@@ -1,0 +1,166 @@
+
+# %Z% $RCSfile: daemons.mac,v $ ver: $Revision: 1.14 $ $Date: 2011/04/18 20:23:31 $
+
+Start_File daemons.mac
+
+If var_exists(daemons_dot_mac_read) "warn 'daemons.mac included more than once' PopFile 2 nop"
+
+< $macro_dir/system/ports.mac
+
+# sockets and variables:
+#
+# daemon_sock - the daemon's "ear"
+#
+
+
+# macros for programs to connect to various daemons
+# macros interpreted by both the app. & the daemon
+
+Define Send_Command 2 port text
+Xmit_Text $1 $2
+.
+
+# macros interpreted by the application
+
+# Get_Daemon gets a daemon on the local host - this is probably obsolete...
+#Define Get_Daemon 2 port_number local_port_name
+#Get_Remote_Daemon $HOSTNAME $1 $2
+#.
+
+# Get_Remote_Daemon - called by the client
+
+Define Get_Remote_Daemon 3 remote_host port_number local_port_name
+Tell_If "connecting to daemon on $1, port $2"
+#advise "Get_Remote_Daemon calling Open_Client_Port $3 $1 $2"
+Open_Client_Port $3 $1 $2
+#Tell_If "sending TopMenu command to daemon"
+Send_Command $3 TopMenu
+Send_Command $3 "advise 'connected to a client'"
+.
+
+# need some general macros for daemon ACK
+
+# interpreted by daemon
+
+Define Daemon_Ack 2 write_portname text
+Xmit_Text $1 $2
+.
+
+# interpreted by client
+
+Define Send_Ack_Req 3 local_port_name daemon_port_name message
+Xmit_Text $1 "Daemon_Ack $2 '$3'"
+.
+
+Define Wait_Ack 1 local_recv_port
+Recv_Text $1 ackword
+#echo $ackword
+.
+
+# macros interpreted by a daemon
+
+Define Oneshot_Daemon_Start 1 port_number
+Open_Read_Port daemon_sock $1
+Listen_Port daemon_sock
+ports relisten daemon_sock no quit
+Redir_Port daemon_sock
+.
+
+Define Daemon_Start 1 port_number
+Tell_If "Opening port $1 for reading"
+Open_Read_Port daemon_sock $1
+Tell_If "Listening for a connection on port $1"
+# open_port used to do a listen on a read port, but now we do it ourselves...
+Listen_Port daemon_sock
+Tell_If "Ready to execute commands from port $1"
+Redir_Port daemon_sock
+.
+
+#
+# macros to support a daemon with multiple connections.
+#
+# The idea is this:  we have a daemon (the switchboard "operator")
+# that sits listening on a port.  Clients connect to this port to request
+# a connection.  The operator then gives them a port number to connect
+# to for their dedicated connection.
+#
+# This avoids the problem of having to dedicate port numbers on a
+# host-by-host basis
+
+
+# Stem_Connect - the client calls this.
+
+Define Stem_Connect 2 daemon_name host
+advise "Stem_Connect $1 $2"
+#Set daemon_sock	${1}_sock	# who uses this?
+
+Set host $2
+Set daemon_portno_name		${1}_port
+Set daemon_port_number		$$daemon_portno_name
+Set client_sock	${1}_client_sock
+
+Get_Remote_Daemon $host $daemon_port_number $client_sock
+.
+
+Define Stem_Disconnect 1 daemon_name
+echo "disconnecting from daemon $1"
+Set client_sock	${1}_client_sock
+Close_Port $client_sock
+.
+
+Define Stem_Xmit 2 daemon object
+Set client_sock	${1}_client_sock
+Xmit_Data $client_sock "$2"
+.
+
+Define Stem_Send 2 daemon text
+Set client_sock	${1}_client_sock
+Xmit_Text $client_sock "$2"
+.
+
+Define Stem_Handshake 1 daemon_name
+Tell_If 'Stem_Handshake $1:  sending req'
+Set daemon_sock	daemon_sock
+Set client_sock	${1}_sock
+#Stem_Send $1 "Tell_If 'Xmit_TexT $daemon_sock handshake' Xmit_Text $daemon_sock handshake Tell_If 'Xmit_Text DONE'"
+Stem_Send $1 "Xmit_Text $daemon_sock handshake"
+Tell_If 'Stem_Handshake $1:  waiting for response on client socket $client_sock'
+Recv_Text $client_sock ackword
+Tell_If "Stem_Handshake $1 DONE"
+.
+
+# Use Fetch_Var to import a variable from the daemon to the client
+
+Define Stem_Fetch_Var 2 stem varname
+Set daemon_sock	daemon_sock
+Set client_sock	${1}_sock
+Set text_to_return "Set $2 \$$2"
+#Print text_to_return
+Set text_to_send "Xmit_Text $daemon_sock \"$text_to_return\""
+#Print text_to_send
+Stem_Send $1 $text_to_send
+Recv_Text $client_sock ackword
+push_text $ackword
+.
+
+Define Stem_Get_Obj 2 daemon_name object
+Set client_sock	${1}_sock
+Set daemon_sock daemon_sock
+Stem_Send $1 "Xmit_Data $daemon_sock $2"
+Recv_Data $client_sock
+.
+
+Define Request_Child_Port 2 response_port program_name
+# next_daemon_child_port should get initialized in the .file
+Assign this_server_port $next_daemon_child_port
+Print_If this_server_port
+Add_Var next_daemon_child_port 4
+Xmit_Text $1 "Set this_server_port $this_server_port"
+#advise "Request_Child_Port executing '$2 $this_server_port &'"
+system "$2 $this_server_port &"
+.
+
+Set daemons_dot_mac_read 1
+
+Stop_File daemons.mac
+

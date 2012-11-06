@@ -1,0 +1,55 @@
+# compute gaussian curvature
+
+Set fast_curv_setup 0
+
+Define Fast_Curv_Setup 1 source
+advise "Fast_Curv_Setup $1"
+
+Subimage sx1 $1 ncols($1)-2 nrows($1)-2 0 1
+Subimage sx2 $1 ncols($1)-2 nrows($1)-2 2 1
+
+Subimage sy1 $1 ncols($1)-2 nrows($1)-2 1 0
+Subimage sy2 $1 ncols($1)-2 nrows($1)-2 1 2
+
+advise 'subimages created'
+
+Image gx nrows($1)-2 ncols($1)-2 1 float
+Image gy nrows($1)-2 ncols($1)-2 1 float
+
+advise 'first derivative images created'
+
+Subimage sxx1 gx ncols(gx)-2 nrows(gx)-2 0 1
+Subimage sxx2 gx ncols(gx)-2 nrows(gx)-2 2 1
+
+Subimage sxy1 gy ncols(gx)-2 nrows(gx)-2 0 1
+Subimage sxy2 gy ncols(gx)-2 nrows(gx)-2 2 1
+
+Subimage syy1 gy ncols(gx)-2 nrows(gx)-2 1 0
+Subimage syy2 gy ncols(gx)-2 nrows(gx)-2 1 2
+
+advise 'second set of subimages created'
+
+Image gxx nrows($1)-4 ncols($1)-4 1 float
+Image gxy nrows($1)-4 ncols($1)-4 1 float
+Image gyy nrows($1)-4 ncols($1)-4 1 float
+
+advise 'second derivative images created'
+Set fast_curv_setup 1
+.
+
+Define Fast_Curv 2 'target float image' 'source float image'
+If !$fast_curv_setup "Fast_Curv_Setup $2"
+
+VVSub gx sx1 sx2
+VVSub gy sy1 sy2
+
+VVSub gxx sxx1 sxx2
+VVSub gxy sxy1 sxy2
+VVSub gyy syy1 syy2
+
+VSquare gxy gxy
+VSMul gxy gxy -1
+VVMul $1 gxx gyy
+VVAdd $1 $1 gxy		# gxx*gyy - gxy^2
+.
+

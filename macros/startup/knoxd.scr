@@ -1,0 +1,17 @@
+#
+# mmvi record daemon
+
+#variables set verbose 1 quit
+
+< $DOTFILEDIR/.daemon
+#< $DOTFILEDIR/.generic
+< $DOTFILEDIR/.gendata
+< $DOTFILEDIR/.genwar
+< $DOTFILEDIR/.genview
+
+< $macro_dir/knox/knox.mac
+
+variables set verbose 1 quit
+
+Daemon_Start $knoxd_port
+

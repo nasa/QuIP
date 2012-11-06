@@ -1,0 +1,1331 @@
+Set __deinterlace 0
+Set field_factor 2	# BUG - set this where?
+Set compute_input_mean	1
+Set use_cuda_centroid 0
+Set ready 0
+Set placing 0
+Set waiting 0
+Set prefix g
+Set i_blink 0	# if non-zero, we are in a blink
+Set i_calib 0	# which frame of calibration recording
+Set n_blink_samples	3	# number of samples to wait
+Set n_total_blinks 0
+
+Set bad_pupil 0
+Set bad_cr 0
+
+# other states
+Set calibrating 0
+Set visualizing 0
+Set tuning_calib 0
+Set monitoring 0
+Set stimulating 0
+Set tracking 1
+
+Set have_calib 0
+Set subject New_subject		# dummy entry
+Set SUBJECT_DIR	subjects
+
+
+# The trace vector holds past results
+
+Set samples_per_second 60	# this is for deinterlaced data analysis...
+Set seconds_per_minute 60
+Set n_result_minutes	20	# can change this for experiments...
+
+# Set the default values
+
+Set default_um_thr	170
+Set default_lm_thr	134
+
+Set default_pup_thr	63
+Set default_cr_thr	240
+
+Assign default_upa_thr	5000/$field_factor
+Assign default_lpa_thr	2000/$field_factor
+
+Set default_uca_thr	112
+Set default_lca_thr	30
+
+# this is scaled up by a factor of 10...
+Set default_dmdt_thr	20	# for detecting blinks
+
+#Set max_pupil_area	20000	# not a tracking param, used for the slider anchor
+
+Assign n_result_seconds	$n_result_minutes*$seconds_per_minute
+Assign n_trace_samples	$n_result_seconds*$samples_per_second
+
+
+
+Define CkPt 1 tag
+If !$checkpointing exit_macro
+os checkpoint $1 quit
+cuda events set_checkpoint $1 quit quit
+.
+
+Define Set_Var_Name 2 name_stem var_stem
+Set ${1}_name ${2}$cam_num
+.
+
+Define Set_Cam_Vars 1 camera_index
+Set cam_num $1
+Set_Var_Name prx pup_roi_x
+Set_Var_Name prx pup_roi_x
+Set_Var_Name pry pup_roi_y
+Set_Var_Name prl pup_roi_left
+Set_Var_Name prt pup_roi_top
+
+Set_Var_Name crx cr_roi_x
+Set_Var_Name cry cr_roi_y
+Set_Var_Name crl cr_roi_left
+Set_Var_Name crt cr_roi_top
+
+Set_Var_Name lm_thr lm_thr
+Set_Var_Name um_thr um_thr
+Set_Var_Name lpa_thr lpa_thr
+Set_Var_Name upa_thr upa_thr
+Set_Var_Name lca_thr lca_thr
+Set_Var_Name uca_thr uca_thr
+Set_Var_Name pup_thr pup_thr
+Set_Var_Name cr_thr cr_thr
+Set_Var_Name dmdt_thr dmdt_thr
+
+If $plotting&&obj_exists(g_plot) Reset_Plot
+.
+
+# This function is called when we switch cameras...
+Define Switch_To_Cam 1 camera_index
+#advise "Switch_To_Cam $1"
+Set_Cam_Vars $1
+Set_Pupil_ROI_Corner
+Assign i_cam $1-1	# 0-based indexing
+Update_Threshold_Panel	# set sliders to correct values
+.
+
+# When we go to deinterlace, we don't change i_h...
+
+# Set_Pupil_ROI_Corner takes as input $$prx_name and $$pry_name,
+# adds the ROI half-size offset to get the corner location
+# and makes sure that it is in-bounds, resetting $prx_name etc if necessary
+# Output is in $prl_name and $prt_name
+
+Define Set_Pupil_ROI_Corner 0
+Assign $prl_name $$prx_name-$pup_roi_w/2
+Assign $prt_name $$pry_name-$pup_roi_h/2
+advise "Set_Pupil_ROI_Corner before bounding:  $prl_name = $$prl_name   $prt_name = $$prt_name"
+Bound_Var $prl_name 0 $in_w-$pup_roi_w
+Bound_Var $prt_name 0 ($in_h/$n_interlace)-$pup_roi_h
+advise "Set_Pupil_ROI_Corner after bounding:  $prl_name = $$prl_name   $prt_name = $$prt_name"
+# make sure that the center coords reflect any clipping
+Assign $prx_name $$prl_name+$pup_roi_w/2
+Assign $pry_name $$prt_name+$pup_roi_h/2
+.
+
+Define Set_CR_ROI_Corner 0
+
+Assign $crl_name $$crx_name-$cr_roi_w/2
+Bound_Var $crl_name 0 $in_w-$cr_roi_w
+
+Assign $crt_name $$cry_name-($cr_roi_h/$n_interlace)/2
+Bound_Var $crt_name 0 ($in_h-$cr_roi_h)/$n_interlace
+
+# make sure that the center coords reflect clipping
+Assign $crx_name $$crl_name+$cr_roi_w/2
+Assign $cry_name $$crt_name+($cr_roi_h/$n_interlace)/2
+
+# make sure the pcr_delta is correct after clipping
+Assign pcr_dx $$crx_name-$$prx_name
+Assign pcr_dy $$cry_name-$$pry_name
+.
+
+Define CR_Follows_Pupil 0
+Assign $crx_name $$prx_name+$pcr_dx
+Assign $cry_name $$pry_name+$pcr_dy
+Set_CR_ROI_Corner
+.
+
+Define Next_F 0
+Wait_F
+Convert_Oldest
+Release_F
+.
+
+Define Release_F 0
+v4l2 flow release quit quit
+.
+
+Define Wait_F 0
+v4l2 flow wait quit quit
+.
+
+Define Convert_Oldest 0
+Set oname oldest.$vdev
+Set bufname $vdev.buffer$$oname
+#v4l2
+#  flow
+#    yuv2gray ${prefix}_input_gray $bufname
+#    quit
+#  quit
+VMov ${prefix}_input_gray $bufname # Now we get gray from the driver
+CkPt 'yuv2gray (host)'
+#v4l2
+#  flow
+#    yuv2rgb h_input_rgb $bufname
+#    quit
+#  quit
+#CkPt 'after yuv2rgb on host'
+.
+
+Define Apply_Thresholds 2 display_destination input_image
+# pup_mask = input_b > pup_thr ? 0 : 1 ;
+veclib execute ss_vs_gt $pup_mask $input_b 0 1 $$pup_thr_name quit
+#CkPt 'pupil threshold'
+If $displaying "Show_Pupil_Pixels $1 $2"
+veclib execute ss_vs_lt $cr_mask $input_b 0 1 $$cr_thr_name quit
+#CkPt 'CR threshold'
+If $displaying "Show_CR_Pixels $1 $2"
+.
+
+Define Show_CR_Pixels 2 display_image input_image
+If $display_thresholds
+  Then " veclib execute vs_vs_lt $1{1} $2 $cr_mask 255 1 quit \
+	 veclib execute vs_vs_lt $1{0} $2 $cr_mask 0 1 quit"
+  Else "VMov $1{1} $2 VMov $1{0} $2"
+.
+
+Define Show_Pupil_Pixels 2 display_image input_image
+#Print displaying
+If $display_thresholds
+  Then "veclib execute vs_vs_lt $1{2} $2 $pup_mask 255 1 quit"
+  Else "VMov $1{2} $2"
+.
+
+Define Show_Input_Image 2 display_image input_image
+VMov $1{0} $2
+CkPt 'blue component copy'
+VMov $1{1} $2
+CkPt 'green component copy'
+VMov $1{2} $2
+CkPt 'red component copy'
+.
+
+# Sometimes when we lose the pupil, we can get trapped by dark junk
+# at the edge of the image.  We could exclude the edge from the roi search,
+# or search by spiralling outward from the last good position.  If the roi
+# is on the edge and the centroid is near the edge, then we should reject
+# the frame.
+
+Define Track_Pupil 1 viewer_index
+#advise "\nTrack_Pupil BEGIN"
+# pup_mask has already been thresholded...
+#advise "Track_Pupil n_interlace = $n_interlace  pup_roi_top = $$prt_name pup_roi_h = $pup_roi_h"
+If obj_exists(pup_inset_b) "Delete_Image pup_inset_b"
+#advise "Track_Pupil:  $prl_name = $$prl_name   $prt_name = $$prt_name"
+Subimage pup_inset_b $pup_mask $pup_roi_w $pup_roi_h $$prl_name $$prt_name
+Convert_ROI pup pup_inset_b
+
+# If the pupil area is bad here, why don't we search for it???
+# ans:  search is done withing Check_Pupil_Area
+
+Get_Pupil_Area
+# make sure the area is reasonable
+# Check_Pupil_Area will search for a new ROI location that has
+# a good pupil area...  But there is a bug:  if the upper pupil area threshold
+# is set too low, the search procedure can settle on a location that only
+# includes a portion of the pupil, then the re-centering (below) will center
+# it but with a bad area!?
+
+Check_Pupil_Area $1
+If $bad_pupil exit_macro
+
+# moved to Check_Pupil_Area
+## calculate the centroids
+#Do_Centroid $result_pup_a_idx pup_inset_b pup $1
+
+# We need to be able to access the values in order
+# to reposition the ROI.  So we store them
+# in a pinned, mapped object...
+Eval_Pup_Offset
+# sometimes these are nan's???
+If abs($p_dx)>$roi_movement_threshold||abs($p_dy)>$roi_movement_threshold
+  "Reposition_Pupil_ROI $1 Read_Pupil_Area"
+Delete_Image pup_inset_b
+
+If $bad_pupil exit_macro	# pupil could be bad after repositioning...
+
+## now display the ROI in its own window
+If $displaying "Display_ROI pup $1"
+
+# Use the dev_ prefix when accessing host-mapped mem on device
+# Track pupil stores pupil area in trace vector
+VMov dev_${prefix}_result[$i_cam]{$result_pup_a_idx} ${prefix}_n_sum
+VSet ${prefix}_result[$i_cam]{$result_pup_roi_x_idx} $$prx_name
+VSet ${prefix}_result[$i_cam]{$result_pup_roi_y_idx} $$pry_name
+VSet ${prefix}_result[$i_cam]{$result_pup_x_idx} $p_dx
+VSet ${prefix}_result[$i_cam]{$result_pup_y_idx} $p_dy
+#advise "Track_Pupil DONE\n"
+.
+
+Define Eval_Pup_Offset 0
+#advise "Eval_Pup_Offset:  i_cam = $i_cam   result_pup_x_idx = $result_pup_x_idx   result_pup_y_idx = $result_pup_y_idx"
+Assign p_dx value(${prefix}_result[$i_cam]{$result_pup_x_idx})
+Assign p_dy value(${prefix}_result[$i_cam]{$result_pup_y_idx})
+#advise "Eval_Pup_Offset:  p_dx = $p_dx   p_dy = $p_dy"
+.
+
+Define Track_CR 1 viewer_index
+
+CR_Follows_Pupil
+If obj_exists(cr_inset_b) "Delete_Image cr_inset_b"
+#Print cr_roi_w
+#Print cr_roi_h
+#Print $crl_name
+#Print $crt_name
+Subimage cr_inset_b $cr_mask $cr_roi_w $cr_roi_h $$crl_name $$crt_name
+
+Convert_ROI cr cr_inset_b
+Get_CR_Area
+Check_CR_Area
+If $bad_cr exit_macro
+
+Do_Centroid $result_cr_area_idx cr_inset_b cr $1
+Eval_CR_Offset
+#Print c_dx
+#Print c_dy
+#Print roi_movement_threshold
+If abs($c_dx)>$roi_movement_threshold||abs($c_dy)>$roi_movement_threshold
+  "Reposition_CR_ROI $1 Eval_CR_Offset"
+
+VMov dev_${prefix}_result[$i_cam]{$result_cr_area_idx} ${prefix}_n_sum
+#Print pcr_dx
+#Print pcr_dy
+#Print c_dx
+#Print c_dy
+
+VSet ${prefix}_result[$i_cam]{$result_pcr_dx_idx} $pcr_dx
+VSet ${prefix}_result[$i_cam]{$result_pcr_dy_idx} $pcr_dy
+VSet ${prefix}_result[$i_cam]{$result_cr_x_idx} $c_dx
+VSet ${prefix}_result[$i_cam]{$result_cr_y_idx} $c_dy
+
+If $displaying "Display_ROI cr $1"
+Delete_Image cr_inset_b
+.
+
+Define Eval_CR_Offset 0
+Assign c_dx value(${prefix}_result[$i_cam]{$result_cr_x_idx})
+Assign c_dy value(${prefix}_result[$i_cam]{$result_cr_y_idx})
+#advise "Eval_CR_Offset:  c_dx = $c_dx"
+.
+
+
+Define Reposition_Pupil_ROI 1 viewer_index
+advise "Reposition_Pupil_ROI #1  p_dx = $p_dx   p_dy = $p_dy"
+advise "Reposition_Pupil_ROI #2  $prx_name = $$prx_name   $pry_name = $$pry_name"
+Delete_Image pup_inset_b
+Add_Var $prx_name round($p_dx)
+Add_Var $pry_name round($p_dy)
+advise "Reposition_Pupil_ROI #3 (after adding):  $prx_name = $$prx_name   $pry_name = $$pry_name"
+Set_Pupil_ROI_Corner
+advise "Reposition_Pupil_ROI #4 (after Set_Pupil_ROI_Corner):  $prl_name = $$prl_name   $prt_name = $$prt_name"
+Subimage pup_inset_b $pup_mask $pup_roi_w $pup_roi_h $$prl_name $$prt_name
+Convert_ROI pup pup_inset_b
+Get_Pupil_Area
+Do_Centroid $result_pup_a_idx pup_inset_b pup $1
+Eval_Pup_Offset
+advise "After repositioning:  p_dx = $p_dx   p_dy = $p_dy"
+.
+
+Define Reposition_CR_ROI 1 viewer_index
+Delete_Image cr_inset_b
+Add_Var pcr_dx round($c_dx)
+Add_Var pcr_dy round($c_dy)
+Assign pcr_dx max($min_pcr_dx,min($max_pcr_dx,$pcr_dx))
+Assign pcr_dy max($min_pcr_dy,min($max_pcr_dy,$pcr_dy))
+CR_Follows_Pupil
+Subimage cr_inset_b $cr_mask $cr_roi_w $cr_roi_h $$crl_name $$crt_name
+Convert_ROI cr cr_inset_b
+Get_CR_Area
+Do_Centroid $result_cr_area_idx cr_inset_b cr $1
+.
+
+Define Cuda_Sum 2 dst src
+# What precisions is this implemented for?
+cuda npp sum $1 $2 quit quit
+.
+
+# Get_Pupil_Area stores the result in the result vector...
+
+Define Get_Pupil_Area 0
+App_Sum ${prefix}_n_sum $roi
+#CkPt "$3 ROI summed"
+# Get_Pupil_Area puts the sum in the result vec
+VMov dev_${prefix}_result[$i_cam]{$result_pup_a_idx} ${prefix}_n_sum
+# Put into the trace also - BUG?  redundant?
+#CkPt "sum copied"
+.
+
+Define Get_CR_Area 0
+App_Sum ${prefix}_n_sum $roi
+# Get_CR_Area puts the sum in the result vec
+VMov dev_${prefix}_result[$i_cam]{$result_cr_area_idx} ${prefix}_n_sum
+# Put into the trace also - BUG?  redundant?
+cuda streams sync default quit quit
+Assign ca value(${prefix}_result[$i_cam]{$result_cr_area_idx})
+.
+
+# The image mean value is good, but we don't have a reasonable pupil area
+# Move the ROI around until we find a good one.
+# This might be done faster by computing projections?
+#
+# Better to start at the center, and spiral outwards until we find a good spot
+# moving by half a ROI width each time...
+# But first for simplicity we do a raster scan...
+
+Set pupil_search_ready 0
+
+# The search overlap is 1/4 of the ROI size...
+# If the pupil is half the size of the ROI, we could have
+# a situation:q
+#
+#    RRRRRRRR
+#    ....PPPP..
+#      RRRRRRRR
+Define Setup_Pupil_Search 0
+Assign pupil_search_step_size_x floor($pup_roi_w/4)
+Assign pupil_search_step_size_y floor($pup_roi_h/4)
+#advise "pupil search step sizes:  $pupil_search_step_size_x $pupil_search_step_size_y"
+Assign n_pupil_search_x ceil(($in_w-$pup_roi_w)/$pupil_search_step_size_x)
+Assign n_pupil_search_y ceil(($in_h-$pup_roi_h)/$pupil_search_step_size_y)
+Set pupil_search_ready 1
+
+Set spiral_size max($n_pupil_search_x,$n_pupil_search_y)
+# make sure in ram
+data areas select ram quit quit
+If obj_exists(spiral_coords) "Delete_Image spiral_coords"
+Vector spiral_coords $spiral_size*$spiral_size 2 short
+Spiral_Coords spiral_coords
+#Display spiral_coords
+
+# These vars are used in spiral search
+Assign pup_roi_dx ($in_w-$pup_roi_w)/$spiral_size
+# don't use pup_roi_h here in case deinterlacing...
+Assign pup_roi_dy (nrows('$pup_mask')-$pup_roi_h)/$spiral_size
+#advise "Pupil search step sizes:  $pup_roi_dx  $pup_roi_dy"
+.
+
+Set cr_search_ready 0
+Define Setup_CR_Search 0
+Assign cr_search_step_size_x floor($cr_roi_w/4)
+Assign cr_search_step_size_y floor($cr_roi_h/4)
+Assign n_cr_search_x ceil(($pup_roi_w-$cr_roi_w)/$cr_search_step_size_x)
+Assign n_cr_search_y ceil(($pup_roi_h-$cr_roi_h)/$cr_search_step_size_y)
+Set cr_search_ready 1
+.
+
+# Search pupil scans the ROI looking for a location with the correct
+# number of thresholded pixels (kind of like mean-shift, but with only 2
+# levels?  Maybe we could apply several thresholds (based on histogram),
+# and get a more robust test?)
+# At the very least, we could count the number of potential CR pixels
+# within the pupil ROI - we would not want to apply the CR area test,
+# as the pupil ROI is larger and there might be other glints that were counted,
+# but if there are NO cr pixels, then we should move on...
+
+# This search does a raster-order search - because it terminates as soon
+# as if finds a plausible location, it can get trapped on the edge -
+# better to spiral out from the center!
+#
+# Here is the patterm for 5x5
+#
+#          13 14 15 16 17
+#          12  3  4  5 18
+#          11  2  1  6 19
+#          10  9  8  7 20
+#          25 24 23 22 21
+#
+# Here is the patterm for 4x4
+#
+#          13 14 15 16
+#          12  3  4  5
+#          11  2  1  6
+#          10  9  8  7
+#
+# Here is the patterm for 6x6
+#
+#       31 32 33 34 35 36
+#       30 13 14 15 16 17
+#       29 12  3  4  5 18
+#       28 11  2  1  6 19
+#       27 10  9  8  7 20
+#       26 25 24 23 22 21
+#
+# start_x	floor(n_cols/2)
+# start_y	floor(n_rows/2)
+#
+# iteration	dx	dy
+#	1	-	-
+#	2	-1	0
+#	3	0	-1
+#	4	1	0
+#	5	1	0
+#	6	0	1
+#	7	0	1
+#	8	-1	0
+#	9	-1	0
+#	10	-1	0
+#	11	0	-1
+#	12	0	-1
+#	13	0	-1
+#	14	1	0
+#	...
+# number of x and y steps starts at 1, and increase by 1 each cycle, flipping
+# the sign
+#
+# We use vars n_x_steps n_y_steps, i_x, i_y
+
+Define Spiral_Coords 1 dest
+#advise "Spiral_Coords $1 BEGIN"
+Assign spiral_size sqrt(ncols('$1')*nrows('$1'))
+If $spiral_size!=floor($spiral_size) "error1 'Spiral_Coords:  Image $1 is not square!?'"
+Print spiral_size
+Assign s_x floor($spiral_size/2)
+Assign s_y floor($spiral_size/2)
+Set dx -1
+Set dy 0
+Set next_dy -1
+Set n_x_steps 1
+Set n_y_steps 1
+Set i_x $n_x_steps
+Set i 0
+repeat $spiral_size*$spiral_size
+  VSet $1[$i]{0} $s_x
+  VSet $1[$i]{1} $s_y
+  Add_Var s_x $dx
+  Add_Var s_y $dy
+  If $i_x>0
+    Then X_Step
+    Else Y_Step
+  Increment i
+  end
+#Display $1
+.
+
+Define X_Step 0
+Decrement i_x
+If $i_x!=0 exit_macro
+# corner
+Increment n_x_steps
+Mul_Var dx -1
+Set next_dx $dx
+Set dx 0
+Set dy $next_dy
+Set i_y $n_y_steps
+.
+
+Define Y_Step 0
+Decrement i_y
+If $i_y!=0 exit_macro
+Increment n_y_steps
+Mul_Var dy -1
+Set next_dy $dy
+Set dy 0
+Set dx $next_dx
+Set i_x $n_x_steps
+.
+
+Define Old_Search_Pupil 0
+If !$pupil_search_ready Setup_Pupil_Search
+Set bad_pupil 0
+Set y 0
+repeat $n_pupil_search_y
+  Set x 0
+  repeat $n_pupil_search_x
+    Delete_Image pup_inset_b
+    Assign $prx_name $x+$pup_roi_w/2
+    Assign $pry_name $y+$pup_roi_h/2
+    Set_Pupil_ROI_Corner
+    Subimage pup_inset_b $pup_mask $pup_roi_w $pup_roi_h $$prl_name $$prt_name
+    Convert_ROI pup pup_inset_b
+    Get_Pupil_Area	# stores the value in the result vec
+    cuda streams sync default quit quit
+    Assign pa value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+    If $pa>$$lpa_thr_name&&$pa<$$upa_thr_name "exit_macro"	# success!
+    Add_Var x $pupil_search_step_size_x
+    end
+  Add_Var y $pupil_search_step_size_y
+  end
+Set bad_pupil 1
+Report_PA_Status 'Out of range'
+.
+
+Define Search_Pupil 1 viewer_index
+If !$pupil_search_ready Setup_Pupil_Search
+Set bad_pupil 0
+Set i_spiral 0
+repeat ncols(spiral_coords)
+  Delete_Image pup_inset_b
+  Assign s_x value(spiral_coords[$i_spiral]{0})
+  Assign s_y value(spiral_coords[$i_spiral]{1})
+  Assign $prx_name $pup_roi_w/2+floor($s_x*$pup_roi_dx)
+  # BUG - deinterlace?
+  Assign $pry_name $pup_roi_h/2+floor($s_y*$pup_roi_dy)
+#advise "Search_Pupil (t=$t):  s_x = $s_x   s_y = $s_y  ROI CTR at $$prx_name $$pry_name"
+  Set_Pupil_ROI_Corner
+#advise "Search_Pupil (t=$t):  s_x = $s_x   s_y = $s_y  ROI at $$prl_name $$prt_name"
+  Subimage pup_inset_b $pup_mask $pup_roi_w $pup_roi_h $$prl_name $$prt_name
+  Convert_ROI pup pup_inset_b
+  Get_Pupil_Area	# stores the value in the result vec
+  cuda streams sync default quit quit
+  Assign pa value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+  If $pa>$$lpa_thr_name&&$pa<$$upa_thr_name 	# success?
+    'Check_Search $1 If !$bad_pupil exit_macro'
+#    Then 'Check_Search $1 If !$bad_pupil exit_macro'
+#    Else "advise 'Search_Pupil (t=$t):  bad area $pa at $$prl_name $$prt_name'"
+  Increment i_spiral
+  end
+Set bad_pupil 1
+Report_PA_Status 'Not found'
+.
+
+# Check_Search computes the centroid and makes sure it is not on the edge.
+#
+# Actually, we reject this search if the centroid is decentered by more
+# than half the search step size, on the grounds that we will get a better
+# match by moving the ROI
+
+Define Check_Search 1 viewer_index
+Do_Centroid $result_pup_a_idx pup_inset_b pup $1
+# are we jammed up against the left edge?
+# sync with cuda to read centroid results
+cuda streams sync default quit quit
+Assign cx value(${prefix}_result[$i_cam]{$result_pup_a_idx+1})
+Assign cy value(${prefix}_result[$i_cam]{$result_pup_a_idx+2})
+If abs($cx)>$pup_roi_dx/2||abs($cy)>$pup_roi_dy/2
+  "Set bad_pupil 1 exit_macro"
+#  "Set bad_pupil 1 Report_Bad_Search exit_macro"
+#advise "Check_Search (t=$t):  $prl_name = $$prl_name, $prt_name = $$prt_name, cx = $cx, cy = $cy"
+#advise "Check_Search:  OK! (t=$t)"
+Set bad_pupil 0
+# more tests here?
+.
+
+Define Report_Bad_Search 0
+advise "Search rejected (t=$t)  $prl_name = $$prl_name $prt_name = $$prt_name cx = $cx   cy = $cy"
+.
+
+Define Search_CR 0
+If !$cr_search_ready Setup_CR_Search
+Set bad_cr 0
+Assign pcr_dy -floor(($pup_roi_h-$cr_roi_h)/2)
+repeat $n_cr_search_y
+  Assign pcr_dx -floor(($pup_roi_w-$cr_roi_w)/2)
+  repeat $n_cr_search_x
+    Delete_Image cr_inset_b
+    CR_Follows_Pupil
+    Subimage cr_inset_b $cr_mask $cr_roi_w $cr_roi_h $$crl_name $$crt_name
+    Convert_ROI cr cr_inset_b
+    Get_CR_Area
+    If $ca>$$lca_thr_name&&$ca<$$uca_thr_name "exit_macro"	# success!
+    Add_Var pcr_dx $cr_search_step_size_x
+    end
+  Add_Var pcr_dy $cr_search_step_size_y
+  end
+Set bad_cr 1
+Report_CA_Status 'Out of range'
+.
+
+Define Read_Pupil_Area 0
+# sync w/ gpu
+cuda streams sync default quit quit
+Assign pa value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+If $pa<=$$lpa_thr_name||$pa>=$$upa_thr_name
+  "Set bad_pupil 1"
+.
+
+# Check_Pupil_Area
+
+Define Check_Pupil_Area 1 viewer_index
+Read_Pupil_Area
+If $bad_pupil
+  Then "Search_Pupil $1"
+  Else "Do_Centroid $result_pup_a_idx pup_inset_b pup $1"
+If !$bad_pupil "Report_PA_Status 'Good ($pa)'"
+.
+
+Define Check_CR_Area 0
+# sync w/ gpu
+cuda streams sync default quit quit
+Assign ca value(${prefix}_result[$i_cam]{$result_cr_area_idx})
+If $ca<=$$lca_thr_name||$ca>=$$uca_thr_name
+  Search_CR
+If !$bad_cr "Report_CA_Status 'Good'"
+.
+
+# Convert_ROI converts a byte subimage to float.
+# It also sets script vars roi and scr.
+
+Define Convert_ROI 2 stem byte_source
+Set roi ${prefix}_f_${1}$roi_suffix
+Set scr ${prefix}_f_${1}$scr_suffix	# scratch space
+Convert $roi $2
+#CkPt "ROI converted"
+.
+
+Define App_Sum 2 target source		# appropriate sum
+If !strcmp($prefix,g)
+  Then "Cuda_Sum $1 $2"
+  Else "VSum $1 $2"
+.
+
+# Assumes:
+#  $roi is the name of the image
+#  n_sum already holds sum of all values...
+#
+# n_sum gets set to 1 if it is 0, to avoid divide-by-zero
+#
+
+Define Do_Centroid 4 result_area_idx byte_source stem viewer_index
+#advise "Do_Centroid $1 $2 $3 $4 BEGIN"
+If $use_cuda_centroid "Cuda_Centroid $1 $2 $3"
+
+VVMul $scr $roi ${prefix}_x_${3}$roi_suffix
+App_Sum ${prefix}_c_sum $scr
+
+# IMPORTANT - sync stream before trying to read value on host
+# The area was computed before the last cuda call,
+# so maybe we dont need to sync???
+#cuda streams sync default quit quit
+If value(${prefix}_result[$i_cam]{$1})==0 "VSet ${prefix}_n_sum 1"
+
+# This code depends on the result vector components having centroid x and y
+# following the area for pup & CR
+VVDiv dev_${prefix}_result[$i_cam]{$1+1} ${prefix}_c_sum ${prefix}_n_sum
+
+VVMul $scr $roi ${prefix}_y_${3}$roi_suffix
+App_Sum ${prefix}_c_sum $scr
+VVDiv dev_${prefix}_result[$i_cam]{$1+2} ${prefix}_c_sum ${prefix}_n_sum
+
+#Show_3 $1
+
+CkPt "$3 centroid computed"
+
+## now display the ROI in its own window
+## Why do this here, before we know that the ROI is actually accepted???
+#If $displaying "Display_ROI $3 $4"
+.
+
+Define Show_3 1 base_index
+#advise "Show_3 $1"
+# sync so that we get the result back correctly
+cuda streams sync default quit quit
+Subscalar tmp3 ${prefix}_result[$i_cam] 3 $1
+Display tmp3
+Delete_Image tmp3
+.
+
+Define Display_ROI 2 stem viewer_index
+VSMul ${prefix}_f_${1}$scr_suffix ${prefix}_f_${1}$roi_suffix 255
+CkPt "roi scaled"
+Convert ${prefix}_b_${1}$roi_suffix ${prefix}_f_${1}$scr_suffix
+CkPt "roi converted to byte"
+VMov ${prefix}_${1}$roi_suffix{0} ${prefix}_b_${1}$roi_suffix
+VMov ${prefix}_${1}$roi_suffix{1} ${prefix}_b_${1}$roi_suffix
+VMov ${prefix}_${1}$roi_suffix{2} ${prefix}_b_${1}$roi_suffix
+CkPt "$1 display image prepared"
+Load_Cuda_Image v_${1}_$2 ${prefix}_${1}$roi_suffix
+.
+
+Define Load_Cuda_Image 2 viewer image
+cuda cuda_gl
+  load $1 $2
+  quit quit
+CkPt "viewer $1 loaded"
+.
+
+Set last_status none
+Set last_mean_status none
+Set last_pa_status none
+Set last_ca_status none
+Set last_blink_count none
+
+Define Report_Status 1 string
+Load_Status Status $1 last_status
+.
+
+Define Load_Status 3 widget message old_msg_var
+If !strcmp('$$3','$2') exit_macro
+interface
+  decorate master_panel
+    set_message $1 $2
+    quit
+  quit
+Set $3 $2
+.
+
+Define Report_Mean_Status 1 string
+Load_Status 'Mean Value' $1 last_mean_status
+.
+
+Define Report_PA_Status 1 string
+Load_Status 'Pupil Area' $1 last_pa_status
+.
+
+Define Report_CA_Status 1 string
+Load_Status 'CR Area' $1 last_ca_status
+.
+
+Define Report_Blink_Status 0
+Load_Status 'Blink count' $n_total_blinks last_blink_count
+advise "Blink t = $t"
+.
+
+
+Define Show_Results 0
+cuda streams sync default quit quit
+  Assign px round(value(${prefix}_result[$i_cam]{$result_pup_x_idx}))
+  Assign py round(value(${prefix}_result[$i_cam]{$result_pup_y_idx}))
+  Assign pa round(value(${prefix}_result[$i_cam]{$result_pup_a_idx}))
+  Assign cx round(value(${prefix}_result[$i_cam]{$result_cr_x_idx}))
+  Assign cy round(value(${prefix}_result[$i_cam]{$result_cr_y_idx}))
+  Assign ca round(value(${prefix}_result[$i_cam]{$result_cr_area_idx}))
+  interface
+    decorate monitor_panel
+      set_message 'Pupil ROI' "$$prx_name $$pry_name"
+      set_message 'Pupil Position' "$px $py"
+      set_message 'Pupil Area' "$pa"
+      set_message 'CR ROI offset' "$pcr_dx $pcr_dy"
+      set_message 'CR Position' "$cx $cy"
+      set_message 'CR Area' "$ca"
+      set_message 'Frame Rate' "$fps"
+      quit
+    quit
+.
+
+Define Get_Input_Mean 1 byte_input
+Convert $input_f $input_b
+App_Sum ${prefix}_m_sum $input_f
+VSMul dev_${prefix}_result[$i_cam]{$result_img_mean_idx} ${prefix}_m_sum
+							1/$n_input_pixels
+cuda streams sync default quit quit
+If $t>0 "VVSub ${prefix}_result[$i_cam]{$result_img_dmdt_idx} \
+	${prefix}_result[$i_cam]{$result_img_mean_idx} \
+	${prefix}_trace[$t-1][$i_cam]{$result_img_mean_idx}"
+Assign dmdt value(${prefix}_result[$i_cam]{$result_img_dmdt_idx})
+
+CkPt 'mean computed'
+
+If $dmdt*10>$$dmdt_thr_name
+  "Set give_up 1 Set i_blink $n_blink_samples Report_Mean_Status Blink exit_macro"
+	
+Assign img_mean value(${prefix}_result[$i_cam]{$result_img_mean_idx})
+If $img_mean<=$$lm_thr_name||$img_mean>=$$um_thr_name "Set give_up 1"
+If $give_up
+  Then "Report_Mean_Status 'Out of range'"
+  Else "Report_Mean_Status Good"
+.
+
+# the left and bottom edges are black and end up being treated as pupil pixels...
+
+Define Fix_Input_Edges 0
+If !obj_exists(fix_left) Init_Fix_Images
+VSet fix_left $$fixval_name
+VSet fix_bot $$fixval_name
+.
+
+Set n_fix_cols 4
+Set n_fix_rows 3
+
+Define Init_Fix_Images 0
+Subimage fix_left $input_b $n_fix_cols nrows($input_b) 0 0
+Subimage fix_bot $input_b ncols($input_b) $n_fix_rows 0 nrows($input_b)-$n_fix_rows
+Set fixval_name fixval1
+Assign fixval1 ($cr_thr1-$pup_thr1)/2
+.
+
+Define Blink_Sample 2 destination_image input_image
+Decrement i_blink
+If $i_blink==0 "Increment n_total_blinks Report_Blink_Status"
+Set give_up 1
+If $displaying "Show_Input_Image $1 $2"
+Report_Status Blink	# does this get overwritten?
+.
+
+Define Process_Frame 3 destination_image input_image viewer_index
+# the purpose of this copy is to extract one component...
+# But this is not necessary if we xfer a gray level image...
+Set give_up 0
+
+VSet dev_${prefix}_result[$i_cam] 0
+
+VMov $input_b $2
+Fix_Input_Edges
+CkPt 'input copy'
+If $compute_input_mean "Get_Input_Mean $input_b"
+If $i_blink>0 "Blink_Sample $1 $2 exit_macro"
+If $give_up "If $displaying 'Show_Input_Image $1 $2' Note_Bad_Image exit_macro"
+
+Apply_Thresholds $1 $2
+#  CkPt 'threshold processing'
+
+Track_Pupil $3
+#  CkPt 'pupil tracked'
+If $bad_pupil "Note_Bad_Pupil exit_macro"
+
+Track_CR $3
+  CkPt 'CR tracked'
+# show the pupil ROI even if the CR is bad
+If $bad_cr "Report_Status 'Bad CR' \
+            If $displaying&&$display_rois 'Update_Pupil_Display $1' \
+	    exit_macro"
+
+# now compute P-CR
+Eval_PCR
+
+If $displaying&&$display_rois "Update_Display $1"	# draw the ROI boxes
+
+Report_Status 'OK'
+.
+# end Process_Frame
+
+Define Note_Bad_Image 0
+Report_Status 'Bad image mean'
+VSet ${prefix}_result[$i_cam]{$result_pup_a_idx} 0
+.
+
+Define Note_Bad_Pupil 0
+Report_Status 'Bad pupil'
+VSet ${prefix}_result[$i_cam]{$result_pup_a_idx} 0
+.
+
+Define Eval_PCR 0
+If !var_exists(c_dx)||!var_exists(p_dx) exit_macro
+
+VSet ${prefix}_result[$i_cam]{$result_pcr_x_idx} $pcr_dx+$c_dx-$p_dx
+VSet ${prefix}_result[$i_cam]{$result_pcr_y_idx} $pcr_dy+$c_dy-$p_dy
+.
+
+Define Set_ROI_Heights 0
+Assign pup_roi_h	$pup_roi_w/$field_factor
+Assign cr_roi_h		$cr_roi_w/$field_factor
+
+Assign max_pcr_dy	$pup_roi_h/4
+Assign min_pcr_dy	-$max_pcr_dy
+.
+
+Define Set_Constants 0
+
+# insure default value for $n_interlace
+Set n_interlace 1
+If !strcmp($field_mode,interlaced)
+  Then "Set field_factor 1"
+  Else "Set field_factor 2"
+
+# viewer sizes
+Set v_w 640
+Set v_h 480
+
+# We used to divide the heights by n_interlace, but now
+# for interlace processing we just use the top halves.
+
+Assign in_w 640
+
+Set in_h -1
+If !strcmp($field_mode,interlaced) "Assign in_h 480"
+If !strcmp($field_mode,alternate) "Assign in_h 240"
+If $in_h<0 "error_exit 'Invalid value for field_mode ($field_mode)'"
+
+Set pup_roi_w	192
+Set cr_roi_w	64
+
+Set_ROI_Heights
+
+# These limits will have to be readjusted based on interlace
+Assign max_pcr_dx	$pup_roi_w/4
+Assign min_pcr_dx	-$max_pcr_dx
+
+
+# Result vector
+# These are the data that we might want to store for each frame,
+# repeated for each camera.
+#
+# 
+
+Set result_img_mean_idx		0
+Set result_img_dmdt_idx		1
+Set result_pup_roi_x_idx	2
+Set result_pup_roi_y_idx	3
+Set result_pup_a_idx		4	# have to be area, x, y
+Set result_pup_x_idx		5
+Set result_pup_y_idx		6
+Set result_pcr_dx_idx		7
+Set result_pcr_dy_idx		8
+Set result_cr_area_idx		9	# have to be area, x, y
+Set result_cr_x_idx		10
+Set result_cr_y_idx		11
+Set result_pcr_x_idx		12	# offset between the ROI's
+Set result_pcr_y_idx		13
+Set n_result_comps		14
+
+#Set pup_base_idx		0
+#Set cr_base_idx			3
+
+Set x_res_idx			0
+Set y_res_idx			1
+Set area_res_idx		2
+
+
+Set cam_num 1
+repeat $n_cameras
+  Set prx_name pup_roi_x$cam_num
+  Set pry_name pup_roi_y$cam_num
+  Set crx_name cr_roi_x$cam_num
+  Set cry_name cr_roi_y$cam_num
+  Set $prx_name 320
+  Set $pry_name 240
+  Set $crx_name 320
+  Set $cry_name 240
+  Assign pcr_dx$cam_num -0.5*$cr_roi_w
+  Assign pcr_dy$cam_num 0
+  Increment cam_num
+  end
+
+advise "Set_Constants:  result_pup_a_idx = $result_pup_a_idx"
+.
+
+Define Init_Visca_Cameras 0
+Set_D70_Params		# to initialize camera subsystem...
+< $macro_dir/visca/evi_params.scr
+Init_EVI
+Set n_total_cams 0
+Get_Camera_Count n_cameras
+Print n_cameras
+
+Set cam_list ""
+Set i 1
+repeat $n_cameras
+  Set cam_list "$cam_list cam$i"
+  Increment i
+  end
+Print cam_list
+.
+
+Define Declare_Drawing_Buffers 1 prefix
+If strcmp($prefix,g) exit_macro
+cuda
+  cuda_gl
+    # Hopefully the current window doesn't affect these buffer calls...
+    buffer g_stim $stim_w $stim_h 3
+    buffer g_cr_roi $cr_roi_w $cr_roi_h 3
+    buffer g_cr_roi_half $cr_roi_w $cr_roi_h/2 3
+    buffer g_pup_roi $pup_roi_w $pup_roi_h 3
+    buffer g_pup_roi_half $pup_roi_w $pup_roi_h/2 3
+    buffer g_frame $in_w $in_h 3
+    buffer g_plot $plot_w $plot_h 3
+    buffer g_calib $calib_w $calib_h 3
+    quit
+  quit
+Subimage g_top g_frame ncols(${prefix}_frame) nrows(${prefix}_frame)/2 0 0
+Subimage g_bot g_frame ncols(${prefix}_frame) nrows(${prefix}_frame)/2 0 nrows(${prefix}_frame)/2
+#advise 'Buffers declared...'
+.
+
+
+# things to do when changing input size whether up or down
+Define Update_Stuff 0
+Set pupil_search_ready 0
+Set cr_search_ready 0
+# Update the corner values
+Set_Pupil_ROI_Corner
+Set_CR_ROI_Corner
+#
+Assign n_input_pixels $in_w*$in_h/$n_interlace
+Print n_input_pixels
+.
+
+Define Declare_Processing_Buffers 1 prefix
+#advise "Declaring buffers with prefix $1"
+If !strcmp($1,g)
+  Then "data areas select $DEFAULT_CUDA_DEVICE quit quit"
+  Else "data areas select ram quit quit"
+Image ${1}_input_f $in_h $in_w 1 float
+Image ${1}_input_b $in_h $in_w 1 u_byte
+Image ${1}_pup_mask_b $in_h $in_w 1 u_byte
+Image ${1}_cr_mask_f $in_h $in_w 1 float
+Image ${1}_cr_mask_b $in_h $in_w 1 u_byte
+Image ${1}_b1 $in_h $in_w 1 u_byte
+Image ${1}_bitmask $in_h $in_w 1 bit
+
+Image ${1}_f_pup_scr $pup_roi_h $pup_roi_w 1 float
+Image ${1}_f_pup_roi $pup_roi_h $pup_roi_w 1 float
+Image ${1}_b_pup_roi $pup_roi_h $pup_roi_w 1 u_byte
+Image ${1}_x_pup_roi $pup_roi_h $pup_roi_w 1 float
+Image ${1}_y_pup_roi $pup_roi_h $pup_roi_w 1 float
+Image ${1}_c_pup_roi $pup_roi_h $pup_roi_w 1 float
+Image ${1}_x_pup_roi_half $pup_roi_h/2 $pup_roi_w 1 float
+Image ${1}_y_pup_roi_half $pup_roi_h/2 $pup_roi_w 1 float
+
+Image ${1}_f_cr_scr $cr_roi_h $cr_roi_w 1 float
+Image ${1}_f_cr_roi $cr_roi_h $cr_roi_w 1 float
+Image ${1}_b_cr_roi $cr_roi_h $cr_roi_w 1 u_byte
+Image ${1}_x_cr_roi $cr_roi_h $cr_roi_w 1 float
+Image ${1}_y_cr_roi $cr_roi_h $cr_roi_w 1 float
+Image ${1}_c_cr_roi $cr_roi_h $cr_roi_w 1 float
+Image ${1}_x_cr_roi_half $cr_roi_h/2 $cr_roi_w 1 float
+Image ${1}_y_cr_roi_half $cr_roi_h/2 $cr_roi_w 1 float
+
+Declare_Half ${1}_input_b
+Declare_Half ${1}_input_f
+Declare_Half ${1}_pup_mask_b
+Declare_Half ${1}_cr_mask_b
+
+Declare_Half ${1}_b_pup_roi
+Declare_Half ${1}_f_pup_roi
+Declare_Half ${1}_f_pup_scr
+#Declare_Half ${1}_x_pup_roi
+#Declare_Half ${1}_y_pup_roi
+
+Declare_Half ${1}_b_cr_roi
+Declare_Half ${1}_f_cr_roi
+Declare_Half ${1}_f_cr_scr
+#Declare_Half ${1}_x_cr_roi
+#Declare_Half ${1}_y_cr_roi
+.
+
+Define Declare_Half 1 object
+Subimage ${1}_half $1 ncols('$1') nrows('$1')/2 0 0
+.
+
+# create cuda images and data vectors
+
+Define Declare_Cuda_Images 1 prefix
+
+Declare_All_Images $1
+.
+
+Define Declare_All_Images 1 prefix
+
+Set prefix $1
+Declare_Processing_Buffers $1
+Declare_Drawing_Buffers $1
+
+# Have to be careful when/where we declare these, because
+# we don't want to mess up the alignment of the images...
+Scalar ${1}_c_sum 1 float
+Scalar ${1}_n_sum 1 float
+Scalar ${1}_m_sum 1 float
+
+#advise 'global images declared...'
+
+Print DEFAULT_CUDA_DEVICE
+If !strcmp($1,g)
+  Then "data areas select ${DEFAULT_CUDA_DEVICE}_host quit quit"
+  Else "data areas select ram quit quit"
+Image ${1}_input_gray $in_h $in_w 1 u_byte
+Image ${1}_input_rgb $in_h $in_w 3 u_byte
+#Image h_input_rgba $in_h $in_w 4 u_byte
+
+# The result is one time slot, the trace is a time series...
+Image ${1}_trace $n_trace_samples $n_cameras $n_result_comps float
+Vector ${1}_result $n_cameras $n_result_comps float
+
+If !strcmp($1,g)
+  "advise 'host-mapped images declared...'"
+
+# revert to default area
+If !strcmp($1,g)
+  Then "data areas select $DEFAULT_CUDA_DEVICE quit quit"
+  Else "data areas select ram quit quit"
+
+Set f foo
+If strcmp($1,g)
+  "Dev_Equiv input_gray \
+   Dev_Equiv trace \
+   Dev_Equiv result"
+
+Interlace ${1}_oddlines dev_${1}_input_gray even
+Interlace ${1}_evenlines dev_${1}_input_gray odd
+
+Init_Ramps $1
+.
+
+Define Dev_Equiv 1 stem
+Set f ${prefix}_$1
+Get_Prec prec $f
+Equivalence dev_$f $f 1 1 nrows($f) ncols($f) depth($f) $prec
+.
+
+# The ROI ramps increase down so we never have to worry about
+# inverting the y coord.
+
+Define Init_Ramps 1 prefix
+Ramp2D ${1}_x_pup_roi -$pup_roi_w/2 1 0
+Ramp2D ${1}_y_pup_roi -$pup_roi_h/2 0 1
+Ramp2D ${1}_x_cr_roi -$cr_roi_w/2 1 0
+Ramp2D ${1}_y_cr_roi -$cr_roi_h/2 0 1
+
+Ramp2D ${1}_x_pup_roi_half -$pup_roi_w/2 1 0
+Ramp2D ${1}_y_pup_roi_half -$pup_roi_h/4 0 1
+Ramp2D ${1}_x_cr_roi_half -$cr_roi_w/2 1 0
+Ramp2D ${1}_y_cr_roi_half -$cr_roi_h/4 0 1
+
+#advise 'ramps initialized'
+.
+
+Define Preload_Video_Buffers 0
+Next_F
+Next_F
+Next_F
+Next_F
+Next_F
+Next_F
+Next_F
+Next_F
+#advise 'buffers are pre-loaded'
+.
+
+
+Define Init_Cuda_Checkpoints 0
+cuda
+  events
+    max_checkpoints 100
+    quit
+  quit
+.
+
+Define Copy_Result_To_Trace 0
+# The sync may be unnecessary?
+VMov ${prefix}_trace[$t] ${prefix}_result
+.
+
+Define Main_Loop 0
+
+# these defns are for rgb input
+
+#Set dev_input dev_h_input_rgb{1}	# _rgb or _gray
+#Set odd_input oddlines{1}
+#Set even_input evenlines{1}
+
+# these defns are for gray input
+Set dev_input dev_${prefix}_input_gray
+Set odd_input ${prefix}_oddlines
+Set even_input ${prefix}_evenlines
+
+Reset_Clock
+#advise 'starting main loop'
+do
+  os events quit
+  If $tracking One_Iteration
+  If $calibrating Service_Calibration
+  If $visualizing Service_Visualization
+  If $tuning_calib Tune_Calibration
+  If $stimulating Service_Stim
+  Copy_Result_To_Trace
+  Increment t
+  If $t>=$n_trace_samples Reset_Clock
+#advise "looping t = $t"
+  while 1
+.
+
+# Should we store the trace before zeroing???
+Define Reset_Clock 0
+Set t 0
+VSet dev_${prefix}_trace 0.0
+.
+
+Define Report_Checkpoints 0
+os report quit
+cuda
+  events
+    show
+    reset
+    quit
+  quit
+output_file -
+Set checkpointing 0
+.
+
+# This version waits for a frame.  But to process deinterlaced video,
+# we'd like to start working on the first field before the frame is
+# complete...  We might do that by painting a strip in the left column
+# when we release the buffer - then we can check the bottom pixel
+# in the first (odd) field to know when it has been overwritten?
+
+# BUT - this code is all oriented toward frame processing...
+
+Define One_Iteration 0
+Set c 0
+os usecs start_secs start_usecs quit
+ 
+Wait_F
+If $checkpointing "CkPt 'start'"
+Convert_Oldest
+Release_F
+
+# do the computations
+If $__deinterlace
+  Then "Process_Frame g_top $odd_input 1 Process_Frame g_bot $even_input 2"
+  Else "Process_Frame ${prefix}_frame $dev_input 0"
+If $displaying "Refresh_Display"
+
+If $checkpointing "CkPt 'End of script'"
+If $checkpointing Report_Checkpoints
+
+os usecs end_secs end_usecs quit
+Assign delta_ms ($end_secs-$start_secs)*1000+($end_usecs-$start_usecs)/1000
+Assign ms_per_frame $delta_ms
+Assign fps 1000/$ms_per_frame
+
+# print numbers in a panel
+If $monitoring Show_Results
+.
+
+# This is specific to the pupil-cam illuminator board used for ETRA12 demo
+
+Define Init_Illum 0
+If file_exists('/dev/pic')
+  Then Local_Init_Illum
+  Else Remote_Init_Illum
+.
+
+Define Remote_Init_Illum 0
+#error_exit "cmon.mac:  Remote_Init_Illum:  unimplemented"
+warn "cmon.mac:  Remote_Init_Illum:  unimplemented"
+.
+
+Define Local_Init_Illum 0
+Scalar illum_setting 4 u_short
+data ascii read illum_setting - 0x0000 0x0380 0x0000 0x0000 quit quit
+Display illum_setting
+pic
+  device /dev/pic
+  vsync no
+  led64 illum_setting
+  quit
+Delete_Image illum_setting
+.
+
+# Make sure the variables have reasonable default values...
+Define Init_Tracking_Vars 0
+Set cam_num 1
+repeat $n_cameras
+  foreach v ( um lm upa lpa uca lca pup cr dmdt )
+    Set var_name ${v}_thr$cam_num
+    Set val_name default_${v}_thr
+    Set $var_name $$val_name
+    end
+  Increment cam_num
+  end
+.
+
+# This insures that all the devices are opened...
+
+Define Init_Video_Devices 0
+Set i 1
+repeat $n_cameras
+  Install_In_Channel $i
+  Increment i
+  end
+.
+
+# end cmon.mac
+

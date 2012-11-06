@@ -1,0 +1,115 @@
+# %Z% $RCSfile: quartic.mac,v $ ver: $Revision: 1.3 $ $Date: 1998/09/23 13:58:29 $
+
+Start_File quartic.mac
+
+
+# hopefully, the middle one is the biggest?
+# quadratic interpolation:
+# y = ax^2 + bx + c
+# y1 = a - b + c
+# y2 = c
+# y3 = a + b + c
+# c = y2
+# a = (y1+y3)/2 - y2
+# b = (y3-y1)/2
+#
+# complete the square:
+# y/a = ( x^2 + b/a x + c/a )
+#     = (x + b/2a)^2 + c/a - bb/4aa
+# peak occurs at x = - b / 2a
+# - b = (y1-y3)/2
+# 2a = y1 + y3 - 2y2
+# peak value is at x = (y1-y3)/(2*(y1+y3-2*y2))
+
+Set min_inc 0.01
+Set debug_quartic 1
+
+# find the max of a parametric curve (quartic)
+
+Define Find_Quartic_Peak 2 'initial value' 'initial increment'
+Assign trial_peak $1
+Assign curr_inc $2
+Open 1000
+  Try_QTriple
+  Set oca $trial_peak
+  Set oci $curr_inc
+  Step_Angle
+  If $debug_quartic
+	"advise 'SEARCH $oca +- $oci:  $pk1 $pk2 $pk3  new angle $trial_peak $curr_inc'"
+  nop
+  while "$curr_inc > $min_inc"
+nop
+nop
+.
+
+Define Step_Angle 0
+If "$pk2 == $pk1 && $pk2 == $pk3"
+  "advise 'Surface is flat with inc $curr_inc' Set curr_inc 0 PopFile 2 advise GOOF"
+If "$pk2 >= $pk1 && $pk2 >= $pk3"
+  "Make_Finer PopFile 2 advise ERROR"
+If "$pk1 > $pk3" "Add_Var trial_peak -$curr_inc PopFile 2 advise ERROR2"
+If "$pk1 < $pk3" "Add_Var trial_peak $curr_inc PopFile 2 advise ERROR2"
+advise 'THIS SHOULDNT HAPPEN!?'
+.
+
+Define Make_Finer 0
+Add_Var trial_peak $curr_inc*($pk1-$pk3)/(2*($pk1+$pk3-2*$pk2))
+Mul_Var curr_inc 0.5
+.
+
+Define Try_QTriple 0
+Try_Three_Quartic_Pts $trial_peak
+.
+
+Define Try_Three_Quartic_Pts 1 argument
+Assign _qa "$1-$curr_inc"
+Assign pk1 $q33a*$_qa*$_qa*$_qa*$_qa+$q33b*$_qa*$_qa*$_qa+$q33c*$_qa*$_qa+$q33d*$_qa+$q33e
+
+Assign _qa $1
+Assign pk2 $q33a*$_qa*$_qa*$_qa*$_qa+$q33b*$_qa*$_qa*$_qa+$q33c*$_qa*$_qa+$q33d*$_qa+$q33e
+
+Assign _qa "$1+$curr_inc"
+Assign pk3 $q33a*$_qa*$_qa*$_qa*$_qa+$q33b*$_qa*$_qa*$_qa+$q33c*$_qa*$_qa+$q33d*$_qa+$q33e
+.
+
+
+Define Setup_Quartic_Fit 3 n_samples xmin xmax
+Set n_data_pts		$1
+Set n_parameters	5
+Create_SVD_Objects q33 $n_data_pts $n_parameters
+Set_Quartic_Range $2 $3
+.
+
+
+Define Set_Quartic_Range 2 xmin xmax
+# initialize the u_matrix - these are the x values (squared etc)
+VSet q33_u_matrix{4} 1
+Ramp1D q33_u_matrix{3} $1 "($2-($1))/($n_data_pts-1)"
+VVMul q33_u_matrix{2} q33_u_matrix{3} q33_u_matrix{3}
+VVMul q33_u_matrix{1} q33_u_matrix{2} q33_u_matrix{3}
+VVMul q33_u_matrix{0} q33_u_matrix{1} q33_u_matrix{3}
+#Display q33_u_matrix
+
+numrec
+  svd q33_u_matrix q33_eigenvalues q33_v_matrix
+  quit
+.
+
+# call this after the q33_datain has been initialized...
+
+Define Find_Quartic_Params 0
+Tell_If "Find_Quartic_Params"
+?
+numrec
+  svbk q33_coeffs q33_u_matrix q33_eigenvalues q33_v_matrix q33_datain
+  quit
+#Display q33_coeffs
+Assign q33a value(q33_coeffs[0])
+Assign q33b value(q33_coeffs[1])
+Assign q33c value(q33_coeffs[2])
+Assign q33d value(q33_coeffs[3])
+Assign q33e value(q33_coeffs[4])
+.
+
+Stop_File quartic.mac
+

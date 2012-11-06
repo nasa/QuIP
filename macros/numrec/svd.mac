@@ -1,0 +1,69 @@
+# %Z% $RCSfile: svd.mac,v $ ver: $Revision: 1.9 $ $Date: 2010/12/02 18:00:08 $
+
+# usage:
+#
+# Create_SVD_Objects prefix npts nparams
+#
+
+If var_exists(svd_loaded) "PopFile 2 nop"
+
+Start_File svd.mac
+
+
+If !var_exists(std_type) "Set std_type float"
+
+#< $macro_dir/war/bqi.mac
+
+Define Create_SVD_Objects 3 prefix n_data_pts n_parameters
+Image  "${1}_u_matrix" $2 $3 1 $std_type
+Image  "${1}_v_matrix" $3 $3 1 $std_type
+Vector "${1}_eigenvalues" $3 1 $std_type
+Vector "${1}_coeffs"      $3 1 $std_type
+Vector "${1}_datain"      $2 1 $std_type
+.
+
+Define Delete_SVD_Objects 1 prefix
+Delete_Image "${1}_u_matrix"
+Delete_Image "${1}_v_matrix"
+Delete_Image "${1}_eigenvalues"
+Delete_Image "${1}_coeffs"
+Delete_Image "${1}_datain"
+.
+
+Define Create_SVD_Objects_DP 3 prefix n_data_pts n_parameters
+Set std_type double
+Create_SVD_Objects $1 $2 $3
+.
+
+
+# Another problem:  fit a fn of 33 pts with a quartic:
+#
+# p(x) = a x^4  +  b x^3  +  c x^2  +  d x  +  e
+#
+# X values go from -8 to 8 in steps of 0.5
+#
+# then the following matrix takes parameters (coefficients) to data values:
+#
+#
+# dvec =
+#        | x^4  x^3  x^2  x^1  1  |
+#        | ...				for x=-8 to 8 ...
+
+Define Setup_Fit33 0
+Setup_Quartic_Fit $n_torsion_samples -$torsion_range/2 $torsion_range/2
+.
+
+Set svd_loaded 1
+
+
+Define Jacobi 3 eigenvectors eigenvalues "input matrix"
+numrec
+	jacobi $1 $2 $3
+	eigsrt $1 $2
+quit
+.
+
+
+
+Stop_File svd.mac
+

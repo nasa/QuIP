@@ -1,0 +1,159 @@
+
+Start_File portids.scr
+
+If var_exists(portids_read) "warn 'File portids.scr included more than once!?' PopFile 2 nop"
+
+# these are the id numbers used for socket ports between the various # machines
+
+# The definitions here are peculiar to the NASA vision lab,
+# but may serve as a guide for others.
+
+
+# there is tricky bug in that different programs should really use
+# different port numbers...  Two daemons running at the same time
+# will cause big trouble.
+
+# these port id's are used by the viewer daemon on various workstations
+# question:  why can't the same daemon running on different machines
+# use the same port id?  Maybe the portid's should be assigned to daemons...
+
+Set port_base		2200
+Set test_port		4012
+Set reading_port 1105
+
+Set ear_os		0	# whose ear?  the daemon's?
+Set ports_per_block	4
+Assign max_clients	4
+
+Set n_bases_assigned	0
+
+Define Next_Port_Base 1 name
+Assign $1 $port_base+$n_bases_assigned*$ports_per_block
+Increment n_bases_assigned
+.
+
+Next_Port_Base	test1_base
+Next_Port_Base	test2_base
+Next_Port_Base	test3_base
+Next_Port_Base	videmon_port
+Next_Port_Base	war_base
+Next_Port_Base	view_base
+Next_Port_Base	calib_base
+Next_Port_Base	rmvi_base
+Next_Port_Base	jmm_base
+Next_Port_Base	tracker_base
+Next_Port_Base	studio_base
+Next_Port_Base	pic_base
+Next_Port_Base	tst_base
+Next_Port_Base	pix_base
+Next_Port_Base	mmvi_base
+Next_Port_Base	xvid_base
+Next_Port_Base	das_base
+Next_Port_Base	iscan_base
+Next_Port_Base	cosmo_base
+Next_Port_Base	quip_base
+Next_Port_Base	rtv_base
+Next_Port_Base	clk_base
+Next_Port_Base	polh_base
+Next_Port_Base	lml_base
+Next_Port_Base	soundd_base
+Next_Port_Base	rawvol_server_base
+Next_Port_Base  knoxd_base
+Next_Port_Base  evid_base
+Next_Port_Base  vmenud_base
+Next_Port_Base  fbdevd_base
+Next_Port_Base	seriald_base
+
+Assign rawvol_server_child_port_base	$port_base+500
+
+Set	test1_host	euler
+Set	test1_port	$test1_base+$ear_os
+
+Set	test2_host	euler
+Set	test2_port	$test2_base+$ear_os
+
+Set	test3_host	euler
+Set	test3_port	$test3_base+$ear_os
+
+Set 	lml_host	brewster
+Assign 	lmld_port	$lml_base+$ear_os
+
+Set 	polh_host	brewster
+Assign 	polhd_port	$polh_base+$ear_os
+
+Set	clock_host	durer
+Assign	clkd_port	$clk_base+$ear_os
+
+Set	soundd_host	brewster
+Assign	soundd_port	$soundd_base+$ear_os
+
+Set	rawvol_server_host		craik
+Assign	rawvol_server_port		$rawvol_server_base+$ear_os
+
+Set	knox_host	poisson
+Assign  knoxd_port	$knoxd_base+$ear_os
+
+Set	evi_host	poisson
+Assign  evid_port	$evid_base+$ear_os
+
+Set	vmenu_host	wheatstone
+Assign  vmenud_port	$vmenud_base+$ear_os
+
+Set	seriald_host	localhost
+Assign  seriald_port	$seriald_base+$ear_os
+
+Set	das_host		poisson
+Assign	dasd_port		$das_base+$ear_os
+
+Assign	war_port	$war_base+$ear_os	# wardaemon
+
+Assign	fused_port	$view_base+$ear_os	# iviewd
+
+Assign	calibd_port	$calib_base+$ear_os	# calibd (netcal)
+Assign	calear_port	$calib_base+2		# calmaster.scr
+
+Set	rtv_host	riemann
+Assign	rtvd_port	$rtv_base+$ear_os
+
+Set	rmvi_host	riemann
+Assign	rmvid_port	$rmvi_base+$ear_os
+# recorder daemon
+Assign	rmvird_port	$rmvi_base+$ear_os
+
+Assign	xvidd_port	$xvid_base+$ear_os
+
+Set	cosmod_host	airy
+Assign	cosmod_port	$cosmo_base+$ear_os
+
+Set	iscan_host	mach
+#Set	iscan_host	airy		# for debugging tests
+Assign	iscand_port	$iscan_base+$ear_os
+
+Assign	quipd_port	$quip_base+$ear_os
+
+Assign	jmm_port	$jmm_base+$ear_os
+
+Assign	trackerd_port	$tracker_base+$ear_os	# trackerd
+
+Assign	tstd_port	$tst_base+$ear_os
+
+Assign	pixd_port	$pix_base+$ear_os
+
+Set 	mmvi_host	craik
+#Set 	mmvi_host	donders
+#Set 	mmvi_host	hilbert
+Assign	mmvid_port	$mmvi_base+$ear_os
+
+Set 	studiod_host	newton
+Assign	studiod_port	$studio_base+$ear_os	# studiod ear
+
+Set	picd_host	purkinje
+Assign 	picd_port	$pic_base+$ear_os
+
+Set	fbdev_host	poisson
+Assign  fbdevd_port	$fbdevd_base+$ear_os
+
+Set portids_read 1
+
+Stop_File portids.scr
+

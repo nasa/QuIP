@@ -1,0 +1,66 @@
+# @(#) .mon_cam ver: 1.1 2/12/99
+
+# the first section is copied from .mmvi
+
+#advise 'reading .mmvi'
+#verbose yes
+
+#variables set verbose 1 quit
+
+< $DOTFILEDIR/.generic
+< $DOTFILEDIR/.gendata
+< $DOTFILEDIR/.genwar
+< $DOTFILEDIR/.genview
+
+#movie playback
+#  directory /u/jbm/fusion2
+#  directory /export/home/fusion3/jbm/osa
+#  quit quit
+
+
+< $macro_dir/movie/mmvi.mac
+< $macro_dir/knox/knox.mac
+
+advise Meteor_Defaults
+Meteor_Defaults
+
+# end of .mmvi
+# now start mon_cam.scr
+
+# monitor 5 cameras
+#
+# with 3 viewing windows (three meteor channels)
+#
+
+#max_warnings 1
+
+#Set v_reduction_factor	4	# 4 works well over home dsl...
+#Set h_reduction_factor	4	# 4 works well over home dsl...
+Set v_reduction_factor	1	# 4 works well over home dsl...
+Set h_reduction_factor	1	# 4 works well over home dsl...
+#Set v_reduction_factor	2	# 4 works well over home dsl...
+#Set h_reduction_factor	2	# 4 works well over home dsl...
+
+movie control geometry nframes 4 quit quit quit
+
+
+< $macro_dir/galvo/mon_cam.mac
+< $macro_dir/galvo/ptz_cam.mac
+< $macro_dir/galvo/galvo_cam.mac
+< $macro_dir/galvo/galvo.mac
+< $macro_dir/view/plotsupp.mac
+< $macro_dir/war/curv.mac
+
+Clobber yes		# so save function works...
+
+advise Init_Stuff
+Init_Stuff
+
+advise 'STARTING MAIN LOOP'
+do
+  If $flowing Update_Flow
+  os events quit
+  If $live_video Update_Viewer
+  while 1
+
+

@@ -1,0 +1,1412 @@
+# %Z% $RCSfile: plotsupp.mac,v $ ver: $Revision: 1.81 $ $Date: 2010/12/02 17:56:12 $
+
+#
+# Call No_Reserve first to get a plotting window w/ no axes
+# Call Default_Reserve if axes desired (default)
+# but last call becomes new default in the execution of the program.
+#
+# New_Plotter name width height
+# # DONE AUTOMATICALLY:  Assign_Margins	# if axes desired...
+# Plot_Data_Range $xmin $ymin $xmax $ymax
+# Y_Legend string
+# (Y_Legend_Right string)
+# X_Legend string
+# (X_Legend_Top string)
+# Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+# Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
+# Label_X_Ticks $xmin $xmax $x_tick_spacing
+# Label_Y_Ticks $ymin $ymax $y_tick_spacing
+# (Label_Y_Ticks_Right first max delta)
+#
+# XYPlot data_vector
+# Thick_Plot thickness data_vector
+# Symbol Disk 3
+# Symbol_Plot data_vector
+
+If var_exists(plotsupp_loaded) "warn 'plotsupp.mac already read!?' PopFile 2 nop"
+
+Set plotsupp_loaded 1
+Set the_plotter no_plotter
+Set y_legend none
+Set x_legend none
+
+# basic plotting macros
+#
+# record length is provided by caller in $dlen
+
+Start_File plotsupp.mac
+
+Set current_window you_need_to_set_current_window
+
+Set black 20
+Set white 21
+Set gray 22
+Set red	23
+Set green	24
+Set yellow	25
+Set cyan	26
+Set blue	27
+Set orange	28
+Set purple	29
+Set magenta	29
+Set dark_green	30
+Set dark_red	31
+
+
+# default is white on black
+# These two macros override this for the current plotter...
+
+Define Black_On_White 0
+Plot_Foreground $black
+Plot_Background $white
+Set label_color $plot_foreground
+.
+
+
+Define White_On_Black 0
+Plot_Foreground	$white
+Plot_Background	$black
+#Set label_color $default_fg
+Set label_color $plot_foreground
+.
+
+# these two macros change the default for new plotters
+
+Define Default_White_On_Black 0
+Set default_fg $white
+Set default_bg $black
+Set label_color $default_fg
+.
+
+Define Default_Black_On_White 0
+Set default_fg $black
+Set default_bg $white
+Set label_color $default_fg
+.
+
+# default default is white on black (for slides)
+###Set default_fg	$white
+###Set default_bg	$black
+###Set label_color $default_fg
+#Default_White_On_Black
+Default_Black_On_White
+
+
+# call once to use an existing viewer as a plotter
+Define Use_Viewer_As_Plotter 1 name
+Init_New_Plotter $1
+.
+
+Define New_Plotter 3 name dx dy
+Viewer $1 $2 $3
+view
+  xsync yes
+  show $1
+  quit
+Init_New_Plotter $1
+.
+
+# We store the plotting space parameters in a structure
+Set plot_xmin_index		0
+Set plot_xmax_index		1
+Set plot_ymin_index		2
+Set plot_ymax_index		3
+Set left_margin_index		4
+Set right_margin_index		5
+Set bot_margin_index		6
+Set top_margin_index		7
+Set plot_foreground_index	8
+Set plot_background_index	9
+Set grid_color_index		10
+Set label_color_index		11
+Set pen_color_index		12
+Set n_plotter_params		13
+
+# some default values
+Set plot_xmin	0
+Set plot_xmax	1
+Set plot_ymin	0
+Set plot_ymax	1
+
+Define Init_New_Plotter 1 name
+If strcmp('$the_plotter','no_plotter')
+  Remember_Plotter_Params
+# Here we need to forget everything about the old plotter...
+
+Set minmax_set 0		# BUG this should be a plotter param...
+
+Set the_plotter $1
+Set current_window $1
+Init_Color_Defs
+Plot_Foreground $default_fg
+Plot_Background $default_bg
+Select_Pen $default_fg
+#advise "Setting up plotter $1 with default margins of zero"
+#Zero_Margins			# default
+Assign_Margins			# margins by default...
+Grid_Color $gray
+Erase_Plot
+#advise "Init_New_Plotter:  $1"
+Vector ${1}_params $n_plotter_params 1 float
+data ascii
+  input_fmt ' '
+	read ${1}_params -
+	0
+	ncols('$1')-1
+	0
+	nrows('$1')-1
+	0 0 0 0
+#	$black
+#	$white
+	$plot_foreground
+	$plot_background
+	$grid_color
+	$label_color
+	$pen_color
+
+	quit quit
+.
+
+# Remember_Plotter_Params:	store script vars to memory data structure
+
+Define Remember_Plotter_Params 0
+#advise "Remember_Plotter_Params $the_plotter"
+If !strcmp('$the_plotter','no_plotter')
+  "error_exit 'Remember_Plotter_Params:  no plotter set'"
+data
+  ascii
+    input_fmt ' '
+    read ${the_plotter}_params -
+	$plot_xmin
+	$plot_xmax
+	$plot_ymin
+	$plot_ymax
+	$left_margin
+	$right_margin
+	$bot_margin
+	$top_margin
+	$plot_foreground
+	$plot_background
+	$grid_color
+	$label_color
+	$pen_color
+    quit
+  quit
+.
+
+Define Recall_Plotter_Params 0
+If !strcmp('$the_plotter','no_plotter')
+  "error_exit 'Recall_Plotter_Params:  no plotter set'"
+Assign plot_xmin value(${the_plotter}_params{$plot_xmin_index})
+Assign plot_xmax value(${the_plotter}_params{$plot_xmax_index})
+Assign plot_ymin value(${the_plotter}_params{$plot_ymin_index})
+Assign plot_ymax value(${the_plotter}_params{$plot_ymax_index})
+Assign left_margin value(${the_plotter}_params{$left_margin_index})
+Assign right_margin value(${the_plotter}_params{$right_margin_index})
+Assign bot_margin value(${the_plotter}_params{$bot_margin_index})
+Assign top_margin value(${the_plotter}_params{$top_margin_index})
+Assign plot_foreground value(${the_plotter}_params{$plot_foreground_index})
+Assign plot_background value(${the_plotter}_params{$plot_background_index})
+Assign grid_color value(${the_plotter}_params{$grid_color_index})
+Assign label_color value(${the_plotter}_params{$label_color_index})
+Assign pen_color value(${the_plotter}_params{$pen_color_index})
+#Show_Plotter_Params
+.
+
+Define Show_Plotter_Params 0
+advise "-> Plot parameters, current plotter $the_plotter:"
+advise "  > plot limits:  $plot_xmin - $plot_xmax,   $plot_ymin - $plot_ymax"
+advise "  > plot margins:  $left_margin - $right_margin,   $bot_margin - $top_margin"
+advise "  > plot colors:  $plot_foreground, $plot_background"
+.
+
+Define Init_Color_Defs 0
+#advise "Init_Color_Defs:  current_window = $current_window"
+Setcolor $black 0 0 0
+Setcolor $white 255 255 255
+Setcolor $gray 50 50 50
+Setcolor $red 255 0 0
+Setcolor $dark_red 100 0 0
+Setcolor $green 0 255 0
+Setcolor $dark_green 0 100 0
+Setcolor $blue 0 0 255
+Setcolor $purple 255 0 255	# same as $magenta
+Setcolor $yellow 255 255 0
+Setcolor $orange 250 100 0
+Setcolor $cyan 0 255 255
+Plot_Foreground $default_fg
+Plot_Background $default_bg
+Grid_Color $gray
+# wait for viewer to map - where did this come from???
+#view
+#  wait $1
+#  quit
+Erase_Plot
+.
+
+Define New_Adjuster 4 name dx dy action_text
+Adj_Viewer $1 $2 $3 $4
+view
+  xsync yes
+  show $1
+  show $1
+  quit
+Init_New_Plotter $1
+.
+
+Define Select_Plotter 1 plotter_name
+# Should selecting a plotter bring it to the front???
+view show $1 quit		# raise viewer
+#echo "Select_Plotter $1"
+#Pause
+Set recall 0
+Assign plotter_changing strcmp('$1','$the_plotter')
+If $plotter_changing
+  Remember_Plotter_Params
+Set the_plotter $1
+Set current_window $1
+If $plotter_changing 
+  Recall_Plotter_Params
+.
+
+Set plot_foreground -1
+Set plot_background -1
+
+Define Plot_Foreground_White 0
+Setcolor $white 255 255 255
+Set plot_foreground $white
+view
+  draw $the_plotter
+    foreground $white
+    quit
+  plot $the_plotter
+    select $white
+    quit
+  quit
+.
+
+
+Define Plot_Foreground 1 color
+Set plot_foreground $1
+view
+  draw $the_plotter
+    foreground $1
+    quit
+  plot $the_plotter
+    select $1
+    quit
+  quit
+.
+
+Define Plot_Background 1 color
+Set plot_background $1
+view
+  draw $the_plotter
+    background $1
+    quit
+  quit
+.
+
+Set grid_color -1
+
+Define Grid_Color 1 color
+Set grid_color $1
+.
+
+
+Define XPlot 1 vector
+view
+  plot $the_plotter
+    xplot $1
+    quit
+  quit
+.
+
+Define YPlot 1 vector
+view
+  plot $the_plotter
+    yplot $1
+    quit
+  quit
+.
+
+Define CYPlot 2 data colors
+view
+  plot $the_plotter
+    cyplot $1 $2
+    quit
+  quit
+.
+
+Define XYPlot 1 vector
+view
+  plot $the_plotter
+    xyplot $1
+    quit
+  quit
+.
+
+
+Define XYZ_Plot 1 vector
+view
+  plot $the_plotter
+    xyzplot $1
+    quit
+  quit
+.
+
+
+Define Select_Pen 1 color
+Set pen_color $1
+view
+  plot $the_plotter
+    select $pen_color
+    quit
+  quit
+.
+
+Define Plot_Space 4 xmin ymin xmax ymax
+Tell_If "Plot_Space $1 $2 $3 $4"
+If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
+If !$minmax_set "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+#advise "Plot_Space $the_plotter $1 $2 $3 $4"
+view
+  plot $the_plotter
+    space $1 $2 $3 $4
+    quit
+  quit
+# Why does Plot_Space call Remember_Plotter_Params???
+#advise "Plot_Space calling Remember_Plotter_Params"
+#Remember_Plotter_Params
+.
+
+Define Erase_Plotter 1 plotter
+Select_Plotter $1
+Erase_Plot
+.
+
+Define Erase_Plot 0
+#Plot_Background $plot_background
+view
+  plot $the_plotter
+    erase
+    quit
+  quit
+.
+
+Define PMove 2 x y
+view
+  plot $the_plotter
+    move $1 $2
+    quit
+  quit
+.
+
+Define PCont 2 x y
+view
+  plot $the_plotter
+    cont $1 $2
+    quit
+  quit
+.
+
+Define Hide_Viewer 1 name
+Posn_Window $1 $hidex $hidey
+.
+
+Define UnHide_Viewer 1 name
+Posn_Window $1 $showx $showy
+.
+
+# These are the default reserves... what is extra_right_reserve?
+# and what if we want two y axes, left and right?
+
+Define Default_Reserve 0
+Set left_reserve	90
+Set bot_reserve		80		# in screen units
+Set right_reserve	40
+Set extra_right_reserve	$left_reserve
+Set top_reserve		40
+Set extra_top_reserve	$bot_reserve
+Set tick_len		10
+.
+
+Default_Reserve
+
+Define No_Reserve 0
+Set left_reserve	0
+Set bot_reserve		0
+Set right_reserve	0
+Set top_reserve		0
+Set tick_len		0
+.
+
+
+
+# the margins are the fraction of the total window area...
+
+Set margins_set 0
+
+Define Assign_Margins 0
+Assign left_margin $left_reserve/ncols($the_plotter)
+Assign right_margin $right_reserve/ncols($the_plotter)
+Assign bot_margin $bot_reserve/nrows($the_plotter)
+Assign top_margin $top_reserve/nrows($the_plotter)
+Set margins_set 1
+#advise "Assign_Margins:  Plot margins for plotter $the_plotter set to $left_margin, $right_margin, $bot_margin, $top_margin"
+.
+
+Define Assign_Extra_Margins 1 where
+If !strcmp('$1',right) Extra_Right_Margins
+If !strcmp('$1',top) Extra_Top_Margins
+If !strcmp('$1',right_and_top) Both_Extra_Margins
+.
+
+Define Extra_Right_Margins 0
+Assign left_margin $left_reserve/ncols($the_plotter)
+Assign right_margin $extra_right_reserve/ncols($the_plotter)
+Assign bot_margin $bot_reserve/nrows($the_plotter)
+Assign top_margin $top_reserve/nrows($the_plotter)
+Set margins_set 1
+.
+
+Define Extra_Top_Margins 0
+Assign left_margin $left_reserve/ncols($the_plotter)
+Assign right_margin $right_reserve/ncols($the_plotter)
+Assign bot_margin $bot_reserve/nrows($the_plotter)
+Assign top_margin $extra_top_reserve/nrows($the_plotter)
+Set margins_set 1
+.
+
+Define Both_Extra_Margins 0
+Assign left_margin $left_reserve/ncols($the_plotter)
+Assign right_margin $extra_right_reserve/ncols($the_plotter)
+Assign bot_margin $bot_reserve/nrows($the_plotter)
+Assign top_margin $extra_top_reserve/nrows($the_plotter)
+Set margins_set 1
+.
+
+Define Zero_Margins 0
+Set left_margin 0
+Set right_margin 0
+Set bot_margin 0
+Set top_margin 0
+Set margins_set 1
+#advise "Plot margins set to Zero"
+.
+
+# this is like Plot_Space, but leaves a gap for axes...
+
+Define Plot_Data_Range 4 xmin ymin xmax ymax
+Tell_If "Plot_Data_Range $1 $2 $3 $4"
+If !$margins_set "Tell_If 'margins not set, assigning default values' Assign_Margins"
+Set_Plot_Minmax $1 $2 $3 $4
+Assign x_delta ($3)-($1)				# width of plotting area in plotting units
+Assign y_delta ($4)-($2)
+Assign h_active 1-($left_margin+$right_margin)	# e.g. 0.7 - fraction of window width used for plotting
+Assign v_active 1-($top_margin+$bot_margin)	# e.g. 0.7
+Assign left_factor $left_margin/$h_active	# left margin expressed as a fraction of active area
+Assign bot_factor $bot_margin/$v_active
+Assign right_factor $right_margin/$h_active
+Assign top_factor $top_margin/$v_active
+Assign pdr_x1 ($1)-$x_delta*$left_factor		# edge of window in plot units
+Assign pdr_y1 ($2)-$y_delta*$bot_factor
+Assign pdr_x2 ($3)+$x_delta*$right_factor
+Assign pdr_y2 ($4)+$y_delta*$top_factor
+#advise "Plot_Data_Range calling Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2"
+Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2
+Update_Range_Constants
+# tick_len is in pixels (screen units), not plot space units
+Assign y_tick_len $tick_len*$h_plot_units_per_screen_unit
+Assign x_tick_len $tick_len*$v_plot_units_per_screen_unit
+Assign unit_v_offset $x_tick_len*0.3
+Assign unit_h_offset $y_tick_len*0.3
+Init_Legend_Fonts $the_plotter
+Unit_Font
+.
+# end Plot_Data_Range
+
+Set minmax_set 0
+
+Define Set_Plot_Minmax 4 xmin ymin xmax ymax
+Assign plot_xmin $1
+Assign plot_ymin $2
+Assign plot_xmax $3
+Assign plot_ymax $4
+Set minmax_set 1
+.
+
+Define Show_Plot_Limits 0
+Print plot_xmin
+Print plot_xmax
+Print plot_ymin
+Print plot_ymax
+.
+
+Define Plot_2_Screen 4 xvarname yvarname x y
+#advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
+#Show_Plot_Limits
+# first get the fractional position in the plotting space
+Assign $2 ($4-$plot_ymin)/($plot_ymax-$plot_ymin)
+Assign $1 ($3-$plot_xmin)/($plot_xmax-$plot_xmin)
+# turn Y upside down
+Assign $2 1-$$2
+# scale
+Mul_Var $1 (ncols($the_plotter)*(1-($left_margin+$right_margin)))
+Mul_Var $2 (nrows($the_plotter)*(1-($top_margin+$bot_margin)))
+# shift origin
+Add_Var $1 ncols($the_plotter)*$left_margin
+Add_Var $2 nrows($the_plotter)*$top_margin
+Assign $1 floor($$1+0.5)
+Assign $2 floor($$2+0.5)
+#advise "Plot_2_Screen $$1 $$2  <-  $3 $4"
+.
+
+# Screen_2_Plot - convert from window coordinates to plotting units
+#
+# The constants we need are:
+#	plot_xmin, plot_xmax
+#	plot_ymin, plot_ymax
+#	left_margin, right_margin
+#	top_margin, bot_margin
+#
+
+
+Define Screen_2_Plot 4 xvarname yvarname x y
+#advise "Screen_2_Plot:  margins:  $left_margin - $right_margin"
+Assign $1 ($3)-ncols($the_plotter)*$left_margin
+Assign $2 ($4)-nrows($the_plotter)*$top_margin
+#advise "Screen_2_Plot, shifting origin:  $$1 $$2 <- $3 $4"
+Mul_Var $1 ($plot_xmax-$plot_xmin)/(ncols($the_plotter)*(1-($left_margin+$right_margin)))
+Mul_Var $2 ($plot_ymax-$plot_ymin)/(nrows($the_plotter)*(1-($top_margin+$bot_margin)))
+#advise "Screen_2_Plot, scaling:  $$1 $$2 <- $3 $4"
+# turn Y upside down
+Assign $2 $plot_ymax-$plot_ymin-$$2
+Add_Var $1 $plot_xmin
+Add_Var $2 $plot_ymin
+#advise "Screen_2_Plot:  $$1 $$2 <- $3 $4"
+.
+
+Define Test_Coords 0
+Set sx1 10
+Set sy1 20
+Set sdx 50
+Set sdy 70
+Assign sx2 $sx1+$sdx
+Assign sy2 $sy1+$sdy
+
+view
+  draw $the_plotter
+    move $sx1	$sy1
+    cont $sx1	$sy2
+    cont $sx2	$sy2
+    cont $sx2	$sy1
+    cont $sx1	$sy1
+    cont $sx2	$sy2
+    quit
+  quit
+Screen_2_Plot px1 py1 $sx1 $sy1
+Screen_2_Plot px2 py2 $sx2 $sy2
+Select_Plotter $the_plotter
+< /dev/tty
+Select_Pen $red_pen
+view
+  #advise "px1 $px1  py1 $py1   px2 $px2   py2 $py2"
+  plot $the_plotter
+    move $px1		$py1
+    cont $px1		$py2
+    cont $px2		$py2
+    cont $px2		$py1
+    cont $px1		$py1
+    cont $px2		$py2
+    quit
+  quit
+
+Set px1	1.5
+Set py1	0.5
+Set px2 3.5
+Set py2 2.5
+view
+  #advise "px1 $px1  py1 $py1   px2 $px2   py2 $py2"
+  plot $the_plotter
+    move $px1		$py1
+    cont $px1		$py2
+    cont $px2		$py2
+    cont $px2		$py1
+    cont $px1		$py1
+    cont $px2		$py2
+    quit
+  quit
+Plot_2_Screen sx1 sy1 $px1 $py1
+Plot_2_Screen sx2 sy2 $px2 $py2
+< /dev/tty
+view
+  draw $the_plotter
+    move $sx1	$sy1
+    cont $sx1	$sy2
+    cont $sx2	$sy2
+    cont $sx2	$sy1
+    cont $sx1	$sy1
+    cont $sx2	$sy2
+    quit
+  quit
+advise "TEST DONE"
+< /dev/tty
+.
+
+Define X_Tick_At 2 x y
+PMove $1 $2
+PCont $1 $2-$x_tick_len
+.
+
+Define Plain_X_Axis 3 xmin xmax ypos
+PMove $1 $3
+PCont $2 $3
+.
+
+Define Plot_X_Axis_Offset 5 xmin xmax tick_spacing ypos first_tick_offset
+Plain_X_Axis $1 $2 $4
+Assign _x $1+$5
+do
+  X_Tick_At $_x $4
+  Add_Var _x $3
+  while $_x<=$2
+.
+
+
+Define Plot_X_Axis 4 xmin xmax tick_spacing ypos
+Plot_X_Axis_Offset $1 $2 $3 $4 0
+.
+
+Define Plot_X_Axis_Top 4 xmin xmax tick_spacing ypos
+Mul_Var x_tick_len -1
+Plot_X_Axis_Offset $1 $2 $3 $4 0
+Mul_Var x_tick_len -1
+.
+
+
+Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
+Plot_Y_Axis_Offset $1 $2 $3 $4 0
+.
+
+Define Plot_Y_Axis_Right 4 ymin ymax tick_spacing xpos
+Mul_Var y_tick_len -1
+Plot_Y_Axis_Offset $1 $2 $3 $4 0
+Mul_Var y_tick_len -1
+.
+
+Define Plot_Y_Axis_Offset 5 ymin ymax tick_spacing xpos first_tick_offset
+PMove $4 $1
+PCont $4 $2
+Assign _y $1+$5
+do
+  PMove $4 $_y
+  PCont $4-$y_tick_len $_y
+  Add_Var _y $3
+  while $_y<=$2
+.
+
+Define Plot_Grid 6 xmin ymin xmax ymax x_spacing y_spacing
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+#draw the box in the current color
+PMove $1 $2
+PCont $3 $2
+PCont $3 $4
+PCont $1 $4
+PCont $1 $2
+If $grid_color>=0 "Select_Pen $grid_color"
+Assign _x $1+$5
+do
+  PMove $_x $2
+  PCont $_x $4
+  Add_Var _x $5
+  while $_x<=$3
+Assign _y $2+$6
+do
+  PMove $1 $_y
+  PCont $3 $_y
+  Add_Var _y $6
+  while $_y<=$4
+.
+
+Set descender_fraction	0.20
+
+# BUG we need a way to figure out how to move...
+
+# these fonts don't seem to be present on fc8...
+Set iso_rev 8859
+#Set iso_rev 10646
+
+#Set unit_font   -adobe-times-bold-r-normal--14-140-75-75-p-77-iso8859-1
+#Set legend_font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
+
+# this has been the default...
+Set unit_font "-adobe-times-bold-r-normal--14-100-100-100-p-76-iso${iso_rev}-1"
+Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
+
+# do these work on wheatstone?
+#Set unit_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-13"
+#Set legend_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-15"
+
+# these work on wheatstone...
+Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
+Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
+
+# what fonts do we have on fc12?
+#Set legend_font "-urw-urw bookman l-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+#Set unit_font "-urw-urw bookman l-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+
+
+# -adobe-times-bold-r-normal--11-80-100-100-p-57-iso10646-1
+# -adobe-times-bold-r-normal--11-80-100-100-p-57-iso8859-1
+# -adobe-times-bold-r-normal--14-100-100-100-p-76-iso10646-1
+# -adobe-times-bold-r-normal--14-100-100-100-p-76-iso8859-1
+# -adobe-times-bold-r-normal--17-120-100-100-p-88-iso10646-1
+# -adobe-times-bold-r-normal--17-120-100-100-p-88-iso8859-1
+# -adobe-times-bold-r-normal--20-140-100-100-p-100-iso10646-1
+# -adobe-times-bold-r-normal--20-140-100-100-p-100-iso8859-1
+# -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
+# -adobe-times-bold-r-normal--25-180-100-100-p-132-iso8859-1
+# -adobe-times-bold-r-normal--34-240-100-100-p-177-iso10646-1
+# -adobe-times-bold-r-normal--34-240-100-100-p-177-iso8859-1
+
+Set fonts_loaded 0
+
+Define Init_Legend_Fonts 1 plotter
+If $fonts_loaded "PopFile 2 nop"
+view
+  draw $1
+    load $unit_font
+    load $legend_font
+    quit
+  quit
+Set fonts_loaded 1
+.
+
+# just set some default values to set the vars...
+Set h_screen_units_per_char	6
+Set v_screen_units_per_char	10
+
+Define Unit_Font 0
+view draw $the_plotter font $unit_font quit quit
+Set h_screen_units_per_char	6
+Set v_screen_units_per_char	10
+Update_Font_Constants
+.
+
+Define Legend_Font 0
+view draw $the_plotter font $legend_font quit quit
+#Set h_screen_units_per_char	12
+Set h_screen_units_per_char	9.0	# works good for centering, but end is getting chopped off...
+Set v_screen_units_per_char	26
+Update_Font_Constants
+.
+
+
+Define Update_Range_Constants 0
+Assign h_plot_units_per_screen_unit	($plot_xmax-$plot_xmin)/(ncols($the_plotter)*(1-($left_margin+$right_margin)))
+#advise "Update_Range_Constants:  plot:  $plot_xmin - $plot_xmax, h_plot_units_per_screen_unit = $h_plot_units_per_screen_unit"
+Assign n_graph_vpixels			(nrows($the_plotter)*(1-($top_margin+$bot_margin)))
+Assign v_plot_units_per_screen_unit	($plot_ymax-$plot_ymin)/$n_graph_vpixels
+
+# bot_reserve is in pixels, we take this to plot units...
+Assign legend_v_offset	(0.8*$bot_reserve)*$v_plot_units_per_screen_unit
+Assign legend_v_offset_top	(0.4*$extra_top_reserve)*$v_plot_units_per_screen_unit
+Assign legend_h_offset	(0.8*$left_reserve)*$h_plot_units_per_screen_unit
+# should be in plot units?
+Assign legend_h_offset_right	(0.40*$extra_right_reserve)*$h_plot_units_per_screen_unit
+Assign _h nrows($the_plotter)
+.
+
+Define Update_Font_Constants 0
+#advise "Update_Font_Constants BEGIN"
+Update_Range_Constants
+Assign h_plot_units_per_char	$h_screen_units_per_char*$h_plot_units_per_screen_unit
+Assign v_plot_units_per_char	$v_screen_units_per_char*$v_plot_units_per_screen_unit
+Assign h_plot_units_per_rotated_char	$v_screen_units_per_char*$h_plot_units_per_screen_unit
+Assign v_plot_units_per_rotated_char	$h_screen_units_per_char*$v_plot_units_per_screen_unit
+#advise "Update_Font_Constants DONE"
+.
+
+Define Label_X_Tick 2 posn string
+Unit_Font
+view
+  plot $the_plotter
+    move $1 $plot_ymin
+    cont $1 $plot_ymin-$x_tick_len
+
+    Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign lx $1-($string_width/2)
+    Assign ly $plot_ymin-($x_tick_len+$string_height+$unit_v_offset)
+
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+# We used to draw the ticks here...
+
+Define Label_Y_Tick 2 posn string
+Unit_Font
+view
+  plot $the_plotter
+    #move $plot_xmin $1
+    #cont $plot_xmin-$y_tick_len $1
+
+    Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign ly $1-($string_height/2)
+    Assign lx $plot_xmin-($y_tick_len+$string_width+$unit_h_offset)
+    # BUG need to get this right independent of viewer width!?
+    #Assign lx $plot_xmin-(2.5*$y_tick_len+$string_width)
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+
+Define Label_Y_Tick_Right 2 posn string
+Unit_Font
+view
+  plot $the_plotter
+    #move $plot_xmax $1
+    #cont $plot_xmax+$y_tick_len $1
+
+    # BUG we can get a more accurate measure now...
+    Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign ly $1-($string_height/2)
+    Assign lx $plot_xmax+($y_tick_len+$unit_h_offset)
+    # BUG need to get this right independent of viewer width!?
+    #Assign lx $plot_xmin-(2.5*$y_tick_len+$string_width)
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+Define Label_X_Tick_Top 2 posn string
+Unit_Font
+view
+  plot $the_plotter
+    # usually the tick is drawn already!?
+    move $1 $plot_ymax
+    cont $1 $plot_ymax+$x_tick_len
+
+    Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign lx $1-($string_width/2)
+    Assign ly $plot_ymax+($x_tick_len+$unit_v_offset)
+
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+Define Show_Legend_Area 0
+view
+  draw $the_plotter
+    move $sx1 $sy1
+    cont $sx1 $sy2
+    cont $sx2 $sy2
+    cont $sx2 $sy1
+    cont $sx1 $sy1
+    quit
+  quit
+.
+
+Define Get_Legend_Image 1 string
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+Image save_buf nrows($the_plotter) ncols($the_plotter) depth('$DISPLAY')/8 u_byte
+view
+  # Don't erase before saving!!!
+  #draw $the_plotter clear quit	# doesn't erase list?  Yes it does!!!
+  extract save_buf $the_plotter 0 0
+  quit
+X_Legend $1
+
+# Now we need to figure out more-or-less where it is!
+Plot_2_Screen sx1 sy1 $lx $ly
+#advise "lx ly = $lx $ly    maps to $sx1 $sy1"
+#Assign legend_width floor(strlen('$1')*$h_screen_units_per_char)
+view draw $the_plotter get_string_width legend_width "$1" quit quit
+#Print legend_width
+Assign legend_height floor($v_screen_units_per_char)
+Image legend_strip $legend_height $legend_width depth('$DISPLAY')/8 u_byte
+Add_Var sy1 floor($v_screen_units_per_char*$descender_fraction)
+Assign sx2 $sx1+$legend_width
+Assign sy2 $sy1-$legend_height
+
+# this line draws a box around the clipped area
+#Show_Legend_Area
+
+# lx and ly are in plotting coords...
+view extract legend_strip $the_plotter $sx1 $sy2 quit
+
+Image y_legend ncols(legend_strip) nrows(legend_strip) depth(legend_strip) u_byte
+# A simple transpose does a mirror reversal, so we fake it...
+data
+  subsample r_legend y_legend
+    depth(y_legend)	0			1
+    ncols(y_legend)	0			1
+    nrows(y_legend)	nrows(y_legend)-1	-1
+  quit
+Transpose r_legend legend_strip
+Delete_Image legend_strip
+.
+
+# we don't know how to draw rotated text using Xlib, so we do a hack:
+# we save the contents of the window, draw the Y_Legend horizontally,
+# read it in, rotate it 90 degrees in memory, restore the original
+# window contents, then insert the legend - whew!
+
+Define Y_Legend 1 string
+Get_Legend_Image $1
+# now need to erase so that this isn't in the redraw list
+# there ought to be an easier way to clear this list!
+view plot $the_plotter erase quit quit
+
+# now figure out where to put it
+Assign string_width strlen('$1')*$v_plot_units_per_rotated_char
+Assign string_height $h_plot_units_per_rotated_char
+Assign ly ($plot_ymax+$plot_ymin+$string_width)/2	# top
+Assign lx $plot_xmin-$legend_h_offset			# left
+Plot_2_Screen slx sly $lx $ly
+#advise "drawing y legend at $slx $sly"
+Subimage y_legend_inset save_buf ncols(y_legend) nrows(y_legend) $slx $sly
+VMov y_legend_inset y_legend
+Delete_Image y_legend
+
+view draw $the_plotter clear quit quit	# get the X (Y) legend off the remember list
+# make sure these are back on the list
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+
+view load $the_plotter save_buf quit
+Delete_Image save_buf
+.
+
+Define Y_Legend_Right 1 string
+Get_Legend_Image $1
+# now need to erase so that this isn't in the redraw list
+# there ought to be an easier way to clear this list!
+view plot $the_plotter erase quit quit
+
+# now figure out where to put it
+Assign string_width strlen('$1')*$v_plot_units_per_rotated_char
+Assign string_height $h_plot_units_per_rotated_char
+Assign ly ($plot_ymax+$plot_ymin+$string_width)/2	# top
+Assign lx $plot_xmax+$legend_h_offset_right		# left
+Plot_2_Screen slx sly $lx $ly
+Subimage y_legend_inset save_buf ncols(y_legend) nrows(y_legend) $slx $sly
+VMov y_legend_inset y_legend
+Delete_Image y_legend
+
+view draw $the_plotter clear quit quit	# get the X (Y) legend off the remember list
+# make sure these are back on the list
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+
+view load $the_plotter save_buf quit
+Delete_Image save_buf
+.
+
+Define X_Legend 1 string
+#advise "x legend BEGIN, string = \"$1\""
+Legend_Font
+#Print plot_xmin
+#Print plot_xmax
+view
+  draw $the_plotter
+    get_string_width string_width "$1"
+    quit
+  plot $the_plotter
+    #Assign string_width strlen('$1')*$h_plot_units_per_char
+    Mul_Var string_width $h_plot_units_per_screen_unit
+
+# these are in the plotting units...
+    Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
+    Assign ly $plot_ymin-$legend_v_offset
+    # what about justification??? x centered, y at bottom of text...
+    move $lx $ly
+    string $1
+    quit
+  quit
+.
+
+Define X_Legend_Top 1 string
+#advise "x legend BEGIN, string = \"$1\""
+Legend_Font
+#Print plot_xmin
+#Print plot_xmax
+view
+  draw $the_plotter
+    get_string_width string_width "$1"
+    quit
+  plot $the_plotter
+    #Assign string_width strlen('$1')*$h_plot_units_per_char
+    Mul_Var string_width $h_plot_units_per_screen_unit
+
+# these are in the plotting units...
+    Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
+    Assign ly $plot_ymax+$legend_v_offset_top
+    # what about justification??? x centered, y at bottom of text...
+    move $lx $ly
+    string $1
+    quit
+  quit
+.
+
+Define Symbol_At 4 symbol_macro px py size
+#advise "Symbol_At $1 $2 $3 $4"
+Plot_2_Screen sx1 sy1 $2 $3
+$1 $sx1 $sy1 $4
+.
+
+Define Symbol 2 symbol_macro size
+Set draw_symbol $1
+Set symbol_size $2
+.
+
+Define Diamond 3 x y size
+view
+  draw $the_plotter
+    fill_poly 4
+      $1    $2-$3
+      $1+$3 $2   
+      $1    $2+$3
+      $1-$3 $2   
+    quit
+  quit
+.
+
+Define Square 3 x y size
+view
+  draw $the_plotter
+    fill_poly 4
+      $1-$3 $2-$3
+      $1+$3 $2-$3
+      $1+$3 $2+$3
+      $1-$3 $2+$3
+    quit
+  quit
+.
+
+Define Bar_At 3 x y width
+Plot_2_Screen bx1 by1 $1-$3/2 $plot_ymin
+Plot_2_Screen bx2 by2 $1+$3/2 $2
+# y increases down...
+Decrement by1
+view
+  draw $the_plotter
+    fill_poly 4
+      $bx1 $by1
+      $bx1 $by2
+      $bx2 $by2
+      $bx2 $by1
+    quit
+  quit
+.
+
+Define Bar_Key_At 3 x y size_in_pixels
+Plot_2_Screen bx1 by1 $1 $2
+view
+  draw $the_plotter
+    fill_poly 4
+      $bx1    $by1
+      $bx1+$3 $by1
+      $bx1+$3 $by1+$3
+      $bx1    $by1+$3
+    quit
+  quit
+.
+
+Define Inverted_Triangle 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1    $2-$3
+      $1-$3 $2+$3
+      $1+$3 $2+$3
+    quit
+  quit
+.
+
+
+Define Horz_Triangle_L 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1+$3 $2+$3
+      $1-$3 $2
+      $1+$3 $2-$3
+    quit
+  quit
+.
+
+Define Horz_Triangle_R 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1-$3 $2+$3
+      $1+$3 $2
+      $1-$3 $2-$3
+    quit
+  quit
+.
+
+Define Triangle 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1-$3 $2-$3
+      $1+$3 $2-$3
+      $1    $2+$3
+    quit
+  quit
+.
+
+
+Define Disk 3 x y radius
+view
+  draw $the_plotter
+    fill_arc $1-$3 $2-$3 2*$3 2*$3 0 32000
+    quit
+  quit
+.
+
+Define Sized_Symbol_Plot 1 xys_list
+Set i 0
+repeat ncols($1)
+  Assign ssp_x value($1[$i]{0})
+  Assign ssp_y value($1[$i]{1})
+  Assign symbol_size value($1[$i]{2})
+  Symbol_At $draw_symbol $ssp_x $ssp_y $symbol_size
+
+###  Plot_2_Screen sx1 sy1 $ssp_x $ssp_y
+####  advise "$sx1 <- $ssp_x"
+###  $draw_symbol $sx1 $sy1 $symbol_size
+
+  Increment i
+  end
+.
+
+Define Symbol_Plot 1 xy_list
+Set i 0
+repeat ncols($1)
+  Assign ssp_x value($1[$i]{0})
+  Assign ssp_y value($1[$i]{1})
+  Symbol_At $draw_symbol $ssp_x $ssp_y $symbol_size
+  Increment i
+  end
+.
+
+Define Bar_Chart 2 xy_list bar_width
+Set i 0
+repeat ncols($1)
+  Assign _x value($1[$i]{0})
+  Assign _y value($1[$i]{1})
+  If $_y!=0
+    "Bar_At $_x $_y $2"
+  Increment i
+  end
+.
+
+
+Define PString 1 string
+view
+  plot $the_plotter
+    string $1
+    quit
+  quit
+.
+
+Set thick_plot_macro XYPlot
+
+Define Thick_Plot_Type 1 macro_name
+Set thick_plot_macro $1
+.
+
+# We pass n_thick, (n_thick-1)/2 is the radius in pixels
+Define Thicken2 2 radius dataset
+Dup_Float shifted_points $2
+Assign radius (($1-1)/2)
+Assign n_circum max(1,ceil($radius*8*atan(1)))	# twopi
+Screen_2_Plot xr yr $radius $radius
+Screen_2_Plot xz yz 0 0
+Add_Var xr -$xz
+Add_Var yr -$yz
+Assign _arginc 8*atan(1)/$n_circum
+Set arg 0
+Set old_xshift 0
+Set old_yshift 0
+VMov shifted_points $2
+repeat $n_circum
+  Assign x_shift $xr*cos($arg)
+  Assign y_shift $yr*sin($arg)
+  VSAdd shifted_points{0} shifted_points{0} $x_shift-$old_xshift
+  VSAdd shifted_points{1} shifted_points{1} $y_shift-$old_yshift
+  $thick_plot_macro shifted_points
+  Set old_xshift $x_shift
+  Set old_yshift $y_shift
+  Add_Var arg $_arginc
+  end
+Set x_shift 0
+Set y_shift 0
+# these lines restored the old values, but now we do it in a scratch buf
+#VSAdd shifted_points{0} shifted_points{0} $x_shift-$old_xshift
+#VSAdd shifted_points{1} shifted_points{1} $y_shift-$old_yshift
+Delete_Image shifted_points
+.
+
+# shift right, plot
+# shift up, plot
+# shift left, plot
+# shift down, plot
+
+Define Thicken 2 multiplier data_set
+
+# move up and right
+VSAdd $2{0} $2{0} $1*$x_shift
+VSAdd $2{1} $2{1} $1*$y_shift
+$thick_plot_macro $2
+
+# move down
+VSAdd $2{1} $2{1} -2*$1*$y_shift
+$thick_plot_macro $2
+
+# move left
+VSAdd $2{0} $2{0} -2*$1*$x_shift
+$thick_plot_macro $2
+
+# move up
+VSAdd $2{1} $2{1} 2*$1*$y_shift
+$thick_plot_macro $2
+
+# restore
+VSAdd $2{0} $2{0} $1*$x_shift
+VSAdd $2{1} $2{1} -$1*$y_shift
+.
+
+Define Thick_Plot 2 n data_set
+#advise "Thick_Plot $1 $2"
+# We really need to determine how many pixels to determine the best shift...
+Set __x1 0
+Set __y1 0
+Set __x2 1
+Set __y2 1
+Screen_2_Plot __px1 __py1 $__x1 $__y1
+Screen_2_Plot __px2 __py2 $__x2 $__y2
+#Assign x_shift 0.2*($__px2-$__px1)
+#Assign y_shift 0.2*($__py2-$__py1)
+Assign x_shift ($__px2-$__px1)
+Assign y_shift ($__py2-$__py1)
+
+Set n_thick $1
+do
+#  Thicken $n_thick $2
+#  Thicken -$n_thick $2
+  Thicken2 $n_thick $2
+  Decrement n_thick
+  while $n_thick>0
+.
+
+Define Label_X_Ticks 3 first max delta 
+Assign x ($2-$1)/$3
+Assign n_x_ticks 1+floor($x)
+Select_Pen $label_color
+Set tick_x $1
+repeat $n_x_ticks
+  Label_X_Tick $tick_x	$tick_x
+  Add_Var tick_x $3
+  end
+.
+
+# this one adds the position delta to the label
+
+Define Label_X_Ticks_Offset 4 first_posn max_posn delta_posn first_label 
+Select_Pen $label_color
+Assign n_x_ticks 1+floor(($2-$1)/$3)
+Set tick_x $1
+Assign tick_x_label $4
+repeat $n_x_ticks
+  Label_X_Tick $tick_x $tick_x_label
+  Add_Var tick_x $3
+  Add_Var tick_x_label $3
+  end
+.
+
+# this one allows an affine relation between posn and label
+
+Define Linear_X_Tick_Labels 5 first_posn max_posn delta_posn first_label delta_label
+Select_Pen $label_color
+Assign n_div (($2)-($1))/($3)
+Assign n_x_ticks 1+round($n_div)
+Set tick_x $1
+Assign tick_x_label $4
+repeat $n_x_ticks
+  Label_X_Tick $tick_x $tick_x_label
+  Add_Var tick_x $3
+  Add_Var tick_x_label $5
+  end
+.
+
+Set allow_color_tick_labels 1
+Set tiny 0.00001
+
+Define Label_Y_Ticks 3 first max delta 
+If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
+Assign n_y_ticks 1+floor($tiny+($2-$1)/$3)
+#advise "Label_Y_Ticks $1 $2 $3"
+#Print n_y_ticks
+Set tick_y $1
+repeat $n_y_ticks
+  Label_Y_Tick $tick_y	$tick_y
+  Add_Var tick_y $3
+  end
+If !$allow_color_tick_labels "Pop_Var pen_color"
+.
+
+Define Label_Y_Ticks_Right 3 first max delta 
+If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
+Assign n_y_ticks 1+floor(($2-$1)/$3)
+Set tick_y $1
+repeat $n_y_ticks
+  Label_Y_Tick_Right $tick_y	$tick_y
+  Add_Var tick_y $3
+  end
+If !$allow_color_tick_labels "Pop_Var pen_color"
+.
+
+Define S_At 3 string x y
+PMove $2 $3
+PString $1
+.
+
+Define Plot_Datafile 1 filename
+Count_Lines _nl $1
+Vector _pts $_nl 2 float	# bug - should count columns
+Get_Ascii _pts $1
+XYPlot _pts
+Delete_Image _pts
+.
+
+Define Save_Plot 2 filename viewer
+If obj_exists(_plotbuf) "Delete_Image _plotbuf"
+Image _plotbuf nrows('$2') ncols('$2') 3 u_byte
+view extract _plotbuf $2 0 0 quit
+Rotate_Colors _plotbuf
+Write_File_Header $1 1
+Put_Next _plotbuf $1
+.
+
+Set plotsupp_read 1
+
+Stop_File plotsupp.mac
+

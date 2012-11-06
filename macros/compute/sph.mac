@@ -1,0 +1,452 @@
+# macros for plotting a sphere
+
+Start_File sph.mac
+
+Define Make_Sphere 0
+## latitude lines
+#Ramp2D lat{0} 0 2*$pi/($npts-1) 0			# azimuth
+#Ramp2D lat{1} -$pi/2 0 ($pi)/($nlatlines-1)		# elevation
+
+# not latitude lines, more like rotated longitudes
+#Ramp2D lat{0} 0 2*$pi/($npts-1) 0			# azimuth
+#Ramp2D lat{1} -$pi/2 0 ($pi)/($nlatlines-1)		# elevation
+
+#Set hfrac 0.15
+#Set vfrac 0.30
+#Set frac 1.00
+Ramp2D long{0} ($pi/2)-$pi*$hfrac 0 $hfrac*2*$pi/($nlonglines-1)		# azimuth
+Ramp2D long{1} (-$vfrac*$pi/2) $vfrac*($pi)/($npts-1) 0			# elevation
+.
+
+# originally lat went +- 90, with 0 at the equator
+#
+# for spherical harmonics, it is more convenient for
+# latitude to go from 0 to 180!?
+
+Define Make_LatLong 0
+## latitude lines
+Ramp2D lat{0} 0 360/($npts-1) 0				# azimuth
+Assign latinc 180/($nlatlines+1)
+Ramp2D lat{1} -90+$latinc 0 $latinc		# elevation
+
+## longitude lines
+Ramp2D long{0} -180 0 360/($nlonglines)			# azimuth
+Ramp2D long{1} -90 180/($npts-1) 0			# elevation
+.
+
+### ###  Define Make_LatLong 0
+### ###  ## latitude lines
+### ###  Ramp2D lat{0} 0 360/($npts-1) 0			# azimuth
+### ###  Assign latinc 180/($nlatlines+1)
+### ###  Ramp2D lat{1} $latinc 0 $latinc			# elevation
+### ###  
+### ###  ## longitude lines
+### ###  Ramp2D long{0} -180 0 360/($nlonglines)		# azimuth
+### ###  Ramp2D long{1} 0 180/($npts-1) 0			# elevation
+### ###  .
+
+Define LatLong2Cart 2 dest src
+# first convert degrees to radians
+Dup_Complex ll2c $2
+VSMul ll2c{0} $2{0} atan(1)/45
+VSMul ll2c{1} $2{1} atan(1)/45
+Sph2Cart $1 ll2c
+Delete_Image ll2c
+VSMul $1{2} $1{2} -1
+.
+
+### ### Define LatLong2Cart 2 dest src
+### ### # first convert degrees to radians
+### ### Dup_Complex ll2c $2
+### ### VSMul ll2c{0} $2{0} atan(1)/45
+### ### VSAdd ll2c{1} $2{1} -90
+### ### VSMul ll2c{1} ll2c{1} atan(1)/45
+### ### Sph2Cart $1 ll2c
+### ### Delete_Image ll2c
+### ### VSMul $1{2} $1{2} -1
+### ### .
+
+Define Cart2LatLong 2 dest src
+# y = +- 1 at the poles, less than 1 in between
+# compute the latitude
+VASin $1{1} $2{1}		# elev = atan(y)	(unit sphere)
+# compute the longitude
+Compute_Longitude $1{0} $2{0} $2{2}
+VSMul $1{0} $1{0} 45/atan(1)
+VSMul $1{1} $1{1} 45/atan(1)
+.
+
+### ### Define Cart2LatLong 2 dest src
+### ### # y = +- 1 at the poles, less than 1 in between
+### ### # compute the latitude
+### ### VASin $1{1} $2{1}		# elev = atan(y)	(unit sphere)
+### ### # compute the longitude
+### ### Compute_Longitude $1{0} $2{0} $2{2}
+### ### VSMul $1{0} $1{0} 45/atan(1)
+### ### VSMul $1{1} $1{1} 45/atan(1)
+### ### VSAdd $1{1} $1{1} 90
+### ### .
+
+Define Compute_Longitude 3 dest x z
+Tell_If "Compute_Longitude $1 $2 $3"
+Image c2lltmp "nrows('$2')" "ncols('$2')" 1 complex
+VMov c2lltmp{1} $2		# x
+VMov c2lltmp{0} $3		# z
+Tell_If 'atan2 #1'
+VAtn2 $1 c2lltmp		# azim = atan2(x,z)
+Delete_Image c2lltmp
+.
+
+Define Cart2LongLong 2 dest src
+Compute_Longitude $1{0} $2{0} $2{2}
+Compute_Longitude $1{1} $2{1} $2{2}
+VSMul $1{0} $1{0} 45/atan(1)
+VSMul $1{1} $1{1} 45/atan(1)
+.
+
+Define Sph2Cart 2 dest source
+Image s2ctmp "nrows('$2')" "ncols('$2')" 1 float
+VCos $1{0} $2{0}		# x = cos azimuth (long)
+VSin $1{2} $2{0}		# z = sin azimuth (long)
+VSin $1{1} $2{1}		# y = sin elevation (lat)
+VCos s2ctmp $2{1}		# scaling factor for x,z cos elevation (lat)
+VVMul $1{0} $1{0} s2ctmp
+VVMul $1{2} $1{2} s2ctmp
+Delete_Image s2ctmp
+.
+
+# consider the case "x" is 0 ...
+# ca1 = 1    sa1 = 0
+# c21 = 1    s21 = 0
+#
+Define LongLong2Cart 2 dest src
+Tell_If "LongLong2Cart $1 $2"
+# first convert degrees to radians
+Dup_Complex ll2c $2
+VSMul ll2c{0} $2{0} atan(1)/45
+VSMul ll2c{1} $2{1} atan(1)/45
+Image ca1 "nrows('$2')" "ncols('$2')" 1 float
+Image ca2 "nrows('$2')" "ncols('$2')" 1 float
+Image sa1 "nrows('$2')" "ncols('$2')" 1 float
+Image sa2 "nrows('$2')" "ncols('$2')" 1 float
+# temporary squared terms
+Image c21 "nrows('$2')" "ncols('$2')" 1 float
+Image c22 "nrows('$2')" "ncols('$2')" 1 float
+Image s21 "nrows('$2')" "ncols('$2')" 1 float
+Image s22 "nrows('$2')" "ncols('$2')" 1 float
+VCos ca1 ll2c{0}		# x = cos azimuth (long)
+VSin sa1 ll2c{0}		# z = sin azimuth (long)
+VCos ca2 ll2c{1}
+VSin sa2 ll2c{1}
+Delete_Image ll2c
+VVMul c21 ca1 ca1
+VVMul c22 ca2 ca2
+VVMul s21 sa1 sa1
+VVMul s22 sa2 sa2
+# make sure the order is right here...
+VVDiv c21 c21 s21
+VVDiv c22 c22 s22
+VVAdd c21 c21 c22
+VSAdd c21 c21 1
+VSDiv c21 c21 1		# reciprocal
+VSqrt $1{2} c21		# now this is z
+VVMul $1{0} $1{2} sa1
+VVDiv $1{0} ca1 $1{0}	# x = x ca1 / sa1
+VVMul $1{1} $1{2} sa2
+VVDiv $1{1} ca2 $1{1}	# x = x ca1 / sa1
+Delete_Image ca1
+Delete_Image ca2
+Delete_Image sa1
+Delete_Image sa2
+Delete_Image c21
+Delete_Image c22
+Delete_Image s21
+Delete_Image s22
+#Display $2[0][0]
+#Display $1[0][0]
+.
+
+Define Draw_Sphere 0
+# make the latitude curves
+
+#Sph2Cart curves lat
+
+Sph2Cart curves long
+VMov scr curves{0}
+VMov curves{0} curves{1}
+VMov curves{1} scr
+
+Xform_List xc curves xrot
+Xform_List curves xc yrot
+Select_Plotter $plotter_1
+Erase_Plot
+ShowXY curves
+#ShowXYZ curves
+
+# make the longitude curves
+
+Sph2Cart curves long
+Xform_List xc curves xrot
+Xform_List curves xc yrot
+#ShowXY curves
+ShowXYZ curves
+.
+
+Define Render_Curve 1 src
+####Image tmpcrv "nrows($1)" "ncols($1)" 3 float
+####Image tmpcrv2 "nrows($1)" "ncols($1)" 3 float
+####Xform_List tmpcrv $1 yrot
+####Xform_List tmpcrv2 tmpcrv xrot
+####Delete_Image tmpcrv
+Select_Plotter $plotter_1
+#ShowXY $1
+Select_Pen $current_pen
+ShowXYZ $1				# orthographic projection in plotter 1
+####ShowXYZ tmpcrv2
+####Delete_Image tmpcrv2
+# transform the curves on the sphere to the image plane
+.
+
+# this is a cylindrical projection
+# lat/long
+
+Define Cylindrical_Projection 1 src
+Image rptmp "nrows($1)" "ncols($1)" 2 float
+Image rptmp2 "nrows($1)" "ncols($1)" 3 float
+Cart2LatLong rptmp $1
+#Insure_NoWrap rptmp
+VMov rptmp2{0} rptmp{0}
+VMov rptmp2{1} rptmp{1}
+Delete_Image rptmp
+#VMov rptmp2{2} $1{2}
+VSet rptmp2{2} 1
+Select_Plotter $plotter_2
+ShowXYZ rptmp2
+Delete_Image rptmp2
+.
+
+# this is an azimuthal projection
+
+Define Cart2Polar 2 dest src
+Image c2p_tmp "nrows($2)" "ncols($2)" 1 complex
+VMov c2p_tmp{0} $2{0}
+VMov c2p_tmp{1} $2{1}
+Image azimuth "nrows($2)" "ncols($2)" 1 float
+#Tell_If 'atan2 #2'
+VAtn2 azimuth c2p_tmp		# az = atan2(y,x)
+Delete_Image c2p_tmp
+Image rad "nrows($2)" "ncols($2)" 1 float
+VACos rad $2{2}			# rad = acos(z)
+# degree conversion factor
+VSMul rad rad 45/atan(1)
+Image c2p_tmp2 "nrows($2)" "ncols($2)" 3 float
+VCos c2p_tmp2{0} azimuth	#
+VSin c2p_tmp2{1} azimuth
+Delete_Image azimuth
+VVMul $1{0} c2p_tmp2{0} rad
+VVMul $1{1} c2p_tmp2{1} rad
+Delete_Image rad
+Delete_Image c2p_tmp2
+.
+
+Define Polar2Cart 2 dest src
+Image p2c_tmp "nrows($2)" "ncols($2)" 1 complex
+VSMul p2c_tmp{0} $2{0} atan(1)/45	# convert to radians
+VSMul p2c_tmp{1} $2{1} atan(1)/45	# convert to radians
+Image azimuth "nrows($2)" "ncols($2)" 1 float
+Tell_If 'atan2 #3'
+VAtn2 azimuth p2c_tmp		# az = atan2(y,x)
+Image rad "nrows($2)" "ncols($2)" 1 float
+VMagSq rad p2c_tmp
+VSqrt rad rad
+VCos $1{2} rad
+.
+
+Define Azimuthal_Projection 1 src
+Image ratmp "nrows($1)" "ncols($1)" 1 complex
+Image ratmp2 "nrows($1)" "ncols($1)" 3 float
+Cart2Polar ratmp $1
+VMov ratmp2{0} ratmp{0}
+VMov ratmp2{1} ratmp{1}
+Delete_Image ratmp
+#VMov ratmp2{2} $1{2}
+VSet ratmp2{2} 1
+Select_Plotter $plotter_3
+ShowXYZ ratmp2
+Delete_Image ratmp2
+.
+
+# this is SLO type projection...
+
+Define Scan_Projection 1 src
+Image rlltmp "nrows($1)" "ncols($1)" 2 float
+Image rlltmp2 "nrows($1)" "ncols($1)" 3 float
+Cart2LongLong rlltmp $1
+VMov rlltmp2{0} rlltmp{0}
+VMov rlltmp2{1} rlltmp{1}
+Delete_Image rlltmp
+#VMov rlltmp2{2} $1{2}
+VSet rlltmp2{2} 1
+Select_Plotter $plotter_4
+ShowXYZ rlltmp2
+Delete_Image rlltmp2
+.
+
+Define Draw_Euler 0
+Select_Plotter $plotter_2
+Erase_Plot
+Sph2Cart curves long		# the coordates are now in array "curves"
+VMov scr curves{0}
+VMov curves{0} curves{1}
+VMov curves{1} scr
+Xform_List xc curves xrot
+Xform_List curves xc yrot
+
+# compute the distance
+VSAdd curves{2} curves{2} $z_offset
+VVDiv imgc{0} curves{2} curves{0}
+VVDiv imgc{1} curves{2} curves{1}
+view plot $plotter_2 xyplot imgc quit quit
+
+Sph2Cart curves long		# the coordates are now in array "curves"
+Xform_List xc curves xrot
+Xform_List curves xc yrot
+
+# compute the distance
+VSAdd curves{2} curves{2} $z_offset
+VVDiv imgc{0} curves{2} curves{0}
+VVDiv imgc{1} curves{2} curves{1}
+#VVDiv imgc{0} curves{0} curves{2}
+#VVDiv imgc{1} curves{1} curves{2}
+view plot $plotter_2 xyplot imgc quit quit
+
+.
+
+
+Define ShowXYZ 1 src
+view
+  plot $the_plotter
+    xyzplot $1
+    quit
+  quit
+.
+
+Define ShowXY 1 src
+Image dpts "nrows($1)" "ncols($1)" 2 float
+VMov dpts{0} $1{0}
+VMov dpts{1} $1{1}
+view
+  plot $plotter_1
+    xyplot dpts
+    quit
+  quit
+Delete_Image dpts
+.
+
+Define Draw_Great_Circle 3 x y z
+Sph2Cart one_curve lat
+.
+
+# intersect a plane with a sphere
+#
+# A plane is specified by a (unit) direction vector and a distance from the origin
+#
+#  px x + py y + pz z = d
+#
+# The sphere is a unit sphere centered at the origin
+#
+# x^2 + y^2 + z^2 = 0
+#
+# radius of the intersection circle r = sqrt(1-d^2)  [r^2 + d^2 = 1]
+#
+# center of the intersection circle (px d, py d , pz d)
+#
+# locus p = oi + v1 r cos phi + v2 r sin phi
+#
+# get v1,v2
+# user specify v1, v2 is cross product of v1 and p
+
+Define Intersect_Sphere 7 vx vy vz d ox oy oz
+Scalar nv 3 float
+Scalar ov 3 float
+Scalar xv 3 float
+VSet nv{0} $1
+VSet nv{1} $2
+VSet nv{2} $3
+# normalize
+Assign const "sqrt($1*$1+$2*$2+$3*$3)"
+Print const
+VSMul nv nv 1/$const
+Assign rad "sqrt(1-$4*$4)"
+Print rad
+VSet ov{0} $5
+VSet ov{1} $6
+VSet ov{2} $7
+Assign const "sqrt($5*$5+$6*$6+$7*$7)"
+Print const
+VSMul ov ov 1/$const
+# should make sure that they're normal here...
+Cross_Product xv nv ov
+# now make the curve
+VSet one_curve{0} $4*value(nv{0})
+VSet one_curve{1} $4*value(nv{1})
+VSet one_curve{2} $4*value(nv{2})
+Display nv
+Display ov
+Display xv
+Ramp1D arg 0 2*$pi/($npts-1)
+VCos ca arg
+VSin sa arg
+
+VSMul delta{0} ca value(ov{0})
+VSMul delta{1} ca value(ov{1})
+VSMul delta{2} ca value(ov{2})
+VSMul delta delta $rad
+VVAdd one_curve one_curve delta
+
+VSMul delta{0} sa value(xv{0})
+VSMul delta{1} sa value(xv{1})
+VSMul delta{2} sa value(xv{2})
+VSMul delta delta $rad
+VVAdd one_curve one_curve delta
+
+#Xform_List one_tmp one_curve xrot
+#Xform_List one_curve one_tmp yrot
+#
+#ShowXY one_curve
+Render_Curve one_curve
+Delete_Image nv
+Delete_Image ov
+Delete_Image xv
+.
+
+Define Cross_Product 3 dest src1 src2
+VSet $1{0} "value($2{1})*value($3{2})-value($2{2})*value($3{1})"
+VSet $1{1} "value($2{2})*value($3{0})-value($2{0})*value($3{2})"
+VSet $1{2} "value($2{0})*value($3{1})-value($2{1})*value($3{0})"
+.
+
+# for a lat/long plot, get rid of any segments that wrap around...
+#
+# input:	300 350 355 358   2   4
+# want:		300 350 355 358 358 358
+#
+# diff:		50  5   3   -354  2
+# abs:		50  5   3   354   2
+# vsmin 180	180 180 180 354 180
+
+Define Insure_NoWrap 1 target
+echo Insure_NoWrap
+Image inw_tmp "nrows($1)" "ncols($1)-1" 1 complex
+Subimage inw1 $1 "ncols($1)-1" "nrows($1)" 0 0
+Subimage inw2 $1 "ncols($1)-1" "nrows($1)" 1 0
+VVSub inw_tmp inw1 inw2
+# now find places where the difference is BIG
+VAbs inw_tmp{0} inw_tmp{0}
+VAbs inw_tmp{1} inw_tmp{1}
+#Display inw_tmp
+#< /dev/tty
+.
+
+Stop_File sph.mac
+

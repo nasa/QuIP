@@ -1,0 +1,87 @@
+#
+# macros for making labels
+# Uses Xwindows drawing menu
+#
+# usage:
+# [ Set_LWin_Size w h ]
+# Init_LWin
+# Clear_Strings lab
+# Get_String string		# draws string into lab.bim
+
+Set lwidth 150
+Set lheight 25
+
+Define Set_LWin_Size 2 width height
+Assign lwidth $1
+Assign lheight $2
+.
+
+Define Init_LWin 0
+Init_Text_Window lab $lwidth $lheight
+.
+
+Define Clear_Strings 1 name
+view
+  draw $1.win
+    clear
+    quit
+  quit
+.
+
+Define Set_Text_Font 1 font
+Set text_font $1
+.
+
+Define Init_Text_Window 3 name width height
+Viewer $1.win $2 $3
+data
+  image $1.bim $3 $2 1 byte
+  image $1.fim $3 $2 1 float
+  quit
+view
+  xsync yes
+  draw $1.win
+#    load $text_font
+#    font $text_font
+    foreground 255
+    background 0
+    quit
+  quit
+.
+
+Define End_LWin 0
+Destroy_Viewer lab.win
+.
+
+Define Get_Text_String 2 name string
+Put_String_At $1 $2 10 10
+.
+
+Define Put_String_At 4 name string x y
+#echo "Put_String_At $1 $2 $3 $4"
+#data info $1.bim quit
+view
+#  viewers info $1.win quit
+  draw $1.win
+    foreground 255
+    background 0
+    string $2 $3 $4
+    quit
+#  echo 'type ^D to extract'
+#  < /dev/tty
+  sleep 1
+  extract $1.bim $1.win 0 0
+  quit
+Convert $1.fim $1.bim
+Convert $1.bim $1.fim
+.
+
+Define Get_String 1 string
+Clear_Strings lab
+Get_Text_String lab $1
+.
+
+Define Get_Second_String 1 string
+Put_String_At lab $1 10 24
+.
+ 

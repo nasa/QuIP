@@ -1,0 +1,210 @@
+
+Set window_border_top	24
+Set window_border_bot	5
+Set window_border_side	$window_border_bot
+
+Set stim_h 192
+Set display_h	768	# may need to subtract
+			# window manager panel thicknesses...
+
+Assign v_gap floor(($display_h-3*($stim_h+$window_border_top+$window_border_bot))/4)
+Assign panel_h 3*($window_border_top+$window_border_bot+$stim_h)+2*$v_gap-($window_border_top+$window_border_bot)
+
+Set h_gap $v_gap
+
+Set display_w 1024
+
+Set stim_w 512
+Assign panel_w floor($display_w-3*$h_gap-$stim_w-4*$window_border_side)
+
+Set adjuster_h	$stim_h
+Set key_h $stim_h
+
+Set key_w $stim_w
+
+Assign top_y $v_gap
+Assign mid_y $top_y+$window_border_top+$window_border_bot+$key_h+$v_gap
+Assign bot_y $mid_y+$window_border_top+$window_border_bot+$stim_h+$v_gap
+
+Set left_x $h_gap
+Assign right_x $left_x+$panel_w+$window_border_side*2+$h_gap
+
+# use New_Plotter instead of Viewer to install color defs
+
+Define Background_Viewer 0
+New_Plotter bg_v ncols("$DISPLAY") nrows("$DISPLAY")
+
+Posn_Window bg_v 0 0
+view
+  draw bg_v
+    background $black
+    clear
+    quit
+  quit
+.
+
+Define Init_Demo_Viewers 0
+# COMMENT OUT Background_Viewer for debugging...
+#Background_Viewer
+New_Plotter stim_v $stim_w $stim_h
+Posn_Window stim_v $right_x $mid_y
+
+New_Plotter key_v $key_w $key_h
+Posn_Window key_v $right_x $top_y
+
+New_Plotter adjuster_v $stim_w $adjuster_h
+Posn_Window adjuster_v $right_x $bot_y
+Set_Button_Actions adjuster_v Make_Adjustment nop nop
+
+#Draw_Adjuster_Arrows $gray $black $white
+.
+
+Define Draw_Adjuster_Disk 1 color
+Set disk_rad 50
+Assign x0 floor(ncols(adjuster_v)/2)-$disk_rad
+Assign y0 floor(nrows(adjuster_v)/2)-$disk_rad
+view
+  draw adjuster_v
+    foreground $1
+    fill_arc $x0 $y0 2*$disk_rad 2*$disk_rad 0 360*64
+    quit
+  quit
+.
+
+Define Draw_Adjuster_Arrows 3 bg_color left_color right_color
+Assign y0 floor(nrows(adjuster_v)/2)
+Set arrow_w 20
+Set arrow_len 100
+Set tip_len 40
+Set tip_w 40
+Assign x0_1 floor(ncols(adjuster_v)/4)-floor(($arrow_len)/2)
+Assign x0_2 floor(3*ncols(adjuster_v)/4)+floor(($arrow_len)/2)
+view
+  draw adjuster_v
+    background $1
+    clear
+    foreground $2
+    fill_poly 7
+      $x0_1 $y0
+      $x0_1+$tip_len $y0-$tip_w
+      $x0_1+$tip_len $y0-$arrow_w
+      $x0_1+$arrow_len $y0-$arrow_w
+      $x0_1+$arrow_len $y0+$arrow_w
+      $x0_1+$tip_len $y0+$arrow_w
+      $x0_1+$tip_len $y0+$tip_w
+    foreground $3
+    fill_poly 7
+      $x0_2 $y0
+      $x0_2-$tip_len $y0-$tip_w
+      $x0_2-$tip_len $y0-$arrow_w
+      $x0_2-$arrow_len $y0-$arrow_w
+      $x0_2-$arrow_len $y0+$arrow_w
+      $x0_2-$tip_len $y0+$arrow_w
+      $x0_2-$tip_len $y0+$tip_w
+    quit
+  quit
+.
+
+Define SlowCycle 0
+Cycle_It 2 60
+.
+
+Define FastCycles 0
+Cycle_It 80 1
+.
+
+
+Set delay 3
+Define SetDelay 0
+Set delay $slider_val
+.
+
+Set no_adjustment -1
+Set last_adjustment $no_adjustment
+Set adjustment_increment 127
+
+Define Increase_Increment 0
+Assign adjustment_increment min(127,round($adjustment_increment*1.5))
+.
+
+Define Decrease_Increment 0
+Assign adjustment_increment max(1,ceil($adjustment_increment/2))
+.
+
+
+Define TogVBL 0
+If $vbl_sync
+  Then "Set vbl_sync 0"
+  Else "Set vbl_sync 1"
+.
+
+Set vbl_sync 1
+
+Define Cycle_4 2 count delay
+repeat $1
+  If $vbl_sync "view vblank $2 quit"
+  Show_Bytes frm1 stim_v
+  If $vbl_sync "view vblank $2 quit"
+  Show_Bytes frm2 stim_v
+  If $vbl_sync "view vblank $2 quit"
+  Show_Bytes frm3 stim_v
+  If $vbl_sync "view vblank $2 quit"
+  Show_Bytes frm4 stim_v
+  end
+. 
+
+Define Cycle_2 2 count delay
+repeat $1
+  If $vbl_sync "view vblank $2 quit"
+  Show_Bytes frm1 stim_v
+  If $vbl_sync "view vblank $2 quit"
+  Show_Bytes frm2 stim_v
+  end
+.
+
+Define SetStripeWidth 0
+Set log2_stripe_width $slider_val
+Assign stripe_width pow(2,$log2_stripe_width)
+Assign strip_width $stripe_width/2
+Paint_Strips strips
+Paint_Strips key_strips
+Map_Stripes
+Show_Bytes key_frm key_v
+.
+
+Set n_lut_entries 1024
+Vector gamma_lut $n_lut_entries 1 float
+VSet gamma_lut -1	# indicates no data
+VSet gamma_lut[0] 0
+VSet gamma_lut[$n_lut_entries-1] 255
+
+Vector forward_lut 256 1 float
+VSet forward_lut -1
+
+VSet forward_lut[0] 0
+VSet forward_lut[255] 1
+
+Define Record_Bisection 3 low_setting high_setting midpoint_setting
+advise "Record_Bisection $1 $2 $3 BEGIN"
+# first get the luminances of the low and high settings
+Assign lum1 value(forward_lut[$1])
+Assign lum2 value(forward_lut[$2])
+Assign midpoint ($lum1+$lum2)/2
+VSet forward_lut[$3] $midpoint
+# get the indices into the gamma correction table
+Assign index1 round($lum1*($n_lut_entries-1))
+Assign index2 round($lum2*($n_lut_entries-1))
+Assign index3 round($midpoint*($n_lut_entries-1))
+advise 'setting gamma_lut'
+VSet gamma_lut[$index1] $1
+VSet gamma_lut[$index2] $2
+VSet gamma_lut[$index3] $3
+advise "testing bisection, $1 $2   $3"
+If $3-$1>4&&abs(($1+$2)/2-$3)>1
+  "Add_Adjustment $1 $3"
+If $2-$3>4&&abs(($1+$2)/2-$3)>1
+  "Add_Adjustment $3 $2"
+advise "Record_Bisection DONE"
+.
+
+

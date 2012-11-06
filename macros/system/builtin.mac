@@ -1,0 +1,120 @@
+#
+# %Z% $RCSfile: builtin.mac,v $ ver: $Revision: 1.17 $ $Date: 2009/01/19 08:52:42 $
+#
+# macros to simplify use of builtin submenus
+#
+
+#verbose yes
+
+If $verbose "echo 'interpreting file builtin.mac'"
+
+# macro control
+
+macros define Define 0
+macros define
+.
+
+Define Delete_Macro 1 name
+macros delete $1 quit
+.
+
+Define Find_Macro 1 string
+macros find $1 quit
+.
+
+# variable control
+
+Define Set 2 'variable name' 'value'
+variables set $1 $2 quit
+.
+
+Define UnSet 1 'variable name'
+variables unset $1 quit
+.
+
+Define Variables 0
+variables list quit
+.
+
+# generally useful
+
+Define Idle 0
+Set idling 1
+os
+  do
+    events
+    while $idling
+  quit
+.
+
+Define Pause 0
+advise 'type ^D to proceed'
+< /dev/tty
+.
+
+Set pausing 0
+
+Define Pause_If 0
+If $pausing Pause
+.
+
+Set chatty 0
+
+Define Tell_If 1 string
+If $verbose||$chatty "advise '$1'"
+.
+
+Define Print_If 1 varname
+If $verbose||$chatty "Print $1"
+.
+
+Define Tell_Date 0
+os
+  pipes
+    open date_pipe r date
+    read date_pipe date_string
+    close date_pipe
+    quit
+  quit
+advise "$date_string"
+.
+
+Define Count_Bytes 2 varname filename
+variables push_fmt decimal quit
+os
+  pipes
+    open counter_pipe r "ls -l $2 | dm s5"
+    read counter_pipe cb_tmp
+    close counter_pipe
+    quit
+  quit
+Assign $1 $cb_tmp
+variables pop_fmt quit
+.
+
+Define Count_Columns 2 varname filename
+If !file_exists('$2') "warn 'File $2 does not exist' PopFile 2 nop"
+os
+  pipes
+    open counter_pipe r "wc $2 | dm x2/x1"
+    read counter_pipe cl_tmp
+    close counter_pipe
+    quit
+  quit
+Assign $1 $cl_tmp
+.
+
+Define Count_Lines 2 varname filename
+If !file_exists('$2') "warn 'File $2 does not exist' PopFile 2 nop"
+os
+  pipes
+    open counter_pipe r "cat $2 | wc -l"
+    read counter_pipe cl_tmp
+    close counter_pipe
+    quit
+  quit
+Assign $1 $cl_tmp
+.
+
+If $verbose "echo 'finished interpreting file builtin.mac'"
+

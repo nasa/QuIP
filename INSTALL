@@ -1,0 +1,42 @@
+
+Simple 3-step installation:
+
+% ./configure
+% make
+% sudo make install
+
+
+Possible options for configure:
+
+--disable-async-exec		doesn't do anything!?
+--disable-tty-ctl		TTY_CTL
+--disable-viewers		VIEWERS
+--disable-history		HISTORY
+--disable-rt-sched		ALLOW_RT_SCHED
+--disable-gui			INTERFACE
+--disable-stepit		STEPIT
+--disable-numrec		HAVE_NUMREC
+--disable-sound			HAVE_SOUND
+--disable-debug			DEBUG
+--disable-cautious		CAUTIOUS
+--disable-avi			doesnt do anything!?
+
+
+PACKAGES NEEDED FOR BUILDING UNDER REDHAT/CENTOS
+
+freeglut-devel
+mesa-libGLU-devel
+openmotif-devel
+alsa-lib-devel
+curl-devel
+matio-devel
+libtiff-devel
+libjpeg-devel
+ffmpeg-devel
+gsl-devel
+ncurses-devel
+libdc1394-devel
+texinfo-tex
+libtermcap-devel
+opencv-devel
+kernel-devel	(for building nvidia driver)

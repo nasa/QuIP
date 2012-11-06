@@ -1,0 +1,31 @@
+#
+< $macro_dir/numrec/svd.mac
+
+Set stim_w 1600
+Set stim_h 1024
+
+< calib.mac
+
+Set infile caldata1.asc
+
+Count_Lines nl $infile
+Print nl
+
+Set n_calib_x -1
+If $nl==540 "Set n_calib_x 3 Set n_calib_y 3 Set n_calib_samples 60"
+If $nl==1500 "Set n_calib_x 5 Set n_calib_y 5 Set n_calib_samples 60"
+
+If $n_calib_x<0 "error_exit 'Need to add a case for nl = $nl'"
+
+Init_Calib_Grid
+
+Get_Ascii calib_data $infile
+
+Fit_Linear
+
+Map_Linear
+
+Put_Ascii data_to_save new_calest1.asc
+
+exit
+

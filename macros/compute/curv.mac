@@ -1,0 +1,325 @@
+
+Start_File curv.mac
+
+
+# compute 2-D curvature of level sets
+#
+# Formula (from Erhardt) is:
+#
+# (gxx*gy*gy + gyy*gx*gx - 2*gx*gy*gxy)/  (gx*gx+gy*gy) ^(3/2)
+#
+
+Set curv_const	0.01
+
+Define Get_2D_Curv 2 'target float image' 'source float image'
+Tell_If "Get_2D_Curv $1 $2"
+Dup_Float gx  $2
+Dup_Float gy  $2
+Dup_Float gxx $2
+Dup_Float gyy $2
+Dup_Float gxy $2
+#
+Dup_Float _t1 $2
+Dup_Float _t2 $2
+Dup_Float _t3 $2
+Dup_Float gc_denom $2
+
+# these are not biased positionally, because Take_Diff does +,- shifts.
+
+Take_Diff gx $2 1 0
+Take_Diff gy $2 0 1
+Take_Diff gxx gx 1 0
+Take_Diff gyy gy 0 1
+Take_Diff gxy gy 1 0
+
+VVMul _t1 gxx gy
+VVMul _t1 _t1 gy
+
+VVMul _t2 gyy gx
+VVMul _t2 _t2 gx
+
+VVMul _t3 gx gy
+VVMul _t3 _t3 gxy
+VSMul _t3 _t3 -2
+
+VVAdd _t1 _t1 _t2
+VVAdd _t1 _t1 _t3
+
+# _t1 now holds the numerator
+
+VSquare gx gx
+VSquare gy gy
+VVAdd gc_denom gx gy
+
+
+# we might make sure it's not zero before taking the log...
+VSMax gc_denom gc_denom $curv_const
+
+VLog gc_denom gc_denom
+VSMul gc_denom gc_denom 1.5
+VExp gc_denom gc_denom
+
+# make sure to check order
+VVDiv $1 gc_denom _t1
+
+Delete_Image gx
+Delete_Image gy
+Delete_Image gxx
+Delete_Image gyy
+Delete_Image gxy
+Delete_Image _t1
+Delete_Image _t2
+Delete_Image _t3
+Delete_Image gc_denom
+.
+
+# BUG to run faster, don't delete these very iteration, but is hosed if size changes
+
+#Define Dup_If 2 name proto
+#If !obj_exists('$1') "Dup_Float $1 $2"
+#.
+
+# compute gaussian curvature
+
+Define Get_Curv 2 'target float image' 'source float image'
+Tell_If "Get_Curv $1 $2"
+
+Dup_If gx $2
+Dup_If gy  $2
+Dup_If gxx $2
+Dup_If gyy $2
+Dup_If gxy $2
+
+# these are not biased positionally, because Take_Diff does +,- shifts.
+
+Take_Diff gx $2 1 0
+Take_Diff gy $2 0 1
+Take_Diff gxx gx 1 0
+Take_Diff gyy gy 0 1
+Take_Diff gxy gy 1 0
+
+VSquare gxy gxy
+VSMul gxy gxy -1
+VVMul $1 gxx gyy
+VVAdd $1 $1 gxy		# gxx*gyy - gxy^2
+
+#Delete_Image gx
+#Delete_Image gy
+#Delete_Image gxx
+#Delete_Image gyy
+#Delete_Image gxy
+.
+
+# BUG this image is de-centered!?
+
+Define Get_Grad_Mag 2 target src
+Tell_If "Get_Grad_Mag $1 $2"
+Dup_Float gx $2
+Dup_Float gy $2
+Take_Diff gx $2 1 0
+Take_Diff gy $2 0 1
+VVMul gx gx gx
+VVMul gy gy gy
+VVAdd $1 gx gy
+VSqrt $1 $1
+Delete_Image gx
+Delete_Image gy
+VSet $1{0} 0
+VSet $1{ncols('$1')-1} 0
+VSet $1[0] 0
+VSet $1[nrows('$1')-1] 0
+Tell_If "Get_Grad_Mag $1 $2 done"
+.
+
+Define Get_Gradient 2 target src
+Take_Diff $1{0} $2 1 0
+Take_Diff $1{1} $2 0 -1		# invert the y coord
+.
+
+# MACRO:  Take_Diff dest_image source_image dx dy
+
+Define Take_Diff 4 'target image' 'source image' dx dy
+#Tell_If "Take_Diff $1 $2 $3 $4"
+Dup_Float tdtmp $2
+Scroll $1 $2 $3 $4
+Scroll tdtmp $2 -$3 -$4
+#VVSub $1 $1 tdtmp
+VVSub $1 tdtmp $1
+Delete_Image tdtmp
+.
+
+# Erhardt's flower curvature filters
+
+Define Setup_Filters 3 f1 f2 freq
+Assign parity $3%2
+Assign xparity ($3+1)%2
+Dup_Float xf_targ xf_arg
+VSMul xf_targ xf_arg $3
+VCos $1{$parity} xf_targ
+VSin $2{$parity} xf_targ
+Delete_Image xf_targ
+VSet $1{$xparity} 0
+VSet $2{$xparity} 0
+VVMul $1 xf_window $1
+VVMul $2 xf_window $2
+# now scroll back
+Scroll xf_tmp $1{$parity} 0 nrows(Xf1c)/2 VMov $1{$parity} xf_tmp
+Scroll xf_tmp $2{$parity} 0 nrows(Xf1c)/2 VMov $2{$parity} xf_tmp
+.
+
+# a hack written for pupil tracking on 128 images...
+# make a mask that selects the pupil and not much else
+
+Define Get_Curv_Mask 2 target source
+# these originally worked well for pupil tracking w/ 128...
+#Set freq1 1
+#Set freq2 3
+Set freq1 12
+Set freq2 14
+advise "Frequencies are $freq1 and $freq2"
+#Set freq3 3
+Xform_For xf_tmpl $2
+Dup_Complex Xf1c xf_tmpl
+Dup_Complex Xf1s xf_tmpl
+Dup_Complex Xf2c xf_tmpl
+Dup_Complex Xf2s xf_tmpl
+### Dup_Complex Xf3c xf_tmpl
+### Dup_Complex Xf3s xf_tmpl
+Dup_Float xf_arg xf_tmpl{0}	# angle theta
+Dup_Float xf_rad xf_tmpl{0}
+Dup_Float xf_window xf_tmpl{0}
+Dup_Float xf_tmp xf_tmpl{0}
+Dup_Float in1 $2
+Dup_Float in2 $2
+Dup_Float in3 $2
+Dup_Float in4 $2
+### Dup_Float in5 $2
+### Dup_Float in6 $2
+#Ramp2D xf_tmpl{0} -ncols(xf_tmpl)/2 1 0
+Ramp2D xf_tmpl{0} 0 1 0
+Assign yorg nrows(xf_tmpl)/2
+Ramp2D xf_tmpl{1} -$yorg 0 1
+VSquare xf_tmp xf_tmpl{0}
+VSquare xf_rad xf_tmpl{1}
+VVAdd xf_rad xf_rad xf_tmp
+VSqrt xf_rad xf_rad
+# atan2(0,0) undefined
+VSet xf_tmpl{0}[$yorg][0] 1
+VSet xf_tmpl{1}[$yorg][0] 1
+VAtn2 xf_arg xf_tmpl		# the angle
+VSet xf_arg[$yorg][0] 0
+
+# make the radial multiplier
+# original value was 8
+#Assign lp_const 8
+Assign lp_const 2
+advise "Assign sd ncols(xf_rad)/$lp_const"
+Assign sd ncols(xf_rad)/$lp_const
+Assign f0 0
+advise "transform window radius is $f0, std dev $sd"
+VSAdd xf_window xf_rad -$f0
+VSquare xf_window xf_window
+VSMul xf_window xf_window -1/(2*$sd*$sd)
+VExp xf_window xf_window
+#Show_All_If xf_rad v2 'radius'
+VVMul xf_window xf_window xf_rad	# multiply by freq
+VVMul xf_window xf_window xf_rad	# multiply by freq^2
+Show_All_If xf_window v1 'radial function'
+
+# do freq1
+advise "setting up filters for frequency $freq1"
+Setup_Filters Xf1c Xf1s $freq1
+Show_All_If Xf1c{$parity} v1 'filter'
+Show_All_If Xf1s{$parity} v2 'filter'
+
+advise "setting up filters for frequency $freq2"
+Setup_Filters Xf2c Xf2s $freq2
+Show_All_If Xf2c{$parity} v3 'filter'
+Show_All_If Xf2s{$parity} v4 'filter'
+
+# now start filtering
+
+VMov in1 $2
+Filter in1 Xf1c
+Show_All_If in1 v5 'filter 1'
+
+VMov in2 $2
+Filter in2 Xf1s
+Show_All_If in2 v6 'filter 2'
+
+VMov in3 $2
+Filter in3 Xf2c
+Show_All_If in3 v7 'filter 3'
+
+VMov in4 $2
+Filter in4 Xf2s
+Show_All_If in4 v8 'filter 4'
+
+### VMov in5 $2
+### Filter in5 Xf3c
+### #Show_All_If in5 v1 'filter 5'
+### VMov in6 $2
+### Filter in6 Xf3s
+### #Show_All_If in6 v2 'filter 6'
+verbose no
+
+# in1 and in2 are now the outputs of the odd and even filters
+VSquare in1 in1
+VSquare in2 in2
+VVAdd in1 in1 in2
+Show_All_If in1 v1 'energy 1'
+VSquare in3 in3
+VSquare in4 in4
+VVAdd in3 in3 in4
+Show_All_If in3 v3 'energy 2'
+### VSquare in5 in5
+### VSquare in6 in6
+### VVAdd in5 in5 in6
+### VSAdd in5 in5 40		# half of range
+
+# take the difference
+#VVSub in1 in3 in1
+VVSub in1 in1 in3
+### VVDiv in1 in5 in1
+Show_All_If in1 v4 difference
+
+#VSMax in1 in1 0
+##Show_All_If in1 v2 rectified
+
+# just pick one polarity instead of abs val...
+### # get magnitude
+### VAbs in1 in1
+### Show_All_If in1 v4 'difference abs. val.'
+VSMax in1 in1 0
+Show_All_If in1 v4 'clipped difference'
+
+#advise 'low passing with LP filter constant 8'
+#Low_Pass in1 8
+
+#Show_All_If in1 v3 blurred
+
+Set thresh_level 0.3
+Scale in1 0 1
+VSMin in1 in1 $thresh_level		# clip at $threshlevel
+VSMul in1 in1 1/$thresh_level		# remap range to 0-1
+VSquare in1 in1				# square to reduce intermed. values...
+VSquare $1 in1
+Show_All_If $1 v4 thresholded
+
+Delete_Image in1
+Delete_Image in2
+Delete_Image in3
+Delete_Image in4
+Delete_Image Xf1c
+Delete_Image Xf1s
+Delete_Image Xf2c
+Delete_Image Xf2s
+Delete_Image xf_tmp
+Delete_Image xf_rad
+Delete_Image xf_arg
+Delete_Image xf_tmpl
+Delete_Image xf_window
+.
+
+Stop_File curv.mac
+

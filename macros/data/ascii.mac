@@ -1,0 +1,81 @@
+
+# %Z% $RCSfile: ascii.mac,v $ ver: $Revision: 1.10 $ $Date: 2005/11/17 06:16:01 $
+
+Start_File ascii.mac
+
+Set ascii_read_dir .
+Set ascii_write_dir .
+
+Define Get_Ascii 2 'data object' 'ascii filename'
+data
+  ascii
+    If strstr('$2','/')==0
+      Then "read $1 $2"
+      Else "read $1 $ascii_read_dir/$2"
+    quit
+  quit
+.
+
+Define Put_Ascii 2 'data object' 'ascii filename'
+data
+  ascii
+    If strstr('$2','/')==0
+      Then "write $1 $2"
+      Else "write $1 $ascii_write_dir/$2"
+    quit
+  quit
+.
+
+Define Ascii_Write_Dir 1 dirname
+Set ascii_write_dir $1
+.
+
+Define Ascii_Read_Dir 1 dirname
+Set ascii_read_dir $1
+.
+
+Define Info 1 'data object'
+data info $1 quit
+.
+
+Define Display_If 1 object
+If $chatty "Display $1"
+.
+
+Define Display 1 'data object'
+data
+  ascii
+    display $1
+    quit
+  quit
+.
+
+Define Get_Scalar 2 scalar file
+Scalar sc_tmp 1 float
+Get_Ascii sc_tmp $2
+Assign $1 value(sc_tmp)
+Delete_Image sc_tmp
+.
+
+Define Put_Scalar 2 scalar file
+Scalar sc_tmp 1 float
+VSet sc_tmp $1
+Put_Ascii sc_tmp $2
+Delete_Image sc_tmp
+.
+
+Define Read_Data 1 object
+data ascii read $1 -
+.
+
+# user needs to quit!?
+
+Define End_Data 0
+quit quit
+.
+
+
+
+Stop_File ascii.mac
+
+

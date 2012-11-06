@@ -1,0 +1,668 @@
+#Set n_calib_x 5
+#Set n_calib_y 5
+
+Set n_calib_x 3
+Set n_calib_y 3
+
+#Set n_calib_samples 4	# 1 or 2 seconds?
+Set n_calib_samples 60	# 1 or 2 seconds?
+
+# calibration fixation cross
+Set bar_thickness 3
+Set bar_length 11
+
+Define Draw_ROIs 1 destination_image
+Draw_Pupil_ROI $1
+Draw_CR_ROI $1
+.
+
+Define Draw_Pupil_ROI 1 destination_image
+# this test should be redundant!?
+If $bad_pupil exit_macro
+#advise "Draw_Pupil_ROI:  $prl_name = $$prl_name   $prt_name = $$prt_name"
+Subimage pup_roi_inset $1 $pup_roi_w $pup_roi_h $$prl_name $$prt_name
+VSet pup_roi_inset{1}[0] 255
+VSet pup_roi_inset{1}[$pup_roi_h-1] 255
+VSet pup_roi_inset{1}{0} 255
+VSet pup_roi_inset{1}{$pup_roi_w-1} 255
+Delete_Image pup_roi_inset
+.
+
+Define Draw_CR_ROI 1 destination_image
+Subimage cr_roi_inset $1 $cr_roi_w $cr_roi_h $$crl_name $$crt_name
+VSet cr_roi_inset{2}[0] 255
+VSet cr_roi_inset{2}[$cr_roi_h-1] 255
+VSet cr_roi_inset{2}{0} 255
+VSet cr_roi_inset{2}{$cr_roi_w-1} 255
+Delete_Image cr_roi_inset
+.
+
+Define Refresh_Display 0
+cuda cuda_gl
+  load $video_window_name g_frame
+  quit quit
+If $plotting "Plotem cuda cuda_gl load plotwin g_plot quit quit"
+CkPt "$video_window_name loaded"
+gl
+  # swap_buffers used to be called directly from the cuda window load code,
+  # but we want to be able to synch to vblank...
+  #vbl_wait 1
+  window $video_window_name
+  swap_buffers
+  window plotwin
+  swap_buffers
+  window v_stim		# do this here?
+  swap_buffers
+  If $__deinterlace
+    Then "Refresh_It 1 Refresh_It 2"
+    Else "Refresh_It 0"
+  quit
+CkPt 'buffers swapped'
+.
+
+Define Refresh_It 1 index
+window v_pup_$1
+swap_buffers
+window v_cr_$1
+swap_buffers
+.
+
+
+# Drawing to a window takes almost 2 msec regardless of size;
+# Probably better to have one big window, draw into subregions
+# of an off-screen image, then refresh at the end...
+#
+# Assume this is called not in deinterlaced mode...
+
+Set plot_w 1600
+Set plot_h 440
+
+view displays quit quit	# make sure display is initialized
+Assign disp_w ncols('$DISPLAY')
+Assign disp_h nrows('$DISPLAY')
+
+# These pad constants are chosen to allow a stimulus window to
+# fit entirely within the display...
+Set stim_w 1600
+Set stim_h 1024
+#Assign stim_w $disp_w-50
+#Assign stim_h $disp_h-80
+
+Set calib_w	$stim_w
+Set calib_h	$stim_h
+
+Define StimRClick 0
+If $calibrating&&!$tuning_calib "Finish_Calib exit_macro"
+If $visualizing "Finish_Visual exit_macro"
+If $tuning_calib "Finish_Tune exit_macro"
+If $stimulating "StopStim exit_macro"
+.
+
+Define Finish_Tune 0
+# Save calibration data?
+Set calibrating 0
+Set tuning_calib 0
+Resume_Display
+UnShow_Viewer v_stim
+.
+
+Define StimLClick 0
+If $left_button_up exit_macro
+If $waiting End_Wait
+If $placing Place_Pt
+.
+
+Define Place_Pt 0
+Assign px $view_xpos
+Assign py $view_ypos
+Increment n_calib_stimuli	# better to count after collecting?
+advise 'Place_Pt clearing ready...'
+Set ready 0
+Set placing 0
+Set waiting 1
+#Display_Stim $this_stim
+If !$cross_macro_set Set_Cross_Macro
+# BUG?  how do we tell calib routine these are the coords?
+VSet calib_data[$this_stim]{0} $px
+VSet calib_data[$this_stim]{1} $py
+Set displayed_stim $this_stim
+$cross_macro $px $py g_stim
+Refresh_Stim
+Set i_calib 0
+.
+
+Define Recolor_Target 0
+If $tuning_calib
+  Then "Display_Recorded_Stim $this_stim Refresh_Stim"
+  Else "Display_Grid_Stim $this_stim"
+.
+
+Define End_Wait 0
+advise "EndWait this_stim = $this_stim"
+Set waiting 0
+Set ready 1
+# change to white
+If $calibrating Recolor_Target
+
+If !obj_exists(g_save) "Dup_UByte g_save g_stim"
+VMov g_save g_stim
+.
+
+Define CalibLClick 0
+If $left_button_up exit_macro
+If !$ready Make_Ready
+.
+
+Define Make_Ready 0
+Set ready 1
+$cross_macro $hx $hy g_calib
+Refresh_Calib
+.
+
+Define Declare_Viewing_Windows 0
+If !var_exists(video_window_name) "Set video_window_name v_video"
+Viewer $video_window_name $v_w $v_h
+Viewer v_calib $calib_w $calib_h
+Viewer v_stim $stim_w $stim_h
+Set_Button_Actions $video_window_name SetROI nop nop
+Set_Button_Actions v_stim StimLClick nop StimRClick
+Set_Button_Actions v_calib CalibLClick nop CalibRClick
+
+Viewer plotwin $plot_w $plot_h
+Set_Button_Actions plotwin nop nop nop
+
+Set vgap 32
+Set hgap 13
+Set v_x1 0
+Assign v_x2 $v_x1+640+$hgap
+Assign v_x3 $v_x2+192+$hgap
+
+Set v_y1 30
+Assign v_y3 $v_y1+192+$vgap
+
+Assign v_y2 $v_y1+192/2+$vgap
+
+Assign v_y4 $v_y1+480/2
+Assign v_y5 $v_y4+192/2+$vgap
+
+Assign v_y6 $v_y1+480+$vgap
+
+Posn_Window plotwin $v_x1 $v_y6
+
+Set i 0
+Viewer v_pup_$i $pup_roi_w $pup_roi_h
+Assign y 50+($i-1)*($pup_roi_h+$vgap)
+advise "Positioning v_pup_$i at y = $y"
+Viewer v_cr_$i $cr_roi_w $cr_roi_h
+Assign y 400+($i-1)*($cr_roi_h+$vgap)
+advise "Positioning v_cr_$i at y = $y"
+
+Set i 1
+repeat 2
+  Viewer v_pup_$i $pup_roi_w $pup_roi_h/2
+  Assign y 50+($i-1)*($pup_roi_h/2+$vgap)
+  advise "Positioning v_pup_$i at y = $y"
+  Posn_Window v_pup_$i $v_x2 $y
+  Viewer v_cr_$i $cr_roi_w $cr_roi_h/2
+  Assign y 400+($i-1)*($cr_roi_h/2+$vgap)
+  advise "Positioning v_cr_$i at y = $y"
+  Posn_Window v_cr_$i $v_x2 $y
+  Increment i
+  end
+
+Set i 0
+repeat 3
+  Set_Button_Actions v_pup_$i nop nop nop
+  Set_Button_Actions v_cr_$i nop nop nop
+  Increment i
+  end
+
+Posn_Window $video_window_name $v_x1 $v_y1
+Posn_Window v_stim $v_x1 $v_y1
+UnShow_Viewer v_stim
+
+Posn_Window v_calib $v_x1 $v_y1
+UnShow_Viewer v_calib
+
+Posn_Window v_pup_0 $v_x2 $v_y1
+Posn_Window v_cr_0  $v_x2 $v_y3
+
+Posn_Window v_pup_1 $v_x2 $v_y1
+Posn_Window v_cr_1  $v_x2 $v_y2
+
+Posn_Window v_pup_2 $v_x2 $v_y4
+Posn_Window v_cr_2  $v_x2 $v_y5
+
+# make the windows usable by opengl
+gl
+  window $video_window_name
+  window v_stim
+  window v_calib
+  window plotwin
+  Set i 0
+  repeat 3
+    window v_pup_$i
+    window v_cr_$i
+    Increment i
+    end
+  quit
+
+# make the windows usable by cuda
+cuda
+  cuda_gl
+    viewer $video_window_name
+    viewer v_stim
+    viewer v_calib
+    viewer plotwin
+    Set i 0
+    repeat 3
+      viewer v_cr_$i
+      viewer v_pup_$i
+      Increment i
+      end
+    quit
+  quit
+
+# now hide the ones we aren't using now
+Set i 1
+repeat 2
+  UnShow_Viewer v_pup_$i
+  UnShow_Viewer v_cr_$i
+  Increment i
+  end
+.
+
+# We call this after tracking each field
+Define Update_Display 1 drawing_buffer
+Draw_ROIs $1
+  CkPt 'ROIs drawn'
+.
+
+Define Update_Pupil_Display 1 drawing_buffer
+Draw_Pupil_ROI $1
+.
+
+
+Define Finish_Calib 0
+# compute the calibration
+UnShow_Viewer v_stim
+UnShow_Viewer v_calib	# maybe not used?
+Set calibrating 0
+Save_Cal		# store results to subject file
+.
+
+Set displayed_stim -1
+Set this_stim 0
+
+# where is Display_Calib declared???
+
+#Define New_Calib_Stim 0
+#VSet g_calib 0
+#Set ready 0
+#Display_Calib $this_stim
+#.
+
+#Set stim_gray	128	# gamma correction?
+Set mid_gray 100
+Set stim_gray	$mid_gray	# gamma correction?
+
+Define New_Stim 0
+Increment n_calib_stimuli	# better to count after collecting?
+VSet g_stim $stim_gray
+advise 'New_Stim clearing ready...'
+Set ready 0
+Set waiting 1
+Display_Grid_Stim $this_stim
+.
+
+Set cross_macro_set 0
+Set dot_macro_set 0
+
+Define Set_Cross_Macro 0
+If $cuda_comp_cap>=2.0
+  Then "Set cross_macro Fast_Cross_At"
+  Else "Set cross_macro Slow_Cross_At"
+Set cross_macro_set 1
+.
+
+Define Set_Dot_Macro 0
+If $cuda_comp_cap>=2.0
+  Then "Set dot_macro Fast_Draw_Dot"
+  Else "Set dot_macro Slow_Draw_Dot"
+Set dot_macro_set 1
+.
+
+Define Display_Grid_Stim 1 which_stim
+If !$cross_macro_set Set_Cross_Macro
+advise "Display_Grid_Stim $1"
+Assign cal_i_x $1%$n_calib_x
+Assign cal_i_y floor($1/$n_calib_x)
+Assign cal_x value(calib_grid[$cal_i_y][$cal_i_x]{0})
+Assign cal_y value(calib_grid[$cal_i_y][$cal_i_x]{1})
+$cross_macro $cal_x $cal_y g_stim
+
+Set displayed_stim $1
+Refresh_Stim
+Set i_calib 0
+.
+
+Define Display_Recorded_Stim 1 which_stim
+If !$cross_macro_set Set_Cross_Macro
+advise "Display_Recorded_Stim $1"
+If $1<0||$1>=$n_calib_stimuli
+  "warn 'Display_Recorded_Stim $1:  out of range (n_calib_stimuli = $n_calib_stimuli)'"
+Assign cal_x value(calib_data[$1][0]{0})
+Assign cal_y value(calib_data[$1][0]{1})
+$cross_macro $cal_x $cal_y g_stim
+.
+
+Define Display_Small_Calib 1 which_stim
+If !$cross_macro_set Set_Cross_Macro
+Assign cal_i_x $1%$n_calib_x
+Assign cal_i_y floor($1/$n_calib_x)
+Assign cal_x value(calib_grid[$cal_i_y][$cal_i_x]{0})
+Assign cal_y value(calib_grid[$cal_i_y][$cal_i_x]{1})
+Assign hx ncols(v_calib)/2
+Assign hy nrows(v_calib)/2
+Assign vpx $cal_x-$hx	# BUG subtract window border too
+Assign vpy $cal_y-$hy	# BUG subtract window border too
+Posn_Window v_calib $vpx $vpy
+$cross_macro $hx $hy g_calib
+
+Set displayed_stim $1
+Refresh_Calib
+Set i_calib 0
+.
+
+# Multi-component subimages need 3-D indexing in current implementation,
+# Not possible on older gpu's...
+
+Define Fast_Cross_At 3 x y buffer
+#advise "Fast_Cross_At $1 $2 $3"
+Subimage bar $3 $bar_thickness $bar_length $1-floor($bar_thickness/2)
+						$2-floor($bar_length/2)
+If $ready
+  Then "VSet bar 255"
+  Else "VSet bar{1} 255"
+Delete_Image bar
+Subimage bar $3 $bar_length $bar_thickness $1-floor($bar_length/2)
+						$2-floor($bar_thickness/2)
+If $ready
+  Then "VSet bar 255"
+  Else "VSet bar{1} 255"
+Delete_Image bar
+.
+
+# draw a red dot
+
+Define Dot_At 3 x y buffer
+Subimage dot $3 $bar_thickness $bar_thickness $1-floor($bar_thickness/2)
+						$2-floor($bar_thickness/2)
+VSet dot{2} 255
+Delete_Image dot
+.
+
+# draw a dot with the specified gray level
+
+Define Fast_Draw_Dot 3 x y color
+advise "Fast_Draw_Dot BEGIN"
+Subimage dot g_stim $bar_thickness $bar_thickness $1-floor($bar_thickness/2)
+						$2-floor($bar_thickness/2)
+VSet dot $3
+advise "Fast_Draw_Dot:  drawn!"
+Delete_Image dot
+.
+
+Define Slow_Draw_Dot 3 x y color
+Subimage dot g_stim $bar_thickness $bar_thickness $1-floor($bar_thickness/2)
+						$2-floor($bar_thickness/2)
+VSet dot{0} $3
+VSet dot{1} $3
+VSet dot{2} $3
+Delete_Image dot
+.
+
+Define Slow_Cross_At 3 x y buffer
+advise "Slow_Cross_At $1 $2 $3, ready = $ready"
+Subimage bar g_stim $bar_thickness $bar_length $1-floor($bar_thickness/2)
+						$2-floor($bar_length/2)
+If $ready
+  Then "VSet bar{0} 255 VSet bar{1} 255 VSet bar{2} 255"
+  Else "VSet bar{1} 255"
+
+Delete_Image bar
+Subimage bar g_stim $bar_length $bar_thickness $1-floor($bar_length/2)
+						$2-floor($bar_thickness/2)
+
+If $ready
+  Then "VSet bar{0} 255 VSet bar{1} 255 VSet bar{2} 255"
+  Else "VSet bar{1} 255"
+
+Delete_Image bar
+.
+
+Define Save_Cal 0
+# The calib_data array can hold a lot of points.
+# Only save ones we have collected.
+advise "Save_Cal:  n_calib_stimuli = $n_calib_stimuli"
+Subimage use_calib_data calib_data $n_calib_samples $n_calib_stimuli 0 0
+Get_Calib_Filename
+Put_Ascii use_calib_data $calfile
+Delete_Image use_calib_data
+.
+
+# The old calibration put up a large stimulus window, and presented a number
+# of fixation targets.
+#
+# For the new calibration, we use a smaller window, do incremental fitting on the fly,
+# and display the gaze cursor in the window...
+
+#Define Small_Service_Calibration 0
+#If $this_stim>=$n_calib_x*$n_calib_y "Save_Cal Finish_Calib exit_macro"
+#If $displayed_stim!=$this_stim New_Calib_Stim
+#If !$ready "exit_macro"
+#
+#If $i_calib>=$n_calib_samples
+#  "Increment this_stim exit_macro"
+#
+#Log_Calib_Datum
+#.
+
+# Tune calibration is something that we do to fix an existing calibration
+# We display the existing calibration points, and fit scatter,
+# and then allow the user to place a new fixation point with a left click.
+# Then, a second left click starts the collection, and finally
+# the fit to the new, augmented set is displayed.
+
+Define Tune_Calibration 0
+If $placing exit_macro	# wait for placement
+.
+
+Define Service_Calibration 0
+#advise "Service_Calibration:  ready = $ready  tuning_calib = $tuning_calib"
+If (!$tuning_calib)&&$this_stim>=$n_calib_x*$n_calib_y "Save_Cal Finish_Calib exit_macro"
+
+If (!$tuning_calib)&&$displayed_stim!=$this_stim New_Stim
+If !$ready "exit_macro"
+
+If $i_calib>=$n_calib_samples
+  "If $tuning_calib 'Show_Cal Set placing 1 Set ready 0 Decrement this_stim' Increment this_stim exit_macro"
+
+# We shouldn't log the data if there was a problem with this measurement!?
+Log_Calib_Datum
+.
+
+# use the global vars...
+# $prx_name, $pry_name			ROI location
+# p_dx, p_dy				pupil location rel. ROI center
+# pcr_dx, pcr_dy			CR ROI offset
+# c_dx, c_dy				CR location rel. ROI center
+#VMov dev_${prefix}_result[$i_cam]{$result_pup_a_idx} ${prefix}_n_sum
+
+Define Log_Calib_Datum 0
+#advise 'Log_Calib_Datum BEGIN'
+Assign px $$prx_name+$p_dx
+Assign py $$pry_name+$p_dy
+
+Assign cx $$prx_name+$pcr_dx+$c_dx
+Assign cy $$pry_name+$pcr_dy+$c_dy
+
+VSet calib_data[$this_stim][$i_calib]{$cal_stm_x_i} $cal_x
+VSet calib_data[$this_stim][$i_calib]{$cal_stm_y_i} $cal_y
+
+# This should work, but doesn't!?
+#VSet calib_data[$this_stim][$i_calib]{$cal_pcr_x_i} $px-$cx
+#VSet calib_data[$this_stim][$i_calib]{$cal_pcr_y_i} $py-$cy
+VSet calib_data[$this_stim][$i_calib]{$cal_pcr_x_i} value(${prefix}_result[$i_cam]{$result_pcr_x_idx})
+VSet calib_data[$this_stim][$i_calib]{$cal_pcr_y_i} value(${prefix}_result[$i_cam]{$result_pcr_y_idx})
+
+VSet calib_data[$this_stim][$i_calib]{$cal_pup_x_i} $px
+VSet calib_data[$this_stim][$i_calib]{$cal_pup_y_i} $py
+
+VSet calib_data[$this_stim][$i_calib]{$cal_cr_x_i} $cx
+VSet calib_data[$this_stim][$i_calib]{$cal_cr_y_i} $cy
+
+VSet calib_data[$this_stim][$i_calib]{$cal_pup_a_i}
+	value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+
+Increment i_calib
+.
+
+# draw a dot in the calibration window
+
+Assign fix_x_min $bar_thickness/2
+Assign fix_y_min $bar_thickness/2
+Assign fix_x_max $calib_w-$bar_thickness/2
+Assign fix_y_max $calib_h-$bar_thickness/2
+
+Define Visualize_Fixation 2 x y
+#advise "Visualize_Fixation $1 $2"
+# old version for v_calib
+#If !obj_exists(g_save) "Dup_UByte g_save g_calib VMov g_save g_calib"
+#VMov g_calib g_save	# erase previous fixation
+# use stim window now
+If !obj_exists(g_save) "Dup_UByte g_save g_stim VMov g_save g_stim"
+VMov g_stim g_save	# erase previous fixation
+
+# This was for the version where we moved a small window around...
+# # The x and y are in display coords,
+# # we need to subtract off the window origin...
+# Assign dot_x $fx-$vpx
+# Assign dot_y $fy-$vpy
+Assign dot_x $fx
+Assign dot_y $fy
+If $dot_x<$fix_x_min||$dot_x>=$fix_x_max exit_macro
+If $dot_y<$fix_y_min||$dot_y>=$fix_y_max exit_macro
+#Dot_At $dot_x $dot_y g_calib
+#Refresh_Calib
+Dot_At $dot_x $dot_y g_stim
+Refresh_Stim
+.
+
+# Now we have the calibration coefficients
+# Map the measurements back to the screen and display
+
+Define Show_Scatter 0
+#advise "Show_Scatter:  n_calib_stimuli = $n_calib_stimuli   ready = $ready"
+Get_Calib_Suffix
+#Map_Linear
+Map_Calib$calib_suffix
+VSet g_stim $stim_gray
+#now draw all the fixation crosses
+Print n_calib_stimuli
+Set i 0
+repeat $n_calib_stimuli
+  Display_Recorded_Stim $i
+  Increment i
+  end
+# Now plot all the estimated points...
+Set this_stim 0
+Print n_calib_stimuli
+repeat $n_calib_stimuli
+  Set j 0
+  repeat $n_calib_samples
+    Assign x round(value(calib_estimate[$this_stim][$j]{0}))
+    Assign y round(value(calib_estimate[$this_stim][$j]{1}))
+    If $x>=0&&$x<$stim_w&&$y>=0&&$y<$stim_h
+      "VSet g_stim[$y][$x]{2} 255 \
+       VSet g_stim[$y][$x]{1} 0 \
+       VSet g_stim[$y][$x]{0} 0"
+    Increment j
+    end
+  Increment this_stim
+  end
+Refresh_Stim
+Put_Ascii calib_estimate calest.asc
+.
+
+# For some reason, Refresh_Stim is not working!?
+# We display old garbage left in memory...
+
+Define Refresh_Stim 0
+#advise "VSet g_stim 100"
+#VSet g_stim 100
+#advise "Refresh_Stim"
+cuda
+  cuda_gl
+    load v_stim g_stim
+    quit
+  quit
+gl
+  window v_stim
+  swap_buffers
+  quit
+.
+
+Define Refresh_Calib 0
+cuda
+  cuda_gl
+    load v_calib g_calib
+    quit
+  quit
+gl
+  window v_calib
+  swap_buffers
+  quit
+.
+
+Set old_vis_x -1
+Set old_vis_y -1
+
+Assign dot_x_min $bar_thickness/2
+Assign dot_y_min $bar_thickness/2
+Assign dot_x_max $stim_w-$bar_thickness/2
+Assign dot_y_max $stim_h-$bar_thickness/2
+# Draw a dot in the stimulus window corresponding to the gaze location
+
+Define Service_Visualization 0
+If !$dot_macro_set Set_Dot_Macro
+
+If $old_vis_x>0&&$old_vis_y>0 "$dot_macro $old_vis_x $old_vis_y $stim_gray"
+
+Map_Gaze$calib_suffix
+
+# The x and y are in display coords, we used to
+# subtract off the window origin...
+#Assign dot_x $fx-$v_x1
+#Assign dot_y $fy-$v_y1
+#advise "Dot at $dot_x $dot_y (ex = $ex, ey = $ey)"
+Assign dot_x $fx
+Assign dot_y $fy
+
+If $dot_x<$dot_x_min||$dot_x>=$dot_x_max exit_macro
+If $dot_y<$dot_y_min||$dot_y>=$dot_y_max exit_macro
+
+$dot_macro $dot_x $dot_y 255
+Set old_vis_x $dot_x
+Set old_vis_y $dot_y
+#advise "Service_Visualization calling Refresh_Stim"
+Refresh_Stim
+#advise "Service_Visualization DONE"
+.
+
+Define Finish_Visual 0
+Set visualizing 0
+Resume_Display
+UnShow_Viewer v_stim
+.
+

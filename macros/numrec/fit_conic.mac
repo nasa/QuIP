@@ -1,0 +1,193 @@
+Start_File fit_conic.mac
+
+< $macro_dir/numrec/svd.mac
+< $macro_dir/numrec/la_util.mac
+
+Define Fit_Conic 2 result_vec ptlist
+Tell_If "Fit_Conic2"
+Image term_matrix ncols($2) 6 1 $std_type
+Column_Vector null_v 6 $std_type
+Dup_Obj norm_pts $2
+Normalize_Coords norm_pts $2	# we need to save the normalization factors!
+# here is where we might check for one of the sigma's being too small...
+#
+# for a skinny ellipse at the origin,
+# x^2/r1^2 + y^2/r2^2 = 1
+
+Set fci 0
+repeat ncols($2)
+  Assign x value(norm_pts[$fci]{0})
+  Assign y value(norm_pts[$fci]{1})
+  data ascii read term_matrix[$fci] -
+	$x*$x $x*$y $y*$y $x $y 1
+	quit quit
+  Increment fci
+  end
+
+VSet null_v 0			# why?
+Get_Right_Null_Vector null_v term_matrix
+
+# When we return the coefficients, we ought to undo the normalization!
+# we have x_mean, y_mean, x_sigma, y_sigma
+#
+# a ((x-x_mean)/x_sigma)^2
+#
+# x' F x = 0		# quadratic form for centered conic F = |	a	b/2	|
+#			#					|	b/2	c	|
+#
+# ax' (F/a^2) ax = x' F x
+#
+# (x-u)' F (x-u) = x'Fx - u'Fx - x'Fu + u'u
+#
+# -u'Fx = - x_mean a x - x_mean b/2 y - y_mean b/2 x - y_mean c y
+# -x'Fu = (same thing because F is symmetric)
+# u'u = x_mean^2 + y_mean^2
+
+Set fci 0
+repeat 6
+  VSet $1{$fci} value(null_v[$fci])
+  Increment fci
+  end
+
+Delete_Image null_v
+Delete_Image term_matrix
+Delete_Image norm_pts
+.
+# end Fit_Conic
+
+
+Define Ellipse_Params_From_Coefficients 1 coefficient_vector
+Assign _a	value($1[0])
+Assign _b	value($1[1])
+Assign _c	value($1[2])
+Assign _d	value($1[3])
+Assign _e	value($1[4])
+Assign _f	value($1[5])
+advise "\nEllipse_Params_From_Coefficients:  conic coeffs:  $_a $_b $_c $_d $_e $_f"
+Image _F 2 2 1 $std_type
+Image _F_inv 2 2 1 $std_type
+data ascii read _F - $_a $_b/2 $_b/2 $_c quit quit
+
+# The quadratic form F should be of the form Rinv D R, where D is a diagonal matrix
+# and R, Rinv are a pair of rotation matrices.
+# 
+
+Create_SVD_Objects ellipse 2 2
+#data list quit
+VMov ellipse_u_matrix _F
+numrec svd ellipse_u_matrix ellipse_eigenvalues ellipse_v_matrix quit
+SVD_Sort ellipse
+
+# The u and v matrices are a pair of inverse rotations
+#Display_If ellipse_v_matrix
+#Display_If ellipse_u_matrix
+#Display_If ellipse_eigenvalues
+
+Assign lambda1 value(ellipse_eigenvalues[0])
+Assign lambda2 value(ellipse_eigenvalues[1])
+If $lambda1==0||$lambda2==0
+  "advise 'zero eigenvalue, giving up' Delete_SVD_Objects ellipse PopFile 2 nop"
+
+# Because we have sorted the eigenvalues, this test should always turn out the same way...
+# BUT - equality?
+If $lambda2>$lambda1
+  Then 'Set tmp $lambda1 Set lambda1 $lambda2 Set lambda2 $tmp \
+        Assign ellipse_angle_radians atan2(value(ellipse_u_matrix[0][1]),value(ellipse_u_matrix[1][1]))'
+  Else 'Assign ellipse_angle_radians atan2(value(ellipse_u_matrix[0][0]),value(ellipse_u_matrix[1][0]))'
+Assign ellipse_angle_degrees $ellipse_angle_radians*45/atan(1)
+If $ellipse_angle_degrees<0
+  'do Add_Var ellipse_angle_degrees 180 while $ellipse_angle_degrees<0'
+If $ellipse_angle_degrees>=180
+  'do Add_Var ellipse_angle_degrees -180 while $ellipse_angle_degrees>=180'
+
+# Get the _origin from the linear coefficients
+# We have (x-x0)' F (x-x0),
+# the linear terms are -2 x0' F x,
+# so (d,e) = -2 x0' F = -2 F x0
+# To get the _origin from the coefficients, we invert F
+# BUT the coefficients operate on image space values...
+# Because we have now moved to pixel space computations,
+# we scale them with M
+
+Image _linear_coeffs 2 1 1 $std_type
+Image _origin 2 1 1 $std_type
+Image _tmp_col 2 1 1 $std_type
+Vector _originT 2 1 $std_type
+
+data ascii read _linear_coeffs - $_d $_e quit quit
+# x0 = _F_inv (d,e)
+Invert2 _F_inv _F
+Inner_Prod _origin _F_inv _linear_coeffs
+Delete_Image _linear_coeffs
+
+VSMul _origin _origin -1/2
+
+# This calculation of the center is unaffected by scaling the equation,
+# beause of cancelling factors in Finc and _linear_coeffs...
+#
+# But to calculate the radii, we need to make an adjustment to the constant term...
+# a x^2 + b y^2 + f = 0
+# y=0 -> x = sqrt(-f/a)
+
+# Now compute the effective "f" after taking into account the translation...
+Transpose _originT _origin
+Inner_Prod _tmp_col _F _origin
+Scalar _offset 1 $std_type
+Inner_Prod _offset _originT _tmp_col
+
+# this offset is x0' _F x0, which appears with a plus sign (the two minus signs on the x0's cancel).
+# We add it to the f coefficient to get the effective constant
+
+# So now we have:
+#
+# f = _offset + C
+# C = f - _offset
+#
+# where C is the constant term that we would have if there were no positional offset.
+# But to interpret the coefficients in meaningful units, we need to divide so that C= -1.
+#
+# We have (x-x0)' _F (x-x0) + C = 0
+# or  (x-x0)' (-_F/C) (x-x0) - 1 = 0
+
+# for debug
+Assign eff value($1{5})
+Assign _offset value(_offset)
+advise "eff = $eff,  _offset = $_offset"
+
+Assign C value($1{5})-value(_offset)
+#advise "Assign C value($1{5})-value(_offset)"
+#Print C
+#
+# BUG - feature_index goes with a specific client program...
+#
+# this statement used to be executed after the advisory...
+#VSet param_list[$feature_index]{5} value(_offset)-1'
+
+If $C==0	'advise "bad C value, resetting" Set C -1'
+
+# The radii are 1/sqrt(lambda) if C is -1...
+# So we try 1/sqrt(abs($lambda1/(-$C)))
+Assign rad1 1/sqrt(abs($lambda1/(-$C)))
+Assign rad2 1/sqrt(abs($lambda2/(-$C)))
+Assign ellipse_radius max($rad1,$rad2)
+Assign minor_fraction min($rad2,$rad1)/$ellipse_radius
+Assign rad1 $ellipse_radius
+Assign rad2 $rad1*$minor_fraction
+
+#advise "radii:  $rad1 $rad2"
+
+Assign ellipse_x0 value(_origin[0])
+Assign ellipse_y0 value(_origin[1])
+
+Delete_Image _origin
+Delete_Image _originT
+Delete_Image _offset
+Delete_Image _tmp_col
+Delete_Image _F
+Delete_Image _F_inv
+
+Delete_SVD_Objects ellipse
+.
+# end Ellipse_Params_From_Coefficients
+
+Stop_File fit_conic.mac

@@ -1,0 +1,71 @@
+
+Define Find_Stim_Start 1 filename
+Read_File_Header $1
+Assign fss_nf nframes('$1')
+Tell_If "file $1 has $fss_nf frames"
+Set first_field_to_process -1
+# don't use the top and bottom strips, don't use the center either...
+# Why not user the center???
+# Because the fixation point is there???
+
+
+Dup_Float valid_mask raw_input
+
+Vector sigma_buf $fss_nf 1 float
+
+Set fss_i 0
+do
+  Next_Input $1		# into raw_input
+  Get_Valid_Mask valid_mask raw_input
+  Pause_If
+  # We compute the stats for the valid portion only
+  VVMul raw_input raw_input valid_mask
+  Get_Valid_Stats raw_input valid_mask
+
+  VSet sigma_buf[$fss_i] $sigma
+  Tell_If "field $fss_i, mean $mean_val  sigma $sigma  sigma_thresh $sigma_thresh"
+  If $sigma>$sigma_thresh&&$first_field_to_process<0
+    "Set first_field_to_process $fss_i"
+  Increment fss_i
+  nop
+  while $fss_i<$fss_nf&&$first_field_to_process<0
+
+# BUG close file here???
+
+If iof_exists('$1') "Close_Hips_File $1"
+
+If $first_field_to_process<0 Make_Do
+If $first_field_to_process<0 "error_exit 'Unable to find stim start'"
+
+Delete_Image valid_mask		# we create this again later...
+Print first_field_to_process
+.
+
+# We call Make_Do when we have failed to find a first frame by other means.
+# This could be because the sigma never got above threshold
+
+Define Make_Do 0
+Tell_If Make_Do
+Subvector use_sigmas sigma_buf $fss_i 0
+Get_Max max_sigma  use_sigmas
+Get_Min min_sigma  use_sigmas
+Get_Sum sigma_sum use_sigmas
+Assign mean_sigma $sigma_sum/ncols(use_sigmas)
+VSAdd use_sigmas use_sigmas -$mean_sigma
+Dup_Float sigsq use_sigmas
+VVMul sigsq use_sigmas use_sigmas
+Get_Sum sos sigsq
+Assign sigma_sd sqrt($sos/ncols(use_sigmas))
+advise "sigma mean $mean_sigma, sd = $sigma_sd"
+VSMul use_sigmas use_sigmas 1/$sigma_sd
+# now supposedly the array has a mean of zero and a variance of 1
+Set fss_j 0
+do
+  If value(use_sigmas[$fss_j])>(-2) "Set first_field_to_process $fss_j"
+  Increment fss_j
+  while $first_field_to_process<0&&$fss_j<ncols(use_sigmas)
+Delete_Image use_sigmas
+.
+
+
+

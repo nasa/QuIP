@@ -1,0 +1,22 @@
+/* These are the integer-only functions */
+
+KERN_PROT_3V( vand )
+KERN_PROT_3V( vnand )
+KERN_PROT_3V( vor )
+KERN_PROT_3V( vxor )
+KERN_PROT_3V( vmod )
+KERN_PROT_3V( vshr )
+KERN_PROT_3V( vshl )
+KERN_PROT_2V( vnot )
+KERN_PROT_2V( vcomp )
+
+KERN_PROT_2V_SCAL( vsand )
+KERN_PROT_2V_SCAL( vsnand )
+KERN_PROT_2V_SCAL( vsor )
+KERN_PROT_2V_SCAL( vsxor )
+KERN_PROT_2V_SCAL( vsmod )
+KERN_PROT_2V_SCAL( vsmod2 )
+KERN_PROT_2V_SCAL( vsshr )
+KERN_PROT_2V_SCAL( vsshr2 )
+KERN_PROT_2V_SCAL( vsshl )
+KERN_PROT_2V_SCAL( vsshl2 )

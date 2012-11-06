@@ -1,0 +1,17 @@
+
+Start_File rotimg.mac
+
+Complex_Image rotation_map
+
+Define Rotate_Image 3 target source angle_in_degrees
+Set angle $3
+Assign radians $angle*atan(1)/45
+Ramp2D rotation_map{1} -$ysize*$radians/2 $radians 0
+Ramp2D rotation_map{0} $xsize*$radians/2 0 -$radians
+war misc bilinear $1 $2 rotation_map quit quit
+.
+
+
+
+Stop_File rotimg.mac
+

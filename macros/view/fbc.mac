@@ -1,0 +1,105 @@
+# fbdevd client macros
+
+< $macro_dir/system/daemons.mac
+< $macro_dir/system/portids.scr
+
+Start_File fbc.mac
+
+Define FBDev_Connect 0
+Stem_Connect fbdevd $fbdev_host
+.
+
+Define FBDev_Handshake 0
+Stem_Handshake fbdevd
+.
+
+Define FBDev_Send 1 text
+Stem_Send fbdevd $1
+.
+
+Define FBDev_Xmit 1 object
+Stem_Xmit fbdevd $1
+.
+
+Define FBDev_Fetch_Var 1 varname
+Stem_Fetch_Var fbdevd $1
+.
+
+Define Second_Head_Init 0
+FBDev_Connect
+FBDev_Send Second_Head_Init
+FBDev_Fetch_Var fb_width
+FBDev_Fetch_Var fb_height
+advise "Frame buffer is $fb_width x $fb_height"
+.
+
+Define FBDev_Init 0
+FBDev_Connect
+FBDev_Send FBDev_Init
+FBDev_Fetch_Var fb_width
+FBDev_Fetch_Var fb_height
+advise "Frame buffer is $fb_width x $fb_height"
+.
+
+#_________mappings to functions in fb.mac_______________________#
+
+Define Set_Screen_Color 3 r g b
+FBDev_Send "Set_Screen_Color $1 $2 $3"
+.
+
+Define FB_Init 0
+FBDev_Send FB_Init
+.
+
+Define S2 0
+FBDev_Send S2
+.
+
+Define S1 0
+FBDev_Send S1
+.
+
+If macro_exists("Setcolor") "macros delete Setcolor quit"
+
+Define Setcolor 4 index r g b
+FBDev_Send "Setcolor $1 $2 $3 $4"
+.
+
+Define Update_Cmap 0
+FBDev_Send "Update_Cmap"
+.
+
+Define Wake_FB 0
+FBDev_Send "Wake_FB"
+.
+
+Define Init_KB 0
+FBDev_Send "Init_KB"
+.
+
+Define Wait_KB 0
+FBDev_Send "Wait_KB"
+.
+
+Define Check_KB 0
+FBDev_Send "Check_KB"
+FBDev_Fetch_Var n_readable
+.
+
+Define Clear_KB 0
+FBDev_Send "Clear_KB"
+#FBDev_Fetch_Var n_readable
+Set n_readable 0
+.
+
+Define Select_Pen 1 color_index
+FBDev_Send "Select_Pen $1"
+.
+
+Define Draw_Box 4 x0 y0 x1 y1
+advise "Draw_Box $1 $2 $3 $4"
+FBDev_Send "Draw_Box $1 $2 $3 $4"
+.
+
+Stop_File fbc.mac
+

@@ -1,0 +1,13 @@
+# These macros are for 8 bpp display
+
+# The big Acer monitor is 1920x1200 but it is broken at the moment.
+# We've replaced it with a Samsung Syncmaster 204bw: 1680x1050
+Define Set_Screen_Color 3 r g b
+Setcolor $mod_index $1 $2 $3
+Update_Cmap
+.
+
+Define Toggle_Screens 0
+nop
+.
+

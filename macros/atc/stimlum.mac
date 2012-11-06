@@ -1,0 +1,138 @@
+
+# This used to work on an 8 bit display, but with a 24 bit display we
+# need to do something different
+
+Define Extract8 0
+view extract stimbuf $screen_viewer 0 0 quit
+Map f_stimlum stimbuf lum_map
+.
+
+Define Init_Lum_Map 0
+Vector cmap 256 3 float
+Vector lum_map 256 1 float
+
+view 
+  luts 
+    cmaps 
+      getmap cmap 
+      quit 
+    quit 
+  quit 
+
+# lum_map maps 8 bit LUT indices to the corresponding luminance,
+# assuming linearity (no gamma) and luminance ratios 3:6:1
+
+VSMul lum_map cmap{0} 0.3
+VSMul cmap{1} cmap{1} 0.6
+VVAdd lum_map lum_map cmap{1}
+VSMul cmap{2} cmap{2} 0.1
+VVAdd lum_map lum_map cmap{2}
+Delete_Image cmap
+.
+
+Define Extract24 0
+Tell_If "Extract24:  extracting"
+view extract stimbuf $screen_viewer 0 0 quit
+Tell_If "Extract24:  DONE extracting"
+.
+
+Define Save_RGB_File 0
+Tell_If "Save_RGB_File:  writing rgb file"
+# save the rgb stimulus
+Write_File_Header $rgb_file 1
+Put_Next stimbuf $rgb_file
+Tell_If "Save_RGB_File:  DONE writing rgb file"
+.
+
+
+# get the previously saved stimlus
+
+Define Read_Saved_RGB 1 target
+Set stim_img_dir /home/plateau2/jbm/data/atc/images/$SUBSTEM
+Set stim_rgb_file stimrgb.trl.$trlno.hips2
+Hips_Read_Directory $stim_img_dir
+Read_File_Header $stim_rgb_file
+Get_Next $1 $stim_rgb_file
+.
+
+Define Read_Last_RGB 1 target
+Set lastfile /tmp/lastrgb.hips2
+If file_exists('$lastfile')
+  Then "advise 'reading file $lastfile into image $1' Read_File_Header $lastfile Get_Next $1 $lastfile Set have_last_rgb 1"
+  Else "Set have_last_rgb 0"
+.
+
+Define Save_Last_RGB 1 image
+Set lastfile /tmp/lastrgb.hips2
+advise "saving image $1 to file $lastfile"
+Write_File_Header $lastfile 1
+Put_Next $1 $lastfile
+.
+
+
+Define Save_Lum_File 0
+Tell_If "Save_Lum_File:  computing stimlum"
+RGB_2_Lum f_stimlum stimbuf
+Tell_If "Save_Lum_File:  DONE computing stimlum"
+.
+
+Define RGB_2_Lum 2 dest src
+Tell_If "RGB_2_Lum $1 $2"
+Dup_Float fstim $2
+Convert fstim $2
+# BUG these weights aren't quite right for the flat panel
+VSMul fstim{0} fstim{0} 0.3
+VSMul fstim{1} fstim{1} 0.6
+VSMul fstim{2} fstim{2} 0.1
+VVAdd $1 fstim{0} fstim{1}
+VVAdd $1 $1 fstim{2}
+Delete_Image fstim
+.
+
+
+# create image stimlum and get if from the window
+
+Define Get_Stimulus_From_Window 0
+
+Assign display_depth depth($screen_viewer)
+Print display_depth
+
+Image stimbuf nrows(default_screen) ncols(default_screen) $display_depth u_byte
+Image f_stimlum nrows(default_screen) ncols(default_screen) 1 float
+Image b_stimlum nrows(default_screen) ncols(default_screen) 1 u_byte
+
+If $display_depth==1 Init_Lum_Map
+
+# We need to make sure that no other process tries to use the display
+# when we think our window is mapped...
+# What happens if a screen saver is running???
+
+#Lock_Display
+
+Tell_If "mapping screen viewer"
+view
+  show $screen_viewer			# make sure on top
+  quit
+
+Tell_If "extracting image from window"
+If $display_depth==1
+  Then Extract8
+  Else Extract24
+Tell_If "DONE extracting image from window"
+
+RGB_2_Lum f_stimlum stimbuf
+
+Convert b_stimlum f_stimlum
+Delete_Image f_stimlum
+
+# BUG?  sometimes the window manager (on stiles) doesn't unmap
+# the viewer:  subsequent runs of the program get the SAME image!?!?!?
+
+Tell_If "unmapping screen_viewer"
+Pause_If
+view
+  unshow $screen_viewer
+  quit
+Tell_If "DONE unmapping screen_viewer"
+
+.

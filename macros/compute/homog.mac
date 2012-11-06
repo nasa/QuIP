@@ -1,0 +1,60 @@
+#
+# matrix utilities for homogenous coordinates
+#
+
+Define YRot 2 matrix angle
+Assign yra $2*atan(1)/45
+VSet $1 0.0
+VSet $1[1][1] 1.0
+VSet $1[0][0] "cos($yra)"
+VSet $1[0][2] "-sin($yra)"
+VSet $1[2][0] "sin($yra)"
+VSet $1[2][2] "cos($yra)"
+VSet $1[3][3] 1
+.
+
+Define XRot 2 matrix angle
+Assign xra $2*atan(1)/45
+VSet $1 0.0
+VSet $1[0][0] 1.0
+VSet $1[1][1] "cos($xra)"
+VSet $1[1][2] "-sin($xra)"
+VSet $1[2][1] "sin($xra)"
+VSet $1[2][2] "cos($xra)"
+VSet $1[3][3] 1
+.
+
+Define ZRot 2 matrix angle
+Assign zra $2*atan(1)/45
+VSet $1 0.0
+VSet $1[2][2] 1.0
+VSet $1[1][1] "cos($zra)"
+VSet $1[1][0] "-sin($zra)"
+VSet $1[0][1] "sin($zra)"
+VSet $1[0][0] "cos($zra)"
+VSet $1[3][3] 1
+.
+
+Define Identity 1 matrix
+VSet $1 0.0
+VSet $1[0][0] 1.0
+VSet $1[1][1] 1.0
+VSet $1[2][2] 1.0
+VSet $1[3][3] 1
+.
+
+Define New_Matrix 1 name
+Image $1 4 4 1 float
+.
+
+Define Translation 4 matrix dx dy dz
+VSet $1 0.0
+VSet $1[0][0] 1
+VSet $1[1][1] 1
+VSet $1[2][2] 1
+VSet $1[3][3] 1
+VSet $1[0][3] $2
+VSet $1[1][3] $3
+VSet $1[2][3] $4
+.
+

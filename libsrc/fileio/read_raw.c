@@ -1,0 +1,417 @@
+#include "quip_config.h"
+
+char VersionId_fio_read_raw[] = QUIP_VERSION_STRING;
+
+
+#include <stdio.h>
+
+#include "fio_prot.h"
+#include "debug.h"
+#include "raw.h"
+#include "filetype.h"
+#include "data_obj.h"
+#include "uio.h"
+#include <fcntl.h>
+
+#ifdef CRAY
+#include "getbuf.h"
+#endif /* CRAY */
+
+#define N_DUMPER_BYTES	0x2000		/* 8k */
+
+static char dumper[N_DUMPER_BYTES];	/* BUG need to check that 1024
+							is really max size */
+
+/* We used to read() in chunks - WHY???
+ * The code had a bug, it counted pixels and assumed that the number of bytes
+ * in a chunk was evenly divisible by the pixel size - but for RGB byte images the size
+ * is 3 - so CHUNK_SIZE needs to be divisible by 3!?
+ *
+ * I don't really see why we need to read in chunks at all!!?
+ * Maybe a hack for the old dos port?
+ */
+#define CHUNK_SIZE	0x7000			/* a kluge */
+
+
+#define TALL_TOLD	(ifp->if_flags&FILE_TALL)
+#define SHORT_TOLD	(ifp->if_flags&FILE_SHORT)
+#define THICK_TOLD	(ifp->if_flags&FILE_THICK)
+#define THIN_TOLD	(ifp->if_flags&FILE_THIN)
+
+#define TELL_TALL	ifp->if_flags |= FILE_TALL
+#define TELL_SHORT	ifp->if_flags |= FILE_SHORT
+#define TELL_THICK	ifp->if_flags |= FILE_THICK
+#define TELL_THIN	ifp->if_flags |= FILE_THIN
+
+void rd_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+{
+	incr_t sinc,finc,rinc,pinc,cinc;
+	int size;
+	char *sbase,*fbase,*rowbase,*pbase,*cbase;
+	dimension_t s,f,row,col,comp;
+
+	if( ! USES_STDIO(ifp) ){
+		WARN("sorry, non-contiguous reads must use stdio");
+		return;
+	}
+
+	size=siztbl[dp->dt_prec];
+	sinc = dp->dt_sinc*size;
+	finc = dp->dt_finc*size;
+	rinc = dp->dt_rowinc*size;
+	pinc = dp->dt_pinc*size;
+	cinc = dp->dt_cinc*size;
+
+	sbase = (char *)dp->dt_data;
+	for(s=0;s<dp->dt_seqs;s++){
+		fbase = sbase;
+		for(f=0;f<dp->dt_frames;f++){
+			rowbase=fbase;
+			for(row=0;row<dp->dt_rows;row++){
+				pbase = rowbase;
+				for(col=0;col<dp->dt_cols;col++){
+					cbase=pbase;
+					for(comp=0;comp<dp->dt_comps;comp++){
+						/* write this pixel */
+						if( fread(cbase,size,1,ifp->if_fp)
+							!= 1 ){
+					WARN("error reading pixel component");
+					SET_ERROR(ifp);
+					(*ft_tbl[ifp->if_type].close_func)(QSP_ARG  ifp);
+							return;
+						}
+						cbase += cinc;
+					}
+					pbase += pinc;
+				}
+				rowbase += rinc;
+			}
+			fbase += finc;
+		}
+		sbase += sinc;
+	}
+}
+
+void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+{
+	dimension_t n, size;
+	dimension_t n2;
+	uint32_t npixels;
+#ifdef CRAY
+	int goofed=0;
+#endif /* CRAY */
+
+	if( !same_type(QSP_ARG  dp,ifp) ) return;
+
+	/* this wants nframes the same too!?
+	 * same_size() checks only rows & cols
+	 */
+	if( !same_size(QSP_ARG  dp,ifp) ) return;
+
+	if( !IS_CONTIGUOUS(dp) ){
+		rd_raw_gaps(QSP_ARG  dp,ifp);
+		return;
+	}
+
+	npixels=dp->dt_seqs * dp->dt_frames * dp->dt_rows * dp->dt_cols ;
+
+	size = siztbl[ dp->dt_prec ];
+	size *= dp->dt_comps;
+
+#ifdef CRAY
+	/* CRAY float's are 8 bytes instead of 4,
+	 * so we have to convert from IEEE format
+	 */
+
+	if( dp->dt_prec == PREC_SP ){
+		float *cbuf, *p;
+
+		n=CONV_LEN<npixels?CONV_LEN:npixels;
+		cbuf = getbuf( 4 * n );		/* 4 is size of IEEE float */
+		p = dp->dt_data;
+
+		while( npixels > 0 ){
+			n = CONV_LEN<npixels ? CONV_LEN : npixels ;
+			if( USES_STDIO(ifp) ){
+				if( (n2=fread(cbuf,4,n,ifp->if_fp)) != n ){
+					sprintf(ERROR_STRING,
+				"read_object %s from file %s:  %d pixels requested, %d pixels read",
+						dp->dt_name,ifp->if_name,n,n2);
+					WARN(ERROR_STRING);
+					goofed=1;
+					goto ccdun;
+				}
+			} else {
+				if( (n2=read(ifp->if_fd,cbuf,4*n)) != 4*n ){
+					sprintf(ERROR_STRING,
+				"read_object %s from file %s:  %d bytes requested, %d bytes read",
+						dp->dt_name,ifp->if_name,4*n,n2);
+					WARN(ERROR_STRING);
+					goofed=1;
+					goto ccdun;
+				}
+			}
+
+			ieee2cray(p,cbuf,n);
+
+			p += n;
+			npixels -= n;
+		}
+ccdun:		givbuf(cbuf);
+		if( goofed ) (*ft_tbl[ifp->if_type].close_func)(ifp);
+dun2:		return;
+	} else if( dp->dt_prec != PREC_UBY ){
+		WARN("Sorry, can only read float or unsigned byte images on CRAY now...");
+		goto dun2;
+	}
+#endif /* CRAY */
+		
+		
+	if( USES_STDIO(ifp) ){
+		if( (n2=fread(dp->dt_data,(size_t)size,(size_t)npixels,ifp->if_fp))
+			!= (size_t)npixels ){
+
+			sprintf(ERROR_STRING,
+		"read_object %s from file %s:  %d pixels requested, but %d pixels read",
+				dp->dt_name,ifp->if_name,npixels,n2);
+			WARN(ERROR_STRING);
+		}
+	} else {
+#ifdef FOOBAR
+		uint32_t os;
+
+		n=CHUNK_SIZE;
+		os=0;
+		while( npixels > 0 ){
+			int n_actual;
+
+			if( npixels*size < n )
+				n=(npixels*size);
+
+			/* BUG these casts are done for PC,
+			 * should check for data loss!?
+			 */
+
+sprintf(ERROR_STRING,"%d pixels remaining, requesting %d bytes at offset %d (size=%d)",npixels,n,os,size);
+advise(ERROR_STRING);
+			if( (n_actual=read(ifp->if_fd,((char *)dp->dt_data)+os,(u_int)n))
+				!= (int)n ){
+				sprintf(ERROR_STRING,
+					"error read()'ing pixel data, %d requested, %d actually read",n,n_actual);
+				WARN(ERROR_STRING);
+			} else {
+				sprintf(ERROR_STRING,"%d pixels read successfully",n);
+				advise(ERROR_STRING);
+			}
+			os += n;
+			npixels -= n/size;
+		}
+#endif /* FOOBAR */
+
+		int n_actual;
+
+		n=npixels*size;
+		if( (n_actual=read(ifp->if_fd,((char *)dp->dt_data),(u_int)n)) != (int) n ){
+			sprintf(ERROR_STRING,
+				"error reading pixel data, %d requested, %d actually read",n,n_actual);
+			WARN(ERROR_STRING);
+		}
+	}
+}
+
+
+
+/* read an image which is too small or too big.
+ * The offsets are offsets into the target data object.
+ */
+
+int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
+{
+	dimension_t x_fill, y_fill;	/* number of cols,rows to draw */
+	dimension_t dx,dy;		/* dimensions of input file */
+	dimension_t x_skip;		/* extra data cols to right of image */
+	dimension_t x_dump, y_dump;	/* data to read and throw away */
+	dimension_t i;
+	char *p;
+	dimension_t size, dump_count, n_dumper_elements;
+
+	size = siztbl[ dp->dt_prec ];
+	size *= dp->dt_comps;
+	x_fill=(dp->dt_cols-x_offset);
+	y_fill=(dp->dt_rows-y_offset);
+	if( x_fill <= 0 || y_fill <= 0 ){
+		NWARN("frag_read:  offset too great for this object");
+		return(-1);
+	}
+	dx=ifp->if_dp->dt_cols;
+	dy=ifp->if_dp->dt_rows;
+	if( dx > x_fill ){	/* image wider than data area */
+		x_skip=x_fill-dx;
+		x_dump=dx-x_fill;
+		x_skip=0;
+if( ! THICK_TOLD ){
+sprintf(DEFAULT_ERROR_STRING,"image in file %s too wide (%d) for object %s (%d)",
+ifp->if_name,dx,dp->dt_name,x_fill);
+NWARN(DEFAULT_ERROR_STRING);
+/*
+//sprintf(DEFAULT_ERROR_STRING,"xskip = %d    x_fill = %d    dx = %d    x_dump = %d\n",x_skip,x_fill,dx,x_dump);
+//advise(DEFAULT_ERROR_STRING);
+*/
+TELL_THICK;
+}
+	} else {		/* image thinner that data area? */
+
+if( dx < x_fill && (! THIN_TOLD) ){
+sprintf(DEFAULT_ERROR_STRING,"image in file %s too thin (%d) for object %s (%d)",
+ifp->if_name,dx,dp->dt_name,x_fill);
+NWARN(DEFAULT_ERROR_STRING);
+TELL_THIN;
+}
+		x_skip=x_fill-dx;
+		x_fill=dx;
+		x_dump=0;
+	}
+	if( dy > y_fill ){	/* image taller than data area */
+
+if( ! TALL_TOLD ){
+sprintf(DEFAULT_ERROR_STRING,"image in file %s too tall (%d) for object %s (%d)",
+ifp->if_name,dy,dp->dt_name,y_fill);
+NWARN(DEFAULT_ERROR_STRING);
+TELL_TALL;
+}
+		x_skip=x_fill-dx;
+		y_dump=dy-y_fill;
+	} else {		/* image shorter than data area */
+
+if( dy < y_fill && (! SHORT_TOLD) ){
+sprintf(DEFAULT_ERROR_STRING,"image in file %s too short (%d) for object %s (%d)",
+ifp->if_name,dy,dp->dt_name,y_fill);
+NWARN(DEFAULT_ERROR_STRING);
+TELL_SHORT;
+}
+		x_skip=x_fill-dx;
+		y_fill=dy;
+		y_dump=0;
+	}
+	p=(char *)dp->dt_data + t_offset;
+	p += y_offset * size * dp->dt_cols;
+
+	n_dumper_elements = N_DUMPER_BYTES/(ifp->if_dp->dt_comps*ELEMENT_SIZE(ifp->if_dp));
+
+	for(i=0;i<y_fill;i++){
+		p += (x_offset*size);
+		if( USES_STDIO(ifp) ){
+			if( fread(p,(size_t)size,(size_t)x_fill,ifp->if_fp)
+				!= (size_t)x_fill )
+				return(-1);
+			/* now read the trash... */
+			dump_count = x_dump;
+			do {
+				dimension_t n;
+				if( dump_count > n_dumper_elements )
+					n = n_dumper_elements;
+				else
+					n = dump_count;
+
+				if( fread(dumper,(size_t)size,(size_t)n,ifp->if_fp) != (size_t)n )
+					return(-1);
+
+				dump_count -= n;
+			} while( dump_count > 0 );
+		} else {
+			/* BUG casting for pc */
+			if( read(ifp->if_fd,p,(u_int)(size*x_fill))
+				!= (int)(size*x_fill) )
+				return(-1);
+			/* now read the trash... */
+			dump_count = x_dump;
+			do {
+				dimension_t n;
+				if( dump_count > n_dumper_elements )
+					n = n_dumper_elements;
+				else
+					n = dump_count;
+
+				if( read(ifp->if_fd,dumper,(u_int)(size*n)) != (int)(size*n) )
+					return(-1);
+				dump_count -= n;
+			} while( dump_count > 0 );
+		}
+		p += ( (x_fill+x_skip) *size);
+	}
+	for(i=0;i<y_dump;i++)
+		/* BUG need to limit read size to dumper */
+		if( dx > n_dumper_elements )
+			NERROR1("There is a bug in fileio/read_raw.c - FIXME");
+
+		if( USES_STDIO(ifp) ){
+			if( fread(dumper,(size_t)size,(size_t)dx,ifp->if_fp)
+				!= (size_t)dx )
+				return(-1);
+		} else {
+			if( read(ifp->if_fd,dumper,(u_int)(size*dx))
+				!= (int)(size*dx) )
+				return(-1);
+		}
+
+	return(0);
+}
+
+FIO_RD_FUNC( raw_rd )
+{
+	uint32_t totfrms;
+
+	if( !same_type(QSP_ARG  dp,ifp) ) return;
+
+	if( t_offset >= dp->dt_frames ){
+		sprintf(ERROR_STRING,
+			"raw_rd:  ridiculous frame offset %d (max %d)",
+			t_offset,dp->dt_frames-1);
+		WARN(ERROR_STRING);
+		return;
+	}
+
+	t_offset *=	( dp->dt_rows
+			 * dp->dt_cols
+			 * dp->dt_comps
+			 * siztbl[dp->dt_prec] );
+
+
+	totfrms = dp->dt_frames * dp->dt_seqs;
+
+	if( 	dp->dt_rows==ifp->if_dp->dt_rows &&
+		dp->dt_cols==ifp->if_dp->dt_cols &&
+		x_offset==0 && y_offset==0 ){
+
+		read_object(QSP_ARG  dp,ifp);
+	} else {
+		if( frag_read(dp,ifp,x_offset,y_offset,t_offset) < 0 )
+			goto readerr;
+	}
+
+	ifp->if_nfrms += totfrms;
+
+	/* We added the NO_AUTO_CLOSE flag so we could reverse
+	 * a movie by reading the last frame first...
+	 * BUG we need to add this functionality to the other filetypes.
+	 */
+
+	if( FILE_FINISHED(ifp) ){
+
+		if( verbose ){
+			sprintf(ERROR_STRING,
+				"closing file \"%s\" after reading %d frames",
+				ifp->if_name,ifp->if_nfrms);
+			advise(ERROR_STRING);
+		}
+		(*ft_tbl[ifp->if_type].close_func)(QSP_ARG  ifp);
+	}
+	return;
+readerr:
+	sprintf(ERROR_STRING, "error reading pixel data from file \"%s\"",
+		ifp->if_name);
+	WARN(ERROR_STRING);
+	SET_ERROR(ifp);
+	(*ft_tbl[ifp->if_type].close_func)(QSP_ARG  ifp);
+	return;
+}

@@ -1,0 +1,23 @@
+
+Define Check_Env 3 env_var script_var default_value
+If !var_exists($1) "Set $1 $3"
+Set $2 $$1
+.
+
+Check_Env CHATTY chatty 0
+Check_Env SHOWING showing 1
+Check_Env PLOTTING plotting 1
+Check_Env PLOTALL plotall 0
+
+Check_Env SHOWALL showall 0
+Check_Env PAUSING pausing 0
+Check_Env SAVING saving 0
+Check_Env LOGGING logging 0
+Check_Env RECORDING recording 0
+
+Check_Env INTERACTIVE interactive 0
+
+Define Init_Viewers 0
+If $showing "< $macro_dir/view/def_viewers.scr advise 'Waiting for viewers...' Pause_If"
+.
+

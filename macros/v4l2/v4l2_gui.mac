@@ -1,0 +1,138 @@
+# controls offered in xawtv:
+# Audio (un)mute
+# Full Screen on/off
+# Grab Image (ppm/jpeg/avi)
+# Channel Window
+# Channel Editor
+# Launch Window
+# Channel Hopping
+# Stay On Top
+
+# TV Norm			NTSC
+# Video source			default
+# Capture			grabdisplay
+# Bright
+# Hue
+# Contrast
+# Color
+# Volume
+# y offset odd field
+# y offset even field
+
+# Mirror			off
+# Invert			off
+# automute			on
+# Quit
+
+Set hue_min	 -128
+Set hue_max	127
+
+Set bright_min	 0
+Set bright_max	255
+
+Set cont_min	 0
+Set cont_max	127
+
+Set color_min	 0
+Set color_max	127
+
+Define SetHue 0
+v4l2
+  controls
+    set_hue $slider_val
+    quit
+  quit
+.
+
+Define SetBright 0
+v4l2
+  controls
+    set_brightness $slider_val
+    quit
+  quit
+.
+
+Define SetCont 0
+v4l2
+  controls
+    set_contrast $slider_val
+    quit
+  quit
+.
+
+Define SetColor 0
+v4l2
+  controls
+    set_saturation $slider_val
+    quit
+  quit
+.
+
+Define Fetch_Settings 0
+v4l2
+  controls
+    get_hue v4l2_hue
+    get_contrast v4l2_contrast
+    get_brightness v4l2_bright
+    get_saturation v4l2_color
+    quit
+  quit
+interface
+  decorate $v4l2_panel_name
+    set_scale hue $v4l2_hue
+    set_scale bright $v4l2_bright
+    set_scale contrast $v4l2_contrast
+    set_scale color $v4l2_color
+    quit
+  quit
+.
+
+Define Init_V4L2_Panel 0
+advise 'INIT PANEL'
+Set p v4l2_panel
+interface
+  panel $p 500 340
+  quit
+Add_V4L2_Controls $p
+interface
+  control
+    show $p
+    quit
+  quit
+Posn_Window $p 700 630
+.
+
+Set g1name	/dev/video0
+Set g2name	/dev/video1
+Set g3name	/dev/video2
+Set g4name	/dev/video3
+
+Define Add_V4L2_Controls 1 panel_name
+Set v4l2_panel_name $1
+interface
+  decorate $v4l2_panel_name
+    chooser input_channel SelectVideoInput 4
+    	$g1name
+    	$g2name
+    	$g3name
+    	$g4name
+    position 130 5
+    adjuster hue SetHue $hue_min $hue_max 0
+    adjuster bright SetBright $bright_min $bright_max 0
+    adjuster contrast SetCont $cont_min $cont_max 0
+    adjuster color SetColor $color_min $color_max 0
+    quit
+  quit
+.
+
+# This sets which grabber we display in the window, and
+# which ptz cam we send commands to.
+
+Define SelectVideoInput 0
+If !strcmp('$choice','$g1name') "SetInChannel 1"
+If !strcmp('$choice','$g2name') "SetInChannel 2"
+If !strcmp('$choice','$g3name') "SetInChannel 3"
+If !strcmp('$choice','$g4name') "SetInChannel 4"
+.
+
+

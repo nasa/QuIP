@@ -1,0 +1,95 @@
+#include "quip_config.h"
+
+char VersionId_dither_getbest[] = QUIP_VERSION_STRING;
+
+#include <stdio.h>
+#ifdef HAVE_MATH_H
+#include <math.h>
+#endif
+
+#include "qlevel.h"
+#include "ctone.h"
+#include "debug.h"
+#include "vec_util.h"	/* spread_debug - BUG should be moved elsewhere! */
+
+int thebest[3];
+float err_dist[MAXLEVELS];
+float quant_level[MAXLEVELS];
+
+
+/* get the best level for phosphor: minimize absval of difference */
+float lum_weight=1.0;
+float rg_weight=1.0;
+float by_weight=1.0;
+
+void showvec(float *p)
+{
+sprintf(DEFAULT_ERROR_STRING,"vector:  %g %g %g",p[0],p[1],p[2]);
+advise(DEFAULT_ERROR_STRING);
+}
+
+/* red in most sig. bits, then green, then blue */
+
+int getbest(QSP_ARG_DECL  int col_index)
+{
+	int red_level,grn_level,blu_level;
+	int n,best;
+	float least_err;
+	float vec[3];
+
+	n=0;
+	for(red_level=0;red_level<nlevels;red_level++){
+		for(grn_level=0;grn_level<nlevels;grn_level++){
+			for(blu_level=0;blu_level<nlevels;blu_level++){
+/*
+sprintf(DEFAULT_ERROR_STRING,"getbest:  desired = %g %g %g",
+desired[0][col_index],desired[1][col_index],desired[2][col_index]);
+advise(DEFAULT_ERROR_STRING);
+*/
+				vec[0]=desired[0][col_index]-quant_level[red_level];
+				vec[1]=desired[1][col_index]-quant_level[grn_level];
+				vec[2]=desired[2][col_index]-quant_level[blu_level];
+				rgb2o(QSP_ARG  vec);
+				vec[0] *= rg_weight;
+				vec[1] *= by_weight;
+				vec[2] *= lum_weight;
+				err_dist[n] =	  vec[0]*vec[0]
+						+ vec[1]*vec[1]
+						+ vec[2]*vec[2];
+				n++;
+			}
+		}
+	}
+	least_err=1000000000000.0;
+	best=(-1);
+	n=0;
+	for(red_level=0;red_level<nlevels;red_level++){
+		for(grn_level=0;grn_level<nlevels;grn_level++){
+			for(blu_level=0;blu_level<nlevels;blu_level++){
+#ifdef DEBUG
+if( debug & spread_debug ){
+sprintf(DEFAULT_ERROR_STRING,"getbest %d %d %d:  err_dist[%d] = %g",red_level,grn_level,blu_level,n,err_dist[n]);
+advise(DEFAULT_ERROR_STRING);
+}
+#endif /* DEBUG */
+				if( err_dist[n] < least_err ){
+					least_err=err_dist[n];
+					thebest[0]=red_level;
+					thebest[1]=grn_level;
+					thebest[2]=blu_level;
+					best=n;
+				}
+				n++;
+			}
+		}
+	}
+	if( best== -1 ) ERROR1("error too big!!!");
+#ifdef DEBUG
+if( debug & spread_debug ){
+sprintf(DEFAULT_ERROR_STRING,"getbest RETURNING %d",best);
+advise(DEFAULT_ERROR_STRING);
+}
+#endif /* DEBUG */
+	return(best);
+}
+

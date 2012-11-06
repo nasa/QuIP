@@ -1,0 +1,18 @@
+< $QUIPSTARTUPDIR/quip.scr
+
+max_warnings 3
+
+If $argc<1 "warn 'usage:  Xgraph [options] xy_files ... ' exit"
+
+< $macro_dir/view/plotsupp.mac
+< $macro_dir/view/xgraph.mac
+< $macro_dir/view/range.mac
+
+Process_Options
+Pause
+
+exit
+
+
+
+

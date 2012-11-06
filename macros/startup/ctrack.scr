@@ -1,0 +1,131 @@
+# quip script to monitor a camera,
+# and process the result with CUDA
+
+variables
+  set verbose 0
+  set QUIPSTARTUPDIR /usr/local/share/quip/macros/startup
+  quit
+
+
+#view debug xsupp quit
+
+< $QUIPSTARTUPDIR/generic.scr
+< $QUIPSTARTUPDIR/gendata.scr
+< $QUIPSTARTUPDIR/gencomp.scr
+< $QUIPSTARTUPDIR/genclient.scr
+< $QUIPSTARTUPDIR/genview.scr
+
+#view xsync yes quit
+
+compute control n_processors 1 quit quit
+
+max_warnings 2
+Clobber yes
+
+Set displaying 1	# see how fast with no drawing
+Set display_thresholds 1
+Set display_rois 1
+
+Set plotting 1
+Set checkpointing 0	# set to 1 to time performance
+
+# no knox switcher on standalone system
+#< $macro_dir/knox/knoxc.mac
+
+< $macro_dir/v4l2/v4l2.mac
+< $macro_dir/v4l2/mon_ptz.mac
+< $macro_dir/v4l2/v4l2_gui.mac
+
+# visca stuff
+# used by all flavors
+< $macro_dir/visca/visca_common.mac
+Set_D70_Params		# to initialize...
+< $macro_dir/visca/ptz_gui.mac
+
+If file_exists('/dev/visca')
+  # if hardware is controlled locally
+  Then "< $macro_dir/visca/visca.mac"
+  # if hardware is controlled via a remote daemon...
+  Else "< $macro_dir/visca/evic.mac"
+
+< $macro_dir/gui/ui.mac
+< $macro_dir/numrec/svd.mac
+
+# do these have to be called after something is intialized??
+#< $macro_dir/visca/ptz_gui.mac
+#< $macro_dir/visca/evi_params.scr
+
+< $macro_dir/ctrack/et_display.mac
+< $macro_dir/ctrack/fstim.mac
+< $macro_dir/ctrack/et_gui.mac
+< $macro_dir/ctrack/et_plot.mac
+< $macro_dir/ctrack/cmon.mac
+< $macro_dir/ctrack/deinterlace.mac
+< $macro_dir/ctrack/calib.mac
+
+#verbose yes
+
+Init_Calib_Grid
+Init_Illum	# turn on the illuminator
+
+# tunable parameters
+
+Set roi_movement_threshold 2
+Set pup_thr 41
+Set cr_thr 190
+
+Tell_If "ctrack.scr calling Init_Visca_Cameras"
+Init_Visca_Cameras
+Count_Visca_Cameras	# this is used in mon_ptz?
+
+Set field_mode alternate
+Set_Constants		# needs to know field_mode...
+
+Init_Tracking_Vars	# make sure default values are in place
+Set param_file et_params.scr
+If file_exists($param_file)
+  Then "advise 'Loading parameters from file $param_file' < $param_file"
+  Else "advise 'No parameter file $param_file'"
+
+Set_Cam_Vars 1		# default values for prl_name etc
+
+If !strcmp($field_mode,interlaced)
+  Then "Set_Deinterlace 0"	# cameras must be initialized before this
+				# also pup_roi...
+  Else Unset_Deinterlace_Buffers
+
+Set_Pupil_ROI_Corner	# has to be done every time we switch cams...
+
+Tell_If "ctrack.scr calling Declare_Viewing_Windows"
+Declare_Viewing_Windows	# has to be before Init_GUI
+Tell_If "ctrack.scr calling Init_GUI"
+Init_GUI
+Set have_ptz_gui 1
+
+Set_Video_Format gray
+Set_Field_Mode $field_mode	# default is to process fields
+Init_Video_Devices	# make sure all open, need cam count first
+			# also needs cam gui
+
+Tell_If "ctrack.scr calling SetInChannel 1"
+SetInChannel 1	# has to come after Init_GUI
+Set_PTZ_Index 1
+
+Set video_window_name "v_video"	# compat w/ old visca s/w
+Declare_Cuda_Images g
+
+
+
+Tell_If 'ctrack.scr:  preloading video buffers'
+Preload_Video_Buffers
+advise 'ctrack.scr:  initializing checkpoints'
+Init_Cuda_Checkpoints
+
+Set_Button_Actions $video_window_name "LClick" "MClick" "RClick"
+
+#advise 'entering main loop'
+Main_Loop
+
+exit
+
+

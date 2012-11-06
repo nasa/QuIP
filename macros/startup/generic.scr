@@ -1,0 +1,20 @@
+
+# %Z% $RCSfile: .generic,v $ ver: $Revision: 1.4 $ $Date: 2002/04/02 05:36:45 $
+
+
+If $verbose 'echo "interpreting file generic.scr"'
+
+variables set macro_dir /usr/local/share/quip/macros quit
+
+< $macro_dir/system/builtin.mac
+< $macro_dir/system/msgs.mac
+< $macro_dir/system/vars.mac
+< $macro_dir/system/files.mac
+< $macro_dir/system/setup_env.scr	# set default values for missing env vars
+
+Set home $HOME
+Set system_dir "{$macro_dir}/system"
+Set am_client 0
+
+Stop_File generic.scr
+

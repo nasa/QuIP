@@ -1,0 +1,1188 @@
+# give these default values
+# Should we store the values in a data object???
+Set um_thr_name um_thr1
+Set lm_thr_name lm_thr1
+Set pup_thr_name pup_thr1
+Set cr_thr_name cr_thr1
+Set upa_thr_name upa_thr1
+Set lpa_thr_name lpa_thr1
+Set uca_thr_name uca_thr1
+Set lca_thr_name lca_thr1
+Set dmdt_thr_name dmdt_thr1
+
+Set calfile cal_data.asc	# BUG should be subject dependent...
+
+Define SetROI 0
+Set $prx_name $view_xpos
+Set $pry_name $view_ypos
+advise "Pupil ROI centered at $$prx_name $$pry_name"
+Set_Pupil_ROI_Corner
+.
+
+
+Define AdjPupThr 0
+Assign $pup_thr_name $slider_val
+.
+
+Define AdjCRThr 0
+Assign $cr_thr_name $slider_val
+.
+
+Define TogLace 0
+# in case we didn't init the toggle
+If $toggle_state==$__deinterlace exit_macro
+
+Set_Deinterlace $toggle_state
+If $__deinterlace
+  Then Deinterlace_Viewers
+  Else Interlace_Viewers
+.
+
+Define TogLive 0
+Set displaying $toggle_state
+.
+
+Define TogThresh 0
+Set display_thresholds $toggle_state
+.
+
+Define TogROIs 0
+Set display_rois $toggle_state
+.
+
+Define DoFeatures 0
+Panel_Off master_panel
+Panel_On feature_panel
+.
+
+Define EndFeatures 0
+Panel_Off feature_panel
+Panel_On master_panel
+.
+
+Define DoMonitor 0
+Panel_Off master_panel
+Panel_On monitor_panel
+Set monitoring 1
+.
+
+Define EndMonitor 0
+Panel_Off monitor_panel
+Panel_On master_panel
+Set monitoring 0
+.
+
+
+Define SetVideo 0
+Panel_Off master_panel
+Panel_On video_panel
+.
+
+Define FinishVideo 0
+Panel_Off video_panel
+Panel_On master_panel
+.
+
+Define SetCameras 0
+Panel_Off master_panel
+Panel_On camera_panel
+.
+
+Define DoVCR 0
+Panel_Off master_panel
+Panel_On vcr_panel
+.
+
+Define BeginSetup 0
+Set i_step 1
+Set setup_panel 'Guided Setup - Step 1'
+Panel_Off master_panel
+Panel_On $setup_panel
+.
+
+Define FinishCameras 0
+Panel_Off camera_panel
+Panel_On master_panel
+.
+
+Set threshold_panel mean_threshold_panel	# a default to start with
+
+Define SetThresholds 0
+Panel_Off master_panel
+Panel_On $threshold_panel
+Push_Var display_thresholds
+Set display_thresholds 1
+.
+
+Define FinishThresholds 0
+Panel_Off $threshold_panel
+Panel_On master_panel
+Pop_Var display_thresholds
+.
+
+
+Define SetPlotParams 0
+Panel_Off master_panel
+Panel_On plot_panel
+.
+
+Define FinishPlotParams 0
+Panel_Off plot_panel
+Panel_On master_panel
+.
+
+
+Define Save_Param 1 param_name
+echo "Set $1 $$1"
+.
+
+# BUG allow to be named, or compute name for SUB
+
+Define SaveParams 0
+Insure_Directory $SUBJECT_DIR
+Insure_Directory $SUBJECT_DIR/$subject
+Set subject_param_file $SUBJECT_DIR/$subject/subject_params.scr
+output_file $subject_param_file
+Set cam_num 1
+repeat $n_cameras
+  foreach p ( um lm upa lpa uca lca pup cr dmdt )
+    Set pname ${p}_thr$cam_num
+    Save_Param $pname
+    end
+  Increment cam_num
+  end
+output_file -
+.
+
+Define LoadParams 0
+Set subject_param_file $SUBJECT_DIR/$subject/subject_params.scr
+# BUG this param file should come from some data directory
+If !file_exists('$subject_param_file')
+  "advise 'No parameter file $subject_param_file for subject $subject !?' exit_macro"
+< $subject_param_file
+# If we are plotting, reset the plot (thresholds may have changed...)
+If $plotting Reset_Plot
+.
+
+Define DoOldCalib 0
+Show_Viewer v_stim
+Set calibrating 1
+Set this_stim 0
+Set displayed_stim -1
+.
+
+Define DoDFB 0
+Declare_Stim_Objects
+Fit_Calibration_Points
+Panel_Off master_panel
+Panel_On dfb_panel
+.
+
+Define EndDFB 0
+Panel_Off dfb_panel
+Panel_On master_panel
+.
+
+Define DoCalib 0
+Panel_Off master_panel
+Panel_On calib_panel
+.
+
+Define DoneCalib 0
+Panel_Off calib_panel
+Panel_On master_panel
+.
+
+Define RunCalib 0
+#Show_Viewer v_calib
+Show_Viewer v_stim
+Set calibrating 1
+Set this_stim 0
+Set displayed_stim -1
+.
+
+# Put up a window where we can visualize the gaze cursor
+
+Define DoVisualize 0
+#Load_User_Calib
+If !$have_calib exit_macro
+Show_Viewer v_stim
+VSet g_stim $stim_gray
+Refresh_Stim
+Get_Calib_Suffix
+Set visualizing 1
+Suspend_Display
+.
+
+Define DoShowCalib 0
+Suspend_Display
+Show_Viewer v_stim
+Show_Cal
+Set ready 0
+Set tuning_calib 1
+Set calibrating 1
+Set placing 1
+.
+
+Define Show_Cal 0
+#Fit_Linear
+Fit_Calibration_Points
+If !$have_calib exit_macro
+Set ready 1
+Show_Scatter
+.
+
+Define Suspend_Display 0
+Push_Var displaying
+Push_Var plotting
+Set displaying 0
+Set plotting 0
+.
+
+Define Resume_Display 0
+Pop_Var displaying
+Pop_Var plotting
+.
+
+Define Get_Calib_Filename 0
+# BUG - subject directory should be in data hierarchy, not current dir?
+Set cal_file $SUBJECT_DIR/$subject/caldata.asc	# BUG use per-camera file
+.
+
+Define DoLoadCalib 0
+Get_Calib_Filename
+If !file_exists('$cal_file')
+  "advise 'No calibration file $cal_file for subject $subject!?' exit_macro"
+Count_Lines nl $cal_file
+advise "DoLoadCalib:  cal_file $cal_file has $nl lines."
+Assign n_calib_stimuli $nl/$n_calib_samples
+If $n_calib_stimuli!=floor($n_calib_stimuli)
+  "warn 'Calibration file $cal_file ($nl lines) does not contain an integral number of stimuli!?' Assign n_calib_stimuli floor($n_calib_stimuli)"
+If $n_calib_stimuli==0
+  "advise 'No calibration data.'  exit_macro"
+If obj_exists(use_calib) "Delete_Image use_calib"
+Subimage use_calib calib_data $n_calib_samples $n_calib_stimuli 0 0
+Get_Ascii use_calib $calfile
+advise "DoLoadCalib:  n_calib_stimuli = $n_calib_stimuli"
+.
+
+Define Init_Subject_List 0
+# BUG where should the data go?
+# what about experiment number, etc?
+# we assume a directory called subjects,
+# with a subdirectory for each subject
+# BUG should have somewhere specific to store subject data...
+Set subject_dir subjects
+Insure_Directory $subject_dir
+Insure_Directory $subject_dir/New_subject
+os
+  pipes
+    open p r "ls $subject_dir | wc -l"
+    read p n_subjects
+    Print n_subjects
+    close p
+    open p r "ls $subject_dir"
+    read p subject_list
+    If $n_subjects>1
+      'repeat $n_subjects-1 \
+         read p next_sub \
+         Set subject_list "$subject_list $next_sub" \
+         end'
+    close p
+    quit
+  quit
+Print n_subjects
+Print subject_list
+.
+
+
+Define Declare_Master_Panel 0
+Init_Subject_List
+interface
+  panel master_panel $panel_w $panel_h
+  decorate master_panel
+    button 'Guided Setup'	BeginSetup
+    button Cameras	SetCameras
+    button Video	SetVideo
+    button Thresholds	SetThresholds
+    # measurements should be on a monitoring panel?
+    button Monitor	DoMonitor	# panel shows measurements, and has control toggles
+# SetFeatures unimplemented?
+    button Features	DoFeatures
+    button 'Save Threshold Parameters'	SaveParams
+    button 'Load Threshold Parameters'	LoadParams
+    button Plotting	SetPlotParams
+    button Calibration	DoCalib
+    button DFB		DoDFB
+    button Stimuli	DoStimuli
+    button VCR		DoVCR
+    button Pause		Pause
+    button QUIT		exit
+    position 200 5
+    message 'Status' " "
+    message 'Mean Value' " "
+    message 'Pupil Area' " "
+    message 'CR Area' " "
+    message 'Blink count' " "
+    Set cmd "chooser Subject SetSubject $n_subjects $subject_list"
+    push_text $cmd
+    quit
+  quit
+.
+
+Define SetSubject 0
+Set subject $choice
+If !strcmp($choice,'New_subject')
+  Then Get_New_Subject
+  Else Restore_Subject
+.
+
+# Load all data we have for this subject
+Define Restore_Subject 0
+LoadParams
+DoLoadCalib
+.
+
+Define Get_New_Subject 0
+Panel_Off master_panel
+Panel_On new_subject_panel
+.
+
+Define Reset_Indicator 1 varname
+Draw_Indicator $$1 0
+Set $1 $slider_val
+Draw_Indicator $$1 255
+.
+
+Define AdjLwrMean 0
+Reset_Indicator $lm_thr_name
+.
+
+Define AdjUprMean 0
+Reset_Indicator $um_thr_name
+.
+
+Define AdjLwrPA 0
+Reset_Indicator $lpa_thr_name
+.
+
+Define AdjUprPA 0
+Reset_Indicator $upa_thr_name
+.
+
+Define AdjLwrCA 0
+Reset_Indicator $lca_thr_name
+.
+
+Define AdjUprCA 0
+Reset_Indicator $uca_thr_name
+.
+
+Define AdjdMdT 0
+Reset_Indicator $dmdt_thr_name
+.
+
+# We need to reset the sliders after we switch cameras!!
+
+Define Set_Slider 3 panel_name slider_name value
+interface
+  decorate $1
+    set_scale $2 $3
+    quit
+  quit
+.
+
+Define Update_Threshold_Panel 0
+Set_Slider mean_threshold_panel upper_mean_threshold $$um_thr_name
+Set_Slider mean_threshold_panel lower_mean_threshold $$lm_thr_name
+Set_Slider level_threshold_panel pupil_threshold $$pup_thr_name
+Set_Slider level_threshold_panel CR_threshold $$cr_thr_name
+Set_Slider pupil_area_threshold_panel upper_pupil_area_threshold $$upa_thr_name
+Set_Slider pupil_area_threshold_panel lower_pupil_area_threshold $$lpa_thr_name
+Set_Slider cr_area_threshold_panel upper_cr_area_threshold $$uca_thr_name
+Set_Slider cr_area_threshold_panel lower_cr_area_threshold $$lca_thr_name
+Set_Slider dmdt_threshold_panel dM_dT_threshold_x_10 $$dmdt_thr_name
+Update_Step_Slider 4 upper_mean_threshold $$um_thr_name
+Update_Step_Slider 4 lower_mean_threshold $$lm_thr_name
+# Step 5
+Update_Step_Slider 5 pupil_threshold $$pup_thr_name
+# Step 6
+Update_Step_Slider 6 CR_threshold $$cr_thr_name
+# Step 7
+Update_Step_Slider 7 upper_pupil_area_threshold $$upa_thr_name
+Update_Step_Slider 7 lower_pupil_area_threshold $$lpa_thr_name
+# Step 8
+Update_Step_Slider 8 upper_cr_area_threshold $$uca_thr_name
+Update_Step_Slider 8 lower_cr_area_threshold $$lca_thr_name
+.
+
+Define Update_Step_Slider 3 step_number slider_name value
+Get_Setup_Panel_Name pn $1
+interface
+  decorate $pn
+    set_scale $2 $3
+    quit
+  quit
+.
+
+Define Declare_Calib_Panel 0
+Set p calib_panel
+interface
+  panel $p $panel_w $panel_h
+  decorate $p
+    button Calibrate RunCalib
+    button Visualize	DoVisualize
+    button 'Show Calibration'	DoShowCalib
+    button 'Load Calibration'	DoLoadCalib
+    button Done DoneCalib
+    position $x3 $y1
+    chooser Variables SetCalVars 4 'P-CR' 'P-CR,PA' 'P,CR' 'P,CR,PA'
+    quit
+  quit
+.
+
+Set calib_var_set 'P-CR'
+Set calib_suffix _1
+
+Define SetCalVars 0
+Set calib_var_set $choice
+# install the calibration now!
+Fit_Calibration_Points
+.
+
+Set min_delay 1
+Set delay_delta 10		# offset
+
+Define SetDFBDelay 0
+Set delay_delta $slider_val
+.
+
+Define Declare_DFB_Panel 0
+Set p dfb_panel
+interface
+  panel $p $panel_w $panel_h
+  decorate $p
+    chooser Order SetStimOrder 2 1 2
+    button 'Present stimulus' DoDFBStim
+    adjuster Delay SetDFBDelay $min_delay $max_delay-2 $delay_delta
+    button Done EndDFB
+    quit
+  quit
+.
+
+Define DoDFB1 0
+nop
+.
+
+Define DoDFBStim 0
+# show the stimulus window,
+Set stim_macro Next_DFB
+Set n_delay 0
+Set i_delay 0
+StartStim
+.
+
+Define Declare_New_Subject_Panel 0
+Set p new_subject_panel
+interface
+  panel $p $panel_w $panel_h
+  decorate $p
+    message status ' '
+    message instruction 'Enter name of new subject'
+    #Pause
+    text Initials SetNewSub ''
+    button Done EndNewSub
+    button Cancel CancelNewSub
+    quit
+  quit
+.
+
+Define SetNewSub 0
+interface
+  decorate new_subject_panel
+    get_text Initials new_subject
+    quit
+  quit
+advise "SetNewSub: new_subject = $new_subject"
+.
+
+Define EndNewSub 0
+# Check to see that a new subject really has been entered!
+# and that the name is unique
+interface
+  decorate new_subject_panel
+    get_text Initials new_subject
+    quit
+  quit
+advise "EndNewSub: new_subject = $new_subject"
+#
+If file_exists('$subject_dir/$new_subject')
+  'ExistingSubject $new_subject exit_macro'
+# If the name is already in use then we should print a message
+# and stay on this screen
+Insure_Directory $subject_dir/$new_subject
+# BUG we would like the new subject to appear on the chooser...
+Panel_Off new_subject_panel
+Panel_On master_panel
+.
+
+Define Existing_Subject 1 subject_name
+interface
+  decorate new_subject_panel
+    set_message status "Subject name '$1' is already in use!?"
+    quit
+  quit
+.
+
+Define CancelNewSub 0
+# revert without doing anything
+Panel_Off new_subject_panel
+Panel_On master_panel
+.
+
+
+# The threshold panel used to have all the sliders - but we would have
+# to separately select the appropriate signals from the plot panel.
+# Now there are multiple threshold panels, for each signal that might
+# be plotted - each has a chooser that determines which threshold(s)
+# should be set.
+
+Define Declare_Threshold_Panels 0
+Declare_Mean_Threshold_Panel
+Declare_DMDT_Threshold_Panel
+Declare_Level_Threshold_Panel
+Declare_Pupil_Area_Threshold_Panel
+Declare_CR_Area_Threshold_Panel
+.
+
+Define Declare_Mean_Threshold_Panel 0
+interface
+  Set p mean_threshold_panel
+  panel $p $panel_w $panel_h
+  decorate $p
+    Threshold_Chooser
+    position $x3 $y1
+    adjuster upper_mean_threshold AdjUprMean 0 255 $$um_thr_name
+    position $x3 $y2
+    adjuster lower_mean_threshold AdjLwrMean 0 255 $$lm_thr_name
+    quit
+  quit
+.
+
+Define Declare_DMDT_Threshold_Panel 0
+interface
+  Set p dmdt_threshold_panel
+  panel $p $panel_w $panel_h
+  decorate $p
+    Threshold_Chooser
+    position $x3 $y1
+    adjuster dM_dT_threshold_x_10 AdjdMdT 0 $max_dMdT $$dmdt_thr_name
+    quit
+  quit
+.
+
+Define Declare_Level_Threshold_Panel 0
+interface
+  Set p level_threshold_panel
+  panel $p $panel_w $panel_h
+  decorate $p
+    Threshold_Chooser
+    position $x3 $y1
+    adjuster pupil_threshold AdjPupThr 0 255 $$pup_thr_name
+    position $x3 $y2
+    adjuster CR_threshold AdjCRThr 0 255 $$cr_thr_name
+    quit
+  quit
+.
+
+Define Declare_Pupil_Area_Threshold_Panel 0
+interface
+  Set p pupil_area_threshold_panel
+  panel $p $panel_w $panel_h
+  decorate $p
+    Threshold_Chooser
+    position $x3 $y1
+    adjuster upper_pupil_area_threshold AdjUprPA 0 $max_pupil_area $$upa_thr_name
+    position $x3 $y2
+    adjuster lower_pupil_area_threshold AdjLwrPA 0 $max_pupil_area $$lpa_thr_name
+    quit
+  quit
+.
+
+Define Declare_CR_Area_Threshold_Panel 0
+interface
+  Set p cr_area_threshold_panel
+  panel $p $panel_w $panel_h
+  decorate $p
+    Threshold_Chooser
+
+    position $x3 $y1
+    adjuster upper_cr_area_threshold AdjUprCA 0 $max_cr_area $$uca_thr_name
+    position $x3 $y2
+    adjuster lower_cr_area_threshold AdjLwrCA 0 $max_cr_area $$lca_thr_name
+
+    quit
+  quit
+.
+
+Define Threshold_Chooser 0
+    chooser Parameter(s) SelectWhichThreshold 5 'Mean' 'dM/dT' Levels 'Pupil area' 'CR area'
+    button Done FinishThresholds
+.
+
+Define SelectWhichThreshold 0
+Set old_tpanel $threshold_panel
+Set threshold_panel none
+If !strcmp('$choice','Mean') "Set threshold_panel mean_threshold_panel Switch_Plot Mean"
+If !strcmp('$choice','dM/dT') "Set threshold_panel dmdt_threshold_panel Switch_Plot dM/dT"
+If !strcmp('$choice','Levels') "Set threshold_panel level_threshold_panel"	# uses video, not plot
+If !strcmp('$choice','Pupil area') "Set threshold_panel pupil_area_threshold_panel Switch_Plot 'Pupil area'"
+If !strcmp('$choice','CR area') "Set threshold_panel cr_area_threshold_panel Switch_Plot 'CR area'"
+If !strcmp('$threshold_panel','none')
+  "warn 'SelectWhichThreshold:  no match found for choice \\\\'$choice\\\\'!?'"
+If !strcmp('$threshold_panel','$old_tpanel') exit_macro
+Panel_Off $old_tpanel
+Panel_On $threshold_panel
+# make the chooser on the newly-displayed panel show the current choice
+Update_Chooser Parameter(s) $choice $threshold_panel
+.
+
+Define NextStep 0
+Print setup_panel
+Panel_Off $setup_panel
+advise "NextStep:  old step is $i_step"
+Increment i_step
+Set setup_panel "Guided Setup - Step $i_step"
+Panel_On $setup_panel
+Init_Step
+.
+
+Define Init_Step 0
+Set macroname Step${i_step}_Init
+If macro_exists($macroname) $macroname
+.
+
+Define PrevStep 0
+Panel_Off $setup_panel
+Decrement i_step
+Set setup_panel "Guided Setup - Step $i_step"
+Panel_On $setup_panel
+.
+
+Define Get_Setup_Panel_Name 2 varname step_number
+Set $1 "Guided Setup - Step $2"
+.
+
+Define Begin_Step_Decl 0
+Get_Setup_Panel_Name setup_panel $i_step
+interface
+  panel $setup_panel $panel_w $panel_h
+  decorate $setup_panel
+.
+
+Define FinishSetup 0
+Panel_Off $setup_panel
+Panel_On master_panel
+.
+
+Define ExitSetup 0
+Panel_Off $setup_panel
+Panel_On master_panel
+.
+
+Define GotoStep3 0
+Set i_step 2
+NextStep
+.
+
+Define Finish_Step_Decl 0
+    If !$last_step
+      Then "button 'Proceed to next step' NextStep"
+      Else "button 'Finish' FinishSetup"
+    If $i_step>1 "button 'Go back to previous step' PrevStep"
+    button 'Exit guided setup' ExitSetup
+    quit
+  quit
+Posn_Window $setup_panel $v_x3 $v_y1
+Increment i_step
+.
+
+Define Step2_Init 0
+Set zoom $zoom_min
+Set_PTZ_Zoom $zoom
+Update_Zoom_Scale
+.
+
+Define Step3_Init 0
+Set zoom $zoom_max
+Set_PTZ_Zoom $zoom
+Update_Zoom_Scale
+.
+
+Set img_mean_tolerance 30
+
+Define Step4_Init 0
+# Here we might look at the current mean value and automatically
+# set the thresholds to bracket it
+One_Iteration
+One_Iteration	# make sure we have a value in $img_mean
+Print img_mean
+Assign $lm_thr_name max(0,$img_mean-$img_mean_tolerance)
+Assign $um_thr_name min(255,$img_mean+$img_mean_tolerance)
+Print $lm_thr_name
+Print $um_thr_name
+# Need to refresh the plot, and update the sliders...
+interface
+  decorate 'Guided Setup - Step 4'
+    set_scale upper_mean_threshold $$um_thr_name
+    set_scale lower_mean_threshold $$lm_thr_name
+    quit
+  quit
+Switch_Plot Mean
+#Reset_Plot
+.
+
+Define Step5_Init 0
+# Here we might look at the image histogram and
+# try to automatically determine the pupil threshold...
+nop
+.
+
+Define Step6_Init 0
+# Here we might look at the image histogram and
+# try to automatically determine the CR threshold...
+nop
+.
+
+Define Step7_Init 0
+# Here we might present bright and dark fields to try and drive the pupil
+Switch_Plot 'Pupil area'
+.
+
+Define Step8_Init 0
+Switch_Plot 'CR area'
+.
+
+Define ET_PTZ_Select_Callback 1 choice
+interface
+  decorate $setup_panel_0
+    set_choice Camera $1
+    quit
+  quit
+.
+
+Define ETSelectPTZCam 0
+SelectPTZCam	# std function in visca/ptz_gui.mac
+Update_PTZ_Cam_Choice $choice	# update other panel
+.
+
+Define Declare_Setup_Panels 0
+Set i_step 1
+Set last_step 0
+Begin_Step_Decl
+    # Step 1
+    message instruction "Select a camera"
+    Set cmd "chooser Camera ETSelectPTZCam $n_cameras $cam_list"
+    push_text $cmd
+    button "Skip gross camera aiming" GotoStep3
+    Finish_Step_Decl
+interface
+  decorate $setup_panel
+    set_choice Camera cam1	# BUG?  make sure this camera is really selected...
+    				# It should be changed if we change the camera elsewhere...
+    quit
+  quit
+Set setup_panel_0 $setup_panel
+Set_PTZ_Select_Callback ET_PTZ_Select_Callback
+
+Begin_Step_Decl
+    # Step 2
+    message instruction "Aim camera at right eye with left-click"
+    Finish_Step_Decl
+Begin_Step_Decl
+    # Step 3
+    message instruction "Center eye with left-click"
+    Finish_Step_Decl
+Begin_Step_Decl
+    # Step 4
+    message instruction "Adjust mean value acceptance thresholds if necessary"
+    adjuster upper_mean_threshold AdjUprMean 0 255 $$um_thr_name
+    adjuster lower_mean_threshold AdjLwrMean 0 255 $$lm_thr_name
+    Finish_Step_Decl
+Begin_Step_Decl
+    # Step 5
+    message instruction "Adjust pupil threshold if necessary"
+    adjuster pupil_threshold AdjPupThr 0 255 $$pup_thr_name
+    Finish_Step_Decl
+Begin_Step_Decl
+    # Step 6
+    message instruction "Adjust CR (glint) threshold if necessary"
+    adjuster CR_threshold AdjCRThr 0 255 $$cr_thr_name
+    Finish_Step_Decl
+Begin_Step_Decl
+    # Step 7
+    message instruction "Adjust pupil area threshold"
+    adjuster upper_pupil_area_threshold AdjUprPA 0 $max_pupil_area $$upa_thr_name
+    adjuster lower_pupil_area_threshold AdjLwrPA 0 $max_pupil_area $$lpa_thr_name
+    Finish_Step_Decl
+Set last_step 1
+Begin_Step_Decl
+    # Step 8
+    message instruction "Adjust CR area threshold"
+    adjuster upper_cr_area_threshold AdjUprCA 0 $max_cr_area $$uca_thr_name
+    adjuster lower_cr_area_threshold AdjLwrCA 0 $max_cr_area $$lca_thr_name
+    Finish_Step_Decl
+.
+
+Define Declare_Camera_Panel 0
+interface
+  panel camera_panel $panel_w $panel_h
+  quit
+Add_PTZ_Controls camera_panel
+interface
+  decorate camera_panel
+    # 300 is fine with 2 cameras, but not with 4!
+    #position 0 300
+    position 0 380
+    button Done FinishCameras
+    quit
+  quit
+.
+
+
+Define SetMovie 0
+Set movie_name $choice
+.
+
+Set n_movie_frames 60
+
+Define DoRecord 0
+Push_Var plotting
+Push_Var displaying
+Set displaying 0
+Set plotting 0
+
+Set was_flowing $flowing
+If $flowing 'Stop_V4L2_Flow'
+
+If !var_exists(movie_name) "Set movie_name test"
+# record all cameras by default
+# assume that cameras are connected to lowest-numbered inputs
+# Are all of the video devices opened at start-up?
+Set vid_list "/dev/video0"
+Set i 1
+repeat $n_cameras-1
+  Set vid_list "$vid_list /dev/video$i"
+  Increment i
+  end
+# Can we have this done asynchronously?
+#verbose yes
+v4l2
+  stream
+    Set cmd "record $movie_name $n_movie_frames $n_cameras $vid_list"
+    push_text $cmd
+    quit
+  quit
+
+Resume_Display
+
+# Now we have to restart the flow so that the normal display
+# doesn't get messed up...
+If $was_flowing "Start_V4L2_Flow $vdev"
+.
+
+Define DoPlayback 0
+If !var_exists(movie_name) "warn 'Set movie_name before trying to play' exit_macro"
+warn "DoPlayback:  unimplemented!?"
+.
+
+Define FinishVCR 0
+Panel_Off vcr_panel
+Panel_On master_panel
+.
+
+Define Declare_VCR_Panel 0
+interface
+  panel vcr_panel $panel_w $panel_h
+  quit
+# might like vcr controls from jpsee?
+interface
+  decorate vcr_panel
+    chooser Movie SetMovie 1 test
+    button Record DoRecord
+    button Play DoPlayback
+    button Finish FinishVCR
+    quit
+  quit
+.
+
+Define Declare_Video_Panel 0
+interface
+  panel video_panel $panel_w $panel_h
+  quit
+Add_V4L2_Controls video_panel
+interface
+  decorate video_panel
+#    position 0 300
+    button Done FinishVideo
+    quit
+  quit
+.
+
+Set n_checkpoint_dumps 0
+Define DoCheckpoints 0
+Increment n_checkpoint_dumps
+Set checkpointing 1
+output_file ascii/${prefix}_checkpoints.$n_checkpoint_dumps.txt
+.
+
+# The monitor panel displays the measurements.
+# It should include a camera select...
+
+Define Declare_Monitor_Panel 0
+Set p monitor_panel
+interface
+  panel $p $panel_w $panel_h
+  decorate $p
+    position $x3 $y1
+    message 'Pupil ROI' "0.00000 0.00000"
+    position $x4 $y1
+    message 'Pupil Position' "0.00000 0.00000"
+    position $x5 $y1
+    message 'Pupil Area' "0.00000"
+
+    position $x3 $y2
+    message 'CR ROI offset' "0.00000 0.00000"
+    position $x4 $y2
+    message 'CR Position' "0.00000 0.00000"
+    position $x5 $y2
+    message 'CR Area' "0.00000"
+
+    position $x1 $y3
+    message 'Frame Rate' "0.00000"
+
+    position $x4 $y3
+    button Done EndMonitor
+    quit
+  quit
+.
+
+Define Declare_Feature_Panel 0
+Set p feature_panel
+interface
+  panel $p $panel_w $panel_h
+  decorate $p
+    position $x2 $y3
+    toggle 'ShowTresholds' TogThresh
+    position $x2 $y4
+    toggle 'ShowROIs' TogROIs
+    position $x3 $y3
+    toggle 'Live Display' TogLive
+    position $x3 $y4
+    toggle 'Deinterlace' TogLace
+
+#    button 'Save Images' SaveImgs
+#    button 'Run Checkpoints' DoCheckpoints
+    button Done EndFeatures
+    quit
+  quit
+.
+
+Define Create_Save_Objs 0
+data areas select ram quit quit
+Image b_video nrows(v_video) ncols(v_video) 3 u_byte
+Image b_pupil nrows(v_pup_0) ncols(v_pup_0) 3 u_byte
+.
+
+Set save_index 1
+Define SaveImgs 0
+If !obj_exists(b_video) Create_Save_Objs
+view
+  extract b_video v_video 0 0
+  extract b_pupil v_pup_0 0 0
+  quit
+#Set ft png
+Set ft jpg
+Filetype jpeg
+
+Set f video$save_index.$ft
+Write_File_Header $f 1
+Put_Next b_video $f
+
+Set f pupil$save_index.$ft
+Write_File_Header $f 1
+Put_Next b_pupil $f
+
+Increment save_index
+.
+
+
+
+Define SetTrace 0
+#Set trace_choice $choice
+Switch_Plot $choice
+.
+
+Define Declare_Plot_Panel 0
+interface
+  panel plot_panel $panel_w $panel_h
+  decorate plot_panel
+    chooser Trace SetTrace 7 Mean dM/dT 'Pupil area' 'CR area' Pupil CR P-CR
+    button Back FinishPlotParams
+    quit
+  quit
+# this is the default selection
+Update_Chooser Trace Mean plot_panel
+.
+
+Define Update_Plot_Choice 1 choice
+interface
+  decorate plot_panel
+    set_choice Trace $1
+    quit
+  quit
+.
+
+Define Init_GUI 0
+Set panel_w 800
+Set panel_h 480
+
+Set x1 0
+Set x2 170
+Set x3 340
+Set x4 510
+Set x5 680
+
+Set y1 3
+Set y2 103
+Set y3 203
+Set y4 303
+Set y5 403
+
+Declare_Master_Panel
+Declare_Camera_Panel
+Declare_VCR_Panel
+Declare_Video_Panel
+Declare_Threshold_Panels
+Declare_Calib_Panel
+Declare_Monitor_Panel
+Declare_Feature_Panel
+Declare_Plot_Panel
+Declare_Setup_Panels
+Declare_DFB_Panel
+Declare_New_Subject_Panel
+Declare_FStim_Panel
+
+Panel_On master_panel
+
+Posn_Window master_panel $v_x3 $v_y1
+Posn_Window monitor_panel $v_x3 $v_y1
+Posn_Window feature_panel $v_x3 $v_y1
+Posn_Window mean_threshold_panel $v_x3 $v_y1
+Posn_Window dmdt_threshold_panel $v_x3 $v_y1
+Posn_Window level_threshold_panel $v_x3 $v_y1
+Posn_Window pupil_area_threshold_panel $v_x3 $v_y1
+Posn_Window cr_area_threshold_panel $v_x3 $v_y1
+Posn_Window camera_panel $v_x3 $v_y1
+Posn_Window vcr_panel $v_x3 $v_y1
+Posn_Window video_panel $v_x3 $v_y1
+Posn_Window plot_panel $v_x3 $v_y1
+Posn_Window calib_panel $v_x3 $v_y1
+Posn_Window dfb_panel $v_x3 $v_y1
+Posn_Window new_subject_panel $v_x3 $v_y1
+Posn_Window stim_control_panel $v_x3 $v_y1
+.
+
+# Stuff for flicker dot stim
+
+Define Attenuate_Twinkle 0
+Assign a_factor $slider_val/($max_atten)
+.
+
+Define SetSigma 0
+Assign sigma $slider_val/$stim_zoom
+Gaussian_At g_gaussian $sigma 0 0
+.
+
+# frequency of sinusoidal motion 
+Define SetFreq 0
+Assign f100 $slider_val
+Assign freq $f100/100
+Assign period 1/$freq	# period in seconds
+Mul_Var period $sample_freq	# seconds * samples/sec = samples
+# period may have a fraction, but we want it to evenly divide
+# traj_len, so that things match up when we reset
+Assign n_periods round($traj_len/$period)
+Assign period $traj_len/$n_periods
+Recompute_Coords
+.
+
+Define SetTrajRad 0
+Set traj_radius $slider_val
+Recompute_Coords
+.
+
+Set min_sigma 1
+Set max_sigma 200
+
+Set min_freq 1	# 0.01 Hz
+Set max_freq 1000 # 10 Hz
+Set start_freq 50	# 0.5 x 100
+Set min_traj_rad	20
+Set max_traj_rad	400
+
+Define Declare_FStim_Panel 0
+Set p stim_control_panel
+interface
+  panel $p $panel_w $panel_h
+  decorate $p
+    chooser Order SetStimOrder 2 1 2
+    button Start StartStim
+    button Stop StopStim
+    button Done FinishStim
+    position $x2 $y1
+    adjuster Attenuation Attenuate_Twinkle 0 $max_atten $max_atten
+    adjuster Sigma SetSigma $min_sigma $max_sigma $stim_zoom*$sigma
+    adjuster Freq_x_100 SetFreq $min_freq $max_freq $start_freq
+    adjuster Radius SetTrajRad $min_traj_rad $max_traj_rad $traj_radius
+    quit
+  quit
+.
+
+Set stim_order 2
+
+Define SetStimOrder 0
+Set stim_order $choice
+.
+
+Define StartStim 0
+Suspend_Display
+Show_Viewer v_stim
+Set stimulating 1
+.
+
+Define StopStim 0
+Set stimulating 0
+UnShow_Viewer v_stim
+Resume_Display
+.
+
+Define FinishStim 0
+Panel_Off stim_control_panel
+Panel_On master_panel
+Set stimulating 0
+Resume_Display
+Set tracking 1
+.
+
+Define DoStimuli 0
+Suspend_Display
+#Set tracking 0
+Declare_Stim_Objects
+Prepare_Noise_Texture
+Recompute_Coords
+Panel_Off master_panel
+Panel_On stim_control_panel
+.
+
+

@@ -1,0 +1,427 @@
+Start_File atc.mac
+
+
+If !var_exists(show_human_time) "Set show_human_time 0"
+
+Set use_small_screen	0
+Set mirror_reversed	0	# default, set to 1 for mirror stereoscope
+
+Set screen_viewer	no_viewer
+
+Set mem_dir $HOME/exps/atc/params
+Set fixation_delay 0
+
+Set default_width	1024
+Set default_height	768
+
+# these values work well when using sirius video out to drive video or slide maker...
+#Set small_width		648
+#Set small_height	486
+
+# these values are for cosmo...
+Set small_width		640
+Set small_height	496	# BUG not all lines are displayed...
+
+Define New_Plane 6 name x y heading speed alt
+atc planes new $1 $2 $3 $4 $5 $6 quit quit
+.
+
+# what do we do when rendering into a smaller window?
+# do we keep that same coordinate space?
+# or transform the coordinates of the models??
+
+Define CRAFT 15 name A alt H heading S speed X x Y x TX tx TY ty
+#Assign xf $screen_w/$default_width
+#If !var_exists(screen_h) "error_exit 'CRAFT:  screen_h not defined call Init_Default_Screen?'"
+Assign scale_factor $screen_h/$default_height
+#Assign xf 1
+#Assign yf 1
+New_Plane $1 $9*$scale_factor $11*$scale_factor $5 $7 $3
+.
+
+Define Altcolor 1 flag
+atc stimuli altcolor $1 quit quit
+.
+
+Define Conceal 1 radius
+atc stimuli conceal $1 quit quit
+.
+
+
+Define NOP 0
+echo NOP
+.
+
+Define Set_Eccentricity_Threshold 1 ecc
+atc model params eccentricity $1 quit quit quit
+.
+
+Define Init_Small_Screen 0
+Adj_Viewer small_screen $small_width $small_height NOP
+Posn_Window small_screen 100 40
+atc graphics screen small_screen quit quit
+Set screen_viewer small_screen
+atc model params eccentricity 80 quit quit quit
+.
+
+Define Init_Graphics 0
+If $use_small_screen
+  Then Init_Small_Screen
+  Else Init_Default_Screen
+view xsync yes quit
+.
+
+Define Init_Default_Strategies 0
+atc
+  model
+    strategy
+      new smart_random
+        scan_type	random
+	use_altitude	yes
+	use_crossings	yes
+	use_density	no
+	quit
+      new smart_cw
+        scan_type	clockwise
+	use_altitude	yes
+	use_crossings	yes
+	use_density	no
+	quit
+      new smart_near
+        scan_type	nearest
+	use_altitude	yes
+	use_crossings	yes
+	use_density	no
+	quit
+      new dumb_random
+        scan_type	random
+	use_altitude	no
+	use_crossings	no
+	use_density	no
+	quit
+      new dumb_cw
+        scan_type	clockwise
+	use_altitude	no
+	use_crossings	no
+	use_density	no
+	quit
+      new dumb_near
+        scan_type	nearest
+	use_altitude	no
+	use_crossings	no
+	use_density	no
+	quit
+
+      ## Old style spec
+      ### #   name         scan      crossings   altitude	saliency
+### 
+      ### new smart_random random    yes	     yes	yes
+      ### new smart_cw     clockwise yes         yes	yes
+      ### new smart_near   nearest   yes         yes	yes
+### 
+      ### new dumb_random  random    no          no		no
+      ### new dumb_cw      clockwise no          no		no
+      ### new dumb_near    nearest   no          no		no
+
+      quit
+    quit
+  quit
+.
+
+Define Init_Fixation_Data_Record 1 len
+Assign max_recorded_fixations $1
+Vector fixation_data $max_recorded_fixations 3 float
+atc
+  model
+    multi
+      fixation_obj fixation_data
+      quit
+    quit
+  quit
+.
+
+Define Init_Default_Screen 0
+If strcmp($screen_viewer,no_viewer)
+  "warn 'Init_Default_Screen:  $screen_viewer already initialized' PopFile 2 nop"
+Tell_If Init_Default_Screen
+atc graphics init_graphics quit quit
+Set screen_viewer default_screen
+Init_Font default_screen
+
+Assign screen_w ncols(default_screen)
+Assign screen_h nrows(default_screen)
+.
+
+Set stereo_w	1024
+Set stereo_h	768
+#Set stereo_w	400
+#Set stereo_h	400
+
+Define Init_Stereo_Screens 0
+Viewer left_v $stereo_w $stereo_h
+Init_Font left_v
+Viewer right_v $stereo_w $stereo_h
+Init_Font right_v
+# assume monitors are 1024x1280,
+Assign display_w	1280
+Assign display_h	1024
+# with the "left" monitor to the right of the "right" one...
+Assign x_os	($display_w-$stereo_w)/2
+Assign y_os	($display_h-$stereo_h)/2
+#Posn_Window left_v $display_w+$x_os $y_os
+#Posn_Window right_v $x_os $y_os
+##Posn_Window left_v $x_os $y_os
+##Posn_Window right_v  $display_w+$x_os $y_os
+Posn_Window left_v $display_w-$display_w $y_os
+Posn_Window right_v  $display_w+$display_w-$stereo_w $y_os
+Set is_stereo 1
+Set left_viewer left_v
+Set right_viewer right_v
+atc graphics stereo left_v right_v quit quit
+
+Assign screen_w ncols(left_v)
+Assign screen_h nrows(left_v)
+
+#view
+#  draw left_v
+#    remember no
+#    quit
+#  draw right_v
+#    remember no
+#    quit
+#  quit
+view wait left_v wait right_v quit
+.
+
+Set normal_font linux8x8
+Set reversed_font r8x8
+Set font_loaded 0
+
+Define Init_Font 1 viewer
+Tell_If "Init_Font $1"
+If $mirror_reversed
+  Then "Set atc_font $reversed_font advise 'Using mirror-reversed font'"
+  Else "Set atc_font $normal_font advise 'Using normal font'"
+view
+  draw $1
+    If !$font_loaded "load $atc_font Set font_loaded 1"
+    font $atc_font
+    quit
+  quit
+.
+
+Define New_Stim 1 viewer
+atc planes clear quit quit
+view
+  plot $1
+    erase
+    space 0 nrows($1) ncols($1) 0
+    #space 0 768 1024 0
+    quit
+  quit
+.
+
+Define Render_Stim 0
+atc
+  stimuli
+    setup_coords
+    render
+    region
+    quit
+  quit
+.
+
+Define Show_Stim 2 session trialno
+Tell_If Show_Stim
+New_Stim
+#< /u/jbm/exps/atc/stimuli/scripts/config.1.$1.1.$2.scr
+< $HOME/pl2/data/atc/stimuli/$SUBSTEM/config.1.$1.1.$2.scr
+Render_Stim
+.
+
+Define Clear_Planes 0
+atc planes clear quit quit
+.
+
+# run the model on one of the actual configurations
+
+Define Model_Trial 1 index
+Clear_Planes
+If $showing
+  "view plot $screen_viewer erase space 0 nrows($screen_viewer) ncols($screen_viewer) 0 quit quit"
+< scripts/config.0.1.1.$1.scr
+Run_Model
+Subvector valid_data fixation_data min($n_model_fixations,$max_recorded_fixations) 0
+Put_Ascii valid_data data/trl.$1.$replication
+Delete_Image valid_data
+.
+
+Define Run_Model 0
+If $show_human_time
+  Then "Set fixation_delay 300"
+  Else "Set fixation_delay 0"
+atc
+  stimuli
+    setup_coords
+    quit
+  quit
+atc
+  model
+    init
+    render	# do it twice so we see it the first time
+    render
+    params
+      delay $fixation_delay
+      quit
+    single
+      fixate location	512 384		# center of logical space
+      quit
+    If $fixation_delay>0 "usleep $fixation_delay*1000"
+    multi
+      run
+      #click
+      #step
+      quit
+    quit
+  quit
+# what is the script variable that holds the number of fixations?
+.
+
+Define Click_Model 0
+If $show_human_time
+  Then "Set fixation_delay 300"
+  Else "Set fixation_delay 0"
+atc
+  stimuli
+    setup_coords
+    quit
+  quit
+atc
+  model
+    init
+    render	# do it twice so we see it the first time
+    render
+    params
+      delay $fixation_delay
+      quit
+    single
+      fixate location	512 384		# center of logical space
+      quit
+    If $fixation_delay>0 "usleep $fixation_delay*1000"
+    multi
+      click
+      advise "back from click"
+      #step
+      quit
+    quit
+  quit
+# what is the script variable that holds the number of fixations?
+.
+
+Define Strategy 1 strat
+atc model strategy select $1 quit quit quit
+.
+
+
+Define Model_Sim 3 n_samps trial_index strategy
+Set total_fixations 0
+Strategy $3
+Set replication 1
+repeat $1
+  Model_Trial $2
+  Add_Var total_fixations $n_model_fixations
+  Increment replication
+  end
+Mul_Var total_fixations 1/$1
+Tell_If "trial $2 strategy $3  mean_n_fixations $total_fixations"
+.
+
+
+Define Make_Memory_Object 3 objname filename infotype
+warn "Make_Memory_Object obsolete, use Read_Memory_File"
+Read_Memory_File $1 $2 $3
+.
+
+Define Read_Memory_File 3 objname filename infotype
+Count_Lines nelts $mem_dir/$2
+Vector $1 $nelts 1 float
+Get_Ascii $1 $mem_dir/$2
+Set_Memory_Vector $3 $1
+.
+
+Define Set_Memory_Vector 2 infotype vecname
+atc
+  model
+    params
+      forget $1 $2
+      quit
+    quit
+  quit
+.
+
+ 
+Define Mem_Params 3 heading_datafile alt_datafile speed_datafile
+Read_Memory_File heading_memvec $1 heading
+Read_Memory_File alt_memvec $1 altitude
+Read_Memory_File speed_memvec $1 speed
+.
+
+Define Plot_Scan_Path 1 vector
+#view
+#  plot $screen_viewer
+#    space 0 767 1023 0	# assume sim run full res
+#    xyplot $1
+#    quit
+#  quit
+atc
+  stimuli
+    scan_path $1
+    quit
+  quit
+.
+
+Define Init_Screen_Objs 0
+Tell_If Init_Screen_Objs
+Dup_Byte screen_dump $screen_viewer 
+data
+  image rgb_dump nrows(screen_dump) ncols(screen_dump) 3 byte
+  image frgb nrows(screen_dump) ncols(screen_dump) 3 float
+  vector cmap 256 3 float 
+  quit 
+.
+
+# extract screen image and put in rgb_dump
+
+Define Fetch_Screen 0
+Tell_If "extracting image from window"
+view
+  extract screen_dump $screen_viewer 0 0 
+  quit
+view 
+  luts 
+    cmaps 
+      getmap cmap 
+      quit 
+    quit 
+  quit 
+Tell_If "mapping image to rgb"
+Map frgb screen_dump cmap
+Convert rgb_dump frgb
+.
+
+# This routine assumes that you will remember something for some number of fixations,
+# then forget it with increasing probability.  For now, the probability increases
+# linearly to 1 over n_forget fixations.
+
+Define Make_Memory_Vector 3 name n_remember n_forget
+Assign vlen $2+$3
+Vector $1 $vlen 1 float
+Subvector sub1 $1 $2 0
+VSet sub1 0
+Delete_Image sub1
+Subvector sub2 $1 $3+1 $2-1
+Assign inc 1/$3
+Ramp1D sub2 0 $inc
+.
+
+Stop_File atc.mac

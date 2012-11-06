@@ -1,0 +1,367 @@
+
+# %Z% $RCSfile: decl.mac,v $ ver: $Revision: 1.25 $ $Date: 2012/01/21 17:14:40 $
+
+Start_File decl.mac
+
+Define Check_Dup 2 name prototype
+If obj_exists($1)&&(ncols('$1')!=ncols('$2')||nrows('$1')!=nrows('$2'))
+  "Delete_Image $1"
+If !obj_exists($1)||ncols('$1')!=ncols('$2')||nrows('$1')!=nrows('$2')
+  "Dup_Float $1 $2"
+.
+
+# This is used when we have located a small bright feature within
+Define Set_Standard_Type 1 type
+Set std_type $1
+If "!strcmp('$std_type',\"float\")"
+  Then 'Set std_cpx_type complex'
+  Else 'Set std_cpx_type dblcpx'
+.
+
+# set default
+Set_Standard_Type float
+
+# this version for efficient real xforms
+
+Define Xform_Image 1 name
+data image $1 $ysize 1+$xsize/2 1 $std_cpx_type quit
+.
+
+Define Xform_For 2 name template
+Tell_Precision $2 srcprec
+If "!strcmp(\"$srcprec\",\"float\")"
+  Then 'Set xfprec complex'
+  Else 'Set xfprec dblcpx'
+data image $1 "nrows('$2')" "1+ncols('$2')/2" 1 $xfprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $xfprec quit
+.
+
+Define IXform_For 2 name template
+Tell_Precision $2 srcprec
+If "!strcmp($srcprec,\"complex\")"
+  Then 'Set ixfprec float'
+  Else 'Set ixfprec double'
+data image $1 "nrows('$2')" "2*(ncols('$2')-1)" 1 $ixfprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $ixfprec quit
+.
+
+Define Filter_For 2 name template
+Tell_Precision $2 srcprec
+data image $1 "nrows('$2')" "1+ncols('$2')/2" 1 $srcprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $srcprec quit
+.
+
+Define Image_Info 1 name
+data info $1 quit
+.
+
+Define Interlace 3 name parent odd_even
+data interlace $1 $2 $3 quit
+.
+
+Define New_Object 5 name frames rows cols type
+data sequence $1 $2 $3 $4 $5 quit
+.
+
+Define Std_Scalar 1 name
+Scalar $1 1 $std_type
+.
+
+Define Double_Scalar 1 name
+Scalar $1 double
+.
+
+Define Scalar 3 name depth type
+data scalar $1 $2 $3 quit
+.
+
+Define Row_Vector 3 name length type
+data vector $1 $2 1 $3 quit
+.
+
+Define Column_Vector 3 name length type
+data column $1 $2 1 $3 quit
+.
+
+Define Column 4 name length depth type
+data column $1 $2 $3 $4 quit
+.
+
+Define Vector 4 name length depth type
+data vector $1 $2 $3 $4 quit
+.
+
+Define Image 5 name height width depth type
+data image $1 $2 $3 $4 $5 quit
+.
+
+Define Hypersequence 7 name seqs frames height width ncomps type
+data hyperseq $1 $2 $3 $4 $5 $6 $7 quit
+.
+
+Define Sequence 6 name frames height width ncomps type
+data sequence $1 $2 $3 $4 $5 $6 quit
+.
+
+Define Subimage 6 name parent width height x0 y0
+data subimage $1 $2 $3 $4 $5 $6 quit
+.
+
+Define Subsample_Color_Image 11 name parent nc c0 cinc nx x0 xinc ny y0 yinc
+data subsample $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 quit
+.
+
+Define Subsample_Image 8 name parent nx x0 xinc ny y0 yinc
+data
+  subsample $1 $2 
+	# depth('$2') 0 1
+	$3 $4 $5
+	$6 $7 $8
+  quit
+.
+
+Define Subsample_Vector 5 name parent nx x0 xinc
+data subsample $1 $2 $3 $4 $5 quit
+.
+
+Define Subvector 4 name parent len offset
+data subvector $1 $2 $3 $4 quit
+.
+
+Define Subscalar 4 name parent len offset
+data subscalar $1 $2 $3 $4 quit
+.
+
+# BUG type is not a fixed number of words
+# this works for multi dim only!
+
+Define Equivalence 8 name parent nseqs nfrms nrows ncols ncomps precision
+data equivalence $1 $2 $3 $4 $5 $6 $7 $8 quit
+.
+
+Define Relocate 4 name x y t
+data relocate $1 $2 $3 $4 quit
+.
+
+Define Std_Image 1 name
+data image $1 $ysize $xsize 1 $std_type quit
+.
+
+Define Tri_Image 1 name
+data image $1 $ysize $xsize 3 float quit
+.
+
+Define Color_Image 1 name
+data image $1 $ysize $xsize 3 float quit
+.
+
+# old version with all the bits jammed together
+#Define Bit_Image 1 'name for bitmap image'
+#data vector $1 floor(($ysize*$xsize+31)/32) 1 long quit
+#.
+
+# new version with even # of words per line
+Define Bit_Image 1 'name for bitmap image'
+If "($xsize%32)!=0"
+  "warn 'Image width $xsize not a multiple of 32 for bit image!?'"
+# now we have a bit type
+#Image $1 $ysize floor(($xsize+31)/32) 1 long
+Image $1 $ysize $xsize 1 bit
+.
+
+Define Short_Image 1 'name for long image'
+data image $1 $ysize $xsize 1 short quit
+.
+
+Define Long_Image 1 'name for long image'
+data image $1 $ysize $xsize 1 long quit
+.
+
+Define Double_Image 1 'name for double image'
+data image $1 $ysize $xsize 1 double quit
+.
+
+Define Float_Image 1 'name for float image'
+data image $1 $ysize $xsize 1 float quit
+.
+
+# this default size  is for cosmo
+#Set frame_width		640
+#Set frame_height	496
+
+# this default size  is for LML33
+Set frame_width		720
+Set frame_height	480
+
+Assign field_width	$frame_width
+Assign field_height	$frame_height/2
+
+Set field_x_zoom	1
+Set field_y_zoom	1
+
+Define Float_Field 1 name
+Print field_height
+Image $1 $field_height/$field_y_zoom $field_width/$field_x_zoom 1 float
+.
+
+Define Float_Frame 1 name
+Image $1 $frame_height/$frame_y_zoom $frame_width/$frame_x_zoom 1 float
+.
+
+Define Byte_Field 1 name
+Print field_height
+Print field_width
+data image $1 $field_height $field_width 1 byte quit
+.
+
+Define Float_Vector 2 'name for float vector' size
+data vector $1 $2 1 float quit
+.
+
+Define Complex_Image 1 'name for complex image'
+data image $1 $ysize $xsize 1 $std_cpx_type quit
+.
+
+Define Dup_Complex 2 'name for complex image' prototype
+data image $1 "nrows('$2')" "ncols('$2')" 1 $std_cpx_type quit
+.
+
+Define Dup_Std 2 'new name' prototype
+Dup_Sequence $1 $2 $std_type
+.
+
+Define Dup_Short 2 'name for short image' prototype
+Dup_Sequence $1 $2 short
+.
+
+Define Dup_Bit 2 'name for bitmap image' prototype
+Dup_Sequence $1 $2 bit
+.
+
+Define Dup_Long 2 'name for long image' prototype
+Dup_Sequence $1 $2 long
+.
+
+Define Dup_ULong 2 'name for long image' prototype
+Dup_Sequence $1 $2 u_long
+.
+
+Define Dup_Double 2 'name for double image' prototype
+Dup_Sequence $1 $2 double
+.
+
+Define Dup_Float 2 'new name' prototype
+Dup_Sequence $1 $2 float
+.
+
+Define Dup_Byte 2 'name for byte image' prototype
+Dup_Sequence $1 $2 byte
+.
+
+Define Dup_UByte 2 'name for byte image' prototype
+Dup_Sequence $1 $2 u_byte
+.
+
+Define Dup_If 2 newname proto
+If !obj_exists('$1') "Dup_Obj $1 $2"
+.
+
+Define Get_Prec 2 varname object
+data precision $2 $1 quit
+.
+
+Define Dup_Obj 2 'new name' prototype
+data
+  precision $2 dup_prec
+  hyperseq $1
+	"nseqs('$2')" "nframes('$2')"
+	"nrows('$2')" "ncols('$2')" "depth('$2')" $dup_prec
+	quit
+.
+
+Define Dup_Image 3 'new name' prototype precision
+Dup_Sequence $1 $2 $3
+.
+
+# We do this for cuda, but it's only appropriate for a data_object,
+# not another sizeable object such as a file or window
+
+Define Match_Area 1 sizable
+If !obj_exists('$1') exit_macro
+data
+  areas match $1 quit
+  quit
+.
+
+Define Dup_Sequence 3 'new name' prototype precision
+Match_Area $2
+data
+  sequence $1 "nframes('$2')" "nrows('$2')" "ncols('$2')" "depth('$2')" $3
+  quit
+.
+
+Define UByte_Image 1 'name for u_byte image'
+data image $1 $ysize $xsize 1 u_byte quit
+.
+
+Define Byte_Image 1 'name for byte image'
+data image $1 $ysize $xsize 1 byte quit
+.
+
+Define Byte_Display 1 'name for byte image'
+data image $1 $display_size $display_size 1 byte quit
+.
+
+Define Float_Display 1 'name for float image'
+data image $1 $display_size $display_size 1 float quit
+.
+
+Define Byte_Sequence 2 'sequence name' 'number of frames'
+data sequence $1 $2 $ysize $xsize 1 byte quit
+.
+
+Define Delete_Image 1 'name of image'
+data delete $1 quit
+.
+
+Define Delete_Vector 1 'name of vector'
+data delete $1 quit
+.
+
+Define Delete_Object 1 'name of data object'
+data delete $1 quit
+.
+
+Define Set_Image_Size 2 dx dy
+Assign xsize $1
+Assign ysize $2
+.
+
+Define Dup_Sizes 1 prototype
+Assign ysize "nrows('$1')"
+Assign xsize "ncols('$1')"
+.
+
+Define Resize 1 size
+Assign size $1
+Assign xsize $1
+Assign ysize $1
+.
+
+Define Float_Scalar 1 name
+data scalar $1 1 float quit
+.
+
+Define Tell_Precision 2 object variable
+data precision $1 $2 quit
+.
+
+Define Alignment 1 val
+data alignment $1 quit
+.
+
+Stop_File decl.mac
+

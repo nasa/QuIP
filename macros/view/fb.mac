@@ -1,0 +1,237 @@
+
+# macros to interpret the output of fbset...
+
+If var_exists(fb_macros_read) "advise 'ADVISORY:  Ignoring request to read fb.mac an additional time.' PopFile 2 nop"
+
+# mode "1680x1050-60"
+#     # D: 154.202 MHz, H: 66.238 kHz, V: 60.053 Hz
+#     geometry 1680 1050 1728 4854 8
+#     timings 6485 32 32 22 21 584 10
+#     hsync high
+#     accel true
+#     rgba 8/0,8/0,8/0,0/0
+# endmode
+Define mode 1 string
+nop
+.
+
+Define geometry 5 width height mem_width mem_height bit_depth
+Assign fb_width $1
+Assign fb_height $2
+Assign fb_mem_width $3
+Assign fb_mem_height $4
+Assign fb_depth $5
+.
+
+Define hsync 1 x
+nop
+.
+
+Define timings 7 x x x x x x x
+nop
+.
+
+Define accel 1 tf
+nop
+.
+
+Define rgba 1 string
+nop
+.
+
+Define endmode 0
+nop
+.
+
+
+
+# These definitions are specific to poisson's big monitor...
+
+Set fb0_inited 0
+Set fb1_inited 0
+
+Define Get_FB_Size 1 devname
+os
+  pipes
+    open fbset r "fbset -fb /dev/$1"
+    redir fbset
+    quit
+  quit
+.
+
+Define FBDev_Init 0
+
+If $fb0_inited "advise 'Frame buffer /dev/fb0 is already initialized' exit_macro"
+If $fb1_inited "advise 'Closing previously opened frame buffer /dev/fb1' Close_Second_Head"
+
+advise 'Getting fb size...'
+Get_FB_Size fb0
+
+advise 'Getting color maps...'
+Vector _r_map 256 1 u_short
+Vector _g_map 256 1 u_short
+Vector _b_map 256 1 u_short
+view
+  fb
+    open /dev/fb0
+    get_cmap _r_map _g_map _b_map
+    quit
+  quit
+
+advise 'Defining screen regions...'
+Subimage screen1 /dev/fb0 $fb_width $fb_height 0 0
+Subimage screen2 /dev/fb0 $fb_width $fb_height 0 $fb_height
+
+Set fb0_inited 1
+
+advise 'Reading fb0 definitions...'
+< $macro_dir/view/fb0_defns.mac
+
+Set s2_offset $fb_height
+.
+
+Define Close_Generic_Head 0
+If obj_exists(screen1) "Delete_Image screen1"
+If obj_exists(screen2) "Delete_Image screen2"
+macros
+  If macro_exists(Set_Screen_Color) "delete Set_Screen_Color"
+  quit
+.
+
+Define Close_First_Head 0
+Close_Generic_Head
+.
+
+Define Close_Second_Head 0
+Close_Generic_Head
+.
+
+Define Second_Head_Init 0
+If $fb1_inited "advise 'Frame buffer /dev/fb1 is already initialized' exit_macro"
+If $fb0_inited "advise 'Closing previously opened frame buffer /dev/fb0' Close_First_Head"
+
+Get_FB_Size fb1
+
+view
+  fb
+    open /dev/fb1
+    quit
+  quit
+Set s2_offset 480
+Subimage screen1 /dev/fb1 640 480 0 0
+Subimage screen2 /dev/fb1 640 480 0 480
+# If 16 bpp
+If depth(screen1)==2
+  "Equivalence _screen1 screen1 1 1 nrows(screen1) ncols(screen1) 1 u_short \
+   Equivalence _screen2 screen2 1 1 nrows(screen2) ncols(screen2) 1 u_short"
+If depth(screen1)==4
+  "Equivalence _screen1 screen1 1 1 nrows(screen1) ncols(screen1) 1 u_long \
+   Equivalence _screen2 screen2 1 1 nrows(screen2) ncols(screen2) 1 u_long"
+Set fb1_inited 1
+
+< $macro_dir/view/fb1_defns.mac
+.
+
+Define S2 0
+view fb pan 0 $s2_offset quit quit
+Set current_screen screen2
+Set hidden_screen screen1
+.
+
+Define S1 0
+view fb pan 0 0 quit quit
+Set current_screen screen1
+Set hidden_screen screen2
+.
+
+macros delete Setcolor quit	# make sure X11 version is not defined...
+
+Define Setcolor 4 index r g b
+VSet _r_map[$1] $2
+VSet _g_map[$1] $3
+VSet _b_map[$1] $4
+.
+
+Define Update_Cmap 0
+view
+  fb
+    vblank
+    set_cmap _r_map _g_map _b_map
+    quit
+  quit
+.
+
+macros delete VBlank quit
+
+Define VBlank 0
+view
+  fb
+    vblank
+    quit
+  quit
+.
+
+Define Wake_FB 0
+output_file /dev/kmsg
+echo ' '
+output_file -
+.
+
+# More macros to interact with the keyboard.
+# We assume that the line for mingetty is commented out in /etc/inittab
+
+Define Init_KB 0
+os
+  serial
+    open /dev/tty1
+    check
+    If $n_readable>0 recv
+    quit
+  quit
+.
+
+# wait for (any) keystroke
+
+Define Check_KB 0
+os
+  serial
+    check
+    quit
+  quit
+.
+
+Define Clear_KB 0
+os
+  serial
+    recv
+    quit
+  quit
+.
+
+Define Wait_KB 0
+os
+  serial
+    do
+      check
+      If $n_readable==0 'usleep 10000'
+      while $n_readable==0
+    recv	# xfer chars to $serial_response
+    quit
+  quit
+.
+
+Define Select_Pen 1 color_index
+Set pen_color $1
+.
+
+Define Draw_Box 4 x0 y0 x1 y1
+#Print pen_color
+advise "Draw_Box $1 $2 $3 $4"
+# draw to current screen or hidden screen?
+Subimage box $current_screen 1+$3-$1 1+$4-$2 $1 $2
+VSet box $pen_color
+Delete_Image box
+.
+
+Set fb_macros_read 1
+

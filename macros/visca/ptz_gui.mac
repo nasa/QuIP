@@ -1,0 +1,578 @@
+Set have_ptz_gui 0
+Set ptz_index_set 0
+
+Define Set_Camera_Zoom 1 value
+Set_PTZ_Zoom $1
+Update_Zoom_Scale
+.
+
+Set zoom_coeffs_inited 0
+
+Define Use_Default_Data_Dir 0
+Set QUIP_DATA_DIR /usr/local/share/quip
+advise "Using default value for QUIP_DATA_DIR:  $QUIP_DATA_DIR"
+.
+
+Define Init_Zoom_Coeffs 0
+Vector _zoom_coeffs 3 1 float
+#Get_Ascii _zoom_coeffs $HOME/data/galvo/params/zoom_coeffs.asc
+If !var_exists(QUIP_DATA_DIR) Use_Default_Data_Dir
+Get_Ascii _zoom_coeffs $QUIP_DATA_DIR/params/visca/zoom_coeffs.asc
+Display _zoom_coeffs
+# When the zoom changes, update cm/pix
+Set zoom_coeffs_inited 1
+.
+
+Define Update_Zoom_Scale 0
+If !$zoom_coeffs_inited Init_Zoom_Coeffs
+#advise "Update_Zoom_Scale $zoom"
+Assign _x $zoom/1000	# multiplier, see calib/zoom_cal.scr
+Print zoom
+Print _x
+# quadratic fit
+Assign cm_per_pixel (value(_zoom_coeffs[0])*$_x+value(_zoom_coeffs[1]))*$_x+value(_zoom_coeffs[2])
+# How can we know cm per pixel without knowing the viewing distance?
+# refers to calibration at a certain distance?
+Print cm_per_pixel
+If $cm_per_pixel<=0 "error_exit 'Update_Zoom_Scale:  cannot determine cm_per_pixel!?'"
+Assign pixels_per_cm 1/$cm_per_pixel
+Print pixels_per_cm
+# y is cm/pix
+.
+
+Set ptz_action PTZ_Recenter_Click	# set default action - must AGREE
+
+Define SetPTZClickMode 0
+If !strcmp($choice,recenter) "Set ptz_action PTZ_Recenter_Click"
+If !strcmp($choice,mark_point) "Set ptz_action PTZ_Mark_Point"
+.
+
+Set last_xpos -1
+Set last_ypos -1
+
+Define Report_Delta 0
+Assign dx $view_xpos-$last_xpos
+Assign dy $view_ypos-$last_ypos
+Assign ds sqrt($dx*$dx+$dy*$dy)
+#advise "ZOOM $zoom     ds $ds"
+.
+
+Define PTZ_Mark_Point 0
+If $last_xpos>=0 Report_Delta
+Set last_xpos $view_xpos
+Set last_ypos $view_ypos
+.
+
+Define SetGain 0
+Set gain $slider_val
+Set_PTZ_Gain $gain
+Update_Viewer
+.
+
+Define SetShutter 0
+If $ae
+  "Set_PTZ_Exposure_Manual Update_Gain_Slider Update_Shutter_Slider"
+Set shutter $slider_val
+Set_PTZ_Shutter $shutter
+Update_Viewer
+.
+
+# callback function for when the user updates the camera on the ptz panel
+
+Define SelectPTZCam 0
+If !strcmp('$choice',cam1) "Set_PTZ_Index 1"
+If !strcmp('$choice',cam2) "Set_PTZ_Index 2"
+If !strcmp('$choice',cam3) "Set_PTZ_Index 3"
+If !strcmp('$choice',cam4) "Set_PTZ_Index 4"
+If !strcmp('$choice',cam5) "Set_PTZ_Index 5"
+If !strcmp('$choice',cam6) "Set_PTZ_Index 6"
+# BUG need to detect if nothing has been done, in case number of cameras increases...
+$select_ptz_callback $choice
+.
+
+Define Default_PTZ_Select_Callback 1 choice
+nop
+.
+
+Define Set_PTZ_Select_Callback 1 macro_name
+Set select_ptz_callback $1
+.
+
+Define Update_PTZ_Cam_Choice 1 choice
+interface
+  decorate $ptz_panel_name	# BUG? can there be more than one???
+    set_choice Camera $1
+    quit
+  quit
+.
+
+Set select_ptz_callback Default_PTZ_Select_Callback
+
+
+Define Init_PTZ_Panel 0
+Set p ptz_panel
+interface
+  panel $p 500 530
+  quit
+Add_PTZ_Controls $p
+Set have_ptz_gui 1
+.
+
+Define Add_PTZ_Controls 1 panel_name
+Set ptz_panel_name $1
+interface
+  decorate $ptz_panel_name
+    #adjuster pan SetPan $pan_min $pan_max 0
+    #adjuster tilt SetTilt $tilt_min $tilt_max 0
+    #adjuster zoom SetZoom $zoom_min $zoom_max $zoom_min
+    #adjuster focus SetFocus $focus_min $focus_max $focus_min
+    Set cmd "chooser Camera SelectPTZCam $n_cameras $cam_list"
+    push_text $cmd
+    # where do we set the default?
+    chooser PTZClickMode SetPTZClickMode 2 recenter mark_point
+    set_choice PTZClickMode recenter	# show default - must AGREE
+    toggle AutoFocus SetAF
+    toggle IR_Mode SetIR
+    toggle AutoExposure SetAE
+#    button QUIT exit
+
+    position 150 20
+    slider pan _SetPan $pan_min $pan_max 0
+    slider tilt _SetTilt $tilt_min $tilt_max 0
+    slider zoom _SetZoom $zoom_min $zoom_max $zoom_min
+    slider focus_pos SetFocus $focus_min $focus_max $focus_min
+    slider gain SetGain $gain_min $gain_max $gain_min
+    slider shutter SetShutter $shutter_min $shutter_max $shutter_min
+    quit
+  quit
+.
+
+Define Inquire_PTZ_Zoom 0
+Inquire_PTZ_Param zoom
+.
+
+Define Inquire_PTZ_Focus 0
+Inquire_PTZ_Param focus_pos
+.
+
+Define Inquire_PTZ_Gain 0
+Inquire_PTZ_Param gain
+.
+
+Define Inquire_PTZ_Shutter 0
+Inquire_PTZ_Param shutter
+.
+
+Define Inquire_PTZ_Focus_Mode 0
+Inquire_PTZ_Param focus_mode
+.
+
+Define Inquire_PTZ_IR_Mode 0
+Inquire_PTZ_Param ir_mode
+.
+
+Define Inquire_PTZ_Exposure_Mode 0
+Inquire_PTZ_Param exposure_mode
+.
+
+# this one now defined separately for daemon client & hw host
+### Define Inquire_PTZ_Posn 0
+### # for two parameters returned we don't use the simple version...
+### #Inquire_PTZ_Param pantilt_posn
+######  
+### Evi_Send "Inquire_PTZ_Param pantilt_posn"
+### Set daemon_sock	daemon_sock
+### Set client_sock	evic_sock
+### Set string "Xmit_Text $daemon_sock \"Set pan_posn \$pan_posn Set tilt_posn \$tilt_posn\""
+### Evi_Send $string
+### Recv_Text $client_sock response
+### push_text $response
+### .
+
+Define Get_Camera_Settings 1 cam_string
+advise "Get_Camera_Settings $1 BEGIN"
+Select_PTZ $1
+
+# The inquire function returns the values in $pan_posn and $tilt_posn
+Inquire_PTZ_Posn
+Set pan $pan_posn
+Set tilt $tilt_posn
+
+advise 'Inquire_PTZ_Zoom...'
+Inquire_PTZ_Zoom
+Print inquiry_result
+Set zoom $inquiry_result
+#advise "camera reports zoom = $zoom"
+# sometime the camera reports 0x4000, which is not supposed to be a legal value?
+#advise "Get_Camera_Settings, zoom = $zoom, zoom_max = $zoom_max"
+Assign z1 $zoom
+Assign z2 $zoom_max
+#advise "$z1, $z2"
+If $zoom>$zoom_max
+  'Tell_If "clipping zoom to $zoom_max" Set zoom $zoom_max Set_PTZ_Zoom $zoom'
+
+advise 'Update_Zoom_Scale...'
+Update_Zoom_Scale		# so recentering works!
+
+Inquire_PTZ_Focus
+Set focus_pos $inquiry_result
+
+Inquire_PTZ_Gain
+Set gain $inquiry_result
+
+Inquire_PTZ_Shutter
+Set shutter $inquiry_result
+
+advise 'inquire ptz_focus mode...'
+Inquire_PTZ_Focus_Mode
+If !strcmp($inquiry_result,"auto")
+  Then "Set af 1"
+  Else "Set af 0"
+
+Inquire_PTZ_IR_Mode
+If !strcmp($inquiry_result,"on")
+  Then "Set ir 1"
+  Else "Set ir 0"
+
+Inquire_PTZ_Exposure_Mode
+If !strcmp($inquiry_result,"manual")
+  Then "Set ae 0"
+  Else "Set ae 1"
+
+#advise "$1 parameters:  pan = $pan   tilt = $tilt   zoom = $zoom   focus = $focus   af = $af   ir = $ir"
+Remember_Params $1
+advise "Get_Camera_Settings $1 DONE"
+.
+
+# We call this when we turn autofocus off, to display the current focus setting
+
+Define Update_Focus_Slider 0
+Update_Param_Slider focus_pos
+.
+
+Define Update_Gain_Slider 0
+Update_Param_Slider gain
+.
+
+Define Update_Shutter_Slider 0
+Update_Param_Slider shutter
+.
+
+Define Update_Param_Slider 1 param_name
+Inquire_PTZ_Param $1
+Set $1 $inquiry_result
+interface
+  decorate $ptz_panel_name
+    set_scale $1 $$1
+    quit
+  quit
+.
+
+
+
+
+Define Remember_Params 1 stem
+Set pan_name		${1}_pan
+Set tilt_name		${1}_tilt
+Set zoom_name		${1}_zoom
+Set focus_pos_name		${1}_focus_pos
+Set gain_name		${1}_gain
+Set shutter_name	${1}_shutter
+Set af_name		${1}_af
+Set ir_name		${1}_ir
+Set ae_name		${1}_ae
+
+Set $pan_name		$pan
+Set $tilt_name		$tilt
+Set $zoom_name		$zoom
+Set $focus_pos_name		$focus_pos
+Set $gain_name		$gain
+Set $shutter_name	$shutter
+Set $af_name		$af
+Set $ir_name		$ir
+Set $ae_name		$ae
+.
+
+# Set_PTZ_Index:
+#   selects the camera for subsequent operations
+#   gets camera value & updates gui
+#   selects associated video input
+
+Define Set_PTZ_Index 1 index
+Install_PTZ_Index $1
+# Also change video input
+Set_V4L2_Device $1
+.
+
+Define Install_PTZ_Index 1 index
+Set cam_index $1
+Select_PTZ_Cam $1
+Get_Camera_Settings $ptz_cam
+If $have_ptz_gui Update_PTZ_Sliders
+
+# This is peculiar to ctrack
+Switch_To_Cam $1
+.
+
+
+Set ptz_cam none		# initial default
+
+# Why do we have 2 macros, Select_PTZ_Cam and Select_PTZ???
+# Select_PTZ_Cam puts the camera-specific parameters into the global
+# params used by the gui.
+
+Define Select_PTZ_Cam 1 index
+#advise "Select_PTZ_Cam $1"
+If strcmp($ptz_cam,none) "Remember_Params $ptz_cam"
+Set pan_name	cam${1}_pan
+Set tilt_name	cam${1}_tilt
+Set zoom_name	cam${1}_zoom
+Set focus_pos_name	cam${1}_focus_pos
+Set gain_name	cam${1}_gain
+Set shutter_name	cam${1}_shutter
+Set af_name	cam${1}_af
+Set ir_name	cam${1}_ir
+Set ae_name	cam${1}_ae
+
+Set pan $$pan_name
+Set tilt $$tilt_name
+Set zoom $$zoom_name
+Set focus_pos $$focus_pos_name
+Set gain $$gain_name
+Set shutter $$shutter_name
+Set af $$af_name
+Set ir $$ir_name
+Set ae $$ae_name
+
+Set ptz_cam cam$1
+Select_PTZ $ptz_cam
+Update_Zoom_Scale
+.
+
+Define Update_PTZ_Sliders 0
+#advise "Update_PTZ_Sliders, pan = $pan  tilt = $tilt  zoom = $zoom"
+interface
+  decorate $ptz_panel_name
+    set_scale pan $pan
+    set_scale tilt $tilt
+    set_scale zoom $zoom
+    set_scale focus_pos $focus_pos
+    set_scale gain $gain
+    set_scale shutter $shutter
+    If $af
+      Then "set_toggle AutoFocus yes"
+      Else "set_toggle AutoFocus no"
+    If $ir
+      Then "set_toggle IR_Mode yes"
+      Else "set_toggle IR_Mode no"
+    If $ae
+      Then "set_toggle AutoExposure yes"
+      Else "set_toggle AutoExposure no"
+    quit
+  quit
+.
+
+Set ptz_panel_on 0
+
+Define PTZ_Panel_On 0
+If $ptz_panel_on 'PopFile 2 nop'
+interface
+  control
+    show ptz_panel
+    quit quit
+Select_PTZ $ptz_cam
+Set ptz_panel_on 1
+.
+
+Define PTZ_Panel_Off 0
+If !$ptz_panel_on "PopFile 2 nop"
+interface
+  control
+    unshow ptz_panel
+    quit quit
+Set ptz_panel_on 0
+.
+
+Define _SetPan 0
+Set pan $slider_val
+Set_PTZ_Posn $max_pan_speed $max_tilt_speed $pan $tilt
+Update_Viewer
+.
+
+Define _SetTilt 0
+Set tilt $slider_val
+Point_Camera $pan $tilt
+Update_Viewer
+.
+
+Define _SetZoom 0
+Set last_xpos -1		# in case we are marking...
+Set last_ypos -1
+Set zoom $slider_val
+Set_PTZ_Zoom $zoom
+Update_Viewer
+Update_Zoom_Scale
+.
+
+Define SetFocus 0
+If $af
+  Set_Manual_Focus
+Set focus_pos $slider_val
+Set_PTZ_Focus $focus_pos
+Update_Viewer
+.
+
+Define SetAF 0
+Set af $toggle_state
+If $af
+  Then Set_Auto_Focus
+  Else Set_Manual_Focus
+Update_Viewer
+Update_Focus_Slider
+.
+  
+Define Set_Auto_Focus 0
+Set_PTZ_Auto_Focus
+interface
+  decorate $ptz_panel_name
+    set_toggle AutoFocus yes
+    quit
+  quit
+# how many times do we need to do this?
+# there used to be an extra focus inquiry - a delay???
+Update_Focus_Slider
+.
+
+Define Set_Manual_Focus 0
+Set_PTZ_Manual_Focus
+interface
+  decorate $ptz_panel_name
+    set_toggle AutoFocus no
+    quit
+  quit
+#visca inquire focus_pos quit
+Update_Focus_Slider
+.
+
+
+Define SetIR 0
+Set ir $toggle_state
+If $ir
+  Then Set_PTZ_IR_On
+  Else Set_PTZ_IR_Off
+Update_Viewer
+.
+
+Define SetAE 0
+Set ae $toggle_state
+If $ae
+  Then Set_PTZ_Exposure_Auto
+  Else "Set_PTZ_Exposure_Manual Update_Gain_Slider Update_Shutter_Slider"
+Update_Viewer
+.
+
+Define PTZ_Click 0
+$ptz_action
+.
+
+Set ptz_action PTZ_Recenter_Click	# set default action
+
+# So far we have only calibrated this for zoom=500
+# but just for now let's assume that the zoom IS 500, and try this out...
+# 100 pan OR tilt units results in 29 pixels of image movement (after subsampling???)
+Define PTZ_Recenter_Click 0
+Assign dx ncols($video_window_name)/2-$view_xpos
+Assign dy nrows($video_window_name)/2-$view_ypos
+# If the window has minified the image, we need to boost...
+Mul_Var dx 640/ncols($video_window_name)
+Mul_Var dy 480/nrows($video_window_name)
+advise "PTZ_Recenter_Click:  desired delta is $dx $dy"
+Reposition_PTZ $dx $dy
+.
+
+# Reposition_PTZ  - x and y are image coordinates (relative to center)
+# of a feature we wish to bring to the center of the image.  Unlike
+# the galvo, here the matrix is diagonal, and the gains are more-or-less
+# equal (but depend on zoom).  For zoom=500, 100 units (pan or tilt)
+# result in 29 pixels of motion.
+
+Column _delta_ptz 2 1 float
+Column _delta_pix 2 1 float
+Image p2c_matrix 2 2 1 float
+
+
+# Initialize the reference based on the calibration
+Set zoom 500
+Update_Zoom_Scale
+Set reference_cm_per_pixel $cm_per_pixel
+Set reference_pixels_per_cm $pixels_per_cm
+
+Define Reposition_PTZ 2 dx dy
+Print cm_per_pixel
+Print pixels_per_cm
+#advise "Reposition_PTZ pixels_per_cm = $pixels_per_cm"
+Assign pscale	29*$pixels_per_cm/$reference_pixels_per_cm
+#Assign pscale	29*$reference_pixels_per_cm/$pixels_per_cm
+Print pscale
+data ascii read p2c_matrix - 100/(4*$pscale) 0 0 -100/(4*$pscale) quit quit
+#Display p2c_matrix
+data ascii read _delta_pix - $1 $2 quit quit
+Display _delta_pix
+Display p2c_matrix
+#Inner_Prod _delta_ptz _delta_pix p2c_matrix
+Inner_Prod _delta_ptz p2c_matrix _delta_pix
+Display _delta_ptz
+#Display p2c_matrix
+#Display _delta_pix
+#Display _delta_ptz
+
+Add_Var pan -value(_delta_ptz[0])
+Add_Var tilt -value(_delta_ptz[1])
+If $pan<$pan_min "Set pan $pan_min"
+If $pan>$pan_max "Set pan $pan_max"
+If $tilt<$tilt_min "Set tilt $tilt_min"
+If $tilt>$tilt_max "Set tilt $tilt_max"
+Print pan
+Print tilt
+advise "Point_Camera $pan $tilt"
+Point_Camera $pan $tilt
+If $have_ptz_gui Update_PTZ_Sliders
+.
+
+# This is peculiar to wheatstone
+# We need to have a data object that holds these...
+#Define Set_Visca_Device 1 index
+## relates to the gui...
+## The mapping from indices to cameras is a function
+## of how things are wired up.
+#If $1==1 "Set pi 1"
+#If $1==2 "Set pi 2"
+#If $1==4 "Set pi 3"
+#If $1==3 "Set pi 4"
+#Set_PTZ_Index $pi
+## now set the chooser button
+#interface
+#  decorate $ptz_panel_name
+#    set_choice Camera cam$pi
+#    quit
+#  quit
+#.
+
+# Set Visca_Device takes a video channel and determines which visca cam is attached
+Vector visca_device_mapping 4 1 short
+Ramp1D visca_device_mapping 1 1	# default 1->1 etc
+
+# Set_Visca_Device is what we call when the user clicks on a video channel chooser
+
+Define Set_Visca_Device 1 index
+Assign _ci value(visca_device_mapping[$1-1])
+Tell_If "Video channel 1 is associated with visca device $_ci"
+Install_PTZ_Index $_ci
+# now set the chooser button
+interface
+  decorate $ptz_panel_name
+    set_choice Camera cam$_ci
+    quit
+  quit
+.
+

@@ -1,0 +1,10 @@
+
+# generic macros for viewers
+
+Start_File genview.scr
+
+< $macro_dir/view/view.mac
+< $macro_dir/view/dpysize.scr
+
+Stop_File genview.scr
+

@@ -1,0 +1,8 @@
+
+Start_File gencomp.scr
+
+< $macro_dir/compute/funcs.mac
+< $macro_dir/compute/chains.mac
+
+Stop_File gencomp.scr
+

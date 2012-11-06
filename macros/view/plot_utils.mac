@@ -1,0 +1,143 @@
+# Some utility functions developed for plotting period-vs-delay functions.
+
+Set plot_serial 1
+
+Define Save_Plot 0
+advise "SAVE_PLOT BEGIN"
+view extract rgbbuf p1  0 0 quit
+Filetype png
+Set file exp${EXPERIMENT}_plot.$subject.$plot_serial.png
+Write_File_Header $file 1
+
+# rotate colors
+Dup_UByte bt rgbbuf{0}
+VMov bt rgbbuf{0}
+VMov rgbbuf{0} rgbbuf{2}
+VMov rgbbuf{2} bt
+Delete_Image bt
+
+Put_Next rgbbuf $file
+Increment plot_serial
+.
+
+# these are the axes for the period-vs-delay plots
+
+Define Draw_Plot_Axes 0
+Select_Pen $white
+Y_Legend "period (seconds)"
+X_Legend "delay (seconds)"
+Plot_Y_Axis 0 1.5 0.25 0
+Plot_X_Axis 0 1.5 0.25 0
+Label_X_Ticks 0 1.5 0.25
+Label_Y_Ticks 0 1.5 0.25
+.
+
+# these are the axes for the slope-vs-delay scatter plots
+
+Set min_plot_delay 100
+#Set max_plot_delay 160
+Set max_plot_delay 250
+Set delay_tick_delta 20
+
+#Set min_plot_slope 1.54
+#Set max_plot_slope 1.64
+#Set slope_tick_delta 0.02
+Set min_plot_slope 1.25
+Set max_plot_slope 1.75
+Set slope_tick_delta 0.10
+
+Define Param_Scatter_Plot_Axes 0
+Select_Pen $white
+Y_Legend "internal delay (msec)"
+X_Legend "slope"
+Plot_Y_Axis $min_plot_delay $max_plot_delay $delay_tick_delta $min_plot_slope
+Plot_X_Axis $min_plot_slope $max_plot_slope $slope_tick_delta $min_plot_delay
+Label_X_Ticks $min_plot_slope $max_plot_slope $slope_tick_delta
+Label_Y_Ticks $min_plot_delay $max_plot_delay $delay_tick_delta
+.
+
+Define Get_Dir_Constraint_File_Name 0
+If $has_dir
+  Then "Set constraint_file $HOME/data/$PROJECT/pointfiles/pfile.$subject.$EXPERIMENT.$REPLICATION.comp$component.$direction.asc"
+  Else "Set constraint_file $HOME/data/$PROJECT/pointfiles/pfile.$subject.$EXPERIMENT.$REPLICATION.comp$component.asc"
+.
+
+Define Get_Constraint_File_Name 0
+If var_exists(has_dir)
+  Then Get_Dir_Constraint_File_Name
+  Else "Set constraint_file $HOME/data/$PROJECT/pointfiles/pfile.$subject.$EXPERIMENT.$REPLICATION.comp$component.asc"
+.
+
+Define Param_Scatter_Plot 0
+Plot_Data_Range $min_plot_slope $min_plot_delay $max_plot_slope $max_plot_delay
+Param_Scatter_Plot_Axes
+Plot_Param_Scatter
+.
+
+Define Show_Subject 5 color symbol x y subject_legend
+Set subject $5
+Select_Pen $1
+Symbol $2 8
+Point_At $3 $4
+data ascii read rline - $symbol_x $symbol_y $symbol_x $symbol_y quit quit
+Symbol_Plot rline
+Show_Constraint_Line
+Select_Pen $white
+S_At $5 $legend_x $legend_y
+Add_Var legend_y $legend_y_delta
+Assign symbol_y $legend_y-$symbol_delta
+.
+
+Define Plot_Param_Scatter 0
+Set legend_x 1.62
+#Assign symbol_x $legend_x+0.01
+Assign symbol_x $legend_x-0.03
+#Set legend_y 150
+Set legend_y 240
+Set symbol_delta -0.7
+#Set legend_y_delta -4
+Set legend_y_delta -10
+
+Assign symbol_y $legend_y-$symbol_delta
+
+Show_Subject $magenta Diamond 1.56 151 jbm
+Show_Subject $red Square 1.62 111 sbs
+Show_Subject $yellow Disk 1.56 126 fev
+Show_Subject $cyan Triangle 1.57 134 gkr
+Show_Subject $green Inverted_Triangle 1.296 232 jkb
+.
+
+Define Show_Constraint_Line 0
+Get_Constraint_File_Name
+If !file_exists('$constraint_file') "error_exit 'file $constraint_file does not exist'"
+Print constraint_file
+Count_Lines nl $constraint_file
+Vector cpts $nl 2 float
+Get_Ascii cpts $constraint_file
+Display cpts[0]
+XYPlot cpts
+Delete_Image cpts
+.
+
+Define Draw_Scatter_Plot_Axes 0
+Select_Pen $white
+Y_Legend "correlogram peak (msec)"
+X_Legend "internal delay (msec)"
+Plot_Y_Axis 0 300 100 0
+Plot_X_Axis 0 300 100 0
+Label_X_Ticks 0 300 100
+Label_Y_Ticks 0 300 100
+Vector diag 2 2 float
+data ascii read diag - 0 0 300 300 quit quit
+XYPlot diag
+.
+
+
+Define Point_At 2 x y
+Vector tline 2 2 float
+VSet tline{0} $1
+VSet tline{1} $2
+Symbol_Plot tline
+Delete_Image tline
+.
+

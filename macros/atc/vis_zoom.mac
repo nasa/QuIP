@@ -1,0 +1,47 @@
+
+Set use_trace	1		# default
+Set deltas_set	0
+
+Define Process_Frame 1 index
+advise "Process_Frame BEGIN"
+#Show_All_If raw_input 1 'raw input'
+Show_All_If raw_input v1 'raw input'
+advise "Insert_Valid_Portion"
+Insert_Valid_Portion
+# get the number for the first frame, but if use_trace==0 then
+# just hold it constant.  That allows us to see how much head
+# movement there actually was!
+If $use_trace||$deltas_set==0
+  "Assign tt_deltax value(head_coords[$1]{0}) \
+   Assign tt_deltay value(head_coords[$1]{1}) \
+   Set deltas_set 1"
+Tell_If "translating input by $tt_deltax, $tt_deltay"
+advise "translating..."
+Xlate input $tt_deltax $tt_deltay
+Show_If input 5 "translated input"
+
+advise "MagSpin..."
+MagSpin camlum input $shrink_factor $rotation_angle
+
+#Scale camlum 0 120
+Scale camlum 0 200
+Convert b_camlum camlum
+Show_Bytes b_camlum v9
+Pause_If
+
+# Now lets see if we can redraw the stimulus on top of this...
+advise "redrawing stimulus..."
+
+atc
+  stimuli
+    setup_coords
+    overlay yes
+    render
+    quit
+  quit
+
+Pause_If
+.
+
+
+

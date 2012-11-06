@@ -1,0 +1,189 @@
+
+#
+# down sample a big image
+#
+
+Start_File nsubsamp.mac
+
+Set interlace_parity	1	# default value is correct for sirius
+
+# the source may be byte?
+
+Define Subsample 2 target source
+data precision $2 input_prec quit
+If 'strcmp($input_prec,float)' Then
+	"NF_Subsample $1 $2"
+Else
+	"F_Subsample $1 $2"
+.
+
+Define NF_Subsample 2 target source
+Dup_Float nfssrc $2
+Dup_Float nfsdst $1
+#echo "converting $2 to nfssrc"
+Convert nfssrc $2
+#Show_Image nfssrc vfield
+#echo F_Subsample
+F_Subsample nfsdst nfssrc
+#echo "converting nfsdst to $1"
+#Disp_Image nfsdst nfield
+Convert $1 nfsdst
+Delete_Image nfssrc
+Delete_Image nfsdst
+.
+
+Define Show_Log 2 image viewer
+Dup_Float slt $1
+VLog slt $1
+Show_Image slt $2
+Delete_Image slt
+.
+
+Define Show_Power 2 viewer xform
+Dup_Float tx1 $2{0}
+VMagSq tx1 $2
+VSMax tx1 tx1 0.000001
+VLog tx1 tx1
+Show_Gray tx1 $1
+Delete_Image tx1
+.
+
+# BUG - we ought to remember the sizes so we don't have to constantly
+# reallocate our tmp images...
+
+Define F_Subsample 2 target source
+#advise "F_Subsample $1 $2"
+If "ncols('$1')==ncols('$2') && nrows('$1')==nrows('$2')"
+  'VMov $1 $2 PopFile 2 echo error'
+#Info $1
+#Info $2
+Xform_For big_xf $2
+Xform_For sm_xf $1
+# something should happen here!?
+#Info big_xf
+#echo "RFFT big_xf $2"
+RFFT big_xf $2
+Assign bigw ncols(big_xf)
+Assign smallw ncols(sm_xf)
+Assign bigh nrows(big_xf)
+Assign smallh nrows(sm_xf)
+# BUG don't use widths of transform...
+Assign scale_factor (ncols('$2')/ncols('$1'))*($bigh/$smallh)
+Subimage __src big_xf $smallw $smallh/2 0 0
+Subimage __dst sm_xf $smallw $smallh/2 0 0
+VMov __dst __src
+Relocate __src 0 $bigh-$smallh/2 0
+Relocate __dst 0 $smallh/2 0
+VMov __dst __src
+Delete_Image __dst
+Delete_Image __src
+# now zero imaginary nyquists
+VSet sm_xf{1}{$smallw-1} 0.0
+VSet sm_xf{1}[$smallh/2] 0.0
+RInvFFT $1 sm_xf
+Delete_Image big_xf
+Delete_Image sm_xf
+VSMul $1 $1 1/$scale_factor
+.
+
+Define Setup_Interlace_Correction 1 src_img
+Tell_If "Setup_Interlace_Correction $1"
+If obj_exists(_ilace_correction) "advise 'Setup_Interlace_Correction:  _ilace_correction already exists' PopFile 2"
+Xlate_Init $1
+Xform_For _ilace_correction $1
+Make_Phase_Multiplier _ilace_correction 0 -0.5
+.
+
+Define Apply_Ilace_Correction 0
+VVMul big_xf big_xf _ilace_correction
+.
+
+# Subsample an image at different resolutions
+
+Define Multi_Subsample 4 target_stem source n largest_size
+Xform_For big_xf $2
+Assign bigw ncols(big_xf)
+Assign bigh nrows(big_xf)
+Assign targ_size $4
+RFFT big_xf $2
+# Here we want to diddle the phase to shift
+# the image up by half a pixel to compensate for interlacing...
+#
+# There is some confusion about which are odd and even fields, and which come first...
+# My reading has been that in the video world, numbering starts with 1 (not 0),
+# and that the "odd" field is first...
+# Of course, if we switch the field we apply the correction to, AND
+# change the sign of the correction, then the result is the same
+# (with the exception of a small overall position shift).
+#
+# The following code seems to be the correct thing to do for the meteor,
+# grabbing the 217D bench pupil camera:
+#
+# We introduce the variable $interlace_parity to keep track of which fields
+# we will correct...  for the meteor grabbing the 217D bench camera,
+# this should be zero, we think it should be 1 for sirius
+
+If $field_index%2==$interlace_parity
+  Then "Tell_If 'Applying interlace correction on field $field_index' Apply_Ilace_Correction"
+  Else "Tell_If 'Not applying interlace correction on field $field_index'"
+
+repeat $3
+  Set target "$1.$targ_size"
+  Xform_For sm_xf $target
+  Assign smallw ncols(sm_xf)
+  Assign smallh nrows(sm_xf)
+  Assign scale_factor (ncols('$2')/ncols(target))*($bigh/$smallh)
+ # Assign scale_factor ($bigw/$smallw)*($bigh/$smallh)
+  Subimage __src big_xf $smallw $smallh/2 0 0
+  Subimage __dst sm_xf $smallw $smallh/2 0 0
+  VMov __dst __src
+  Relocate __src 0 $bigh-$smallh/2 0
+  Relocate __dst 0 $smallh/2 0
+  VMov __dst __src
+  Delete_Image __dst
+  Delete_Image __src
+  # now zero imaginary nyquists
+  VSet sm_xf{1}{$smallw-1} 0.0
+  VSet sm_xf{1}[$smallh/2] 0.0
+
+  RInvFFT $target sm_xf
+  Delete_Image sm_xf
+  VSMul $target $target 1/$scale_factor
+  Mul_Var targ_size 0.5
+  end
+Delete_Image big_xf
+.
+
+Stop_File nsubsamp.mac
+
+
+
+Define Subsample_General 2 output_img input_img
+# Subsamples an img having any size (no need "power of 2" dimensions)
+
+Assign _L0_in nrows($2)
+Assign _C0_in ncols($2)
+Assign _Ln_in pow(2,ceil(log($_L0_in)/log(2)))
+Assign _Cn_in pow(2,ceil(log($_C0_in)/log(2)))
+Assign _L0_out nrows($1)
+Assign _C0_out ncols($1)
+Assign _Ln_out $_L0_out*$_Ln_in/$_L0_in
+Assign _Cn_out $_C0_out*$_Cn_in/$_C0_in
+
+Image ss_master_in  $_Ln_in  $_Cn_in  1 float
+Image ss_master_out $_Ln_out $_Cn_out 1 float
+Subimage ss_slave_in  ss_master_in  $_C0_in  $_L0_in  0 0
+Subimage ss_slave_out ss_master_out $_C0_out $_L0_out 0 0
+
+Get_Mean ss_mn $2
+VSet ss_master_in $ss_mn
+VMov ss_slave_in $2
+Subsample ss_master_out ss_master_in
+VMov $1 ss_slave_out
+
+Delete_Image ss_master_in
+Delete_Image ss_master_out
+.
+
+Stop_File nsubsamp.mac
+

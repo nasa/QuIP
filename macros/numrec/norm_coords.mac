@@ -1,0 +1,23 @@
+Start_File norm_coords.mac
+
+# used by fit_conic, etc
+
+Define Normalize_Coords 2 dst src
+Get_Sum xsum $2{0}
+Assign x_mean $xsum/ncols($2)
+Get_Sum ysum $2{1}
+Assign y_mean $ysum/ncols($2)
+VSAdd $1{0} $2{0} -$x_mean
+VSAdd $1{1} $2{1} -$y_mean
+Dup_Obj csqs $1
+VVMul csqs $1 $1
+Get_Sum xsos csqs{0}
+Get_Sum ysos csqs{1}
+Assign x_sigma sqrt($xsos/ncols(csqs))
+Assign y_sigma sqrt($ysos/ncols(csqs))
+VSMul $1{0} $1{0} 1/$x_sigma
+VSMul $1{1} $1{1} 1/$y_sigma
+Delete_Image csqs
+.
+
+Stop_File norm_coords.mac

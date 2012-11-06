@@ -1,0 +1,99 @@
+# knoxd client macros
+
+Start_File knoxc.mac
+
+If !var_exists(daemons_dot_mac_read) "< $macro_dir/system/daemons.mac"
+If !var_exists(portids_read) "< $macro_dir/system/portids.scr"
+
+# High-level stuff
+
+# symbolic defns for the switcher outputs
+Set meteor_in1		1
+Set meteor_in2		2
+Set meteor_in3		3
+Set video0_in		4
+Set video1_in		5
+Set video2_in		6
+Set sync_genlock_input	7
+Set sony_monitor_input	8
+Set video3_in		8	# looped through the monitor
+# four outputs for bt848?
+
+# These defns reflect the connections of the cameras
+# to the knox switcher inputs:
+
+Set galvo_cam		1
+Set left_pupil_cam	2
+Set right_pupil_cam	3
+Set left_ptz_cam	4
+Set right_ptz_cam	5
+Set purkinje_ptz_cam	6
+Set left_ptz_cam2	7
+Set right_ptz_cam2	8
+
+
+Define Default_Routing 0
+Route $video0_in	$left_ptz_cam
+Route $video1_in	$right_ptz_cam
+Route $video2_in	$left_ptz_cam2
+Route $video3_in	$right_ptz_cam2
+.
+
+
+
+# basic daemon macros
+
+
+Define Knox_Connect 0
+Stem_Connect knoxd $knox_host
+.
+
+Define Knox_Handshake 0
+Stem_Handshake knoxd
+.
+
+Define Knox_Get_Obj 1 obj_name
+Stem_Get_Obj knoxd $1
+.
+
+Define Knox_Send 1 text
+Stem_Send knoxd $1
+.
+
+Define Knox_Xmit 1 object
+Stem_Xmit knoxd $1
+.
+
+#_________mappings to functions in knox.mac_______________________#
+
+
+Define Knox_Init 0
+Knox_Connect
+Knox_Send Knox_Init
+.
+
+Define Route 2 output_index input_index
+Knox_Send "Route $1 $2"
+.
+
+# do load and store go to files?
+
+Define Knox_Store 1 index
+Knox_Send "Knox_Store $1"
+.
+
+Define Knox_Load 1 index
+Knox_Send "Knox_Load $1"
+.
+
+Define Knox_Get_Map 1 object
+# need to make sure the object exists on the remote system,
+# and then need to xfer it back.
+Knox_Xmit $1
+Knox_Send "Knox_Get_Map $1"
+Knox_Get_Obj knox_map
+#Display knox_map
+.
+
+Stop_File knoxc.mac
+

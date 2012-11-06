@@ -1,0 +1,139 @@
+# macros for real time control of round-robin frame buffer
+#
+# example usage:
+#
+# Start_Flow n_frames
+#
+# (loop)
+#	New_Field	# wait for a ready field
+#
+# or
+#
+#	Get_Fields	# sets $even_field_buf & $odd_field_buf
+#
+#	don't forget to call Release_Old_Frames...
+
+Define Release_Old_Frames 0
+meteor flow update quit quit
+If $oldest==$newest "PopFile 2 nop"	# exit macro if nothing to do
+#Tell_If "Release_Old_Frames, newest = $newest, oldest = $oldest"
+meteor
+  flow
+    do
+      #Tell_If "releasing oldest field $oldest, active_mask = $active_mask"
+      release
+      while $oldest!=$newest
+    quit
+  quit
+.
+
+
+Define Start_Flow 1 nframes
+advise "BEGIN Start_Flow $1"
+Assign n_flow_frames $1
+Init_Flow $1
+Flow_Go
+.
+
+Define Init_Flow 1 nframes
+If !var_exists(field_mode_set) "Set field_mode_set 0"
+meteor
+  geometry
+    # BUG Init_Flow should not set geometry...
+    # Set field mode only if not already set by user...
+    If !$field_mode_set
+      "Field_Mode no"
+#    field_mode yes
+#   # field_mode no
+    nframes $1
+    quit
+
+  Set _sf_i 0
+  repeat $1
+    frame f$_sf_i $_sf_i
+    Increment _sf_i
+    end
+
+  #cap_tst stop quit	# frame creation starts continuous capture by default
+  # NOT TRUE ANY MORE!?
+  quit
+.
+
+Define Flow_Go 0
+meteor
+  flow
+    start		# start synchronous capture
+    wait		# wait for first frame
+    update		# refresh vars
+    advise "flow started, active_mask = $active_mask, oldest = $oldest, newest = $newest"
+    quit
+  quit
+.
+
+Define Update_Flow 0
+meteor flow update quit quit		# refresh oldest & newest
+.
+
+Define New_Field 0
+meteor flow next quit quit		# wait for a fresh frame to arrive
+.
+
+
+## Function Get_Fields
+## Outputs the index of the latest odd and even fields
+#######################################################
+
+Define Get_Fields 0
+
+Release_Old_Frames
+New_Field
+Assign previous ($newest-1+$n_flow_frames)%$n_flow_frames
+
+# Even fields: created by outer ring of LEDs, are brighter than the odds, have dark pupil
+# Odd  fields: created by inner ring of LEDs, are dimmer than the evens,  have bright pupil
+# We assume even (resp. odd) buffers always contain even (resp. odd) fields, which means
+# we must be careful to release buffers often enough in order to never be overflown.
+
+Assign parity		$newest%2
+Assign even_buf_index	(1-$parity)*$newest+$parity*$previous
+Assign odd_buf_index	$parity*$newest+(1-$parity)*$previous
+Set even_field_buf	f$even_buf_index
+Set odd_field_buf	f$odd_buf_index
+.
+
+
+
+
+
+## Function Get_Fresh_Fields
+## Gets odd and even fields corresponding to a new galvo setting.
+## Assume we send a galvo command while a frame k is being written
+## At that moment, the 'newest' frame index is k-1. In order to get two new fields
+## corresponding to the galvo new position, we'll have to wait until k+2 is finished 
+## being written
+#####################################################################################
+Define Get_Fresh_Fields 1 old_newest
+
+Release_Old_Frames
+Assign NnewBuf	($newest-$1+$n_flow_frames)%$n_flow_frames
+
+# We want to wait for at least 3 new fields after sending the new galvo pos, before acquiring
+If '$NnewBuf<3'	'repeat 3-$NnewBuf	\
+			New_Field	\
+		end'
+
+# BUG ??? I dunno why I need to wait one more field. but if I don't, then one of the 2 fields
+# corresponds to an old galvo setting
+New_Field
+
+# Even fields: created by outer ring of LEDs, are brighter than the odds, have dark pupil
+# Odd  fields: created by inner ring of LEDs, are dimmer than the evens, have bright pupil
+# We assume even (resp. odd) buffers always contain even (resp. odd) fields 
+
+Assign previous 	($newest-1+$n_flow_frames)%$n_flow_frames
+Assign parity		$newest%2
+Assign even_buf_index	(1-$parity)*$newest+$parity*$previous
+Assign odd_buf_index	$parity*$newest+(1-$parity)*$previous
+Set even_field_buf	f$even_buf_index
+Set odd_field_buf	f$odd_buf_index
+.

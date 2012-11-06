@@ -1,0 +1,48 @@
+
+# %Z% $RCSfile: size.scr,v $ ver: $Revision: 1.2 $ $Date: 1998/01/12 14:50:49 $
+
+Start_File size.scr
+
+Define ReSize 1 newsize
+#echo "RESIZE $1"
+Set size $1
+Set xsize $size
+Set ysize $size
+#Set_Display_Sizes
+.
+
+Define Set_Sizes 2 xsize ysize
+#echo "Set_Sizes $1 $2"
+Assign xsize $1
+Assign ysize $2
+If "$1 == $2" Then "Set size $1" Else "Set size -1"
+#Set_Display_Sizes
+.
+
+#Define Set_Display_Sizes 0
+##echo "Set_Display_Sizes $size $xsize $ysize"
+#Set display_size $size
+#Set display_width $xsize
+#Set display_height $ysize
+#.
+
+#ReSize 128
+ReSize 256
+#ReSize 64
+# for pupil analysis
+#Set_Sizes 512 512
+#Set_Sizes 640 512
+#Set_Sizes 512 256
+#Set_Sizes 256 128
+#Set_Sizes 128 128
+#Set_Sizes 256 256
+#Set_Sizes 64 64
+
+# for video...
+#Set_Sizes 640/2 496/2
+#Set_Sizes 640 496
+Set_Sizes 256 256
+#Set_Sizes 64 64
+
+Stop_File size.scr
+
