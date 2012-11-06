@@ -6792,7 +6792,7 @@ DUMP_TREE(enp);
 				 * of the functions in the table, or by calling a mapping
 				 * function...  either way it's not clean!?
 				 */
-				dval = get_dobj_size(dp,enp->en_func_index);
+				dval = get_dobj_size((Item *)dp,enp->en_func_index);
 			}
 			return(dval);
 
