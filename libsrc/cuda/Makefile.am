@@ -11,7 +11,10 @@
 # -arch sm_13 is good for wheatstone but breaks things on craik...
 # -arch sm_11 on craik
 
-NVCCFLAGS =	@NVCC_ARCH_FLAGS@ $(CPPFLAGS) -I/usr/local/cuda/include -I../.. -I$(top_srcdir)/include -DHAVE_CONFIG_H
+# needed -m64 to link properly on mac...
+
+NVCCFLAGS =	@NVCC_ARCH_FLAGS@ $(CPPFLAGS) -I/usr/local/cuda/include -I../.. -I$(top_srcdir)/include -DHAVE_CONFIG_H -m64
+#NVCCFLAGS =	@NVCC_ARCH_FLAGS@ $(CPPFLAGS) --machine 64 -I/usr/local/cuda/include -I../.. -I$(top_srcdir)/include -DHAVE_CONFIG_H
 
 .cu.o:	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
 
@@ -133,17 +136,18 @@ noinst_HEADERS =		my_cuda.h		\
 #				int_prec_funcs.cu	\
 #				signed_prec_funcs.cu
 
+
 libcuda_a_SOURCES =					\
-				cuda.cpp		\
 				cuda_npp.cpp		\
-				cuda_curand.cpp		\
 				cuda_viewer.cpp		\
+				cuda.cpp		\
+				cuda_menu.cpp		\
+				cuda_curand.cpp		\
 				simpleCUBLAS.cpp	\
 				deviceQuery.cpp		\
 				cuda_func_tbl.cpp	\
 				cuda_error.c		\
-				cuda_streams.c		\
-				cuda_menu.cpp
+				cuda_streams.c
 
 # This business seems to break distclean, the .cu files don't get removed...
 

@@ -19,7 +19,10 @@ AC_CONFIG_HEADERS([config.h])
 
 # Check for odd include directories
 AC_CHECK_FILE([/usr/X11/include],[CPPFLAGS="$CPPFLAGS -I/usr/X11/include"])
+AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
 
+# AC_FUNC_MALLOC causes problems on Mac OSX, defines malloc to be rpl_malloc!?
+AC_FUNC_MALLOC
 
 # CUDA checks
 
@@ -33,9 +36,14 @@ AC_CHECK_FILE([/usr/local/cuda/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/cuda/i
 
 AC_CHECK_FILE([/usr/local/cuda/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="/usr/local/cuda/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
 if test "x${gpu_sdk_dir}" = xno; then
-  AC_CHECK_FILE([/usr/local/cuda/NVIDIA_CUDA_SDK],[cuda_sdk_dir="/usr/local/cuda/NVIDIA_CUDA_SDK"],[cuda_sdk_dir="no"])
-  if test "x${cuda_sdk_dir}" = xno; then
-    AC_CHECK_FILE([$HOME/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="$HOME/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
+  # BUG - jbm creating a symbolic link with an underscore replacing the space,
+  # because the space screwed up some of the scripts later on...
+  AC_CHECK_FILE([/Developer/GPU_Computing],[gpu_sdk_dir="/Developer/GPU_Computing"],[gpu_sdk_dir="no"])
+  if test "x${gpu_sdk_dir}" = xno; then
+    AC_CHECK_FILE([/usr/local/cuda/NVIDIA_CUDA_SDK],[cuda_sdk_dir="/usr/local/cuda/NVIDIA_CUDA_SDK"],[cuda_sdk_dir="no"])
+    if test "x${cuda_sdk_dir}" = xno; then
+      AC_CHECK_FILE([$HOME/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="$HOME/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
+    fi
   fi
 fi
 
@@ -59,16 +67,26 @@ else
   CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
   NVCCFLAGS="-I$nv_sdk_inc_dir"
   have_nv_sdk=yes
+  # BUG - when we found $gpu_sdk_dir, we should know enough to know whether
+  # we are on a mac or not...
   AC_CHECK_FILE([$gpu_sdk_dir/shared/lib/linux],
     			[have_cuda_sdk_libdir=yes],
     			[have_cuda_sdk_libdir=no])
   if test "x${have_cuda_sdk_libdir}" = xyes; then
     LDFLAGS="$LDFLAGS -L$gpu_sdk_dir/shared/lib/linux"
+  else
+    AC_CHECK_FILE([$gpu_sdk_dir/shared/lib/darwin],
+    			[have_cuda_sdk_libdir=yes],
+    			[have_cuda_sdk_libdir=no])
+    if test "x${have_cuda_sdk_libdir}" = xyes; then
+      LDFLAGS="$LDFLAGS -L$gpu_sdk_dir/shared/lib/darwin"
+    fi
   fi
 fi
 
 # Check for odd lib directories
 AC_CHECK_FILE([/usr/X11/lib],[LDFLAGS="$LDFLAGS -L/usr/X11/lib"])
+AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
 AC_CHECK_FILE([/usr/X11R6/lib],[LDFLAGS="$LDFLAGS -L/usr/X11R6/lib"])
 AC_CHECK_FILE([/usr/lib64],[LDFLAGS="$LDFLAGS -L/usr/lib64"])
 AC_CHECK_FILE([/usr/local/lib],[LDFLAGS="$LDFLAGS -L/usr/local/lib"])
@@ -188,7 +206,6 @@ int main() {
 	    return 0;	// just print out for first device
 	}
     }
-    /* printf("%d GPU CUDA device(s) found\n", gpuDeviceCount); */
     printf("0.0\n");
 
     /* don't just return the number of gpus, because other runtime cuda
@@ -201,7 +218,9 @@ int main() {
 EOF
 
   # BUG should have variables with inc and lib dirs?
-  gcc -o /tmp/gpu_test -I/usr/local/cuda/include -L/usr/local/cuda/lib64 conftest.c -lcudart
+  # LDFLAGS instead of hard-coded -L/usr/local/cuda/lib64
+  # no lib64 on mac
+  gcc -o /tmp/gpu_test -I/usr/local/cuda/include $LDFLAGS conftest.c -lcudart
   comp_cap=`/tmp/gpu_test`
   rm -f conftest.c /tmp/gpu_test
   AC_MSG_RESULT([compute capability $comp_cap])
@@ -406,6 +425,8 @@ AC_ARG_ENABLE([use_cuda],
 #	[AS_HELP_STRING([--enable-debug],[enable cautious checking @<:@default: yes@:>@])],
 #	[ use_debug=${enableval}], [use_debug=no])
 
+# this test bombs if we perform it after testing for libGLEW !?!?!?
+AC_CHECK_SIZEOF([long])
 
 # Checks for libraries.
 
@@ -432,6 +453,7 @@ AC_SEARCH_LIBS([stat],[c],[have_stat=yes])
 # -lX11		X
 # -lpthread	pthreads
 # -lXm		motif
+# -lXt		X intrinsics, needed by Xm
 # -lnumrec	numerical recipes
 # -lcurl	www lib
 # -lasound	ALSA sound library
@@ -512,7 +534,10 @@ AC_SEARCH_LIBS([cublasGetError],[cublas],[have_libcublas=yes],[have_libcublas=no
 AC_SEARCH_LIBS([curandCreateGenerator],[curand],[have_libcurand=yes],[have_libcurand=no])
 AC_SEARCH_LIBS([nppiErode_8u_C1R],[npp],[have_libnpp=yes],[have_libnpp=no])
 # BUG need to determine whether we're compiling for 64 bit!
-AC_SEARCH_LIBS([glewInit],[GLEW_x86_64],[have_libglew=yes],[have_libglew=no])
+AC_SEARCH_LIBS([glewInit],[GLEW_x86_64 GLEW],[have_libglew=yes],[have_libglew=no])
+#if test "x${have_libglew}" = xno; then
+#  AC_SEARCH_LIBS([glewInit],[GLEW],[have_libglew=yes],[have_libglew=no])
+#fi
 
 # Checks for header files.
 
@@ -634,8 +659,6 @@ AC_CHECK_HEADERS([jpeglib.h],[have_jpeglib_h=yes],[have_jpeglib_h=no])
 AC_CHECK_HEADERS([curand.h])
 AC_CHECK_HEADERS([nppi.h])
 
-AC_CHECK_SIZEOF([long])
-
 if test $ac_cv_sizeof_long -eq 8; then
   AC_DEFINE([LONG_64_BIT], 1, [64 bit longs])
 fi
@@ -669,7 +692,6 @@ AC_TYPE_UINT8_T
 
 # Checks for library functions.
 AC_FUNC_FORK
-AC_FUNC_MALLOC
 AC_FUNC_MKTIME
 AC_FUNC_MMAP
 AC_FUNC_STRTOD
@@ -711,6 +733,8 @@ AC_CONFIG_FILES([Makefile
                  macros/v4l2/Makefile
                  macros/gui/Makefile
                  macros/ctrack/Makefile
+                 macros/eyemov/Makefile
+                 macros/analysis/Makefile
                  macros/movie/Makefile
                  doc/Makefile
                  include/Makefile
@@ -780,7 +804,16 @@ if test "x${have_pthreads}" = xno; then
 fi
 
 if test "x${have_libmotif}" = xyes; then
-  AC_CHECK_HEADERS([Xm/Xm.h],[],[have_libmotif=no])
+  if test "x${have_libxt}" = xyes; then
+    AC_CHECK_HEADERS([Xm/Xm.h],[],[have_libmotif=no])
+  else
+    AC_MSG_WARN([
+    -------------------------------------------------
+    libXm is present, but libXt is not.
+    Not building with GUI support.
+    -------------------------------------------------])
+    have_libmotif=no
+  fi
 fi
 
 if test "x${have_alsa}" = xno; then

@@ -577,7 +577,12 @@ static void get_scratch_for(Data_Obj *dp)
 	}
 
 	len = dp->dt_n_type_elts;
+	/* BUG this function is gone in cuda 4.2 */
+#ifdef FOOBAR
 	s = nppsReductionGetBufferSize_32f( len, &buf_size );
+#else
+	s = nppsSumGetBufferSize_32f( len, &buf_size );
+#endif /* ! FOOBAR */
 
 	REPORT_NPP_STATUS("do_npp_vadd","nppsReductionGetBufferSize_32f")
 

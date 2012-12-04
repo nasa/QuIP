@@ -1,0 +1,214 @@
+# %Z% $RCSfile: axes.mac,v $ ver: $Revision: 1.5 $ $Date: 2004/12/15 01:14:54 $
+
+Start_File analysis/axes.mac
+
+Define Velocity_Axes 1 viewer
+Select_Plotter $1
+Select_Pen $axis_color
+
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$plot_dlen
+
+Upper_Trace $datamin $datamax
+Show_Bounds $sacc_v_thresh
+Lower_Trace $datamin $datamax
+Show_Bounds $sacc_v_thresh
+
+# give scale indicators
+
+Select_Pen $axis_color
+Middle_Trace $datamin $datamax
+Scale_On
+
+# need to determine the appropriate scale indicator!?
+
+Compute_Ruler_Unit
+
+Assign sxpos 0.75*$plot_dlen
+Assign sypos 0
+PMove $sxpos $sypos-0.5*$ruler_unit
+PCont $sxpos $sypos+0.5*$ruler_unit
+###
+Draw_String "$ruler_unit deg/sec" $sxpos+0.02*$plot_dlen  $sypos-0.5*$ruler_unit
+
+Draw_Time_Base
+
+Scale_Off
+Draw_String "VELOCITY vs. TIME" 10*$hzfactor 25*$zfactor
+Scale_On
+.
+
+Define Draw_Time_Base 0
+Assign sxpos 0.10*$plot_dlen
+Assign time_unit floor($plot_dlen/8)
+#Print time_unit
+Assign n_seconds floor($time_unit/$sample_rate)
+#Print n_seconds
+If $n_seconds<1
+  Then Millitime_Unit
+  Else Seconds_Unit
+
+Assign sypos 0
+PMove $sxpos $sypos
+PCont $sxpos+$time_unit $sypos
+Draw_String $time_string $sxpos+1.1*$time_unit $sypos
+.
+
+Define Seconds_Unit 0
+Assign time_unit $n_seconds*$sample_rate
+If $n_seconds==1
+  Then "Set time_string '1 sec'"
+  Else "Set time_string '$n_seconds secs'"
+.
+
+Define Millitime_Unit 0
+Set n_milli 1000
+Tell_If "Millitime_Unit:  plot_dlen = $plot_dlen"
+repeat 3
+  Mul_Var n_milli 0.5
+  # 500, 50, 5
+  Assign time_unit $sample_rate*$n_milli/1000
+  If $time_unit<($plot_dlen/8)
+    "Set time_string '$n_milli msec' PopFile 3"
+  Mul_Var n_milli 0.4
+  # 200, 20, 2
+  Assign time_unit $sample_rate*$n_milli/1000
+  If $time_unit<($plot_dlen/8)
+    "Set time_string '$n_milli msec' PopFile 3"
+  Mul_Var n_milli 0.5
+  # 100, 10, 1
+  Assign time_unit $sample_rate*$n_milli/1000
+  If $time_unit<($plot_dlen/8)
+    "Set time_string '$n_milli msec' PopFile 3"
+  end
+warn 'time unit less than 1 msec???'
+.
+
+Define Acceleration_Axes 1 viewer
+Select_Plotter $1
+Select_Pen $axis_color
+
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$plot_dlen
+
+Upper_Trace $datamin $datamax
+Show_Bounds $sacc_a_thresh
+Lower_Trace $datamin $datamax
+Show_Bounds $sacc_a_thresh
+
+# give scale indicators
+
+Select_Pen $axis_color
+Middle_Trace $datamin $datamax
+Scale_On
+
+# need to determine the appropriate scale indicator!?
+
+Compute_Ruler_Unit
+
+Assign sxpos 0.75*$plot_dlen
+Assign sypos 0
+PMove $sxpos $sypos-0.5*$ruler_unit
+PCont $sxpos $sypos+0.5*$ruler_unit
+###
+Draw_String "$ruler_unit deg/sec/sec" $sxpos+0.02*$plot_dlen  $sypos-0.5*$ruler_unit
+
+Draw_Time_Base
+
+Scale_Off
+Draw_String "ACCELERATION vs. TIME" 10*$hzfactor 25*$zfactor
+Scale_On
+.
+
+# axes for cross correlations
+
+Define XCorr_Axes 1 viewer
+
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$flen
+Compute_Ruler_Unit
+
+# plot a vertical line at lag 0
+Middle_Trace $datamin $datamax
+Show_XZero
+Assign cxpos 0.75*$plot_dlen
+Assign cypos 0
+PMove $cxpos $cypos-0.5*$ruler_unit
+PCont $cxpos $cypos+0.5*$ruler_unit
+
+Scale_On
+
+Draw_String "$ruler_unit (dimensionless)" $cxpos+0.02*$plot_dlen $cypos-0.5*$ruler_unit
+.
+
+# axes for image correlation and blink
+
+Define ICorr_Axes 1 viewer
+Select_Plotter $1
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$plot_dlen
+Set datamax 1
+Set datamin -1
+
+Upper_Trace $datamin $datamax 
+Select_Pen $refcolor			# blue?
+PMove 0 0 PCont $plot_dlen-1 0		# draw lower limit
+PMove 0 1 PCont $plot_dlen-1 1		# draw upper limit
+
+# show the blink correlation threshold in red
+Select_Pen $redcolor
+YPlot blink_thresh_array
+
+#PMove 0 $blink_threshold
+#PCont $plot_dlen-1 $blink_threshold
+
+# show the correlation delta threshold
+Lower_Trace $datamin $datamax 
+PMove 0 $blink_threshold2
+PCont $plot_dlen-1 $blink_threshold2
+.
+
+Define Null_Axes 1 viewer
+nop
+.
+
+Define Posn_Axes 1 viewer
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$plot_dlen
+Upper_Trace $datamin $datamax
+Select_Pen $axis_color
+Draw_X_Axis
+Label_Trace 'horizontal position'
+
+Lower_Trace $datamin $datamax
+Select_Pen $axis_color
+Draw_X_Axis
+Label_Trace 'vertical position'
+Show_Posn_Scale $1
+.
+
+
+Define Pixel_Axes 1 viewer
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$plot_dlen
+Upper_Trace $datamin $datamax
+Select_Pen $axis_color
+Draw_X_Axis
+Label_Trace 'horizontal position'
+
+Lower_Trace $datamin $datamax
+Select_Pen $axis_color
+Draw_X_Axis
+Label_Trace 'vertical position'
+Show_Pixel_Scale $1
+.
+
+
+Define Saccade_Axes 1 viewer
+Assign plot_left -$plot_xos
+Assign plot_right $plot_xos+$plot_dlen
+nop
+.
+
+Stop_File analysis/axes.mac
+

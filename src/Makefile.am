@@ -1,6 +1,8 @@
 #bin_PROGRAMS = quip datamenu quip_test1
 
-bin_PROGRAMS = quip math_drill
+#bin_PROGRAMS = quip math_drill
+# math_drill doesn't compile with cuda on system...
+bin_PROGRAMS = quip
 
 EXTRA_DIST =	quip_test.sh
 
@@ -12,8 +14,8 @@ EXTRA_DIST =	quip_test.sh
 quip_SOURCES = quip_main.c
 quip_CPPFLAGS = -I$(top_srcdir)/include
 
-math_drill_SOURCES = math.c
-math_drill_CPPFLAGS = -I$(top_srcdir)/include
+#math_drill_SOURCES = math.c
+#math_drill_CPPFLAGS = -I$(top_srcdir)/include
 
 # BUG - how do we figure out what Xlib?
 CUDALIBS= ../libsrc/cuda/libcuda.a
@@ -54,7 +56,8 @@ endif
 
 quip_LDADD += $(DASLIB) $(ATCLIB) $(DVLIB) $(PGRLIB) $(OCVLIB) $(OGL_LIB) $(GPSLIB) $(PICLIB) $(CUDALIBS) $(V4LIB) $(RQLIB) $(VISCALIB) $(KNOXLIB) $(METEORLIB) $(GUILIB) $(VLIBS) $(MVILIBS) $(PLIB) $(VECLIBS) $(GSLLIB) $(DLIBS) $(JLIBS) $(SVRLIB)
 
-math_drill_LDADD = $(VLIBS) $(VECLIBS) $(RQLIB) $(DLIBS) $(JLIBS)
+# this doesn't work any more because lib dobj has dependencies on libcuda - should FIXME?  BUG?
+#math_drill_LDADD = $(VLIBS) $(VECLIBS) $(RQLIB) $(DLIBS) $(JLIBS)
 
 check_SCRIPTS = quip_test.sh
 TESTS = $(check_SCRIPTS)

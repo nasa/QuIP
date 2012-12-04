@@ -1,0 +1,1077 @@
+# %Z% $RCSfile: common.mac,v $ ver: $Revision: 1.22 $ $Date: 2011/01/25 05:56:28 $
+
+
+Start_File common.mac
+
+< $macro_dir/compute/threshold.mac
+
+Define Do_Ascii 2 object filestem
+Tell_If "Do_Ascii $1 $2"
+Set adir ascii/$RUN_STEM.$EYE_CAMERA_INDEX
+Insure_Directory $adir
+Set dafn $adir/$2
+Tell_If "writing object $1 to ascii file $dafn"
+Put_Ascii $1 $dafn
+.
+
+Define If_Ascii 2 object filename
+If $asciidump "Do_Ascii $1 $2"
+.
+
+Define Save_Correlogram 2 object filename
+advise "Save_Correlogram $1 $2"
+Insure_Directory $DATA_DIR/correlograms/$RUN_STEM
+Set cdir $DATA_DIR/correlograms/$RUN_STEM/$RUN_STEM.$EYE_CAMERA_INDEX
+Insure_Directory $cdir
+Put_Ascii $1 $cdir/$2
+advise "Save_Correlogram DONE"
+.
+
+Define Plot_If 1 plotcmd
+warn "obsolete macros Plot_If, use Trace_If instead"
+Tell_If "Plot_If $1"
+#If $plotting "$1"
+.
+
+Define Update_Record 0
+VMov record{0} eye_pos{0}
+VMov record{1} eye_pos{1}
+.
+
+Define Init_Stuff 0
+If !var_exists(alen) "Assign alen min($dlen,$stimlen)"
+Set nvalid $alen		# default value
+VSet one 1
+VSet zero 0
+#If $plotting 'Init_Plotters'
+.
+
+Define Find_Saccades 0
+# find where the saccades happen
+# just a little bit of smoothing...
+#Plot_If 'VPlot eye_vel{0} eye_vel{1}'		# already done
+#Apply_Filter_Pair eye_vel{0} eye_vel{1} eye_vel{0} eye_vel{1} v_filter
+# Tell_If 'plotting filtered velocities'
+Tell_If "Saccade threshold is $sacc_v_thresh"
+# We originally did independent thresholds in x and y, but this makes the
+# effective threshold for oblique saccades 1.4 times higher...
+Dup_Float sacc_mag eye_vel{0}
+Equivalence c_vel eye_vel 1 1 1 ncols(eye_vel) 1 complex
+VMagSq sacc_mag c_vel
+VSqrt sacc_mag sacc_mag
+Map_Scalar_Mag_Compare xbitmap sacc_mag $sacc_v_thresh
+Delete_Image sacc_mag
+Delete_Image c_vel
+
+#Map_Scalar_Mag_Compare xbitmap eye_vel{0} $sacc_v_thresh
+#Map_Scalar_Mag_Compare ybitmap eye_vel{1} $sacc_v_thresh
+#VOr xbitmap xbitmap ybitmap
+
+# The saccade finding seemed to be wrong!?
+#Select xbitmap sacc zero one		# 1's where threshold is exceeded
+Select xbitmap sacc one zero		# 1's where threshold is exceeded
+#If $plotting "Select_Plotter $icv Erase_Plot Plot_Sacc 1 sacc"
+.
+
+# grow saccades a little
+Define Filt_Saccades 0
+If !$boxcar_inited 'warn "Need to call Boxcar_Init"'
+Boxcar fsacc sacc
+Map_Scalar_Mag_Compare xbitmap fsacc 0.001
+#Select xbitmap fsacc one zero		# 1's where data is good
+Select xbitmap fsacc zero one		# 1's where data is good
+#Plot_If 'Plot_FSacc 2 fsacc'
+.
+
+
+# apply a median filter to the velocity traces to try and eliminate saccades
+
+Define Filter_Saccades 0
+Tell_If Filter_Saccades
+Median_1D feye_vel{0} eye_vel{0} 3
+Median_1D feye_vel{1} eye_vel{1} 3
+#
+# I tried keeping the original except where the median was sufficiently
+# different, but this passed some glitches around saccades...
+#
+# find the difference between the filtered (de-saccaded signal)
+# and the original
+#VVSub xvdiff feye_vel{0} eye_vel{0}
+#VVSub yvdiff feye_vel{1} eye_vel{1}
+VVSub xvdiff eye_vel{0} feye_vel{0}
+VVSub yvdiff eye_vel{1} feye_vel{1}
+Print sacc_v_thresh
+Map_Scalar_Mag_Compare xbitmap xvdiff $sacc_v_thresh
+Map_Scalar_Mag_Compare ybitmap yvdiff $sacc_v_thresh
+#Select xbitmap eye_vel{0} eye_vel{0} feye_vel{0}		# use feye_vel{0} where threshold is exceeded
+#Select ybitmap eye_vel{1} eye_vel{1} feye_vel{1}		# use feye_vel{0} where threshold is exceeded
+Select xbitmap eye_vel{0} feye_vel{0} eye_vel{0}		# use feye_vel{0} where threshold is exceeded
+Select ybitmap eye_vel{1} feye_vel{1} eye_vel{1}		# use feye_vel{0} where threshold is exceeded
+
+VOr xbitmap xbitmap ybitmap
+#Select xbitmap sacc zero one		# 1's where threshold is exceeded
+Select xbitmap sacc one zero		# 1's where threshold is exceeded
+#Plot_If 'Plot_Sacc 1 sacc'
+
+#Plot_If 'VPlot eye_vel{0} eye_vel{1}'
+Tell_If HIII
+#Trace_If eye_vel{0} eye_vel{1} $vpv 'velocities' 1 Velocity_Axes $color1
+Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+#VSum eye_vel{1} vsum
+VSum vsum eye_vel{1}
+VSMul vsum vsum 1/ncols(eye_vel{1})
+Assign ymean value(vsum)
+Print ymean
+.
+
+Define Proc_Saccades 0
+Tell_If Find_Saccades
+Find_Saccades
+# Boxcar_Init 4		# do this where?
+Tell_If Filt_Saccades
+Filt_Saccades
+Tell_If "Proc_Saccades:  plotting saccades and saccade mask"
+#Trace_If sacc fsacc $scdv 'saccade mask' 1 Saccade_Axes $color1
+Trace_If sacc fsacc v3 'saccade mask' 1 Saccade_Axes $color1
+Count_Saccades fsacc
+.
+
+# Count_Saccades assumes it has been passed the valid mask, so that saccades
+# are represented as negative pulses...
+
+Define Count_Saccades 1 signal
+Dup_Float count_buf $1
+VMov count_buf $1
+Scalar min_index 1 int32
+Set n_sacc 0
+do
+  #Min_Index count_buf min_index
+  Min_Index min_index count_buf
+  Assign mi value(min_index)
+  # does min_index return fortran style index?
+  # not any more!!
+  #Print mi
+  Assign mv value(count_buf[$mi])
+  If $mv==0 "Increment n_sacc Remove_Minimum count_buf $mi"
+  while $mv==0
+Tell_If "SACCADES:  $n_sacc"
+Delete_Image min_index
+Delete_Image count_buf
+.
+
+Define Remove_Minimum 2 vector index
+Assign i $2
+# We shouldn't have to look back, since Min_Index should return the first occurrence
+do
+  Assign v value($1[$i])
+  If $v==0 "VSet $1[$i] 1 Increment i"
+  while $v==0&&$i<ncols($1)
+.
+
+# filter data
+
+Define Boxcar 2 target source
+Apply_Filter $1 $2 boxcar_filter
+.
+
+Define Apply_Filter_Pair 5 target1 target2 source1 source2 filter
+If !var_exists(alen) "Assign alen min($dlen,$stimlen)"
+VSetComplex crecord 0.0 0.0
+If "ncols($2) == $flen"
+  Then 'VMov crecord{0} $3 VMove crecord{1} $4'
+  Else 'Subvector rdata crecord $alen 0 VMov rdata{0} $3 VMov rdata{1} $4 Delete_Image rdata'
+FFT crecord
+VVMul crecord crecord $5
+InvFFT crecord
+If "ncols($1) == $flen"
+  Then 'VMov $1 crecord{0} VMov $2 crecord{1}'
+  Else 'Subvector rdata crecord $alen 0 VMov $1 rdata{0} VMov $2 rdata{1} Delete_Image rdata'
+.
+
+Define Apply_Filter 3 target source filter
+If !var_exists(alen) "Assign alen min($dlen,$stimlen)"
+VSetComplex crecord 0.0 0.0
+Tell_If "Apply_Filter, comparing size of source $2 to flen $flen"
+If "ncols($2) == $flen"
+  Then 'VMov crecord{0} $2'
+  Else 'Subvector rdata crecord{0} $alen 0 VMov rdata $2 Delete_Image rdata'
+FFT crecord
+VVMul crecord crecord $3
+InvFFT crecord
+If "ncols($1) == $flen"
+  Then 'VMov $1 crecord{0}'
+  Else 'Subvector rdata crecord{0} $alen 0 VMov $1 rdata Delete_Image rdata'
+.
+
+# make a gaussian window
+Define Make_Window 0
+If !var_exists(alen) "Assign alen min($dlen,$stimlen)"
+Assign sd 25
+Ramp1D window -$alen/2 1
+VVMul window window window
+VSMul window window -1/(2*$sd*$sd)
+VExp window window
+.
+
+Define Gauss_Init 1 stddev
+Tell_If "Gauss_Init $1"
+Create_Gaussian g_filter $1
+.
+
+Define Create_Gaussian 2 target stddev
+Tell_If "Create_Gaussian $1 $2"
+Assign sd $2
+Ramp1D $1{0} -$flen/2 1
+VVMul $1{0} $1{0} $1{0}
+VSMul $1{0} $1{0} -1/(2*$sd*$sd)
+VExp $1{0} $1{0}
+Scroll $1{1} $1{0} -$flen/2 0
+VMov $1{0} $1{1}
+# normalize
+#VSum $1{0} sum
+VSum sum $1{0}
+VSMul $1{0} $1{0} 1/value(sum)
+VSet $1{1} 0.0
+FFT $1
+.
+
+Define BP_Init 2 c_stddev s_sd
+Tell_If "BP_INIT" exit
+Create_BP g_filter $1 $2
+.
+
+Define Create_BP 3 target c_stddev s_sd
+Assign sd $2
+Dup_Float bpi_tmp $1{0}
+# make the center
+Assign sd $2
+Ramp1D bpi_tmp -$flen/2 1
+VVMul bpi_tmp bpi_tmp bpi_tmp
+VSMul bpi_tmp bpi_tmp -1/(2*$sd*$sd)
+VExp bpi_tmp bpi_tmp
+Scroll $1{0} bpi_tmp -$flen/2 0
+Get_Sum csum $1{0}
+
+# make the surround
+Assign sd $3
+Ramp1D bpi_tmp -$flen/2 1
+VVMul bpi_tmp bpi_tmp bpi_tmp
+VSMul bpi_tmp bpi_tmp -1/(2*$sd*$sd)
+VExp bpi_tmp bpi_tmp
+Get_Sum ssum bpi_tmp
+VSMul bpi_tmp bpi_tmp -$csum/$ssum
+Scroll $1{1} bpi_tmp -$flen/2 0
+
+Delete_Image bpi_tmp
+
+#Plot_If "PPlot $1{0} $1{1}"
+Trace_If $1{0} $1{1} v2 'gaussian filter' 1 Velocity_Axes $color1
+VVAdd $1{0} $1{0} $1{1}
+#Plot_If "VPlot $1{0} $1{0}"
+Trace_If $1{0} $1{0} v2 'filter sum' 1 Velocity_Axes $color1
+
+FFT $1
+.
+
+# make boxcar filter in space domain
+
+Set boxcar_inited 0
+
+Define Boxcar_Init 1 boxlen
+#advise 'In Boxcar_Init'
+#Info boxcar_filter
+#Pause
+Set boxlen $1
+data
+  delete boxcar
+  subvector boxcar boxcar_filter{0} $boxlen 0
+  quit
+#Info boxcar
+VSet boxcar_filter{0} 0.0
+VSet boxcar 1/$boxlen
+#advise 'scrolling boxcar_filter'
+Scroll boxcar_filter{1} boxcar_filter{0} -$boxlen/2 0
+VMov boxcar_filter{0} boxcar_filter{1}
+VSet boxcar_filter{1} 0.0
+FFT boxcar_filter
+Set boxcar_inited 1
+#advise 'Boxcar_Init DONE'
+.
+
+
+# ucb values
+#Set x_posn_offset -2000
+#Set y_posn_offset -2000
+
+# retina track values
+Set x_posn_offset -30.5
+Set y_posn_offset 22.5
+
+########
+
+# this one reads in two components 
+
+Define Read_Dilation_File 1 filename
+data
+  ascii
+    read dilation $1
+    quit
+  quit
+# subtract the mean
+Scalar sumscal 1 float
+#VSum dilation sumscal
+VSum sumscal dilation
+Assign meandil value(sumscal)/ncols(dilation)
+Delete_Image sumscal
+Print meandil
+VSAdd dilation dilation -$meandil
+.
+
+Define Chart_Plot 2 xsig ysig
+Assign nc "ncols($1)"
+Push_Var i
+Set i 1
+repeat $nc
+  Subvector cpxsub $1 $i 0
+  Subvector cpysub $2 $i 0
+  PPlot cpxsub cpysub
+  Delete_Image cpxsub
+  Delete_Image cpysub
+  Increment i
+  end
+Pop_Var i
+.
+
+Define Process_Dilation 0
+#Plot_If 'Plot_Dilation '
+#Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+User_Notify 'Ready to differentiate'
+Differentiate eye_vel{0} dilation
+Differentiate eye_vel{1} dilation
+# now are in degrees per sample
+VSMul eye_vel{0} eye_vel{0} $sample_rate		# convert to degrees per second
+VSMul eye_vel{1} eye_vel{1} $sample_rate		# convert to degrees per second
+#Plot_If 'VPlot eye_vel{0} eye_vel{1}'
+Trace_If eye_vel{0} eye_vel{1} v6 'velocities' 1 Velocity_Axes $color1
+.
+
+Set n_filters 128
+
+Define Declare_Vectors 1 length
+advise "Declare_Vectors $1 BEGIN"
+data
+#  vector affpar 6 1 float		# parameters for affine xform
+  vector corr_record $1 3 float
+  vector record $1 2 float
+  vector dilation $1 1 float
+  #vector urec $1 1 float
+  #vector vrec $1 1 float
+  #vector wrec $1 1 float
+  vector cvec $1 1 complex
+  vector angle $1 1 float
+  vector angsq $1 1 float
+  vector xsacc $1 1 float
+  vector ysacc $1 1 float
+  vector sacc $1 1 float
+  vector fsacc $1 1 float
+# valid is used in rem.mac
+  vector valid $1 1 float
+  vector one $1 1 float
+  vector zero $1 1 float
+  vector correlation $1 1 float
+  vector dcorr $1 1 float
+  vector blink $1 1 float
+  vector tblink $1 1 float
+  vector blink_val $1 1 float
+  vector blink_thresh_array $1 1 float
+  vector xt $1 2 float
+  vector yt $1 2 float
+  # position
+  vector stimpos $stimlen 2 float
+  vector eye_pos $1 2 float
+  vector posn_err $1 2 float
+  # velocity
+  vector stimvel $stimlen 2 float
+  vector stimacc $stimlen 2 float
+  vector eye_vel $1 2 float
+  vector xv_err $1 1 float
+  vector yv_err $1 1 float
+
+  vector ret_pos $1 2 float
+  vector ret_vel $1 2 float
+  vector ret_accel $1 2 float
+  # acceleration
+  vector eye_acc $1 2 float
+  Tell_If "Declare_Vectors, len = $1"
+
+  # filtered quantities
+  vector fstimvel $flen 2 float		# filtered stim vel
+  vector feye_vel $flen 2 float
+  vector fxv_err $flen 1 float
+  vector fyv_err $flen 1 float
+  vector fxp_err $flen 1 float
+  vector fyp_err $flen 1 float
+
+# correlation stuff
+  vector _stim_xf $flen 1 complex
+  vector _ac_xf $flen 1 complex
+  vector _cc_xf $flen 1 complex
+  vector mag $flen 1 float
+  vector _data_xf $flen 1 complex
+  image xf_accum $n_filters $flen 2 float
+  image xf_avg $n_filters $flen 2 float
+
+  vector test_signal $flen 1 float
+  vector test_carrier $flen 1 float
+  vector test_envelope $flen 1 float
+
+  vector a1x $flen 1 float
+  vector a1y $flen 1 float
+  vector a2x $flen 1 float
+  vector a2y $flen 1 float
+  vector a3x $flen 1 float
+  vector a3y $flen 1 float
+  vector ccx $flen 1 float
+  vector ccy $flen 1 float
+  vector da2x $flen 1 float
+  vector da2y $flen 1 float
+  vector aa2x $flen 1 float
+  vector aa2y $flen 1 float
+
+  vector tmp_cx $flen 1 float
+  vector tmp_cy $flen 1 float
+
+  vector c1x $flen 1 float
+  vector c1y $flen 1 float
+  vector c2x $flen 1 float
+  vector c2y $flen 1 float
+  vector c3x $flen 1 float
+  vector c3y $flen 1 float
+
+  vector dc2x $flen 1 float
+  vector dc2y $flen 1 float
+  vector ac2x $flen 1 float
+  vector ac2y $flen 1 float
+
+  vector avg1 $flen 1 float
+  vector avg2 $flen 1 float
+  vector auto_corr $flen 1 float
+  vector x_autocorr $flen 1 float
+  vector y_autocorr $flen 1 float
+  vector ac_accum $flen 1 float
+  vector ac_avg $flen 1 float
+
+  vector xvdiff $1 1 float
+  vector yvdiff $1 1 float
+  #vector xbitmap ceil($1/32) 1 int32
+  #vector ybitmap ceil($1/32) 1 int32
+  vector xbitmap $1 1 bit
+  vector ybitmap $1 1 bit
+  vector scratch $1 1 float
+
+  vector histbuf 180 1 float
+
+# filter stuff
+  vector finput $flen 1 float
+  vector foutput $flen 1 float
+  vector crecord $flen 1 complex
+  vector g_filter $flen 1 complex
+  vector v_filter $flen 1 complex
+  vector boxcar_filter $flen 1 complex
+  #info boxcar_filter
+  subvector boxcar boxcar_filter{0} 3 0		# dummy length
+  #info boxcar
+
+# xform stuff
+  vector window $1 1 float
+  vector xfbuf $flen 1 complex
+  vector power $flen 1 float
+  vector ptmp $flen 1 float
+  subvector xfinset xfbuf{0} $1 0
+  subvector xftail xfbuf{0} $flen-$1 $1
+
+# scalars
+  scalar sum 1 float
+  scalar vsum 1 float
+  scalar sos 1 float
+  scalar ls 1 int32
+  quit
+# why is this length 10?
+Subvector veye_pos{0} eye_pos{0} min(10,$1) 0
+Subvector veye_pos{1} eye_pos{1} min(10,$1) 0
+Subvector veye_vel{0} eye_vel{0} min(10,$1) 0
+Subvector veye_vel{1} eye_vel{1} min(10,$1) 0
+Subvector vangs angle min(10,$1) 0
+Tell_If "INIT Gauss , sd = 1"
+Gauss_Init 1
+#Gauss_Init 4
+VMov v_filter g_filter
+Declare_Thresh_Objs blink
+VSet blink 1	# blink
+.
+
+# create the accumulators for a condition
+
+Define Create_Type_Objects 2 type_string length
+Tell_If "Create_Type_Objects, len = $1"
+data
+  vector "{$1}xvaccum" $1 1 float
+  vector "{$1}yvaccum" $1 1 float
+  quit
+.
+
+# copy the valid part of the record into the (longer) filter buffer,
+# and pad it with flipped copies of itself...
+
+Define Splice 2 target source
+Tell_If Splice
+Subvector dvec $1 "ncols($2)" 0
+VMov dvec $2
+Delete_Image dvec
+Assign n_to_flip $flen-$nvalid
+Assign nt min(ceil($n_to_flip/2),$nvalid)
+Assign nh min($n_to_flip-$nt,$nvalid)
+Tell_If "nvalid $nvalid nt $nt nh $nh"
+Pause_If
+Subvector tailflip $1 $nt $nvalid
+Subvector splice_tail $1 $nt $nvalid-$nt
+VFlip tailflip splice_tail
+Delete_Image tailflip
+Delete_Image splice_tail
+Subvector headflip $1 $nh $flen-$nh
+Subvector head $1 $nh 0
+VFlip headflip head
+Delete_Image headflip
+Delete_Image head
+Tell_If "Splice done"
+.
+
+# remove the saccades from the velocity signal by stitching
+# what is stitching?  vs. splicing?
+# "stitching" means that we shift the records over,
+# while "interpolation" leaves things at the correct time,
+# but when saccades occur, the data in the saccade interval
+# is replaced by interpolated data
+
+Define Interpolate_Saccades 0
+advise 'starting Interpolate_Saccades'
+Tell_If 'starting Interpolate_Saccades'
+Dup_Float is_vel eye_vel{0}
+
+VSet is_vel 0.0
+advise "VInterp is_vel eye_vel{0} fsacc"
+#Pause
+VInterp is_vel eye_vel{0} fsacc
+VMov eye_vel{0} is_vel
+
+VSet is_vel 0.0
+VInterp is_vel eye_vel{1} fsacc
+VMov eye_vel{1} is_vel
+
+Delete_Image is_vel
+#Plot_If 'VPlot eye_vel{0} eye_vel{1}'
+#Plot_If 'Overlay_VPlot stimvel{0} stimvel{1} $color2'
+#Trace_If eye_vel{0} eye_vel{1} $vpv 'De-saccaded Velocities' 1 Velocity_Axes $color1
+#Trace_If stimvel{0} stimvel{1} $vpv '' 0 Null_Axes $color2
+VSet eye_pos{0} 0
+VSet eye_pos{1} 0
+#If_Ascii eye_vel{0} seye_vel{0}
+#If_Ascii eye_vel{1} seye_vel{1}
+
+# just for fun, integrate the velocities
+VIntegrate
+#If_Ascii veye_pos{0} ieye_pos{0}
+#If_Ascii veye_pos{1} ieye_pos{1}
+Tell_If 'Interpolate_Saccades done'
+.
+
+
+# this version uses splices!?
+
+Define Pad_Signal 0
+
+# fill in the invalid part to make the filtering sensible;
+# to simulate wrap around, put a bit of the beginning of the valid
+# signal at the beginning of the invalid part, and a bit of the end
+# at the end
+#
+# why do we want to simulate wrap-around?
+# flipped copies sounds more like it! which is it?
+
+Assign n_to_move ceil(($flen-$nvalid)/2)
+# should check for 0, but now we assume will always be a few
+# filter the velocity signals
+Tell_If "Pad_signal"
+Splice finput eye_vel{0}
+#If_Ascii finput xsplice
+#Plot_If 'VPlot feye_vel{0} finput'
+Apply_Filter feye_vel{0} finput $the_filter
+
+Splice finput eye_vel{1}
+### If_Ascii finput ysplice
+#Plot_If 'VPlot feye_vel{1} finput'
+Apply_Filter feye_vel{1} finput $the_filter
+
+# there is a hard window here - why?
+warn 'replace feye_vel{0} w/ a dup scratch obj'
+VVMul eye_vel{0} feye_vel{0} valid
+VVMul eye_vel{1} feye_vel{1} valid
+
+#If_Ascii veye_vel{0} xvsmooth
+#If_Ascii veye_vel{1} yvsmooth
+
+#Plot_If 'VPlot feye_vel{0} feye_vel{1}'
+Trace_If feye_vel{0} feye_vel{1} v4 'filtered de-saccaded velocities' 1 Velocity_Axes $color1
+
+VIntegrate
+#If_Ascii veye_pos{0} xsmooth
+#If_Ascii veye_pos{1} ysmooth
+.
+
+# Filter_Velocities applies $the_filter to eye_vel{0},eye_vel{1}...
+# results in feye_vel{0}, feye_vel{1}
+
+Define Filter_Velocities 0
+
+### # why splice?
+### Splice finput eye_vel{0}
+### If_Ascii finput xsplice
+
+#Tell_If Filter_Velocities
+
+Subvector insertion finput ncols(eye_vel{0}) 0
+Subvector outsertion foutput ncols(feye_vel{0}) 0
+
+VSet finput 0
+VMov insertion eye_vel{0}
+
+Apply_Filter foutput finput $the_filter
+VMov feye_vel{0} outsertion
+#Plot_If 'FVPlot finput foutput'
+
+### Splice finput eye_vel{1}
+VSet finput 0
+VMov insertion eye_vel{1}
+
+
+### If_Ascii finput ysplice
+Apply_Filter foutput finput $the_filter
+VMov feye_vel{1} outsertion
+
+Delete_Image outsertion
+
+# here we might want to plot all $flen points, maybe in
+# the blink window?
+
+Subvector outsertion foutput ncols(fstimvel) 0
+
+#Plot_If 'VPlot feye_vel{0} feye_vel{1}'
+
+
+#Plot_If 'FVPlot feye_vel{0} feye_vel{1}'
+
+#Subvector xcpy feye_vel{0} ncols(eye_vel{0}) 0
+#VMov eye_vel{0} xcpy
+#Delete_Image xcpy
+
+#Subvector ycpy feye_vel{1} ncols(eye_vel{1}) 0
+#VMov eye_vel{1} ycpy
+#Delete_Image ycpy
+
+VMov insertion stimvel{0}
+Apply_Filter foutput finput $the_filter
+VMov fstimvel{0} outsertion
+
+#Splice finput stimvel{1}
+VMov insertion stimvel{1}
+Apply_Filter foutput finput $the_filter
+VMov fstimvel{1} outsertion
+
+Delete_Image insertion
+Delete_Image outsertion
+
+#Plot_If 'Overlay_VPlot fstimvel{0} fstimvel{1} $color2'
+Trace_If fstimvel{0} fstimvel{1} v4 'filtered stim velocities' 1 Velocity_Axes $color2
+Trace_If feye_vel{0} feye_vel{1} v4 'filtered de-saccaded velocities' 0 Null_Axes $color1
+
+# recompute velocity error
+
+#VVSub fxv_err fstimvel{0} feye_vel{0}
+#VVSub fyv_err fstimvel{1} feye_vel{1}
+VVSub fxv_err feye_vel{0} fstimvel{0}
+VVSub fyv_err feye_vel{1} fstimvel{1}
+#Trace_If fxv_err fyv_err v2 'filtered velocity error' 1 Velocity_Axes $color1
+.
+
+# this version assumes all data is valid or interpolated
+
+Define Pad_Signal2 0
+
+# fill in the invalid part to make the filtering sensible;
+# to simulate wrap around, put a bit of the beginning of the valid
+# signal at the beginning of the invalid part, and a bit of the end
+# at the end
+#Print flen
+#Print nvalid
+#Print alen
+Assign n_to_move ceil(($flen-$nvalid)/2)
+# should check for 0, but now we assume will always be a few
+
+# filter the velocity signals
+
+If $filtering Filter_Velocities
+
+
+VIntegrate
+#If_Ascii veye_pos{0} xsmooth
+#If_Ascii veye_pos{1} ysmooth
+.
+
+# just for fun, integrate the velocities
+
+Define VIntegrate 0
+Tell_If VIntegrate
+Integrate eye_pos{0} eye_vel{0}
+Integrate eye_pos{1} eye_vel{1}
+VSMul eye_pos{0} eye_pos{0} 1/$sample_rate
+VSMul eye_pos{1} eye_pos{1} 1/$sample_rate
+Update_Record
+#Plot_If 'PPlot eye_pos{0} eye_pos{1}'
+Trace_If eye_pos{0} eye_pos{1} v1 'positions' 1 Position_Axes $color1
+User_Notify 'Ready to plot integrated scan path'
+#Plot_If 'Plot_Scan '
+#Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+.
+
+Define Compute_Angles 0
+VMov cvec{1} eye_vel{0}	# the f versions don't have
+			# the invalid part zeroed, so
+			# atan2 doesn't complain
+VAbs cvec{0} eye_vel{1}	# take abs to guarantee that atan is continuous...
+# this atan(y/x) between -p & p
+Tell_If 'computing angle'
+VAtn2 angle cvec
+Tell_If 'converting angle'
+VSMul angle angle 45/atan(1)
+#VVMul angle angle valid		# select non-saccade angles
+#VVMul angle angle window		# get rid of tails
+Tell_If 'plotting angle'
+#Plot_If 'Acc_Plot angle '
+#Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+#Compute_Average_Angle
+.
+
+Define Compute_Average_Angle 0
+Tell_If 'computing average angle'
+#VSum angle sum
+VSum sum angle
+Assign asum value(sum)
+#VSum valid sum
+VSum sum valid
+Assign count value(sum)
+Assign meana $asum/$count
+# compute variance
+VVMul angsq angle angle
+#VSum angsq sos
+VSum sos angsq
+Assign totsq value(sos)
+Assign stddev sqrt(value(sos)/$count-$meana*$meana)
+
+# now just compute the angle of the last point
+# on the integrated trajectory
+Assign xfinal value(eye_pos{0}[$nvalid-1])
+Assign yfinal value(eye_pos{1}[$nvalid-1])
+Assign fang 45*atan2($xfinal,$yfinal)/atan(1)
+Tell_If "final x y $xfinal $yfinal , angle $fang"
+.
+
+Define Fit_Sine 1 input
+stepit fit_sine $1 quit
+Print sine_amp
+Print sine_phase
+Print sine_freq
+.
+
+Define Synthesize_Sine 1 target
+# freq is in cycles per interval?
+# phase is in degrees
+Ramp1D $1 0 "$sine_freq*8*atan(1)/ncols($1)"
+VSAdd $1 $1 atan(1)*$sine_phase/45
+VSin $1 $1
+VSMul $1 $1 $sine_amp
+.
+
+Define Look_For_Oscillation 0
+Filter_Saccades
+VIntegrate
+Fit_Sine eye_vel{0}
+Synthesize_Sine eye_vel{1}
+#Plot_If 'VPlot eye_vel{0} eye_vel{1}'
+Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+.
+
+Define Compute_Xform 0
+If !var_exists(alen) "Assign alen min($dlen,$stimlen)"
+VMov xfinset angle
+Display angle[0]
+Display angle[$alen-1]
+Assign inc (value(angle[0])-value(angle[$alen-1]))/($flen-$alen)
+Ramp1D xftail value(angle[$alen-1])+$inc $inc
+VSet xfbuf{1} 0.0
+FFT xfbuf
+VVMul power xfbuf{0} xfbuf{0}
+VVMul ptmp xfbuf{1} xfbuf{1}
+VVAdd ptmp power ptmp
+Wrap power ptmp
+# take the log?
+VLog power power
+Plot_Power
+.
+
+Define Integrate 2 target source
+Assign tlen "ncols($1)-1"
+Subvector intsub1 $1 $tlen 0
+Subvector intsub2 $1 $tlen 1
+Subvector diffsub $2 $tlen 0
+VSet $1 0.0
+VVAdd intsub2 intsub1 diffsub
+Delete_Vector intsub1
+Delete_Vector intsub2
+Delete_Vector diffsub
+.
+
+Define Get_Mode 0
+Histogram histbuf vangs -180 2
+war minmax max_index histbuf ls quit quit
+Assign maxi value(ls)-1
+Assign maxang 2*$maxi-180
+#Plot_If 'HPlot '
+#Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+.
+
+Define Try_Len 1 boxlen
+Tell_If 'initializing gaussian filter'
+Gauss_Init "0.6*$1"
+User_Notify 'Ready to process saccades'
+Proc_Saccades
+User_Notify 'Ready to remove saccades 1'
+Remove_Saccades eye_vel{0} eye_vel{1}
+User_Notify 'Ready to saccades removed  1'
+# we only need to do padding if we're stitching...
+# or perhaps padding to a length with is a power of 2???
+Tell_If 'padding signal?'
+Set the_filter g_filter
+Tell_If "SETTING the_filter TO g_filter"
+exit
+Pad_Signal2
+User_Notify 'Ready to compute angles'
+Compute_Angles
+.
+
+Define User_Notify 1 string
+Tell_If "$1"
+Pause_If
+.
+
+# Process_Trace removes saccades...
+# it calls Pad_Signal2 in case we want to filter
+
+Define Process_Trace 0
+User_Notify 'Ready to process saccades'
+Proc_Saccades
+
+#User_Notify 'Ready to remove saccades 2'
+
+VVMul fsacc fsacc blink		# remove blinks as well as saccades
+
+Remove_Saccades eye_vel{0} eye_vel{1}
+#Trace_If eye_vel{0} eye_vel{1} $vpv 'de-saccaded velocities' 1 Velocity_Axes $color1
+Trace_If eye_vel{0} eye_vel{1} v4 'de-saccaded velocities' 1 Velocity_Axes $color1
+
+Remove_Saccades stimvel{0} stimvel{1}
+#Trace_If stimvel{0} stimvel{1} $vpv '' 0 Null_Axes $color2
+Trace_If stimvel{0} stimvel{1} v4 '' 0 Null_Axes $color2
+
+# Now let's try filtering the smooth velocities...
+
+
+Remove_Saccades eye_acc{0} eye_acc{1}
+#Trace_If xacc yacc $accv 'de-saccaded acceleration' 1 Acceleration_Axes $color1
+
+# now recompute the velocity error
+#VVSub xv_err stimvel{0} eye_vel{0}
+#VVSub yv_err stimvel{1} eye_vel{1}
+VVSub xv_err eye_vel{0} stimvel{0}
+VVSub yv_err eye_vel{1} stimvel{1}
+#Trace_If xv_err yv_err $vev 'de-saccaded velocity error' 1 Velocity_Axes $color1
+
+User_Notify 'Ready to filter velocities'
+.
+
+# S_Process_Trace DOESN'T remove saccades...
+
+Define S_Process_Trace 0
+User_Notify 'Ready to process saccades'
+Proc_Saccades
+
+# fsacc is the inverse ("valid") signal ?
+
+#VVMul fsacc fsacc blink		# remove blinks as well as saccades
+
+Remove_Smooth eye_vel{0} eye_vel{1}
+#Trace_If eye_vel{0} eye_vel{1} $vpv 'de-saccaded velocities' 1 Velocity_Axes $color1
+Trace_If eye_vel{0} eye_vel{1} v4 'saccade velocities' 1 Velocity_Axes $color1
+
+Trace_If stimvel{0} stimvel{1} v4 '' 0 Null_Axes $color2
+.
+
+
+
+Set max_t_offset 0
+
+Define AccumVel 0
+Tell_If AccumVel
+Process_Trace
+
+Tell_If AccumVel
+Print t_offset
+If $t_offset>$max_t_offset "Set max_t_offset $t_offset"
+Tell_If AccumVel
+Print t_offset
+
+User_Notify 'Ready to time-align traces'
+# multiply the x velocity by dsign*asign
+
+Tell_If scrolling
+Scroll feye_vel{0} eye_vel{0} -$t_offset 0
+Tell_If 'done scrolling'
+#Plot_If 'VPlot eye_vel{0} feye_vel{0}'
+Trace_If eye_vel{0} fye_vel{0} v5 'scrolled velocity' 1 Velocity_Axes $color1
+
+Tell_If "dsign = $dsign   asign = $asign"
+User_Notify 'Ready to accumulate'
+
+VSMul feye_vel{0} feye_vel{0} $dsign*$asign
+Set xan "{$type}xvaccum"	# X Accum Name
+VVAdd $xan $xan feye_vel{0}
+
+
+Scroll feye_vel{1} eye_vel{1} -$t_offset 0
+VSMul feye_vel{1} feye_vel{1} $dsign
+Set yan "{$type}yvaccum"	# X Accum Name
+VVAdd $yan $yan feye_vel{1}
+
+Tell_If 'plotting with stim'
+#Plot_If 'SVPlot $xan $yan'
+Trace_If $xan $yan v5 'what is this?' 1 Velocity_Axes $color1
+User_Notify 'Done with this record, ready for next'
+.
+
+
+
+Define AccumDil 0
+Tell_If AccumDil
+# we might want to remove blinks here!?
+VVMul fsacc fsacc blink
+#Pad_Signal2
+If $filtering Filter_Velocities
+Tell_If AccumDil
+Print t_offset
+If $t_offset>$max_t_offset "Set max_t_offset $t_offset"
+Print t_offset
+
+User_Notify 'Ready to time-align traces'
+# multiply the x velocity by dsign*asign
+
+#Scroll feye_vel{0} eye_vel{0} -$t_offset 0
+#Plot_If 'VPlot eye_vel{0} feye_vel{0}'
+
+User_Notify 'Ready to accumulate'
+
+Set xan "{$type}xvaccum"	# X Accum Name
+Set yan "{$type}yvaccum"	# X Accum Name
+
+VVAdd $xan $xan eye_vel{0}
+Scroll feye_vel{0} eye_vel{0} -$t_offset 0
+VVAdd $yan $yan feye_vel{0}
+
+
+Tell_If 'plotting with stim'
+Plot_If 'SVPlot $xan $yan'
+Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+User_Notify 'Done with this record, ready for next'
+.
+
+Define Show_Accum 1 type
+Set type $1
+Set yan "{$type}yvaccum"	# X Accum Name
+Set xan "{$type}xvaccum"	# X Accum Name
+#Subvector accum_tail $xan $max_t_offset ncols($xan)-$max_t_offset
+#VSet accum_tail 0.0
+#Delete_Image accum_tail
+
+#Subvector accum_head $xan $max_t_offset 0
+#VSet accum_head 0.0
+#Delete_Image accum_head
+
+#Subvector accum_tail $yan $max_t_offset ncols($yan)-$max_t_offset
+#VSet accum_tail 0.0
+#Delete_Image accum_tail
+Plot_If 'SVPlot $xan $yan'
+Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1
+.
+
+Define Final_Accum 2 type conditions_per_type
+Tell_If "FInal_Accum $1 $2"
+VSMul "{$1}xvaccum" "{$1}xvaccum" "1/$2"
+VSMul "{$1}yvaccum" "{$1}yvaccum" "1/$2"
+Do_Ascii "{$1}xvaccum" "{$1}xva"
+Do_Ascii "{$1}yvaccum" "{$1}yva"
+Do_Ascii stimvec stim
+Show_Accum $1
+User_Notify "Accumulators for stim type $1"
+.
+
+# used to be in rem2.mac
+
+# remove the saccades from the velocity signal by stitching
+# what is stitching?  vs. splicing?
+# "stitching" means that we shift the records over,
+# while "interpolation" leaves things at the correct time,
+# but when saccades occur, the data in the saccade interval
+# is replaced by interpolated data
+
+Define Remove_Saccades 2 x y
+Dup_Float rs_tmp $1
+
+VSet rs_tmp 0.0
+#advise "VInterp rs_tmp $1 fsacc"
+#Pause
+VInterp rs_tmp $1 fsacc
+VMov $1 rs_tmp
+advise "VInterp rs_tmp $1 fsacc DONE"
+
+VSet rs_tmp 0.0
+#advise "VInterp rs_tmp $2 fsacc"
+VInterp rs_tmp $2 fsacc
+#advise "VInterp rs_tmp $2 fsacc DONE"
+VMov $2 rs_tmp
+
+#warn "ZEROING SACCADES from $1 and $2!"
+#VVMul $1 $1 fsacc
+#VVMul $2 $2 fsacc
+
+Delete_Image rs_tmp
+.
+
+Define Remove_Smooth 2 x y
+Dup_Float rs_tmp $1
+VSSub rs_tmp fsacc 1
+VVMul $1 $1 rs_tmp
+VVMul $2 $2 rs_tmp
+Delete_Image rs_tmp
+.
+
+
+Stop_File common.mac
+

@@ -1,0 +1,91 @@
+# %Z% $RCSfile: procrec.mac,v $ ver: $Revision: 1.10 $ $Date: 2010/12/02 17:57:42 $
+
+
+Start_File procrec.mac
+
+# Process_Record  differentiates the position measurements
+# and the stim posns to get raw velocities...
+# It also computes eye accelerations.
+# Plots and saves to ascii files if flag set.
+
+Set clip_velocity	100
+Set clip_acceleration	500
+
+Define Process_Record 0
+
+# now compute position error
+Tell_If 'computing position error'
+# When was this changed?
+# posn error = eyepos - stimpos
+# vel error = eyevel - stimvel
+# positive velocity error means eye is moving to the right relative to the stimulus
+# positive posn error means eye is to the right of stimulus - so we expect negative correlation
+#VVSub posn_err stimpos eye_pos
+VVSub posn_err eye_pos stimpos
+
+#Plot_If "EPPlot xp_err yp_err"
+#If !$fewer_viewers "Trace_If xp_err yp_err $pev 'position error' 1 Posn_Axes $color1"
+
+#Trace_If posn_err{0} posn_err{1} v1 'position error' 1 Posn_Axes $color1
+
+#User_Notify 'Ready to differentiate'
+Differentiate eye_vel{0} eye_pos{0}
+Differentiate eye_vel{1} eye_pos{1}
+# now are in degrees per sample
+VSMul eye_vel{0} eye_vel{0} $sample_rate		# convert to degrees per second
+VSMul eye_vel{1} eye_vel{1} $sample_rate		# convert to degrees per second
+
+Differentiate stimvel{0} stimpos{0}
+Differentiate stimvel{1} stimpos{1}
+VSMul stimvel{0} stimvel{0} $sample_rate	# convert to degrees per second
+VSMul stimvel{1} stimvel{1} $sample_rate	# convert to degrees per second
+
+# now compute the velocity error
+#VVSub xv_err stimvel{0} eye_vel{0}
+#VVSub yv_err stimvel{1} eye_vel{1}
+VVSub xv_err eye_vel{0} stimvel{0}
+VVSub yv_err eye_vel{1} stimvel{1}
+
+
+Differentiate eye_acc{0} eye_vel{0}			# degrees per second per sample
+Differentiate eye_acc{1} eye_vel{1}			# degrees per second per sample
+VSMul eye_acc{0} eye_acc{0} $sample_rate		# convert to degrees per sec per sec
+VSMul eye_acc{1} eye_acc{1} $sample_rate		# convert to degrees per sec per sec
+
+Tell_If "clipping velocities at $clip_velocity deg/sec"
+Clip eye_vel{0} eye_vel{0} $clip_velocity
+Clip eye_vel{1} eye_vel{1} $clip_velocity
+
+#If !$fewer_viewers "Trace_If eye_vel{0} eye_vel{1} $vpv 'velocities' 1 Velocity_Axes $color1"
+#
+#If !$fewer_viewers "Trace_If stimvel{0} stimvel{1} $vpv '' 0 Null_Axes $color2"
+
+If !$fewer_viewers "Trace_If eye_vel{0} eye_vel{1} v2 'velocities' 1 Velocity_Axes $color1"
+If !$fewer_viewers "Trace_If stimvel{0} stimvel{1} v2 '' 0 Null_Axes $color2"
+
+
+#If !$fewer_viewers "Trace_If xv_err yv_err $vev 'velocity error' 1 Velocity_Axes $color1"
+
+Tell_If "clipping accelerations at $clip_acceleration deg/sec/sec"
+Clip eye_acc{0} eye_acc{0} $clip_acceleration
+Clip eye_acc{1} eye_acc{1} $clip_acceleration
+
+#If !$fewer_viewers "Trace_If eye_acc{0} eye_acc{1} $accv 'eye acceleration' 1 Acceleration_Axes $color1"
+
+#If_Ascii eye_pos{0} "xpos.$param_string"
+#If_Ascii eye_pos{1} "ypos.$param_string"
+#If_Ascii eye_vel{0} "xvel.$param_string"
+#If_Ascii eye_vel{1} "yvel.$param_string"
+.
+
+Define Compute_Stimvel 0
+Differentiate stimvel{0} stimpos{0}
+Differentiate stimvel{1} stimpos{1}
+VSMul stimvel{0} stimvel{0} $sample_rate	# convert to degrees per second
+VSMul stimvel{1} stimvel{1} $sample_rate	# convert to degrees per second
+#Trace_If stimvel{0} stimvel{1} $vpv '' 0 Null_Axes $color2
+Trace_If stimvel{0} stimvel{1} $vpv 'velocities' 1 Velocity_Axes $color2
+.
+
+Stop_File procrec.mac
+

@@ -10,6 +10,9 @@
 
 char VersionId_cuda_cuda[] = QUIP_VERSION_STRING;
 
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>	/* malloc */
+#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -270,6 +273,8 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	}
 }
 
+#ifdef HAVE_DEV_NVIDIACTL
+
 static void check_file_access(QSP_ARG_DECL  const char *filename)
 {
 	if( ! file_exists(filename) ){
@@ -286,6 +291,8 @@ static void check_file_access(QSP_ARG_DECL  const char *filename)
 	}
 }
 
+#endif /* HAVE_DEV_NVIDIACTL */
+
 void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 {
 	int n_devs,i;
@@ -294,7 +301,10 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 	 * are not readable...  So we check that first.
 	 */
 
+#ifdef HAVE_DEV_NVIDIACTL
+	// BUG check for this is not yet in configure.ac
 	check_file_access(QSP_ARG  "/dev/nvidiactl");
+#endif /* HAVE_DEV_NVIDIACTL */
 
 	cudaGetDeviceCount(&n_devs);
 
@@ -312,10 +322,15 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
+#ifdef HAVE_DEV_NVIDIACTL
+		/* If we have the nvidiactl dev file, then we should
+		 * have the other dev entries as well.
+		 * These don't seem to be present on Mac OSX...
+		 */
 		char s[32];
-
 		sprintf(s,"/dev/nvidia%d",i);
 		check_file_access(QSP_ARG  s);
+#endif /* HAVE_DEV_NVIDIACTL */
 
 		init_cuda_device(QSP_ARG  i);
 	}

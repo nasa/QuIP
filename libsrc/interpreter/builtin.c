@@ -108,7 +108,7 @@ static const char *help_p="builtin_help";
 #ifdef MY_INTR
 
 #include <signal.h>
-static char *intr_str="";
+static const char *intr_str="";
 
 /* when we get an interrupt, do we associate it with a particular query_stream? */
 
@@ -120,14 +120,14 @@ void my_onintr(int asig /* what is this arg??? */)
 
 #ifdef DEBUG
 if( debug & bi_debug ){
-sprintf(ERROR_STRING,"my_onintr:  pushing string \"%s\"",intr_str);
-advise(ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"my_onintr:  pushing string \"%s\"",intr_str);
+advise(DEFAULT_ERROR_STRING);
 }
 #endif /* DEBUG */
 
 	push_input_file(DEFAULT_QSP_ARG  "intr_handler");
 	pushtext(DEFAULT_QSP_ARG  intr_str);
-	curr_qsp->qs_flags &= ~QS_HAD_INTR;	/* clear flag */
+	default_qsp->qs_flags &= ~QS_HAD_INTR;	/* clear flag */
 }
 
 static COMMAND_FUNC( set_onintr )

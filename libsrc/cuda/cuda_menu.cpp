@@ -335,6 +335,8 @@ static COMMAND_FUNC( do_fft )
 	PUSHCMD(cuda_fft_ctbl, FFT_MENU_NAME);
 }
 
+#ifdef HAVE_LIBNPP
+
 static Command cuda_npp_ctbl[]={
 { "image",	do_npp_malloc,		"declare new image"		},
 { "vadd",	do_npp_vadd,		"add two images"		},
@@ -353,6 +355,8 @@ static COMMAND_FUNC( npp_menu )
 {
 	PUSHCMD(cuda_npp_ctbl,NPP_MENU_NAME);
 }
+
+#endif /* HAVE_LIBNPP */
 
 COMMAND_FUNC( do_cuda_fill )
 {

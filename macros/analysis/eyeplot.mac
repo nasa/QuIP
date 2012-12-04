@@ -1,0 +1,737 @@
+# %Z% $RCSfile: eyeplot.mac,v $ ver: $Revision: 1.17 $ $Date: 2007/05/09 08:44:32 $
+
+Start_File analysis/eyeplot.mac
+
+# iview macros to plot eye movement records
+#
+# record length is provided by caller in $dlen
+
+< $macro_dir/view/plotsupp.mac
+
+Set zfactor 1			# default value
+Set hzfactor 1			# default value
+Set hiding	0
+Set plot_height	0
+
+Set fewer_viewers	0
+
+Set buffer 0.1	# fraction of spread by which to separate traces from edges...
+
+# make a window that covers up the whole screen to hide stuff for demos
+
+Define Make_Backdrop 0
+view quit  # make sure Xlib display is initialized
+Viewer Backdrop ncols('$DISPLAY') nrows('$DISPLAY')
+.
+
+# defaults
+Set color0	20		# black
+Set color1	21		# white
+Set color2	22		# green
+Set color3	23		# cyan
+Set color4	24		# gray
+Set redcolor	25
+
+Set axis_color	$color4
+Set refcolor	$color2
+Assign py 30			# pixels between windows
+
+# viewers
+Set icv v1		# image correlation viewer
+Set ppv v2		# posn plot viewer
+Set vpv v3		# velocity plot viewer
+Set accv v4
+
+Set pev v6		# position error viewer
+Set vev v7		# velocity error viewer
+
+Set xcv v8		# cross correlation viewer
+
+Set scdv $icv
+
+# We need this function when we have trials
+# with variable record lengths (e.g. atc search)
+
+Define Reset_Data_Length 1 dlen
+Assign dlen $1
+Assign plot_dlen 4*(floor(($dlen-1)/4)+1)
+Assign hzfactor $plot_width/$plot_dlen
+Assign plot_xos 20/$hzfactor
+.
+
+Define Init_Plot_Params 0
+Tell_If "BEGIN Init_Plot_Params"
+
+# this should maybe be called plotter_gap or something...
+
+Assign py 30			# pixels between windows
+Assign plot_h_gap	20
+Assign plot_v_gap	40	# vertical space between viewers in pixels
+Assign text_reserve	50	# set aside 50 pixlels bottom for typing
+
+# Determine the width of the plotting window
+#
+# We want it to be no wider than half the screen (1280/2=640),
+# and we want to display a whole trace.
+# We round the data length to a multiple of 4 (why?)
+# and possibly zoom to get the biggest window
+# possible < 640
+
+Assign plot_dlen 4*(floor(($dlen-1)/4)+1)
+#advise "dlen $dlen   plot_dlen $plot_dlen"
+#Assign hzfactor floor(620/$plot_dlen)
+#Assign hzfactor floor(500/$plot_dlen)
+Assign hzfactor max(1,floor(512/$plot_dlen))
+# plot_width is width in pixels of trace viewers
+# We're hacking this to work with sri data...
+Set plot_width 512
+### If $hzfactor<1
+### #  Then 'Assign plot_width 20+512 Assign hzfactor floor($plot_width/$plot_dlen)'
+### #  Else "Assign plot_width 20+$hzfactor*$plot_dlen"
+###   Then 'Assign plot_width 20+412 Assign hzfactor floor($plot_width/$plot_dlen)'
+###   Else "Assign plot_width 20+$hzfactor*412"
+
+Assign plot_xos 20/$hzfactor
+
+# Set the viewer height
+#
+# We'd like to have 4 trace windows, preferably least 200 pixels tall
+
+#Assign plot_height $zfactor*200	# pixel height of trace windows
+view quit				# make sure Xlib is initialized
+Assign plot_height floor((nrows('$DISPLAY')-$text_reserve)/3)-$plot_v_gap
+Print plot_height
+
+# These parameters should perhaps have their names changed
+# to make it clear that they are plot params and not processing params...
+#
+# overlay the saccade traces (0-1) on the posn traces
+# so they appear small and at the lower bit of the plot
+
+Assign saccmax 15
+Assign saccmin -4
+Assign angmax 90
+Assign angmin -$angmax
+
+Assign pwrmin -10
+Assign pwrmax 25
+
+# these positions are for video demo
+Set showx	60
+Set showy	$py
+Set hidex	60
+Set hidey	500
+Tell_If 'Init_Plot_Params DONE'
+.
+
+
+Define Font_Init 0
+view
+  draw v5
+     echo 'NOT loading font...'
+#    load screen-bold18
+#    font screen-bold18
+    quit
+  quit
+.
+
+Define Init_Eyeplot_Color_Defs 1 viewer
+Select_Viewer $1
+#advise "Init_Eyeplot_Color_Defs:  current_window = $current_window"
+view
+  draw $1
+    background $color0		# erase will use this color
+    quit
+  quit
+Setcolor $color0 0 0 0
+Setcolor $color1 255 255 255
+Setcolor $color2 0 255 0
+Setcolor $color3 0 255 255
+Setcolor $color4 150 150 150
+#Setcolor $refcolor 255 255 0
+# this was done for viewer v1...
+Setcolor $redcolor 255 0 0
+.
+
+# Originally the windows had names that were informative...
+#
+# Eventually, they became reused for different things, now
+# we just name them v1, v2, etc., and relabel as desired
+#
+# old name	new name
+#
+# traces	v1
+# velocities	v2
+# correlation	v3
+# scan_path	v5
+# correlations	v6
+
+Define Init_Plotters 0
+#Init_5_Plotters
+#If !$fewer_viewers "Init_3_More_Plotters"
+Init_6_Plotters
+.
+
+Define RClick 0
+output_file -
+echo RCLICK
+Set clicked 1
+Set checking_click 0
+.
+
+Define Click 0
+output_file -
+echo CLICK
+Set clicked 1
+Set checking_click 1
+.
+
+Define Init_6_Plotters 0
+#Click_Viewer backdrop 1024 768  Click Click RClick
+#Posn_Window backdrop 0 0
+#view draw backdrop background 20 clear quit quit
+
+Init_Plot_Params
+Tell_If "plot_width $plot_width  plot_height $plot_height"
+
+Assign plot_v_delta $plot_v_gap+$plot_height
+Assign plot_h_delta $plot_h_gap+$plot_width
+
+view xsync yes quit
+
+# We have changed the order, and interspersed
+# the Posn commands in order to eliminate
+# extra expose events.
+
+#Click_Viewer v6 $plot_width $plot_height Click Click RClick
+New_Plotter v6 $plot_width $plot_height
+Posn_Window v6 $plot_h_gap+$plot_h_delta		$plot_v_gap+2*$plot_v_delta
+
+#Click_Viewer v5 $plot_width $plot_height Click Click RClick
+New_Plotter v5 $plot_width $plot_height
+Posn_Window v5 $plot_h_gap+$plot_h_delta		$plot_v_gap+$plot_v_delta
+
+#Click_Viewer v4 $plot_width $plot_height Click Click RClick
+New_Plotter v4 $plot_width $plot_height
+Posn_Window v4 $plot_h_gap+$plot_h_delta		$plot_v_gap
+
+#Click_Viewer v3 $plot_width $plot_height Click Click RClick
+New_Plotter v3 $plot_width $plot_height
+Posn_Window v3 $plot_h_gap		$plot_v_gap+2*$plot_v_delta
+
+#Click_Viewer v2 $plot_width $plot_height Click Click RClick
+New_Plotter v2 $plot_width $plot_height
+Posn_Window v2 $plot_h_gap		$plot_v_gap+$plot_v_delta
+
+#Click_Viewer v1 $plot_width $plot_height Click Click RClick
+New_Plotter v1 $plot_width $plot_height
+Posn_Window v1 $plot_h_gap		$plot_v_gap
+
+
+
+Init_Eyeplot_Color_Defs v1
+Init_Eyeplot_Color_Defs v2
+Init_Eyeplot_Color_Defs v3
+Init_Eyeplot_Color_Defs v4
+Init_Eyeplot_Color_Defs v5
+Init_Eyeplot_Color_Defs v6
+
+# eat up events before drawing
+view loop quit
+Tell_If 'Init_6_Plotters DONE'
+.
+
+
+Define Init_5_Plotters 0
+Init_Plot_Params
+Tell_If "plot_width $plot_width  plot_height $plot_height"
+
+Assign plot_v_delta $plot_v_gap+$plot_height
+Assign plot_h_delta $plot_h_gap+$plot_width
+
+view xsync yes quit
+
+# We have changed the order, and interspersed
+# the Posn commands in order to eliminate
+# extra expose events.
+
+Viewer v5 $plot_height $plot_height
+Posn_Window v5 $plot_h_gap+$plot_h_delta	$plot_v_gap
+
+If !$fewer_viewers "Viewer v4 $plot_width $plot_height"
+If !$fewer_viewers "Posn_Window v4 $plot_h_gap			$plot_v_gap+3*$plot_v_delta"
+#
+If !$fewer_viewers "Viewer v3 $plot_width $plot_height"
+If !$fewer_viewers "Posn_Window v3 $plot_h_gap			$plot_v_gap+2*$plot_v_delta"
+
+Viewer v2 $plot_width $plot_height
+Posn_Window v2 $plot_h_gap			$plot_v_gap+$plot_v_delta
+
+Viewer v1 $plot_width $plot_height
+Posn_Window v1 $plot_h_gap			$plot_v_gap
+
+
+
+Init_Eyeplot_Color_Defs v1
+Init_Eyeplot_Color_Defs v2
+If !$fewer_viewers "Init_Eyeplot_Color_Defs v3"
+If !$fewer_viewers "Init_Eyeplot_Color_Defs v4"
+Init_Eyeplot_Color_Defs v5
+
+# eat up events before drawing
+view loop quit
+.
+
+Define Init_3_More_Plotters 0
+Viewer v6 $plot_width $plot_height
+Viewer v7 $plot_width $plot_height
+Viewer v8 $plot_width $plot_height
+Init_Eyeplot_Color_Defs v6
+Init_Eyeplot_Color_Defs v7
+Init_Eyeplot_Color_Defs v8
+
+# v8 doesn't seem to get the color definitions, perhaps because it
+# isn't created yet - try xsync yes
+
+Normal_3_Positions
+.
+
+Define Init_PPlotter 2 width height
+Init_Plot_Params
+Viewer v1 $1 $2
+#Posn_Window v1 $plot_h_gap 600
+Posn_Window v1 $plot_h_gap $plot_v_gap
+.
+
+Define Init_Scan_Plot 0
+Tell_If Init_Scan_Plot
+#Init_Plot_Params
+If $plot_height==0 "Set plot_height 512 Set plot_width 512"
+Viewer v5 $plot_height $plot_height	# these have to come after the setcolor's for
+view
+  draw v5
+    background $color0
+    quit
+  quit
+Init_Eyeplot_Color_Defs v5
+#Posn_Window v5 2*$plot_h_gap+$plot_width $py
+Posn_Window v5 2*$plot_h_gap+$plot_width $plot_v_gap
+.
+
+Define Normal_Positions 0
+Normal_5_Positions
+Normal_3_Positions
+.
+
+Define Normal_5_Positions 0
+Assign plot_v_delta $plot_v_gap+$plot_height
+Assign plot_h_delta $plot_h_gap+$plot_width
+Posn_Window v1 $plot_h_gap			$plot_v_gap
+Posn_Window v5 $plot_h_gap+$plot_h_delta	$plot_v_gap
+Posn_Window v2 $plot_h_gap			$plot_v_gap+$plot_v_delta
+Posn_Window v3 $plot_h_gap			$plot_v_gap+2*$plot_v_delta
+Posn_Window v4 $plot_h_gap			$plot_v_gap+3*$plot_v_delta
+.
+
+Define Normal_3_Positions 0
+Posn_Window v6 $plot_h_gap+$plot_h_delta	$plot_v_gap+$plot_v_delta
+Posn_Window v7 $plot_h_gap+$plot_h_delta	$plot_v_gap+2*$plot_v_delta
+Posn_Window v8 $plot_h_gap+$plot_h_delta	$plot_v_gap+3*$plot_v_delta
+.
+
+Define Show_Data_Scale 0
+warn "macro Show_Data_Scale is obsolete"
+#Show_Posn_Scale v1
+.
+
+Define Draw_Posn_Legend 0
+
+# Since we don't know the scale of the data, we position
+# the legend string using raw window coordinates
+#
+# The 10,25 numbers are hard-coded here, not sure where
+# that came from but it must have looked good at one time...
+
+Scale_Off
+#Print hzfactor
+#Print zfactor
+Draw_String "POSITION vs. TIME" 10*$hzfactor 25*$zfactor
+Scale_On
+.
+
+Define Draw_Scale_Indicator 1 viewer
+Select_Plotter $1
+Middle_Trace $datamin $datamax
+# give a scale indicator
+# the center is 0
+Assign sxpos 0.75*$plot_dlen
+Assign sypos 0			# 0.75*$datamax
+# draw a one degree vertical bar
+Compute_Ruler_Unit
+
+# draw a line of length $ruler_unit
+
+#Print ruler_unit
+#Print sypos
+PMove $sxpos $sypos-0.5*$ruler_unit
+PCont $sxpos $sypos+0.5*$ruler_unit
+.
+
+# draw the scale units on a position graph
+
+Define Show_Posn_Scale 1 viewer
+Draw_Posn_Legend
+Draw_Scale_Indicator $1
+# don't need this Scale_On...
+# Scale_On
+Draw_String "$ruler_unit deg" $sxpos+0.02*$plot_dlen $sypos-0.5*$ruler_unit
+# the x,y values for string, are they in plotting units???
+#Show_Time_Base
+Draw_Time_Base
+.
+
+
+Define Show_Pixel_Scale 1 viewer
+Draw_Posn_Legend
+Draw_Scale_Indicator $1
+# don't need this Scale_On...
+#Scale_On
+Draw_String "$ruler_unit pixels" $sxpos+0.02*$plot_dlen $sypos-0.5*$ruler_unit
+# the x,y values for string, are they in plotting units???
+#Show_Time_Base
+Draw_Time_Base
+.
+
+Define Show_Time_Base 0
+# Draw a 1 second time scale indicator
+
+Assign sxpos 0.10*$plot_dlen
+#Assign sypos -0.8*$datamax
+Assign sypos 0
+PMove $sxpos $sypos
+PCont $sxpos+$sample_rate $sypos
+Draw_String "1 sec" $sxpos+$sample_rate+6 $sypos
+.
+
+# we want the ruler unit to be an even number, about 1/8 of the plot window...
+
+Define Compute_Ruler_Unit 0
+#advise "Compute_Ruler_Unit:  datamax = $datamax"
+Assign ruler_unit exp(floor(log($datamax)/log(10.0))*log(10.0))
+Tell_If "Compute_Ruler_Unit:  datamax $datamax   ruler_unit $ruler_unit"
+If "$ruler_unit >= $datamax/2" "Mul_Var ruler_unit 1/2"
+If "$ruler_unit <= $datamax/5" "Mul_Var ruler_unit 2"
+#Tell_If "Compute_Ruler_Unit:  datamax $datamax   ruler_unit $ruler_unit"
+.
+
+Define Show_Scan_Scale 0
+Scale_Off
+Draw_String "SCAN PATH" 0.05*$plot_height 0.125*$plot_height
+Scale_On
+Assign fact 1+$buffer
+Plot_Space $fact*$datamin $fact*$datamin $fact*$datamax $fact*$datamax
+# give a scale indicator
+Assign xbase $datamin
+Assign ybase $datamin
+Compute_Ruler_Unit
+# what is the drawing color???
+#Tell_If "datamax $datamax ruler_unit $ruler_unit"
+PMove $xbase             $ybase
+PCont $xbase+$ruler_unit $ybase
+PCont $xbase+$ruler_unit $ybase+$ruler_unit
+PCont $xbase             $ybase+$ruler_unit
+PCont $xbase             $ybase
+Scale_On
+Draw_String "$ruler_unit deg" $datamin+$ruler_unit*1.5 $datamin
+.
+
+Define Scale_Off 0
+view
+  draw $the_plotter
+    scale no
+    quit
+  quit
+.
+
+Define Scale_On 0
+view
+  draw $the_plotter
+    scale yes
+    quit
+  quit
+.
+
+
+Define Draw_String 3 string x y
+view
+  draw $the_plotter
+    #string $1 $2 $3
+    string $1 $2 $3
+    quit
+  quit
+.
+
+Define Lower_Trace 2 min max
+#advise "Lower_Trace $1 $2"
+Assign spread "(($2)-($1))"
+Plot_Space $plot_left  "$1-$buffer*$spread"
+	   $plot_right "$2+$spread*(1+2*$buffer)"
+.
+
+Define Upper_Trace 2 min max
+#advise "Upper_Trace $1 $2"
+Assign spread "(($2)-($1))"
+Plot_Space $plot_left  "$1-$spread*(1+2*$buffer)"
+	   $plot_right "$2+$buffer*$spread"
+.
+
+# We rarely draw a center trace;
+# we use this to preserve the upper and lower scales but put 0 in the center...
+
+Define Middle_Trace 2 min max
+Assign spread "(($2)-($1))"
+Plot_Space -$plot_xos "$1-$spread*(1+3*$buffer)/2" $plot_dlen+$plot_xos "$2+$spread*(1+3*$buffer)/2"
+.
+
+Define Center_Trace 2 min max
+Plot_Space -$plot_xos $1 $plot_dlen+$plot_xos $2
+.
+
+Define Draw_X_Axis 0
+Select_Pen $axis_color
+PMove 0 0
+PCont $plot_dlen 0
+.
+
+Define Label_Trace 1 label
+#Tell_If "Label_Trace $1"
+Scale_On
+Draw_String "$1" 0 0
+.
+
+Define Plot_Correlation 0
+If $hiding "UnHide_Viewer $icv"
+Select_Plotter $icv
+Upper_Trace 0 1
+Select_Pen $refcolor			# blue?
+PMove 0 0
+PCont $plot_dlen-1 0
+PMove 0 $blink_threshold
+PCont $plot_dlen-1 $blink_threshold
+PMove 0 1
+PCont $plot_dlen-1 1
+Select_Pen $color1
+YPlot correlation
+
+Lower_Trace 0 1
+Select_Pen $color1
+YPlot blink
+.
+
+
+# set variables datamin,datamax in accordance with the data in the named record
+
+Define Compute_Data_Range 1 record_name
+#advise "Compute_Data_Range $1"
+Tell_If "Compute_Data_Range $1"
+Scalar cpr_scalar 1 float
+#VMax $1 cpr_scalar
+VMax cpr_scalar $1
+#Display cpr_scalar
+Assign dmax value(cpr_scalar)
+#VMin $1 cpr_scalar
+VMin cpr_scalar $1
+Assign dmin value(cpr_scalar)
+Assign datamax max(abs($dmax),abs($dmin))
+Assign datamin -$datamax
+#Print datamax
+#Print datamin
+Delete_Image cpr_scalar
+#Pause
+.
+
+
+Define Update_Scan 2 record color
+Tell_If "Update_Scan $1"
+Select_Plotter v5
+Assign fact 1+$buffer 
+Tell_If "fact $fact datamin $datamin datamax $datamax"
+Plot_Space $fact*$datamin $fact*$datamin $fact*$datamax $fact*$datamax
+Select_Pen $2
+XYPlot $1
+Show_Scan_Scale
+.
+
+Define Plot_Scan_Data 1 record
+Tell_If Plot_Scan
+If $hiding "UnHide_Viewer v5"
+Select_Plotter v5
+Erase_Plot
+Update_Scan $1 $color1
+Show_Scan_Scale
+.
+
+Define Plot_Scan 0
+Tell_If Plot_Scan
+Compute_Data_Range record
+Plot_Scan_Data record
+Update_Scan stimpos $color2
+.
+
+Define HPlot 0
+Select_Plotter v1
+Erase_Plot
+Plot_Space -10 -10 370 200
+Select_Pen $color1
+YPlot histbuf
+.
+
+Define Compute2_Data_Range 2 vec1 vec2
+Compute_Data_Range $1
+Assign d2max $datamax
+Compute_Data_Range $2
+Assign tmp max($d2max,$datamax)
+Set datamax $tmp
+Assign datamin -$datamax
+.
+
+Define Overlay_Plot 4 plotter xsig ysig color
+Select_Plotter $1
+Upper_Trace $datamin $datamax
+Select_Pen $4
+YPlot $2
+Lower_Trace $datamin $datamax
+YPlot $3
+.
+
+Define COverlay_Plot 4 plotter xsig ysig colorvec
+Select_Plotter $1
+Upper_Trace $datamin $datamax
+CYPlot $2 $4
+Lower_Trace $datamin $datamax
+CYPlot $3 $4
+.
+
+# Draw horizontal lines at y=0 and y= +- limit
+# used in velocity and acceleration plots to visualize
+# saccade classification
+
+Define Show_Bounds 1 limit
+#Select_Pen $refcolor			# blue?
+PMove 0 0
+PCont $plot_dlen 0
+PMove 0 $1
+PCont $plot_dlen $1
+PMove 0 "-$1"
+PCont $plot_dlen "-$1"
+.
+
+# acceleration plot
+
+#Set accv v2
+
+Define Acc_Plot 2 xacc yacc
+Std_Acc_Plot $1 $2 $accv
+Label_Viewer $accv "acceleration"
+.
+
+Define Show_XZero 0
+Tell_If Show_XZero
+Select_Pen $refcolor			# blue?
+PMove $plot_dlen/2 -1
+PCont $plot_dlen/2 1
+.
+
+Define VOverlay 1 trace
+If $hiding "UnHide_Viewer $vpv"
+Middle_Trace $datamin/3 $datamax/3
+Select_Pen $refcolor			# blue?
+YPlot $1
+.
+
+Define Line_At 1 x
+PMove $1 2*$datamin
+PCont $1 2*$datamax
+.
+
+Define Ref_Lines 0
+# draw some vertical reference lines
+Select_Pen $refcolor			# blue?
+Middle_Trace $datamin $datamax
+Assign startx $event_start
+Line_At $startx
+Line_At $startx+15
+Line_At $startx+30
+Line_At $startx+45
+Line_At $startx+60
+.
+
+
+Define Add_Freq_Label 1 label
+Draw_String "$1" 0.75*$plot_dlen*$hzfactor 0.9*$plot_height
+.
+
+# new version of Plot_If, labels viewer
+
+Define Trace_If 7 x_signal y_signal viewer label erase_flag axis_func color
+Tell_If "Trace_If $1 $2 $3 $4 $5 $6 $7"
+If !$plotting 'PopFile 2'
+
+If $hiding "UnHide_Viewer $3"
+
+If "strlen('$4')>0"
+  "Label_Viewer $3 '$4'"
+
+Select_Plotter $3
+
+If $5 Erase_Plot
+
+If $5 "Compute2_Data_Range $1 $2"
+
+
+$6 $3		# call the context-specific axes function
+		# this may reset the data range...
+
+
+Overlay_Plot $3 $1 $2 $7
+Pause_If
+.
+
+# version of Trace_If, which uses vector instead of constant for color
+
+Define CTrace_If 7 x_signal y_signal viewer label erase_flag axis_func colorvec
+#Tell_If "CTrace_If $1 $2 $3 $4 $5 $6 $7"
+If !$plotting 'PopFile 2'
+
+If $hiding "UnHide_Viewer $3"
+
+If "strlen('$4')>0"
+  "Label_Viewer $3 '$4'"
+
+Select_Plotter $3
+
+If $5 Erase_Plot
+
+If $5 "Compute2_Data_Range $1 $2"
+
+
+$6 $3		# call the context-specific axes function
+		# this may reset the data range...
+
+
+COverlay_Plot $3 $1 $2 $7
+.
+
+Define Erase_All 0
+Select_Plotter v1 Erase_Plot
+Select_Plotter v2 Erase_Plot
+Select_Plotter v3 Erase_Plot
+#Select_Plotter v4 Erase_Plot
+Select_Plotter v5 Erase_Plot
+Select_Plotter v6 Erase_Plot
+Select_Plotter v7 Erase_Plot
+#Select_Plotter v8 Erase_Plot
+.
+
+Stop_File analysis/eyeplot.mac
+

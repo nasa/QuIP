@@ -7,6 +7,19 @@ char VersionId_cuda_cuda_viewer[] = QUIP_VERSION_STRING;
 #ifdef HAVE_OPENGL
 #ifdef HAVE_GLUT
 
+/* Put the cuda includes first to compile on mac??? */
+
+#include <cuda_runtime.h>
+#include <cutil_inline.h>
+#ifdef HAVE_GL_GLEW_H
+#include <GL/glew.h>
+#endif
+
+#include <cutil_gl_inline.h>
+#include <cutil_gl_error.h>
+#include <cuda_gl_interop.h>
+#include <vector_types.h>
+
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -23,22 +36,11 @@ char VersionId_cuda_cuda_viewer[] = QUIP_VERSION_STRING;
 #include <math.h>
 #endif
 
-#ifdef HAVE_GL_GLEW_H
-#include <GL/glew.h>
-#endif
-
 // used to include GL/glut.h and rendercheck_gl.h...
 
 #ifdef HAVE_GL_GLX_H
 #include <GL/glx.h>	// jbm added for glXSwapBuffers()
 #endif
-
-#include <cuda_runtime.h>
-#include <cutil_inline.h>
-#include <cutil_gl_inline.h>
-#include <cutil_gl_error.h>
-#include <cuda_gl_interop.h>
-#include <vector_types.h>
 
 void cleanup_cuda_viewer(void);
 

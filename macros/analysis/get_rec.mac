@@ -1,0 +1,213 @@
+# %Z% $RCSfile: get_rec.mac,v $ ver: $Revision: 1.14 $ $Date: 2003/11/11 07:58:13 $
+
+Start_File analysis/get_rec.mac
+
+
+#system "dm x5 x6 < $rawdir/$filename > $scrdir/rettmp"
+#system "abut $scrdir/rettmp $scrdir/ycorr.$camera_index | \
+#  dm x1 x2+x3 > $scrdir/retdata"
+#< /dev/tty
+#Read_Data_File $scrdir/retdata
+
+Set corr_norm 1		# use 4000 for munged data
+
+# This is for retina files...
+
+Define Get_Retina_Data 1 filename
+# corr_norm is a hack until correlation coefficient is fixed...
+#system "dm x5 x6 x10/$corr_norm < $rawdir/$1 > $scrdir/retdata"
+Tell_If "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
+system "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
+Read_Data_With_Corr $scrdir/retdata
+.
+
+#Set dm_string "x8-x10 x9-x11 1"			# this string uses CR-p4
+Set dm_string "x6 x7 1"					# this string uses pupil?
+Print_If dm_string
+Tell_If "Default dm_string set to \\'$dm_string\\'"
+
+Define Get_Pupil_Data 1 filename
+advise "grep FRAME $rawdir/$1 | dm $dm_string | tail -$dlen > $scrdir/retdata"
+system "grep FRAME $rawdir/$1 | dm $dm_string | tail -$dlen > $scrdir/retdata"
+Read_Data_With_Corr $scrdir/retdata
+.
+
+Set read_data_function Get_Pupil_Data		# default
+
+
+# Get_Record
+
+Define Get_Record 1 param_string
+
+Tell_If "Get_Record $1"
+
+Set filename "d.$ANALYSIS_SIZE.$1.asc"	# camera index is in directory
+Tell_If "Get_Record:  filename is $filename"
+If $plotting Erase_All
+
+# make sure the data file exists
+# This check is here mainly so that we can get an advance
+# look at data before all of the movies have been processed...
+#Set datadir "../data/$SUBJECT.$EXPERIMENT.$REPLICATION.$CAMERA"
+If !var_exists(rawdir) "warn 'Variable rawdir not defined' exit"
+Print_If rawdir
+If "!exists('$rawdir/$filename')"
+  "warn 'missing data file $filename' Set have_record 0 PopFile 2"
+
+Set have_record 1
+
+# read data function is vectored to handle pupil & retina files...
+#Read_Data_With_Corr $scrdir/retdata
+$read_data_function $filename
+VMov eye_pos{0} record{0}
+VMov eye_pos{1} record{1}
+
+Get_Stim_Filename $1
+Tell_If "Get_Ascii stimpos $stim_filename"
+Info stimpos
+Get_Ascii stimpos $stim_filename
+
+# why is this minus sign here?
+# is it because the y coordinates go down?
+# but this seems to apply both to x and y...
+# Perhaps there is another sign inversion in the affine calibration...
+# THIS NEEDS TO BE MADE CLEAN!!!
+VSMul stimpos stimpos -$zoom_factor*$degrees_per_pixel
+
+Trace_If eye_pos{0} eye_pos{1} $ppv 'positions' 1 Posn_Axes $color1
+
+VVMul stimpos{0} stimpos{0} blink
+VVMul stimpos{1} stimpos{1} blink
+
+Trace_If stimpos{0} stimpos{1} $ppv '' 0 Null_Axes $color2
+
+If $plotting Plot_Scan
+
+# We used to do these things within Get_Record, but
+# since they are not in this file, let's do it elsewhere!?
+
+#Process_Record		# get velocities
+#Process_Trace		# remove saccdes
+User_Notify "Record $1 read in"
+.
+
+# Load_Stimulus
+
+Define Load_Stimulus 1 paramstr
+
+Tell_If "Load_Stimulus $1"
+
+Get_Stim_Filename $1
+#advise "Get_Ascii stimpos $stim_filename"
+Tell_If "Get_Ascii stimpos $stim_filename"
+data ascii input_fmt '' quit quit
+Get_Ascii stimpos $stim_filename
+User_Notify 'stimulus loaded'
+
+# why is this minus sign here?
+# is it because the y coordinates go down?
+# but this seems to apply both to x and y...
+# Perhaps there is another sign inversion in the affine calibration...
+# THIS NEEDS TO BE MADE CLEAN!!!
+#VSMul stimpos stimpos -$zoom_factor*$degrees_per_pixel
+# We don't seem to need the minus sign in the pulfrich expt
+VSMul stimpos stimpos $zoom_factor*$degrees_per_pixel
+
+#Trace_If eye_pos{0} eye_pos{1} $ppv 'positions' 1 Posn_Axes $color1
+.
+
+Define Accum_Init 0
+VSet axvaccum 0.0
+VSet ayvaccum 0.0
+VSet bxvaccum 0.0
+VSet byvaccum 0.0
+VSet cxvaccum 0.0
+VSet cyvaccum 0.0
+
+# now make the stimulus trace...
+#
+# we have 90,110,or 130 fields before and after, the things
+# are left-shifted to make the transitions line up,
+# so they will start at 90
+
+Set event_start 90
+Subvector stimseg stimvec $event_start 0
+VSet stimseg 0.0
+Delete_Image stimseg
+# the transition segment is 16 fields...
+Subvector stimseg stimvec 17 $event_start-1
+Ramp1D stimseg 0.0 1/16
+Delete_Image stimseg
+# the final segment is the rest...
+Subvector stimseg stimvec ncols(stimvec)-($event_start+16) $event_start+16
+VSet stimseg 1.0
+Delete_Image stimseg
+.
+
+Define Read_Data_File 1 filename
+Get_Ascii record $1
+#data ascii read record $1 quit quit
+Tell_If "applying affine calibration"
+Affine_Calibrate record
+#Process_Record
+.
+
+# this is used to read retina data with correlation
+
+Define Read_Data_With_Corr 1 filename
+Tell_If "Read_Data_With_Corr $1"
+Get_Ascii corr_record $1
+#data ascii read corr_record $1 quit quit
+#Tell_If copying
+VMov record{0} corr_record{0}
+VMov record{1} corr_record{1}
+VMov correlation corr_record{2}
+
+Detect_Blinks
+
+# apply interlace correction, if necessary, before calibration
+If $interlace_correction!=0 'advise "Read_Data_With_Corr calling Apply_Interlace_Correction" Apply_Interlace_Correction'
+
+# the affine calibration should take retina image coords
+# to degrees of visual angle
+
+Tell_If "applying affine calibration"
+Affine_Calibrate record
+
+# these two lines zero the blink portion of the trace...
+VVMul record{0} record{0} blink
+VVMul record{1} record{1} blink
+.
+
+# Read_Stimulus
+
+Define Read_Stimulus 1 param_string
+
+Tell_If "Read_Stimulus $1"
+
+# Get_Stim_Filename defined in an experiment specific
+# macros file...  (e.g. ecvp/analysis/exp1.mac).
+# In this example,
+# Get_Stim_Filename assumes that $type, $hz and $signal are set,
+# and just uses param_string for a sanity check.
+# Only $hz and $signal are used in the construction of the filename
+
+Get_Stim_Filename $1
+
+Tell_If "Get_Ascii stimpos $stim_filename"
+Get_Ascii stimpos $stim_filename
+
+# why is this minus sign here?
+# is it because the y coordinates go down?
+# but this seems to apply both to x and y...
+# Perhaps there is another sign inversion in the affine calibration...
+# THIS NEEDS TO BE MADE CLEAN!!!
+
+VSMul stimpos stimpos -$zoom_factor*$degrees_per_pixel
+
+#Trace_If stimpos{0} stimpos{1} $ppv '' 0 Null_Axes $color2
+Trace_If stimpos{0} stimpos{1} $ppv '' 1 Posn_Axes $color2
+.
+
+Stop_File analysis/get_rec.mac
+
