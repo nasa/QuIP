@@ -17,6 +17,11 @@ char VersionId_cuda_cuda_npp[] = QUIP_VERSION_STRING;
 #include <npps.h>
 #endif /* HAVE_NPPI_H */
 
+#define NPP_VERSION_CODE(major,minor,build)			\
+	((major<<16)|(minor<<8)|build)
+
+#define NPP_VERSION	NPP_VERSION_CODE(NPP_VERSION_MAJOR,NPP_VERSION_MINOR,NPP_VERSION_BUILD)
+
 #include "query.h"
 #include "data_obj.h"
 #include "cuda_supp.h"
@@ -577,12 +582,14 @@ static void get_scratch_for(Data_Obj *dp)
 	}
 
 	len = dp->dt_n_type_elts;
-	/* BUG this function is gone in cuda 4.2 */
-#ifdef FOOBAR
+	/* BUG this function is gone in cuda 4.2,
+	 * Not sure when it went away...
+	 */
+#if NPP_VERSION <= NPP_VERSION_CODE(4,0,17)
 	s = nppsReductionGetBufferSize_32f( len, &buf_size );
-#else
+#else	/* newer version of NPP */
 	s = nppsSumGetBufferSize_32f( len, &buf_size );
-#endif /* ! FOOBAR */
+#endif	/* newer version of NPP */
 
 	REPORT_NPP_STATUS("do_npp_vadd","nppsReductionGetBufferSize_32f")
 

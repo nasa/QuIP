@@ -1,11 +1,13 @@
 
-Here is a list of packages that need to be installed
-to access all the functions of QuIP:
+Here is a list of packages (names for yum,
+may be different with apt-get) that need to
+be installed to access all the functions of QuIP:
 
 libpng-devel
 libtiff-devel
 libX11-devel
 lib-alsa-devel
+libtermcap-devel
 openmotif-devel
 ffmpeg-devel
 freeglut-devel
@@ -15,5 +17,5 @@ gsl-devel
 ncurses-devel
 opencv-devel
 matio-devel
-libcurl-devel
+curl-devel		(was libcurl-devel ???)
 
