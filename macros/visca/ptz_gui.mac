@@ -10,7 +10,7 @@ Set zoom_coeffs_inited 0
 
 Define Use_Default_Data_Dir 0
 Set QUIP_DATA_DIR /usr/local/share/quip
-advise "Using default value for QUIP_DATA_DIR:  $QUIP_DATA_DIR"
+Tell_If "Using default value for QUIP_DATA_DIR:  $QUIP_DATA_DIR"
 .
 
 Define Init_Zoom_Coeffs 0
@@ -27,16 +27,16 @@ Define Update_Zoom_Scale 0
 If !$zoom_coeffs_inited Init_Zoom_Coeffs
 #advise "Update_Zoom_Scale $zoom"
 Assign _x $zoom/1000	# multiplier, see calib/zoom_cal.scr
-Print zoom
-Print _x
+Print_If zoom
+Print_If _x
 # quadratic fit
 Assign cm_per_pixel (value(_zoom_coeffs[0])*$_x+value(_zoom_coeffs[1]))*$_x+value(_zoom_coeffs[2])
 # How can we know cm per pixel without knowing the viewing distance?
 # refers to calibration at a certain distance?
-Print cm_per_pixel
+Print_If cm_per_pixel
 If $cm_per_pixel<=0 "error_exit 'Update_Zoom_Scale:  cannot determine cm_per_pixel!?'"
 Assign pixels_per_cm 1/$cm_per_pixel
-Print pixels_per_cm
+Print_If pixels_per_cm
 # y is cm/pix
 .
 
@@ -190,7 +190,7 @@ Inquire_PTZ_Param exposure_mode
 ### .
 
 Define Get_Camera_Settings 1 cam_string
-advise "Get_Camera_Settings $1 BEGIN"
+Tell_If "Get_Camera_Settings $1 BEGIN"
 Select_PTZ $1
 
 # The inquire function returns the values in $pan_posn and $tilt_posn
@@ -198,9 +198,9 @@ Inquire_PTZ_Posn
 Set pan $pan_posn
 Set tilt $tilt_posn
 
-advise 'Inquire_PTZ_Zoom...'
+Tell_If 'Inquire_PTZ_Zoom...'
 Inquire_PTZ_Zoom
-Print inquiry_result
+Print_If inquiry_result
 Set zoom $inquiry_result
 #advise "camera reports zoom = $zoom"
 # sometime the camera reports 0x4000, which is not supposed to be a legal value?
@@ -211,7 +211,7 @@ Assign z2 $zoom_max
 If $zoom>$zoom_max
   'Tell_If "clipping zoom to $zoom_max" Set zoom $zoom_max Set_PTZ_Zoom $zoom'
 
-advise 'Update_Zoom_Scale...'
+Tell_If 'Update_Zoom_Scale...'
 Update_Zoom_Scale		# so recentering works!
 
 Inquire_PTZ_Focus
@@ -223,7 +223,7 @@ Set gain $inquiry_result
 Inquire_PTZ_Shutter
 Set shutter $inquiry_result
 
-advise 'inquire ptz_focus mode...'
+Tell_If 'inquire ptz_focus mode...'
 Inquire_PTZ_Focus_Mode
 If !strcmp($inquiry_result,"auto")
   Then "Set af 1"
@@ -241,7 +241,7 @@ If !strcmp($inquiry_result,"manual")
 
 #advise "$1 parameters:  pan = $pan   tilt = $tilt   zoom = $zoom   focus = $focus   af = $af   ir = $ir"
 Remember_Params $1
-advise "Get_Camera_Settings $1 DONE"
+Tell_If "Get_Camera_Settings $1 DONE"
 .
 
 # We call this when we turn autofocus off, to display the current focus setting
@@ -486,7 +486,7 @@ Assign dy nrows($video_window_name)/2-$view_ypos
 # If the window has minified the image, we need to boost...
 Mul_Var dx 640/ncols($video_window_name)
 Mul_Var dy 480/nrows($video_window_name)
-advise "PTZ_Recenter_Click:  desired delta is $dx $dy"
+Tell_If "PTZ_Recenter_Click:  desired delta is $dx $dy"
 Reposition_PTZ $dx $dy
 .
 
@@ -508,12 +508,12 @@ Set reference_cm_per_pixel $cm_per_pixel
 Set reference_pixels_per_cm $pixels_per_cm
 
 Define Reposition_PTZ 2 dx dy
-Print cm_per_pixel
-Print pixels_per_cm
+Print_If cm_per_pixel
+Print_If pixels_per_cm
 #advise "Reposition_PTZ pixels_per_cm = $pixels_per_cm"
 Assign pscale	29*$pixels_per_cm/$reference_pixels_per_cm
 #Assign pscale	29*$reference_pixels_per_cm/$pixels_per_cm
-Print pscale
+Print_If pscale
 data ascii read p2c_matrix - 100/(4*$pscale) 0 0 -100/(4*$pscale) quit quit
 #Display p2c_matrix
 data ascii read _delta_pix - $1 $2 quit quit
@@ -532,9 +532,9 @@ If $pan<$pan_min "Set pan $pan_min"
 If $pan>$pan_max "Set pan $pan_max"
 If $tilt<$tilt_min "Set tilt $tilt_min"
 If $tilt>$tilt_max "Set tilt $tilt_max"
-Print pan
-Print tilt
-advise "Point_Camera $pan $tilt"
+Print_If pan
+Print_If tilt
+Tell_If "Point_Camera $pan $tilt"
 Point_Camera $pan $tilt
 If $have_ptz_gui Update_PTZ_Sliders
 .

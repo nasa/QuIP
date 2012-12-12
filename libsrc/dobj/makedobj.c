@@ -240,6 +240,13 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp )
 	if( new_dp==NO_OBJ )
 		NERROR1("make_device_alias:  failure in setup_dp");
 
+#ifdef FOOBAR
+	// Copy maxdim just in case...
+	// So we can index 1-length vectors without an error...
+	// However, the parent object hasn't been adjusted yet!?
+	new_dp->dt_maxdim = dp->dt_maxdim;
+#endif /* FOOBAR */
+
 	new_dp->dt_ap = ap;
 
 	/* Now the magic:  get the address on the device! */
@@ -295,94 +302,6 @@ static void fix_bitmap_increments(Data_Obj *dp)
 	dp->dt_flags &= ~DT_EVENLY;
 	*/
 }
-
-/*
- * Create a new data object.  This routine calls _make_dp() to create a new
- * header structure and then allocates space for the data.
- * Returns a pointer to the newly created header.  Prints a warning and
- * returns NO_OBJ if the name is already in use, or if space cannot be allocated
- * in the data area,.
- */
-
-Data_Obj *
-make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec)
-{
-	Data_Obj *dp;
-	dimension_t size;
-
-	dp = _make_dp(QSP_ARG  name,dsp,prec);
-	if( dp == NO_OBJ ) return(dp);
-
-	if( dp->dt_n_type_elts == 0 ){	/* maybe an unknown size obj */
-		dp->dt_data=NULL;
-	} else {
-		if( IS_BITMAP(dp) ){
-			int n_bits, n_words, i_dim;
-
-			/* size is in elements (bits), convert to # words */
-			/* round n bits up to an even number of words */
-
-			/* we used to just slosh all the bits together,
-			 * but, for reasons relating to CUDA implementation,
-			 * we now don't want to have words crossing
-			 * dimension boundaries.  For example, if we
-			 * have a one component image, then we want
-			 * to pad each row so that an integral number
-			 * of words is allocated for each row.
-			 * In general, we have to have an integral
-			 * number of words for mindim.
-			 *
-			 * In the case that there is padding, we have
-			 * to fix the increments.
-			 */
-			n_bits = dp->dt_type_dim[dp->dt_mindim];
-			// n_words is generally the row length, but it doesn't have to be. TEST
-			n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/
-						BITS_PER_BITMAP_WORD;
-			dp->dt_mach_dim[dp->dt_mindim] = n_words;
-
-			if( n_words * BITS_PER_BITMAP_WORD != n_bits ){
-				fix_bitmap_increments(dp);
-			}
-
-			size = n_words;
-			dp->dt_n_mach_elts = n_words;
-			for(i_dim=dp->dt_mindim+1;i_dim<N_DIMENSIONS;i_dim++){
-				size *= dp->dt_type_dim[i_dim];
-				dp->dt_n_mach_elts *= dp->dt_mach_dim[i_dim];
-			}
-
-			/* size is now in words */
-		} else {
-			size = dp->dt_n_mach_elts;
-		}
-		size *= ELEMENT_SIZE(dp);
-
-#ifdef DEBUG
-if( debug & debug_data ){
-sprintf(error_string,"make_dobj %s, requesting %d data bytes",name,size);
-advise(error_string);
-}
-#endif /* DEBUG */
-		/* Now that we pass the element size as an alignment requirement,
-		 * maybe the request should not be in terms of bytes??
-		 */
-		if( get_data_space(QSP_ARG  dp,size,ELEMENT_SIZE(dp) ) < 0 ){
-			dp->dt_data = dp->dt_unaligned_data = NULL;
-			delvec(QSP_ARG  dp);
-			return(NO_OBJ);
-		}
-	}
-#ifdef HAVE_CUDA
-	/* If this object is using mapped host memory, create
-	 * another "alias" object that is usable on the device
-	 */
-	if( dp->dt_ap->da_flags & DA_CUDA_HOST )
-		make_device_alias(QSP_ARG  dp);
-#endif /* HAVE_CUDA */
-
-	return(dp);
-} /* end make_dobj */
 
 /* stuff shared with sub_obj initialization */
 
@@ -464,7 +383,7 @@ Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,prec_t prec)
  *  already in use, or if the name contains illegal characters.
  */
 
-Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec)
+static Data_Obj * _make_dp_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec, int maxdim)
 {
 	Data_Obj *dp;
 
@@ -506,6 +425,106 @@ Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t pre
 		
 	return(dp);
 } /* end _make_dp */
+
+Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec)
+{
+	return _make_dp_with_maxdim(QSP_ARG  name,dsp,prec, AUTO_MAXDIM);
+}
+
+/*
+ * Create a new data object.  This routine calls _make_dp() to create a new
+ * header structure and then allocates space for the data.
+ * Returns a pointer to the newly created header.  Prints a warning and
+ * returns NO_OBJ if the name is already in use, or if space cannot be allocated
+ * in the data area,.
+ */
+
+Data_Obj *
+make_dobj_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec, int maxdim)
+{
+	Data_Obj *dp;
+	dimension_t size;
+
+	dp = _make_dp_with_maxdim(QSP_ARG  name,dsp,prec,maxdim);
+	if( dp == NO_OBJ ) return(dp);
+
+	if( dp->dt_n_type_elts == 0 ){	/* maybe an unknown size obj */
+		dp->dt_data=NULL;
+	} else {
+		if( IS_BITMAP(dp) ){
+			int n_bits, n_words, i_dim;
+
+			/* size is in elements (bits), convert to # words */
+			/* round n bits up to an even number of words */
+
+			/* we used to just slosh all the bits together,
+			 * but, for reasons relating to CUDA implementation,
+			 * we now don't want to have words crossing
+			 * dimension boundaries.  For example, if we
+			 * have a one component image, then we want
+			 * to pad each row so that an integral number
+			 * of words is allocated for each row.
+			 * In general, we have to have an integral
+			 * number of words for mindim.
+			 *
+			 * In the case that there is padding, we have
+			 * to fix the increments.
+			 */
+			n_bits = dp->dt_type_dim[dp->dt_mindim];
+			// n_words is generally the row length, but it doesn't have to be. TEST
+			n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/
+						BITS_PER_BITMAP_WORD;
+			dp->dt_mach_dim[dp->dt_mindim] = n_words;
+
+			if( n_words * BITS_PER_BITMAP_WORD != n_bits ){
+				fix_bitmap_increments(dp);
+			}
+
+			size = n_words;
+			dp->dt_n_mach_elts = n_words;
+			for(i_dim=dp->dt_mindim+1;i_dim<N_DIMENSIONS;i_dim++){
+				size *= dp->dt_type_dim[i_dim];
+				dp->dt_n_mach_elts *= dp->dt_mach_dim[i_dim];
+			}
+
+			/* size is now in words */
+		} else {
+			size = dp->dt_n_mach_elts;
+		}
+		size *= ELEMENT_SIZE(dp);
+
+#ifdef DEBUG
+if( debug & debug_data ){
+sprintf(error_string,"make_dobj %s, requesting %d data bytes",name,size);
+advise(error_string);
+}
+#endif /* DEBUG */
+		/* Now that we pass the element size as an alignment requirement,
+		 * maybe the request should not be in terms of bytes??
+		 */
+		if( get_data_space(QSP_ARG  dp,size,ELEMENT_SIZE(dp) ) < 0 ){
+			dp->dt_data = dp->dt_unaligned_data = NULL;
+			delvec(QSP_ARG  dp);
+			return(NO_OBJ);
+		}
+	}
+#ifdef HAVE_CUDA
+	/* If this object is using mapped host memory, create
+	 * another "alias" object that is usable on the device
+	 */
+	if( dp->dt_ap->da_flags & DA_CUDA_HOST )
+		make_device_alias(QSP_ARG  dp);
+#endif /* HAVE_CUDA */
+
+	return(dp);
+} /* end make_dobj */
+
+Data_Obj *
+make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec)
+{
+	return make_dobj_with_maxdim(QSP_ARG  name,dsp,prec,AUTO_MAXDIM);
+}
+
 
 /*
  * Set the objects dimensions from a user-supplied array

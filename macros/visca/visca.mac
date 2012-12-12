@@ -143,6 +143,6 @@ visca
     get_n_cameras $1
     quit
   quit
-Print $1
+Print_If $1
 .
 

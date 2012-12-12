@@ -1,6 +1,6 @@
 Define Insure_Var_Name 1 stem
-advise "Insure_Var_Name $1"
-advise "Set ${1}_name ${1}1"
+Tell_If "Insure_Var_Name $1"
+Tell_If "Set ${1}_name ${1}1"
 If !var_exists('${1}_name') "Set ${1}_name ${1}1"
 .
 

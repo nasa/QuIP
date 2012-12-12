@@ -192,20 +192,20 @@ Posn_Window plotwin $v_x1 $v_y6
 Set i 0
 Viewer v_pup_$i $pup_roi_w $pup_roi_h
 Assign y 50+($i-1)*($pup_roi_h+$vgap)
-advise "Positioning v_pup_$i at y = $y"
+#advise "Positioning v_pup_$i at y = $y"
 Viewer v_cr_$i $cr_roi_w $cr_roi_h
 Assign y 400+($i-1)*($cr_roi_h+$vgap)
-advise "Positioning v_cr_$i at y = $y"
+#advise "Positioning v_cr_$i at y = $y"
 
 Set i 1
 repeat 2
   Viewer v_pup_$i $pup_roi_w $pup_roi_h/2
   Assign y 50+($i-1)*($pup_roi_h/2+$vgap)
-  advise "Positioning v_pup_$i at y = $y"
+  #advise "Positioning v_pup_$i at y = $y"
   Posn_Window v_pup_$i $v_x2 $y
   Viewer v_cr_$i $cr_roi_w $cr_roi_h/2
   Assign y 400+($i-1)*($cr_roi_h/2+$vgap)
-  advise "Positioning v_cr_$i at y = $y"
+  #advise "Positioning v_cr_$i at y = $y"
   Posn_Window v_cr_$i $v_x2 $y
   Increment i
   end

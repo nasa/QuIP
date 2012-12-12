@@ -112,10 +112,10 @@ Update_Threshold_Panel	# set sliders to correct values
 Define Set_Pupil_ROI_Corner 0
 Assign $prl_name $$prx_name-$pup_roi_w/2
 Assign $prt_name $$pry_name-$pup_roi_h/2
-advise "Set_Pupil_ROI_Corner before bounding:  $prl_name = $$prl_name   $prt_name = $$prt_name"
+Tell_If "Set_Pupil_ROI_Corner before bounding:  $prl_name = $$prl_name   $prt_name = $$prt_name"
 Bound_Var $prl_name 0 $in_w-$pup_roi_w
 Bound_Var $prt_name 0 ($in_h/$n_interlace)-$pup_roi_h
-advise "Set_Pupil_ROI_Corner after bounding:  $prl_name = $$prl_name   $prt_name = $$prt_name"
+Tell_If "Set_Pupil_ROI_Corner after bounding:  $prl_name = $$prl_name   $prt_name = $$prt_name"
 # make sure that the center coords reflect any clipping
 Assign $prx_name $$prl_name+$pup_roi_w/2
 Assign $pry_name $$prt_name+$pup_roi_h/2
@@ -810,14 +810,18 @@ cuda streams sync default quit quit
 If $t>0 "VVSub ${prefix}_result[$i_cam]{$result_img_dmdt_idx} \
 	${prefix}_result[$i_cam]{$result_img_mean_idx} \
 	${prefix}_trace[$t-1][$i_cam]{$result_img_mean_idx}"
+advise "Assign dmdt value(${prefix}_result[$i_cam]{$result_img_dmdt_idx})"
 Assign dmdt value(${prefix}_result[$i_cam]{$result_img_dmdt_idx})
+advise "Assign DONE"
 
 CkPt 'mean computed'
 
 If $dmdt*10>$$dmdt_thr_name
   "Set give_up 1 Set i_blink $n_blink_samples Report_Mean_Status Blink exit_macro"
 	
+advise "Assign img_mean value(${prefix}_result[$i_cam]{$result_img_mean_idx})"
 Assign img_mean value(${prefix}_result[$i_cam]{$result_img_mean_idx})
+advise "Assign DONE"
 If $img_mean<=$$lm_thr_name||$img_mean>=$$um_thr_name "Set give_up 1"
 If $give_up
   Then "Report_Mean_Status 'Out of range'"
@@ -989,7 +993,7 @@ repeat $n_cameras
   Increment cam_num
   end
 
-advise "Set_Constants:  result_pup_a_idx = $result_pup_a_idx"
+#advise "Set_Constants:  result_pup_a_idx = $result_pup_a_idx"
 .
 
 Define Init_Visca_Cameras 0
@@ -998,7 +1002,7 @@ Set_D70_Params		# to initialize camera subsystem...
 Init_EVI
 Set n_total_cams 0
 Get_Camera_Count n_cameras
-Print n_cameras
+#Print n_cameras
 
 Set cam_list ""
 Set i 1
@@ -1006,7 +1010,7 @@ repeat $n_cameras
   Set cam_list "$cam_list cam$i"
   Increment i
   end
-Print cam_list
+#Print cam_list
 .
 
 Define Declare_Drawing_Buffers 1 prefix
@@ -1127,6 +1131,10 @@ Image ${1}_input_rgb $in_h $in_w 3 u_byte
 # The result is one time slot, the trace is a time series...
 Image ${1}_trace $n_trace_samples $n_cameras $n_result_comps float
 Vector ${1}_result $n_cameras $n_result_comps float
+Info ${1}_result
+Pause
+Info dev_${1}_result
+Pause
 
 If !strcmp($1,g)
   "advise 'host-mapped images declared...'"

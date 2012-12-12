@@ -170,22 +170,22 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_QUERYCAP, &cap)) {
 		if( errno == EINVAL ){
-			sprintf(ERROR_STRING, "%s is not a V4L2 device!?", vdp->vd_name);
+			sprintf(ERROR_STRING, "init_video_device:  %s is not a V4L2 device!?", vdp->vd_name);
 		} else {
-			sprintf(ERROR_STRING,"VIDIOC_QUERYCAP:  %s",strerror(errno));
+			sprintf(ERROR_STRING,"init_video_device:  VIDIOC_QUERYCAP:  %s",strerror(errno));
 		}
 		WARN(ERROR_STRING);
 		return(-1);
 	}
 
 	if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-		sprintf(ERROR_STRING,"%s does not have video capture capability",vdp->vd_name);
+		sprintf(ERROR_STRING,"init_video_device:  %s does not have video capture capability",vdp->vd_name);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
 
 	if(!(cap.capabilities & V4L2_CAP_STREAMING)) {
-		sprintf(ERROR_STRING,"%s does not support streaming i/o",vdp->vd_name);
+		sprintf(ERROR_STRING,"init_video_device:  %s does not support streaming i/o",vdp->vd_name);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -214,10 +214,10 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 			switch(errno) {
 			case EINVAL:
 				/* Cropping not supported. */
-				WARN("cropping not supported");
+				WARN("init_video_device:  cropping not supported");
 				break;
 			default:
-				errno_warn("VIDIOC_S_CROP");
+				errno_warn("init_video_device:  ioctl VIDIOC_S_CROP");
 				/* Errors ignored. */
 				break;
 			}
@@ -242,13 +242,16 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 	bytes_per_pixel = vfmt_list[vfmt_index].vfmt_bpp;
 
 	// Can we set the other field types???
-	//fmt.fmt.pix.field	= V4L2_FIELD_INTERLACED;
+	// fmt.fmt.pix.field	= V4L2_FIELD_INTERLACED;
 	// this generates an invalid argument error...
-	//fmt.fmt.pix.field	= V4L2_FIELD_ALTERNATE;
+	// fmt.fmt.pix.field	= V4L2_FIELD_ALTERNATE;
 	fmt.fmt.pix.field	= vfld_tbl[vfld_index].vfld_code;
+sprintf(ERROR_STRING,"init_video_device:  trying to set format with field code %d (index %d)",
+vfld_tbl[vfld_index].vfld_code,vfld_index);
+advise(ERROR_STRING);
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_S_FMT, &fmt)){
-		sprintf(ERROR_STRING,"VIDIOC_S_FMT:  %s",strerror(errno));
+		sprintf(ERROR_STRING,"init_video_device:  ioctl VIDIOC_S_FMT:  %s",strerror(errno));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -286,21 +289,21 @@ advise(ERROR_STRING);
 
 	if( xioctl(vdp->vd_fd, VIDIOC_REQBUFS, &req) < 0 ){
 		if(EINVAL == errno) {
-			sprintf(ERROR_STRING, "%s does not support memory mapping", vdp->vd_name);
+			sprintf(ERROR_STRING, "init_video_device:  %s does not support memory mapping", vdp->vd_name);
 		} else {
-			sprintf(ERROR_STRING,"VIDIOC_REQBUFS:  %s",strerror(errno));
+			sprintf(ERROR_STRING,"init_video_device:  ioctl VIDIOC_REQBUFS:  %s",strerror(errno));
 		}
 		WARN(ERROR_STRING);
 		return(-1);
 	}
 
 	if(req.count < 2) {
-		sprintf(ERROR_STRING, "Insufficient buffer memory on %s\n",
+		sprintf(ERROR_STRING, "init_video_device:  Insufficient buffer memory on %s\n",
 			vdp->vd_name);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-sprintf(ERROR_STRING,"Requested %d buffers, got %d",MAX_BUFFERS_PER_DEVICE,req.count);
+sprintf(ERROR_STRING,"init_video_device:  Requested %d buffers, got %d",MAX_BUFFERS_PER_DEVICE,req.count);
 advise(ERROR_STRING);
 
 	vdp->vd_n_buffers = 0;
@@ -321,7 +324,7 @@ advise(ERROR_STRING);
 		buf.index	= i_buffer;
 
 		if(-1 == xioctl( vdp->vd_fd, VIDIOC_QUERYBUF, &buf)){
-			errno_warn(QSP_ARG  "VIDIOC_QUERYBUF");
+			errno_warn(QSP_ARG  "init_video_device:  ioctl VIDIOC_QUERYBUF");
 			return(-1);
 		}
 
@@ -335,7 +338,7 @@ advise(ERROR_STRING);
 				vdp->vd_fd, buf.m.offset);
 
 		if(MAP_FAILED == vdp->vd_buf_tbl[i_buffer].mb_start){
-			ERRNO_WARN("mmap");
+			ERRNO_WARN("init_video_device:  mmap");
 			return(-1);
 		}
 
@@ -367,7 +370,7 @@ advise(ERROR_STRING);
 				dimset.ds_dimension[1]=640;
 				break;
 			default:
-				sprintf(ERROR_STRING,"Oops, haven't implemented buffer creation for %s pixel format!?",
+				sprintf(ERROR_STRING,"init_video_device:  Oops, haven't implemented buffer creation for %s pixel format!?",
 					vfmt_list[vfmt_index].vfmt_name);
 				WARN(ERROR_STRING);
 				// default to YUYV
@@ -382,7 +385,7 @@ advise(ERROR_STRING);
 		dimset.ds_dimension[4]=1;
 		dp = _make_dp(QSP_ARG  name,&dimset,PREC_UBY);
 #ifdef CAUTIOUS
-		if( dp == NO_OBJ ) ERROR1("CAUTIOUS:  error creating data_obj for video buffer");
+		if( dp == NO_OBJ ) ERROR1("CAUTIOUS:  init_video_device:  error creating data_obj for video buffer");
 #endif /* CAUTIOUS */
 		dp->dt_data = vdp->vd_buf_tbl[i_buffer].mb_start;
 
@@ -670,14 +673,14 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	}
 
 	if( stat(dev_name, &st) < 0 ) {
-		sprintf(ERROR_STRING, "Cannot identify '%s': %d, %s\n",
+		sprintf(ERROR_STRING, "open_video_device:  Cannot stat '%s': %d, %s !?!?\n",
 			dev_name, errno, strerror( errno));
 		WARN(ERROR_STRING);
 		return -1;
 	}
 
 	if( !S_ISCHR( st.st_mode)) {
-		sprintf(ERROR_STRING, "%s is no device\n", dev_name);
+		sprintf(ERROR_STRING, "open_video_device:  %s is not a character device!?\n", dev_name);
 		WARN(ERROR_STRING);
 		return -1;
 	}
@@ -685,7 +688,7 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	fd = open( dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
 	if( -1 == fd) {
-		sprintf(ERROR_STRING, "Cannot open '%s': %d, %s\n",
+		sprintf(ERROR_STRING, "open_video_device:  Cannot open '%s': %d, %s\n",
 			dev_name, errno, strerror( errno));
 		WARN(ERROR_STRING);
 		return -1;
@@ -813,20 +816,22 @@ static int query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
 	/* Should be ctrl_info or something... */
 
 	/* the structure should now have the range of values... */
-	switch(ctlp->type){
-		case V4L2_CTRL_TYPE_INTEGER:
-			sprintf(ERROR_STRING,"%s, integer control %d - %d",ctlp->name,ctlp->minimum,ctlp->maximum); break;
-		case V4L2_CTRL_TYPE_MENU:
-			sprintf(ERROR_STRING,"%s, menu control",ctlp->name); break;
-		case V4L2_CTRL_TYPE_BOOLEAN:
-			sprintf(ERROR_STRING,"%s, boolean control",ctlp->name); break;
-		case V4L2_CTRL_TYPE_BUTTON:
-			sprintf(ERROR_STRING,"%s, button control",ctlp->name); break;
+	if( verbose ){
+		switch(ctlp->type){
+			case V4L2_CTRL_TYPE_INTEGER:
+				sprintf(ERROR_STRING,"%s, integer control %d - %d",ctlp->name,ctlp->minimum,ctlp->maximum); break;
+			case V4L2_CTRL_TYPE_MENU:
+				sprintf(ERROR_STRING,"%s, menu control",ctlp->name); break;
+			case V4L2_CTRL_TYPE_BOOLEAN:
+				sprintf(ERROR_STRING,"%s, boolean control",ctlp->name); break;
+			case V4L2_CTRL_TYPE_BUTTON:
+				sprintf(ERROR_STRING,"%s, button control",ctlp->name); break;
 #ifdef CAUTIOUS
-		default: sprintf(ERROR_STRING,"CAUTIOUS:  unknown control"); break;
+			default: sprintf(ERROR_STRING,"CAUTIOUS:  unknown control"); break;
 #endif /* CAUTIOUS */
+		}
+		advise(ERROR_STRING);
 	}
-	advise(ERROR_STRING);
 	return(0);
 }
 

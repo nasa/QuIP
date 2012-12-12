@@ -1,12 +1,16 @@
 # vmenu macros
 
 Define Open_Video_Device 1 devname
-advise "Open_Video_Device:  entering submenu"
+Tell_If "Open_Video_Device:  entering submenu"
 v4l2
+  Tell_If "Open_Video_Device:  opening $1"
   advise "Open_Video_Device:  opening $1"
   open $1
-  standards set_standard NTSC quit
   advise "Open_Video_Device:  DONE opening $1"
+  advise 'Setting standard to ntsc...'
+  standards set_standard NTSC quit
+  advise 'DONE Setting standard to ntsc...'
+  Tell_If "Open_Video_Device:  DONE opening $1"
   quit
 .
 
@@ -71,7 +75,9 @@ v4l2
 .
 
 
-Set n_buf_lines	240	# field mode
+#Set n_buf_lines	240	# field mode
+Set n_buf_lines		480	# full frame
+
 Image rgb $n_buf_lines 640 3 u_byte
 Image y $n_buf_lines 640 1 u_byte
 Image u $n_buf_lines 320 1 u_byte

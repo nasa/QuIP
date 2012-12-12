@@ -412,6 +412,8 @@ typedef struct shape_info {
 
 #define NO_SHAPE		((Shape_Info *)NULL)
 
+#define AUTO_MAXDIM	(-1)
+
 // si_dimension is now the machine type dimension - deprecated
 /* #define si_dimension	si_mach_dimset.ds_dimension */
 #define si_mach_dim	si_mach_dimset.ds_dimension
@@ -807,9 +809,11 @@ extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
 /* makedobj.c */
 extern void	  set_dp_alignment(int);
+extern Data_Obj * make_dobj_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t,int);
+//extern Data_Obj * _make_dp_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t,int);
 extern Data_Obj * make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t);
 extern Data_Obj * setup_dp(QSP_ARG_DECL  Data_Obj *dp,prec_t);
-extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t );
+extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t);
 extern Data_Obj * init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *,prec_t);
 
 

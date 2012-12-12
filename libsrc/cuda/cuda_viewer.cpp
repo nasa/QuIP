@@ -423,8 +423,8 @@ COMMAND_FUNC( do_new_gl_buffer )
 	
 	// Leave the buffer mapped by default
 	//cutilSafeCall(cudaGLMapBufferObject( &dp->dt_data,  BUF_ID(dp) ));
-sprintf(error_string,"Mapping buffer %s",dp->dt_name);
-advise(error_string);
+//sprintf(error_string,"Mapping buffer %s",dp->dt_name);
+//advise(error_string);
 	e = cudaGLMapBufferObject( &dp->dt_data,  BUF_ID(dp) );
 	if( e != cudaSuccess ){
 		describe_cuda_error2("do_new_gl_buffer",

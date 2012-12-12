@@ -49,7 +49,7 @@ static COMMAND_FUNC( do_gen_xpose );
 static Data_Obj *get_obj_or_file(QSP_ARG_DECL const char *name);
 static COMMAND_FUNC( do_tellprec );
 
-static void finish_obj(QSP_ARG_DECL  const char *s,Dimension_Set *dsp);
+static Data_Obj * finish_obj(QSP_ARG_DECL  const char *s,Dimension_Set *dsp, int maxdim);
 
 
 
@@ -228,13 +228,14 @@ int get_precision(SINGLE_QSP_ARG_DECL)
 	return(p);
 }
 
-static void finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp)
+static Data_Obj * finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp, int maxdim)
 {
 	prec_t prec;
+	Data_Obj *dp;
 
 	prec = get_precision(SINGLE_QSP_ARG);
 
-	if( prec == BAD_PREC ) return;
+	if( prec == BAD_PREC ) return NO_OBJ;
 
 	if( COLOR_PRECISION(prec) ){
 		if( dsp->ds_dimension[0] != 1 ){
@@ -245,17 +246,18 @@ static void finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp)
 		prec = PREC_SP;
 	}
 
-	if( make_dobj(QSP_ARG  s,dsp,prec) == NO_OBJ ) {
+	if( (dp=make_dobj_with_maxdim(QSP_ARG  s,dsp,prec,maxdim)) == NO_OBJ ) {
 		sprintf(ERROR_STRING,"couldn't create data object \"%s\"", s);
 		WARN(ERROR_STRING);
-		return;
 	}
+	return dp;
 }
 
 static COMMAND_FUNC( new_hyperseq )
 {
 	Dimension_Set dimset;
 	const char *s;
+	Data_Obj *dp;
 
 	s=NAMEOF("object name");
 
@@ -265,13 +267,14 @@ static COMMAND_FUNC( new_hyperseq )
 	dimset.ds_dimension[1]=HOW_MANY("number of columns");
 	dimset.ds_dimension[0]=HOW_MANY("number of components");
 
-	finish_obj(QSP_ARG  s,&dimset);
+	dp=finish_obj(QSP_ARG  s,&dimset,4);
 }
 
 static COMMAND_FUNC( new_seq )
 {
 	Dimension_Set dimset;
 	const char *s;
+	Data_Obj *dp;
 
 	s=NAMEOF("object name");
 
@@ -281,13 +284,14 @@ static COMMAND_FUNC( new_seq )
 	dimset.ds_dimension[1]=HOW_MANY("number of columns");
 	dimset.ds_dimension[0]=HOW_MANY("number of components");
 
-	finish_obj(QSP_ARG  s,&dimset);
+	dp=finish_obj(QSP_ARG  s,&dimset,3);
 }
 
 static COMMAND_FUNC( new_frame )
 {
 	Dimension_Set dimset;
 	const char *s;
+	Data_Obj *dp;
 
 	s=NAMEOF("object name");
 
@@ -297,7 +301,7 @@ static COMMAND_FUNC( new_frame )
 	dimset.ds_dimension[1]=HOW_MANY("number of columns");
 	dimset.ds_dimension[0]=HOW_MANY("number of components");
 
-	finish_obj(QSP_ARG  s,&dimset);
+	dp=finish_obj(QSP_ARG  s,&dimset,2);
 }
 
 static COMMAND_FUNC( new_obj_list )
@@ -331,6 +335,7 @@ static COMMAND_FUNC( new_row )
 {
 	Dimension_Set dimset;
 	const char *s;
+	Data_Obj *dp;
 
 	s=NAMEOF("object name");
 
@@ -340,13 +345,15 @@ static COMMAND_FUNC( new_row )
 	dimset.ds_dimension[1]=HOW_MANY("number of elements");
 	dimset.ds_dimension[0]=HOW_MANY("number of components");
 
-	finish_obj(QSP_ARG  s,&dimset);
+	dp=finish_obj(QSP_ARG  s,&dimset,1);
+
 }
 
 static COMMAND_FUNC( new_col )
 {
 	Dimension_Set dimset;
 	const char *s;
+	Data_Obj *dp;
 
 	s=NAMEOF("object name");
 
@@ -356,13 +363,14 @@ static COMMAND_FUNC( new_col )
 	dimset.ds_dimension[1]=1;
 	dimset.ds_dimension[0]=HOW_MANY("number of components");
 
-	finish_obj(QSP_ARG  s,&dimset);
+	dp=finish_obj(QSP_ARG  s,&dimset,2);
 }
 
 static COMMAND_FUNC( new_scalar )
 {
 	Dimension_Set dimset;
 	const char *s;
+	Data_Obj *dp;
 
 	s=NAMEOF("object name");
 
@@ -372,7 +380,7 @@ static COMMAND_FUNC( new_scalar )
 	dimset.ds_dimension[1]=1;
 	dimset.ds_dimension[0]=HOW_MANY("number of components");
 
-	finish_obj(QSP_ARG  s,&dimset);
+	dp=finish_obj(QSP_ARG  s,&dimset,0);
 }
 
 static COMMAND_FUNC( do_delvec )

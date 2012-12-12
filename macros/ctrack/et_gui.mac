@@ -279,7 +279,7 @@ os
   pipes
     open p r "ls $subject_dir | wc -l"
     read p n_subjects
-    Print n_subjects
+    #Print n_subjects
     close p
     open p r "ls $subject_dir"
     read p subject_list
@@ -291,8 +291,8 @@ os
     close p
     quit
   quit
-Print n_subjects
-Print subject_list
+#Print n_subjects
+#Print subject_list
 .
 
 

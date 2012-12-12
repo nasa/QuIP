@@ -35,7 +35,7 @@ Define Count_Visca_Cameras 0
 Set n_total_cams 0
 
 Get_Camera_Count n_cameras
-Print n_cameras
+Print_If n_cameras
 
 Set cam_list ""
 Set i 1
@@ -43,6 +43,6 @@ repeat $n_cameras
   Set cam_list "$cam_list cam$i"
   Increment i
   end
-Print cam_list
+Print_If cam_list
 .
 
