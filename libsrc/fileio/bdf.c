@@ -136,7 +136,7 @@ advise(DEFAULT_ERROR_STRING);
 	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	set_shape_flags(&dp->dt_shape,dp);
+	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
 
 	return(size-sizeof(BDF_info_text));
 }

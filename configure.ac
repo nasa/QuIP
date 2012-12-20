@@ -767,6 +767,7 @@ AC_CONFIG_FILES([Makefile
                  libsrc/opengl/Makefile
                  libsrc/ieee1394/Makefile
                  libsrc/ptgrey/Makefile
+                 libsrc/smarteye/Makefile
                  libsrc/cuda/Makefile
                  libsrc/dither/Makefile
                  libsrc/das1602/Makefile

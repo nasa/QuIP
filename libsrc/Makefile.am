@@ -10,6 +10,7 @@ SUBDIRS =							\
 		ieee1394					\
 		opencv						\
 		cuda						\
+		smarteye					\
 		parport		gps				\
 		das1602		usb2000		meteor		\
 		v4l2		dither		knox		\

@@ -148,7 +148,7 @@ make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		dp->dt_prec = (*dp_tbl)->dt_prec;
 	}
 
-	set_shape_flags(&dp->dt_shape,dp);
+	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
 
 	if( uk_leaf ){
 		dp->dt_flags &= SHAPE_DIM_MASK;

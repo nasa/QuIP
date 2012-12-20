@@ -412,7 +412,7 @@ typedef struct shape_info {
 
 #define NO_SHAPE		((Shape_Info *)NULL)
 
-#define AUTO_MAXDIM	(-1)
+#define AUTO_SHAPE	0
 
 // si_dimension is now the machine type dimension - deprecated
 /* #define si_dimension	si_mach_dimset.ds_dimension */
@@ -714,7 +714,7 @@ extern void		info_area(QSP_ARG_DECL  Data_Area *ap);
 extern void		info_all_dps(SINGLE_QSP_ARG_DECL);
 extern void		sizinit(void);
 extern void		make_complex(Shape_Info *shpp);
-extern int		set_shape_flags(Shape_Info *shpp,Data_Obj * dp);
+extern int		set_shape_flags(Shape_Info *shpp,Data_Obj * dp,uint32_t shape_flag);
 extern void		show_space_used(Data_Obj * dp);
 extern void		dobj_iterate(Data_Obj * dp,void (*func)(Data_Obj * ,uint32_t));
 extern void		dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,
@@ -809,7 +809,7 @@ extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
 /* makedobj.c */
 extern void	  set_dp_alignment(int);
-extern Data_Obj * make_dobj_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t,int);
+extern Data_Obj * make_dobj_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t,uint32_t);
 //extern Data_Obj * _make_dp_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t,int);
 extern Data_Obj * make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,prec_t);
 extern Data_Obj * setup_dp(QSP_ARG_DECL  Data_Obj *dp,prec_t);

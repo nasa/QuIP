@@ -67,7 +67,7 @@ int ppm_to_dp(Data_Obj *dp,Ppm_Header *hd_p)
 	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	set_shape_flags(&dp->dt_shape,dp);
+	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
 
 	return(0);
 }
@@ -316,7 +316,7 @@ int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	set_shape_flags(&dp->dt_shape,dp);
+	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
 
 	return(0);
 }

@@ -261,7 +261,7 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 	shape.si_frames = n_frames;
 	shape.si_seqs = 1;
 	shape.si_prec = PREC_UBY;
-	set_shape_flags(&shape,NO_OBJ);
+	set_shape_flags(&shape,NO_OBJ,AUTO_SHAPE);
 
 	rv_set_shape(QSP_ARG  ifp->if_name,&shape);
 

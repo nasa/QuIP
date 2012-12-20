@@ -199,8 +199,36 @@ advise(error_string);
 	return(0);
 } /* end get_data_space() */
 
+/* stuff shared with sub_obj initialization */
+
+static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,prec_t prec,uint32_t type_flag)
+{
+	dp->dt_prec = prec;
+	dp->dt_refcount = 0;
+	dp->dt_declfile = savestr( current_input_stack(SINGLE_QSP_ARG) );
+	dp->dt_bit0=0;
+
+	/* set_shape_flags is where mindim gets set */
+	if( set_shape_flags(&dp->dt_shape,dp,type_flag) < 0 )
+		return(NO_OBJ);
+
+	/* check_contiguity used to be called from set_obj_flags,
+	 * but Shape_Info structs don't have increments, so we
+	 * can't do it in set_shape_flags()
+	 */
+	check_contiguity(dp);
+
+	return(dp);
+}
+
+Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,prec_t prec)
+{
+	return setup_dp_with_shape(QSP_ARG  dp,prec,AUTO_SHAPE);
+}
+
+
 #ifdef HAVE_CUDA
-static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp )
+static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 {
 	char name[LLEN];
 	Data_Obj *new_dp;
@@ -236,16 +264,9 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp )
 		new_dp->dt_mach_inc[i] = dp->dt_mach_inc[i];
 		new_dp->dt_type_inc[i] = dp->dt_type_inc[i];
 	}
-	new_dp = setup_dp(QSP_ARG  new_dp,dp->dt_prec);
+	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,dp->dt_prec,type_flag);
 	if( new_dp==NO_OBJ )
 		NERROR1("make_device_alias:  failure in setup_dp");
-
-#ifdef FOOBAR
-	// Copy maxdim just in case...
-	// So we can index 1-length vectors without an error...
-	// However, the parent object hasn't been adjusted yet!?
-	new_dp->dt_maxdim = dp->dt_maxdim;
-#endif /* FOOBAR */
 
 	new_dp->dt_ap = ap;
 
@@ -303,33 +324,12 @@ static void fix_bitmap_increments(Data_Obj *dp)
 	*/
 }
 
-/* stuff shared with sub_obj initialization */
-
-Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,prec_t prec)
-{
-	dp->dt_prec = prec;
-	dp->dt_refcount = 0;
-	dp->dt_declfile = savestr( current_input_stack(SINGLE_QSP_ARG) );
-	dp->dt_bit0=0;
-
-	/* set_shape_flags is where mindim gets set */
-	if( set_shape_flags(&dp->dt_shape,dp) < 0 )
-		return(NO_OBJ);
-
-	/* check_contiguity used to be called from set_obj_flags,
-	 * but Shape_Info structs don't have increments, so we
-	 * can't do it in set_shape_flags()
-	 */
-	check_contiguity(dp);
-
-	return(dp);
-}
-
 /*
  * Initialize an existing header structure
  */
 
-Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,prec_t prec)
+Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
+			Dimension_Set *dsp,prec_t prec,uint32_t type_flag)
 {
 	if( dp == NO_OBJ )	/* name already used */
 		return(dp);
@@ -357,14 +357,14 @@ Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,prec_t prec)
 	 */
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,prec) < 0 ){
-		WARN("init_dp:  error setting dimensions");
+		WARN("init_dp_with_shape:  error setting dimensions");
 		return(NO_OBJ);
 		/* BUG might want to clean up */
 	}
 
 	make_contiguous(dp);
 
-	if( setup_dp(QSP_ARG  dp,prec) == NO_OBJ ){
+	if( setup_dp_with_shape(QSP_ARG  dp,prec,type_flag) == NO_OBJ ){
 		/* set this flag so delvec doesn't free nonexistent mem */
 		dp->dt_flags |= DT_NO_DATA;
 		delvec(QSP_ARG  dp);
@@ -372,6 +372,11 @@ Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,prec_t prec)
 	}
 
 	return(dp);
+}
+
+Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,prec_t prec)
+{
+	return init_dp_with_shape(QSP_ARG  dp,dsp,prec,AUTO_SHAPE);
 }
 
 /*
@@ -383,7 +388,7 @@ Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,prec_t prec)
  *  already in use, or if the name contains illegal characters.
  */
 
-static Data_Obj * _make_dp_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec, int maxdim)
+static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec, uint32_t type_flag)
 {
 	Data_Obj *dp;
 
@@ -418,17 +423,17 @@ static Data_Obj * _make_dp_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_
 		return(NO_OBJ);
 	}
 
-	if( init_dp(QSP_ARG  dp,dsp,prec) == NO_OBJ ){
+	if( init_dp_with_shape(QSP_ARG  dp,dsp,prec,type_flag) == NO_OBJ ){
 		delvec(QSP_ARG   dp );
 		return(NO_OBJ);
 	}
 		
 	return(dp);
-} /* end _make_dp */
+} /* end _make_dp_with_shape */
 
 Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec)
 {
-	return _make_dp_with_maxdim(QSP_ARG  name,dsp,prec, AUTO_MAXDIM);
+	return _make_dp_with_shape(QSP_ARG  name,dsp,prec, AUTO_SHAPE);
 }
 
 /*
@@ -440,12 +445,13 @@ Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t pre
  */
 
 Data_Obj *
-make_dobj_with_maxdim(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec, int maxdim)
+make_dobj_with_shape(QSP_ARG_DECL  const char *name,
+			Dimension_Set *dsp,prec_t prec, uint32_t type_flag)
 {
 	Data_Obj *dp;
 	dimension_t size;
 
-	dp = _make_dp_with_maxdim(QSP_ARG  name,dsp,prec,maxdim);
+	dp = _make_dp_with_shape(QSP_ARG  name,dsp,prec,type_flag);
 	if( dp == NO_OBJ ) return(dp);
 
 	if( dp->dt_n_type_elts == 0 ){	/* maybe an unknown size obj */
@@ -513,16 +519,16 @@ advise(error_string);
 	 * another "alias" object that is usable on the device
 	 */
 	if( dp->dt_ap->da_flags & DA_CUDA_HOST )
-		make_device_alias(QSP_ARG  dp);
+		make_device_alias(QSP_ARG  dp,type_flag);
 #endif /* HAVE_CUDA */
 
 	return(dp);
-} /* end make_dobj */
+} /* end make_dobj_with_shape */
 
 Data_Obj *
 make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,prec_t prec)
 {
-	return make_dobj_with_maxdim(QSP_ARG  name,dsp,prec,AUTO_MAXDIM);
+	return make_dobj_with_shape(QSP_ARG  name,dsp,prec,AUTO_SHAPE);
 }
 
 

@@ -488,7 +488,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	/* dt_n_type_elts is the total number of elements, where a complex number is counted as 1 */
 	newdp->dt_n_type_elts /= dp->dt_type_dim[which_dim];
 
-	if( set_shape_flags(&newdp->dt_shape,newdp) < 0 )
+	if( set_shape_flags(&newdp->dt_shape,newdp,AUTO_SHAPE) < 0 )
 		WARN("holy mole batman!?");
 
 	check_contiguity(newdp);
@@ -517,7 +517,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 		*/
 
 	return(newdp);
-}
+} /* end gen_subscript */
 
 void release_tmp_obj(Data_Obj *dp)
 {

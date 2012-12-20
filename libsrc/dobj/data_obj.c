@@ -34,7 +34,7 @@ char VersionId_dataf_data_obj[] = QUIP_VERSION_STRING;
 /* local prototypes */
 static void release_data(Data_Obj *);
 
-static void set_minmaxdim(Shape_Info *);
+static void set_minmaxdim(Shape_Info *,uint32_t);
 
 static void make_zombie(QSP_ARG_DECL  Data_Obj *dp);
 static void del_subs(QSP_ARG_DECL  Data_Obj *dp);
@@ -317,15 +317,37 @@ void delvec(QSP_ARG_DECL  Data_Obj *dp)
  * This is the main reason that we need two sets of dimensions - kind of UGLY.
  */
 
-static void set_minmaxdim(Shape_Info *shpp)
+static void set_minmaxdim(Shape_Info *shpp,uint32_t shape_flag)
 {
 	int i;
 
 	/* set maxdim */
-	shpp->si_maxdim = 0;
-	for(i=0;i<N_DIMENSIONS;i++){
-		if( shpp->si_mach_dim[i] > 1 ) shpp->si_maxdim = i;
+	if( shape_flag == AUTO_SHAPE ){
+		shpp->si_maxdim = 0;
+		for(i=0;i<N_DIMENSIONS;i++){
+			if( shpp->si_mach_dim[i] > 1 ) shpp->si_maxdim = i;
+		}
+	} else {
+		if( shape_flag == DT_SCALAR )
+			shpp->si_maxdim = 0;
+		else if( shape_flag == DT_ROWVEC )
+			shpp->si_maxdim = 1;
+		else if( shape_flag == DT_COLVEC )
+			shpp->si_maxdim = 2;
+		else if( shape_flag == DT_IMAGE )
+			shpp->si_maxdim = 2;
+		else if( shape_flag == DT_SEQUENCE )
+			shpp->si_maxdim = 3;
+		else if( shape_flag == DT_HYPER_SEQ )
+			shpp->si_maxdim = 4;
+#ifdef CAUTIOUS
+		else {
+			NWARN("CAUTIOUS:  set_minmaxdim:  unexpected type flag!?");
+		}
+#endif /* CAUTIOUS */
 	}
+				
+
 	/* set mindim */
 	shpp->si_mindim = N_DIMENSIONS-1;
 	for(i=N_DIMENSIONS-1;i>=0;i--){
@@ -370,7 +392,7 @@ advise(error_string);
  * This routine determines the type (real/complex) from dt_prec...
  */
 
-int set_shape_flags(Shape_Info *shpp,Data_Obj *dp)
+int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 {
 	int i;
 
@@ -400,26 +422,43 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp)
 	}
 #endif /* CAUTIOUS */
 
-	set_minmaxdim(shpp);
+	/* BUG?  here we set the shape type based
+	 * on dimension length, which makes it impossible
+	 * to have a one-length vector.  This causes problems
+	 * when we index a variable-length vector which
+	 * can have length one.  An example of this is a camera
+	 * array, when we sometimes only have one camers...
+	 *
+	 * Perhaps the solution is to set the shape flag when
+	 * the object is created, and use that to set maxdim?
+	 */
 
-	if( shpp->si_seqs > 1 )
-		shpp->si_flags |= DT_HYPER_SEQ;
-	else if( shpp->si_frames > 1 )
-		shpp->si_flags |= DT_SEQUENCE;
-	else if( shpp->si_rows > 1 ){
-		if( shpp->si_type_dim[1]==1 )
-			shpp->si_flags |= DT_COLVEC;
-		else
-			shpp->si_flags |= DT_IMAGE;
-	}
-	else {
-		dimension_t nc;
+	set_minmaxdim(shpp,shape_flag);
 
-		nc=shpp->si_cols;
+	if( shape_flag == AUTO_SHAPE ){
+		if( shpp->si_seqs > 1 )
+			shpp->si_flags |= DT_HYPER_SEQ;
+		else if( shpp->si_frames > 1 )
+			shpp->si_flags |= DT_SEQUENCE;
+		else if( shpp->si_rows > 1 ){
+			if( shpp->si_type_dim[1]==1 )
+				shpp->si_flags |= DT_COLVEC;
+			else
+				shpp->si_flags |= DT_IMAGE;
+		}
+		else {
+			dimension_t nc;
 
-		if( nc > 1 )
-			shpp->si_flags |= DT_ROWVEC;
-		else	shpp->si_flags |= DT_SCALAR;
+			nc=shpp->si_cols;
+
+			if( nc > 1 )
+				shpp->si_flags |= DT_ROWVEC;
+			else	shpp->si_flags |= DT_SCALAR;
+		}
+	} else {
+sprintf(DEFAULT_ERROR_STRING,"setting shape flag bit to 0x%x",shape_flag);
+advise(DEFAULT_ERROR_STRING);
+		shpp->si_flags |= shape_flag;
 	}
 
 	shpp->si_flags &= ~ SHAPE_TYPE_MASK;
@@ -597,7 +636,7 @@ void gen_xpose(Data_Obj *dp,int dim1,int dim2)
 	EXCHANGE_INCS(dp->dt_mach_inc,dim1,dim2)
 
 	/* should this be CAUTIOUS??? */ 
-	if( set_shape_flags(&dp->dt_shape,dp) < 0 )
+	if( set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE) < 0 )
 		NWARN("gen_xpose:  RATS!?");
 
 	check_contiguity(dp);

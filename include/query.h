@@ -334,6 +334,20 @@ typedef struct command {
 	const char *	cmd_help;
 } Command ;
 
+#define MENU_BEGIN(stem)			\
+static Command stem##_ctbl[]={
+
+#define MENU_END(stem)				\
+{ "quit", popcmd, "exit submenu" },		\
+{ NULL_COMMAND }				\
+};
+
+#define ADD_COMMAND(table,selector,func,help)	\
+{ #selector , func , #help },
+
+#define PUSH_MENU(stem)			\
+	PUSHCMD(stem##_ctbl,#stem);
+
 #define NULL_COMMAND	(const char *)NULL,			\
 			(void (*)(SINGLE_QSP_ARG_DECL))NULL,	\
 			(const char *)NULL

@@ -70,7 +70,7 @@ static int rv_to_dp(Data_Obj *dp,RV_Inode *inp)
 	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	set_shape_flags(&dp->dt_shape,dp);
+	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
 
 	return(0);
 }
@@ -201,7 +201,7 @@ static int dp_to_rv(RV_Inode *inp,Data_Obj *dp)
 	/* num_frame set when when write request given */
 
 	inp->rvi_shape = dp->dt_shape;
-	set_shape_flags(&inp->rvi_shape,NO_OBJ);
+	set_shape_flags(&inp->rvi_shape,NO_OBJ,AUTO_SHAPE);
 
 	return(0);
 }
@@ -247,7 +247,7 @@ FIO_WT_FUNC( rvfio_wt )
 
 		ifp->if_dp->dt_frames =  ifp->if_frms_to_wt;
 		ifp->if_dp->dt_seqs = 1;
-		set_shape_flags(&ifp->if_dp->dt_shape,ifp->if_dp);
+		set_shape_flags(&ifp->if_dp->dt_shape,ifp->if_dp,AUTO_SHAPE);
 		rv_set_shape(QSP_ARG  ifp->if_name,&ifp->if_dp->dt_shape);
 
 		/* This used to be after the call to rv_realloc()...

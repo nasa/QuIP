@@ -2335,7 +2335,7 @@ int rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
 	if( inp == NO_INODE ) return(-1);
 
 	inp->rvi_shape = *shpp;
-	set_shape_flags(&inp->rvi_shape,NO_OBJ);
+	set_shape_flags(&inp->rvi_shape,NO_OBJ,AUTO_SHAPE);
 	return(0);
 }
 

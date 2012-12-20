@@ -30,6 +30,7 @@ char VersionId_vectree_comptree[] = QUIP_VERSION_STRING;
 #include <math.h>
 #endif
 
+#define SET_SHAPE_FLAGS(shpp,dp)	set_shape_flags(shpp,dp,AUTO_SHAPE)
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -1576,7 +1577,7 @@ static void check_mating_bitmap(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *
 			}
 		}
 		if( enlarged )
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 	}
 } /* check_mating_bitmap */
 
@@ -1633,7 +1634,7 @@ Shape_Info *calc_outer_shape(Vec_Expr_Node *enp1, Vec_Expr_Node *enp2)
 		shp1.si_n_type_elts *= shp1.si_type_dim[i];
 	}
 
-	set_shape_flags(&shp1,NO_OBJ);
+	SET_SHAPE_FLAGS(&shp1,NO_OBJ);
 
 	return(&shp1);
 }
@@ -3228,7 +3229,7 @@ Shape_Info *scalar_shape(prec_t prec)
 
 	_scalar_shpp[index]->si_prec = prec;
 
-	set_shape_flags(_scalar_shpp[index],NO_OBJ);
+	SET_SHAPE_FLAGS(_scalar_shpp[index],NO_OBJ);
 
 	return(_scalar_shpp[index]);
 }
@@ -3292,7 +3293,7 @@ Shape_Info *uk_shape(prec_t prec)
 	for(i=0;i<N_DIMENSIONS;i++)
 		_uk_shpp[i_prec]->si_type_dim[i]=0;
 
-	/* set_shape_flags(_uk_shpp[i_prec],NO_OBJ); */
+	/* SET_SHAPE_FLAGS(_uk_shpp[i_prec],NO_OBJ); */
 	_uk_shpp[i_prec]->si_flags = DT_UNKNOWN_SHAPE;
 	_uk_shpp[i_prec]->si_prec = prec;
 	/* Set BIT & COMPLEX flags if necessary */
@@ -3471,7 +3472,7 @@ describe_shape(enp2->en_shpp);
 	if( !dominance_table_inited ) init_dominance_table();
 	shpp->si_prec = dominance_tbl[ enp1->en_shpp->si_prec & MACH_PREC_MASK ]
 					[ enp2->en_shpp->si_prec & MACH_PREC_MASK ];
-	set_shape_flags(shpp,NO_OBJ);
+	SET_SHAPE_FLAGS(shpp,NO_OBJ);
 	return(shpp);
 }
 
@@ -3568,7 +3569,7 @@ describe_shape(enp2->en_shpp);
 		}
 		/* we assume the precisions match ...  is this correct?  BUG? */
 		shp.si_prec = enp1->en_shpp->si_prec;
-		set_shape_flags(&shp,NO_OBJ);
+		SET_SHAPE_FLAGS(&shp,NO_OBJ);
 		return(&shp);	/* BUG?  can we get away with a single static shape here??? */
 	}
 
@@ -3675,7 +3676,7 @@ describe_shape(shpp2);
 		/* BUG - should we set si_n_mach_elts etc? */
 		/* we assume the precisions match ...  is this correct?  BUG? */
 		shp.si_prec = shpp1->si_prec;
-		set_shape_flags(&shp,NO_OBJ);
+		SET_SHAPE_FLAGS(&shp,NO_OBJ);
 		return(&shp);	/* BUG?  can we get away with a single static shape here??? */
 	}
 
@@ -4067,7 +4068,7 @@ DUMP_TREE(enp);
 				enp->en_shpp->si_type_dim[2] = enp->en_shpp->si_type_dim[3];
 				enp->en_shpp->si_type_dim[3] = enp->en_shpp->si_type_dim[4];
 				enp->en_shpp->si_type_dim[4] = 1;
-				set_shape_flags(enp->en_shpp,NO_OBJ);
+				SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			}
 			/* probably a COMP_LIST node?  do nothing? */
 			break;
@@ -4228,7 +4229,7 @@ DUMP_NODE(enp);
 			i1                    = tmp_shape.si_rows;
 			tmp_shape.si_rows = tmp_shape.si_cols;
 			tmp_shape.si_cols = i1;
-			set_shape_flags(&tmp_shape,NO_OBJ);
+			SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);
 
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 			CHECK_UK_CHILD(enp,0);
@@ -4280,7 +4281,7 @@ DUMP_NODE(enp);
 				tmp_shape.si_cols *= 2;
 				tmp_shape.si_mach_dim[0] = 1;
 				/* BUG set more things?  n_elts?  mach_dim? */
-				set_shape_flags(&tmp_shape,NO_OBJ);
+				SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);
 			}
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 			CHECK_UK_CHILD(enp,0);
@@ -4339,7 +4340,7 @@ WARN("CAUTIOUS:  prelim_node_shape:  unary op child has no shape");
 			/* Use copy_node_shape just to do the mem alloc */
 			tmp_shape = *enp->en_child[0]->en_shpp;
 			tmp_shape.si_cols=enp->en_child[1]->en_shpp->si_cols;
-			set_shape_flags(&tmp_shape,NO_OBJ);
+			SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 			/* Shape is known so don't bother with this */
 			/*
@@ -4531,7 +4532,7 @@ return;
 			tmp_shape.si_type_dim[tmp_shape.si_maxdim+1] =
 				enp->en_child[0]->en_shpp->si_type_dim[tmp_shape.si_maxdim+1]+1;
 
-			set_shape_flags(&tmp_shape,NO_OBJ);	/* set_shape_flags sets maxdim?? */
+			SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);	/* set_shape_flags sets maxdim?? */
 			MULTIPLY_DIMENSIONS(tmp_shape.si_n_type_elts,tmp_shape.si_type_dim)
 			/* BUG?  n_mach_elts? */
 			COPY_NODE_SHAPE(enp,&tmp_shape);
@@ -4582,7 +4583,7 @@ return;
 			tmp_shape.si_type_dim[tmp_shape.si_mindim] =
 				enp->en_child[0]->en_shpp->si_type_dim[tmp_shape.si_mindim]+1;
 
-			set_shape_flags(&tmp_shape,NO_OBJ);	/* set_shape_flags sets maxdim?? */
+			SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);	/* set_shape_flags sets maxdim?? */
 			MULTIPLY_DIMENSIONS(tmp_shape.si_n_type_elts,tmp_shape.si_type_dim)
 			/* BUG?  n_mach_elts? */
 			COPY_NODE_SHAPE(enp,&tmp_shape);
@@ -4618,7 +4619,7 @@ advise(error_string);
 			COPY_NODE_SHAPE(enp,scalar_shape(PREC_CHAR));
 			enp->en_shpp->si_type_dim[1] =
 			enp->en_shpp->si_n_type_elts = strlen(enp->en_string)+1;
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			break;
 
 		case T_SCALMAX:
@@ -5024,7 +5025,7 @@ describe_shape(decl_enp->en_shpp);
 				n1=EVAL_INT_EXP(enp->en_child[0]);
 				n2=EVAL_INT_EXP(enp->en_child[1]);
 				enp->en_shpp->si_cols = floor( n2 - n1 );
-				set_shape_flags(enp->en_shpp,NO_OBJ);
+				SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			} else {
 				COPY_NODE_SHAPE(enp,uk_shape(PREC_DI));
 			}
@@ -5039,7 +5040,7 @@ describe_shape(decl_enp->en_shpp);
 			/* BUG? should we allow float start and stop? */
 			/* enp->en_shpp->si_cols = floor( (n3-n1)/n2 ); */
 			/* NOT columns, could be any dimension... */
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			break;
 
 		case T_STRING_LIST:	/* prelim_node_shape */
@@ -5048,7 +5049,7 @@ describe_shape(decl_enp->en_shpp);
 			enp->en_shpp->si_cols = enp->en_child[0]->en_shpp->si_cols
 						+ enp->en_child[1]->en_shpp->si_cols
 						- 1;
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			break;
 			}
 
@@ -5314,7 +5315,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			}
 			enp->en_shpp->si_type_dim[i_dim] = d;
 			enp->en_shpp->si_flags &= ~DT_UNKNOWN_SHAPE;	/* if we are here, all dimensions are non-zero */
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			}
 
 			break;
@@ -5368,7 +5369,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* see T_ROW below... */
 			COPY_NODE_SHAPE(enp,enp->en_child[0]->en_shpp);
 			enp->en_shpp->si_cols = 1 + labs(i2 - i1) ;
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			break;
 		/* matlab! */
 		case T_RET_LIST:		/* prelim_node_shape */
@@ -5387,7 +5388,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* this is really a list node... */
 			COPY_NODE_SHAPE(enp,enp->en_child[0]->en_shpp);
 			enp->en_shpp->si_cols ++;
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			break;
 
 		/* end matlab */
@@ -5452,7 +5453,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				 * of the target.
 				 */
 				enp->en_shpp->si_type_dim[0] = enp->en_child[0]->en_shpp->si_type_dim[0];
-				set_shape_flags(enp->en_shpp,NO_OBJ);	/* DO we need this? */
+				SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);	/* DO we need this? */
 				break;
 			}
 			if( UNKNOWN_SHAPE(enp->en_child[0]->en_shpp) ) break;
@@ -5468,7 +5469,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 			REDUCE_MAXDIM(enp->en_shpp)
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			/* BUG do range checking here */
 			break;
 
@@ -5489,7 +5490,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			tmp_shape = *enp->en_child[0]->en_shpp;
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 			REDUCE_MINDIM(enp->en_shpp)
-			set_shape_flags(enp->en_shpp,NO_OBJ);
+			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 			/* BUG do range checking here */
 			break;
 
@@ -5511,7 +5512,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			i1                    = tmp_shape.si_rows;
 			tmp_shape.si_rows = tmp_shape.si_cols;
 			tmp_shape.si_cols = i1;
-			set_shape_flags(&tmp_shape,NO_OBJ);
+			SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);
 
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 
@@ -5550,7 +5551,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* BUG there is code missing here !? */
 			UPDATE_DIM_LEN(enp->en_shpp,si_mindim,len,++)
 
-			/* set_shape_flags(enp->en_shpp,NO_OBJ); */
+			/* SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ); */
 
 			break;
 
@@ -5587,7 +5588,7 @@ static void update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				tmp_shape.si_cols *= 2;
 				tmp_shape.si_mach_dim[0] = 1;
 				/* BUG?  set other things? */
-				set_shape_flags(&tmp_shape,NO_OBJ);
+				SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);
 			}
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 
@@ -5769,7 +5770,7 @@ return;
 
 			tmp_shape.si_type_dim[tmp_shape.si_maxdim+1] =
 				enp->en_child[0]->en_shpp->si_type_dim[tmp_shape.si_maxdim+1]+1;
-			set_shape_flags(&tmp_shape,NO_OBJ);
+			SET_SHAPE_FLAGS(&tmp_shape,NO_OBJ);
 
 			COPY_NODE_SHAPE(enp,&tmp_shape);
 
@@ -5779,7 +5780,7 @@ return;
 //		case T_ROWLIST:						/* update_node_shape */
 //			COPY_NODE_SHAPE(enp,enp->en_child[0]->en_shpp);
 //			enp->en_shpp->si_rows ++;
-//			set_shape_flags(enp->en_shpp,NO_OBJ);
+//			SET_SHAPE_FLAGS(enp->en_shpp,NO_OBJ);
 //			break;
 
 
@@ -6716,7 +6717,7 @@ static Shape_Info *cpx_scalar_shape(prec_t prec)
 
 	_cpx_scalar_shpp[prec]->si_prec = (prec&~PSEUDO_PREC_MASK) | COMPLEX_PREC_BITS;
 
-	set_shape_flags(_cpx_scalar_shpp[prec],NO_OBJ);
+	SET_SHAPE_FLAGS(_cpx_scalar_shpp[prec],NO_OBJ);
 
 	return(_cpx_scalar_shpp[prec]);
 }
