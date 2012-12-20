@@ -39,6 +39,7 @@ VISCALIB= ../libsrc/visca/libvisca.a
 GSLLIB=	../libsrc/gsl/libgslmenu.a
 ATCLIB=	../libsrc/atc/libatc.a
 DASLIB=	../libsrc/das1602/libdas1602.a
+SELIB=../libsrc/smarteye/libsmarteye.a
 
 
 DVLIB=	../libsrc/ieee1394/libdvmenu.a
@@ -54,7 +55,7 @@ if HAVE_NUMREC
   quip_LDADD += -lnumrec
 endif
 
-quip_LDADD += $(DASLIB) $(ATCLIB) $(DVLIB) $(PGRLIB) $(OCVLIB) $(OGL_LIB) $(GPSLIB) $(PICLIB) $(CUDALIBS) $(V4LIB) $(RQLIB) $(VISCALIB) $(KNOXLIB) $(METEORLIB) $(GUILIB) $(VLIBS) $(MVILIBS) $(PLIB) $(VECLIBS) $(GSLLIB) $(DLIBS) $(JLIBS) $(SVRLIB)
+quip_LDADD += $(SELIB) $(DASLIB) $(ATCLIB) $(DVLIB) $(PGRLIB) $(OCVLIB) $(OGL_LIB) $(GPSLIB) $(PICLIB) $(CUDALIBS) $(V4LIB) $(RQLIB) $(VISCALIB) $(KNOXLIB) $(METEORLIB) $(GUILIB) $(VLIBS) $(MVILIBS) $(PLIB) $(VECLIBS) $(GSLLIB) $(DLIBS) $(JLIBS) $(SVRLIB)
 
 # this doesn't work any more because lib dobj has dependencies on libcuda - should FIXME?  BUG?
 #math_drill_LDADD = $(VLIBS) $(VECLIBS) $(RQLIB) $(DLIBS) $(JLIBS)

@@ -5,6 +5,7 @@ char VersionId_src_quip_main[] = QUIP_VERSION_STRING;
 
 #include "query.h"	/* prototype for rcfile() */
 #include "submenus.h"
+#include "smarteye_api.h"
 
 static COMMAND_FUNC( finish_vt )
 {
@@ -144,6 +145,8 @@ Command quip_ctbl[]={
 #ifdef HAVE_X11
 { "atc",	atc_menu,	"ATC submenu"				},
 #endif /* HAVE_X11 */
+
+{ "smarteye",	smarteye_menu,	"SmartEye submenu"			},
 
 { "quit",	finish_vt,	"exit program"				},
 { NULL_COMMAND								}
