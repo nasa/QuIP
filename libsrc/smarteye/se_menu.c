@@ -1,7 +1,9 @@
 #include "quip_config.h"
 
-#include "smarteye.h"
 #include "query.h"
+#include "smarteye_api.h"
+#include "smarteye.h"
+
 #include <string.h>		/* memset */
 #include <unistd.h>		/* close */
 
