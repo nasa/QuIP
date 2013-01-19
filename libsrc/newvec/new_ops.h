@@ -37,7 +37,7 @@
 #define bitmap_dst_dp	oap->oa_dest
 #define bitmap_src_dp	oap->oa_bmap
 
-//#define MAX_DEBUG
+#define MAX_DEBUG
 
 #ifdef MAX_DEBUG
 
@@ -512,21 +512,23 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 
 #define SETBIT( value )							\
 									\
-	if( value )							\
+	if( value ){							\
 		*(dbm_ptr + (which_bit/BITS_PER_BITMAP_WORD)) |=	\
-			NUMBERED_BIT(which_bit); \
-	else								\
+			NUMBERED_BIT(which_bit); 			\
+	}								\
+	else {								\
 		*(dbm_ptr + (which_bit/BITS_PER_BITMAP_WORD)) &=	\
-			~ NUMBERED_BIT(which_bit);
+			~ NUMBERED_BIT(which_bit);			\
+	}
 
-#define DEBUG_SBM_	\
-sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   which_bit = %d",\
-(int_for_addr)sbm_ptr,which_bit);\
+#define DEBUG_SBM_							\
+sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   which_bit = %d",	\
+(int_for_addr)sbm_ptr,which_bit);					\
 NADVISE(DEFAULT_ERROR_STRING);
 
-#define DEBUG_DBM_	\
-sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   which_bit = %d",\
-(int_for_addr)dbm_ptr,which_bit);\
+#define DEBUG_DBM_							\
+sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   which_bit = %d",	\
+(int_for_addr)dbm_ptr,which_bit);					\
 NADVISE(DEFAULT_ERROR_STRING);
 
 #define srcbit		((*(sbm_ptr + (which_bit/BITS_PER_BITMAP_WORD)))\

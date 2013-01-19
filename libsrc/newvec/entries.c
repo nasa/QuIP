@@ -979,6 +979,7 @@ ALL_CONVERSIONS( udi )
 
 #define SWITCH3(func)							\
 									\
+NADVISE("SWITCH3 begin");\
 		switch( MACHINE_PREC(oap->oa_dp[0]) ){			\
 			case PREC_BY:  by_obj_##func(oap); break;	\
 			case PREC_IN:  in_obj_##func(oap); break;	\

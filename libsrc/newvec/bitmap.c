@@ -10,6 +10,12 @@
  *
  * The necessary constants are defined in data_obj.h, and include:
  * BITS_PER_BITMAP_WORD			32 or 64
+ *
+ * In the original implementation, the bits were all contiguous...  But to
+ * support the GPU, it was necessary to make each image row be an integral
+ * number of words.  Therefore, the old logic of having a single loop to
+ * do all the bits is no longer valid.  We need an outer loop to iterate
+ * over rows, and an inner loop to iterate over bits.
  */
 
 
@@ -23,91 +29,133 @@
 			bit <<= 1;					\
 		}
 
-#define BITMAP_OBJ_BINARY_FUNC( funcname, statement )						\
-void funcname( Vec_Obj_Args *oap )								\
-{												\
-	bitmap_word *src1_ptr,*src2_ptr,*dst_ptr;						\
-	bitmap_word l1,l2,l3;									\
-	bitmap_word src1_bit,src2_bit,dst_bit;							\
-	dimension_t n;										\
-												\
-	n = oap->oa_dest->dt_n_type_elts;							\
-												\
-	src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;						\
-	src2_ptr=(bitmap_word *)oap->oa_dp[1]->dt_data;						\
-	dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;						\
-												\
-	src1_bit = 1 << oap->oa_dp[0]->dt_bit0;							\
-	src2_bit = 1 << oap->oa_dp[1]->dt_bit0;							\
-	dst_bit = 1 << oap->oa_dest->dt_bit0;							\
-												\
-	l1=*src1_ptr;										\
-	l2=*src2_ptr;										\
-	l3=*dst_ptr;										\
-	while(n--){										\
-		statement									\
-												\
-		ADVANCE_BIT(src1_bit,src1_ptr,l1)						\
-		ADVANCE_BIT(src2_bit,src2_ptr,l2)						\
-		ADVANCE_BIT(dst_bit,dst_ptr,l3)							\
-	}											\
+// BUG for now we haven't implemented sequences or hyperseqs...
+
+#define BITMAP_OBJ_BINARY_FUNC( funcname, statement )			\
+									\
+void funcname( Vec_Obj_Args *oap )					\
+{									\
+	int i,j;							\
+	bitmap_word *src1_ptr,*src2_ptr,*dst_ptr;			\
+	bitmap_word l1,l2,l3;						\
+	bitmap_word src1_bit,src2_bit,dst_bit;				\
+									\
+	for(i=0;i<oap->oa_dest->dt_rows;i++){				\
+		src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;		\
+		src2_ptr=(bitmap_word *)oap->oa_dp[1]->dt_data;		\
+		dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;		\
+									\
+		src1_ptr+= i * oap->oa_dp[0]->dt_mach_inc[2];		\
+		src2_ptr+= i * oap->oa_dp[1]->dt_mach_inc[2];		\
+		dst_ptr+= i * oap->oa_dest->dt_mach_inc[2];		\
+									\
+		src1_bit = 1 << oap->oa_dp[0]->dt_bit0;			\
+		src2_bit = 1 << oap->oa_dp[1]->dt_bit0;			\
+		dst_bit = 1 << oap->oa_dest->dt_bit0;			\
+									\
+		l1=*src1_ptr;						\
+		l2=*src2_ptr;						\
+		l3=*dst_ptr;						\
+									\
+		for(j=0;j<oap->oa_dest->dt_cols;j++){			\
+			statement					\
+									\
+			ADVANCE_BIT(src1_bit,src1_ptr,l1)		\
+			ADVANCE_BIT(src2_bit,src2_ptr,l2)		\
+			ADVANCE_BIT(dst_bit,dst_ptr,l3)			\
+		}							\
+	}								\
 }
 
+#ifdef FOOBAR
 
-#define BITMAP_OBJ_VS_FUNC( funcname, statement )						\
-void funcname( Vec_Obj_Args *oap )								\
-{												\
-	bitmap_word *src1_ptr,*dst_ptr;								\
-	bitmap_word l1,l3;									\
-	bitmap_word src1_bit,dst_bit;								\
-	bitmap_word scalar_bit; /* really just a boolean */					\
-	dimension_t n;										\
-												\
-	n = oap->oa_dest->dt_n_type_elts;							\
-												\
-	src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;						\
-	scalar_bit=oap->oa_svp[0]->u_bit;							\
-	dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;						\
-												\
-	src1_bit = 1 << oap->oa_dp[0]->dt_bit0;							\
-	dst_bit = 1 << oap->oa_dest->dt_bit0;							\
-												\
-	l1=*src1_ptr;										\
-	l3=*dst_ptr;										\
-	while(n--){										\
-		statement									\
-												\
-		ADVANCE_BIT(src1_bit,src1_ptr,l1)						\
-		ADVANCE_BIT(dst_bit,dst_ptr,l3)							\
-	}											\
+#define BITMAP_OBJ_BINARY_FUNC( funcname, statement )			\
+									\
+void funcname( Vec_Obj_Args *oap )					\
+{									\
+	bitmap_word *src1_ptr,*src2_ptr,*dst_ptr;			\
+	bitmap_word l1,l2,l3;						\
+	bitmap_word src1_bit,src2_bit,dst_bit;				\
+	dimension_t n;							\
+									\
+	n = oap->oa_dest->dt_n_type_elts;				\
+									\
+	src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;			\
+	src2_ptr=(bitmap_word *)oap->oa_dp[1]->dt_data;			\
+	dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;			\
+									\
+	src1_bit = 1 << oap->oa_dp[0]->dt_bit0;				\
+	src2_bit = 1 << oap->oa_dp[1]->dt_bit0;				\
+	dst_bit = 1 << oap->oa_dest->dt_bit0;				\
+									\
+	l1=*src1_ptr;							\
+	l2=*src2_ptr;							\
+	l3=*dst_ptr;							\
+	while(n--){							\
+		statement						\
+									\
+		ADVANCE_BIT(src1_bit,src1_ptr,l1)			\
+		ADVANCE_BIT(src2_bit,src2_ptr,l2)			\
+		ADVANCE_BIT(dst_bit,dst_ptr,l3)				\
+	}								\
 }
 
-#define BITMAP_OBJ_UNARY_FUNC( funcname, statement )						\
-												\
-void funcname( Vec_Obj_Args *oap )								\
-{												\
-	bitmap_word *src1_ptr,*dst_ptr;								\
-	bitmap_word l1,l2;									\
-	bitmap_word src1_bit,dst_bit;								\
-	dimension_t n;										\
-												\
-	n = oap->oa_dp[0]->dt_n_type_elts;							\
-												\
-	src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;						\
-	dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;						\
-												\
-	src1_bit = 1 << oap->oa_dp[0]->dt_bit0;							\
-	dst_bit = 1 << oap->oa_dest->dt_bit0;							\
-												\
-												\
-	l1=*src1_ptr;										\
-	l2=*dst_ptr;										\
-	while(n--){										\
-		statement									\
-												\
-		ADVANCE_BIT(src1_bit,src1_ptr,l1)						\
-		ADVANCE_BIT(dst_bit,dst_ptr,l2)							\
-	}											\
+#endif /* ! FOOBAR */
+
+#define BITMAP_OBJ_VS_FUNC( funcname, statement )			\
+void funcname( Vec_Obj_Args *oap )					\
+{									\
+	bitmap_word *src1_ptr,*dst_ptr;					\
+	bitmap_word l1,l3;						\
+	bitmap_word src1_bit,dst_bit;					\
+	bitmap_word scalar_bit; /* really just a boolean */		\
+	dimension_t n;							\
+									\
+	n = oap->oa_dest->dt_n_type_elts;				\
+									\
+	src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;			\
+	scalar_bit=oap->oa_svp[0]->u_bit;				\
+	dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;			\
+									\
+	src1_bit = 1 << oap->oa_dp[0]->dt_bit0;				\
+	dst_bit = 1 << oap->oa_dest->dt_bit0;				\
+									\
+	l1=*src1_ptr;							\
+	l3=*dst_ptr;							\
+	while(n--){							\
+		statement						\
+									\
+		ADVANCE_BIT(src1_bit,src1_ptr,l1)			\
+		ADVANCE_BIT(dst_bit,dst_ptr,l3)				\
+	}								\
+}
+
+#define BITMAP_OBJ_UNARY_FUNC( funcname, statement )			\
+									\
+void funcname( Vec_Obj_Args *oap )					\
+{									\
+	bitmap_word *src1_ptr,*dst_ptr;					\
+	bitmap_word l1,l2;						\
+	bitmap_word src1_bit,dst_bit;					\
+	dimension_t n;							\
+									\
+	n = oap->oa_dp[0]->dt_n_type_elts;				\
+									\
+	src1_ptr=(bitmap_word *)oap->oa_dp[0]->dt_data;			\
+	dst_ptr=(bitmap_word *)oap->oa_dest->dt_data;			\
+									\
+	src1_bit = 1 << oap->oa_dp[0]->dt_bit0;				\
+	dst_bit = 1 << oap->oa_dest->dt_bit0;				\
+									\
+									\
+	l1=*src1_ptr;							\
+	l2=*dst_ptr;							\
+	while(n--){							\
+		statement						\
+									\
+		ADVANCE_BIT(src1_bit,src1_ptr,l1)			\
+		ADVANCE_BIT(dst_bit,dst_ptr,l2)				\
+	}								\
 }
 
 

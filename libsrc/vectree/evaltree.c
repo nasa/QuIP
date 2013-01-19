@@ -5245,6 +5245,17 @@ static Data_Obj * vv_bitmap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *dp1,Data_Ob
 	return(bmdp);
 }
 
+/* Call eval_bitmap with dst_dp = NO_OBJ for automatic allocation
+ *
+ * For a compound test such as a<b || c>d, we would allocate a temp
+ * bitmap for the first comparison, another for the second comparison,
+ * but reuse one of these as the destination object for the final
+ * comparison.  But if we have cached bitmaps b1 || b2 then we
+ * have to allocate a new bitmap to hold the result...
+ *
+ * The allocation is done later, in vs_bitmap, vv_bitmap etc.
+ */
+
 static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 {
 	Data_Obj *bm_dp1,*bm_dp2,*dp,*dp2;
@@ -5260,7 +5271,7 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 			return(dp);
 			break;
 
-		case T_BOOL_AND:
+		case T_BOOL_AND:		/* eval_bitmap */
 			if( SCALAR_SHAPE(enp->en_child[0]->en_shpp) ){
 				ival = EVAL_INT_EXP(enp->en_child[0]);
 				bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[1]);
@@ -5274,17 +5285,18 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 					constant_bitmap(bm_dp1,0L);
 				return(bm_dp1);
 			} else {
+				dst_dp =
 				bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[0]);
 				bm_dp2 = EVAL_BITMAP(NO_OBJ,enp->en_child[1]);
-				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVAND) < 0 ){
+				if( do_vvfunc(QSP_ARG  dst_dp,bm_dp1,bm_dp2,FVAND) < 0 ){
 					NODE_ERROR(enp);
 					WARN("Error evaluating bitmap");
 					return(NO_OBJ);
 				}
-				return(bm_dp1);
+				return(dst_dp);
 			}
 			break;
-		case T_BOOL_OR:
+		case T_BOOL_OR:		/* eval_bitmap */
 			if( SCALAR_SHAPE(enp->en_child[0]->en_shpp) ){
 				ival = EVAL_INT_EXP(enp->en_child[0]);
 				bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[1]);
@@ -5298,17 +5310,18 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 					constant_bitmap(bm_dp1,0xffffffff);
 				return(bm_dp1);
 			} else {
+				dst_dp =
 				bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[0]);
 				bm_dp2 = EVAL_BITMAP(NO_OBJ,enp->en_child[1]);
-				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVOR) < 0 ){
+				if( do_vvfunc(QSP_ARG  dst_dp,bm_dp1,bm_dp2,FVOR) < 0 ){
 					NODE_ERROR(enp);
 					WARN("Error evaluating bitmap");
 					return(NO_OBJ);
 				}
-				return(bm_dp1);
+				return(dst_dp);
 			}
 			break;
-		case T_BOOL_XOR:
+		case T_BOOL_XOR:		/* eval_bitmap */
 			if( SCALAR_SHAPE(enp->en_child[0]->en_shpp) ){
 				ival = EVAL_INT_EXP(enp->en_child[0]);
 				bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[1]);
@@ -5324,17 +5337,18 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 				}
 				return(bm_dp1);
 			} else {
+				dst_dp =
 				bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[0]);
 				bm_dp2 = EVAL_BITMAP(NO_OBJ,enp->en_child[1]);
-				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVXOR) < 0 ){
+				if( do_vvfunc(QSP_ARG  dst_dp,bm_dp1,bm_dp2,FVXOR) < 0 ){
 					NODE_ERROR(enp);
 					WARN("Error evaluating bitmap");
 					return(NO_OBJ);
 				}
-				return(bm_dp1);
+				return(dst_dp);
 			}
 			break;
-		case T_BOOL_NOT:
+		case T_BOOL_NOT:		/* eval_bitmap */
 			bm_dp1 = EVAL_BITMAP(dst_dp,enp->en_child[0]);
 			bm_dp1 = complement_bitmap(QSP_ARG  bm_dp1);
 			return(bm_dp1);
@@ -5422,6 +5436,7 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
 		 * so we're ok
 		 */
 		if( is_bitmap ){
+ADVISE("get_2_operands calling eval_bitmap #1");
 			dp1=EVAL_BITMAP(NO_OBJ,enp->en_child[0]);
 		} else if( dst_dp!=NO_OBJ && same_shape(enp->en_child[0]->en_shpp,&dst_dp->dt_shape) ){
 			dp1=EVAL_OBJ_EXP(enp->en_child[0],dst_dp);
@@ -5448,12 +5463,14 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
 
 		if( dp2!=dst_dp ){
 			if( is_bitmap ){
+ADVISE("get_2_operands calling eval_bitmap #2");
 				dp1=EVAL_BITMAP(NO_OBJ,enp->en_child[0]);
 			} else if( dst_dp!=NO_OBJ && same_shape(enp->en_child[0]->en_shpp,&dst_dp->dt_shape) ){
 				dp1=EVAL_OBJ_EXP(enp->en_child[0],dst_dp);
 			}
 		} else {
 			if( is_bitmap ){
+ADVISE("get_2_operands calling eval_bitmap #3");
 				dp1=EVAL_BITMAP(NO_OBJ,enp->en_child[0]);
 			} else {
 				dp1=EVAL_OBJ_EXP(enp->en_child[0],NO_OBJ);
@@ -5461,9 +5478,10 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
 		}
 	} else {
 		/* Both sides refer to the lhs */
-		if( is_bitmap )
+		if( is_bitmap ){
+ADVISE("get_2_operands calling eval_bitmap #3");
 			dp1=EVAL_BITMAP(NO_OBJ,enp->en_child[0]);
-		else
+		} else
 			dp1=EVAL_OBJ_EXP(enp->en_child[0],NO_OBJ);
 
 		/* used to have dst_dp here, would have added a test here for shape match,
@@ -5761,6 +5779,7 @@ DUMP_TREE(enp);
 		case T_BOOL_XOR:
 		case T_BOOL_NOT:
 		case T_BOOL_PTREQ:
+ADVISE("eval_obj_assignment calling eval_bitmap");
 			EVAL_BITMAP(dp,enp);
 			break;
 

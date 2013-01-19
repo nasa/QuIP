@@ -485,7 +485,8 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 		if( which_dim == 1 ){	/* column subscript */
 			ERROR1("SORRY:  don't know how to subscript bitmap column!?");
 		} else if( which_dim > 1 ){	/* subscript bitmap word */
-			index *= dp->dt_mach_inc[which_dim] * ELEMENT_INC_SIZE(dp);
+			index *= dp->dt_mach_inc[which_dim];
+			index *= BYTES_PER_BITMAP_WORD;
 			newdp->dt_offset = index;	/* offset is in bytes! */
 			if( newdp->dt_data != NULL )
 				newdp->dt_data = ((char *)dp->dt_data) + index;
