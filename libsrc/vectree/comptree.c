@@ -1849,6 +1849,7 @@ static int check_curds(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_SCRIPT:
 		case T_REFERENCE:
 		case T_UMINUS:
+		case T_BITCOMP:		/* UNOP_CASES ??? */
 		case T_RAMP:
 		case T_CONJ:
 		case T_INNER:

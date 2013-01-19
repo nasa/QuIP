@@ -6382,6 +6382,16 @@ advise(error_string);
 			xpose_data(QSP_ARG  dp,dp1);
 			break;
 
+		case T_VCOMP:		/* eval_obj_assignment */
+			dp1=EVAL_OBJ_EXP(enp->en_child[0],NO_OBJ);
+			if( dp1 == NO_OBJ ) break;
+			if( do_unfunc(QSP_ARG  dp,dp1,FVCOMP) < 0 ){
+				NODE_ERROR(enp);
+				WARN("error computing bit complement");
+				break;
+			}
+			break;
+
 		case T_RAMP:
 			start=EVAL_FLT_EXP(enp->en_child[0]);
 			dx=EVAL_FLT_EXP(enp->en_child[1]);

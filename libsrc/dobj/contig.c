@@ -12,13 +12,23 @@ int is_evenly_spaced(Data_Obj *dp)
 	/* returns 1 if all the data can be accessed with a single increment */
 	int i,n,spacing;
 
-	/* New logic to handle case when increments are 0 if the corresponding dimension is 1 */
+	/* New logic to handle case when increments are 0
+	 * if the corresponding dimension is 1
+	 */
 
 	/* mindim is the smallest indexable dimension - but for complex,
 	 * it is always equal to 1 with an increment of 0...
 	 */
+
+	/*
+	 * Do we need a special case for bitmaps???
+	 * We do this with type sizes and increments,
+	 * should we instead be using machine sizes and increments?
+	 */
+
 	if( IS_SCALAR(dp) ) return(1);
 
+	/* Find the smallest spacing */
 	spacing = 0;
 	i=dp->dt_mindim-1;
 	while(spacing==0){

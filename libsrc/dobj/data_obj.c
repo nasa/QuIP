@@ -324,8 +324,14 @@ static void set_minmaxdim(Shape_Info *shpp,uint32_t shape_flag)
 	/* set maxdim */
 	if( shape_flag == AUTO_SHAPE ){
 		shpp->si_maxdim = 0;
-		for(i=0;i<N_DIMENSIONS;i++){
-			if( shpp->si_mach_dim[i] > 1 ) shpp->si_maxdim = i;
+		if( BITMAP_SHAPE(shpp) ){
+			for(i=0;i<N_DIMENSIONS;i++){
+				if( shpp->si_type_dim[i] > 1 ) shpp->si_maxdim = i;
+			}
+		} else {
+			for(i=0;i<N_DIMENSIONS;i++){
+				if( shpp->si_mach_dim[i] > 1 ) shpp->si_maxdim = i;
+			}
 		}
 	} else {
 		if( shape_flag == DT_SCALAR )
@@ -349,9 +355,16 @@ static void set_minmaxdim(Shape_Info *shpp,uint32_t shape_flag)
 				
 
 	/* set mindim */
+	/* We used to use mach_dim here...  but for bitmaps we must use type dim */
 	shpp->si_mindim = N_DIMENSIONS-1;
-	for(i=N_DIMENSIONS-1;i>=0;i--){
-		if( shpp->si_mach_dim[i] > 1 ) shpp->si_mindim = i;
+	if( BITMAP_SHAPE(shpp) ){
+		for(i=N_DIMENSIONS-1;i>=0;i--){
+			if( shpp->si_type_dim[i] > 1 ) shpp->si_mindim = i;
+		}
+	} else {
+		for(i=N_DIMENSIONS-1;i>=0;i--){
+			if( shpp->si_mach_dim[i] > 1 ) shpp->si_mindim = i;
+		}
 	}
 
 	shpp->si_last_subi = shpp->si_maxdim + 1;
@@ -456,8 +469,8 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 			else	shpp->si_flags |= DT_SCALAR;
 		}
 	} else {
-sprintf(DEFAULT_ERROR_STRING,"setting shape flag bit to 0x%x",shape_flag);
-advise(DEFAULT_ERROR_STRING);
+//sprintf(DEFAULT_ERROR_STRING,"setting shape flag bit to 0x%x",shape_flag);
+//advise(DEFAULT_ERROR_STRING);
 		shpp->si_flags |= shape_flag;
 	}
 

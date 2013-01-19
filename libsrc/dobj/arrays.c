@@ -396,6 +396,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	Node *np;
 	char str[LLEN];	/* BUG how long can this be really? */
 	int i;
+	dimension_t *dim_arr;
 
 	if( dp==NO_OBJ ) return(dp);
 
@@ -407,6 +408,14 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	 * but we use mindim and maxdim to keep track of that...
 	 * As long as the subscript value itself is legal...
 	 */
+
+	/*
+	 * Should the subscripts apply to machine elements or type
+	 * elements?  In order to use curly braces to get the real
+	 * and imaginary parts of a complex number, we use the
+	 * machine elements...  But for bitmaps we want to use the type!
+	 */
+
 	/*
 	if( dp->dt_mach_dim[which_dim] == 1 ){
 		sprintf(error_string,
@@ -427,11 +436,16 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 		return(NO_OBJ);
 	}
 
-	if( index-base_index >= dp->dt_mach_dim[which_dim] ){
+	if( BITMAP_SHAPE(&dp->dt_shape) ){
+		dim_arr = dp->dt_type_dim;
+	} else {
+		dim_arr = dp->dt_mach_dim;
+	}
+	if( index-base_index >= dim_arr[which_dim] ){
 		sprintf(error_string,
 		"%s subscript too large (%u, max %u) for object %s",
 			dimension_name[which_dim],index,
-			dp->dt_mach_dim[which_dim]+base_index-1,dp->dt_name);
+			dim_arr[which_dim]+base_index-1,dp->dt_name);
 		WARN(error_string);
 		return(NO_OBJ);
 	}
@@ -465,27 +479,51 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	newdp->dt_type_dim[which_dim] = 1;
 	newdp->dt_type_inc[which_dim] = 0;
 
-	index -= base_index;
-	index *= dp->dt_mach_inc[which_dim] * ELEMENT_INC_SIZE(dp);
-	newdp->dt_offset = index;		/* offset is in bytes! */
+	index -= base_index;	// Base is 0 for C-style, 1 for fortan, matlab
 
 	if( IS_BITMAP(newdp) ){
-		if( newdp->dt_data != NULL ){
-			newdp->dt_data = ((char *)dp->dt_data) + 4*(index/32);
-			newdp->dt_bit0 += index % 32;
-			if( newdp->dt_bit0 >= 32 ){
-				newdp->dt_bit0 -= 32;
-				newdp->dt_data = ((char *)newdp->dt_data) + 4;
-			}
+		if( which_dim == 1 ){	/* column subscript */
+			ERROR1("SORRY:  don't know how to subscript bitmap column!?");
+		} else if( which_dim > 1 ){	/* subscript bitmap word */
+			index *= dp->dt_mach_inc[which_dim] * ELEMENT_INC_SIZE(dp);
+			newdp->dt_offset = index;	/* offset is in bytes! */
+			if( newdp->dt_data != NULL )
+				newdp->dt_data = ((char *)dp->dt_data) + index;
 		}
+#ifdef CAUTIOUS
+		else if( which_dim == 0 )
+			ERROR1("CAUTIOUS:  can't subscript bitmap components!?");
+#endif /* CAUTIOUS */
+
+
+#ifdef FOOBAR
+		/* BUG - this logic is for all the bits sloshed together;
+		 * But after cuda, we have an integral number of words
+		 * per row...
+		 */
+		newdp->dt_data = ((char *)dp->dt_data)
+			+ BYTES_PER_BITMAP_WORD*(index/BITS_PER_BITMAP_WORD);
+		newdp->dt_bit0 += index % BITS_PER_BITMAP_WORD;
+		if( newdp->dt_bit0 >= BITS_PER_BITMAP_WORD ){
+			newdp->dt_bit0 -= BITS_PER_BITMAP_WORD;
+			newdp->dt_data = ((char *)newdp->dt_data) + BYTES_PER_BITMAP_WORD;
+		}
+#endif /* FOOBAR */
+
+
 	} else {
+		index *= dp->dt_mach_inc[which_dim] * ELEMENT_INC_SIZE(dp);
+		newdp->dt_offset = index;		/* offset is in bytes! */
 		if( newdp->dt_data != NULL )
 			newdp->dt_data = ((char *)dp->dt_data) + newdp->dt_offset;
 	}
 
 	/* dt_n_mach_elts is the total number of component elements */
 	newdp->dt_n_mach_elts /= dp->dt_mach_dim[which_dim];
-	/* dt_n_type_elts is the total number of elements, where a complex number is counted as 1 */
+
+	/* dt_n_type_elts is the total number of elements,
+	 * where a complex number is counted as 1
+	 */
 	newdp->dt_n_type_elts /= dp->dt_type_dim[which_dim];
 
 	if( set_shape_flags(&newdp->dt_shape,newdp,AUTO_SHAPE) < 0 )
@@ -509,6 +547,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	}
 
 	/* now change mindim/maxdim! */
+	/* WHERE IS THIS DONE NOW??? */
 	/*
 	if( subscr_type == SQUARE )
 		newdp->dt_maxdim -- ;
