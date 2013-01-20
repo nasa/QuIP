@@ -394,7 +394,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -962,7 +962,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -2390,7 +2390,6 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Item *szp=NULL,*szp2;
 	index_t index;
-
 	switch(enp->sen_code){
 		case N_STRING:
 			szp = find_sizable( QSP_ARG  enp->sen_string );
@@ -2449,20 +2448,20 @@ static void dump_enode(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 {
 	switch(enp->sen_code){
 		case N_STRING:
-			sprintf(ERROR_STRING,"0x%lx\tstring\t%s",
-				(int_for_addr)enp, enp->sen_string);
+			sprintf(ERROR_STRING,"0x%lx\t%d string\t%s",
+				(int_for_addr)enp, enp->sen_code, enp->sen_string);
 			ADVISE(ERROR_STRING);
 			break;
 
 		case N_SIZABLE:
-			sprintf(ERROR_STRING,"0x%lx\tsizable\t%s",
-				(int_for_addr)enp, enp->sen_string);
+			sprintf(ERROR_STRING,"0x%lx\t%d sizable\t%s",
+				(int_for_addr)enp, enp->sen_code, enp->sen_string);
 			ADVISE(ERROR_STRING);
 			break;
 
 		case N_SIZFUNC:
-			sprintf(ERROR_STRING,"0x%lx\tsizefunc\t%s",
-				(int_for_addr)enp, size_functbl[ enp->sen_index ].fn_name);
+			sprintf(ERROR_STRING,"0x%lx\t%d sizefunc\t%s",
+				(int_for_addr)enp, enp->sen_code, size_functbl[ enp->sen_index ].fn_name);
 			ADVISE(ERROR_STRING);
 			break;
 
@@ -2487,6 +2486,13 @@ static void dump_enode(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 		case N_SUBSCRIPT:
 			sprintf(ERROR_STRING,"0x%lx\tsubscript\t0x%lx\t0x%lx",
 				(int_for_addr)enp, (int_for_addr)enp->sen_child[0],(int_for_addr)enp->sen_child[1]);
+			ADVISE(ERROR_STRING);
+			break;
+
+		case N_CSUBSCRIPT:
+			sprintf(ERROR_STRING,"0x%lx\t%d Csubscript\t0x%lx\t0x%lx",
+				(int_for_addr)enp, enp->sen_code,
+				(int_for_addr)enp->sen_child[0],(int_for_addr)enp->sen_child[1]);
 			ADVISE(ERROR_STRING);
 			break;
 			
@@ -2515,6 +2521,9 @@ static void dump_enode(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			sprintf(ERROR_STRING,"> (GT)");
 			ADVISE(ERROR_STRING);
 			break;
+		/* Comment out the default case for the compiler to
+		 * report unhandled cases from the enumerated type...
+		 */
 		default:
 			sprintf(ERROR_STRING,
 		"%s - %s:  unhandled node code %d",
@@ -2970,6 +2979,8 @@ double parse_number(QSP_ARG_DECL  const char **strptr)
 			if( errno != 0 ){
 				sprintf(ERROR_STRING,"long long conversion error!?  (errno=%d)",errno);
 				WARN(ERROR_STRING);
+				sprintf(ERROR_STRING,"buf = \"%s\"",buf);
+				ADVISE(ERROR_STRING);
 				tell_sys_error("strtoll");
 			}
 			if( ll1 > 0 && ll1 <=0xffffffff ){	/* fits in an unsigned long */

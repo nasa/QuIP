@@ -1150,6 +1150,8 @@ double parse_number(QSP_ARG_DECL  const char **strptr)
 			if( errno != 0 ){
 				sprintf(ERROR_STRING,"long long conversion error!?  (errno=%d)",errno);
 				WARN(ERROR_STRING);
+				sprintf(ERROR_STRING,"buf = \"%s\"",buf);
+				ADVISE(ERROR_STRING);
 				tell_sys_error("strtoll");
 			}
 			if( ll1 > 0 && ll1 <=0xffffffff ){	/* fits in an unsigned long */

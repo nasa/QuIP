@@ -49,6 +49,8 @@ PGRLIB=	../libsrc/ptgrey/libpgr.a
 
 LIBS=	@LIBS@
 
+#quip_LDFLAGS = -rpath /usr/local/cuda/lib
+
 quip_LDADD = $(SOUNDLIB) ../libsrc/nrmenu/libnrmenu.a
 
 if HAVE_NUMREC

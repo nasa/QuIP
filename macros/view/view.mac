@@ -4,6 +4,8 @@
 
 Start_File view.mac
 
+If !var_exists(DISPLAY_DEPTH) "Set DISPLAY_DEPTH 24"
+
 < $macro_dir/view/common.mac
 < $macro_dir/view/luts.mac
 < $macro_dir/view/dither.mac
