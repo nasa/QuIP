@@ -253,6 +253,23 @@ static Data_Obj * finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp, u
 	return dp;
 }
 
+static COMMAND_FUNC( new_gen_obj )
+{
+	Dimension_Set dimset;
+	const char *s;
+	Data_Obj *dp;
+
+	s=NAMEOF("object name");
+
+	dimset.ds_dimension[4]=HOW_MANY("number of sequences");
+	dimset.ds_dimension[3]=HOW_MANY("number of frames");
+	dimset.ds_dimension[2]=HOW_MANY("number of rows");
+	dimset.ds_dimension[1]=HOW_MANY("number of columns");
+	dimset.ds_dimension[0]=HOW_MANY("number of components");
+
+	dp=finish_obj(QSP_ARG  s,&dimset,AUTO_SHAPE);
+}
+
 static COMMAND_FUNC( new_hyperseq )
 {
 	Dimension_Set dimset;
@@ -826,6 +843,7 @@ static COMMAND_FUNC( do_protect )
 
 
 Command cr_ctbl[]={
+{ "object",	new_gen_obj,	"create auto-shaped object"		},
 { "hyperseq",	new_hyperseq,	"create new hyper-sequence"		},
 { "sequence",	new_seq,	"create new sequence"			},
 { "image",	new_frame,	"create new image"			},

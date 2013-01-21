@@ -254,15 +254,15 @@ Dup_Sequence $1 $2 double
 .
 
 Define Dup_Float 2 'new name' prototype
-Dup_Sequence $1 $2 float
+Dup_Obj_With_Prec $1 $2 float
 .
 
 Define Dup_Byte 2 'name for byte image' prototype
-Dup_Sequence $1 $2 byte
+Dup_Obj_With_Prec $1 $2 byte
 .
 
 Define Dup_UByte 2 'name for byte image' prototype
-Dup_Sequence $1 $2 u_byte
+Dup_Obj_With_Prec $1 $2 u_byte
 .
 
 Define Dup_If 2 newname proto
@@ -276,14 +276,20 @@ data precision $2 $1 quit
 Define Dup_Obj 2 'new name' prototype
 data
   precision $2 dup_prec
-  hyperseq $1
+  quit
+Dup_Obj_With_Prec $1 $2 $dup_prec
+.
+
+Define Dup_Obj_With_Prec 3 'new name' prototype precision
+data
+  object $1
 	"nseqs('$2')" "nframes('$2')"
-	"nrows('$2')" "ncols('$2')" "depth('$2')" $dup_prec
-	quit
+	"nrows('$2')" "ncols('$2')" "depth('$2')" $3
+  quit
 .
 
 Define Dup_Image 3 'new name' prototype precision
-Dup_Sequence $1 $2 $3
+Dup_Obj_With_Prec $1 $2 $3
 .
 
 # We do this for cuda, but it's only appropriate for a data_object,
