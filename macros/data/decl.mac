@@ -165,19 +165,23 @@ data image $1 $ysize $xsize 3 float quit
 
 # new version with even # of words per line
 Define Bit_Image 1 'name for bitmap image'
-If "($xsize%32)!=0"
-  "warn 'Image width $xsize not a multiple of 32 for bit image!?'"
+
+# Now we handle extra columns OK
+#If "($xsize%32)!=0"
+#  "warn 'Image width $xsize not a multiple of 32 for bit image!?'"
+
 # now we have a bit type
 #Image $1 $ysize floor(($xsize+31)/32) 1 long
+
 Image $1 $ysize $xsize 1 bit
 .
 
-Define Short_Image 1 'name for long image'
+Define Short_Image 1 'name for short image'
 data image $1 $ysize $xsize 1 short quit
 .
 
 Define Long_Image 1 'name for long image'
-data image $1 $ysize $xsize 1 long quit
+data image $1 $ysize $xsize 1 int32 quit
 .
 
 Define Double_Image 1 'name for double image'
@@ -241,12 +245,12 @@ Define Dup_Bit 2 'name for bitmap image' prototype
 Dup_Sequence $1 $2 bit
 .
 
-Define Dup_Long 2 'name for long image' prototype
-Dup_Sequence $1 $2 long
+Define Dup_Long 2 'name for int32 image' prototype
+Dup_Sequence $1 $2 int32
 .
 
-Define Dup_ULong 2 'name for long image' prototype
-Dup_Sequence $1 $2 u_long
+Define Dup_ULong 2 'name for uint32 image' prototype
+Dup_Sequence $1 $2 uint32
 .
 
 Define Dup_Double 2 'name for double image' prototype

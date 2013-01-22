@@ -888,14 +888,15 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 
 	/* We don't need to be mapped to display (although nothing will
 	 * happen at all if we're not mapped).
-	 * In this case, however, if the window is not mapped we will bomb out of X
-	 * with an error in XGetImage.
+	 * In this case, however, if the window is not mapped
+	 * we will bomb out of X with an error in XGetImage.
 	 *
 	 * We also bomb out if any part of the window that we are trying to
 	 * extract falls off the edge of the screen...  We need to check this,
 	 * but how do we find out the width of the window border?
 	 */
 
+	/* wait_for_mapped seems not to work on Mac OS X !? */
 	wait_for_mapped(QSP_ARG  vp,1/* this arg is not currently used!? */ );
 
 	/* Now make sure that the target image is appropriate for this depth */

@@ -104,6 +104,7 @@ view
   show $1
   quit
 Init_New_Plotter $1
+Set_Button_Actions $1 LClick MClick RClick
 .
 
 # We store the plotting space parameters in a structure
@@ -923,9 +924,17 @@ view
   quit
 .
 
+
+# in the supporting C code for extract, we call a subroutine
+# called wait_until_mapped (or something like that), which seems
+# to work as expected on linux but not on Mac OS X...  So as a
+# hack we have put in a 100 msec delay here...
+
 Define Get_Legend_Image 1 string
 If $plot_foreground>=0 "Select_Pen $plot_foreground"
 Image save_buf nrows($the_plotter) ncols($the_plotter) depth('$DISPLAY')/8 u_byte
+usleep 100000
+
 view
   # Don't erase before saving!!!
   #draw $the_plotter clear quit	# doesn't erase list?  Yes it does!!!
@@ -967,6 +976,11 @@ Delete_Image legend_strip
 # we save the contents of the window, draw the Y_Legend horizontally,
 # read it in, rotate it 90 degrees in memory, restore the original
 # window contents, then insert the legend - whew!
+#
+# If the window is not mapped, it is not an error to draw to it,
+# but we get an Xlib error if we try to read back image data from
+# it.  We seemed to have solved this on linux with a function is_mapped,
+# but on Mac OS X this doesn't seem to be working!?
 
 Define Y_Legend 1 string
 Get_Legend_Image $1
