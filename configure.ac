@@ -350,6 +350,11 @@ AC_ARG_ENABLE([use_tty_ctl],
 	[AS_HELP_STRING([--disable-tty-ctl],[disable low level tty control @<:@default: no@:>@])],
 	[ use_tty_ctl=${enableval}], [use_tty_ctl=yes])
 
+# Enable script interrupt handler by default:
+AC_ARG_ENABLE([use_my_intr],
+	[AS_HELP_STRING([--disable-my-intr],[disable scriptable interrupt handler @<:@default: no@:>@])],
+	[ use_my_intr=${enableval}], [use_my_intr=yes])
+
 # Enable viewers by default:
 AC_ARG_ENABLE([use_viewers],
 	[AS_HELP_STRING([--disable-viewers],[disable graphical viewing window support @<:@default: no@:>@])],
@@ -993,6 +998,10 @@ fi
 
 if test "x${use_tty_ctl}" = xyes; then
   AC_DEFINE([TTY_CTL], 1, [low-level tty control enabled])
+fi
+
+if test "x${use_my_intr}" = xyes; then
+  AC_DEFINE([MY_INTR], 1, [scriptable interrupt handler enabled])
 fi
 
 if test "x${use_viewers}" = xyes; then
