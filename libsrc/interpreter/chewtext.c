@@ -96,6 +96,7 @@ void chew_text(QSP_ARG_DECL  const char *text)
 				ERROR1("couldn't make chew list");
 #endif /* CAUTIOUS */
 		}
+		// Is this thread-safe?
 		addTail(CHEW_LIST,np);
 	} else swallow(QSP_ARG  text);
 }

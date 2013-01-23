@@ -19,5 +19,11 @@ variables
 compute control n_processors 1 quit quit
 max_warnings 200
 
+# This is the default action, but if we let the OS do its default
+# then the program exits with a non-zero error code, which causes
+# Automator (Mac OS X) to put up an alert...
+
+os interrupt_action exit quit
+
 Stop_File .quip
 

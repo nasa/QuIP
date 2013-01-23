@@ -116,7 +116,8 @@ void my_onintr(int asig /* what is this arg??? */)
 {
 	if( *intr_str == 0 ) nice_exit(0);
 
-	while( cmd_depth(SGL_DEFAULT_QSP_ARG) > MIN_CMD_DEPTH ) popcmd(SGL_DEFAULT_QSP_ARG);
+	/* Don't pop the stack - just push the top menu! */
+	//while( cmd_depth(SGL_DEFAULT_QSP_ARG) > MIN_CMD_DEPTH ) popcmd(SGL_DEFAULT_QSP_ARG);
 
 #ifdef DEBUG
 if( debug & bi_debug ){
@@ -125,8 +126,12 @@ advise(DEFAULT_ERROR_STRING);
 }
 #endif /* DEBUG */
 
-	push_input_file(DEFAULT_QSP_ARG  "intr_handler");
-	pushtext(DEFAULT_QSP_ARG  intr_str);
+	//push_input_file(DEFAULT_QSP_ARG  "intr_handler");
+	//pushtext(DEFAULT_QSP_ARG  intr_str);
+
+	// Use the digest function - it would be nice to have another arg to pass the filename...
+	digest(DEFAULT_QSP_ARG  intr_str);
+
 	default_qsp->qs_flags &= ~QS_HAD_INTR;	/* clear flag */
 }
 
