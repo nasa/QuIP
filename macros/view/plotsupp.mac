@@ -97,11 +97,14 @@ Define Use_Viewer_As_Plotter 1 name
 Init_New_Plotter $1
 .
 
+Set exit_on_plotter_click 1
+
 Define Plotter_Click 0
 If $left_button_down exit_macro
 If $middle_button_down exit_macro
 If $right_button_down exit_macro
-exit
+If $exit_on_plotter_click exit
+Set clicked 1
 .
 
 Define New_Plotter 3 name dx dy
