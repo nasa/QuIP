@@ -5,8 +5,6 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#define MY_INTR	1	// a kludge...
-
 /* When we used CVS (and before that SCCS) to manage
  * the source code, strings like the following held the version
  * data.  But now that we are using git, there are no longer
