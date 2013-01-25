@@ -27,9 +27,9 @@ Set pausing 0
 
 # Open movie file
 Filetype jpeg
-advise 'Reading file $jpeg_file'
+advise "Reading file $jpeg_file"
 Read_File_Header $jpeg_file
-advise 'DONE reading file $jpeg_file'
+advise "DONE reading file $jpeg_file"
 
 Assign w	ncols('$jpeg_file')
 Assign h	nrows('$jpeg_file')
