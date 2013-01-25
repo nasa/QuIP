@@ -241,6 +241,17 @@ view loop quit
 Tell_If 'Init_6_Plotters DONE'
 .
 
+# This macro is for saving plots for a paper figure...
+
+Define Save_All_Windows 0
+Clobber yes
+Save_Plot $HOME/eyepos.png v1
+Save_Plot $HOME/eyevel.png v2
+Save_Plot $HOME/saccades.png v3
+Save_Plot $HOME/smoothvel.png v4
+Save_Plot $HOME/xcorr_1.png v5
+Save_Plot $HOME/xcorr_avg.png v6
+.
 
 Define Init_5_Plotters 0
 Init_Plot_Params
