@@ -9,6 +9,8 @@ macros_DATA	=	Xgraph.scr		\
 			gendata.scr		\
 			genview.scr		\
 			generic.scr		\
+			get_time.scr		\
+			show_alert.scr		\
 			mon_ptz.scr		\
 			mon_cam.scr		\
 			ctrack.scr		\

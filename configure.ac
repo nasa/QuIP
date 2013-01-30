@@ -33,6 +33,9 @@ AC_CHECK_FILE([/usr/local/cuda/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/cuda/i
 # versions on different systems, this can be problematic.
 # The solution here is to put a symbolic link in /usr/local/cuda.
 
+# On the mac, it is installed in /Developer/GPU Computing
+# We need to make a link to /usr/local/cuda/NVIDIA_GPU_Computing_SDK
+
 
 AC_CHECK_FILE([/usr/local/cuda/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="/usr/local/cuda/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
 if test "x${gpu_sdk_dir}" = xno; then

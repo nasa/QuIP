@@ -585,11 +585,15 @@ static void get_scratch_for(Data_Obj *dp)
 	/* BUG this function is gone in cuda 4.2,
 	 * Not sure when it went away...
 	 */
+#ifdef FOOBAR
 #if NPP_VERSION <= NPP_VERSION_CODE(4,0,17)
 	s = nppsReductionGetBufferSize_32f( len, &buf_size );
 #else	/* newer version of NPP */
 	s = nppsSumGetBufferSize_32f( len, &buf_size );
 #endif	/* newer version of NPP */
+#endif /* FOOBAR */
+/* not working on mac cuda 4.2, fix later... */
+	s = nppsSumGetBufferSize_32f( len, &buf_size );
 
 	REPORT_NPP_STATUS("do_npp_vadd","nppsReductionGetBufferSize_32f")
 
