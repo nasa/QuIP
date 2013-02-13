@@ -582,18 +582,19 @@ static void get_scratch_for(Data_Obj *dp)
 	}
 
 	len = dp->dt_n_type_elts;
+
 	/* BUG this function is gone in cuda 4.2,
 	 * Not sure when it went away...
+	 * npp 4.0.17 is the version on euler, which should be a 4.2 installation!?...
 	 */
-#ifdef FOOBAR
 #if NPP_VERSION <= NPP_VERSION_CODE(4,0,17)
 	s = nppsReductionGetBufferSize_32f( len, &buf_size );
 #else	/* newer version of NPP */
 	s = nppsSumGetBufferSize_32f( len, &buf_size );
 #endif	/* newer version of NPP */
-#endif /* FOOBAR */
 /* not working on mac cuda 4.2, fix later... */
-	s = nppsSumGetBufferSize_32f( len, &buf_size );
+	//s = nppsSumGetBufferSize_32f( len, &buf_size );
+	// hack doesn't work on euler, although that should be 4.2 also!?
 
 	REPORT_NPP_STATUS("do_npp_vadd","nppsReductionGetBufferSize_32f")
 

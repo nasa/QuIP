@@ -108,6 +108,9 @@ VSMul $2 $1 1/$n_in_avg
 # Process_Trial
 #
 # We call this after we have successfully read in a single record
+#
+# variables ev and sv (eyevel, stimvel) determine which variables are correlated
+# For saccade analysis, we use position error as the input...
 
 Define Process_Trial 0
 #Set stim_desc_str "stim $type $hz $signal_index"
@@ -451,8 +454,10 @@ Delete_Image tmp3
 .
 
 Set bad_record 0	# default
+Set analyse_saccades 0	# default
 
 Define Do_One 1 signal_index
+advise 'Do_One BEGIN'
 Set signal_index $1
 Set param_string "$RUN_STEM.signal$1"
 Read_Record $param_string
@@ -463,14 +468,19 @@ If $rotating Rotate_Signals
 Trace_If eye_pos{0} eye_pos{1} v1 "positions, trial $1" 1 Posn_Axes $color1
 Trace_If stimpos{0} stimpos{1} v1 "positions, trial $1" 0 Null_Axes $color2
 User_Notify 'record read, stimulus loaded'
+advise 'record read, stimulus loaded'
+Print have_record
+If !$have_record exit_macro
 
-If $have_record Process_Record	# differentiate etc
+Process_Record	# differentiate etc
 
-If $have_record Process_Trace		# remove saccades
-#If $have_record S_Process_Trace		# DON'T remove saccades
+If $analyse_saccades
+  Then S_Process_Trace		# DON'T remove saccades
+  Else Process_Trace		# remove saccades
 
-If $have_record Process_Trial		# correlate stimvel w/ eyevel
-#If $have_record S2_Process_Trial		# correlate saccades w/ stim
+If $analyse_saccades
+  Then S2_Process_Trial		# correlate saccades w/ posn_err
+  Else Process_Trial		# correlate stimvel w/ eyevel
 
 If obj_exists(eye_data) "Delete_Image eye_data"
 .
