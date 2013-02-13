@@ -25,6 +25,7 @@ macros_DATA	=	3d.mac			\
 			rdp.mac			\
 			rotimg.mac		\
 			sph.mac			\
+			threshold.mac		\
 			trough.mac		\
 			xfcoords.mac
 

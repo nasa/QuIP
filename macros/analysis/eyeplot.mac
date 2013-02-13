@@ -100,7 +100,7 @@ Assign plot_xos 20/$hzfactor
 #Assign plot_height $zfactor*200	# pixel height of trace windows
 view quit				# make sure Xlib is initialized
 Assign plot_height floor((nrows('$DISPLAY')-$text_reserve)/3)-$plot_v_gap
-Print plot_height
+#Print plot_height
 
 # These parameters should perhaps have their names changed
 # to make it clear that they are plot params and not processing params...

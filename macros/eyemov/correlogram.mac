@@ -459,7 +459,7 @@ Read_Record $param_string
 If $bad_record "advise 'Skipping signal $signal_index due to bad data' exit_macro"
 Load_Stimulus $param_string
 If $rotating Rotate_Signals
-Info eye_pos
+#Info eye_pos
 Trace_If eye_pos{0} eye_pos{1} v1 "positions, trial $1" 1 Posn_Axes $color1
 Trace_If stimpos{0} stimpos{1} v1 "positions, trial $1" 0 Null_Axes $color2
 User_Notify 'record read, stimulus loaded'
