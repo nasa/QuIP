@@ -1,0 +1,7 @@
+
+On mac, need to make symlink for /Developer/...  NVIDIA_GPU_Computing_SDK
+
+and
+
+libGLEW.1.5.1.dylib to /opt/ ...
+

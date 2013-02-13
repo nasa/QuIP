@@ -10,19 +10,22 @@ If "!exists('$calfile')"
   Else "Load_Affine_Params $calfile Set have_cal 1 Set which_cal '$1'"
 .
 
-Define Get_Stim_Filename 1 paramstr
-advise Get_Stim_Filename
-Tell_If "paramstr = $1"
-# assume  variable $signal_index has it
-If "strcmp('$1','$RUN_STEM.signal$signal_index')"
-  "warn 'unexpected paramstr $1, signal $signal_index'"
-Set_LP_Sigma
-Set stim_dir $DATA_DIR/signals/$RUN_STEM
-Set stim_stem sxy$EYE_CAMERA_INDEX
-Set stim_filename "$stim_dir/${stim_stem}_${signal_set}t$signal_index.asc"
-Print_If stim_filename
-Pause_If
-.
+# This is older - for which experiments???
+# We comment this out because this needs to be experiment-specific...
+
+#Define Get_Stim_Filename 1 paramstr
+#advise Get_Stim_Filename
+#Tell_If "paramstr = $1"
+## assume  variable $signal_index has it
+#If "strcmp('$1','$RUN_STEM.signal$signal_index')"
+#  "warn 'unexpected paramstr $1, signal $signal_index'"
+#Set_LP_Sigma
+#Set stim_dir $DATA_DIR/signals/$RUN_STEM
+#Set stim_stem sxy$EYE_CAMERA_INDEX
+#Set stim_filename "$stim_dir/${stim_stem}_${signal_set}t$signal_index.asc"
+#Print_If stim_filename
+#Pause_If
+#.
 
 # get autocorrelation of stimulus
 Define AutoCorr 2 destination signal
@@ -446,6 +449,8 @@ Delete_Image tmp
 Delete_Image tmp2
 Delete_Image tmp3
 .
+
+Set bad_record 0	# default
 
 Define Do_One 1 signal_index
 Set signal_index $1

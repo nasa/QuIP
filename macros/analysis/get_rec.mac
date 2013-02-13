@@ -24,7 +24,7 @@ Read_Data_With_Corr $scrdir/retdata
 #Set dm_string "x8-x10 x9-x11 1"			# this string uses CR-p4
 Set dm_string "x6 x7 1"					# this string uses pupil?
 Print_If dm_string
-Tell_If "Default dm_string set to \\'$dm_string\\'"
+Tell_If "Default dm_string set to \\\\'$dm_string\\\\'"
 
 Define Get_Pupil_Data 1 filename
 advise "grep FRAME $rawdir/$1 | dm $dm_string | tail -$dlen > $scrdir/retdata"
@@ -63,6 +63,7 @@ VMov eye_pos{0} record{0}
 VMov eye_pos{1} record{1}
 
 Get_Stim_Filename $1
+advise "Get_Record getting stimpos..."
 Tell_If "Get_Ascii stimpos $stim_filename"
 Info stimpos
 Get_Ascii stimpos $stim_filename
@@ -91,7 +92,8 @@ If $plotting Plot_Scan
 User_Notify "Record $1 read in"
 .
 
-# Load_Stimulus
+# Load_Stimulus is the one that is used in ../eyemov/correlogram.mac
+# But this should be experiment-dependent...
 
 Define Load_Stimulus 1 paramstr
 
@@ -179,7 +181,7 @@ VVMul record{0} record{0} blink
 VVMul record{1} record{1} blink
 .
 
-# Read_Stimulus
+# Read_Stimulus does not appear to be used...
 
 Define Read_Stimulus 1 param_string
 

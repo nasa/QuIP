@@ -313,6 +313,12 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 
+#ifdef CAUTIOUS
+	if( n_devs < 0 ){
+		ERROR1("CAUTIOUS:  CUDA device count less than 0!?");
+	}
+#endif /* CAUTIOUS */
+
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d cuda devices found...",n_devs);
 		advise(ERROR_STRING);

@@ -19,12 +19,12 @@ If $asciidump "Do_Ascii $1 $2"
 .
 
 Define Save_Correlogram 2 object filename
-advise "Save_Correlogram $1 $2"
+#advise "Save_Correlogram $1 $2"
 Insure_Directory $DATA_DIR/correlograms/$RUN_STEM
 Set cdir $DATA_DIR/correlograms/$RUN_STEM/$RUN_STEM.$EYE_CAMERA_INDEX
 Insure_Directory $cdir
 Put_Ascii $1 $cdir/$2
-advise "Save_Correlogram DONE"
+#advise "Save_Correlogram DONE"
 .
 
 Define Plot_If 1 plotcmd
@@ -358,7 +358,6 @@ Trace_If eye_vel{0} eye_vel{1} v6 'velocities' 1 Velocity_Axes $color1
 Set n_filters 128
 
 Define Declare_Vectors 1 length
-advise "Declare_Vectors $1 BEGIN"
 data
 #  vector affpar 6 1 float		# parameters for affine xform
   vector corr_record $1 3 float
@@ -559,7 +558,7 @@ Tell_If 'starting Interpolate_Saccades'
 Dup_Float is_vel eye_vel{0}
 
 VSet is_vel 0.0
-advise "VInterp is_vel eye_vel{0} fsacc"
+#advise "VInterp is_vel eye_vel{0} fsacc"
 #Pause
 VInterp is_vel eye_vel{0} fsacc
 VMov eye_vel{0} is_vel
@@ -1049,7 +1048,7 @@ VSet rs_tmp 0.0
 #Pause
 VInterp rs_tmp $1 fsacc
 VMov $1 rs_tmp
-advise "VInterp rs_tmp $1 fsacc DONE"
+#advise "VInterp rs_tmp $1 fsacc DONE"
 
 VSet rs_tmp 0.0
 #advise "VInterp rs_tmp $2 fsacc"

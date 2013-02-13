@@ -6,7 +6,7 @@ Define Insure_Directory 1 name
 If "!file_exists('$1')"
   "advise 'creating subdirectory \"$1\"' system 'mkdir $1'"
 If "!file_exists('$1')"
-  "warn 'Couldn\\'t create subdirectory \"$1\"' TopMenu quit"
+  "warn 'Couldn\\\\'t create subdirectory \"$1\"' TopMenu quit"
 .
 
 Define Insure_Public_Directory 1 name

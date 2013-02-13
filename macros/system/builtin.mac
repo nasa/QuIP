@@ -61,6 +61,7 @@ If $pausing Pause
 Set chatty 0
 
 Define Tell_If 1 string
+# Problems if the argument has single quotes in it...
 If $verbose||$chatty "advise '$1'"
 .
 
