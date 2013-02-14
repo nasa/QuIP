@@ -12,7 +12,7 @@ Set clip_velocity	100
 Set clip_acceleration	500
 
 Define Process_Record 0
-advise 'Process_Record BEGIN'
+Tell_If 'Process_Record BEGIN'
 
 # now compute position error
 Tell_If 'computing position error'

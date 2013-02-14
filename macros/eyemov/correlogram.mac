@@ -313,22 +313,33 @@ Define Set_Done 0
 # Set pausing 1
 # Trace_If a2x a2y $accv 'Final averages' 1 XCorr_Axes $color1
 
-Push_Var asciidump
+#Push_Var asciidump
 #Set asciidump 1
 #If_Ascii a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
 #If_Ascii a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
 #Pop_Var asciidump
 
+# This stuff now handled by Save_Pair
+##Save_Correlogram a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+##Save_Correlogram a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#advise "Save_Correlogram a2x x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
 #Save_Correlogram a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#advise "Save_Correlogram a2y y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
 #Save_Correlogram a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
-advise "Save_Correlogram a2x x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
-Save_Correlogram a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
-advise "Save_Correlogram a2y y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
-Save_Correlogram a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+
+Save_Pair x_axcor y_axcor a2x a2y
+
 
 # If $scanning Dump_Scan_Data
 # Pop_Var plotting
 # Pop_Var pausing
+.
+
+Define Save_Pair 4 xstem ystem xobj yobj
+Tell_If "Save_Correlogram $3 $1.$RUN_STEM.$EYE_CAMERA_INDEX"
+Save_Correlogram $3 "$1.$RUN_STEM.$EYE_CAMERA_INDEX"
+Tell_If "Save_Correlogram $4 $2.$RUN_STEM.$EYE_CAMERA_INDEX"
+Save_Correlogram $4 "$2.$RUN_STEM.$EYE_CAMERA_INDEX"
 .
 
 Define Get_Trial_Start 1 signal_index
@@ -457,7 +468,7 @@ Set bad_record 0	# default
 Set analyse_saccades 0	# default
 
 Define Do_One 1 signal_index
-advise 'Do_One BEGIN'
+Tell_If 'Do_One BEGIN'
 Set signal_index $1
 Set param_string "$RUN_STEM.signal$1"
 Read_Record $param_string
@@ -468,8 +479,6 @@ If $rotating Rotate_Signals
 Trace_If eye_pos{0} eye_pos{1} v1 "positions, trial $1" 1 Posn_Axes $color1
 Trace_If stimpos{0} stimpos{1} v1 "positions, trial $1" 0 Null_Axes $color2
 User_Notify 'record read, stimulus loaded'
-advise 'record read, stimulus loaded'
-Print have_record
 If !$have_record exit_macro
 
 Process_Record	# differentiate etc
@@ -477,6 +486,8 @@ Process_Record	# differentiate etc
 If $analyse_saccades
   Then S_Process_Trace		# DON'T remove saccades
   Else Process_Trace		# remove saccades
+
+If !$have_record exit_macro	# no saccades in saccade analysis?
 
 If $analyse_saccades
   Then S2_Process_Trial		# correlate saccades w/ posn_err

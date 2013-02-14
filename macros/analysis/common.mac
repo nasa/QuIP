@@ -913,6 +913,9 @@ Define S_Process_Trace 0
 User_Notify 'Ready to process saccades'
 Proc_Saccades
 
+# If there are NO saccades, then we should bail...
+If $n_sacc==0 "Set have_record 0 exit_macro"
+
 # fsacc is the inverse ("valid") signal ?
 
 #VVMul fsacc fsacc blink		# remove blinks as well as saccades
