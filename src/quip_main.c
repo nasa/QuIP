@@ -45,6 +45,15 @@ static COMMAND_FUNC(soundmenu)
 
 #endif /* ! STEPIT */
 
+#ifndef HAVE_CUDA
+static COMMAND_FUNC( no_cuda_menu )
+{
+	WARN("Program not compiled with CUDA support!?");
+	nice_exit(1);
+}
+#endif /* ! HAVE_CUDA */
+
+
 Command quip_ctbl[]={
 { "data",	datamenu,	"create and examine data objects"	},
 { "expressions",do_exprs,	"vector expression submenu"		},
@@ -120,6 +129,8 @@ Command quip_ctbl[]={
 
 #ifdef HAVE_CUDA
 { "cuda",	cuda_menu,	"nVidia CUDA submenu"			},
+#else
+{ "cuda",	no_cuda_menu,	"nVidia CUDA submenu"			},
 #endif
 
 #ifdef HAVE_LIBDV

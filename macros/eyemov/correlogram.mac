@@ -171,7 +171,9 @@ Pause_If
 
 Define S2_Process_Trial 0
 Set ev eye_vel		# saccade velocity
-Set sv posn_err
+If $use_center
+  Then "Set sv eye_pos"
+  Else "Set sv posn_err"
 
 Set xev $ev{0}
 Set yev $ev{1}
@@ -466,6 +468,17 @@ Delete_Image tmp3
 
 Set bad_record 0	# default
 Set analyse_saccades 0	# default
+			# If set, different macros are called
+			# which correlate position error against
+			# saccade velocity...
+Set use_center 0	# default
+			# If set, correlate saccades with deviation
+			# from center position (0,0), instead of
+			# target position error.  This is in fact
+			# just the eye position - rather, the negative
+			# of it.  But if we use the eye position, then
+			# like the saccade correlogram we would expect
+			# negative correlations for centering...
 
 Define Do_One 1 signal_index
 Tell_If 'Do_One BEGIN'

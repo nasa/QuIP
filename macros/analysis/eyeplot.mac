@@ -706,6 +706,16 @@ $6 $3		# call the context-specific axes function
 
 Overlay_Plot $3 $1 $2 $7
 Pause_If
+
+If var_exists(SAVE_TRACES) "Save_Traces $1 $2"
+.
+
+Set i_saved_trace 1
+Define Save_Traces 2 sig1 sig2
+Put_Ascii $1 /tmp/saved_trace.$i_saved_trace.asc
+Increment i_saved_trace
+Put_Ascii $2 /tmp/saved_trace.$i_saved_trace.asc
+Increment i_saved_trace
 .
 
 # version of Trace_If, which uses vector instead of constant for color

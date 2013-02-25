@@ -452,6 +452,7 @@ AC_SEARCH_LIBS([cos],[m],[have_math=yes],[have_math=no])
 AC_SEARCH_LIBS([cosf],[m],[have_fmath=yes],[have_fmath=no])
 AC_SEARCH_LIBS([cosl],[m],[have_lmath=yes],[have_lmath=no])
 AC_SEARCH_LIBS([round],[m],[have_round=yes],[have_round=no])
+AC_SEARCH_LIBS([erf],[m],[have_erf=yes],[have_erf=no])
 
 # should always have this on unix, but not on iOS?
 have_stat=no
@@ -1111,6 +1112,10 @@ fi
 
 if test "x${have_round}" = xyes; then
   AC_DEFINE([HAVE_ROUND], 1, [library implementation of round() available])
+fi
+
+if test "x${have_erf}" = xyes; then
+  AC_DEFINE([HAVE_ERF], 1, [library implementation of erf() available])
 fi
 
 if test "x${have_xext}" = xyes; then

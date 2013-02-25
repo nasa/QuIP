@@ -29,6 +29,7 @@ Tell_If "After adjustment, mantissa = $grr_mantissa   exp = $grr_exponent"
 # Now make sure that the limits are multiples of this...
 Assign chunk $grr_mantissa*exp(log(10)*$grr_exponent)
 #Print chunk
+If $chunk==0 exit_macro
 
 Assign new_min $chunk*floor($$1/$chunk)
 Assign new_max $chunk*ceil($$2/$chunk)

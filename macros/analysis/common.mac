@@ -74,6 +74,7 @@ Select xbitmap sacc one zero		# 1's where threshold is exceeded
 .
 
 # grow saccades a little
+
 Define Filt_Saccades 0
 If !$boxcar_inited 'warn "Need to call Boxcar_Init"'
 Boxcar fsacc sacc
@@ -124,6 +125,8 @@ Assign ymean value(vsum)
 Print ymean
 .
 
+Set tabulating 0
+
 Define Proc_Saccades 0
 Tell_If Find_Saccades
 Find_Saccades
@@ -134,13 +137,16 @@ Tell_If "Proc_Saccades:  plotting saccades and saccade mask"
 #Trace_If sacc fsacc $scdv 'saccade mask' 1 Saccade_Axes $color1
 Trace_If sacc fsacc v3 'saccade mask' 1 Saccade_Axes $color1
 Count_Saccades fsacc
+If $tabulating Tabulate_Saccades
 .
 
-# Count_Saccades assumes it has been passed the valid mask, so that saccades
-# are represented as negative pulses...
+# Count_Saccades assumes it has been passed the valid mask,
+# so that saccades # are represented as negative pulses...
+#
+# To make a histogram of saccade vectors, can we use this?
 
 Define Count_Saccades 1 signal
-Dup_Float count_buf $1
+Dup_Float count_buf $1		# usually fsacc...
 VMov count_buf $1
 Scalar min_index 1 int32
 Set n_sacc 0
@@ -159,9 +165,13 @@ Delete_Image min_index
 Delete_Image count_buf
 .
 
+# Remove a down-going pulse of 0's (by replacing with 1's)
+# starting at the given index.
+# We shouldn't have to look back, because Min_Index
+# should return the first occurrence
+
 Define Remove_Minimum 2 vector index
 Assign i $2
-# We shouldn't have to look back, since Min_Index should return the first occurrence
 do
   Assign v value($1[$i])
   If $v==0 "VSet $1[$i] 1 Increment i"
@@ -1034,6 +1044,55 @@ Show_Accum $1
 User_Notify "Accumulators for stim type $1"
 .
 
+# 10 degree field, assume range of +- 5 deg, with 1 minute bins
+Set sacc_hist_size 601
+
+Define Declare_Saccade_Histogram 0
+Image sacc_hist $sacc_hist_size $sacc_hist_size 1 uint32
+VSet sacc_hist 0
+.
+
+Define Tabulate_One 1 index
+Assign pre_index 1+$1
+If $pre_index<0 exit_macro	# shouldn't happen
+Assign x_start value(eye_pos[$pre_index]{0})
+Assign y_start value(eye_pos[$pre_index]{1})
+Assign post_index $1
+do
+  Increment post_index
+  Assign v value(fsacc[$post_index])
+  while $v==0&&$post_index<(ncols(fsacc)-1)
+If $v==0 exit_macro	# shouldn't happen
+Assign x_stop value(eye_pos[$post_index]{0})
+Assign y_stop value(eye_pos[$post_index]{1})
+Assign dx $x_stop-$x_start
+Assign dy $y_stop-$y_start
+Assign i_dx round(floor($sacc_hist_size/2)+$dx*60)
+Assign i_dy round(floor($sacc_hist_size/2)+$dy*60)
+If $i_dx>=0&&$i_dy>=0&&$i_dx<$sacc_hist_size&&$i_dy<$sacc_hist_size
+  "VSAdd sacc_hist[$i_dy][$i_dx] sacc_hist[$i_dy][$i_dx] 1"
+.
+
+# Tabulate_Saccades computes a histogram of saccade vectors.
+# For now, we don't bother averaging endpoints...
+
+Define Tabulate_Saccades 0
+If !obj_exists(sacc_hist) Declare_Saccade_Histogram
+Dup_Float ts_tmp fsacc
+VMov ts_tmp fsacc
+# like Count_Saccades...
+Scalar min_index 1 int32
+do
+  Min_Index min_index ts_tmp
+  Assign mi value(min_index)
+  Assign mv value(ts_tmp[$mi])
+  If $mv==0 "Tabulate_One $mi Remove_Minimum ts_tmp $mi"
+  while $mv==0
+Delete_Image min_index
+Delete_Image ts_tmp
+# Should we save this?  Not here, this is the per-trial function.
+.
+
 # used to be in rem2.mac
 
 # remove the saccades from the velocity signal by stitching
@@ -1042,6 +1101,10 @@ User_Notify "Accumulators for stim type $1"
 # while "interpolation" leaves things at the correct time,
 # but when saccades occur, the data in the saccade interval
 # is replaced by interpolated data
+#
+# The controll signal is fsacc (filtered saccades)
+# The interpolation routine is hard-coded, and uses
+# a small number of samples to get the endpoint values.
 
 Define Remove_Saccades 2 x y
 Dup_Float rs_tmp $1
