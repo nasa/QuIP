@@ -43,8 +43,11 @@ Differentiate dcorr correlation
 Threshold tblink dcorr $blink_threshold2
 # now find everywhere that the signal is zero
 VSMul tblink tblink -1
+advise 'calling Find_Max_Sample tblink'
 Find_Max_Sample tblink
-If $mxv==(-1) "PopFile 2"	# return if no blinks
+advise 'back from Find_Max_Sample tblink'
+If $mxv==(-1) "advise 'No blinks' exit_macro"	# return if no blinks
+Print mxx
 Assign lowcorr value(correlation[$mxx])
 Tell_If "first blink is at time sample $mxx, value $lowcorr"
 Assign hicorr value(correlation[$mxx-1])
@@ -71,14 +74,17 @@ Trace_If correlation blink $icv 'image correlation, blink' 1 ICorr_Axes $color1
 
 Define Find_Max_Sample 1 input
 # find location of the maximum
-Vector fms_indices 100 1 long
+Vector fms_indices 100 1 int32
 Std_Scalar fms_maxval
-Scalar fms_maxtimes 1 long
+Scalar fms_maxtimes 1 int32
 Max_Times fms_indices $1 fms_maxval fms_maxtimes
 Assign mxv value(fms_maxval)
 Assign mxt value(fms_maxtimes)
-Assign mxi value(fms_indices[0])-1
+# No more fortran-isms...
+#Assign mxi value(fms_indices[0])-1
+Assign mxi value(fms_indices[0])
 Assign mxx "($mxi)%(ncols($1))"
+advise "Find_Max_Sample $1:  mxv = $mxv, mxt = $mxt, mxi = $mxi, mxx = $mxx"
 Delete_Image fms_indices
 Delete_Image fms_maxval
 Delete_Image fms_maxtimes

@@ -744,6 +744,7 @@ AC_CONFIG_FILES([Makefile
                  macros/ctrack/Makefile
                  macros/em_exp/Makefile
                  macros/eyemov/Makefile
+                 macros/postproc/Makefile
                  macros/analysis/Makefile
                  macros/movie/Makefile
                  doc/Makefile

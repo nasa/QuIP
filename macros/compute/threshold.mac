@@ -56,7 +56,9 @@ Select $6 $1 $5 $4
 
 Define Threshold 3 'output image' 'input image' level
 #Tell_If "Threshold $1 $2 $3"
-Thresh_Select $1 $2 $3 thresh_one thresh_zero thresh_bitmap
+# order convention changed???
+#Thresh_Select $1 $2 $3 thresh_one thresh_zero thresh_bitmap
+Thresh_Select $1 $2 $3 thresh_zero thresh_one thresh_bitmap
 .
 
 # This version makes no assumptions...

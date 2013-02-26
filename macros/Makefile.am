@@ -12,6 +12,7 @@ SUBDIRS = 			\
 		knox		\
 		movie		\
 		numrec		\
+		postproc	\
 		startup		\
 		system		\
 		v4l2		\

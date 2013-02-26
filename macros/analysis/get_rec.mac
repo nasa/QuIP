@@ -158,6 +158,9 @@ Affine_Calibrate record
 
 Define Read_Data_With_Corr 1 filename
 Tell_If "Read_Data_With_Corr $1"
+#advise "File:  $1"
+#system "wc $1"
+#Info corr_record
 Get_Ascii corr_record $1
 #data ascii read corr_record $1 quit quit
 #Tell_If copying
@@ -165,7 +168,8 @@ VMov record{0} corr_record{0}
 VMov record{1} corr_record{1}
 VMov correlation corr_record{2}
 
-Detect_Blinks
+#Detect_Blinks
+Detect_Retina_Blinks
 
 # apply interlace correction, if necessary, before calibration
 If $interlace_correction!=0 'advise "Read_Data_With_Corr calling Apply_Interlace_Correction" Apply_Interlace_Correction'
