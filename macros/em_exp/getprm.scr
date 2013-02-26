@@ -1,0 +1,43 @@
+
+# @(#) getprm.scr ver: 1.2 1/1/00
+
+Start_File em_exp/getprm.scr
+
+clear_warnings
+
+Set scrdir ../scripts
+#Set histdir /u/jbm/exps/narvo97/history
+Set histdir /u/tja/exps/free/history
+#Set image_dir	/u/jbm/fusion3/free
+#Set image_dir	/u/tja/fusion3/free
+#Set image_dir	/home/fusion3/jbm/free
+
+# user_dir must be set by the calling application!?
+Set project_dir "$user_dir/$PROJECT"
+
+Set subject $SUBJECT
+Set experiment $EXPERIMENT
+Set replication $REPLICATION
+#Set camera_index $CAMERA
+Set substem "$subject.$experiment.$replication"
+#Set video_dir $data_dir/video
+Set exptfile "$scrdir/exptfile.$experiment.scr"
+Set histfile "$histdir/$substem.scr"
+Print POSTPROC_PARAMS_DIR
+Set cropfile "$POSTPROC_PARAMS_DIR/crop.$substem.$EYE_CAMERA_INDEX"
+Set listfile "$COLLECT_PARAMS_DIR/filelist"
+#Set tunefile "params/tune.$substem"
+Set tunefile "$POSTPROC_PARAMS_DIR/tune.$EYE_ANALYSIS_SIZE.$substem.$EYE_CAMERA_INDEX"
+#Set runfile  "../runs/RUN.$substem"
+#Set calfile  "$POSTPROC_PARAMS_DIR/cal.$substem"
+#Set log_dir $data_dir/log/$subject
+
+#< $histfile
+
+#Assign aspect_str floor(10*$aspect)
+count_warnings warned
+If $warned quit
+
+
+
+Stop_File em_exp/getprm.scr

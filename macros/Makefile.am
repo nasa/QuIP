@@ -6,6 +6,7 @@ SUBDIRS = 			\
 		compute		\
 		ctrack		\
 		data		\
+		em_exp		\
 		eyemov		\
 		gui		\
 		knox		\
