@@ -1067,6 +1067,7 @@ Assign x_stop value(eye_pos[$post_index]{0})
 Assign y_stop value(eye_pos[$post_index]{1})
 Assign dx $x_stop-$x_start
 Assign dy $y_stop-$y_start
+# dx and dy are in degrees, we convert to minutes...
 Assign i_dx round(floor($sacc_hist_size/2)+$dx*60)
 Assign i_dy round(floor($sacc_hist_size/2)+$dy*60)
 If $i_dx>=0&&$i_dy>=0&&$i_dx<$sacc_hist_size&&$i_dy<$sacc_hist_size

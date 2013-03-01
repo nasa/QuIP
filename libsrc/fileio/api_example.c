@@ -29,6 +29,10 @@
 #include "libavcodec/avcodec.h"
 #include "libavutil/mathematics.h"
 
+/* jbm experimenting with different codec's */
+//#define DEFAULT_VIDEO_CODEC	CODEC_ID_MPEG1VIDEO
+#define DEFAULT_VIDEO_CODEC	CODEC_ID_MPEG4
+
 #define INBUF_SIZE 4096
 #define AUDIO_INBUF_SIZE 20480
 #define AUDIO_REFILL_THRESH 4096
@@ -199,8 +203,11 @@ static void video_encode_example(const char *filename)
 
     printf("Video encoding\n");
 
-    /* find the mpeg1 video encoder */
-    codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+    ///* find the mpeg1 video encoder */
+    //codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+    /* find the mpeg4 video encoder */
+    codec = avcodec_find_encoder(CODEC_ID_MPEG4);
+    codec = avcodec_find_encoder(DEFAULT_VIDEO_CODEC);
     if (!codec) {
         fprintf(stderr, "codec not found\n");
         exit(1);
@@ -331,7 +338,8 @@ static void video_decode_example(const char *outfilename, const char *filename)
     printf("Video decoding\n");
 
     /* find the mpeg1 video decoder */
-    codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
+    //codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
+    codec = avcodec_find_decoder(DEFAULT_VIDEO_CODEC);
     if (!codec) {
         fprintf(stderr, "codec not found\n");
         exit(1);
@@ -442,8 +450,8 @@ int main(int argc, char **argv)
     avcodec_register_all();
 
     if (argc <= 1) {
-        audio_encode_example("/tmp/test.mp2");
-        audio_decode_example("/tmp/test.sw", "/tmp/test.mp2");
+        //audio_encode_example("/tmp/test.mp2");
+        //audio_decode_example("/tmp/test.sw", "/tmp/test.mp2");
 
         video_encode_example("/tmp/test.mpg");
         filename = "/tmp/test.mpg";
