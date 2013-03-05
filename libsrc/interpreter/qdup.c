@@ -179,12 +179,45 @@ void savechar(QSP_ARG_DECL  Query *qp,int c)
 	savetext(QSP_ARG  qp,buf);
 }
 
+void unsavechar(QSP_ARG_DECL  Query *qp, int c)
+{
+	int n;
+
+	while( qp != (&THIS_QSP->qs_query[0]) && (qp-1)->q_saving ){
+		qp--;
+#ifdef CAUTIOUS
+		if( qp->q_text == NULL ){
+			ERROR1("CAUTIOUS:  unsavechar:  no saved text!?");
+		}
+#endif /* CAUTIOUS */
+
+		n=strlen(qp->q_text);
+
+#ifdef CAUTIOUS
+		if( n <= 0 ) ERROR1("CAUTIOUS:  unsavechar:  no saved text!?");
+
+#endif /* CAUTIOUS */
+		n--;
+
+#ifdef CAUTIOUS
+		if( qp->q_text[n] != c ) 
+			ERROR1("CAUTIOUS:  unsavechar:  last char not what expected!?");
+#endif /* CAUTIOUS */
+
+		qp->q_text[n] = 0; 
+		qp->q_txtfree ++;
+	}
+}
+
 /*
  *	Save as string for later interpretation.
  *
  *	We save text for reinterpreting in loops;
  *	we save parsed words, and quotes (which are
  *	ignored when parsing words).
+ *
+ *	We save at levels down the stack...
+ *	(When would we ever save at more than one level?  nested loops?)
  */
 
 void savetext(QSP_ARG_DECL  Query *qp,const char* buf)
@@ -213,6 +246,10 @@ advise(ERROR_STRING);
 			ERROR1("CAUTIOUS:  whoa, null text buffer!!!");
 		}
 #endif /* CAUTIOUS */
+
+		/* See if we have enough room for this text,
+		 * and grow the buffer if necessary
+		 */
 		while( n_more > qp->q_txtfree ){
 			qp->q_txtsiz += LOOPSIZE;
 			qp->q_txtfree += LOOPSIZE;
@@ -226,10 +263,33 @@ advise(ERROR_STRING);
 		strcat(qp->q_text,buf);
 		qp->q_txtfree -= n_more;
 
+#ifdef FOOBAR
 		/* these next two lines are here since we're
 		 * already executing at the higher level
+		 *
+		 * For some reason, when we store the last "end",
+		 * that gets stored here too???
+		 * Why did that not happen before?
 		 */
 
+		// This gets called over and over again,
+		// for every character in a saved word...
+		// very inefficient!?
+		// Maybe we could do this from rd_word???
+
+//sprintf(ERROR_STRING,"savetext:  setting lbptr to 0x%lx (\"%s\")",
+//(long)(qp+1)->q_lbptr,(qp+1)->q_lbptr);
+//advise(ERROR_STRING);
+		qp->q_lbptr = (qp+1)->q_lbptr;
+		qp->q_havtext = (qp+1)->q_havtext;
+#endif /* FOOBAR */
+	}
+} // end savetext
+
+void sync_lbptrs(QSP_ARG_DECL  Query *qp)
+{
+	while( qp != (&THIS_QSP->qs_query[0]) && (qp-1)->q_saving ){
+		qp--;
 		qp->q_lbptr = (qp+1)->q_lbptr;
 		qp->q_havtext = (qp+1)->q_havtext;
 	}

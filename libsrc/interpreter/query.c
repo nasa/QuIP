@@ -2,6 +2,8 @@
 
 char VersionId_interpreter_query[] = QUIP_VERSION_STRING;
 
+//#define DEBUG_LINENO
+
 /**/
 /**		input and output stuff		**/
 /**/
@@ -189,7 +191,10 @@ advise(ERROR_STRING);
 		 * slower to run...
 		 */
 
-		if( qp->q_havtext ) eatup_space(qp);
+		if( qp->q_havtext ) {
+//advise("lookahead_til calling eatup_space (havtext)");
+			eatup_space(qp);	/* lookahead_til */
+		}
 		while( (QLEVEL == level) && (qp->q_havtext == 0) ){
 #ifdef DEBUG
 if( debug & lah_debug ){
@@ -198,8 +203,12 @@ advise(ERROR_STRING);
 }
 #endif /* DEBUG */
 			/* nextline() never pops more than one level */
+//advise("lookahead_til calling nextline");
 			nextline(QSP_ARG "" );	// lookahead_til
-			if( qp->q_havtext ) eatup_space(qp);
+			if( qp->q_havtext ) {
+//advise("lookahead_til calling eatup_space #2");
+				eatup_space(qp);	/* lookahead_til */
+			}
 		}
 		if( qp->q_havtext ){
 #ifdef DEBUG
@@ -287,9 +296,11 @@ advise(ERROR_STRING);
 		// before we do lookahead.  We do this before
 		// macro expansion.
 
-//sprintf(ERROR_STRING,"qword:  setting lineno to rdlineno (%d), qlevel = %d; buf = '%s'",
-//THIS_QSP->qs_query[QLEVEL].q_rdlineno,QLEVEL,buf);
-//advise(ERROR_STRING);
+#ifdef DEBUG_LINENO
+sprintf(ERROR_STRING,"qword:  setting lineno to rdlineno (%d), qlevel = %d; buf = '%s'",
+THIS_QSP->qs_query[QLEVEL].q_rdlineno,QLEVEL,buf);
+advise(ERROR_STRING);
+#endif /* DEBUG_LINENO */
 		THIS_QSP->qs_query[QLEVEL].q_lineno = THIS_QSP->qs_query[QLEVEL].q_rdlineno;
 
 		/* now see if the word is a macro */
@@ -319,6 +330,212 @@ void qgivup(SINGLE_QSP_ARG_DECL)
 {
 	QUERY_FLAGS &= ~QS_STILL_TRYING;
 }
+
+static void after_backslash(QSP_ARG_DECL  int c,char **bufp, const char **sp, char **startp, Query *qp)
+{
+	char *buf;
+	const char *s;
+	char *start;
+
+	buf = *bufp;
+	s = *sp;
+	start = *startp;
+
+	if( isdigit(c) ){
+		*buf=0;
+		while( isdigit(c) ){
+			*buf <<= 3;
+			*buf += c -'0';
+			c=(*s++);
+		}
+		buf++;
+		s--;
+	} else if( c == 't' ){
+		*buf++ = '\t';
+	} else if( c == 'r' ){
+		*buf++ = '\r';
+	} else if( c == 'n' ){
+		*buf++ = '\n';
+	} else if( c == 'b' ){
+		*buf++ = '\b';
+	} else if( c == '$' ){
+		*buf++ = '\\';
+		*buf++ = '$';
+	} else if( c == '\n' || c=='\r' ){
+		/* an escaped newline */
+		/* read the next line */
+		//int nhave;
+
+		qp->q_rdlineno++;
+#ifdef DEBUG_LINENO
+sprintf(ERROR_STRING,"after_backslash (qlevel = %d):  EOL char seen, rdlineno set to %d",
+QLEVEL,qp->q_rdlineno);
+advise(ERROR_STRING);
+#endif /* DEBUG_LINENO */
+
+#ifdef DONT_DO_THIS_HERE
+		nhave = (int) (buf-start);	/* cast for pc */
+		start[nhave]=0;
+
+		if( *s == 0 ){	/* end of line */
+#ifdef DEBUG
+if( debug & qldebug ){
+advise("reading additional line after escaped newline");
+}
+#endif /* DEBUG */
+
+			s=qline(QSP_ARG  "");		// after_backslash
+			qp=(&THIS_QSP->qs_query[QLEVEL]);
+
+			need_size += strlen(s)+16;
+
+			if( sbp->sb_size < need_size ){
+				enlarge_buffer(sbp,need_size);
+
+				start=sbp->sb_buf;
+				buf=start+nhave;
+//if( verbose ){
+//sprintf(ERROR_STRING,"after_backslash %s:  enlarged buffer, new start = 0x%lx",
+//THIS_QSP->qs_name,(int_for_addr)start);
+//advise(ERROR_STRING);
+//}
+			}
+
+		}
+#ifdef DEBUG
+else if( debug & qldebug ){
+advise("continuing to read word after escaped newline");
+sprintf(ERROR_STRING,"remaining text:  \"%s\"",s);
+advise(ERROR_STRING);
+}
+#endif /* DEBUG */
+
+#endif /* DONT_DO_THIS_HERE */
+
+	} else {
+		*buf++ = c; /* backslash before normal char */
+	}
+
+	*sp = s;
+	*bufp = buf;
+	*startp = start;
+
+}	// end after_backslash
+
+#ifdef FOOBAR
+/* return values for process_normal */
+
+#define PN_BACKSLASH	1
+#define PN_COMMENT	2
+#define PN_NONWHITE	4
+#define PN_HAVSOME	8
+#define PN_ALLDONE	16
+#define PN_NEWLINE	32
+#endif /* FOOBAR */
+
+// rd_word flags
+#define RW_HAVBACK	1
+#define RW_HAVSOME	2
+#define RW_INQUOTE	4
+#define RW_NOVAREXP	8
+#define RW_INCOMMENT	16
+#define RW_SAVING	32
+#define RW_NWSEEN	64
+#define RW_NEWLINE	128
+#define RW_ALLDONE	256
+
+static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **bufp, const char **sp, int *flagp )
+{
+	char *buf;
+	const char *s;
+	int flags;
+
+//sprintf(ERROR_STRING,"process_normal qp = 0x%lx,  0x%x ('%c')",(long)qp,c,c);
+//advise(ERROR_STRING);
+
+	buf = *bufp;
+	s = *sp;
+	flags = *flagp;
+
+	/* Nothing special, most characters processed here.
+	 * We know that the previous character was not
+	 * a backslash.
+	 */
+
+	/* If this char is a backslash, don't save, but
+	 * remember.
+	 */
+	if( c == '\\' ){
+		//havback=1;
+		//return PN_BACKSLASH;
+		flags |= RW_HAVBACK;
+	} else {
+		if( /*in_quote*/ flags & RW_INQUOTE ){
+			*buf++ = c;
+		} else {
+			if( c == '#' ){		// comment delimiter
+				//in_comment=1;
+				//return PN_COMMENT;
+				flags |= RW_INCOMMENT;
+			} else if( isspace(c) ){
+				if( flags & RW_NWSEEN ){
+					if( c == '\n' ){
+						// Set the flag, but don't increment the line
+						// counter until the word is interpreted...
+						// BUT instead of doing that,
+						// what about just leaving the newline
+						// there to be seen next time???
+						// PROBLEM:  we've already saved
+						// the newline!?  Should we un-save?
+						s--;	// leave the newline
+						if( flags & RW_SAVING ){
+							unsavechar(QSP_ARG  qp,'\n');
+						}
+#ifdef Q_LINEDONE
+						qp->q_flags |= Q_LINEDONE;
+//sprintf(ERROR_STRING,"process_normal:  setting LINEDONE flag, qlevel = %d",
+//QLEVEL);
+//advise(ERROR_STRING);
+#endif /* Q_LINEDONE */
+					}
+					//retval = PN_ALLDONE;
+					flags |= RW_ALLDONE;
+					goto pn_done;
+				} else {
+					/* This is a space, but we haven't
+					 * seen any non-spaces yet.
+					 * Don't copy to output buffer.
+					 */
+					if( c == '\n' ){
+//advise("process_normal:  leading newline white space");
+						//retval=PN_NEWLINE;
+						flags |= RW_NEWLINE;
+						goto pn_done;
+					}
+				}
+			} else {		/* a good character */
+				*buf++ = c;
+				//nonwhite_seen=1;
+				//retval |= PN_NONWHITE;
+				flags |= RW_NWSEEN;
+//advise("process_normal:  non-white seen");
+			}
+		} // end not in quote
+		//havsome=1;
+		//retval |= PN_HAVSOME;
+		// Should we set this if we are in a comment?
+		flags |= RW_HAVSOME;
+	}
+
+pn_done:
+	*bufp = buf;
+	*sp = s;
+	*flagp = flags;
+
+	//return retval;
+
+}	// end process_normal
+
 
 /*
  * Copy the next query word from the query stack's
@@ -365,18 +582,21 @@ void qgivup(SINGLE_QSP_ARG_DECL)
 char * rd_word(SINGLE_QSP_ARG_DECL)
 {
 	Query *qp;
-	int havback=0, havsome=0;
+	//int havback=0, havsome=0;
 
 	int start_quote=0;	/* holds the value of the starting quote char,
 				 * if in a quote, otherwise 0
 				 */
-	int in_quote=0;		/* possibly redundant w/ start_quote... */
+	//int in_quote=0;		/* possibly redundant w/ start_quote... */
 	int n_quotations=0;	/* to handle things like "a b c"X"x y z" */
 
-	int inhib_varexp=0;	/* set to 1 to inhibit variable expansion */
+	//int inhib_varexp=0;	/* set to 1 to inhibit variable expansion */
+	//int in_comment=0;
 
-	char *start,*buf;
-	int am_saving=0;
+	char *start, *buf;
+	//int am_saving=0;
+	//int nonwhite_seen=0;
+	int flags=0;
 	u_int need_size;
 	const char *s;
 	String_Buf *sbp;
@@ -393,7 +613,8 @@ sprintf(ERROR_STRING,"%s - %s:  setting am_saving at level %d",
 WHENCE(rd_word),QLEVEL);
 advise(ERROR_STRING);
 */
-		am_saving=1;
+		//am_saving=1;
+		flags |= RW_SAVING;
 	}
 
 	/* actually, the size needed is probably LESS than
@@ -434,6 +655,7 @@ advise(ERROR_STRING);
 
 	buf=start;
 
+#ifdef Q_LINEDONE
 	/* increment the line counter if the LINEDONE flag is set
 	 * We do it this way so that we don't report the line number
 	 * of the following line -
@@ -448,9 +670,11 @@ advise(ERROR_STRING);
 		if( qp->q_flags & Q_BUFFERED_TEXT ){
 			/* should be not just macros, but loops too? */
 			qp->q_rdlineno ++;
-//sprintf(ERROR_STRING,"rd_word:  LINEDONE flag set, rdlineno set to %d",
-//qp->q_rdlineno);
-//advise(ERROR_STRING);
+#ifdef DEBUG_LINENO
+sprintf(ERROR_STRING,"rd_word:  LINEDONE flag set, rdlineno set to %d",
+qp->q_rdlineno);
+advise(ERROR_STRING);
+#endif /* DEBUG_LINENO */
 		}
 //else {
 //sprintf(ERROR_STRING,"rd_word:  LINEDONE flag set, but BUFFERED_TEXT flag not set" );
@@ -458,6 +682,7 @@ advise(ERROR_STRING);
 //}
 		qp->q_flags &= ~Q_LINEDONE;
 	}
+#endif /* Q_LINEDONE */
 
 	/* no check for overflow in the following loop
 	 * because both buffers have size LLEN
@@ -500,10 +725,11 @@ advise(ERROR_STRING);
 	 * then it could be longer...
 	 */
 
+//advise("rd_word:  scanning");
 	while( *s ){		/* scan the input buffer */
 		int c;
 
-		c=(*s++);
+		c=(*s++);	// get the next char
 
 #ifdef DEBUG
 //if( debug&qldebug ){
@@ -513,9 +739,9 @@ advise(ERROR_STRING);
 //}
 #endif /* DEBUG */
 
-		if( in_quote ){
+		if( /* in_quote */ flags & RW_INQUOTE ){
 			/* check if the character is the closing quote mark */
-			if( c == start_quote && !havback ){
+			if( c == start_quote && !/*havback*/ (flags & RW_HAVBACK) ){
 #ifdef DEBUG
 if( debug&qldebug ){
 sprintf(ERROR_STRING,"%s - %s:  matching quote seen",
@@ -523,14 +749,16 @@ WHENCE(rd_word));
 advise(ERROR_STRING);
 }
 #endif /* DEBUG */
-				in_quote=0;
+				//in_quote=0;
+				flags &= ~RW_INQUOTE;
 				n_quotations++;
 			}
 		} else {
 			if( c == DBL_QUOTE || c == SGL_QUOTE ){
 				/* this is the opening quote */
 				start_quote = c;
-				in_quote=1;
+				//in_quote=1;
+				flags |= RW_INQUOTE;
 #ifdef DEBUG
 if( debug&qldebug ){
 	if( start_quote ){
@@ -545,113 +773,62 @@ advise(ERROR_STRING);
 
 		/* now do something with this character */
 
-		if( am_saving ) savechar(QSP_ARG  qp,c);
-		if( havback ){		/* char follows backslash */
-			if( isdigit(c) ){
-				*buf=0;
-				while( isdigit(c) ){
-					*buf <<= 3;
-					*buf += c -'0';
-					c=(*s++);
-				}
-				buf++;
-				s--;
-			} else if( c == 't' ){
-				*buf++ = '\t';
-			} else if( c == 'r' ){
-				*buf++ = '\r';
-			} else if( c == 'n' ){
-				*buf++ = '\n';
-			} else if( c == 'b' ){
-				*buf++ = '\b';
-			} else if( c == '$' ){
-				*buf++ = '\\';
-				*buf++ = '$';
-			} else if( c == '\n' || c=='\r' ){
-				/* an escaped newline */
-				/* read the next line */
-				int nhave;
-
-				qp->q_rdlineno++;
-//sprintf(ERROR_STRING,"rd_word (qlevel = %d):  EOL char seen, rdlineno set to %d",
-//QLEVEL,qp->q_rdlineno);
+		if( /*am_saving*/ flags & RW_SAVING ) {
+//sprintf(ERROR_STRING,"rd_word:  qp = 0x%lx, saving char 0x%x ('%c')",(long)qp,c,c);
 //advise(ERROR_STRING);
+			savechar(QSP_ARG  qp,c);
+		}
 
-				nhave = (int) (buf-start);	/* cast for pc */
-				start[nhave]=0;
-
-				if( *s == 0 ){	/* end of line */
-#ifdef DEBUG
-if( debug & qldebug ){
-advise("reading additional line after escaped newline");
-}
-#endif /* DEBUG */
-
-					s=qline(QSP_ARG  "");		// rd_word
-					qp=(&THIS_QSP->qs_query[QLEVEL]);
-
-					need_size += strlen(s)+16;
-
-					if( sbp->sb_size < need_size ){
-						enlarge_buffer(sbp,need_size);
-
-						start=sbp->sb_buf;
-						buf=start+nhave;
-//if( verbose ){
-//sprintf(ERROR_STRING,"rd_word %s:  enlarged buffer, new start = 0x%lx",
-//THIS_QSP->qs_name,(int_for_addr)start);
-//advise(ERROR_STRING);
-//}
-					}
-
-				}
-#ifdef DEBUG
-else if( debug & qldebug ){
-advise("continuing to read word after escaped newline");
-sprintf(ERROR_STRING,"remaining text:  \"%s\"",s);
-advise(ERROR_STRING);
-}
-#endif /* DEBUG */
-
-			} else {
-				*buf++ = c; /* backslash before normal char */
+		if( /*in_comment*/ flags & RW_INCOMMENT ){
+			/* skip all characters until a newline */
+			if( c == '\n' ){
+				// should we increment the line counter??
+				//in_comment=0;
+				flags &= ~RW_INCOMMENT;
 			}
-
-			/* BUG maybe we shouldn't have any after escaped nl ? */
-			havsome=1;
-
-			havback=0;
 		} else {
-			/* Nothing special, most characters processed here.
-			 * We know that the previous character was not
-			 * a backslash.
-			 */
-
-			/* If this char is a backslash, don't save, but
-			 * remember.
-			 */
-			if( c == '\\' ){
-				havback=1;
+			if( /*havback*/ flags & RW_HAVBACK ){		/* char follows backslash */
+				after_backslash(QSP_ARG  c,&buf,&s,&start,qp);
+				/* BUG maybe we shouldn't have any after escaped nl ? */
+				//havsome=1;
+				//havback=0;
+				flags |= RW_HAVSOME;
+				flags &= ~RW_HAVBACK;
 			} else {
-				if( in_quote ){
-					*buf++ = c;
-				} else {
-					if( isspace(c) ){
-						if( c == '\n' ){
-							qp->q_flags |= Q_LINEDONE;
-//sprintf(ERROR_STRING,"rd_word:  setting LINEDONE flag, qlevel = %d",
-//QLEVEL);
-//advise(ERROR_STRING);
-						}
-						goto alldone;
-					}
-					else
-						*buf++ = c;
+#ifdef FOOBAR
+				switch( process_normal(QSP_ARG  qp,c,&buf,&s,&flags) ){
+					case PN_BACKSLASH: havback=1; break;
+					case PN_COMMENT: in_comment=1; break;
+					case PN_NONWHITE: nonwhite_seen=1; break;
+					case PN_HAVSOME: havsome=1; break;
+					case PN_NONWHITE|PN_HAVSOME: nonwhite_seen=1; havsome=1; break;
+					case PN_ALLDONE: goto alldone; break;
+					case PN_NEWLINE:
+//advise("PN_NEWLINE");
+						qp->q_rdlineno ++;
+						break;
+					case 0: break;
+					default:
+						sprintf(ERROR_STRING,"Bad return value from process_normal");
+						ERROR1(ERROR_STRING);
+						break;
 				}
-				havsome=1;
+#endif /* FOOBAR */
+				process_normal(QSP_ARG  qp,c,&buf,&s,&flags);
+				if( flags & RW_NEWLINE ){
+					qp->q_rdlineno ++;
+					flags &= ~RW_NEWLINE;
+				}
+				if( flags & RW_ALLDONE ) goto alldone;
 			}
 		}
 	}
+//advise("rd_word:  DONE scanning");
+
+	/* We get here when we are done reading the word, either because
+	 * we have run out of input or because we encountered a white
+	 * space character.
+	 */
 
 alldone:
 
@@ -670,7 +847,13 @@ alldone:
 //}
 #endif /* DEBUG */
 
-	if( havback )
+	if( ! (flags & RW_NWSEEN) ){
+//advise("rd_word:  no non-white chars seen, returning NULL");
+		return NULL;
+	}
+//else advise("rd_word:  must have seen something!?");
+
+	if( flags & RW_HAVBACK )
 		advise("still have backslash at end of buffer!?");
 
 	*buf=0;
@@ -692,10 +875,10 @@ ERROR1("CAUTIOUS too much stuff!!!");
 }
 #endif	/* CAUTIOUS */
 
-	if( start_quote && in_quote ){
-sprintf(ERROR_STRING,"start len = %ld, retstr size = %d",
-(long)strlen(start), sbp->sb_size );
-advise(ERROR_STRING);
+	if( start_quote && (flags & RW_INQUOTE) ){
+//sprintf(ERROR_STRING,"start len = %ld, retstr size = %d",
+//(long)strlen(start), sbp->sb_size );
+//advise(ERROR_STRING);
 		WARN("rd_word:  no closing quote");
 		/* If the buffer has overflowed, we can't print into error_string! */
 #define BC_STR	"buffer contained "
@@ -710,11 +893,20 @@ advise(ERROR_STRING);
 
 	/* it's important to do this before calling savetext */
 	/* WHY? */
-	if( havsome ){
+	if( flags & RW_HAVSOME ){
+//sprintf(ERROR_STRING,"rd_word:  setting lbptr to \"%s\", qp = 0x%lx",s,(long)qp);
+//advise(ERROR_STRING);
 		qp->q_lbptr=s;	/* current text scan ptr */
 	} else return(NULL);
 
-	if( am_saving ) savetext(QSP_ARG  qp," ");
+	// We don't need to save a space, but we need to sync
+	// up the lbptr's...
+	if( flags & RW_SAVING ) sync_lbptrs(QSP_ARG  qp);
+
+//	if( flags & RW_SAVING ) {
+//advise("rd_word:  saving a space");
+//		savetext(QSP_ARG  qp," ");
+//	}
 
 	/* strip quotes if they enclose the entire string */
 	/* This is useful in vt script, but bad if we are using these routines to pass input
@@ -739,7 +931,8 @@ advise(ERROR_STRING);
 #endif /* DEBUG */
 		
 		if( start_quote == SGL_QUOTE )
-			inhib_varexp=1;
+			//inhib_varexp=1;
+			flags |= RW_NOVAREXP;
 
 		/* it used to be a bug if the quote didn't come at the end */
 
@@ -770,7 +963,7 @@ advise(ERROR_STRING);
 	 * which contain single quoted strings and vars...
 	 */
 
-	if( ! inhib_varexp ) 
+	if( ! /*inhib_varexp*/ (flags & RW_NOVAREXP) ) 
 		var_expand(QSP_ARG  sbp);
 
 //if( verbose ){
@@ -808,11 +1001,13 @@ gwtop:
 	need=1;
 	QUERY_FLAGS |= QS_STILL_TRYING;
 	qp=(&THIS_QSP->qs_query[QLEVEL]);
+//sprintf(ERROR_STRING,"gword:  qlevel = %d, havtext = %d",QLEVEL,qp->q_havtext);
+//advise(ERROR_STRING);
 	if( !qp->q_havtext )	/* need to read more input */
 	{
 //if( verbose ){
-//sprintf(ERROR_STRING,"gword %s calling qline (qlevel = %d)",THIS_QSP->qs_name,THIS_QSP->qs_level);
-//advise(ERROR_STRING);
+//sprintf(DEFAULT_ERROR_STRING,"gword %s calling qline (qlevel = %d)",THIS_QSP->qs_name,THIS_QSP->qs_level);
+//advise(DEFAULT_ERROR_STRING);
 //}
 		buf=qline(QSP_ARG   pline );
 #ifdef THREAD_SAFE_QUERY
@@ -821,7 +1016,12 @@ gwtop:
 	}
 
 	qp=(&THIS_QSP->qs_query[QLEVEL]);	/* qline may pop the level!!! */
-	eatup_space(qp);
+
+	/* why eatup_space here?
+	 * If we are saving, we might like to save all the white space - especially
+	 * newlines, for correct line counting.
+	 */
+	//eatup_space(qp);		/* gword */
 	if( qp->q_havtext ){
 		/* rd_word() returns non-NULL if successful */
 //if(verbose){
@@ -841,9 +1041,9 @@ advise(ERROR_STRING);
 			need=0;
 		} else {
 #ifdef DEBUG
-if( debug & qldebug ){
-advise("gword() got nuttin from rd_word");
-}
+//if( debug & qldebug ){
+//advise("gword() got nuttin from rd_word");
+//}
 #endif	/* DEBUG */
 			qp->q_havtext=0;
 		}
@@ -984,12 +1184,10 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 #endif /* THREAD_SAFE_QUERY */
 
 #ifdef DEBUG
-/*
-if( debug & qldebug ){
-sprintf(ERROR_STRING,"in nextline qlevel =  %d",QLEVEL);
-advise(ERROR_STRING);
-}
-*/
+//if( debug & qldebug ){
+//sprintf(ERROR_STRING,"in nextline qlevel =  %d",QLEVEL);
+//advise(ERROR_STRING);
+//}
 #endif /* DEBUG */
 	qp=(&THIS_QSP->qs_query[QLEVEL]);
 
@@ -1038,8 +1236,10 @@ advise(ERROR_STRING);
 
 	/* advance the line number right before reading */
 	qp->q_rdlineno++;
-//sprintf(ERROR_STRING,"nextline:  advanced line number to %d",qp->q_rdlineno);
-//advise(ERROR_STRING);
+#ifdef DEBUG_LINENO
+sprintf(ERROR_STRING,"nextline:  advanced line number to %d",qp->q_rdlineno);
+advise(ERROR_STRING);
+#endif /* DEBUG_LINENO */
 
 	if( (*(qp->q_readfunc))(QSP_ARG  buf,LLEN,qp->q_file) == NULL ){
 		/* this means EOF if reading with fgets()
@@ -1078,9 +1278,11 @@ advise(ERROR_STRING);
 		}
 		qp->q_havtext=1;
 		qp->q_lbptr=buf;
-//sprintf(ERROR_STRING,"nextline:  returning \"%s\" (qlevel = %d, rdlineno = %d)",
-//buf,QLEVEL,qp->q_rdlineno);
-//advise(ERROR_STRING);
+#ifdef DEBUG_LINENO
+sprintf(ERROR_STRING,"nextline:  returning \"%s\" (qlevel = %d, rdlineno = %d)",
+buf,QLEVEL,qp->q_rdlineno);
+advise(ERROR_STRING);
+#endif /* DEBUG_LINENO */
 		return(buf);
 	}
 	/* NOTREACHED */
@@ -1091,7 +1293,7 @@ advise(ERROR_STRING);
 	 * Is the C++ compiler stupid or what?
 	 */
 	return NULL;
-} 
+} // end nextline
 
 const char *getmarg(QSP_ARG_DECL  int index)
 {
@@ -1163,6 +1365,14 @@ char * rdmtext(SINGLE_QSP_ARG_DECL)
 	/* lookahead line may have been read already... */
 
 	if( qp->q_havtext ){
+#ifndef Q_LINEDONE
+		/* Now we leave the newline in the buffer when we read a word,
+		 * to make line-counting simpler.  But we don't want it part of the
+		 * macro body.
+		 */
+		if( *qp->q_lbptr == '\n' )
+			qp->q_lbptr++;
+#endif /* Q_LINEDONE */
 		/* this case only arises for scripted macros,
 			so don't worry about strcat'ing \n */
 
@@ -1279,13 +1489,29 @@ static void eatup_space(Query *qp)
 		return;
 	}
 
+#ifdef DEBUG_LINENO
+sprintf(DEFAULT_ERROR_STRING,"eatup_space:  buffer contains \"%s\"",str);
+advise(DEFAULT_ERROR_STRING);
+#endif /* DEBUG_LINENO */
+
 skipit:
 
 	/* skip over spaces */
 	while( *str && isspace( *str ) ){
 		// What if file has both??
-		if( *str == '\n' || *str == '\r' )
-			qp->q_rdlineno++;
+		if( *str == '\n' || *str == '\r' ){
+			/* We only need to do this when we are reading from a buffer,
+			 * because when we are reading directly from a file the
+			 * line numbers are advanced by nextline...
+			 */
+			if( READING_BUFFERED_TEXT(qp) ){
+				qp->q_rdlineno++;
+#ifdef DEBUG_LINENO
+sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing newline char",qp->q_rdlineno);
+advise(DEFAULT_ERROR_STRING);
+#endif /* DEBUG_LINENO */
+			}
+		}
 		str++;
 	}
 
@@ -1295,15 +1521,29 @@ skipit:
 	if( *str == '#' ){
 		while( *str && *str!='\n' && *str!='\r' ) str++;
 
+		/* We used to count the line here, but because
+		 * we weren't advancing the char ptr, the line
+		 * got counted again above after the goto skipit.
+		 */
+
+#ifdef FOOBAR
 		/* We need to cound this line if we're in a macro;
 		 * if it's a regular file,
 		 * it's already been counted...
 		 */
 
 		//if( (qp->q_flags & Q_BUFFERED_TEXT) && 
+
 		if( *str == '\n' || *str == '\r' ){
-			qp->q_rdlineno++;
+			if( READING_BUFFERED_TEXT(qp) ){
+				qp->q_rdlineno++;
+#ifdef DEBUG_LINENO
+sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing newline char in comment line",qp->q_rdlineno);
+advise(DEFAULT_ERROR_STRING);
+#endif /* DEBUG_LINENO */
+			}
 		}
+#endif /* FOOBAR */
 
 		goto skipit;
 	}

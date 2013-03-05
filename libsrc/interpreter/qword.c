@@ -452,21 +452,14 @@ advise(ERROR_STRING);
 
 	/* these two lines are so we can have within-line loops */
 	(qp+1)->q_havtext=qp->q_havtext;
+//sprintf(ERROR_STRING,"dup_input:  setting lbptr = 0x%lx",(long)qp->q_lbptr);
+//advise(ERROR_STRING);
 	(qp+1)->q_lbptr =qp->q_lbptr;
 	(qp+1)->q_rdlineno =qp->q_rdlineno;
-//sprintf(ERROR_STRING,"dup_input:  copied rdlineno %d, qlevel = %d",
-//qp->q_rdlineno,QLEVEL);
+//sprintf(ERROR_STRING,"dup_input:  rdlineno set to %d",qp->q_rdlineno);
 //advise(ERROR_STRING);
-/*
-	if( qp->q_flags & Q_LINEDONE ){
-		(qp+1)->q_flags |= Q_LINEDONE;
-sprintf(ERROR_STRING,"dup_input:  Setting LINEDONE flag");
-advise(ERROR_STRING);
-	} else {
-sprintf(ERROR_STRING,"dup_input:  NOT setting LINEDONE flag");
-advise(ERROR_STRING);
-	}
-	*/
+
+	/* used to copy LINEDONE bit here... */
 	(qp+1)->q_flags = qp->q_flags;	// any reason not to do this?
 					// BUG q_saving and q_havtxt are
 					// flags that have their own
@@ -508,6 +501,8 @@ sprintf(ERROR_STRING,"saving to q_text buffer at level %d",qlevel);
 advise(ERROR_STRING);
 */
 
+//sprintf(ERROR_STRING,"openloop:  buf \"%s\"",qp->q_lbptr);
+//advise(ERROR_STRING);
 	dup_input(SINGLE_QSP_ARG);
 
 	qp->q_count=n;
@@ -696,9 +691,15 @@ COMMAND_FUNC( closeloop )
 	const char *errmsg="Can't Close, no loop open";
 
 	if( QLEVEL <= 0 || THIS_QSP->qs_query[QLEVEL-1].q_count == 0 ){
+//sprintf(ERROR_STRING,"closeloop:  qlevel = %d",QLEVEL);
+//advise(ERROR_STRING);
+//sprintf(ERROR_STRING,"closeloop:  count = %d",THIS_QSP->qs_query[QLEVEL-1].q_count);
+//advise(ERROR_STRING);
 		WARN(errmsg);
 		return;
 	}
+//sprintf(ERROR_STRING,"closeloop:  qlevel = %d   count = %d",QLEVEL,THIS_QSP->qs_query[QLEVEL-1].q_count);
+//advise(ERROR_STRING);
 
 	qp=(&THIS_QSP->qs_query[QLEVEL]);
 
@@ -742,21 +743,25 @@ advise(ERROR_STRING);
 }
 #endif /* DEBUG */
 		push_input_file( QSP_ARG current_input_file(SINGLE_QSP_ARG) );
+//sprintf(ERROR_STRING,"closeloop:  pushing \"%s\"",qp->q_text);
+//advise(ERROR_STRING);
 		fullpush(QSP_ARG  qp->q_text);
 		/* This is right if we haven't finished the current line yet... */
 		(qp+1)->q_rdlineno = qp->q_rdlineno;
+#ifdef Q_LINEDONE
 		if( qp->q_flags & Q_LINEDONE )
 			(qp+1)->q_rdlineno++ ;
+#endif /* Q_LINEDONE */
 	} else {
 
 lup_dun:
 
 #ifdef DEBUG
-if( debug & qldebug ){
-sprintf(ERROR_STRING,"r%s - %s:  eleasing loop text buffer at level %ld",
-WHENCE(closeloop),QUERY_LEVEL );
-advise(ERROR_STRING);
-}
+//if( debug & qldebug ){
+//sprintf(ERROR_STRING,"r%s - %s:  releasing loop text buffer at level %ld",
+//WHENCE(closeloop),QUERY_LEVEL );
+//advise(ERROR_STRING);
+//}
 #endif /* DEBUG */
 		givbuf(qp->q_text);
 		qp->q_text = NULL;
@@ -765,6 +770,9 @@ advise(ERROR_STRING);
 		/* lookahead may have been inhibited by q_count==1 */
 		lookahead(SINGLE_QSP_ARG);
 	}
+//sprintf(ERROR_STRING,"End of closeloop:  qlevel = %d",QLEVEL);
+//advise(ERROR_STRING);
+//qdump(SINGLE_QSP_ARG);
 }
 
 

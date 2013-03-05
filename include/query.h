@@ -83,7 +83,7 @@ typedef struct query {
 #define Q_MPASSED	4
 #define Q_FIRST_WORD	8
 #define Q_LOOKAHEAD	16
-#define Q_LINEDONE	32
+//#define Q_LINEDONE	32
 #define Q_BUFFERED_TEXT	64
 #define Q_PIPE		128
 
@@ -92,6 +92,7 @@ typedef struct query {
 #define IS_DUPING			( THIS_QSP->qs_query[QLEVEL].q_dupfile != NULL )
 #define FIRST_WORD_ON_LINE		( THIS_QSP->qs_query[QLEVEL].q_flags & Q_FIRST_WORD )
 #define IS_PIPE( qp )			((( qp ) -> q_flags) & Q_PIPE)
+#define READING_BUFFERED_TEXT( qp )	((( qp ) -> q_flags) & Q_BUFFERED_TEXT)
 
 /* size of memory chunks for loop buffer */
 #define LOOPSIZE	256
@@ -642,7 +643,9 @@ extern void qgivup(SINGLE_QSP_ARG_DECL);
 extern char * rd_word(SINGLE_QSP_ARG_DECL);
 extern const char * gword(QSP_ARG_DECL const char *pline);
 extern void savechar(QSP_ARG_DECL Query *qp,int c);
+extern void unsavechar(QSP_ARG_DECL Query *qp,int c);
 extern void savetext(QSP_ARG_DECL Query *qp,const char *buf);
+extern void sync_lbptrs(QSP_ARG_DECL Query *qp);
 #ifdef HAVE_HISTORY
 extern Query *hist_select(QSP_ARG_DECL char *buf,const char *pline);
 extern void set_completion(SINGLE_QSP_ARG_DECL);
