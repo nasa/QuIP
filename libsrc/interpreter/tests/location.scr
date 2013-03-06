@@ -1,0 +1,22 @@
+# Test line number reporting
+#
+Define Test1 0
+warn "Line 1 of macro Test1 (file line 4)"
+
+warn "Line 3 of macro Test1 (file line 6)"
+repeat 2
+  warn "Line 5 of macro Test1 (file line 8)"
+  end
+repeat 2 warn "Line 7 of macro Test1 (file line 10)" end
+repeat 2 warn "Line 8 of macro Test1 (file line 11)" end	# line not advanced!?
+.
+
+warn "Line 14 of file location.scr (file line 14)"
+Test1
+warn "Line 16 of file location.scr (file line 16)"
+
+macros show Test1 quit
+#warn "Line 2 of macro Test1 (file line 5)"
+
+exit
+

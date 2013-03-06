@@ -1,0 +1,29 @@
+
+Set i 1
+repeat 3 advise "in-line loop, iteration $i" Increment i end
+
+Set j 1
+repeat 3 advise "partially in-line loop, iteration $j"
+  Increment j end
+
+Set k 1
+repeat 3
+  advise "partially in-line loop, iteration $k"
+  Increment k end
+
+Set l 1
+repeat 3
+  advise "loop, iteration $l"
+  Increment l
+  end
+
+foreach i ( a b c d )
+  advise "foreach loop, iteration $i"
+  end
+
+Set i 1
+do
+  advise "do/while loop, iteration $i"
+  Increment i
+  while $i<4
+

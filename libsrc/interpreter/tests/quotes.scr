@@ -1,0 +1,25 @@
+Define Quote_Test 0
+warn "macro line 1, file line 2"
+Set x 55
+
+advise "Test of variable expansion:  x = $x"
+advise 'Test of variable non-expansion:  x = $x'
+
+warn "File line 8"
+Set i 1
+repeat 2
+  advise "Loop iteration $i"
+  Increment i
+  end
+
+advise "Test of wrapped line:"
+# the escaped newline doesn't generate a char in the quoted string
+advise "This line is continued\
+ on the next line"
+warn "This is file line 19"
+.
+
+Quote_Test
+
+exit
+
