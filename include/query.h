@@ -71,6 +71,8 @@ typedef struct query {
 #endif /* MAC */
 } Query;
 
+#define NEED_TO_SAVE(qp) ((qp) != (&THIS_QSP->qs_query[0]) && ((qp)-1)->q_saving )
+
 /* number of query structs */
 #define MAX_Q_LVLS	64
 

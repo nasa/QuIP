@@ -339,7 +339,10 @@ void redir(QSP_ARG_DECL FILE *fp)
 	qp=(&THIS_QSP->qs_query[QLEVEL]);
 	qp->q_file=fp;
 	qp->q_lineno=0;		// redir
-	qp->q_rdlineno=0;
+	qp->q_rdlineno=0;	// first words are on line 1
+				// we used to pre-advance in nextline, but not now.
+				// but we now advance when we call qline/nextline...
+				// When we read a file at level 0, this causes a problem?
 	qp->q_havtext=0;
 	qp->q_saving=0;
 	qp->q_count=0;
@@ -748,10 +751,6 @@ advise(ERROR_STRING);
 		fullpush(QSP_ARG  qp->q_text);
 		/* This is right if we haven't finished the current line yet... */
 		(qp+1)->q_rdlineno = qp->q_rdlineno;
-#ifdef Q_LINEDONE
-		if( qp->q_flags & Q_LINEDONE )
-			(qp+1)->q_rdlineno++ ;
-#endif /* Q_LINEDONE */
 	} else {
 
 lup_dun:

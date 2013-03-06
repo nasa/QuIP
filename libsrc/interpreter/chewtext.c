@@ -16,12 +16,6 @@ void digest(QSP_ARG_DECL  const char *text)
 	int level;
 	/* int la_level; */
 
-#ifdef OLD_LOOKAHEAD
-	/* enable lookahead at this level and higher */
-	push_lookahead(SINGLE_QSP_ARG);
-	/* la_level= */ enable_lookahead(tell_qlevel(SINGLE_QSP_ARG));
-#endif /* OLD_LOOKAHEAD */
-
 	push_top_menu(SINGLE_QSP_ARG);		/* make sure at root menu */
 	push_input_file(QSP_ARG  "-");
 	PUSHTEXT(text);			/* or fullpush? */
@@ -40,11 +34,6 @@ void digest(QSP_ARG_DECL  const char *text)
 	} while( tell_qlevel(SINGLE_QSP_ARG) >= level );
 
 	popcmd(SINGLE_QSP_ARG);			/* back to where we were (undo push_top_menu) */
-#ifdef OLD_LOOKAHEAD
-	pop_lookahead(SINGLE_QSP_ARG);
-	/* enable_lookahead(la_level); */
-#endif /* OLD_LOOKAHEAD */
-
 }
 
 void swallow(QSP_ARG_DECL  const char *text)

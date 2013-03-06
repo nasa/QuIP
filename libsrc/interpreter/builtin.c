@@ -270,6 +270,8 @@ static COMMAND_FUNC( do_if )
 	 *
 	 * We are temporarily putting this back the way it was
 	 * because of an unintended consequence...
+	 *
+	 * But I don't see any disable_lookahead here at all???
 	 */
 
 
@@ -296,8 +298,6 @@ static COMMAND_FUNC( do_if )
 			push_if(QSP_ARG   savestr(s) );
 		}
 	}
-
-/* enable_lookahead(-1); */ /* leave level alone */
 }
 
 static COMMAND_FUNC( do_seed )
