@@ -14,6 +14,20 @@ Define M3 0		# M3 has a comment
 warn "This is line 1 of M3 (file line 14)"
 .
 
+advise 'Will define M4...'
+
+Define M4 0 extra junk on line
+advise 'This is M4'
+.
+
+advise 'Will define M5...'
+
+Define M5 0
+advise 'This is M5'
+. extra stuff on last line
+
+advise 'Will call M1,M2,M3...'
+
 M1
 M2
 M3

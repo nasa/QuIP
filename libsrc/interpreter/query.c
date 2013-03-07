@@ -1229,8 +1229,45 @@ int intractive(SINGLE_QSP_ARG_DECL)
 #endif /* ! MAC */
 }
 
-/* read in macro text */
+/* scan_remainder
+ *
+ * scan from qp_lbptr to the end of the buffer.
+ * We expect only one newline (at the end), and nothing
+ * except white space before a comment delimiter.
+ */
 
+void scan_remainder(QSP_ARG_DECL  Query *qp, char *location )
+{
+	const char *s;
+	int c;
+	int n_newlines=0;
+	int comment_seen=0;
+
+	s=qp->q_lbptr;
+	while( (c=(*s++)) ){
+
+		if( isspace(c) ){
+			if( c == '\n' ) n_newlines++;
+		} else if( !comment_seen ){
+			if( c == '#' ) comment_seen=1;
+			else {
+				sprintf(ERROR_STRING,"Extra text encountered after %s",location);
+				WARN(ERROR_STRING);
+				return;
+			}
+		}
+		/* else not a space and comment seen */
+	}
+#ifdef CAUTIOUS
+	if( n_newlines != 1 ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  scan_remainder %s:  expected 1 newline, but encountered %d",
+			location,n_newlines);
+		WARN(ERROR_STRING);
+	}
+#endif /* CAUTIOUS */
+}
+
+/* read in macro text */
 
 char * rdmtext(SINGLE_QSP_ARG_DECL)
 {
@@ -1252,25 +1289,14 @@ char * rdmtext(SINGLE_QSP_ARG_DECL)
 	/* lookahead line may have been read already... */
 
 	if( qp->q_havtext ){
-//sprintf(ERROR_STRING,"rdmtext:  query buffer has text, buf = \"%s\"",qp->q_lbptr);
-//advise(ERROR_STRING);
-		/* Now rd_word leaves the final newline in the buffer,
-		 * to make line-counting simpler.
-		 * But we don't want it part of the
-		 * macro body.
-		 */
-
 		// Flush any buffered text remaining on the line...
 		qp->q_havtext = 0;
 
-#ifdef FOOBAR
-		/* Shouldn't the line buffer contain nothing at this point??? */
-		if( *qp->q_lbptr != '.' )
-			copy_string(&mac_text,qp->q_lbptr);
-		else goto dun;
-#endif /* FOOBAR */
-		copy_string(&mac_text,"");	// init?
+		// this is just so we can warn if there's garbage on the line
+		scan_remainder(QSP_ARG  qp, "macro declaration");
 	}
+
+	copy_string(&mac_text,"");	// initialize
 
 	/* We shold have a reading macro flag? */
 
@@ -1296,6 +1322,10 @@ advise(ERROR_STRING);
 	}
 //dun:
 	qp->q_havtext=0;	/* don't read '.' */
+	qp->q_lbptr++;
+	qp->q_lineno = qp->q_rdlineno;	// in case a warning is printed by scan_remainder
+	scan_remainder(QSP_ARG  qp,"end of macro definition");
+
 	// Shouldn't we advance the line number???
 	// Lookahead may do that?
 	qp->q_rdlineno++;
