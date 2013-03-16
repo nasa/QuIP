@@ -694,15 +694,9 @@ COMMAND_FUNC( closeloop )
 	const char *errmsg="Can't Close, no loop open";
 
 	if( QLEVEL <= 0 || THIS_QSP->qs_query[QLEVEL-1].q_count == 0 ){
-//sprintf(ERROR_STRING,"closeloop:  qlevel = %d",QLEVEL);
-//advise(ERROR_STRING);
-//sprintf(ERROR_STRING,"closeloop:  count = %d",THIS_QSP->qs_query[QLEVEL-1].q_count);
-//advise(ERROR_STRING);
 		WARN(errmsg);
 		return;
 	}
-//sprintf(ERROR_STRING,"closeloop:  qlevel = %d   count = %d",QLEVEL,THIS_QSP->qs_query[QLEVEL-1].q_count);
-//advise(ERROR_STRING);
 
 	qp=(&THIS_QSP->qs_query[QLEVEL]);
 
@@ -737,17 +731,7 @@ advise(ERROR_STRING);
 			ASSIGN_VAR(qp->q_fore->f_varname,
 				(const char *)qp->q_fore->f_np->n_data );
 		}
-#ifdef DEBUG
-if( debug & qldebug ){
-sprintf(ERROR_STRING,"%s - %s:  pushing saved text, level %ld",
-WHENCE(closeloop),
-QUERY_LEVEL );
-advise(ERROR_STRING);
-}
-#endif /* DEBUG */
 		push_input_file( QSP_ARG current_input_file(SINGLE_QSP_ARG) );
-//sprintf(ERROR_STRING,"closeloop:  pushing \"%s\"",qp->q_text);
-//advise(ERROR_STRING);
 		fullpush(QSP_ARG  qp->q_text);
 		/* This is right if we haven't finished the current line yet... */
 		(qp+1)->q_rdlineno = qp->q_rdlineno;
@@ -755,13 +739,6 @@ advise(ERROR_STRING);
 
 lup_dun:
 
-#ifdef DEBUG
-//if( debug & qldebug ){
-//sprintf(ERROR_STRING,"r%s - %s:  releasing loop text buffer at level %ld",
-//WHENCE(closeloop),QUERY_LEVEL );
-//advise(ERROR_STRING);
-//}
-#endif /* DEBUG */
 		givbuf(qp->q_text);
 		qp->q_text = NULL;
 		qp->q_rdlineno = (qp+1)->q_rdlineno;
@@ -769,9 +746,6 @@ lup_dun:
 		/* lookahead may have been inhibited by q_count==1 */
 		lookahead(SINGLE_QSP_ARG);
 	}
-//sprintf(ERROR_STRING,"End of closeloop:  qlevel = %d",QLEVEL);
-//advise(ERROR_STRING);
-//qdump(SINGLE_QSP_ARG);
 }
 
 

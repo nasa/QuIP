@@ -160,13 +160,11 @@ void lookahead(SINGLE_QSP_ARG_DECL)
 
 void lookahead_til(QSP_ARG_DECL  int level)
 {
-/*sprintf(ERROR_STRING,"lookahead_til %d:  qlevel = %d",level,THIS_QSP->qs_level); */
-/*advise(ERROR_STRING); */
 	THIS_QSP->qs_former_level = THIS_QSP->qs_level;
 
 #ifdef DEBUG
 if( debug & lah_debug ){
-sprintf(ERROR_STRING,"lookahead at level %d",THIS_QSP->qs_level);
+sprintf(ERROR_STRING,"lookahead_til %d BEGIN",level);
 advise(ERROR_STRING);
 }
 #endif /* DEBUG */
@@ -175,6 +173,7 @@ advise(ERROR_STRING);
 		&& (!IS_INTERACTIVE(&THIS_QSP->qs_query[QLEVEL]) )
 		&& ( (THIS_QSP->qs_query[QLEVEL].q_flags & Q_SOCKET ) == 0 )
 		&& QLEVEL > level
+		/* don't lookahead if we are saving... */
 		&& (QLEVEL<=0 || !THIS_QSP->qs_query[QLEVEL-1].q_count)
 
 	){
@@ -217,17 +216,9 @@ advise(ERROR_STRING);
 //advise("lookahead_til calling nextline");
 
 			nextline(QSP_ARG "" );	// lookahead_til
-#ifdef FOOBAR
-			qp->q_rdlineno++;
-#ifdef DEBUG_LINENO
-sprintf(ERROR_STRING,"lookahead_til(%d) advancing line number to %d after calling nextline",
-level,qp->q_rdlineno);
-advise(ERROR_STRING);
-#endif /* DEBUG_LINENO */
-#endif /* FOOBAR */
 
+			// Should we make sure qlevel hasn't changed?
 			if( qp->q_havtext ) {
-//advise("lookahead_til calling eatup_space #2");
 				eatup_space(qp);	/* lookahead_til */
 			}
 		}
@@ -263,7 +254,7 @@ THIS_QSP->qs_query[QLEVEL-1].q_count,QLEVEL-1);
 advise(ERROR_STRING);
 } }
 #endif /* DEBUG */
-}
+} // end lookahead_til
 
 /*
  * Get next word from the top of the query file stack.
@@ -284,8 +275,6 @@ const char * qword(QSP_ARG_DECL const char *pline)
 	const char *buf;
 
 	do {
-		/*lookahead();*/
-
 		buf=gword(QSP_ARG  pline);		/* read a raw word */
 
 //if( verbose && buf != NULL ){
@@ -696,21 +685,6 @@ char * rd_word(SINGLE_QSP_ARG_DECL)
 
 		c=(*s++);	// get the next char
 
-		// Check for opening or closing quote
-		if( flags & RW_INQUOTE ){
-			/* check if the character is the closing quote mark */
-			if( c == start_quote && !(flags & RW_HAVBACK) ){
-				flags &= ~RW_INQUOTE;
-				n_quotations++;
-			}
-		} else {
-			if( c == DBL_QUOTE || c == SGL_QUOTE ){
-				/* this is the opening quote */
-				start_quote = c;
-				flags |= RW_INQUOTE;
-			}
-		}
-
 		/* now do something with this character */
 
 		if( flags & RW_SAVING ) {
@@ -720,10 +694,31 @@ char * rd_word(SINGLE_QSP_ARG_DECL)
 		if( flags & RW_INCOMMENT ){
 			/* skip all characters until a newline */
 			if( c == '\n' ){
-				// should we increment the line counter??
+				// increment the line counter
+				qp->q_rdlineno ++;
 				flags &= ~RW_INCOMMENT;
+				/* We don't let backslash's escape
+				 * newlines within comments...
+				 * For multi-line comments, use a new delimiter.
+				 */
 			}
 		} else {
+			// Check for opening or closing quote
+			// BUG?  should we do this before backslash checking???
+			if( flags & RW_INQUOTE ){
+				/* check if the character is the closing quote mark */
+				if( c == start_quote && !(flags & RW_HAVBACK) ){
+					flags &= ~RW_INQUOTE;
+					n_quotations++;
+				}
+			} else {
+				if( c == DBL_QUOTE || c == SGL_QUOTE ){
+					/* this is the opening quote */
+					start_quote = c;
+					flags |= RW_INQUOTE;
+				}
+			}
+
 			if( flags & RW_HAVBACK ){		/* char follows backslash */
 				after_backslash(QSP_ARG  c,&buf,&s,&start,qp,&need_size,sbp);
 				/* BUG maybe we shouldn't have any after escaped nl ? */
@@ -840,14 +835,8 @@ gwtop:
 	need=1;
 	QUERY_FLAGS |= QS_STILL_TRYING;
 	qp=(&THIS_QSP->qs_query[QLEVEL]);
-//sprintf(ERROR_STRING,"gword:  qlevel = %d, havtext = %d",QLEVEL,qp->q_havtext);
-//advise(ERROR_STRING);
 	if( !qp->q_havtext )	/* need to read more input */
 	{
-//if( verbose ){
-//sprintf(DEFAULT_ERROR_STRING,"gword %s calling qline (qlevel = %d)",THIS_QSP->qs_name,THIS_QSP->qs_level);
-//advise(DEFAULT_ERROR_STRING);
-//}
 		buf=qline(QSP_ARG   pline );
 #ifdef THREAD_SAFE_QUERY
 		if( IS_HALTING(qsp) ) return(NULL);
@@ -856,37 +845,11 @@ gwtop:
 
 	qp=(&THIS_QSP->qs_query[QLEVEL]);	/* qline may pop the level!!! */
 
-#ifdef FOOBAR
-	/* why eatup_space here?
-	 * If we are saving, we might like to save all the white space - especially
-	 * newlines, for correct line counting.
-	 */
-	//eatup_space(qp);		/* gword */
-#endif /* FOOBAR */
-
 	if( qp->q_havtext ){
 		/* rd_word() returns non-NULL if successful */
-//if(verbose){
-//sprintf(ERROR_STRING,"gword %s calling rd_word (level = %d)",THIS_QSP->qs_name,THIS_QSP->qs_level);
-//advise(ERROR_STRING);
-//if( THIS_QSP->qs_serial > FIRST_QUERY_SERIAL ) qdump(THIS_QSP);
-//}
 		if( (buf=rd_word(SINGLE_QSP_ARG)) != NULL ){
-#ifdef DEBUG
-if( debug & qldebug ){
-sprintf(ERROR_STRING,"%s - %s:  rd_word returned 0x%lx \"%s\"",
-WHENCE(gword),
-(u_long)buf,buf);
-advise(ERROR_STRING);
-}
-#endif	/* DEBUG */
 			need=0;
 		} else {
-#ifdef DEBUG
-//if( debug & qldebug ){
-//advise("gword() got nuttin from rd_word");
-//}
-#endif	/* DEBUG */
 			qp->q_havtext=0;
 		}
 	}
@@ -1102,18 +1065,6 @@ advise(ERROR_STRING);
 	 * lines in the case of a macro or a loop, so we have to
 	 * count as we scan.
 	 */
-
-#ifdef FOOBAR
-
-	/* advance the line number right before reading */
-	qp->q_rdlineno++;
-#ifdef DEBUG_LINENO
-sprintf(ERROR_STRING,"nextline:  advanced line number to %d",qp->q_rdlineno);
-advise(ERROR_STRING);
-#endif /* DEBUG_LINENO */
-
-#endif /* FOOBAR */
-
 
 	if( qp->q_rdlineno == 0 ){
 		qp->q_rdlineno++;		// count the first line
@@ -1413,15 +1364,14 @@ static void eatup_space(Query *qp)
 	if( !qp->q_havtext ) return;
 
 	str=qp->q_lbptr;
+
+#ifdef CAUTIOUS
 	if( str == (char *)NULL ) {
-		NWARN("Huh???:  null line buf ptr");
-		/* BUG need a good trace display !? */
-		/*
-		qdump();
-		*/
+		NWARN("CAUTIOUS:  eatup_space:  null line buf ptr");
 		qp->q_havtext=0;
 		return;
 	}
+#endif /* CAUTIOUS */
 
 #ifdef DEBUG_LINENO
 sprintf(DEFAULT_ERROR_STRING,"eatup_space:  buffer contains \"%s\"",str);
@@ -1434,24 +1384,11 @@ skipit:
 	while( *str && isspace( *str ) ){
 		// What if file has both??
 		if( *str == '\n' || *str == '\r' ){
-#ifdef FOOBAR
-			/* We only need to do this when we are reading from a buffer,
-			 * because when we are reading directly from a file the
-			 * line numbers are advanced by nextline...
-			 * BAD COMMENT - is that still true???
-			 */
-			if( READING_BUFFERED_TEXT(qp) ){
-#endif /* FOOBAR */
-				qp->q_rdlineno++;
+			qp->q_rdlineno++;
 #ifdef DEBUG_LINENO
 sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing newline char",qp->q_rdlineno);
 advise(DEFAULT_ERROR_STRING);
 #endif /* DEBUG_LINENO */
-
-#ifdef FOOBAR
-			}
-#endif /* FOOBAR */
-
 		}
 		str++;
 	}

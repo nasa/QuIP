@@ -1,5 +1,5 @@
 # Test line number reporting
-#
+
 Define Test1 0
 warn "Line 1 of macro Test1 (file line 4)"
 

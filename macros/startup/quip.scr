@@ -24,6 +24,7 @@ max_warnings 200
 # Automator (Mac OS X) to put up an alert...
 
 os interrupt_action exit quit
+#debug lookahead
 
 Stop_File .quip
 

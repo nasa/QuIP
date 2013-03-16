@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/eyemov
+macrosdir	=	$(datadir)/coq/macros/eyemov
 
 macros_DATA	=	calib.mac	\
 			uhco.mac	\

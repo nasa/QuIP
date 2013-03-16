@@ -62,7 +62,7 @@ static void init_fmt_choices(SINGLE_QSP_ARG_DECL)
 	var_fmt_list[ FMT_DECIMAL ] = "decimal";
 	var_fmt_list[ FMT_HEX ] = "hex";
 	var_fmt_list[ FMT_OCTAL ] = "octal";
-	var_fmt_list[ FMT_UDECIMAL ] = "decimal";	/* BUG?  support unsigned? */
+	var_fmt_list[ FMT_UDECIMAL ] = "unsigned_decimal";
 	var_fmt_list[ FMT_FLOAT ] = "float";
 	var_fmt_list[ FMT_POSTSCRIPT ] = "postscript";
 

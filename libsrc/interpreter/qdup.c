@@ -263,26 +263,6 @@ advise(ERROR_STRING);
 		strcat(qp->q_text,buf);
 		qp->q_txtfree -= n_more;
 
-#ifdef FOOBAR
-		/* these next two lines are here since we're
-		 * already executing at the higher level
-		 *
-		 * For some reason, when we store the last "end",
-		 * that gets stored here too???
-		 * Why did that not happen before?
-		 */
-
-		// This gets called over and over again,
-		// for every character in a saved word...
-		// very inefficient!?
-		// Maybe we could do this from rd_word???
-
-//sprintf(ERROR_STRING,"savetext:  setting lbptr to 0x%lx (\"%s\")",
-//(long)(qp+1)->q_lbptr,(qp+1)->q_lbptr);
-//advise(ERROR_STRING);
-		qp->q_lbptr = (qp+1)->q_lbptr;
-		qp->q_havtext = (qp+1)->q_havtext;
-#endif /* FOOBAR */
 	}
 } // end savetext
 

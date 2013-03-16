@@ -1,4 +1,4 @@
-#                                               -*- Autoconf -*-
+#					       -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
 # BUG - need to set or clear HAVE_VBL
@@ -177,7 +177,7 @@ EOF
 #       if $NVCC conftest.cu && test_whether_output_files_are_ok
        if $NVCC conftest.cu
        then
-               working_nvcc=yes
+	       working_nvcc=yes
        fi
        rm -f conftest.cu a.out
        AC_MSG_RESULT([$working_nvcc])
@@ -198,13 +198,13 @@ int main() {
     struct cudaDeviceProp properties;
     cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
     if (cudaResultCode != cudaSuccess) 
-        deviceCount = 0;
+	deviceCount = 0;
     /* machines with no GPUs can still report one emulation device */
     for (device = 0; device < deviceCount; ++device) {
-        cudaGetDeviceProperties(&properties, device);
-        if (properties.major != 9999){ /* 9999 means emulation only */
-            ++gpuDeviceCount;
-            printf("%d.%d\n",
+	cudaGetDeviceProperties(&properties, device);
+	if (properties.major != 9999){ /* 9999 means emulation only */
+	    ++gpuDeviceCount;
+	    printf("%d.%d\n",
 		properties.major,properties.minor);
 	    return 0;	// just print out for first device
 	}
@@ -214,9 +214,9 @@ int main() {
     /* don't just return the number of gpus, because other runtime cuda
        errors can also yield non-zero return values */
     if (gpuDeviceCount > 0)
-        return 0; /* success */
+	return 0; /* success */
     else
-        return 1; /* failure */
+	return 1; /* failure */
 }
 EOF
 
@@ -729,71 +729,71 @@ AC_CHECK_FUNCS([gethostbyname select socket])
 AC_CHECK_FUNCS([drand48 srand48 random srandom rand srand])
 
 AC_CONFIG_FILES([Makefile
-                 macros/Makefile
-                 macros/system/Makefile
-                 macros/compute/Makefile
-                 macros/startup/Makefile
-                 macros/data/Makefile
-                 macros/view/Makefile
-                 macros/numrec/Makefile
-                 macros/knox/Makefile
-                 macros/visca/Makefile
-                 macros/atc/Makefile
-                 macros/v4l2/Makefile
-                 macros/gui/Makefile
-                 macros/ctrack/Makefile
-                 macros/em_exp/Makefile
-                 macros/eyemov/Makefile
-                 macros/postproc/Makefile
-                 macros/analysis/Makefile
-                 macros/movie/Makefile
-                 doc/Makefile
-                 include/Makefile
-                 include/veclib/Makefile
-                 libsrc/Makefile
-                 libsrc/qutil/Makefile
-                 libsrc/gsl/Makefile
-                 libsrc/interpreter/Makefile
-                 libsrc/dobj/Makefile
-                 libsrc/nports/Makefile
-                 libsrc/fileio/Makefile
-                 libsrc/datamenu/Makefile
-                 libsrc/rawvol/Makefile
-                 libsrc/newvec/Makefile
-                 libsrc/vec_util/Makefile
-                 libsrc/vectree/Makefile
-                 libsrc/mvimenu/Makefile
-                 libsrc/seq/Makefile
-                 libsrc/view/Makefile
-                 libsrc/viewmenu/Makefile
-                 libsrc/xsupp/Makefile
-                 libsrc/genwin/Makefile
-                 libsrc/lutmenu/Makefile
-                 libsrc/luts/Makefile
-                 libsrc/psych/Makefile
-                 libsrc/cstepit/Makefile
-                 libsrc/opencv/Makefile
-                 libsrc/visca/Makefile
-                 libsrc/pic/Makefile
-                 libsrc/opengl/Makefile
-                 libsrc/ieee1394/Makefile
-                 libsrc/ptgrey/Makefile
-                 libsrc/smarteye/Makefile
-                 libsrc/cuda/Makefile
-                 libsrc/dither/Makefile
-                 libsrc/das1602/Makefile
-                 libsrc/usb2000/Makefile
-                 libsrc/meteor/Makefile
-                 libsrc/knox/Makefile
-                 libsrc/v4l2/Makefile
-                 libsrc/parport/Makefile
-                 libsrc/gps/Makefile
-                 libsrc/www/Makefile
-                 libsrc/gui/Makefile
-                 libsrc/nrmenu/Makefile
-                 libsrc/atc/Makefile
-                 libsrc/sound/Makefile
-                 src/Makefile])
+		 macros/Makefile
+		 macros/system/Makefile
+		 macros/compute/Makefile
+		 macros/startup/Makefile
+		 macros/data/Makefile
+		 macros/view/Makefile
+		 macros/numrec/Makefile
+		 macros/knox/Makefile
+		 macros/visca/Makefile
+		 macros/atc/Makefile
+		 macros/v4l2/Makefile
+		 macros/gui/Makefile
+		 macros/ctrack/Makefile
+		 macros/em_exp/Makefile
+		 macros/eyemov/Makefile
+		 macros/postproc/Makefile
+		 macros/analysis/Makefile
+		 macros/movie/Makefile
+		 doc/Makefile
+		 include/Makefile
+		 include/veclib/Makefile
+		 libsrc/Makefile
+		 libsrc/qutil/Makefile
+		 libsrc/gsl/Makefile
+		 libsrc/interpreter/Makefile
+		 libsrc/dobj/Makefile
+		 libsrc/nports/Makefile
+		 libsrc/fileio/Makefile
+		 libsrc/datamenu/Makefile
+		 libsrc/rawvol/Makefile
+		 libsrc/newvec/Makefile
+		 libsrc/vec_util/Makefile
+		 libsrc/vectree/Makefile
+		 libsrc/mvimenu/Makefile
+		 libsrc/seq/Makefile
+		 libsrc/view/Makefile
+		 libsrc/viewmenu/Makefile
+		 libsrc/xsupp/Makefile
+		 libsrc/genwin/Makefile
+		 libsrc/lutmenu/Makefile
+		 libsrc/luts/Makefile
+		 libsrc/psych/Makefile
+		 libsrc/cstepit/Makefile
+		 libsrc/opencv/Makefile
+		 libsrc/visca/Makefile
+		 libsrc/pic/Makefile
+		 libsrc/opengl/Makefile
+		 libsrc/ieee1394/Makefile
+		 libsrc/ptgrey/Makefile
+		 libsrc/smarteye/Makefile
+		 libsrc/cuda/Makefile
+		 libsrc/dither/Makefile
+		 libsrc/das1602/Makefile
+		 libsrc/usb2000/Makefile
+		 libsrc/meteor/Makefile
+		 libsrc/knox/Makefile
+		 libsrc/v4l2/Makefile
+		 libsrc/parport/Makefile
+		 libsrc/gps/Makefile
+		 libsrc/www/Makefile
+		 libsrc/gui/Makefile
+		 libsrc/nrmenu/Makefile
+		 libsrc/atc/Makefile
+		 libsrc/sound/Makefile
+		 src/Makefile])
 
 # See p. 111 if we only need the library for the feature...
 #
@@ -1022,10 +1022,10 @@ if test "x${use_cuda}" = xyes; then
       # Check for devices when determining compute capability!
       AC_DEFINE([HAVE_CUDA], 1, [GPU operations with CUDA enabled])
       if test "x${have_libcurand}" = xyes ; then
-        AC_DEFINE([HAVE_LIBCURAND], 1, [GPU random number generation with libcurand enabled])
+	AC_DEFINE([HAVE_LIBCURAND], 1, [GPU random number generation with libcurand enabled])
       fi
       if test "x${have_libnpp}" = xyes ; then
-        AC_DEFINE([HAVE_LIBNPP], 1, [GPU operations libnpp enabled])
+	AC_DEFINE([HAVE_LIBNPP], 1, [GPU operations libnpp enabled])
       fi
     else
       AC_MSG_WARN([
@@ -1217,9 +1217,9 @@ if test "x${have_opencvcore}" = xyes; then
   if test "x${have_opencvimgproc}" = xyes; then
     if test "x${have_opencvobjdetect}" = xyes; then
       if test "x${have_opencvhighgui}" = xyes; then
-        have_opencv=yes
-        # Should make sure that the user has not disabled...
-        AC_DEFINE([HAVE_OPENCV], 1, [Linkage to OpenCV library])
+	have_opencv=yes
+	# Should make sure that the user has not disabled...
+	AC_DEFINE([HAVE_OPENCV], 1, [Linkage to OpenCV library])
       fi
     fi
   fi

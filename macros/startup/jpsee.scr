@@ -255,15 +255,15 @@ If $deinterlace
 
 Define Display_Vanilla 0
 # We need to rotate jpeg files, but not avi's???
-	If $depth==3 "Rotate_Colors _img"
+If $depth==3 "Rotate_Colors _img"
 #	If $depth==3
 #		Then "Show_Bytes _img{0} rv Show_Bytes _img{1} gv Show_Bytes _img{2} bv Label3"
 #		Else 'Show_Bytes _img v Label_Viewer v "$jpeg_file, frame $frame_idx"'
-	# this should work for color or mono
-	If $vd==8&&$depth==3
-		Then "Show_Bytes _img{1} v"
-		Else "Show_Bytes _img v"
-	If $vd==16 "Show16 _img v"
+# this should work for color or mono
+If $vd==8&&$depth==3
+	Then "Show_Bytes _img{1} v"
+	Else "Show_Bytes _img v"
+If $vd==16 "Show16 _img v"
 .
 
 Define Display_Interlace 0
