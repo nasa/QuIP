@@ -666,7 +666,7 @@ AC_CHECK_HEADERS([jpeglib.h],[have_jpeglib_h=yes],[have_jpeglib_h=no])
 # cuda headers
 # These won't be found if the include directories aren't in CPPFLAGS!?
 AC_CHECK_HEADERS([curand.h])
-AC_CHECK_HEADERS([nppi.h])
+AC_CHECK_HEADERS([npp.h])
 
 if test $ac_cv_sizeof_long -eq 8; then
   AC_DEFINE([LONG_64_BIT], 1, [64 bit longs])

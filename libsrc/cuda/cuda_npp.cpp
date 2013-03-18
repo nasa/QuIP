@@ -12,10 +12,9 @@ char VersionId_cuda_cuda_npp[] = QUIP_VERSION_STRING;
 
 #include <cuda_runtime.h>
 
-#ifdef HAVE_NPPI_H
-#include <nppi.h>
-#include <npps.h>
-#endif /* HAVE_NPPI_H */
+#ifdef HAVE_NPP_H
+#include <npp.h>
+#endif /* HAVE_NPP_H */
 
 #define NPP_VERSION_CODE(major,minor,build)			\
 	((major<<16)|(minor<<8)|build)
@@ -590,6 +589,7 @@ static void get_scratch_for(Data_Obj *dp)
 	 * Mac is 4.2 also, but npp 4.2.9...
 	 */
 /* #if NPP_VERSION <= NPP_VERSION_CODE(4,0,17) */
+/* 4.0.17 on linux... */
 
 #if NPP_VERSION >= NPP_VERSION_CODE(4,0,17)
 	s = nppsReductionGetBufferSize_32f( len, &buf_size );
