@@ -22,9 +22,9 @@ char VersionId_cuda_cuda_curand[] = QUIP_VERSION_STRING;
 
 #include "my_cuda.h"
 
-#ifdef HAVE_NPPI_H
-#include <nppi.h>
-#endif /* HAVE_NPPI_H */
+#ifdef HAVE_NPP_H
+#include <npp.h>
+#endif /* HAVE_NPP_H */
 
 #include "items.h"
 #include "debug.h"		/* verbose */
