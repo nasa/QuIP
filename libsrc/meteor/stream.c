@@ -641,7 +641,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	shape.si_frames = n_frames;
 	shape.si_seqs = 1;
 	shape.si_prec = PREC_UBY;
-	set_shape_flags(&shape,NO_OBJ);
+	set_shape_flags(&shape,NO_OBJ,AUTO_SHAPE);
 	if( !meteor_field_mode )
 		shape.si_flags |= DT_INTERLACED;
 

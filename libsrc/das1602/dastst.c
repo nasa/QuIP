@@ -330,7 +330,7 @@ static COMMAND_FUNC( adc_range )
 			case 3:	range = RANGE_1_25V_UNI; break;
 #ifdef CAUTIOUS
 			default:
-				error1("CAUTIOUS:  adc_range:  impossible unipolar value!?");
+				ERROR1("CAUTIOUS:  adc_range:  impossible unipolar value!?");
 				range=(-1);	/* quiet compiler */
 				break;
 #endif /* CAUTIOUS */
@@ -343,7 +343,7 @@ static COMMAND_FUNC( adc_range )
 			case 3:	range = RANGE_1_25V_BI; break;
 #ifdef CAUTIOUS
 			default:
-				error1("CAUTIOUS:  adc_range:  impossible bipolar value!?");
+				ERROR1("CAUTIOUS:  adc_range:  impossible bipolar value!?");
 				range=(-1);	/* quiet compiler */
 				break;
 #endif /* CAUTIOUS */
@@ -427,7 +427,7 @@ static COMMAND_FUNC( adc_mode )
 		case 2: arg = ADC_MODE_PACED; break;
 #ifdef CAUTIOUS
 		default:
-			error1("CAUTIOUS:  adc_mode:  impossible mode!?");
+			ERROR1("CAUTIOUS:  adc_mode:  impossible mode!?");
 			arg = (-1);	/* quiet compiler */
 			break;
 #endif /* CAUTIOUS */
@@ -717,7 +717,7 @@ static COMMAND_FUNC( set_dac_mode )
 		case 3: arg=DAC_MODE_EXT_FALLING; break;
 #ifdef CAUTIOUS
 		default:
-			error1("CAUTIOUS:  set_dac_mode:  impossible DAC mode!?");
+			ERROR1("CAUTIOUS:  set_dac_mode:  impossible DAC mode!?");
 			arg=(INVALID_DAC_MODE);	/* quiet compiler */
 			break;
 #endif /* CAUTIOUS */
@@ -788,7 +788,7 @@ static COMMAND_FUNC( set_dac_range )
 		case 3: arg=RANGE_5V_UNI; break;
 #ifdef CAUTIOUS
 		default:
-			error1("CAUTIOUS:  set_dac_range:  impossible range index!?");
+			ERROR1("CAUTIOUS:  set_dac_range:  impossible range index!?");
 			arg=(-1);	/* quiet compiler */
 			break;
 #endif
@@ -1047,7 +1047,7 @@ static COMMAND_FUNC( read_nvram )
 
 	if(dp==NO_OBJ) return;
 
-	if( nvram_fd < 0 ) error1("unable to open nvram");
+	if( nvram_fd < 0 ) ERROR1("unable to open nvram");
 
 	if( ! VALID_NVRAM_PREC(dp) ){
 		sprintf(error_string,
@@ -1083,7 +1083,7 @@ static COMMAND_FUNC( write_nvram )		/* sq */
 
 	if(dp==NO_OBJ) return;
 
-	if( nvram_fd < 0 ) error1("unable to open nvram");
+	if( nvram_fd < 0 ) ERROR1("unable to open nvram");
 
 	if( ! VALID_NVRAM_PREC(dp) ){
 		sprintf(error_string,
@@ -1120,7 +1120,7 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
-	if( nvram_fd < 0 ) error1("nvram not open");
+	if( nvram_fd < 0 ) ERROR1("nvram not open");
 
 	original_fd_position = lseek(nvram_fd,0,SEEK_CUR);
 
@@ -1174,7 +1174,7 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
-	if( nvram_fd < 0 ) error1("nvram not open");
+	if( nvram_fd < 0 ) ERROR1("nvram not open");
 
 	original_fd_position = lseek(nvram_fd,0,SEEK_CUR);
 
