@@ -219,7 +219,7 @@ advise(error_string);
 	}
 #endif /* HAVE_SELECT */
 
-advise("port_listen:  select detected something...");
+//advise("port_listen:  select detected something...");
 
 	while( (msg_sock=accept(mpp->mp_o_sock,&from,&from_len)) == -1 ){
 		if ( errno == EWOULDBLOCK) {
