@@ -1760,6 +1760,12 @@ Query_Stream *new_query_stream(QSP_ARG_DECL  const char *name)
 
 	init_query_stream(new_qsp);
 
+	// We used to set this when we increment below,
+	// but serial needs to be set before we call
+	// first_query_stream, because it indexes
+	// the context list...
+	new_qsp->qs_serial = n_active_threads;
+
 	if( n_active_threads == 0 ){
 		default_qsp = new_qsp;
 		first_query_stream(new_qsp);	/* point this at stdin */
@@ -1767,7 +1773,7 @@ Query_Stream *new_query_stream(QSP_ARG_DECL  const char *name)
 
 	// We increment n_active threads here, although the thread
 	// isn't created until a teeny bit later...
-	new_qsp->qs_serial = n_active_threads++;
+	n_active_threads++;
 
 #ifdef THREAD_SAFE_QUERY
 	if( new_qsp->qs_serial == FIRST_QUERY_SERIAL )

@@ -145,6 +145,7 @@ static void init_itp(Item_Type *itp)
 #ifdef THREAD_SAFE_QUERY
 	{
 		int i;
+
 //if( n_active_threads==0 )NERROR1("init_itp:  no active threads!?");
 		/*
 		itp->it_contexts[0] = new_list();
@@ -154,8 +155,10 @@ static void init_itp(Item_Type *itp)
 			itp->it_contexts[i] = NO_LIST;
 			*/
 		/* What the heck - just allocate all the lists */
-		for(i=0;i<MAX_QUERY_STREAMS;i++)
+		for(i=0;i<MAX_QUERY_STREAMS;i++){
 			itp->it_contexts[i] = new_list();
+			itp->it_ctx_restricted[i] = 0;
+		}
 	}
 	{
 		//itp->it_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -167,6 +170,7 @@ static void init_itp(Item_Type *itp)
 	}
 #else /* ! THREAD_SAFE_QUERY */
 	itp->it_contexts = new_list();
+	itp->it_ctx_restricted = 0;
 #endif /* ! THREAD_SAFE_QUERY */
 }
 
@@ -268,7 +272,7 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
 	PUSH_ITEM_CONTEXT(itp,icp);
 
 	return(itp);
-}
+} // end init_item_type
 
 /*
  * Create a new item type.  Allocate a hash table with hashsize
@@ -776,7 +780,6 @@ NERROR1(ERROR_STRING);
 			// explicitly clear it.
 
 			//CTX_RSTRCT_FLAG(itp)=0;
-
 			return(NO_ITEM);
 		}
 		np=np->n_next;

@@ -590,8 +590,9 @@ static void get_scratch_for(Data_Obj *dp)
 	 */
 /* #if NPP_VERSION <= NPP_VERSION_CODE(4,0,17) */
 /* 4.0.17 on linux... */
+/* Mac is 4.2.9 and needs SumGet ... */
 
-#if NPP_VERSION >= NPP_VERSION_CODE(4,0,17)
+#if NPP_VERSION <= NPP_VERSION_CODE(4,0,17)
 	s = nppsReductionGetBufferSize_32f( len, &buf_size );
 #else	/* newer version of NPP */
 	/* What versions use this??? */

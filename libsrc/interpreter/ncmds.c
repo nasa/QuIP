@@ -587,7 +587,6 @@ void getwcmd(SINGLE_QSP_ARG_DECL)		/** get command from ctbl */
 	cip = cmd_of(QSP_ARG  s);
 	if( cip != NO_COMMAND_ITEM ){	/* an exact match! */
 		Command *cmdp;
-
 		cmdp = cip->ci_cmdp;
 		(*cmdp->cmd_func)(SINGLE_QSP_ARG);
 		return;
