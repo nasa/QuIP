@@ -4,7 +4,7 @@ Start_File conv.mac
 # space domain convolution
 
 Define Convolve 3 target source filter
-war misc convolve $1 $2 $3 quit quit
+compute misc convolve $1 $2 $3 quit quit
 .
 
 Stop_File conv.mac

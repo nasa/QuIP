@@ -662,7 +662,7 @@ char * rd_word(SINGLE_QSP_ARG_DECL)
 
 	s=qp->q_lbptr;		/* this is the read scan pointer */
 
-//sprintf(ERROR_STRING,"rd_word:  input buffer contains \"%s\"",s);
+//sprintf(ERROR_STRING,"rd_word:  scanning \"%s\"",s);
 //advise(ERROR_STRING);
 
 	/* Eventually we will want to strip quote marks,
@@ -804,6 +804,7 @@ ERROR1("CAUTIOUS too much stuff!!!");
 	if( ! (flags & RW_NOVAREXP) ) 
 		var_expand(QSP_ARG  sbp);
 
+//fprintf(stderr,"rd_word:  returning '%s'\n",sbp->sb_buf);
 	return(sbp->sb_buf);
 
 } // end rd_word

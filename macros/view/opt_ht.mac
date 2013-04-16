@@ -33,9 +33,9 @@ Dup_Float zoombuf $1
 Assign mid floor($fsize/2)
 Sequence filter $tsize $fsize $fsize 1 float
 Scalar maxscal 1 float
-Scalar nmax 1 long
+Scalar nmax 1 int32
 Assign total_ht_pixels nframes(halftone)*$xsize*$ysize
-Vector indices $total_ht_pixels 1 long
+Vector indices $total_ht_pixels 1 int32
 .
 
 Define Opt_HT_Init 1 prototype
@@ -48,9 +48,9 @@ Float_Image zoombuf
 Assign mid floor($fsize/2)
 Image filter $fsize $fsize 1 float
 Scalar maxscal 1 float
-Scalar nmax 1 long
+Scalar nmax 1 int32
 Assign total_ht_pixels $xsize*$ysize
-Vector indices $total_ht_pixels 1 long
+Vector indices $total_ht_pixels 1 int32
 .
 
 Define Msgs_On 0
@@ -168,7 +168,7 @@ Delete_Image f_error
 .
 
 Define Setup_Requant 0
-war requantize
+compute requantize
   achrom
     set_output halftone
     set_input input
@@ -181,7 +181,7 @@ war requantize
 
 
 Define Setup_Requant3d 0
-war
+compute
 requantize
   threeD
     set_output halftone
@@ -213,7 +213,7 @@ Get_SSE
 .
 
 Define Ordered_Dither 2 target size
-war misc dither $1 $2 quit quit
+compute misc dither $1 $2 quit quit
 .
 
 Define Check_OD 0
@@ -252,7 +252,7 @@ repeat $size
   Increment i
   end
 Tell_If 'Checkboard init done'
-war misc product $1 row row quit quit
+compute misc product $1 row row quit quit
 Delete_Image row
 .
 
@@ -347,9 +347,9 @@ repeat 50000
 
   VMov last_halftone halftone
 
-  # war requantize achrom descend $n_per_block quit quit quit
-  war requantize achrom $1 $n_per_block quit quit quit
-#  war requantize anneal $temp $n_per_block quit quit
+  # compute requantize achrom descend $n_per_block quit quit quit
+  compute requantize achrom $1 $n_per_block quit quit quit
+#  compute requantize anneal $temp $n_per_block quit quit
 
   If $show_inset "Show_Halftone_Inset"
 
@@ -382,12 +382,12 @@ repeat 50000
 
   VMov last_halftone halftone
 
-  war requantize threeD descend $n_per_block quit quit quit
-  # war requantize threeD migrate $n_per_block quit quit quit
+  compute requantize threeD descend $n_per_block quit quit quit
+  # compute requantize threeD migrate $n_per_block quit quit quit
 Show_If halftone $v1_index halftone
 Show_All_If HT_error 5 'halftone error'
 Show_All_If HT_ferror 6 'filtered error'
-#  war requantize anneal $temp $n_per_block quit quit
+#  compute requantize anneal $temp $n_per_block quit quit
 
 #  Mul_Var temp 1/$coolrate
   #Get_SSE_3d
@@ -416,7 +416,7 @@ repeat 50000
 
   VMov last_halftone halftone
 
-  war requantize achrom anneal $temp $n_per_block quit quit quit
+  compute requantize achrom anneal $temp $n_per_block quit quit quit
 
 #  Mul_Var temp 1/$coolrate
   Get_SSE
@@ -453,7 +453,7 @@ Scale $1 -1 1
 Define One_Scan 2 'check function' 'scan type'
 Tell_If "initializing with function $1 , using $2 scan"
 $1
-war requantize achrom scan $2 quit quit quit
+compute requantize achrom scan $2 quit quit quit
 Descend
 .
 
@@ -472,7 +472,7 @@ Tell_If "Scan_and_Dump $1 $2 $3 $4"
 Tell_If "initializing with function $1 , using $2 scan"
 $1
 Tell_If 'setting scan'
-war requantize achrom scan $2 quit quit quit
+compute requantize achrom scan $2 quit quit quit
 Tell_If improving?
 $3
 Pause_If
@@ -498,7 +498,7 @@ $1
 Show_All_If HT_error 5 'halftone error'
 Show_All_If HT_ferror 6 'filtered error'
 Tell_If 'setting scan'
-war requantize threeD scan $2 quit quit quit
+compute requantize threeD scan $2 quit quit quit
 Tell_If "improving with $3"
 $3
 Pause_If
@@ -555,7 +555,7 @@ Convert $1 halftone	# Bug should really pass along args...
 Set ht_filter_init_macro Default_Halftone_Filter
 Set descent_method Descend
 
-Define Compute_HT 1 target source initialization scan
+Define Compute_HT 4 target source initialization scan
 Convert input $2
 Show_All_If input 1 'input image'
 
