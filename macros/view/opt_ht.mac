@@ -152,7 +152,7 @@ Float_Image f_error
 #Float_Image f2_error
 Show_All_If input v7 'input'
 Show_All_If halftone v8 'halftone'
-VVSub HT_error input halftone
+VVSub HT_error halftone input
 Show_All_If HT_error v5 'raw error'
 Convolve f_error HT_error filter
 #misc convolve f2_error f_error filter quit
