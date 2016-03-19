@@ -10,17 +10,16 @@ SUBDIRS =							\
 		ieee1394					\
 		opencv						\
 		cuda						\
-		smarteye					\
-		parport		gps				\
+		parport		\
 		das1602		usb2000		meteor		\
 		v4l2		dither		knox		\
-		qutil		dobj		nports		\
-		interpreter	datamenu			\
+		dobj		\
+		interpreter	\
 		rawvol		vectree				\
 		vec_util	mvimenu		seq		\
-		view		viewmenu	xsupp		\
-		genwin		luts		lutmenu		\
+		view		xsupp		\
+		genwin		\
 		psych		cstepit		www		\
-		gui		nrmenu		sound		\
-		atc
+		gui		nrmenu		sound
+
 
