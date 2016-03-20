@@ -1,0 +1,148 @@
+We’ve had a meeting over here to discuss the App to try
+and figure out any errors or things we would like to see
+to help improve the data accuracy and try to engage
+the crew members.
+
+I have split these up into 4 areas.
+
+Errors
+Nice to have
+App Additions
+& Change to APP upload files
+
+ERRORS
+
+1. ’CAUTIOUS: titleForRow (PickerView): couldn’t find screen object?!’.
+This crashed the app on two occasions
+& on another allowed movement to the next step.
+
+It occurred on different screens in the CIS checklist & NASA TLX.
+
+2. ‘Type dimension (200) of string object scratch_user_answers[3]
+is too small for string of length ***’. This is on the
+‘Fatigue Countermeasures Q.4. I guess this is to do with the maximum
+string length, this might be one of the areas we change so that the
+maximum string length is less than 200 characters.
+
+3. ‘YYERROR: Syntax Error’. This occurred in the free text areas
+and after the error came up the APP crashed.
+
+4. Sometimes the ‘Done’ button in free text areas did not work,
+however this was spontaneous and had no regular occurrence.
+
+5. When pushing ‘previous’ button after selecting ‘next sector > Yes’
+it takes you back to the start of the duty day.
+
+6.  You cannot press the ribbon at the top of the PVT to get a time.
+I guess this is an apple thing and therefore impossible to change,
+if so not to worry.
+
+ 
+
+ 
+
+The nice to have bits
+
+These are a collection of items from the crew and items we have thought of,
+I will go through the areas in as streamlined a way as possible
+
+Overall App
+
+1.  Can previous button only allow a 1 step back and then disappear.
+– We have a feeling some crew members may go back to previous questions
+instead of following the days fully.
+
+2.  Would it be possible to add previous test name and time/date stamp
+on the home page of the app.
+
+3.  Is it possible to turn on/off whether questionnaires are shown
+(I’m thinking this might be good because in future studies we may
+require certain questionnaires and not others, also thinking about
+the possible introduction of n-back while keeping PVT available
+and other questionnaires).
+
+AM sleep diary
+
+1.Would it be possible to add a date as the first screen so that if we have the errors with the iPod not having the correct time we can calculate easily.
+
+PVT
+
+1. Is it possible/is it still validated if the white square changes
+to different shapes through the test at random points?
+
+2. Is it possible to change the number colour to green when a crew
+member has selected correctly, like
+
+3. Can we take out the ‘Skip PVT’ button, I think more people than
+we wanted just completely skipped the PVT if we can force them to
+start they may complete it.
+
+4. In keeping with above can we increase the time out to 60 seconds.
+
+5. Is it possible to calculate average score and list it at the end of the test.
+
+Workload Factors
+
+1. Would it be possible to have one screen where the workload
+factors can be selected, maybe with radio buttons, dragable numbers
+or maybe 3 picker screens?
+
+2. Workload factors title should read ‘SELECT’ as the first word
+on Q1, Q3 & Q5(It is currently only the case on Q1)
+
+App Additions
+
+1.  How possible is it to add a ‘History’ area,
+Listing items contained in the study for example ‘Average sleep period’,
+Average PVT speed, Quickest PVT speed, Dates fully completed and any
+further information might be interesting for the crew member to view
+themselves.
+
+Third part, we had an issue on a crew member during the study who was
+changed to a standby due to being delayed then was called out from
+this standby.
+
+If possible could we have a standby day included in Duty Day/Rest
+Day selection.
+
+This should start with the Rest Day questionnaires but have an extra
+selectable button which when pushed moves onto the Duty Day questionnaires,
+with a question asking ‘Time of Callout’ which is selectable from a 24
+hour clock.
+
+Lastly.
+
+In regard to the files, I have a few ideas but I’m not sure how
+easy/possible they are to implement.
+
+Firstly if a crew member selects previous can it have the data
+re-entered into the questionnaire as currently the person has
+to re-enter the data, I guess what it would mean is that the
+data is held somewhere in the app until the next questionnaire
+is selected, this would help the crew members but would also
+mean that
+
+Next would it be possible to create a singular file per day which
+would then allow us to calculate through a day so everything is
+combined into individual days for individual crew members.
+
+However then have a few separated out which contain the data as
+separate entries into singular files.
+
+For example
+
+01/01/14 10:10:23 xxxxxx
+01/01/14 15:13:15 xxxxxx
+01/01/14 22:45:13 xxxxxx
+
+The questionnaires which might be useful here would be
+
+PVT Summaries, AM&PM Sleep Diaries (combined), Samn-Perelli Score,
+Workload & Nasa TLX.
+
+Hopefully that all makes sense, let me know how feasible these are?
+And any other areas you’d like to change the app or any errors you’ve noticed.
+
+Thanks,
+Martin
+

@@ -2,10 +2,12 @@
 
 #ifdef HAVE_CUDA
 
-char VersionId_cuda_yuv2rgb[] = QUIP_VERSION_STRING;
-
+#define BUILD_FOR_CUDA
 /* Derived from libng, xawtv source code...  */
 
+#include <curand.h>
+
+#include "quip_prot.h"
 #include "my_cuda.h"
 #include "data_obj.h"
 #include "host_call_utils.h"
@@ -80,7 +82,7 @@ __global__ void decode_two_pixels_yuv2rgb(unsigned char *dst_p,unsigned char *yu
 
 #define SETUP_THREADS(dp)						\
 									\
-	n_thr_need = dp->dt_rows * dp->dt_cols/2;			\
+	n_thr_need = OBJ_ROWS(dp) * OBJ_COLS(dp)/2;			\
 	n_blocks = n_thr_need / max_threads_per_block;			\
 	n_extra = n_thr_need % n_blocks;				\
 	if( n_extra > 0 ) NERROR1("OOPS:  Need to handle case of extra threads");
@@ -98,8 +100,8 @@ void cuda_yuv422_to_rgb24(Data_Obj *dst_dp, Data_Obj * src_dp )
 	INSURE_TABLES
 	SETUP_THREADS(dst_dp)
 
-	dst_p = (unsigned char *)dst_dp->dt_data;
-	y_p  = (unsigned char *)src_dp->dt_data;
+	dst_p = (unsigned char *)OBJ_DATA_PTR(dst_dp);
+	y_p  = (unsigned char *)OBJ_DATA_PTR(src_dp);
 
 	decode_two_pixels_yuv2rgb<<< n_blocks , max_threads_per_block >>>
 		(dst_p,y_p);
@@ -118,19 +120,19 @@ void yuv422_to_gray(Data_Obj *dst_dp, Data_Obj * src_dp )
 //advise("yuv420p_to_rgb24");
     INSURE_TABLES
 
-    dst_p = (unsigned char *)dst_dp->dt_data;
-    y_p  = (unsigned char *)src_dp->dt_data;
+    dst_p = (unsigned char *)OBJ_DATA_PTR(dst_dp);
+    y_p  = (unsigned char *)OBJ_DATA_PTR(src_dp);
 
-    for (i = 0; i < dst_dp->dt_rows; i++) {
+    for (i = 0; i < OBJ_ROWS(dst_dp); i++) {
 	d_p = dst_p;
-	for (j = 0; j < dst_dp->dt_cols; j+= 2) {
+	for (j = 0; j < OBJ_COLS(dst_dp); j+= 2) {
 	    *(d_p++)   = GRAY(*y_p);
 	    y_p+=2;
 	    *(d_p++)   = GRAY(*y_p);
 	    y_p+=2;
 	}
 	/* BUG assumes source is contiguous... */
-	dst_p += dst_dp->dt_rowinc;
+	dst_p += OBJ_ROW_INC(dst_dp);
     }
 }
 
@@ -152,12 +154,12 @@ void yuv420p_to_rgb24(Data_Obj *dst_dp, unsigned char *src )
 	INSURE_TABLES
 	SETUP_THREADS(dst_dp)
 
-	dst_p = (unsigned char *)dst_dp->dt_data;
+	dst_p = (unsigned char *)OBJ_DATA_PTR(dst_dp);
 
 	/* It looks like the components are not interleaved? */
 	y_p  = src;
-	u0_p  = y_p + dst_dp->dt_cols * dst_dp->dt_rows;
-	v0_p  = u0_p + dst_dp->dt_cols * dst_dp->dt_rows / 2;
+	u0_p  = y_p + OBJ_COLS(dst_dp) * OBJ_ROWS(dst_dp);
+	v0_p  = u0_p + OBJ_COLS(dst_dp) * OBJ_ROWS(dst_dp) / 2;
 							/* was 4 instead of 2? */
 
 	decode_two_pixels_yuv2rgb<<< n_blocks , max_threads_per_block >>>
@@ -182,13 +184,13 @@ __global__ void init_tbl_entries(void)
         ng_clip[i+CLIP] = i ;
 }
 
-__global__ void const_tbl_entries(unsigned int *ptr, unsigned int value)
+__global__ void const_tbl_entries(unsigned int index, unsigned int value)
 {
 	int i;
 
 	i = blockIdx.x * blockDim.x + threadIdx.x;
 
-        ptr[i] = value;
+        ng_clip[index+i] = value;
 }
 
 static void init_tables(void)
@@ -196,8 +198,9 @@ static void init_tables(void)
 	// BUG make sure we can have this many threads in a block.
 
 	init_tbl_entries<<< 1 , 256  >>>();
-	const_tbl_entries<<< 1 , CLIP  >>>( &ng_clip[0], 0 );
-	const_tbl_entries<<< 1 , CLIP  >>>( &ng_clip[CLIP+256], 255 );
+	// can't take the address of a shared variable, cuda 5 warning???
+	const_tbl_entries<<< 1 , CLIP  >>>( 0, 0 );
+	const_tbl_entries<<< 1 , CLIP  >>>( CLIP+256, 255 );
 	tbls_inited=1;
 }
 

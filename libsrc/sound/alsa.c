@@ -1,8 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_sound_alsa[] = QUIP_VERSION_STRING;
-
-#ifdef HAVE_SOUND
+#ifdef HAVE_ALSA
 
 #ifndef USE_OSS_SOUND
 
@@ -34,10 +32,8 @@ char VersionId_sound_alsa[] = QUIP_VERSION_STRING;
 #include <alsa/asoundlib.h>
 #endif
 
-#include "getbuf.h"
-#include "debug.h"
+#include "quip_prot.h"
 #include "sound.h"
-#include "function.h"		/* add_tsable */
 
 static snd_pcm_t *playback_handle=NULL;
 static snd_pcm_hw_params_t *hw_params=NULL;
@@ -77,9 +73,7 @@ static Timestamp_Functions dobj_tsf={
 	}
 };
 
-/* local prototypes */
-static void alsa_playback_init(SINGLE_QSP_ARG_DECL);
-
+#ifdef NOT_USED
 void show_playback_state(SINGLE_QSP_ARG_DECL)
 {
 	snd_pcm_state_t state;
@@ -104,6 +98,7 @@ void show_playback_state(SINGLE_QSP_ARG_DECL)
 		default: NWARN("unexpected state code"); break;
 	}
 } /* end show_playback_state */
+#endif /* NOT_USED */
 
 int set_playback_nchan(QSP_ARG_DECL  int channels)
 {
@@ -145,7 +140,7 @@ int set_playback_nchan(QSP_ARG_DECL  int channels)
 static int xrun_recovery(snd_pcm_t *handle, int err)
 {
 	if (err == -EPIPE) {/* under-run */
-advise("underrun, calling snd_pcm_prepare()");
+NADVISE("underrun, calling snd_pcm_prepare()");
 		err = snd_pcm_prepare(handle);
 		if (err < 0)
 			printf("Can't recovery from underrun, prepare failed: %s\n", snd_strerror(err));
@@ -172,23 +167,23 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 
 	if(audio_state!=AUDIO_PLAY) audio_init(QSP_ARG  AUDIO_PLAY);	
 
-	if( MACHINE_PREC(dp) != PREC_IN ){
-		sprintf(ERROR_STRING,"Object %s has precision %s, should be %s for sounds",dp->dt_name,
-			prec_name[MACHINE_PREC(dp)],prec_name[PREC_IN]);
+	if( OBJ_MACH_PREC(dp) != PREC_IN ){
+		sprintf(ERROR_STRING,"Object %s has precision %s, should be %s for sounds",OBJ_NAME(dp),
+			PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN));
 		NWARN(ERROR_STRING);
 		return;
 	}
 
-	if( dp->dt_comps != nchannels ){
+	if( OBJ_COMPS(dp) != nchannels ){
 		sprintf(ERROR_STRING,
 	"Sound %s has %ld components, output configured for %d channels!?",  
-			dp->dt_name,(long)dp->dt_comps,nchannels);
+			OBJ_NAME(dp),(long)OBJ_COMPS(dp),nchannels);
 		advise(ERROR_STRING);
 
-		if( set_playback_nchan(QSP_ARG  dp->dt_comps) < 0 ){
+		if( set_playback_nchan(QSP_ARG  OBJ_COMPS(dp)) < 0 ){
 			sprintf(ERROR_STRING,
 	"Sound %s has illegal number of channels (%ld)",
-				dp->dt_name,(long)dp->dt_comps);
+				OBJ_NAME(dp),(long)OBJ_COMPS(dp));
 			NWARN(ERROR_STRING);
 			return;
 		}
@@ -219,10 +214,9 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 
 	/* write interleaved */
 
-	//n_req = dp->dt_nelts;
-	n_req = dp->dt_cols;
+	n_req = OBJ_COLS(dp);
 	n_written=0;
-	data_ptr = (short *)dp->dt_data;
+	data_ptr = (short *)OBJ_DATA_PTR(dp);
 	while( n_req > 0 ){
 		err = snd_pcm_writei(playback_handle, data_ptr, n_req);
 		if( err < 0 ){
@@ -245,7 +239,7 @@ void play_sound(QSP_ARG_DECL  Data_Obj *dp)
 		}
 		n_req -= err;
 		/* advance pointer over what has already played */
-		data_ptr += err * dp->dt_comps;
+		data_ptr += err * OBJ_COMPS(dp);
 	}
 	/* Now we are probably in the underrun state - if we will play again, prepare here... */
 }
@@ -282,15 +276,139 @@ void set_samp_freq(QSP_ARG_DECL  unsigned int req_rate)
 	}
 }
 
+static void set_hw_params()
+{
+	int err;
+	unsigned int rate;
+ 
+ 	if ((err = snd_pcm_hw_params_any (playback_handle, hw_params)) < 0) {
+		fprintf(stderr, "cannot initialize hardware parameter structure (%s)\n", snd_strerror (err));
+		exit (1);
+	}
+
+	if ((err = snd_pcm_hw_params_set_access (playback_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+		fprintf(stderr, "cannot set access type (%s)\n", snd_strerror (err));
+ 		exit (1);
+	}
+
+	/* set the format to 16bit little-endian */
+	if ((err = snd_pcm_hw_params_set_format (playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+		fprintf (stderr, "cannot set sample format (%s)\n", snd_strerror (err));
+	 	exit (1);
+	}
+
+	rate=48000;
+	if ((err = snd_pcm_hw_params_set_rate_near (playback_handle, hw_params, &rate, 0)) < 0) {
+		fprintf (stderr, "cannot set sample rate near 48000 (%s)\n", snd_strerror (err));
+ 		exit (1);
+	}
+
+	if ((err = snd_pcm_hw_params_set_channels (playback_handle, hw_params, nchannels)) < 0) {
+		fprintf (stderr, "cannot set channel count (%s)\n", snd_strerror (err));
+		exit (1);
+	}
+
+	if ((err = snd_pcm_hw_params (playback_handle, hw_params)) < 0) {
+		fprintf (stderr, "cannot set parameters (%s)\n", snd_strerror (err));
+		exit (1);
+	}
+	
+	/* don't free, might need later... */
+	/*
+	snd_pcm_hw_params_free (hw_params);
+	*/
+}
+
+static int set_sw_params(SINGLE_QSP_ARG_DECL)
+{
+        int err;
+
+#ifdef CAUTIOUS
+	if( playback_handle == NULL ){
+		WARN("CAUTIOUS:  set_sw_params:  playback handle has not been set!?");
+		return(-1);
+	}
+	if( sw_params == NULL ){
+		WARN("CAUTIOUS:  set_sw_params:  sw_params pointer has not been set!?");
+		return(-1);
+	}
+#endif /* CAUTIOUS */
+
+
+        /* get the current sw_params */
+        err = snd_pcm_sw_params_current(playback_handle, sw_params);
+        if (err < 0) {
+                printf("Unable to determine current sw_params for playback: %s\n", snd_strerror(err));
+                return err;
+        }
+        /* start the transfer when the buffer is almost full: */
+        /* (buffer_size / avail_min) * avail_min */
+	/* jbm:  Not sure which buffer this refers to, but probably the driver's internal ring buffer? */
+        err = snd_pcm_sw_params_set_start_threshold(playback_handle, sw_params, 512);
+        if (err < 0) {
+                printf("Unable to set start threshold mode for playback: %s\n", snd_strerror(err));
+                return err;
+        }
+#ifdef FOOBAR
+        /* allow the transfer when at least period_size samples can be processed */
+	/* jbm:  what should this be??? */
+        err = snd_pcm_sw_params_set_avail_min(playback_handle, sw_params, 512);
+        if (err < 0) {
+                printf("Unable to set avail min for playback: %s\n", snd_strerror(err));
+                return err;
+        }
+#endif
+        /* align all transfers to 1 sample */
+        err = snd_pcm_sw_params_set_xfer_align(playback_handle, sw_params, 1);
+        if (err < 0) {
+                printf("Unable to set transfer align for playback: %s\n", snd_strerror(err));
+                return err;
+        }
+        /* write the parameters to the playback device */
+        err = snd_pcm_sw_params(playback_handle, sw_params);
+        if (err < 0) {
+                printf("Unable to set sw params for playback: %s\n", snd_strerror(err));
+                return err;
+        }
+        return 0;
+}
+
+#define ALSA_NAME	"plughw:0,0"
+
+static void alsa_playback_init(SINGLE_QSP_ARG_DECL)
+{
+	int err;
+	if ((err = snd_pcm_open (&playback_handle, ALSA_NAME, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+		fprintf(stderr, "cannot open audio device %s (%s)\n", ALSA_NAME, snd_strerror (err));
+		exit (1);
+	}
+	/* we pass the address of the pointer, which gets sets if successful... */
+	if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
+		fprintf(stderr, "cannot allocate hardware parameter structure (%s)\n", snd_strerror (err));
+	 	exit (1);
+	}
+ 
+	if ((err = snd_pcm_sw_params_malloc (&sw_params)) < 0) {
+		fprintf(stderr, "cannot allocate software parameter structure (%s)\n", snd_strerror (err));
+	 	exit (1);
+	}
+
+	set_hw_params();
+	set_sw_params(SINGLE_QSP_ARG);
+	
+	if ((err = snd_pcm_prepare (playback_handle)) < 0) {
+		fprintf (stderr, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
+		exit (1);
+	}
+}
+
 void audio_init(QSP_ARG_DECL  int mode)
 {
 	int channels;
 	static int ts_class_inited=0;
 
-advise("audio_init BEGIN");
 
 	if( ! ts_class_inited ){
-advise("audio_init calling add_tsable");
 		add_tsable(QSP_ARG  dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 		ts_class_inited++;
 	}
@@ -373,132 +491,6 @@ void halt_play_stream(SINGLE_QSP_ARG_DECL)
 		usleep(100000);
 }
 
-static int set_sw_params(SINGLE_QSP_ARG_DECL)
-{
-        int err;
-
-#ifdef CAUTIOUS
-	if( playback_handle == NULL ){
-		WARN("CAUTIOUS:  set_sw_params:  playback handle has not been set!?");
-		return(-1);
-	}
-	if( sw_params == NULL ){
-		WARN("CAUTIOUS:  set_sw_params:  sw_params pointer has not been set!?");
-		return(-1);
-	}
-#endif /* CAUTIOUS */
-
-
-        /* get the current sw_params */
-        err = snd_pcm_sw_params_current(playback_handle, sw_params);
-        if (err < 0) {
-                printf("Unable to determine current sw_params for playback: %s\n", snd_strerror(err));
-                return err;
-        }
-        /* start the transfer when the buffer is almost full: */
-        /* (buffer_size / avail_min) * avail_min */
-	/* jbm:  Not sure which buffer this refers to, but probably the driver's internal ring buffer? */
-        err = snd_pcm_sw_params_set_start_threshold(playback_handle, sw_params, 512);
-        if (err < 0) {
-                printf("Unable to set start threshold mode for playback: %s\n", snd_strerror(err));
-                return err;
-        }
-#ifdef FOOBAR
-        /* allow the transfer when at least period_size samples can be processed */
-	/* jbm:  what should this be??? */
-        err = snd_pcm_sw_params_set_avail_min(playback_handle, sw_params, 512);
-        if (err < 0) {
-                printf("Unable to set avail min for playback: %s\n", snd_strerror(err));
-                return err;
-        }
-#endif
-        /* align all transfers to 1 sample */
-        err = snd_pcm_sw_params_set_xfer_align(playback_handle, sw_params, 1);
-        if (err < 0) {
-                printf("Unable to set transfer align for playback: %s\n", snd_strerror(err));
-                return err;
-        }
-        /* write the parameters to the playback device */
-        err = snd_pcm_sw_params(playback_handle, sw_params);
-        if (err < 0) {
-                printf("Unable to set sw params for playback: %s\n", snd_strerror(err));
-                return err;
-        }
-        return 0;
-}
-
-static void set_hw_params()
-{
-	int err;
-	unsigned int rate;
- 
- 	if ((err = snd_pcm_hw_params_any (playback_handle, hw_params)) < 0) {
-		fprintf(stderr, "cannot initialize hardware parameter structure (%s)\n", snd_strerror (err));
-		exit (1);
-	}
-
-	if ((err = snd_pcm_hw_params_set_access (playback_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-		fprintf(stderr, "cannot set access type (%s)\n", snd_strerror (err));
- 		exit (1);
-	}
-
-	/* set the format to 16bit little-endian */
-	if ((err = snd_pcm_hw_params_set_format (playback_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
-		fprintf (stderr, "cannot set sample format (%s)\n", snd_strerror (err));
-	 	exit (1);
-	}
-
-	rate=48000;
-	if ((err = snd_pcm_hw_params_set_rate_near (playback_handle, hw_params, &rate, 0)) < 0) {
-		fprintf (stderr, "cannot set sample rate near 48000 (%s)\n", snd_strerror (err));
- 		exit (1);
-	}
-
-	if ((err = snd_pcm_hw_params_set_channels (playback_handle, hw_params, nchannels)) < 0) {
-		fprintf (stderr, "cannot set channel count (%s)\n", snd_strerror (err));
-		exit (1);
-	}
-
-	if ((err = snd_pcm_hw_params (playback_handle, hw_params)) < 0) {
-		fprintf (stderr, "cannot set parameters (%s)\n", snd_strerror (err));
-		exit (1);
-	}
-	
-	/* don't free, might need later... */
-	/*
-	snd_pcm_hw_params_free (hw_params);
-	*/
-}
-
-#define ALSA_NAME	"plughw:0,0"
-
-static void alsa_playback_init(SINGLE_QSP_ARG_DECL)
-{
-	int err;
-	if ((err = snd_pcm_open (&playback_handle, ALSA_NAME, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-		fprintf(stderr, "cannot open audio device %s (%s)\n", ALSA_NAME, snd_strerror (err));
-		exit (1);
-	}
-	/* we pass the address of the pointer, which gets sets if successful... */
-	if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
-		fprintf(stderr, "cannot allocate hardware parameter structure (%s)\n", snd_strerror (err));
-	 	exit (1);
-	}
- 
-	if ((err = snd_pcm_sw_params_malloc (&sw_params)) < 0) {
-		fprintf(stderr, "cannot allocate software parameter structure (%s)\n", snd_strerror (err));
-	 	exit (1);
-	}
-
-	set_hw_params();
-	set_sw_params(SINGLE_QSP_ARG);
-	
-	if ((err = snd_pcm_prepare (playback_handle)) < 0) {
-		fprintf (stderr, "cannot prepare audio interface for use (%s)\n", snd_strerror (err));
-		exit (1);
-	}
-}
-
 
 void play_stream(QSP_ARG_DECL  int fd) { WARN("unimplemented for ALSA:  play_stream"); }
 void set_stereo_output(QSP_ARG_DECL  int is_stereo) { WARN("unimplemented for ALSA:  set_stereo_output"); }
@@ -507,4 +499,4 @@ void pause_sound(SINGLE_QSP_ARG_DECL) { WARN("unimplemented for ALSA:  pause_sou
 #endif /* ! USE_OSS_SOUND */
 
 
-#endif /* HAVE_SOUND */
+#endif /* HAVE_ALSA */

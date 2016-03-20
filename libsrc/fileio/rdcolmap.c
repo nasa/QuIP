@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_rdcolmap[] = QUIP_VERSION_STRING;
-
 //#include "img_file.h"
 
 #ifdef HAVE_JPEG_SUPPORT

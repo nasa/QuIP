@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_parport_parport[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_PARPORT
 
 #ifdef HAVE_SYS_TYPES_H
@@ -28,9 +26,9 @@ char VersionId_parport_parport[] = QUIP_VERSION_STRING;
 #include <linux/ppdev.h>
 #endif
 
-#include "parport.h"
-#include "query.h"
-#include "debug.h"	/* sup_verbose */
+#include "quip_prot.h"
+#include "my_parport.h"
+//#include "debug.h"
 
 ITEM_INTERFACE_DECLARATIONS(ParPort,parport)
 
@@ -42,7 +40,7 @@ ParPort * open_parport(QSP_ARG_DECL  const char *name)
 
 	if( name == NULL || *name == 0 ){
 		name = default_parport;
-		if( sup_verbose ){
+		if( verbose ){
 			sprintf(ERROR_STRING,"open_parport:  using default parallel port %s",name);
 			advise(ERROR_STRING);
 		}
@@ -71,7 +69,7 @@ ParPort * open_parport(QSP_ARG_DECL  const char *name)
 		perror("ioctl");
 		WARN("error claiming parallel port device");
 		close(ppp->pp_fd);
-		del_parport(QSP_ARG  ppp->pp_name);
+		del_parport(QSP_ARG  ppp);
 		return NO_PARPORT;
 	}
 	return ppp;

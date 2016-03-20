@@ -1,6 +1,4 @@
 
-# %Z% $RCSfile: blink.mac,v $ ver: $Revision: 1.5 $ $Date: 2006/05/23 07:30:28 $
-
 Start_File analysis/blink.mac
 
 Set blink_threshold 0.2

@@ -1,0 +1,42 @@
+# test program for script server
+
+# this appears to be a test program to be run on a host,
+# to test the server functionality before using a device
+# as the client...
+
+< iquip.mac
+
+Define Get_Script_Count 0
+Send_Server_Cmd "Count_Scripts"
+Send_Server_Cmd 'ports xmit text ss_ear "Set n_scripts $n_scripts" quit'
+ports
+  text_variable client_mouth gsc_text
+  receive client_mouth text
+  quit
+interpret $gsc_text
+.
+
+Define Get_Scripts 0
+Get_Script_Count
+If $n_scripts<=0 exit_macro
+Send_Server_Cmd "Send_Script_Filenames"
+ports
+  receive client_mouth data
+  quit
+#If !obj_exists(filename_array)
+#  Then 'warn "Did not receive filename_array!?"'
+#  Else 'exit_macro Display filename_array'
+.
+
+Set_Default_Server_Params
+
+Select_Server 1
+Init_Server_Connection
+Send_Server_Cmd "advise 'connected to a client!'"
+
+Get_Scripts
+Display filename_array
+
+
+Pause
+

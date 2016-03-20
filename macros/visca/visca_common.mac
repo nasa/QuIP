@@ -16,8 +16,13 @@ Set_D70_Params
 Define Set_D70_Params 0
 Set pan_min	-2267		# specific to evi-d70
 Set pan_max	2267		# specific to evi-d70
+
+# These are the normal values, but if the camera is flipped
+# then the limits are -1200 to 400 !?
+# Can we dynamically set slider limits???
 Set tilt_min	-400
 Set tilt_max	1200
+
 Set zoom_min	0		# wide
 Set zoom_max	0x3ff8		# tele
 Set focus_min	0x1000		# far

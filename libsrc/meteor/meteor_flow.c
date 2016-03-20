@@ -7,8 +7,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_meteor_flow[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 /* Like continuous capture to memory, but we use the handshaking (like in stream record)
@@ -24,6 +22,7 @@ char VersionId_meteor_meteor_flow[] = QUIP_VERSION_STRING;
 #include <sys/types.h>
 #endif /* HAVE_SYS_TYPES_H */
 
+#include "quip_prot.h"
 #include "mmenu.h"			/* capture_code */
 #include "ioctl_meteor.h"		/* meteor_mem struct defn */
 
@@ -35,7 +34,7 @@ static int oldest, newest;	/* indices into ringbuf
 				 * (1+newest-oldest) = n_active.
 				 */
 
-COMMAND_FUNC( start_flow )
+static COMMAND_FUNC( do_start_flow )
 {
 	/* Now start the meteor capturing */
 
@@ -63,14 +62,14 @@ COMMAND_FUNC( start_flow )
 
 	while( _mm->num_active_bufs < 1 ){
 /*
-sprintf(error_string,"num_activ_bufs = %d",_mm->num_active_bufs);
-advise(error_string);
+sprintf(ERROR_STRING,"num_activ_bufs = %d",_mm->num_active_bufs);
+advise(ERROR_STRING);
 */
 		usleep(1000);
 	}
 }
 
-COMMAND_FUNC( stop_flow )
+static COMMAND_FUNC( do_stop_flow )
 {
 	meteor_stop_capture(SINGLE_QSP_ARG);
 }
@@ -92,8 +91,8 @@ static COMMAND_FUNC( update_vars )
 	 * currently active buffer!
 	 */
 /*
-sprintf(error_string,"cur_frame:\t%d\t\tnum_activ:\t%d\tmask = 0x%x",_mm->cur_frame,_mm->num_active_bufs,_mm->active);
-advise(error_string);
+sprintf(ERROR_STRING,"cur_frame:\t%d\t\tnum_activ:\t%d\tmask = 0x%x",_mm->cur_frame,_mm->num_active_bufs,_mm->active);
+advise(ERROR_STRING);
 */
 	/*newest = (_mm->cur_frame + num_meteor_frames - 2 ) % num_meteor_frames; */
 	newest = (_mm->cur_frame + num_meteor_frames - 1 ) % num_meteor_frames;
@@ -112,8 +111,8 @@ advise(error_string);
 	ASSIGN_VAR("newest",s);
 
 /*
-sprintf(error_string,"update_vars:\toldest = %d\t\tnewest = %d",oldest,newest);
-advise(error_string);
+sprintf(ERROR_STRING,"update_vars:\toldest = %d\t\tnewest = %d",oldest,newest);
+advise(ERROR_STRING);
 */
 	sprintf(s,"%d",_mm->num_active_bufs);
 	ASSIGN_VAR("n_active",s);
@@ -122,20 +121,20 @@ advise(error_string);
 	ASSIGN_VAR("active_mask",s);
 }
 
-COMMAND_FUNC( wait_next )	/* wait til we have another frame */
+static COMMAND_FUNC( do_wait_next )	/* wait til we have another frame */
 {
 	int start_n;
 
 	start_n=_mm->num_active_bufs;
 	if( start_n == _hiwat ){
-		sprintf(error_string,"wait_next:  ring buffer already containts %d active frames, will not advance until one is released.",start_n);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"do_wait_next:  ring buffer already containts %d active frames, will not advance until one is released.",start_n);
+		WARN(ERROR_STRING);
 		update_vars(SINGLE_QSP_ARG);
 		return;
 	}
 /*
-sprintf(error_string,"wait_next BEGIN:  num_active_bufs = %d",start_n);
-advise(error_string);
+sprintf(ERROR_STRING,"do_wait_next BEGIN:  num_active_bufs = %d",start_n);
+advise(ERROR_STRING);
 */
 	while( _mm->num_active_bufs == start_n )
 		;
@@ -146,7 +145,7 @@ advise(error_string);
 	update_vars(SINGLE_QSP_ARG);
 }
 
-COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
+static COMMAND_FUNC( do_wait_drip )	/* wait til we have at least one frame */
 {
 	while( _mm->num_active_bufs <= 1 ){
 		usleep(10000);
@@ -154,7 +153,7 @@ COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 	update_vars(SINGLE_QSP_ARG);
 }
 
-COMMAND_FUNC( release_buffer )
+static COMMAND_FUNC( do_release_buffer )
 {
 	/* release this buffer,
 	 * and increment oldest.
@@ -168,20 +167,20 @@ COMMAND_FUNC( release_buffer )
 	update_vars(SINGLE_QSP_ARG);
 }
 
-static Command meteor_flow_ctbl[]={
-{ "start",	start_flow,	"start capture"				},
-{ "stop",	stop_flow,	"stop capture"				},
-{ "wait",	wait_drip,	"wait for at least one frame in memory"	},
-{ "next",	wait_next,	"wait for the next frame"		},
-{ "release",	release_buffer,	"release oldest buffer"			},
-{ "update",	update_vars,	"refresh values of $oldest and $newest"	},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(flow_menu,s,f,h)
+
+MENU_BEGIN(flow)
+ADD_CMD( start,		do_start_flow,	start capture )
+ADD_CMD( stop,		do_stop_flow,	stop capture )
+ADD_CMD( wait,		do_wait_drip,	wait for at least one frame in memory )
+ADD_CMD( next,		do_wait_next,	wait for the next frame )
+ADD_CMD( release,	do_release_buffer,	release oldest buffer )
+ADD_CMD( update,	update_vars,	refresh values of $oldest and $newest )
+MENU_END(flow)
 
 COMMAND_FUNC( meteor_flow_menu )
 {
-	PUSHCMD(meteor_flow_ctbl,"flow");
+	PUSH_MENU(flow);
 }
 
 #endif /* HAVE_METEOR */

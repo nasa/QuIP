@@ -1,0 +1,12 @@
+*.o
+prog2
+.deps
+libocl.a
+ocl_veclib_stripped.c
+ocl_veclib_expanded.c
+*.debug*
+*.noindent
+junk
+foo
+output
+vuni.i

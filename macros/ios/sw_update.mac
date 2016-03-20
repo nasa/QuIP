@@ -1,0 +1,188 @@
+# Macros to support the sw download client
+
+Set update_panel_name 'Software update'
+Set update_svr_panel_name 'Server config'
+
+Set local_sw_version 090813	# version code is the date
+
+Define DoCheckSW 0
+Push_Nav $update_panel_name
+.
+
+Define TellLocalSW 0
+Alert $local_sw_version "Script update code is $local_sw_version"
+.
+
+Define TellServerSW 0
+Get_Server_Version
+If $remote_version_set
+  "Alert '$current_sw_version' 'Latest version on server is $current_sw_version'"
+.
+
+
+Define UpdateSW 0
+Get_Server_Version
+If !$remote_version_set exit_macro
+If !strcmp('$current_sw_version','$local_sw_version')
+  "Alert 'Not necessary' 'device is already at latest s/w version' exit_macro"
+InstallSWUpdate
+.
+
+# The server has to be restarted when there is a software update...
+
+Define Get_Server_Version 0
+Set remote_version_set 0
+Connect_To_Update_Server
+If !$connected exit_macro
+Send_Update_Command
+  'ports\
+    xmit encrypted_text update_ear "Set current_sw_version $current_sw_version"\
+    quit'
+Receive_Update_Response
+Break_Update_Connection
+Set remote_version_set 1
+.
+
+Define InstallSWUpdate 0
+Set update_installed 0
+Connect_To_Update_Server
+If !$connected exit_macro
+Set sending_update 0
+Send_Update_Command "Send_Update $local_sw_version $current_sw_version"
+Receive_Update_Response
+If !$sending_update
+  "advise 'not sending update after Receive_Update_Response...'\
+   Break_Update_Connection\
+   Alert 'Problem' 'Failed to receive update' exit_macro"
+
+# The update server should now send a file which we will cache...
+Set local_update_script "$system_script_dir/update_from_${local_sw_version}_to_$current_sw_version.scr"
+Print local_update_script
+echo $local_update_script
+
+If file_exists('$local_update_script')
+  "Alert 'Warning!?' 'Update script already exists on the device!?'"
+
+ports
+  advise "Setting local filename = $local_update_script"
+  port_output_file update_mouth $local_update_script
+  advise 'Receiving update file'
+  receive update_mouth encrypted_file
+  advise 'After receiving update file'
+  quit
+
+#cd $script_dir
+#pwd ls
+
+If file_exists('$local_update_script')
+  Then "advise 'reading update script...'\
+        < '$local_update_script'\
+	advise 'DONE reading update script'"
+
+  Else "Alert 'Warning' 'Update script failed to transfer'"
+
+#Redir_To_Update_Server
+# do we need to break if the redirect finished?
+
+Break_Update_Connection
+
+If strcmp('$local_sw_version','$current_sw_version')
+  Then "Alert 'Problem' 'Software version did not update properly'"
+  Else "Note_SW_Update Alert 'Success!' 'Software updated properly'"
+.
+
+Define Note_SW_Update 0
+Get_SW_Update_Log_Filename
+append yes
+output_file $sw_update_log_file
+echo "< '$local_update_script'"
+output_file -
+.
+
+Define Check_For_SW_Updates 0
+Get_SW_Update_Log_Filename
+If file_exists('$sw_update_log_file')
+  "< '$sw_update_log_file'"
+.
+
+Define Get_SW_Update_Log_Filename 0
+Set sw_update_log_file $system_script_dir/sw_update_log.scr
+.
+
+Define Receive_Update_Response 0
+ports
+  text_variable update_mouth update_response
+  receive update_mouth encrypted_text
+  quit
+interpret $update_response
+.
+
+Define Init_SW_Panel 0
+interface
+  nav_panel $update_panel_name
+  navigation $update_panel_name
+    new_group "Software update"
+    plain_item "Current version" 'Report current version of scripts' TellLocalSW
+    plain_item "Latest version" 'Report latest version available' TellServerSW
+    plain_item "Update" 'Install latest version from update server' UpdateSW
+    nav_item "Configure update server" 'Specify host and port for s/w updates' ConfigSWUpdateServer
+    quit
+  quit
+.
+
+Define Connect_To_Update_Server 0
+ports
+  max_retries 1
+  client update_mouth $update_server_hostname $update_port_num
+  quit
+
+Assign connected port_exists(update_mouth)
+If !$connected "Announce_Failure exit_macro"
+
+log_message 'client connected to update server...'
+
+Send_Update_Auth "Does anybody really know what day it is?"
+Send_Update_Command "log_message 'Connected to participant $participant_id'"
+Send_Update_Command "top_menu"
+.
+
+Define Send_Update_Command 1 text
+ports
+  xmit encrypted_text update_mouth $1
+  quit
+.
+
+Define Send_Update_Auth 1 text
+ports
+  xmit authentication update_mouth $1
+  quit
+.
+
+Define Redir_To_Update_Server 0
+ports
+  redir update_mouth
+
+  # does remote script do top_menu?
+  # or do we need to quit ports menu here???
+  # we make sure by calling top_menu ourself!
+
+  top_menu
+.
+
+Define Break_Update_Connection 0
+# does the port go away on EOF?
+ports close update_mouth quit
+.
+
+Define Insist_Current_SW_Version 1 version_string
+If strcmp('$local_sw_version','$1')
+  "Alert 'Wrong version!?' 'Expected $1, found $local_sw_version' exit_file"
+.
+
+Define Ping_Update_Server 0
+Connect_To_Update_Server
+If !$connected exit_macro
+Break_Update_Connection
+Alert Success "Successfully connected to server $$server_varname, port $$port_varname"
+.
+

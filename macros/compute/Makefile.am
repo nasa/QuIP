@@ -1,12 +1,12 @@
-# want to install these somewhere like /usr/local/quip/macros...
+# want to install these somewhere like /usr/local/coq/macros...
 
-macrosdir	=	$(datadir)/quip/macros/compute
+macrosdir	=	$(datadir)/coq/macros/compute
 
 macros_DATA	=	3d.mac			\
 			centroid.mac		\
 			chains.mac		\
+			chisq.mac		\
 			components.mac		\
-			conv.mac		\
 			corr.mac		\
 			corr2.mac		\
 			curv.mac		\
@@ -17,7 +17,9 @@ macros_DATA	=	3d.mac			\
 			grating.mac		\
 			histeq.mac		\
 			homog.mac		\
+			invert_erf.scr		\
 			kalman.mac		\
+			tdist.mac		\
 			linear_algebra.mac	\
 			nfilter.mac		\
 			nsubsamp.mac		\

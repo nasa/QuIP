@@ -34,7 +34,7 @@ Set fitstart 0
 Define Where_Fit 2 len start
 Assign wflen $1
 echo "Where_Fit $wflen $2 , fitlen = $fitlen"
-If "$wflen==$fitlen" 'echo "where_fit popping" PopFile 2'
+If "$wflen==$fitlen" 'echo "where_fit popping" exit_macro'
 echo "requested len = $wflen , fitlen = $fitlen"
 #echo 'NOT POPPED'
 If $fitlen>0 'echo DELETING Delete_Em'

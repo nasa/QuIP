@@ -1,0 +1,133 @@
+# Change this to server scripts from somewhere else...
+Set script_repo_dir ./scripts
+
+Define Set_Repo_Dir 1 dirname
+If !file_exists('$1') "warn 'Set_Repo_Dir:  $1 does not exist!?' exit_macro"
+Set script_repo_dir $1
+.
+
+Define Handle_Requests 0
+ports
+  server ss_ear $port_num	# create server port
+# doesn't have to be secure for everyday use...
+#
+#  secure ss_ear $script_server_passphrase
+  connect ss_ear
+  redir ss_ear	# doesn't return unless port is closed by client
+  top_menu
+If port_exists(ss_ear) 'ports close ss_ear quit'
+.
+
+Define Set_Log_Filename 1 filename
+Set log_name $log_dir/$1
+.
+
+Define Send_Update 2 from_version to_version
+Set update_script_file $script_repo_dir/update_from_${1}_to_$2.scr
+Print update_script_file
+If !file_exists('$update_script_file')
+  "log_message 'Missing update file $update_script_file'\
+   Send_Update_Response 'Set sending_update 0'\
+   Finish_Update exit_macro"
+Send_Update_Response 'Set sending_update 1'
+
+#< $update_script_file
+Send_Update_File $update_script_file
+
+Finish_Update
+.
+
+# the update commands are cached on the device, so that they
+# can be re-read after the program stops and restarts
+
+Define Send_Script_File 1 filename
+log_message "Sending script file $1"
+ports
+#  xmit encrypted_file ss_ear $1
+  xmit plain_file ss_ear $script_repo_dir/$1
+  quit
+# Check for successful completion?
+.
+
+
+Define Send_Script_Response 1 string
+ports
+#  xmit encrypted_text ss_ear $1
+  xmit text ss_ear $1
+  quit
+.
+
+# We finish the update by closing the server port, so that
+# the client will read EOF
+
+Define Finish_Script_Transmission 0
+ports
+  reset ss_ear
+  quit
+.
+
+Define Count_Scripts 0
+os
+  pipes
+    open filecount read "ls $script_repo_dir | wc -l"
+    read filecount n_scripts
+    close filecount
+    quit
+  quit
+Print n_scripts
+.
+
+Set max_filename_len	80
+
+Define Send_Script_Filenames 0
+Vector filename_array $n_scripts $max_filename_len string
+os
+  pipes
+    open filenames read "ls $script_repo_dir"
+    quit
+  quit
+
+Set i 0
+repeat $n_scripts
+  os pipes read filenames x quit quit
+  Print x
+  # BUG should check that the length is less than $max_filename_len!?
+  Set_String filename_array[$i] $x
+  Increment i
+  end
+
+os pipes close filenames quit quit
+Display filename_array
+
+ports
+  xmit data ss_ear filename_array
+  quit
+Delete_Image filename_array
+.
+
+Set overseer_port_num 4020
+
+Define Start_Slave_Master 0
+log_message "Enslaving client..."
+#ports
+#  xmit text ss_ear 'top_menu advise "Connected to slave master."'
+#  quit
+Command_Slave 'top_menu advise "Connected to slave master."'
+
+# Now listen for connections for someone who wants
+# to send commands to the slave...
+ports
+  server overseer $overseer_port_num	# create server port
+  connect overseer
+  advise "Redirecting from overseer port..."
+  redir overseer	# doesn't return unless port is closed by client
+  top_menu
+If port_exists(overseer) 'ports close overseer quit'
+.
+
+# this macro can be used by the slave master...
+Define Command_Slave 1 string
+advise "Command_Slave:  Sending '$1' to device..."
+ports xmit text ss_ear $1 quit
+.
+

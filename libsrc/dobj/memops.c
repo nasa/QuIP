@@ -1,12 +1,13 @@
 #include "quip_config.h"
 
-char VersionId_dataf_memops[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #include "debug.h"
 #include "data_obj.h"
 #include "rn.h"
+#include "warn.h"
 #include "query.h"			/* assign_var() */
+#include "variable.h"			/* assign_var() */
+#include "quip_prot.h"			/* assign_var() */
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -21,13 +22,6 @@ char VersionId_dataf_memops[] = QUIP_VERSION_STRING;
 #include <memory.h>
 #endif
 
-/* local prototypes */
-static void contig_copy(Data_Obj *dp_to,Data_Obj *dp_fr);
-static void fast_copy(Data_Obj *dp_to,Data_Obj *dp_fr);
-static void fast_uni(Data_Obj *dp);
-static void fast_rand(Data_Obj *dp);
-static void fast_equate(Data_Obj *dp);
-
 #define DEFAULT_WHENCE(s)		if( whence == NULL ) whence=s;
 
 int max_vectorizable;
@@ -40,25 +34,25 @@ void getmean( QSP_ARG_DECL  Data_Obj *dp )
 	float max,min;
 
 	if( dp== NO_OBJ ) return;
-	if( dp->dt_prec != PREC_SP && dp->dt_prec != PREC_IN ){
+	if( OBJ_PREC(dp) != PREC_SP && OBJ_PREC(dp) != PREC_IN ){
 		NWARN("sorry, only float or short objects");
 		return;
 	}
-	if( dp->dt_mach_dim[0] != 1 ){
-		sprintf(error_string,"ALERT:  getmean:  object %s has %d components!?",
-			dp->dt_name,dp->dt_mach_dim[0]);
-		advise(error_string);
+	if( OBJ_MACH_DIM(dp,0) != 1 ){
+		sprintf(ERROR_STRING,"ALERT:  getmean:  object %s has %d components!?",
+			OBJ_NAME(dp),OBJ_MACH_DIM(dp,0));
+		advise(ERROR_STRING);
 	}
 	if( ! IS_CONTIGUOUS(dp) ){
 		NWARN("sorry, can only compute mean of contiguous objects");
 		return;
 	}
 	sum=sos=0.0;
-	n=dp->dt_n_mach_elts;
-	if( dp->dt_prec == PREC_SP ){
+	n=OBJ_N_MACH_ELTS(dp);
+	if( OBJ_PREC(dp) == PREC_SP ){
 		float *fnp;
 
-		fnp=(float *)dp->dt_data;
+		fnp=(float *)OBJ_DATA_PTR(dp);
 		max=min=(*fnp);
 		for(i=0;i<n;i++){
 			f=(*fnp);
@@ -68,10 +62,10 @@ void getmean( QSP_ARG_DECL  Data_Obj *dp )
 			sum += (double)f;
 			fnp++;
 		}
-	} else if( dp->dt_prec == PREC_IN ){
+	} else if( OBJ_PREC(dp) == PREC_IN ){
 		short *inp;
 
-		inp=(short *)dp->dt_data;
+		inp=(short *)OBJ_DATA_PTR(dp);
 		if( IS_UNSIGNED(dp) )
 			max=min=(*(u_short *)inp);
 		else
@@ -98,20 +92,20 @@ void getmean( QSP_ARG_DECL  Data_Obj *dp )
 	sos -= n * sum * sum;
 
 	if( verbose ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"mean:  %f\nvariance:  %f\nmax:  %f\nmin:  %f",
 			sum,sos,max,min);
-		advise(error_string);
+		advise(ERROR_STRING);
 	}
 
-	sprintf(error_string,"%f",sum);
-	ASSIGN_VAR("mean",error_string);
-	sprintf(error_string,"%f",sos);
-	ASSIGN_VAR("variance",error_string);
-	sprintf(error_string,"%f",max);
-	ASSIGN_VAR("max",error_string);
-	sprintf(error_string,"%f",min);
-	ASSIGN_VAR("min",error_string);
+	sprintf(ERROR_STRING,"%f",sum);
+	ASSIGN_VAR("mean",ERROR_STRING);
+	sprintf(ERROR_STRING,"%f",sos);
+	ASSIGN_VAR("variance",ERROR_STRING);
+	sprintf(ERROR_STRING,"%f",max);
+	ASSIGN_VAR("max",ERROR_STRING);
+	sprintf(ERROR_STRING,"%f",min);
+	ASSIGN_VAR("min",ERROR_STRING);
 }
 
 static double equate_value;
@@ -122,7 +116,7 @@ static double equate_value;
 		type * ptr;						\
 		type value;						\
 									\
-		ptr = ( type * ) dp->dt_data;				\
+		ptr = ( type * ) OBJ_DATA_PTR(dp);				\
 		value = ( type ) equate_value;				\
 		for(i=0;i<n;i++){					\
 			*ptr = value;					\
@@ -135,31 +129,31 @@ static void fast_equate( Data_Obj *dp )
 	u_long n;
 	long inc;
 
-	n=dp->dt_n_mach_elts;
-	inc = dp->dt_mach_inc[ dp->dt_mindim ];
+	n=OBJ_N_MACH_ELTS(dp);
+	inc = OBJ_MACH_INC(dp, OBJ_MINDIM(dp) );
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"fast_equate %s",dp->dt_name);
-advise(DEFAULT_ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"fast_equate %s",OBJ_NAME(dp));
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	if( dp->dt_prec == PREC_BY ){
+	if( OBJ_PREC(dp) == PREC_BY ){
 		EQUATE_IT( char )
-	} else if( dp->dt_prec == PREC_UBY ){
+	} else if( OBJ_PREC(dp) == PREC_UBY ){
 		EQUATE_IT( u_char )
-	} else if( dp->dt_prec == PREC_SP ){
+	} else if( OBJ_PREC(dp) == PREC_SP ){
 		EQUATE_IT( float )
-	} else if( dp->dt_prec == PREC_DP ){
+	} else if( OBJ_PREC(dp) == PREC_DP ){
 		EQUATE_IT( double )
-	} else if( dp->dt_prec == PREC_IN ){
+	} else if( OBJ_PREC(dp) == PREC_IN ){
 		EQUATE_IT( short )
-	} else if( dp->dt_prec == PREC_UIN ){
+	} else if( OBJ_PREC(dp) == PREC_UIN ){
 		EQUATE_IT( u_short )
-	} else if( dp->dt_prec == PREC_DI ){
+	} else if( OBJ_PREC(dp) == PREC_DI ){
 		EQUATE_IT( long )
-	} else if( dp->dt_prec == PREC_UDI ){
+	} else if( OBJ_PREC(dp) == PREC_UDI ){
 		EQUATE_IT( u_long )
 	} else NWARN("fast_equate:  unsupported pixel type");
 }
@@ -181,14 +175,14 @@ static void contig_copy( Data_Obj *dp_to, Data_Obj *dp_fr )
 {
 	u_long nb;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"contig_copy:  %s  %s",dp_to->dt_name,dp_fr->dt_name);
-advise(DEFAULT_ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"contig_copy:  %s  %s",OBJ_NAME(dp_to),OBJ_NAME(dp_fr));
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	nb = dp_to->dt_n_mach_elts * ELEMENT_SIZE(dp_to);
+	nb = OBJ_N_MACH_ELTS(dp_to) * ELEMENT_SIZE(dp_to);
 
 	if( IS_BITMAP(dp_to) )
 		nb = (nb+(BITS_PER_BITMAP_WORD-1)) / BITS_PER_BITMAP_WORD;
@@ -200,10 +194,10 @@ advise(DEFAULT_ERROR_STRING);
 	 */
 
 #ifndef PC
-	memcpy(dp_to->dt_data,dp_fr->dt_data,nb);
+	memcpy(OBJ_DATA_PTR(dp_to),OBJ_DATA_PTR(dp_fr),nb);
 #else /* PC */
 	if( nb <= 0x7fff )
-		memcpy(dp_to->dt_data,dp_fr->dt_data,(int)nb);
+		memcpy(OBJ_DATA_PTR(dp_to),OBJ_DATA_PTR(dp_fr),(int)nb);
 	else
 		/* BUG should go ahead and copy blocks... */
 		NWARN("Sorry, can't copy large blocks");
@@ -216,9 +210,9 @@ advise(DEFAULT_ERROR_STRING);
 #define COPY_IT( type )							\
 		type *pto,*pfr;						\
 									\
-		pto=(type *)dp_to->dt_data;				\
-		pfr=(type *)dp_fr->dt_data;				\
-		for(i=0;i<dp_to->dt_n_mach_elts;i++){				\
+		pto=(type *)OBJ_DATA_PTR(dp_to);				\
+		pfr=(type *)OBJ_DATA_PTR(dp_fr);				\
+		for(i=0;i<OBJ_N_MACH_ELTS(dp_to);i++){				\
 			*pto = *pfr;					\
 			pto += to_inc;					\
 			pfr += fr_inc;					\
@@ -229,53 +223,54 @@ static void fast_copy( Data_Obj *dp_to, Data_Obj *dp_fr )
 	u_long i;
 	long to_inc,fr_inc;
 
-	if( IS_CONTIGUOUS(dp_to) && IS_CONTIGUOUS(dp_fr) ){
+	if( N_IS_CONTIGUOUS(dp_to) && N_IS_CONTIGUOUS(dp_fr) ){
 		contig_copy(dp_to,dp_fr);
 		return;
 	}
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"fast_copy:  %s  %s",dp_to->dt_name,dp_fr->dt_name);
-advise(DEFAULT_ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"fast_copy:  %s  %s",OBJ_NAME(dp_to),OBJ_NAME(dp_fr));
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* Because these objects are known to be evenly spaced,
 	 * dt_mach_inc[dt_mindim] must be the increment!
 	 */
 
-	to_inc = dp_to->dt_mach_inc[ dp_to->dt_mindim ];
-	fr_inc = dp_fr->dt_mach_inc[ dp_fr->dt_mindim ];
+	to_inc = OBJ_MACH_INC(dp_to, OBJ_MINDIM(dp_to) );
+	fr_inc = OBJ_MACH_INC(dp_fr, OBJ_MINDIM(dp_fr) );
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
 sprintf(DEFAULT_ERROR_STRING,"fast_copy'ing %s (inc %ld) to %s (inc %ld)",
-dp_fr->dt_name,fr_inc,dp_to->dt_name,to_inc);
-advise(DEFAULT_ERROR_STRING);
+OBJ_NAME(dp_fr),fr_inc,OBJ_NAME(dp_to),to_inc);
+NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif
 
-	if( MACHINE_PREC(dp_to) == PREC_BY || MACHINE_PREC(dp_to) == PREC_UBY ){
+	if( OBJ_MACH_PREC(dp_to) == PREC_BY || OBJ_MACH_PREC(dp_to) == PREC_UBY ){
 		COPY_IT( u_char )
-	} else if( MACHINE_PREC(dp_to) == PREC_IN || MACHINE_PREC(dp_to) == PREC_UIN ){
+	} else if( OBJ_MACH_PREC(dp_to) == PREC_IN || OBJ_MACH_PREC(dp_to) == PREC_UIN ){
 		COPY_IT( short )
-	} else if( MACHINE_PREC(dp_to) == PREC_DI || MACHINE_PREC(dp_to) == PREC_UDI ){
+	} else if( OBJ_MACH_PREC(dp_to) == PREC_DI || OBJ_MACH_PREC(dp_to) == PREC_UDI ){
 		COPY_IT( long )
-	} else if( MACHINE_PREC(dp_to) == PREC_SP){
+	} else if( OBJ_MACH_PREC(dp_to) == PREC_SP){
 		COPY_IT( float )
-	} else if( MACHINE_PREC(dp_to) == PREC_DP){
+	} else if( OBJ_MACH_PREC(dp_to) == PREC_DP){
 		COPY_IT( double )
 	}
 
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 	else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  fast_copy:  unsupported precision %s",
-			prec_name[MACHINE_PREC(dp_to)]);
-		NWARN(DEFAULT_ERROR_STRING);
+//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  fast_copy:  unsupported precision %s",
+//			OBJ_MACH_PREC_NAME(dp_to) );
+//		NWARN(DEFAULT_ERROR_STRING);
+		assert( ! "Unsupported precision in fast_copy!?" );
 	}
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 
 }
 
@@ -306,9 +301,9 @@ static void fast_rand( Data_Obj *dp )
 	u_char *cp;
 	long inc;
 
-	cp=(u_char *)dp->dt_data;
-	i=dp->dt_n_mach_elts;
-	inc = dp->dt_mach_inc[dp->dt_mindim];
+	cp=(u_char *)OBJ_DATA_PTR(dp);
+	i=OBJ_N_MACH_ELTS(dp);
+	inc = OBJ_MACH_INC(dp,OBJ_MINDIM(dp));
 
 	while(i--){
 		*cp = (u_char)(_imin + rn((long)_imax));
@@ -319,9 +314,9 @@ static void fast_rand( Data_Obj *dp )
 void i_rnd( QSP_ARG_DECL  Data_Obj *dp, int imin, int imax )
 {
 	if( dp==NO_OBJ ) return;
-	if( MACHINE_PREC(dp) != PREC_BY && MACHINE_PREC(dp) != PREC_UBY ){
+	if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
 		sprintf(ERROR_STRING,"i_rnd:  object %s (%s) should have %s or %s precision",
-				dp->dt_name,PNAME(dp),prec_name[PREC_BY],prec_name[PREC_UBY]);
+				OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_BY),NAME_FOR_PREC_CODE(PREC_UBY));
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -338,21 +333,24 @@ void i_rnd( QSP_ARG_DECL  Data_Obj *dp, int imin, int imax )
 
 static void fast_uni( Data_Obj *dp )
 {
-	u_long i,n;
+#ifdef HAVE_DRAND48
+	u_long i;
+#endif /* HAVE_DRAND48 */
+    u_long n;
 	float *fptr;
 	long inc;
 
-	fptr=(float *)dp->dt_data;
-	n=dp->dt_n_mach_elts;
-	inc = dp->dt_mach_inc[dp->dt_mindim];
+	fptr=(float *)OBJ_DATA_PTR(dp);
+	n=OBJ_N_MACH_ELTS(dp);
+	inc = OBJ_MACH_INC(dp,OBJ_MINDIM(dp));
 
 #ifdef HAVE_DRAND48
 	for(i=0;i<n;i++){
-		*fptr = drand48();
+		*fptr = (float)drand48();
 		fptr += inc;
 	}
 #else
-	error1("Sorry, no implementation of drand48() on this configuration...");
+	NERROR1("Sorry, no implementation of drand48() on this configuration...");
 #endif
 
 }
@@ -363,7 +361,7 @@ void dp_uni( QSP_ARG_DECL  Data_Obj *dp )
 
 	if( dp==NO_OBJ ) return;
 
-	if( dp->dt_prec != PREC_SP ){
+	if( OBJ_PREC(dp) != PREC_SP ){
 		NWARN("Uniform random numbers require FLOAT precision");
 		return;
 	}
@@ -398,15 +396,15 @@ int dp_equal_dims(QSP_ARG_DECL  Data_Obj *dp1, Data_Obj *dp2, int index1, int in
 
 int dp_same_dim(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index,const char *whence)
 {
-	if( dp1->dt_type_dim[index] == dp2->dt_type_dim[index] ) return(1);
+	if( OBJ_TYPE_DIM(dp1,index) == OBJ_TYPE_DIM(dp2,index) ) return(1);
 
 	DEFAULT_WHENCE("dp_same_dim")
 	sprintf(ERROR_STRING,
 	"%s:  Objects %s and %s differ in %s size (%u, %u)",
 		whence,
-		dp1->dt_name,dp2->dt_name,dimension_name[index],
-		dp1->dt_type_dim[index],
-		dp2->dt_type_dim[index]);
+		OBJ_NAME(dp1),OBJ_NAME(dp2),dimension_name[index],
+		OBJ_TYPE_DIM(dp1,index),
+		OBJ_TYPE_DIM(dp2,index));
 	WARN(ERROR_STRING);
 	return(0);
 }
@@ -415,7 +413,7 @@ int dp_same_dim(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index,const char *
 
 int dp_equal_dim(Data_Obj *dp1,Data_Obj *dp2,int index)
 {
-	if( dp1->dt_type_dim[index] == dp2->dt_type_dim[index] ) return(1);
+	if( OBJ_TYPE_DIM(dp1,index) == OBJ_TYPE_DIM(dp2,index) ) return(1);
 	return(0);
 }
 
@@ -446,59 +444,34 @@ int dp_same_size_query( Data_Obj *dp1, Data_Obj *dp2 )
 	int i;
 
 	for(i=0;i<N_DIMENSIONS;i++)
-		if( dp1->dt_type_dim[i] != dp2->dt_type_dim[i] ){
+		if( OBJ_TYPE_DIM(dp1,i) != OBJ_TYPE_DIM(dp2,i) ){
 			return(0);
 		}
 	return(1);
 }
 
-#ifdef FOOBAR
-
-/* We don't need this now that we have type_dim. */
-
-/* like dp_same_size_query(), but don't check component dimension.
- * This is useful for comparing real and complex objects.
- */
+// _rc is for real/complex - but this function ignores type dimension
 
 int dp_same_size_query_rc( Data_Obj *dp1, Data_Obj *dp2 )
 {
 	int i;
 
-	// First, make sure that the first obj is real and the second is cpx
-	if( dp1->dt_tdim != 1 ) return(0);
-	if( ! IS_COMPLEX( dp2 ) ) return(0);
-
 	for(i=1;i<N_DIMENSIONS;i++)
-		if( dp1->dt_dimension[i] != dp2->dt_dimension[i] ){
+		if( OBJ_TYPE_DIM(dp1,i) != OBJ_TYPE_DIM(dp2,i) ){
 			return(0);
 		}
 	return(1);
 }
-#endif /* FOOBAR */
-
-
-#ifdef FOOBAR
-int dp_same_len( Data_Obj *dp1, Data_Obj *dp2 )
-{
-	int i;
-
-	for(i=1;i<N_DIMENSIONS;i++)
-		if( dp1->dt_dimension[i] != dp2->dt_dimension[i] ){
-			return(0);
-		}
-	return(1);
-}
-#endif /* FOOBAR */
 
 int dp_same_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2, const char *whence )
 {
 	if( whence == NULL ) whence = "sp_same_prec";
-	if( dp1->dt_prec != dp2->dt_prec ){
+	if( OBJ_PREC(dp1) != OBJ_PREC(dp2) ){
 		sprintf(ERROR_STRING,
 			"%s:  Objects %s (%s) and %s (%s) differ in precision",
 			whence,
-			dp1->dt_name,name_for_prec(dp1->dt_prec),
-			dp2->dt_name,name_for_prec(dp2->dt_prec) );
+			OBJ_NAME(dp1),OBJ_PREC_NAME(dp1),
+			OBJ_NAME(dp2),OBJ_PREC_NAME(dp2) );
 		WARN(ERROR_STRING);
 		return(0);
 	}
@@ -508,12 +481,12 @@ int dp_same_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2, const char *whence )
 int dp_same_mach_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2, const char *whence )
 {
 	DEFAULT_WHENCE("dp_same_mach_prec")
-	if( MACHINE_PREC(dp1) != MACHINE_PREC(dp2) ){
+	if( OBJ_MACH_PREC(dp1) != OBJ_MACH_PREC(dp2) ){
 		sprintf(ERROR_STRING,
 	"%s:  Objects %s (%s) and %s (%s) differ in machine precision",
 			whence,
-			dp1->dt_name,prec_name[MACHINE_PREC(dp1)],
-			dp2->dt_name,prec_name[MACHINE_PREC(dp2)]);
+			OBJ_NAME(dp1),OBJ_MACH_PREC_NAME(dp1),
+			OBJ_NAME(dp2),OBJ_MACH_PREC_NAME(dp2));
 		WARN(ERROR_STRING);
 		return(0);
 	}
@@ -526,11 +499,11 @@ int dp_same_pixel_type( QSP_ARG_DECL  Data_Obj *dp1, Data_Obj *dp2, const char *
 
 	if( !dp_same_prec(QSP_ARG  dp1,dp2,whence) ) return(0);
 
-	if( dp1->dt_mach_dim[0] != dp2->dt_mach_dim[0] ){
+	if( OBJ_MACH_DIM(dp1,0) != OBJ_MACH_DIM(dp2,0) ){
 		sprintf(ERROR_STRING,"%s:  type dimension mismatch between %s (%d) and %s (%d)",
 			whence,
-			dp1->dt_name,dp1->dt_mach_dim[0],
-			dp2->dt_name,dp2->dt_mach_dim[0]);
+			OBJ_NAME(dp1),OBJ_MACH_DIM(dp1,0),
+			OBJ_NAME(dp2),OBJ_MACH_DIM(dp2,0));
 		WARN(ERROR_STRING);
 		return(0);
 	}
@@ -557,33 +530,25 @@ void check_vectorization(Data_Obj *dp)		/** sets global max_vectorizable */
 {
 	int max_v;
 	int i,j;
-#ifdef FOOBAR
-	int start_dim;
-#endif /* FOOBAR */
 
-#ifdef CAUTIOUS
-	if( dp == NO_OBJ ){
-		NWARN("CAUTIOUS:  check_vectorization called with NULL arg!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( dp == NO_OBJ ){
+//		NWARN("CAUTIOUS:  check_vectorization called with NULL arg!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( dp != NO_OBJ );
 
 	max_v = N_DIMENSIONS-1;	/* default:  vectorize over everything */
 
-#ifdef FOOBAR
-	if( IS_COMPLEX(dp) )
-		start_dim=1;
-	else	start_dim=0;
-#endif /* FOOBAR */
-
 	for(i=/*start_dim*/0;i<(N_DIMENSIONS-1);i++){
-		if( dp->dt_type_dim[i] > 1 ){
+		if( OBJ_TYPE_DIM(dp,i) > 1 ){
 			/* find the next biggest dimension > 1 */
 			for(j=i+1;j<N_DIMENSIONS;j++){
-				if( dp->dt_type_dim[j] > 1 ){
-					if( dp->dt_type_inc[j] != 
-						((long)dp->dt_type_dim[i])
-						* dp->dt_type_inc[i] ){
+				if( OBJ_TYPE_DIM(dp,j) > 1 ){
+					if( OBJ_TYPE_INC(dp,j) != 
+						((long)OBJ_TYPE_DIM(dp,i))
+						* OBJ_TYPE_INC(dp,i) ){
 						max_v = i;
 
 						/* break out of i loop */
@@ -608,14 +573,14 @@ void check_vectorization(Data_Obj *dp)		/** sets global max_vectorizable */
 	 * FIXME
 	 */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /*
 if( debug & debug_data ){
-sprintf(error_string,"check_vectorization %s:  max_vectorizable = %d",dp->dt_name,max_vectorizable);
-advise(error_string);
+sprintf(ERROR_STRING,"check_vectorization %s:  max_vectorizable = %d",OBJ_NAME(dp),max_vectorizable);
+advise(ERROR_STRING);
 }
 */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 }
 
@@ -628,33 +593,33 @@ advise(error_string);
 void dp2_vectorize(QSP_ARG_DECL  int level,Data_Obj *dpto,Data_Obj *dpfr,void (*dp_func)(Data_Obj *,Data_Obj *) )
 {
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(error_string,"level = %d, max_v = %d",level,max_vectorizable);
-advise(error_string);
+sprintf(ERROR_STRING,"level = %d, max_v = %d",level,max_vectorizable);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( level == max_vectorizable ){
 		(*dp_func)(dpto,dpfr);
-	} else if(dpto->dt_type_dim[level]==1){
+	} else if(OBJ_TYPE_DIM(dpto,level)==1){
 		dp2_vectorize(QSP_ARG  level-1,dpto,dpfr,dp_func);
 	} else {
 		dimension_t i;
 		Data_Obj *_dpto,*_dpfr;
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(error_string,"dp2_vec:  subscripting at level %d, n=%u (max_vec = %d)",
-level,dpto->dt_type_dim[level],max_vectorizable);
-advise(error_string);
+sprintf(ERROR_STRING,"dp2_vec:  subscripting at level %d, n=%u (max_vec = %d)",
+level,OBJ_TYPE_DIM(dpto,level),max_vectorizable);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 		_dpto = gen_subscript(QSP_ARG  dpto,level,0L,SQUARE);
 		_dpfr = gen_subscript(QSP_ARG  dpfr,level,0L,SQUARE);
-		for(i=0;i<dpto->dt_type_dim[level];i++){
+		for(i=0;i<OBJ_TYPE_DIM(dpto,level);i++){
 			reindex(QSP_ARG  _dpto,level,i);
 			reindex(QSP_ARG  _dpfr,level,i);
 			dp2_vectorize(QSP_ARG  level-1,_dpto,_dpfr,dp_func);
@@ -674,32 +639,32 @@ advise(error_string);
 void dp1_vectorize(QSP_ARG_DECL  int level,Data_Obj *dp,void (*dp_func)(Data_Obj *))
 {
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(error_string,"level = %d, max_v = %d",level,max_vectorizable);
-advise(error_string);
+sprintf(ERROR_STRING,"level = %d, max_v = %d",level,max_vectorizable);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( level == max_vectorizable ){
 		(*dp_func)(dp);
-	} else if(dp->dt_type_dim[level]==1){
+	} else if(OBJ_TYPE_DIM(dp,level)==1){
 		dp1_vectorize(QSP_ARG  level-1,dp,dp_func);
 	} else {
 		dimension_t i;
 		Data_Obj *_dp;
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(error_string,"dp1_vec:  subscripting at level %d, n=%u (max_vec = %d)",
-level,dp->dt_type_dim[level],max_vectorizable);
-advise(error_string);
+sprintf(ERROR_STRING,"dp1_vec:  subscripting at level %d, n=%u (max_vec = %d)",
+level,OBJ_TYPE_DIM(dp,level),max_vectorizable);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 		_dp = gen_subscript(QSP_ARG  dp,level,0L,SQUARE);
-		for(i=0;i<dp->dt_type_dim[level];i++){
+		for(i=0;i<OBJ_TYPE_DIM(dp,level);i++){
 			reindex(QSP_ARG  _dp,level,i);
 			dp1_vectorize(QSP_ARG  level-1,_dp,dp_func);
 		}
@@ -715,9 +680,9 @@ advise(error_string);
 
 int not_prec(QSP_ARG_DECL  Data_Obj *dp,prec_t prec)
 {
-	if( MACHINE_PREC(dp) != prec ){
+	if( OBJ_MACH_PREC(dp) != prec ){
 		sprintf(ERROR_STRING,"Object %s has precision %s, expecting %s",
-			dp->dt_name,prec_name[MACHINE_PREC(dp)],prec_name[prec]);
+			OBJ_NAME(dp),OBJ_MACH_PREC_NAME(dp),NAME_FOR_PREC_CODE(prec));
 		WARN(ERROR_STRING);
 		return(1);
 	}

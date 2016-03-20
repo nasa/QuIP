@@ -1,9 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_interpreter_features[] = QUIP_VERSION_STRING;
-
-#include "query.h"
-#include "submenus.h"
+#include "quip_prot.h"
 
 typedef enum {
 	SWF_DEBUG,
@@ -22,6 +19,7 @@ typedef enum {
 	SWF_RGB,
 	SWF_QUICKTIME,
 	SWF_MATIO,
+	SWF_OPENCV,
 
 	SWF_CURL,
 	SWF_SOUND,
@@ -34,6 +32,10 @@ typedef enum {
 	SWF_X11_EXT,
 	SWF_OPENGL,
 	SWF_MOTIF,
+	SWF_GSL,
+	SWF_GCRYPT,
+	SWF_FLYCAP,
+	SWF_DC1394,
 	N_SW_FEATURES
 } sw_feature_t;
 
@@ -66,9 +68,10 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_RGB,		"SGI rgb files"			},
 { UNKNOWN, SWF_QUICKTIME,	"Quicktime files"		},
 { UNKNOWN, SWF_MATIO,		"MATLAB i/o"			},
+{ UNKNOWN, SWF_OPENCV,		"OpenCV machine vision library"	},
 
 { UNKNOWN, SWF_CURL,		"www i/o (w/ libcurl)"		},
-{ UNKNOWN, SWF_SOUND,		"sound (ALSA)"			},
+{ UNKNOWN, SWF_SOUND,		"sound (portaudio/ALSA)"	},
 { UNKNOWN, SWF_MPLAYER,		"mplayer"			},
 { UNKNOWN, SWF_XINE,		"Xine"				},
 { UNKNOWN, SWF_SSE,		"SSE processor acceleration"	},
@@ -77,9 +80,14 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_LIBAVCODEC,	"AVI files (w/ libavcodec)"	},
 { UNKNOWN, SWF_X11_EXT,		"shared memory display w/ libXext"	},
 { UNKNOWN, SWF_OPENGL,		"OpenGL graphics"		},
-{ UNKNOWN, SWF_MOTIF,		"Motif GUI widgets with libXm"	}
+{ UNKNOWN, SWF_MOTIF,		"Motif GUI widgets with libXm"	},
+{ UNKNOWN, SWF_GSL,		"GNU Scientific Library"	},
+{ UNKNOWN, SWF_GCRYPT,		"encryption w/ libgcrypt"	},
+{ UNKNOWN, SWF_FLYCAP,		"firewire cameras w/ libflycap"	},
+{ UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	}
 };
 
+#ifdef NOW_DONE_WITH_ASSERTION
 #ifdef CAUTIOUS
 #define CHECKIT(code)						\
 	if( swf_tbl[code].swf_code != code )			\
@@ -87,13 +95,16 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 #else
 #define CHECKIT(code)
 #endif
+#endif // NOW_DONE_WITH_ASSERTION
 
 #define FEATURE_ABSENT(code)					\
-	CHECKIT(code)						\
+	/*CHECKIT(code)*/					\
+	assert( swf_tbl[code].swf_code == code );		\
 	swf_tbl[code].swf_state = ABSENT;
 	
 #define FEATURE_PRESENT(code)					\
-	CHECKIT(code)						\
+	/*CHECKIT(code)*/					\
+	assert( swf_tbl[code].swf_code == code );		\
 	swf_tbl[code].swf_state = PRESENT;
 
 static void get_feature_states(SINGLE_QSP_ARG_DECL)
@@ -139,6 +150,12 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_ABSENT(SWF_MATIO);
 #endif
 
+#ifdef HAVE_OPENCV
+	FEATURE_PRESENT(SWF_OPENCV);
+#else
+	FEATURE_ABSENT(SWF_OPENCV);
+#endif
+
 
 #ifdef HAVE_MPEG
 	FEATURE_PRESENT(SWF_MPEG);
@@ -175,7 +192,7 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_CURL
+#ifdef HAVE_LIBCURL
 	FEATURE_PRESENT(SWF_CURL);
 #else
 	FEATURE_ABSENT(SWF_CURL);
@@ -196,7 +213,7 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_JPEG
+#ifdef HAVE_JPEG_SUPPORT
 	FEATURE_PRESENT(SWF_JPEG);
 #else
 	FEATURE_ABSENT(SWF_JPEG);
@@ -237,6 +254,30 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_ABSENT(SWF_MOTIF);
 #endif
 
+#ifdef HAVE_GSL
+	FEATURE_PRESENT(SWF_GSL);
+#else
+	FEATURE_ABSENT(SWF_GSL);
+#endif
+
+#ifdef HAVE_LIBGCRYPT
+	FEATURE_PRESENT(SWF_GCRYPT);
+#else
+	FEATURE_ABSENT(SWF_GCRYPT);
+#endif
+
+#ifdef HAVE_LIBFLYCAP
+	FEATURE_PRESENT(SWF_FLYCAP);
+#else
+	FEATURE_ABSENT(SWF_FLYCAP);
+#endif
+
+#ifdef HAVE_LIBDC1394
+	FEATURE_PRESENT(SWF_DC1394);
+#else
+	FEATURE_ABSENT(SWF_DC1394);
+#endif
+
 
 #ifdef HELPFUL
 	FEATURE_PRESENT(SWF_HELPFUL);
@@ -252,7 +293,7 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef SSE_SUPPORTED
+#ifdef USE_SSE
 	FEATURE_PRESENT(SWF_SSE);
 #else
 	FEATURE_ABSENT(SWF_SSE);
@@ -316,14 +357,15 @@ COMMAND_FUNC( do_list_features )
 
 #ifdef CAUTIOUS
 	for(i=0;i<N_SW_FEATURES;i++){
-		if( swf_tbl[i].swf_state != ABSENT &&
-			swf_tbl[i].swf_state != PRESENT ){
-
-			sprintf(ERROR_STRING,
-		"CAUTIOUS:  need to test state of feature %d (%s)",i,
-				swf_tbl[i].swf_desc);
-			ERROR1(ERROR_STRING);
-		}
+//		if( swf_tbl[i].swf_state != ABSENT &&
+//			swf_tbl[i].swf_state != PRESENT ){
+//
+//			sprintf(ERROR_STRING,
+//		"CAUTIOUS:  need to test state of feature %d (%s)",i,
+//				swf_tbl[i].swf_desc);
+//			ERROR1(ERROR_STRING);
+//		}
+		assert( swf_tbl[i].swf_state == ABSENT || swf_tbl[i].swf_state == PRESENT );
 	}
 #endif /* CAUTIOUS */
 }

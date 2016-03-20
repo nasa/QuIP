@@ -1,9 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_tiff[] = QUIP_VERSION_STRING;
-
-
 #ifdef HAVE_TIFF
 
 #include <stdio.h>
@@ -12,47 +9,44 @@ char VersionId_fio_tiff[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "fio_prot.h"
-#include "filetype.h"
-#include "getbuf.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "savestr.h"
-#include "fiotiff.h"
-#include "raw.h"
-#include "readhdr.h"
+#include "img_file/fiotiff.h"
+#include "img_file/raw.h"
+//#include "readhdr.h"
 
 /* static int num_color=1; */
 /* static void rewrite_tiff_nf(TIFF* tiff,dimension_t n); */
 
-void tiff_info(QSP_ARG_DECL  Image_File *ifp)
+FIO_INFO_FUNC(tiff)
 {
 }
 
-int tiff_to_dp(Data_Obj *dp,TIFF * tiff)
+FIO_FT_TO_DP_FUNC(tiff,TIFF)
 {
 	uint32 w,h,d;
 	//TIFFDataType dtype;
 	uint16 dtype;
 	/* uint16 */ short bps;
 
-	if( TIFFGetField(tiff,TIFFTAG_BITSPERSAMPLE,&bps) != 1 ){
+	if( TIFFGetField(hd_p,TIFFTAG_BITSPERSAMPLE,&bps) != 1 ){
 		NWARN("tiff_to_dp:  No bits_per_sample tag");
 		bps=(-1);
 	} else {
 		if( verbose ){
 			sprintf(DEFAULT_ERROR_STRING,"Tiff bits per sample = %d",bps);
-			advise(DEFAULT_ERROR_STRING);
+			NADVISE(DEFAULT_ERROR_STRING);
 		}
 	}
 
-	if( TIFFGetField(tiff,TIFFTAG_SAMPLEFORMAT,&dtype) == 1 ){
+	if( TIFFGetField(hd_p,TIFFTAG_SAMPLEFORMAT,&dtype) == 1 ){
 		switch(dtype){
 			case SAMPLEFORMAT_UINT:
 				switch(bps){
-					case 8: dp->dt_prec = PREC_UBY; break;
-					case 16: dp->dt_prec = PREC_UIN; break;
-					case 32: dp->dt_prec = PREC_UDI; break;
+					case 8: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UBY )); break;
+					case 16: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UIN )); break;
+					case 32: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UDI )); break;
 					default:
 						sprintf(DEFAULT_ERROR_STRING,"Bad uint bits_per_pixel:  %d",bps);
 						NWARN(DEFAULT_ERROR_STRING);
@@ -62,9 +56,9 @@ int tiff_to_dp(Data_Obj *dp,TIFF * tiff)
 
 			case SAMPLEFORMAT_INT:
 				switch(bps){
-					case 8: dp->dt_prec = PREC_BY; break;
-					case 16: dp->dt_prec = PREC_IN; break;
-					case 32: dp->dt_prec = PREC_DI; break;
+					case 8: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_BY )); break;
+					case 16: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_IN )); break;
+					case 32: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_DI )); break;
 					default:
 						sprintf(DEFAULT_ERROR_STRING,"Bad int bits_per_pixel:  %d",bps);
 						NWARN(DEFAULT_ERROR_STRING);
@@ -74,8 +68,8 @@ int tiff_to_dp(Data_Obj *dp,TIFF * tiff)
 
 			case SAMPLEFORMAT_IEEEFP:
 				switch(bps){
-					case 32: dp->dt_prec = PREC_SP; break;
-					case 64: dp->dt_prec = PREC_DP; break;
+					case 32: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_SP )); break;
+					case 64: SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_DP )); break;
 					default:
 						sprintf(DEFAULT_ERROR_STRING,"Bad ieeefp bits_per_pixel:  %d",bps);
 						NWARN(DEFAULT_ERROR_STRING);
@@ -90,22 +84,22 @@ int tiff_to_dp(Data_Obj *dp,TIFF * tiff)
 		}
 	} else {
 		if( verbose )
-			advise("TIFFTAG_SAMPLEFORMAT is not present, trying TIFFTAG_DATATYPE");
+			NADVISE("TIFFTAG_SAMPLEFORMAT is not present, trying TIFFTAG_DATATYPE");
 
-		if( TIFFGetField(tiff,TIFFTAG_DATATYPE,&dtype) == 1 ){
+		if( TIFFGetField(hd_p,TIFFTAG_DATATYPE,&dtype) == 1 ){
 sprintf(DEFAULT_ERROR_STRING,"dtype = %d",dtype);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 			switch(dtype){
-				case TIFF_BYTE: advise("tiff_byte"); dp->dt_prec = PREC_UBY; break;
-				case TIFF_SHORT: advise("tiff short"); dp->dt_prec = PREC_UIN; break;
-				case TIFF_LONG: advise("tiff long"); dp->dt_prec = PREC_UDI; break;
+				case TIFF_BYTE: NADVISE("tiff_byte"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UBY )); break;
+				case TIFF_SHORT: NADVISE("tiff short"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UIN )); break;
+				case TIFF_LONG: NADVISE("tiff long"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UDI )); break;
 
-				case TIFF_SBYTE: advise("tiff_signed_byte"); dp->dt_prec = PREC_BY; break;
-				case TIFF_SSHORT: advise("tiff signed short"); dp->dt_prec = PREC_IN; break;
-				case TIFF_SLONG: advise("tiff signed long"); dp->dt_prec = PREC_DI; break;
+				case TIFF_SBYTE: NADVISE("tiff_signed_byte"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_BY )); break;
+				case TIFF_SSHORT: NADVISE("tiff signed short"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_IN )); break;
+				case TIFF_SLONG: NADVISE("tiff signed long"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_DI )); break;
 
-				case TIFF_FLOAT: advise("tiff float"); dp->dt_prec = PREC_SP; break;
-				case TIFF_DOUBLE: advise("tiff float"); dp->dt_prec = PREC_DP; break;
+				case TIFF_FLOAT: NADVISE("tiff float"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_SP )); break;
+				case TIFF_DOUBLE: NADVISE("tiff float"); SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_DP )); break;
 
 				case TIFF_ASCII:
 				case TIFF_RATIONAL:
@@ -123,13 +117,13 @@ advise(DEFAULT_ERROR_STRING);
 			if( bps < 0 ){	/* bits per sample not specified */
 				/* assume byte */
 
-				sprintf(DEFAULT_ERROR_STRING, "TIFFTAG_DATATYPE not present, assuming default TIFF data type for %s",dp->dt_name);
-				advise(DEFAULT_ERROR_STRING);
-				dp->dt_prec = PREC_BY;
+				sprintf(DEFAULT_ERROR_STRING, "TIFFTAG_DATATYPE not present, assuming default TIFF data type for %s",OBJ_NAME(dp));
+				NADVISE(DEFAULT_ERROR_STRING);
+				SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_BY ));
 			} else if( bps >0 && bps <= 8 ){
-				dp->dt_prec = PREC_UBY;
+				SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UBY ));
 			} else if( bps >8 && bps <=16 ){
-				dp->dt_prec = PREC_UIN;
+				SET_OBJ_PREC_PTR(dp, PREC_FOR_CODE( PREC_UIN ));
 			} else {
 				sprintf(DEFAULT_ERROR_STRING,"Not sure what to do with tiff bps = %d",bps);
 				NWARN(DEFAULT_ERROR_STRING);
@@ -138,54 +132,54 @@ advise(DEFAULT_ERROR_STRING);
 	}
 
 
-	if( TIFFGetField(tiff,TIFFTAG_IMAGEWIDTH,&w) == 1 ){
+	if( TIFFGetField(hd_p,TIFFTAG_IMAGEWIDTH,&w) == 1 ){
 		//sprintf(DEFAULT_ERROR_STRING,"width = %d",w);
-		//advise(DEFAULT_ERROR_STRING);
-		dp->dt_cols = w;
+		//NADVISE(DEFAULT_ERROR_STRING);
+		SET_OBJ_COLS(dp, w);
 	} else NWARN("error getting TIFF width tag");
 
-	if( TIFFGetField(tiff,TIFFTAG_IMAGELENGTH,&h) == 1 ){
+	if( TIFFGetField(hd_p,TIFFTAG_IMAGELENGTH,&h) == 1 ){
 		//sprintf(DEFAULT_ERROR_STRING,"height = %d",h);
-		//advise(DEFAULT_ERROR_STRING);
-		dp->dt_rows = h;
+		//NADVISE(DEFAULT_ERROR_STRING);
+		SET_OBJ_ROWS(dp, h);
 	} else NWARN("error getting TIFF length tag");
 
-	if( TIFFGetField(tiff,TIFFTAG_IMAGEDEPTH,&d) == 1 ){
+	if( TIFFGetField(hd_p,TIFFTAG_IMAGEDEPTH,&d) == 1 ){
 		sprintf(DEFAULT_ERROR_STRING,"depth = %ld",(u_long)d);
-		advise(DEFAULT_ERROR_STRING);
+		NADVISE(DEFAULT_ERROR_STRING);
 	} else {
 		/* assume monochrome */
-		dp->dt_comps = 1;
+		SET_OBJ_COMPS(dp, 1);
 	}
 
-	dp->dt_frames = 1;
-	dp->dt_seqs = 1;
+	SET_OBJ_FRAMES(dp, 1);
+	SET_OBJ_SEQS(dp, 1);
 
-	dp->dt_cinc = 1;
-	dp->dt_pinc = 1;
-	dp->dt_rowinc = dp->dt_cols*dp->dt_pinc;
-	dp->dt_finc = dp->dt_rowinc * dp->dt_rows;
-	dp->dt_sinc = dp->dt_finc * dp->dt_frames;
+	SET_OBJ_COMP_INC(dp, 1);
+	SET_OBJ_PXL_INC(dp, 1);
+	SET_OBJ_ROW_INC(dp, OBJ_COLS(dp)*OBJ_PXL_INC(dp) );
+	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * OBJ_ROWS(dp));
+	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * OBJ_FRAMES(dp));
 
-	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_CHILDREN(dp, NO_LIST);
 
-	dp->dt_ap = ram_area;		/* the default */
-	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
-			* dp->dt_frames * dp->dt_seqs;
+	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
+	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
+			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
+	auto_shape_flags(OBJ_SHAPE(dp),dp);
 //longlist(dp);
 
 	return(0);
 }
 
-FIO_OPEN_FUNC( tiff_open )
+FIO_OPEN_FUNC( tiff )
 {
 	Image_File *ifp;
 	char *modestr;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_TIFF);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_TIFF));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
 	if( IS_READABLE(ifp) )	modestr="r";
@@ -193,9 +187,10 @@ FIO_OPEN_FUNC( tiff_open )
 
 	ifp->if_tiff = TIFFOpen(ifp->if_pathname,modestr);
 	if( ifp->if_tiff == NULL ){
-		sprintf(error_string,"error opening TIFF file %s",ifp->if_pathname);
-		NWARN(error_string);
-		DEL_IMG_FILE(name);
+		sprintf(ERROR_STRING,"error opening TIFF file %s",ifp->if_pathname);
+		NWARN(ERROR_STRING);
+		DEL_IMG_FILE(ifp);
+		// call rls_str here???  BUG?
 		return(NO_IMAGE_FILE);
 	}
 
@@ -224,7 +219,7 @@ FIO_OPEN_FUNC( tiff_open )
 }
 
 
-FIO_CLOSE_FUNC( tiff_close )
+FIO_CLOSE_FUNC( tiff )
 {
 	/* can we write multiple frames to tiff??? */
 
@@ -232,7 +227,8 @@ FIO_CLOSE_FUNC( tiff_close )
 	GENERIC_IMGFILE_CLOSE(ifp);
 }
 
-int dp_to_tiff(TIFF *tiff,Data_Obj *dp)
+//int dp_to_tiff(TIFF *tiff,Data_Obj *dp)
+FIO_DP_TO_FT_FUNC(tiff,TIFF)
 {
 #ifdef FOOBAR
 	dimension_t size;
@@ -251,15 +247,15 @@ int dp_to_tiff(TIFF *tiff,Data_Obj *dp)
 	/* uint16 comp=COMPRESSION_LZW; */
 
 
-	w = dp->dt_cols;
-	h = dp->dt_rows;
-	d = dp->dt_comps;
-sprintf(DEFAULT_ERROR_STRING,"dp_to_tiff:  dimensions are %ld x %ld x %ld",(u_long)h,(u_long)w,(u_long)d);
-advise(DEFAULT_ERROR_STRING);
+	w = OBJ_COLS(dp);
+	h = OBJ_ROWS(dp);
+	d = OBJ_COMPS(dp);
+//sprintf(DEFAULT_ERROR_STRING,"dp_to_tiff:  dimensions are %ld x %ld x %ld",(u_long)h,(u_long)w,(u_long)d);
+//NADVISE(DEFAULT_ERROR_STRING);
 
 	/* num_frame set when when write request given */
 
-	switch( MACHINE_PREC(dp) ){
+	switch( OBJ_MACH_PREC(dp) ){
 		case PREC_UBY: bps=8; goto set_uint;
 		case PREC_UIN: bps =16; goto set_uint;
 		case PREC_UDI: bps=32;
@@ -282,32 +278,32 @@ set_flt:
 			break;
 	}
 
-	if( TIFFSetField(tiff,TIFFTAG_SAMPLEFORMAT,dtype) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_SAMPLEFORMAT,dtype) != 1 )
 		NWARN("error setting TIFF sample format");
 
-	if( TIFFSetField(tiff,TIFFTAG_BITSPERSAMPLE,bps) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_BITSPERSAMPLE,bps) != 1 )
 		NWARN("error setting TIFF bits per sample");
 
-	if( TIFFSetField(tiff,TIFFTAG_IMAGEWIDTH,w) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_IMAGEWIDTH,w) != 1 )
 		NWARN("error setting TIFF width tag");
 
-	if( TIFFSetField(tiff,TIFFTAG_IMAGELENGTH,h) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_IMAGELENGTH,h) != 1 )
 		NWARN("error setting TIFF length tag");
 
-//	if( TIFFSetField(tiff,TIFFTAG_IMAGEDEPTH,d) != 1 )
+//	if( TIFFSetField(hd_p,TIFFTAG_IMAGEDEPTH,d) != 1 )
 //		NWARN("error setting TIFF depth tag");
 
-	if( TIFFSetField(tiff,TIFFTAG_SAMPLESPERPIXEL,d) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_SAMPLESPERPIXEL,d) != 1 )
 		NWARN("error setting TIFF depth tag");
 
-	if( TIFFSetField(tiff,TIFFTAG_PLANARCONFIG,pc) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_PLANARCONFIG,pc) != 1 )
 		NWARN("error setting TIFF planar_config tag");
 
-	if( TIFFSetField(tiff,TIFFTAG_PHOTOMETRIC,ph) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_PHOTOMETRIC,ph) != 1 )
 		NWARN("error setting TIFF photometric tag");
 
 	/*
-	if( TIFFSetField(tiff,TIFFTAG_COMPRESSION,comp) != 1 )
+	if( TIFFSetField(hd_p,TIFFTAG_COMPRESSION,comp) != 1 )
 		NWARN("error setting TIFF bits per sample");
 	*/
 
@@ -316,14 +312,14 @@ set_flt:
 
 int set_tiff_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from image object */
 {
-	if( dp_to_tiff(ifp->if_tiff,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(tiff)(ifp->if_tiff,ifp->if_dp) < 0 ){
 		tiff_close(QSP_ARG  ifp);
 		return(-1);
 	}
 	return(0);
 }
 
-FIO_WT_FUNC( tiff_wt )
+FIO_WT_FUNC( tiff )
 {
 	dimension_t row;
 	char *datap;
@@ -334,8 +330,8 @@ FIO_WT_FUNC( tiff_wt )
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);
 
-		ifp->if_dp->dt_frames = ifp->if_frms_to_wt;
-		ifp->if_dp->dt_seqs = 1;
+		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
+		SET_OBJ_SEQS(ifp->if_dp, 1);
 
 		if( set_tiff_hdr(QSP_ARG  ifp) < 0 ) return(-1);
 
@@ -343,11 +339,11 @@ FIO_WT_FUNC( tiff_wt )
 
 	/* now write the data */
 // We get an error from TIFFWriteScanline about setting PlanarConfig...
-	datap = (char *)dp->dt_data;
-	for(row=0;row<dp->dt_rows;row++){
+	datap = (char *)OBJ_DATA_PTR(dp);
+	for(row=0;row<OBJ_ROWS(dp);row++){
 		if( TIFFWriteScanline(ifp->if_tiff,datap,row,0) != 1 )
 			NWARN("error writing TIFF scanline");
-		datap += siztbl[MACHINE_PREC(dp)] * dp->dt_rowinc;
+		datap += PREC_SIZE(OBJ_MACH_PREC_PTR(dp)) * OBJ_ROW_INC(dp);
 	}
 
 	ifp->if_nfrms ++ ;
@@ -355,39 +351,47 @@ FIO_WT_FUNC( tiff_wt )
 	return(0);
 }
 
-FIO_RD_FUNC( tiff_rd )
+FIO_RD_FUNC( tiff )
 {
 	dimension_t row;
 	char *datap;
 
-	if( dp->dt_prec != ifp->if_dp->dt_prec ){
-		sprintf(error_string,"Destination object %s has %s precision, but file %s has %s!?",
-			dp->dt_name,name_for_prec(dp->dt_prec),
-			ifp->if_name,name_for_prec(ifp->if_dp->dt_prec));
-		NWARN(error_string);
+	if( OBJ_PREC(dp) != OBJ_PREC(ifp->if_dp) ){
+		sprintf(ERROR_STRING,"Destination object %s has %s precision, but file %s has %s!?",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),
+			ifp->if_name,PREC_NAME(OBJ_PREC_PTR(ifp->if_dp)));
+		NWARN(ERROR_STRING);
 		return;
 	}
 
-	for(row=0;row<ifp->if_dp->dt_rows;row++){
-		datap = (char *)dp->dt_data;
-		datap += siztbl[MACHINE_PREC(dp)]*
-			(x_offset+(y_offset+row)*dp->dt_rowinc);
+	for(row=0;row<OBJ_ROWS(ifp->if_dp);row++){
+		datap = (char *)OBJ_DATA_PTR(dp);
+		datap += PREC_SIZE(OBJ_MACH_PREC_PTR(dp))*
+			(x_offset+(y_offset+row)*OBJ_ROW_INC(dp));
 		if( TIFFReadScanline(ifp->if_tiff,datap,row,0) != 1 )
 			NWARN("error in TIFFReadScanline");
 	}
 }
 
-int tiff_unconv(void *hdr_pp,Data_Obj *dp)
+FIO_UNCONV_FUNC(tiff)
 {
 	NWARN("tiff_unconv not implemented");
 	return(-1);
 }
 
-int tiff_conv(Data_Obj *dp,void *hd_pp)
+FIO_CONV_FUNC(tiff)
 {
 	NWARN("tiff_conv not implemented");
 	return(-1);
 }
+
+FIO_SEEK_FUNC(tiff)
+{
+	NWARN("tiff_seek_frame:  not implemented!?");
+	return(0);
+}
+
+
 
 #ifdef FOOBAR
 /* rewrite the number of frames in this header */

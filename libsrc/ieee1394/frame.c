@@ -35,13 +35,15 @@ Frame *new_frame()
 }
 
 
-void release_frame(Frame *frmp)
+#ifdef NOT_USED
+static void release_frame(Frame *frmp)
 {
 	int n;
 	dv_decoder_free(frmp->frm_decoder);
 	for (n = 0; n < 4; n++)
 		free(frmp->frm_audio_buffers[n]);
 }
+#endif /* NOT_USED */
 
 
 /** checks whether the frame is in PAL or NTSC format
@@ -50,7 +52,7 @@ void release_frame(Frame *frmp)
 	\return TRUE for PAL frame, FALSE for a NTSC frame
 */
 
-bool IsPAL(Frame *frmp)
+static bool IsPAL(Frame *frmp)
 {
 	unsigned char dsf = frmp->frm_data[3] & 0x80;
 	bool pal = (dsf == 0) ? FALSE : TRUE;
@@ -61,6 +63,7 @@ bool IsPAL(Frame *frmp)
 }
 
 
+#ifdef NOT_USED
 
 /** gets a subcode data packet
  
@@ -70,7 +73,7 @@ bool IsPAL(Frame *frmp)
 	\param pack a reference to the variable where the result is stored
 	\return TRUE for success, FALSE if no pack could be found */
 
-bool GetSSYBPack(Frame *frmp, int packNum, Pack *packp)
+static bool GetSSYBPack(Frame *frmp, int packNum, Pack *packp)
 {
 	packp->data[ 0 ] = packNum;
 #ifdef HAVE_LIBDV_1_0
@@ -102,7 +105,7 @@ bool GetSSYBPack(Frame *frmp, int packNum, Pack *packp)
 	\param pack a reference to the variable where the result is stored
 	\return TRUE for success, FALSE if no pack could be found */
 
-bool GetVAUXPack(Frame *frmp,int packNum, Pack *packp)
+static bool GetVAUXPack(Frame *frmp,int packNum, Pack *packp)
 {
 	packp->data[ 0 ] = packNum;
 	dv_get_vaux_pack( frmp->frm_decoder, packNum, &packp->data[ 1 ] );
@@ -129,7 +132,7 @@ bool GetVAUXPack(Frame *frmp,int packNum, Pack *packp)
 	\param pack a reference to the variable where the result is stored
 	\return TRUE for success, FALSE if no pack could be found */
 
-bool GetAAUXPack(Frame *frmp, int packNum, Pack *packp)
+static bool GetAAUXPack(Frame *frmp, int packNum, Pack *packp)
 {
 	bool done = FALSE;
 	int seqCount,i,j;
@@ -198,6 +201,180 @@ bool GetAAUXPack(Frame *frmp, int packNum, Pack *packp)
 	return FALSE;
 }
 
+static const char * GetRecordingDateString(Frame *frmp)
+{
+	const char * recDate;
+	static char s[64];
+	if (dv_get_recording_datetime( frmp->frm_decoder, s))
+		recDate = s;
+	else
+		recDate = "0000-00-00 00:00:00";
+	return recDate;
+}
+
+static bool GetVideoInfo(Frame *frmp,VideoInfo *vip)
+{
+	GetTimeCode(frmp,&vip->vi_timeCode);
+	GetRecordingDateTime(frmp,&vip->vi_recDate);
+	vip->vi_isPAL = IsPAL(frmp);
+	return TRUE;
+}
+
+
+/** get the video frame rate
+
+	\return frames per second
+*/
+static float GetFrameRate(Frame *frmp)
+{
+	return IsPAL(frmp) ? 25.0 : 30000.0/1001.0;
+}
+
+/** checks whether this frame is the first in a new recording
+ 
+	To determine this, the function looks at the recStartPoint bit in
+	AAUX pack 51.
+ 
+	\return TRUE if this frame is the start of a new recording */
+
+static bool IsNewRecording(Frame *frmp)
+{
+	return (frmp->frm_decoder->audio->aaux_asc.pc2.rec_st == 0);
+}
+
+
+/** retrieves the audio data from the frame
+ 
+	The DV frame contains audio data mixed in the video data blocks, 
+	which can be retrieved easily using this function.
+ 
+	The audio data consists of 16 bit, two channel audio samples (a 16 bit word for channel 1, followed by a 16 bit word
+	for channel 2 etc.)
+ 
+	\param sound a pointer to a buffer that holds the audio data
+	\return the number of bytes put into the buffer, or 0 if no audio data could be retrieved */
+
+static int ExtractAudio(Frame *frmp)
+{
+	AudioInfo info;
+	
+	if (GetAudioInfo(frmp,&info) == TRUE) {
+
+		dv_decode_full_audio( frmp->frm_decoder, frmp->frm_data, (short **)frmp->frm_audio_buffers);
+	} else
+		info.samples = 0;
+	
+	return info.samples * info.channels * 2;
+}
+
+
+
+/** gets the audio properties of this frame
+ 
+	get the sampling frequency and the number of samples in this particular DV frame (which can vary)
+ 
+	\param info the AudioInfo record
+	\return TRUE, if audio properties could be determined */
+
+static bool GetAudioInfo(Frame *frmp, AudioInfo *info_p)
+{
+	info_p->frequency = frmp->frm_decoder->audio->frequency;
+	info_p->samples = frmp->frm_decoder->audio->samples_this_frame;
+	info_p->frames = (frmp->frm_decoder->audio->aaux_as.pc3.system == 1) ? 50 : 60;
+	info_p->channels = frmp->frm_decoder->audio->num_channels;
+	info_p->quantization = (frmp->frm_decoder->audio->aaux_as.pc4.qu == 0) ? 16 : 12;
+	return TRUE;
+}
+
+
+
+static void Deinterlace( Frame *frmp,  void *image, int bpp )
+{
+	int i;
+	int width = GetWidth(frmp) * bpp;
+	int height = GetHeight(frmp);
+	for ( i = 0; i < height; i += 2 )
+		memcpy( (uint8_t *)image + width * ( i + 1 ), (uint8_t *)image + width * i, width );
+}
+
+
+/** Get the frame image width.
+
+	\return the width in pixels.
+*/
+static int GetWidth(Frame *frmp)
+{
+	return frmp->frm_decoder->width;
+}
+
+/** Get the frame image height.
+
+	\return the height in pixels.
+*/
+static int GetHeight(Frame *frmp)
+{
+	return frmp->frm_decoder->height;
+}
+
+static int ExtractYUV(Frame *frmp, void *yuv)
+{
+	unsigned char *pixels[3];
+	int pitches[3];
+
+	pixels[0] = (unsigned char*)yuv;
+	pitches[0] = frmp->frm_decoder->width * 2;
+
+	dv_decode_full_frame(frmp->frm_decoder, frmp->frm_data, e_dv_color_yuv, pixels, pitches);
+	return 0;
+}
+
+
+/** Set the RecordingDate of the frame.
+
+	This updates the calendar date and time and the timecode.
+	However, timecode is derived from the time in the datetime
+	parameter and frame number. Use SetTimeCode for more control
+	over timecode.
+
+	\param datetime A simple time value containing the
+		   RecordingDate and time information. The time in this
+		   structure is automatically incremented by one second
+		   depending on the frame parameter and updatded.
+	\param frame A zero-based running frame sequence/serial number.
+		   This is used both in the timecode as well as a timestamp on
+		   dif block headers.
+*/
+static void SetRecordingDate( Frame *frmp,  time_t *datetime, int frame )
+{
+	dv_encode_metadata( frmp->frm_data, IsPAL(frmp), IsWide(frmp), datetime, frame );
+}
+
+/** Get the frame aspect ratio.
+
+	Indicates whether frame aspect ration is normal (4:3) or wide (16:9).
+
+	\return TRUE if the frame is wide (16:9), FALSE if unknown or normal.
+*/
+static bool IsWide( Frame *frmp )
+{
+	return dv_format_wide(frmp->frm_decoder) > 0;
+}
+
+
+/** Set the TimeCode of the frame.
+
+	This function takes a zero-based frame counter and automatically
+	derives the timecode.
+
+	\param frame The frame counter.
+*/
+static void SetTimeCode( Frame *frmp, int frame )
+{
+	dv_encode_timecode( frmp->frm_data, IsPAL(frmp), frame );
+}
+
+
+#endif /* NOT_USED */
 
 /** gets the date and time of recording of this frame
  
@@ -213,17 +390,6 @@ bool GetRecordingDateTime(Frame *frmp, struct tm *recDate_p)
 	return dv_get_recording_datetime_tm( frmp->frm_decoder, recDate_p);
 }
 
-
-const char * GetRecordingDateString(Frame *frmp)
-{
-	const char * recDate;
-	static char s[64];
-	if (dv_get_recording_datetime( frmp->frm_decoder, s))
-		recDate = s;
-	else
-		recDate = "0000-00-00 00:00:00";
-	return recDate;
-}
 
 
 /** gets the timecode information of this frame
@@ -248,34 +414,6 @@ bool GetTimeCode(Frame *frmp, TimeCode *timeCode_p)
 	return TRUE;
 }
 
-
-/** gets the audio properties of this frame
- 
-	get the sampling frequency and the number of samples in this particular DV frame (which can vary)
- 
-	\param info the AudioInfo record
-	\return TRUE, if audio properties could be determined */
-
-bool GetAudioInfo(Frame *frmp, AudioInfo *info_p)
-{
-	info_p->frequency = frmp->frm_decoder->audio->frequency;
-	info_p->samples = frmp->frm_decoder->audio->samples_this_frame;
-	info_p->frames = (frmp->frm_decoder->audio->aaux_as.pc3.system == 1) ? 50 : 60;
-	info_p->channels = frmp->frm_decoder->audio->num_channels;
-	info_p->quantization = (frmp->frm_decoder->audio->aaux_as.pc4.qu == 0) ? 16 : 12;
-	return TRUE;
-}
-
-
-bool GetVideoInfo(Frame *frmp,VideoInfo *vip)
-{
-	GetTimeCode(frmp,&vip->vi_timeCode);
-	GetRecordingDateTime(frmp,&vip->vi_recDate);
-	vip->vi_isPAL = IsPAL(frmp);
-	return TRUE;
-}
-
-
 /** gets the size of the frame
  
 	Depending on the type (PAL or NTSC) of the frame, the length of the frame is returned 
@@ -285,28 +423,6 @@ bool GetVideoInfo(Frame *frmp,VideoInfo *vip)
 int GetFrameSize(Frame *frmp)
 {
 	return IsPAL(frmp) ? 144000 : 120000;
-}
-
-
-/** get the video frame rate
-
-	\return frames per second
-*/
-float GetFrameRate(Frame *frmp)
-{
-	return IsPAL(frmp) ? 25.0 : 30000.0/1001.0;
-}
-
-/** checks whether this frame is the first in a new recording
- 
-	To determine this, the function looks at the recStartPoint bit in
-	AAUX pack 51.
- 
-	\return TRUE if this frame is the start of a new recording */
-
-bool IsNewRecording(Frame *frmp)
-{
-	return (frmp->frm_decoder->audio->aaux_asc.pc2.rec_st == 0);
 }
 
 
@@ -322,65 +438,10 @@ bool IsComplete(Frame *frmp)
 	return frmp->frm_bytesInFrame == GetFrameSize(frmp);
 }
 
-
-/** retrieves the audio data from the frame
- 
-	The DV frame contains audio data mixed in the video data blocks, 
-	which can be retrieved easily using this function.
- 
-	The audio data consists of 16 bit, two channel audio samples (a 16 bit word for channel 1, followed by a 16 bit word
-	for channel 2 etc.)
- 
-	\param sound a pointer to a buffer that holds the audio data
-	\return the number of bytes put into the buffer, or 0 if no audio data could be retrieved */
-
-int ExtractAudio(Frame *frmp)
-{
-	AudioInfo info;
-	
-	if (GetAudioInfo(frmp,&info) == TRUE) {
-
-		dv_decode_full_audio( frmp->frm_decoder, frmp->frm_data, (short **)frmp->frm_audio_buffers);
-	} else
-		info.samples = 0;
-	
-	return info.samples * info.channels * 2;
-}
-
-
 void ExtractHeader(Frame *frmp)
 {
 	dv_parse_header(frmp->frm_decoder, frmp->frm_data);
 	dv_parse_packs(frmp->frm_decoder, frmp->frm_data);
-}
-
-/** Get the frame image width.
-
-	\return the width in pixels.
-*/
-int GetWidth(Frame *frmp)
-{
-	return frmp->frm_decoder->width;
-}
-
-
-/** Get the frame image height.
-
-	\return the height in pixels.
-*/
-int GetHeight(Frame *frmp)
-{
-	return frmp->frm_decoder->height;
-}
-
-
-void Deinterlace( Frame *frmp,  void *image, int bpp )
-{
-	int i;
-	int width = GetWidth(frmp) * bpp;
-	int height = GetHeight(frmp);
-	for ( i = 0; i < height; i += 2 )
-		memcpy( (uint8_t *)image + width * ( i + 1 ), (uint8_t *)image + width * i, width );
 }
 
 int ExtractRGB(Frame *frmp, void *rgb)
@@ -398,63 +459,6 @@ int ExtractRGB(Frame *frmp, void *rgb)
 
 	dv_decode_full_frame(frmp->frm_decoder, frmp->frm_data, e_dv_color_rgb, pixels, pitches);
 	return 0;
-}
-
-int ExtractYUV(Frame *frmp, void *yuv)
-{
-	unsigned char *pixels[3];
-	int pitches[3];
-
-	pixels[0] = (unsigned char*)yuv;
-	pitches[0] = frmp->frm_decoder->width * 2;
-
-	dv_decode_full_frame(frmp->frm_decoder, frmp->frm_data, e_dv_color_yuv, pixels, pitches);
-	return 0;
-}
-
-
-/** Get the frame aspect ratio.
-
-	Indicates whether frame aspect ration is normal (4:3) or wide (16:9).
-
-	\return TRUE if the frame is wide (16:9), FALSE if unknown or normal.
-*/
-bool IsWide( Frame *frmp )
-{
-	return dv_format_wide(frmp->frm_decoder) > 0;
-}
-
-
-/** Set the RecordingDate of the frame.
-
-	This updates the calendar date and time and the timecode.
-	However, timecode is derived from the time in the datetime
-	parameter and frame number. Use SetTimeCode for more control
-	over timecode.
-
-	\param datetime A simple time value containing the
-		   RecordingDate and time information. The time in this
-		   structure is automatically incremented by one second
-		   depending on the frame parameter and updatded.
-	\param frame A zero-based running frame sequence/serial number.
-		   This is used both in the timecode as well as a timestamp on
-		   dif block headers.
-*/
-void SetRecordingDate( Frame *frmp,  time_t *datetime, int frame )
-{
-	dv_encode_metadata( frmp->frm_data, IsPAL(frmp), IsWide(frmp), datetime, frame );
-}
-
-/** Set the TimeCode of the frame.
-
-	This function takes a zero-based frame counter and automatically
-	derives the timecode.
-
-	\param frame The frame counter.
-*/
-void SetTimeCode( Frame *frmp, int frame )
-{
-	dv_encode_timecode( frmp->frm_data, IsPAL(frmp), frame );
 }
 
 #endif /* HAVE_LIBDV */

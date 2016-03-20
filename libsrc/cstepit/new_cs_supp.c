@@ -1,8 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_cstepit_new_cs_supp[] = QUIP_VERSION_STRING;
-
-
 /*
  * linkage to C stepit
  */
@@ -20,7 +17,6 @@ char VersionId_cstepit_new_cs_supp[] = QUIP_VERSION_STRING;
 
 #include "new_cstepit.h"
 #include "optimize.h"
-#include "chewtext.h"		/* digest() */
 
 static int n_prms;
 static Query_Stream *cs_qsp=NULL;
@@ -75,7 +71,7 @@ static void new_cstepit_scr_funk()
 		np=np->n_next;
 	}
 
-	DIGEST(opt_func_string);	/* used to call pushtext here */
+	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 
 	vp=var__of("error");
 	if( vp == NO_VAR ) {

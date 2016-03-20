@@ -61,6 +61,8 @@ Define Make_LP 2 'target filter image' 'filter constant'
 Make_2D_LP $1 $2 $2
 .
 
+# What if this is called for a row?
+
 Define Make_2D_LP 3 'target filter image' 'H filter constant' 'V filter constant'
 Assign _lpw "ncols($1)"
 Assign _lph "nrows($1)"
@@ -132,14 +134,14 @@ Delete_Image lpfilter
 .
 
 Define Impulse_2_Filter 2 filter impulse
-Dup_Float i2ftmp $2
+Dup_Std i2ftmp $2
 Wrap i2ftmp $2
 RFFT $1 i2ftmp
 Delete_Image i2ftmp
 .
 
 Define Filter_2_Impulse 2 impulse filter
-Dup_Float f2itmp $1
+Dup_Std f2itmp $1
 RInvFFT f2itmp $2
 Wrap $1 f2itmp
 Delete_Image f2itmp

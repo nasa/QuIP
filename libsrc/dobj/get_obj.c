@@ -2,33 +2,30 @@
 
 #include "quip_config.h"
 
-char VersionId_dataf_get_obj[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
 
 
 /* Look for an object described by a possibly indexed string
  * no warning issued if the object does not exist
  */
 
-Data_Obj *
-hunt_obj(QSP_ARG_DECL  const char *name)
+Data_Obj * hunt_obj(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 	char stem[LLEN], *cp;
 	const char *s;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /*
 if( debug & debug_data ){
-sprintf(error_string,"hunt_obj:  passed name \"%s\"",name);
-advise(error_string);
+sprintf(ERROR_STRING,"hunt_obj:  passed name \"%s\"",name);
+advise(ERROR_STRING);
 list_dobjs(SINGLE_QSP_ARG);
 }
 */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	dp=dobj_of(QSP_ARG  name);
 	if( dp != NO_OBJ ){
@@ -58,8 +55,8 @@ Data_Obj *get_obj(QSP_ARG_DECL  const char *name)
 
 	dp = hunt_obj(QSP_ARG  name);
 	if( dp == NO_OBJ ){
-		sprintf(error_string,"No data object \"%s\"",name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"No data object \"%s\"",name);
+		WARN(ERROR_STRING);
 	}
 	return(dp);
 }
@@ -70,9 +67,9 @@ Data_Obj *get_vec(QSP_ARG_DECL  const char *s)
 
 	dp=get_obj(QSP_ARG  s);
 	if( dp==NO_OBJ ) return(dp);
-	if( !(dp->dt_flags & DT_VECTOR) ){
-		sprintf(error_string,"object \"%s\" is not a vector",s);
-		WARN(error_string);
+	if( !(OBJ_FLAGS(dp) & DT_VECTOR) ){
+		sprintf(ERROR_STRING,"object \"%s\" is not a vector",s);
+		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 	return(dp);
@@ -85,9 +82,9 @@ img_of(QSP_ARG_DECL  const char *s)				/**/
 
 	dp=get_obj(QSP_ARG  s);
 	if( dp==NO_OBJ ) return(dp);
-	if( !(dp->dt_flags & DT_IMAGE) ){
-		sprintf(error_string,"object \"%s\" is not an image",s);
-		WARN(error_string);
+	if( !(OBJ_FLAGS(dp) & DT_IMAGE) ){
+		sprintf(ERROR_STRING,"object \"%s\" is not an image",s);
+		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 	return(dp);
@@ -99,24 +96,23 @@ Data_Obj *get_seq(QSP_ARG_DECL  const char *s)
 
 	dp=get_obj(QSP_ARG  s);
 	if( dp==NO_OBJ ) return(dp);
-	if( !(dp->dt_flags & DT_SEQUENCE) ){
-		sprintf(error_string,"object \"%s\" is not an sequence",s);
-		WARN(error_string);
+	if( !(OBJ_FLAGS(dp) & DT_SEQUENCE) ){
+		sprintf(ERROR_STRING,"object \"%s\" is not an sequence",s);
+		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 	return(dp);
 }
 
-Data_Obj *
-get_img( QSP_ARG_DECL  const char *s )
+Data_Obj * get_img( QSP_ARG_DECL  const char *s )
 {
 	Data_Obj *dp;
 
 	dp=get_obj(QSP_ARG  s);
 	if( dp==NO_OBJ ) return(dp);
 	if( !IS_IMAGE(dp) ){
-		sprintf(error_string,"data object %s is not an image",s);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"data object %s is not an image",s);
+		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 	return(dp);

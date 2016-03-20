@@ -1,11 +1,9 @@
 #include "quip_config.h"
 
-char VersionId_dither_requant[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 #include "vec_util.h"
 #include "requant.h"
 #include "ctone.h"
-#include "menuname.h"
 
 debug_flag_t spread_debug=0;
 
@@ -13,7 +11,7 @@ static COMMAND_FUNC( do_scan2_requant )
 {
 	int n;
 
-	n=HOW_MANY("number of passes");
+	n=(int)HOW_MANY("number of passes");
 	scan2_requant(QSP_ARG  n);
 }
 
@@ -21,7 +19,7 @@ static COMMAND_FUNC( do_scan2_requant3d )
 {
 	int n;
 
-	n=HOW_MANY("number of passes");
+	n=(int)HOW_MANY("number of passes");
 	scan2_requant3d(n);
 }
 
@@ -29,7 +27,7 @@ static COMMAND_FUNC( do_scan_requant )
 {
 	int n;
 
-	n=HOW_MANY("number of passes");
+	n=(int)HOW_MANY("number of passes");
 	scan_requant(n);
 }
 
@@ -39,7 +37,7 @@ static COMMAND_FUNC( do_anneal )
 	int n;
 
 	temp = HOW_MUCH("temperature");
-	n=HOW_MANY("number of passes");
+	n=(int)HOW_MANY("number of passes");
 	scan_anneal(temp,n);
 }
 
@@ -47,7 +45,7 @@ static COMMAND_FUNC( do_scan_requant3d )
 {
 	int n;
 
-	n=HOW_MANY("number of passes");
+	n=(int)HOW_MANY("number of passes");
 	scan_requant3d(n);
 }
 
@@ -57,19 +55,19 @@ static COMMAND_FUNC( do_anneal3d )
 	int n;
 
 	temp = HOW_MUCH("temperature");
-	n=HOW_MANY("number of passes");
+	n=(int)HOW_MANY("number of passes");
 	scan_anneal3d(temp,n);
 }
 
 static COMMAND_FUNC( do_dich_anneal )
 {
 	double temp1,temp2;
-	u_long n;
+	index_t n;
 
-	n=HOW_MANY("number of passes");
+	n=(index_t)HOW_MANY("number of passes");
 	temp1=HOW_MUCH("initial temperature");
 	temp2=HOW_MUCH("final temperature");
-	dich_scan_anneal(n,temp1,temp2);
+	dich_scan_anneal(QSP_ARG  n,temp1,temp2);
 }
 
 static const char *scanlist[]={"raster","scattered","random"};
@@ -178,20 +176,20 @@ static COMMAND_FUNC( do_tweak )
 {
 	int x,y;
 
-	x=HOW_MANY("x coord");
-	y=HOW_MANY("y coord");
+	x=(int)HOW_MANY("x coord");
+	y=(int)HOW_MANY("y coord");
 
 	redo_two_pixels(x,y);
 }
 static COMMAND_FUNC( do_tweak3d )
 {
-	dimension_t posn[N_DIMENSIONS];
+	incr_t posn[N_DIMENSIONS];
 
 	posn[0]=posn[4]=0;
 
-	posn[1] = HOW_MANY("x coord");
-	posn[2] = HOW_MANY("y coord");
-	posn[3] = HOW_MANY("t coord");
+	posn[1] = (int)HOW_MANY("x coord");
+	posn[2] = (int)HOW_MANY("y coord");
+	posn[3] = (int)HOW_MANY("t coord");
 
 	redo_two_pixels3d(posn);
 }
@@ -206,7 +204,7 @@ static COMMAND_FUNC( do_set_clr_input )
 
 	if( lumdp==NO_OBJ || rgdp==NO_OBJ || bydp==NO_OBJ ) return;
 
-	set_rgb_input(lumdp,rgdp,bydp);
+	set_rgb_input(QSP_ARG  lumdp,rgdp,bydp);
 }
 
 static COMMAND_FUNC( do_set_dich_input )
@@ -218,7 +216,7 @@ static COMMAND_FUNC( do_set_dich_input )
 
 	if( lumdp==NO_OBJ || rgdp==NO_OBJ ) return;
 
-	set_dich_input(lumdp,rgdp);
+	set_dich_input(QSP_ARG  lumdp,rgdp);
 }
 
 static COMMAND_FUNC( do_set_clr_output )
@@ -268,9 +266,9 @@ static COMMAND_FUNC( do_clr_migrate_pixel )
 {
 	int x,y;
 
-	x=HOW_MANY("x coordinate");
-	y=HOW_MANY("y coordinate");
-	clr_migrate_pixel(x,y);
+	x=(int)HOW_MANY("x coordinate");
+	y=(int)HOW_MANY("y coordinate");
+	clr_migrate_pixel(QSP_ARG  x,y);
 }
 
 
@@ -278,18 +276,18 @@ static COMMAND_FUNC( do_clr_redo_pixel )
 {
 	int x,y;
 
-	x=HOW_MANY("x coordinate");
-	y=HOW_MANY("y coordinate");
-	clr_redo_pixel(x,y);
+	x=(int)HOW_MANY("x coordinate");
+	y=(int)HOW_MANY("y coordinate");
+	clr_redo_pixel(QSP_ARG  x,y);
 }
 
 static COMMAND_FUNC( do_dich_migrate_pixel )
 {
 	int x,y;
 
-	x=HOW_MANY("x coordinate");
-	y=HOW_MANY("y coordinate");
-	dich_migrate_pixel(x,y);
+	x=(int)HOW_MANY("x coordinate");
+	y=(int)HOW_MANY("y coordinate");
+	dich_migrate_pixel(QSP_ARG  x,y);
 }
 
 
@@ -297,9 +295,9 @@ static COMMAND_FUNC( do_dich_redo_pixel )
 {
 	int x,y;
 
-	x=HOW_MANY("x coordinate");
-	y=HOW_MANY("y coordinate");
-	dich_redo_pixel(x,y);
+	x=(int)HOW_MANY("x coordinate");
+	y=(int)HOW_MANY("y coordinate");
+	dich_redo_pixel(QSP_ARG  x,y);
 }
 
 static COMMAND_FUNC( do_clr_setxform )
@@ -322,151 +320,144 @@ static COMMAND_FUNC( do_dich_setxform )
 
 static COMMAND_FUNC( do_clr_descend )
 {
-	clr_scan_requant(1);
+	clr_scan_requant(QSP_ARG  1);
 }
 
 static COMMAND_FUNC( do_clr_migrate )
 {
-	clr_scan_migrate(1);
+	clr_scan_migrate(QSP_ARG  1);
 }
 
 static COMMAND_FUNC( do_dich_descend )
 {
-	dich_scan_requant(1);
+	dich_scan_requant(QSP_ARG  1);
 }
 
 static COMMAND_FUNC( do_dich_migrate )
 {
-	dich_scan_migrate(1);
+	dich_scan_migrate(QSP_ARG  1);
 }
 
-Command achrom_req_ctbl[]={
-{ "set_input",	do_set_input,		"specify input grayscale image"	},
-{ "set_filter",	do_set_filter,		"specify error filter image"	},
-{ "set_output",	do_set_output,		"specify output halftone image"	},
-{ "anneal",	do_anneal,		"requant image at specified temp"},
-{ "descend",	do_scan_requant,	"requantize entire image"	},
-{ "migrate",	do_scan2_requant,	"migrate pixels"		},
-{ "tweak",	do_tweak,		"tweak at one pixel"		},
+#define ADD_CMD(s,f,h)	ADD_COMMAND(achrom_requant_menu,s,f,h)
+
+MENU_BEGIN(achrom_requant)
+ADD_CMD( set_input,	do_set_input,		specify input grayscale image )
+ADD_CMD( set_filter,	do_set_filter,		specify error filter image )
+ADD_CMD( set_output,	do_set_output,		specify output halftone image )
+ADD_CMD( anneal,	do_anneal,		requant image at specified temp )
+ADD_CMD( descend,	do_scan_requant,	requantize entire image )
+ADD_CMD( migrate,	do_scan2_requant,	migrate pixels )
+ADD_CMD( tweak,		do_tweak,		tweak at one pixel )
 #ifdef FOOBAR
-{ "quadtree",	do_qt_dither,		"quadtree dither algorithm"	},
+ADD_CMD( quadtree,	do_qt_dither,		quadtree dither algorithm )
 #endif /* FOOBAR */
-{ "scan",	do_pickscan,		"select scanning pattern"	},
-{ "setup_error",do_init_requant,	"initialize error & filtered error"},
-#ifndef MAC
-{ "quit",	popcmd,			"exit submenu"			},
-#endif
-{ NULL_COMMAND								}
-};
+ADD_CMD( scan,		do_pickscan,		select scanning pattern )
+ADD_CMD( setup_error,	do_init_requant,	initialize error & filtered error )
+MENU_END(achrom_requant)
 
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(threeD_requant_menu,s,f,h)
 
-Command threeD_req_ctbl[]={
-{ "set_input",	do_set_input3d,		"specify input grayscale image"	},
-{ "set_filter",	do_set_filter3d,		"specify error filter image"	},
-{ "set_output",	do_set_output3d,		"specify output halftone image"	},
-{ "anneal",	do_anneal3d,		"anneal 3D image at specified temp"},
-{ "descend",	do_scan_requant3d,	"requantize entire image"	},
-{ "migrate",	do_scan2_requant3d,	"migrate pixels"		},
-{ "tweak",	do_tweak3d,		"tweak at one pixel"		},
+MENU_BEGIN(threeD_requant)
+ADD_CMD( set_input,	do_set_input3d,		specify input grayscale image )
+ADD_CMD( set_filter,	do_set_filter3d,	specify error filter image )
+ADD_CMD( set_output,	do_set_output3d,	specify output halftone image )
+ADD_CMD( anneal,	do_anneal3d,		anneal 3D image at specified temp )
+ADD_CMD( descend,	do_scan_requant3d,	requantize entire image )
+ADD_CMD( migrate,	do_scan2_requant3d,	migrate pixels )
+ADD_CMD( tweak,		do_tweak3d,		tweak at one pixel )
 /*
-{ "quadtree",	do_qt_dither3d,		"quadtree dither algorithm"	},
+ADD_CMD( quadtree,	do_qt_dither3d,		quadtree dither algorithm )
 */
-{ "scan",	do_pickscan3d,		"select scanning pattern"	},
-{ "setup_error",do_init_requant3d,	"initialize error & filtered error"},
-#ifndef MAC
-{ "quit",	popcmd,			"exit submenu"			},
-#endif
-{ NULL_COMMAND								}
-};
+ADD_CMD( scan,		do_pickscan3d,		select scanning pattern )
+ADD_CMD( setup_error,	do_init_requant3d,	initialize error & filtered error )
+MENU_END(threeD_requant)
 
 
 static COMMAND_FUNC( do_achrom )
 {
-	PUSHCMD(achrom_req_ctbl,"achrom_requant");
+	PUSH_MENU(achrom_requant);
 }
 
 static COMMAND_FUNC( do_3d )
 {
-	PUSHCMD(threeD_req_ctbl,"threeD_requant");
+	PUSH_MENU(threeD_requant);
 }
 
-Command color_req_ctbl[]={
-{ "set_input",	do_set_clr_input,		"specify input grayscale image"	},
-{ "set_filter",	do_set_clr_filter,		"specify error filter image"	},
-{ "set_output",	do_set_clr_output,		"specify output halftone image"	},
-{ "redo_pixel",	do_clr_redo_pixel,		"redo a particular pixel"	},
-{ "redo_migrate",	do_clr_migrate_pixel,	"redo a particular pixel using migration"	},
-{ "descend",	do_clr_descend,		"scan image & reduce error SOS"	},
-{ "migrate",	do_clr_migrate,		"scan image & migrate bits"	},
-{ "scan",	do_pickscan,		"select scanning pattern"	},
-{ "matrix",	do_clr_setxform,		"specify color transformation matrix"},
-{ "initialize",	init_clr_requant,	"initialize error images"	},
-{ "sos",	tell_sos,		"report SOS's"			},
-{ "tell",	cspread_tell,		"info for all internal data images"},
-#ifndef MAC
-{ "quit",	popcmd,			"exit submenu"			},
-#endif
-{ NULL_COMMAND								}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(color_requant_menu,s,f,h)
+
+MENU_BEGIN(color_requant)
+ADD_CMD( set_input,	do_set_clr_input,	specify input grayscale image )
+ADD_CMD( set_filter,	do_set_clr_filter,	specify error filter image )
+ADD_CMD( set_output,	do_set_clr_output,	specify output halftone image )
+ADD_CMD( redo_pixel,	do_clr_redo_pixel,	redo a particular pixel )
+ADD_CMD( redo_migrate,	do_clr_migrate_pixel,	redo a particular pixel using migration )
+ADD_CMD( descend,	do_clr_descend,		scan image & reduce error SOS )
+ADD_CMD( migrate,	do_clr_migrate,		scan image & migrate bits )
+ADD_CMD( scan,		do_pickscan,		select scanning pattern )
+ADD_CMD( matrix,	do_clr_setxform,	specify color transformation matrix )
+ADD_CMD( initialize,	init_clr_requant,	initialize error images )
+ADD_CMD( sos,		tell_sos,		report SOSs )
+ADD_CMD( tell,		cspread_tell,		info for all internal data images )
+MENU_END(color_requant)
 
 static COMMAND_FUNC( do_dich_set_weights )
 {
 	float l,r;
 
-	l=HOW_MUCH("weighting factor for filtered luma errors");
-	r=HOW_MUCH("weighting factor for filtered chroma errors");
+	l=(float)HOW_MUCH("weighting factor for filtered luma errors");
+	r=(float)HOW_MUCH("weighting factor for filtered chroma errors");
 	set_dich_weights(l,r);
 }
 
-Command dich_req_ctbl[]={
-{ "set_input",	do_set_dich_input,		"specify input grayscale image"	},
-{ "set_filter",	do_set_dich_filter,		"specify error filter image"	},
-{ "set_output",	do_set_dich_output,		"specify output halftone image"	},
-{ "redo_pixel",	do_dich_redo_pixel,		"redo a particular pixel"	},
-{ "redo_migrate",	do_dich_migrate_pixel,	"redo a particular pixel using migration"	},
-{ "descend",	do_dich_descend,		"scan image & reduce error SOS"	},
-{ "anneal",	do_dich_anneal,			"scan image & reduce error SOS"	},
-{ "migrate",	do_dich_migrate,		"scan image & migrate bits"	},
-{ "scan",	do_pickscan,		"select scanning pattern"	},
-{ "matrix",	do_dich_setxform,		"specify color transformation matrix"},
-{ "initialize",	init_dich_requant,	"initialize error images"	},
-{ "sos",	dich_tell_sos,		"report SOS's"			},
-{ "tell",	dspread_tell,		"info for all internal data images"},
-{ "weights",	do_dich_set_weights,	"specify relative weighting for luma and chroma errors"},
-#ifndef MAC
-{ "quit",	popcmd,			"exit submenu"			},
-#endif
-{ NULL_COMMAND								}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(dichrom_requant_menu,s,f,h)
+
+MENU_BEGIN(dichrom_requant)
+ADD_CMD( set_input,	do_set_dich_input,	specify input grayscale image )
+ADD_CMD( set_filter,	do_set_dich_filter,	specify error filter image )
+ADD_CMD( set_output,	do_set_dich_output,	specify output halftone image )
+ADD_CMD( redo_pixel,	do_dich_redo_pixel,	redo a particular pixel )
+ADD_CMD( redo_migrate,	do_dich_migrate_pixel,	redo a particular pixel using migration )
+ADD_CMD( descend,	do_dich_descend,	scan image & reduce error SOS )
+ADD_CMD( anneal,	do_dich_anneal,		scan image & reduce error SOS )
+ADD_CMD( migrate,	do_dich_migrate,	scan image & migrate bits )
+ADD_CMD( scan,		do_pickscan,		select scanning pattern )
+ADD_CMD( matrix,	do_dich_setxform,	specify color transformation matrix )
+ADD_CMD( initialize,	init_dich_requant,	initialize error images )
+ADD_CMD( sos,		dich_tell_sos,		report SOSs )
+ADD_CMD( tell,		dspread_tell,		info for all internal data images )
+ADD_CMD( weights,	do_dich_set_weights,	specify relative weighting for luma and chroma errors )
+MENU_END(dichrom_requant)
 
 static COMMAND_FUNC( do_dichrom )
 {
-	PUSHCMD(dich_req_ctbl,"dichrom_requant");
+	PUSH_MENU(dichrom_requant);
 }
 
 static COMMAND_FUNC( do_color )
 {
-	PUSHCMD(color_req_ctbl,"color_requant");
+	PUSH_MENU(color_requant);
 }
 
-static Command req_ctbl[]={
-{ "color",	do_color,		"color requantization submenu"	},
-{ "achrom",	do_achrom,		"achromatic requantization submenu"	},
-{ "threeD",	do_3d,			"spatiotemporal achromatic requantization submenu"	},
-{ "dichrom",	do_dichrom,		"dichromatic requantization submenu"	},
-{ "cdiff",	ctone_menu,		"color error diffusion submenu"	},
-#ifndef MAC
-{ "quit",	popcmd,			"exit submenu"			},
-#endif
-{ NULL_COMMAND								}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(requantize_menu,s,f,h)
+
+MENU_BEGIN(requantize)
+ADD_CMD( color,		do_color,	color requantization submenu )
+ADD_CMD( achrom,	do_achrom,	achromatic requantization submenu )
+ADD_CMD( threeD,	do_3d,		spatiotemporal achromatic requantization submenu )
+ADD_CMD( dichrom,	do_dichrom,	dichromatic requantization submenu )
+ADD_CMD( cdiff,		do_ctone_menu,	color error diffusion submenu )
+MENU_END(requantize)
 
 COMMAND_FUNC( do_requant )
 {
 	if( spread_debug == 0 )
 		spread_debug=add_debug_module(QSP_ARG  "requantize");
 
-	PUSHCMD(req_ctbl,REQUANT_MENU_NAME);
+	PUSH_MENU(requantize);
 }
 
 

@@ -1,6 +1,4 @@
 #
-# %Z% $RCSfile: builtin.mac,v $ ver: $Revision: 1.17 $ $Date: 2009/01/19 08:52:42 $
-#
 # macros to simplify use of builtin submenus
 #
 
@@ -47,10 +45,11 @@ os
   quit
 .
 
-Define Pause 0
-advise 'type ^D to proceed'
-< /dev/tty
-.
+# needs to be different for unix & iOS
+#Define Pause 0
+#advise 'type ^D to proceed'
+#< /dev/tty
+#.
 
 Set pausing 0
 
@@ -62,6 +61,8 @@ Set chatty 0
 
 Define Tell_If 1 string
 # Problems if the argument has single quotes in it...
+# Also problems if there is a newline...  For direct
+# input, we can escape a newline by preceding with a backslash...
 If $verbose||$chatty "advise '$1'"
 .
 
@@ -69,52 +70,17 @@ Define Print_If 1 varname
 If $verbose||$chatty "Print $1"
 .
 
-Define Tell_Date 0
-os
-  pipes
-    open date_pipe r date
-    read date_pipe date_string
-    close date_pipe
-    quit
-  quit
-advise "$date_string"
+Define Check_Version_Match 0
+If strcmp('$script_version','$git_version')
+  "error_exit 'Version mismatch:  script is $script_version, but code is $git_version'"
 .
 
-Define Count_Bytes 2 varname filename
-variables push_fmt decimal quit
-os
-  pipes
-    open counter_pipe r "ls -l $2 | dm s5"
-    read counter_pipe cb_tmp
-    close counter_pipe
-    quit
-  quit
-Assign $1 $cb_tmp
-variables pop_fmt quit
-.
-
-Define Count_Columns 2 varname filename
-If !file_exists('$2') "warn 'File $2 does not exist' PopFile 2 nop"
-os
-  pipes
-    open counter_pipe r "wc $2 | dm x2/x1"
-    read counter_pipe cl_tmp
-    close counter_pipe
-    quit
-  quit
-Assign $1 $cl_tmp
-.
-
-Define Count_Lines 2 varname filename
-If !file_exists('$2') "warn 'File $2 does not exist' PopFile 2 nop"
-os
-  pipes
-    open counter_pipe r "cat $2 | wc -l"
-    read counter_pipe cl_tmp
-    close counter_pipe
-    quit
-  quit
-Assign $1 $cl_tmp
+Define Require_Version 1 version_string
+advise "Require_Version $1 BEGIN"
+Print git_version
+If strcmp('$1','$git_version')
+  "error_exit 'Script requires version $1, but code is $git_version'"
+#advise "Require_Version $1 DONE"
 .
 
 If $verbose "echo 'finished interpreting file builtin.mac'"

@@ -1,18 +1,16 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_lutmap[] = QUIP_VERSION_STRING;
-
-#include "data_obj.h"
 #include "vec_util.h"
+#include "quip_prot.h"
 
 #define CLIP_INDEX							\
 									\
-	if( si >= lut_dp->dt_cols ){					\
-		sprintf(error_string,					\
+	if( si >= OBJ_COLS(lut_dp) ){					\
+		sprintf(ERROR_STRING,					\
 "Index value %d exceeds size of lookup table %s (%d), clipping.",	\
-			si,lut_dp->dt_name,lut_dp->dt_cols);		\
-		WARN(error_string);					\
-		si = lut_dp->dt_cols - 1;				\
+			si,OBJ_NAME(lut_dp),OBJ_COLS(lut_dp));		\
+		WARN(ERROR_STRING);					\
+		si = OBJ_COLS(lut_dp) - 1;				\
 	}
 
 /* Originally there was a call to chain_breaks here, probably from when the
@@ -27,12 +25,12 @@ char VersionId_vec_util_lutmap[] = QUIP_VERSION_STRING;
 
 #define DO_MAPPING(dst_type,src_type)					\
 		u_long npix;						\
-		dstptr = (dst_type *)dest_dp->dt_data;			\
-		srcptr = (src_type *)src_dp->dt_data;			\
-		lutptr = (dst_type *)lut_dp->dt_data;			\
+		dstptr = (dst_type *)OBJ_DATA_PTR(dest_dp);			\
+		srcptr = (src_type *)OBJ_DATA_PTR(src_dp);			\
+		lutptr = (dst_type *)OBJ_DATA_PTR(lut_dp);			\
 									\
-		npix = src_dp->dt_n_type_elts;				\
-		if( lut_dp->dt_pinc == 1 ){				\
+		npix = OBJ_N_TYPE_ELTS(src_dp);				\
+		if( OBJ_PXL_INC(lut_dp) == 1 ){				\
 			for(i=0;i<npix;i++){				\
 				si = *srcptr++;				\
 				CLIP_INDEX				\
@@ -42,9 +40,9 @@ char VersionId_vec_util_lutmap[] = QUIP_VERSION_STRING;
 			for(i=0;i<npix;i++){				\
 				si = *srcptr++;				\
 				CLIP_INDEX				\
-				si *= lut_dp->dt_pinc;			\
-				for(j=0;j<dest_dp->dt_comps;j++)		\
-					*dstptr++ = lutptr[ si+j*lut_dp->dt_cinc ];	\
+				si *= OBJ_PXL_INC(lut_dp);			\
+				for(j=0;j<OBJ_COMPS(dest_dp);j++)		\
+					*dstptr++ = lutptr[ si+j*OBJ_COMP_INC(lut_dp) ];	\
 			}						\
 		} 
 
@@ -52,85 +50,104 @@ int lutmap( QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *lut_dp 
 {
 	dimension_t i,j;
 
-	if( dest_dp->dt_prec != lut_dp->dt_prec ){
-		sprintf(error_string,
+	// BUG we will need lut mapping on the GPU for gamma correction!!!
+
+	VINSIST_RAM_OBJ(dest_dp,lutmap,-1)
+	VINSIST_RAM_OBJ(src_dp,lutmap,-1)
+	VINSIST_RAM_OBJ(lut_dp,lutmap,-1)
+
+	if( OBJ_PREC(dest_dp) != OBJ_PREC(lut_dp) ){
+		sprintf(ERROR_STRING,
 	"lutmap:  precision mismatch destination %s (%s) and lut %s (%s)",
-			dest_dp->dt_name,PNAME(dest_dp),
-			lut_dp->dt_name,PNAME(lut_dp));
-		WARN(error_string);
+			OBJ_NAME(dest_dp),OBJ_PREC_NAME(dest_dp),
+			OBJ_NAME(lut_dp),OBJ_PREC_NAME(lut_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( dest_dp->dt_comps != lut_dp->dt_comps*src_dp->dt_comps ){
-		sprintf(error_string,
+	if( OBJ_COMPS(dest_dp) != OBJ_COMPS(lut_dp)*OBJ_COMPS(src_dp) ){
+		sprintf(ERROR_STRING,
 		"lutmap:  destination (%s) depth (%d) should be product of",
-			dest_dp->dt_name, dest_dp->dt_comps);
-		WARN(error_string);
-		sprintf(error_string,
+			OBJ_NAME(dest_dp), OBJ_COMPS(dest_dp));
+		WARN(ERROR_STRING);
+		sprintf(ERROR_STRING,
 		"\tsource (%s) depth (%d) and lut (%s) depth (%d)",
-			src_dp->dt_name,  src_dp->dt_comps,
-			lut_dp->dt_name,  lut_dp->dt_comps
+			OBJ_NAME(src_dp),  OBJ_COMPS(src_dp),
+			OBJ_NAME(lut_dp),  OBJ_COMPS(lut_dp)
 			);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( dest_dp->dt_n_type_elts != src_dp->dt_n_type_elts * lut_dp->dt_comps ){
-		sprintf(error_string,"lutmap:  destination %s and source %s must match in size",
-			dest_dp->dt_name,src_dp->dt_name);
-		WARN(error_string);
+	if( OBJ_N_TYPE_ELTS(dest_dp) != OBJ_N_TYPE_ELTS(src_dp) * OBJ_COMPS(lut_dp) ){
+		sprintf(ERROR_STRING,"lutmap:  destination %s and source %s must match in size",
+			OBJ_NAME(dest_dp),OBJ_NAME(src_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( src_dp->dt_prec != PREC_UIN && src_dp->dt_prec != PREC_UBY ){
-		sprintf(error_string,
+	if( OBJ_PREC(src_dp) != PREC_UIN && OBJ_PREC(src_dp) != PREC_UBY ){
+		sprintf(ERROR_STRING,
 "lutmap:  source %s precision (%s) must be unsigned byte or unsigned short",
-			src_dp->dt_name,name_for_prec(src_dp->dt_prec));
-		WARN(error_string);
+			OBJ_NAME(src_dp),OBJ_PREC_NAME(src_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( src_dp->dt_prec == PREC_UBY && lut_dp->dt_cols != 256 ){
-		WARN("lutmap:  lut size must be 256 for byte indexing");
+	if( OBJ_PREC(src_dp) == PREC_UBY && OBJ_COLS(lut_dp) != 256 ){
+		sprintf(ERROR_STRING,
+"lutmap:  lut %s size (%d) must be 256 for byte indexing",OBJ_NAME(lut_dp),OBJ_COLS(lut_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 	/* BUG?  if we use short indices, we may not want to have a full 64k lookup table... */
 	if( !IS_CONTIGUOUS(src_dp) ){
-		sprintf(error_string,"lutmap:  source image %s must be contiguous",
-			src_dp->dt_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"lutmap:  source image %s must be contiguous",
+			OBJ_NAME(src_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 	if( !IS_CONTIGUOUS(dest_dp) ){
-		sprintf(error_string,"lutmap:  destination image %s must be contiguous",
-			dest_dp->dt_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"lutmap:  destination image %s must be contiguous",
+			OBJ_NAME(dest_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 
-	if( dest_dp->dt_prec == PREC_SP ){
+	if( OBJ_PREC(dest_dp) == PREC_SP ){
 		float *dstptr, *lutptr;
 		dimension_t si;
 
-		if( src_dp->dt_prec == PREC_UBY ){
+		if( OBJ_PREC(src_dp) == PREC_UBY ){
 			u_char *srcptr;
 			DO_MAPPING(float,u_char)
-		} else if( src_dp->dt_prec == PREC_UIN ){
+		} else if( OBJ_PREC(src_dp) == PREC_UIN ){
 			u_short *srcptr;
 			DO_MAPPING(float,u_short)
 		}
-	} else if( MACHINE_PREC(dest_dp) == PREC_BY || 
-		MACHINE_PREC(dest_dp) == PREC_UBY ){
+	} else if( OBJ_PREC(dest_dp) == PREC_DP ){
+		double *dstptr, *lutptr;
+		dimension_t si;
+
+		if( OBJ_PREC(src_dp) == PREC_UBY ){
+			u_char *srcptr;
+			DO_MAPPING(double,u_char)
+		} else if( OBJ_PREC(src_dp) == PREC_UIN ){
+			u_short *srcptr;
+			DO_MAPPING(double,u_short)
+		}
+	} else if( OBJ_MACH_PREC(dest_dp) == PREC_BY || 
+		OBJ_MACH_PREC(dest_dp) == PREC_UBY ){
 		u_char *dstptr, *lutptr;
 		dimension_t si;
 
-		if( src_dp->dt_prec == PREC_UBY ){
+		if( OBJ_PREC(src_dp) == PREC_UBY ){
 			u_char *srcptr;
 			DO_MAPPING(u_char,u_char)
-		} else if( src_dp->dt_prec == PREC_UIN ){
+		} else if( OBJ_PREC(src_dp) == PREC_UIN ){
 			u_short *srcptr;
 			DO_MAPPING(u_char,u_short)
 		}
 	} else {
-		sprintf(error_string,
-			"Sorry, unhandled destination precision (%s) for lutmap",name_for_prec(dest_dp->dt_prec));
-		WARN(error_string);
+		sprintf(ERROR_STRING,
+			"Sorry, unhandled destination precision (%s) for lutmap",OBJ_PREC_NAME(dest_dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 	return(0);

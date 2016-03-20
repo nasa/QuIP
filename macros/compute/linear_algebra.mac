@@ -388,11 +388,12 @@ data
 quit
 .
 
+# homogenous coordinates means that we have an extra component
+# which should be normalized to 1...
 
 Define Xform_Homogenous 3 out in transfo_matrix
-
 Xform_List $1 $2 $3
-Set n ncomps($1)
+Assign n ncomps($1)
 Set i 0
 repeat $n-1
 	#VVDiv $1{$i} $1{$n-1} $1{$i}

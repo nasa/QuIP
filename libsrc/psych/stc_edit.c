@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_psych_stair_edit[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_STRING_H
 #include <string.h>		/* memcpy() */
 #endif
@@ -14,9 +12,9 @@ static Staircase s1;
 static Param stair_ptbl[]={
 { "val",     "starting value",			       SHORTP,&s1.stc_val },
 { "inc",     "current increment",		       SHORTP,&s1.stc_inc },
-{ "mininc",  "minimum increment (negative for ?)",     SHORTP,&s1.stc_mininc },
-{ "crctrsp", "response to count as correct",	       SHORTP,&s1.stc_crctrsp },
-{ "incrsp",  "response for staircase to consider up",  SHORTP,&s1.stc_incrsp },
+{ "mininc",  "minimum increment (negative for ?)",     SHORTP,&s1.stc_min_inc },
+{ "crctrsp", "response to count as correct",	       SHORTP,&s1.stc_crct_rsp },
+{ "incrsp",  "response for staircase to consider up",  SHORTP,&s1.stc_inc_rsp },
 { "type",    "type code (1 up-dn, 2 2-to-1, 4 3-to-1", SHORTP,&s1.stc_type },
 { NULL_UPARAM	}
 };
@@ -50,16 +48,19 @@ static int get_stair_type(SINGLE_QSP_ARG_DECL)
 	
 static COMMAND_FUNC( do_add_stair )
 {
-	int t,c;
+	short t;
+	Trial_Class *tcp;
 
 	/* now get the parameters in a user friendly way */
 
-	t=get_stair_type(SINGLE_QSP_ARG);
-	c=(int)HOW_MANY("index of associated condition");
+	t= (short) get_stair_type(SINGLE_QSP_ARG);
+	//c=(short)HOW_MANY("index of associated condition");
+	tcp = PICK_TRIAL_CLASS("");
 
 	if( t < 0 ) return;
+	if( tcp == NULL ) return;
 
-	add_stair(QSP_ARG  t,c);
+	add_stair(QSP_ARG  t,tcp);
 }
 
 static COMMAND_FUNC( do_del_stair )
@@ -86,19 +87,19 @@ static COMMAND_FUNC( do_step_stair )
 	save_response(QSP_ARG resp,stcp);
 }
 
-static Command staircase_ctbl[]={
-{ "add",	do_add_stair,	"add a staircase"			},
-{ "list",	do_list_stairs,	"list currently specified staircases"	},
-{ "edit",	edit_stair,	"edit a particular staircase"		},
-{ "step",	do_step_stair,	"step a staircase"			},
-{ "delete",	do_del_stair,	"delete a staircase"			},
-{ "Delete",	del_all_stairs,	"delete all staircases"			},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
+
+MENU_BEGIN(staircases)
+ADD_CMD( add,		do_add_stair,	add a staircase )
+ADD_CMD( list,		do_list_stairs,	list currently specified staircases )
+ADD_CMD( edit,		edit_stair,	edit a particular staircase )
+ADD_CMD( step,		do_step_stair,	step a staircase )
+ADD_CMD( delete,	do_del_stair,	delete a staircase )
+ADD_CMD( Delete,	del_all_stairs,	delete all staircases )
+MENU_END(staircases)
 
 COMMAND_FUNC( staircase_menu )
 {
-	PUSHCMD(staircase_ctbl,"staircases");
+	PUSH_MENU(staircases);
 }
 

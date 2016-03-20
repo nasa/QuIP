@@ -1,0 +1,117 @@
+
+# udid's are 40 hex digits
+
+Set max_udid_bytes	48	# 7 extra, but a multiple of 8...
+Set max_devices		100	# max beta devices per apple
+				# but simulators have UDID's too...
+Set n_devices		0
+
+Vector udid_tbl $max_devices $max_udid_bytes string
+
+Define Get_Index_For_UDID 1 udid_string
+If $n_devices<=0 "Set udid_idx -1 exit_macro"
+Set udid_idx 0
+repeat $n_devices
+  Get_String this_udid udid_tbl[$udid_idx]
+  If !strcmp('$this_udid','$1') exit_macro
+  Increment udid_idx
+  end
+Set udid_idx -1
+.
+
+Define Add_Device 1 udid
+# Make sure not a duplicate
+Get_Index_For_UDID $1	# return value in $udid_idx
+If $udid_idx>=0
+  "warn 'Add_Device:  UDID $1 is already stored in the device table!?' exit_macro"
+If $n_devices>=$max_devices
+  "warn 'Add_Device:  UDID table is full!?' exit_macro"
+Set_String udid_tbl[$n_devices] $1
+Increment n_devices
+.
+
+
+# NASA OpStat iPod	6.0.1		PC547LL
+
+
+Add_Device 1021b2763fdc8ef688cb9553f9db80215561a6dc	# EasyJet Test iPod
+Add_Device 2959a99c23b32c9aa1bb1c397824977428fa0a34	# EasyJet iPod 1
+Add_Device 13ae3e54a70648834ddc6efea5dd3bd7bc420531	# EasyJet iPod 2
+Add_Device 8c76381fb187bcb16c053ee1d6e2c65fa67f0096	# EasyJet iPod 3
+Add_Device 3d910a8f88f9729a39593443eab5d491c79f21c7	# EasyJet iPod 4
+Add_Device b65e734a419becb479165d78a7d6ef9b5a4148a5	# EasyJet iPod 5
+Add_Device cbe59be6114bc97c49aceedc8441b2d6efa186e1	# EasyJet iPod 6
+Add_Device 2904399c0f497bac7b0bfe718f7357e81f65f33e	# EasyJet iPod 7
+Add_Device 28a7d27b2a0e03b9ad0dd32d72843a4f1b732cf9	# EasyJet iPod 8
+Add_Device 88f487e2abd273474b1169a01ea9db7b3b5a7897	# EasyJet iPod 9
+Add_Device 2226fe242364eda3579d7bb724876095fd830fb4	# EasyJet iPod 10
+Add_Device 5f57205dedf49417470a409fcd5a640c5e94d60e	# EasyJet iPod 11
+Add_Device 4a6ff03f7065de26dfe6a9378f1962dcffb85e05	# EasyJet iPod 12
+Add_Device 140107e3626450a3d4541e11bb41a2f1edec9d74	# EasyJet iPod 13
+Add_Device 6a4f49852f1582862abb8bec3c0c028ca8766048	# EasyJet iPod 14
+Add_Device e29a080d4e17861d8ea71cd98c332229ce393055	# EasyJet iPod 15
+Add_Device f41e8bae273d5cd836b19eb921c8c055688c95b3	# EasyJet iPod 16
+Add_Device 8791ee2b0668947c26e08dc6e5d413ee4646c03b	# EasyJet iPod 17
+Add_Device 5df363a8c92298f988692073bccb21d463f1ed23	# EasyJet iPod 18
+Add_Device 44f80d6016972b4abc8e9b3719a45d9555fca10d	# EasyJet iPod 19
+Add_Device 727374caf0929fcf9aeb659269958334639f48aa	# EasyJet iPod 20
+Add_Device 83e799b197f7e9375d99e56c999f21fb3756b305	# EasyJet iPod 21
+Add_Device 5d88f8ece39c471de74b254e3629517f2f0e6d29	# EasyJet iPod 22
+Add_Device 41ce139e6dc403214d8ffba2816a5ff07a9458fc	# EasyJet iPod 23
+Add_Device 8c203936f35da3257ed274d01ccb0dd68eb642a4	# EasyJet iPod 24
+Add_Device 8994e8526c15919ead65f368b8d74f5c378343fa	# EasyJet iPod 25
+Add_Device 2bdbfd774a23aa715e0cbabbaac95bf1fafaedec	# EasyJet iPod 26
+Add_Device 54e5023a5a0295d39e96f5aac94e274fb01405f5	# EasyJet iPod 27
+Add_Device 23da8c62e5c1e9842632f52d7148a06ab9a58c2c	# EasyJet iPod 28
+Add_Device 2a6323369b20963b46a80576d3a6925cd1ba98c7	# EasyJet iPod 29
+Add_Device 15cff90ac95f77a98a0f5a0e16d5401b20b94ae2	# EasyJet iPod 30
+Add_Device 37aab5c72184422b2c02e0b71d85f07a99d7317e	# EasyJet iPod 31
+Add_Device 162fa153776b760428a08b8879b974ff29e3d439	# EasyJet iPod 32
+Add_Device 117e5d69c585abcb47261a5ad44dfca17c4910d3	# EasyJet iPod 33
+Add_Device d311e0cf66804f023beac4d372acb17f3f7a7ad0	# EasyJet iPod 34
+Add_Device 647015ee9e217e29ac4f8b6cb58c3540ebd37f06	# EasyJet iPod 35
+Add_Device 0dc32b6e8553d1ecc70e9750c81705e4dd1585cd	# EasyJet iPod 36
+Add_Device a066c4821810abf6e5554092289bdbb6cf98253d	# EasyJet iPod 37
+Add_Device 6da34a44a07e013aaa2ae9ffb3b696bea7c59a3e	# EasyJet iPod 38
+Add_Device c064666052db7ee071851a6ed6d27d1db76037d0	# EasyJet iPod 39
+Add_Device c38e6dde585e591b19cb970e8ff6726d130f5fec	# EasyJet iPod 40
+Add_Device 00103ec28ccf7cffec02e14b29d403e0b7cec34b	# EasyJet iPod 41
+Add_Device 9ae3b9d3b778a11cd072e60a3e3b8a279523ff96	# EasyJet iPod 42
+Add_Device b393dac8baccd154a33c3eb5e06cdc87edb0a46c	# EasyJet iPod 43
+Add_Device d1d9a9566f2c1b08650ba9818c702db665e98575	# EasyJet iPod 44
+Add_Device 089df430c4ecfa2bb4e4af61276f0d56a61b205e	# EasyJet iPod 45
+Add_Device 5f52f0f01348783151b7a9412a83ad11018af734	# EasyJet iPod 46
+Add_Device 7e6ead67c2441bee0e121aa2098d9e5767d53d1a	# EasyJet iPod 47
+Add_Device e23ed5806f6267ca6571aa44b7edb467a1b2a11e	# EasyJet iPod 48
+Add_Device dc76db9ac490a881845327a590ffd83b0f478af7	# EasyJet iPod 49
+
+# These appear before ezjet devices on apple site (alphabetical)
+Add_Device a83a1ae70f6a70745fe4f9f7f05777efc385187b	# Cynthia's NASA iPad
+Add_Device 09f5cbe172cf4a9b64dbe86271f409b27db6e489	# DOT device
+
+Add_Device d8c9c556d0496facbca652a2114cfd4eb62062bf	# JBM retina pad, 6.1.3
+Add_Device d4bcea35ae128edb07ccacad2a716a73f6834695	# Jeff Mulligan's iPad
+Add_Device 6746baf705a13455f722ce5897d00b916163de59	# (NASA JBM iPod 5th gen)
+							# Jeffrey's iPod Touch
+Add_Device 4d396cf0b93c5f143bc541f435d8abae3cdf4ff5	# NASA OpStat iPod
+Add_Device e38accd64fb4c15891d4b28518b17178f12ffccd	# NASA Test iPod, 6.0
+
+Add_Device 17ed18f6c21f28d75918d23d7e61fe978e8251e9	# NASA OpStat iPad, 6.0
+							# iPad
+
+Add_Device 800027736a7e5dd1ab0f9e7456d39a3500000000	# iPhone simulator on MBP
+Add_Device 95a55e8fa4795ef2a9e8b604db8c16c600000000	# iPhone simulator on air laptop
+Add_Device b5775a70328a5ae1b95daafc87c1e6b900000000 # iPhone simulator on Mini
+Add_Device d1ba2a062d2355c9ae7bdd64f179bbb700000000 # iPhone simulator on jbm iMac
+Add_Device 2d0dd33561b34af60e37fa4746d8f6e4a055a3ba # Feary iPad
+Add_Device da13944826c95686917be7d3af8cde3300000000 # Lucia simulator
+Add_Device 98bb8547f60d5d6e7f61b0e0809f7ebf31be7cb0 # Lucia iPod
+Add_Device e768c50cb7cfe594b751dce045a5e84ffe6fc1cd # Erin iPad
+Add_Device FFFFFFFF6F48EA904FC74ECC850AA824DE8D0F23 # iphone simulator 7.0
+Add_Device FFFFFFFFB5A1C393DB8D42409EE736ABBDF824BD # Lydia's iPhone
+
+
+
+#Print n_devices
+Subvector known_devices udid_tbl $n_devices 0
+

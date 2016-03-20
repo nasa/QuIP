@@ -6,7 +6,7 @@ Assign iterations_per_millisecond 68.46
 Define MDelay 1 delay_in_milliseconds
 Assign n_spin floor(($1-$spin_overhead_milliseconds)*$iterations_per_millisecond)
 #Print n_spin
-If $n_spin<=0 "PopFile 2 nop"
+If $n_spin<=0 "exit_macro"
 repeat $n_spin
   nop
   end

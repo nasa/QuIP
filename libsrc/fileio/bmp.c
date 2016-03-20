@@ -1,29 +1,19 @@
-#include "quip_config.h"
-
-char VersionId_fio_bmp[] = QUIP_VERSION_STRING;
+char VersionId_fio_bmp[] = "$RCSfile: bmp.c,v $ $Revision: 1.10 $ $Date: 2011/10/25 17:00:16 $";
 
 /* BUG BUG BUG  check for memory leaks! */
 
 #include <stdio.h>
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 #include "fio_prot.h"
-#include "bmp.h"
-#include "filetype.h"
+#include "quip_prot.h"
 #include "getbuf.h"
 #include "data_obj.h"
 #include "debug.h"
-#include "savestr.h"
-#include "raw.h"
-#include "uio.h"
-#include "vl.h"
+#include "img_file/raw.h"
+#include "hips/hips2.h"
+#include "bmp.h"
 
 typedef enum {
 	BMP_BI_RGB = 0,
@@ -31,38 +21,38 @@ typedef enum {
 	BMP_BI_RLE4
 } CompressionType;
 
-//#define HDR_P(ifp)	((Image_File_Hdr *)ifp->if_hd)->ifh_u.bmp_hd_p
-#define HDR_P(ifp)	((BMP_Header *)&(((Image_File_Hdr *)ifp->if_hd)->ifh_u.bmp_hd))
+#define HDR_P(ifp)	((BMP_Header *)ifp->if_hdr_p)
 
 int bmp_to_dp(Data_Obj *dp, BMP_Header *hd_p)
 {
-	dp->dt_prec = PREC_UBY;
-	dp->dt_comps = 1;
-	dp->dt_cols = hd_p->bmp_cols;
-	dp->dt_rows = hd_p->bmp_rows;
-	dp->dt_frames = 1;
-	dp->dt_seqs = 1;
+	SET_OBJ_PREC_PTR(dp,prec_for_code(PREC_UBY));
+	SET_OBJ_COMPS(dp,1);
+	SET_OBJ_COLS(dp, hd_p->bmp_cols);
+	SET_OBJ_ROWS(dp, hd_p->bmp_rows);
+	SET_OBJ_FRAMES(dp, 1);
+	SET_OBJ_SEQS(dp, 1);
 
-	dp->dt_cinc = 1;
-	dp->dt_pinc = 1;
-	dp->dt_rowinc = dp->dt_pinc * (incr_t)dp->dt_cols ;
-	dp->dt_finc = dp->dt_rowinc * (incr_t)dp->dt_rows;
-	dp->dt_sinc = dp->dt_finc * (incr_t)dp->dt_frames;
+	SET_OBJ_COMP_INC(dp, 1);
+	SET_OBJ_PXL_INC(dp, 1);
+	SET_OBJ_ROW_INC(dp, OBJ_PXL_INC(dp) * (incr_t)OBJ_COLS(dp) );
+	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp));
+	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp));
 
-	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_CHILDREN(dp, NO_LIST);
 
-	dp->dt_ap = ram_area;		/* the default */
+	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	/* dp->dt_data = hd_p->image; */
-	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
-			* dp->dt_frames * dp->dt_seqs;
+	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
+			* OBJ_FRAMES(dp) * OBJ_SEQS(dp));
 
-	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
+	set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE);
 
 	return(0);
 }
 
-void bmp_info(QSP_ARG_DECL  Image_File *ifp)
+//void bmp_info(QSP_ARG_DECL  Image_File *ifp)
+FIO_INFO_FUNC( bmp )
 {
 	sprintf(msg_str,"\tcompression %d (0x%x)",HDR_P(ifp)->bmp_compression,HDR_P(ifp)->bmp_compression);
 	sprintf(msg_str,"\tbit_count %d (0x%x)",HDR_P(ifp)->bmp_bit_count,HDR_P(ifp)->bmp_bit_count);
@@ -70,9 +60,9 @@ void bmp_info(QSP_ARG_DECL  Image_File *ifp)
 	/* BUG do the rest of these */
 }
 
-static long read32BitValue(Image_File *ifp)
+static int32_t read32BitValue(Image_File *ifp)
 {
-	long l;
+	int32_t l;
 
 	int c1 = fgetc(ifp->if_fp);
 	int c2 = fgetc(ifp->if_fp);
@@ -94,7 +84,7 @@ static short read16BitValue(Image_File *ifp)
 	int c1 = fgetc(ifp->if_fp);
 	int c2 = fgetc(ifp->if_fp);
 
-	s = c1 + (c2 << 8);
+	s = (short)(c1 + (c2 << 8));
 
 
 	HDR_P(ifp)->bmp_bytes_read += 2;
@@ -112,12 +102,13 @@ static unsigned char read8BitValue(Image_File *ifp)
 }
 
 
-FIO_CLOSE_FUNC( bmp_close )
+//void bmp_close(Image_File *ifp)
+FIO_CLOSE_FUNC( bmp )
 {
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(QSP_ARG  ifp);
 }
 
-FIO_OPEN_FUNC( bmp_open )
+FIO_OPEN_FUNC( bmp )
 {
 	Image_File *ifp;
 
@@ -125,42 +116,42 @@ FIO_OPEN_FUNC( bmp_open )
 if( debug ) advise("opening image file");
 #endif /* DEBUG */
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_BMP);
-
-	/* image_file_open creates dummy if_dp only if readable */
-
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_BMP));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
-	ifp->if_hd = getbuf( sizeof(BMP_Header) );
+	/* img_file_creat creates dummy if_dp only if readable */
+
+	ifp->if_hdr_p = (BMP_Header *)getbuf( sizeof(BMP_Header) );
+	// here we sometimes clear the header...
 
 #ifdef DEBUG
 if( debug ) advise("allocating hips header");
 #endif /* DEBUG */
 
 	if( rw == FILE_READ ){
-		long l;
-		short s1,s2;
+		//long l;
+		//short s1,s2;
 		/*unsigned int sizeOfInfoHeader;*/
 
 		HDR_P(ifp)->bmp_bytes_read = 0;
 
 		if (read8BitValue(ifp) != 66 || read8BitValue(ifp) != 77){
-			sprintf(error_string,"bmp_open %s:  bad magic number",ifp->if_name);
-			NWARN(error_string);
+			sprintf(ERROR_STRING,"bmp_open %s:  bad magic number",ifp->if_name);
+			WARN(ERROR_STRING);
 			return(NO_IMAGE_FILE);
 		}
 
-		l=read32BitValue(ifp);
-		s1=read16BitValue(ifp);
-		s2=read16BitValue(ifp);
+		/*l=*/  read32BitValue(ifp);
+		/*s1=*/ read16BitValue(ifp);
+		/*s2=*/ read16BitValue(ifp);
 
 		HDR_P(ifp)->bmp_byte_offset = read32BitValue(ifp);
 		HDR_P(ifp)->bmp_info_size = (unsigned int)read32BitValue(ifp);
 
 		if (HDR_P(ifp)->bmp_info_size < 40){
-			sprintf(error_string,"bmp_open %s:  bad info header size (%d)",
+			sprintf(ERROR_STRING,"bmp_open %s:  bad info header size (%d)",
 				ifp->if_name,HDR_P(ifp)->bmp_info_size);
-			NWARN(error_string);
+			WARN(ERROR_STRING);
 			return(NO_IMAGE_FILE);
 		}
 
@@ -169,18 +160,18 @@ if( debug ) advise("allocating hips header");
 		HDR_P(ifp)->bmp_rows = read32BitValue(ifp);
 
 		if (read16BitValue(ifp) != 1){
-			sprintf(error_string,"bmp_open %s: expected word after height to be 1!?",
+			sprintf(ERROR_STRING,"bmp_open %s: expected word after height to be 1!?",
 				ifp->if_name);
-			NWARN(error_string);
+			WARN(ERROR_STRING);
 			return(NO_IMAGE_FILE);
 		}
 
 		HDR_P(ifp)->bmp_bit_count = read16BitValue(ifp);
 
 		if (HDR_P(ifp)->bmp_bit_count != 1 && HDR_P(ifp)->bmp_bit_count != 4 && HDR_P(ifp)->bmp_bit_count != 8 && HDR_P(ifp)->bmp_bit_count != 24){
-			sprintf(error_string,"bmp_open %s: bad bit count (%d)!?",
+			sprintf(ERROR_STRING,"bmp_open %s: bad bit count (%d)!?",
 				ifp->if_name,HDR_P(ifp)->bmp_bit_count);
-			NWARN(error_string);
+			WARN(ERROR_STRING);
 			return(NO_IMAGE_FILE);
 		}
 
@@ -189,9 +180,9 @@ if( debug ) advise("allocating hips header");
 		if (HDR_P(ifp)->bmp_compression != BMP_BI_RGB && HDR_P(ifp)->bmp_compression != BMP_BI_RLE8 && 
 	    		HDR_P(ifp)->bmp_compression != BMP_BI_RLE4){
 
-			sprintf(error_string,"bmp_open %s: bad compression code (%d)!?",
+			sprintf(ERROR_STRING,"bmp_open %s: bad compression code (%d)!?",
 				ifp->if_name,HDR_P(ifp)->bmp_compression);
-			NWARN(error_string);
+			WARN(ERROR_STRING);
 			return(NO_IMAGE_FILE);
 		}
 
@@ -214,8 +205,8 @@ if( debug ) advise("allocating hips header");
 			int numColors, i, j;
 
 			/* read the palette */
-sprintf(error_string,"allocating palette, bit_count = %d",HDR_P(ifp)->bmp_bit_count);
-advise(error_string);
+//sprintf(ERROR_STRING,"allocating palette, bit_count = %d",HDR_P(ifp)->bmp_bit_count);
+//advise(ERROR_STRING);
 			HDR_P(ifp)->bmp_palette_p = (u_char *)getbuf( 3 * 256 * sizeof(u_char) );
 
 			numColors = 1 << HDR_P(ifp)->bmp_bit_count;
@@ -229,9 +220,9 @@ advise(error_string);
 			}
 		}
 
-		bmp_to_dp(ifp->if_dp,ifp->if_hd);
+		bmp_to_dp(ifp->if_dp,HDR_P(ifp));
 	} else {
-		NERROR1("CAUTIOUS:  Sorry, don't know how to write BMP files");
+		ERROR1("Sorry, don't know how to write BMP files");
 	}
 	return(ifp);
 } /* end bmp_open */
@@ -248,22 +239,21 @@ int bmp_conv(Data_Obj *dp,void *hd_pp)
 	return(-1);
 }
 
-FIO_RD_FUNC( bmp_rd_24bit_image )
+static void bmp_rd_24bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
 {
 	dimension_t x, y;
 
-	/*for (y = 0; y < dp->dt_rows; y++) { */
-	for (y = dp->dt_rows-1; y >= 0 ; y--) {
+	for(y=0;y<OBJ_ROWS(dp);y++){
 		u_char *p;
 
-		p = (u_char *)dp->dt_data;
-		p += y * dp->dt_rowinc;
-		for (x = 0; x < dp->dt_cols; x++) {
+		p = (u_char *)OBJ_DATA_PTR(dp);
+		p += (OBJ_ROWS(dp)-(1+y)) * OBJ_ROW_INC(dp);
+		for (x = 0; x < OBJ_COLS(dp); x++) {
 			/* BGR order, or display is wacky?? */
-			*(p + 2 * dp->dt_cinc) = read8BitValue(ifp);
-			*(p + dp->dt_cinc) = read8BitValue(ifp);
+			*(p + 2 * OBJ_COMP_INC(dp)) = read8BitValue(ifp);
+			*(p + OBJ_COMP_INC(dp)) = read8BitValue(ifp);
 			*p = read8BitValue(ifp);
-			p += dp->dt_pinc;
+			p += OBJ_PXL_INC(dp);
 		}
 
 		/* Pad to 32-bit boundery. */
@@ -272,7 +262,29 @@ FIO_RD_FUNC( bmp_rd_24bit_image )
 	}
 }
 
-void bmp_rd_bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
+static void bmp_rd_8bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
+{
+	dimension_t x, y;	// an unsigned type...
+
+	for(y=0;y<OBJ_ROWS(dp);y++){
+		u_char *p;
+
+		p = (u_char *)OBJ_DATA_PTR(dp);
+		p += (OBJ_ROWS(dp)-(1+y)) * OBJ_ROW_INC(dp);
+		for (x = 0; x < OBJ_COLS(dp); x++) {
+			*p = read8BitValue(ifp);
+			p += OBJ_PXL_INC(dp);
+		}
+
+		/* Pad to 32-bit boundery. */
+		while(HDR_P(ifp)->bmp_bytes_read % 4 != 0)
+			read8BitValue(ifp);
+	}
+}
+
+#ifdef NOT_USED
+
+static void bmp_rd_bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
 {
 	dimension_t x, y;
 	unsigned char color;
@@ -288,22 +300,22 @@ void bmp_rd_bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_of
 		return;
 	}
 
-	for (y = 0; y < dp->dt_rows; y++) {
+	for (y = 0; y < OBJ_ROWS(dp); y++) {
 		u_char *p;
 
-		p = (u_char *)dp->dt_data;
-		p += y * dp->dt_rowinc;
-		for (x = 0; x < dp->dt_cols; x++) {
+		p = (u_char *)OBJ_DATA_PTR(dp);
+		p += y * OBJ_ROW_INC(dp);
+		for (x = 0; x < OBJ_COLS(dp); x++) {
 			if (x % 8 == 0)
 				byteRead = read8BitValue(ifp);
 
 			color = (byteRead >> (7 -(x % 8))) & 1;
 
 			*p = HDR_P(ifp)->bmp_palette_p[color];
-			*(p + dp->dt_cinc) = HDR_P(ifp)->bmp_palette_p[256+color];
-			p += dp->dt_cinc;
+			*(p + OBJ_COMP_INC(dp)) = HDR_P(ifp)->bmp_palette_p[256+color];
+			p += OBJ_COMP_INC(dp);
 			*p = HDR_P(ifp)->bmp_palette_p[512+color]; 
-			p += dp->dt_cinc;
+			p += OBJ_COMP_INC(dp);
 		}
 
 		/* Pad to 32-bit boundery. */
@@ -312,10 +324,15 @@ void bmp_rd_bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_of
 	}
 }
 
-FIO_RD_FUNC( bmp_rd )
+#endif // NOT_USED
+
+FIO_RD_FUNC( bmp )
 {
 	if( HDR_P(ifp)->bmp_bit_count == 24 )
-		bmp_rd_24bit_image(QSP_ARG  dp,ifp,x_offset,y_offset,t_offset);
-	else NWARN("Sorry, only 24 bit image reads...");
+		bmp_rd_24bit_image(dp,ifp,x_offset,y_offset,t_offset);
+	if( HDR_P(ifp)->bmp_bit_count == 8 )
+		bmp_rd_8bit_image(dp,ifp,x_offset,y_offset,t_offset);
+	else WARN("Sorry, only 24 or 8 bit image reads...");
 }
+
 

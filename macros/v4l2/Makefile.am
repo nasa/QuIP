@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/v4l2
+macrosdir	=	$(datadir)/coq/macros/v4l2
 
 macros_DATA	=	v4l2.mac	\
 			v4l2_gui.mac	\

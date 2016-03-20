@@ -8,6 +8,7 @@
 
 extern void xmvi_init(SINGLE_QSP_ARG_DECL);
 
+#ifdef FOOBAR
 extern int x_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t);
 extern void x_add_frame(QSP_ARG_DECL  Movie *mvip,Data_Obj *dp);
 extern void x_end_assemble(QSP_ARG_DECL  Movie *mvip);
@@ -25,6 +26,7 @@ extern void x_movie_init(SINGLE_QSP_ARG_DECL);
 extern int  x_setup_play(Movie *);
 extern void x_wait_play(void);
 extern void x_monitor(SINGLE_QSP_ARG_DECL);
+#endif /* FOOBAR */
 
 
 

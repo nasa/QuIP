@@ -54,7 +54,7 @@ Delete_Image tx1
 Define F_Subsample 2 target source
 #advise "F_Subsample $1 $2"
 If "ncols('$1')==ncols('$2') && nrows('$1')==nrows('$2')"
-  'VMov $1 $2 PopFile 2 echo error'
+  'VMov $1 $2 exit_macro'
 #Info $1
 #Info $2
 Xform_For big_xf $2
@@ -69,9 +69,12 @@ Assign bigh nrows(big_xf)
 Assign smallh nrows(sm_xf)
 # BUG don't use widths of transform...
 Assign scale_factor (ncols('$2')/ncols('$1'))*($bigh/$smallh)
-Subimage __src big_xf $smallw $smallh/2 0 0
-Subimage __dst sm_xf $smallw $smallh/2 0 0
+# We appear to copy half the lines,
+# but make two copies - why?
+Subimage __src big_xf $smallw max(1,$smallh/2) 0 0
+Subimage __dst sm_xf $smallw max(1,$smallh/2) 0 0
 VMov __dst __src
+# second half goes to the bottom...
 Relocate __src 0 $bigh-$smallh/2 0
 Relocate __dst 0 $smallh/2 0
 VMov __dst __src
@@ -88,7 +91,7 @@ VSMul $1 $1 1/$scale_factor
 
 Define Setup_Interlace_Correction 1 src_img
 Tell_If "Setup_Interlace_Correction $1"
-If obj_exists(_ilace_correction) "advise 'Setup_Interlace_Correction:  _ilace_correction already exists' PopFile 2"
+If obj_exists(_ilace_correction) "advise 'Setup_Interlace_Correction:  _ilace_correction already exists' exit_macro"
 Xlate_Init $1
 Xform_For _ilace_correction $1
 Make_Phase_Multiplier _ilace_correction 0 -0.5

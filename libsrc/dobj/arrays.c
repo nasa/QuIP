@@ -1,52 +1,40 @@
 #include "quip_config.h"
 
-char VersionId_dataf_arrays[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "savestr.h"
 
-/* BUG We hate to have fixed-size arrays...  Also, this mechanism will break
- * for multi-threaded code...
+/* Sbscripted objects are implemented from a fixed-size pool of temporary
+ * objects.  The thinking is that these will be used in an expression
+ * of finited depth, and once the operation has completed they are no
+ * longer required to persist.
+ *
+ * BUG We hate to have fixed-size arrays...
+ *
+ * Will this mechanism break for multi-threaded code?
+ * Only the list heads are global, they should not change (except
+ * when initialized - should we lock then?), and the list manipulation
+ * routines should be thread-safe...
  */
 
-#define N_TMP_DP	128
+#define N_TMP_DP	24
 
-//static int freedp=0;
-static index_t base_index=0;	/* 0 for C style indexing, 1 for fortran, matlab */
+/* 0 for C style indexing, 1 for fortran, matlab */
+static index_t base_index=0;
 
 static List *free_tmpobj_lp=NO_LIST;
 static List *used_tmpobj_lp=NO_LIST;
 
-/* local prototypes */
-static Data_Obj * temp_replica(Data_Obj *);
-
-const char *dimension_name[N_DIMENSIONS]={
-	"component",
-	"column",
-	"row",
-	"frame",
-	"sequence"
-};
-
-/* 
- * we take this out on systems without yacc, since we often use expressions
- * for the index
- */
-
-#define PARSE_INDEX
-
-void init_tmp_dps()
+void init_tmp_dps(SINGLE_QSP_ARG_DECL)
 {
 	/* this doesn't work, because it gets called too often??? */
 
-	add_cmd_callback( unlock_all_tmp_objs );
+	add_cmd_callback( QSP_ARG  unlock_all_tmp_objs );
 }
 
-void list_temp_dps()
+void list_temp_dps(SINGLE_QSP_ARG_DECL)
 {
 	Node *np;
 	int n, nl, nc, nr;
@@ -55,21 +43,21 @@ void list_temp_dps()
 		advise("no temp objects");
 		return;
 	}
-	np=used_tmpobj_lp->l_head;
+	np=QLIST_HEAD(used_tmpobj_lp);
 	n=nl=nc=nr=0;
 	while(np!=NO_NODE){
 		Data_Obj *dp;
-		dp=(Data_Obj *)np->n_data;
+		dp=(Data_Obj *)NODE_DATA(np);
 		if( DOBJ_IS_LOCKED(dp) ) nl++;
-		if( dp->dt_children != NO_LIST ) nc++;
-		if( dp->dt_refcount > 0 ) nr++;
+		if( OBJ_CHILDREN(dp) != NO_LIST ) nc++;
+		if( OBJ_REFCOUNT(dp) > 0 ) nr++;
 		n++;
-		np=np->n_next;
+		np=NODE_NEXT(np);
 	}
-	sprintf(msg_str,
+	sprintf(MSG_STR,
 	"%d temporary objects, %d locked, %d w/ children, %d referenced",
 		n,nl,nc,nr);
-	prt_msg(msg_str);
+	prt_msg(MSG_STR);
 }
 
 /*
@@ -110,69 +98,93 @@ void list_temp_dps()
  * to an image component (e.g.  rgb{0}).  In this case, we want to keep the thing
  * locked for many commands.  To handle this, we introduce *another* flag, VOLATILE,
  * and we only unlock temp objects when this is set.
+ *
  */
 
-static Data_Obj * temp_replica(Data_Obj *dp)
+static Data_Obj * temp_replica(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *newdp;
 
-	newdp = find_free_temp_dp(dp);
+	newdp = find_free_temp_dp(QSP_ARG  dp);
 
-	memcpy( newdp, dp, sizeof(*dp) );
+//	memcpy( newdp, dp, sizeof(*dp) );
+
+	DOBJ_COPY(newdp,dp);
+	SET_OBJ_DECLFILE(newdp,NULL);	// parent is ok
+
+	// What about the shape??
+	SET_OBJ_SHAPE(newdp,ALLOC_SHAPE);
+
+	COPY_SHAPE(OBJ_SHAPE(newdp),OBJ_SHAPE(dp));	
 
 	return( newdp );
 }
 
+/* release_tmpobj_resources
+ *
+ * returns -1 on failure, 0 for success
+ */
+
 static int release_tmpobj_resources(Data_Obj *dp, Data_Obj *parent_dp)
 {
 	/* a used data_obj should have its name set */
-#ifdef CAUTIOUS
-	if( dp->dt_name == NULL )
-		NERROR1("CAUTIOUS:  release_tmpobj_resources:  obj has null name!?");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( OBJ_NAME(dp) == NULL )
+//		NERROR1("CAUTIOUS:  release_tmpobj_resources:  obj has null name!?");
+//#endif /* CAUTIOUS */
+	assert( OBJ_NAME(dp) != NULL );
 
-	if(	dp->dt_children != NO_LIST	||
-		dp == parent_dp			||
-		DOBJ_IS_LOCKED(dp)		||
-		dp->dt_refcount > 0 ){
-
+	if( OBJ_CHILDREN(dp) != NO_LIST ){
+		return(-1);	/* failure */
+	}
+	if( dp == parent_dp ){
+		return(-1);	/* failure */
+	}
+	if( DOBJ_IS_LOCKED(dp) ){
+		return(-1);	/* failure */
+	}
+	if( OBJ_REFCOUNT(dp) > 0 ){
 		return(-1);	/* failure */
 	}
 
-	/* If we are called from delvec, then disown child has already been called!?
+	/* If we are called from delvec, then disown
+	 * child has already been called!?
 	 *
 	 * So we don't do it here any more...
 	 */
-	//disown_child(dp);
 
-	rls_str((char *)dp->dt_name);
-	dp->dt_name = NULL;	/* should not be needed, but helps us catch other bugs... */
+	/* release the allocated shape stuff to prevent a memory leak */
+
+	rls_shape(OBJ_SHAPE(dp));
+
+	rls_str((char *)OBJ_NAME(dp));	// release_tmpobj_resources
+	SET_OBJ_NAME(dp, NULL);	/* may not be needed,
+				 * but helps us catch other bugs...
+				 */
 
 	return(0);
-}
+} // release_tmpobj_resources
 
 static void add_tmpobjs(List *lp, int n)
 {
-	Data_Obj *data_obj_tbl;
+	Data_Obj *dp;
 	int i;
-
-	data_obj_tbl=(Data_Obj *)getbuf( n * sizeof(*data_obj_tbl) );
 
 	for(i=0;i<n;i++){
 		Node *np;
-		data_obj_tbl[i].dt_name=NULL;
-		np = mk_node(&data_obj_tbl[i]);
-		addTail(free_tmpobj_lp,np);
+		NEW_DATA_OBJ(dp);
+		// allocates but does not zero???
+		np = mk_node(dp);
+		addTail(lp,np);
 	}
 }
 
-Data_Obj * find_free_temp_dp(Data_Obj *dp)
+Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *new_dp;
 	Node *np,*first_np;
 
 	if( free_tmpobj_lp == NO_LIST ){
-
 		free_tmpobj_lp = new_list();
 		add_tmpobjs(free_tmpobj_lp,N_TMP_DP);
 	}
@@ -184,22 +196,22 @@ Data_Obj * find_free_temp_dp(Data_Obj *dp)
 			used_tmpobj_lp = new_list();
 		addHead(used_tmpobj_lp,np);
 
-		return((Data_Obj *)np->n_data);
+		return((Data_Obj *)NODE_DATA(np));
 	}
 
 	/* They are all in use, we have to release a free one... */
 	np = remTail(used_tmpobj_lp);
 	first_np = np;
-	new_dp = (Data_Obj *)np->n_data;
+	new_dp = (Data_Obj *)NODE_DATA(np);
 	while( release_tmpobj_resources(new_dp,dp) < 0 ){
 		addHead(used_tmpobj_lp,np);
 		np=remTail(used_tmpobj_lp);
 		if( np == first_np )
 			NERROR1("out of temporary objects!?");
-		new_dp = (Data_Obj *)np->n_data;
+		new_dp = (Data_Obj *)NODE_DATA(np);
 	}
 	/* The deallocate routine has freed the old name etc */
-	disown_child(new_dp);
+	disown_child(QSP_ARG  new_dp);
 
 	/* put this one at the head of the used list... */
 	addHead(used_tmpobj_lp,np);
@@ -211,22 +223,22 @@ Data_Obj * find_free_temp_dp(Data_Obj *dp)
  * These names are not hashed, and the objects are initially locked.
  */
 
-Data_Obj *temp_child( const char *name, Data_Obj *dp )
+Data_Obj *temp_child( QSP_ARG_DECL  const char *name, Data_Obj *dp )
 {
 	Data_Obj *newdp;
 	
-	newdp=temp_replica(dp);
+	newdp=temp_replica(QSP_ARG  dp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /*
 if( debug & debug_data ){
-sprintf(error_string,"saving child name \"%s\"",name);
-advise(error_string);
+sprintf(ERROR_STRING,"saving child name \"%s\"",name);
+advise(ERROR_STRING);
 }
 */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	newdp->dt_name = savestr(name);
+	SET_OBJ_NAME(newdp, savestr(name));
 
 	/* not added to item table!!! */
 
@@ -243,24 +255,34 @@ advise(error_string);
 	 * in a viewer, but we don't care about its children!
 	 */
 
-	newdp->dt_refcount = 0;
+	SET_OBJ_REFCOUNT(newdp,0);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-printf("locking temp object %s\n",newdp->dt_name);
+printf("locking temp object %s\n",OBJ_NAME(newdp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	newdp->dt_flags |= DT_TEMP | DT_LOCKED | DT_VOLATILE ;
+	// temp object begin life as locked and volatile...
+	// "volatile" means that we can unlock at end of command cycle.
+
+	SET_OBJ_FLAG_BITS(newdp, DT_TEMP | DT_LOCKED | DT_VOLATILE ) ;
 	/* may be contiguous etc, but we have to check... */
-	newdp->dt_flags &= ~(DT_CONTIG | DT_EVENLY | DT_CHECKED) ;
+	CLEAR_OBJ_FLAG_BITS(newdp, DT_CONTIG | DT_EVENLY | DT_CHECKED) ;
 
 	return(newdp);
 }
 
-/* when should we call this?  After all references to new objects
+/* 
+ * unlock_all_tmp_objs - the basic idea is that temp objects
+ * only need to persist for the duration of one command line..
+ * After the command is finished we can call this, which unlocks
+ * but doesn't delete the objects.
+ * 
+ * when should we call this?  After all references to new objects
  * have been made and finished...
  *
+ * This comment seems to be out-of-date:
  * There is a problem, though, if we release many of these, then
  * we can encounter a situation in which we assign a[0], then it
  * gets released, then we use a[0] on the RHS, and get a warning
@@ -269,23 +291,54 @@ printf("locking temp object %s\n",newdp->dt_name);
  * This could get rather slow!?  On the other hand, we can't really keep
  * around data_obj structs for every pixel...  Maybe we can
  * introduce a "lock" function?
+ *
+ * Should temporary objects be associated with a particular qsp?  I think so!
+ * This function also does not appear to be thread-safe, because the list
+ * should be locked from other threads while the flag bits are being diddled.
+ * Actually, no harm is done if another process skips over an object that
+ * is being unlocked, but when an object is locked (where?), then THAT has
+ * to be thread-safe!!  BUG
  */
 
-void unlock_all_tmp_objs(void)
+void unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL)
 {
 	Node *np;
 	Data_Obj *dp;
-
-	if( used_tmpobj_lp == NO_LIST ) return;
-
-	np = used_tmpobj_lp->l_head;
-	while(np!=NO_NODE){
-		dp=(Data_Obj *)np->n_data;
-		if( dp->dt_flags & DT_VOLATILE ){
-			dp->dt_flags &= ~DT_LOCKED;
-		}
-		np = np->n_next;
+	if( used_tmpobj_lp == NO_LIST ){
+		return;
 	}
+
+	np = QLIST_HEAD(used_tmpobj_lp);
+	while(np!=NO_NODE){
+		dp=(Data_Obj *)NODE_DATA(np);
+		if( OBJ_FLAGS(dp) & DT_VOLATILE ){
+			CLEAR_OBJ_FLAG_BITS(dp, DT_LOCKED);
+		}
+		np = NODE_NEXT(np);
+	}
+}
+
+// unlock_children was introduced to fix a memory leak caused by x display
+// creating an image of different depth for display, copying data, displaying
+// then deleting.  The subscripted components were still locked at delete time!?
+//
+
+void unlock_children(Data_Obj *dp)
+{
+	if( OBJ_CHILDREN(dp) != NO_LIST ){
+		Node *np;
+
+		np = QLIST_HEAD( OBJ_CHILDREN(dp) );
+		while( np != NO_NODE ){
+			Data_Obj *child_dp;
+
+			child_dp = (Data_Obj *) NODE_DATA(np);
+			unlock_children(child_dp);
+
+			np = NODE_NEXT(np);
+		}
+	}
+	SET_OBJ_FLAGS( dp, OBJ_FLAGS(dp) & ~DT_LOCKED );
 }
 
 /*
@@ -348,23 +401,24 @@ void make_array_name( QSP_ARG_DECL  char *target_str, Data_Obj *dp, index_t inde
 	if( subscr_type == SQUARE ){
 		left_delim  = '[';
 		right_delim = ']';
-		nstars = dp->dt_maxdim - which_dim;
+		nstars = OBJ_MAXDIM(dp) - which_dim;
 	} else if( subscr_type == CURLY ){
 		left_delim  = '{';
 		right_delim = '}';
-		nstars = which_dim - dp->dt_mindim;
+		nstars = which_dim - OBJ_MINDIM(dp);
 	}
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 	else {
-		WARN("CAUTIOUS:  unrecognized subscript type");
-		left_delim  = '{';
-		right_delim = '}';
-		nstars = which_dim - dp->dt_mindim;
+//		WARN("CAUTIOUS:  unrecognized subscript type");
+//		left_delim  = '{';
+//		right_delim = '}';
+//		nstars = which_dim - OBJ_MINDIM(dp);
+		assert( ! "Bad subscript type!?" );
 	}
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 
 	/* now make the name */
-	strcpy(target_str,dp->dt_name);
+	strcpy(target_str,OBJ_NAME(dp));
 	for(i=0;i<nstars;i++){
 		sprintf(str2,"%c*%c",left_delim,right_delim);
 		strcat(target_str,str2);
@@ -379,13 +433,16 @@ static Node *existing_tmpobj_node(const char *name)
 	Data_Obj *dp;
 
 	if( used_tmpobj_lp == NO_LIST ) return(NO_NODE);
-	np=used_tmpobj_lp->l_head;
+	np=QLIST_HEAD(used_tmpobj_lp);
 	while(np!=NO_NODE){
-		dp = (Data_Obj *)np->n_data;
-if( dp->dt_name==NULL ) NERROR1("existing_tmpobj_node:  null object!?");
-		if( !strcmp(dp->dt_name,name) )
+		dp = (Data_Obj *)NODE_DATA(np);
+		if( OBJ_NAME(dp)==NULL ) {
+			NERROR1("existing_tmpobj_node:  null object!?");
+			return NULL; // NOTREACHED - silence static analyzer
+		}
+		if( !strcmp(OBJ_NAME(dp),name) )
 			return(np);
-		np=np->n_next;
+		np=NODE_NEXT(np);
 	}
 	return(NO_NODE);
 }
@@ -396,7 +453,6 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	Node *np;
 	char str[LLEN];	/* BUG how long can this be really? */
 	int i;
-	dimension_t *dim_arr;
 
 	if( dp==NO_OBJ ) return(dp);
 
@@ -409,45 +465,38 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	 * As long as the subscript value itself is legal...
 	 */
 
-	/*
-	 * Should the subscripts apply to machine elements or type
-	 * elements?  In order to use curly braces to get the real
-	 * and imaginary parts of a complex number, we use the
-	 * machine elements...  But for bitmaps we want to use the type!
-	 */
-
-	/*
-	if( dp->dt_mach_dim[which_dim] == 1 ){
-		sprintf(error_string,
-			"Can't subscript object %s, has %s dimension = 1",
-			dp->dt_name,dimension_name[which_dim]);
-		WARN(error_string);
-		return(NO_OBJ);
-	}
-	*/
-
-	/* indices are unsigned ! */
 	if( index < base_index ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 		"%s subscript too small (%d, min %u) for object %s",
 			dimension_name[which_dim],index,
-			base_index,dp->dt_name);
-		WARN(error_string);
+			base_index,OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 
-	if( BITMAP_SHAPE(&dp->dt_shape) ){
-		dim_arr = dp->dt_type_dim;
-	} else {
-		dim_arr = dp->dt_mach_dim;
-	}
-	if( index-base_index >= dim_arr[which_dim] ){
-		sprintf(error_string,
-		"%s subscript too large (%u, max %u) for object %s",
-			dimension_name[which_dim],index,
-			dim_arr[which_dim]+base_index-1,dp->dt_name);
-		WARN(error_string);
-		return(NO_OBJ);
+	/* We test against mach_dim so that we can subscript complex and color
+	 * objects...  but for bitmaps we need to use type_dim!
+	 */
+
+	if( ! IS_BITMAP(dp) ){
+		/* indices are unsigned ! */
+		if( index-base_index >= OBJ_MACH_DIM(dp,which_dim) ){
+			sprintf(ERROR_STRING,
+			"%s subscript too large (%u, max %u) for object %s",
+				dimension_name[which_dim],index,
+				OBJ_MACH_DIM(dp,which_dim)+base_index-1,OBJ_NAME(dp));
+			WARN(ERROR_STRING);
+			return(NO_OBJ);
+		}
+	} else {	/* bitmap */
+		if( index-base_index >= OBJ_TYPE_DIM(dp,which_dim) ){
+			sprintf(ERROR_STRING,
+			"%s subscript too large (%u, max %u) for object %s",
+				dimension_name[which_dim],index,
+				OBJ_MACH_DIM(dp,which_dim)+base_index-1,OBJ_NAME(dp));
+			WARN(ERROR_STRING);
+			return(NO_OBJ);
+		}
 	}
 
 	make_array_name(QSP_ARG  str,dp,index,which_dim,subscr_type);
@@ -463,92 +512,76 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 		 * The point is to keep the list priority sorted, where
 		 * priority is based on the recency of the access...
 		 */
-		if( np != used_tmpobj_lp->l_head ){
+		if( np != QLIST_HEAD(used_tmpobj_lp) ){
 			np=remNode(used_tmpobj_lp,np);
 			/* do we need to check the return value?? */
 			addHead(used_tmpobj_lp,np);
 		}
-		return((Data_Obj *)np->n_data);
+		return((Data_Obj *)NODE_DATA(np));
 	}
 
 	/* the object doesn't exist, so create it */
 
-	newdp=temp_child(str,dp);
-	newdp->dt_mach_dim[which_dim] = 1;
-	newdp->dt_mach_inc[which_dim] = 0;
-	newdp->dt_type_dim[which_dim] = 1;
-	newdp->dt_type_inc[which_dim] = 0;
+	newdp=temp_child(QSP_ARG  str,dp);
+	SET_OBJ_MACH_DIM(newdp,which_dim, 1 );
+	SET_OBJ_MACH_INC(newdp,which_dim, 0 );
+	SET_OBJ_TYPE_DIM(newdp,which_dim, 1 );
+	SET_OBJ_TYPE_INC(newdp,which_dim, 0 );
 
-	index -= base_index;	// Base is 0 for C-style, 1 for fortan, matlab
+	index -= base_index;
 
-	if( IS_BITMAP(newdp) ){
-		if( which_dim == 1 ){	/* column subscript */
-			ERROR1("SORRY:  don't know how to subscript bitmap column!?");
-		} else if( which_dim > 1 ){	/* subscript bitmap word */
-			index *= dp->dt_mach_inc[which_dim];
-			index *= BYTES_PER_BITMAP_WORD;
-			newdp->dt_offset = index;	/* offset is in bytes! */
-			if( newdp->dt_data != NULL )
-				newdp->dt_data = ((char *)dp->dt_data) + index;
-		}
-#ifdef CAUTIOUS
-		else if( which_dim == 0 )
-			ERROR1("CAUTIOUS:  can't subscript bitmap components!?");
-#endif /* CAUTIOUS */
-
-
-#ifdef FOOBAR
-		/* BUG - this logic is for all the bits sloshed together;
-		 * But after cuda, we have an integral number of words
-		 * per row...
-		 */
-		newdp->dt_data = ((char *)dp->dt_data)
-			+ BYTES_PER_BITMAP_WORD*(index/BITS_PER_BITMAP_WORD);
-		newdp->dt_bit0 += index % BITS_PER_BITMAP_WORD;
-		if( newdp->dt_bit0 >= BITS_PER_BITMAP_WORD ){
-			newdp->dt_bit0 -= BITS_PER_BITMAP_WORD;
-			newdp->dt_data = ((char *)newdp->dt_data) + BYTES_PER_BITMAP_WORD;
-		}
-#endif /* FOOBAR */
-
-
+	if( ! IS_BITMAP(dp) || which_dim > 1 ){
 	} else {
-		index *= dp->dt_mach_inc[which_dim] * ELEMENT_INC_SIZE(dp);
-		newdp->dt_offset = index;		/* offset is in bytes! */
-		if( newdp->dt_data != NULL )
-			newdp->dt_data = ((char *)dp->dt_data) + newdp->dt_offset;
+		// We're indexing bits, do nothing
+
 	}
+	if( IS_BITMAP(newdp) && which_dim <= 1 ){
+		SET_OBJ_BIT0(newdp, OBJ_BIT0(newdp) + index % BITS_PER_BITMAP_WORD );
+		if( OBJ_BIT0(newdp) >= BITS_PER_BITMAP_WORD ){
+			SET_OBJ_BIT0(newdp, OBJ_BIT0(newdp) - BITS_PER_BITMAP_WORD );
+			index += BITS_PER_BITMAP_WORD;
+		}
+		SET_OBJ_OFFSET(newdp, sizeof(BITMAP_DATA_TYPE)*(index/BITS_PER_BITMAP_WORD) );
+	} else {
+		index *= OBJ_MACH_INC(dp,which_dim);
+		SET_OBJ_OFFSET(newdp, index);		/* offset is in bytes! */
+	}
+	// We used to update the data ptr here, but for OpenCL we need to do
+	// something different if the object is complex, so we moved it to after
+	// the code below hwere we update the flags...
+	/*
+	if( OBJ_DATA_PTR(newdp) != NULL )
+		( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(dp)) ) (QSP_ARG  newdp,
+								OBJ_OFFSET(newdp) );
+								*/
 
 	/* dt_n_mach_elts is the total number of component elements */
-	newdp->dt_n_mach_elts /= dp->dt_mach_dim[which_dim];
+	SET_OBJ_N_MACH_ELTS(newdp, OBJ_N_MACH_ELTS(newdp)/OBJ_MACH_DIM(dp,which_dim) );
+	/* dt_n_type_elts is the total number of elements, where a complex number is counted as 1 */
+	SET_OBJ_N_TYPE_ELTS(newdp, OBJ_N_TYPE_ELTS(newdp)/OBJ_TYPE_DIM(dp,which_dim) );
 
-	/* dt_n_type_elts is the total number of elements,
-	 * where a complex number is counted as 1
-	 */
-	newdp->dt_n_type_elts /= dp->dt_type_dim[which_dim];
-
-	if( set_shape_flags(&newdp->dt_shape,newdp,AUTO_SHAPE) < 0 )
+	if( SET_OBJ_SHAPE_FLAGS(newdp) < 0 )
 		WARN("holy mole batman!?");
 
 	check_contiguity(newdp);
 
-	if( IS_COMPLEX(newdp->dt_parent) && newdp->dt_mach_dim[0]!=2 ){
-		newdp->dt_prec &= ~COMPLEX_PREC_BITS;
-		newdp->dt_flags &= ~DT_COMPLEX;
-		newdp->dt_flags &= ~DT_CONTIG;
+	if( IS_COMPLEX( OBJ_PARENT(newdp) ) && OBJ_MACH_DIM(newdp,0)!=2 ){
+		//CLEAR_OBJ_PREC_BITS(newdp, COMPLEX_PREC_BITS);
+		SET_OBJ_PREC_PTR( newdp, OBJ_MACH_PREC_PTR(OBJ_PARENT(newdp)) );
+		CLEAR_OBJ_FLAG_BITS(newdp, DT_COMPLEX);
+		CLEAR_OBJ_FLAG_BITS(newdp, DT_CONTIG);
 		for(i=0;i<N_DIMENSIONS;i++)
-			newdp->dt_type_inc[i] = newdp->dt_mach_inc[i];
+			SET_OBJ_TYPE_INC(newdp,i, OBJ_MACH_INC(newdp,i) );
 	}
-	if( IS_QUAT(newdp->dt_parent) && newdp->dt_mach_dim[0] !=4 ){
-		newdp->dt_prec &= ~QUAT_PREC_BITS;
-		newdp->dt_flags &= ~DT_QUAT;
-		newdp->dt_flags &= ~DT_CONTIG;
+	if( IS_QUAT( OBJ_PARENT(newdp) ) && OBJ_MACH_DIM(newdp,0) !=4 ){
+		//CLEAR_OBJ_PREC_BITS(newdp,QUAT_PREC_BITS);
+		SET_OBJ_PREC_PTR( newdp, OBJ_MACH_PREC_PTR(OBJ_PARENT(newdp)) );
+		CLEAR_OBJ_FLAG_BITS(newdp, DT_QUAT|DT_CONTIG );
 		for(i=0;i<N_DIMENSIONS;i++)
-			newdp->dt_type_inc[i] = newdp->dt_mach_inc[i];
+			SET_OBJ_TYPE_INC(newdp,i, OBJ_MACH_INC(newdp,i) );
 	}
 
 	/* now change mindim/maxdim! */
-	/* WHERE IS THIS DONE NOW??? */
 	/*
 	if( subscr_type == SQUARE )
 		newdp->dt_maxdim -- ;
@@ -556,22 +589,28 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 		newdp->dt_mindim ++ ;
 		*/
 
+	if( OBJ_DATA_PTR(newdp) != NULL )
+		( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(dp)) ) (QSP_ARG  newdp,
+								OBJ_OFFSET(newdp) );
+
 	return(newdp);
-} /* end gen_subscript */
+}
 
 void release_tmp_obj(Data_Obj *dp)
 {
 	Node *np;
 
 	np = remData(used_tmpobj_lp,dp);
-#ifdef CAUTIOUS
-	if( np == NO_NODE ){
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  delete_tmp_obj:  %s not found",dp->dt_name);
-		NERROR1(DEFAULT_ERROR_STRING);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( np == NO_NODE ){
+//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  delete_tmp_obj:  %s not found",OBJ_NAME(dp));
+//		NERROR1(DEFAULT_ERROR_STRING);
+//		return; // NOTREACHED - silence analyzer
+//	}
+//#endif /* CAUTIOUS */
+	assert( np != NO_NODE );
 
-	release_tmpobj_resources((Data_Obj *)np->n_data,NO_OBJ);
+	release_tmpobj_resources(dp,NO_OBJ);
 	addHead(free_tmpobj_lp,np);
 }
 
@@ -584,7 +623,7 @@ void release_tmp_obj(Data_Obj *dp)
 
 void reindex( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t index )
 {
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
 	char str[LLEN];
 
@@ -592,16 +631,16 @@ if( debug & debug_data ){
 	/* But this is usually called from dp_vectorize(), then it is... */
 	/* the name isn't always right here, but it is useful for debugging... */
 
-	make_array_name(QSP_ARG  str,dp->dt_parent,index,which_dim,SQUARE);
-	rls_str((char *)dp->dt_name);
-	dp->dt_name=savestr(str);
+	make_array_name(QSP_ARG  str, OBJ_PARENT(dp) ,index,which_dim,SQUARE);
+	rls_str((char *)OBJ_NAME(dp));	// reindex
+	SET_OBJ_NAME(dp,savestr(str));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	index -= base_index;
-	index *= dp->dt_parent->dt_mach_inc[which_dim] * ELEMENT_SIZE(dp);
-	dp->dt_offset = index;
+	index *= OBJ_MACH_INC( OBJ_PARENT(dp) ,which_dim) ;
+	SET_OBJ_OFFSET(dp, index);
 	/* why a check for non-nul ptr above? */
-	dp->dt_data = ((char *)dp->dt_parent->dt_data) + index;
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(OBJ_PARENT(dp))) ) (QSP_ARG  dp, index );
 }
 
 /* reduce the dimensionality of dp */
@@ -613,23 +652,16 @@ Data_Obj *reduce_from_end( QSP_ARG_DECL  Data_Obj *dp, index_t index, int subscr
 
 	if( dp==NO_OBJ ) return(dp);
 
-	if( subscr_type == SQUARE )     dim=dp->dt_maxdim;
-#ifdef CAUTIOUS
-	else if( subscr_type == CURLY ) dim=dp->dt_mindim;
-	else {
-		dim=0;		/* eliminate warning */
-		NERROR1("bad subscript type, reduce_from_end()");
-	}
-#else
-	else dim=dp->dt_mindim;
-#endif /* CAUTIOUS */
+	assert( subscr_type == SQUARE || subscr_type == CURLY );
+
+	if( subscr_type == SQUARE )     dim=OBJ_MAXDIM(dp);
+	else		/* CURLY */	dim=OBJ_MINDIM(dp);
 
 	newdp =  gen_subscript(QSP_ARG  dp,dim,index,subscr_type);
 
 	return(newdp);
 }
 
-#ifdef PARSE_INDEX
 /*
  * sequence -> frame
  * frame -> row
@@ -661,18 +693,18 @@ int is_in_string(int c,const char *s)
 	return(0);
 }
 
+// My guess is that the purpose of this is to support 1-based indexing for matlab...
 
 void set_array_base_index(QSP_ARG_DECL  int index)
 {
 	if( index < 0 || index > 1 ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"set_base_index:  requested base index (%d) is out of range (0-1)",
 			index);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
 	base_index = index;
 }
 
-#endif /* PARSE_INDEX */

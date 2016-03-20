@@ -7,8 +7,7 @@
 char VersionId_inc_visca[] = QUIP_VERSION_STRING;
 #endif /* INC_VERSION */
 
-#include "items.h"
-#include "query.h"
+#include "quip_prot.h"
 
 #define MAX_VISCA_REQS 10 /* size of the buffer of requests */
 
@@ -18,9 +17,9 @@ char VersionId_inc_visca[] = QUIP_VERSION_STRING;
 #define MAX_VISCA_ADDR                  7
 
 typedef enum {
-	EVI_D30, 			/* 0 */
-	EVI_D100, 			/* 1 */
-	EVI_D70, 			/* 2 */
+	EVI_D30,			/* 0 */
+	EVI_D100,			/* 1 */
+	EVI_D70,			/* 2 */
 	N_CAM_TYPES			/* must be last */
 } Camera_Type;
 
@@ -74,9 +73,9 @@ typedef enum {
 	PT_POSN,
 	PT_LMT_SET,
 	PT_LMT_CLR,
-	
-	
-/* the rest are only for EVI-30 */	
+
+
+/* the rest are only for EVI-30 */
 	POWER_ARG,
 	ZOOM_DATA,
 	EXP_ARG,
@@ -91,7 +90,7 @@ typedef enum {
 	REF_ARG,
 	MM_ARG,
 	NO_ARGS
-	
+
 } Command_Args;
 
 /* This is the structure we use to build the tables of commands */
@@ -117,11 +116,13 @@ typedef struct visca_queued_cmd {
  */
 
 typedef enum {
+	NULL_INQ,	// we use 0 to terminate the table
 	POSN_INQ,
 	POWER_INQ,
 	DIG_ZOOM_INQ,
 	FOCUS_MODE_INQ,
 	IR_MODE_INQ,
+	FLIP_MODE_INQ,
 	AFMODE_INQ,
 	WBMODE_INQ,
 	EXPMODE_INQ,
@@ -143,8 +144,8 @@ typedef enum {
 	INFO_INQ,
 	IR_RECV_INQ,
 
-/* the rest are only for EVI-30 */	
-	
+/* the rest are only for EVI-30 */
+
 	LOCK_INQ,
 	ID_INQ,
 	ATMD_MODE_INQ,
@@ -159,7 +160,7 @@ typedef enum {
 	MD_DISP_TIME_INQ,
 	MD_REF_INQ,
 	MD_REF_TIME_INQ,
-	UNDEF_INQ			/* We should get rid of this one */
+	//UNDEF_INQ			/* We should get rid of this one */
 } Inq_Type;
 
 /* This structure is used to build the tables of inquiry commands */
@@ -202,50 +203,61 @@ typedef struct visca_cmd_set {
 #define NO_CMD_SET	((Visca_Cmd_Set *)NULL)
 
 ITEM_INTERFACE_PROTOTYPES(Visca_Command,visca_cmd)
-extern Item_Type *visca_cmd_itp;
-
 ITEM_INTERFACE_PROTOTYPES(Visca_Cmd_Set,cmd_set)
 ITEM_INTERFACE_PROTOTYPES(Visca_Inquiry,visca_inq)
+#define PICK_VISCA_CMD(p)	pick_visca_cmd(QSP_ARG  p)
+#define PICK_CMD_SET(p)		pick_cmd_set(QSP_ARG  p)
+#define PICK_VISCA_INQ(p)	pick_visca_inq(QSP_ARG  p)
+
+extern Item_Context *create_visca_cmd_context(QSP_ARG_DECL  const char *name);
+extern void push_visca_cmd_context(QSP_ARG_DECL  Item_Context *);
+#define PUSH_VISCA_CMD_CONTEXT(icp)	push_visca_cmd_context(QSP_ARG  icp)
+
+extern Item_Context *pop_visca_cmd_context(SINGLE_QSP_ARG_DECL);
+#define POP_VISCA_CMD_CONTEXT		pop_visca_cmd_context(SINGLE_QSP_ARG)
 
 typedef struct visca_params {
-	unsigned int 	zoom_speed_min;
-	unsigned int 	zoom_speed_max;
-	
-	unsigned int 	zoom_opt_pos_min;
-	unsigned int 	zoom_opt_pos_max;
+	uint32_t	zoom_speed_min;
+	uint32_t	zoom_speed_max;
 
-	unsigned int 	focus_pos_min;
-	unsigned int 	focus_pos_max;
+	uint32_t	zoom_opt_pos_min;
+	uint32_t	zoom_opt_pos_max;
 
-	unsigned int 	shutr_min;
-	unsigned int 	shutr_max;
+	uint32_t	focus_pos_min;
+	uint32_t	focus_pos_max;
 
-	unsigned int	iris_pos_min;
-	unsigned int	iris_pos_max;
-		
-	unsigned int	gain_pos_min;
-	unsigned int	gain_pos_max;	
-		
-	unsigned int 	mem_min;
-	unsigned int 	mem_max;
+	uint32_t	shutr_min;
+	uint32_t	shutr_max;
 
-	unsigned int	pan_speed_min;
-	unsigned int	pan_speed_max;
+	uint32_t	iris_pos_min;
+	uint32_t	iris_pos_max;
 
-	unsigned int 	tilt_speed_min;
-	unsigned int 	tilt_speed_max;
+	uint32_t	gain_pos_min;
+	uint32_t	gain_pos_max;
 
-	int 		pan_pos_min;
-	int 		pan_pos_max;
+	uint32_t	mem_min;
+	uint32_t	mem_max;
 
-	int 		tilt_pos_min;
-	int 		tilt_pos_max;
-	
-	int		pan_lmt_min;
-	int		pan_lmt_max;	
+	uint32_t	pan_speed_min;
+	uint32_t	pan_speed_max;
 
-	int		tilt_lmt_min;
-	int		tilt_lmt_max;
+	uint32_t	tilt_speed_min;
+	uint32_t	tilt_speed_max;
+
+	int32_t		pan_pos_min;
+	int32_t		pan_pos_max;
+
+	int32_t		tilt_pos_min;
+	int32_t		tilt_pos_max;
+
+	int32_t		pan_lmt_min;
+	int32_t		pan_lmt_max;
+
+	int32_t		tilt_lmt_min;
+	int32_t		tilt_lmt_max;
+
+	int32_t		tilt_pos_min_flipped;
+	int32_t		tilt_pos_max_flipped;
 
 } Visca_Params;
 
@@ -278,6 +290,8 @@ typedef struct visca_cam {
 
 #endif /* HAVE_PTHREADS */
 
+	int		vcam_flipped;	// evi-d70 only
+
 } Visca_Cam;
 
 #define NO_CAMERA	((Visca_Cam *)NULL)
@@ -293,6 +307,8 @@ typedef struct visca_cam {
 /* some prototypes */
 ITEM_INTERFACE_PROTOTYPES(Visca_Cam,vcam)
 ITEM_INTERFACE_PROTOTYPES(Visca_Port,vport)
+#define PICK_VCAM(p)	pick_vcam(QSP_ARG  p)
+#define PICK_VPORT(p)	pick_vport(QSP_ARG  p)
 
 
 #endif /* undev _VISCA_H */

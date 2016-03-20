@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_mgeo[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 #include <stdio.h>
@@ -51,8 +49,7 @@ char VersionId_meteor_mgeo[] = QUIP_VERSION_STRING;
 #include "ioctl_meteor.h"
 
 #include "mmenu.h"
-#include "debug.h"
-#include "query.h"
+#include "quip_prot.h"
 
 #include "mmvi.h"
 
@@ -114,7 +111,7 @@ void meteor_set_size(QSP_ARG_DECL  int r,int c,int nf)
 }
 
 
-void meteor_set_num_frames(QSP_ARG_DECL  int n)
+static void meteor_set_num_frames(QSP_ARG_DECL  int n)
 {
 	/*
 	if( meteor_field_mode == METEOR_FIELD_MODE )
@@ -168,10 +165,10 @@ static COMMAND_FUNC( do_meteor_set_num_frames )
 
 	n=HOW_MANY("number of frames");
 	if( n<1 || n>max_frames ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"Number of frames must be positive and less than or equal to %ld",
 			(long)max_frames);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 	meteor_set_num_frames(QSP_ARG  n);
@@ -200,8 +197,8 @@ int get_ofmt_index(QSP_ARG_DECL  int fmt)
 	int ofmt_index=(-1);
 
 /*
-sprintf(error_string,"get_ofmt_index:  fmt = %d",fmt);
-advise(error_string);
+sprintf(ERROR_STRING,"get_ofmt_index:  fmt = %d",fmt);
+advise(ERROR_STRING);
 */
 	switch(fmt&METEOR_GEO_OUTPUT_MASK){
 		case METEOR_GEO_RGB24:  ofmt_index=0; meteor_bytes_per_pixel=4; break;
@@ -210,9 +207,9 @@ advise(error_string);
 		case METEOR_GEO_YUV_PACKED:  ofmt_index=3; meteor_bytes_per_pixel=2; break;
 		case METEOR_GEO_YUV_422:  ofmt_index=4; meteor_bytes_per_pixel=2; break;
 		default:
-			sprintf(error_string,"get_ofmt_index:  bad format 0x%x",
+			sprintf(ERROR_STRING,"get_ofmt_index:  bad format 0x%x",
 				fmt&METEOR_GEO_OUTPUT_MASK);
-			WARN(error_string);
+			WARN(ERROR_STRING);
 			break;
 	}
 	return(ofmt_index);
@@ -285,7 +282,7 @@ static COMMAND_FUNC( do_meteor_get_geometry )
 	show_meteor_geometry(QSP_ARG  &_geo);
 }
 
-void meteor_set_field_mode(QSP_ARG_DECL  int flag)
+static void meteor_set_field_mode(QSP_ARG_DECL  int flag)
 {
 	if( flag && meteor_field_mode == METEOR_FIELD_MODE ){
 		WARN("meteor_set_field_mode(1):  already in field mode!?");
@@ -319,7 +316,7 @@ void meteor_set_field_mode(QSP_ARG_DECL  int flag)
 	meteor_set_geometry(QSP_ARG  &my_geo);
 }
 
-void meteor_set_oformat(QSP_ARG_DECL  int fmt)
+static void meteor_set_oformat(QSP_ARG_DECL  int fmt)
 {
 	/* set global variable meteor_bytes_per_pixel */
 
@@ -342,9 +339,12 @@ static COMMAND_FUNC( do_meteor_set_oformat )
 		case 2:  fmt=METEOR_GEO_YUV_PLANAR; break;
 		case 3:  fmt=METEOR_GEO_YUV_PACKED; break;
 		case 4:  fmt=METEOR_GEO_YUV_422; break;
-#ifdef CAUTIOUS
-		default:  WARN("wacky output format!?"); return;
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			WARN("wacky output format!?");
+			assert( ! "wacky output format" );
+			return;
+//#endif /* CAUTIOUS */
 	}
 
 	curr_ofmt = fmt;
@@ -423,22 +423,22 @@ static COMMAND_FUNC( do_odd_only )
 	meteor_set_oformat(QSP_ARG  curr_ofmt);
 }
 
-static Command geo_ctbl[]={
-{ "size",	do_meteor_set_size,	"specify # rows & columns"	},
-{ "depth",	do_set_grab_depth,	"specify grab bit depth"	},
-{ "field_mode",	do_meteor_set_field_mode,"set/clear field mode"		},
-{ "odd_only",	do_odd_only,		"capture only odd fields"	},
-{ "even_only",	do_even_only,		"capture only even fields"	},
-{ "get_geom",	do_meteor_get_geometry,	"display meteor geometry"	},
-{ "set_oformat",do_meteor_set_oformat,	"set output format"		},
-{ "nframes",	do_meteor_set_num_frames,"set number of buffered frames"},
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(geometry_menu,s,f,h)
+
+MENU_BEGIN(geometry)
+ADD_CMD( size,		do_meteor_set_size,	specify # rows & columns )
+ADD_CMD( depth,		do_set_grab_depth,	specify grab bit depth )
+ADD_CMD( field_mode,	do_meteor_set_field_mode,	set/clear field mode )
+ADD_CMD( odd_only,	do_odd_only,		capture only odd fields )
+ADD_CMD( even_only,	do_even_only,		capture only even fields )
+ADD_CMD( get_geom,	do_meteor_get_geometry,	display meteor geometry )
+ADD_CMD( set_oformat,	do_meteor_set_oformat,	set output format )
+ADD_CMD( nframes,	do_meteor_set_num_frames,	set number of buffered frames )
+MENU_END(geometry)
 
 COMMAND_FUNC( do_geometry )
 {
-	PUSHCMD(geo_ctbl,"geometry");
+	PUSH_MENU(geometry);
 }
 
 

@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_parport_pp_menu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_PARPORT
 
 /* test program for parallel port using /dev/parport0
@@ -38,10 +36,8 @@ char VersionId_parport_pp_menu[] = QUIP_VERSION_STRING;
 #include <linux/ppdev.h>
 #endif
 
-#include "query.h"
-#include "debug.h"
+#include "quip_prot.h"
 #include "data_obj.h"		/* pick_obj */
-#include "submenus.h"
 
 static int pport_fd=(-1);
 
@@ -116,16 +112,16 @@ static COMMAND_FUNC( do_rd_byte )
 	assign_var(QSP_ARG  s,val_string);
 }
 
-static Command pp_ctbl[]={
-{ "open",	do_open_pport,	"open parallel port device"		},
-{ "read",	do_rd_byte,	"read a byte from parport status lines"	},
-{ "quit",	popcmd,		"exit program"				},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(parport_menu,s,f,h)
 
-COMMAND_FUNC( parport_menu )
+MENU_BEGIN(parport)
+ADD_CMD( open,	do_open_pport,	open parallel port device )
+ADD_CMD( read,	do_rd_byte,	read a byte from parport status lines )
+MENU_END(parport)
+
+COMMAND_FUNC( do_parport_menu )
 {
-	PUSHCMD(pp_ctbl,"parport");
+	PUSH_MENU(parport);
 }
 
 #endif /* HAVE_PARPORT */

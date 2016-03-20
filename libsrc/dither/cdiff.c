@@ -1,30 +1,26 @@
 #include "quip_config.h"
 
-char VersionId_dither_cdiff[] = QUIP_VERSION_STRING;
-
 /* computation of quantization errors due to scan conversion */
 
 #include <stdio.h>
-#include "qlevel.h"
+#include "quip_prot.h"
 #include "ctone.h"
+#include "qlevel.h"
 #include "data_obj.h"
-#include "debug.h"
 #include "vec_util.h"
 
 #define MAXCOLS	512
 
-float desired[3][MAXCOLS];
+//static float desired[3][MAXCOLS];
 static float ierror1[3][MAXCOLS];
 static float ierror2[3][MAXCOLS];
 static float ierror3[3][MAXCOLS];
-unsigned char image[3][MAXCOLS];
-float qerror[3][MAXCOLS];	/* the actual pointwise error */
+static unsigned char image[3][MAXCOLS];
+//static float qerror[3][MAXCOLS];	/* the actual pointwise error */
 
-int _ncols;
-int _nrows;
 
-float raw[3], rbraw[3], lerr[3], rgerr[3], byerr[3];
-int zz;
+static float raw[3], rbraw[3];
+//static int zz;
 
 /* pseudo-impulse responses */
 
@@ -34,16 +30,16 @@ float s1_pir[2][2]={
 };
 
 float s2_pir[3][3]={
-	{	0.0,	0.0,	0.25	},
-	{	0.0,	0.0,	0.2	},
-	{	0.25,	0.2,	0.1	}
+	{	0.0f,	0.0f,	0.25f	},
+	{	0.0f,	0.0f,	0.2f	},
+	{	0.25f,	0.2f,	0.1f	}
 };
 
 float s3_pir[4][4]={
-	{	0.0,	0.0,	0.0,	0.2	},
-	{	0.0,	0.0,	0.0,	0.1	},
-	{	0.0,	0.0,	0.0,	0.1	},
-	{	0.2,	0.15,	0.1,	0.1	}
+	{	0.0f,	0.0f,	0.0f,	0.2f	},
+	{	0.0f,	0.0f,	0.0f,	0.1f	},
+	{	0.0f,	0.0f,	0.0f,	0.1f	},
+	{	0.2f,	0.15f,	0.1f,	0.1f	}
 };
 
 static void get_raw_err(QSP_ARG_DECL  int col)		/* get raw rgb error */
@@ -189,9 +185,9 @@ static void sprd_e3(float * cvec,int col)
 
 static int not_float(Data_Obj *dp)
 {
-	if( dp->dt_prec != PREC_SP ){
+	if( OBJ_PREC(dp) != PREC_SP ){
 		sprintf(DEFAULT_ERROR_STRING,"object %s (%s) must have float precision",
-			dp->dt_name,name_for_prec(dp->dt_prec));
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(1);
 	}
@@ -200,11 +196,11 @@ static int not_float(Data_Obj *dp)
 
 void ctoneit(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 {
-	dimension_t row_index, col_index, comp_index;
+	posn_t row_index, col_index, comp_index;
 	float cvec[3];
 	float *src_ptr;
 
-sprintf(ERROR_STRING,"BEGIN ctoneit, dst = %s",dst_dp->dt_name);
+sprintf(ERROR_STRING,"BEGIN ctoneit, dst = %s",OBJ_NAME(dst_dp));
 advise(ERROR_STRING);
 
 	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ){
@@ -218,36 +214,46 @@ advise(ERROR_STRING);
 		NWARN("ctoneit:  need to specify number of quantization levels first");
 		return;
 	}
-		
-	_ncols = src_dp->dt_cols;
-	_nrows = src_dp->dt_rows;
 
-	for(col_index=0;col_index<src_dp->dt_cols;col_index++){
+	// BUG should dynamicaly allocate dp1...
+	if( OBJ_COLS(src_dp) != _ncols ){
+		for(comp_index=0;comp_index<3;comp_index++){
+			if( dp1.dp_desired[comp_index] != NULL )
+				givbuf(dp1.dp_desired[comp_index]);
+			dp1.dp_desired[comp_index] =
+				getbuf( OBJ_COLS(src_dp) * sizeof(float) );
+		}
+	}
+
+	_ncols = OBJ_COLS(src_dp);
+	_nrows = OBJ_ROWS(src_dp);
+
+	for(col_index=0;col_index<OBJ_COLS(src_dp);col_index++){
 		for(comp_index=0;comp_index<3;comp_index++){
 			ierror1[comp_index][col_index]=0.0;
 			ierror2[comp_index][col_index]=0.0;
 			ierror3[comp_index][col_index]=0.0;
 		}
 	}
-	for(row_index=0;row_index<src_dp->dt_rows;row_index++){		/* k is row index */
-		src_ptr = (float *)src_dp->dt_data;
-		src_ptr += row_index * src_dp->dt_rowinc;
+	for(row_index=0;row_index<OBJ_ROWS(src_dp);row_index++){		/* k is row index */
+		src_ptr = (float *)OBJ_DATA_PTR(src_dp);
+		src_ptr += row_index * OBJ_ROW_INC(src_dp);
 		/* copy over a line of desired data */
 		for(comp_index=0;comp_index<3;comp_index++){
-			src_ptr += comp_index * src_dp->dt_cinc;
+			src_ptr += comp_index * OBJ_COMP_INC(src_dp);
 			/* process this row */
-			for(col_index=0;col_index< src_dp->dt_cols;col_index++){
+			for(col_index=0;col_index< OBJ_COLS(src_dp);col_index++){
 				desired[comp_index][col_index] = *src_ptr;
 				desired[comp_index][col_index] += ierror1[comp_index][col_index];
 				ierror1[comp_index][col_index] = ierror2[comp_index][col_index];
 				ierror2[comp_index][col_index] = ierror3[comp_index][col_index];
 				ierror3[comp_index][col_index] = 0.0;
-				src_ptr += src_dp->dt_pinc;
+				src_ptr += OBJ_PXL_INC(src_dp);
 			}
 		}
 
 		if( row_index & 1 ) {	/* odd line */
-			for(col_index=(src_dp->dt_cols-1);col_index>=0;col_index--){
+			for(col_index=(OBJ_COLS(src_dp)-1);col_index>=0;col_index--){
 
 				getbest(QSP_ARG  col_index);
 				get_raw_err(QSP_ARG  col_index);
@@ -262,10 +268,10 @@ advise(ERROR_STRING);
 				sprd_o3(cvec,col_index);
 
 				for(comp_index=0;comp_index<3;comp_index++)
-					image[comp_index][col_index]=thebest[comp_index];
+					image[comp_index][col_index]=(u_char) thebest[comp_index];
 			}
 		} else {	/* even line */
-			for(col_index=0;col_index<src_dp->dt_cols;col_index++){
+			for(col_index=0;col_index<OBJ_COLS(src_dp);col_index++){
 				getbest(QSP_ARG  col_index);
 				get_raw_err(QSP_ARG  col_index);
 
@@ -279,24 +285,24 @@ advise(ERROR_STRING);
 				sprd_e3(cvec,col_index);
 
 				for(comp_index=0;comp_index<3;comp_index++)
-					image[comp_index][col_index]=thebest[comp_index];
+					image[comp_index][col_index]= (u_char)thebest[comp_index];
 			}
 		}
 		for(comp_index=0;comp_index<3;comp_index++){
 			float *dst_ptr;
 
-			dst_ptr = (float *)dst_dp->dt_data;
-			dst_ptr += row_index * dst_dp->dt_rowinc + comp_index * dst_dp->dt_cinc;
-			for(col_index=0;col_index<dst_dp->dt_cols;col_index++){
-#ifdef DEBUG
+			dst_ptr = (float *)OBJ_DATA_PTR(dst_dp);
+			dst_ptr += row_index * OBJ_ROW_INC(dst_dp) + comp_index * OBJ_COMP_INC(dst_dp);
+			for(col_index=0;col_index<OBJ_COLS(dst_dp);col_index++){
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(ERROR_STRING,"Setting component %d of image %s at %d %d (addr = 0x%lx) to value %d",
-comp_index,dst_dp->dt_name,col_index,row_index,(u_long)dst_ptr,image[comp_index][col_index]);
+comp_index,OBJ_NAME(dst_dp),col_index,row_index,(u_long)dst_ptr,image[comp_index][col_index]);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				*dst_ptr = image[comp_index][col_index];
-				dst_ptr += dst_dp->dt_pinc;
+				dst_ptr += OBJ_PXL_INC(dst_dp);
 			}
 		}
 		fprintf(stderr,"line %d done\n",row_index);

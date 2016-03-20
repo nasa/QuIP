@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_cstepit_stepmenu[] = QUIP_VERSION_STRING;
-
 /*
  * Interpreter interface to stepit
  *
@@ -9,25 +7,20 @@ char VersionId_cstepit_stepmenu[] = QUIP_VERSION_STRING;
  *  Stepit places parameter values in script variables.
  */
 
-#include "version.h"	/* for some reason, the compiler chokes if this is after math.h!? */
-
 #include <math.h>
 
+#include "quip_prot.h"
 #include "data_obj.h"	/* unlock_all_tmp_objs */
-#include "savestr.h"
-#include "query.h"
-#include "fitsine.h"
-#include "items.h"
-
+//#include "fitsine.h"
 #include "optimize.h"
-#include "submenus.h"
+#include "sparse.h"	// do_sparse_menu
 
 static COMMAND_FUNC( set_params )
 {
 	int i;
 	int n;
 
-	n=HOW_MANY("number of paramters");
+	n=(int)HOW_MANY("number of paramters");
 	if( n <= 0 ){
 		NWARN("ridiculous number of paramters");
 		return;
@@ -43,11 +36,11 @@ static COMMAND_FUNC( set_params )
 
 		s=NAMEOF("parameter name");
 
-		a=HOW_MUCH("starting value");
-		mnv=HOW_MUCH("minimum value");
-		mxv=HOW_MUCH("maximum value");
-		del=HOW_MUCH("starting increment");
-		mndl=HOW_MUCH("minimum increment");
+		a=(float)HOW_MUCH("starting value");
+		mnv=(float)HOW_MUCH("minimum value");
+		mxv=(float)HOW_MUCH("maximum value");
+		del=(float)HOW_MUCH("starting increment");
+		mndl=(float)HOW_MUCH("minimum increment");
 
 		opp = new_opt_param(QSP_ARG  s);
 		if( opp != NO_OPT_PARAM ){
@@ -58,8 +51,10 @@ static COMMAND_FUNC( set_params )
 			opp->mindel = mndl;
 		}
 
-		unlock_all_tmp_objs();	/* in case we have a lot of params, and the expressions
-					 * involve subsripted objects... */
+		/* in case we have a lot of params, and the expressions
+		 * involve subsripted objects...
+		 */
+		unlock_all_tmp_objs(SINGLE_QSP_ARG);
 	}
 /*
 sprintf(error_string,"%d parameters read",n);
@@ -113,36 +108,30 @@ static COMMAND_FUNC( do_opt_param_info )
 
 	opp = PICK_OPT_PARAM("");
 	if( opp == NO_OPT_PARAM ) return;
-	opt_param_info(opp);
+	opt_param_info(QSP_ARG  opp);
 }
 
 static COMMAND_FUNC(do_list_opt_params){list_opt_params(SINGLE_QSP_ARG);}
 
-Command step_ctbl[]={
-{ "package",	select_package,	"select optimization package"		},
-{ "function",	set_function,	"specify command which computes error"	},
-{ "parameters",	set_params,	"specify parameters to be varied"	},
-{ "optimize",	run_opt,	"search for minimum error"		},
-{ "halt",	halt_opt,	"halt optimization"			},
+#define ADD_CMD(s,f,h)	ADD_COMMAND(stepit_menu,s,f,h)
 
-{ "list",	do_list_opt_params,	"list current parameters"	},
-{ "info",	do_opt_param_info,	"report information about a parameter"	},
+MENU_BEGIN(stepit)
+ADD_CMD( package,	select_package,	select optimization package )
+ADD_CMD( function,	set_function,	specify command which computes error )
+ADD_CMD( parameters,	set_params,	specify parameters to be varied )
+ADD_CMD( optimize,	run_opt,	search for minimum error )
+ADD_CMD( halt,		halt_opt,	halt optimization )
+ADD_CMD( list,		do_list_opt_params,	list current parameters )
+#ifndef BUILD_FOR_IOS
+ADD_CMD( sparse,	do_sparse_menu,	sparse L-M sover )
+#endif // ! BUILD_FOR_IOS
+ADD_CMD( info,		do_opt_param_info,	report information about a parameter )
 
-{ "quit",	popcmd,		"exit"					},
-{ NULL_COMMAND								}
-};
+MENU_END(stepit)
 
-
-
-COMMAND_FUNC( stepmenu )
+COMMAND_FUNC( do_step_menu )
 {
-	static int inited=0;
-
-	if( !inited ){
-		auto_version(QSP_ARG  "CSTEPIT","VersionId_cstepit");
-		inited=1;
-	}
-	PUSHCMD(step_ctbl,"stepit");
+	PUSH_MENU(stepit);
 }
 
 

@@ -1,5 +1,6 @@
 
-#ifndef N_COLORS
+#ifndef _CMAPS_H_
+#define _CMAPS_H_
 
 #include "data_obj.h"
 #include "display.h"
@@ -48,14 +49,14 @@ extern Dpyable *current_dpyp;
 #endif /* HAVE_X11 */
 
 #ifdef HAVE_X11
-#define CM_DATA(dp,component,index)	(*( ((u_char *)(dp)->dt_data) +component*dp->dt_cinc+index*dp->dt_pinc))
-#define CHECK_DPY(func_name)	if( current_dpyp == NULL ){sprintf(error_string,"%s:  current_dpyp is null!?",func_name); NERROR1(error_string);}
+#define CM_DATA(dp,component,index)	(*( ((u_char *)OBJ_DATA_PTR(dp)) +component*OBJ_COMP_INC(dp)+index*OBJ_PXL_INC(dp)))
+//#define CHECK_DPY(func_name)	if( current_dpyp == NULL ){sprintf(error_string,"%s:  current_dpyp is null!?",func_name); NERROR1(error_string);}
 #else
 #define CM_DATA(dp,component,index)	0
-#define CHECK_DPY(func_name)
+//#define CHECK_DPY(func_name)
 #endif
 
-#define CM_ADDR(dp,component,index)	( ((u_char *)(dp)->dt_data) +component*dp->dt_cinc+index*dp->dt_pinc)
+#define CM_ADDR(dp,component,index)	( ((u_char *)OBJ_DATA_PTR(dp)) +component*OBJ_COMP_INC(dp)+index*OBJ_PXL_INC(dp))
 
 
 /* formerly in cmflags.h */
@@ -106,20 +107,21 @@ extern void		push_cm_state(void);
 extern void		pop_cm_state(void);
 extern void		cm_immediate(long immediate);
 extern void		update_all(void);
-extern void		setcolor(int c, int r, int g, int b);
-extern void		const_cmap(int base,int n,int r,int g,int b);
-extern void		make_grayscale(int base,int n_colors);
-extern void		make_rgb(int base, int nr,int ng, int nb);
-extern void		poke_lut(int c, int r, int g, int b);
-extern void		setmap(Data_Obj *);
+#define setcolor(c,r,g,b)	_setcolor(QSP_ARG  c,r,g,b)
+extern void		_setcolor(QSP_ARG_DECL  int c, int r, int g, int b);
+extern void		const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b);
+extern void		make_grayscale(QSP_ARG_DECL  int base,int n_colors);
+extern void		make_rgb(QSP_ARG_DECL  int base, int nr,int ng, int nb);
+extern void		poke_lut(QSP_ARG_DECL  int c, int r, int g, int b);
+extern void		setmap(QSP_ARG_DECL  Data_Obj *);
 extern void		getmap(Data_Obj *);
 extern Data_Obj *	new_colormap(QSP_ARG_DECL  const char *);
 extern void		set_colormap(Data_Obj *);
 #ifdef HAVE_X11
-extern void		default_cmap(Dpyable *);
+extern void		default_cmap(QSP_ARG_DECL  Dpyable *);
 extern void		select_cmap_display(Dpyable *);
 #endif /* HAVE_X11 */
-extern int		color_index_out_of_range(u_int index);
+extern int		color_index_out_of_range(QSP_ARG_DECL  u_int index);
 extern void		update_if(void);
 
 /* funcvec.c */
@@ -132,29 +134,29 @@ extern void	lin_setup(QSP_ARG_DECL  Data_Obj *,double gam,double vz);
 /* bplanes.c */
 
 extern void	set_lvls_per_comp(int n);
-extern void	set_c_amps(int index);
-extern void	count(int digit,int offset);
+extern void	set_c_amps(QSP_ARG_DECL  int index);
+extern void	count(QSP_ARG_DECL  int digit,int offset);
 extern void	set_ncomps(int n);
 extern int	get_ncomps(void);
-extern void	set_comp_amps(float *amps);
+extern void	set_comp_amps(QSP_ARG_DECL  float *amps);
 extern void	sine_mod_amp(QSP_ARG_DECL  int nframes, float *phases,
 			int period, float*envelope, const char *lutstem);
 extern void	set_base_index(int i);
 extern int	get_base_index(void);
 extern void	setwhite(float *white);
 extern void	set_bit_vecs(float veclist[][3]);
-extern void	set_bitplanes(int nplanes, float *amps);
+extern void	set_bitplanes(QSP_ARG_DECL  int nplanes, float *amps);
 extern void	set_bits_per_comp(int n);
 
 /* alpha.c */
 
 extern void	set_alpha(int index,int alpha);
 extern void	index_alpha(int index,int lv,int hv);
-extern void	const_alpha(int value);
+extern void	const_alpha(QSP_ARG_DECL  int value);
 
 /* verluts.c */
 extern void	verluts(SINGLE_QSP_ARG_DECL);
 
 
-#endif /* ! N_COLORS */
+#endif /* ! _CMAPS_H_ */
 

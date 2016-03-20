@@ -9,8 +9,8 @@ extern void o2rgb(QSP_ARG_DECL  float *);
 
 /* globals */
 
-extern int thebest[3];
-extern float desired[3][MAXCOLS];
+//extern int thebest[3];
+//extern float desired[3][MAXCOLS];
 extern int know_white;
 
 /* qinit.c */
@@ -25,7 +25,7 @@ extern int getbest(QSP_ARG_DECL  int);
 extern void showvec(float *);
 
 /* ctone.c */
-extern COMMAND_FUNC( ctone_menu );
+extern COMMAND_FUNC( do_ctone_menu );
 
 /* rb2rgb.c */
 extern COMMAND_FUNC( set_matrices );

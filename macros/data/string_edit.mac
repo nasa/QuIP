@@ -1,0 +1,26 @@
+Start_File string_edit.mac
+
+# used to change spaces to underscores, for example...
+
+Define Subst_Var 3 varname orig_char subst_char 
+Insure_String_Obj tmpstring $$1
+
+expressions
+  read -
+    tmpstring = tmpstring == $2 ? '$3' : tmpstring; #for spaces
+    end
+  quit
+
+Get_String $1 tmpstring
+.
+
+Define Insure_String_Obj 2 obj_name string
+# bug broken if string contains a quote???
+If !obj_exists('$1') "Vector $1 1 strlen('$2')+1 string expressions export $1 quit"
+If ncomps('$1')<=strlen('$2') "Delete_Image $1"
+If !obj_exists('$1') "Vector $1 1 strlen('$2')+1 string expressions export $1 quit"
+Set_String $1 $2
+.
+
+Stop_File string_edit.mac
+

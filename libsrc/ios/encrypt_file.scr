@@ -1,0 +1,6 @@
+If $argc!=2 "error_exit 'usage:  coq infile outfile < encrypt_file.scr'"
+
+encrypt_file $1 $2
+
+exit
+

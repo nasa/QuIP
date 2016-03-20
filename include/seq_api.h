@@ -3,8 +3,7 @@
 
 #include "quip_config.h"
 
-#include "items.h"
-#include "node.h"
+#include "quip_prot.h"
 
 /* Public structures */
 
@@ -36,9 +35,6 @@ typedef struct seq_module {
 
 
 /* Public data */
-
-extern Item_Type * mviseq_itp;	/* global so mvimenu can check it */
-
 
 /* Public prototypes */
 

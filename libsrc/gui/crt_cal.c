@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_gui_crt_cal[] = QUIP_VERSION_STRING;
-
 /*
  * Calibrate gamma & tau for workstation screen
  *
@@ -17,8 +15,7 @@ char VersionId_gui_crt_cal[] = QUIP_VERSION_STRING;
 
 #include <math.h>
 
-#include "cmds.h"
-#include "howmuch.h"
+#include "quip_prot.h"
 
 /*
  *  Color map allocation:
@@ -90,7 +87,7 @@ static int which_phos=0;
 #define FILT_LEN	16
 #define OUT_LEN		256
 
-static double signal[SIG_LEN],filter[FILT_LEN],output[OUT_LEN];
+static double sig_wave[SIG_LEN],filter[FILT_LEN],output[OUT_LEN];
 
 #define DEF_TAU		0.02
 #define DEF_GAMMA	2.5
@@ -131,21 +128,24 @@ static int ntrac=(-1);
 #define I_GRN_VZERO	3
 #define I_BLU_VZERO	4
 
-void enter_ramp_match()
+// local prototypes
+static void set_em(int *buf,int r,int g,int b);
+
+static COMMAND_FUNC( enter_ramp_match )
 {
 	int i,p,d;
 	int r,g,b,color[3];
 
-	p=howmany("phosphor");
-	i=howmany("index");
-	d=howmany("match value");
+	p=HOW_MANY("phosphor");
+	i=HOW_MANY("index");
+	d=HOW_MANY("match value");
 
 	if( p < 0 || p >= n_ramp_levels ){
-		warn("bad phosphor index");
+		WARN("bad phosphor index");
 		return;
 	}
 	if( i < 0 || i >= n_ramp_levels ){
-		warn("bad level index");
+		WARN("bad level index");
 		return;
 	}
 
@@ -159,21 +159,21 @@ void enter_ramp_match()
 	update_colors();
 }
 
-void enter_cmod_match()
+static COMMAND_FUNC( enter_cmod_match )
 {
 	int i,p,d;
 	int r,g,b,color[3];
 
-	p=howmany("phosphor");
-	i=howmany("index");
-	d=howmany("match value");
+	p=HOW_MANY("phosphor");
+	i=HOW_MANY("index");
+	d=HOW_MANY("match value");
 
 	if( p < 0 || p >= n_ramp_levels ){
-		warn("bad phosphor index");
+		WARN("bad phosphor index");
 		return;
 	}
 	if( i < 0 || i >= n_ramp_levels ){
-		warn("bad level index");
+		WARN("bad level index");
 		return;
 	}
 
@@ -245,22 +245,22 @@ int phos;
 {
 	if( !changed[phos] ) return;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug )
 	advise("computing linearizing tables");
-#endif DEBUG
+#endif QUIP_DEBUG
 	compute_lintbl(phos);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug )
 	advise("computing comtrast ramp");
-#endif DEBUG
+#endif QUIP_DEBUG
 	compute_contrast_ramp(phos);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug )
 	advise("computing gray ramp");
-#endif DEBUG
+#endif QUIP_DEBUG
 	compute_gray_ramp(phos);
 
 	changed[phos]=0;
@@ -273,14 +273,14 @@ int phos; double rate,min,max;
 	double sum;
 	static double old_tau=(-1);
 
-	make_pulse_train(signal,SIG_LEN,rate,min,max);
+	make_pulse_train(sig_wave,SIG_LEN,rate,min,max);
 
 	if( tau[phos] != old_tau ){
 		make_impulse(filter,FILT_LEN,tau[phos]);
 		old_tau=tau[phos];
 	}
 
-	s_convolve(output,OUT_LEN,signal,SIG_LEN,filter,FILT_LEN);
+	s_convolve(output,OUT_LEN,sig_wave,SIG_LEN,filter,FILT_LEN);
 
 	/* map output through gamma table */
 
@@ -418,15 +418,15 @@ int on, sn, fn;
 	}
 }
 
-void set_gamma()
+static COMMAND_FUNC( set_gamma )
 {
 	int i;
 	double g;
 
-	i=howmany("phosphor index");
-	g = howmuch("gamma");
+	i=HOW_MANY("phosphor index");
+	g = HOW_MUCH("gamma");
 	if( g <= 0.0 ){
-		warn("gamma must be positive");
+		WARN("gamma must be positive");
 		return;
 	}
 
@@ -438,18 +438,18 @@ void set_gamma()
 		crt_gamma[1] =
 		crt_gamma[2] = g;
 		changed[0]=changed[1]=changed[2]=1;
-	} else warn("bad index");
+	} else WARN("bad index");
 }
 
-void set_tau()
+static COMMAND_FUNC( set_tau )
 {
 	int i;
 	double t;
 
-	i=howmany("phosphor index");
-	t=howmuch("tau");
+	i=HOW_MANY("phosphor index");
+	t=HOW_MUCH("tau");
 	if( t <= 0.0 ){
-		warn("tau must be positive");
+		WARN("tau must be positive");
 		return;
 	}
 
@@ -461,30 +461,30 @@ void set_tau()
 		tau[1] =
 		tau[2] = t;
 		changed[0]=changed[1]=changed[2]=1;
-	} else warn("bad index");
+	} else WARN("bad index");
 }
 
-void set_vzero()
+static COMMAND_FUNC( set_vzero )
 {
 	int i;
 
-	i=howmany("phosphor index");
+	i=HOW_MANY("phosphor index");
 	if( i>=0 && i<3 ){
-		vzero[i] = howmany("vzero");
+		vzero[i] = HOW_MANY("vzero");
 		changed[i]=1;
 	} else if( i== -1 ){
 		vzero[0] =
 		vzero[1] =
-		vzero[2] = howmany("vzero");
+		vzero[2] = HOW_MANY("vzero");
 		changed[0]=changed[1]=changed[2]=1;
-	} else warn("bad index");
+	} else WARN("bad index");
 }
 
-void do_compute()
+static COMMAND_FUNC( do_compute )
 {
 	int p;
 
-	p=howmany("phosphor index (-1 for all three)");
+	p=HOW_MANY("phosphor index (-1 for all three)");
 
 	if( p>=0 && p<= 2)
 		compute_color_map(p);
@@ -496,7 +496,7 @@ void do_compute()
 	}
 }
 
-void dump_gray()
+static COMMAND_FUNC( dump_gray )
 {
 	int i;
 
@@ -508,7 +508,7 @@ void dump_gray()
 			ramp_match_data[2][i]);
 }
 
-void dump_cont()
+static COMMAND_FUNC( dump_cont )
 {
 	int i;
 
@@ -517,7 +517,7 @@ void dump_cont()
 			mean_level[0][i], mean_level[1][i], mean_level[2][i] );
 }
 
-void dump_filter()
+static COMMAND_FUNC( dump_filter )
 {
 	int i;
 
@@ -525,7 +525,7 @@ void dump_filter()
 		printf("%f\n",filter[i]);
 }
 
-void dump_lintbl()
+static COMMAND_FUNC( dump_lintbl )
 {
 	int i;
 
@@ -548,8 +548,7 @@ default_lintbl()
 	lindone=1;
 }
 
-set_em(buf,r,g,b)
-int *buf;
+static void set_em(int *buf,int r,int g,int b)
 {
 	int i;
 
@@ -592,13 +591,13 @@ set_ramp_levels()
 	}
 }
 
-void set_color_maps()
+static COMMAND_FUNC( set_color_maps )
 {
 	int i;
 
-	i=howmany("index of phosphor for display (-1 for all three)");
+	i=HOW_MANY("index of phosphor for display (-1 for all three)");
 	if( i < -1 || i > 2 ){
-		warn("bad phosphor index");
+		WARN("bad phosphor index");
 		return;
 	}
 	disp_phos=i;
@@ -644,24 +643,24 @@ set_cmod_levels()
 	}
 }
 
-void set_levels()
+static COMMAND_FUNC( set_levels )
 {
 	int l;
 
-	l=howmany("number of levels");
+	l=HOW_MANY("number of levels");
 	if( l<2 || l>N_CMOD_LEVELS || l>N_RAMP_LEVELS ){
-		warn("number of levels out of range");
+		WARN("number of levels out of range");
 		return;
 	}
 	n_cmod_levels = n_ramp_levels = l;
 }
 
-void set_rates()
+static COMMAND_FUNC( set_rates )
 {
 	int i;
 
 	for(i=0;i<n_ramp_levels;i++){
-		rate_tbl[i] = howmuch("ramp level");
+		rate_tbl[i] = HOW_MUCH("ramp level");
 	}
 }
 
@@ -698,7 +697,7 @@ tau[step_phos]);
 		index = ramp_level[step_phos][i] + 0.5;
 
 		if( index < 0 || index > 255 ){
-			warn("bad ramp_level index");
+			WARN("bad ramp_level index");
 		} else {
 			ie = lin_tbl[step_phos][ index ]
 				- ramp_match_data[step_phos][i] ;
@@ -713,7 +712,7 @@ tau[step_phos]);
 		index = mean_level[step_phos][i] + 0.5;
 
 		if( index < 0 || index > 255 ){
-			warn("bad mean_level index");
+			WARN("bad mean_level index");
 		} else {
 			ie = lin_tbl[step_phos][ index ]
 				- mean_match_data[step_phos][i] ;
@@ -766,7 +765,7 @@ crt_gamma[0], tau[0]);
 			index = ramp_level[p][i] + 0.5;
 
 			if( index < 0 || index > 255 ){
-				warn("bad ramp_level index");
+				WARN("bad ramp_level index");
 			} else {
 				ie = lin_tbl[p][ index ]
 					- ramp_match_data[p][i] ;
@@ -779,7 +778,7 @@ crt_gamma[0], tau[0]);
 			index = mean_level[p][i] + 0.5;
 
 			if( index < 0 || index > 255 ){
-				warn("bad mean_level index");
+				WARN("bad mean_level index");
 			} else {
 				ie = lin_tbl[p][ index ]
 					- mean_match_data[p][i] ;
@@ -795,11 +794,11 @@ fprintf(stderr,"\t%f\n",err);
 	setfobj_(&err);
 }
 
-void do_fit()
+static COMMAND_FUNC( do_fit )
 {
 	step_phos=how_many("phosphor to fit");
 	if( step_phos < -1 || step_phos > 2 ){
-		warn("bad phosphor specification");
+		WARN("bad phosphor specification");
 		return;
 	}
 	if( step_phos >= 0 )
@@ -922,7 +921,7 @@ fit_one_phosphor()
 
 static char *match_choices[]={"ramp","cmod"};
 
-void save_matches(SINGLE_QSP_ARG_DECL)
+static COMMAND_FUNC( save_matches )
 {
 	FILE *fp;
 	int t,i;
@@ -943,26 +942,26 @@ void save_matches(SINGLE_QSP_ARG_DECL)
 			mean_match_data[2][i]);
 }
 
-void read_matches()
+static COMMAND_FUNC( read_matches )
 {
 	FILE *fp;
 	int t,i,p;
 	int d[3];
 
-	p=howmany("phosphor index");
-	fp=try_open( nameof("filename"), "r" );
+	p=HOW_MANY("phosphor index");
+	fp=TRY_OPEN( nameof("filename"), "r" );
 	if( !fp ) return;
 
 	for(i=0;i<n_ramp_levels;i++){
 		if( fscanf(fp,"%d %d %d",&d[0],&d[1],&d[2]) != 3 ){
-			warn("error reading data file");
+			WARN("error reading data file");
 			goto bad;
 		}
 		ramp_match_data[p][i] = d[p];
 	}
 	for(i=0;i<n_cmod_levels;i++){
 		if( fscanf(fp,"%d %d %d",&d[0],&d[1],&d[2]) != 3 ){
-			warn("error reading data file");
+			WARN("error reading data file");
 			goto bad;
 		}
 		mean_match_data[p][i] = d[p];
@@ -971,29 +970,29 @@ bad:
 	fclose(fp);
 }
 
-Command cal_ctbl[]={
-	"gamma",set_gamma,"set gamma parameter",
-	"tau",set_tau,"set tau parameter",
-	"vzero",set_vzero,"set vzero parameter",
-	"compute",do_compute,"compute color maps",
-	"install",set_color_maps,"install color map for calibration",
-	"ramp_match",enter_ramp_match,"enter data for one ramp match",
-	"cmod_match",enter_cmod_match,"enter data for one cmod match",
-	"gray_ramp",dump_gray,"dump grayscale ramp data to screen",
-	"cont_ramp",dump_cont,"dump contrast ramp data to screen",
-	"lintbl",dump_lintbl,"dump linearizing table to screen",
-	"levels",set_levels,"set number of levels",
-	"read",read_matches,"read match data from a file",
-	"save",save_matches,"save match data to a file",
-	"rates",set_rates,"specify ramp levels in test image",
-	"fit",do_fit,"estaimate parameters from match data",
-	"filter",dump_filter,"dump exponental impulse response",
-	"quit",popcmd,"exit submenu",
-	NULL,NULL,NULL
-};
+MENU_BEGIN(cal_menu,calib)
+ADD_COMMAND(cal_menu,	gamma,		set_gamma,	set gamma parameter )
+ADD_COMMAND(cal_menu,	tau,		set_tau,	set tau parameter )
+ADD_COMMAND(cal_menu,	vzero,		set_vzero,	set vzero parameter )
+ADD_COMMAND(cal_menu,	compute,	do_compute,	compute color maps )
+ADD_COMMAND(cal_menu,	install,	set_color_maps,	install color map for calibration )
+ADD_COMMAND(cal_menu,	ramp_match,	enter_ramp_match,
+							enter data for one ramp match )
+ADD_COMMAND(cal_menu,	cmod_match,	enter_cmod_match,
+							enter data for one cmod match )
+ADD_COMMAND(cal_menu,	gray_ramp,	dump_gray,	dump grayscale ramp data to screen )
+ADD_COMMAND(cal_menu,	cont_ramp,	dump_cont,	dump contrast ramp data to screen )
+ADD_COMMAND(cal_menu,	lintbl,		dump_lintbl,	dump linearizing table to screen )
+ADD_COMMAND(cal_menu,	levels,		set_levels,	set number of levels )
+ADD_COMMAND(cal_menu,	read,		read_matches,	read match data from a file )
+ADD_COMMAND(cal_menu,	save,		save_matches,	save match data to a file )
+ADD_COMMAND(cal_menu,	rates,		set_rates,	specify ramp levels in test image )
+ADD_COMMAND(cal_menu,	fit,		do_fit,		estaimate parameters from match data )
+ADD_COMMAND(cal_menu,	filter,		dump_filter,	dump exponental impulse response )
+MENU_END(cal_menu)
 
-void cal_menu()
+COMMAND_FUNC( do_cal_menu )
 {
-	pushcmd(cal_ctbl,"calib");
+	PUSH_MENU(cal_menu);
 }
 

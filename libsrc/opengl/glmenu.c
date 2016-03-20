@@ -1,8 +1,10 @@
 #include "quip_config.h"
 
-char VersionId_opengl_glmenu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENGL
+
+#ifdef HAVE_GL_GLEW_H
+#include <GL/glew.h>
+#endif
 
 #ifdef HAVE_GLUT
 #include "glut_supp.h"
@@ -10,15 +12,18 @@ char VersionId_opengl_glmenu[] = QUIP_VERSION_STRING;
 
 #include "glx_supp.h"
 
+#include "quip_prot.h"
+
+#include "platform.h"
+#include "pf_viewer.h"
+
 #include "gl_util.h"
-#include "submenus.h"
-#include "query.h"	/* assign_var */
 #include "data_obj.h"
+#include "gl_info.h"
 #include "dl.h"
-#include "version.h"
 #include "tile.h"
-#include "debug.h"
-#include "chewtext.h"
+#include "glfb.h"
+#include "opengl_utils.h"
 
 #define NOT_IMP(s)	{ sprintf(ERROR_STRING,"Sorry, %s not implemented yet.",s); NWARN(ERROR_STRING); }
 
@@ -26,7 +31,9 @@ char VersionId_opengl_glmenu[] = QUIP_VERSION_STRING;
 
 debug_flag_t gl_debug=0;
 
-void check_gl_error(char *s)
+#define check_gl_error(s)	_check_gl_error(QSP_ARG  s)
+
+static void _check_gl_error(QSP_ARG_DECL  char *s)
 {
 	GLenum e;
 
@@ -34,13 +41,13 @@ void check_gl_error(char *s)
 	if( e == GL_NO_ERROR ) return;
 	switch(e){
 		case GL_INVALID_OPERATION:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 				"%s:  invalid operation",s);
-			NWARN(DEFAULT_ERROR_STRING);
+			WARN(ERROR_STRING);
 			break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"check_gl_error:  unhandled error code after %s",s);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING,"check_gl_error:  unhandled error code after %s",s);
+			WARN(ERROR_STRING);
 			break;
 	}
 }
@@ -121,20 +128,20 @@ static COMMAND_FUNC(do_glFlush)
 	glFlush();
 }
 
-static Command gl_color_ctbl[]={
-{ "background",	set_clear_color,"set color for clear"		},
-{ "clear_color",do_clear_color,	"clear color buffer"		},
-{ "clear_depth",do_clear_depth,	"clear depth buffer"		},
-{ "color",	set_gl_pen,	"set current drawing color"	},
-{ "shade",	select_shader,	"select shading model"		},
-{ "flush",	do_glFlush,	"flush graphics pipeline"	},
-{ "quit",	popcmd,		"exit submenu"			},
-{ NULL_COMMAND							}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(color_menu,s,f,h)
 
-static COMMAND_FUNC( color_menu )
+MENU_BEGIN( color )
+ADD_CMD( background,	set_clear_color,	set color for clear )
+ADD_CMD( clear_color,	do_clear_color,		clear color buffer )
+ADD_CMD( clear_depth,	do_clear_depth,		clear depth buffer )
+ADD_CMD( color,		set_gl_pen,		set current drawing color )
+ADD_CMD( shade,		select_shader,		select shading model )
+ADD_CMD( flush,		do_glFlush,		flush graphics pipeline )
+MENU_END( color )
+
+static COMMAND_FUNC( do_color_menu )
 {
-	PUSHCMD(gl_color_ctbl,"color");
+	PUSH_MENU(color);
 }
 
 static GLenum current_primitive=INVALID_CONSTANT;
@@ -404,7 +411,7 @@ static COMMAND_FUNC( do_slct_obj )
 	//drawer.drawAirspace(&manager, &table);
 	
 	/* Call the user's draw routine here... */
-	DIGEST( s );		/* as in cstepit/cs_supp.c */
+	chew_text(QSP_ARG  s, "(gl object selection)" );
 	rls_str(s);
 
 	// Restoring the original projection matrix.
@@ -462,7 +469,7 @@ static COMMAND_FUNC( do_slct_obj )
 //sprintf(ERROR_STRING,"front-most hit is %d",the_hit);
 //advise(ERROR_STRING);
 	sprintf(ret_str,"%d",the_hit);
-	ASSIGN_VAR("selection_index",ret_str);
+	ASSIGN_RESERVED_VAR("selection_index",ret_str);
 
 	//if (hits != 0) {
 	//manager.advanceTrial(processHits());
@@ -507,32 +514,46 @@ static COMMAND_FUNC( do_pop_name )
 	glPopName();
 }
 
-static Command obj_ctbl[]={
-{ "begin_obj",	do_gl_begin,	"begin primitive description"	},
-{ "end_obj",	do_gl_end,	"end primitive description"	},
-{ "vertex",	do_gl_vertex,	"specify a vertex"		},
-{ "color",	do_gl_color,	"set current color"		},
-{ "normal",	do_gl_normal,	"set normal vector"		},
-{ "tex_coord",	do_gl_tc,	"set texture coordinate"	},
-{ "edge_flag",	do_gl_ef,	"control drawing of edges"	},
-{ "material",	do_gl_material,	"set material properties"	},
-{ "array_elt",	do_gl_ae,	"extract vertex array data"	},
-{ "eval_coord",	do_gl_ec,	"generate coordinates"		},
-{ "eval_point",	do_gl_ep,	"generate point coordinates"	},
-{ "front_face",	do_fface,	"specify front face of polygons"},
-{ "cull_face",	do_cface,	"specfy cull face of polygons"	},
-{ "point_size",	do_gl_ptsize,	"set width in pixels of points"	},
-{ "select",	do_slct_obj,	"select an object with the mouse"	},
-{ "load_name",	do_load_name,	"load a name"			},
-{ "push_name",	do_push_name,	"push a name onto the stack"	},
-{ "pop_name",	do_pop_name,	"pop a name from the stack"	},
-{ "quit",	popcmd,		"exit submenu"			},
-{ NULL_COMMAND							}
-};
-
-static COMMAND_FUNC( obj_menu )
+static COMMAND_FUNC( do_set_buf )
 {
-	PUSHCMD(obj_ctbl,"object");
+	GLenum buf;
+
+	if( debug & gl_debug ){
+		sprintf(ERROR_STRING,"glDrawBuffer");
+		advise(ERROR_STRING);
+	}
+	buf=CHOOSE_DRAW_BUFFER("buffer for drawing");
+	glDrawBuffer(buf);
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(object_menu,s,f,h)
+
+MENU_BEGIN(object)
+ADD_CMD( draw_buffer,	do_set_buf,	set drawing buffer )
+ADD_CMD( begin_obj,	do_gl_begin,	begin primitive description )
+ADD_CMD( end_obj,	do_gl_end,	end primitive description )
+ADD_CMD( vertex,	do_gl_vertex,	specify a vertex )
+ADD_CMD( color,		do_gl_color,	set current color )
+ADD_CMD( normal,	do_gl_normal,	set normal vector )
+ADD_CMD( tex_coord,	do_gl_tc,	set texture coordinate )
+ADD_CMD( edge_flag,	do_gl_ef,	control drawing of edges )
+ADD_CMD( material,	do_gl_material,	set material properties )
+ADD_CMD( array_elt,	do_gl_ae,	extract vertex array data )
+ADD_CMD( eval_coord,	do_gl_ec,	generate coordinates )
+ADD_CMD( eval_point,	do_gl_ep,	generate point coordinates )
+ADD_CMD( front_face,	do_fface,	specify front face of polygons )
+ADD_CMD( cull_face,	do_cface,	specfy cull face of polygons )
+ADD_CMD( point_size,	do_gl_ptsize,	set width in pixels of points )
+ADD_CMD( select,	do_slct_obj,	select an object with the mouse )
+ADD_CMD( load_name,	do_load_name,	load a name )
+ADD_CMD( push_name,	do_push_name,	push a name onto the stack )
+ADD_CMD( pop_name,	do_pop_name,	pop a name from the stack )
+MENU_END(object)
+
+static COMMAND_FUNC( do_gl_obj_menu )
+{
+	PUSH_MENU(object);
 }
 
 static COMMAND_FUNC( do_enable )
@@ -574,19 +595,173 @@ static COMMAND_FUNC( do_cap_q )
 
 	cap = CHOOSE_CAP("capability");
 	if( cap == INVALID_CONSTANT ){
-		ASSIGN_VAR(CAP_RESULT_VARNAME,"-1");
+		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"-1");
 		return;
 	}
 
 	if( glIsEnabled(cap) == GL_TRUE ){
 advise("cap_enabled = 1");
-		ASSIGN_VAR(CAP_RESULT_VARNAME,"1");
+		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"1");
 	} else {
 advise("cap_enabled = 0");
-		ASSIGN_VAR(CAP_RESULT_VARNAME,"0");
+		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"0");
 	}
 }
 
+
+static const char * extension_table[]={
+	"GL_ARB_color_buffer_float",
+	"GL_ARB_depth_buffer_float",
+	"GL_ARB_depth_clamp",
+	"GL_ARB_depth_texture",
+	"GL_ARB_draw_buffers",
+	"GL_ARB_draw_elements_base_vertex",
+	"GL_ARB_draw_instanced",
+	"GL_ARB_fragment_program",
+	"GL_ARB_fragment_program_shadow",
+	"GL_ARB_fragment_shader",
+	"GL_ARB_framebuffer_object",
+	"GL_ARB_framebuffer_sRGB",
+	"GL_ARB_half_float_pixel",
+	"GL_ARB_half_float_vertex",
+	"GL_ARB_imaging",
+	"GL_ARB_instanced_arrays",
+	"GL_ARB_multisample",
+	"GL_ARB_multitexture",
+	"GL_ARB_occlusion_query",
+	"GL_ARB_pixel_buffer_object",
+	"GL_ARB_point_parameters",
+	"GL_ARB_point_sprite",
+	"GL_ARB_provoking_vertex",
+	"GL_ARB_seamless_cube_map",
+	"GL_ARB_shader_objects",
+	"GL_ARB_shader_texture_lod",
+	"GL_ARB_shading_language_100",
+	"GL_ARB_shadow",
+	"GL_ARB_sync",
+	"GL_ARB_texture_border_clamp",
+	"GL_ARB_texture_compression",
+	"GL_ARB_texture_compression_rgtc",
+	"GL_ARB_texture_cube_map",
+	"GL_ARB_texture_env_add",
+	"GL_ARB_texture_env_combine",
+	"GL_ARB_texture_env_crossbar",
+	"GL_ARB_texture_env_dot3",
+	"GL_ARB_texture_float",
+	"GL_ARB_texture_mirrored_repeat",
+	"GL_ARB_texture_non_power_of_two",
+	"GL_ARB_texture_rectangle",
+	"GL_ARB_texture_rg",
+	"GL_ARB_transpose_matrix",
+	"GL_ARB_vertex_array_bgra",
+	"GL_ARB_vertex_blend",
+	"GL_ARB_vertex_buffer_object",
+	"GL_ARB_vertex_program",
+	"GL_ARB_vertex_shader",
+	"GL_ARB_window_pos",
+	"GL_EXT_abgr",
+	"GL_EXT_bgra",
+	"GL_EXT_bindable_uniform",
+	"GL_EXT_blend_color",
+	"GL_EXT_blend_equation_separate",
+	"GL_EXT_blend_func_separate",
+	"GL_EXT_blend_minmax",
+	"GL_EXT_blend_subtract",
+	"GL_EXT_clip_volume_hint",
+	"GL_EXT_depth_bounds_test",
+	"GL_EXT_draw_buffers2",
+	"GL_EXT_draw_range_elements",
+	"GL_EXT_fog_coord",
+	"GL_EXT_framebuffer_blit",
+	"GL_EXT_framebuffer_multisample",
+	"GL_EXT_framebuffer_multisample_blit_scaled",
+	"GL_EXT_framebuffer_object",
+	"GL_EXT_framebuffer_sRGB",
+	"GL_EXT_geometry_shader4",
+	"GL_EXT_gpu_program_parameters",
+	"GL_EXT_gpu_shader4",
+	"GL_EXT_multi_draw_arrays",
+	"GL_EXT_packed_depth_stencil",
+	"GL_EXT_packed_float",
+	"GL_EXT_provoking_vertex",
+	"GL_EXT_rescale_normal",
+	"GL_EXT_secondary_color",
+	"GL_EXT_separate_specular_color",
+	"GL_EXT_shadow_funcs",
+	"GL_EXT_stencil_two_side",
+	"GL_EXT_stencil_wrap",
+	"GL_EXT_texture_array",
+	"GL_EXT_texture_compression_dxt1",
+	"GL_EXT_texture_compression_s3tc",
+	"GL_EXT_texture_env_add",
+	"GL_EXT_texture_filter_anisotropic",
+	"GL_EXT_texture_integer",
+	"GL_EXT_texture_lod_bias",
+	"GL_EXT_texture_mirror_clamp",
+	"GL_EXT_texture_rectangle",
+	"GL_EXT_texture_shared_exponent",
+	"GL_EXT_texture_sRGB",
+	"GL_EXT_texture_sRGB_decode",
+	"GL_EXT_timer_query",
+	"GL_EXT_transform_feedback",
+	"GL_EXT_vertex_array_bgra",
+	"GL_APPLE_aux_depth_stencil",
+	"GL_APPLE_client_storage",
+	"GL_APPLE_element_array",
+	"GL_APPLE_fence",
+	"GL_APPLE_float_pixels",
+	"GL_APPLE_flush_buffer_range",
+	"GL_APPLE_flush_render",
+	"GL_APPLE_object_purgeable",
+	"GL_APPLE_packed_pixels",
+	"GL_APPLE_pixel_buffer",
+	"GL_APPLE_rgb_422",
+	"GL_APPLE_row_bytes",
+	"GL_APPLE_specular_vector",
+	"GL_APPLE_texture_range",
+	"GL_APPLE_transform_hint",
+	"GL_APPLE_vertex_array_object",
+	"GL_APPLE_vertex_array_range",
+	"GL_APPLE_vertex_point_size",
+	"GL_APPLE_vertex_program_evaluators",
+	"GL_APPLE_ycbcr_422",
+	"GL_ATI_separate_stencil",
+	"GL_ATI_texture_env_combine3",
+	"GL_ATI_texture_float",
+	"GL_ATI_texture_mirror_once",
+	"GL_IBM_rasterpos_clip",
+	"GL_NV_blend_square",
+	"GL_NV_conditional_render",
+	"GL_NV_depth_clamp",
+	"GL_NV_fog_distance",
+	"GL_NV_fragment_program_option",
+	"GL_NV_fragment_program2",
+	"GL_NV_light_max_exponent",
+	"GL_NV_multisample_filter_hint",
+	"GL_NV_point_sprite",
+	"GL_NV_texgen_reflection",
+	"GL_NV_vertex_program2_option",
+	"GL_NV_vertex_program3",
+	"GL_SGIS_generate_mipmap",
+	"GL_SGIS_texture_edge_clamp",
+	"GL_SGIS_texture_lod"
+};
+
+#define N_KNOWN_EXTENSIONS	(sizeof(extension_table)/sizeof(const char *))
+
+static COMMAND_FUNC( do_check_extension )
+{
+	int i;
+
+	i=WHICH_ONE("GL extension",N_KNOWN_EXTENSIONS,extension_table);
+	if( i < 0 ) return;
+
+	if( check_extension(QSP_ARG  extension_table[i]) ){
+		ASSIGN_RESERVED_VAR("extension_present","1");
+	} else {
+		ASSIGN_RESERVED_VAR("extension_present","0");
+	}
+}
 
 static COMMAND_FUNC( do_tex_image )
 {
@@ -595,38 +770,38 @@ static COMMAND_FUNC( do_tex_image )
 
 	if( dp == NO_OBJ ) return;
 
-	set_texture_image(dp);
+	set_texture_image(QSP_ARG  dp);
 }
 
-void set_texture_image(Data_Obj *dp)
+void set_texture_image(QSP_ARG_DECL  Data_Obj *dp)
 {
 	int code,prec;
 	/*glDepthFunc(GL_LEQUAL);
 		glPixelStorei(GL_UNPACK_ALIGNMENT,1);*/
 
-	if(dp->dt_comps==1) code=GL_LUMINANCE;
-	else if( dp->dt_comps == 3 ) code=GL_RGB;
+	if(OBJ_COMPS(dp)==1) code=GL_LUMINANCE;
+	else if( OBJ_COMPS(dp) == 3 ) code=GL_RGB;
 	else {
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"set_texture_image:  Object %s has type dimension %d, expected 1 or 3",
-			dp->dt_name,dp->dt_comps);
-		NWARN(DEFAULT_ERROR_STRING);
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		NWARN(ERROR_STRING);
 		return;
 	}
 
-	if( dp->dt_prec == PREC_SP ) prec=GL_FLOAT;
-	else if( dp->dt_prec == PREC_UBY ) prec=GL_UNSIGNED_BYTE;
+	if( OBJ_PREC(dp) == PREC_SP ) prec=GL_FLOAT;
+	else if( OBJ_PREC(dp) == PREC_UBY ) prec=GL_UNSIGNED_BYTE;
 	else {
-		sprintf(DEFAULT_ERROR_STRING,"set_texture_image:  Object %s has precision %s, expected %s or %s",
-			dp->dt_name,name_for_prec(dp->dt_prec),
-			name_for_prec(PREC_SP),name_for_prec(PREC_UBY));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"set_texture_image:  Object %s has precision %s, expected %s or %s",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)),
+			NAME_FOR_PREC_CODE(PREC_SP),NAME_FOR_PREC_CODE(PREC_UBY));
+		NWARN(ERROR_STRING);
 		return;
 	}
 
 	if( debug & gl_debug ) advise("glTexImage2D");
-	glTexImage2D(GL_TEXTURE_2D, 0, dp->dt_comps, dp->dt_cols,
-		dp->dt_rows, 0, code, prec, dp->dt_data);
+	glTexImage2D(GL_TEXTURE_2D, 0, OBJ_COMPS(dp), OBJ_COLS(dp),
+		OBJ_ROWS(dp), 0, code, prec, OBJ_DATA_PTR(dp));
 
 	if( debug & gl_debug ) advise("glTexParameterf (4)");
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -639,18 +814,21 @@ void set_texture_image(Data_Obj *dp)
 		glShadeModel(GL_FLAT);*/
 }
 
-static Command cap_ctbl[]={
-{ "enable",	do_enable,	"enable capability"				},
-{ "disable",	do_disable,	"disable capability"				},
-{ "query",	do_cap_q,	"query capability (result in $cap_enabled)"	},
-{ "tex_image",	do_tex_image,	"specify a texture image"											},
-{ "quit",	popcmd,		"exit submenu"					},
-{ NULL_COMMAND									}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(capabilities_menu,s,f,h)
 
-static COMMAND_FUNC( cap_menu )
+MENU_BEGIN(capabilities)
+ADD_CMD( enable,	do_enable,	enable capability )
+ADD_CMD( disable,	do_disable,	disable capability )
+ADD_CMD( query,		do_cap_q,	query capability (result in $cap_enabled) )
+ADD_CMD( check_extension,	do_check_extension,	query renderer extension (result in $extension_present) )
+ADD_CMD( tex_image,	do_tex_image,	specify a texture image )
+MENU_END(capabilities)
+
+
+static COMMAND_FUNC( do_cap_menu )
 {
-	PUSHCMD(cap_ctbl,"capabilities");
+	PUSH_MENU(capabilities);
 }
 
 static COMMAND_FUNC( set_pt_size )
@@ -733,17 +911,19 @@ static COMMAND_FUNC( set_poly_mode )
 	glPolygonMode(face_dir,polygon_mode);
 }
 
-static Command mode_ctbl[]={
-	{ "point_size",	set_pt_size,	"set point size"	},
-	{ "line_width",	set_line_width,	"set line width"	},
-	{ "polygon_mode",	set_poly_mode,	"set polygon mode"	},
-	{ "quit",	popcmd,		"exit submenu"		},
-	{ NULL_COMMAND						}
-};
 
-static COMMAND_FUNC( mode_menu )
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(mode_menu,s,f,h)
+
+MENU_BEGIN(mode)
+ADD_CMD( point_size,	set_pt_size,	set point size )
+ADD_CMD( line_width,	set_line_width,	set line width )
+ADD_CMD( polygon_mode,	set_poly_mode,	set polygon mode )
+MENU_END(mode)
+
+static COMMAND_FUNC( do_mode_menu )
 {
-	PUSHCMD(mode_ctbl,"mode");
+	PUSH_MENU(mode);
 }
 
 static COMMAND_FUNC( set_xf_mode )
@@ -868,9 +1048,9 @@ static COMMAND_FUNC( do_sv_mv_mat )
 	}
 
 	if (!(strcmp(matrix, "modelview")))
-		glGetFloatv(GL_MODELVIEW_MATRIX,(GLfloat *)dp->dt_data);
+		glGetFloatv(GL_MODELVIEW_MATRIX,(GLfloat *)OBJ_DATA_PTR(dp));
 	if (!(strcmp(matrix, "projection")))
-		glGetFloatv(GL_PROJECTION_MATRIX,(GLfloat *)dp->dt_data);
+		glGetFloatv(GL_PROJECTION_MATRIX,(GLfloat *)OBJ_DATA_PTR(dp));
 }
 
 static COMMAND_FUNC( do_ld_mat )
@@ -883,7 +1063,7 @@ static COMMAND_FUNC( do_ld_mat )
 	/* BUG check size & type here */
 
 	if( debug & gl_debug ) advise("glLoadMatrixf");
-	glLoadMatrixf((GLfloat *)dp->dt_data);
+	glLoadMatrixf((GLfloat *)OBJ_DATA_PTR(dp));
 }
 
 static COMMAND_FUNC( do_mul_mat )
@@ -896,7 +1076,7 @@ static COMMAND_FUNC( do_mul_mat )
 	/* BUG check size & type here */
 
 	if( debug & gl_debug ) advise("glMultMatrixf");
-	glMultMatrixf((GLfloat *)dp->dt_data);
+	glMultMatrixf((GLfloat *)OBJ_DATA_PTR(dp));
 }
 
 static COMMAND_FUNC( do_rotate )
@@ -952,28 +1132,30 @@ static COMMAND_FUNC( do_pop_mat )
 	n_pushed_matrices--;
 }
 
-static Command xf_ctbl[]={
-{ "mode",	set_xf_mode,	"set mode for viewing transformation"		},
-{ "identity",	do_identity,	"initialize viewing matrix"			},
-{ "frustum",	set_frustum,	"specify viewing frustum"			},
-{ "ortho",	do_ortho,	"specify orthographic viewing volume"		},
-{ "look_at",	do_look_at,	"specify viewing position and direction"	},
-{ "scale",	do_scale,	"specify scaling factor"			},
-{ "translate",	do_xlate,	"specify translation"				},
-{ "rotate",	do_rotate,	"specify rotation"				},
-{ "perspective",do_persp,	"specify perspective transformation"		},
-{ "save_matrix",do_sv_mv_mat,	"save current modelview or projection matrix"	},
-{ "load_matrix",do_ld_mat,	"load current matrix from object"		},
-{ "mult_matrix",do_mul_mat,	"multiply current matrix by object"		},
-{ "push_matrix",do_push_mat,	"push down matrix stack"			},
-{ "pop_matrix",	do_pop_mat,	"pop top of matrix stack"			},
-{ "quit",	popcmd,		"exit submenu"					},
-{ NULL_COMMAND									}
-};
 
-static COMMAND_FUNC( xf_menu )
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(xform_menu,s,f,h)
+
+MENU_BEGIN(xform)
+ADD_CMD( mode,		set_xf_mode,	set mode for viewing transformation )
+ADD_CMD( identity,	do_identity,	initialize viewing matrix )
+ADD_CMD( frustum,	set_frustum,	specify viewing frustum )
+ADD_CMD( ortho,		do_ortho,	specify orthographic viewing volume )
+ADD_CMD( look_at,	do_look_at,	specify viewing position and direction )
+ADD_CMD( scale,		do_scale,	specify scaling factor )
+ADD_CMD( translate,	do_xlate,	specify translation )
+ADD_CMD( rotate,	do_rotate,	specify rotation )
+ADD_CMD( perspective,	do_persp,	specify perspective transformation )
+ADD_CMD( save_matrix,	do_sv_mv_mat,	save current modelview or projection matrix )
+ADD_CMD( load_matrix,	do_ld_mat,	load current matrix from object )
+ADD_CMD( mult_matrix,	do_mul_mat,	multiply current matrix by object )
+ADD_CMD( push_matrix,	do_push_mat,	push down matrix stack )
+ADD_CMD( pop_matrix,	do_pop_mat,	pop top of matrix stack )
+MENU_END(xform)
+
+static COMMAND_FUNC( do_xf_menu )
 {
-	PUSHCMD(xf_ctbl,"xform");
+	PUSH_MENU(xform);
 }
 
 static COMMAND_FUNC( set_shading_model )
@@ -981,6 +1163,7 @@ static COMMAND_FUNC( set_shading_model )
 	GLenum m;
 
 	m = CHOOSE_SHADING_MODEL("shading model");
+	// BUG need to install it!!
 }
 
 static GLenum which_light=INVALID_CONSTANT;
@@ -1050,7 +1233,7 @@ static COMMAND_FUNC( set_specular )
 	glLightfv(which_light, GL_SPECULAR, v);
 }
 
-static COMMAND_FUNC( set_position )
+static COMMAND_FUNC( set_light_position )
 {
 	float v[4];
 
@@ -1146,48 +1329,52 @@ static COMMAND_FUNC( set_atten )
 	}
 }
 
-static Command lighting_ctbl[]={
-{ "shading_model",	set_shading_model,	"select shading model"		},
-{ "select_light",	do_sel_light,		"select light for subsequent operations"	},
-{ "ambient",		set_ambient,		"set ambient parameters"	},
-{ "diffuse",		set_diffuse,		"set diffuse parameters"	},
-{ "specular",		set_specular,		"set specular parameters"	},
-{ "position",		set_position,		"set light position"		},
-{ "attenuation",	set_atten,		"set light attenuation"		},
-{ "spot_direction",	set_spot_dir,		"set spotlight direction"	},
-{ "global_ambient",	set_global_ambient,	"set color of global ambient"	},
-{ "local_viewer",	set_local_viewer,	"enable/disable use of viewing position in specular reflection calc's"	},
-{ "two_side",		set_two_side,		"enable/disable two-sided lighting"	},
-	/*
-{ "separate_specular",	set_color_control,	"specular color calculated separately"	},
-*/
-{ "quit",		popcmd,			"exit submenu"			},
-{ NULL_COMMAND									}
-};
 
-static COMMAND_FUNC( lighting_menu )
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(lighting_menu,s,f,h)
+
+MENU_BEGIN(lighting)
+ADD_CMD( shading_model,		set_shading_model,	select shading model )
+ADD_CMD( select_light,		do_sel_light,		select light for subsequent operations )
+ADD_CMD( ambient,		set_ambient,		set ambient parameters )
+ADD_CMD( diffuse,		set_diffuse,		set diffuse parameters )
+ADD_CMD( specular,		set_specular,		set specular parameters )
+ADD_CMD( position,		set_light_position,	set light position )
+ADD_CMD( attenuation,		set_atten,		set light attenuation )
+ADD_CMD( spot_direction,	set_spot_dir,		set spotlight direction )
+ADD_CMD( global_ambient,	set_global_ambient,	set color of global ambient )
+ADD_CMD( local_viewer,		set_local_viewer,	enable/disable use of viewing position in specular reflection calculations )
+ADD_CMD( two_side,		set_two_side,		enable/disable two-sided lighting )
+	/*
+ADD_CMD( separate_specular,	set_color_control,	specular color calculated separately )
+*/
+MENU_END(lighting)
+
+static COMMAND_FUNC( do_lighting_menu )
 {
-	PUSHCMD(lighting_ctbl,"lighting");
+	PUSH_MENU(lighting);
 }
 
 static COMMAND_FUNC(do_list_dls){list_dls(SINGLE_QSP_ARG);}
 
-static Command dl_ctbl[]={
-{ "new",	do_new_dl,	"create new display list"		},
-{ "end",	do_end_dl,	"end current display list"		},
-{ "list",	do_list_dls,	"list all display lists"		},
-{ "delete",	do_del_dl,	"delete a display list"			},
-{ "info",	do_info_dl,	"give info about a display list"	},
-//{ "dump",	do_dump_dl,	"dump a display list to the screen"	},
-{ "call",	do_call_dl,	"call display list"			},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(display_list_menu,s,f,h)
+
+MENU_BEGIN(display_list)
+ADD_CMD( new_list,	do_new_dl,	create new display list )
+ADD_CMD( end_list,	do_end_dl,	end current display list )
+ADD_CMD( list,		do_list_dls,	list all display lists )
+ADD_CMD( delete,	do_del_dl,	delete a display list )
+ADD_CMD( info,		do_info_dl,	give info about a display list )
+//ADD_CMD( dump,	do_dump_dl,	dump a display list to the screen )
+ADD_CMD( call,		do_call_dl,	call display list )
+MENU_END(display_list)
 
 
-static COMMAND_FUNC( dl_menu )
+static COMMAND_FUNC( do_dl_menu )
 {
-	PUSHCMD(dl_ctbl,"display_lists");
+	PUSH_MENU(display_list);
 }
 
 static COMMAND_FUNC(do_swap_buffers){swap_buffers();}
@@ -1213,33 +1400,296 @@ static COMMAND_FUNC( do_vbl_wait )
 	wait_video_sync(n);
 }
 
-static Command gl_ctbl[]={
-{ "objects",		obj_menu,	"object specification submenu"	},
-{ "modes",		mode_menu,	"display mode submenu"		},
-{ "capabilities",	cap_menu,	"rendering capability submenu"	},
-{ "color",		color_menu,	"drawing color submenu"		},
-/* display and setup_view commands used to be here, but just for teapot? */
-{ "swap_buffers",	do_swap_buffers,	"swap display buffers"		},
-{ "sync_to_vblank",	do_vbl_sync,	"enable/disable vblank synch'ing"},
-{ "vbl_wait",		do_vbl_wait,	"wait a specified number of frames"},
-{ "transform",		xf_menu,	"viewing transformation submenu"},
-{ "lighting",		lighting_menu,	"lighting submenu"		},
-{ "window",		do_render_to,	"specify drawing window"	},
-{ "display_lists",	dl_menu,	"display list submenu"		},
-{ "tiles",		tile_menu,	"tile object submenu"	},
-{ "quit",		popcmd,		"exit submenu"			},
-{ NULL_COMMAND								}
-};
+/************* frame buffers ******************/
 
-COMMAND_FUNC( gl_menu )
+static COMMAND_FUNC( do_create_fb )
+{
+	Framebuffer *fbp;
+	const char *s;
+	int w,h;
+
+	s = NAMEOF("name for framebuffer");
+	w = HOW_MANY("width in pixels");
+	h = HOW_MANY("height in pixels");
+
+	fbp = create_framebuffer(QSP_ARG  s,w,h);
+	if( fbp == NULL ) {
+		sprintf(ERROR_STRING,"Error creating framebuffer %s",s);
+		WARN(ERROR_STRING);
+	}
+}
+
+static COMMAND_FUNC( do_delete_fb )
+{
+	Framebuffer *fbp;
+
+	fbp = PICK_GLFB("");
+	if( fbp == NULL ) return;
+
+	delete_framebuffer(QSP_ARG  fbp);
+}
+
+static COMMAND_FUNC( do_list_fbs )
+{
+	list_glfbs(SINGLE_QSP_ARG);
+}
+
+static COMMAND_FUNC( do_fb_info )
+{
+	Framebuffer *fbp;
+
+	fbp = PICK_GLFB("");
+	if( fbp == NULL ) return;
+
+	glfb_info(QSP_ARG  fbp);
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(glfb_menu,s,f,h)
+
+MENU_BEGIN(glfb)
+ADD_CMD( new_fb,		do_create_fb,	create a new framebuffer object )
+ADD_CMD( del_fb,		do_delete_fb,	delete a framebuffer object )
+ADD_CMD( list,			do_list_fbs,	list all framebuffer objects )
+ADD_CMD( info,			do_fb_info,	print info about a framebuffer object )
+MENU_END(glfb)
+
+static COMMAND_FUNC( do_glfb_menu )
+{
+	PUSH_MENU(glfb);
+}
+
+#ifdef HAVE_OPENGL
+int gl_pixel_type(Data_Obj *dp)
+{
+	int t;
+
+	switch(OBJ_COMPS(dp)){
+		case 1: t = GL_LUMINANCE; break;
+		/* 2 is allowable, but what do we do with it? */
+		case 3: t = GL_BGR; break;
+		case 4: t = GL_BGRA; break;
+		default:
+			t=0;	// quiet compiler
+			NERROR1("bad pixel depth!?");
+			break;
+	}
+	return(t);
+}
+
+void glew_check(SINGLE_QSP_ARG_DECL)
+{
+#ifdef HAVE_LIBGLEW
+	static int glew_checked=0;
+
+	if( glew_checked ){
+		if( verbose )
+			NADVISE("glew_check:  glew already checked.");
+		return;
+	}
+
+	// BUG glewInit will core dump if GL is not already initialized!?
+	// We try to fix this by making sure that the cuda viewer is already
+	// specified for GL before calling this...
+
+	glewInit();
+
+	if (!glewIsSupported( "GL_VERSION_1_5 GL_ARB_vertex_buffer_object GL_ARB_pixel_buffer_object" )) {
+		/*
+		fprintf(stderr, "Error: failed to get minimal extensions for demo\n");
+		fprintf(stderr, "This sample requires:\n");
+		fprintf(stderr, "  OpenGL version 1.5\n");
+		fprintf(stderr, "  GL_ARB_vertex_buffer_object\n");
+		fprintf(stderr, "  GL_ARB_pixel_buffer_object\n");
+		*/
+		/*
+		cudaThreadExit();
+		exit(-1);
+		*/
+NERROR1("glew_check:  Please create a GL window before specifying a cuda viewer.");
+	}
+
+	glew_checked=1;
+#else // ! HAVE_LIBGLEW
+advise("glew_check:  libglew not present, can't check for presence of extensions!?.");
+#endif // ! HAVE_LIBGLEW
+}
+
+#endif // HAVE_OPENGL
+
+// Does the GL context have to be set when we do this??
+
+static COMMAND_FUNC( do_new_gl_buffer )
+{
+	const char *s;
+	Data_Obj *dp;
+	Platform_Device *pdp;
+	Compute_Platform *cdp;
+	dimension_t d,w,h;
+#ifdef HAVE_OPENGL
+	Dimension_Set ds;
+	int t;
+#endif // HAVE_OPENGL
+
+	s = NAMEOF("name for GL buffer object");
+	cdp = PICK_PLATFORM("platform");
+	if( cdp != NO_PLATFORM )
+		push_pfdev_context(QSP_ARG  PF_CONTEXT(cdp) );
+	pdp = PICK_PFDEV("device");
+	if( cdp != NO_PLATFORM )
+		pop_pfdev_context(SINGLE_QSP_ARG);
+
+	w = HOW_MANY("width");
+	h = HOW_MANY("height");
+	d = HOW_MANY("depth");
+
+	/* what should the depth be??? default to 1 for now... */
+
+	if( pdp == NO_PFDEV ) return;
+
+	/* Make sure this name isn't already in use... */
+	dp = dobj_of(QSP_ARG  s);
+	if( dp != NO_OBJ ){
+		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
+		NWARN(ERROR_STRING);
+		return;
+	}
+
+#ifdef HAVE_OPENGL
+	// BUG need to be able to set the cuda device.
+	// Note, however, that we don't need GL buffers on the Tesla...
+	//set_data_area(cuda_data_area[0][0]);
+	set_data_area( PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX) );
+
+	ds.ds_dimension[0]=d;
+	ds.ds_dimension[1]=w;
+	ds.ds_dimension[2]=h;
+	ds.ds_dimension[3]=1;
+	ds.ds_dimension[4]=1;
+	dp = _make_dp(QSP_ARG  s,&ds,PREC_FOR_CODE(PREC_UBY));
+	if( dp == NO_OBJ ){
+		sprintf(ERROR_STRING,
+			"Error creating data_obj header for %s",s);
+		ERROR1(ERROR_STRING);
+	}
+
+	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);	/* can't free this data */
+	SET_OBJ_FLAG_BITS(dp, DT_GL_BUF);	/* indicate obj is a GL buffer */
+
+	SET_OBJ_DATA_PTR(dp, NULL);
+	SET_OBJ_GL_INFO(dp, (GL_Info *) getbuf( sizeof(GL_Info) ) );
+
+	glew_check(SINGLE_QSP_ARG);	/* without this, we get a segmentation
+			 * violation on glGenBuffers???
+			 */
+
+	// We need an extra field in which to store the GL identifier...
+	// AND another extra field in which to store the associated texid.
+
+// Why is this ifdef here?  These don't seem to depend
+// on libglew???
+// Answer:  We need libglew to bring in openGL extensions like glBindBuffer...
+advise("calling glGenBuffers");
+	glGenBuffers(1, OBJ_BUF_ID_P(dp) );	// first arg is # buffers to generate?
+
+//sprintf(ERROR_STRING,"glGenBuffers gave us buf_id = %d",OBJ_BUF_ID(dp));
+//advise(ERROR_STRING);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER,  OBJ_BUF_ID(dp) ); 
+
+	// glBufferData will allocate the memory for the buffer,
+	// but won't copy unless the pointer is non-null
+	// How do we get the gpu memory space address?
+	// That must be with map
+
+	glBufferData(GL_PIXEL_UNPACK_BUFFER,
+		OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp), NULL, GL_STREAM_DRAW);  
+
+	/* buffer arg set to 0 unbinds any previously bound buffers...
+	 * and restores client memory usage.
+	 */
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+//#endif // HAVE_LIBGLEW
+
+	glGenTextures(1, OBJ_TEX_ID_P(dp) );		// makes a texture name
+	glBindTexture(GL_TEXTURE_2D, OBJ_TEX_ID(dp) );
+	t = gl_pixel_type(dp);
+	glTexImage2D(	GL_TEXTURE_2D,
+			0,			// level-of-detail - is this the same as miplevel???
+			OBJ_COMPS(dp),		// internal format, can also be symbolic constant such as
+						// GL_RGBA etc
+			OBJ_COLS(dp),		// width - must be 2^n+2 (border) for some n???
+			OBJ_ROWS(dp),		// height - must be 2^m+2 (border) for some m???
+			0,			// border - must be 0 or 1
+			t,			// format of pixel data
+			GL_UNSIGNED_BYTE,	// type of pixel data
+			NULL			// pixel data - null pointer means
+						// allocate but do not copy?
+						// - offset into PIXEL_UNPACK_BUFFER??
+			);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Why was this here?  It would seem to un-bind the target???
+	glBindTexture(GL_TEXTURE_2D, 0);
+	
+	//glFinish();	// necessary or not?
+
+advise("calling platform-specific buffer registration function");
+	if( (*PF_REGBUF_FN(PFDEV_PLATFORM(pdp)))( QSP_ARG  dp ) < 0 ){
+		WARN("do_new_gl_buffer:  Error in platform-specific buffer registration!?");
+		// BUG? - should clean up here!
+	}
+
+	// Leave the buffer mapped by default
+	//cutilSafeCall(cudaGLMapBufferObject( &OBJ_DATA_PTR(dp),  OBJ_BUF_ID(dp) ));
+advise("calling platform-specific buffer mapping function");
+	if( (*PF_MAPBUF_FN(PFDEV_PLATFORM(pdp)))( QSP_ARG  dp ) < 0 ){
+		WARN("do_new_gl_buffer:  Error in platform-specific buffer mapping!?");
+		// BUG? - should clean up here!
+	}
+
+	SET_OBJ_FLAG_BITS(dp, DT_BUF_MAPPED);
+	// propagate change to children and parents
+	propagate_flag(dp,DT_BUF_MAPPED);
+
+#else // ! HAVE_OPENGL
+	NO_OGL_MSG
+#endif // ! HAVE_OPENGL
+} /* end do_new_gl_buffer */
+
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(gl_menu,s,f,h)
+
+MENU_BEGIN(gl)
+ADD_CMD( window,		do_render_to,	specify drawing window )
+ADD_CMD( gl_buffer,		do_new_gl_buffer,	create a new GL buffer )
+ADD_CMD( objects,		do_gl_obj_menu,	object specification submenu )
+ADD_CMD( framebuffers,		do_glfb_menu,	off-screen framebuffer submenu )
+ADD_CMD( modes,			do_mode_menu,	display mode submenu )
+ADD_CMD( capabilities,		do_cap_menu,	rendering capability submenu )
+ADD_CMD( color,			do_color_menu,	drawing color submenu )
+/* display and setup_view commands used to be here, but just for teapot? */
+ADD_CMD( swap_buffers,		do_swap_buffers,	swap display buffers )
+ADD_CMD( sync_to_vblank,	do_vbl_sync,	enable/disable vblank synching )
+ADD_CMD( vbl_wait,		do_vbl_wait,	wait a specified number of frames )
+ADD_CMD( transform,		do_xf_menu,	viewing transformation submenu )
+ADD_CMD( lighting,		do_lighting_menu,	lighting submenu )
+ADD_CMD( fullscreen,		do_set_fullscreen,	enable/disable fullscreen mode )
+ADD_CMD( display_lists,		do_dl_menu,	display list submenu )
+ADD_CMD( stereo,		do_stereo_menu,	nVidia shutter glasses submenu )
+ADD_CMD( tiles,			do_tile_menu,	tile object submenu )
+MENU_END(gl)
+
+COMMAND_FUNC( do_gl_menu )
 {
 	static int inited=0;
 	if( !inited ){
-		auto_version(QSP_ARG  "GLMENU","VersionId_opengl");
 		inited=1;
 		gl_debug = add_debug_module(QSP_ARG  "gl");
+		DECLARE_STR1_FUNCTION(	display_list_exists,	display_list_exists )
 	}
-	PUSHCMD(gl_ctbl,"gl");
+	PUSH_MENU(gl);
 }
 
 #endif /* HAVE_OPENGL */

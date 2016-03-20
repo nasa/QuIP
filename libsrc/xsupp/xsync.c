@@ -1,9 +1,8 @@
 #include "quip_config.h"
 
-char VersionId_xsupp_xsync[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_X11
 
+#include <stdio.h>
 #include "xsupp.h"
 
 void x_sync_off()

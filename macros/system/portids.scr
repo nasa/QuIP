@@ -1,7 +1,7 @@
 
 Start_File portids.scr
 
-If var_exists(portids_read) "warn 'File portids.scr included more than once!?' PopFile 2 nop"
+If var_exists(portids_read) "warn 'File portids.scr included more than once!?' exit_macro"
 
 # these are the id numbers used for socket ports between the various # machines
 

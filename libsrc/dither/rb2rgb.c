@@ -1,12 +1,11 @@
 #include "quip_config.h"
 
-char VersionId_dither_rb2rgb[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
 
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "ctone.h"
 #include "vec_util.h"
@@ -25,12 +24,12 @@ static int install_white(SINGLE_QSP_ARG_DECL);
 
 /* r-b coordinates of phosphors */
 /* where do these numbers come from??? */
-#define X1	0.825101
-#define Y1	0.001364
-#define X2	0.619213
-#define Y2	0.002498
-#define X3	0.535606
-#define Y3	0.157105
+#define X1	0.825101f
+#define Y1	0.001364f
+#define X2	0.619213f
+#define Y2	0.002498f
+#define X3	0.535606f
+#define Y3	0.157105f
 
 /* phosphor to opponent (cardinal direction) matrix */
 static float p2o_mat[3][3];
@@ -85,13 +84,13 @@ static int init_matrices(SINGLE_QSP_ARG_DECL)
 		NWARN("init_matrices: need to specify object for p2c_mat");
 		return(-1);
 	}
-	ptr = (float *)p2c_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(p2c_dp);
 	for(i=0;i<3;i++)
 		for(j=0;j<3;j++)
 			*ptr++ = p2c_mat[i][j];
 	dp_copy(QSP_ARG  c2p_dp,p2c_dp);
 	dt_invert(QSP_ARG  c2p_dp);
-	ptr = (float *)c2p_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(c2p_dp);
 	for(i=0;i<3;i++)
 		for(j=0;j<3;j++)
 			c2p_mat[i][j] = *ptr++;
@@ -113,6 +112,7 @@ static int init_matrices(SINGLE_QSP_ARG_DECL)
 	in the chromaticites at the white luminance.
 */
 
+#ifdef NOT_USED
 void show_mat( float matrix[3][3], char *name )
 {
 	printf("%s:\n\t%f\t%f\t%f\n", name,
@@ -122,8 +122,9 @@ void show_mat( float matrix[3][3], char *name )
 	printf("\t%f\t%f\t%f\n",
 		matrix[2][0], matrix[2][1], matrix[2][2]);
 }
+#endif /* NOT_USED */
 
-float rgb_norm(float *vec)	/* un-normalized rgb */
+static float rgb_norm(float *vec)	/* un-normalized rgb */
 {
 	int i;
 	float totlum;
@@ -138,7 +139,7 @@ float rgb_norm(float *vec)	/* un-normalized rgb */
 
 	/* convert rgb settings to relative rgb luminances, get total lum */
 
-advise("lumscal");
+NADVISE("lumscal");
 showvec(lumscal);
 	totlum=0.0;
 	for(i=0;i<3;i++){
@@ -176,7 +177,7 @@ static void apply_mat3x3(float *vec,float mat[3][3])
 
 /* convert rgb settings to rb chromaticities and relative luminance */
 
-void rgb2rb(float *vec)			/** returns luminance in vec[2] */
+static void rgb2rb(float *vec)			/** returns luminance in vec[2] */
 {
 	float totlum;
 
@@ -188,15 +189,15 @@ void rgb2rb(float *vec)			/** returns luminance in vec[2] */
 showvec(vec);
 	totlum=rgb_norm(vec);
 sprintf(DEFAULT_ERROR_STRING,"rgb2rb:  totlum = %g",totlum);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 	/* vec is now fractional luminances (sum to 1) */
 showvec(vec);
-advise("p2c_mat");
+NADVISE("p2c_mat");
 showvec(p2c_mat[0]);
 showvec(p2c_mat[1]);
 showvec(p2c_mat[2]);
 	apply_mat3x3(vec,p2c_mat);	/* now contains rb and lum */
-advise("rgb2rb:  after p2c_mat");
+NADVISE("rgb2rb:  after p2c_mat");
 showvec(vec);
 	vec[2]=totlum;
 showvec(vec);
@@ -204,7 +205,7 @@ showvec(vec);
 
 /* convert chromaticity coordinates & luminance to an rgb triple */
 
-void rb2rgb(float *vec)			/** luminance given in vec[2] */
+static void rb2rgb(float *vec)			/** luminance given in vec[2] */
 {
 	float totlum;
 	int i;
@@ -238,12 +239,12 @@ static void wnorm(float *vec)
 	float fact, maxswing, factor[3];
 
 sprintf(DEFAULT_ERROR_STRING,"%g %g %g",vec[0],vec[1],vec[2]);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 	for(j=0;j<3;j++){
 		maxswing=_white[j];	/* maximum allowable decrement */
 		if( (PHOSMAX-_white[j]) < maxswing )
 			maxswing=PHOSMAX-_white[j];
-		factor[j] = fabs(vec[j]) / maxswing ;
+		factor[j] = (float) fabs(vec[j]) / maxswing ;
 	}
 	/* find the biggest factor */
 	fact=0.0;
@@ -310,13 +311,13 @@ showvec(wc);
 	wnorm(uv);
 	for(j=0;j<3;j++) o2p_mat[j][2] = uv[j];
 
-	ptr = (float *)o2p_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(o2p_dp);
 	for(j=0;j<3;j++)
 		for(k=0;k<3;k++)
 			*ptr++ = o2p_mat[j][k];
 	dp_copy(QSP_ARG  p2o_dp,o2p_dp);
 	dt_invert(QSP_ARG  p2o_dp);
-	ptr = (float *)p2o_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(p2o_dp);
 	for(j=0;j<3;j++)
 		for(k=0;k<3;k++)
 			p2o_mat[j][k] = *ptr++;
@@ -345,9 +346,9 @@ void o2rgb(QSP_ARG_DECL  float *vec)
 
 COMMAND_FUNC( set_lumscal )
 {
-	lumscal[0] = HOW_MUCH("relative red luminance");
-	lumscal[1] = HOW_MUCH("relative green luminance");
-	lumscal[2] = HOW_MUCH("relative blue luminance");
+	lumscal[0] = (float) HOW_MUCH("relative red luminance");
+	lumscal[1] = (float) HOW_MUCH("relative green luminance");
+	lumscal[2] = (float) HOW_MUCH("relative blue luminance");
 advise("SETTING know_lumscal");
 	know_lumscal = 1;
 }

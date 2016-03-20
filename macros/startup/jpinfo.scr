@@ -1,0 +1,14 @@
+#
+
+< $QUIPSTARTUPDIR/quip.scr
+
+If $argc!=1  "error_exit 'usage:  jpinfo jpeg_filename'"
+
+Set jpeg_file $1
+If !file_exists('$jpeg_file')
+  "error_exit 'File $jpeg_file does not exist '"
+
+Read_File_Header $jpeg_file
+fileio info $jpeg_file quit
+exit
+

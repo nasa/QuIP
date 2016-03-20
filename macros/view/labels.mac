@@ -76,6 +76,7 @@ Convert $1.fim $1.bim
 Convert $1.bim $1.fim
 .
 
+# BUG need to rename this...
 Define Get_String 1 string
 Clear_Strings lab
 Get_Text_String lab $1

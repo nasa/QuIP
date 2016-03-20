@@ -16,6 +16,9 @@
 #include <libdv/dv_types.h>
 #endif
 
+// Where did we used to get bool from???
+typedef int bool;
+
 #include "dv_globals.h"
 
 #define FRAME_MAX_WIDTH 720
@@ -46,7 +49,6 @@ typedef struct AudioInfo
 	int channels;
 	int quantization;
 } AudioInfo;
-
 
 typedef struct VideoInfo
 {

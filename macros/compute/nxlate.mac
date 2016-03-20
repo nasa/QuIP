@@ -5,25 +5,31 @@ Start_File nxlate.mac
 
 
 Define Xlate_Init 1 'template image'
+advise "Xlate_Init $1"
 Tell_If "Xlate_Init $1"
 Assign xlw "ncols('$1')"
 Assign xlh "nrows('$1')"
-If obj_exists(_c_uv)&&ncols(_c_uv)==1+$xlw/2&&nrows(_c_uv)==$xlh "PopFile 2"
+If obj_exists(_c_uv)&&ncols(_c_uv)==1+$xlw/2&&nrows(_c_uv)==$xlh "exit_macro"
 If obj_exists(_c_uv) "Delete_Image _c_uv"
 
+advise "Xform_For _c_uv $1"		# x & y frequencies
 Xform_For _c_uv $1		# x & y frequencies
 Xform_For _c_tmp $1
+advise "Ramp2D _c_tmp{0} 0.0 -1/$xlw 0"
 Ramp2D _c_tmp{0} 0.0 -1/$xlw 0
 Ramp2D _c_tmp{1} 0.5 0 -1/$xlh
 ## zero Nyquist!?
 #VSet _c_tmp{0}[0] 0.0
 #VSet _c_tmp{1}{0} 0.0
+advise "Scroll _c_uv _c_tmp 0 $xlh/2"
 Scroll _c_uv _c_tmp 0 $xlh/2
+advise "VSMul _c_uv{0} _c_uv{0} 8*atan(1)"
 VSMul _c_uv{0} _c_uv{0} 8*atan(1)
 VSMul _c_uv{1} _c_uv{1} 8*atan(1)
 #Show_Gray _c_uv{0} v5
 #Show_Gray _c_uv{1} v6
 Delete_Image _c_tmp
+advise 'Xlate_Init finished...'
 .
 
 # call this once to set up for a new shift
@@ -45,16 +51,23 @@ Delete_Image _c_tmp
 # call this after Setup_Xlate
 
 Define Quick_Xlate 1 image
+advise 'Quick_Xlate calling RFFT'
 RFFT _c_input $1
+advise 'Quick_Xlate calling VVMul'
 VVMul _c_input _c_input _c_tmp
+advise 'Quick_Xlate calling RInvFFT'
 RInvFFT $1 _c_input
 .
 
 # This assumes that _c_uv has been set up with Xlate_Init
 
 Define Make_Phase_Multiplier 3 target x y
+If !obj_exists(_c_uv) "error_exit 'Make_Phase_Multiplier:  need to call Xlate_Init first!?'"
 #Tell_If "Make_Phase_Multiplier $1"
+advise "Make_Phase_Multiplier $1 $2 $3"
+advise "VSMul $1{0} _c_uv{0} $2"
 VSMul $1{0} _c_uv{0} $2
+advise "VSMul $1{1} _c_uv{1} $3"		# $1 is u dx +  i v dy
 VSMul $1{1} _c_uv{1} $3		# $1 is u dx +  i v dy
 VVAdd $1{0} $1{0} $1{1}		# $1{0} is u dx + v dy
 VSin $1{1} $1{0}

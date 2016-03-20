@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_mmenu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 #include <stdio.h>
@@ -55,16 +53,13 @@ char VersionId_meteor_mmenu[] = QUIP_VERSION_STRING;
 
 /* #include "ioctl_meteor.h" */
 
-#include "version.h"
+#include "quip_prot.h"
 #include "mmenu.h"
-#include "debug.h"
-#include "query.h"
 #include "pupfind.h"
 #include "mmvi.h"
 #include "gmovie.h"
 #include "fio_api.h"
 #include "rv_api.h"
-#include "submenus.h"
 #include "fg_routines.h"
 
 #if defined(PAL)
@@ -84,12 +79,6 @@ char VersionId_meteor_mmenu[] = QUIP_VERSION_STRING;
 #define MAXFPS 30
 #endif
 #define HIMEM_FG
-extern int	meteorfd;
-/* function prototypes */
-void gotframe(int x);
-
-/* device stuff */
-//static char *DevName;
 
 char *mmbuf=NULL;
 
@@ -117,7 +106,7 @@ Movie_Module meteor_movie_module = {
 	meteor_record,
 	meteor_monitor,
 
-	meteor_menu,
+	do_meteor_menu,
 	meteor_movie_info,
 	meteor_init,
 
@@ -181,9 +170,12 @@ static COMMAND_FUNC( do_meteor_set_input )
 		case 4:  meteor_set_input(METEOR_INPUT_DEV1); break;
 		case 5:  meteor_set_input(METEOR_INPUT_DEV2); break;
 		case 6:  meteor_set_input(METEOR_INPUT_DEV3); break;
-#ifdef CAUTIOUS
-		default:  WARN("bad meteor input"); break;
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			WARN("bad meteor input");
+			assert( ! "bad meteor input" );
+			break;
+//#endif /* CAUTIOUS */
 	}
 }
 
@@ -212,13 +204,14 @@ static COMMAND_FUNC( do_meteor_get_input )
 		case METEOR_INPUT_DEV1:  i=4; break;
 		case METEOR_INPUT_DEV2:  i=5; break;
 		case METEOR_INPUT_DEV3:  i=6; break;
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 		default:
-			sprintf(error_string,
-		"CAUTIOUS:  invalid meteor input code %d (0x%x)", w,w);
-			WARN(error_string);
+//			sprintf(ERROR_STRING,
+//		"CAUTIOUS:  invalid meteor input code %d (0x%x)", w,w);
+//			WARN(ERROR_STRING);
+			assert( ! "invalid meteor input" );
 			return;
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 	}
 
 	sprintf(msg_str,"Meteor input is %s",input_names[i]);
@@ -227,16 +220,10 @@ static COMMAND_FUNC( do_meteor_get_input )
 
 static void setup_meteor_device(SINGLE_QSP_ARG_DECL)
 {
-/*	if ((meteor_fd = open(DevName, O_RDWR)) < 0) {
-		perror("open failed");
-		printf("device %s\n", DevName);
-	}
-*/
 	if ( fg_open(QSP_ARG  SOURCE_NTSC, METEOR_GEO_RGB24, HIMEM_RAM) < 0) {
 		perror("fg_open()");
 		exit(-1);
 	}
-	meteor_fd = meteorfd;
 }
 
 static void meteor_set_iformat(int c)
@@ -270,9 +257,12 @@ static COMMAND_FUNC( do_meteor_set_iformat )
 		case 1:  meteor_set_iformat(METEOR_FMT_PAL); break;
 		case 2:  meteor_set_iformat(METEOR_FMT_SECAM); break;
 		case 3:  meteor_set_iformat(METEOR_FMT_AUTOMODE); break;
-#ifdef CAUTIOUS
-		default:  WARN("bad format selection"); break;
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			WARN("bad format selection");
+			assert( ! "bad format selection");
+			break;
+//#endif /* CAUTIOUS */
 	}
 }
 
@@ -289,14 +279,17 @@ static COMMAND_FUNC( do_meteor_get_iformat )
 		case METEOR_FMT_PAL:  i=1; break;
 		case METEOR_FMT_SECAM:  i=2; break;
 		case METEOR_FMT_AUTOMODE:  i=3; break;
-#ifdef CAUTIOUS
-		default:  WARN("CAUTIOUS:  unrecognized format code"); break;
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			WARN("CAUTIOUS:  unrecognized format code");
+			assert( ! "unrecognized format code");
+			break;
+//#endif /* CAUTIOUS */
 	}
 	if( i < 0 ) return;
 
-	sprintf(error_string,"Format is %s",fmt_list[i]);
-	advise(error_string);
+	sprintf(ERROR_STRING,"Format is %s",fmt_list[i]);
+	advise(ERROR_STRING);
 }
 
 	
@@ -340,11 +333,11 @@ static COMMAND_FUNC( do_getc )
 	while( c!=EOF && c!='q' && c!=4 ){
 		c=fgetc(fp);
 		if( c!=EOF ){
-			sprintf(error_string,"char is 0x%x",c);
-			advise(error_string);
+			sprintf(ERROR_STRING,"char is 0x%x",c);
+			advise(ERROR_STRING);
 			c &= 0xff;
-			sprintf(error_string,"char is 0x%x",c);
-			advise(error_string);
+			sprintf(ERROR_STRING,"char is 0x%x",c);
+			advise(ERROR_STRING);
 			kill_sig(SINGLE_QSP_ARG);
 			n_eof=0;
 		} else n_eof++;
@@ -352,8 +345,8 @@ static COMMAND_FUNC( do_getc )
 	}
 
 	fclose(fp);
-	sprintf(error_string,"%d EOF's detected\n",n_eof);
-	advise(error_string);
+	sprintf(ERROR_STRING,"%d EOF's detected\n",n_eof);
+	advise(ERROR_STRING);
 }
 
 static COMMAND_FUNC( do_make_frame_obj )
@@ -473,48 +466,49 @@ static COMMAND_FUNC( do_setup_blur )
 	dp = PICK_OBJ("impulse response");
 	if( dp == NO_OBJ ) return;
 
-	setup_blur(dp);
+	setup_blur(QSP_ARG  dp);
 }
 
-static Command pupfind_ctbl[]={
-{ "setup_diff",	setup_diff_computation,	"initialize internal variables"	},
-{ "compute_diff",do_compute_diff,		"compute difference image"	},
-{ "setup_curv",	setup_curv_computation,	"initialize internal variables"	},
-{ "compute_curv",do_compute_curv,		"compute gaussian curvature"	},
-{ "setup_blur",	do_setup_blur,		"specity impulse response"		},
-{ "blur_curvature",blur_curvature,	"blur curvature"		},
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(pupfind_menu,s,f,h)
+
+MENU_BEGIN(pupfind)
+ADD_CMD( setup_diff,		setup_diff_computation,	initialize internal variables )
+ADD_CMD( compute_diff,		do_compute_diff,	compute difference image )
+ADD_CMD( setup_curv,		setup_curv_computation,	initialize internal variables )
+ADD_CMD( compute_curv,		do_compute_curv,	compute gaussian curvature )
+ADD_CMD( setup_blur,		do_setup_blur,		specity impulse response )
+ADD_CMD( blur_curvature,	blur_curvature,		blur curvature )
+MENU_END(pupfind)
 
 static COMMAND_FUNC( pf_menu )
 {
-	PUSHCMD(pupfind_ctbl,"pupfind");
+	PUSH_MENU(pupfind);
 }
 
-static Command meteor_ctbl[]={
-{ "frame",	do_make_frame_obj,	"make an object for a frame"	},
-{ "close",	do_close_dev,		"close meteor devices"		},
-{ "geometry",	do_geometry,		"geometry submenu"		},
-{ "video",	do_video_controls,	"video controls"		},
-{ "capture",	do_capture,		"capture submenu"		},
-{ "flow",	meteor_flow_menu,	"image flow submenu"		},
-{ "set_input",	do_meteor_set_input,	"select input source"		},
-{ "get_input",	do_meteor_get_input,	"report current input source"	},
-{ "timestamp",	do_set_timestamp,	"enable/disable timestamping"	},
-#ifdef USE_SIGS
-{ "install_handler",	meteor_install_handler,	"install signal handler"	},
-#endif
-{ "set_iformat",do_meteor_set_iformat,	"set input format"		},
-{ "get_iformat",do_meteor_get_iformat,	"get input format"		},
-{ "kill",	kill_sig,		"fake a capture signal"		},
-{ "getc",	do_getc,		"try to get a character from the terminal file"	},
-{ "cap_tst",	do_captst,		"capture test submenu"		},
-{ "pupil_finder",pf_menu,		"pupil finder submenu"		},
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(meteor_menu,s,f,h)
 
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+MENU_BEGIN(meteor)
+ADD_CMD( frame,		do_make_frame_obj,	make an object for a frame )
+ADD_CMD( close,		do_close_dev,		close meteor devices )
+ADD_CMD( geometry,	do_geometry,		geometry submenu )
+ADD_CMD( video,		do_video_controls,	video controls )
+ADD_CMD( capture,	do_capture,		capture submenu )
+ADD_CMD( flow,		meteor_flow_menu,	image flow submenu )
+ADD_CMD( set_input,	do_meteor_set_input,	select input source )
+ADD_CMD( get_input,	do_meteor_get_input,	report current input source )
+ADD_CMD( timestamp,	do_set_timestamp,	enable/disable timestamping )
+#ifdef USE_SIGS
+ADD_CMD( install_handler,	meteor_install_handler,	install signal handler )
+#endif
+ADD_CMD( set_iformat,	do_meteor_set_iformat,	set input format )
+ADD_CMD( get_iformat,	do_meteor_get_iformat,	get input format )
+ADD_CMD( kill,		kill_sig,		fake a capture signal )
+ADD_CMD( getc,		do_getc,		try to get a character from the terminal file )
+ADD_CMD( cap_tst,	do_captst,		capture test submenu )
+ADD_CMD( pupil_finder,	pf_menu,		pupil finder submenu )
+MENU_END(meteor)
+
 
 void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 {
@@ -523,29 +517,29 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 
 	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
 		if( verbose ){
-			sprintf(error_string,"make_movie_from_inode:  rv inode %s is not a movie",inp->rvi_name);
-			advise(error_string);
+			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",inp->rvi_name);
+			advise(ERROR_STRING);
 		}
 		return;
 	}
 
 	mvip = create_movie(QSP_ARG  inp->rvi_name);
 	if( mvip == NO_MOVIE ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"error creating movie %s",inp->rvi_name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 	} else {
 		ifp = img_file_of(QSP_ARG  inp->rvi_name);
 		if( ifp == NO_IMAGE_FILE ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 	"image file struct for rv file %s does not exist!?",inp->rvi_name);
-			WARN(error_string);
+			WARN(ERROR_STRING);
 		} else {
 			mvip->mvi_data = ifp;
-			mvip->mvi_nframes = ifp->if_dp->dt_frames;
-			mvip->mvi_height = ifp->if_dp->dt_rows;
-			mvip->mvi_width = ifp->if_dp->dt_cols;
-			mvip->mvi_depth = ifp->if_dp->dt_comps;
+			SET_MOVIE_FRAMES(mvip, OBJ_FRAMES(ifp->if_dp));
+			SET_MOVIE_HEIGHT(mvip, OBJ_ROWS(ifp->if_dp));
+			SET_MOVIE_WIDTH(mvip, OBJ_COLS(ifp->if_dp));
+			SET_MOVIE_DEPTH(mvip, OBJ_COMPS(ifp->if_dp));
 		}
 	}
 }
@@ -558,8 +552,8 @@ void update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
 {
 	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
 		if( verbose ){
-			sprintf(error_string,"update_movie_database:  rv inode %s is not a movie",inp->rvi_name);
-			advise(error_string);
+			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",inp->rvi_name);
+			advise(ERROR_STRING);
 		}
 		return;
 	}
@@ -587,27 +581,32 @@ void meteor_init(SINGLE_QSP_ARG_DECL)
 	meteor_set_size(QSP_ARG  DEFAULT_METEOR_HEIGHT,DEFAULT_METEOR_WIDTH,DEFAULT_METEOR_FRAMES);
 	meteor_set_iformat(DEFAULT_FORMAT);
 
-	auto_version(QSP_ARG  "METEOR","VersionId_meteor");
 	meteor_inited++;
 }
 
-COMMAND_FUNC( meteor_menu )
+COMMAND_FUNC( do_meteor_menu )
 {
 	static int inited=0;
 
 	if( ! inited ){
+advise("setting up default rawvol");
 		if( insure_default_rv(SINGLE_QSP_ARG) >= 0 ){
 			/* create movie structs for any existing rv files */
+advise("initializing rawvol movies");
 			init_rv_movies(SINGLE_QSP_ARG);
+		} else {
+			WARN("do_meteor_menu:  No default raw volume!?");
 		}
 
+advise("calling meteor init");
 		meteor_init(SINGLE_QSP_ARG);
+advise("back from meteor init");
 		load_movie_module(QSP_ARG  &meteor_movie_module);
 
 		inited=1;
 	}
 
-	PUSHCMD(meteor_ctbl,"meteor");
+	PUSH_MENU(meteor);
 }
 
 

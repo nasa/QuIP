@@ -1,7 +1,9 @@
 #
 # visca control daemon
 
-#variables set verbose 1 quit
+#verbose yes
+
+advise 'evid.scr BEGIN'
 
 < $DOTFILEDIR/.daemon
 #< $DOTFILEDIR/.generic
@@ -12,7 +14,7 @@
 < $macro_dir/visca/visca.mac
 < $macro_dir/visca/visca_common.mac
 
-variables set verbose 1 quit
+#verbose yes
 
 Daemon_Start $evid_port
 

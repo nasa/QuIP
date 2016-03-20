@@ -2,20 +2,15 @@
 
 /* morphological image operators */
 
-char VersionId_vec_util_morph[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "vec_util.h"
 #include "ggem.h"
-#include "vecgen.h"
+#include "veclib/vecgen.h"
 #include "math.h"	/* abs */
 #include "debug.h"	/* verbose */
 
 #define PIXTYPE u_char		/* see SeedFill.c BUG */
-
-/* local prototypes */
-static float flt_pixelread(long x,long y);
-static void flt_pixelwrite(long x,long y,double v);
 
 /* Put a pixel to 0 if ANY of it's neighbors are 1 */
 
@@ -28,14 +23,14 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	if( dpto == dpfr )
 		WARN("source and destination should differ for erosion!?");
 
-	if( !is_contiguous(dpfr) ){
-		sprintf(error_string,
+	if( !is_contiguous(QSP_ARG  dpfr) ){
+		sprintf(ERROR_STRING,
 			"source image %s must be contiguous for erosion",
-			dpfr->dt_name);
-		WARN(error_string);
+			OBJ_NAME(dpfr));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dpto->dt_prec != PREC_SP || dpfr->dt_prec != PREC_SP ){
+	if( OBJ_PREC(dpto) != PREC_SP || OBJ_PREC(dpfr) != PREC_SP ){
 		WARN("precision must be float for erosion");
 		return;
 	}
@@ -44,15 +39,15 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		return;
 	}
 
-	ri = dpfr->dt_rowinc;
+	ri = OBJ_ROW_INC(dpfr);
 
 	/* Let's forget about the edges for now... */
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + dpfr->dt_pinc;
-		for(j=1;j<(dpto->dt_cols-1);j++){
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + OBJ_PXL_INC(dpfr);
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 			if( *srcp     == 1.0 && ( 
 			    *(srcp-1) == 0.0 ||
 			    *(srcp+1) == 0.0 ||
@@ -68,16 +63,16 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 				else *dstp = 0.0;
 			      }
 			srcp++;
-			dstp+=dpto->dt_pinc;
+			dstp+=OBJ_PXL_INC(dpto);
 		}
 	}
 	/* now do the top row */
 	i=0;
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + dpfr->dt_pinc;
-		for(j=1;j<(dpto->dt_cols-1);j++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + OBJ_PXL_INC(dpfr);
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 			if( *srcp     == 1.0 && (
 			    *(srcp-1) == 0.0 ||
 			    *(srcp+1) == 0.0 ||
@@ -91,15 +86,15 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 			           else *dstp = 0.0;
                               }
 			srcp++;
-			dstp+=dpto->dt_pinc;
+			dstp+=OBJ_PXL_INC(dpto);
 		}
 	/* now do the top row */
-	i=dpto->dt_rows-1;
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + dpfr->dt_pinc;
-		for(j=1;j<(dpto->dt_cols-1);j++){
+	i=OBJ_ROWS(dpto)-1;
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + OBJ_PXL_INC(dpfr);
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 			if( *srcp     == 1.0 && (
 			    *(srcp-1) == 0.0 ||
 			    *(srcp+1) == 0.0 ||
@@ -112,15 +107,15 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 			  else *dstp = 0.0;
 		             }
 			srcp++;
-			dstp+=dpto->dt_pinc;
+			dstp+=OBJ_PXL_INC(dpto);
 		}
 	/* now do the left column */
 	j=0;
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc;
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr);
 		if( *srcp     == 1.0 && (
 		    *(srcp+1) == 0.0 ||
 		    *(srcp-ri) == 0.0 ||
@@ -134,12 +129,12 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		     }
 	}
 	/* now do the right column */
-	j=dpto->dt_cols-1;
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-		srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	j=OBJ_COLS(dpto)-1;
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+		srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 		if( *srcp     == 1.0 && (
 		    *(srcp-1) == 0.0 ||
 		    *(srcp-ri) == 0.0 ||
@@ -156,10 +151,10 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	/* upper left */
 	i=0;
 	j=0;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 && (
 	    *(srcp+1) == 0.0 ||
 	    *(srcp+ri) == 0.0 ||
@@ -171,11 +166,11 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	     }
 	/* lower left */
 	j=0;
-	i=dpto->dt_rows-1;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	i=OBJ_ROWS(dpto)-1;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 && (
 	    *(srcp+1) == 0.0 ||
 	    *(srcp-ri) == 0.0 ||
@@ -186,12 +181,12 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	           else *dstp = 0.0;
 		}
 	/* upper right */
-	j=dpto->dt_cols-1;
+	j=OBJ_COLS(dpto)-1;
 	i=0;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 && (
 	    *(srcp-1) == 0.0 ||
 	    *(srcp+ri) == 0.0 ||
@@ -202,12 +197,12 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	  	else *dstp = 0.0;
 		}
 	/* lower right */
-	i=dpto->dt_rows-1;
-	j=dpto->dt_cols-1;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	i=OBJ_ROWS(dpto)-1;
+	j=OBJ_COLS(dpto)-1;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 && (
 	    *(srcp-1) == 0.0 ||
 	    *(srcp-ri) == 0.0 ||
@@ -232,14 +227,14 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	if( dpto == dpfr )
 		WARN("source and destination should differ for dilation!?");
 
-	if( !is_contiguous(dpfr) ){
-		sprintf(error_string,
+	if( !is_contiguous(QSP_ARG  dpfr) ){
+		sprintf(ERROR_STRING,
 			"source image %s must be contiguous for dilation",
-			dpfr->dt_name);
-		WARN(error_string);
+			OBJ_NAME(dpfr));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dpto->dt_prec != PREC_SP || dpfr->dt_prec != PREC_SP ){
+	if( OBJ_PREC(dpto) != PREC_SP || OBJ_PREC(dpfr) != PREC_SP ){
 		WARN("precision must be float for dilation");
 		return;
 	}
@@ -248,15 +243,15 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		return;
 	}
 
-	ri = dpfr->dt_rowinc;
+	ri = OBJ_ROW_INC(dpfr);
 
 	/* Let's forget about the edges for now... */
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + dpfr->dt_pinc;
-		for(j=1;j<(dpto->dt_cols-1);j++){
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + OBJ_PXL_INC(dpfr);
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 			if( *srcp     == 1.0 ||
 			    *(srcp-1) == 1.0 ||
 			    *(srcp+1) == 1.0 ||
@@ -270,16 +265,16 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 			else
 				*dstp = 0.0;
 			srcp++;
-			dstp+=dpto->dt_pinc;
+			dstp+=OBJ_PXL_INC(dpto);
 		}
 	}
 	/* now do the top row */
 	i=0;
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + dpfr->dt_pinc;
-		for(j=1;j<(dpto->dt_cols-1);j++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + OBJ_PXL_INC(dpfr);
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 			if( *srcp     == 1.0 ||
 			    *(srcp-1) == 1.0 ||
 			    *(srcp+1) == 1.0 ||
@@ -291,15 +286,15 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 			else
 				*dstp = 0.0;
 			srcp++;
-			dstp+=dpto->dt_pinc;
+			dstp+=OBJ_PXL_INC(dpto);
 		}
 	/* now do the top row */
-	i=dpto->dt_rows-1;
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + dpfr->dt_pinc;
-		for(j=1;j<(dpto->dt_cols-1);j++){
+	i=OBJ_ROWS(dpto)-1;
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + OBJ_PXL_INC(dpfr);
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 			if( *srcp     == 1.0 ||
 			    *(srcp-1) == 1.0 ||
 			    *(srcp+1) == 1.0 ||
@@ -310,15 +305,15 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 			else
 				*dstp = 0.0;
 			srcp++;
-			dstp+=dpto->dt_pinc;
+			dstp+=OBJ_PXL_INC(dpto);
 		}
 	/* now do the left column */
 	j=0;
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc;
-		srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc;
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto);
+		srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr);
 		if( *srcp     == 1.0 ||
 		    *(srcp+1) == 1.0 ||
 		    *(srcp-ri) == 1.0 ||
@@ -330,12 +325,12 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 			*dstp = 0.0;
 	}
 	/* now do the right column */
-	j=dpto->dt_cols-1;
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		dstp=(float *)dpto->dt_data;
-		srcp=(float *)dpfr->dt_data;
-		dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-		srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	j=OBJ_COLS(dpto)-1;
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		dstp=(float *)OBJ_DATA_PTR(dpto);
+		srcp=(float *)OBJ_DATA_PTR(dpfr);
+		dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+		srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 		if( *srcp     == 1.0 ||
 		    *(srcp-1) == 1.0 ||
 		    *(srcp-ri) == 1.0 ||
@@ -350,10 +345,10 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	/* upper left */
 	i=0;
 	j=0;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 ||
 	    *(srcp+1) == 1.0 ||
 	    *(srcp+ri) == 1.0 ||
@@ -363,11 +358,11 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		*dstp = 0.0;
 	/* lower left */
 	j=0;
-	i=dpto->dt_rows-1;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	i=OBJ_ROWS(dpto)-1;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 ||
 	    *(srcp+1) == 1.0 ||
 	    *(srcp-ri) == 1.0 ||
@@ -376,12 +371,12 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	else
 		*dstp = 0.0;
 	/* upper right */
-	j=dpto->dt_cols-1;
+	j=OBJ_COLS(dpto)-1;
 	i=0;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 ||
 	    *(srcp-1) == 1.0 ||
 	    *(srcp+ri) == 1.0 ||
@@ -390,12 +385,12 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	else
 		*dstp = 0.0;
 	/* lower right */
-	i=dpto->dt_rows-1;
-	j=dpto->dt_cols-1;
-	dstp=(float *)dpto->dt_data;
-	srcp=(float *)dpfr->dt_data;
-	dstp += i*dpto->dt_rowinc + j * dpto->dt_pinc ;
-	srcp += i*dpfr->dt_rowinc + j * dpfr->dt_pinc ;
+	i=OBJ_ROWS(dpto)-1;
+	j=OBJ_COLS(dpto)-1;
+	dstp=(float *)OBJ_DATA_PTR(dpto);
+	srcp=(float *)OBJ_DATA_PTR(dpfr);
+	dstp += i*OBJ_ROW_INC(dpto) + j * OBJ_PXL_INC(dpto) ;
+	srcp += i*OBJ_ROW_INC(dpfr) + j * OBJ_PXL_INC(dpfr) ;
 	if( *srcp     == 1.0 ||
 	    *(srcp-1) == 1.0 ||
 	    *(srcp-ri) == 1.0 ||
@@ -412,30 +407,30 @@ static Data_Obj *fill_dp=NO_OBJ;
 
 int pixelread(int x,int y)
 {
-	return( (int) *( ((PIXTYPE *)fill_dp->dt_data)
-		+ x * fill_dp->dt_pinc
-		+ y * fill_dp->dt_rinc ) );
+	return( (int) *( ((PIXTYPE *)OBJ_DATA_PTR(fill_dp))
+		+ x * OBJ_PXL_INC(fill_dp)
+		+ y * OBJ_ROW_INC(fill_dp) ) );
 }
 
 void pixelwrite(int x,int y,int v)
 {
-	*( ((PIXTYPE *)fill_dp->dt_data)
-		+ x * fill_dp->dt_pinc
-		+ y * fill_dp->dt_rinc ) = v;
+	*( ((PIXTYPE *)OBJ_DATA_PTR(fill_dp))
+		+ x * OBJ_PXL_INC(fill_dp)
+		+ y * OBJ_ROW_INC(fill_dp) ) = (PIXTYPE) v;
 }
 
 static float flt_pixelread(long x,long y)
 {
-	return( *( ((float *)fill_dp->dt_data)
-		+ x * fill_dp->dt_pinc
-		+ y * fill_dp->dt_rinc ) );
+	return( *( ((float *)OBJ_DATA_PTR(fill_dp))
+		+ x * OBJ_PXL_INC(fill_dp)
+		+ y * OBJ_ROW_INC(fill_dp) ) );
 }
 
 static void flt_pixelwrite(long x,long y,double v)
 {
-	*( ((float *)fill_dp->dt_data)
-		+ x * fill_dp->dt_pinc
-		+ y * fill_dp->dt_rinc ) = v;
+	*( ((float *)OBJ_DATA_PTR(fill_dp))
+		+ x * OBJ_PXL_INC(fill_dp)
+		+ y * OBJ_ROW_INC(fill_dp) ) = (float) v;
 }
 
 static float flt_ov;	/* original value at seed pt */
@@ -448,20 +443,20 @@ static int flt_inside(long x, long y)
 
 	v=flt_pixelread(x,y);
 	if( verbose ){
-		sprintf(msg_str,"value at %ld %ld is %g, orig_val = %g, tol = %g",
+		sprintf(DEFAULT_MSG_STR,"value at %ld %ld is %g, orig_val = %g, tol = %g",
 			x,y,v,flt_ov,flt_tol);
-		prt_msg(msg_str);
+		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 	}
 	if( fabs(v - flt_ov) <= flt_tol ){
 		if( verbose ){
-			sprintf(msg_str,"pixel at %ld %ld is inside fill region",x,y);
-			prt_msg(msg_str);
+			sprintf(DEFAULT_MSG_STR,"pixel at %ld %ld is inside fill region",x,y);
+			_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 		}
 		return(1);
 	} else {
 		if( verbose ){
-			sprintf(msg_str,"pixel at %ld %ld is NOT inside fill region",x,y);
-			prt_msg(msg_str);
+			sprintf(DEFAULT_MSG_STR,"pixel at %ld %ld is NOT inside fill region",x,y);
+			_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 		}
 		return(0);
 	}
@@ -470,9 +465,9 @@ static int flt_inside(long x, long y)
 static void flt_fill(long x, long y)
 {
 	if( verbose ){
-		sprintf(msg_str,"Filling pixel at %ld %ld with value %g",
+		sprintf(DEFAULT_MSG_STR,"Filling pixel at %ld %ld with value %g",
 			x,y,flt_nv);
-		prt_msg(msg_str);
+		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 	}
 	flt_pixelwrite(x,y,flt_nv);
 }
@@ -490,35 +485,37 @@ void ifl(QSP_ARG_DECL  Data_Obj *dp,dimension_t x,dimension_t y,double color,dou
 	}
 #endif /* CAUTIOUS */
 
+	INSIST_RAM_OBJ(dp,ifl)
+
 	fill_dp = dp;
-	if( dp->dt_prec == PREC_UBY ){
+	if( OBJ_PREC(dp) == PREC_UBY ){
 /*
-sprintf(error_string,"ifl( %s, %ld, %ld, color = %g, tol = %g )",dp->dt_name,x,y,color,tol);
-advise(error_string);
+sprintf(ERROR_STRING,"ifl( %s, %ld, %ld, color = %g, tol = %g )",OBJ_NAME(dp),x,y,color,tol);
+advise(ERROR_STRING);
 */
-		ggem_fill(QSP_ARG  (int)x,(int)y,(int)dp->dt_cols,(int)dp->dt_rows,(PIXTYPE)color,(int)tol);
+		ggem_fill(QSP_ARG  (int)x,(int)y,(int)OBJ_COLS(dp),(int)OBJ_ROWS(dp),(PIXTYPE)color,(int)tol);
 		return;
-	} else if( dp->dt_prec == PREC_SP ){
+	} else if( OBJ_PREC(dp) == PREC_SP ){
 		flt_ov = flt_pixelread(x,y);
-		flt_nv = color;
-		flt_tol = tol;
+		flt_nv = (float) color;
+		flt_tol = (float) tol;
 
 		/* check that the inside rule fails for the new color */
 		if( fabs(flt_nv-flt_ov) <= flt_tol ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 "fill value (%g) too close to seed point value (%g) (tolerance = %g)",
 				flt_nv,flt_ov,flt_tol);
-			WARN(error_string);
+			WARN(ERROR_STRING);
 			return;
 		}
 		gen_fill(x,y,dp,flt_inside,flt_fill);
 	} else {
-		sprintf(error_string,"ifl:  Sorry, precision %s (object %s) is not supported",
-			prec_name[MACHINE_PREC(dp)],dp->dt_name);
-		WARN(error_string);
-		sprintf(error_string,"Supported precisions for ifl() are %s and %s",
-			prec_name[PREC_UBY],prec_name[PREC_SP]);
-		advise(error_string);
+		sprintf(ERROR_STRING,"ifl:  Sorry, precision %s (object %s) is not supported",
+			OBJ_MACH_PREC_NAME(dp),OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		sprintf(ERROR_STRING,"Supported precisions for ifl() are %s and %s",
+			NAME_FOR_PREC_CODE(PREC_UBY),NAME_FOR_PREC_CODE(PREC_SP));
+		advise(ERROR_STRING);
 	}
 }
 
@@ -581,42 +578,42 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 	int index;
 	u_char *table;
 
-	if( tbl_dp->dt_cols != 512 ){
-		sprintf(error_string,"Table vector %s (%d) should have 512 columns",
-			tbl_dp->dt_name,tbl_dp->dt_cols);
-		WARN(error_string);
+	if( OBJ_COLS(tbl_dp) != 512 ){
+		sprintf(ERROR_STRING,"Table vector %s (%d) should have 512 columns",
+			OBJ_NAME(tbl_dp),OBJ_COLS(tbl_dp));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( MACHINE_PREC(tbl_dp) != PREC_UBY ){
-		sprintf(error_string,"Table vector %s (%s) should have %s precision",
-			tbl_dp->dt_name,name_for_prec(tbl_dp->dt_prec),
-			name_for_prec(PREC_UBY));
-		WARN(error_string);
+	if( OBJ_MACH_PREC(tbl_dp) != PREC_UBY ){
+		sprintf(ERROR_STRING,"Table vector %s (%s) should have %s precision",
+			OBJ_NAME(tbl_dp),OBJ_PREC_NAME(tbl_dp),
+			NAME_FOR_PREC_CODE(PREC_UBY));
+		WARN(ERROR_STRING);
 		return;
 	}
-	table=(u_char *)tbl_dp->dt_data;
+	table=(u_char *)OBJ_DATA_PTR(tbl_dp);
 	if( dpto == dpfr ){
 		WARN("target and source must be distinct for morphological filter");
 		return;
 		/* BUG this will not catch subobjects that share data, so be careful! */
 	}
-	if( dpto->dt_prec != PREC_BIT ){
-		sprintf(error_string,"target image %s (%s) must have %s precision",
-			dpto->dt_name,name_for_prec(dpto->dt_prec),name_for_prec(PREC_BIT));
-		WARN(error_string);
+	if( OBJ_PREC(dpto) != PREC_BIT ){
+		sprintf(ERROR_STRING,"target image %s (%s) must have %s precision",
+			OBJ_NAME(dpto),OBJ_PREC_NAME(dpto),NAME_FOR_PREC_CODE(PREC_BIT));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dpfr->dt_prec != PREC_BIT ){
-		sprintf(error_string,"source image %s (%s) must have %s precision",
-			dpfr->dt_name,name_for_prec(dpfr->dt_prec),name_for_prec(PREC_BIT));
-		WARN(error_string);
+	if( OBJ_PREC(dpfr) != PREC_BIT ){
+		sprintf(ERROR_STRING,"source image %s (%s) must have %s precision",
+			OBJ_NAME(dpfr),OBJ_PREC_NAME(dpfr),NAME_FOR_PREC_CODE(PREC_BIT));
+		WARN(ERROR_STRING);
 		return;
 	}
 	if( !IS_CONTIGUOUS(dpto) || !IS_CONTIGUOUS(dpfr) ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"%s and %s must be contiguous for morphological filter",
-			dpto->dt_name,dpfr->dt_name);
-		WARN(error_string);
+			OBJ_NAME(dpto),OBJ_NAME(dpfr));
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -627,14 +624,14 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 	 * We might assume all 0's, or extend the edge values off the image...
 	 */
 
-	to = (u_long *)dpto->dt_data;
-	outbit = 1 << dpto->dt_bit0;
+	to = (u_long *)OBJ_DATA_PTR(dpto);
+	outbit = 1 << OBJ_BIT0(dpto);
 
-	from1 = from2 = from3 = (u_long *)dpfr->dt_data;
-	bitfr2 = bitfr1 = dpfr->dt_bit0;
+	from1 = from2 = from3 = (u_long *)OBJ_DATA_PTR(dpfr);
+	bitfr2 = bitfr1 = OBJ_BIT0(dpfr);
 
-	from3 += (dpfr->dt_cols/32);
-	bitfr3 = dpfr->dt_bit0 + (dpfr->dt_cols%32);
+	from3 += (OBJ_COLS(dpfr)/32);
+	bitfr3 = OBJ_BIT0(dpfr) + (OBJ_COLS(dpfr)%32);
 	if( bitfr3 >= 32 ){
 		bitfr3 -= 32;
 		from3++;
@@ -649,8 +646,8 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 	 *		6 7 8
 	 */
 
-	b0=b1=b2=b3=b6=0;	/* default values for upper left hand corner */
-	i=0;
+	//b0=b1=b2=b3=b6=0;	/* default values for upper left hand corner */
+	//i=0;
 	/* Do the upper left hand corner */
 	b0 = b1 = b3 = b4 = (*from2) & bit2 ? 1 : 0;
 	ADVANCE_BIT(bit2,from2)
@@ -669,7 +666,7 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 	 * We advance b5, b8, then copy the first row...
 	 */
 
-	for(j=1;j<(dpto->dt_cols-1);j++){
+	for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 		ROTATE_INPUTS
 		b5 = (*from2) & bit2 ? 1 : 0;
 		ADVANCE_BIT(bit2,from2)
@@ -692,8 +689,8 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 	/* Now from2, from3 should be pointing at the right rows... */
 
 	/* Do the middle rows */
-	for(i=1;i<(dpto->dt_rows-1);i++){
-		j=0;
+	for(i=1;i<(OBJ_ROWS(dpto)-1);i++){
+		//j=0;
 		/* Do the left column */
 		b1 = (*from1) & bit1 ? 1 : 0;
 		ADVANCE_BIT(bit1,from1)
@@ -715,7 +712,7 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 
 		/* Do the middle columns */
 
-		for(j=1;j<(dpto->dt_cols-1);j++){
+		for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 
 			ROTATE_INPUTS
 
@@ -753,7 +750,7 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 	SET_OUTPUT
 	/* Do the middle of the last row */
 
-	for(j=1;j<(dpto->dt_cols-1);j++){
+	for(j=1;j<(OBJ_COLS(dpto)-1);j++){
 		ROTATE_INPUTS
 
 		b2 = (*from1) & bit1 ? 1 : 0;

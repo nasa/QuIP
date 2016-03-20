@@ -1,30 +1,55 @@
-THREE_VEC_METHOD( vibnd , dst=src1<src2?src2:src1 )
-TWO_VEC_METHOD( vsign , dst = 1 )
-TWO_VEC_METHOD( vabs , dst=src1 )
-TWO_VEC_METHOD( rvneg , dst=( (std_type) -((std_signed)src1) ) )
-THREE_VEC_METHOD( vbnd , dst=(src1<=src2?src1:src2) )
+_VEC_FUNC_3V( vibnd , dst=src1<src2?src2:src1 )
+_VEC_FUNC_2V( vsign , dst=src1>0?1:0 )
+_VEC_FUNC_2V( vabs , dst=src1 )
+_VEC_FUNC_3V( vbnd , dst=(src1<=src2?src1:src2) )
 
 
-TWO_VEC_SCALAR_METHOD( vsmnm , dst=(scalar1_val<src1?scalar1_val:src1) )
-TWO_VEC_SCALAR_METHOD( vsmxm , dst=(scalar1_val>src1?scalar1_val:src1 ) )
-TWO_VEC_SCALAR_METHOD( viclp , dst = ( src1 >= scalar1_val ? src1 : scalar1_val ) )
-TWO_VEC_SCALAR_METHOD( vclip , dst = ( src1 <= scalar1_val ? src1 : scalar1_val ) )
+_VEC_FUNC_2V_SCAL( vsmnm , dst=(scalar1_val<src1?scalar1_val:src1) )
+_VEC_FUNC_2V_SCAL( vsmxm , dst=(scalar1_val>src1?scalar1_val:src1 ) )
+_VEC_FUNC_2V_SCAL( viclp , dst = ( src1 >= scalar1_val ? src1 : scalar1_val ) )
+_VEC_FUNC_2V_SCAL( vclip , dst = ( src1 <= scalar1_val ? src1 : scalar1_val ) )
 
-EXTREMA_LOCATIONS_METHOD( vmxmg, src1>=extval, src1>extval, extval=src1  )
-EXTREMA_LOCATIONS_METHOD( vmnmg, src1<=extval, src1<extval, extval=src1  )
+_VEC_FUNC_MM_NOCC( vmxmg,
+		src1>=extval,
+		src1>extval,
+		extval=src1,
+		src_vals[index2.x]>src_vals[index2.x+1],
+		src_vals[index2.x]<src_vals[index2.x+1]
+		)
+_VEC_FUNC_MM_NOCC( vmnmg,
+		src1<=extval,
+		src1<extval,
+		extval=src1,
+		src_vals[index2.x]<src_vals[index2.x+1],
+		src_vals[index2.x]>src_vals[index2.x+1]
+		)
 
-PROJECTION_METHOD_IDX_2( vmnmi ,
+_VEC_FUNC_2V_PROJ_IDX( vmnmi ,
 	dst = index_base[0] ,
-	tmp_ptr = INDEX_VDATA(dst); if( src1<(*tmp_ptr) ) dst=index_base[0] )
-PROJECTION_METHOD_IDX_2( vmxmi ,
+	tmp_ptr = INDEX_VDATA(dst); if( src1<(*tmp_ptr) ) dst=index_base[0],
+	dst = (src1 < src2 ? index2.x : index3.x+len1) ,
+	dst = (orig[src1] < orig[src2] ? src1 : src2 )
+	)
+_VEC_FUNC_2V_PROJ_IDX( vmxmi ,
 	dst = index_base[0] ,
-	tmp_ptr = INDEX_VDATA(dst); if( src1>(*tmp_ptr) ) dst=index_base[0] )
+	tmp_ptr = INDEX_VDATA(dst); if( src1>(*tmp_ptr) ) dst=index_base[0],
+	dst = (src1 > src2 ? index2.x : index3.x+len1) ,
+	dst = (orig[src1] > orig[src2] ? src1 : src2 )
+	)
 
-PROJECTION_METHOD_2( vmxmv , dst = src1 , if( src1 > dst ) dst = src1; )
-PROJECTION_METHOD_2( vmnmv , dst = src1 , if( src1 < dst ) dst = src1; )
+_VEC_FUNC_2V_PROJ( vmxmv , dst = src1 ,
+		if( src1 > dst ) dst = src1; ,
+		(psrc1 > psrc2 ? psrc1 : psrc2)
+		)
+_VEC_FUNC_2V_PROJ( vmnmv , dst = src1 ,
+		if( src1 < dst ) dst = src1; ,
+		(psrc1 < psrc2 ? psrc1 : psrc2)
+		)
 
-THREE_VEC_METHOD( vmaxm , dst = ( src1 >= src2 ? src1 : src2 ) )
-THREE_VEC_METHOD( vminm , dst = ( src1 <  src2 ? src1 : src2 ) )
+_VEC_FUNC_3V( vmaxm , dst = ( src1 >= src2 ? src1 : src2 ) )
+_VEC_FUNC_3V( vminm , dst = ( src1 <  src2 ? src1 : src2 ) )
 
+_VEC_FUNC_2V( rvneg , dst = (std_type)( - (std_signed) src1 ) )
 
+/***********/
 

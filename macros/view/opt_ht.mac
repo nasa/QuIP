@@ -1,5 +1,5 @@
-# %Z% $RCSfile: opt_ht.mac,v $ ver: $Revision: 1.11 $ $Date: 2005/04/25 23:23:03 $
 
+# dependencies on these files:
 #< $macro_dir/view/def_viewers.scr
 #< $macro_dir/war/rdp.mac
 #< $macro_dir/war/conv.mac
@@ -25,7 +25,7 @@ Set n_per_block	1
 
 Define Opt_HT_Init3d 1 prototype
 Set_Sizes ncols('$1') nrows('$1')
-#Dup_Float input $1
+#Dup_Float ht_input $1
 Dup_Float halftone $1
 Dup_Float last_halftone $1
 Dup_Float zoombuf $1
@@ -34,22 +34,29 @@ Assign mid floor($fsize/2)
 Sequence filter $tsize $fsize $fsize 1 float
 Scalar maxscal 1 float
 Scalar nmax 1 int32
-Assign total_ht_pixels nframes(halftone)*$xsize*$ysize
+Assign total_ht_pixels nframes(halftone)*ncols(halftone)*nrows(halftone)
 Vector indices $total_ht_pixels 1 int32
 .
 
 Define Opt_HT_Init 1 prototype
+If obj_exists('ht_input')&&ncols('ht_input')==ncols('$1')&&nrows('ht_input')==nrows('$1')
+  exit_macro
+If obj_exists('ht_input')
+  "Delete_Image ht_input Delete_Image halftone Delete_Image last_halftone Delete_Image zoombuf"
+
 Set_Sizes ncols('$1') nrows('$1')
-Float_Image input
+Float_Image ht_input
 Float_Image halftone
 Float_Image last_halftone
 Float_Image zoombuf
 
 Assign mid floor($fsize/2)
+If obj_exists('filter') exit_macro
+
 Image filter $fsize $fsize 1 float
 Scalar maxscal 1 float
 Scalar nmax 1 int32
-Assign total_ht_pixels $xsize*$ysize
+Assign total_ht_pixels ncols(halftone)*nrows(halftone)
 Vector indices $total_ht_pixels 1 int32
 .
 
@@ -76,6 +83,9 @@ repeat $fsize
 Get_Sum filt_volume $1
 # does the filter have to have unit volume, or unit squared volume???
 Tell_If "filter volume = $filt_volume"
+Tell_If "Normalizing the filter by $filt_volume"
+VSMul filter filter 1/$filt_volume
+#Disp_Image filter v1
 Tell_If 'Gaussian_Filter done'
 .
 
@@ -129,12 +139,14 @@ Delete_Image qtftmpa
 .
 
 Define Show_Stuff 0
-Tell_If 'showing quantized image'
-Label_Viewer v2 "'Quantized image'"
+#Tell_If 'showing quantized image'
+#Label_Viewer v2 "'Quantized image'"
 #DispImage halftone v2
+
 #Tell_If 'showing error image'
 #Label_Viewer v5 '"Error Image"'
 #DispImage HT_error v5
+
 #Tell_If 'showing filtered error image'
 #Label_Viewer v6 '"twice filtered error"'
 #DispImage HT_ferror v6
@@ -146,18 +158,19 @@ Tell_If 'type ^D to proceed'
 .
 
 Define Get_SSE 0
-Tell_If 'showing quantized image'
+#Tell_If 'showing quantized image'
 Show_All_If halftone v3 'current halftone'
 Float_Image f_error
 #Float_Image f2_error
-Show_All_If input v7 'input'
-Show_All_If halftone v8 'halftone'
-VVSub HT_error input halftone
-Show_All_If HT_error v5 'raw error'
-Convolve f_error HT_error filter
+Show_All_If ht_input v4 'ht_input'
+Show_All_If halftone v5 'halftone'
+VVSub HT_error halftone ht_input	# order matters here!
+Show_All_If HT_error v6 'raw error'
+#Convolve f_error HT_error filter
+SD_Convolve f_error HT_error filter
 #misc convolve f2_error f_error filter quit
-Show_All_If f_error v6 'filtered error'
-#Show_All_If f2_error v6 'twice-filtered error'
+Show_All_If f_error v7 'filtered error'
+#Show_All_If f2_error v3 'twice-filtered error'
 VVMul f_error f_error f_error
 Show_All_If f_error v8 'squared error'
 Get_Sum sos f_error
@@ -171,7 +184,7 @@ Define Setup_Requant 0
 compute requantize
   achrom
     set_output halftone
-    set_input input
+    set_input ht_input
     set_filter filter
     setup_error
     quit
@@ -185,7 +198,7 @@ compute
 requantize
   threeD
     set_output halftone
-    set_input input
+    set_input ht_input
     set_filter filter
     setup_error
     # setup_images ???
@@ -206,7 +219,7 @@ Delete_Image qdtmp
 .
 
 Define Check_Diff 0
-Q_Diff halftone input
+Q_Diff halftone ht_input
 Setup_Requant
 Tell_If 'SSE of error diffused image:'
 Get_SSE
@@ -225,16 +238,14 @@ VSMul dither_mat dither_mat 2/($dither_size*$dither_size)
 VSAdd dither_mat dither_mat -1
 Float_Image result
 #Long_Image result
-VCmp result dither_mat input
+VCmp result dither_mat ht_input
 #Display result[0]
 Delete_Image dither_mat
 Convert halftone result
 Delete_Image result
 VSMul halftone halftone 2
 VSAdd halftone halftone -1
-verbose yes
 Show_All_If halftone 1 'ordered dither halftone'
-verbose no
 Setup_Requant
 Tell_If 'SSE of ordered dither image:'
 Get_SSE
@@ -272,7 +283,7 @@ Get_SSE
 .
 
 Define Check_Trunc3d 0
-Q_Trunc halftone input
+Q_Trunc halftone ht_input
 Setup_Requant3d
 # BUG need sse 3d!
 #Tell_If 'SSE of truncated image'
@@ -281,7 +292,7 @@ Setup_Requant3d
 
 
 Define Check_Trunc 0
-Q_Trunc halftone input
+Q_Trunc halftone ht_input
 Setup_Requant
 Tell_If 'SSE of truncated image'
 Get_SSE
@@ -299,7 +310,7 @@ Tell_If 'getting random pixels'
 Get_Random_Pixels halftone
 #Tell_If 'truncating'
 Q_Trunc halftone halftone
-Show_If halftone $v1_index 'starting image'
+#Show_If halftone $v1_index 'starting image'
 #Tell_If 'setup'
 Setup_Requant3d
 Tell_If 'SSE of starting image:'
@@ -313,7 +324,7 @@ Get_Random_Pixels halftone
 Tell_If 'truncating'
 Q_Trunc halftone halftone
 Tell_If "Check_Rand:  showing starting image"
-Show_If halftone $v1_index 'starting image'
+#Show_If halftone $v1_index 'starting image'
 #Tell_If 'setup'
 Setup_Requant
 Tell_If 'SSE of starting image:'
@@ -322,7 +333,7 @@ Get_SSE
 
 Define Check_Quad 0
 Tell_If 'applying quadtree algorithm'
-requant achrom quadtree halftone input quit quit
+requant achrom quadtree halftone ht_input quit quit
 Tell_If 'SSE of quadtree image'
 Setup_Requant
 Get_SSE
@@ -357,7 +368,7 @@ repeat 50000
   Get_SSE
 
   # count the number of pixels changed
-  VVSub last_halftone last_halftone halftone
+  VVSub last_halftone last_halftone halftone	# order doesn't matter
   VAbs last_halftone last_halftone
   Max_Times indices last_halftone maxscal nmax
   Assign nm value(nmax)
@@ -366,9 +377,10 @@ repeat 50000
   If '$nm != $total_ht_pixels'
     Then 'Tell_If "$nm pixels changed\n"'
     Else "Tell_If 'no pixels changed; Stable!!!  SSE = $sseval\n\n' \
-             Show_If halftone $v1_index 'h/t $ictr, 0 changed' PopFile 2"
+    		exit_macro"
+#             Show_If halftone $v1_index 'h/t $ictr, 0 changed' exit_macro"
 
-Show_If halftone $v1_index "h/t $ictr, $nm changed"
+#Show_If halftone $v1_index "h/t $ictr, $nm changed"
   Increment ictr
   end
 .
@@ -384,16 +396,16 @@ repeat 50000
 
   compute requantize threeD descend $n_per_block quit quit quit
   # compute requantize threeD migrate $n_per_block quit quit quit
-Show_If halftone $v1_index halftone
-Show_All_If HT_error 5 'halftone error'
-Show_All_If HT_ferror 6 'filtered error'
+#Show_If halftone $v1_index halftone
+Show_All_If HT_error 3 'halftone error'
+Show_All_If HT_ferror 3 'filtered error'
 #  compute requantize anneal $temp $n_per_block quit quit
 
 #  Mul_Var temp 1/$coolrate
   #Get_SSE_3d
 
   # count the number of pixels changed
-  VVSub last_halftone last_halftone halftone
+  VVSub last_halftone last_halftone halftone	# order doesn't matter
   VAbs last_halftone last_halftone
   Max_Times indices last_halftone maxscal nmax
   Assign nm value(nmax)
@@ -401,8 +413,8 @@ Show_All_If HT_ferror 6 'filtered error'
 #Tell_If "max $mxv occurred $nm times"
   If '$nm != $total_ht_pixels'
     Then 'Tell_If "$nm pixels changed\n"'
-  #  Else 'Tell_If "no pixels changed; Stable!!!  SSE = $sseval\n\n" PopFile 2'
-    Else 'Tell_If "no pixels changed; Stable!!!\n\n" PopFile 2'
+  #  Else 'Tell_If "no pixels changed; Stable!!!  SSE = $sseval\n\n" exit_macro'
+    Else 'Tell_If "no pixels changed; Stable!!!\n\n" exit_macro'
 
   end
 .
@@ -422,13 +434,13 @@ repeat 50000
   Get_SSE
 
   # count the number of pixels changed
-  VVSub last_halftone last_halftone halftone
+  VVSub last_halftone last_halftone halftone	# order doesn't matter
   VAbs last_halftone last_halftone
   Max_Times indices last_halftone maxscal nmax
   Assign nm value(nmax)
   If '$nm != $total_ht_pixels'
     Then 'Tell_If "$nm pixels changed\n"'
-    Else 'Tell_If "no pixels changed; Stable!!!  SSE = $sseval\n\n" PopFile 2'
+    Else 'Tell_If "no pixels changed; Stable!!!  SSE = $sseval\n\n" exit_macro'
 
   end
 .
@@ -473,7 +485,7 @@ Tell_If "initializing with function $1 , using $2 scan"
 $1
 Tell_If 'setting scan'
 compute requantize achrom scan $2 quit quit quit
-Tell_If improving?
+Tell_If "improving with function $3?"
 $3
 Pause_If
 #Tell_If 'showing halftone in v1'
@@ -495,15 +507,15 @@ Define Scan_and_Dump3d 4
 Tell_If "Scan_and_Dump3d $1 $2 $3 $4"
 Tell_If "initializing with function $1 , using $2 scan"
 $1
-Show_All_If HT_error 5 'halftone error'
-Show_All_If HT_ferror 6 'filtered error'
+Show_All_If HT_error 2 'halftone error'
+Show_All_If HT_ferror 3 'filtered error'
 Tell_If 'setting scan'
 compute requantize threeD scan $2 quit quit quit
 Tell_If "improving with $3"
 $3
 Pause_If
-Show_All_If HT_error 5 'halftone error'
-Show_All_If HT_ferror 6 'filtered error'
+Show_All_If HT_error 2 'halftone error'
+Show_All_If HT_ferror 3 'filtered error'
 #Tell_If 'showing halftone in v1'
 #DispImage halftone v1
 #Tell_If dumping
@@ -521,12 +533,12 @@ Gaussian_Filter $1 $sd
 ############
 
 Define Compute_Opt_HT 2 target source
-Convert input $2
+Convert ht_input $2
 
-#Get_Girl input
-#Get_Ramp input
+#Get_Girl ht_input
+#Get_Ramp ht_input
 
-Show_If input 1 'input image'
+#Show_If ht_input 1 'input image'
 
 Tell_If "setting up filter with standard deviation $sd"
 Gaussian_Filter filter $sd
@@ -539,6 +551,7 @@ Tell_If "Computing visually optimal halftone, sd = $sd, fsize = $fsize, n = $n_p
 #Scan_and_Dump Check_OD scattered Descend /dev/null
 #Scan_and_Dump Check_Rand scattered Descend /dev/null
 # scattered scan is nice but doesn't work now for non-square images.
+Tell_If "Scan_and_Dump Check_Rand raster Descend /dev/null"
 Scan_and_Dump Check_Rand raster Descend /dev/null
 #Scan_and_Dump Check_Rand random Descend si.hips
 #Scan_and_Dump Check_Rand random Descend /dev/null
@@ -556,11 +569,11 @@ Set ht_filter_init_macro Default_Halftone_Filter
 Set descent_method Descend
 
 Define Compute_HT 4 target source initialization scan
-Convert input $2
-Show_All_If input 1 'input image'
+Convert ht_input $2
+Show_All_If ht_input 1 'input image'
 
 $ht_filter_init_macro filter
-Show_All_If filter 3 'error filter'
+Show_All_If filter 2 'error filter'
 
 Set temp $starttemp
 Set nsame 0
@@ -569,14 +582,14 @@ Tell_If "Computing visually optimal halftone, sd = $sd, fsize = $fsize, n = $n_p
 
 Scan_and_Dump $3 $4 $descent_method /dev/null
 
-VSMax halftone halftone 0
+VSMax halftone halftone 0	# clip from below
 Convert $1 halftone	# Bug should really pass along args...
 .
 
 Define Compute_HT3d 4 target source initialization scan
 Tell_If "BEGIN Compute_HT3d"
-Convert input $2
-Show_All_If input 1 'input image'
+Convert ht_input $2
+Show_All_If ht_input 1 'input image'
 
 Tell_If "setting up filter"
 Gaussian_Filter3d filter $sd $t_sd

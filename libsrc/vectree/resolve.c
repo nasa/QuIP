@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_vectree_resolve[] = QUIP_VERSION_STRING;
-
 /* resolve.c
  *
  * Scanning the tree does a number of things:
@@ -11,7 +9,7 @@ char VersionId_vectree_resolve[] = QUIP_VERSION_STRING;
  * (Actually, that is done by prelim_node_shape and update_node_shape!?)
  *
  * Should nodes "own" their shape structs?
- * For Objects, we can't just point to dp->dt_shape, because
+ * For Objects, we can't just point to OBJ_SHAPE(dp), because
  * the objects can be dynamically created and destroyed.
  * (e.g. automatic objects within subroutines)
  * So we point references to the shape at the declaration
@@ -171,6 +169,23 @@ char VersionId_vectree_resolve[] = QUIP_VERSION_STRING;
  *
  * I wonder who in the world has thought deeply about this?
  * Data flow analysis?
+ *
+ * 5/17/13 - a bug discovered:
+ *
+ * void func(float u1[])
+ * {
+ * 	float u2[],s{2};
+ *	s=1;
+ *	u2=u1+s;
+ * }
+ *
+ * float v[4]{2};
+ * v=1;
+ * func(v);
+ *
+ * u2 is resolved to match s, not v...  In this situation, we really need to use
+ * the outer product shape...
+ * 
  */
 
 #include <stdio.h>
@@ -190,32 +205,17 @@ char VersionId_vectree_resolve[] = QUIP_VERSION_STRING;
 #include <unistd.h>	/* sleep() */
 #endif
 
-#include "savestr.h"
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "getbuf.h"
-#include "node.h"
-#include "function.h"
 #include "nexpr.h"
-#include "nvf_api.h"
-#include "query.h"
-#include "chewtext.h"
+#include "veclib_api.h"
 #include "vec_util.h"		/* dilate, erode */
-#include "img_file.h"
-#include "filetype.h"
-#include "fileck.h"		/* file exists */
+//#include "img_file.h"
+//#include "filetype.h"
 
 #include "vectree.h"
 
 #define MAX_HIDDEN_CONTEXTS	32
-
-/* local prototypes */
-
-static void resolve_uk_nodes(QSP_ARG_DECL  List *lp);
-static void resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp);
-static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp);
-static Vec_Expr_Node * resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp);
-static Vec_Expr_Node * resolve_unknown_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_Node *enp);
 
 #define RESOLVE_UK_NODES(lp)		resolve_uk_nodes(QSP_ARG  lp)
 #define RESOLVE_OBJ_LIST(enp,shpp)	resolve_obj_list(QSP_ARG  enp,shpp)
@@ -244,8 +244,10 @@ static void find_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp,List *lp)
 	Node *np;
 	int i;
 
-	if( enp->en_shpp != NO_SHAPE && UNKNOWN_SHAPE(enp->en_shpp) && enp->en_prec != PREC_VOID ){
-		switch(enp->en_code){
+	if( enp == NO_VEXPR_NODE ) return;
+
+	if( VN_SHAPE(enp) != NO_SHAPE && UNKNOWN_SHAPE(VN_SHAPE(enp)) && VN_PREC(enp) != PREC_VOID ){
+		switch(VN_CODE(enp)){
 			case T_EXPR_LIST:
 			ALL_DECL_CASES
 			case T_UNDEF:
@@ -286,10 +288,8 @@ static void find_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp,List *lp)
 			case T_MAXVAL:
 			case T_MINVAL:
 			case T_TRANSPOSE:
-/*
-sprintf(error_string,"find_uk_nodes:  adding %s",node_desc(enp));
-advise(error_string);
-*/
+//sprintf(ERROR_STRING,"find_uk_nodes:  adding %s",node_desc(enp));
+//ADVISE(ERROR_STRING);
 				np=mk_node(enp);
 				addTail(lp,np);
 				break;
@@ -301,8 +301,8 @@ advise(error_string);
 		}
 	}
 	for(i=0;i<MAX_CHILDREN(enp);i++)
-		if( enp->en_child[i] != NO_VEXPR_NODE )
-			find_uk_nodes(QSP_ARG  enp->en_child[i],lp);
+		if( VN_CHILD(enp,i) != NO_VEXPR_NODE )
+			find_uk_nodes(QSP_ARG  VN_CHILD(enp,i),lp);
 }
 
 static List *get_uk_list(QSP_ARG_DECL  Vec_Expr_Node *enp)
@@ -328,38 +328,39 @@ void forget_resolved_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 
 	if( RESOLVED_AT_CALLTIME(enp) ){
-		//enp->en_flags &= ~ NODE_NEEDS_CALLTIME_RES;
-#ifdef CAUTIOUS
-		if( enp->en_shpp == NO_SHAPE ){
-			sprintf(error_string,"CAUTIOUS:  forget_resolved_tree %s:  resolved node has no shape!?",
-				node_desc(enp));
-			ERROR1(error_string);
-		}
-#endif /* CAUTIOUS */
+		//CLEAR_VN_FLAG_BITS(enp, NODE_NEEDS_CALLTIME_RES);
+//#ifdef CAUTIOUS
+//		if( VN_SHAPE(enp) == NO_SHAPE ){
+//			sprintf(ERROR_STRING,"CAUTIOUS:  forget_resolved_tree %s:  resolved node has no shape!?",
+//				node_desc(enp));
+//			ERROR1(ERROR_STRING);
+//		}
+//#endif /* CAUTIOUS */
+		assert( VN_SHAPE(enp) != NO_SHAPE );
 
-		if( enp->en_code == T_DYN_OBJ ){
+		if( VN_CODE(enp) == T_DYN_OBJ ){
 			/* OBJECT nodes point to the shape at the decl node,
 			 * so we leave it alone.
 			 * BUT matlab has no decl nodes, so we'd better do something different?
 			 */
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"forget_resolved_tree %s:  leaving OBJECT node alone",node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"forget_resolved_tree %s:  leaving OBJECT node alone",node_desc(enp));
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 		} else {
 			if( OWNS_SHAPE(enp) )
-				COPY_NODE_SHAPE(enp,uk_shape(enp->en_prec));
+				copy_node_shape(enp,uk_shape(VN_PREC(enp)));
 			else
-				point_node_shape(QSP_ARG  enp,uk_shape(enp->en_prec));
+				point_node_shape(QSP_ARG  enp,uk_shape(VN_PREC(enp)));
 		}
 	}
 
 	for(i=0;i<MAX_CHILDREN(enp);i++)
-		if( enp->en_child[i] != NO_VEXPR_NODE )
-			forget_resolved_tree(QSP_ARG  enp->en_child[i]);
+		if( VN_CHILD(enp,i) != NO_VEXPR_NODE )
+			forget_resolved_tree(QSP_ARG  VN_CHILD(enp,i));
 } /* end forget_resolved_tree */
 
 /* forget_resolved_shapes
@@ -373,27 +374,63 @@ void forget_resolved_shapes(QSP_ARG_DECL  Subrt *srp)
 {
 	/* First check the arguments */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"forget_resolve_shapes %s:",srp->sr_name);
-advise(error_string);
-DUMP_TREE(srp->sr_body);
+sprintf(ERROR_STRING,"forget_resolve_shapes %s:",SR_NAME(srp));
+ADVISE(ERROR_STRING);
+DUMP_TREE(SR_BODY(srp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	if( srp->sr_arg_decls != NO_VEXPR_NODE )
-		forget_resolved_tree(QSP_ARG  srp->sr_arg_decls);
-	if( srp->sr_body != NO_VEXPR_NODE )
-		forget_resolved_tree(QSP_ARG  srp->sr_body);
+	if( SR_ARG_DECLS(srp) != NO_VEXPR_NODE )
+		forget_resolved_tree(QSP_ARG  SR_ARG_DECLS(srp));
+	if( SR_BODY(srp) != NO_VEXPR_NODE )
+		forget_resolved_tree(QSP_ARG  SR_BODY(srp));
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"forget_resolve_shapes %s DONE",srp->sr_name);
-advise(error_string);
-DUMP_TREE(srp->sr_body);
+sprintf(ERROR_STRING,"forget_resolve_shapes %s DONE",SR_NAME(srp));
+ADVISE(ERROR_STRING);
+DUMP_TREE(SR_BODY(srp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
+}
+
+
+/* We call this with a list of nodes which may need resolution.
+ * This can be called with a list we construct from a tree, or
+ * with a node's list (propagation), so we therefore cannot assume
+ * that all the nodes on the list actually need resolution.
+ */
+
+static void resolve_uk_nodes(QSP_ARG_DECL  List *lp)
+{
+	Node *np;
+
+	np=QLIST_HEAD(lp);
+	while(np!=NO_NODE){
+		Vec_Expr_Node *enp;
+
+		enp=(Vec_Expr_Node *)NODE_DATA(np);
+		if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
+#ifdef QUIP_DEBUG
+if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"resolve_uk_nodes trying to fix %s",node_desc(enp));
+ADVISE(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+			/*
+			resolve_one_uk_node(enp);
+			*/
+			RESOLVE_TREE(enp,NO_VEXPR_NODE);
+		}
+
+		/* If we remove nodes from the list as they are resolved,
+		 * We can't do this next business...
+		 */
+		np=NODE_NEXT(np);
+	}
 }
 
 /* late_calltime_resolve
@@ -404,71 +441,73 @@ DUMP_TREE(srp->sr_body);
 void late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
 {
 	List *lp;
-	u_long save_res;
+	uint32_t save_res;
 
-#ifdef CAUTIOUS
-	if( curr_srp != srp ){
-		sprintf(error_string,"CAUTIOUS:  late_calltime_resolve %s:  current subrt is %s!?",
-			srp->sr_name,curr_srp->sr_name);
-		WARN(error_string);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( curr_srp != srp ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  late_calltime_resolve %s:  current subrt is %s!?",
+//			SR_NAME(srp),SR_NAME(curr_srp));
+//		WARN(ERROR_STRING);
+//	}
+//#endif /* CAUTIOUS */
+	assert( curr_srp == srp );
 
 /*
-sprintf(error_string,"late_calltime_resolve %s setting SCANNING flag",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"late_calltime_resolve %s setting SCANNING flag",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
-	srp->sr_flags |= SR_SCANNING;
+	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 	save_res = resolution_flags;
 	resolution_flags = NODE_NEEDS_CALLTIME_RES;
 
 	/*
-	if( srp->sr_prec != PREC_VOID ){
+	if( SR_PREC(srp) != PREC_VOID ){
 		if( ret_shpp != NO_SHAPE && ! UNKNOWN_SHAPE(ret_shpp) ){
-			srp->sr_shpp = ret_shpp;
+			SET_SR_SHAPE(srp, ret_shpp);
 		} else {
-			srp->sr_shpp = uk_shape(srp->sr_prec);
+			SET_SR_SHAPE(srp, uk_shape(SR_PREC(srp)));
 		}
 	}
 	*/
-#ifdef CAUTIOUS
-	  /*
-	  else if( srp->sr_shpp != NO_SHAPE ){
-		sprintf(error_string,"CAUTIOUS:  late_calltime_resolve %s:  prec is void, but shape is not null!?",
-			srp->sr_name);
-		WARN(error_string);
-	}
-	*/
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	  /*
+//	  else if( SR_SHAPE(srp) != NO_SHAPE ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  late_calltime_resolve %s:  prec is void, but shape is not null!?",
+//			SR_NAME(srp));
+//		WARN(ERROR_STRING);
+//	}
+//	*/
+//#endif /* CAUTIOUS */
+	/* assert( SR_SHAPE(srp) == NO_SHAPE ); */
 
-#ifdef DEBUG
-if( debug & resolve_debug ){
-sprintf(error_string,"late_calltime_resolve %s begin:",srp->sr_name);
-advise(error_string);
+#ifdef QUIP_DEBUG
+//if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"late_calltime_resolve %s begin:",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_SUBRT(srp);
-}
-#endif /* DEBUG */
+//}
+#endif /* QUIP_DEBUG */
 
-	lp = get_uk_list(QSP_ARG  srp->sr_body);
+	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
 	if( lp != NO_LIST ){
 		RESOLVE_UK_NODES(lp);
 
-#ifdef DEBUG
-if( debug & resolve_debug ){
-sprintf(error_string,"late_calltime_resolve %s done:",srp->sr_name);
-advise(error_string);
+#ifdef QUIP_DEBUG
+//if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"late_calltime_resolve %s done:",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_SUBRT(srp);
-}
-#endif /* DEBUG */
+//}
+#endif /* QUIP_DEBUG */
 
 		dellist(lp);
 	}
 
 /*
-sprintf(error_string,"late_calltime_resolve %s clearing SCANNING flag",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"late_calltime_resolve %s clearing SCANNING flag",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
-	srp->sr_flags &= ~SR_SCANNING;
+	CLEAR_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	resolution_flags = save_res;
 }
@@ -477,28 +516,29 @@ static void find_known_return(QSP_ARG_DECL  Vec_Expr_Node *enp,Subrt *srp)
 {
 	int i;
 
-	if( enp == NO_VEXPR_NODE ) enp=srp->sr_body;
+	if( enp == NO_VEXPR_NODE ) enp=SR_BODY(srp);
 
-	switch(enp->en_code){
+	switch(VN_CODE(enp)){
 		case T_RETURN:
 
-#ifdef CAUTIOUS
-			if( enp->en_shpp == NO_SHAPE ){
-				NODE_ERROR(enp);
-				sprintf(error_string,
-	"CAUTIOUS:  find_known_return %s:  return node has no shape!?",node_desc(enp));
-				WARN(error_string);
-				return;
-			}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//			if( VN_SHAPE(enp) == NO_SHAPE ){
+//				NODE_ERROR(enp);
+//				sprintf(ERROR_STRING,
+//	"CAUTIOUS:  find_known_return %s:  return node has no shape!?",node_desc(enp));
+//				WARN(ERROR_STRING);
+//				return;
+//			}
+//#endif /* CAUTIOUS */
+			assert( VN_SHAPE(enp) != NO_SHAPE );
 
-			if( ! UNKNOWN_SHAPE(enp->en_shpp) ){
+			if( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 /*
-sprintf(error_string,"find_known_return: setting subrt %s shape from %s",srp->sr_name,node_desc(enp));
-advise(error_string);
-describe_shape(enp->en_shpp);
+sprintf(ERROR_STRING,"find_known_return: setting subrt %s shape from %s",SR_NAME(srp),node_desc(enp));
+ADVISE(ERROR_STRING);
+DESCRIBE_SHAPE(VN_SHAPE(enp));
 */
-				srp->sr_shpp = enp->en_shpp;
+				SET_SR_SHAPE(srp, VN_SHAPE(enp));
 			}
 			return;
 
@@ -508,8 +548,8 @@ describe_shape(enp->en_shpp);
 
 		case T_IFTHEN:
 			/* child 0 is the test,and can't have a return statement */
-			if( ! NULL_CHILD(enp,1) ) find_known_return(QSP_ARG  enp->en_child[1],srp);
-			if( ! NULL_CHILD(enp,2) ) find_known_return(QSP_ARG  enp->en_child[2],srp);
+			if( ! NULL_CHILD(enp,1) ) find_known_return(QSP_ARG  VN_CHILD(enp,1),srp);
+			if( ! NULL_CHILD(enp,2) ) find_known_return(QSP_ARG  VN_CHILD(enp,2),srp);
 			return;
 
 		/* for all of these cases, we know there will not be a
@@ -533,7 +573,7 @@ describe_shape(enp->en_shpp);
 	}
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( ! NULL_CHILD(enp,i) )
-			find_known_return(QSP_ARG  enp->en_child[i],srp);
+			find_known_return(QSP_ARG  VN_CHILD(enp,i),srp);
 } /* find_known_return */
 
 
@@ -552,18 +592,19 @@ describe_shape(enp->en_shpp);
 void resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence)
 {
 	Node *np;
-	Vec_Expr_Node *enp2,*resolved_enp;
+	Vec_Expr_Node *enp2;
+    //Vec_Expr_Node *resolved_enp;
 	Identifier *idp;
 	Subrt *srp;
 	Run_Info *rip;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"BEGIN resolve_tree %s:",node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"BEGIN resolve_tree %s:",node_desc(enp));
+ADVISE(ERROR_STRING);
 DUMP_TREE(enp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* We first handle a couple of special cases:
 	 *
@@ -589,7 +630,9 @@ DUMP_TREE(enp);
 	 * vv_func nodes can be outer ops, so we need to look at both children.
 	 * 
 	 */
-	switch(enp->en_code){
+//advise("ready to check special cases");
+//dump_tree(enp);
+	switch(VN_CODE(enp)){
 		case T_SUBVEC:
 		case T_CSUBVEC:
 			/* we really want to do this as late as possible... */
@@ -600,12 +643,15 @@ DUMP_TREE(enp);
 			break;
 
 		case T_VV_FUNC:
-			if( ( ! UNKNOWN_SHAPE(enp->en_child[0]->en_shpp) ) &&
-				! UNKNOWN_SHAPE(enp->en_child[1]->en_shpp ) ){
+//advise("checking special case T_VV_FUNC");
+//dump_tree(enp);
+			if( ( ! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ) &&
+				! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1)) ) ){
 				Shape_Info *shpp;
 
-				shpp = calc_outer_shape(enp->en_child[0],enp->en_child[1]);
-				COPY_NODE_SHAPE(enp,shpp);
+//ADVISE("resolve_tree:  BOTH child shapes are known, getting outer shape...");
+				shpp = calc_outer_shape(VN_CHILD(enp,0),VN_CHILD(enp,1));
+				copy_node_shape(enp,shpp);
 			}
 
 			break;
@@ -613,7 +659,7 @@ DUMP_TREE(enp);
 		case T_EQUIVALENCE:
 			/* We really just want to call update_node_shape here... */
 			SHAPIFY(enp);
-			enp->en_flags |= NODE_NEEDS_CALLTIME_RES;	/* this forces us to forget */
+			SET_VN_FLAG_BITS(enp, NODE_NEEDS_CALLTIME_RES);	/* this forces us to forget */
 			break;
 
 		case T_INDIR_CALL:
@@ -626,45 +672,49 @@ DUMP_TREE(enp);
 		case T_POINTER:
 			idp = EVAL_PTR_REF(enp,EXPECT_PTR_SET);
 			if( idp == NO_IDENTIFIER ) break;	/* probably not set */
-#ifdef CAUTIOUS
-			if( ! IS_POINTER(idp) ){
-				NODE_ERROR(enp);
-				sprintf(error_string,"Identifier %s is not a ptr",idp->id_name);
-				WARN(error_string);
-				break;
-			}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//			if( ! IS_POINTER(idp) ){
+//				NODE_ERROR(enp);
+//				sprintf(ERROR_STRING,"Identifier %s is not a ptr",ID_NAME(idp));
+//				WARN(ERROR_STRING);
+//				break;
+//			}
+//#endif /* CAUTIOUS */
+			assert( IS_POINTER(idp) );
+
 			if( ! POINTER_IS_SET(idp) ) break;
 
-			if( idp->id_ptrp->ptr_refp == NO_REFERENCE ){
+			if( PTR_REF(ID_PTR(idp)) == NO_REFERENCE ){
 				/* This sometimes happens during resolution, but not sure why??? */
 				/*
-				sprintf(error_string,"CAUTIOUS:  resolve_tree %s:  ptr %s has null ref arg!?",
-					node_desc(enp),idp->id_name);
-				WARN(error_string);
+	//			sprintf(ERROR_STRING,"CAUTIOUS:  resolve_tree %s:  ptr %s has null ref arg!?",
+					node_desc(enp),ID_NAME(idp));
+				WARN(ERROR_STRING);
 				*/
 				break;
 			}
-#ifdef CAUTIOUS
-			if( idp->id_ptrp->ptr_refp->ref_dp == NO_OBJ ){
-				sprintf(error_string,"CAUTIOUS:  resolve_tree %s:  ref dp is NULL!?",node_desc(enp));
-				WARN(error_string);
-				break;
-			}
-#endif /* CAUTIOUS */
-			if( ! UNKNOWN_SHAPE( &idp->id_ptrp->ptr_refp->ref_dp->dt_shape ) ){
-#ifdef DEBUG
+//#ifdef CAUTIOUS
+//			if( REF_OBJ(PTR_REF(ID_PTR(idp))) == NO_OBJ ){
+//				sprintf(ERROR_STRING,"CAUTIOUS:  resolve_tree %s:  ref dp is NULL!?",node_desc(enp));
+//				WARN(ERROR_STRING);
+//				break;
+//			}
+//#endif /* CAUTIOUS */
+			assert( REF_OBJ(PTR_REF(ID_PTR(idp))) != NO_OBJ );
+
+			if( ! UNKNOWN_SHAPE( OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))) ) ){
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree POINTER %s:  object %s has known shape",node_desc(enp),
-idp->id_ptrp->ptr_refp->ref_dp->dt_name);
-advise(error_string);
-describe_shape(&idp->id_ptrp->ptr_refp->ref_dp->dt_shape);
+sprintf(ERROR_STRING,"resolve_tree POINTER %s:  object %s has known shape",node_desc(enp),
+OBJ_NAME(REF_OBJ(PTR_REF(ID_PTR(idp)))));
+ADVISE(ERROR_STRING);
+DESCRIBE_SHAPE(OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
 }
-#endif /* DEBUG */
-				RESOLVE_POINTER(enp,&idp->id_ptrp->ptr_refp->ref_dp->dt_shape);
+#endif /* QUIP_DEBUG */
+				RESOLVE_POINTER(enp,OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
 				return;
 /*
-advise("after resolution pointer:");
+ADVISE("after resolution pointer:");
 DUMP_TREE(enp);
 */
 			}
@@ -674,45 +724,45 @@ DUMP_TREE(enp);
 		case T_CALLFUNC:			/* resolve_tree */
 							/* should we try a call-time resolution? */
 /*
-if( UNKNOWN_SHAPE(enp->en_shpp) ){
-sprintf(error_string,"resolve_tree %s:  shape is unknown",node_desc(enp));
-advise(error_string);
+if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
+sprintf(ERROR_STRING,"resolve_tree %s:  shape is unknown",node_desc(enp));
+ADVISE(ERROR_STRING);
 } else {
-sprintf(error_string,"resolve_tree %s:  shape is KNOWN",node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  shape is KNOWN",node_desc(enp));
+ADVISE(ERROR_STRING);
 }
 */
 
 			srp = runnable_subrt(QSP_ARG  enp);
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree %s:  before setup_call %s:",node_desc(enp),srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  before setup_call %s:",node_desc(enp),SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_TREE(enp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			/* BUG how can we get dst_dp?? */
 			rip = SETUP_CALL(srp,NO_OBJ);
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree %s:  after setup_call %s:",node_desc(enp),srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  after setup_call %s:",node_desc(enp),SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_TREE(enp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			if( rip == NO_RUN_INFO ){
 				return;
 			}
 
 			if( rip->ri_arg_stat >= 0 ){ 
-				EVAL_DECL_TREE(srp->sr_body);
+				EVAL_DECL_TREE(SR_BODY(srp));
 				LATE_CALLTIME_RESOLVE(srp,NO_OBJ);
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-advise("resolve_tree:  after late_calltime_resolve:");
-DUMP_TREE(srp->sr_body);
+ADVISE("resolve_tree:  after late_calltime_resolve:");
+DUMP_TREE(SR_BODY(srp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			}
 
 			wrapup_context(QSP_ARG  rip);
@@ -720,13 +770,13 @@ DUMP_TREE(srp->sr_body);
 			find_known_return(QSP_ARG  NO_VEXPR_NODE,srp);
 
 			/* now maybe we have a return shape??? */
-			if( srp->sr_shpp != NO_SHAPE && ! UNKNOWN_SHAPE(srp->sr_shpp) ){
+			if( SR_SHAPE(srp) != NO_SHAPE && ! UNKNOWN_SHAPE(SR_SHAPE(srp)) ){
 /*
-sprintf(error_string,"resolve_tree %s:  setting shape from %s return shape",
-node_desc(enp),srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  setting shape from %s return shape",
+node_desc(enp),SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
-				COPY_NODE_SHAPE(enp,srp->sr_shpp);
+				copy_node_shape(enp,SR_SHAPE(srp));
 			}
 
 			break;
@@ -735,24 +785,24 @@ advise(error_string);
 			/* For a return node, we look up the subroutine and
 			 * see if the return shape is known.
 			 */
-			if( enp->en_srp->sr_dst_shpp != NO_SHAPE && enp->en_srp->sr_dst_shpp->si_prec != PREC_VOID ){
-				if( ! UNKNOWN_SHAPE(enp->en_srp->sr_dst_shpp) ){
+			if( SR_DEST_SHAPE(VN_SUBRT(enp)) != NO_SHAPE && SHP_PREC(SR_DEST_SHAPE(VN_SUBRT(enp))) != PREC_VOID ){
+				if( ! UNKNOWN_SHAPE(SR_DEST_SHAPE(VN_SUBRT(enp))) ){
 					/* We know the return destination shape! */
-					point_node_shape(QSP_ARG  enp,enp->en_srp->sr_dst_shpp);
+					point_node_shape(QSP_ARG  enp,SR_DEST_SHAPE(VN_SUBRT(enp)));
 				}
 /*
 else {
-sprintf(error_string,"resolve_tree %s:  subrt %s return shape unknown",
-node_desc(enp),enp->en_srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  subrt %s return shape unknown",
+node_desc(enp),SR_NAME(VN_SUBRT(enp)));
+ADVISE(ERROR_STRING);
 }
 */
 			}
 /*
 else {
-sprintf(error_string,"resolve_tree %s:  subrt %s return shape nonexistent",
-node_desc(enp),enp->en_srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  subrt %s return shape nonexistent",
+node_desc(enp),SR_NAME(VN_SUBRT(enp)));
+ADVISE(ERROR_STRING);
 }
 */
 
@@ -789,12 +839,12 @@ advise(error_string);
 		case T_MINVAL:
 		case T_SUM:
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resove_tree:  %s is not a special case",node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resove_tree:  %s is not a special case",node_desc(enp));
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			break;
 
 		default:
@@ -814,122 +864,96 @@ advise(error_string);
 	 * nodes) need to have both their children examined...
 	 * Does vv_func need to be another special case?
 	 */
-
-	if( enp->en_resolvers == NO_LIST ){
+//advise("resolve_tree:  ready to resolve!");
+	if( VN_RESOLVERS(enp) == NO_LIST ){
 		/* We don't set the shapes of T_SUBVEC nodes if the range
 		 * expressions contain variables (which will be set at runtime).
 		 */
 		UPDATE_TREE_SHAPE(enp);
 
 
-		if( UNKNOWN_SHAPE(enp->en_shpp) && ( enp->en_code != T_SUBVEC
-							&& enp->en_code != T_CSUBVEC
-							&& enp->en_code != T_SUBSAMP
-							&& enp->en_code != T_CSUBSAMP )
+		if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ( VN_CODE(enp) != T_SUBVEC
+							&& VN_CODE(enp) != T_CSUBVEC
+							&& VN_CODE(enp) != T_SUBSAMP
+							&& VN_CODE(enp) != T_CSUBSAMP )
 			){
 			/* This message gets printed sometimes (see tests/outer_test.scr),
 			 * but the computation seems to be done correctly, so we suppress
 			 * the msg for now...
 			 */
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree %s:  no resolvers",node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  no resolvers",node_desc(enp));
+ADVISE(ERROR_STRING);
 DUMP_TREE(enp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		}
 		return;
 	}
 
-	np=enp->en_resolvers->l_head;
-#ifdef DEBUG
+	np=QLIST_HEAD(VN_RESOLVERS(enp));
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree:  %s has %d resolver nodes",
-node_desc(enp),eltcount(enp->en_resolvers));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree:  %s has %d resolver nodes",
+node_desc(enp),eltcount(VN_RESOLVERS(enp)));
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	while(np!=NO_NODE){
-		enp2 = (Vec_Expr_Node *)np->n_data;
-#ifdef DEBUG
+		enp2 = (Vec_Expr_Node *)NODE_DATA(np);
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree:  %s is a resolver node for %s",
+sprintf(ERROR_STRING,"resolve_tree:  %s is a resolver node for %s",
 node_desc(enp2),node_desc(enp));
-advise(error_string);
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
-#ifdef CAUTIOUS
-		if( enp2 == NO_VEXPR_NODE ){
-			sprintf(error_string,"CAUTIOUS:  resolve_tree:  %s has null node on resolver list!?",
-				node_desc(enp));
-			WARN(error_string);
-		} else
-#endif /* CAUTIOUS */
+#endif /* QUIP_DEBUG */
+
+//#ifdef CAUTIOUS
+//		if( enp2 == NO_VEXPR_NODE ){
+//			sprintf(ERROR_STRING,"CAUTIOUS:  resolve_tree:  %s has null node on resolver list!?",
+//				node_desc(enp));
+//			WARN(ERROR_STRING);
+//		} else
+//#endif /* CAUTIOUS */
+
+		assert( enp2 != NO_VEXPR_NODE );
+
 		if( enp2 != whence ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_tree %s:  trying %s",node_desc(enp),node_desc(enp2));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_tree %s:  trying %s",node_desc(enp),node_desc(enp2));
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
-			if( enp2->en_shpp == NO_SHAPE ||	/* could be a void callfunc node */
-				UNKNOWN_SHAPE(enp2->en_shpp) )
+#endif /* QUIP_DEBUG */
+			if( VN_SHAPE(enp2) == NO_SHAPE ||	/* could be a void callfunc node */
+				UNKNOWN_SHAPE(VN_SHAPE(enp2)) )
 
 				RESOLVE_TREE(enp2,enp);
 			
 			/* The above call to resolve_tree could have resolved enp2 */
-			if( enp2->en_shpp!=NO_SHAPE && ! UNKNOWN_SHAPE(enp2->en_shpp) ){
-				resolved_enp=EFFECT_RESOLUTION(enp,enp2);
-				if(enp->en_resolvers != NO_LIST ){
+			if( VN_SHAPE(enp2)!=NO_SHAPE && ! UNKNOWN_SHAPE(VN_SHAPE(enp2)) ){
+#ifdef QUIP_DEBUG
+if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"resolve_tree %s:  effecting resolution using %s",node_desc(enp),node_desc(enp2));
+ADVISE(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+				/*resolved_enp=*/EFFECT_RESOLUTION(enp,enp2);
+				if(VN_RESOLVERS(enp) != NO_LIST ){
 					/* careful - we dont want a recursive call, we may
 					 * have gotten here from resolve_uk_nodes!
 					 */
-					RESOLVE_UK_NODES(enp->en_resolvers);
+					RESOLVE_UK_NODES(VN_RESOLVERS(enp));
 				}
 				return;
 			}
 		}
-		np=np->n_next;
+		np=NODE_NEXT(np);
 	}
 } /* end resolve_tree() */
 
-
-
-/* We call this with a list of nodes which may need resolution.
- * This can be called with a list we construct from a tree, or
- * with a node's list (propagation), so we therefore cannot assume
- * that all the nodes on the list actually need resolution.
- */
-
-static void resolve_uk_nodes(QSP_ARG_DECL  List *lp)
-{
-	Node *np;
-
-	np=lp->l_head;
-	while(np!=NO_NODE){
-		Vec_Expr_Node *enp;
-
-		enp=(Vec_Expr_Node *)np->n_data;
-		if( UNKNOWN_SHAPE(enp->en_shpp) ){
-#ifdef DEBUG
-if( debug & resolve_debug ){
-sprintf(error_string,"resolve_uk_nodes trying to fix %s",node_desc(enp));
-advise(error_string);
-}
-#endif /* DEBUG */
-			/*
-			resolve_one_uk_node(enp);
-			*/
-			RESOLVE_TREE(enp,NO_VEXPR_NODE);
-		}
-
-		/* If we remove nodes from the list as they are resolved,
-		 * We can't do this next business...
-		 */
-		np=np->n_next;
-	}
-}
 
 /* We call resolve_subrt from early_calltime_resolve
  * Currently, we are calling this BEFORE arg val assignment...
@@ -944,15 +968,15 @@ void resolve_subrt(QSP_ARG_DECL  Subrt *srp,List *uk_list, Vec_Expr_Node *argval
 
 /*
 if( ret_shpp != NO_SHAPE ){
-sprintf(error_string,"resolve_subrt %s:  return shape known:",srp->sr_name);
-advise(error_string);
-describe_shape(ret_shpp);
+sprintf(ERROR_STRING,"resolve_subrt %s:  return shape known:",SR_NAME(srp));
+ADVISE(ERROR_STRING);
+DESCRIBE_SHAPE(ret_shpp);
 }
 */
 
 /*
-sprintf(error_string,"resolve_subrt %s:  calling pop_previous",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s:  calling pop_previous",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
 	prev_cpp = POP_PREVIOUS();
 
@@ -960,80 +984,81 @@ advise(error_string);
 	curr_srp = srp;
 
 /*
-sprintf(error_string,"resolve_subrt %s setting SCANNING flag",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s setting SCANNING flag",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
-	srp->sr_flags |= SR_SCANNING;
+	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	if( argval_tree != NO_VEXPR_NODE ){
-		stat = CHECK_ARG_SHAPES(srp->sr_arg_decls,argval_tree,srp);
+		stat = CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),argval_tree,srp);
 		if( stat < 0 ) {
-sprintf(error_string,"resolve_subrt %s:  argument error",srp->sr_name);
-WARN(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s:  argument error",SR_NAME(srp));
+WARN(ERROR_STRING);
 			goto givup;
 		}
 	}
 
 	/* set the context */
 /*
-sprintf(error_string,"resolve_subrt %s:  done w/ check_arg_shapes",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s:  done w/ check_arg_shapes",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_SUBRT(srp);
 */
 
-	set_subrt_ctx(QSP_ARG  srp->sr_name);
+	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 	/* declare the arg variables */
-	EVAL_DECL_TREE(srp->sr_arg_decls);	/* resolve_subrt() */
-	EVAL_DECL_TREE(srp->sr_body);		/* resolve_subrt() */
-	if( srp->sr_prec != PREC_VOID ){
+	EVAL_DECL_TREE(SR_ARG_DECLS(srp));	/* resolve_subrt() */
+	EVAL_DECL_TREE(SR_BODY(srp));		/* resolve_subrt() */
+	if( SR_PREC_CODE(srp) != PREC_VOID ){
 		if( ret_shpp != NO_SHAPE && ! UNKNOWN_SHAPE(ret_shpp) ){
-			srp->sr_shpp = ret_shpp;
+			SET_SR_SHAPE(srp, ret_shpp);
 		} else {
-			srp->sr_shpp = uk_shape(srp->sr_prec);
+			SET_SR_SHAPE(srp, uk_shape(SR_PREC_CODE(srp)));
 		}
 	}
-#ifdef CAUTIOUS
-	/*
-	  else if( srp->sr_shpp != NO_SHAPE ){
-		sprintf(error_string,"CAUTIOUS:  resolve_subrt %s:  prec is void, but shape is not null!?",
-			srp->sr_name);
-		WARN(error_string);
-	}
-	*/
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	/*
+//	  else if( SR_SHAPE(srp) != NO_SHAPE ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  resolve_subrt %s:  prec is void, but shape is not null!?",
+//			SR_NAME(srp));
+//		WARN(ERROR_STRING);
+//	}
+//	*/
+//#endif /* CAUTIOUS */
+	/* assert( SR_SHAPE(srp) == NO_SHAPE ); */
 
 	/* we need to assign the arg vals for any ptr arguments! */
 
-	srp->sr_dst_shpp = ret_shpp;
+	SET_SR_DEST_SHAPE(srp, ret_shpp);
 
 	RESOLVE_UK_NODES(uk_list);
 
 	/* now try for the args */
 	/* resolve_uk_args( */
 
-	srp->sr_dst_shpp = NO_SHAPE;
+	SET_SR_DEST_SHAPE(srp, NO_SHAPE);
 
 /*
-sprintf(error_string,"resolve_subrt %s:  deleting subrt context",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s:  deleting subrt context",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
-	delete_subrt_ctx(QSP_ARG  srp->sr_name);
+	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 givup:
 
 /*
-sprintf(error_string,"resolve_subrt %s clearing SCANNING flag",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s clearing SCANNING flag",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
-	srp->sr_flags &= ~SR_SCANNING;
+	CLEAR_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	curr_srp = save_srp;
 
 	if( prev_cpp != NO_CONTEXT_PAIR ){
 /*
-sprintf(error_string,"resolve_subrt %s:  restoring context",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_subrt %s:  restoring context",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 */
 		RESTORE_PREVIOUS(prev_cpp);
 	}
@@ -1044,7 +1069,7 @@ advise(error_string);
 	 */
 
 	if( argval_tree != NO_VEXPR_NODE )
-		RESOLVE_ARGVAL_SHAPES(argval_tree,srp->sr_arg_decls,srp);
+		RESOLVE_ARGVAL_SHAPES(argval_tree,SR_ARG_DECLS(srp),srp);
 
 } /* end resolve_subrt() */
 
@@ -1062,13 +1087,13 @@ void early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
 	int save_exec;
 	uint32_t save_res;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"Begin early_calltime_resolve %s",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"Begin early_calltime_resolve %s",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_SUBRT(srp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* We are about to call a subroutine, but we are not actually executing.
 	 * We have a destination object (which may be unknown or NULL for void).
@@ -1079,17 +1104,17 @@ DUMP_SUBRT(srp);
 	 * that need to be resolved...  Then we attempt to resolve each one.
 	 */
 
-	lp = get_uk_list(QSP_ARG  srp->sr_body);
+	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
 	if( lp == NO_LIST ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /*
 if( debug & resolve_debug ){
-sprintf(error_string,"early_calltime_resolve %s:  no UK nodes, returning",srp->sr_name);
-advise(error_string);
-DUMP_TREE(srp->sr_body);
+sprintf(ERROR_STRING,"early_calltime_resolve %s:  no UK nodes, returning",SR_NAME(srp));
+ADVISE(ERROR_STRING);
+DUMP_TREE(SR_BODY(srp));
 }
 */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return;
 	}
 
@@ -1101,18 +1126,18 @@ DUMP_TREE(srp->sr_body);
 	save_res = resolution_flags;
 	resolution_flags = NODE_NEEDS_CALLTIME_RES;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"early_calltime_resolve calling resolve_subrt %s, flags = 0x%x, saved flags = 0x%x",
-srp->sr_name,resolution_flags, save_res);
-advise(error_string);
+sprintf(ERROR_STRING,"early_calltime_resolve calling resolve_subrt %s, flags = 0x%x, saved flags = 0x%x",
+SR_NAME(srp),resolution_flags, save_res);
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( dst_dp == NO_OBJ )
-		RESOLVE_SUBRT(srp,lp,srp->sr_arg_vals,NO_SHAPE);
+		RESOLVE_SUBRT(srp,lp,SR_ARG_VALS(srp),NO_SHAPE);
 	else
-		RESOLVE_SUBRT(srp,lp,srp->sr_arg_vals,&dst_dp->dt_shape);
+		RESOLVE_SUBRT(srp,lp,SR_ARG_VALS(srp),OBJ_SHAPE(dst_dp));
 
 	executing = save_exec;
 
@@ -1126,74 +1151,84 @@ advise(error_string);
 
 	dellist(lp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"early_calltime_resolve %s DONE",srp->sr_name);
-advise(error_string);
+sprintf(ERROR_STRING,"early_calltime_resolve %s DONE",SR_NAME(srp));
+ADVISE(ERROR_STRING);
 DUMP_SUBRT(srp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	resolution_flags = save_res;
 }
 
 void xform_to_bitmap(Shape_Info *shpp)
 {
-#ifdef CAUTIOUS
-	if( BITMAP_SHAPE(shpp) ){
-		NWARN("CAUTIOUS:  xform_to_bitmap:  shape is already a bitmap!?");
-		return;
-	}
-#endif /* CAUTIOUS */
-	/* shpp->si_rowpad = N_PAD_BITS(shpp->si_cols); */
-	/* shpp->si_cols = N_WORDS_FOR_BITS(shpp->si_cols); */
-	shpp->si_prec = PREC_BIT;
-	shpp->si_flags |= DT_BIT;
+//#ifdef CAUTIOUS
+//	if( BITMAP_SHAPE(shpp) ){
+//		NWARN("CAUTIOUS:  xform_to_bitmap:  shape is already a bitmap!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( ! BITMAP_SHAPE(shpp) );
+
+	/* shpp->si_rowpad = N_PAD_BITS(SHP_COLS(shpp)); */
+	/* SET_SHP_COLS(shpp, N_WORDS_FOR_BITS(SHP_COLS(shpp))); */
+	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(PREC_BIT) );
+	SET_SHP_FLAG_BITS(shpp, DT_BIT);
 }
 
 void xform_from_bitmap(Shape_Info *shpp,prec_t prec)
 {
-#ifdef CAUTIOUS
-	if( ! BITMAP_SHAPE(shpp) ){
-		NWARN("CAUTIOUS:  xform_from_bitmap:  shape is not a bitmap!?");
-		return;
-	}
-#endif /* CAUTIOUS */
-	/*shpp->si_cols = N_BITMAP_COLS(shpp); */
+//#ifdef CAUTIOUS
+//	if( ! BITMAP_SHAPE(shpp) ){
+//		NWARN("CAUTIOUS:  xform_from_bitmap:  shape is not a bitmap!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( BITMAP_SHAPE(shpp) );
+
+	/*SET_SHP_COLS(shpp, N_BITMAP_COLS(shpp)); */
 	/*shpp->si_rowpad=0; */
-	shpp->si_prec = prec;
-	shpp->si_flags &= ~ DT_BIT;
+	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(prec) );
+	CLEAR_SHP_FLAG_BITS(shpp, DT_BIT);
 }
 
 /* setup_spcdom_shape - setup space domain shape (from freq. domain transform shape) */
 
-void setup_spcdom_shape(Shape_Info *spcdom_shpp, Shape_Info *xf_shpp)
+static void setup_spcdom_shape(Shape_Info *spcdom_shpp, Shape_Info *xf_shpp)
 {
-	*spcdom_shpp = *xf_shpp;
-	spcdom_shpp->si_cols -= 1;
-	spcdom_shpp->si_cols *= 2;
-	spcdom_shpp->si_comps = 1;
+	COPY_SHAPE(spcdom_shpp, xf_shpp);
+	SET_SHP_COLS(spcdom_shpp,
+		SHP_COLS(spcdom_shpp)-1);
+	SET_SHP_COLS(spcdom_shpp,
+		SHP_COLS(spcdom_shpp)*2);
+	SET_SHP_COMPS(spcdom_shpp, 1);
 	/* BUG?  should we make sure that the known shape is complex? */
 	/* The space domain shape is real */
-	spcdom_shpp->si_flags &= ~DT_COMPLEX;
-	spcdom_shpp->si_prec &= ~COMPLEX_PREC_BITS;
+	CLEAR_SHP_FLAG_BITS(spcdom_shpp,DT_COMPLEX);
+	SET_SHP_PREC_PTR(spcdom_shpp,
+		PREC_MACH_PREC_PTR(SHP_PREC_PTR(spcdom_shpp)) );
 }
 
-void setup_xform_shape(Shape_Info *xf_shpp,Shape_Info *im_shpp)
+static void setup_xform_shape(Shape_Info *xf_shpp,Shape_Info *im_shpp)
 {
 	*xf_shpp = *im_shpp;
-	xf_shpp->si_cols /= 2;
-	xf_shpp->si_cols += 1;
-	xf_shpp->si_mach_dim[0] = 2;
+	SET_SHP_COLS(xf_shpp,
+		SHP_COLS(xf_shpp) / 2);
+	SET_SHP_COLS(xf_shpp,
+		SHP_COLS(xf_shpp) + 1 );
+	SET_SHP_MACH_DIM(xf_shpp,0, 2);
 	/* BUG?  should we make sure that the known shape is real? */
-	xf_shpp->si_flags |= DT_COMPLEX;
-	xf_shpp->si_prec |= COMPLEX_PREC_BITS;
+	SET_SHP_FLAG_BITS(xf_shpp, DT_COMPLEX);
+	SET_SHP_PREC_PTR(xf_shpp,
+		complex_precision(SHP_PREC_PTR(xf_shpp)) );
 }
 
 
 /* Reshape this object.  for now, we don't worry about preserving any data... */
 
-Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
+static Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 {
 	Data_Obj *tmp_dp;
 	char s[LLEN];
@@ -1204,8 +1239,16 @@ Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 	 * to use make_local_dobj, because then it would be cleaned up at the end of the command...
 	 */
 
-	tmp_dp = make_dobj(QSP_ARG  localname(),&shpp->si_type_dimset,shpp->si_prec);
-	strcpy(s,dp->dt_name);
+	tmp_dp = make_dobj(QSP_ARG  localname(),SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+//#ifdef CAUTIOUS
+//	if( dp == NULL ){
+//		ERROR1("CAUTIOUS:  reshape_obj:  null object pointer!?");
+//		IOS_RETURN_VAL(NULL);
+//	}
+//#endif // CAUTIOUS
+	assert( dp != NULL );
+
+	strcpy(s,OBJ_NAME(dp));
 	delvec(QSP_ARG  dp);
 	obj_rename(QSP_ARG  tmp_dp,s);
 	return(tmp_dp);
@@ -1220,102 +1263,114 @@ Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 static void resolve_obj_id(QSP_ARG_DECL  Identifier *idp, Shape_Info *shpp)
 {
 	Vec_Expr_Node *decl_enp;
-	Shape_Info tmp_shape;
+	Shape_Info *tmp_shpp;
 	Data_Obj *dp;
 /* char remember_name[LLEN]; */
 
-	/* decl_enp = dp->dt_extra; */
+//#ifdef CAUTIOUS
+//    if( shpp == NO_SHAPE ){
+//        ERROR1("CAUTIOUS:  resolve_obj_id:  shape ptr is null!?");
+//        return; // iOS:  error1 can return
+//    }
+//#endif // CAUTIOUS
+	assert( shpp != NO_SHAPE );
+    
+	INIT_SHAPE_PTR(tmp_shpp)
+
+	/* decl_enp = OBJ_EXTRA(dp); */
 
 	/* matlab has no declarations!? */
 	if( mode_is_matlab ){
 /*
-sprintf(error_string,"resolve_obj_id %s:  mode is matlab",idp->id_name);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_obj_id %s:  mode is matlab",ID_NAME(idp));
+ADVISE(ERROR_STRING);
 */
-		dp = GET_OBJ(idp->id_name);
+		dp = GET_OBJ(ID_NAME(idp));
 
-#ifdef CAUTIOUS
-		if( dp == NO_OBJ ){
-			sprintf(error_string,"resolve_obj_id %s:  missing object",idp->id_name);
-			ERROR1(error_string);
-		}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//		if( dp == NO_OBJ ){
+//			sprintf(ERROR_STRING,"resolve_obj_id %s:  missing object",ID_NAME(idp));
+//			ERROR1(ERROR_STRING);
+//		}
+//#endif /* CAUTIOUS */
+		assert( dp != NO_OBJ );
 
-		idp->id_refp->ref_dp = reshape_obj(QSP_ARG  dp,shpp);
+		REF_OBJ(ID_REF(idp)) = reshape_obj(QSP_ARG  dp,shpp);
 
 		return;
 	}
 
-#ifdef CAUTIOUS
-	if( idp->id_type != ID_REFERENCE ){
-		sprintf(error_string,"CAUTIOUS:  resolve_obj_id:  identifier %s is not a reference!?",idp->id_name);
-		ERROR1(error_string);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( ID_TYPE(idp) != ID_REFERENCE ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  resolve_obj_id:  identifier %s is not a reference!?",ID_NAME(idp));
+//		ERROR1(ERROR_STRING);
+//	}
+//#endif /* CAUTIOUS */
+	assert( ID_TYPE(idp) == ID_REFERENCE );
 
-	decl_enp = idp->id_refp->ref_decl_enp;
-	dp = idp->id_refp->ref_dp;
+	decl_enp = REF_DECL_VN(ID_REF(idp));
+	dp = REF_OBJ(ID_REF(idp));
 
-#ifdef CAUTIOUS
-	if( dp->dt_extra != decl_enp ){
-		sprintf(error_string,"CAUTIOUS:  resolve_obj_id:  object %s decl_enp (0x%lx) does not match 0x%lx!?",
-			dp->dt_name,(u_long)dp->dt_extra,(u_long)decl_enp);
-		ERROR1(error_string);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( OBJ_EXTRA(dp) != decl_enp ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  resolve_obj_id:  object %s decl_enp (0x%lx) does not match 0x%lx!?",
+//			OBJ_NAME(dp),(u_long)OBJ_EXTRA(dp),(u_long)decl_enp);
+//		ERROR1(ERROR_STRING);
+//	}
+//#endif /* CAUTIOUS */
+	assert( OBJ_EXTRA(dp) == decl_enp );
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_obj_id:  setting decl node shape for %s", decl_enp->en_string);
-advise(error_string);
-if( shpp == NO_SHAPE ) WARN("shape ptr is null!?");
-describe_shape(shpp);
+sprintf(ERROR_STRING,"resolve_obj_id:  setting decl node shape for %s", VN_STRING(decl_enp));
+ADVISE(ERROR_STRING);
+DESCRIBE_SHAPE(shpp);
 }
-#endif /* DEBUG */
-	tmp_shape = *shpp;
-	tmp_shape.si_prec=decl_enp->en_prec;
+#endif /* QUIP_DEBUG */
+	COPY_SHAPE(tmp_shpp, shpp);
+	SET_SHP_PREC_PTR(tmp_shpp,VN_PREC_PTR(decl_enp));
 
 	/* used to propagate complex bit here */
-	if( COMPLEX_PRECISION(tmp_shape.si_prec) )
-		tmp_shape.si_flags |= DT_COMPLEX;
+	if( COMPLEX_PRECISION(SHP_PREC(tmp_shpp)) )
+		SET_SHP_FLAG_BITS(tmp_shpp, DT_COMPLEX);
 
-	COPY_NODE_SHAPE(decl_enp,&tmp_shape);
+	copy_node_shape(decl_enp,tmp_shpp);
 	/* make sure to do this, needed for runtime! */
 	/* need to copy NEEDS_CALLTIME_RES flag too!? */
-	decl_enp->en_flags |= resolution_flags;
+	SET_VN_FLAG_BITS(decl_enp, resolution_flags);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_obj_id:  resolution_flags = 0x%x",resolution_flags);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_obj_id:  resolution_flags = 0x%x",resolution_flags);
+ADVISE(ERROR_STRING);
 
-sprintf(error_string,"resolve_obj_id:  calling reeval_decl_stat %s", decl_enp->en_string);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_obj_id:  calling reeval_decl_stat %s", VN_STRING(decl_enp));
+ADVISE(ERROR_STRING);
 if( shpp == NO_SHAPE ) WARN("shape ptr is null!?");
-describe_shape(shpp);
+DESCRIBE_SHAPE(shpp);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* the pointer points to the object, but the object's name may be in a different
 	 * context.  We need to reinstate the context before reevaluating the declaration.
 	 * We do this by saving the identifier context in the declaration node.
 	 */
 /*
-strcpy(remember_name,dp->dt_name);
-sprintf(error_string,"resolve_obj_id %s, old dp = 0x%lx",dp->dt_name,(u_long)dp);
-advise(error_string);
+strcpy(remember_name,OBJ_NAME(dp));
+sprintf(ERROR_STRING,"resolve_obj_id %s, old dp = 0x%lx",OBJ_NAME(dp),(u_long)dp);
+ADVISE(ERROR_STRING);
 longlist(dp);
 */
-	reeval_decl_stat(QSP_ARG  dp->dt_prec,decl_enp,decl_enp->en_decl_flags);
+	reeval_decl_stat(QSP_ARG  OBJ_PREC_PTR(dp),decl_enp,VN_DECL_FLAGS(decl_enp));
 /*
-dp = idp->id_refp->ref_dp;
+dp = REF_OBJ(ID_REF(idp));
 dp=dobj_of(remember_name);
 if( dp == NO_OBJ ) {
-sprintf(error_string,"resolve_obj_id:  missing object %s!?",remember_name);
-ERROR1(error_string);
+sprintf(ERROR_STRING,"resolve_obj_id:  missing object %s!?",remember_name);
+ERROR1(ERROR_STRING);
 }
-sprintf(error_string,"resolve_obj_id %s, new dp = 0x%lx",dp->dt_name,(u_long)dp);
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_obj_id %s, new dp = 0x%lx",OBJ_NAME(dp),(u_long)dp);
+ADVISE(ERROR_STRING);
 longlist(dp);
 */
 
@@ -1332,14 +1387,14 @@ static int rc_match(Shape_Info *shpp1,Shape_Info *shpp2)
 	for(i=1;i<N_DIMENSIONS;i++)
 		if( shpp1->si_dimension[i] != shpp2->si_dimension[i] ) return(0);
 
-	if( COMPLEX_PRECISION(shpp1->si_prec) ){
-		if( COMPLEX_PRECISION(shpp2->si_prec) ){
+	if( COMPLEX_PRECISION(SHP_PREC(shpp1)) ){
+		if( COMPLEX_PRECISION(SHP_PREC(shpp2)) ){
 			if( shpp1->si_tdim != 2 || shpp2->si_tdim != 2 ) return(0);
 		} else {
 			if( shpp1->si_tdim != 2 || shpp2->si_tdim != 1 ) return(0);
 		}
 	} else {
-		if( COMPLEX_PRECISION(shpp2->si_prec) ){
+		if( COMPLEX_PRECISION(SHP_PREC(shpp2)) ){
 			if( shpp1->si_tdim != 1 || shpp2->si_tdim != 2 ) return(0);
 		} else {
 			if( shpp1->si_tdim != 1 || shpp2->si_tdim != 1 ) return(0);
@@ -1381,53 +1436,54 @@ void resolve_pointer(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 	if( idp == NO_IDENTIFIER ){
 /*
 NODE_ERROR(uk_enp);
-sprintf(error_string,"resolve_pointer:  no set identifier for %s",node_desc(uk_enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_pointer:  no set identifier for %s",node_desc(uk_enp));
+ADVISE(ERROR_STRING);
 */
 		/* this probably means that the ptr is not set, needs to be resolved
 		 * at runtime.
 		 */
 		return;
 	}
-	/* At one time we did a CAUTIOUS check to see if the object was in the database,
+	/* At one time we did a CAUTIOUS check to see if the object was in the database, //
 	 * but that could fail because the pointed to object might be out of scope
 	 * (e.g.  ptr to local object passed as subrt arg)
 	 */
 
-	dp = idp->id_ptrp->ptr_refp->ref_dp;
+	dp = REF_OBJ(PTR_REF(ID_PTR(idp)));
 
 	/* BUG check ptr set first */
 
-#ifdef CAUTIOUS
-	if( dp == NO_OBJ ){
-		advise("CAUTIOUS:  resolve_pointer:  ptr has no object!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( dp == NO_OBJ ){
+//		ADVISE("CAUTIOUS:  resolve_pointer:  ptr has no object!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( dp != NO_OBJ );
 
-	if( UNKNOWN_SHAPE(&dp->dt_shape) ){
+	if( UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
 		/* Now we know the object in question has unknown shape -
 		 * Resolve it!
 		 */
 		/* now we try to resolve the pointed-to object */
-sprintf(error_string,"resolve_pointer %s:  resolving pointer target object",node_desc(uk_enp));
-advise(error_string);
-		RESOLVE_OBJ_ID(idp->id_ptrp->ptr_refp->ref_idp,shpp);
+sprintf(ERROR_STRING,"resolve_pointer %s:  resolving pointer target object",node_desc(uk_enp));
+ADVISE(ERROR_STRING);
+		RESOLVE_OBJ_ID(REF_ID(PTR_REF(ID_PTR(idp))),shpp);
 	} else {
 		/* make sure that the shapes are the same */
-		if( ! same_shape(&dp->dt_shape,shpp) ){
+		if( ! same_shape(OBJ_SHAPE(dp),shpp) ){
 			NODE_ERROR(uk_enp);
-			sprintf(error_string,
-		"resolve_pointer:  Shape mismatch with object %s",dp->dt_name);
-			WARN(error_string);
-describe_shape(uk_enp->en_shpp);
-describe_shape(shpp);
+			sprintf(ERROR_STRING,
+		"resolve_pointer:  Shape mismatch with object %s",OBJ_NAME(dp));
+			WARN(ERROR_STRING);
+DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
+DESCRIBE_SHAPE(shpp);
 		}
 	}
 
 /*
-sprintf(error_string,"resolve_pointer fixing %s",node_desc(uk_enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_pointer fixing %s",node_desc(uk_enp));
+ADVISE(ERROR_STRING);
 */
 
 	/* also fix the node where we found this */
@@ -1440,43 +1496,47 @@ advise(error_string);
  * The shape pointer should point to a valid shape...
  */
 
-void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
+static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 {
 	Identifier *idp;
 	Data_Obj *dp;
 
 	/* If this is an automatic object, and we haven't evaluated the decls yet... */
-	idp = GET_ID(uk_enp->en_string);
-#ifdef CAUTIOUS
-	if( idp == NO_IDENTIFIER ){
-		sprintf(error_string,
-	"CAUTIOUS:  resolve_object:  missing identifier %s!?",uk_enp->en_string);
-		WARN(error_string);
-		return;
-	}
-	if( ! IS_REFERENCE(idp) ){
-		sprintf(error_string,
-	"CAUTIOUS:  resolve_object:  identifier %s is not an object reference!?",idp->id_name);
-		WARN(error_string);
-		return;
-	}
-#endif /* CAUTIOUS */
+	idp = GET_ID(VN_STRING(uk_enp));
+//#ifdef CAUTIOUS
+//	if( idp == NO_IDENTIFIER ){
+//		sprintf(ERROR_STRING,
+//	"CAUTIOUS:  resolve_object:  missing identifier %s!?",VN_STRING(uk_enp));
+//		WARN(ERROR_STRING);
+//		return;
+//	}
+	assert( idp != NO_IDENTIFIER );
 
-	dp = idp->id_refp->ref_dp;
+//	if( ! IS_REFERENCE(idp) ){
+//		sprintf(ERROR_STRING,
+//	"CAUTIOUS:  resolve_object:  identifier %s is not an object reference!?",ID_NAME(idp));
+//		WARN(ERROR_STRING);
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( IS_REFERENCE(idp) );
 
-#ifdef CAUTIOUS
-	if( dp==NO_OBJ ){
-		sprintf(error_string,
-	"CAUTIOUS:  resolve_object:  missing object %s!?",uk_enp->en_string);
-		WARN(error_string);
-list_dobjs(SINGLE_QSP_ARG);
-		return;
-	}
-#endif /* CAUTIOUS */
+	dp = REF_OBJ(ID_REF(idp));
 
-	uk_enp->en_flags |= resolution_flags;		/* resolve_object */
+//#ifdef CAUTIOUS
+//	if( dp==NO_OBJ ){
+//		sprintf(ERROR_STRING,
+//	"CAUTIOUS:  resolve_object:  missing object %s!?",VN_STRING(uk_enp));
+//		WARN(ERROR_STRING);
+//list_dobjs(SINGLE_QSP_ARG);
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( dp != NO_OBJ );
 
-	if( ! UNKNOWN_SHAPE(&dp->dt_shape) ){
+	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_object */
+
+	if( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
 		/* This can occur as a matter of course if we have multiple T_DYN_OBJ
 		 * nodes, after the first is resolved the shape is propagated to the
 		 * declaration node.  The other instances don't get fixed right away...
@@ -1489,13 +1549,13 @@ list_dobjs(SINGLE_QSP_ARG);
 
 	RESOLVE_OBJ_ID(idp,shpp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_object %s:",node_desc(uk_enp));
-advise(error_string);
-describe_shape(uk_enp->en_shpp);
+sprintf(ERROR_STRING,"resolve_object %s:",node_desc(uk_enp));
+ADVISE(ERROR_STRING);
+DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 } /* end resolve_object */
 
@@ -1504,10 +1564,10 @@ describe_shape(uk_enp->en_shpp);
 
 static void resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp)
 {
-	switch(enp->en_code){
+	switch(VN_CODE(enp)){
 		case T_RET_LIST:
-			RESOLVE_OBJ_LIST(enp->en_child[0],shpp);
-			RESOLVE_OBJ_LIST(enp->en_child[1],shpp);
+			RESOLVE_OBJ_LIST(VN_CHILD(enp,0),shpp);
+			RESOLVE_OBJ_LIST(VN_CHILD(enp,1),shpp);
 			break;
 
 		case T_DYN_OBJ:
@@ -1535,9 +1595,9 @@ static void resolve_obj_list(QSP_ARG_DECL  Vec_Expr_Node *enp, Shape_Info *shpp)
 
 Vec_Expr_Node *resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 {
-	uk_enp->en_flags |= resolution_flags;		/* resolve_node */
+	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_node */
 
-	switch(uk_enp->en_code){
+	switch(VN_CODE(uk_enp)){
 		/* projection operator cases */
 
 		/* For most cases, we just install the shape */
@@ -1589,23 +1649,24 @@ Vec_Expr_Node *resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp
 		case T_REAL_PART:
 		case T_IMAG_PART:
 		case T_VV_FUNC:		/* resolve_node */
-			COPY_NODE_SHAPE(uk_enp,shpp);
+			copy_node_shape(uk_enp,shpp);
 			return(uk_enp);
 
 		BINARY_BOOLOP_CASES			/* T_BOOL_AND etc, bitmap shapes */
 		case T_BOOL_NOT:			/* does this belong here??? */
 		ALL_NUMERIC_COMPARISON_CASES		/* T_BOOL_GT etc, bitmap shapes */
 			/* for numeric comparisons, we know that the known child node can't be a bitmap */
-			COPY_NODE_SHAPE(uk_enp,shpp);
+			copy_node_shape(uk_enp,shpp);
 			if( ! BITMAP_SHAPE(shpp) ){
-				xform_to_bitmap(uk_enp->en_shpp);
+				xform_to_bitmap(VN_SHAPE(uk_enp));
 			}
 			break;
 
 
 		case T_TYPECAST:
-			COPY_NODE_SHAPE(uk_enp,shpp);
-			uk_enp->en_shpp->si_prec = uk_enp->en_intval;
+			copy_node_shape(uk_enp,shpp);
+			//SET_SHP_PREC_PTR(VN_SHAPE(uk_enp), PREC_FOR_CODE(VN_INTVAL(uk_enp)) );
+			SET_SHP_PREC_PTR(VN_SHAPE(uk_enp), VN_CAST_PREC_PTR(uk_enp) );
 			return(uk_enp);
 
 		case T_POINTER:			/* resolve_node */
@@ -1624,23 +1685,23 @@ Vec_Expr_Node *resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp
 
 		case T_RET_LIST:		/* a list of objects */
 			if( ROWVEC_SHAPE(shpp) ){	/* a list of scalars? */
-				RESOLVE_OBJ_LIST(uk_enp,scalar_shape(shpp->si_prec));
+				RESOLVE_OBJ_LIST(uk_enp,scalar_shape(SHP_PREC(shpp)));
 			} else {
-sprintf(error_string,"resolve_node %s:  oops, only know how to resolve from rowvec!?",node_desc(uk_enp));
-WARN(error_string);
+sprintf(ERROR_STRING,"resolve_node %s:  oops, only know how to resolve from rowvec!?",node_desc(uk_enp));
+WARN(ERROR_STRING);
 			}
 			return(uk_enp);
 
 		case T_SS_B_CONDASS:
 			/* The known child is the bitmap */
-			COPY_NODE_SHAPE(uk_enp,shpp);
+			copy_node_shape(uk_enp,shpp);
 			return(uk_enp);
 
 		case T_VS_B_CONDASS:
 			/* The known child may be the bitmap, but hopefully the
 			 * correct shape was determined above.
 			 */
-			COPY_NODE_SHAPE(uk_enp,shpp);
+			copy_node_shape(uk_enp,shpp);
 			return(uk_enp);
 
 
@@ -1657,45 +1718,46 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 {
 	prec_t prec;
 
-	switch(uk_enp->en_code){
+	switch(VN_CODE(uk_enp)){
 
 		case T_CURLY_SUBSCR:
-			*uk_enp->en_shpp = *shpp;	/* copy shape */
+			COPY_SHAPE(VN_SHAPE(uk_enp), shpp);	/* copy shape */
 			/* set a dimension to one */
-			uk_enp->en_shpp->si_mach_dim[shpp->si_mindim] = 1;
-			uk_enp->en_shpp->si_type_dim[shpp->si_mindim] = 1;
-			uk_enp->en_shpp->si_mindim++;
+			SET_SHP_MACH_DIM(VN_SHAPE(uk_enp),SHP_MINDIM(shpp), 1);
+			SET_SHP_TYPE_DIM(VN_SHAPE(uk_enp),SHP_MINDIM(shpp), 1);
+			SET_SHP_MINDIM(VN_SHAPE(uk_enp),
+				SHP_MINDIM(VN_SHAPE(uk_enp)) + 1 );
 			return(uk_enp);
 
 			
 		case T_TRANSPOSE:
-			*uk_enp->en_shpp = *shpp;	/* copy shape */
-			uk_enp->en_shpp->si_cols = shpp->si_rows;
-			uk_enp->en_shpp->si_rows = shpp->si_cols;
+			COPY_SHAPE(VN_SHAPE(uk_enp),shpp);	/* copy shape */
+			SET_SHP_COLS(VN_SHAPE(uk_enp), SHP_ROWS(shpp));
+			SET_SHP_ROWS(VN_SHAPE(uk_enp), SHP_COLS(shpp));
 			/* BUG?  reset shape flags? */
 			return(uk_enp);
 
 		case T_RIDFT:		/* resolve_parent, xform shape is known, get spc. dom. size */
-			setup_spcdom_shape(uk_enp->en_shpp,shpp);
+			setup_spcdom_shape(VN_SHAPE(uk_enp),shpp);
 			return(uk_enp);
 
 		case T_RDFT:		/* resolve_parent, input shape is known, get xform size */
-			setup_xform_shape(uk_enp->en_shpp,shpp);
+			setup_xform_shape(VN_SHAPE(uk_enp),shpp);
 			return(uk_enp);
 
 		ALL_NUMERIC_COMPARISON_CASES
 			/* for numeric comparisons, we know that the known child node can't be a bitmap */
-			COPY_NODE_SHAPE(uk_enp,shpp);
-			xform_to_bitmap(uk_enp->en_shpp);
+			copy_node_shape(uk_enp,shpp);
+			xform_to_bitmap(VN_SHAPE(uk_enp));
 			return(uk_enp);
 
 		case T_SS_B_CONDASS:	/* resolve_parent, branch shape is known */
 		case T_VS_B_CONDASS:	/* resolve_parent, branch shape is known */
 		case T_VV_B_CONDASS:	/* resolve_parent, branch shape is known */
-			prec = uk_enp->en_prec;
-			COPY_NODE_SHAPE(uk_enp,shpp);
+			prec = VN_PREC(uk_enp);
+			copy_node_shape(uk_enp,shpp);
 			if( BITMAP_SHAPE(shpp) )
-				xform_from_bitmap(uk_enp->en_shpp,prec);
+				xform_from_bitmap(VN_SHAPE(uk_enp),prec);
 			return(uk_enp);
 
 		case T_VS_FUNC:
@@ -1712,12 +1774,12 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 		/* Now with outer ops being handled by vv_func, we need to know
 		 * the shape of both children before we can resolve.
 		 */
-		if( (!UNKNOWN_SHAPE(uk_enp->en_child[0]->en_shpp)) &&
-			! UNKNOWN_SHAPE(uk_enp->en_child[1]->en_shpp) ){
-			Shape_Info *shpp;
+		if( (!UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(uk_enp,0)))) &&
+			! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(uk_enp,1))) ){
+			Shape_Info *o_shpp;
 
-			shpp = calc_outer_shape(uk_enp->en_child[0],uk_enp->en_child[1]);
-			COPY_NODE_SHAPE(uk_enp,shpp);
+			o_shpp = calc_outer_shape(VN_CHILD(uk_enp,0),VN_CHILD(uk_enp,1));
+			copy_node_shape(uk_enp,o_shpp);
 			return(uk_enp);
 		}
 		break;
@@ -1741,7 +1803,7 @@ static Vec_Expr_Node * resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_en
 	Shape_Info *shpp;
 
 	/* First get the target shape - this is easy!? */
-	switch(enp->en_code){
+	switch(VN_CODE(enp)){
 		case T_FIX_SIZE:
 		case T_POINTER:
 		case T_TYPECAST:
@@ -1759,21 +1821,21 @@ static Vec_Expr_Node * resolve_unknown_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_en
 		ALL_MATHFN_CASES
 		ALL_CONDASS_CASES
 		case T_TRANSPOSE:
-			shpp = enp->en_shpp;
+			shpp = VN_SHAPE(enp);
 			break;
 
 		ALL_NUMERIC_COMPARISON_CASES
 			/* This is a bitmap shape! */
-			shpp = enp->en_shpp;
+			shpp = VN_SHAPE(enp);
 			break;
 
 		default:
 			MISSING_CASE(enp,"resolve_unknown_parent (known node)");
-			shpp = enp->en_shpp;
+			shpp = VN_SHAPE(enp);
 			break;
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 	/* We usually thing of resolution as applying to images etc, and not scalars,
 	 * but when we have multiple scalar arguments to return from a function, we may
@@ -1781,20 +1843,20 @@ if( debug & resolve_debug ){
 	 * are resolved to their scalar targets, this msg will be printed...
 	 */
 	if( SCALAR_SHAPE(shpp) ){
-		sprintf(error_string,"ADVISORY:  resolve_unknown_parent %s from %s:  known shape is scalar!?",
+		sprintf(ERROR_STRING,"ADVISORY:  resolve_unknown_parent %s from %s:  known shape is scalar!?",
 			node_desc(uk_enp),node_desc(enp));
-		prt_msg(error_string);
-		describe_shape(shpp);
+		prt_msg(ERROR_STRING);
+		DESCRIBE_SHAPE(shpp);
 	}
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_unknown_parent %s from %s",node_desc(uk_enp),node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_unknown_parent %s from %s",node_desc(uk_enp),node_desc(enp));
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* BUG we'd like to merge this with resolve_node... */
 
@@ -1809,26 +1871,26 @@ static Shape_Info *shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_
 {
 	Shape_Info *shpp;
 
-	switch(enp->en_code){
+	switch(VN_CODE(enp)){
 
 		BINARY_BOOLOP_CASES			/* shape_for_child (known node) */
-			if( BITMAP_SHAPE(uk_enp->en_shpp) ) return(enp->en_shpp);
+			if( BITMAP_SHAPE(VN_SHAPE(uk_enp)) ) return(VN_SHAPE(enp));
 			else {
-				*enp->en_bm_child_shpp = *enp->en_shpp;
-				xform_from_bitmap(enp->en_bm_child_shpp,uk_enp->en_prec);
-				return(enp->en_bm_child_shpp);
+				COPY_SHAPE( VN_BM_SHAPE(enp) , VN_SHAPE(enp));
+				xform_from_bitmap(VN_BM_SHAPE(enp),VN_PREC(uk_enp));
+				return(VN_BM_SHAPE(enp));
 			}
 
 		ALL_NUMERIC_COMPARISON_CASES		/* T_BOOL_GT etc */
-			*enp->en_bm_child_shpp = *enp->en_shpp;
-			xform_from_bitmap(enp->en_bm_child_shpp,uk_enp->en_prec);
-			return(enp->en_bm_child_shpp);
+			COPY_SHAPE(VN_BM_SHAPE(enp) , VN_SHAPE(enp) );
+			xform_from_bitmap(VN_BM_SHAPE(enp),VN_PREC(uk_enp));
+			return(VN_BM_SHAPE(enp));
 
 		ALL_CONDASS_CASES
-			if( uk_enp == enp->en_child[0] ){
-				*enp->en_bm_child_shpp = *enp->en_shpp;
-				xform_to_bitmap(enp->en_bm_child_shpp);
-				return(enp->en_bm_child_shpp);
+			if( uk_enp == VN_CHILD(enp,0) ){
+				COPY_SHAPE(VN_BM_SHAPE(enp) , VN_SHAPE(enp) );
+				xform_to_bitmap(VN_BM_SHAPE(enp));
+				return(VN_BM_SHAPE(enp));
 			}
 			/* fall-thru */
 		/*
@@ -1843,7 +1905,7 @@ static Shape_Info *shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_
 		case T_DFT:
 		case T_RETURN:			/* shape_for_child */
 
-			return( enp->en_shpp );
+			return( VN_SHAPE(enp) );
 
 		case T_RIDFT:	/* resolve_unkown_child, RIDFT output shape is known, get xform shape */
 			/* We know the shape of the real image, but we want
@@ -1859,32 +1921,36 @@ static Shape_Info *shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_
 			 * an extra shape structure...
 			 */
 
-			setup_xform_shape(enp->en_child_shpp,enp->en_shpp);
-			return(enp->en_child_shpp);
+			setup_xform_shape(VN_SIZCH_SHAPE(enp),VN_SHAPE(enp));
+			return(VN_SIZCH_SHAPE(enp));
 
 		case T_RDFT:		/* shape_for_child, RDFT xform shape is known, get input shape */
-			setup_spcdom_shape(enp->en_child_shpp,enp->en_shpp);
-			return(enp->en_child_shpp);
+			setup_spcdom_shape(VN_SIZCH_SHAPE(enp),VN_SHAPE(enp));
+			return(VN_SIZCH_SHAPE(enp));
 
 		case T_ENLARGE:
-			shpp = enp->en_child_shpp;
-			*shpp = *enp->en_shpp;
-			shpp->si_cols /= 2;
-			shpp->si_rows /= 2;
+			shpp = VN_SIZCH_SHAPE(enp);
+			COPY_SHAPE(shpp , VN_SHAPE(enp));
+			SET_SHP_COLS(shpp,
+				SHP_COLS(shpp) / 2 );
+			SET_SHP_ROWS(shpp,
+				SHP_ROWS(shpp) / 2);
 			return(shpp);
 
 		case T_REDUCE:
-			shpp = enp->en_child_shpp;
-			*shpp = *enp->en_shpp;
-			shpp->si_cols *= 2;
-			shpp->si_rows *= 2;
+			shpp = VN_SIZCH_SHAPE(enp);
+			COPY_SHAPE(shpp , VN_SHAPE(enp));
+			SET_SHP_COLS(shpp,
+				SHP_COLS(shpp) * 2 );
+			SET_SHP_ROWS(shpp,
+				SHP_ROWS(shpp) * 2);
 			return(shpp);
 
 		case T_TRANSPOSE:
-			shpp = enp->en_child_shpp;
-			*shpp = *enp->en_shpp;
-			shpp->si_cols = enp->en_shpp->si_rows;
-			shpp->si_rows = enp->en_shpp->si_cols;
+			shpp = VN_SIZCH_SHAPE(enp);
+			COPY_SHAPE(shpp , VN_SHAPE(enp));
+			SET_SHP_COLS(shpp, SHP_ROWS(VN_SHAPE(enp)) );
+			SET_SHP_ROWS(shpp, SHP_COLS(VN_SHAPE(enp)) );
 			return(shpp);
 
 		case T_TYPECAST:
@@ -1892,13 +1958,13 @@ static Shape_Info *shape_for_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_
 			 * We create a new shape, potentially a garbage collection problem?
 			 */
 			shpp = (Shape_Info *)getbuf(sizeof(*shpp));
-			*shpp = *enp->en_shpp;
-			shpp->si_prec = uk_enp->en_shpp->si_prec;
+			*shpp = *VN_SHAPE(enp);
+			SET_SHP_PREC_PTR(shpp, SHP_PREC_PTR(VN_SHAPE(uk_enp)));
 			return(shpp);
 
 		default:
 			MISSING_CASE(enp,"shape_for_child");
-			return( enp->en_shpp );
+			return( VN_SHAPE(enp) );
 	}
 } /* end shape_for_child */
 
@@ -1906,24 +1972,24 @@ static Vec_Expr_Node * resolve_unknown_child(QSP_ARG_DECL  Vec_Expr_Node *uk_enp
 {
 	Shape_Info *shpp;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"resolve_unknown_child %s from %s",node_desc(uk_enp),node_desc(enp));
-advise(error_string);
+sprintf(ERROR_STRING,"resolve_unknown_child %s from %s",node_desc(uk_enp),node_desc(enp));
+ADVISE(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	shpp = shape_for_child(QSP_ARG  uk_enp,enp);
 
-	if( mode_is_matlab && uk_enp->en_code == T_RET_LIST ){
-		Data_Obj *dp;
+	if( mode_is_matlab && VN_CODE(uk_enp) == T_RET_LIST ){
+		//Data_Obj *dp;
 
-		dp = EVAL_OBJ_REF(uk_enp);	/* force object creation */
+		/*dp =*/ EVAL_OBJ_REF(uk_enp);	/* force object creation */
 	}
 
 	/* Now shpp point to the shape we will use for resolution */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 	/* We usually thing of resolution as applying to images etc, and not scalars,
 	 * but when we have multiple scalar arguments to return from a function, we may
@@ -1931,16 +1997,18 @@ if( debug & resolve_debug ){
 	 * are resolved to their scalar targets, this msg will be printed...
 	 */
 	if( SCALAR_SHAPE(shpp) ){
-		sprintf(error_string,"ADVISORY:  resolve_unknown_child %s from %s:  known shape is scalar!?",
+		sprintf(ERROR_STRING,"ADVISORY:  resolve_unknown_child %s from %s:  known shape is scalar!?",
 			node_desc(uk_enp),node_desc(enp));
-		prt_msg(error_string);
-		describe_shape(shpp);
+		prt_msg(ERROR_STRING);
+		DESCRIBE_SHAPE(shpp);
 	}
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	return(RESOLVE_NODE(uk_enp,shpp));
 } /* resolve_unknown_child */
+
+#ifdef NOT_USED
 
 /* resolve_return
  *
@@ -1952,6 +2020,8 @@ void resolve_return(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 {
 	point_node_shape(QSP_ARG  enp,shpp);
 }
+
+#endif /* NOT_USED */
 
 /* effect_resolution
  *
@@ -1965,40 +2035,40 @@ Vec_Expr_Node * effect_resolution(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Vec_Expr_N
 {
 	Vec_Expr_Node *ret_enp=NULL;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"effect_resolution of %s from %s",node_desc(uk_enp),node_desc(enp));
-advise(error_string);
-advise("known shape:");
-describe_shape(enp->en_shpp);
+sprintf(ERROR_STRING,"effect_resolution of %s from %s",node_desc(uk_enp),node_desc(enp));
+ADVISE(ERROR_STRING);
+ADVISE("known shape:");
+DESCRIBE_SHAPE(VN_SHAPE(enp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* BUG?  do we need to save the old value of the flags? */
-	if( enp->en_flags & NODE_NEEDS_CALLTIME_RES )
+	if( VN_FLAGS(enp) & NODE_NEEDS_CALLTIME_RES )
 		resolution_flags |= NODE_NEEDS_CALLTIME_RES;
 
 	/* We know that one of these nodes is the parent of the
 	 * other - which one is which ?
 	 */
 	
-	if( enp->en_parent == uk_enp ) ret_enp=RESOLVE_UNKNOWN_PARENT(uk_enp,enp);
-	else if( uk_enp->en_parent == enp ) ret_enp=RESOLVE_UNKNOWN_CHILD(uk_enp,enp);
+	if( VN_PARENT(enp) == uk_enp ) ret_enp=RESOLVE_UNKNOWN_PARENT(uk_enp,enp);
+	else if( VN_PARENT(uk_enp) == enp ) ret_enp=RESOLVE_UNKNOWN_CHILD(uk_enp,enp);
 	else {
-		RESOLVE_NODE(uk_enp,enp->en_shpp);
+		RESOLVE_NODE(uk_enp,VN_SHAPE(enp));
 	}
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(error_string,"After effect_resolution of %s from %s:",node_desc(uk_enp),node_desc(enp));
-advise(error_string);
-advise("known shape:");
-describe_shape(enp->en_shpp);
-advise("resolved shape:");
-describe_shape(uk_enp->en_shpp);
+sprintf(ERROR_STRING,"After effect_resolution of %s from %s:",node_desc(uk_enp),node_desc(enp));
+ADVISE(ERROR_STRING);
+ADVISE("known shape:");
+DESCRIBE_SHAPE(VN_SHAPE(enp));
+ADVISE("resolved shape:");
+DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	return(ret_enp);
 } /* effect_resolution */
@@ -2034,16 +2104,16 @@ void resolve_argval_shapes(QSP_ARG_DECL  Vec_Expr_Node *val_enp,Vec_Expr_Node *d
 {
 	if( decl_enp == NO_VEXPR_NODE ) return;
 
-	switch(decl_enp->en_code){
+	switch(VN_CODE(decl_enp)){
 		case T_DECL_STAT_LIST:
-			RESOLVE_ARGVAL_SHAPES(val_enp->en_child[0],
-				decl_enp->en_child[0],srp);
-			RESOLVE_ARGVAL_SHAPES(val_enp->en_child[1],
-				decl_enp->en_child[1],srp);
+			RESOLVE_ARGVAL_SHAPES(VN_CHILD(val_enp,0),
+				VN_CHILD(decl_enp,0),srp);
+			RESOLVE_ARGVAL_SHAPES(VN_CHILD(val_enp,1),
+				VN_CHILD(decl_enp,1),srp);
 			break;
 		case T_DECL_STAT:
 			RESOLVE_ARGVAL_SHAPES(val_enp,
-				decl_enp->en_child[0],srp);
+				VN_CHILD(decl_enp,0),srp);
 			break;
 
 		case T_PTR_DECL:
@@ -2056,37 +2126,39 @@ void resolve_argval_shapes(QSP_ARG_DECL  Vec_Expr_Node *val_enp,Vec_Expr_Node *d
 		case T_CVEC_DECL:
 		case T_CSCAL_DECL:
 		case T_FUNCPTR_DECL:
-#ifdef CAUTIOUS
-			if( val_enp->en_shpp == NO_SHAPE ){
-				sprintf(error_string,"CAUTIOUS:  resolve_argval_shapes %s:  node has no shape!?",
-					node_desc(val_enp));
-				WARN(error_string);
-				return;
-			}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//			if( VN_SHAPE(val_enp) == NO_SHAPE ){
+//				sprintf(ERROR_STRING,"CAUTIOUS:  resolve_argval_shapes %s:  node has no shape!?",
+//					node_desc(val_enp));
+//				WARN(ERROR_STRING);
+//				return;
+//			}
+//#endif /* CAUTIOUS */
+			assert( VN_SHAPE(val_enp) != NO_SHAPE );
+
 			/* See if the value has unknown shape */
-			if( ! UNKNOWN_SHAPE(val_enp->en_shpp) )
+			if( ! UNKNOWN_SHAPE(VN_SHAPE(val_enp)) )
 				return;
 
 			/* value has unknown shape, see if decl is known */
-			if( UNKNOWN_SHAPE( decl_enp->en_shpp ) )
+			if( UNKNOWN_SHAPE( VN_SHAPE(decl_enp) ) )
 				return;
 
 			/* value is unknown, decl is known:  propagate! */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-advise("resolve_argval_shapes:  propagating a shape!!");
-describe_shape(decl_enp->en_shpp);
+ADVISE("resolve_argval_shapes:  propagating a shape!!");
+DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 }
-#endif /* DEBUG */
-			PROPAGATE_SHAPE(val_enp,decl_enp->en_shpp);
-#ifdef DEBUG
+#endif /* QUIP_DEBUG */
+			PROPAGATE_SHAPE(val_enp,VN_SHAPE(decl_enp));
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-advise("resolve_argval_shapes:  DONE");
-describe_shape(val_enp->en_shpp);
+ADVISE("resolve_argval_shapes:  DONE");
+DESCRIBE_SHAPE(VN_SHAPE(val_enp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			break;
 			
 			
@@ -2103,24 +2175,27 @@ describe_shape(val_enp->en_shpp);
 
 void propagate_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 {
-	Shape_Info tmp_shape;
+	Shape_Info *tmp_shpp;
 
-#ifdef CAUTIOUS
-	if( ! UNKNOWN_SHAPE(enp->en_shpp) ){
-		if( ! same_shape(enp->en_shpp,shpp) ){
-			NODE_ERROR(enp);
-	WARN("CAUTIOUS:  propagate_shape:  shapes don't match!?");
-			describe_shape(enp->en_shpp);
-			describe_shape(shpp);
-DUMP_TREE(enp);
-		}
-		sprintf(error_string,"CAUTIOUS:  propagate_shape %s already has a shape!?",node_desc(enp));
-		WARN(error_string);
-		return;
-	}
-#endif /* CAUTIOUS */
+	INIT_SHAPE_PTR(tmp_shpp)
 
-	switch(enp->en_code){
+//#ifdef CAUTIOUS
+//	if( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
+//		if( ! same_shape(VN_SHAPE(enp),shpp) ){
+//			NODE_ERROR(enp);
+//	WARN("CAUTIOUS:  propagate_shape:  shapes don't match!?");
+//			DESCRIBE_SHAPE(VN_SHAPE(enp));
+//			DESCRIBE_SHAPE(shpp);
+//DUMP_TREE(enp);
+//		}
+//		sprintf(ERROR_STRING,"CAUTIOUS:  propagate_shape %s already has a shape!?",node_desc(enp));
+//		WARN(ERROR_STRING);
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( UNKNOWN_SHAPE(VN_SHAPE(enp)) );
+
+	switch(VN_CODE(enp)){
 		case T_POINTER:		/* propagate_shape */
 			RESOLVE_POINTER(enp,shpp);
 			break;
@@ -2131,24 +2206,26 @@ DUMP_TREE(enp);
 			break;
 
 		case T_CURLY_SUBSCR:
-			tmp_shape = *shpp;
-			tmp_shape.si_type_dim[tmp_shape.si_mindim]=1;
-			tmp_shape.si_mach_dim[tmp_shape.si_mindim]=1;
-			tmp_shape.si_mindim++;
-			PROPAGATE_SHAPE(enp->en_child[0],&tmp_shape);
+			COPY_SHAPE(tmp_shpp , shpp);
+			SET_SHP_TYPE_DIM(tmp_shpp,SHP_MINDIM(tmp_shpp),1);
+			SET_SHP_MACH_DIM(tmp_shpp,SHP_MINDIM(tmp_shpp),1);
+			SET_SHP_MINDIM(tmp_shpp,
+				SHP_MINDIM(tmp_shpp) + 1 );
+			PROPAGATE_SHAPE(VN_CHILD(enp,0),tmp_shpp);
 			break;
 
 		case T_SQUARE_SUBSCR:
-			tmp_shape = *shpp;
-			tmp_shape.si_type_dim[tmp_shape.si_maxdim]=1;
-			tmp_shape.si_mach_dim[tmp_shape.si_maxdim]=1;
-			tmp_shape.si_maxdim--;
-			PROPAGATE_SHAPE(enp->en_child[0],&tmp_shape);
+			COPY_SHAPE(tmp_shpp , shpp);
+			SET_SHP_TYPE_DIM(tmp_shpp,SHP_MAXDIM(tmp_shpp),1);
+			SET_SHP_MACH_DIM(tmp_shpp,SHP_MAXDIM(tmp_shpp),1);
+			SET_SHP_MAXDIM(tmp_shpp,
+				SHP_MAXDIM(tmp_shpp) - 1 );
+			PROPAGATE_SHAPE(VN_CHILD(enp,0),tmp_shpp);
 			break;
 
 		case T_VV_FUNC:
-			PROPAGATE_SHAPE(enp->en_child[0],shpp);
-			PROPAGATE_SHAPE(enp->en_child[1],shpp);
+			PROPAGATE_SHAPE(VN_CHILD(enp,0),shpp);
+			PROPAGATE_SHAPE(VN_CHILD(enp,1),shpp);
 			break;
 
 		default:
@@ -2171,19 +2248,19 @@ static int arg_sizes_known(Vec_Expr_Node *enp)
 
 	if( enp==NO_VEXPR_NODE ) return(1);
 
-	switch(enp->en_code){
+	switch(VN_CODE(enp)){
 		case T_LIT_INT:
 		case T_LIT_DBL:
 			return(1);
 
 		case T_ARGLIST:
-			stat=arg_sizes_known(enp->en_child[0]);
+			stat=arg_sizes_known(VN_CHILD(enp,0));
 			if( ! stat ) return(stat);
-			stat=arg_sizes_known(enp->en_child[1]);
+			stat=arg_sizes_known(VN_CHILD(enp,1));
 			return(stat);
 
 		case T_DYN_OBJ:
-			if( UNKNOWN_SHAPE(enp->en_shpp) )
+			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) )
 				return(0);
 			else
 				return(1);
@@ -2260,34 +2337,35 @@ int check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp
 	if( arg_enp == NO_VEXPR_NODE ) return(0);
 	else if( val_enp == NO_VEXPR_NODE ){
 		/* BUG we want to report this error at the line number of the callfunc node */
-		sprintf(error_string,"Subroutine %s requires arguments",srp->sr_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"Subroutine %s requires arguments",SR_NAME(srp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 
-	switch(arg_enp->en_code){
+	switch(VN_CODE(arg_enp)){
 		case  T_DECL_STAT:
 			/* en_intval is the type (float,short,etc) */
-			stat=CHECK_ARG_SHAPES(arg_enp->en_child[0],
+			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,0),
 						val_enp,srp);
 			return(stat);
 
 		case T_DECL_STAT_LIST:
 			/* val_enp should be T_ARGLIST */
-#ifdef CAUTIOUS
-			if( val_enp->en_code != T_ARGLIST ){
-				sprintf(error_string,"CAUTIOUS:  expected T_ARGLIST in args for subrt %s, code is %s",
-					srp->sr_name,NNAME(val_enp));
-				WARN(error_string);
-					
-			}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//			if( VN_CODE(val_enp) != T_ARGLIST ){
+//				sprintf(ERROR_STRING,"CAUTIOUS:  expected T_ARGLIST in args for subrt %s, code is %s",
+//					SR_NAME(srp),NNAME(val_enp));
+//				WARN(ERROR_STRING);
+//					
+//			}
+//#endif /* CAUTIOUS */
+			assert( VN_CODE(val_enp) == T_ARGLIST );
 
-			stat=CHECK_ARG_SHAPES(arg_enp->en_child[0],
-				val_enp->en_child[0],srp);
+			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,0),
+				VN_CHILD(val_enp,0),srp);
 			if( stat < 0 ) return(stat);
-			stat=CHECK_ARG_SHAPES(arg_enp->en_child[1],
-				val_enp->en_child[1],srp);
+			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,1),
+				VN_CHILD(val_enp,1),srp);
 			return(stat);
 
 		case T_PTR_DECL:		/* check_arg_shapes */
@@ -2295,14 +2373,14 @@ int check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp
 			 * the shapes match for a ptr arg, it just assumes the
 			 * shape of the value...
 			 */
-			if( arg_enp->en_shpp != NO_SHAPE && UNKNOWN_SHAPE(arg_enp->en_shpp) ){
-				if( ! UNKNOWN_SHAPE(val_enp->en_shpp) ){
+			if( VN_SHAPE(arg_enp) != NO_SHAPE && UNKNOWN_SHAPE(VN_SHAPE(arg_enp)) ){
+				if( ! UNKNOWN_SHAPE(VN_SHAPE(val_enp)) ){
 /*
-sprintf(error_string,"check_arg_shapes %s, %s:  copying shape for ptr",node_desc(arg_enp),node_desc(val_enp));
-advise(error_string);
+sprintf(ERROR_STRING,"check_arg_shapes %s, %s:  copying shape for ptr",node_desc(arg_enp),node_desc(val_enp));
+ADVISE(ERROR_STRING);
 */
-					/*copy_decl_shape*/ COPY_NODE_SHAPE(arg_enp,
-						val_enp->en_shpp);
+					/*copy_decl_shape*/ copy_node_shape(arg_enp,
+						VN_SHAPE(val_enp));
 
 				}
 				/* it is ok if both are unknown... */
@@ -2320,56 +2398,59 @@ advise(error_string);
 		case T_CVEC_DECL:
 		case T_CIMG_DECL:
 		case T_CSEQ_DECL:
-#ifdef CAUTIOUS
-if( arg_enp->en_shpp == NO_SHAPE ){
-sprintf(error_string,"CAUTIOUS:  check_arg_shapes:  subrt %s, arg %s has no shape!?",
-srp->sr_name,arg_enp->en_string);
-WARN(error_string);
-return(-1);
-}
-if( val_enp->en_shpp == NO_SHAPE ){
-sprintf(error_string,"CAUTIOUS:  check_arg_shapes:  subrt %s, arg val %s has no shape!?",
-srp->sr_name,val_enp->en_string);
-WARN(error_string);
-return(-1);
-}
-#endif /* CAUTIOUS */
-			if( UNKNOWN_SHAPE(arg_enp->en_shpp) ){
-				if( ! UNKNOWN_SHAPE(val_enp->en_shpp) ){
-					COPY_NODE_SHAPE(arg_enp, val_enp->en_shpp);
+//#ifdef CAUTIOUS
+//if( VN_SHAPE(arg_enp) == NO_SHAPE ){
+//sprintf(ERROR_STRING,"CAUTIOUS:  check_arg_shapes:  subrt %s, arg %s has no shape!?",
+//SR_NAME(srp),VN_STRING(arg_enp));
+//WARN(ERROR_STRING);
+//return(-1);
+//}
+//if( VN_SHAPE(val_enp) == NO_SHAPE ){
+//sprintf(ERROR_STRING,"CAUTIOUS:  check_arg_shapes:  subrt %s, arg val %s has no shape!?",
+//SR_NAME(srp),VN_STRING(val_enp));
+//WARN(ERROR_STRING);
+//return(-1);
+//}
+//#endif /* CAUTIOUS */
+			assert( VN_SHAPE(arg_enp) != NO_SHAPE );
+			assert( VN_SHAPE(val_enp) != NO_SHAPE );
+
+			if( UNKNOWN_SHAPE(VN_SHAPE(arg_enp)) ){
+				if( ! UNKNOWN_SHAPE(VN_SHAPE(val_enp)) ){
+					copy_node_shape(arg_enp, VN_SHAPE(val_enp));
 					/* Now we would like to propagate into the body of the subroutine!? */
-					arg_enp->en_flags |= resolution_flags;
+					SET_VN_FLAG_BITS(arg_enp, resolution_flags);
 				}
 
 				/* it's not necessarily an error for both
 				 * to be unknown at this time...
 				 */
 
-			} else if( UNKNOWN_SHAPE(val_enp->en_shpp) ){
+			} else if( UNKNOWN_SHAPE(VN_SHAPE(val_enp)) ){
 				/* here the arg decl has known shape, but the arg val is unknown;
 				 * We'd like to propagate upwards...
 				 */
-				PROPAGATE_SHAPE(val_enp,arg_enp->en_shpp);
+				PROPAGATE_SHAPE(val_enp,VN_SHAPE(arg_enp));
 			} else {	/* everything is known */
-				if( !shapes_match(arg_enp->en_shpp,
-							val_enp->en_shpp) ){
-					NODE_ERROR(srp->sr_call_enp);
-					sprintf(error_string,
-	"subrt %s:  argument shape mismatch",srp->sr_name);
-					WARN(error_string);
-advise("argument prototype shape:");
-describe_shape(arg_enp->en_shpp);
-advise("argument value shape:");
-describe_shape(val_enp->en_shpp);
+				if( !shapes_match(VN_SHAPE(arg_enp),
+							VN_SHAPE(val_enp)) ){
+					NODE_ERROR(SR_CALL_VN(srp));
+					sprintf(ERROR_STRING,
+	"subrt %s:  argument shape mismatch",SR_NAME(srp));
+					WARN(ERROR_STRING);
+ADVISE("argument prototype shape:");
+DESCRIBE_SHAPE(VN_SHAPE(arg_enp));
+ADVISE("argument value shape:");
+DESCRIBE_SHAPE(VN_SHAPE(val_enp));
 DUMP_TREE(arg_enp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-advise(arg_enp->en_string);
-describe_shape(arg_enp->en_shpp);
-describe_shape(val_enp->en_shpp);
+ADVISE(VN_STRING(arg_enp));
+DESCRIBE_SHAPE(VN_SHAPE(arg_enp));
+DESCRIBE_SHAPE(VN_SHAPE(val_enp));
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 					return(-1);
 				}
 			}

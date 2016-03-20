@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_xsupp_which_display[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_X11
 
 #include <stdio.h>
@@ -14,15 +12,14 @@ char VersionId_xsupp_which_display[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
-#include "debug.h"
-#include "version.h"
+#include "quip_prot.h"
 #include "xsupp.h"
 
 static const char *display_name=NULL;
 
-const char *which_display( VOID )
+const char *which_display( SINGLE_QSP_ARG_DECL )
 {
-	display_name = check_display();
+	display_name = check_display(SINGLE_QSP_ARG);
 	if( !strncmp(display_name, ":0", 1 ))
 		display_name=getenv("HOSTNAME");
 
@@ -36,9 +33,9 @@ const char *which_display( VOID )
 	}
 
 	if( display_name == NULL )
-		NWARN("environment variable HOSTNAME not set, using :0");
+		WARN("environment variable HOSTNAME not set, using :0");
 	else if( *display_name == 0 )
-		NWARN("environment variable HOSTNAME set to null string, using :0");
+		WARN("environment variable HOSTNAME set to null string, using :0");
 	display_name=":0";
 
 	return(display_name);

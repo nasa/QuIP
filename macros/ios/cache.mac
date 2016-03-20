@@ -1,0 +1,8 @@
+Start_File cache.mac
+
+Define Cache_Var 1 varname
+echo "Set $1 $$1"
+.
+
+Stop_File cache.mac
+

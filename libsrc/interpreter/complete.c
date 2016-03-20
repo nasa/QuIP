@@ -1,10 +1,9 @@
 
 #include "quip_config.h"
 
-char VersionId_interpreter_complete[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
+
 
 #include <stdio.h>
 
@@ -59,20 +58,14 @@ char VersionId_interpreter_complete[] = QUIP_VERSION_STRING;
 #endif /* HAVE_TERMCAP */
 
 
+#include "quip_prot.h"
 #include "ttyctl.h"
-#include "items.h"
-#include "query.h"	/* prototype for tfile() */
 #include "history.h"
-#include "debug.h"
-#include "submenus.h"		/* call_event_funcs() */
-#include "getbuf.h"
-#include "substr.h"
-#include "savestr.h"
 #include "sigpush.h"
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 static u_long comp_debug=0;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 // BUG another global...
 int had_intr=0;
@@ -137,14 +130,14 @@ void tty_reset(FILE *tty)
 	echoon(fileno(tty));
 }
 
-void sane_tty()		/** call this before exiting */
+void sane_tty(SINGLE_QSP_ARG_DECL)	/** call this before exiting */
 {
 	FILE *fp;
 
-	if( sup_verbose )
+	if( verbose )
 		advise("Resetting tty to sane state");
 
-	fp=tfile(SGL_DEFAULT_QSP_ARG);
+	fp=tfile(SINGLE_QSP_ARG);
 	tty_reset(fp);
 }
 
@@ -246,6 +239,17 @@ int get_keystroke()
 
 void simulate_typing(const char *str)
 {
+
+/* A persistent bug in the Mac implementation has led to this code.
+ * Sometimes, for reasons unknown, it is as if a key is stuck.  This
+ * can be fixed by doing a hard reset from the menu bar of the terminal
+ * app.  But the errant keystrokes are coming in via X keypress events,
+ * eventually entering this routine.  Why is the event not cleared?
+ * And why is an X keypress event generated for keystrokes outside
+ * of the X11 window?
+ */
+
+//fprintf(stderr,"simulate_typeing \"%s\"\n",str);
 	if( simulated_input != NULL ){
 		/* concatenate this string onto the unprocessed simulated input */
 
@@ -281,7 +285,7 @@ int keyboard_hit(QSP_ARG_DECL  FILE *tty_in)
 	 * So we changed it to int... there should be an include
 	 * file that tells us what to do here?
 	 */
-		int n;
+		int n=1;
 
 		static int try_fionread=1;
 
@@ -457,9 +461,9 @@ const char *get_sel( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_o
 	static int have_tty_chars=0;
 	int edit_mode=0;		/* complete until we see an arrow key */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* BUG need to check here that tty_in, tty_out
 	 * are really tty's!!
@@ -477,7 +481,6 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 	n_so_far=0;
 
 	had_intr=0;
-
 
 	if( !exit_func_set ){
 		do_on_exit(sane_tty);
@@ -670,22 +673,22 @@ nextchar:
 			 * interrupts block
 			 * until the last command finishes
 			 */
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & comp_debug ) advise("resetting tty after interrupt");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			tty_reset(tty_out);
 			putc('\n',tty_out);
 
 			if( hint_pushed ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & comp_debug ) advise("popping history interrupt handler");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				sigpop(SIGINT);
 				hint_pushed=0;
 			}
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & comp_debug ) advise("sending SIGINT to process id");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 			kill( getpid(), SIGINT );
 			return("");
@@ -698,14 +701,31 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 				show_def(&def_str[n_so_far],0);
 			fputc(c,tty_out);	/* do the echo */
 
-			/* we do this in qword() also,
-				to save values for suppressed prompts */
+			/* Add response to history lists...
+			 * We do this in qword() also,
+			 * to save values for suppressed prompts
+			 */
 
 			if( edit_mode ){
-				if( *prompt && *edit_string ) add_def(QSP_ARG  prompt,edit_string);
+				if( *prompt && *edit_string )
+					add_def(QSP_ARG  prompt,edit_string);
 				return(edit_string);
 			} else {
-				if( *prompt && *def_str ) add_def(QSP_ARG  prompt,def_str);
+				if( *prompt && *def_str )
+					add_def(QSP_ARG  prompt,def_str);
+
+				// Store the newline too...
+				if( n_so_far >= (LLEN-1) ){
+					WARN("too many input chars!?");
+				} else {
+					//sel_str[n_so_far++] = c;
+					// We do this after returning from get_sel.
+					// that way we get def_str also!
+				}
+				sel_str[n_so_far] = 0;
+//fprintf(stderr,"get_sel:  sel_str = \"%s\", def_str = \"%s\"\n",
+//sel_str,def_str);
+				// should we add a newline to def_str?
 				return(def_str);
 			}
 		}

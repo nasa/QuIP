@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_knox_knox[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -10,14 +8,73 @@ char VersionId_knox_knox[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
-#include "debug.h"
+#include "quip_prot.h"
+
+// BUG static vars not thread safe
+static int range_ok;
+static int doing_command_set = 0;	/* flag for sending set of commands */
+
+
+#define MIN_SIGNAL_NUMBER	1
+#define MAX_SIGNAL_NUMBER	8
+
+#define CHECK_RANGE( name, number, min, max )			\
+{								\
+	range_ok=1;						\
+	if( number < min || number > max ) {			\
+		sprintf(ERROR_STRING,				\
+"%s (%d) must be between %d and %d", name, number, min, max);	\
+		WARN(ERROR_STRING);				\
+		range_ok=0;					\
+	}							\
+}
+
+
+#define GET_WITH_LIMITS( var, string, minval, maxval )			\
+									\
+	var = HOW_MANY(string);						\
+	CHECK_RANGE(string,var, minval, maxval)				\
+	if( !range_ok ) ret_stat=(-1);
+
+
+
+#define GET_PATTERN( var, string )					\
+									\
+	GET_WITH_LIMITS( var, string, MIN_CROSSPOINT_PATTERN, MAX_CROSSPOINT_PATTERN)
+
+
+#define GET_SIGNAL( var, string )					\
+									\
+	GET_WITH_LIMITS( var, string, MIN_SIGNAL_NUMBER, MAX_SIGNAL_NUMBER )
+
+
+#define GET_KNOX_ARGS(arg_buf)		get_knox_args(QSP_ARG  arg_buf)
+
+
+#ifndef HAVE_KNOX
+
+#define NO_KNOX_MSG WARN("Sorry, no knox support in this build.");
+#define DO_KNOX_CMD( code, args, error_msg )				\
+	NO_KNOX_MSG
+
+#define USES_NEWER_FIRMWARE(kdp)		0
+#define USES_OLDER_FIRMWARE(kdp)		0
+
+#else  // HAVE_KNOX
+
+#define DO_KNOX_CMD( code, args, error_msg )				\
+									\
+	if( do_knox_cmd(QSP_ARG  code,args) < 0 ) {			\
+		WARN(error_msg);					\
+		return;							\
+	}
+
 #include "data_obj.h"
-#include "submenus.h"
 #include "knox.h"
-#include "serial.h"
 #include "serbuf.h"		/* expected_response() */
-#include "version.h"
+#include "serial.h"
 #include "ttyctl.h"		/* keyhit() */
+//#include "version.h"
 
 #define TIMER_STOPPED	1
 #define TIMER_RUNNING	2
@@ -28,9 +85,6 @@ static Knox_State knox_state;	/* not initialized! */
 
 static COMMAND_FUNC( do_knox_timer_stop );
 
-static int doing_command_set = 0;				/* flag for sending set of commands */
-
-static int range_ok;
 
 typedef struct knox_response_strings {
 	const char *krs_pre_map_response;
@@ -86,52 +140,21 @@ typedef struct knox_device {
 
 Knox_Device *curr_kdp=NULL;
 
-ITEM_INTERFACE_DECLARATIONS(Knox_Device,knox_dev)
+// should be static?
+//ITEM_INTERFACE_PROTOTYPES_STATIC(Knox_Device,knox_dev)
+//ITEM_INTERFACE_DECLARATIONS_STATIC(Knox_Device,knox_dev)
+static Item_Type * knox_dev_itp=NO_ITEM_TYPE;
+static ITEM_INIT_FUNC(Knox_Device,knox_dev)
+static ITEM_NEW_FUNC(Knox_Device,knox_dev)
+static ITEM_CHECK_FUNC(Knox_Device,knox_dev)
 
-#define PICK_KNOX_DEV(pmpt)		pick_knox_dev(QSP_ARG  pmpt)
-
-
-#define CHECK_RANGE( name, number, min, max )			\
-{								\
-	range_ok=1;						\
-	if( number < min || number > max ) {			\
-		sprintf(ERROR_STRING,				\
-"%s (%d) must be between %d and %d", name, number, min, max);	\
-		WARN(ERROR_STRING);				\
-		range_ok=0;					\
-	}							\
-}
-
-
-#define GET_WITH_LIMITS( var, string, minval, maxval )				\
-										\
-	var = HOW_MANY(string);							\
-	CHECK_RANGE(string,var, minval, maxval)					\
-	if( !range_ok ) ret_stat=(-1);
-
-
-
-#define GET_PATTERN( var, string )						\
-										\
-	GET_WITH_LIMITS( var, string, MIN_CROSSPOINT_PATTERN, MAX_CROSSPOINT_PATTERN)
-
-
-#define GET_SIGNAL( var, string )						\
-										\
-	GET_WITH_LIMITS( var, string, MIN_SIGNAL_NUMBER, MAX_SIGNAL_NUMBER )
-
-
-
-#define MIN_SIGNAL_NUMBER	1
-#define MAX_SIGNAL_NUMBER	8
+// FOOBAR?
+//#define PICK_KNOX_DEV(pmpt)		pick_knox_dev(QSP_ARG  pmpt)
 
 #define KNOX_DONE_MSG		"DONE"
 #define KNOX_ERROR_MSG		"ERROR"
 
-static int get_knox_args(QSP_ARG_DECL   char* arg_buf);
-#define GET_KNOX_ARGS(arg_buf)		get_knox_args(QSP_ARG  arg_buf)
-
-static void show_routing_map(void)
+static void show_routing_map(SINGLE_QSP_ARG_DECL)
 {
 	int i;
 
@@ -332,6 +355,8 @@ static int process_knox_reply(QSP_ARG_DECL  Knox_Cmd_Code code)
 	return(0);
 }
 
+#endif // HAVE_KNOX
+
 static int get_knox_args(QSP_ARG_DECL   char* arg_buf)
 {
 	int input, first_output;
@@ -357,6 +382,7 @@ static int get_knox_args(QSP_ARG_DECL   char* arg_buf)
 	return(ret_stat);		
 }
 
+#ifdef HAVE_KNOX
 static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 {
 	char buf[LLEN];
@@ -377,6 +403,7 @@ static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 	stat=process_knox_reply(QSP_ARG  code);
 	return(stat);
 }
+#endif // HAVE_KNOX
 
 static COMMAND_FUNC( do_route_both )
 {
@@ -384,9 +411,7 @@ static COMMAND_FUNC( do_route_both )
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
-	if( do_knox_cmd(QSP_ARG  KNOX_SET_BOTH,knox_args) < 0 ) {
-		WARN("Unable to route audio and video!");
-	}
+	DO_KNOX_CMD(KNOX_SET_BOTH,knox_args,"Unable to route audio and video!")
 }
 
 static COMMAND_FUNC( do_route_diff )
@@ -400,12 +425,10 @@ static COMMAND_FUNC( do_route_diff )
 	GET_SIGNAL(output,"output number");
 
 	if( ret_stat < 0 ) return;
-	
+
 	sprintf(knox_args, "%d%d%d", output, video_input, audio_input);
 
-	if( do_knox_cmd(QSP_ARG  KNOX_SET_DIFF,knox_args) < 0 ) {
-		WARN("Unable to route audio and video from different inputs!");
-	}
+	DO_KNOX_CMD( KNOX_SET_DIFF,knox_args,"Unable to route audio and video from different inputs!")
 }
 
 static COMMAND_FUNC( do_route_video )
@@ -414,9 +437,7 @@ static COMMAND_FUNC( do_route_video )
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
-	if( do_knox_cmd(QSP_ARG  KNOX_SET_VIDEO,knox_args) < 0 ) {
-		WARN("Unable to route video alone!");
-	}
+	DO_KNOX_CMD(KNOX_SET_VIDEO,knox_args,"Unable to route video alone!")
 }
 
 static COMMAND_FUNC( do_route_audio )
@@ -424,50 +445,31 @@ static COMMAND_FUNC( do_route_audio )
 	char knox_args[LLEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
-	if( do_knox_cmd(QSP_ARG  KNOX_SET_AUDIO,knox_args) < 0 ) {
-		WARN("Unable to route audio alone!");
-	}
+
+	DO_KNOX_CMD( KNOX_SET_AUDIO, knox_args,"Unable to route audio!?")
 }
 
-static Command knox_route_ctbl[] = {
-{ "both",	do_route_both,	"route both audio and video (same input)"	},
-{ "diff",	do_route_diff,	"route both audio and video (different inputs)" },	
-{ "video",	do_route_video,	"route video alone"				},
-{ "audio",	do_route_audio,	"route audio alone"				},
-{ "quit",	popcmd,		"exit route submenu"				},
-{ NULL_COMMAND									}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(route_menu,s,f,h)
 
-#ifdef UNIMPLEMENTED
-static Command knox_salvo_ctbl[] = {
-{ "both",	do_salvo_both,	"route both audio and video (same input)"	},
-{ "video",	do_salvo_video,	"route video alone"				},
-{ "audio",	do_salvo_audio,	"route audio alone"				},
-{ "quit",	popcmd,		"exit salvo submenu"				},
-{ NULL_COMMAND									}
-};
+MENU_BEGIN(route)
+ADD_CMD( both,	do_route_both,	route both audio and video (same input) )
+ADD_CMD( diff,	do_route_diff,	route both audio and video (different inputs) )
+ADD_CMD( video,	do_route_video,	route video alone )
+ADD_CMD( audio,	do_route_audio,	route audio alone )
+MENU_END(route)
 
-static Command knox_conf_ctbl[] = {
-{ "both",	do_conf_both,	"route both audio and video (same input)"	},
-{ "video",	do_conf_video,	"route video alone"				},
-{ "audio",	do_conf_audio,	"route audio alone"				},
-{ "quit",	popcmd,		"exit conference submenu"			},
-{ NULL_COMMAND									}
-};
-
-static Command knox_cmd_ctbl[] = {
-{ "both",	do_cmd_both,	"route both audio and video (same input)"	},
-{ "video",	do_cmd_video,	"route video alone"				},
-{ "audio",	do_cmd_audio,	"route audio alone"				},
-{ "quit",	popcmd,		"exit cmd submenu"				},
-{ NULL_COMMAND									}
-};
-#endif
 
 static COMMAND_FUNC( do_knox_route_cmds )
 {
-	PUSHCMD(knox_route_ctbl, "route");	
+	PUSH_MENU(route);	
 }	
+
+#ifdef NOT_YET
+/*
+ * We used to use the same command table for salvo command etc, setting global flag (commented out???)
+ * to communicate the mode.  However, now that the prompt is part of the menu structure, this makes less
+ * sense.  Better to have a separate command that sets the routing mode.
+ */
 
 static COMMAND_FUNC( do_knox_salvo_cmds )
 {
@@ -476,7 +478,7 @@ static COMMAND_FUNC( do_knox_salvo_cmds )
 		return;
 	}
 	/* current_mode = KNOX_SALVO_MODE; */
-	PUSHCMD(knox_route_ctbl, "salvo");
+	PUSH_MENU(knox_route_menu);
 }
 
 	
@@ -487,8 +489,9 @@ static COMMAND_FUNC( do_knox_conf_cmds )
 		return;
 	}
 	/* current_mode = KNOX_CONFERENCE_MODE; */
-	PUSHCMD(knox_route_ctbl, "conference");
+	PUSH_MENU(knox_route_menu, "conference");
 }
+#endif /* NOT_YET */
 
 static COMMAND_FUNC( do_take_set_cmds )
 {
@@ -497,9 +500,7 @@ static COMMAND_FUNC( do_take_set_cmds )
 		return;
 	}
 
-	if( do_knox_cmd(QSP_ARG  KNOX_TAKE_COMMAND, NULL) < 0 ) {
-		WARN("Unable to take current commands sent!");
-	}
+	DO_KNOX_CMD(KNOX_TAKE_COMMAND, NULL, "Unable to take current commands sent!")
 }
 
 static COMMAND_FUNC( do_begin_set_cmds )
@@ -519,20 +520,21 @@ static COMMAND_FUNC( do_end_set_cmds )
  * route commands, no salvo or conference commands.
  */
 
-static Command knox_cmds_ctbl[] = {
-{ "route",	do_knox_route_cmds,	"regular route audio and video"		},
-{ "salvo",	do_knox_salvo_cmds,	"salvo route audio and video"		},
-{ "conference",	do_knox_conf_cmds,	"conference route audio and video"	},
-{ "begin",	do_begin_set_cmds,	"begin a set of commands (route only)"	},
-{ "end_set",	do_end_set_cmds,	"end set of commands and send"		},
-{ "take",	do_take_set_cmds,	"execute current set of commands sent"	},
-{ "quit",	popcmd,			"exit submenu"				},
-{ NULL_COMMAND									}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(knox_cmd_menu,s,f,h)
+
+MENU_BEGIN(knox_cmd)
+ADD_CMD( route,		do_knox_route_cmds,	regular route audio and video )
+//ADD_CMD( salvo,		do_knox_salvo_cmds,	salvo route audio and video )
+//ADD_CMD( conference,	do_knox_conf_cmds,	conference route audio and video )
+ADD_CMD( begin,		do_begin_set_cmds,	begin a set of routing commands )
+ADD_CMD( end_set,	do_end_set_cmds,	end set of commands and send )
+ADD_CMD( take,		do_take_set_cmds,	execute current set of commands sent )
+MENU_END(knox_cmd)
 
 static COMMAND_FUNC( do_knox_main_cmds )
 {
-	PUSHCMD(knox_cmds_ctbl, "command");
+	PUSH_MENU(knox_cmd);
 }
 
 #define MIN_CROSSPOINT_PATTERN	1
@@ -550,9 +552,7 @@ static COMMAND_FUNC( do_knox_recall )
 	}
 
 	sprintf(args, "%d", pattern);
-	if( do_knox_cmd(QSP_ARG  KNOX_RECALL_CROSSPOINT, args) < 0 ) {
-		WARN("Unable to load crosspoint pattern!");
-	}
+	DO_KNOX_CMD(KNOX_RECALL_CROSSPOINT, args, "Unable to load crosspoint pattern!")
 }
 
 #define MIN_STORE_CROSSPOINT	1
@@ -568,21 +568,20 @@ static COMMAND_FUNC( do_knox_store )
 	if( ret_stat < 0 ) return;
 
 	sprintf(args, "%d", pattern_index);
-	if( do_knox_cmd(QSP_ARG  KNOX_STORE_CROSSPOINT, args) < 0 ) {
-		WARN("Unable to store crosspoint pattern!");
-	}
+	DO_KNOX_CMD(KNOX_STORE_CROSSPOINT, args, "Unable to store crosspoint pattern!")
 }
 
-static Command knox_cross_ctbl[] = {
-{ "load",	do_knox_recall,	"load crosspoint pattern from memory"		},
-{ "store",	do_knox_store,	"store currently loaded crosspoint pattern" 	},
-{ "quit",	popcmd,		"exit submenu" 					},
-{ NULL_COMMAND									}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(crosspoint_menu,s,f,h)
+
+MENU_BEGIN(crosspoint)
+ADD_CMD( load,	do_knox_recall,	load crosspoint pattern from memory )
+ADD_CMD( store,	do_knox_store,	store currently loaded crosspoint pattern )
+MENU_END(crosspoint)
 
 static COMMAND_FUNC( do_knox_cross_cmds )
 {
-	PUSHCMD(knox_cross_ctbl, "crosspoint");
+	PUSH_MENU(crosspoint);
 }
 
 #define MIN_TIME_CYCLE	1
@@ -599,84 +598,83 @@ static COMMAND_FUNC( do_knox_timer_start )
 
 	/*sprintf(args, "%03d", time_cycle); */
 	sprintf(args, "%02d", time_cycle);
-	if( do_knox_cmd(QSP_ARG  KNOX_SET_TIMER, args) < 0 ) {
-		WARN("Unable to set timed sequencer!");
-	}
+	DO_KNOX_CMD(  KNOX_SET_TIMER, args, "Unable to set timed sequencer!")
 }
 
 static COMMAND_FUNC( do_knox_timer_stop )
 {
-	if( do_knox_cmd(QSP_ARG  KNOX_STOP_TIMER, NULL) < 0 ) {
-		WARN("Unable to stop timed sequencer!");
-	}
+	DO_KNOX_CMD(KNOX_STOP_TIMER, NULL, "Unable to stop timed sequencer!")
 }
 
-static Command knox_timer_ctbl[] = {
-{ "start",	do_knox_timer_start,	"set time cycle time interval and start timer"	},
-{ "stop",	do_knox_timer_stop,	"stop time cycle"				},
-{ "quit",	popcmd,			"exit submenu"					},
-{ NULL_COMMAND										}
-};
+
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(timer_menu,s,f,h)
+
+MENU_BEGIN(timer)
+ADD_CMD( start,	do_knox_timer_start,	set time cycle time interval and start timer )
+ADD_CMD( stop,	do_knox_timer_stop,	stop time cycle )
+MENU_END(timer)
 
 static COMMAND_FUNC( do_knox_time_cmds )
 {
-	PUSHCMD(knox_timer_ctbl, "timer");
+	PUSH_MENU(timer);
 }
 
 static COMMAND_FUNC( do_fetch_map )
 {
 	Data_Obj *dp;
-	u_char *p;
-	int i;
 
 	dp = PICK_OBJ("object for routing results");
 
 	if( dp == NO_OBJ ) return;
 
-	if( dp->dt_cols != 8 ){
+	if( OBJ_COLS(dp) != 8 ){
 		sprintf(ERROR_STRING,
 	"Object %s should have 8 columns for knox report",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_comps != 2 ){
+	if( OBJ_COMPS(dp) != 2 ){
 		sprintf(ERROR_STRING,
 	"Object %s should have 2 components for knox report",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_prec != PREC_UBY ){
+	if( OBJ_PREC(dp) != PREC_UBY ){
 		sprintf(ERROR_STRING,
 	"Object %s should have %s precision for knox report",
-			dp->dt_name,name_for_prec(PREC_UBY));
+			OBJ_NAME(dp),PREC_NAME(PREC_FOR_CODE(PREC_UBY)));
 		WARN(ERROR_STRING);
 		return;
 	}
 
 	/* do we care about the precision? */
 
-	if( do_knox_cmd(QSP_ARG  KNOX_MAP_REPORT, NULL) < 0 ) {
-		WARN("Unable to get routing status map report!");
-		return;
-	}	
+	DO_KNOX_CMD(  KNOX_MAP_REPORT, NULL, "Unable to get routing status map report!")
 
-	p=(u_char *)dp->dt_data;
+#ifdef HAVE_KNOX
+	{
+	u_char *p;
+	int i;
+	p=(u_char *)OBJ_DATA_PTR(dp);
 	for(i=0;i<8;i++){
-		*(p + i * dp->dt_pinc) = knox_state.ks_video[i];
-		*(p + i * dp->dt_pinc + dp->dt_cinc ) = knox_state.ks_audio[i];
+		*(p + i * OBJ_PXL_INC(dp)) = knox_state.ks_video[i];
+		*(p + i * OBJ_PXL_INC(dp) + OBJ_COMP_INC(dp) ) = knox_state.ks_audio[i];
 	}
+	}
+#endif // HAVE_KNOX
 }
 
 static COMMAND_FUNC( do_show_map )
 {
-	if( do_knox_cmd(QSP_ARG  KNOX_MAP_REPORT, NULL) < 0 ) {
-		WARN("Unable to get routing status map report!");
-		return;
-	}	
+	DO_KNOX_CMD(KNOX_MAP_REPORT, NULL, "Unable to get routing status map report!")
 
-	show_routing_map();
+#ifdef HAVE_KNOX
+	show_routing_map(SINGLE_QSP_ARG);
+#endif // HAVE_KNOX
 }
 
 static COMMAND_FUNC( do_inq_knox_cond )
@@ -689,26 +687,27 @@ static COMMAND_FUNC( do_inq_knox_cond )
 	}
 advise("seems to be using older firmware?");
 
-	if( do_knox_cmd(QSP_ARG  KNOX_CONDENSE_REPORT, NULL) < 0 ) {
-		WARN("Unable to get condensed routing status map report!");
-		return;
-	}	
+	DO_KNOX_CMD(KNOX_CONDENSE_REPORT, NULL, "Unable to get condensed routing status map report!")
 
+#ifdef HAVE_KNOX
 	prt_msg("\nCondensed Routing Map Status Report:");
-	show_routing_map();
+	show_routing_map(SINGLE_QSP_ARG);
+#endif // HAVE_KNOX
 }
 
-static Command knox_status_ctbl[] = {
-{ "fetch_map",		do_fetch_map,		"store routing map to data vector"			},
-{ "show_map",		do_show_map,		"display routing map"			},
-{ "condense",		do_inq_knox_cond,	"get condensed routing map status report"	},
-{ "quit",		popcmd,			"exit submenu"					},
-{ NULL_COMMAND											}
-};
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(status_menu,s,f,h)
+
+MENU_BEGIN(status)
+ADD_CMD( fetch_map,		do_fetch_map,		store routing map to data vector )
+ADD_CMD( show_map,		do_show_map,		display routing map )
+ADD_CMD( condense,		do_inq_knox_cond,	get condensed routing map status report )
+MENU_END(status)
 
 static COMMAND_FUNC( do_knox_status_cmds )
 {
-	PUSHCMD(knox_status_ctbl, "status");
+	PUSH_MENU(status);
 }
 
 static COMMAND_FUNC( do_lamp_test )
@@ -716,11 +715,10 @@ static COMMAND_FUNC( do_lamp_test )
 	/* Lamp test command has no args! */
 	/*if( GET_KNOX_ARGS(args) < 0 ) return; */
 
-	if( do_knox_cmd(QSP_ARG  KNOX_LAMP_TEST, NULL) < 0 ) {
-		WARN("Unable to do lamp test!");
-	}
+	DO_KNOX_CMD(  KNOX_LAMP_TEST, NULL, "Unable to do lamp test!")
 }
 
+#ifdef HAVE_KNOX
 static void open_knox_device(QSP_ARG_DECL  const char *s)
 {
 	int fd;
@@ -775,14 +773,19 @@ static void open_knox_device(QSP_ARG_DECL  const char *s)
 	}
 */
 }
+#endif // HAVE_KNOX
+
 
 static COMMAND_FUNC( do_select_device )
 {
 	const char *s;
+#ifdef HAVE_KNOX
 	Knox_Device *kdp;
+#endif // HAVE_KNOX
 
 	s=NAMEOF("knox device");
 
+#ifdef HAVE_KNOX
 	kdp = knox_dev_of(QSP_ARG  s);
 	if( kdp != NULL ){
 		curr_kdp = kdp;
@@ -790,18 +793,24 @@ static COMMAND_FUNC( do_select_device )
 	}
 
 	open_knox_device(QSP_ARG  s);
+#else // ! HAVE_KNOX
+	NO_KNOX_MSG
+#endif // ! HAVE_KNOX
+
 }
 
-static Command knox_main_ctbl[] = {
-{ "device",	do_select_device,	"select knox device"			},
-{ "command",	do_knox_main_cmds,	"routing switcher commands"		},
-{ "crosspoint",	do_knox_cross_cmds,	"crosspoint pattern commands"		},
-{ "timer",	do_knox_time_cmds,	"timed sequencer commands"		},
-{ "status",	do_knox_status_cmds,	"switcher status commands"		},
-{ "lamp",	do_lamp_test,		"perform lamp test"			},
-{ "quit",	popcmd,			"exit submenu"				},
-{ NULL_COMMAND									},
-};
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(knox_menu,s,f,h)
+
+MENU_BEGIN(knox)
+ADD_CMD( device,	do_select_device,	select knox device )
+ADD_CMD( command,	do_knox_main_cmds,	routing switcher commands )
+ADD_CMD( crosspoint,	do_knox_cross_cmds,	crosspoint pattern commands )
+ADD_CMD( timer,		do_knox_time_cmds,	timed sequencer commands )
+ADD_CMD( status,	do_knox_status_cmds,	switcher status commands )
+ADD_CMD( lamp,		do_lamp_test,		perform lamp test )
+MENU_END(knox)
 
 /* This was /dev/ttyS0 on fourier, but we insist on using a symlink
  * /dev/knox to make this portable to other systems which might use
@@ -810,15 +819,16 @@ static Command knox_main_ctbl[] = {
 
 #define KNOX_TTY_DEV	"/dev/knox"
 
-COMMAND_FUNC( knoxmenu )
+COMMAND_FUNC( do_knox_menu )
 {
+#ifdef HAVE_KNOX
 	if( curr_kdp == NULL ) {
-		auto_version(QSP_ARG  "KNOX","VersionId_knox");
 		open_knox_device(QSP_ARG  KNOX_TTY_DEV);
 		if( curr_kdp == NULL )
 			ERROR1("Unable to open default knox device");
 	}
+#endif // HAVE_KNOX
 
-	PUSHCMD(knox_main_ctbl, "knox");
+	PUSH_MENU(knox);
 }
 

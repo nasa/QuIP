@@ -70,7 +70,7 @@ Put_Ascii affpar $1
 
 Define Load_Affine_Params 1 filename
 If $have_affine_params
-  "warn 'Load_Affine_Params: already have affine parameters!?' PopFile 2"
+  "warn 'Load_Affine_Params: already have affine parameters!?' exit_macro"
 advise "Loading affine parameters from file $1"
 Get_Ascii affpar $1
 Set have_affine_params 1

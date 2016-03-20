@@ -1,0 +1,12 @@
+
+no documentation about stty settings???
+
+purkinje:
+	main rack switcher, 19200, connected to ttyS0
+
+dirac:
+	mini rack switcher, 19200, connected to ttyS0
+
+brewster:
+	booth rack switcher, 19200, connected to ttyS1
+

@@ -8,6 +8,7 @@ macros_DATA	=	calib.mac	\
 			correlogram.mac	\
 			expon.mac	\
 			hmc_record.mac	\
+			regression.mac	\
 			newfit.mac
 
 EXTRA_DIST	=	$(macros_DATA)

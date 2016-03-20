@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/analysis
+macrosdir	=	$(datadir)/coq/macros/analysis
 
 macros_DATA	=	axes.mac		\
 			blink.mac		\

@@ -1,7 +1,6 @@
 
 #include "quip_config.h"
-
-char VersionId_vec_util_convolve[] = QUIP_VERSION_STRING;
+#include "quip_prot.h"
 
 #include "vec_util.h"
 
@@ -11,17 +10,17 @@ void img_clear(Data_Obj *dp)
 	float *ptr;
 	incr_t xos, yos;
 
-	ptr=(float *)dp->dt_data;
-	for(j=0;j<dp->dt_rows;j++){
-		yos = j * dp->dt_rowinc;
-		for(i=0;i<dp->dt_cols;i++){
-			xos = i * dp->dt_pinc;
+	ptr=(float *)OBJ_DATA_PTR(dp);
+	for(j=0;j<OBJ_ROWS(dp);j++){
+		yos = j * OBJ_ROW_INC(dp);
+		for(i=0;i<OBJ_COLS(dp);i++){
+			xos = i * OBJ_PXL_INC(dp);
 			*(ptr + yos + xos ) = 0.0;
 		}
 	}
 }
 
-void add_impulse(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,dimension_t x,dimension_t y)
+void add_impulse(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,posn_t x,posn_t y)
 {
 	float *image_ptr, *irptr;
 	incr_t i,j;
@@ -29,31 +28,31 @@ void add_impulse(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,dimension_t x,dim
 	incr_t iryos,iros;	/* offsets into impulse response */
 	incr_t pinc, ir_pinc;
 
-	pinc = image_dp->dt_pinc;
-	ir_pinc = ir_dp->dt_pinc;
+	pinc = OBJ_PXL_INC(image_dp);
+	ir_pinc = OBJ_PXL_INC(ir_dp);
 
-	image_ptr = (float *) image_dp->dt_data;
-	irptr = (float *) ir_dp->dt_data;
+	image_ptr = (float *) OBJ_DATA_PTR(image_dp);
+	irptr = (float *) OBJ_DATA_PTR(ir_dp);
 	
-	j=ir_dp->dt_rows;
+	j=OBJ_ROWS(ir_dp);
 	while( j-- ){			/* foreach impulse row */
-		yos = ((y+j)-ir_dp->dt_rows/2);
+		yos = ((y+j)-OBJ_ROWS(ir_dp)/2);
 #ifdef NOWRAP
-		if( yos < 0 || yos >= (incr_t) image_dp->dt_rows ) continue;
+		if( yos < 0 || yos >= (incr_t) OBJ_ROWS(image_dp) ) continue;
 #else
-		if( yos < 0 ) yos+=image_dp->dt_rows;
-		else if( yos >= image_dp->dt_rows ) yos-=image_dp->dt_rows;
+		if( yos < 0 ) yos+=OBJ_ROWS(image_dp);
+		else if( yos >= OBJ_ROWS(image_dp) ) yos-=OBJ_ROWS(image_dp);
 #endif /* NOWRAP */
-		yos *= image_dp->dt_rowinc;
-		iryos = j * ir_dp->dt_rowinc;
-		i=ir_dp->dt_cols;
+		yos *= OBJ_ROW_INC(image_dp);
+		iryos = j * OBJ_ROW_INC(ir_dp);
+		i=OBJ_COLS(ir_dp);
 		while(i--){
-			xos = ((x+i)-ir_dp->dt_cols/2);
+			xos = ((x+i)-OBJ_COLS(ir_dp)/2);
 #ifdef NOWRAP
-			if( xos < 0 || xos >= (incr_t) image_dp->dt_cols ) continue;
+			if( xos < 0 || xos >= (incr_t) OBJ_COLS(image_dp) ) continue;
 #else
-			if( xos < 0 ) xos+=image_dp->dt_cols;
-			else if( xos >= image_dp->dt_cols ) xos-=image_dp->dt_cols;
+			if( xos < 0 ) xos+=OBJ_COLS(image_dp);
+			else if( xos >= OBJ_COLS(image_dp) ) xos-=OBJ_COLS(image_dp);
 #endif /* NOWRAP */
 			offset = (yos + xos*pinc);
 			iros = (iryos + i*ir_pinc);
@@ -69,15 +68,20 @@ void convolve(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
 	float val, *frptr;
 	dimension_t yos, offset;
 
+	// where is the other error checking done???
+	INSIST_RAM_OBJ(dpto,convolve)
+	INSIST_RAM_OBJ(dpfr,convolve)
+	INSIST_RAM_OBJ(dpfilt,convolve)
+
 	img_clear(dpto);
 
-	frptr = (float *) dpfr->dt_data;
-	j=dpto->dt_rows;
+	frptr = (float *) OBJ_DATA_PTR(dpfr);
+	j=OBJ_ROWS(dpto);
 	while(j--){
-		yos = j * dpfr->dt_rowinc;
-		i=dpfr->dt_cols;
+		yos = j * OBJ_ROW_INC(dpfr);
+		i=OBJ_COLS(dpfr);
 		while(i--){
-			offset = yos+i*dpfr->dt_pinc;
+			offset = yos+i*OBJ_PXL_INC(dpfr);
 			val = *(frptr+offset);
 			add_impulse(val,dpto,dpfilt,i,j);
 		}

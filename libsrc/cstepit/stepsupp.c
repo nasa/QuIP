@@ -1,13 +1,9 @@
 #include "quip_config.h"
 
-char VersionId_cstepit_stepsupp[] = QUIP_VERSION_STRING;
-
 #include <math.h>
 
-#include "savestr.h"
-#include "query.h"
-#include "fitsine.h"
-#include "items.h"
+#include "quip_prot.h"
+//#include "fitsine.h"
 #include "optimize.h"
 
 ITEM_INTERFACE_DECLARATIONS(Opt_Param,opt_param)
@@ -16,18 +12,7 @@ const char *opt_func_string=NULL;
 
 Opt_Pkg *curr_opt_pkg=NO_OPT_PKG;
 
-
-List *opt_param_list(SINGLE_QSP_ARG_DECL)
-{
-	if( opt_param_itp==NO_ITEM_TYPE ){
-		/* NWARN("opt_param_list:  no parameters defined"); */
-		return(NO_LIST);
-	}
-
-	return( item_list(QSP_ARG  opt_param_itp) );
-}
-
-void opt_param_info(Opt_Param *opp)
+void opt_param_info(QSP_ARG_DECL  Opt_Param *opp)
 {
 	sprintf(msg_str,"Parameter %s:",opp->op_name);
 	prt_msg(msg_str);
@@ -59,7 +44,7 @@ void delete_opt_params(SINGLE_QSP_ARG_DECL)
 
 		opp = (Opt_Param *)(np->n_data);
 		next=np->n_next;
-		del_opt_param(QSP_ARG  opp->op_name);
+		del_opt_param(QSP_ARG  opp);
 		rls_str(opp->op_name);
 		np=next;
 	}
@@ -80,10 +65,10 @@ Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *opp)
 	return(new_opp);
 }
 
-void optimize(QSP_ARG_DECL  float (*opt_func)())
+void optimize(QSP_ARG_DECL  float (*opt_func)(SINGLE_QSP_ARG_DECL))
 {
 	insure_opt_pkg(SINGLE_QSP_ARG);
-	(*curr_opt_pkg->pkg_c_func)(opt_func);
+	(*curr_opt_pkg->pkg_c_func)(QSP_ARG  opt_func);
 }
 
 float get_opt_param_value(QSP_ARG_DECL  const char *name)
@@ -92,8 +77,8 @@ float get_opt_param_value(QSP_ARG_DECL  const char *name)
 
 	opp=get_opt_param(QSP_ARG  name);
 	if( opp==NO_OPT_PARAM ){
-		sprintf(error_string,"No optimization parameter \"%s\"",name);
-		NWARN(error_string);
+		sprintf(ERROR_STRING,"No optimization parameter \"%s\"",name);
+		NWARN(ERROR_STRING);
 		return(-1.0);
 	}
 	return(opp->ans);

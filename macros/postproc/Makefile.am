@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/postproc
+macrosdir	=	$(datadir)/coq/macros/postproc
 
 macros_DATA	=	get_rec.mac	\
 			ilace.mac

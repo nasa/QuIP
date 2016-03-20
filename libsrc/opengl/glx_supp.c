@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_opengl_glx_supp[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENGL
 
 #define GLX_GLXEXT_PROTOTYPES
@@ -10,15 +8,31 @@ char VersionId_opengl_glx_supp[] = QUIP_VERSION_STRING;
 #include <GL/glx.h>
 #endif
 
+#ifdef HAVE_GL_FREEGLUT_H
+// This might be in glut_supp.h, but it conflicts with some nVidia stuff
+// used in other files...
+#include <GL/freeglut.h>
+#endif
 
+#include "quip_prot.h"
 #include "viewer.h"
 #include "gl_viewer.h"
-#include "debug.h"
+#include "glut_supp.h"
+#include "glx_supp.h"
 
 static Viewer *gl_vp=NO_VIEWER;
 
 //static GLXContext the_ctx;
 //static GLXContext first_ctx=NULL;
+
+typedef struct renderer_info {
+	const char *	glr_vendor;
+	const char *	glr_renderer;
+	const char *	glr_version;
+	const char *	glr_extensions;
+} Renderer_Info;
+
+static Renderer_Info *curr_renderer_info_p=NULL;
 
 void swap_buffers(void)
 {
@@ -33,18 +47,55 @@ void swap_buffers(void)
 	glXSwapBuffers(gl_vp->vw_dpy,gl_vp->vw_xwin);
 }
 
+#ifdef HAVE_VIDEOSYNCSGI
+
+static int (*m_glXWaitVideoSyncSGI)(int, int, unsigned int*)=(&glXWaitVideoSyncSGI);
+static int (*m_glXGetVideoSyncSGI)(unsigned int*)=(&glXGetVideoSyncSGI);
+
+#else
+
+/* On some systems we may be able to find the routine??? */
+/* apparently not on MacOS... */
+
+static int (*m_glXWaitVideoSyncSGI)(int, int, unsigned int*)=NULL;
+static int (*m_glXGetVideoSyncSGI)(unsigned int*)=NULL;
+
+#endif
+
 void wait_video_sync(int n)
 {
-#ifdef HAVE_VIDEOSYNCSGI
 	unsigned int count;
 	int divisor, remainder;
+#ifndef HAVE_VIDEOSYNCSGI
+	static int warned=0;
+
+	if( m_glXWaitVideoSyncSGI == NULL && !warned ){
+		m_glXWaitVideoSyncSGI = (int (*)(int, int, unsigned int*))
+			glXGetProcAddress((const GLubyte*)"glXWaitVideoSyncSGI");
+		if (!m_glXWaitVideoSyncSGI) {
+	NWARN("wait_video_sync:  couldn't get address for glXWaitVideoSyncSGI!?");
+			warned=1;
+		}
+		m_glXGetVideoSyncSGI = (int (*)(unsigned int*))
+			glXGetProcAddress((const GLubyte*)"glXGetVideoSyncSGI");
+		if (!m_glXGetVideoSyncSGI) {
+	NWARN("wait_video_sync:  couldn't get address for glXGetVideoSyncSGI!?");
+			warned=1;
+		}
+	}
+
+	if( warned ) return;
+
+	/* Now we have something we can call... */
+
+#endif /* ! HAVE_VIDEOSYNCSGI */
 
 	if( gl_vp == NO_VIEWER ){
 		NWARN("wait_video_sync:  no viewer selected");
 		return;
 	}
 
-	glXGetVideoSyncSGI(&count);
+	(*m_glXGetVideoSyncSGI)(&count);
 /*
 sprintf(ERROR_STRING,"Calling glXWaitVideoSyncSGI(%d (0x%x), %d (0x%x), %d (0x%x))",
 divisor,divisor,remainder,remainder,count,count);
@@ -69,19 +120,85 @@ advise(ERROR_STRING);
 	divisor = n+1;
 	remainder = (count+n) % divisor;
 
-	glXWaitVideoSyncSGI(divisor,remainder,&count);
+	(*m_glXWaitVideoSyncSGI)(divisor,remainder,&count);
 
-#else /* ! HAVE_VIDEOSYNCSGI */
-	static int warned=0;
-
-	if( ! warned ){
-		NWARN("wait_video_sync:  glXWaitVideoSyncSGI is not present!?");
-		warned=1;
-	}
-#endif /* ! HAVE_VIDEOSYNCSGI */
 }
 
-static void init_glx_context(Viewer *vp)
+static void show_extensions( QSP_ARG_DECL  Renderer_Info *rip )
+{
+	int n_chars;
+	const char *start, *end;
+
+	start = rip->glr_extensions;
+	while( *start ){
+		end=start;
+		while( *end && *end!=' ' ) end++;
+		// Now end should point to the space, or the final null
+		n_chars = end - start;
+		ERROR_STRING[0]='\t';
+		strncpy(&((ERROR_STRING)[1]),start,n_chars);
+		// BUG - check that n_chars is less than LLEN
+		(ERROR_STRING)[n_chars+1] = 0;	// add 1 because of initial tab
+		advise(ERROR_STRING);
+		if( *end == ' ' ) end++;
+		start = end;
+	}
+}
+
+static void show_renderer_info( QSP_ARG_DECL  Renderer_Info *rip )
+{
+	const char *s;
+	int n;
+
+	sprintf(ERROR_STRING,"Vendor:  %s",rip->glr_vendor);
+	advise(ERROR_STRING);
+
+	sprintf(ERROR_STRING,"Renderer:  %s",rip->glr_renderer);
+	advise(ERROR_STRING);
+
+	sprintf(ERROR_STRING,"Version:  %s",rip->glr_version);
+	advise(ERROR_STRING);
+
+	// count the extensions, expect too many to fit in LLEN string
+	s=rip->glr_extensions;
+	n=1;
+	while( *s ){
+		if( *s == ' ' ) n++;
+		s++;
+	}
+
+	sprintf(ERROR_STRING,"Extensions:  %d available",n);
+	advise(ERROR_STRING);
+
+	show_extensions(QSP_ARG  rip);
+}
+
+static void check_gl_capabilities(SINGLE_QSP_ARG_DECL)
+{
+	if( curr_renderer_info_p != NULL ) return;
+
+	curr_renderer_info_p = getbuf( sizeof(Renderer_Info) );
+
+	curr_renderer_info_p->glr_vendor = (char *) glGetString(GL_VENDOR);
+	curr_renderer_info_p->glr_renderer = (char *) glGetString(GL_RENDERER);
+	curr_renderer_info_p->glr_version = (char *) glGetString(GL_VERSION);
+	curr_renderer_info_p->glr_extensions = (char *) glGetString(GL_EXTENSIONS);
+
+	if( verbose )
+		show_renderer_info(QSP_ARG  curr_renderer_info_p);
+}
+
+int check_extension( QSP_ARG_DECL  const char *extension )
+{
+	if( curr_renderer_info_p == NULL ){
+		WARN("Renderer info not available!?");
+		return 0;
+	}
+	return gluCheckExtension((GLubyte *)extension,
+		(GLubyte *)curr_renderer_info_p->glr_extensions);
+}
+
+static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 {
 	XVisualInfo vinfo_template, *vis_info_p;
 	long mask=0;
@@ -189,21 +306,70 @@ COMMAND_FUNC( do_render_to )
 	vp = PICK_VWR("");
 	if( vp == NO_VIEWER ) return;
 
-	select_gl_viewer(vp);
+	select_gl_viewer(QSP_ARG  vp);
 }
 
-void select_gl_viewer(Viewer *vp)
+static int glut_inited=0;
+
+static int insure_glut(void)
+{
+#ifdef HAVE_GLUT
+	int argc=0;
+	char **argv=NULL;
+#endif // HAVE_GLUT
+
+	if( glut_inited ) return 0;
+#ifdef HAVE_GLUT
+	glutInit(&argc,argv);
+#else // ! HAVE_GLUT
+	NWARN("insure_glut:  No GLUT support in this build!?");
+	return -1;
+#endif // ! HAVE_GLUT
+	glut_inited=1;
+	return 0;
+}
+
+COMMAND_FUNC( do_set_fullscreen )
+{
+	int yesno;
+
+	yesno = ASKIF("fullscreen mode");
+
+	if( insure_glut() < 0 ) return;
+
+#ifdef HAVE_GLUT
+	if( yesno )
+		glutFullScreen();
+	else {
+		//glutLeaveFullScreen();
+
+		// BUG glutLeaveFullScreen doesn't seem
+		// to be present, we really should check
+		// the state and only toggle if we really
+		// are full-screen
+		// But this will work as long as we don't call
+		// it twice.
+		//glutFullScreenToggle();
+		WARN("no implementation to turn full-screen off!?");
+	}
+#else // ! HAVE_GLUT
+	if( yesno == 0 || yesno == 1 )	// quiet compiler
+	WARN("do_set_fullscreen:  program not built with GLUT support!?");
+#endif // ! HAVE_GLUT
+}
+
+void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	if( ! READY_FOR_GLX(vp) ) {
-		init_glx_context(vp);
+		init_glx_context(QSP_ARG  vp);
 		vp->vw_flags |= VIEW_GLX_RDY;
 	}
 
 #ifdef CAUTIOUS
 	if( vp->vw_ctx == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"CAUTIOUS:  select_gl_viewer %s:  no GL context!?",vp->vw_name);
-		NERROR1(DEFAULT_ERROR_STRING);
+		ERROR1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -215,11 +381,14 @@ advise(ERROR_STRING);
 }
 */
 	if( glXMakeCurrent(vp->vw_dpy,vp->vw_xwin,vp->vw_ctx) != True ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 		"Unable to set current GLX context to %s!?",vp->vw_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		WARN(ERROR_STRING);
 	}
 	gl_vp = vp;
+
+	check_gl_capabilities(SINGLE_QSP_ARG);
+
 } /* end select_gl_viewer */
 
 #endif /* HAVE_OPENGL */

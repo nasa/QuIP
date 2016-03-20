@@ -4,13 +4,17 @@
 
 #advise 'reading .mmvi'
 #verbose yes
+verbose no
 
-#variables set verbose 1 quit
+variables
+  set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup
+  quit
 
-< $DOTFILEDIR/.generic
-< $DOTFILEDIR/.gendata
-< $DOTFILEDIR/.genwar
-< $DOTFILEDIR/.genview
+
+< $QUIPSTARTUPDIR/generic.scr
+< $QUIPSTARTUPDIR/gendata.scr
+< $QUIPSTARTUPDIR/gencomp.scr
+< $QUIPSTARTUPDIR/genview.scr
 
 #movie playback
 #  directory /u/jbm/fusion2
@@ -49,7 +53,7 @@ movie control geometry nframes 4 quit quit quit
 < $macro_dir/galvo/galvo_cam.mac
 < $macro_dir/galvo/galvo.mac
 < $macro_dir/view/plotsupp.mac
-< $macro_dir/war/curv.mac
+< $macro_dir/compute/curv.mac
 
 Clobber yes		# so save function works...
 

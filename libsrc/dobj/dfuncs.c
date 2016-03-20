@@ -1,17 +1,16 @@
 #include "quip_config.h"
 
-char VersionId_dataf_dfuncs[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "function.h"
 
 /* support for data functions in expr.y */
+
+// could be integer return?
 
 double obj_exists(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
-
 	dp = dobj_of(QSP_ARG  name);
 	if( dp==NO_OBJ ) return(0.0);
 	return(1.0);
@@ -21,8 +20,8 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 										\
 				unsigned int bitnum;				\
 				bitmap_word bit,*lp;				\
-				bitnum = dp->dt_bit0;				\
-				lp = (bitmap_word *)dp->dt_data;		\
+				bitnum = OBJ_BIT0(dp);				\
+				lp = (bitmap_word *)OBJ_DATA_PTR(dp);		\
 				lp += index/BITS_PER_BITMAP_WORD;		\
 				bitnum += index % BITS_PER_BITMAP_WORD;		\
 				if( bitnum >= BITS_PER_BITMAP_WORD ){		\
@@ -45,73 +44,70 @@ double comp_func( Data_Obj *dp, index_t index )
 	if( dp==NO_OBJ ) return(0.0);
 
 #ifdef HAVE_CUDA
-	if( ! IS_RAM(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
-			"Can't use value functions on CUDA device object %s",
-			dp->dt_name);
-		NWARN(DEFAULT_ERROR_STRING);
+	if( ! object_is_in_ram(DEFAULT_QSP_ARG  dp,
+		"use value functions on CUDA object") ){
 		return(0.0);
 	}
 #endif /* HAVE_CUDA */
 			
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,"comp_func:  %s is not a scalar",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(0.0);
 	}
-	if( dp->dt_mach_dim[0] <= (dimension_t)index ){
+	if( OBJ_MACH_DIM(dp,0) <= (dimension_t)index ){
 		sprintf(DEFAULT_ERROR_STRING,
 		"Component index %d out of range for object %s",
-			index,dp->dt_name);
+			index,OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 	}
-	mp = MACHINE_PREC(dp);
+	mp = OBJ_MACH_PREC(dp);
 	switch( mp ){
 		case PREC_SP:
-			d = (* (((float *)dp->dt_data)+index) );
+			d = (* (((float *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_DP:
-			d = (* (((double *)dp->dt_data)+index) );
+			d = (* (((double *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_IN:
-			d = (* (((short *)dp->dt_data)+index) );
+			d = (* (((short *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_DI:
-			d = (* (((int32_t *)dp->dt_data)+index) );
+			d = (* (((int32_t *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_LI:
-			d = (* (((int64_t *)dp->dt_data)+index) );
+			d = (* (((int64_t *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_BY:
-			d = (* (((char *)dp->dt_data)+index) );
+			d = (* (((char *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_UIN:
-			d = (* (((u_short *)dp->dt_data)+index) );
+			d = (* (((u_short *)OBJ_DATA_PTR(dp))+index) );
 			break;
 		case PREC_UDI:
 			if( IS_BITMAP(dp) ){
 				FETCH_BIT
 			} else {
-				d = (* (((uint32_t *)dp->dt_data)+index) );
+				d = (* (((uint32_t *)OBJ_DATA_PTR(dp))+index) );
 			}
 			break;
 		case PREC_ULI:
 			if( IS_BITMAP(dp) ){
 				FETCH_BIT
 			} else {
-				d = (* (((uint64_t *)dp->dt_data)+index) );
+				d = (* (((uint64_t *)OBJ_DATA_PTR(dp))+index) );
 			}
 			break;
 		case PREC_UBY:
-			d = (* (((u_char *)dp->dt_data)+index) );
+			d = (* (((u_char *)OBJ_DATA_PTR(dp))+index) );
 			break;
 #ifdef CAUTIOUS
 		case PREC_NONE:
 		case N_MACHINE_PRECS:
 		default:
 			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  comp_func:  object %s has invalid machine precision %d",
-				dp->dt_name,mp);
+				OBJ_NAME(dp),mp);
 			NERROR1(DEFAULT_ERROR_STRING);
 			d = 0.0;	// quiet compiler
 			break;
@@ -120,63 +116,63 @@ double comp_func( Data_Obj *dp, index_t index )
 	return(d);
 } // end comp_func
 
-double val_func( Data_Obj *dp )
+double val_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( dp==NO_OBJ ) return(0.0);
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,"val_func:  %s is not a scalar",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(0.0);
 	}
-	if( dp->dt_mach_dim[0] > 1 ){
+	if( OBJ_MACH_DIM(dp,0) > 1 ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"value:  %s has %d components; returning comp. #0",
-			dp->dt_name,dp->dt_mach_dim[0]);
+			OBJ_NAME(dp),OBJ_MACH_DIM(dp,0));
 		NWARN(DEFAULT_ERROR_STRING);
 	}
 	return( comp_func(dp,0) );
 }
 
-static double re_func( Data_Obj *dp )
+static double re_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( dp==NO_OBJ ) return(0.0);
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,
-			"re_func:  %s is not a scalar",dp->dt_name);
+			"re_func:  %s is not a scalar",OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(0.0);
 	}
-	if( dp->dt_mach_dim[0] == 1 ){
+	if( OBJ_MACH_DIM(dp,0) == 1 ){
 		sprintf(DEFAULT_ERROR_STRING,
-			"%s is real, not complex!?",dp->dt_name);
+			"%s is real, not complex!?",OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
-	} else if( dp->dt_mach_dim[0] != 2 ){
+	} else if( OBJ_MACH_DIM(dp,0) != 2 ){
 		sprintf(DEFAULT_ERROR_STRING,
-			"%s is multidimensional, not complex!?",dp->dt_name);
+			"%s is multidimensional, not complex!?",OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 	}
 	return( comp_func(dp,0) );
 }
 
-static double im_func( Data_Obj *dp )
+static double im_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( dp==NO_OBJ ) return(0.0);
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,
-			"im_func:  %s is not a scalar",dp->dt_name);
+			"im_func:  %s is not a scalar",OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(0.0);
 	}
-	if( dp->dt_mach_dim[0] != 2 ){
+	if( OBJ_MACH_DIM(dp,0) != 2 ){
 		sprintf(DEFAULT_ERROR_STRING,
-			"%s is not complex; returning 0.0", dp->dt_name);
+			"%s is not complex; returning 0.0", OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 	}
 	return( comp_func(dp,1) );
 }
 
-static double contig_func( Data_Obj *dp )
+static double contig_func(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( IS_CONTIGUOUS(dp) ){
 		return(1);
@@ -185,12 +181,12 @@ static double contig_func( Data_Obj *dp )
 	}
 }
 
-void init_dfuncs(void)
+void init_dfuncs(SINGLE_QSP_ARG_DECL)
 {
-	setdatafunc("value",val_func);
-	setdatafunc("Re",re_func);
-	setdatafunc("Im",im_func);
-	setdatafunc("is_contiguous",contig_func);
-	setstrfunc("obj_exists",obj_exists);
+	DECLARE_DOBJ_FUNCTION( value,		val_func	)
+	DECLARE_DOBJ_FUNCTION( Re,		re_func		)
+	DECLARE_DOBJ_FUNCTION( Im,		im_func		)
+	DECLARE_DOBJ_FUNCTION( is_contiguous,	contig_func	)
+	DECLARE_STR1_FUNCTION( obj_exists,	obj_exists	)
 }
 

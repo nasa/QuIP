@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_meteor_mviewer[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 #ifdef HAVE_X11_EXT
@@ -46,6 +44,7 @@ char VersionId_meteor_mviewer[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "xsupp.h"
 #include "rv_api.h"
 #include "fio_api.h"
@@ -54,7 +53,6 @@ char VersionId_meteor_mviewer[] = QUIP_VERSION_STRING;
 #include "ioctl_meteor.h"
 
 #include "mmenu.h"
-#include "debug.h"
 #include "data_obj.h"
 
 /* globals */
@@ -115,13 +113,13 @@ rstatstr[ppi[2].ppi_status],					\
 ppi[2].ppi_newest,					\
 rstatstr[ppi[3].ppi_status],					\
 ppi[3].ppi_newest);					\
-advise(estring[pip->ppi_index]);				\
+NADVISE(estring[pip->ppi_index]);				\
 }
 
 #define RMSTATUS(code)						\
 m_status = code;						\
 if( verbose ){							\
-sprintf(error_string,						\
+sprintf(ERROR_STRING,						\
 "M %c\t%d\t%c %d\t%c %d\t%c %d\t%c %d",				\
 rmstatstr[m_status],						\
 read_frame_want,						\
@@ -133,7 +131,7 @@ rstatstr[ppi[2].ppi_status],					\
 ppi[2].ppi_newest,					\
 rstatstr[ppi[3].ppi_status],					\
 ppi[3].ppi_newest);					\
-advise(error_string);						\
+NADVISE(ERROR_STRING);						\
 }
 #else /* ! TRACE_FLOW */
 
@@ -194,17 +192,17 @@ void play_meteor_movie(QSP_ARG_DECL  Image_File *ifp)
 	int fd_arr[MAX_DISKS];
 	int height, width, depth;
 
-	if( ifp->if_type != IFT_RV ){
+	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
 		WARN("Sorry, image files must be type rv for display in meteor window");
 		return;
 	}
-	inp = (RV_Inode *)ifp->if_hd;
-	ndisks = queue_rv_file(inp,fd_arr);
+	inp = (RV_Inode *)ifp->if_hdr_p;
+	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
 
 	/* get real size */
-	width = ifp->if_dp->dt_cols;
-	height = ifp->if_dp->dt_rows;
-	depth = ifp->if_dp->dt_comps;
+	width = OBJ_COLS(ifp->if_dp);
+	height = OBJ_ROWS(ifp->if_dp);
+	depth = OBJ_COMPS(ifp->if_dp);
 
 	/* make sure that the meteor window is available */
 
@@ -223,10 +221,10 @@ void play_meteor_movie(QSP_ARG_DECL  Image_File *ifp)
 RMSTATUS(RM_INIT);
 
 	/* start disk reader threads */
-	start_dr_threads(QSP_ARG  ifp->if_dp->dt_frames,inp,ndisks,fd_arr);
+	start_dr_threads(QSP_ARG  OBJ_FRAMES(ifp->if_dp),inp,ndisks,fd_arr);
 	usleep(N_READ_BUFFERS*33000);		/* let buffers fill up */
 
-	for(frame_index=0;frame_index<ifp->if_dp->dt_frames;frame_index++){
+	for(frame_index=0;frame_index<OBJ_FRAMES(ifp->if_dp);frame_index++){
 		int which_buf;
 		int disk_index;
 
@@ -262,7 +260,7 @@ RMSTATUS(RM_EXIT);
 	givbuf(rdfrmptr[0]);
 
 	/* now we need to update the seek pointer in the i/o file struct, so that seeking works! */
-	ifp->if_nfrms = ifp->if_dp->dt_frames;
+	ifp->if_nfrms = OBJ_FRAMES(ifp->if_dp);
 } /* end play_meteor_movie */
 
 void play_meteor_frame(QSP_ARG_DECL  Image_File *ifp, uint32_t frame)
@@ -277,17 +275,17 @@ void play_meteor_frame(QSP_ARG_DECL  Image_File *ifp, uint32_t frame)
 
 advise("play_meteor_frame");
 	/* get real size */
-	width = ifp->if_dp->dt_cols;
-	height = ifp->if_dp->dt_rows;
-	depth = ifp->if_dp->dt_comps;
+	width = OBJ_COLS(ifp->if_dp);
+	height = OBJ_ROWS(ifp->if_dp);
+	depth = OBJ_COMPS(ifp->if_dp);
 
 
-	if( ifp->if_type != IFT_RV ){
+	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
 		WARN("Sorry, image files must be type rv for display in meteor window");
 		return;
 	}
-	inp = (RV_Inode *) ifp->if_hd;
-	ndisks = queue_rv_file(inp,fd_arr);
+	inp = (RV_Inode *) ifp->if_hdr_p;
+	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
 
 	/* make sure that the meteor window is available */
 
@@ -296,7 +294,7 @@ advise("play_meteor_frame");
 	/* seek to the correct frame */
 
 	/*
-	rv_frame_seek(inp, frame);
+	rv_frame_seek(QSP_ARG  inp, frame);
 	*/
 advise("calling image_file_seek...");
 	image_file_seek(QSP_ARG  ifp,frame);
@@ -326,8 +324,8 @@ RMSTATUS(RM_INIT);
 	  return;
 	}
 
-	sprintf(error_string,"play_meteor_frame:  playing frame: %d of %d",frame + 1, ifp->if_dp->dt_frames);
-	advise(error_string);
+	sprintf(ERROR_STRING,"play_meteor_frame:  playing frame: %d of %d",frame + 1, OBJ_FRAMES(ifp->if_dp));
+	advise(ERROR_STRING);
 
 	RMSTATUS(RM_TOP);
 	/* wait for this frame */
@@ -441,7 +439,7 @@ RSTATUS(DR_READ);
 
 		/* read in the next frame */
 		/* We put this seek here in case there is timestamp info at the end of the last frame */
-		rv_frame_seek(pip->ppi_inp,j);
+		rv_frame_seek(DEFAULT_QSP_ARG  pip->ppi_inp,j);
 
 		if( (n_read = read(fd,buf,n_to_read)) != n_to_read ){
 			sprintf(tmpstr,
@@ -469,9 +467,9 @@ RSTATUS(DR_EXIT);
 #define MAKE_METEOR_VIEWER( index )					\
 									\
 	if( meteor_vp[index] != NO_VIEWER ){				\
-		sprintf(error_string,					\
+		sprintf(ERROR_STRING,					\
 		"init_meteor_viewer:  meteor viewer %d (%s) already exists",index,meteor_vp[index]->vw_name);		\
-		WARN(error_string);					\
+		WARN(ERROR_STRING);					\
 		return;							\
 	}								\
 									\
@@ -481,7 +479,8 @@ RSTATUS(DR_EXIT);
 	posn_viewer(meteor_vp[index],sx[index]*width,sy[index]*height);	\
 	/* set_n_protect(0); */						\
 	/* BUG: replace with make_grayscale(0, pow(depth, 2)) ?? */	\
-	/* if( ! displaying_color ) */ make_grayscale(0,256);		\
+	/* if( ! displaying_color ) */					\
+		make_grayscale(QSP_ARG  0,256);				\
 									\
 	show_viewer(QSP_ARG  meteor_vp[index]);				\
 	shm_setup(meteor_vp[index]);
@@ -513,7 +512,7 @@ void monitor_meteor_video(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Viewer *vp;
 
-	init_meteor_viewer(QSP_ARG  dp->dt_cols, dp->dt_rows, dp->dt_comps);
+	init_meteor_viewer(QSP_ARG  OBJ_COLS(dp), OBJ_ROWS(dp), OBJ_COMPS(dp));
 
 	/* BUG should make this a background process or something... */
 	/* This routine just displays over and over again, no synchronization
@@ -524,13 +523,13 @@ void monitor_meteor_video(QSP_ARG_DECL  Data_Obj *dp)
 
 		if( displaying_color ){
 			vp=meteor_vp[0];
-			update_shm_viewer(vp, ((char *)dp->dt_data) /* +display_component[w] */ ,
+			update_shm_viewer(vp, ((char *)OBJ_DATA_PTR(dp)) /* +display_component[w] */ ,
 				meteor_increment,1 /* this means advance src component */,
 				vp->vw_width,vp->vw_height, 0,0);
 		} else {
 			for(i=0;i<n_displayed_components;i++){
 				vp=meteor_vp[i];
-				update_shm_viewer(vp, ((char *)dp->dt_data)+display_component[i],
+				update_shm_viewer(vp, ((char *)OBJ_DATA_PTR(dp))+display_component[i],
 					meteor_increment,0 /* don't advance src component at each pixel */,
 					vp->vw_width,vp->vw_height, 0,0);
 			}
@@ -538,17 +537,19 @@ void monitor_meteor_video(QSP_ARG_DECL  Data_Obj *dp)
 	}
 }
 
+#ifdef NOT_USED
 void display_meteor_video(QSP_ARG_DECL  int index, Data_Obj *dp)
 {
 	Viewer *vp;
 
-	init_meteor_viewer(QSP_ARG  dp->dt_cols, dp->dt_rows, dp->dt_comps);
+	init_meteor_viewer(QSP_ARG  OBJ_COLS(dp), OBJ_ROWS(dp), OBJ_COMPS(dp));
 
 	vp=meteor_vp[index];
-	update_shm_viewer(vp, ((char *)dp->dt_data)+display_component[index],
+	update_shm_viewer(vp, ((char *)OBJ_DATA_PTR(dp))+display_component[index],
 		meteor_increment,0,
 		vp->vw_width,vp->vw_height, 0,0);
 }
+#endif /* NOT_USED */
 
 #ifdef UNUSED
 static void set_display_component()
@@ -559,8 +560,8 @@ static void set_display_component()
 	n = how_many("component index");
 
 	if( i < 0 || i > n_displayed_components ){
-		sprintf(error_string,"viewer index must be >= 0 and less than the number of displayed components %d",n_displayed_components);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"viewer index must be >= 0 and less than the number of displayed components %d",n_displayed_components);
+		WARN(ERROR_STRING);
 		return;
 	}
 

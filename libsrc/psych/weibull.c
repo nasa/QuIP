@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_psych_weibull[] = QUIP_VERSION_STRING;
-
 /*
  * Maximum liklihood Weibull fits
  * See appendix in Watson, "Probability summation over time"
@@ -37,7 +35,7 @@ static double	alpha,		/* threshold parameter */
 #define MIN_DELTA	0.0001		/* minumum finger error rate */
 static double error_rate=DELTA;
 
-static Data_Tbl *the_dtbl;
+static Data_Tbl *the_dtp;
 
 #define ALPHA_INDEX	0
 #define BETA_INDEX	1
@@ -46,7 +44,7 @@ static Data_Tbl *the_dtbl;
 /* local prototypes */
 static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp, int ntrac);
 
-float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelihood of guess */
+static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelihood of guess */
 {
 
 	float lh=0.0,lhinc;
@@ -61,38 +59,46 @@ float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelih
 	/* compute the likelihood for this guess */
 
 	opp=get_opt_param(QSP_ARG  ALPHA_NAME);
-#ifdef CAUTIOUS
-	if( opp==NO_OPT_PARAM )
-		ERROR1("CAUTIOUS:  missing alpha param");
-#endif
+//#ifdef CAUTIOUS
+//	if( opp==NO_OPT_PARAM ){
+//		ERROR1("CAUTIOUS:  missing alpha param");
+//		IOS_RETURN_VAL(0)
+//	}
+//#endif
+	assert( opp != NO_OPT_PARAM );
+
 	t_alpha = opp->ans;
 
 	opp=get_opt_param(QSP_ARG  BETA_NAME);
-#ifdef CAUTIOUS
-	if( opp==NO_OPT_PARAM )
-		ERROR1("CAUTIOUS:  missing beta param");
-#endif
+//#ifdef CAUTIOUS
+//	if( opp==NO_OPT_PARAM ){
+//		ERROR1("CAUTIOUS:  missing beta param");
+//		IOS_RETURN_VAL(0)
+//	}
+//#endif
+	assert( opp != NO_OPT_PARAM );
+
 	t_beta = opp->ans;
 
 	for(i=0;i<_nvals;i++){
 
 		/* calculate theoretical percent correct with this guess */
 
-		if( (ntt=the_dtbl->d_data[i].ntotal) <= 0 )
+		if( (ntt=DATUM_NTOTAL(DTBL_ENTRY(the_dtp,i)) ) <= 0 )
 			continue;
 
-		nc=the_dtbl->d_data[i].ncorr;
+		nc=DATUM_NCORR( DTBL_ENTRY(the_dtp,i) );
 		xv = xval_array[ i ];
 
-		if( xv == 0.0 ) pc = w_gamma;
+		if( xv == 0.0 ) pc = (float) w_gamma;
 		else {
-			pc = 1 - (1-w_gamma)*exp(-pow( xv/t_alpha, t_beta ) );
-			if( pc > (1-error_rate) ) pc = 1-error_rate;
+			pc = (float) (1 - (1-w_gamma)*exp(-pow( xv/t_alpha, t_beta ) ));
+			if( pc > (1-error_rate) ) pc =(float) ( 1-error_rate);
 		}
 
 		/* pc is the theoretical % correct at this xval */
 
-		lhinc = nc * log( pc ) + ( ntt - nc ) * log( 1 - pc );
+		lhinc = (float) (nc * log( pc ) + ( ntt - nc ) * log( 1 - pc ));
 		lh -= lhinc;
 	}
 
@@ -103,43 +109,44 @@ float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return likelih
 
 static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
 {
-	Opt_Param op1, *opp=(&op1);
+	Opt_Param op1, *alpha_opp=(&op1);
+	Opt_Param op2, *beta_opp=(&op2);
 
 	/* initialize global */
 
-	the_dtbl = dp;
+	the_dtp = dp;
 
 	/* initialize the parameters */
 
 	delete_opt_params(SINGLE_QSP_ARG);	/* clear any existing parameters */
 
-	opp->op_name = ALPHA_NAME;
-	opp->ans = xval_array[ _nvals/2 ];
+	alpha_opp->op_name = ALPHA_NAME;
+	alpha_opp->ans = xval_array[ _nvals/2 ];
 	if( xval_array[0] < xval_array[_nvals-1] ){
-		opp->maxv =  xval_array[_nvals-1];
-		opp->minv =  xval_array[0];
+		alpha_opp->maxv =  xval_array[_nvals-1];
+		alpha_opp->minv =  xval_array[0];
 	} else {
-		opp->maxv = xval_array[0];
-		opp->minv = xval_array[_nvals-1];
+		alpha_opp->maxv = xval_array[0];
+		alpha_opp->minv = xval_array[_nvals-1];
 	}
-	if( opp->minv < 0.0 ){
+	if( alpha_opp->minv < 0.0 ){
 		WARN("wiebull fit will blow up for negative x values");
 		return;
 	}
-	opp->delta = fabs( xval_array[_nvals/2] - xval_array[ (_nvals/2)+1 ] );
-	opp->mindel = 1.0e-30;
+	alpha_opp->delta = (float) fabs( xval_array[_nvals/2] - xval_array[ (_nvals/2)+1 ] );
+	alpha_opp->mindel = (float) 1.0e-30;
 
-	add_opt_param(QSP_ARG  opp);
+	add_opt_param(QSP_ARG  alpha_opp);
 
 
-	opp->op_name = BETA_NAME;
-	opp->ans = 2;
-	opp->maxv = 10000.0;
-	opp->minv = 0.0;
-	opp->delta = 0.5;
-	opp->mindel = 1.0e-30;
+	beta_opp->op_name = BETA_NAME;
+	beta_opp->ans = 2;
+	beta_opp->maxv = 10000.0;
+	beta_opp->minv = 0.0;
+	beta_opp->delta = 0.5;
+	beta_opp->mindel = (float) 1.0e-30;
 
-	add_opt_param(QSP_ARG  opp);
+	add_opt_param(QSP_ARG  beta_opp);
 
 	if( fc_flag ){
 		w_gamma = 0.5;
@@ -150,38 +157,43 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 
 	optimize(QSP_ARG  w_likelihood);
 
-	opp=get_opt_param(QSP_ARG  ALPHA_NAME);
-#ifdef CAUTIOUS
-	if( opp==NO_OPT_PARAM )
-		ERROR1("CAUTIOUS:  missing alpha param");
-#endif
-	alpha = opp->ans;
+	alpha_opp=get_opt_param(QSP_ARG  ALPHA_NAME);
+//#ifdef CAUTIOUS
+//	if( alpha_opp==NO_OPT_PARAM ){
+//		ERROR1("CAUTIOUS:  missing alpha param");
+//		IOS_RETURN
+//	}
+//#endif
+	assert( alpha_opp != NO_OPT_PARAM );
 
-	opp=get_opt_param(QSP_ARG  BETA_NAME);
-#ifdef CAUTIOUS
-	if( opp==NO_OPT_PARAM )
-		ERROR1("CAUTIOUS:  missing beta param");
-#endif
-	beta = opp->ans;
+	alpha = alpha_opp->ans;
+
+	beta_opp=get_opt_param(QSP_ARG  BETA_NAME);
+//#ifdef CAUTIOUS
+//	if( beta_opp==NO_OPT_PARAM ){
+//		ERROR1("CAUTIOUS:  missing beta param");
+//		IOS_RETURN
+//	}
+//#endif
+	assert( beta_opp != NO_OPT_PARAM );
+
+	beta = beta_opp->ans;
 
 	/* clean up */
-	del_opt_param(QSP_ARG  BETA_NAME);
-	del_opt_param(QSP_ARG  ALPHA_NAME);
+	del_opt_param(QSP_ARG  beta_opp);
+	del_opt_param(QSP_ARG  alpha_opp);
 }
 
-void w_analyse( QSP_ARG_DECL  int itbl )		/** do a regression on the ith table */
+void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
 {
-	Trial_Class *clp;
-
 	int ntrac=(-1);
 
-	clp=index_class(QSP_ARG  itbl);
-	weibull_fit( QSP_ARG  clp->cl_dtp, ntrac );
+	weibull_fit( QSP_ARG  CLASS_DATA_TBL(tcp), ntrac );
 }
 
-void weibull_out(int cl)			/** verbose analysis report */
+void weibull_out(QSP_ARG_DECL  Trial_Class * tcp)			/** verbose analysis report */
 {
-        sprintf(msg_str,"\nTrial_Class %d\n",cl);
+        sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
 	prt_msg(msg_str);
 
 	sprintf(msg_str,"alpha (threshold):\t\t%f",alpha);
@@ -191,9 +203,9 @@ void weibull_out(int cl)			/** verbose analysis report */
 	/* BUG print out chi-square like statistic */
 }
 
-void w_tersout(int cl)
+void w_tersout(QSP_ARG_DECL  Trial_Class * tcp)
 {
-	sprintf(msg_str,"%d\t%f\t%f",cl,alpha,beta);
+	sprintf(msg_str,"%s\t%f\t%f",CLASS_NAME(tcp),alpha,beta);
 	prt_msg(msg_str);
 	/* BUG should print out chi sq stat */
 }
@@ -210,7 +222,7 @@ void w_set_error_rate(double er)
 		if( verbose ){
 			sprintf(DEFAULT_ERROR_STRING,
 	"Setting error rate to minimum permissable value:  %g", MIN_DELTA);
-			advise(DEFAULT_ERROR_STRING);
+			NADVISE(DEFAULT_ERROR_STRING);
 		}
 		er = MIN_DELTA;
 	}

@@ -1,8 +1,5 @@
 #include "quip_config.h"
 
-
-char VersionId_vec_util_dct8[] = QUIP_VERSION_STRING;
-
 /* based on DCT code written by John McGowan */
 
 /* #include <stdio.h> */
@@ -12,6 +9,7 @@ char VersionId_vec_util_dct8[] = QUIP_VERSION_STRING;
 /* #include <assert.h> */
 /* #include <memory.h> */
 
+#include "quip_prot.h"
 #include "vec_util.h"
 #include "data_obj.h"
 
@@ -43,21 +41,21 @@ static void dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int direction)
 	dct_type g[DCT_SIZE];
 
 #ifdef CAUTIOUS
-	if( dp->dt_cols != DCT_SIZE || dp->dt_rows != DCT_SIZE ){
-		sprintf(error_string,"Object %s should be 8x8 for DCT",dp->dt_name);
-		WARN(error_string);
+	if( OBJ_COLS(dp) != DCT_SIZE || OBJ_ROWS(dp) != DCT_SIZE ){
+		sprintf(ERROR_STRING,"Object %s should be 8x8 for DCT",OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_prec != PREC_SP ){
-		sprintf(error_string,"Object %s has prec %s, should be float for DCT",
-			dp->dt_name,prec_name[dp->dt_prec]);
-		WARN(error_string);
+	if( OBJ_PREC(dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"Object %s has prec %s, should be float for DCT",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_comps != 1 ){
-		sprintf(error_string,"Object %s has %d components, should be 1 for DCT",
-			dp->dt_name,dp->dt_comps);
-		WARN(error_string);
+	if( OBJ_COMPS(dp) != 1 ){
+		sprintf(ERROR_STRING,"Object %s has %d components, should be 1 for DCT",
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
 #endif	/* CAUTIOUS */
@@ -66,12 +64,12 @@ static void dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int direction)
 
 	/* apply 1D dct to each row */
 
-	ptr = (float *)dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(dp);
 
 	for (row=0 ; row < DCT_SIZE ; row++) {
 		/* copy row */
 		for (col=0 ; col < DCT_SIZE ; col++)
-			g[col] = *(ptr+col*dp->dt_pinc);
+			g[col] = *(ptr+col*OBJ_PXL_INC(dp));
 
 		if( direction == OLD_DCT )
 			dct8_1D(g);
@@ -83,19 +81,19 @@ static void dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int direction)
 
 		/* copy back */
 		for (col=0 ; col < DCT_SIZE ; col++)
-			*(ptr+col*dp->dt_pinc) = g[col];
+			*(ptr+col*OBJ_PXL_INC(dp)) = (float)g[col];
 
 		/* next row */
-		ptr += dp->dt_rowinc;
+		ptr += OBJ_ROW_INC(dp);
 	}
 
 	/* apply 1D dct to each col */
 
-	ptr = (float *)dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(dp);
 
 	for (col=0 ; col < DCT_SIZE ; col++) {
 		for (row=0; row < DCT_SIZE ; row++)
-			g[row] = *(ptr+row*dp->dt_rowinc);
+			g[row] = *(ptr+row*OBJ_ROW_INC(dp));
 
 		/* dct8_1D(g); */
 
@@ -109,10 +107,10 @@ static void dct8_2D(QSP_ARG_DECL  Data_Obj *dp,int direction)
 
 
 		for (row=0; row < DCT_SIZE ; row++)
-			*(ptr+row*dp->dt_rowinc) = g[row];
+			*(ptr+row*OBJ_ROW_INC(dp)) = (float) g[row];
 
 		/* next col */
-		ptr += dp->dt_pinc;
+		ptr += OBJ_PXL_INC(dp);
 	}
 }
 
@@ -226,45 +224,45 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 
 	/* some fatal errors */
 
-	if( dp->dt_prec != PREC_SP ){
-		sprintf(error_string,"Object %s has prec %s, should be float for DCT",
-			dp->dt_name,prec_name[dp->dt_prec]);
-		WARN(error_string);
+	if( OBJ_PREC(dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"Object %s has prec %s, should be float for DCT",
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_comps != 1 ){
-		sprintf(error_string,"Object %s has %d components, should be 1 for DCT",
-			dp->dt_name,dp->dt_comps);
-		WARN(error_string);
+	if( OBJ_COMPS(dp) != 1 ){
+		sprintf(ERROR_STRING,"Object %s has %d components, should be 1 for DCT",
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_frames != 1 ){
-		sprintf(error_string,"Object %s has %d frames, should be 1 for DCT",
-			dp->dt_name,dp->dt_frames);
-		WARN(error_string);
+	if( OBJ_FRAMES(dp) != 1 ){
+		sprintf(ERROR_STRING,"Object %s has %d frames, should be 1 for DCT",
+			OBJ_NAME(dp),OBJ_FRAMES(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_seqs != 1 ){
-		sprintf(error_string,"Object %s has %d seqs, should be 1 for DCT",
-			dp->dt_name,dp->dt_seqs);
-		WARN(error_string);
+	if( OBJ_SEQS(dp) != 1 ){
+		sprintf(ERROR_STRING,"Object %s has %d seqs, should be 1 for DCT",
+			OBJ_NAME(dp),OBJ_SEQS(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
 
 	/* some non-fatal errors */
 
-	if( (dp->dt_cols%8) != 0 || (dp->dt_rows%8) != 0 ){
-		sprintf(error_string,"Image %s dimension(s) not a multiple of 8 for DCT",
-			dp->dt_name);
-		WARN(error_string);
+	if( (OBJ_COLS(dp)%8) != 0 || (OBJ_ROWS(dp)%8) != 0 ){
+		sprintf(ERROR_STRING,"Image %s dimension(s) not a multiple of 8 for DCT",
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 	}
 
 	block_dp=mk_subimg(QSP_ARG  dp,0,0,"dct_block",DCT_SIZE,DCT_SIZE);
 	if( block_dp == NO_OBJ )
 		WARN("couldn't create subimage for DCT block");
 
-	nx = dp->dt_cols/DCT_SIZE;
-	ny = dp->dt_rows/DCT_SIZE;
+	nx = OBJ_COLS(dp)/DCT_SIZE;
+	ny = OBJ_ROWS(dp)/DCT_SIZE;
 
 	for(i=0;i<nx;i++){
 		for(j=0;j<ny;j++){
@@ -292,26 +290,26 @@ static void init_mat(SINGLE_QSP_ARG_DECL)
 
 	if( mat_inited ) return;
 
-	mat_dp = mk_img(QSP_ARG  "dct_mat",DCT_SIZE,DCT_SIZE,1,PREC_SP);
+	mat_dp = mk_img(QSP_ARG  "dct_mat",DCT_SIZE,DCT_SIZE,1,PREC_FOR_CODE(PREC_SP));
 	if( mat_dp == NO_OBJ ) return;
 
 	pi = 4 * atan(1.0);
 
 	v=sqrt(1.0/DCT_SIZE);
 
-	ptr = (float *)mat_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(mat_dp);
 
 	for(j=0;j<DCT_SIZE;j++)
 		/* dct_mat[0][j] = v; */
-		ptr[j] = v;
+		ptr[j] = (float) v;
 
 	v=sqrt(2.0/DCT_SIZE);
 
 	for(i=1;i<DCT_SIZE;i++)
 		for(j=0;j<DCT_SIZE;j++)
 			/* dct_mat[i][j] = */
-			ptr[ i * DCT_SIZE + j ] = 
-			v * cos( pi*(2*j+1)*i/(2.0*DCT_SIZE) );
+			ptr[ i * DCT_SIZE + j ] = (float)
+			(v * cos( pi*(2*j+1)*i/(2.0*DCT_SIZE) ));
 
 	mat_inited++;
 }
@@ -326,7 +324,7 @@ static void mat8_1D(QSP_ARG_DECL  dct_type *f)
 
 	/* multiply by the matrix */
 
-	ptr = (float *)mat_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(mat_dp);
 
 	for(i=0;i<DCT_SIZE;i++){
 		tmpvec[i] = 0.0;
@@ -351,7 +349,7 @@ static void imat8_1D(QSP_ARG_DECL  dct_type *f)
 	/* multiply by the matrix */
 
 
-	ptr = (float *)mat_dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(mat_dp);
 
 	for(i=0;i<DCT_SIZE;i++){
 		tmpvec[i] = 0.0;

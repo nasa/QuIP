@@ -1,65 +1,60 @@
 #include "quip_config.h"
 
-char VersionId_fio_hips1[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
 #include "fio_prot.h"
-#include "filetype.h"
+#include "quip_prot.h"
 #include "getbuf.h"
 #include "data_obj.h"
 #include "debug.h"
-#include "hips1.h"
-#include "get_hdr.h"
-#include "savestr.h"
-#include "raw.h"
-#include "hipl_fmt.h"
-#include "uio.h"
-
-#define HDR_P(ifp)	((Image_File_Hdr *)ifp->if_hd)->ifh_u.hips1_hd_p
-
+#include "hips/hips1.h"
+//#include "get_hdr.h"
+#include "img_file/raw.h"
+#include "hips/hipl_fmt.h"
 
 /* local prototypes */
 
-static void fpts(const char *,int);
 static void rewrite_hips1_nf(int fd,dimension_t n);
-static void pt_header(int fd,Hips1_Header *hd);
 static void rls_header(Hips1_Header *hd);
 
-FIO_CLOSE_FUNC( hips1_close )
+FIO_CLOSE_FUNC( hips1 )
 {
 	/* see if we need to edit the header */
 	if( IS_WRITABLE(ifp)
 		&& ifp->if_dp != NO_OBJ	/* may be closing 'cause of error */
 		&& ifp->if_nfrms != ifp->if_frms_to_wt ){
 		if( ifp->if_nfrms <= 0 ){
-			sprintf(error_string, "file %s nframes=%d!?",
+			sprintf(ERROR_STRING, "file %s nframes=%d!?",
 				ifp->if_name,ifp->if_nfrms);
-			WARN(error_string);
+			WARN(ERROR_STRING);
 		}
 		rewrite_hips1_nf(ifp->if_fd,ifp->if_nfrms);
 	}
 
-	if( ifp->if_hd != NULL ){
-#ifdef DEBUG
+	if( ifp->if_hdr_p != NULL ){
+#ifdef QUIP_DEBUG
 if( debug & debug_fileio ) advise("freeing hips1 header strings");
 #endif
-		rls_header(ifp->if_hd);		/* free strings */
-#ifdef DEBUG
+		rls_header(ifp->if_hdr_p);		/* free strings */
+#ifdef QUIP_DEBUG
 if( debug & debug_fileio ) advise("freeing hips1 header struct");
 #endif
-		givbuf(ifp->if_hd);
+		givbuf(ifp->if_hdr_p);
 	}
 	GENERIC_IMGFILE_CLOSE(ifp);
 }
 
 int hips1_to_dp(Data_Obj *dp,Hips1_Header *hd_p)
 {
-	short type_dim=1;
+	dimension_t type_dim=1;
 	short prec;
 
 	if( hd_p->pixel_format < 0 ){	/* a non-hips extension */
@@ -83,12 +78,12 @@ int hips1_to_dp(Data_Obj *dp,Hips1_Header *hd_p)
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
 	}
-	dp->dt_seqs = 1;
-	dp->dt_frames = hd_p->num_frame;
-	dp->dt_rows = hd_p->rows;
-	dp->dt_cols = hd_p->cols;
-	dp->dt_comps = type_dim;
-	dp->dt_prec = prec;
+	SET_OBJ_SEQS(dp, 1);
+	SET_OBJ_FRAMES(dp, hd_p->num_frame);
+	SET_OBJ_ROWS(dp, hd_p->rows);
+	SET_OBJ_COLS(dp, hd_p->cols);
+	SET_OBJ_COMPS(dp, type_dim);
+	SET_OBJ_PREC_PTR(dp, prec_for_code(prec));
 
 	return(0);
 }
@@ -103,38 +98,38 @@ void hdr1_strs(Hips1_Header *hdp)
 	hdp->seq_desc=savestr("\n");
 }
 
-FIO_OPEN_FUNC( hips1_open )
+FIO_OPEN_FUNC( hips1 )
 {
 	Image_File *ifp;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_fileio ) advise("opening hips1 image file");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_HIPS1);
-	/* image_file_open creates dummy if_dp only if readable */
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
+	/* img_file_creat creates dummy if_dp only if readable */
 
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_fileio ) advise("allocating hips1 header");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	ifp->if_hd = getbuf( sizeof(Hips1_Header) );
+	ifp->if_hdr_p = getbuf( sizeof(Hips1_Header) );
 
 	if( rw == FILE_READ ){
 		/* BUG: should check for error here */
-		if( ftch_header( ifp->if_fd, (Header *)ifp->if_hd ) == 0 ){
-			if( ifp->if_hd != NULL ){
-				givbuf(ifp->if_hd);
-				ifp->if_hd=NULL;
+		if( ftch_header( QSP_ARG  ifp->if_fd, (Header *)ifp->if_hdr_p ) == 0 ){
+			if( ifp->if_hdr_p != NULL ){
+				givbuf(ifp->if_hdr_p);
+				ifp->if_hdr_p=NULL;
 			}
 			hips1_close(QSP_ARG  ifp);
 			return(NO_IMAGE_FILE);
 		}
-		hips1_to_dp(ifp->if_dp,ifp->if_hd);
+		hips1_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	} else {
-		hdr1_strs(ifp->if_hd);		/* make null strings */
+		hdr1_strs(ifp->if_hdr_p);		/* make null strings */
 	}
 	return(ifp);
 }
@@ -145,14 +140,14 @@ int dp_to_hips1(Hips1_Header *hd_p,Data_Obj *dp)
 	dimension_t size;
 
 	/* BUG questionable cast */
-	hd_p->rows = (int)dp->dt_rows;
-	hd_p->cols = (int)dp->dt_cols;
-	hd_p->num_frame = (int)dp->dt_frames;
-	if( dp->dt_prec != PREC_SP && dp->dt_comps > 1 ){
+	hd_p->rows = (int)OBJ_ROWS(dp);
+	hd_p->cols = (int)OBJ_COLS(dp);
+	hd_p->num_frame = (int)OBJ_FRAMES(dp);
+	if( OBJ_PREC(dp) != PREC_SP && OBJ_COMPS(dp) > 1 ){
 NWARN("HIPS1 extension does not support non-float multicomponent pixels");
 		return(-1);
 	}
-	switch( dp->dt_prec ){
+	switch( OBJ_PREC(dp) ){
 		case PREC_BY:
 		case PREC_UBY:
 			hd_p->pixel_format = PFBYTE;
@@ -171,27 +166,29 @@ NWARN("HIPS1 extension does not support non-float multicomponent pixels");
 			size=8;
 			break;
 		case PREC_SP:
-#ifdef CAUTIOUS
-			if( dp->dt_comps==0 ){
-				NWARN("CAUTIOUS:  Zero tdim!?");
-				return(-1);
-			}
-#endif /* CAUTIOUS */
-			if( dp->dt_comps == 1 ){
+//#ifdef CAUTIOUS
+//			if( OBJ_COMPS(dp)==0 ){
+//				NWARN("CAUTIOUS:  Zero tdim!?");
+//				return(-1);
+//			}
+//#endif /* CAUTIOUS */
+			assert( OBJ_COMPS(dp) != 0 );
+
+			if( OBJ_COMPS(dp) == 1 ){
 				hd_p->pixel_format = PFFLOAT;
 				size=sizeof(float);
-			} else if( dp->dt_comps == 2 ){
+			} else if( OBJ_COMPS(dp) == 2 ){
 				hd_p->pixel_format = PFCOMPLEX;
 				size=2*sizeof(float);
-			} else {	/* dp->dt_comps > 2 */
+			} else {	/* OBJ_COMPS(dp) > 2 */
 				/* This is a jbm extension to hips1:
 				 * negative values for pixel_format
 				 * are used to code multidimensional
 				 * pixels with the dimension stored here.
 				 * PFFLOAT is assumed.
 				 */
-				hd_p->pixel_format = (int)(dp->dt_comps * -1);
-				size=(dp->dt_comps*sizeof(float));
+				hd_p->pixel_format = (int)(OBJ_COMPS(dp) * -1);
+				size=(OBJ_COMPS(dp)*sizeof(float));
 			}
 			break;
 		default:
@@ -202,23 +199,73 @@ NWARN("HIPS1 extension does not support non-float multicomponent pixels");
 	return(0);
 }
 
-int set_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from image object */
+
+#define fpts(s,fd)	_fpts(QSP_ARG  s,fd)
+
+static void _fpts(QSP_ARG_DECL  const char *s,int fd)
 {
-	if( dp_to_hips1(ifp->if_hd,ifp->if_dp) < 0 ){
+	size_t n;
+	ssize_t n2;
+	n=strlen(s);
+	if( (n2=write(fd,s,n)) != n ){
+		if( n2 < 0 ) tell_sys_error("write");
+
+		sprintf(DEFAULT_ERROR_STRING,"error writing %ld header bytes (%s)",(long)n,s);
+		NWARN(DEFAULT_ERROR_STRING);
+	}
+}
+
+static void pt_header(QSP_ARG_DECL  int fd,Hips1_Header *hd)
+{
+	char str[256];
+
+	if( *(hd->orig_name) == 0 ) fpts("\n",fd);
+	else fpts(hd->orig_name,fd);
+	if( *(hd->seq_name) == 0 ) fpts("\n",fd);
+	else fpts(hd->seq_name,fd);
+
+	/* make sure to print extra spaces with the number of
+	 * frames, so we can possibly go in later and edit it
+	 */
+	sprintf(str,"%6d\n",hd->num_frame);
+	fpts(str,fd);
+
+	if( *(hd->orig_date) == 0 ) fpts("\n",fd);
+	else fpts(hd->orig_date,fd);
+	sprintf(str,"%d\n",hd->rows);
+	fpts(str,fd);
+	sprintf(str,"%d\n",hd->cols);
+	fpts(str,fd);
+	sprintf(str,"%d\n",hd->bits_per_pixel);
+	fpts(str,fd);
+	sprintf(str,"%d\n",hd->bit_packing);
+	fpts(str,fd);
+	sprintf(str,"%d\n",hd->pixel_format);
+	fpts(str,fd);
+	if( *(hd->seq_history) == 0 ) fpts("\n",fd);
+	else fpts(hd->seq_history,fd);
+	if( *(hd->seq_desc) == 0 ) fpts("\n",fd);
+	else fpts(hd->seq_desc,fd);
+	fpts("\n.\n",fd);
+}
+
+static int set_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from image object */
+{
+	if( dp_to_hips1(ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		hips1_close(QSP_ARG  ifp);
 		return(-1);
 	}
-	pt_header(ifp->if_fd,ifp->if_hd);		/* write it out */
+	pt_header(QSP_ARG  ifp->if_fd,ifp->if_hdr_p);		/* write it out */
 	return(0);
 }
 
-int hips1_wt(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)		/** output next frame */
+FIO_WT_FUNC(hips1)
 {
 	if( ifp->if_dp == NO_OBJ ){
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp , dp );
 		/* reset nframes */
-		ifp->if_dp->dt_frames = ifp->if_frms_to_wt;
+		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
 		if( set_hdr(QSP_ARG  ifp) < 0 ) return(-1);
 	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
 
@@ -226,42 +273,29 @@ int hips1_wt(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)		/** output next frame 
 	return(0);
 }
 
-int hips1_unconv(void *hdr_pp,Data_Obj *dp)
+FIO_UNCONV_FUNC(hips1)
 {
-	Hips1_Header **hd_pp;
+	Hips1_Header **hdr_pp;
 
-	hd_pp = (Hips1_Header **)hdr_pp;
+	hdr_pp = (Hips1_Header **)hd_pp;
 
 	/* allocate space for new header */
 
-	*hd_pp = (Hips1_Header *)getbuf( sizeof(Hips1_Header) );
-	if( *hd_pp == NULL ) return(-1);
+	*hdr_pp = (Hips1_Header *)getbuf( sizeof(Hips1_Header) );
+	if( *hdr_pp == NULL ) return(-1);
 
-	dp_to_hips1(*hd_pp,dp);
+	dp_to_hips1(*hdr_pp,dp);
 
 	return(0);
 }
 
-int hips1_conv(Data_Obj *dp,void *hd_pp)
+FIO_CONV_FUNC(hips1)
 {
 	NWARN("hips1_conv not implemented");
 	return(-1);
 }
 
 /* stuff from former put_hdr.c */
-
-
-static void fpts(const char *s,int fd)
-{
-	int n,n2;
-	n=strlen(s);
-	if( (n2=write(fd,s,n)) != n ){
-		if( n2 < 0 ) tell_sys_error("write");
-
-		sprintf(DEFAULT_ERROR_STRING,"error writing %d header bytes (%s)",n,s);
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-}
 
 /* rewrite the number of frames in this header */
 
@@ -297,47 +331,13 @@ static void rewrite_hips1_nf(int fd,dimension_t n)
 	}
 }
 
-static void pt_header(int fd,Hips1_Header *hd)
-{
-	char str[256];
-
-	if( *(hd->orig_name) == 0 ) fpts("\n",fd);
-	else fpts(hd->orig_name,fd);
-	if( *(hd->seq_name) == 0 ) fpts("\n",fd);
-	else fpts(hd->seq_name,fd);
-
-	/* make sure to print extra spaces with the number of
-	 * frames, so we can possibly go in later and edit it
-	 */
-	sprintf(str,"%6d\n",hd->num_frame);
-	fpts(str,fd);
-
-	if( *(hd->orig_date) == 0 ) fpts("\n",fd);
-	else fpts(hd->orig_date,fd);
-	sprintf(str,"%d\n",hd->rows);
-	fpts(str,fd);
-	sprintf(str,"%d\n",hd->cols);
-	fpts(str,fd);
-	sprintf(str,"%d\n",hd->bits_per_pixel);
-	fpts(str,fd);
-	sprintf(str,"%d\n",hd->bit_packing);
-	fpts(str,fd);
-	sprintf(str,"%d\n",hd->pixel_format);
-	fpts(str,fd);
-	if( *(hd->seq_history) == 0 ) fpts("\n",fd);
-	else fpts(hd->seq_history,fd);
-	if( *(hd->seq_desc) == 0 ) fpts("\n",fd);
-	else fpts(hd->seq_desc,fd);
-	fpts("\n.\n",fd);
-}
-
 static void rls_header(Hips1_Header *hd)		/* free saved strings */
 {
 	rls_str(hd->orig_name);
 	rls_str(hd->seq_name);
 	rls_str(hd->orig_date);
 
-	givbuf(hd->seq_history);
-	givbuf(hd->seq_desc);
+	givbuf((void *)(hd->seq_history));
+	givbuf((void *)(hd->seq_desc));
 }
 

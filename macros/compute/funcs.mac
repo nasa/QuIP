@@ -1,6 +1,40 @@
 
 Start_File funcs.mac
 
+Define Select_Default_CUDA_Device 0
+If (!strcmp('$HOSTNAME','mach'))&&!var_exists(DEFAULT_CUDA_DEVICE)
+  "Set DEFAULT_CUDA_DEVICE GeForce_GTX_680MX_2"
+If var_exists(DEFAULT_CUDA_DEVICE)
+  'platforms select $DEFAULT_CUDA_DEVICE quit exit_macro'
+error_exit "DEFAULT_CUDA_DEVICE is not defined!?"
+.
+
+Define Select_Default_OpenCL_Device 0
+If var_exists(DEFAULT_OPENCL_DEVICE)
+  'platforms select $DEFAULT_OPENCL_DEVICE quit exit_macro'
+error_exit "DEFAULT_OPENCL_DEVICE is not defined!?"
+.
+
+Define Select_Default_GPU 0
+If var_exists(DEFAULT_GPU)&&var_exists(DEFAULT_PLATFORM)
+  'platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit exit_macro'
+If var_exists(GPU_DEVICE)&&var_exists(GPU_PLATFORM)
+  'platforms select $GPU_PLATFORM $GPU_DEVICE quit exit_macro'
+
+If !strcmp('$HOSTNAME','pavlov')
+  "Set GPU_DEVICE AMD_Radeon_R9_M370X_Compute_Engine"
+If !strcmp('$HOSTNAME','pavlov.local')
+  "Set GPU_DEVICE AMD_Radeon_R9_M370X_Compute_Engine"
+If !strcmp('$HOSTNAME','mach')
+  #"Set GPU_DEVICE GeForce_GTX_680MX_2"		# use this for CUDA
+  "Set GPU_DEVICE GeForce_GTX_680MX"		# use this for OpenCL
+
+If !var_exists(GPU_DEVICE)
+  "error_exit 'Select_Default_GPU:  need to add a case for host $HOSTNAME!?'"
+
+platforms select $GPU_DEVICE quit
+.
+
 # space-domain convolution
 
 Define SD_Convolve 3 target source filter
@@ -181,10 +215,10 @@ compute unary set $1 $2 quit quit
 
 Define Get_Sum 2 varname image
 data
-  precision $2 prec
+  precision $2 gs_prec
   areas match $2 quit
   quit
-Scalar gs_sum 1 $prec
+Scalar gs_sum 1 $gs_prec
 VSum gs_sum $2
 Assign $1 value(gs_sum)
 #Tell_If "Sum($2) = $$1"
@@ -273,6 +307,10 @@ compute trig exp $1 $2 quit quit
 
 Define VErf 2 target source
 compute trig erf $1 $2 quit quit
+.
+
+Define VErfInv 2 target source
+compute trig erfinv $1 $2 quit quit
 .
 
 Define VSin 2 target source
@@ -527,7 +565,8 @@ compute misc reduce $1 $2 quit quit
 .
 
 Define Product 3 target vec1 vec2
-compute image product $1 $2 $3 quit quit
+#compute image product $1 $2 $3 quit quit
+VVMul $1 $2 $3
 .
 
 Define Ramp2D 4 target start dx dy
@@ -774,26 +813,25 @@ compute linear xform $1 $2 $3 quit quit
 # Find the index of the maximum pixel, convert to x,y coords
 # values in script vars $mxx $mxy
 
+# What is the point of this "gpu" version???
 Define GPU_Find_Max_Pixel 1 input
-Vector fmp_indices ncols('$1') 1 int32
-data precision $1 prec quit
-Scalar fmp_maxval 1 $prec
-Scalar fmp_maxtimes 1 int32
-Max_Times fmp_indices $1 fmp_maxval fmp_maxtimes
+#Vector fmp_indices ncols('$1') 1 int32
+#data precision $1 prec quit
+#Scalar fmp_extval 1 $prec
+#Scalar fmp_n_times 1 int32
+Insure_FMP_Objects
+Max_Times fmp_indices $1 fmp_extval fmp_n_times
 .
 
 Define Find_Max_Pixel 1 input
+Insure_FMP_Objects $1
 # find location of the maximum
-Vector fmp_indices 100 1 int32
-data precision $1 prec quit
-Scalar fmp_maxval 1 $prec
-Scalar fmp_maxtimes 1 int32
-Max_Times fmp_indices $1 fmp_maxval fmp_maxtimes
-Assign mxv value(fmp_maxval)
-Assign mxt value(fmp_maxtimes)
+Max_Times fmp_indices $1 fmp_extval fmp_n_times
+Assign mxv value(fmp_extval)
+Assign mxt value(fmp_n_times)
 #Assign mxi value(fmp_indices[0])-1	# -1 was for old fortran convention?
 Assign mxi value(fmp_indices[0])	# -1 was for old fortran convention?
-echo "max value $mxv occurred $mxt times, first at $mxi"
+#echo "max value $mxv occurred $mxt times, first at $mxi"
 Assign mxy "floor($mxi/ncols('$1'))"
 Assign mxx "($mxi)%(ncols('$1'))"
 #echo "index $mxi corresponds to location $mxx $mxy ?"
@@ -802,20 +840,41 @@ Assign mxx "($mxi)%(ncols('$1'))"
 #  Else "Assign tstval value($1[$mxx])"
 #
 #Print tstval
+.
+
+Define Init_FMP_Objects 1 source_vector
+#data precision $1 fmp_prec quit
+# how should we decide how many indices we need?
+Vector fmp_indices nelts('$1') 1 int32
+#Vector fmp_indices 3 1 int32
+Scalar fmp_n_times 1 int32
+VSet fmp_n_times -1	# BUG just for testing!
+#Std_Scalar fmp_extval	# BUG match precision to input
+Assign fmp_prec precision('$1')
+Scalar fmp_extval 1 $fmp_prec
+.
+
+Define Delete_FMP_Objects 0
 Delete_Image fmp_indices
-Delete_Image fmp_maxval
-Delete_Image fmp_maxtimes
+Delete_Image fmp_extval
+Delete_Image fmp_n_times
+.
+
+
+Define Insure_FMP_Objects 1 input
+If obj_exists(fmp_extval)&&strcmp(precision('$1'),precision(fmp_extval)) Delete_FMP_Objects
+If obj_exists(fmp_indices)&&ncols(fmp_indices)<nelts('$1') Delete_FMP_Objects
+If !obj_exists(fmp_indices) "Init_FMP_Objects $1"
 .
 
 Define Find_Min_Pixel 1 input
+Insure_FMP_Objects $1
 # find location of the minimum
-#Vector fmp_indices 100 1 int32
-Vector fmp_indices 3 1 int32
-Std_Scalar fmp_minval
-Scalar fmp_mintimes 1 int32
-Min_Times fmp_indices $1 fmp_minval fmp_mintimes
-Assign mnv value(fmp_minval)
-Assign mnt value(fmp_mintimes)
+Min_Times fmp_indices $1 fmp_extval fmp_n_times
+Assign mnv value(fmp_extval)
+Assign mnt value(fmp_n_times)
+#Display fmp_n_times
+#Display fmp_indices
 #Assign mni value(fmp_indices[0])-1
 Assign mni value(fmp_indices[0])	# not fortran indices any more
 #echo "min value $mnv occurred $mnt times, first at $mni"
@@ -825,19 +884,14 @@ Assign mnx "($mni)%(ncols('$1'))"
 If "nrows('$1')>1"
   Then "Assign tstval value($1[$mny][$mnx])"
   Else "Assign tstval value($1[$mnx])"
-
-#Print tstval
-Delete_Image fmp_indices
-Delete_Image fmp_minval
-Delete_Image fmp_mintimes
 .
 
 Define YUV2RGB 2 dst src
 compute
   misc
-	  yuv2rgb $1 $2
-		quit
-	quit
+    yuv2rgb $1 $2
+    quit
+  quit
 .
 
 # differentiate record
@@ -852,6 +906,12 @@ VSet $1[0] 0.0		# or should be [n-1] ?
 Delete_Image _d_scratch
 .
 
+
+# space domain convolution
+
+#Define Convolve 3 target source filter
+#compute misc convolve $1 $2 $3 quit quit
+#.
 
 Stop_File funcs.mac
 

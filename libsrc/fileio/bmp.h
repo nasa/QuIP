@@ -1,14 +1,18 @@
-
-
-#ifndef _BMP_H_
-#define _BMP_H_
+#ifndef NO_BMP
+#define NO_BMP
  
 #include <stdio.h>
+//#include "hip2hdr.h"
+#include "hips/hips2.h"
+#include "data_obj.h"
 #include "img_file.h"
  
 /* bmp.c */
-FIO_INTERFACE_PROTOTYPES( bmp , BMP_Header )
+extern int		bmp_to_dp(Data_Obj *dp,BMP_Header *hd_p);
+extern int		dp_to_bmp(Hips2_Header *hd_p,Data_Obj *dp);
+extern int		set_bmp_hdr(Image_File *ifp);
+extern void		bmp_info(QSP_ARG_DECL  Image_File *ifp);
 
  
-#endif /* _BMP_H_ */
+#endif /* NO_HIPS2 */
 

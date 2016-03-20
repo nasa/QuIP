@@ -10,7 +10,7 @@ extern "C" {
 
 /* glx_supp.c */
 extern void swap_buffers(void);
-extern void select_gl_viewer(Viewer *vp);
+extern void select_gl_viewer(QSP_ARG_DECL  Viewer *vp);
 
 
 #ifdef __cplusplus

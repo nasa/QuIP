@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_dither_spread[] = QUIP_VERSION_STRING;
-
 /*
  * program to requantize
  *
@@ -27,6 +25,7 @@ char VersionId_dither_spread[] = QUIP_VERSION_STRING;
 #include <sys/time.h>
 #endif
 
+#include "quip_prot.h"
 #include "vec_util.h"
 #include "data_obj.h"
 
@@ -85,7 +84,7 @@ static void mk_prob_tbl(void)
 	if( prob_ready ) return;
 
 	if( verbose )
-		advise("Initializing probability table");
+		NADVISE("Initializing probability table");
 
 	val = - MAX_DELE + BIN_WIDTH/2;
 
@@ -111,7 +110,7 @@ double get_prob(double dele)
 	dele += MAX_DELE;	/* range is now 0 to 2*MAX_DELE */
 	dele *= N_BINS/(2*MAX_DELE);
 
-	index = dele;
+	index = (int)dele;
 	if( index >= N_BINS ) index = N_BINS-1;
 
 	return( prob_tbl[index] );
@@ -131,40 +130,40 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 		NWARN("filter not specified");
 		return(-1);
 	}
-	if( _hdp->dt_rows != _gdp->dt_rows ||
-		_hdp->dt_cols != _gdp->dt_cols ){
+	if( OBJ_ROWS(_hdp) != OBJ_ROWS(_gdp) ||
+		OBJ_COLS(_hdp) != OBJ_COLS(_gdp) ){
 		NWARN("input/output size mismatch");
 		return(-1);
 	}
 
-	if( _gdp->dt_rows != _gdp->dt_cols
+	if( OBJ_ROWS(_gdp) != OBJ_COLS(_gdp)
 		&& scan_func==get_xy_scattered_point ){
 
 		NWARN("input image must be square for scattered scanning");
 		return(-1);
 	}
 
-	_npixels = (_hdp->dt_rows * _hdp->dt_cols);
+	_npixels = (OBJ_ROWS(_hdp) * OBJ_COLS(_hdp));
 
 	if( _edp != NO_OBJ )
 		delvec(QSP_ARG  _edp);
 	_edp = mk_img(QSP_ARG  "HT_error",
-		_hdp->dt_rows,_hdp->dt_cols,1,PREC_SP);
+		OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _edp == NO_OBJ ){
 		NWARN("couldn't create error image");
 		return(-1);
 	}
-	_eptr = (float *) _edp->dt_data;
+	_eptr = (float *) OBJ_DATA_PTR(_edp);
 
 	if( _fedp != NO_OBJ )
 		delvec(QSP_ARG  _fedp);
 	_fedp = mk_img(QSP_ARG  "HT_ferror",
-		_hdp->dt_rows,_hdp->dt_cols,1,PREC_SP);
+		OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _fedp == NO_OBJ ){
 		NWARN("couldn't create filtered error image");
 		return(-1);
 	}
-	_feptr = (float *) _fedp->dt_data;
+	_feptr = (float *) OBJ_DATA_PTR(_fedp);
 
 	setup_ffilter(QSP_ARG  _fdp);
 
@@ -179,19 +178,19 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 void set_filter(Data_Obj *fdp)
 {
 	_fdp = fdp;
-	/* _fptr = (float *) fdp->dt_data; */
+	/* _fptr = (float *) OBJ_DATA_PTR(fdp); */
 }
 
 void set_grayscale(Data_Obj *gdp)
 {
 	_gdp = gdp;
-	_gptr = (float *) gdp->dt_data;
+	_gptr = (float *) OBJ_DATA_PTR(gdp);
 }
 
 void set_halftone(Data_Obj *hdp)
 {
 	_hdp = hdp;
-	_hptr = (float *) hdp->dt_data;
+	_hptr = (float *) OBJ_DATA_PTR(hdp);
 }
 
 void setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp)
@@ -204,7 +203,7 @@ void setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp)
 		delvec(QSP_ARG  _ffdp);
 
 	_ffdp = mk_img(QSP_ARG   "double_filter",
-		fdp->dt_rows*2-1,fdp->dt_cols*2-1,1,PREC_SP);
+		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));
 
 	if( _ffdp == NO_OBJ ){
 		NWARN("couldn't create double filter image");
@@ -213,16 +212,16 @@ void setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp)
 
 	normalize_filter(fdp);
 
-	xos = ((incr_t)_ffdp->dt_cols - (incr_t)fdp->dt_cols)/2;
-	yos = ((incr_t)_ffdp->dt_rows - (incr_t)fdp->dt_rows)/2;
-	fptr = (float *) fdp->dt_data;
+	xos = ((incr_t)OBJ_COLS(_ffdp) - (incr_t)OBJ_COLS(fdp))/2;
+	yos = ((incr_t)OBJ_ROWS(_ffdp) - (incr_t)OBJ_ROWS(fdp))/2;
+	fptr = (float *) OBJ_DATA_PTR(fdp);
 
 	/* Initialize the double filter by convolving the filter w/ itself */
 
 	img_clear(_ffdp);
-	for(j=0;j<fdp->dt_rows;j++){
-		for(i=0;i<fdp->dt_cols;i++){
-			offset = (incr_t)(j*fdp->dt_cols+i);
+	for(j=0;j<OBJ_ROWS(fdp);j++){
+		for(i=0;i<OBJ_COLS(fdp);i++){
+			offset = (incr_t)(j*OBJ_COLS(fdp)+i);
 			val = *(fptr+offset);
 			add_impulse(val,_ffdp,fdp,xos+i,yos+j);
 		}
@@ -236,11 +235,11 @@ double get_volume(Data_Obj *dp)
 	float *ptr;
 
 	sum=0.0;
-	ptr = (float *) dp->dt_data;
-	for(j=0;j<dp->dt_rows;j++){
+	ptr = (float *) OBJ_DATA_PTR(dp);
+	for(j=0;j<OBJ_ROWS(dp);j++){
 		rowsum=0.0;
-		for(i=0;i<dp->dt_cols;i++)
-			rowsum += *(ptr+ j*dp->dt_rinc+i );
+		for(i=0;i<OBJ_COLS(dp);i++)
+			rowsum += *(ptr+ j*OBJ_ROW_INC(dp)+i );
 		sum += rowsum;
 	}
 	return(sum);
@@ -254,12 +253,12 @@ void normalize_filter(Data_Obj *fdp)
 	double sos, length;
 	incr_t offset;
 
-	fptr = (float *) fdp->dt_data;
+	fptr = (float *) OBJ_DATA_PTR(fdp);
 
 	sos =0.0;
-	for(j=0;j<fdp->dt_rows;j++){
-		for(i=0;i<fdp->dt_cols;i++){
-			offset = (incr_t)j*fdp->dt_rinc + (incr_t)i;
+	for(j=0;j<OBJ_ROWS(fdp);j++){
+		for(i=0;i<OBJ_COLS(fdp);i++){
+			offset = (incr_t)j*OBJ_ROW_INC(fdp) + (incr_t)i;
 			sos += *(fptr+offset) * *(fptr+offset);
 		}
 	}
@@ -271,11 +270,11 @@ void normalize_filter(Data_Obj *fdp)
 	if( verbose ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"Normalizing filter by factor %g",length);
-		advise(DEFAULT_ERROR_STRING);
+		NADVISE(DEFAULT_ERROR_STRING);
 	}
-	for(j=0;j<fdp->dt_rows;j++){
-		for(i=0;i<fdp->dt_cols;i++){
-			offset = (incr_t)j*fdp->dt_rinc + (incr_t)i;
+	for(j=0;j<OBJ_ROWS(fdp);j++){
+		for(i=0;i<OBJ_COLS(fdp);i++){
+			offset = (incr_t)j*OBJ_ROW_INC(fdp) + (incr_t)i;
 			*(fptr+offset) /= length;
 		}
 	}
@@ -289,18 +288,18 @@ void init_requant(void)
 
 	/* initialize error image */
 
-	for(j=0;j<_edp->dt_rows; j++){
-		for(i=0;i<_edp->dt_cols; i++){
-			offset = _edp->dt_cols*j+i;
+	for(j=0;j<OBJ_ROWS(_edp); j++){
+		for(i=0;i<OBJ_COLS(_edp); i++){
+			offset = OBJ_COLS(_edp)*j+i;
 			*(_eptr+offset) = *(_hptr+offset) - *(_gptr+offset);
 		}
 	}
 
 	/* initialize filtered error image */
 	img_clear(_fedp);
-	for(j=0;j<_edp->dt_rows; j++){
-		for(i=0;i<_edp->dt_cols; i++){
-			offset = (_edp->dt_cols*j+i);
+	for(j=0;j<OBJ_ROWS(_edp); j++){
+		for(i=0;i<OBJ_COLS(_edp); i++){
+			offset = (OBJ_COLS(_edp)*j+i);
 			value = *(_eptr+offset);
 			add_impulse(value,_fedp,_ffdp,i,j);
 		}
@@ -327,7 +326,7 @@ int scan_requant(int ntimes)
 	n_changed=0;
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<(dimension_t)_npixels;i++){
-			(*scan_func)(i,_edp->dt_cols,_edp->dt_rows,&x,&y);
+			(*scan_func)(i,OBJ_COLS(_edp),OBJ_ROWS(_edp),&x,&y);
 			n_changed += redo_pixel(x,y);
 		}
 	}
@@ -351,7 +350,7 @@ void scan2_requant(QSP_ARG_DECL  int ntimes)
 	for(j=0;j<ntimes;j++){
 		n_changed=0;
 		for(i=0;i<(dimension_t)_npixels;i++){
-			(*scan_func)(i,_edp->dt_cols,_edp->dt_rows,&x,&y);
+			(*scan_func)(i,OBJ_COLS(_edp),OBJ_ROWS(_edp),&x,&y);
 			n_changed += redo_two_pixels(x,y);
 		}
 sprintf(ERROR_STRING,"Iteration %d:  %d pixels changed",j+1,n_changed);
@@ -378,7 +377,7 @@ void scan_anneal(double temp,int ntimes)
 	_temp = temp;
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,_edp->dt_cols,_edp->dt_rows,&x,&y);
+			(*scan_func)(i,OBJ_COLS(_edp),OBJ_ROWS(_edp),&x,&y);
 			anneal_pixel(x,y);
 		}
 	}
@@ -389,12 +388,12 @@ void scan_anneal(double temp,int ntimes)
  * set and the error with the pixel cleared
  */
 
-double get_delta(dimension_t x,dimension_t y)
+float get_delta(dimension_t x,dimension_t y)
 {
-	double delta_E;
+	float delta_E;
 	dimension_t offset;
 
-	offset = y*_edp->dt_rowinc + x;
+	offset = y*OBJ_ROW_INC(_edp) + x;
 	/* BUG this assumes that all images have the same rowing */
 
 	delta_E = *(_feptr+offset);		/* doubly filtered error */
@@ -416,13 +415,13 @@ int redo_pixel(dimension_t x,dimension_t y)
 	float delta_E,olderr,errval;
 	double oldsos=0.0;	/* init to eliminate warning */
 
-	offset = y*_edp->dt_rowinc + x;
+	offset = y*OBJ_ROW_INC(_edp) + x;
 
 	if( verbose ){
 		if( the_sos == NO_VALUE ){
 			the_sos = get_sos(_edp,_fdp);
-			sprintf(msg_str,"Initial SOS:  %g",the_sos);
-			prt_msg(msg_str);
+			sprintf(DEFAULT_MSG_STR,"Initial SOS:  %g",the_sos);
+			_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 		}
 		oldsos = the_sos;
 		/* subtract contribution of this pt from sos */
@@ -439,13 +438,13 @@ int redo_pixel(dimension_t x,dimension_t y)
 	if( delta_E >= 0 ){
 		if( verbose ){
 			sprintf(DEFAULT_ERROR_STRING,"clearing pixel at %d, %d",x,y);
-			advise(DEFAULT_ERROR_STRING);
+			NADVISE(DEFAULT_ERROR_STRING);
 		}
 		*(_hptr+offset) = -1;
 	} else {
 		if( verbose ){
 			sprintf(DEFAULT_ERROR_STRING,"setting pixel at %d, %d",x,y);
-			advise(DEFAULT_ERROR_STRING);
+			NADVISE(DEFAULT_ERROR_STRING);
 		}
 		*(_hptr+offset) =  1;
 	}
@@ -463,16 +462,16 @@ int redo_pixel(dimension_t x,dimension_t y)
 	add_impulse(errval-olderr,_fedp,_ffdp,x,y);
 
 	if( verbose ){
-		sprintf(msg_str,
+		sprintf(DEFAULT_MSG_STR,
 			"Pixel at %d,%d\t SOS:  %g\t\tdelta = %g",
 			x,y,the_sos,the_sos-oldsos);
-		prt_msg(msg_str);
-#ifdef DEBUG
+		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"total sse: %g",get_sos(_edp,_fdp));
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	}
 	return(1);
 } /* end redo_pixel */
@@ -527,13 +526,13 @@ int redo_two_pixels(dimension_t x,dimension_t y)
 	double maxdel;
 	int n_changed;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"optimizing at %d, %d",x,y);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
-	offset = y*_edp->dt_rowinc + x;
+#endif /* QUIP_DEBUG */
+	offset = y*OBJ_ROW_INC(_edp) + x;
 	oldbit = *(_hptr+offset);	/* save to check if changed later */
 	olderr = *(_eptr+offset);
 
@@ -555,12 +554,12 @@ advise(DEFAULT_ERROR_STRING);
 	 * regardless of sign.
 	 */
 	dtbl[ HERE ] = delta_E  * oldbit ;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"energy gain from flip:  %g",dtbl[HERE]);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* now actually flip the state */
 
@@ -575,13 +574,13 @@ advise(DEFAULT_ERROR_STRING);
 		yy = (incr_t)y + dy_tbl[loc];
 
 		/* skip this location if it is off the edge of the image */
-		if( yy < 0 || xx < 0 || yy >= (incr_t)_edp->dt_rows ||
-			xx >= (incr_t)_edp->dt_cols ){
+		if( yy < 0 || xx < 0 || yy >= (incr_t)OBJ_ROWS(_edp) ||
+			xx >= (incr_t)OBJ_COLS(_edp) ){
 
 			dtbl[ loc ] = NO_GO;
 			continue;
 		}
-		newoffset = yy * _edp->dt_rowinc + xx;
+		newoffset = yy * OBJ_ROW_INC(_edp) + xx;
 		/* do nothing if this pixel has the same value as the original pixel */
 		if( oldbit == *(_hptr+newoffset) ){
 			dtbl[ loc ] = NO_GO;
@@ -597,12 +596,12 @@ advise(DEFAULT_ERROR_STRING);
 	 * combine with a minus sign.
 	 */
 		dtbl[ loc ] = ( delta_E - get_delta(xx,yy) ) * oldbit;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"energy gain from exchange w %d %d:  %g",xx,yy,dtbl[loc]);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	}
 	bestloc=NO_LOC;
 	maxdel = 0.0;
@@ -614,27 +613,27 @@ advise(DEFAULT_ERROR_STRING);
 	}
 	n_changed = 0;
 	if( bestloc == NO_LOC ){	/* restore to original state */
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"no improvement from pair flip");
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		/* correct filtered error */
 		add_impulse(olderr-errval,_fedp,_ffdp,x,y);
 
 		*(_hptr+offset) = oldbit ;
 		*(_eptr+offset) = *(_hptr+offset) - *(_gptr+offset);
 	} else if( bestloc != HERE ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"improvement from pair flip at %d %d",dx_tbl[bestloc],dy_tbl[bestloc]);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		xx = (incr_t)x + dx_tbl[bestloc];
 		yy = (incr_t)y + dy_tbl[bestloc];
-		newoffset = yy * _edp->dt_rowinc + xx;
+		newoffset = yy * OBJ_ROW_INC(_edp) + xx;
 
 		olderr2 = *(_hptr+newoffset) - *(_gptr+newoffset);
 		*(_hptr+newoffset) = oldbit ;
@@ -659,13 +658,13 @@ static void anneal_pixel(dimension_t x,dimension_t y)
 	double oldsos=0.0;	/* init to elim compiler warning */
 	double prob,rnum;
 
-	offset = y*_edp->dt_rowinc + x;
+	offset = y*OBJ_ROW_INC(_edp) + x;
 
 	if( verbose ){
 		if( the_sos == NO_VALUE ){
 			the_sos = get_sos(_edp,_fdp);
-			sprintf(msg_str,"Initial SOS:  %g",the_sos);
-			prt_msg(msg_str);
+			sprintf(DEFAULT_MSG_STR,"Initial SOS:  %g",the_sos);
+			_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 		}
 		oldsos = the_sos;
 		/* subtract contribution of this pt from sos */
@@ -674,7 +673,7 @@ static void anneal_pixel(dimension_t x,dimension_t y)
 
 
 	olderr = *(_eptr+offset);
-	oldbit = *(_hptr+offset);	/* save to check if changed later */
+	oldbit = (u_char) *(_hptr+offset);	/* save to check if changed later */
 	delta_E = *(_feptr+offset);		/* blurred error */
 	delta_E -= olderr;
 	delta_E -= *(_gptr+offset);		/* subtract desired value */
@@ -720,10 +719,10 @@ static void anneal_pixel(dimension_t x,dimension_t y)
 
 	if( verbose ){
 		if( verbose ){
-			sprintf(msg_str,
+			sprintf(DEFAULT_MSG_STR,
 			"Pixel at %d,%d\t SOS:  %g\t\tdelta = %g",
 				x,y,the_sos,the_sos-oldsos);
-			advise(msg_str);
+			NADVISE(DEFAULT_MSG_STR);
 		}
 	}
 } /* end anneal_pixel */
@@ -733,7 +732,7 @@ void insist_pixel(dimension_t x,dimension_t y)
 	dimension_t offset;
 	double sos_on, sos_off;
 
-	offset = y*_edp->dt_rowinc + x;
+	offset = y*OBJ_ROW_INC(_edp) + x;
 
 	*(_hptr+offset) = 1;		/* turn pixel on */
 					/* calculate error */

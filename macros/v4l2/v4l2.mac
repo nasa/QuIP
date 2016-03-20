@@ -125,7 +125,8 @@ v4l2
   flow
     wait
     Set oname oldest.$1
-    If !var_exists('$oname') exit_macro
+    If !var_exists('$oname')
+      "advise 'var $oname does not exist!?' quit quit exit_macro"
     If $$oname<0 exit_macro
     Set bufname ${1}.buffer$$oname
 

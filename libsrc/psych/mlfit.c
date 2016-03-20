@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_psych_mlfit[] = QUIP_VERSION_STRING;
-
 /* maximum liklihood fit suggested by DIAM */
 
 /*
@@ -49,24 +47,24 @@ void set_chance_rate( double r )
 void set_fcflag(int flg)
 { fc_flag=flg; }
 
-double regr(Data_Tbl *dp,int first)
+double regr(Data_Tbl *dtp,int first)
 /* =1 if the first iteration */
 {
 	int i;
 	double sx,sy,sxx,syy,sxy;
 	double xvar, yvar, xyvar;
 	double r, nt;
-	double x[MAXVALS], y[MAXVALS];
+	double x[MAX_X_VALUES], y[MAX_X_VALUES];
 	double pc;
-	double n[MAXVALS];
+	double n[MAX_X_VALUES];
 	double f1,f2,yt;
 	short nsamps=0;
 
 	for(i=0;i<_nvals;i++) n[i]=0.0;
 	for(i=0;i<_nvals;i++){
-		if( dp->d_data[i].ntotal > 0 ){
-			pc= (double) dp->d_data[i].ncorr
-				/ (double) dp->d_data[i].ntotal;
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,i)) > 0 ){
+			pc= (double) DATUM_NCORR(DTBL_ENTRY(dtp,i))
+				/ (double) DATUM_NTOTAL(DTBL_ENTRY(dtp,i));
 
 			/* BUG need to make sure that chance_rate is 0 if the 2afc
 			 * flag is set - We need a better way to do this!
@@ -90,7 +88,7 @@ double regr(Data_Tbl *dp,int first)
 			}
 			f1 = exp( - yt * yt );
 			f2 = (pc*(1-pc));
-			n[nsamps]= f1 * dp->d_data[i].ntotal / f2;
+			n[nsamps]= f1 * DATUM_NTOTAL(DTBL_ENTRY(dtp,i)) / f2;
 			nsamps++;
 		}
 	}
@@ -161,48 +159,49 @@ static float likelihood(SINGLE_QSP_ARG_DECL)	/* called from optimization routine
 
 		/* calculate theoretical percent correct with this guess */
 
-		if( (ntt=the_dtbl->d_data[i].ntotal) <= 0 )
+		if( (ntt=DATUM_NTOTAL(DTBL_ENTRY(the_dtbl,i))) <= 0 )
 			continue;
 
-		nc=the_dtbl->d_data[i].ncorr;
+		nc=DATUM_NCORR(DTBL_ENTRY(the_dtbl,i));
 		xv = xval_array[ i ];
-		pc = ztop( t_int + t_slope * xv );
-		if( pc == 1.0 ) pc =0.99;
-		else if( pc == 0.0 ) pc =0.01;
+		pc = (float) ztop( t_int + t_slope * xv );
+		if( pc == 1.0 ) pc = (float) 0.99;
+		else if( pc == 0.0 ) pc = (float) 0.01;
 
 		/* pc is the theoretical % correct at this xval */
 
-		lhinc = nc * log( pc ) + ( ntt - nc ) * log( 1 - pc );
+		lhinc = (float)( nc * log( pc ) + ( ntt - nc ) * log( 1 - pc ) );
 		lh -= lhinc;
 	}
 
 	return(lh);
 }
 
-void ml_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
+void ml_fit(QSP_ARG_DECL  Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
 {
-	Opt_Param op1, *opp=(&op1);
+	Opt_Param op1, *slope_opp=(&op1);
+	Opt_Param op2, *int_opp=(&op2);
 
 	/* initialize global */
-	the_dtbl = dp;
+	the_dtbl = dtp;
 
 	delete_opt_params(SINGLE_QSP_ARG);
 
-	opp->op_name=SLOPE_NAME;
-	opp->maxv=10000.0;
-	opp->minv=(-10000.0);
-	opp->ans = slope;
+	slope_opp->op_name=SLOPE_NAME;
+	slope_opp->maxv=10000.0;
+	slope_opp->minv=(-10000.0);
+	slope_opp->ans = (float) slope;
 	if( slope_constraint < 0 ){
-		opp->maxv = 0.0;
-		if( slope > 0 ) opp->ans = 0.0;
+		slope_opp->maxv = 0.0;
+		if( slope > 0 ) slope_opp->ans = 0.0;
 	} else if( slope_constraint > 0 ){
-		opp->minv = 0.0;
-		if( slope < 0 ) opp->ans = 0.0;
+		slope_opp->minv = 0.0;
+		if( slope < 0 ) slope_opp->ans = 0.0;
 	}
-	opp->delta = fabs(slope/10.0);
-	opp->mindel = 1.0e-30;
+	slope_opp->delta = (float) fabs(slope/10.0);
+	slope_opp->mindel = (float) 1.0e-30;
 
-	add_opt_param(QSP_ARG  opp);
+	add_opt_param(QSP_ARG  slope_opp);
 
 
 
@@ -220,43 +219,41 @@ void ml_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum liklihood fit */
 	 */
 
 	if( !fc_flag ){
-		opp->op_name=INTERCEPT_NAME;
-		opp->ans = y_int;
-		opp->delta = fabs(y_int/10.0);
-		opp->mindel = 1.0e-30;
-		opp->maxv = 10000.0;
-		opp->minv = -10000.0;
-		add_opt_param(QSP_ARG  opp);
+		int_opp->op_name=INTERCEPT_NAME;
+		int_opp->ans = (float) y_int;
+		int_opp->delta = (float) fabs(y_int/10.0);
+		int_opp->mindel = (float) 1.0e-30;
+		int_opp->maxv = 10000.0;
+		int_opp->minv = -10000.0;
+		add_opt_param(QSP_ARG  int_opp);
 	}
 
 
 	optimize(QSP_ARG  likelihood);
 
 	slope = get_opt_param_value(QSP_ARG  SLOPE_NAME);
-	del_opt_param(QSP_ARG  SLOPE_NAME);
+	del_opt_param(QSP_ARG  slope_opp);
 
 	if( !fc_flag ){
 		y_int = get_opt_param_value(QSP_ARG  INTERCEPT_NAME);
-		del_opt_param(QSP_ARG  INTERCEPT_NAME);
+		del_opt_param(QSP_ARG  int_opp);
 	} else
 		y_int = 0.0;
 }
 
-void analyse( QSP_ARG_DECL  int itbl )		/** do a regression on the ith table */
+void analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */
 {
 	double _slope, _y_int;
-	Trial_Class *clp;
 
 	/* ntrac = how_many("trace stepit output (-1,0,1)"); */
 
-	clp = index_class(QSP_ARG  itbl);
-	_r_initial = regr( clp->cl_dtp, 1 );
+	_r_initial = regr( CLASS_DATA_TBL(tcp), 1 );
 	if(_r_initial == NO_GOOD){
                 advise("\n");
                 return;
         }
 
-	ml_fit( QSP_ARG  clp->cl_dtp, /* ntrac */ -1 );
+	ml_fit( QSP_ARG  CLASS_DATA_TBL(tcp), /* ntrac */ -1 );
 
 	/* now we want to compute the correlation coefficient
 	 * for the final fit
@@ -266,7 +263,7 @@ void analyse( QSP_ARG_DECL  int itbl )		/** do a regression on the ith table */
 	_slope = slope;
 	_y_int = y_int;
 
-	_r_ = regr( clp->cl_dtp, 0 );
+	_r_ = regr( CLASS_DATA_TBL(tcp), 0 );
 
 	slope = _slope;
 	y_int = _y_int;
@@ -283,9 +280,9 @@ void analyse( QSP_ARG_DECL  int itbl )		/** do a regression on the ith table */
 	}
 }
 
-void longout(int cl)			/** verbose analysis report */
+void longout(QSP_ARG_DECL  Trial_Class *tcp)	/** verbose analysis report */
 {
-        sprintf(msg_str,"\nTrial_Class %d\n",cl);
+        sprintf(msg_str,"\nTrial_Class %s\n",CLASS_NAME(tcp));
 	prt_msg(msg_str);
         sprintf(msg_str,"initial correlation:\t\t\t%f", _r_initial );
 	prt_msg(msg_str);
@@ -303,95 +300,98 @@ void longout(int cl)			/** verbose analysis report */
 	}
 }
 
-void tersout(int cl)
+void tersout(QSP_ARG_DECL  Trial_Class *tcp)
 {
 	if( !fc_flag ) 
-		sprintf(msg_str,"%d\t%f\t%f\t%f", cl,_r_, _x_,siqd);
+		sprintf(msg_str,"%d\t%f\t%f\t%f", CLASS_INDEX(tcp),_r_, _x_,siqd);
 	else
-		sprintf(msg_str,"%d\t%f\t%f", cl,_r_, _x_);
+		sprintf(msg_str,"%d\t%f\t%f", CLASS_INDEX(tcp),_r_, _x_);
 	prt_msg(msg_str);
 }
 
 #ifdef QUIK
 
-void pntquic(FILE *fp,int cl,int in_db)
+void pntquic(FILE *fp,Trial_Class * tcp,int in_db)
 {
         int j;
 	float v;
-        Data_Tbl *dp;
+        Data_Tbl *dtp;
 
-	dp=(&dt[cl]);
+	dtp=(&dt[cl]);
 	/* first count the number of records */
 	j=0;
-	while( dp->d_data[j].ntotal && j<_nvals )
+	while( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) && j<_nvals )
 		j++;
 	fprintf(fp,"%d\n",j);
 	j=0;
 	for(j=0;j<_nvals;j++)
-		if( dp->d_data[j].ntotal > 0 ){
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
 			if( in_db )
 			v= 20.0*log10( xval_array[ j ] );
 			else v=xval_array[ j ];
 			fprintf(fp,"%f\t%d\t%d\n", v,
-				dp->d_data[j].ntotal,
-				dp->d_data[j].ncorr);
+				DATUM_NTOTAL(DTBL_ENTRY(dtp,j)),
+				DATUM_NCORR(DTBL_ENTRY(dtp,j)));
 		}
 	fflush(fp);
 }
 #endif /* QUIK */
 
-void pntdata(QSP_ARG_DECL  int cl)
+void print_raw_data(QSP_ARG_DECL  Trial_Class * tcp)
 {
         int j;
-        Data_Tbl *dp;
-	Trial_Class *clp;
+        Data_Tbl *dtp;
 
-	clp=index_class(QSP_ARG  cl);
-	dp=clp->cl_dtp;
+	assert( tcp != NULL );
+
+	dtp=CLASS_DATA_TBL(tcp);
+
+	assert( dtp != NULL );
+
 	if( verbose ){
-		sprintf(msg_str,"class = %d",cl);
+		sprintf(msg_str,"class = %s, %d points",
+			CLASS_NAME(tcp),DTBL_N(CLASS_DATA_TBL(tcp)));
 		prt_msg(msg_str);
 		sprintf(msg_str,"val\txval\t\tntot\tncorr\t%% corr\n");
 		prt_msg(msg_str);
 	}
-	j=0;
+	//j=0;
 	for(j=0;j<_nvals;j++){
-		if( dp->d_data[j].ntotal > 0 ){
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
 			sprintf(msg_str,"%d\t%f\t%d\t%d\t%f",
 				j,
 				xval_array[ j ],
-				dp->d_data[j].ntotal,
-				dp->d_data[j].ncorr,
-				(double) dp->d_data[j].ncorr /
-					(double) dp->d_data[j].ntotal );
+				DATUM_NTOTAL(DTBL_ENTRY(dtp,j)),
+				DATUM_NCORR(DTBL_ENTRY(dtp,j)),
+				(double) DATUM_NCORR(DTBL_ENTRY(dtp,j)) /
+					(double) DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) );
 			prt_msg(msg_str);
 		}
 	}
 	prt_msg("\n");
 }
 
-void split(QSP_ARG_DECL  int cl,int wantupper)
+void split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper)
 {
         int j;
-        Data_Tbl *dp;
+        Data_Tbl *dtp;
 	int havzero=0;
-	Trial_Class *clp;
 
-	clp=index_class(QSP_ARG  cl);
-	dp=clp->cl_dtp;
-	j=0;
+	//tcp=index_class(QSP_ARG  cl);
+	dtp=CLASS_DATA_TBL(tcp);
+	//j=0;
 	for(j=0;j<_nvals;j++){
-		if( dp->d_data[j].ntotal > 0 ){
-			if( dp->d_data[j].ncorr == 0 ){
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
+			if( DATUM_NCORR(DTBL_ENTRY(dtp,j)) == 0 ){
 				if( wantupper ){
 					return;
 				}
 				havzero=1;
 			} else {
 				if( wantupper ){
-					dp->d_data[j].ntotal = 0;
+					DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) = 0;
 				} else if( havzero ){
-					dp->d_data[j].ntotal = 0;
+					DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) = 0;
 				}
 			}
 		}

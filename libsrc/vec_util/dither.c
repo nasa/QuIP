@@ -1,14 +1,13 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_dither[] = QUIP_VERSION_STRING;
-
 /* construct ordered dither matrix  */
 #include <stdio.h>
 #include "vec_util.h"
+#include "quip_prot.h"
 
 static int matrix[2][2]={{0,2},{3,1}};
 
-void odither(Data_Obj *dp,int size)	/* ordered dither matrix order n */
+void odither(QSP_ARG_DECL  Data_Obj *dp,int size)/* ordered dither matrix order n */
 {
 	dimension_t x,y;
 	int i;
@@ -16,7 +15,9 @@ void odither(Data_Obj *dp,int size)	/* ordered dither matrix order n */
 	float *buf;
 	int logsiz;
 
-	if( dp->dt_prec != PREC_SP ){
+	INSIST_RAM_OBJ(dp,odither)
+
+	if( OBJ_PREC(dp) != PREC_SP ){
 		NWARN("target image must be float precision");
 		return;
 	}
@@ -33,15 +34,15 @@ void odither(Data_Obj *dp,int size)	/* ordered dither matrix order n */
 	}
 	factor/=4;
 
-	for(y=0;y<dp->dt_rows;y++){
-		buf = (float *) dp->dt_data;
-		buf += y * dp->dt_rowinc;
-		for(x=0;x<dp->dt_cols;x++){
+	for(y=0;y<OBJ_ROWS(dp);y++){
+		buf = (float *) OBJ_DATA_PTR(dp);
+		buf += y * OBJ_ROW_INC(dp);
+		for(x=0;x<OBJ_COLS(dp);x++){
 			*buf=0.0;
 			for(i=0;i<logsiz;i++)
 				*buf += ((factor>>(i*2)) *
 					matrix[(x>>i)&1][(y>>i)&1]);
-			buf += dp->dt_pinc;
+			buf += OBJ_PXL_INC(dp);
 		}
 	}
 }

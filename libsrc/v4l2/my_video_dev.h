@@ -5,7 +5,6 @@
 
 #include "query.h"
 
-#ifdef HAVE_V4L2
 
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>	  /* for videodev2.h */
@@ -14,16 +13,20 @@
 #define __user			/* something for kernel modules? */
 /* end of [unnecessary] defns */
 
+#ifdef HAVE_V4L2
 #ifdef HAVE_LINUX_VIDEODEV2_H
 #include <linux/videodev2.h>
 #endif
+#endif // HAVE_V4L2
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 typedef struct my_buffer {
 	void *			mb_start;
 	size_t			mb_length;
+#ifdef HAVE_V4L2
 	struct video_device *	mb_vdp;
+#endif // HAVE_V4L2
 } My_Buffer;
 
 typedef struct choice {
@@ -58,6 +61,7 @@ typedef struct video_device {
 
 #define IS_CAPTURING( vdp )			( (vdp)->vd_flags & VD_CAPTURING )
 
+#ifdef HAVE_V4L2
 
 #define CHECK_DEVICE						\
 								\
@@ -74,7 +78,12 @@ typedef struct video_device {
 		return -1;					\
 	}
 
+#else // ! HAVE_V4L2
 
+#define CHECK_DEVICE
+#define CHECK_DEVICE2
+
+#endif // ! HAVE_V4L2
 
 /* globals */
 
@@ -85,15 +94,16 @@ extern unsigned int n_buffers;
 /* prototypes */
 
 extern int start_capturing(QSP_ARG_DECL  Video_Device *);
+#ifdef HAVE_V4L2
 extern int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp);
+#endif /* HAVE_V4L2 */
 extern int xioctl(int fd, int request, void *arg);
 extern void errno_warn(QSP_ARG_DECL  const char *s);
 
 #define ERRNO_WARN(s)	errno_warn(QSP_ARG  s)
 
-#endif /* HAVE_V4L2 */
 
-extern COMMAND_FUNC( flow_menu );
+extern COMMAND_FUNC( do_flow_menu );
 
 #endif /* undef NO_VIDEO_DEVICE */
 

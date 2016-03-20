@@ -37,8 +37,6 @@
 
 #include "quip_config.h"
 
-char VersionId_cuda_deviceQuery[] = QUIP_VERSION_STRING;
-
 // includes, system
 #include <stdio.h>
 
@@ -50,11 +48,17 @@ char VersionId_cuda_deviceQuery[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
-#include "query.h"
+#ifdef HAVE_CUDA
+#define BUILD_FOR_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <curand.h>
+#endif // HAVE_CUDA
+
+#include "quip_prot.h"
+#include "my_cuda.h"
 
 #ifdef HAVE_CUDA
-
-#include "my_cuda.h"
 
 
 #ifdef USE_DLL_LINKING
@@ -69,7 +73,7 @@ void mapCudaFunctionPointers()
 }
 #endif
 
-void print_cudev_properties(int dev, cudaDeviceProp *propp)
+void print_cudev_properties(QSP_ARG_DECL  int dev, cudaDeviceProp *propp)
 {
 	sprintf(msg_str,"\nDevice %d: \"%s\"", dev, propp->name);
 	prt_msg(msg_str);
@@ -161,12 +165,12 @@ COMMAND_FUNC( query_cuda_devices ){
 	for (dev = 0; dev < deviceCount; ++dev) {
 		if (dev == 0) {
 		}
-		query_cuda_device(dev);
+		query_cuda_device(QSP_ARG  dev);
 	}
 }
 
 
-void query_cuda_device(int dev)
+void query_cuda_device(QSP_ARG_DECL  int dev)
 {
 	cudaDeviceProp deviceProp;
 	cudaGetDeviceProperties(&deviceProp, dev);
@@ -175,7 +179,7 @@ void query_cuda_device(int dev)
 	if (deviceProp.major == 9999 && deviceProp.minor == 9999)
 		printf("There is no CUDA device with dev = %d!?.\n",dev);
 
-	print_cudev_properties(dev,&deviceProp);
+	print_cudev_properties(QSP_ARG  dev,&deviceProp);
 }
 
 #else

@@ -1,7 +1,5 @@
 #include "quip_config.h"
-
-char VersionId_vec_util_dpinvert[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 
 /**	invert.c	subroutine for general matrix inversion */
 
@@ -16,11 +14,11 @@ double dt_invert(QSP_ARG_DECL  Data_Obj *dp)
 	dimension_t size;
 	float *matrix;
 
-	if( dp->dt_rows != dp->dt_cols ){
+	if( OBJ_ROWS(dp) != OBJ_COLS(dp) ){
 		NWARN("matrix must be square");
 		return(0.0);
 	}
-	if( dp->dt_prec != PREC_SP ){
+	if( OBJ_PREC(dp) != PREC_SP ){
 		NWARN("matrix precision must be float");
 		return(0.0);
 	}
@@ -28,13 +26,13 @@ double dt_invert(QSP_ARG_DECL  Data_Obj *dp)
 		NWARN("matrix object must be contiguous");
 		return(0.0);
 	}
-	if( dp->dt_comps != 1 ){
+	if( OBJ_COMPS(dp) != 1 ){
 		NWARN("matrix componenet dimension must be 1");
 		return(0.0);
 	}
 
-	size=dp->dt_cols;
-	matrix=(float *)dp->dt_data;
+	size=OBJ_COLS(dp);
+	matrix=(float *)OBJ_DATA_PTR(dp);
 
 	return( invert_sq_matrix(QSP_ARG  matrix,size) );
 }
@@ -59,8 +57,8 @@ prt_msg("invert_sq_matrix:  input matrix");
 		det *= pivot;
 		matrix[j*size+j] = 1.0;
 		if( pivot == 0.0 ) {
-			sprintf(error_string,"zero pivot, j=%d",j);
-			WARN(error_string);
+			sprintf(ERROR_STRING,"zero pivot, j=%d",j);
+			WARN(ERROR_STRING);
 			return (0.0);
 		}
 		for (k = 0; k < size; k++)

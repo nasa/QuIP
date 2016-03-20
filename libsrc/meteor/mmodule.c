@@ -1,24 +1,22 @@
 #include "quip_config.h"
 
-char VersionId_meteor_mmodule[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 #include <stdio.h>
 
+#include "quip_prot.h"		/* has to come before jmorecfg.h */
 #include "xsupp.h"		/* has to come before jmorecfg.h */
 #include "fio_api.h"
 
 #include "ioctl_meteor.h"
 #include "mmvi.h"
 #include "mmenu.h"
-#include "debug.h"
 #include "viewer.h"
 #include "rv_api.h"
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 int meteor_debug=0;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 void meteor_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 {
@@ -84,7 +82,7 @@ void meteor_reverse_movie(Movie *mvip)
 {
 	sprintf(DEFAULT_ERROR_STRING,
 		"meteor_reverse_movie:  Sorry, meteor can't reverse movie %s",
-		mvip->mvi_name);
+		MOVIE_NAME(mvip));
 
 	NWARN(DEFAULT_ERROR_STRING);
 }
@@ -93,8 +91,8 @@ void meteor_shuttle_movie(QSP_ARG_DECL  Movie* mvip,uint32_t frame)
 {
 	Image_File *ifp;
 
-sprintf(error_string,"meteor_shuttle_movie %s %d",mvip->mvi_name,frame);
-advise(error_string);
+sprintf(ERROR_STRING,"meteor_shuttle_movie %s %d",MOVIE_NAME(mvip),frame);
+advise(ERROR_STRING);
 	ifp= (Image_File *) mvip->mvi_data;
 
 #ifdef HAVE_X11_EXT
@@ -146,7 +144,7 @@ void meteor_movie_info(QSP_ARG_DECL  Movie *mvip)
 
 int meteor_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 {
-	int ft;
+	Filetype * ftp;
 	Image_File *ifp;
 	struct meteor_geomet _geo;
 	uint32_t blocks_per_frame,n_frames;
@@ -155,10 +153,10 @@ int meteor_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 
 	/* BUG shouldn't insist upon even field count in field mode */
 	if( n_fields % 2 ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"meteor_setup_movie:  requested number of fields (%d) is odd, rounding up",
 			n_fields);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		n_fields++;
 	}
 	if( ! meteor_field_mode )
@@ -166,28 +164,32 @@ int meteor_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 	else
 		n_frames = n_fields ;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & meteor_debug )
 advise("meteor_setup_movie");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* used to set mvi_filename here.... */
 
 	/* BUG? set filetype to IFT_DISK? */
 	/* maybe more flexible to let the user specify */
 
-	if( (ft=get_filetype()) != IFT_RV ){
+	ftp = current_filetype();
+	if( FT_CODE(ftp) != IFT_RV ){
+		Filetype *new_ftp;
+
+		new_ftp = FILETYPE_FOR_CODE(IFT_RV);
 		if( verbose ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 	"meteor_setup_movie:  default filetype is %s, resetting to type %s",
-				ft_tbl[ft].ft_name,
-				ft_tbl[IFT_RV].ft_name);
-			advise(error_string);
+				FT_NAME(ftp),
+				FT_NAME(new_ftp) );
+			advise(ERROR_STRING);
 		}
-		set_filetype(QSP_ARG  IFT_RV);
+		set_filetype(QSP_ARG  new_ftp);
 	}
 
-	ifp = write_image_file(QSP_ARG  mvip->mvi_name,n_frames);
+	ifp = write_image_file(QSP_ARG  MOVIE_NAME(mvip),n_frames);
 
 	if( ifp == NO_IMAGE_FILE ) return(-1);
 
@@ -200,9 +202,9 @@ advise("meteor_setup_movie");
 		return(-1);
 	}
 
-	mvip->mvi_height = _geo.rows;
-	mvip->mvi_width = _geo.columns;
-	mvip->mvi_nframes = n_frames;
+	SET_MOVIE_HEIGHT(mvip, _geo.rows);
+	SET_MOVIE_WIDTH(mvip, _geo.columns);
+	SET_MOVIE_FRAMES(mvip, n_frames);
 
 	blocks_per_frame = get_blocks_per_frame();
 
@@ -210,10 +212,10 @@ advise("meteor_setup_movie");
 
 	n_allocframes = FRAMES_TO_ALLOCATE( n_frames, n_disks );
 
-	if( rv_realloc(QSP_ARG  mvip->mvi_name,n_allocframes*blocks_per_frame) < 0 ){
-		sprintf(error_string,"meteor_setup_movie:  failed to allocate rawvol storage for %s",
-			mvip->mvi_name);
-		WARN(error_string);
+	if( rv_realloc(QSP_ARG  MOVIE_NAME(mvip),n_allocframes*blocks_per_frame) < 0 ){
+		sprintf(ERROR_STRING,"meteor_setup_movie:  failed to allocate rawvol storage for %s",
+			MOVIE_NAME(mvip));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 
@@ -223,10 +225,10 @@ advise("meteor_setup_movie");
 void meteor_add_frame(QSP_ARG_DECL  Movie *mvip,Data_Obj *dp)
 {
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & meteor_debug )
 advise("meteor_add_frame");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* BUG make sure dp & mvip have same dimensions if not 1st frame */
 	write_image_to_file(QSP_ARG  (Image_File *) mvip->mvi_data,dp);
@@ -236,12 +238,12 @@ void meteor_end_assemble(QSP_ARG_DECL  Movie *mvip)
 {
 	RV_Inode *inp;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & meteor_debug )
 advise("meteor_end_assemble");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	inp = rv_inode_of(QSP_ARG  mvip->mvi_name);	/* save this for later */
+	inp = rv_inode_of(QSP_ARG  MOVIE_NAME(mvip));	/* save this for later */
 
 	/* don't do this stuff until async record is finished */
 
@@ -255,9 +257,9 @@ advise("meteor_end_assemble");
 		 * We know it is an rv file, so this is really pretty much
 		 * of a no-op???
 		 */
-sprintf(error_string,"meteor_end_assemble calling close_image_file, movie is %s, if is %s",
-mvip->mvi_name,((Image_File *)mvip->mvi_data)->if_name);
-advise(error_string);
+sprintf(ERROR_STRING,"meteor_end_assemble calling close_image_file, movie is %s, if is %s",
+MOVIE_NAME(mvip),((Image_File *)mvip->mvi_data)->if_name);
+advise(ERROR_STRING);
 		close_image_file(QSP_ARG  (Image_File *) mvip->mvi_data);
 	}
 
@@ -267,12 +269,13 @@ advise(error_string);
 
 	delete_movie(QSP_ARG  mvip);
 
-#ifdef CAUTIOUS
-	if( inp == NO_INODE ){
-		WARN("CAUTIOUS:  meteor_end_assemble:  missing rv inode!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( inp == NO_INODE ){
+//		WARN("CAUTIOUS:  meteor_end_assemble:  missing rv inode!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( inp != NO_INODE );
 
 	update_movie_database(QSP_ARG  inp);
 }

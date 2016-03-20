@@ -18,13 +18,13 @@ char VersionId_inc_cstepit[] = QUIP_VERSION_STRING;
 
 /* stepit.c */
 
-extern int stepit(void (*func)(void));
+extern int stepit(QSP_ARG_DECL  void (*func)(void));
 extern void halt_cstepit(void);
 extern void getvals(double *,int);
-extern void setvals(double *,int);
+extern void setvals(QSP_ARG_DECL  double *,int);
 extern void setfobj(double);
-extern void setminmax(double *,double *,int);
-extern void setdelta(double *,double *,int);
+extern void setminmax(QSP_ARG_DECL  double *,double *,int);
+extern void setdelta(QSP_ARG_DECL  double *,double *,int);
 extern void settrace(int);
 extern void setmaxcalls(int);
 extern int reset_n_params(int);
@@ -36,7 +36,7 @@ extern void fn(void);
 
 /* cs_supp.c */
 COMMAND_FUNC( run_cstepit_scr );
-void run_cstepit_c(float (*func)(void));
+void run_cstepit_c(QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL));
 
 #endif /* undef VARS */
 

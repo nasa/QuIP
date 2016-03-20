@@ -1,0 +1,9 @@
+< $macro_dir/knox/knox_gui.mac
+< $macro_dir/knox/knoxc.mac
+< $macro_dir/view/plotsupp.mac
+
+Knox_Connect
+Declare_Knox_GUI
+
+Pause
+

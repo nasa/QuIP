@@ -1,0 +1,41 @@
+
+# compute the histogram of a supposedly uniform RNG
+
+Set infile $1
+If !file_exists('$infile') "error_exit 'File $infile does not exist!?'"
+
+Set n_bins 1000
+
+Vector hist_buf $n_bins 1 float
+
+advise "Reading data from $infile ..."
+Count_Lines n $infile
+Vector indata $n 1 float
+Get_Ascii indata $infile
+
+Histogram hist_buf indata (1/$n_bins)/2 1/$n_bins
+
+< $macro_dir/view/plotsupp.mac
+
+Set y_legend Count
+Set x_legend Value
+Set xmin 0
+Set xmax 1
+Set x_tick_spacing 0.2
+
+Set ymin 3500
+Set ymax 4500
+Set y_tick_spacing 250
+
+New_Plotter plotwin 600 600
+Setup_Axes
+Vector pts ncols(hist_buf) 2 float
+Ramp1D pts{0} 1/(2*$n_bins) 1/$n_bins
+VMov pts{1} hist_buf
+
+Put_Ascii hist_buf hist.asc
+
+XYPlot pts
+
+Pause
+

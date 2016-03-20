@@ -1,0 +1,107 @@
+#
+# like jpsee, but has zoom argument
+
+< $QUIPSTARTUPDIR/quip.scr
+< $macro_dir/system/mark_time.mac
+
+#Set min_panel_width 660		# used to be smaller but with ff, pause etc we need more real estate...
+Set min_panel_width 780		# increased for deinterlace toggle...
+
+max_warnings 1000
+#max_warnings 2
+
+Print argc
+If $argc!=2  "error_exit 'usage:  jpz jpeg_filename zoom_factor'"
+Set jpeg_file $argv1
+Assign zoom $2
+Set chatty 1
+
+If !file_exists('$jpeg_file')
+  "error_exit 'File $jpeg_file does not exist '"
+
+# Parameters
+Set pausing 0
+
+# Open movie file
+Filetype jpeg
+advise 'Reading file $jpeg_file...'
+Read_File_Header $jpeg_file
+
+Assign w	ncols('$jpeg_file')
+Assign h	nrows('$jpeg_file')
+Assign depth	ncomps('$jpeg_file')
+Assign n_frames	nframes('$jpeg_file')
+
+Tell_If " "
+Tell_If "-> File info:"
+Tell_If "   > Frame size (w x h x d): $w x $h x $depth"
+Tell_If "   > Number of frames: $n_frames"
+Tell_If " "
+
+
+# Init images
+Image _img	$h $w $depth u_byte
+
+## Mono_Viewer
+#######################
+If $w<800
+Then	'Set x_v 10'
+Else	'Set x_v 0'
+Set y_v 10
+
+Define Mono_Viewer 0
+#Viewer_For v _img
+Viewer v $zoom*$w $zoom*$h
+Posn_Window v $x_v $y_v
+#Protect_LUT 0
+Grayscale_Viewer v
+.
+
+
+Mono_Viewer		# "mono" viewer will display color on a 24 bit display
+Label_Viewer v "$jpeg_file"
+Assign vd depth('$DISPLAY')
+
+Define Display_Vanilla 0
+# We need to rotate jpeg files, but not avi's???
+	If $depth==3 "Rotate_Colors _img"
+#	If $depth==3
+#		Then "Show_Bytes _img{0} rv Show_Bytes _img{1} gv Show_Bytes _img{2} bv Label3"
+#		Else 'Show_Bytes _img v Label_Viewer v "$jpeg_file, frame $frame_idx"'
+	# this should work for color or mono
+	If $vd==8&&$depth==3
+		Then "Disp_Bytes _img{1} v"
+		Else "Disp_Bytes _img v"
+.
+
+Define Display_Frame 0
+Display_Vanilla
+.
+
+## Display_Image
+##################################
+Define Display_Image 0
+#advise "-> Press <Crtl-D> to display image"
+#Pause
+view wait v quit
+Get_Next _img $jpeg_file
+Display_Frame
+advise "-> Press <Crtl-D> to exit"
+Pause
+exit
+.
+
+Zero_Time
+
+
+# Image display
+If '$n_frames==1' Display_Image
+
+# Movie display
+Tell_If "-> Right-click in viewer to exit"
+Tell_If " "
+Set frame_idx 1
+
+# try to update the display at 60 Hz
+Set want_ms 16.666
+

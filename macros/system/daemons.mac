@@ -1,9 +1,7 @@
 
-# %Z% $RCSfile: daemons.mac,v $ ver: $Revision: 1.14 $ $Date: 2011/04/18 20:23:31 $
-
 Start_File daemons.mac
 
-If var_exists(daemons_dot_mac_read) "warn 'daemons.mac included more than once' PopFile 2 nop"
+If var_exists(daemons_dot_mac_read) "warn 'daemons.mac included more than once' exit_macro"
 
 < $macro_dir/system/ports.mac
 
@@ -33,8 +31,8 @@ Define Get_Remote_Daemon 3 remote_host port_number local_port_name
 Tell_If "connecting to daemon on $1, port $2"
 #advise "Get_Remote_Daemon calling Open_Client_Port $3 $1 $2"
 Open_Client_Port $3 $1 $2
-#Tell_If "sending TopMenu command to daemon"
-Send_Command $3 TopMenu
+#Tell_If "sending top_menu command to daemon"
+Send_Command $3 top_menu
 Send_Command $3 "advise 'connected to a client'"
 .
 

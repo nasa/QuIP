@@ -1,42 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_sound_soundmenu[] = QUIP_VERSION_STRING;
-
-
-#ifdef HAVE_SOUND
-
-/* we reference these symbols to force the files to load even when they're not needed,
- * so as to keep our version updating scripts from being confused - they might think
- * the extra file represented a version difference...
- */
-
-extern char *VersionId_sound_alsa;
-extern char *VersionId_sound_alsa_input;
-/* extern char *VersionId_sound_oss_sound; */
-
-/* This used to be local to force_load_sound_version_strings, but on durer (alsa), we
- * got no undef version id strings, even though the same things seemed to work on oss sound
- * machines, running the same compiler version???
- * Making the string pointer a global fixed it only for the last one - in other words,
- * the compiler was smart enough to see that the first two assignments did nothing
- * and so they were pruned.  So we have 3 dummy string pointers now!?
- */
-
-char *dummy_string_ptr1;
-char *dummy_string_ptr2;
-char *dummy_string_ptr3;
-
-/* all this does is to get the file version strings included in the executable */
-void force_load_sound_version_strings()
-{
-	//char *s;
-	dummy_string_ptr1=VersionId_sound_alsa;
-	dummy_string_ptr2=VersionId_sound_alsa_input;
-	/*
-	dummy_string_ptr3=VersionId_sound_oss_sound;
-	*/
-}
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -67,19 +30,19 @@ void force_load_sound_version_strings()
 #include <fcntl.h>		/* open() */
 #endif
 
-#include "query.h"
-#include "getbuf.h"
-#include "submenus.h"
+#include "quip_prot.h"
+
+
+//#ifndef BUILD_FOR_IOS
+
 /* #include "warmprot.h" */
-#include "debug.h"
-#include "version.h"
 
 #include "sound.h"
 
 typedef struct {
 	Data_Obj *ra_dp;
 #ifdef THREAD_SAFE_QUERY
-	Query_Stream *ra_qsp;
+	Query_Stack *ra_qsp;
 #endif
 } Recorder_Args;
 
@@ -91,9 +54,9 @@ debug_flag_t sound_debug=0;
 
 int object_is_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
-	if( MACHINE_PREC(dp) != PREC_IN ){
+	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"Object %s has %s precision, should be %s for sound",
-			dp->dt_name,prec_name[MACHINE_PREC(dp)],prec_name[PREC_IN]);
+			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN));
 		WARN(ERROR_STRING);
 		return(0);
 	}
@@ -127,7 +90,7 @@ static COMMAND_FUNC( do_set_nchan )
 {
 	int channels;
 
-	channels = HOW_MANY("number of output channels (1=MONO 2=STEREO 4=QUAD)");
+	channels = (int)HOW_MANY("number of output channels (1=MONO 2=STEREO 4=QUAD)");
 
 	set_playback_nchan(QSP_ARG  channels);
 }
@@ -147,7 +110,7 @@ static void *sound_recorder(void *argp)
 	Data_Obj *dp;
 	Recorder_Args *rap;
 #ifdef THREAD_SAFE_QUERY
-	Query_Stream *qsp;
+	Query_Stack *qsp;
 #endif
 
 	rap=argp;
@@ -158,7 +121,7 @@ static void *sound_recorder(void *argp)
 #endif
 
 	dp=(Data_Obj *)argp;
-	sprintf(ERROR_STRING,"sound_recorder:  sound is %s",dp->dt_name);
+	sprintf(ERROR_STRING,"sound_recorder:  sound is %s",OBJ_NAME(dp));
 	advise(ERROR_STRING);
 	recording_in_progress=1;
 	record_sound(QSP_ARG  dp);
@@ -220,7 +183,7 @@ static COMMAND_FUNC( do_inputgain )
 {
 	int g;
 
-	g = HOW_MANY("input gain (0-100)");
+	g = (int)HOW_MANY("input gain (0-100)");
 
 	g = g < 0 ? 0 : g;
 	g = g > 100 ? 100 : g;
@@ -233,7 +196,7 @@ static COMMAND_FUNC( do_volume )
 {
 	int g;
 
-	g = HOW_MANY("playback volume (0-100)");
+	g = (int)HOW_MANY("playback volume (0-100)");
 
 	g = g * 256 + g;
 	set_sound_volume(QSP_ARG  g);
@@ -255,7 +218,7 @@ static COMMAND_FUNC( do_set_samp_freq )
 {
 	int rate;
 
-	rate = HOW_MANY("sample frequency");
+	rate = (int)HOW_MANY("sample frequency");
 	if( rate <= 0 ){
 		sprintf(ERROR_STRING,"sample frequency must be greater than or equal to %d",MIN_SAMP_FREQ);
 		WARN(ERROR_STRING);
@@ -274,29 +237,29 @@ static COMMAND_FUNC( do_sound_info )
 	dp=PICK_OBJ("sound object");
 	if( dp == NO_OBJ ) return;
 
-	if( MACHINE_PREC(dp) != PREC_IN ){
+	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"sound_info:  object %s has %s precision, expect %s for sounds",
-			dp->dt_name,prec_name[MACHINE_PREC(dp)],prec_name[PREC_IN]);
+			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN) );
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_rows > 1 || dp->dt_frames > 1 || dp->dt_seqs > 1 ){
-		sprintf(ERROR_STRING,"sound_info:  object %s is not a row vector!?",dp->dt_name);
+	if( OBJ_ROWS(dp) > 1 || OBJ_FRAMES(dp) > 1 || OBJ_SEQS(dp) > 1 ){
+		sprintf(ERROR_STRING,"sound_info:  object %s is not a row vector!?",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 	}
-	if( dp->dt_n_type_elts < N_TIMESTAMP_WORDS ){
+	if( OBJ_N_TYPE_ELTS(dp) < N_TIMESTAMP_WORDS ){
 		sprintf(ERROR_STRING,"sound_info:  object %s has too few elements to contain a timestamp",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	sec = get_sound_seconds((Item *)dp,0);
-	usec = get_sound_microseconds((Item *)dp,0);
+	sec = (long) get_sound_seconds(QSP_ARG  (Item *)dp,0);
+	usec = (u_long) get_sound_microseconds(QSP_ARG  (Item *)dp,0);
 
 	s=ctime(&sec);
 	s[strlen(s)-1]=0;	/* get rid of final newline */
-	sprintf(msg_str,"%s:  %s, %ld microseconds",dp->dt_name,s,usec);
+	sprintf(msg_str,"%s:  %s, %ld microseconds",OBJ_NAME(dp),s,usec);
 	prt_msg(msg_str);
 }
 
@@ -376,7 +339,7 @@ static COMMAND_FUNC( do_show_stamps )
 		s=ctime(&tv.tv_sec);
 		if( s[strlen(s)-1] == '\n' )
 			s[strlen(s)-1] = 0;
-		sprintf(msg_str,"%s\t\t%ld",s,tv.tv_usec/1000);
+		sprintf(msg_str,"%s\t\t%ld",s,(long)tv.tv_usec/1000);
 		prt_msg(msg_str);
 	}
 	fclose(fp);
@@ -385,71 +348,78 @@ static COMMAND_FUNC( do_show_stamps )
 
 static COMMAND_FUNC(do_halt_rec_stream){halt_rec_stream(SINGLE_QSP_ARG);}
 
-static Command rec_ctbl[]={
-{ "select_input",do_insel,		"select input channel"		},
-{ "input_gain",	do_inputgain,		"set input gain level"		},
-{ "stereo",	do_stereo_input,	"select stereo/mono input"	},
-{ "stream",	do_recstream,		"record audio stream to disk"	},
-{ "halt",	do_halt_rec_stream,	"halt stream recording"		},
-{ "async",	do_setasync,		"enable/disable asynchronous recording"},
-{ "record",	do_recsound,		"record a sound clip"		},
-{ "wait",	do_waitrec,		"wait for async record to finish"},
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(audio_record_menu,s,f,h)
+
+MENU_BEGIN(audio_record)
+ADD_CMD( select_input,	do_insel,		select input channel )
+ADD_CMD( input_gain,	do_inputgain,		set input gain level )
+ADD_CMD( stereo,	do_stereo_input,	select stereo/mono input )
+ADD_CMD( stream,	do_recstream,		record audio stream to disk )
+ADD_CMD( halt,		do_halt_rec_stream,	halt stream recording )
+ADD_CMD( async,		do_setasync,		enable/disable asynchronous recording )
+ADD_CMD( record,	do_recsound,		record a sound clip )
+ADD_CMD( wait,		do_waitrec,		wait for async record to finish )
+MENU_END(audio_record)
 
 static COMMAND_FUNC(do_pause_sound){pause_sound(SINGLE_QSP_ARG);}
 static COMMAND_FUNC(do_halt_play_stream){halt_play_stream(SINGLE_QSP_ARG);}
 
-static Command pb_ctbl[]={
-{ "info",	do_sound_info,	"display timestamp"			},
-{ "play",	do_playsound,	"play a sound"				},
-{ "pause",	do_pause_sound,	"pause a sound"				},
-{ "stream",	do_pb_stream,	"stream audio from disk"		},
-{ "halt",	do_halt_play_stream,"halt stream playback"		},
-{ "nchannels",	do_set_nchan,	"set number of output channels"		},
-{ "stereo",	do_stereo_output,"select stereo/mono output"		},
-{ "volume",	do_volume,	"set playback volume"			},
-{ "alert_sound",do_set_alert,	"set warning sound"			},
-{ "timestamps",	do_show_stamps,	"display recorded timestamps"		},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
 
-static COMMAND_FUNC( rec_menu )
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(audio_playback_menu,s,f,h)
+
+MENU_BEGIN(audio_playback)
+ADD_CMD( info,		do_sound_info,		display timestamp )
+ADD_CMD( play,		do_playsound,		play a sound )
+ADD_CMD( pause,		do_pause_sound,		pause a sound )
+ADD_CMD( stream,	do_pb_stream,		stream audio from disk )
+ADD_CMD( halt,		do_halt_play_stream,	halt stream playback )
+ADD_CMD( nchannels,	do_set_nchan,		set number of output channels )
+ADD_CMD( stereo,	do_stereo_output,	select stereo/mono output )
+ADD_CMD( volume,	do_volume,		set playback volume )
+ADD_CMD( alert_sound,	do_set_alert,		set warning sound )
+ADD_CMD( timestamps,	do_show_stamps,		display recorded timestamps )
+MENU_END(audio_playback)
+
+static COMMAND_FUNC( do_rec_menu )
 {
-	PUSHCMD(rec_ctbl,"audio_record");
+	PUSH_MENU(audio_record);
 }
 
-static COMMAND_FUNC( pb_menu )
+static COMMAND_FUNC( do_pb_menu )
 {
-	PUSHCMD(pb_ctbl,"audio_playback");
+	PUSH_MENU(audio_playback);
 }
 
-static Command sound_ctbl[]={
-	{ "acquire",		rec_menu,		"sound recording submenu"	},
-	{ "playback",		pb_menu,		"sound playback submenu"	},
-	{ "sample_freq",	do_set_samp_freq,	"set sample frequency"		},
-	{ "close",		do_close,		"close audio device"		},
-	{ "quit",		popcmd,			"exit submenu"			},
-	{ NULL_COMMAND									}
-};
 
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(sound_menu,s,f,h)
 
-COMMAND_FUNC( soundmenu )
+MENU_BEGIN(sound)
+ADD_CMD( acquire,	do_rec_menu,		sound recording submenu )
+ADD_CMD( playback,	do_pb_menu,		sound playback submenu )
+ADD_CMD( sample_freq,	do_set_samp_freq,	set sample frequency )
+ADD_CMD( close,		do_close,		close audio device )
+MENU_END(sound)
+
+//#endif // ! BUILD_FOR_IOS
+
+COMMAND_FUNC( do_sound_menu )
 {
+//#ifdef BUILD_FOR_IOS
+//    WARN("Sorry, no sound support for iOS yet...");
+//#else // ! BUILD_FOR_IOS
 	static int sound_inited=0;
-
+    
 	if( ! sound_inited ){
 #ifdef DEBUG
 		if( sound_debug == 0 )
 			sound_debug = add_debug_module(QSP_ARG  "sound");
 #endif /* DEBUG */
-		auto_version(QSP_ARG  "SOUND","VersionId_sound");
 		sound_inited=1;
 	}
-
-	PUSHCMD(sound_ctbl,"sound");	/* load the initial menu */
+    
+	PUSH_MENU(sound);	/* load the initial menu */
+//#endif // ! BUILD_FOR_IOS
 }
 
-#endif /* HAVE_SOUND */

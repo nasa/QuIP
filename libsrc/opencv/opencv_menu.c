@@ -1,26 +1,52 @@
 #include "quip_config.h"
 
-char VersionId_opencv_opencv_menu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENCV
 
-#include "data_obj.h"
+#include "quip_prot.h"
 #include "opencv_glue.h"
-#include "query.h"
-#include "string.h"
-#include "debug.h"		/* verbose */
-#include "version.h"		/* auto_version() */
-#include "submenus.h"		/* ocv_menu() */
+#include "data_obj.h"
 
+// local prototypes
+static COMMAND_FUNC( do_ocv_smooth );
+static COMMAND_FUNC( do_convert_color );
+static COMMAND_FUNC( do_ocv_not );
+static COMMAND_FUNC( do_ocv_erode );
+static COMMAND_FUNC( do_ocv_dilate );
+static COMMAND_FUNC( do_ocv_binary_threshold );
+static COMMAND_FUNC( do_ocv_canny );
+static COMMAND_FUNC( do_ocv_zero );
+static COMMAND_FUNC( do_creat_img );
+static COMMAND_FUNC( do_create_mem );
+static COMMAND_FUNC( do_create_scanner );
+static COMMAND_FUNC( do_create_seq );
+static COMMAND_FUNC( do_seq_is_null );
+static COMMAND_FUNC( do_load_img );
+static COMMAND_FUNC( do_save_img );
+static COMMAND_FUNC( do_find_contours );
+static COMMAND_FUNC( do_find_next_contour );
+static COMMAND_FUNC( do_aspect_ratio );
+static COMMAND_FUNC( do_ocv_area );
+static COMMAND_FUNC( do_centroid );
+static COMMAND_FUNC( do_image_info );
+static COMMAND_FUNC( do_import_img );
+static COMMAND_FUNC( do_new_cascade );
+static CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img,
+					CvMemStorage* storage,
+					CvHaarClassifierCascade* cascade,
+					int frame_number);
+static COMMAND_FUNC( do_find_face );
+static COMMAND_FUNC( do_face_finder );
 
+#ifdef NOT_USED
 void report_opencv_version(SINGLE_QSP_ARG_DECL)
 {
 	sprintf(ERROR_STRING,"OpenCV version %d.%d.%d",
 		CV_MAJOR_VERSION,CV_MINOR_VERSION,CV_SUBMINOR_VERSION);
 	advise(ERROR_STRING);
 }
+#endif /* NOT_USED */
 
-COMMAND_FUNC( do_ocv_smooth )
+static COMMAND_FUNC( do_ocv_smooth )
 {
 	OpenCV_Image *src, *dst;
 	int blur_size;
@@ -35,7 +61,7 @@ COMMAND_FUNC( do_ocv_smooth )
 	cvSmooth( src->ocv_image, dst->ocv_image, CV_BLUR, blur_size, blur_size, 0, 0 );
 }
 
-COMMAND_FUNC( do_convert_color )
+static COMMAND_FUNC( do_convert_color )
 {
 	OpenCV_Image *src, *dst;
 	const char * s;
@@ -64,7 +90,7 @@ COMMAND_FUNC( do_convert_color )
 	cvCvtColor(src->ocv_image, dst->ocv_image, code);
 }
 
-COMMAND_FUNC( do_ocv_not )
+static COMMAND_FUNC( do_ocv_not )
 {
 	OpenCV_Image *src, *dst;
 
@@ -77,7 +103,7 @@ COMMAND_FUNC( do_ocv_not )
 }
 
 // Erosion operator.
-COMMAND_FUNC( do_ocv_erode )
+static COMMAND_FUNC( do_ocv_erode )
 {
 	OpenCV_Image *src, *dst;
 	int iterations;
@@ -93,7 +119,7 @@ COMMAND_FUNC( do_ocv_erode )
 }
 
 // Dilation operator.
-COMMAND_FUNC( do_ocv_dilate )
+static COMMAND_FUNC( do_ocv_dilate )
 {
 	OpenCV_Image *src, *dst;
 	int iterations;
@@ -109,7 +135,7 @@ COMMAND_FUNC( do_ocv_dilate )
 }
 
 // Binary threshold.
-COMMAND_FUNC( do_ocv_binary_threshold )
+static COMMAND_FUNC( do_ocv_binary_threshold )
 {
 	OpenCV_Image *src, *dst;
 	double threshold;
@@ -124,7 +150,7 @@ COMMAND_FUNC( do_ocv_binary_threshold )
 	cvThreshold(src->ocv_image, dst->ocv_image, threshold, max_value, CV_THRESH_BINARY);
 }
 
-COMMAND_FUNC( do_ocv_canny )
+static COMMAND_FUNC( do_ocv_canny )
 {
 	OpenCV_Image *src, *dst;
 	int edge_thresh;
@@ -142,7 +168,7 @@ COMMAND_FUNC( do_ocv_canny )
 	cvCanny(src->ocv_image, dst->ocv_image, (float)edge_thresh, (float)edge_thresh2, 3);
 }
 
-COMMAND_FUNC( do_ocv_zero )
+static COMMAND_FUNC( do_ocv_zero )
 {
 	OpenCV_Image *dst;
 
@@ -153,7 +179,7 @@ COMMAND_FUNC( do_ocv_zero )
 	cvZero( dst->ocv_image );
 }
 
-COMMAND_FUNC( do_creat_img )
+static COMMAND_FUNC( do_creat_img )
 {
 	const char *s;
 	long w,h,n_channels;
@@ -166,20 +192,24 @@ COMMAND_FUNC( do_creat_img )
 	/* BUG should have a precision switch here, using which_one... */
 
 	ocvi_p = create_ocv_image(QSP_ARG  s,w,h,IPL_DEPTH_8U,n_channels);
+
+	if( ocvi_p == NULL ) WARN("Error creating openCV image!?");
 }
 
 /* Create a MemStorage object with the given string name. */
-COMMAND_FUNC( do_create_mem )
+static COMMAND_FUNC( do_create_mem )
 {
 	const char *s;
 	OpenCV_MemStorage *ocv_mem_p;
 
 	s=NAMEOF("name for MemStorage");
 	ocv_mem_p = create_ocv_mem(QSP_ARG  s);
+
+	if( ocv_mem_p == NULL ) WARN("Error creating openCV memory area!?");
 }
 
 /* Create a Scanner object with the given string name. */
-COMMAND_FUNC( do_create_scanner )
+static COMMAND_FUNC( do_create_scanner )
 {
 	const char *s;
 	OpenCV_Scanner *ocv_scanner_p;
@@ -188,10 +218,12 @@ COMMAND_FUNC( do_create_scanner )
 	ocv_scanner_p = create_ocv_scanner(QSP_ARG  s);
 	/*sprintf(ERROR_STRING, "do_create_scanner: Address of new scanner: %p", &(ocv_scanner_p->ocv_scanner));
 	WARN(ERROR_STRING);*/
+
+	if( ocv_scanner_p == NULL ) WARN("Error creating openCV scanner!?");
 }
 
 /* Create a Seq object with the given string name. */
-COMMAND_FUNC( do_create_seq )
+static COMMAND_FUNC( do_create_seq )
 {
 	const char *s;
 	OpenCV_Seq *ocv_seq_p;
@@ -200,10 +232,12 @@ COMMAND_FUNC( do_create_seq )
 	ocv_seq_p = create_ocv_seq(QSP_ARG  s);
 	/*sprintf(ERROR_STRING, "do_create_seq: Address of new seq: %p", ocv_seq_p->ocv_seq);
 	WARN(ERROR_STRING);*/
+
+	if( ocv_seq_p == NULL ) WARN("Error creating openCV sequence!?");
 }
 
 /* Create a Seq object with the given string name. */
-COMMAND_FUNC( do_seq_is_null )
+static COMMAND_FUNC( do_seq_is_null )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
@@ -215,7 +249,7 @@ COMMAND_FUNC( do_seq_is_null )
 	}
 }
 
-COMMAND_FUNC( do_load_img )
+static COMMAND_FUNC( do_load_img )
 {
 	const char *object_name;
 	const char *filename;
@@ -226,9 +260,11 @@ COMMAND_FUNC( do_load_img )
 	filename=NAMEOF("image filename");
 	is_color=HOW_MANY("is color? (boolean)");
 	ocvi_p = load_ocv_image(QSP_ARG  object_name, filename);
+
+	if( ocvi_p == NULL ) WARN("Error loading openCV image!?");
 }
 
-COMMAND_FUNC( do_save_img )
+static COMMAND_FUNC( do_save_img )
 {
 	const char *filename;
 	OpenCV_Image *ocvi_p;
@@ -240,7 +276,7 @@ COMMAND_FUNC( do_save_img )
 	save_ocv_image(ocvi_p, filename);
 }
 
-COMMAND_FUNC( do_find_contours )
+static COMMAND_FUNC( do_find_contours )
 {
 	OpenCV_Scanner *ocv_scanner_p;
 	OpenCV_Image *ocvi_p;
@@ -258,7 +294,7 @@ COMMAND_FUNC( do_find_contours )
 }
 
 
-COMMAND_FUNC( do_find_next_contour )
+static COMMAND_FUNC( do_find_next_contour )
 {
 	OpenCV_Scanner *ocv_scanner_p;
 	OpenCV_Seq *ocv_seq_p;
@@ -278,7 +314,7 @@ COMMAND_FUNC( do_find_next_contour )
 	}
 }
 
-COMMAND_FUNC( do_aspect_ratio )
+static COMMAND_FUNC( do_aspect_ratio )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
@@ -297,7 +333,7 @@ COMMAND_FUNC( do_aspect_ratio )
 	WARN(ERROR_STRING);*/
 }
 
-COMMAND_FUNC( do_ocv_area )
+static COMMAND_FUNC( do_ocv_area )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
@@ -321,7 +357,7 @@ COMMAND_FUNC( do_ocv_area )
 	ASSIGN_VAR("contour_area", area_string);
 }
 
-COMMAND_FUNC( do_centroid )
+static COMMAND_FUNC( do_centroid )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
@@ -353,7 +389,7 @@ COMMAND_FUNC( do_centroid )
 
 }
 
-COMMAND_FUNC( do_image_info )
+static COMMAND_FUNC( do_image_info )
 {
 	OpenCV_Image *ocvi_p;
 	ocvi_p=PICK_OCVI("openCV image");
@@ -388,7 +424,7 @@ COMMAND_FUNC( do_image_info )
 	prt_msg(ERROR_STRING);
 }
 
-COMMAND_FUNC( do_import_img )
+static COMMAND_FUNC( do_import_img )
 {
 	Data_Obj *dp;
 	OpenCV_Image *ocvi_p;
@@ -398,12 +434,12 @@ COMMAND_FUNC( do_import_img )
 	/* Possibly do some tests here */
 
 	if( (ocvi_p = creat_ocvi_from_dp(QSP_ARG  dp) ) == NO_OPENCV_IMAGE ){
-		sprintf(ERROR_STRING,"Error creating OpenCV image from QuIP image %s",dp->dt_name);
+		sprintf(ERROR_STRING,"Error creating OpenCV image from QuIP image %s",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 	}
 }
 
-COMMAND_FUNC( do_new_cascade )
+static COMMAND_FUNC( do_new_cascade )
 {
 	const char * s;
 	const char *cascade_name;
@@ -439,10 +475,9 @@ COMMAND_FUNC( do_new_cascade )
 #define true 1
 #define bool int
 
-CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img, CvMemStorage* storage, CvHaarClassifierCascade* cascade, int frame_number)
+static CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img, CvMemStorage* storage, CvHaarClassifierCascade* cascade, int frame_number)
 {
 	bool face_found = false;
-	int faces_found = 0;
 	CvPoint2D32f* features = NULL;
 	int max_faces = 4;
 	//int scale = 1;
@@ -490,7 +525,6 @@ CVAPI(CvSeq*) cvHaarDetectObjects( const CvArr* image,
 					cvSize(30,30) );
 #endif
 		if (faces != NULL) {
-			faces_found = faces->total;
 			if( verbose ){
 				sprintf(ERROR_STRING,"%d faces found in frame %d.",faces->total, frame_number);
 				advise(ERROR_STRING);
@@ -559,11 +593,11 @@ CVAPI(CvSeq*) cvHaarDetectObjects( const CvArr* image,
 
 	//cvReleaseImage(&img_copy);
 	return features;
-}
+} // end FindFace
 
 static CvMemStorage* storage = NULL;
 
-COMMAND_FUNC( do_find_face )
+static COMMAND_FUNC( do_find_face )
 {
 	OpenCV_Image *src;
 	OpenCV_Cascade *casc_p;
@@ -582,62 +616,59 @@ COMMAND_FUNC( do_find_face )
 	features = FindFace(QSP_ARG  src->ocv_image, storage, casc_p->ocv_cascade, frame_number);
 	//cvReleaseImage(&src->ocv_image);
 	/* BUG need to do something with the feature array */
+	if( features == NULL )
+		WARN("find_face:  Null feature array!?");
 
 	// Deallocate memory.
 	cvReleaseMemStorage(&storage);
 }
 
-static Command face_finder_ctbl[]={
-{ "cascade",		do_new_cascade,		"create a new classifier cascade"	},
-{ "find_face",		do_find_face,		"find face/eyes"			},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(face_finder_menu,s,f,h)
 
-COMMAND_FUNC( do_face_finder )
+MENU_BEGIN(face_finder)
+ADD_CMD( cascade,	do_new_cascade,	create a new classifier cascade )
+ADD_CMD( find_face,	do_find_face,	find face/eyes )
+MENU_END(face_finder)
+
+static COMMAND_FUNC( do_face_finder )
 {
-	PUSHCMD(face_finder_ctbl,"face_finder");
+	PUSH_MENU(face_finder);
 }
 
-static Command ocv_ctbl[]={
-{ "face_finder",	do_face_finder,		"face-finder submenu"			},
-{ "new_image",		do_creat_img,		"Create new OpenCV image"		},
-{ "import",		do_import_img,		"import an image from QuIP to OpenCV"	},
-{ "load_image",		do_load_img,		"load an image file"			},
-{ "save_image",		do_save_img,		"save an image file"			},
-{ "zero",		do_ocv_zero,		"zero an OpenCV image"			},
-{ "area",		do_ocv_area,		"Area of a sequence."			},
-{ "aspect_ratio",	do_aspect_ratio,	"Aspect ratio of a sequence."		},
-{ "canny",		do_ocv_canny,		"find edges w/ Canny detector"		},
-{ "centroid",		do_centroid,		"Centroid of a sequence."		},
-{ "convert_color",	do_convert_color,	"convert to another color space"	},
-{ "dilate",		do_ocv_dilate,		"dilate binary image"			},
-{ "erode",		do_ocv_erode,		"erode binary image"			},
-{ "find_contours",	do_find_contours,	"Find contours."			},
-{ "find_next_contour",	do_find_next_contour,	"Find next contour."			},
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(open_cv_menu,s,f,h)
 
-{ "binary_threshold",	do_ocv_binary_threshold,"binary threshold image"		},
-{ "smooth",		do_ocv_smooth,		"smooth image"				},
-{ "not",		do_ocv_not,		"complement image"			},
+MENU_BEGIN(open_cv)
+ADD_CMD( face_finder,		do_face_finder,		face-finder submenu )
+ADD_CMD( new_image,		do_creat_img,		Create new OpenCV image )
+ADD_CMD( import,		do_import_img,		import an image from QuIP to OpenCV )
+ADD_CMD( load_image,		do_load_img,		load an image file )
+ADD_CMD( save_image,		do_save_img,		save an image file )
+ADD_CMD( zero,			do_ocv_zero,		zero an OpenCV image )
+ADD_CMD( area,			do_ocv_area,		Area of a sequence )
+ADD_CMD( aspect_ratio,		do_aspect_ratio,	Aspect ratio of a sequence )
+ADD_CMD( canny,			do_ocv_canny,		find edges w/ Canny detector )
+ADD_CMD( centroid,		do_centroid,		Centroid of a sequence )
+ADD_CMD( convert_color,		do_convert_color,	convert to another color space )
+ADD_CMD( dilate,		do_ocv_dilate,		dilate binary image )
+ADD_CMD( erode,			do_ocv_erode,		erode binary image )
+ADD_CMD( find_contours,		do_find_contours,	Find contours )
+ADD_CMD( find_next_contour,	do_find_next_contour,	Find next contour )
+
+ADD_CMD( binary_threshold,	do_ocv_binary_threshold,	binary threshold image )
+ADD_CMD( smooth,		do_ocv_smooth,		smooth image )
+ADD_CMD( not,			do_ocv_not,		complement image )
 /* MemStorage */
-{ "new_mem",		do_create_mem,		"Create a new MemStorage object."	},
-{ "new_scanner",	do_create_scanner,	"Create a new MemStorage object."	},
-{ "new_seq",		do_create_seq,		"Create a new MemStorage object."	},
-{ "is_seq_null",	do_seq_is_null,		"Determine if a sequence is NULL."	},
-{ "image_info",		do_image_info,		"Display OpenCV image info."		},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+ADD_CMD( new_mem,		do_create_mem,		Create a new MemStorage object )
+ADD_CMD( new_scanner,		do_create_scanner,	Create a new MemStorage object )
+ADD_CMD( new_seq,		do_create_seq,		Create a new MemStorage object )
+ADD_CMD( is_seq_null,		do_seq_is_null,		Determine if a sequence is NULL )
+ADD_CMD( image_info,		do_image_info,		Display OpenCV image info )
+MENU_END(open_cv)
 
-static int ocv_inited=0;
-
-COMMAND_FUNC( ocv_menu )
+COMMAND_FUNC( do_ocv_menu )
 {
-	if( !ocv_inited ){
-		auto_version(QSP_ARG  "OPENCV","VersionId_opencv");
-		ocv_inited=1;
-	}
-	PUSHCMD( ocv_ctbl, "OpenCV" );
+	PUSH_MENU( open_cv );
 }
 
 

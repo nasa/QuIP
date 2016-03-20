@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_knox_knox_tbl[] = QUIP_VERSION_STRING;
-
 #include "knox.h"
 
 Knox_Cmd knox_tbl[N_KNOX_CMDS] = {

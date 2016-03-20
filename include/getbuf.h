@@ -6,6 +6,8 @@
 #ifndef _GETBUF_H_
 #define _GETBUF_H_
 
+//#define USE_GETBUF		// for debugging...
+
 #ifdef USE_GETBUF
 
 #include "typedefs.h"
@@ -26,19 +28,29 @@ void givbuf(const void *addr);
 
 #else /* ! USE_GETBUF */
 
+// Use this define for extra debugging...
+//#define DEBUG_GETBUF
+
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>	/* malloc */
 #endif /* HAVE_STDLIB_H */
 
 /* malloc and free are supposed to be thread-safe if linking w/ -lpthreads? */
-#define getbuf( s )	malloc( s )
+// We wrap malloc in getbuf to provide error-checking.
+//#define getbuf( s )	malloc( s )
+extern void * getbuf(size_t size);
+
+#ifdef DEBUG_GETBUF
+extern void givbuf(void *a);
+#else // ! DEBUG_GETBUF
 #define givbuf( a )	free( a )
+#endif // ! DEBUG_GETBUF
 
 
 #endif /* ! USE_GETBUF */
 
 /* This function exists in either case */
-extern void mem_err(const char *);
+__attribute__ ((__noreturn__)) extern void mem_err(const char *);
 
 
 #endif /* ! _GETBUF_H_ */

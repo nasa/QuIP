@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_cstepit_stepit[] = QUIP_VERSION_STRING;
-
 /*
  * Implementation of the stepit subroutine in C; translated from the Fortran
  * routine composed by J. P. Chandler.
@@ -16,10 +14,8 @@ char VersionId_cstepit_stepit[] = QUIP_VERSION_STRING;
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
-/* #include "const.h" */
 #include "cstepit.h"
-#include "debug.h"
-#include "void.h"
+#include "quip_prot.h"
 #include "sigpush.h"		/* sigpush(), sigpop() */
 
 #define	amax1(a,b) ((a>b)?a:b)
@@ -54,12 +50,22 @@ static int     ncomp = VARS;
 /* local prototypes */
 
 
-static void noparams(void (*f)(void));
 static void ccseen(void);
 static void done(void);
 #ifdef FOOBAR
 static void intrupt(void);
 #endif /* FOOBAR */
+
+/*
+ * Here if no free parameters given
+ */
+
+static void noparams(QSP_ARG_DECL  void (*cstepit_fn)(void))
+{
+	advise("calling function with initial parameters...");
+	(*cstepit_fn)();
+	done();
+}
 
 
 void halt_cstepit(void)
@@ -72,7 +78,7 @@ void halt_cstepit(void)
  */
 
 /*int stepit(cstepit_fn)*/
-int stepit (void (*cstepit_fn)(void))
+int stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
 {
 	int     nactiv, nack, ncirc, nosc, nah, nzip, jock, i, j, k;
 	int     ngiant, ntry, nretry, kl, nt, na, nz, ngate, nflag;
@@ -101,9 +107,8 @@ int stepit (void (*cstepit_fn)(void))
 #error HUGE_VAL is not defined!?
 #endif
 
-
 	if (n_params <= 0) {
-		noparams(cstepit_fn);
+		noparams(QSP_ARG  cstepit_fn);
 #ifdef FOOBAR
 		sigpop(SIGINT);
 #endif /* FOOBAR */
@@ -172,6 +177,7 @@ int stepit (void (*cstepit_fn)(void))
 		printf("\nDelmin=");
 		for (j = 0; j < n_params; j++)
 			printf("%10.4g", delmin[j]);
+		printf("\n");
 		fflush(stdout);
 		/* BUG use advise() or prt_msg() */
 	}
@@ -189,22 +195,27 @@ int stepit (void (*cstepit_fn)(void))
 
 /* equivalent of line 290 of stepit.f */
 
-	if (ntrace >= 0)
+	if (ntrace >= 0){
 		printf("\n\n%d variables, %d active, initial fobj = %g", n_params, nactiv, fobj);
+		fflush(stdout);
+	}
 	if (ntrace > 0) {
 		printf("\nncomp = %d   ratio = %5.1f   ack = %5.1f  ", ncomp, ratio, ack);
 		printf("colin = %6.3f   ", colin);
-		printf("compar = %6.3f", compar);
+		printf("compar = %6.3f\n", compar);
+		fflush(stdout);
 	}
 	if (n_params <= 0) {
-		noparams(cstepit_fn);
+		noparams(QSP_ARG  cstepit_fn);
 #ifdef FOOBAR
 	sigpop(SIGINT);
 #endif /* FOOBAR */
 		return(0);
 	}
-	if (ntrace > 0)
+	if (ntrace > 0){
 		fprintf(stderr,"\nTrace map of the minimalization process\n\n");
+		fflush(stderr);
+	}
 
 	for (i = 0; i < n_params; i++) {
 		dx[i] = deltax[i];
@@ -394,8 +405,10 @@ L690:		if (nzip < 1)
 			oldvec[i] /= ack;
 			for (j = 0; j < mosque; j++)
 				err[i][j] /= ack;
-			if (ntrace > 0)
+			if (ntrace > 0){
 				fprintf(stderr,"\nStep size %d increased to %11.4g", i, dx[i]);
+				fflush(stderr);
+			}
 		}
 		for (j = 0, sumo = sumv = 0.; j < n_params; j++) {
 			sumo += pow(oldvec[j], 2.);
@@ -438,6 +451,7 @@ L830:		if (ntrace > 0) {
 			fprintf(stderr,"\nfobj = %15.8g ", fbest);
 			for (j = 0; j < i + 1; j++)
 				fprintf(stderr,"\nNumber of steps = %9.2g ", vec[j]);
+			fflush(stderr);
 		}
 		ngiant = ntry = nretry = 0;
 		kl = 0;
@@ -487,6 +501,7 @@ L970:		ntry = 1;
 		if (ntrace > 0) {
 			nt = nosc - k;
 			fprintf(stderr,"\n****Possible oscillation with period  %d", nt);
+			fflush(stderr);
 		}
 		for (j = 0; j < n_params; j++) {
 			salvo[j] = trial[j];
@@ -527,6 +542,7 @@ L1020:		for (j = 0; j < n_params; j++) {
 			fprintf(stderr,"\nfobj = %15.8g ", fbest);
 			for (j = 0; j < n_params; j++)
 				fprintf(stderr,"\nx[%d] = %11.4g", j, x[j]);
+			fflush(stderr);
 		}
 		goto L1020;
 
@@ -582,6 +598,7 @@ L1100:		cinder = (.5 / ack) * (pow(ack, 2.) * chibak - (pow(ack, 2.) - 1.) *
 				fprintf(stderr,"\nChisq = %15.8g after %d giant steps", fbest, ngiant);
 				for (j = 0; j < n_params; j++)
 					fprintf(stderr,"\nx[%d] = %11.4g", j, x[j]);
+				fflush(stderr);
 			}
 			if (ngiant > 0)
 				goto L1310;
@@ -601,6 +618,7 @@ L1100:		cinder = (.5 / ack) * (pow(ack, 2.) * chibak - (pow(ack, 2.) - 1.) *
 		if (ntrace > 0) {
 			steps = (double) ngiant + cinder;
 			fprintf(stderr,"\n Chisq = %15.8g after %6.1f giant steps", fbest, steps);
+			fflush(stderr);
 		}
 L1310:		if (ntry)
 			nosc = 0;
@@ -624,10 +642,13 @@ L1340:		fstor[i] = fbest;
 		fprintf(stderr,"\nCHISQ = %15.8g ", fbest);
 		for (j = 0; j < i + 1; j++)
 			fprintf(stderr,"\nNumber of steps = %9.2g ", vec[j]);
+		fflush(stderr);
 	}
-	if ((nzip == 0) && ntrace > 0)
+	if ((nzip == 0) && ntrace > 0){
 		for (j = 0; j < n_params; j++)
 			fprintf(stderr,"\nx[%d] = %11.4g", j, x[j]);
+		fflush(stderr);
+	}
 	nzip++;
 	goto L390;
 
@@ -637,6 +658,7 @@ L1430:	if (ntrace > 0) {
 		fprintf(stderr,"\nCHISQ = %15.8g ", fbest);
 		for (j = 0; j < i + 1; j++)
 			fprintf(stderr,"\nNumber of steps = %9.2g ", vec[j]);
+		fflush(stderr);
 	}
 	nosc = 0;
 	ngate = 1;
@@ -655,6 +677,7 @@ L1520:		dx[j] /= ratio;
 		fprintf(stderr,"\nSteps reduced to:");
 		for (j = 0; j < i + 1; j++)
 			fprintf(stderr,"\n%11.4g", dx[j]);
+		fflush(stderr);
 	}
 	goto L380;
 L1600:	fobj = fbest;
@@ -678,17 +701,6 @@ static void intrupt()
 #endif /* FOOBAR */
 
 /*
- * Here if no free parameters given
- */
-
-static void noparams(void (*cstepit_fn)(VOID))
-{
-	advise("calling function with initial parameters...");
-	(*cstepit_fn)();
-	done();
-}
-
-/*
  * Here if control-C noticed
  */
 
@@ -697,7 +709,7 @@ static void ccseen()
 
 	ccflag = 0;
 	if( verbose )
-		advise("Subroutine stepit terminated by operator");
+		NADVISE("Subroutine stepit terminated by operator");
 
 	fobj = fbest;
 	done();
@@ -718,6 +730,7 @@ static void done()
 	for (i = 0; i < n_params; i++)
 		printf(" %10.6g", x[i]);
 	printf("\nResidual error: %11.4g\n", fobj);
+	fflush(stdout);
 }
 
 void setfobj(double value)
@@ -751,7 +764,7 @@ int reset_n_params(int n)
 	return( n_params=n );
 }
 
-void setvals(double *arr, int n)
+void setvals(QSP_ARG_DECL  double *arr, int n)
 {
 	int i;
 
@@ -767,7 +780,7 @@ void setvals(double *arr, int n)
 		x[i] = arr[i];
 }
 
-void setminmax(double *minarr, double *maxarr, int n)
+void setminmax(QSP_ARG_DECL  double *minarr, double *maxarr, int n)
 {
 	int i;
 
@@ -785,7 +798,7 @@ void setminmax(double *minarr, double *maxarr, int n)
 	}
 }
 
-void setdelta(double *delarr, double *dmnarr, int n)
+void setdelta(QSP_ARG_DECL  double *delarr, double *dmnarr, int n)
 {
 	int i;
 

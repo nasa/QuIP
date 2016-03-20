@@ -2,18 +2,25 @@
 #ifndef NEXPR_H
 #define NEXPR_H
 
+//#include "shape_bits.h"
+//#include "dobj_basic.h"
 #include "data_obj.h"
+#include "typed_scalar.h"
+#include "function_basic.h"
+
+struct scalar_expression_node;
+typedef struct scalar_expression_node Scalar_Expr_Node;
 
 typedef enum {
 	N_OBJNAME,			/*  0 */
 	N_SUBSCRIPT,			/*  1 */
 	N_CSUBSCRIPT,			/*  2 */
-	N_SIZABLE,			/*  3 */
-//	N_SUBSIZ,			/*  4 */
-//	N_CSUBSIZ,			/*  5 */
-	N_TSABLE,			/*  6 */
+	N_TSABLE,			/*  3 */
+	N_STRVFUNC,			/*  4 */
+	N_LITSTR,			/*  5 */
+	N_INT1FUNC,			/*  6 */
 	N_TSFUNC,			/*  7 */
-	N_LITDBL,			/*  8 */
+	N_LITNUM,			/*  8 */
 	N_MATH0FUNC,			/*  9 */
 	N_MATH1FUNC,			/* 10 */
 	N_MATH2FUNC,			/* 11 */
@@ -46,32 +53,54 @@ typedef enum {
 	N_NE,				/* 38 */
 	N_CONDITIONAL,			/* 39 */
 	N_SCALAR_OBJ,			/* 40 */
-	N_STRING,			/* 41 */
-	N_LOGXOR			/* 42 */
+	N_QUOT_STR,			/* 41 */
+	N_LOGXOR,			/* 42 */
+	N_CHARFUNC,			/* 43 */
+	N_ILACEFUNC,			/* 44 */
+	N_POSNFUNC,			/* 45 */
 	/* N_SLCT_CHAR */		/* 40 */	/* obsolete? */
 } Scalar_Expr_Node_Code;
 
-typedef struct scalar_expression_node {
+#define MAX_SEN_CHILDREN  3
+
+struct scalar_expression_node {
 	Scalar_Expr_Node_Code	sen_code;
-	const char *		sen_string;
-	const char *		sen_string2;
+//	const char *		sen_string;
+//	const char *		sen_string2;
 	index_t			sen_index;
-	struct scalar_expression_node	*sen_child[3];
-	double			sen_dblval;
-} Scalar_Expr_Node;
+	Function *		sen_func_p;
+	Scalar_Expr_Node	*sen_child[MAX_SEN_CHILDREN];
+	//double		sen_dblval;
+	Typed_Scalar *		sen_tsp;
+};
 
 #define NO_EXPR_NODE ((Scalar_Expr_Node *)NULL)
 
 
 /* globals */
 
-extern Data_Obj *(*obj_func)(QSP_ARG_DECL  const char *);
-extern Data_Obj *(*sub_func)(QSP_ARG_DECL  Data_Obj *,index_t);
-extern Data_Obj *(*csub_func)(QSP_ARG_DECL  Data_Obj *,index_t);
+//extern double parse_number(QSP_ARG_DECL  const char **);
+//extern double pexpr(QSP_ARG_DECL  const char *);
+extern Typed_Scalar * parse_number(QSP_ARG_DECL  const char **);
+extern Typed_Scalar * pexpr(QSP_ARG_DECL  const char *);
+extern const char *function_name(void *objp);
+extern const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp);
 
-extern double parse_number(QSP_ARG_DECL  const char **);
-extern double pexpr(QSP_ARG_DECL  const char *);
+extern void set_obj_funcs(
+	Data_Obj *(*obj_get_func)(QSP_ARG_DECL  const char *),
+	Data_Obj *(*obj_check_func)(QSP_ARG_DECL  const char *),
+	Data_Obj *(*sub_func)(QSP_ARG_DECL  Data_Obj*,index_t),
+	Data_Obj *(*csub_func)(QSP_ARG_DECL  Data_Obj*,index_t) );
 
+#ifdef BUILD_FOR_OBJC
+extern int check_ios_sizable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_strv_func( const char **strptr, Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_positionable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_interlaceable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
+#endif /* BUILD_FOR_OBJC */
+
+// temporary!  BUG
+/*static*/ extern void dump_etree(QSP_ARG_DECL  Scalar_Expr_Node *enp);
 
 #endif /* !NEXPR_H */
 

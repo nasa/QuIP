@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_polhemus_polh_dev[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -29,7 +27,7 @@ char VersionId_polhemus_polh_dev[] = QUIP_VERSION_STRING;
 #endif
 
 #ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
+#include <sys/ioctl.h>      // FIONREAD
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -50,12 +48,13 @@ char VersionId_polhemus_polh_dev[] = QUIP_VERSION_STRING;
 #include <ctype.h>
 #endif
 
-#include "myerror.h"
-#include "getbuf.h"
-#include "savestr.h"
-#include "sigpush.h"
+//#include "myerror.h"
+//#include "getbuf.h"
+//#include "savestr.h"
+//#include "sigpush.h"
+#include "quip_prot.h"
 
-#include "ioctl_polhemus.h"
+//#include "ioctl_polhemus.h"
 #include "polh_dev.h"
 #include "debug.h"
 
@@ -72,13 +71,14 @@ char VersionId_polhemus_polh_dev[] = QUIP_VERSION_STRING;
 
 /* polhemus file descriptors */
 static int active_mask=0;
+int curr_station_idx=0;
 
 int polh_fd = (-1);
 #ifdef USE_DATA_DEV
 static int polh_data_fd = (-1);
 #endif /* USE_DATA_DEV */
 
-int which_receiver = POLH_RECV;		/* polhemus receiver number */
+int which_receiver = POLH_RECV;		/* polhemus receiver number, defaults to 1 */
 int polh_continuous = 0;		/* continuous output flag */
 int polh_units = PH_CM_FMT;		/* units format (default is cm.) */
 int n_active_stations=0;
@@ -96,31 +96,39 @@ short resp_buf[RESP_BUF_SIZE];
 int n_response_chars;
 
 /* Implement data buffering for polhemus device */
-#define POLHEMUS_BUFFER_SIZE	4096
+//#define POLHEMUS_BUFFER_SIZE	4096
+#define POLHEMUS_BUFFER_SIZE	8192
 static char polh_buffer[POLHEMUS_BUFFER_SIZE];
 static int polh_next_wr=0;
 static int polh_next_rd=0;
 static int n_polh_free=POLHEMUS_BUFFER_SIZE;
 static int n_polh_avail=0;
 
+#ifdef QUIP_DEBUG
+#define POLH_BUF_DEBUG							\
+		if( debug & debug_polhemus ){				\
+			sprintf(DEFAULT_ERROR_STRING,			\
+				"fill_polh_buffer read %d bytes",m);	\
+			NADVISE(DEFAULT_ERROR_STRING);			\
+		}
+#else	// ! QUIP_DEBUG
+#define POLH_BUF_DEBUG
+#endif	// ! QUIP_DEBUG
+
 #define GET_CHUNK(n_want)						\
 									\
 	if( (m=read(polh_fd,&polh_buffer[polh_next_wr],n_want)) !=	\
 							n_want ){	\
 		if( m < 0 ){						\
-			tell_sys_error("read");				\
-			warn("error reading polhemus data");		\
+			_tell_sys_error(DEFAULT_QSP_ARG  "read");	\
+			NWARN("error reading polhemus data");		\
 		} else {						\
-			sprintf(error_string,				\
+			sprintf(DEFAULT_ERROR_STRING,			\
 		"Expected %d polhemus bytes, got %d",n_want,m);		\
-			warn(error_string);				\
+			NWARN(DEFAULT_ERROR_STRING);			\
 		}							\
 	} else {							\
-		if( debug & debug_polhemus ){				\
-			sprintf(error_string,				\
-				"fill_polh_buffer read %d bytes",m);	\
-			advise(error_string);				\
-		}							\
+		POLH_BUF_DEBUG						\
 	}								\
 	polh_next_wr += n_want;						\
 	if( polh_next_wr >= POLHEMUS_BUFFER_SIZE )			\
@@ -129,7 +137,9 @@ static int n_polh_avail=0;
 	n_polh_avail += n_want;
 
 
-int n_printable(short *buf,int n)
+#ifdef NOT_USED
+
+static int n_printable(short *buf,int n)
 {
 	char *s;
 	int i;
@@ -143,19 +153,21 @@ int n_printable(short *buf,int n)
 	return(2*n);
 }
 
-void print_string(short *buf,int n)
+static void print_string(short *buf,int n)
 {
 	char cbuf[LLEN];
 
 	if( n > LLEN-1 ){
-		warn("print_string:  buffer size too small for data");
+		NWARN("print_string:  buffer size too small for data");
 		return;
 	}
 
 	memcpy(cbuf,buf,n);
 	cbuf[n]=0;
-	prt_msg(cbuf);
+	_prt_msg(DEFAULT_QSP_ARG  cbuf);
 }
+
+#endif // NOT_USED
 
 void display_buffer(short *buf,int n)
 {
@@ -171,16 +183,16 @@ void display_buffer(short *buf,int n)
 
 		str[0]=(*cp);
 		str[1]=0;
-		s=show_printable(str);
-		sprintf(msg_str,"\t0x%x\t\t0x%x\t%s", *buf, *cp, s);
-		prt_msg_frag(msg_str);
+		s=show_printable(DEFAULT_QSP_ARG  str);
+		sprintf(DEFAULT_MSG_STR,"\t0x%x\t\t0x%x\t%s", *buf, *cp, s);
+		_prt_msg_frag(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 
 		cp++;
 		str[0]=(*cp);
 		str[1]=0;
-		s=show_printable(str);
-		sprintf(msg_str,"\t0x%x\t%s", *cp, s);
-		prt_msg(msg_str);
+		s=show_printable(DEFAULT_QSP_ARG  str);
+		sprintf(DEFAULT_MSG_STR,"\t0x%x\t%s", *cp, s);
+		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 
 		buf++;
  	}
@@ -190,15 +202,15 @@ void display_buffer(short *buf,int n)
 static int open_polh_dev(void)
 {
 	if( (polh_fd = open(POLH_DEV, O_RDWR)) < 0 ) {
-		sprintf(error_string,"open_polh_dev: opening polhemus device %s",POLH_DEV);
-		tell_sys_error(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"open_polh_dev: opening polhemus device %s",POLH_DEV);
+		_tell_sys_error(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
 #ifdef USE_DATA_DEV
 	if( (polh_data_fd = open(POLH_DATA_DEV, O_RDONLY) ) < 0) {
-		sprintf(error_string,"open_polh_dev: opening polhemus data device %s",POLH_DATA_DEV);
-		tell_sys_error(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"open_polh_dev: opening polhemus data device %s",POLH_DATA_DEV);
+		_tell_sys_error(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 #endif /* USE_DATA_DEV */
@@ -206,7 +218,7 @@ static int open_polh_dev(void)
 	return(0);
 }
 
-#else
+#else	// ! INSIDE_TRACK
 
 void flush_input_data()
 {
@@ -216,15 +228,15 @@ void flush_input_data()
 
 	if( ioctl(polh_fd,FIONREAD,&n) < 0 ){
 		perror("ioctl (FIONREAD)");
-		warn("error getting polhemus word count");
+		NWARN("error getting polhemus word count");
 		n=1;	/* just in case... */
 	}
 	if( n > 0 ){
-		sprintf(error_string,"Flushing %d pending input characters...",n);
-		advise(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"Flushing %d pending input characters...",n);
+		NADVISE(DEFAULT_ERROR_STRING);
 
 		if( tcflush(polh_fd,TCIFLUSH) < 0 ){
-			tell_sys_error("tcflush");
+			_tell_sys_error(DEFAULT_QSP_ARG  "tcflush");
 		}
 	}
 }
@@ -245,32 +257,32 @@ void fill_polh_buffer(void)
 
 	if( ioctl(polh_fd,FIONREAD,&n) < 0 ){
 		perror("ioctl (FIONREAD)");
-		warn("error getting number of readable polhemus chars");
+		NWARN("error getting number of readable polhemus chars");
 		return;
 	}
 	if( n == 0 ) return;
-//sprintf(error_string,"fill_polh_buffer:  %d chars available",n);
-//advise(error_string);
+//sprintf(DEFAULT_ERROR_STRING,"fill_polh_buffer:  %d chars available",n);
+//NADVISE(DEFAULT_ERROR_STRING);
 	if( n <= n_polh_free ){		/* we have room for the data */
 		if( n <= (POLHEMUS_BUFFER_SIZE-polh_next_wr) ){		/* all fits without wraparound */
-//sprintf(error_string,"fill_polh_buffer:  trying to get chunk of %d chars",n);
-//advise(error_string);
+//sprintf(DEFAULT_ERROR_STRING,"fill_polh_buffer:  trying to get chunk of %d chars",n);
+//NADVISE(DEFAULT_ERROR_STRING);
 
 			GET_CHUNK(n)
 		} else {						/* need to wrap-around */
 			n1=POLHEMUS_BUFFER_SIZE-polh_next_wr;
-//sprintf(error_string,"fill_polh_buffer:  trying to get chunk of %d chars",n1);
-//advise(error_string);
+//sprintf(DEFAULT_ERROR_STRING,"fill_polh_buffer:  trying to get chunk of %d chars",n1);
+//NADVISE(DEFAULT_ERROR_STRING);
 			GET_CHUNK(n1)
 			n -= n1;
-//sprintf(error_string,"fill_polh_buffer:  trying to get chunk of %d chars",n);
-//advise(error_string);
+//sprintf(DEFAULT_ERROR_STRING,"fill_polh_buffer:  trying to get chunk of %d chars",n);
+//NADVISE(DEFAULT_ERROR_STRING);
 			GET_CHUNK(n)
 		}
 	} else {
-		sprintf(error_string,"%d chars readable polhemus characters, but only %d free buffer locs",
+		sprintf(DEFAULT_ERROR_STRING,"%d chars readable polhemus characters, but only %d free buffer locs",
 			n,n_polh_free);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 	}
 }
 
@@ -307,37 +319,46 @@ int polh_ungetc(int c)
 static int open_polh_dev(void)
 {
 	if( (polh_fd = open(POLH_DEV, O_RDWR)) < 0 ) {
-		sprintf(error_string,"open_polh_dev: opening polhemus device %s",POLH_DEV);
-		tell_sys_error(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"open_polh_dev: opening polhemus device %s",POLH_DEV);
+		_tell_sys_error(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
 	/* Now set baud rate etc. */
+
+	/* The old Walt Johnson unit in the vision lab is set to 115200 baud...
+	 * Is this selected by the DIP switches?
+	 */
 
 	/* after fastrak power-up, the device doesn't respond to the reset (W)
 	 * command until a carriage return has been sent, which triggers
 	 * an error message!?
 	 */
 
+fprintf(stderr,"open_polh_dev:  flushing input data...\n");
 	flush_input_data();
 
 	/* Should we flush any old data, reset device to known state, etc?
 	 * What if the device is currently in continuous mode?
   	 */
+fprintf(stderr,"open_polh_dev:  sending REINIT_SYS command...\n");
 	if(send_polh_cmd(PH_REINIT_SYS, NULL) < 0 ) {
-		warn("open_polh_dev:  unable to reinitialize system");
+		NWARN("open_polh_dev:  unable to reinitialize system");
 		return(-1);
 	}
 	/* The reinit command will halt continuous output, but we should now wait a few
 	 * clicks and then flush any pending output from the device.
 	 */
+fprintf(stderr,"open_polh_dev:  flushing input data again...\n");
 	flush_input_data();
 
+fprintf(stderr,"open_polh_dev:  done.\n");
 	return(0);
 } /* end open_polh_dev */
 
 	
-#endif
+#endif	// ! INSIDE_TRACK
+
 
 void read_response(int display_flag)
 {
@@ -348,9 +369,9 @@ void read_response(int display_flag)
 	if( n <= 0 ) return;
 
 	if( n > RESP_BUF_SIZE ){
-		sprintf(error_string,"%d response words available, buffer size is only %d",
+		sprintf(DEFAULT_ERROR_STRING,"%d response words available, buffer size is only %d",
 			n,RESP_BUF_SIZE);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		n = RESP_BUF_SIZE;
 	}
 
@@ -358,11 +379,11 @@ void read_response(int display_flag)
 
 	if( (n_response_chars=read(polh_fd,resp_buf,n)) != n ){
 		if( n_response_chars < 0 ) {
-			tell_sys_error("read_response");
-			warn("error reading polhemus data");
+			_tell_sys_error(DEFAULT_QSP_ARG  "read_response");
+			NWARN("error reading polhemus data");
 		} else {
-			sprintf(error_string,"read_response:  %d bytes requested, %d actually read",n,n_response_chars);
-			warn(error_string);
+			sprintf(DEFAULT_ERROR_STRING,"read_response:  %d bytes requested, %d actually read",n,n_response_chars);
+			NWARN(DEFAULT_ERROR_STRING);
 		}
 	}
 	if( display_flag )
@@ -378,7 +399,7 @@ void clear_polh_dev(void)
 	int total=0;
 
 	if( polhemus_word_count()<0 ){
-		advise("no bytes to clear from polhemus device");
+		NADVISE("no bytes to clear from polhemus device");
 		return;
 	}
 
@@ -389,12 +410,12 @@ void clear_polh_dev(void)
 
 		if( (n_read=read(polh_fd, clear_buf, n_want*2)) != (n_want*2) ) {
 			if( n_read < 0 ) {
-				tell_sys_error("clear_polh_dev");
-				warn("error clearing polhemus device");
+				_tell_sys_error(DEFAULT_QSP_ARG  "clear_polh_dev");
+				NWARN("error clearing polhemus device");
 				return;
 			} else {
-				sprintf(error_string,"clear_polh_dev: %d bytes requested, %d actually read",n_want*2, n_read);
-				warn(error_string);
+				sprintf(DEFAULT_ERROR_STRING,"clear_polh_dev: %d bytes requested, %d actually read",n_want*2, n_read);
+				NWARN(DEFAULT_ERROR_STRING);
 			}	
 		}	
 		total += n_read;
@@ -402,51 +423,53 @@ void clear_polh_dev(void)
 	return;
 }
 
-static void init_output_data_format(int station)
+static void init_output_data_format(int station_idx)
 {
 	Polh_Record_Format *prfp;
 
-	prfp = &station_info[station].sd_multi_prf;
+	prfp = &station_info[station_idx].sd_multi_prf;
 
 	prfp->rf_n_data = 4;
 	prfp->rf_output[0] = SECONDS;
 	prfp->rf_output[1] = MSECS;
 	prfp->rf_output[2] = XYZ_INT;
 	prfp->rf_output[3] = EULER_INT;
-	prfp->rf_station = station;
+	prfp->rf_station = station_idx;
 	prfp->rf_n_words = 12;
 	polhemus_output_data_format( prfp );
 
 	/*
-	show_output_data_format(station);
+	show_output_data_format(station_idx);
 	*/
 }
 
-static int set_default_polh(void)
+static int set_default_polh(SINGLE_QSP_ARG_DECL)
 {
 #ifdef INSIDE_TRACK
 	/* initialize to floating output */
 	/* station number, xyz_int, euler_int, crlf */
 	if(send_string("O1,2,4,1\r") < 0 ) { 
-		warn("set_default_polh: Unable to initialize to floating output");
+		NWARN("set_default_polh: Unable to initialize to floating output");
 		return(-1);
 	}
 
 	usleep(100000);	/* sleep 1/10 sec */
-#endif
+#endif // INSIDE_TRACK
 
+fprintf(stderr,"set_default_polh:  clearing device...\n");
 	clear_polh_dev();
 
 	/* set to centimeter output */
+fprintf(stderr,"set_default_polh:  sending centimeter command...\n");
 	if(send_polh_cmd(PH_CM_FMT, NULL) < 0 ) {
-		warn("set_default_polh: Unable to set to centimeter output");
+		NWARN("set_default_polh: Unable to set to centimeter output");
 		return(-1);
 	}
 
 	/* set active station to 1 */
 #ifdef USE_DATA_DEV
 	if(send_string("l1,1\r") < 0 ){
-		warn("set_default_polh: Unable to set active station number to 1");
+		NWARN("set_default_polh: Unable to set active station number to 1");
 		return(-1);
 	}
 #endif /* USE_DATA_DEV */
@@ -455,29 +478,37 @@ static int set_default_polh(void)
 	init_output_data_format(0);
 	init_output_data_format(1);
 
-	get_active_stations();	/* make sure the flags reflect reality */
+fprintf(stderr,"set_default_polh:  getting active stations...\n");
+	get_active_stations(SINGLE_QSP_ARG);
+		/* make sure the flags reflect reality */
 
 	if( ! STATION_IS_ACTIVE(0) )
 		activate_station(0,1);	/* make station 1 active */
 	if( STATION_IS_ACTIVE(1) )
 		activate_station(1,0);	/* make station 2 inactive */
-	curr_station=0;
+	curr_station_idx=0;
 	
+fprintf(stderr,"set_default_polh:  sleeping 100 ms...\n");
 	usleep(100000);
+fprintf(stderr,"set_default_polh:  clearing...\n");
 	clear_polh_dev();
 
+fprintf(stderr,"set_default_polh:  setting non-active station number to 2 (?)...\n");
 	if( send_string("l2,0\r") < 0 ) { 
-		warn("set_default_polh: Unable to set non-active station number to 2");
+		NWARN("set_default_polh: Unable to set non-active station number to 2");
 		return(-1);
 	}
 	
+fprintf(stderr,"set_default_polh:  sleeping 100 ms...\n");
 	usleep(100000);
+fprintf(stderr,"set_default_polh:  clearing...\n");
 	clear_polh_dev();
+fprintf(stderr,"set_default_polh:  done.\n");
 
 	return(0);
 }
 
-int init_polh_dev(void)
+int init_polh_dev(SINGLE_QSP_ARG_DECL)
 {
 #ifdef CAUTIOUS
 	if( polh_fd >= 0 
@@ -485,20 +516,21 @@ int init_polh_dev(void)
 			|| polh_data_fd >= 0
 #endif /* USE_DATA_DEV */
 			) {
-		warn("CAUTIOUS: init_polh_dev: polhemus device already intialized!?");
+		NWARN("CAUTIOUS: init_polh_dev: polhemus device already intialized!?");
 		return(0);
 	}
 #endif /* CAUTIOUS */
 
-	if(open_polh_dev() < 0 || set_default_polh() < 0) return(-1);
+	if(open_polh_dev() < 0 || set_default_polh(SINGLE_QSP_ARG) < 0) return(-1);
 
+fprintf(stderr,"init_polh_dev:  done.\n");
 	return(0);
-}
+} // init_polh_dev
 
 /* What is the point of this?  Are we trying to reset the driver?
  */
 
-int reopen_polh_dev(void)
+int reopen_polh_dev(SINGLE_QSP_ARG_DECL)
 {
 #ifdef CAUTIOUS
 	if( (!(polh_fd >= 0))
@@ -506,26 +538,26 @@ int reopen_polh_dev(void)
 			&& !(polh_data_fd >= 0)
 #endif /* USE_DATA_DEV */
 			) {
-		warn("CAUTIOUS: reopen_polh_dev: polhemus device not opened to close!?"); 
+		NWARN("CAUTIOUS: reopen_polh_dev: polhemus device not opened to close!?"); 
 		return(-1);
 	}
 #endif /* CAUTIOUS */
 
 	if( close(polh_fd) < 0 ) {
-		tell_sys_error("unable to close polhemus device");
+		_tell_sys_error(DEFAULT_QSP_ARG  "unable to close polhemus device");
 		return(-1);
 	}
 
 #ifdef USE_DATA_DEV
 	if( close(polh_data_fd) < 0 ) {
-		tell_sys_error("unable to close polhemus data device");
+		_tell_sys_error(DEFAULT_QSP_ARG  "unable to close polhemus data device");
 		return(-1);
 	}
 	polh_data_fd=-1;
 #endif /* USE_DATA_DEV */
 	polh_fd=-1;
 	
-	return( init_polh_dev() );
+	return( init_polh_dev(SINGLE_QSP_ARG) );
 }
 
 #ifdef INSIDE_TRACK
@@ -542,23 +574,23 @@ static int read_until(char *databuf, int n_want, int fd )
 	/* Keep reading data until we get enough requested bytes */
 	while( (n_read = read(fd, &databuf[n_orig-n_want], n_want)) != n_want ){
 		if( n_read < 0  ){
-			tell_sys_error("read_until");
+			_tell_sys_error(DEFAULT_QSP_ARG  "read_until");
 			return(-1);
 		}
-		sprintf(msg_str,"read_until (fd=%d):  %d bytes requested, %d actually read",
+		sprintf(DEFAULT_MSG_STR,"read_until (fd=%d):  %d bytes requested, %d actually read",
 			fd,n_want,n_read);
-		advise(msg_str);
+		NADVISE(DEFAULT_MSG_STR);
 		n_want -= n_read;
 		if( ++num_reads >= MAX_POLHEMUS_READS ) {
-			warn("read_polh_dev: timed out from reading data");
+			NWARN("read_polh_dev: timed out from reading data");
 			return(-1);
 		}
 	}
 {
 int i;
 for(i=0;i<n_orig;i++){
-sprintf(error_string,"%d\t0x%x\t%c",i,databuf[i],databuf[i]);
-advise(error_string);
+sprintf(DEFAULT_ERROR_STRING,"%d\t0x%x\t%c",i,databuf[i],databuf[i]);
+NADVISE(DEFAULT_ERROR_STRING);
 }
 }
 
@@ -570,7 +602,7 @@ int read_polh_dev( short* databuf, int n_want )
 	int n;
 
 	if( (n=read_until((char *)databuf,n_want,polh_fd)) < 0 )
-		warn("error reading polhemus");
+		NWARN("error reading polhemus");
 	return(n);
 }
 
@@ -580,7 +612,7 @@ int read_polh_data( void *raw_pdp, int n_want )
 	int n;
 
 	if( (n=read_until((char *)raw_pdp,n_want,polh_data_fd)) < 0 )
-		warn("error reading polhemus data");
+		NWARN("error reading polhemus data");
 	return(n);
 }
 #else /* ! USE_DATA_DEV */
@@ -590,7 +622,7 @@ int read_polh_data( void *raw_pdp, int n_want )
 	int n;
 
 	if( (n=read_until((char *)raw_pdp,n_want,polh_fd)) < 0 )
-		warn("error reading polhemus data");
+		NWARN("error reading polhemus data");
 	return(n);
 }
 
@@ -600,9 +632,9 @@ int read_polh_data( void *raw_pdp, int n_want )
 											\
 	if( strncmp( resp_chars+posn, str, strlen(str) ) ){				\
 		/* display buffer */							\
-		sprintf(error_string,"Expected to find string \"%s\" at position %d",	\
+		sprintf(DEFAULT_ERROR_STRING,"Expected to find string \"%s\" at position %d",	\
 				str,posn);						\
-		warn(error_string);							\
+		NWARN(DEFAULT_ERROR_STRING);							\
 		display_buffer(&resp_buf[0],n_response_chars/2);			\
 		return;									\
 	}										\
@@ -628,8 +660,8 @@ static void parse_error()
 	while( isspace(resp_chars[posn]) )
 		posn++;
 	if( resp_chars[posn] != '-' ){
-		sprintf(error_string,"parse_error:  expected '-' at position %d",posn);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"parse_error:  expected '-' at position %d",posn);
+		NWARN(DEFAULT_ERROR_STRING);
 		display_buffer(resp_buf,n_response_chars/2);
 		return;
 	}
@@ -642,20 +674,20 @@ static void parse_error()
 	}
 	error_code *= -1;
 	switch( error_code ){
-		case -1:	warn("required field missing"); break;
-		case -2:	warn("required numeric field is non-numeric"); break;
-		case -3:	warn("value is outside required range"); break;
-		case -4:	warn("specified frequency not hardware configured"); break;
-		case -99:	warn("undefined input - cannot identify command"); break;
+		case -1:	NWARN("required field missing"); break;
+		case -2:	NWARN("required numeric field is non-numeric"); break;
+		case -3:	NWARN("value is outside required range"); break;
+		case -4:	NWARN("specified frequency not hardware configured"); break;
+		case -99:	NWARN("undefined input - cannot identify command"); break;
 		default:
-				sprintf(error_string,"Unrecognized error code %d",error_code);
-				warn(error_string);
+				sprintf(DEFAULT_ERROR_STRING,"Unrecognized error code %d",error_code);
+				NWARN(DEFAULT_ERROR_STRING);
 				display_buffer(resp_buf,n_response_chars/2);
 				return;
 	}
 
 
-advise("parse_error: calling display_buffer");
+NADVISE("parse_error: calling display_buffer");
 	display_buffer(&resp_buf[0],n_response_chars/2);			\
 }
 
@@ -672,8 +704,8 @@ char *read_polh_line(void)
 		fill_polh_buffer();
 		while( i < (POLHEMUS_LINE_SIZE-1) && (c=polh_getc()) >= 0 ){
 /*
-sprintf(error_string,"read_polh_line has character 0x%x",c);
-advise(error_string);
+sprintf(DEFAULT_ERROR_STRING,"read_polh_line has character 0x%x",c);
+NADVISE(DEFAULT_ERROR_STRING);
 */
 			/* the polhemus terminates lines with \r\n combos, but we
 			 * end the line when we see the \r...  so when we go to read
@@ -694,36 +726,39 @@ advise(error_string);
 static int recv_polh_data(QSP_ARG_DECL  Ph_Cmd_Code cmd)
 {
 	char *s;
+	char expected[8];
 
+fprintf(stderr,"recv_polh_data:  reading line...\n");
 	s=read_polh_line();
+fprintf(stderr,"recv_polh_data:  line read:  \"%s\".\n",s);
 
 	switch(polh_cmds[cmd].pc_code){
 		case PH_SYNC_MODE:
 			/* "2 y0\r" */
 			if( strncmp(s,"2 y",3) ){
-				sprintf(error_string,"recv_polh_data PH_SYNC_MODE:  read \"%s\", expected \"2 y...\"",
-					show_printable(s));
-				warn(error_string);
+				sprintf(DEFAULT_ERROR_STRING,"recv_polh_data PH_SYNC_MODE:  read \"%s\", expected \"2 y...\"",
+					show_printable(DEFAULT_QSP_ARG  s));
+				NWARN(DEFAULT_ERROR_STRING);
 			} else {
 				switch(s[3]){
 					case '0':
-						prt_msg("Internal sync");
+						_prt_msg(DEFAULT_QSP_ARG  "Internal sync");
 						ASSIGN_VAR(POLHEMUS_SYNC_VAR_NAME,"internal");
 						break;
 					case '1':
-						prt_msg("External sync");
+						_prt_msg(DEFAULT_QSP_ARG  "External sync");
 						ASSIGN_VAR(POLHEMUS_SYNC_VAR_NAME,"external");
 						break;
 					case '2':
-						prt_msg("External sync");
+						_prt_msg(DEFAULT_QSP_ARG  "External sync");
 						ASSIGN_VAR(POLHEMUS_SYNC_VAR_NAME,"software");
 						break;
 #ifdef CAUTIOUS
 					default:
-						sprintf(error_string,
+						sprintf(DEFAULT_ERROR_STRING,
 					"CAUTIOUS:  recv_polh_data:  read \"%s\", unhandled sync mode",
-							show_printable(s));
-						warn(error_string);
+							show_printable(DEFAULT_QSP_ARG  s));
+						NWARN(DEFAULT_ERROR_STRING);
 						break;
 #endif /* CAUTIOUS */
 				}
@@ -731,15 +766,17 @@ static int recv_polh_data(QSP_ARG_DECL  Ph_Cmd_Code cmd)
 			break;
 
 		case PH_STATUS:
-sprintf(error_string,"PH_STATUS recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
-advise(error_string);
+sprintf(DEFAULT_ERROR_STRING,"PH_STATUS recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+NADVISE(DEFAULT_ERROR_STRING);
 			break;
 		case PH_STATION:
 			/* 21l1000\r */
-			if( strncmp(s,"21l",3) ){
-				sprintf(error_string,"recv_polh_data PH_STATION:  read \"%s\", expected \"21l...\"",
-					show_printable(s));
-				warn(error_string);
+			sprintf(expected,"2%cl",'1'+curr_station_idx);
+			if( strncmp(s,expected,3) ){
+				sprintf(DEFAULT_ERROR_STRING,"recv_polh_data PH_STATION:  read \"%s\", expected \"%s...\"",
+					show_printable(DEFAULT_QSP_ARG  s),
+					expected);
+				NWARN(DEFAULT_ERROR_STRING);
 			} else {
 				int i=3;
 				char *str;
@@ -754,23 +791,23 @@ advise(error_string);
 							str="enabled";
 							break;
 						default:
-							sprintf(error_string,
+							sprintf(DEFAULT_ERROR_STRING,
 			"CAUTIOUS:  recv_polh_data PH_STATION:  read \"%s\", unexpected status char in position %d",
-								show_printable(s),i);
-							warn(error_string);
+								show_printable(DEFAULT_QSP_ARG  s),i);
+							NWARN(DEFAULT_ERROR_STRING);
 							break;
 					}
 					if( str != NULL ){
-						sprintf(msg_str,"Station %d is %s",i-2,str);
-						prt_msg(msg_str);
+						sprintf(DEFAULT_MSG_STR,"Station %d is %s",i-2,str);
+						_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 					}
 					i++;
 				}
 			}
 			break;
 		case PH_ALIGNMENT:
-sprintf(error_string,"PH_ALIGNMENT recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
-advise(error_string);
+sprintf(DEFAULT_ERROR_STRING,"PH_ALIGNMENT recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+NADVISE(DEFAULT_ERROR_STRING);
 			break;
 		case PH_XMTR_ANGLES:
 		case PH_RECV_ANGLES:
@@ -780,20 +817,22 @@ advise(error_string);
 		case PH_ANGULAR_ENV:
 		case PH_POSITIONAL_ENV:
 		case PH_HEMISPHERE:
+#ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-sprintf(error_string,"recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
-advise(error_string);
+sprintf(DEFAULT_ERROR_STRING,"recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+NADVISE(DEFAULT_ERROR_STRING);
 }
-sprintf(error_string,"recv_polh_data received \"%s\", NOT parsing...",show_printable(s));
-advise(error_string);
+#endif // QUIP_DEBUG
+sprintf(DEFAULT_ERROR_STRING,"recv_polh_data received \"%s\", NOT parsing...",show_printable(DEFAULT_QSP_ARG  s));
+NADVISE(DEFAULT_ERROR_STRING);
 			/* BUG - need to parse the string */
 			break;
 		default:
-			sprintf(error_string,"Unhandled case in recv_polh_data for %s command",
+			sprintf(DEFAULT_ERROR_STRING,"Unhandled case in recv_polh_data for %s command",
 				polh_cmds[cmd].pc_name);
-			warn(error_string);
-sprintf(error_string,"recv_polh_data received \"%s\"",show_printable(s));
-advise(error_string);
+			NWARN(DEFAULT_ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"recv_polh_data received \"%s\"",show_printable(DEFAULT_QSP_ARG  s));
+NADVISE(DEFAULT_ERROR_STRING);
 			return(-1);
 			break;
 	}
@@ -801,90 +840,6 @@ advise(error_string);
 }
 
 #define MAX_POLHEMUS_COUNT_WAITS	10 	/* one second */	
-
-#ifdef FOOBAR
-{
-	int n,nwant,count_waits=0;
-#ifdef CAUTIOUS
-	if(polh_cmds[cmd].pc_rec_size <= 0) {
-		warn("recv_polh_data: bad output record size!?");
-		return(-1);
-	}
-#endif
-
-	nwant = polh_cmds[cmd].pc_rec_size;
-	n = polhemus_byte_count();
-
-sprintf(error_string,"expect %d bytes in polhemus response, byte count is %d",
-nwant,n);
-advise(error_string);
-
-	if( n < 0 ){
-		warn("recv_polh_data:  problem determining byte count");
-		return(-1);
-	}
-
-
-	while( n < nwant ){
-advise("waiting for polhemus data");
-		usleep(100000);	/* sleep 1/10 sec. */
-		n = polhemus_byte_count();
-		if( n < 0 ){
-			warn("recv_polh_data:  problem determining byte count");
-			return(-1);
-		}
-		if( ++count_waits >= MAX_POLHEMUS_COUNT_WAITS ) {
-			warn("recv_polh_data: timed out waiting for data");
-			return(-1);
-		}
-	}
-
-sprintf(error_string,"expect %d bytes in polhemus response, byte count is %d",
-nwant,n);
-advise(error_string);
-
-	if( n != nwant ){
-		sprintf(error_string,"recv_polh_data:  expected %d bytes, but %d are available!?",
-				nwant,n);
-		warn(error_string);
-		if( n > 2 ){	/* start to read anyway, check for error code... */
-			parse_error();
-			return(-1);
-		} else {
-			read_response(1);
-			return(-1);
-		}
-	}
-
-	if( read_polh_dev(resp_buf, nwant ) < 0 ) {
-		sprintf(error_string, "recv_polh_data: error reading output record type %s of size %d bytes",
-			polh_cmds[cmd].pc_cmdstr, nwant);
-		warn(error_string);
-		return(-1);
-	}
-
-	/* check for errors in the output record */
-	if( check_polh_output((char *)resp_buf, curr_station, cmd ) < 0 ) {
-		sprintf(error_string,"recv_polh_data: Unable to get %s", polh_cmds[cmd].pc_name);
-		warn(error_string);
-		return(-1);
-	}	
-
-#ifdef DEBUG
-if( debug & debug_polhemus ){
-sprintf(error_string,"received data:  %s",(char *)resp_buf);
-advise(error_string);
-}
-#endif /* DEBUG */
-
-	/* Now the buffer should be empty... */
-	if( (n = polhemus_byte_count()) > 0 ){
-		sprintf(error_string,"After reading response there are %d bytes available!?",n);
-		warn(error_string);
-	}
-	return(0);
-}
-#endif /* FOOBAR */
 
 /* Send a command to the polhemus */
 
@@ -894,8 +849,9 @@ int send_polh_cmd(Ph_Cmd_Code cmd, const char * cmdargs)
 	char command[LLEN];
 
 #ifdef CAUTIOUS
-	if( cmd < 0 || cmd >= N_PH_CMD_CODES ) {
-		warn("send_polh_cmd: Unhandled command code!?");
+	// cmd is an unsigned type!
+	if( /* cmd < 0 || */ cmd >= N_PH_CMD_CODES ) {
+		NWARN("send_polh_cmd: Unhandled command code!?");
 		return(-1);
 	}
 #endif
@@ -903,9 +859,9 @@ int send_polh_cmd(Ph_Cmd_Code cmd, const char * cmdargs)
 	/* check if we can peform the requested operation with the command code */
 	/* why does reinit command trigger this message??? */
 	if( !CAN_SET(cmd) ) {
-		sprintf(error_string,
+		sprintf(DEFAULT_ERROR_STRING,
 			"send_polh_cmd: command %s cannot be used to SET", polh_cmds[cmd].pc_name);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);	
 	}
 		
@@ -916,10 +872,10 @@ int send_polh_cmd(Ph_Cmd_Code cmd, const char * cmdargs)
 	switch( polh_cmds[cmd].pc_trs ) {
 		case PH_NEED_XMTR : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, POLH_XMTR_NUM); break;
 		case PH_NEED_RECV : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, which_receiver); break;
-		case PH_NEED_STAT : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, curr_station+1); break;
+		case PH_NEED_STAT : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, curr_station_idx+1); break;
 		case PH_NEED_NONE : sprintf(code_id, "%s", polh_cmds[cmd].pc_cmdstr); break;
 #ifdef CAUTIOUS
-		default : warn("send_polh_cmd: Unknown transmitter/receiver/station flag value!?"); return(-1); break;
+		default : NWARN("send_polh_cmd: Unknown transmitter/receiver/station flag value!?"); return(-1); break;
 #endif
 	}
 
@@ -930,9 +886,9 @@ int send_polh_cmd(Ph_Cmd_Code cmd, const char * cmdargs)
 	 * they have arguments.
 	 */ 
 	if(cmdargs) {
-//sprintf(error_string,"Appending command args \"%s\" to %s command",
-//show_printable(cmdargs),polh_cmds[cmd].pc_name);
-//advise(error_string);
+//sprintf(DEFAULT_ERROR_STRING,"Appending command args \"%s\" to %s command",
+//show_printable(DEFAULT_QSP_ARG  cmdargs),polh_cmds[cmd].pc_name);
+//NADVISE(DEFAULT_ERROR_STRING);
 		switch(cmd){
 			case PH_STATION:
 			case PH_POS_FILTER:
@@ -950,9 +906,9 @@ int send_polh_cmd(Ph_Cmd_Code cmd, const char * cmdargs)
 				sprintf(command, "%s,%s", code_id, cmdargs);
 				break;
 			default:
-				sprintf(error_string,"Unhandled Case in send_polh_cmd:  %s, cmd_args = \"%s\"",
-					polh_cmds[cmd].pc_name,show_printable(cmdargs));
-				warn(error_string);
+				sprintf(DEFAULT_ERROR_STRING,"Unhandled Case in send_polh_cmd:  %s, cmd_args = \"%s\"",
+					polh_cmds[cmd].pc_name,show_printable(DEFAULT_QSP_ARG  cmdargs));
+				NWARN(DEFAULT_ERROR_STRING);
 				sprintf(command, "%s,%s", code_id, cmdargs);
 				break;
 		}
@@ -987,19 +943,19 @@ int send_polh_cmd(Ph_Cmd_Code cmd, const char * cmdargs)
 			strcat(command,"\r");
 			break;
 		default:
-			sprintf(error_string,"Unhandled case in send_polh_cmd:  %s",
+			sprintf(DEFAULT_ERROR_STRING,"Unhandled case in send_polh_cmd:  %s",
 				polh_cmds[cmd].pc_name);
-			warn(error_string);
+			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-sprintf(error_string,"Ready to send command string \"%s\"",show_printable(command));
-advise(error_string);
+sprintf(DEFAULT_ERROR_STRING,"Ready to send command string \"%s\"",show_printable(DEFAULT_QSP_ARG  command));
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	strcpy(last_command,command);
 
@@ -1015,8 +971,8 @@ advise(error_string);
 
 	/* write the command to the device */
 	if( send_string(command) < 0 ) {
-		sprintf(error_string,"send_polh_cmd: Unable to send command string %s",command);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"send_polh_cmd: Unable to send command string %s",command);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 	/* FIXME - here we should put some error-checking to ensure that the command is set */
@@ -1024,23 +980,24 @@ advise(error_string);
 	return(0);
 }
 
-int get_polh_info(Ph_Cmd_Code cmd, const char * cmdargs) 
+int get_polh_info(QSP_ARG_DECL  Ph_Cmd_Code cmd, const char * cmdargs) 
 {
 	char code_id[LLEN];
 	char command[LLEN];
 
 #ifdef CAUTIOUS
-	if( cmd < 0 || cmd >= N_PH_CMD_CODES ) {
-		warn("get_polh_info: Unhandled command code!?");
+	// cmd is an unsigned type!
+	if( /* cmd < 0 || */ cmd >= N_PH_CMD_CODES ) {
+		NWARN("get_polh_info: Unhandled command code!?");
 		return(-1);
 	}
 #endif
 	
 	/* check if we can peform the requested operation with the command code */
 	if( !CAN_GET(cmd) ){
-		sprintf(error_string, "get_polh_info: command %s is not a GET command",
+		sprintf(DEFAULT_ERROR_STRING, "get_polh_info: command %s is not a GET command",
 			polh_cmds[cmd].pc_name);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);	
 	}
 		
@@ -1051,12 +1008,14 @@ int get_polh_info(Ph_Cmd_Code cmd, const char * cmdargs)
 	switch( polh_cmds[cmd].pc_trs ) {
 		case PH_NEED_XMTR : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, POLH_XMTR_NUM); break;
 		case PH_NEED_RECV : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, which_receiver); break;
-		case PH_NEED_STAT : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, curr_station+1); break;
+		case PH_NEED_STAT : sprintf(code_id, "%s%d", polh_cmds[cmd].pc_cmdstr, curr_station_idx+1); break;
 		case PH_NEED_NONE : sprintf(code_id, "%s", polh_cmds[cmd].pc_cmdstr); break;
 #ifdef CAUTIOUS
-		default : warn("send_polh_cmd: Unknown transmitter/receiver/station flag value!?"); return(-1); break;
+		default : NWARN("send_polh_cmd: Unknown transmitter/receiver/station flag value!?"); return(-1); break;
 #endif
 	}
+
+fprintf(stderr,"get_polh_info:  code_id = \"%s\"\n",code_id);
 
 #ifdef FOOBAR
 	/* Add additional arguments, if any.
@@ -1068,7 +1027,7 @@ int get_polh_info(Ph_Cmd_Code cmd, const char * cmdargs)
 	if(cmdargs) {
 		switch(cmd){
 			case PH_STATION:
-advise("Oops");
+NADVISE("Oops");
 				sprintf(command, "%s%s\r", code_id, cmdargs);
 				break;
 			case PH_POS_FILTER:
@@ -1076,13 +1035,13 @@ advise("Oops");
 		case PH_ANGULAR_ENV:
 		case PH_POSITIONAL_ENV:
 			case PH_HEMISPHERE:
-advise("oops");
+NADVISE("oops");
 				sprintf(command, "%s%s", code_id, cmdargs);
 				break;
 			default:
-				sprintf(error_string,"get_polh_info:  missing case for command %s",
+				sprintf(DEFAULT_ERROR_STRING,"get_polh_info:  missing case for command %s",
 					polh_cmds[cmd].pc_name);
-				warn(error_string);
+				NWARN(DEFAULT_ERROR_STRING);
 				sprintf(command, "%s,%s", code_id, cmdargs);
 				break;
 		}
@@ -1110,18 +1069,18 @@ advise("oops");
 		case PH_STATUS:
 			break;
 		default:
-sprintf(error_string,"get_polh_info:  unhandled case for %s command",polh_cmds[cmd].pc_name);
-warn(error_string);
+sprintf(DEFAULT_ERROR_STRING,"get_polh_info:  unhandled case for %s command",polh_cmds[cmd].pc_name);
+NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
 
 
-#ifdef DEBUG
-if( debug & debug_polhemus ){
-sprintf(error_string,"ready to send command string \"%s\"",show_printable(command));
-advise(error_string);
-}
-#endif /* DEBUG */
+#ifdef QUIP_DEBUG
+//if( debug & debug_polhemus ){
+sprintf(DEFAULT_ERROR_STRING,"ready to send command string \"%s\"",show_printable(DEFAULT_QSP_ARG  command));
+NADVISE(DEFAULT_ERROR_STRING);
+//}
+#endif /* QUIP_DEBUG */
 
 	strcpy(last_command,command);
 
@@ -1129,12 +1088,13 @@ advise(error_string);
 
 	/* write the command to the device */
 	if( send_string(command) < 0 ) {
-		sprintf(error_string,"send_polh_cmd: Unable to send command string %s",command);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"send_polh_cmd: Unable to send command string %s",command);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
-	
-	return recv_polh_data(cmd);	
+
+fprintf(stderr,"get_polh_info:  command sent, calling recv_polh_data\n");
+	return recv_polh_data(QSP_ARG  cmd);	
 } /* end get_polh_info */
 
 int send_string(const char *cmd)
@@ -1143,14 +1103,14 @@ int send_string(const char *cmd)
 	int len;
 	
 	if(cmd == NULL) {
-		warn("send_string: null command string!?");
+		NWARN("send_string: null command string!?");
 		return(-1);
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_polhemus ){
-	sprintf(msg_str, "send_string: %s", show_printable(cmd) );
-	advise(msg_str);
+	sprintf(DEFAULT_MSG_STR, "send_string: %s", show_printable(DEFAULT_QSP_ARG  cmd) );
+	NADVISE(DEFAULT_MSG_STR);
 }
 #endif
 	
@@ -1159,11 +1119,11 @@ if( debug & debug_polhemus ){
 
 	if( numwritten != len ) {
 		if(numwritten < 0 ) 
-			tell_sys_error("send_string");
+			_tell_sys_error(DEFAULT_QSP_ARG  "send_string");
 		else {
-			sprintf(error_string, "Requested %d bytes to be written to polhemus device, %d actually written",
+			sprintf(DEFAULT_ERROR_STRING, "Requested %d bytes to be written to polhemus device, %d actually written",
 				len, numwritten);
-			warn(error_string);
+			NWARN(DEFAULT_ERROR_STRING);
 		}
 		return(-1);
 	}
@@ -1187,11 +1147,11 @@ int set_polh_sync_mode(int mode_code)
 			stat = send_polh_cmd(PH_SYNC_MODE,arg_str);
 			break;
 		case PH_SOFTWARE_SYNC :
-			warn("Software sync not implemented!");
+			NWARN("Software sync not implemented!");
 			return(-1);
 #ifdef CAUTIOUS
 		default :
-			warn("set_polh_sync_mode:  Unexpected sync mode requsted!?");
+			NWARN("set_polh_sync_mode:  Unexpected sync mode requsted!?");
 			return(-1);
 #endif
 	}
@@ -1209,43 +1169,47 @@ void set_polh_sync_rate(long rate)
 /* The insidetrak device only has 2 stations, but fastrak has 4.
  */
 
-void activate_station(int station,int flag)
+void activate_station(int station_idx,int flag)
 {
 	int bit;
 #ifndef INSIDE_TRACK
 	char cmd_str[32];
 #endif
 
+fprintf(stderr,"activate_station:  station %d, flag = %d\n",
+station_idx,flag);
+
 #ifdef CAUTIOUS
-	if( station < 0 || station >= MAX_POLHEMUS_STATIONS ) {
-		sprintf(error_string,
+	if( station_idx < 0 || station_idx >= MAX_POLHEMUS_STATIONS ) {
+		sprintf(DEFAULT_ERROR_STRING,
 	"CAUTIOUS:  activate_station: bad station number %d, must be in the range from 0 to %d",
-			station,MAX_POLHEMUS_STATIONS-1);
-		warn(error_string);
+			station_idx,MAX_POLHEMUS_STATIONS-1);
+		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
+	// what is flag???
 	if( flag < 0 || flag > 1 ){
-		sprintf(error_string,
+		sprintf(DEFAULT_ERROR_STRING,
 			"CAUTIOUS:  activate_station:  bad flag %d, should be 0 or 1",flag);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
 
-	if( STATION_IS_ACTIVE(station) == flag ){
-		sprintf(error_string,"activate_station:  station %d is already %s",
-				station+1,flag?"activated":"deactivated");
-		warn(error_string);
+	if( STATION_IS_ACTIVE(station_idx) == flag ){
+		sprintf(DEFAULT_ERROR_STRING,"activate_station:  station %d is already %s",
+				station_idx+1,flag?"activated":"deactivated");
+		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 
 #ifdef FOOBAR
-	if( station == 0 )
+	if( station_idx == 0 )
 		bit = STATION_1_ACTIVE;
 	else
 		bit = STATION_2_ACTIVE;
 #else
-	bit = 1 << station;
+	bit = 1 << station_idx;
 #endif
 
 	if( flag )
@@ -1256,36 +1220,36 @@ void activate_station(int station,int flag)
 #ifdef INSIDE_TRACK
 	if( ioctl( polh_fd, POLHEMUS_SET_ACTIVE, &active_mask ) < 0 ){
 		perror("ioctl POLHEMUS_SET_ACTIVE");
-		warn("error setting active stations");
+		NWARN("error setting active stations");
 		return;
 	}
 #else
 	/* just send the command - this ought to work for insidetrak too? */
-	sprintf(cmd_str,"l%d,%d\r",station+1,flag);
+	sprintf(cmd_str,"l%d,%d\r",station_idx+1,flag);
 	if( send_string(cmd_str) < 0 ) {
-		sprintf(error_string,"activate_station: Unable to send command string \"%s\"",
+		sprintf(DEFAULT_ERROR_STRING,"activate_station: Unable to send command string \"%s\"",
 			cmd_str);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 #endif
 
 	/* remember state */
 	if( flag ){
-		station_info[station].sd_flags |= STATION_ACTIVE;
-		which_receiver=station;
-		curr_station=station;
+		station_info[station_idx].sd_flags |= STATION_ACTIVE;
+		which_receiver=station_idx;
+		curr_station_idx=station_idx;
 	} else
-		station_info[station].sd_flags &= ~STATION_ACTIVE;
+		station_info[station_idx].sd_flags &= ~STATION_ACTIVE;
 
 	n_active_stations = (STATION_IS_ACTIVE(0)?1:0) + (STATION_IS_ACTIVE(1)?1:0);
 
 	if( flag )
-		sprintf(msg_str,"Activating station %d",station+1);
+		sprintf(DEFAULT_MSG_STR,"Activating station %d",station_idx+1);
 	else
-		sprintf(msg_str,"Deactivating station %d",station+1);
+		sprintf(DEFAULT_MSG_STR,"Deactivating station %d",station_idx+1);
 
-	prt_msg(msg_str);
+	_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 
 	/* Assume that if we change the station, we are working
 	 * with the corresponding receiver for that station.
@@ -1299,13 +1263,13 @@ void set_polh_units(Ph_Cmd_Code cmd)
 
 #ifdef CAUTIOUS
 	if( cmd != PH_INCHES_FMT && cmd != PH_CM_FMT ) {
-		warn("set_polh_units: unhandled unit format requested!?");
+		NWARN("set_polh_units: unhandled unit format requested!?");
 		return;
 	}
 #endif /* CAUTIOUS */
 	
 	if( send_polh_cmd(cmd,NULL) < 0 ) {
-		warn("set_polh_units: unable to set requested units!?");
+		NWARN("set_polh_units: unable to set requested units!?");
 		return;
 	}
 
@@ -1318,8 +1282,8 @@ void set_polh_units(Ph_Cmd_Code cmd)
 #define CHECK_POL_FD( who )							\
 										\
 	if( polh_fd < 0 ){							\
-		sprintf(error_string,"%s:  polhemus device not open",who);	\
-		warn(error_string);						\
+		sprintf(DEFAULT_ERROR_STRING,"%s:  polhemus device not open",who);	\
+		NWARN(DEFAULT_ERROR_STRING);						\
 		return(-1);							\
 	}
 #else
@@ -1337,7 +1301,7 @@ int polhemus_byte_count(void)
 #ifdef INSIDE_TRACK
 	if( ioctl(polh_fd,POLHEMUS_GET_COUNT,&n) < 0 ){
 		perror("ioctl");
-		warn("error getting polhemus word count");
+		NWARN("error getting polhemus word count");
 		return(-1);
 	}
 	n *= 2;		/* change word count to byte count */
@@ -1345,7 +1309,7 @@ int polhemus_byte_count(void)
 	/* need to use FIONREAD here??? */
 	if( ioctl(polh_fd,FIONREAD,&n) < 0 ){
 		perror("ioctl (FIONREAD)");
-		warn("error getting polhemus word count");
+		NWARN("error getting polhemus word count");
 		return(-1);
 	}
 #endif
@@ -1362,14 +1326,14 @@ int polhemus_word_count(void)
 #ifdef INSIDE_TRACK
 	if( ioctl(polh_fd,POLHEMUS_GET_COUNT,&n) < 0 ){
 		perror("ioctl");
-		warn("error getting polhemus word count");
+		NWARN("error getting polhemus word count");
 		return(-1);
 	}
 #else
 	/* need to use FIONREAD here??? */
 	if( ioctl(polh_fd,FIONREAD,&n) < 0 ){
 		perror("ioctl (FIONREAD)");
-		warn("error getting polhemus word count");
+		NWARN("error getting polhemus word count");
 		return(-1);
 	}
 	n /= 2;		/* change byte count to word count */
@@ -1383,21 +1347,21 @@ int polhemus_output_data_format( Polh_Record_Format *prfp )
 	int i;
 	char cmdstr[64], codestr[16];
 	Polh_Record_Format sprf;	/* the single version, no timestamps */
-	int station;
+	int station_idx;
 
-	station = prfp->rf_station;
+	station_idx = prfp->rf_station;
 
 #ifdef CAUTIOUS
-	if( station != 0 && station != 1 ){
-		sprintf(error_string,
+	if( station_idx != 0 && station_idx != 1 ){
+		sprintf(DEFAULT_ERROR_STRING,
 			"CAUTIOUS:  polhemus_output_data_format:  station (%d) should be 0 or 1",
-			station);
-		warn(error_string);
+			station_idx);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 #endif /* CAUTIOUS */
 
-	sprf.rf_station = station;
+	sprf.rf_station = station_idx;
 
 	CHECK_POL_FD("polhemus_output_data");
 
@@ -1420,11 +1384,11 @@ int polhemus_output_data_format( Polh_Record_Format *prfp )
 #ifdef INSIDE_TRACK
 	if( ioctl(polh_fd,POLHEMUS_SET_RECORD_FORMAT,prfp) < 0 ){
 		perror("ioctl POLHEMUS_SET_RECORD_FORMAT");
-		warn("error setting polhemus output data structure");
+		NWARN("error setting polhemus output data structure");
 		return(-1);
 	}
 #else
-	//warn("no ioctl for set record format???");
+	//NWARN("no ioctl for set record format???");
 	/* We don't have a driver for the fastrack, so there is nothing to do!? */
 #endif
 
@@ -1446,73 +1410,76 @@ int polhemus_output_data_format( Polh_Record_Format *prfp )
 	strcat(cmdstr,",1\r");	/* cr lf at end of record */
 
 	if( send_string(cmdstr) < 0 ) { 
-		warn("polhemus_output_data_format:  Unable to set output data format");
+		NWARN("polhemus_output_data_format:  Unable to set output data format");
 		return(-1);
 	}
 
-	station_info[station].sd_multi_prf = *prfp;
-	station_info[station].sd_single_prf = sprf;
+	station_info[station_idx].sd_multi_prf = *prfp;
+	station_info[station_idx].sd_single_prf = sprf;
 
 	return(0);
 }
 
-static void decode_activation_state(int station,int code_char)
+static void decode_activation_state(int station_idx,int code_char)
 {
 	switch( code_char ){
 		case '1':
-			if( ! STATION_IS_ACTIVE(station) ){
+			if( ! STATION_IS_ACTIVE(station_idx) ){
 				if( verbose ) {
-					sprintf(error_string,
-				"setting active flag for station %d",station);
-					advise(error_string);
+					sprintf(DEFAULT_ERROR_STRING,
+				"setting active flag for station %d",station_idx);
+					NADVISE(DEFAULT_ERROR_STRING);
 				}
-				station_info[station].sd_flags |= STATION_ACTIVE;
+				station_info[station_idx].sd_flags |= STATION_ACTIVE;
 			}
 			break;
 		case '0':
-			if( STATION_IS_ACTIVE(station) ){
+			if( STATION_IS_ACTIVE(station_idx) ){
 				if( verbose ) {
-					sprintf(error_string,
-				"clearing active flag for station %d",station);
-					advise(error_string);
+					sprintf(DEFAULT_ERROR_STRING,
+				"clearing active flag for station %d",station_idx);
+					NADVISE(DEFAULT_ERROR_STRING);
 				}
-				station_info[station].sd_flags &= ~STATION_ACTIVE;
+				station_info[station_idx].sd_flags &= ~STATION_ACTIVE;
 			}
 			break;
 		default:
-			sprintf(error_string,"decode_activation_state:  bad code char");
-			warn(error_string);
+			sprintf(DEFAULT_ERROR_STRING,"decode_activation_state:  bad code char");
+			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
 }
 
-void get_active_stations()
+void get_active_stations(SINGLE_QSP_ARG_DECL)
 {
 	char *s;
 
-	if( get_polh_info(PH_STATION,"") < 0 ){
-		warn("Unable to get current active station!");
+fprintf(stderr,"get_active_stations:  getting active station...\n");
+	if( get_polh_info(QSP_ARG  PH_STATION,"") < 0 ){
+		NWARN("Unable to get current active station!");
 		return;
 	}
+fprintf(stderr,"get_active_stations:  response buffer:\n");
+display_buffer(&resp_buf[0],n_response_chars/2);
 
 	s=(char *)resp_buf;
 
 	if( *s != '2' ){
-		sprintf(error_string,"get_active_stations:  expected first char to be 2 (\"%s\")",
-			show_printable(s));
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"get_active_stations:  expected first char to be 2 (\"%s\")",
+			show_printable(DEFAULT_QSP_ARG  s));
+		NWARN(DEFAULT_ERROR_STRING);
 	}
 
 	if( s[1] != '1' && s[1] != '2' ){
-		sprintf(error_string,"get_active_stations:  expected second char to be 1 or 2 (\"%s\")",
-			show_printable(s));
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"get_active_stations:  expected second char to be 1 or 2 (\"%s\")",
+			show_printable(DEFAULT_QSP_ARG  s));
+		NWARN(DEFAULT_ERROR_STRING);
 	}
 
 	if( s[2] != 'l' ){
-		sprintf(error_string,"get_active_stations:  expected third char to be l (\"%s\")",
-			show_printable(s));
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"get_active_stations:  expected third char to be l (\"%s\")",
+			show_printable(DEFAULT_QSP_ARG  s));
+		NWARN(DEFAULT_ERROR_STRING);
 	}
 
 	decode_activation_state(0,s[3]);
@@ -1529,28 +1496,28 @@ void get_active_stations()
 	}
 }
 
-void show_output_data_format(int station)
+void show_output_data_format(int station_idx)
 {
 	Polh_Record_Format *prfp;
 	int i;
 
-	prfp = &station_info[station].sd_multi_prf;
+	prfp = &station_info[station_idx].sd_multi_prf;
 
-	sprintf(msg_str,"Station %d:",prfp->rf_station);
-	prt_msg(msg_str);
+	sprintf(DEFAULT_MSG_STR,"Station %d:",prfp->rf_station);
+	_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 
-	sprintf(msg_str,"\t%d output words.",prfp->rf_n_words);
-	prt_msg(msg_str);
+	sprintf(DEFAULT_MSG_STR,"\t%d output words.",prfp->rf_n_words);
+	_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 
-	sprintf(msg_str,"\t%d output fields:",prfp->rf_n_data);
-	prt_msg(msg_str);
+	sprintf(DEFAULT_MSG_STR,"\t%d output fields:",prfp->rf_n_data);
+	_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 
 	for(i=0;i<prfp->rf_n_data;i++){
 		Polh_Output_Type type;
 
 		type = prfp->rf_output[i];
-		sprintf(msg_str,"\t\t%s",od_tbl[type].od_name);
-		prt_msg(msg_str);
+		sprintf(DEFAULT_MSG_STR,"\t\t%s",od_tbl[type].od_name);
+		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_MSG_STR);
 	}
 }
 

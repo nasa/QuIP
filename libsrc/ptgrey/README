@@ -1,0 +1,7 @@
+
+what is the module that needs to be loaded?
+The following would seem to be the answer for linux, but what about mac?
+
+modprobe firewire-ohci
+chmod 666 /dev/fw*
+

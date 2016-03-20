@@ -1,37 +1,32 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_thinz[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "ggem.h"
-#include "vecgen.h"
+#include "veclib/vecgen.h"
+#include "vec_util.h"
 
-/* local prototypes */
-static int range ( Data_Obj *x,int n,int m);
-static int nay8(Data_Obj *im,int i,int j,double val);
-/* BUG naming conventions violated (by Sylvain?) */
-int crossing_index(Data_Obj *x,int ii,int jj);
-
-int crossing_index(Data_Obj *x,int ii,int jj)
+static int crossing_index(Data_Obj *x,int ii,int jj)
 {
 /* 	Compute the crossing index for pixel X[ii][jj] and return it	*/
 	
 	int i,j,count;
-	float *dstp, *k, *tmp;
+	//float *dstp;
+    float *k, *tmp;
 	long ri;
 
-	if( (ii<=0) || (ii>=(int)x->dt_rows-1) || (jj<=0) || (jj>=(int)(x->dt_cols-1)) ){
+	if( (ii<=0) || (ii>=(int)OBJ_ROWS(x)-1) || (jj<=0) || (jj>=(int)(OBJ_COLS(x)-1)) ){
 		/* Should write an error here */
 		return -1;
 	}
 	count = 0;
-	i = ii-1; j = jj-1; k = (float *)x->dt_data;
-	k += i*x->dt_rowinc + j*x->dt_pinc;
+	i = ii-1; j = jj-1; k = (float *)OBJ_DATA_PTR(x);
+	k += i*OBJ_ROW_INC(x) + j*OBJ_PXL_INC(x);
 	tmp = k;
 /*	Move clockwise around the (ii,jj) pixel, couting level changes	*/
 
-	ri = x->dt_rowinc;
-	dstp = (float *)x->dt_data;
+	ri = OBJ_ROW_INC(x);
+	//dstp = (float *)OBJ_DATA_PTR(x);
 	tmp = tmp+1;	/* Move to (i-1,j)      */  
 	if (*k != *tmp) 	{ k = tmp; count++; }
 	tmp = tmp+1;	/* Move to (i-1,j+1)    */
@@ -47,7 +42,7 @@ int crossing_index(Data_Obj *x,int ii,int jj)
 	tmp = tmp-ri;	/* Move to (i,j-1)	*/
 	if (*k != *tmp) 	{ k = tmp; count++; }
 	tmp = tmp-ri;	/* Move to (i-1,j-1)	*/
-	if (*k != *tmp) 	{ k = tmp; count++; }
+	if (*k != *tmp) 	{ /*k = tmp;*/ count++; }
 	return count/2;
 }
 
@@ -56,8 +51,8 @@ int crossing_index(Data_Obj *x,int ii,int jj)
 static int range (Data_Obj *dp,int n,int m)
 {
 /* Return 1 if (n,m) are legal (row, column) indices for image X */
-	if (n < 0 || n >= (int)dp->dt_rows) return 0;
-	if (m < 0 || m >= (int)dp->dt_cols) return 0;
+	if (n < 0 || n >= (int)OBJ_ROWS(dp)) return 0;
+	if (m < 0 || m >= (int)OBJ_COLS(dp)) return 0;
 	return 1;
 }
 
@@ -67,16 +62,16 @@ static int nay8(Data_Obj *im,int i,int j,double val)
 	int n,m,k;
 	float *tp;
 	long ri,ci;
-	tp = (float *)im->dt_data;
-	tp += i*im->dt_rowinc + j*im->dt_pinc;
+	tp = (float *)OBJ_DATA_PTR(im);
+	tp += i*OBJ_ROW_INC(im) + j*OBJ_PXL_INC(im);
 	if (*tp != val) return 0;
 	k = 0;
 	for (n=-1; n<=1; n++){
 	  	for (m=-1; m<=1; m++){
-			tp = (float *)im->dt_data;
-			tp += i*im->dt_rowinc + j*im->dt_pinc;
-			ri = n*im->dt_rowinc;
-			ci = m*im->dt_pinc;
+			tp = (float *)OBJ_DATA_PTR(im);
+			tp += i*OBJ_ROW_INC(im) + j*OBJ_PXL_INC(im);
+			ri = n*OBJ_ROW_INC(im);
+			ci = m*OBJ_PXL_INC(im);
 			tp += ri + ci;
 	  		if (range(im,i+n,j+m))
 		  	  if (*tp == val) k++;
@@ -84,7 +79,6 @@ static int nay8(Data_Obj *im,int i,int j,double val)
 	}
 	return k-1;
 }
-
 
 /* Zhang-Suen type of thinning procedure. This thin the region value */
 void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
@@ -96,7 +90,7 @@ void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
 	float *dstp, *srcp;
 	float bckgrd;
 	
-	if( MACHINE_PREC(x) != PREC_SP){
+	if( OBJ_MACH_PREC(x) != PREC_SP){
 		WARN("precision must be float for squeletonization");
 		return;
 	}
@@ -105,13 +99,13 @@ void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
 	dp_copy(QSP_ARG  y,x);
 	do{
 		again = 0;
-		for (i=1; i<(x->dt_rows-1); i++){
-			for (j=1; j<(x->dt_cols-1); j++){
-				ri = y->dt_rowinc;
-				dstp=(float *)x->dt_data;
-				srcp=(float *)y->dt_data;
-				dstp += i*x->dt_rowinc + j*x->dt_pinc;
-				srcp += i*y->dt_rowinc + j*y->dt_pinc;
+		for (i=1; i<(OBJ_ROWS(x)-1); i++){
+			for (j=1; j<(OBJ_COLS(x)-1); j++){
+				ri = OBJ_ROW_INC(y);
+				dstp=(float *)OBJ_DATA_PTR(x);
+				srcp=(float *)OBJ_DATA_PTR(y);
+				dstp += i*OBJ_ROW_INC(x) + j*OBJ_PXL_INC(x);
+				srcp += i*OBJ_ROW_INC(y) + j*OBJ_PXL_INC(y);
 				if (*srcp != value) continue;
 				n = nay8(y,i,j,value);
 				if( (n>=2) && (n<=6) ){
@@ -131,14 +125,14 @@ void thinzs (QSP_ARG_DECL  Data_Obj *x,double value)
 			}
 		}
 		dp_copy(QSP_ARG  y,x);
-		ri = x->dt_rowinc;
+		ri = OBJ_ROW_INC(x);
 
-		for (i=1; i<(x->dt_rows-1); i++){
-			for (j=1; j<(x->dt_cols-1); j++){
-			dstp=(float *)x->dt_data;
-			srcp=(float *)y->dt_data;
-			dstp += i*x->dt_rowinc + j*x->dt_pinc;
-			srcp += i*y->dt_rowinc + j*y->dt_pinc;
+		for (i=1; i<(OBJ_ROWS(x)-1); i++){
+			for (j=1; j<(OBJ_COLS(x)-1); j++){
+			dstp=(float *)OBJ_DATA_PTR(x);
+			srcp=(float *)OBJ_DATA_PTR(y);
+			dstp += i*OBJ_ROW_INC(x) + j*OBJ_PXL_INC(x);
+			srcp += i*OBJ_ROW_INC(y) + j*OBJ_PXL_INC(y);
 				if (*dstp != value) continue;
 				n = nay8(x,i,j,value);
 				if( (n>=2) && (n<=6) ){

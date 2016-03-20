@@ -1,15 +1,12 @@
 #include "quip_config.h"
 
-char VersionId_viewer_rdplot[] = QUIP_VERSION_STRING;
-
-#ifdef HAVE_X11
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "viewer.h"
 #include "data_obj.h"
 #include "xsupp.h"
@@ -51,7 +48,7 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 					int i=0;
 
 					while( (c=getc(fp)) != '\n' && c!=EOF ){
-						labelstring[i++]=c;
+						labelstring[i++]=(char)c;
 					}
 					labelstring[i]=0;
 					xp_text(labelstring);
@@ -89,7 +86,7 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 			case 'f':
 				s=modstr;
 				while((c=getc(fp)) != '\n' && c != EOF )
-					*s++ = c;
+					*s++ = (char)c;
 				*s=0;
 				if( !strcmp(modstr,"solid") )
 					xp_select(1);
@@ -104,9 +101,9 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 				else WARN("unsupported line color");
 				break;
 			default:
-				sprintf(error_string,
+				sprintf(ERROR_STRING,
 				"unrecognized plot command '%c' (%o)",c,c);
-				NWARN(error_string);
+				NWARN(ERROR_STRING);
 				goto plotdun;
 		}
 	}
@@ -114,6 +111,4 @@ plotdun:
 	fclose(fp);
 }
 
-
-#endif /* HAVE_X11 */
 

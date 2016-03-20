@@ -32,7 +32,17 @@ Tell_Precision $2 srcprec
 If "!strcmp(\"$srcprec\",\"float\")"
   Then 'Set xfprec complex'
   Else 'Set xfprec dblcpx'
-data image $1 "nrows('$2')" "1+ncols('$2')/2" 1 $xfprec quit
+data image $1 nrows('$2') 1+ncols('$2')/2 1 $xfprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $xfprec quit
+.
+
+Define Xform2_For 2 name template
+Tell_Precision $2 srcprec
+If "!strcmp(\"$srcprec\",\"float\")"
+  Then 'Set xfprec complex'
+  Else 'Set xfprec dblcpx'
+data image $1 1+nrows('$2')/2 ncols('$2') 1 $xfprec quit
 # use this line if not useing real/cpx transform
 #data image $1 "nrows('$2')" "ncols('$2')" 1 $xfprec quit
 .
@@ -63,7 +73,7 @@ data interlace $1 $2 $3 quit
 .
 
 Define New_Object 5 name frames rows cols type
-data sequence $1 $2 $3 $4 $5 quit
+data object $1 $2 $3 $4 $5 quit
 .
 
 Define Std_Scalar 1 name
@@ -108,6 +118,10 @@ data sequence $1 $2 $3 $4 $5 $6 quit
 
 Define Subimage 6 name parent width height x0 y0
 data subimage $1 $2 $3 $4 $5 $6 quit
+.
+
+Define Subsequence 8 name parent width height length x0 y0 t0
+data subsequence $1 $2 $3 $4 $5 $6 $7 $8 quit
 .
 
 Define Subsample_Color_Image 11 name parent nc c0 cinc nx x0 xinc ny y0 yinc
@@ -234,27 +248,31 @@ data image $1 "nrows('$2')" "ncols('$2')" 1 $std_cpx_type quit
 .
 
 Define Dup_Std 2 'new name' prototype
-Dup_Sequence $1 $2 $std_type
+Dup_Obj_With_Prec $1 $2 $std_type
+.
+
+Define Dup_UShort 2 'name for u_short image' prototype
+Dup_Obj_With_Prec $1 $2 u_short
 .
 
 Define Dup_Short 2 'name for short image' prototype
-Dup_Sequence $1 $2 short
+Dup_Obj_With_Prec $1 $2 short
 .
 
 Define Dup_Bit 2 'name for bitmap image' prototype
-Dup_Sequence $1 $2 bit
+Dup_Obj_With_Prec $1 $2 bit
 .
 
 Define Dup_Long 2 'name for int32 image' prototype
-Dup_Sequence $1 $2 int32
+Dup_Obj_With_Prec $1 $2 int32
 .
 
 Define Dup_ULong 2 'name for uint32 image' prototype
-Dup_Sequence $1 $2 uint32
+Dup_Obj_With_Prec $1 $2 uint32
 .
 
 Define Dup_Double 2 'name for double image' prototype
-Dup_Sequence $1 $2 double
+Dup_Obj_With_Prec $1 $2 double
 .
 
 Define Dup_Float 2 'new name' prototype
@@ -306,6 +324,13 @@ data
   quit
 .
 
+Define Dup_Object 3 'new name' prototype precision
+Match_Area $2
+data
+  object $1 "nframes('$2')" "nrows('$2')" "ncols('$2')" "depth('$2')" $3
+  quit
+.
+
 Define Dup_Sequence 3 'new name' prototype precision
 Match_Area $2
 data
@@ -331,6 +356,10 @@ data image $1 $display_size $display_size 1 float quit
 
 Define Byte_Sequence 2 'sequence name' 'number of frames'
 data sequence $1 $2 $ysize $xsize 1 byte quit
+.
+
+Define Del_If 1 object
+If obj_exists('$1') "Delete_Image $1"
 .
 
 Define Delete_Image 1 'name of image'
@@ -371,6 +400,14 @@ data precision $1 $2 quit
 
 Define Alignment 1 val
 data alignment $1 quit
+.
+
+Define Load_Vector_From_File 2 object_name filename
+If !file_exists('$2') "error_exit 'File $2 does not exist!?'"
+Count_Lines nl $2
+Count_Columns nc $2
+Vector $1 $nl $nc float
+Get_Ascii $1 $2
 .
 
 Stop_File decl.mac

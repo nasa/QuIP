@@ -58,8 +58,8 @@ Define Process_Arg 1 index
 #advise "Process_Arg $1 (argc = $argc)"
 Set argname argv$1
 Set arg $$argname
-If !strncmp('$arg','--',2) "Process_Long_Option $arg $1 PopFile 2 nop"
-If !strncmp('$arg','-',1) "Process_Short_Option $arg $1 PopFile 2 nop"
+If !strncmp('$arg','--',2) "Process_Long_Option $arg $1 exit_macro"
+If !strncmp('$arg','-',1) "Process_Short_Option $arg $1 exit_macro"
 # The default action is plot a file of points
 If !$have_scope_instance Scope_Instance
 #advise "Graph_File $$argname $pen_color"
@@ -129,10 +129,10 @@ Add_Var i_arg 2
 
 
 Define Process_Short_Option 2 option index
-If !strcmp('$1','-x') "X_Axis_Option $2 PopFile 2 nop"
-If !strcmp('$1','-y') "Y_Axis_Option $2 PopFile 2 nop"
-If !strcmp('$1','-g') "Grid_Style_Option $2 PopFile 2 nop"
-If !strcmp('$1','-m') "Line_Style_Option $2 PopFile 2 nop"
+If !strcmp('$1','-x') "X_Axis_Option $2 exit_macro"
+If !strcmp('$1','-y') "Y_Axis_Option $2 exit_macro"
+If !strcmp('$1','-g') "Grid_Style_Option $2 exit_macro"
+If !strcmp('$1','-m') "Line_Style_Option $2 exit_macro"
 warn "unrecognized short option $1"
 .
 
@@ -187,18 +187,18 @@ Add_Var i_arg 2
 
 Define Process_Long_Option 2 option index
 advise "Process_Long_Option $1"
-If !strcmp('$1','--width') "Window_Width_Option $2 PopFile 2 nop"
-If !strcmp('$1','--height') "Window_Height_Option $2 PopFile 2 nop"
-If !strcmp('$1','--x_legend') "X_Legend_Option $2 PopFile 2 nop"
-If !strcmp('$1','--y_legend') "Y_Legend_Option $2 PopFile 2 nop"
-If !strcmp('$1','--sample_freq') "Sample_Freq_Option $2 PopFile 2 nop"
+If !strcmp('$1','--width') "Window_Width_Option $2 exit_macro"
+If !strcmp('$1','--height') "Window_Height_Option $2 exit_macro"
+If !strcmp('$1','--x_legend') "X_Legend_Option $2 exit_macro"
+If !strcmp('$1','--y_legend') "Y_Legend_Option $2 exit_macro"
+If !strcmp('$1','--sample_freq') "Sample_Freq_Option $2 exit_macro"
 warn "unrecognized long option $1"
 .
 
 # BUG we can't get args $1 etc from within macro...
 
 Define Process_Scope_Options 0
-If $argc<1 "PopFile 2 nop"
+If $argc<1 "exit_macro"
 
 Set i_arg 1
 do
@@ -209,7 +209,7 @@ do
 Set _i_trace 1
 
 Define Graph_File 2 filename pen_index
-If !file_exists('$1') "warn 'file \"$1\" does not exist!?' PopFile 2"
+If !file_exists('$1') "warn 'file \"$1\" does not exist!?' exit_macro"
 
 # get the number of lines (points)
 

@@ -2,10 +2,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_fg_routines[] = QUIP_VERSION_STRING;
-
-#ifdef HAVE_METEOR
-
 /* fg_routines
  *
  *  8/15/97 mjw extracted from snap.c
@@ -29,10 +25,11 @@ char VersionId_meteor_fg_routines[] = QUIP_VERSION_STRING;
 
 
 #include "fg_routines.h"
-#include "query.h"	/* error_string */
+#include "quip_prot.h"	/* ERROR_STRING */
+
+#ifdef HAVE_METEOR
 #include "memchunk.h"
 #include "ioctl_meteor.h"
-#include "debug.h"	/* error_string? */
 
 //#ifdef LINUX
 //#define MAP_OPTIONS	MAP_FILE|MAP_PRIVATE
@@ -45,7 +42,7 @@ char VersionId_meteor_fg_routines[] = QUIP_VERSION_STRING;
 /* (these should be in private area) */
 unsigned int	fifoerrcnts;
 unsigned int	dmaerrcnts;
-int	meteorfd;
+int	meteor_fd=(-1);
 int	fbfd=(-1);
 struct fb_info {
 	int ram_location;
@@ -87,15 +84,15 @@ advise("fg_open BEGIN");
 
 	/* open the digitizer */
 	/* jbm:  was RDONLY, changed to RDWR for mmap */
-	if ((meteorfd = open(MeteorDev, O_RDWR)) < 0) {
-		sprintf(error_string,"open(%s)",MeteorDev);
-		perror(error_string);
+	if ((meteor_fd = open(MeteorDev, O_RDWR)) < 0) {
+		sprintf(ERROR_STRING,"open(%s)",MeteorDev);
+		perror(ERROR_STRING);
 		return( -1 );
 	}
 
 	if( verbose ){
-		sprintf(error_string,"MeteorDev %s opened, fd=%d",MeteorDev,meteorfd);
-		advise(error_string);
+		sprintf(ERROR_STRING,"MeteorDev %s opened, fd=%d",MeteorDev,meteor_fd);
+		advise(ERROR_STRING);
 	}
 
 
@@ -107,11 +104,11 @@ advise("fg_open BEGIN");
 	err_cnts.frames_captured = 0;
 	err_cnts.even_fields_captured = 0;
 	err_cnts.odd_fields_captured = 0;
-//sprintf(error_string,"fg_open:  sizeof(struct meteor_counts) = 0x%lx",sizeof(struct meteor_counts));
-//advise(error_string);
-//sprintf(error_string,"fg_open:  METEORSCOUNT = 0x%lx",METEORSCOUNT);
-//advise(error_string);
-	if (ioctl(meteorfd, (int)(METEORSCOUNT), &err_cnts) < 0) {
+//sprintf(ERROR_STRING,"fg_open:  sizeof(struct meteor_counts) = 0x%lx",sizeof(struct meteor_counts));
+//advise(ERROR_STRING);
+//sprintf(ERROR_STRING,"fg_open:  METEORSCOUNT = 0x%lx",METEORSCOUNT);
+//advise(ERROR_STRING);
+	if (ioctl(meteor_fd, (int)(METEORSCOUNT), &err_cnts) < 0) {
 		perror("fg_open:  ioctl(METEORSCOUNT)");
 		fg_close();
 		return( -1 );
@@ -122,13 +119,13 @@ advise("fg_open BEGIN");
 	if( (numcols % 8) != 0 )
 		numcols = numcols & 0x3f8;
 
-	if (ioctl(meteorfd, METEORSINPUT, &video_source) < 0) {
+	if (ioctl(meteor_fd, METEORSINPUT, &video_source) < 0) {
 		perror("ioctl(METEORSINPUT)");
 		fg_close();
 		return( -1 );
 	}
 
-	if (ioctl(meteorfd, METEORSFMT, &iformat) < 0) {
+	if (ioctl(meteor_fd, METEORSFMT, &iformat) < 0) {
 		perror("ioctl(METEORSFMT)");
 		fg_close();
 		return( -1 );
@@ -177,14 +174,14 @@ advise("progress...");
 			vid.addr = (uint32_t)phys_fb_addr + (uint32_t)SCREEN_OFFSET;
 			vid.width = DEF_SCREEN_WIDTH * DEF_SCREEN_BYTE_DEPTH;
 			vid.ramsize = vid.width * (geo.rows + 16);
-			if (ioctl(meteorfd, METEORSVIDEO, &vid) < 0) {
+			if (ioctl(meteor_fd, METEORSVIDEO, &vid) < 0) {
 				perror("ioctl(METEORSVIDEO)");
 				fg_close();
 				return( -1 );
 			}
 
 			/* set geometry only after set video */
-			if (ioctl(meteorfd, METEORSETGEO, &geo) < 0) {
+			if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
 				perror("ioctl(METEORSETGEO)");
 				fg_close();
 				return( -1 );
@@ -221,8 +218,8 @@ advise("HIMEM_FG");
 				advise("allocating frame buffer using himemfb device");
 
 			if ((fbfd = open(DEF_HIMEM_DEVICE, O_RDWR)) < 0) {
-				sprintf(error_string,"open(%s)",DEF_HIMEM_DEVICE);
-				perror(error_string);
+				sprintf(ERROR_STRING,"open(%s)",DEF_HIMEM_DEVICE);
+				perror(ERROR_STRING);
 				fg_close();
 				return( -1 );
 			}
@@ -279,8 +276,8 @@ advise("HIMEM_FG");
 			}
 			/* the size of the largest chunk should be returned in mc1.mc_size */
 			if( verbose ){
-sprintf(error_string,"largest himemfb chunk is %d bytes",mc1.mc_size);
-advise(error_string);
+sprintf(ERROR_STRING,"largest himemfb chunk is %d bytes",mc1.mc_size);
+advise(ERROR_STRING);
 			}
 
 			if( mc1.mc_size <= 0 ){
@@ -294,8 +291,8 @@ advise(error_string);
 			}
 
 			if( verbose ){
-sprintf(error_string,"requesting %d bytes from himemfb",mc1.mc_size);
-advise(error_string);
+sprintf(ERROR_STRING,"requesting %d bytes from himemfb",mc1.mc_size);
+advise(ERROR_STRING);
 			}
 			mc1.mc_flags = AUTO_RELEASE;	/* release the chunk when himemfb is closed */
 
@@ -312,14 +309,14 @@ advise(error_string);
 			vid.ramsize = mc1.mc_size;
 
 			vid.width = 0;
-			if (ioctl(meteorfd, METEORSVIDEO, &vid) < 0) {
+			if (ioctl(meteor_fd, METEORSVIDEO, &vid) < 0) {
 				perror("ioctl(METEORSVIDEO)");
 				fg_close();
 				return( -1 );
 			}
 
 			/* set geometry only after set video */
-			if (ioctl(meteorfd, METEORSETGEO, &geo) < 0) {
+			if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
 				perror("ioctl(METEORSETGEO)");
 				fg_close();
 				return( -1 );
@@ -335,7 +332,7 @@ advise(error_string);
 
 /* can use either device as mmap source */
 /*			framebuf=(u_char *)mmap((caddr_t)0, framesize, PROT_READ,
-				MAP_FILE|MAP_PRIVATE, meteorfd, (off_t)0);
+				MAP_FILE|MAP_PRIVATE, meteor_fd, (off_t)0);
 */
 advise("calling mmap");
 			framebuf = (u_char *) mmap( (caddr_t)0, (size_t)framesize,
@@ -360,7 +357,7 @@ advise("calling mmap");
 
 		case BIGPHYS_RAM: {
 
-			if (ioctl(meteorfd, METEORSETGEO, &geo) < 0) {
+			if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
 				perror("ioctl(METEORSETGEO)");
 				fg_close();
 				return( -1 );
@@ -368,7 +365,7 @@ advise("calling mmap");
 
 			framesize = bytesperpixel * geo.columns * geo.rows;
 			framebuf=(u_char *)mmap((caddr_t)0, framesize, PROT_READ,
-				MAP_OPTIONS, meteorfd, (off_t)0);
+				MAP_OPTIONS, meteor_fd, (off_t)0);
 			if (framebuf == (u_char *)-1) {
 				perror("meteor mmap failed");
 				fg_close();
@@ -414,18 +411,19 @@ int assoc_pids(pid1,pid2)
 	mc1.mc_pid[0]=pid1;
 	mc1.mc_pid[1]=pid2;
 
-#ifdef CAUTIOUS
-	if( fbfd == (-1) )
-		error1("CAUTIOUS:  assoc_pids:  himemfb is not open");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( fbfd == (-1) )
+//		error1("CAUTIOUS:  assoc_pids:  himemfb is not open");
+//#endif /* CAUTIOUS */
+	assert( fbfd != (-1) );
 
 	if( ioctl(fbfd,HM_ADDPID,&mc1) < 0 ){
 		perror("ioctl HM_ADDPID");
 		error1("error associating process id");
 	}
 /*
-sprintf(error_string,"associating pid's %d and %d",pid1,pid2);
-advise(error_string);
+sprintf(ERROR_STRING,"associating pid's %d and %d",pid1,pid2);
+advise(ERROR_STRING);
 */
 
 	return(0);
@@ -438,18 +436,19 @@ int unassoc_pids(pid1,pid2)
 	mc1.mc_pid[0]=pid1;
 	mc1.mc_pid[1]=pid2;
 
-#ifdef CAUTIOUS
-	if( fbfd == (-1) )
-		error1("CAUTIOUS:  unassoc_pids:  himemfb is not open");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( fbfd == (-1) )
+//		error1("CAUTIOUS:  unassoc_pids:  himemfb is not open");
+//#endif /* CAUTIOUS */
+	assert( fbfd != (-1) );
 
 	if( ioctl(fbfd,HM_SUBPID,&mc1) < 0 ){
 		perror("ioctl HM_SUBPID");
 		error1("error unassociating process id");
 	}
 /*
-sprintf(error_string,"unassociating pid's %d and %d",pid1,pid2);
-advise(error_string);
+sprintf(ERROR_STRING,"unassociating pid's %d and %d",pid1,pid2);
+advise(ERROR_STRING);
 */
 
 	return(0);
@@ -468,14 +467,14 @@ int fg_capture()
 	int consecutive_errors = 0;
 	struct meteor_counts  cnts;
 
-	if (ioctl(meteorfd, METEORCAPTUR, &capcmd)) {
+	if (ioctl(meteor_fd, METEORCAPTUR, &capcmd)) {
 		perror("ioctl(start_capture)");
 		return(-1);
 	}
 
 	/* repeat until no errors */
 	while( done == FALSE) {
-		if (ioctl(meteorfd, METEORGCOUNT, &cnts) < 0) {
+		if (ioctl(meteor_fd, METEORGCOUNT, &cnts) < 0) {
 			perror("ioctl(METEORGCOUNT)");
 			return(-1);
 		}
@@ -489,7 +488,7 @@ int fg_capture()
 				fprintf(stderr, "too many FIFO errors --\n");
 				return(-1);
 			}
-			if (ioctl(meteorfd, METEORCAPTUR, &capcmd)) {
+			if (ioctl(meteor_fd, METEORCAPTUR, &capcmd)) {
 				perror("ioctl(start_capture)");
 				return(-1);
 			}
@@ -511,7 +510,7 @@ int fg_run_continuous()
 {
 	int capcmd = METEOR_CAP_CONTINOUS;
 
-	if (ioctl(meteorfd, METEORCAPTUR, &capcmd)) {
+	if (ioctl(meteor_fd, METEORCAPTUR, &capcmd)) {
 		perror("ioctl(start_capture)");
 		return(-1);
 	}
@@ -652,7 +651,7 @@ void fg_stop()
 {
 	int capcmd = METEOR_CAP_STOP_CONT;
 
-	if (ioctl(meteorfd, METEORCAPTUR, &capcmd)) {
+	if (ioctl(meteor_fd, METEORCAPTUR, &capcmd)) {
 		perror("ioctl(stop_capture)");
 	}
 }
@@ -672,10 +671,10 @@ void fg_close()
 #endif
 			perror("munmap meteor/fbdev");
 	} else {
-		advise("fg_close:  nothing has been mmap'd");
+		NADVISE("fg_close:  nothing has been mmap'd");
 	}
 
-	close(meteorfd);
+	close(meteor_fd);
 	close(fbfd);
 	fbfd = -1;
 	fgbuf.ram_location = 0;
@@ -690,7 +689,7 @@ int fg_rows( int rows )
 {
 	struct meteor_geomet  geo;
 
-	if (ioctl(meteorfd, METEORGETGEO, &geo) < 0) {
+	if (ioctl(meteor_fd, METEORGETGEO, &geo) < 0) {
 		perror("ioctl(METEORGETGEO)");
 		return( -1 );
 	}
@@ -699,7 +698,7 @@ int fg_rows( int rows )
 		rows &= 0x7fe;
 	geo.rows = rows;
 
-	if (ioctl(meteorfd, METEORSETGEO, &geo) < 0) {
+	if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
 		perror("ioctl(METEORSETGEO)");
 		return( -1 );
 	}
@@ -716,7 +715,7 @@ int fg_cols( int cols )
 {
 	struct meteor_geomet  geo;
 
-	if (ioctl(meteorfd, METEORGETGEO, &geo) < 0) {
+	if (ioctl(meteor_fd, METEORGETGEO, &geo) < 0) {
 		perror("ioctl(METEORGETGEO)");
 		return( -1 );
 	}
@@ -725,7 +724,7 @@ int fg_cols( int cols )
 		cols = cols & 0x3f8;
 	geo.columns = cols;
 
-	if (ioctl(meteorfd, METEORSETGEO, &geo) < 0) {
+	if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
 		perror("ioctl(METEORSETGEO)");
 		return( -1 );
 	}
@@ -738,7 +737,7 @@ int fg_cols( int cols )
  */
 int fg_hue( int hue )
 {
-	if (ioctl(meteorfd, METEORSHUE, &hue) < 0) {
+	if (ioctl(meteor_fd, METEORSHUE, &hue) < 0) {
 		perror("ioctl(METEORSHUE)");
 		return( -1 );
 	}
@@ -750,7 +749,7 @@ int fg_hue( int hue )
  */
 int fg_brightness( int brightness )
 {
-	if (ioctl(meteorfd, METEORSBRIG, &brightness) < 0) {
+	if (ioctl(meteor_fd, METEORSBRIG, &brightness) < 0) {
 		perror("ioctl(METEORSBRIG)");
 		return( -1 );
 	}
@@ -762,7 +761,7 @@ int fg_brightness( int brightness )
  */
 int fg_contrast( int contrast )
 {
-	if (ioctl(meteorfd, METEORSCONT, &contrast) < 0) {
+	if (ioctl(meteor_fd, METEORSCONT, &contrast) < 0) {
 		perror("ioctl(METEORSCONT)");
 		return( -1 );
 	}
@@ -780,7 +779,7 @@ int fg_gamma( int gamma )
 	else
 		arg = 1;
 
-	if (ioctl(meteorfd, METEORSGAMMA, &arg) < 0) {
+	if (ioctl(meteor_fd, METEORSGAMMA, &arg) < 0) {
 		perror("ioctl(METEORSGAMMA)");
 		return( -1 );
 	}
@@ -795,10 +794,10 @@ u_char *fg_buf_addr()
 
 #else /* FAKE_METEOR_HARDWARE */
 
-int meteorfd=(-1);
+int meteor_fd=(-1);
 int fbfd=(-1);
 
-int fg_open(int video_source, int video_format, int ram_location)
+int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 {
 	return(0);
 }

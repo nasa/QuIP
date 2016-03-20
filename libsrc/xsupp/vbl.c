@@ -5,8 +5,6 @@
 
 #ifdef HAVE_X11
 
-char VersionId_xsupp_vbl[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_SYS_IO_H
 #include <sys/io.h>		/* ioperm (glibc) */
 #endif
@@ -19,13 +17,14 @@ char VersionId_xsupp_vbl[] = QUIP_VERSION_STRING;
 #include <unistd.h>		/* geteuid etc */
 #endif
 
-#include "query.h"		/* error1() */
-#include "xsupp.h"		/* xdebug, error1() */
+#include "quip_prot.h"		/* error1() */
+#include "xsupp.h"
+#include "xsupp_prot.h"		/* xdebug */
 #include "debug.h"
 
 static int vbl_inited=0;
 
-void vbl_init()
+static void vbl_init()
 {
 	uid_t uid;
 
@@ -34,7 +33,7 @@ void vbl_init()
 	if( seteuid(0) < 0 ){
 		perror("seteuid");	/* if we were suid root */
 		NWARN("vbl_init:  unable to set effective uid to 0 for ioperm");
-		advise("Make sure program is suid root.");
+		NADVISE("Make sure program is suid root.");
 		vbl_inited = (-1);
 		return;
 	}
@@ -42,7 +41,7 @@ void vbl_init()
 	if( ioperm(0x3c0,32,1) != 0 ){
 		perror("ioperm");
 		NWARN("vbl_init:  unable to map VGA registers.");
-		advise("Make sure program is suid root.");
+		NADVISE("Make sure program is suid root.");
 		vbl_inited = (-1);
 		return;
 	}
@@ -54,7 +53,7 @@ void vbl_init()
 	vbl_inited = 1;
 }
 
-#ifdef DEBUG_DEBUG
+#ifdef QUIP_DEBUG_DEBUG
 
 static void dump_all_regs()
 {
@@ -76,7 +75,7 @@ static void dump_all_regs()
 		prt_msg(msg_str);
 	}
 }
-#endif /* DEBUG_DEBUG */
+#endif /* QUIP_DEBUG_DEBUG */
 
 
 /* 0x400  1k
@@ -88,7 +87,7 @@ static void dump_all_regs()
 // #define MAX_WAITS	0x1000000
 #define MAX_WAITS	100000
 
-void vbl_wait()
+void vbl_wait(void)
 {
 	int regval;
 	int ctr;
@@ -100,12 +99,12 @@ void vbl_wait()
 	ctr=0;
 	/* If we're already in blanking, wait til it finishes... */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"vbl_wait:  reg 0x3da = 0x%x",regval);
-//advise(ERROR_STRING);
+//NADVISE(ERROR_STRING);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* on a 70 Hz system (fourier), we seem to sometimes miss a pulse...
 	 * The timer count jumps from 9k to 36k, we have approx. 27k loop
@@ -116,19 +115,19 @@ void vbl_wait()
 	while( (regval & 0x8) == 0x8 && ctr < MAX_WAITS ){
 		regval = inb(0x3da);
 		ctr++;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"vbl_wait:  reg 0x3da = 0x%x   (ctr = %d)",regval,ctr);
-//advise(ERROR_STRING);
+//NADVISE(ERROR_STRING);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	}
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"vbl_wait:  bit clear after %d counts",ctr);
 //advise(ERROR_STRING);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( ctr >= MAX_WAITS ){
 		sprintf(DEFAULT_ERROR_STRING,
@@ -141,20 +140,20 @@ void vbl_wait()
 	while( (regval & 0x8) == 0 && ctr < MAX_WAITS ){
 		regval = inb(0x3da);
 		ctr++;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"vbl_wait:  reg 0x3da = 0x%x   (ctr = %d)",regval,ctr);
 //advise(ERROR_STRING);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(DEFAULT_ERROR_STRING,"vbl_wait:  bit set after %d counts",ctr);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( ctr >= MAX_WAITS ){
 		sprintf(DEFAULT_ERROR_STRING,

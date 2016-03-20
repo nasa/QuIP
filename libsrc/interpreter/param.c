@@ -1,6 +1,10 @@
 #include "quip_config.h"
 
-char VersionId_interpreter_param[] = QUIP_VERSION_STRING;
+/* This file is kind of obsolete...
+ * We don't really use parameter tables any more.
+ * This is a legacy system derived from old
+ * Kropfl code from Bell Labs.
+ */
 
 #include <stdio.h>
 #ifdef HAVE_CTYPE_H
@@ -10,17 +14,18 @@ char VersionId_interpreter_param[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
+#include "query_prot.h"
 #include "nexpr.h"
-#include "query.h"
-#include "debug.h"
 #include "history.h"
-#include "submenus.h"
 
 #define UPARAM
 #include "param_api.h"
 
+#ifdef FOOBAR
 /* local prototypes */
 static void	rdprms(QSP_ARG_DECL  Param *p,FILE *fp);
+#endif /* FOOBAR */
 
 static void	wtprms(QSP_ARG_DECL  FILE *fp,Param *p);
 static void	showparm(QSP_ARG_DECL  Param *);
@@ -35,14 +40,10 @@ static COMMAND_FUNC( do_chng_one );
 static COMMAND_FUNC( do_prm_rd );
 static COMMAND_FUNC( do_prm_wt );
 
-static int	ifarr(QSP_ARG_DECL  const char *);
-
 static Param *theptbl;
 static const char *badpstr="bad paramter type";
 float fnum;
 
-int chngp_ing;		/* a global so we know if we're in the menu. - NOT THREAD-SAFE !? */
-				
 
 static void showparm( QSP_ARG_DECL  Param* p ) /** show p on the screen */
 {
@@ -186,7 +187,7 @@ static COMMAND_FUNC( do_chng_one )
 
 #ifdef HAVE_HISTORY
 
-	if( intractive(SINGLE_QSP_ARG) && HISTORY_FLAG ){
+	if( intractive(SINGLE_QSP_ARG) && IS_TRACKING_HISTORY(THIS_QSP) ){
 		List *lp;
 		Node *np;
 
@@ -230,11 +231,55 @@ static COMMAND_FUNC( do_chng_one )
 	}
 }
 
+/* ifarr("p[3]") returns 3, and has the following side effects:
+ */
+
+#define MAX_INDEX_STRING_LEN	16
+
+static index_t ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
+{
+	Typed_Scalar *tsp;
+	char index_string[MAX_INDEX_STRING_LEN];
+	int i;
+
+/* need to fix up const stuff */
+
+	while( *s && *s != '[' ){
+		s++;	/* skip until end or opening brace */
+	}
+	if( *s==0 ) return(NOTARR);
+	s++;		// skip opening brace
+
+	/* changed to use expression parser jbm 12-10-92 */
+
+	i=0;
+	while( *s && *s!=']' ){
+		if( i >= (MAX_INDEX_STRING_LEN-1)){
+			sprintf(ERROR_STRING,"ifarr:  index string too long (%d chars max)",
+				MAX_INDEX_STRING_LEN-1);
+			WARN(ERROR_STRING);
+			return(NOTARR);
+		}
+		index_string[i++] = *s++;
+	}
+	index_string[i]=0;
+
+	if( *s != ']' ) {
+		WARN("ifarr:  no closing brace for index");
+		return(NOTARR);
+	}
+	tsp = pexpr(QSP_ARG  index_string );
+	i =  index_for_scalar( tsp );
+	RELEASE_SCALAR(tsp);
+
+	return(i);
+}
+
 /* This does a lot of in-place monkeying... */
 
 static int get_pval(QSP_ARG_DECL  const char *name,Param* ptable)
 {
-	int pindex;
+	index_t pindex;
 
 	pindex=ifarr(QSP_ARG name);
 	while( ptable->p_type != NULL_P_TYPE ){
@@ -264,12 +309,12 @@ static void wtprms(QSP_ARG_DECL  FILE *fp,Param *p)	/** write parameters to file
 }
 
 
-static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp)
+static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp, const char *filename)
 {
 	int level;
 	const char *s;
 
-	redir(QSP_ARG  fp);
+	redir(QSP_ARG  fp, filename);
 	level=QLEVEL;
 	do {
 		s=NAMEOF("name of parameter");
@@ -277,50 +322,7 @@ static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp)
 			WARN("error getting parameter value");
 		/* lookahead word should decrement qlevel at EOF */
 		lookahead(SINGLE_QSP_ARG);
-	} while( level == tell_qlevel(SINGLE_QSP_ARG) );
-}
-
-/* ifarr("p[3]") returns 3, and has the following side effects:
- */
-
-#define MAX_INDEX_STRING_LEN	16
-
-static int ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
-{
-	char index_string[MAX_INDEX_STRING_LEN];
-	char *s2;
-	int i;
-
-/* need to fix up const stuff */
-
-	while( *s && *s != '[' ){
-		s++;	/* skip until end or opening brace */
-	}
-	if( *s==0 ) return(NOTARR);
-	s++;		// skip opening brace
-
-	/* changed to use expression parser jbm 12-10-92 */
-
-	s2=index_string;
-	i=0;
-	while( *s && *s!=']' ){
-		if( i >= (MAX_INDEX_STRING_LEN-1)){
-			sprintf(ERROR_STRING,"ifarr:  index string too long (%d chars max)",
-				MAX_INDEX_STRING_LEN-1);
-			WARN(ERROR_STRING);
-			return(NOTARR);
-		}
-		index_string[i++] = *s++;
-	}
-	index_string[i]=0;
-
-	if( *s != ']' ) {
-		WARN("ifarr:  no closing brace for index");
-		return(NOTARR);
-	}
-	i =  (int)pexpr(QSP_ARG  index_string);
-
-	return(i);
+	} while( level == QLEVEL );
 }
 
 
@@ -332,8 +334,7 @@ static COMMAND_FUNC( do_prm_rd )
 	s=NAMEOF(pfstr);
 	fp=TRY_OPEN( s,"r" );
 	if( !fp ) return;
-	push_input_file(QSP_ARG  s);
-	rdprms(QSP_ARG  theptbl,fp);
+	rdprms(QSP_ARG  theptbl,fp,s);
 }
 
 static COMMAND_FUNC( do_prm_wt )
@@ -344,30 +345,23 @@ static COMMAND_FUNC( do_prm_wt )
 	wtprms(QSP_ARG  fp,theptbl);
 }
 
-static COMMAND_FUNC( quit_chngp )
-{
-	chngp_ing = 0;
-	popcmd(SINGLE_QSP_ARG);
-}
+#define ADD_CMD(s,f,h)	ADD_COMMAND(change_parameter_menu,s,f,h)
 
-static Command prmctbl[]={
-{ "change",	do_chng_one,	"change parameter"		},
-{ "display",	do_disp_prms,	"display parameters"		},
-{ "read",	do_prm_rd,	"read parameters from a file"	},
-{ "write",	do_prm_wt,	"write parameters to a file"	},
-{ "quit",	quit_chngp,	"exit submenu"			},
-{ NULL_COMMAND							}
-};
+MENU_BEGIN(change_parameter)
+ADD_CMD( change,	do_chng_one,	change parameter )
+ADD_CMD( display,	do_disp_prms,	display parameters )
+ADD_CMD( read,		do_prm_rd,	read parameters from a file )
+ADD_CMD( write,		do_prm_wt,	write parameters to a file )
+MENU_END(change_parameter)
 
 COMMAND_FUNC( prm_menu )
 {
-	PUSHCMD(prmctbl,"change_parameter");
+	PUSH_MENU(change_parameter);
 }
 
 void chngp(QSP_ARG_DECL  Param *p) /** display and modify parameters */
 {
 	theptbl=p;
-	chngp_ing=1;
 	prm_menu(SINGLE_QSP_ARG);
 }
 

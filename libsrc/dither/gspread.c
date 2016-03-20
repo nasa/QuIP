@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_dither_gspread[] = QUIP_VERSION_STRING;
-
 /*
  * utility routines for optimal halftoning
  */
@@ -11,6 +9,7 @@ char VersionId_dither_gspread[] = QUIP_VERSION_STRING;
 #include <math.h>
 #endif
 
+#include "quip_prot.h"
 #include "vec_util.h"
 
 /* get the filtered error at one point.
@@ -32,49 +31,49 @@ double get_ferror(Data_Obj *edp,Data_Obj *fdp,dimension_t x,dimension_t y)
 	 * the center is at the middle of the image
 	 */
 
-	hy=fdp->dt_rows/2;
-	hx=fdp->dt_cols/2;
+	hy=OBJ_ROWS(fdp)/2;
+	hx=OBJ_COLS(fdp)/2;
 	/*
 	x -= hx;
 	y -= hy;
 	*/
 	err=0.0;
-	eptr = (float *)edp->dt_data;
-	fptr = (float *)fdp->dt_data;
+	eptr = (float *)OBJ_DATA_PTR(edp);
+	fptr = (float *)OBJ_DATA_PTR(fdp);
 
-	j=(long)fdp->dt_rows;
+	j=(incr_t)OBJ_ROWS(fdp);
 	while(j--){
 		iy=y+j-hy;
 #ifdef NOWRAP
 		if( iy < 0 ) continue;
-		else if( iy >= edp->dt_rows ) continue;
+		else if( iy >= OBJ_ROWS(edp) ) continue;
 #else
-		while( iy < 0 ) iy += edp->dt_rows;
-		while( iy >= (incr_t)edp->dt_rows ) iy -= edp->dt_rows;
+		while( iy < 0 ) iy += OBJ_ROWS(edp);
+		while( iy >= (incr_t)OBJ_ROWS(edp) ) iy -= OBJ_ROWS(edp);
 #endif /* NOWRAP */
 
-		yos = iy*(long)edp->dt_rowinc;
+		yos = iy*(incr_t)OBJ_ROW_INC(edp);
 
-		foffset = (j+1) * (long)fdp->dt_rowinc;
+		foffset = (j+1) * (incr_t)OBJ_ROW_INC(fdp);
 
-		i=(long)fdp->dt_cols;
+		i=(incr_t)OBJ_COLS(fdp);
 		while(i--){
 			foffset--;
 
 			ix=x+i-hx;
 #ifdef NOWRAP
 			if( ix < 0 ) continue;
-			else if( ix >= edp->dt_cols ) continue;
+			else if( ix >= OBJ_COLS(edp) ) continue;
 #else
-			while( ix < 0 ) ix += edp->dt_cols;
-			while( ix >= (incr_t)edp->dt_cols ) ix -= edp->dt_cols;
+			while( ix < 0 ) ix += OBJ_COLS(edp);
+			while( ix >= (incr_t)OBJ_COLS(edp) ) ix -= OBJ_COLS(edp);
 #endif /* NOWRAP */
 			eoffset = yos + ix;
 
 			err += *(eptr+eoffset)
 				* *(fptr+foffset);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"get_ferror %d %d:  %d %d, err = %g, filt = %g, running total %g",
@@ -82,17 +81,17 @@ x,y,i,j,*(eptr+eoffset),*(fptr+foffset),err);
 advise(DEFAULT_ERROR_STRING);
 }
 */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		}
 	}
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"get_ferror %d %d:  TOTAL err = %g",x,y,err);
 advise(DEFAULT_ERROR_STRING);
 }
 */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	return(err);
 }
@@ -105,9 +104,9 @@ double get_sos(Data_Obj *edp,Data_Obj *fdp)		/* get the total sq'd error */
 	double sos, rowsos,err;
 
 	sos = 0.0;
-	for(j=0;j<(incr_t)edp->dt_rows;j++){
+	for(j=0;j<(incr_t)OBJ_ROWS(edp);j++){
 		rowsos=0.0;
-		for(i=0;i<(incr_t)edp->dt_cols;i++){
+		for(i=0;i<(incr_t)OBJ_COLS(edp);i++){
 			err = get_ferror(edp,fdp,i,j);
 			rowsos += err * err;
 		}
@@ -116,7 +115,7 @@ double get_sos(Data_Obj *edp,Data_Obj *fdp)		/* get the total sq'd error */
 
 	/* normalize by number of pixels */
 	/* why rowinc and not ncols??? */
-	sos /= edp->dt_rows*edp->dt_rowinc;
+	sos /= OBJ_ROWS(edp)*OBJ_ROW_INC(edp);
 	return(sos);
 }
 
@@ -141,25 +140,25 @@ double add_to_sos(dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int fa
 	*/
 
 	adj =0.0;
-	for(j=0;j<fdp->dt_rows;j++){
-		yy = (incr_t)(y + j) - (incr_t)fdp->dt_rows/2;
+	for(j=0;j<OBJ_ROWS(fdp);j++){
+		yy = (incr_t)(y + j) - (incr_t)OBJ_ROWS(fdp)/2;
 #ifdef NOWRAP
-		if( yy >= 0 && yy < edp->dt_rows ){
-			for(i=0;i<fdp->dt_cols;i++){
-				xx = (incr_t)(x + i) - (incr_t)(fdp->dt_cols/2);
-				if( xx >= 0 && xx < edp->dt_cols ){
+		if( yy >= 0 && yy < OBJ_ROWS(edp) ){
+			for(i=0;i<OBJ_COLS(fdp);i++){
+				xx = (incr_t)(x + i) - (incr_t)(OBJ_COLS(fdp)/2);
+				if( xx >= 0 && xx < OBJ_COLS(edp) ){
 					err = get_ferror(edp,fdp,xx,yy);
 					adj += err*err;
 				}
 			}
 		}
 #else
-		while( yy < 0 ) yy += edp->dt_rows;
-		while( yy >= (incr_t)edp->dt_rows ) yy -= edp->dt_rows;
-		for(i=0;i<fdp->dt_cols;i++){
-			xx = x + i - fdp->dt_cols/2;
-			while( xx < 0 ) xx += edp->dt_cols;
-			while( xx >= (incr_t)edp->dt_cols ) xx -= edp->dt_cols;
+		while( yy < 0 ) yy += OBJ_ROWS(edp);
+		while( yy >= (incr_t)OBJ_ROWS(edp) ) yy -= OBJ_ROWS(edp);
+		for(i=0;i<OBJ_COLS(fdp);i++){
+			xx = x + i - OBJ_COLS(fdp)/2;
+			while( xx < 0 ) xx += OBJ_COLS(edp);
+			while( xx >= (incr_t)OBJ_COLS(edp) ) xx -= OBJ_COLS(edp);
 			err = get_ferror(edp,fdp,xx,yy);
 			adj += err*err;
 		}
@@ -167,9 +166,9 @@ double add_to_sos(dimension_t x,dimension_t y,Data_Obj *edp,Data_Obj *fdp,int fa
 	}
 	/* normalize by number of pixels */
 	if( factor == 1 )
-		adj /= (edp->dt_cols * edp->dt_rows);
+		adj /= (OBJ_COLS(edp) * OBJ_ROWS(edp));
 	else if( factor == -1 )
-		adj /= - (edp->dt_cols * edp->dt_rows);
+		adj /= - (OBJ_COLS(edp) * OBJ_ROWS(edp));
 #ifdef CAUTIOUS
 	else {
 		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  add_to_sos:  factor (%d) is not 1 or -1 !?",factor);

@@ -1,8 +1,7 @@
 #include "quip_config.h"
 
-char VersionId_v4l2_ezstream[] = QUIP_VERSION_STRING;
-
-#include "query.h"
+#include "quip_prot.h"
+#include "my_v4l2.h"
 
 #ifdef HAVE_V4L2
 
@@ -75,7 +74,9 @@ char VersionId_v4l2_ezstream[] = QUIP_VERSION_STRING;
 
 /* on wheatstone, we get 6 buffers per camera... */
 
+#ifdef HAVE_RAWVOL
 static int really_writing=1;	/* just for testing */
+#endif // HAVE_RAWVOL
 
 //static int capture_rows=480;
 //static int capture_cols=640;
@@ -102,25 +103,25 @@ struct itimerval tmr1;
 #define RECORD_HALTING		4		/* async halt requested */
 #define RECORD_FINISHING	8	/* halt request has been processed */
 
+#ifdef HAVE_RAWVOL
 static int which_device;
 static int record_state=NOT_RECORDING;
+
+/* disk writer stuff */
+static long n_so_far;			/* # frames written */
+static long n_to_write;			/* number of bytes per write op */
+
 static int recording_in_process = 0;
+#endif // HAVE_RAWVOL
 
 //#define DEFAULT_BYTES_PER_PIXEL		4
 
 /* raw video from the grabber is 422 YUYV */
 #define DEFAULT_BYTES_PER_PIXEL		2
 
-/* disk writer stuff */
-static long n_so_far;			/* # frames written */
-static long n_to_write;			/* number of bytes per write op */
-
+#ifdef NOT_USED
 static int async_capture=0;
-
-/* local prototypes */
-static struct v4l2_buffer *next_frame(QSP_ARG_DECL  int n_devices, Video_Device **vdp_tbl);
-static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp);
-
+#endif /* NOT_USED */
 
 #ifdef RECORD_TIMESTAMPS
 
@@ -136,6 +137,7 @@ static unsigned int n_stored_times=0;
 static unsigned int ts_array_size=0;
 #endif /* RECORD_TIMESTAMPS */
 
+#ifdef HAVE_RAWVOL
 static uint32_t get_blocks_per_frame()
 {
 	uint32_t blocks_per_frame, bytes_per_frame;
@@ -150,6 +152,7 @@ static uint32_t get_blocks_per_frame()
 	blocks_per_frame = ( bytes_per_frame + BLOCK_SIZE - 1 ) / BLOCK_SIZE;
 	return(blocks_per_frame);
 }
+#endif // HAVE_RAWVOL
 
 #ifdef RECORD_TIMESTAMPS
 static void init_stamps(uint32_t n_frames)
@@ -172,15 +175,15 @@ static void init_stamps(uint32_t n_frames)
 
 static void show_tmr(struct itimerval *tmrp)
 {
-	sprintf(error_string,"interval:  %ld   %ld",
+	sprintf(ERROR_STRING,"interval:  %ld   %ld",
 			tmrp->it_interval.tv_sec,
 			tmrp->it_interval.tv_usec);
-	advise(error_string);
+	advise(ERROR_STRING);
 
-	sprintf(error_string,"value:  %ld   %ld",
+	sprintf(ERROR_STRING,"value:  %ld   %ld",
 			tmrp->it_value.tv_sec,
 			tmrp->it_value.tv_usec);
-	advise(error_string);
+	advise(ERROR_STRING);
 }
 
 static void show_tmrs()
@@ -192,6 +195,7 @@ show_tmr(&tmr1);
 
 #endif /* DEBUG_TIMERS */
 
+#ifdef NOT_USED
 /* These don't seem to be used anywhere in this module??? */
 
 void set_v4l2_async_record(int flag)
@@ -199,25 +203,223 @@ void set_v4l2_async_record(int flag)
 
 int get_v4l2_async_record()
 { return async_capture; }
+#endif /* NOT_USED */
+
+/* Get the next frame from whichever device might be ready.  We want to store
+ * the frames we get in device order, so we don't necessarily deliver up the frame
+ * we get here next...
+ *
+ * This seems to fail, so instead we wait for the frame we want, accepting
+ * that frames may pile up in the other channels...
+ */
+
+
+#ifdef HAVE_RAWVOL
+
+static struct v4l2_buffer nf_buf;
+
+static struct v4l2_buffer *next_frame(QSP_ARG_DECL  int n_devices, Video_Device **vdp_tbl)
+{
+	fd_set fds;
+	struct timeval tv;
+	int r;
+	//int i;
+	int fd_limit;
+	Video_Device *ready_vdp;
+#ifdef WRITE_SEQUENTIAL
+	int where_to_write;
+#endif /* WRITE_SEQUENTIAL */
+
+#define CHECK_ALL_DEVICES
+
+	/* We CHECK ALL DEVICES when the cameras are not sychronized, and so we
+	 * don't know which one will be ready next
+	 */
+
+#ifdef CHECK_ALL_DEVICES
+	int i;
+
+	FD_ZERO(&fds);
+	fd_limit = vdp_tbl[0]->vd_fd;
+	for(i=0;i<n_devices;i++){
+		FD_SET(vdp_tbl[i]->vd_fd, &fds);
+		if( vdp_tbl[i]->vd_fd > fd_limit )
+			fd_limit = vdp_tbl[i]->vd_fd;
+	}
+	/* what is fd+1 all about??? see select(2) man page... */
+	fd_limit++;
+
+	/* Timeout. */
+	tv.tv_sec = 2;
+	tv.tv_usec = 0;
+
+	r = select(fd_limit, &fds, NULL, NULL, &tv);
+
+	if(r == -1) {
+		/* original code repeated if EINTR */
+		ERRNO_WARN("select");
+		return(NULL);
+	}
+
+	if( r == 0 ) {
+		sprintf(ERROR_STRING, "select timeout");
+		WARN(ERROR_STRING);
+		return(NULL);
+	}
+
+	/* Something is readable on one of the fd's - but which one??? */
+	which_device = (-1);
+	for(i=0;i<n_devices;i++){
+		if( FD_ISSET(vdp_tbl[i]->vd_fd,&fds) ){
+			if( which_device != -1 ) {
+				if( verbose )
+					advise("more than one device is ready!");
+				/* Because we assign which_device every
+				 * time we encounter a ready device, this
+				 * has the effect of giving a preference
+				 * to higher-numbered devices.  We ought
+				 * to do something smarter, like noting
+				 * how much time has elapsed since the
+				 * device was last serviced, to avoid
+				 * having a device's ring buffer fill up.
+				 * In practice, this doesn't seem to be a
+				 * problem, even though the system only
+				 * gives each device 6 buffers (200 msec).
+				 * With the * new SATA disks, write times
+				 * are only 1-2 msec.
+				 * Still, we might consider this a BUG.
+				 */
+			}
+			which_device = i;
+		}
+	}
+#ifdef CAUTIOUS
+	if( which_device < 0 ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  next_frame:  no ready device found!?");
+		WARN(ERROR_STRING);
+		return(NULL);
+	}
+#endif /* CAUTIOUS */
+
+#else /* ! CHECK_ALL_DEVICES */
+
+	/* figure out which device we want to read next... */
+	which_device = (newest+1) % n_devices;
+	FD_ZERO(&fds);
+	FD_SET(vdp_tbl[which_device]->vd_fd, &fds);
+	fd_limit = vdp_tbl[which_device]->vd_fd;
+	fd_limit++;
+	/* Timeout. */
+	tv.tv_sec = 2;
+	tv.tv_usec = 0;
+
+	r = select(fd_limit, &fds, NULL, NULL, &tv);
+
+	if(r == -1) {
+		/* original code repeated if EINTR */
+		ERRNO_WARN("select");
+		return(NULL);
+	}
+
+	if( r == 0 ) {
+		sprintf(ERROR_STRING, "select timeout");
+		WARN(ERROR_STRING);
+		return(NULL);
+	}
+
+#endif /* ! CHECK_ALL_DEVICES */
+
+	ready_vdp = vdp_tbl[which_device];
+
+	//CLEAR (nf_buf);
+
+	nf_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	nf_buf.memory = V4L2_MEMORY_MMAP;
+
+	/* DQBUF pulls a buffer out and locks it up while we use it... */
+	if( xioctl(ready_vdp->vd_fd, VIDIOC_DQBUF, &nf_buf) < 0 ) {
+		/* original code had special cases for EAGAIN and EIO */
+		ERRNO_WARN ("VIDIOC_DQBUF #1");
+		return(NULL);
+	}
+
+#ifdef CAUTIOUS
+	if( nf_buf.index < 0 || nf_buf.index >= (unsigned int) ready_vdp->vd_n_buffers ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  Unexpected buffer number (%d) from VIDIOC_DQBUF, expected 0-%d",
+			nf_buf.index,ready_vdp->vd_n_buffers-1);
+		WARN(ERROR_STRING);
+		return(NULL);
+	}
+#endif /* CAUTIOUS */
+
+#ifdef RECORD_TIMESTAMPS
+	/* Store the timestamp for this buffer */
+#ifdef CAUTIOUS
+	if( n_stored_times >= ts_array_size ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  n_stored_times (%d) should be less than ts_array_size (%d) when storing a new timestamp",n_stored_times,ts_array_size);
+		ERROR1(ERROR_STRING);
+	}
+#endif /* CAUTIOUS */
+	ts_array[n_stored_times].grab_time = nf_buf.timestamp;
+	ts_array[n_stored_times].which_dev = which_device;
+	n_stored_times++;
+#endif /* RECORD_TIMESTAMPS */
+
+
+	/* note that newest & oldest are one thing for the video device,
+	 * and another completely different thing for our ring buffer.
+	 * Here we update the information for the video dev's private ring buffer...
+	 */
+
+	return(&nf_buf);
+} /* end next_frame */
+
+static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
+{
+	RV_Inode *inp;
+
+//sprintf(ERROR_STRING,"v4l2_finish_recording %s",ifp->if_name);
+//advise(ERROR_STRING);
+	inp = get_rv_inode(QSP_ARG  ifp->if_name);
+#ifdef CAUTIOUS
+	if( inp == NO_INODE ){
+		sprintf(ERROR_STRING,"CAUTIOUS: v4l2_finish_recording:  missing rv inode %s",ifp->if_name);
+		ERROR1(ERROR_STRING);
+	}
+#endif
+
+	close_image_file(QSP_ARG  ifp);		/* close write file	*/
+
+	/* FIXME - when we do the full moviemenu interface, we need to make
+	 * sure our new recording gets incorporated into the database here...
+	 */
+
+	/* update_movie_database(inp); */
+	//warn("NOT updating movie database");
+	/* note_error_frames(inp); */
+}
+#endif // HAVE_RAWVOL
 
 /*
  */
 
 void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_cameras, Video_Device **vd_tbl)
 {
+#ifdef HAVE_RAWVOL
 	int fd_arr[MAX_DISKS];
 	int ndisks, which_disk;
 	uint32_t blocks_per_frame;
-	Shape_Info shape;
+	Shape_Info shp1;
+	Shape_Info *shpp=(&shp1);
 	RV_Inode *inp;
 	struct v4l2_buffer *bufp;
 	int i;
 
 	if( record_state != NOT_RECORDING ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"v4l2_stream_record:  can't record file %s until previous record completes",
 			ifp->if_name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -228,42 +430,42 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 //n_to_write>>=2;		/* write quarter for testing */
 
 
-	if( ifp->if_type != IFT_RV ){
-		sprintf(error_string,
+	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
+		sprintf(ERROR_STRING,
 	"stream record:  image file %s (type %s) should be type %s",
 			ifp->if_name,
-			ft_tbl[ifp->if_type].ft_name,
-			ft_tbl[IFT_RV].ft_name);
-		WARN(error_string);
+			FT_NAME(IF_TYPE(ifp)),
+			FT_NAME(FILETYPE_FOR_CODE(IFT_RV)) );
+		WARN(ERROR_STRING);
 		return;
 	}
 
 
-	inp = (RV_Inode *) ifp->if_hd;
-	ndisks = queue_rv_file(inp,fd_arr);
+	inp = (RV_Inode *) ifp->if_hdr_p;
+	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
 
 #ifdef CAUTIOUS
 	if( ndisks < 1 ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"Bad number (%d) of raw volume disks",ndisks);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
 
 
 	/* meteor_get_geometry(&_geo); */
-	shape.si_flags = 0;
-	shape.si_rows = 480;	/* BUG don't hard code */
-	shape.si_cols = 640; /* BUG don't hard code */
+	SET_SHP_FLAGS(shpp, 0);
+	SET_SHP_ROWS(shpp, 480);	/* BUG don't hard code */
+	SET_SHP_COLS(shpp, 640); /* BUG don't hard code */
 	/* should get bytes per pixel from _geo... */
-	shape.si_comps =  DEFAULT_BYTES_PER_PIXEL;
-	shape.si_frames = n_frames;
-	shape.si_seqs = 1;
-	shape.si_prec = PREC_UBY;
-	set_shape_flags(&shape,NO_OBJ,AUTO_SHAPE);
+	SET_SHP_COMPS(shpp,  DEFAULT_BYTES_PER_PIXEL);
+	SET_SHP_FRAMES(shpp, n_frames);
+	SET_SHP_SEQS(shpp, 1);
+	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(PREC_UBY) );
+	set_shape_flags(shpp,NO_OBJ,AUTO_SHAPE);
 
-	rv_set_shape(QSP_ARG  ifp->if_name,&shape);
+	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
 
 
 	/* We write an entire frame to each disk in turn... */
@@ -290,12 +492,12 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 if( really_writing ){
 		if( (n_written = write(fd_arr[which_disk],vd_tbl[which_device]->vd_buf_tbl[ bufp->index ].mb_start,n_to_write))
 			!= n_to_write ){
-			sprintf(error_string,"write (frm %ld, fd=%d)",n_so_far,ifp->if_fd);
-			perror(error_string);
-			sprintf(error_string,
+			sprintf(ERROR_STRING,"write (frm %ld, fd=%d)",n_so_far,ifp->if_fd);
+			perror(ERROR_STRING);
+			sprintf(ERROR_STRING,
 				"%ld requested, %d written",
 				n_to_write,n_written);
-			WARN(error_string);
+			WARN(ERROR_STRING);
 			return;
 		}
 
@@ -348,198 +550,10 @@ if( really_writing ){
 	 */
 
 	ifp->if_nfrms = n_frames;	/* BUG? is this really what happened? */
+#else // ! HAVE_RAWVOL
+	WARN("v4l2_stream_record:  Program not compiled with raw volume support, can't record!?");
+#endif // ! HAVE_RAWVOL
 } /* end v4l2_stream_record */
-
-/* Get the next frame from whichever device might be ready.  We want to store
- * the frames we get in device order, so we don't necessarily deliver up the frame
- * we get here next...
- *
- * This seems to fail, so instead we wait for the frame we want, accepting
- * that frames may pile up in the other channels...
- */
-
-static struct v4l2_buffer nf_buf;
-
-static struct v4l2_buffer *next_frame(QSP_ARG_DECL  int n_devices, Video_Device **vdp_tbl)
-{
-	fd_set fds;
-	struct timeval tv;
-	int r;
-	//int i;
-	int fd_limit;
-	Video_Device *ready_vdp;
-#ifdef WRITE_SEQUENTIAL
-	int where_to_write;
-#endif /* WRITE_SEQUENTIAL */
-
-#define CHECK_ALL_DEVICES
-
-	/* We CHECK ALL DEVICES when the cameras are not sychronized, and so we
-	 * don't know which one will be ready next
-	 */
-
-#ifdef CHECK_ALL_DEVICES
-	int i;
-
-	FD_ZERO(&fds);
-	fd_limit = vdp_tbl[0]->vd_fd;
-	for(i=0;i<n_devices;i++){
-		FD_SET(vdp_tbl[i]->vd_fd, &fds);
-		if( vdp_tbl[i]->vd_fd > fd_limit )
-			fd_limit = vdp_tbl[i]->vd_fd;
-	}
-	/* what is fd+1 all about??? see select(2) man page... */
-	fd_limit++;
-
-	/* Timeout. */
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
-
-	r = select(fd_limit, &fds, NULL, NULL, &tv);
-
-	if(r == -1) {
-		/* original code repeated if EINTR */
-		ERRNO_WARN("select");
-		return(NULL);
-	}
-
-	if( r == 0 ) {
-		sprintf(error_string, "select timeout");
-		WARN(error_string);
-		return(NULL);
-	}
-
-	/* Something is readable on one of the fd's - but which one??? */
-	which_device = (-1);
-	for(i=0;i<n_devices;i++){
-		if( FD_ISSET(vdp_tbl[i]->vd_fd,&fds) ){
-			if( which_device != -1 ) {
-				if( verbose )
-					advise("more than one device is ready!");
-				/* Because we assign which_device every
-				 * time we encounter a ready device, this
-				 * has the effect of giving a preference
-				 * to higher-numbered devices.  We ought
-				 * to do something smarter, like noting
-				 * how much time has elapsed since the
-				 * device was last serviced, to avoid
-				 * having a device's ring buffer fill up.
-				 * In practice, this doesn't seem to be a
-				 * problem, even though the system only
-				 * gives each device 6 buffers (200 msec).
-				 * With the * new SATA disks, write times
-				 * are only 1-2 msec.
-				 * Still, we might consider this a BUG.
-				 */
-			}
-			which_device = i;
-		}
-	}
-#ifdef CAUTIOUS
-	if( which_device < 0 ){
-		sprintf(error_string,"CAUTIOUS:  next_frame:  no ready device found!?");
-		WARN(error_string);
-		return(NULL);
-	}
-#endif /* CAUTIOUS */
-
-#else /* ! CHECK_ALL_DEVICES */
-
-	/* figure out which device we want to read next... */
-	which_device = (newest+1) % n_devices;
-	FD_ZERO(&fds);
-	FD_SET(vdp_tbl[which_device]->vd_fd, &fds);
-	fd_limit = vdp_tbl[which_device]->vd_fd;
-	fd_limit++;
-	/* Timeout. */
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
-
-	r = select(fd_limit, &fds, NULL, NULL, &tv);
-
-	if(r == -1) {
-		/* original code repeated if EINTR */
-		ERRNO_WARN("select");
-		return(NULL);
-	}
-
-	if( r == 0 ) {
-		sprintf(error_string, "select timeout");
-		WARN(error_string);
-		return(NULL);
-	}
-
-#endif /* ! CHECK_ALL_DEVICES */
-
-	ready_vdp = vdp_tbl[which_device];
-
-	//CLEAR (nf_buf);
-
-	nf_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	nf_buf.memory = V4L2_MEMORY_MMAP;
-
-	/* DQBUF pulls a buffer out and locks it up while we use it... */
-	if( xioctl(ready_vdp->vd_fd, VIDIOC_DQBUF, &nf_buf) < 0 ) {
-		/* original code had special cases for EAGAIN and EIO */
-		ERRNO_WARN ("VIDIOC_DQBUF #1");
-		return(NULL);
-	}
-
-#ifdef CAUTIOUS
-	if( nf_buf.index < 0 || nf_buf.index >= (unsigned int) ready_vdp->vd_n_buffers ){
-		sprintf(error_string,"CAUTIOUS:  Unexpected buffer number (%d) from VIDIOC_DQBUF, expected 0-%d",
-			nf_buf.index,ready_vdp->vd_n_buffers-1);
-		WARN(error_string);
-		return(NULL);
-	}
-#endif /* CAUTIOUS */
-
-#ifdef RECORD_TIMESTAMPS
-	/* Store the timestamp for this buffer */
-#ifdef CAUTIOUS
-	if( n_stored_times >= ts_array_size ){
-		sprintf(error_string,"CAUTIOUS:  n_stored_times (%d) should be less than ts_array_size (%d) when storing a new timestamp",n_stored_times,ts_array_size);
-		ERROR1(error_string);
-	}
-#endif /* CAUTIOUS */
-	ts_array[n_stored_times].grab_time = nf_buf.timestamp;
-	ts_array[n_stored_times].which_dev = which_device;
-	n_stored_times++;
-#endif /* RECORD_TIMESTAMPS */
-
-
-	/* note that newest & oldest are one thing for the video device,
-	 * and another completely different thing for our ring buffer.
-	 * Here we update the information for the video dev's private ring buffer...
-	 */
-
-	return(&nf_buf);
-} /* end next_frame */
-
-void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
-{
-	RV_Inode *inp;
-
-//sprintf(error_string,"v4l2_finish_recording %s",ifp->if_name);
-//advise(error_string);
-	inp = get_rv_inode(QSP_ARG  ifp->if_name);
-#ifdef CAUTIOUS
-	if( inp == NO_INODE ){
-		sprintf(error_string,"CAUTIOUS: v4l2_finish_recording:  missing rv inode %s",ifp->if_name);
-		ERROR1(error_string);
-	}
-#endif
-
-	close_image_file(QSP_ARG  ifp);		/* close write file	*/
-
-	/* FIXME - when we do the full moviemenu interface, we need to make
-	 * sure our new recording gets incorporated into the database here...
-	 */
-
-	/* update_movie_database(inp); */
-	//warn("NOT updating movie database");
-	/* note_error_frames(inp); */
-}
 
 #ifdef RECORD_CAPTURE_COUNT
 void dump_ccount(int index,FILE* fp)
@@ -601,6 +615,7 @@ COMMAND_FUNC( print_store_times )
 
 COMMAND_FUNC( do_stream_record )
 {
+#ifdef HAVE_RAWVOL
 	long n_frames;
 	Image_File *ifp;
 	const char *name;
@@ -625,13 +640,13 @@ COMMAND_FUNC( do_stream_record )
 	ifp = img_file_of(QSP_ARG  name);
 
 	if( ifp != NO_IMAGE_FILE ){
-		sprintf(error_string,"Clobbering existing image file %s",name);
-		advise(error_string);
+		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
+		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
 		delete_image_file(QSP_ARG  ifp);
 	}
 
-	set_filetype(QSP_ARG  IFT_RV);
+	set_filetype(QSP_ARG  FILETYPE_FOR_CODE(IFT_RV));
 	ifp = write_image_file(QSP_ARG  name,n_frames);	/* nf stored in if_frms_to_write */
 
 	/* sets nframes in ifp, but doesn't allocate rv blocks properly...
@@ -640,8 +655,8 @@ COMMAND_FUNC( do_stream_record )
 	 */
 
 	if( ifp == NO_IMAGE_FILE ){
-		sprintf(error_string,"Error creating movie file %s",name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"Error creating movie file %s",name);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -650,9 +665,9 @@ COMMAND_FUNC( do_stream_record )
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
 	if( rv_realloc(QSP_ARG  name,n_blocks) < 0 ){
-		sprintf(error_string,"error reallocating %d blocks for rv file %s",
+		sprintf(ERROR_STRING,"error reallocating %d blocks for rv file %s",
 			n_blocks,name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -664,6 +679,9 @@ COMMAND_FUNC( do_stream_record )
 	recording_in_process = 1;
 
 	v4l2_stream_record(QSP_ARG  ifp,n_frames,nc,vd_tbl);
+#else // ! HAVE_RAWVOL
+	WARN("do_stream_record:  no rawvol support, can't record!?");
+#endif // ! HAVE_RAWVOL
 }
  /* end do_record() */
 

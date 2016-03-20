@@ -2,38 +2,29 @@
 
 #include "quip_config.h"
 
-char VersionId_cstepit_pr_supp[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_NUMREC
 
 /*
  * linkage to numerical recipes Polak Ribiere routine
  */
 
-#include "version.h"	/* for some reason, the compiler chokes if this is after math.h!? */
-
 #include <math.h>
 
-#include "savestr.h"
-#include "query.h"
-#include "fitsine.h"
-#include "debug.h"
-
+#include "quip_prot.h"
+//#include "fitsine.h"
 #include "optimize.h"
-#include "chewtext.h"		/* digest */
 
-static Query_Stream *pr_qsp=NULL;
+static Query_Stack *pr_qsp=NULL;
 
 /* local prototypes */
 
 static float frprmn_scr_funk(float *p);
-static void run_frprmn(float (*func)(float *));
 static void dfunc(float *, float *);
 
 static int n_prms;
 
 
-static float (*user_c_func)(void);
+static float (*user_c_func)(SINGLE_QSP_ARG_DECL);
 
 static float (*pr_error_func)(float *);
 
@@ -51,7 +42,7 @@ static void dfunc(float *p,float *df)
 	for(i=1;i<=n_prms;i++){
 		save_p = p[i];
 
-#define DELTA 0.001
+#define DELTA 0.001f
 
 		p[i] += /* min_inc[i] */ DELTA ;
 		df[i] = ( pr_error_func(p) - result ) / DELTA ;
@@ -68,14 +59,15 @@ static float frprmn_scr_funk(float *p)
 {
 	char str[128];
 	float	err;
-	Var *vp;
+	Variable *vp;
 	int i;
 	List *lp;
 	Node *np;
-	Query_Stream *qsp;
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
 
 	qsp = pr_qsp;
-
+#endif // THREAD_SAFE_QUERY
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp==NO_LIST ) {
 		NWARN("no parameters!?");
@@ -95,13 +87,13 @@ static float frprmn_scr_funk(float *p)
 		np=np->n_next;
 	}
 
-	DIGEST(opt_func_string);	/* used to call pushtext here */
-
+	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	
 	vp=var__of(QSP_ARG  "error");
-	if( vp == NO_VAR ) {
+	if( vp == NO_VARIABLE ) {
 		NWARN("variable \"error\" not set!!!");
 		err=0.0;
-	} else sscanf(vp->v_value,"%g",&err);
+	} else sscanf(VAR_VALUE(vp),"%g",&err);
 
 	return(err);
 }
@@ -125,27 +117,14 @@ static float frprmn_c_funk(float *p)
 		i++;
 	}
 
-	err = (*user_c_func)();
+	err = (*user_c_func)(SGL_DEFAULT_QSP_ARG);
 
 	return(err);
 }
 
 static float p[MAX_OPT_PARAMS];
 
-void run_frprmn_scr(SINGLE_QSP_ARG_DECL)
-{
-	pr_qsp = THIS_QSP;
-	run_frprmn( frprmn_scr_funk );
-}
-
-void run_frprmn_c( float (*func)(void) )
-{
-	user_c_func = func;
-	run_frprmn( frprmn_c_funk );
-}
-
-
-static void run_frprmn( float (*func)(float *) )
+static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 {
 	float ftol;
 	int iter;
@@ -172,7 +151,7 @@ static void run_frprmn( float (*func)(float *) )
 	/* call frprmn */
 
 	/* not sure how to properly set this!? */
-	ftol=0.001;
+	ftol=0.001f;
 
 /*
 if( verbose ){
@@ -189,11 +168,24 @@ printf("&iter = 0x%x\n",&iter);
 	frprmn(p-1,n_prms,ftol,&iter,&fret,func,dfunc);
 
 	if( verbose ){
-		sprintf(msg_str,"run_frprmn:  %d iterations, final value %g",
+		sprintf(DEFAULT_MSG_STR,"run_frprmn:  %d iterations, final value %g",
 			iter,fret);
-		prt_msg(msg_str);
+		prt_msg(DEFAULT_MSG_STR);
 	}
 }
+
+void run_frprmn_scr(SINGLE_QSP_ARG_DECL)
+{
+	pr_qsp = THIS_QSP;
+	run_frprmn( QSP_ARG  frprmn_scr_funk );
+}
+
+void run_frprmn_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) )
+{
+	user_c_func = func;
+	run_frprmn( QSP_ARG  frprmn_c_funk );
+}
+
 
 #endif /* HAVE_NUMREC */
 

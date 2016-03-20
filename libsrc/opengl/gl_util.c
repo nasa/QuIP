@@ -1,12 +1,10 @@
 #include "quip_config.h"
 
-char VersionId_opengl_gl_util[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENGL
 
+#include "quip_prot.h"	/* assign_var */
 #include "glut_supp.h"
 #include "gl_util.h"
-#include "query.h"	/* assign_var */
 
 #define CHOOSE_NAMED_CONSTANT(pmpt,choices_p,tbl,n)		choose_named_constant(QSP_ARG pmpt,choices_p,tbl,n)
 
@@ -207,6 +205,32 @@ static const char **light_choices=NULL;
 
 GLenum choose_light_source(QSP_ARG_DECL const char *prompt)
 { return CHOOSE_NAMED_CONSTANT( prompt, &light_choices, light_tbl, N_LIGHT_SOURCES ); }
+
+/*****************************************************************/
+
+typedef Named_Constant Draw_Buffer;
+
+static Draw_Buffer buf_tbl[]={
+{ "none",		GL_NONE			},
+{ "front_left",		GL_FRONT_LEFT		},
+{ "front_right",	GL_FRONT_RIGHT		},
+{ "back_left",		GL_BACK_LEFT		},
+{ "back_right",		GL_BACK_RIGHT		},
+{ "front",		GL_FRONT		},
+{ "back",		GL_BACK			},
+{ "front_and_back",	GL_FRONT_AND_BACK	},
+{ "left",		GL_LEFT			},
+{ "right",		GL_RIGHT		},
+// GL_AUX0, etc?
+// up to GL_AUX_BUFFERS-1...
+};
+
+#define N_DRAW_BUFFERS	(sizeof(buf_tbl)/sizeof(Draw_Buffer))
+
+static const char **buffer_choices=NULL;
+
+GLenum choose_draw_buffer(QSP_ARG_DECL const char *prompt)
+{ return CHOOSE_NAMED_CONSTANT( prompt, &buffer_choices, buf_tbl, N_DRAW_BUFFERS ); }
 
 #endif /* HAVE_OPENGL */
 

@@ -11,7 +11,7 @@
 #define _FG_ROUTINES
 
 #include "quip_config.h"
-#include "query.h"
+#include "query_stack.h"
 
 #ifdef HAVE_SYS_FCNTL_H
 #include <sys/fcntl.h>
@@ -111,21 +111,21 @@
  *      video_format: MERGE_FIELDS, SEPARATE_FIELDS
  *      ram_location: DISPLAY_RAM, BIGPHYS_RAM, HIMEM_RAM
  */
-int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location);
-void fg_close();
+extern int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location);
+extern void fg_close(void);
 
 /*
  * captures one frame
  * returns 0 on success -1 on failure
  */
-int fg_capture();
+extern int fg_capture(void);
 
 /*
  * turn on/off frame_grabber for continuous capture
  * returns 0 on success -1 on failure
  */
-int fg_run_continuous();
-void fg_stop();
+extern int fg_run_continuous(void);
+extern void fg_stop(void);
 
 /*
  * get a region of interest from video ram to buf
@@ -175,6 +175,6 @@ int assoc_pids(pid_t,pid_t);
 int unassoc_pids(pid_t,pid_t);
 
 /* use this only if doing low level operations */
-u_char *fg_buf_addr();
+u_char *fg_buf_addr(void);
 
 #endif

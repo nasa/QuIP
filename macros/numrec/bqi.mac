@@ -2,7 +2,7 @@
 
 Start_File bqi.mac
 
-#If $bqi_loaded 'echo "bqi already loaded, popping" PopFile 2'
+If var_exists(bqi_loaded) 'warn "bqi already loaded, popping" exit_macro'
 
 # do biquadradic interpolation using SVD
 
@@ -194,7 +194,7 @@ Assign _e value(bqi_coeffs[4])
 Assign _f value(bqi_coeffs[5])
 Assign _denom $_b*$_b-4*$_a*$_c
 
-If $_denom==0 "advise 'zero denom, no subpixel estimation' Set peak_value 0.0001 PopFile 2 nop"
+If $_denom==0 "advise 'zero denom, no subpixel estimation' Set peak_value 0.0001 exit_macro"
 Assign x0 (2*$_c*$_d-$_e*$_b)/$_denom
 Assign y0 (2*$_a*$_e-$_d*$_b)/$_denom
 #Print x0

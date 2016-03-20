@@ -1,16 +1,12 @@
 #include "quip_config.h"
 
-char VersionId_fio_sunras[] = QUIP_VERSION_STRING;
-
 /* read in a sun raster file */
 
 #include <stdio.h>
 
-#include "img_file_hdr.h"
-
-#include "debug.h"
-#include "getbuf.h"
-#include "filetype.h"
+#include "quip_prot.h"
+#include "img_file/img_file_hdr.h"
+//#include "filetype.h"
 #include "fio_prot.h"
 
 #define HDR_P(ifp)		((struct rasterfile *)&(((Image_File_Hdr *)ifp->if_hd)->ifh_u.rf_hd))
@@ -43,7 +39,7 @@ void sunras_rd(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index
 		/* BUG should read in this data somewhere else;
 		   could cause a problem for a very small image */
 
-		if( fread(dp->dt_data,1,HDR_P(ifp)->ras_maplength,ifp->if_fp) !=
+		if( fread(OBJ_DATA_PTR(dp),1,HDR_P(ifp)->ras_maplength,ifp->if_fp) !=
 			(size_t)HDR_P(ifp)->ras_maplength ){
 			WARN("error reading color map");
 			SET_ERROR(ifp);
@@ -52,7 +48,7 @@ void sunras_rd(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index
 		WARN("not retaining color map");
 	} else if( HDR_P(ifp)->ras_maptype == RMT_EQUAL_RGB ){
 		if( verbose ) advise("equal rgb format");
-		if( fread(dp->dt_data,1,HDR_P(ifp)->ras_maplength,ifp->if_fp) !=
+		if( fread(OBJ_DATA_PTR(dp),1,HDR_P(ifp)->ras_maplength,ifp->if_fp) !=
 			(size_t)HDR_P(ifp)->ras_maplength ){
 			WARN("error reading color map");
 			SET_ERROR(ifp);
@@ -65,7 +61,7 @@ void sunras_rd(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index
 
 	nb=HDR_P(ifp)->ras_width*HDR_P(ifp)->ras_height*(HDR_P(ifp)->ras_depth/8);
 	if( HDR_P(ifp)->ras_length == nb ){
-		if( fread(dp->dt_data,1,HDR_P(ifp)->ras_length,ifp->if_fp)
+		if( fread(OBJ_DATA_PTR(dp),1,HDR_P(ifp)->ras_length,ifp->if_fp)
 			!= (size_t)HDR_P(ifp)->ras_length ){
 
 			WARN("error reading pixel data");
@@ -79,7 +75,7 @@ void sunras_rd(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index
 		register unsigned char *cp;
 		int nput=0;
 
-		cp=(unsigned char *)dp->dt_data;
+		cp=(unsigned char *)OBJ_DATA_PTR(dp);
 
 		while( HDR_P(ifp)->ras_length ){
 			if( fread(&count,sizeof(count),1,ifp->if_fp) != 1 ){
@@ -118,7 +114,7 @@ sunras_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 {
 	Image_File *ifp;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_SUNRAS);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_SUNRAS));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
 	ifp->if_hd = getbuf( sizeof(struct rasterfile) );
@@ -131,21 +127,21 @@ sunras_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 		WARN("not a rasterfile");
 		goto stoppit;
 	}
-	ifp->if_dp->dt_prec = PREC_BY;
+	SET_OBJ_PREC_PTR(ifp->if_dp, PREC_FOR_CODE(PREC_BY) );
 	if( HDR_P(ifp)->ras_depth == 8 )
-		ifp->if_dp->dt_comps = 1;
+		SET_OBJ_COMPS(ifp->if_dp, 1);
 	else if( HDR_P(ifp)->ras_depth == 24 )
-		ifp->if_dp->dt_comps = 3;
+		SET_OBJ_COMPS(ifp->if_dp, 3);
 	else {
-		sprintf(error_string,"depth = %d",HDR_P(ifp)->ras_depth);
-		advise(error_string);
+		sprintf(ERROR_STRING,"depth = %d",HDR_P(ifp)->ras_depth);
+		advise(ERROR_STRING);
 		WARN("Sorry, can only read 8 or 24 bit rasterfiles now");
 		goto stoppit;
 	}
-	ifp->if_dp->dt_cols = HDR_P(ifp)->ras_width;
-	ifp->if_dp->dt_rows = HDR_P(ifp)->ras_height;
-	ifp->if_dp->dt_frames = 1;
-	ifp->if_dp->dt_seqs = 1;
+	SET_OBJ_COLS(ifp->if_dp, HDR_P(ifp)->ras_width );
+	SET_OBJ_ROWS(ifp->if_dp, HDR_P(ifp)->ras_height );
+	SET_OBJ_FRAMES(ifp->if_dp, 1);
+	SET_OBJ_SEQS(ifp->if_dp, 1);
 
 	ifp->if_nfrms = 0;
 	ifp->if_flags = rw;

@@ -3,7 +3,7 @@
 
 Start_File em_exp/getprm.scr
 
-clear_warnings
+#clear_warnings
 
 Set scrdir ../scripts
 #Set histdir /u/jbm/exps/narvo97/history
@@ -35,8 +35,10 @@ Set tunefile "$POSTPROC_PARAMS_DIR/tune.$EYE_ANALYSIS_SIZE.$substem.$EYE_CAMERA_
 #< $histfile
 
 #Assign aspect_str floor(10*$aspect)
-count_warnings warned
-If $warned quit
+#
+
+#count_warnings warned
+#If $warned quit
 
 
 

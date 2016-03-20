@@ -1,7 +1,51 @@
+Installation on macbook air, had to run mknod by hand...
 
-On mac, need to make symlink for /Developer/...  NVIDIA_GPU_Computing_SDK
+################
 
-and
+Notes on macros:
 
-libGLEW.1.5.1.dylib to /opt/ ...
+Where are the function prototypes defined?
 
+menu_calls.h has the macros that declare functions like do_gpu_xxx etc.
+The corresponding prototypes are declared in my_cuda.h,
+but they are just listed...?
+
+Where are the h_ funcs?
+Where are the g_ funcs?
+
+######### still to do #############
+things to check:
+cudaGetSymbolAddress()
+cuLaunchGrid
+cuLaunchGridAsync
+cudaGetDeviceProperties
+	deviceOverlap
+cuDeviceGetAttribute
+	CU_DEVICE_ATTRIBUTE_GPU_OVERLAP
+
+stream objects?
+cudaStreamQuery, cudaStreamSynchronize
+setenv CUDA_LAUNCH_BLOCKING 1 - for debugging
+
+things to do:
+better control over data areas (constant, texture)
+number of blocks should be at least the number of processors...
+cudaGetLastError - after kernel launches?
+
+cudaMallocHost, cudaFreeHost for host-side data objects...
+	cudaHostAllocMapped flag for aliased objects...
+
+cudaMemcpyAsync
+
+
+Shared mem:
+	32 bit words in each successive bank...
+	One 32 bit word can hold an x,y pair...
+
+############################################
+
+Argh - now not compiling on mach (iMac), with odd errors from nvcc and apple system includes.
+Sample programs still compile, so try fiddling with nvcc options.  Here is a working compilation
+statement from a sample program:
+
+/Developer/NVIDIA/CUDA-6.5/bin/nvcc -ccbin clang -I../../common/inc  -m64   -Xcompiler -arch -Xcompiler x86_64  -gencode arch=compute_11,code=sm_11 -gencode arch=compute_20,code=sm_20 -gencode arch=compute_30,code=sm_30 -gencode arch=compute_35,code=sm_35 -gencode arch=compute_37,code=sm_37 -gencode arch=compute_50,code=sm_50 -gencode arch=compute_50,code=compute_50 -o matrixMul.o -c matrixMul.cu

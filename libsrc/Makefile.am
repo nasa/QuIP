@@ -1,6 +1,5 @@
 
 SUBDIRS =							\
-		newvec						\
 		fileio						\
 		ptgrey						\
 		pic						\
@@ -18,7 +17,6 @@ SUBDIRS =							\
 		rawvol		vectree				\
 		vec_util	mvimenu		seq		\
 		view		xsupp		\
-		genwin		\
 		psych		cstepit		www		\
 		gui		nrmenu		sound
 

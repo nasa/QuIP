@@ -1,15 +1,15 @@
+#ifndef _TTY_CTL_H_
+#define _TTY_CTL_H_
+
 
 #ifdef TTY_CTL
-
-#ifndef TTYCTL_D
-#define TTYCTL_D
 
 #if HAVE_TERMIOS_H
 #include <termios.h>
 #endif
 
 #include "typedefs.h"
-#include "query.h"
+#include "query_stack.h"
 
 typedef struct termio_option {
 	const char *	to_name;
@@ -36,16 +36,19 @@ extern void waitq(int fd);
 extern int keyhit(int fd);
 extern int get_erase_chr(int fd);
 extern int get_kill_chr(int fd);
-extern void show_term_flags(u_long flag,Termio_Option *tbl);
-extern void dump_term_flags(u_long flag,Termio_Option *tbl);
+extern void show_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
+extern void dump_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
 
-/* tty_flags.c */
-extern void show_all(int fd);
-extern void dump_all(int fd);
+// my_stty.c
 extern void set_tty_flag(const char *flagname,int fd,int value);
+
+#ifdef FOOBAR
+/* tty_flags.c */
+extern void dump_all(QSP_ARG_DECL  int fd);
 extern int get_flag_value(QSP_ARG_DECL   const char *flagname);
+#endif // FOOBAR
 
 
-
-#endif /* ! TTYCTL_D */
 #endif /* TTY_CTL */
+
+#endif /* ! _TTY_CTL_H_ */

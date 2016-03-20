@@ -1,0 +1,71 @@
+If var_exists(plot_locale)
+  'warn "ios_plot.mac:  plot locale already initialized to $plot_locale" exit_macro'
+
+
+Define Y_Legend 1 string
+
+Assign ly ($plot_ymax+$plot_ymin)/2
+
+# BUG it might be possible for "xmin" to be larger
+# than "xmax", in which case subtracting the
+# offset would move the legend in the wrong
+# direction...
+
+Assign lx $plot_xmin-$legend_h_offset
+
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+
+view
+  draw $the_plotter
+    text_angle 90
+    text_mode centered
+    quit
+  plot $the_plotter
+    move $lx $ly
+    string "$1"
+    quit
+  draw $the_plotter
+    text_angle 0
+    quit
+  quit
+.
+
+Define Y_Legend_Right 1 string
+warn 'Sorry, Y_Legend_Right not implemented yet for iOS.'
+.
+
+
+Define X_Legend 1 string
+Legend_Font
+#Print plot_xmin
+#Print plot_xmax
+
+# these are in the plotting units...
+#Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
+# this is the centered x coord...
+Assign lx ($plot_xmin+$plot_xmax)/2
+Assign ly $plot_ymin-$legend_v_offset
+
+view
+  draw $the_plotter
+    text_angle 0
+    text_mode centered
+    quit
+  plot $the_plotter
+    move $lx $ly
+    string "$1"
+    quit
+  quit
+.
+
+# font size needs to be set separately?
+
+Define Init_Font_Stuff 0
+Set unit_font 'Times New Roman'
+Set legend_font 'Times New Roman'
+Set unit_font_size 14
+Set legend_font_size 24
+.
+
+Set plot_locale iOS
+

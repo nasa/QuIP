@@ -1,7 +1,9 @@
+all:	libmeteor.a
+	cp libmeteor.a ../../libs
 
 noinst_LIBRARIES = libmeteor.a
 
-libmeteor_a_CPPFLAGS = -D_GNU_SOURCE -I$(top_srcdir)/include -Wall
+libmeteor_a_CPPFLAGS = -D_GNU_SOURCE -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
 libmeteor_a_SOURCES = 					\
 				mmenu.c			\

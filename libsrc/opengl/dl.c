@@ -1,15 +1,13 @@
 #include "quip_config.h"
 
-char VersionId_opengl_dl[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENGL
 
 #ifdef HAVE_GL_GLX_H
 #include <GL/glx.h>
 #endif
 
+#include "quip_prot.h"
 #include "dl.h"
-#include "items.h"
 #include "gl_viewer.h"
 
 static Display_List *current_dlp=NO_DISPLAY_LIST;
@@ -18,15 +16,8 @@ static int next_serial_number=0;
 static GLenum dl_mode=GL_COMPILE;
 
 ITEM_INTERFACE_DECLARATIONS(Display_List,dl)
+#define PICK_DL(pmpt)	pick_dl(QSP_ARG pmpt)
 
-#define CALL_IF_EXISTS( func )					\
-								\
-	Display_List *dlp;					\
-								\
-	dlp = PICK_DL("");					\
-	if( dlp == NO_DISPLAY_LIST ) return;			\
-								\
-	func( dlp );
 
 COMMAND_FUNC( do_del_dl )
 {
@@ -42,7 +33,7 @@ void delete_dl(QSP_ARG_DECL  Display_List *dlp)
 {
 	glDeleteLists(dlp->dl_serial,1);
 
-	del_dl( QSP_ARG  dlp->dl_name );
+	del_dl( QSP_ARG  dlp );
 	givbuf(dlp->dl_name);
 	/* object struct itself is put on the free list... */
 }
@@ -88,11 +79,29 @@ void new_display_list(QSP_ARG_DECL  const char *name)
 	current_dlp = dlp;
 }
 
-COMMAND_FUNC( do_info_dl ) { CALL_IF_EXISTS( info_dl ) } 
-//COMMAND_FUNC( do_dump_dl ) { CALL_IF_EXISTS( dump_dl ) } 
-COMMAND_FUNC( do_call_dl ) { CALL_IF_EXISTS( call_dl ) } 
+COMMAND_FUNC( do_info_dl )
+{
+	Display_List *dlp;					\
+								\
+	dlp = PICK_DL("");					\
+	if( dlp == NO_DISPLAY_LIST ) return;			\
+								\
+	info_dl(QSP_ARG  dlp );
+}
 
-void info_dl(Display_List *dlp)
+//COMMAND_FUNC( do_dump_dl ) { CALL_IF_EXISTS( dump_dl ) } 
+
+COMMAND_FUNC( do_call_dl )
+{
+	Display_List *dlp;					\
+								\
+	dlp = PICK_DL("");					\
+	if( dlp == NO_DISPLAY_LIST ) return;			\
+								\
+	call_dl( dlp );
+}
+
+void info_dl(QSP_ARG_DECL  Display_List *dlp)
 {
 	sprintf(msg_str,"Display List \"%s\":",dlp->dl_name);
 	prt_msg(msg_str);
@@ -129,6 +138,15 @@ void call_dl(Display_List *dlp)
 		return;
 	}
 	glCallList(dlp->dl_serial);
+}
+
+double display_list_exists(QSP_ARG_DECL  const char *name)
+{
+	Display_List *dl;
+	dl = dl_of(QSP_ARG  name);
+
+	if( dl == NO_DISPLAY_LIST ) return(0);
+	return(1.0);
 }
 
 #endif /* HAVE_OPENGL */

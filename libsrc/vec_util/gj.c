@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_gj[] = QUIP_VERSION_STRING;
-
 /* Gauss-Jordan elimination matrix inversion
  *
  * This looks suspiciously like Numerical Recipes code!?
@@ -13,10 +11,12 @@ char VersionId_vec_util_gj[] = QUIP_VERSION_STRING;
 #include "debug.h"
 
 #include "vec_util.h"
+#include "quip_prot.h"
 
 #define MAXSIZE	256
 
-#define SWAP(a,b)	{ float tmp=(a); (a)=(b); (b)=tmp; }
+#define FSWAP(a,b)	{ float swap_tmp=(a); (a)=(b); (b)=swap_tmp; }
+#define DSWAP(a,b)	{ double swap_tmp=(a); (a)=(b); (b)=swap_tmp; }
 
 /* assume no right-hand side vectors */
 
@@ -76,7 +76,7 @@ int gauss_jordan(float *matrix,dimension_t size)
 
 		if( irow != icol ){
 			for(l=0;l<(incr_t)size;l++)
-				SWAP(matrix[irow*size+l],matrix[icol*size+l])
+				FSWAP(matrix[irow*size+l],matrix[icol*size+l])
 		}
 		indxr[i]=irow;
 		indxc[i]=icol;
@@ -114,7 +114,7 @@ int gauss_jordan(float *matrix,dimension_t size)
 		if( indxr[l] != indxc[l] ){
 			for(k=0;k<size;k++){
 				rowdex=k*size;
-			SWAP(matrix[rowdex+indxr[l]],matrix[rowdex+indxc[l]])
+			FSWAP(matrix[rowdex+indxr[l]],matrix[rowdex+indxc[l]])
 			}
 		}
 	}
@@ -172,7 +172,7 @@ int dp_gauss_jordan(double *matrix,dimension_t size)
 
 		if( irow != icol ){
 			for(l=0;l<(incr_t)size;l++)
-				SWAP(matrix[irow*size+l],matrix[icol*size+l])
+				DSWAP(matrix[irow*size+l],matrix[icol*size+l])
 		}
 		indxr[i]=irow;
 		indxc[i]=icol;
@@ -209,7 +209,7 @@ int dp_gauss_jordan(double *matrix,dimension_t size)
 		if( indxr[l] != indxc[l] ){
 			for(k=0;k<size;k++){
 				rowdex=k*size;
-			SWAP(matrix[rowdex+indxr[l]],matrix[rowdex+indxc[l]])
+			DSWAP(matrix[rowdex+indxr[l]],matrix[rowdex+indxc[l]])
 			}
 		}
 	}

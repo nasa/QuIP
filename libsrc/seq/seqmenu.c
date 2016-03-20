@@ -1,14 +1,12 @@
 #include "quip_config.h"
 
-char VersionId_seq_seqmenu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "seq.h"
-#include "menuname.h"
 
 static COMMAND_FUNC( do_show_seq )
 {
@@ -61,7 +59,7 @@ static COMMAND_FUNC( do_prt_seq )
 	Seq *seqptr;
 
 	seqptr=PICK_SEQ("");
-	if( seqptr != NO_SEQ ) pseq(seqptr);
+	if( seqptr != NO_SEQ ) pseq(QSP_ARG  seqptr);
 }
 
 static COMMAND_FUNC( do_del_seq )
@@ -74,25 +72,19 @@ static COMMAND_FUNC( do_del_seq )
 
 static COMMAND_FUNC( do_list_Seqs ){ list_mviseqs(SINGLE_QSP_ARG); }
 
-Command seqctbl[]={
-{ "define",	do_def_seq,	"define movie sequence"			},
-{ "redefine",	do_redef_seq,	"redefine existing movie sequence"	},
-{ "list",	do_list_Seqs,	"list all defined sequences"		},
-{ "show",	do_show_seq,	"show a sequence"			},
-{ "print",	do_prt_seq,	"print sequence definition"		},
-{ "delete",	do_del_seq,	"delete sequence"			},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL,		NULL,		NULL					}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(sequence_menu,s,f,h)
 
-COMMAND_FUNC( seq_menu )
+MENU_BEGIN(sequence)
+ADD_CMD( define,	do_def_seq,	define movie sequence )
+ADD_CMD( redefine,	do_redef_seq,	redefine existing movie sequence )
+ADD_CMD( list,		do_list_Seqs,	list all defined sequences )
+ADD_CMD( show,		do_show_seq,	show a sequence )
+ADD_CMD( print,		do_prt_seq,	print sequence definition )
+ADD_CMD( delete,	do_del_seq,	delete sequence )
+MENU_END(sequence)
+
+COMMAND_FUNC( do_seq_menu )
 {
-	static int vinited=0;
-
-	if( !vinited ){
-		verseq(SINGLE_QSP_ARG);
-		vinited++;
-	}
-	PUSHCMD(seqctbl,SEQ_MENU_NAME);
+	PUSH_MENU(sequence);
 }
 

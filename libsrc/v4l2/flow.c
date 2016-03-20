@@ -1,8 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_v4l2_flow[] = QUIP_VERSION_STRING;
-
-
 /* Like continuous capture to memory, but we use the handshaking
  * (like in stream record)
  * to make sure our application is synchronized.
@@ -28,26 +25,21 @@ char VersionId_v4l2_flow[] = QUIP_VERSION_STRING;
 #include <sys/ioctl.h>
 #endif
 
-#include "query.h"
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "img_file.h"
 #include "my_video_dev.h"
 #include "my_v4l2.h"
-
-#include "debug.h"	/* verbose */
+#include "veclib_api.h"	// do_yuv2rgb
 
 #ifdef HAVE_V4L2
 
 #define oldest	curr_vdp->vd_oldest
 #define newest	curr_vdp->vd_newest
 
-#else
+#endif /* HAVE_V4L2 */
 
-#define CHECK_DEVICE
-
-#endif /* ! HAVE_V4L2 */
-
-COMMAND_FUNC( start_flow )
+static COMMAND_FUNC( start_flow )
 {
 	CHECK_DEVICE
 
@@ -59,7 +51,7 @@ COMMAND_FUNC( start_flow )
 #endif
 }
 
-COMMAND_FUNC( stop_flow )
+static COMMAND_FUNC( stop_flow )
 {
 	CHECK_DEVICE
 
@@ -95,7 +87,7 @@ static COMMAND_FUNC( update_vars )
 }
 #endif
 
-COMMAND_FUNC( wait_next )	/* wait til we have another frame */
+static COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 {
 #ifdef HAVE_V4L2
 	int n,m;
@@ -103,18 +95,18 @@ COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 	CHECK_DEVICE
 
 	if( ! IS_CAPTURING(curr_vdp) ){
-		sprintf(error_string,"wait_next:  Video device %s is not capturing!?",
+		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",
 			curr_vdp->vd_name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
 	n = check_queue_status(QSP_ARG  curr_vdp);
 	if( n == curr_vdp->vd_n_buffers ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"wait_next:  device %s already has all of its %d buffers ready!?",
 			curr_vdp->vd_name,curr_vdp->vd_n_buffers);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -124,9 +116,9 @@ COMMAND_FUNC( wait_next )	/* wait til we have another frame */
 
 	update_vars(SINGLE_QSP_ARG);
 #endif
-}
+} // end wait_next
 
-COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
+static COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 {
 #ifdef HAVE_V4L2
 	int n=0;
@@ -134,9 +126,9 @@ COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 	CHECK_DEVICE
 
 	if( ! IS_CAPTURING(curr_vdp) ){
-		sprintf(error_string,"wait_drip:  Video device %s is not capturing!?",
+		sprintf(ERROR_STRING,"wait_drip:  Video device %s is not capturing!?",
 			curr_vdp->vd_name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -146,16 +138,16 @@ COMMAND_FUNC( wait_drip )	/* wait til we have at least one frame */
 
 	update_vars(SINGLE_QSP_ARG);
 #endif
-}
+} // end wait_drip
 
 #ifdef HAVE_V4L2
 void release_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
 {
 	struct v4l2_buffer buf;
 
-//sprintf(error_string,"release_oldest_buffer %s BEGIN (newest = %d, oldest = %d)",
+//sprintf(ERROR_STRING,"release_oldest_buffer %s BEGIN (newest = %d, oldest = %d)",
 //vdp->vd_name,vdp->vd_oldest,vdp->vd_newest);
-//advise(error_string);
+//advise(ERROR_STRING);
 
 	if( vdp->vd_oldest < 0 ){
 		WARN("release_oldest_buffer:  no oldest buffer to release!?");
@@ -179,15 +171,15 @@ void release_oldest_buffer(QSP_ARG_DECL  Video_Device *vdp)
 }
 #endif /* HAVE_V4L2 */
 
-COMMAND_FUNC( do_release_buffer )
+static COMMAND_FUNC( do_release_buffer )
 {
 #ifdef HAVE_V4L2
 	CHECK_DEVICE
 
 	if( ! IS_CAPTURING(curr_vdp) ){
-		sprintf(error_string,"wait_next:  Video device %s is not capturing!?",
+		sprintf(ERROR_STRING,"wait_next:  Video device %s is not capturing!?",
 			curr_vdp->vd_name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -197,18 +189,19 @@ COMMAND_FUNC( do_release_buffer )
 }
 
 
-static Command flow_ctbl[]={
-{ "start",	start_flow,	"start capture"		},
-{ "stop",	stop_flow,	"start capture"		},
-{ "wait",	wait_drip,	"wait for at least one frame in memory"	},
-{ "next",	wait_next,	"wait for the next frame"	},
-{ "release",	do_release_buffer,	"release oldest buffer"	},
-{ "quit",	popcmd,		"exit submenu"		},
-{ NULL_COMMAND						}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(flow_menu,s,f,h)
 
-COMMAND_FUNC( flow_menu )
+MENU_BEGIN(flow)
+ADD_CMD( start,		start_flow,		start capture )
+ADD_CMD( stop,		stop_flow,		start capture )
+ADD_CMD( wait,		wait_drip,		wait for at least one frame in memory )
+ADD_CMD( next,		wait_next,		wait for the next frame )
+ADD_CMD( release,	do_release_buffer,	release oldest buffer )
+ADD_CMD( yuv2rgb,	do_yuv2rgb,		convert from YUYV to RGB )
+MENU_END(flow)
+
+COMMAND_FUNC( do_flow_menu )
 {
-	PUSHCMD(flow_ctbl,"flow");
+	PUSH_MENU(flow);
 }
 

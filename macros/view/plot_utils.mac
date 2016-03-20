@@ -2,7 +2,10 @@
 
 Set plot_serial 1
 
-Define Save_Plot 0
+# used to be Save_Plot, but conflicts with macro in plotsupp.mac
+# with different semantics...
+
+Define Save_Plot_Auto 0
 advise "SAVE_PLOT BEGIN"
 view extract rgbbuf p1  0 0 quit
 Filetype png

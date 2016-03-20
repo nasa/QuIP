@@ -3,13 +3,14 @@
 
 #include "quip_config.h"
 
-char VersionId_cuda_cuda_curand[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_CUDA
-
+#define BUILD_FOR_CUDA
 #include <curand.h>
 
-#include "vecgen.h"
+#include "quip_prot.h"
+#include "veclib/vecgen.h"
+#include "veclib/obj_args.h"
+#include "my_vector_functions.h"
 
 
 #ifdef FOOBAR /* find out what we really need */
@@ -26,14 +27,11 @@ char VersionId_cuda_cuda_curand[] = QUIP_VERSION_STRING;
 #include <npp.h>
 #endif /* HAVE_NPP_H */
 
-#include "items.h"
-#include "debug.h"		/* verbose */
+#include "quip_prot.h"
 #include "cuda_menu.h"
 #include "cuda_error.h"
-#include "fileck.h"
-#include "nvf.h"		/* is_ram() */
-#include "my_vector_functions.h"
-#include "menu_calls.h"
+#include "veclib.h"		/* is_ram() */
+#include "menu_call_defs.h"
 
 #endif /* FOOBAR */
 
@@ -46,8 +44,32 @@ char VersionId_cuda_cuda_curand[] = QUIP_VERSION_STRING;
 #define NO_GENERATOR	((curandGenerator_t)NULL)
 
 static curandGenerator_t f_gen=NO_GENERATOR;
+
+// local prototypes
+static void init_curand(void);
+
+
 /* Does the lib support double? */
 /* static curandGenerator_t d_gen=NO_GENERATOR; */
+
+static void g_sp_vuni(Data_Obj *dp)
+{
+	curandStatus_t s;
+
+	if( f_gen == NO_GENERATOR ){
+		init_curand();
+	}
+	if( is_contiguous(DEFAULT_QSP_ARG  dp) ){
+		s = curandGenerateUniform(f_gen,(float *)OBJ_DATA_PTR(dp), OBJ_N_TYPE_ELTS(dp) );
+		if( s != CURAND_STATUS_SUCCESS ){
+			NWARN("curand error generating uniform floats");
+			return;
+		}
+	} else {
+		/* Hopefully the rows are contiguous? */
+		NWARN("Sorry, need to write code for non-contig g_sp_vuni");
+	}
+}
 
 static void init_curand(void)
 {
@@ -66,24 +88,6 @@ static void init_curand(void)
 	}
 }
 
-void g_sp_vuni(Data_Obj *dp)
-{
-	curandStatus_t s;
-
-	if( f_gen == NO_GENERATOR ){
-		init_curand();
-	}
-	if( is_contiguous(dp) ){
-		s = curandGenerateUniform(f_gen,(float *)dp->dt_data, dp->dt_n_type_elts);
-		if( s != CURAND_STATUS_SUCCESS ){
-			NWARN("curand error generating uniform floats");
-			return;
-		}
-	} else {
-		/* Hopefully the rows are contiguous? */
-		NWARN("Sorry, need to write code for non-contig g_sp_vuni");
-	}
-}
 #endif /* HAVE_LIBCURAND */
 
 
@@ -94,20 +98,29 @@ void g_vuni( Vec_Obj_Args *oap )
 	Data_Obj *dp;
 
 	dp = oap->oa_dest;
-	switch( dp->dt_prec & MACH_PREC_MASK ){
+	switch( OBJ_MACH_PREC(dp) ){
 		case PREC_SP:
 			g_sp_vuni(dp);
 			break;
-			/*
+		case PREC_BY:
+		case PREC_IN:
+		case PREC_DI:
+		case PREC_LI:
+		case PREC_UBY:
+		case PREC_UIN:
+		case PREC_UDI:
+		case PREC_ULI:
 		case PREC_DP:
-			NWARN("Sorry, no curand double precision uniform numbers at this time.");
-			break;
-			*/
-		default:
 			sprintf(DEFAULT_ERROR_STRING,
 	"g_vuni:  Object %s (%s) should have float precision",
-				dp->dt_name,name_for_prec(dp->dt_prec));
+				OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
 			NWARN(DEFAULT_ERROR_STRING);
+			break;
+		case PREC_NONE:
+		case PREC_INVALID:
+		case N_MACHINE_PRECS:
+		default:
+			NWARN("CAUTIOUS:  g_vuni:  unexpected invalid prec code!?");
 			break;
 	}
 #else /* ! HAVE_LIBCURAND */

@@ -89,7 +89,7 @@ Set client_sock	evic_sock
 Set string "Xmit_Text $daemon_sock \"Set $1 \$$1\""
 Evi_Send $string
 Recv_Text $client_sock response
-push_text $response
+interpret $response
 .
 
 Define Select_PTZ 1 cam_string
@@ -153,7 +153,7 @@ Set string "Xmit_Text $daemon_sock \"Set inquiry_result \$inquiry_result\""
 Evi_Send $string
 Recv_Text $client_sock response
 #Print response
-push_text $response
+interpret $response
 .
 
 Define Inquire_PTZ_Posn 0
@@ -163,7 +163,7 @@ Set client_sock	evic_sock
 Set string "Xmit_Text $daemon_sock \"Set pan_posn \$pan_posn Set tilt_posn \$tilt_posn\""
 Evi_Send $string
 Recv_Text $client_sock response
-push_text $response
+interpret $response
 .
 
 Stop_File evic.mac

@@ -237,6 +237,12 @@ typedef enum {
 	T_VV_SS_CONDASS,			/* new condass functions */
 	T_VS_SS_CONDASS,			/* new condass functions */
 	T_SS_SS_CONDASS,			/* new condass functions */
+	T_INT1_FN,				/* new for isnan etc. */
+	T_INT1_VFN,				/* new for isnan etc. */
+	T_STR3_FN,
+	T_STRV_FN,
+	T_CHAR_FN,
+	T_CHAR_VFN,
 
 	N_TREE_CODES				/* this has to be last */
 } Tree_Code;
@@ -297,6 +303,9 @@ typedef enum {
 								\
 		case T_STR1_FN:					\
 		case T_STR2_FN:					\
+		case T_STR3_FN:					\
+		case T_STRV_FN:					\
+		case T_CHAR_FN:					\
 		case T_STRCAT:					\
 		case T_STRCPY:
 
@@ -323,6 +332,7 @@ typedef enum {
 		case T_MATH0_FN:				\
 		case T_MATH1_FN:				\
 		case T_MATH2_FN:				\
+		case T_INT1_FN:					\
 		case T_SIZE_FN:
 
 #define ALL_SCALAR_FUNCTION_CASES				\
@@ -330,6 +340,7 @@ typedef enum {
 		case T_MATH0_FN:				\
 		case T_MATH1_FN:				\
 		case T_MATH2_FN:				\
+		case T_INT1_FN:					\
 		case T_SIZE_FN:
 
 #define ALL_SCALAR_CONSTANT_CASES				\
@@ -392,12 +403,14 @@ typedef enum {
 
 #define ALL_MATH_SFN_CASES					\
 								\
+		case T_INT1_FN:					\
 		case T_MATH0_FN:				\
 		case T_MATH1_FN:				\
 		case T_MATH2_FN:
 
 #define ALL_MATH_VFN_CASES					\
 								\
+		case T_INT1_VFN:				\
 		case T_MATH0_VFN:				\
 		case T_MATH1_VFN:				\
 		case T_MATH2_VFN:				\
@@ -558,6 +571,14 @@ typedef enum {
  * and SSS -> SS_VS.  That leaves VVS, VSS, SVV and SVS.
  */
 
+#define TRINARY_CONDASS_CASES					\
+		case T_VV_B_CONDASS:				\
+		case T_VS_B_CONDASS:				\
+		case T_SS_B_CONDASS:				\
+		case T_VV_S_CONDASS:				\
+		case T_VS_S_CONDASS:				\
+		case T_SS_S_CONDASS:
+
 #define ALL_NEW_CONDASS_CASES					\
 		case T_VV_VV_CONDASS:				\
 		case T_VS_VV_CONDASS:				\
@@ -572,13 +593,14 @@ typedef enum {
 #define ALL_CONDASS_CASES					\
 								\
 		ALL_NEW_CONDASS_CASES				\
-		case T_VV_B_CONDASS:				\
-		case T_VS_B_CONDASS:				\
-		case T_SS_B_CONDASS:				\
+		TRINARY_CONDASS_CASES
+
+#define NON_BITMAP_CONDASS_CASES				\
+								\
+		ALL_NEW_CONDASS_CASES				\
 		case T_VV_S_CONDASS:				\
 		case T_VS_S_CONDASS:				\
 		case T_SS_S_CONDASS:
-
 
 #define ALL_NUMERIC_COMPARISON_CASES				\
 								\

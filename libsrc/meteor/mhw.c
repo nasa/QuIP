@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_mhw[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 #include <stdio.h>
@@ -15,7 +13,7 @@ char VersionId_meteor_mhw[] = QUIP_VERSION_STRING;
 
 #include "ioctl_meteor.h"
 #include "mmenu.h"
-#include "debug.h"
+#include "quip_prot.h"
 
 extern int fbfd;
 
@@ -90,14 +88,14 @@ void meteor_mmap(SINGLE_QSP_ARG_DECL)
 
 	if( verbose ){
 		int i;
-		sprintf(error_string, "size: 0x%x", meteor_off.fb_size);
-		advise(error_string);
-		sprintf(error_string, "mem: 0x%x", meteor_off.mem_off);
-		advise(error_string);
+		sprintf(ERROR_STRING, "size: 0x%x", meteor_off.fb_size);
+		advise(ERROR_STRING);
+		sprintf(ERROR_STRING, "mem: 0x%x", meteor_off.mem_off);
+		advise(ERROR_STRING);
 		for (i=0; i<num_meteor_frames; i++){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 				"frame %d: 0x%x", i, meteor_off.frame_offset[i]);
-			advise(error_string);
+			advise(ERROR_STRING);
 		}
 	}
 
@@ -117,8 +115,8 @@ void meteor_mmap(SINGLE_QSP_ARG_DECL)
 				 MAP_SHARED,
 				 fbfd, (off_t)0);
 
-//sprintf(error_string,"meteor_mmap:  mmbuf = 0x%lx, size = 0x%lx",(int_for_addr)mmbuf,meteor_off.fb_size);
-//advise(error_string);
+//sprintf(ERROR_STRING,"meteor_mmap:  mmbuf = 0x%lx, size = 0x%lx",(int_for_addr)mmbuf,meteor_off.fb_size);
+//advise(ERROR_STRING);
 	if (mmbuf == (char *)(-1)) {
 		perror("mmap failed");
 		exit(1);
@@ -127,20 +125,20 @@ void meteor_mmap(SINGLE_QSP_ARG_DECL)
 	last_mm_size=meteor_off.fb_size;
 
 	if( verbose ){
-		sprintf(error_string,"meteor_mmap:  meteor_off.mem_off = 0x%x",meteor_off.mem_off);
-		advise(error_string);
+		sprintf(ERROR_STRING,"meteor_mmap:  meteor_off.mem_off = 0x%x",meteor_off.mem_off);
+		advise(ERROR_STRING);
 	}
 
 	_mm = (struct meteor_mem *)(mmbuf + meteor_off.mem_off);
 
-//sprintf(error_string,"meteor_mmap:  _mm = 0x%lx",(int_for_addr)_mm);
-//advise(error_string);
-//sprintf(error_string,"meteor_mmap:  _mm->frame_size = 0x%x",_mm->frame_size);
-//advise(error_string);
+//sprintf(ERROR_STRING,"meteor_mmap:  _mm = 0x%lx",(int_for_addr)_mm);
+//advise(ERROR_STRING);
+//sprintf(ERROR_STRING,"meteor_mmap:  _mm->frame_size = 0x%x",_mm->frame_size);
+//advise(ERROR_STRING);
 
 	if( verbose ){
-		sprintf(error_string,"meteor_mmap:  _mm->frame_size = 0x%x",_mm->frame_size);
-		advise(error_string);
+		sprintf(ERROR_STRING,"meteor_mmap:  _mm->frame_size = 0x%x",_mm->frame_size);
+		advise(ERROR_STRING);
 	}
 } /* end meteor_mmap() */
 

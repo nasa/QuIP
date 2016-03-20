@@ -3,15 +3,33 @@
 
 Start_File ascii.mac
 
+Define Get_String 2 varname string_obj
+data ascii get_string $2 $1 quit quit
+.
+
+Define Set_String 2 string_obj string
+data ascii set_string $1 "$2" quit quit
+.
+
 Set ascii_read_dir .
 Set ascii_write_dir .
 
 Define Get_Ascii 2 'data object' 'ascii filename'
 data
   ascii
-    If strstr('$2','/')==0
-      Then "read $1 $2"
-      Else "read $1 $ascii_read_dir/$2"
+    If strcmp('$2','-')==0||strstr('$2','/')==0
+      Then "read $1 '$2'"
+      Else "read $1 '$ascii_read_dir/$2'"
+    quit
+  quit
+.
+
+Define Append_Ascii 2 'data object' 'ascii filename'
+data
+  ascii
+    If strcmp('$2','-')==0||strstr('$2','/')==0
+      Then "append $1 '$2'"
+      Else "append $1 '$ascii_write_dir/$2'"
     quit
   quit
 .
@@ -19,9 +37,9 @@ data
 Define Put_Ascii 2 'data object' 'ascii filename'
 data
   ascii
-    If strstr('$2','/')==0
-      Then "write $1 $2"
-      Else "write $1 $ascii_write_dir/$2"
+    If strcmp('$2','-')==0||strstr('$2','/')==0
+      Then "write $1 '$2'"
+      Else "write $1 '$ascii_write_dir/$2'"
     quit
   quit
 .

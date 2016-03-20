@@ -22,15 +22,15 @@ typedef enum {
 	SW
 } Corner_Direction;
 
-typedef struct point {
+typedef struct tile_point {
 	float p_c[3];
-} Point;
+} Tile_Point;
 
 typedef struct vertex {
 	/* The point in object space */
-	Point	v_p;
+	Tile_Point	v_p;
 	/* The transformed point */
-	Point	v_xf;
+	Tile_Point	v_xf;
 	int	v_nref;
 } Vertex;
 
@@ -43,7 +43,7 @@ typedef struct vertex {
 #define v_z	v_p.p_z
 
 #define NO_VERTEX	((Vertex *)NULL)
-#define NO_POINT	((Point *)NULL)
+#define NO_POINT	((Tile_Point *)NULL)
 
 #define POINT_USED(ptp)		((ptp)->v_nref > 0)
 #define POINT_FREE(ptp)		((ptp)->v_nref == -1 )
@@ -134,20 +134,20 @@ extern Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex 
 extern Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw, int quadrant);
 extern void subdivide_tile(Tile *tp);
 extern Tile *add_neighbor(Tile *tp, Cardinal_Direction dir);
-extern void show_tile(Tile *tp, const char *prefix);
+extern void show_tile(QSP_ARG_DECL  Tile *tp, const char *prefix);
 extern void init_dir_names(void);
 
 
-extern COMMAND_FUNC( tile_menu );
+extern COMMAND_FUNC( do_tile_menu );
 
 extern void draw_tile(Tile *tp);
 extern void undivide_tile(Tile *tp);
-extern void xdraw_master(Master_Tile *tp);
+extern void xdraw_master(QSP_ARG_DECL  Master_Tile *tp);
 
 extern void tile_xform(Tile *tp,Data_Obj *matp);
 extern void master_tile_elevate(QSP_ARG_DECL  Master_Tile *tp);
 extern void master_tile_texture(QSP_ARG_DECL  Master_Tile *tp);
-extern void tile_info(Tile *tp);
+extern void tile_info(QSP_ARG_DECL  Tile *tp);
 extern void set_dthresh(float);
 
 #ifdef FOOBAR

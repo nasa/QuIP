@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_dataf_index[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -10,9 +8,9 @@ char VersionId_dataf_index[] = QUIP_VERSION_STRING;
 #include <ctype.h>
 #endif
 
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "savestr.h"
-#include "nexpr.h"
+#include "nexpr.h"	// pexpr
 
 /*
  * Return a data object indexed by the index string.
@@ -24,12 +22,11 @@ char VersionId_dataf_index[] = QUIP_VERSION_STRING;
  * (e.g., x[3:6]) as a way of doing subimages.
  */
 
-Data_Obj *
-index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
+Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
 {
 	const char *cp;
 	int i;
-	u_long index;
+	index_t index;
 	char str[64];
 	Data_Obj *newdp;
 	int left_delim,right_delim;
@@ -42,14 +39,14 @@ index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
 	cp=index_str;
 	while( *cp && isspace(*cp) ) cp++;
 
-	maxd = dp->dt_maxdim;
-	mind = dp->dt_mindim;
+	maxd = OBJ_MAXDIM(dp);
+	mind = OBJ_MINDIM(dp);
 
 next_index:
 
 	if( *cp != '[' && *cp != '{' ){
-		sprintf(error_string,"bad index delimiter \"%s\"",index_str);
-		NWARN(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"bad index delimiter \"%s\"",index_str);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(NO_OBJ);
 	}
 	left_delim = *cp;
@@ -75,8 +72,8 @@ next_index:
 		str[i++]=(*cp++);
 	}
 	if( *cp != right_delim ){
-		sprintf(error_string,"missing index delimiter '%c'",right_delim);
-		NWARN(error_string);
+		sprintf(DEFAULT_ERROR_STRING,"missing index delimiter '%c'",right_delim);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(NO_OBJ);
 	}
 	cp++;
@@ -99,7 +96,10 @@ next_index:
 		else               mind++;
 		goto next_index;
 	} else {
-		index = (u_long) pexpr( QSP_ARG  str );
+		Typed_Scalar *tsp;
+		tsp = pexpr( QSP_ARG  str );
+		index = index_for_scalar(tsp);
+		RELEASE_SCALAR(tsp)
 		if( right_delim == ']' )
 			newdp=gen_subscript(QSP_ARG  dp,maxd,index,SQUARE);
 		else
@@ -108,7 +108,7 @@ next_index:
 
 	if( *cp ) return(index_data(QSP_ARG  newdp,cp));
 	else return(newdp);
-}
+} // index_data
 
 
 

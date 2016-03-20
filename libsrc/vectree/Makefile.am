@@ -1,7 +1,9 @@
+all:	libvectree.a
+	cp libvectree.a ../../libs
 
 noinst_LIBRARIES = libvectree.a
 
-libvectree_a_CPPFLAGS = -I$(top_srcdir)/include -Wall
+libvectree_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 # -D__STRICT_ANSI__  this breaks u_long in sys/types.h...
 
 libvectree_a_SOURCES =			\
@@ -10,6 +12,8 @@ libvectree_a_SOURCES =			\
 			vectree.c	\
 			vecnodes.c	\
 			evaltree.c	\
+			identifier.c	\
+			undef_sym.c	\
 			resolve.c	\
 			comptree.c	\
 			costtree.c	\
@@ -17,12 +21,21 @@ libvectree_a_SOURCES =			\
 			opt_tree.c	\
 			nodetbl.c	\
 			subrt.c		\
+			subrt_funcs.c	\
 			mseq.c		\
 			vt_native.c	\
+			string_ref.c	\
 			yacc_hack.h	\
 			vt_native.h
 
-noinst_HEADERS = vectree.h vt_native.h yacc_hack.h
+noinst_HEADERS = vectree.h vt_native.h yacc_hack.h \
+			ctx_pair.h	\
+			identifier.h	\
+			pointer.h	\
+			reference.h	\
+			subrt.h		\
+			undef_sym.h	\
+			vec_expr_node.h
 
 AM_YFLAGS=-v
 

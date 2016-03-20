@@ -1,6 +1,6 @@
-# want to install these somewhere like /usr/local/quip/macros...
+# want to install these somewhere like /usr/local/coq/macros...
 
-macrosdir	=	$(datadir)/quip/macros/system
+macrosdir	=	$(datadir)/coq/macros/system
 
 # these "data" files don't get put into the distribution package?
 
@@ -14,6 +14,8 @@ macros_DATA	=	daemons.mac		\
 			mouse.mac		\
 			msgs.mac		\
 			ports.mac		\
+			unix_helper.mac		\
+			server_utilz.mac	\
 			vars.mac
 
 EXTRA_DIST	=	$(macros_DATA)

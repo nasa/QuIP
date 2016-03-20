@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_mcapt[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 #ifdef HAVE_UNISTD_H
@@ -33,12 +31,10 @@ char VersionId_meteor_mcapt[] = QUIP_VERSION_STRING;
 #include <sys/ioctl.h>
 #endif
 
+#include "quip_prot.h"
 #include "mmvi.h"
 #include "ioctl_meteor.h"
-
 #include "mmenu.h"
-#include "debug.h"
-#include "query.h"
 #include "rv_api.h"
 #include "fio_api.h"
 
@@ -62,7 +58,8 @@ static COMMAND_FUNC( do_meteor_status )
 void meteor_status(SINGLE_QSP_ARG_DECL)
 {
 
-	INSURE_MM("meteor_status");
+//	INSURE_MM("meteor_status");
+	assert( _mm != NULL );
 
 	sprintf(msg_str,"_mm = 0x%lx",(int_for_addr)_mm);
 	prt_msg(msg_str);
@@ -90,15 +87,15 @@ static void meteor_get_errors(SINGLE_QSP_ARG_DECL)
 		perror("ioctl GetCount failed");
 		exit(1);
 	}
-	sprintf(error_string, "Frames: %d\nEven:   %d\nOdd:	%d\n", 
+	sprintf(ERROR_STRING, "Frames: %d\nEven:   %d\nOdd:	%d\n", 
 		cnt.frames_captured,
 		cnt.even_fields_captured,
 		cnt.odd_fields_captured);
-	advise(error_string);
-	sprintf(error_string, "Fifo errors: %d\n", cnt.fifo_errors);
-	advise(error_string);
-	sprintf(error_string, "DMA errors:  %d\n", cnt.dma_errors);
-	advise(error_string);
+	advise(ERROR_STRING);
+	sprintf(ERROR_STRING, "Fifo errors: %d\n", cnt.fifo_errors);
+	advise(ERROR_STRING);
+	sprintf(ERROR_STRING, "DMA errors:  %d\n", cnt.dma_errors);
+	advise(ERROR_STRING);
 }
 
 void meteor_clear_counts()
@@ -175,8 +172,8 @@ static void meteor_check_capture_control(SINGLE_QSP_ARG_DECL)
 		perror("ioctl GetCapt failed");
 		exit(1);
 	}
-	sprintf(error_string, "Capture control: 0x%x\n", cap);
-	advise(error_string);
+	sprintf(ERROR_STRING, "Capture control: 0x%x\n", cap);
+	advise(ERROR_STRING);
 }
 
 static COMMAND_FUNC( do_meteor_check )
@@ -224,8 +221,8 @@ int meteor_capture(SINGLE_QSP_ARG_DECL)
 #ifndef FAKE_METEOR_HARDWARE
 	if( capture_code == METEORCAPTUR ){
 /*
-sprintf(error_string,"capture_code = METEORCAPTUR, mode = %d (0x%x)",capture_mode,capture_mode);
-advise(error_string);
+sprintf(ERROR_STRING,"capture_code = METEORCAPTUR, mode = %d (0x%x)",capture_mode,capture_mode);
+advise(ERROR_STRING);
 */
 		if (ioctl(meteor_fd, METEORCAPTUR, &capture_mode)){
 			perror("ioctl Capture failed");
@@ -320,14 +317,15 @@ static int index_of_mode(QSP_ARG_DECL  int mode )
 
 	for(i=0;i<N_CAPTURE_MODES;i++)
 		if( meteor_mode[i] == mode ) return(i);
-#ifdef CAUTIOUS
-	sprintf(error_string,"CAUTIOUS:  Mode %d does not appear in meteor capture mode table!?",mode);
-	WARN(error_string);
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	sprintf(ERROR_STRING,"CAUTIOUS:  Mode %d does not appear in meteor capture mode table!?",mode);
+//	WARN(ERROR_STRING);
+//#endif /* CAUTIOUS */
+	assert( ! "mode missing from table" );
 	return(-1);
 }
 
-void set_capture_mode(int64_t mode)
+static void set_capture_mode(int64_t mode)
 {
 	if( mode == METEORCAPFRM ){
 		capture_code=mode;
@@ -346,9 +344,9 @@ void setup_monitor_capture(SINGLE_QSP_ARG_DECL)
 		} else {
 			int i;
 			i=index_of_mode(QSP_ARG  capture_mode);
-			sprintf(error_string,"Meteor is already capturing in %s mode!?",
+			sprintf(ERROR_STRING,"Meteor is already capturing in %s mode!?",
 					i>=0 ?  mode_names[ i ] : "(unknown)" );
-			WARN(error_string);
+			WARN(ERROR_STRING);
 		}
 		return;
 	}
@@ -391,10 +389,10 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 	dimset.ds_dimension[3] = 1;
 	dimset.ds_dimension[4] = 1;
 
-	dp = _make_dp(QSP_ARG  name,&dimset,PREC_UBY);
+	dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
 
 	if( dp != NO_OBJ )
-		dp->dt_data = mmbuf+meteor_off.frame_offset[index];
+		SET_OBJ_DATA_PTR(dp, mmbuf+meteor_off.frame_offset[index] );
 
 	return(dp);
 }
@@ -432,7 +430,8 @@ static COMMAND_FUNC( do_hiwat )
 
 static COMMAND_FUNC( do_release )
 {
-	INSURE_MM("do_release");
+//	INSURE_MM("do_release");
+	assert( _mm != NULL );
 
 	_mm->num_active_bufs--;
 }
@@ -533,13 +532,13 @@ static COMMAND_FUNC( do_record )
 	ifp = img_file_of(QSP_ARG  name);
 
 	if( ifp != NO_IMAGE_FILE ){
-		sprintf(error_string,"Clobbering existing image file %s",name);
-		advise(error_string);
+		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
+		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
 		delete_image_file(QSP_ARG  ifp);
 	}
 
-	set_filetype(QSP_ARG  IFT_RV);
+	set_filetype(QSP_ARG  FILETYPE_FOR_CODE(IFT_RV));
 	ifp = write_image_file(QSP_ARG  name,n_frames);	/* nf stored in if_frms_to_write */
 
 	/* sets nframes in ifp, but doesn't allocate rv blocks properly...
@@ -548,8 +547,8 @@ static COMMAND_FUNC( do_record )
 	 */
 
 	if( ifp == NO_IMAGE_FILE ){
-		sprintf(error_string,"Error creating movie file %s",name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"Error creating movie file %s",name);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -558,9 +557,9 @@ static COMMAND_FUNC( do_record )
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
 	if( rv_realloc(QSP_ARG  name,n_blocks) < 0 ){
-		sprintf(error_string,"error reallocating %d blocks for rv file %s",
+		sprintf(ERROR_STRING,"error reallocating %d blocks for rv file %s",
 			n_blocks,name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -572,12 +571,12 @@ void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 	RV_Inode *inp;
 
 	inp = get_rv_inode(QSP_ARG  ifp->if_name);
-#ifdef CAUTIOUS
-	if( inp == NO_INODE ){
-		sprintf(error_string,"CAUTIOUS: finish_recording:  missing rv inode %s",ifp->if_name);
-		ERROR1(error_string);
-	}
-#endif
+//#ifdef CAUTIOUS
+//	if( inp == NO_INODE ){
+//		sprintf(ERROR_STRING,"CAUTIOUS: finish_recording:  missing rv inode %s",ifp->if_name);
+//		ERROR1(ERROR_STRING);
+//	}
+//#endif
 
 	close_image_file(QSP_ARG  ifp);		/* close write file	*/
 	update_movie_database(QSP_ARG  inp);
@@ -639,7 +638,8 @@ static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 
 	mem_frm_to_wt=0;
 
-	INSURE_MM("mem_record");
+//	INSURE_MM("mem_record");
+	assert( _mm != NULL );
 
 	/* set synchronous mode */
 	capture_code = METEORCAPTUR ;	/* mem_record() */
@@ -663,8 +663,8 @@ static void mem_record(QSP_ARG_DECL  Image_File *ifp,uint32_t n_frames)
 #ifndef FAKE_METEOR_HARDWARE
 	while(_mm->frames_captured< n_frames){
 /*
-sprintf(error_string,"%d of %d frames captured",_mm->frames_captured,n_frames);
-advise(error_string);
+sprintf(ERROR_STRING,"%d of %d frames captured",_mm->frames_captured,n_frames);
+advise(ERROR_STRING);
 */
 		usleep(16000);
 	}
@@ -684,9 +684,9 @@ advise("faking hardware");
 	dimset.ds_dimension[2]=gp.rows;	
 	dimset.ds_dimension[3]=1;
 	dimset.ds_dimension[4]=1;
-	dp = _make_dp(QSP_ARG  "tmp_dp",&dimset,PREC_UBY);
+	dp = _make_dp(QSP_ARG  "tmp_dp",&dimset,PREC_FOR_CODE(PREC_UBY));
 	if( !meteor_field_mode )
-		dp->dt_shape.si_flags |= DT_INTERLACED;
+		SET_SHP_FLAG_BITS(OBJ_SHAPE(dp),DT_INTERLACED);
 
 	if( dp == NO_OBJ ){
 		WARN("mem_record:  error creating tmp dp");
@@ -696,25 +696,26 @@ advise("faking hardware");
 	/* Now write the frames to disk */
 
 	/* This does not properly handle timestamps, so call out an error */
-#ifdef CAUTIOUS
-	if( ifp->if_type != IFT_RV ){
-		sprintf(error_string,"CAUTIOUS:  mem_record:  output file %s is not a raw volume file!?",ifp->if_name);
-		ERROR1(error_string);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  mem_record:  output file %s is not a raw volume file!?",ifp->if_name);
+//		ERROR1(ERROR_STRING);
+//	}
+//#endif /* CAUTIOUS */
+	assert( FT_CODE(IF_TYPE(ifp)) == IFT_RV );
 
-	inp = (RV_Inode *)ifp->if_hd;
-	if( inp->rvi_extra_bytes != 0 ){
-		sprintf(error_string,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,inp->rvi_extra_bytes);
-		WARN(error_string);
+	inp = (RV_Inode *)ifp->if_hdr_p;
+	if( RV_MOVIE_EXTRA(inp) != 0 ){
+		sprintf(ERROR_STRING,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,RV_MOVIE_EXTRA(inp));
+		WARN(ERROR_STRING);
 		ERROR1("Sorry, can't record timestamps in memory recordings at present...");
 	}
 
 	for(i=0;i<n_frames;i++){
-		dp->dt_data = mmbuf + meteor_off.frame_offset[i] ;
+		SET_OBJ_DATA_PTR(dp, mmbuf + meteor_off.frame_offset[i] );
 		write_image_to_file(QSP_ARG  ifp,dp);
 	}
-	dp->dt_flags |= DT_NO_DATA;
+	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);
 	delvec(QSP_ARG  dp);
 
 	/* the image file should have been close automatically by
@@ -851,17 +852,17 @@ static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 	unsigned int nerrs;
 
 	if( index < 0 || index > 2 ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"error index (%d) must be between 0 and 2",index);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 	}
 
-	if( MACHINE_PREC(dp) != PREC_UDI ){
-		sprintf(error_string,
+	if( OBJ_MACH_PREC(dp) != PREC_UDI ){
+		sprintf(ERROR_STRING,
 	"Vector %s has precision %s, should be %s for METEORGERRFRMS",
-			dp->dt_name,prec_name[MACHINE_PREC(dp)],
-			prec_name[PREC_UDI]);
-		WARN(error_string);
+			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
+			PREC_UDI_NAME);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -871,23 +872,23 @@ static void get_err_fields(QSP_ARG_DECL  Data_Obj *dp,int index)
 	}
 	nerrs = ei.ei[index].n_saved;
 
-	if( dp->dt_n_type_elts < nerrs ){
-		sprintf(error_string,
+	if( OBJ_N_TYPE_ELTS(dp) < nerrs ){
+		sprintf(ERROR_STRING,
 	"Vector %s has %d elements, not big enough to store %d errors",
-			dp->dt_name,dp->dt_n_type_elts,nerrs);
-		WARN(error_string);
+			OBJ_NAME(dp),OBJ_N_TYPE_ELTS(dp),nerrs);
+		WARN(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"Vector %s should be contiguous for METEORGERRFRMS",
-			dp->dt_name);
-		WARN(error_string);
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
 
-	if( ioctl(meteor_fd,error_code_tbl[index],dp->dt_data) ){
+	if( ioctl(meteor_fd,error_code_tbl[index],OBJ_DATA_PTR(dp)) ){
 		perror("ioctl METEORGERRFRMS failed");
 	}
 }
@@ -935,12 +936,12 @@ static COMMAND_FUNC( do_get_drops )
 
 	if( dp== NO_OBJ ) return;
 
-	if( MACHINE_PREC(dp) != PREC_UDI ){
-		sprintf(error_string,
+	if( OBJ_MACH_PREC(dp) != PREC_UDI ){
+		sprintf(ERROR_STRING,
 	"Vector %s has precision %s, should be %s for METEORGDRPFRMS",
-			dp->dt_name,prec_name[MACHINE_PREC(dp)],
-			prec_name[PREC_UDI]);
-		WARN(error_string);
+			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),
+			PREC_UDI_NAME);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -953,23 +954,23 @@ static COMMAND_FUNC( do_get_drops )
 	di.n_total = di.n_saved = 0;
 #endif
 
-	if( dp->dt_n_type_elts < di.n_saved ){
-		sprintf(error_string,
+	if( OBJ_N_TYPE_ELTS(dp) < di.n_saved ){
+		sprintf(ERROR_STRING,
 	"Vector %s has %d elements, not big enough to store %d drops",
-			dp->dt_name,dp->dt_n_type_elts,di.n_saved);
-		WARN(error_string);
+			OBJ_NAME(dp),OBJ_N_TYPE_ELTS(dp),di.n_saved);
+		WARN(ERROR_STRING);
 		return;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"Vector %s should be contiguous for METEORGDRPFRMS",
-			dp->dt_name);
-		WARN(error_string);
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
 
-	if( ioctl(meteor_fd,METEORGDRPFRMS,dp->dt_data) ){
+	if( ioctl(meteor_fd,METEORGDRPFRMS,OBJ_DATA_PTR(dp)) ){
 		perror("ioctl METEORGDRPFRMS failed");
 	}
 }
@@ -1033,58 +1034,59 @@ static COMMAND_FUNC( do_write_enable )
 	thread_write_enable(QSP_ARG  index,flag);
 }
 
-static Command capture_ctbl[]={
-{ "record",	do_record,		"stream video to disk"		},
-{ "async",	do_set_async,		"set/clear asynchronous recording" },
-{ "halt",	meteor_halt_record,	"halt asynchronous recording"	},
-{ "wait",	meteor_wait_record,	"wait for asynchronous recording to finish" },
-{ "playback",	do_playback,		"playback a previously recorded movie"	},
+#define ADD_CMD(s,f,h)	ADD_COMMAND(capture_menu,s,f,h)
+
+MENU_BEGIN(capture)
+ADD_CMD( record,		do_record,		stream video to disk )
+ADD_CMD( async,			do_set_async,		set/clear asynchronous recording )
+ADD_CMD( halt,			meteor_halt_record,	halt asynchronous recording )
+ADD_CMD( wait,			meteor_wait_record,	wait for asynchronous recording to finish )
+ADD_CMD( playback,		do_playback,		playback a previously recorded movie )
 #ifdef RECORD_CAPTURE_COUNT
-{ "ccount",	do_dump_cc,		"dump ccount array to file"	},
+ADD_CMD( ccount,		do_dump_cc,		dump ccount array to file )
 #endif /* RECORD_CAPTURE_COUNT */
 #ifdef FOOBAR
-{ "ndiscard",	do_set_ndiscard,	"set number of lines to discard" },
+ADD_CMD( ndiscard,		do_set_ndiscard,	set number of lines to discard )
 #endif /* FOOBAR */
-{ "n_fifo_errors",do_get_n_fifo_errors,	"get the number of corrupted frames" },
-{ "n_dma_errors",do_get_n_dma_errors,	"get the number of corrupted frames" },
-{ "n_fifodma_errors",do_get_n_fifodma_errors,"get the number of corrupted frames" },
-{ "ndrops",	do_get_ndrops,		"get the number of dropped frames" },
-{ "get_fifo_frms",	do_get_fifo_errors,	"get the corrupted frame indices" },
-{ "get_fifodma_frms",do_get_fifodma_errors,	"get the corrupted frame indices" },
-{ "get_dma_frms",	do_get_dma_errors,	"get the corrupted frame indices" },
-{ "get_drops",	do_get_drops,		"get the corrupted frame indices" },
-{ "write_data",	do_write_enable,	"enable/disable writing to particular disks"	},
+ADD_CMD( n_fifo_errors,		do_get_n_fifo_errors,	get the number of corrupted frames )
+ADD_CMD( n_dma_errors,		do_get_n_dma_errors,	get the number of corrupted frames )
+ADD_CMD( n_fifodma_errors,	do_get_n_fifodma_errors,	get the number of corrupted frames )
+ADD_CMD( ndrops,		do_get_ndrops,		get the number of dropped frames )
+ADD_CMD( get_fifo_frms,		do_get_fifo_errors,	get the corrupted frame indices )
+ADD_CMD( get_fifodma_frms,	do_get_fifodma_errors,	get the corrupted frame indices )
+ADD_CMD( get_dma_frms,		do_get_dma_errors,	get the corrupted frame indices )
+ADD_CMD( get_drops,		do_get_drops,		get the corrupted frame indices )
+ADD_CMD( write_data,		do_write_enable,	enable/disable writing to particular disks )
 #ifdef RECORD_TIMESTAMPS
-{ "enable_timestamps",	do_ts_enable,	"enable/disable timestamping"	},
-{ "dump_timestamps",	do_dump,	"dump timestamp data to a file"	},
-{ "print_timestamps",	do_print,	"print timestamp data"	},
+ADD_CMD( enable_timestamps,	do_ts_enable,		enable/disable timestamping )
+ADD_CMD( dump_timestamps,	do_dump,		dump timestamp data to a file )
+ADD_CMD( print_timestamps,	do_print,		print timestamp data )
 #endif /* RECORD_TIMESTAMPS */
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+MENU_END(capture)
 
 COMMAND_FUNC( do_capture )
 {
-	PUSHCMD(capture_ctbl,"capture");
+	PUSH_MENU(capture);
 }
 
-static Command captst_ctbl[]={
-{ "mode",	do_set_capture_mode,	"set capture mode"		},
-{ "capture",	do_meteor_capture,	"capture frame(s)"		},
-{ "stop",	meteor_stop_capture,	"stop capture"			},
-{ "check",	do_meteor_check,	"check capture status"		},
-{ "monitor",	do_meteor_status,	"monitor capture status"	},
-{ "object",	do_make_object,		"create object for frame"	},
-{ "hiwat",	do_hiwat,		"set hiwat variable"		},
-{ "lowat",	do_lowat,		"set lowat variable"		},
-{ "release",	do_release,		"decrement n_active_bufs"	},
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(cap_tst_menu,s,f,h)
+
+MENU_BEGIN(cap_tst)
+ADD_CMD( mode,		do_set_capture_mode,	set capture mode )
+ADD_CMD( capture,	do_meteor_capture,	capture frame(s) )
+ADD_CMD( stop,		meteor_stop_capture,	stop capture )
+ADD_CMD( check,		do_meteor_check,	check capture status )
+ADD_CMD( monitor,	do_meteor_status,	monitor capture status )
+ADD_CMD( object,	do_make_object,		create object for frame )
+ADD_CMD( hiwat,		do_hiwat,		set hiwat variable )
+ADD_CMD( lowat,		do_lowat,		set lowat variable )
+ADD_CMD( release,	do_release,		decrement n_active_bufs )
+MENU_END(cap_tst)
 
 COMMAND_FUNC( do_captst )
 {
-	PUSHCMD(captst_ctbl,"cap_tst");
+	PUSH_MENU(cap_tst);
 }
 
 

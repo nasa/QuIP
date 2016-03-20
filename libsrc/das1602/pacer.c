@@ -53,7 +53,7 @@
 double SetPacerFreq( double desired_freq , unsigned short *c1p, unsigned short *c2p )
 {
   unsigned short ctr1, ctr2;
-  long desired_product;
+  /*long*/ int32_t desired_product;
   double actual_freq, error;
 
   /* divide 10Mhz by frequency */

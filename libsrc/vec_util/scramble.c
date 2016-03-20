@@ -1,30 +1,65 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_scramble[] = QUIP_VERSION_STRING;
-
-
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "rn.h"
 #include "vec_util.h"
-
-#define SCRAMBLE_REQUIRED_PRECISION PREC_UDI
-#define SCRAMBLE_REQUIRED_TYPE u_long
+#include "veclib_api.h"
+#include "veclib/vl2_veclib_prot.h"
 
 /* The old scramble function is in the support library */
 
+// rn(N) returns a random integer in the range 0-N...
+// So if j is initialized to N, we need to call rn(j-1)...
+
+#define SCRAMBLE_DATA(type)				\
+							\
+	{						\
+		type tmp;				\
+		type *data;				\
+							\
+		data = (type *) OBJ_DATA_PTR(dp);	\
+							\
+		while(j>0){				\
+			i=rn(j);			\
+			tmp=data[i];			\
+			data[i]=data[j];		\
+			data[j]=tmp;			\
+			j--;				\
+		}					\
+	}
+
 void dp_scramble(QSP_ARG_DECL  Data_Obj *dp)
 {
+	unsigned long i,j;
+
+	INSIST_RAM_OBJ(dp,scramble)
+
 	if( ! IS_CONTIGUOUS(dp) ){
-		sprintf(error_string,"dp_scramble:  object %s must be contiguous",dp->dt_name);
-		NWARN(error_string);
+		sprintf(ERROR_STRING,"dp_scramble:  object %s must be contiguous",OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( MACHINE_PREC(dp) != SCRAMBLE_REQUIRED_PRECISION ){
-		sprintf(error_string,"dp_scramble:  object %s must have %s precision",dp->dt_name,prec_name[SCRAMBLE_REQUIRED_PRECISION]);
-		NWARN(error_string);
-		return;
+	//scramble(QSP_ARG  ((SCRAMBLE_TYPE *)OBJ_DATA_PTR(dp)), OBJ_N_TYPE_ELTS(dp) );
+
+	j=OBJ_N_TYPE_ELTS(dp)-1;
+	switch( OBJ_MACH_PREC(dp) ){
+		case PREC_SP: SCRAMBLE_DATA(float) break;
+		case PREC_DP: SCRAMBLE_DATA(double) break;
+		case PREC_BY: SCRAMBLE_DATA(char) break;
+		case PREC_IN: SCRAMBLE_DATA(short) break;
+		case PREC_DI: SCRAMBLE_DATA(int32_t) break;
+		case PREC_LI: SCRAMBLE_DATA(int64_t) break;
+		case PREC_UBY: SCRAMBLE_DATA(u_char) break;
+		case PREC_UIN: SCRAMBLE_DATA(u_short) break;
+		case PREC_UDI: SCRAMBLE_DATA(uint32_t) break;
+		case PREC_ULI: SCRAMBLE_DATA(uint64_t) break;
+		default:
+			sprintf(ERROR_STRING,"dp_permute:  object %s has unsupported precision (%s)!?",
+				OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
+			WARN(ERROR_STRING);
+			break;
 	}
-	scramble(QSP_ARG  ((SCRAMBLE_REQUIRED_TYPE *)dp->dt_data), dp->dt_n_type_elts );
 }
 
 /* permute_elements fills the destination object by using the corresponding elements

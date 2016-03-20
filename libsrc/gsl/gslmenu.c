@@ -1,25 +1,16 @@
 
 #include "quip_config.h"
 
-char VersionId_gslmenu_gslmenu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_GSL
 
 #include <stdio.h>
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "query.h"
-#include "menuname.h"
-#include "version.h"
-#include "submenus.h"
-
 #include "gslprot.h"
 
-static COMMAND_FUNC( do_gsl_svd );
-
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 static void gsl_debug_init(SINGLE_QSP_ARG_DECL);
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 
 static COMMAND_FUNC( do_gsl_svd )
@@ -33,19 +24,34 @@ static COMMAND_FUNC( do_gsl_svd )
 	if( a_dp == NO_OBJ || w_dp == NO_OBJ || v_dp == NO_OBJ )
 		return;
 
-	gsl_svd(a_dp,w_dp,v_dp);
+	gsl_svd(QSP_ARG  a_dp,w_dp,v_dp);
 }
 
+static COMMAND_FUNC( do_gsl_solve )
+{
+	Data_Obj *u_dp, *v_dp, *w_dp, *x_dp, *b_dp;
 
-Command gsl_ctbl[]={
-{ "gslsvd",	do_gsl_svd,		"singular value decomposition"			},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"					},
-#endif
-{ NULL_COMMAND									}
-};
+	x_dp = PICK_OBJ("Vector of unknown coefficients");
+	u_dp = PICK_OBJ("U matrix");
+	w_dp = PICK_OBJ("Singular values");
+	v_dp = PICK_OBJ("V matrix");
+	b_dp = PICK_OBJ("Vector of input data");
 
-#ifdef DEBUG
+	if( u_dp == NO_OBJ || w_dp == NO_OBJ || v_dp == NO_OBJ ||
+		x_dp == NO_OBJ || b_dp == NO_OBJ )
+		return;
+
+	gsl_solve(QSP_ARG  x_dp,u_dp,w_dp,v_dp,b_dp);
+}
+
+#define ADD_CMD(s,f,h)	ADD_COMMAND(gsl_menu,s,f,h)
+
+MENU_BEGIN(gsl)
+ADD_CMD( gslsvd,	do_gsl_svd,		singular value decomposition )
+ADD_CMD( solve,		do_gsl_solve,		solve linear system )
+MENU_END(gsl)
+
+#ifdef QUIP_DEBUG
 int gsl_debug=0;
 
 static void gsl_debug_init(SINGLE_QSP_ARG_DECL)
@@ -54,25 +60,24 @@ static void gsl_debug_init(SINGLE_QSP_ARG_DECL)
 		gsl_debug = add_debug_module(QSP_ARG  "gsl");
 	}
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 
-COMMAND_FUNC( gsl_menu )
+COMMAND_FUNC( do_gsl_menu )
 {
 	static int inited=0;
 
 
 	if( !inited ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 		gsl_debug_init(SINGLE_QSP_ARG);
-#endif /* DEBUG */
-		auto_version(QSP_ARG  "GSLMENU","VersionId_gslmenu");
+#endif /* QUIP_DEBUG */
 		inited=1;
 	}
 
-	PUSHCMD(gsl_ctbl,"gsl");
+	PUSH_MENU(gsl);
 }
-
+	
 #endif /* HAVE_GSL */
 
 

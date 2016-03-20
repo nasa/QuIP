@@ -1,9 +1,10 @@
 #include "quip_config.h"
 
-char VersionId_psych_exp[] = QUIP_VERSION_STRING;
-
 /*	this is a general package for running experiments
  *
+ *	OLD:  this was a library that we linked with, providing our
+ *	own c-callable routines for stimulus delivery and parameter
+ *	modification.
  *	The responsibilities of the caller of exprmnt() :
  *
  *		define the following global fuction ptrs:
@@ -12,6 +13,10 @@ char VersionId_psych_exp[] = QUIP_VERSION_STRING;
  *
  *	stimrt pts to a routine called with two integer args: class, val
  *	modrt pts to a routine to modify stimulus parameters
+ *
+ *	NEW:  everything should be script-based.  Instead of providing a
+ *	c-callable stimulus routine, for each condition we provide a macro
+ *	to be called.
  */
 
 #include <stdio.h>
@@ -23,14 +28,10 @@ char VersionId_psych_exp[] = QUIP_VERSION_STRING;
 #include <unistd.h>	/* prototype for sync() */
 #endif
 
+#include "quip_prot.h"
 #include "param_api.h"
 #include "stc.h"
-#include "savestr.h"
-#include "getbuf.h"
 #include "rn.h"
-#include "substr.h"
-#include "query.h"
-#include "version.h"
 
 /* local prototypes */
 
@@ -57,30 +58,47 @@ void (*modrt)(QSP_ARG_DECL int)=null_mod;
 
 static int custom_keys=0;
 static int get_response_from_keyboard=1;
-static int dribbling=1;
+//static int dribbling=1;
+static int exp_flags=0;
+#define DRIBBLING	1
+#define SET_EXP_FLAG(bit)	exp_flags |= bit
+#define CLEAR_EXP_FLAG(bit)	exp_flags &= ~(bit)
+
+#define IS_DRIBBLING	(exp_flags & DRIBBLING)
+
 static char rsp_tbl[N_RESPONSES][64];
 static const char *rsp_list[N_RESPONSES];
 static int rsp_inited=0;
 static int n_prel, n_data;
 
-static void null_init(){}
+static int class_index=0;
+
+static void null_init(void)
+{
+	NADVISE("null_init...");
+}
+
 static void null_mod(QSP_ARG_DECL int c){}
 
 static COMMAND_FUNC( modify );
 static COMMAND_FUNC( do_trial );
 static COMMAND_FUNC( demo );
-static COMMAND_FUNC( show_stim );
 static COMMAND_FUNC( set_nstairs );
-static COMMAND_FUNC( addcnd );
-static COMMAND_FUNC( runexp );
 static COMMAND_FUNC( set_dribble_flag );
 static COMMAND_FUNC( setyesno );
 static COMMAND_FUNC( use_keyboard );
 
-static int chkout(SINGLE_QSP_ARG_DECL);
-static void setup_files(SINGLE_QSP_ARG_DECL);
-static int present_stim(QSP_ARG_DECL int c,int v,Staircase *stcp);
+//static int present_stim(QSP_ARG_DECL int c,int v,Staircase *stcp);
 static void do_rspinit(void);
+
+#define INSIST_XVALS						\
+								\
+	if( _nvals <= 0 ){					\
+		sprintf(ERROR_STRING,				\
+	"Need to initialize x values (n=%d)",_nvals);		\
+		WARN(ERROR_STRING);				\
+		return;						\
+	}
 
 static void do_rspinit()
 {
@@ -104,66 +122,121 @@ static COMMAND_FUNC( modify )
 	else (*modrt)(QSP_ARG n);
 }
 
-static int present_stim(QSP_ARG_DECL int c,int v,Staircase *stcp)
+static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is something to run */
+{
+	if( eltcount(class_list(SINGLE_QSP_ARG)) <= 0 ){
+		WARN("no conditions defined");
+		return(-1);
+	}
+	if( _nvals <= 0 ){
+		sprintf(ERROR_STRING,"Need to initialize x values (n=%d)",_nvals);
+		WARN(ERROR_STRING);
+		return(-1);
+	}
+	return(0);
+}
+
+static int present_stim(QSP_ARG_DECL Trial_Class *tcp,int v,Staircase *stcp)
 {
 	int rsp=REDO;
 
-	if( chkout(SINGLE_QSP_ARG) == -1 ) return(-1);
+	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return(-1);
 
-#ifdef CAUTIOUS
-	if( v<0 || v>=_nvals ){
-		WARN("CAUTIOUS:  level out of range");
-		return(-1);
-	}
-#endif
+//#ifdef CAUTIOUS
+//	if( v<0 || v>=_nvals ){
+//		WARN("CAUTIOUS:  level out of range");
+//		return(-1);
+//	}
+//#endif
+	assert( v >= 0 && v < _nvals );
 
-	rsp=(*stmrt)(QSP_ARG c,v,stcp);
+	rsp=(*stmrt)(QSP_ARG tcp,v,stcp);
 
 	return(rsp);
 }
 
 static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 {
-	int c,v;
+	short v;
 	int rsp;
 	Staircase st1;
+	Trial_Class *tcp;
 
-	c=(int)HOW_MANY("stimulus class");
-	v=(int)HOW_MANY("level");
+	//c=(short)HOW_MANY("stimulus class");
+	tcp = PICK_TRIAL_CLASS("");
+	v=(short)HOW_MANY("level");
 
-	rsp=present_stim(QSP_ARG c,v,NULL);
+	if( tcp == NULL ) return;
+
+	rsp=present_stim(QSP_ARG tcp,v,NULL);
 
 	/* make a dummy staircase */
-	st1.stc_clp = index_class(QSP_ARG  c);
-	st1.stc_index = 0;
-	st1.stc_val = v;
-	st1.stc_crctrsp = YES;
-	st1.stc_incrsp = YES;
-	st1.stc_type = UP_DOWN;
-	st1.stc_inc = 1;
+	SET_STAIR_CLASS(&st1, tcp);
+	SET_STAIR_INDEX(&st1, 0);
+	SET_STAIR_VAL(&st1, v);
+	SET_STAIR_CRCT_RSP(&st1, YES);
+	SET_STAIR_INC_RSP(&st1, YES);
+	SET_STAIR_TYPE(&st1, UP_DOWN);
+	SET_STAIR_INC(&st1, 1);
 
 	save_response(QSP_ARG  rsp,&st1);
 }
 
+//#ifdef CAUTIOUS
+//static int is_invalid_response( int r )
+//{
+//	if( r == REDO ) return 0;
+//	else if( r == ABORT ) return 0;
+//	else if( r == YES ) return 0;
+//	else if( r == NO ) return 0;
+//	else return 1;
+//}
+//#endif // CAUTIOUS
+
+#define IS_VALID_RESPONSE(r)	r == REDO || r == ABORT || r == YES || r == NO
+
 static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 {
-	int c,v,r;
+	int v,r;
+	Trial_Class *tcp;
 
-	c=(int)HOW_MANY("stimulus class");
+	//c=(int)HOW_MANY("stimulus class");
+	tcp = PICK_TRIAL_CLASS("");
 	v=(int)HOW_MANY("level");
 
-	r=present_stim(QSP_ARG c,v,NULL);
+	if( tcp == NULL ) return;
+
+	r=present_stim(QSP_ARG tcp,v,NULL);
+//#ifdef CAUTIOUS
+//	if( is_invalid_response(r) )
+//		ERROR1("CAUTIOUS:  invalid response code returned by present_stim!?");
+//#endif // CAUTIOUS
+	assert( IS_VALID_RESPONSE(r) );
 }
 
 static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 {
-	int c,v,r;
+	int v,r;
+	Trial_Class *tcp;
 
-	c=(int)HOW_MANY("stimulus class");
+	//c=(int)HOW_MANY("stimulus class");
+	tcp = PICK_TRIAL_CLASS("");
 	v=(int)HOW_MANY("level");
 
+	if( tcp == NULL ) return;
+
+	INSIST_XVALS
+
 	get_response_from_keyboard=0;
-	r=present_stim(QSP_ARG c,v,NULL);
+	r=present_stim(QSP_ARG tcp,v,NULL);
+//#ifdef CAUTIOUS
+//	if( is_invalid_response(r) ){
+//		sprintf(ERROR_STRING,"CAUTIOUS:  invalid response code %d!?",r);
+//		ERROR1(ERROR_STRING);
+//	}
+//#endif // CAUTIOUS
+	assert( IS_VALID_RESPONSE(r) );
+
 	get_response_from_keyboard=1;
 }
 
@@ -186,8 +259,74 @@ struct param expptbl[]={
 { NULL_UPARAM }
 };
 
+
+/* make the staircases specified by the parameter table */
+
+static void make_staircases(SINGLE_QSP_ARG_DECL)
+{
+	int j;
+	List *lp;
+	Node *np;
+	Trial_Class *tcp;
+
+	lp=class_list(SINGLE_QSP_ARG);
+//#ifdef CAUTIOUS
+//	if( lp == NO_LIST ){
+//		WARN("CAUTIOUS:  no conditions in make_staircases()");
+//		return;
+//	}
+//#endif
+	assert( lp != NO_LIST );
+
+	np=lp->l_head;
+	while(np!=NO_NODE){
+		tcp=(Trial_Class *)np->n_data;
+		np=np->n_next;
+
+		/* makestair( type, class, mininc, correct rsp, inc rsp ); */
+		for( j=0;j<n_updn;j++)
+			makestair( QSP_ARG  UP_DOWN, tcp, 1, YES, YES );
+		for( j=0;j<n_dnup;j++)
+			makestair( QSP_ARG  UP_DOWN, tcp, -1, YES, YES );
+		for(j=0;j<n_2up;j++)
+			/*
+			 * 2-up increases val after 2 YES's,
+			 * decreases val after 1 NO
+			 * seeks 71% YES, YES decreasing with val
+			 */
+			makestair( QSP_ARG  TWO_TO_ONE, tcp, 1, YES, YES );
+		for(j=0;j<n_2dn;j++)
+			/*
+			 * 2-down decreases val after 2 NO's,
+			 * increases val after 1 YES
+			 * Seeks 71% NO, NO increasing with val
+			 */
+			makestair( QSP_ARG  TWO_TO_ONE, tcp, -1, YES, NO );
+		for(j=0;j<n_2iup;j++)
+			/*
+			 * 2-inverted-up decreases val after 2 YES's,
+			 * increases val after 1 NO
+			 * Seeks 71% YES, YES increasing with val
+			 */
+			makestair( QSP_ARG  TWO_TO_ONE, tcp, -1, YES, YES );
+		for(j=0;j<n_2idn;j++)
+			/*
+			 * 2-inverted-down increases val after 2 NO's,
+			 * decreases val after 1 YES
+			 * Seeks 71% NO, NO decreasing with val
+			 */
+			makestair( QSP_ARG  TWO_TO_ONE, tcp, 1, YES, NO );
+		for(j=0;j<n_3up;j++)
+			makestair( QSP_ARG  THREE_TO_ONE, tcp, 1, YES, YES );
+		for(j=0;j<n_3dn;j++)
+			makestair( QSP_ARG  THREE_TO_ONE, tcp, -1, YES, NO );
+	}
+}
+
 static COMMAND_FUNC( set_nstairs )	/** set up experiment */
 {
+	int d;
+
 	/* BUG?
 	 * by clearing out the actual staircases, any
 	 * hand edited changes will be lost.
@@ -203,42 +342,47 @@ static COMMAND_FUNC( set_nstairs )	/** set up experiment */
 	 * But we need to executed some routines when we are done.
 	 * So we have to duplicate the loop here...
 	 */
-	while(chngp_ing) do_cmd(SINGLE_QSP_ARG);
+	d = STACK_DEPTH(QS_MENU_STACK(THIS_QSP));
+	while( STACK_DEPTH(QS_MENU_STACK(THIS_QSP)) == d )
+		qs_do_cmd(THIS_QSP);
 
 	new_exp(SINGLE_QSP_ARG);
 	make_staircases(SINGLE_QSP_ARG);
 }
 
+// was addcnd
 
-static COMMAND_FUNC( addcnd )
+static COMMAND_FUNC( do_new_class )
 {
-	Trial_Class *clp;
+	const char *name, *cmd;
+	Trial_Class *tcp;
 
-	clp = new_class(SINGLE_QSP_ARG);
-	(*modrt)(QSP_ARG clp->cl_index);
-}
+	name = NAMEOF("nickname for this class");
+	cmd = NAMEOF("string to execute for this stimulus class");
 
-static int chkout(SINGLE_QSP_ARG_DECL)	/* make sure there is something to run */
-{
-	if( eltcount(class_list(SINGLE_QSP_ARG)) <= 0 ){
-		WARN("no conditions defined");
-		return(-1);
-	}
-	if( _nvals <= 0 ){
-		sprintf(ERROR_STRING,"Need to initialize x values (n=%d)",_nvals);
+	// Make sure not in use
+	tcp = trial_class_of(QSP_ARG  name);
+	if( tcp != NULL ){
+		sprintf(ERROR_STRING,"Class name \"%s\" is already in use!?",
+			name);
 		WARN(ERROR_STRING);
-		return(-1);
+		return;
 	}
-	return(0);
-}
 
-static COMMAND_FUNC( runexp )
-{
-	if( chkout(SINGLE_QSP_ARG) == -1 ) return;
+	tcp = new_trial_class(QSP_ARG  name );
+	SET_CLASS_CMD(tcp,savestr(cmd));
+	SET_CLASS_INDEX(tcp,class_index++);
+	SET_CLASS_DATA_TBL(tcp,NULL);
+	SET_CLASS_N_STAIRS(tcp,0);
 
-	setup_files(SINGLE_QSP_ARG);
+	if( _nvals > 0 ){
+		alloc_data_tbl(tcp,_nvals);
+	} else {
+		WARN("need to specify x-values before declaring stimulus class!?");
+		SET_CLASS_DATA_TBL(tcp,NULL);
+	}
 
-	_run_stairs(QSP_ARG  n_prel,n_data);
+	//(*modrt)(QSP_ARG tcp->cl_index);
 }
 
 static void setup_files(SINGLE_QSP_ARG_DECL)
@@ -257,108 +401,54 @@ static void setup_files(SINGLE_QSP_ARG_DECL)
 	 * since the former can be constructed from the latter
 	 */
 
-	if( dribbling ){
-		while( (fp=TRYNICE(NAMEOF("dribble data file"),"w"))
-			== NULL ) ;
-		set_dribble_file(fp);
-		wt_top(QSP_ARG  fp);		/* write header w/ #classes & xvalues */
-		markdrib(fp);		/* identify this as dribble data */
+	if( IS_DRIBBLING ){
+		init_dribble_file(SINGLE_QSP_ARG);
 	} else {
 		while( (fp=TRYNICE(NAMEOF("summary data file"),"w"))
 			== NULL ) ;
 		set_summary_file(fp);
 	}
+advise("setup_files DONE");
 }
 
-/* make the staircases specified by the parameter table */
-
-void make_staircases(SINGLE_QSP_ARG_DECL)
+static COMMAND_FUNC( do_run_exp )
 {
-	int j;
-	List *lp;
-	Node *np;
-	Trial_Class *clp;
+	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return;
 
-	lp=class_list(SINGLE_QSP_ARG);
-#ifdef CAUTIOUS
-	if( lp == NO_LIST ){
-		WARN("CAUTIOUS:  no conditions in make_staircases()");
-		return;
-	}
-#endif
+	setup_files(SINGLE_QSP_ARG);
 
-	np=lp->l_head;
-	while(np!=NO_NODE){
-		int i;
-
-		clp=(Trial_Class *)np->n_data;
-		np=np->n_next;
-		i=clp->cl_index;
-
-		/* makestair( type, class, mininc, correct rsp, inc rsp ); */
-		for( j=0;j<n_updn;j++)
-			makestair( QSP_ARG  UP_DOWN, i, 1, YES, YES );
-		for( j=0;j<n_dnup;j++)
-			makestair( QSP_ARG  UP_DOWN, i, -1, YES, YES );
-		for(j=0;j<n_2up;j++)
-			/*
-			 * 2-up increases val after 2 YES's,
-			 * decreases val after 1 NO
-			 * seeks 71% YES, YES decreasing with val
-			 */
-			makestair( QSP_ARG  TWO_TO_ONE, i, 1, YES, YES );
-		for(j=0;j<n_2dn;j++)
-			/*
-			 * 2-down decreases val after 2 NO's,
-			 * increases val after 1 YES
-			 * Seeks 71% NO, NO increasing with val
-			 */
-			makestair( QSP_ARG  TWO_TO_ONE, i, -1, YES, NO );
-		for(j=0;j<n_2iup;j++)
-			/*
-			 * 2-inverted-up decreases val after 2 YES's,
-			 * increases val after 1 NO
-			 * Seeks 71% YES, YES increasing with val
-			 */
-			makestair( QSP_ARG  TWO_TO_ONE, i, -1, YES, YES );
-		for(j=0;j<n_2idn;j++)
-			/*
-			 * 2-inverted-down increases val after 2 NO's,
-			 * decreases val after 1 YES
-			 * Seeks 71% NO, NO decreasing with val
-			 */
-			makestair( QSP_ARG  TWO_TO_ONE, i, 1, YES, NO );
-		for(j=0;j<n_3up;j++)
-			makestair( QSP_ARG  THREE_TO_ONE, i, 1, YES, YES );
-		for(j=0;j<n_3dn;j++)
-			makestair( QSP_ARG  THREE_TO_ONE, i, -1, YES, NO );
-	}
+fprintf(stderr,"calling _run_stairs %d %d\n",n_prel,n_data);
+	_run_stairs(QSP_ARG  n_prel,n_data);
 }
 
-COMMAND_FUNC( delcnds )
+COMMAND_FUNC( do_delete_all_classes )
 {
 	List *lp;
 	Node *np,*next;
-	Trial_Class *clp;
+	Trial_Class *tcp;
 
 	lp=class_list(SINGLE_QSP_ARG);
 	if( lp==NO_LIST ) return;
 
 	np=lp->l_head;
 	while(np!=NO_NODE){
-		clp=(Trial_Class *)np->n_data;
+		tcp=(Trial_Class *)np->n_data;
 		next = np->n_next;	/* del_class messes with the nodes... */
-		del_class(QSP_ARG  clp);
+		del_class(QSP_ARG  tcp);
 		np=next;
 	}
+	ASSIGN_RESERVED_VAR( "n_classes" , "0" );
 	/* new_exp(); */
 }
 
 static COMMAND_FUNC( set_dribble_flag )
 {
-	dribbling = ASKIF("Record trial-by-trial data");
+	if( ASKIF("Record trial-by-trial data") )
+		SET_EXP_FLAG(DRIBBLING);
+	else
+		CLEAR_EXP_FLAG(DRIBBLING);
 
-	if( dribbling )
+	if( IS_DRIBBLING )
 		advise("Recording trial-by-trial data");
 	else
 		advise("Recording only summary data");
@@ -402,19 +492,20 @@ static COMMAND_FUNC( do_feedback )
 
 }
 
-COMMAND_FUNC( do_creat_stc )
+static COMMAND_FUNC( do_creat_stc )
 {
-	Trial_Class *clp;
-	int c;
+	Trial_Class *tcp;
+	short c;
 
-	c=HOW_MANY("stimulus class");
+	c= (short) HOW_MANY("stimulus class");
 
-	clp = class_for(QSP_ARG  c);
+	tcp = class_for(QSP_ARG  c);
 
-#ifdef CAUTIOUS
-	if( clp == NO_CLASS )
-		ERROR1("CAUTIOUS:  do_creat_stc:  error creating stimulus class");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( tcp == NO_CLASS )
+//		ERROR1("CAUTIOUS:  do_creat_stc:  error creating stimulus class");
+//#endif /* CAUTIOUS */
+	assert( tcp != NO_CLASS );
 
 	
 }
@@ -439,66 +530,58 @@ static COMMAND_FUNC( do_get_value )
 	ASSIGN_VAR(s,valstr);
 }
 
-Command salac_ctbl[]={
-{ "create",	do_creat_stc,	"create a staircase"			},
-{ "edit",	staircase_menu,	"edit individual staircases"		},
-{ "get_value",	do_get_value,	"get current level of a staircase"	},
-{ "xvals",	xval_menu,	"x value submenu"			},
-{ "use_keyboard",use_keyboard,	"enable/disable use of keyboard for responses"	},
-{ "quit",	popcmd,		"quit"					},
-{ NULL,		NULL,		NULL					}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
 
-COMMAND_FUNC( salac_menu )
+MENU_BEGIN(staircases)
+ADD_CMD( create,	do_creat_stc,	create a staircase )
+ADD_CMD( edit,		staircase_menu,	edit individual staircases )
+ADD_CMD( get_value,	do_get_value,	get current level of a staircase )
+ADD_CMD( xvals,		xval_menu,	x value submenu )
+ADD_CMD( use_keyboard,	use_keyboard,	enable/disable use of keyboard for responses )
+MENU_END(staircases)
+
+static COMMAND_FUNC( do_staircase_menu )
 {
 	if( !rsp_inited ){
 		do_rspinit();
 		rninit(SINGLE_QSP_ARG);
 		new_exp(SINGLE_QSP_ARG);
-		auto_version(QSP_ARG  "PSYCH","VersionId_psych");
 	}
-	PUSHCMD( salac_ctbl, "staircases" );
+	PUSH_MENU( staircases );
 }
 
-Command expctbl[]={
-{ "add",	addcnd,		"add a condition"			},
-{ "modify",	modify,		"modify parameters"			},
-{ "test",	demo,		"test a condition"			},
-{ "test_stim",	show_stim,	"test with scripted response"		},
-{ "init",	do_exp_init,	"start new experiment"			},
-{ "present",	do_trial,	"present a stimulus & save data"	},
-{ "finish",	savdat,		"close data files"			},
-{ "staircases",	set_nstairs,	"set up staircases"			},
-{ "run",	runexp,		"run experiment"			},
-{ "2AFC",	set_2afc,	"set forced choice flag"		},
-{ "delete",	delcnds,	"delete all conditions"			},
-{ "keys",	setyesno,	"select response keys"			},
-{ "xvals",	xval_menu,	"x value submenu"			},
-{ "dribble",	set_dribble_flag,"set long/short data file format"	},
-{ "edit_stairs",staircase_menu,	"edit individual staircases"		},
-{ "lookit",	lookmenu,	"data analysis submenu"			},
-{ "feedback",	do_feedback,	"specify feedback strings"		},
-{ "quit",	popcmd,		"quit"					},
-{ NULL,		NULL,		NULL					}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(experiment_menu,s,f,h)
 
-#ifdef FOOBAR
-COMMAND_FUNC( exprmnt )	/** play around with an experiment */
-{
-	exp_menu(SINGLE_QSP_ARG);
-	while(1) do_cmd(SINGLE_QSP_ARG);
-}
-#endif /* FOOBAR */
+MENU_BEGIN(experiment)
+ADD_CMD( class,		do_new_class,	add a stimulus class )
+ADD_CMD( modify,	modify,		modify parameters )
+ADD_CMD( test,		demo,		test a condition )
+ADD_CMD( test_stim,	show_stim,	test with scripted response )
+ADD_CMD( init,		do_exp_init,	start new experiment )
+ADD_CMD( present,	do_trial,	present a stimulus & save data )
+ADD_CMD( finish,	do_save_data,	close data files )
+ADD_CMD( staircases,	set_nstairs,	set up staircases )
+ADD_CMD( staircase_menu,	do_staircase_menu,	staircase submenu )
+ADD_CMD( run,		do_run_exp,	run experiment )
+ADD_CMD( 2AFC,		set_2afc,	set forced choice flag )
+ADD_CMD( delete,	do_delete_all_classes,	delete all conditions )
+ADD_CMD( keys,		setyesno,	select response keys )
+ADD_CMD( xvals,		xval_menu,	x value submenu )
+ADD_CMD( dribble,	set_dribble_flag,	set long/short data file format )
+ADD_CMD( edit_stairs,	staircase_menu,	edit individual staircases )
+ADD_CMD( lookit,	lookmenu,	data analysis submenu )
+ADD_CMD( feedback,	do_feedback,	specify feedback strings )
+MENU_END(experiment)
 
-COMMAND_FUNC( exp_menu )
+COMMAND_FUNC( do_exp_menu )
 {
 	if( !rsp_inited ){
 		do_rspinit();
 		rninit(SINGLE_QSP_ARG);
 		new_exp(SINGLE_QSP_ARG);
-		auto_version(QSP_ARG  "PSYCH","VersionId_psych");
 	}
-	PUSHCMD(expctbl,EXP_MENU_PROMPT);
+	PUSH_MENU(experiment);
 }
 
 static void set_rsp_word(const char **sptr,const char *s,const char *default_str)
@@ -584,8 +667,7 @@ int response(QSP_ARG_DECL  const char *s)
 
 
 	if( get_response_from_keyboard ){
-		PUSH_INPUT_FILE("/dev/tty");
-		redir( QSP_ARG tfile(SINGLE_QSP_ARG) );	/* get response from keyboard */
+		redir( QSP_ARG tfile(SINGLE_QSP_ARG), "/dev/tty" );	/* get response from keyboard */
 	}
 
 
@@ -594,16 +676,18 @@ int response(QSP_ARG_DECL  const char *s)
 	} while( n < 0 );
 
 	if( get_response_from_keyboard )
-		popfile(SINGLE_QSP_ARG);		/* back to default input */
+		pop_file(SINGLE_QSP_ARG);		/* back to default input */
 
 	switch(n){
 		case YES_INDEX:		return(YES); break;
 		case NO_INDEX:		return(NO); break;
 		case REDO_INDEX:	return(REDO); break;
 		case ABORT_INDEX:	Abort=1; return(REDO); break;
-#ifdef CAUTIOUS
-		default: ERROR1("CAUTIOUS:  response:  crazy response value");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			ERROR1("CAUTIOUS:  response:  crazy response value");
+			assert( ! "response:  crazy response value");
+//#endif /* CAUTIOUS */
 	}
 	/* should never be reached */
 	return(ABORT);

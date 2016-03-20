@@ -1,7 +1,7 @@
 
 /* stuff from sched.c in jbm lib */
 
-#include "query.h"
+#include "query_stack.h"
 
 #ifdef ALLOW_RT_SCHED
 extern int try_rt_sched;

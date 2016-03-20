@@ -1,20 +1,23 @@
 #include "quip_config.h"
 
-char VersionId_fio_raw[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
 #include "fio_prot.h"
+#include "quip_prot.h"
 #include "debug.h"
-#include "raw.h"
-#include "savestr.h"		/* do we really need savestr??? */
+#include "img_file/raw.h"
+//#include "savestr.h"		/* do we really need savestr??? */
 #include "data_obj.h"
-#include "filetype.h"
-#include "uio.h"
+//#include "filetype.h"
+//#include "uio.h"
 
 static dimension_t raw_dim[N_DIMENSIONS]={1,0,0,0,1};
 #define	raw_comps	raw_dim[0]
@@ -23,7 +26,8 @@ static dimension_t raw_dim[N_DIMENSIONS]={1,0,0,0,1};
 #define raw_frames	raw_dim[3]
 #define	raw_seqs	raw_dim[4]
 
-prec_t raw_prec=PREC_UBY;
+// BUG - not thread safe!?
+static Precision* raw_prec_p=NO_PRECISION;
 
 /* BUG doesn't write multiple sequences */
 
@@ -45,23 +49,23 @@ void wt_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	}
 #endif /* CRAY */
 
-	size=siztbl[dp->dt_prec];
-	sinc = dp->dt_sinc*size;
-	finc = dp->dt_finc*size;
-	rinc = dp->dt_rowinc*size;
-	pinc = dp->dt_pinc*size;
-	cinc = dp->dt_cinc*size;
+	size=PREC_SIZE( OBJ_PREC_PTR(dp) );
+	sinc = OBJ_SEQ_INC(dp)*size;
+	finc = OBJ_FRM_INC(dp)*size;
+	rinc = OBJ_ROW_INC(dp)*size;
+	pinc = OBJ_PXL_INC(dp)*size;
+	cinc = OBJ_COMP_INC(dp)*size;
 
-	sbase = (char *)dp->dt_data;
-	for(s=0;s<dp->dt_seqs;s++){
+	sbase = (char *)OBJ_DATA_PTR(dp);
+	for(s=0;s<OBJ_SEQS(dp);s++){
 		fbase = sbase;
-		for(f=0;f<dp->dt_frames;f++){
+		for(f=0;f<OBJ_FRAMES(dp);f++){
 			rowbase=fbase;
-			for(row=0;row<dp->dt_rows;row++){
+			for(row=0;row<OBJ_ROWS(dp);row++){
 				pbase = rowbase;
-				for(col=0;col<dp->dt_cols;col++){
+				for(col=0;col<OBJ_COLS(dp);col++){
 					cbase=pbase;
-					for(comp=0;comp<dp->dt_comps;comp++){
+					for(comp=0;comp<OBJ_COMPS(dp);comp++){
 						/* write this pixel */
 						if( fwrite(cbase,size,1,ifp->if_fp)
 							!= 1 ){
@@ -91,15 +95,15 @@ void wt_raw_contig(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 #ifdef FOOBAR
 	u_int os;
 #endif /* FOOBAR */
-	int actual;
+	size_t actual;
 
-	size = siztbl[ dp->dt_prec ];
-	size *= dp->dt_comps;
+	size = PREC_SIZE( OBJ_PREC_PTR(dp) );
+	size *= OBJ_COMPS(dp);
 
-	npixels= dp->dt_seqs *
-		 dp->dt_frames *
-		 dp->dt_rows *
-		 dp->dt_cols;
+	npixels= OBJ_SEQS(dp) *
+		 OBJ_FRAMES(dp) *
+		 OBJ_ROWS(dp) *
+		 OBJ_COLS(dp);
 
 	/* BUG questionable cast */
 	ipixels = (int) npixels;
@@ -114,7 +118,7 @@ void wt_raw_contig(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 
 		n=CONV_LEN<npixels?CONV_LEN:npixels;
 		cbuf = getbuf( 4 * n );		/* 4 is size of IEEE float */
-		p = dp->dt_data;
+		p = OBJ_DATA_PTR(dp);
 
 		while( npixels > 0 ){
 			n = CONV_LEN<npixels ? CONV_LEN : npixels ;
@@ -151,23 +155,23 @@ ccdun:		givbuf(cbuf);
 
 
 	if( USES_STDIO(ifp) ){
-		if( (actual=fwrite(dp->dt_data,
+		if( (actual=fwrite(OBJ_DATA_PTR(dp),
 			(size_t)size,(size_t)ipixels,ifp->if_fp))
 			!= ipixels ){
 
 			WARN("error #3 writing pixel data");
-			sprintf(error_string,
-				"%d bytes actually written",actual);
-			advise(error_string);
+			sprintf(ERROR_STRING,
+				"%ld bytes actually written",(long)actual);
+			advise(ERROR_STRING);
 			SET_ERROR(ifp);
 			close_image_file(QSP_ARG  ifp);
 		}
 	} else {
 		n = ipixels*size;
-		if( (actual=write(ifp->if_fd,((char *)dp->dt_data),n)) != n ){
-			sprintf(error_string,
-				"%d bytes requested, %d bytes actually written",n,actual);
-			WARN(error_string);
+		if( (actual=write(ifp->if_fd,((char *)OBJ_DATA_PTR(dp)),n)) != n ){
+			sprintf(ERROR_STRING,
+				"%d bytes requested, %ld bytes actually written",n,(long)actual);
+			WARN(ERROR_STRING);
 			SET_ERROR(ifp);
 			close_image_file(QSP_ARG  ifp);
 			return;
@@ -180,24 +184,24 @@ void wt_raw_data(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)		/** output next fr
 {
 	dimension_t totfrms;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_fileio ){
-sprintf(error_string,"wt_raw_data, %s to file %s",
-dp->dt_name,ifp->if_name);
-advise(error_string);
+sprintf(ERROR_STRING,"wt_raw_data, %s to file %s",
+OBJ_NAME(dp),ifp->if_name);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( !same_type(QSP_ARG  dp,ifp) ) return;
 
-	totfrms = dp->dt_frames * dp->dt_seqs;
+	totfrms = OBJ_FRAMES(dp) * OBJ_SEQS(dp);
 
 	if( ifp->if_nfrms + totfrms > ifp->if_frms_to_wt ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 		"Can't append object %s (%d frames) to file %s (too many frames, has %d, wants %d)",
-			dp->dt_name,totfrms,ifp->if_name,
+			OBJ_NAME(dp),totfrms,ifp->if_name,
 			ifp->if_nfrms,ifp->if_frms_to_wt);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		LONGLIST(dp);
 		LONGLIST(ifp->if_dp);
 		return;
@@ -218,13 +222,13 @@ advise(error_string);
 	 */
 	
 	if( HAD_ERROR(ifp) ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_fileio ){
-sprintf(error_string,"wt_raw_data, returning after error on file %s",
+sprintf(ERROR_STRING,"wt_raw_data, returning after error on file %s",
 ifp->if_name);
-advise(error_string);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return;
 	}
 
@@ -233,23 +237,23 @@ advise(error_string);
 	check_auto_close(QSP_ARG  ifp);
 }
 
-FIO_WT_FUNC( raw_wt )
+FIO_WT_FUNC( raw )
 {
 
 	if( ifp->if_dp == NO_OBJ ){	/* first time? */
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);
-		ifp->if_dp->dt_frames = ifp->if_frms_to_wt;
-		ifp->if_dp->dt_seqs = 1;
+		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
+		SET_OBJ_SEQS(ifp->if_dp, 1);
 	}
 
 	if( ifp->if_nfrms == 0 ){	/* this is the first */
 		dimension_t nf;
 
 		/* BUG what about seqs??? */
-		nf = ifp->if_dp->dt_frames;
+		nf = OBJ_FRAMES(ifp->if_dp);
 		copy_dimensions(ifp->if_dp , dp );
-		ifp->if_dp->dt_frames = nf;
+		SET_OBJ_FRAMES(ifp->if_dp, nf);
 	}
 
 	wt_raw_data(QSP_ARG  dp,ifp);
@@ -266,9 +270,9 @@ void set_raw_sizes( dimension_t arr[N_DIMENSIONS] )
 	}
 }
 
-void set_raw_prec(prec_t p)
+void set_raw_prec(Precision * prec_p)
 {
-	raw_prec = p;
+	raw_prec_p = prec_p;
 }
 
 
@@ -282,10 +286,21 @@ int raw_to_dp( Data_Obj *dp, void *vp )
 	if( raw_rows <= 0 || raw_cols <= 0 )
 		NWARN("size of raw image file not specified!?");
 		
-	dp->dt_prec = raw_prec;
-	dp->dt_comps = raw_comps;
-	dp->dt_cols = raw_cols;
-	dp->dt_rows = raw_rows;
+	if( raw_prec_p == NO_PRECISION ){
+		sprintf(DEFAULT_ERROR_STRING,
+			"Pixel precision for raw file %s not specified!?",
+			ifp->if_name);
+		NWARN(DEFAULT_ERROR_STRING);
+		raw_prec_p = PREC_FOR_CODE(PREC_UBY);
+		sprintf(DEFAULT_ERROR_STRING,
+			"Assuming default value of %s.",PREC_NAME(raw_prec_p));
+		NADVISE(DEFAULT_ERROR_STRING);
+	}
+
+	SET_OBJ_PREC_PTR(dp, raw_prec_p);
+	SET_OBJ_COMPS(dp, raw_comps);
+	SET_OBJ_COLS(dp, raw_cols);
+	SET_OBJ_ROWS(dp, raw_rows);
 	if( raw_frames <= 0 ){
 		/* get the number of frames by dividing the total file size by the image size */
 		off_t s;
@@ -293,41 +308,41 @@ int raw_to_dp( Data_Obj *dp, void *vp )
 		/* first get the total file size */
 		s = lseek(ifp->if_fd,0,SEEK_END);
 		if( s == ((off_t)-1) ){
-			tell_sys_error("raw_to_dp:  lseek");
-			dp->dt_frames = 1;
+			_tell_sys_error(DEFAULT_QSP_ARG  "raw_to_dp:  lseek");
+			SET_OBJ_FRAMES(dp, 1);
 		} else {
 			dimension_t frm_size;
 
-			frm_size = dp->dt_comps * dp->dt_cols * dp->dt_rows * siztbl[ MACHINE_PREC(dp) ];
-			dp->dt_frames = s / frm_size;
+			frm_size = OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp) * PREC_SIZE( OBJ_MACH_PREC_PTR(dp) );
+			SET_OBJ_FRAMES(dp, s / frm_size);
 
 			if( (s % frm_size) != 0 ){
 				sprintf(DEFAULT_ERROR_STRING,
-		"Number of bytes (%d) in raw file %s is not an integral multiple of the frame size (%d)",
-					s,ifp->if_name,frm_size);
+		"Number of bytes (%ld) in raw file %s is not an integral multiple of the frame size (%ld)",
+					(long)s,ifp->if_name,(long)frm_size);
 				NWARN(DEFAULT_ERROR_STRING);
 			}
 		}
 		s = lseek(ifp->if_fd,0,SEEK_SET);
 		if( s == ((off_t)-1) ){
-			tell_sys_error("raw_to_dp:  lseek");
+			_tell_sys_error(DEFAULT_QSP_ARG  "raw_to_dp:  lseek");
 			NWARN("error rewinding file");
 		}
 	} else {
-		dp->dt_frames = raw_frames;
+		SET_OBJ_FRAMES(dp, raw_frames);
 	}
-	dp->dt_seqs = raw_seqs;
+	SET_OBJ_SEQS(dp, raw_seqs);
 	return 0;
 }
 
 
-FIO_OPEN_FUNC( raw_open )
+FIO_OPEN_FUNC( raw )
 {
 	Image_File *ifp;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_RAW);
+	ifp = IMG_FILE_CREAT(name,rw,filetype_for_code(QSP_ARG  IFT_RAW));
 
-	/* image_file_open creates dummy if_dp only if readable */
+	/* img_file_creat creates dummy if_dp only if readable */
 
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 

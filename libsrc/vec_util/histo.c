@@ -1,51 +1,49 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_histo[] = QUIP_VERSION_STRING;
-
 /* histogram function for data objects */
 
 #include "vec_util.h"
-#include "data_obj.h"
+#include "quip_prot.h"
 
 static void zero_dimension(Data_Obj *dp,float *base,int dim,long index);
 
 
-#define HISTOGRAM(type)									\
-											\
-	{										\
-	type *frm_base, *row_base, *p_ptr;						\
-	frm_base = (type *) data_dp->dt_data;						\
-	n_bins = histo_dp->dt_cols;							\
-	histbuf = (float *) histo_dp->dt_data;						\
-											\
-	for(i=0;i<n_bins;i++)								\
-		*( histbuf + i* histo_dp->dt_pinc) =0;					\
-											\
-	for(i=0;i<data_dp->dt_frames;i++){						\
-		row_base = frm_base;							\
-		for(j=0;j<data_dp->dt_rows;j++){					\
-			p_ptr=row_base;							\
-			for(k=0;k<data_dp->dt_cols;k++){				\
-				num = *p_ptr;						\
-				num -= min_limit;					\
-				num /= bin_width;					\
-				num += 0.5;						\
-				index = (incr_t)num;	/* convert to integer */	\
-				if( index < 0 ){					\
-					index=0;					\
-					n_under++;					\
-				} else if( index >= (incr_t) n_bins ){			\
-					index = (incr_t)n_bins-1;			\
-					n_over++;					\
-				}							\
-				* ( histbuf + index*histo_dp->dt_pinc ) += 1.0;		\
-											\
-				p_ptr += data_dp->dt_pinc;				\
-			}								\
-			row_base += data_dp->dt_rowinc;					\
-		}									\
-		frm_base += data_dp->dt_finc;						\
-	}										\
+#define HISTOGRAM(type)							\
+									\
+	{								\
+	type *frm_base, *row_base, *p_ptr;				\
+	frm_base = (type *) OBJ_DATA_PTR(data_dp);			\
+	n_bins = OBJ_COLS(histo_dp);					\
+	histbuf = (float *) OBJ_DATA_PTR(histo_dp);			\
+									\
+	for(i=0;i<n_bins;i++)						\
+		*( histbuf + i* OBJ_PXL_INC(histo_dp)) =0;		\
+									\
+	for(i=0;i<OBJ_FRAMES(data_dp);i++){				\
+		row_base = frm_base;					\
+		for(j=0;j<OBJ_ROWS(data_dp);j++){			\
+			p_ptr=row_base;					\
+			for(k=0;k<OBJ_COLS(data_dp);k++){		\
+				num = (float) *p_ptr;			\
+				num -= min_limit;			\
+				num /= bin_width;			\
+				num += 0.5;				\
+				index = (incr_t)num;	/* conv. to int. */ \
+				if( index < 0 ){			\
+					index=0;			\
+					n_under++;			\
+				} else if( index >= (incr_t) n_bins ){	\
+					index = (incr_t)n_bins-1;	\
+					n_over++;			\
+				}					\
+				* ( histbuf + index*OBJ_PXL_INC(histo_dp) ) += 1.0;		\
+									\
+				p_ptr += OBJ_PXL_INC(data_dp);		\
+			}						\
+			row_base += OBJ_ROW_INC(data_dp);		\
+		}							\
+		frm_base += OBJ_FRM_INC(data_dp);			\
+	}								\
 	}
 
 void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin_width,double min_limit)
@@ -57,22 +55,25 @@ void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin
 	dimension_t n_bins;
 	int n_under=0, n_over=0;
 
-	if( histo_dp->dt_prec != PREC_SP ){
+	INSIST_RAM_OBJ(histo_dp,compute_histo);
+	INSIST_RAM_OBJ(data_dp,compute_histo);
+
+	if( OBJ_PREC(histo_dp) != PREC_SP ){
 		WARN("histogram precision must be float");
 		return;
 	}
-	if( histo_dp->dt_comps != 1 ){
+	if( OBJ_COMPS(histo_dp) != 1 ){
 		WARN("histogram data must be real");
 		return;
 	}
-	if( histo_dp->dt_rows > 1 || histo_dp->dt_frames > 1 ){
+	if( OBJ_ROWS(histo_dp) > 1 || OBJ_FRAMES(histo_dp) > 1 ){
 		WARN("only using first row of histogram image");
 	}
-	if( data_dp->dt_comps != 1 ){
+	if( OBJ_COMPS(data_dp) != 1 ){
 		WARN("input data must be real");
 		return;
 	}
-	switch( data_dp->dt_prec ){
+	switch( OBJ_PREC(data_dp) ){
 		case PREC_SP: HISTOGRAM(float) break;
 		case PREC_DP: HISTOGRAM(double) break;
 		case PREC_UBY: HISTOGRAM(u_char) break;
@@ -87,10 +88,10 @@ void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin
 	}
 
 	if( (n_under > 0) || (n_over > 0) ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"Histogram for %s had %d underflows and %d overflows",
-			data_dp->dt_name,n_under,n_over);
-		advise(error_string);
+			OBJ_NAME(data_dp),n_under,n_over);
+		advise(ERROR_STRING);
 	}
 }
 
@@ -102,10 +103,10 @@ static void zero_dimension(Data_Obj *dp,float *base,int dim,long index)
 	dimension_t i;
 
 	if( dim > 1 ){
-		for(i=0;i<dp->dt_type_dim[dim];i++)
-			zero_dimension(dp,base+i*dp->dt_type_inc[dim],dim-1,i);
+		for(i=0;i<OBJ_TYPE_DIM(dp,dim);i++)
+			zero_dimension(dp,base+i*OBJ_TYPE_INC(dp,dim),dim-1,i);
 	} else {
-		for(i=0;i<dp->dt_cols;i++)
+		for(i=0;i<OBJ_COLS(dp);i++)
 			base[i] = 0.0;
 	}
 }
@@ -121,50 +122,53 @@ void multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float
 	int n_bins[MAX_DIMENSIONS];
 	int n_under[MAX_DIMENSIONS], n_over[MAX_DIMENSIONS];
 
-	if( histo_dp->dt_prec != PREC_SP ){
+	INSIST_RAM_OBJ(histo_dp,compute_histo);
+	INSIST_RAM_OBJ(data_dp,compute_histo);
+
+	if( OBJ_PREC(histo_dp) != PREC_SP ){
 		NWARN("2D histogram precision must be float");
 		return;
 	}
-	if( histo_dp->dt_comps != 1 ){
+	if( OBJ_COMPS(histo_dp) != 1 ){
 		NWARN("2D histogram data must be real");
 		return;
 	}
-	if( histo_dp->dt_pinc != 1 ){
+	if( OBJ_PXL_INC(histo_dp) != 1 ){
 		NWARN("2D histogram data must be contiguous");
 		return;
 	}
 
-	n_dimensions = data_dp->dt_comps;
+	n_dimensions = OBJ_COMPS(data_dp);
 
 	if( n_dimensions > MAX_DIMENSIONS ){
 		NWARN("Too many 2D histogram dimensions");
 		return;
 	}
 
-	if( data_dp->dt_prec != PREC_SP ){
+	if( OBJ_PREC(data_dp) != PREC_SP ){
 		NWARN("2D data precision must be float");
 		return;
 	}
 
-	fbase = (float *) data_dp->dt_data;
+	fbase = (float *) OBJ_DATA_PTR(data_dp);
 
 	for(l=0;l<n_dimensions;l++){
 		n_over[l]=0;
 		n_under[l]=0;
-		n_bins[l] = histo_dp->dt_type_dim[l+1];
+		n_bins[l] = OBJ_TYPE_DIM(histo_dp,l+1);
 	}
 
-	histbuf = (float *) histo_dp->dt_data;
+	histbuf = (float *) OBJ_DATA_PTR(histo_dp);
 
-	zero_dimension(histo_dp,(float *)histo_dp->dt_data,n_dimensions,0L);
+	zero_dimension(histo_dp,(float *)OBJ_DATA_PTR(histo_dp),n_dimensions,0L);
 	for(l=0;l<MAX_DIMENSIONS;l++)
 		index[l]=0;
 
-	for(i=0;i<data_dp->dt_frames;i++){
+	for(i=0;i<OBJ_FRAMES(data_dp);i++){
 		fptr = fbase;
-		for(j=0;j<data_dp->dt_rows;j++){
+		for(j=0;j<OBJ_ROWS(data_dp);j++){
 			f=fptr;
-			for(k=0;k<data_dp->dt_cols;k++){
+			for(k=0;k<OBJ_COLS(data_dp);k++){
 				float num[MAX_DIMENSIONS];
 
 				for(l=0;l<n_dimensions;l++){
@@ -172,7 +176,7 @@ void multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float
 					num[l] -= min_array[l];
 					num[l] /= width_array[l];
 					num[l] += 0.5;
-					index[l] = num[l];  /* cast to int */
+					index[l] = (incr_t)num[l];  /* cast to int */
 					if( index[l] < 0 ){
 						index[l]=0;
 						n_under[l]++;
@@ -184,22 +188,22 @@ void multivariate_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,float
 
 				histbuf[
 					index[0] +
-					index[1] * histo_dp->dt_rowinc +
-					index[2] * histo_dp->dt_finc
+					index[1] * OBJ_ROW_INC(histo_dp) +
+					index[2] * OBJ_FRM_INC(histo_dp)
 					  ] += 1.0;
 
-				f += data_dp->dt_pinc;
+				f += OBJ_PXL_INC(data_dp);
 			}
-			fptr += data_dp->dt_rowinc;
+			fptr += OBJ_ROW_INC(data_dp);
 		}
-		fbase += data_dp->dt_finc;
+		fbase += OBJ_FRM_INC(data_dp);
 	}
 	for(l=0;l<n_dimensions;l++){
 		if( (n_under[l] > 0) || (n_over[l] > 0) ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 	"Histogram for %s had %d underflows and %d overflows in dimension %d",
-			data_dp->dt_name,n_under[l],n_over[l],l);
-			advise(error_string);
+			OBJ_NAME(data_dp),n_under[l],n_over[l],l);
+			advise(ERROR_STRING);
 		}
 	}
 

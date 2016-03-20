@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_meteor_mcont[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_METEOR
 
 /* meteor video controls */
@@ -16,8 +14,8 @@ char VersionId_meteor_mcont[] = QUIP_VERSION_STRING;
 #endif
 
 #include "ioctl_meteor.h"
+#include "quip_prot.h"
 #include "mmenu.h"
-#include "debug.h"
 
 typedef struct meteor_setting {
 	const char *	ms_name;
@@ -35,7 +33,7 @@ static Meteor_Setting setting_tbl[N_SETTINGS]={
 
 static const char *setting_choices[N_SETTINGS];
 
-static void meteor_get_setting(Meteor_Setting *msp)
+static void meteor_get_setting(QSP_ARG_DECL  Meteor_Setting *msp)
 {
 	int c;
 
@@ -69,7 +67,7 @@ static COMMAND_FUNC( report_setting )
 		setting_choices[i]=setting_tbl[i].ms_name;
 	i=WHICH_ONE("control",N_SETTINGS,setting_choices);
 	if( i<0 ) return;
-	meteor_get_setting(&setting_tbl[i]);
+	meteor_get_setting(QSP_ARG  &setting_tbl[i]);
 }
 
 static COMMAND_FUNC( update_setting )
@@ -83,17 +81,17 @@ static COMMAND_FUNC( update_setting )
 	meteor_set_setting(QSP_ARG   &setting_tbl[i]);
 }
 
-	
-static Command ctl_ctbl[]={
-{ "report",	report_setting,		"report a control setting"	},
-{ "update",	update_setting,		"update a control setting"	},
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+
+#define ADD_CMD(s,f,h)	ADD_COMMAND(video_menu,s,f,h)
+
+MENU_BEGIN(video)
+ADD_CMD( report,	report_setting,		report a control setting )
+ADD_CMD( update,	update_setting,		update a control setting )
+MENU_END(video)
 
 COMMAND_FUNC( do_video_controls )
 {
-	PUSHCMD(ctl_ctbl,"video");
+	PUSH_MENU(video);
 }
 
 #endif /* HAVE_METEOR */

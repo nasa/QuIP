@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_interpreter_history[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_HISTORY
 
 #include <stdio.h>
@@ -16,19 +14,20 @@ char VersionId_interpreter_history[] = QUIP_VERSION_STRING;
 #include <ctype.h>
 #endif
 
-#include "items.h"
+#include "quip_prot.h"	// should be just for external API
+#include "query_prot.h"	// should be for things used in interpreter module
 #include "history.h"
-#include "debug.h"
-#include "getbuf.h"
-#include "savestr.h"
-#include "substr.h"
-#include "query.h"
+//#include "debug.h"
+//#include "getbuf.h"
+//#include "savestr.h"
+//#include "substr.h"
+//#include "query.h"
 
-int history=1;
+int history_flag=1;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 debug_flag_t hist_debug=0;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 /* local variables */
 static Node *cur_node;
@@ -41,6 +40,8 @@ static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp);
 static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char *string);
 static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char **choices);
 
+// need macro to make these all static
+ITEM_INTERFACE_PROTOTYPES(Hist_Choice,choice)
 ITEM_INTERFACE_DECLARATIONS(Hist_Choice,choice)
 
 /* This has to match what is up above!!! */
@@ -64,16 +65,19 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 	Item_Context *icp;
 	char *ctxname;
 
-	if( choice_itp == NO_ITEM_TYPE ) choice_init(SINGLE_QSP_ARG);
+	if( choice_itp == NO_ITEM_TYPE ) init_choices(SINGLE_QSP_ARG);
 
 	ctxname = get_hist_ctx_name(prompt);
 	icp = ctx_of(QSP_ARG  ctxname);
 	if( icp == NO_ITEM_CONTEXT ){
 		icp = create_item_context(QSP_ARG  choice_itp,prompt);
-#ifdef CAUTIOUS
-		if( icp == NO_ITEM_CONTEXT )
-			ERROR1("CAUTIOUS:  error creating history context");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//		if( icp == NO_ITEM_CONTEXT ){
+//			ERROR1("CAUTIOUS:  error creating history context");
+//			IOS_RETURN_VAL(NULL)
+//		}
+//#endif /* CAUTIOUS */
+		assert( icp != NO_ITEM_CONTEXT );
 	}
 
 	return(icp);
@@ -86,8 +90,8 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 	Node *np;
 	List *lp;
 
-	lp = namespace_list(icp->ic_nsp);
-	np=lp->l_head;
+	lp = dictionary_list(CTX_DICT(icp));
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		Hist_Choice *hcp;
 		Node *next;
@@ -97,8 +101,8 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 		 * list when they are deleted, we have to get the next
 		 * node BEFORE deletion!!!
 		 */
-		next=np->n_next;
-		hcp = (Hist_Choice *) np->n_data;
+		next=NODE_NEXT(np);
+		hcp = (Hist_Choice *) NODE_DATA(np);
 		found=0;
 
 		/*
@@ -134,7 +138,7 @@ void set_defs(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choic
 	 * are equal.
 	 */
 
-	if( eltcount(namespace_list(icp->ic_nsp)) == n )
+	if( eltcount(dictionary_list(CTX_DICT(icp))) == n )
 		return;
 
 	/*
@@ -142,12 +146,12 @@ void set_defs(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choic
 	 * ec <= n, and we only have to add choices
 	 */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & hist_debug ){
 sprintf(ERROR_STRING,"set_defs for prompt \"%s\"",prompt);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	for(i=0;i<n;i++){
 		add_hl_def(QSP_ARG  icp,choices[i]);
@@ -204,15 +208,16 @@ static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char* string)
 	Hist_Choice *hcp;
 	List *lp;
 
-#ifdef CAUTIOUS
-	if( string[0]==0 ) {		/* don't add empty string */
-		sprintf(ERROR_STRING,
-			"CAUTIOUS: add_hl_def:  not adding empty string to context %s",
-			icp->ic_name);
-		WARN(ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( string[0]==0 ) {		/* don't add empty string */
+//		sprintf(ERROR_STRING,
+//			"CAUTIOUS: add_hl_def:  not adding empty string to context %s",
+//			CTX_NAME(icp));
+//		WARN(ERROR_STRING);
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( string[0] != 0 );		/* don't add empty string */
 
 	/* first see if this string is already on the list */
 
@@ -225,23 +230,25 @@ static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char* string)
 	 * passed list.
 	 */
 
-	lp = namespace_list(icp->ic_nsp);
+	lp = dictionary_list(CTX_DICT(icp));
 
 	if( hcp != NO_CHOICE ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & hist_debug ){
 sprintf(ERROR_STRING,"add_hl_def:  increasing priority for choice \"%s\"",string);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		/* we should boost the priority of an existing choice! */
 		np = nodeOf(lp,hcp);
-#ifdef CAUTIOUS
-		if( np==NO_NODE ){
-	WARN("CAUTIOUS:  add_hl_def can't find node of existing choice");
-			return;
-		}
-#endif	/* CAUTIOUS */
+//#ifdef CAUTIOUS
+//		if( np==NO_NODE ){
+//	WARN("CAUTIOUS:  add_hl_def can't find node of existing choice");
+//			return;
+//		}
+//#endif	/* CAUTIOUS */
+		assert( np != NO_NODE );
+
 		np->n_pri++;
 		p_sort(lp);
 		pop_item_context(QSP_ARG  choice_itp);
@@ -253,22 +260,25 @@ advise(ERROR_STRING);
 	hcp=new_choice(QSP_ARG  string);
 	pop_item_context(QSP_ARG  choice_itp);
 
-#ifdef CAUTIOUS
-	if( hcp==NO_CHOICE )
-		ERROR1("CAUTIOUS: error creating menu choice");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( hcp==NO_CHOICE ){
+//		ERROR1("CAUTIOUS: error creating menu choice");
+//		IOS_RETURN
+//	}
+//#endif /* CAUTIOUS */
+	assert( hcp != NO_CHOICE );
 }
 
 void add_def( QSP_ARG_DECL  const char *prompt, const char *string )
 {
 	Item_Context *icp;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & hist_debug ){
 sprintf(ERROR_STRING,"add_def \"%s\" for prompt \"%s\"",string,prompt);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	icp=find_hist(QSP_ARG  prompt);
 	add_hl_def(QSP_ARG  icp,string);
@@ -305,22 +315,22 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	icp=find_hist(QSP_ARG  prompt);
 
-	lp = namespace_list(icp->ic_nsp);
+	lp = dictionary_list(CTX_DICT(icp));
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	while(np!=NO_NODE) {
 		Hist_Choice *hcp;
 
 		/* priority sorted!? */
 
-		hcp=(Hist_Choice *) np->n_data;
+		hcp=(Hist_Choice *) NODE_DATA(np);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			cur_list=lp;
 			return(hcp->hc_text);
 		}
-		np=np->n_next;
+		np=NODE_NEXT(np);
 	}
 
 	return("");
@@ -331,13 +341,13 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 #define NEXT_NODE								\
 										\
 	if( direction == CYC_FORWARD ){						\
-		np=np->n_next;							\
+		np=NODE_NEXT(np);							\
 		if( np == NO_NODE )	/* at end of list */			\
-			np=cur_list->l_head;					\
+			np=QLIST_HEAD(cur_list);					\
 	} else {								\
-		np=np->n_last;							\
+		np=NODE_PREV(np);							\
 		if( np == NO_NODE )						\
-			np=cur_list->l_tail;					\
+			np=QLIST_TAIL(cur_list);					\
 	}
 
 const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
@@ -352,7 +362,7 @@ const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
 	NEXT_NODE
 
 	while(np!=first){
-		hcp=(Hist_Choice *) np->n_data;
+		hcp=(Hist_Choice *) NODE_DATA(np);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			return(hcp->hc_text);
@@ -362,7 +372,7 @@ const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
 
 	/* nothing was accomplished - could ring bell or something? */
 
-	hcp=(Hist_Choice *) first->n_data;
+	hcp=(Hist_Choice *) NODE_DATA(first);
 	return(hcp->hc_text);
 }
 
@@ -374,31 +384,34 @@ void init_hist_from_list(QSP_ARG_DECL  const char *prompt,List* lp)
 	Node *np;
 	Item_Context *icp;
 
-#ifdef CAUTIOUS
-	if( lp == NO_LIST )
-		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( lp == NO_LIST ){
+//		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
+//		IOS_RETURN
+//	}
+//#endif /* CAUTIOUS */
+	assert( lp != NO_LIST );
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 	if( hist_debug == 0 )
 		hist_debug = add_debug_module(QSP_ARG  "history");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & hist_debug ){
 sprintf(ERROR_STRING,"init_hist_from_list for prompt \"%s\"",prompt);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	icp=find_hist(QSP_ARG  prompt);
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		Item *ip;
-		ip=(Item *) np->n_data;
-		add_hl_def(QSP_ARG  icp,ip->item_name);
-		np=np->n_next;
+		ip=(Item *) NODE_DATA(np);
+		add_hl_def(QSP_ARG  icp,ITEM_NAME(ip));
+		np=NODE_NEXT(np);
 	}
 }
 
@@ -408,10 +421,13 @@ void init_hist_from_item_list(QSP_ARG_DECL  const char *prompt,List *lp)
 {
 	char s[LLEN];
 
-#ifdef CAUTIOUS
-	if( lp == NO_LIST )
-		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( lp == NO_LIST ){
+//		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
+//		IOS_RETURN
+//	}
+//#endif /* CAUTIOUS */
+	assert( lp != NO_LIST );
 
 	sprintf(s,PROMPT_FORMAT,prompt);
 	init_hist_from_list(QSP_ARG  s,lp);
@@ -432,37 +448,37 @@ void init_hist_from_class(QSP_ARG_DECL  const char* prompt,Item_Class *iclp)
 	if( icp != NO_ITEM_CONTEXT ){
 		if( (iclp->icl_flags&NEED_CLASS_CHOICES)==0 ){
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & hist_debug )
 advise("init_hist_from_class:  don't need new choices");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 			return;
 		}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 		else {
 if( debug & hist_debug )
 advise("init_hist_from_class:  redoing class choices");
 		}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 	else {
 if( debug & hist_debug )
 advise("making new hist list for class");
 	}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	np=iclp->icl_lp->l_head;
+	np=QLIST_HEAD(iclp->icl_lp);
 	while(np!=NO_NODE){
-		mip=(Member_Info *) np->n_data;
+		mip=(Member_Info *) NODE_DATA(np);
 		lp = item_list(QSP_ARG  mip->mi_itp);
 		if( lp != NO_LIST )
 			init_hist_from_list(QSP_ARG  s,lp);
-		np=np->n_next;
+		np=NODE_NEXT(np);
 	}
 	iclp->icl_flags &= ~NEED_CLASS_CHOICES;
 }

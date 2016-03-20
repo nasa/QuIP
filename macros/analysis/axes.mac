@@ -1,4 +1,3 @@
-# %Z% $RCSfile: axes.mac,v $ ver: $Revision: 1.5 $ $Date: 2004/12/15 01:14:54 $
 
 Start_File analysis/axes.mac
 
@@ -69,18 +68,19 @@ repeat 3
   # 500, 50, 5
   Assign time_unit $sample_rate*$n_milli/1000
   If $time_unit<($plot_dlen/8)
-    "Set time_string '$n_milli msec' PopFile 3"
+    "Set time_string '$n_milli msec' exit_macro"
   Mul_Var n_milli 0.4
   # 200, 20, 2
   Assign time_unit $sample_rate*$n_milli/1000
   If $time_unit<($plot_dlen/8)
-    "Set time_string '$n_milli msec' PopFile 3"
+    "Set time_string '$n_milli msec' exit_macro"
   Mul_Var n_milli 0.5
   # 100, 10, 1
   Assign time_unit $sample_rate*$n_milli/1000
   If $time_unit<($plot_dlen/8)
-    "Set time_string '$n_milli msec' PopFile 3"
+    "Set time_string '$n_milli msec' exit_macro"
   end
+advise "sample_rate = $sample_rate, plot_dlen = $plot_dlen"
 warn 'time unit less than 1 msec???'
 .
 

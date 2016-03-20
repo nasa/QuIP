@@ -1,19 +1,18 @@
 
 #include "quip_config.h"
 
-char VersionId_opengl_tilemenu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENGL
 
+#include "quip_prot.h"
 #include "tile.h"
 #include "data_obj.h"
 
 List *tile_lp=NO_LIST;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 #include "debug.h"
 u_long debug_tiles=0;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 /* TILE_ITERATE executes the statement on all master tiles in the list */
 
@@ -77,14 +76,14 @@ advise("texturing master tile");
 static COMMAND_FUNC( do_show )
 {
 	Node *np;
-	TILE_ITERATE( show_tile( THIS_TILE,"") )
+	TILE_ITERATE( show_tile(QSP_ARG  THIS_TILE,"") )
 }
 
 static COMMAND_FUNC( do_xdraw_tiles )
 {
 	Node *np;
 
-	TILE_ITERATE( xdraw_master( ((Master_Tile *)np->n_data) ) )
+	TILE_ITERATE( xdraw_master( QSP_ARG  ((Master_Tile *)np->n_data) ) )
 	TILE_ITERATE( undivide_tile( THIS_TILE ) )
 }
 
@@ -136,7 +135,7 @@ static COMMAND_FUNC( do_tile_info )
 	Tile *tp;
 
 	tp = PICK_TILE("tile name");
-	tile_info(tp);
+	tile_info(QSP_ARG  tp);
 #else
 	const char *s;
 
@@ -170,24 +169,24 @@ static COMMAND_FUNC( do_set_dthresh )
 	set_dthresh(d);
 }
 
-static Command tile_ctbl[]={
-{ "add",	do_add,		"add a tile"				},
-{ "show",	do_show,	"show all tiles"			},
-{ "draw",	do_draw_tiles,	"draw tiles"				},
-{ "xdraw",	do_xdraw_tiles,	"draw transformed tiles"		},
-{ "xform",	do_xform_tiles,	"transform tiles, subdividing as necessary"},
-{ "threshold",	do_set_dthresh,	"set threshold distance for tile subdivision"},
-{ "bounding_box",do_set_bb,	"specify bounding box for drawing"	},
-{ "info",	do_tile_info,	"print info about current tile"		},
-{ "list",	list_tiles,	"list names of all tiles"		},
-{ "dem_directory",do_dem_dir,	"specify DEM directory"			},
-{ "tex_directory",do_tex_dir,	"specify texture directory"		},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(tiles_menu,s,f,h)
+
+MENU_BEGIN(tiles)
+ADD_CMD( add,		do_add,		add a tile )
+ADD_CMD( show,		do_show,	show all tiles )
+ADD_CMD( draw,		do_draw_tiles,	draw tiles )
+ADD_CMD( xdraw,		do_xdraw_tiles,	draw transformed tiles )
+ADD_CMD( xform,		do_xform_tiles,	transform tiles subdividing as necessary )
+ADD_CMD( threshold,	do_set_dthresh,	set threshold distance for tile subdivision )
+ADD_CMD( bounding_box,	do_set_bb,	specify bounding box for drawing )
+ADD_CMD( info,		do_tile_info,	print info about current tile )
+ADD_CMD( list,		list_tiles,	list names of all tiles )
+ADD_CMD( dem_directory,	do_dem_dir,	specify DEM directory )
+ADD_CMD( tex_directory,	do_tex_dir,	specify texture directory )
+MENU_END(tiles)
 
 
-COMMAND_FUNC( tile_menu )
+COMMAND_FUNC( do_tile_menu )
 {
 	static int inited=0;
 
@@ -198,7 +197,7 @@ COMMAND_FUNC( tile_menu )
 		debug_tiles = add_debug_module(QSP_ARG  "tiles");
 #endif /* DEBUG */
 	}
-	PUSHCMD(tile_ctbl,"tiles");
+	PUSH_MENU(tiles);
 }
 
 #endif /* HAVE_OPENGL */
