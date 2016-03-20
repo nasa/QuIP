@@ -1,2 +1,2 @@
-SUBDIRS = include libsrc src macros doc
+SUBDIRS = include libsrc src libs macros doc
 
