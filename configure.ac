@@ -1621,13 +1621,10 @@ AC_CONFIG_FILES([Makefile
 		 macros/gsl/Makefile
 		 macros/knox/Makefile
 		 macros/visca/Makefile
-		 macros/csf/Makefile
 		 macros/v4l2/Makefile
-		 macros/sni/Makefile
 		 macros/gui/Makefile
 		 macros/ctrack/Makefile
 		 macros/em_exp/Makefile
-		 macros/retina/Makefile
 		 macros/eyemov/Makefile
 		 macros/postproc/Makefile
 		 macros/analysis/Makefile
