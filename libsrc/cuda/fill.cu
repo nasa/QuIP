@@ -76,8 +76,6 @@
 #include "my_cuda.h"
 #include "cuda_supp.h"			// describe_cuda_error
 #include "my_vector_functions.h"	// max_threads_per_block
-#include "gpu_call_utils.h"
-#include "host_call_utils.h"
 
 #define CHECK_CUDA_RETURN_VAL(msg)		\
 	if( e != cudaSuccess ){			\

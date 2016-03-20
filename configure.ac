@@ -116,12 +116,6 @@ AC_ARG_ENABLE([use-fb-dev],
 	[AS_HELP_STRING([--disable-fb-dev],[disable /dev/fb subsystem @<:@default: no@:>@])],
 	[ use_fb_dev=${enableval}], [use_fb_dev=yes])
 
-# disable PIC microcontroller LED controller by default
-
-AC_ARG_ENABLE([pic-led-controller],
-	[AS_HELP_STRING([--enable-pic-led-controller],
-		[enable PIC LED controller @<:@default: yes@:>@])],
-	[ use_pic=${enableval}], [use_pic=no])
 
 # disable Knox switcher support by default
 
@@ -308,7 +302,6 @@ if test "x${minimal_build}" = xyes; then
 	use_das1602=no
 	use_visca=no
 	use_fb_dev=no
-	use_pic=no
 	use_knox=no
 	use_tty_ctl=no
 	use_my_intr=no
@@ -684,9 +677,6 @@ fi
 if test "x${use_rawvol}" = xyes; then
   AC_CHECK_FILE([/dev/rawvol],[have_rawvol=yes],[have_rawvol=no])
 fi
-
-# check for pic
-AC_CHECK_FILE([/dev/pic],[have_pic=yes],[have_pic=no])
 
 # check for knox video switcher
 AC_CHECK_FILE([/dev/knox],[have_knox=yes],[have_knox=no])
@@ -1630,9 +1620,7 @@ AC_CONFIG_FILES([Makefile
 		 macros/numrec/Makefile
 		 macros/gsl/Makefile
 		 macros/knox/Makefile
-		 macros/galvo/Makefile
 		 macros/visca/Makefile
-		 macros/atc/Makefile
 		 macros/csf/Makefile
 		 macros/v4l2/Makefile
 		 macros/sni/Makefile
@@ -1673,7 +1661,6 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/cstepit/Makefile
 		 libsrc/opencv/Makefile
 		 libsrc/visca/Makefile
-		 libsrc/pic/Makefile
 		 libsrc/knox/Makefile
 		 libsrc/opengl/Makefile
 		 libsrc/polhemus/Makefile
@@ -1687,7 +1674,6 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/v4l2/Makefile
 		 libsrc/gui/Makefile
 		 libsrc/nrmenu/Makefile
-		 libsrc/atc/Makefile
 		 libsrc/sound/Makefile
 		 libsrc/parport/Makefile
 		 libsrc/opencl/Makefile
@@ -1916,17 +1902,6 @@ if test "x${n_processors}" != xno; then
   AC_DEFINE_UNQUOTED([N_PROCESSORS], ${n_processors}, [multi-processing with $n_processors processors enabled])
 fi
 
-if test "x${have_pic}" = xno; then
-  if test "x${use_pic}" = xyes; then
-  AC_MSG_WARN([
--------------------------------------------
-Device /dev/pic not found.
-Building without PIC microcontroller support.
--------------------------------------------])
-    use_pic=no
-  fi
-fi
-
 if test "x${have_knox}" = xno; then
   if test "x${use_knox}" = xyes; then
   AC_MSG_WARN([
@@ -1936,11 +1911,6 @@ Building without Knox video switcher support.
 -------------------------------------------])
     use_knox=no
   fi
-fi
-
-# Here we enable PIC if /dev/pic is present, regardless of the state of use_pic
-if test "x${have_pic}" = xyes; then
-  AC_DEFINE([HAVE_PIC], 1, [PIC LED controller support enabled])
 fi
 
 # Here we enable Knox support if /dev/knox is present, regardless of the state of use_knox

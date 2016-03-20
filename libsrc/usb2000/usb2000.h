@@ -181,4 +181,4 @@ extern int xmit_pxl_mode_pkt(QSP_ARG_DECL  const char *pkt, int pxl_mode, int n 
 extern int open_usb2000(void);
 
 /* usb_menu.c */
-extern COMMAND_FUNC( usb2000_menu );
+extern COMMAND_FUNC( do_usb2000_menu );

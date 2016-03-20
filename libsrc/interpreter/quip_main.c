@@ -131,7 +131,7 @@ ADD_CMD(	fly,		do_fly_menu,	PGR camera submenu )
 #endif /* HAVE_LIBFLYCAP */
 
 #ifdef HAVE_X11
-ADD_CMD(	atc,		do_atc_menu,	ATC submenu )
+//ADD_CMD(	atc,		do_atc_menu,	ATC submenu )
 #endif /* HAVE_X11 */
 
 #endif // ! MINIMAL_BUILD

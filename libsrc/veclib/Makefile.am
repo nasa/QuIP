@@ -33,54 +33,12 @@ libvec_a_SOURCES =				\
 				platform_menu.c	\
 				vec_chain.c
 
-
-#				entries.c	\
-#				fast_sp.c
-#				typtbl.c	\
-#				spfft.c		\
-#				dpfft.c		\
-#				sp_funcs.c	\
-#				by_funcs.c	\
-#				uby_funcs.c	\
-#				in_funcs.c	\
-#				uin_funcs.c	\
-#				di_funcs.c	\
-#				udi_funcs.c	\
-#				li_funcs.c	\
-#				uli_funcs.c	\
-#				ubyin_funcs.c	\
-#				uindi_funcs.c	\
-#				inby_funcs.c	\
-#				spdp_funcs.c	\
-#				inby_funcs.c	\
-#				simd_funcs.c	\
-#				dp_funcs.c
-
 # included files (not compiled themselves
 
 EXTRA_libvec_a_SOURCES =			\
 				bit_vec.c	\
 				conv_vec.c	\
 				linear.c
-
-#				bm_prot.h
-#				by_prot.h
-#				di_prot.h
-#				dp_prot.h
-#				fast_prot.h
-#				fp_prot.h
-#				conv_prot.h
-#				in_prot.h
-#				inby_prot.h
-#				li_prot.h
-#				sp_prot.h
-#				spdp_prot.h
-#				uby_prot.h
-#				ubyin_prot.h
-#				udi_prot.h
-#				uin_prot.h
-#				uindi_prot.h
-#				uli_prot.h
 
 noinst_HEADERS =				\
 				bitmap.h	\

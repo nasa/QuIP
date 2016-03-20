@@ -52,7 +52,6 @@ noinst_HEADERS =					\
 			host_calls_gpu.h		\
 			host_calls_special.h		\
 			host_typed_call_defs.h		\
-			host_untyped_prot_defs.h	\
 			inby_defs.h			\
 			in_defs.h			\
 			li_defs.h			\
@@ -77,8 +76,6 @@ noinst_HEADERS =					\
 			uli_defs.h			\
 			vec_func.h			\
 			vecgen.h			\
-			vl1_port.h			\
-			vl1_veclib_prot.h		\
 			vl2_port.h			\
 			vl2_veclib_prot.h		\
 			xfer_args.h

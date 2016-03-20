@@ -26,8 +26,6 @@
 #include "quip_prot.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"
-#include "my_vector_functions.h"
-#include "menu_call_defs.h"	// macros to define func bodies
 
 // global var
 int max_threads_per_block;
@@ -428,7 +426,6 @@ COMMAND_FUNC( do_gpu_obj_upload )
 	gpu_obj_upload(QSP_ARG  dpto,dpfr);
 }
 
-#endif // FOOBAR
 
 COMMAND_FUNC( do_gpu_fwdfft )
 {
@@ -457,7 +454,6 @@ COMMAND_FUNC( do_gpu_fwdfft )
 	FINISH_CUDA_MENU_FUNC
 }
 
-#ifdef FOOBAR
 
 // moved to veclib2
 

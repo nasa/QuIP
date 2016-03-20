@@ -10,7 +10,6 @@
 #include "quip_prot.h"
 #include "my_cuda.h"
 #include "data_obj.h"
-#include "host_call_utils.h"
 
 /* ------------------------------------------------------------------- */
 

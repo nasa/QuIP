@@ -34,11 +34,8 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I../.. -I$(top_srcdir)/inc
 
 # The dependency building stuff doesn't seem to know about .cu files...
 
-CU_DEPS =	host_call_utils.h			\
-		host_calls.h				\
-		gpu_call_utils.h			\
+CU_DEPS =						\
 		my_cuda.h				\
-		my_vector_functions.h			\
 		../../include/veclib/fast_test.h	\
 		../../include/veclib/xfer_args.h	\
 		../../include/cuda_supp.h 		\
@@ -108,37 +105,11 @@ endif
 #
 
 noinst_HEADERS =					\
-				all_prot.h		\
-				bit_prot.h		\
-				float_prot.h		\
-				int_prot.h		\
-				signed_prot.h		\
-				prot_defs.h		\
-				undefs.h		\
-				undefs2.h		\
-							\
-				all_funcs.h		\
-							\
 				cuda_port.h		\
 				cuda_viewer.h		\
 				my_cuda.h		\
-				my_vector_functions.h	\
 				glx_hack.h		\
-				hcall_defs.h		\
-				call_defs.h		\
-				host_calls.h		\
-				host_call_utils.h	\
-				gpu_calls.h		\
-				gpu_call_utils.h	\
-				gpu_bit.cu		\
-				gpu_all.cu		\
-				gpu_int.cu		\
-				gpu_cent.cu		\
-				gpu_signed.cu		\
-				conversions.h		\
-				enum_menu_calls.h	\
-				menu_call_prot.h	\
-				menu_call_defs.h
+				gpu_cent.cu
 
 libqcuda_a_SOURCES =					\
 				cuda.cpp		\
@@ -150,7 +121,7 @@ libqcuda_a_SOURCES =					\
 				cuda_streams.c		\
 				cuda_menu.cpp
 
-libqcuda_a_SOURCES += fakit.cpp
+#libqcuda_a_SOURCES += fakit.cpp
 
 #				conversions.cu
 

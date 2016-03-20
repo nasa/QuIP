@@ -8,12 +8,12 @@
 
 #include "veclib/vec_func.h"
 #include "veclib/obj_args.h"
-#include "veclib/host_untyped_prot_defs.h"
 
 // obsolete file... 
 //#include "veclib/method_defs.h"// why does this need to be included multiple times? NO
 				// include guard added...
 
+#ifdef NOT_USED
 // declare the prototypes for the main functions, g_vadd etc
 // that are not typed
 #include "veclib/math_funcs.c"
@@ -24,11 +24,13 @@
 #include "veclib/intvec.c"
 #include "veclib/conv_vec.c"	// conversions
 #include "veclib/new_conv.c"	// conversions
+#endif // NOT_USED
 
 #include "veclib/type_undefs.h"
 #include "veclib/method_undefs.h"	// undefines the platform-specific and overloaded
 					// defns, e.g. _VEC_FUNC_5V etc
 
+#ifdef NOT_USED
 // Here we have all the funcs w/ real & complex versions
 // In include/veclib/all_vec.c rvadd is declared (cvadd is in a different file)
 // So there is no regular vadd...  we add them here as special cases
@@ -70,4 +72,5 @@ HOST_PROTOTYPE(vss_slct)	// special case because of real/cpx versions
 //		VFCODE_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
 extern void HOST_CALL_NAME(convert)(HOST_CALL_ARG_DECLS);
 
+#endif // NOT_USED
 
