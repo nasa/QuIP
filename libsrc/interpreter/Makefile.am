@@ -8,43 +8,44 @@ libinterpreter_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -D_GNU_SOURCE
 libinterpreter_a_SOURCES =		\
 					\
 		adjust.c		\
-		do_cmd.c		\
-		builtin.c		\
-		sched.c			\
-		pipes.c			\
-		mac_cmds.c		\
-		var_cmds.c		\
-		which1.c		\
-		param.c			\
+		askif.c			\
 		bind.c			\
-		rcfile.c		\
-		ncmds.c			\
+		builtin.c		\
+		callback.c		\
+		chewtext.c		\
+		complete.c		\
+		do_cmd.c		\
+		features.c		\
+		filerd.c		\
+		fork.c			\
+		help.c			\
+		history.c		\
 		howmany.c		\
 		howmuch.c		\
-		filerd.c		\
-		vars.c			\
-		trynice.c		\
-		askif.c			\
-		qword.c			\
+		mac_cmds.c		\
 		macros.c		\
-		history.c		\
-		complete.c		\
-		callback.c		\
-		help.c			\
-		fork.c			\
-		threads.c		\
-		query.c			\
-		qdup.c			\
-		verjbm.c		\
-		features.c		\
-		timex.c			\
-		ver_cmds.c		\
-		chewtext.c		\
-		serial.c		\
-		stamps.c		\
 		mouse.c			\
 		my_stty.c		\
-		tty_flags.c
+		ncmds.c			\
+		param.c			\
+		pipes.c			\
+		qdup.c			\
+		query.c			\
+		qword.c			\
+		rcfile.c		\
+		sched.c			\
+		serial.c		\
+		stamps.c		\
+		threads.c		\
+		timex.c			\
+		trynice.c		\
+		tty_flags.c		\
+		ver_cmds.c		\
+		verjbm.c		\
+		var_cmds.c		\
+		vars.c			\
+		which1.c
+
 
 noinst_HEADERS =			\
 		adjust.h		\
