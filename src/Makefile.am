@@ -48,8 +48,9 @@ PGRLIB=	../libsrc/ptgrey/libpgr.a
 
 LIBS=	@LIBS@
 
+quip_LDADD = $(JLIBS)
 
-quip_LDADD = $(SOUNDLIB) -lnrmenu
+quip_LDADD += $(SOUNDLIB) -lnrmenu
 
 if HAVE_NUMREC
   quip_LDADD += -lnumrec

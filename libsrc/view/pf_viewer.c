@@ -177,48 +177,6 @@ static void init_pf_viewer_subsystem(void)
 	pf_viewer_subsystem_inited=1;
 }
 
-#ifdef FOOBAR
-// moved to glmenu.c
-
-static void glew_check(SINGLE_QSP_ARG_DECL)
-{
-#ifdef HAVE_LIBGLEW
-	static int glew_checked=0;
-
-	if( glew_checked ){
-		if( verbose )
-			NADVISE("glew_check:  glew already checked.");
-		return;
-	}
-
-	// BUG glewInit will core dump if GL is not already initialized!?
-	// We try to fix this by making sure that the cuda viewer is already
-	// specified for GL before calling this...
-
-	glewInit();
-
-	if (!glewIsSupported( "GL_VERSION_1_5 GL_ARB_vertex_buffer_object GL_ARB_pixel_buffer_object" )) {
-		/*
-		fprintf(stderr, "Error: failed to get minimal extensions for demo\n");
-		fprintf(stderr, "This sample requires:\n");
-		fprintf(stderr, "  OpenGL version 1.5\n");
-		fprintf(stderr, "  GL_ARB_vertex_buffer_object\n");
-		fprintf(stderr, "  GL_ARB_pixel_buffer_object\n");
-		*/
-		/*
-		cudaThreadExit();
-		exit(-1);
-		*/
-NERROR1("glew_check:  Please create a GL window before specifying a cuda viewer.");
-	}
-
-	glew_checked=1;
-#else // ! HAVE_LIBGLEW
-advise("glew_check:  libglew not present, can't check for presence of extensions!?.");
-#endif // ! HAVE_LIBGLEW
-}
-#endif // FOOBAR
-
 static Platform_Viewer * new_pf_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	Platform_Viewer *pvp;
@@ -255,7 +213,9 @@ COMMAND_FUNC( do_new_pf_vwr )
 		return;
 	}
 
+#ifdef HAVE_OPENGL
 	glew_check(SINGLE_QSP_ARG);	/* without this, we get a segmentation violation on glGenBuffers??? */
+#endif // HAVE_OPENGL
 
 	if( new_pf_viewer(QSP_ARG  vp) == NULL ){
 		sprintf(ERROR_STRING,"Error making %s a cuda viewer!?",VW_NAME(vp));
