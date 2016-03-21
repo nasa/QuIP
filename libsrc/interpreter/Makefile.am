@@ -40,7 +40,6 @@ libinterpreter_a_SOURCES =		\
 		query_funcs.c		\
 		query_stack.c		\
 		start_quip.c		\
-		quip_main.c		\
 		rcfile.c		\
 		rn.c			\
 		stack.c			\
