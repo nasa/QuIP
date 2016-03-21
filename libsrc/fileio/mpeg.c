@@ -1,18 +1,16 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_mpeg[] = QUIP_VERSION_STRING;
-
 /*#define BPP_3		 */
-/*#define DEBUG_USING_SDL */
+/*#define QUIP_DEBUG_USING_SDL */
 
 #include <stdio.h>
 #include <stdlib.h>
 
 
-#ifdef DEBUG_USING_SDL
+#ifdef QUIP_DEBUG_USING_SDL
 #include <SDL/SDL.h> 
-#endif /* DEBUG_USING_SDL */
+#endif /* QUIP_DEBUG_USING_SDL */
 
 #include "img_file.h"
 #include "debug.h"
@@ -24,17 +22,17 @@ char VersionId_fio_mpeg[] = QUIP_VERSION_STRING;
 #define hdr	if_hd.mpeg_hd_p
 
 
-#undef DEBUG
+#undef QUIP_DEBUG
 
-#ifdef DEBUG_USING_SDL
+#ifdef QUIP_DEBUG_USING_SDL
 SDL_Surface *screen;
-#endif /* DEBUG_USING_SDL */
+#endif /* QUIP_DEBUG_USING_SDL */
  
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 /* declared in wrapper.c of mpeg lib */
 extern int totNumFrames;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 //extern int get_n_of_frms(char *filename);
 
 
@@ -63,7 +61,7 @@ static int mpeg_to_dp(Data_Obj *dp,Mpeg_Hdr *mpeg_hp)
 	dp->dt_nelts = dp->dt_tdim * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	set_shape_flags(&dp->dt_shape,dp);
+	auto_shape_flags(&dp->dt_shape,dp);
 
 	return(0);
 }
@@ -85,7 +83,7 @@ int mpeg_conv(Data_Obj *dp,void *hd_pp)
 }
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 
 static void prt_wt_img(ImVfb *wt_img)
 {
@@ -111,7 +109,7 @@ static void prt_wt_img(ImVfb *wt_img)
 
 }
 
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 
 static ImVfb *dp_to_ImVfb(Data_Obj *dp)
@@ -166,9 +164,9 @@ static int get_n_frs(Image_File *ifp)
 	ImageDesc *idp;
 	Boolean moreframes = TRUE;
 	
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 printf("get_n_frs: IN\n");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	
 	idp = ifp->hdr->idp;
 	
@@ -187,9 +185,9 @@ printf("get_n_frs: IN\n");
 
 	RewindMPEG (ifp->if_fp, idp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 printf("get_n_frs: OUT\n");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	
 	return n_frames;	
 }
@@ -200,11 +198,11 @@ Image_File * mpeg_open(const char *name,int rw)
 	Image_File *ifp;
 	ImageDesc *idp;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 printf("mpeg_open: IN\n");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_MPEG);
+	ifp = IMG_FILE_CREAT(name,rw,IFT_MPEG);
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
 	ifp->hdr = (Mpeg_Hdr *)getbuf( sizeof(Mpeg_Hdr) );
@@ -238,7 +236,7 @@ printf("mpeg_open: IN\n");
 		mpeg_to_dp(ifp->if_dp,ifp->hdr);
 
 		
-#ifdef DEBUG_USING_SDL
+#ifdef QUIP_DEBUG_USING_SDL
 {
 		char buf[32];
 		/* Initialize SDL */
@@ -260,7 +258,7 @@ printf("mpeg_open: IN\n");
 			return NULL;
 		}
 }
-#endif /* DEBUG_USING_SDL */
+#endif /* QUIP_DEBUG_USING_SDL */
 
 
 	} else {
@@ -279,9 +277,9 @@ printf("mpeg_open: IN\n");
 		/* It doesn't make sense to initialize the header for writing. */
 	}
 	
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 printf("mpeg_open: OUT\n");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	return(ifp);
 }
@@ -322,9 +320,9 @@ void mpeg_rd(Data_Obj *dp,Image_File *ifp,index_t x_offset, index_t y_offset,ind
 	int actual_fr_size; 
 #endif /* BPP_3 */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 printf("mpeg_rd: IN\n");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* make sure that the sizes match */
 	if( ! dp_same_dim(dp,ifp->if_dp,0) ) return;	/* same # components? */
@@ -367,7 +365,7 @@ printf("mpeg_rd: IN\n");
 #endif /* BPP_3 */		
 	}
 
-#ifdef DEBUG_USING_SDL
+#ifdef QUIP_DEBUG_USING_SDL
 #ifdef BPP_3
 	screen->pixels = (char *)memcpy(screen->pixels, dp->dt_data, actual_fr_size);
 #else	
@@ -375,7 +373,7 @@ printf("mpeg_rd: IN\n");
 #endif /* BPP_3 */		
 
 	SDL_UpdateRect(screen, 0, 0, 0, 0);
-#endif /* DEBUG_USING_SDL */
+#endif /* QUIP_DEBUG_USING_SDL */
 	
 //	dp->dt_data = (char *)memcpy(dp->dt_data, pixels, ifp->hdr->idp->Size);
 
@@ -395,9 +393,9 @@ printf("mpeg_rd: IN\n");
 		
 	}
 	
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 printf("mpeg_rd: OUT\n");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 }
 
 

@@ -2,6 +2,7 @@
 
 #include "quip_config.h"
 
+#include "quip_prot.h"
 #include "usb2000.h"
 
 #ifdef USE_SERIAL_LINE
@@ -119,8 +120,8 @@ int recv_a_byte(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( n_waits >= MAX_WAITS && n_received == 0 ) {
-		sprintf(error_string,"No value received after waiting %d n_waits?", n_waits);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"No value received after waiting %d n_waits?", n_waits);
+		WARN(ERROR_STRING);
 		return -1;
 	}
 
@@ -128,8 +129,8 @@ int recv_a_byte(SINGLE_QSP_ARG_DECL)
 
 #ifdef DEBUG
 if( debug & usb2000_debug ){
-sprintf(error_string,"byte recvd: 0x%.2x", value_recvd);
-advise(error_string);
+sprintf(ERROR_STRING,"byte recvd: 0x%.2x", value_recvd);
+advise(ERROR_STRING);
 }
 #endif /* DEBUG */
 
@@ -172,8 +173,8 @@ advise("recv_a_value:  not ascii mode");
 			}
 
 			if( n_waits >= MAX_WAITS && n_received == 0 ) {
-				sprintf(error_string,"No value received after waiting %d n_waits?", n_waits);
-				WARN(error_string);
+				sprintf(ERROR_STRING,"No value received after waiting %d n_waits?", n_waits);
+				WARN(ERROR_STRING);
 				return -1;
 			}
 
@@ -200,15 +201,15 @@ advise("recv_a_value:  not ascii mode");
 			}
 
 			if( n_waits >= MAX_WAITS && n_received == 0 ) {
-				sprintf(error_string,"No value received after waiting %d n_waits?", n_waits);
-				WARN(error_string);
-				sprintf(error_string,"%d characters already received",i);
-				advise(error_string);
+				sprintf(ERROR_STRING,"No value received after waiting %d n_waits?", n_waits);
+				WARN(ERROR_STRING);
+				sprintf(ERROR_STRING,"%d characters already received",i);
+				advise(ERROR_STRING);
 
 				if( i > 0 ){
 					value[i]=0;	/* terminate string */
-					sprintf(error_string,"string \"%s\" received so far",value);
-					advise(error_string);
+					sprintf(ERROR_STRING,"string \"%s\" received so far",value);
+					advise(ERROR_STRING);
 				}
 				return -1;
 			}
@@ -219,8 +220,8 @@ advise("recv_a_value:  not ascii mode");
 			#ifdef CAUTIOUS
 			if( i > MAX_SIZEOF_VALUE-1 ) {
 				value[MAX_SIZEOF_VALUE-1]=0;	/* terminate string */
-				sprintf(error_string, "CAUTIOUS:  recv_a_value:  Impossiblely large value (%s) is being received, Reception ABORTED.", value);
-				WARN(error_string);
+				sprintf(ERROR_STRING, "CAUTIOUS:  recv_a_value:  Impossiblely large value (%s) is being received, Reception ABORTED.", value);
+				WARN(ERROR_STRING);
 			}
 			#endif /* CAUTIOUS */
 
@@ -234,8 +235,8 @@ advise("recv_a_value:  not ascii mode");
 
 #ifdef DEBUG
 if( debug & usb2000_debug ){
-sprintf(error_string, "n_value: %d", n_value );
-advise(error_string);
+sprintf(ERROR_STRING, "n_value: %d", n_value );
+advise(ERROR_STRING);
 }
 #endif /* DEBUG */
 
@@ -377,9 +378,9 @@ static int get_echo(QSP_ARG_DECL  char *pkt)
 				return -1;
 
 			if( *(echo_bufp+i) != *(pkt+i) ) {
-				sprintf(error_string, "Unexpected 0x%x instead of 0x%x received .... please restart the usb2000",
+				sprintf(ERROR_STRING, "Unexpected 0x%x instead of 0x%x received .... please restart the usb2000",
 					*(echo_bufp+i), *(pkt+i) );
-				WARN(error_string);
+				WARN(ERROR_STRING);
 
 				clear_input_buf(SINGLE_QSP_ARG);
 				return -1;
@@ -392,12 +393,12 @@ static int get_echo(QSP_ARG_DECL  char *pkt)
 static void baud_rate(int data_word)
 {
 	switch(data_word){
-		case 0:	set_baud(usb2000_fd, B2400);  advise("Communicating at 2400 baud");  break;
-		case 1:	set_baud(usb2000_fd, B4800);  advise("Communicating at 4800 baud");  break;
-		case 2:	set_baud(usb2000_fd, B9600);  advise("Communicating at 9600 baud");  break;
-		case 3:	set_baud(usb2000_fd, B19200); advise("Communicating at 19200 baud"); break;
-		case 4:	set_baud(usb2000_fd, B38400); advise("Communicating at 38400 baud"); break;
-		case 5:	set_baud(usb2000_fd, B57600); advise("Communicating at 57600 baud"); break;
+		case 0:	set_baud(usb2000_fd, B2400);  NADVISE("Communicating at 2400 baud");  break;
+		case 1:	set_baud(usb2000_fd, B4800);  NADVISE("Communicating at 4800 baud");  break;
+		case 2:	set_baud(usb2000_fd, B9600);  NADVISE("Communicating at 9600 baud");  break;
+		case 3:	set_baud(usb2000_fd, B19200); NADVISE("Communicating at 19200 baud"); break;
+		case 4:	set_baud(usb2000_fd, B38400); NADVISE("Communicating at 38400 baud"); break;
+		case 5:	set_baud(usb2000_fd, B57600); NADVISE("Communicating at 57600 baud"); break;
 	}
 }
 
@@ -439,8 +440,8 @@ int set_baud_rate(QSP_ARG_DECL  int data_word)
 	}
 
 	if( reply != ACK ){
-		sprintf(error_string,"set_baud_rate: reply (0x%x) != ACK (0x%x)", reply,ACK);
-		advise(error_string);
+		sprintf(ERROR_STRING,"set_baud_rate: reply (0x%x) != ACK (0x%x)", reply,ACK);
+		advise(ERROR_STRING);
 	}
 
 	/* step 3: */

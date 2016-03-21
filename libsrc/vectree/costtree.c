@@ -7,58 +7,36 @@
 
 #include "quip_config.h"
 
-char VersionId_vectree_costtree[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "getbuf.h"
-#include "function.h"
-#include "fio_api.h"
+//#include "fio_api.h"
 
 #include "vectree.h"
-#include "nvf_api.h"
+#include "veclib_api.h"
 
-/* local prototypes */
-
-static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *);
 
 #define max( n1 , n2 )		(n1>n2?n1:n2)
 
 void tell_cost(QSP_ARG_DECL  Subrt *srp)
 {
-	cost_tree(QSP_ARG  srp->sr_body);
+	cost_tree(QSP_ARG  SR_BODY(srp) );
 	WARN("Sorry, cost reporting not implemented");
 }
 
-void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
-{
-	int i;
-
-	if( enp == NO_VEXPR_NODE ) return;
-
-	for(i=0;i<MAX_CHILDREN(enp);i++){
-		if( enp->en_child[i] != NO_VEXPR_NODE )
-			cost_tree(QSP_ARG  enp->en_child[i]);
-	}
-
-	/* now all the child nodes have been scanned, process this one */
-
-	cost_node(QSP_ARG  enp);	/* code shared w/ rescan_tree() */
-}
+// count the number of flops and math library calls
+// for this node, and all of its children
 
 static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
-	Shape_Info *shpp1=NULL,*shpp2=NULL;	/* auto-init just to silence compiler warnings? */
-	u_long nf_here,nf1,nf2;
-	dimension_t ne1,ne2;
+	uint32_t nf_here,nf1,nf2;
 
 	/* now all the child nodes have been scanned, process this one */
 
-	switch(enp->en_code){
+	switch(VN_CODE(enp)){
 		case T_ENLARGE:
 		case T_REDUCE:
 			break;
@@ -91,9 +69,9 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 		case T_WRAP:
 		case T_SCROLL:
-			enp->en_nmath = enp->en_child[0]->en_nmath;
-			enp->en_flops = enp->en_child[0]->en_flops
-				+ enp->en_shpp->si_n_mach_elts;
+			SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0)) );
+			SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0))
+				+ SHP_N_MACH_ELTS(VN_SHAPE(enp)) );
 
 			break;
 
@@ -124,10 +102,10 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 			
 		case T_EXPR_LIST:
-			enp->en_flops = enp->en_child[0]->en_flops
-				+ enp->en_child[1]->en_flops;
-			enp->en_nmath = enp->en_child[0]->en_nmath
-				+ enp->en_child[1]->en_nmath;
+			SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0))
+				+ VN_FLOPS(VN_CHILD(enp,1)) );
+			SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0))
+				+ VN_N_MATH(VN_CHILD(enp,1)) );
 
 			break;
 
@@ -148,36 +126,36 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 		case T_UMINUS:
 
-			enp->en_nmath = enp->en_child[0]->en_nmath;
-			enp->en_flops = enp->en_child[0]->en_flops
-				+ enp->en_shpp->si_n_mach_elts;
+			SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0)) );
+			SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0))
+				+ SHP_N_MACH_ELTS(VN_SHAPE(enp)) );
 
 			break;
 
 		case T_RECIP:
-			enp->en_nmath = enp->en_child[0]->en_nmath;
-			enp->en_flops = enp->en_child[0]->en_flops
-				+ enp->en_shpp->si_n_mach_elts;
+			SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0)) );
+			SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0))
+				+ SHP_N_MACH_ELTS(VN_SHAPE(enp)) );
 
 			break;
 
 		case T_MATH1_VFN:
 		case T_MATH1_FN:
-			enp->en_nmath = enp->en_child[0]->en_nmath
-				+ shpp1->si_n_mach_elts;
-			enp->en_flops = enp->en_child[0]->en_flops;
+			SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0))
+				+ SHP_N_MACH_ELTS( VN_SHAPE(enp) ) );
+			SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0)) );
 
 			break;
 
 		case T_MATH2_FN:
 		case T_MATH2_VFN:
 		case T_MATH2_VSFN:
-			if( enp->en_shpp != NO_SHAPE ){
-				enp->en_nmath = enp->en_child[0]->en_nmath
-					+ enp->en_child[1]->en_nmath
-					+ shpp1->si_n_mach_elts;
-				enp->en_flops = enp->en_child[0]->en_flops
-					+ enp->en_child[1]->en_flops ;
+			if( VN_SHAPE(enp) != NO_SHAPE ){
+				SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0))
+					+ VN_N_MATH(VN_CHILD(enp,1))
+					+ SHP_N_MACH_ELTS( VN_SHAPE(enp) ) );
+				SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0))
+					+ VN_FLOPS(VN_CHILD(enp,1))  );
 			}
 
 			break;
@@ -192,27 +170,27 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* a stat_list can have null children if
 			 * the statements had parse errors
 			 */
-			if( enp->en_child[0] == NO_VEXPR_NODE ){
-				if( enp->en_child[1] == NO_VEXPR_NODE ){
-					enp->en_flops = 0;
-					enp->en_nmath = 0;
+			if( VN_CHILD(enp,0) == NO_VEXPR_NODE ){
+				if( VN_CHILD(enp,1) == NO_VEXPR_NODE ){
+					SET_VN_FLOPS( enp, 0 );
+					SET_VN_N_MATH( enp, 0 );
 				} else {
-					enp->en_flops =
-						enp->en_child[1]->en_flops;
-					enp->en_nmath =
-						enp->en_child[1]->en_nmath;
+					SET_VN_FLOPS( enp,
+						VN_FLOPS(VN_CHILD(enp,1)) );
+					SET_VN_N_MATH( enp,
+						VN_N_MATH(VN_CHILD(enp,1)) );
 				}
-			} else if( enp->en_child[1] == NO_VEXPR_NODE ){
-					enp->en_flops =
-						enp->en_child[0]->en_flops;
-					enp->en_nmath =
-						enp->en_child[0]->en_nmath;
+			} else if( VN_CHILD(enp,1) == NO_VEXPR_NODE ){
+					SET_VN_FLOPS( enp,
+						VN_FLOPS(VN_CHILD(enp,0)) );
+					SET_VN_N_MATH( enp,
+						VN_N_MATH(VN_CHILD(enp,0)) );
 			} else {
-				enp->en_flops = enp->en_child[0]->en_flops
-					+ enp->en_child[1]->en_flops;
+				SET_VN_FLOPS( enp, VN_FLOPS(VN_CHILD(enp,0))
+					+ VN_FLOPS(VN_CHILD(enp,1)) );
 
-				enp->en_nmath = enp->en_child[0]->en_nmath
-					+ enp->en_child[1]->en_nmath;
+				SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0))
+					+ VN_N_MATH(VN_CHILD(enp,1)) );
 
 			}
 
@@ -232,18 +210,18 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			 * Now this is done in eval_obj_assignment...
 			 */
 
-			if( enp->en_child[1]->en_code == T_DYN_OBJ )
-				nf_here = enp->en_shpp->si_n_mach_elts;
+			if( VN_CODE( VN_CHILD(enp,1) ) == T_DYN_OBJ )
+				nf_here = SHP_N_MACH_ELTS(VN_SHAPE(enp));
 			else {
-				if( SCALAR_SHAPE(shpp2) )
-					nf_here=enp->en_shpp->si_n_mach_elts;
+				if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) )
+					nf_here=SHP_N_MACH_ELTS(VN_SHAPE(enp));
 				else
 					nf_here = 0;
 			}
 
-			enp->en_flops = nf_here
-				+ enp->en_child[1]->en_flops;
-			enp->en_nmath = enp->en_child[1]->en_nmath;
+			SET_VN_FLOPS( enp, nf_here
+				+ VN_FLOPS(VN_CHILD(enp,1)) );
+			SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,1)) );
 
 			break;
 
@@ -256,20 +234,23 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_PLUS:	case T_MINUS:	case T_TIMES:	case T_DIVIDE:
 
 
-			nf1=enp->en_child[0]->en_flops;
-			nf2=enp->en_child[1]->en_flops;
-			ne1=shpp1->si_n_mach_elts;
-			ne2=shpp2->si_n_mach_elts;
+			nf1=VN_FLOPS(VN_CHILD(enp,0));
+			nf2=VN_FLOPS(VN_CHILD(enp,1));
 
 			/* The number of flops for this node and its
 			 * children is the sum of the children's
 			 * flops, plus the number of operations
 			 * at this node.  A move counts as a flop...
+			 *
+			 * We used to take the max of the child element
+			 * counts, but that is wrong if it is an
+			 * outer product or something like that...
 			 */
 
-			nf_here = max(ne1,ne2);
+			//nf_here = max(ne1,ne2);
+			nf_here = SHP_N_MACH_ELTS( VN_SHAPE(enp) );
 
-			enp->en_flops = nf_here + nf1 + nf2;
+			SET_VN_FLOPS( enp, nf_here + nf1 + nf2 );
 
 			break;
 			
@@ -299,5 +280,21 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			MISSING_CASE(enp,"cost_node");
 			break;
 	}
+}
+
+void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	int i;
+
+	if( enp == NO_VEXPR_NODE ) return;
+
+	for(i=0;i<MAX_CHILDREN(enp);i++){
+		if( VN_CHILD(enp,i) != NO_VEXPR_NODE )
+			cost_tree(QSP_ARG  VN_CHILD(enp,i));
+	}
+
+	/* now all the child nodes have been scanned, process this one */
+
+	cost_node(QSP_ARG  enp);	/* code shared w/ rescan_tree() */
 }
 

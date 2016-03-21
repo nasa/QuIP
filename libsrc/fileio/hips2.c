@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_fio_hips2[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -10,16 +8,13 @@ char VersionId_fio_hips2[] = QUIP_VERSION_STRING;
 
 
 #include "fio_prot.h"
-#include "filetype.h"
+#include "quip_prot.h"
 #include "getbuf.h"
 #include "data_obj.h"
 #include "debug.h"
-#include "savestr.h"
-#include "hips2.h"
-#include "raw.h"
-#include "readhdr.h"
-
-#define HDR_P(ifp)	((Image_File_Hdr *)ifp->if_hd)->ifh_u.hips2_hd_p
+#include "img_file/raw.h"
+#include "hips/hips2.h"
+#include "hips/readhdr.h"
 
 static int num_color=1;
 
@@ -44,11 +39,11 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
 	}
-	dp->dt_prec = prec;
+	SET_OBJ_PREC_PTR(dp,prec_for_code(prec));
 
-	dp->dt_comps = type_dim;
-	dp->dt_cols = hd_p->cols;
-	dp->dt_rows = hd_p->rows;
+	SET_OBJ_COMPS(dp, type_dim);
+	SET_OBJ_COLS(dp, hd_p->cols);
+	SET_OBJ_ROWS(dp, hd_p->rows);
 	if( hd_p->numcolor != 1 ){
 		if( type_dim != 1 )
 			NWARN("Sorry, no complex pixels with multiple color planes");
@@ -58,34 +53,36 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 		 * We'd like to have better scheme!
 		 */
 
-		dp->dt_frames = hd_p->numcolor;
-		dp->dt_seqs = hd_p->num_frame/hd_p->numcolor;
+		SET_OBJ_FRAMES(dp, hd_p->numcolor);
+		SET_OBJ_SEQS(dp, hd_p->num_frame/hd_p->numcolor);
 		/* what we'd really like to do is transpose these
 		 * to go to our standard interlaced color format
 		 */
 	} else {
-		dp->dt_frames = hd_p->num_frame;
-		dp->dt_seqs = 1;
+		SET_OBJ_FRAMES(dp, hd_p->num_frame);
+		SET_OBJ_SEQS(dp, 1);
 	}
 
-	dp->dt_cinc = 1;
-	dp->dt_pinc = 1;
-	dp->dt_rowinc = dp->dt_pinc * (incr_t)hd_p->ocols ;
-	dp->dt_finc = dp->dt_rowinc * (incr_t)dp->dt_rows;
-	dp->dt_sinc = dp->dt_finc * (incr_t)dp->dt_frames;
+	SET_OBJ_COMP_INC(dp, 1);
+	SET_OBJ_PXL_INC(dp, 1);
+	SET_OBJ_ROW_INC(dp, OBJ_PXL_INC(dp) * (incr_t)hd_p->ocols );
+	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
+	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp));
 
 	dp->dt_parent = NO_OBJ;
 	dp->dt_children = NO_LIST;
 
-	dp->dt_ap = ram_area;		/* the default */
-	dp->dt_data = hd_p->image;
-	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
-			* dp->dt_frames * dp->dt_seqs;
+	// BUG fix ram_area
+	//dp->dt_ap = ram_area;		/* the default */
+
+	SET_OBJ_DATA_PTR(dp, hd_p->image);
+	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
+			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
 	if( hd_p->pixel_format == PFCOMPLEX )
-		dp->dt_flags |= DT_COMPLEX;
+		SET_OBJ_FLAG_BITS(dp, DT_COMPLEX);
 
-	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
+	auto_shape_flags(OBJ_SHAPE(dp),dp);
 
 	return(0);
 }
@@ -98,22 +95,20 @@ void hdr2_strs(Hips2_Header *hdp)
 	hdp->seq_history=savestr("\n");
 	hdp->seq_desc=savestr("\n");
 	hdp->params = NULL;
-	hdp->sizehist = strlen(hdp->seq_history)+1;
-	hdp->sizedesc = strlen(hdp->seq_desc)+1;
+	hdp->sizehist = (int) strlen(hdp->seq_history)+1;
+	hdp->sizedesc = (int) strlen(hdp->seq_desc)+1;
 }
 
-FIO_OPEN_FUNC(hips2_open)
-//Image_File *		/**/
-//hips2_open(const char *name,int rw)		/**/
+FIO_OPEN_FUNC(hips2)
 {
 	Image_File *ifp;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_HIPS2);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS2));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
-	ifp->if_hd = (Hips2_Header *)getbuf( sizeof(Hips2_Header) );
+	ifp->if_hdr_p = (Hips2_Header *)getbuf( sizeof(Hips2_Header) );
 
-	null_hips2_hd(ifp->if_hd);
+	null_hips2_hd(ifp->if_hdr_p);
 
 	if( IS_READABLE(ifp) ){
 		/* BUG: should check for error here */
@@ -125,37 +120,37 @@ FIO_OPEN_FUNC(hips2_open)
 		 * addresses
 		 */
 
-		if( rd_hips2_hdr( ifp->if_fp, (Hips2_Header *)ifp->if_hd,
+		if( rd_hips2_hdr( ifp->if_fp, (Hips2_Header *)ifp->if_hdr_p,
 			ifp->if_name ) != HIPS_OK ){
 			hips2_close(QSP_ARG  ifp);
 			return(NO_IMAGE_FILE);
 		}
-		if( hips2_to_dp(ifp->if_dp,ifp->if_hd) < 0 )
+		if( hips2_to_dp(ifp->if_dp,ifp->if_hdr_p) < 0 )
 			NWARN("error converting hips2 header");
 	} else {	/* write file */
-		hdr2_strs(ifp->if_hd);		/* make null strings */
+		hdr2_strs(ifp->if_hdr_p);		/* make null strings */
 	}
 	return(ifp);
 }
 
 
-FIO_CLOSE_FUNC( hips2_close )
+FIO_CLOSE_FUNC( hips2 )
 {
 	/* see if we need to edit the header */
 	if( IS_WRITABLE(ifp)
 		&& ifp->if_dp != NO_OBJ	/* may be closing 'cause of error */
 		&& ifp->if_nfrms != ifp->if_frms_to_wt ){
 		if( ifp->if_nfrms <= 0 ){
-			sprintf(error_string, "file %s nframes=%d!?",
+			sprintf(ERROR_STRING, "file %s nframes=%d!?",
 				ifp->if_name,ifp->if_nfrms);
-			NWARN(error_string);
+			NWARN(ERROR_STRING);
 		}
 		rewrite_hips2_nf(ifp->if_fp,ifp->if_nfrms);
 	}
 
-	if( ifp->if_hd != NULL ){
-		rls_hips2_hd(ifp->if_hd);		/* free strings */
-		givbuf(ifp->if_hd);
+	if( ifp->if_hdr_p != NULL ){
+		rls_hips2_hd(ifp->if_hdr_p);		/* free strings */
+		givbuf(ifp->if_hdr_p);
 	}
 
 	GENERIC_IMGFILE_CLOSE(ifp);
@@ -172,33 +167,33 @@ int dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp)
 	 * kludge in the way HIPS2 treats color sequences
 	 */
 
-	if( dp->dt_seqs > 1 || num_color > 1 )	/* the kludge is on! */
-		hd_p->numcolor = (int)dp->dt_frames;
+	if( OBJ_SEQS(dp) > 1 || num_color > 1 )	/* the kludge is on! */
+		hd_p->numcolor = (int)OBJ_FRAMES(dp);
 	else
 		hd_p->numcolor = 1;
 
 	/* BUG questionable cast */
-	hd_p->num_frame = (int)(dp->dt_frames * dp->dt_seqs);
-	hd_p->rows = (int)dp->dt_rows;
-	hd_p->cols = (int)dp->dt_cols;
-	hd_p->orows = (int)dp->dt_rows;
-	hd_p->ocols = (int)dp->dt_cols;
+	hd_p->num_frame = (int)(OBJ_FRAMES(dp) * OBJ_SEQS(dp));
+	hd_p->rows = (int)OBJ_ROWS(dp);
+	hd_p->cols = (int)OBJ_COLS(dp);
+	hd_p->orows = (int)OBJ_ROWS(dp);
+	hd_p->ocols = (int)OBJ_COLS(dp);
 	hd_p->frow = 0;
 	hd_p->fcol = 0;
-	hd_p->numpix = (int)(dp->dt_rows*dp->dt_cols);
+	hd_p->numpix = (int)(OBJ_ROWS(dp)*OBJ_COLS(dp));
 
 	hd_p->firstpix = 
-	hd_p->image = (h_byte *) dp->dt_data;
+	hd_p->image = (h_byte *) OBJ_DATA_PTR(dp);
 
 	/* BUG should do something more sensible here... */
 	if( hd_p->orig_name != NULL ){
 		rls_str(hd_p->orig_name);
 	}
-	hd_p->orig_name = savestr(dp->dt_name);
+	hd_p->orig_name = savestr(OBJ_NAME(dp));
 	if( hd_p->seq_name != NULL ){
 		rls_str(hd_p->seq_name);
 	}
-	hd_p->seq_name = savestr(dp->dt_name);
+	hd_p->seq_name = savestr(OBJ_NAME(dp));
 
 	/*
 	hd_p->orig_date = savestr("\n");
@@ -206,7 +201,7 @@ int dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp)
 	hd_p->seq_desc = savestr("\n");
 	*/
 
-	switch( dp->dt_prec ){
+	switch( OBJ_PREC(dp) ){
 		case PREC_BY:
 		case PREC_UBY:
 			hd_p->pixel_format = PFBYTE;
@@ -255,15 +250,15 @@ int dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp)
 
 int set_hips2_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from image object */
 {
-	if( dp_to_hips2(ifp->if_hd,ifp->if_dp) < 0 ){
+	if( dp_to_hips2(ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		hips2_close(QSP_ARG  ifp);
 		return(-1);
 	}
-	wt_hips2_hdr(ifp->if_fp,ifp->if_hd,ifp->if_name);	/* write it out */
+	wt_hips2_hdr(ifp->if_fp,ifp->if_hdr_p,ifp->if_name);	/* write it out */
 	return(0);
 }
 
-FIO_WT_FUNC( hips2_wt )
+FIO_WT_FUNC( hips2 )
 {
 	Data_Obj dobj;
 
@@ -274,14 +269,14 @@ FIO_WT_FUNC( hips2_wt )
 
 	num_color=1;	/* the default */
 
-	if( dp->dt_comps > 1 ){
-		if( dp->dt_seqs > 1 ){
+	if( OBJ_COMPS(dp) > 1 ){
+		if( OBJ_SEQS(dp) > 1 ){
 	NWARN("can't write color hypersequences in HIPS2 format");
 			return(-1);
 		}
 		dobj = *dp;	/* copy the thing */
 
-		num_color=(int)dp->dt_comps;
+		num_color=(int)OBJ_COMPS(dp);
 
 		gen_xpose(&dobj,4,3);		/* seqs <--> frames */
 		gen_xpose(&dobj,0,3);		/* comps <--> frames */
@@ -305,12 +300,12 @@ FIO_WT_FUNC( hips2_wt )
 		 */
 
 		if( num_color > 1 ){
-			ifp->if_dp->dt_frames = num_color;
-			ifp->if_dp->dt_seqs = ifp->if_frms_to_wt;
+			SET_OBJ_FRAMES(ifp->if_dp, num_color);
+			SET_OBJ_SEQS(ifp->if_dp, ifp->if_frms_to_wt);
 			ifp->if_frms_to_wt *= num_color;
 		} else {
-			ifp->if_dp->dt_frames = ifp->if_frms_to_wt;
-			ifp->if_dp->dt_seqs = 1;
+			SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
+			SET_OBJ_SEQS(ifp->if_dp, 1);
 		}
 
 		if( set_hips2_hdr(QSP_ARG  ifp) < 0 ) return(-1);
@@ -321,12 +316,12 @@ FIO_WT_FUNC( hips2_wt )
 	return(0);
 }
 
-FIO_RD_FUNC( hips2_rd )
+FIO_RD_FUNC( hips2 )
 {
 	Data_Obj *rd_dp;
 
-	if( dp->dt_comps > 1 ){	/* color kludge */
-		if( dp->dt_seqs > 1 ){
+	if( OBJ_COMPS(dp) > 1 ){	/* color kludge */
+		if( OBJ_SEQS(dp) > 1 ){
 			NWARN("Sorry, can't convert color hyperseqs from HIPS2");
 			return;
 		}
@@ -336,7 +331,7 @@ if( verbose ) advise("transposing data to make interleaved components");
 		gen_xpose(rd_dp,3,4);
 	} else rd_dp = dp;
 
-	raw_rd(QSP_ARG  rd_dp,ifp,x_offset,y_offset,t_offset);
+	FIO_RD_FUNC_NAME(raw)(QSP_ARG  rd_dp,ifp,x_offset,y_offset,t_offset);
 
 	if( rd_dp != dp ){
 		gen_xpose(rd_dp,4,3);		/* seqs <--> frames */

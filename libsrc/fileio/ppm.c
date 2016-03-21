@@ -1,35 +1,25 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_ppm[] = QUIP_VERSION_STRING;
-
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "fio_prot.h"
-#include "filetype.h"
-#include "getbuf.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "savestr.h"
-#include "jbm_ppm.h"
-#include "raw.h"
-#include "readhdr.h"
+#include "img_file/jbm_ppm.h"
+#include "img_file/raw.h"
 
-#define HDR_P(ifp)	((Image_File_Hdr *)ifp->if_hd)->ifh_u.ppm_hd_p
-#define DHDR_P(ifp)	((Image_File_Hdr *)ifp->if_hd)->ifh_u.dis_hd_p
-
-int ppm_to_dp(Data_Obj *dp,Ppm_Header *hd_p)
+FIO_FT_TO_DP_FUNC(ppm,Ppm_Header)
 {
 	short type_dim=1;
-	short prec;
+	Precision * prec_p;
 
 	hd_p = (Ppm_Header *)hd_p;
-	prec=PREC_UBY;
+	prec_p=PREC_FOR_CODE(PREC_UBY);
 	switch( hd_p->format ){
 		/* BUG should use symbolic constants here */
 		case 5: type_dim=1; break;
@@ -41,33 +31,33 @@ int ppm_to_dp(Data_Obj *dp,Ppm_Header *hd_p)
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
 	}
-	dp->dt_prec = prec;
+	SET_OBJ_PREC_PTR(dp, prec_p);
 
-	dp->dt_comps = type_dim;
-	dp->dt_cols = hd_p->cols;
-	dp->dt_rows = hd_p->rows;
+	SET_OBJ_COMPS(dp, type_dim);
+	SET_OBJ_COLS(dp, hd_p->cols);
+	SET_OBJ_ROWS(dp, hd_p->rows);
 /*
 //sprintf(DEFAULT_ERROR_STRING,"ppm_to_dp:  c = %d, r = %d",hd_p->cols,hd_p->rows);
 //advise(DEFAULT_ERROR_STRING);
 */
-	dp->dt_frames = 1;
-	dp->dt_seqs = 1;
+	SET_OBJ_FRAMES(dp, 1);
+	SET_OBJ_SEQS(dp, 1);
 
-	dp->dt_cinc = 1;
-	dp->dt_pinc = 1;
-	dp->dt_rowinc = dp->dt_pinc * (incr_t)dp->dt_cols;
-	dp->dt_finc = dp->dt_rowinc * (incr_t)dp->dt_rows;
-	dp->dt_sinc = dp->dt_finc * (incr_t)dp->dt_frames;
+	SET_OBJ_COMP_INC(dp, 1);
+	SET_OBJ_PXL_INC(dp, 1);
+	SET_OBJ_ROW_INC(dp, OBJ_PXL_INC(dp) * (incr_t)OBJ_COLS(dp) );
+	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
+	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
-	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_CHILDREN(dp, NO_LIST);
 
-	dp->dt_ap = ram_area;		/* the default */
-	dp->dt_data = hd_p->img_data;
-	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
-			* dp->dt_frames * dp->dt_seqs;
+	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
+	SET_OBJ_DATA_PTR(dp, hd_p->img_data);
+	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
+			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
+	auto_shape_flags(OBJ_SHAPE(dp),dp);
 
 	return(0);
 }
@@ -149,67 +139,67 @@ int rd_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
 	return(0);
 }
 
-FIO_OPEN_FUNC( ppm_open )
+FIO_OPEN_FUNC( ppm )
 {
 	Image_File *ifp;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_PPM);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
-	ifp->if_hd = getbuf( sizeof(Ppm_Header) );
+	ifp->if_hdr_p = getbuf( sizeof(Ppm_Header) );
 
 	if( IS_READABLE(ifp) ){
-		if( rd_ppm_hdr( ifp->if_fp, (Ppm_Header *)ifp->if_hd,
+		if( rd_ppm_hdr( ifp->if_fp, (Ppm_Header *)ifp->if_hdr_p,
 			ifp->if_name ) < 0 ){
 			ppm_close(QSP_ARG  ifp);
 			return(NO_IMAGE_FILE);
 		}
-		ppm_to_dp(ifp->if_dp,ifp->if_hd);
+		ppm_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	}
 	return(ifp);
 }
 
 
 
-FIO_CLOSE_FUNC( ppm_close )
+FIO_CLOSE_FUNC( ppm )
 {
-	if( ifp->if_hd != NULL ){
-		givbuf(ifp->if_hd);
+	if( ifp->if_hdr_p != NULL ){
+		givbuf(ifp->if_hdr_p);
 	}
 	GENERIC_IMGFILE_CLOSE(ifp);
 }
 
-int dp_to_ppm(Ppm_Header *hd_p,Data_Obj *dp)
+FIO_DP_TO_FT_FUNC(ppm,Ppm_Header)
 {
-	if( dp->dt_prec != PREC_UBY ){
+	if( OBJ_PREC(dp) != PREC_UBY ){
 		sprintf(DEFAULT_ERROR_STRING,
 		"Sorry, can only write unsigned byte images to PPM, object %s has prec %s",
-			dp->dt_name,prec_name[dp->dt_prec]);
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
-	if( dp->dt_frames>1 || dp->dt_seqs>1 ){
+	if( OBJ_FRAMES(dp)>1 || OBJ_SEQS(dp)>1 ){
 		sprintf(DEFAULT_ERROR_STRING,
 		"Sorry, object %s has more than 1 frame/seq, can only write 1 to PPM",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
-	if( dp->dt_comps == 1 ) 
+	if( OBJ_COMPS(dp) == 1 ) 
 		hd_p->format = 5;
-	else if( dp->dt_comps == 3 )
+	else if( OBJ_COMPS(dp) == 3 )
 		hd_p->format = 6;
 	else {
 		NWARN("Sorry, PPM only supports type dimensions 1 and 3");
 		return(-1);
 	}
 		
-	hd_p->rows = (int)dp->dt_rows;
-	hd_p->cols = (int)dp->dt_cols;
+	hd_p->rows = (int)OBJ_ROWS(dp);
+	hd_p->cols = (int)OBJ_COLS(dp);
 	hd_p->somex = 255;
 
-	hd_p->img_data = dp->dt_data;
+	hd_p->img_data = OBJ_DATA_PTR(dp);
 
 	return(0);
 }
@@ -225,17 +215,33 @@ void wt_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
 	fflush(fp);
 }
 
-FIO_SETHDR_FUNC( set_ppm_hdr ) /* set header fields from image object */
+FIO_SETHDR_FUNC( ppm ) /* set header fields from image object */
 {
-	if( dp_to_ppm(ifp->if_hd,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(ppm)(ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		ppm_close(QSP_ARG  ifp);
 		return(-1);
 	}
-	wt_ppm_hdr(ifp->if_fp,ifp->if_hd,ifp->if_name);	/* write it out */
+	wt_ppm_hdr(ifp->if_fp,ifp->if_hdr_p,ifp->if_name);	/* write it out */
 	return(0);
 }
 
-FIO_WT_FUNC( ppm_wt )	/** output next frame */
+FIO_RD_FUNC( ppm )
+{
+	raw_rd( QSP_ARG  dp, ifp, x_offset, y_offset, t_offset );
+}
+
+FIO_SEEK_FUNC( ppm )
+{
+	return std_seek_frame( QSP_ARG  ifp, n );
+}
+
+FIO_INFO_FUNC( ppm )
+{
+	// nop
+}
+
+
+FIO_WT_FUNC( ppm )	/** output next frame */
 {
 	/* PPM wants color images interleaved */
 
@@ -260,7 +266,8 @@ int ppm_unconv(void *hdr_pp,Data_Obj *dp)
 	*hd_pp = (Ppm_Header *)getbuf( sizeof(Ppm_Header) );
 	if( *hd_pp == NULL ) return(-1);
 
-	dp_to_ppm(*hd_pp,dp);
+	//dp_to_ppm(*hd_pp,dp);
+	FIO_DP_TO_FT_FUNC_NAME(ppm)(*hd_pp,dp);
 
 	return(0);
 }
@@ -280,9 +287,9 @@ int ppm_conv(Data_Obj *dp,void *hd_pp)
 int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 {
 	short type_dim=1;
-	short prec;
+	Precision * prec_p;
 
-	prec=PREC_UBY;
+	prec_p=PREC_FOR_CODE(PREC_UBY);
 	switch( hd_p->format ){
 		/* BUG should use symbolic constants here */
 		case 5: type_dim=1; break;
@@ -294,29 +301,29 @@ int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
 	}
-	dp->dt_prec = prec;
+	SET_OBJ_PREC_PTR(dp, prec_p);
 
-	dp->dt_comps = type_dim;
-	dp->dt_cols = hd_p->cols;
-	dp->dt_rows = hd_p->rows;
-	dp->dt_frames = hd_p->frames;
-	dp->dt_seqs = 1;
+	SET_OBJ_COMPS(dp, type_dim);
+	SET_OBJ_COLS(dp, hd_p->cols);
+	SET_OBJ_ROWS(dp, hd_p->rows);
+	SET_OBJ_FRAMES(dp, hd_p->frames);
+	SET_OBJ_SEQS(dp, 1);
 
-	dp->dt_cinc = 1;
-	dp->dt_pinc = 1;
-	dp->dt_rowinc = dp->dt_pinc * (incr_t)dp->dt_cols ;
-	dp->dt_finc = dp->dt_rowinc * (incr_t)dp->dt_rows;
-	dp->dt_sinc = dp->dt_finc * (incr_t)dp->dt_frames;
+	SET_OBJ_COMP_INC(dp, 1);
+	SET_OBJ_PXL_INC(dp, 1);
+	SET_OBJ_ROW_INC(dp, OBJ_PXL_INC(dp) * (incr_t)OBJ_COLS(dp) );
+	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
+	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
-	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_CHILDREN(dp, NO_LIST);
 
-	dp->dt_ap = ram_area;		/* the default */
-	dp->dt_data = hd_p->img_data;
-	dp->dt_n_type_elts = dp->dt_comps * dp->dt_cols * dp->dt_rows
-			* dp->dt_frames * dp->dt_seqs;
+	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
+	SET_OBJ_DATA_PTR(dp, hd_p->img_data);
+	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
+			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	set_shape_flags(&dp->dt_shape,dp,AUTO_SHAPE);
+	auto_shape_flags(OBJ_SHAPE(dp),dp);
 
 	return(0);
 }
@@ -357,68 +364,69 @@ int rd_dis_hdr(FILE *fp,Dis_Header *hdp,const char *filename)
 	return(0);
 }
 
-FIO_OPEN_FUNC( dis_open )
+FIO_OPEN_FUNC( dis )
 {
 	Image_File *ifp;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_PPM);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
-	ifp->if_hd = (Dis_Header *)getbuf( sizeof(Dis_Header) );
+	ifp->if_hdr_p = (Dis_Header *)getbuf( sizeof(Dis_Header) );
 
 	if( IS_READABLE(ifp) ){
-		if( rd_dis_hdr( ifp->if_fp, ifp->if_hd,
+		if( rd_dis_hdr( ifp->if_fp, ifp->if_hdr_p,
 			ifp->if_name ) < 0 ){
 			dis_close(QSP_ARG  ifp);
 			return(NO_IMAGE_FILE);
 		}
-		dis_to_dp(ifp->if_dp,ifp->if_hd);
+		dis_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	}
 	return(ifp);
 }
 
 
 
-FIO_CLOSE_FUNC( dis_close )
+FIO_CLOSE_FUNC( dis )
 {
-	if( ifp->if_hd != NULL ){
-		givbuf(ifp->if_hd);
+	if( ifp->if_hdr_p != NULL ){
+		givbuf(ifp->if_hdr_p);
 	}
 	GENERIC_IMGFILE_CLOSE(ifp);
 }
 
-int dp_to_dis(Dis_Header *hd_p,Data_Obj *dp)
+//int dp_to_dis(Dis_Header *hd_p,Data_Obj *dp)
+FIO_DP_TO_FT_FUNC(dis,Dis_Header)
 {
-	if( dp->dt_prec != PREC_UBY ){
+	if( OBJ_PREC(dp) != PREC_UBY ){
 		sprintf(DEFAULT_ERROR_STRING,
 		"Sorry, can only write unsigned byte images to PPM, object %s has prec %s",
-			dp->dt_name,prec_name[dp->dt_prec]);
+			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
-	if( dp->dt_seqs>1 ){
+	if( OBJ_SEQS(dp)>1 ){
 		sprintf(DEFAULT_ERROR_STRING,
 		"Sorry, object %s has more than 1 seq, can only write 1 to .dis",
-			dp->dt_name);
+			OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
-	if( dp->dt_comps == 1 ) 
+	if( OBJ_COMPS(dp) == 1 ) 
 		hd_p->format = 5;
-	else if( dp->dt_comps == 3 )
+	else if( OBJ_COMPS(dp) == 3 )
 		hd_p->format = 6;
 	else {
 		NWARN("Sorry, .dis only supports type dimensions 1 and 3");
 		return(-1);
 	}
 		
-	hd_p->rows = (int)dp->dt_rows;
-	hd_p->cols = (int)dp->dt_cols;
-	hd_p->frames = (int)dp->dt_frames;
+	hd_p->rows = (int)OBJ_ROWS(dp);
+	hd_p->cols = (int)OBJ_COLS(dp);
+	hd_p->frames = (int)OBJ_FRAMES(dp);
 	hd_p->somex = 255;
 
-	hd_p->img_data = dp->dt_data;
+	hd_p->img_data = OBJ_DATA_PTR(dp);
 
 	return(0);
 }
@@ -431,17 +439,17 @@ void wt_dis_hdr(FILE *fp,Dis_Header *hdp,const char *filename)
 	fflush(fp);
 }
 
-FIO_SETHDR_FUNC( set_dis_hdr )		/* set header fields from image object */
+FIO_SETHDR_FUNC( dis )		/* set header fields from image object */
 {
-	if( dp_to_dis(ifp->if_hd,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(dis)(ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		dis_close(QSP_ARG  ifp);
 		return(-1);
 	}
-	wt_dis_hdr(ifp->if_fp,ifp->if_hd,ifp->if_name);	/* write it out */
+	wt_dis_hdr(ifp->if_fp,ifp->if_hdr_p,ifp->if_name);	/* write it out */
 	return(0);
 }
 
-FIO_WT_FUNC( dis_wt )
+FIO_WT_FUNC( dis )
 {
 	/* PPM wants color images interleaved */
 
@@ -466,7 +474,7 @@ int dis_unconv(void *hdr_pp,Data_Obj *dp)
 	*hd_pp = (Dis_Header *)getbuf( sizeof(Dis_Header) );
 	if( *hd_pp == NULL ) return(-1);
 
-	dp_to_dis(*hd_pp,dp);
+	FIO_DP_TO_FT_FUNC_NAME(dis)(*hd_pp,dp);
 
 	return(0);
 }

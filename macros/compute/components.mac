@@ -172,7 +172,7 @@ quit
 
 Define Next_Component 1 image
 Get_Sum totsum $1
-If $totsum==0 "Set biggest_found 1 PopFile 2 nop"
+If $totsum==0 "Set biggest_found 1 exit_macro"
 Dup_Float nc_tmp $1
 Find_Component nc_tmp $1
 If $area>$max_area "Set max_area $area VMov big_comp nc_tmp"

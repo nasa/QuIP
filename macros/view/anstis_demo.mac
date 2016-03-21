@@ -147,7 +147,7 @@ Show_Bytes key_frm key_v
 .
 
 Define Make_Adjustment 0
-If $left_button_up "PopFile 2 nop"	# no action on up-click
+If $left_button_up "exit_macro"	# no action on up-click
 Assign which_half floor($view_xpos/(ncols(adjuster_v)/2))
 If $which_half==$last_adjustment Increase_Increment
 If $which_half!=$last_adjustment&&$last_adjustment!=$no_adjustment

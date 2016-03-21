@@ -2,11 +2,10 @@
 
 #include "quip_config.h"
 
-char VersionId_ptgrey_pgr[] = QUIP_VERSION_STRING;
+#ifdef HAVE_LIBDC1394
 
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "query.h"
-#include "debug.h"		/* verbose */
 
 #include <stdio.h>
 
@@ -32,18 +31,9 @@ char VersionId_ptgrey_pgr[] = QUIP_VERSION_STRING;
 
 #include "pgr.h"
 
-#ifdef HAVE_LIBDC1394
-static PGR_Cam pgc1;
-static List *in_use_lp=NO_LIST;
-static int ring_buffer_size=64;
-static int capturing=0;
-static int transmitting=0;
-#endif
+#define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
-
-ITEM_INTERFACE_DECLARATIONS(PGR_Frame,pfrm)
-
-
+ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc)
 
 //dc1394error_t dc1394_get_camera_feature_set(dc1394camera_t *camera, dc1394featureset_t *features);
 
@@ -54,9 +44,9 @@ ITEM_INTERFACE_DECLARATIONS(PGR_Frame,pfrm)
 //dc1394error_t dc1394_print_feature(dc1394feature_info_t *feature);
 //dc1394error_t dc1394_print_feature_set(dc1394featureset_t *features);
 
+#ifdef NOT_USED
 void show_camera_features(PGR_Cam *pgcp)
 {
-#ifdef HAVE_LIBDC1394
 	dc1394featureset_t features;
 
 	if(
@@ -70,18 +60,17 @@ void show_camera_features(PGR_Cam *pgcp)
 		dc1394_feature_print_all(&features,stdout) != DC1394_SUCCESS ){
 		NWARN("error printing feature set");
 	}
-#endif
 }
-
-#ifdef HAVE_LIBDC1394
+#endif /* NOT_USED */
 
 void
-cleanup1394( dc1394camera_t *cam_p )
+cleanup_cam( PGR_Cam *pgcp )
 {
-	if( capturing ) dc1394_capture_stop( cam_p );
-	if( transmitting ) dc1394_video_set_transmission( cam_p, DC1394_OFF );
+	if( IS_CAPTURING(pgcp) ) dc1394_capture_stop( pgcp->pc_cam_p );
+	if( IS_TRANSMITTING(pgcp) )
+		dc1394_video_set_transmission( pgcp->pc_cam_p, DC1394_OFF );
 	/* dc1394_free_camera */
-	dc1394_camera_free( cam_p );
+	dc1394_camera_free( pgcp->pc_cam_p );
 }
 
 static Named_Video_Mode all_video_modes[]={
@@ -106,6 +95,7 @@ static Named_Video_Mode all_video_modes[]={
 { "yuv422_1280x960",	DC1394_VIDEO_MODE_1280x960_YUV422	},
 { "rgb8_1280x960",	DC1394_VIDEO_MODE_1280x960_RGB8		},
 { "mono8_1280x960",	DC1394_VIDEO_MODE_1280x960_MONO8	},
+{ "mono16_1280x960",	DC1394_VIDEO_MODE_1280x960_MONO16	},
 
 { "yuv422_1600x1200",	DC1394_VIDEO_MODE_1600x1200_YUV422	},
 { "rgb8_1600x1200",	DC1394_VIDEO_MODE_1600x1200_RGB8	},
@@ -157,6 +147,7 @@ static Named_Frame_Rate all_framerates[]={
 
 #define N_NAMED_FRAMERATES	(sizeof(all_framerates)/sizeof(Named_Frame_Rate))
 
+#ifdef NOT_USED
 static Named_Feature all_features[]={
 { "brightness",		DC1394_FEATURE_BRIGHTNESS	},
 { "exposure",		DC1394_FEATURE_EXPOSURE		},
@@ -183,6 +174,7 @@ static Named_Feature all_features[]={
 };
 
 #define N_NAMED_FEATURES	(sizeof(all_features)/sizeof(Named_Feature))
+#endif /* NOT_USED */
 
 static Named_Trigger_Mode all_trigger_modes[]={
 { "mode0",		DC1394_TRIGGER_MODE_0		},
@@ -197,13 +189,10 @@ static Named_Trigger_Mode all_trigger_modes[]={
 
 #define N_NAMED_TRIGGER_MODES	(sizeof(all_trigger_modes)/sizeof(Named_Trigger_Mode))
 
-#endif /* HAVE_LIBDC1394 */
-
 /* called once at camera initialization... */
 
 void get_camera_features( PGR_Cam *pgcp )
 {
-#ifdef HAVE_LIBDC1394
 	Node *np;
 	int i;
 
@@ -243,13 +232,12 @@ void get_camera_features( PGR_Cam *pgcp )
 			addTail(pgcp->pc_feat_lp,np);
 		}
 	}
-#endif
 }
+
 
 /* report_camera_features:  this used the library's print routine (for comparison) */
 
-#ifdef HAVE_LIBDC1394
-int report_camera_features( PGR_Cam *pgcp )
+static int report_camera_features( PGR_Cam *pgcp )
 {
 	// report camera's features
 	dc1394featureset_t	features;
@@ -264,14 +252,14 @@ int report_camera_features( PGR_Cam *pgcp )
 	return 0;
 }
 
-void list_camera_feature( dc1394feature_info_t *feat_p )
+static void list_camera_feature(QSP_ARG_DECL  dc1394feature_info_t *feat_p )
 {
 	sprintf(msg_str,"%s", /*dc1394_feature_desc[feat_p->id - DC1394_FEATURE_MIN]*/
 			dc1394_feature_get_string(feat_p->id) );
 	prt_msg(msg_str);
 }
 
-int list_camera_features( PGR_Cam *pgcp )
+int list_camera_features(QSP_ARG_DECL  PGR_Cam *pgcp )
 {
 	Node *np;
 
@@ -281,7 +269,7 @@ int list_camera_features( PGR_Cam *pgcp )
 	while(np!=NO_NODE){
 		dc1394feature_info_t * f;
 		f= (dc1394feature_info_t *) np->n_data;
-		list_camera_feature(f);
+		list_camera_feature(QSP_ARG  f);
 		np=np->n_next;
 	}
 	return(0);
@@ -311,7 +299,7 @@ int get_feature_choices( PGR_Cam *pgcp, const char ***chp )
 	return n;
 }
 
-void report_feature_info( PGR_Cam *pgcp, dc1394feature_t id )
+void report_feature_info(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_t id )
 {
 	Node *np;
 	dc1394feature_info_t *f;
@@ -473,13 +461,10 @@ void report_feature_info( PGR_Cam *pgcp, dc1394feature_t id )
 			break;
 	}
 }
-#endif /* HAVE_LIBDC1394 */
-
-#ifdef HAVE_LIBDC1394
 
 #define INDEX_SEARCH( name, type, count, array, member )		\
 									\
-int name( type x )							\
+static int name( type x )						\
 {									\
 	unsigned int i;							\
 									\
@@ -490,13 +475,15 @@ int name( type x )							\
 	return -1;							\
 }
 
+#ifdef NOT_USED
 INDEX_SEARCH(index_of_feature,dc1394feature_t,N_NAMED_FEATURES,all_features,nft_feature)
+#endif /* NOT_USED */
 INDEX_SEARCH(index_of_video_mode,dc1394video_mode_t,N_NAMED_VIDEO_MODES,all_video_modes,nvm_mode)
 INDEX_SEARCH(index_of_framerate,dc1394framerate_t,N_NAMED_FRAMERATES,all_framerates,nfr_framerate)
 INDEX_SEARCH(index_of_trigger_mode,dc1394trigger_mode_t,N_NAMED_TRIGGER_MODES,all_trigger_modes,ntm_mode)
 
 
-const char *name_for_video_mode(dc1394video_mode_t mode)
+static const char *name_for_video_mode(dc1394video_mode_t mode)
 {
 	int i;
 
@@ -506,7 +493,7 @@ const char *name_for_video_mode(dc1394video_mode_t mode)
 	return(NULL);
 }
 
-const char *name_for_framerate(dc1394framerate_t rate)
+static const char *name_for_framerate(dc1394framerate_t rate)
 {
 	int i;
 
@@ -526,7 +513,7 @@ const char *name_for_trigger_mode(dc1394trigger_mode_t mode)
 	return(NULL);
 }
 
-int list_video_modes(PGR_Cam *pgcp)
+int list_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	dc1394video_modes_t	video_modes;
 	const char *s;
@@ -549,31 +536,26 @@ int list_video_modes(PGR_Cam *pgcp)
 	return 0;
 }
 
-#define BAD_VIDEO_MODE ((dc1394video_mode_t)-1)
-
 dc1394video_mode_t pick_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 {
-	unsigned int i;
+	int i;
 	int j,k;
-	dc1394video_modes_t	video_modes;
 	const char **choices;
 	dc1394video_mode_t *	modelist;
 	dc1394video_mode_t	m;
 
 	if( pgcp == NULL ) return BAD_VIDEO_MODE;
 
-	if ( dc1394_video_get_supported_modes( pgcp->pc_cam_p, &video_modes ) != DC1394_SUCCESS )
-		return BAD_VIDEO_MODE;
-
-	choices = (const char **)getbuf( video_modes.num * sizeof(char *) );
+	choices = (const char **)getbuf( pgcp->pc_video_modes.num * sizeof(char *) );
 	modelist = (dc1394video_mode_t *)
-		getbuf( video_modes.num * sizeof(dc1394video_mode_t) );
+		getbuf( pgcp->pc_video_modes.num * sizeof(dc1394video_mode_t) );
 	j=0;
-	for(i=0;i<video_modes.num;i++){
-		k=index_of_video_mode(video_modes.modes[i]);	/* get index into our table... */
-								/* could probably get this by subtraction if
-								 * our table is in the correct order...
-								 */
+	for(i=0;i<pgcp->pc_video_modes.num;i++){
+		/* get index into our table... */
+		/* could probably get this by subtraction if
+		 * our table is in the correct order...
+		 */
+		k=index_of_video_mode(pgcp->pc_video_modes.modes[i]);
 		if( k >= 0 ){
 			choices[j] = all_video_modes[k].nvm_name;
 			modelist[j] = all_video_modes[k].nvm_mode;
@@ -591,9 +573,130 @@ dc1394video_mode_t pick_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 	return(m);
 }
 
+int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
+{
+	// Could check format of object here...
+	// Should be string table with enough entries to hold the modes
+	// Should the strings be rows or multidim pixels?
+	List *lp;
+	Node *np;
+	PGR_Cam *pgcp;
+	int i, n;
+
+	lp = pgc_list(SINGLE_QSP_ARG);
+	if( lp == NO_LIST ){
+		WARN("No cameras!?");
+		return 0;
+	}
+
+	n=eltcount(lp);
+	if( OBJ_COLS(str_dp) < n ){
+		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d camera names",
+			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),n);
+		WARN(ERROR_STRING);
+		n = OBJ_COLS(str_dp);
+	}
+		
+	np=QLIST_HEAD(lp);
+	i=0;
+	while(np!=NO_NODE){
+		char *dst;
+		pgcp = (PGR_Cam *) NODE_DATA(np);
+		dst = OBJ_DATA_PTR(str_dp);
+		dst += i * OBJ_PXL_INC(str_dp);
+		if( strlen(pgcp->pc_name)+1 > OBJ_COMPS(str_dp) ){
+			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold camera name \"%s\"",
+				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),pgcp->pc_name);
+			WARN(ERROR_STRING);
+		} else {
+			strcpy(dst,pgcp->pc_name);
+		}
+		i++;
+		if( i>=n )
+			np=NO_NODE;
+		else
+			np = NODE_NEXT(np);
+	}
+
+	return i;
+}
+
+int get_video_mode_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
+{
+	// Could check format of object here...
+	// Should be string table with enough entries to hold the modes
+	// Should the strings be rows or multidim pixels?
+
+	int i, n;
+
+	if( OBJ_COLS(str_dp) < pgcp->pc_video_modes.num ){
+		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d modes",
+			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),pgcp->pc_video_modes.num);
+		WARN(ERROR_STRING);
+		n = OBJ_COLS(str_dp);
+	} else {
+		n=pgcp->pc_video_modes.num;
+	}
+		
+	for(i=0;i<n;i++){
+		int k;
+		const char *src;
+		char *dst;
+
+		k=index_of_video_mode(pgcp->pc_video_modes.modes[i]);
+		src = all_video_modes[k].nvm_name;
+		dst = OBJ_DATA_PTR(str_dp);
+		dst += i * OBJ_PXL_INC(str_dp);
+		if( strlen(src)+1 > OBJ_COMPS(str_dp) ){
+			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold mode string \"%s\"",
+				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),src);
+			WARN(ERROR_STRING);
+		} else {
+			strcpy(dst,src);
+		}
+	}
+	set_script_var_from_int(QSP_ARG  "n_video_modes",n);
+	return n;
+}
+
+int get_framerate_strings( QSP_ARG_DECL  Data_Obj *str_dp, PGR_Cam *pgcp )
+{
+	// Could check format of object here...
+	// Should be string table with enough entries to hold the modes
+	// Should the strings be rows or multidim pixels?
+
+	int i, n;
+
+	if( OBJ_COLS(str_dp) < pgcp->pc_framerates.num ){
+		sprintf(ERROR_STRING,"String object %s has too few columns (%ld) to hold %d framerates",
+			OBJ_NAME(str_dp),(long)OBJ_COLS(str_dp),pgcp->pc_framerates.num);
+		WARN(ERROR_STRING);
+		n = OBJ_COLS(str_dp);
+	} else {
+		n=pgcp->pc_framerates.num;
+	}
+		
+	for(i=0;i<n;i++){
+		const char *src;
+		char *dst;
+
+		src = name_for_framerate(pgcp->pc_framerates.framerates[i]);
+		dst = OBJ_DATA_PTR(str_dp);
+		dst += i * OBJ_PXL_INC(str_dp);
+		if( strlen(src)+1 > OBJ_COMPS(str_dp) ){
+			sprintf(ERROR_STRING,"String object %s has too few components (%ld) to hold framerate string \"%s\"",
+				OBJ_NAME(str_dp),(long)OBJ_COMPS(str_dp),src);
+			WARN(ERROR_STRING);
+		} else {
+			strcpy(dst,src);
+		}
+	}
+	return n;
+}
+
 dc1394video_mode_t pick_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 {
-	unsigned int i;
+	int i;
 	int j,k;
 	dc1394video_modes_t	video_modes;
 	const char **choices;
@@ -631,11 +734,17 @@ dc1394video_mode_t pick_fmt7_mode(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 	return(m);
 }
 
-
+static int mode_is_format7( PGR_Cam *pgcp )
+{
+	if( pgcp->pc_video_mode >= DC1394_VIDEO_MODE_FORMAT7_MIN &&
+			pgcp->pc_video_mode <= DC1394_VIDEO_MODE_FORMAT7_MAX )
+		return 1;
+	return 0;
+}
 
 int pick_framerate(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 {
-	unsigned int i;
+	int i;
 	int j;
 	dc1394framerates_t	framerates;
 	const char **choices;
@@ -643,7 +752,15 @@ int pick_framerate(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 
 	if( pgcp == NULL ) return -1;
 
-	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_current_video_mode, &framerates )
+	// format7 doesn't have a framerate!?
+	if( mode_is_format7(pgcp) ){
+		WARN("Can't specify framerate for format7 video mode...");
+		// eat the argument
+		s = NAMEOF("dummy argument");
+		return -1;
+	}
+
+	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_video_mode, &framerates )
 			!= DC1394_SUCCESS )
 		return -1;
 
@@ -661,15 +778,73 @@ int pick_framerate(QSP_ARG_DECL  PGR_Cam *pgcp,const char *pmpt)
 	return(i);
 }
 
-int set_video_mode(PGR_Cam *pgcp, dc1394video_mode_t mode)
+static int set_default_framerate(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
+	int r;
+
+	// get highest framerate
+
+	// Hmm...  the avaialable framerates appear to depend on the video mode!
+	// Therefore, we should re-call this when we change the video mode!
+
+	// format7 doesn't have a framerate!?
+
+	// format7 doesn't have a framerate!?
+	if( mode_is_format7(pgcp) ){
+		//NWARN("set_default_framerate:  No framerate associated with format7 video mode!?");
+		pgcp->pc_framerate = -1;
+		set_script_var_from_int(QSP_ARG "n_framerates",0);
+		return 0;
+	}
+
+	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_video_mode, &(pgcp->pc_framerates) )
+			!= DC1394_SUCCESS ) {
+		NWARN("Can't get framerates");
+		return -1;
+	}
+
+	r = pgcp->pc_framerates.framerates[ pgcp->pc_framerates.num-1];
+	pgcp->pc_framerate = r;
+
+sprintf(ERROR_STRING,"set_default_framerate:  setting to %s", name_for_framerate(r));
+advise(ERROR_STRING);
+
+	dc1394_video_set_framerate( pgcp->pc_cam_p, pgcp->pc_framerate );
+	// BUG if this fails, then pc_framerate is wrong!?
+
+	// stash the number of framerates in a script variable
+	// in case the user wants to fetch the strings...
+	set_script_var_from_int(QSP_ARG
+			"n_framerates",pgcp->pc_framerates.num);
+
+	return 0;
+}
+
+int set_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394video_mode_t mode)
+{
+	dc1394framerate_t fr;
+
 	if( pgcp == NULL ) return -1;
 
 	if( dc1394_video_set_mode( pgcp->pc_cam_p, mode) != DC1394_SUCCESS ){
-		NWARN("unable to set video mode");
+		WARN("unable to set video mode");
 		return -1;
 	}
-	pgcp->pc_current_video_mode = mode;
+	pgcp->pc_video_mode = mode;
+
+	fr=pgcp->pc_framerate;
+	if( set_default_framerate(QSP_ARG  pgcp) < 0 ){
+		advise("Unable to set default framerate for new video mode");
+	} else {
+		if( fr != pgcp->pc_framerate ){
+			sprintf(ERROR_STRING,
+		"set_video_mode:  framerate changed from %s to %s",
+				name_for_framerate(fr),
+				name_for_framerate(pgcp->pc_framerate) );
+			advise(DEFAULT_ERROR_STRING);
+		}
+	}
+
 	return 0;
 }
 
@@ -684,17 +859,37 @@ int set_framerate(PGR_Cam *pgcp, int framerate_index)
 		NWARN("unable to set framerate");
 		return -1;
 	}
-	pgcp->pc_current_framerate = rate;
+	pgcp->pc_framerate = rate;
 	return 0;
 }
 
-int list_framerates(PGR_Cam *pgcp)
+void show_framerate(QSP_ARG_DECL  PGR_Cam *pgcp)
+{
+	sprintf(MSG_STR,"%s framerate:  %s",
+		pgcp->pc_name,name_for_framerate(pgcp->pc_framerate));
+	advise(MSG_STR);
+}
+
+void show_video_mode(QSP_ARG_DECL  PGR_Cam *pgcp)
+{
+	sprintf(MSG_STR,"%s video mode:  %s",
+		pgcp->pc_name,name_for_video_mode(pgcp->pc_video_mode));
+	advise(MSG_STR);
+}
+
+int list_framerates(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	unsigned int i;
 	dc1394framerates_t	framerates;
 	const char *s;
 
-	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_current_video_mode, &framerates )
+	// format7 doesn't have a framerate!?
+	if( mode_is_format7(pgcp) ){
+		WARN("list_framerates:  No framerates associated with format7 video mode!?");
+		return -1;
+	}
+
+	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_video_mode, &framerates )
 			!= DC1394_SUCCESS ){
 		NWARN("error fetching framerates");
 		return -1;
@@ -719,10 +914,9 @@ int list_framerates(PGR_Cam *pgcp)
 	return 0;
 }
 
-int get_video_mode(PGR_Cam *pgcp)
+static int set_default_video_mode(PGR_Cam *pgcp)
 {
 	dc1394camera_t*	cam_p;
-	dc1394video_modes_t	video_modes;
 	dc1394video_mode_t	video_mode;
 	int i;
 
@@ -731,12 +925,15 @@ int get_video_mode(PGR_Cam *pgcp)
 	//  get the best video mode and highest framerate. This can be skipped
 	//  if you already know which mode/framerate you want...
 	// get video modes:
-	if ( dc1394_video_get_supported_modes( cam_p, &video_modes ) != DC1394_SUCCESS )
+
+	if( dc1394_video_get_supported_modes( cam_p, &pgcp->pc_video_modes )
+						!= DC1394_SUCCESS ){
 		return -1;
+	}
 
 	// select highest res mode that is greyscale (MONO8)
 	/*
-	printf( "Searching for the highest resolution MONO8 mode available (of %d modes)...\n",
+	printf("Searching for the highest resolution MONO8 mode available (of %d modes)...\n",
 		video_modes.num);
 		*/
 
@@ -747,189 +944,376 @@ int get_video_mode(PGR_Cam *pgcp)
 
 	video_mode = BAD_VIDEO_MODE;
 
-	for ( i = video_modes.num-1; i >= 0; i-- ) {
+//fprintf(stderr,"Checking %d video modes...\n",pgcp->pc_video_modes.num);
+	for ( i = pgcp->pc_video_modes.num-1; i >= 0; i-- ) {
 		// don't consider FORMAT 7 modes (i.e. "scalable")
-		if ( !dc1394_is_video_mode_scalable( video_modes.modes[i] ) ) {
-			dc1394_get_color_coding_from_video_mode( cam_p, video_modes.modes[i],
-									&coding );
+		if ( !dc1394_is_video_mode_scalable( pgcp->pc_video_modes.modes[i] ) ) {
+			dc1394_get_color_coding_from_video_mode( cam_p,
+				pgcp->pc_video_modes.modes[i], &coding );
+//fprintf(stderr,"Checking non-scalable mode %d\n",pgcp->pc_video_modes.modes[i]);
 			if ( coding == DC1394_COLOR_CODING_MONO8 ) {
-				video_mode = video_modes.modes[i];
+				video_mode = pgcp->pc_video_modes.modes[i];
+				break;
+			}
+		} else {
+//fprintf(stderr,"Not checking scalable mode %d\n",pgcp->pc_video_modes.modes[i]);
+		}
+	}
+	if( video_mode == BAD_VIDEO_MODE ){	// only scalable modes?
+		for ( i = pgcp->pc_video_modes.num-1; i >= 0; i-- ) {
+			dc1394_get_color_coding_from_video_mode( cam_p, 
+				pgcp->pc_video_modes.modes[i], &coding );
+			if( coding == DC1394_COLOR_CODING_MONO8  ||
+					coding == DC1394_COLOR_CODING_RAW8 ) {
+				video_mode = pgcp->pc_video_modes.modes[i];
 				break;
 			}
 		}
 	}
+
 #ifdef CAUTIOUS
 	if( video_mode == BAD_VIDEO_MODE )
-		NERROR1("CAUTIOUS:  get_video_mode:  unable to find a video mode!?");
+		NERROR1("CAUTIOUS:  set_default_video_mode:  unable to find an 8-bit video mode!?");
 #endif /* CAUTIOUS */
 
+#ifdef FOOBAR
 	// double check that we found a video mode  that is MONO8
 	dc1394_get_color_coding_from_video_mode( cam_p, video_mode, &coding );
 	if ( ( dc1394_is_video_mode_scalable( video_mode ) ) ||
-			( coding != DC1394_COLOR_CODING_MONO8 ) ) {
+			( coding != DC1394_COLOR_CODING_MONO8 &&
+			  coding != DC1394_COLOR_CODING_RAW8 ) ) {
 		NWARN("Could not get a valid MONO8 mode" );
 		return -1;
 	}
+#endif // FOOBAR
 
 	dc1394_video_set_mode( pgcp->pc_cam_p, video_mode );
-	pgcp->pc_current_video_mode = video_mode;
+	pgcp->pc_video_mode = video_mode;
+
 	return 0;
 }
 
-int get_framerate(PGR_Cam *pgcp)
+static void fix_string( char *s )
 {
-	// get highest framerate
-	dc1394framerates_t	framerates;
-	dc1394framerate_t	framerate;
-
-	if ( dc1394_video_get_supported_framerates( pgcp->pc_cam_p, pgcp->pc_current_video_mode, &framerates )
-			!= DC1394_SUCCESS ) {
-		NWARN("Can't get framerates");
-		return -1;
+	while( *s ){
+		if( *s == ' ' ) *s='_';
+		// other chars to map also?
+		s++;
 	}
-	//printf("%d frame rates to choose from...\n",framerates.num);
-
-	framerate = framerates.framerates[ framerates.num-1];
-
-	dc1394_video_set_framerate( pgcp->pc_cam_p, framerate );
-//printf("video mode and framerate set...\n");
-
-	pgcp->pc_current_framerate = framerate;
-
-	return 0;
 }
 
-PGR_Cam * init_firewire_system()
+static PGR_Cam *unique_camera_instance( QSP_ARG_DECL  dc1394camera_t *cam_p )
 {
-	dc1394camera_t*	cam_p;
-	int			err;
+	int i;
+	char cname[80];	// How many chars is enough?
 	PGR_Cam *pgcp;
 
+	i=1;
+	pgcp=NULL;
+	while(pgcp==NULL){
+		sprintf(cname,"%s_%d",cam_p->model,i);
+		fix_string(cname);	// change spaces to underscores
+		pgcp = pgc_of( QSP_ARG  cname );
+		if( pgcp == NULL ){	// This index is free
+			pgcp = new_pgc( QSP_ARG  cname );
+			if( pgcp == NULL ){
+				sprintf(ERROR_STRING,
+			"Failed to create camera %s!?",cname);
+				ERROR1(ERROR_STRING);
+			}
+		} else {
+			pgcp = NULL;
+		}
+		i++;
+		if( i>=5 ){
+			ERROR1("Too many cameras!?"); 
+		}
+	}
+	return pgcp;
+}
+
+static PGR_Cam *setup_my_camera( QSP_ARG_DECL  dc1394camera_t * cam_p )
+{
+	PGR_Cam *pgcp;
+
+	// We could have multiple instances of the same model...
+	pgcp = unique_camera_instance(QSP_ARG  cam_p);
+
+	pgcp->pc_cam_p = cam_p;
+	pgcp->pc_feat_lp=NO_LIST;
+	pgcp->pc_in_use_lp=NO_LIST;
+	pgcp->pc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
+
+	if( set_default_video_mode(pgcp) < 0 ){
+		WARN("error setting default video mode");
+		cleanup_cam( pgcp );
+		return(NULL);
+	}
+
+	/* used to set B-mode stuff here... */
+	// What if the camera is a usb cam???
+	dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
+
+	if( set_default_framerate(QSP_ARG  pgcp) < 0 ){
+		// This happens for format7...
+		//NWARN("error setting default framerate");
+		//cleanup_cam( pgcp );
+		//return(NULL);
+	}
+
+	dc1394_get_image_size_from_video_mode( pgcp->pc_cam_p,
+					pgcp->pc_video_mode,
+					&pgcp->pc_nCols,
+					&pgcp->pc_nRows );
+	get_camera_features(pgcp);
+
+	/* We need to poll if we have multiple cameras with different frame rates */
+	pgcp->pc_policy = DC1394_CAPTURE_POLICY_POLL;	// or WAIT ...
+	//pgcp->pc_policy = DC1394_CAPTURE_POLICY_WAIT;	// or POLL ...
+
+	// Make a data_obj context for the frames...
+	pgcp->pc_do_icp = create_dobj_context( QSP_ARG  pgcp->pc_name );
+
+	return(pgcp);
+}
+
+void pop_camera_context(SINGLE_QSP_ARG_DECL)
+{
+	// pop old context...
+	Item_Context *icp;
+	icp=pop_dobj_context(SINGLE_QSP_ARG);
+#ifdef CAUTIOUS
+	if( icp == NO_ITEM_CONTEXT ){
+		ERROR1("CAUTIOUS:  pop_camera_context popped a null dobj context!?");
+	}
+#endif // CAUTIOUS
+}
+
+void push_camera_context(QSP_ARG_DECL  PGR_Cam *pgcp)
+{
+	push_dobj_context(QSP_ARG  pgcp->pc_do_icp);
+}
+
+int init_firewire_system(SINGLE_QSP_ARG_DECL)
+{
+	dc1394camera_t*	cam_p;
+	int err;
+	PGR_Cam *pgcp;
+	int i,n_good_cameras;
+	static int firewire_system_inited=0;
+
+	if( firewire_system_inited ){
+		WARN("Firewire system has already been initialized!?");
+		return -1;
+	}
+	firewire_system_inited=1;
+
 	// Find cameras on the 1394 buses
-	/*
-	uint32_t		nCameras;
-	dc1394camera_t**	cameras=NULL;
-	*/
 	dc1394_t *		firewire_context;
 	dc1394camera_list_t *	camera_list_p;
 
-	/*
-	err = dc1394_find_cameras( &cameras, &nCameras );
-	*/
 	firewire_context = dc1394_new();
 	/* BUG check for error */
 	err=dc1394_camera_enumerate(firewire_context,&camera_list_p);
 
 	if ( err != DC1394_SUCCESS ) {
-		sprintf( DEFAULT_ERROR_STRING, "Unable to look for cameras\n\n"
+		sprintf( ERROR_STRING, "Unable to look for cameras\n\n"
 			"Please check \n"
 			"  - if the kernel modules `ieee1394',`raw1394' and `ohci1394' are loaded \n"
 			"  - if you have read/write access to /dev/raw1394\n\n");
-		NWARN(DEFAULT_ERROR_STRING);
-		return(NULL);
+		WARN(ERROR_STRING);
+		return -1;
 	}
 
 	//  get the camera nodes and describe them as we find them
 	if( camera_list_p == NULL ){
 		NWARN("dc1394_camera_enumerate returned a null list pointer...");
-		return(NULL);
+		return -1;
 	}
 	if ( camera_list_p->num < 1 ) {
-		sprintf( DEFAULT_ERROR_STRING, "No cameras found!\n");
+		sprintf( ERROR_STRING, "No cameras found!");
+		WARN(ERROR_STRING);
+		advise("Check permissions on /dev/fw? ...");
+		return -1;
+	}
+
+	sprintf(ERROR_STRING,
+		"%d camera%s found.", camera_list_p->num, camera_list_p->num==1?"":"s" );
+	advise(ERROR_STRING);
+
+	// Why not initialize all the cameras???
+
+	n_good_cameras=0;
+	for(i=0;i<camera_list_p->num;i++){
+		cam_p = dc1394_camera_new( firewire_context, camera_list_p->ids[i].guid );
+		if( cam_p == NULL ){
+			sprintf(ERROR_STRING,"dc1394_camera_new failed...");
+			WARN(ERROR_STRING);
+		} else {
+			pgcp = setup_my_camera(QSP_ARG  cam_p);
+			n_good_cameras ++;
+			sprintf(ERROR_STRING,
+				"%s set up...", pgcp->pc_cam_p->model );
+			advise(ERROR_STRING);
+		}
+	}
+
+	set_script_var_from_int(QSP_ARG  "n_cameras",
+				/*camera_list_p->num*/ n_good_cameras);
+
+	// BUG make this a reserved var
+
+	// Set camera name in a script variable here...
+	//ASSIGN_VAR("camera_model",pgcp->pc_cam_p->model);
+	//return pgcp;
+
+	return 0;
+}
+
+static Data_Obj *make_1394frame_obj(QSP_ARG_DECL  dc1394video_frame_t *framep)
+{
+	Dimension_Set dimset;
+	Data_Obj *dp;
+	char fname[32];
+
+	sprintf(fname,"_frame%d",framep->id);
+
+	dimset.ds_dimension[0] = 1;	/* 1 or two depending on video mode (8 or 16) */
+	dimset.ds_dimension[1] = framep->size[0];
+	dimset.ds_dimension[2] = framep->size[1];
+	dimset.ds_dimension[3] = 1;
+	dimset.ds_dimension[4] = 1;
+
+	dp = _make_dp(QSP_ARG  fname,&dimset,PREC_FOR_CODE(PREC_UBY));
+
+	/* Do we need to test for a good return value??? */
+	/* Only one buffer?  where do we specify the index? BUG */
+	SET_OBJ_DATA_PTR(dp, framep->image);
+if( verbose )
+fprintf(stderr,"Object %s, data ptr set to 0x%lx\n",OBJ_NAME(dp),(long)OBJ_DATA_PTR(dp));
+
+	if( framep->total_bytes != framep->image_bytes ){
+		sprintf(DEFAULT_ERROR_STRING,"image may be padded...");
 		NWARN(DEFAULT_ERROR_STRING);
-		return(NULL);
-	}
-	if( camera_list_p->num > 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
-			"%d cameras found, using first...\n", camera_list_p->num );
-		NWARN(DEFAULT_ERROR_STRING);
-#ifdef FOOBAR
-		// free the other cameras
-		for( i = 1; i < camera_list_p->num; i++ )
-			/*dc1394_free_camera */
-			dc1394_camera_free( camera_list_p->ids[i] );
-#endif /* FOOBAR */
 	}
 
-	cam_p = dc1394_camera_new( firewire_context, camera_list_p->ids[0].guid );
+	return(dp);
+}
 
-	//free(cameras);
+static void init_buffer_objects(QSP_ARG_DECL  PGR_Cam * pgcp )
+{
+	int i;
+	dc1394video_frame_t *framep;
+	char fname[TMPSIZE];
+	Data_Obj *dp;
 
-	pgcp = &pgc1;
-	pgcp->pc_cam_p = cam_p;
-	pgcp->pc_feat_lp=NO_LIST;
-	pgcp->pc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
+sprintf(ERROR_STRING,"Initializing %d buffer objects...",
+pgcp->pc_ring_buffer_size);
+advise(ERROR_STRING);
 
-	if( get_video_mode(pgcp) < 0 ){
-		NWARN("error getting video mode");
-		cleanup1394( cam_p );
-		return(NULL);
+	// Cycle once through the ring buffer,
+	// making a data object for each frame
+	for(i=0;i<pgcp->pc_ring_buffer_size;i++){
+		if ( dc1394_capture_dequeue( pgcp->pc_cam_p, 
+			DC1394_CAPTURE_POLICY_WAIT, &framep )
+			!= DC1394_SUCCESS) {
+	ERROR1("init_buffer_objects:  error in dc1394_capture_dequeue!?" );
+		}
+		snprintf(fname,TMPSIZE,"_frame%d",framep->id);
+#ifdef CAUTIOUS
+		if( i != framep->id ){
+			sprintf(ERROR_STRING,
+	"init_buffer_objects:  frame id = %d, expected %d!?",framep->id,i);
+			WARN(ERROR_STRING);
+		}
+#endif // CAUTIOUS
+		dp = make_1394frame_obj(QSP_ARG  framep);
+		if( dc1394_capture_enqueue(pgcp->pc_cam_p,framep)
+				!= DC1394_SUCCESS ){
+			ERROR1("init_buffer_objects:  error enqueueing frame!?");
+		}
+		// Here we might store dp in a table...
 	}
-
-	/* used to set B-mode stuff here... */
-	dc1394_video_set_iso_speed( cam_p, DC1394_ISO_SPEED_400 );
-
-	if( get_framerate(pgcp) < 0 ){
-		NWARN("error getting framerate");
-		cleanup1394( cam_p );
-		return(NULL);
-	}
-
-	dc1394_get_image_size_from_video_mode( pgcp->pc_cam_p,
-					pgcp->pc_current_video_mode,
-					&pgcp->pc_nCols,
-					&pgcp->pc_nRows );
-	get_camera_features(pgcp);
-
-	return(pgcp);
+advise("Done setting up buffer objects.");
 }
 
 int start_firewire_transmission(QSP_ARG_DECL  PGR_Cam * pgcp, int _ring_buffer_size )
 {
 	int i;
+	dc1394error_t err;
+	Data_Obj *dp;
 
-	ring_buffer_size = _ring_buffer_size;
-
+//advise("start_firewire_transmission BEGIN");
 	/* older version had third flags arg... */
-advise("calling dc1394_capture_setup");
-	if( dc1394_capture_setup(pgcp->pc_cam_p,ring_buffer_size ,DC1394_CAPTURE_FLAGS_DEFAULT )
+//advise("calling dc1394_capture_setup");
+	if( (err=dc1394_capture_setup(pgcp->pc_cam_p,_ring_buffer_size ,DC1394_CAPTURE_FLAGS_DEFAULT ))
 		!= DC1394_SUCCESS ) {
+
+		WARN("dc1394_capture_setup failed!?");
+		describe_dc1394_error( QSP_ARG  err );
+
+		if( err == DC1394_IOCTL_FAILURE ){
+			advise("Try decreasing the number of ring buffer frames requested?");
+			return -1;
+		}
 
 		fprintf( stderr,"unable to setup camera-\n"
 			"check line %d of %s to make sure\n"
 			"that the video mode and framerate are\n"
 			"supported by your camera\n",
 			__LINE__,__FILE__ );
+
+		/*
 		fprintf( stderr,
 			"video_mode = %d, framerate = %d\n"
 			"Check dc1394_control.h for the meanings of these values\n",
-			pgcp->pc_current_video_mode, pgcp->pc_current_framerate );
+			pgcp->pc_video_mode, pgcp->pc_framerate );
+			*/
+		fprintf( stderr,
+			"video_mode = %s (%d), framerate = %s (%d)\n",
+			name_for_video_mode(pgcp->pc_video_mode),
+			pgcp->pc_video_mode,
+			name_for_framerate(pgcp->pc_framerate),
+			pgcp->pc_framerate );
 
 		NERROR1("error starting capture");
 
 		return(-1);
 	}
-	capturing=1;
 
+	pgcp->pc_ring_buffer_size = _ring_buffer_size;
+	pgcp->pc_n_avail = _ring_buffer_size;
+
+	pgcp->pc_flags |= PGR_CAM_IS_CAPTURING;
+
+#ifdef FOOBAR	// we set this in the script already!?
 	sprintf(msg_str,"%d",ring_buffer_size);		/* tell the scripting language */
 	ASSIGN_VAR("ring_buffer_size",msg_str);
+#endif // FOOBAR
 
 	// have the camera start sending us data
-advise("calling dc1394_video_set_transmission");
-	if ( dc1394_video_set_transmission( pgcp->pc_cam_p, DC1394_ON ) != DC1394_SUCCESS ) {
-		sprintf(DEFAULT_ERROR_STRING,"Unable to start camera iso transmission" );
-		NWARN(DEFAULT_ERROR_STRING);
+//advise("calling dc1394_video_set_transmission");
+	if( (err=dc1394_video_set_transmission( pgcp->pc_cam_p, DC1394_ON ))
+			!= DC1394_SUCCESS ) {
+		WARN("Unable to start camera iso transmission");
+		describe_dc1394_error( QSP_ARG  err );
+
+		// do we need to undo capture_setup?
+		dc1394_capture_stop( pgcp->pc_cam_p );
+		pgcp->pc_flags &= ~PGR_CAM_IS_CAPTURING;
+
 		return(-1);
 	}
-	transmitting=1;
+	pgcp->pc_flags |= PGR_CAM_IS_TRANSMITTING;
 
 	//  Sleep untill the camera has a transmission
 	dc1394switch_t status = DC1394_OFF;
 
 	for ( i = 0; i <= 5; i++ ) {
 		usleep(50000);
-advise("calling dc1394_video_get_transmission");
-		if ( dc1394_video_get_transmission( pgcp->pc_cam_p, &status ) != DC1394_SUCCESS ) {
+//advise("calling dc1394_video_get_transmission");
+		if ( dc1394_video_get_transmission( pgcp->pc_cam_p, &status )
+				!= DC1394_SUCCESS ) {
 			fprintf( stderr, "Unable to get transmision status\n" );
 			return(-1);
 		}
@@ -941,139 +1325,197 @@ advise("calling dc1394_video_get_transmission");
 			return(-1);
 		}
 	}
+//advise("start_firewire_transmission DONE");
+
+	// Now make sure that we have the frame objects...
+	dp = dobj_of(QSP_ARG  "_frame1");
+	if( dp == NO_OBJ ) init_buffer_objects(QSP_ARG  pgcp);
+
 	return(0);
 }
 
-PGR_Frame *make_1394frame_obj(QSP_ARG_DECL  dc1394video_frame_t *framep)
+static int ready_to_grab( QSP_ARG_DECL  PGR_Cam *pgcp )
 {
-	Dimension_Set dimset;
+	if( pgcp->pc_n_avail <= 0 ){
+		WARN("grab_firewire_frame:  no available frames");
+		advise("Need to release frames before grabbing.");
+		return 0;
+	}
+	return 1;
+}
+
+static Data_Obj *dobj_for_frame(QSP_ARG_DECL  dc1394video_frame_t *framep)
+{
 	Data_Obj *dp;
 	char fname[32];
-	PGR_Frame *pfp;
 
+	// For speed, we could keep a table of the dobj's associated with the camera.  BUG
 	sprintf(fname,"_frame%d",framep->id);
-	pfp = new_pfrm(QSP_ARG  fname);
-	if( pfp == NO_PGR_FRAME ){
-		NWARN("make_1394frame_obj:  unable to create frame object");
-		return(NO_PGR_FRAME);
-	}
-	pfp->pf_framep = framep;
-
-
-	dimset.ds_dimension[0] = 1;	/* 1 or two depending on video mode (8 or 16) */
-	dimset.ds_dimension[1] = framep->size[0];
-	dimset.ds_dimension[2] = framep->size[1];
-	dimset.ds_dimension[3] = 1;
-	dimset.ds_dimension[4] = 1;
-
-	dp = _make_dp(QSP_ARG  fname,&dimset,PREC_UBY);
-
-	/* Do we need to test for a good return value??? */
-	/* Only one buffer?  where do we specify the index? BUG */
-	dp->dt_data = framep->image;
-
-	pfp->pf_dp = dp;
-
-	if( framep->total_bytes != framep->image_bytes ){
-		sprintf(DEFAULT_ERROR_STRING,"image may be padded...");
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-
-	return(pfp);
+	dp = get_obj(QSP_ARG  fname);
+	return dp;
 }
 
-static int serial=1;
-
-PGR_Frame * grab_newest_firewire_frame( QSP_ARG_DECL  PGR_Cam * pgcp )
+static void note_frame_usage(PGR_Cam *pgcp, dc1394video_frame_t *framep)
 {
-	PGR_Frame *pfp;
-	int i=0;
-
-	do {
-		if( (pfp=grab_firewire_frame(QSP_ARG  pgcp)) == NULL ){
-			NWARN("grab_newest_firewire_frame:  error grabbing single frame");
-			return(NULL);
-		}
-		/* now release up to newest... */
-		if( pfp->pf_framep->frames_behind > 0 ){
-			release_oldest_frame(pgcp);
-			/* will that change frames_behind??? only "grabbing" should... */
-			i++;
-		}
-	} while( pfp->pf_framep->frames_behind > 0 );
-
-	if( verbose && i > 0 ){
-		sprintf(msg_str,"F %d   newest = %d, %d frames dropped",serial++,pfp->pf_framep->id,i);
-		prt_msg(msg_str);
-	}
-	return(pfp);
-}
-
-
-PGR_Frame * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
-{
-	dc1394video_frame_t *framep;
-	dc1394capture_policy_t policy=DC1394_CAPTURE_POLICY_WAIT;
-	char fname[32];
-	PGR_Frame *pfp;
 	Node *np;
 
-	if ( dc1394_capture_dequeue( pgcp->pc_cam_p, policy, &framep ) != DC1394_SUCCESS) {
+	np=mk_node(framep);
+	if( pgcp->pc_in_use_lp == NO_LIST )
+		pgcp->pc_in_use_lp = new_list();
+
+	addHead(pgcp->pc_in_use_lp,np);
+}
+
+Data_Obj * grab_newest_firewire_frame( QSP_ARG_DECL  PGR_Cam * pgcp )
+{
+	dc1394video_frame_t *framep, *prev_framep=NULL;
+	//int i=0;
+	int n_dequeued=0;
+
+	if( ! ready_to_grab( QSP_ARG  pgcp ) )
+		return NULL;
+
+	// We might want to release all of the frames we have now, in case we
+	// need to automatically release any that we grab in the meantime,
+	// so that we release in order...
+
+	// We get the newest by dequeueing in POLL mode, until we come up empty.
+	// If we have at least one frame at that time, then that's the frame.
+	// If we don't have any, then we WAIT.  If at any time we have
+	// more than 1, then we release the older.
+
+	while( 1 ){
+		if ( dc1394_capture_dequeue( pgcp->pc_cam_p, DC1394_CAPTURE_POLICY_POLL,
+				&framep ) != DC1394_SUCCESS) {
+			fprintf( stderr, "Unable to capture a frame\n" );
+			return(NULL);
+		}
+		if( framep == NULL ){	// No frame to fetch?
+			if( n_dequeued > 0 ){	// already have something?
+				// The last one is the newest!
+				sprintf(msg_str,"%d",prev_framep->id);
+				ASSIGN_VAR("newest",msg_str);
+				note_frame_usage(pgcp,prev_framep);
+				return dobj_for_frame(QSP_ARG  prev_framep);
+			} else {		// No frames yet...
+				// We don't want to call the WAIT version here, because
+				// we might have multiple cameras...
+				return NO_OBJ;
+			}
+		} else {	// We have a new frame
+			if( prev_framep != NULL ){	// already have one?
+				if( dc1394_capture_enqueue(pgcp->pc_cam_p,prev_framep)
+						!= DC1394_SUCCESS ){
+					WARN("error enqueueing frame");
+				}
+			} else {
+				// This counts the frame we dequeued.
+				// We don't bother if we just enqueued
+				// the previous one.
+				pgcp->pc_n_avail--;
+			}
+			prev_framep = framep;
+			n_dequeued++;
+		}
+	}
+	// NOTREACHED
+}
+
+Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
+{
+	dc1394video_frame_t *framep;
+	//dc1394capture_policy_t policy=DC1394_CAPTURE_POLICY_WAIT;
+	Data_Obj *dp;
+	char fname[TMPSIZE];
+
+	// Before attempting to dequeue, make sure that we have at least one
+	// available...  The library seems to hang if we keep
+	// grabbing without releasing.
+
+	if( ! ready_to_grab(QSP_ARG  pgcp) )
+		return NULL;
+
+	/* POLICY_WAIT waits for the next frame...
+	 * POLICY_POLL returns right away if there is no frame available.
+	 */
+	if ( dc1394_capture_dequeue( pgcp->pc_cam_p, 
+		pgcp->pc_policy, &framep ) != DC1394_SUCCESS) {
 		fprintf( stderr, "Unable to capture a frame\n" );
 		return(NULL);
 	}
+	if( framep == NULL ){
+		if( pgcp->pc_policy != DC1394_CAPTURE_POLICY_POLL )
+			WARN("dc1394_capture_dequeue returned a null frame.");
+		return NULL;
+	}
 
-	/* Now, we might want to determine if this is the newest available frame,
-	 * and what policy we want to enforce if it is not...
-	 */
+	pgcp->pc_n_avail--;
 
-	sprintf(fname,"_frame%d",framep->id);
-	pfp = pfrm_of(QSP_ARG  fname);
-	if( pfp == NO_PGR_FRAME )
-		pfp = make_1394frame_obj(QSP_ARG  framep);
-
-	if( pfp == NO_PGR_FRAME ){
-		NWARN("unable to create frame object");
+	//sprintf(fname,"_frame%d",framep->id);
+	snprintf(fname,TMPSIZE,"_frame%d",framep->id);
+	dp = get_obj(QSP_ARG  fname);
+	if( dp == NO_OBJ ){
+		NWARN("grab_firewire_frame:  unable to create frame object");
 		return(NULL);
 	}
 
-	pfp->pf_framep = framep;	/* redundant only if make_1394frame_obj was called */
-					/* in the other case, the pointer is likely to be unchanged,
-					 * but we don't assume...
-					 * We *do* assume that the old size is still ok.
-					 */
+#ifdef CAUTIOUS
+	if( OBJ_DATA_PTR(dp) != framep->image ){
+		sprintf(DEFAULT_ERROR_STRING,
+	"grab_firewire_frame:  image data at 0x%lx, but expected 0x%lx!?",
+			(long)framep->image,(long)OBJ_DATA_PTR(dp));
+		NWARN(DEFAULT_ERROR_STRING);
+		SET_OBJ_DATA_PTR(dp, framep->image);
+	}
+#endif // CAUTIOUS
 
-	np=mk_node(pfp);
-	if( in_use_lp == NO_LIST )
-		in_use_lp = new_list();
+	/* in the other case, the pointer is likely to be unchanged,
+	 * but we don't assume...
+	 * We *do* assume that the old size is still ok.
+	 */
 
-	addHead(in_use_lp,np);
-
-	return(pfp);
-}
+	note_frame_usage(pgcp,framep);
+	return(dp);
+} // end grab_firewire_frame
 
 void release_oldest_frame(PGR_Cam *pgcp)
 {
 	Node *np;
-	PGR_Frame *pfrm_p;
+	dc1394video_frame_t *framep;
 
-	if( in_use_lp == NO_LIST ){
+	// Only can do this if the camera is running...
+	if( (pgcp->pc_flags & PGR_CAM_IS_RUNNING) == 0 ){
+		NWARN("release_oldest_frame:  camera is not running!?");
+		return;
+	}
+
+	if( pgcp->pc_n_avail == pgcp->pc_ring_buffer_size ){
+		NWARN("release_oldest_frame:  no frames are currently dequeued");
+		return;
+	}
+
+	if( pgcp->pc_in_use_lp == NO_LIST ){
 		NWARN("release_oldest_frame:  no frames have been grabbed");
 		return;
 	}
 
-	np = remTail(in_use_lp);
+	np = remTail(pgcp->pc_in_use_lp);
+
+#ifdef CAUTIOUS
+	// This is CAUTIOUS because of the pc_n_avail test above...
 	if( np == NO_NODE ){
 		NWARN("release_oldest_frame:  no frames are currently dequeued");
 		return;
 	}
-	pfrm_p = (PGR_Frame *) np->n_data;
+#endif // CAUTIOUS
 
-	if( dc1394_capture_enqueue(pgcp->pc_cam_p,pfrm_p->pf_framep)
+	framep = (dc1394video_frame_t *) np->n_data;
+
+	if( dc1394_capture_enqueue(pgcp->pc_cam_p,framep)
 		!= DC1394_SUCCESS ){
 		NWARN("error enqueueing frame");
 	}
-	/* BUG free object too?? */
+	pgcp->pc_n_avail++;
 }
 
 int stop_firewire_capture( PGR_Cam * pgcp )
@@ -1082,7 +1524,7 @@ int stop_firewire_capture( PGR_Cam * pgcp )
 	 * or the iso bandwidth will not be freed - jbm.
 	 */
 
-	if( ! transmitting ){
+	if( ! IS_TRANSMITTING(pgcp) ){
 		/* CAUTIOUS? */
 		NWARN("stop_firewire_capture:  not transmitting!?");
 		return(-1);
@@ -1092,15 +1534,15 @@ int stop_firewire_capture( PGR_Cam * pgcp )
 			NWARN("stop_firewire_capture:  Couldn't stop transmission!?");
 			return(-1);
 		}
-		transmitting=0;
+		pgcp->pc_flags &= ~PGR_CAM_IS_TRANSMITTING;
 	}
 
-	if( ! capturing ){
+	if( ! IS_CAPTURING(pgcp) ){
 		NWARN("stop_firewire_capture:  not capturing!?");
 		return(-1);
 	} else {
 		dc1394_capture_stop( pgcp->pc_cam_p );
-		capturing = 0;
+		pgcp->pc_flags &= ~PGR_CAM_IS_CAPTURING;
 	}
 
 	/* why free the camera here? */
@@ -1125,7 +1567,7 @@ int reset_camera(PGR_Cam *pgcp)
 }
 
 
-void list_trig(PGR_Cam *pgcp)
+void list_trig(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	dc1394bool_t has_p;
 	dc1394trigger_mode_t tm;
@@ -1169,7 +1611,7 @@ void list_trig(PGR_Cam *pgcp)
 	}
 }
 
-void report_bandwidth( PGR_Cam *pgcp )
+void report_bandwidth(QSP_ARG_DECL  PGR_Cam *pgcp )
 {
 	unsigned int bw;
 
@@ -1179,25 +1621,116 @@ void report_bandwidth( PGR_Cam *pgcp )
 		return;
 	}
 	/* What are the units of bandwidth??? */
-	sprintf(msg_str,"Bandwidth:  %d",bw);
+	sprintf(msg_str,"%s bandwidth:  %d",pgcp->pc_name,bw);
 	prt_msg(msg_str);
 }
 
-void print_camera_info(PGR_Cam *pgcp)
+void print_camera_info(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
 	int i;
 
 	prt_msg("\nCurrent camera:");
 
-	i=index_of_video_mode(pgcp->pc_current_video_mode);
+	i=index_of_video_mode(pgcp->pc_video_mode);
 	sprintf(msg_str,"\tmode:  %s",all_video_modes[i].nvm_name);
 	prt_msg(msg_str);
 
-	i=index_of_framerate(pgcp->pc_current_framerate);
+	i=index_of_framerate(pgcp->pc_framerate);
 	sprintf(msg_str,"\trate:  %s",all_framerates[i].nfr_name);
 	prt_msg(msg_str);
 
-	/* report_camera_features(pgcp); */
+	report_camera_features(pgcp);
+}
+
+void describe_dc1394_error( QSP_ARG_DECL  dc1394error_t e )
+{
+	switch( e ){
+		case DC1394_SUCCESS:
+			advise("Success!"); break;
+		case DC1394_FAILURE:
+			advise("Failure!?"); break;
+		case DC1394_NOT_A_CAMERA:
+			advise("Not a camera."); break;
+		case DC1394_FUNCTION_NOT_SUPPORTED:
+			advise("Function not supported."); break;
+		case DC1394_CAMERA_NOT_INITIALIZED:
+			advise("Camera not initialized."); break;
+		case DC1394_MEMORY_ALLOCATION_FAILURE:
+			advise("Memory allocation failure."); break;
+		case DC1394_TAGGED_REGISTER_NOT_FOUND:
+			advise("Tagged register not found."); break;
+		case DC1394_NO_ISO_CHANNEL:
+			advise("No ISO channel."); break;
+		case DC1394_NO_BANDWIDTH:
+			advise("No bandwidth."); break;
+		case DC1394_IOCTL_FAILURE:
+			advise("Ioctl failure."); break;
+		case DC1394_CAPTURE_IS_NOT_SET:
+			advise("Capture is not set."); break;
+		case DC1394_CAPTURE_IS_RUNNING:
+			advise("Capture is running."); break;
+		case DC1394_RAW1394_FAILURE:
+			advise("Raw 1394 failure."); break;
+		case DC1394_FORMAT7_ERROR_FLAG_1:
+			advise("Format 7 error flag 1."); break;
+		case DC1394_FORMAT7_ERROR_FLAG_2:
+			advise("Format 7 error flag 2."); break;
+		case DC1394_INVALID_ARGUMENT_VALUE:
+			advise("Invalid argument value."); break;
+		case DC1394_REQ_VALUE_OUTSIDE_RANGE:
+			advise("Req. value outside range."); break;
+		case DC1394_INVALID_FEATURE:
+			advise("Invalid feature."); break;
+		case DC1394_INVALID_VIDEO_FORMAT:
+			advise("Invalid video format."); break;
+		case DC1394_INVALID_VIDEO_MODE:
+			advise("Invalid video mode."); break;
+		case DC1394_INVALID_FRAMERATE:
+			advise("Invalid frame rate."); break;
+		case DC1394_INVALID_TRIGGER_MODE:
+			advise("Invalid trigger mode."); break;
+		case DC1394_INVALID_TRIGGER_SOURCE:
+			advise("Invalid trigger source."); break;
+		case DC1394_INVALID_ISO_SPEED:
+			advise("Invalid ISO speed."); break;
+		case DC1394_INVALID_IIDC_VERSION:
+			advise("Invalid IIDC version."); break;
+		case DC1394_INVALID_COLOR_CODING:
+			advise("Invalid color coding."); break;
+		case DC1394_INVALID_COLOR_FILTER:
+			advise("Invalid color filter."); break;
+		case DC1394_INVALID_CAPTURE_POLICY:
+			advise("Invalid capture policy."); break;
+		case DC1394_INVALID_ERROR_CODE:
+			advise("Invalid error code."); break;
+		case DC1394_INVALID_BAYER_METHOD:
+			advise("Invalid Bayer method."); break;
+		case DC1394_INVALID_VIDEO1394_DEVICE:
+			advise("Invalid video1394 device."); break;
+		case DC1394_INVALID_OPERATION_MODE:
+			advise("Invalid operation mode."); break;
+		case DC1394_INVALID_TRIGGER_POLARITY:
+			advise("Invalid trigger polarity."); break;
+		case DC1394_INVALID_FEATURE_MODE:
+			advise("Invalid feature mode."); break;
+		case DC1394_INVALID_LOG_TYPE:
+			advise("Invalid log type."); break;
+		case DC1394_INVALID_BYTE_ORDER:
+			advise("Invalid byte order."); break;
+		case DC1394_INVALID_STEREO_METHOD:
+			advise("Invalid stereo method."); break;
+		case DC1394_BASLER_NO_MORE_SFF_CHUNKS:
+			advise("No more SFF chunks (Baseler)."); break;
+		case DC1394_BASLER_CORRUPTED_SFF_CHUNK:
+			advise("Corrupted SFF chunk (Baseler)."); break;
+		case DC1394_BASLER_UNKNOWN_SFF_CHUNK:
+			advise("Unknown SFF chunk (Baseler)."); break;
+		default:
+			sprintf(ERROR_STRING,"describe_dc1394_error:  unhandled error code %d!?",e);
+			advise(ERROR_STRING);
+			break;
+	}
 }
 
 #endif /* HAVE_LIBDC1394 */
+

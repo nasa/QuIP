@@ -1,0 +1,144 @@
+#
+
+< $QUIPSTARTUPDIR/quip.scr
+
+max_warnings 1000
+
+If ($argc!=1)&&($argc!=2)  "error_exit 'usage:  jpsee jpeg_filename <speed>'"
+Set jpeg_file $1
+If $argc>1
+Then	'Set speed $2'
+Else	'Set speed 1'
+Set chatty 1
+
+If !file_exists('$jpeg_file') "error_exit 'File $jpeg_file does not exist '"
+
+# There seems to be a bug when we include .iview instead of .vt ...
+# number of processors???
+
+# Parameters
+Set pausing 0
+
+# Open movie file
+Filetype jpeg
+Read_File_Header $jpeg_file
+Assign w	ncols('$jpeg_file')
+Assign h	nrows('$jpeg_file')
+Assign depth	ncomps('$jpeg_file')
+Assign n_frames	nframes('$jpeg_file')
+
+Tell_If " "
+Tell_If "-> File info:"
+Tell_If "   > Frame size (w x h x d): $w x $h x $depth"
+Tell_If "   > Number of frames: $n_frames"
+Tell_If " "
+
+
+# Init images
+Image _img	$h $w $depth u_byte
+Image last_frm	$h $w $depth u_byte
+Image tmp	$h $w 1 u_byte
+
+# Get last frame
+File_Seek $jpeg_file $n_frames-1
+Get_Next last_frm $jpeg_file
+Read_File_Header $jpeg_file
+
+
+## Mono_Viewer
+#######################
+If $w<800
+Then	'Set x_v 100'
+Else	'Set x_v 0'
+Set y_v 100
+Define Mono_Viewer 0
+Viewer_For v _img
+Posn_Window v $x_v $y_v
+#Protect_LUT 0
+Grayscale_Viewer v
+.
+
+
+## RGB_Viewer
+#######################
+Define RGB_Viewers 0
+Viewer_For rv _img
+Viewer_For gv _img
+Viewer_For bv _img
+Posn_Window rv $x_v $y_v
+Posn_Window gv $x_v $y_v+300
+Posn_Window bv $x_v $y_v+600
+#Protect_LUT 0
+Grayscale_Viewer rv
+Grayscale_Viewer gv
+Grayscale_Viewer bv
+.
+
+
+## Label3
+#######################
+Define Label3 0
+Label_Viewer rv "$jpeg_file, frame $frameno"
+Label_Viewer gv "$jpeg_file, frame $frameno"
+Label_Viewer bv "$jpeg_file, frame $frameno"
+.
+
+
+
+
+# Init viewer
+#If $depth==3
+#  Then RGB_Viewers
+#  Else Mono_Viewer
+Mono_Viewer		# "mono" viewer will display color on a 24 bit display
+Label_Viewer v "$jpeg_file"
+Assign vd depth('$DISPLAY')
+
+# Init Slider
+If '$n_frames>1'	Init_Slider
+
+
+
+## Display_Frame
+#############################
+Define Display_Frame 0
+	If $depth==3 "Rotate_Colors _img"
+#	If $depth==3
+#		Then "Show_Bytes _img{0} rv Show_Bytes _img{1} gv Show_Bytes _img{2} bv Label3"
+#		Else 'Show_Bytes _img v Label_Viewer v "$jpeg_file, frame $frame_idx"'
+	# this should work for color or mono
+	If $vd==8&&$depth==3
+		Then "Show_Bytes _img{1} v"
+		Else "Show_Bytes _img v"
+	If $vd==16 "Show16 _img v"
+.
+
+
+## Display_Image
+##################################
+Define Display_Image 0
+#advise "-> Press <Crtl-D> to display image"
+#Pause
+view wait v quit
+Get_Next _img $jpeg_file
+Display_Frame
+advise "Click image to exit"
+.
+
+Define RClick 0
+exit
+.
+
+view
+  viewers
+    actions v exit exit exit
+    quit
+  quit
+
+# Image display
+If '$n_frames==1' Display_Image
+
+do
+  os events quit
+  while 1
+

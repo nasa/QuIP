@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_cstepit_fitsine[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -150,7 +148,7 @@ COMMAND_FUNC( fitsine )
 	dp=PICK_OBJ( "signal vector" );
 	if( dp==NO_OBJ ) return;
 
-	sprintf(msg_str, "Attempting to fit %s by varying",dp->dt_name);
+	sprintf(msg_str, "Attempting to fit %s by varying",OBJ_NAME(dp));
 	prt_msg_frag(msg_str);
 
 	delete_opt_params(SINGLE_QSP_ARG);
@@ -170,8 +168,8 @@ COMMAND_FUNC( fitsine )
 	else
 		prm_pp[AMP_INDEX]  = &default_amp;
 
-	nsamps = dp->dt_cols;
-	target = (float *)(dp->dt_data);
+	nsamps = OBJ_COLS(dp);
+	target = (float *)(OBJ_DATA_PTR(dp));
 
 	optimize(QSP_ARG  fitsine_error);
 

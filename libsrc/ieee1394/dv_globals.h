@@ -3,11 +3,11 @@
 #define _DV_GLOBALS_H_
 
 #include <pthread.h>
-#include "node.h"
+#include "quip_prot.h"
 
 // C++ has bool...
 #ifndef __cplusplus
-typedef int bool;
+//typedef int bool;		// now this seems to be coming from somewhere else - where?
 #endif
 
 #define FALSE	0

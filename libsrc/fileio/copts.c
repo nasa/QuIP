@@ -1,15 +1,15 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_copts[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_JPEG_SUPPORT
 
 #include "fio_prot.h"
 
 
+#include "quip_prot.h"
 #include "fiojpeg.h"
-#include "cdjpeg.h"
+#include "jpeg_private.h"
+//#include "cdjpeg.h"
 
 int default_jpeg_info_format = JPEG_INFO_FORMAT_UNSPECIFIED;
 
@@ -72,9 +72,12 @@ static COMMAND_FUNC( do_set_colorspace )
 	switch(n){
 		case 0: cparams1.colorspace = JCS_YCbCr; break;
 		case 1: cparams1.colorspace = JCS_GRAYSCALE; break;
-#ifdef CAUTIOUS
-		default:  ERROR1("CAUTIOUS:  do_set_colorspace");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			ERROR1("CAUTIOUS:  do_set_colorspace");
+			assert( ! "do_set_colorspace:  bad colorspace code");
+			break;
+//#endif /* CAUTIOUS */
 	}
 }
 
@@ -85,9 +88,9 @@ static COMMAND_FUNC( do_set_quality )
 	q=HOW_MANY("quality factor (1-99)");
 
 	if( q < 1 || q > 99 ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"JPEG quality factor (%d) should be between 1 and 99",q);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -111,6 +114,10 @@ void install_cjpeg_params(j_compress_ptr cinfo)
 	}
 
 	q_scale_factor = jpeg_quality_scaling(cparams1.quality);
+	// check the return value just to suppress a compiler warning...
+	// The return value should be an integer representing the percentage...
+	if( q_scale_factor < 0 )
+		NWARN("install_cjpeg_params:  bad quality index!?");
 
 	/* more stuff done by cjpeg after scanning options */
 
@@ -118,20 +125,18 @@ void install_cjpeg_params(j_compress_ptr cinfo)
 				/* TRUE means force baseline jpeg (8bit) */
 }
 
-static Command cjpeg_ctbl[]={
-{ "sample_factors",	do_set_sample_factors,	"set sampling factors"	},
-{ "colorspace",		do_set_colorspace,	"set target color space" },
-{ "quality",		do_set_quality,		"set Q-factor"		},
-{ "quit",		popcmd,			"exit submenu"		},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(cjpeg_menu,s,f,h)
 
-COMMAND_FUNC( cjpeg_param_menu )
+MENU_BEGIN(cjpeg)
+ADD_CMD(sample_factors,	do_set_sample_factors,	set sampling factors	)
+ADD_CMD(colorspace,	do_set_colorspace,	set target color space	)
+ADD_CMD(quality,	do_set_quality,		set Q-factor	)
+MENU_END(cjpeg)
+
+static COMMAND_FUNC( do_cjpeg_param_menu )
 {
-	PUSHCMD(cjpeg_ctbl,"jpeg_compress");
+	PUSH_MENU(cjpeg);
 }
-
-extern COMMAND_FUNC( djpeg_param_menu );
 
 static const char *fmt_choices[N_JPEG_INFO_FORMATS]={"binary","ascii"};
 
@@ -144,17 +149,18 @@ static COMMAND_FUNC( do_set_info_format )
 		default_jpeg_info_format ++;
 }
 
-static Command jpeg_ctbl[]={
-{ "compressor",		cjpeg_param_menu,	"compressor parameter submenu"		},
-{ "decompressor",	djpeg_param_menu,	"decompressor parameter submenu"	},
-{ "info_format",	do_set_info_format,	"select default jpeg info format"	},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(jpeg_menu,s,f,h)
 
-COMMAND_FUNC( jpeg_menu )
+MENU_BEGIN(jpeg)
+ADD_CMD(compressor,	do_cjpeg_param_menu,	compressor parameter submenu )
+ADD_CMD(decompressor,	do_djpeg_param_menu,	decompressor parameter submenu )
+ADD_CMD(info_format,	do_set_info_format,	select default jpeg info format )
+MENU_END(jpeg)
+
+COMMAND_FUNC( do_jpeg_menu )
 {
-	PUSHCMD(jpeg_ctbl,"jpeg");
+	PUSH_MENU(jpeg);
 }
 
 #endif /* HAVE_JPEG_SUPPORT */

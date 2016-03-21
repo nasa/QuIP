@@ -1,7 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_meteor_pupfind[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "pupfind.h"
 
@@ -85,7 +84,7 @@ void compute_diff_image(int newest, int previous,int component_offset)
 	}
 }
 
-void setup_frame_ptrs(SINGLE_QSP_ARG_DECL)
+static void setup_frame_ptrs(SINGLE_QSP_ARG_DECL)
 {
 	int i;
 	char name[64];
@@ -95,7 +94,7 @@ void setup_frame_ptrs(SINGLE_QSP_ARG_DECL)
 		sprintf(name,"f%d",i);
 		dp = GET_OBJ(name);
 		if( dp == NO_OBJ ) ERROR1("missing frame object");
-		frame_base[i] = dp->dt_data;
+		frame_base[i] = OBJ_DATA_PTR(dp);
 	}
 	frames_known=1;
 }
@@ -107,28 +106,28 @@ COMMAND_FUNC( setup_diff_computation )
 	dp=GET_OBJ("pdiff");
 	if( dp == NO_OBJ ) ERROR1("missing destination object 'pdiff'");
 
-	if( dp->dt_cols != 320 ){
-		sprintf(error_string,"Object pdiff (%d) should have 320 columns",dp->dt_cols);
-		ERROR1(error_string);
+	if( OBJ_COLS(dp) != 320 ){
+		sprintf(ERROR_STRING,"Object pdiff (%d) should have 320 columns",OBJ_COLS(dp));
+		ERROR1(ERROR_STRING);
 	}
 
-	if( dp->dt_rows != 240 ){
-		sprintf(error_string,"Object pdiff (%d) should have 240 rows",dp->dt_rows);
-		ERROR1(error_string);
+	if( OBJ_ROWS(dp) != 240 ){
+		sprintf(ERROR_STRING,"Object pdiff (%d) should have 240 rows",OBJ_ROWS(dp));
+		ERROR1(ERROR_STRING);
 	}
 
-	pdiff = (short *)dp->dt_data;
+	pdiff = (short *)OBJ_DATA_PTR(dp);
 
 	if( !frames_known ) setup_frame_ptrs(SINGLE_QSP_ARG);
 }
 
-void setup_blur(Data_Obj *dp)
+void setup_blur(QSP_ARG_DECL  Data_Obj *dp)
 {
 	/* BUG need to do checks here */
 
 	float *f;
 
-	f=(float *)dp->dt_data;
+	f=(float *)OBJ_DATA_PTR(dp);
 	w11 = *f;
 	f++;
 	w10 = *f;
@@ -236,12 +235,12 @@ COMMAND_FUNC( setup_curv_computation )
 	dp=GET_OBJ("curv");
 	if( dp == NO_OBJ ) ERROR1("setup_curv_computation:  missing curvature object");
 
-	curv_dst = (float *)dp->dt_data;
+	curv_dst = (float *)OBJ_DATA_PTR(dp);
 
 	dp=GET_OBJ("fcurv");
 	if( dp == NO_OBJ ) ERROR1("setup_curv_computation:  missing filtered curvature object");
 
-	fcurv_dst = (float *)dp->dt_data;
+	fcurv_dst = (float *)OBJ_DATA_PTR(dp);
 
 	/* BUG verify type, size, contiguity here */
 
@@ -263,14 +262,14 @@ COMMAND_FUNC( setup_curv_computation )
 			*dst++ = gc>0.0 ? gc : 0.0 ;
 
 #define DEBUG_DUMP2									\
-sprintf(error_string,"k=%d\t dst = 0x%lx\tframe_base[%d] = 0x%lx\tp_2 = 0x%lx",				\
+sprintf(ERROR_STRING,"k=%d\t dst = 0x%lx\tframe_base[%d] = 0x%lx\tp_2 = 0x%lx",				\
 		k,dst,frame_index,frame_base[frame_index],p_2);				\
-advise(error_string);
+advise(ERROR_STRING);
 
 #define DEBUG_DUMP									\
-sprintf(error_string,"frame_base[%d] = 0x%lx\tp_2 = 0x%lx\te = %g\tdst = 0x%x",		\
+sprintf(ERROR_STRING,"frame_base[%d] = 0x%lx\tp_2 = 0x%lx\te = %g\tdst = 0x%x",		\
 		frame_index,frame_base[frame_index],p_2,e,dst);				\
-advise(error_string);
+advise(ERROR_STRING);
 
 #define EYE_CAM_INDEX	2
 #define N_TRIPLETS	(N_CURV_ROWS/3)

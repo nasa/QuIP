@@ -8,13 +8,14 @@
 #endif
 
 #include "data_obj.h"
-#include "node.h"
-#include "items.h"
-#include "query.h"
+
+#ifndef BUILD_FOR_OBJC
+#include "map_ios_item.h"
+#endif // ! BUILD_FOR_OBJC
 
 typedef struct movie {
 	Item		mvi_item;
-	Shape_Info	mvi_shape;
+	Shape_Info *	mvi_shpp;
 	int		mvi_flags;
 	time_t		mvi_time;
 	void *		mvi_data;		/* device specific */
@@ -22,11 +23,30 @@ typedef struct movie {
 	int32_t		mvi_offset;		/* for sirius shuttle */
 } Movie;
 
-#define mvi_name	mvi_item.item_name
-#define mvi_depth	mvi_shape.si_mach_dim[0]
-#define mvi_width	mvi_shape.si_mach_dim[1]
-#define mvi_height	mvi_shape.si_mach_dim[2]
-#define mvi_nframes	mvi_shape.si_mach_dim[3]
+#define MOVIE_NAME(mvip)	(mvip)->mvi_item.item_name
+#define MOVIE_SHAPE(mvip)	(mvip)->mvi_shpp
+#define MOVIE_DEPTH(mvip)	SHP_COMPS(MOVIE_SHAPE(mvip))
+#define MOVIE_WIDTH(mvip)	SHP_COLS(MOVIE_SHAPE(mvip))
+#define MOVIE_HEIGHT(mvip)	SHP_ROWS(MOVIE_SHAPE(mvip))
+#define MOVIE_FRAMES(mvip)	SHP_FRAMES(MOVIE_SHAPE(mvip))
+
+#define MOVIE_TIME(mvip)	(mvip)->mvi_time
+#define MOVIE_OFFSET(mvip)	(mvip)->mvi_offset
+#define MOVIE_FILENAME(mvip)	(mvip)->mvi_filename
+#define SET_MOVIE_TIME(mvip,t)	(mvip)->mvi_time = t
+#define SET_MOVIE_OFFSET(mvip,o)	(mvip)->mvi_offset = o
+#define SET_MOVIE_FILENAME(mvip,n)	(mvip)->mvi_filename = n
+#define MOVIE_DATA(mvip)		(mvip)->mvi_data
+#define SET_MOVIE_DATA(mvip,v)		(mvip)->mvi_data = (void *) v
+#define SET_MOVIE_SHAPE(mvip,shpp)	(mvip)->mvi_shpp = shpp
+
+#define MOVIE_FLAGS(mvip)	(mvip)->mvi_flags
+#define SET_MOVIE_FLAGS(mvip,v)	(mvip)->mvi_flags = v
+#define SET_MOVIE_FLAG_BITS(mvip,b)	(mvip)->mvi_flags |= b
+#define SET_MOVIE_DEPTH(mvip,d)		SET_SHP_COMPS(MOVIE_SHAPE(mvip),d)
+#define SET_MOVIE_WIDTH(mvip,w)		SET_SHP_COLS(MOVIE_SHAPE(mvip),w)
+#define SET_MOVIE_HEIGHT(mvip,h)	SET_SHP_ROWS(MOVIE_SHAPE(mvip),h)
+#define SET_MOVIE_FRAMES(mvip,n)	SET_SHP_FRAMES(MOVIE_SHAPE(mvip),n)
 
 #define NO_MOVIE	((Movie *)NULL)
 
@@ -91,7 +111,7 @@ typedef struct mvi_module {
 
 /* global vars */
 extern int n_refresh;
-extern Movie_Module x_movie_module;
+//extern Movie_Module x_movie_module;
 
 
 

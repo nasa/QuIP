@@ -232,10 +232,10 @@ Show_Bytes key_frm key_v
 .
 
 Define Make_Adjustment 0
-If $left_button_up "PopFile 2 nop"	# no action on up-click
+If $left_button_up "exit_macro"	# no action on up-click
 # Responses can be left, right, or accept
 If abs(ncols(adjuster_v)/2-$view_xpos)<=$disk_rad
-  "AcceptSetting PopFile 2 nop"
+  "AcceptSetting exit_macro"
 Assign which_half floor($view_xpos/(ncols(adjuster_v)/2))
 If $which_half==$last_adjustment Increase_Increment
 If $which_half!=$last_adjustment&&$last_adjustment!=$no_adjustment
@@ -425,7 +425,7 @@ Record_Bisection $lower_lum $upper_lum $middle_lum
 .
 
 Define AcceptSetting 0
-If !$in_protocol "PopFile 2 nop"
+If !$in_protocol "exit_macro"
 If $n_settings_made<$max_settings Record_Setting
 If $n_settings_made<$n_in_queue 
   Then Next_Adjustment

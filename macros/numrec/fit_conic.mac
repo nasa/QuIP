@@ -86,7 +86,7 @@ SVD_Sort ellipse
 Assign lambda1 value(ellipse_eigenvalues[0])
 Assign lambda2 value(ellipse_eigenvalues[1])
 If $lambda1==0||$lambda2==0
-  "advise 'zero eigenvalue, giving up' Delete_SVD_Objects ellipse PopFile 2 nop"
+  "advise 'zero eigenvalue, giving up' Delete_SVD_Objects ellipse exit_macro"
 
 # Because we have sorted the eigenvalues, this test should always turn out the same way...
 # BUT - equality?

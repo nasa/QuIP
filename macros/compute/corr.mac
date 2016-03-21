@@ -59,7 +59,7 @@ Define Correlate 3  target in1 in2
 Prepare_Xforms $2 $3
 
 Get_Norm_Value $2 _nv1
-If $_nv1==0 "advise 'zero norm1, not correlating' Delete_Xforms PopFile 2 nop"
+If $_nv1==0 "advise 'zero norm1, not correlating' Delete_Xforms exit_macro"
 
 #Print_If _nv1
 Get_Norm_Value $3 _nv2

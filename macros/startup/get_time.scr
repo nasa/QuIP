@@ -1,5 +1,0 @@
-os
-  get_time x
-  echo $x
-  exit
-

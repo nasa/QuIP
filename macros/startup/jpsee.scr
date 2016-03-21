@@ -6,37 +6,44 @@
 #Set min_panel_width 660		# used to be smaller but with ff, pause etc we need more real estate...
 Set min_panel_width 780		# increased for deinterlace toggle...
 
-#max_warnings 1000
-max_warnings 2
+max_warnings 1000
+#max_warnings 2
 
 Print argc
 If ($argc!=1)&&($argc!=2)  "error_exit 'usage:  jpsee jpeg_filename <speed>'"
-Set jpeg_file $argv1
+Set jpeg_file "$argv1"
 If $argc>1
 Then	'Set speed $2'
 Else	'Set speed 1'
 Set chatty 1
 
-If !file_exists('$jpeg_file') "error_exit 'File $jpeg_file does not exist '"
+Set frame_dwell 1
+
+If file_exists('/dev/rawvol') "rawvol default quit"
+
+# may be rawvol?
+If (!iof_exists('$jpeg_file'))&&!file_exists('$jpeg_file')
+  "error_exit 'File $jpeg_file does not exist '"
 
 # There seems to be a bug when we include .iview instead of .vt ...
 # number of processors???
 
 # Parameters
-Set pausing 0
+Set movie_paused 0
 
 # Open movie file
-Filetype jpeg
-advise "Reading file $jpeg_file"
-Read_File_Header $jpeg_file
-advise "DONE reading file $jpeg_file"
+If !iof_exists('$jpeg_file')
+  "Filetype jpeg \
+   advise 'Reading file $jpeg_file' \
+   Read_File_Header '$jpeg_file' \
+   advise 'DONE reading file $jpeg_file'"
 
 Assign w	ncols('$jpeg_file')
 Assign h	nrows('$jpeg_file')
 Assign depth	ncomps('$jpeg_file')
 Assign n_frames	nframes('$jpeg_file')
 
-fileio autoclose $jpeg_file no quit
+fileio autoclose "$jpeg_file" no quit
 
 Tell_If " "
 Tell_If "-> File info:"
@@ -125,11 +132,15 @@ interface
 		position $p_x $button_h Add_Var p_x $dx
 		button "Rev Play" RevPlay_Movie
 		position $p_x $button_h Add_Var p_x $dx
+		button "Slow Rev" SlowRev_Movie
+		position $p_x $button_h Add_Var p_x $dx
 		button "Rev Step" RevStep_Movie
 		position $p_x $button_h Add_Var p_x $dx
 		button "Pause" PausePlay_Movie
 		position $p_x $button_h Add_Var p_x $dx
 		button "Fwd Step" FwdStep_Movie
+		position $p_x $button_h Add_Var p_x $dx
+		button "Slow Fwd" SlowFwd_Movie
 		position $p_x $button_h Add_Var p_x $dx
 		button "Fwd Play" FwdPlay_Movie
 		position $p_x $button_h Add_Var p_x $dx
@@ -148,28 +159,37 @@ quit
 #############################
 Define Update_Time 0
 Assign frame_idx $slider_val
-
-If $pausing	'Assign frame_idx  min($frame_idx,$n_frames-2)	\
-		File_Seek $jpeg_file $frame_idx			\
-		Get_Next _img $jpeg_file			\
-		Display_Frame'
+If $movie_paused	'Assign frame_idx  min($frame_idx,$n_frames-2)	\
+		 Show_Current_Frame'
 nop
+.
+
+Define Show_Current_Frame 0
+File_Seek $jpeg_file $frame_idx
+Get_Next _img $jpeg_file
+Display_Frame
 .
 
 
 ## Update_Slider
 #############################
 Define Update_Slider 1 field_idx
+#advise "Update_Slider $1"
 interface decorate jpsee 
 	slide_pos $adjuster_name $1
 quit quit
+.
+
+Define Bound_Frame 0
+Assign frame_idx min(round($frame_idx),$n_frames-1)
+Assign frame_idx max($frame_idx,0)
 .
 
 ## PausePlay_Movie
 ##############################
 Define PausePlay_Movie 0
 If !var_exists(saved_speed) "Set saved_speed 0"
-If $speed==0
+If $movie_paused
   Then Unpause_Movie
   Else Pause_Movie
 .
@@ -177,40 +197,73 @@ If $speed==0
 Define Pause_Movie 0
 If $speed!=0 "Set saved_speed $speed"
 Set speed 0
+Set movie_paused 1
+os usecs pause_secs pause_usecs quit
+#advise "Paused at $pause_secs $pause_usecs"
 .
 
 Define Unpause_Movie 0
 Set speed $saved_speed
+Set movie_paused 0
+os usecs psecs pusecs quit
+#advise "Unpaused at $psecs $pusecs"
+Add_Var want_ms 1000*($psecs-$pause_secs)+($pusecs-$pause_usecs)/1000
 .
 
 Define FastRev_Movie 0
+If $movie_paused Unpause_Movie
 If $speed>0 "Set speed -1"
 Mul_Var speed 2
+Set frame_dwell 1
+.
+
+Define SlowRev_Movie 0
+If $movie_paused Unpause_Movie
+Set speed -1
+Mul_Var frame_dwell 2
 .
 
 Define FastFwd_Movie 0
+If $movie_paused Unpause_Movie
 If $speed<0 "Set speed 1"
 Mul_Var speed 2
+Set frame_dwell 1
+.
+
+Define SlowFwd_Movie 0
+If $movie_paused Unpause_Movie
+Set speed 1
+Mul_Var frame_dwell 2
 .
 
 Define FwdPlay_Movie 0
+If $movie_paused Unpause_Movie
 If $speed<0 "Set speed 1"
 Assign speed max(1,ceil($speed/2))
+Set frame_dwell 1
 .
 
 Define RevPlay_Movie 0
+If $movie_paused Unpause_Movie
 If $speed>0 "Set speed -1"
 Assign speed min(-1,floor($speed/2))
+Set frame_dwell 1
 .
 
 Define FwdStep_Movie 0
 Pause_Movie
 Increment frame_idx
+Bound_Frame
+Show_Current_Frame
+Update_Slider $frame_idx
 .
 
 Define RevStep_Movie 0
 Pause_Movie
 Decrement frame_idx
+Bound_Frame
+Show_Current_Frame
+Update_Slider $frame_idx
 .
 
 
@@ -220,7 +273,7 @@ Define Wait_For_Unpausing 0
 do
 	usleep 1000
 	os events quit
-while '$pausing'
+while '$movie_paused'
 .
 
 
@@ -255,15 +308,15 @@ If $deinterlace
 
 Define Display_Vanilla 0
 # We need to rotate jpeg files, but not avi's???
-If $depth==3 "Rotate_Colors _img"
+	If $depth==3 "Rotate_Colors _img"
 #	If $depth==3
 #		Then "Show_Bytes _img{0} rv Show_Bytes _img{1} gv Show_Bytes _img{2} bv Label3"
 #		Else 'Show_Bytes _img v Label_Viewer v "$jpeg_file, frame $frame_idx"'
-# this should work for color or mono
-If $vd==8&&$depth==3
-	Then "Show_Bytes _img{1} v"
-	Else "Show_Bytes _img v"
-If $vd==16 "Show16 _img v"
+	# this should work for color or mono
+	If $vd==8&&$depth==3
+		Then "Show_Bytes _img{1} v"
+		Else "Show_Bytes _img v"
+	If $vd==16 "Show16 _img v"
 .
 
 Define Display_Interlace 0
@@ -305,26 +358,26 @@ Set want_ms 16.666
 
 do
 	# Get frame
-	Assign frame_idx min(round($frame_idx),$n_frames-1)
-	Assign frame_idx max($frame_idx,0)
-	File_Seek $jpeg_file $frame_idx
-	Get_Next _img $jpeg_file
+#advise "top of loop, frame_idx = $frame_idx"
+	# Check events
+	os events quit
+
+	Bound_Frame
+
 	Update_Slider $frame_idx
-
-	# Display
-	Display_Frame
-
+	Show_Current_Frame
 	# Check events
 	os events quit
 	If $right_button_down exit
 	
-	If $pausing Wait_For_Unpausing
+	If $movie_paused Wait_For_Unpausing
 
 	Assign frame_idx $frame_idx+$speed
 	Assign frame_idx min($frame_idx,$n_frames-1)
 
 	Check_Time
+	# When we pause, we need to add the pause time to want_ms!
 	If $total_ms<$want_ms "usleep 1000*($want_ms-$total_ms)"
-	Add_Var want_ms 16.666
+	Add_Var want_ms 16.666*$frame_dwell
 while 1
 

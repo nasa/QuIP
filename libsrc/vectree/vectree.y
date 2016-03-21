@@ -1,58 +1,54 @@
 %{
 #include "quip_config.h"
 
-char VersionId_vectree_vectree[] = QUIP_VERSION_STRING;
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 
-#include "yacc_hack.h"
-#include "savestr.h"		/* not needed? BUG */
+// The file yacc_hack redefines the symbols used by yacc so that two parsers
+// can play together...
+#include "yacc_hack.h"		// could be obviated by bison cmd line arg
+
+//#include "savestr.h"		/* not needed? BUG */
 #include "data_obj.h"
+#include "undef_sym.h"
 #include "debug.h"
 #include "getbuf.h"
 #include "node.h"
 #include "function.h"
 /* #include "warproto.h" */
 #include "query.h"
+#include "quip_prot.h"
+#include "veclib/vec_func.h"
+#include "warn.h"
 
 #include "vectree.h"
 
 /* for definition of function codes */
-#include "vecgen.h"
+#include "veclib/vecgen.h"
 
 #ifdef SGI
 #include <alloca.h>
 #endif
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 debug_flag_t parser_debug=0;
-#endif /* DEBUG */
-
-
+#endif /* QUIP_DEBUG */
 
 #define YY_LLEN 1024
 
-/* local prototypes */
-
-/* extern int yyparse(void); */
-
-static double parse_num(QSP_ARG_DECL  const char **strptr);
+static char yy_word_buf[YY_LLEN]; // BUG global is not thread-safe!
 
 
-#ifdef THREAD_SAFE_QUERY
-#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stream * */
+//#ifdef THREAD_SAFE_QUERY
+// old-style, now use %parse-param {}
+//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stack * */
 /* For yyerror */
-#define YY_(msg)	QSP_ARG msg
-#endif /* THREAD_SAFE_QUERY */
+//#define YY_(msg)	QSP_ARG msg
+//#endif /* THREAD_SAFE_QUERY */
 
-void yyerror(QSP_ARG_DECL  char *);
-
-static const char *read_word(QSP_ARG_DECL  const char **spp);
-static const char *match_quote(QSP_ARG_DECL  const char **spp);
+void yyerror(Query_Stack *qsp,  char *);
 
 static int whkeyword(Keyword *table,const char *str);
 
@@ -86,8 +82,9 @@ typedef struct decl_info {
 
 typedef union {
 	Vec_Expr_Node *enp;
-	Vec_Func_Code fcode;	/* index to our tables here... */
+	//Vec_Func_Code fcode;	/* index to our tables here... */
 	int   fundex;		/* function index */
+	Function *func_p;
 	double dval;		/* actual value */
 	int intval;
 	Data_Obj *dp;
@@ -99,27 +96,38 @@ typedef union {
 	void *v;
 	struct position posn;
 	Vec_Func_Code vfc;
+	Precision *prec_p;
 } YYSTYPE;
 
 static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp);
 
 #define YYSTYPE_IS_DECLARED			/* necessary on a 2.6 machine?? */
 
-#ifdef THREAD_SAFE_QUERY
+//#ifdef THREAD_SAFE_QUERY
+//
+//int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
+//#define YYLEX_PARAM SINGLE_QSP_ARG
+//
+//#else
+//
+//int yylex(YYSTYPE *yylvp);
+//
+//#endif
+int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
-int yylex(YYSTYPE *yylvp, Query_Stream *qsp);
-#define YYLEX_PARAM SINGLE_QSP_ARG
-
-#else
-
-int yylex(YYSTYPE *yylvp);
-
-#endif
-
+#define YY_ERR_STR	QS_ERROR_STRING(((Query_Stack *)qsp))	// this macro casts qsp, unlike ERROR_STRING
 
 %}
 
-%pure_parser	// make the parser rentrant (thread-safe)
+/* This line stops yacc invoked on linux... */
+//%pure_parser	/* make the parser rentrant (thread-safe) */
+%pure-parser	/* updated syntax - make the parser rentrant (thread-safe) */
+
+// parse-param also affects yyerror!
+
+%parse-param{ Query_Stack *qsp }
+%lex-param{ Query_Stack *qsp }
+
 
 /* expressison operators */
 
@@ -177,18 +185,23 @@ int yylex(YYSTYPE *yylvp);
 %left <vfc> ','
 
 %token <dval> NUMBER
-%token <dval> VARIABLE
+//%token <dval> VARIABLE
 %token <dval> INT_NUM
 %token <dval> CHAR_CONST
 
-%token <vfc> MATH0_FUNC
-%token <vfc> MATH1_FUNC
-%token <vfc> MATH2_FUNC
-%token <fundex> DATA_FUNC
-%token <fundex> SIZE_FUNC
-%token <fundex> MISC_FUNC
-%token <fundex> STR1_FUNC
-%token <fundex> STR2_FUNC
+%token <func_p> MATH0_FUNC
+%token <func_p> MATH1_FUNC
+%token <func_p> MATH2_FUNC
+%token <func_p> INT1_FUNC
+%token <func_p> STR1_FUNC
+%token <func_p> STR2_FUNC
+%token <func_p> STR3_FUNC
+%token <func_p> STRV_FUNC
+%token <func_p> CHAR_FUNC
+%token <func_p> DATA_FUNC
+%token <func_p> SIZE_FUNC
+%token <func_p> TS_FUNC
+/* %token <func_p> MISC_FUNC */
 
 %token <fundex> BEGIN_COMMENT
 %token <fundex> END_COMMENT
@@ -212,14 +225,18 @@ int yylex(YYSTYPE *yylvp);
 %token <fundex> FLOAT
 %token <fundex> DOUBLE
 %token <fundex> SHORT
-%token <fundex> LONG
+%token <fundex> INT32
+%token <fundex> INT64
 %token <fundex> BIT
 %token <fundex> UBYTE
 %token <fundex> USHORT
-%token <fundex> ULONG
+%token <fundex> UINT32
+%token <fundex> UINT64
 %token <fundex> COLOR
 %token <fundex> COMPLEX
 %token <fundex> DBLCPX
+%token <fundex> QUATERNION
+%token <fundex> DBLQUAT
 
 %token <fundex> STRCPY
 %token <fundex> NAME_FUNC
@@ -236,8 +253,8 @@ int yylex(YYSTYPE *yylvp);
 %token <fundex> RETURN
 %token <fundex> EXIT
 
-%token <fundex> MIN
-%token <fundex> MAX
+%token <fundex> MINVAL
+%token <fundex> MAXVAL
 %token <fundex> WRAP
 %token <fundex> SCROLL
 %token <fundex> DILATE
@@ -357,7 +374,7 @@ int yylex(YYSTYPE *yylvp);
 %type <enp> expr_list
 %type <enp> row_list
 %type <enp> comp_list
-%type <enp> expr_stack
+%type <enp> list_obj
 %type <enp> comp_stack
 
 %type <enp> decl_item_list
@@ -366,11 +383,11 @@ int yylex(YYSTYPE *yylvp);
 
 %type <enp> expression
 
-%type <intval> data_type
-%type <intval> precision
+%type <prec_p> data_type
+%type <prec_p> precision
 %token <intval> VOID_TYPE
 %token <intval> EXTERN
-%token <intval> CONST_TYPE
+//%token <intval> CONST_TYPE
 %token <intval> NATIVE_FUNC_NAME
 
 %%
@@ -388,21 +405,21 @@ int yylex(YYSTYPE *yylvp);
 pointer		: PTRNAME
 			{
 			$$=NODE0(T_POINTER);
-			$$->en_string = savestr($1->id_name);
+			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		;
 
 func_ptr	: FUNCPTRNAME
 			{
 			$$ = NODE0(T_FUNCPTR);
-			$$->en_string = savestr($1->id_name);
+			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		;
 
 str_ptr		: STRNAME	/* name of a string object */
 			{
 			$$=NODE0(T_STR_PTR);
-			$$->en_string = savestr($1->id_name);
+			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		;
 
@@ -414,12 +431,19 @@ subsamp_spec	:	expression ':' expression ':' expression
 
 objref		: OBJNAME
 			{
-			if( $1->dt_flags & DT_STATIC ){
+			if( OBJ_FLAGS($1) & DT_STATIC ){
 				$$=NODE0(T_STATIC_OBJ);
-				$$->en_dp = $1;
+				SET_VN_OBJ($$, $1);
+				// To be safe, we need to mark
+				// the object so that it can't be
+				// deleted while this reference
+				// exists...  We don't want to 
+				// have a dangling pointer!?
 			} else {
+				const char *s;
 				$$=NODE0(T_DYN_OBJ);
-				$$->en_string = savestr($1->dt_name);
+				s=savestr(OBJ_NAME($1));
+				SET_VN_STRING($$,s);
 			}
 			}
 		| '*' pointer %prec UNARY
@@ -437,12 +461,12 @@ objref		: OBJNAME
 			usp=undef_of(QSP_ARG  $1);
 			if( usp == NO_UNDEF ){
 				/* BUG?  are contexts handled correctly??? */
-				sprintf(error_string,"Undefined symbol %s",$1);
-				yyerror(QSP_ARG  error_string);
-				usp=new_undef(QSP_ARG  $1);
+				sprintf(YY_ERR_STR,"Undefined symbol %s",$1);
+				yyerror(qsp,  YY_ERR_STR);
+				/*usp=*/new_undef(QSP_ARG  $1);
 			}
 			$$=NODE0(T_UNDEF);
-			$$->en_string = savestr($1);
+			SET_VN_STRING($$, savestr($1));
 			CURDLE($$)
 			}
 		| REAL_PART '(' objref ')' {
@@ -487,15 +511,15 @@ expression	: FIX_SIZE '(' expression ')'
 		/*
 		| pointer {
 			$$=NO_VEXPR_NODE;
-			sprintf(error_string,"Need to dereference pointer \"%s\"",$1->en_string);
-			yyerror(QSP_ARG  error_string);
+			sprintf(YY_ERR_STR,"Need to dereference pointer \"%s\"",VN_STRING($1));
+			yyerror(THIS_QSP,  YY_ERR_STR);
 			}
 			*/
 		| string_arg
 		| '(' data_type ')' expression %prec UNARY
 			{
 			$$ = NODE1(T_TYPECAST,$4);
-			$$->en_cast_prec=$2;
+			SET_VN_CAST_PREC_PTR($$,$2);
 			}
 		| '(' expression ')' {
 			$$ = $2; }
@@ -523,7 +547,7 @@ expression	: FIX_SIZE '(' expression ')'
 			$$=NODE1(T_BITCOMP,$2); }
 		| INT_NUM {
 			$$ = NODE0(T_LIT_INT);
-			$$->en_intval = $1;
+			SET_VN_INTVAL($$, (int) $1);
 			}
 		| expression LOG_EQ expression {
 			$$=NODE2(T_BOOL_EQ,$1,$3);
@@ -577,17 +601,22 @@ expression	: FIX_SIZE '(' expression ')'
 		| MATH0_FUNC '(' ')' 
 			{
 			$$=NODE0(T_MATH0_FN);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		| MATH1_FUNC '(' expression ')' 
 			{
 			$$=NODE1(T_MATH1_FN,$3);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		| MATH2_FUNC '(' expression ',' expression ')' 
 			{
 			$$=NODE2(T_MATH2_FN,$3,$5);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
+			}
+		| INT1_FUNC '(' expression ')' 
+			{
+			$$=NODE1(T_INT1_FN,$3);
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		/* can we have a general object here?? */
 		| expression DOT expression {
@@ -595,7 +624,7 @@ expression	: FIX_SIZE '(' expression ')'
 			}
 		| NUMBER {
 			$$=NODE0(T_LIT_DBL);
-			$$->en_dblval=$1;
+			SET_VN_DBLVAL($$,$1);
 			}
 		| expression '?' expression ':' expression
 			{
@@ -604,7 +633,7 @@ expression	: FIX_SIZE '(' expression ')'
 			}
 		| CHAR_CONST {
 			$$ = NODE0(T_LIT_INT);
-			$$->en_intval = $1;
+			SET_VN_INTVAL($$, (int) $1);
 			}
 		| DATA_FUNC
 			{
@@ -615,27 +644,27 @@ expression	: FIX_SIZE '(' expression ')'
 			}
 		| DATA_FUNC '(' objref ')' {
 			$$=NODE1(T_DATA_FN,$3);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			}
 
 		| SIZE_FUNC '(' string_arg ')' {
 			$$=NODE1(T_SIZE_FN,$3);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		| SIZE_FUNC '(' objref ')' {
 			$$=NODE1(T_SIZE_FN,$3);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		| SIZE_FUNC '(' pointer ')' {
 			$$=NODE1(T_SIZE_FN,$3);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			NODE_ERROR($$);
 			advise("dereference pointer before passing to size function");
 			CURDLE($$)
 			}
 		| SUM '(' pointer ')' {
-			sprintf(error_string,"need to dereference pointer %s",$3->en_string);
-			yyerror(QSP_ARG  error_string);
+			sprintf(YY_ERR_STR,"need to dereference pointer %s",VN_STRING($3));
+			yyerror(THIS_QSP,  YY_ERR_STR);
 			$$=NO_VEXPR_NODE;
 			}
 
@@ -650,18 +679,39 @@ expression	: FIX_SIZE '(' expression ')'
 		| STR1_FUNC '(' string_arg ')'
 			{
 			$$=NODE1(T_STR1_FN,$3);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		| STR2_FUNC '(' string_arg ',' string_arg ')'
 			{
 			$$=NODE2(T_STR2_FN,$3,$5);
-			$$->en_func_index=$1;
+			SET_VN_FUNC_PTR($$,$1);
+			}
+		// What are the 3-arg string functions???
+		| STR3_FUNC '(' string_arg ',' string_arg ')'
+			{
+			$$=NODE2(T_STR2_FN,$3,$5);
+			SET_VN_FUNC_PTR($$,$1);
+			}
+		// string-valued functions, toupper, tolower
+		| STRV_FUNC '(' string_arg ')'
+			{
+			$$=NODE1(T_STRV_FN,$3);
+			SET_VN_FUNC_PTR($$,$1);
+			}
+		// char arg functions, isupper, islower, etc
+		// output is a bitmap...
+		| CHAR_FUNC '(' string_arg ')'
+			{
+			$$=NODE1(T_CHAR_FN,$3);
+			SET_VN_FUNC_PTR($$,$1);
 			}
 		/* miscellaneous functions are currframe() and recordable() for omdr */
+/*
 		| MISC_FUNC '(' ')' {
 				$$=NODE0(T_MISC_FN);
-				$$->en_func_index=$1;
+				SET_VN_FUNC_PTR($$,$1);
 				}
+*/
 
 		| CONJ '(' expression ')'
 			{
@@ -672,11 +722,11 @@ expression	: FIX_SIZE '(' expression ')'
 		| '-' expression %prec UNARY {
 				$$=NODE1(T_UMINUS,$2);
 				}
-		| MIN '(' expr_list ')'
+		| MINVAL '(' expr_list ')'
 			{
 			$$=NODE1(T_MINVAL,$3);
 			}
-		| MAX '(' expr_list ')'
+		| MAXVAL '(' expr_list ')'
 			{
 			$$=NODE1(T_MAXVAL,$3);
 			}
@@ -693,19 +743,19 @@ expression	: FIX_SIZE '(' expression ')'
 		| FUNCNAME '(' func_args ')'
 			{
 			$$=NODE1(T_CALLFUNC,$3);
-			$$->en_call_srp = $1;
+			SET_VN_CALL_SUBRT($$, $1);
 			/* make sure this is not a void subroutine! */
-			if( $1->sr_prec == PREC_VOID ){
+			if( SR_PREC_CODE($1) == PREC_VOID ){
 				NODE_ERROR($$);
-				sprintf(error_string,"void subroutine %s used in expression!?",$1->sr_name);
-				advise(error_string);
+				sprintf(YY_ERR_STR,"void subroutine %s used in expression!?",SR_NAME($1));
+				advise(YY_ERR_STR);
 				CURDLE($$)
 			}
 			}
 		| comp_stack {
 			$$=$1;
 			}
-		| expr_stack {
+		| list_obj {
 			$$=$1;
 			}
 		| WARP '(' expression ',' expression ')' {
@@ -718,17 +768,17 @@ expression	: FIX_SIZE '(' expression ')'
 		| TRANSPOSE '(' expression ')'			/* transpose */
 			{
 			$$ = NODE1(T_TRANSPOSE,$3);
-			$$->en_child_shpp = (Shape_Info *)getbuf(sizeof(Shape_Info));
+			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
 		| DFT '(' expression ')' { $$ = NODE1(T_DFT,$3); }
 		| IDFT '(' expression ')' { $$ = NODE1(T_IDFT,$3); }
 		| RDFT '(' expression ')' {
 			$$ = NODE1(T_RDFT,$3);
-			$$->en_child_shpp = (Shape_Info *)getbuf(sizeof(Shape_Info));
+			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
 		| RIDFT '(' expression ')' {
 			$$ = NODE1(T_RIDFT,$3);
-			$$->en_child_shpp = (Shape_Info *)getbuf(sizeof(Shape_Info));
+			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
 		| assignment
 		| WRAP '(' expression ')' {
@@ -746,11 +796,11 @@ expression	: FIX_SIZE '(' expression ')'
 
 		| ENLARGE '(' expression ')' {
 			$$=NODE1(T_ENLARGE,$3);
-			$$->en_child_shpp = (Shape_Info *)getbuf(sizeof(Shape_Info));
+			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
 		| REDUCE '(' expression ')' {
 			$$=NODE1(T_REDUCE,$3);
-			$$->en_child_shpp = (Shape_Info *)getbuf(sizeof(Shape_Info));
+			SET_VN_SIZCH_SHAPE($$, ALLOC_SHAPE );
 			}
 		| LOAD '(' string_arg ')'
 			{ $$=NODE1(T_LOAD,$3); }
@@ -771,7 +821,7 @@ func_arg	: expression
 		| '&' FUNCNAME
 			{
 			$$=NODE0(T_FUNCREF);
-			$$->en_srp = $2;
+			SET_VN_SUBRT($$, $2);
 			}
 		*/
 		| func_ref_arg
@@ -779,8 +829,8 @@ func_arg	: expression
 		| ptr_assgn
 		| '&' pointer
 			{
-			sprintf(error_string,"shouldn't try to reference pointer variable %s",$2->en_string);
-			yyerror(QSP_ARG  error_string);
+			sprintf(YY_ERR_STR,"shouldn't try to reference pointer variable %s",VN_STRING($2));
+			yyerror(THIS_QSP,  YY_ERR_STR);
 			$$=$2;
 			}
 		|
@@ -803,11 +853,11 @@ void_call	: FUNCNAME '(' func_args ')'
 			{
 			/* BUG check to see that this subrt is void! */
 			$$=NODE1(T_CALLFUNC,$3);
-			$$->en_call_srp = $1;
-			if( $1->sr_prec != PREC_VOID ){
+			SET_VN_CALL_SUBRT($$, $1);
+			if( SR_PREC_CODE($1) != PREC_VOID ){
 				NODE_ERROR($$);
-				sprintf(error_string,"return value of function %s is ignored",$1->sr_name);
-				advise(error_string);
+				sprintf(YY_ERR_STR,"return value of function %s is ignored",SR_NAME($1));
+				advise(YY_ERR_STR);
 			}
 			}
 		| '(' '*' func_ptr ')' '(' func_args ')'
@@ -827,17 +877,17 @@ ref_arg		: '&' objref %prec UNARY
 		| EQUIVALENCE '(' objref ',' expr_list ',' precision ')'
 			{
 				$$=NODE2(T_EQUIVALENCE,$3,$5);
-				$$->en_decl_prec = $7;
+				SET_VN_DECL_PREC($$, $7);
 			}
 		| REFFUNC '(' func_args ')'
 			{
 			$$=NODE1(T_CALLFUNC,$3);
-			$$->en_call_srp = $1;
+			SET_VN_CALL_SUBRT($$, $1);
 			/* make sure this is not a void subroutine! */
-			if( $1->sr_prec == PREC_VOID ){
+			if( SR_PREC_CODE($1) == PREC_VOID ){
 				NODE_ERROR($$);
-				sprintf(error_string,"void subroutine %s used in pointer expression!?",$1->sr_name);
-				advise(error_string);
+				sprintf(YY_ERR_STR,"void subroutine %s used in pointer expression!?",SR_NAME($1));
+				advise(YY_ERR_STR);
 				CURDLE($$)
 			}
 			}
@@ -846,7 +896,7 @@ ref_arg		: '&' objref %prec UNARY
 func_ref_arg	: '&' FUNCNAME %prec UNARY
 			{
 			$$=NODE0(T_FUNCREF);
-			$$->en_srp = $2;
+			SET_VN_SUBRT($$, $2);
 			}
 		| funcptr_assgn
 		| func_ptr
@@ -951,13 +1001,13 @@ statline	: simple_stat ';'
 			Identifier *idp;
 			$$ = NODE0(T_LABEL);
 			idp = new_id(QSP_ARG  $1);
-			idp->id_type = ID_LABEL;
-			$$->en_string = savestr(idp->id_name);
+			SET_ID_TYPE(idp, ID_LABEL);
+			SET_VN_STRING($$, savestr(ID_NAME(idp)));
 			}
 		| LABELNAME ':'
 			{
 			$$ = NODE0(T_LABEL);
-			$$->en_string = savestr($1->id_name);
+			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		| error ';'
 			{ $$ = NO_VEXPR_NODE; }
@@ -995,6 +1045,11 @@ stat_block	: '{' stat_list '}'
 			{
 			$$=$2;
 			}
+		/* This doesn't do anything, but should not be a syntax error */
+		| '{' decl_stat_list '}'
+			{
+			$$=$2;
+			}
 		| '{' decl_stat_list stat_list '}'
 			{
 			$$=NODE2(T_STAT_LIST,$2,$3);
@@ -1009,7 +1064,7 @@ stat_block	: '{' stat_list '}'
 			}
 		| '{' stat_list END
 			{
-			yyerror(QSP_ARG  (char *)"missing '}'");
+			yyerror(THIS_QSP,  (char *)"missing '}'");
 			$$=NO_VEXPR_NODE;
 			}
 		;
@@ -1024,26 +1079,26 @@ new_func_decl	: NEWNAME '(' arg_decl_list ')'
 			if( $3 != NO_VEXPR_NODE )
 				EVAL_DECL_TREE($3);
 			$$ = NODE1(T_PROTO,$3);
-			$$->en_string = savestr($1);
+			SET_VN_STRING($$, savestr($1));
 			}
 		;
 
 old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 			{
-			if( $1->sr_flags != SR_PROTOTYPE ){
-				sprintf(error_string,"Subroutine %s multiply defined!?",$1->sr_name);
-				yyerror(QSP_ARG  error_string);
+			if( SR_FLAGS($1) != SR_PROTOTYPE ){
+				sprintf(YY_ERR_STR,"Subroutine %s multiply defined!?",SR_NAME($1));
+				yyerror(THIS_QSP,  YY_ERR_STR);
 				/* now what??? */
 			}
-			set_subrt_ctx(QSP_ARG  $1->sr_name);		/* when do we unset??? */
+			set_subrt_ctx(QSP_ARG  SR_NAME($1));		/* when do we unset??? */
 
 			/* compare the two arg decl trees
 			 * and issue a warning if they do not match.
 			 */
-			compare_arg_trees(QSP_ARG  $3,$1->sr_arg_decls);
+			compare_arg_trees(QSP_ARG  $3,SR_ARG_DECLS($1));
 
 			/* use the new ones */
-			$1->sr_arg_decls = $3;
+			SET_SR_ARG_DECLS($1, $3);
 			/* BUG?? we might want to release the old tree... */
 
 			/* We also need to make sure that the type of the function matches
@@ -1060,47 +1115,50 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 
 			$$=NODE1(T_PROTO,$3);
 			/* BUG why are we storing the name again?? */
-			$$->en_string = savestr($1->sr_name);
+			SET_VN_STRING($$, savestr(SR_NAME($1)));
 			}
 		;
 
 subroutine	: data_type new_func_decl stat_block
 			{
 			Subrt *srp;
-			srp=remember_subrt(QSP_ARG  $1,$2->en_string,$2->en_child[0],$3);
-			srp->sr_prec = $1;
+			srp=remember_subrt(QSP_ARG  $1,VN_STRING($2),VN_CHILD($2,0),$3);
+			SET_SR_PREC_PTR(srp, $1);
 			$$=NODE0(T_SUBRT);
-			$$->en_srp=srp;
-			delete_subrt_ctx(QSP_ARG  $2->en_string);	/* this deletes the objects... */
+			SET_VN_SUBRT($$,srp);
+			delete_subrt_ctx(QSP_ARG  VN_STRING($2));	/* this deletes the objects... */
+			// But why is the context in existence here?
 			COMPILE_SUBRT(srp);
 			}
 		| data_type '*' new_func_decl stat_block
 			{
 			Subrt *srp;
-			srp=remember_subrt(QSP_ARG  $1,$3->en_string,$3->en_child[0],$4);
-			srp->sr_prec = $1;
-			srp->sr_flags |= SR_REFFUNC;
+			srp=remember_subrt(QSP_ARG  $1,VN_STRING($3),VN_CHILD($3,0),$4);
+			SET_SR_PREC_PTR(srp, $1);
+			SET_SR_FLAG_BITS(srp, SR_REFFUNC);
 			/* set a flag to show returns ptr */
 			$$=NODE0(T_SUBRT);
-			$$->en_srp=srp;
-			delete_subrt_ctx(QSP_ARG  $3->en_string);	/* this deletes the objects... */
+			SET_VN_SUBRT($$,srp);
+			delete_subrt_ctx(QSP_ARG  VN_STRING($3));	/* this deletes the objects... */
 			COMPILE_SUBRT(srp);
 			}
 		| data_type old_func_decl stat_block
 			{
 			/* BUG make sure that precision matches prototype decl */
 			Subrt *srp;
-			srp=subrt_of(QSP_ARG  $2->en_string);
-#ifdef CAUTIOUS
-			if( srp == NO_SUBRT ) {
-				NODE_ERROR($2);
-				ERROR1("CAUTIOUS:  missing subrt!?");
-			}
-#endif /* CAUTIOUS */
+			srp=subrt_of(QSP_ARG  VN_STRING($2));
+//#ifdef CAUTIOUS
+//			if( srp == NO_SUBRT ) {
+//				NODE_ERROR($2);
+//				ERROR1("CAUTIOUS:  missing subrt!?");
+//			}
+//#endif /* CAUTIOUS */
+			assert( srp != NO_SUBRT );
+
 			update_subrt(QSP_ARG  srp,$3);
 			$$=NODE0(T_SUBRT);
-			$$->en_srp=srp;
-			delete_subrt_ctx(QSP_ARG  $2->en_string);
+			SET_VN_SUBRT($$,srp);
+			delete_subrt_ctx(QSP_ARG  VN_STRING($2));
 			COMPILE_SUBRT(srp);
 			}
 		;
@@ -1122,13 +1180,29 @@ arg_decl_list	:		/* nuthin */
 
 prog_elt	: subroutine
 		| decl_statement
+			{
+			if( $$ != NO_VEXPR_NODE ) {
+				// decl_stats are always evaluated,
+				// to create the objects for compilation...
+				SET_VN_FLAG_BITS($$,NODE_FINISHED);
+			}
+			}
 		| statline
 			{
-			if( $$ != NO_VEXPR_NODE ) EVAL_IMMEDIATE($$);
+			if( $$ != NO_VEXPR_NODE ) {
+				EVAL_IMMEDIATE($$);
+				// We don't release here,
+				// because these nodes get passed up
+				// to program nonterminal...
+				SET_VN_FLAG_BITS($$,NODE_FINISHED);
+			}
 			}
 		| blk_stat
 			{
-			if( $$ != NO_VEXPR_NODE ) EVAL_IMMEDIATE($$);
+			if( $$ != NO_VEXPR_NODE ) {
+				EVAL_IMMEDIATE($$);
+				SET_VN_FLAG_BITS($$,NODE_FINISHED);
+			}
 			}
 		;
 
@@ -1138,10 +1212,18 @@ program		: prog_elt END
 			{ TOP_NODE=$1; }
 		| program prog_elt END {
 			$$=NODE2(T_STAT_LIST,$1,$2);
+			if( $1 != NULL && NODE_IS_FINISHED($1) &&
+					$2 != NULL && NODE_IS_FINISHED($2) )
+				SET_VN_FLAG_BITS($$,NODE_FINISHED);
 			TOP_NODE=$$;
 			}
 		| program prog_elt {
+			// We don't need to make lists of statements
+			// already executed!?
 			$$=NODE2(T_STAT_LIST,$1,$2);
+			if( $1 != NULL && NODE_IS_FINISHED($1) &&
+					$2 != NULL && NODE_IS_FINISHED($2) )
+				SET_VN_FLAG_BITS($$,NODE_FINISHED);
 			TOP_NODE=$$;
 			}
 		| error END
@@ -1152,24 +1234,28 @@ program		: prog_elt END
 		;
 
 data_type	: precision
-		| CONST_TYPE precision { $$ = $2 | DT_RDONLY ; }
+		/* | CONST_TYPE precision { $$ = const_precision($2) ; } */
 		;
 
-precision	: BYTE { $$		= PREC_BY;	}
-		| CHAR { $$		= PREC_CHAR;	}
-		| STRING { $$		= PREC_STR;	}
-		| FLOAT { $$		= PREC_SP;	}
-		| DOUBLE { $$		= PREC_DP;	}
-		| COMPLEX { $$		= PREC_CPX;	}
-		| DBLCPX { $$		= PREC_DBLCPX;	}
-		| SHORT { $$		= PREC_IN;	}
-		| LONG { $$		= PREC_DI;	}
-		| UBYTE { $$		= PREC_UBY;	}
-		| USHORT { $$		= PREC_UIN;	}
-		| ULONG { $$		= PREC_UDI;	}
-		| BIT { $$		= PREC_BIT;	}
-		| COLOR { $$		= PREC_COLOR;	}
-		| VOID_TYPE { $$	= PREC_VOID;	}
+precision	: BYTE { $$		= PREC_FOR_CODE(PREC_BY);	}
+		| CHAR { $$		= PREC_FOR_CODE(PREC_CHAR);	}
+		| STRING { $$		= PREC_FOR_CODE(PREC_STR);	}
+		| FLOAT { $$		= PREC_FOR_CODE(PREC_SP);	}
+		| DOUBLE { $$		= PREC_FOR_CODE(PREC_DP);	}
+		| COMPLEX { $$		= PREC_FOR_CODE(PREC_CPX);	}
+		| DBLCPX { $$		= PREC_FOR_CODE(PREC_DBLCPX);	}
+		| QUATERNION { $$	= PREC_FOR_CODE(PREC_QUAT);	}
+		| DBLQUAT { $$		= PREC_FOR_CODE(PREC_DBLQUAT);	}
+		| SHORT { $$		= PREC_FOR_CODE(PREC_IN);	}
+		| INT32 { $$		= PREC_FOR_CODE(PREC_DI);	}
+		| INT64 { $$		= PREC_FOR_CODE(PREC_LI);	}
+		| UBYTE { $$		= PREC_FOR_CODE(PREC_UBY);	}
+		| USHORT { $$		= PREC_FOR_CODE(PREC_UIN);	}
+		| UINT32 { $$		= PREC_FOR_CODE(PREC_UDI);	}
+		| UINT64 { $$		= PREC_FOR_CODE(PREC_ULI);	}
+		| BIT { $$		= PREC_FOR_CODE(PREC_BIT);	}
+		| COLOR { $$		= PREC_FOR_CODE(PREC_COLOR);	}
+		| VOID_TYPE { $$	= PREC_FOR_CODE(PREC_VOID);	}
 		;
 
 
@@ -1192,13 +1278,23 @@ return_stat	: RETURN
 			{
 			$$=NODE1(T_RETURN,NO_VEXPR_NODE);
 			}
+		/*
 		| RETURN '(' expression ')'
 			{
 			$$=NODE1(T_RETURN,$3);
 			}
+			*/
+		| RETURN expression
+			{
+			$$=NODE1(T_RETURN,$2);
+			}
 		| RETURN '(' ref_arg ')'
 			{
 			$$=NODE1(T_RETURN,$3);
+			}
+		| RETURN ref_arg
+			{
+			$$=NODE1(T_RETURN,$2);
 			}
 		;
 
@@ -1211,20 +1307,20 @@ fileio_stat	:	SAVE '(' string_arg ',' expression ')'
 script_stat	:	SCRIPTFUNC '(' print_list ')'
 			{
 			$$=NODE1(T_SCRIPT,$3);
-			$$->en_srp = $1;
+			SET_VN_SUBRT($$, $1);
 			}
 		| SCRIPTFUNC '(' ')'
 			{
 			$$=NODE1(T_SCRIPT,NO_VEXPR_NODE);
-			$$->en_srp = $1;
+			SET_VN_SUBRT($$, $1);
 			}
 		;
 
 str_ptr_arg	: str_ptr
 		| NEWNAME
 			{
-			sprintf(error_string,"undefined string pointer \"%s\"",$1);
-			yyerror(QSP_ARG  error_string);
+			sprintf(YY_ERR_STR,"undefined string pointer \"%s\"",$1);
+			yyerror(THIS_QSP,  YY_ERR_STR);
 			$$=NO_VEXPR_NODE;
 			}
 		;
@@ -1245,7 +1341,7 @@ misc_stat	: STRCPY '(' str_ptr_arg ',' printable ')'
 		| NATIVE_FUNC_NAME '(' func_args ')'
 			{
 			$$ = NODE1(T_CALL_NATIVE,$3);
-			$$->en_intval = $1;
+			SET_VN_INTVAL($$, $1);
 			}
 			/*
 		| SVBK '(' ref_arg ',' expression ',' expression ',' expression ',' expression ')'
@@ -1279,7 +1375,7 @@ misc_stat	: STRCPY '(' str_ptr_arg ',' printable ')'
 		| OPTIMIZE '(' FUNCNAME ')'
 			{
 			$$ = NODE0(T_OPTIMIZE);
-			$$->en_srp = $3;
+			SET_VN_SUBRT($$, $3);
 			}
 
 
@@ -1296,115 +1392,119 @@ print_stat	: PRINT '(' mixed_list ')' { $$=NODE1(T_EXP_PRINT,$3); }
 
 decl_identifier	: NEWNAME
 		| OBJNAME
-			{ $$ = $1->dt_name; }
+			{ $$ = OBJ_NAME($1); }
 		| PTRNAME
-			{ $$ = $1->id_name; }
+			{ $$ = ID_NAME($1); }
 		| STRNAME
-			{ $$ = $1->id_name; }
+			{ $$ = ID_NAME($1); }
 		|	precision
 			{
-			yyerror(QSP_ARG  (char *)"illegal attempt to use a keyword as an identifier");
+			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
 			$$="<illegal_keyword_use>";
 			}
 		;
 
 decl_item	: decl_identifier {
 			$$ = NODE0(T_SCAL_DECL);
-			$$->en_string=savestr($1);	/* bug need to save??? */
+			// WHY VN_STRING and not VN_DECL_NAME???
+			SET_VN_STRING($$,savestr($1));	/* bug need to save??? */
 			}
 		/*
 		| decl_identifier '(' arg_decl_list ')' {
 			$$ = NODE1(T_PROTO,$3);
-			$$->en_string = savestr($1);
+			SET_VN_STRING($$, savestr($1));
 			}
 		*/
 		| new_func_decl
 			{
-			delete_subrt_ctx(QSP_ARG  $1->en_string);
+			delete_subrt_ctx(QSP_ARG  VN_STRING($1));
 			}
 		| old_func_decl				/* repeated prototype */
 			{
-			delete_subrt_ctx(QSP_ARG  $1->en_string);
+			delete_subrt_ctx(QSP_ARG  VN_STRING($1));
 			}
 		| '(' '*' decl_identifier ')' '(' arg_decl_list ')'
 			{
 			/* function pointer */
 			$$ = NODE1(T_FUNCPTR_DECL,$6);
-			$$->en_decl_name=savestr($3);
+			SET_VN_DECL_NAME($$,savestr($3));
 			}
 		| decl_identifier '{' expression '}' {
 			$$ = NODE1(T_CSCAL_DECL,$3);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' expression ']' {
 			$$ = NODE1(T_VEC_DECL,$3);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' expression ']' '{' expression '}' {
 			$$ = NODE2(T_CVEC_DECL,$3,$6);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' {
+			// The type is stored at the parent node...
+			// Since we "compile" the nodes depth first,
+			// how does it get here?
 			$$=NODE2(T_IMG_DECL,$3,$6);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '{' expression '}' {
 			$$=NODE3(T_CIMG_DECL,$3,$6,$9);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '[' expression ']' {
 			$$=NODE3(T_SEQ_DECL,$3,$6,$9);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '[' expression ']' '{' expression '}' {
 			Vec_Expr_Node *enp;
 			enp = NODE2(T_EXPR_LIST,$9,$12);
 			$$=NODE3(T_CSEQ_DECL,$3,$6,enp);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '{' '}' {
 			$$ = NODE1(T_CSCAL_DECL,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']'
 			{
 			$$ = NODE1(T_VEC_DECL,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '{' '}'
 			{
 			$$ = NODE2(T_CVEC_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']'
 			{
 			$$ = NODE2(T_IMG_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']' '{' '}'
 			{
 			$$ = NODE3(T_CIMG_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']'
 			{
 			$$ = NODE3(T_SEQ_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']' '{' '}'
 			{
 			$$ = NODE3(T_CSEQ_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
-			$$->en_decl_name=savestr($1);
+			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| '*' decl_identifier
 			{
 			$$=NODE0(T_PTR_DECL);
-			$$->en_decl_name  = savestr($2);
+			SET_VN_DECL_NAME($$, savestr($2));
 			}
 		| DATA_FUNC
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = savestr( ((Function *)data_functbl) [$1].fn_name);
+			SET_VN_STRING($$, savestr( FUNC_NAME( $1 )) );
 			CURDLE($$)
 			NODE_ERROR($$);
 			WARN("illegal data function name use");
@@ -1412,7 +1512,7 @@ decl_item	: decl_identifier {
 		| SIZE_FUNC
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = savestr( ((Function *)size_functbl) [$1].fn_name);
+			SET_VN_STRING($$, savestr( FUNC_NAME($1) ) );
 			CURDLE($$)
 			NODE_ERROR($$);
 			WARN("illegal size function name use");
@@ -1421,37 +1521,37 @@ decl_item	: decl_identifier {
 		| badname
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		| badname '[' expression ']'
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		| badname '[' expression ']' '[' expression ']'
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		| badname '[' expression ']' '[' expression ']' '[' expression ']'
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		| badname '[' ']'
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		| badname '[' ']' '[' ']'
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		| badname '[' ']' '[' ']' '[' ']'
 			{
 			$$=NODE0(T_BADNAME);
-			$$->en_string = $1;
+			SET_VN_STRING($$, $1);
 			}
 		*/
 		;
@@ -1475,9 +1575,11 @@ decl_item_list	: decl_item
 
 arg_decl	: data_type decl_item {
 			$$=NODE1(T_DECL_STAT,$2);
-			if( $1 & DT_RDONLY )
-				$$->en_decl_flags = DECL_IS_CONST;
-			$$->en_decl_prec=$1 & ~DT_RDONLY;
+/*
+			if( PREC_RDONLY($1) )
+				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
+*/
+			SET_VN_DECL_PREC($$,$1);
 			}
 		;
 
@@ -1491,25 +1593,35 @@ decl_stat_list	: decl_statement
 
 decl_statement	: data_type decl_item_list ';' {
 			$$ = NODE1(T_DECL_STAT,$2);
+/*
 			if( $1 & DT_RDONLY )
-				$$->en_decl_flags = DECL_IS_CONST;
-			$$->en_decl_prec=$1 & ~DT_RDONLY;
+				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
+*/
+			SET_VN_DECL_PREC($$,$1);
 			EVAL_IMMEDIATE($$);
+			// don't release here because may be in subrt decl...
+			// But we need to release otherwise!?
 			}
 		| EXTERN data_type decl_item_list ';' {
 			$$ = NODE1(T_EXTERN_DECL,$3);
+/*
 			if( $2 & DT_RDONLY )
-				$$->en_decl_flags = DECL_IS_CONST;
-			$$->en_decl_prec=$2 & ~DT_RDONLY;
+				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
+*/
+			SET_VN_DECL_PREC($$,$2);
 			EVAL_IMMEDIATE($$);
+			// don't release here because may be in subrt decl...
 			}
 		| STATIC data_type decl_item_list ';' {
 			$$ = NODE1(T_DECL_STAT,$3);
+/*
 			if( $2 & DT_RDONLY )
-				$$->en_decl_flags = DECL_IS_CONST;
-			$$->en_decl_flags |= DECL_IS_STATIC;
-			$$->en_decl_prec=$2 & ~DT_RDONLY;
+				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
+*/
+			SET_VN_DECL_FLAG_BITS($$,DECL_IS_STATIC);
+			SET_VN_DECL_PREC($$,$2);
 			EVAL_IMMEDIATE($$);
+			// don't release here because may be in subrt decl...
 			}
 		;
 
@@ -1615,12 +1727,12 @@ simple_stat	:	/* null empty statement */
 		| GOTO LABELNAME
 			{
 			$$ = NODE0(T_GO_BACK);
-			$$->en_string = savestr($2->id_name);
+			SET_VN_STRING($$, savestr(ID_NAME($2)));
 			}
 		| GOTO NEWNAME
 			{
 			$$ = NODE0(T_GO_FWD);
-			$$->en_string = savestr($2);
+			SET_VN_STRING($$, savestr($2));
 			}
 		;
 
@@ -1645,7 +1757,7 @@ comp_stack	: '{' comp_list '}' {
 			}
 		;
 
-expr_stack	: '[' row_list ']' {
+list_obj	: '[' row_list ']' {
 			$$=NODE1(T_LIST_OBJ,$2);
 			}
 		;
@@ -1656,6 +1768,10 @@ comp_list	: expression
 			$$=NODE2(T_COMP_LIST,$1,$3);
 			}
 		;
+
+/* what is the difference between a row_list and an expr_list?
+ * An expr_list can appear as the argument to a function...
+ */
 
 row_list	: expression
 		| row_list ',' expression
@@ -1693,8 +1809,10 @@ string_list	: string_arg
 
 string		: LEX_STRING
 			{
+			const char *s;
+			s=savestr($1);
 			$$=NODE0(T_STRING);
-			$$->en_string = savestr($1);
+			SET_VN_STRING($$, s);
 				/* BUG?  make sure to free if tree deleted */
 			}
 		| NAME_FUNC '(' objref ')'
@@ -1732,31 +1850,31 @@ string_arg	: string
 badname		:	oldname
 		|	data_type
 			{
-			yyerror(QSP_ARG  (char *)"illegal attempt to use a keyword as an identifier");
+			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
 			$$="<illegal_keyword_use>";
 			}
 		;
 
 oldname		:	OBJNAME
 			{
-			sprintf(error_string,"Object %s already declared",
-				$1->dt_name);
-			yyerror(QSP_ARG  error_string);
-			$$ = $1->dt_name;
+			sprintf(YY_ERR_STR,"Object %s already declared",
+				OBJ_NAME($1));
+			yyerror(THIS_QSP,  YY_ERR_STR);
+			$$ = OBJ_NAME($1);
 			}
 		|	STRNAME
 			{
-			sprintf(error_string,"string %s already declared",
-				$1->id_name);
-			yyerror(QSP_ARG  error_string);
-			$$ = $1->id_name;
+			sprintf(YY_ERR_STR,"string %s already declared",
+				ID_NAME($1));
+			yyerror(THIS_QSP,  YY_ERR_STR);
+			$$ = ID_NAME($1);
 			}
 		|	PTRNAME
 			{
-			sprintf(error_string,"Pointer %s already declared",
-				$1->id_name);
-			yyerror(QSP_ARG  error_string);
-			$$ = $1->id_name;
+			sprintf(YY_ERR_STR,"Pointer %s already declared",
+				ID_NAME($1));
+			yyerror(THIS_QSP,  YY_ERR_STR);
+			$$ = ID_NAME($1);
 			}
 		;
 
@@ -1769,7 +1887,8 @@ oldname		:	OBJNAME
 Keyword kw_tbl[]={
 	{	"extern",	EXTERN			},
 	{	"static",	STATIC			},
-	{	"const",	CONST_TYPE		},
+// why do we need to support const?
+//	{	"const",	CONST_TYPE		},
 	{	"void",		VOID_TYPE		},
 	{	"byte",		BYTE			},
 	{	"char",		CHAR			},
@@ -1777,14 +1896,22 @@ Keyword kw_tbl[]={
 	{	"float",	FLOAT			},
 	{	"complex",	COMPLEX			},
 	{	"dblcpx",	DBLCPX			},
+	{	"quaternion",	QUATERNION		},
+	{	"dblquat",	DBLQUAT			},
 	{	"double",	DOUBLE			},
 	{	"short",	SHORT			},
-	{	"int",		LONG			},
-	{	"long",		LONG			},
+	{	"int",		INT32			},
+	{	"int32",	INT32			},
+	{	"long",		INT32			},
+	{	"llong",	INT64			},
+	{	"int64",	INT64			},
 	{	"u_byte",	UBYTE			},
 	{	"u_short",	USHORT			},
-	{	"u_long",	ULONG			},
-	{	"u_int",	ULONG			},
+	{	"u_long",	UINT32			},
+	{	"u_int",	UINT32			},
+	{	"u_int32",	UINT32			},
+	{	"u_llong",	UINT64			},
+	{	"u_int64",	UINT64			},
 	{	"bit",		BIT			},
 	{	"color",	COLOR			},
 
@@ -1839,8 +1966,8 @@ Keyword kw_tbl[]={
 	{	"lookup",	LOOKUP			},
 	{	"ramp",		RAMP			},
 	{	"sum",		SUM			},
-	{	"min",		MIN			},
-	{	"max",		MAX			},
+	{	"min",		MINVAL			},
+	{	"max",		MAXVAL			},
 	{	"Re",		REAL_PART		},
 	{	"Im",		IMAG_PART		},
 
@@ -1944,7 +2071,7 @@ static double parse_num(QSP_ARG_DECL  const char **strptr)
 			value=intval;
 			break;
 		default:
-			yyerror(QSP_ARG  (char *)"bizarre radix in intscan");
+			yyerror(THIS_QSP,  (char *)"bizarre radix in intscan");
 	}
 	if( radix==10 && *ptr == '.' ){
 		decimal_seen=1;
@@ -1972,7 +2099,7 @@ static double parse_num(QSP_ARG_DECL  const char **strptr)
 		} else sign=1;
 
 		if( !isdigit(*ptr) )
-			yyerror(QSP_ARG  (char *)"no digits for exponent!?");
+			yyerror(THIS_QSP,  (char *)"no digits for exponent!?");
 		while( *ptr && 
 			isdigit( *ptr ) ){
 			ponent *= 10;
@@ -1990,6 +2117,7 @@ static double parse_num(QSP_ARG_DECL  const char **strptr)
 	*strptr = ptr;
 	return(value);
 }
+
 static int whkeyword(Keyword *table,const char *str)
 {
 	register int i;
@@ -2005,13 +2133,59 @@ static int whkeyword(Keyword *table,const char *str)
 	return(-1);
 }
 
-static char yy_word_buf[YY_LLEN];
+// Ideally we would grow this table dynamically as needed!  BUG
+#define MAX_SAVED_PARSE_STRINGS	2048
+static int n_saved_parse_strings=0;
+const char *saved_parse_string[MAX_SAVED_PARSE_STRINGS];
 
-#ifdef THREAD_SAFE_QUERY
-int yylex(YYSTYPE *yylvp, Query_Stream *qsp)	/* return the next token */
-#else /* ! THREAD_SAFE_QUERY */
-int yylex(YYSTYPE *yylvp)			/* return the next token */
-#endif /* ! THREAD_SAFE_QUERY */
+static const char *save_parse_string(char *s)
+{
+	const char *ss;
+
+	ss = savestr(s);
+
+	// remember s so we can free it later...
+	if( n_saved_parse_strings >= MAX_SAVED_PARSE_STRINGS ){
+		NERROR1("Need to increase MAX_SAVED_PARSE_STRINGS!?");
+	} else {
+		saved_parse_string[n_saved_parse_strings++] = ss;
+	}
+
+	return ss;
+}
+
+
+/* Read text up to a matching quote, and update the pointer */
+
+static const char *match_quote(QSP_ARG_DECL  const char **spp)
+{
+	char *s;
+	int c;
+
+	s=VEXP_STR;
+
+	while( (c=(**spp)) && c!='"' ){
+		*s++ = (char) c;
+		(*spp)++; /* YY_CP++; */
+	}
+	*s=0;
+	if( c != '"' ) {
+		NWARN("missing quote");
+		sprintf(DEFAULT_ERROR_STRING,"string \"%s\" stored",CURR_STRING);
+		advise(DEFAULT_ERROR_STRING);
+	} else (*spp)++;			/* skip over closing quote */
+
+	s=(char *)save_parse_string(VEXP_STR);
+	SET_CURR_STRING(s);
+	return(CURR_STRING);
+} // match_quote
+
+//#ifdef THREAD_SAFE_QUERY
+//int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
+//#else /* ! THREAD_SAFE_QUERY */
+//int yylex(YYSTYPE *yylvp)			/* return the next token */
+//#endif /* ! THREAD_SAFE_QUERY */
+int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 {
 	register int c;
 	int in_comment=0;
@@ -2029,25 +2203,37 @@ nexttok:
 		 */
 
 
-		lookahead_til(QSP_ARG  THIS_QSP->qs_expr_level-1);
-		if( THIS_QSP->qs_expr_level > (ql=tell_qlevel(SINGLE_QSP_ARG)) ){
+		lookahead_til(QSP_ARG  EXPR_LEVEL-1);
+		if( EXPR_LEVEL > (ql=QLEVEL) ){
 			return(0);	/* EOF */
 		}
 
 		/* remember the name of the current input file if we don't already have one */
-		if( curr_infile == NULL )
-			curr_infile = savestr(current_input_file(SINGLE_QSP_ARG));
+		// CURR_INFILE is part of the query stack struct...
+		// while CURRENT_FILENAME is part of the query struct.
+		// CURR_INFILE doesn't seem to be used by the interpreter - why
+		// was it introduced???  Used here, but needs to be thread-safe,
+		// so part of query_stack...
+		//
+		// Better would be to have a saved string with reference count.
+		// 
+
+		if( CURR_INFILE == NULL ){
+			CURR_INFILE = save_stringref(CURRENT_FILENAME);
+		}
 
 		/* if the name now is different from the remembered name, change it! */
-		if( strcmp(current_input_file(SINGLE_QSP_ARG),curr_infile) ){
+		if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
 			/* This is a problem - we don't want to release the old string, because
 			 * existing nodes point to it.  We don't want them to have private copies,
 			 * either, because there would be too many.  We compromise here by not
 			 * releasing the old string, but not remembering it either.  Thus we may
 			 * end up with a few more copies later, if we have nested file inclusion...
 			 */
-			/* rls_str(curr_infile); */
-			curr_infile = savestr(current_input_file(SINGLE_QSP_ARG));
+			/* rls_str(CURR_INFILE); */
+			if( SR_COUNT(CURR_INFILE) == 0 )
+				rls_stringref(CURR_INFILE);
+			CURR_INFILE = save_stringref(CURRENT_FILENAME);
 		}
 
 		/* why disable stripping quotes? */
@@ -2058,32 +2244,33 @@ nexttok:
 		strcpy(yy_word_buf,NAMEOF("statement"));
 		YY_CP=yy_word_buf;
 /*
-sprintf(error_string,"read word \"%s\", lineno is now %d, qlevel = %d",
+sprintf(ERROR_STRING,"read word \"%s\", lineno is now %d, qlevel = %d",
 YY_CP,query[ql].q_lineno,qlevel);
-advise(error_string);
+advise(ERROR_STRING);
 */
 
 		/* BUG?  lookahead advances lineno?? */
 		/* BUG no line numbers in macros? */
-		if( THIS_QSP->qs_query[ql].q_lineno != LASTLINENO ){
+		// Should we compare lineno or rdlineno???
+		if( QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql)) != LASTLINENO ){
 /*
-sprintf(error_string,"line number changed from %d to %d, saving line \"%s\"",
+sprintf(ERROR_STRING,"line number changed from %d to %d, saving line \"%s\"",
 LASTLINENO,query[ql].q_lineno,YY_INPUT_LINE);
-advise(error_string);
+advise(ERROR_STRING);
 */
 			strcpy(YY_LAST_LINE,YY_INPUT_LINE);
 			YY_INPUT_LINE[0]=0;
-			PARSER_LINENO =
-			LASTLINENO = THIS_QSP->qs_query[ql].q_lineno;
+			SET_PARSER_LINENO( QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) ) );
+			SET_LASTLINENO( QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) ) );
 		}
 
 		if( (strlen(YY_INPUT_LINE) + strlen(YY_CP) + 2) >= YY_LLEN ){
 			WARN("yy_input line buffer overflow");
-			sprintf(error_string,"%ld chars in input line:",(long)strlen(YY_INPUT_LINE));
-			advise(error_string);
+			sprintf(ERROR_STRING,"%ld chars in input line:",(long)strlen(YY_INPUT_LINE));
+			advise(ERROR_STRING);
 			advise(YY_INPUT_LINE);
-			sprintf(error_string,"%ld previously buffered chars:",(long)strlen(YY_CP));
-			advise(error_string);
+			sprintf(ERROR_STRING,"%ld previously buffered chars:",(long)strlen(YY_CP));
+			advise(ERROR_STRING);
 			advise(YY_CP);
 			return(0);
 		}
@@ -2092,20 +2279,20 @@ advise(error_string);
 
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){
-sprintf(error_string,"yylex scanning \"%s\"",YY_CP);
-advise(error_string);
+sprintf(ERROR_STRING,"yylex scanning \"%s\"",YY_CP);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	/* skip spaces */
 	while( *YY_CP
 		&& isspace(*YY_CP) ){
 		if( *YY_CP == '\n' ){
 			YY_CP++;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning NEWLINE"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			return(NEWLINE);
 		}
 		YY_CP++;
@@ -2140,40 +2327,50 @@ if( debug & parser_debug ){ advise("yylex returning NEWLINE"); }
 
 	if( c=='.' && !isdigit(*(YY_CP+1)) ){
 		YY_CP++;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning DOT"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return(DOT);
 	}
 		
 	if( isdigit(c) || c=='.' ) {
-		yylvp->dval= parse_num(QSP_ARG  &YY_CP) ;
+		const char *s;
+
+		// In objC, we can't take the address of a property...
+		s=YY_CP;
+		yylvp->dval= parse_num(QSP_ARG  &s) ;
+		SET_YY_CP(s);
+
 		if( decimal_seen ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning NUMBER"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			return(NUMBER);
 		} else {
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning INT_NUM"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			return(INT_NUM);
 		}
 	} else if( c == '"' ){		/* read to matching quote */
-		YY_CP++;
-		yylvp->e_string=match_quote(QSP_ARG  &YY_CP);
-#ifdef DEBUG
+		const char *s;
+		//SET_YY_CP( YY_CP + 1 );
+		// objC can't take the address of a property...
+		s=YY_CP+1;
+		yylvp->e_string=match_quote(QSP_ARG  &s);
+		SET_YY_CP(s);
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LEX_STRING"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return(LEX_STRING);
 	} else if( c == '\'' ){		/* char const? */
 		if( *(YY_CP+1) != '\\' ){		/* not an escape */
 			if( *(YY_CP+2) == '\'' ){
 				yylvp->dval = *(YY_CP+1);
-				YY_CP += 3;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 3);
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(CHAR_CONST);
 			}
 		} else {				/* first char is a backslash */
@@ -2185,10 +2382,10 @@ if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
 					case 'f':  yylvp->dval = '\f'; break;
 					default:   yylvp->dval = *(YY_CP+2); break;
 				}
-				YY_CP += 4;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 4 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(CHAR_CONST);
 			}
 		}
@@ -2220,170 +2417,170 @@ if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
 		 */
 		if( tok == NEXT_TOKEN ) goto nexttok;
 		else {
-#ifdef DEBUG
-if( debug & parser_debug ){ sprintf(error_string,"yylex returning token %d",tok); advise(error_string); }
-#endif /* DEBUG */
+#ifdef QUIP_DEBUG
+if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning token %d",tok); advise(ERROR_STRING); }
+#endif /* QUIP_DEBUG */
 			return(tok);
 		}
 
 	} else if( ispunct(c) ){
-		YY_CP++;
+		SET_YY_CP( YY_CP + 1 );
 		yylvp->fundex=c;
 		if( c==';' ){
 			SEMI_SEEN=1;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning semicolon"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			return(c);
 		} else if( c=='>' ){
 			if( *YY_CP == '>' ){
-				YY_CP++;
+				SET_YY_CP( YY_CP + 1 );
 				if( *YY_CP == '=' ){
-					YY_CP++;
-#ifdef DEBUG
+					SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning SHR_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 					return(SHR_EQ);
 				}
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning SHR"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(SHR);
 			} else if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning GE"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(GE);
 			}
 		} else if( c=='<' ){
 			if( *YY_CP=='<' ){
-				YY_CP++;
+				SET_YY_CP( YY_CP + 1 );
 				if( *YY_CP == '=' ){
-					YY_CP++;
-#ifdef DEBUG
+					SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning SHL_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 					return(SHL_EQ);
 				}
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning SHL"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(SHL);
 			} else if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LE"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(LE);
 			}
 		} else if( c == '=' ){
 			if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LOG_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(LOG_EQ);
 			}
 		} else if( c == '|' ){
 			if( *YY_CP == '|' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LOGOR"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(LOGOR);
 			} else if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning OR_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(OR_EQ);
 			}
 		} else if( c == '^' ){
 			if( *YY_CP == '^' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LOGXOR"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(LOGXOR);
 			} else if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning XOR_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(XOR_EQ);
 			}
 		} else if( c == '&' ){
 			if( *YY_CP == '&' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning LOGAND"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(LOGAND);
 			} else if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning AND_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(AND_EQ);
 			}
 		} else if( c == '!' ){
 			if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning NE"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(NE);
 			}
 		} else if( c == '*' ){
 			if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning TIMES_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(TIMES_EQ);
 			}
 		} else if( c == '+' ){
 			if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning PLUS_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(PLUS_EQ);
 			} else if( *YY_CP == '+' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning PLUS_PLUS"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(PLUS_PLUS);
 			}
 		} else if( c == '-' ){
 			if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning MINUS_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(MINUS_EQ);
 			} else if( *YY_CP == '-' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning MINUS_MINUS"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(MINUS_MINUS);
 			}
 		} else if( c == '/' ){
 			if( *YY_CP == '=' ){
-				YY_CP++;
-#ifdef DEBUG
+				SET_YY_CP( YY_CP + 1 );
+#ifdef QUIP_DEBUG
 if( debug & parser_debug ){ advise("yylex returning DIV_EQ"); }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				return(DIV_EQ);
 			}
 		}
 
-#ifdef DEBUG
-if( debug & parser_debug ){ sprintf(error_string,"yylex returning char '%c' (0x%x)",c,c); advise(error_string); }
-#endif /* DEBUG */
+#ifdef QUIP_DEBUG
+if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning char '%c' (0x%x)",c,c); advise(ERROR_STRING); }
+#endif /* QUIP_DEBUG */
 		return(c);
 	} else {
 		WARN("yylex error");
@@ -2401,34 +2598,12 @@ static const char *read_word(QSP_ARG_DECL  const char **spp)
 	s=VEXP_STR;
 
 	while( islegal(c=(**spp)) || isdigit(c) ){
-		*s++ = c;
+		*s++ = (char) c;
 		(*spp)++; /* YY_CP++; */
 	}
 	*s=0;
 
-	return(savestr(VEXP_STR));
-}
-
-static const char *match_quote(QSP_ARG_DECL  const char **spp)
-{
-	char *s;
-	int c;
-
-	s=VEXP_STR;
-
-	while( (c=(**spp)) && c!='"' ){
-		*s++ = c;
-		(*spp)++; /* YY_CP++; */
-	}
-	*s=0;
-	if( c != '"' ) {
-		NWARN("missing quote");
-		sprintf(DEFAULT_ERROR_STRING,"string \"%s\" stored",CURR_STRING);
-		advise(DEFAULT_ERROR_STRING);
-	} else (*spp)++;			/* skip over closing quote */
-
-	CURR_STRING=savestr(VEXP_STR);
-	return(CURR_STRING);
+	return(save_parse_string(VEXP_STR));
 }
 
 /* this function should go in the lexical analyser... */
@@ -2440,6 +2615,8 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	Identifier *idp;
 	Subrt *srp;
 	const char *s;
+	const char *sptr;
+	Function *func_p;
 
 	/*
 	 * Currently, function names don't have
@@ -2452,7 +2629,13 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 
 	/* read in a word, possibly expanding macro args */
 
-	CURR_STRING=s=read_word(QSP_ARG  &YY_CP);
+	// a little kludgy for objC...
+	sptr=YY_CP;
+	// read_word is saved, must be freed somewhere!?
+	s=read_word(QSP_ARG  &sptr);
+	SET_YY_CP(sptr);
+
+	SET_CURR_STRING(s);	// call savestr here?
 	/* if word was a macro arg, macro arg is now on input stack */
 	if( s == NULL ) return(NEXT_TOKEN);
 
@@ -2465,57 +2648,48 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 		return(code);
 	}
 	/* see if it's a system- or user-defined function */
+
 	i=whkeyword(vt_native_func_tbl,CURR_STRING);
 	if( i!=(-1) ){
-#ifdef CAUTIOUS
-if( i != vt_native_func_tbl[i].kw_code ){
-sprintf(error_string,"CAUTIOUS:  OOPS vt_native_func_tbl[%d].kw_code = %d (expected %d)",i,vt_native_func_tbl[i].kw_code,i);
-ERROR1(error_string);
-}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//if( i != vt_native_func_tbl[i].kw_code ){
+//sprintf(ERROR_STRING,"CAUTIOUS:  OOPS vt_native_func_tbl[%d].kw_code = %d (expected %d)",i,vt_native_func_tbl[i].kw_code,i);
+//ERROR1(ERROR_STRING);
+//}
+//#endif /* CAUTIOUS */
+
+		// this assertion says that the table is in the correct order,
+		// either by initialization or sorting...
+		assert( i == vt_native_func_tbl[i].kw_code );
+
 		yylvp->fundex = i;
 		return(NATIVE_FUNC_NAME);
 	}
 
-	i=whfunc((Function *)math0_functbl,CURR_STRING);
-	if( i!= (-1) ){
-		yylvp->fundex =i;
-		return(MATH0_FUNC);
-	}
-	i=whfunc((Function *)math1_functbl,CURR_STRING);
-	if( i!= (-1) ){
-		yylvp->fundex =i;
-		return(MATH1_FUNC);
-	}
-	i=whfunc((Function *)math2_functbl,CURR_STRING);
-	if( i!= (-1) ){
-		yylvp->fundex =i;
-		return(MATH2_FUNC);
-	}
-	i=whfunc((Function *)data_functbl,CURR_STRING);
-	if( i!=(-1) ){
-		yylvp->fundex=i;
-		return(DATA_FUNC);
-	}
-	i=whfunc((Function *)size_functbl,CURR_STRING);
-	if( i!=(-1) ){
-		yylvp->fundex=i;
-		return(SIZE_FUNC);
-	}
-	i=whfunc((Function *)misc_functbl,CURR_STRING);
-	if( i!=(-1) ){
-		yylvp->fundex=i;
-		return(MISC_FUNC);
-	}
-	i=whfunc((Function *)str1_functbl,CURR_STRING);
-	if( i!=(-1) ){
-		yylvp->fundex=i;
-		return(STR1_FUNC);
-	}
-	i=whfunc((Function *)str2_functbl,CURR_STRING);
-	if( i!=(-1) ){
-		yylvp->fundex=i;
-		return(STR2_FUNC);
+	func_p=function_of(QSP_ARG  CURR_STRING);
+
+	if( func_p != NULL ){
+		yylvp->func_p = func_p;
+		switch(FUNC_TYPE(func_p)){
+			case D0_FUNCTYP:	return(MATH0_FUNC);	break;
+			case D1_FUNCTYP:	return(MATH1_FUNC);	break;
+			case D2_FUNCTYP:	return(MATH2_FUNC);	break;
+			case I1_FUNCTYP:	return(INT1_FUNC);	break;
+			case STR1_FUNCTYP:	return(STR1_FUNC);	break;
+			case STR2_FUNCTYP:	return(STR2_FUNC);	break;
+			case STR3_FUNCTYP:	return(STR3_FUNC);	break;
+			case STRV_FUNCTYP:	return(STRV_FUNC);	break;
+			case CHAR_FUNCTYP:	return(CHAR_FUNC);	break;
+			case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
+			case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
+			case TS_FUNCTYP:	return(TS_FUNC);	break;
+//#ifdef CAUTIOUS
+			default:
+//				NERROR1("CAUTIOUS:  name_token:  bad function type!?");
+				assert( ! "name_token:  bad function type!?");
+				break;
+//#endif /* CAUTIOUS */
+		}
 	}
 
 	/*
@@ -2552,23 +2726,24 @@ ERROR1(error_string);
 			/* can we dereference it now?
 			 * Only safe it it is static...
 			 */
-			if( idp->id_refp->ref_typ == OBJ_REFERENCE ){
-				yylvp->dp = idp->id_refp->ref_u.u_dp;
-			} else if( idp->id_refp->ref_typ == STR_REFERENCE ){
-sprintf(error_string,"name_token:  identifier %s refers to a string!?",idp->id_name);
-WARN(error_string);
-				yylvp->dp = (Data_Obj *)idp->id_refp->ref_u.u_sbp;
+			if( REF_TYPE(ID_REF(idp)) == OBJ_REFERENCE ){
+				yylvp->dp = REF_OBJ(ID_REF(idp));
+			} else if( REF_TYPE(ID_REF(idp)) == STR_REFERENCE ){
+sprintf(ERROR_STRING,"name_token:  identifier %s refers to a string!?",ID_NAME(idp));
+WARN(ERROR_STRING);
+				yylvp->dp = (Data_Obj *)REF_SBUF(ID_REF(idp));
 			}
 			return(OBJNAME);
 		} else if( IS_LABEL(idp) ){
 			yylvp->idp = idp;
 			return(LABELNAME);
 		}
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 		else {
-			WARN("CAUTIOUS:  unhandled identifier type!?");
+//			WARN("CAUTIOUS:  unhandled identifier type!?");
+			assert( ! "unhandled identifier type!?" );
 		}
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 
 	} else {
 		yylvp->e_string=CURR_STRING;
@@ -2576,6 +2751,16 @@ WARN(error_string);
 	}
 	/* NOTREACHED */
 	return(-1);
+}
+
+static void release_parse_strings(SINGLE_QSP_ARG_DECL)
+{
+	int i;
+
+	for(i=0;i<n_saved_parse_strings;i++){
+		givbuf((void *)(saved_parse_string[i]));
+	}
+	n_saved_parse_strings=0;
 }
 
 double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
@@ -2594,31 +2779,44 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 				 */
 
 	TOP_NODE=NO_VEXPR_NODE;
-	last_node=NO_VEXPR_NODE;
+
+	// we only use the last node for a commented out error dump?
+	LAST_NODE=NO_VEXPR_NODE;
 
 	/* The best way to do this would be to pass qsp to yyparse, but since this
 	 * routine is generated automatically by bison, we would have to hand-edit
 	 * vectree.c each time we run bison...
 	 */
-	stat=yyparse(SINGLE_QSP_ARG);
+	stat=yyparse(THIS_QSP);
 	if( TOP_NODE != NO_VEXPR_NODE )	/* successful parsing */
 		{
 		if( dumpit ) {
-			print_shape_key();
+			print_shape_key(SINGLE_QSP_ARG);
 			DUMP_TREE(TOP_NODE);
 		}
-	}
-	else
+		// What are we releasing?  the immediately
+		// executed statements?
+		check_release(TOP_NODE);
+	} else {
+		// Do we get here on a syntax error???
 		WARN("Unsuccessfully parsed statement (top_node=NULL");
+		sprintf(ERROR_STRING,"status = %d\n",stat);	// suppress compiler warning
+		advise(ERROR_STRING);
+	}
 
 	/* yylex call qline - */
 
 	/* enable_lookahead(); */
 
-	return(FINAL);
-}
+	// Here we need to free all of the strings we allocated during the
+	// parsing!
 
-void yyerror(QSP_ARG_DECL  char *s)
+	release_parse_strings(SINGLE_QSP_ARG);
+
+	return(FINAL);
+} // end parse_stuff
+
+void yyerror(Query_Stack *qsp,  char *s)
 {
 	const char *filename;
 	int ql,n;
@@ -2626,35 +2824,37 @@ void yyerror(QSP_ARG_DECL  char *s)
 
 	/* get the filename and line number */
 
-	filename=current_input_file(SINGLE_QSP_ARG);
-	ql = tell_qlevel(SINGLE_QSP_ARG);
-	n = THIS_QSP->qs_query[ql].q_lineno;
+fprintf(stderr,"yyerror BEGIN\n");
+	filename=CURRENT_FILENAME;
+	ql = QLEVEL;
+	//n = THIS_QSP->qs_query[ql].q_lineno;
+	n = QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) );
 
-	sprintf(yyerror_str,"%s, line %d:  %s",filename,THIS_QSP->qs_query[ql].q_lineno,s);
-	WARN(yyerror_str);
+	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
+	NWARN(yyerror_str);
 
 	sprintf(yyerror_str,"\t%s",YY_INPUT_LINE);
 	advise(yyerror_str);
 	/* print an arrow at the problem point... */
-	n=strlen(YY_INPUT_LINE)-strlen(YY_CP);
+	n=(int)(strlen(YY_INPUT_LINE)-strlen(YY_CP));
 	n-=2;
 	if( n < 0 ) n=0;
 	strcpy(yyerror_str,"\t");
 	while(n--) strcat(yyerror_str," ");
 	strcat(yyerror_str,"^");
-	advise(yyerror_str);
+	NADVISE(yyerror_str);
 
 	/* we might use this to print an arrow at the problem point... */
 	/*
 	if( *YY_CP ){
 		sprintf(yyerror_str,"\"%s\" left in the buffer",YY_CP);
-		advise(yyerror_str);
-	} else advise("no buffered text");
+		NADVISE(yyerror_str);
+	} else NADVISE("no buffered text");
 	*/
 
 	/*
-	if( last_node != NO_VEXPR_NODE ){
-		DUMP_TREE(last_node);
+	if( LAST_NODE != NO_VEXPR_NODE ){
+		DUMP_TREE(LAST_NODE);
 	}
 	*/
 
@@ -2685,7 +2885,7 @@ int vecexp_ing=1;
 
 void expr_file(SINGLE_QSP_ARG_DECL)
 {
-	THIS_QSP->qs_expr_level=tell_qlevel(SINGLE_QSP_ARG);	/* yylex checks this... */
+	SET_EXPR_LEVEL(QLEVEL);	/* yylex checks this... */
 
 	parse_stuff(SINGLE_QSP_ARG);
 

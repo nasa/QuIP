@@ -1,11 +1,10 @@
 #include "quip_config.h"
 
-char VersionId_vectree_mseq[] = QUIP_VERSION_STRING;
-
 #include <math.h>
+#include "quip_prot.h"
 #include "data_obj.h"
 
-int generate_packed_mseq( int reglen, int tap_n, u_long *data, u_long start_val )
+static int generate_packed_mseq( int reglen, int tap_n, u_long *data, u_long start_val )
 {
 	/* the data buffer must be able to hold (2^len-1)/reglen bits... */
 
@@ -36,7 +35,7 @@ int generate_packed_mseq( int reglen, int tap_n, u_long *data, u_long start_val 
 	}
 }
 
-int generate_mseq( int reglen, int tap_n, u_long *data, u_long start_val )
+static int generate_mseq( int reglen, int tap_n, u_long *data, u_long start_val )
 {
 	/* the data buffer must be able to hold (2^len-1) bits... */
 
@@ -51,7 +50,7 @@ int generate_mseq( int reglen, int tap_n, u_long *data, u_long start_val )
 	tap_bit = 1 << tap_n;
 sprintf(DEFAULT_ERROR_STRING,"generate_mseq:  high_bit = %ld (0x%lx), tap_bit = %ld (0x%lx)",
 		high_bit,high_bit,tap_bit,tap_bit);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 
 	while(1) {
 		i++;
@@ -75,22 +74,22 @@ static COMMAND_FUNC( do_packed_mseq )
 	u_long start_val;
 
 	dp = PICK_OBJ("mseq vector");
-	n = HOW_MANY("register length");
-	t = HOW_MANY("tap bit index");
+	n = (int) HOW_MANY("register length");
+	t = (int) HOW_MANY("tap bit index");
 	start_val = HOW_MANY("start value");
 
 	if( dp == NO_OBJ ) return;
 
 	/* BUG check object here */
 
-	if( (dimension_t)(((1<<n)+n-1)/n) > dp->dt_cols ){
-		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",dp->dt_name,
-				dp->dt_cols,n);
+	if( (dimension_t)(((1<<n)+n-1)/n) > OBJ_COLS(dp) ){
+		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",OBJ_NAME(dp),
+				OBJ_COLS(dp),n);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	m = generate_packed_mseq(n,t,(u_long *)dp->dt_data,start_val);
+	m = generate_packed_mseq(n,t,(u_long *)OBJ_DATA_PTR(dp),start_val);
 	if( (m+1) == 1<<(n) ){
 		sprintf(msg_str,"GOOD reglen = %d, t = %d, m = %d (0x%x)",n,t,m,m);
 		prt_msg(msg_str);
@@ -104,22 +103,22 @@ static COMMAND_FUNC( do_mseq )
 	u_long start_val;
 
 	dp = PICK_OBJ("mseq vector");
-	n = HOW_MANY("register length");
-	t = HOW_MANY("tap bit index");
+	n = (int) HOW_MANY("register length");
+	t = (int) HOW_MANY("tap bit index");
 	start_val = HOW_MANY("start value");
 
 	if( dp == NO_OBJ ) return;
 
 	/* BUG check object here */
 
-	if( (dimension_t)((1<<n)-1) > dp->dt_cols ){
-		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",dp->dt_name,
-				dp->dt_cols,n);
+	if( (dimension_t)((1<<n)-1) > OBJ_COLS(dp) ){
+		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",OBJ_NAME(dp),
+				OBJ_COLS(dp),n);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	m = generate_mseq(n,t,(u_long *)dp->dt_data,start_val);
+	m = generate_mseq(n,t,(u_long *)OBJ_DATA_PTR(dp),start_val);
 	if( (m+1) == 1<<(n) ){
 		sprintf(msg_str,"GOOD reglen = %d, t = %d, seqlen = %d (0x%x)",n,t,m,m);
 		prt_msg(msg_str);
@@ -132,20 +131,21 @@ static COMMAND_FUNC( do_mseq )
 static COMMAND_FUNC( do_pack )
 {
 	Data_Obj *dst_dp, *src_dp;
-	int reg_len, total_bits, nwords;
+	int reg_len, total_bits;
+    //int nwords;
 	u_long src_bit, dst_bit, max_src_bit, max_dst_bit;
 	u_long *src, *dst;
 
 	dst_dp = PICK_OBJ("destination vector");
 	src_dp = PICK_OBJ("source vector");
 	
-	reg_len = HOW_MANY("source register length");
+	reg_len = (int) HOW_MANY("source register length");
 	total_bits = (1<<reg_len)-1;
-	nwords = floor((total_bits+31)/32);
+	//nwords = (int) floor((total_bits+31)/32);
 
 	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ) return;
-	src = (u_long *)src_dp->dt_data;
-	dst = (u_long *)dst_dp->dt_data;
+	src = (u_long *)OBJ_DATA_PTR(src_dp);
+	dst = (u_long *)OBJ_DATA_PTR(dst_dp);
 
 	/* BUG do size checks here */
 	src_bit=1;
@@ -170,17 +170,17 @@ static COMMAND_FUNC( do_pack )
 }
 
 
-static Command mseq_ctbl[]={
-	{ "mseq",	do_mseq,	"generate M-sequence"	},
-	{ "packed_mseq",	do_packed_mseq,	"generate packed M-sequence"	},
-	{ "pack",	do_pack,	"pack N bit subwords into 32 bit long words" },
-	{ "quit",	popcmd,		"exit submenu"		},
-	{ NULL_COMMAND						}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(mseq_menu,s,f,h)
 
-COMMAND_FUNC( mseq_menu )
+MENU_BEGIN(mseq)
+ADD_CMD( mseq,		do_mseq,	generate M-sequence )
+ADD_CMD( packed_mseq,	do_packed_mseq,	generate packed M-sequence )
+ADD_CMD( pack,		do_pack,	pack N bit subwords into 32 bit long words )
+MENU_END(mseq)
+
+COMMAND_FUNC( do_mseq_menu )
 {
-	PUSHCMD(mseq_ctbl,"mseq");
+	PUSH_MENU(mseq);
 }
 
 

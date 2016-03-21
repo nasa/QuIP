@@ -5,38 +5,40 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_get_hdr[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
 #ifdef HAVE_CTYPE_H
 #include <ctype.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
-#include "img_file_hdr.h"
+#include "quip_prot.h"
 #include "fio_api.h"
-#include "uio.h"
-#include "hipl_fmt.h"
+#include "fio_prot.h"	// for some reason this has to come before fio_api.h???
+//#include "fio_api.h"
 #include "debug.h"
 #include "getbuf.h"
-#include "savestr.h"
-#include "get_hdr.h"
-#include "filetype.h"
+#include "img_file/img_file_hdr.h"
+#include "hips/hipl_fmt.h"
+//#include "get_hdr.h"
 
 #define LINES 100
 
-int fh_err(Header *hd,const char *s)
+static int fh_err(Header *hd,const char *s)
 {
 	NWARN("error reading HIPS file header:");
 	NWARN(s);
 	return(0);
 }
 
-int read_chr(int fd)
+static int read_chr(int fd)
 {
 	char c;
 
@@ -44,7 +46,7 @@ int read_chr(int fd)
 	return(c);
 }
 
-char *gtline(int fd)	/** get a non-empty line */
+static char *gtline(int fd)	/** get a non-empty line */
 {
 	int n_avail, n_gotten;
 	int c;
@@ -73,27 +75,27 @@ char *gtline(int fd)	/** get a non-empty line */
 	}
  	if( c==(-1) ) return(NULL);
  	else { 					/* c == '\n' or '\r' */
-		*s ++ = c;
+		*s ++ = (char) c;
 		*s = '\0';
 		return(tbuf);
 	}
 }
 
-int dfscanf(int fd,Header *hd)
+static int dfscanf(QSP_ARG_DECL  int fd,Header *hd)
 {
 	int n;
 	register char *s;
 
 	s=gtline(fd);
-	if( s==NULL ) return( fh_err(hd,"no string for dscanf") );
+	if( s==NULL ) return( fh_err(hd,"no string for dfscanf") );
 	if( sscanf(s,"%d",&n) != 1 ){
 
-		sprintf(DEFAULT_ERROR_STRING,
-		"dscanf:  string \"%s\" is not an integer",s);
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,"Supposed filetype is %s",
-			ft_tbl[get_filetype()].ft_name);
-		advise(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,
+		"dfscanf:  string \"%s\" is not an integer",s);
+		WARN(ERROR_STRING);
+		sprintf(ERROR_STRING,"Supposed filetype is %s",
+			FT_NAME(current_filetype()) );
+		advise(ERROR_STRING);
 
 		givbuf(s);
 		return(0);
@@ -102,44 +104,44 @@ int dfscanf(int fd,Header *hd)
 	return( n );
 }
 
-char *catlines(const char *s1,const char *s2)
+static char *catlines(const char *s1,const char *s2)
 {
 	char *s;
 
 	s=(char *)getbuf(strlen(s1)+strlen(s2)+1);
 	strcpy(s,s1);
-	givbuf(s1);
+	givbuf((void *)s1);
 	strcat(s,s2);
-	givbuf(s2);
+	givbuf((void *)s2);
 	return(s);
 }
 
-int ftch_header(int fd,Header *hd)
+int ftch_header(QSP_ARG_DECL  int fd,Header *hd)
 {
 	const char *s2;
 	register char *s;
 
  	if( (s=gtline(fd)) == NULL) return( fh_err(hd,"no orig name") );
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("saving original name");
 #endif
 	hd->orig_name = s;
  	if( (s=gtline(fd)) == NULL) return( fh_err(hd,"no seq name") );
 	hd->seq_name = s;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("saving sequence name");
 #endif
-	hd->num_frame = dfscanf(fd,hd);
+	hd->num_frame = dfscanf(QSP_ARG  fd,hd);
  	if( (s=gtline(fd)) == NULL) return( fh_err(hd,"no orig date") );
 	hd->orig_date = s;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("saving original date");
 #endif
-	hd->rows = dfscanf(fd,hd);
-	hd->cols = dfscanf(fd,hd);
-	hd->bits_per_pixel = dfscanf(fd,hd);
-	hd->bit_packing = dfscanf(fd,hd);
-	hd->pixel_format = dfscanf(fd,hd);
+	hd->rows = dfscanf(QSP_ARG  fd,hd);
+	hd->cols = dfscanf(QSP_ARG  fd,hd);
+	hd->bits_per_pixel = dfscanf(QSP_ARG  fd,hd);
+	hd->bit_packing = dfscanf(QSP_ARG  fd,hd);
+	hd->pixel_format = dfscanf(QSP_ARG  fd,hd);
 
 	/* get sequence history */
  	if( (s=gtline(fd)) == NULL) return( fh_err(hd,"no seq hist") );
@@ -149,7 +151,7 @@ if( debug ) advise("saving original date");
 		s=catlines(s,s2);
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("saving sequence history");
 #endif
 	hd->seq_history = s;
@@ -165,7 +167,7 @@ if( debug ) advise("saving sequence history");
 		s2=catlines(s2,s);
 	}
 gotit:
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("saving sequence description");
 #endif
 	hd->seq_desc = s2;

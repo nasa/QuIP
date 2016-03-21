@@ -14,7 +14,7 @@ typedef struct named_constant {
 extern debug_flag_t gl_debug;
 
 
-extern void set_texture_image(Data_Obj *);
+extern void set_texture_image(QSP_ARG_DECL  Data_Obj *);
 
 #ifdef HAVE_OPENGL
 
@@ -27,6 +27,7 @@ extern GLenum choose_winding_dir(QSP_ARG_DECL const char *);
 extern GLenum choose_facing_dir(QSP_ARG_DECL const char *);
 extern GLenum choose_cap(QSP_ARG_DECL const char *);
 extern GLenum choose_shading_model(QSP_ARG_DECL const char *);
+extern GLenum choose_draw_buffer(QSP_ARG_DECL const char *);
 extern const char *primitive_name(GLenum);
 extern GLenum choose_light_source(QSP_ARG_DECL const char *);
 extern GLenum choose_polygon_mode(QSP_ARG_DECL const char *prompt);
@@ -40,4 +41,5 @@ extern GLenum choose_polygon_mode(QSP_ARG_DECL const char *prompt);
 #define CHOOSE_SHADING_MODEL(pmpt)		choose_shading_model(QSP_ARG pmpt)
 #define CHOOSE_LIGHT_SOURCE(pmpt)		choose_light_source(QSP_ARG pmpt)
 #define CHOOSE_POLYGON_MODE(pmpt)		choose_polygon_mode(QSP_ARG pmpt)
+#define CHOOSE_DRAW_BUFFER(pmpt)		choose_draw_buffer(QSP_ARG pmpt)
 

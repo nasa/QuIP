@@ -1,7 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_SeedFill[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 #include "ggem.h"
 #include "vec_util.h"
 
@@ -33,14 +32,27 @@ typedef struct {short y, xl, xr, dy;} Segment;
  * Parent segment was on line y-dy.  dy=1 or -1
  */
 
-#define MAX 10000		/* max depth of stack */
+#define MAX_STACK_DEPTH 10000		/* max depth of stack */
 
 #define PUSH(Y, XL, XR, DY)	/* push new segment on stack */ \
-	if (sp<stack+MAX && Y+(DY)>=0 && Y+(DY)<height) \
-	{ sp->y = Y; sp->xl = XL; sp->xr = XR; sp->dy = DY; sp++;}
+								\
+	if (		sp<stack+MAX_STACK_DEPTH &&		\
+			Y+(DY)>=0 &&				\
+			Y+(DY)<height ){ 			\
+		sp->y = (short) Y;				\
+		sp->xl = (short) XL;				\
+		sp->xr = (short) XR;				\
+		sp->dy = (short) DY;				\
+		sp++;						\
+	}
 
-#define POP(Y, XL, XR, DY)	/* pop segment off stack */ \
-	{sp--; Y = sp->y+(DY = sp->dy); XL = sp->xl; XR = sp->xr;}
+#define POP(Y, XL, XR, DY)	/* pop segment off stack */ 	\
+	{							\
+		sp--;						\
+		Y = (short) sp->y+(DY = (short) sp->dy);	\
+		XL = (short) sp->xl;				\
+		XR = (short) sp->xr;				\
+	}
 
 /*
  * fill: set the pixel at (x,y) and all of its 4-connected neighbors
@@ -64,7 +76,7 @@ void ggem_fill(QSP_ARG_DECL  int x, int y, int width, int height, Pixel nv, int 
 {
 	int l, x1, x2, dy;
 	Pixel ov;	/* old pixel value */
-	Segment stack[MAX], *sp = stack;	/* stack of filled segments */
+	Segment stack[MAX_STACK_DEPTH], *sp = stack;	/* stack of filled segments */
 
 	ov = pixelread(x, y);		/* read pv at seed point */
 
@@ -72,10 +84,10 @@ void ggem_fill(QSP_ARG_DECL  int x, int y, int width, int height, Pixel nv, int 
 	/* why is this a problem??? */
 
 	if( abs(nv-ov) <= tolerance ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"ggem_fill:  Value %d at seed point %d, %d is within tolerance %d of new value %d",
 			ov,x,y,tolerance,nv);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -128,10 +140,10 @@ void gen_fill(incr_t x, incr_t y, Data_Obj *dp, int (*inside_func)(long,long), v
 	incr_t l;
 	long dy;
 	incr_t x1, x2;
-	Segment stack[MAX], *sp = stack;	/* stack of filled segments */
+	Segment stack[MAX_STACK_DEPTH], *sp = stack;	/* stack of filled segments */
 
-	width = dp->dt_cols;
-	height = dp->dt_rows;
+	width = OBJ_COLS(dp);
+	height = OBJ_ROWS(dp);
 
 	/* originally this returned here if ov==nv */
 
@@ -143,8 +155,8 @@ void gen_fill(incr_t x, incr_t y, Data_Obj *dp, int (*inside_func)(long,long), v
 	while (sp>stack) {
 		/* pop segment off stack and fill a neighboring scan line */
 		POP(y, x1, x2, dy);
-//sprintf(error_string,"Popped y = %ld   x1 = %ld   x2 = %ld    dy = %ld",y,x1,x2,dy);
-//advise(error_string);
+//sprintf(ERROR_STRING,"Popped y = %ld   x1 = %ld   x2 = %ld    dy = %ld",y,x1,x2,dy);
+//advise(ERROR_STRING);
 
 		/*
 		 * segment of scan line y-dy for x1<=x<=x2 was previously filled,
@@ -153,21 +165,21 @@ void gen_fill(incr_t x, incr_t y, Data_Obj *dp, int (*inside_func)(long,long), v
 
 		/* fill to the left */
 		for (x=x1; (x>=0) && inside_func(x,y) ; x--){
-//sprintf(error_string,"Filling to the left, x = %ld   y = %ld",x,y);
-//advise(error_string);
+//sprintf(ERROR_STRING,"Filling to the left, x = %ld   y = %ld",x,y);
+//advise(ERROR_STRING);
 			fill_func(x, y);
 		}
 
 		if (x>=x1){		/* did anything happen? */
-//sprintf(error_string,"nothing happened, skipping, x = %ld   x1 = %ld...",x,x1);
-//advise(error_string);
+//sprintf(ERROR_STRING,"nothing happened, skipping, x = %ld   x1 = %ld...",x,x1);
+//advise(ERROR_STRING);
 			goto skip;	/* no */
 		}
 
 		l = x+1;
 		if (l<x1){				/* leak on left? */
-//sprintf(error_string,"Leak on left, Pushing y = %ld   l = %ld   x1-1 = %ld    -dy = %ld",y,l,x1-1,-dy);
-//advise(error_string);
+//sprintf(ERROR_STRING,"Leak on left, Pushing y = %ld   l = %ld   x1-1 = %ld    -dy = %ld",y,l,x1-1,-dy);
+//advise(ERROR_STRING);
 			PUSH(y, l, x1-1, -dy);		/* reverse y direction */
 		}
 
@@ -175,27 +187,27 @@ void gen_fill(incr_t x, incr_t y, Data_Obj *dp, int (*inside_func)(long,long), v
 		do {
 			/* fill to the right */
 			for (; x<width && inside_func(x,y) ; x++){
-//sprintf(error_string,"Filling to the right, x = %ld   y = %ld",x,y);
-//advise(error_string);
+//sprintf(ERROR_STRING,"Filling to the right, x = %ld   y = %ld",x,y);
+//advise(ERROR_STRING);
 				fill_func(x, y);
 			}
 	
-//sprintf(error_string,"Pushing y = %ld   l = %ld   x-1 = %ld    dy = %ld",y,l,x-1,dy);
-//advise(error_string);
+//sprintf(ERROR_STRING,"Pushing y = %ld   l = %ld   x-1 = %ld    dy = %ld",y,l,x-1,dy);
+//advise(ERROR_STRING);
 			PUSH(y, l, x-1, dy);	/* continue */
 
 			if (x>x2+1){		/* leak on right? */
-//sprintf(error_string,"Leak on right, Pushing y = %ld   x2+1 = %ld   x-1 = %ld    -dy = %ld",y,x2+1,x-1,-dy);
-//advise(error_string);
+//sprintf(ERROR_STRING,"Leak on right, Pushing y = %ld   x2+1 = %ld   x-1 = %ld    -dy = %ld",y,x2+1,x-1,-dy);
+//advise(ERROR_STRING);
 				PUSH(y, x2+1, x-1, -dy);
 			}
 skip:			
-//sprintf(error_string,"after skip label, x = %ld, x2 = %ld",x,x2);
-//advise(error_string);
+//sprintf(ERROR_STRING,"after skip label, x = %ld, x2 = %ld",x,x2);
+//advise(ERROR_STRING);
 			for (x++; x<=x2 && (!inside_func(x,y)) ; x++)
 				;
-//sprintf(error_string,"x advanced to %ld, x2 = %ld",x,x2);
-//advise(error_string);
+//sprintf(ERROR_STRING,"x advanced to %ld, x2 = %ld",x,x2);
+//advise(ERROR_STRING);
 			l = x;
 		} while (x<=x2);
 	}

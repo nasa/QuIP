@@ -1,7 +1,7 @@
 
 # macros to interpret the output of fbset...
 
-If var_exists(fb_macros_read) "advise 'ADVISORY:  Ignoring request to read fb.mac an additional time.' PopFile 2 nop"
+If var_exists(fb_macros_read) "advise 'ADVISORY:  Ignoring request to read fb.mac an additional time.' exit_macro"
 
 # mode "1680x1050-60"
 #     # D: 154.202 MHz, H: 66.238 kHz, V: 60.053 Hz

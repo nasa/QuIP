@@ -5,12 +5,18 @@
 extern "C" {
 #endif
 
-extern int path_exists(const char *name);
-extern int directory_exists(const char *dirname);
-extern int regfile_exists(const char *dirname);
-extern int can_write_to(const char *name);
-extern int can_read_from(const char *name);
-extern int file_exists(const char *pathname);
+#include "query_stack.h"
+
+extern int path_exists(QSP_ARG_DECL  const char *name);
+extern int directory_exists(QSP_ARG_DECL  const char *dirname);
+extern int regfile_exists(QSP_ARG_DECL  const char *dirname);
+extern int can_write_to(QSP_ARG_DECL  const char *name);
+extern int can_read_from(QSP_ARG_DECL  const char *name);
+extern int file_exists(QSP_ARG_DECL  const char *pathname);
+extern /* long */ off_t file_content_size(QSP_ARG_DECL  const char *pathname);
+extern /* long */ off_t fp_content_size(QSP_ARG_DECL  FILE *fp);
+
+extern int check_file_access(QSP_ARG_DECL  const char *pathname);
 
 #ifdef __cplusplus
 }

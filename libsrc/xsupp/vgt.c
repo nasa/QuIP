@@ -2,8 +2,6 @@
 
 #include "quip_config.h"
 
-char VersionId_xsupp_vgt[] = QUIP_VERSION_STRING;
-
 // What is this?  A custom driver???
 
 #ifdef hAVE_SYS_TYPES_H
@@ -26,6 +24,7 @@ char VersionId_xsupp_vgt[] = QUIP_VERSION_STRING;
 #include <stdlib.h>	/* exit */
 #endif
 
+#include "quip_prot.h"
 #include "vgat_ioctl.h"
 
 static int vgat_fd=(-1);
@@ -34,12 +33,13 @@ void vgat_init()
 {
 	static int warned=0;
 
-#ifdef CAUTIOUS
-	if( vgat_fd >= 0 ){
-		NWARN("CAUTIOUS:  vgat_init:  /dev/vgat is already open!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( vgat_fd >= 0 ){
+//		NWARN("CAUTIOUS:  vgat_init:  /dev/vgat is already open!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( vgat_fd < 0 );
 
 	vgat_fd=open("/dev/vgat",O_RDONLY);
 	if( vgat_fd < 0 ){

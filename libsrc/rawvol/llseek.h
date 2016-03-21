@@ -1,4 +1,3 @@
-#include "void.h"		/* CONST */
 
 #ifdef HAVE_LINUX_UNISTD_H
 #include <linux/unistd.h>
@@ -27,6 +26,6 @@ typedef int errcode_t;
 
 extern off64_t my_lseek64(int,off64_t,int);
 
-extern errcode_t get_device_size(CONST char *,int,blk_t *);
+extern errcode_t get_device_size(QSP_ARG_DECL  const char *,int,blk_t *);
 
 

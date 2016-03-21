@@ -1,0 +1,44 @@
+Start_File console.mac
+
+Set console_name 'QuIP Console'
+
+Define PushConsole 0
+interface
+  push_nav $console_name
+  quit
+.
+
+Define DismissConsole 0
+Pop_Nav
+.
+
+# why show instead of push_nav???
+
+Define DisplayConsole 0
+Push_Nav $console_name
+.
+
+#Define DisplayConsole 0
+#interface
+#  control
+#    show $console_name
+#    quit
+#  quit
+#.
+
+Define InterpretString 0
+interpret $input_string
+.
+
+# BUG the name here has to match that defined in ios_gui.h
+
+Define ClearConsole 0
+interface
+  decorate $console_name
+    set_text_field 'Console output' ''
+    quit
+  quit
+.
+
+Stop_File console.mac
+

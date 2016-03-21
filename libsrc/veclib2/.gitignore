@@ -1,0 +1,8 @@
+.deps
+*.o
+*.a
+*.debug
+*.noindent
+old*.h
+junk
+

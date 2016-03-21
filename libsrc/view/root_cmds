@@ -1,0 +1,24 @@
+#!/bin/csh
+
+# Commands to set up to use /dev/fb...
+# Should be put into rc.local!
+
+# these need to be executed by root after a reboot...
+# and perhaps at other times?
+
+if( ! -e /dev/fb0 ) then
+  mknod /dev/fb0 c 29 0
+endif
+
+if( ! -e /dev/fb1 ) then
+  mknod /dev/fb1 c 29 1
+endif
+
+modprobe matroxfb_crtc2
+chmod 666 /dev/fb0 /dev/fb1
+
+modprobe ppdev
+chmod 666 /dev/parport0
+
+ls -l /dev/fb* /dev/parport0
+

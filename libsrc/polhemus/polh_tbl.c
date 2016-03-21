@@ -1,8 +1,7 @@
 #include "quip_config.h"
+#include "quip_prot.h"
 
-char VersionId_polhemus_polh_tbl[] = QUIP_VERSION_STRING;
 #include <stdlib.h>		/* qsort() */
-
 
 #include "polh_dev.h"
 
@@ -65,9 +64,9 @@ void sort_table(void)
 
 	for(i=0;i<N_PH_CMD_CODES;i++){
 		if( polh_cmds[i].pc_code != i ){
-			sprintf(error_string,"Polhemus command table entry %d has code %d!?",
+			sprintf(DEFAULT_ERROR_STRING,"Polhemus command table entry %d has code %d!?",
 					i,polh_cmds[i].pc_code);
-			error1(error_string);
+			NERROR1(DEFAULT_ERROR_STRING);
 		}
 	}
 }

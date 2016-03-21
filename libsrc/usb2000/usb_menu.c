@@ -13,7 +13,7 @@
 #include <unistd.h>	/* usleep() */
 #endif
 
-#include "query.h"
+#include "quip_prot.h"
 
 #include "usb2000.h"
 
@@ -76,8 +76,8 @@ static COMMAND_FUNC( baud_inq )
 		case 5: advise("baud rate: 57600"); break;
 #ifdef CAUTIOUS
 		default:
-			sprintf(error_string, "CAUTIOUS: unknown baud rate: %d", baud_rate);
-			WARN(error_string);
+			sprintf(ERROR_STRING, "CAUTIOUS: unknown baud rate: %d", baud_rate);
+			WARN(ERROR_STRING);
 #endif /* CAUTIOUS */
 	}
 }
@@ -130,10 +130,10 @@ static COMMAND_FUNC( calib_const_inq )
 	calib_index = HOW_MANY("calib constant index");
 
 	if( calib_index<MIN_CALIB_INDEX || calib_index>MAX_CALIB_INDEX ) {
-	       sprintf(error_string, " (%d) should be in range %d - %d",
+	       sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_CALIB_INDEX, MAX_CALIB_INDEX);
 
-	       WARN(error_string);
+	       WARN(ERROR_STRING);
 	       return;
 	}
 
@@ -199,20 +199,19 @@ static COMMAND_FUNC( do_n_of_scans )
 }
 
 
-Command inq_ctbl[]={
-{ "integ_time",		it_inq,			"integration time"					},
-{ "baud",		baud_inq,		"baud rate"						},
-{ "timer",		timer_inq,		"timer operation"					},
-{ "pb_width",		pixel_inq,		"pixel boxcar width"					},
-{ "scan",		scan_inq,		"number of discrete spectra being summed together"	},
-{ "trig_mode",		trig_mode_inq,		"trigger mode"						},
-{ "lamp",		lamp_inq,		"lamp enable"						},
-{ "calib_const",	calib_const_inq,	"calibration constant"					},
-{ "accessories",	accessories_inq,	"read plugged-in ocean optics compatible accessories"	},
-{ "n_of_scans",		do_n_of_scans,		"return number of scans in spectral data memory"	},
-{ "quit",		popcmd,			"exit menu"						},
-{ NULL_COMMAND												}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(usb2k_inquiry_menu,s,f,h)
+MENU_BEGIN(usb2k_inquiry)
+ADD_CMD( integ_time,	it_inq,			integration time		)
+ADD_CMD( baud,		baud_inq,		baud rate			)
+ADD_CMD( timer,		timer_inq,		timer operation			)
+ADD_CMD( pb_width,	pixel_inq,		pixel boxcar width		)
+ADD_CMD( scan,		scan_inq,		number of discrete spectra being summed together )
+ADD_CMD( trig_mode,	trig_mode_inq,		trigger mode			)
+ADD_CMD( lamp,		lamp_inq,		lamp enable			)
+ADD_CMD( calib_const,	calib_const_inq,	calibration constant		)
+ADD_CMD( accessories,	accessories_inq,	read plugged-in ocean optics compatible accessories )
+ADD_CMD( n_of_scans,		do_n_of_scans,		return number of scans in spectral data memory )
+MENU_END(usb2k_inquiry)
 
 static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 {
@@ -227,14 +226,14 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 	dp = dobj_of(QSP_ARG  name);
 
 	if( dp != NO_OBJ ){
-		sprintf(error_string,"Can't create new data vector %s, name is in use already",
+		sprintf(ERROR_STRING,"Can't create new data vector %s, name is in use already",
 			name);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		/* We could delete the existing object here, or recycle it if the dimension is correct... */
 		return -1;
 	}
 
-	dp = mk_vec(QSP_ARG  name,size,2,PREC_SP);
+	dp = mk_vec(QSP_ARG  name,size,2,PREC_FOR_CODE(PREC_SP));
 
 	if( dp == NO_OBJ ) {
 		WARN("unable to create spectra data vector");
@@ -242,8 +241,8 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
-		sprintf(error_string, "mk_spec_vector: object %s must be contiguous",dp->dt_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING, "mk_spec_vector: object %s must be contiguous",OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return -1;
 	}
 
@@ -261,7 +260,7 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 
 	}
 
-	dp->dt_data = (float *)memcpy(dp->dt_data, tmp_data, n_of_bytes*2);
+	SET_OBJ_DATA_PTR(dp, (float *)memcpy(OBJ_DATA_PTR(dp), tmp_data, n_of_bytes*2) );
 
 	return 0;
 }
@@ -293,10 +292,10 @@ static COMMAND_FUNC( do_add_scans )
 	data_word= HOW_MANY(prompt);
 
 	if( data_word<MIN_N_SCANS || data_word>MAX_N_SCANS ) {
-		sprintf(error_string, "number (%d) should be in range %d - %d",
+		sprintf(ERROR_STRING, "number (%d) should be in range %d - %d",
 			data_word, MIN_N_SCANS, MAX_N_SCANS);
 
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -347,9 +346,9 @@ static COMMAND_FUNC( do_sampling_mode )
 			n = HOW_MUCH("number of wavelengths to skip");
 
 			if( n<(1/BIN_WIDTH) || n>=WAVELENGTH_RANGE ) {
-				sprintf(error_string, "number of wavelengths(%f) has to be in range(%f-%f)",
+				sprintf(ERROR_STRING, "number of wavelengths(%f) has to be in range(%f-%f)",
 						n, (1/BIN_WIDTH), WAVELENGTH_RANGE );
-				WARN(error_string);
+				WARN(ERROR_STRING);
 
 				return;
 			}
@@ -362,9 +361,9 @@ static COMMAND_FUNC( do_sampling_mode )
 			x = HOW_MUCH("starting wavelength");
 
 			if( x<MIN_WAVELENGTH || x>MAX_WAVELENGTH ) {
-				sprintf(error_string, "wavelength(%f) has to be in range(%f-%f)",
+				sprintf(ERROR_STRING, "wavelength(%f) has to be in range(%f-%f)",
 						x, MIN_WAVELENGTH, MAX_WAVELENGTH);
-				WARN(error_string);
+				WARN(ERROR_STRING);
 
 				return;
 			}
@@ -372,9 +371,9 @@ static COMMAND_FUNC( do_sampling_mode )
 			y = HOW_MUCH("ending wavelength");
 
 			if( y<MIN_WAVELENGTH || y>MAX_WAVELENGTH ) {
-				sprintf(error_string, "wavelength(%f) has to be in range(%f-%f)",
+				sprintf(ERROR_STRING, "wavelength(%f) has to be in range(%f-%f)",
 						y, MIN_WAVELENGTH, MAX_WAVELENGTH);
-				WARN(error_string);
+				WARN(ERROR_STRING);
 
 				return;
 			}
@@ -382,9 +381,9 @@ static COMMAND_FUNC( do_sampling_mode )
 			n = HOW_MUCH("number of wavelengths to skip");
 
 			if( n<(1/BIN_WIDTH) || n>=WAVELENGTH_RANGE ) {
-				sprintf(error_string, "number of wavelength(%f) has to be in range(%f-%f)",
+				sprintf(ERROR_STRING, "number of wavelength(%f) has to be in range(%f-%f)",
 						n, (1/BIN_WIDTH), WAVELENGTH_RANGE);
-				WARN(error_string);
+				WARN(ERROR_STRING);
 
 				return;
 			}
@@ -399,8 +398,8 @@ static COMMAND_FUNC( do_sampling_mode )
 
 			/* see manual pg.11 for these limits */
 			if( n<0 || n>10 ) {
-				sprintf(error_string, "n (%f) has to be in range(0-10)",n);
-				WARN(error_string);
+				sprintf(ERROR_STRING, "n (%f) has to be in range(0-10)",n);
+				WARN(ERROR_STRING);
 				return;
 			}
 
@@ -411,9 +410,9 @@ static COMMAND_FUNC( do_sampling_mode )
 				wavelengths[i] = HOW_MUCH(prompt);
 
 				if( wavelengths[i]<MIN_WAVELENGTH || wavelengths[i]>MAX_WAVELENGTH ) {
-					sprintf(error_string, "wavelength(%f) has to be in range(%f-%f)",
+					sprintf(ERROR_STRING, "wavelength(%f) has to be in range(%f-%f)",
 						wavelengths[i], MIN_WAVELENGTH, MAX_WAVELENGTH);
-					WARN(error_string);
+					WARN(ERROR_STRING);
 
 					return;
 				}
@@ -473,8 +472,8 @@ static COMMAND_FUNC( do_save_spec )
 
 	dp = dobj_of(QSP_ARG  name);
 	if( dp == NO_OBJ ){
-		sprintf(error_string,"%s does not exist", name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"%s does not exist", name);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -497,17 +496,17 @@ static COMMAND_FUNC( do_save_spec )
 	return;
 }
 
-Command spectra_ctbl[]={
-{ "sampling_mode", do_sampling_mode,	"set sampling mode"					},
-{ "acquire",	do_spec_acq,		"acquire spectra with current set of operating params"	},
-{ "save",	do_save_spec,		"write acquired spectra to ascii file"			},
-{ "add_scans",	do_add_scans,		"number of discrete spectra to sum together"		},
-{ "clr_spectra",do_clr_spectra,		"clear memory"						},
-{ "storage",	do_data_strg,		"enable/disable data storage mode"			},
-{ "scan",	do_get_scan,		"read out one scan from specified spectral memory"	},
-{ "quit",	popcmd,			"exit menu"						},
-{ NULL_COMMAND											}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(spectra_menu,s,f,h)
+MENU_BEGIN(spectra)
+ADD_CMD( sampling_mode, do_sampling_mode,	set sampling mode			)
+ADD_CMD( acquire,	do_spec_acq,		acquire spectra with current set of operating params )
+ADD_CMD( save,		do_save_spec,		write acquired spectra to ascii file	)
+ADD_CMD( add_scans,	do_add_scans,		number of discrete spectra to sum together )
+ADD_CMD( clr_spectra,	do_clr_spectra,		clear memory				)
+ADD_CMD( storage,	do_data_strg,		enable/disable data storage mode	)
+ADD_CMD( scan,		do_get_scan,		read out one scan from specified spectral memory )
+MENU_END(spectra)
 
 static COMMAND_FUNC( do_data_comp )
 {
@@ -568,10 +567,10 @@ static COMMAND_FUNC( do_pb_width )
 	data_word = HOW_MANY(prompt);
 
 	if( data_word<MIN_PB_WIDTH || data_word>MAX_PB_WIDTH ) {
-		sprintf(error_string, "number (%d) should be in range %d - %d",
+		sprintf(ERROR_STRING, "number (%d) should be in range %d - %d",
 			data_word, MIN_PB_WIDTH, MAX_PB_WIDTH);
 
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -592,10 +591,10 @@ static COMMAND_FUNC( do_integ_time )
 	data_word= HOW_MANY(prompt);
 
 	if( data_word<MIN_INTEG_TIME || data_word>MAX_INTEG_TIME ) {
-		sprintf(error_string, "integration time(%d) should be in range %d - %d",
+		sprintf(ERROR_STRING, "integration time(%d) should be in range %d - %d",
 			data_word, MIN_INTEG_TIME, MAX_INTEG_TIME);
 
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -666,10 +665,10 @@ static COMMAND_FUNC( do_calib_const )
 	calib_index = HOW_MANY(prompt);
 
 	if( calib_index<MIN_CALIB_INDEX || calib_index>MAX_CALIB_INDEX ) {
-		sprintf(error_string, " (%d) should be in range %d - %d",
+		sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_CALIB_INDEX, MAX_CALIB_INDEX);
 
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -702,22 +701,22 @@ static COMMAND_FUNC( do_timer )
 }
 
 
-Command cntrl_ctbl[]={
-{ "integ_time",		do_integ_time,		"set integtration time"					},
-{ "data_mode",		do_data_mode,		"select mode for data sent and received (default mode: binary)"	},
-{ "compress",		do_data_comp,		"enable/disable data compression"			},
-{ "checksum",		do_checksum,		"enable/disable checksum mode"				},
-{ "pb_width",		do_pb_width,		"set pixel boxcar width"				},
-{ "lamp",		do_lamp,		"set lamp enable to low/high"				},
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(usb2k_control_menu,s,f,h)
+MENU_BEGIN(usb2k_control)
+ADD_CMD( integ_time,		do_integ_time,		set integtration time			)
+ADD_CMD( data_mode,		do_data_mode,		select mode for data sent and received (default mode: binary) )
+ADD_CMD( compress,		do_data_comp,		enable/disable data compression	)
+ADD_CMD( checksum,		do_checksum,		enable/disable checksum mode		)
+ADD_CMD( pb_width,		do_pb_width,		set pixel boxcar width		)
+ADD_CMD( lamp,			do_lamp,		set lamp enable to low/high		)
 #ifdef USE_SERIAL_LINE
-{ "baud",		do_baud,		"change baud rate"					},
+ADD_CMD( baud,			do_baud,		change baud rate			)
 #endif /* USE_SERIAL_LINE */
-{ "trig_mode",		do_trig_mode,		"set trigger mode"					},
-{ "timer",		do_timer,		"set timer operation"					},
-{ "set_calib_const",	do_calib_const,		"write a calibration constant to EEPROM "		},
-{ "quit",		popcmd,			"exit menu"						},
-{ NULL_COMMAND												}
-};
+ADD_CMD( trig_mode,		do_trig_mode,		set trigger mode			)
+ADD_CMD( timer,			do_timer,		set timer operation			)
+ADD_CMD( set_calib_const,	do_calib_const,		write a calibration constant to EEPROM )
+MENU_END(usb2k_control)
 
 static COMMAND_FUNC( analog_op_inq )
 {
@@ -753,7 +752,7 @@ static COMMAND_FUNC( led_mode_inq )
 
 }
 
-static COMMAND_FUNC( ls450_const_inq )
+static COMMAND_FUNC( do_ls450_const_inq )
 {
 	int calib_index;
 	char calib_const[MAX_SIZEOF_CALIB_CONST];
@@ -762,10 +761,10 @@ static COMMAND_FUNC( ls450_const_inq )
 	calib_index = HOW_MANY("calib constant index");
 
 	if( calib_index<MIN_LS450_CALIB_INDEX || calib_index>MAX_LS450_CALIB_INDEX ) {
-	       sprintf(error_string, " (%d) should be in range %d - %d",
+	       sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_LS450_CALIB_INDEX, MAX_LS450_CALIB_INDEX);
 
-	       WARN(error_string);
+	       WARN(ERROR_STRING);
 	       return;
 	}
 
@@ -777,13 +776,13 @@ static COMMAND_FUNC( ls450_const_inq )
 }
 
 
-Command inq_ls450_ctbl[]={
-{ "analog_op",		analog_op_inq,		"analog output"						},
-{ "led_mode",		led_mode_inq,		"LED operational mode"					},
-{ "calib_const",	ls450_const_inq,	"USB-LS450 calibration coefficient"			},
-{ "quit",		popcmd,			"exit menu"						},
-{ NULL_COMMAND												}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ls450_inquiry_menu,s,f,h)
+MENU_BEGIN(ls450_inquiry)
+ADD_CMD( analog_op,	analog_op_inq,		analog output				)
+ADD_CMD( led_mode,	led_mode_inq,		LED operational mode			)
+ADD_CMD( calib_const,	do_ls450_const_inq,	USB-LS450 calibration coefficient	)
+MENU_END(ls450_inquiry)
 
 
 static COMMAND_FUNC( do_analog_op )
@@ -798,10 +797,10 @@ static COMMAND_FUNC( do_analog_op )
 	analog_op= HOW_MANY(prompt);
 
 	if( analog_op<MIN_ANALOG_OP|| analog_op>MAX_ANALOG_OP) {
-		sprintf(error_string, "analog output (%d) should be in range %d - %d",
+		sprintf(ERROR_STRING, "analog output (%d) should be in range %d - %d",
 			analog_op, MIN_ANALOG_OP, MAX_ANALOG_OP);
 
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -864,10 +863,10 @@ static COMMAND_FUNC( do_ls450_calib_const )
 	calib_index = HOW_MANY(prompt);
 
 	if(calib_index<MIN_LS450_CALIB_INDEX || calib_index>MAX_LS450_CALIB_INDEX ) {
-		sprintf(error_string, " (%d) should be in range %d - %d",
+		sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_LS450_CALIB_INDEX, MAX_LS450_CALIB_INDEX);
 
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -884,35 +883,35 @@ static COMMAND_FUNC( do_ls450_calib_const )
 
 static COMMAND_FUNC( inq_ls450 )
 {
-	PUSHCMD(inq_ls450_ctbl,"ls450_inq");
+	PUSH_MENU(ls450_inquiry);
 }
 
 
-Command usb_ls450_ctbl[]={
-{ "analog_op",		do_analog_op,		"set analog output (0-20mA)"				},
-{ "led_mode",		do_led_mode,		"set LED operational mode"				},
-{ "temp",		do_temp,		"read temperature"					},
-{ "set_calib_const",	do_ls450_calib_const,	"set a USB-LS450 calibration coefficient"		},
-{ "inquire",		inq_ls450,		"inquire the settings"					},
-{ "quit",		popcmd,			"exit menu"						},
-{ NULL_COMMAND												}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ls450_menu,s,f,h)
+MENU_BEGIN(ls450)
+ADD_CMD( analog_op,		do_analog_op,		set analog output (0-20mA)		)
+ADD_CMD( led_mode,		do_led_mode,		set LED operational mode		)
+ADD_CMD( temp,			do_temp,		read temperature			)
+ADD_CMD( set_calib_const,	do_ls450_calib_const,	set a USB-LS450 calibration coefficient )
+ADD_CMD( inquire,		inq_ls450,		inquire the settings			)
+MENU_END(ls450)
 
 
 
-static COMMAND_FUNC( spectra_menu )
+static COMMAND_FUNC( do_spectra_menu )
 {
-	PUSHCMD(spectra_ctbl,"spectra");
+	PUSH_MENU(spectra);
 }
 
-static COMMAND_FUNC( cntrl_menu )
+static COMMAND_FUNC( do_cntrl_menu )
 {
-	PUSHCMD(cntrl_ctbl,"control");
+	PUSH_MENU(usb2k_control);
 }
 
-static COMMAND_FUNC( inq_menu )
+static COMMAND_FUNC( do_inq_menu )
 {
-	PUSHCMD(inq_ctbl,"query");
+	PUSH_MENU(usb2k_inquiry);
 }
 
 static COMMAND_FUNC( do_ver )
@@ -941,9 +940,9 @@ static void poll_accessories()
 }
 #endif /* NOT_USED */
 
-static COMMAND_FUNC( usb_ls450_menu )
+static COMMAND_FUNC( do_ls450_menu )
 {
-	PUSHCMD(usb_ls450_ctbl,"usb_ls450");
+	PUSH_MENU(ls450);
 }
 
 static COMMAND_FUNC(do_clear_input_buf)
@@ -951,22 +950,22 @@ static COMMAND_FUNC(do_clear_input_buf)
 	clear_input_buf(SINGLE_QSP_ARG);
 }
 
-Command usb2000_ctbl[]={
-{ "spectra",		spectra_menu,		"spectra sub-menu"					},
-{ "cntrl",		cntrl_menu,		"control sub-menu"					},
-{ "inquire",		inq_menu,		"inquire the settings"					},
-{ "version",		do_ver,			"microcode version number"				},
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(usb2k_menu,s,f,h)
+MENU_BEGIN(usb2k)
+ADD_CMD( spectra,	do_spectra_menu,	spectra sub-menu			)
+ADD_CMD( cntrl,		do_cntrl_menu,		control sub-menu			)
+ADD_CMD( inquire,	do_inq_menu,		inquire the settings			)
+ADD_CMD( version,	do_ver,			microcode version number		)
 /*
-{ "accessories",	poll_accessories,	"poll plugged-in ocean optics compatible accessories"	},
+ADD_CMD( accessories,	poll_accessories,	poll plugged-in ocean optics compatible accessories)
 */
-{ "usb_ls450",		usb_ls450_menu,		"USB-LS450 sub-menu"					},
-{ "flush",		do_clear_input_buf,	"flush the contents of input buffer"			},
-{ "quit",		popcmd,			"exit program"						},
-{ NULL_COMMAND												}
-};
+ADD_CMD( usb_ls450,	do_ls450_menu,		USB-LS450 sub-menu			)
+ADD_CMD( flush,		do_clear_input_buf,	flush the contents of input buffer	)
+MENU_END(usb2k)
 
 
-COMMAND_FUNC( usb2000_menu )
+COMMAND_FUNC( do_usb2000_menu )
 {
 	static int inited=0;
 
@@ -975,7 +974,7 @@ COMMAND_FUNC( usb2000_menu )
 		inited=1;
 	}
 
-	PUSHCMD(usb2000_ctbl,"usb2000");
+	PUSH_MENU(usb2k);
 
 }
 

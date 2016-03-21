@@ -1,6 +1,30 @@
 Start_File norm_coords.mac
 
 # used by fit_conic, etc
+# We have a bunch of x,y pairs, and we want to solve
+# y = p(x) where p is a polynomial
+#
+# x' <- (x-x_mean)/x_sigma
+# y' <- (y-y_mean)/y_sigma
+#
+# We obtain coefficients a', b', etc...
+# How to get back real coefficients a, b etc?
+# u = x_mean, v = y_mean
+#
+# a' (x-u)^2 / x_sigma^2 + b' (x-u) / x_sigma + c' = (y-y_mean)/y_sigma
+#
+# a'/(x_sigma^2) x^2 - 2u a' /(x_sigma^2) x + a' u^2/(x_sigma^2)
+#   + (b'/x_sigma) x   - (b'/x_sigma) u     + c'
+#
+# collect terms:
+# x^2 a'/x_sigma^2
+# + x ( -2u a' / x_sigma^2 + b'/x_sigma )
+# + a' u^2/x_sigma^2 - b' u / x_sigma + c'
+#
+# Then multiply everything by y_sigma, and add y_mean to the constant term
+#
+# What is the general case???
+# Maybe it is simpler to transform the coordinates...
 
 Define Normalize_Coords 2 dst src
 Get_Sum xsum $2{0}
@@ -15,9 +39,26 @@ Get_Sum xsos csqs{0}
 Get_Sum ysos csqs{1}
 Assign x_sigma sqrt($xsos/ncols(csqs))
 Assign y_sigma sqrt($ysos/ncols(csqs))
-VSMul $1{0} $1{0} 1/$x_sigma
-VSMul $1{1} $1{1} 1/$y_sigma
+If $x_sigma!=0 "VSMul $1{0} $1{0} 1/$x_sigma"
+If $y_sigma!=0 "VSMul $1{1} $1{1} 1/$y_sigma"
 Delete_Image csqs
+#advise "Normalize_Coords:  x_mean = $x_mean  x_sigma = $x_sigma    y_mean = $y_mean  y_sigma = $y_sigma"
+.
+
+Define Adjust_Quadratic_Coefficients 2 dst src
+# These are the coefficients for normalized coords
+Assign __a value($2[0])
+Assign __b value($2[1])
+Assign __c value($2[2])
+# We need a general way to account for normalization
+# Here is the specific solution for a quadratic (see ../numrec/norm_coords.mac)
+# x^2 a'/x_sigma^2
+# + x ( -2u a' / x_sigma^2 + b'/x_sigma )
+# + a' u^2/x_sigma^2 - b' u / x_sigma + c'
+Assign _a $y_sigma*$__a/($x_sigma*$x_sigma)
+Assign _b $y_sigma*((-2)*$__a*$x_mean/($x_sigma*$x_sigma)+$__b/$x_sigma)
+Assign _c $y_mean+$y_sigma*($__a*$x_mean*$x_mean/($x_sigma*$x_sigma)-$__b*$x_mean/$x_sigma+$__c)
+data ascii read $1 - $_a $_b $_c quit quit
 .
 
 Stop_File norm_coords.mac

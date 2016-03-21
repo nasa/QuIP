@@ -1,0 +1,169 @@
+
+Define Declare_Knox_GUI 0
+
+Set gui_size 600
+
+Set input1_name 	galvo_cam
+Set input2_name 	left_pupil_cam
+Set input3_name 	right_pupil_cam
+Set input4_name 	left_ptz_cam
+Set input5_name 	right_ptz_cam
+Set input6_name 	purkinje_ptz_cam
+Set input7_name 	left_ptz_cam2
+Set input8_name 	right_ptz_cam2
+
+Set output1_name	meteor_in1
+Set output2_name	meteor_in2
+Set output3_name	meteor_in3
+Set output4_name	/dev/video0
+Set output5_name	/dev/video1
+Set output6_name	/dev/video2
+Set output7_name	sync_genlock_input
+Set output8_name	sony_monitor_input
+
+Set text_width 150
+Set border_width 50
+Set n_channels 8
+Set button_gap 3
+Assign matrix_size ($gui_size-$text_width-$border_width)
+Assign button_spacing $matrix_size/$n_channels
+Assign button_size $button_spacing-$button_gap
+Image button $button_size $button_size 3 u_byte
+Image button_map $gui_size $gui_size 1 short
+VSet button_map -1
+
+Init_Button_Map
+
+New_Plotter knox_switcher $gui_size $gui_size
+
+Image gui_image $gui_size $gui_size 3 u_byte
+Image gui_buttons $gui_size $gui_size 3 u_byte
+
+# first draw the legends
+
+#Subimage inset $text_width $button_size 0 $gui_size-$button_size
+Image text_rect $button_size $text_width 3 u_byte
+Image col_legend $text_width $button_size 3 u_byte
+Image col_scratch $text_width $button_size 3 u_byte
+Subsample_Color_Image col_dst col_legend
+  3 0 1
+  $button_size 0 1
+  $text_width $text_width-1 -1
+
+Vector input_selected 8 1 short		# records which input is selected for each output
+Ramp1D input_selected 1 1
+
+Draw_GUI_Legends
+
+Set_Button_Actions knox_switcher KnoxSelect nop nop
+
+Vector knox_map 8 2 u_byte
+Knox_Get_Map knox_map
+
+Convert input_selected knox_map{0}
+Display_State
+.
+
+Define Init_Button_Map 0
+Set i 0
+repeat 8
+  Set j 0
+  repeat 8
+    Subimage button_region button_map $button_size $button_size $text_width+$i*$button_spacing
+    								$text_width+$j*$button_spacing
+    VSet button_region 10*($j+1)+$i+1
+    Delete_Image button_region
+    Increment j
+    end
+  Increment i
+  end
+.
+
+Define Draw_GUI_Legends 0
+Set i 0
+Set text_height_in_box 20
+repeat $n_channels
+  #Assign y $text_width+$i*$button_size
+  Assign y $text_height_in_box
+  Assign x 10
+  Increment i
+  Set varname input${i}_name
+  Set s $$varname
+  S_At $s $x $y
+  
+  view extract text_rect knox_switcher 0 $gui_size-$button_spacing quit
+  Transpose col_scratch text_rect
+  VMov col_dst col_scratch
+  view embed knox_switcher col_legend $text_width+($i-1)*$button_spacing 0 quit
+  VSet text_rect 255
+  view embed knox_switcher text_rect 0 $gui_size-$button_spacing quit
+  end
+
+Set i 0
+repeat $n_channels
+  Assign x 10
+  Increment i
+  Assign y ($n_channels-$i)*$button_spacing+$text_height_in_box+$border_width
+  Set varname output${i}_name
+  Set s "    $$varname"
+  S_At $s $x $y
+  end
+.
+
+Define Red_Button 0
+VSet button 0
+VSet button{2} 255
+.
+
+Define Redraw_Row 1 row_index
+Set j 1
+repeat 8
+  If value(input_selected[$1-1])==$j
+    Then "Button_ON $1 $j"
+    Else "Button_OFF $1 $j"
+  Increment j
+  end
+.
+
+Define Display_State 0
+Set i 1
+repeat 8
+  Redraw_Row $i
+  Increment i
+  end
+.
+
+Define Button_ON 2 output input
+Red_Button
+Draw_Button $1 $2
+.
+
+Define Button_OFF 2 output input
+Gray_Button
+Draw_Button $1 $2
+.
+
+Define Gray_Button 0
+VSet button 70
+.
+
+Define Draw_Button 2 output input
+view
+  embed knox_switcher button $text_width+($2-1)*$button_spacing
+				$text_width+($1-1)*$button_spacing
+  quit
+.
+
+
+Define KnoxSelect 0
+If $left_button_up exit_macro
+Assign which_button value(button_map[$view_ypos][$view_xpos])
+If $which_button==(-1) exit_macro
+Assign col $which_button%10
+Assign row floor($which_button/10)
+#advise "Click at $view_xpos $view_ypos, button = $which_button, row = $row   col = $col"
+VSet input_selected[$row-1] $col
+Redraw_Row $row
+Route $row $col
+.
+

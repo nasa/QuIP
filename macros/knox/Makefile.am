@@ -1,7 +1,10 @@
 
-macrosdir	=	$(datadir)/quip/macros/knox
+macrosdir	=	$(datadir)/coq/macros/knox
 
-macros_DATA	=	knoxc.mac
+macros_DATA	=				\
+			knox.mac		\
+			knox_gui.mac		\
+			knoxc.mac
 
 EXTRA_DIST	=	$(macros_DATA)
 

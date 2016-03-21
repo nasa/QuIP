@@ -1,0 +1,151 @@
+# @(#) collect.mac ver: 1.5 7/29/98
+
+# Good general purpose macros for data collection
+
+Start_File collect.mac
+
+### Define Timeit 0
+### If $timing
+  ### Then "Stg_Send 'echo Timeit' Stg_Send Timeit"
+  ### Else "echo 'timer not enabled'"
+### .
+### 
+### 
+### # older Get_Click using socket port
+### 
+### #Define Get_Click 0
+### #If $clicking
+### #  Then "Stg_Send Get_Click Wait_Click"
+### #  Else "echo 'type ^D to proceed' Set click_word MClick < /dev/tty"
+### #.
+
+### # newer Get_Click using serial line
+### 
+### Define Get_Click 0
+### Stg_Send 'PC_Send Get_Click'
+### Stg_Send 'Wait_Click'
+### # somehow the daemon has to send back the click word!?
+### advise 'end of Get_Click'
+### .
+### 
+### # serial line version of Wait_Click
+### 
+### Define Wait_Click 0
+### os serial wait_for CLICKED quit quit
+### push_text $last_line			# should contain text like "Set click_word MCLICK"
+### .
+
+### # socket port version of Wait_Click
+### 
+### #Define Wait_Click 0
+### #ports
+### #  receive stg_ack text click_word
+### #  quit
+### #Print click_word
+### #.
+### 
+### Define Stg_Sync 0
+### Tell_If 'Synchronizing with stgtest'
+### os serial send '\r' quit quit
+### os serial wait_for stgtest> quit quit
+### Tell_If 'Synchronized with stgtest'
+### .
+
+Define Quit 0
+If $clicking||$timing "Stg_Send quit"
+If $recording 'Movie_Send quit'
+quit
+.
+
+Define Movie_Wait 0
+echo 'waiting for record to finish'
+Movie_Handshake
+echo done
+.
+
+Define Get_User_Cmd 0
+Get_User_Click
+If !strcmp($click_word,RClick)
+  Then Repeat_Trial
+  Else "Set ready_for_next 1"
+If !strcmp($click_word,LClick)
+  "echo 'aborting run' < /dev/tty"
+.
+
+
+Define Get_User_Click 0
+echo 'Press right mouse button to repeat previous trial,'
+echo 'Press middle button (index finger) to initiate next trial'
+echo 'Press left button (thumb) to abort run'
+Get_Click		# subject initiates trial
+.
+
+
+Define Present_Trial 0
+echo "Present_Trial"
+Set ready_for_next 0
+do
+  Get_User_Cmd
+  while !$ready_for_next
+Increment trial_counter
+echo "Presenting trial $trial_counter"
+Lookat_Stim
+.
+
+Define Repeat_Trial 0
+If !$have_previous_trial
+  "warn 'no previous trial to repeat' PopFile 2"
+echo "Repeating trial $trial_counter"
+#Restore_Parameters
+Lookat_Stim
+.
+
+# Make_Data_Filename, Make_Stimulus 
+# have to be defined by the experiment module
+
+Define Lookat_Stim 0
+Make_Data_Filename
+If $recording
+  'Record_Sirius_Movie $datafilename $n_record_fields'
+
+# We start recording first, so we get the beginning of the clock,
+# and the beginning of the stimulus...  We really need a bit
+# more delay than we are getting here on average - this will
+# be addressed by putting in some blank frames at the beginning
+# of the timer and stimulus sequences.
+
+Timeit
+
+Make_Stimulus
+Play_Movie $stimname
+
+If $recording Movie_Wait
+Set have_previous_trial 1
+echo 'all done with trial \n'
+.
+
+Define Create_Dir 1 dirname
+advise "Creating directory $1"
+system "mkdir $1"
+If "!exists('$1')"
+  "warn 'Couldn\\\'t create directory $1' TopMenu quit"
+.
+
+Define Make_Data_Dir 0
+If "!exists('$user_dir')"
+  "warn 'User directory $user_dir does not exist!?' TopMenu quit"
+
+Set proj_dir "$user_dir/$PROJECT"
+If "!exists('$proj_dir')" "Create_Dir $proj_dir"
+
+Set raw_dir "$proj_dir/raw"
+If "!exists('$raw_dir')" "Create_Dir $raw_dir"
+
+Set datadir "$raw_dir/$substem"
+If "!exists('$datadir')" "Create_Dir $datadir"
+.
+
+
+Stop_File collect.mac
+
+

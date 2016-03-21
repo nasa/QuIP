@@ -30,12 +30,15 @@
 #endif
 
 #ifdef HAVE_CUDA
+#ifdef OLD_CUDA4
 #include <cuda_runtime.h>
 #include <cutil_inline.h>
 #include <cutil_gl_inline.h>
 #include <cuda_gl_interop.h>
+#endif /* OLD_CUDA4 */
 #endif /* HAVE_CUDA */
 
+#include "glx_hack.h"
 #include "viewer.h"
 
 typedef struct cuda_viewer {
@@ -57,6 +60,7 @@ typedef struct cuda_viewer {
 
 extern COMMAND_FUNC( do_new_cuda_vwr );
 extern COMMAND_FUNC( do_load_cuda_vwr );
+extern COMMAND_FUNC( do_map_cuda_vwr );
 extern COMMAND_FUNC( gl_test );
 extern COMMAND_FUNC( gl_disp );
 extern COMMAND_FUNC( do_new_gl_buffer );

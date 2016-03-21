@@ -11,28 +11,73 @@
 
 /* Real only */
 
-THREE_VEC_METHOD( vand ,	dst = src1 & src2		)
-THREE_VEC_METHOD( vnand ,	dst = ~(src1 & src2)		)
-THREE_VEC_METHOD( vor ,		dst = src1 | src2		)
-THREE_VEC_METHOD( vxor ,	dst = src1 ^ src2		)
-THREE_VEC_METHOD( vmod ,	dst = src1 % src2		)
-THREE_VEC_METHOD( vshr ,	dst = src1 >> src2		)
+_VEC_FUNC_3V( vand ,	dst = (dest_type) ( src1 & src2	)	)
+_VEC_FUNC_3V( vnand ,	dst = (dest_type) ( ~(src1 & src2) )	)
+_VEC_FUNC_3V( vor ,		dst = (dest_type) ( src1 | src2	)	)
+_VEC_FUNC_3V( vxor ,	dst = (dest_type) ( src1 ^ src2	)	)
+_VEC_FUNC_3V( vmod ,	dst = (dest_type) ( src1 % src2	)	)
+_VEC_FUNC_3V( vshr ,	dst = (dest_type) ( src1 >> src2 )	)
 
-TWO_VEC_METHOD( vnot ,		dst = ~src1			)
-TWO_VEC_METHOD( vcomp ,		dst = ~src1			)
+_VEC_FUNC_2V( vnot ,		dst = (dest_type) ( ~src1 )		)
+_VEC_FUNC_2V( vcomp ,		dst = (dest_type) ( ~src1 )		)
 
-TWO_VEC_SCALAR_METHOD( vsand ,	dst = src1 & scalar1_val		)
-TWO_VEC_SCALAR_METHOD( vsnand ,	dst = ~(src1 & scalar1_val)	)
-TWO_VEC_SCALAR_METHOD( vsor ,	dst = src1 | scalar1_val		)
-TWO_VEC_SCALAR_METHOD( vsxor ,	dst = src1 ^ scalar1_val		)
-TWO_VEC_SCALAR_METHOD( vsmod ,	dst = src1 % scalar1_val		)
-TWO_VEC_SCALAR_METHOD( vsmod2 ,	dst = scalar1_val % src1		)
-TWO_VEC_SCALAR_METHOD( vsshr ,	dst = src1 >> scalar1_val	)
-TWO_VEC_SCALAR_METHOD( vsshr2 ,	dst = scalar1_val >> src1	)
+_VEC_FUNC_2V_SCAL( vsand ,	dst = (dest_type) ( src1 & scalar1_val ) )
+/*_VEC_FUNC_2V_SCAL( vsnand , dst = (dest_type) ( ~(src1 & scalar1_val))) */
+_VEC_FUNC_2V_SCAL( vsor ,	dst = (dest_type) ( src1 | scalar1_val ) )
+_VEC_FUNC_2V_SCAL( vsxor ,	dst = (dest_type) ( src1 ^ scalar1_val ) )
+_VEC_FUNC_2V_SCAL( vsmod ,	dst = (dest_type) ( src1 % scalar1_val ) )
+_VEC_FUNC_2V_SCAL( vsmod2 ,	dst = (dest_type) ( scalar1_val % src1 ) )
+_VEC_FUNC_2V_SCAL( vsshr ,	dst = (dest_type) ( src1 >> scalar1_val	) )
+_VEC_FUNC_2V_SCAL( vsshr2 ,	dst = (dest_type) ( scalar1_val >> src1	) )
 
-#ifndef GPU_FUNCTION
-THREE_VEC_METHOD( vshl ,	dst = src1 << src2		)
-TWO_VEC_SCALAR_METHOD( vsshl ,	dst = src1 << scalar1_val	)
-TWO_VEC_SCALAR_METHOD( vsshl2 ,	dst = scalar1_val << src1	)
-#endif /* ! GPU_FUNCTION */
+#ifdef BUILD_FOR_GPU
+
+/* why no left-shift on GPU?? */
+/* CUDA impementation is broken */
+#ifdef BUILD_FOR_CUDA
+/*
+KERN_CALL_VV_LS(vshl, dst , src1 , src2)
+KERN_CALL_VS_LS(vsshl, dst , src1 , scalar1_val)
+KERN_CALL_VS_LS(vsshl2, dst , scalar1_val , src1)
+*/
+_VEC_FUNC_3V( vshl ,		dst = (dest_type)(src1 << src2)		)
+_VEC_FUNC_2V_SCAL( vsshl ,	dst = (dest_type)(src1 << scalar1_val)	)
+_VEC_FUNC_2V_SCAL( vsshl2 ,	dst = (dest_type)(scalar1_val << src1)	)
+#else // ! BUILD_FOR_CUDA
+_VEC_FUNC_3V( vshl ,		LSHIFT_SWITCH_32(dst,src1,src2)		)
+_VEC_FUNC_2V_SCAL( vsshl ,	LSHIFT_SWITCH_32(dst,src1,scalar1_val)	)
+_VEC_FUNC_2V_SCAL( vsshl2 ,	LSHIFT_SWITCH_32(dst,scalar1_val,src1)	)
+#endif // ! BUILD_FOR_CUDA
+
+/* ctype stuff... */
+_VEC_FUNC_2V( vtolower ,	dst = (dest_type) ( src1 >= 'A' && src1 <= 'Z' ? src1 + /* ('a'-'A') */ 32 : src1 ) )
+_VEC_FUNC_2V( vtoupper ,	dst = (dest_type) ( src1 >= 'a' && src1 <= 'z' ? src1 - /* ('a'-'A') */ 32 : src1 ) )
+_VEC_FUNC_2V( vislower ,	dst = (dest_type) ( src1 >= 'a' && src1 <= 'z' ? 1 : 0 ) )
+_VEC_FUNC_2V( visupper ,	dst = (dest_type) ( src1 >= 'A' && src1 <= 'Z' ? 1 : 0 ) )
+_VEC_FUNC_2V( visalpha ,	dst = (dest_type) ( ((src1 >= 'A' && src1 <= 'Z')||(src1 >= 'a' && src1 <= 'z')) ? 1 : 0 ) )
+_VEC_FUNC_2V( visdigit ,	dst = (dest_type) ( src1 >= '0' && src1 <= '9' ? 1 : 0 ) )
+_VEC_FUNC_2V( visalnum ,	dst = (dest_type) ( ((src1>='0'&&src1<='9')||(src1 >= 'A' && src1 <= 'Z')||(src1 >= 'a' && src1 <= 'z')) ? 1 : 0 ) )
+_VEC_FUNC_2V( viscntrl ,	dst = (dest_type) ( (((src1&0x7f) <= 0x1f)||(src1 == 0x7f )) ? 1 : 0 ) )
+_VEC_FUNC_2V( visspace ,	dst = (dest_type) ( ((src1>=0x9&&src1<=0xd)||(src1 == 0x20)) ? 1 : 0 ) )
+_VEC_FUNC_2V( visblank ,	dst = (dest_type) ( ((src1==0x9)||(src1 == 0x20)) ? 1 : 0 ) )
+
+#else // ! BUILD_FOR_GPU
+
+_VEC_FUNC_3V( vshl ,	dst = (dest_type)(src1 << src2)		)
+_VEC_FUNC_2V_SCAL( vsshl ,	dst = (dest_type)(src1 << scalar1_val)	)
+_VEC_FUNC_2V_SCAL( vsshl2 ,	dst = (dest_type)(scalar1_val << src1)	)
+
+_VEC_FUNC_2V( vtolower ,	dst = (dest_type) tolower( (int) src1 )	)
+_VEC_FUNC_2V( vtoupper ,	dst = (dest_type) toupper( (int) src1 )	)
+
+_VEC_FUNC_2V( vislower ,	dst = (dest_type) islower( (int) src1 )	)
+_VEC_FUNC_2V( visupper ,	dst = (dest_type) isupper( (int) src1 )	)
+_VEC_FUNC_2V( visalpha ,	dst = (dest_type) isalpha( (int) src1 )	)
+_VEC_FUNC_2V( visalnum ,	dst = (dest_type) isalnum( (int) src1 )	)
+_VEC_FUNC_2V( visdigit ,	dst = (dest_type) isdigit( (int) src1 )	)
+_VEC_FUNC_2V( visspace ,	dst = (dest_type) isspace( (int) src1 )	)
+_VEC_FUNC_2V( visblank ,	dst = (dest_type) isblank( (int) src1 )	)
+_VEC_FUNC_2V( viscntrl ,	dst = (dest_type) iscntrl( (int) src1 )	)
+
+#endif /* ! BUILD_FOR_GPU */
 

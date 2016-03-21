@@ -1,16 +1,22 @@
 #include "quip_config.h"
 
-char VersionId_ptgrey_pgr_menu[] = QUIP_VERSION_STRING;
-
-#include "query.h"
-#include "submenus.h"
+#include "quip_prot.h"
 #include "pgr.h"
 #include "data_obj.h"
 
 static PGR_Cam *the_cam_p=NULL;
 
+// local prototypes
+static COMMAND_FUNC( do_cam_menu );
+
 #ifdef HAVE_LIBDC1394
+
+// BUG - this should be part of the camera struct!?
 static dc1394video_mode_t the_fmt7_mode=DC1394_VIDEO_MODE_FORMAT7_0;
+
+static void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn);
+static void camera_feature_set_onoff(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn);
+static int camera_feature_set_value(PGR_Cam *pgcp, dc1394feature_info_t *f, int val);
 #endif
 
 #ifndef HAVE_LIBDC1394
@@ -30,44 +36,29 @@ static dc1394video_mode_t the_fmt7_mode=DC1394_VIDEO_MODE_FORMAT7_0;
 #endif /* ! HAVE_LIBDC1394 */
 
 #define CHECK_CAM	if( the_cam_p == NULL ){ \
-		WARN("Firewire system not initialized yet..."); \
+		WARN("No camera selected."); \
 		return; }
 
 static COMMAND_FUNC(do_list_trig)
 {
 #ifdef HAVE_LIBDC1394
 	CHECK_CAM
-	list_trig(the_cam_p);
+	list_trig(QSP_ARG  the_cam_p);
 #else
 	NO_LIB_MSG("do_list_trig");
 #endif
 }
 
-Command trigger_ctbl[]={
-{ "list",	do_list_trig,	"report trigger info"			},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(trigger_menu,s,f,h)
+
+MENU_BEGIN(trigger)
+ADD_CMD( list,	do_list_trig,	report trigger info )
+MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
 {
-	PUSHCMD(trigger_ctbl,"trigger");
+	PUSH_MENU(trigger);
 }
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_frame )
-{
-	char *s;
-	int i;
-
-	s=NAMEOF( "name for frame object" );
-	i=HOW_MANY("capture buffer index");
-
-	CHECK_CAM
-
-	make_frame_obj(s,i);
-}
-#endif /* FOOBAR */
 
 static COMMAND_FUNC( do_init )
 {
@@ -77,27 +68,57 @@ static COMMAND_FUNC( do_init )
 		return;
 	}
 
-	if( (the_cam_p=init_firewire_system()) == NULL )
-		WARN("Unable to initialize firewire subsystem");
+	if( init_firewire_system(SINGLE_QSP_ARG) < 0 )
+		WARN("Error initializing firewire system.");
 #endif
 }
 
-static COMMAND_FUNC( do_list )
+static COMMAND_FUNC( do_list_cams )
 {
+	list_pgcs(SINGLE_QSP_ARG);
+}
+
+static COMMAND_FUNC( do_cam_info )
+{
+	PGR_Cam *pgcp;
+
+	pgcp = pick_pgc(QSP_ARG  "camera");
+	if( pgcp == NULL ) return;
+
 #ifdef HAVE_LIBDC1394
 	/* print out info about this camera */
 	int bpp=1; /* BUG determine this from video mode */
 
 	CHECK_CAM
 	sprintf(msg_str,"%s %s:  %dx%d, %d %s per pixel",
-		the_cam_p->pc_cam_p->vendor,
-		the_cam_p->pc_cam_p->model,
-		the_cam_p->pc_nRows,the_cam_p->pc_nCols, bpp,
+		pgcp->pc_cam_p->vendor,
+		pgcp->pc_cam_p->model,
+		pgcp->pc_nRows,pgcp->pc_nCols, bpp,
 		bpp>1?"bytes":"byte");
 	prt_msg(msg_str);
+
+	print_camera_info(QSP_ARG  pgcp);
 #else
-	NO_LIB_MSG("do_list");
+	NO_LIB_MSG("do_list_cam");
 #endif
+}
+
+static void select_camera(QSP_ARG_DECL  PGR_Cam *pgcp )
+{
+	if( the_cam_p != NULL )
+		pop_camera_context(SINGLE_QSP_ARG);
+	the_cam_p = pgcp;
+	push_camera_context(QSP_ARG  pgcp);
+}
+
+static COMMAND_FUNC( do_select_cam )
+{
+	PGR_Cam *pgcp;
+
+	pgcp = pick_pgc(QSP_ARG  "camera");
+	if( pgcp == NULL ) return;
+
+	select_camera(QSP_ARG  pgcp);
 }
 
 static COMMAND_FUNC( do_start )
@@ -124,11 +145,13 @@ static COMMAND_FUNC( do_start )
 	}
 
 	if( start_firewire_transmission(QSP_ARG  the_cam_p, rb_size ) < 0 ){
-		cleanup1394(the_cam_p->pc_cam_p);
+advise("failure, cleaning up...");
+		cleanup_cam(the_cam_p);
 		the_cam_p=NULL;
 		return;
 	}
 
+advise("camera is running.");
 	the_cam_p->pc_flags |= PGR_CAM_IS_RUNNING;
 #else
 	NO_LIB_MSG("do_start");
@@ -138,12 +161,17 @@ static COMMAND_FUNC( do_start )
 static COMMAND_FUNC( do_grab )
 {
 #ifdef HAVE_LIBDC1394
-	PGR_Frame *pfp;
+	Data_Obj *dp;
 
 	CHECK_CAM
-	if( (pfp=grab_firewire_frame(QSP_ARG  the_cam_p )) == NULL ){		/* any error */
-		cleanup1394(the_cam_p->pc_cam_p);	/* grab error */
+	if( (dp=grab_firewire_frame(QSP_ARG  the_cam_p )) == NULL ){		/* any error */
+#ifdef FOOBAR
+		cleanup_cam(the_cam_p);	/* grab error */
 		the_cam_p=NULL;
+#endif // FOOBAR
+		// We might fail because we need to release a frame...
+		// Don't shut down in that case.
+		WARN("do_grab:  failed.");
 	}
 #else
 	NO_LIB_MSG("do_grab");
@@ -153,15 +181,28 @@ static COMMAND_FUNC( do_grab )
 static COMMAND_FUNC( do_grab_newest )
 {
 #ifdef HAVE_LIBDC1394
-	PGR_Frame *pfp;
+	Data_Obj *dp;
 
 	CHECK_CAM
-	if( (pfp=grab_newest_firewire_frame(QSP_ARG  the_cam_p )) == NULL ){		/* any error */
-		cleanup1394(the_cam_p->pc_cam_p);	/* grab error */
-		the_cam_p=NULL;
+
+	// Only try to get the frame if the camera is running...
+	if( (the_cam_p->pc_flags & PGR_CAM_IS_RUNNING) == 0 ){
+		WARN("do_grab_newest:  camera is not running!?");
+		return;
 	}
-	sprintf(msg_str,"%d",pfp->pf_framep->id);
-	ASSIGN_VAR("newest",msg_str);
+
+	if( (dp=grab_newest_firewire_frame(QSP_ARG  the_cam_p )) == NULL ){		/* any error */
+#ifdef FOOBAR
+		cleanup_cam(the_cam_p);	/* grab error */
+		the_cam_p=NULL;
+#endif // FOOBAR
+		if( the_cam_p->pc_policy != DC1394_CAPTURE_POLICY_POLL )
+			WARN("do_grab_newest:  failure.");
+		// If we are polling, this means there is no newest frame
+		// We should set a script variable to indicate this...
+		ASSIGN_VAR("newest","-1");
+		return;
+	}
 #else
 	NO_LIB_MSG("do_grab_newest");
 #endif
@@ -204,7 +245,7 @@ static COMMAND_FUNC( do_close )
 {
 	CHECK_CAM
 #ifdef HAVE_LIBDC1394
-	cleanup1394(the_cam_p->pc_cam_p);
+	cleanup_cam(the_cam_p);
 #endif
 	the_cam_p=NULL;
 }
@@ -214,7 +255,7 @@ static COMMAND_FUNC( do_bw )
 #ifdef HAVE_LIBDC1394
 	CHECK_CAM
 
-	report_bandwidth(the_cam_p);
+	report_bandwidth(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -223,9 +264,18 @@ static COMMAND_FUNC( do_list_modes )
 #ifdef HAVE_LIBDC1394
 	CHECK_CAM
 	prt_msg("\nAvailable video modes:");
-	list_video_modes(the_cam_p);
+	list_video_modes(QSP_ARG  the_cam_p);
 #endif
 }
+
+static COMMAND_FUNC( do_show_video_mode )
+{
+#ifdef HAVE_LIBDC1394
+	CHECK_CAM
+	show_video_mode(QSP_ARG  the_cam_p);
+#endif
+}
+
 
 static COMMAND_FUNC( do_list_framerates )
 {
@@ -233,7 +283,15 @@ static COMMAND_FUNC( do_list_framerates )
 	CHECK_CAM
 
 	prt_msg("\nAvailable framerates:");
-	list_framerates(the_cam_p);
+	list_framerates(QSP_ARG  the_cam_p);
+#endif
+}
+
+static COMMAND_FUNC( do_show_framerate )
+{
+#ifdef HAVE_LIBDC1394
+	CHECK_CAM
+	show_framerate(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -243,11 +301,11 @@ static COMMAND_FUNC( do_set_video_mode )
 	dc1394video_mode_t m;
 
 	m=pick_video_mode(QSP_ARG  the_cam_p,"video mode");
-	if( m >= 0 )
-		set_video_mode(the_cam_p,m);
-#else
+	if( m == BAD_VIDEO_MODE )
+		set_video_mode(QSP_ARG  the_cam_p,m);
+#else /* ! HAVE_LIBDC1394 */
 	EAT_ONE_DUMMY("do_set_video_mode");
-#endif
+#endif /* ! HAVE_LIBDC1394 */
 }
 
 static COMMAND_FUNC( do_set_framerate )
@@ -260,16 +318,6 @@ static COMMAND_FUNC( do_set_framerate )
 		set_framerate(the_cam_p,i);
 #else
 	EAT_ONE_DUMMY("do_set_framerate");
-#endif
-}
-
-static COMMAND_FUNC( do_cam_info )
-{
-#ifdef HAVE_LIBDC1394
-	CHECK_CAM
-	print_camera_info(the_cam_p);
-#else
-	NO_LIB_MSG("do_cam_info");
 #endif
 }
 
@@ -294,16 +342,15 @@ static COMMAND_FUNC( do_get_frange )
 	sprintf(s,"%d",curr_feat_p->max);
 	ASSIGN_VAR("fmax",s);
 
-	/*
-	if( curr_feat_p->auto_capable ){
+	//if( curr_feat_p->auto_capable ){
+	if( is_auto_capable( curr_feat_p ) ){
 		ASSIGN_VAR("f_auto_capable","1");
-		sprintf(s,"%d",curr_feat_p->auto_active);
-		ASSIGN_VAR("f_auto",s);
+		//sprintf(s,"%d",curr_feat_p->auto_active);
+		//ASSIGN_VAR("f_auto",s);
 	} else {
 		ASSIGN_VAR("f_auto_capable","0");
 		ASSIGN_VAR("f_auto","0");
 	}
-	*/
 
 	if( curr_feat_p->on_off_capable ){
 		ASSIGN_VAR("f_onoff_capable","1");
@@ -319,7 +366,7 @@ static COMMAND_FUNC( do_get_frange )
 }
 
 #ifdef HAVE_LIBDC1394
-void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
+static void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
 {
 	/* make sure this feature supports auto */
 	/*
@@ -344,7 +391,7 @@ void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
 	}
 }
 
-void camera_feature_set_onoff(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
+static void camera_feature_set_onoff(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
 {
 	/* make sure this feature supports auto */
 	if( ! f->on_off_capable ){
@@ -366,7 +413,7 @@ void camera_feature_set_onoff(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
 	}
 }
 
-int camera_feature_set_value(PGR_Cam *pgcp, dc1394feature_info_t *f, int val)
+static int camera_feature_set_value(PGR_Cam *pgcp, dc1394feature_info_t *f, int val)
 {
 	if( dc1394_feature_set_value( pgcp->pc_cam_p, f->id, val ) != DC1394_SUCCESS ){
 		sprintf(DEFAULT_ERROR_STRING,"error setting value (%d) for %s",val,
@@ -447,23 +494,26 @@ static COMMAND_FUNC( do_set_fval )
 
 static COMMAND_FUNC( change_done )
 {
-	POPCMD();
+	POP_MENU;
 	/* refresh all the features so we can display the current values */
 	get_camera_features(the_cam_p);
 
 #ifdef HAVE_LIBDC1394
-	report_feature_info(the_cam_p,curr_feat_p->id);
+	report_feature_info(QSP_ARG  the_cam_p,curr_feat_p->id);
 #endif
 }
 
-static Command fchng_ctbl[]={
-{ "fetch",	do_get_frange,	"get current value in $fval, range limits in $fmin $fmax"	},
-{ "value",	do_set_fval,	"set value"				},
-{ "auto",	do_set_auto,	"set/clear auto flag"			},
-{ "on",		do_set_onoff,	"set/clear on_off flag"			},
-{ "quit",	change_done,	"exit submenu"				},
-{ NULL_COMMAND								}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)		ADD_COMMAND(feature_change_menu,s,f,h)
+
+MENU_BEGIN(feature_change)
+ADD_CMD( fetch,	do_get_frange,	get current value in $fval with range tlimits in $fmin $fmax )
+ADD_CMD( value,	do_set_fval,	set value )
+ADD_CMD( auto,	do_set_auto,	set/clear auto flag )
+ADD_CMD( on,	do_set_onoff,	set/clear on_off flag )
+// BUG? will we get two quit commands?
+ADD_CMD( quit,	change_done,	exit submenu )
+MENU_END(feature_change)
 
 
 static COMMAND_FUNC( do_feature_change )
@@ -487,14 +537,14 @@ static COMMAND_FUNC( do_feature_change )
 	EAT_ONE_DUMMY("do_feature_change");
 #endif
 
-	PUSHCMD( fchng_ctbl,"feature_change");
+	PUSH_MENU(feature_change);
 }
 
 static COMMAND_FUNC( do_list_cam_features )
 {
 #ifdef HAVE_LIBDC1394
 	CHECK_CAM
-	list_camera_features(the_cam_p);
+	list_camera_features(QSP_ARG  the_cam_p);
 #endif
 }
 
@@ -516,54 +566,200 @@ static COMMAND_FUNC( do_feature_info )
 
 	np=nth_elt(the_cam_p->pc_feat_lp,i);
 	f=(dc1394feature_info_t *)np->n_data;
-	report_feature_info(the_cam_p,f->id);
+	report_feature_info(QSP_ARG  the_cam_p,f->id);
 #else
 	EAT_ONE_DUMMY("do_feature_info");
 #endif
 }
 
-static Command feature_ctbl[]={
-{ "list",	do_list_cam_features,	"list available features for this camera"	},
-{ "info",	do_feature_info,	"report feature info"				},
-{ "change",	do_feature_change,	"change feature settings"			},
-{ "quit",	popcmd,			"exit submenu"					},
-{ NULL_COMMAND										}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(features_menu,s,f,h)
 
-static COMMAND_FUNC( feature_menu )
+MENU_BEGIN(features)
+ADD_CMD( list,		do_list_cam_features,	list available features for this camera )
+ADD_CMD( info,		do_feature_info,	report feature info )
+ADD_CMD( change,	do_feature_change,	change feature settings )
+MENU_END(features)
+
+static COMMAND_FUNC( do_feature_menu )
 {
-	PUSHCMD(feature_ctbl,"features");
+	PUSH_MENU(features);
 }
 
-static Command cam_ctbl[]={
-{ "list_video_modes",	do_list_modes,		"list all video modes for this camera"	},
-{ "list_framerates",	do_list_framerates,	"list all framerates for this camera"	},
-{ "set_video_mode",	do_set_video_mode,	"set video mode"			},
-{ "set_framerate",	do_set_framerate,	"set framerate"				},
-{ "info",		do_cam_info,		"print info about current camera"	},
-{ "features",		feature_menu,		"camera feature submenu"		},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+#ifdef HAVE_LIBDC1394
+#define N_SPEED_CHOICES	2
+static const char *speed_choices[N_SPEED_CHOICES]={"400","800"};
+#endif /* HAVE_LIBDC1394 */
 
-static COMMAND_FUNC( cam_menu )
+static COMMAND_FUNC( do_set_iso_speed )
 {
-	PUSHCMD(cam_ctbl,"camera");
+#ifdef HAVE_LIBDC1394
+	int i;
+
+	CHECK_CAM
+
+	i=WHICH_ONE("speed",N_SPEED_CHOICES,speed_choices);
+	if( i < 0 ) return;
+
+	switch(i){
+		case 0:
+			if( set_iso_speed(the_cam_p, DC1394_ISO_SPEED_400) < 0 )
+				WARN("Error setting iso speed.");
+			break;
+		case 1:
+			if( set_iso_speed(the_cam_p, DC1394_ISO_SPEED_800) < 0 )
+				WARN("Error setting iso speed.");
+			break;
+#ifdef CAUTIOUS
+		default:
+			ERROR1("CAUTIOUS:  do_set_iso_speed:  wacky speed choice!?");
+			break;
+#endif /* CAUTIOUS */
+	}
+#else /* ! HAVE_LIBDC1394 */
+	EAT_ONE_DUMMY("speed");
+#endif /* ! HAVE_LIBDC1394 */
 }
 
-static Command capt_ctbl[]={
-{ "start",	do_start,	"start capture"			},
-{ "grab",	do_grab,	"grab a frame"			},
-{ "grab_newest",do_grab_newest,	"grab the newest frame"		},
-{ "release",	do_release,	"release a frame"		},
-{ "stop",	do_stop,	"stop capture"			},
-{ "quit",	popcmd,		"exit submenu"			},
-{ NULL_COMMAND							}
-};
+static COMMAND_FUNC( do_power_on )
+{
+	CHECK_CAM
+
+	if( power_on_camera(the_cam_p) < 0 )
+		WARN("Error powering on camera.");
+}
+
+static COMMAND_FUNC( do_power_off )
+{
+	CHECK_CAM
+
+	if( power_off_camera(the_cam_p) < 0 )
+		WARN("Error powering off camera.");
+}
+
+static COMMAND_FUNC( do_set_temp )
+{
+	int t;
+
+	t = HOW_MANY("color temperature");	// BUG prompt should display valid range
+
+	CHECK_CAM
+
+	if( set_camera_temperature(the_cam_p, t) < 0 )
+		WARN("Error setting color temperature");
+}
+
+static COMMAND_FUNC( do_set_white_balance )
+{
+	int wb;
+
+	wb = HOW_MANY("white balance");	// BUG prompt should display valid range
+
+	CHECK_CAM
+
+	if( set_camera_white_balance(the_cam_p, wb) < 0 )
+		WARN("Error setting white balance!?");
+}
+
+// WHAT IS WHITE "SHADING" ???
+
+static COMMAND_FUNC( do_set_white_shading )
+{
+	int val;
+
+	val = HOW_MANY("white shading");	// BUG prompt should display valid range
+
+	CHECK_CAM
+
+	if( set_camera_white_shading(the_cam_p, val) < 0 )
+		WARN("Error setting white shading!?");
+}
+
+static COMMAND_FUNC( do_get_cams )
+{
+	Data_Obj *dp;
+	int n;
+
+	dp = PICK_OBJ("string table");
+	if( dp == NO_OBJ ) return;
+
+	n = get_camera_names( QSP_ARG  dp );
+}
+
+static COMMAND_FUNC( do_get_video_modes )
+{
+	Data_Obj *dp;
+	int n;
+	char s[8];
+
+	dp = PICK_OBJ("string table");
+	if( dp == NO_OBJ ) return;
+
+	CHECK_CAM
+
+	n = get_video_mode_strings( QSP_ARG  dp, the_cam_p );
+	sprintf(s,"%d",n);
+	// BUG should make this a reserved var...
+	ASSIGN_VAR("n_video_modes",s);
+}
+
+static COMMAND_FUNC( do_get_framerates )
+{
+	Data_Obj *dp;
+	int n;
+	char s[8];
+
+	dp = PICK_OBJ("string table");
+	if( dp == NO_OBJ ) return;
+
+	CHECK_CAM
+
+	n = get_framerate_strings( QSP_ARG  dp, the_cam_p );
+	sprintf(s,"%d",n);
+	// BUG should make this a reserved var...
+	ASSIGN_VAR("n_framerates",s);
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(camera_menu,s,f,h)
+
+MENU_BEGIN(camera)
+ADD_CMD( list_video_modes,	do_list_modes,		list all video modes for this camera )
+ADD_CMD( get_video_modes,	do_get_video_modes,	copy video modes strings to an array )
+ADD_CMD( set_video_mode,	do_set_video_mode,	set video mode )
+ADD_CMD( show_video_mode,	do_show_video_mode,	display current video mode )
+ADD_CMD( list_framerates,	do_list_framerates,	list all framerates for this camera )
+ADD_CMD( get_framerates,	do_get_framerates,	copy framerate strings to an array )
+ADD_CMD( set_framerate,		do_set_framerate,	set framerate )
+ADD_CMD( show_framerate,	do_show_framerate,	show current framerate )
+ADD_CMD( set_iso_speed,		do_set_iso_speed,	set ISO speed )
+ADD_CMD( power_on,		do_power_on,		power on current camera )
+ADD_CMD( power_off,		do_power_off,		power off current camera )
+ADD_CMD( temperature,		do_set_temp,		set color temperature )
+ADD_CMD( white_balance,		do_set_white_balance,	set white balance )
+ADD_CMD( white_shading,		do_set_white_shading,	set white shading )
+ADD_CMD( features,		do_feature_menu,	camera feature submenu )
+MENU_END(camera)
+
+static COMMAND_FUNC( do_cam_menu )
+{
+	PUSH_MENU(camera);
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(capture_menu,s,f,h)
+
+MENU_BEGIN(capture)
+ADD_CMD( start,		do_start,	start capture )
+ADD_CMD( grab,		do_grab,	grab a frame )
+ADD_CMD( grab_newest,	do_grab_newest,	grab the newest frame )
+ADD_CMD( release,	do_release,	release a frame )
+ADD_CMD( stop,		do_stop,	stop capture )
+MENU_END(capture)
 
 static COMMAND_FUNC( captmenu )
 {
-	PUSHCMD( capt_ctbl, "capture" );
+	PUSH_MENU( capture );
 }
 
 #define CAM_P	the_cam_p->pc_cam_p
@@ -669,6 +865,7 @@ static COMMAND_FUNC( do_fmt7_setsize )
 	}
 
 #ifdef HAVE_LIBDC1394
+
 	if( dc1394_format7_set_image_size(CAM_P,the_fmt7_mode, w, h ) != DC1394_SUCCESS ){
 		WARN("error setting image size");
 		return;
@@ -679,15 +876,34 @@ static COMMAND_FUNC( do_fmt7_setsize )
 static COMMAND_FUNC( do_fmt7_setposn )
 {
 	uint32_t h,v;
+#ifdef HAVE_LIBDC1394
+	dc1394error_t err;
+#endif // HAVE_LIBDC1394
 
 	h=HOW_MANY("horizontal position (left)");
 	v=HOW_MANY("vertical position (top)");
 
 	CHECK_CAM
 
+	// What are the constraints as to what this can be???
+	// At least on the flea, the position has to be even...
+
+	if( h & 1 ){
+		sprintf(ERROR_STRING,"Horizontal position (%d) should be even, rounding down to %d.",h,h&(~1));
+		advise(ERROR_STRING);
+		h &= ~1;
+	}
+
+	if( v & 1 ){
+		sprintf(ERROR_STRING,"Vertical position (%d) should be even, rounding down to %d.",v,v&(~1));
+		advise(ERROR_STRING);
+		v &= ~1;
+	}
+
 #ifdef HAVE_LIBDC1394
-	if( dc1394_format7_set_image_position( CAM_P,the_fmt7_mode, h, v ) != DC1394_SUCCESS ){
+	if( (err=dc1394_format7_set_image_position( CAM_P,the_fmt7_mode, h, v )) != DC1394_SUCCESS ){
 		WARN("error setting image position");
+		describe_dc1394_error(QSP_ARG  err);
 		return;
 	}
 #endif
@@ -707,18 +923,19 @@ static COMMAND_FUNC( do_fmt7_select )
 #endif
 }
 
-static Command fmt7_ctbl[]={
-{ "mode",	do_fmt7_select,		"select format7 mode for get/set"	},
-{ "list",	do_fmt7_list,		"list format7 settings"			},
-{ "image_size",	do_fmt7_setsize,	"set image size"			},
-{ "position",	do_fmt7_setposn,	"set image position"			},
-{ "quit",	popcmd,			"exit submenu"				},
-{ NULL_COMMAND									}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(format7_menu,s,f,h)
+
+MENU_BEGIN(format7)
+ADD_CMD( mode,		do_fmt7_select,		select format7 mode for get/set )
+ADD_CMD( list,		do_fmt7_list,		list format7 settings )
+ADD_CMD( set_image_size, do_fmt7_setsize,	set image size )
+ADD_CMD( position,	do_fmt7_setposn,	set image position )
+MENU_END(format7)
 
 static COMMAND_FUNC( fmt7menu )
 {
-	PUSHCMD( fmt7_ctbl, "format7" );
+	PUSH_MENU( format7 );
 }
 
 static COMMAND_FUNC( do_bmode )
@@ -736,25 +953,30 @@ static COMMAND_FUNC( do_bmode )
 #endif
 }
 
-static Command pgr_ctbl[]={
-{ "init",	do_init,	"initialize subsystem"		},
-{ "capture",	captmenu,	"capture submenu"		},
-{ "format7",	fmt7menu,	"format7 submenu"		},
-{ "list",	do_list,	"list camera"			},
-{ "power",	do_power,	"power camera on/off"		},
-{ "reset",	do_reset,	"reset camera"			},
-/* { "frame",	do_frame,	"create a data object alias for a capture buffer frame"	}, */
-{ "trigger",	do_trigger,	"trigger submenu"		},
-{ "bandwidth",	do_bw,		"report bandwidth usage"	},
-{ "bmode",	do_bmode,	"set/clear B-mode"		},
-{ "close",	do_close,	"shutdown firewire subsystem"	},
-{ "camera",	cam_menu,	"camera submenu"		},
-{ "quit",	popcmd,		"exit submenu"			},
-{ NULL_COMMAND							}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(pgr_menu,s,f,h)
 
-COMMAND_FUNC( pgr_menu )
+MENU_BEGIN(pgr)
+ADD_CMD( init,		do_init,	initialize subsystem )
+ADD_CMD( list,		do_list_cams,	list cameras )
+ADD_CMD( select,	do_select_cam,	select camera )
+ADD_CMD( get_cameras,	do_get_cams,	copy camera names to an array )
+ADD_CMD( capture,	captmenu,	capture submenu )
+ADD_CMD( format7,	fmt7menu,	format7 submenu )
+ADD_CMD( select,	do_select_cam,	select camera )
+ADD_CMD( info,		do_cam_info,	print info about current camera )
+ADD_CMD( power,		do_power,	power camera on/off )
+ADD_CMD( reset,		do_reset,	reset camera )
+/* ADD_CMD( frame,	do_frame,	create a data object alias for a capture buffer frame ) */
+ADD_CMD( trigger,	do_trigger,	trigger submenu )
+ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
+ADD_CMD( bmode,		do_bmode,	set/clear B-mode )
+ADD_CMD( close,		do_close,	shutdown firewire subsystem )
+ADD_CMD( camera,	do_cam_menu,	camera submenu )
+MENU_END(pgr)
+
+COMMAND_FUNC( do_pgr_menu )
 {
-	PUSHCMD( pgr_ctbl, "pgr" );
+	PUSH_MENU( pgr );
 }
 

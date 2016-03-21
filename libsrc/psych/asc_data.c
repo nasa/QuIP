@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_psych_asciidata[] = QUIP_VERSION_STRING;
-
 /*
  *	asciidata.c	routines to read and write experimental data
  *			in human readable form
@@ -17,7 +15,7 @@ char VersionId_psych_asciidata[] = QUIP_VERSION_STRING;
 #include <stdlib.h>		/* mkstemp */
 #endif
 
-#include "debug.h"		/* verbose */
+#include "quip_prot.h"		/* verbose */
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -25,30 +23,52 @@ char VersionId_psych_asciidata[] = QUIP_VERSION_STRING;
 
 #include "stc.h"
 
-/* these includes were added for xvalue transformations... */
-#include "savestr.h"
-#include "getbuf.h"
-
-
 
 /* printf/scanf format strings */
 static const char *topline="%d classes, %d x values\n";
 static const char *xvline="\t%g\n";
-static const char *classheader="Trial_Class %d, %d data points\n";
+static const char *class_header="Trial_Class %d, %d data points\n";
 static const char *pointline="\t%d\t%d\t%d\n";
 
 static const char *summline="Summary data\n";
 static const char *dribline="Raw data\n";
 
-static char input_line[128];
+static char input_line[LLEN];
 static int have_input_line;
 
 static const char *dm_arg_str=NULL;
 
-static int rd_summ(QSP_ARG_DECL  int n, FILE *fp);
-static int rd_top(QSP_ARG_DECL  FILE *fp);
-static int rd_dribble(QSP_ARG_DECL  FILE *fp);
-static void xform_xvals(SINGLE_QSP_ARG_DECL);
+FILE *drib_file=NULL;		/* trial by trial dribble */
+
+//static int read_data_preamble(QSP_ARG_DECL  FILE *fp);
+//static int rd_dribble(QSP_ARG_DECL  FILE *fp);
+//static void xform_xvals(SINGLE_QSP_ARG_DECL);
+
+static void rls_data_tbl(Trial_Class *tcp)
+{
+	Data_Tbl *dtp;
+
+	dtp = CLASS_DATA_TBL(tcp);
+	givbuf( DTBL_DATA(dtp) );
+	givbuf(dtp);
+	SET_CLASS_DATA_TBL(tcp,NULL);
+}
+
+Data_Tbl *alloc_data_tbl( Trial_Class *tcp, int size )
+{
+	Data_Tbl *dtp;
+
+	assert( CLASS_DATA_TBL(tcp) == NULL );
+
+	dtp = getbuf(sizeof(Data_Tbl));
+	SET_CLASS_DATA_TBL(tcp,dtp);
+	SET_DTBL_DATA(dtp, getbuf(size * sizeof(Datum) ) );
+	SET_DTBL_SIZE(dtp,size);
+	SET_DTBL_N(dtp,0);
+	// BUG?  Should we zero the table here?
+
+	return dtp;
+}
 
 static int next_input_line(FILE *fp)
 {
@@ -60,145 +80,41 @@ static int next_input_line(FILE *fp)
 	return(0);
 }
 
-void markdrib(FILE *fp)
+void mark_drib(FILE *fp)
 {
 	fputs(dribline,fp);
 	fflush(fp);
 }
 
-void wtdata(QSP_ARG_DECL  FILE *fp)	/* replaces routine formerly in stair.c */
-{
-	List *lp;
-	Node *np;
-	Trial_Class *clp;
-
-	/* new ascii format */
-
-	wt_top(QSP_ARG  fp);
-	fputs(summline,fp);
-
-	lp = class_list(SINGLE_QSP_ARG);
-	np=lp->l_head;
-	while(np!=NO_NODE){
-		clp=(Trial_Class *)np->n_data;
-		wtclass(clp,fp);
-		np=np->n_next;
-	}
-	fflush(fp);
-}
-
-void wtclass(Trial_Class *clp,FILE *fp)
+static void write_class_data(Trial_Class *tcp,FILE *fp)
 {
 	int j;
+	Data_Tbl *dtp;
 
-	clp->cl_dtp->d_npts=0;
-	for(j=0;j<MAXVALS;j++)
-		if( clp->cl_dtp->d_data[j].ntotal != 0 )
-			clp->cl_dtp->d_npts++;
-	fprintf(fp,classheader,clp->cl_index,clp->cl_dtp->d_npts);
-	for(j=0;j<MAXVALS;j++)
-		if( clp->cl_dtp->d_data[j].ntotal != 0 )
+	//SET_DTBL_N(CLASS_DATA_TBL(tcp),0);
+
+	dtp = CLASS_DATA_TBL(tcp);
+	for(j=0;j<DTBL_SIZE(dtp);j++)
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) != 0 )
+			SET_DTBL_N(dtp,1+DTBL_N(dtp));
+	fprintf(fp,class_header,CLASS_INDEX(tcp),DTBL_N(dtp));
+	for(j=0;j<DTBL_SIZE(dtp);j++)
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) != 0 )
 			fprintf(fp,pointline, j,
-				clp->cl_dtp->d_data[j].ntotal,
-				clp->cl_dtp->d_data[j].ncorr );
-}
-
-/* Read the bottom half of a data file.
- * This may be either a dribble file or a summary file.
- */
-
-static int rd_bot(QSP_ARG_DECL  FILE *fp,int n_classes)
-{
-	char tstr[32];
-
-	/* determine data format type */
-	/* fscanf(fp,"%s data\n",tstr); */
-	if( next_input_line(fp) < 0 ){
-		WARN("rd_bot:  premature eof on input file");
-		return(-1);
-	}
-	if( sscanf(input_line,"%s data\n",tstr) != 1 ){
-		sprintf(error_string,"rddata:  unexpected data description:  %s",tstr);
-		WARN(error_string);
-		return(-1);
-	}
-	if( !strcmp(tstr,"Summary") ){
-		if( verbose ) advise("Reading data in summary format");
-		return( rd_summ(QSP_ARG  n_classes,fp) );
-	} else if( !strcmp(tstr,"Raw") ){
-		if( verbose ) advise("Reading data in raw format");
-		return( rd_dribble(QSP_ARG  fp) );
-	} else {
-		sprintf(error_string,"bizarre data format:  \"%s\"\n",tstr);
-		WARN(error_string);
-		return(-1);
-	}
-	/* NOTREACHED */
-}
-
-int rddata(QSP_ARG_DECL  FILE *fp)
-{
-	int n;
-	int status;
-
-	have_input_line=0;
-
-	while( (n=rd_top(QSP_ARG  fp)) >= 0 ){
-		status=rd_bot(QSP_ARG  fp,n);
-		if( status < 0 ) return(status);
-		if( ! have_input_line ) return(0);
-	}
-	return(-1);
-}
-
-static int rd_summ(QSP_ARG_DECL  int n,FILE *fp)		/** read data in summary format */
-{
-	while(n--){
-		if( rd_one_summ(QSP_ARG  fp) < 0 )
-			return(-1);
-	}
-	return(0);
-}
-
-int rd_one_summ(QSP_ARG_DECL  FILE *fp)
-{
-	int index,np;
-	Trial_Class *clp;
-	int j;
-
-	if( fscanf(fp,classheader,&index,&np) != 2 ){
-		WARN("error reading class header");
-		return(-1);
-	}
-	clp=index_class(QSP_ARG  index);
-#ifdef CAUTIOUS
-	if( clp == NO_CLASS ){
-		WARN("CAUTIOUS:  missing class");
-		return(-1);
-	}
-#endif
-
-	clp->cl_dtp->d_npts=np;
-	for(j=0;j<clp->cl_dtp->d_npts;j++){
-		int di,nt,nc;
-
-		if( fscanf(fp,pointline,&di,&nt,&nc) != 3 ){
-			WARN("error reading data line");
-			return(-1);
-		} else {
-			clp->cl_dtp->d_data[di].ntotal=nt;
-			clp->cl_dtp->d_data[di].ncorr = nc;
-		}
-	}
-	return(0);
+				DATUM_NTOTAL(DTBL_ENTRY(dtp,j)),
+				DATUM_NCORR(DTBL_ENTRY(dtp,j))
+				);
 }
 
 /* this is separate so we can include it at the top of dribble files */
+/* write header w/ #classes & xvalues */
 
-void wt_top(QSP_ARG_DECL  FILE *fp)
+static void write_data_preamble(QSP_ARG_DECL  FILE *fp)
 {
 	int i;
 	int nclasses;
+
+	assert(xval_array != NULL);
 
 	nclasses = eltcount( class_list(SINGLE_QSP_ARG) );
 
@@ -208,87 +124,79 @@ void wt_top(QSP_ARG_DECL  FILE *fp)
 	fflush(fp);
 }
 
-void setup_classes(QSP_ARG_DECL  int n)
+void write_exp_data(QSP_ARG_DECL  FILE *fp)	/* replaces routine formerly in stair.c */
 {
-	int i;
-	char name[32];
+	List *lp;
+	Node *np;
+	Trial_Class *tcp;
 
-	/* We don't delete old classes if they already exist;
-	 * This allows us to read multiple files if they are concatenated...
-	 */
-	for(i=0;i<n;i++){
-		Trial_Class *clp;
+	/* new ascii format */
 
-		sprintf(name,"class%d",i);
-		clp = trial_class_of(QSP_ARG  name);
-		if( clp == NO_CLASS ){
-			if(verbose){
-				sprintf(error_string,"setup_classes:  class %s not found, creating a new class",
-						name);
-				advise(error_string);
-			}
-			new_class(SINGLE_QSP_ARG);
-		}
+	write_data_preamble(QSP_ARG  fp);
+	fputs(summline,fp);
+
+	lp = class_list(SINGLE_QSP_ARG);
+	np=lp->l_head;
+	while(np!=NO_NODE){
+		tcp=(Trial_Class *)np->n_data;
+		write_class_data(tcp,fp);
+		np=np->n_next;
 	}
-}
-
-/* Read the top half of a data file.  This tells us the number of x values,
- * and the number of classes.
- * We return the number of classes, or -1 on error.
- */
-
-static int rd_top(QSP_ARG_DECL  FILE *fp)
-{
-	int i;
-	int n;		/* number of classes */
-
-	if( ! have_input_line ){
-		/* The first time through we will need to read
-		 * a line of input here.  If we have multiple
-		 * files concatenated, then we will have a buffered
-		 * line and can skip this step.
-		 */
-		if( next_input_line(fp) < 0 ){
-			WARN("rd_top:  no top line");
-			return(-1);
-		}
-	}
-
-	if( sscanf(input_line,topline,&n,&_nvals) != 2 ){
-		sprintf(error_string,"rd_top:  bad top line:  %s",input_line);
-		WARN(error_string);
-		return(-1);
-	}
-
-	/* Make sure that there are at least n classes.
-	 * If they already exist, that is ok, we can read in
-	 * concatenated data files and lump the data that way.
-	 */
-
-	setup_classes(QSP_ARG  n);
-
-	/* Read the x values.  If we are reading concatenated files,
-	 * we have to insist that all the xval arrays be the same.
-	 * BUG we have to put in a check for this!
-	 */
-	for(i=0;i<_nvals;i++)
-		if( fscanf(fp,xvline,&xval_array[i]) != 1 ){
-			WARN("error reading an x value");
-			return(-1);
-		}
-
-	if( dm_arg_str != NULL )
-		xform_xvals(SINGLE_QSP_ARG);
-
-	return(n);
-}
-
-void wt_dribble(FILE *fp,Trial_Class *clp,int index,int val,int rsp,int crct)
-{
-	fprintf(fp,"%d\t%d\t%d\t%d\t%d\n",clp->cl_index,index,val,rsp,crct);
 	fflush(fp);
 }
 
+static int read_class_summary(QSP_ARG_DECL  FILE *fp)
+{
+	short index,np;
+	Trial_Class *tcp;
+	Data_Tbl *dtp;
+	int j;
+
+	if( fscanf(fp,class_header,&index,&np) != 2 ){
+		WARN("error reading class header");
+		return(-1);
+	}
+	tcp=index_class(QSP_ARG  index);
+//#ifdef CAUTIOUS
+//	if( tcp == NO_CLASS ){
+//		WARN("CAUTIOUS:  missing class");
+//		return(-1);
+//	}
+//#endif
+	assert( tcp != NO_CLASS );
+
+	dtp = CLASS_DATA_TBL(tcp);
+	// BUG?  make sure that np <= size
+	if( np > DTBL_SIZE(dtp) ){
+		rls_data_tbl(tcp);
+		dtp = alloc_data_tbl(tcp,np);
+	}
+
+	SET_DTBL_N(dtp,np);
+	for(j=0;j<DTBL_N(dtp);j++){
+		short di,nt,nc;
+
+		if( fscanf(fp,pointline,&di,&nt,&nc) != 3 ){
+			WARN("error reading data line");
+			return(-1);
+		} else {
+			SET_DATUM_NTOTAL( DTBL_ENTRY(dtp,j), nt );
+			SET_DATUM_NCORR( DTBL_ENTRY(dtp,j), nc );
+		}
+	}
+	if( feof(fp) ) have_input_line=0;
+	return(0);
+}
+
+static int read_class_summaries(QSP_ARG_DECL  int n_classes,FILE *fp)		/** read data in summary format */
+{
+	while(n_classes--){
+		if( read_class_summary(QSP_ARG  fp) < 0 )
+			return(-1);
+	}
+	// Now we should be at the end-of-file...
+	return(0);
+}
 
 /* Read a dribble file (sequential list of trials).
  */
@@ -300,9 +208,14 @@ static int rd_dribble(QSP_ARG_DECL  FILE *fp)
 	while( next_input_line(fp) >= 0 ){
 		n=sscanf(input_line,"%d\t%d\t%d\t%d\t%d\n",&i_class,&i_stair,&i_val,&resp,&crct);
 		if( n == 5 ){
-			Trial_Class *clp;
-			clp=index_class(QSP_ARG  i_class);
-			note_trial(clp,i_val,resp,crct);
+			Trial_Class *tcp;
+			tcp=index_class(QSP_ARG  i_class);
+			if( tcp == NULL ){
+				fprintf(stderr,"rd_dribble:  didn't find class for index %d!?\n",i_class);
+				return -1;
+			}
+			//note_trial(tcp,i_val,resp,crct);
+			note_trial(tcp,i_val,resp,crct);
 		} else {
 			if( feof(fp) )
 				have_input_line=0;
@@ -319,10 +232,37 @@ static int rd_dribble(QSP_ARG_DECL  FILE *fp)
 	return(-1);
 }
 
-void set_xval_xform(const char *s)
+/* Read the bottom half of a data file.
+ * This may be either a dribble file or a summary file.
+ */
+
+static int read_class_data(QSP_ARG_DECL  FILE *fp,int n_classes)
 {
-	if( dm_arg_str != NULL ) givbuf(dm_arg_str);
-	dm_arg_str = savestr(s);
+	char tstr[32];
+
+	/* determine data format type */
+	/* fscanf(fp,"%s data\n",tstr); */
+	if( next_input_line(fp) < 0 ){
+		WARN("read_class_data:  premature eof on input file");
+		return(-1);
+	}
+	if( sscanf(input_line,"%s data\n",tstr) != 1 ){
+		sprintf(ERROR_STRING,"read_class_data:  unexpected data description:  %s",tstr);
+		WARN(ERROR_STRING);
+		return(-1);
+	}
+	if( !strcmp(tstr,"Summary") ){
+		if( verbose ) ADVISE("Reading data in summary format");
+		return( read_class_summaries(QSP_ARG  n_classes,fp) );
+	} else if( !strcmp(tstr,"Raw") ){
+		if( verbose ) ADVISE("Reading data in raw format");
+		return( rd_dribble(QSP_ARG  fp) );
+	} else {
+		sprintf(ERROR_STRING,"bizarre data format:  \"%s\"\n",tstr);
+		WARN(ERROR_STRING);
+		return(-1);
+	}
+	/* NOTREACHED */
 }
 
 static void xform_xvals(SINGLE_QSP_ARG_DECL)
@@ -348,8 +288,8 @@ static void xform_xvals(SINGLE_QSP_ARG_DECL)
 	}
 	if( close(fd) < 0 ){
 		perror("close");
-		sprintf(error_string,"xform_xvals:  unable to close temp file %s",tmpfilename);
-		NWARN(error_string);
+		sprintf(ERROR_STRING,"xform_xvals:  unable to close temp file %s",tmpfilename);
+		NWARN(ERROR_STRING);
 		return;
 	}
 	sprintf(line,"dm %s > %s",dm_arg_str,tmpfilename);
@@ -368,10 +308,10 @@ static void xform_xvals(SINGLE_QSP_ARG_DECL)
 	i=0;
 again:
 	if( i > MAX_RETRIES ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"giving up after %d retries to read file %s",
 			MAX_RETRIES,tmpfilename);
-		NWARN(error_string);
+		NWARN(ERROR_STRING);
 		return;
 	}
 	fp=try_open(DEFAULT_QSP_ARG  tmpfilename,"r");
@@ -390,5 +330,156 @@ again:
 	unlink(tmpfilename);
 }
 
+/* Read the top half of a data file.  This tells us the number of x values,
+ * and the number of classes.
+ * We return the number of classes, or -1 on error.
+ */
 
+static int read_data_preamble(QSP_ARG_DECL  FILE *fp)
+{
+	int i;
+	int n;		/* number of classes */
+
+	if( xval_array != NULL ){
+		givbuf(xval_array);
+		_nvals = 0;
+	}
+
+	if( ! have_input_line ){
+		/* The first time through we will need to read
+		 * a line of input here.  If we have multiple
+		 * files concatenated, then we will have a buffered
+		 * line and can skip this step.
+		 */
+		if( next_input_line(fp) < 0 ){
+			WARN("read_data_preamble:  no top line");
+			return(-1);
+		}
+	}
+
+	if( sscanf(input_line,topline,&n,&_nvals) != 2 ){
+		sprintf(ERROR_STRING,"read_data_preamble:  bad top line:  %s",input_line);
+		WARN(ERROR_STRING);
+		return(-1);
+	}
+
+	if( _nvals < 2 || _nvals > MAX_X_VALUES ){
+		sprintf(ERROR_STRING,"read_data_preamble:  ridiculous number of x values (%d)!?",_nvals);
+		WARN(ERROR_STRING);
+		return(-1);
+	}
+
+	/* Make sure that there are at least n classes.
+	 * If they already exist, that is ok, we can read in
+	 * concatenated data files and lump the data that way.
+	 */
+
+	setup_classes(QSP_ARG  n);
+
+	xval_array = (float *) getbuf( _nvals * sizeof(float) );
+	/* Read the x values.  If we are reading concatenated files,
+	 * we have to insist that all the xval arrays be the same.
+	 * BUG we have to put in a check for this!
+	 */
+	for(i=0;i<_nvals;i++)
+		if( fscanf(fp,xvline,&xval_array[i]) != 1 ){
+			WARN("error reading an x value");
+			return(-1);
+		}
+
+	if( dm_arg_str != NULL )
+		xform_xvals(SINGLE_QSP_ARG);
+
+	return(n);
+}
+
+int read_exp_data(QSP_ARG_DECL  FILE *fp)
+{
+	int n_classes;
+	int status;
+
+	have_input_line=0;
+
+	if( (n_classes=read_data_preamble(QSP_ARG  fp)) < 0 ){
+		WARN("Error in data file preamble!?");
+		return -1;
+	}
+	status=read_class_data(QSP_ARG  fp,n_classes);
+	if( status < 0 ) return(status);
+	if( ! have_input_line ) return(0);
+	return(-1);
+}
+
+void setup_classes(QSP_ARG_DECL  int n)
+{
+	int i;
+	char name[32];
+
+	/* We don't delete old classes if they already exist;
+	 * This allows us to read multiple files if they are concatenated...
+	 */
+	for(i=0;i<n;i++){
+		Trial_Class *tcp;
+
+		sprintf(name,"class%d",i);
+		tcp = trial_class_of(QSP_ARG  name);
+		if( tcp == NO_CLASS ){
+			/*
+			if(verbose){
+				sprintf(ERROR_STRING,"setup_classes:  class %s not found, creating a new class",
+						name);
+				advise(ERROR_STRING);
+			}
+			*/
+			new_class(SINGLE_QSP_ARG);
+		}
+	}
+}
+
+void set_xval_xform(const char *s)
+{
+	if( dm_arg_str != NULL ) givbuf((void *)dm_arg_str);
+	dm_arg_str = savestr(s);
+}
+
+void init_dribble_file(SINGLE_QSP_ARG_DECL)
+{
+	FILE *fp;
+
+	// BUG - we should only keep trying if interactive!?
+	while( (fp=TRYNICE(NAMEOF("dribble data file"),"w")) == NULL )
+		;
+	set_dribble_file(fp);
+	write_data_preamble(QSP_ARG  fp);
+	mark_drib(fp);		/* identify this as dribble data */
+}
+
+int dribbling(void)
+{
+	if( drib_file != NULL ) return 1;
+	return 0;
+}
+
+void dribble( Staircase *stc_p, int rsp )
+{
+	assert( drib_file != NULL );
+
+	fprintf(drib_file,"%d\t%d\t%d\t%d\t%d\n",
+		CLASS_INDEX(STAIR_CLASS(stc_p)),
+		STAIR_INDEX(stc_p),
+		STAIR_VAL(stc_p),
+		rsp,
+		STAIR_CRCT_RSP(stc_p));
+
+	fflush(drib_file);
+}
+
+void close_dribble(void)
+{
+	fclose(drib_file);
+	drib_file=NULL;
+	//CLEAR_EXP_FLAGS(DRIBBLING);
+}
+
+void set_dribble_file(FILE *fp) { drib_file=fp; }
 

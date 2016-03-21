@@ -1,70 +1,65 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_vinterp[] = QUIP_VERSION_STRING;
-
 /* utility funcs for vinterp() */
 
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "debug.h"
-#include "vecgen.h"
+#include "veclib/vecgen.h"
 #include "vec_util.h"
 
 #define MAX_AVG	5
+// BUG global var not thread-safe!?
 static int max_avg=MAX_AVG;	/* BUG this should be a menu-settable param */
-
-/* local prototypes */
-
-static float get_start_val(Data_Obj *source,Data_Obj *control,dimension_t index);
-static float get_end_val(Data_Obj *source,Data_Obj *control,dimension_t index);
 
 static float get_end_val(Data_Obj *source,Data_Obj *control,dimension_t index)
 {
 	float *f,*c,sum;
 	int i=0;
 
-	f = (float *)source->dt_data;
-	f += index*source->dt_pinc;
-	c = (float *)control->dt_data;
-	c += index*control->dt_pinc;
+	f = (float *)OBJ_DATA_PTR(source);
+	f += index*OBJ_PXL_INC(source);
+	c = (float *)OBJ_DATA_PTR(control);
+	c += index*OBJ_PXL_INC(control);
 
 	sum = 0.0;
-	while( (index+i) < source->dt_cols && *c == 1.0 && i < max_avg ){
+	while( (index+i) < OBJ_COLS(source) && *c == 1.0 && i < max_avg ){
 		sum += *f;
-		f += source->dt_pinc;
-		c += control->dt_pinc;
+		f += OBJ_PXL_INC(source);
+		c += OBJ_PXL_INC(control);
 		i++;
 	}
 	sum /= i;
 	return(sum);
 }
 
-
-float get_start_val(Data_Obj *source,Data_Obj *control,dimension_t index)
+static float get_start_val(Data_Obj *source,Data_Obj *control,dimension_t index)
 {
 	float *f,*c,sum;
 	int i=0;
 
-	f = (float *)source->dt_data;
-	f += index*source->dt_pinc;
-	c = (float *)control->dt_data;
-	c += index*control->dt_pinc;
+	f = (float *)OBJ_DATA_PTR(source);
+	f += index*OBJ_PXL_INC(source);
+	c = (float *)OBJ_DATA_PTR(control);
+	c += index*OBJ_PXL_INC(control);
 
 	sum = 0.0;
 	while( (((int)index)-i) >= 0 && *c == 1.0 && i < max_avg ){
 		sum += *f;
-		f -= source->dt_pinc;
-		c -= control->dt_pinc;
+		f -= OBJ_PXL_INC(source);
+		c -= OBJ_PXL_INC(control);
 		i++;
 	}
 #ifdef DEBUG
 if( debug ){
 sprintf(DEFAULT_ERROR_STRING,"get_start_val:  index = %d  n = %d  sum = %f",index,i,sum);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif
 	sum /= i;
 	return(sum);
 }
+
 
 /*
  * this "interpolation" function is useful for saccade removal of eye-movement
@@ -90,6 +85,10 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 	}
 #endif
 
+	INSIST_RAM_OBJ(target,vinterp)
+	INSIST_RAM_OBJ(source,vinterp)
+	INSIST_RAM_OBJ(control,vinterp)
+
 	if( not_prec(QSP_ARG  target,PREC_SP) )  return;
 	if( not_prec(QSP_ARG  source,PREC_SP) )  return;
 	if( not_prec(QSP_ARG  control,PREC_SP) ) return;
@@ -103,20 +102,20 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 		NWARN("vinterp:  target/control length mismatch");
 		return;
 	}
-	if( source->dt_comps != 1 || target->dt_comps != 1 ){
+	if( OBJ_COMPS(source) != 1 || OBJ_COMPS(target) != 1 ){
 		NWARN("vinterp:  component dimensions must be 1");
 		return;
 	}
 
 	/* could check that they are all vectors... */
 
-	to=(float *)target->dt_data;
-	fr=(float *)source->dt_data;
-	c=(float *)control->dt_data;
+	to=(float *)OBJ_DATA_PTR(target);
+	fr=(float *)OBJ_DATA_PTR(source);
+	c=(float *)OBJ_DATA_PTR(control);
 
 	interp_dest=to;
 
-	for(i=0;i<target->dt_cols;i++){
+	for(i=0;i<OBJ_COLS(target);i++){
 		if( *c == 1.0 ){			/* copy data */
 			if( n_to_interpolate > 0 ){	/* end of gap? */
 				int j; float start_val, end_val;
@@ -138,10 +137,10 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 
 #ifdef DEBUG
 if( debug ){
-sprintf(error_string,
+sprintf(ERROR_STRING,
 "vinterp:  %d values at index %d (start_i = %d), start = %f end = %f",
 n_to_interpolate,i,start_index,start_val,end_val);
-advise(error_string);
+advise(ERROR_STRING);
 }
 #endif /* DEBUG */
 				for(j=0;j<n_to_interpolate;j++){
@@ -149,7 +148,7 @@ advise(error_string);
 					factor=((float)j+1)/((float)n_to_interpolate+1);
 					*interp_dest = factor*end_val
 						+ (1-factor)*start_val;
-					interp_dest += target->dt_pinc;
+					interp_dest += OBJ_PXL_INC(target);
 				}
 			}
 			*to = *fr;
@@ -160,9 +159,9 @@ advise(error_string);
 				interp_dest = to;
 			n_to_interpolate++;
 		}
-		to += target->dt_pinc;
-		c += control->dt_pinc;
-		fr += source->dt_pinc;
+		to += OBJ_PXL_INC(target);
+		c += OBJ_PXL_INC(control);
+		fr += OBJ_PXL_INC(source);
 	}
 	if( n_to_interpolate > 0 ){		/* fill in at end? */
 		float fill_val;
@@ -173,7 +172,7 @@ advise(error_string);
 		} else fill_val = get_start_val(source,control,start_index);
 		for(j=0;j<n_to_interpolate;j++){
 			*interp_dest = fill_val;
-			interp_dest += target->dt_pinc;
+			interp_dest += OBJ_PXL_INC(target);
 		}
 	}
 }

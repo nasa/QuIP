@@ -1,0 +1,9 @@
+# test of url download
+
+http
+#  save_url scanpath.arc.nasa.gov/index.html foo
+  # read_url interprets the downloaded text as script commands...
+  read_url scanpath.arc.nasa.gov/quip/scripts/test.scr
+  Pause
+
+

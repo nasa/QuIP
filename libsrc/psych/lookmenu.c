@@ -1,44 +1,29 @@
 #include "quip_config.h"
 
-char VersionId_psych_lookmenu[] = QUIP_VERSION_STRING;
-
 #include "quip_config.h"
 #include <stdio.h>
+#include "quip_prot.h"
 #include "stc.h"
-#include "query.h"
-#include "version.h"
-#include "debug.h"		/* verbose */
 
-static int classno=0;
+//static Trial_Class *curr_tcp=NULL;
 static int n_have_classes=0;
 
-/* local functions */
-static void pntcurve(QSP_ARG_DECL  FILE *fp, int cl);
-static COMMAND_FUNC( drdfil );
-static int no_data(VOID);
-#ifdef QUIK
-static COMMAND_FUNC( prquic );
-#endif /* QUIK */
-static COMMAND_FUNC( pntraw );
-static COMMAND_FUNC( pntgrph );
-static COMMAND_FUNC( t_wanal );
-static COMMAND_FUNC( t_danal );
-static COMMAND_FUNC( wanal );
-static COMMAND_FUNC( danal );
-static COMMAND_FUNC( setfc );
-static COMMAND_FUNC( do_set_chance_rate );
-static COMMAND_FUNC( setcl );
-static COMMAND_FUNC( _split );
-static COMMAND_FUNC( do_ogive );
-static COMMAND_FUNC( seter );
-static COMMAND_FUNC( do_weibull );
-static COMMAND_FUNC( do_pnt_bars );
-static COMMAND_FUNC( do_xv_xform );
-
-static COMMAND_FUNC( drdfil )	/** read a data file */
+#ifdef FOOBAR
+#define CHECK_CURR_TCP(whence)				\
+							\
+	if( curr_tcp == NULL ){				\
+		sprintf(ERROR_STRING,			\
+	"%s:  no condition selected!?",#whence);	\
+		WARN(ERROR_STRING);			\
+		return;					\
+	}
+#endif // FOOBAR
+		
+static COMMAND_FUNC( do_read_data )	/** read a data file */
 {
 	FILE *fp;
 	const char *filename;
+	char num_str[16];
 
 	filename=NAMEOF("data file");
 	fp=TRY_OPEN( filename, "r" );
@@ -50,30 +35,36 @@ static COMMAND_FUNC( drdfil )	/** read a data file */
 	 */
 
 	/* clear old classes */
-	delcnds(SINGLE_QSP_ARG);
-
-	classno=0;
+	do_delete_all_classes(SINGLE_QSP_ARG);
+	//curr_tcp=NULL;
 	n_have_classes=0;
-	if( rddata(QSP_ARG  fp) != 0 ){
+	if( read_exp_data(QSP_ARG  fp) != 0 ){
 		fclose(fp);
-		sprintf(error_string,"Error reading file %s",filename);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"do_read_data:  error return from read_exp_data, file %s",filename);
+		WARN(ERROR_STRING);
 		return;
 	}
 	fclose(fp);
 	n_have_classes = eltcount(class_list(SINGLE_QSP_ARG));
 
+	sprintf(num_str,"%d",n_have_classes);	// BUG?  buffer overflow
+						// if n_have_classes too big???
+	ASSIGN_RESERVED_VAR( "n_classes" , num_str );
+	
 	if( verbose ){
-		sprintf(error_string,"File %s read, %d classes, %d x-values",
+		sprintf(ERROR_STRING,"File %s read, %d classes, %d x-values",
 			filename,n_have_classes,_nvals);
-		advise(error_string);
+		advise(ERROR_STRING);
 	}
 }
 
-static int no_data()
+static int no_data(QSP_ARG_DECL  const char *whence)
 {
 	if( n_have_classes <= 0 ){
-		NWARN("must read a data file before this operation!");
+		sprintf(ERROR_STRING,
+			"%s:  must read a data file before this operation!",
+			whence);
+		WARN(ERROR_STRING);
 		return(1);
 	}
 	return(0);
@@ -85,43 +76,44 @@ static COMMAND_FUNC( prquic )
 	FILE *fp;
 	int i;
 	int in_db;
+	Trial_Class *tcp;
 
 	fp=TRYNICE( NAMEOF("quic file"), "w");
-	if( !fp ) return;
-
+	tcp = PICK_TRIAL_CLASS("");
 	in_db = ASKIF("transform x values to decibels");
 
-	if( no_data() ) return;
+	if( fp == NULL || tcp == NULL ) return;
+
+	if( no_data(SINGLE_QSP_ARG,"prquic") ) return;
 
 	fprintf(fp,"%c\n",004);		/* EOT */
-
-	pntquic(fp,classno,in_db);
-
+	pntquic(fp,tcp,in_db);
 	fclose(fp);
 }
 #endif /* QUIK */
 
 
 
-static COMMAND_FUNC( pntraw )
+static COMMAND_FUNC( do_print_raw )
 {
-	if( no_data() ) return;
-	pntdata(QSP_ARG  classno);
+	Trial_Class *tcp;
+
+	tcp = PICK_TRIAL_CLASS("");
+	if( tcp == NULL ) return;
+	if( no_data(QSP_ARG  "do_print_raw") ) return;
+	print_raw_data(QSP_ARG  tcp);
 }
 
-static void pntcurve(QSP_ARG_DECL  FILE *fp, int cl)
+static void pntcurve(QSP_ARG_DECL  FILE *fp, Trial_Class * tcp)
 {
         int j;
-        Data_Tbl *dp;
-	Trial_Class *clp;
+        Data_Tbl *dtp;
 
-	clp=index_class(QSP_ARG  cl);
-	dp=clp->cl_dtp;
-	for(j=0;j<_nvals;j++){
-		if( dp->d_data[j].ntotal > 0 ){
+	dtp=CLASS_DATA_TBL(tcp);
+	for(j=0;j<DTBL_SIZE(dtp);j++){
+		if( DATUM_NTOTAL(DTBL_ENTRY(dtp,j)) > 0 ){
 			fprintf(fp,"%f\t", xval_array[ j ]);
-			fprintf(fp,"%f\n",(double) dp->d_data[j].ncorr /
-				(double) dp->d_data[j].ntotal );
+			fprintf(fp,"%f\n",DATUM_FRACTION(DTBL_ENTRY(dtp,j)));
 		}
 	}
 	fclose(fp);
@@ -130,50 +122,68 @@ static void pntcurve(QSP_ARG_DECL  FILE *fp, int cl)
 static COMMAND_FUNC( pntgrph )
 {
 	FILE *fp;
+	Trial_Class *tcp;
 
+	tcp = PICK_TRIAL_CLASS("");
 	fp=TRYNICE( NAMEOF("output file"), "w" );
-	if( !fp ) return;
+	if( fp == NULL || tcp == NULL ) return;
 
-	if( no_data() ) return;
+	if( no_data(QSP_ARG  "pntgrph") ) return;
 
-	pntcurve(QSP_ARG  fp,classno);
+	pntcurve(QSP_ARG  fp,tcp);
 }
 
 
 static COMMAND_FUNC( t_wanal )
 {
+	Trial_Class *tcp;
 
-	if( no_data() ) return;
+	tcp = PICK_TRIAL_CLASS("");
 
-	w_analyse(QSP_ARG  classno);
-	w_tersout(classno);
+	if( tcp == NULL ) return;
+	if( no_data(QSP_ARG  "t_wanal") ) return;
+
+	w_analyse(QSP_ARG  tcp);
+	w_tersout(QSP_ARG  tcp);
 }
 
 static COMMAND_FUNC( t_danal )
 {
+	Trial_Class *tcp;
 
-	if( no_data() ) return;
+	tcp = PICK_TRIAL_CLASS("");
 
-	analyse(QSP_ARG  classno);
-	tersout(classno);
+	if( tcp == NULL ) return;
+	if( no_data(QSP_ARG  "t_danal") ) return;
+
+	analyse(QSP_ARG  tcp);
+	tersout(QSP_ARG  tcp);
 }
 
 static COMMAND_FUNC( wanal )
 {
+	Trial_Class *tcp;
 
-	if( no_data() ) return;
+	tcp = PICK_TRIAL_CLASS("");
 
-	w_analyse(QSP_ARG  classno);
-	weibull_out(classno);
+	if( tcp == NULL ) return;
+	if( no_data(QSP_ARG  "wanal") ) return;
+
+	w_analyse(QSP_ARG  tcp);
+	weibull_out(QSP_ARG  tcp);
 }
 
 static COMMAND_FUNC( danal )
 {
+	Trial_Class *tcp;
 
-	if( no_data() ) return;
+	tcp = PICK_TRIAL_CLASS("");
 
-	analyse(QSP_ARG  classno);
-	longout(classno);
+	if( tcp == NULL ) return;
+	if( no_data(QSP_ARG  "danal") ) return;
+
+	analyse(QSP_ARG  tcp);
+	longout(QSP_ARG  tcp);
 }
 
 static COMMAND_FUNC( setfc ) { set_fcflag( ASKIF("do analysis relative to 50% chance") ); }
@@ -183,47 +193,56 @@ static COMMAND_FUNC( do_set_chance_rate )
 	set_chance_rate( HOW_MUCH("Probability of correct response due to guessing") );
 }
 
+#ifdef FUBAR
 static COMMAND_FUNC( setcl )
 {
-	classno=(int)HOW_MANY("index of class of interest");
+	//classno=(int)HOW_MANY("index of class of interest");
+	curr_tcp = PICK_TRIAL_CLASS("name of class of interest");
+	if( curr_tcp == NULL ) return;
 
-	if( no_data() ) return;
+	if( no_data(QSP_ARG  "setcl") ) return;
 
+#ifdef FOOBAR
 	if( classno < 0 || classno >= n_have_classes ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"Ridiculous selection %d, should be in range 0 to %d (inclusive)",
 			classno,n_have_classes-1);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		classno=0;
 	}
+#endif // FOOBAR
 }
+#endif // FUBAR
 
 static COMMAND_FUNC( _split )
 {
 	int wu;
+	Trial_Class *tcp;
+
+	tcp = PICK_TRIAL_CLASS("");
 
 	wu = ASKIF("retain upper half");
 
-	if( no_data() ) return;
+	if( tcp == NULL ) return;
+	if( no_data(QSP_ARG  "_split") ) return;
 
-	split(QSP_ARG  classno,wu);
+	split(QSP_ARG  tcp,wu);
 }
 
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ogive_menu,s,f,h)
 
-static Command og_ctbl[]={
-{ "analyse",	danal,			"analyse data"			},
-{ "summarize",	t_danal,		"analyse data (terse output)"	},
-{ "class",	setcl,			"select new stimulus class"	},
-{ "2afc",	setfc,			"set forced-choice flag"	},
-{ "chance_rate", do_set_chance_rate,	"specify chance P(correct)"	},
-{ "constrain",	constrain_slope,	"constrain regression slope"	},
-{ "quit",	popcmd,			"quit"				},
-{ NULL_COMMAND								}
-};
+MENU_BEGIN(ogive)
+ADD_CMD( analyse,	danal,			analyse data )
+ADD_CMD( summarize,	t_danal,		analyse data (terse output) )
+//ADD_CMD( class,		setcl,			select new stimulus class )
+ADD_CMD( 2afc,		setfc,			set forced-choice flag )
+ADD_CMD( chance_rate, 	do_set_chance_rate,	specify chance P(correct) )
+ADD_CMD( constrain,	constrain_slope,	constrain regression slope )
+MENU_END(ogive)
 
 static COMMAND_FUNC( do_ogive )
 {
-	PUSHCMD(og_ctbl,"ogive");
+	PUSH_MENU(ogive);
 }
 
 static COMMAND_FUNC( seter )
@@ -234,30 +253,33 @@ static COMMAND_FUNC( seter )
 	w_set_error_rate(er);
 }
 
-static Command weib_ctbl[]={
-{ "analyse",	wanal,		"analyse data"				},
-{ "summarize",	t_wanal,	"analyse data (terse output)"		},
-{ "class",	setcl,		"select new stimulus class"		},
-{ "2afc",	setfc,		"set forced-choice flag"		},
-{ "error_rate",	seter,		"specify finger-error rate"		},
-{ "quit",	popcmd,		"quit"					},
-{ NULL_COMMAND								}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(weibull_menu,s,f,h)
+
+MENU_BEGIN(weibull)
+ADD_CMD( analyse,	wanal,		analyse data )
+ADD_CMD( summarize,	t_wanal,	analyse data (terse output) )
+//ADD_CMD( class,		setcl,		select new stimulus class )
+ADD_CMD( 2afc,		setfc,		set forced-choice flag )
+ADD_CMD( error_rate,	seter,		specify finger-error rate )
+MENU_END(weibull)
 
 
 static COMMAND_FUNC( do_weibull )
 {
-	PUSHCMD(weib_ctbl,"weibull");
+	PUSH_MENU(weibull);
 }
 
 static COMMAND_FUNC( do_pnt_bars )
 {
 	FILE *fp;
+	Trial_Class *tcp;
 
+	tcp = PICK_TRIAL_CLASS("");
 	fp=TRYNICE( NAMEOF("output file"), "w" );
-	if( !fp ) return;
+	if( fp == NULL || tcp == NULL ) return;
 
-	pnt_bars( QSP_ARG  fp, classno );
+	pnt_bars( QSP_ARG  fp, tcp );
 }
 
 static COMMAND_FUNC( do_xv_xform )
@@ -268,32 +290,27 @@ static COMMAND_FUNC( do_xv_xform )
 	set_xval_xform(s);
 }
 
-static Command lukctbl[]={
-{ "read",	drdfil,		"read new data file"			},
-{ "xform",	do_xv_xform,	"set automatic x-value transformation"	},
-{ "print",	pntraw,		"print raw data"			},
-{ "class",	setcl,		"select new stimulus class"		},
-{ "plotprint",	pntgrph,	"print data for plotting"		},
-{ "errbars",	do_pnt_bars,	"print psychometric function with error bars"},
-{ "ogive",	do_ogive,	"do fits with to ogive"			},
-{ "weibull",	do_weibull,	"do fits to weibull function"		},
-{ "split",	_split,		"split data at zeroes"			},
-{ "lump",	lump,		"lump data conditions"			},
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(lookit_menu,s,f,h)
+
+MENU_BEGIN(lookit)
+ADD_CMD( read,		do_read_data,	read new data file )
+ADD_CMD( xform,		do_xv_xform,	set automatic x-value transformation )
+ADD_CMD( print,		do_print_raw,	print raw data )
+//ADD_CMD( class,		setcl,		select new stimulus class )
+ADD_CMD( plotprint,	pntgrph,	print data for plotting )
+ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )
+ADD_CMD( ogive,		do_ogive,	do fits with to ogive )
+ADD_CMD( weibull,	do_weibull,	do fits to weibull function )
+ADD_CMD( split,		_split,		split data at zeroes )
+ADD_CMD( lump,		lump,		lump data conditions )
 #ifdef QUIK
-{ "Quick",	prquic,		"print data in QUICK format"		},
+ADD_CMD( Quick,		prquic,		print data in QUICK format )
 #endif /* QUIK */
-{ "quit",	popcmd,		"quit"					},
-{ NULL_COMMAND								}
-};
+MENU_END(lookit)
 
 COMMAND_FUNC( lookmenu )
 {
-	static int inited=0;
-
-	if( !inited ){
-		auto_version(QSP_ARG  "CSTEPIT","VersionId_cstepit");
-		inited=1;
-	}
-	PUSHCMD(lukctbl,"lookit");
+	PUSH_MENU(lookit);
 }
 

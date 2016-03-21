@@ -1,8 +1,12 @@
 #include "quip_config.h"
 
-char VersionId_xsupp_event[] = QUIP_VERSION_STRING;
+#include "quip_prot.h"
+#include "viewer.h"
 
 #ifdef HAVE_X11
+
+#include "xsupp.h"
+#include "xsupp_prot.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* getpid() */
@@ -16,12 +20,6 @@ char VersionId_xsupp_event[] = QUIP_VERSION_STRING;
 #include <signal.h>
 #endif
 
-#include "viewer.h"
-#include "debug.h"
-#include "xsupp.h"
-#include "chewtext.h"	/* CHEW_TEXT */
-#include "query.h"
-
 static int button_number, last_button;
 static Draggable *carried=NO_DRAGG;
 static Data_Obj *drag_image=NO_OBJ;
@@ -30,15 +28,12 @@ static XImage *bg_xim;
 
 #define NOTHING_HAPPENED	(-1)
 
-/* local prototypes */
-static int HandleEvent(QSP_ARG_DECL  XEvent *event, int *donep);
-
-int flush_one_display( Disp_Obj *dop )
+static /* int */ void flush_one_display( Disp_Obj *dop )
 {
 	XEvent event;
 	long mask;
 
-	if( dop == NO_DISP_OBJ ) return(-1);
+	if( dop == NO_DISP_OBJ ) return; // return(-1);
 
 	/* This mask should match check_one_display */
 
@@ -47,96 +42,132 @@ int flush_one_display( Disp_Obj *dop )
 		| ButtonReleaseMask
 		| ButtonMotionMask
 		| PointerMotionMask
-		/* | StructureNotifyMask */
+		| StructureNotifyMask
 		| KeyPressMask
+		/* | SubstructureRedirectMask */
 		;
 		/* | Button1MotionMask */
 
+	/* Does XCheckMaskEvent actually flush the events???
+	 */
+
+	XCheckMaskEvent(dop->do_dpy,mask,&event);
+
+#ifdef FOOBAR
 	if( XCheckMaskEvent(dop->do_dpy,mask,&event) == True ){
 		/* we just discard the event */
 		return(0);
 	} else {
 		return(0);
 	}
+#endif // FOOBAR
 }
 
-int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
+static void drag_to( int x, int y, Viewer *vp )
 {
-	XEvent event;
-	long mask;
-	int retval,done;
+//#ifdef CAUTIOUS
+//	if( vp->vw_dp == NO_OBJ ){
+//		sprintf(DEFAULT_ERROR_STRING,
+//			"CAUTIOUS:  drag_to:  null data object for viewer %s",
+//			vp->vw_name);
+//		NWARN(DEFAULT_ERROR_STRING);
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( vp->vw_dp != NO_OBJ );
 
-	if( dop == NO_DISP_OBJ ) return(-1);
+	/* erase at old location */
 
-	/* this is not really a loop yet! */
+	/*
+	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, bg_xim,
+		x, y, x, y, carried->dg_width, carried->dg_height);
+	*/
+	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, bg_xim,
+		0, 0, 0, 0, vp->vw_width, vp->vw_height);
 
-	mask =	  ExposureMask
-		| ButtonPressMask
-		| ButtonReleaseMask
-		| ButtonMotionMask
-		| PointerMotionMask
-		/* | StructureNotifyMask */
-		| KeyPressMask
-		;
-		/* | Button1MotionMask */
+	carried->dg_x=0;
+	carried->dg_y=0;
 
-	/* BUG we need to be sure that HandleEvent actually handles all masked
-	 * events, otherwise we could get into a bad loop!
+	/* copy new background into drag image */
+
+	/* BUG the new background may containg a piece of the dragged
+	 * object, not drawing it in can make the dragged object flicker
 	 */
+	extract_image(drag_image,vp->vw_dp,x-carried->dg_rx,y-carried->dg_ry);
 
-	if( XCheckMaskEvent(dop->do_dpy,mask,&event) == True ){
-		retval = HandleEvent(QSP_ARG  &event,&done);
-	} else {
-		return(NOTHING_HAPPENED);
-	}
-		
-	return(retval);
+	/* paint icon over new background */
+	embed_draggable(drag_image,carried);
+
+	/* redraw thingy at new location */
+	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, drag_xim,
+		0, 0, x-carried->dg_rx, y-carried->dg_ry,
+		OBJ_COLS(drag_image), OBJ_ROWS(drag_image));
+
+	carried->dg_x=x-carried->dg_rx;
+	carried->dg_y=y-carried->dg_ry;
 }
 
-/* Check all displays, return after an event is detected... */
-
-int event_loop(SINGLE_QSP_ARG_DECL)
+static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 {
-	List *lp;
-	Node *np;
-	Disp_Obj *dop;
-	int stat;
+	/* place the object */
+	drag_to(x,y,vp);
 
-	lp = displays_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return(-1);
+	/* BUG should factor where the object was picked up, rx ry */
 
-	np=lp->l_head;
-	while( np != NO_NODE ){
-		dop = (Disp_Obj *)np->n_data;
-		stat=check_one_display(QSP_ARG  dop);
-		if( stat != NOTHING_HAPPENED ) return(stat);
-		np = np->n_next;
-	}
-	return(NOTHING_HAPPENED);
+	addTail(vp->vw_draglist,carried->dg_np);
+	carried=NO_DRAGG;
+
+	delvec(QSP_ARG  drag_image);
+	drag_image = NO_OBJ;
+
+	drag_xim->data = (char *)NULL;	/* to avoid freeing the data */
+	XDestroyImage(drag_xim);
+
+	bg_xim->data = (char *)NULL;	/* to avoid freeing the data */
+	XDestroyImage(bg_xim);
 }
 
-/* Check all displays, flushing events */
-void discard_events(SINGLE_QSP_ARG_DECL)
+static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 {
-	List *lp;
-	Node *np;
-	Disp_Obj *dop;
-	int stat;
+//#ifdef CAUTIOUS
+//	if( vp->vw_dp == NO_OBJ ){
+//		sprintf(ERROR_STRING,
+//			"CAUTIOUS:  pickup:  null data object for viewer %s",
+//			vp->vw_name);
+//		NWARN(ERROR_STRING);
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( vp->vw_dp != NO_OBJ );
 
-	lp = displays_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	carried=dgp;
 
-	np=lp->l_head;
-	while( np != NO_NODE ){
-		dop = (Disp_Obj *)np->n_data;
-		stat=flush_one_display(dop);
-		/* if( stat != NOTHING_HAPPENED ) return(stat); */
-		np = np->n_next;
-	}
+	/* remove it from the list */
+	remData(vp->vw_draglist,carried);
+
+	/* re-render background */
+	update_image(vp);
+
+	/* make the rendering image */
+//#ifdef CAUTIOUS
+//	if( drag_image != NO_OBJ )
+//		ERROR1("extra drag image!?");
+//#endif /* CAUTIOUS */
+	assert( drag_image == NO_OBJ );
+
+	drag_image = mk_img(QSP_ARG  "drag_image",dgp->dg_height,
+		dgp->dg_width,vp->vw_depth/8,PREC_FOR_CODE(PREC_BY));
+
+	drag_xim = XCreateImage(vp->vw_dpy,vp->vw_visual,vp->vw_depth,ZPixmap,0,
+		(char *)OBJ_DATA_PTR(drag_image),
+		OBJ_COLS(drag_image),OBJ_ROWS(drag_image),8,0);
+
+	bg_xim = XCreateImage(vp->vw_dpy,vp->vw_visual,vp->vw_depth,ZPixmap,0,
+		(char *)OBJ_DATA_PTR(vp->vw_dp),
+		OBJ_COLS(vp->vw_dp),OBJ_ROWS(vp->vw_dp),8,0);
 }
 
-
-void do_enter_leave( XEvent *event )
+static void do_enter_leave( XEvent *event )
 {
 
 	/*
@@ -151,61 +182,26 @@ void do_enter_leave( XEvent *event )
 	return;
 }
 
-Viewer *find_viewer( QSP_ARG_DECL  Window win )
+#ifdef FOOBAR
+static void show_configure_notify( XEvent *event )
 {
-	Node *np;
-	Viewer *vp;
-
-	np=first_viewer_node(SINGLE_QSP_ARG);
-	while( np != NO_NODE ){
-		vp=(Viewer *) np->n_data;
-		if( vp->vw_xwin == win ) return(vp);
-		np=np->n_next;
-	}
-	return(NO_VIEWER);
+	fprintf(stderr,"ConfigureNotify event:\n");
+	fprintf(stderr,"\tserial = %ld, send_event = %s\n",
+		event->xconfigure.serial,
+		event->xconfigure.send_event?"true":"false");
+	fprintf(stderr,"\tdisplay = 0x%lx\n",(u_long)event->xconfigure.display);
+	fprintf(stderr,"\tWindows:  event = %ld, window = %ld, above = %ld\n",
+		event->xconfigure.event, event->xconfigure.window,
+		event->xconfigure.above);
+	fprintf(stderr,"\tx = %d, y = %d\n",
+		event->xconfigure.x, event->xconfigure.y);
+	fprintf(stderr,"\twidth = %d, height = %d\n",
+		event->xconfigure.width, event->xconfigure.height);
+	fprintf(stderr,"\tborder_width = %d\n",
+		event->xconfigure.border_width);
+	fflush(stderr);
 }
-
-
-Draggable *in_draggable( Viewer *vp, int x,int y )
-{
-	Node *np;
-	Draggable *dgp;
-	int rx,ry;
-	WORD_TYPE *base;
-	int words_per_row, wordno, bit;
-
-	np=vp->vw_draglist->l_head;
-	while(np!=NO_NODE){
-		dgp=(Draggable *)np->n_data;
-		/* compute coords rel. the draggable object */
-		rx=x-dgp->dg_x;
-		ry=y-dgp->dg_y;
-		/* now see if inside bitmap */
-
-		if( rx >= 0 && rx < dgp->dg_width &&
-		    ry >= 0 && ry < dgp->dg_height ){
-
-			words_per_row = (dgp->dg_width+WORDLEN-1)/WORDLEN;
-			wordno = ry*words_per_row + rx/WORDLEN;
-			bit = 1<<(rx%WORDLEN);
-			base=(WORD_TYPE *)dgp->dg_bitmap->dt_data;
-			if( base[wordno] & bit ){
-				dgp->dg_rx=rx;
-				dgp->dg_ry=ry;
-				return(dgp);
-			}
-		}
-
-		np=np->n_next;
-	}
-	return(NO_DRAGG);
-}
-
-#ifdef THREAD_SAFE_QUERY
-#define INIT_EVENT_QSP			qsp = curr_qsp;
-#else
-#define INIT_EVENT_QSP
-#endif
+#endif // FOOBAR
 
 static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 {
@@ -213,16 +209,12 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 	Viewer *vp;
 	Window win;
 	char string[256];
-	unsigned int x,y;
+	int x,y;
+	Canvas_Event_Code ce_code=CE_INVALID_CODE;
 
 #define KEYBYTES	8
 	static char keystr[KEYBYTES]; /* must be global! */
 	int ks_len;
-#ifdef FOOBAR
-	QSP_DECL
-
-	INIT_EVENT_QSP
-#endif /* FOOBAR */
 
 	switch (event->type) {
 		case Expose:
@@ -230,7 +222,7 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 
 			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
 				NWARN("can't find viewing window for expose event");
-				return(0);
+				return 0;
 			}
 			vp->vw_flags |= VIEW_EXPOSED;
 			/*
@@ -257,24 +249,24 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 				 * Does the event signify ANY change in
 				 * the exposure status?
 				 */
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(ERROR_STRING,"redrawing viewer %s after expose event",vp->vw_name);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				redraw_viewer(QSP_ARG  vp);
 			}
 //else advise("ignoring expose event w/ count > 0");
 
-			return(0);
+			return 0;
 
 		case ButtonRelease:
 		case ButtonPress:
 			win = event->xbutton.window;
 			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
 		NWARN("can't find viewing window for button event");
-				return(0);
+				return 0;
 			}
 			/*
 			 * BUG !? sometimes button 1 returns
@@ -285,33 +277,76 @@ advise(ERROR_STRING);
 
 			if( event->type == ButtonPress ){
 				switch(button_number){
+					// Sometimes this happens on the mac???
+					case 0:
+						sprintf(DEFAULT_ERROR_STRING,
+				"Huh?  Button press with button number 0!?");
+						advise(DEFAULT_ERROR_STRING);
+						// just return for now
+						return 0;
+						// BUG give a value to ce_code
+						break;
 					case 1:
 						ASSIGN_VAR("left_button_down","1");
 						ASSIGN_VAR("left_button_up","0");
+						ce_code = CE_LEFT_BUTTON_DOWN;
 						break;
 					case 2:
 						ASSIGN_VAR("middle_button_down","1");
 						ASSIGN_VAR("middle_button_up","0");
+						ce_code = CE_MIDDLE_BUTTON_DOWN;
 						break;
 					case 3:
 						ASSIGN_VAR("right_button_down","1");
 						ASSIGN_VAR("right_button_up","0");
+						ce_code = CE_RIGHT_BUTTON_DOWN;
 						break;
+//#ifdef CAUTIOUS
+					default:
+//						sprintf(DEFAULT_ERROR_STRING,
+//							"button press, number = %d",button_number);
+//						NADVISE(DEFAULT_ERROR_STRING);
+//						NWARN("CAUTIOUS:  HandleEvent:  bad button code!?");
+						// BUG give a value to ce_code
+						assert( ! "bad button code in HandleEvent" );
+						break;
+//#endif /* CAUTIOUS */
 				}
-			} else {
+			} else {	// ButtonRelease
 				switch(button_number){
+					case 0:
+						sprintf(DEFAULT_ERROR_STRING,
+				"Huh?  Button release with button number 0!?");
+						advise(DEFAULT_ERROR_STRING);
+						// just return for now
+						return 0;
+						// BUG give a value to ce_code
+						break;
 					case 1:
 						ASSIGN_VAR("left_button_down","0");
 						ASSIGN_VAR("left_button_up","1");
+						ce_code = CE_LEFT_BUTTON_UP;
 						break;
 					case 2:
 						ASSIGN_VAR("middle_button_down","0");
 						ASSIGN_VAR("middle_button_up","1");
+						ce_code = CE_MIDDLE_BUTTON_UP;
 						break;
 					case 3:
 						ASSIGN_VAR("right_button_down","0");
 						ASSIGN_VAR("right_button_up","1");
+						ce_code = CE_RIGHT_BUTTON_UP;
 						break;
+//#ifdef CAUTIOUS
+					default:
+//						sprintf(DEFAULT_ERROR_STRING,
+//							"button release, number = %d",button_number);
+//						NADVISE(DEFAULT_ERROR_STRING);
+//						NWARN("CAUTIOUS:  HandleEvent:  bad button code!?");
+						// BUG give a value to ce_code
+						assert( ! "bad button release code in HandleEvent" );
+						break;
+//#endif /* CAUTIOUS */
 				}
 			}
 
@@ -342,30 +377,50 @@ advise(ERROR_STRING);
 			win = event->xbutton.window;
 			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
 				NWARN("can't find viewing window for button event");
-				return(0);
+				return 0;
 			}
 
 			ASSIGN_VAR("event_window",vp->vw_name);
 
-			if( IS_BUTTON_ARENA(vp) || IS_MOUSESCAPE(vp) ){
-				if( button_number == 1 )
-					CHEW_TEXT(vp->vw_text1);
-				else if( button_number == 2 )
-					CHEW_TEXT(vp->vw_text2);
-				else if( button_number == 3 )
-					CHEW_TEXT(vp->vw_text3);
-				else if( button_number == 0 ){
-					/* this sometimes happens on the new laptop
-					 * when using the touchpad... ???
-					 */
-					if( verbose ){
-						sprintf(ERROR_STRING,"Ignoring event w/ button #0");
-						advise(ERROR_STRING);
+			// This is where we would like to use the new canvas_event
+			// scheme instead of the old button scheme...
+
+			if( IS_BUTTON_ARENA(vp) || IS_MOUSESCAPE(vp) || IS_PLOTTER(vp) ){
+//#ifdef CAUTIOUS
+//				if( ce_code == CE_INVALID_CODE ){	// never true?
+//					NADVISE("CAUTIOUS:  HandleEvent:  Invalid canvas event code!?!?");
+//				}
+//#endif /* CAUTIOUS */
+				assert( ce_code != CE_INVALID_CODE );	// always true?
+
+				if( VW_EVENT_TBL(vp) != NULL ){
+					if( VW_EVENT_ACTION(vp,ce_code) != NULL ){
+						CHEW_TEXT( VW_EVENT_ACTION(vp,ce_code), "(viewer event)" );
 					}
+					// Do nothing if the event action has not been specified
 				} else {
-					sprintf(ERROR_STRING,
-					"wacky button number %d",button_number);
-					NWARN(ERROR_STRING);
+					// Use the old system if no actions have been defined for the specific event...
+					// This is mainly here to support backward-compatibility with old scripts.
+					// We should print a deprecated warning when the old-style actions are set...
+					if( button_number == 1 )
+				CHEW_TEXT(vp->vw_text1,"(button 1 event)");
+					else if( button_number == 2 )
+				CHEW_TEXT(vp->vw_text2,"(button 2 event)");
+					else if( button_number == 3 )
+				CHEW_TEXT(vp->vw_text3,"(button 3 event)");
+					else if( button_number == 0 ){
+						/* this sometimes happens on the new laptop
+						 * when using the touchpad... ???
+						 */
+						if( verbose ){
+							sprintf(ERROR_STRING,"Ignoring event w/ button #0");
+							advise(ERROR_STRING);
+						}
+					} else {
+						sprintf(ERROR_STRING,
+						"wacky button number %d",button_number);
+						NWARN(ERROR_STRING);
+					}
 				}
 			} else if( IS_ADJUSTER(vp) ) goto adjust_event;
 
@@ -397,24 +452,24 @@ advise(ERROR_STRING);
 			win = event->xmapping.window;
 			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
 				NWARN("can't find viewing window for map event");
-				return(0);
+				return 0;
 			}
 			vp->vw_flags |= VIEW_MAPPED;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(ERROR_STRING,"redrawing viewer %s after MapNotify event",vp->vw_name);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 			redraw_viewer(QSP_ARG  vp);
-			return(0);
+			return 0;
 
 		case MotionNotify:
 			win = event->xmotion.window;
 			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
 		NWARN("can't find viewing window for motion event");
-				return(0);
+				return 0;
 			}
 			if( !IS_TRACKING(vp) ){
 				/* eat up motion events */
@@ -473,45 +528,106 @@ advise(ERROR_STRING);
 			sprintf(string,"%d", event->type);
 			ASSIGN_VAR("event_type",string);
 
-			CHEW_TEXT(vp->vw_text);		/* used for motion... */
+			CHEW_TEXT(vp->vw_text,"(button motion event)");
 
 			last_button = button_number;
 			break;
 
+		// These all used to be no-ops...
+
 		case ConfigureNotify:
+
+		/* Some work was attempted here to make this work correctly
+		 * with XQuartz/MacOS, but I'm giving up for the moment...
+		 * I think that XQuartz may be broken...
+		 * jbm, 7/30/2015
+		 */
+
+			//NADVISE("ConfigureNotify event!");
+			win = event->xconfigure.window;
+			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+		NWARN("can't find viewer for configure event");
+				return 0;
+			}
+//show_configure_notify(event);
+			if( event->xconfigure.x != VW_X(vp)
+					|| event->xconfigure.y != VW_Y(vp) ){
+/*
+fprintf(stderr,"window %s moved to %d %d...\n",
+VW_NAME(vp),event->xconfigure.x,event->xconfigure.y);
+*/
+				SET_VW_X(vp,event->xconfigure.x);
+				SET_VW_Y(vp,event->xconfigure.y);
+
+				// This could be due to a programmatic move,
+				// or a user action!?
+				if( VW_MOVE_REQUESTED(vp) ){
+/*
+fprintf(stderr,"Configure event after move request:\n");
+fprintf(stderr,"Reported position %d, %d, requested position %d, %d\n",
+VW_X(vp),VW_Y(vp),VW_X_REQUESTED(vp),VW_Y_REQUESTED(vp));
+*/
+					SET_VW_Y_OFFSET(vp,VW_Y(vp)-VW_Y_REQUESTED(vp));
+					CLEAR_VW_FLAG_BITS(vp,VW_PROG_MOVE_REQ);
+				} else {
+//fprintf(stderr,"Window move event without request???\n");
+					// update requested by actual - offset?
+				}
+			}
+
+			break;
+
 		case ReparentNotify:
+			// This one occurs when a window is first created...
+			//NADVISE("ReparentNotify event!");
+			break;
+
 		case CirculateNotify:
+			NADVISE("CirculateNotify event!");
+			break;
+
 		case DestroyNotify:
+			NADVISE("DestroyNotify event!");
+			break;
+
 		case GravityNotify:
+			NADVISE("GravityNotify event!");
+			break;
+
 		case UnmapNotify:
-#ifdef DEBUG
+			// happens when we "unshow"
+			//NADVISE("UnmapNotify event!");
+			break;
+
+#ifdef FOOBAR
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(ERROR_STRING,"do-nothing event type %d",event->type);
 NWARN(ERROR_STRING);
 }
-#endif /* DEBUG */
-			break;
+#endif /* QUIP_DEBUG */
+#endif // FOOBAR
 
 		/*
 		case ReparentNotify: retval=do_reparent(event); break;
 		*/
 		case EnterNotify:
 		case LeaveNotify:
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"enter/leave event type %d",event->type);
 NWARN(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			do_enter_leave(event);
 			break;
 		case 14:
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"mysterious event14 type %d",event->type);
 NWARN(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 			break;		/* what is this??? */
 		case KeyPress:
 			ks_len = XLookupString((XKeyEvent *)event,
@@ -523,6 +639,10 @@ NWARN(ERROR_STRING);
 			} else if( ks_len == 0 ){
 				/* usually because shift or control was depressed */
 			} else {
+// On Mac, we sometimes get spurious keypress events that are
+// never cleared!?
+//
+//fprintf(stderr,"Keypress event, ks_len = %d\n",ks_len);
 				if( keystr[0] == 015 )
 					keystr[0]=012;	/* map CR to LF */
 				keystr[1]=0;
@@ -541,19 +661,150 @@ NWARN(ERROR_STRING);
 			break;
 
 		default: 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"uncaught event type %d",event->type);
 NWARN(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 sprintf(ERROR_STRING,"uncaught event type %d",event->type);
 NWARN(ERROR_STRING);
 			break;		/* ignore unexpected events */
 	}
 	*donep = done;
 	return(retval);
+} // HandleEvent
+
+static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
+{
+	XEvent event;
+	long mask;
+	int retval,done;
+
+	if( dop == NO_DISP_OBJ ) return(-1);
+
+	/* this is not really a loop yet! */
+
+	mask =	  ExposureMask
+		| ButtonPressMask
+		| ButtonReleaseMask
+		| ButtonMotionMask
+		| PointerMotionMask
+		| KeyPressMask
+		// what about when the user moves or resizes a window?
+		| StructureNotifyMask
+		// | SubstructureRedirectMask
+		;
+		/* | Button1MotionMask */
+
+	/* BUG we need to be sure that HandleEvent actually handles all masked
+	 * events, otherwise we could get into a bad loop!
+	 */
+
+	if( XCheckMaskEvent(dop->do_dpy,mask,&event) == True ){
+		retval = HandleEvent(QSP_ARG  &event,&done);
+	} else {
+		return(NOTHING_HAPPENED);
+	}
+		
+	return(retval);
 }
+
+/* Check all displays, return after an event is detected... */
+
+int event_loop(SINGLE_QSP_ARG_DECL)
+{
+	List *lp;
+	Node *np;
+	Disp_Obj *dop;
+	int stat;
+
+	lp = displays_list(SINGLE_QSP_ARG);
+	if( lp == NO_LIST ) return(-1);
+
+	np=lp->l_head;
+	while( np != NO_NODE ){
+		dop = (Disp_Obj *)np->n_data;
+		stat=check_one_display(QSP_ARG  dop);
+		if( stat != NOTHING_HAPPENED ) return(stat);
+		np = np->n_next;
+	}
+	return(NOTHING_HAPPENED);
+}
+
+/* Check all displays, flushing events */
+void discard_events(SINGLE_QSP_ARG_DECL)
+{
+	List *lp;
+	Node *np;
+	Disp_Obj *dop;
+
+	lp = displays_list(SINGLE_QSP_ARG);
+	if( lp == NO_LIST ) return;
+
+	np=lp->l_head;
+	while( np != NO_NODE ){
+		dop = (Disp_Obj *)np->n_data;
+		flush_one_display(dop);
+		np = np->n_next;
+	}
+}
+
+Viewer *find_viewer( QSP_ARG_DECL  Window win )
+{
+	Node *np;
+	Viewer *vp;
+
+	np=first_viewer_node(SINGLE_QSP_ARG);
+	while( np != NO_NODE ){
+		vp=(Viewer *) np->n_data;
+		if( vp->vw_xwin == win ) return(vp);
+		np=np->n_next;
+	}
+	return(NO_VIEWER);
+}
+
+
+Draggable *in_draggable( Viewer *vp, int x,int y )
+{
+	Node *np;
+	Draggable *dgp;
+	int rx,ry;
+	WORD_TYPE *base;
+	int words_per_row, wordno, bit;
+
+	np=vp->vw_draglist->l_head;
+	while(np!=NO_NODE){
+		dgp=(Draggable *)np->n_data;
+		/* compute coords rel. the draggable object */
+		rx=x-dgp->dg_x;
+		ry=y-dgp->dg_y;
+		/* now see if inside bitmap */
+
+		if( rx >= 0 && rx < dgp->dg_width &&
+		    ry >= 0 && ry < dgp->dg_height ){
+
+			words_per_row = (dgp->dg_width+WORDLEN-1)/WORDLEN;
+			wordno = ry*words_per_row + rx/WORDLEN;
+			bit = 1<<(rx%WORDLEN);
+			base=(WORD_TYPE *)OBJ_DATA_PTR(dgp->dg_bitmap);
+			if( base[wordno] & bit ){
+				dgp->dg_rx=rx;
+				dgp->dg_ry=ry;
+				return(dgp);
+			}
+		}
+
+		np=np->n_next;
+	}
+	return(NO_DRAGG);
+}
+
+#ifdef THREAD_SAFE_QUERY
+#define INIT_EVENT_QSP			qsp = curr_qsp;
+#else
+#define INIT_EVENT_QSP
+#endif
 
 /* i_loop()  --  process events until there are none */
 
@@ -564,44 +815,6 @@ void i_loop(SINGLE_QSP_ARG_DECL)
 	} while( event_loop(SINGLE_QSP_ARG) != -1 );
 }
 
-void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
-{
-#ifdef CAUTIOUS
-	if( vp->vw_dp == NO_OBJ ){
-		sprintf(ERROR_STRING,
-			"CAUTIOUS:  pickup:  null data object for viewer %s",
-			vp->vw_name);
-		NWARN(ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
-
-	carried=dgp;
-
-	/* remove it from the list */
-	remData(vp->vw_draglist,carried);
-
-	/* re-render background */
-	update_image(vp);
-
-	/* make the rendering image */
-#ifdef CAUTIOUS
-	if( drag_image != NO_OBJ )
-		ERROR1("extra drag image!?");
-#endif /* CAUTIOUS */
-
-	drag_image = mk_img(QSP_ARG  "drag_image",dgp->dg_height,
-		dgp->dg_width,vp->vw_depth/8,PREC_BY);
-
-	drag_xim = XCreateImage(vp->vw_dpy,vp->vw_visual,vp->vw_depth,ZPixmap,0,
-		(char *)drag_image->dt_data,
-		drag_image->dt_cols,drag_image->dt_rows,8,0);
-
-	bg_xim = XCreateImage(vp->vw_dpy,vp->vw_visual,vp->vw_depth,ZPixmap,0,
-		(char *)vp->vw_dp->dt_data,
-		vp->vw_dp->dt_cols,vp->vw_dp->dt_rows,8,0);
-}
-
 /* Why is this in event.c?? */
 
 void extract_image( Data_Obj *dpto, Data_Obj *dpfr, int x, int y )
@@ -609,83 +822,29 @@ void extract_image( Data_Obj *dpto, Data_Obj *dpfr, int x, int y )
 	/* assumes dpto is smaller */
 
 	u_char *to, *fr;
-	dimension_t i,j;
+	incr_t i,j;
 
-	to=(u_char *)dpto->dt_data;
-	fr=(u_char *)dpfr->dt_data;
+	to=(u_char *)OBJ_DATA_PTR(dpto);
+	fr=(u_char *)OBJ_DATA_PTR(dpfr);
 
-	for(j=0;j<dpto->dt_rows;j++){
-		if( j+y < 0 || j+y >= dpfr->dt_rows ) continue;
-		for(i=0;i<dpto->dt_cols;i++){
-			if( i+x < 0 || i+x >= dpfr->dt_cols ) continue;
+	for(j=0;j<OBJ_ROWS(dpto);j++){
+		if( j+y < 0 || j+y >= OBJ_ROWS(dpfr) ) continue;
+		for(i=0;i<OBJ_COLS(dpto);i++){
+			if( i+x < 0 || i+x >= OBJ_COLS(dpfr) ) continue;
 
-			*(to+j*dpto->dt_rowinc+i*dpto->dt_pinc)
-			  = *(fr+(j+y)*dpfr->dt_rowinc+(i+x)*dpfr->dt_pinc);
+			*(to+j*OBJ_ROW_INC(dpto)+i*OBJ_PXL_INC(dpto))
+			  = *(fr+(j+y)*OBJ_ROW_INC(dpfr)+(i+x)*OBJ_PXL_INC(dpfr));
 		}
 	}
 }
 
-void drag_to( int x, int y, Viewer *vp )
+#else /* ! HAVE_X11 */
+
+int event_loop(SINGLE_QSP_ARG_DECL)
 {
-#ifdef CAUTIOUS
-	if( vp->vw_dp == NO_OBJ ){
-		sprintf(DEFAULT_ERROR_STRING,
-			"CAUTIOUS:  drag_to:  null data object for viewer %s",
-			vp->vw_name);
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
-	/* erase at old location */
-
-	/*
-	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, bg_xim,
-		x, y, x, y, carried->dg_width, carried->dg_height);
-	*/
-	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, bg_xim,
-		0, 0, 0, 0, vp->vw_width, vp->vw_height);
-
-	carried->dg_x=0;
-	carried->dg_y=0;
-
-	/* copy new background into drag image */
-
-	/* BUG the new background may containg a piece of the dragged
-	 * object, not drawing it in can make the dragged object flicker
-	 */
-	extract_image(drag_image,vp->vw_dp,x-carried->dg_rx,y-carried->dg_ry);
-
-	/* paint icon over new background */
-	embed_draggable(drag_image,carried);
-
-	/* redraw thingy at new location */
-	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, drag_xim,
-		0, 0, x-carried->dg_rx, y-carried->dg_ry,
-		drag_image->dt_cols, drag_image->dt_rows);
-
-	carried->dg_x=x-carried->dg_rx;
-	carried->dg_y=y-carried->dg_ry;
+	UNIMP_MSG(event_loop)
+	return -1;
 }
 
-void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
-{
-	/* place the object */
-	drag_to(x,y,vp);
-
-	/* BUG should factor where the object was picked up, rx ry */
-
-	addTail(vp->vw_draglist,carried->dg_np);
-	carried=NO_DRAGG;
-
-	delvec(QSP_ARG  drag_image);
-	drag_image = NO_OBJ;
-
-	drag_xim->data = (char *)NULL;	/* to avoid freeing the data */
-	XDestroyImage(drag_xim);
-
-	bg_xim->data = (char *)NULL;	/* to avoid freeing the data */
-	XDestroyImage(bg_xim);
-}
-
-#endif /* HAVE_X11 */
+#endif /* ! HAVE_X11 */
 

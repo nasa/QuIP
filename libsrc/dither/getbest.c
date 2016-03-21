@@ -1,20 +1,22 @@
 #include "quip_config.h"
 
-char VersionId_dither_getbest[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
 
+#include "quip_prot.h"
 #include "qlevel.h"
 #include "ctone.h"
-#include "debug.h"
 #include "vec_util.h"	/* spread_debug - BUG should be moved elsewhere! */
 
-int thebest[3];
-float err_dist[MAXLEVELS];
-float quant_level[MAXLEVELS];
+static float err_dist[MAX_QUANT_LEVELS];
+//float quant_level[MAX_QUANT_LEVELS];
+Dither_Params dp1={
+	.dp_n_columns = 	0,
+	.dp_n_rows = 	0,
+	.dp_desired = 	{NULL,NULL,NULL}
+};
 
 
 /* get the best level for phosphor: minimize absval of difference */
@@ -25,7 +27,7 @@ float by_weight=1.0;
 void showvec(float *p)
 {
 sprintf(DEFAULT_ERROR_STRING,"vector:  %g %g %g",p[0],p[1],p[2]);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
 
 /* red in most sig. bits, then green, then blue */
@@ -60,18 +62,18 @@ advise(DEFAULT_ERROR_STRING);
 			}
 		}
 	}
-	least_err=1000000000000.0;
+	least_err=(float) 1000000000000.0;	// BUG use scientific notation
 	best=(-1);
 	n=0;
 	for(red_level=0;red_level<nlevels;red_level++){
 		for(grn_level=0;grn_level<nlevels;grn_level++){
 			for(blu_level=0;blu_level<nlevels;blu_level++){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"getbest %d %d %d:  err_dist[%d] = %g",red_level,grn_level,blu_level,n,err_dist[n]);
 advise(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 				if( err_dist[n] < least_err ){
 					least_err=err_dist[n];
 					thebest[0]=red_level;
@@ -84,12 +86,12 @@ advise(DEFAULT_ERROR_STRING);
 		}
 	}
 	if( best== -1 ) ERROR1("error too big!!!");
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"getbest RETURNING %d",best);
 advise(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	return(best);
 }
 

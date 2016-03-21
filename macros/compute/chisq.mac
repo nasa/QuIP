@@ -1,0 +1,321 @@
+#
+# Compute the chi-square distribution
+#
+# formulas from wikipedia
+
+# pdf(k) = (1 / pow(2,k/2) G(k/2) ) * pow(x,k/2-1) * exp(-x/2);
+
+# G is gamma function
+# For integer arg:  G(n) = (n-1)!
+# For half integer arg:  G(n/2) = sqrt(pi) * (n-2)!! / pow(2,(n-1)/2)
+
+#Set diff_thresh 100	# exp(100) = 2.6e+43
+Set diff_thresh 30	# exp(30) = 1e+13
+
+# compute gamma(k/2) for even k
+Define Compute_Gamma_Factor_Even 2 obj k
+Get_Factorial $1 ($2)/2-1
+.
+
+Define Compute_Gamma_Log_Even 2 obj k
+Get_Factorial_Log $1 ($2)/2-1
+.
+
+Define Init_ChiSq 1 n_pts
+Assign n_chisq_pts $1
+Assign pi atan(1)*4
+Scalar f 1 double
+Scalar ff 1 double
+Scalar eg 1 double
+Scalar c 1 double
+Scalar g 1 double
+Vector pscratch $n_chisq_pts 1 double
+Vector pscratch2 $n_chisq_pts 1 double
+Vector pprev $n_chisq_pts 1 double
+Vector x_over_2 $n_chisq_pts 1 double
+Vector max_logs $n_chisq_pts 1 double
+Vector ldiff $n_chisq_pts 1 double
+Vector min_diff $n_chisq_pts 1 double
+.
+
+Define Init_ChiSq_Objs 2 npts x_max
+Init_ChiSq $1
+#Vector cs_pts $n_chisq_pts 2 double
+Assign dx $2/($n_chisq_pts)
+#Ramp1D cs_pts{0} $dx $dx
+.
+
+Define Get_Factorial 2 obj n
+Assign n $2
+#Print n
+VSet $1 1
+If $n<=0 exit_macro
+do
+  VSMul $1 $1 $n
+  Decrement n
+  while $n>1
+.
+
+Define Get_Factorial_Log 2 obj n
+Assign n $2
+VSet $1 0
+If $n<=0 exit_macro
+do
+  VSAdd $1 $1 log($n)
+  Decrement n
+  while $n>1
+.
+
+Define Get_Log_Gamma_Function 2 obj n
+Get_Factorial_Log $1 $2-1
+.
+
+Define Get_Double_Factorial 2 obj n
+Assign n $2
+#Print n
+VSet $1 1
+If $n<=0 exit_macro
+do
+  VSMul $1 $1 $n
+  Add_Var n -2
+  while $n>1
+.
+
+Define Get_Double_Factorial_Log 2 obj n
+Assign n $2
+VSet $1 0
+If $n<=0 exit_macro
+do
+  VSAdd $1 $1 log($n)
+  Add_Var n -2
+  while $n>1
+.
+
+
+# compute gamma(k/2) for odd k
+
+Define Compute_Gamma_Factor_Odd 2 obj k
+Get_Double_Factorial ff ($2)-2
+VSMul $1 ff sqrt($pi)/pow(2,(($2)-1)/2)
+.
+
+Define Compute_Gamma_Log_Odd 2 obj k
+Get_Double_Factorial_Log ff ($2)-2
+VSAdd $1 ff log(sqrt($pi))-((($2)-1)/2)*log(2)
+.
+
+# Compute the gamma function of k/2
+
+Define Compute_Gamma_Factor 2 object k
+# We need the gamma function of k/2
+If ($2)%2==0
+  Then "Compute_Gamma_Factor_Even $1 $2"
+  Else "Compute_Gamma_Factor_Odd $1 $2"
+.
+
+Define Compute_Gamma_Factor_Log 2 object k
+If ($2)%2==0
+  Then "Compute_Gamma_Log_Even $1 $2"
+  Else "Compute_Gamma_Log_Odd $1 $2"
+.
+
+Define Compute_ChiSq_CDF 3 dest src k
+If !obj_exists(x_over_2) "Init_ChiSq ncols('$2')"
+VSMul x_over_2 $2 0.5
+Assign cdf_k $3
+# there should be a k/2 somewhere..
+# We call gamma(x/2,k/2), but it is easier if we pass k...
+Compute_Lower_Incomplete_Gamma_Log $1 x_over_2 $cdf_k
+Compute_Gamma_Factor g $cdf_k		# Compute_Gamma_Factor divides by 2...
+#advise "gamma denominator" Display g
+VVDiv $1 $1 g
+.
+
+Define OLD_Compute_ChiSq_CDF 3 dest src k
+VSMul x_over_2 $2 0.5
+Compute_Lower_Incomplete_Gamma $1 x_over_2 $3
+Compute_Gamma_Factor g $3
+VVDiv $1 $1 g
+.
+
+Define Compute_ChiSq_PDF 3 dest src k
+Compute_Gamma_Factor g $3
+VSet c 2
+VSPow c c -$3/2
+VVDiv c c g
+VSMul pscratch $2 -1/2
+VExp pscratch2 pscratch
+VSPow pscratch $2 ($3/2)-1
+VVMul $1 pscratch pscratch2
+VVMul $1 $1 c
+.
+
+# we have two scratch objects... we may need more!
+# y(s,x) = pow(x,s) gamma(s) exp(-x) sum from k to inf pow(x,k) / gamma(s+k+1)
+
+# s may be half integer, we pass twice this, which is k in the chi-square...
+
+Define Compute_Lower_Incomplete_Gamma 3 dest src s_times_two
+# do the sum first
+Set __k 0
+VSet $1 0
+VSet pprev 0
+do
+  VSPow pscratch $2 $__k
+  Compute_Gamma_Factor g ($3)+2*($__k+1)
+  VVDiv pscratch pscratch g
+  VVAdd $1 $1 pscratch
+  # See how the convergence is coming
+  VVSub pprev pprev $1
+  VVMul pprev pprev pprev
+  Get_Sum sos pprev
+  VMov pprev $1
+  Increment __k
+  If $__k<$min_gamma_iterations "Add_Var sos 1"
+  while $sos>0.0000001
+# Now $1 holds the sum term
+
+VSMul pscratch $2 -1
+VExp pscratch pscratch
+VVMul $1 $1 pscratch
+
+Compute_Gamma_Factor g $3
+VVMul $1 $1 g
+
+VSPow pscratch $2 $3/2
+VVMul $1 $1 pscratch
+.
+
+# BUG this blows up for an input of zero...
+
+# Does this mean we return the log of the lower incomplete gamma?
+
+#Set max_sum_terms 500
+Set max_sum_terms 4000
+
+Define Compute_Lower_Incomplete_Gamma_Log 3 dest src_x S_times_two
+
+# First calculate the log of the factor outside of the sum
+# which is pow(x,s) * gamma(s) * exp (-x)
+# So the log is: s * log(x) + log(gamma(s)) - x
+
+VSMul pscratch $2 -1	# log( exp(-x) ) = -x
+#advise "-x"  Display pscratch
+
+#VExp pscratch pscratch
+# no need to take log, just suppress exp()...
+
+Compute_Gamma_Factor g $3		# returns GAMMA(arg/2)
+#advise "outer gamma factor"  Display g
+VLog g g				# log(gamma(s))
+#advise "log outer gamma factor"  Display g
+VVAdd pscratch pscratch g		# log(gamma(s)) - x
+#advise "log(gamma(s))-x"  Display pscratch
+
+VLog pscratch2 $2			# log(x)
+#advise "log(x)"  Display pscratch2
+VSMul pscratch2 pscratch2 $3/2		# we passed s times two
+#advise "s * log(x)"  Display pscratch2
+VVAdd pscratch2 pscratch pscratch2	# add logs to get log of factor
+#advise "log of outer factor"  Display pscratch2
+
+# Now pscratch2 holds the log to be added to the log of the sum...
+# This can be a large negative number for certain inputs.
+# In that case, if we add the whole thing to the log in the sum,
+# then we get 0 when we exponentiate.
+# That's no good because we keep summing zeroes and nothing ever changes.
+# But if we wait and do it outside, then the sum blows up...
+# Shall we try half and half?
+#VSMul pscratch2 pscratch2 0.5	# now need to add it twice
+
+# do the sum first
+VSet $1 0
+VSet pprev 0
+Set prev_mean_sq 0
+
+# compute the terms of the sum
+# The sum is an infinite series of terms of the form
+# pow(x,k) / gamma( s + k + 1 )
+# So the log of this is:
+# k * log(x) - log(gamma(s+k+1)
+
+If obj_exists(sum_terms)&&ncols(sum_terms)!=ncols('$1') "Delete_Image sum_terms"
+If !obj_exists(sum_terms)
+  "Image sum_terms $max_sum_terms ncols('$1') 1 double"
+Set __k 0
+do
+#repeat $max_sum_terms
+#advise "top of loop..."
+  #VSPow pscratch $2 $__k
+  # The numerator is pow(x,k)
+  VLog pscratch $2	# log(x)
+  VSMul pscratch pscratch $__k		# k log(x)
+#advise "scaled log" Display pscratch[0]
+# $3 is 2*s !!!
+  Compute_Gamma_Factor_Log g ($3)+2*($__k+1)
+#advise "gamma factor log" Display g[0]
+  VSMul g g -1
+#advise "negative gamma factor log" Display g[0]
+  VVAdd sum_terms[$__k] pscratch g
+  If $__k==0
+    Then "VMov max_logs sum_terms[0]"
+    Else "VVMax max_logs max_logs sum_terms[$__k]"
+#advise "log of term $__k" Display sum_terms[$__k][0]
+#  Display max_logs
+#  Display sum_terms[$__k]
+  VVSub ldiff max_logs sum_terms[$__k]
+#  Display ldiff
+  Get_Min min_diff ldiff
+#  advise "iteration $__k, min_diff = $min_diff"
+  Increment __k
+#  Print __k
+  while $__k<$max_sum_terms&&$min_diff<$diff_thresh
+
+If $__k>=$max_sum_terms
+  "advise 'ADVISORY:  min_diff = $min_diff after $__k iterations!?'"
+
+If obj_exists(use_sum) "Delete_Image use_sum"
+Subimage use_sum sum_terms ncols(sum_terms) $__k 0 0
+#advise "Using $__k terms in the sum..."
+#advise "logs of sum terms" Display use_sum
+#advise "log of outer factors" Display pscratch2
+VVAdd use_sum use_sum pscratch2
+#advise "adjusted logs of sum terms" Display use_sum
+VExp use_sum use_sum
+#advise "exponentiated sum terms" Display use_sum
+VSum $1 use_sum
+#advise Sums Display $1
+.
+
+Set min_gamma_iterations 30
+
+
+# We have the CDF in cs_pts
+# find the x-values that correspond to 0.95, 0.99, and 0.999
+
+Define Find_Table_Values 0
+Find_X_Value x_95 0.95
+Find_X_Value x_99 0.99
+Find_X_Value x_999 0.999
+.
+
+Define Find_X_Value 2 varname level
+Set _i 0
+do
+  Assign p value(cs_pts{1}[$_i])
+  If $p>$2 "Found_It $1 $2 $_i exit_macro"
+  Increment _i
+  while $_i<ncols(cs_pts)
+warn "Find_X_Value $1 $2:  need to extend the range!?"
+Assign $1 value(cs_pts{0}[ncols(cs_pts)-1])
+.
+
+Define Found_It 3 varname level index
+Assign x1 value(cs_pts{0}[$3-1])
+Assign x2 value(cs_pts{0}[$3])
+Assign y1 value(cs_pts{1}[$3-1])
+Assign y2 value(cs_pts{1}[$3])
+Assign $1 $x1+($x2-$x1)*($2-$y1)/($y2-$y1)
+.
+
+

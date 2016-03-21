@@ -1,10 +1,5 @@
 #include "quip_config.h"
 
-#ifdef HAVE_V4L2
-
-char VersionId_v4l2_vmenu[] = QUIP_VERSION_STRING;
-
-
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -38,23 +33,19 @@ char VersionId_v4l2_vmenu[] = QUIP_VERSION_STRING;
 #endif
 
 
-#include "query.h"
-#include "submenus.h"
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "gui.h"		/* must come before img_file.h - INT32 */
 #include "fio_api.h"
 #include "rv_api.h"
-#include "nvf_api.h"
+#include "veclib_api.h"
 #include "vec_util.h"		/* yuv422_to_rgb24 */
 #include "my_video_dev.h"
 #include "my_v4l2.h"
-#include "debug.h"	/* verbose */
 
 
 Video_Device *curr_vdp=NO_VIDEO_DEVICE;
 
 ITEM_INTERFACE_DECLARATIONS(Video_Device,video_dev)
-
 
 /* Call ioctl, repeating if interrupted */
 
@@ -80,10 +71,19 @@ void errno_warn(QSP_ARG_DECL  const char *s)
 typedef struct {
 	const char *	vfmt_name;
 	int		vfmt_bpp;	// bytes per pixel
-	uint32		vfmt_code;	// list of codes in videodev2.h
+	uint32_t	vfmt_code;	// list of codes in videodev2.h
 } Video_Format;
 
 #define N_VIDEO_FORMATS 6
+
+#ifndef HAVE_V4L2
+#define	V4L2_PIX_FMT_YUYV	-1
+#define	V4L2_PIX_FMT_RGB24	-1
+#define	V4L2_PIX_FMT_BGR24	-1
+#define	V4L2_PIX_FMT_RGB32	-1
+#define	V4L2_PIX_FMT_BGR32	-1
+#define	V4L2_PIX_FMT_GREY	-1
+#endif // ! HAVE_V4L2
 
 static Video_Format vfmt_list[N_VIDEO_FORMATS]={
 { "yuyv",	2,	V4L2_PIX_FMT_YUYV	},
@@ -123,6 +123,15 @@ typedef struct {
 
 #define N_FIELD_MODES 6
 
+#ifndef HAVE_V4L2
+#define	V4L2_FIELD_INTERLACED	-1
+#define	V4L2_FIELD_ALTERNATE	-1
+#define	V4L2_FIELD_TOP		-1
+#define	V4L2_FIELD_BOTTOM	-1
+#define	V4L2_FIELD_SEQ_TB	-1
+#define	V4L2_FIELD_SEQ_BT	-1
+#endif // HAVE_V4L2
+
 static Video_Field_Mode vfld_tbl[N_FIELD_MODES]={
 {	"interlaced",	480,	V4L2_FIELD_INTERLACED	},
 {	"alternate",	240,	V4L2_FIELD_ALTERNATE	},
@@ -156,6 +165,8 @@ static COMMAND_FUNC( set_field_mode )
 
 static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 {
+#ifdef HAVE_V4L2
+
 	struct v4l2_capability cap;
 #ifdef 	CHECK_CROPCAP
 	struct v4l2_cropcap cropcap;
@@ -170,22 +181,22 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_QUERYCAP, &cap)) {
 		if( errno == EINVAL ){
-			sprintf(ERROR_STRING, "init_video_device:  %s is not a V4L2 device!?", vdp->vd_name);
+			sprintf(ERROR_STRING, "%s is not a V4L2 device!?", vdp->vd_name);
 		} else {
-			sprintf(ERROR_STRING,"init_video_device:  VIDIOC_QUERYCAP:  %s",strerror(errno));
+			sprintf(ERROR_STRING,"VIDIOC_QUERYCAP:  %s",strerror(errno));
 		}
 		WARN(ERROR_STRING);
 		return(-1);
 	}
 
 	if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-		sprintf(ERROR_STRING,"init_video_device:  %s does not have video capture capability",vdp->vd_name);
+		sprintf(ERROR_STRING,"%s does not have video capture capability",vdp->vd_name);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
 
 	if(!(cap.capabilities & V4L2_CAP_STREAMING)) {
-		sprintf(ERROR_STRING,"init_video_device:  %s does not support streaming i/o",vdp->vd_name);
+		sprintf(ERROR_STRING,"%s does not support streaming i/o",vdp->vd_name);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -214,10 +225,10 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 			switch(errno) {
 			case EINVAL:
 				/* Cropping not supported. */
-				WARN("init_video_device:  cropping not supported");
+				WARN("cropping not supported");
 				break;
 			default:
-				errno_warn("init_video_device:  ioctl VIDIOC_S_CROP");
+				errno_warn("VIDIOC_S_CROP");
 				/* Errors ignored. */
 				break;
 			}
@@ -242,16 +253,13 @@ static int init_video_device(QSP_ARG_DECL  Video_Device *vdp)
 	bytes_per_pixel = vfmt_list[vfmt_index].vfmt_bpp;
 
 	// Can we set the other field types???
-	// fmt.fmt.pix.field	= V4L2_FIELD_INTERLACED;
+	//fmt.fmt.pix.field	= V4L2_FIELD_INTERLACED;
 	// this generates an invalid argument error...
-	// fmt.fmt.pix.field	= V4L2_FIELD_ALTERNATE;
+	//fmt.fmt.pix.field	= V4L2_FIELD_ALTERNATE;
 	fmt.fmt.pix.field	= vfld_tbl[vfld_index].vfld_code;
-sprintf(ERROR_STRING,"init_video_device:  trying to set format with field code %d (index %d)",
-vfld_tbl[vfld_index].vfld_code,vfld_index);
-advise(ERROR_STRING);
 
 	if(-1 == xioctl(vdp->vd_fd, VIDIOC_S_FMT, &fmt)){
-		sprintf(ERROR_STRING,"init_video_device:  ioctl VIDIOC_S_FMT:  %s",strerror(errno));
+		sprintf(ERROR_STRING,"VIDIOC_S_FMT:  %s",strerror(errno));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -289,27 +297,27 @@ advise(ERROR_STRING);
 
 	if( xioctl(vdp->vd_fd, VIDIOC_REQBUFS, &req) < 0 ){
 		if(EINVAL == errno) {
-			sprintf(ERROR_STRING, "init_video_device:  %s does not support memory mapping", vdp->vd_name);
+			sprintf(ERROR_STRING, "%s does not support memory mapping", vdp->vd_name);
 		} else {
-			sprintf(ERROR_STRING,"init_video_device:  ioctl VIDIOC_REQBUFS:  %s",strerror(errno));
+			sprintf(ERROR_STRING,"VIDIOC_REQBUFS:  %s",strerror(errno));
 		}
 		WARN(ERROR_STRING);
 		return(-1);
 	}
 
 	if(req.count < 2) {
-		sprintf(ERROR_STRING, "init_video_device:  Insufficient buffer memory on %s\n",
+		sprintf(ERROR_STRING, "Insufficient buffer memory on %s\n",
 			vdp->vd_name);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-sprintf(ERROR_STRING,"init_video_device:  Requested %d buffers, got %d",MAX_BUFFERS_PER_DEVICE,req.count);
+sprintf(ERROR_STRING,"Requested %d buffers, got %d",MAX_BUFFERS_PER_DEVICE,req.count);
 advise(ERROR_STRING);
 
 	vdp->vd_n_buffers = 0;
 
 	// make sure data area is set to ram...
-	curr_ap = ram_area;
+	curr_ap = ram_area_p;
 
 	for(i_buffer = 0; i_buffer < req.count; ++i_buffer) {
 		struct v4l2_buffer buf;
@@ -324,7 +332,7 @@ advise(ERROR_STRING);
 		buf.index	= i_buffer;
 
 		if(-1 == xioctl( vdp->vd_fd, VIDIOC_QUERYBUF, &buf)){
-			errno_warn(QSP_ARG  "init_video_device:  ioctl VIDIOC_QUERYBUF");
+			errno_warn(QSP_ARG  "VIDIOC_QUERYBUF");
 			return(-1);
 		}
 
@@ -338,7 +346,7 @@ advise(ERROR_STRING);
 				vdp->vd_fd, buf.m.offset);
 
 		if(MAP_FAILED == vdp->vd_buf_tbl[i_buffer].mb_start){
-			ERRNO_WARN("init_video_device:  mmap");
+			ERRNO_WARN("mmap");
 			return(-1);
 		}
 
@@ -352,8 +360,12 @@ advise(ERROR_STRING);
 		// Use the current pixel format
 		switch( vfmt_list[vfmt_index].vfmt_code ){
 			case V4L2_PIX_FMT_YUYV:
+#ifdef FOOBAR
 				dimset.ds_dimension[0]=4;	/* four bytes per pixel pair */
 				dimset.ds_dimension[1]=320;	/* pixel pairs per row */
+#endif // FOOBAR
+				dimset.ds_dimension[0]=2;	/* two bytes per pixel - YU or YV */
+				dimset.ds_dimension[1]=640;	/* pixels row */
 				break;
 			case V4L2_PIX_FMT_GREY:
 				dimset.ds_dimension[0]=1;
@@ -370,7 +382,7 @@ advise(ERROR_STRING);
 				dimset.ds_dimension[1]=640;
 				break;
 			default:
-				sprintf(ERROR_STRING,"init_video_device:  Oops, haven't implemented buffer creation for %s pixel format!?",
+				sprintf(ERROR_STRING,"Oops, haven't implemented buffer creation for %s pixel format!?",
 					vfmt_list[vfmt_index].vfmt_name);
 				WARN(ERROR_STRING);
 				// default to YUYV
@@ -383,14 +395,15 @@ advise(ERROR_STRING);
 
 		dimset.ds_dimension[3]=1;
 		dimset.ds_dimension[4]=1;
-		dp = _make_dp(QSP_ARG  name,&dimset,PREC_UBY);
+		dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
 #ifdef CAUTIOUS
-		if( dp == NO_OBJ ) ERROR1("CAUTIOUS:  init_video_device:  error creating data_obj for video buffer");
+		if( dp == NO_OBJ ) ERROR1("CAUTIOUS:  error creating data_obj for video buffer");
 #endif /* CAUTIOUS */
-		dp->dt_data = vdp->vd_buf_tbl[i_buffer].mb_start;
+		SET_OBJ_DATA_PTR(dp, vdp->vd_buf_tbl[i_buffer].mb_start );
 
 		vdp->vd_n_buffers ++;
 	}
+#endif // HAVE_V4L2
 	return 0;
 }
 
@@ -431,6 +444,7 @@ static void report_status(QSP_ARG_DECL  Video_Device *vdp)
 
 int start_capturing(QSP_ARG_DECL  Video_Device *vdp)
 {
+#ifdef HAVE_V4L2
 	int i;
 	enum v4l2_buf_type type;
 
@@ -468,9 +482,11 @@ int start_capturing(QSP_ARG_DECL  Video_Device *vdp)
 
 	vdp->vd_flags |= VD_CAPTURING;
 
+#endif // HAVE_V4L2
 	return 0;
 }
 
+#ifdef HAVE_V4L2
 int dq_buf(QSP_ARG_DECL  Video_Device *vdp,struct v4l2_buffer *bufp)
 {
 	fd_set fds;
@@ -655,6 +671,7 @@ int stop_capturing(QSP_ARG_DECL  Video_Device *vdp)
 	}
 	return 0;
 }
+#endif // HAVE_V4L2
 
 /* based on open_device() from capture.c */
 
@@ -673,14 +690,14 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	}
 
 	if( stat(dev_name, &st) < 0 ) {
-		sprintf(ERROR_STRING, "open_video_device:  Cannot stat '%s': %d, %s !?!?\n",
+		sprintf(ERROR_STRING, "Cannot identify '%s': %d, %s\n",
 			dev_name, errno, strerror( errno));
 		WARN(ERROR_STRING);
 		return -1;
 	}
 
 	if( !S_ISCHR( st.st_mode)) {
-		sprintf(ERROR_STRING, "open_video_device:  %s is not a character device!?\n", dev_name);
+		sprintf(ERROR_STRING, "%s is no device\n", dev_name);
 		WARN(ERROR_STRING);
 		return -1;
 	}
@@ -688,7 +705,7 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	fd = open( dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
 	if( -1 == fd) {
-		sprintf(ERROR_STRING, "open_video_device:  Cannot open '%s': %d, %s\n",
+		sprintf(ERROR_STRING, "Cannot open '%s': %d, %s\n",
 			dev_name, errno, strerror( errno));
 		WARN(ERROR_STRING);
 		return -1;
@@ -763,31 +780,17 @@ static COMMAND_FUNC( do_start )
 static COMMAND_FUNC( do_stop )
 {
 	CHECK_DEVICE
+#ifdef HAVE_V4L2
 	stop_capturing(QSP_ARG  curr_vdp);
+#endif // HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_next )
 {
 	CHECK_DEVICE
+#ifdef HAVE_V4L2
 	get_next_frame(QSP_ARG  curr_vdp);
-}
-
-static COMMAND_FUNC( do_yuv2rgb )
-{
-	Data_Obj *dst_dp, *src_dp;
-
-	dst_dp = PICK_OBJ("destination RGB image");
-	src_dp = PICK_OBJ("source YUYV image");
-
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ )
-		return;
-
-	/* BUG Here we need to check sizes, etc */
-	/* because check is not present, writing to a gray image will cause memory corruption! */
-	/* FIXME */
-
-	//yuv420p_to_rgb24(dst_dp,src_dp->dt_data);
-	yuv422_to_rgb24(dst_dp,src_dp);
+#endif // HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_yuv2gray )
@@ -802,10 +805,10 @@ static COMMAND_FUNC( do_yuv2gray )
 
 	/* BUG Here we need to check sizes, etc */
 
-	//yuv420p_to_rgb24(dst_dp,src_dp->dt_data);
-	yuv422_to_gray(dst_dp,src_dp);
+	yuv422_to_gray(QSP_ARG  dst_dp,src_dp);
 }
 
+#ifdef HAVE_V4L2
 static int query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
 {
 	if( ioctl(curr_vdp->vd_fd,VIDIOC_QUERYCTRL,ctlp) < 0 ){
@@ -816,22 +819,20 @@ static int query_control(QSP_ARG_DECL  struct v4l2_queryctrl *ctlp)
 	/* Should be ctrl_info or something... */
 
 	/* the structure should now have the range of values... */
-	if( verbose ){
-		switch(ctlp->type){
-			case V4L2_CTRL_TYPE_INTEGER:
-				sprintf(ERROR_STRING,"%s, integer control %d - %d",ctlp->name,ctlp->minimum,ctlp->maximum); break;
-			case V4L2_CTRL_TYPE_MENU:
-				sprintf(ERROR_STRING,"%s, menu control",ctlp->name); break;
-			case V4L2_CTRL_TYPE_BOOLEAN:
-				sprintf(ERROR_STRING,"%s, boolean control",ctlp->name); break;
-			case V4L2_CTRL_TYPE_BUTTON:
-				sprintf(ERROR_STRING,"%s, button control",ctlp->name); break;
+	switch(ctlp->type){
+		case V4L2_CTRL_TYPE_INTEGER:
+			sprintf(ERROR_STRING,"%s, integer control %d - %d",ctlp->name,ctlp->minimum,ctlp->maximum); break;
+		case V4L2_CTRL_TYPE_MENU:
+			sprintf(ERROR_STRING,"%s, menu control",ctlp->name); break;
+		case V4L2_CTRL_TYPE_BOOLEAN:
+			sprintf(ERROR_STRING,"%s, boolean control",ctlp->name); break;
+		case V4L2_CTRL_TYPE_BUTTON:
+			sprintf(ERROR_STRING,"%s, button control",ctlp->name); break;
 #ifdef CAUTIOUS
-			default: sprintf(ERROR_STRING,"CAUTIOUS:  unknown control"); break;
+		default: sprintf(ERROR_STRING,"CAUTIOUS:  unknown control"); break;
 #endif /* CAUTIOUS */
-		}
-		advise(ERROR_STRING);
 	}
+	advise(ERROR_STRING);
 	return(0);
 }
 
@@ -888,84 +889,132 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 
 	return r;
 }
+#endif // HAVE_V4L2
+
+#ifdef HAVE_V4L2
+
+#define SET_INTEGER_CONTROL(control)					\
+	set_integer_control(QSP_ARG  control);
+
+#else // ! HAVE_V4L2
+#define SET_INTEGER_CONTROL(control)					\
+									\
+{									\
+	int i;								\
+	i = HOW_MANY("dummy control value");				\
+	sprintf(ERROR_STRING,						\
+	"program not configured with V4L2 support, can't set %s!?",#control);	\
+	WARN(ERROR_STRING);						\
+}
+
+#endif // ! HAVE_V4L2
 
 static COMMAND_FUNC( do_set_hue )
 {
 	CHECK_DEVICE
-	set_integer_control(QSP_ARG V4L2_CID_HUE);
+	SET_INTEGER_CONTROL(V4L2_CID_HUE);
 }
 
 static COMMAND_FUNC( do_set_bright )
 {
 	CHECK_DEVICE
-	set_integer_control(QSP_ARG V4L2_CID_BRIGHTNESS);
+	SET_INTEGER_CONTROL(V4L2_CID_BRIGHTNESS);
 }
 
 static COMMAND_FUNC( do_set_contrast )
 {
 	CHECK_DEVICE
-	set_integer_control(QSP_ARG V4L2_CID_CONTRAST);
+	SET_INTEGER_CONTROL(V4L2_CID_CONTRAST);
 }
 
 static COMMAND_FUNC( do_set_saturation )
 {
 	CHECK_DEVICE
-	set_integer_control(QSP_ARG V4L2_CID_SATURATION);
+	SET_INTEGER_CONTROL(V4L2_CID_SATURATION);
 }
 
 
-static void do_get_control( QSP_ARG_DECL int ctl_index )
+#ifdef HAVE_V4L2
+static void do_get_control( QSP_ARG_DECL const char *varname, int ctl_index )
 {
 	int v;
-	const char *s;
 
 	CHECK_DEVICE
-	s=NAMEOF("variable name");
 	v=get_integer_control(QSP_ARG ctl_index);
 	sprintf(msg_str,"%d",v);
-	ASSIGN_VAR(s,msg_str);
+	ASSIGN_VAR(varname,msg_str);
 }
+#endif // HAVE_V4L2
 
 static COMMAND_FUNC( do_get_hue )
 {
-	do_get_control(QSP_ARG V4L2_CID_HUE);
+	const char *s;
+
+	s=NAMEOF("variable name for hue setting");
+#ifdef HAVE_V4L2
+	do_get_control(QSP_ARG s,V4L2_CID_HUE);
+#else // ! HAVE_V4L2
+	ASSIGN_VAR(s,"0");
+#endif // ! HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_get_bright )
 {
-	do_get_control(QSP_ARG V4L2_CID_BRIGHTNESS);
+	const char *s;
+
+	s=NAMEOF("variable name for brightness setting");
+#ifdef HAVE_V4L2
+	do_get_control(QSP_ARG s,V4L2_CID_BRIGHTNESS);
+#else // ! HAVE_V4L2
+	ASSIGN_VAR(s,"0");
+#endif // ! HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_get_contrast )
 {
-	do_get_control(QSP_ARG V4L2_CID_CONTRAST);
+	const char *s;
+
+	s=NAMEOF("variable name for contrast setting");
+#ifdef HAVE_V4L2
+	do_get_control(QSP_ARG s,V4L2_CID_CONTRAST);
+#else // ! HAVE_V4L2
+	ASSIGN_VAR(s,"0");
+#endif // ! HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_get_saturation )
 {
-	do_get_control(QSP_ARG V4L2_CID_SATURATION);
+	const char *s;
+
+	s=NAMEOF("variable name for saturation setting");
+#ifdef HAVE_V4L2
+	do_get_control(QSP_ARG s,V4L2_CID_SATURATION);
+#else // ! HAVE_V4L2
+	ASSIGN_VAR(s,"0");
+#endif // ! HAVE_V4L2
 }
 
-static Command vctl_ctbl[]={
-{ "set_hue",		do_set_hue,		"adjust hue"			},
-{ "set_brightness",	do_set_bright,		"adjust picture brightness"	},
-{ "set_contrast",	do_set_contrast,	"adjust picture contrast"	},
-{ "set_saturation",	do_set_saturation,	"adjust picture saturation"	},
-{ "get_hue",		do_get_hue,		"fetch hue"			},
-{ "get_brightness",	do_get_bright,		"fetch picture brightness"	},
-{ "get_contrast",	do_get_contrast,	"fetch picture contrast"	},
-{ "get_saturation",	do_get_saturation,	"fetch picture saturation"	},
-{ "quit",		popcmd,			"exit submenu"			},
-{ NULL_COMMAND							}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(video_controls_menu,s,f,h)
 
-static COMMAND_FUNC( vctl_menu )
+MENU_BEGIN(video_controls)
+ADD_CMD( set_hue,		do_set_hue,		adjust hue )
+ADD_CMD( set_brightness,	do_set_bright,		adjust picture brightness )
+ADD_CMD( set_contrast,		do_set_contrast,	adjust picture contrast )
+ADD_CMD( set_saturation,	do_set_saturation,	adjust picture saturation )
+ADD_CMD( get_hue,		do_get_hue,		fetch hue )
+ADD_CMD( get_brightness,	do_get_bright,		fetch picture brightness )
+ADD_CMD( get_contrast,		do_get_contrast,	fetch picture contrast )
+ADD_CMD( get_saturation,	do_get_saturation,	fetch picture saturation )
+MENU_END(video_controls)
+
+static COMMAND_FUNC( do_vctl_menu )
 {
-	PUSHCMD(vctl_ctbl,"video_controls");
+	PUSH_MENU(video_controls);
 }
 
 static COMMAND_FUNC( do_report_input )
 {
+#ifdef HAVE_V4L2
 	struct v4l2_input input;
 	int index;
 
@@ -985,10 +1034,12 @@ static COMMAND_FUNC( do_report_input )
 	}
 
 	printf ("Current input: %s\n", input.name);
+#endif // HAVE_V4L2
 }
 
 static COMMAND_FUNC( do_list_inputs )
 {
+#ifdef HAVE_V4L2
 	struct v4l2_input input;
 
 	CHECK_DEVICE
@@ -1005,10 +1056,12 @@ static COMMAND_FUNC( do_list_inputs )
 	        perror ("VIDIOC_ENUMINPUT");
 	        exit (EXIT_FAILURE);
 	}
+#endif // HAVE_V4L2
 }
 				      
 static COMMAND_FUNC( do_list_stds )
 {
+#ifdef HAVE_V4L2
 	struct v4l2_input input;
 	struct v4l2_standard standard;
 
@@ -1044,10 +1097,11 @@ static COMMAND_FUNC( do_list_stds )
 		perror ("VIDIOC_ENUMSTD");
 		exit (EXIT_FAILURE);
 	}
-										
+#endif // HAVE_V4L2
 }
 
 
+#ifdef HAVE_V4L2
 static int count_standards(QSP_ARG_DECL  Video_Device *vdp)
 {
 	struct v4l2_standard standard;
@@ -1134,9 +1188,11 @@ static void set_standard( QSP_ARG_DECL  int id )
 	        exit (EXIT_FAILURE);
 	}
 }
+#endif // HAVE_V4L2
 
 static COMMAND_FUNC( do_set_std )
 {
+#ifdef HAVE_V4L2
 	int i;
 	const char **choices;
 
@@ -1158,22 +1214,28 @@ static COMMAND_FUNC( do_set_std )
 	for(i=0;i<curr_vdp->vd_n_standards;i++)
 		rls_str(choices[i]);
 	givbuf(choices);
+#else // ! HAVE_V4L2
+	const char *s;
+	s=NAMEOF("standard");	// dummy word to throw away
+	// print warning
+#endif // ! HAVE_V4L2
 }
 
-static Command std_ctbl[]={
-//{ "info",		do_std_info,		"report current info about input and standard"	},
-//{ "set_input",		do_set_input,		"select video input"				},
-{ "set_standard",	do_set_std,		"select video standard"				},
-{ "list",		do_list_stds,		"list available standards"			},
-{ "report_input",	do_report_input,	"report current input device"			},
-{ "list_inputs",	do_list_inputs,		"list all input devices"			},
-{ "quit",		popcmd,			"exit submenu"					},
-{ NULL_COMMAND											}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(standards_menu,s,f,h)
 
-static COMMAND_FUNC( std_menu )
+MENU_BEGIN(standards)
+//ADD_CMD( info,		do_std_info,		report current info about input and standard )
+//ADD_CMD( set_input,		do_set_input,		select video input )
+ADD_CMD( set_standard,	do_set_std,		select video standard )
+ADD_CMD( list,		do_list_stds,		list available standards )
+ADD_CMD( report_input,	do_report_input,	report current input device )
+ADD_CMD( list_inputs,	do_list_inputs,		list all input devices )
+MENU_END(standards)
+
+static COMMAND_FUNC( do_std_menu )
 {
-	PUSHCMD(std_ctbl,"standards");
+	PUSH_MENU(standards);
 }
 
 static COMMAND_FUNC( do_downsample )
@@ -1196,24 +1258,26 @@ static COMMAND_FUNC( do_dump_ts )
 }
 #endif /* RECORD_TIMESTAMPS */
 
-static Command stream_ctbl[]={
-{ "record",		do_stream_record,	"record video to raw volume"		},
-{ "wait",		wait_record,		"wait for current recording to finish"	},
-{ "halt",		halt_record,		"halt current recording"		},
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(stream_menu,s,f,h)
+
+MENU_BEGIN(stream)
+ADD_CMD( record,	do_stream_record,	record video to raw volume )
+ADD_CMD( wait,		wait_record,		wait for current recording to finish )
+ADD_CMD( halt,		halt_record,		halt current recording )
 #ifdef RECORD_TIMESTAMPS
-{ "timestamps",		do_dump_ts,		"dump timestamps"			},
-{ "grab_times",		print_grab_times,	"print grab times"			},
-{ "store_times",	print_grab_times,	"print store times"			},
+ADD_CMD( timestamps,	do_dump_ts,		dump timestamps )
+ADD_CMD( grab_times,	print_grab_times,	print grab times )
+ADD_CMD( store_times,	print_grab_times,	print store times )
 #endif /* RECORD_TIMESTAMPS */
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+MENU_END(stream)
 
 debug_flag_t stream_debug=0;
 
-static COMMAND_FUNC( stream_menu )
+static COMMAND_FUNC( do_stream_menu )
 {
-	PUSHCMD(stream_ctbl,"stream");
+	PUSH_MENU(stream);
 }
 
 static COMMAND_FUNC( do_list_devs )
@@ -1235,36 +1299,40 @@ static COMMAND_FUNC( do_list_devs )
 	}
 }
 
-static Command v4l2_ctbl[]={
-{ "format",	set_vfmt,	"set pixel format"			},
-{ "field_mode",	set_field_mode,	"set field mode"			},
-{ "open",	do_open,	"open video device"			},
-{ "list",	do_list_devs,	"list open video devices & statuses"	},
-{ "status",	do_status,	"report status of  current video device"},
-{ "start",	do_start,	"start capturing"			},
-{ "stop",	do_stop,	"stop capturing"			},
-{ "next",	do_next,	"capture next frame"			},
-{ "select",	do_select,	"select device"				},
-{ "yuv2rgb",	do_yuv2rgb,	"convert from YUYV to RGB"		},
-{ "yuv2gray",	do_yuv2gray,	"convert from YUYV to GRAY"		},
-{ "downsample",	do_downsample,	"fast downsampling"			},
-{ "controls",	vctl_menu,	"video controls submenu"		},
-{ "standards",	std_menu,	"video standards submenu"		},
-{ "flow",	flow_menu,	"frame-by-frame capture submenu"	},
-{ "stream",	stream_menu,	"streaming capture submenu"		},
-{ "quit",	popcmd,		"exit submenu"				},
-{ NULL_COMMAND								}
-};
 
-COMMAND_FUNC( v4l2_menu )
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(v4l2_menu,s,f,h)
+
+MENU_BEGIN(v4l2)
+ADD_CMD( format,	set_vfmt,	set pixel format )
+ADD_CMD( field_mode,	set_field_mode,	set field mode )
+ADD_CMD( open,		do_open,	open video device )
+ADD_CMD( list,		do_list_devs,	list open video devices & statuses )
+ADD_CMD( status,	do_status,	report status of  current video device )
+ADD_CMD( start,		do_start,	start capturing )
+ADD_CMD( stop,		do_stop,	stop capturing )
+ADD_CMD( next,		do_next,	capture next frame )
+ADD_CMD( select,	do_select,	select device )
+ADD_CMD( yuv2rgb,	do_yuv2rgb,	convert from YUYV to RGB )
+ADD_CMD( yuv2gray,	do_yuv2gray,	convert from YUYV to GRAY )
+ADD_CMD( downsample,	do_downsample,	fast downsampling )
+ADD_CMD( controls,	do_vctl_menu,	video controls submenu )
+ADD_CMD( standards,	do_std_menu,	video standards submenu )
+ADD_CMD( flow,		do_flow_menu,	frame-by-frame capture submenu )
+ADD_CMD( stream,	do_stream_menu,	streaming capture submenu )
+MENU_END(v4l2)
+
+COMMAND_FUNC( do_v4l2_menu )
 {
 	static int inited=0;
 
 	if( ! inited ){
 		stream_debug=add_debug_module(QSP_ARG  "stream_record");
+#ifdef HAVE_RAWVOL
 		if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
 			WARN("error opening default raw volume");
 		}
+#endif // HAVE_RAWVOL
 
 		/* FIXME put analogous stuff here for lml board,
 		 * someday write movie module...
@@ -1277,7 +1345,6 @@ COMMAND_FUNC( v4l2_menu )
 
 	}
 
-	PUSHCMD(v4l2_ctbl,"v4l2");
+	PUSH_MENU(v4l2);
 }
 
-#endif /* HAVE_V4L2 */

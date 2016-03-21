@@ -1,4 +1,24 @@
 
+// The NOCC functions have a destination array of indices, and a source vector of inputs,
+// plus two return scalars
+
+// Can't use XFER_FAST_ARGS_2, because it uses dst_dp for the count...
+// But we need to know the length of the index array (dest)
+
+#define XFER_FAST_ARGS_NOCC		XFER_SLOW_ARGS_1		\
+					XFER_FAST_COUNT(SRC1_DP)	\
+					XFER_FAST_ARGS_SRC1		\
+					XFER_RETSCAL1 XFER_RETSCAL2
+
+#define XFER_EQSP_ARGS_NOCC		SET_VA_FLAGS(vap,VA_EQSP_ARGS);		\
+					XFER_SLOW_ARGS_1			\
+					XFER_FAST_COUNT(SRC1_DP)		\
+					XFER_EQSP_ARGS_SRC1			\
+					XFER_RETSCAL1 XFER_RETSCAL2
+
+#define XFER_SLOW_ARGS_NOCC		XFER_SLOW_ARGS_2	\
+					XFER_RETSCAL1		\
+					XFER_RETSCAL2
 
 #define XFER_FAST_ARGS_SBM_3		XFER_FAST_ARGS_SBM XFER_FAST_ARGS_3
 #define XFER_EQSP_ARGS_SBM_3		XFER_EQSP_ARGS_SBM XFER_EQSP_ARGS_3
@@ -52,9 +72,15 @@
 #define XFER_EQSP_ARGS_DBM_1S_1SRC	XFER_EQSP_ARGS_DBM_1SRC XFER_ARGS_1S
 #define XFER_SLOW_ARGS_DBM_1S_1SRC	XFER_SLOW_ARGS_DBM_1SRC XFER_ARGS_1S
 
-#define XFER_FAST_ARGS_DBM_1SRC	XFER_FAST_ARGS_DBM XFER_FAST_ARGS_SRC1 XFER_FAST_COUNT(src1_dp)
-#define XFER_EQSP_ARGS_DBM_1SRC	XFER_EQSP_ARGS_DBM XFER_FAST_ARGS_SRC1 XFER_EQSP_COUNT(src1_dp)
+#define XFER_FAST_ARGS_DBM_1SRC	XFER_FAST_ARGS_DBM XFER_FAST_ARGS_SRC1 XFER_FAST_COUNT(SRC1_DP)
+#define XFER_EQSP_ARGS_DBM_1SRC	XFER_EQSP_ARGS_DBM XFER_FAST_ARGS_SRC1 XFER_EQSP_COUNT(SRC1_DP)
 #define XFER_SLOW_ARGS_DBM_1SRC	XFER_SLOW_ARGS_DBM XFER_SLOW_ARGS_SRC1
+
+// for rvmov, sbm is passed as src1?
+#define XFER_FAST_ARGS_DBM_SBM	XFER_FAST_ARGS_DBM XFER_FAST_ARGS_SBM XFER_FAST_COUNT(bitmap_src_dp)
+#define XFER_EQSP_ARGS_DBM_SBM	XFER_EQSP_ARGS_DBM XFER_FAST_ARGS_SBM XFER_EQSP_COUNT(bitmap_src_dp)
+#define XFER_SLOW_ARGS_DBM_SBM	XFER_SLOW_ARGS_DBM XFER_SLOW_ARGS_SBM
+
 
 #define XFER_FAST_ARGS_DBM_1S	XFER_FAST_ARGS_DBM XFER_ARGS_1S XFER_FAST_COUNT(bitmap_dst_dp)
 #define XFER_EQSP_ARGS_DBM_1S	XFER_EQSP_ARGS_DBM XFER_ARGS_1S XFER_EQSP_COUNT(bitmap_dst_dp)
@@ -87,8 +113,6 @@
 #define XFER_FAST_ARGS_2S_1	XFER_FAST_ARGS_1 XFER_ARGS_2S
 #define XFER_EQSP_ARGS_2S_1	XFER_EQSP_ARGS_1 XFER_ARGS_2S
 #define XFER_SLOW_ARGS_2S_1	XFER_SLOW_ARGS_1 XFER_ARGS_2S
-
-#define XFER_SLOW_ARGS_3S_1	XFER_SLOW_ARGS_1 XFER_ARGS_3S
 
 #define XFER_FAST_ARGS_2SRCS	XFER_FAST_ARGS_SRC1 XFER_FAST_ARGS_SRC2
 #define XFER_EQSP_ARGS_2SRCS	XFER_EQSP_ARGS_SRC1 XFER_EQSP_ARGS_SRC2
@@ -174,77 +198,74 @@
 #define XFER_EQSP_ARGS_QUAT_1S_1	XFER_EQSP_ARGS_1 XFER_ARGS_QUAT_1S
 #define XFER_SLOW_ARGS_QUAT_1S_1	XFER_SLOW_ARGS_1 XFER_ARGS_QUAT_1S
 
+#define XFER_FAST_ARGS_CONV	XFER_FAST_ARGS_2
+
 #define XFER_FAST_ARGS_2	XFER_FAST_ARGS_1 XFER_FAST_ARGS_SRC1
 
 #define XFER_FAST_ARGS_DBM					\
-	va1.va_dest	= bitmap_dst_dp->dt_data;		\
-	va1.va_bit0	= bitmap_dst_dp->dt_bit0;
+	XFER_DBM_PTR						\
+	XFER_FAST_COUNT(bitmap_dst_dp)				\
+	SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );
 
 #define XFER_FAST_ARGS_SBM					\
-	va1.va_sbm_p	= bitmap_src_dp->dt_data;		\
-	va1.va_bit0	= bitmap_src_dp->dt_bit0;
+	XFER_SBM_PTR						\
+	SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
 
 #define XFER_EQSP_ARGS_DBM					\
-	va1.va_dest	= bitmap_dst_dp->dt_data;		\
-	va1.va_bit0	= bitmap_dst_dp->dt_bit0;		\
-	XFER_INCR(spi_dst_incr, bitmap_dst_dp)
+	XFER_DBM_PTR						\
+	SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );		\
+	XFER_DST_INCR(bitmap_dst_dp)
 
 #define XFER_EQSP_ARGS_SBM					\
-	va1.va_sbm_p	= bitmap_src_dp->dt_data;		\
-	va1.va_bit0	= bitmap_src_dp->dt_bit0;
+	XFER_SBM_PTR						\
+	SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
+
+/*#define XFER_ARGS_1S						\
+ *	SET_VA_SVAL1(vap, (oap->oa_svp[0])->std_scalar );
+ */
 
 #define XFER_ARGS_1S						\
-	va1.scalar_val1	= (oap->oa_svp[0])->std_scalar;
+	SET_VA_SVAL1(vap, OA_SVAL(oap,0) );
 
 #define XFER_ARGS_CPX_1S					\
-	va1.cpx_scalar_val1	= (oap->oa_svp[0])->std_cpx_scalar;
+	SET_VA_CVAL1(vap, OA_CPX_SVAL(oap,0) );
 
 #define XFER_ARGS_CPX_2S					\
 	XFER_ARGS_CPX_1S					\
-	va1.cpx_scalar_val2	= (oap->oa_svp[1])->std_cpx_scalar;
+	SET_VA_CVAL2(vap, OA_CPX_SVAL(oap,1) );
 
 #define XFER_ARGS_QUAT_1S					\
-	va1.quat_scalar_val1	= (oap->oa_svp[0])->std_quat_scalar;
+	SET_VA_QVAL1(vap,OA_QUAT_SVAL(oap,0) );
 
 #define XFER_ARGS_QUAT_2S					\
 	XFER_ARGS_QUAT_1S					\
-	va1.quat_scalar_val2	= (oap->oa_svp[1])->std_quat_scalar;
+	SET_VA_QVAL2(vap, OA_QUAT_SVAL(oap,1) );
 
 #define XFER_ARGS_3S						\
 	XFER_ARGS_2S						\
-	va1.scalar_val3	= (oap->oa_svp[2])->std_scalar;
+	SET_VA_SVAL3(vap, OA_SVAL(oap,2) );
 
 #define XFER_ARGS_2S						\
 	XFER_ARGS_1S						\
-	va1.scalar_val2	= (oap->oa_svp[1])->std_scalar;
+	SET_VA_SVAL2(vap, OA_SVAL(oap,1) );
 
-/*
-#define XFER_FAST_ARGS_DBM					\
-	va1.va_dest	= bitmap_dst_dp->dt_data;		\
-	va1.va_bit0	= bitmap_dst_dp->dt_bit0;
-#define XFER_SLOW_ARGS_1					\
-	SLOW_ARGS_SETUP						\
-	va1.va_dest	= dst_dp->dt_data;			\
-	va1.va_dinc	= dst_dp->dt_type_inc;			\
-	va1.va_count	= dst_dp->dt_type_dim;
-
-	*/
 
 #define XFER_SLOW_ARGS_DBM	SLOW_ARGS_SETUP					\
-				va1.va_dest	= bitmap_dst_dp->dt_data;	\
-				va1.va_dinc	= bitmap_dst_dp->dt_type_inc;	\
-				va1.va_count	= bitmap_dst_dp->dt_type_dim;	\
-				va1.va_bit0	= bitmap_dst_dp->dt_bit0;
+				XFER_DBM_PTR			\
+				SET_VA_DEST_INCSET(vap, OBJ_TYPE_INCS(bitmap_dst_dp) );	\
+				SET_VA_COUNT(vap, OBJ_TYPE_DIMS(bitmap_dst_dp) );	\
+				SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );
 
 #define XFER_SLOW_ARGS_SBM	SLOW_ARGS_SETUP					\
-				va1.va_sbm_p	= bitmap_src_dp->dt_data;	\
-				va1.va_sbm_inc	= bitmap_src_dp->dt_type_inc;	\
-				va1.va_sbm_count= bitmap_src_dp->dt_type_dim;	\
-				va1.va_bit0	= bitmap_src_dp->dt_bit0;
+				XFER_SBM_PTR					\
+				SET_VA_SBM_INCSET(vap, OBJ_TYPE_INCS(bitmap_src_dp) );	\
+				SET_VA_SBM_DIMSET(vap, OBJ_TYPE_DIMS(bitmap_src_dp) );\
+				SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
 
 
 
 #define XFER_FAST_ARGS_2	XFER_FAST_ARGS_1 XFER_FAST_ARGS_SRC1
+#define XFER_SLOW_ARGS_CONV	XFER_SLOW_ARGS_2
 #define XFER_SLOW_ARGS_2	XFER_SLOW_ARGS_1 XFER_SLOW_ARGS_SRC1
 #define XFER_FAST_ARGS_3	XFER_FAST_ARGS_2 XFER_FAST_ARGS_SRC2
 #define XFER_SLOW_ARGS_3	XFER_SLOW_ARGS_2 XFER_SLOW_ARGS_SRC2
@@ -256,68 +277,93 @@
 #define SHOW_ARG_DP(stem)	sprintf(error_string,"%s object:  %s",#stem,stem##_dp->dt_name);\
 				advise(error_string);
 
-#define XFER_FAST_ARGS_1	va1.va_dest	= dst_dp->dt_data;	\
+#define XFER_DEST_PTR		SET_VA_DEST_PTR(vap, OBJ_DATA_PTR(dst_dp) );	\
+				SET_VA_DEST_OFFSET(vap,OBJ_OFFSET(dst_dp));
+
+#define SRC_DP(idx)		OA_SRC_OBJ(oap,idx)
+
+/*#define XFER_SRC_PTR(idx)	SET_VA_SRC_PTR(vap,idx, OBJ_DATA_PTR(SRC_DP(idx)) );*/
+#define XFER_SRC_PTR(idx)	SET_VA_SRC_PTR(vap,idx, OBJ_DATA_PTR(SRC_DP(idx)) );	\
+				SET_VA_SRC_OFFSET(vap,idx,OBJ_OFFSET(SRC_DP(idx)) );
+
+
+#define XFER_SRC1_PTR		XFER_SRC_PTR(0)
+#define XFER_SRC2_PTR		XFER_SRC_PTR(1)
+#define XFER_SRC3_PTR		XFER_SRC_PTR(2)
+#define XFER_SRC4_PTR		XFER_SRC_PTR(3)
+#define XFER_SRC5_PTR		XFER_SRC_PTR(4)
+
+#define XFER_RETSCAL1		SET_VA_SVAL(vap,0,OBJ_DATA_PTR(OA_SCLR_OBJ(oap,0)));
+#define XFER_RETSCAL2		SET_VA_SVAL(vap,1,OBJ_DATA_PTR(OA_SCLR_OBJ(oap,1)));
+
+#define XFER_DBM_PTR		SET_VA_DEST_PTR(vap, OBJ_DATA_PTR(bitmap_dst_dp) );
+#define XFER_SBM_PTR		SET_VA_SBM_PTR(vap, OBJ_DATA_PTR(bitmap_src_dp) );
+
+#define XFER_FAST_ARGS_1	XFER_DEST_PTR					\
 				XFER_FAST_COUNT(dst_dp)
 
-#define XFER_FAST_COUNT(dp)	va1.va_len	= dp->dt_n_type_elts;
+#define XFER_FAST_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );
+#define XFER_EQSP_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );
 
-#define XFER_EQSP_COUNT(dp)	va1.va_len	= dp->dt_n_type_elts;
+#define XFER_FAST_ARGS_SRC(idx)	XFER_SRC_PTR(idx)
+#define XFER_FAST_ARGS_SRC1	XFER_FAST_ARGS_SRC(0)
+#define XFER_FAST_ARGS_SRC2	XFER_FAST_ARGS_SRC(1)
+#define XFER_FAST_ARGS_SRC3	XFER_FAST_ARGS_SRC(2)
+#define XFER_FAST_ARGS_SRC4	XFER_FAST_ARGS_SRC(3)
 
-#define XFER_FAST_ARGS_SRC1	va1.va_src1 = src1_dp->dt_data;
-#define XFER_FAST_ARGS_SRC2	va1.va_src2 = src2_dp->dt_data;
-#define XFER_FAST_ARGS_SRC3	va1.va_src3 = src3_dp->dt_data;
-#define XFER_FAST_ARGS_SRC4	va1.va_src4 = src4_dp->dt_data;
+#define XFER_SRC1_PTR		XFER_SRC_PTR(0)
 
-#define XFER_ARGS_EXTLOC	va1.va_sval[0].u_ul=dst_dp->dt_n_type_elts;	\
-				/* Need to do something here for the return scalars... */
-
-#define XFER_FAST_ARGS_EXTLOC	XFER_FAST_ARGS_SRC1		\
-				XFER_FAST_COUNT(src1_dp)	\
-				va1.va_dest = dst_dp->dt_data;	\
-				XFER_ARGS_EXTLOC
-
-#define XFER_SLOW_ARGS_EXTLOC	XFER_SLOW_ARGS_2		\
-				XFER_ARGS_EXTLOC
-
-#define SLOW_ARGS_SETUP						\
-	va1.va_spi_p = &spi1;					\
-	va1.va_szi_p = &szi1;
+#define SLOW_ARGS_SETUP		/* no-op, mem is allocated at object creation... */
+	
 
 #define XFER_SLOW_ARGS_1					\
 	SLOW_ARGS_SETUP						\
-	va1.va_dest	= dst_dp->dt_data;			\
-	va1.va_dinc	= dst_dp->dt_type_inc;			\
-	va1.va_count	= dst_dp->dt_type_dim;
+	XFER_DEST_PTR						\
+	SET_VA_DEST_INCSET(vap, OBJ_TYPE_INCS(dst_dp) );	\
+	SET_VA_COUNT(vap,OBJ_TYPE_DIMS(dst_dp) );
 
-#define XFER_SLOW_ARGS_SRC1	XFER_SLOW_ARGS_SRC_N(1)
-#define XFER_SLOW_ARGS_SRC2	XFER_SLOW_ARGS_SRC_N(2)
-#define XFER_SLOW_ARGS_SRC3	XFER_SLOW_ARGS_SRC_N(3)
-#define XFER_SLOW_ARGS_SRC4	XFER_SLOW_ARGS_SRC_N(4)
 
-#define XFER_SLOW_ARGS_SRC_N(n)					\
-	va1.va_src##n		= src##n##_dp->dt_data;		\
-	va1.va_src##n##_inc	= src##n##_dp->dt_type_inc;	\
-	va1.va_src##n##_cnt	= src##n##_dp->dt_type_dim;
+// Why don't we transfer the destination dimset???
 
+#define XFER_SLOW_ARGS_SRC(idx)	XFER_SRC_PTR(idx)			\
+				XFER_SLOW_SRC_SHAPE(idx)
+
+#define XFER_SLOW_ARGS_SRC1	XFER_SLOW_ARGS_SRC(0)
+#define XFER_SLOW_ARGS_SRC2	XFER_SLOW_ARGS_SRC(1)
+#define XFER_SLOW_ARGS_SRC3	XFER_SLOW_ARGS_SRC(2)
+#define XFER_SLOW_ARGS_SRC4	XFER_SLOW_ARGS_SRC(3)
+
+#define XFER_SLOW_SRC_SHAPE(idx)				\
+								\
+	SET_VA_SRC_INCSET(vap,idx,OBJ_TYPE_INCS(SRC_DP(idx)) );	\
+	SET_VA_SRC_DIMSET(vap,idx,OBJ_TYPE_DIMS(SRC_DP(idx)) );
+
+
+#define XFER_EQSP_ARGS_CONV	XFER_EQSP_ARGS_2
 #define XFER_EQSP_ARGS_2	XFER_EQSP_ARGS_1 XFER_EQSP_ARGS_SRC1
 #define XFER_EQSP_ARGS_3	XFER_EQSP_ARGS_2 XFER_EQSP_ARGS_SRC2
 #define XFER_EQSP_ARGS_4	XFER_EQSP_ARGS_3 XFER_EQSP_ARGS_SRC3
 #define XFER_EQSP_ARGS_5	XFER_EQSP_ARGS_4 XFER_EQSP_ARGS_SRC4
 
-#define XFER_INCR(member,dp)	va1.va_spi_p->member = dp->dt_type_inc;
+#define XFER_DST_INCR(dp)	fprintf(stderr,"XFER_DST_INCR\n");  longlist(DEFAULT_QSP_ARG  dp); SET_VA_DEST_INCSET(vap,OBJ_TYPE_INCS(dp) );
+#define XFER_SRC1_INCR(dp)	SET_VA_SRC1_INCSET(vap,OBJ_TYPE_INCS(dp) );
+#define XFER_SRC2_INCR(dp)	SET_VA_SRC2_INCSET(vap,OBJ_TYPE_INCS(dp) );
+#define XFER_SRC3_INCR(dp)	SET_VA_SRC3_INCSET(vap,OBJ_TYPE_INCS(dp) );
+#define XFER_SRC4_INCR(dp)	SET_VA_SRC4_INCSET(vap,OBJ_TYPE_INCS(dp) );
 
-#define XFER_EQSP_ARGS_1	XFER_FAST_ARGS_1		\
-				XFER_INCR(spi_dst_incr, oap->oa_dest)
+// XFER_FAST_ARGS_1 transfers the data ptr and the total count
 
-#define XFER_EQSP_ARGS_SRC1	XFER_FAST_ARGS_SRC1		\
-				XFER_INCR(spi_src_incr[0], oap->oa_dp[0])
+#define XFER_EQSP_ARGS_1	SET_VA_FLAGS(vap,VA_EQSP_ARGS);		\
+				XFER_FAST_ARGS_1			\
+				SET_VA_DEST_INC(vap,			\
+				OBJ_TYPE_INC(OA_DEST(oap),OBJ_MINDIM(OA_DEST(oap) ) ) );
 
-#define XFER_EQSP_ARGS_SRC2	XFER_FAST_ARGS_SRC2		\
-				XFER_INCR(spi_src_incr[1], oap->oa_dp[1])
+#define XFER_EQSP_ARGS_SRC(idx)	XFER_FAST_ARGS_SRC(idx)			\
+				SET_VA_SRC_INC(vap,idx,			\
+				OBJ_TYPE_INC(OA_SRC_OBJ(oap,idx),OBJ_MINDIM(OA_SRC_OBJ(oap,idx) ) ) );
 
-#define XFER_EQSP_ARGS_SRC3	XFER_FAST_ARGS_SRC3		\
-				XFER_INCR(spi_src_incr[2], oap->oa_dp[2])
-
-#define XFER_EQSP_ARGS_SRC4	XFER_FAST_ARGS_SRC4		\
-				XFER_INCR(spi_src_incr[3], oap->oa_dp[3])
+#define XFER_EQSP_ARGS_SRC1	XFER_EQSP_ARGS_SRC(0)
+#define XFER_EQSP_ARGS_SRC2	XFER_EQSP_ARGS_SRC(1)
+#define XFER_EQSP_ARGS_SRC3	XFER_EQSP_ARGS_SRC(2)
+#define XFER_EQSP_ARGS_SRC4	XFER_EQSP_ARGS_SRC(3)
 

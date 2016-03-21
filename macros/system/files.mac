@@ -2,18 +2,27 @@
 
 Start_File files.mac
 
+# Why TopMenu here???  (TopMenu used to be in the second
+# error then clause...
+
+# for unix, Create_Dir is defined to use a system cmd...
+
 Define Insure_Directory 1 name
 If "!file_exists('$1')"
-  "advise 'creating subdirectory \"$1\"' system 'mkdir $1'"
+  "advise 'creating subdirectory \"$1\"' Mkdir '$1'"
+#  Then "advise 'creating subdirectory \"$1\"' Mkdir '$1'"
+#  Else "advise 'directory \"$1\" already exists!'"
 If "!file_exists('$1')"
-  "warn 'Couldn\\\\'t create subdirectory \"$1\"' TopMenu quit"
+  "warn 'Couldn\\\\'t create subdirectory \"$1\"'"
 .
+
+# Insure_Public_Directory does a chmod 777...
 
 Define Insure_Public_Directory 1 name
 If "!file_exists('$1')"
-  "advise 'creating subdirectory \"$1\"' system 'mkdir $1; chmod 777 $1'"
+  "advise 'creating subdirectory \"$1\"' Mkdir '$1' Chmod 777 '$1'"
 If "!file_exists('$1')"
-  "warn 'Couldn\\'t create subdirectory \"$1\"' TopMenu quit"
+  "warn 'Couldn\\'t create subdirectory \"$1\"' quit"
 .
 
 Stop_File files.mac

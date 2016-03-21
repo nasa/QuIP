@@ -1,60 +1,61 @@
 #include "quip_config.h"
 
-char VersionId_psych_stairmenu[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #include <string.h>
 
 #include "stc.h"
-#include "getbuf.h"
-#include "savestr.h"
+#include "quip_prot.h"
 #include "rn.h"
-#include "query.h"
-#include "debug.h"		/* verbose */
 
 int is_fc=0;
 
 void general_mod(QSP_ARG_DECL int t_class)
 {
 	const char *s;
-	Trial_Class *clp;
+	Trial_Class *tcp;
 
 	s=NAMEOF("stimulus command string");
-	clp = index_class(QSP_ARG  t_class);
-#ifdef CAUTIOUS
-	if( clp == NO_CLASS ) ERROR1("CAUTIOUS:  general_mod, missing class");
-#endif /* CAUTIOUS */
+	tcp = index_class(QSP_ARG  t_class);
+//#ifdef CAUTIOUS
+//	if( tcp == NO_CLASS ) {
+//		ERROR1("CAUTIOUS:  general_mod, missing class");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( tcp != NO_CLASS );
 
-	if( clp->cl_data != NULL )
-		givbuf(clp->cl_data);
-	clp->cl_data = savestr(s);
+	if( CLASS_CMD(tcp) != NULL )
+		givbuf((void *) CLASS_CMD(tcp) );
+	SET_CLASS_CMD( tcp, savestr(s) );
 }
 
+#ifdef FOOBAR
 /* BUG?  this routine duplicates chew_text??? */
 
 void interpret_text_fragment(QSP_ARG_DECL const char *s)
 {
 	int ql;
 
-	PUSHTEXT(s);
+	PUSH_TEXT(s);
 
-	ql=TELL_QLEVEL;
+	ql=QLEVEL;
 
 	/* now need to interpret input intil text is eaten */
 
-	while( TELL_QLEVEL >= ql ) {
-		do_cmd(SINGLE_QSP_ARG);
+	while( QLEVEL >= ql ) {
+		qs_do_cmd(THIS_QSP);
 		lookahead_til(QSP_ARG ql-1);
 	}
 }
+#endif // FOOBAR
 
-int general_stim(QSP_ARG_DECL  int t_class,int val,Staircase *stcp)
+int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 {
 	char stim_str[256], *s;
-	int coin;
+	int coin=0;	// initialize to quiet compiler, but not necessary!?
 	int rsp;
-	struct var *vp;
-	Trial_Class *clp;
+	//struct var *vp;
+	Variable *vp;
 
 	if( is_fc ){
 		coin=(int)rn(1);
@@ -88,25 +89,32 @@ int general_stim(QSP_ARG_DECL  int t_class,int val,Staircase *stcp)
 	ASSIGN_VAR("xval",stim_str);
 	sprintf(stim_str,"%d",val);
 	ASSIGN_VAR("val",stim_str);
-	sprintf(stim_str,"%d",t_class);
+	sprintf(stim_str,"%d",CLASS_INDEX(tcp));
 	ASSIGN_VAR("class",stim_str);
 
-	clp = index_class(QSP_ARG  t_class);
-#ifdef CAUTIOUS
-	if( clp == NO_CLASS ) ERROR1("CAUTIOUS:  missing class");
-#endif
-	sprintf(msg_str,"Text \"%s\"",(char *)(clp->cl_data));
-	PUSH_INPUT_FILE(msg_str);
+//#ifdef CAUTIOUS
+//	if( tcp == NO_CLASS ) {
+//		ERROR1("CAUTIOUS:  missing class");
+//#ifdef BUILD_FOR_IOS
+//		return REDO;
+//#endif // BUILD_FOR_IOS
+//	}
+//#endif // CAUTIOUS
+	assert( tcp != NO_CLASS );
 
-	interpret_text_fragment(QSP_ARG clp->cl_data);		/* use chew_text??? */
+	//sprintf(msg_str,"Text \"%s\"",(char *)(tcp->cl_data));
+	//PUSH_INPUT_FILE(msg_str);
+
+	//interpret_text_fragment(QSP_ARG tcp->cl_data);		/* use chew_text??? */
+	chew_text(QSP_ARG CLASS_CMD(tcp), "(stimulus text)");
 	vp=VAR_OF("response_string");
-	if( vp != NO_VAR )
-		rsp=response(QSP_ARG  vp->v_value);
+	if( vp != NO_VARIABLE )
+		rsp=response(QSP_ARG  VAR_VALUE(vp));
 	else {
 		static int warned=0;
 
 		if( !warned ){
-			WARN("script variable $response_string not defined");
+			WARN("default_stim:  script variable $response_string not defined");
 			warned=1;
 		}
 		rsp=response(QSP_ARG  "Enter response: ");
@@ -115,10 +123,10 @@ int general_stim(QSP_ARG_DECL  int t_class,int val,Staircase *stcp)
 	if( is_fc ){
 		/* stimulus routine may have changed value of coin */
 		vp=VAR_OF("coin");
-		if( vp == NO_VAR )
+		if( vp == NO_VARIABLE )
 			WARN("variable \"coin\" not set!!!");
 		else {
-			if( sscanf(vp->v_value,"%d",&coin) != 1 )
+			if( sscanf(VAR_VALUE(vp),"%d",&coin) != 1 )
 			WARN("error scanning integer from variable \"coin\"\n");
 		}
 
@@ -128,17 +136,24 @@ int general_stim(QSP_ARG_DECL  int t_class,int val,Staircase *stcp)
 			else if( rsp == NO ) rsp = YES;
 		}
 		*/
-#ifdef CAUTIOUS
-		if( stcp == NULL )
-			ERROR1("CAUTIOUS:  stcp is null, but expt is forced choice!?");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//		if( stcp == NULL ){
+//			ERROR1("CAUTIOUS:  stcp is null, but expt is forced choice!?");
+//#ifdef BUILD_FOR_IOS
+//			return REDO;
+//#endif // BUILD_FOR_IOS
+//		}
+//#endif /* CAUTIOUS */
+		assert( stcp != NULL );
+        
+        // analyzer complains coin is a garbage value??? BUG?
 		if( coin ){
-			stcp->stc_crctrsp = NO;
+			SET_STAIR_CRCT_RSP(stcp,NO);
 		} else {
-			stcp->stc_crctrsp = YES;
+			SET_STAIR_CRCT_RSP(stcp,YES);
 		}
 		if( verbose ){
-			if( rsp == stcp->stc_crctrsp )
+			if( rsp == STAIR_CRCT_RSP(stcp) )
 				advise("correct");
 			else
 				advise("incorrect");
@@ -152,13 +167,13 @@ COMMAND_FUNC( stair_menu )
 	static int inited=0;
 
 	if( !inited ){
-		stmrt=general_stim;
+		stmrt=default_stim;
 		modrt=general_mod;
 		/* we don't want a warning msg if default file doesn't exist */
 		/* rdxvals("xvals"); */
 		inited++;
 	}
 
-	exp_menu(SINGLE_QSP_ARG);
+	do_exp_menu(SINGLE_QSP_ARG);
 }
 

@@ -5,7 +5,7 @@
 # Create_SVD_Objects prefix npts nparams
 #
 
-If var_exists(svd_loaded) "PopFile 2 nop"
+If var_exists(svd_loaded) exit_file
 
 Start_File svd.mac
 
@@ -15,11 +15,12 @@ If !var_exists(std_type) "Set std_type float"
 #< $macro_dir/war/bqi.mac
 
 Define Create_SVD_Objects 3 prefix n_data_pts n_parameters
-Image  "${1}_u_matrix" $2 $3 1 $std_type
-Image  "${1}_v_matrix" $3 $3 1 $std_type
-Vector "${1}_eigenvalues" $3 1 $std_type
-Vector "${1}_coeffs"      $3 1 $std_type
-Vector "${1}_datain"      $2 1 $std_type
+If !var_exists(svd_type) "Set svd_type $std_type"
+Image  "${1}_u_matrix" $2 $3 1 $svd_type
+Image  "${1}_v_matrix" $3 $3 1 $svd_type
+Vector "${1}_eigenvalues" $3 1 $svd_type
+Vector "${1}_coeffs"      $3 1 $svd_type
+Vector "${1}_datain"      $2 1 $svd_type
 .
 
 Define Delete_SVD_Objects 1 prefix

@@ -53,7 +53,7 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 0
+#define YYPURE 1
 
 /* Using locations.  */
 #define YYLSP_NEEDED 0
@@ -70,7 +70,7 @@
      NUMBER = 259,
      END = 260,
      SEQNAME = 261,
-     MOVIE_NAME = 262
+     MY_MOVIE_NAME = 262
    };
 #endif
 /* Tokens.  */
@@ -78,7 +78,7 @@
 #define NUMBER 259
 #define END 260
 #define SEQNAME 261
-#define MOVIE_NAME 262
+#define MY_MOVIE_NAME 262
 
 
 
@@ -88,8 +88,6 @@
 
 
 #include "quip_config.h"
-
-char SccsId_seq_seqparse[] = QUIP_VERSION_STRING;
 
 /* generalized item sequencer */
 
@@ -104,43 +102,172 @@ char SccsId_seq_seqparse[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "seq.h"
-#include "debug.h"
-#include "items.h"
-#include "savestr.h"
+
+typedef union {
+	Seq *yysp;
+	void *yyvp;
+	int yyi;
+} YYSTYPE;
+
+#define YYSTYPE_IS_DECLARED		/* needed on 2.6 machine? */
+
 #include "yacc_hack.h"	// change yy prefix to seq_
 
-int yylex(SINGLE_QSP_ARG_DECL);
-#define YYLEX_PARAM SINGLE_QSP_ARG
+//int yylex(SINGLE_QSP_ARG_DECL);
+//#define YYLEX_PARAM SINGLE_QSP_ARG
 
-#ifdef THREAD_SAFE_QUERY
-#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stream * */
-/* For yyerror */
-#define YY_(msg)	QSP_ARG msg
-#endif /* THREAD_SAFE_QUERY */
+// For the time being a single signature, regardless of THREAD_SAFE_QUERY
+static int yylex(YYSTYPE *yylval_p, Query_Stack *qsp);
 
-int yyerror(QSP_ARG_DECL  const char *);
+//#ifdef THREAD_SAFE_QUERY
+//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stream * */
+///* For yyerror */
+//#define YY_(msg)	QSP_ARG msg
+//#endif /* THREAD_SAFE_QUERY */
+
+int yyerror(Query_Stack *qsp,  const char *);
 
 
+// BUG global not thread-sage
 static int refno=1;
-
-/* local prototypes */
-
-static Seq *revseq(Seq *seqptr);
-static int contains(Seq *seqp,void *data);
-static Seq *seqparse(QSP_ARG_DECL  const char *strbuf);
-static Seq *new_seq(QSP_ARG_DECL  const char *name);
-static Seq *joinseq(Seq *s1, Seq *s2);
-static Seq *makfrm(int cnt, void *vp);
-static Seq *reptseq(int cnt, Seq *seqptr);
-static void null_show_func(void *vp);
-static void * null_get_func(const char *name);
-static void null_rev_func(void *vp);
-static void init_seq_struct(Seq *sp);
-static Seq *unnamed_seq(void);
 static const char *ipptr;
 static int ended;
 static Seq *final_mviseq;
+
+static void null_show_func(void *vp)
+{
+	NWARN("no sequence show function defined");
+}
+
+static void * null_get_func(const char *name)
+{
+	NWARN("no sequence item get function defined");
+	return(NULL);
+}
+
+static void null_rev_func(void *vp)
+{
+	NWARN("no reverse function defined");
+}
+
+static int null_init_func(void *vp)
+{
+	NWARN("no init function defined");
+	return(0);
+}
+
+static void null_wait_func(void)
+{
+	NWARN("no wait function defined");
+}
+
+static void null_ref_func(void *vp)
+{
+	NWARN("no reference function defined");
+}
+
+static Seq_Module null_seq_module = {
+	null_get_func,
+	null_init_func,
+	null_show_func,
+	null_rev_func,
+	null_wait_func,
+	null_ref_func
+};
+
+static Seq_Module *the_smp=(&null_seq_module);
+
+static void init_seq_struct(Seq *sp)
+{
+	sp->seq_flags=SEQFREE;
+	sp->seq_refcnt=0;
+	sp->seq_first=NO_SEQ;
+	sp->seq_next=NO_SEQ;
+	sp->seq_count=0;
+}
+
+static Seq *unnamed_seq(void)	/* return an unused seq. struct */
+{
+	register Seq *sp;
+
+	sp = (Seq *)getbuf(sizeof(*sp));
+
+	if( sp == NO_SEQ )
+		NERROR1("no more memory for sequences");
+
+	sp->seq_name=NULL;
+
+	init_seq_struct(sp);
+	return(sp);
+}
+
+static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!= NO_SEQ ){
+		sp->seq_first=s1;
+		sp->seq_next=s2;
+		sp->seq_count=1;
+		sp->seq_flags=SUPSEQ;
+
+		s1->seq_refcnt++;
+		s2->seq_refcnt++;
+		sp->seq_refcnt++;
+
+	}
+	return(sp);
+}
+
+static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!=NO_SEQ ){
+		sp->seq_first=seqptr;
+		sp->seq_count=(short)cnt;
+		sp->seq_flags=SUPSEQ;
+		seqptr->seq_refcnt++;
+		sp->seq_refcnt++;
+	}
+	return(sp);
+}
+
+static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!=NO_SEQ ){
+		sp->seq_first=seqptr;
+		sp->seq_count = -1;
+		sp->seq_flags=SUPSEQ;
+		seqptr->seq_refcnt++;
+		sp->seq_refcnt++;
+	}
+	return(sp);
+}
+
+static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!=NO_SEQ ){
+		sp->seq_count=(short)cnt;
+		sp->seq_data=vp;
+		sp->seq_flags = SEQ_MOVIE;
+		sp->seq_refcnt++;
+
+		/* increment reference count on this leaf */
+		(*the_smp->ref_func)(vp);
+	}
+	return(sp);
+}
 
 
 
@@ -163,16 +290,7 @@ static Seq *final_mviseq;
 #endif
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 60 "seqparse.y"
-{
-	Seq *yysp;
-	void *yyvp;
-	int yyi;
-}
-/* Line 193 of yacc.c.  */
-#line 175 "seqparse.c"
-	YYSTYPE;
+typedef int YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -184,7 +302,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 188 "seqparse.c"
+#line 306 "seqparse.c"
 
 #ifdef short
 # undef short
@@ -234,7 +352,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -470,8 +588,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    76,    76,    80,    82,    83,    85,    87,    89,    90,
-      95
+       0,   211,   211,   215,   217,   218,   220,   222,   224,   225,
+     230
 };
 #endif
 
@@ -481,8 +599,8 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "REVERSE", "NUMBER", "END", "SEQNAME",
-  "MOVIE_NAME", "'+'", "'*'", "'('", "')'", "$accept", "seqst", "sequence",
-  "movie", 0
+  "MY_MOVIE_NAME", "'+'", "'*'", "'('", "')'", "$accept", "seqst",
+  "sequence", "movie", 0
 };
 #endif
 
@@ -600,7 +718,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (YY_("syntax error: cannot back up")); \
+      yyerror (qsp, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -641,7 +759,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -655,9 +773,9 @@ while (YYID (0))
 /* YYLEX -- calling `yylex' with the right arguments.  */
 
 #ifdef YYLEX_PARAM
-# define YYLEX yylex (YYLEX_PARAM)
+# define YYLEX yylex (&yylval, YYLEX_PARAM)
 #else
-# define YYLEX yylex ()
+# define YYLEX yylex (&yylval, qsp)
 #endif
 
 /* Enable debugging if requested.  */
@@ -680,7 +798,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value); \
+		  Type, Value, qsp); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -694,17 +812,19 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, Query_Stack *qsp)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, qsp)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
+    Query_Stack *qsp;
 #endif
 {
   if (!yyvaluep)
     return;
+  YYUSE (qsp);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -726,13 +846,14 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, Query_Stack *qsp)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep)
+yy_symbol_print (yyoutput, yytype, yyvaluep, qsp)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
+    Query_Stack *qsp;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -740,7 +861,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, qsp);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -780,12 +901,13 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, Query_Stack *qsp)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule)
+yy_reduce_print (yyvsp, yyrule, qsp)
     YYSTYPE *yyvsp;
     int yyrule;
+    Query_Stack *qsp;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -799,7 +921,7 @@ yy_reduce_print (yyvsp, yyrule)
       fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       );
+		       		       , qsp);
       fprintf (stderr, "\n");
     }
 }
@@ -807,7 +929,7 @@ yy_reduce_print (yyvsp, yyrule)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule); \
+    yy_reduce_print (yyvsp, Rule, qsp); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1058,16 +1180,18 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, Query_Stack *qsp)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep)
+yydestruct (yymsg, yytype, yyvaluep, qsp)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
+    Query_Stack *qsp;
 #endif
 {
   YYUSE (yyvaluep);
+  YYUSE (qsp);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1092,7 +1216,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void);
+int yyparse (Query_Stack *qsp);
 #else
 int yyparse ();
 #endif
@@ -1100,14 +1224,6 @@ int yyparse ();
 
 
 
-/* The look-ahead symbol.  */
-int yychar;
-
-/* The semantic value of the look-ahead symbol.  */
-YYSTYPE yylval;
-
-/* Number of syntax errors so far.  */
-int yynerrs;
 
 
 
@@ -1129,15 +1245,23 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void)
+yyparse (Query_Stack *qsp)
 #else
 int
-yyparse ()
-
+yyparse (qsp)
+    Query_Stack *qsp;
 #endif
 #endif
 {
-  
+  /* The look-ahead symbol.  */
+int yychar;
+
+/* The semantic value of the look-ahead symbol.  */
+YYSTYPE yylval;
+
+/* Number of syntax errors so far.  */
+int yynerrs;
+
   int yystate;
   int yyn;
   int yyresult;
@@ -1382,37 +1506,37 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 77 "seqparse.y"
+#line 212 "seqparse.y"
     { final_mviseq = (yyval. yysp ) ; }
     break;
 
   case 3:
-#line 81 "seqparse.y"
+#line 216 "seqparse.y"
     { (yyval. yysp )=joinseq( (yyvsp[(1) - (3)]. yysp ), (yyvsp[(3) - (3)]. yysp ) ); }
     break;
 
   case 5:
-#line 84 "seqparse.y"
+#line 219 "seqparse.y"
     { (yyval. yysp )=reptseq( (yyvsp[(1) - (3)].yyi), (yyvsp[(3) - (3)]. yysp ) ); }
     break;
 
   case 6:
-#line 86 "seqparse.y"
+#line 221 "seqparse.y"
     { (yyval. yysp )=reptseq( (yyvsp[(1) - (4)].yyi), (yyvsp[(3) - (4)]. yysp ) ); }
     break;
 
   case 7:
-#line 88 "seqparse.y"
+#line 223 "seqparse.y"
     { (yyval. yysp )=reptseq( (yyvsp[(1) - (5)].yyi), (yyvsp[(4) - (5)]. yysp ) ); }
     break;
 
   case 9:
-#line 91 "seqparse.y"
+#line 226 "seqparse.y"
     { (yyval. yysp )=revseq( (yyvsp[(3) - (4)]. yysp ) ); }
     break;
 
   case 10:
-#line 96 "seqparse.y"
+#line 231 "seqparse.y"
     {
 				(yyval. yysp )=makfrm((yyvsp[(1) - (3)].yyi),(yyvsp[(3) - (3)]. yyvp ));
 			}
@@ -1420,7 +1544,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1424 "seqparse.c"
+#line 1548 "seqparse.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1456,7 +1580,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (YY_("syntax error"));
+      yyerror (qsp, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -1480,11 +1604,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (yymsg);
+	    yyerror (qsp, yymsg);
 	  }
 	else
 	  {
-	    yyerror (YY_("syntax error"));
+	    yyerror (qsp, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -1508,7 +1632,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval);
+		      yytoken, &yylval, qsp);
 	  yychar = YYEMPTY;
 	}
     }
@@ -1564,7 +1688,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp);
+		  yystos[yystate], yyvsp, qsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1602,7 +1726,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (YY_("memory exhausted"));
+  yyerror (qsp, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1610,7 +1734,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval);
+		 yytoken, &yylval, qsp);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -1618,7 +1742,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp);
+		  yystos[*yyssp], yyvsp, qsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1634,53 +1758,10 @@ yyreturn:
 }
 
 
-#line 101 "seqparse.y"
+#line 236 "seqparse.y"
 
 
 ITEM_INTERFACE_DECLARATIONS( Seq, mviseq )
-
-static void null_show_func(void *vp)
-{
-	NWARN("no sequence show function defined");
-}
-
-static void * null_get_func(const char *name)
-{
-	NWARN("no sequence item get function defined");
-	return(NULL);
-}
-
-static void null_rev_func(void *vp)
-{
-	NWARN("no reverse function defined");
-}
-
-static int null_init_func(void *vp)
-{
-	NWARN("no init function defined");
-	return(0);
-}
-
-static void null_wait_func(VOID)
-{
-	NWARN("no wait function defined");
-}
-
-static void null_ref_func(void *vp)
-{
-	NWARN("no reference function defined");
-}
-
-static Seq_Module null_seq_module = {
-	null_get_func,
-	null_init_func,
-	null_show_func,
-	null_rev_func,
-	null_wait_func,
-	null_ref_func
-};
-
-static Seq_Module *the_smp=(&null_seq_module);
 
 void load_seq_module(Seq_Module *smp)
 {
@@ -1730,7 +1811,7 @@ void show_sequence(QSP_ARG_DECL  const char *s)
 					( c ) == '-'   ||	\
 					( c ) == '_' )
 
-int yylex(SINGLE_QSP_ARG_DECL)
+int yylex( YYSTYPE *yylval_p, /*SINGLE_QSP_ARG_DECL*/ Query_Stack *qsp )
 {
 	char *numptr, *wrdptr;
 	int n;
@@ -1750,7 +1831,7 @@ int yylex(SINGLE_QSP_ARG_DECL)
 			*numptr++ = (*ipptr++);
 		*numptr=0;
 		sscanf(numbuf,"%d",&n);
-		yylval.yyi=n;
+		yylval_p->yyi=n;
 		return(NUMBER);
 	} else if( IS_LEGAL_NAME_START(*ipptr) ){
 		char wrdbuf[LLEN];
@@ -1762,20 +1843,20 @@ int yylex(SINGLE_QSP_ARG_DECL)
 
 		if( !strcmp(wrdbuf,"reverse") ) return(REVERSE);
 
-		yylval.yysp = mviseq_of( QSP_ARG  wrdbuf );
-		if( yylval.yysp != NO_SEQ ) return( SEQNAME );
+		yylval_p->yysp = mviseq_of( QSP_ARG  wrdbuf );
+		if( yylval_p->yysp != NO_SEQ ) return( SEQNAME );
 
 		/* not a sequence, try a pattern name */
 
-		yylval.yyvp = (*the_smp->get_func)( wrdbuf );
-		if( yylval.yyvp != NULL ) return( MOVIE_NAME );
+		yylval_p->yyvp = (*the_smp->get_func)( wrdbuf );
+		if( yylval_p->yyvp != NULL ) return( MY_MOVIE_NAME );
 
 		/* error */
 		sprintf(str,"%s is not a sequence or a movie name", wrdbuf);
-		yyerror(YY_(str));
+		yyerror(qsp,str);
 		return(0);
 	} else {
-		yylval.yyi=0;
+		yylval_p->yyi=0;
 		return(*ipptr++);
 	}
 }
@@ -1784,19 +1865,19 @@ static Seq *seqparse(QSP_ARG_DECL  const char *strbuf)		/* compile sequence in s
 {
 	ipptr=strbuf;
 	ended=0;
-	if( yyparse(SINGLE_QSP_ARG)==0 ) return(final_mviseq);
+	if( yyparse(THIS_QSP)==0 ) return(final_mviseq);
 	else {
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"Error parsing sequence definition \"%s\"", strbuf);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return(NO_SEQ);
 	}
 }
 
-int yyerror(QSP_ARG_DECL  const char *s)
+int yyerror(Query_Stack *qsp,  const char *s)
 {
-	sprintf(error_string,"seqparse (yyerror): %s",s);
-	WARN(error_string);
+	sprintf(ERROR_STRING,"seqparse (yyerror): %s",s);
+	WARN(ERROR_STRING);
 	return(0);
 }
 
@@ -1843,102 +1924,12 @@ void delseq(QSP_ARG_DECL  Seq *sp)
 	if( sp->seq_next != NO_SEQ ) delseq(QSP_ARG  sp->seq_next);
 	if( sp->seq_refcnt <= 0 ){
 		if( sp->seq_name != NULL ){
-			del_mviseq(QSP_ARG  sp->seq_name);
+			del_mviseq(QSP_ARG  sp);
 			rls_str((char *)sp->seq_name);
 		} else {
 			givbuf(sp);
 		}
 	}
-}
-
-static Seq *unnamed_seq(void)	/* return an unused seq. struct */
-{
-	register Seq *sp;
-
-	sp = (Seq *)getbuf(sizeof(*sp));
-
-	if( sp == NO_SEQ )
-		NERROR1("no more memory for sequences");
-
-	sp->seq_name=NULL;
-
-	init_seq_struct(sp);
-	return(sp);
-}
-
-static void init_seq_struct(Seq *sp)
-{
-	sp->seq_flags=SEQFREE;
-	sp->seq_refcnt=0;
-	sp->seq_first=NO_SEQ;
-	sp->seq_next=NO_SEQ;
-	sp->seq_count=0;
-}
-
-static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
-		sp->seq_count=cnt;
-		sp->seq_data=vp;
-		sp->seq_flags = SEQ_MOVIE;
-		sp->seq_refcnt++;
-
-		/* increment reference count on this leaf */
-		(*the_smp->ref_func)(vp);
-	}
-	return(sp);
-}
-
-static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!= NO_SEQ ){
-		sp->seq_first=s1;
-		sp->seq_next=s2;
-		sp->seq_count=1;
-		sp->seq_flags=SUPSEQ;
-
-		s1->seq_refcnt++;
-		s2->seq_refcnt++;
-		sp->seq_refcnt++;
-
-	}
-	return(sp);
-}
-
-static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
-		sp->seq_first=seqptr;
-		sp->seq_count=cnt;
-		sp->seq_flags=SUPSEQ;
-		seqptr->seq_refcnt++;
-		sp->seq_refcnt++;
-	}
-	return(sp);
-}
-
-static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
-		sp->seq_first=seqptr;
-		sp->seq_count = -1;
-		sp->seq_flags=SUPSEQ;
-		seqptr->seq_refcnt++;
-		sp->seq_refcnt++;
-	}
-	return(sp);
 }
 
 void evalseq(Seq *seqptr)		/* recursive procedure to compile a subsequence */

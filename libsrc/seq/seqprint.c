@@ -2,24 +2,21 @@
 
 #include "quip_config.h"
 
-char VersionId_seq_seqprint[] = QUIP_VERSION_STRING;
-
-
 #include <stdio.h>
 
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "seq.h"
-#include "items.h"
 
-void pseq(Seq *seqptr)		/** print out a sequence */
+void pseq(QSP_ARG_DECL  Seq *seqptr)		/** print out a sequence */
 {
 	sprintf(msg_str,"%s: ",seqptr->seq_name);
 	prt_msg_frag(msg_str);
-	pfull(seqptr);
+	pfull(QSP_ARG  seqptr);
 	prt_msg("");
 }
 
-void pframe( Seq *seqptr)
+void pframe(QSP_ARG_DECL   Seq *seqptr)
 {
 	Item *ip;
 
@@ -28,14 +25,14 @@ void pframe( Seq *seqptr)
 	prt_msg_frag(msg_str);
 }
 
-void pfull( Seq *seqptr )
+void pfull(QSP_ARG_DECL   Seq *seqptr )
 {
 	if( seqptr->seq_first == NO_SEQ && seqptr->seq_next==NO_SEQ )	/* frame */
-		pframe(seqptr);
+		pframe(QSP_ARG  seqptr);
 	else {						/* concatentation */
 		if( seqptr->seq_count == -1 ){	/* reversal */
 			prt_msg_frag("reverse( ");
-			pone(seqptr->seq_first);
+			pone(QSP_ARG  seqptr->seq_first);
 			prt_msg_frag(" )");
 			return;
 		}
@@ -43,17 +40,17 @@ void pfull( Seq *seqptr )
 			sprintf(msg_str,"%d ( ",seqptr->seq_count);
 			prt_msg_frag(msg_str);
 		}
-		pone(seqptr->seq_first);
+		pone(QSP_ARG  seqptr->seq_first);
 		if( seqptr->seq_next != NO_SEQ ){
 			prt_msg_frag(" + ");
-			pone(seqptr->seq_next);
+			pone(QSP_ARG  seqptr->seq_next);
 		}
 		if( seqptr->seq_count != 1 )
 			prt_msg_frag(" ) ");
 	}
 }
 
-void pone( Seq *seqptr )
+void pone(QSP_ARG_DECL   Seq *seqptr )
 {
 	if( seqptr==NO_SEQ ){ /* end of the chain */
 		/* warn("pone:  null sequence"); */
@@ -63,11 +60,11 @@ void pone( Seq *seqptr )
 		sprintf(msg_str,"%s",seqptr->seq_name);
 		prt_msg_frag(msg_str);
 	} else if( seqptr->seq_first == NO_SEQ && seqptr->seq_next==NO_SEQ ) /* frame */
-		pframe(seqptr);
+		pframe(QSP_ARG  seqptr);
 	else {						/* concatentation */
 		if( seqptr->seq_count == -1 ){
 			prt_msg_frag("reverse( ");
-			pone(seqptr->seq_first);
+			pone(QSP_ARG  seqptr->seq_first);
 			prt_msg_frag(" )");
 			return;
 		}
@@ -75,10 +72,10 @@ void pone( Seq *seqptr )
 			sprintf(msg_str,"%d ( ",seqptr->seq_count);
 			prt_msg_frag(msg_str);
 		}
-		pone(seqptr->seq_first);
+		pone(QSP_ARG  seqptr->seq_first);
 		if( seqptr->seq_next != NO_SEQ ){
 			prt_msg_frag(" + ");
-			pone(seqptr->seq_next);
+			pone(QSP_ARG  seqptr->seq_next);
 		}
 		if( seqptr->seq_count != 1 )
 			prt_msg_frag(" ) ");

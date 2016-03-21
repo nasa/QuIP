@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/ctrack
+macrosdir	=	$(datadir)/coq/macros/ctrack
 
 macros_DATA	=	calib.mac		\
 			cmon.mac		\

@@ -1,0 +1,74 @@
+#
+# macros that only work on unix
+# (pipes work on iOS simulator, but not the device itself!)
+#
+
+If $verbose "echo 'interpreting file unix_helper.mac'"
+
+Define Pause 0
+advise 'type ^D to proceed'
+< /dev/tty
+.
+
+macros nest Pause quit
+
+Define Fetch_Date 1 varname
+os
+  pipes
+    open date_pipe read date
+    read date_pipe $1
+    close date_pipe
+    quit
+  quit
+.
+
+Define Tell_Date 0
+Fetch_Date date_string
+advise "$date_string"
+.
+
+Define Count_Bytes 2 varname filename
+variables push_fmt decimal quit
+os
+  pipes
+    open counter_pipe r "ls -l $2 | dm s5"
+    read counter_pipe cb_tmp
+    close counter_pipe
+    quit
+  quit
+Assign $1 $cb_tmp
+variables pop_fmt quit
+.
+
+Define Count_Columns 2 varname filename
+If !file_exists('$2') "warn 'File $2 does not exist' exit_macro"
+os
+  pipes
+    open counter_pipe read "wc $2 | dm x2/x1"
+    read counter_pipe cl_tmp
+    close counter_pipe
+    quit
+  quit
+Assign $1 $cl_tmp
+.
+
+Define Count_Lines 2 varname filename
+If !file_exists('$2') "warn 'File '$2' does not exist' exit_macro"
+os
+  pipes
+    open counter_pipe read "cat '$2' | wc -l"
+    read counter_pipe cl_tmp
+    close counter_pipe
+    quit
+  quit
+Assign $1 $cl_tmp
+.
+
+Define Mkdir 1 dirname
+os
+  system "mkdir '$1'"
+  quit
+.
+
+If $verbose "echo 'finished interpreting file unix_helper.mac'"
+

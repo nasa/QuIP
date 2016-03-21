@@ -8,28 +8,24 @@
 
 #include "quip_config.h"
 
-char VersionId_cuda_cuda[] = QUIP_VERSION_STRING;
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>	/* malloc */
-#endif
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
-#ifdef HAVE_CUDA
-#include <cutil_inline.h>
+//#ifdef HAVE_CUDA
+// This is used in cuda 4
+//#include <cutil_inline.h>
 
+#ifdef HAVE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <curand.h>
+#define BUILD_FOR_CUDA
+#endif // HAVE_CUDA
+
+#include "quip_prot.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"
-
-#include "items.h"
-#include "debug.h"		/* verbose */
-#include "submenus.h"
-#include "fileck.h"
-#include "my_vector_functions.h"
-#include "menu_calls.h"
 
 // global var
 int max_threads_per_block;
@@ -38,42 +34,25 @@ Cuda_Device *curr_cdp=NO_CUDA_DEVICE;
 
 Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
+#ifdef HAVE_CUDA
 #define DEFAULT_CUDA_DEV_VAR	"DEFAULT_CUDA_DEVICE"
-static const char *default_cuda_dev_name=NULL;
-static const char *first_cuda_dev_name=NULL;
-static int default_cuda_dev_found=0;
+
+
+#endif // HAVE_CUDA
 
 ITEM_INTERFACE_DECLARATIONS( Cuda_Device, cudev )
+
+#define PICK_CUDEV(pmpt)	pick_cudev(QSP_ARG  pmpt)
+
 
 /* On the host 1L<<33 gets us bit 33 - but 1<<33 does not,
  * because, by default, ints are 32 bits.  We don't know
  * how nvcc treats 1L...  but we can try it...
  */
 
+#ifdef HAVE_CUDA
+
 #ifdef FOOBAR
-bitmap_word *gpu_bit_val_array;
-
-static void init_gpu_bit_val_array(void)
-{
-	cudaError_t e;
-	void *p;
-
-	e = cudaMalloc(&p, sizeof(bitmap_word) * BITS_PER_BITMAP_WORD );
-	/* Now copy the bit_value array.
-	 * This is declared as __device__ memory - but what if we have multiple
-	 * devices???
-	 */
-
-	if( e != cudaSuccess ){
-		describe_cuda_error2("init_gpu_bit_val_array","cudaMalloc",e);
-		ERROR1("CUDA memory allocation error");
-	}
-	cutilSafeCall( cudaMemcpy(p, bit_val_array,
-		BITS_PER_BITMAP_WORD*sizeof(bitmap_word), cudaMemcpyHostToDevice) );
-	gpu_bit_val_array = (bitmap_word *)p;
-}
-#endif /* FOOBAR */
-
 static const char * available_cuda_device_name(QSP_ARG_DECL  const char *name,char *scratch_string)
 {
 	Cuda_Device *cdp;
@@ -96,7 +75,11 @@ static const char * available_cuda_device_name(QSP_ARG_DECL  const char *name,ch
 	ERROR1(ERROR_STRING);
 	return(NULL);	// NOTREACHED - quiet compiler
 }
+#endif // FOOBAR
+#endif // HAVE_CUDA
 
+#ifdef USE_OLD_CODE
+#ifdef HAVE_CUDA
 static void init_cuda_device(QSP_ARG_DECL  int index)
 {
 	cudaDeviceProp deviceProp;
@@ -121,7 +104,7 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	}
 
 	if( (e=cudaGetDeviceProperties(&deviceProp, index)) != cudaSuccess ){
-		describe_cuda_error2("init_cuda_device","cudaGetDeviceProperties",e);
+		describe_cuda_driver_error2("init_cuda_device","cudaGetDeviceProperties",e);
 		return;
 	}
 
@@ -152,7 +135,7 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	/* What does this do??? */
 	e = cudaSetDeviceFlags( cudaDeviceMapHost );
 	if( e != cudaSuccess ){
-		describe_cuda_error2("init_cuda_device",
+		describe_cuda_driver_error2("init_cuda_device",
 			"cudaSetDeviceFlags",e);
 	}
 
@@ -176,7 +159,7 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 
 #ifdef CAUTIOUS
 	if( cdp == NO_CUDA_DEVICE ){
-		sprintf(ERROR_STRING,"Error creating cuda device struct for %s!?",name_p);
+		sprintf(ERROR_STRING,"CAUTIOUS:  init_cuda_device:  Error creating cuda device struct for %s!?",name_p);
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -197,10 +180,11 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	cdp->cudev_index = index;
 	cdp->cudev_prop = deviceProp;
 
-	set_cuda_device(QSP_ARG  cdp);	// is this call just so we can call cudaMalloc?
+	set_cuda_device(cdp);	// is this call just so we can call cudaMalloc?
 
 	// address set to NULL says use custom allocator - see dobj/makedobj.c
 
+fprintf(stderr,"init_cuda_device calling init_area()\n");
 	ap = area_init(QSP_ARG  name_p,NULL,0, MAX_CUDA_GLOBAL_OBJECTS,DA_CUDA_GLOBAL);
 	if( ap == NO_AREA ){
 		sprintf(ERROR_STRING,
@@ -208,7 +192,7 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 		WARN(ERROR_STRING);
 	}
 	// g++ won't take this line!?
-	ap->da_dai.dai_cd_p = (void *)cdp;
+	SET_AREA_CUDA_DEV(ap,cdp);
 	//set_device_for_area(ap,cdp);
 
 	cuda_data_area[index][CUDA_GLOBAL_AREA_INDEX] = ap;
@@ -238,7 +222,7 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	"init_cuda_device:  error creating host data area %s",cname);
 		ERROR1(ERROR_STRING);
 	}
-	ap->da_dai.dai_cd_p = (void *)cdp;
+	SET_AREA_CUDA_DEV(ap, cdp);
 	cuda_data_area[index][CUDA_HOST_AREA_INDEX] = ap;
 
 	/* Make up another psuedo-area for the mapped host memory;
@@ -260,7 +244,7 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	"init_cuda_device:  error creating host-mapped data area %s",cname);
 		ERROR1(ERROR_STRING);
 	}
-	ap->da_dai.dai_cd_p = (void *)cdp;
+	SET_AREA_CUDA_DEV(ap,cdp);
 	cuda_data_area[index][CUDA_HOST_MAPPED_AREA_INDEX] = ap;
 
 
@@ -273,27 +257,9 @@ static void init_cuda_device(QSP_ARG_DECL  int index)
 	}
 }
 
-#ifdef HAVE_DEV_NVIDIACTL
+// c++ version
 
-static void check_file_access(QSP_ARG_DECL  const char *filename)
-{
-	if( ! file_exists(filename) ){
-		sprintf(ERROR_STRING,"File %s does not exist.",filename);
-		ERROR1(ERROR_STRING);
-	}
-	/*if( ! can_read_from(filename) ){
-		sprintf(ERROR_STRING,"File %s exists, but no read permission.",filename);
-		ERROR1(ERROR_STRING);
-	}*/
-	if( ! can_write_to(filename) ){
-		sprintf(ERROR_STRING,"File %s exists, but no write permission.",filename);
-		ERROR1(ERROR_STRING);
-	}
-}
-
-#endif /* HAVE_DEV_NVIDIACTL */
-
-void init_cuda_devices(SINGLE_QSP_ARG_DECL)
+void _init_cuda_devices(SINGLE_QSP_ARG_DECL)
 {
 	int n_devs,i;
 
@@ -301,10 +267,7 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 	 * are not readable...  So we check that first.
 	 */
 
-#ifdef HAVE_DEV_NVIDIACTL
-	// BUG check for this is not yet in configure.ac
 	check_file_access(QSP_ARG  "/dev/nvidiactl");
-#endif /* HAVE_DEV_NVIDIACTL */
 
 	cudaGetDeviceCount(&n_devs);
 
@@ -312,12 +275,6 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 		WARN("No CUDA devices found!?");
 		return;
 	}
-
-#ifdef CAUTIOUS
-	if( n_devs < 0 ){
-		ERROR1("CAUTIOUS:  CUDA device count less than 0!?");
-	}
-#endif /* CAUTIOUS */
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d cuda devices found...",n_devs);
@@ -328,15 +285,10 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
-#ifdef HAVE_DEV_NVIDIACTL
-		/* If we have the nvidiactl dev file, then we should
-		 * have the other dev entries as well.
-		 * These don't seem to be present on Mac OSX...
-		 */
 		char s[32];
+
 		sprintf(s,"/dev/nvidia%d",i);
 		check_file_access(QSP_ARG  s);
-#endif /* HAVE_DEV_NVIDIACTL */
 
 		init_cuda_device(QSP_ARG  i);
 	}
@@ -360,92 +312,120 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 	vl_init(SINGLE_QSP_ARG);
 	set_gpu_dispatch_func(gpu_dispatch);
 } // end init_cuda_devices
-
-#define CHECK_CONTIG_DATA(whence,which_obj,dp)				\
-									\
-	if( ! has_contiguous_data(dp) ){				\
-		sprintf(ERROR_STRING,					\
-	"%s:  %s object %s must have contiguous data.",			\
-			whence,which_obj,dp->dt_name);			\
-		WARN(ERROR_STRING);					\
-		return;							\
-	}
+#endif // HAVE_CUDA
+#endif // USE_OLD_CODE
 
 
-#define CHECK_NOT_RAM(whence,which_obj,dp)				\
-									\
-	if( IS_RAM(dp) ){						\
-		sprintf(ERROR_STRING,					\
-	"%s:  %s object %s lives in %s data area, expected a GPU.",	\
-			whence,which_obj,dpto->dt_name,			\
-			dpto->dt_ap->da_name);				\
-		WARN(ERROR_STRING);					\
-		return;							\
-	}
+// make these C so we can link from other C files...
 
-#define CHECK_RAM(whence,which_obj,dp)				\
-									\
-	if( ! IS_RAM(dp) ){						\
-		sprintf(ERROR_STRING,					\
-	"%s:  %s object %s lives in %s data area, expected ram.",	\
-			whence,which_obj,dpto->dt_name,			\
-			dpto->dt_ap->da_name);				\
-		WARN(ERROR_STRING);					\
-		return;							\
-	}
+#ifdef FOOBAR
+extern "C" {
 
-
-COMMAND_FUNC( do_gpu_upload )
+void gpu_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz )
 {
-	Data_Obj *dpto, *dpfr;
+#ifdef HAVE_CUDA
+	cudaError_t error;
+
+#ifdef OLD_CUDA4
+	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyHostToDevice) );
+#else
+	error = cudaMemcpy(dst, src, siz, cudaMemcpyHostToDevice);
+	if( error != cudaSuccess ){
+		// BUG report cuda error
+		WARN("Error in cudaMemcpy, host to device!?");
+	}
+#endif
+#else // ! HAVE_CUDA
+	NO_CUDA_MSG(mem_upload)
+#endif // ! HAVE_CUDA
+}
+
+void gpu_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz )
+{
+#ifdef HAVE_CUDA
+	cudaError_t error;
+
+        //cutilSafeCall( cutilDeviceSynchronize() );	// added for 4.0?
+#ifdef OLD_CUDA4
+	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) );
+#else
+	error = cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) ;
+	if( error != cudaSuccess ){
+		// BUG report cuda error
+		WARN("Error in cudaMemcpy, device to host!?");
+	}
+#endif
+#else // ! HAVE_CUDA
+	NO_CUDA_MSG(mem_dnload)
+#endif // ! HAVE_CUDA
+}
+
+void gpu_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
+{
 	size_t siz;
 
-	dpto = PICK_OBJ("destination GPU object");
-	dpfr = PICK_OBJ("source RAM object");
-
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
-
-	CHECK_NOT_RAM("do_gpu_upload","destination",dpto)
-	CHECK_RAM("do_gpu_upload","source",dpfr)
-	CHECK_CONTIG_DATA("do_gpu_upload","source",dpfr)
-	CHECK_CONTIG_DATA("do_gpu_upload","destination",dpto)
-	CHECK_SAME_SIZE(dpto,dpfr,"do_gpu_upload")
-	CHECK_SAME_PREC(dpto,dpfr,"do_gpu_upload")
+	CHECK_NOT_RAM("do_gpu_obj_upload","destination",dpto)
+	CHECK_RAM("do_gpu_obj_upload","source",dpfr)
+	CHECK_CONTIG_DATA("do_gpu_obj_upload","source",dpfr)
+	CHECK_CONTIG_DATA("do_gpu_obj_upload","destination",dpto)
+	CHECK_SAME_SIZE(dpto,dpfr,"do_gpu_obj_upload")
+	CHECK_SAME_PREC(dpto,dpfr,"do_gpu_obj_upload")
 
 #ifdef FOOBAR
 	if( IS_BITMAP(dpto) )
-		siz = BITMAP_WORD_COUNT(dpto) * siztbl[BITMAP_MACH_PREC];
+		siz = BITMAP_WORD_COUNT(dpto) * PREC_SIZE( PREC_FOR_CODE(BITMAP_MACH_PREC) );
 	else
-		siz = dpto->dt_n_mach_elts * siztbl[ MACHINE_PREC(dpto) ];
+		siz = OBJ_N_MACH_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
 #endif /* FOOBAR */
-	siz = dpto->dt_n_mach_elts * siztbl[ MACHINE_PREC(dpto) ];
+	siz = OBJ_N_MACH_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
 
-	cutilSafeCall( cudaMemcpy(dpto->dt_data, dpfr->dt_data, siz, cudaMemcpyHostToDevice) );
+	gpu_mem_upload(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz );
 }
 
-COMMAND_FUNC( do_gpu_dnload )
+void gpu_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
+{
+	size_t siz;
+
+	CHECK_RAM("gpu_obj_dnload","destination",dpto)
+	CHECK_NOT_RAM("gpu_obj_dnload","source",dpfr)
+	CHECK_CONTIG_DATA("gpu_obj_dnload","source",dpfr)
+	CHECK_CONTIG_DATA("gpu_obj_dnload","destination",dpto)
+	CHECK_SAME_SIZE(dpto,dpfr,"gpu_obj_dnload")
+	CHECK_SAME_PREC(dpto,dpfr,"gpu_obj_dnload")
+
+	/* TEST - does this work for bitmaps? */
+	siz = OBJ_N_MACH_ELTS(dpto) * PREC_SIZE( OBJ_PREC_PTR(dpto) );
+
+	gpu_mem_dnload(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz );
+}
+
+}	// end extern C
+
+
+COMMAND_FUNC( do_gpu_obj_dnload )
 {
 	Data_Obj *dpto, *dpfr;
-	size_t siz;
 
 	dpto = PICK_OBJ("destination RAM object");
 	dpfr = PICK_OBJ("source GPU object");
 
 	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
 
-	CHECK_RAM("do_gpu_dnload","destination",dpto)
-	CHECK_NOT_RAM("do_gpu_dnload","source",dpfr)
-	CHECK_CONTIG_DATA("do_gpu_dnload","source",dpfr)
-	CHECK_CONTIG_DATA("do_gpu_dnload","destination",dpto)
-	CHECK_SAME_SIZE(dpto,dpfr,"do_gpu_dnload")
-	CHECK_SAME_PREC(dpto,dpfr,"do_gpu_dnload")
-
-	/* TEST - does this work for bitmaps? */
-	siz = dpto->dt_n_mach_elts * siztbl[ MACHINE_PREC(dpto) ];
-
-        //cutilSafeCall( cutilDeviceSynchronize() );	// added for 4.0?
-	cutilSafeCall( cudaMemcpy(dpto->dt_data, dpfr->dt_data, siz, cudaMemcpyDeviceToHost) );
+	gpu_obj_dnload(QSP_ARG  dpto,dpfr);
 }
+
+COMMAND_FUNC( do_gpu_obj_upload )
+{
+	Data_Obj *dpto, *dpfr;
+
+	dpto = PICK_OBJ("destination GPU object");
+	dpfr = PICK_OBJ("source RAM object");
+
+	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+
+	gpu_obj_upload(QSP_ARG  dpto,dpfr);
+}
+
 
 COMMAND_FUNC( do_gpu_fwdfft )
 {
@@ -473,6 +453,9 @@ COMMAND_FUNC( do_gpu_fwdfft )
 
 	FINISH_CUDA_MENU_FUNC
 }
+
+
+// moved to veclib2
 
 // a utility used in host_calls.h
 #define MAXD(m,n)	(m>n?m:n)
@@ -507,9 +490,9 @@ int setup_slow_len(dim3 *len_p,Size_Info *szi_p,dimension_t start_dim,int *dim_i
 		int i_src;
 
 		/* Find the max len of all the objects at this level */
-		max_d=szi_p->szi_dst_dim[i_dim];
+		max_d=DIMENSION(SZI_DST_DIMS(*szi_p),i_dim);
 		for(i_src=i_first;i_src<(i_first+n_vec-1);i_src++)
-			max_d=MAXD(max_d,szi_p->szi_src_dim[i_src][i_dim]);
+			max_d=MAXD(max_d,DIMENSION(SZI_SRC_DIMS(*szi_p,i_src),i_dim));
 
 		if( max_d > 1 ){
 			if( n_set == 0 ){
@@ -551,106 +534,10 @@ int setup_slow_len(dim3 *len_p,Size_Info *szi_p,dimension_t start_dim,int *dim_i
 	return(n_set);
 }
 
-//Three vec functions
-MENU_CALL_3V( vcmp )
-MENU_CALL_3V( vibnd )
-MENU_CALL_3V_S( vbnd )
-MENU_CALL_3V_S( vmaxm )
-MENU_CALL_3V_S( vminm )
-MENU_CALL_3V( vmax )
-MENU_CALL_3V( vmin )
-MENU_CALL_3V_RC( vadd )
-MENU_CALL_3V( rvsub )
-MENU_CALL_3V( rvmul )
-MENU_CALL_3V( rvdiv )
 
-MENU_CALL_3V_I( vand )
-MENU_CALL_3V_I( vnand )
-MENU_CALL_3V_I( vor )
-MENU_CALL_3V_I( vxor )
-MENU_CALL_3V_I( vmod )
-MENU_CALL_3V_I( vshr )
-MENU_CALL_3V_I( vshl )
+#include "enum_menu_calls.h"	// will lay out all the functions...
 
-// float only
-MENU_CALL_3V_F( vatan2 )
-MENU_CALL_2V_F( vexp )
-MENU_CALL_3V_F( rvpow )
-//MENU_CALL_3V_F( vpow )
-
-//Two vec functions
-MENU_CALL_2V_S( vsign )
-MENU_CALL_2V_S( vabs )
-MENU_CALL_2V_S( rvneg )
-
-MENU_CALL_2V_I( vnot )
-MENU_CALL_2V_I( vcomp )
-
-MENU_CALL_1S_1_B( rvset )
-MENU_CALL_1S_1V_F( cvset )
-MENU_CALL_1S_1V_RC(vset)
-
-MENU_CALL_2V( rvmov )
-MENU_CALL_2V( rvsqr )
-/*
-MENU_CALL_2V( rvrand )
-*/
-
-// float only
-/*
-..MENU_CALL_2V_F( vj0 )
-..MENU_CALL_2V_F( vj1 )
-*/
-MENU_CALL_2V_F( vrint)
-MENU_CALL_2V_F( vfloor)
-MENU_CALL_2V_F( vround)
-MENU_CALL_2V_F( vceil)
-MENU_CALL_2V_F( vlog)
-MENU_CALL_2V_F( vlog10)
-MENU_CALL_2V_F( vatan)
-MENU_CALL_2V_F( vtan)
-MENU_CALL_2V_F( vcos)
-MENU_CALL_2V_F( verf)
-MENU_CALL_2V_F( vacos)
-MENU_CALL_2V_F( vsin)
-MENU_CALL_2V_F( vasin)
-MENU_CALL_2V_F( vsqrt)
-
-//Two vec scalar functions
-MENU_CALL_2V_SCALAR( vscmp)
-MENU_CALL_2V_SCALAR( vscmp2)
-MENU_CALL_2V_SCALAR_S( vsmnm)
-MENU_CALL_2V_SCALAR_S( vsmxm)
-MENU_CALL_2V_SCALAR_S( viclp)
-MENU_CALL_2V_SCALAR_S( vclip)
-MENU_CALL_2V_SCALAR( vsmin)
-MENU_CALL_2V_SCALAR( vsmax)
-MENU_CALL_2V_SCALAR( rvsadd)
-MENU_CALL_2V_SCALAR( rvssub)
-MENU_CALL_2V_SCALAR( rvsmul)
-MENU_CALL_2V_SCALAR( rvsdiv)
-MENU_CALL_2V_SCALAR( rvsdiv2)
-
-MENU_CALL_2V_SCALAR_I( vsand)
-MENU_CALL_2V_SCALAR_I( vsnand)
-MENU_CALL_2V_SCALAR_I( vsor)
-MENU_CALL_2V_SCALAR_I( vsxor)
-MENU_CALL_2V_SCALAR_I( vsmod)
-MENU_CALL_2V_SCALAR_I( vsmod2)
-MENU_CALL_2V_SCALAR_I( vsshr)
-MENU_CALL_2V_SCALAR_I( vsshr2 )
-MENU_CALL_2V_SCALAR_I( vsshl)
-MENU_CALL_2V_SCALAR_I( vsshl2)
-
-// float only
-// now pow, atan2 on gpu?
-MENU_CALL_2V_SCALAR_F( vsatan2)
-MENU_CALL_2V_SCALAR_F( vsatan22)
-MENU_CALL_2V_SCALAR_F( vspow)
-MENU_CALL_2V_SCALAR_F( vspow2)
-
-MENU_CALL_2V_CONV( convert)
-
+// BUG should have an enum file for the host calls too!
 
 // The strategy for these kinds of operations is that we divide and conquer recursively.
 // We have a global routine which operates on two pixels, and puts the result in a third.
@@ -737,7 +624,7 @@ H_CALL_MAP( vsm_eq )
 H_CALL_MAP( vsm_ne )
 
 H_CALL_F( vmgsq )
-
+#endif // FOOBAR
 
 //MENU_CALL_ALL( vsum )
 
@@ -746,10 +633,12 @@ COMMAND_FUNC( do_list_cudevs )
 	list_cudevs(SINGLE_QSP_ARG);
 }
 
-void print_cudev_info(Cuda_Device *cdp)
+#ifdef HAVE_CUDA
+static void print_cudev_info(QSP_ARG_DECL  Cuda_Device *cdp)
 {
-	print_cudev_properties(cdp->cudev_index, &cdp->cudev_prop);
+	print_cudev_properties(QSP_ARG  cdp->cudev_index, &cdp->cudev_prop);
 }
+#endif // HAVE_CUDA
 
 COMMAND_FUNC( do_cudev_info )
 {
@@ -758,38 +647,44 @@ COMMAND_FUNC( do_cudev_info )
 	cdp = PICK_CUDEV((char *)"device");
 	if( cdp == NO_CUDA_DEVICE ) return;
 
-	print_cudev_info(cdp);
+#ifdef HAVE_CUDA
+	print_cudev_info(QSP_ARG  cdp);
+#else
+	NO_CUDA_MSG(print_cudev_info)
+#endif
 }
 
-void set_cuda_device( QSP_ARG_DECL   Cuda_Device *cdp )
+void set_cuda_device( Cuda_Device *cdp )
 {
+#ifdef HAVE_CUDA
 	cudaError_t e;
 
 	if( curr_cdp == cdp ){
-		sprintf(ERROR_STRING,"set_cuda_device:  current device is already %s!?",cdp->cudev_name);
-		WARN(ERROR_STRING);
+		sprintf(DEFAULT_ERROR_STRING,"set_cuda_device:  current device is already %s!?",cdp->cudev_name);
+		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 
 	e = cudaSetDevice( cdp->cudev_index );
 	if( e != cudaSuccess )
-		describe_cuda_error2("set_cuda_device","cudaSetDevice",e);
+		describe_cuda_driver_error2("set_cuda_device","cudaSetDevice",e);
 	else
 		curr_cdp = cdp;
+#endif //  HAVE_CUDA
 }
 
 void insure_cuda_device( Data_Obj *dp )
 {
 	Cuda_Device *cdp;
 
-	if( dp->dt_ap->da_flags & DA_RAM ){
+	if( AREA_FLAGS(OBJ_AREA(dp)) & DA_RAM ){
 		sprintf(DEFAULT_ERROR_STRING,
-	"insure_cuda_device:  Object %s is a host RAM object!?",dp->dt_name);
+	"insure_cuda_device:  Object %s is a host RAM object!?",OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 
-	cdp = (Cuda_Device *) dp->dt_ap->da_cd_p;
+	cdp = (Cuda_Device *) AREA_CUDA_DEV(OBJ_AREA(dp));
 
 #ifdef CAUTIOUS
 	if( cdp == NO_CUDA_DEVICE )
@@ -799,25 +694,26 @@ void insure_cuda_device( Data_Obj *dp )
 	if( curr_cdp != cdp ){
 sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%lx  cdp = 0x%lx",
 (int_for_addr)curr_cdp,(int_for_addr)cdp);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 
 sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  current device is %s, want %s",
 curr_cdp->cudev_name,cdp->cudev_name);
-advise(DEFAULT_ERROR_STRING);
-		set_cuda_device(DEFAULT_QSP_ARG  cdp);
+NADVISE(DEFAULT_ERROR_STRING);
+		set_cuda_device(cdp);
 	}
 
 }
 
 void *tmpvec(int size,int len,const char *whence)
 {
+#ifdef HAVE_CUDA
 	void *cuda_mem;
-	cudaError_t e;
+	cudaError_t drv_err;
 
-	e = cudaMalloc(&cuda_mem, size * len );
-	if( e != cudaSuccess ){
-		sprintf(msg_str,"tmpvec (%s)",whence);
-		describe_cuda_error2(msg_str,"cudaMalloc",e);
+	drv_err = cudaMalloc(&cuda_mem, size * len );
+	if( drv_err != cudaSuccess ){
+		sprintf(DEFAULT_MSG_STR,"tmpvec (%s)",whence);
+		describe_cuda_driver_error2(DEFAULT_MSG_STR,"cudaMalloc",drv_err);
 		NERROR1("CUDA memory allocation error");
 	}
 
@@ -827,23 +723,30 @@ void *tmpvec(int size,int len,const char *whence)
 //sprintf(ERROR_STRING,"tmpvec %s:  0x%lx",whence,(int_for_addr)cuda_mem);
 //advise(ERROR_STRING);
 	return(cuda_mem);
+#else // ! HAVE_CUDA
+	return NULL;
+#endif // ! HAVE_CUDA
 }
 
 void freetmp(void *ptr,const char *whence)
 {
-	cudaError_t e;
+#ifdef HAVE_CUDA
+	cudaError_t drv_err;
 
 //sprintf(ERROR_STRING,"freetmp %s:  0x%lx",whence,(int_for_addr)ptr);
 //advise(ERROR_STRING);
-	e=cudaFree(ptr);
-	if( e != cudaSuccess ){
-		sprintf(msg_str,"freetmp (%s)",whence);
-		describe_cuda_error2(msg_str,"cudaFree",e);
+	drv_err=cudaFree(ptr);
+	if( drv_err != cudaSuccess ){
+		sprintf(DEFAULT_MSG_STR,"freetmp (%s)",whence);
+		describe_cuda_driver_error2(DEFAULT_MSG_STR,"cudaFree",drv_err);
 	}
+#endif // HAVE_CUDA
 }
 
+#ifdef HAVE_CUDA
 //CUFFT
-const char* getCUFFTError(cufftResult_t status)
+//static const char* getCUFFTError(cufftResult_t status)
+static const char* getCUFFTError(cufftResult status)
 {
 	switch (status) {
 		case CUFFT_SUCCESS:
@@ -866,13 +769,33 @@ const char* getCUFFTError(cufftResult_t status)
 			return "Invalid Size";
 		case CUFFT_UNALIGNED_DATA:
 			return "Unaligned data";
+		// these were added later on iMac - present in older versions?
+		// BUG - find correct version number...
+#if CUDA_VERSION >= 5050
+		case CUFFT_INCOMPLETE_PARAMETER_LIST:
+			return "Incomplete parameter list";
+		case CUFFT_INVALID_DEVICE:
+			return "Invalid device";
+		case CUFFT_PARSE_ERROR:
+			return "Parse error";
+		case CUFFT_NO_WORKSPACE:
+			return "No workspace";
+#endif
+#if CUDA_VERSION >= 6050
+		case CUFFT_NOT_IMPLEMENTED:
+			return "Not implemented";
+		case CUFFT_LICENSE_ERROR:
+			return "License error";
+#endif
 	}
 	sprintf(DEFAULT_ERROR_STRING,"Unexpected CUFFT return value:  %d",status);
 	return(DEFAULT_ERROR_STRING);
 }
+#endif // HAVE_CUDA
 
 void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 {
+#ifdef HAVE_CUDA
 	//Variable declarations
 	int NX = 256;
 	//int BATCH = 10;
@@ -885,10 +808,22 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	//cufftComplex *result;
 	void *data;
 	void *result;
+	cudaError_t drv_err;
 
 	//Allocate RAM
-	cutilSafeCall(cudaMalloc(&data, sizeof(cufftComplex)*NX*BATCH));	
-	cutilSafeCall(cudaMalloc(&result, sizeof(cufftComplex)*NX*BATCH));
+	//cutilSafeCall(cudaMalloc(&data, sizeof(cufftComplex)*NX*BATCH));	
+	//cutilSafeCall(cudaMalloc(&result, sizeof(cufftComplex)*NX*BATCH));
+	drv_err = cudaMalloc(&data, sizeof(cufftComplex)*NX*BATCH);
+	if( drv_err != cudaSuccess ){
+		WARN("error allocating cuda data buffer for fft!?");
+		return;
+	}
+	drv_err = cudaMalloc(&result, sizeof(cufftComplex)*NX*BATCH);
+	if( drv_err != cudaSuccess ){
+		WARN("error allocating cuda result buffer for fft!?");
+		// BUG clean up previous malloc...
+		return;
+	}
 
 	//Create plan for FFT
 	status = cufftPlan1d(&plan, NX, CUFFT_C2C, BATCH);
@@ -916,21 +851,30 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	//Free resources
 	cufftDestroy(plan);
 	cudaFree(data);
+#else // ! HAVE_CUDA
+	NO_CUDA_MSG(g_fwdfft)
+#endif // ! HAVE_CUDA
 }
 
 
 typedef struct {
 	const char *	ckpt_tag;
+#ifdef HAVE_CUDA
 	cudaEvent_t	ckpt_event;
+#endif // HAVE_CUDA
 } Cuda_Checkpoint;
 
 static Cuda_Checkpoint *ckpt_tbl=NULL;
-static int max_cuda_checkpoints=0;	// size of checkpoit table
 static int n_cuda_checkpoints=0;	// number of placements
 
-void init_cuda_checkpoints(int n)
+#ifdef HAVE_CUDA
+
+static int max_cuda_checkpoints=0;	// size of checkpoit table
+
+static void init_cuda_checkpoints(int n)
 {
-	cudaError_t e;
+	//CUresult e;
+	cudaError_t drv_err;
 	int i;
 
 	if( max_cuda_checkpoints > 0 ){
@@ -946,27 +890,40 @@ void init_cuda_checkpoints(int n)
 	max_cuda_checkpoints = n;
 
 	for(i=0;i<max_cuda_checkpoints;i++){
-		e=cudaEventCreate(&ckpt_tbl[i].ckpt_event);
-		if( e != cudaSuccess ){
-			describe_cuda_error2("init_cuda_checkpoints",
-				"cudaEventCreate",e);
+		drv_err=cudaEventCreate(&ckpt_tbl[i].ckpt_event);
+		if( drv_err != cudaSuccess ){
+			describe_cuda_driver_error2("init_cuda_checkpoints",
+				"cudaEventCreate",drv_err);
 			NERROR1("failed to initialize checkpoint table");
 		}
 		ckpt_tbl[i].ckpt_tag=NULL;
 	}
 }
+#endif // HAVE_CUDA
 
 COMMAND_FUNC( do_init_checkpoints )
 {
 	int n;
 
 	n = HOW_MANY("maximum number of checkpoints");
+#ifdef HAVE_CUDA
 	init_cuda_checkpoints(n);
+#else // ! HAVE_CUDA
+	NO_CUDA_MSG(init_cuda_checkpoints)
+#endif // ! HAVE_CUDA
 }
+
+#define CUDA_DRIVER_ERROR_RETURN(calling_funcname, cuda_funcname )	\
+								\
+	if( drv_err != cudaSuccess ){					\
+		describe_cuda_driver_error2(calling_funcname,cuda_funcname,drv_err); \
+		return;						\
+	}
+
 
 #define CUDA_ERROR_RETURN(calling_funcname, cuda_funcname )	\
 								\
-	if( e != cudaSuccess ){					\
+	if( e != CUDA_SUCCESS ){					\
 		describe_cuda_error2(calling_funcname,cuda_funcname,e); \
 		return;						\
 	}
@@ -974,7 +931,7 @@ COMMAND_FUNC( do_init_checkpoints )
 
 #define CUDA_ERROR_FATAL(calling_funcname, cuda_funcname )	\
 								\
-	if( e != cudaSuccess ){					\
+	if( e != CUDA_SUCCESS ){					\
 		describe_cuda_error2(calling_funcname,cuda_funcname,e); \
 		ERROR1("Fatal cuda error.");			\
 	}
@@ -982,7 +939,9 @@ COMMAND_FUNC( do_init_checkpoints )
 
 COMMAND_FUNC( do_set_checkpoint )
 {
-	cudaError_t e;
+#ifdef HAVE_CUDA
+	//cudaError_t e;
+	cudaError_t drv_err;
 	const char *s;
 
 	s = NAMEOF("tag for this checkpoint");
@@ -1004,13 +963,18 @@ COMMAND_FUNC( do_set_checkpoint )
 
 	// use default stream (0) for now, but will want to introduce
 	// more streams later?
-	e = cudaEventRecord( ckpt_tbl[n_cuda_checkpoints++].ckpt_event, 0 );
-	CUDA_ERROR_RETURN( "do_place_ckpt","cudaEventRecord")
+	drv_err = cudaEventRecord( ckpt_tbl[n_cuda_checkpoints++].ckpt_event, 0 );
+	CUDA_DRIVER_ERROR_RETURN( "do_place_ckpt","cudaEventRecord")
+#else // ! HAVE_CUDA
+	NO_CUDA_MSG(do_set_checkpoint)
+#endif // ! HAVE_CUDA
 }
 
 COMMAND_FUNC( do_show_checkpoints )
 {
-	cudaError_t e;
+#ifdef HAVE_CUDA
+	///*cudaError_t*/ CUresult e;
+	cudaError_t drv_err;
 	float msec, cum_msec;
 	int i;
 
@@ -1019,11 +983,11 @@ COMMAND_FUNC( do_show_checkpoints )
 		return;
 	}
 
-	e = cudaEventSynchronize(ckpt_tbl[n_cuda_checkpoints-1].ckpt_event);
-	CUDA_ERROR_RETURN("do_show_checkpoints", "cudaEventSynchronize")
+	drv_err = cudaEventSynchronize(ckpt_tbl[n_cuda_checkpoints-1].ckpt_event);
+	CUDA_DRIVER_ERROR_RETURN("do_show_checkpoints", "cudaEventSynchronize")
 
-	e = cudaEventElapsedTime( &msec, ckpt_tbl[0].ckpt_event, ckpt_tbl[n_cuda_checkpoints-1].ckpt_event);
-	CUDA_ERROR_RETURN("do_show_checkpoints", "cudaEventElapsedTime")
+	drv_err = cudaEventElapsedTime( &msec, ckpt_tbl[0].ckpt_event, ckpt_tbl[n_cuda_checkpoints-1].ckpt_event);
+	CUDA_DRIVER_ERROR_RETURN("do_show_checkpoints", "cudaEventElapsedTime")
 	sprintf(msg_str,"Total GPU time:\t%g msec",msec);
 	prt_msg(msg_str);
 
@@ -1033,15 +997,18 @@ COMMAND_FUNC( do_show_checkpoints )
 	prt_msg(msg_str);
 	cum_msec =0.0;
 	for(i=1;i<n_cuda_checkpoints;i++){
-		e = cudaEventElapsedTime( &msec, ckpt_tbl[i-1].ckpt_event,
+		drv_err = cudaEventElapsedTime( &msec, ckpt_tbl[i-1].ckpt_event,
 			ckpt_tbl[i].ckpt_event);
-		CUDA_ERROR_RETURN("do_show_checkpoints", "cudaEventElapsedTime")
+		CUDA_DRIVER_ERROR_RETURN("do_show_checkpoints", "cudaEventElapsedTime")
 
 		cum_msec += msec;
 		sprintf(msg_str,"GPU  %3d  %12.3f  %12.3f  %s",i+1,msec,
 			cum_msec, ckpt_tbl[i].ckpt_tag);
 		prt_msg(msg_str);
 	}
+#else // ! HAVE_CUDA
+	NO_CUDA_MSG(do_show_checkpoints)
+#endif // ! HAVE_CUDA
 }
 
 COMMAND_FUNC( do_clear_checkpoints )
@@ -1058,5 +1025,5 @@ COMMAND_FUNC( do_clear_checkpoints )
 
 
 
-#endif /* HAVE_CUDA */
+//#endif /* HAVE_CUDA */
 

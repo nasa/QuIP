@@ -1,34 +1,32 @@
 #include "quip_config.h"
 
-char VersionId_vectree_dumptree[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 
-#include "savestr.h"
+#include "quip_prot.h"
+//#include "savestr.h"
 #include "data_obj.h"
 #include "debug.h"
-#include "getbuf.h"
+//#include "getbuf.h"
 #include "node.h"
 #include "function.h"
 #include "nexpr.h"
-#include "nvf_api.h"
+#include "veclib_api.h"
 #include "query.h"
+#include "warn.h"
 
 #include "vectree.h"
 
 /* for definition of function codes */
 /* #include "wartbl.h" */
 
+#ifdef NOT_YET
 static Keyword *curr_native_func_tbl=vt_native_func_tbl;
+#endif /* NOT_YET */
 
-/* local prototypes */
-
-static void _dump_tree(QSP_ARG_DECL  Vec_Expr_Node *);
 #define _DUMP_TREE(enp)		_dump_tree(QSP_ARG  enp)
-static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp);
 #define _DUMP_NODE(enp)		_dump_node(QSP_ARG  enp)
 
 
@@ -38,10 +36,12 @@ int dump_flags=0;
 
 int dumping=0;
 
+#ifdef NOT_YET
 void set_native_func_tbl(Keyword *tbl)
 {
 	curr_native_func_tbl = tbl;
 }
+#endif /* NOT_YET */
 
 void set_show_shape(int flg)
 {
@@ -51,18 +51,12 @@ void set_show_shape(int flg)
 		dump_flags &= ~SHOW_SHAPES;
 }
 
+#ifdef NOT_USED
+
 void set_show_key(int flg)
 {
 	if( flg )	dump_flags |= SHOW_KEY;
 	else		dump_flags &= ~SHOW_KEY;
-}
-
-void set_show_lhs_refs(int flg)
-{
-	if( flg )
-		dump_flags |= SHOW_LHS_REFS;
-	else
-		dump_flags &= ~SHOW_LHS_REFS;
 }
 
 void set_show_cost(int flg)
@@ -73,7 +67,17 @@ void set_show_cost(int flg)
 		dump_flags &= ~SHOW_COST;
 }
 
-void print_dump_legend(void)
+#endif /* NOT_USED */
+
+void set_show_lhs_refs(int flg)
+{
+	if( flg )
+		dump_flags |= SHOW_LHS_REFS;
+	else
+		dump_flags &= ~SHOW_LHS_REFS;
+}
+
+void print_dump_legend(SINGLE_QSP_ARG_DECL)
 {
 	/* blank line */
 	prt_msg("");
@@ -96,7 +100,7 @@ void print_dump_legend(void)
 	prt_msg("");
 }
 
-void print_shape_key(void)
+void print_shape_key(SINGLE_QSP_ARG_DECL)
 {
 	prt_msg("_\tno shape\n?\tunknown shape\n*\towns shape\n@\tshape ref\n#\tunknown leaf");
 }
@@ -105,12 +109,12 @@ static void prt_node(Vec_Expr_Node *enp,char *buf)
 {
 	int key;
 
-	if( enp->en_shpp == NO_SHAPE ) key='_';
-	else if( UNKNOWN_SHAPE(enp->en_shpp) ) key='?';
+	if( VN_SHAPE(enp) == NO_SHAPE ) key='_';
+	else if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ) key='?';
 	else if ( OWNS_SHAPE(enp) ) key='*';
 	else key='@';
 
-	sprintf(buf,"n%-4d %c%c%c",enp->en_serial, key,
+	sprintf(buf,"n%-4d %c%c%c",VN_SERIAL(enp), key,
 		RESOLVED_AT_CALLTIME(enp) ? '!' : ' ',
 		HAS_CONSTANT_VALUE(enp) ? 'C' : ' '
 		
@@ -125,26 +129,27 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	if( enp==NO_VEXPR_NODE ) return;
 
-
 	/* print the node "name", and a code that tells about shape knowledge */
 
-	
+//DEBUG_IT_3(enp,_dump_node)
+
+// Temporarily print to stderr instead of stdout for debugging...
 	prt_node(enp,msg_str);
 	prt_msg_frag(msg_str);
 
 	if( SHOWING_LHS_REFS ){
-		sprintf(msg_str,"\t%d",enp->en_lhs_refs);
+		sprintf(msg_str,"\t%d",VN_LHS_REFS(enp));
 		prt_msg_frag(msg_str);
 	}
 
 	if( SHOWING_COST ){
-		if( enp->en_shpp != NO_SHAPE ){
-			sprintf(msg_str,"\t%d", enp->en_shpp->si_n_mach_elts);
+		if( VN_SHAPE(enp) != NO_SHAPE ){
+			sprintf(msg_str,"\t%d", SHP_N_MACH_ELTS(VN_SHAPE(enp)));
 		}
 
 		prt_msg_frag(msg_str);
 
-		sprintf(msg_str,"\t%d\t%d", enp->en_flops,enp->en_nmath);
+		sprintf(msg_str,"\t%d\t%d", VN_FLOPS(enp),VN_N_MATH(enp));
 		prt_msg_frag(msg_str);
 	}
 
@@ -157,106 +162,111 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	sprintf(msg_str,"\t%s", NNAME(enp));
 	prt_msg_frag(msg_str);
 
-
 	/* print the special op-dependent args in human-readable form */
 
-	code = enp->en_code;
+	code = VN_CODE(enp);
 
 	if( code==T_DYN_OBJ || code == T_UNDEF || code == T_PROTO || code==T_POINTER || code==T_FUNCPTR || code==T_STR_PTR ){
-		sprintf(msg_str,"\t%s",enp->en_string);
+		sprintf(msg_str,"\t%s",VN_STRING(enp));
 		prt_msg_frag(msg_str);
 		if( code == T_POINTER ){
 			Identifier *idp;
 			/* We don't use get_set_ptr() here because we don't want an error msg... */
-			idp = ID_OF(enp->en_string);
+			idp = ID_OF(VN_STRING(enp));
 			if( idp != NO_IDENTIFIER && IS_POINTER(idp) && POINTER_IS_SET(idp) ){
-				if( idp->id_ptrp->ptr_refp == NO_REFERENCE ){
+				if( PTR_REF(ID_PTR(idp)) == NO_REFERENCE ){
 					/* how could this ever happen??? */
 					prt_msg_frag("->???");
 				} else {
 					Data_Obj *dp;
-					dp = idp->id_ptrp->ptr_refp->ref_dp;
-					sprintf(msg_str,"->%s",dp->dt_name);
+					dp = REF_OBJ(PTR_REF(ID_PTR(idp)));
+					sprintf(msg_str,"->%s",OBJ_NAME(dp));
 					prt_msg_frag(msg_str);
 				}
 			}
 		}
 	} else if( code == T_STATIC_OBJ ){
-		sprintf(msg_str,"\t%s",enp->en_dp->dt_name);
+		sprintf(msg_str,"\t%s",OBJ_NAME(VN_OBJ(enp)));
 		prt_msg_frag(msg_str);
 	} else if ( code == T_FUNCREF ){
 		Subrt *srp;
-		srp=enp->en_srp;
-		sprintf(msg_str,"\t%s",srp->sr_name);
+		srp=VN_SUBRT(enp);
+		sprintf(msg_str,"\t%s",SR_NAME(srp));
 		prt_msg_frag(msg_str);
 	} else if( code == T_SIZE_FN ){
-		sprintf(msg_str,"\t%s",size_functbl[enp->en_intval].fn_name);
+		sprintf(msg_str,"\t%s",FUNC_NAME(VN_FUNC_PTR(enp)));
 		prt_msg_frag(msg_str);
-	} else if(code == T_CALL_NATIVE ){
-		sprintf(msg_str,"\t%s",curr_native_func_tbl[enp->en_intval].kw_token);
+	}
+#ifdef NOT_YET
+	else if(code == T_CALL_NATIVE ){
+		// was kw_token???
+		// curr_native_func_tbl...
+		sprintf(msg_str,"\t%s",FUNC_NAME(VN_FUNC_PTR(enp)));
 		prt_msg_frag(msg_str);
-	} else if(code == T_TYPECAST ){
-		sprintf(msg_str,"  %s",name_for_prec(enp->en_intval));
+	}
+#endif /* NOT_YET */
+	else if(code == T_TYPECAST ){
+		// BUG not how we do precision any more!!!
+		//sprintf(msg_str,"  %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
+		sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code == T_SUBRT || code == T_SCRIPT ){
 		Subrt *srp;
-		srp=enp->en_srp;
-		sprintf(msg_str,"\t%s",srp->sr_name);
+		srp=VN_SUBRT(enp);
+		sprintf(msg_str,"\t%s",SR_NAME(srp));
 		prt_msg_frag(msg_str);
 	} else if( code==T_DECL_STAT ){
-		sprintf(msg_str," %s",prec_name[enp->en_intval]);
+		//sprintf(msg_str," %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
+		sprintf(msg_str," %s",PREC_NAME(VN_DECL_PREC(enp)));
 		prt_msg_frag(msg_str);
 	} else if( IS_DECL(code) ){
-		sprintf(msg_str," %s",enp->en_string);
+		sprintf(msg_str," %s",VN_STRING(enp));
 		prt_msg_frag(msg_str);
 	} else if( code==T_ADVISE ){
 		/* BUG need to elim yylex_qsp */
-		s=eval_string(QSP_ARG  enp->en_child[0]);
+		s=eval_string(QSP_ARG  VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\"%s\"",s);
 		prt_msg_frag(msg_str);
 	} else if( code==T_WARN ){
 		/* BUG need to elim yylex_qsp */
-		s=eval_string(QSP_ARG  enp->en_child[0]);
+		s=eval_string(QSP_ARG  VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\"%s\"",s);
 		prt_msg_frag(msg_str);
 	} else if( code==T_STRING ){
-		sprintf(msg_str,"\t\"%s\"",enp->en_string);
+		sprintf(msg_str,"\t\"%s\"",VN_STRING(enp));
 		prt_msg_frag(msg_str);
 	} else if( code == T_LABEL || code ==T_GO_BACK || code == T_GO_FWD ){
-		sprintf(msg_str," %s",enp->en_string);
+		sprintf(msg_str," %s",VN_STRING(enp));
 		prt_msg_frag(msg_str);
 	} else if( code==T_LIT_DBL ){
-		sprintf(msg_str," %g",enp->en_dblval);
-		prt_msg_frag(msg_str);
-	} else if( code==T_MATH1_FN ){
-		sprintf(msg_str," %s ",
-			math1_functbl[enp->en_intval].fn_name
-			);
+		sprintf(msg_str," %g",VN_DBLVAL(enp));
 		prt_msg_frag(msg_str);
 	} else if( code == T_MATH0_FN ){
-		sprintf(msg_str," %s",math0_functbl[enp->en_func_index].fn_name);
+		sprintf(msg_str," %s",FUNC_NAME(VN_FUNC_PTR(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code == T_MATH1_FN ){
-		sprintf(msg_str," %s",math1_functbl[enp->en_func_index].fn_name);
+		sprintf(msg_str," %s",FUNC_NAME(VN_FUNC_PTR(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code == T_MATH2_FN ){
-		sprintf(msg_str," %s",math2_functbl[enp->en_func_index].fn_name);
+		sprintf(msg_str," %s",FUNC_NAME(VN_FUNC_PTR(enp)));
 		prt_msg_frag(msg_str);
 	} else if (
 		   code == T_MATH0_VFN
 		|| code == T_MATH1_VFN
 		|| code == T_MATH2_VFN
 		|| code == T_MATH2_VSFN
+		|| code == T_CHAR_VFN
+			/* BUG? shouldn't there bre a VSFN2 ??? */
 		|| code == T_VS_FUNC
 		|| code == T_VV_FUNC
 		){
-		sprintf(msg_str," %s",vec_func_tbl[enp->en_vfunc_code].vf_name);
+		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_VFUNC_CODE(enp))));
 		prt_msg_frag(msg_str);
 	} else if( code==T_CALLFUNC ){
-		sprintf(msg_str," %s", ((Subrt *)enp->en_srp)->sr_name);
+		sprintf(msg_str," %s", SR_NAME(VN_SUBRT(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code==T_LIT_INT ){
-		sprintf(msg_str," %ld",enp->en_intval);
+		sprintf(msg_str," %ld",VN_INTVAL(enp));
 		prt_msg_frag(msg_str);
 	} else if( code==T_ASSIGN ){
 		prt_msg_frag("\t");
@@ -270,41 +280,41 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	/* Now print the addresses of the child nodes */
 
-	if( enp->en_child[0]!=NO_VEXPR_NODE){
-		sprintf(msg_str,"\t\tn%d",enp->en_child[0]->en_serial);
+	if( VN_CHILD(enp,0)!=NO_VEXPR_NODE){
+		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
 	for(i=1;i<MAX_CHILDREN(enp);i++){
-		if( enp->en_child[i]!=NO_VEXPR_NODE){
-			sprintf(msg_str,", n%d",enp->en_child[i]->en_serial);
+		if( VN_CHILD(enp,i)!=NO_VEXPR_NODE){
+			sprintf(msg_str,", n%d",VN_SERIAL(VN_CHILD(enp,i)));
 			prt_msg_frag(msg_str);
 		}
 	}
 	prt_msg("");
 
-	if( SHOWING_SHAPES && enp->en_shpp != NO_SHAPE ){
+	if( SHOWING_SHAPES && VN_SHAPE(enp) != NO_SHAPE ){
 		prt_msg_frag("\t");
 		if( OWNS_SHAPE(enp) ){
-			sprintf(msg_str,"* 0x%lx  ",(u_long)enp->en_shpp);
+			sprintf(msg_str,"* 0x%lx  ",(u_long)VN_SHAPE(enp));
 			prt_msg_frag(msg_str);
 		}
 		else {
-			sprintf(msg_str,"@ 0x%lx  ",(u_long)enp->en_shpp);
+			sprintf(msg_str,"@ 0x%lx  ",(u_long)VN_SHAPE(enp));
 			prt_msg_frag(msg_str);
 		}
 		prt_msg_frag("\t");
-		describe_shape(enp->en_shpp);
+		DESCRIBE_SHAPE(VN_SHAPE(enp));
 	}
 
-	if( SHOWING_RESOLVERS && enp->en_resolvers!=NO_LIST ){
+	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NO_LIST ){
 		Node *np; Vec_Expr_Node *enp2;
 		prt_msg("\tResolvers:");
-		np=enp->en_resolvers->l_head;
+		np=QLIST_HEAD(VN_RESOLVERS(enp));
 		while(np!=NO_NODE){
-			enp2=(Vec_Expr_Node *)np->n_data;
+			enp2=(Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\t\t%s",node_desc(enp2));
 			prt_msg(msg_str);
-			np=np->n_next;
+			np=NODE_NEXT(np);
 		}
 	}
 }
@@ -316,8 +326,8 @@ static void _dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	_dump_node(QSP_ARG  enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
-		if( enp->en_child[i]!=NO_VEXPR_NODE){
-			_DUMP_TREE(enp->en_child[i]);
+		if( VN_CHILD(enp,i)!=NO_VEXPR_NODE){
+			_DUMP_TREE(VN_CHILD(enp,i));
 		}
 	}
 }
@@ -326,7 +336,7 @@ static void _dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 void dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( dump_flags & SHOW_KEY ){
-		print_shape_key();
+		print_shape_key(SINGLE_QSP_ARG);
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
@@ -337,7 +347,7 @@ void dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 void dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( dump_flags & SHOW_KEY ){
-		print_shape_key();
+		print_shape_key(SINGLE_QSP_ARG);
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;

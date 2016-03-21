@@ -1,5 +1,7 @@
 
-macrosdir	=	$(datadir)/quip/macros/view
+macrosdir	=	$(datadir)/coq/macros/view
+
+# we copy ios_plot for running mac native from command line...
 
 macros_DATA	=	adjuster.mac		\
 			anstis_demo.mac		\
@@ -17,6 +19,8 @@ macros_DATA	=	adjuster.mac		\
 			oscope.mac		\
 			plot_utils.mac		\
 			plotsupp.mac		\
+			unix_plot.mac		\
+			ios_plot.mac		\
 			range.mac		\
 			scopit.mac		\
 			vcr.mac			\

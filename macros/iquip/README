@@ -1,0 +1,9 @@
+The macros here are intended to be part of a startup script
+for a user-programmable system...
+
+We begin by providing an interface to a script download server.
+
+________________________________
+
+To download scripts to the device, run script_server.scr on a machine that
+the device can make a network connection to.

@@ -1,28 +1,17 @@
 #include "quip_config.h"
 
-char VersionId_dataf_sub_obj[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "items.h"
-#include "debug.h"
-#include "getbuf.h"
-#include "savestr.h"
+#ifdef HAVE_OPENCL
+#include "ocl_platform.h"
+#endif // HAVE_OPENCL
 
 #ifdef HAVE_CUDA
-#include "cuda_supp.h"
-#endif
-
-/* local prototypes */
-
-static int check_posn(QSP_ARG_DECL  Data_Obj *parent,index_t *offsets,
-			Dimension_Set *dsp,const char *name);
-static int check_inset(QSP_ARG_DECL  Data_Obj *parent,index_t *offsets,Dimension_Set *dsp,
-			incr_t *incrs,const char *name);
-static void relocate_children(Data_Obj *);
-static int is_inside(QSP_ARG_DECL  index_t index,int which_dim,const char *sub_name,Data_Obj *parent);
-static void set_child_increments(Data_Obj *dp, incr_t *type_incrs, incr_t *mach_incrs);
+//#include "cuda_supp.h"
+#include "cuda_helper.h"
+#endif // HAVE_CUDA
 
 /* This used to be declared withing check_posn(),
  * but old sun compiler says "no automatic aggregate initialization"
@@ -30,7 +19,7 @@ static void set_child_increments(Data_Obj *dp, incr_t *type_incrs, incr_t *mach_
 
 static incr_t ones[N_DIMENSIONS]={1,1,1,1,1};	/* dummy increments */
 
-static void set_child_increments(Data_Obj *dp, incr_t *type_incrs, incr_t *mach_incrs)
+static void set_child_increments(Data_Obj *dp, Increment_Set *type_incrs, Increment_Set *mach_incrs)
 {
 	int i;
 
@@ -41,15 +30,20 @@ static void set_child_increments(Data_Obj *dp, incr_t *type_incrs, incr_t *mach_
 	 */
 
 	for(i=0;i<N_DIMENSIONS;i++){
-		if( dp->dt_mach_dim[i] == 1 ){
-			dp->dt_mach_inc[i] = 0;
-			dp->dt_type_inc[i] = 0;
+		if( OBJ_MACH_DIM(dp,i) == 1 ){
+			SET_OBJ_MACH_INC(dp,i,0);
+			SET_OBJ_TYPE_INC(dp,i,0);
 		} else {
-			dp->dt_type_inc[i] = type_incrs[i];
-			dp->dt_mach_inc[i] = mach_incrs[i];
+			SET_OBJ_TYPE_INC(dp,i,INCREMENT(type_incrs,i));
+			SET_OBJ_MACH_INC(dp,i,INCREMENT(mach_incrs,i));
 		}
 	}
 }
+
+// This was OBJ_MACH_INC but perhaps it should be OBJ_TYPE_INC?
+// It probably makes more sense to use type units, but for the sake
+// of minimal breakage, we leave it in machine units, and change
+// the OpenCL data offset function to make adjustments for complex and quat.
 
 static index_t get_pix_base_offset(index_t *offsets, Data_Obj *parent)
 {
@@ -58,14 +52,10 @@ static index_t get_pix_base_offset(index_t *offsets, Data_Obj *parent)
 
 	pix_offset=0L;
 	for(i=0;i<N_DIMENSIONS;i++)
-		pix_offset += offsets[i] * parent->dt_mach_inc[i];
+		pix_offset += offsets[i] * OBJ_MACH_INC(parent,i);
+		//pix_offset += offsets[i] * OBJ_TYPE_INC(parent,i);
 
 	return(pix_offset);
-}
-
-static int check_posn( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimension_Set *dsp, const char *name )
-{
-	return( check_inset(QSP_ARG  parent,offsets,dsp,ones,name) );
 }
 
 /* check one dimension */
@@ -75,18 +65,18 @@ static int is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *su
 	dimension_t pd;		/* parent dim */
 
 	/* if indices are unsigned, the negative test is meaningless... */
-	pd = parent->dt_type_dim[which_dim];
+	pd = OBJ_TYPE_DIM(parent,which_dim);
 
 	if( /* index < 0 || */ index >= pd){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 "%s offset %d for subobject \"%s\" falls outside of parent \"%s\"",
 			dimension_name[which_dim],
-			index,sub_name,parent->dt_name);
-		WARN(error_string);
-		sprintf(error_string,
+			index,sub_name,OBJ_NAME(parent));
+		WARN(ERROR_STRING);
+		sprintf(ERROR_STRING,
 			"dim index %d:  parent size = %u",
-			which_dim, parent->dt_type_dim[which_dim]);
-		advise(error_string);
+			which_dim, OBJ_TYPE_DIM(parent,which_dim));
+		advise(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -103,15 +93,16 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 	/* make sure that all the sizes are valid */
 
 	for(i=0;i<N_DIMENSIONS;i++){
-		if( dsp->ds_dimension[i] == 0 ){
-			sprintf(error_string,
-	"CAUTIOUS:  subobject %s dimension %d has value 0!??",
-				name,i);
-			WARN(error_string);
-			retval=(-1);
-		}
+//		if( DIMENSION(dsp,i) == 0 ){
+//			sprintf(ERROR_STRING,
+//	"CAUTIOUS:  check_inset:  subobject %s dimension %d has value 0!??",
+//				name,i);
+//			WARN(ERROR_STRING);
+//			retval=(-1);
+//		}
+		assert( DIMENSION(dsp,i) != 0 );
 	}
-	if( retval < 0 ) return(retval);
+	//if( retval < 0 ) return(retval);
 #endif /* CAUTIOUS */
 
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -122,11 +113,11 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 			retval=(-1);
 
 		/* This test is needed if indices are unsigned... */
-		if( incrs[i] < 0 && (-incrs[i]*(dsp->ds_dimension[i]-1)) > offsets[i] )
+		if( incrs[i] < 0 && (-incrs[i]*(DIMENSION(dsp,i)-1)) > offsets[i] )
 			/* BUG print a warning here */
 			retval=(-1);
 
-		extreme_index = offsets[i]+incrs[i]*(dsp->ds_dimension[i]-1);
+		extreme_index = offsets[i]+incrs[i]*(DIMENSION(dsp,i)-1);
 		if( ! is_inside(QSP_ARG  extreme_index,i,name,parent) )
 			retval=(-1);
 
@@ -134,26 +125,31 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 	return(retval);
 } /* end check_inset() */
 
+static int check_posn( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimension_Set *dsp, const char *name )
+{
+	return( check_inset(QSP_ARG  parent,offsets,dsp,ones,name) );
+}
+
 /* Set family fields for both child and parent
  */
 
 void parent_relationship( Data_Obj *parent, Data_Obj *child )
 {
-	child->dt_ap = parent->dt_ap;
-	child->dt_parent = parent;
+	SET_OBJ_AREA(child,OBJ_AREA(parent));
+	SET_OBJ_PARENT(child,parent);
 
 	/* the child is always a new object, so we're not
 	 * losing anything here
 	 */
-	child->dt_children = NO_LIST;
+	SET_OBJ_CHILDREN(child, NO_LIST);
 
-	if( parent->dt_children == NO_LIST )
-		parent->dt_children = new_list();
+	if( OBJ_CHILDREN(parent) == NO_LIST )
+		SET_OBJ_CHILDREN(parent,new_list());
 
-	addHead(parent->dt_children,mk_node(child));
+	addHead(OBJ_CHILDREN(parent),mk_node(child));
 
-	child->dt_flags = parent->dt_flags;
-	child->dt_flags |= DT_NO_DATA;
+	SET_OBJ_FLAGS(child,OBJ_FLAGS(parent));
+	SET_OBJ_FLAG_BITS(child,DT_NO_DATA);
 
 	/* Clear the TEMP flag in case
 	 * parent is a subscripted object
@@ -163,16 +159,68 @@ void parent_relationship( Data_Obj *parent, Data_Obj *child )
 	 * set this flag if needed (see array.c)
 	 */
 
-	child->dt_flags &= ~DT_TEMP;
+	/* Clear the EXPORTED flag - subobjects not
+	 * automatically exported, even if the parent is.
+	 */
 
-#ifdef HAVE_CUDA
+	CLEAR_OBJ_FLAG_BITS(child,DT_TEMP|DT_EXPORTED);
+
+	// We would like to remove dependencies on OpenGL
+	// and cuda...  One solution is to make the flag
+	// copying an object method?  Then, if an object
+	// is created as a gl buffer, the function pointer
+	// can be set...
+
+// this section used to be ifdef'd HAVE_OPENGL?
+
 	if( IS_GL_BUFFER(parent) ){
-		child->dt_gl_info_p = parent->dt_gl_info_p;
-		xfer_cuda_flag(child,parent,DT_GL_BUF);
-		xfer_cuda_flag(child,parent,DT_BUF_MAPPED);
+		// Unaligned_data is an overloaded field here... ?
+		SET_OBJ_GL_INFO(child,OBJ_GL_INFO(parent) );
+	// BUG? - do we need this code for OpenCL too?
+		// These two flag transfer commands
+		// used to be ifdef'd HAVE_CUDA...
+		xfer_dobj_flag(child,parent,DT_GL_BUF);
+		xfer_dobj_flag(child,parent,DT_BUF_MAPPED);
 	}
-#endif
 
+}
+
+// Is pix_offset in machine or type units?  (Important for float/complex)
+// Originally it was in machine units, but this broke things for the OpenCL
+// implementation.
+//
+
+// update_offset should be here too, instead of in veclib2, even though
+// it is a platform function...
+
+void default_offset_data_func(QSP_ARG_DECL  Data_Obj *dp, index_t pix_offset )
+{
+	Data_Obj *parent;
+
+//fprintf(stderr,"default_offset_data_func:  %s, pix_offset = %d\n",
+//OBJ_NAME(dp),pix_offset);
+	parent = OBJ_PARENT(dp);
+	if( IS_BITMAP(parent) ){
+		SET_OBJ_DATA_PTR(dp, ((long *)OBJ_DATA_PTR(parent)) +
+			((OBJ_BIT0(parent)+pix_offset)>>LOG2_BITS_PER_BITMAP_WORD) );
+	} else {
+		pix_offset *= ELEMENT_SIZE(dp);
+		SET_OBJ_DATA_PTR(dp, ((char *)OBJ_DATA_PTR(parent)) + pix_offset);
+	}
+	SET_OBJ_OFFSET(dp,pix_offset);
+}
+
+static void set_child_bit0(Data_Obj *dp, index_t *offsets)
+{
+	int i;
+	Data_Obj *parent;
+
+	parent = OBJ_PARENT(dp);
+
+	SET_OBJ_BIT0(dp, OBJ_BIT0(parent) );
+	for(i=0;i<N_DIMENSIONS;i++)
+		SET_OBJ_BIT0(dp, OBJ_BIT0(dp)
+			 + offsets[i] * OBJ_TYPE_INC(parent,i) );
 }
 
 Data_Obj *
@@ -180,15 +228,17 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 {
 	Data_Obj *dp;
 	index_t pix_offset;
-	int i;
 
 	if( check_posn(QSP_ARG  parent,offsets,dsp,name) < 0 ) return(NO_OBJ);
 
 	dp = new_dobj(QSP_ARG  name);
 	if( dp==NO_OBJ ) return(NO_OBJ);
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,parent->dt_prec) < 0 ){
-		del_dobj(QSP_ARG  name);
+	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
+
+	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
+		// BUG?  do we need to free other resources?
+		del_dobj(QSP_ARG  dp);
 		return(NO_OBJ);
 	}
 
@@ -197,42 +247,56 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 	 */
 	parent_relationship(parent,dp);
 
-	set_child_increments(dp,parent->dt_type_inc,parent->dt_mach_inc);
+	set_child_increments(dp,OBJ_TYPE_INCS(parent),OBJ_MACH_INCS(parent));
 	pix_offset = get_pix_base_offset(offsets,parent);
 
-	dp = setup_dp(QSP_ARG  dp,parent->dt_prec);
+	dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
 	if( dp==NO_OBJ ){
 		/* BUG? where does the cleanup happen? */
 		return(dp);
 	}
 
-	if( IS_BITMAP(parent) ){
-		dp->dt_data = ((long *)parent->dt_data) +
-			((parent->dt_bit0+pix_offset)>>LOG2_BITS_PER_BITMAP_WORD);
-	} else {
-		pix_offset *= ELEMENT_SIZE(dp);
-		dp->dt_data = ((char *)parent->dt_data) + pix_offset;
-	}
-	dp->dt_offset = pix_offset;		/* offset is in bytes */
-	if( IS_BITMAP(parent) ){
-		dp->dt_bit0 = parent->dt_bit0;
-		for(i=0;i<N_DIMENSIONS;i++)
-			dp->dt_bit0 += offsets[i] * parent->dt_type_inc[i];
-		/* We used to mask bit0 here, but now the bit offset can span words */
-	}
+	// In openCL, the "data_ptr" is actually a pointer to the memory buffer,
+	// object, not the address of the data itself.  (This appears to be a private
+	// structure, so we don't have access to the innards.)
+	// Instead, we have to call clCreateSubBuffer to get a sub-buffer with
+	// the required offset.  Unfortunately, we can't call this multiple times,
+	// so if we are creating a sub-object of a sub-object, we have to go back
+	// and get the buffer from the ultimate owner of the data.
+	//
+	// We address this by using adding an offset parameter to the data object,
+	// which is passed to all OpenCL kernel calls.  A bit wasteful when not
+	// needed, but guaranteed to work.  The offset is passed to the kernel
+	// and is in units of the basic type (complex, not float!)
+	// 
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(parent)) ) (QSP_ARG  dp, pix_offset );
+
+#ifdef REMOVE_BAD
+	// This has to be part of the platform-specific function !!!
+	SET_OBJ_OFFSET(dp,pix_offset);		/* offset was in bytes */
+						/* but now is in elements! */
+#endif // REMOVE_BAD
+
+	if( IS_BITMAP(parent) ) set_child_bit0(dp,offsets);
 
 	return(dp);
 } /* end mk_subseq() */
 
-Data_Obj *
-make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
+Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 		Dimension_Set *dsp, index_t *offsets, incr_t *incrs )
 {
 	Data_Obj *dp;
 	index_t pix_offset;	/* can be neg if image runs backwards... */
-	incr_t new_mach_incrs[N_DIMENSIONS];
-	incr_t new_type_incrs[N_DIMENSIONS];
+	Increment_Set mis, *new_mach_isp=(&mis);
+	Increment_Set tis, *new_type_isp=(&tis);
 	int i;
+
+	// Defn of this macro doesn't copy any data, 2nd arg not used???
+	//INIT_INCSET_PTR_FROM_OBJ(new_mach_isp,new_mach_incset)
+	//INIT_INCSET_PTR_FROM_OBJ(new_type_isp,new_type_incset)
+
+	//INIT_INCSET_PTR(new_mach_isp)
+	//INIT_INCSET_PTR(new_type_isp)
 
 	if( check_inset(QSP_ARG  parent,offsets,dsp,incrs,name) < 0 )
 		return(NO_OBJ);
@@ -241,8 +305,10 @@ make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	if( dp==NO_OBJ )
 		return(NO_OBJ);
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,parent->dt_prec) < 0 ){
-		del_dobj(QSP_ARG  name);
+	// init_dp uses AUTO_SHAPE...
+	if( init_dp( QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent) ) == NO_OBJ ){
+		// BUG?  do we need to free other resources?
+		del_dobj(QSP_ARG  dp);
 		return(NO_OBJ);
 	}
 
@@ -253,13 +319,23 @@ make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 
 	/* setup dp sets the increments as if the object were contiguous */
 	for(i=0;i<N_DIMENSIONS;i++){
-		new_mach_incrs[i] = parent->dt_mach_inc[i] * incrs[i];
-		new_type_incrs[i] = parent->dt_type_inc[i] * incrs[i];
+		SET_INCREMENT(new_mach_isp,i, OBJ_MACH_INC(parent,i) * incrs[i] );
+		SET_INCREMENT(new_type_isp,i, OBJ_TYPE_INC(parent,i) * incrs[i] );
 	}
-	set_child_increments(dp,new_type_incrs, new_mach_incrs);
+	set_child_increments(dp,new_type_isp, new_mach_isp);
 
 
-	dp = setup_dp(QSP_ARG  dp,parent->dt_prec);
+	// did init_dp already call setup_dp?? YES
+	// BUT we need to reset the flags!?
+	// dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
+
+	// We might want to not use AUTO_SHAPE - for example, if we subsample
+	// a column vector that we want to treat as an image?
+	if( set_shape_flags( OBJ_SHAPE(dp), dp, AUTO_SHAPE) < 0 )
+		return(NO_OBJ);
+
+	check_contiguity(dp);		// almost sure not contiguous if subsample!
+
 	if( dp==NO_OBJ )
 		return(dp);
 
@@ -268,35 +344,36 @@ make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	 */
 
 	pix_offset = get_pix_base_offset(offsets,parent);
-	if( IS_BITMAP(dp) ){
-		dp->dt_data = parent->dt_data;
-		dp->dt_bit0 = parent->dt_bit0;
-		for(i=0;i<N_DIMENSIONS;i++)
-			dp->dt_bit0 += offsets[i]*parent->dt_type_inc[i];
-	} else {
-		pix_offset *= ELEMENT_SIZE(dp);		/* offset in bytes */
-		dp->dt_data = ((char *)parent->dt_data) + pix_offset;
-	}
+
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(parent)) ) (QSP_ARG  dp, pix_offset );
+
+	//SET_OBJ_OFFSET(dp,pix_offset);
+
+	if( IS_BITMAP(dp) ) set_child_bit0(dp,offsets);
 
 	return(dp);
 } /* end mk_subsamp */
 
-Data_Obj *
-mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
+Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
 {
 	Data_Obj *dp;
-	Dimension_Set dimset;
+	Dimension_Set *dsp;
 	int i;
 	index_t offset;
+
+	INIT_DIMSET_PTR(dsp)
 
 	dp=new_dobj(QSP_ARG  name);
 	if( dp==NO_OBJ ) return(NO_OBJ);
 
-	dimset = parent->dt_type_dimset;
-	dimset.ds_dimension[2] /= 2;
+	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
 
-	if( set_obj_dimensions(QSP_ARG  dp,&dimset,parent->dt_prec) < 0 ){
-		del_dobj(QSP_ARG  name);
+	DIMSET_COPY(dsp , OBJ_TYPE_DIMS(parent) );
+	SET_DIMENSION(dsp,2,DIMENSION(dsp,2) / 2);
+
+	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
+		// BUG?  do we need to free other resources?
+		del_dobj(QSP_ARG  dp);
 		return(NO_OBJ);
 	}
 
@@ -306,18 +383,23 @@ mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
 	parent_relationship(parent,dp);
 
 	for(i=0;i<N_DIMENSIONS;i++){
-		dp->dt_type_inc[i] = parent->dt_type_inc[i];
-		dp->dt_mach_inc[i] = parent->dt_mach_inc[i];
+		SET_OBJ_TYPE_INC(dp,i,OBJ_TYPE_INC(parent,i));
+		SET_OBJ_MACH_INC(dp,i,OBJ_MACH_INC(parent,i));
 	}
-	dp->dt_rinc *= 2;
+	SET_OBJ_ROW_INC(dp,OBJ_ROW_INC(dp) * 2);
 
-	dp = setup_dp(QSP_ARG  dp,parent->dt_prec);
-#ifdef CAUTIOUS
-	if( dp==NO_OBJ ){
-		WARN("CAUTIOUS:  mk_ilace error");
-		return(dp);
-	}
-#endif /* CAUTIOUS */
+	// setup_dp_with_shape called from init_dp...
+	//dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
+
+//#ifdef CAUTIOUS
+//	if( dp==NO_OBJ ){
+//		WARN("CAUTIOUS:  mk_ilace error");
+//		return(dp);
+//	}
+//#endif /* CAUTIOUS */
+
+	// don't need this any more if we're not calling setup_dp
+	//assert( dp != NO_OBJ );
 
 	/* BUG?  even parity gets us the first set of lines, but by convention
 	 * in video terminology line numbering starts with 1, and the first set
@@ -327,33 +409,39 @@ mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
 	 */
 
 	if( parity & 1 )
-		offset = parent->dt_rowinc * ELEMENT_SIZE(parent);
+		offset = OBJ_ROW_INC(parent) /* * ELEMENT_SIZE(parent) */;
 	else
 		offset = 0;
 
-	dp->dt_data = ((char *)parent->dt_data) + offset;
-	dp->dt_offset = offset;
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(parent)) ) (QSP_ARG  dp, offset );
+
+	//SET_OBJ_OFFSET(dp,offset); // offset in bytes
 
 	return(dp);
-}
+} // mk_ilace
 
 /* When we relocate a subimage, we also have to relocate any subimages of
  * the subimage!!!  This is why each object has to remember its offset
- * in dt_offset...
+ * in dt_offset...  We used to keep this in bytes, but as OpenCL needs
+ * to do something different, we now keep the offset in elements.
+ *
+ * The update_offset function should update the offset of a child object
+ * relative to its parent...
  */
 
-static void relocate_children( Data_Obj *dp )
+static void relocate_children(QSP_ARG_DECL  Data_Obj *dp )
 {
 	Node *np;
 	Data_Obj *child;
 
-	np=dp->dt_children->l_head;
+	np=QLIST_HEAD( OBJ_CHILDREN(dp) );
 	while(np!=NO_NODE){
-		child = (Data_Obj *)np->n_data;
-		child->dt_data = ((char *)dp->dt_data) + child->dt_offset;
-		if( child->dt_children != NO_LIST )
-			relocate_children(child);
-		np = np->n_next;
+		child = (Data_Obj *)NODE_DATA(np);
+		( * PF_UPDATE_OFFSET_FN(OBJ_PLATFORM(dp)) ) (QSP_ARG  child );
+
+		if( OBJ_CHILDREN(child) != NO_LIST )
+			relocate_children(QSP_ARG  child);
+		np = NODE_NEXT(np);
 	}
 }
 
@@ -365,37 +453,36 @@ int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 {
 	index_t os;
 
-	if( dp->dt_parent == NO_OBJ ){
-		sprintf(error_string,
+	if( OBJ_PARENT(dp) == NO_OBJ ){
+		sprintf(ERROR_STRING,
 	"__relocate:  object \"%s\" is not a subimage",
-			dp->dt_name);
-		WARN(error_string);
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
 		
-	if( check_posn(QSP_ARG  dp->dt_parent,offsets,
-		&dp->dt_type_dimset,dp->dt_name) < 0 ){
+	if( check_posn(QSP_ARG  OBJ_PARENT(dp),offsets,
+		OBJ_TYPE_DIMS(dp),OBJ_NAME(dp)) < 0 ){
 
-		sprintf(error_string,
-			"bad relocation info for %s",dp->dt_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,
+			"bad relocation info for %s",OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return(-1);
 	}
-	os = get_pix_base_offset(offsets,dp->dt_parent);
+	os = get_pix_base_offset(offsets,OBJ_PARENT(dp));
 
-	os *= ELEMENT_SIZE(dp);	/* offset in bytes */
-	dp->dt_data = ((char *)dp->dt_parent->dt_data) + os;
-	dp->dt_offset = os;
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(OBJ_PARENT(dp))) ) (QSP_ARG  dp, os );
+	//SET_OBJ_OFFSET(dp,os);
 
 	/*
 	 * Need to recompute the data pointers of any children
 	 */
 
-	if( dp->dt_children != NO_LIST )
-		relocate_children(dp);
+	if( OBJ_CHILDREN(dp) != NO_LIST )
+		relocate_children(QSP_ARG  dp);
 
 	return(0);
-}
+} /* __relocate */
 
 /* relocate position of the subimage */
 int _relocate( QSP_ARG_DECL  Data_Obj *dp, index_t xos, index_t yos,index_t tos )
@@ -416,30 +503,36 @@ Data_Obj *
 mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols )
 {
 	index_t offsets[N_DIMENSIONS];
-	Dimension_Set dimset;
+	Dimension_Set ds1;
+	Dimension_Set *dsp=(&ds1);
+//	Dimension_Set *dsp;
 
-	offsets[0]=0L;	dimset.ds_dimension[0]=parent->dt_type_dim[0];
-	offsets[1]=xos;	dimset.ds_dimension[1]=cols;
-	offsets[2]=yos;	dimset.ds_dimension[2]=rows;
-	offsets[3]=0L;	dimset.ds_dimension[3]=parent->dt_type_dim[3];
-	offsets[4]=0L;	dimset.ds_dimension[4]=parent->dt_type_dim[4];
+	//INIT_DIMSET_PTR(dsp)
 
-	return(mk_subseq(QSP_ARG  name,parent,offsets,&dimset));
+	offsets[0]=0L;	SET_DIMENSION(dsp,0,OBJ_TYPE_DIM(parent,0));
+	offsets[1]=xos;	SET_DIMENSION(dsp,1,cols);
+	offsets[2]=yos;	SET_DIMENSION(dsp,2,rows);
+	offsets[3]=0L;	SET_DIMENSION(dsp,3,OBJ_TYPE_DIM(parent,3));
+	offsets[4]=0L;	SET_DIMENSION(dsp,4,OBJ_TYPE_DIM(parent,4));
+
+	return(mk_subseq(QSP_ARG  name,parent,offsets,dsp));
+	// release dimension set or not?
 }
 
-Data_Obj *
-nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )
+Data_Obj * nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )
 {
 	index_t offsets[N_DIMENSIONS];
-	Dimension_Set dimset;
+	Dimension_Set *dsp;
 
-	offsets[0]=0L;	dimset.ds_dimension[0]=tdim;
-	offsets[1]=xos;	dimset.ds_dimension[1]=cols;
-	offsets[2]=yos;	dimset.ds_dimension[2]=rows;
-	offsets[3]=0L;	dimset.ds_dimension[3]=parent->dt_type_dim[3];
-	offsets[4]=0L;	dimset.ds_dimension[4]=parent->dt_type_dim[4];
+	INIT_DIMSET_PTR(dsp)
 
-	return(mk_subseq(QSP_ARG  name,parent,offsets,&dimset));
+	offsets[0]=0L;	SET_DIMENSION(dsp,0,tdim);
+	offsets[1]=xos;	SET_DIMENSION(dsp,1,cols);
+	offsets[2]=yos;	SET_DIMENSION(dsp,2,rows);
+	offsets[3]=0L;	SET_DIMENSION(dsp,3,OBJ_TYPE_DIM(parent,3));
+	offsets[4]=0L;	SET_DIMENSION(dsp,4,OBJ_TYPE_DIM(parent,4));
+
+	return(mk_subseq(QSP_ARG  name,parent,offsets,dsp));
 }
 
 /* get_machine_dimensions - utility function to support make_equivalence
@@ -447,28 +540,30 @@ nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char 
 
 static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_dsp, prec_t prec)
 {
-	*dst_dsp = *src_dsp;	/* Default - they are the same */
+	//*dst_dsp = *src_dsp;	/* Default - they are the same */
+
+	DIMSET_COPY(dst_dsp,src_dsp);
 
 	if( BITMAP_PRECISION(prec) ){
-		if( src_dsp->ds_dimension[0] != 1 )
+		if( DIMENSION(src_dsp,0) != 1 )
 			NERROR1("get_machine_dimensions:  Sorry, don't handle multi-component bitmaps");
-		dst_dsp->ds_dimension[0] = 1;
+		SET_DIMENSION(dst_dsp,0,1);
 
 		// round number of columns up
-		dst_dsp->ds_dimension[1] = N_BITMAP_WORDS(src_dsp->ds_dimension[1]);
+		SET_DIMENSION(dst_dsp,1,N_BITMAP_WORDS(DIMENSION(src_dsp,1)));
 	} else if( COMPLEX_PRECISION(prec) ){
 		// complex can't have a component dimension
-		if( src_dsp->ds_dimension[0] != 1 ){
+		if( DIMENSION(src_dsp,0) != 1 ){
 			sprintf(DEFAULT_ERROR_STRING,
 		"Sorry, complex images must have component dimension (%d) equal to 1",
-				src_dsp->ds_dimension[0]);
+				DIMENSION(src_dsp,0));
 			NERROR1(DEFAULT_ERROR_STRING);
 		}
-		dst_dsp->ds_dimension[0]=2;
+		SET_DIMENSION(dst_dsp,0,2);
 	} else if( QUAT_PRECISION(prec) ){
-		if( src_dsp->ds_dimension[0] != 1 )
+		if( DIMENSION(src_dsp,0) != 1 )
 			NERROR1("Sorry, complex quaternion images must have component dimension equal to 1");
-		dst_dsp->ds_dimension[0]=4;
+		SET_DIMENSION(dst_dsp,0,4);
 	}
 }
 
@@ -524,7 +619,7 @@ static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_ds
  *
  */
 
-Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp, prec_t prec )
+Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp, Precision * prec_p )
 {
 	Data_Obj *newdp;
 	const char *s;
@@ -537,7 +632,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	incr_t child_mach_inc;
 	incr_t new_mach_inc[N_DIMENSIONS];
 	int multiplier, divisor;
-	Dimension_Set new_mach_dim;
+	Dimension_Set ds1, *new_dsp=(&ds1);
 
 	/* If we are casting to a larger machine type (e.g. byte to long)
 	 * We have to have at least 4 bytes contiguous.
@@ -548,13 +643,13 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	 * Figure out how the elements match up.
 	 */
 
-	n_child_bytes_per_elt = siztbl[ prec & MACH_PREC_MASK ];
-	if( COMPLEX_PRECISION(prec) )
+	n_child_bytes_per_elt = PREC_MACH_SIZE( prec_p );
+	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
 		n_child_bytes_per_elt *= 2;
-	else if( QUAT_PRECISION(prec) )
+	else if( QUAT_PRECISION(PREC_CODE(prec_p)) )
 		n_child_bytes_per_elt *= 4;
 
-	n_parent_bytes_per_elt = siztbl[ MACHINE_PREC(parent) ];
+	n_parent_bytes_per_elt = OBJ_PREC_MACH_SIZE( parent );
 	if( IS_COMPLEX(parent) )
 		n_parent_bytes_per_elt *= 2;
 	else if( IS_QUAT(parent) )
@@ -570,7 +665,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	if( n_child_bytes_per_elt > n_parent_bytes_per_elt ) {
 		incr_t n_contig;
 
-		//n_per_child = siztbl[ prec & MACH_PREC_MASK ] / siztbl[ MACHINE_PREC(parent) ];
+		//n_per_child = PREC_SIZE( PREC_CODE(prec_p) & MACH_PREC_MASK ) / OBJ_PREC_MACH_SIZE( parent );
 		n_per_child = n_child_bytes_per_elt / n_parent_bytes_per_elt;
 
 		/* new size is larger, first increment must be 1 */
@@ -578,40 +673,40 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 		/* Find the largest number of contiguous elements in the parent */
 		n_contig=1;
 		for(parent_dim=0;parent_dim<N_DIMENSIONS;parent_dim++)
-			if( parent->dt_mach_inc[parent_dim] == n_contig )
-				n_contig *= parent->dt_mach_dim[parent_dim];
+			if( OBJ_MACH_INC(parent,parent_dim) == n_contig )
+				n_contig *= OBJ_MACH_DIM(parent,parent_dim);
 		/* n_contig is the number of contiguous machine elements in the parent... */
 
 		if( n_contig < n_per_child ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 	"make_equivalence:  parent object %s n_contig = %d < %d, can't case to %s",
-				parent->dt_name,n_contig,n_per_child,name_for_prec(prec));
-			WARN(error_string);
+				OBJ_NAME(parent),n_contig,n_per_child,PREC_NAME(prec_p));
+			WARN(ERROR_STRING);
 			return(NO_OBJ);
 		}
 	} else if( n_child_bytes_per_elt < n_parent_bytes_per_elt ) {
 		/* Case 2:  child element size is less than parent element size - casting down */
-		//n_per_parent = siztbl[ MACHINE_PREC(parent) ] / siztbl[ prec & MACH_PREC_MASK ] ;
+		//n_per_parent = OBJ_PREC_MACH_SIZE( parent ) / PREC_SIZE( prec & MACH_PREC_MASK ) ;
 		n_per_parent = n_parent_bytes_per_elt / n_child_bytes_per_elt ;
 	}
 
 	/* first make sure the total size matches */
 
 	/* We need the machine dimensions of the new object */
-	get_machine_dimensions(&new_mach_dim,dsp,prec);
+	get_machine_dimensions(new_dsp,dsp,PREC_CODE(prec_p));
 
 	total_child_bytes = 1;
 	for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++)
-		total_child_bytes *= new_mach_dim.ds_dimension[child_dim];
-	total_child_bytes *= siztbl[ prec & MACH_PREC_MASK ];
+		total_child_bytes *= DIMENSION(new_dsp,child_dim);
+	total_child_bytes *= PREC_MACH_SIZE( prec_p );
 
-	total_parent_bytes = ELEMENT_SIZE(parent)*parent->dt_n_mach_elts;
+	total_parent_bytes = ELEMENT_SIZE(parent)*OBJ_N_MACH_ELTS(parent);
 
 	if( total_child_bytes != total_parent_bytes){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
-			name,total_child_bytes,parent->dt_name,total_parent_bytes);
-		WARN(error_string);
+			name,total_child_bytes,OBJ_NAME(parent),total_parent_bytes);
+		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 
@@ -664,12 +759,13 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 		child_mach_inc=0;
 		i=0;
 		while( child_mach_inc==0 && i < N_DIMENSIONS ){
-			child_mach_inc = parent->dt_mach_inc[i];
+			child_mach_inc = OBJ_MACH_INC(parent,i);
 			i++;
 		}
-#ifdef CAUTIOUS
-		if( child_mach_inc == 0 ) ERROR1("CAUTIOUS:  make_equivalence:  could not determine child_mach_inc!?");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//		if( child_mach_inc == 0 ) ERROR1("CAUTIOUS:  make_equivalence:  could not determine child_mach_inc!?");
+//#endif /* CAUTIOUS */
+		assert( child_mach_inc != 0 );
 
 		/* Is this correct in all cases?  If multiple parent elements make up one child
 		 * element, the contiguity check should have been performed above.  If they are the same
@@ -684,11 +780,11 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	// in the first element.
 
 	// If the parent is a bitmap, this is NOT the number of machine elts!?
-	total_child_bytes = siztbl[ prec & MACH_PREC_MASK ];
-	total_child_bytes *= new_mach_dim.ds_dimension[0];
+	total_child_bytes = PREC_MACH_SIZE( prec_p );
+	total_child_bytes *= DIMENSION(new_dsp,0);
 
-	total_parent_bytes = siztbl[ MACHINE_PREC(parent) ];
-	total_parent_bytes *= parent->dt_mach_dim[0];
+	total_parent_bytes = OBJ_PREC_MACH_SIZE( parent );
+	total_parent_bytes *= OBJ_MACH_DIM(parent,0);
 
 
 	/* total_parent_bytes, total_child_bytes count the number of elements of the parent
@@ -707,15 +803,15 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			new_mach_inc[child_dim] = child_mach_inc;
 			child_dim++;
 			if( child_dim < N_DIMENSIONS )
-				total_child_bytes *= new_mach_dim.ds_dimension[child_dim];
+				total_child_bytes *= DIMENSION(new_dsp,child_dim);
 			/* increase the parent dimension */
 			parent_dim++;
 			if( parent_dim < N_DIMENSIONS ){
-				total_parent_bytes *= parent->dt_mach_dim[parent_dim];
+				total_parent_bytes *= OBJ_MACH_DIM(parent,parent_dim);
 
 				/* BUG - need to make sure that the math comes out even, no fractions or truncations */
-				if( parent->dt_mach_inc[parent_dim] != 0 ){
-					child_mach_inc = n_per_parent * parent->dt_mach_inc[parent_dim] / n_per_child;
+				if( OBJ_MACH_INC(parent,parent_dim) != 0 ){
+					child_mach_inc = n_per_parent * OBJ_MACH_INC(parent,parent_dim) / n_per_child;
 				}
 			}
 		} else if( total_parent_bytes > total_child_bytes ){
@@ -729,7 +825,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			new_mach_inc[child_dim] = child_mach_inc;
 			child_dim++;
 			if( child_dim < N_DIMENSIONS )
-				total_child_bytes *= new_mach_dim.ds_dimension[child_dim];
+				total_child_bytes *= DIMENSION(new_dsp,child_dim);
 			/* Increasing the increment assumes that the spacing
 			 * within the parent is even at this larger size.
 			 * This is guaranteed it the new child size is LTE
@@ -739,7 +835,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			 */
 			/* assumes child is evenly-spaced between the new dimension and the old */ 
 			if( new_mach_inc[child_dim-1] > 0 )
-				child_mach_inc = new_mach_dim.ds_dimension[child_dim-1] * new_mach_inc[child_dim-1];
+				child_mach_inc = DIMENSION(new_dsp,child_dim-1) * new_mach_inc[child_dim-1];
 		} else { /* total_parent_bytes < total_child_bytes */
 			/* Increment the parent dimension WITHOUT incrementing the child.
 			 *
@@ -749,13 +845,13 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			parent_dim++;
 			prev_parent_mach_elts = total_parent_bytes;
 			if( parent_dim < N_DIMENSIONS )
-				total_parent_bytes *= parent->dt_mach_dim[parent_dim];
+				total_parent_bytes *= OBJ_MACH_DIM(parent,parent_dim);
 			else {
-				sprintf(error_string,"make_equivalence:  can't fit objects");
-				WARN(error_string);
-				sprintf(error_string,"total_parent_bytes = %d   total_child_bytes = %d",
+				sprintf(ERROR_STRING,"make_equivalence:  can't fit objects");
+				WARN(ERROR_STRING);
+				sprintf(ERROR_STRING,"total_parent_bytes = %d   total_child_bytes = %d",
 					total_parent_bytes,total_child_bytes);
-				advise(error_string);
+				advise(ERROR_STRING);
 				return(NO_OBJ);
 			}
 			/* When we bring in more parent elements
@@ -769,23 +865,23 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			 * But we probably should remember the last non-zero increment?
 			 */
 
-			if( prev_parent_mach_elts > 1 && parent->dt_mach_inc[parent_dim] != 0 &&
-							parent->dt_mach_inc[parent_dim-1] != 0 &&
-					parent->dt_mach_inc[parent_dim] !=
-					(incr_t)(parent->dt_mach_inc[parent_dim-1]
-					* parent->dt_mach_dim[parent_dim-1]) ){
-				sprintf(error_string,
-						"make_equivalence:  problem with unevenly spaced parent object %s",parent->dt_name);
-				WARN(error_string);
-				sprintf(error_string,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
-					parent->dt_name,parent_dim,parent->dt_mach_inc[parent_dim],
-					parent_dim-1,parent->dt_mach_inc[parent_dim-1],
-					parent_dim-1,parent->dt_mach_dim[parent_dim-1]);
-				advise(error_string);
+			if( prev_parent_mach_elts > 1 && OBJ_MACH_INC(parent,parent_dim) != 0 &&
+							OBJ_MACH_INC(parent,parent_dim-1) != 0 &&
+					OBJ_MACH_INC(parent,parent_dim) !=
+					(incr_t)(OBJ_MACH_INC(parent,parent_dim-1)
+					* OBJ_MACH_DIM(parent,parent_dim-1)) ){
+				sprintf(ERROR_STRING,
+						"make_equivalence:  problem with unevenly spaced parent object %s",OBJ_NAME(parent));
+				WARN(ERROR_STRING);
+				sprintf(ERROR_STRING,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
+					OBJ_NAME(parent),parent_dim,OBJ_MACH_INC(parent,parent_dim),
+					parent_dim-1,OBJ_MACH_INC(parent,parent_dim-1),
+					parent_dim-1,OBJ_MACH_DIM(parent,parent_dim-1));
+				advise(ERROR_STRING);
 
-				sprintf(error_string,"prev_parent_mach_elts = %d, total_parent_bytes = %d, total_child_bytes = %d",
+				sprintf(ERROR_STRING,"prev_parent_mach_elts = %d, total_parent_bytes = %d, total_child_bytes = %d",
 					prev_parent_mach_elts,total_parent_bytes,total_child_bytes);
-				advise(error_string);
+				advise(ERROR_STRING);
 
 				return(NO_OBJ);
 			}
@@ -800,14 +896,18 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 		return(NO_OBJ);
 	}
 
-	s = newdp->dt_name;	/* save, while we overwrite temporarily */
-	*newdp = *parent;	/* copy all of the fields... */
+	s = OBJ_NAME(newdp);	/* save, while we overwrite temporarily */
+	//*newdp = *parent;	/* copy all of the fields... */
+	OBJ_COPY_FROM(newdp, parent);	// newdp points to parent's shape...
+	// after the copy, the shape pointer is the same as the parent's...
+	DUP_OBJ_SHAPE(newdp,parent);
 
-	newdp->dt_name = s;
-	newdp->dt_offset = 0;
+	SET_OBJ_NAME(newdp,s);
+	SET_OBJ_OFFSET(newdp,0);
 
-	if( set_obj_dimensions(QSP_ARG  newdp,dsp,prec) ){
-		del_dobj(QSP_ARG  newdp->dt_name);
+	if( set_obj_dimensions(QSP_ARG  newdp,dsp,prec_p) ){
+		// BUG?  do we need to free other resources?
+		del_dobj(QSP_ARG  newdp);
 		return(NO_OBJ);
 	}
 
@@ -835,43 +935,43 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 		pdim=1;
 		/* find the basic parent increment */
 		for(parent_dim=0;parent_dim<N_DIMENSIONS;parent_dim++){
-			//pdim *= parent->dt_mach_dim[parent_dim];	/* how many elements we are up to */
-			pdim *= parent->dt_type_dim[parent_dim];	/* how many elements we are up to */
+			//pdim *= OBJ_MACH_DIM(parent,parent_dim);	/* how many elements we are up to */
+			pdim *= OBJ_TYPE_DIM(parent,parent_dim);	/* how many elements we are up to */
 			if( pdim > 1 ){
-				parent_mach_inc = parent->dt_mach_inc[parent_dim];
-				parent_type_inc = parent->dt_type_inc[parent_dim];
+				parent_mach_inc = OBJ_MACH_INC(parent,parent_dim);
+				parent_type_inc = OBJ_TYPE_INC(parent,parent_dim);
 				parent_dim=N_DIMENSIONS;			/* break out of loop */
 			}
 		}
 
-		newdp->dt_mach_inc[0]=parent_mach_inc;
-		newdp->dt_type_inc[0]=parent_type_inc;
+		SET_OBJ_MACH_INC(newdp,0,parent_mach_inc);
+		SET_OBJ_TYPE_INC(newdp,0,parent_type_inc);
 		for(child_dim=1;child_dim<N_DIMENSIONS;child_dim++){
-			newdp->dt_mach_inc[child_dim] = newdp->dt_mach_inc[child_dim-1] * newdp->dt_mach_dim[child_dim-1];
-			newdp->dt_type_inc[child_dim] = newdp->dt_type_inc[child_dim-1] * newdp->dt_type_dim[child_dim-1];
+			SET_OBJ_MACH_INC(newdp,child_dim,OBJ_MACH_INC(newdp,child_dim-1) * OBJ_MACH_DIM(newdp,child_dim-1));
+			SET_OBJ_TYPE_INC(newdp,child_dim,OBJ_TYPE_INC(newdp,child_dim-1) * OBJ_TYPE_DIM(newdp,child_dim-1));
 		}
 	} else {	/* Not evenly spaced or contiguous... */
 		//
 		for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++){
-			newdp->dt_mach_inc[child_dim] = new_mach_inc[child_dim];
+			SET_OBJ_MACH_INC(newdp,child_dim,new_mach_inc[child_dim]);
 		}
 	}
 
 	/* Now we have the machine increments.
 	 * Copy them to the type increments, and adjust if necessary.
 	 */
-	if( COMPLEX_PRECISION(prec) )
+	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
 		divisor=2;
-	else if( QUAT_PRECISION(prec) )
+	else if( QUAT_PRECISION(PREC_CODE(prec_p)) )
 		divisor=4;
 	else	divisor=1;
 
-	if( BITMAP_PRECISION(prec) )
+	if( BITMAP_PRECISION(PREC_CODE(prec_p)) )
 		multiplier = BITS_PER_BITMAP_WORD;
 	else	multiplier = 1;
 
 	for(child_dim=0;child_dim<N_DIMENSIONS;child_dim++){
-		newdp->dt_type_inc[child_dim] = multiplier * newdp->dt_mach_inc[child_dim] / divisor;
+		SET_OBJ_TYPE_INC(newdp,child_dim,multiplier * OBJ_MACH_INC(newdp,child_dim) / divisor);
 	}
 
 	/* Where should we adjust the row increment when the parent is a bitmap? */
@@ -882,14 +982,15 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	 */
 	parent_relationship(parent,newdp);
 
-	newdp=setup_dp(QSP_ARG  newdp,prec);
+	newdp=setup_dp(QSP_ARG  newdp,prec_p);
 
-#ifdef CAUTIOUS
-	if( newdp == NO_OBJ ){
-		/* BUG do something??? */
-		ERROR1("CAUTIOUS:  make_equivalence:  unable to setup equivalance object!?");
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( newdp == NO_OBJ ){
+//		/* BUG do something??? */
+//		ERROR1("CAUTIOUS:  make_equivalence:  unable to setup equivalance object!?");
+//	}
+//#endif /* CAUTIOUS */
+	assert( newdp != NO_OBJ );
 
 
 	/* If the parent is a bitmap, but the equivalence is not, then
@@ -897,8 +998,8 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	 * We also need to adjust the row increment...
 	 */
 
-	if( IS_BITMAP(newdp) && prec != PREC_BIT ){
-		newdp->dt_flags &= ~DT_BIT;
+	if( IS_BITMAP(newdp) && PREC_CODE(prec_p) != PREC_BIT ){
+		CLEAR_OBJ_FLAG_BITS(newdp,DT_BIT);
 	}
 
 	return(newdp);
@@ -909,17 +1010,17 @@ void propagate_flag_to_children(Data_Obj *dp, uint32_t flags_to_set )
 	Data_Obj *child;
 	Node *np;
 
-	if( dp->dt_children == NO_LIST ) return;
+	if( OBJ_CHILDREN(dp) == NO_LIST ) return;
 
-	np = dp->dt_children->l_head;
+	np = QLIST_HEAD( OBJ_CHILDREN(dp) );
 	while( np != NO_NODE ){
-		child = (Data_Obj *)np->n_data;
+		child = (Data_Obj *)NODE_DATA(np);
 
-		child->dt_flags |= flags_to_set;
+		SET_OBJ_FLAG_BITS(child,flags_to_set);
 
-		if( dp->dt_children != NO_LIST ) propagate_flag_to_children(child,flags_to_set);
+		if( OBJ_CHILDREN(dp) != NO_LIST ) propagate_flag_to_children(child,flags_to_set);
 
-		np = np->n_next;
+		np = NODE_NEXT(np);
 	}
 }
 

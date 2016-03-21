@@ -1,0 +1,8 @@
+*.o
+*.a
+*.asc
+.deps
+Makefile
+Makefile.in
+events_sara.hdf5
+

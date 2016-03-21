@@ -1,0 +1,7 @@
+# test of url download
+
+http
+  save_url scanpath.arc.nasa.gov/index.html foo
+  Pause
+
+

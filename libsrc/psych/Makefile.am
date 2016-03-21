@@ -1,7 +1,9 @@
+all:	libpsych.a
+	cp libpsych.a ../../libs
 
 noinst_LIBRARIES = libpsych.a
 
-libpsych_a_CPPFLAGS = -I$(top_srcdir)/include -Wall
+libpsych_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
 libpsych_a_SOURCES = 				\
 						\

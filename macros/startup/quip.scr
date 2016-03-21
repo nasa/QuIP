@@ -1,8 +1,10 @@
 # @(#) .quip ver: 1.1 1/19/99
 
+verbose no
+
 variables
-  set verbose 0
-  set QUIPSTARTUPDIR /usr/local/share/quip/macros/startup
+#  set QUIPSTARTUPDIR /usr/local/share/quip/macros/startup
+  set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup
   quit
 
 
@@ -19,12 +21,5 @@ variables
 compute control n_processors 1 quit quit
 max_warnings 200
 
-# This is the default action, but if we let the OS do its default
-# then the program exits with a non-zero error code, which causes
-# Automator (Mac OS X) to put up an alert...
-
-os interrupt_action exit quit
-#debug lookahead
-
-Stop_File .quip
+Stop_File quip.scr
 

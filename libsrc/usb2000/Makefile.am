@@ -1,7 +1,7 @@
 
 noinst_LIBRARIES = libusb2000.a
 
-libusb2000_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE -Wall
+libusb2000_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE -Wall -Wmissing-prototypes
 
 libusb2000_a_SOURCES = 					\
 				usb_menu.c		\

@@ -142,7 +142,7 @@ atc
 
 Define Init_Default_Screen 0
 If strcmp($screen_viewer,no_viewer)
-  "warn 'Init_Default_Screen:  $screen_viewer already initialized' PopFile 2 nop"
+  "warn 'Init_Default_Screen:  $screen_viewer already initialized' exit_macro"
 Tell_If Init_Default_Screen
 atc graphics init_graphics quit quit
 Set screen_viewer default_screen
@@ -193,7 +193,7 @@ Assign screen_h nrows(left_v)
 view wait left_v wait right_v quit
 .
 
-Set normal_font linux8x8
+Set normal_font linux8x8	# works on linux, but on mac???
 Set reversed_font r8x8
 Set font_loaded 0
 
@@ -298,8 +298,11 @@ atc
   quit
 atc
   model
+    advise 'calling init'
     init
+    advise 'calling render #1'
     render	# do it twice so we see it the first time
+    advise 'calling render #2'
     render
     params
       delay $fixation_delay

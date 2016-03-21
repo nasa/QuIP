@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_vl[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -13,16 +11,13 @@ char VersionId_fio_vl[] = QUIP_VERSION_STRING;
 #include <stdlib.h>
 #endif
 
+#include "quip_prot.h"
 #include "fio_prot.h"
 #include "fio_api.h"
-#include "filetype.h"
-#include "getbuf.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "savestr.h"
-#include "raw.h"
-#include "uio.h"
-#include "vl.h"
+#include "img_file/raw.h"
+//#include "img_file/uio.h"
+//#include "img_file/vl.h"		// BUG need to add this for prototypes??
 
 void vl_close(QSP_ARG_DECL  Image_File *ifp)
 {
@@ -34,19 +29,19 @@ vl_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 {
 	Image_File *ifp;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("opening image file");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_VL);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_VL) );
 
-	/* image_file_open creates dummy if_dp only if readable */
+	/* img_file_creat creates dummy if_dp only if readable */
 
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug ) advise("allocating hips header");
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( rw == FILE_READ ){
 		char string[LLEN];
@@ -54,12 +49,12 @@ if( debug ) advise("allocating hips header");
 		char word2[LLEN];
 		int at_end=0;
 
-		ifp->if_dp->dt_seqs=
-		ifp->if_dp->dt_frames=
-		ifp->if_dp->dt_rows=
-		ifp->if_dp->dt_cols=
-		ifp->if_dp->dt_comps=1;
-		ifp->if_dp->dt_prec = PREC_BY;
+		SET_OBJ_SEQS(ifp->if_dp,1);
+		SET_OBJ_FRAMES(ifp->if_dp,1);
+		SET_OBJ_ROWS(ifp->if_dp,1);
+		SET_OBJ_COLS(ifp->if_dp,1);
+		SET_OBJ_COMPS(ifp->if_dp,1);
+		SET_OBJ_PREC_PTR(ifp->if_dp, PREC_FOR_CODE(PREC_BY) );
 
 		/* read strings until line with . encountered */
 		while( !at_end ){
@@ -74,17 +69,17 @@ if( debug ) advise("allocating hips header");
 					goto dun;
 				}
 				if( !strcmp(word1,"UDIM:") ){
-					ifp->if_dp->dt_cols = atoi(word2);
+					SET_OBJ_COLS(ifp->if_dp, atoi(word2) );
 				} else if( ! strcmp(word1,"VDIM:") ){
-					ifp->if_dp->dt_rows = atoi(word2);
+					SET_OBJ_ROWS(ifp->if_dp, atoi(word2) );
 				} else if( verbose ){
-					sprintf(error_string,
+					sprintf(ERROR_STRING,
 				"Ignoring header field %s",word1);
-					advise(error_string);
+					advise(ERROR_STRING);
 				}
 			}
 		}
-		if( ifp->if_dp->dt_rows == 1 || ifp->if_dp->dt_cols == 1 )
+		if( OBJ_ROWS(ifp->if_dp) == 1 || OBJ_COLS(ifp->if_dp) == 1 )
 			WARN("Image dimension(s) may not have been set from header");
 	} else {
 		WARN("Sorry, can't write VL files");

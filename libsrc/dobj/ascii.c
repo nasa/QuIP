@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_dataf_ascii[] = QUIP_VERSION_STRING;
-
 /* more generalized dimensions & subscripts added 8-92 jbm */
 
 #include <stdio.h>
@@ -14,38 +12,20 @@ char VersionId_dataf_ascii[] = QUIP_VERSION_STRING;
 #include <ctype.h>
 #endif
 
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "query.h"		/* tell_qlevel() */
-
-static int padflag=0;
-static Data_Obj *ascii_data_dp=NO_OBJ;
-static int ascii_warned=0;
+#include "ascii_fmts.h"
 
 
-/* local prototypes */
-static void show_input_format(void);
-static int get_next(QSP_ARG_DECL  Data_Obj *,void *);
-static void pnt_one(FILE *,Data_Obj *,unsigned char *);
-static void pnt_dim(FILE *,Data_Obj *,unsigned char *,int);
-static void sp_pntvec(Data_Obj *,FILE *);
-static int get_sheets(QSP_ARG_DECL  Data_Obj *,unsigned char *,int);
-static long next_input_int(QSP_ARG_DECL  const char *pmpt);
-static double next_input_flt(QSP_ARG_DECL  const char *pmpt);
-static const char * next_input_str(QSP_ARG_DECL  const char *pmpt);
 
 /*
  * For printing out data with more than one number per line,
  * ret_dim is the index of the dimension where a return is forced
  */
 
-static int ret_dim;
 #define DEFAULT_MAX_PER_LINE	12
 #define ENFORCED_MAX_PER_LINE	50
 
-static dimension_t	n_gotten;
-
-static dimension_t max_per_line=DEFAULT_MAX_PER_LINE;
 /* We have different needs for formats;
  * When we are print a table of dobj values, we'd like to have fixed length fields,
  * but when we are constructing filenames or strings from object values we don't
@@ -65,16 +45,9 @@ static dimension_t max_per_line=DEFAULT_MAX_PER_LINE;
  * data-module struct, that we allocate dynamically and point to from the query_stream...
  * FIXME
  */
-static int min_field_width=DEFAULT_MIN_FIELD_WIDTH;
-static int display_precision=DEFAULT_DISPLAY_PRECISION;
 
 #define NORMAL_SEPARATOR	" "
 #define POSTSCRIPT_SEPARATOR	""
-static const char *separator=NORMAL_SEPARATOR;
-
-static const char *ffmtstr=NOPAD_FLT_FMT_STR;		/* float format string */
-static char pad_ffmtstr[16];
-static const char *ifmtstr=NOPAD_INT_FMT_STR;		/* integer format string */
 
 /* get a pixel from the input stream, store data at *cp */
 
@@ -100,22 +73,20 @@ static const char *ifmtstr=NOPAD_INT_FMT_STR;		/* integer format string */
 
 static int n_format_fields, curr_fmt_i;
 
-typedef enum {
-	IN_FMT_INT,
-	IN_FMT_FLT,
-	IN_FMT_STR,
-	IN_FMT_LIT
-} Input_Format_Type;
+void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
+{
+	dai_p->dai_padflag = 0;
+	dai_p->dai_ascii_data_dp = NO_OBJ;
+	dai_p->dai_ascii_warned = 0;
+	dai_p->dai_dobj_max_per_line = DEFAULT_MAX_PER_LINE;
+	dai_p->dai_min_field_width = DEFAULT_MIN_FIELD_WIDTH;
+	dai_p->dai_display_precision = DEFAULT_DISPLAY_PRECISION;
+	dai_p->dai_ascii_separator = NORMAL_SEPARATOR;
+	dai_p->dai_ffmtstr = NOPAD_FLT_FMT_STR;
+	dai_p->dai_ifmtstr = NOPAD_INT_FMT_STR;
+}
 
-typedef struct input_fmt_spec {
-	Input_Format_Type	fmt_type;
-	const char *		fmt_litstr;
-} Input_Format_Spec;
-
-#define MAX_FORMAT_FIELDS	64
-static Input_Format_Spec input_fmt[MAX_FORMAT_FIELDS];
-
-static void show_input_format()
+static void show_input_format(SINGLE_QSP_ARG_DECL)
 {
 	int i=0;
 
@@ -126,9 +97,9 @@ static void show_input_format()
 
 	while(i<n_format_fields){
 		if( i > 0 ) prt_msg_frag(" ");
-		switch( input_fmt[i].fmt_type ){
+		switch( ascii_input_fmt[i].fmt_type ){
 			case IN_FMT_STR:  prt_msg_frag("%s"); break;
-			case IN_FMT_LIT:  prt_msg_frag(input_fmt[i].fmt_litstr); break;
+			case IN_FMT_LIT:  prt_msg_frag(ascii_input_fmt[i].fmt_litstr); break;
 			case IN_FMT_FLT:  prt_msg_frag("%f"); break;
 			case IN_FMT_INT:  prt_msg_frag("%d"); break;
 		}
@@ -145,8 +116,8 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 	while( n_format_fields > 0 ){
 		/* release any old literal strings */
 		n_format_fields--;
-		if( input_fmt[n_format_fields].fmt_type == IN_FMT_LIT )
-			rls_str( input_fmt[n_format_fields].fmt_litstr );
+		if( ascii_input_fmt[n_format_fields].fmt_type == IN_FMT_LIT )
+			rls_str( (char *) ascii_input_fmt[n_format_fields].fmt_litstr );
 	}
 
 	/* parse the string */
@@ -159,50 +130,50 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 			s++;
 			switch(*s){
 				case 0:
-					sprintf(error_string,
+					sprintf(ERROR_STRING,
 		"Poorly formed input format string \"%s\"" , orig_str);
-					WARN(error_string);
+					WARN(ERROR_STRING);
 					return;
 
 				case 'd':
 				case 'x':
 				case 'o':
 				case 'i':
-					input_fmt[n_format_fields].fmt_type = IN_FMT_INT;
+					ascii_input_fmt[n_format_fields].fmt_type = IN_FMT_INT;
 					break;
 				case 'f':
 				case 'g':
-					input_fmt[n_format_fields].fmt_type = IN_FMT_FLT;
+					ascii_input_fmt[n_format_fields].fmt_type = IN_FMT_FLT;
 					break;
 				case 's':
-					input_fmt[n_format_fields].fmt_type = IN_FMT_STR;
+					ascii_input_fmt[n_format_fields].fmt_type = IN_FMT_STR;
 					break;
 			}
 			s++;
 			if( *s && !isspace(*s) ){
-				sprintf(error_string,
+				sprintf(ERROR_STRING,
 					"white space should follow format, \"%s\"",
 					orig_str);
-				WARN(error_string);
+				WARN(ERROR_STRING);
 			}
 		} else {	/* literal string */
 			int i=0;
 
-			input_fmt[n_format_fields].fmt_type=IN_FMT_LIT;
+			ascii_input_fmt[n_format_fields].fmt_type=IN_FMT_LIT;
 			while( *s && !isspace(*s) && i < (LLEN-1) )
 				lit_str[i++]=(*s++);
 			lit_str[i] = 0;
 			if( *s && !isspace(*s) )
 				WARN("literal string overflow in input format spec");
-			input_fmt[n_format_fields].fmt_litstr = savestr(lit_str);
+			ascii_input_fmt[n_format_fields].fmt_litstr = savestr(lit_str);
 		}
 		n_format_fields++;
 	}
 	if( n_format_fields >= MAX_FORMAT_FIELDS && *s != 0 ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"Max number of format fields (%d) used up before done processing format string!?",
 			MAX_FORMAT_FIELDS);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 	}
 }
 
@@ -215,12 +186,12 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 
 #define READ_LITERAL		{					\
 									\
-	s=NAMEOF(input_fmt[curr_fmt_i].fmt_litstr);			\
-	if( strcmp(s,input_fmt[curr_fmt_i].fmt_litstr) ){		\
-		sprintf(error_string,					\
+	s=NAMEOF(ascii_input_fmt[curr_fmt_i].fmt_litstr);			\
+	if( strcmp(s,ascii_input_fmt[curr_fmt_i].fmt_litstr) ){		\
+		sprintf(ERROR_STRING,					\
 	"expected literal string \"%s\", saw string \"%s\"",		\
-			input_fmt[curr_fmt_i].fmt_litstr,s);		\
-		WARN(error_string);					\
+			ascii_input_fmt[curr_fmt_i].fmt_litstr,s);		\
+		WARN(ERROR_STRING);					\
 	}								\
 }
 
@@ -234,11 +205,11 @@ static long next_input_int(QSP_ARG_DECL   const char *pmpt)
 	int done=0;
 
 	do {
-		switch( input_fmt[curr_fmt_i].fmt_type ){
+		switch( ascii_input_fmt[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT:
 				READ_LITERAL;
 				break;
-			case IN_FMT_STR: s=NAMEOF("don't-care string"); break;
+			case IN_FMT_STR: /*s=*/NAMEOF("don't-care string"); break;
 			case IN_FMT_INT:
 				if( havit ) SET_DONE
 				else {
@@ -250,10 +221,10 @@ static long next_input_int(QSP_ARG_DECL   const char *pmpt)
 				if( havit ) SET_DONE
 				else {
 					if( !ascii_warned ){
-						sprintf(error_string,
+						sprintf(ERROR_STRING,
 							"Float format data assigned to integer object %s!?",
-							ascii_data_dp->dt_name);
-						WARN(error_string);
+							OBJ_NAME( ascii_data_dp) );
+						WARN(ERROR_STRING);
 						ascii_warned=1;
 					}
 
@@ -276,9 +247,9 @@ static double next_input_flt(QSP_ARG_DECL   const char *pmpt)
 	int done=0;
 
 	do {
-		switch( input_fmt[curr_fmt_i].fmt_type ){
+		switch( ascii_input_fmt[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT: READ_LITERAL; break;
-			case IN_FMT_STR: s=NAMEOF("don't-care string"); break;
+			case IN_FMT_STR: /*s=*/NAMEOF("don't-care string"); break;
 			case IN_FMT_FLT:
 				if( havit ) SET_DONE
 				else {
@@ -305,12 +276,12 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 	const char *s
 		= NULL		/* to elim possibly used w/o init warning */
 	;
-	double d;
+	//double d;
 	int havit=0;
 	int done=0;
 
 	do {
-		switch( input_fmt[curr_fmt_i].fmt_type ){
+		switch( ascii_input_fmt[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT: READ_LITERAL; break;
 			case IN_FMT_STR:
 				if( havit ) SET_DONE
@@ -320,10 +291,10 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 				}
 				break;
 			case IN_FMT_FLT:
-				d = HOW_MUCH("don't care float number");
+				/*d =*/ HOW_MUCH("don't care float number");
 				break;
 			case IN_FMT_INT:
-				d = HOW_MANY("don't care integer number");
+				/*d =*/ HOW_MANY("don't care integer number");
 				break;
 		}
 		NEXT_FORMAT;
@@ -334,27 +305,35 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 
 static int check_input_level(SINGLE_QSP_ARG_DECL)
 {
-	if( tell_qlevel(SINGLE_QSP_ARG) != ASCII_LEVEL ){
-		sprintf(error_string,"check_input_level (ascii):  input depth is %d, expected %d!?",
-			tell_qlevel(SINGLE_QSP_ARG),ASCII_LEVEL);
-		WARN(error_string);
+	if( QLEVEL != ASCII_LEVEL ){
+		sprintf(ERROR_STRING,"check_input_level (ascii):  input depth is %d, expected %d!?",
+			QLEVEL,ASCII_LEVEL);
+		WARN(ERROR_STRING);
 		advise("premature end of data");
-		sprintf(error_string,"%d elements read so far",n_gotten);
-		advise(error_string);
+		sprintf(ERROR_STRING,"%d elements read so far",dobj_n_gotten);
+		advise(ERROR_STRING);
 		if( n_format_fields > 0 ){
 			prt_msg_frag("input_format:  ");
-			show_input_format();
+			show_input_format(SINGLE_QSP_ARG);
 		}
 		return(-1);
 	}
 	return 0;
 }
 
-static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap)
+static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 {
-	const char *s;
+	const char *s, *orig;
 	char *t;
 	dimension_t i;
+
+//#ifdef CAUTIOUS
+//	if( dim < 0 ){
+//		WARN("CAUTIOUS:  get_a_string:  negative dim!?");
+//		return -1;
+//	}
+//#endif // CAUTIOUS
+	assert( dim >= 0 );
 
 	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
 
@@ -366,15 +345,37 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap)
 
 	/* FIXME should use strncpy() here */
 	t=datap;
+
+#ifdef FOOBAR
+	// This old code assumes strings are in image rows...
 	i=0;
-	while( *s && i < dp->dt_cols ){
+	while( *s && i < OBJ_COLS(dp) ){
 		*t = *s;
-		t += dp->dt_pinc;
+		t += OBJ_PXL_INC(dp);
 		s++;
 		i++;
 	}
-	if( i < dp->dt_cols )
+	if( i < OBJ_COLS(dp) )
 		*t = 0;
+#endif // FOOBAR
+	// This new code takes the dimension passed in the arg.
+	i=0;
+	orig=s;
+	while( *s && i < DIMENSION(OBJ_TYPE_DIMS(dp),dim) ){
+		*t = *s;
+		t += INCREMENT(OBJ_TYPE_INCS(dp),dim);
+		s++;
+		i++;
+	}
+	if( i >= DIMENSION(OBJ_TYPE_DIMS(dp),dim) ){
+		t -= INCREMENT(OBJ_TYPE_INCS(dp),dim);
+		sprintf(ERROR_STRING,
+"get_a_string:  input string (%ld chars) longer than data buffer (%ld chars)",
+			(long)(strlen(orig)+1),
+			(long)DIMENSION(OBJ_TYPE_DIMS(dp),dim));
+		WARN(ERROR_STRING);
+	}
+	*t = 0;	// add null terminator
 
 	/* now lookahead to pop the file if it is empty */
 	lookahead_til(QSP_ARG  ASCII_LEVEL-1);
@@ -382,42 +383,238 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap)
 	return(0);
 }
 
+#ifdef HAVE_CUDA
+int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
+{
+	static Data_Obj *warned_dp=NO_OBJ;
+
+	if( ! OBJ_IS_RAM(dp) ){
+		if( dp != warned_dp ){
+			sprintf(ERROR_STRING,
+		"Object %s is not in host ram, cannot %s!?",
+				OBJ_NAME(dp), op_str);
+			WARN(ERROR_STRING);
+			warned_dp=dp;
+		}
+		return 0;
+	}
+	return 1;
+}
+#endif //HAVE_CUDA
+
+#define DEREF(ptr,type)	 (*((type *)ptr))
+
+static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_ptr)
+{
+	mach_prec mp;
+	long l;
+	static Data_Obj *warned_dp=NO_OBJ;
+
+#ifdef HAVE_CUDA
+	if( ! object_is_in_ram(QSP_ARG  dp,"set a value") ) return;
+#endif //HAVE_CUDA
+
+	mp = OBJ_MACH_PREC(dp);
+	switch( mp ){
+#ifdef USE_LONG_DOUBLE
+		case PREC_LP:
+			* ((long double *)datap) = DEREF(num_ptr,long double);
+			break;
+#endif // USE_LONG_DOUBLE
+		case PREC_DP:
+			* ((double *)datap) = DEREF(num_ptr,double);
+			break;
+		case PREC_SP:
+			* ((float *)datap) =(float) DEREF(num_ptr,double);
+			break;
+		case PREC_BY:
+			l = DEREF(num_ptr,long);
+			if( (l < -128 || l > 127) && warned_dp!=dp ){
+				sprintf(ERROR_STRING,
+			"data (0x%lx) out of range for byte conversion, object %s",
+			l,OBJ_NAME( dp) );
+				WARN(ERROR_STRING);
+				warned_dp=dp;
+			}
+			*(char *)datap = (char)(l);
+			break;
+		case PREC_UBY:
+			l = DEREF(num_ptr,long);
+			if( (l < 0 || l > 255) && warned_dp!=dp ){
+				sprintf(ERROR_STRING,
+			"data (0x%lx) out of range for unsigned byte conversion, object %s",
+			l,OBJ_NAME( dp) );
+				WARN(ERROR_STRING);
+				warned_dp=dp;
+			}
+			*(u_char *)datap = (u_char)(l);
+			break;
+
+/* these values are for two's complement!? */
+#define MIN_SIGNED_SHORT	-32768		/* 0x8000 */
+#define MAX_SIGNED_SHORT	0x7fff		/*  32767 */
+#define MIN_UNSIGNED_SHORT	0x0000
+#define MAX_UNSIGNED_SHORT	0xffff
+
+		case PREC_IN:
+			l = DEREF(num_ptr,long);
+			if( (l < MIN_SIGNED_SHORT || l > MAX_SIGNED_SHORT )
+					&& warned_dp!=dp ){
+
+				sprintf(ERROR_STRING,
+		"number %ld (0x%lx) won't fit in a signed short, object %s",
+					l,l,OBJ_NAME( dp) );
+				WARN(ERROR_STRING);
+				warned_dp=dp;
+			}
+			* ((short *)datap)=(short)l;
+			break;
+		case PREC_UIN:
+			l = DEREF(num_ptr,long);
+			if( (l < MIN_UNSIGNED_SHORT || l > MAX_UNSIGNED_SHORT )
+					&& warned_dp!=dp ){
+
+				sprintf(ERROR_STRING,
+		"number %ld (0x%lx) won't fit in an unsigned short, object %s",
+					l,l,OBJ_NAME( dp) );
+				WARN(ERROR_STRING);
+				warned_dp=dp;
+			}
+			* ((u_short *)datap)=(u_short)l;
+			break;
+		case PREC_DI:
+			l = DEREF(num_ptr,long);
+			* ((int32_t *)datap)=(int32_t)l;
+			break;
+		case PREC_UDI:
+			l = DEREF(num_ptr,long);
+			// BUG do range checks on 64 bit arch!
+			if( IS_BITMAP(dp) ){
+				long offset;
+				int bit;
+		/* BUG - here we are assuming that the bitmap word type is PREC_UDI,
+		 * so we are right shifting by 5 instead of LOG2_BITS_PER_BITMAP_WORD...
+		 * BUT we are using BITMAP_DATA_TYPE!?
+		 * CAUTIOUS check here???
+		 */
+		/* We have faked datap to get the bit offset */
+				offset = ((BITMAP_DATA_TYPE *)datap) -
+					((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp));
+				/* offset is in bits... */
+				datap = ((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp)) +
+					((OBJ_BIT0(dp) + offset)>>5);
+				bit = (OBJ_BIT0(dp)+offset)&BIT_NUMBER_MASK;
+				/* We used to have 1<<bit here, but that gave 0
+				 * for more than 32 bits.
+				 * Is that because the compiler treats the 1
+				 * as a 32 bit number?
+				 */
+				if( l==1 )
+					*((BITMAP_DATA_TYPE *)datap) |= NUMBERED_BIT(bit);
+
+				else if( l == 0 )
+					*((BITMAP_DATA_TYPE *)datap) &= ~NUMBERED_BIT(bit);
+				else {
+					sprintf(ERROR_STRING,
+				"Non-boolean value %ld specified for bitmap %s!?",
+						l,OBJ_NAME( dp) );
+					WARN(ERROR_STRING);
+				}
+			} else {
+				* ((uint32_t *)datap)=(uint32_t)l;
+			}
+			break;
+
+		case PREC_LI:
+			l = DEREF(num_ptr,long);
+			* ((int64_t *)datap)=(int64_t)l;
+			break;
+		case PREC_ULI:
+			l = DEREF(num_ptr,long);
+			if( IS_BITMAP(dp) ){
+				long offset;
+				int bit;
+				/* hard coded to 6 instead of LOG2_BITS_PER_BITMAP_WORD?
+				 * BUG?
+				 * See comment above...
+				 */
+				offset = ((BITMAP_DATA_TYPE *)datap) -
+						((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp));
+				datap = ((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp)) +
+						((OBJ_BIT0(dp) + offset)>>6);
+				bit = (OBJ_BIT0(dp)+offset)&BIT_NUMBER_MASK;
+				if( l==1 )
+					*((BITMAP_DATA_TYPE *)datap) |= (1<<bit);
+				else if( l == 0 )
+					*((BITMAP_DATA_TYPE *)datap) &= ~(1<<bit);
+				else {
+					sprintf(ERROR_STRING,
+					"Non-boolean value %ld specified for bitmap %s!?",
+						l,OBJ_NAME( dp) );
+					WARN(ERROR_STRING);
+				}
+			} else {
+				* ((uint64_t *)datap)=(uint64_t)l;
+			}
+			break;
+
+//#ifdef CAUTIOUS
+		case PREC_INVALID:
+		case N_MACHINE_PRECS:	/* just to silence compiler */
+		case PREC_NONE:		/* should have been handled above */
+			assert( ! "Unexpected case in switch!?" );
+			break;
+//#endif /* CAUTIOUS */
+
+	}
+}
+
 static int get_next(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 {
 	/* init these to eliminate optimizer warnings */
+#ifdef USE_LONG_DOUBLE
+	long
+#endif // USE_LONG_DOUBLE
 	double d_number=0.0;
 	long l=0L;
 	mach_prec mp;
-
-	static Data_Obj *warned_dp=NO_OBJ;
+	void *num_ptr;
 
 	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
 
-#ifdef CAUTIOUS
-	if( MACHINE_PREC(dp) > N_MACHINE_PRECS ){
-		sprintf(error_string,
-	"CAUTIOUS:  get_next:  Object %s precision %s is not a machine precision!?",
-			dp->dt_name,prec_name[MACHINE_PREC(dp)]);
-			WARN(error_string);
-		return(-1);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( OBJ_MACH_PREC(dp) > N_MACHINE_PRECS ){
+//		sprintf(ERROR_STRING,
+//	"CAUTIOUS:  get_next:  Object %s precision %s is not a machine precision!?",
+//			OBJ_NAME( dp) ,OBJ_MACH_PREC_NAME(dp) );
+//			WARN(ERROR_STRING);
+//		return(-1);
+//	}
+//#endif /* CAUTIOUS */
+	// should the old test have been >= instead of > ???
+	assert( OBJ_MACH_PREC(dp) < N_MACHINE_PRECS );
+	
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(error_string,"get_next:  getting a %s value for address 0x%lx",
-prec_name[MACHINE_PREC(dp)],(u_long)datap);
-advise(error_string);
+sprintf(ERROR_STRING,"get_next:  getting a %s value for address 0x%lx",
+OBJ_MACH_PREC_NAME(dp),(u_long)datap);
+advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	mp = MACHINE_PREC(dp);
+	mp = OBJ_MACH_PREC(dp);
+	num_ptr = NULL;
 	switch( mp ){
+#ifdef USE_LONG_DOUBLE
+		case PREC_LP:
+#endif // USE_LONG_DOUBLE
 		case PREC_DP:  case PREC_SP:
 			if( n_format_fields == 0 )
 				d_number = HOW_MUCH("real data");
 			else
 				d_number = next_input_flt(QSP_ARG  "real data");
+			num_ptr = &d_number;
 			break;
 		case PREC_BY:
 		case PREC_IN:
@@ -431,150 +628,25 @@ advise(error_string);
 				l=HOW_MANY("integer data");
 			else
 				l=next_input_int(QSP_ARG  "integer data");
+			num_ptr = &l;
 			break;
 		case PREC_NONE:
-			sprintf(error_string,"get_next:  object %s has no data!?",dp->dt_name);
-			WARN(error_string);
+			sprintf(ERROR_STRING,"get_next:  object %s has no data!?",OBJ_NAME( dp) );
+			WARN(ERROR_STRING);
 			return(-1);
 			break;
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
+		case PREC_INVALID:
 		case N_MACHINE_PRECS:	/* have this case here to silence compiler */
-			ERROR1("bad case in get_next");
+//			ERROR1("bad case in get_next");
+			assert( ! "bad case in get_next");
 			break;
 		/* default: ERROR1("CAUTIOUS:  get_next, bad machine precision"); break; */
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 	}
 
-	switch( mp ){
-		case PREC_DP:
-			* ((double *)datap) =d_number;
-			break;
-		case PREC_SP:
-			* ((float *)datap) =(float)d_number;
-			break;
-		case PREC_BY:
-			if( (l < -128 || l > 127) && warned_dp!=dp ){
-				sprintf(error_string,
-			"data out of range for byte conversion, object %s",
-			dp->dt_name);
-				WARN(error_string);
-				warned_dp=dp;
-			}
-			*(char *)datap = (char)(l);
-			break;
-		case PREC_UBY:
-			if( (l < 0 || l > 255) && warned_dp!=dp ){
-				sprintf(error_string,
-			"data out of range for unsigned byte conversion, object %s",
-			dp->dt_name);
-				WARN(error_string);
-				warned_dp=dp;
-			}
-			*(u_char *)datap = (u_char)(l);
-			break;
-
-/* these values are for two's complement!? */
-#define MIN_SIGNED_SHORT	-32768		/* 0x8000 */
-#define MAX_SIGNED_SHORT	0x7fff		/*  32767 */
-#define MIN_UNSIGNED_SHORT	0x0000
-#define MAX_UNSIGNED_SHORT	0xffff
-
-		case PREC_IN:
-			if( (l < MIN_SIGNED_SHORT || l > MAX_SIGNED_SHORT )
-					&& warned_dp!=dp ){
-
-				sprintf(error_string,
-		"number %ld (0x%lx) won't fit in a signed short, object %s",
-					l,l,dp->dt_name);
-				WARN(error_string);
-				warned_dp=dp;
-			}
-			* ((short *)datap)=(short)l;
-			break;
-		case PREC_UIN:
-			if( (l < MIN_UNSIGNED_SHORT || l > MAX_UNSIGNED_SHORT )
-					&& warned_dp!=dp ){
-
-				sprintf(error_string,
-		"number %ld (0x%lx) won't fit in an unsigned short, object %s",
-					l,l,dp->dt_name);
-				WARN(error_string);
-				warned_dp=dp;
-			}
-			* ((u_short *)datap)=(u_short)l;
-			break;
-		case PREC_DI:  * ((int32_t *)datap)=(int32_t)l; break;
-		case PREC_UDI:
-			if( IS_BITMAP(dp) ){
-				long offset;
-				int bit;
-				/* BUG - here we are assuming that the bitmap word type is PREC_UDI,
-				 * so we are right shifting by 5 instead of LOG2_BITS_PER_BITMAP_WORD...
-				 * BUT we are using BITMAP_DATA_TYPE!?
-				 */
-				/* We have faked datap to get the bit offset */
-				offset = ((BITMAP_DATA_TYPE *)datap) - ((BITMAP_DATA_TYPE *)dp->dt_data);
-				/* offset is in bits... */
-				datap = ((BITMAP_DATA_TYPE *)dp->dt_data) + ((dp->dt_bit0 + offset)>>5);
-				bit = (dp->dt_bit0+offset)&BIT_NUMBER_MASK;
-				/* We used to have 1<<bit here, but that gave 0 for more than 32 bits.
-				 * Is that because the compiler treats the 1 as a 32 bit number?
-				 */
-				if( l==1 )
-					*((BITMAP_DATA_TYPE *)datap) |= NUMBERED_BIT(bit);
-
-				else if( l == 0 )
-					*((BITMAP_DATA_TYPE *)datap) &= ~NUMBERED_BIT(bit);
-				else {
-					sprintf(error_string,"Non-boolean value %ld specified for bitmap %s!?",
-						l,dp->dt_name);
-					WARN(error_string);
-				}
-			} else {
-				* ((uint32_t *)datap)=(uint32_t)l;
-			}
-			break;
-
-		case PREC_LI:  * ((int64_t *)datap)=(int64_t)l; break;
-		case PREC_ULI:
-			if( IS_BITMAP(dp) ){
-				long offset;
-				int bit;
-				/* hard coded to 6 instead of LOG2_BITS_PER_BITMAP_WORD? BUG? */
-				offset = ((BITMAP_DATA_TYPE *)datap) - ((BITMAP_DATA_TYPE *)dp->dt_data);
-				datap = ((BITMAP_DATA_TYPE *)dp->dt_data) + ((dp->dt_bit0 + offset)>>6);
-				bit = (dp->dt_bit0+offset)&BIT_NUMBER_MASK;
-				if( l==1 )
-					*((BITMAP_DATA_TYPE *)datap) |= (1<<bit);
-				else if( l == 0 )
-					*((BITMAP_DATA_TYPE *)datap) &= ~(1<<bit);
-				else {
-					sprintf(error_string,"Non-boolean value %ld specified for bitmap %s!?",
-						l,dp->dt_name);
-					WARN(error_string);
-				}
-			} else {
-				* ((uint64_t *)datap)=(uint64_t)l;
-			}
-			break;
-
-#ifdef CAUTIOUS
-		case PREC_NONE:		/* should have been handled above */
-			break;
-#endif /* CAUTIOUS */
-
-#ifdef CAUTIOUS
-		case N_MACHINE_PRECS:	/* just to silence compiler */
-			ERROR1("bad case in get_next");
-			break;
-		/*
-		default:
-			WARN("CAUTIOUS:  get_next:  unexpected pseudo-precision");
-			break;
-			*/
-#endif /* CAUTIOUS */
-	}
-	n_gotten++;
+	set_one_value(QSP_ARG  dp, datap, num_ptr);
+	dobj_n_gotten++;
 
 	/* now lookahead to pop the file if it is empty */
 	lookahead_til(QSP_ARG  ASCII_LEVEL-1);
@@ -582,7 +654,7 @@ advise(error_string);
 	return(0);
 } /* end get_next() */
 
-#ifdef FOOBAR
+#ifdef BITMAP_FOOBAR
 static int64_t get_bit_from_bitmap(Data_Obj *dp, void *data)
 {
 	int which_bit;
@@ -593,10 +665,10 @@ static int64_t get_bit_from_bitmap(Data_Obj *dp, void *data)
 	 */
 
 	/* We encode the bit in the data address - it's not the real address. */
-	which_bit = ((u_char *)data) - ((u_char *)dp->dt_data);
-sprintf(error_string,"get_bit_from_bitmap:  which_bit = %d",which_bit);
-advise(error_string);
-	which_bit += dp->dt_bit0;
+	which_bit = ((u_char *)data) - ((u_char *)OBJ_DATA_PTR(dp));
+sprintf(ERROR_STRING,"get_bit_from_bitmap:  which_bit = %d",which_bit);
+advise(ERROR_STRING);
+	which_bit += OBJ_BIT0(dp);
 
 	/* now we know which bit it is, but we still need to figure
 	 * out which word...  If this is a subobject of a bit image,
@@ -605,7 +677,7 @@ advise(error_string);
 	 * a non-contiguous object...  not sure how to handle this?
 	 */
 
-	data = ((BITMAP_DATA_TYPE *)dp->dt_data) +
+	data = ((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp)) +
 		(which_bit>>LOG2_BITS_PER_BITMAP_WORD);
 	l= (int64_t)(* (BITMAP_DATA_TYPE *) data );
 	which_bit &= BIT_NUMBER_MASK;
@@ -616,7 +688,7 @@ advise(error_string);
 		l=0;
 	return(l);
 }
-#endif /* FOOBAR */
+#endif /* BITMAP_FOOBAR */
 
 
 /*
@@ -625,12 +697,12 @@ advise(error_string);
  * It seems we are confused about what to do about bitmaps - BUG?
  */
 
-void format_scalar_obj(char *buf,Data_Obj *dp,void *data)
+void format_scalar_obj(QSP_ARG_DECL  char *buf,Data_Obj *dp,void *data)
 {
 	//int64_t l;
 	int c;
 
-	if( dp->dt_prec == PREC_CHAR || dp->dt_prec == PREC_STR ){
+	if( OBJ_PREC(dp) == PREC_CHAR || OBJ_PREC(dp) == PREC_STR ){
 		c=(*(char *)data);
 		if( isalnum(c) || ispunct(c) )
 			sprintf(buf,"'%c'",c);
@@ -640,7 +712,7 @@ void format_scalar_obj(char *buf,Data_Obj *dp,void *data)
 	}
 
 	if( ! IS_BITMAP(dp) ){
-		format_scalar_value(buf,data,dp->dt_prec);
+		format_scalar_value(QSP_ARG  buf,data,OBJ_PREC_PTR(dp));
 	}
 	/*
 	else {
@@ -650,21 +722,29 @@ void format_scalar_obj(char *buf,Data_Obj *dp,void *data)
 	*/
 }
 
-void format_scalar_value(char *buf,void *data,prec_t prec)
+void format_scalar_value(QSP_ARG_DECL  char *buf,void *data,Precision *prec_p)
 {
 	mach_prec mp;
+	// long double is kind of inefficient unless we really need it?  BUG
+#ifdef USE_LONG_DOUBLE
+	long
+#endif // USE_LONG_DOUBLE
 	double ddata;
 	int64_t l;
 
-	mp = (mach_prec)(prec & MACH_PREC_MASK);
+	mp = (mach_prec)(MP_BITS(PREC_CODE(prec_p)));
 	switch( mp ){
 
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 		case PREC_NONE:
-			NERROR1("CAUTIOUS:  format_scalar_value:  null precision!?");
+//			NERROR1("CAUTIOUS:  format_scalar_value:  null precision!?");
+			assert( ! "format_scalar_value:  null precision!?");
 			break;
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 
+#ifdef USE_LONG_DOUBLE
+		case PREC_LP: ddata=(* ((long double *)data) ); goto pntflt;
+#endif // USE_LONG_DOUBLE
 		case PREC_DP: ddata=(* ((double *)data) ); goto pntflt;
 		case PREC_SP: ddata=(* ((float *)data) ); goto pntflt;
 		case PREC_BY: l= (*(char *)data); goto pntlng;
@@ -689,32 +769,111 @@ pntlng:
 			sprintf(buf,ifmtstr,l);
 			break;
 
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
+		case PREC_INVALID:
 		case N_MACHINE_PRECS:	/* silence compiler */
-			NERROR1("CAUTIOUS:  format_scalar_value:  bad machine precision");
+//			NERROR1("CAUTIOUS:  format_scalar_value:  bad machine precision");
+			assert( ! "format_scalar_value:  bad machine precision");
 			break;
 		/* default: ERROR1("CAUTIOUS:  format_scalar_value:  unknown prec"); break; */
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 	}
+}
+
+char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
+{
+	static char buf[64];
+
+fprintf(stderr,"string_for_scalar using precision %s\n",PREC_NAME(prec_p));
+	format_scalar_value(QSP_ARG  buf,data,prec_p);
+	return buf;
+}
+
+#ifdef FOOBAR
+	REAL_ARGS,
+	COMPLEX_ARGS,
+	MIXED_ARGS,		/* real/complex */
+	QUATERNION_ARGS,
+	QMIXED_ARGS,		/* real/quaternion */
+#endif // FOOBAR
+
+Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
+{
+	int code=PREC_NONE;
+
+	switch(ap){
+		case BY_ARGS:	code=PREC_BY; break;
+		case IN_ARGS:	code=PREC_IN; break;
+		case DI_ARGS:	code=PREC_DI; break;
+		case LI_ARGS:	code=PREC_LI; break;
+		case SP_ARGS:
+			switch(at){
+				case REAL_ARGS: 	code=PREC_SP; break;
+				case MIXED_ARGS:
+				case COMPLEX_ARGS:	code=PREC_CPX; break;
+				case QMIXED_ARGS:
+				case QUATERNION_ARGS:	code=PREC_QUAT; break;
+				// BUG mixed args depend on WHICH source arg!
+				default:
+					//NERROR1("CAUTIOUS:  bad argset type in src_prec_for_argset_prec()");
+					assert( ! "bad argset type in src_prec_for_argset_prec()");
+					break;
+			}
+			break;
+		case DP_ARGS:
+			switch(at){
+				case REAL_ARGS: 	code=PREC_DP; break;
+				case MIXED_ARGS:
+				case COMPLEX_ARGS:	code=PREC_DBLCPX; break;
+				case QMIXED_ARGS:
+				case QUATERNION_ARGS:	code=PREC_DBLQUAT; break;
+				// BUG mixed args depend on WHICH source arg!
+				default:
+					//NERROR1("CAUTIOUS:  bad argset type in src_prec_for_argset_prec()");
+					assert( ! "bad argset type in src_prec_for_argset_prec()");
+					break;
+			}
+			break;
+		case UBY_ARGS:	code=PREC_UBY; break;
+		case UIN_ARGS:	code=PREC_UIN; break;
+		case UDI_ARGS:	code=PREC_UDI; break;
+		case ULI_ARGS:	code=PREC_ULI; break;
+		case BYIN_ARGS:	code=PREC_BY; break;
+		case INBY_ARGS:	code=PREC_IN; break;
+		case INDI_ARGS:	code=PREC_IN; break;
+		case SPDP_ARGS:	code=PREC_SP; break;
+		default:
+//			NERROR1("CAUTIOUS:  bad argset prec in src_prec_for_argset_prec()");
+			assert( ! "bad argset prec in src_prec_for_argset_prec()");
+			break;
+	}
+
+	return( PREC_FOR_CODE(code) );
 }
 
 /*
  * Print one (possibly multidimensional) pixel value
+ *
+ * BUG - if we want it to go to a redirected output (prt_msg_vec),
+ * it won't happen, because this doesn't use prt_msg!?
+ *
+ * We don't necessarily want to use prt_msg, because this can be
+ * called both from a display function and a write function...
  */
 
-static void pnt_one( FILE *fp, Data_Obj *dp,  u_char *data )
+static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 {
 	char buf[128];
 
-	if( dp->dt_mach_dim[0] > 1 ){	/* not real, complex or higher */
+	if( OBJ_MACH_DIM(dp,0) > 1 ){	/* not real, complex or higher */
 		if( IS_STRING(dp) ){
 			fprintf(fp,"%s",data);
 		} else {
 			incr_t inc;
 			dimension_t j;
 
-			inc = (ELEMENT_SIZE(dp) * dp->dt_mach_inc[0]);
-			for(j=0;j<dp->dt_mach_dim[0];j++){
+			inc = (ELEMENT_SIZE(dp) * OBJ_MACH_INC(dp,0));
+			for(j=0;j<OBJ_MACH_DIM(dp,0);j++){
 				/* WHen this code was written, we didn't anticipate
 				 * having too many components, so ret_dim=0 means
 				 * print a return after each pixel.  But if
@@ -722,77 +881,86 @@ static void pnt_one( FILE *fp, Data_Obj *dp,  u_char *data )
 				 * lines can be too long!?  Fixing this here is
 				 * kind of a hack...
 				 */
-				if( j>0 && dp->dt_mach_dim[0] > max_per_line ){
+				if( j>0 && OBJ_MACH_DIM(dp,0) > dobj_max_per_line ){
 					fprintf(fp,"\n");
 				}
-				format_scalar_obj(buf,dp,data);
+				format_scalar_obj(QSP_ARG  buf,dp,data);
 				fprintf(fp," %s",buf);
 				data += inc;
 			}
 		}
 	} else {
-		format_scalar_obj(buf,dp,data);
-		fprintf(fp,"%s%s",separator,buf);
+		format_scalar_obj(QSP_ARG  buf,dp,data);
+		fprintf(fp,"%s%s",ascii_separator,buf);
 	}
 } /* end pnt_one */
 
-static void pnt_dim( FILE *fp, Data_Obj *dp, unsigned char *data, int dim )
+static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, int dim )
 {
 	dimension_t i;
 	incr_t inc;
 
-#ifdef CAUITOUS
-	if( IS_BITMAP(dp) ) ERROR1("CAUTIOUS:  pnt_dim called with bitmap argument.");
-#endif /* CAUTIOUS */
+//#ifdef CAUITOUS
+//	if( IS_BITMAP(dp) ) ERROR1("CAUTIOUS:  pnt_dim called with bitmap argument.");
+//#endif /* CAUTIOUS */
+	assert( ! IS_BITMAP(dp) );
 
 	if( dim > 0 ){
-		if( dim==1 && dp->dt_prec == PREC_STR ){
-			/* here we use .* to put the max number of chars to print
-			 * in the next arg (is this a gcc extension or standard?).
-			 * We do this because we are not guaranteed a null terminator char.
+#ifdef FOOBAR
+		// This code assumes that strings are the rows
+		// of an image, but other code seems to insist
+		// that strings are multi-dimensional pixels...
+
+		if( dim==1 && OBJ_PREC(dp) == PREC_STR ){
+			/* here we use .* to put the max number of chars
+			 * to print in the next arg (is this a gcc
+			 * extension or standard?).
+			 * We do this because we are not guaranteed
+			 * a null terminator char.
 			 */
-			fprintf(fp,"%.*s\n",(int)dp->dt_cols,data);
+			fprintf(fp,"%.*s\n",(int)OBJ_COMPS(dp),data);
 			return;
 		}
-		inc=(ELEMENT_SIZE(dp)*dp->dt_mach_inc[dim]);
-#ifdef DEBUG
+#endif // FOOBAR
+		inc=(ELEMENT_SIZE(dp)*OBJ_MACH_INC(dp,dim));
+#ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(DEFAULT_ERROR_STRING,"pntdim: dim=%d, n=%d, inc=%d",dim,dp->dt_mach_dim[dim],
+sprintf(DEFAULT_ERROR_STRING,"pntdim: dim=%d, n=%d, inc=%d",dim,OBJ_MACH_DIM(dp,dim),
 inc);
 advise(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-		for(i=0;i<dp->dt_mach_dim[dim];i++)
-			pnt_dim(fp,dp,data+i*inc,dim-1);
+		for(i=0;i<OBJ_MACH_DIM(dp,dim);i++)
+			pnt_dim(QSP_ARG  fp,dp,data+i*inc,dim-1);
 	} else {
-		pnt_one(fp,dp,data);
+		pnt_one(QSP_ARG  fp,dp,data);
 	}
 	if( dim == ret_dim ) fprintf(fp,"\n");
 }
 
 /* This is a speeded-up version for floats - do we need it? */
 
-static void sp_pntvec( Data_Obj *dp, FILE *fp )
+static void sp_pntvec( QSP_ARG_DECL  Data_Obj *dp, FILE *fp )
 {
 	float *base, *fbase, *rbase, *pbase;
 	dimension_t i3,i2,i1,i0;
 
-	base = (float *) dp->dt_data;
+	base = (float *) OBJ_DATA_PTR(dp);
 
-	for(i3=0;i3<dp->dt_frames;i3++){
-	    fbase=base+i3*dp->dt_mach_inc[3];
-	    for(i2=0;i2<dp->dt_rows;i2++){
-		rbase=fbase+i2*dp->dt_mach_inc[2];
-		for(i1=0;i1<dp->dt_cols;i1++){
-		    pbase=rbase+i1*dp->dt_mach_inc[1];
-		    for(i0=0;i0<dp->dt_mach_dim[0];i0++){
+	for(i3=0;i3<OBJ_FRAMES(dp);i3++){
+	    fbase=base+i3*OBJ_MACH_INC(dp,3);
+	    for(i2=0;i2<OBJ_ROWS(dp);i2++){
+		rbase=fbase+i2*OBJ_MACH_INC(dp,2);
+		for(i1=0;i1<OBJ_COLS(dp);i1++){
+		    pbase=rbase+i1*OBJ_MACH_INC(dp,1);
+		    for(i0=0;i0<OBJ_MACH_DIM(dp,0);i0++){
 			fprintf(fp," ");
-			fprintf(fp,ffmtstr,*(pbase+i0*dp->dt_mach_inc[0]));
-		        if( ret_dim == 0 && dp->dt_mach_dim[0] > max_per_line )
+			fprintf(fp,ffmtstr,*(pbase+i0*OBJ_MACH_INC(dp,0)));
+		        if( ret_dim == 0 && OBJ_MACH_DIM(dp,0) > dobj_max_per_line )
 				fprintf(fp,"\n");
 		    }
-		    if( ret_dim == 0 && dp->dt_mach_dim[0] <= max_per_line )
+		    if( ret_dim == 0 && OBJ_MACH_DIM(dp,0) <= dobj_max_per_line )
 		    	fprintf(fp,"\n");
 		}
 		if( ret_dim > 0 ) fprintf(fp,"\n");
@@ -800,60 +968,66 @@ static void sp_pntvec( Data_Obj *dp, FILE *fp )
 	}
 }
 
-static void set_pad_ffmt_str(void)
+static void set_pad_ffmt_str(SINGLE_QSP_ARG_DECL)
 {
 	sprintf(pad_ffmtstr,"%%%d.%dg",min_field_width,display_precision);
 	ffmtstr = pad_ffmtstr;
 }
 
+#ifdef NOT_USED
 void set_min_field_width(int fw)
 {
 	min_field_width=fw;
 }
+#endif /* NOT_USED */
 
-void set_display_precision(int digits)
+void set_display_precision(QSP_ARG_DECL  int digits)
 {
 	display_precision=digits;
 }
 
 #define MAX_BITS_PER_LINE 32
 
-static void display_bitmap(Data_Obj *dp, FILE *fp)
+static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 {
 	int i,j,k,l,m;
 	bitmap_word *bwp,val;
 	int which_bit, bit_index, word_offset;
 	int bits_this_line;
 
-	bwp = (bitmap_word *)dp->dt_data;
+	bwp = (bitmap_word *)OBJ_DATA_PTR(dp);
 
 	bits_this_line=0;
-	for(i=0;i<dp->dt_seqs;i++){
-		for(j=0;j<dp->dt_frames;j++){
-			for(k=0;k<dp->dt_rows;k++){
-				for(l=0;l<dp->dt_cols;l++){
-					for(m=0;m<dp->dt_comps;m++){
-						which_bit = dp->dt_bit0
-							+ m * dp->dt_type_inc[0]
-							+ l * dp->dt_type_inc[1]
-							+ k * dp->dt_type_inc[2]
-							+ j * dp->dt_type_inc[3]
-							+ i * dp->dt_type_inc[4];
+	for(i=0;i<OBJ_SEQS(dp);i++){
+		for(j=0;j<OBJ_FRAMES(dp);j++){
+			for(k=0;k<OBJ_ROWS(dp);k++){
+				for(l=0;l<OBJ_COLS(dp);l++){
+					for(m=0;m<OBJ_COMPS(dp);m++){
+						which_bit = OBJ_BIT0(dp)
+							+ m * OBJ_TYPE_INC(dp,0)
+							+ l * OBJ_TYPE_INC(dp,1)
+							+ k * OBJ_TYPE_INC(dp,2)
+							+ j * OBJ_TYPE_INC(dp,3)
+							+ i * OBJ_TYPE_INC(dp,4);
 						bit_index = which_bit % BITS_PER_BITMAP_WORD;
 						word_offset = which_bit/BITS_PER_BITMAP_WORD;
 						val = *(bwp + word_offset) & NUMBERED_BIT(bit_index); 
 						if( bits_this_line >= MAX_BITS_PER_LINE ){
 							bits_this_line=0;
-							prt_msg("");
+							fputc('\n',fp);
+							//prt_msg("");
 						} else if( bits_this_line > 0 )
-							prt_msg_frag(" ");
-						prt_msg_frag(val?"1":"0");
+							fputc(' ',fp);
+							//prt_msg_frag(" ");
+						//prt_msg_frag(val?"1":"0");
+						fputc(val?'1':'0',fp);
 						bits_this_line++;
 					}
 				}
 				if( bits_this_line > 0 ){
 					bits_this_line=0;
-					prt_msg("");
+					fputc('\n',fp);
+					//prt_msg("");
 				}
 			}
 		}
@@ -864,12 +1038,12 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 {
 	const char *save_ifmt;
 	const char *save_ffmt;
-
+	
 	/* first let's figure out when to print returns */
 	/* ret_dim == 0 means a return is printed after every pixel */
 	/* ret_dim == 1 means a return is printed after every row */
 
-	if( dp->dt_mach_dim[0] == 1 && dp->dt_cols <= max_per_line )
+	if( OBJ_MACH_DIM(dp,0) == 1 && OBJ_COLS(dp) <= dobj_max_per_line )
 		ret_dim=1;
 	else ret_dim=0;
 
@@ -880,12 +1054,16 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	/* BUG should set format based on desired radix !!! */
 	padflag = 1;
 	set_integer_print_fmt(QSP_ARG   THE_FMT_CODE);	/* handles integer formats */
-	set_pad_ffmt_str();
+	set_pad_ffmt_str(SINGLE_QSP_ARG);
 
-	if( MACHINE_PREC(dp) == PREC_SP )
-		sp_pntvec(dp,fp);
-	else if( dp->dt_prec == PREC_BIT )
-		display_bitmap(dp,fp);
+#ifdef HAVE_CUDA
+	if( ! object_is_in_ram(QSP_ARG  dp,"display") ) return;
+#endif //HAVE_CUDA
+
+	if( OBJ_MACH_PREC(dp) == PREC_SP )
+		sp_pntvec(QSP_ARG  dp,fp);
+	else if( OBJ_PREC(dp) == PREC_BIT )
+		display_bitmap(QSP_ARG  dp,fp);
 	else {
 		/* the call to pnt_dim() was commented out,
 		 * and the following lines calling dobj_iterate
@@ -899,7 +1077,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 		 * format printing!
 		 */
 
-		pnt_dim(fp,dp,(u_char *)dp->dt_data,N_DIMENSIONS-1);
+		pnt_dim(QSP_ARG  fp,dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1);
 	}
 	fflush(fp);
 
@@ -907,58 +1085,60 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	ifmtstr = save_ifmt ;
 }
 
-void shp_trace(const char *name,Shape_Info *shpp)
+static void shp_trace(QSP_ARG_DECL  const char *name,Shape_Info *shpp)
 {
 	sprintf(DEFAULT_ERROR_STRING,
 		"%s: mindim = %d,  maxdim = %d",
-		name, shpp->si_mindim, shpp->si_maxdim);
+		name, SHP_MINDIM(shpp), SHP_MAXDIM(shpp));
 	advise(DEFAULT_ERROR_STRING);
 
 	sprintf(DEFAULT_ERROR_STRING,
 		"%s dim:  %u %u %u %u %u",
 		name,
-		shpp->si_type_dim[0],
-		shpp->si_type_dim[1],
-		shpp->si_type_dim[2],
-		shpp->si_type_dim[3],
-		shpp->si_type_dim[4]);
+		SHP_TYPE_DIM(shpp,0),
+		SHP_TYPE_DIM(shpp,1),
+		SHP_TYPE_DIM(shpp,2),
+		SHP_TYPE_DIM(shpp,3),
+		SHP_TYPE_DIM(shpp,4));
 	advise(DEFAULT_ERROR_STRING);
 }
 
-void dptrace( Data_Obj *dp )
+void dptrace( QSP_ARG_DECL  Data_Obj *dp )
 {
-	shp_trace(dp->dt_name,&dp->dt_shape);
+	shp_trace(QSP_ARG  OBJ_NAME( dp) ,OBJ_SHAPE(dp) );
 
 	sprintf(DEFAULT_ERROR_STRING,
 		// why %u format when increment can be negative???
 		"%s inc:  %u %u %u %u %u  (%u %u %u %u %u)",
-		dp->dt_name,
-		dp->dt_type_inc[0],
-		dp->dt_type_inc[1],
-		dp->dt_type_inc[2],
-		dp->dt_type_inc[3],
-		dp->dt_type_inc[4],
-		dp->dt_mach_inc[0],
-		dp->dt_mach_inc[1],
-		dp->dt_mach_inc[2],
-		dp->dt_mach_inc[3],
-		dp->dt_mach_inc[4]);
+		OBJ_NAME( dp) ,
+		OBJ_TYPE_INC(dp,0),
+		OBJ_TYPE_INC(dp,1),
+		OBJ_TYPE_INC(dp,2),
+		OBJ_TYPE_INC(dp,3),
+		OBJ_TYPE_INC(dp,4),
+		OBJ_MACH_INC(dp,0),
+		OBJ_MACH_INC(dp,1),
+		OBJ_MACH_INC(dp,2),
+		OBJ_MACH_INC(dp,3),
+		OBJ_MACH_INC(dp,4));
 	advise(DEFAULT_ERROR_STRING);
 }
+
+/* read an array of strings... */
 
 static int get_strings(QSP_ARG_DECL  Data_Obj *dp,char *data,int dim)
 {
 	int status=0;
 
-	if( dim < 2 ){	/* get a row */
-		return( get_a_string(QSP_ARG  dp,data) );
+	if( dim == OBJ_MINDIM(dp) ){
+		return( get_a_string(QSP_ARG  dp,data,dim) );
 	} else {
 		dimension_t i;
 		long offset;
 
 		offset = ELEMENT_SIZE( dp);
-		offset *= dp->dt_mach_inc[dim];
-		for(i=0;i<dp->dt_mach_dim[dim];i++){
+		offset *= OBJ_MACH_INC(dp,dim);
+		for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
 			status = get_strings(QSP_ARG  dp,data+i*offset,dim-1);
 			if( status < 0 ) return(status);
 		}
@@ -978,14 +1158,14 @@ static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 
 		offset = ELEMENT_SIZE( dp);
 		if( IS_BITMAP(dp) ){
-			offset *= dp->dt_type_inc[dim];
-			for(i=0;i<dp->dt_type_dim[dim];i++){
+			offset *= OBJ_TYPE_INC(dp,dim);
+			for(i=0;i<OBJ_TYPE_DIM(dp,dim);i++){
 				status = get_sheets(QSP_ARG  dp,data+i*offset,dim-1);
 				if( status < 0 ) return(status);
 			}
 		} else {
-			offset *= dp->dt_mach_inc[dim];
-			for(i=0;i<dp->dt_mach_dim[dim];i++){
+			offset *= OBJ_MACH_INC(dp,dim);
+			for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
 				status = get_sheets(QSP_ARG  dp,data+i*offset,dim-1);
 				if( status < 0 ) return(status);
 			}
@@ -1009,35 +1189,36 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 	 * file, that has to be taken care of in read_obj()
 	 */
 
-	push_input_file(QSP_ARG  s);
-	redir(QSP_ARG  fp);
+	//push_input_file(QSP_ARG  s);
+	redir(QSP_ARG  fp, orig_filename);
 
 	/* BUG we'd like to have the string be 'Pipe: "command args"' or something... */
 	if( !strncmp(s,"Pipe",4) ){
-		THIS_QSP->qs_query[QLEVEL].q_flags |= Q_PIPE;
+		// THIS_QSP->qs_query[QLEVEL].q_flags |= Q_PIPE;
+		SET_QS_FLAG_BITS( THIS_QSP, Q_PIPE );
 	}
 
-	level = tell_qlevel(SINGLE_QSP_ARG);
+	level = QLEVEL;
 
 	read_obj(QSP_ARG  dp);
 
-	if( level == tell_qlevel(SINGLE_QSP_ARG) ){
+	if( level == QLEVEL ){
 		if( expect_exact_count ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 				"Needed %d values for object %s, file %s has more!?",
-				dp->dt_n_mach_elts,dp->dt_name,orig_filename);
-			WARN(error_string);
+				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) ,orig_filename);
+			WARN(ERROR_STRING);
 		}
-		popfile(SINGLE_QSP_ARG);
+		pop_file(SINGLE_QSP_ARG);
 	}
 
-	rls_str(orig_filename);
+	rls_str( orig_filename);
 }
 
 void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 {
-	ASCII_LEVEL = tell_qlevel(SINGLE_QSP_ARG);
-	n_gotten = 0;
+	ASCII_LEVEL = QLEVEL;
+	dobj_n_gotten = 0;
 
 	if( dp != ascii_data_dp ){
 		/* We store the target object so we can print its name if we need to... */
@@ -1045,19 +1226,19 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 		ascii_warned=0;
 	}
 
-	if( dp->dt_prec == PREC_CHAR || dp->dt_prec == PREC_STR ){
-		if( get_strings(QSP_ARG  dp,(char *)dp->dt_data,N_DIMENSIONS-1) < 0 ){
-			sprintf(error_string,"error reading strings for object %s",dp->dt_name);
-			WARN(error_string);
+	if( OBJ_PREC(dp) == PREC_CHAR || OBJ_PREC(dp) == PREC_STR ){
+		if( get_strings(QSP_ARG  dp,(char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1) < 0 ){
+			sprintf(ERROR_STRING,"error reading strings for object %s",OBJ_NAME( dp) );
+			WARN(ERROR_STRING);
 		}
-	} else if( get_sheets(QSP_ARG  dp,(u_char *)dp->dt_data,N_DIMENSIONS-1) < 0 ){
+	} else if( get_sheets(QSP_ARG  dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1) < 0 ){
 		/*
-		sprintf(error_string,"error reading ascii data for object %s",dp->dt_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"error reading ascii data for object %s",OBJ_NAME( dp) );
+		WARN(ERROR_STRING);
 		*/
-		sprintf(error_string,"expected %d elements for object %s",
-			dp->dt_n_mach_elts,dp->dt_name);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"expected %d elements for object %s",
+			OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) );
+		WARN(ERROR_STRING);
 	}
 }
 
@@ -1077,10 +1258,11 @@ void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
 			ifmtstr= (padflag ? "0x%-10lx" : "0x%lx"); break;
 		case FMT_OCTAL:
 			ifmtstr= (padflag ? "0%-10lo"  : "0%lo") ; break;
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  unrecognized format code");
-#endif /* CAUTIOUS */
+//			ERROR1("CAUTIOUS:  unrecognized format code");
+			assert( ! "unrecognized format code");
+//#endif /* CAUTIOUS */
 	}
 }
 
@@ -1089,10 +1271,10 @@ void set_max_per_line(QSP_ARG_DECL  int n )
 	if( n < 1 )
 		WARN("max_per_line must be positive");
 	else if( n > ENFORCED_MAX_PER_LINE ){
-		sprintf(error_string,"Requested max_per_line (%d) exceeds hard-coded maximum (%d)",
+		sprintf(ERROR_STRING,"Requested max_per_line (%d) exceeds hard-coded maximum (%d)",
 				n,ENFORCED_MAX_PER_LINE);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 	} else
-		max_per_line = n;
+		dobj_max_per_line = n;
 }
 

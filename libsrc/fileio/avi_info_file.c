@@ -1,11 +1,9 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_avi_info_file[] = QUIP_VERSION_STRING;
-
 int force_avi_info_load;		/* see comment in matio.c */
 
-#ifdef HAVE_LIBAVCODEC
+#ifdef HAVE_AVI_SUPPORT
 
 #include <stdio.h>		/* fileno() */
 
@@ -38,12 +36,11 @@ int force_avi_info_load;		/* see comment in matio.c */
 #include <sys/time.h>
 #endif
 
+#include "quip_prot.h"
 #include "fio_prot.h"
-#include "debug.h"
 
 // BUG this defn is duplicated from avi.c
-//#define HDR_P(ifp)		((Image_File_Hdr *)ifp->if_hd)->ifh_u.avc_hd_p
-#define HDR_P(ifp)		(&(((Image_File_Hdr *)ifp->if_hd)->ifh_u.avc_hd))
+#define HDR_P(ifp)		((AVCodec_Hdr *)ifp->if_hdr_p)
 
 /* local prototypes */
 
@@ -75,32 +72,34 @@ static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const
 	/* need to stat both files... */
 
 	if( fstat(fileno(info_fp),&info_statb) < 0 ){
-		tell_sys_error("remove_avi_info_if_stale:  fstat:");
+		_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  fstat:");
 		NERROR1("unable to stat avi info file");
 	}
 
 	if( stat(src_name,&file_statb) < 0 ){
 #ifdef LONG_64_BIT
 //#ifdef IA64
-		tell_sys_error("remove_avi_info_if_stale:  stat:");
+		_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  stat:");
 		sprintf(DEFAULT_ERROR_STRING,"unable to stat avi data file %s",src_name);
 		NERROR1(DEFAULT_ERROR_STRING);
 #elif defined(LONG_32_BIT)
 		if( errno == EOVERFLOW ){
 			struct stat64 stat64b;
 			if( stat64(src_name,&stat64b) < 0 ){
-				tell_sys_error("remove_avi_info_if_stale:  stat64:");
+				_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  stat64:");
 				sprintf(DEFAULT_ERROR_STRING,"unable to stat64 avi data file %s",src_name);
 				NERROR1(DEFAULT_ERROR_STRING);
 			}
 			file_statb.st_mtime = stat64b.st_mtime;
 		} else {
-			tell_sys_error("remove_avi_info_if_stale:  stat:");
+			_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  stat:");
 			sprintf(DEFAULT_ERROR_STRING,"unable to stat avi data file %s",src_name);
 			NERROR1(DEFAULT_ERROR_STRING);
 		}
 #else
-		NERROR1("CAUTIOUS:  sizeof(long) not properly set by configure!?");
+#error "sizeof(long) not properly set by configure!?"
+//		NERROR1("CAUTIOUS:  sizeof(long) not properly set by configure!?");
+		assert( ! "sizeof(long) not properly set by configure!?");
 #endif
 	}
 
@@ -108,11 +107,11 @@ static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const
 	if( file_statb.st_mtime > info_statb.st_mtime ){
 		sprintf(DEFAULT_ERROR_STRING,"Existing jpeg info file %s is older than file %s, will unlink and recompute",
 				info_name,src_name);
-		advise(DEFAULT_ERROR_STRING);
+		NADVISE(DEFAULT_ERROR_STRING);
 		fclose(info_fp);
 
 		if( unlink(info_name) < 0 ){
-			tell_sys_error("remove_avi_info_if_stale:  unlink:");
+			_tell_sys_error(DEFAULT_QSP_ARG  "remove_avi_info_if_stale:  unlink:");
 			NWARN("unable to remove stale jpeg info file");
 			/* may not have permission */
 		}
@@ -122,7 +121,7 @@ static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const
 	return(info_fp);
 }
 
-int read_avi_info(Image_File *ifp, FILE *info_fp)
+static int read_avi_info(Image_File *ifp, FILE *info_fp)
 {
 	char buf[16];
 	unsigned long nf, n_skew, n_seek;
@@ -198,7 +197,7 @@ int read_avi_info(Image_File *ifp, FILE *info_fp)
 		}
 	}
 
-	ifp->if_dp->dt_frames = nf;
+	SET_OBJ_FRAMES(ifp->if_dp, nf);
 
 	return(0);
 }
@@ -279,7 +278,7 @@ void save_avi_info(Image_File *ifp)
 		return;
 	}
 	fprintf(fp,"AVIinfo\n");
-	fprintf(fp,"%d\n",ifp->if_dp->dt_frames);
+	fprintf(fp,"%d\n",OBJ_FRAMES(ifp->if_dp));
 	fprintf(fp,"%d\n",HDR_P(ifp)->avch_n_skew_tbl_entries);
 	for(i=0;i<HDR_P(ifp)->avch_n_skew_tbl_entries;i++){
 		fprintf(fp,"%d\t%d\n",HDR_P(ifp)->avch_skew_tbl[i].frame_index,
@@ -303,5 +302,5 @@ void save_avi_info(Image_File *ifp)
 }
 
 
-#endif /* HAVE_LIBAVCODEC */
+#endif /* HAVE_AVI_SUPPORT */
 

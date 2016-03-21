@@ -1,0 +1,21 @@
+Video recording has been unreliable!?
+
+The two disk recorder threads do not always seem to get processor time...
+One disk keeps up, while the other falls behind...
+
+This would normally be addressed by increasing the number of buffers, but
+(with the help of Brian Cha at PGR support) it has been determined that the
+USBFS limit of 16MB is limiting the number of buffers that can be allocated
+for  the USB3 Flea3.
+
+This command should fix things on the fly:
+% sudo modprobe usbcore usbfs_memory_mb=1000
+But usbcore does not seem to be a module???
+I changed the setting to 200MB in /etc/default/grub, and then ran sudo update-grub,
+and rebooted...
+
+_____________________________________
+
+New users on the system don't see cameras in flycap!?
+What needs to be done???
+

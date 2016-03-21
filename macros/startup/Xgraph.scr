@@ -4,6 +4,7 @@ max_warnings 3
 
 If $argc<1 "warn 'usage:  Xgraph [options] xy_files ... ' exit"
 
+< $macro_dir/view/unix_plot.mac
 < $macro_dir/view/plotsupp.mac
 < $macro_dir/view/xgraph.mac
 < $macro_dir/view/range.mac

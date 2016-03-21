@@ -1,8 +1,9 @@
 
-macrosdir	=	$(datadir)/quip/macros/movie
+macrosdir	=	$(datadir)/coq/macros/movie
 
 macros_DATA	=					\
 							\
+			mmvi.mac			\
 			flow.mac
 
 

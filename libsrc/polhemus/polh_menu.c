@@ -1,20 +1,20 @@
 #include "quip_config.h"
 
-char VersionId_polhemus_polh_menu[] = QUIP_VERSION_STRING;
 #include <stdio.h>
 #include <string.h>
 
-#include "dataprot.h"
-#include "debug.h"
-#include "version.h"
+#include "quip_prot.h"
+//#include "dataprot.h"
+//#include "debug.h"
+//#include "version.h"
 
 #include "polh_dev.h"
-#include "ioctl_polhemus.h"
+//#include "ioctl_polhemus.h"
 #include "polh_menu.h"
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 debug_flag_t debug_polhemus;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 typedef enum { CM, INCHES } Units;
 
@@ -35,8 +35,8 @@ static Data_Obj *tmp_pt_dp=NO_OBJ;
 												\
 	if( tmp_pt_dp == NO_OBJ ){								\
 		/* BUG?  should we get the precision based on the current format? */		\
-		tmp_pt_dp = mk_vec("tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,PREC_SP);		\
-		if( tmp_pt_dp == NO_OBJ ) error1("error creating temporary polhemus point");	\
+		tmp_pt_dp = mk_vec(QSP_ARG  "tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,prec_for_code(PREC_SP));		\
+		if( tmp_pt_dp == NO_OBJ ) NERROR1("error creating temporary polhemus point");	\
 	}
 
 Output_Datum od_tbl[N_OUTPUT_TYPES]={
@@ -59,12 +59,12 @@ Output_Datum od_tbl[N_OUTPUT_TYPES]={
 {	"quat_flt",	QUAT_FLT,	61,	8,	4	}
 };
 
-static char *od_names[N_OUTPUT_TYPES];
+static const char *od_names[N_OUTPUT_TYPES];
 
 static COMMAND_FUNC( do_reset_align )
 {
 	if( send_polh_cmd(PH_RESET_ALIGNMENT,NULL) < 0 ) 
-		warn("Unable to reset polhemus alignment!");
+		WARN("Unable to reset polhemus alignment!");
 }
 
 static COMMAND_FUNC( do_set_curr_align )
@@ -78,15 +78,15 @@ static COMMAND_FUNC( do_set_curr_align )
 	INSURE_TMP_PT
 	
 	/* read the current data point */
-	if( read_single_polh_dp(tmp_pt_dp) < 0 ) {
-		warn("do_set_curr_align: error reading single polhemus data point");
+	if( read_single_polh_dp(QSP_ARG  tmp_pt_dp) < 0 ) {
+		WARN("do_set_curr_align: error reading single polhemus data point");
 		return;
 	}
 
 	/* BUG need to make sure that xyz is measured */
 
 /*
-	format_data(&fdp,tmp_pt_dp, &station_info[curr_station].sd_single_prf);
+	format_polh_data(&fdp,tmp_pt_dp, &station_info[curr_station_idx].sd_single_prf);
 	*/
 
 	/* what units are these supposed to be in??? */
@@ -95,10 +95,10 @@ static COMMAND_FUNC( do_set_curr_align )
 	sprintf(align, "%3.2f,%3.2f,%3.2f,%3.2f,0,0,0,%3.2f,0,0,0,%3.2f",
 		pdp[ixyz], pdp[ixyz+1], pdp[ixyz+2], pdp[ixyz], pdp[ixyz+1], pdp[ixyz+2]); 
 		*/
-	error1("need to fix alignment code");
+	NERROR1("need to fix alignment code");
 
 
-	if(send_polh_cmd(PH_ALIGNMENT, align) < 0) warn("Unable to set polhemus alignment!");	
+	if(send_polh_cmd(PH_ALIGNMENT, align) < 0) WARN("Unable to set polhemus alignment!");	
 }
 
 static COMMAND_FUNC( do_set_align )
@@ -130,13 +130,13 @@ static COMMAND_FUNC( do_set_align )
 	sprintf(align, "%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f", 
 		Ox, Oy, Oz, Xx, Xy, Xz, Yx, Yy, Yz);
 	
-	if(send_polh_cmd(PH_ALIGNMENT, align) < 0) warn("Unable to set polhemus alignment!");	
+	if(send_polh_cmd(PH_ALIGNMENT, align) < 0) WARN("Unable to set polhemus alignment!");	
 }
 
 static COMMAND_FUNC( do_get_align )
 {
-	if( get_polh_info(PH_ALIGNMENT,NULL) < 0 ) 
-		warn("Unable to get current polhemus alignment!");
+	if( get_polh_info(QSP_ARG  PH_ALIGNMENT,NULL) < 0 ) 
+		WARN("Unable to get current polhemus alignment!");
 }
 
 /* Polhemus manual (pg. A-15) - The manual says that if the alignment
@@ -147,13 +147,13 @@ static COMMAND_FUNC( do_get_align )
 static COMMAND_FUNC( do_set_bore )
 {
 	if( send_polh_cmd(PH_BORESIGHT,NULL) < 0 ) 
-		warn("Unable to set polhemus boresight to station line sight values!");
+		WARN("Unable to set polhemus boresight to station line sight values!");
 }
 
 static COMMAND_FUNC( do_set_ref_bore )
 {
 	if( SET_POLH_ANGLES(PH_REF_BORESIGHT) < 0 ) 
-		warn("Unable to set boresight reference angles!");
+		WARN("Unable to set boresight reference angles!");
 }
 
 static COMMAND_FUNC( do_set_curr_ref_bore )
@@ -165,38 +165,36 @@ static COMMAND_FUNC( do_set_curr_ref_bore )
 	INSURE_TMP_PT
 
 	/* read the current data point */
-	if( read_single_polh_dp(tmp_pt_dp) < 0 ) {
-		warn("do_set_curr_align: error reading single polhemus data point");
+	if( read_single_polh_dp(QSP_ARG  tmp_pt_dp) < 0 ) {
+		WARN("do_set_curr_align: error reading single polhemus data point");
 		return;
 	}
 
 	/* BUG make sure we have euler angles */
 
-	/*
-	format_data(&fp1,tmp_pt_dp, &station_info[curr_station].sd_single_prf );
-	*/
+	format_polh_data(&fp1,tmp_pt_dp, &station_info[curr_station_idx].sd_single_prf );
 	sprintf(bore, "%3.2f %3.2f %3.2f", fp1.fp_azim, fp1.fp_elev, fp1.fp_roll);
 
 	if( send_polh_cmd(PH_REF_BORESIGHT, bore) < 0 ) 
-		warn("Unable to set boresight reference angles!");
+		WARN("Unable to set boresight reference angles!");
 }
 
 static COMMAND_FUNC( do_get_ref_bore )
 {
-	if( get_polh_info(PH_REF_BORESIGHT,NULL) < 0 ) 
-		warn("Unable to get boresight reference angles!");
+	if( get_polh_info(QSP_ARG  PH_REF_BORESIGHT,NULL) < 0 ) 
+		WARN("Unable to get boresight reference angles!");
 }
 
 static COMMAND_FUNC( do_set_trans )
 {
 	if( SET_POLH_ANGLES(PH_XMTR_ANGLES) < 0 ) 
-		warn("Unable to set transmitter mount frame angles!");
+		WARN("Unable to set transmitter mount frame angles!");
 }
 
 static COMMAND_FUNC( do_get_trans )
 {
-	if( get_polh_info(PH_XMTR_ANGLES,NULL) < 0 ) 
-		warn("Unable to get transmitter mount frame angles!");
+	if( get_polh_info(QSP_ARG  PH_XMTR_ANGLES,NULL) < 0 ) 
+		WARN("Unable to get transmitter mount frame angles!");
 }
 
 static COMMAND_FUNC( do_set_recv_bore )
@@ -208,24 +206,24 @@ static COMMAND_FUNC( do_set_recv_bore )
 	 */
 
 	if( SET_POLH_ANGLES(PH_RECV_ANGLES) < 0 ) 
-		warn("Unable to set receiver boresight angles!");
+		WARN("Unable to set receiver boresight angles!");
 }
 
 static COMMAND_FUNC( do_get_recv_bore )
 {
-	if( get_polh_info(PH_RECV_ANGLES,NULL) < 0 ) 
-		warn("Unable to get receiver boresight angles!");
+	if( get_polh_info(QSP_ARG  PH_RECV_ANGLES,NULL) < 0 ) 
+		WARN("Unable to get receiver boresight angles!");
 }
 
 static COMMAND_FUNC( do_reset_bore )
 {
 	if( send_polh_cmd(PH_RESET_BORESIGHT,NULL) < 0 ) 
-		warn("Unable to reset system boresight!");
+		WARN("Unable to reset system boresight!");
 }
 static COMMAND_FUNC( do_get_angl )
 {
-	if( get_polh_info(PH_ANGULAR_ENV,NULL) < 0 ) 
-		warn("Unable to get angular operational envelope!");
+	if( get_polh_info(QSP_ARG  PH_ANGULAR_ENV,NULL) < 0 ) 
+		WARN("Unable to get angular operational envelope!");
 }
 
 /* These values are from Polhmemus manual A-41. */
@@ -248,10 +246,10 @@ static COMMAND_FUNC( do_set_post )
 		max = MAX_CM_COORD;
 		min = MIN_CM_COORD;
 	} else if( unit == INCHES ) {
-		max = MAX_IN_COORD;
-		min = MIN_IN_COORD;
+		max = (float) MAX_IN_COORD;
+		min = (float) MIN_IN_COORD;
 	} else {
-		warn("unknown unit conversion for system");
+		WARN("unknown unit conversion for system");
 		return;
 	}
 	
@@ -265,14 +263,14 @@ static COMMAND_FUNC( do_set_post )
 	sprintf(post, "%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f", xmax, ymax, zmax, xmin, ymin, zmin);
 
 	if( send_polh_cmd(PH_POSITIONAL_ENV, post) < 0 ) 
-		warn("Unable to set positional operational envelope");
+		WARN("Unable to set positional operational envelope");
 }
 
 static COMMAND_FUNC( do_get_post )
 {
 	/* FIXME - doesn't seem to be giving right coordinates */
-	if( get_polh_info(PH_POSITIONAL_ENV,NULL) < 0 ) 
-		warn("Unable to get position operational envelope!");
+	if( get_polh_info(QSP_ARG  PH_POSITIONAL_ENV,NULL) < 0 ) 
+		WARN("Unable to get position operational envelope!");
 }
 
 /* Polhemus manual A-42 */
@@ -288,13 +286,13 @@ static COMMAND_FUNC( do_set_hemi )
 	int i=0;
 
 	for(i=0;i<N_HEMI_COMPS;i++){
-		sprintf(msg_str,"%s of vector in direction of hemisphere", ask_strs[i]);
-		vecs[i]=(float)HOW_MUCH(msg_str);
+		sprintf(MSG_STR,"%s of vector in direction of hemisphere", ask_strs[i]);
+		vecs[i]=(float)HOW_MUCH(MSG_STR);
 		if( vecs[i] < MIN_HEMI_VALUE || vecs[i] > MAX_HEMI_VALUE ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 			"bad %s %f specified, value must be between %d and %d",
 			ask_strs[i], vecs[i], MIN_HEMI_VALUE, MAX_HEMI_VALUE);
-			warn(error_string);
+			WARN(ERROR_STRING);
 			return;
 		}		
 	}
@@ -302,7 +300,7 @@ static COMMAND_FUNC( do_set_hemi )
 	sprintf(hemi, "%1.2f,%1.2f,%1.2f", vecs[0], vecs[1], vecs[2]);
 
 	if( send_polh_cmd(PH_HEMISPHERE, hemi) < 0 ) 
-		warn("Unable to set polhemus operational hemisphere!");
+		WARN("Unable to set polhemus operational hemisphere!");
 }
 
 static COMMAND_FUNC( do_read_raw_vector )
@@ -314,7 +312,7 @@ static COMMAND_FUNC( do_read_raw_vector )
 
 	/* BUG? where do we check that the vector is of proper type and shape? */
 
-	read_polh_vector(dp);
+	read_polh_vector(QSP_ARG  dp);
 }
 
 static COMMAND_FUNC( do_next_read )
@@ -324,8 +322,8 @@ static COMMAND_FUNC( do_next_read )
 	dp = PICK_OBJ("data object for single polhemus record");
 	if( dp == NO_OBJ ) return;
 
-	if( read_next_polh_dp(dp) < 0 ) {
-		warn("do_single_read: error reading single polhemus data point");
+	if( read_next_polh_dp(QSP_ARG  dp) < 0 ) {
+		WARN("do_single_read: error reading single polhemus data point");
 		return;
 	}
 }
@@ -338,7 +336,7 @@ static COMMAND_FUNC( do_cont_read )
 	if( dp == NO_OBJ ) return;
 
 	if( read_cont_polh_dp(dp) < 0 ) {
-		warn("do_single_read: error reading polhemus continuously");
+		WARN("do_single_read: error reading polhemus continuously");
 		return;
 	}
 }
@@ -349,8 +347,8 @@ static COMMAND_FUNC( do_single_read )
 
 	dp = PICK_OBJ("data object for single polhemus record");
 
-	if( read_single_polh_dp(dp) < 0 ) {
-		warn("do_single_read: error reading single polhemus data point");
+	if( read_single_polh_dp(QSP_ARG  dp) < 0 ) {
+		WARN("do_single_read: error reading single polhemus data point");
 		return;
 	}
 
@@ -359,7 +357,7 @@ static COMMAND_FUNC( do_single_read )
 	for(station=0;station<2;station++){
 		if( STATION_IS_ACTIVE(station) ){
 			/* BUG for multiple stations, need to index dp... */
-			format_data(&fp1,dp,&station_info[station].sd_single_prf);
+			format_polh_data(&fp1,dp,&station_info[station].sd_single_prf);
 			display_formatted_point(&fp1,&station_info[station].sd_single_prf);
 		}
 	}
@@ -372,13 +370,14 @@ static COMMAND_FUNC( do_fmt_raw_vector )
 
 	dp = PICK_OBJ("polhemus data vector");
 
-	if( ! good_polh_vector(dp) ) return;
+	if( ! good_polh_vector(QSP_ARG  dp) ) return;
 
 	/*
 	format_polh_vector(dp);
 	*/
 }
 
+#ifdef NOT_USED
 static COMMAND_FUNC( do_cvt_raw_vector )
 {
 	Data_Obj *fdp, *pdp;
@@ -386,12 +385,11 @@ static COMMAND_FUNC( do_cvt_raw_vector )
 	fdp = PICK_OBJ("float data vector");
 	pdp = PICK_OBJ("polhemus data vector");
 
-	if( ! good_polh_vector(pdp) ) return;
+	if( ! good_polh_vector(QSP_ARG  pdp) ) return;
 
-	/*
 	convert_polh_vector(fdp,pdp);
-	*/
 }
+#endif // NOT_USED
 
 static Polh_Output_Type get_record_type(SINGLE_QSP_ARG_DECL)
 {
@@ -402,10 +400,10 @@ static Polh_Output_Type get_record_type(SINGLE_QSP_ARG_DECL)
 		od_names[i] = od_tbl[i].od_name;
 #ifdef CAUTIOUS
 		if( od_tbl[i].od_type != i ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 				"CAUTIOUS:  Output data table entry %d has type code %d!?",
 				i,od_tbl[i].od_type);
-			error1(error_string);
+			NERROR1(ERROR_STRING);
 		}
 #endif /* CAUTIOUS */
 	}
@@ -422,21 +420,27 @@ static COMMAND_FUNC( do_set_record )
 	int n,i;
 	Polh_Record_Format prf;
 
-	n=HOW_MANY("number of measurements to transfer");
+	n = (int) HOW_MANY("number of measurements to transfer");
 	if( n <= 0 || n > N_OUTPUT_TYPES ){
-		sprintf(error_string,"measurements:  number of measurements must be > 0 and <= %d",
+		sprintf(ERROR_STRING,"measurements:  number of measurements must be > 0 and <= %d",
 			N_OUTPUT_TYPES);
-		warn(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 	for(i=0;i<n;i++){
-		prf.rf_output[i] = get_record_type(SINGLE_QSP_ARG);
+		int j;
+
+		j = get_record_type(SINGLE_QSP_ARG);
+		if( j < 0 ){
+			j=0;
+		}
+		prf.rf_output[i] = j;
 
 		/* BUG we should do some error checking here,
 		 * check for duplications...
 		 */
 	}
-	prf.rf_n_data = n;
+	prf.rf_n_data = (short) n;
 
 	if( n_active_stations == 2 ){	/* If both are active, do both */
 		prf.rf_station = 0;
@@ -444,9 +448,9 @@ static COMMAND_FUNC( do_set_record )
 		prf.rf_station = 1;
 		polhemus_output_data_format(&prf);
 	} else {
-		prf.rf_station = curr_station;
+		prf.rf_station = (short) curr_station_idx;
 		polhemus_output_data_format(&prf);
-		/* show_output_data_format(curr_station); */
+		/* show_output_data_format(curr_station_idx); */
 	}
 }
 
@@ -458,43 +462,57 @@ static COMMAND_FUNC( do_mk_vector )
 	uint32_t n;
 
 	strcpy(name, NAMEOF("name for new polhemus data vector") );
-	n = HOW_MANY("number of records");
+	n = (uint32_t) HOW_MANY("number of records");
 
-	dp = dobj_of(name);
+	dp = dobj_of(QSP_ARG  name);
 	if( dp != NO_OBJ ){
-		sprintf(error_string,"Can't create new polhemus data vector %s, name is in use already",
+		sprintf(ERROR_STRING,"Can't create new polhemus data vector %s, name is in use already",
 			name);
-		warn(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
 	if( n <= 0 ){
-		sprintf(error_string,"number of records (%d) must be positive",n);
-		warn(error_string);
+		sprintf(ERROR_STRING,"number of records (%d) must be positive",n);
+		WARN(ERROR_STRING);
 		return;
 	}
 
+	/*
 	ds1.ds_seqs = 1;
 	ds1.ds_frames = 1;
 	ds1.ds_rows = 1;
 	ds1.ds_cols = n;
+	*/
+	SET_DS_SEQS(&ds1,1);
+	SET_DS_FRAMES(&ds1,1);
+	SET_DS_ROWS(&ds1,1);
+	SET_DS_COLS(&ds1,1);
+
 	/* BUG need to handle more stations...  this code is for insidetrak only! */
 	if( n_active_stations == 2 )
+		/*
 		ds1.ds_tdim = station_info[0].sd_multi_prf.rf_n_words
 			+ station_info[1].sd_multi_prf.rf_n_words;
+			*/
+		SET_DS_COMPS(&ds1, station_info[0].sd_multi_prf.rf_n_words
+			+ station_info[1].sd_multi_prf.rf_n_words );
 	else if( n_active_stations < 1 ){
-		warn("At least one station must be active to create a polhemus data vector");
+		WARN("At least one station must be active to create a polhemus data vector");
 		return;
 	} else
-		ds1.ds_tdim = station_info[curr_station].sd_multi_prf.rf_n_words;
+		/*
+		ds1.ds_tdim = station_info[curr_station_idx].sd_multi_prf.rf_n_words;
+		*/
+		SET_DS_COMPS(&ds1,station_info[curr_station_idx].sd_multi_prf.rf_n_words);
 
 	/* WHY SHORT??? good for binary data, but... */
 	/* BUG need to handle other precisions... */
-	dp = make_dobj(name,&ds1,PREC_IN);
+	dp = make_dobj(QSP_ARG  name,&ds1,prec_for_code(PREC_IN));
 	//dp = make_dobj(name,&ds1,PREC_SP);
 
 	if( dp == NO_OBJ )
-		warn("unable to create polhemus data vector");
+		WARN("unable to create polhemus data vector");
 }
 
 #ifdef FOOBAR
@@ -514,15 +532,15 @@ static COMMAND_FUNC( do_assign_var )
 	if( i_type < 0 ) return;
 	if( index < 0 || index >= od_tbl[i_type].od_strings ){
 		if( od_tbl[i_type].od_strings==1){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 		"For %s records, index must be 0",od_tbl[i_type].od_name);
 		} else {
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 		"For %s records, index must be between 0 and %d",
 				od_tbl[i_type].od_name,
 				od_tbl[i_type].od_strings-1);
 		}
-		warn(error_string);
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -541,39 +559,43 @@ static COMMAND_FUNC( do_polh_flush )
 	flush_polh_buffer();
 }
 
+/*                                   Acquire Menu                                   */
 
-static Command ph_acq_ctbl[] = {
-{ "measurements",	do_set_record,		"specify the data that compose a record"		},
-{ "single",		do_single_read,		"read single polhemus point"				},
-{ "next",		do_next_read,		"read next streaming polhemus point"			},
-{ "cont",		do_cont_read,		"read polhemus continuously"			},
-{ "create_vec",		do_mk_vector,		"create a vector for polhemus data"			},
-{ "readvec",		do_read_raw_vector,	"read raw polhemus data point into a vector"		},
-{ "async",		do_set_async,		"set/clear asynchronous read mode"			},
-{ "wait",		polhemus_wait,		"wait for async read to finish"				},
-{ "halt",		polhemus_halt,		"terminate asynchronous read"				},
-{ "fmtvec",		do_fmt_raw_vector,	"print recorded polhemus data"				},
-{ "cvtvec",		do_cvt_raw_vector,	"convert recorded polhemus data to float"		},
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_acq_menu,s,f,h)
+
+MENU_BEGIN(ph_acq)
+
+ADD_CMD( measurements,	do_set_record,		specify the data that compose a record )
+ADD_CMD( single,	do_single_read,		read single polhemus point )
+ADD_CMD( next,		do_next_read,		read next streaming polhemus point )
+ADD_CMD( cont,		do_cont_read,		read polhemus continuously )
+ADD_CMD( create_vec,	do_mk_vector,		create a vector for polhemus data )
+ADD_CMD( readvec,	do_read_raw_vector,	read raw polhemus data point into a vector )
+ADD_CMD( async,		do_set_async,		set/clear asynchronous read mode )
+ADD_CMD( wait,		polhemus_wait,		wait for async read to finish )
+ADD_CMD( halt,		polhemus_halt,		terminate asynchronous read )
+ADD_CMD( fmtvec,	do_fmt_raw_vector,	print recorded polhemus data )
 #ifdef FOOBAR
-{ "fmtvar",		do_assign_var,		"assign formatted polhemus data to a variable"		},
+ADD_CMD( cvtvec,	do_cvt_raw_vector,	convert recorded polhemus data to float )
+ADD_CMD( fmtvar,	do_assign_var,		assign formatted polhemus data to a variable )
 #endif /* FOOBAR */
-{ "start",		do_start_continuous_mode,	"start continuous output mode"				},
-{ "stop",		do_stop_continuous_mode,	"stop continuous output mode"				},
-{ "flush",		do_polh_flush,		"flush polhemus buffer"					},
-{ "quit",		popcmd,			"exit submenu"						},
-{ NULL_COMMAND												}
-};
+ADD_CMD( start,		do_start_continuous_mode,	start continuous output mode )
+ADD_CMD( stop,		do_stop_continuous_mode,	stop continuous output mode )
+ADD_CMD( flush,		do_polh_flush,		flush polhemus buffer )
+MENU_END(ph_acq)
 
 static COMMAND_FUNC( do_reinit )
 { 
 	if( send_polh_cmd(PH_REINIT_SYS,NULL) < 0 ) 
-		warn("Unable to reinitialize polhemus system!");
+		WARN("Unable to reinitialize polhemus system!");
 }
 
 static COMMAND_FUNC( do_units )
 { 
         Ph_Cmd_Code cmd;
-	char *units[] = { "inches", "cm" };
+	const char *units[] = { "inches", "cm" };
 	
 	int n = WHICH_ONE("system units (inches/cm)", 2, units);
 
@@ -587,7 +609,10 @@ static COMMAND_FUNC( do_units )
 		case 0 : cmd = PH_INCHES_FMT; unit = INCHES; break;
 		case 1 : cmd = PH_CM_FMT; unit = CM; break;
 #ifdef CAUTIOUS
-		default : warn("CAUTIOUS: unexpected system unit!?"); break;
+		default :
+			WARN("CAUTIOUS: units:  unexpected system unit!?");
+			cmd = PH_INCHES_FMT;
+			break;
 #endif
 	}
 	
@@ -617,8 +642,8 @@ static COMMAND_FUNC( do_chk_resp )
 
 static COMMAND_FUNC( do_get_hemi )
 {
-	if( get_polh_info(PH_HEMISPHERE,NULL) < 0 ) 
-		warn("Unable to get polhemus operational hemisphere!");
+	if( get_polh_info(QSP_ARG  PH_HEMISPHERE,NULL) < 0 ) 
+		WARN("Unable to get polhemus operational hemisphere!");
 }
 
 static COMMAND_FUNC( do_clr )
@@ -653,16 +678,16 @@ static COMMAND_FUNC( do_set_angl )
 	sprintf(angl, "%3.2f,%3.2f,%3.2f,%3.2f,%3.2f,%3.2f", amax, emax, rmax, amin, emin, rmin);
 
 	if( send_polh_cmd(PH_ANGULAR_ENV, angl ) < 0) 
-		warn("Unable to set angular operational envelope");
+		WARN("Unable to set angular operational envelope");
 }
 
 static COMMAND_FUNC( do_reopen )
 {
-	if( reopen_polh_dev() < 0 ) 
-		warn("unable to reopen polhemus device");
+	if( reopen_polh_dev(SINGLE_QSP_ARG) < 0 ) 
+		WARN("unable to reopen polhemus device");
 }
 
-static char * stat_choices[] = { "1", "2" };
+static const char * stat_choices[] = { "1", "2" };
 
 static int get_station(SINGLE_QSP_ARG_DECL)
 {
@@ -670,7 +695,7 @@ static int get_station(SINGLE_QSP_ARG_DECL)
 
 	n = WHICH_ONE("station number", 2, stat_choices);
 	if( n < 0 ) {
-		warn("bad station number specified, must be 1 or 2");
+		WARN("bad station number specified, must be 1 or 2");
 		return(-1);
 	}	
 	return(n);
@@ -698,48 +723,52 @@ static COMMAND_FUNC( do_deactivate_station )
 
 static COMMAND_FUNC( do_get_status )
 { 
-	if( get_polh_info(PH_STATUS,NULL) < 0 ) 
-		warn("Unable to get polhemus system status!");
+	if( get_polh_info(QSP_ARG  PH_STATUS,NULL) < 0 ) 
+		WARN("Unable to get polhemus system status!");
 }
 
-static void inform_activation_state(int station)
+static void inform_activation_state(QSP_ARG_DECL  int station)
 {
 	if( STATION_IS_ACTIVE(station) ){
-		sprintf(msg_str,"Station %d is activated",station+1);
-		prt_msg(msg_str);
+		sprintf(MSG_STR,"Station %d is activated",station+1);
+		prt_msg(MSG_STR);
 	} else {
-		sprintf(msg_str,"Station %d is not activated",station+1);
-		prt_msg(msg_str);
+		sprintf(MSG_STR,"Station %d is not activated",station+1);
+		prt_msg(MSG_STR);
 	}
 }
 
 
 static COMMAND_FUNC( do_get_active_stations )
 {
-	get_active_stations();
-	inform_activation_state(0);
-	inform_activation_state(1);
+	get_active_stations(SINGLE_QSP_ARG);
+	inform_activation_state(QSP_ARG  0);
+	inform_activation_state(QSP_ARG  1);
 }
 
-static Command ph_dev_ctbl[] = {
-{ "reinit",		do_reinit,		"reinitialize system"			},
-{ "units",		do_units,		"set system distance unit"		},
-{ "send",		do_send_string,		"send a command string"			},
-{ "activate",		do_activate_station,	"activate a station"			},
-{ "deactivate",		do_deactivate_station,	"deactivate a station"			},
-{ "check_active",	do_get_active_stations,	"get current active stations"		},
-{ "response",		do_chk_resp,		"check for command response"		},
-{ "clear",		do_clr,			"clear polhemus device"			},
-{ "reopen",		do_reopen,		"close polhemus device and reopen"	},
-{ "status",		do_get_status,		"get system status record"		},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+/*                                  Polh> Misc> Device Menu                                   */
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_dev_menu,s,f,h)
+
+MENU_BEGIN(ph_dev)
+
+ADD_CMD( reinit,	do_reinit,		reinitialize system )
+ADD_CMD( units,		do_units,		set system distance unit )
+ADD_CMD( send,		do_send_string,		send a command string )
+ADD_CMD( activate,	do_activate_station,	activate a station )
+ADD_CMD( deactivate,	do_deactivate_station,	deactivate a station )
+ADD_CMD( check_active,	do_get_active_stations,	get current active stations )
+ADD_CMD( response,	do_chk_resp,		check for command response )
+ADD_CMD( clear,		do_clr,			clear polhemus device )
+ADD_CMD( reopen,	do_reopen,		close polhemus device and reopen )
+ADD_CMD( status,	do_get_status,		get system status record )
+MENU_END(ph_dev)
 
 static COMMAND_FUNC( do_get_sync )
 {
-	if( get_polh_info(PH_SYNC_MODE,NULL) < 0 ) 
-		warn("Unable to get synchronization mode!");
+	if( get_polh_info(QSP_ARG  PH_SYNC_MODE,NULL) < 0 ) 
+		WARN("Unable to get synchronization mode!");
 
 	/*
 	if( !strncmp((char *)(&resp_buf[1]),polh_cmds[PH_INTERNAL_SYNC].pc_cmdstr,2) )
@@ -749,8 +778,8 @@ static COMMAND_FUNC( do_get_sync )
 	else if( !strncmp((char *)(&resp_buf[1]),polh_cmds[PH_SOFTWARE_SYNC].pc_cmdstr,2) )
 		prt_msg("Current sync mode is software");
 	else {
-		sprintf(error_string,"Unrecognized sync mode string:  \"%s\"",(char *)(&resp_buf[1]) );
-		warn(error_string);
+		sprintf(ERROR_STRING,"Unrecognized sync mode string:  \"%s\"",(char *)(&resp_buf[1]) );
+		WARN(ERROR_STRING);
 	}
 	*/
 }
@@ -758,7 +787,7 @@ static COMMAND_FUNC( do_get_sync )
 
 static COMMAND_FUNC( do_set_sync )
 {
-	char *sync_choices[] = { "internal", "external", "software" };
+	const char *sync_choices[] = { "internal", "external", "software" };
 	int stat=0;
 
 	int n = WHICH_ONE("synchronization type (internal/external/software)", 3, sync_choices);
@@ -768,171 +797,187 @@ static COMMAND_FUNC( do_set_sync )
 	switch(n){
 		case 0:  stat=set_polh_sync_mode(0); break;
 		case 1:  stat=set_polh_sync_mode(1); break;
-		case 2:  warn("Sorry, software sync not supported for polhemus"); break;
+		case 2:  WARN("Sorry, software sync not supported for polhemus"); break;
 	}
-	if( stat < 0 ) warn("Error setting polhemus sync");
+	if( stat < 0 ) WARN("Error setting polhemus sync");
 }
 
 static COMMAND_FUNC( do_set_att )
 {
 	if( SET_POLH_FILTER(PH_ATT_FILTER) < 0 ) 
-		warn("Unable to set attitude filter parameters!");
+		WARN("Unable to set attitude filter parameters!");
 }
 
 static COMMAND_FUNC( do_get_att )
 {
-	if( get_polh_info(PH_ATT_FILTER,NULL) < 0 ) 
-		warn("Unable to get attitude filter parameters!");
+	if( get_polh_info(QSP_ARG  PH_ATT_FILTER,NULL) < 0 ) 
+		WARN("Unable to get attitude filter parameters!");
 }
 
+/*                         Polh > Misc > Boresight                             */
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_bore_menu,s,f,h)
 
-static Command ph_bore_ctbl[] = {
-{ "sight",		do_set_bore,		"set boresight (zero) angles to current sight"	},
-{ "refer",		do_set_ref_bore,	"set boresight (zero) reference angles" 	},
-{ "current_refer",	do_set_curr_ref_bore,	"set boresight (zero) reference angles to current position angles" },
-{ "get_refer",		do_get_ref_bore,	"get current boresight (zero) reference angles"	},
-{ "xmitr",		do_set_trans,		"set transmitter mount frame angles"		},
-{ "get_xmitr",		do_get_trans,		"get current transmitter mount frame angles"	},
-{ "recv",		do_set_recv_bore,	"set boresight receiver angles"			},
-{ "get_recv",		do_get_recv_bore,	"get current boresight receiver angles"		},
-{ "reset",		do_reset_bore,		"reset boresight to factory defaults"		},
-{ "quit",		popcmd,			"exit submenu"					},
-{ NULL_COMMAND											}
-};
+MENU_BEGIN(ph_bore)
 
-static COMMAND_FUNC( ph_bore_menu )
+ADD_CMD( sight,		do_set_bore,		set boresight (zero) angles to current sight )
+ADD_CMD( refer,		do_set_ref_bore,	set boresight (zero) reference angles )
+ADD_CMD( current_refer,	do_set_curr_ref_bore,	set boresight (zero) reference angles to current position angles )
+ADD_CMD( get_refer,	do_get_ref_bore,	get current boresight (zero) reference angles )
+ADD_CMD( xmitr,		do_set_trans,		set transmitter mount frame angles )
+ADD_CMD( get_xmitr,	do_get_trans,		get current transmitter mount frame angles )
+ADD_CMD( recv,		do_set_recv_bore,	set boresight receiver angles )
+ADD_CMD( get_recv,	do_get_recv_bore,	get current boresight receiver angles )
+ADD_CMD( reset,		do_reset_bore,		reset boresight to factory defaults )
+MENU_END(ph_bore)
+
+static COMMAND_FUNC( do_ph_bore )
 {
-	PUSHCMD(ph_bore_ctbl, "boresight");
+	PUSH_MENU(ph_bore);
 }
 
 static COMMAND_FUNC( do_set_pos )
 {
 	if( SET_POLH_FILTER(PH_POS_FILTER) < 0 ) 
-		warn("Unable to set position filter parameters!");
+		WARN("Unable to set position filter parameters!");
 }
 
 static COMMAND_FUNC( do_get_pos )
 {
-	if( get_polh_info(PH_POS_FILTER,NULL) < 0 ) 
-		warn("Unable to get position filter parameters!");
+	if( get_polh_info(QSP_ARG  PH_POS_FILTER,NULL) < 0 ) 
+		WARN("Unable to get position filter parameters!");
 }
 
 static COMMAND_FUNC( ph_pdata_menu )
-{ PUSHCMD(ph_acq_ctbl, "acquire"); }
+{ PUSH_MENU(ph_acq); }
 
-static COMMAND_FUNC( ph_dev_menu )
-{ PUSHCMD(ph_dev_ctbl, "device"); }
-
-
+static COMMAND_FUNC( do_ph_dev )
+{ PUSH_MENU(ph_dev); }
 
 
-static Command ph_comp_ctbl[] = {
-{ "attitude",		do_set_att,		"set adaptive filter attitude controls"		},
-{ "get_attitude",	do_get_att,		"get current adaptive filter attitude controls"	},
-{ "position",		do_set_pos,		"set adaptive filter position controls"		},
-{ "get_position",	do_get_pos,		"get current adaptive filter position controls"	},
-{ "quit",		popcmd,			"exit submenu"					},
-{ NULL_COMMAND											}
-};
 
-static COMMAND_FUNC( ph_comp_menu )
-{ PUSHCMD(ph_comp_ctbl, "compensate"); }
 
-static Command ph_env_ctbl[] = {
-{ "angular",		do_set_angl,		"set software angular limits"		},	
-{ "get_angular",	do_get_angl,		"get software angular limits"		},	
-{ "positional",		do_set_post,		"set positional angular limits"		},
-{ "get_positional",	do_get_post,		"get positional angular limits"		},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_comp_menu,s,f,h)
 
-static COMMAND_FUNC( ph_env_menu )
-{ PUSHCMD(ph_env_ctbl, "envelope"); }
+MENU_BEGIN(ph_comp)
+ADD_CMD( attitude,	do_set_att,	set adaptive filter attitude controls )
+ADD_CMD( get_attitude,	do_get_att,	get current adaptive filter attitude controls )
+ADD_CMD( position,	do_set_pos,	set adaptive filter position controls )
+ADD_CMD( get_position,	do_get_pos,	get current adaptive filter position controls )
+MENU_END(ph_comp)
 
-static Command ph_hemi_ctbl[] = {
-{ "set",		do_set_hemi,		"set operational hemisphere"			},
-{ "get",		do_get_hemi,		"get current operational hemisphere"		},
-{ "quit",		popcmd,			"exit submenu"					},
-{ NULL_COMMAND											}
-};
+static COMMAND_FUNC( do_ph_comp )
+{ PUSH_MENU(ph_comp); }
 
-static COMMAND_FUNC( ph_hemi_menu )
-{ PUSHCMD(ph_hemi_ctbl, "hemisphere"); }
 
-static Command ph_sys_ctbl[] = {
-{ "reinit",		do_reinit,		"reinitialize system"		},
-{ "units",		do_units,		"set system distance unit"	},
-{ "status",		do_get_status,		"get system status record"	},
-{ "send",		do_send_string,		"send a command string"		},
-{ "response",		do_chk_resp,		"check for command response"	},
-{ "quit",		popcmd,			"exit submenu"			},
-{ NULL_COMMAND									}
-};
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_env_menu,s,f,h)
 
-static COMMAND_FUNC( ph_sys_menu )
-{ PUSHCMD(ph_sys_ctbl, "system"); }
+MENU_BEGIN(ph_env)
+ADD_CMD( angular,		do_set_angl,		set software angular limits )
+ADD_CMD( get_angular,		do_get_angl,		get software angular limits )
+ADD_CMD( positional,		do_set_post,		set positional angular limits )
+ADD_CMD( get_positional,	do_get_post,		get positional angular limits )
+MENU_END(ph_env)
 
-static Command ph_align_ctbl[] = {
-{ "set",		do_set_align,		"set alignment points"				},
-{ "current",		do_set_curr_align,	"set alignment to current coordinate position"	},
-{ "get",		do_get_align,		"get current alignment points"			},
-{ "reset",		do_reset_align,		"reset alignment to factory default"		},
-{ "quit",		popcmd,			"exit submenu"					},
-{ NULL_COMMAND											}
-};
+static COMMAND_FUNC( do_ph_env )
+{ PUSH_MENU(ph_env); }
 
-static COMMAND_FUNC( ph_align_menu )
-{ PUSHCMD(ph_align_ctbl, "alignment"); }
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_hemi_menu,s,f,h)
+
+MENU_BEGIN(ph_hemi)
+ADD_CMD( set,	do_set_hemi,	set operational hemisphere )
+ADD_CMD( get,	do_get_hemi,	get current operational hemisphere )
+MENU_END(ph_hemi)
+
+static COMMAND_FUNC( do_ph_hemi )
+{ PUSH_MENU(ph_hemi); }
+
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_sys_menu,s,f,h)
+
+MENU_BEGIN(ph_sys)
+ADD_CMD( reinit,	do_reinit,	reinitialize system )
+ADD_CMD( units,		do_units,	set system distance unit )
+ADD_CMD( status,	do_get_status,	get system status record )
+ADD_CMD( send,		do_send_string,	send a command string )
+ADD_CMD( response,	do_chk_resp,	check for command response )
+MENU_END(ph_sys)
+
+static COMMAND_FUNC( do_ph_sys )
+{ PUSH_MENU(ph_sys); }
+
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_align_menu,s,f,h)
+
+MENU_BEGIN(ph_align)
+ADD_CMD( set,		do_set_align,		set alignment points )
+ADD_CMD( current,	do_set_curr_align,	set alignment to current coordinate position )
+ADD_CMD( get,		do_get_align,		get current alignment points )
+ADD_CMD( reset,		do_reset_align,		reset alignment to factory default )
+MENU_END(ph_align)
+
+static COMMAND_FUNC( do_ph_align )
+{ PUSH_MENU(ph_align); }
 
 /* BUG these commands should be organized better... */
 
-static Command ph_misc_ctbl[]={
-{ "system",		ph_sys_menu,		"system submenu"		},
-{ "device",		ph_dev_menu,		"device submenu"		},
-{ "alignment",		ph_align_menu,		"alignment submenu"		},
-{ "boresight",		ph_bore_menu,		"boresight submenu"		},
-{ "compensate",		ph_comp_menu,		"compensation submenu"		},
-{ "envelope",		ph_env_menu,		"envelope submenu"		},
-{ "hemisphere",		ph_hemi_menu,		"hemisphere submenu"		},
-{ "quit",		popcmd,			"exit submenu"			},
-{ NULL_COMMAND									}
-};
+/*                                  Polh> Misc  Menu                              */
 
-static COMMAND_FUNC( ph_misc_menu )
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(ph_misc_menu,s,f,h)
+
+MENU_BEGIN(ph_misc)
+ADD_CMD( system,	do_ph_sys,	system submenu	)
+ADD_CMD( device,	do_ph_dev,	device submenu	)
+ADD_CMD( alignment,	do_ph_align,	alignment submenu	)
+ADD_CMD( boresight,	do_ph_bore,	boresight submenu	)
+ADD_CMD( compensate,	do_ph_comp,	compensation submenu	)
+ADD_CMD( envelope,	do_ph_env,	envelope submenu	)
+ADD_CMD( hemisphere,	do_ph_hemi,	hemisphere submenu	)
+MENU_END(ph_misc)
+
+static COMMAND_FUNC( do_ph_misc )
 {
-	PUSHCMD(ph_misc_ctbl, "misc");
+	PUSH_MENU(ph_misc);
 }
 
-static Command ph_ctbl[] = {
-{ "acquire",		ph_pdata_menu,		"data acquisition submenu"		},
-{ "get_sync",		do_get_sync,		"get current synchronization mode"	},	
-{ "set_sync",		do_set_sync,		"set synchronization mode"		},
-{ "misc",		ph_misc_menu,		"miscellaneous command submenu"		},
-{ "quit",		popcmd,			"exit submenu"				},
-{ NULL_COMMAND										}
-};
+/*                           Main Menu:    Polh                              */
 
-COMMAND_FUNC( ph_menu )
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(polh_menu,s,f,h)
+
+MENU_BEGIN(polh)
+ADD_CMD( acquire,	ph_pdata_menu,	data acquisition submenu )
+ADD_CMD( get_sync,	do_get_sync,	get current synchronization mode )
+ADD_CMD( set_sync,	do_set_sync,	set synchronization mode )
+ADD_CMD( misc,		do_ph_misc,	miscellaneous command submenu )
+MENU_END(polh)
+
+COMMAND_FUNC( do_polh )
 {
-	static int polh_init = 0;
+	static int polh_inited = 0;
 
-	if( !polh_init ) {
+	if( ! polh_inited ) {
 
-#ifdef DEBUG
-		debug_polhemus = add_debug_module("polhemus");
+#ifdef QUIP_DEBUG
+		debug_polhemus = add_debug_module(QSP_ARG  "polhemus");
 		//debug |= debug_polhemus;	/* turn it on for testing */
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-		auto_version("POLHEMUS","VersionId_polhemus");
 		sort_table();
-		if( init_polh_dev() < 0 ) {
-			warn("ph_menu: Unable to initialize polhemus device");
-			return;
+		if( init_polh_dev(SINGLE_QSP_ARG) < 0 ) {
+			WARN("ph_menu: Unable to initialize polhemus device");
 		}
-		polh_init = 1;
+		polh_inited = 1;
 	}
 
-	PUSHCMD(ph_ctbl, "polhemus");
+	PUSH_MENU(polh);
 }
 

@@ -44,11 +44,11 @@ nop
 
 Define Step_Angle 0
 If "$pk2 == $pk1 && $pk2 == $pk3"
-  "advise 'Surface is flat with inc $curr_inc' Set curr_inc 0 PopFile 2 advise GOOF"
+  "advise 'Surface is flat with inc $curr_inc' Set curr_inc 0 exit_macro"
 If "$pk2 >= $pk1 && $pk2 >= $pk3"
-  "Make_Finer PopFile 2 advise ERROR"
-If "$pk1 > $pk3" "Add_Var trial_peak -$curr_inc PopFile 2 advise ERROR2"
-If "$pk1 < $pk3" "Add_Var trial_peak $curr_inc PopFile 2 advise ERROR2"
+  "Make_Finer exit_macro"
+If "$pk1 > $pk3" "Add_Var trial_peak -$curr_inc exit_macro"
+If "$pk1 < $pk3" "Add_Var trial_peak $curr_inc exit_macro"
 advise 'THIS SHOULDNT HAPPEN!?'
 .
 

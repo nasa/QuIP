@@ -1,11 +1,9 @@
 #include "quip_config.h"
 
-char VersionId_dither_getwhite[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "debug.h"
+#include "quip_prot.h"
 #include "cie.h"
 #include "query.h"
 #include "ctone.h"
@@ -16,6 +14,7 @@ char VersionId_dither_getwhite[] = QUIP_VERSION_STRING;
 
 float _white[3];
 
+#ifdef NOT_USED
 void rmnl(char *s)		/* remove a final newline */
 {
 	while( *s && *s != '\n' ) s++;
@@ -35,6 +34,7 @@ int rwhite(char *name)
 	}
 	return(1);
 }
+#endif /* NOT_USED */
 
 COMMAND_FUNC( getwhite )		/** initialze white value (from file) */
 {

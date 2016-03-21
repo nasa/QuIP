@@ -54,6 +54,7 @@ extern int checkChips(SINGLE_QSP_ARG_DECL);
 
 /* mcapt.c */
 
+extern void gotframe(int signum);
 extern void	meteor_status(SINGLE_QSP_ARG_DECL);
 extern uint32_t	get_blocks_per_frame(void);
 extern void	update_movie_database(QSP_ARG_DECL  RV_Inode *inp);
@@ -82,7 +83,7 @@ extern void dump_timestamps(const char *);
 extern void print_grab_times(void);
 extern void print_store_times(void);
 extern void set_async_record(int);
-extern int get_async_record();
+extern int get_async_record(void);
 extern COMMAND_FUNC( meteor_halt_record );
 extern COMMAND_FUNC( meteor_wait_record );
 extern void stream_record(QSP_ARG_DECL  Image_File *,int32_t);

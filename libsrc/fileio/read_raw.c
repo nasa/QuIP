@@ -1,21 +1,18 @@
 #include "quip_config.h"
 
-char VersionId_fio_read_raw[] = QUIP_VERSION_STRING;
-
-
 #include <stdio.h>
-
-#include "fio_prot.h"
-#include "debug.h"
-#include "raw.h"
-#include "filetype.h"
-#include "data_obj.h"
-#include "uio.h"
 #include <fcntl.h>
 
-#ifdef CRAY
-#include "getbuf.h"
-#endif /* CRAY */
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+
+#include "quip_prot.h"
+#include "fio_prot.h"
+#include "img_file/raw.h"
+#include "data_obj.h"
+
+//#include "uio.h"
 
 #define N_DUMPER_BYTES	0x2000		/* 8k */
 
@@ -55,29 +52,29 @@ void rd_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 		return;
 	}
 
-	size=siztbl[dp->dt_prec];
-	sinc = dp->dt_sinc*size;
-	finc = dp->dt_finc*size;
-	rinc = dp->dt_rowinc*size;
-	pinc = dp->dt_pinc*size;
-	cinc = dp->dt_cinc*size;
+	size=PREC_SIZE(OBJ_PREC_PTR(dp));
+	sinc = OBJ_SEQ_INC(dp)*size;
+	finc = OBJ_FRM_INC(dp)*size;
+	rinc = OBJ_ROW_INC(dp)*size;
+	pinc = OBJ_PXL_INC(dp)*size;
+	cinc = OBJ_COMP_INC(dp)*size;
 
-	sbase = (char *)dp->dt_data;
-	for(s=0;s<dp->dt_seqs;s++){
+	sbase = (char *)OBJ_DATA_PTR(dp);
+	for(s=0;s<OBJ_SEQS(dp);s++){
 		fbase = sbase;
-		for(f=0;f<dp->dt_frames;f++){
+		for(f=0;f<OBJ_FRAMES(dp);f++){
 			rowbase=fbase;
-			for(row=0;row<dp->dt_rows;row++){
+			for(row=0;row<OBJ_ROWS(dp);row++){
 				pbase = rowbase;
-				for(col=0;col<dp->dt_cols;col++){
+				for(col=0;col<OBJ_COLS(dp);col++){
 					cbase=pbase;
-					for(comp=0;comp<dp->dt_comps;comp++){
+					for(comp=0;comp<OBJ_COMPS(dp);comp++){
 						/* write this pixel */
 						if( fread(cbase,size,1,ifp->if_fp)
 							!= 1 ){
 					WARN("error reading pixel component");
 					SET_ERROR(ifp);
-					(*ft_tbl[ifp->if_type].close_func)(QSP_ARG  ifp);
+					(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
 							return;
 						}
 						cbase += cinc;
@@ -95,7 +92,7 @@ void rd_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	dimension_t n, size;
-	dimension_t n2;
+	size_t n2;
 	uint32_t npixels;
 #ifdef CRAY
 	int goofed=0;
@@ -113,22 +110,22 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 		return;
 	}
 
-	npixels=dp->dt_seqs * dp->dt_frames * dp->dt_rows * dp->dt_cols ;
+	npixels=OBJ_SEQS(dp) * OBJ_FRAMES(dp) * OBJ_ROWS(dp) * OBJ_COLS(dp) ;
 
-	size = siztbl[ dp->dt_prec ];
-	size *= dp->dt_comps;
+	size = PREC_SIZE(OBJ_PREC_PTR(dp));
+	size *= OBJ_COMPS(dp);
 
 #ifdef CRAY
 	/* CRAY float's are 8 bytes instead of 4,
 	 * so we have to convert from IEEE format
 	 */
 
-	if( dp->dt_prec == PREC_SP ){
+	if( OBJ_PREC(dp) == PREC_SP ){
 		float *cbuf, *p;
 
 		n=CONV_LEN<npixels?CONV_LEN:npixels;
 		cbuf = getbuf( 4 * n );		/* 4 is size of IEEE float */
-		p = dp->dt_data;
+		p = OBJ_DATA_PTR(dp);
 
 		while( npixels > 0 ){
 			n = CONV_LEN<npixels ? CONV_LEN : npixels ;
@@ -136,7 +133,7 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 				if( (n2=fread(cbuf,4,n,ifp->if_fp)) != n ){
 					sprintf(ERROR_STRING,
 				"read_object %s from file %s:  %d pixels requested, %d pixels read",
-						dp->dt_name,ifp->if_name,n,n2);
+						OBJ_NAME(dp),ifp->if_name,n,n2);
 					WARN(ERROR_STRING);
 					goofed=1;
 					goto ccdun;
@@ -145,7 +142,7 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 				if( (n2=read(ifp->if_fd,cbuf,4*n)) != 4*n ){
 					sprintf(ERROR_STRING,
 				"read_object %s from file %s:  %d bytes requested, %d bytes read",
-						dp->dt_name,ifp->if_name,4*n,n2);
+						OBJ_NAME(dp),ifp->if_name,4*n,n2);
 					WARN(ERROR_STRING);
 					goofed=1;
 					goto ccdun;
@@ -158,9 +155,9 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 			npixels -= n;
 		}
 ccdun:		givbuf(cbuf);
-		if( goofed ) (*ft_tbl[ifp->if_type].close_func)(ifp);
+		if( goofed ) (*FT_CLOSE_FUNC(IF_TYPE(ifp)))(ifp);
 dun2:		return;
-	} else if( dp->dt_prec != PREC_UBY ){
+	} else if( OBJ_PREC(dp) != PREC_UBY ){
 		WARN("Sorry, can only read float or unsigned byte images on CRAY now...");
 		goto dun2;
 	}
@@ -168,12 +165,12 @@ dun2:		return;
 		
 		
 	if( USES_STDIO(ifp) ){
-		if( (n2=fread(dp->dt_data,(size_t)size,(size_t)npixels,ifp->if_fp))
+		if( (n2=fread(OBJ_DATA_PTR(dp),(size_t)size,(size_t)npixels,ifp->if_fp))
 			!= (size_t)npixels ){
 
 			sprintf(ERROR_STRING,
-		"read_object %s from file %s:  %d pixels requested, but %d pixels read",
-				dp->dt_name,ifp->if_name,npixels,n2);
+		"read_object %s from file %s:  %d pixels requested, but %ld pixels read",
+				OBJ_NAME(dp),ifp->if_name,npixels,(long)n2);
 			WARN(ERROR_STRING);
 		}
 	} else {
@@ -194,7 +191,7 @@ dun2:		return;
 
 sprintf(ERROR_STRING,"%d pixels remaining, requesting %d bytes at offset %d (size=%d)",npixels,n,os,size);
 advise(ERROR_STRING);
-			if( (n_actual=read(ifp->if_fd,((char *)dp->dt_data)+os,(u_int)n))
+			if( (n_actual=read(ifp->if_fd,((char *)OBJ_DATA_PTR(dp))+os,(u_int)n))
 				!= (int)n ){
 				sprintf(ERROR_STRING,
 					"error read()'ing pixel data, %d requested, %d actually read",n,n_actual);
@@ -208,12 +205,12 @@ advise(ERROR_STRING);
 		}
 #endif /* FOOBAR */
 
-		int n_actual;
+		size_t n_actual;
 
 		n=npixels*size;
-		if( (n_actual=read(ifp->if_fd,((char *)dp->dt_data),(u_int)n)) != (int) n ){
+		if( (n_actual=read(ifp->if_fd,((char *)OBJ_DATA_PTR(dp)),(u_int)n)) != (int) n ){
 			sprintf(ERROR_STRING,
-				"error reading pixel data, %d requested, %d actually read",n,n_actual);
+				"error reading pixel data, %d requested, %ld actually read",n,(long)n_actual);
 			WARN(ERROR_STRING);
 		}
 	}
@@ -235,23 +232,23 @@ int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,ind
 	char *p;
 	dimension_t size, dump_count, n_dumper_elements;
 
-	size = siztbl[ dp->dt_prec ];
-	size *= dp->dt_comps;
-	x_fill=(dp->dt_cols-x_offset);
-	y_fill=(dp->dt_rows-y_offset);
+	size = PREC_SIZE(OBJ_PREC_PTR(dp));
+	size *= OBJ_COMPS(dp);
+	x_fill=(OBJ_COLS(dp)-x_offset);
+	y_fill=(OBJ_ROWS(dp)-y_offset);
 	if( x_fill <= 0 || y_fill <= 0 ){
 		NWARN("frag_read:  offset too great for this object");
 		return(-1);
 	}
-	dx=ifp->if_dp->dt_cols;
-	dy=ifp->if_dp->dt_rows;
+	dx=OBJ_COLS(ifp->if_dp);
+	dy=OBJ_ROWS(ifp->if_dp);
 	if( dx > x_fill ){	/* image wider than data area */
-		x_skip=x_fill-dx;
+		//x_skip=x_fill-dx;
 		x_dump=dx-x_fill;
-		x_skip=0;
+		//x_skip=0;
 if( ! THICK_TOLD ){
 sprintf(DEFAULT_ERROR_STRING,"image in file %s too wide (%d) for object %s (%d)",
-ifp->if_name,dx,dp->dt_name,x_fill);
+ifp->if_name,dx,OBJ_NAME(dp),x_fill);
 NWARN(DEFAULT_ERROR_STRING);
 /*
 //sprintf(DEFAULT_ERROR_STRING,"xskip = %d    x_fill = %d    dx = %d    x_dump = %d\n",x_skip,x_fill,dx,x_dump);
@@ -263,11 +260,11 @@ TELL_THICK;
 
 if( dx < x_fill && (! THIN_TOLD) ){
 sprintf(DEFAULT_ERROR_STRING,"image in file %s too thin (%d) for object %s (%d)",
-ifp->if_name,dx,dp->dt_name,x_fill);
+ifp->if_name,dx,OBJ_NAME(dp),x_fill);
 NWARN(DEFAULT_ERROR_STRING);
 TELL_THIN;
 }
-		x_skip=x_fill-dx;
+		//x_skip=x_fill-dx;
 		x_fill=dx;
 		x_dump=0;
 	}
@@ -275,7 +272,7 @@ TELL_THIN;
 
 if( ! TALL_TOLD ){
 sprintf(DEFAULT_ERROR_STRING,"image in file %s too tall (%d) for object %s (%d)",
-ifp->if_name,dy,dp->dt_name,y_fill);
+ifp->if_name,dy,OBJ_NAME(dp),y_fill);
 NWARN(DEFAULT_ERROR_STRING);
 TELL_TALL;
 }
@@ -285,7 +282,7 @@ TELL_TALL;
 
 if( dy < y_fill && (! SHORT_TOLD) ){
 sprintf(DEFAULT_ERROR_STRING,"image in file %s too short (%d) for object %s (%d)",
-ifp->if_name,dy,dp->dt_name,y_fill);
+ifp->if_name,dy,OBJ_NAME(dp),y_fill);
 NWARN(DEFAULT_ERROR_STRING);
 TELL_SHORT;
 }
@@ -293,10 +290,10 @@ TELL_SHORT;
 		y_fill=dy;
 		y_dump=0;
 	}
-	p=(char *)dp->dt_data + t_offset;
-	p += y_offset * size * dp->dt_cols;
+	p=(char *)OBJ_DATA_PTR(dp) + t_offset;
+	p += y_offset * size * OBJ_COLS(dp);
 
-	n_dumper_elements = N_DUMPER_BYTES/(ifp->if_dp->dt_comps*ELEMENT_SIZE(ifp->if_dp));
+	n_dumper_elements = N_DUMPER_BYTES/(OBJ_COMPS(ifp->if_dp)*ELEMENT_SIZE(ifp->if_dp));
 
 	for(i=0;i<y_fill;i++){
 		p += (x_offset*size);
@@ -357,30 +354,30 @@ TELL_SHORT;
 	return(0);
 }
 
-FIO_RD_FUNC( raw_rd )
+FIO_RD_FUNC( raw )
 {
 	uint32_t totfrms;
 
 	if( !same_type(QSP_ARG  dp,ifp) ) return;
 
-	if( t_offset >= dp->dt_frames ){
+	if( t_offset >= OBJ_FRAMES(dp) ){
 		sprintf(ERROR_STRING,
 			"raw_rd:  ridiculous frame offset %d (max %d)",
-			t_offset,dp->dt_frames-1);
+			t_offset,OBJ_FRAMES(dp)-1);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	t_offset *=	( dp->dt_rows
-			 * dp->dt_cols
-			 * dp->dt_comps
-			 * siztbl[dp->dt_prec] );
+	t_offset *=	( OBJ_ROWS(dp)
+			 * OBJ_COLS(dp)
+			 * OBJ_COMPS(dp)
+			 * PREC_SIZE(OBJ_PREC_PTR(dp)) );
 
 
-	totfrms = dp->dt_frames * dp->dt_seqs;
+	totfrms = OBJ_FRAMES(dp) * OBJ_SEQS(dp);
 
-	if( 	dp->dt_rows==ifp->if_dp->dt_rows &&
-		dp->dt_cols==ifp->if_dp->dt_cols &&
+	if( 	OBJ_ROWS(dp)==OBJ_ROWS(ifp->if_dp) &&
+		OBJ_COLS(dp)==OBJ_COLS(ifp->if_dp) &&
 		x_offset==0 && y_offset==0 ){
 
 		read_object(QSP_ARG  dp,ifp);
@@ -404,7 +401,7 @@ FIO_RD_FUNC( raw_rd )
 				ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
 		}
-		(*ft_tbl[ifp->if_type].close_func)(QSP_ARG  ifp);
+		(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
 	}
 	return;
 readerr:
@@ -412,6 +409,6 @@ readerr:
 		ifp->if_name);
 	WARN(ERROR_STRING);
 	SET_ERROR(ifp);
-	(*ft_tbl[ifp->if_type].close_func)(QSP_ARG  ifp);
+	(*FT_CLOSE_FUNC(IF_TYPE(ifp)) )(QSP_ARG  ifp);
 	return;
 }

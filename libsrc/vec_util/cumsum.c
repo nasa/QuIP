@@ -1,7 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_cumsum[] = QUIP_VERSION_STRING;
-
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "vec_util.h"
 
@@ -15,7 +14,10 @@ void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 {
 	int i;
 
-	if( dp_fr->dt_prec != PREC_SP && dp_fr->dt_prec != PREC_DP ){
+	INSIST_RAM_OBJ(dp_to,war_cumsum);
+	INSIST_RAM_OBJ(dp_fr,war_cumsum);
+
+	if( OBJ_PREC(dp_fr) != PREC_SP && OBJ_PREC(dp_fr) != PREC_DP ){
 		NWARN("Sorry, can only accumulate float or double precision vectors");
 		return;
 	}
@@ -28,7 +30,7 @@ void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 		NWARN("Sorry, accumulation operation only defined for row vectors");
 		return;
 	}
-	if( dp_to->dt_tdim != 1 ){
+	if( OBJ_COMPS(dp_to) != 1 ){
 		NWARN("Sorry, can only accumulate vectors with 1 component/pixel");
 		return;
 	}
@@ -38,28 +40,28 @@ void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 		return;
 	}
 
-	if( dp_fr->dt_prec == PREC_SP ){
+	if( OBJ_PREC(dp_fr) == PREC_SP ){
 		float *srcp, *dstp, *last_dstp;
 
-		srcp=(float *)dp_fr->dt_data;
-		dstp=(float *)dp_to->dt_data;
+		srcp=(float *)OBJ_DATA_PTR(dp_fr);
+		dstp=(float *)OBJ_DATA_PTR(dp_to);
 
 		*dstp = *srcp;		/* copy the first element */
-		i=dp_to->dt_n_type_elts-1;	/* do nothing to the first element */ 
+		i=OBJ_N_TYPE_ELTS(dp_to)-1;	/* do nothing to the first element */ 
 		while(i--){
 			last_dstp = dstp;
 			dstp ++;
 			srcp ++;
 			*dstp = *last_dstp + *srcp;
 		}
-	} else if( dp_fr->dt_prec == PREC_DP ){
+	} else if( OBJ_PREC(dp_fr) == PREC_DP ){
 		double *srcp, *dstp, *last_dstp;
 
-		srcp=(double *)dp_fr->dt_data;
-		dstp=(double *)dp_to->dt_data;
+		srcp=(double *)OBJ_DATA_PTR(dp_fr);
+		dstp=(double *)OBJ_DATA_PTR(dp_to);
 
 		*dstp = *srcp;		/* copy the first element */
-		i=dp_to->dt_n_type_elts-1;	/* do nothing to the first element */ 
+		i=OBJ_N_TYPE_ELTS(dp_to)-1;	/* do nothing to the first element */ 
 		while(i--){
 			last_dstp = dstp;
 			dstp ++;
@@ -68,3 +70,4 @@ void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 		}
 	}
 }
+

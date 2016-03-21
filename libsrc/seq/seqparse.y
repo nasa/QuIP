@@ -2,8 +2,6 @@
 
 #include "quip_config.h"
 
-char SccsId_seq_seqparse[] = QUIP_VERSION_STRING;
-
 /* generalized item sequencer */
 
 #include <stdio.h>
@@ -17,56 +15,193 @@ char SccsId_seq_seqparse[] = QUIP_VERSION_STRING;
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "seq.h"
-#include "debug.h"
-#include "items.h"
-#include "savestr.h"
+
+typedef union {
+	Seq *yysp;
+	void *yyvp;
+	int yyi;
+} YYSTYPE;
+
+#define YYSTYPE_IS_DECLARED		/* needed on 2.6 machine? */
+
 #include "yacc_hack.h"	// change yy prefix to seq_
 
-int yylex(SINGLE_QSP_ARG_DECL);
-#define YYLEX_PARAM SINGLE_QSP_ARG
+//int yylex(SINGLE_QSP_ARG_DECL);
+//#define YYLEX_PARAM SINGLE_QSP_ARG
 
-#ifdef THREAD_SAFE_QUERY
-#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stream * */
-/* For yyerror */
-#define YY_(msg)	QSP_ARG msg
-#endif /* THREAD_SAFE_QUERY */
+// For the time being a single signature, regardless of THREAD_SAFE_QUERY
+static int yylex(YYSTYPE *yylval_p, Query_Stack *qsp);
 
-int yyerror(QSP_ARG_DECL  const char *);
+//#ifdef THREAD_SAFE_QUERY
+//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stream * */
+///* For yyerror */
+//#define YY_(msg)	QSP_ARG msg
+//#endif /* THREAD_SAFE_QUERY */
+
+int yyerror(Query_Stack *qsp,  const char *);
 
 
+// BUG global not thread-sage
 static int refno=1;
-
-/* local prototypes */
-
-static Seq *revseq(Seq *seqptr);
-static int contains(Seq *seqp,void *data);
-static Seq *seqparse(QSP_ARG_DECL  const char *strbuf);
-static Seq *new_seq(QSP_ARG_DECL  const char *name);
-static Seq *joinseq(Seq *s1, Seq *s2);
-static Seq *makfrm(int cnt, void *vp);
-static Seq *reptseq(int cnt, Seq *seqptr);
-static void null_show_func(void *vp);
-static void * null_get_func(const char *name);
-static void null_rev_func(void *vp);
-static void init_seq_struct(Seq *sp);
-static Seq *unnamed_seq(void);
 static const char *ipptr;
 static int ended;
 static Seq *final_mviseq;
 
-%}
-%union
+static void null_show_func(void *vp)
 {
-	Seq *yysp;
-	void *yyvp;
-	int yyi;
+	NWARN("no sequence show function defined");
 }
+
+static void * null_get_func(const char *name)
+{
+	NWARN("no sequence item get function defined");
+	return(NULL);
+}
+
+static void null_rev_func(void *vp)
+{
+	NWARN("no reverse function defined");
+}
+
+static int null_init_func(void *vp)
+{
+	NWARN("no init function defined");
+	return(0);
+}
+
+static void null_wait_func(void)
+{
+	NWARN("no wait function defined");
+}
+
+static void null_ref_func(void *vp)
+{
+	NWARN("no reference function defined");
+}
+
+static Seq_Module null_seq_module = {
+	null_get_func,
+	null_init_func,
+	null_show_func,
+	null_rev_func,
+	null_wait_func,
+	null_ref_func
+};
+
+static Seq_Module *the_smp=(&null_seq_module);
+
+static void init_seq_struct(Seq *sp)
+{
+	sp->seq_flags=SEQFREE;
+	sp->seq_refcnt=0;
+	sp->seq_first=NO_SEQ;
+	sp->seq_next=NO_SEQ;
+	sp->seq_count=0;
+}
+
+static Seq *unnamed_seq(void)	/* return an unused seq. struct */
+{
+	register Seq *sp;
+
+	sp = (Seq *)getbuf(sizeof(*sp));
+
+	if( sp == NO_SEQ )
+		NERROR1("no more memory for sequences");
+
+	sp->seq_name=NULL;
+
+	init_seq_struct(sp);
+	return(sp);
+}
+
+static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!= NO_SEQ ){
+		sp->seq_first=s1;
+		sp->seq_next=s2;
+		sp->seq_count=1;
+		sp->seq_flags=SUPSEQ;
+
+		s1->seq_refcnt++;
+		s2->seq_refcnt++;
+		sp->seq_refcnt++;
+
+	}
+	return(sp);
+}
+
+static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!=NO_SEQ ){
+		sp->seq_first=seqptr;
+		sp->seq_count=(short)cnt;
+		sp->seq_flags=SUPSEQ;
+		seqptr->seq_refcnt++;
+		sp->seq_refcnt++;
+	}
+	return(sp);
+}
+
+static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!=NO_SEQ ){
+		sp->seq_first=seqptr;
+		sp->seq_count = -1;
+		sp->seq_flags=SUPSEQ;
+		seqptr->seq_refcnt++;
+		sp->seq_refcnt++;
+	}
+	return(sp);
+}
+
+static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
+{
+	register Seq *sp;
+
+	sp=unnamed_seq();
+	if( sp!=NO_SEQ ){
+		sp->seq_count=(short)cnt;
+		sp->seq_data=vp;
+		sp->seq_flags = SEQ_MOVIE;
+		sp->seq_refcnt++;
+
+		/* increment reference count on this leaf */
+		(*the_smp->ref_func)(vp);
+	}
+	return(sp);
+}
+
+%}
+//%union
+//{
+//	Seq *yysp;
+//	void *yyvp;
+//	int yyi;
+//}
+
+%pure-parser	// make the parser rentrant (thread-safe)
+
+// parse-param also affects yyerror!
+
+%parse-param{ Query_Stack *qsp }
+%lex-param{ Query_Stack *qsp }
+
 
 %type < yysp > seqst sequence movie
 %token <yyi> REVERSE NUMBER END
 %token < yysp > SEQNAME
-%token < yyvp > MOVIE_NAME
+%token < yyvp > MY_MOVIE_NAME
 %start seqst
 %left '+'
 %nonassoc '*'
@@ -92,7 +227,7 @@ sequence	: sequence '+' sequence
 		;
 
 
-movie		: NUMBER '*' MOVIE_NAME
+movie		: NUMBER '*' MY_MOVIE_NAME
 			{
 				$$=makfrm($1,$3);
 			}
@@ -101,49 +236,6 @@ movie		: NUMBER '*' MOVIE_NAME
 %%
 
 ITEM_INTERFACE_DECLARATIONS( Seq, mviseq )
-
-static void null_show_func(void *vp)
-{
-	NWARN("no sequence show function defined");
-}
-
-static void * null_get_func(const char *name)
-{
-	NWARN("no sequence item get function defined");
-	return(NULL);
-}
-
-static void null_rev_func(void *vp)
-{
-	NWARN("no reverse function defined");
-}
-
-static int null_init_func(void *vp)
-{
-	NWARN("no init function defined");
-	return(0);
-}
-
-static void null_wait_func(VOID)
-{
-	NWARN("no wait function defined");
-}
-
-static void null_ref_func(void *vp)
-{
-	NWARN("no reference function defined");
-}
-
-static Seq_Module null_seq_module = {
-	null_get_func,
-	null_init_func,
-	null_show_func,
-	null_rev_func,
-	null_wait_func,
-	null_ref_func
-};
-
-static Seq_Module *the_smp=(&null_seq_module);
 
 void load_seq_module(Seq_Module *smp)
 {
@@ -193,7 +285,7 @@ void show_sequence(QSP_ARG_DECL  const char *s)
 					( c ) == '-'   ||	\
 					( c ) == '_' )
 
-int yylex(SINGLE_QSP_ARG_DECL)
+int yylex( YYSTYPE *yylval_p, /*SINGLE_QSP_ARG_DECL*/ Query_Stack *qsp )
 {
 	char *numptr, *wrdptr;
 	int n;
@@ -213,7 +305,7 @@ int yylex(SINGLE_QSP_ARG_DECL)
 			*numptr++ = (*ipptr++);
 		*numptr=0;
 		sscanf(numbuf,"%d",&n);
-		yylval.yyi=n;
+		yylval_p->yyi=n;
 		return(NUMBER);
 	} else if( IS_LEGAL_NAME_START(*ipptr) ){
 		char wrdbuf[LLEN];
@@ -225,20 +317,20 @@ int yylex(SINGLE_QSP_ARG_DECL)
 
 		if( !strcmp(wrdbuf,"reverse") ) return(REVERSE);
 
-		yylval.yysp = mviseq_of( QSP_ARG  wrdbuf );
-		if( yylval.yysp != NO_SEQ ) return( SEQNAME );
+		yylval_p->yysp = mviseq_of( QSP_ARG  wrdbuf );
+		if( yylval_p->yysp != NO_SEQ ) return( SEQNAME );
 
 		/* not a sequence, try a pattern name */
 
-		yylval.yyvp = (*the_smp->get_func)( wrdbuf );
-		if( yylval.yyvp != NULL ) return( MOVIE_NAME );
+		yylval_p->yyvp = (*the_smp->get_func)( wrdbuf );
+		if( yylval_p->yyvp != NULL ) return( MY_MOVIE_NAME );
 
 		/* error */
 		sprintf(str,"%s is not a sequence or a movie name", wrdbuf);
-		yyerror(YY_(str));
+		yyerror(qsp,str);
 		return(0);
 	} else {
-		yylval.yyi=0;
+		yylval_p->yyi=0;
 		return(*ipptr++);
 	}
 }
@@ -247,19 +339,19 @@ static Seq *seqparse(QSP_ARG_DECL  const char *strbuf)		/* compile sequence in s
 {
 	ipptr=strbuf;
 	ended=0;
-	if( yyparse(SINGLE_QSP_ARG)==0 ) return(final_mviseq);
+	if( yyparse(THIS_QSP)==0 ) return(final_mviseq);
 	else {
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 			"Error parsing sequence definition \"%s\"", strbuf);
-		WARN(error_string);
+		WARN(ERROR_STRING);
 		return(NO_SEQ);
 	}
 }
 
-int yyerror(QSP_ARG_DECL  const char *s)
+int yyerror(Query_Stack *qsp,  const char *s)
 {
-	sprintf(error_string,"seqparse (yyerror): %s",s);
-	WARN(error_string);
+	sprintf(ERROR_STRING,"seqparse (yyerror): %s",s);
+	WARN(ERROR_STRING);
 	return(0);
 }
 
@@ -306,102 +398,12 @@ void delseq(QSP_ARG_DECL  Seq *sp)
 	if( sp->seq_next != NO_SEQ ) delseq(QSP_ARG  sp->seq_next);
 	if( sp->seq_refcnt <= 0 ){
 		if( sp->seq_name != NULL ){
-			del_mviseq(QSP_ARG  sp->seq_name);
+			del_mviseq(QSP_ARG  sp);
 			rls_str((char *)sp->seq_name);
 		} else {
 			givbuf(sp);
 		}
 	}
-}
-
-static Seq *unnamed_seq(void)	/* return an unused seq. struct */
-{
-	register Seq *sp;
-
-	sp = (Seq *)getbuf(sizeof(*sp));
-
-	if( sp == NO_SEQ )
-		NERROR1("no more memory for sequences");
-
-	sp->seq_name=NULL;
-
-	init_seq_struct(sp);
-	return(sp);
-}
-
-static void init_seq_struct(Seq *sp)
-{
-	sp->seq_flags=SEQFREE;
-	sp->seq_refcnt=0;
-	sp->seq_first=NO_SEQ;
-	sp->seq_next=NO_SEQ;
-	sp->seq_count=0;
-}
-
-static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
-		sp->seq_count=cnt;
-		sp->seq_data=vp;
-		sp->seq_flags = SEQ_MOVIE;
-		sp->seq_refcnt++;
-
-		/* increment reference count on this leaf */
-		(*the_smp->ref_func)(vp);
-	}
-	return(sp);
-}
-
-static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!= NO_SEQ ){
-		sp->seq_first=s1;
-		sp->seq_next=s2;
-		sp->seq_count=1;
-		sp->seq_flags=SUPSEQ;
-
-		s1->seq_refcnt++;
-		s2->seq_refcnt++;
-		sp->seq_refcnt++;
-
-	}
-	return(sp);
-}
-
-static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
-		sp->seq_first=seqptr;
-		sp->seq_count=cnt;
-		sp->seq_flags=SUPSEQ;
-		seqptr->seq_refcnt++;
-		sp->seq_refcnt++;
-	}
-	return(sp);
-}
-
-static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
-{
-	register Seq *sp;
-
-	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
-		sp->seq_first=seqptr;
-		sp->seq_count = -1;
-		sp->seq_flags=SUPSEQ;
-		seqptr->seq_refcnt++;
-		sp->seq_refcnt++;
-	}
-	return(sp);
 }
 
 void evalseq(Seq *seqptr)		/* recursive procedure to compile a subsequence */

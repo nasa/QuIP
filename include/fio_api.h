@@ -1,5 +1,4 @@
 
-
 #ifndef _FIO_API_H_
 #define _FIO_API_H_
 
@@ -7,31 +6,68 @@
 #include "quip_config.h"
 #include "img_file.h"
 
-/* These are NOT items... (why not?) */
-typedef struct filetype {
-	const char *	ft_name;
+#define FIO_OPEN_FUNC_NAME(stem)	stem##_open
+#define FIO_OPEN_FUNC( stem )				\
+Image_File * FIO_OPEN_FUNC_NAME(stem)(QSP_ARG_DECL  const char *name,int rw)
 
-	Image_File *	(*op_func)(QSP_ARG_DECL  const char *,int rw);
-	void		(*rd_func)(QSP_ARG_DECL  Data_Obj *,Image_File *,
-				index_t,index_t,index_t);
-	int		(*wt_func)(QSP_ARG_DECL  Data_Obj *,Image_File *);
-	void		(*close_func)(QSP_ARG_DECL  Image_File *);
-	int		(*unconv_func)(void *,Data_Obj *);
-					/* from dp to whatever */
-	int		(*conv_func)(Data_Obj *, void *);
-					/* from whatever to dp */
-	void		(*info_func)(QSP_ARG_DECL  Image_File *);
-	int		(*seek_func)(QSP_ARG_DECL  Image_File *,dimension_t);	/* might need to be 64 bit... */
-	short		ft_flags;
-	filetype_code	ft_type;
-} Filetype;
+#define FIO_CLOSE_FUNC_NAME( stem )	stem##_close
+#define FIO_CLOSE_FUNC( stem )				\
+void FIO_CLOSE_FUNC_NAME(stem)(QSP_ARG_DECL  Image_File *ifp)
 
+#define FIO_WT_FUNC_NAME( stem )	stem##_wt
+#define FIO_WT_FUNC( stem )					\
+int FIO_WT_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp, Image_File *ifp )
+
+#define FIO_RD_FUNC_NAME( stem )	stem##_rd
+#define FIO_RD_FUNC( stem )					\
+void FIO_RD_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
+
+#define FIO_SETHDR_FUNC_NAME( stem )	set_##stem##_hdr
+#define FIO_SETHDR_FUNC( stem )				\
+int FIO_SETHDR_FUNC_NAME(stem)(QSP_ARG_DECL  Image_File *ifp)
+
+#define FIO_SEEK_FUNC_NAME( stem )	stem##_seek_frame
+#define FIO_SEEK_FUNC( stem )				\
+int FIO_SEEK_FUNC_NAME(stem)( QSP_ARG_DECL  Image_File *ifp, dimension_t n )
+
+#define FIO_INFO_FUNC_NAME( stem )	stem##_info_func
+#define FIO_INFO_FUNC( stem )			\
+void FIO_INFO_FUNC_NAME(stem)( QSP_ARG_DECL  Image_File *ifp )
+
+#define FIO_FT_TO_DP_FUNC_NAME(stem)		stem##_to_dp
+#define FIO_FT_TO_DP_FUNC(stem,header_type)					\
+int FIO_FT_TO_DP_FUNC_NAME(stem)(Data_Obj *dp,header_type *hd_p)
+
+#define FIO_DP_TO_FT_FUNC_NAME(stem)		do_to_##stem
+#define FIO_DP_TO_FT_FUNC(stem,header_type)					\
+int FIO_DP_TO_FT_FUNC_NAME(stem)(header_type *hd_p,Data_Obj *dp)
+
+#define FIO_UNCONV_FUNC_NAME(stem)		stem##_unconv
+#define FIO_UNCONV_FUNC(stem)						\
+int FIO_UNCONV_FUNC_NAME(stem)(void *hd_pp ,Data_Obj *dp)
+
+#define FIO_CONV_FUNC_NAME(stem)		stem##_conv
+#define FIO_CONV_FUNC(stem)						\
+int FIO_CONV_FUNC_NAME(stem)(Data_Obj *dp, void *hd_pp)
+
+#define FIO_INTERFACE_PROTOTYPES( stem , header_type )			\
+									\
+extern FIO_OPEN_FUNC( stem );						\
+extern FIO_CLOSE_FUNC( stem );						\
+extern FIO_WT_FUNC( stem );						\
+extern FIO_RD_FUNC( stem );						\
+extern FIO_SETHDR_FUNC( stem );						\
+extern FIO_INFO_FUNC( stem );						\
+extern FIO_SEEK_FUNC( stem );						\
+extern FIO_FT_TO_DP_FUNC(stem,header_type);				\
+extern FIO_DP_TO_FT_FUNC(stem,header_type);				\
+extern FIO_UNCONV_FUNC(stem);						\
+extern FIO_CONV_FUNC(stem);
 
 /* Public prototypes */
 
 /* img_file.c */
-extern void set_filetype(QSP_ARG_DECL  filetype_code n);
-extern filetype_code get_filetype(void);
+extern Filetype *	current_filetype(void);
 extern void close_image_file(QSP_ARG_DECL  Image_File *ifp);
 extern void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
 #define GENERIC_IMGFILE_CLOSE(ifp)	generic_imgfile_close(QSP_ARG  ifp)
@@ -42,11 +78,34 @@ extern int image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n);
 extern void image_file_clobber(int);
 extern void	delete_image_file(QSP_ARG_DECL  Image_File *);
 extern Image_File * open_image_file(QSP_ARG_DECL  const char *filename, const char *rw);
+
+/* img_file.c */
+extern void		set_iofile_directory(QSP_ARG_DECL  const char *);
+extern	Image_File *	read_image_file(QSP_ARG_DECL  const char *name);
+extern void		read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
+extern void		set_filetype(QSP_ARG_DECL  Filetype *ftp);
+
+
 ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
 
+/* These go elsewhere... */
+#ifdef FOOBAR
+ITEM_INIT_PROT(Filetype,filetype)
+ITEM_NEW_PROT(Filetype,filetype)
+ITEM_CHECK_PROT(Filetype,filetype)
+ITEM_PICK_PROT(Filetype,filetype)
+#endif /* FOOBAR */
 
-/* Public data structures */
+extern Filetype *filetype_for_code(QSP_ARG_DECL  filetype_code code);
+#define FILETYPE_FOR_CODE(code)	filetype_for_code(QSP_ARG  code)
 
-extern Filetype ft_tbl[];
+#ifdef HAVE_JPEG_SUPPORT
+extern COMMAND_FUNC( do_jpeg_menu );
+#endif /* HAVE_JPEG_SUPPORT */
+
+#ifdef HAVE_PNG 
+extern COMMAND_FUNC( do_png_menu );
+#endif /* HAVE_PNG */
 
 #endif /* ! _FIO_API_H_ */
+

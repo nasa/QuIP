@@ -1,7 +1,7 @@
 
 #ifndef NO_DISPLAY_LIST
 
-#include "query.h"
+#include "quip_prot.h"
 
 typedef struct display_list {
 	char *		dl_name;
@@ -19,13 +19,15 @@ extern COMMAND_FUNC( do_dump_dl );
 extern COMMAND_FUNC( do_call_dl );
 extern COMMAND_FUNC( do_end_dl );
 
-extern void info_dl(Display_List *);
+extern void info_dl(QSP_ARG_DECL  Display_List *);
 extern void dump_dl(Display_List *);
 extern void call_dl(Display_List *);
 
 extern void new_display_list(QSP_ARG_DECL  const char *name);
 extern void end_dl(void);
 extern void delete_dl(QSP_ARG_DECL  Display_List *dlp);
+
+extern double display_list_exists(QSP_ARG_DECL  const char *name);
 
 #endif /* undef NO_DISPLAY_LIST */
 

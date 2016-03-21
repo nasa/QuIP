@@ -1,7 +1,6 @@
 
 #include "quip_config.h"
-
-char VersionId_rawvol_llseek[] = QUIP_VERSION_STRING;
+#include "quip_prot.h"
 
 /* This is a mess! */
 
@@ -29,7 +28,15 @@ char VersionId_rawvol_llseek[] = QUIP_VERSION_STRING;
 
 off64_t my_lseek64(int fd,off64_t offset,int whence)
 {
-	return(lseek64(fd,offset,whence));
+	off_t r;
+	r=lseek64(fd,offset,whence);
+	/*
+	if( r < 0 )
+		return (off64_t) r;	// is off_t unsigned?
+	else
+		return r;
+	*/
+	return r;
 }
 
 #else /* ! HAVE_LSEEK64 */

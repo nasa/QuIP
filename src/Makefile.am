@@ -14,32 +14,31 @@ EXTRA_DIST =	quip_test.sh
 quip_SOURCES = quip_main.c
 quip_CPPFLAGS = -I$(top_srcdir)/include
 
+quip_LDFLAGS = -L../libs -Wl,-rpath,/usr/local/cuda/lib
+#quip_LDFLAGS = -rpath /usr/local/cuda/lib
+
 #math_drill_SOURCES = math.c
 #math_drill_CPPFLAGS = -I$(top_srcdir)/include
 
 # BUG - how do we figure out what Xlib?
-CUDALIBS= ../libsrc/cuda/libcuda.a
-VLIBS=	../libsrc/viewmenu/libviewmenu.a ../libsrc/parport/libpport.a ../libsrc/genwin/libgenwin.a ../libsrc/lutmenu/liblutmenu.a ../libsrc/luts/libluts.a ../libsrc/view/libview.a ../libsrc/xsupp/libxsupp.a
+CUDALIBS= -lqcuda
+VLIBS=	-lpport -lview -lxsupp
 MVILIBS= ../libsrc/mvimenu/libmvimenu.a ../libsrc/seq/libseq.a
-VECLIBS= ../libsrc/vectree/libvectree.a ../libsrc/newvec/libnewvec.a ../libsrc/vec_util/libvec_util.a
-DLIBS= ../libsrc/datamenu/libdatamenu.a ../libsrc/fileio/libfileio.a ../libsrc/dobj/libdobj.a ../libsrc/nports/libnports.a ../libsrc/rawvol/librawvol.a
-JLIBS= ../libsrc/interpreter/libinterpreter.a ../libsrc/qutil/libqutil.a
-PLIB= ../libsrc/psych/libpsych.a ../libsrc/cstepit/libcstepit.a
-SVRLIB= ../libsrc/www/libserver.a
-GUILIB=	../libsrc/gui/libgui.a
-OCVLIB=	../libsrc/opencv/libocvq.a
-V4LIB=	../libsrc/v4l2/libvmenu.a
-SOUNDLIB= ../libsrc/sound/libsound.a
-RQLIB= ../libsrc/dither/libdither.a
-KNOXLIB= ../libsrc/knox/libknox.a
-METEORLIB= ../libsrc/meteor/libmeteor.a
-GPSLIB= ../libsrc/gps/libgps.a
-PICLIB=	../libsrc/pic/libpicmenu.a
-VISCALIB= ../libsrc/visca/libvisca.a
-GSLLIB=	../libsrc/gsl/libgslmenu.a
-ATCLIB=	../libsrc/atc/libatc.a
-DASLIB=	../libsrc/das1602/libdas1602.a
-SELIB=../libsrc/smarteye/libsmarteye.a
+VECLIBS= -lvectree -lvec -lvl2 -locl -lvec_util
+DLIBS= -lfileio -lhips -ldobj -lports -lrawvol
+JLIBS= -linterpreter -lunix_util
+PLIB= -lpsych -lcstepit
+SVRLIB= -lserver
+GUILIB=	-lgui
+OCVLIB=	-locvq
+V4LIB=	-lvmenu
+SOUNDLIB= -lsound
+RQLIB= -ldither
+KNOXLIB= -lknox
+METEORLIB= -lmeteor
+VISCALIB= -lvisca
+GSLLIB=	-lgslmenu
+DASLIB=	-ldas1602
 
 
 DVLIB=	../libsrc/ieee1394/libdvmenu.a
@@ -49,15 +48,14 @@ PGRLIB=	../libsrc/ptgrey/libpgr.a
 
 LIBS=	@LIBS@
 
-#quip_LDFLAGS = -rpath /usr/local/cuda/lib
 
-quip_LDADD = $(SOUNDLIB) ../libsrc/nrmenu/libnrmenu.a
+quip_LDADD = $(SOUNDLIB) -lnrmenu
 
 if HAVE_NUMREC
   quip_LDADD += -lnumrec
 endif
 
-quip_LDADD += $(SELIB) $(DASLIB) $(ATCLIB) $(DVLIB) $(PGRLIB) $(OCVLIB) $(OGL_LIB) $(GPSLIB) $(PICLIB) $(CUDALIBS) $(V4LIB) $(RQLIB) $(VISCALIB) $(KNOXLIB) $(METEORLIB) $(GUILIB) $(VLIBS) $(MVILIBS) $(PLIB) $(VECLIBS) $(GSLLIB) $(DLIBS) $(JLIBS) $(SVRLIB)
+quip_LDADD += $(DASLIB) $(DVLIB) $(PGRLIB) $(OCVLIB) $(OGL_LIB) $(CUDALIBS) $(V4LIB) $(RQLIB) $(VISCALIB) $(KNOXLIB) $(METEORLIB) $(GUILIB) $(VLIBS) $(MVILIBS) $(PLIB) $(VECLIBS) $(GSLLIB) $(DLIBS) $(JLIBS) $(SVRLIB)
 
 # this doesn't work any more because lib dobj has dependencies on libcuda - should FIXME?  BUG?
 #math_drill_LDADD = $(VLIBS) $(VECLIBS) $(RQLIB) $(DLIBS) $(JLIBS)

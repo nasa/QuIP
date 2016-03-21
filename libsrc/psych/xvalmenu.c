@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_psych_xvalmenu[] = QUIP_VERSION_STRING;
-
 /*	this is a general package for running experiments
  *
  *	The responsibilities of the caller of exprmnt() :
@@ -30,8 +28,8 @@ static void linsteps(void);
 static float xval_1=1.0, xval_n=0.0;
 
 /* globals */
-float xval_array[MAXVALS];
-int _nvals;
+float *xval_array=NULL;
+int _nvals=0;
 
 
 static COMMAND_FUNC( do_load_xvals )
@@ -41,18 +39,18 @@ static COMMAND_FUNC( do_load_xvals )
 
 static COMMAND_FUNC( do_set_nxvals )
 {
-	_nvals=HOW_MANY("number of x values");
-	if( _nvals<=0 || _nvals >MAXVALS ){
-		sprintf(error_string,
-			"Number of x values must be between 0 and %d",MAXVALS);
-		WARN(error_string);
+	_nvals= (int) HOW_MANY("number of x values");
+	if( _nvals<=0 || _nvals >MAX_X_VALUES ){
+		sprintf(ERROR_STRING,
+			"Number of x values must be between 0 and %d",MAX_X_VALUES);
+		WARN(ERROR_STRING);
 	}
 }
 
 static COMMAND_FUNC( do_set_range )
 {
-	xval_1 = HOW_MUCH("zeroeth value");
-	xval_n = HOW_MUCH("last value");
+	xval_1 = (int) HOW_MUCH("zeroeth value");
+	xval_n = (int) HOW_MUCH("last value");
 
 	make_steps(SINGLE_QSP_ARG);
 }
@@ -74,14 +72,17 @@ static COMMAND_FUNC( do_set_steps )
 
 static COMMAND_FUNC( make_steps )
 {
+	if( xval_array == NULL )
+		xval_array = (float *) getbuf( _nvals * sizeof(float) );
+
 	if( log_steps ){
 		int i;
 
-		xval_1 = log( xval_1 );
-		xval_n = log( xval_n );
+		xval_1 = (float) log( xval_1 );
+		xval_n = (float) log( xval_n );
 		linsteps();
 		for(i=0;i<_nvals;i++)
-			xval_array[i]=exp( xval_array[i] );
+			xval_array[i]=(float) exp( xval_array[i] );
 	} else linsteps();
 }
 
@@ -104,6 +105,9 @@ static void linsteps(void)	/** make linear steps */
 	float inc;
 	int i;
 
+	if( xval_array == NULL )
+		xval_array = (float *) getbuf( _nvals * sizeof(float) );
+
 	inc=xval_n - xval_1;
 	inc /= (_nvals-1);
 	xval_array[0] = xval_1;
@@ -111,18 +115,18 @@ static void linsteps(void)	/** make linear steps */
 		xval_array[i]=xval_1+i*inc;
 }
 
-Command xval_ctbl[]={
-{ "load",	do_load_xvals,	"load x values from a file"		},
-{ "save",	do_save_xvals,	"save x values to a file"		},
-{ "n_vals",	do_set_nxvals,	"set number of x values"		},
-{ "range",	do_set_range,	"set range of x values"			},
-{ "step_type",	do_set_steps,	"select linear/logarithmic steps"	},
-{ "quit",	popcmd,		"quit"					},
-{ NULL,		NULL,		NULL					}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(xvals_menu,s,f,h)
+
+MENU_BEGIN(xvals)
+ADD_CMD( load,		do_load_xvals,	load x values from a file )
+ADD_CMD( save,		do_save_xvals,	save x values to a file )
+ADD_CMD( n_vals,	do_set_nxvals,	set number of x values )
+ADD_CMD( range,		do_set_range,	set range of x values )
+ADD_CMD( step_type,	do_set_steps,	select linear/logarithmic steps )
+MENU_END(xvals)
 
 COMMAND_FUNC( xval_menu )	/** play around with an experiment */
 {
-	PUSHCMD(xval_ctbl,"xvals");
+	PUSH_MENU(xvals);
 }
 

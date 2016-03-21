@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_xsupp_glxhelper[] = QUIP_VERSION_STRING;
-
 #ifdef SGI
 
 /*

@@ -1,39 +1,31 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_sample[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
-#include "data_obj.h"
-#include "debug.h"
 #include "vec_util.h"
-
-/* local prototypes */
-static int render_check(QSP_ARG_DECL
-			Data_Obj *image_dp,
-			Data_Obj *coord_dp,
-			Data_Obj *intens_dp);
+#include "debug.h"
+#include "quip_prot.h"
 
 static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data_Obj *intens_dp)
 {
-	if( image_dp->dt_prec != PREC_SP ){
-		sprintf(ERROR_STRING,"render_check:  source image %s must be float",image_dp->dt_name);
+	if( OBJ_PREC(image_dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"render_check:  source image %s must be float",OBJ_NAME(image_dp));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( coord_dp->dt_comps != 2 ){
-		sprintf(ERROR_STRING,"render_check:  coordinate list %s (%d) must have two components",coord_dp->dt_name,
-			coord_dp->dt_comps);
+	if( OBJ_COMPS(coord_dp) != 2 ){
+		sprintf(ERROR_STRING,"render_check:  coordinate list %s (%d) must have two components",OBJ_NAME(coord_dp),
+			OBJ_COMPS(coord_dp));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( MACHINE_PREC(intens_dp) != PREC_SP ){
-		sprintf(ERROR_STRING,"render_check:  intensity list %s must be float",intens_dp->dt_name);
+	if( OBJ_MACH_PREC(intens_dp) != PREC_SP ){
+		sprintf(ERROR_STRING,"render_check:  intensity list %s must be float",OBJ_NAME(intens_dp));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( MACHINE_PREC(coord_dp) != PREC_SP ){
+	if( OBJ_MACH_PREC(coord_dp) != PREC_SP ){
 		sprintf(ERROR_STRING,"render_check:  coordinate list %s must be float",
-			coord_dp->dt_name);
+			OBJ_NAME(coord_dp));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -42,15 +34,15 @@ static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data
 		WARN("render_check:  Sorry, objects must be contiguous for render_samples");
 		return(-1);
 	}
-	if( image_dp->dt_comps != intens_dp->dt_comps ){
+	if( OBJ_COMPS(image_dp) != OBJ_COMPS(intens_dp) ){
 		sprintf(ERROR_STRING,"render_check:  intensity list %s (%d) must have same number of components as target image %s (%d)",
-			intens_dp->dt_name,intens_dp->dt_comps,image_dp->dt_name,image_dp->dt_comps);
+			OBJ_NAME(intens_dp),OBJ_COMPS(intens_dp),OBJ_NAME(image_dp),OBJ_COMPS(image_dp));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( image_dp->dt_comps>1 && image_dp->dt_cinc != 1 ){
+	if( OBJ_COMPS(image_dp)>1 && OBJ_COMP_INC(image_dp) != 1 ){
 		sprintf(ERROR_STRING,"render_check:  Sorry, target image %s has component increment (%d) != 1",
-				image_dp->dt_name,image_dp->dt_cinc);
+				OBJ_NAME(image_dp),OBJ_COMP_INC(image_dp));
 		WARN(ERROR_STRING);
 		advise("Target image component increment must be 1 for rendering and sampling");
 		return(-1);
@@ -61,17 +53,17 @@ static int render_check(QSP_ARG_DECL  Data_Obj *image_dp,Data_Obj *coord_dp,Data
 
 	/* like to use dp_same_size() here, but type dim is unequal!? */
 
-	if( coord_dp->dt_rows != intens_dp->dt_rows ||
+	if( OBJ_ROWS(coord_dp) != OBJ_ROWS(intens_dp) ||
 		/* BUG should check all dims? */
-		coord_dp->dt_cols != intens_dp->dt_cols ){
+		OBJ_COLS(coord_dp) != OBJ_COLS(intens_dp) ){
 		sprintf(ERROR_STRING,
 	"Coordinate object %s (%d x %d) differs in size from intensity object %s (%d x %d)",
-			coord_dp->dt_name,
-			coord_dp->dt_rows,
-			coord_dp->dt_cols,
-			intens_dp->dt_name,
-			intens_dp->dt_rows,
-			intens_dp->dt_cols);
+			OBJ_NAME(coord_dp),
+			OBJ_ROWS(coord_dp),
+			OBJ_COLS(coord_dp),
+			OBJ_NAME(intens_dp),
+			OBJ_ROWS(intens_dp),
+			OBJ_COLS(intens_dp));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -89,15 +81,16 @@ void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_O
 	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
-	image  = (float *) image_dp->dt_data;
-	coord  = (float *) coord_dp->dt_data;
-	intens = (float *) intens_dp->dt_data;
-	width  = image_dp->dt_cols;
-	height = image_dp->dt_rows;
+	image  = (float *) OBJ_DATA_PTR(image_dp);
+	coord  = (float *) OBJ_DATA_PTR(coord_dp);
+	intens = (float *) OBJ_DATA_PTR(intens_dp);
+	width  = OBJ_COLS(image_dp);
+	height = OBJ_ROWS(image_dp);
 
-	x=y=0;
+	//x=0;
+    //y=0;
 
-	i=coord_dp->dt_n_type_elts/2;
+	i=OBJ_N_TYPE_ELTS(coord_dp)/2;
 
 	while(i--){
 		x = *coord++;
@@ -106,15 +99,15 @@ void render_samples(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_O
 		iy = (incr_t)( y + 0.5 );
 
 		if( iy < (incr_t)height && iy >= 0 && ix >= 0 && ix < (incr_t)width ){
-			for(k=0;k<image_dp->dt_comps;k++)
-				image[ iy * image_dp->dt_rinc + ix * image_dp->dt_pinc + k * image_dp->dt_cinc ] =
+			for(k=0;k<OBJ_COMPS(image_dp);k++)
+				image[ iy * OBJ_ROW_INC(image_dp) + ix * OBJ_PXL_INC(image_dp) + k * OBJ_COMP_INC(image_dp) ] =
 					*intens++;
 		} else {
 			if( verbose ){
 				sprintf(msg_str,"render_samples:  clipping point at %d %d",ix,iy);
 				prt_msg(msg_str);
 			}
-			for(k=0;k<image_dp->dt_comps;k++)
+			for(k=0;k<OBJ_COMPS(image_dp);k++)
 				intens++;
 		}
 	}
@@ -138,15 +131,16 @@ void render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_
 	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
-	image  = (float *) image_dp->dt_data;
-	coord  = (float *) coord_dp->dt_data;
-	intens = (float *) intens_dp->dt_data;
-	width  = image_dp->dt_cols;
-	height = image_dp->dt_rows;
+	image  = (float *) OBJ_DATA_PTR(image_dp);
+	coord  = (float *) OBJ_DATA_PTR(coord_dp);
+	intens = (float *) OBJ_DATA_PTR(intens_dp);
+	width  = OBJ_COLS(image_dp);
+	height = OBJ_ROWS(image_dp);
 
-	x=y=0;
+	//x=0;
+    //y=0;
 
-	i=coord_dp->dt_n_type_elts/2;
+	i=OBJ_N_TYPE_ELTS(coord_dp)/2;
 
 	while(i--){			/* foreach destination coordinate pair */
 		x = *coord++;
@@ -155,7 +149,7 @@ void render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_
 		if ( (x > (float)(width  - 1)) || (x < 0) ||
 		     (y > (float)(height - 1)) || (y < 0) )
 		  {
-			intens += image_dp->dt_comps;	/* same as intens_dp */
+			intens += OBJ_COMPS(image_dp);	/* same as intens_dp */
 			continue;
 		  }
 
@@ -173,13 +167,13 @@ void render_samples2(QSP_ARG_DECL  Data_Obj *image_dp, Data_Obj *coord_dp, Data_
 		ix2=ix+1;
 		iy2=iy+1;
 
-		ix  *= image_dp -> dt_pinc;
-		ix2 *= image_dp -> dt_pinc;
-		iy  *= image_dp -> dt_rowinc;
-		iy2 *= image_dp -> dt_rowinc;
+		ix  *= OBJ_PXL_INC(image_dp);
+		ix2 *= OBJ_PXL_INC(image_dp);
+		iy  *= OBJ_ROW_INC(image_dp );
+		iy2 *= OBJ_ROW_INC(image_dp );
 
 		/* BUG this code relies on the component increment == 1 */
-		for(k=0;k<image_dp->dt_comps;k++){
+		for(k=0;k<OBJ_COMPS(image_dp);k++){
 			*(image + ix  + iy + k ) += ((*intens) * (1-dx-dy+dxy));
 			*(image + ix  + iy2 + k ) += ((*intens) * (dy - dxy));
 			*(image + ix2 + iy + k ) += ((*intens) * (dx - dxy));
@@ -201,15 +195,16 @@ void sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Ob
 	if( render_check(QSP_ARG  image_dp,coord_dp,intens_dp) < 0 )
 		return;
 
-	image  = (float *) image_dp->dt_data;
-	coord  = (float *) coord_dp->dt_data;
-	intens = (float *) intens_dp->dt_data;
-	width  = image_dp->dt_cols;
-	height = image_dp->dt_rows;
+	image  = (float *) OBJ_DATA_PTR(image_dp);
+	coord  = (float *) OBJ_DATA_PTR(coord_dp);
+	intens = (float *) OBJ_DATA_PTR(intens_dp);
+	width  = OBJ_COLS(image_dp);
+	height = OBJ_ROWS(image_dp);
 
-	x=y=0;
+	//x=0;
+    //y=0;
 
-	i=coord_dp->dt_n_type_elts/2;
+	i=OBJ_N_TYPE_ELTS(coord_dp)/2;
 
 	while(i--){
 		x = *coord++;
@@ -218,7 +213,7 @@ void sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Ob
 		if ( (x > (float)(width  - 1)) || (x < 0) ||
 		     (y > (float)(height - 1)) || (y < 0) )
 		  {
-			intens += image_dp->dt_comps;
+			intens += OBJ_COMPS(image_dp);
 			continue;
 		  }
 
@@ -236,12 +231,12 @@ void sample_image(QSP_ARG_DECL  Data_Obj *intens_dp, Data_Obj *image_dp, Data_Ob
 		ix2=ix+1;
 		iy2=iy+1;
 
-		ix  *= image_dp -> dt_pinc;
-		ix2 *= image_dp -> dt_pinc;
-		iy  *= image_dp -> dt_rowinc;
-		iy2 *= image_dp -> dt_rowinc;
+		ix  *= OBJ_PXL_INC(image_dp);
+		ix2 *= OBJ_PXL_INC(image_dp);
+		iy  *= OBJ_ROW_INC(image_dp);
+		iy2 *= OBJ_ROW_INC(image_dp);
 
-		for(k=0;k<image_dp->dt_comps;k++){
+		for(k=0;k<OBJ_COMPS(image_dp);k++){
 			*intens++ = (*(image + ix  + iy + k ) * (1-dx-dy+dxy))
 				  + (*(image + ix  + iy2 + k ) * (dy - dxy))
 				  + (*(image + ix2 + iy + k ) * (dx - dxy))

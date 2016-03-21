@@ -1,0 +1,7 @@
+< coq_startup.scr
+debug query
+debug getbuf
+do
+  os events quit
+  while 1
+

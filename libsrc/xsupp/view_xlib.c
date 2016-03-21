@@ -1,6 +1,8 @@
 #include "quip_config.h"
 
-char VersionId_xsupp_view_xlib[] = QUIP_VERSION_STRING;
+#include "quip_prot.h"
+#include "viewer.h"
+#include "xsupp.h"
 
 #ifdef HAVE_X11
 
@@ -32,13 +34,11 @@ char VersionId_xsupp_view_xlib[] = QUIP_VERSION_STRING;
 #include <string.h>		/* memcpy() */
 #endif
 
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "getbuf.h"
 #include "handle.h"
-#include "debug.h"
-#include "savestr.h"
-#include "callback_api.h"
-#include "xsupp.h"
+//#include "callback_api.h"
+#include "xsupp_prot.h"
 #include "cmaps.h"
 #include "viewer.h"
 
@@ -63,16 +63,24 @@ char VersionId_xsupp_view_xlib[] = QUIP_VERSION_STRING;
 #include "cmaps.h"
 
 const char *def_geom="";
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 u_long xdebug=0;
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 /* draw-op stuff, local to this file */
 
 static List *unused_dop_list=NO_LIST;
+// BUG not thread-safe...
 static XFont *current_xfp=NO_XFONT;
 
 static int display_to_mapped=0;		/* flag - if set, then wait for windows to be mapped before displaying */
+
+typedef enum {
+	LEFT_JUSTIFY,	// 0
+	CENTER_TEXT,	// 1
+	RIGHT_JUSTIFY	// 2
+} Text_Mode;
+
 
 typedef struct draw_op_args {
 	const char *		doa_str;
@@ -80,6 +88,7 @@ typedef struct draw_op_args {
 		uint32_t	u_color;
 		int		u_int[7];
 		XFont *		u_xfp;
+		Text_Mode	u_mode;
 	} doa_u;
 } Draw_Op_Args;
 
@@ -87,6 +96,8 @@ typedef struct draw_op_args {
 #define doa_color	doa_u.u_color
 #define doa_int		doa_u.u_int
 #define doa_xfp		doa_u.u_xfp
+
+#define doa_text_mode	doa_u.u_mode
 
 #define doa_x		doa_int[0]
 #define doa_y		doa_int[1]
@@ -99,8 +110,21 @@ typedef struct draw_op_args {
 #define doa_a2		doa_int[5]
 #define doa_filled	doa_int[6]
 
+/* drawing operations */
+typedef enum {
+	DRAW_OP_NONE,		// 0
+	DRAW_OP_TEXT,		// 1
+	DRAW_OP_TEXT_MODE,	// 2
+	DRAW_OP_MOVE,		// 3
+	DRAW_OP_CONT,		// 4
+	DRAW_OP_FOREGROUND,	// 5
+	DRAW_OP_BACKGROUND,	// 6
+	DRAW_OP_ARC,		// 7
+	N_DRAW_OP_TYPES		// 8
+} Draw_Op_Code;
+
 typedef struct draw_op {
-	short		do_op;
+	Draw_Op_Code	do_op;
 	Draw_Op_Args	do_doa;
 } Draw_Op;
 
@@ -116,50 +140,13 @@ typedef struct draw_op {
 #define do_a1		do_doa.doa_a1
 #define do_a2		do_doa.doa_a2
 #define do_filled	do_doa.doa_filled
-
+#define do_text_mode	do_doa.doa_text_mode
 
 #define NO_DRAW_OP	((Draw_Op *) NULL)
 
-/* drawing operations */
-#define DRAW_OP_TEXT		1
-#define DRAW_OP_MOVE		2
-#define DRAW_OP_CONT		3
-#define DRAW_OP_FOREGROUND	4
-#define DRAW_OP_BACKGROUND	5
-#define DRAW_OP_ARC		6
-
-
-
-/* local prototypes */
-
-#ifdef SGI_GL
-static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h);
-#endif /* SGI_GL */
-
-static Window CreateWindow(const char *name,const char *geom,u_int w,u_int h);
-static int x_image_for(Viewer *vp,Data_Obj *dp);
-static Window creat_window(const char *name,int w,int h,long event_mask);
-
-static int is_mapped(Viewer *);
-
-/* memory funcs */
-
-static void remember_drawing(Viewer *vp,int op,Draw_Op_Args *doap);
-static void refresh_drawing(Viewer *vp);
-static void free_drawlist(Viewer *vp);
-static void remember_move(Viewer *,int,int);
-static void remember_cont(Viewer *,int,int);
-static void remember_text(Viewer *,const char *);
-static void forget_drawing(Viewer *);
-static void remember_arc(Viewer *,int,int,int,int,int,int,int);
-static void remember_fg(Viewer *,u_long);
-static void remember_bg(Viewer *,u_long);
-
-
-
 #define WINDOW_BORDER_WIDTH	2
 
-Bool WaitForNotify(Display *dpy, XEvent *ep, XPointer arg)
+static Bool WaitForNotify(Display *dpy, XEvent *ep, XPointer arg)
 {
 	switch( ep->type ){
 		case MapNotify:
@@ -184,6 +171,7 @@ static int quick=0;
  * out of somewhere!?
  */
 
+// BUG static globals not thread-safe!
 static int from_memory=0;		/* set to ture when redrawing after expose */
 					/* if true, then don't re-remember draw cmds */
 static int remember_gfx=1;		/* by default, remember gfx so can refresh on expose */
@@ -210,13 +198,14 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 
 	colormap = (Colormap) NULL;	// quiet compiler
 	dop = curr_dop();
-#ifdef CAUTIOUS
-	if( dop == NO_DISP_OBJ )
-		NERROR1("CAUTIOUS:  CreateWindow, no current display!?");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( dop == NO_DISP_OBJ )
+//		NERROR1("CAUTIOUS:  CreateWindow, no current display!?");
+//#endif /* CAUTIOUS */
+	assert( dop != NO_DISP_OBJ );
 
 	/* note that only x,y are gotten from geom spec.  w,h are fixed */
-	x = y = 50;
+	x = y = 50;	// has to default to something!?
 	i = XParseGeometry(geom,&x,&y,&w,&h);
 
 	if ((i&XValue || i&YValue)) hints.flags = USPosition;
@@ -227,6 +216,7 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 	if (i&XValue && i&XNegative) x = dop->do_width - w - abs(x);
 	if (i&YValue && i&YNegative) y = dop->do_height - h - abs(y);
 
+//fprintf(stderr,"Hint posn is %d, %d\n",x,y);
 	hints.x = x;				hints.y = y;
 	hints.width = w;			hints.height = h;
 	hints.min_width  = w;		hints.min_height = h;
@@ -255,17 +245,17 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 		attributes.colormap = colormap;
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
-advise("XCreateWindow");
+NADVISE("XCreateWindow");
 sprintf(DEFAULT_ERROR_STRING,"dpy = %s,  dispDEEP = %d",
 dop->do_name,dop->do_depth);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 sprintf(DEFAULT_ERROR_STRING,"calling XCreateWindow, depth = %d",dop->do_depth);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 sprintf(DEFAULT_ERROR_STRING,"\tx = %d, y = %d, w = %d, h = %d, border = %d, vis = %ld (0x%lx)",
 x,y,w,h,WINDOW_BORDER_WIDTH,(u_long)dop->do_visual,(u_long)dop->do_visual);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif
 	if( w <=0 || h <= 0 ){
@@ -280,20 +270,20 @@ advise(DEFAULT_ERROR_STRING);
 		WINDOW_BORDER_WIDTH, dop->do_depth, InputOutput,
 		dop->do_visual, valuemask, &attributes);
 
-	XMapWindow(dop->do_dpy,win);
-	{
-		/* what is this for? */
-		XEvent event;
-	XIfEvent(dop->do_dpy,&event,WaitForNotify,(char*)win);
-	}
-
 	if (!win){
 		NWARN("error creating window");
 		return(win);   /* leave immediately if couldn't create */
 	}
-#ifdef DEBUG
+
+	XMapWindow(dop->do_dpy,win);
+	{
+		/* what is this for? */
+		XEvent event;
+		XIfEvent(dop->do_dpy,&event,WaitForNotify,(char*)win);
+	}
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
-advise("window created");
+NADVISE("window created");
 }
 #endif
 
@@ -375,10 +365,11 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 		return(win);   /* leave immediately if couldn't create */
 	}
 
-#ifdef CAUTIOUS
-	if( dop == NO_DISP_OBJ )
-		ERROR1("CAUTIOUS:  CreateGLWindow, no current display!?");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( dop == NO_DISP_OBJ )
+//		ERROR1("CAUTIOUS:  CreateGLWindow, no current display!?");
+//#endif /* CAUTIOUS */
+	assert( dop != NO_DISP_OBJ );
 
 	dop->do_currw = win;
 
@@ -489,15 +480,16 @@ void set_viewer_display(Viewer *vp)
 	Disp_Obj *dop;
 
 	dop=curr_dop();
-#ifdef CAUTIOUS
-	if( dop == NO_DISP_OBJ )
-		NERROR1("CAUTIOUS:  set_viewer_display:  no current display object");
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( dop == NO_DISP_OBJ )
+//		NERROR1("CAUTIOUS:  set_viewer_display:  no current display object");
+//#endif /* CAUTIOUS */
+	assert( dop != NO_DISP_OBJ );
 
 	vp->vw_dop = dop;
 }
 
-int make_generic_window(QSP_ARG_DECL  Viewer *vp,long event_mask)
+static int make_generic_window(QSP_ARG_DECL  Viewer *vp, int width, int height, long event_mask)
 {
 	Window scrW;
 	XGCValues values;
@@ -505,7 +497,7 @@ int make_generic_window(QSP_ARG_DECL  Viewer *vp,long event_mask)
 	window_sys_init(SINGLE_QSP_ARG);
 
 	event_mask |= DEFAULT_EVENT_MASK;
-	scrW=creat_window(vp->vw_label,vp->vw_width,vp->vw_height,event_mask);
+	scrW=creat_window(vp->vw_label,width,height,event_mask);
 
 	vp->vw_xwin = scrW;
 	vp->vw_dop = curr_dop();
@@ -521,53 +513,65 @@ void enable_masked_events(Viewer *vp, long event_mask)
 	XSelectInput(vp->vw_dop->do_dpy, vp->vw_xwin, vp->vw_event_mask );
 }
 
-void disable_masked_events(Viewer *vp, long event_mask)
+#ifdef FOOBAR		// no longer needed???
+static void disable_masked_events(Viewer *vp, long event_mask)
 {
 	vp->vw_event_mask &= ~event_mask;
 	XSelectInput(vp->vw_dop->do_dpy, vp->vw_xwin, vp->vw_event_mask );
 }
+#endif /* FOOBAR */
 
-int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp)
+int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int width,int height)
 {
-	return( make_generic_window(QSP_ARG  vp, ButtonMotionMask |
+	return( make_generic_window(QSP_ARG  vp, width, height, ButtonMotionMask |
 				ButtonPressMask |
 				ButtonReleaseMask
 				/* | PointerMotionHintMask */
 				) );
 }
 
-int make_button_arena(QSP_ARG_DECL  Viewer *vp)
+int make_button_arena(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
 	/* We didn't used to look at Release events? */
-	return( make_generic_window(QSP_ARG  vp, ButtonPressMask|ButtonReleaseMask ) );
+	return( make_generic_window(QSP_ARG  vp, width, height, ButtonPressMask|ButtonReleaseMask ) );
 }
 
-int make_dragscape(QSP_ARG_DECL  Viewer *vp)
+int make_dragscape(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp, ButtonMotionMask |
+	return( make_generic_window(QSP_ARG  vp, width, height, ButtonMotionMask |
 				ButtonPressMask |
 				ButtonReleaseMask
 				/* | PointerMotionHintMask */
 				) );
 }
 
-int make_mousescape(QSP_ARG_DECL  Viewer *vp)
+int make_mousescape(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp, PointerMotionMask
+	return( make_generic_window(QSP_ARG  vp, width, height, PointerMotionMask
 				| ButtonPressMask
 				| ButtonReleaseMask
 				/* | PointerMotionHintMask */
 				) );
 }
 
-int make_viewer(QSP_ARG_DECL  Viewer *vp)
+int make_viewer(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp,0L) );
+	return( make_generic_window(QSP_ARG  vp,width, height, 0L) );
 }
 
-int make_gl_window(QSP_ARG_DECL  Viewer *vp)
+int make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp,0L) );
+	return( make_generic_window(QSP_ARG  vp,width, height, 0L) );
+}
+
+static int is_mapped(Viewer *vp)
+{
+	XWindowAttributes attr;
+
+	XGetWindowAttributes(vp->vw_Disp,vp->vw_xwin,&attr);
+
+	if( attr.map_state != IsViewable ) return(0);
+	return(1);
 }
 
 void show_viewer(QSP_ARG_DECL  Viewer *vp)
@@ -578,20 +582,16 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 //sprintf(ERROR_STRING,"show_viewer %s calling XMapRaised...",vp->vw_name);
 //advise(ERROR_STRING);
 	XMapRaised(vp->vw_Disp,vp->vw_xwin);
-	XMoveWindow(vp->vw_Disp,vp->vw_xwin,vp->vw_x,vp->vw_y);
+	// When we command a movement, the content window ends up lower
+	// by the width of the top border (22 pixels)
+	// Is this why we sometimes see the window march down the screen?
+	XMoveWindow(vp->vw_Disp,vp->vw_xwin,VW_X_REQUESTED(vp),
+					VW_Y_REQUESTED(vp));
+
 	//usleep(100);
 	XSync(vp->vw_Disp,False);
 
 	/* but window may be mapped but not raised? */
-
-	/* On Mac OSX, the x server reports the window as being mapped, but
-	 * X_GetImage can still fail...  Maybe that means that the server is
-	 * returning the state of what it is trying to do, not what has
-	 * really happened?
-	 *
-	 * This problem was resolved be revertint to an older version
-	 * of XQuartz (2.5.0 instead of 2.7.3)
-	 */
 
 	/* We used to check events here, but that can cause undesireable macro recursion... */
 	do {
@@ -621,8 +621,8 @@ static int x_image_for(Viewer *vp,Data_Obj *dp)
 	 */
 
 	if( vp->vw_ip != NO_X_IMAGE ){		/* has XImage? */
-		if (vp->vw_ip->width == (int)dp->dt_cols &&
-			vp->vw_ip->height == (int)dp->dt_rows )
+		if (vp->vw_ip->width == (int)OBJ_COLS(dp) &&
+			vp->vw_ip->height == (int)OBJ_ROWS(dp) )
 
 			return(0);
 
@@ -630,36 +630,36 @@ static int x_image_for(Viewer *vp,Data_Obj *dp)
 
 		if( ! OWNS_IMAGE_DATA(vp) )
 			vp->vw_ip->data=NULL;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug )
 {
 sprintf(DEFAULT_ERROR_STRING,"Destroying old X image, viewer %s",vp->vw_name);
-advise(DEFAULT_ERROR_STRING);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		XDestroyImage(vp->vw_ip);
 
 	} else {
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"x_image_for %s:  viewer %s has no old X image",dp->dt_name,vp->vw_name);
-advise(DEFAULT_ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"x_image_for %s:  viewer %s has no old X image",OBJ_NAME(dp),vp->vw_name);
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	}
 
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"x_image_for %s:  calling XCreateImage",dp->dt_name);
-advise(DEFAULT_ERROR_STRING);
+sprintf(DEFAULT_ERROR_STRING,"x_image_for %s:  calling XCreateImage",OBJ_NAME(dp));
+NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	vp->vw_ip = XCreateImage(vp->vw_Disp,vp->vw_visual,vp->vw_depth,ZPixmap,
-		/* offset */ 0, (char *) dp->dt_data,
-		dp->dt_cols,dp->dt_rows,8,0);
+		/* offset */ 0, (char *) OBJ_DATA_PTR(dp),
+		OBJ_COLS(dp),OBJ_ROWS(dp),8,0);
 
 	if( vp->vw_ip == NULL ){
 		NWARN("XCreateImage failed");
@@ -668,9 +668,9 @@ advise(DEFAULT_ERROR_STRING);
 
 /*
  * on LINUX this prints LSBFirst, and we usually get BGR, i.e. c{0} goes to blue...
- * if( vp->vw_ip->byte_order == LSBFirst ) advise("LSBFirst");
- * else if( vp->vw_ip->byte_order == MSBFirst ) advise("MSBFirst");
- * else advise("unexpected byte order???");
+ * if( vp->vw_ip->byte_order == LSBFirst ) NADVISE("LSBFirst");
+ * else if( vp->vw_ip->byte_order == MSBFirst ) NADVISE("MSBFirst");
+ * else NADVISE("unexpected byte order???");
  */
 
 	/* Xlib has not allocated any image memory yet */
@@ -709,12 +709,12 @@ void wait_for_mapped(QSP_ARG_DECL  Viewer *vp, int max_wait_time)
 	//show_viewer(vp);	/* make sure mapped */
 
 	while( ! is_mapped(vp) ){
-		//usleep(100);
+		usleep(100);
 		i_loop(SINGLE_QSP_ARG);		/* process events if any */
 	}
 }
 
-void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
+void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 {
 	/* u_long fno; */
 	u_int display_bpp;
@@ -726,45 +726,45 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 		wait_for_mapped(QSP_ARG  vp,10);
 	}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //sprintf(ERROR_STRING,"embed_image %s (depth = %d), viewer %s (depth = %d)",
-//dp->dt_name,8*dp->dt_comps,vp->vw_name,vp->vw_depth);
+//OBJ_NAME(dp),8*OBJ_COMPS(dp),vp->vw_name,vp->vw_depth);
 //advise(ERROR_STRING);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 /*error checks exit on failure */
 
-	if( x < 0 || y < 0 ||	x+dp->dt_cols > vp->vw_width ||
-				y+dp->dt_rows > vp->vw_height ){
+	if( x < 0 || y < 0 ||	x+OBJ_COLS(dp) > vp->vw_width ||
+				y+OBJ_ROWS(dp) > vp->vw_height ){
 		sprintf(ERROR_STRING,
 	"embed_image:  Can't embed image %s (%d x %d) at %d %d in viewer %s (%d x %d)",
-			dp->dt_name,dp->dt_rows,dp->dt_cols,
+			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			x,y,vp->vw_name,vp->vw_height,vp->vw_width);
 		NWARN(ERROR_STRING);
 		return;
 	}
 
 	if( vp->vw_depth == 15 || vp->vw_depth == 16 ){
-		if( dp->dt_prec != PREC_IN && dp->dt_prec != PREC_UIN ){
+		if( OBJ_PREC(dp) != PREC_IN && OBJ_PREC(dp) != PREC_UIN ){
 			sprintf(ERROR_STRING,
 				"embed_image:  image \"%s\" is type %s, should be short",
-				dp->dt_name,prec_name[dp->dt_prec]);
+				OBJ_NAME(dp),OBJ_PREC_NAME(dp));
 			NWARN(ERROR_STRING);
 			return;
 		}
 	}
 	else{
-		if( MACHINE_PREC(dp) != PREC_BY && MACHINE_PREC(dp) != PREC_UBY ){
-			if( dp->dt_name == NULL ){
+		if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
+			if( OBJ_NAME(dp) == NULL ){
 				NWARN("non-byte image (with null name) passed to embed_image!?");
 				abort();
 			}
 			sprintf(ERROR_STRING,
 				"embed_image:  image \"%s\" is type %s, should be %s or %s",
-				dp->dt_name,prec_name[dp->dt_prec],
-				prec_name[PREC_BY], prec_name[PREC_UBY]);
+				OBJ_NAME(dp),OBJ_PREC_NAME(dp),
+				PREC_NAME(PREC_FOR_CODE(PREC_BY)), PREC_NAME(PREC_FOR_CODE(PREC_UBY)));
 			NWARN(ERROR_STRING);
 			return;
 		}
@@ -791,47 +791,49 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 	if( x_image_for(vp,dp) < 0 ){
 		sprintf(ERROR_STRING,
 			"embed_image:  can't find x_image for viewer %s, object %s",
-			vp->vw_name,dp->dt_name);
+			vp->vw_name,OBJ_NAME(dp));
 		NWARN(ERROR_STRING);
 		return;
 	}
 
 	display_bpp = vp->vw_ip->bytes_per_line / vp->vw_ip->width;
 
-	if( display_bpp != dp->dt_comps * siztbl[ MACHINE_PREC(dp) ] ){
+	if( display_bpp != OBJ_COMPS(dp) * PREC_SIZE( OBJ_MACH_PREC_PTR(dp) ) ){
 		/* BUG don't deal with short case correctly here... */
-		if( siztbl[MACHINE_PREC(dp)] != 1 ){
+		if( PREC_SIZE(OBJ_MACH_PREC_PTR(dp)) != 1 ){
 			sprintf(ERROR_STRING,
 	"embed_image:  expected byte precision for object %s (%d %s components)!?",
-				dp->dt_name,dp->dt_comps,prec_name[MACHINE_PREC(dp)]);
+				OBJ_NAME(dp),OBJ_COMPS(dp),OBJ_PREC_NAME(dp));
 			NWARN(ERROR_STRING);
 			return;
 		}
 		disp_dp = comp_replicate(QSP_ARG  dp,display_bpp,ALLOC_DATA);
-		if( dp->dt_comps == 1 )
+		if( OBJ_COMPS(dp) == 1 )
 			copy_components(QSP_ARG  display_bpp,disp_dp,0,1,dp,0,0);
 		else {
 			int n;
 
-			n = MIN(dp->dt_comps,disp_dp->dt_comps);
+			n = MIN(OBJ_COMPS(dp),OBJ_COMPS(disp_dp));
 			copy_components(QSP_ARG  n,disp_dp,0,1,dp,0,1);
+			unlock_children(dp);	// so they delete properly
 		}
+		unlock_children(disp_dp);	// so they delete properly
 	} else	disp_dp = dp;
 
 
 	/* allow loading of an entire sequence... */
 	/* vw_frameno should be set by the caller! */
-	fno=vp->vw_frameno % disp_dp->dt_frames;
+	fno=vp->vw_frameno % OBJ_FRAMES(disp_dp);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //advise("x_image gotten");
 //longlist(dp);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
-	vp->vw_ip->data = ((char *)disp_dp->dt_data)+fno*disp_dp->dt_finc;
-	/* vp->vw_ip->data = (char *)disp_dp->dt_data ; */
+	vp->vw_ip->data = ((char *)OBJ_DATA_PTR(disp_dp))+fno*OBJ_FRM_INC(disp_dp);
+	/* vp->vw_ip->data = (char *)OBJ_DATA_PTR(disp_dp) ; */
 
 #ifdef HAVE_VBL
 	// We call vbl_wait here with the idea that if we are
@@ -846,66 +848,190 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 	vbl_wait();
 #endif /* HAVE_VBL */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
 //advise("calling XPutImage");
 //}
-#endif /* DEBUG */
-
+#endif /* QUIP_DEBUG */
 
 	XPutImage(vp->vw_Disp, vp->vw_xwin, vp->vw_gc, vp->vw_ip,
-		0, 0, x, y, dp->dt_cols, dp->dt_rows);
+		0, 0, x, y, OBJ_COLS(dp), OBJ_ROWS(dp));
 
 	if( disp_dp != dp ){
 		/* Is it safe to release the image now it the x server is not
 		 * running synchronously???
 		 */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 //if( debug & xdebug ){
-//sprintf(ERROR_STRING,"embed_image:  deleting disp_dp %s",disp_dp->dt_name);
+//sprintf(ERROR_STRING,"embed_image:  deleting disp_dp %s",OBJ_NAME(disp_dp));
 //advise(ERROR_STRING);
 //}
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
+		// memory leak on children because locked - same command cycle!?
+
 		delvec(QSP_ARG  disp_dp);
 	}
 } // end embed_image
 
-static int is_mapped(Viewer *vp)
+static const char *string_for_text_mode(Text_Mode m)
 {
-	XWindowAttributes attr;
-
-	XGetWindowAttributes(vp->vw_Disp,vp->vw_xwin,&attr);
-
-	if( attr.map_state != IsViewable ) return(0);
-	return(1);
+	switch(m){
+	case LEFT_JUSTIFY:  return("left_justify"); break;
+	case RIGHT_JUSTIFY:  return("right_justify"); break;
+	case CENTER_TEXT:  return("center"); break;
+	}
+	// NOTREACHED
+	return("bad text mode!?");
 }
 
-void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
+static void dop_info( QSP_ARG_DECL  Draw_Op *dop)
+{
+	switch(dop->do_op){
+		case DRAW_OP_FOREGROUND:
+			sprintf(msg_str,"\tselect 0x%x",dop->do_color);
+			break;
+		case DRAW_OP_BACKGROUND:
+			sprintf(msg_str,"\tbgselect 0x%x",dop->do_color);
+			break;
+		case DRAW_OP_MOVE:
+			sprintf(msg_str,"\tmove %d %d",dop->do_x,dop->do_y);
+			break;
+		case DRAW_OP_CONT:
+			sprintf(msg_str,"\tcont %d %d",dop->do_x,dop->do_y);
+			break;
+		case DRAW_OP_TEXT:
+			sprintf(msg_str,"\ttext \"%s\"",dop->do_str);
+			break;
+		case DRAW_OP_TEXT_MODE:
+			sprintf(msg_str,"\ttext_mode \"%s\"",
+				string_for_text_mode(dop->do_text_mode));
+			break;
+		case DRAW_OP_ARC:
+			sprintf(msg_str,"\tarc %d %d",dop->do_xl,dop->do_yu);
+			break;
+
+		default:
+			sprintf(DEFAULT_ERROR_STRING,
+			"dop_info:  unrecognized drawing op %d (0x%x)",
+					dop->do_op,dop->do_op);
+			NWARN(DEFAULT_ERROR_STRING);
+			break;
+	}
+	prt_msg(msg_str);
+}
+
+static void refresh_drawing(Viewer *vp)
+{
+	Node *np;
+	int cx=0,cy=0;
+	Draw_Op *dop;
+	//Handle hdl;
+
+	if( vp->vw_drawlist == NO_LIST ){
+		return;
+	}
+
+	from_memory =1;
+
+	np=vp->vw_drawlist->l_head;
+	while(np!=NO_NODE){
+		//hdl = (void **) np->n_data;
+		//dop = (Draw_Op *) *hdl;
+		dop = (Draw_Op *) np->n_data;
+
+#ifdef QUIP_DEBUG
+if( debug & xdebug ){
+dop_info(DEFAULT_QSP_ARG  dop);
+}
+#endif
+		switch(dop->do_op){
+			case DRAW_OP_FOREGROUND:
+				_xp_select(vp,dop->do_color);
+				break;
+			case DRAW_OP_BACKGROUND:
+				_xp_bgselect(vp,dop->do_color);
+				break;
+			case DRAW_OP_MOVE:
+				cx = dop->do_x;
+				cy = dop->do_y;
+				break;
+			case DRAW_OP_CONT:
+				_xp_line(vp,cx,cy,dop->do_x,dop->do_y);
+				cx = dop->do_x;
+				cy = dop->do_y;
+				break;
+			case DRAW_OP_TEXT:
+				if( dop->do_xfp != NO_XFONT ){
+					set_font(vp,dop->do_xfp);
+				}
+				_xp_text(vp,cx,cy,dop->do_str);
+				break;
+			case DRAW_OP_TEXT_MODE:
+				switch(dop->do_text_mode){
+					case LEFT_JUSTIFY:
+						left_justify(vp);
+						break;
+					case RIGHT_JUSTIFY:
+						right_justify(vp);
+						break;
+					case CENTER_TEXT:
+						center_text(vp);
+						break;
+//#ifdef CAUTIOUS
+					default:
+//		NWARN("CAUTIOUS:  refresh_drawing:  Bad text justification mode!?");
+		assert( ! "refresh_drawing:  Bad text justification mode!?");
+						break;
+//#endif // CAUTIOUS
+				}
+				break;
+			case DRAW_OP_ARC:
+				if( dop->do_filled )
+					_xp_fill_arc(vp,dop->do_xl,dop->do_yu,dop->do_w,
+						dop->do_h,dop->do_a1,dop->do_a2);
+				else
+					_xp_arc(vp,dop->do_xl,dop->do_yu,dop->do_w,
+						dop->do_h,dop->do_a1,dop->do_a2);
+				break;
+
+			default:
+				sprintf(DEFAULT_ERROR_STRING,
+			"refresh_drawing:  unrecognized drawing op %d (0x%x)",
+					dop->do_op,dop->do_op);
+				NWARN(DEFAULT_ERROR_STRING);
+				break;
+		}
+		np=np->n_next;
+	}
+
+	from_memory=0;
+}
+
+void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 {
 	u_long plane_mask;
 	u_int display_bpp;
 
 	/* We don't need to be mapped to display (although nothing will
 	 * happen at all if we're not mapped).
-	 * In this case, however, if the window is not mapped
-	 * we will bomb out of X with an error in XGetImage.
+	 * In this case, however, if the window is not mapped we will bomb out of X
+	 * with an error in XGetImage.
 	 *
 	 * We also bomb out if any part of the window that we are trying to
 	 * extract falls off the edge of the screen...  We need to check this,
 	 * but how do we find out the width of the window border?
 	 */
 
-	/* wait_for_mapped seems not to work on Mac OS X !? */
 	wait_for_mapped(QSP_ARG  vp,1/* this arg is not currently used!? */ );
 
 	/* Now make sure that the target image is appropriate for this depth */
-	if( x < 0 || y < 0 ||	x+dp->dt_cols > vp->vw_width  ||
-				y+dp->dt_rows > vp->vw_height ){
+	if( x < 0 || y < 0 ||	x+OBJ_COLS(dp) > vp->vw_width  ||
+				y+OBJ_ROWS(dp) > vp->vw_height ){
 
 		sprintf(ERROR_STRING,
 	"Can't extract image %s (%d x %d) from %d %d in viewer %s (%d x %d)",
-			dp->dt_name,dp->dt_rows,dp->dt_cols,
+			OBJ_NAME(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			x,y,vp->vw_name,vp->vw_height,vp->vw_width);
 		NWARN(ERROR_STRING);
 		return;
@@ -932,7 +1058,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 	/* if( ! is_mapped(vp) ){ */
 
 		XMapRaised(vp->vw_Disp,vp->vw_xwin);
-		//usleep(100);
+		usleep(100);
 		XSync(vp->vw_Disp,False);
 
 		/*
@@ -945,7 +1071,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 		while( ! is_mapped(vp) )	/* wait for window to be mapped */
 			;
 
-		//usleep(100);
+		usleep(100);
 		//sleep(1);			/* give the server a chance to map */
 		//redraw_viewer(vp);
 	/* } */
@@ -955,7 +1081,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 	plane_mask = 0xffffffff;
 
 	vp->vw_ip2=XGetImage(vp->vw_Disp, vp->vw_xwin,
-		x, y, dp->dt_cols, dp->dt_rows, plane_mask, ZPixmap );
+		x, y, OBJ_COLS(dp), OBJ_ROWS(dp), plane_mask, ZPixmap );
 
 	if( vp->vw_ip2 == NO_X_IMAGE ){
 		NWARN("error getting X image");
@@ -964,19 +1090,19 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 
 	display_bpp = vp->vw_ip2->bytes_per_line / vp->vw_ip2->width;
 
-	if( (display_bpp != dp->dt_comps * siztbl[ MACHINE_PREC(dp) ] ) ){
+	if( (display_bpp != OBJ_COMPS(dp) * PREC_SIZE( OBJ_MACH_PREC_PTR(dp) ) ) ){
 		/* in general, the depths should match, but we allow
 		 * 3 and 4 to match each other...
 		 */
-		if( display_bpp == 3 && dp->dt_comps == 4 ){
+		if( display_bpp == 3 && OBJ_COMPS(dp) == 4 ){
 			/* ok */
-		} else if ( display_bpp == 4 && dp->dt_comps == 3 ){
+		} else if ( display_bpp == 4 && OBJ_COMPS(dp) == 3 ){
 			/* ok */
 		} else {
 			sprintf(ERROR_STRING,
 	"unembed_image:  display has %d bpp, image %s (%s) has depth %d",
-				display_bpp,dp->dt_name,name_for_prec(dp->dt_prec),
-				dp->dt_comps);
+				display_bpp,OBJ_NAME(dp),OBJ_PREC_NAME(dp),
+				OBJ_COMPS(dp));
 			NWARN(ERROR_STRING);
 			return;
 		}
@@ -986,29 +1112,30 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,u_int x,u_int y)
 
 	/* copy the data from the XImage to the data object area */
 
-	if( display_bpp == dp->dt_comps*siztbl[ MACHINE_PREC(dp) ] )
-		memcpy(dp->dt_data,vp->vw_ip2->data,
-			dp->dt_rows*dp->dt_cols*display_bpp);
+	if( display_bpp == OBJ_COMPS(dp)*PREC_SIZE( OBJ_MACH_PREC_PTR(dp) ) )
+		memcpy(OBJ_DATA_PTR(dp),vp->vw_ip2->data,
+			OBJ_ROWS(dp)*OBJ_COLS(dp)*display_bpp);
 	else {
 		Data_Obj *disp_dp;
 		int n;
 
 		disp_dp = comp_replicate(QSP_ARG  dp,display_bpp,DONT_ALLOC_DATA);
-		disp_dp->dt_data = vp->vw_ip2->data;
+		SET_OBJ_DATA_PTR(disp_dp, vp->vw_ip2->data );
 
-		n = MIN(dp->dt_comps,disp_dp->dt_comps);
+		n = MIN(OBJ_COMPS(dp),OBJ_COMPS(disp_dp));
 		copy_components(QSP_ARG  n,dp,0,1,disp_dp,0,1);
+		unlock_children(disp_dp);	// so they delete properly
 		delvec(QSP_ARG  disp_dp);
 	}
 
 	/* set the flag to show the image has some stuff */
-	dp->dt_flags |= DT_ASSIGNED;
+	SET_OBJ_FLAG_BITS(dp, DT_ASSIGNED);
 
 	propagate_flag_to_children(dp,DT_ASSIGNED);
 
 } /* end unembed_image() */
 
-void refresh_image(QSP_ARG_DECL  Viewer *vp)
+static void refresh_image(QSP_ARG_DECL  Viewer *vp)
 {
 	if( ! is_mapped(vp) )
 		return;
@@ -1036,13 +1163,13 @@ void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 	}
 	if( (now_time - vp->vw_time) <= 1 ){
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & xdebug ){
 sprintf(ERROR_STRING,"not redrawing viewer %s, drawn within last 1 sec",
 vp->vw_name);
 advise(ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 		return;
 	}
@@ -1052,7 +1179,7 @@ advise(ERROR_STRING);
 
 	refresh_image(QSP_ARG  vp);
 
-	x_dump_lut(&vp->vw_top);		/* why do we need to do this?? */
+	x_dump_lut( VW_DPYABLE(vp) );		/* why do we need to do this?? */
 	refresh_drawing(vp);
 
 #ifdef FOOBAR
@@ -1071,9 +1198,15 @@ advise(ERROR_STRING);
 
 void posn_viewer(Viewer *vp,int x,int y)
 {
-	vp->vw_x = x;
-	vp->vw_y = y;
-	XMoveWindow(vp->vw_dpy,vp->vw_xwin,vp->vw_x,vp->vw_y);
+	//vp->vw_x = x;
+	//vp->vw_y = y;
+	SET_VW_X_REQUESTED(vp,x);
+	SET_VW_Y_REQUESTED(vp,y);
+	SET_VW_FLAG_BITS(vp, VW_PROG_MOVE_REQ);
+//fprintf(stderr,"requested position set to %d, %d\n",x,y);
+	// These are now set by StructureNotify events...
+	// move window seems to be relative!?
+	XMoveWindow(vp->vw_dpy,vp->vw_xwin,x,y);
 }
 
 void zap_viewer(Viewer *vp)
@@ -1118,7 +1251,6 @@ void set_font(Viewer *vp,XFont *xfp)
 
 int get_string_width(Viewer *vp, const char *s)
 {
-	XFontStruct *xfsp;
 	int n;
 
 	/* We use current_xfp for now, but really we should query the font from the viewer... */
@@ -1126,223 +1258,81 @@ int get_string_width(Viewer *vp, const char *s)
 		NWARN("get_string_width:  need to specify a font before calling this function...");
 		return(-1);
 	}
-	xfsp = XQueryFont(vp->vw_dpy,current_xfp->xf_id);
-	n = XTextWidth(xfsp,s,strlen(s));
+	n = XTextWidth(current_xfp->xf_fsp,s,strlen(s));
 	return(n);
 }
 
-
-#define LEFT_JUSTIFY	0
-#define CENTER_TEXT	1
-#define RIGHT_JUSTIFY	2
-
-static int text_mode = LEFT_JUSTIFY;
-
-void center_text(void)
+void set_font_size(Viewer *vp, int s)
 {
-	text_mode = CENTER_TEXT;
+	NWARN("set_font_size:  not implemented");
 }
 
-void right_justify(void)
+void set_text_angle(Viewer *vp, float a)
 {
-	text_mode = RIGHT_JUSTIFY;
+	NWARN("set_text_angle:  not implemented");
 }
 
-void left_justify(void)
+// BUG text_mode should be a viewer property...
+// Or a per-thread viewer property???
+//
+// Why do we use handles for the draw list??
+// They don't have to be relocated???
+
+static Text_Mode text_mode = LEFT_JUSTIFY;
+
+static void remember_drawing(Viewer *vp,Draw_Op_Code op,Draw_Op_Args *doap)
 {
-	text_mode = LEFT_JUSTIFY;
-}
+	Node *np;
+	Draw_Op *dop;
+	//Handle hdl;
 
-void _xp_text(Viewer *vp,int x,int y,const char *s)
-{
-	int dir, ascent, descent;
-	XCharStruct overall;
-	int h_offset=0;
+//#ifdef CAUTIOUS
+//	if( ! REMEMBER_GFX ){
+//		sprintf(DEFAULT_ERROR_STRING,
+//			"CAUTIOUS:  remember_drawing called from_memory=%d, remember_gfx=%d",
+//			from_memory,remember_gfx);
+//		NERROR1(DEFAULT_ERROR_STRING);
+//	}
+//#endif /* CAUTIOUS */
+	assert( REMEMBER_GFX );
 
-	if( text_mode != LEFT_JUSTIFY ){
-		if( current_xfp == NO_XFONT ){
-			NWARN("_xp_text:  no font specified, can't center text");
-		} else {
-			XFontStruct *xfsp;
-
-			xfsp = XQueryFont(vp->vw_dpy,current_xfp->xf_id);
-#ifdef CAUTIOUS
-			if( xfsp == NULL ){
-		NWARN("CAUTIOUS:  _xp_text:  XQueryFont failed (font not loaded?)");
-				goto proceed;
-			}
-#endif /* CAUTIOUS */
-
-			XTextExtents(xfsp,s,strlen(s),
-				&dir,&ascent,&descent,&overall);
-
-			if( text_mode == CENTER_TEXT )
-				h_offset = overall.width/2;
-			else if( text_mode == RIGHT_JUSTIFY )
-				h_offset = overall.width;
-		}
+	if( vp->vw_drawlist == NO_LIST ){
+		vp->vw_drawlist = new_list();
 	}
 
-	x -= h_offset;
-	if( x < 0 ){
-		sprintf(DEFAULT_ERROR_STRING,"_xp_text:  negative x offset (%d) requested",
-			x);
-		NWARN(DEFAULT_ERROR_STRING);
-		x=0;
+	if( unused_dop_list != NO_LIST &&
+		(np=remHead(unused_dop_list)) != NO_NODE ){
+
+		//hdl = (void **) np->n_data;
+		dop = (Draw_Op *) np->n_data;
+	} else {
+		/*
+		hdl = new_hdl(sizeof(*dop));
+		if( hdl == NO_HANDLE )
+			NERROR1("couldn't allocate drawing op");
+		np = mk_node(hdl);
+		*/
+		dop = getbuf(sizeof(*dop));
+		np = mk_node(dop);
 	}
 
-proceed:
+	//dop = (Draw_Op *) *hdl;
+	dop->do_op = op;
+	dop->do_doa = *doap;
 
-	XDrawString(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
-		x,y,s,strlen(s));
-
-	if( REMEMBER_GFX ){
-		remember_move(vp,x,y);
-		remember_text(vp,s);
-	}
+	addTail(vp->vw_drawlist,np);
 }
 
-void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+static void remember_text_mode(Viewer *vp,Text_Mode m)
 {
-#ifdef DEBUG
-if( debug & xdebug ){
-sprintf(DEFAULT_ERROR_STRING,"XDrawLine %s, %d %d %d %d",vp->vw_name,x1,y1,x2,y2);
-advise(DEFAULT_ERROR_STRING);
-}
-#endif /* DEBUG */
+	Draw_Op_Args doa;
 
-	XDrawLine(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,x1,y1,x2,y2);
-
-	if( REMEMBER_GFX ){
-		remember_move(vp,x1,y1);
-		remember_cont(vp,x2,y2);
+	if( vp != NO_VIEWER && !quick ){
+		doa.doa_text_mode = m;;
+		remember_drawing(vp,DRAW_OP_TEXT_MODE,&doa);
 	}
 }
 
-void _xp_cont(Viewer *vp,int x,int y)
-{
-	XDrawLine(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,currx,curry,x,y);
-	if( REMEMBER_GFX ){
-		remember_cont(vp,x,y);
-	}
-}
-
-void _xp_move(Viewer *vp,int x,int y)
-{
-	currx = x;
-	curry = y;
-	if( REMEMBER_GFX )
-		remember_move(vp,currx,curry);
-}
-
-void _xp_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
-{
-	XDrawArc(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
-		xl,yu,w,h,a1,a2);
-
-	if( REMEMBER_GFX ){
-		remember_arc(vp,xl,yu,w,h,a1,a2,0);
-	}
-}
-
-void _xp_fill_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
-{
-	XFillArc(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
-		xl,yu,w,h,a1,a2);
-
-	if( REMEMBER_GFX ){
-		remember_arc(vp,xl,yu,w,h,a1,a2,1);
-	}
-}
-
-void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
-{
-	XPoint* pxp = (XPoint *) getbuf(sizeof(XPoint) * num_points);
-	int i;
-
-	for (i=0; i < num_points; i++) {
-		pxp[i].x = px_vals[i];
-		pxp[i].y = py_vals[i];
-	}
-
-	XFillPolygon(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, pxp, num_points, Nonconvex, CoordModeOrigin);
-
-	givbuf(pxp);
-}
-
-void _xp_erase(Viewer *vp)
-{
-	XClearWindow(vp->vw_Disp,vp->vw_xwin);
-	forget_drawing(vp);
-}
-
-void _xp_select(Viewer *vp,u_long color)
-{
-	if( REMEMBER_GFX )
-		remember_fg(vp,color);
-
-	if( SIMULATING_LUTS(vp) )
-		color = simulate_lut_mapping(vp,color);
-
-	XSetForeground(vp->vw_Disp,vp->vw_gc,color);
-}
-
-void _xp_bgselect(Viewer *vp,u_long color)
-{
-	if( REMEMBER_GFX )
-		remember_bg(vp,color);
-
-	if( SIMULATING_LUTS(vp) )
-		color = simulate_lut_mapping(vp,color);
-
-	/*
-	XSetBackground(vp->vw_dpy,vp->vw_gc,c);
-	*/
-	XSetWindowBackground(vp->vw_dpy,vp->vw_xwin,color);
-}
-
-void get_geom(Viewer* vp, u_int* width, u_int* height, u_int* depth)
-{
-	Window root;
-	int x,y;  /* who cares */
-	u_int border_width;
-	if( XGetGeometry(vp->vw_dpy,vp->vw_top.c_xwin,&root,&x,&y,width,height,
-			 &border_width,depth) == False ){
-		NWARN("can't get geometry");
-		return;
-	}
-
-}
-
-void show_geom(Viewer *vp)
-{
-	Window root;
-	u_int width, height, border_width, depth;
-	int x,y;
-
-	if( XGetGeometry(vp->vw_dpy,vp->vw_top.c_xwin,&root,&x,&y,&width,&height,
-		&border_width,&depth) == False ){
-		NWARN("can't get geometry");
-		return;
-	}
-
-	sprintf(msg_str,"window is at %d, %d, size %d by %d",x,y,width,height);
-	prt_msg(msg_str);
-	sprintf(msg_str,"border width is %d, depth is %d",border_width,depth);
-	prt_msg(msg_str);
-}
-
-void extra_viewer_info(Viewer *vp)
-{
-	sprintf(msg_str,"\tDisplay\t0x%lx",(u_long)vp->vw_Disp);
-	prt_msg(msg_str);
-	sprintf(msg_str,"\tScreen\t0x%x",vp->vw_screen_no);
-	prt_msg(msg_str);
-	sprintf(msg_str,"\tGC\t0x%lx",(u_long)vp->vw_gc);
-	prt_msg(msg_str);
-	sprintf(msg_str,"\tWindow\t0x%lx",(u_long)vp->vw_xwin);
-	prt_msg(msg_str);
-}
 
 /* stuff to refresh drawings - formerly in libview, xplot.c
  * Put here to make compatible with drawmenu.
@@ -1421,152 +1411,6 @@ static void remember_bg(Viewer *vp,u_long color)
 	}
 }
 
-static void forget_drawing(Viewer *vp)
-{
-	if( vp != NO_VIEWER && !quick )
-		free_drawlist(vp);
-}
-
-static void remember_drawing(Viewer *vp,int op,Draw_Op_Args *doap)
-{
-	Node *np;
-	Draw_Op *dop;
-	Handle hdl;
-
-#ifdef CAUTIOUS
-	if( ! REMEMBER_GFX ){
-		sprintf(DEFAULT_ERROR_STRING,
-			"CAUTIOUS:  remember_drawing called from_memory=%d, remember_gfx=%d",
-			from_memory,remember_gfx);
-		NERROR1(DEFAULT_ERROR_STRING);
-	}
-#endif /* CAUTIOUS */
-
-	if( vp->vw_drawlist == NO_LIST ){
-		vp->vw_drawlist = new_list();
-	}
-
-	if( unused_dop_list != NO_LIST &&
-		(np=remHead(unused_dop_list)) != NO_NODE ){
-
-		hdl = (void **) np->n_data;
-	} else {
-		hdl = new_hdl(sizeof(*dop));
-		if( hdl == NO_HANDLE )
-			NERROR1("couldn't allocate drawing op");
-		np = mk_node(hdl);
-	}
-
-	dop = (Draw_Op *) *hdl;
-	dop->do_op = op;
-	dop->do_doa = *doap;
-
-	addTail(vp->vw_drawlist,np);
-}
-
-static void dop_info( Draw_Op *dop)
-{
-	switch(dop->do_op){
-		case DRAW_OP_FOREGROUND:
-			sprintf(msg_str,"\tselect 0x%x",dop->do_color);
-			break;
-		case DRAW_OP_BACKGROUND:
-			sprintf(msg_str,"\tbgselect 0x%x",dop->do_color);
-			break;
-		case DRAW_OP_MOVE:
-			sprintf(msg_str,"\tmove %d %d",dop->do_x,dop->do_y);
-			break;
-		case DRAW_OP_CONT:
-			sprintf(msg_str,"\tcont %d %d",dop->do_x,dop->do_y);
-			break;
-		case DRAW_OP_TEXT:
-			sprintf(msg_str,"\ttext \"%s\"",dop->do_str);
-			break;
-		case DRAW_OP_ARC:
-			sprintf(msg_str,"\tarc %d %d",dop->do_xl,dop->do_yu);
-			break;
-
-		default:
-			sprintf(DEFAULT_ERROR_STRING,
-			"dop_info:  unrecognized drawing op %d (0x%x)",
-					dop->do_op,dop->do_op);
-			NWARN(DEFAULT_ERROR_STRING);
-			break;
-	}
-	prt_msg(msg_str);
-}
-
-static void refresh_drawing(Viewer *vp)
-{
-	Node *np;
-	int cx=0,cy=0;
-	Draw_Op *dop;
-	Handle hdl;
-
-	if( vp->vw_drawlist == NO_LIST ){
-		return;
-	}
-
-	from_memory =1;
-
-	np=vp->vw_drawlist->l_head;
-	while(np!=NO_NODE){
-		hdl = (void **) np->n_data;
-		dop = (Draw_Op *) *hdl;
-#ifdef DEBUG
-if( debug & xdebug ){
-dop_info(dop);
-}
-#endif
-		switch(dop->do_op){
-			case DRAW_OP_FOREGROUND:
-				_xp_select(vp,dop->do_color);
-				break;
-			case DRAW_OP_BACKGROUND:
-				_xp_bgselect(vp,dop->do_color);
-				break;
-			case DRAW_OP_MOVE:
-				cx = dop->do_x;
-				cy = dop->do_y;
-				break;
-			case DRAW_OP_CONT:
-				_xp_line(vp,cx,cy,dop->do_x,dop->do_y);
-				cx = dop->do_x;
-				cy = dop->do_y;
-				break;
-			case DRAW_OP_TEXT:
-				if( dop->do_xfp != NO_XFONT ){
-					set_font(vp,dop->do_xfp);
-				}
-				_xp_text(vp,cx,cy,dop->do_str);
-				break;
-			case DRAW_OP_ARC:
-				if( dop->do_filled )
-					_xp_fill_arc(vp,dop->do_xl,dop->do_yu,dop->do_w,
-						dop->do_h,dop->do_a1,dop->do_a2);
-				else
-					_xp_arc(vp,dop->do_xl,dop->do_yu,dop->do_w,
-						dop->do_h,dop->do_a1,dop->do_a2);
-				break;
-
-			default:
-				sprintf(DEFAULT_ERROR_STRING,
-			"refresh_drawing:  unrecognized drawing op %d (0x%x)",
-					dop->do_op,dop->do_op);
-				NWARN(DEFAULT_ERROR_STRING);
-				break;
-		}
-		np=np->n_next;
-	}
-
-	from_memory=0;
-}
-
-void set_remember_gfx(int flag)
-{
-	remember_gfx=flag;
-}
-
 static void free_drawlist(Viewer *vp)
 {
 	Node *np;
@@ -1577,11 +1421,12 @@ static void free_drawlist(Viewer *vp)
 		unused_dop_list = new_list();
 
 	while( (np=remHead(vp->vw_drawlist)) != NO_NODE ){
-		Handle hdl;
+		//Handle hdl;
 		Draw_Op *dop;
 
-		hdl = (void **) np->n_data;
-		dop = (Draw_Op *) *hdl;
+		//hdl = (void **) np->n_data;
+		//dop = (Draw_Op *) *hdl;
+		dop = (Draw_Op *) np->n_data;
 
 		/* If this is a string op, free the string! */
 
@@ -1593,7 +1438,18 @@ static void free_drawlist(Viewer *vp)
 	}
 }
 
-void dump_drawlist(Viewer *vp)
+static void forget_drawing(Viewer *vp)
+{
+	if( vp != NO_VIEWER && !quick )
+		free_drawlist(vp);
+}
+
+void set_remember_gfx(int flag)
+{
+	remember_gfx=flag;
+}
+
+void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	Node *np;
 
@@ -1606,11 +1462,13 @@ void dump_drawlist(Viewer *vp)
 	prt_msg(msg_str);
 
 	while(np!=NO_NODE){
-		Handle hdl;
+		//Handle hdl;
 		Draw_Op *dop;
 
-		hdl=(void **)np->n_data;
-		dop = (Draw_Op *) *hdl;
+		//hdl=(void **)np->n_data;
+		//dop = (Draw_Op *) *hdl;
+		dop = (Draw_Op *) np->n_data;
+
 		switch(dop->do_op){
 			case DRAW_OP_FOREGROUND:
 				sprintf(msg_str,"select %d",dop->do_color);
@@ -1627,6 +1485,10 @@ void dump_drawlist(Viewer *vp)
 			case DRAW_OP_TEXT:
 				sprintf(msg_str,"font \"%s\"",dop->do_xfp->xf_name);
 				sprintf(msg_str,"text \"%s\"",dop->do_str);
+				break;
+			case DRAW_OP_TEXT_MODE:
+				sprintf(msg_str,"text_mode \"%s\"",
+					string_for_text_mode(dop->do_text_mode) );
 				break;
 			case DRAW_OP_ARC:
 				sprintf(msg_str,"arc %d %d %d %d %d %d",
@@ -1647,26 +1509,251 @@ void dump_drawlist(Viewer *vp)
 	}
 }
 
+void center_text(Viewer *vp)
+{
+	text_mode = CENTER_TEXT;
+	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
+}
+
+void right_justify(Viewer *vp)
+{
+	text_mode = RIGHT_JUSTIFY;
+	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
+}
+
+void left_justify(Viewer *vp)
+{
+	text_mode = LEFT_JUSTIFY;
+	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
+}
+
+void _xp_text(Viewer *vp,int x,int y,const char *s)
+{
+	int dir, ascent, descent;
+	XCharStruct overall;
+	int h_offset=0;
+	int orig_x;
+
+	orig_x = x;
+	if( text_mode != LEFT_JUSTIFY ){
+		if( current_xfp == NO_XFONT ){
+			NWARN("_xp_text:  no font specified, can't center text");
+		} else {
+			XTextExtents(current_xfp->xf_fsp,s,strlen(s),
+				&dir,&ascent,&descent,&overall);
+
+			if( text_mode == CENTER_TEXT )
+				h_offset = overall.width/2;
+			else if( text_mode == RIGHT_JUSTIFY )
+				h_offset = overall.width;
+		}
+	}
+
+	x -= h_offset;
+	if( x < 0 ){
+		sprintf(DEFAULT_ERROR_STRING,"_xp_text:  negative x offset (%d) requested",
+			x);
+		NWARN(DEFAULT_ERROR_STRING);
+		x=0;
+	}
+
+//proceed:
+
+	XDrawString(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
+		x,y,s,strlen(s));
+
+	if( REMEMBER_GFX ){
+		remember_move(vp,orig_x,y);
+		remember_text(vp,s);
+	}
+}
+
+void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+{
+#ifdef QUIP_DEBUG
+if( debug & xdebug ){
+sprintf(DEFAULT_ERROR_STRING,"XDrawLine %s, %d %d %d %d",vp->vw_name,x1,y1,x2,y2);
+NADVISE(DEFAULT_ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+
+	XDrawLine(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,x1,y1,x2,y2);
+
+	if( REMEMBER_GFX ){
+		remember_move(vp,x1,y1);
+		remember_cont(vp,x2,y2);
+	}
+}
+
+void _xp_linewidth(Viewer *vp,int w)
+{
+	//sprintf(msg_str,"\tGC\t0x%lx",(u_long)vp->vw_gc);
+	//prt_msg(msg_str);
+	SET_VW_LINE_WIDTH(vp,w);
+
+	XSetLineAttributes(VW_DPY(vp),VW_GC(vp),	VW_LINE_WIDTH(vp),
+							VW_LINE_STYLE(vp),
+							VW_CAP_STYLE(vp),
+							VW_JOIN_STYLE(vp) );
+
+	// how do we check for errors???
+}
+
+void _xp_cont(Viewer *vp,int x,int y)
+{
+	XDrawLine(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,currx,curry,x,y);
+	if( REMEMBER_GFX ){
+		remember_cont(vp,x,y);
+	}
+}
+
+void _xp_move(Viewer *vp,int x,int y)
+{
+	currx = x;
+	curry = y;
+	if( REMEMBER_GFX )
+		remember_move(vp,currx,curry);
+}
+
+void _xp_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
+{
+	XDrawArc(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
+		xl,yu,w,h,a1,a2);
+
+	if( REMEMBER_GFX ){
+		remember_arc(vp,xl,yu,w,h,a1,a2,0);
+	}
+}
+
+void _xp_fill_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
+{
+	XFillArc(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
+		xl,yu,w,h,a1,a2);
+
+	if( REMEMBER_GFX ){
+		remember_arc(vp,xl,yu,w,h,a1,a2,1);
+	}
+}
+
+void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
+{
+	XPoint* pxp = (XPoint *) getbuf(sizeof(XPoint) * num_points);
+	int i;
+
+	for (i=0; i < num_points; i++) {
+		pxp[i].x = px_vals[i];
+		pxp[i].y = py_vals[i];
+	}
+
+	XFillPolygon(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, pxp, num_points, Nonconvex, CoordModeOrigin);
+
+	givbuf(pxp);
+}
+
+void _xp_erase(Viewer *vp)
+{
+	XClearWindow(vp->vw_Disp,vp->vw_xwin);
+	forget_drawing(vp);
+	// The call to forget_drawing was commented out, but I think that
+	// was an attempt to find out why the digits in a timer weren't displaying.
+}
+
+void _xp_update(Viewer *vp)
+{
+	/* a no-op */
+}
+
+void _xp_select(Viewer *vp,u_long color)
+{
+	if( REMEMBER_GFX )
+		remember_fg(vp,color);
+
+	if( SIMULATING_LUTS(vp) )
+		color = simulate_lut_mapping(vp,color);
+
+	XSetForeground(vp->vw_Disp,vp->vw_gc,color);
+}
+
+void _xp_bgselect(Viewer *vp,u_long color)
+{
+	if( REMEMBER_GFX )
+		remember_bg(vp,color);
+
+	if( SIMULATING_LUTS(vp) ){
+		color = simulate_lut_mapping(vp,color);
+	}
+
+	/*
+	XSetBackground(vp->vw_dpy,vp->vw_gc,c);
+	*/
+	XSetWindowBackground(vp->vw_dpy,vp->vw_xwin,color);
+}
+
+#ifdef FOOBAR		// no longer needed???
+static void get_geom(Viewer* vp, u_int* width, u_int* height, u_int* depth)
+{
+	Window root;
+	int x,y;  /* who cares */
+	u_int border_width;
+	if( XGetGeometry(vp->vw_dpy,vp->vw_top.c_xwin,&root,&x,&y,width,height,
+			 &border_width,depth) == False ){
+		NWARN("can't get geometry");
+		return;
+	}
+
+}
+#endif /* FOOBAR */
+
+void show_geom(QSP_ARG_DECL  Viewer *vp)
+{
+	Window root;
+	u_int width, height, border_width, depth;
+	int x,y;
+
+	if( XGetGeometry(vp->vw_dpy,VW_XWIN(vp),&root,&x,&y,&width,&height,
+		&border_width,&depth) == False ){
+		NWARN("can't get geometry");
+		return;
+	}
+
+	sprintf(msg_str,"window is at %d, %d, size %d by %d",x,y,width,height);
+	prt_msg(msg_str);
+	sprintf(msg_str,"border width is %d, depth is %d",border_width,depth);
+	prt_msg(msg_str);
+}
+
+void extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
+{
+	sprintf(msg_str,"\tDisplay\t0x%lx",(u_long)vp->vw_Disp);
+	prt_msg(msg_str);
+	sprintf(msg_str,"\tScreen\t0x%x",vp->vw_screen_no);
+	prt_msg(msg_str);
+	sprintf(msg_str,"\tGC\t0x%lx",(u_long)vp->vw_gc);
+	prt_msg(msg_str);
+	sprintf(msg_str,"\tWindow\t0x%lx",(u_long)vp->vw_xwin);
+	prt_msg(msg_str);
+}
+
 void insert_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y,int frameno)
 {
 	u_char *to, *from;
-	dimension_t i,j;
+	incr_t i,j;
 
-	from = (u_char *) dpfr->dt_data;
-	to = (u_char *) dpto->dt_data;
+	from = (u_char *) OBJ_DATA_PTR(dpfr);
+	to = (u_char *) OBJ_DATA_PTR(dpto);
 
-	frameno %= dpfr->dt_frames;
+	frameno %= OBJ_FRAMES(dpfr);
 
-	for(j=0;j<dpfr->dt_rows;j++){
-		if( y+j < 0 || y+j >= dpto->dt_rows ) continue;
-		for(i=0;i<dpfr->dt_cols;i++){
-			if( x+i < 0 || x+i >= dpto->dt_cols ) continue;
+	for(j=0;j<OBJ_ROWS(dpfr);j++){
+		if( y+j < 0 || y+j >= OBJ_ROWS(dpto) ) continue;
+		for(i=0;i<OBJ_COLS(dpfr);i++){
+			if( x+i < 0 || x+i >= OBJ_COLS(dpto) ) continue;
 
-			*(to + (x + i)*dpto->dt_pinc
-			     + (y + j)*dpto->dt_rowinc) =
-			*(from + frameno*dpfr->dt_finc
-			       + i*dpfr->dt_pinc
-			       + j*dpfr->dt_rowinc);
+			*(to + (x + i)*OBJ_PXL_INC(dpto)
+			     + (y + j)*OBJ_ROW_INC(dpto)) =
+			*(from + frameno*OBJ_FRM_INC(dpfr)
+			       + i*OBJ_PXL_INC(dpfr)
+			       + j*OBJ_ROW_INC(dpfr));
 		}
 	}
 }
@@ -1677,21 +1764,21 @@ void embed_draggable(Data_Obj *dp,Draggable *dgp)
 	int bit,word,words_per_row;
 	WORD_TYPE *words;
 	u_char *from, *to;
-	dimension_t x,y;
+	incr_t x,y;	// instead of dimension_t, so we can check for underflow
 
 	/* we could do this using warrior bitmask selection copy... */
 
 	words_per_row = (dgp->dg_width+WORDLEN-1)/WORDLEN;
-	words = (WORD_TYPE *) dgp->dg_bitmap->dt_data;
-	from = (u_char *) dgp->dg_image->dt_data;
-	to = (u_char *) dp->dt_data;
+	words = (WORD_TYPE *) OBJ_DATA_PTR(dgp->dg_bitmap);
+	from = (u_char *) OBJ_DATA_PTR(dgp->dg_image);
+	to = (u_char *) OBJ_DATA_PTR(dp);
 	x=dgp->dg_x;
 	y=dgp->dg_y;
 
 	for(j=0;j<dgp->dg_height;j++){
-		if( y+j < 0 || y+j >= dp->dt_rows ) continue;
+		if( y+j < 0 || y+j >= OBJ_ROWS(dp) ) continue;
 		for(i=0;i<dgp->dg_width;i++){
-			if( x+i < 0 || x+i >= dp->dt_cols ) continue;
+			if( x+i < 0 || x+i >= OBJ_COLS(dp) ) continue;
 
 			/* check the bitmask */
 			word = i/WORDLEN;
@@ -1702,11 +1789,12 @@ void embed_draggable(Data_Obj *dp,Draggable *dgp)
 
 			/* now copy the pixel */
 
-			*(to + x + i + (y+j)*dp->dt_rowinc) =
-				*(from + i + j*dgp->dg_image->dt_rowinc);
+			*(to + x + i + (y+j)*OBJ_ROW_INC(dp)) =
+				*(from + i + j*OBJ_ROW_INC(dgp->dg_image));
 		}
 	}
 }
+
 void update_image(Viewer *vp)
 {
 	/* update the shadow image */
@@ -1751,26 +1839,30 @@ unsigned long convert_color_8to24(unsigned int ui8bitcolor)
 
 
 /* global X objects */
+// BUG - not thread-safe!?
 static XImage *shmimage;
 static XShmSegmentInfo* shminfo;
 static int have_shmimage=0;
 static int shm_bpp=0;
 
 
+#ifdef NOT_USED
 void refresh_shm_window(Viewer *vp)
 {
-#ifdef CAUTIOUS
-	if( ! have_shmimage ) {
-		NWARN("refresh_shm_window:  shmimage has not been created!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( ! have_shmimage ) {
+//		NWARN("refresh_shm_window:  shmimage has not been created!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( have_shmimage );
 
 	/* Draw screen onto display */
 	XShmPutImage(vp->vw_dpy , vp->vw_xwin, vp->vw_gc, shmimage,
 														0, 0, 0, 0, vp->vw_width, vp->vw_height, False);
 	XSync(vp->vw_dpy, 0);
 }
+#endif /* NOT_USED */
 
 int shm_setup(Viewer *vp)
 {
@@ -1831,12 +1923,13 @@ void update_shm_viewer(Viewer *vp,char *src,int pinc,int cinc,int dx,int dy,int 
 	char *dest;
 	int x,y;
 
-#ifdef CAUTIOUS
-	if( ! have_shmimage ){
-		NWARN("update_shm_viewer:  no shmimage!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( ! have_shmimage ){
+//		NWARN("update_shm_viewer:  no shmimage!?");
+//		return;
+//	}
+//#endif /* CAUTIOUS */
+	assert( have_shmimage );
 
 	/* copy the data into the shared memory object */
 
@@ -1869,5 +1962,167 @@ void update_shm_viewer(Viewer *vp,char *src,int pinc,int cinc,int dx,int dy,int 
 #endif /* HAVE_X11_EXT */
 
 
-#endif /* HAVE_X11 */
+#else /* ! HAVE_X11 */
+
+void posn_viewer(Viewer *vp,int x,int y)
+{ UNIMP_MSG(posn_viewer) }
+
+void show_viewer(QSP_ARG_DECL  Viewer *vp)
+{ UNIMP_MSG(show_viewer) }
+
+void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
+{ UNIMP_MSG(unshow_viewer) }
+
+void extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
+{ UNIMP_MSG(extra_viewer_info) }
+
+void zap_viewer(Viewer *vp)
+{ UNIMP_MSG(zap_viewer) }
+
+int make_mousescape(QSP_ARG_DECL  Viewer *vp, int width, int height)
+{
+	UNIMP_MSG(make_mousescape)
+	return -1;
+}
+
+int make_viewer(QSP_ARG_DECL  Viewer *vp, int width, int height)
+{
+	UNIMP_MSG(make_viewer)
+	return -1;
+}
+
+int make_button_arena(QSP_ARG_DECL  Viewer *vp, int width, int height)
+{
+	UNIMP_MSG(make_button_arena)
+	return -1;
+}
+
+int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int width,int height)
+{
+	UNIMP_MSG(make_2d_adjuster)
+	return -1;
+}
+
+int make_dragscape(QSP_ARG_DECL  Viewer *vp, int width, int height)
+{
+	UNIMP_MSG(make_dragscape)
+	return -1;
+}
+
+int get_string_width(Viewer *vp, const char *s)
+{
+	UNIMP_MSG(get_string_width)
+	return -1;
+}
+
+void _xp_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
+{ UNIMP_MSG(_xp_arc) }
+
+void _xp_text(Viewer *vp,int x,int y,const char *s)
+{ UNIMP_MSG(_xp_text) }
+
+void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+{ UNIMP_MSG(_xp_line) }
+
+void _xp_linewidth(Viewer *vp,int w)
+{ UNIMP_MSG(_xp_linewidth) }
+
+void _xp_cont(Viewer *vp,int x,int y)
+{ UNIMP_MSG(_xp_cont) }
+
+void _xp_move(Viewer *vp,int x,int y)
+{ UNIMP_MSG(_xp_move) }
+
+void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
+{ UNIMP_MSG(_xp_fill_polygon) }
+
+void _xp_fill_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
+{ UNIMP_MSG(_xp_fill_arc) }
+
+void _xp_erase(Viewer *vp)
+{ UNIMP_MSG(_xp_erase) }
+
+void _xp_update(Viewer *vp)
+{ UNIMP_MSG(_xp_update) }
+
+void _xp_select(Viewer *vp,u_long color)
+{ UNIMP_MSG(_xp_select) }
+
+void _xp_bgselect(Viewer *vp,u_long color)
+{ UNIMP_MSG(_xp_bgselect) }
+
+void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
+{ UNIMP_MSG(embed_image) }
+
+void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
+{ UNIMP_MSG(redraw_viewer) }
+
+void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
+{ UNIMP_MSG(unembed_image) }
+
+void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+{ UNIMP_MSG(dump_drawlist) }
+
+void set_font_size(Viewer *vp, int s)
+{ UNIMP_MSG(set_font_size) }
+
+void center_text(Viewer *vp)
+{ UNIMP_MSG(center_text) }
+
+void right_justify(Viewer *vp)
+{ UNIMP_MSG(right_justify) }
+
+void left_justify(Viewer *vp)
+{ UNIMP_MSG(left_justify) }
+
+void set_text_angle(Viewer *vp, float a)
+{ UNIMP_MSG(set_text_angle) }
+
+void set_remember_gfx(int flag)
+{ UNIMP_MSG(set_remember_gfx) }
+
+void embed_draggable(Data_Obj *dp,Draggable *dgp)
+{ UNIMP_MSG(embed_draggable) }
+
+void relabel_viewer(Viewer *vp,const char *s)
+{ UNIMP_MSG(relabel_viewer) }
+
+#endif /* ! HAVE_X11 */
+
+void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
+{
+	// BUG are we displaying the head or the tail???
+	Node *np;
+	Window_Image *wip;
+
+//#ifdef CAUTIOUS
+//	if( VW_IMAGE_LIST(vp) == NO_LIST ){
+//		ERROR1("CAUTIOUS:  cycle_viewer_images:  no image list!?");
+//	}
+	assert( VW_IMAGE_LIST(vp) != NO_LIST );
+
+//	if( QLIST_HEAD( VW_IMAGE_LIST(vp) ) == NO_NODE ){
+//		ERROR1("CAUTIOUS:  cycle_viewer_images:  image list is empty!?");
+//	}
+//#endif /* CAUTIOUS */
+	assert( QLIST_HEAD( VW_IMAGE_LIST(vp) ) != NO_NODE );
+
+	np = remHead( VW_IMAGE_LIST(vp) );
+	addTail( VW_IMAGE_LIST(vp), np );
+	np = QLIST_HEAD( VW_IMAGE_LIST(vp) );
+
+	wip = (Window_Image *) NODE_DATA(np);
+	embed_image(QSP_ARG  vp,wip->wi_dp,wip->wi_x,wip->wi_y);
+
+	// embed_image does one vbl_wait
+#ifdef HAVE_VBL
+	// BUG it would be better to return, do other stuff, then wait if needed next time...
+	if( frame_duration > 1 ){
+		int i=frame_duration-1;
+		while(i--){
+			vbl_wait();
+		}
+	}
+#endif /* HAVE_VBL */
+}
 

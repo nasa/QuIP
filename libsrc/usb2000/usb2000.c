@@ -18,6 +18,7 @@
 #include <math.h>	/* fabs() */
 #endif
 
+#include "quip_prot.h"
 #include "usb2000.h"
 
 
@@ -68,16 +69,18 @@ USB2000_Cmd_Def usb2000_cmd_tbl[]={
 };
 
 
+#ifdef DEBUG
 /* a debugging function */
-void dump_buf(char *buf)
+static void dump_buf(char *buf)
 {
 	while( *buf != '\0') {
 		sprintf(DEFAULT_ERROR_STRING, "0x%x	%c", *buf, *buf );
-		advise(DEFAULT_ERROR_STRING);
+		NADVISE(DEFAULT_ERROR_STRING);
 		buf++;
 	}
 
 }
+#endif // DEBUG
 
 void make_pkt( char *pkt, const char *cmd, u_int arg )
 {
@@ -171,9 +174,9 @@ static int get_echo(QSP_ARG_DECL  const char *pkt)
 				return -1;
 
 			if( *(echo_bufp+i) != *(pkt+i) ) {
-				sprintf(error_string, "Unexpected 0x%x instead of 0x%x received .... please restart the usb2000",
+				sprintf(ERROR_STRING, "Unexpected 0x%x instead of 0x%x received .... please restart the usb2000",
 					*(echo_bufp+i), *(pkt+i) );
-				WARN(error_string);
+				WARN(ERROR_STRING);
 
 				clear_input_buf(SINGLE_QSP_ARG);
 				return -1;
@@ -198,9 +201,9 @@ int get_tail(SINGLE_QSP_ARG_DECL)
 		}
 
 		if( recv_buf[0] != LF || recv_buf[1] != CR || recv_buf[2] != 0x3e || recv_buf[3] != SPACE ) {
-			sprintf(error_string, "ERROR: Unexpected trailing chars (0x%x 0x%x 0x%x 0x%x) received",
+			sprintf(ERROR_STRING, "ERROR: Unexpected trailing chars (0x%x 0x%x 0x%x 0x%x) received",
 				recv_buf[0], recv_buf[1] ,recv_buf[2] ,recv_buf[3]);
-			WARN(error_string);
+			WARN(ERROR_STRING);
 			clear_input_buf(SINGLE_QSP_ARG);
 			return -1;
 		}
@@ -241,7 +244,7 @@ int do_cmd_1_arg(QSP_ARG_DECL  Cmd_Index cmd_index, int data_word)
 	return 0;
 }
 
-int do_inq_1_arg(QSP_ARG_DECL  Cmd_Index cmd_index)
+static int do_inq_1_arg(QSP_ARG_DECL  Cmd_Index cmd_index)
 {
 	char pkt[MAX_PKT_SIZE];
 	int data_value;
@@ -384,8 +387,8 @@ int get_n_of_scans(SINGLE_QSP_ARG_DECL)
 
 		} else {
 
-			sprintf(error_string,"ERROR: Unexpected char 0x%x received instead of ACK/NAK", is_ack);
-			WARN(error_string);
+			sprintf(ERROR_STRING,"ERROR: Unexpected char 0x%x received instead of ACK/NAK", is_ack);
+			WARN(ERROR_STRING);
 
 		}
 		return -1;
@@ -401,7 +404,7 @@ int get_n_of_scans(SINGLE_QSP_ARG_DECL)
 }
 
 /* This function is used by spec_acq() to get STX in the spectra header */
-int get_STX(SINGLE_QSP_ARG_DECL)
+static int get_STX(SINGLE_QSP_ARG_DECL)
 {
 	u_short i;
 	u_short n_to_get;
@@ -425,8 +428,8 @@ int get_STX(SINGLE_QSP_ARG_DECL)
 
 		if ( response!=ETX ) {
 
-			sprintf(error_string, "unexpected 0x%x instead of ETX", response);
-			WARN(error_string);
+			sprintf(ERROR_STRING, "unexpected 0x%x instead of ETX", response);
+			WARN(ERROR_STRING);
 
 			/* we now clear up any 'trash' that may be present
 			 * in the input buffer
@@ -453,7 +456,7 @@ int get_STX(SINGLE_QSP_ARG_DECL)
 
 
 /* refer to pg.11 of manual for header details */
-int recv_spec_headers(QSP_ARG_DECL  Pxl_Mode_Info *pxl_mode_info_p)
+static int recv_spec_headers(QSP_ARG_DECL  Pxl_Mode_Info *pxl_mode_info_p)
 {
 	int pxl_case;
 	u_short i;
@@ -561,8 +564,8 @@ int recv_spec_headers(QSP_ARG_DECL  Pxl_Mode_Info *pxl_mode_info_p)
 		}
 
 		default:
-			sprintf(error_string, "recv_spec_headers: Impossible pixel mode (%d)", pxl_case);
-			WARN(error_string);
+			sprintf(ERROR_STRING, "recv_spec_headers: Impossible pixel mode (%d)", pxl_case);
+			WARN(ERROR_STRING);
 			return -1;
 	}
 
@@ -651,14 +654,14 @@ static int get_spectrum(QSP_ARG_DECL  Spectral_Data *sdp, u_short *n_spec_recvd,
 		}
 	}
 
-	//sprintf(error_string, "n_of_spectra received: %d", *n_spec_recvd);
-	//advise(error_string);
+	//sprintf(ERROR_STRING, "n_of_spectra received: %d", *n_spec_recvd);
+	//advise(ERROR_STRING);
 
 #ifdef DEBUG
 if( debug & usb2000_debug ){
 if(chk_sum_mode==ENABLE) {
-sprintf(error_string, "check_sum(calculated): 0x%x", check_sum );
-advise(error_string);
+sprintf(ERROR_STRING, "check_sum(calculated): 0x%x", check_sum );
+advise(ERROR_STRING);
 }
 }
 #endif /* DEBUG */
@@ -728,8 +731,8 @@ static void do_non_linear_crktion(Spectral_Data *sdp, int n_spec_recvd)
 
 		sdp->sd_spec_data[i] = N0 + N1*rd + N2*rd*rd + N3*rd*rd*rd + N4*rd*rd*rd*rd + N5*rd*rd*rd*rd*rd + N6*rd*rd*rd*rd*rd*rd + N7*rd*rd*rd*rd*rd*rd*rd;
 	/*
-	sprintf(error_string, "xform7[%d]: %f", i, sdp->sd_spec_data[i] );
-	advise(error_string);
+	sprintf(ERROR_STRING, "xform7[%d]: %f", i, sdp->sd_spec_data[i] );
+	advise(ERROR_STRING);
 	*/
 
 	}
@@ -824,13 +827,13 @@ int spec_acq(QSP_ARG_DECL  Spectral_Data *sdp)
 				device_check_sum = strtol( tmp, NULL, 16 );
 
 #ifdef DEBUG
-sprintf(error_string, "check_sum(received): 0x%x ", check_sum );
-advise(error_string);
+sprintf(ERROR_STRING, "check_sum(received): 0x%x ", check_sum );
+advise(ERROR_STRING);
 #endif /* DEBUG */
 				if( device_check_sum != check_sum ) {
-					sprintf(error_string, "ERROR: Unexpected check sum(0x%x) instead of 0x%x",
+					sprintf(ERROR_STRING, "ERROR: Unexpected check sum(0x%x) instead of 0x%x",
 						check_sum, device_check_sum );
-					WARN(error_string);
+					WARN(ERROR_STRING);
 					return -1;
 				}
 
@@ -846,12 +849,12 @@ advise(error_string);
 
 #ifdef DEBUG
 if( debug & usb2000_debug ){
-sprintf(error_string,"case:%d n:%d x:%d y:%d",pxl_mode_info.pxl_case,pxl_mode_info.n ,pxl_mode_info.x, pxl_mode_info.y);
-advise(error_string);
+sprintf(ERROR_STRING,"case:%d n:%d x:%d y:%d",pxl_mode_info.pxl_case,pxl_mode_info.n ,pxl_mode_info.x, pxl_mode_info.y);
+advise(ERROR_STRING);
 
 for(i=0;i<10;i++) {
-sprintf(error_string,"pixel(%d):%d",i,pxl_mode_info.pixels[i]);
-advise(error_string);
+sprintf(ERROR_STRING,"pixel(%d):%d",i,pxl_mode_info.pixels[i]);
+advise(ERROR_STRING);
 }
 }
 #endif /* DEBUG */
@@ -1053,9 +1056,9 @@ int set_calib_const(QSP_ARG_DECL  Cmd_Index cmd_index, int calib_index, const ch
 
 	sprintf(pkt, "%s%d\n%s\n", ucdp->ucd_cmd, calib_index, coeff_value);
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	dump_buf(pkt);
-	#endif /* DEBUG */
+#endif /* DEBUG */
 
 	if( xmit_calib_const_pkt(QSP_ARG  pkt) < 0 )
 		return -1;
@@ -1086,7 +1089,7 @@ static u_short wavlen_to_pxl(float wavlen)
 
 	sprintf(DEFAULT_ERROR_STRING,"approximating %fnm to %fnm",
 		wavlen, best_wav);
-	advise(DEFAULT_ERROR_STRING);
+	NADVISE(DEFAULT_ERROR_STRING);
 
 	return pixel;
 }
@@ -1104,8 +1107,8 @@ int round(float f)
 		f = (float)i;
 
 	#ifdef DEBUG
-	sprintf(error_string,"my_int_round: %f to %d",f, (int)f);
-	advise(error_string);
+	sprintf(ERROR_STRING,"my_int_round: %f to %d",f, (int)f);
+	advise(ERROR_STRING);
 	#endif /* DEBUG */
 
 	return (int)f;
@@ -1209,9 +1212,9 @@ int do_calib_inq(QSP_ARG_DECL  Cmd_Index cmd_index, int calib_index, char *calib
 
 	recv_buf[i] = '\0';
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	dump_buf(recv_buf);
-	#endif /* DEBUG */
+#endif /* DEBUG */
 
 	buf_index = strlen(pkt)+1;
 

@@ -20,6 +20,18 @@
 #ifdef HAVE_OPENCV2_CORE_VERSION_HPP
 #include <opencv2/core/version.hpp>
 #endif
+#ifdef HAVE_OPENCV2_CORE_CORE_C_H
+#include <opencv2/core/core_c.h>
+#endif
+#ifdef HAVE_OPENCV2_IMGPROC_IMGPROC_C_H
+#include <opencv2/imgproc/imgproc_c.h>
+#endif
+#ifdef HAVE_OPENCV2_OBJDETECT_OBJDETECT_HPP
+#include <opencv2/objdetect/objdetect.hpp>
+#endif
+#ifdef HAVE_OPENCV2_HIGHGUI_HIGHGUI_C_H
+#include <opencv2/highgui/highgui_c.h>
+#endif
 #endif
 
 #ifndef CV_MAJOR_VERSION
@@ -82,11 +94,11 @@ typedef struct opencv_cascade {
 #define NO_OPENCV_SEQ		((OpenCV_Seq *)NULL)
 #define NO_CASCADE		((OpenCV_Cascade *)NULL)
 
-/* ocv_menu.c */
-extern COMMAND_FUNC( ocv_menu );
 
 /* opencv_glue.c */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Image,ocvi)
+#define PICK_OCVI(p)	pick_ocvi(QSP_ARG  p)
+
 /* extern OpenCV_Image *make_new_ocvi(const char * obj_name); */
 extern OpenCV_Image * load_ocv_image(QSP_ARG_DECL  const char * obj_name, const char * filename );
 extern OpenCV_Image * create_ocv_image(QSP_ARG_DECL  const char *obj_name,
@@ -103,12 +115,15 @@ ITEM_INTERFACE_PROTOTYPES(OpenCV_MemStorage,ocv_mem)
 
 /* Scanner */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Scanner,ocv_scanner)
+#define PICK_OCV_SCANNER(p)	pick_ocv_scanner(QSP_ARG  p)
 
 /* Seq */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Seq,ocv_seq)
+#define PICK_OCV_SEQ(p)	pick_ocv_seq(QSP_ARG  p)
 
 /* Cascade */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Cascade,ocv_ccasc)
+#define PICK_CASCADE(p)	pick_ocv_ccasc(QSP_ARG  p)
 
 
 #endif /* undef NO_OPENCV_IMAGE */

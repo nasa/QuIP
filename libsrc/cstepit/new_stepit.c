@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_cstepit_new_stepit[] = QUIP_VERSION_STRING;
-
 /*
  * Implementation of the stepit subroutine in C; translated from the Fortran
  * routine composed by J. P. Chandler.
@@ -673,7 +671,7 @@ static void intrupt()
  * Here if no free parameters given
  */
 
-static void noparams(void (*cstepit_fn)(VOID))
+static void noparams(void (*cstepit_fn)(void))
 {
 	advise("calling function with initial parameters...");
 	(*cstepit_fn)();

@@ -1,15 +1,16 @@
 #include "quip_config.h"
 
-char VersionId_interpreter_which1[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
-#include "query.h"
+#include "quip_prot.h"
+#include "query_stack.h"
+#include "query_prot.h"
+#include "warn.h"
 #include "history.h"
-#include "substr.h"
+//#include "substr.h"
 
 static int _one_of(QSP_ARG_DECL  const char *, int, const char **);
 
@@ -24,7 +25,7 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 #ifdef HAVE_HISTORY
 	if( intractive(SINGLE_QSP_ARG) && *prompt ){
 		char pline[LLEN];
-		if( QUERY_FLAGS & QS_FORMAT_PROMPT )
+		if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT )
 			sprintf(pline,PROMPT_FORMAT,prompt);
 		else
 			strcpy(pline,prompt);
@@ -35,10 +36,14 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 	/* last_pick=qword(prompt); */
 	last_pick = NAMEOF(prompt);
 
-	for(i=0;i<n;i++)
-		if( !strcmp( last_pick, choices[i] ) ){
+	for(i=0;i<n;i++){
+		/* BUG we should be able to get rid of the test for null choices
+		 * after we fix the precision initialization...
+		 */
+		if( choices[i] != NULL && !strcmp( last_pick, choices[i] ) ){
 			return(i);
 		}
+	}
 	
 	/* if no exact match check for substring match */
 	for(i=0;i<n;i++)

@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_dither_ctone[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -14,26 +12,29 @@ char VersionId_dither_ctone[] = QUIP_VERSION_STRING;
 
 
 extern float lum_weight, rg_weight, by_weight;
+#include "quip_prot.h"
 #include "ctone.h"
 #include "qlevel.h"
 
 /* globals - do we need them all? */
-char *Progname;
+//static char *Progname;
+//static int opicfd[3], picfd[3];
+
+//int nlevels;
+
+#ifdef NOT_USED
 char qname[80];
-int opicfd[3], picfd[3];
-
-int nlevels;
-
 COMMAND_FUNC( getqf )
 {
 	strcpy(qname,NAMEOF("quantization file"));
 }
+#endif /* NOT_USED */
 
-COMMAND_FUNC( set_weights )
+static COMMAND_FUNC( set_weights )
 {
-	lum_weight=HOW_MUCH("weight for luminance");
-	rg_weight=HOW_MUCH("weight for R-G");
-	by_weight=HOW_MUCH("weight for B-Y");
+	lum_weight=(float)HOW_MUCH("weight for luminance");
+	rg_weight=(float)HOW_MUCH("weight for R-G");
+	by_weight=(float)HOW_MUCH("weight for B-Y");
 }
 
 static COMMAND_FUNC( do_ctone )
@@ -50,27 +51,27 @@ static COMMAND_FUNC( set_levels )
 {
 	int i;
 
-	nlevels=HOW_MANY("number of quantization levels");
+	nlevels=(int)HOW_MANY("number of quantization levels");
 	for(i=0;i<nlevels;i++){
 		sprintf(ERROR_STRING,"value for level %d",i+1);
 		quant_level[i] = HOW_MANY(ERROR_STRING);
 	}
 }
 
-static Command opt_ctbl[]={
-{ "weights",	set_weights,	"specify weighting factors"	},
-{ "levels",	set_levels,	"set the number and values of quantization levels"	},
-{ "scan",	do_ctone,	"process an image"		},
-{ "white",	getwhite,	"specify white point"		},
-{ "lumscal",	set_lumscal,	"specify luminance scaling factors"		},
-{ "matrices",	set_matrices,	"specify objects to use for color transformation matrices"		},
-{ "quit",	popcmd,		"exit submenu"			},
-{ NULL_COMMAND							}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(options_menu,s,f,h)
 
-COMMAND_FUNC( ctone_menu )
+MENU_BEGIN(options)
+ADD_CMD( weights,	set_weights,	specify weighting factors )
+ADD_CMD( levels,	set_levels,	set the number and values of quantization levels )
+ADD_CMD( scan,	do_ctone,	process an image )
+ADD_CMD( white,	getwhite,	specify white point )
+ADD_CMD( lumscal,	set_lumscal,	specify luminance scaling factors )
+ADD_CMD( matrices,	set_matrices,	specify objects to use for color transformation matrices )
+MENU_END(options)
+
+COMMAND_FUNC( do_ctone_menu )
 {
-	PUSHCMD(opt_ctbl,"options");
+	PUSH_MENU(options);
 }
 
 

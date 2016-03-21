@@ -1,7 +1,4 @@
 
-# %Z% $RCSfile: msgs.mac,v $ ver: $Revision: 1.3 $ $Date: 2001/12/19 05:21:54 $
-
-
 If $verbose 'advise "interpreting file msgs.mac"'
 
 Define Start_File 1 filename

@@ -3,6 +3,7 @@
 
 #include "quip_config.h"
 #include <stdio.h>
+#include "quip_prot.h"
 
 
 // This file is called glut_supp.h, but if we comment this out
@@ -43,5 +44,6 @@ extern void setup_view(void);
 /* glx_supp.c */
 extern void swap_buffers(void);
 extern void wait_video_sync(int n);
+extern int check_extension( QSP_ARG_DECL  const char *extension );
 
 #endif /* ! GLUT_SUPP_H */

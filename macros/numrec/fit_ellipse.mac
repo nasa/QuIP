@@ -151,7 +151,7 @@ Print discriminant
 #
 # f = a'x0^2/sx^2 + b'x0y0/(sx sy) + c'y0^2/sy^2 -d'x0/sx - e'y0/sy + f'
 
-If $x_sigma==0||$y_sigma==0 "warn 'zero sigma!?' PopFile 2 nop"
+If $x_sigma==0||$y_sigma==0 "warn 'zero sigma!?' exit_macro"
 
 Assign a value($1[0])/($x_sigma*$x_sigma)
 Assign b value($1[1])/($x_sigma*$y_sigma)

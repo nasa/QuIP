@@ -1,0 +1,13 @@
+*.o
+*.a
+.deps
+t.scr
+testout
+output
+foo*.*
+Makefile
+Makefile.in
+vectbl.debug
+junk
+tests/*.broken
+

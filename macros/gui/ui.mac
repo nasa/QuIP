@@ -62,3 +62,37 @@ interface
   quit
 .
 
+# things used on iOS...
+
+Define Notify_Busy 2 title msg
+interface notify_busy $1 $2 quit
+.
+
+Define End_Busy 0
+interface end_busy quit
+.
+
+Define Alert 2 heading message
+interface alert $1 $2 quit
+.
+
+Define Confirm 2 title question
+interface confirm $1 $2 quit
+.
+
+Define Push_Nav 1 panel_name
+interface push_nav $1 quit
+.
+
+Define Top_Nav 0
+interface top_nav quit
+.
+
+Define Pop_Nav 0
+interface pop_nav 1 quit
+.
+
+Define Pop_Navs 1 n_levels
+interface pop_nav $1 quit
+.
+

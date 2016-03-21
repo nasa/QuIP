@@ -1,0 +1,322 @@
+Set server_config_panel_name	'Server configuration'
+Set server_select_panel_name	'Server select'
+
+Set connected 0	# default
+
+Set server_varname	download_server_hostname
+Set port_varname	download_server_port_num
+Set have_varname	download_server_is_connected
+
+Set download_server_is_connected 0
+
+Set which_server 1	# BUG?  what should this be really?
+			# How do we know how many server options?
+Set last_server_index $which_server	# BUG? is this right?
+
+Set server_toggle_name	server_enabled_toggle	# BUG?  what should this be really?
+
+Set server_info_name serverInfo	# never displayed
+
+# set defaults
+
+Define Set_Default_Server_Params 0
+
+#Set download_server localhost		# BUG - should we use download_server_hostname exclusively?
+If var_exists(download_server)
+  "error_exit 'Please use download_server_hostname instead of download_server!?'"
+
+# Set defaults
+If !var_exists(download_server_hostname)
+  'Set download_server_hostname localhost \
+   advise "Using default server:  $download_server_hostname" '
+
+If !var_exists(download_server_port_num)
+  'Set download_server_port_num 2223 \
+   advise "Using default server port:  $download_server_port_num" '
+
+
+#Set update_server_hostname	ace.arc.nasa.gov
+#Set update_port_num		3010
+
+.
+
+Define Cache_Server_Params 0
+advise 'Cache_Server_Params BEGIN'
+Get_Server_Param_Filename
+append no
+output_file $server_param_filename
+Cache_Var download_server_hostname
+Cache_Var download_server_port_num
+#Cache_Var update_server_hostname
+#Cache_Var update_port_num
+output_file -
+advise 'Cache_Server_Params DONE'
+.
+
+Define Init_Server_Params 0
+advise 'Init_Server_Params BEGIN'
+Set_Default_Server_Params
+advise 'Init_Server_Params: default params set'
+Get_Server_Param_Filename
+advise "Init_Server_Params: filename gotten:  $server_param_filename"
+If file_exists('$server_param_filename')
+  'advise "reading param file" < $server_param_filename advise "DONE reading server param file"'
+#  'advise "NOT reading param file $server_param_filename"'
+advise 'Init_Server_Params DONE'
+.
+
+Define Announce_Failure 0
+advise "Announce_Failure BEGIN"
+If $which_server==$last_server_index||$pinging End_Busy
+Alert "Failed to connect" "Please try again later"
+.
+
+Define Init_Server_Connection 0
+advise "Init_Server_Connection $$server_varname BEGIN"
+If !var_exists(pinging) "Set pinging 0"
+Set port_offset 0 #placeholder
+Assign dl_port $$port_varname+$port_offset
+advise "Init_Server_Connection:  attemping to connect to port $dl_port"
+
+ports
+  max_retries 1
+  #echo "Establishing connection to server... "
+  client server_client_mouth $$server_varname $dl_port
+  quit
+
+Assign connected port_exists(server_client_mouth)
+If !$connected "Announce_Failure exit_macro"
+
+advise "Connected to server... "
+advise 'NOT sending auth packet...'
+#Server_Auth
+
+#Send_Server_Cmd "top_menu log_message 'Connected to participant $participant_id'"
+# BUG we would like to identify the client somehow...
+advise 'sending log_message command to server...'
+Send_Server_Cmd "top_menu log_message 'Connected to a client'"
+Send_Server_Cmd "Set n_files_received 0"
+advise "Init_Server_Connection DONE"
+.
+
+Define Server_Auth 0
+ports
+  xmit authentication server_client_mouth "a long and winding road - I mean passphrase."
+  quit
+.
+
+Define DoPingServer 0
+Print port_varname
+Set pinging 1
+If !strcmp('$port_varname','update_port_num')
+  Then Ping_Update_Server
+  Else Ping_Download_Server
+Set pinging 0
+.
+
+Define Ping_Download_Server 0
+advise "Ping_Download_Server BEGIN"
+Notify_Busy "Pinging..." "Attempting to connect to $$server_varname, port $$port_varname"
+Init_Server_Connection
+If !$connected "Set $have_varname 0 Update_Download_Server_Info exit_macro"
+# Should we implement some additional hand-shaking
+# so that we know everything is indeed working correctly?
+Break_Server_Connection
+End_Busy
+Alert Success "Successfully connected to server $$server_varname, port $$port_varname"
+Set $have_varname 1
+Update_Download_Server_Info
+advise "Ping_Download_Server DONE"
+.
+
+# BUG?  closing the server port may drop pending connections???
+
+Define Break_Server_Connection 0
+Send_Server_Cmd
+#	"log_message 'Breaking connection with participant $participant_id'"
+	"log_message 'Breaking client connection'"
+ports close server_client_mouth quit
+.
+
+Define Finish_Upload 1 script_file
+#advise "Finish_Upload, have_server1 = $have_server1  have_server2 = $have_server2  last_server_index = $last_server_index"
+Set sync_good 0
+
+Notify_Busy "Working..." "Uploading data to $server_count"
+
+If $have_server1 "Send_To_Server 1 '$1'"
+If $sync_completed "Set sync_good 1"
+
+If $have_server2 "Send_To_Server 2 '$1'"
+If $sync_completed "Set sync_good 1"
+
+# End_Busy is called before the alert for the last server...
+.
+
+Define Send_Server_Cmd 1 text
+ports
+  xmit encrypted_text server_client_mouth $1
+  quit
+.
+
+Define Send_Server_File 1 filename
+ports
+  xmit encrypted_file server_client_mouth $1
+  quit
+.
+
+Define Get_Server_Param_Filename 0
+Set server_param_filename $system_script_dir/server_params.scr
+.
+
+# used in cleanup...
+Define Delete_Server_Param_File 0
+Get_Server_Param_Filename
+If file_exists('$server_param_filename')
+  Then "rm $server_param_filename"
+  Else "advise 'Delete_Server_Param_File:  No file $server_param_filename'"
+.
+
+Define EnterServerName 0
+advise "EnterServerName BEGIN"
+Set $server_varname $input_string
+Cache_Server_Params
+Update_Server_Info $which_server
+.
+
+# This changes the labels on the Server Configuration pane to reflect the
+# current values...
+
+Define Update_Server_Info 1 which_server
+advise "Update_Server_Info $1 BEGIN"
+Select_Server $1
+interface
+  decorate "$server_select_panel_name"
+    set_label $server_info_name "Server $which_server:  $$server_varname\n   port $$port_varname"
+    If $$have_varname
+      Then 'set_toggle $server_toggle_name yes'
+      Else 'set_toggle $server_toggle_name no'
+    quit
+  quit
+.
+
+Define Select_Server 1 server_index
+advise "Select_Server:  NOT IMPLEMENTED!?"
+.
+
+Define EnterServerPort 0
+advise "EnterServerPort BEGIN"
+Set $port_varname $input_string
+Cache_Server_Params
+Update_Server_Info $which_server
+.
+
+Define ConfigDownloadServer 0
+If !panel_exists('$server_config_panel_name')
+  Init_Server_Config_Panel
+Set port_varname download_server_port_num
+Set server_varname download_server_hostname
+Config_Server
+.
+
+# configure the software update server
+
+Define ConfigSWUpdateServer 0
+If !panel_exists('$server_config_panel_name')
+  Init_Server_Config_Panel
+Set port_varname update_port_num
+Set server_varname update_server_hostname
+Config_Server
+.
+
+Define Config_Server 0
+interface
+  decorate $server_config_panel_name
+    set_text_field Server $$server_varname
+    set_text_field Port $$port_varname
+    quit
+  quit
+Push_Nav "$server_config_panel_name"
+.
+
+##Define Declare_Server_Widgets 1 which_server
+#Select_Server $1
+#interface
+#  decorate $server_select_panel_name
+#    label $server_info_name "Server $which_server:  $$server_varname\n   port $$port_varname"
+#    button "Configure server #$which_server" ConfigServer$which_server
+#    quit
+#  quit
+#.
+
+Define ToggleServer 0
+If $toggle_state
+  Then "advise 'ToggleServer:  toggle is set'"
+  Else "advise 'ToggleServer:  toggle is NOT set'"
+.
+
+Define Init_Server_Config_Panel 0
+advise 'Init_Server_Config_Panel BEGIN'
+interface
+  panel "$server_select_panel_name" $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  quit
+interface
+  decorate $server_select_panel_name
+    label $server_info_name "Server:  $$server_varname\n   port $$port_varname"
+    toggle $server_toggle_name ToggleServer
+    button "Configure server" ConfigDownloadServer
+    quit
+  quit
+
+interface
+  panel "$server_config_panel_name" $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate "$server_config_panel_name"
+    label SName "Server name or IP address"
+    text Server EnterServerName "server name or IP addr"
+    label SPort "Port number"
+    text Port EnterServerPort "server port number"
+    button 'Ping server'  DoPingServer
+    quit
+  quit
+
+Update_Download_Server_Info
+advise 'Init_Server_Config_Panel DONE'
+.
+
+# This changes the labels on the Server Configuration pane to reflect the
+# current values...
+
+Define Update_Download_Server_Info 0
+advise "Update_Download_Server_Info BEGIN"
+Print server_varname
+interface
+  decorate "$server_select_panel_name"
+    set_label $server_info_name "Server $which_server:  $$server_varname\n   port $$port_varname"
+    If $$have_varname
+      Then 'set_toggle $server_toggle_name yes'
+      Else 'set_toggle $server_toggle_name no'
+    quit
+  quit
+advise "Update_Download_Server_Info DONE"
+.
+
+Define DoConfigServer 0
+advise 'DoConfigServer BEGIN'
+If !panel_exists('$server_config_panel_name')
+  Init_Server_Config_Panel
+Push_Nav $server_select_panel_name
+advise 'DoConfigServer DONE'
+.
+
+# We would like to treat the error log like a recent file
+# only if an error has occurred since the last update...
+#
+# But we don't bother, if there are no recent data files
+# we don't load the error file either...
+
+#Define Redirect_Error_Log 0
+#append yes
+#error_file "$q_data_dir/error_log"
+#log_message "Error output redirected"
+#.
+

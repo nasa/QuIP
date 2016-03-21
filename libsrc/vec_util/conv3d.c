@@ -1,13 +1,11 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_conv3d[] = QUIP_VERSION_STRING;
-
 #include "vec_util.h"
 
 #define BEGIN_CLEAR(level)								\
 											\
-	for(var[level]=0;var[level] < dp->dt_type_dim[level];var[level]++){		\
-		os[level] = var[level] * dp->dt_type_inc[level];
+	for(var[level]=0;var[level] < OBJ_TYPE_DIM(dp,level);var[level]++){		\
+		os[level] = var[level] * OBJ_TYPE_INC(dp,level);
 
 void img_clear3d(Data_Obj *dp)
 {
@@ -15,7 +13,7 @@ void img_clear3d(Data_Obj *dp)
 	incr_t os[N_DIMENSIONS];
 	float *ptr;
 
-	ptr = (float *)dp->dt_data;
+	ptr = (float *)OBJ_DATA_PTR(dp);
 
 	BEGIN_CLEAR(3)
 		BEGIN_CLEAR(2)
@@ -33,29 +31,29 @@ void img_clear3d(Data_Obj *dp)
 
 #define CHECK_EDGE(level)									\
 												\
-		if( os[level] < 0 || os[level] >= (incr_t) image_dp->dt_type_dim[level] ) continue;
+		if( os[level] < 0 || os[level] >= (incr_t) OBJ_TYPE_DIM(image_dp,level) ) continue;
 #else
 
 #define CHECK_EDGE(level)									\
 												\
-		if( os[level] < 0 ) os[level]+=image_dp->dt_type_dim[level];			\
-		else if( os[level] >= image_dp->dt_type_dim[level] )				\
-			os[level]-=image_dp->dt_type_dim[level];				\
+		if( os[level] < 0 ) os[level]+=OBJ_TYPE_DIM(image_dp,level);			\
+		else if( os[level] >= OBJ_TYPE_DIM(image_dp,level) )				\
+			os[level]-=OBJ_TYPE_DIM(image_dp,level);				\
 
 #endif /* NOWRAP */
 
 #define BEGIN_ITERATION(level)									\
 												\
-	var[level] = (incr_t ) ir_dp->dt_type_dim[ level ];					\
+	var[level] = (incr_t ) OBJ_TYPE_DIM(ir_dp, level );					\
 	while( var[level] -- ){									\
-		os[level] = position[level] + var[level] - ir_dp->dt_type_dim[level]/2;	\
+		os[level] = position[level] + var[level] - OBJ_TYPE_DIM(ir_dp,level)/2;	\
 		CHECK_EDGE(level)								\
-		os[level] *= image_dp->dt_type_inc[level];					\
-		iros[level] = var[level] * ir_dp->dt_type_inc[level];				\
+		os[level] *= OBJ_TYPE_INC(image_dp,level);					\
+		iros[level] = var[level] * OBJ_TYPE_INC(ir_dp,level);				\
 
 
 
-void add_impulse3d(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,dimension_t *position)
+void add_impulse3d(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,posn_t *position)
 {
 	float *image_ptr, *irptr;
 	incr_t offset,ir_offset;		/* offsets into image */
@@ -63,8 +61,8 @@ void add_impulse3d(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,dimension_t *po
 	incr_t os[N_DIMENSIONS], iros[N_DIMENSIONS];	/* offsets into impulse response */
 
 
-	image_ptr = (float *) image_dp->dt_data;
-	irptr = (float *) ir_dp->dt_data;
+	image_ptr = (float *) OBJ_DATA_PTR(image_dp);
+	irptr = (float *) OBJ_DATA_PTR(ir_dp);
 
 	BEGIN_ITERATION(3)						/* frames */
 		BEGIN_ITERATION(2)					/* rows */
@@ -86,9 +84,9 @@ void add_impulse3d(double amp,Data_Obj *image_dp,Data_Obj *ir_dp,dimension_t *po
 
 #define BEGIN_C(level)								\
 										\
-	var[level] = dpto->dt_type_dim[level];					\
+	var[level] = OBJ_TYPE_DIM(dpto,level);					\
 	while( var[level] -- ){							\
-		os[level] = var[level] * dpfr->dt_type_inc[level];
+		os[level] = var[level] * OBJ_TYPE_INC(dpfr,level);
 
 
 void convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
@@ -96,11 +94,11 @@ void convolve3d(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpfilt)
 	float val, *frptr;
 	dimension_t offset;
 	incr_t	os[N_DIMENSIONS];
-	dimension_t var[N_DIMENSIONS];
+	posn_t var[N_DIMENSIONS];
 
 	img_clear3d(dpto);
 
-	frptr = (float *) dpfr->dt_data;
+	frptr = (float *) OBJ_DATA_PTR(dpfr);
 
 	var[4]=0;
 

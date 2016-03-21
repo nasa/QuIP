@@ -1,27 +1,15 @@
 
 #include "quip_config.h"
 
-char VersionId_nrmenu_nrmenu[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
+#include "quip_prot.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "menuname.h"
-#include "version.h"
-
 #include "nrm_api.h"
 
 #ifdef HAVE_NUMREC
 
 #include "numrec.h"
 
-
-static COMMAND_FUNC( do_choldc );
-static COMMAND_FUNC( do_svd );
-static COMMAND_FUNC( do_svbksb );
-static COMMAND_FUNC( do_jacobi );
-static COMMAND_FUNC( do_eigsrt );
-static COMMAND_FUNC( do_moment );
 
 #ifdef DEBUG
 static void numrec_debug_init(SINGLE_QSP_ARG_DECL);
@@ -38,7 +26,7 @@ static COMMAND_FUNC( do_choldc )
 	if ( a_dp == NO_OBJ || p_dp == NO_OBJ )
 		return;
 
-	printf("nrmenu:nrmenu.c:pickobj %f\n", *((float *)a_dp->dt_data));
+	printf("nrmenu:nrmenu.c:pickobj %f\n", *((float *)OBJ_DATA_PTR(a_dp)));
 
 	dp_choldc(a_dp,p_dp);
 }
@@ -87,7 +75,7 @@ static COMMAND_FUNC( do_jacobi )
 
 	if( v_dp == NO_OBJ || d_dp == NO_OBJ || a_dp == NO_OBJ ) return;
 
-	dp_jacobi(v_dp,d_dp,a_dp,&nrot);
+	dp_jacobi(QSP_ARG  v_dp,d_dp,a_dp,&nrot);
 
 	// sprintf(msg_str,"%d rotations performed",nrot);
 	// prt_msg(msg_str);
@@ -102,7 +90,7 @@ static COMMAND_FUNC( do_eigsrt )
 
 	if( v_dp == NO_OBJ || d_dp == NO_OBJ ) return;
 
-	dp_eigsrt(v_dp,d_dp);
+	dp_eigsrt(QSP_ARG  v_dp,d_dp);
 }
 
 static COMMAND_FUNC( do_moment )
@@ -111,7 +99,7 @@ static COMMAND_FUNC( do_moment )
 	
 	d_dp = PICK_OBJ("array of data");
 	/* How to get the values of ave and sdev??? */
-	dp_moment(d_dp);
+	dp_moment(QSP_ARG  d_dp);
 }
 
 static COMMAND_FUNC( do_plgndr )
@@ -119,9 +107,9 @@ static COMMAND_FUNC( do_plgndr )
 	float x,r;
 	int l,m;
 
-	l=HOW_MANY("l");
-	m=HOW_MANY("m");
-	x=HOW_MUCH("x");
+	l=(int)HOW_MANY("l");
+	m=(int)HOW_MANY("m");
+	x=(float)HOW_MUCH("x");
 
 	if( m < 0 || m > l ){
 		sprintf(ERROR_STRING,"parameter m (%d) must be between 0 and l (%d)",m,l);
@@ -159,21 +147,19 @@ static COMMAND_FUNC( do_zroots )
 	dp_zroots(r_dp,a_dp,polish_roots);
 }
 
-Command nr_ctbl[]={
-{ "svd",	do_svd,		"singular value decomposition"			},
-{ "svbk",	do_svbksb,	"back substitute into SVD"			},
-{ "jacobi",	do_jacobi,	"compute eigenvectors & eigenvalues"		},
-{ "eigsrt",	do_eigsrt,	"sort the eigenvalues into descending order"	}, 
-{ "moment",	do_moment,	"mean value & standard deviation of a vector"	},
-{ "plgndr",	do_plgndr,	"compute legendre polynomial"			},
-{ "zroots",	do_zroots,	"compute roots of a polynomial"			},
-{ "polish",	do_set_polish,	"enable (default) or disable root polishing in zroots()"	},
-{ "choldc",     do_choldc,      "cholesky decomposition"			},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"					},
-#endif
-{ NULL_COMMAND									}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(numrec_menu,s,f,h)
+
+MENU_BEGIN(numrec)
+ADD_CMD( svd,		do_svd,		singular value decomposition )
+ADD_CMD( svbk,		do_svbksb,	back substitute into SVD )
+ADD_CMD( jacobi,	do_jacobi,	compute eigenvectors & eigenvalues )
+ADD_CMD( eigsrt,	do_eigsrt,	sort the eigenvalues into descending order )
+ADD_CMD( moment,	do_moment,	mean value & standard deviation of a vector )
+ADD_CMD( plgndr,	do_plgndr,	compute legendre polynomial )
+ADD_CMD( zroots,	do_zroots,	compute roots of a polynomial )
+ADD_CMD( polish,	do_set_polish,	enable (default) or disable root polishing in zroots() )
+ADD_CMD( choldc,	do_choldc,	cholesky decomposition )
+MENU_END(numrec)
 
 #ifdef DEBUG
 int numrec_debug=0;
@@ -187,7 +173,7 @@ static void numrec_debug_init(SINGLE_QSP_ARG_DECL)
 #endif /* DEBUG */
 
 
-COMMAND_FUNC( nrmenu )
+COMMAND_FUNC( do_nr_menu )
 {
 	static int inited=0;
 
@@ -196,11 +182,10 @@ COMMAND_FUNC( nrmenu )
 #ifdef DEBUG
 		numrec_debug_init(SINGLE_QSP_ARG);
 #endif /* DEBUG */
-		auto_version(QSP_ARG  "NRMENU","VersionId_nrmenu");
 		inited=1;
 	}
 
-	PUSHCMD(nr_ctbl,"numrec");
+	PUSH_MENU(numrec);
 }
 
 #endif /* HAVE_NUMREC */

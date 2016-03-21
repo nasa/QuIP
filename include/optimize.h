@@ -1,8 +1,9 @@
 
 #ifndef NO_OPT_PARAM
 
-#include "items.h"
-#include "query.h"
+#include "quip_prot.h"
+
+#define OPTIMIZER_FILENAME	"(optimizer pushed text)"
 
 /* Modular optimization package with semi-uniform API */
 
@@ -23,7 +24,7 @@ typedef struct opt_pkg {
 #define pkg_name	pkg_item.item_name
 
 	void (*pkg_scr_func)(SINGLE_QSP_ARG_DECL);
-	void (*pkg_c_func)(float (*f)());
+	void (*pkg_c_func)(QSP_ARG_DECL  float (*f)(SINGLE_QSP_ARG_DECL));
 	void (*pkg_halt_func)(void);
 } Opt_Pkg;
 
@@ -63,13 +64,14 @@ extern const char *opt_func_string;
 
 /* stepsupp.c */
 ITEM_INTERFACE_PROTOTYPES(Opt_Param,opt_param)
+#define PICK_OPT_PARAM(p)	pick_opt_param(QSP_ARG  p)
 
-extern void init_opt_params(void);
+//extern void init_opt_params(void);
 extern void delete_opt_params(SINGLE_QSP_ARG_DECL);
 extern Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *);
 extern void optimize( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 extern List *opt_param_list(SINGLE_QSP_ARG_DECL);
-extern void opt_param_info(Opt_Param *);
+extern void opt_param_info(QSP_ARG_DECL  Opt_Param *);
 extern float get_opt_param_value(QSP_ARG_DECL  const char *);
 
 
@@ -77,22 +79,23 @@ extern float get_opt_param_value(QSP_ARG_DECL  const char *);
 
 extern void insure_opt_pkg(SINGLE_QSP_ARG_DECL);
 ITEM_INTERFACE_PROTOTYPES(Opt_Pkg,opt_pkg)
+#define PICK_OPT_PKG(p)	pick_opt_pkg(QSP_ARG  p)
 
 
 /* am_supp.c */
 extern void run_amoeba_scr(SINGLE_QSP_ARG_DECL);
-extern void run_amoeba_c( float (*func)(void) );
+extern void run_amoeba_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 extern void halt_amoeba(void);
 
 /* pr_supp.c */
 extern void run_frprmn_scr(SINGLE_QSP_ARG_DECL);
-extern void run_frprmn_c( float (*func)(void) );
+extern void run_frprmn_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 extern void halt_frprmn(void);
 
 #ifdef STEPIT
 /* st_supp.c */
-extern void run_stepit_scr(void);
-extern void run_stepit_c( float (*func)(void) );
+extern void run_stepit_scr(SINGLE_QSP_ARG_DECL);
+extern void run_stepit_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 #endif /* STEPIT */
 
 

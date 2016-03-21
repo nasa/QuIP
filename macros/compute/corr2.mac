@@ -224,28 +224,31 @@ Set gni_mask_min 0.1	# so we don't divide by 0...
 
 
 ## Get_Norm_Images (new version from brollyx)
-# Without windowing, the norm would simply be the SOS of the input image (constant)
-# With windowing compensation, the norm is only a partial sum of squares (PSOS). This PSOS
-# is weighted by the window for each convolution position.
-# So at the position of the information, we get high value of the PSOS, with a maximum value
-# equal to the SOS (as if no windowing). Far away for the information, the PSOS reaches 0, which 
-# has the consequence to boost the normalized correlation (as the PSOS is used as the
-# normalization factor). Actually, the PSOS represents the variance of the overlapping region
-# between the two images. 
-# But we're not interested in solutions (i.e. high normalized correlation) where the two
-# input images barely overlap. We want solutions where the informative regions of each image
-# correlates, and not where the non-informative regions correlates (those 'zero' regions always
-# correlate). So we want the overlapping region to have a decent variance (not too small).
-# That's why we can clip the small values of the PSOS, and set a minimum variance (function
-# of the maximum). Then, the non-informative regions will be assigned that minimum variance,
+# Without windowing, the norm would simply be the SOS of the input image
+# (constant) With windowing compensation, the norm is only a partial sum
+# of squares (PSOS). This PSOS is weighted by the window for each
+# convolution position.  So at the position of the information, we get
+# high value of the PSOS, with a maximum value equal to the SOS (as if no
+# windowing). Far away for the information, the PSOS reaches 0, which 
+# has the consequence to boost the normalized correlation (as the PSOS
+# is used as the normalization factor). Actually, the PSOS represents
+# the variance of the overlapping region between the two images. 
+# But we're not interested in solutions (i.e. high normalized correlation)
+# where the two input images barely overlap. We want solutions where the
+# informative regions of each image correlates, and not where the
+# non-informative regions correlates (those 'zero' regions always
+# correlate). So we want the overlapping region to have a decent variance
+# (not too small).  That's why we can clip the small values of the PSOS,
+# and set a minimum variance (function of the maximum). Then, the
+# non-informative regions will be assigned that minimum variance,
 # and thus have a very low normed correlation.
 #
 # For now, the minimum variance is linearly dependant on the max variance,
-# but one could use another formula.
-# The following threshold should be defined between 0 and 1.
-# Values close to 1 make this windowed correlation behave like the non-windowed one. They
-# assume the two images have a big overlap (the solution 'translation' is quite small)
-# Small values would enable a larger search, and pre-assumes the two images don't have much
+# but one could use another formula.  The following threshold should be
+# defined between 0 and 1.  Values close to 1 make this windowed correlation
+# behave like the non-windowed one. They assume the two images have a big
+# overlap (the solution 'translation' is quite small) Small values would
+# enable a larger search, and pre-assumes the two images don't have much
 # overlap
 #  
 ###### NORMALIZED PARAMETER #########

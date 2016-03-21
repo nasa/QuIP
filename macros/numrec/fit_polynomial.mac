@@ -18,12 +18,14 @@ Define Fit_Polynomial 2 result_vec pt_list
 Assign degree ncols('$1')-1
 Assign n_data_pts ncols('$2')
 Set init_svd 1			# why do we need this?
-Create_SVD_Objects fitpoly $n_data_pts $degree+1
+Get_Prec svd_type $1
+If !obj_exists(fitpoly_coeffs)
+  "Create_SVD_Objects fitpoly $n_data_pts $degree+1"
 Dup_Obj norm_pts $2
 Normalize_Coords norm_pts $2	# we need to save the normalization factors!
-VMov fitpoly_datain norm_pts{1}
-Image tmp_col ncols(norm_pts) 1 1 float	# should get type from input
+Image tmp_col ncols(norm_pts) 1 1 $svd_type
 Transpose tmp_col norm_pts{0}
+VMov fitpoly_datain norm_pts{1}
 Delete_Image norm_pts
 VSet fitpoly_u_matrix 1
 Set fp_i 0
@@ -41,11 +43,13 @@ Delete_Image tmp_col
 numrec
 	svd fitpoly_u_matrix fitpoly_eigenvalues fitpoly_v_matrix
 	quit
+
 numrec 
 	svbk fitpoly_coeffs fitpoly_u_matrix fitpoly_eigenvalues fitpoly_v_matrix fitpoly_datain
 	quit
 VMov $1 fitpoly_coeffs
-Display $1
+# BUG - shouldn't we un-normalize here, i.e. correct the
+# coefficients for the normalization performed on the inputs?
 Delete_SVD_Objects fitpoly
 .
 

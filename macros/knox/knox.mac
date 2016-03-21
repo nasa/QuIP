@@ -1,0 +1,51 @@
+
+Start_File knox.mac
+
+Define Knox_Init 0
+knox quit
+os
+  serial
+    stty
+      setflag cstopb yes
+      quit
+    quit
+  quit
+.
+
+Define Route 2 output_index input_index
+advise "Route $1 $2"
+knox
+  command
+    route
+      both $2 $1
+      quit
+    quit
+  quit
+.
+
+Define Knox_Store 1 index
+knox
+  crosspoint
+    store $1
+    quit
+  quit
+.
+
+Define Knox_Load 1 index
+knox
+  crosspoint
+    load $1
+    quit
+  quit
+.
+
+Define Knox_Get_Map 1 object
+knox
+  status
+    fetch_map $1
+    quit
+  quit
+.
+
+Stop_File knox.mac
+

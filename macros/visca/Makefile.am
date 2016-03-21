@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/visca
+macrosdir	=	$(datadir)/coq/macros/visca
 
 macros_DATA	=	visca_common.mac	\
 			visca.mac		\

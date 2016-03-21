@@ -1,56 +1,52 @@
 #include "quip_config.h"
 
-char VersionId_dataf_contig[] = QUIP_VERSION_STRING;
 /**		get_obj.c	user interface for interactive progs	*/
 
-#include "data_obj.h"
-#include "debug.h"
 #include <stdio.h>
+#include "quip_prot.h"
+#include "data_obj.h"
+
 
 int is_evenly_spaced(Data_Obj *dp)
 {
 	/* returns 1 if all the data can be accessed with a single increment */
+	/* This means we can treat a multi-dimensional object as a 1-D vector */
 	int i,n,spacing;
 
-	/* New logic to handle case when increments are 0
-	 * if the corresponding dimension is 1
-	 */
+	/* New logic to handle case when increments are 0 if the corresponding dimension is 1 */
 
 	/* mindim is the smallest indexable dimension - but for complex,
 	 * it is always equal to 1 with an increment of 0...
 	 */
-
-	/*
-	 * Do we need a special case for bitmaps???
-	 * We do this with type sizes and increments,
-	 * should we instead be using machine sizes and increments?
-	 */
-
 	if( IS_SCALAR(dp) ) return(1);
+	if( IS_BITMAP(dp) ) return(1);
 
-	/* Find the smallest spacing */
+	/* a complex vector with length of 1 is not flagged as a scalar... */
+	if( OBJ_N_TYPE_ELTS(dp) == 1 ) return(1);
+
 	spacing = 0;
-	i=dp->dt_mindim-1;
+	i=OBJ_MINDIM(dp)-1;
 	while(spacing==0){
 		i++;
-#ifdef CAUTIOUS
-		if( i >= N_DIMENSIONS ){
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  is_evenly_spaced %s:  spacing is 0!?",
-				dp->dt_name);
-			NERROR1(DEFAULT_ERROR_STRING);
-		}
-#endif /* CAUTIOUS */
-		spacing = dp->dt_type_inc[i];
+//#ifdef CAUTIOUS
+//		if( i >= N_DIMENSIONS ){
+//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  is_evenly_spaced %s:  spacing is 0!?",
+//				OBJ_NAME(dp));
+//			NERROR1(DEFAULT_ERROR_STRING);
+//		}
+//#endif /* CAUTIOUS */
+		assert( i < N_DIMENSIONS );
+		spacing = OBJ_TYPE_INC(dp,i);
 	}
-	n=dp->dt_type_dim[i];
+	n=OBJ_TYPE_DIM(dp,i);
 	i++;
-	for(;i<=dp->dt_maxdim;i++){
-		if( dp->dt_type_inc[i] != 0 ){
-			if( dp->dt_type_inc[i] != spacing * n ){
+	for(;i<=OBJ_MAXDIM(dp);i++){
+		if( OBJ_TYPE_INC(dp,i) != 0 ){
+			if( OBJ_TYPE_INC(dp,i) != spacing * n ){
 				return(0);
 			}
 		}
-		n *= dp->dt_type_dim[i];
+		n *= OBJ_TYPE_DIM(dp,i);
 	}
 
 	return(1);
@@ -58,16 +54,17 @@ int is_evenly_spaced(Data_Obj *dp)
 
 /* Why is this function CAUTIOUS? */
 
-int is_contiguous(Data_Obj *dp)
+int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 {
-#ifdef CAUTIOUS
-	if( (dp->dt_flags&DT_CHECKED) == 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
-		"CAUTIOUS:  object \"%s\" not checked for contiguity!?",dp->dt_name);
-		advise(DEFAULT_ERROR_STRING);
-		check_contiguity(dp);
-	}
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+//	if( (OBJ_FLAGS(dp)&DT_CHECKED) == 0 ){
+//		sprintf(DEFAULT_ERROR_STRING,
+//		"CAUTIOUS:  object \"%s\" not checked for contiguity!?",OBJ_NAME(dp));
+//		advise(DEFAULT_ERROR_STRING);
+//		check_contiguity(dp);
+//	}
+//#endif /* CAUTIOUS */
+	assert( OBJ_FLAGS(dp) & DT_CHECKED );
 	return(IS_CONTIGUOUS(dp));
 }
 
@@ -77,24 +74,23 @@ int is_contiguous(Data_Obj *dp)
  * but it is still contiguous from the point of view of transferring data.
  */
 
-int has_contiguous_data(Data_Obj *dp)
+static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( IS_BITMAP(dp) ){
 		int i_dim,n,n_words,inc;
-		/* We should cache the status instead
-		 * of recomputing every time, but we're
-		 * running out of flag bits...
-		 */
-		if( dp->dt_type_inc[dp->dt_mindim] != 1 ) return(0);
-		n=dp->dt_type_dim[dp->dt_mindim];
-		n_words = (dp->dt_bit0 + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD;
-		for(i_dim=dp->dt_mindim+1;i_dim<N_DIMENSIONS;i_dim++){
-			if( dp->dt_type_dim[i_dim] != 1 ){
-				inc = dp->dt_type_inc[i_dim];
+		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return(0);
+		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
+		n_words = (OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD;
+		for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
+			if( OBJ_TYPE_DIM(dp,i_dim) != 1 ){
+				inc = OBJ_TYPE_INC(dp,i_dim);
 				if( inc != n_words * BITS_PER_BITMAP_WORD ) return(0);
-				n_words *= dp->dt_type_dim[i_dim];
+				n_words *= OBJ_TYPE_DIM(dp,i_dim);
 			}
 		}
+		/* We cache the status when called from
+		 * check_contiguity()...
+		 */
 		return(1);
 	} else {
 		return(IS_CONTIGUOUS(dp));
@@ -105,12 +101,16 @@ void check_contiguity(Data_Obj *dp)
 {
 	int i,inc;
 
-	dp->dt_flags |= DT_CHECKED;
-	dp->dt_flags &= ~(DT_EVENLY|DT_CONTIG);
+	SET_OBJ_FLAG_BITS(dp, DT_CHECKED);
+	CLEAR_OBJ_FLAG_BITS(dp,DT_EVENLY|DT_CONTIG);
 
-	if( !is_evenly_spaced(dp) ) return;
+	if( !is_evenly_spaced(dp) ){
+		if( IS_BITMAP(dp) && has_contiguous_data(DEFAULT_QSP_ARG  dp) )
+			SET_OBJ_FLAG_BITS(dp, DT_CONTIG_BITMAP_DATA);
+		return;
+	}
 
-	dp->dt_flags |= DT_EVENLY;
+	SET_OBJ_FLAG_BITS(dp, DT_EVENLY);
 
 	/* if the base increment is -1 the object may still be contiguous,
 	 * but here we will take contiguity to mean that it is contiguous
@@ -126,14 +126,20 @@ void check_contiguity(Data_Obj *dp)
 	 * This used to be mindim, but with separate type and machine increments
 	 * that is no longer true.
 	 */
-	i=dp->dt_mindim;
+	i=OBJ_MINDIM(dp);
 	inc=0;
+
+	// Most non-contiguous cases will get caught by the non-evenly spaced test above.
+	// The only way an evenly-spaced object can be non-contiguous is if the smallest
+	// increment is not 1, so we only have to check the smallest increment.
+	// Note that if the dimension is equal to 1, then the increment is 0.
 	while( inc==0 && i<N_DIMENSIONS ){
-		inc = dp->dt_type_inc[i];
-		if( inc > 0 && inc != 1 ) return;	/* not contiguous */
+		inc = OBJ_TYPE_INC(dp,i);
+		if( inc > 0 && inc != 1 )
+			return;	/* not contiguous */
 		i++;
 	}
 
-	dp->dt_flags |= DT_CONTIG;
+	SET_OBJ_FLAG_BITS(dp, DT_CONTIG);
 }
 

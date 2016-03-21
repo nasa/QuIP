@@ -1,3 +1,8 @@
+# We put the .o files from .cu files here to make sure to recompile when needed
+# BUT that breaks things on non-cuda systems...
+
+all:	libqcuda.a
+	cp libqcuda.a ../../libs
 
 # where to find config.h?  I thought it would be $top_srcdir, but on make distcheck
 # that generated ../../.. instead of ../.. , and it doesn't work!?
@@ -11,62 +16,53 @@
 # -arch sm_13 is good for wheatstone but breaks things on craik...
 # -arch sm_11 on craik
 
-# needed -m64 to link properly on mac...
+# This file has posed problems because it needs to work on both cuda and non-cuda systems.
+# Non-cuda systems have no nvcc, so we don't really want to include the .cu files in the list
+# of sources all the time.
+# We have tried to address this by conditionally adding the .cu files to
 
-NVCCFLAGS =	@NVCC_ARCH_FLAGS@ $(CPPFLAGS) -I/usr/local/cuda/include -I../.. -I$(top_srcdir)/include -DHAVE_CONFIG_H -m64
-#NVCCFLAGS =	@NVCC_ARCH_FLAGS@ $(CPPFLAGS) --machine 64 -I/usr/local/cuda/include -I../.. -I$(top_srcdir)/include -DHAVE_CONFIG_H
+# Tried adding '-ccbin clang' to work on mac, but didn't help...
 
-.cu.o:	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
+#NVCCFLAGS =	-ccbin clang @NVCCFLAGS@ @NVCC_ARCH_FLAGS@ $(CPPFLAGS) --machine 64 $(NVCPPFLAGS) -DHAVE_CONFIG_H
+
+NVCCFLAGS =	@NVCCFLAGS@ @NVCC_ARCH_FLAGS@ $(CPPFLAGS) $(NVCPPFLAGS) -DHAVE_CONFIG_H
+
+NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I../.. -I$(top_srcdir)/include
+#-I../.. -I$(top_srcdir)/include -DHAVE_CONFIG_H
+
+.cu.o:	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
 # The dependency building stuff doesn't seem to know about .cu files...
 
-CU_DEPS =	host_call_utils.h			\
-		host_calls.h				\
-		gpu_call_utils.h			\
+CU_DEPS =						\
 		my_cuda.h				\
-		my_vector_functions.h			\
 		../../include/veclib/fast_test.h	\
 		../../include/veclib/xfer_args.h	\
 		../../include/cuda_supp.h 		\
 		../../config.h 				\
 		../../include/quip_config.h 		\
 		../../include/quip_version.h 		\
-		../../include/vecgen.h
+		../../include/veclib/vecgen.h
 
 host_calls.h:	host_call_utils.h ../../include/veclib/fast_test.h	\
 		../../include/veclib/xfer_args.h
 	touch host_calls.h
 
-myproject.cu:	myproject_kernel.cu					\
-		$(CU_DEPS)						\
-		all_prot.h float_prot.h int_prot.h signed_prot.h	\
-		all_funcs.h bit_prot.h					\
-		undefs.h undefs2.h					\
-		../../include/veclib/intvec.c				\
-		../../include/veclib/all_vec.c				\
-		../../include/veclib/cpx_vec.c				\
-		../../include/veclib/signed_vec.c			\
-		../../include/veclib/unsigned_vec.c			\
-		../../include/veclib/math_funcs.c			\
-		gpu_all.cu gpu_int.cu gpu_signed.cu gpu_bit.cu
-	touch myproject.cu
+# this rule doesn't seem to fire in make distcheck...
+
 
 conversions.cu:	$(CU_DEPS)
-	touch conversions.cu
+#	touch conversions.cu
 
 fill.cu:	$(CU_DEPS)
-	touch fill.cu
+#	touch fill.cu
 
 cuda_centroid.cu:	gpu_cent.cu		\
 			$(CU_DEPS)
-	touch cuda_centroid.cu
+#	touch cuda_centroid.cu
 
 yuv2rgb.cu:	$(CU_DEPS)
-	touch yuv2rgb.cu
-
-
-myproject.o:	myproject.cu
-	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
+#	touch yuv2rgb.cu
 
 yuv2rgb.o:	yuv2rgb.cu
 	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
@@ -80,15 +76,19 @@ fill.o:	fill.cu
 cuda_centroid.o:	cuda_centroid.cu
 	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
 
-noinst_LIBRARIES = libcuda.a
+noinst_LIBRARIES = libqcuda.a
 
 #CC = g++
 
-libcuda_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE -Wall
+# CPPFLAGS is for /bin/cpp (C preprocessor)
+#libqcuda_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE -Wall -Wmissing-prototypes
+libqcuda_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE
+libqcuda_a_CXXFLAGS = -Wall -Wswitch-enum
+libqcuda_a_CFLAGS = -Wall -Wmissing-prototypes -Wswitch-enum
 
 if HAVE_NVCC
 
-libcuda_a_CPPFLAGS += -I/usr/local/cuda/include $(NVCPPFLAGS)
+libqcuda_a_CPPFLAGS += -I/usr/local/cuda/include $(NVCPPFLAGS)
 
 # This file appears to be here when we build in the cvs tree,
 # but not in the distribution!?!?
@@ -100,67 +100,50 @@ endif
 
 # -D__STRICT_ANSI__  this breaks u_long in sys/types.h...
 
-# The headers section includes the true headers (.h), plus
-# code that is included in other .c or .cu files...
+# Should the shell scripts be listed here, or in EXTRA_DIST???
+#				root_cmds.sh		\
+#
 
-noinst_HEADERS =		my_cuda.h		\
-				my_vector_functions.h	\
+noinst_HEADERS =					\
+				cuda_port.h		\
 				cuda_viewer.h		\
-				all_prot.h		\
-				bit_prot.h		\
-				int_prot.h		\
-				undefs.h		\
-				undefs2.h		\
-				signed_prot.h		\
-				float_prot.h		\
-				prot_defs.h		\
-				hcall_defs.h		\
-				call_defs.h		\
-				host_calls.h		\
-				host_call_utils.h	\
-				gpu_calls.h		\
-				gpu_call_utils.h	\
-				myproject_kernel.cu	\
-				gpu_bit.cu		\
-				gpu_all.cu		\
-				gpu_int.cu		\
-				gpu_cent.cu		\
-				gpu_signed.cu		\
-				conversions.h		\
-				all_funcs.h		\
-				menu_calls.h
+				my_cuda.h		\
+				glx_hack.h		\
+				gpu_cent.cu
 
-#				bit_prec_funcs.cu	\
-#				all_prec_funcs.cu	\
-#				float_prec_funcs.cu	\
-#				int_prec_funcs.cu	\
-#				signed_prec_funcs.cu
-
-
-libcuda_a_SOURCES =					\
-				cuda_npp.cpp		\
-				cuda_viewer.cpp		\
+libqcuda_a_SOURCES =					\
 				cuda.cpp		\
-				cuda_menu.cpp		\
+				cuda_npp.cpp		\
 				cuda_curand.cpp		\
 				simpleCUBLAS.cpp	\
 				deviceQuery.cpp		\
-				cuda_func_tbl.cpp	\
 				cuda_error.c		\
-				cuda_streams.c
+				cuda_streams.c		\
+				cuda_menu.cpp
 
-# This business seems to break distclean, the .cu files don't get removed...
+#libqcuda_a_SOURCES += fakit.cpp
+
+#				conversions.cu
+
+NVCC_SOURCES =						\
+				cuda_centroid.cu	\
+				fill.cu			\
+				yuv2rgb.cu
 
 if HAVE_NVCC
-
-libcuda_a_SOURCES += myproject.cu conversions.cu cuda_centroid.cu fill.cu yuv2rgb.cu
-
+libqcuda_a_SOURCES += $(NVCC_SOURCES)
 else
-
-libcuda_a_SOURCES += fakit.cpp
-
-noinst_HEADERS += myproject.cu conversions.cu cuda_centroid.cu fill.cu yuv2rgb.cu
-
+noinst_HEADERS += $(NVCC_SOURCES)
 endif
 
+#else
+#
+#libqcuda_a_SOURCES += fakit.cpp
+#
+
+
+EXTRA_DIST	=	root_cmds.sh
+
+clean-local:
+	-rm -rf *expanded.c *stripped.c
 

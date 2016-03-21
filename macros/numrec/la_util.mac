@@ -96,9 +96,10 @@ advise "rms error after permuting is $rms"
 # sort the eigenvalues from largest to smallest, then permute all the matrices accordingly
 #
 Define SVD_Sort 1 stem
-Vector ss_indices ncols(${1}_eigenvalues) 1 long
+advise "SVD_Sort $1 BEGIN"
+Vector ss_indices ncols(${1}_eigenvalues) 1 uint32
 Ramp1D ss_indices 0 1
-war misc sort_indices ss_indices ${1}_eigenvalues quit quit
+compute misc sort_indices ss_indices ${1}_eigenvalues quit quit
 
 #advise "largest?"
 #Display ${1}_eigenvalues{value(ss_indices[0])}

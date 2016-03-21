@@ -1,5 +1,9 @@
 #include "quip_config.h"
 
+/* This file was set up to use the w3c libraries, but is no longer
+ * maintained, and should be considered obsolete.
+ */
+
 #ifdef HAVE_W3C
 
 #include <stdio.h>

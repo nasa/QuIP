@@ -127,7 +127,7 @@ interface
     #adjuster zoom SetZoom $zoom_min $zoom_max $zoom_min
     #adjuster focus SetFocus $focus_min $focus_max $focus_min
     Set cmd "chooser Camera SelectPTZCam $n_cameras $cam_list"
-    push_text $cmd
+    interpret $cmd
     # where do we set the default?
     chooser PTZClickMode SetPTZClickMode 2 recenter mark_point
     set_choice PTZClickMode recenter	# show default - must AGREE
@@ -171,6 +171,10 @@ Define Inquire_PTZ_IR_Mode 0
 Inquire_PTZ_Param ir_mode
 .
 
+Define Inquire_PTZ_Flip_Mode 0
+Inquire_PTZ_Param flip_mode
+.
+
 Define Inquire_PTZ_Exposure_Mode 0
 Inquire_PTZ_Param exposure_mode
 .
@@ -186,7 +190,7 @@ Inquire_PTZ_Param exposure_mode
 ### Set string "Xmit_Text $daemon_sock \"Set pan_posn \$pan_posn Set tilt_posn \$tilt_posn\""
 ### Evi_Send $string
 ### Recv_Text $client_sock response
-### push_text $response
+### interpret $response
 ### .
 
 Define Get_Camera_Settings 1 cam_string
@@ -233,6 +237,11 @@ Inquire_PTZ_IR_Mode
 If !strcmp($inquiry_result,"on")
   Then "Set ir 1"
   Else "Set ir 0"
+
+Inquire_PTZ_Flip_Mode
+If !strcmp($inquiry_result,"on")
+  Then "Set camera_flipped 1"
+  Else "Set camera_flipped 0"
 
 Inquire_PTZ_Exposure_Mode
 If !strcmp($inquiry_result,"manual")
@@ -353,6 +362,9 @@ Define Update_PTZ_Sliders 0
 #advise "Update_PTZ_Sliders, pan = $pan  tilt = $tilt  zoom = $zoom"
 interface
   decorate $ptz_panel_name
+    If $camera_flipped
+      Then "range tilt -$tilt_max -$tilt_min"
+      Else "range tilt $tilt_min $tilt_max"
     set_scale pan $pan
     set_scale tilt $tilt
     set_scale zoom $zoom
@@ -375,7 +387,7 @@ interface
 Set ptz_panel_on 0
 
 Define PTZ_Panel_On 0
-If $ptz_panel_on 'PopFile 2 nop'
+If $ptz_panel_on 'exit_macro'
 interface
   control
     show ptz_panel
@@ -385,7 +397,7 @@ Set ptz_panel_on 1
 .
 
 Define PTZ_Panel_Off 0
-If !$ptz_panel_on "PopFile 2 nop"
+If !$ptz_panel_on "exit_macro"
 interface
   control
     unshow ptz_panel
@@ -530,13 +542,21 @@ Add_Var pan -value(_delta_ptz[0])
 Add_Var tilt -value(_delta_ptz[1])
 If $pan<$pan_min "Set pan $pan_min"
 If $pan>$pan_max "Set pan $pan_max"
-If $tilt<$tilt_min "Set tilt $tilt_min"
-If $tilt>$tilt_max "Set tilt $tilt_max"
+If $camera_flipped
+  Then "Impose_Limits tilt -$tilt_max -$tilt_min"
+  Else "Impose_Limits tilt $tilt_min $tilt_max"
+#If $tilt<$tilt_min "Set tilt $tilt_min"
+#If $tilt>$tilt_max "Set tilt $tilt_max"
 Print_If pan
 Print_If tilt
 Tell_If "Point_Camera $pan $tilt"
 Point_Camera $pan $tilt
 If $have_ptz_gui Update_PTZ_Sliders
+.
+
+Define Impose_Limits 3 varname min max
+If $$1<($2) "Assign $1 $2"
+If $$1>($3) "Assign $1 $3"
 .
 
 # This is peculiar to wheatstone

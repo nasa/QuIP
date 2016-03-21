@@ -67,18 +67,20 @@
 
 #ifdef HAVE_CUDA
 
-char VersionId_cuda_fill[] = QUIP_VERSION_STRING;
+#define BUILD_FOR_CUDA
 
 #include <stdio.h>
+#include <curand.h>
 
-#include <cutil.h>
-#include <cutil_inline.h>
-
+#include "quip_prot.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"			// describe_cuda_error
 #include "my_vector_functions.h"	// max_threads_per_block
-#include "gpu_call_utils.h"
-#include "host_call_utils.h"
+
+#define CHECK_CUDA_RETURN_VAL(msg)		\
+	if( e != cudaSuccess ){			\
+		NWARN(msg);			\
+	}
 
 // The fill routine kernel
 
@@ -215,14 +217,14 @@ void h_sp_ifl( Data_Obj *dp, int x, int y, float tol, float fill_val )
 	int h_flag, *flag_p;
 	int n_iterations;
 
-	len.x = dp->dt_cols;
-	len.y = dp->dt_rows;
+	len.x = OBJ_COLS(dp);
+	len.y = OBJ_ROWS(dp);
 
 	GET_MAX_THREADS(dp)
 	SETUP_BLOCKS_XY
 
-	inc1.x = dp->dt_type_inc[1];
-	inc1.y = dp->dt_type_inc[2];
+	inc1.x = OBJ_TYPE_INC(dp,1);
+	inc1.y = OBJ_TYPE_INC(dp,2);
 	inc1.z = 0;
 	inc2 = inc1;
 
@@ -241,41 +243,46 @@ void h_sp_ifl( Data_Obj *dp, int x, int y, float tol, float fill_val )
 	CHECK_CUDA_ERROR("h_sp_ifl","zeroit")
 
 	// Get the value at the seed point
-	f_p = (float *)dp->dt_data;
+	f_p = (float *)OBJ_DATA_PTR(dp);
 	f_p += x + y * inc1.y;
 
-	cutilSafeCall( cudaMemcpy(&v, f_p, sizeof(v),
-						cudaMemcpyDeviceToHost) );
+	e = cudaMemcpy(&v, f_p, sizeof(v), cudaMemcpyDeviceToHost);
+	CHECK_CUDA_RETURN_VAL("cudaMemcpy device to host");
 
 	// Fill the seed point
 	b_one = 1;
-	cutilSafeCall( cudaMemcpy(filled+x+y*len.x, &b_one, sizeof(b_one),
-						cudaMemcpyHostToDevice) );
-	cutilSafeCall( cudaMemcpy(f_p, &fill_val, sizeof(fill_val),
-						cudaMemcpyHostToDevice) );
+	e = cudaMemcpy(filled+x+y*len.x, &b_one, sizeof(b_one),
+						cudaMemcpyHostToDevice);
+	CHECK_CUDA_RETURN_VAL("cudaMemcpy host to device");
+
+	e = cudaMemcpy(f_p, &fill_val, sizeof(fill_val),
+						cudaMemcpyHostToDevice);
+	CHECK_CUDA_RETURN_VAL("cudaMemcpy host to device");
 
 
 	n_iterations=0;
 	do {
 		/* Clear the flag */
 		h_flag = 0;
-		cutilSafeCall( cudaMemcpy(flag_p, &h_flag, sizeof(h_flag),
-						cudaMemcpyHostToDevice) );
+		e = cudaMemcpy(flag_p, &h_flag, sizeof(h_flag),
+						cudaMemcpyHostToDevice);
+		CHECK_CUDA_RETURN_VAL("cudaMemcpy host to device");
 
 		CLEAR_CUDA_ERROR2("h_sp_ifl","g_sp_ifl_incs")
 		g_sp_ifl_incs<<< NN_GPU >>>
-		((float *)dp->dt_data,inc1,filled,inc2,len,v,tol,fill_val,flag_p);
+		((float *)OBJ_DATA_PTR(dp),inc1,filled,inc2,len,v,tol,fill_val,flag_p);
 		CHECK_CUDA_ERROR("h_sp_ifl","g_sp_ifl_incs")
 
 		// download flag to see what happened.
-		cutilSafeCall( cudaMemcpy(&h_flag, flag_p, 1,
-						cudaMemcpyDeviceToHost) );
+		e = cudaMemcpy(&h_flag, flag_p, 1,
+						cudaMemcpyDeviceToHost);
+		CHECK_CUDA_RETURN_VAL("cudaMemcpy device to host");
 		n_iterations++;
 	} while( h_flag );
 
 	if( verbose ){
 		sprintf(DEFAULT_ERROR_STRING,"Fill completed after %d iterations",n_iterations);
-		advise(DEFAULT_ERROR_STRING);
+		NADVISE(DEFAULT_ERROR_STRING);
 	}
 }
 
@@ -287,14 +294,14 @@ void h_sp_ifl2( Data_Obj *dp, int seed_x, int seed_y, float tol, float fill_val 
 	float *f_p, v;
 	int n_iterations;
 
-	len.x = dp->dt_cols;
-	len.y = dp->dt_rows;
+	len.x = OBJ_COLS(dp);
+	len.y = OBJ_ROWS(dp);
 
 	GET_MAX_THREADS(dp)
 	SETUP_BLOCKS_XY
 
-	inc1.x = dp->dt_type_inc[1];
-	inc1.y = dp->dt_type_inc[2];
+	inc1.x = OBJ_TYPE_INC(dp,1);
+	inc1.y = OBJ_TYPE_INC(dp,2);
 	inc1.z = 0;
 	inc2 = inc1;
 
@@ -309,29 +316,34 @@ void h_sp_ifl2( Data_Obj *dp, int seed_x, int seed_y, float tol, float fill_val 
 	CHECK_CUDA_ERROR("h_sp_ifl2","zeroit")
 
 	// Get the value at the seed point
-	f_p = (float *)dp->dt_data;
+	f_p = (float *)OBJ_DATA_PTR(dp);
 	f_p += seed_x + seed_y * inc1.y;
 
-	cutilSafeCall( cudaMemcpy(&v, f_p, sizeof(v),
-						cudaMemcpyDeviceToHost) );
+	e = cudaMemcpy(&v, f_p, sizeof(v), cudaMemcpyDeviceToHost);
+	CHECK_CUDA_RETURN_VAL("cudaMemcpy device to host");
 
 	// Fill the seed point
 	b_one = 1;
-	cutilSafeCall( cudaMemcpy(filled+seed_x+seed_y*len.x, &b_one, sizeof(b_one),
-						cudaMemcpyHostToDevice) );
-	cutilSafeCall( cudaMemcpy(f_p, &fill_val, sizeof(fill_val),
-						cudaMemcpyHostToDevice) );
+	e = cudaMemcpy(filled+seed_x+seed_y*len.x, &b_one, sizeof(b_one),
+						cudaMemcpyHostToDevice);
+	CHECK_CUDA_RETURN_VAL("cudaMemcpy host to device");
+	e = cudaMemcpy(f_p, &fill_val, sizeof(fill_val),
+						cudaMemcpyHostToDevice);
+	CHECK_CUDA_RETURN_VAL("cudaMemcpy host to device");
 
-	cutilSafeCall( cudaMemcpyToSymbol(fill_value, &fill_val, sizeof(float)) );
-	cutilSafeCall( cudaMemcpyToSymbol(tolerance, &tol, sizeof(float)) );
-	cutilSafeCall( cudaMemcpyToSymbol(test_value, &v, sizeof(float)) );
+	e = cudaMemcpyToSymbol(fill_value, &fill_val, sizeof(float));
+	CHECK_CUDA_RETURN_VAL("cudaMemcpyToSymbol");
+	e = cudaMemcpyToSymbol(tolerance, &tol, sizeof(float));
+	CHECK_CUDA_RETURN_VAL("cudaMemcpyToSymbol");
+	e = cudaMemcpyToSymbol(test_value, &v, sizeof(float));
+	CHECK_CUDA_RETURN_VAL("cudaMemcpyToSymbol");
 
 	n_iterations=0;
 	for( n_iterations = 0 ; n_iterations < 300 ; n_iterations++ ){
 
 		CLEAR_CUDA_ERROR2("h_sp_ifl2","g_sp_ifl2_incs")
 		g_sp_ifl2_incs<<< NN_GPU >>>
-		((float *)dp->dt_data,inc1,filled,inc2,len);
+		((float *)OBJ_DATA_PTR(dp),inc1,filled,inc2,len);
 		CHECK_CUDA_ERROR("h_sp_ifl2","g_sp_ifl2_incs")
 
 	}
@@ -339,7 +351,7 @@ void h_sp_ifl2( Data_Obj *dp, int seed_x, int seed_y, float tol, float fill_val 
 
 	if( verbose ){
 		sprintf(DEFAULT_ERROR_STRING,"Fill completed after %d iterations",n_iterations);
-		advise(DEFAULT_ERROR_STRING);
+		NADVISE(DEFAULT_ERROR_STRING);
 	}
 }
 

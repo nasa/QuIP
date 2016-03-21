@@ -1,41 +1,30 @@
 #include "quip_config.h"
 
-char VersionId_cstepit_pkg[] = QUIP_VERSION_STRING;
-
-#include "items.h"
+#include "quip_prot.h"
 #include "optimize.h"
 #include "cstepit.h"
 //#include "new_cstepit.h"	/* just for testing! */
-#include "debug.h"	/* verbose */
-#include "query.h"
 
 /* local prototypes */
 
-static void init_opt_pkgs(SINGLE_QSP_ARG_DECL);
-
-static void init_one_pkg( QSP_ARG_DECL
-	const char *,
-	void (*scr_func)(SINGLE_QSP_ARG_DECL),
-	void (*c_func)(float (*f)(void)),
-	void (*h_func)(void)
-	);
+static void init_all_opt_pkgs(SINGLE_QSP_ARG_DECL);
 
 ITEM_INTERFACE_DECLARATIONS(Opt_Pkg,opt_pkg)
 
 void insure_opt_pkg(SINGLE_QSP_ARG_DECL)
 {
 	if( curr_opt_pkg == NO_OPT_PKG ){
-		init_opt_pkgs(SINGLE_QSP_ARG);
+		init_all_opt_pkgs(SINGLE_QSP_ARG);
 		curr_opt_pkg=get_opt_pkg(QSP_ARG  /* DEFAULT_OPT_PKG */ "cstepit" );
 #ifdef CAUTIOUS
 		if( curr_opt_pkg==NO_OPT_PKG )
 			ERROR1("CAUTIOUS:  no default optimization package");
 #endif /* CAUTIOUS */
 		if( verbose ){
-			sprintf(error_string,
+			sprintf(ERROR_STRING,
 				"Using default optimization package \"%s\"",
 				curr_opt_pkg->pkg_name);
-			advise(error_string);
+			advise(ERROR_STRING);
 		}
 	}
 }
@@ -43,7 +32,7 @@ void insure_opt_pkg(SINGLE_QSP_ARG_DECL)
 static void init_one_pkg( QSP_ARG_DECL
 	const char *name,
 	void (*scr_func)(SINGLE_QSP_ARG_DECL),
-	void (*c_func)(float (*f)(void)),
+	void (*c_func)(QSP_ARG_DECL  float (*f)(SINGLE_QSP_ARG_DECL)),
 	void (*h_func)(void) )
 {
 	Opt_Pkg *pkp;
@@ -52,9 +41,10 @@ static void init_one_pkg( QSP_ARG_DECL
 
 #ifdef CAUTIOUS
 	if( pkp==NO_OPT_PKG ){
-		sprintf(error_string,
+		sprintf(ERROR_STRING,
 	"CAUTIOUS:  error creating optimization package %s",name);
-		NWARN(error_string);
+		NWARN(ERROR_STRING);
+        return;
 	}
 #endif /* CAUTIOUS */
 
@@ -63,7 +53,7 @@ static void init_one_pkg( QSP_ARG_DECL
 	pkp->pkg_halt_func	= h_func;
 }
 
-static void init_opt_pkgs(SINGLE_QSP_ARG_DECL)
+static void init_all_opt_pkgs(SINGLE_QSP_ARG_DECL)
 {
 	init_one_pkg(QSP_ARG  "cstepit",	run_cstepit_scr,run_cstepit_c,halt_cstepit);
 	/* init_one_pkg(QSP_ARG  "stepit",run_stepit_scr,run_stepit_c); */

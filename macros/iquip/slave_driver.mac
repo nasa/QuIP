@@ -1,0 +1,17 @@
+# This appears to connect to a server program on a remote host,
+# that is in direct communication with the slave device...
+
+Define Init_Overseer 2 hostname port_num
+ports
+  client client_mouth $1 $2
+  Assign connected port_exists(client_mouth)
+  If !$connected "advise 'Failed to connect!?' exit_macro"
+  xmit text client_mouth top_menu
+  quit
+.
+
+Define Command_Slave 1 command_string
+ports xmit text client_mouth "Command_Slave '$1'" quit
+.
+
+

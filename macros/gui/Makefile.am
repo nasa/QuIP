@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/gui
+macrosdir	=	$(datadir)/coq/macros/gui
 
 macros_DATA	=	ui.mac
 

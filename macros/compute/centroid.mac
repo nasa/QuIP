@@ -47,7 +47,7 @@ Define Compute_Generic_Center 2 image stem
 Get_Sum denom $1
 Tell_If "sum of image $1 is $denom"
 If $denom==0
-  "Set xc 0 Set yc 0 Tell_If 'image $1 has no mass!?' PopFile 2"
+  "Set xc 0 Set yc 0 Tell_If 'image $1 has no mass!?' exit_macro"
 VVMul ${2}_xmass ${2}_xc $1
 VVMul ${2}_ymass ${2}_yc $1
 Get_Sum xc ${2}_xmass

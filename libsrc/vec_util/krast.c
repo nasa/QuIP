@@ -1,11 +1,10 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_krast[] = QUIP_VERSION_STRING;
-
 #include "vec_util.h"
+#include "quip_prot.h"
 
 static int base_size;
-static int base_log;
+static int base_log=4;	// initialize to quiet compiler?
 
 
 /* See koenderink & van doorn, proc ieee v67 Oct 1979 1465-1466.
@@ -26,7 +25,7 @@ static void getkpt( u_long a, u_short *px, u_short *py )
 	unsigned int new_bit;
 	int i;
 
-	atmp=a;
+	atmp=(int)a;
 	bit=1;
 	a2=a32=a2a=0;
 	/* hard-coded for 256^2? */
@@ -63,13 +62,13 @@ static void getkpt( u_long a, u_short *px, u_short *py )
 		bit >>= 1;
 	}
 		
-	*px = ( a2 & ~sigma ) ^ ( a32 & sigma ) ^ eta;
-	*py = ( a2 & sigma ) ^ ( a32 & ~sigma ) ^ eta;
+	*px = (u_short)(( a2 & ~sigma ) ^ ( a32 & sigma ) ^ eta);
+	*py = (u_short)(( a2 & sigma ) ^ ( a32 & ~sigma ) ^ eta);
 /*
-sprintf(error_string,
+sprintf(ERROR_STRING,
 "a = 0x%x, a2 = 0x%x, a32 = 0x%x, a2a = 0x%x, sigma = 0x%x, eta = 0x%x, x = 0x%x, y = 0x%x",
 a,a2,a32,a2a,sigma,eta,*px,*py);
-advise(error_string);
+advise(ERROR_STRING);
 */
 
 }
@@ -93,40 +92,42 @@ void mk_krast(QSP_ARG_DECL  Data_Obj *dp)
 	u_short *sp;
 	int l;
 
-	if( dp->dt_prec != PREC_UIN ){
-		sprintf(error_string,"mk_krast:  object %s (%s) should have precision %s",
-			dp->dt_name,name_for_prec(dp->dt_prec),name_for_prec(PREC_UIN));
-		WARN(error_string);
+	INSIST_RAM_OBJ(dp,mk_krast);
+
+	if( OBJ_PREC(dp) != PREC_UIN ){
+		sprintf(ERROR_STRING,"mk_krast:  object %s (%s) should have precision %s",
+			OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_UIN));
+		WARN(ERROR_STRING);
 		return;
 	}
-	if( dp->dt_comps != 2 ){
-		sprintf(error_string,"mk_krast:  object %s (%d) should have depth 2",
-			dp->dt_name,dp->dt_comps);
-		WARN(error_string);
+	if( OBJ_COMPS(dp) != 2 ){
+		sprintf(ERROR_STRING,"mk_krast:  object %s (%d) should have depth 2",
+			OBJ_NAME(dp),OBJ_COMPS(dp));
+		WARN(ERROR_STRING);
 		return;
 	}
-	l = my_log2( dp->dt_cols ) ;
-	if( 1<<l != (int) dp->dt_cols ){
-		sprintf(error_string,"mk_krast:  %s length (%d) is not a power of two",
-			dp->dt_name,dp->dt_cols);
-		WARN(error_string);
+	l = my_log2( OBJ_COLS(dp) ) ;
+	if( 1<<l != (int) OBJ_COLS(dp) ){
+		sprintf(ERROR_STRING,"mk_krast:  %s length (%d) is not a power of two",
+			OBJ_NAME(dp),OBJ_COLS(dp));
+		WARN(ERROR_STRING);
 		l++;
 	}
 
 	if( l & 1 ){
-		sprintf(error_string,"mk_krast:  %s length (%d) is not the square of a power of two",
-			dp->dt_name,dp->dt_cols);
-		WARN(error_string);
+		sprintf(ERROR_STRING,"mk_krast:  %s length (%d) is not the square of a power of two",
+			OBJ_NAME(dp),OBJ_COLS(dp));
+		WARN(ERROR_STRING);
 		l++;
 	}
 
 	base_log = l / 2;
 	base_size = 1 << l;
 
-	sp=(u_short *)dp->dt_data;
-	for(i=0;i<dp->dt_cols;i++){
-		getkpt(i,sp,sp+dp->dt_cinc);
-		sp += dp->dt_pinc;
+	sp=(u_short *)OBJ_DATA_PTR(dp);
+	for(i=0;i<OBJ_COLS(dp);i++){
+		getkpt(i,sp,sp+OBJ_COMP_INC(dp));
+		sp += OBJ_PXL_INC(dp);
 	}
 }
 

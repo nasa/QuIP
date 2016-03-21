@@ -48,6 +48,33 @@ Delete_Vector dx
 Delete_Vector dy
 .
 
+# Rotated, elongated Gaussian.
+# 0 degrees is vertical, sigma1 is up and sigma2 is sideways
+
+Define Gaussian_2D_R 4 'target image' 'sigma1' 'sigma2' angle
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+Image gr_coords $ys $xs 2 float
+# First make the (rotated) x ramp...
+Assign arg $4*atan(1)/45	# convert angle to radians
+Assign cfact cos($arg)
+Assign sfact sin($arg)
+Assign xdelta $cfact
+Assign ydelta -$sfact
+Ramp2D gr_coords{0} -$xdelta*$xs/2-$ydelta*$ys/2 $xdelta $ydelta
+# Now make the (rotated) y ramp
+Assign xdelta $sfact
+Assign ydelta $cfact
+Ramp2D gr_coords{1} -$xdelta*$xs/2-$ydelta*$ys/2 $xdelta $ydelta
+VSMul gr_coords{0} gr_coords{0} 1/$2
+VSMul gr_coords{1} gr_coords{1} 1/$3
+VVMul gr_coords gr_coords gr_coords
+VVAdd $1 gr_coords{0} gr_coords{1}
+Delete_Vector gr_coords
+VSMul $1 $1 -0.5	# sigma is one here...
+VExp $1 $1
+.
+
 Define D_Gaussian 4 'target x image' 'target y image' 'x scale' 'y scale'
 Assign g_xsize ncols($1)
 Assign g_ysize nrows($1)
@@ -168,9 +195,22 @@ VSqrt $1 $1
 Delete_Image mra_coords
 .
 
+Define Make_Angle_At 3 target x y
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+Image maa_coords $ys $xs 1 complex		# dx,dy are distance from center
+Make_Coords_At maa_coords $2 $3
+#echo "VMagSq $1 maa_coords"
+VAtn2 $1 maa_coords
+Delete_Image maa_coords
+.
+
+
 Define Make_Coords_At 3 target x y
 Assign xs "ncols($1)"
 Assign ys "nrows($1)"
+#Print xs
+#Print ys
 Ramp2D "$1{0}" "-$2-($xs-1)/2" 1 0	# leftmost edge is -($xs-1)/2 rel. ctr
 Ramp2D "$1{1}" "-$3+($ys-1)/2" 0 -1	# top row is ($yx-1)/2 rel. center
 .
@@ -263,6 +303,7 @@ VVMul $1 $1 $1
 VSMul $1 $1 "-1/(8*($5)*($5))"
 VExp $1 $1
 .
+
 
 Stop_File gaussian.macs
 

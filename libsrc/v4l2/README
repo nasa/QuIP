@@ -1,0 +1,13 @@
+
+This code was developed to run the LMLBT44 (bttv driver), and
+was subsequently used without modification for the Sensoray 811
+(saa7134 driver).  The 7134 driver module is not supplied by
+default with CentOS 5.6, and has to be built.  This has to done
+each time there is a kernel update!?  Although, perhaps for minor
+kernel updates, we can simply copy the module to the new location???
+
+Instructions for building module:
+
+see CentOS wiki...
+
+

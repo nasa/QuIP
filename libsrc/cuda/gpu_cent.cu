@@ -1,10 +1,12 @@
 /* special helper function for computing centroids */
 
+#define KERNEL_FUNC_QUALIFIER __global__
+
 #define CENT_KERNEL( typ )						\
 									\
-__global__ void typ##_slow_cent_helper					\
-( std_type *x_array, dim3 inc1, std_type *y_array, dim3 inc2,		\
-	std_type *input, dim3 inc3, dim3 len )				\
+KERNEL_FUNC_QUALIFIER void typ##_slow_cent_helper					\
+( /*std_type *x_array, dim3 inc1, std_type *y_array, dim3 inc2,		\
+	std_type *input, dim3 inc3, dim3 len*/ DECLARE_KERN_ARGS_SLEN_3 )	\
 									\
 {									\
 	dim3 index;							\
@@ -18,9 +20,9 @@ __global__ void typ##_slow_cent_helper					\
 	offset2 = index.y * inc2.x + index.x;				\
 	offset3 = index.y * inc3.x + index.x;				\
 									\
-	p = *(input + offset3);						\
-	*(x_array+offset1) = p * index.x;				\
-	*(y_array+offset2) = p * index.y;				\
+	p = *(/*input*/ c + offset3);						\
+	*(/*x_array*/a+offset1) = p * index.x;				\
+	*(/*y_array*/b+offset2) = p * index.y;				\
 }
 
 #define CK( c )		CENT_KERNEL( c )

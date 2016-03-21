@@ -1,8 +1,7 @@
 #include "quip_config.h"
 
-char VersionId_vectree_nodetbl[] = QUIP_VERSION_STRING;
-
 #include <stdlib.h>	/* qsort() */
+#include "quip_prot.h"
 #include "vectree.h"
 
 /* the entries that are now ND_NULL used to be 0 - w/ g++, this caused
@@ -120,10 +119,17 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_MATH2_VFN,	"math2_vfn",		2,	PT_SHP,	ND_FUNC	},
 {	T_MATH2_VSFN,	"math2_vsfn",		2,	PT_SHP,	ND_FUNC	},
 
+{	T_INT1_FN,	"int1_fn",		1,	PT_SHP,	ND_FUNC	},
+{	T_INT1_VFN,	"int1_vfn",		1,	PT_SHP,	ND_FUNC	},
+
 {	T_SIZE_FN,	"size_fn",		1,	PT_SHP,	ND_FUNC	},
 {	T_DATA_FN,	"data_fn",		1,	PT_SHP,	ND_FUNC	},
 {	T_STR1_FN,	"str1_fn",		1,	PT_SHP,	ND_FUNC	},
 {	T_STR2_FN,	"str2_fn",		2,	PT_SHP,	ND_FUNC	},
+{	T_STR3_FN,	"str3_fn",		3,	PT_SHP,	ND_FUNC	},
+{	T_STRV_FN,	"strv_fn",		1,	PT_SHP,	ND_FUNC	},
+{	T_CHAR_FN,	"char_fn",		1,	PT_SHP,	ND_FUNC	},
+{	T_CHAR_VFN,	"char_vfn",		1,	PT_SHP,	ND_FUNC	},
 {	T_MISC_FN,	"misc_fn",		1,	PT_SHP,	ND_FUNC	},
 
 {	T_MINVAL,	"minval",		1,	CP_SHP,	ND_FUNC	},
@@ -153,6 +159,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_INDIR_CALL,	"indir_call",		2,	PT_SHP,	ND_NONE /* should be ND_CALLF??? BUG? */	},
 {	T_UNDEF,	"undef",		0,	PT_SHP,	ND_STRING	},
 {	T_TYPECAST,	"typecast",		1,	CP_SHP,	ND_CAST	},
+/* Should these own their own shape or not??? */
 {	T_ENLARGE,	"enlarge",		1,	CP_SHP,	ND_SIZE_CHANGE	},
 {	T_REDUCE,	"reduce",		1,	CP_SHP,	ND_SIZE_CHANGE	},
 
@@ -274,20 +281,21 @@ void sort_tree_tbl()
 		int i;
 
 		for(i=0;i<N_TREE_CODES;i++){
-			if( tnt_tbl[i].tnt_code != i ){
-				sprintf(DEFAULT_ERROR_STRING,
-			"tnt_tbl[%d,%s].tnt_code = %d, should be %d !?",
-					i,tnt_tbl[i].tnt_name,tnt_tbl[i].tnt_code,i);
-				NWARN(DEFAULT_ERROR_STRING);
-				NERROR1("make sure that all tree codes are listed in nodetbl.c");
-			}
-			/*
-			else if( verbose ){
-				sprintf(DEFAULT_ERROR_STRING,
-			"tnt_tbl[%d] = %s",i,tnt_tbl[i].tnt_name);
-				advise(DEFAULT_ERROR_STRING);
-			}
-			*/
+			assert( tnt_tbl[i].tnt_code == i );
+//			if( tnt_tbl[i].tnt_code != i ){
+//				sprintf(DEFAULT_ERROR_STRING,
+//			"tnt_tbl[%d,%s].tnt_code = %d, should be %d !?",
+//					i,tnt_tbl[i].tnt_name,tnt_tbl[i].tnt_code,i);
+//				NWARN(DEFAULT_ERROR_STRING);
+//				NERROR1("make sure that all tree codes are listed in nodetbl.c");
+//			}
+//			/*
+//			else if( verbose ){
+//				sprintf(DEFAULT_ERROR_STRING,
+//			"tnt_tbl[%d] = %s",i,tnt_tbl[i].tnt_name);
+//				advise(DEFAULT_ERROR_STRING);
+//			}
+//			*/
 		}
 	}
 #endif /* CAUTIOUS */

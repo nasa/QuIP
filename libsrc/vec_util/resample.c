@@ -1,7 +1,5 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_resample[] = QUIP_VERSION_STRING;
-
 /* image warping */
 
 /*
@@ -14,52 +12,57 @@ char VersionId_vec_util_resample[] = QUIP_VERSION_STRING;
  * pixel, which tell where to accumulate each sample
  */
 
-#include "data_obj.h"
-#include "vec_util.h"
 #include <math.h>
+#include "quip_prot.h"
+#include "vec_util.h"
 
-/* local prototype */
-static int resamp_check(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
-
+// BUG global var not thread-safe
 static int wrap_resample=1;
 
 void set_resample_wrap(int flag)
 {
 	if( flag )
-		advise("enabling wrap-around during resample ops");
+		NADVISE("enabling wrap-around during resample ops");
 	else
-		advise("disabling wrap-around during resample ops");
+		NADVISE("disabling wrap-around during resample ops");
 
 	wrap_resample=flag;
 }
 
 static int resamp_check(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 {
-	if( (dpto->dt_prec != PREC_SP ) || (dpfr->dt_prec != PREC_SP) ){
+	VINSIST_RAM_OBJ(dpto,resample,-1)
+	VINSIST_RAM_OBJ(dpfr,resample,-1)
+	VINSIST_RAM_OBJ(dpwarp,resample,-1)
+
+	if( (OBJ_PREC(dpto) != PREC_SP ) || (OBJ_PREC(dpfr) != PREC_SP) ){
 		WARN("source and destination must be float");
 		return(-1);
 	}
-	if( dpto->dt_comps != dpfr->dt_comps ){
+	if( OBJ_COMPS(dpto) != OBJ_COMPS(dpfr) ){
 		sprintf(ERROR_STRING,"resamp_check:  type dimension mismatch between %s (%d) and %s (%d)",
-				dpto->dt_name,dpto->dt_comps,dpfr->dt_name,dpfr->dt_comps);
+				OBJ_NAME(dpto),OBJ_COMPS(dpto),OBJ_NAME(dpfr),OBJ_COMPS(dpfr));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-	if( (dpto->dt_rows != dpwarp->dt_rows) ||
-		(dpto->dt_cols != dpwarp->dt_cols)){
+	if( (OBJ_ROWS(dpto) != OBJ_ROWS(dpwarp)) ||
+		(OBJ_COLS(dpto) != OBJ_COLS(dpwarp))){
 sprintf(ERROR_STRING,"target %s, %d rows by %d cols",
-dpto->dt_name,dpto->dt_rows,dpto->dt_cols);
+OBJ_NAME(dpto),OBJ_ROWS(dpto),OBJ_COLS(dpto));
 advise(ERROR_STRING);
 sprintf(ERROR_STRING,"map %s, %d rows by %d cols",
-dpwarp->dt_name,dpwarp->dt_rows,dpwarp->dt_cols);
+OBJ_NAME(dpwarp),OBJ_ROWS(dpwarp),OBJ_COLS(dpwarp));
 advise(ERROR_STRING);
 		WARN("size mismatch between target and resample map");
 		return(-1);
 	}
-	if( (MACHINE_PREC(dpwarp) != PREC_SP) ||
-		(dpwarp->dt_comps != 2) ){
-		sprintf(ERROR_STRING,"warp control image %s must be float, complex",
-			dpwarp->dt_name);
+	// We allow 1-component complex or two-component float
+	if( (!(OBJ_PREC(dpwarp) == PREC_CPX && OBJ_COMPS(dpwarp)==1)) &&
+	    (!(OBJ_PREC(dpwarp) == PREC_SP  && OBJ_COMPS(dpwarp)==2)) ){
+		sprintf(ERROR_STRING,
+"warp control image %s (%ld component %s) must be complex or 2-component float",
+			OBJ_NAME(dpwarp),(long)OBJ_COMPS(dpwarp),
+			PREC_NAME(OBJ_PREC_PTR(dpwarp)));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -74,20 +77,21 @@ void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 	u_long i,j;
 	u_long out_rows, out_cols;
 	u_long src_rows, src_cols;
-	incr_t src_rowinc, src_pinc;
+	incr_t src_rowinc;
+    //incr_t src_pinc;
 
 	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
 
-	out_rows=dpto->dt_rows;
-	out_cols=dpto->dt_cols;
-	src_rows=dpfr->dt_rows;
-	src_cols=dpfr->dt_cols;
-	src_rowinc=dpfr->dt_rowinc;
-	src_pinc=dpfr->dt_pinc;
+	out_rows=OBJ_ROWS(dpto);
+	out_cols=OBJ_COLS(dpto);
+	src_rows=OBJ_ROWS(dpfr);
+	src_cols=OBJ_COLS(dpfr);
+	src_rowinc=OBJ_ROW_INC(dpfr);
+	//src_pinc=OBJ_PXL_INC(dpfr);
 
-	wp = (float *)dpwarp->dt_data;
-	ptrto = (float *)dpto->dt_data;
-	ptrfr = (float *)dpfr->dt_data;
+	wp = (float *)OBJ_DATA_PTR(dpwarp);
+	ptrto = (float *)OBJ_DATA_PTR(dpto);
+	ptrfr = (float *)OBJ_DATA_PTR(dpfr);
 	for(i=0;i<out_rows;i++){
 		for(j=0;j<out_cols;j++){
 
@@ -126,40 +130,40 @@ void resample(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 				} while ( coord >= (float)limit );\
 			}
 
-#define CHECK_RANGE	if( wrap_resample ){					\
-				PUT_IN_RANGE(x_fr,src_cols)			\
-				PUT_IN_RANGE(y_fr,src_rows)			\
-				map_sample=1;					\
-			} else {						\
+#define CHECK_RANGE	if( wrap_resample ){				\
+				PUT_IN_RANGE(x_fr,src_cols)		\
+				PUT_IN_RANGE(y_fr,src_rows)		\
+				map_sample=1;				\
+			} else {					\
 				if( x_fr < 0.0 || x_fr >= (float)src_cols ||	\
 					y_fr < 0.0 || y_fr >= (float)src_rows ){\
-					map_sample=0;				\
-				} else {					\
-					map_sample=1;				\
-				}						\
+					map_sample=0;			\
+				} else {				\
+					map_sample=1;			\
+				}					\
 			}
 
-#define MAP_PIXEL	jj = x_fr; /* truncate fraction */				\
-			ii = y_fr;							\
-											\
-			dx=x_fr-jj;							\
-			dy=y_fr-ii;							\
-			dxy = dx*dy;							\
-											\
-			ii2=ii+1;							\
-			if( ii2 == src_rows ) ii2=0;					\
-			ii *= src_rowinc;						\
-			ii2 *= src_rowinc;						\
-			jj2=jj+1;							\
-			if( jj2 == src_cols ) jj2=0;					\
-			jj *= src_pinc;							\
-			jj2 *= src_pinc;						\
-											\
-			for(c=0;c<src_comps;c++){					\
+#define MAP_PIXEL	jj = (dimension_t) x_fr; /* truncate fraction */\
+			ii = (dimension_t) y_fr;			\
+									\
+			dx=x_fr-jj;					\
+			dy=y_fr-ii;					\
+			dxy = dx*dy;					\
+									\
+			ii2=ii+1;					\
+			if( ii2 == src_rows ) ii2=0;			\
+			ii *= src_rowinc;				\
+			ii2 *= src_rowinc;				\
+			jj2=jj+1;					\
+			if( jj2 == src_cols ) jj2=0;			\
+			jj *= src_pinc;					\
+			jj2 *= src_pinc;				\
+									\
+			for(c=0;c<src_comps;c++){			\
 	*(ptrto+c*dst_cinc) = (*(ptrfr + c*src_cinc + ii +  jj  )) * (1-dx-dy+dxy)	\
-		 + (*(ptrfr + c*src_cinc + ii +  jj2 )) * (dx -dxy)			\
-		 + (*(ptrfr + c*src_cinc + ii2 + jj  )) * (dy - dxy)			\
-		 + (*(ptrfr + c*src_cinc + ii2 + jj2 )) * dxy;				\
+		 + (*(ptrfr + c*src_cinc + ii +  jj2 )) * (dx -dxy)	\
+		 + (*(ptrfr + c*src_cinc + ii2 + jj  )) * (dy - dxy)	\
+		 + (*(ptrfr + c*src_cinc + ii2 + jj2 )) * dxy;		\
 		 	}
 
 /* this old bilinear warp uses the warp map for perturbations */
@@ -181,26 +185,26 @@ void bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpwarp)
 
 	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
 
-	out_rows=dpto->dt_rows;
-	out_cols=dpto->dt_cols;
-	src_rows=dpfr->dt_rows;
-	src_cols=dpfr->dt_cols;
-	src_comps=dpfr->dt_comps;
-	src_rowinc=dpfr->dt_rowinc;
-	src_pinc=dpfr->dt_pinc;
+	out_rows=OBJ_ROWS(dpto);
+	out_cols=OBJ_COLS(dpto);
+	src_rows=OBJ_ROWS(dpfr);
+	src_cols=OBJ_COLS(dpfr);
+	src_comps=OBJ_COMPS(dpfr);
+	src_rowinc=OBJ_ROW_INC(dpfr);
+	src_pinc=OBJ_PXL_INC(dpfr);
 
-	dst_cinc = dpto->dt_cinc;
-	src_cinc = dpfr->dt_cinc;
+	dst_cinc = OBJ_COMP_INC(dpto);
+	src_cinc = OBJ_COMP_INC(dpfr);
 
-	ptrto = (float *)dpto->dt_data;
-	ptrfr = (float *)dpfr->dt_data;
+	ptrto = (float *)OBJ_DATA_PTR(dpto);
+	ptrfr = (float *)OBJ_DATA_PTR(dpfr);
 	for(i=0;i<out_rows;i++){
-		wp = (float *)dpwarp->dt_data + i * dpwarp->dt_rinc;
+		wp = (float *)OBJ_DATA_PTR(dpwarp) + i * OBJ_ROW_INC(dpwarp);
 		for(j=0;j<out_cols;j++){
 
 			x_fr = (float)j + *wp;
-			y_fr = (float)i + *(wp+dpwarp->dt_cinc);
-			wp += dpwarp->dt_pinc;
+			y_fr = (float)i + *(wp+OBJ_COMP_INC(dpwarp));
+			wp += OBJ_PXL_INC(dpwarp);
 
 			CHECK_RANGE
 
@@ -232,34 +236,34 @@ void new_bilinear_warp(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *dpw
 	if( resamp_check(QSP_ARG  dpto,dpfr,dpwarp) < 0 ) return;
 
 
-	out_rows=dpto->dt_rows;
-	out_cols=dpto->dt_cols;
-	src_rows=dpfr->dt_rows;
-	src_cols=dpfr->dt_cols;
-	src_comps=dpfr->dt_comps;
-	src_rowinc=dpfr->dt_rowinc;
-	src_pinc=dpfr->dt_pinc;
+	out_rows=OBJ_ROWS(dpto);
+	out_cols=OBJ_COLS(dpto);
+	src_rows=OBJ_ROWS(dpfr);
+	src_cols=OBJ_COLS(dpfr);
+	src_comps=OBJ_COMPS(dpfr);
+	src_rowinc=OBJ_ROW_INC(dpfr);
+	src_pinc=OBJ_PXL_INC(dpfr);
 
-	dst_cinc = dpto->dt_cinc;
-	src_cinc = dpfr->dt_cinc;
+	dst_cinc = OBJ_COMP_INC(dpto);
+	src_cinc = OBJ_COMP_INC(dpfr);
 
-	ptrfr = (float *)dpfr->dt_data;
+	ptrfr = (float *)OBJ_DATA_PTR(dpfr);
 	for(i=0;i<out_rows;i++){
-		ptrto = (float *)dpto->dt_data;
-		ptrto += i*dpto->dt_rowinc;
-		wp = (float *)dpwarp->dt_data + i * dpwarp->dt_rinc;
+		ptrto = (float *)OBJ_DATA_PTR(dpto);
+		ptrto += i*OBJ_ROW_INC(dpto);
+		wp = (float *)OBJ_DATA_PTR(dpwarp) + i * OBJ_ROW_INC(dpwarp);
 		for(j=0;j<out_cols;j++){
 
 			x_fr = *wp;
-			y_fr = *(wp+dpwarp->dt_cinc);
-			wp += dpwarp->dt_pinc;
+			y_fr = *(wp+OBJ_COMP_INC(dpwarp));
+			wp += OBJ_PXL_INC(dpwarp);
 
 			CHECK_RANGE
 
 			if( map_sample ){
 				MAP_PIXEL
 			}
-			ptrto += dpto->dt_pinc;
+			ptrto += OBJ_PXL_INC(dpto);
 		}
 	}
 }

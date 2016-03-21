@@ -3,6 +3,7 @@
 #define _MY_V4L2_H_
 
 #include "quip_config.h"
+#include "fio_api.h"
 
 #include "my_video_dev.h"
 #include "query.h"
@@ -18,8 +19,10 @@ extern debug_flag_t stream_debug;
 #ifdef HAVE_V4L2
 extern int stop_capturing(QSP_ARG_DECL  Video_Device *);
 extern int check_queue_status(QSP_ARG_DECL  Video_Device *);
-ITEM_INTERFACE_PROTOTYPES(Video_Device,video_dev)
 #endif /* HAVE_V4L2 */
+
+ITEM_INTERFACE_PROTOTYPES(Video_Device,video_dev)
+#define PICK_VIDEO_DEV(p)	pick_video_dev(QSP_ARG  p)
 
 /* stream.c */
 extern COMMAND_FUNC( print_grab_times );

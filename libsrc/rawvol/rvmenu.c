@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_rawvol_rvmenu[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -27,11 +25,18 @@ char VersionId_rawvol_rvmenu[] = QUIP_VERSION_STRING;
 #include <linux/unistd.h>
 #endif
 
+#include "quip_prot.h"
 #include "rawvol.h"
-#include "query.h"
-#include "debug.h"
-#include "version.h"
 
+#ifndef HAVE_RAWVOL
+
+#define MISSING_CONFIG(funcname)			\
+	sprintf(ERROR_STRING,				\
+"Unable to call %s, program not configured with raw volume support!?",	\
+		#funcname);				\
+	WARN(ERROR_STRING);
+
+#endif // ! HAVE_RAWVOL
 
 static COMMAND_FUNC( do_mkfs )
 {
@@ -76,7 +81,11 @@ static COMMAND_FUNC( do_mkfs )
 		return;
 	}
 
+#ifdef HAVE_RAWVOL
 	rv_mkfs(QSP_ARG  ndisks,str_arr,nib,nsb);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_mkfs)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_vol )
@@ -85,7 +94,11 @@ static COMMAND_FUNC( do_vol )
 
 	s=NAMEOF("volume file name");
 
+#ifdef HAVE_RAWVOL
 	read_rv_super(QSP_ARG  s);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(read_rv_super)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_new )
@@ -96,7 +109,11 @@ static COMMAND_FUNC( do_new )
 	s=NAMEOF("filename");
 	n=HOW_MANY("size");
 
+#ifdef HAVE_RAWVOL
 	rv_newfile(QSP_ARG  s,n);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_newfile)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_rm )
@@ -105,7 +122,11 @@ static COMMAND_FUNC( do_rm )
 
 	inp = PICK_RV_INODE("");
 	if( inp==NO_INODE ) return;
+#ifdef HAVE_RAWVOL
 	rv_rmfile(QSP_ARG  inp->rvi_name);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_rmfile)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_chmod )
@@ -116,7 +137,11 @@ static COMMAND_FUNC( do_chmod )
 	inp = PICK_RV_INODE("");
 	mode = HOW_MANY("integer mode code");
 	if( inp==NO_INODE ) return;
-	rv_chmod(inp,mode);
+#ifdef HAVE_RAWVOL
+	rv_chmod(QSP_ARG  inp,mode);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_chmod)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_ls_one )
@@ -125,7 +150,11 @@ static COMMAND_FUNC( do_ls_one )
 
 	inp = PICK_RV_INODE("");
 	if( inp==NO_INODE ) return;
+#ifdef HAVE_RAWVOL
 	rv_ls_inode(QSP_ARG  inp);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_ls_inode)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_mkfile )
@@ -142,12 +171,20 @@ static COMMAND_FUNC( do_mkfile )
 		return;
 	}
 
-	rv_mkfile(s,nt,nw);
+#ifdef HAVE_RAWVOL
+	rv_mkfile(QSP_ARG  s,nt,nw);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_mkfile)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_set_osync )
 {
+#ifdef HAVE_RAWVOL
 	set_use_osync( ASKIF("open raw volumes with O_SYNC") );
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(set_use_osync)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_dump_block )
@@ -158,7 +195,11 @@ static COMMAND_FUNC( do_dump_block )
 	i=HOW_MANY("disk index");
 	block = HOW_MANY("block index");
 
-	dump_block(i,block);
+#ifdef HAVE_RAWVOL
+	dump_block(QSP_ARG  i,block);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(dump_block)
+#endif // ! HAVE_RAWVOL
 }
 
 /* Root priveleges allow one user to delete another's files.
@@ -178,10 +219,14 @@ static COMMAND_FUNC( do_set_root )
 		return;
 	}
 
-	if( grant_root_access(s) < 0 ){
+#ifdef HAVE_RAWVOL
+	if( grant_root_access(QSP_ARG  s) < 0 ){
 		sprintf(ERROR_STRING,"Error granting root access to user %s",s);
 		WARN(ERROR_STRING);
 	}
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(grant_root_access)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_wtest )
@@ -192,39 +237,62 @@ static COMMAND_FUNC( do_wtest )
 	s = HOW_MANY("size (in blocks) to test");
 	r = HOW_MANY("number of repetitions per write");
 
-	perform_write_test(n,s,r);
+#ifdef HAVE_RAWVOL
+	perform_write_test(QSP_ARG  n,s,r);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(perform_write_test)
+#endif // ! HAVE_RAWVOL
 
 }
 
-static COMMAND_FUNC( do_rawvol_info ){ rawvol_info(SINGLE_QSP_ARG); }
-static COMMAND_FUNC( do_rawvol_get_usage ){ rawvol_get_usage(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_rawvol_info )
+{
+#ifdef HAVE_RAWVOL
+	rawvol_info(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rawvol_info)
+#endif // ! HAVE_RAWVOL
+}
 
-Command admin_ctbl[]={
-{ "mkfs",	do_mkfs,	"make a new file system"		},
-{ "osync",	do_set_osync,	"set/clear O_SYNC flag (for open(2))"	},
-{ "mkfile",	do_mkfile,	"create a big empty file"		},
-{ "wtest",	do_wtest,	"write test to a single platter"	},
-{ "info",	do_rawvol_info,	"give info about the current volume"	},
-{ "dump",	do_dump_block,	"dump a block"				},
-{ "get_usage",	do_rawvol_get_usage, "print out the number of free and total bytes" },
-{ "root",	do_set_root,	"grant superuser priveleges to a user"	},
-{ "quit",	popcmd,		"exit program"				},
-{ NULL_COMMAND								}
-};
+static COMMAND_FUNC( do_rawvol_get_usage )
+{
+#ifdef HAVE_RAWVOL
+	rawvol_get_usage(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rawvol_get_usage)
+#endif // ! HAVE_RAWVOL
+}
+
+#define ADD_CMD(s,f,h)	ADD_COMMAND(admin_menu,s,f,h)
+
+MENU_BEGIN(admin)
+ADD_CMD( mkfs,		do_mkfs,	make a new file system )
+ADD_CMD( osync,		do_set_osync,	set/clear O_SYNC flag (for open(2)) )
+ADD_CMD( mkfile,	do_mkfile,	create a big empty file )
+ADD_CMD( wtest,		do_wtest,	write test to a single platter )
+ADD_CMD( info,		do_rawvol_info,	give info about the current volume )
+ADD_CMD( dump,		do_dump_block,	dump a block )
+ADD_CMD( get_usage,	do_rawvol_get_usage, show disk usage )
+ADD_CMD( root,		do_set_root,	grant superuser priveleges to a user )
+MENU_END(admin)
 
 
 static COMMAND_FUNC( do_admin )
 {
-	PUSHCMD(admin_ctbl,"rv_admin");
+	PUSH_MENU(admin);
 }
 
 static COMMAND_FUNC( do_rv_end )
 {
 	/* volume may not be open after a mkfs??? */
+#ifdef HAVE_RAWVOL
 	if( rv_is_open() )
 		rv_sync(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_sync)
+#endif // ! HAVE_RAWVOL
 
-	popcmd(SINGLE_QSP_ARG);
+	POP_MENU;
 }
 
 static COMMAND_FUNC( do_rv_info )
@@ -234,7 +302,11 @@ static COMMAND_FUNC( do_rv_info )
 	inp = PICK_RV_INODE("filename");
 	if( inp == NO_INODE ) return;
 
+#ifdef HAVE_RAWVOL
 	rv_info(QSP_ARG  inp);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_info)
+#endif // ! HAVE_RAWVOL
 }
 
 #define N_ERROR_TYPES	4
@@ -278,13 +350,17 @@ static COMMAND_FUNC( do_err_frms )
 		delvec(QSP_ARG  dp);
 	}
 
-	dp = mk_vec(QSP_ARG  s,inp->rvi_fi[i].fi_nsaved,1,PREC_DI);
+	dp = mk_vec(QSP_ARG  s,inp->rvi_fi[i].fi_nsaved,1,PREC_FOR_CODE(PREC_DI));
 	if( dp == NO_OBJ ){
 		sprintf(ERROR_STRING,"do_err_frms:  unable to create data vector %s",s);
 		WARN(ERROR_STRING);
 		return;
 	}
-	xfer_frame_info((dimension_t *)dp->dt_data,i,inp);
+#ifdef HAVE_RAWVOL
+	xfer_frame_info((dimension_t *)OBJ_DATA_PTR(dp),i,inp);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(xfer_frame_info)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_mkdir )
@@ -292,7 +368,11 @@ static COMMAND_FUNC( do_mkdir )
 	const char *s;
 
 	s=NAMEOF("directory name");
+#ifdef HAVE_RAWVOL
 	rv_mkdir(QSP_ARG  s);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_mkdir)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_cd )
@@ -300,53 +380,117 @@ static COMMAND_FUNC( do_cd )
 	const char *s;
 
 	s=NAMEOF("directory name");
+#ifdef HAVE_RAWVOL
 	rv_cd(QSP_ARG  s);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_cd)
+#endif // ! HAVE_RAWVOL
 }
 
 static COMMAND_FUNC( do_default_rv )
 {
+#ifdef HAVE_RAWVOL
 	if( insure_default_rv(SINGLE_QSP_ARG) < 0 )
 		WARN("Unable to mount default raw volume");
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(insure_default_rv)
+#endif // ! HAVE_RAWVOL
 }
 
-static COMMAND_FUNC(do_rv_sync){ rv_sync(SINGLE_QSP_ARG); }
-static COMMAND_FUNC(do_rv_ls_cwd){ rv_ls_cwd(SINGLE_QSP_ARG); }
-static COMMAND_FUNC(do_rv_rm_cwd){ rv_rm_cwd(SINGLE_QSP_ARG); }
-static COMMAND_FUNC(do_rv_ls_all){ rv_ls_all(SINGLE_QSP_ARG); }
-static COMMAND_FUNC(do_rv_ls_ctx){ rv_ls_ctx(SINGLE_QSP_ARG); }
-static COMMAND_FUNC(do_rv_pwd){ rv_pwd(SINGLE_QSP_ARG); }
-static COMMAND_FUNC(do_rv_close){ rv_close(SINGLE_QSP_ARG); }
+static COMMAND_FUNC(do_rv_sync)
+{
+#ifdef HAVE_RAWVOL
+	rv_sync(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_sync)
+#endif // ! HAVE_RAWVOL
+}
 
-Command rv_ctbl[]={
-{ "default",	do_default_rv,	"mount default raw volume"	},
-{ "volume",	do_vol,		"specify current raw volume"	},
-{ "sync",	do_rv_sync,	"update raw volume disk header"	},
-{ "ls_cwd",	do_rv_ls_cwd,	"list files in current directory" },
-{ "ls_all",	do_rv_ls_all,	"list files on current volume"	},
-{ "rm",		do_rm,		"delete raw volume file"	},
-{ "rm_cwd",	do_rv_rm_cwd,	"remove all files in current directory" },
-{ "ls_ctx",	do_rv_ls_ctx,	"list files in current context" },
-{ "ls",		do_ls_one,	"list files on current volume"	},
-{ "pwd",	do_rv_pwd,		"print working RV directory"	},
-{ "info",	do_rv_info,	"list shape information about a file"	},
-{ "chmod",	do_chmod,	"change file mode"		},
-{ "new",	do_new,		"create a new raw volume file"	},
-{ "mkdir",	do_mkdir,	"create directory"		},
-{ "cd",		do_cd,		"change directory"		},
-{ "error_frames",do_err_frms,	"transfer error frames to a data object" },
-{ "admin",	do_admin,	"perform administrative tasks"	},
-{ "close",	do_rv_close,	"close current raw volume"	},
-{ "quit",	do_rv_end,	"exit submenu"			},
-{ NULL_COMMAND							}
-};
+static COMMAND_FUNC(do_rv_ls_cwd)
+{
+#ifdef HAVE_RAWVOL
+	rv_ls_cwd(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_ls_cwd)
+#endif // ! HAVE_RAWVOL
+}
 
-COMMAND_FUNC( rv_menu )
+static COMMAND_FUNC(do_rv_rm_cwd)
+{
+#ifdef HAVE_RAWVOL
+	rv_rm_cwd(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_rm_cwd)
+#endif // ! HAVE_RAWVOL
+}
+
+static COMMAND_FUNC(do_rv_ls_all)
+{
+#ifdef HAVE_RAWVOL
+	rv_ls_all(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_ls_all)
+#endif // ! HAVE_RAWVOL
+}
+
+static COMMAND_FUNC(do_rv_ls_ctx)
+{
+#ifdef HAVE_RAWVOL
+	rv_ls_ctx(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_ls_ctx)
+#endif // ! HAVE_RAWVOL
+}
+
+static COMMAND_FUNC(do_rv_pwd)
+{
+#ifdef HAVE_RAWVOL
+	rv_pwd(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_pwd)
+#endif // ! HAVE_RAWVOL
+}
+
+static COMMAND_FUNC(do_rv_close)
+{
+#ifdef HAVE_RAWVOL
+	rv_close(SINGLE_QSP_ARG);
+#else // ! HAVE_RAWVOL
+	MISSING_CONFIG(rv_close)
+#endif // ! HAVE_RAWVOL
+}
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(rawvol_menu,s,f,h)
+
+MENU_BEGIN(rawvol)
+ADD_CMD( default,	do_default_rv,	mount default raw volume )
+ADD_CMD( volume,	do_vol,		specify current raw volume )
+ADD_CMD( sync,		do_rv_sync,	update raw volume disk header )
+ADD_CMD( ls_cwd,	do_rv_ls_cwd,	list files in current directory )
+ADD_CMD( ls_all,	do_rv_ls_all,	list files on current volume )
+ADD_CMD( rm,		do_rm,		delete raw volume file )
+ADD_CMD( rm_cwd,	do_rv_rm_cwd,	remove all files in current directory )
+ADD_CMD( ls_ctx,	do_rv_ls_ctx,	list files in current context )
+ADD_CMD( ls,		do_ls_one,	list files on current volume )
+ADD_CMD( pwd,		do_rv_pwd,	print working RV directory )
+ADD_CMD( info,		do_rv_info,	list shape information about a file )
+ADD_CMD( chmod,		do_chmod,	change file mode )
+ADD_CMD( new,		do_new,		create a new raw volume file )
+ADD_CMD( mkdir,		do_mkdir,	create directory )
+ADD_CMD( cd,		do_cd,		change directory )
+ADD_CMD( error_frames,	do_err_frms,	transfer error frames to a data object )
+ADD_CMD( admin,		do_admin,	perform administrative tasks )
+ADD_CMD( close,		do_rv_close,	close current raw volume )
+ADD_CMD( quit,		do_rv_end,	exit submenu )
+MENU_END(rawvol)
+
+COMMAND_FUNC( do_rv_menu )
 {
 	static int inited=0;
 
 	if( ! inited ){
 		dataobj_init(SINGLE_QSP_ARG);	/* initialize prec_name[] */
-		auto_version(QSP_ARG  "RAWVOL","VersionId_rawvol");
 		/* insure_default_rv(); */
 #ifdef DEBUG
 		if( rawvol_debug == 0 )
@@ -355,6 +499,6 @@ COMMAND_FUNC( rv_menu )
 		inited++;
 	}
 
-	PUSHCMD(rv_ctbl,"rawvol");
+	PUSH_MENU(rawvol);
 }
 

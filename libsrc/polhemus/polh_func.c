@@ -1,7 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_polhemus_polh_func[] = QUIP_VERSION_STRING;
-#include "llen.h"
+#include "quip_prot.h"
 
 #include "polh_dev.h"
 
@@ -36,8 +35,8 @@ int set_polh_filter(QSP_ARG_DECL  Ph_Cmd_Code code)
 
 	f = (float)HOW_MUCH("sensitivity of filter");
 	if(f < MIN_SENSITIVITY_FILTER || f > MAX_SENSITIVITY_FILTER) {
-		sprintf(error_string, "Requested sensitivity filter %1.3f, should be between 0 and 1", f);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING, "Requested sensitivity filter %1.3f, should be between 0 and 1", f);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
@@ -45,21 +44,21 @@ int set_polh_filter(QSP_ARG_DECL  Ph_Cmd_Code code)
 	fhigh = (float)HOW_MUCH("minimum allowable filtering");
 
 	if( flow < MIN_FLOW_FILTER || flow > fhigh ) {
-		sprintf(error_string, "Requested max. filter %1.3f, should be between 0 and min. filter %1.3f", flow, fhigh);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING, "Requested max. filter %1.3f, should be between 0 and min. filter %1.3f", flow, fhigh);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
 	if( fhigh < flow || fhigh > MAX_FHIGH_FILTER ) {
-		sprintf(error_string, "Requested min. filter %1.3f, should be between max. filter %1.3f and 1", fhigh, flow);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING, "Requested min. filter %1.3f, should be between max. filter %1.3f and 1", fhigh, flow);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 	
 	factor = (float)HOW_MUCH("maximum allowable transition rate");
 	if(factor < MIN_FACTOR_FILTER || factor > MAX_FACTOR_FILTER) {
-		sprintf(error_string, "Requested transition rate %1.3f, should be between 0 and 1", factor);
-		warn(error_string);
+		sprintf(DEFAULT_ERROR_STRING, "Requested transition rate %1.3f, should be between 0 and 1", factor);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 	
@@ -75,18 +74,18 @@ int ask_env(QSP_ARG_DECL  const char* name, const char* type, float* max_value, 
 	sprintf(ask_string,"minimum %s value for %s",name, type);
 	*min_value = (float)HOW_MUCH(ask_string);
 	if( *min_value < sys_min || *min_value > sys_max ) {
-		sprintf(error_string,"bad minimum %s %f specified, must be between %f and %f",
+		sprintf(DEFAULT_ERROR_STRING,"bad minimum %s %f specified, must be between %f and %f",
 			name, *min_value, sys_min, sys_max);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 
 	sprintf(ask_string,"maximum %s value for %s",name, type);
 	*max_value = (float)HOW_MUCH(ask_string);
 	if( *max_value < *min_value || *max_value > sys_max ) {
-		sprintf(error_string,"bad maximum %s %f specified, must be between %f and %f",
+		sprintf(DEFAULT_ERROR_STRING,"bad maximum %s %f specified, must be between %f and %f",
 			name, *max_value, *min_value, sys_max);
-		warn(error_string);
+		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
 

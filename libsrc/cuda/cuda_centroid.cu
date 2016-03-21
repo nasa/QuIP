@@ -2,64 +2,81 @@
 
 #ifdef HAVE_CUDA
 
-#include "quip_version.h"
+//#include "quip_version.h"
+#define BUILD_FOR_CUDA
 
-char VersionId_cuda_cuda_centroid[] = QUIP_VERSION_STRING;
-
+#include <cuda.h>
+#include <curand.h>
+#if CUDA_VERSION >= 5000
+// but gone on 7.5...
+//#include <helper_cuda.h>
+#else
 #include <cutil.h>
 #include <cutil_inline.h>
+#endif
 
+#include "quip_prot.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"
-#include "vecgen.h"
+#include "veclib/vecgen.h"
+#include "veclib/slow_len.h"
+#include "veclib/gpu_args.h"
+#include "veclib/host_typed_call_defs.h"
+#include "../cu2/cu2_host_call_defs.h"
+//#include "../cu2/cu2_kern_call_defs.h"
 
-#include "host_calls.h"
+//#include "host_calls.h"
 
 // The host call
 
 
 #define HOST_CENT_FUNC( typ )					\
 								\
-void typ##_cent(Vector_Args *vap)				\
+void typ##_cent(LINK_FUNC_ARG_DECLS)				\
 {								\
-	BLOCK_VARS_DECLS					\
+	DECLARE_PLATFORM_VARS					\
+	/*BLOCK_VARS_DECLS*/					\
 	dim3 len;						\
-	int max_threads_per_block;				\
+	/*int max_threads_per_block;*/				\
 	DECL_SLOW_INCRS_3					\
 								\
-	max_threads_per_block =	curr_cdp->cudev_prop.maxThreadsPerBlock;\
+	/*max_threads_per_block =	curr_cdp->cudev_prop.maxThreadsPerBlock;*/\
 	CLEAR_CUDA_ERROR(type_code##_slow_cent_helper)		\
-	XFER_SLOW_LEN_3						\
-	SETUP_BLOCKS_XY_					\
+	/*XFER_SLOW_LEN_3*/					\
+	SETUP_BLOCKS_XYZ_(VA_PFDEV(vap))			\
 	SETUP_SLOW_INCRS_3					\
 	REPORT_THREAD_INFO					\
-REPORT_ARGS_3							\
+/*REPORT_ARGS_3*/							\
 	typ##_slow_cent_helper<<< NN_GPU >>>			\
-		(GPU_SLEN_ARGS_3 );				\
-    	cutilCheckMsg("kernel launch failure");			\
+		(KERN_ARGS_SLEN_3 );				\
+    	CUDA_ERROR_CHECK("kernel launch failure");		\
 }								\
 								\
 /* Now the entry point */					\
 								\
-void typ##_cuda_centroid(Vec_Obj_Args *oap)			\
+void typ##_cuda_centroid(HOST_CALL_ARG_DECLS)			\
 {								\
 	Vector_Args va1;					\
-	Spacing_Info spi1;					\
-	Size_Info szi1;						\
+	Vector_Args *vap=(&va1);				\
+	/*Spacing_Info spi1;*/					\
+	/*Size_Info szi1;*/						\
 								\
-	va1.va_spi_p = &spi1;					\
-	va1.va_szi_p = &szi1;					\
+	/*SET_VA_SPACING(vap,&spi1);*/				\
+	/*SET_VA_SIZE_INFO(vap,&szi1);*/				\
 	insure_cuda_device( oap->oa_dest );			\
 	XFER_SLOW_ARGS_3					\
+	SETUP_SLOW_LEN_3					\
 	CHAIN_CHECK( typ##_cent )				\
 	if( is_chaining ){					\
 		if( insure_static(oap) < 0 ) return;		\
-		add_link( & typ##_cent , &va1 );			\
+		add_link( & typ##_cent , LINK_FUNC_ARGS );		\
 		return;						\
 	} else {						\
-		typ##_cent(&va1);				\
-		oap->oa_dest->dt_flags |= DT_ASSIGNED;		\
-		oap->oa_dp[0]->dt_flags |= DT_ASSIGNED;		\
+		typ##_cent(LINK_FUNC_ARGS);				\
+		SET_OBJ_FLAG_BITS(OA_DEST(oap), DT_ASSIGNED);	\
+		/* WHY set assigned flag on a source obj??? */	\
+		/* Maybe because it's really a second destination? */	\
+		SET_OBJ_FLAG_BITS(OA_SRC1(oap), DT_ASSIGNED);	\
 	}							\
 }
 

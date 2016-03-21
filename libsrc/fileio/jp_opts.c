@@ -1,23 +1,24 @@
 
 #include "quip_config.h"
 
-char VersionId_fio_jp_opts[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_JPEG_SUPPORT
 
 #include <stdio.h>
 
 #ifdef HAVE_JPEGLIB_H
 #include <jpeglib.h>
-#endif /* HAVE_JPEGLIB_H */
+#endif
 
 
 //#include "jversion.h"
 
+#include "quip_prot.h"
+
 #include "cdjpeg.h"		/* read_color_map() */
 
-#include "fio_prot.h"		/* defines HAVE_JPEG_SUPPORT based on os... */
+#include "fio_prot.h"
 #include "fiojpeg.h"
+#include "jpeg_private.h"
 
 typedef struct djpeg_params {
 	int	djp_trace_level;
@@ -110,9 +111,9 @@ static COMMAND_FUNC( set_dither )
 
 static COMMAND_FUNC( report_version )
 {
-	sprintf(error_string, "JPEG library version %d%c\n",
+	sprintf(ERROR_STRING, "JPEG library version %d%c\n",
 		JPEG_LIB_VERSION/10, 'a'-1+JPEG_LIB_VERSION%10);
-	advise(error_string);
+	advise(ERROR_STRING);
 }
 
 static COMMAND_FUNC( set_fast )
@@ -206,12 +207,13 @@ static COMMAND_FUNC( do_prm_display )
 		case JDCT_ISLOW: s="slow integer"; break;
 		case JDCT_IFAST: s="fast integer"; break;
 		case JDCT_FLOAT: s="float"; break;
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
 		default:
 			s=NULL;		/* elim compiler warning */
-			ERROR1("CAUTIOUS:  bad dct_method code!?");
+//			ERROR1("CAUTIOUS:  bad dct_method code!?");
+			assert( ! "bad dct_method code" );
 			break;
-#endif /* CAUTIOUS */
+//#endif /* CAUTIOUS */
 	}
 	prt_msg(s);
 
@@ -220,9 +222,12 @@ static COMMAND_FUNC( do_prm_display )
 		case JDITHER_FS: s="Floyd-Steinberg"; break;
 		case JDITHER_NONE: s="(none)"; break;
 		case JDITHER_ORDERED: s="ordered"; break;
-#ifdef CAUTIOUS
-		default:  WARN("CAUTIOUS:  bad dither_mode code!?"); break;
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+//			WARN("CAUTIOUS:  bad dither_mode code!?");
+			assert( ! "bad dither_mode code!?");
+			break;
+//#endif /* CAUTIOUS */
 	}
 	prt_msg(s);
 
@@ -238,9 +243,12 @@ static COMMAND_FUNC( do_prm_display )
 	switch(djp_p1.djp_out_color_space){
 		case JCS_RGB: s="RGB"; break;
 		case JCS_GRAYSCALE: s="grayscale"; break;
-#ifdef CAUTIOUS
-		default:  WARN("CAUTIOUS:  bad out_color_space code!?"); break;
-#endif /* CAUTIOUS */
+//#ifdef CAUTIOUS
+		default:
+			//WARN("CAUTIOUS:  bad out_color_space code!?");
+			assert( ! "bad out_color_space code!?");
+			break;
+//#endif /* CAUTIOUS */
 	}
 	prt_msg(s);
 
@@ -255,31 +263,31 @@ static COMMAND_FUNC( do_prm_display )
 
 static COMMAND_FUNC( do_set_djpeg_defaults ){ set_djpeg_defaults(); }
 
-Command djpeg_param_ctbl[]={
-{ "defaults",	do_set_djpeg_defaults,	"set default parameters"	},
-#ifdef IDCT_SCALING_SUPPORTED
-{ "scale",	set_scale,		"scale output image by fraction M/N" },
-#endif
-{ "ncolors",	set_ncolors,		"set number of output colors"	},
-{ "set_dct",	set_dct,		"select DCT algorithm"		},
-{ "set_dither",	set_dither,		"select dither algorithm"	},
-{ "fast",	set_fast,		"enable fast algorithm"		},
-{ "grayscale",	set_grayscale,		"set grayscale output"		},
-{ "set_map",	set_map,		"quantize output using colormap" },
-{ "maxmem",	set_maxmem,		"specify max mem usage"		},
-{ "nosmooth",	set_nosmooth,		"suppress fancy upsampling"	},
-{ "onepass",	set_onepass,		"enable fast one-pass quantization" },
-{ "display",	do_prm_display,		"display current parameter settings" },
-{ "jpeg_version",report_version,	"report version of JPEG library" },
-{ "quit",	popcmd,			"exit submenu"			},
-{ NULL_COMMAND								}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(djpeg_param_menu,s,f,h)
 
-COMMAND_FUNC( djpeg_param_menu )
+MENU_BEGIN(djpeg_param)
+ADD_CMD(	defaults,	do_set_djpeg_defaults,	set default parameters )
+#ifdef IDCT_SCALING_SUPPORTED
+ADD_CMD(	scale,		set_scale,	scale output image by fraction M/N )
+#endif /* IDCT_SCALING_SUPPORTED */
+ADD_CMD(	ncolors,	set_ncolors,	set number of output colors )
+ADD_CMD(	set_dct,	set_dct,	select DCT algorithm )
+ADD_CMD(	set_dither,	set_dither,	select dither algorithm )
+ADD_CMD(	fast,		set_fast,	enable fast algorithm )
+ADD_CMD(	grayscale,	set_grayscale,	set grayscale output )
+ADD_CMD(	set_map,	set_map,	quantize output using colormap )
+ADD_CMD(	maxmem,		set_maxmem,	specify max mem usage )
+ADD_CMD(	nosmooth,	set_nosmooth,	suppress fancy upsampling )
+ADD_CMD(	onepass,	set_onepass,	enable fast one-pass quantization )
+ADD_CMD(	display,	do_prm_display,	display current parameter settings )
+ADD_CMD(	jpeg_version,	report_version,	report version of JPEG library )
+MENU_END(djpeg_param)
+
+COMMAND_FUNC( do_djpeg_param_menu )
 {
 	if( ! defaults_initialized )
 		set_djpeg_defaults();
-	PUSHCMD(djpeg_param_ctbl,"djpeg_params");
+	PUSH_MENU(djpeg_param);
 }
 
 void install_djpeg_params(j_decompress_ptr cinfop)
@@ -301,8 +309,8 @@ void install_djpeg_params(j_decompress_ptr cinfop)
 	if( djp_p1.djp_mapfilename != NULL ){
 		FILE *fp;
 		if ((fp = fopen(djp_p1.djp_mapfilename, "rb")) == NULL) {
-			sprintf(error_string, "set_map: can't open %s\n", djp_p1.djp_mapfilename);
-			WARN(error_string);
+			sprintf(ERROR_STRING, "set_map: can't open %s\n", djp_p1.djp_mapfilename);
+			WARN(ERROR_STRING);
 			cinfop->quantize_colors = FALSE;
 			rls_str(djp_p1.djp_mapfilename);
 			djp_p1.djp_mapfilename = NULL;

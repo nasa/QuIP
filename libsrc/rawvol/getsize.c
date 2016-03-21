@@ -1,8 +1,6 @@
 
 #include "quip_config.h"
 
-char VersionId_rawvol_getsize[] = QUIP_VERSION_STRING;
-
 /*
  * getsize.c --- get the size of a partition.
  * 
@@ -49,20 +47,12 @@ char VersionId_rawvol_getsize[] = QUIP_VERSION_STRING;
 #endif /* HAVE_SYS_DISKLABEL_H */
 
 
-#include "void.h"		/* CONST */
-#include "debug.h"		/* verbose */
-#include "query.h"		/* advise */
+#include "quip_prot.h"		/* verbose */
 
 /* #include <linux/ext2_fs.h> */
 /* #include "ext2fs.h" */
 
 #include "llseek.h"
-
-/* local prototypes */
-
-static int valid_offset (int fd, off64_t offset);
-
-
 
 static int valid_offset (int fd,off64_t offset)
 {
@@ -84,7 +74,7 @@ static int valid_offset (int fd,off64_t offset)
 /*
  * Returns the number of blocks in a partition
  */
-errcode_t get_device_size(CONST char *file,int blocksize,blk_t *retblocks)
+errcode_t get_device_size(QSP_ARG_DECL  CONST char *file,int blocksize,blk_t *retblocks)
 {
 	int	fd;
 #ifdef BLKGETSIZE

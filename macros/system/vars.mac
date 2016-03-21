@@ -1,6 +1,4 @@
 
-# %Z% $RCSfile: vars.mac,v $ ver: $Revision: 1.14 $ $Date: 2010/04/29 06:16:34 $
-
 Start_File vars.mac
 
 Define Insure_Var 1 name
@@ -37,7 +35,7 @@ Set $1 $__tmp
 
 Define Print 1 'variable name'
 Set __tmp $1
-advise "$__tmp = $$__tmp"
+echo "$__tmp = $$__tmp"
 .
 
 Set temp_index 100
@@ -66,11 +64,11 @@ Set ${vn}_stk_$pv_n $$vn
 Define Pop_Var 1 varname
 Set vn $1
 If "!var_exists(${vn}_stk_count)"
-  "warn 'Variable $1 never pushed!?' PopFile 2"
+  "warn 'Variable $1 never pushed!?' exit_macro"
 Set pv_n_name ${vn}_stk_count
 Set pv_n $$pv_n_name
 If $pv_n<1
-  "warn 'Variable $1 stack empty!?' PopFile 2"
+  "warn 'Variable $1 stack empty!?' exit_macro"
 Set stk_name ${vn}_stk_$pv_n
 Set $1 $$stk_name
 Decrement "${1}_stk_count"

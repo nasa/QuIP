@@ -1,26 +1,18 @@
 #include "quip_config.h"
 
-char SccsId_stepit_am_supp[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_NUMREC
 
 /*
  * linkage to numerical recipes amoeba routine
  */
 
-#include "version.h"	/* for some reason, the compiler chokes if this is after math.h!? */
-
 #include <math.h>
 
-#include "savestr.h"
-#include "query.h"
-#include "fitsine.h"
-#include "debug.h"
-
+#include "quip_prot.h"
+//#include "fitsine.h"
 #include "optimize.h"
-#include "chewtext.h"		/* digest */
 
-static Query_Stream *am_qsp=NULL;
+static Query_Stack *am_qsp=NULL;
 
 /* local prototypes */
 
@@ -28,7 +20,7 @@ static float amoeba_scr_funk(float *p);
 static void run_amoeba(float (*func)(float *));
 static void show_simplex_verts(void);
 static void init_simplex(void);
-static float (*user_c_func)(void);
+static float (*user_c_func)(SINGLE_QSP_ARG_DECL);
 
 
 static float simplex_vertices[MAX_OPT_PARAMS+1][MAX_OPT_PARAMS];
@@ -90,13 +82,15 @@ static float amoeba_scr_funk(float *p)
 {
 	char str[128];
 	float	err;
-	Var *vp;
+	Variable *vp;
 	int i;
 	List *lp;
 	Node *np;
-	Query_Stream *qsp;
-
+#ifdef THREAD_SAFE_QUERY
+	Query_Stack *qsp;
+    
 	qsp = am_qsp;
+#endif // THREAD_SAFE_QUERY
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp==NO_LIST ) {
@@ -117,13 +111,13 @@ static float amoeba_scr_funk(float *p)
 		np=np->n_next;
 	}
 
-	DIGEST(opt_func_string);	/* used to call pushtext here... */
-
+	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	
 	vp=var__of(QSP_ARG  "error");
-	if( vp == NO_VAR ) {
+	if( vp == NO_VARIABLE ) {
 		NWARN("variable \"error\" not set!!!");
 		err=0.0;
-	} else sscanf(vp->v_value,"%g",&err);
+	} else sscanf(VAR_VALUE(vp),"%g",&err);
 
 	return(err);
 }
@@ -147,7 +141,7 @@ static float amoeba_c_funk(float *p)
 		i++;
 	}
 
-	err = (*user_c_func)();
+	err = (*user_c_func)(SGL_DEFAULT_QSP_ARG);
 
 	return(err);
 }
@@ -161,7 +155,7 @@ void run_amoeba_scr(SINGLE_QSP_ARG_DECL)
 	run_amoeba( amoeba_scr_funk );
 }
 
-void run_amoeba_c( float (*func)(void) )
+void run_amoeba_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) )
 {
 	user_c_func = func;
 	run_amoeba( amoeba_c_funk );
@@ -193,7 +187,7 @@ static void run_amoeba( float (*func)(float *) )
 	/* call amoeba */
 
 	/* not sure how to properly set this!? */
-	ftol=0.001;
+	ftol=0.001f;
 
 /*
 if( verbose ){

@@ -12,16 +12,51 @@
 
 #include <cuda.h>
 
+#if CUDA_VERSION >= 6000
+#define CUDA_ERROR_CHECK(string)	/* what to do? */
+#elif CUDA_VERSION >= 5000
+// CUDA 5
+#define CUDA_ERROR_CHECK(string)	getLastCudaError(string);
+#else
+// CUDA 4
+#define CUDA_ERROR_CHECK(string)	cutilCheckMsg(string);
+#endif
+
+#include "cuda_port.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
+
+#ifdef FOOBAR
+#if CUDA_VERSION >= 5000
+#include <helper_cuda.h>
+#else
+#include <cutil.h>
+#include <cutil_inline.h>
+#endif
+#endif // FOOBAR
+
+
 #ifdef HAVE_CURAND_H
 #include <curand.h>
 #endif /* HAVE_CURAND_H */
 
+#ifdef HAVE_CUFFT_H
+#include <cufft.h>
+#endif /* HAVE_CUFFT_H */
+
 #include <cuda_runtime_api.h>
 
-#endif /* HAVE_CUDA */
+#else // ! HAVE_CUDA
+
+#define NO_CUDA_MSG(whence)					\
+							\
+	sprintf(ERROR_STRING,"%s:  Sorry, no CUDA support in this build.",#whence); \
+	advise(ERROR_STRING);
+
+
+#endif /* ! HAVE_CUDA */
+
 
 #include "query.h"
-#include "nvf_api.h"
+#include "veclib_api.h"
 
 typedef struct cuda_device {
 	Item			cudev_item;
@@ -41,7 +76,13 @@ extern Cuda_Device *curr_cdp;
 #define N_CUDA_DEVICE_AREAS	3	/* global, host, host_mapped */
 #endif
 
-extern Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
+enum {
+	CUDA_GLOBAL_AREA_INDEX,
+	CUDA_HOST_AREA_INDEX,
+	CUDA_HOST_MAPPED_AREA_INDEX,
+};
+
+//extern Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
 #ifdef FOOBAR
 extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
@@ -63,131 +104,32 @@ extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
 ITEM_INTERFACE_PROTOTYPES( Cuda_Device, cudev )
 
 
-extern void print_cudev_properties(int, struct cudaDeviceProp *);
+
+#ifdef HAVE_CUDA
+extern void print_cudev_properties(QSP_ARG_DECL  int, struct cudaDeviceProp *);
+#endif // HAVE_CUDA
 
 /* gpu_func_tbl.cpp */
-extern int gpu_dispatch( Vec_Func *vfp, Vec_Obj_Args *oap );
+extern int gpu_dispatch( Vector_Function *vfp, Vec_Obj_Args *oap );
 
 extern COMMAND_FUNC( do_list_cudevs );
 extern COMMAND_FUNC( do_cudev_info );
+extern COMMAND_FUNC( do_report_npp_version );
 
-extern void query_cuda_device(int dev);
+extern void query_cuda_device(QSP_ARG_DECL  int dev);
 
 /* cuda.cpp */
-extern void init_cuda_devices(SINGLE_QSP_ARG_DECL);
-extern void set_cuda_device(QSP_ARG_DECL  Cuda_Device *);
+extern void _init_cuda_devices(SINGLE_QSP_ARG_DECL);
+extern void set_cuda_device(Cuda_Device *);
 extern void *tmpvec(int,int,const char *whence);
 extern void freetmp(void *,const char *whence);
-#ifdef HAVE_CUDA
-extern int setup_slow_len(dim3 *,Size_Info *,dimension_t start_dim, int *dim_indices,int i_first,int n_vec);
-#endif /* HAVE_CUDA */
 
 
-extern COMMAND_FUNC( do_gpu_upload );
-extern COMMAND_FUNC( do_gpu_dnload );
+extern COMMAND_FUNC( do_gpu_obj_upload );
+extern COMMAND_FUNC( do_gpu_obj_dnload );
 
-//Three vec methods
-extern COMMAND_FUNC( do_gpu_vcmp );
-extern COMMAND_FUNC( do_gpu_vibnd );
-extern COMMAND_FUNC( do_gpu_vibnd );
-extern COMMAND_FUNC( do_gpu_vbnd );
-extern COMMAND_FUNC( do_gpu_vmaxm );
-extern COMMAND_FUNC( do_gpu_vminm );
-extern COMMAND_FUNC( do_gpu_vmax );
-extern COMMAND_FUNC( do_gpu_vmin );
-extern COMMAND_FUNC( do_gpu_vadd );
-extern COMMAND_FUNC( do_gpu_rvsub );
-extern COMMAND_FUNC( do_gpu_rvmul );
-extern COMMAND_FUNC( do_gpu_rvdiv );
-extern COMMAND_FUNC( do_gpu_vibnd );
-extern COMMAND_FUNC( do_gpu_vibnd );
-extern COMMAND_FUNC( do_gpu_vbnd );
-extern COMMAND_FUNC( do_gpu_vmaxm );
-extern COMMAND_FUNC( do_gpu_vminm );
-extern COMMAND_FUNC( do_gpu_vmax );
-extern COMMAND_FUNC( do_gpu_vmin );
-extern COMMAND_FUNC( do_gpu_vand );
-extern COMMAND_FUNC( do_gpu_vnand );
-extern COMMAND_FUNC( do_gpu_vor );
-extern COMMAND_FUNC( do_gpu_vxor );
-extern COMMAND_FUNC( do_gpu_vmod );
-extern COMMAND_FUNC( do_gpu_vshr );
-extern COMMAND_FUNC( do_gpu_vshl );
-extern COMMAND_FUNC( do_gpu_rvpow );
-extern COMMAND_FUNC( do_gpu_vatan2 );
-extern COMMAND_FUNC( do_gpu_vexp );
 
-//Two vec methods
-extern COMMAND_FUNC( do_gpu_convert );
-extern COMMAND_FUNC( do_gpu_vsign );
-extern COMMAND_FUNC( do_gpu_vabs );
-extern COMMAND_FUNC( do_gpu_vnot );
-extern COMMAND_FUNC( do_gpu_rvmov );
-extern COMMAND_FUNC( do_gpu_vset );
-extern COMMAND_FUNC( do_gpu_rvneg );
-extern COMMAND_FUNC( do_gpu_rvsqr );
-extern COMMAND_FUNC( do_gpu_rvrand );
-extern COMMAND_FUNC( do_gpu_vnot );
-extern COMMAND_FUNC( do_gpu_rvsqr );
-extern COMMAND_FUNC( do_gpu_rvrand );
-extern COMMAND_FUNC( do_gpu_vnot );
-extern COMMAND_FUNC( do_gpu_vcomp );
-//extern COMMAND_FUNC( do_gpu_vj0 );
-//extern COMMAND_FUNC( do_gpu_vj1 );
-extern COMMAND_FUNC( do_gpu_vrint );
-extern COMMAND_FUNC( do_gpu_vfloor );
-extern COMMAND_FUNC( do_gpu_vround );
-extern COMMAND_FUNC( do_gpu_vceil );
-extern COMMAND_FUNC( do_gpu_vlog );
-extern COMMAND_FUNC( do_gpu_vlog10 );
-extern COMMAND_FUNC( do_gpu_vatan );
-extern COMMAND_FUNC( do_gpu_vtan );
-extern COMMAND_FUNC( do_gpu_vcos ); 
-extern COMMAND_FUNC( do_gpu_verf ); 
-extern COMMAND_FUNC( do_gpu_vacos ); 
-extern COMMAND_FUNC( do_gpu_vsin ); 
-extern COMMAND_FUNC( do_gpu_vasin ); 
-//extern COMMAND_FUNC( do_gpu_vpow );
-extern COMMAND_FUNC( do_gpu_vsqrt ); 
-
-//Two vec scalar methods
-extern COMMAND_FUNC( do_gpu_vscmp );
-extern COMMAND_FUNC( do_gpu_vscmp2 );
-extern COMMAND_FUNC( do_gpu_vsmnm );
-extern COMMAND_FUNC( do_gpu_vsmxm );
-extern COMMAND_FUNC( do_gpu_viclp );
-extern COMMAND_FUNC( do_gpu_vclip );
-extern COMMAND_FUNC( do_gpu_vsmax );
-extern COMMAND_FUNC( do_gpu_vsmin );
-extern COMMAND_FUNC( do_gpu_rvsadd );
-extern COMMAND_FUNC( do_gpu_rvssub );
-extern COMMAND_FUNC( do_gpu_rvsmul );
-extern COMMAND_FUNC( do_gpu_rvsdiv );
-extern COMMAND_FUNC( do_gpu_rvsdiv2 );
-extern COMMAND_FUNC( do_gpu_vscmp );
-extern COMMAND_FUNC( do_gpu_viclp );
-extern COMMAND_FUNC( do_gpu_vclip );
-extern COMMAND_FUNC( do_gpu_vsmax );
-extern COMMAND_FUNC( do_gpu_vsmin );
-extern COMMAND_FUNC( do_gpu_rvsadd );
-extern COMMAND_FUNC( do_gpu_rvssub );
-extern COMMAND_FUNC( do_gpu_rvsmul );
-extern COMMAND_FUNC( do_gpu_rvsdiv );
-extern COMMAND_FUNC( do_gpu_rvsdiv2 );
-extern COMMAND_FUNC( do_gpu_vsand );
-extern COMMAND_FUNC( do_gpu_vsnand );
-extern COMMAND_FUNC( do_gpu_vsor );
-extern COMMAND_FUNC( do_gpu_vsxor );
-extern COMMAND_FUNC( do_gpu_vsmod );
-extern COMMAND_FUNC( do_gpu_vsmod2 );
-extern COMMAND_FUNC( do_gpu_vsshr );
-extern COMMAND_FUNC( do_gpu_vsshr2 );
-extern COMMAND_FUNC( do_gpu_vsshl );
-extern COMMAND_FUNC( do_gpu_vsshl2 );
-extern COMMAND_FUNC( do_gpu_vsatan2 );
-extern COMMAND_FUNC( do_gpu_vsatan22 );
-extern COMMAND_FUNC( do_gpu_vspow );
-extern COMMAND_FUNC( do_gpu_vspow2 );
+// More prototypes that aren't standard...
 
 //FFT Functions
 extern COMMAND_FUNC( do_gpu_fwdfft );
@@ -209,7 +151,7 @@ extern COMMAND_FUNC( do_set_checkpoint );
 extern COMMAND_FUNC( do_clear_checkpoints );
 extern COMMAND_FUNC( do_show_checkpoints );
 
-extern void insure_cuda_device(Data_Obj *dp );
+extern void insure_cuda_device( Data_Obj *dp );
 
 extern void h_sp_ifl(Data_Obj *dp, int x, int y, float tol, float v );
 extern void h_sp_ifl2(Data_Obj *dp, int x, int y, float tol, float v );

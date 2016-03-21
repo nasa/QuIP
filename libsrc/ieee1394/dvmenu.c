@@ -44,10 +44,9 @@
 // local includes
 
 #include "frame.h"
-#include "query.h"
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "img_file.h"
-#include "submenus.h"
 //#include "filehandler.h"
 
 #define RAW_BUF_SIZE	(10240)
@@ -84,55 +83,7 @@ List *g_output_queue=NULL;
 List *g_buffer_queue=NULL;
 List *grab_lp=NULL;
 
-void queue_push_back( List *lp, void *obj )
-{
-	Node *np;
-
-#ifdef CAUTIOUS
-	if( lp == NO_LIST )
-		NERROR1("CAUTIOUS:  Oops - missing queue");
-#endif /* CAUTIOUS */
-
-	np = mk_node(obj);
-	addHead(lp,np);
-}
-
-
-void queue_add_elt( List *lp, void *obj )
-{
-	Node *np;
-
-#ifdef CAUTIOUS
-	if( lp == NO_LIST )
-		NERROR1("CAUTIOUS:  Oops - missing queue");
-#endif /* CAUTIOUS */
-
-	np = mk_node(obj);
-	addTail(lp,np);
-}
-
-
-void *queue_front(List *lp)
-{
-	if( lp == NO_LIST ) return NULL;
-	if( lp->l_head == NO_NODE ) return NULL;
-	return( lp->l_head->n_data );
-}
-
-void queue_pop_front ( List *lp )
-{
-	if( lp == NO_LIST ) return;
-	if( lp->l_head == NO_NODE ) return;
-	remHead(lp);
-}
-
-int queue_size(List *lp)
-{
-	if( lp == NO_LIST ) return 0;
-	return eltcount(lp);
-}
-
-void create_frames()
+static void create_frames(void)
 {
 	Frame *frmp;
 	int i;
@@ -148,8 +99,46 @@ void create_frames()
 	}
 }
 
+/* read_frames appears in the audio support library??? */
 
-Frame* GetNextFrame()
+static void setup_capture()
+{
+	//int incomplete_frames = 0;
+	//Frame *frmp = NULL;
+
+	g_alldone = FALSE;
+	g_buffer_underrun = FALSE;
+
+	/*
+	for (int i = 0; i < 100; ++i) {
+		fail_null(frmp = new Frame);
+		g_buffer_queue.push_back(frmp);
+	}
+	*/
+	create_frames();
+
+//advise("initializing mutex...");
+	pthread_mutex_init(&g_mutex, NULL);
+	g_reader_active = TRUE;
+//advise("creating read_frames thread...");
+	pthread_create(&g_thread, NULL, read_frames, NULL);
+}
+
+static void DoneWithFrame(Frame *frame)
+{
+
+	pthread_mutex_lock(&g_mutex);
+//advise("DoneWithFrame:  pushing back on buffer queue");
+
+	// old code, before brollyx change
+	queue_push_back(g_buffer_queue,frame);
+
+	// printf("writer > buf: buffer %d, output %d\n",g_buffer_queue.size(), g_output_queue.size());
+	// fflush(stdout);
+	pthread_mutex_unlock(&g_mutex);
+}
+
+static Frame* GetNextFrame(void)
 {
 	Frame *	frmp = NULL;
 
@@ -193,23 +182,21 @@ Frame* GetNextFrame()
 	return frmp;
 }
 
-void DoneWithFrame(Frame *frame)
+static void queue_add_elt( List *lp, void *obj )
 {
+	Node *np;
 
-	pthread_mutex_lock(&g_mutex);
-//advise("DoneWithFrame:  pushing back on buffer queue");
+#ifdef CAUTIOUS
+	if( lp == NO_LIST )
+		NERROR1("CAUTIOUS:  Oops - missing queue");
+#endif /* CAUTIOUS */
 
-	// old code, before brollyx change
-	queue_push_back(g_buffer_queue,frame);
-
-	// printf("writer > buf: buffer %d, output %d\n",g_buffer_queue.size(), g_output_queue.size());
-	// fflush(stdout);
-	pthread_mutex_unlock(&g_mutex);
+	np = mk_node(obj);
+	addTail(lp,np);
 }
 
 
-
-void IncreaseBufferQueue()
+static void IncreaseBufferQueue(void)
 {
 	Frame *frmp;
 
@@ -223,33 +210,7 @@ void IncreaseBufferQueue()
 	pthread_mutex_unlock(&g_mutex);
 }
 
-
-
-
-static void setup_capture()
-{
-	//int incomplete_frames = 0;
-	//Frame *frmp = NULL;
-
-	g_alldone = FALSE;
-	g_buffer_underrun = FALSE;
-
-	/*
-	for (int i = 0; i < 100; ++i) {
-		fail_null(frmp = new Frame);
-		g_buffer_queue.push_back(frmp);
-	}
-	*/
-	create_frames();
-
-//advise("initializing mutex...");
-	pthread_mutex_init(&g_mutex, NULL);
-	g_reader_active = TRUE;
-//advise("creating read_frames thread...");
-	pthread_create(&g_thread, NULL, read_frames, NULL);
-}
-
-void dv_grab(int n)
+static void dv_grab(QSP_ARG_DECL  int n)
 {
 	Frame *frmp = NULL;
 
@@ -316,7 +277,43 @@ advise("incomplete frame, done...");
 	/* BUG need to stop reader here */
 }
 
-COMMAND_FUNC( do_dv_capture )
+void queue_push_back( List *lp, void *obj )
+{
+	Node *np;
+
+#ifdef CAUTIOUS
+	if( lp == NO_LIST )
+		NERROR1("CAUTIOUS:  Oops - missing queue");
+#endif /* CAUTIOUS */
+
+	np = mk_node(obj);
+	addHead(lp,np);
+}
+
+
+void *queue_front(List *lp)
+{
+	if( lp == NO_LIST ) return NULL;
+	if( lp->l_head == NO_NODE ) return NULL;
+	return( lp->l_head->n_data );
+}
+
+void queue_pop_front ( List *lp )
+{
+	if( lp == NO_LIST ) return;
+	if( lp->l_head == NO_NODE ) return;
+	remHead(lp);
+}
+
+int queue_size(List *lp)
+{
+	if( lp == NO_LIST ) return 0;
+	return eltcount(lp);
+}
+
+
+
+static COMMAND_FUNC( do_dv_capture )
 {
 	Frame *frmp = NULL;
 	int incomplete_frames = 0;
@@ -350,11 +347,11 @@ advise("reader is not active...");
 
 		GetTimeCode(frmp,&timeCode);
 		GetRecordingDateTime(frmp,&recDate);
-		sprintf( error_string, "buffer underrun near: timecode %2.2d:%2.2d:%2.2d.%2.2d date %4.4d.%2.2d.%2.2d %2.2d:%2.2d:%2.2d\n",
+		sprintf( ERROR_STRING, "buffer underrun near: timecode %2.2d:%2.2d:%2.2d.%2.2d date %4.4d.%2.2d.%2.2d %2.2d:%2.2d:%2.2d\n",
 			timeCode.hour, timeCode.min, timeCode.sec, timeCode.frame,
 			recDate.tm_year + 1900, recDate.tm_mon + 1, recDate.tm_mday,
 			recDate.tm_hour, recDate.tm_min, recDate.tm_sec);
-		NWARN(error_string);
+		NWARN(ERROR_STRING);
 		NWARN("This error means that the frames could not be written fast enough.\n");
 		g_buffer_underrun = FALSE;
 	}
@@ -368,11 +365,11 @@ advise("reader is not active...");
 
 		GetTimeCode(frmp,&timeCode);
 		GetRecordingDateTime(frmp,&recDate);
-		sprintf( error_string, "frame dropped: timecode %2.2d:%2.2d:%2.2d.%2.2d date %4.4d.%2.2d.%2.2d %2.2d:%2.2d:%2.2d\n",
+		sprintf( ERROR_STRING, "frame dropped: timecode %2.2d:%2.2d:%2.2d.%2.2d date %4.4d.%2.2d.%2.2d %2.2d:%2.2d:%2.2d\n",
 			timeCode.hour, timeCode.min, timeCode.sec, timeCode.frame,
 			recDate.tm_year + 1900, recDate.tm_mon + 1, recDate.tm_mday,
 			recDate.tm_hour, recDate.tm_min, recDate.tm_sec);
-		NWARN(error_string);
+		NWARN(ERROR_STRING);
 		NWARN( "This error means that the ieee1394 driver received an incomplete frame.\n");
 			incomplete_frames++;
 	} else {
@@ -383,14 +380,7 @@ advise("reader is not active...");
 	DoneWithFrame(frmp);
 }
 
-
-void usage()
-{
-	fprintf(stderr, "Usage: dvgrab [options] [file]\n");
-	fprintf(stderr, "Try dvgrab --help for more information\n");
-}
-
-void set_defaults()
+static void set_defaults(void)
 {
 	g_autosplit = FALSE;
 	g_timestamp = FALSE;
@@ -409,9 +399,7 @@ void set_defaults()
 	g_jpeg_overwrite = FALSE;
 }
 
-
-extern int capture_test();
-
+#ifdef NOT_USED
 void signal_handler(int sig)
 {
 	/* replace this signal handler with the default (which aborts) */
@@ -425,8 +413,9 @@ advise("signal handler stopping reader");
 	g_reader_active = FALSE;
 	g_alldone = TRUE;
 }
+#endif /* NOT_USED */
 
-COMMAND_FUNC( do_dv_grab )
+static COMMAND_FUNC( do_dv_grab )
 {
 	int n;
 
@@ -436,7 +425,7 @@ COMMAND_FUNC( do_dv_grab )
 		WARN("number of frames must be positive");
 		return;
 	}
-	dv_grab(n);
+	dv_grab(QSP_ARG  n);
 
 	sprintf(msg_str,"%d frames grabbed",eltcount(grab_lp));
 	prt_msg(msg_str);
@@ -469,31 +458,31 @@ static COMMAND_FUNC( do_dv_extract )
 	if( np == NO_NODE ) return;
 	frmp = (Frame *)np->n_data;
 	// BUG check the size, type, contiguity here
-//sprintf(error_string,"do_dv_extract:  frame %d, frmp = 0x%lx",n,(u_long)frmp);
-//advise(error_string);
+//sprintf(ERROR_STRING,"do_dv_extract:  frame %d, frmp = 0x%lx",n,(u_long)frmp);
+//advise(ERROR_STRING);
 
 	ExtractHeader(frmp);
-	ExtractRGB(frmp,dp->dt_data);
+	ExtractRGB(frmp,OBJ_DATA_PTR(dp));
 }
 
-Command dv_ctbl[]={
-{ "capture",	do_dv_capture,	"continuously capture frames"	},
-{ "grab",	do_dv_grab,	"grab N frames"	},
-{ "info",	do_dv_info,	"give info about the output queue"	},
-{ "extract",	do_dv_extract,	"convert stored DV frame to a memory object"	},
-{ "quit",	popcmd,		"exit submenu"		},
-{ NULL_COMMAND						}
-};
+#define ADD_CMD(s,f,h)	ADD_COMMAND(dv_menu,s,f,h)
+
+MENU_BEGIN(dv)
+ADD_CMD( capture,	do_dv_capture,	continuously capture frames )
+ADD_CMD( grab,		do_dv_grab,	grab N frames )
+ADD_CMD( info,		do_dv_info,	give info about the output queue )
+ADD_CMD( extract,	do_dv_extract,	convert stored DV frame to a memory object )
+MENU_END(dv)
 
 static int dv_inited=0;
 
-COMMAND_FUNC( dv_menu )
+COMMAND_FUNC( do_dv_menu )
 {
 	if( !dv_inited ){
 		set_defaults();
 		g_output_queue = new_list();
 		dv_inited=1;
 	}
-	PUSHCMD(dv_ctbl,"dv");
+	PUSH_MENU(dv);
 }
 

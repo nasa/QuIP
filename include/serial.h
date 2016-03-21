@@ -21,10 +21,10 @@ extern int open_serial_device(QSP_ARG_DECL  const char *);
 extern void send_serial(QSP_ARG_DECL  int fd,const u_char *buf,int n);
 extern void send_hex(QSP_ARG_DECL  int fd,const u_char *s);
 extern int n_serial_chars(QSP_ARG_DECL  int fd);
-extern int recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize,int max_want);
+extern ssize_t recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize,int max_want);
 extern int hex_byte(QSP_ARG_DECL  const u_char *);
 extern void set_raw_len(u_char *);
-extern void dump_char_buf(u_char *);
+extern void dump_char_buf(QSP_ARG_DECL  u_char *);
 extern Serial_Port *default_serial_port(void);
 
 

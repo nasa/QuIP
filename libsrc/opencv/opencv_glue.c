@@ -2,10 +2,9 @@
 
 #include "quip_config.h"
 
-char VersionId_opencv_opencv_glue[] = QUIP_VERSION_STRING;
-
 #ifdef HAVE_OPENCV
 
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "opencv_glue.h"
 
@@ -20,7 +19,13 @@ ITEM_INTERFACE_DECLARATIONS(OpenCV_Seq,ocv_seq)
 /* OpenCV_ classifier cascade */
 ITEM_INTERFACE_DECLARATIONS(OpenCV_Cascade,ocv_ccasc)
 
-OpenCV_Image *make_new_ocvi(QSP_ARG_DECL  const char * obj_name)
+static OpenCV_Image *make_new_ocvi(QSP_ARG_DECL  const char * obj_name);
+static OpenCV_MemStorage *make_new_ocv_mem(QSP_ARG_DECL  const char * obj_name);
+static OpenCV_Scanner *make_new_ocv_scanner(QSP_ARG_DECL  const char * obj_name);
+static OpenCV_Seq *make_new_ocv_seq(QSP_ARG_DECL  const char * obj_name);
+static Data_Obj * creat_dp_for_ocvi(QSP_ARG_DECL OpenCV_Image *ocvi_p );
+
+static OpenCV_Image *make_new_ocvi(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_Image *ocvi_p;
 
@@ -42,7 +47,7 @@ OpenCV_Image *make_new_ocvi(QSP_ARG_DECL  const char * obj_name)
 	return(ocvi_p);
 }
 
-OpenCV_MemStorage *make_new_ocv_mem(QSP_ARG_DECL  const char * obj_name)
+static OpenCV_MemStorage *make_new_ocv_mem(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_MemStorage *ocv_mem_p;
 
@@ -64,7 +69,7 @@ OpenCV_MemStorage *make_new_ocv_mem(QSP_ARG_DECL  const char * obj_name)
 	return(ocv_mem_p);
 }
 
-OpenCV_Scanner *make_new_ocv_scanner(QSP_ARG_DECL  const char * obj_name)
+static OpenCV_Scanner *make_new_ocv_scanner(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_Scanner *ocv_scanner_p;
 
@@ -87,7 +92,7 @@ OpenCV_Scanner *make_new_ocv_scanner(QSP_ARG_DECL  const char * obj_name)
 	return(ocv_scanner_p);
 }
 
-OpenCV_Seq *make_new_ocv_seq(QSP_ARG_DECL  const char * obj_name)
+static OpenCV_Seq *make_new_ocv_seq(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_Seq *ocv_seq_p;
 
@@ -122,7 +127,8 @@ OpenCV_Image * load_ocv_image(QSP_ARG_DECL   const char * obj_name, const char *
 		sprintf(ERROR_STRING,"Error opening file %s!?",filename);
 		WARN(ERROR_STRING);
 		/* delete new struct here */
-		del_ocvi(QSP_ARG  ocvi_p->ocv_name);
+		del_ocvi(QSP_ARG  ocvi_p);
+		// free name here?
 		return(NO_OPENCV_IMAGE);
 	}
 
@@ -142,7 +148,7 @@ void save_ocv_image( OpenCV_Image *ocvi_p , const char* filename)
 #endif
 }
 
-Data_Obj * creat_dp_for_ocvi(QSP_ARG_DECL OpenCV_Image *ocvi_p )
+static Data_Obj * creat_dp_for_ocvi(QSP_ARG_DECL OpenCV_Image *ocvi_p )
 {
 
 	IplImage* img;
@@ -182,11 +188,11 @@ Data_Obj * creat_dp_for_ocvi(QSP_ARG_DECL OpenCV_Image *ocvi_p )
 	}
 	dimset.ds_dimension[4] = 1;
 
-	dp = _make_dp(QSP_ARG  ocvi_p->ocv_name,&dimset,p);
+	dp = _make_dp(QSP_ARG  ocvi_p->ocv_name,&dimset,PREC_FOR_CODE(p));
 	if( dp == NO_OBJ ) return(dp);
 
-	dp->dt_data = img->imageData;
-	dp->dt_unaligned_data = img->imageDataOrigin;
+	SET_OBJ_DATA_PTR(dp, img->imageData);
+	SET_OBJ_UNALIGNED_PTR(dp, img->imageDataOrigin);
 
         return(dp);
 }
@@ -202,7 +208,8 @@ OpenCV_Image * create_ocv_image(QSP_ARG_DECL  const char *obj_name,
 	if( (ocvi_p->ocv_image = cvCreateImage(cvSize(width,height), bit_depth_code, n_channels)) == 0 ){
 		sprintf(ERROR_STRING,"create_ocv_image:  error creating ocv image for %s...",obj_name);
 		WARN(ERROR_STRING);
-		del_ocvi(QSP_ARG  ocvi_p->ocv_name);
+		del_ocvi(QSP_ARG  ocvi_p);
+		// release name here??
 		return(NO_OPENCV_IMAGE);
 	}
 
@@ -228,7 +235,8 @@ OpenCV_MemStorage * create_ocv_mem(QSP_ARG_DECL  const char *obj_name)
 	if( (ocv_mem_p->ocv_mem = cvCreateMemStorage(0)) == 0 ){
 		sprintf(ERROR_STRING,"create_ocv_mem:  error creating ocv mem storage for %s...",obj_name);
 		WARN(ERROR_STRING);
-		del_ocv_mem(QSP_ARG  ocv_mem_p->ocv_name);
+		del_ocv_mem(QSP_ARG  ocv_mem_p);
+		// release name here???
 		return(NO_OPENCV_MEM);
 	}
 	return(ocv_mem_p);
@@ -253,7 +261,7 @@ OpenCV_Seq * create_ocv_seq(QSP_ARG_DECL  const char *obj_name)
 
 OpenCV_Image *creat_ocvi_from_dp(QSP_ARG_DECL  Data_Obj *dp)
 {
-	OpenCV_Image* ocvi_p = make_new_ocvi(QSP_ARG  dp->dt_name);
+	OpenCV_Image* ocvi_p = make_new_ocvi(QSP_ARG  OBJ_NAME(dp));
 	if( ocvi_p == NO_OPENCV_IMAGE ) {
 		return(ocvi_p);
 	}
@@ -267,10 +275,10 @@ OpenCV_Image *creat_ocvi_from_dp(QSP_ARG_DECL  Data_Obj *dp)
 	img->nSize = sizeof(*img);
 	img->ID = 0;
 
-	img->nChannels = dp->dt_comps;
+	img->nChannels = OBJ_COMPS(dp);
 	int precision;
 	int bpp; // Bytes per pixel.
-	switch (dp->dt_prec) {
+	switch (OBJ_PREC(dp)) {
 		case PREC_UBY: precision = IPL_DEPTH_8U; bpp = 8; break;
 		case PREC_BY: precision = IPL_DEPTH_8S;	bpp = 8; break;
 		case PREC_IN: precision = IPL_DEPTH_16S; bpp = 16; break;	
@@ -286,25 +294,25 @@ OpenCV_Image *creat_ocvi_from_dp(QSP_ARG_DECL  Data_Obj *dp)
 
 	}
 	img->depth = precision;
-	img->widthStep = dp->dt_cols*dp->dt_comps;
-	if (dp->dt_frames != 1) {
+	img->widthStep = OBJ_COLS(dp)*OBJ_COMPS(dp);
+	if (OBJ_FRAMES(dp) != 1) {
 		img->dataOrder = 1; // Separate color channels.
 		/* img->widthStep = bpp*img->width; */
-		img->imageSize = img->height * img->widthStep * dp->dt_comps;
+		img->imageSize = img->height * img->widthStep * OBJ_COMPS(dp);
 	} else {
 		img->dataOrder = 0; // Interleaved color channels.
-		/* img->widthStep = bpp*img->width*dp->dt_comps; */
-		img->imageSize = dp->dt_rows * img->widthStep; // Image size in bytes.
+		/* img->widthStep = bpp*img->width*OBJ_COMPS(dp); */
+		img->imageSize = OBJ_ROWS(dp) * img->widthStep; // Image size in bytes.
 	}
 	img->origin = 0;		// 0 for upper-left origin.
-	img->width = dp->dt_cols;	// Image width.
-	img->height = dp->dt_rows;	// Image height.
+	img->width = OBJ_COLS(dp);	// Image width.
+	img->height = OBJ_ROWS(dp);	// Image height.
 	img->roi = NULL;
 	img->maskROI = NULL;
 	img->imageId = NULL;
 	img->tileInfo = NULL;
-	img->imageData = (char *)dp->dt_data;
-	img->imageDataOrigin = (char *)dp->dt_unaligned_data;
+	img->imageData = (char *)OBJ_DATA_PTR(dp);
+	img->imageDataOrigin = (char *)OBJ_UNALIGNED_PTR(dp);
 	return(ocvi_p);
 }
 

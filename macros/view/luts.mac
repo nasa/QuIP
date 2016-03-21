@@ -42,7 +42,7 @@ view
 
 Define Protect_LUT 1 n
 warn "Protect_LUT is deprecated"
-PopFile 1
+exit_macro
 view
   luts $current_window
     cmaps

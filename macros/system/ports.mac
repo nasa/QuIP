@@ -1,9 +1,7 @@
 
-# %Z% $RCSfile: ports.mac,v $ ver: $Revision: 1.10 $ $Date: 2011/02/11 23:22:27 $
-
 Start_File ports.mac
 
-If var_exists(ports_dot_mac_read) "warn 'ports.mac included more than once' PopFile 2 nop"
+If var_exists(ports_dot_mac_read) "warn 'ports.mac included more than once' exit_macro"
 
 Define Xmit_Text 2 portname text
 ports xmit text $1 $2 quit
@@ -15,7 +13,10 @@ Recv_Text $1 $2
 .
 
 Define Recv_Text 2 portname varname
-ports receive $1 text $2 quit
+ports
+  text_variable $1 $2
+  receive $1 text
+  quit
 .
 
 Define Close_Port 1 name

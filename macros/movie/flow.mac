@@ -15,7 +15,7 @@
 
 Define Release_Old_Frames 0
 meteor flow update quit quit
-If $oldest==$newest "PopFile 2 nop"	# exit macro if nothing to do
+If $oldest==$newest "exit_macro"	# exit macro if nothing to do
 #Tell_If "Release_Old_Frames, newest = $newest, oldest = $oldest"
 meteor
   flow

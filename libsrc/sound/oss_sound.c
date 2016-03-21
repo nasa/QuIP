@@ -1,8 +1,6 @@
 /* this file provides the interface to the OSS sound module... */
 #include "quip_config.h"
 
-char VersionId_sound_oss_sound[] = QUIP_VERSION_STRING;
-
 #ifdef USE_OSS_SOUND
 
 #include <stdio.h>

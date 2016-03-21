@@ -1,50 +1,45 @@
 #include "quip_config.h"
 
-char VersionId_fio_fioasc[] = QUIP_VERSION_STRING;
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
 #include "fio_prot.h"
-#include "filetype.h"
-#include "getbuf.h"
 #include "data_obj.h"
-#include "debug.h"
-#include "savestr.h"
-#include "fioasc.h"
+//#include "img_file/fioasc.h"
 
-#define hdr	if_hd.asc_hd_p
+//#define hdr	if_hdr_p.asc_hd_p
 
-FIO_OPEN_FUNC( asc_open )
+FIO_OPEN_FUNC( ascii )
 {
 	Image_File *ifp;
 
-	ifp = IMAGE_FILE_OPEN(name,rw,IFT_ASC);
+	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_ASC));
 	if( ifp==NO_IMAGE_FILE ) return(ifp);
 
 	if( IS_READABLE(ifp) ){
-		ifp->if_dp->dt_comps = 0;
-		ifp->if_dp->dt_cols = 0;
-		ifp->if_dp->dt_rows = 0;
-		ifp->if_dp->dt_frames = 0;
-		ifp->if_dp->dt_seqs = 0;
+		SET_OBJ_COMPS(ifp->if_dp, 0);
+		SET_OBJ_COLS(ifp->if_dp, 0);
+		SET_OBJ_ROWS(ifp->if_dp, 0);
+		SET_OBJ_FRAMES(ifp->if_dp, 0);
+		SET_OBJ_SEQS(ifp->if_dp, 0);
 
-		ifp->if_dp->dt_prec = PREC_ANY;
+		SET_OBJ_PREC_PTR(ifp->if_dp, PREC_FOR_CODE(PREC_ANY));
 	}
 
 	return(ifp);
 }
 
 
-FIO_CLOSE_FUNC( asc_close )
+FIO_CLOSE_FUNC( ascii )
 {
 	GENERIC_IMGFILE_CLOSE(ifp);
 }
 
-FIO_WT_FUNC( asc_wt )
+FIO_WT_FUNC( ascii )
 {
 	if( ifp->if_dp == NO_OBJ ){	/* first time? */
 
@@ -61,19 +56,29 @@ FIO_WT_FUNC( asc_wt )
 	return(0);
 }
 
-FIO_RD_FUNC( asc_rd )
+FIO_RD_FUNC( ascii )
 {
 	/* BUG how do we handle the offsets?? */
 	read_ascii_data(QSP_ARG  dp, ifp->if_fp, ifp->if_name, 1 /* expect_exact_count */ );
 }
 
-int asc_unconv(void *hdr_pp,Data_Obj *dp)
+FIO_SEEK_FUNC( ascii )
+{
+	return std_seek_frame( QSP_ARG  ifp, n );
+}
+
+FIO_INFO_FUNC( ascii )
+{
+	// nop
+}
+
+FIO_UNCONV_FUNC( ascii )
 {
 	NWARN("asc_unconv not implemented");
 	return(-1);
 }
 
-int asc_conv(Data_Obj *dp,void *hd_pp)
+FIO_CONV_FUNC( ascii )
 {
 	NWARN("asc_conv not implemented");
 	return(-1);

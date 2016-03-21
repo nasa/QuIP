@@ -99,7 +99,7 @@ Set $1	$$varname
 Define Restore_X_Axis_Parameters 1 scope_name
 #advise "Restore $1"
 Restore_Var x_axis_specified	$1
-If !$x_axis_specified "PopFile 2 nop"
+If !$x_axis_specified "exit_macro"
 Restore_Var data_vector_len	$1
 Restore_Var samples_per_unit	$1
 Restore_Var x_axis_units	$1
@@ -127,7 +127,7 @@ Set ${2}_$1		$$1
 Define Save_X_Axis_Parameters 1 scope_name
 #advise "Save $1"
 Save_Var x_axis_specified	$1
-If !$x_axis_specified "PopFile 2 nop"
+If !$x_axis_specified "exit_macro"
 Save_Var data_vector_len	$1
 Save_Var x_unit_mantissa	$1
 Save_Var x_unit_exponent	$1
@@ -171,10 +171,10 @@ Set vrange		1
 
 Define Get_Oscilloscope_Limits 0
 #advise "Get_Oscilloscope_Limits BEGIN oscope limits:  $oscope_y_min - $oscope_y_max"
-If $manual_y_range "PopFile 2 nop"
+If $manual_y_range "exit_macro"
 #advise "Get_Oscilloscope_Limits BEGIN, data range is $oscope_y_min - $oscope_y_max"
 Assign drange $oscope_y_max-$oscope_y_min
-If $drange==0 "Set oscope_y_max 1 Set oscope_y_min -1 Set chunk 0.5 PopFile 2 nop"
+If $drange==0 "Set oscope_y_max 1 Set oscope_y_min -1 Set chunk 0.5 exit_macro"
 
 #Set i 0
 do
@@ -425,11 +425,11 @@ Set inc_done 0
 
 If $$2==1
   "Set $2 2 Set inc_done 1"
-If $inc_done "Finish_Pair $1 $2 $3 PopFile 2 nop"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
 
 If $$2==2
   "Set $2 5 Set inc_done 1"
-If $inc_done "Finish_Pair $1 $2 $3 PopFile 2 nop"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
 
 If $$2==5
   "Set $2 1 Increment $3 Set inc_done 1"
@@ -442,11 +442,11 @@ Set inc_done 0
 
 If $$2==1
   "Set $2 5 Decrement $3 Set inc_done 1"
-If $inc_done "Finish_Pair $1 $2 $3 PopFile 2 nop"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
 
 If $$2==2
   "Set $2 1 Set inc_done 1"
-If $inc_done "Finish_Pair $1 $2 $3 PopFile 2 nop"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
 
 If $$2==5
   "Set $2 2 Set inc_done 1"
@@ -490,7 +490,7 @@ Set have_scope_callback 1
 # window.  We update current_sample and data_start_index, then call Update_Oscilloscope.
 
 Define PlotRecenter 0
-If $left_button_up "PopFile 2 nop"
+If $left_button_up "exit_macro"
 #Print event_window
 Select_Oscope $event_window
 #advise "PlotRecenter $current_oscope"
@@ -876,8 +876,10 @@ Set use_custom_oscope_controls 0
 Set scope_border_width 4
 
 Define Init_Oscope 2 width height
-#New_Oscope $current_oscope $1 $2
-New_Oscope $default_oscope_name $1 $2
+If !strcmp('$current_oscope','none')
+  "Set current_oscope $default_oscope_name"
+New_Oscope $current_oscope $1 $2
+#New_Oscope $default_oscope_name $1 $2
 .
 
 Set current_oscope none
@@ -1266,6 +1268,8 @@ If ncols('$1')>2*$oscope_width  "Downsample_Signal $signal_name"
 
 # recursively downsample by factors of two
 # signal names are things like default_oscope_signal1 etc
+# BUG what if the signal is something{0} - the bracket can't
+# be in the data object name...
 #
 # We do this once when we add a signal (trace) for the first time.
 
@@ -1277,11 +1281,12 @@ Assign n ncols('$insignal')
 Set inmax $$1
 Set inmin $$1
 Set ds_factor 2
+Cleanup_Name clean_name $$1
 do
 
-  Set dsvec $$1.ds_$ds_factor
-  Set dsmin $$1.min_$ds_factor
-  Set dsmax $$1.max_$ds_factor
+  Set dsvec $clean_name.ds_$ds_factor
+  Set dsmin $clean_name.min_$ds_factor
+  Set dsmax $clean_name.max_$ds_factor
 
   Assign n floor(ncols('$insignal')/2)
   advise "Downsampling $insignal at ds_factor $ds_factor, new n = $n"
@@ -1292,9 +1297,9 @@ do
   Subsample_Vector max_s1 $inmax  $n 0 2
   Subsample_Vector max_s2 $inmax  $n 1 2
 
-  Vector $dsvec $n 1 float
-  Vector $dsmin $n 1 float
-  Vector $dsmax $n 1 float
+  If !obj_exists('$dsvec') "Vector $dsvec $n 1 float"
+  If !obj_exists('$dsmin') "Vector $dsmin $n 1 float"
+  If !obj_exists('$dsmax') "Vector $dsmax $n 1 float"
 
   VVAdd $dsvec s1 s2
   VSMul $dsvec $dsvec 0.5
@@ -1405,7 +1410,7 @@ Plot_Data_Range ($x_min_index-$data_start_index)/$ds_factor $oscope_y_min
 
 
 Set dws_i 1
-If $n_traces<=0 "PopFile 2 nop"
+If $n_traces<=0 "exit_macro"
 
 #advise "drawing $n_traces traces..."
 
@@ -1473,16 +1478,21 @@ Assign _use_start floor($data_start_index/$ds_factor)
 
 Delete_If scope_max
 Delete_If scope_min
+
+If $n_traces<1 "warn 'Set_Scope_Window:  No traces!?' exit_macro"
 Set i_trace 1
 #Print n_traces
 repeat $n_traces
   # are we downsampling?
 
+  Print current_oscope
   Set signal_name ${current_oscope}_signal$i_trace
+  Print signal_name
   If $downsampling
-    Then "Set source_signal $${signal_name}.ds_$ds_factor \
-          Set max_source $${signal_name}.max_$ds_factor \
-	  Set min_source $${signal_name}.min_$ds_factor \
+    Then "Cleanup_Name clean_name $$signal_name \
+          Set source_signal $clean_name.ds_$ds_factor \
+          Set max_source $clean_name.max_$ds_factor \
+	  Set min_source $clean_name.min_$ds_factor \
 	  Min_Max_Crop"
     Else "Set source_signal $$signal_name \
           Set max_source $$signal_name \
@@ -1500,8 +1510,11 @@ repeat $n_traces
 .
 
 Define Min_Max_Crop 0
+advise "Min_Max_Crop:  current_oscope = $current_oscope, i_trace = $i_trace"
+Print min_source
 Set cropped_name ${current_oscope}_cropped_min$i_trace
 Delete_If $cropped_name
+advise "Subvector $cropped_name $min_source $_use_n $_use_start"
 Subvector $cropped_name $min_source $_use_n $_use_start
 Set cropped_name ${current_oscope}_cropped_max$i_trace
 Delete_If $cropped_name
@@ -1518,7 +1531,7 @@ If obj_exists('$1') "Delete_Object $1"
 Define Update_Trace 1 data_source
 #advise "Update_Trace $1"
 Assign ___n min($n_plot_samples,ncols('$1')-$data_start_index)
-If $___n<=0 "warn 'Update_Trace:  No samples to plot!?' PopFile 2 nop"
+If $___n<=0 "warn 'Update_Trace:  No samples to plot!?' exit_macro"
 Subvector show_region $1 $___n $data_start_index
 Select_Pen $data_color
 YPlot show_region
@@ -1547,7 +1560,7 @@ If !$manual_y_range Get_Y_Auto_Range
 
 Define Get_Y_Auto_Range 0
 Set gyr_i 1
-If $n_traces==0 "PopFile 2 nop"
+If $n_traces==0 "exit_macro"
 repeat $n_traces
   Set _cnv_seg_name cnv_segment$gyr_i		# converted segment
   Set _raw_seg_name raw_segment$gyr_i		# raw segment
@@ -1745,7 +1758,7 @@ X_Index_To_Scale current_x_value $current_sample
 Assign plot_fraction ($current_x_value-$x_axis_min)/$x_axis_delta
 Assign total_fraction ($left_margin+$plot_fraction*(1-$left_margin-$right_margin))
 Assign now_col min(ncols($current_oscope)-1,round(ncols($current_oscope)*$total_fraction))
-If $now_col<=0 "warn 'Show_Now_Indicator:  now_col ($now_col) too far to left' PopFile 2 nop"
+If $now_col<=0 "warn 'Show_Now_Indicator:  now_col ($now_col) too far to left' exit_macro"
 Subimage now_line $copy_name 1 nrows($oscope_image_name) $now_col 0
 VSet now_line{2} 255
 VSet now_line{1} 0
@@ -1772,5 +1785,22 @@ Assign current_sample $1
 # be over at the left edge of the plot, and recentering won't move it...
 If ($current_sample<($data_start_index+$n_plot_samples*0.15)&&$data_start_index>0)||$current_sample>($data_start_index+$n_plot_samples*0.85)
   Recenter_Oscilloscope
+.
+
+Define Cleanup_Name 2 var_name string
+Vector _cn_string strlen('$2')+1 1 string
+data import_string _cn_string "$2" quit
+expressions
+  export _cn_string
+  read -
+    _cn_string = _cn_string == '}' ? '_' : _cn_string;
+    _cn_string = _cn_string == '{' ? '_' : _cn_string;
+    _cn_string = _cn_string == ']' ? '_' : _cn_string;
+    _cn_string = _cn_string == '[' ? '_' : _cn_string;
+    end
+  quit
+data stringify $1 _cn_string quit
+Delete_Image _cn_string
+advise "Cleanup_Name $$1 <- $2"
 .
 

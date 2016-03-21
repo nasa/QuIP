@@ -1,5 +1,5 @@
 
-macrosdir	=	$(datadir)/quip/macros/atc
+macrosdir	=	$(datadir)/coq/macros/atc
 
 macros_DATA	=	atc.mac		\
 			atcstim.mac	\

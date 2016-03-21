@@ -1,0 +1,7 @@
+
+What is the idea of MIXED args?
+
+We can mix real and complex, and also different precisions...
+But currently we can't mix source precisions, only source and destination.
+
+

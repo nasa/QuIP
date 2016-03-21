@@ -1,0 +1,25 @@
+
+# field of view is 2*atan(_d/near)
+# to model a 1/4" camera, we set  
+Define Init_Projection 0
+gl capabilities enable culling quit quit
+gl
+  transform
+    mode projection
+    # Make _d smaller to increas magnification (it's the size of the window)
+    # change near to change perspective
+    Assign _d 0.25/(sqrt(2)*2)
+#   Set _d 0.1
+#    Set near 0.5
+    Assign near 6/25.4		# 6 mm lens?
+    frustum -$_d $_d -$_d $_d $near 100
+    mode modelview
+    quit
+  quit
+.
+
+
+# what about looking from an arbitrary viewpoint??
+
+
+

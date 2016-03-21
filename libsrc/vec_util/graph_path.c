@@ -1,13 +1,12 @@
 #include "quip_config.h"
 
-char VersionId_vec_util_graph_path[] = QUIP_VERSION_STRING;
-
 /* extend_shorted_path subroutine - from Rivest et al, p. 624
  *
  * We will use this to implement Faster-All-Pairs-Shortest-Paths (p. 627)
  * by repeated calls to this function.
  */
 
+#include "quip_prot.h"
 #include "data_obj.h"
 #include "vec_util.h"
 
@@ -23,10 +22,10 @@ void extend_shortest_paths(QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp )
 	/* BUG need to check that shape is square */
 	/* BUG need to check that depth is 1 */
 
-	n = dst_dp->dt_cols;
+	n = OBJ_COLS(dst_dp);
 
-	srcp = (float *)src_dp->dt_data;
-	dst_base = (float *)dst_dp->dt_data;
+	srcp = (float *)OBJ_DATA_PTR(src_dp);
+	dst_base = (float *)OBJ_DATA_PTR(dst_dp);
 
 	for(i=0;i<n-1;i++){
 		for(j=i+1;j<n;j++){

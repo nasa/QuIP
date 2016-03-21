@@ -1,0 +1,10 @@
+*.o
+*.a
+.deps
+*.debug
+Makefile
+Makefile.in
+cuda_veclib_expanded.c*
+cuda_veclib_stripped.c*
+
+

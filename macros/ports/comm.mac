@@ -1,0 +1,43 @@
+# some macros for communication with a data-archiving daemon
+
+Set server_host euler.arc.nasa.gov	# what is the right way to do this?
+Set server_port	2050
+
+# BUG?	We need to make sure something sensible happens
+# when the server is not running or is unreachable...
+
+Define Make_Connection 0
+ports
+  client client_mouth $server_host $server_port
+  xmit text client_mouth 'advise "Connected to client..."'
+  # we could print a local message here, but do we really
+  # know we are connected?
+  quit
+.
+
+# This macro has the server port name hard-coded??? BUG?
+
+Define Send_File 2 dest_filename src_filename
+ports
+  xmit text client_mouth "advise 'Receiving file $1...'"
+  xmit text client_mouth "date"
+  xmit text client_mouth "top_menu ports port_output_file server_ear '$1' quit"
+  xmit plain_file client_mouth $2
+  xmit text client_mouth "advise 'File $1 received.'"
+  xmit text client_mouth "date"
+  quit
+.
+
+Define Break_Connection 0
+ports
+  # Not sure if we really need to close the server port,
+  # but the server is written to restart...
+  xmit text client_mouth "advise 'closing server_ear'"
+  xmit text client_mouth "ports close server_ear quit"
+
+  # If we close the server, we have no use for the mouth
+  close client_mouth
+  quit
+.
+
+

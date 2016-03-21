@@ -306,7 +306,7 @@ VSet dc2y 0
 VSet c3y 0
 .
 
-Define Set_Done 0
+Define Set_Done_Stem 1 filestem
 #Tell_If "DONE WITH ALL RECORDS run $RUN_STEM camera $EYE_CAMERA_INDEX"
 
 # Push_Var showing_plots
@@ -329,12 +329,16 @@ Define Set_Done 0
 #advise "Save_Correlogram a2y y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
 #Save_Correlogram a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
 
-Save_Pair x_axcor y_axcor a2x a2y
+Save_Pair x_$1 y_$1 a2x a2y
 
 
 # If $scanning Dump_Scan_Data
 # Pop_Var plotting
 # Pop_Var pausing
+.
+
+Define Set_Done 0
+Set_Done_Stem axcor
 .
 
 Define Save_Pair 4 xstem ystem xobj yobj

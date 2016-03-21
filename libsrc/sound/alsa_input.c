@@ -1,8 +1,6 @@
 #include "quip_config.h"
 
-char VersionId_sound_alsa_input[] = QUIP_VERSION_STRING;
-
-#ifdef HAVE_SOUND
+#ifdef HAVE_ALSA
 
 #ifndef USE_OSS_SOUND
 
@@ -40,11 +38,8 @@ char VersionId_sound_alsa_input[] = QUIP_VERSION_STRING;
 #include <alsa/asoundlib.h>
 #endif
 
-#include "query.h"
-#include "getbuf.h"
-#include "debug.h"
+#include "quip_prot.h"
 #include "sound.h"
-#include "function.h"		/* add_tsable */
 
 /*
 #define MIXER_NAME "/dev/mixer"
@@ -90,7 +85,7 @@ typedef struct sound_device {
 } Sound_Device;
 
 typedef struct {
-	Query_Stream *	ara_qsp;
+	Query_Stack *	ara_qsp;
 } Audio_Reader_Args;
 
 #define NO_SOUND_DEVICE ((Sound_Device *)NULL)
@@ -98,7 +93,11 @@ typedef struct {
 static Sound_Device *the_sdp=NO_SOUND_DEVICE;
 #define DEFAULT_SOUND_DEVICE		"default"	/* capture device */
 
-ITEM_INTERFACE_DECLARATIONS( Sound_Device, snddev )
+//ITEM_INTERFACE_DECLARATIONS_STATIC( Sound_Device, snddev )
+static Item_Type *snddev_itp=NO_ITEM_TYPE;
+static ITEM_INIT_FUNC(Sound_Device,snddev)
+static ITEM_CHECK_FUNC(Sound_Device,snddev)
+static ITEM_NEW_FUNC(Sound_Device,snddev)
 
 
 
@@ -163,7 +162,7 @@ void select_line_input(SINGLE_QSP_ARG_DECL)
 }
 
 
-double get_sound_seconds(Item *ip,dimension_t frame)
+double get_sound_seconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 {
 	Data_Obj *dp;
 	u_long sec;
@@ -172,11 +171,11 @@ double get_sound_seconds(Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(DEFAULT_QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
 
 	/* convert time stamp to broken-down time */
 
-	tm_p = (Timestamp_Data *)dp->dt_data;
+	tm_p = (Timestamp_Data *)OBJ_DATA_PTR(dp);
 
 	tm1.tm_sec = tm_p->tsd_sec;
 	tm1.tm_min = tm_p->tsd_min;
@@ -190,7 +189,7 @@ double get_sound_seconds(Item *ip,dimension_t frame)
 	return((double)sec);
 }
 
-double get_sound_microseconds(Item *ip,dimension_t frame)
+double get_sound_microseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 {
 	Data_Obj *dp;
 	u_long usec;
@@ -198,9 +197,9 @@ double get_sound_microseconds(Item *ip,dimension_t frame)
 
 	dp = (Data_Obj *)ip;
 
-	if( ! object_is_sound(DEFAULT_QSP_ARG  dp) ) return(-1.0);
+	if( ! object_is_sound(QSP_ARG  dp) ) return(-1.0);
 
-	tm_p = (Timestamp_Data *)dp->dt_data;
+	tm_p = (Timestamp_Data *)OBJ_DATA_PTR(dp);
 
 	usec = tm_p->tsd_csec;
 	usec *= 100;
@@ -211,10 +210,10 @@ double get_sound_microseconds(Item *ip,dimension_t frame)
 	return((double)usec);
 }
 
-double get_sound_milliseconds(Item *ip,dimension_t frame)
+double get_sound_milliseconds(QSP_ARG_DECL  Item *ip,dimension_t frame)
 {
-	if( ! object_is_sound(DEFAULT_QSP_ARG  (Data_Obj *)ip) ) return(-1.0);
-	return( get_sound_microseconds(ip,frame) / 1000.0 );
+	if( ! object_is_sound(QSP_ARG  (Data_Obj *)ip) ) return(-1.0);
+	return( get_sound_microseconds(QSP_ARG  ip,frame) / 1000.0 );
 }
 
 void halt_rec_stream(SINGLE_QSP_ARG_DECL)
@@ -260,7 +259,7 @@ void record_sound(QSP_ARG_DECL  Data_Obj *dp)
 
 #define FRAMES_PER_CHUNK	128		/* how should we set this?? */
 
-int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
+static int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 {
 	snd_pcm_uframes_t n_frames;
 	int dir=0;
@@ -287,18 +286,18 @@ int setup_record(QSP_ARG_DECL  Sound_Device *sdp)
 	return(0);
 }
 
-int read_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm_uframes_t frames_remaining, int frame_size )
+static int read_sound_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm_uframes_t frames_remaining, int frame_size )
 {
 	snd_pcm_uframes_t frames_requested;
 	int err;
 
-//fprintf(stderr,"read_frames ptr = 0x%lx, frames_remaining = %d\n",(u_long)ptr,frames_remaining);
+//fprintf(stderr,"read_sound_frames: ptr = 0x%lx, frames_remaining = %d\n",(u_long)ptr,frames_remaining);
 	frames_requested = 64;
 
 	while(frames_remaining){
 		frames_requested = frames_requested < frames_remaining ? frames_requested : frames_remaining;
 
-//fprintf(stderr,"read_frames ptr = 0x%lx, frames_requested = %d\n",(u_long)ptr,frames_requested);
+//fprintf(stderr,"read_sound_frames: ptr = 0x%lx, frames_requested = %d\n",(u_long)ptr,frames_requested);
 		if((err = snd_pcm_readi(sdp->sd_capture_handle, ptr, frames_requested)) != (int) frames_requested) {
 			if( err == EPIPE ){		/* short read */
 				WARN("audio read overrun");
@@ -325,7 +324,7 @@ int read_frames(QSP_ARG_DECL  Sound_Device *sdp, char *ptr, snd_pcm_uframes_t fr
 		ptr += frames_requested * frame_size;
 		frames_remaining -= frames_requested;
 	}
-//fprintf(stderr,"read_frames ptr = 0x%lx  DONE\n",(u_long)ptr);
+//fprintf(stderr,"read_sound_frames: ptr = 0x%lx  DONE\n",(u_long)ptr);
 	return(0);
 }
 
@@ -336,13 +335,13 @@ static int _record_sound(QSP_ARG_DECL  Data_Obj *dp, Sound_Device *sdp)
 	
 	if( setup_record(QSP_ARG  sdp) < 0 ) return(-1);
 
-	n = dp->dt_n_type_elts/dp->dt_comps;		/* assume tdim =2 if stereo... */
+	n = OBJ_N_TYPE_ELTS(dp)/OBJ_COMPS(dp);		/* assume tdim =2 if stereo... */
 sprintf(ERROR_STRING,"_record_sound:  n_frames = %ld, tdim = %ld, size = %d",
-n, (long)dp->dt_comps, siztbl[MACHINE_PREC(dp)]);
+n, (long)OBJ_COMPS(dp), PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 advise(ERROR_STRING);
 
-	ptr = (char *)dp->dt_data;
-	return read_frames(QSP_ARG  sdp,ptr,n,dp->dt_comps*siztbl[MACHINE_PREC(dp)]);
+	ptr = (char *)OBJ_DATA_PTR(dp);
+	return read_sound_frames(QSP_ARG  sdp,ptr,n,OBJ_COMPS(dp)*PREC_SIZE(OBJ_MACH_PREC_PTR(dp)));
 }
 
 static int init_sound_hardware(QSP_ARG_DECL  Sound_Device *sdp)
@@ -461,7 +460,7 @@ static Data_Obj * init_stream_obj(SINGLE_QSP_ARG_DECL)
 	ds1.ds_dimension[3] = 1;
 	ds1.ds_dimension[4] = 1;
 
-	audio_stream_dp = make_dobj(QSP_ARG  "_audio_stream_obj",&ds1,PREC_IN);
+	audio_stream_dp = make_dobj(QSP_ARG  "_audio_stream_obj",&ds1,PREC_FOR_CODE(PREC_IN));
 	return( audio_stream_dp );
 }
 
@@ -472,11 +471,11 @@ static  void *disk_writer(void *arg)
 	short *ptr;
 	int n_want, n_written;
 	struct timeval *tvp;
-	Query_Stream *qsp;
+	Query_Stack *qsp;
 
 	qsp = arg;
 
-	n_want = audio_stream_dp->dt_comps * audio_stream_dp->dt_cols * sizeof(short);
+	n_want = OBJ_COMPS(audio_stream_dp) * OBJ_COLS(audio_stream_dp) * sizeof(short);
 	while(streaming){
 		/* wait for first buffer */
 		while( oldest == (-1) ){
@@ -490,8 +489,8 @@ static  void *disk_writer(void *arg)
 		}
 
 
-		ptr = (short *)audio_stream_dp->dt_data;
-		ptr += oldest * audio_stream_dp->dt_rowinc;
+		ptr = (short *)OBJ_DATA_PTR(audio_stream_dp);
+		ptr += oldest * OBJ_ROW_INC(audio_stream_dp);
 
 		if( (n_written=write(audio_stream_fd,ptr,n_want)) < 0 ){
 			tell_sys_error("write");
@@ -537,24 +536,24 @@ static void *audio_reader(void *arg)
 	snd_pcm_uframes_t frames_requested;
 	Audio_Reader_Args *ara_p;
 #ifdef THREAD_SAFE_QUERY
-	Query_Stream *qsp;
+	Query_Stack *qsp;
 #endif
 
 	ara_p = arg;
 #ifdef THREAD_SAFE_QUERY
 	qsp = ara_p->ara_qsp;
 #endif
-	framesize = audio_stream_dp->dt_comps*siztbl[MACHINE_PREC(audio_stream_dp)];
-	frames_requested = audio_stream_dp->dt_cols;
+	framesize = OBJ_COMPS(audio_stream_dp)*PREC_SIZE(OBJ_MACH_PREC_PTR(audio_stream_dp));
+	frames_requested = OBJ_COLS(audio_stream_dp);
 
 	while( !halting ){
 		short *ptr;
 
-		ptr = (short *) audio_stream_dp->dt_data;
-		ptr += active_buf * audio_stream_dp->dt_rowinc;
+		ptr = (short *) OBJ_DATA_PTR(audio_stream_dp);
+		ptr += active_buf * OBJ_ROW_INC(audio_stream_dp);
 
 		/* now fill this buffer with data */
-		if( read_frames(QSP_ARG  the_sdp,(char *)ptr,frames_requested,framesize) < 0 ){
+		if( read_sound_frames(QSP_ARG  the_sdp,(char *)ptr,frames_requested,framesize) < 0 ){
 			WARN("error reading audio data");
 			halting=1;
 		}
@@ -646,4 +645,4 @@ void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)
 
 #endif /* ! USE_OSS_SOUND */
 
-#endif /* HAVE_SOUND */
+#endif /* HAVE_ALSA */
