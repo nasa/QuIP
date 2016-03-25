@@ -344,7 +344,7 @@ void del_##stem(QSP_ARG_DECL  type *ip)				\
 	del_item(QSP_ARG  stem##_itp, (Item *)ip);		\
 }
 
-extern ITEM_INIT_PROT(Item_Type,ittyp);
+extern ITEM_INIT_PROT(Item_Type,ittyp)
 extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
 extern Item *check_context(Item_Context *icp, const char *name);
 
