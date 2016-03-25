@@ -1,7 +1,5 @@
 
 Set i 1
-
-<<<<<<< HEAD
 repeat 3 advise "in-line repeat loop, iteration $i" Increment i end
 
 Set j 1
