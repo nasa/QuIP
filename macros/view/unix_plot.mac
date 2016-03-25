@@ -1,0 +1,243 @@
+If var_exists(plot_locale)
+  'warn "unix_plot.mac:  plot locale already initialized to $plot_locale" exit_file nop'
+
+# we don't know how to draw rotated text using Xlib, so we do a hack:
+# we save the contents of the window, draw the Y_Legend horizontally,
+# read it in, rotate it 90 degrees in memory, restore the original
+# window contents, then insert the legend - whew!
+#
+# If the window is not mapped, it is not an error to draw to it,
+# but we get an Xlib error if we try to read back image data from
+# it.  We seemed to have solved this on linux with a function is_mapped,
+# but on Mac OS X this doesn't seem to be working!?
+# After a little investigation, it was revealed that the Mac error
+# occurs at the *second* call to extract the patch - so window
+# visibility is not the issue.  An inserted delay seems to fix it.
+
+Define Y_Legend 1 string
+Get_Legend_Image $1
+# now need to erase so that this isn't in the redraw list
+# there ought to be an easier way to clear this list!
+view plot $the_plotter erase quit quit
+
+# now figure out where to put it
+Assign string_width strlen('$1')*$v_plot_units_per_rotated_char
+Assign string_height $h_plot_units_per_rotated_char
+#advise "string size is $string_width x $string_height"
+Assign ly ($plot_ymax+$plot_ymin+$string_width)/2	# top
+#advise "Y_Legend:  plot_xmin = $plot_xmin, legend_h_offset = $legend_h_offset"
+Assign lx $plot_xmin-$legend_h_offset			# left
+Plot_2_Screen slx sly $lx $ly
+#advise "drawing y legend at $slx $sly"
+Subimage y_legend_inset save_buf ncols(y_legend) nrows(y_legend) $slx $sly
+VMov y_legend_inset y_legend
+Delete_Image y_legend
+
+view draw $the_plotter clear quit quit	# get the X (Y) legend off the remember list
+# make sure these are back on the list
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+
+view load $the_plotter save_buf quit
+Delete_Image save_buf
+.
+# end Y_Legend
+
+
+
+Define Y_Legend_Right 1 string
+Get_Legend_Image $1
+# now need to erase so that this isn't in the redraw list
+# there ought to be an easier way to clear this list!
+view plot $the_plotter erase quit quit
+
+# now figure out where to put it
+Assign string_width strlen('$1')*$v_plot_units_per_rotated_char
+Assign string_height $h_plot_units_per_rotated_char
+Assign ly ($plot_ymax+$plot_ymin+$string_width)/2	# top
+Assign lx $plot_xmax+$legend_h_offset_right		# left
+Plot_2_Screen slx sly $lx $ly
+Subimage y_legend_inset save_buf ncols(y_legend) nrows(y_legend) $slx $sly
+VMov y_legend_inset y_legend
+Delete_Image y_legend
+
+view draw $the_plotter clear quit quit	# get the X (Y) legend off the remember list
+# make sure these are back on the list
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+
+view load $the_plotter save_buf quit
+Delete_Image save_buf
+.
+
+# in the supporting C code for extract, we call a subroutine
+# called wait_until_mapped (or something like that), which seems
+# to work as expected on linux but not on Mac OS X...  So as a
+# hack we have put in a 100 msec delay here...
+
+Define Get_Legend_Image 1 string
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+Image save_buf nrows('$the_plotter') ncols('$the_plotter') depth('$DISPLAY')/8 u_byte
+#usleep 300000
+#advise 'Type ^D when window is visible...'
+#< /dev/tty
+
+view
+  # Don't erase before saving!!!
+  #draw $the_plotter clear quit	# doesn't erase list?  Yes it does!!!
+  extract save_buf $the_plotter 0 0
+  quit
+X_Legend $1
+
+# Now we need to figure out more-or-less where it is!
+Plot_2_Screen sx1 sy1 $lx $ly
+#advise "lx ly = $lx $ly    maps to $sx1 $sy1"
+#Assign legend_width floor(strlen('$1')*$h_screen_units_per_char)
+view draw $the_plotter get_string_width legend_width "$1" quit quit
+Add_Var sx1 -$legend_width/2	# need this when we have centered mode
+#Print legend_width
+Assign legend_height floor($v_screen_units_per_char)
+Image legend_strip $legend_height $legend_width depth('$DISPLAY')/8 u_byte
+Add_Var sy1 floor($v_screen_units_per_char*$descender_fraction)
+Assign sx2 $sx1+$legend_width
+Assign sy2 $sy1-$legend_height
+
+# this line draws a box around the clipped area
+#Show_Legend_Area
+#Pause
+
+# lx and ly are in plotting coords...
+# BadMatch error on Mac OS X occurs here, not on the first call...
+usleep 100000
+view extract legend_strip $the_plotter $sx1 $sy2 quit
+
+Image y_legend ncols(legend_strip) nrows(legend_strip) depth(legend_strip) u_byte
+# A simple transpose does a mirror reversal, so we fake it...
+data
+  subsample r_legend y_legend
+    depth(y_legend)	0			1
+    ncols(y_legend)	0			1
+    nrows(y_legend)	nrows(y_legend)-1	-1
+  quit
+Transpose r_legend legend_strip
+Delete_Image legend_strip
+.
+
+
+Define X_Legend 1 string
+#advise "X_Legend:  plot_xmin = $plot_xmin   plot_xmax = $plot_xmax"
+#advise "X_Legend:  plot_ymin = $plot_ymin   legend_v_offset = $legend_v_offset"
+Legend_Font
+#Print plot_xmin
+#Print plot_xmax
+view
+  draw $the_plotter
+    text_mode centered
+    #get_string_width string_width "$1"
+    quit
+  plot $the_plotter
+    #Assign string_width strlen('$1')*$h_plot_units_per_char
+    #Mul_Var string_width $h_plot_units_per_screen_unit
+
+# these are in the plotting units...
+    #Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
+    # this is the centered x coord...
+    Assign lx ($plot_xmin+$plot_xmax)/2
+    Assign ly $plot_ymin-$legend_v_offset
+    # what about justification??? x centered, y at bottom of text...
+    move $lx $ly
+    string $1
+    quit
+  quit
+.
+
+Define Validate_Fonts 0
+Set fonts_present 0
+Validate_Font $unit_font
+If !$font_present exit_macro
+Validate_Font $legend_font
+If !$font_present exit_macro
+Set fonts_present 1
+.
+
+Define Validate_Font 1 font_name
+Set font_present 0
+os
+  pipes
+    open f read "xlsfonts | grep -e '$1'"
+    read f x
+    close f
+    quit
+  quit
+Print x
+If !strcmp('$x','$1') "Set font_present 1"
+.
+
+# These font names are only good for X11, and the particular
+# fonts which are present seem to depend a bit on the installation?
+
+Define Init_Font_Stuff 0
+
+# BUG we need a way to figure out how to move...
+
+# these fonts don't seem to be present on fc8...
+Set iso_rev 8859
+#Set iso_rev 10646
+
+#Set unit_font   -adobe-times-bold-r-normal--14-140-75-75-p-77-iso8859-1
+#Set legend_font -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
+
+# this has been the default...
+# but these fonts are missing on Ubuntu???
+Set unit_font "-adobe-times-bold-r-normal--14-100-100-100-p-76-iso${iso_rev}-1"
+Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
+Validate_Fonts
+If $fonts_present exit_macro
+
+# do these work on wheatstone?
+#Set unit_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-13"
+#Set legend_font "-urw-nimbus roman no9 l-bold-i-normal--0-0-0-0-p-0-iso8859-15"
+
+# these work on wheatstone...
+Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
+Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
+Validate_Fonts
+If $fonts_present exit_macro
+
+# 7/9/14:  they don't work any more!?
+#Set unit_font "6x13"
+#Set legend_font "6x13"
+
+# what fonts do we have on fc12?
+#Set legend_font "-urw-urw bookman l-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+#Set unit_font "-urw-urw bookman l-bold-r-normal--0-0-0-0-p-0-iso8859-15"
+
+
+# -adobe-times-bold-r-normal--11-80-100-100-p-57-iso10646-1
+# -adobe-times-bold-r-normal--11-80-100-100-p-57-iso8859-1
+# -adobe-times-bold-r-normal--14-100-100-100-p-76-iso10646-1
+# -adobe-times-bold-r-normal--14-100-100-100-p-76-iso8859-1
+# -adobe-times-bold-r-normal--17-120-100-100-p-88-iso10646-1
+# -adobe-times-bold-r-normal--17-120-100-100-p-88-iso8859-1
+# -adobe-times-bold-r-normal--20-140-100-100-p-100-iso10646-1
+# -adobe-times-bold-r-normal--20-140-100-100-p-100-iso8859-1
+# -adobe-times-bold-r-normal--25-180-100-100-p-132-iso10646-1
+# -adobe-times-bold-r-normal--25-180-100-100-p-132-iso8859-1
+# -adobe-times-bold-r-normal--34-240-100-100-p-177-iso10646-1
+# -adobe-times-bold-r-normal--34-240-100-100-p-177-iso8859-1
+
+#advise "Init_Font_Stuff:  legend_font = $legend_font, unit_font = $unit_font"
+
+# What fonts are available on Ubuntu???
+#If !strcmp('$HOST','euler')
+#  'advise "Using special fonts for Ubuntu..." \
+
+Set unit_font "-misc-fixed-bold-r-normal--14-130-75-75-c-70-iso8859-2"
+Set legend_font "-misc-fixed-bold-r-normal--14-130-75-75-c-70-iso8859-2"
+
+Validate_Fonts
+If $fonts_present exit_macro
+
+error_exit "Couldn't find any fonts for plotting!?"
+.
+
+
+Set plot_locale x11

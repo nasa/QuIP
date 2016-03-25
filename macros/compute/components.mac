@@ -1,0 +1,207 @@
+Start_File components.mac
+
+# This macro works on the component using some results from the morphological mathematics
+# and mostly on shapes parameters.
+
+Define Test_Sol_Orient 2 dst im
+# If the compactness is the good one, we try two new thresholds
+Box_Dimensions $2
+If "(($solidity < 1.4) & ($solidity > 0.6) & ($orientation < 0.90) & ($orientation > 0.45))"
+   "VVAdd $1 $1 $2"
+.	     
+
+
+Define Remove_Components 2 dst src
+Image comp_test 256 256 1 float
+Image comp_test2 256 256 1 float
+VMov comp_test $2
+# For each component we do:
+do
+# Find one connected component  
+  Find_Component comp_test2 comp_test
+  Show_Image_If comp_test2 vh 'Component found'
+# Now we'll do several test on the connected component
+# First we test the compactness of the shape. 
+# The compactness of an eye is 0.055 < c < 0.035
+# This number was found after some trials on different eyes.
+  If "(($compactness<0.055)&&($compactness>0.035))"
+# Now if the component has the right compactness we test the solidity and the orientation
+     "Test_Sol_Orient $1 comp_test2"
+  Show_Image_If $1 vv "component selected"
+  #VVSub comp_test comp_test2 comp_test
+  VVSub comp_test comp_test comp_test2
+  Show_Image_If comp_test vs "Components to be extracted..."
+  Find_Max_Pixel comp_test      # Shoud try to delete that...
+  while "$mxv==1"  # No components anymore in the picture
+Delete_Image comp_test
+Delete_Image comp_test2
+.
+
+
+
+Define Find_Component 2 dst src
+# Find one connected-component in src and put it in dst
+# Give the dimensions as well
+# This extracts the first component found.
+Find_Max_Pixel $2 
+Dup_UByte fc_btmp $2
+Dup_Float fc_ftmp $2
+Convert fc_btmp $2
+Fill fc_btmp $mxx $mxy 0 0
+Convert fc_ftmp fc_btmp
+#VVSub $1 fc_ftmp $2 
+VVSub $1 $2 fc_ftmp 
+Delete_Image fc_btmp
+Delete_Image fc_ftmp
+# Here we'll do some calculations on the component
+#Dimensions_Component $1
+Get_Sum area $1
+.
+
+# we assume that the area is already in the variable $area
+
+Define Compute_Compactness 1 src
+Dup_Float cc_tmp $1
+Erode cc_tmp $1
+#VVSub cc_tmp cc_tmp $1
+VVSub cc_tmp $1 cc_tmp
+Show_All_If cc_tmp v5 "$1 perimeter"
+Get_Sum perimeter cc_tmp
+#Print perimeter
+# for a circular disk, the area is pi*r*r and the perimeter is 2*pi*r
+# so area/(perimeter*perimeter) should be 1/(4pi)
+Assign compactness 16*atan(1)*($area/($perimeter*$perimeter))
+#Print compactness
+Delete_Image cc_tmp
+.
+
+Define Dimensions_Component 1 src
+# Give the area and the perimeter of the component
+# We compute here the compactness of the shape
+Find_Max_Pixel $1
+Assign area $mxt 
+Print_If area
+Dup_Float grad_tmp $1
+Dilate grad_tmp $1
+#VVSub grad_tmp $1 grad_tmp
+VVSub grad_tmp grad_tmp $1
+Find_Max_Pixel grad_tmp
+Assign perimeter $mxt
+Print_If perimeter
+Assign compactness ($area/($perimeter*$perimeter))
+Delete_Image grad_tmp
+Print_If compactness
+.
+
+Define Box_Dimensions 1 src
+# Take the coordinate of the box around the component and give its
+# width Dx and height Dy
+# Computes the orientation and the solidity
+Std_Scalar fmp_maxval
+Scalar fmp_maxtimes 1 long
+Scalar m 1 float
+Vector fmp_indices 256*256 1 long 
+Vector w 256*256 1 float
+Vector mxi 256*256 1 float
+Vector mxy 256*256 1 float
+Vector mxx 256*256 1 float
+Max_Times fmp_indices $1 fmp_maxval fmp_maxtimes
+Assign mxt value(fmp_maxtimes)
+Convert mxi fmp_indices
+VSAdd mxi mxi -1
+VSMul mxy mxi 1/ncols($1)
+VFloor mxy mxy
+Subvector valid_y mxy $mxt 0
+Get_Min m valid_y
+Assign maxy $m
+Get_Max m valid_y
+Assign miny $m
+Print_If miny
+Print_If maxy
+VSMul mxx mxi 1/ncols($1)
+VFloor w mxx
+VSMul w w ncols($1)
+#VVSub mxx w mxi
+VVSub mxx mxi w
+Subvector valid_x mxx $mxt 0
+Get_Min m valid_x
+Assign minx $m
+Get_Max m valid_x
+Assign maxx $m
+Print_If minx
+Print_If maxx
+Assign Dx $maxx-$minx
+Assign Dy $miny-$maxy
+# Compute the orientation Width of the box/ Height of the box
+Assign orientation $Dy/$Dx
+Print_If orientation
+# Compute the solidity 
+Assign solidity $area/($Dx*$Dy)
+Print_If solidity
+Delete_Image fmp_maxtimes
+Delete_Image fmp_indices
+Delete_Image w
+Delete_Image mxi
+Delete_Image mxy
+Delete_Image mxx
+Delete_Image fmp_maxval
+Delete_Image m
+.
+
+Define Draw_Box 6 viewer color minx miny maxx maxy
+# In the image coordinates
+# Just for checking
+view
+  plot $1
+   select $2
+   move $3 (255-$4)
+   cont $5 (255-$4)
+   cont $5 (255-$6)
+   cont $3 (255-$6)
+   cont $3 (255-$4)
+   quit
+quit
+.
+
+
+# end of original components.mac
+
+
+# Check the next component, updating globals $max_area and image big_comp
+# The component is removed from the input
+
+Define Next_Component 1 image
+Get_Sum totsum $1
+If $totsum==0 "Set biggest_found 1 exit_macro"
+Dup_Float nc_tmp $1
+Find_Component nc_tmp $1
+If $area>$max_area "Set max_area $area VMov big_comp nc_tmp"
+#VVSub $1 nc_tmp $1
+VVSub $1 $1 nc_tmp
+Delete_Image nc_tmp
+.
+
+
+# assume source is a "bit" image, 0's and 1's (or any non-zero?)
+
+Define Find_Largest_Component 2 target source
+Dup_Float flc_tmp $1
+Dup_Float big_comp $1
+Show_All_If $2 $scratch_v "Input to Find_Largest_Component"
+VMov flc_tmp $2
+
+# Now we would like to find the largest connected component
+Set max_area 0
+Set biggest_found 0
+VSet big_comp 0		# just incase there is nothing in this image...
+do
+  Next_Component flc_tmp
+  while !$biggest_found
+VMov $1 big_comp
+
+Delete_Image flc_tmp
+Delete_Image big_comp
+.
+
+Stop_File components.mac
+

@@ -1,0 +1,145 @@
+# vmenu macros
+
+Define Open_Video_Device 1 devname
+Tell_If "Open_Video_Device:  entering submenu"
+v4l2
+  Tell_If "Open_Video_Device:  opening $1"
+  advise "Open_Video_Device:  opening $1"
+  open $1
+  advise "Open_Video_Device:  DONE opening $1"
+  advise 'Setting standard to ntsc...'
+  standards set_standard NTSC quit
+  advise 'DONE Setting standard to ntsc...'
+  Tell_If "Open_Video_Device:  DONE opening $1"
+  quit
+.
+
+Set all_open 0
+
+Set default_video_format yuyv
+
+Set current_video_format $default_video_format
+
+Define Set_Video_Format 1 video_format
+v4l2
+  format $1
+  quit
+# BUG make sure format name is valid!
+Set current_video_format $1
+.
+
+Define Set_Field_Mode 1 mode
+Set field_mode $1	# interlaced/alternate...
+v4l2
+  field_mode $1
+  quit
+.
+
+Define Open_All_Devices 0
+If $all_open exit_macro
+# Where should we set the video format?
+v4l2
+  format $current_video_format
+  open /dev/video3
+  standards set_standard NTSC quit
+  open /dev/video2
+  standards set_standard NTSC quit
+  open /dev/video1
+  standards set_standard NTSC quit
+  open /dev/video0
+  standards set_standard NTSC quit
+  quit
+Set all_open 1
+.
+
+Define Record4 2 moviename total_frames
+v4l2
+  stream
+    # devices should already be open
+    date
+    record $1 $2 4 /dev/video0 /dev/video1 /dev/video2 /dev/video3
+    date
+    quit
+  quit
+.
+
+Define Dump_Grab_Times 1 dumpfilename
+advise "Dump_Grab_Times $1"
+v4l2
+  stream
+    output_file $1
+    grab_times
+    output_file -
+    quit
+  quit
+.
+
+
+#Set n_buf_lines	240	# field mode
+Set n_buf_lines		480	# full frame
+
+Image rgb $n_buf_lines 640 3 u_byte
+Image y $n_buf_lines 640 1 u_byte
+Image u $n_buf_lines 320 1 u_byte
+Image v $n_buf_lines 320 1 u_byte
+data
+  subsample c1 y
+  	320 0 2
+	$n_buf_lines 0 1
+  subsample c2 y
+  	320 1 2
+	$n_buf_lines 0 1
+  quit
+
+Define Start_V4L2_Flow 1 devicename
+# BUG?  should have a flowing flag for each device?
+If $flowing "warn 'Start_V4L2_Flow:  already flowing!? exit_macro"
+Tell_If "Start_V4L2_Flow:  starting $1"
+v4l2
+  select $1
+  flow
+    start	# how do we know which device we are flowing???
+    quit
+  quit
+Set flowing 1
+.
+
+Define Stop_V4L2_Flow 0
+v4l2
+  flow
+    stop
+    quit
+  quit
+Set flowing 0
+.
+
+Set flowing 0
+
+Define Update_V4L2_Flow 0
+Next_Frame_In /dev/video$video_dev_index
+.
+
+Define Next_Frame_In 1 devicename
+v4l2
+  select $1
+  flow
+    wait
+    Set oname oldest.$1
+    If !var_exists('$oname')
+      "advise 'var $oname does not exist!?' quit quit exit_macro"
+    If $$oname<0 exit_macro
+    Set bufname ${1}.buffer$$oname
+
+    yuv2rgb rgb $bufname
+
+    release
+    quit
+  quit
+.
+
+#Start_V4L2_Flow /dev/video0
+#Start_V4L2_Flow /dev/video1
+#Start_V4L2_Flow /dev/video2
+#Start_V4L2_Flow /dev/video3
+
+

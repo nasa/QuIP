@@ -1,0 +1,567 @@
+# mapping.mac
+#
+#################################################
+
+
+Set LINEAR	1
+Set QUAD	2
+Set CUBIC	3
+Set QUARTIC	4
+Set undersc _
+
+
+
+## Compute_Mapping
+################################
+Define Compute_Mapping 4 mapping in out polynomial_order
+
+# We want to find 'mapping' s.t:
+#
+#  poly(in) * mapping = out
+#    poly(in)  * M = out
+# (U*D*Vt) * M = out	(svd of 'in')
+# M = V*invD*Ut * out
+#
+# where poly(in) are the polynomial combinations of in 
+
+
+Dup_Float _validity $2[*][0]
+VSet _validity 1
+
+Compute_Mapping_Selective $1 $2 $3 $4 _validity
+
+Delete_Image _validity
+.
+
+
+
+
+## Compute_Mapping_Selective
+################################
+Define Compute_Mapping_Selective 5 mapping in out polynomial_order validity
+
+# We want to find 'mapping' s.t:
+#
+#  poly(in) * mapping = out
+#    poly(in)  * M = out
+# (U*D*Vt) * M = out	(svd of 'in')
+# M = V*invD*Ut * out
+#
+# where poly(in) are the polynomial combinations of in 
+# 'validity' allows to discard some input data lines
+
+
+Assign L nrows($2)		# nb of data samples
+Assign Np ncols($2)		# nb of input param
+Compute_Nb_Coeffs Ncoeff $Np $4	# nb coefficients for mapping
+Assign Nout ncols($3)		# nb of outputs
+Tell_Precision $2 type		# precision of input
+
+# Display parameters
+advise "-> Computing mapping (order:$4  Nparam:$Np  Ncoeff:$Ncoeff  Nsamples:$L)"
+
+# Limit order to 4
+If $4>4	'advise "-> Sorry, maximum order allowed is 4"	exit'
+
+# Check that there are enough input data samples
+If '$L<$Ncoeff'	'advise " "	\
+		advise "-> Not enough data samples to compute mapping coeffs !!"	\
+		advise " " exit'
+
+# Mapping computation images
+Create_Mapping_Images $1
+Fill_Polynomial_Mat A $2 $4
+Mask_Data A A $5
+Mask_Data out_tmp $3 $5
+
+# Compute SVD of A
+numrec
+	svd A singVal singVec
+quit
+#Assign condN value(singVal[0])/value(singVal[$Ncoeff-1])
+#advise "   (condition number: $condN)"
+
+# Invert decompostion ("backprojection" on B)
+Set out_i 0
+repeat $Nout
+	Transpose B_line_t out_tmp[*][$out_i]
+	numrec
+		svbk mapping_line_t A singVal singVec B_line_t
+	quit
+	Transpose $1[*][$out_i] mapping_line_t
+	Increment out_i
+end
+
+Delete_Mapping_Images
+.
+
+
+
+## Compute_Mapping_2Params_2Orders
+################################
+Define Compute_Mapping_2Params_2Orders 6 mapping in out order1 order2 validity
+
+# We want to find 'mapping' s.t:
+#
+#  poly(in) * mapping = out
+#    poly(in)  * M = out
+# (U*D*Vt) * M = out	(svd of 'in')
+# M = V*invD*Ut * out
+#
+# where poly(in) are the polynomial combinations of in 
+# 'validity' allows to mask (weight/discard) some input data lines
+
+
+Assign L nrows($2)			# nb of data samples
+Assign Np ncols($2)			# nb of input param
+Assign Nout ncols($3)			# nb of outputs
+Tell_Precision $2 type			# precision of input
+Compute_Nb_Coeffs Ncoeff_in12 $Np $5	# nb coefficients in common terms
+Assign Ncoeff_in1 $4-$5
+Assign Ncoeff $Ncoeff_in12+$Ncoeff_in1
+
+Print Nout
+
+# Display parameters
+advise "-> Computing mapping (orders:($4,$5)  Nparam:$Np  Ncoeff:$Ncoeff  Nsamples:$L)"
+
+# Limit order to 4
+If '$4<$5'	'advise "-> Sorry. Given polynomial orders are not supported" exit'
+
+# Check that there are enough input data samples
+If '$L<$Ncoeff'	'advise " "	\
+		advise "-> Not enough data samples to compute mapping coeffs !!"	\
+		advise " " exit'
+
+# Mapping computation images
+Create_Mapping_Images $1
+
+# Fill in A (polynomial combinations of input parameters)
+Fill_Polynomial_Mat A $2 $5
+If $4>$5	'Fill_Remaining_Orders A $2{0} $4 $5'
+Mask_Data A A $6
+Mask_Data out_tmp $3 $6
+
+# Compute SVD of A
+numrec
+	svd A singVal singVec
+quit
+#Assign condN value(singVal[0])/value(singVal[$Ncoeff-1])
+#advise "   (condition number: $condN)"
+
+# Invert decompostion ("backprojection" on B)
+Set out_i 0
+repeat $Nout
+	Transpose B_line_t out_tmp[*][$out_i]
+	numrec
+		svbk mapping_line_t A singVal singVec B_line_t
+	quit
+	Transpose $1[*][$out_i] mapping_line_t
+	Increment out_i
+end
+
+Delete_Mapping_Images
+.
+
+
+
+
+## Compute_Nb_Coeffs
+################################
+Define Compute_Nb_Coeffs 3 Ncoeff Nparam pol_order
+
+Set $1 1
+Set i 1
+If '$3'
+	'repeat $3				\
+		Assign $1 $$1*($2+$i)/$i	\
+		Increment i			\
+	end'
+Set jj 0
+.
+
+
+## Get_Pol_Order
+#
+# what is this for?  N_param is the number of variables?
+# y = a x1 + b
+# y = a x1*x1 + b X1 + c
+##################################
+Define Get_Pol_Order 3 pol_order Ncoeff Nparam
+
+advise "Get_Pol_Order $1 N_coeff = $2   N_param = $3"
+Set $1 no_mapping
+If '$2==1+$3'				'Set $1 $LINEAR'
+If '$2==($3+1)*($3+2)/2'		'Set $1 $QUAD'
+If '$2==($3+1)*($3+2)*($3+3)/6'		'Set $1 $CUBIC'
+If '$2==($3+1)*($3+2)*($3+3)*($3+4)/24' 'Set $1 $QUARTIC'
+If !strcmp($1,no_mapping)
+  Then 'warn "Get_Pol_Order:  cannot determine polynomial order!?"'
+  Else "Print $1"
+#error_exit "Get_Pol_Order:  can't determine polynomial order!?"
+.
+
+
+## Create_Mapping_Images
+###############################
+Define Create_Mapping_Images 1 mapping
+Image $1  $Ncoeff $Nout 1 $type
+Image out_tmp $L $Nout 1 $type
+Image A   $L $Ncoeff 1 $type	# matrix we want to compute the pseudo-inverse
+Image B_line_t  1 $L 1 $type	# transpose of output data we want to fit
+Image mapping_line_t 1 $Ncoeff 1 $type
+Image singVec $Ncoeff $Ncoeff 1 $type
+Image singVal 1 $Ncoeff 1 $type
+.
+
+
+## Mask_Data
+############################
+Define Mask_Data 3 masked raw valididty
+Set i 0
+repeat ncols($1)
+	VVMul $1[*][$i] $2[*][$i] $3
+	Increment i
+end
+.
+
+## Delete_Mapping_Images
+##############################
+Define Delete_Mapping_Images 0
+Delete_Image A
+Delete_Image B_line_t
+Delete_Image singVal
+Delete_Image singVec
+Delete_Image mapping_line_t
+Delete_Image out_tmp
+.
+
+
+## Fill_Polynomial_Mat
+################################
+Define Fill_Polynomial_Mat 3 A param maptype
+
+VSet $1{0} 1
+Set col 1
+If '$3>=1'	'Fill_Order1 $1 $2'
+If '$3>=2'	'Fill_Order2 $1 $2'
+If '$3>=3'	'Fill_Order3 $1 $2'
+If '$3>=4'	'Fill_Order4 $1 $2'
+
+
+.
+
+
+## Fill_Order1
+################################
+Define Fill_Order1 2 A param
+
+Assign Np ncols($2)
+Assign L nrows($2)
+
+Subimage A1 $1 $Np $L	1 0		# linear input
+VMov A1 $2
+Set col $Np+1
+
+Delete_Image A1
+.
+
+
+
+## Fill_Order2
+################################
+Define Fill_Order2 2 A param 
+
+Assign Np ncols($2)
+Set col $Np+1			# start index of quadratic terms
+
+If '$Np==1'
+Then	'VSquare $1{$col} $2'
+Else	'Fill_Order2_Gen $1 $2'
+Set jj 0
+.
+
+
+## Fill_Order2_Gen
+################################
+Define Fill_Order2_Gen 2 A param 
+Set i 0
+repeat $Np
+	Set j 0	
+	repeat $i+1
+		VVMul $1{$col} $2{$i} $2{$j}
+		Increment col
+		Increment j
+	end
+	Increment i
+end
+.
+
+
+
+## Fill_Order3
+################################
+Define Fill_Order3 2 A param 
+
+Assign Np ncols($2)
+Set col ($Np+1)*($Np+2)/2	# start index of cubic terms
+
+If '$Np==1'
+Then	'VSPow $1{$col} $2 3'
+Else	'Fill_Order3_Gen $1 $2'
+Set jj 0
+.
+
+
+## Fill_Order3_Gen
+################################
+Define Fill_Order3_Gen 2 A param 
+Set i 0
+repeat $Np
+	Set j 0
+	repeat $i+1
+		Set k 0
+		repeat $j+1
+			VVMul $1{$col} $2{$i} $2{$j}
+			VVMul $1{$col} $1{$col} $2{$k}
+			Increment col
+			Increment k
+		end
+		Increment j
+	end
+	Increment i
+end
+.
+
+
+
+## Fill_Order4
+################################
+Define Fill_Order4 2 A param 
+
+Assign Np ncols($2)
+Set col ($Np+1)*($Np+2)*($Np+3)/6	# start index of quartic terms
+
+If '$Np==1'
+Then	'VSPow $1{$col} $2 4'
+Else	'Fill_Order4_Gen $1 $2'
+Set jj 0
+.
+
+
+## Fill_Order4_Gen
+################################
+Define Fill_Order4_Gen 2 A param 
+Set i 0
+repeat $Np
+	Set j 0
+	repeat $i+1
+		Set k 0
+		repeat $j+1
+			Set l 0
+			repeat $k+1
+				VVMul $1{$col} $2{$i} $2{$j}
+				VVMul $1{$col} $1{$col} $2{$k}
+				VVMul $1{$col} $1{$col} $2{$l}
+				Increment col
+				Increment l
+			end
+			Increment k
+		end
+		Increment j
+	end
+	Increment i
+end
+.
+
+
+## Fill_Remaining_Orders
+################################
+Define Fill_Remaining_Orders 4 A param0 order1 order2 
+
+Set pow $4+1
+repeat $3-$4
+	VSPow $1{$col} $2 $pow
+	Increment col
+	Increment pow
+end
+.
+
+
+
+
+
+## Map_Data
+################################
+Define Map_Data 3 output input_data mapping
+
+advise "Map_Data $1 $2 $3"
+
+Assign Nsamples	nrows($2)
+Assign Np	ncols($2)
+Assign Ncoeff	nrows($3)
+Assign Nout	ncols($3)
+Tell_Precision $2 type
+
+Get_Pol_Order maptype $Ncoeff $Np
+
+Image $1 $Nsamples $Nout 1 $type
+Image A	 $Nsamples $Ncoeff 1 $type
+
+# Create A
+Fill_Polynomial_Mat A $2 $maptype
+
+# Map data
+Inner_Prod $1 A $3
+
+Delete_Image A
+.
+
+
+## Map_Data_2Params_2Orders
+################################
+Define Map_Data_2Params_2Orders 5 output input_data mapping order1 order2
+
+Assign Nsamples	nrows($2)
+Assign Np	ncols($2)
+Assign Ncoeff	nrows($3)
+Assign Nout	ncols($3)
+Tell_Precision $2 type
+Image $1 $Nsamples $Nout 1 $type
+Image A	 $Nsamples $Ncoeff 1 $type
+
+# Create A
+Fill_Polynomial_Mat A $2 $5
+If $4>$5	'Fill_Remaining_Orders A $2{0} $4 $5'
+
+# Map data
+Inner_Prod $1 A $3
+
+Delete_Image A
+.
+
+
+
+## Create_Data_Sets
+## Splits randomly an initial data set into two sub-sets (training and testing sets)
+################################
+Define Create_Data_Sets 4 train_data test_data data training_ratio
+
+# Number of training and testing samples
+Assign Ntraining	round($4*nrows($3))
+Assign Ntesting		nrows($3)-$Ntraining
+advise "-> Training on $Ntraining samples, testing on $Ntesting samples (training_ratio=$4)"
+
+# Create images
+Image unif	 nrows($3) 1 1 float
+Image train_test nrows($3) 1 1 float
+Image train_data $Ntraining ncols($3) 1 float
+Image test_data  $Ntesting ncols($3) 1 float
+
+# Find training indices
+Uniform unif
+Select_Nfirst train_test unif $Ntraining
+
+# Create training and testing sets
+Set i 0
+Set train_i 0
+Set test_i  0
+repeat nrows($3)
+	If 'value(train_test[$i])'
+	Then	'VMov $1[$train_i] $3[$i]	\
+		Increment train_i'
+	Else	'VMov $2[$test_i] $3[$i]	\
+		Increment test_i'
+
+	Increment i
+end
+
+Delete_Image unif
+Delete_Image train_test
+.
+
+
+## Select_Nfirst
+################################
+Define Select_Nfirst 3 sel_test unif N
+
+VSet $1 0
+Set i 0
+repeat $3
+	Find_Max_Pixel $2
+	VSet $1[$mxy] 1
+	VSet $2[$mxy] 0
+	Increment i
+end
+.
+
+
+
+## Error_Stats
+## Compute the reconstuction RMS
+###########################################
+Define Error_Stats 2 estimate data
+
+Dup_Float _validity $2[*][0]
+VSet _validity 1
+
+Error_Stats_Selective $1 $2 _validity
+
+Delete_Image _validity
+.
+
+
+
+
+## Error_Stats_Selective
+## Compute the reconstuction RMS
+###########################################
+Define Error_Stats_Selective 3 estimate data validity
+
+Assign C ncols($2)
+Dup_Float error $1
+Dup_Float sqtmp $1
+Image var 1 $C 1 float
+Image rms 1 $C 1 float
+Get_Sum _Nvalid $3
+
+
+# Error
+#VVSub error $1 $2
+VVSub error $2 $1
+If $C==1
+Then	'VVMul error error $3'
+Else	'Set _i 0					\
+	repeat $C					\
+		VVMul error[*][$_i] error[*][$_i] $3	\
+		Increment _i				\
+	end'
+
+# RMS error in each direction
+VSquare sqtmp error
+Sum_Cols var sqtmp
+VSMul var var 1/$_Nvalid
+Get_Sum tot_var var
+Assign tot_rms sqrt($tot_var)
+VSqrt rms var
+
+Set i 0
+repeat $C
+	Assign rms$i value(rms[$i])
+	Increment i
+end
+
+# Display stats
+If $C==2	'advise "-> rms:	$tot_rms  	($rms0,	$rms1)"'
+If $C==3	'advise "-> rms:  ($rms0,	$rms1,	$rms2)"	\
+		advise "-> global rms:	$tot_rms"'
+If $C==5	'advise "-> rms:  ($rms0, $rms1, $rms2, $rms3, $rms4)"	\
+		advise "-> global rms:	$tot_rms"'
+If ($C!=2)&&($C!=3)	'advise "-> rms:	$tot_rms"'
+
+Delete_Image error
+Delete_Image sqtmp
+Delete_Image rms
+Delete_Image var
+.
+

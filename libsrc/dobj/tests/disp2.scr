@@ -1,0 +1,109 @@
+#
+# like display.scr, but use new platform functions...
+# copied from ../cu2, for testing on pavlov w/ opencl
+#
+
+
+
+max_warnings 2
+
+Set viewer_width	256	# needed for openCL?
+Set viewer_width	400	# needed for openCL?
+
+#Set viewer_height 	600
+#Set viewer_height 	60
+#Set viewer_width	512
+Set viewer_height 	512
+
+Image hbuf $viewer_height $viewer_width 4 u_byte
+Image hf $viewer_height $viewer_width 1 float
+
+#If !var_exists(DEFAULT_GPU) "error_exit 'DEFAULT_GPU is not defined!?'"
+#advise "Using GPU $DEFAULT_GPU"
+#platforms
+#  list
+#  show
+##  select $DEFAULT_GPU	# This sets the default data area...
+##  show
+#  quit
+
+Set vwr_name 'Test_Viewer'
+# sometimes it craps out here!?
+Viewer $vwr_name $viewer_width $viewer_height
+
+advise "Setting GL window..."
+gl window $vwr_name quit
+#Posn_Window $vwr_name 3000 100
+Posn_Window $vwr_name 50 50
+
+# Need to initialize OpenCL AFTER creating the OpenGL window...
+If !var_exists(DEFAULT_PLATFORM) "error_exit 'DEFAULT_PLATFORM is not defined!?'"
+advise "Using platform $DEFAULT_PLATFORM"
+
+If !var_exists(DEFAULT_GPU) "error_exit 'DEFAULT_GPU is not defined!?'"
+advise "Using GPU $DEFAULT_GPU"
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU	# This sets the default data area...
+  quit
+
+platforms show quit
+
+advise "Setting platform viewer..."
+
+view
+  viewers
+    platform_viewer Test_Viewer
+    quit
+  quit
+
+advise "Setting gl_buffer..."
+gl
+  gl_buffer bbuf $DEFAULT_PLATFORM $DEFAULT_GPU $viewer_width $viewer_height 4
+  quit
+
+advise "Creating GPU objects"
+
+Set inset_w 50
+Set inset_h 40
+#Subimage inset bbuf $inset_w $inset_h 50 $viewer_height-$inset_h-8
+Subimage inset bbuf $inset_w $inset_h 50 50
+
+Image y $viewer_height $viewer_width 1 float
+Image b $viewer_height $viewer_width 1 u_byte
+Dup_Float x y
+Dup_Float xx y
+
+advise "Making ramp..."
+Ramp2D y 0 1 0
+advise "Converting ramp..."
+Convert bbuf{0} y
+Ramp2D y 0 0 1
+Convert bbuf{1} y
+Ramp2D y 0 1 1		# red
+Convert bbuf{2} y
+
+VSet inset{2} 255
+
+platforms
+  advise "downloading..."
+  dnload hbuf bbuf
+  dnload hf y
+  quit
+#Display hbuf{0}{0}
+#Display hf{0}
+
+Pause_If
+
+advise "Ready to load and swap..."
+Pause_If
+
+#platforms load $vwr_name bbuf quit
+view
+  platform_load $vwr_name bbuf
+  quit
+
+gl swap_buffers quit
+
+Pause_If
+exit
+

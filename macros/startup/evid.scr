@@ -1,0 +1,20 @@
+#
+# visca control daemon
+
+#verbose yes
+
+advise 'evid.scr BEGIN'
+
+< $DOTFILEDIR/.daemon
+#< $DOTFILEDIR/.generic
+< $DOTFILEDIR/.gendata
+< $DOTFILEDIR/.genwar
+< $DOTFILEDIR/.genview
+
+< $macro_dir/visca/visca.mac
+< $macro_dir/visca/visca_common.mac
+
+#verbose yes
+
+Daemon_Start $evid_port
+

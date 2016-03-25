@@ -1,0 +1,30 @@
+# coq script to test /dev/fb on purkinje...
+
+Set fb /dev/fb1
+
+view fb open $fb quit quit
+Assign w ncols('$fb')
+Assign h nrows('$fb')
+Assign d depth('$fb')
+
+advise "Frame buffer $fb is $w x $h x $d"
+
+Image frm 480 $w $d u_byte
+Set i 0
+advise 'computing ramps...'
+repeat $d
+  Ramp2D frm{$i} 0 1 0
+  Increment i
+  end
+
+view
+  fb
+    advise 'displaying frame...'
+    load frm 0 0
+    pan 0 0
+    sleep 2
+    quit
+  quit
+
+    Pause
+

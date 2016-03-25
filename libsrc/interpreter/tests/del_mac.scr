@@ -1,0 +1,15 @@
+
+
+Define Cycle 0
+< define_test.scr
+macros delete Test quit
+.
+
+repeat 100000
+  Cycle
+  end
+
+Pause
+
+
+

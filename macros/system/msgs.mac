@@ -1,0 +1,13 @@
+
+If $verbose 'advise "interpreting file msgs.mac"'
+
+Define Start_File 1 filename
+If $verbose "advise 'interpreting file $1'"
+.
+
+Define Stop_File 1 filename
+If $verbose "advise 'finished interpreting file $1'"
+.
+
+Stop_File msgs.mac
+

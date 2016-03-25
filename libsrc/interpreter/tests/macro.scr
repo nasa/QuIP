@@ -1,0 +1,18 @@
+
+Define M1 0
+advise m1!
+#If $x==2 'advise 2!'
+.
+
+Define M2 0
+advise m2!
+.
+
+Set x 2
+
+If $x==2
+  Then M1
+  Else M2
+
+exit
+

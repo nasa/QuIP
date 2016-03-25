@@ -1,0 +1,25 @@
+
+#Set a abcdefg
+#Print a
+#variables replace a bc bbcc quit
+#Print a
+#
+#exit
+
+Set s "This is a string with an apostrophe ' in the middle"
+Print s
+# this fails because of the single quote
+#Assign l strlen('$s')
+
+# Not quite sure why it takes 4 backslashes to get one...
+# but that is what works now...
+# How many times is it scanned?
+
+variables replace s "'" "\\\\'" quit
+#variables replace s "'" "\\\'" quit
+
+Print s
+
+Assign l strlen('$s')
+Print l
+

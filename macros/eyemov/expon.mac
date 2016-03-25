@@ -1,0 +1,61 @@
+# %Z% $RCSfile: expon.mac,v $ ver: $Revision: 1.2 $ $Date: 2002/01/16 23:26:37 $
+
+
+Start_File expon.mac
+
+# tau and tzero are in units of video fields...
+
+Define Make_Exponential 4 target tau tzero amp
+Set tau $2
+Set tzero $3
+Set amp $4
+Ramp1D $1 0 -1/(60*$tau)
+#Display $1[0]
+VExp et $1
+#Display et[0]
+Scroll $1 et 60*$tzero 0
+#Display $1[0]
+# Make them have unit volume
+VSum $1 sumscal
+Assign amp_factor $amp/value(sumscal)
+#Print amp_factor
+VSMul $1 $1 $amp_factor
+#Display $1[0]
+If "$tau <= 0" "VSet $1 0.0"
+.
+
+
+# why is this called SConvolve?
+# It's not a space domain convolution!
+# s for signal?
+
+Define SConvolve 2 target filter
+warn "obsolete macro SConvolve; please use TConvolve instead"
+SConvolve $1 $2
+.
+
+Define TConvolve 2 target filter
+VMov exf{0} $2
+VSet exf{1} 0.0
+FFT exf
+VVMul exf exf sxf
+InvFFT exf
+VMov $1 einset1
+.
+
+Define Make_Test_Curve 1 target
+#echo "making test curve $1 w/ onset params $e1_tau $e1_t0 $e1_amp"
+Make_Exponential e2 $e1_tau $e1_t0 $e1_amp
+#advise "making test curve $1 w/ rebound params $e2_tau $e2_t0 $e2_amp"
+Make_Exponential e3 $e2_tau $e2_t0 $e2_amp
+# these make the exponential do nothing...
+SConvolve tmp2 e2
+#Show_Curve $fit_window tmp2
+SConvolve tmp3 e3
+#Show_Curve $fit_window tmp3
+VVSub $1 tmp3 tmp2
+#Scale $1 0 $datamax
+#Show_Curve $fit_window $1
+.
+
+Stop_File expon.mac

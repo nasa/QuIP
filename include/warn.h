@@ -1,0 +1,82 @@
+#ifndef _WARN_H_
+#define _WARN_H_
+
+#include "query_stack.h"
+
+extern void warn(QSP_ARG_DECL  const char *msg);
+#ifdef BUILD_FOR_IOS
+extern void error1(QSP_ARG_DECL  const char *msg);
+#else // ! BUILD_FOR_IOS
+__attribute__ ((__noreturn__)) extern void error1(QSP_ARG_DECL  const char *msg);
+#endif // ! BUILD_FOR_IOS
+
+#define WARN(msg)	q_warn(QSP_ARG msg)
+#define NWARN(msg)	q_warn(DEFAULT_QSP_ARG msg)
+
+// when we run this on the iOS simulator, the bell char prints
+// as a lower case A!?
+#ifdef BUILD_FOR_IOS
+#define WARNING_PREFIX	"WARNING:  "
+#define ERROR_PREFIX	"ERROR:  "
+#else // ! BUILD_FOR_IOS
+#define WARNING_PREFIX	"WARNING:  "
+#define ERROR_PREFIX	"ERROR:  "
+#endif // ! BUILD_FOR_IOS
+
+#define WARN_ONCE(s)					\
+							\
+	{						\
+		static int warned=0;			\
+		if( ! warned ){				\
+			WARN(s);			\
+			warned=1;			\
+		}					\
+	}
+
+#define NWARN_ONCE(s)					\
+							\
+	{						\
+		static int warned=0;			\
+		if( ! warned ){				\
+			NWARN(s);			\
+			warned=1;			\
+		}					\
+	}
+
+
+#define ERROR1(msg)	q_error1(QSP_ARG  msg)
+#define NERROR1(msg)	q_error1(DEFAULT_QSP_ARG  msg)
+
+// in iOS, error1 needs to return, so routines that call it have to return
+// themselves...
+
+#ifdef BUILD_FOR_IOS
+#define IOS_RETURN		return;
+#define IOS_RETURN_VAL(v)	return(v);
+#else // ! BUILD_FOR_IOS
+#define IOS_RETURN
+#define IOS_RETURN_VAL(v)
+#endif // ! BUILD_FOR_IOS
+
+#define advise(s)	_advise(QSP_ARG  s)
+#define ADVISE(s)	_advise(QSP_ARG  s)
+#define NADVISE(s)	_advise(DEFAULT_QSP_ARG  s)
+
+extern void _advise(QSP_ARG_DECL  const char *msg);
+
+#define prt_msg(s)	_prt_msg(QSP_ARG  s)
+#define prt_msg_frag(s)	_prt_msg_frag(QSP_ARG  s)
+
+extern void _prt_msg_frag(QSP_ARG_DECL  const char *msg);
+extern void _prt_msg(QSP_ARG_DECL  const char *msg);
+
+extern void tty_advise(QSP_ARG_DECL  const char *s);
+
+#define tell_sys_error(s)	_tell_sys_error(QSP_ARG  s)
+
+extern void _tell_sys_error(QSP_ARG_DECL  const char* s);
+extern void set_warn_func(void (*func)(QSP_ARG_DECL  const char *));
+
+
+#endif /* ! _WARN_H_ */
+

@@ -1,0 +1,96 @@
+
+Define Show_Q 0
+Set oname oldest.$vdev
+Set nname newest.$vdev
+Set rname n_ready.$vdev
+advise "N ready = $$rname  (newest = $$nname, oldest = $$oname)"
+.
+
+Define Release_All 0
+Show_Q
+If $$rname==0 exit_macro
+do
+  Release_F
+  while $$rname!=0
+.
+
+Define Convert_Newest 0
+Set oname oldest.$vdev
+Set bufname $vdev.buffer$$oname
+v4l2
+  flow
+    yuv2gray input_gray $bufname
+    quit
+  quit
+.
+
+Define Release_F 0
+v4l2 flow release quit quit
+.
+
+Define Wait_F 0
+v4l2 flow wait quit quit
+.
+
+Define Outline_Face 1 index
+Set wname face${1}_w
+Set hname face${1}_h
+Set xname face${1}_x
+Set yname face${1}_y
+Subimage line input_gray $$wname 1 $$xname $$yname
+VSet line 255
+Delete_Image line
+
+Subimage line input_gray $$wname 1 $$xname $$yname+$$hname
+VSet line 255
+Delete_Image line
+
+Subimage line input_gray 1 $$hname $$xname $$yname
+VSet line 255
+Delete_Image line
+
+Subimage line input_gray 1 $$hname $$xname+$$wname $$yname
+VSet line 255
+Delete_Image line
+.
+
+
+Define Center_Face 0
+Assign view_xpos $face1_x+floor($face1_w/2)
+Assign view_ypos $face1_y+floor($face1_h/2)
+If $n_since_center>$n_center_wait
+  "Increment n_centerings PTZ_Recenter_Click Set n_since_center 0"
+Increment n_since_center
+# synchronize with the visca daemon
+Evi_Handshake
+.
+
+Define Outline_Faces 0
+Set i_face 1
+repeat $n_faces
+  Outline_Face $i_face
+  Increment i_face
+  end
+.
+
+Define Track_Face 0
+do
+  Wait_F
+  Convert_Newest
+  Release_All
+
+  opencv
+    face_finder
+      Zero_Time
+      find_face input_gray c1 $i_frm
+      Mark_Time
+      #Print delta_ms
+      quit
+    quit
+  Print n_faces
+  If $n_faces>=1 "Outline_Faces Center_Face"
+  Show_Bytes input_gray video_window
+  Increment i_frm
+  while $n_centerings<10
+.
+

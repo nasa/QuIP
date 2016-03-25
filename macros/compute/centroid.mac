@@ -1,0 +1,70 @@
+
+# waremul macros to find centroid of a region
+#
+# main entry point is Compute_Center, answer returned in $xc, $yc
+
+Set std_centroid_w -1
+Set std_centroid_h -1
+Set odd_centroid_w -1
+Set odd_centroid_h -1
+
+# See xf_coords.mac for a discussion of coordinate systems
+# This version uses centered screen coords
+
+# used to be called Coord_Init, the N got added when the #args got changed...
+
+Define NCoord_Init 2 'prototype image' name_stem
+Tell_If "NCoord_Init $1 $2 BEGIN"
+Check_Dup ${2}_xc $1
+Check_Dup ${2}_yc $1
+Check_Dup ${2}_xmass $1
+Check_Dup ${2}_ymass $1
+Assign ${2}_centroid_w ncols($1)
+Assign ${2}_centroid_h nrows($1)
+#Scalar xcenter 1 float
+#Scalar ycenter 1 float
+# make the ramps for screen centered coords
+Ramp2D ${2}_xc -(ncols($1)-1)/2 1 0
+Ramp2D ${2}_yc (nrows($1)-1)/2 0 -1
+.
+
+Define Compute_Center 1 image
+Tell_If "Compute_Center $1"
+If $std_centroid_w<0 "NCoord_Init $1 std"
+If "ncols($1) == $std_centroid_w && nrows($1) == $std_centroid_h"
+  Then "Compute_Std_Center $1"
+  Else "Compute_Odd_Center $1"
+.
+
+# compute the centroid parameters of a standard sized image
+
+Define Compute_Std_Center 1 image
+Tell_If "Compute_Std_Center $1"
+Compute_Generic_Center $1 std
+.
+
+Define Compute_Generic_Center 2 image stem
+Get_Sum denom $1
+Tell_If "sum of image $1 is $denom"
+If $denom==0
+  "Set xc 0 Set yc 0 Tell_If 'image $1 has no mass!?' exit_macro"
+VVMul ${2}_xmass ${2}_xc $1
+VVMul ${2}_ymass ${2}_yc $1
+Get_Sum xc ${2}_xmass
+Get_Sum yc ${2}_ymass
+Print_If denom
+Mul_Var xc 1/$denom
+Mul_Var yc 1/$denom
+.
+
+# compute the centroid parameters of an odd sized image
+# this one creates and initializes its own ramps
+
+Define Compute_Odd_Center 1 image
+Tell_If "Compute_Odd_Center $1"
+If "ncols($1) != $odd_centroid_w || nrows($1) != $odd_centroid_h"
+  "NCoord_Init $1 odd"
+Compute_Generic_Center $1 odd
+.
+
+

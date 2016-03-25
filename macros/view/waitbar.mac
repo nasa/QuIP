@@ -1,0 +1,30 @@
+
+# Init_Waitbar
+###################################
+Define Init_Waitbar 1 text
+Set waitbar_w 200
+Viewer waitbar_v $waitbar_w 30
+Posn_Window waitbar_v 550 50
+Label_Viewer waitbar_v $1
+
+Image waitbar_i 30 $waitbar_w 1 float
+VSet waitbar_i 255
+.
+
+
+# Update_Waitbar
+#################################
+Define Update_Waitbar 1 perc_done
+Assign ww min(max(round(($1)*$waitbar_w),0),$waitbar_w)
+Subimage waitbar_si waitbar_i $ww 30 0 0
+VSet waitbar_si 0
+Show_Raw waitbar_i waitbar_v
+Delete_Image waitbar_si
+.
+
+
+# Delete_Waitbar
+##################################
+Define Delete_Waitbar 0
+UnShow_Viewer waitbar_v
+.

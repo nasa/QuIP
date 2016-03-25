@@ -1,0 +1,82 @@
+
+Start_File ports.mac
+
+If var_exists(ports_dot_mac_read) "warn 'ports.mac included more than once' exit_macro"
+
+Define Xmit_Text 2 portname text
+ports xmit text $1 $2 quit
+.
+
+Define Recv_Port 2 portname varname
+warn "Obsolete macro Recv_Port, use Recv_Text instead"
+Recv_Text $1 $2
+.
+
+Define Recv_Text 2 portname varname
+ports
+  text_variable $1 $2
+  receive $1 text
+  quit
+.
+
+Define Close_Port 1 name
+#advise "closing port $1"
+ports close $1 quit
+.
+
+Define Xmit_File 2 port filename
+#advise "Xmit_File $1 $2"
+ports xmit file $1 $2 quit
+.
+
+Define Xmit_Data 2 port data_obj
+ports xmit data $1 $2 quit
+.
+
+Define Xmit_Image 2 image port
+ports xmit data $2 $1 quit
+.
+
+Define Recv_Data 1 port
+ports receive $1 data quit
+.
+
+Define Recv_Image 1 port
+ports receive $1 data quit
+.
+
+Define Recv_File 1 port
+ports receive $1 file quit
+.
+
+Define Link_Port 2 write_port read_port
+ports link $1 $2 quit
+.
+
+Define Open_Client_Port 3 portname hostname port_number
+Tell_If "Open_Client_Port $1 $2 $3"
+#Tell_If "opening port $1 for writing"
+Tell_If "Open_Client_Port:  attempting to connect to port $3 on host $2"
+ports client $1 $2 $3 quit
+Tell_If "Open_Client_Port $1 $2 $3 DONE"
+.
+
+# Open_Read_Port - what a daemon does when it starts...
+Define Open_Read_Port 2 portname port_number
+#Tell_If "opening port $1 for reading"
+#Tell_If "listening for connection on port $2"
+ports server $1 $2 quit
+.
+
+Define Listen_Port 1 portname
+ports connect $1 quit
+.
+
+Define Redir_Port 1 portname
+ports redir $1
+.
+
+Set ports_dot_mac_read 1
+
+Stop_File ports.mac
+

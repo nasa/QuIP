@@ -1,0 +1,211 @@
+
+
+Start_File nfilter.mac
+
+Define Low_Pass 2 'source image' 'filter constant'
+Filter_For ffilter $1
+Make_LP ffilter $2
+Filter $1 ffilter
+Delete_Image ffilter
+.
+
+Define Interpolate 2 'source image' 'sample spacing'
+Filter_For ffilter $1
+Make_Interp ffilter $2
+Filter $1 ffilter
+Delete_Image ffilter
+.
+
+# smaller numbers make it more high-pass
+
+Define High_Pass 2 'source image' 'filter constant'
+Filter_For ffilter $1
+Make_HP ffilter $2
+Filter $1 ffilter
+Delete_Image ffilter
+.
+
+# the lp # should be larger than the hp # ...
+
+Define Band_Pass 3 'source image' 'LP constant' 'HP constant'
+Filter_For ffilter $1
+Make_BP ffilter $2 $3
+Filter $1 ffilter
+Delete_Image ffilter
+.
+
+# This one doesn't do any wrapping
+
+Define Filter 2 'source image' 'filter image'
+Xform_For cimage $1
+#Info cimage
+RFFT cimage $1
+# old veclib
+#VVMul cimage $2 cimage
+# new veclib
+VVMul cimage cimage $2
+
+RInvFFT $1 cimage
+Delete_Image cimage
+.
+
+# What are the units of the filter constant?
+# dx,dy go from +- filt_size
+# exp( - (2*x*filt_size/w) ^ 2 )
+# 2 * filt_size / w = 1/ (2 * sigma * sigma )
+# sigma = sqrt(w/filt_size)/2
+#
+# The filter is constructed in the frequency domain...
+
+Define Make_LP 2 'target filter image' 'filter constant'
+Make_2D_LP $1 $2 $2
+.
+
+# What if this is called for a row?
+
+Define Make_2D_LP 3 'target filter image' 'H filter constant' 'V filter constant'
+Assign _lpw "ncols($1)"
+Assign _lph "nrows($1)"
+Tell_Precision $1 mlpprec
+data
+  vector dx $_lpw 1 $mlpprec
+  column dy $_lph 1 $mlpprec
+  column dy2 $_lph 1 $mlpprec
+  quit
+Set x_filt_size $2
+Set y_filt_size $3
+#Assign mlp_sigma sqrt($_lph/$filt_size)/2
+Assign xinc 2*$x_filt_size/(2*($_lpw-1))
+Assign yinc 2*$y_filt_size/$_lph
+Ramp1D dx 0 $xinc
+Ramp1D dy $y_filt_size*-1 $yinc
+If $_lph==1 "VSet dy 0"
+VSquare dx dx
+VSquare dy dy
+VSMul dx dx -1
+VSMul dy dy -1
+VExp dx dx
+VExp dy dy
+Scroll dy2 dy 0 $_lph/2
+Product $1 dx dy2
+Delete_Image dx
+Delete_Image dy
+Delete_Image dy2
+.
+
+# interpolation filter
+# boxcar; 
+
+Define Make_Interp 2 'target filter image' 'sample spacing'
+Tell_Precision $1 mkprec
+data vector dx $size 1 $miprec quit
+Set ss $2
+Assign start " 1 + ( $size - $ss ) / 2"
+Decrement ss
+VSet dx 0.0
+repeat $ss
+  VSet dx[$start] 1.0
+  Increment start
+  end
+Product $1 dx dx
+data del dx quit
+.
+
+Define Make_2D_HP 3 target x_constant y_constant
+Make_2D_LP $1 $2 $3
+VSMul $1 $1 -1
+VSAdd $1 $1 1
+.
+
+Define Make_HP 2 'target filter image' 'filter constant'
+Make_LP $1 $2
+VSMul $1 $1 -1
+VSAdd $1 $1 1
+.
+
+Define Make_BP 3 'target filter image' 'LP constant' 'HP constant'
+Dup_Std hpfilter $1
+Dup_Std lpfilter $1
+Make_LP lpfilter $2
+Make_HP hpfilter $3
+VVMul $1 hpfilter lpfilter
+Delete_Image hpfilter
+Delete_Image lpfilter
+.
+
+Define Impulse_2_Filter 2 filter impulse
+Dup_Std i2ftmp $2
+Wrap i2ftmp $2
+RFFT $1 i2ftmp
+Delete_Image i2ftmp
+.
+
+Define Filter_2_Impulse 2 impulse filter
+Dup_Std f2itmp $1
+RInvFFT f2itmp $2
+Wrap $1 f2itmp
+Delete_Image f2itmp
+.
+
+# The hilbert transform is has all the phases rotated by 90 degrees...
+
+Define Make_Hilbert_1 2 filt1 filt2
+VMov $1{0} $2{1}
+VSMul $1{0} $1{0} -1
+VMov $1{1} $2{0}
+VSet $1{0}[0][0] 0.0		# make sure no imag DC
+.
+
+Define Make_Hilbert_2 2 filt1 filt2
+Make_Hilbert_1 $1 $2
+Subimage lower $1{1} "ncols($1)" "nrows($1)/2" 0 "nrows($1)/2"
+VSMul lower lower -1
+Delete_Image lower
+.
+
+Stop_File nfilter.mac
+
+
+
+Define Low_Pass_General 2 'source image' 'filter constant'
+# Low pass an img having any size (no need "power of 2" dimensions)
+
+Assign _L0 nrows($1)
+Assign _C0 ncols($1)
+Assign _Ln pow(2,ceil(log($_L0)/log(2)))
+Assign _Cn pow(2,ceil(log($_C0)/log(2)))
+
+Image lp_master $_Ln $_Cn 1 $std_type
+Subimage lp_slave lp_master $_C0 $_L0 0 0
+
+Get_Mean lp_mn $1
+VSet lp_master $lp_mn
+VMov lp_slave $1
+Low_Pass lp_master $2
+VMov $1 lp_slave
+
+Delete_Image lp_master
+.
+
+
+
+
+Define Band_Pass_General 3 'source image' 'low pass filter constant' 'high pass filter constant'
+# Band pass an img having any size (no need "power of 2" dimensions)
+
+Assign _L0 nrows($1)
+Assign _C0 ncols($1)
+Assign _Ln pow(2,ceil(log($_L0)/log(2)))
+Assign _Cn pow(2,ceil(log($_C0)/log(2)))
+
+Image lp_master $_Ln $_Cn 1 $std_type
+Subimage lp_slave lp_master $_C0 $_L0 0 0
+
+Get_Mean lp_mn $1
+VSet lp_master $lp_mn
+VMov lp_slave $1
+Band_Pass lp_master $2 $3
+VMov $1 lp_slave
+
+Delete_Image lp_master
+.

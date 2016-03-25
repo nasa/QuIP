@@ -1,0 +1,82 @@
+
+Define DoNetTest 0
+ports reachability www.apple.com quit
+.
+
+Set setup_group_name 'Initial setup'
+
+Define DoEndSetup 0
+Set setup_completed 1
+Get_Setup_Status_File
+append no
+output_file $setup_status_file
+echo "Set setup_completed 1"
+output_file -
+interface
+  navigation $main_name
+    delete_group $setup_group_name
+    quit
+  quit
+Add_Tasks
+Add_Admin_Option
+.
+
+
+# must be called from within navigation submenu!
+Define Add_Delete_All_Choice 0
+plain_item 'Delete ALL local files' 'Restore app to initial state' CleanAll
+.
+
+Define Add_Setup_Option 0
+interface
+  navigation "$main_name"       # drop into submenu to add groups and items
+    new_group $setup_group_name
+    Add_Delete_All_Choice
+    plain_item 'Network test' 'Check for wireless connection' DoNetTest
+
+#    If $test_mode
+#      "plain_item 'Warning test' 'Test error log file' DoWarnTest"
+
+#    If $test_mode
+#      "nav_item 'Alert tests' 'Test alerting for bugs' DoAlertTest"
+
+    nav_item "Admin functions" "Access administrator functions" DoAdmin
+    plain_item 'Done with setup' 'Configure interface for normal use' DoEndSetup
+    quit
+  quit
+.
+
+
+Define Add_Tasks 0
+interface
+  navigation "$main_name"       # drop into submenu to add groups and items
+    new_group 'Server'
+    plain_item Connect 'Connect to server' DoConnectToServer
+    nav_item Configure 'Edit server parameters' DoConfigServer
+    new_group 'Scripts'
+    nav_item Download 'Download scripts from server' DoDownloadScripts 
+    nav_item Run 'Run a script on the device' DoRunScripts 
+#    If $test_mode
+#      "plain_item Update 'Install latest version from update server' UpdateSW"
+    If $test_mode
+      "nav_item 'Admin functions' 'Access user admin functions' DoUser"
+
+    new_group 'Synchronization'
+    plain_item 'Network test' 'Check for wireless connection' DoNetTest
+    plain_item 'Sync Recent' 'Upload new data to server' UploadRecent
+
+    quit
+  quit
+.
+
+Define Get_Setup_Status_File 0
+Set setup_status_file $system_script_dir/setup_status.scr
+.
+
+Define Check_Setup_Status 0
+Get_Setup_Status_File
+If file_exists('$setup_status_file')
+  Then "< '$setup_status_file'"
+  Else "Set setup_completed 0"
+.
+

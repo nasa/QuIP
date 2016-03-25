@@ -1,0 +1,68 @@
+# homography estimation
+# Taken from David Kriegman's lecture notes
+
+# given four points...
+# Homography matrix has 9 elements (Can we assume H33=1? yes!)
+
+Define Fit_Homography 0
+#Image A 8 9 1 float
+Create_SVD_Objects homog 8 9
+
+data
+  ascii
+    read homog_u_matrix -
+    	-$x_ul -$y_ul -1 0      0      0  0     0     0
+	0      0      0  -$x_ul -$y_ul -1 0     0     0
+    	-$x_ur -$y_ur -1 0      0      0  $x_ur $y_ur 1
+	0      0      0  -$x_ur -$y_ur -1 0     0     0
+    	-$x_ll -$y_ll -1 0      0      0  0     0     0
+	0      0      0  -$x_ll -$y_ll -1 $x_ll $y_ll 1
+    	-$x_lr -$y_lr -1 0      0      0  $x_lr $y_lr 1
+	0      0      0  -$x_lr -$y_lr -1 $x_lr $y_lr 1
+    quit
+  quit
+
+# Now compute the SVD of A
+numrec
+  svd homog_u_matrix homog_eigenvalues homog_v_matrix
+  quit
+Display homog_eigenvalues
+
+# find the smallest eigenvalue
+Set min_i 0
+Set _i 1
+Assign _v value(homog_eigenvalues[0])
+repeat 8
+  If value(homog_eigenvalues[$_i])<$_v
+    'Set _v value(homog_eigenvalues[$_i])  Set min_i $_i'
+  Increment _i
+  end
+advise "Smallest eigen value $_v at index $min_i"
+
+# Now check...
+
+Set v homog_v_matrix{$min_i}
+
+Assign h11 value($v[0])
+Assign h12 value($v[1])
+Assign h13 value($v[2])
+Assign h21 value($v[3])
+Assign h22 value($v[4])
+Assign h23 value($v[5])
+Assign h31 value($v[6])
+Assign h32 value($v[7])
+Assign h33 value($v[8])
+
+Checkit u1 v1 $x_ul $y_ul
+Checkit u2 v2 $x_ur $y_ur
+Checkit u3 v3 $x_ll $y_ll
+Checkit u4 v4 $x_lr $y_lr
+.
+
+Define Checkit 4 uvarname vvarname x y
+Assign denom $h31*$3+$h32*$4+$h33
+Assign $1 ($h11*$3+$h12*$4+$h13)/$denom
+Assign $2 ($h21*$3+$h22*$4+$h23)/$denom
+advise "$1 = $$1       $2 = $$2"
+.
+

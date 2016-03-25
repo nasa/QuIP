@@ -1,0 +1,15 @@
+# test of complex numbers
+
+Set w 3
+Set h 2
+
+Image c1 $h $w 1 complex
+
+#debug data
+Info c1{1}
+
+VSet c1{0} 1
+VSet c1{1} 0
+
+Display c1
+

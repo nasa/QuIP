@@ -1,0 +1,209 @@
+#
+< $QUIPSTARTUPDIR/quip.scr
+
+Print macro_dir
+
+< $macro_dir/system/mark_time.mac
+
+#Set min_panel_width 660		# used to be smaller but with ff, pause etc we need more real estate...
+Set min_panel_width 780		# increased for deinterlace toggle...
+
+max_warnings 1000
+
+Print argc
+If ($argc!=1)&&($argc!=2)  "error_exit 'usage:  jpsee jpeg_filename <speed>'"
+Set jpeg_file $argv1
+If $argc>1
+Then	'Set speed $2'
+Else	'Set speed 1'
+Set chatty 1
+
+If !file_exists('$jpeg_file') "error_exit 'File $jpeg_file does not exist '"
+
+# There seems to be a bug when we include .iview instead of .vt ...
+# number of processors???
+
+# Parameters
+Set pausing 0
+
+# Open movie file
+Filetype jpeg
+Read_File_Header $jpeg_file
+
+Assign w	ncols('$jpeg_file')
+Assign h	nrows('$jpeg_file')
+Assign depth	ncomps('$jpeg_file')
+Assign n_frames	nframes('$jpeg_file')
+
+fileio autoclose $jpeg_file no quit
+
+Tell_If " "
+Tell_If "-> File info:"
+Tell_If "   > Frame size (w x h x d): $w x $h x $depth"
+Tell_If "   > Number of frames: $n_frames"
+Tell_If " "
+
+
+# Init images
+Image _img	$h $w $depth u_byte
+Interlace oddlines _img even
+Interlace evenlines _img odd
+Dup_UByte field oddlines
+Image last_frm	$h $w $depth u_byte
+Image tmp	$h $w 1 u_byte
+
+## Mono_Viewer
+#######################
+If $w<800
+Then	'Set x_v 10'
+Else	'Set x_v 0'
+Set y_v 10
+
+Define Mono_Viewer 0
+Viewer_For v _img
+Posn_Window v $x_v $y_v
+#Protect_LUT 0
+Grayscale_Viewer v
+.
+
+
+## RGB_Viewer
+#######################
+Define RGB_Viewers 0
+Viewer_For rv _img
+Viewer_For gv _img
+Viewer_For bv _img
+Posn_Window rv $x_v $y_v
+Posn_Window gv $x_v $y_v+300
+Posn_Window bv $x_v $y_v+600
+#Protect_LUT 0
+Grayscale_Viewer rv
+Grayscale_Viewer gv
+Grayscale_Viewer bv
+.
+
+
+## Label3
+#######################
+Define Label3 0
+Label_Viewer rv "$jpeg_file, frame $frameno"
+Label_Viewer gv "$jpeg_file, frame $frameno"
+Label_Viewer bv "$jpeg_file, frame $frameno"
+.
+
+
+### ## Rotate_Colors
+#######################
+### Define Rotate_Colors 0
+### VMov tmp _img{0}
+### VMov _img{0} _img{2}
+### VMov _img{2} tmp
+### .
+
+# Init viewer
+#If $depth==3
+#  Then RGB_Viewers
+#  Else Mono_Viewer
+Mono_Viewer		# "mono" viewer will display color on a 24 bit display
+Label_Viewer v "$jpeg_file"
+Pause
+Assign vd depth('$DISPLAY')
+
+# Init Slider
+If '$n_frames>1'	Init_Slider
+
+
+
+## Display_Frame
+#############################
+
+Set deinterlace 0		# default value
+
+Define TogDeinterlace 0
+Set deinterlace $toggle_state
+.
+
+Define Display_Frame 0
+If $deinterlace
+  Then Display_Interlace
+  Else Display_Vanilla
+.
+
+Define Display_Vanilla 0
+	If $depth==3 "Rotate_Colors _img"
+#	If $depth==3
+#		Then "Show_Bytes _img{0} rv Show_Bytes _img{1} gv Show_Bytes _img{2} bv Label3"
+#		Else 'Show_Bytes _img v Label_Viewer v "$jpeg_file, frame $frame_idx"'
+	# this should work for color or mono
+	If $vd==8&&$depth==3
+		Then "Show_Bytes _img{1} v"
+		Else "Show_Bytes _img v"
+	If $vd==16 "Show16 _img v"
+.
+
+Define Display_Interlace 0
+VMov field oddlines
+view embed v field 0 0 quit
+VMov field evenlines
+view embed v field 0 nrows(field) quit
+.
+
+
+## Display_Image
+##################################
+Define Display_Image 0
+#advise "-> Press <Crtl-D> to display image"
+#Pause
+view wait v quit
+Get_Next _img $jpeg_file
+Display_Frame
+advise "-> Press <Crtl-D> to exit"
+do
+  os events quit
+  while 1
+Pause
+exit
+.
+
+Zero_Time
+
+
+# Image display
+If '$n_frames==1' Display_Image
+
+# Movie display
+Tell_If "-> Right-click in viewer to exit"
+Tell_If " "
+Set frame_idx 1
+
+# try to update the display at 60 Hz
+Set want_ms 16.666
+
+#verbose yes
+
+do
+	# Get frame
+	Assign frame_idx min(round($frame_idx),$n_frames-1)
+	Assign frame_idx max($frame_idx,0)
+	File_Seek $jpeg_file $frame_idx
+	Get_Next _img $jpeg_file
+	Update_Slider $frame_idx
+
+Info _img
+	# Display
+	Display_Frame
+
+	# Check events
+	os events quit
+	If $right_button_down exit
+	
+	If $pausing Wait_For_Unpausing
+
+	Assign frame_idx $frame_idx+$speed
+	Assign frame_idx min($frame_idx,$n_frames-1)
+
+	Check_Time
+	If $total_ms<$want_ms "usleep 1000*($want_ms-$total_ms)"
+	Add_Var want_ms 16.666
+while 1
+

@@ -1,0 +1,128 @@
+Start_File xfcoords.mac
+
+# Definitions of different image coordinate systems..
+
+# See files:
+# 	macros/war/centroid.mac		calculation of centroids
+# 	macros/war/gaussian.mac		Make_Radius_At
+
+# Three types of coordinates:
+#
+# Memory image coordinates xm,ym
+#	- used to index data objects
+#	- coords run from 0 to n-1
+#	- y scans image top-to-bottom
+#	- origin at upper left hand corner
+#
+#
+# Screen image coordinates xs,ys
+#	- natural coordinates for screen images
+#	- coords run from 0 to n-1
+#	- y scans image bottom-to-top
+#	- origin at lower left hand corner
+
+#
+# Centered screen coordinates xc,yc
+#	- natural coordinates for screen images?
+#	- coords run from -(n-1)/2 to (n-1)/2
+#	- y scans image bottom-to-top
+#	- origin at image center
+#
+# Do we want the origin at the center-most pixel, or the real
+# center of the image, even if that falls between two pixels?
+# It doesn't matter too much, but we must be consistent!
+
+# for X,Y even, these eqns put the origin at the most centered pixel,
+# 
+# . O
+# . .
+
+# xc = xs - X/2		xs = xc + X/2
+# yc = ys - Y/2		ys = yc + Y/2
+
+
+# To put it right in the middle, we would need to add a value of 1/2
+# for even images:
+
+# xc = xs - (X-1)/2		xs = xc + (X-1)/2
+# yc = ys - (Y-1)/2		ys = yc + (Y-1)/2
+
+# These eqns work for even and odd sized images without the use of
+# the floor() function.  We would need to use the floor function
+# to keep things centered on a pixel...
+
+# Summarizing:
+
+# xs = xm				xm = xs
+# ys = (Y-1) - ym			ym = (Y-1) - ys
+# 
+# xc = xs - (X-1)/2		xs = xc + (X-1)/2
+# yc = ys - (Y-1)/2		ys = yc + (Y-1)/2
+# 
+# xc = xm - (X-1)/2		xm = xc + (X-1)/2
+# yc = (Y-1) - ym - (Y-1)/2
+#    = (Y-1)/2 - ym		ym = (Y-1)/2 - yc
+
+Set coord_dx -1
+Set coord_dy -1
+
+Define Coord_Space_Dimensions 2 X Y
+Assign coord_dx $1
+Assign coord_dy $2
+.
+
+Define Check_Coord_Space 0
+If "$coord_dx<0 || $coord_dy<0"
+  "warn 'Need to initialize with Coord_Space_Dimensions'"
+.
+
+# xs = xm				xm = xs
+# ys = (Y-1) - ym			ym = (Y-1) - ys
+# 
+
+Define Mem_2_Screen 4 xvarname yvarname memx memy
+Check_Coord_Space
+Assign $1 $3
+Assign $2 "($coord_dy-1)-$4"
+.
+
+Define Screen_2_Mem 4 xvarname yvarname scrnx scrny
+Check_Coord_Space
+Assign $1 $3
+Assign $2 "($coord_dy-1)-$4"
+.
+
+# xc = xs - (X-1)/2		xs = xc + (X-1)/2
+# yc = ys - (Y-1)/2		ys = yc + (Y-1)/2
+# 
+
+Define Screen_2_Ctr 4 xvarname yvarname scrnx scrny
+Check_Coord_Space
+Assign $1 "$3-($coord_dx-1)/2"
+Assign $2 "$4-($coord_dy-1)/2"
+.
+
+Define Ctr_2_Screen 4 xvarname yvarname ctrx ctry
+Check_Coord_Space
+Assign $1 "$3+($coord_dx-1)/2"
+Assign $2 "$4+($coord_dy-1)/2"
+.
+
+# xc = xm - (X-1)/2		xm = xc + (X-1)/2
+# yc = (Y-1) - ym - (Y-1)/2
+#    = (Y-1)/2 - ym		ym = (Y-1)/2 - yc
+
+Define Mem_2_Ctr 4 xvarname yvarname memx memy
+Check_Coord_Space
+Assign $1 "$3-($coord_dx-1)/2"
+Assign $2 "($coord_dy-1)/2-$4"
+.
+
+Define Ctr_2_Mem 4 xvarname yvarname ctrx ctry
+Check_Coord_Space
+Assign $1 "$3+($coord_dx-1)/2"
+Assign $2 "($coord_dy-1)/2-$4"
+.
+
+Stop_File xfcoords.mac
+

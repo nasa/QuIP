@@ -1,0 +1,220 @@
+
+Set have_visca 0	# default - don't assume we have visca control
+
+Define SetInChoice 1 index
+Set gname g${1}name
+Set c $$gname
+Print c
+interface
+  decorate $v4l2_panel_name
+    set_choice input_channel $c
+    quit
+  quit
+.
+    
+Define Make_Master_Panel 0
+Set p master_camera_panel
+interface
+  panel $p 640 300
+  decorate $p
+    toggle Live SetLive
+    button Quit exit
+    position 200 30
+    toggle DeInterlace DoDeinterlace
+    button SAVE SaveFrame
+    button SNAP SnapFrame
+    quit
+  control
+    show $p
+    quit
+  quit
+Posn_Window $p 40 580
+.
+
+Set live_video 0
+
+# dirac setup
+Set c1name	galvo_cam
+Set c2name	left_pupil_cam
+Set c3name	right_pupil_cam
+Set c4name	left_ptz_cam
+Set c5name	right_ptz_cam
+Set c6name	purkinje_ptz_cam
+Set c7name	left_ptz_cam2
+Set c8name	right_ptz_cam2
+
+Set ptz_cam none
+
+Define DoDeinterlace 0
+Set deinterlace $toggle_state
+Update_Viewer
+.
+
+Set device0_opened 0
+Set device1_opened 0
+Set device2_opened 0
+Set device3_opened 0
+
+Set in_channel_set 0	# to avoid macro recursion
+
+Define SetInChannel 1 index	# 1-4
+Install_In_Channel $1
+Set_Visca_Device $1
+.
+
+Define Install_In_Channel 1 index
+If $flowing 'Tell_If "SetInChannel:  stopping flow" Stop_V4L2_Flow'
+Assign video_dev_index $1-1	# 0-3
+Set oname device${video_dev_index}_opened
+If !$$oname "Tell_If 'Install_In_Channel:  opening video device' Open_Video_Device /dev/video$video_dev_index Set $oname 1"
+Tell_If 'SetInChannel:  starting flow'
+Set vdev /dev/video$video_dev_index
+Start_V4L2_Flow $vdev
+Tell_If 'Install_In_Channel:  Fetching v4l2 settings'
+Fetch_Settings
+.
+
+Define Set_V4L2_Device 1 index
+Install_In_Channel $1
+# now set the chooser button
+SetInChoice $1
+.
+
+Set video_dev_index 0
+
+Define SetLive 0
+Set live_video $toggle_state
+If $live_video&&!$flowing "Start_V4L2_Flow /dev/video$video_dev_index"
+.
+
+Define Set_Toggle 3 panel widget state
+interface
+  decorate $1
+    set_toggle $2 $3
+    quit
+  quit
+.
+
+Define SnapFrame 0
+Set live_video 0
+Set_Toggle master_camera_panel Live no
+Update_Viewer
+.
+
+Define Insure_Image 1 name
+If !obj_exists('$1') "Dup_Float $1 rgb{1}"
+.
+
+Set box_rad 15
+
+Define Show_Deinterlaced 2 image viewer
+.
+
+Set deinterlace 0
+
+Define Show_Plain 0
+#If $deinterlace
+#  Then "Reduce top oddlines$newest Reduce bot evenlines$newest"
+#  Else "Reduce f frm$newest{2}"
+Show_Bytes rgb $video_window_name
+.
+
+Define LClick 0
+#advise "LClick in_channel = $in_channel"
+If $left_button_up exit_macro
+PTZ_Click
+#If $in_channel==1 Galvo_Click
+#If $in_channel==4 PTZ_Click
+#If $in_channel==5 PTZ_Click
+#If $in_channel==6 PTZ_Click
+#If $in_channel==7 PTZ_Click
+#If $in_channel==8 PTZ_Click
+.
+
+# old initialization for meteor-based program
+Define Init_Stuff 0
+Declare_Grabber_Frames
+Declare_Images
+New_Plotter $video_window_name ncols(f) nrows(f)
+#Viewer_For $video_window_name f
+Init_Mirrors
+advise Init_PTZ_Cameras
+Init_PTZ_Cameras
+advise Init_PTZ_Panel
+Init_PTZ_Panel
+Init_Galvo_Panel
+advise Make_Viewer_Panel
+Make_Viewer_Panel
+advise Make_VCR_Panel
+Make_VCR_Panel
+advise Make_Process_Panel
+Make_Process_Panel
+Posn_Window $video_window_name 20 20
+Posn_Window master_camera_panel 20 540
+Posn_Window vcr_panel 20 540
+Posn_Window ptz_panel 680 20
+Posn_Window v4l2_panel 680 420
+Posn_Window galvo_panel 680 20
+#advise 'Set_Button_Actions $video_window_name "LClick" "MClick" "RClick"'
+Set_Button_Actions $video_window_name "LClick" "MClick" "RClick"
+advise Routing...
+Route 1 1			# initialize knox switcher
+.
+
+Define RClick 0
+nop
+.
+
+Define MClick 0
+nop
+.
+
+Define Grab_Frame 1 target
+If !$flowing "Start_Meteor_Flow usleep 500000"	# start to fill ring buffer
+# release old frames???
+do
+  movie control flow update quit quit quit
+  If $oldest!=$newest Release_Stale_Frames
+  If $newest<0 exit_macro
+If depth('$1')==3
+  Then "VMov $1{0} frm$newest{2} VMov $1{1} frm$newest{2} VMov $1{2} frm$newest{2}"
+  Else "VMov $1 frm$newest{2}"
+.
+
+
+Define Release_Stale_Frames 0
+#advise Release_Stale_Frames
+do
+  # call to update is redundant IF release resets the vars - check source code...
+  movie control flow release update quit quit quit
+  while $oldest!=$newest
+.
+
+Define Update_Viewer 0
+# can't update viewer if recording async...
+Update_V4L2_Flow
+If !$flowing exit_macro
+Show_Plain
+.
+
+Define Init_Video_Window 1 name
+Set video_window_name $1
+Viewer $video_window_name 640 480
+Posn_Window $video_window_name 40 40
+.
+
+
+Set file_serial 1
+
+Define SaveFrame 0
+#advise SaveFrame
+Set f save_file_$file_serial.jpg
+Filetype jpeg
+#fileio jpeg compressor colorspace grayscale quit quit quit
+Write_File_Header $f 1
+echo "Writing buffer to file $f"
+# missing BUG check - jpeg needs contiguous image
+Put_Next rgb $f
+Increment file_serial
+.
+

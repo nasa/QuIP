@@ -1,0 +1,34 @@
+
+# make a panel using motif to emulate an iOS nav_panel
+
+interface
+#  debug contexts
+  nav_panel p
+  advise "creating first nav panel"
+  navigation p
+    new_group 'Group 1'
+    nav_item "Panel Q" "navigate to panel Q" "Push_Nav Q"
+    plain_item "Item 2" "this is item 2" "advise 'item 2 selected'"
+    quit
+  nav_panel Q
+  advise "creating second nav panel"
+  navigation Q
+    new_group 'Group 1'
+    plain_item "Item 3" "this is item 3" "advise 'item 3 selected'"
+    plain_item "Back" "dismiss this panel" "Pop_Nav"
+    quit
+  quit
+
+Push_Nav p
+
+do
+  os events quit
+  while 1
+
+#  control
+#    show p
+#    quit
+
+#  panel p 400 600
+#  decorate p
+    Pause

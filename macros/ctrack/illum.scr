@@ -1,0 +1,213 @@
+# pic script to control the illuminators.
+# run on poisson
+
+pic 
+  #device /dev/ttyS15 
+  device /dev/pic 
+  version 
+  quit
+
+Set led_v1 0
+Set led_v2 0
+
+Define Update_Ckts 0
+#advise "Update_Ckts:  $led_v1 $led_v2"
+pic
+  led8 2 $led_v1
+  led8 3 $led_v2
+  quit
+.
+
+Define Left_Inner_All_On 0
+Set_LED_Bit 1 1
+Set_LED_Bit 2 1
+Set_LED_Bit 3 1
+.
+
+Define Right_Inner_All_On 0
+Set_LED_Bit 7 1
+Set_LED_Bit 8 1
+Set_LED_Bit 9 1
+.
+
+Define Inner_All_On 0
+Set_LED_Bit 1 1
+Set_LED_Bit 2 1
+Set_LED_Bit 3 1
+Set_LED_Bit 7 1
+Set_LED_Bit 8 1
+Set_LED_Bit 9 1
+.
+
+Define Right_All_On 0
+Set_LED_Bit 7 1
+Set_LED_Bit 8 1
+Set_LED_Bit 9 1
+Set_LED_Bit 10 1
+Set_LED_Bit 11 1
+Set_LED_Bit 12 1
+.
+
+Define Left_All_On 0
+Set_LED_Bit 1 1
+Set_LED_Bit 2 1
+Set_LED_Bit 3 1
+Set_LED_Bit 4 1
+Set_LED_Bit 5 1
+Set_LED_Bit 6 1
+.
+
+Define Left_All_Off 0
+Set_LED_Bit 1 0
+Set_LED_Bit 2 0
+Set_LED_Bit 3 0
+Set_LED_Bit 4 0
+Set_LED_Bit 5 0
+Set_LED_Bit 6 0
+.
+
+Define Set_LED_Bit 2 index state
+If $1<=8
+  Then "Set ledvar led_v1 Assign bit 0x100>>$1"
+  Else "Set ledvar led_v2 Assign bit 0x100>>($1-8)"
+Assign_Bit $ledvar $2 $bit
+If $2
+  Then "Set yn yes"
+  Else "Set yn no"
+interface
+  decorate illum_ctl_panel
+    set_toggle ckt$1 $yn
+    quit
+  quit
+os events quit
+.
+
+Define Ckt1 0
+Assign_Bit led_v1 $toggle_state 0x80
+.
+
+Define Ckt2 0
+Assign_Bit led_v1 $toggle_state 0x40
+.
+
+Define Ckt3 0
+Assign_Bit led_v1 $toggle_state 0x20
+.
+
+Define Ckt4 0
+Assign_Bit led_v1 $toggle_state 0x10
+.
+
+Define Ckt5 0
+Assign_Bit led_v1 $toggle_state 0x08
+.
+
+Define Ckt6 0
+Assign_Bit led_v1 $toggle_state 0x04
+.
+
+Define Ckt7 0
+Assign_Bit led_v1 $toggle_state 0x02
+.
+
+Define Ckt8 0
+Assign_Bit led_v1 $toggle_state 0x01
+.
+
+Define Ckt9 0
+Assign_Bit led_v2 $toggle_state 0x80
+.
+
+Define Ckt10 0
+Assign_Bit led_v2 $toggle_state 0x40
+.
+
+Define Ckt11 0
+Assign_Bit led_v2 $toggle_state 0x20
+.
+
+Define Ckt12 0
+Assign_Bit led_v2 $toggle_state 0x10
+.
+
+Define Assign_Bit 3 varname state bitmask
+#advise "Assign_Bit $1 $2 $3"
+Assign c 255^($3)
+#Print c
+#Print $1
+If $2
+  Then "Assign $1 $$1|$3"
+  Else "Assign $1 $$1&(255^($3))"
+#Print $1
+Update_Ckts
+.
+
+Define All_Off 0
+# fast way but doesn't update toggle display
+#Set led_v1 0
+#Set led_v2 0
+#Update_Ckts
+Set i 1
+repeat 12
+  Set_LED_Bit $i 0
+  Increment i
+  end
+.
+
+Define All_On 0
+Set i 1
+repeat 12
+  Set_LED_Bit $i 1
+  Increment i
+  end
+.
+
+Set x 200
+Set y 20
+
+Define Bye 0
+#All_Off
+exit
+.
+
+Set p illum_ctl_panel
+interface
+  panel $p 400 400
+  decorate $p
+    # BUG position these over on the right...
+    position $x $y
+    toggle ckt1 Ckt1
+    toggle ckt2 Ckt2
+    toggle ckt3 Ckt3
+    toggle ckt4 Ckt4
+    toggle ckt5 Ckt5
+    toggle ckt6 Ckt6
+    toggle ckt7 Ckt7
+    toggle ckt8 Ckt8
+    toggle ckt9 Ckt9
+    toggle ckt10 Ckt10
+    toggle ckt11 Ckt11
+    toggle ckt12 Ckt12
+
+    position 30 20 
+    button ALL_ON All_On
+    button ALL_OFF All_Off
+    button LEFT_ALL_ON Left_All_On
+    #button LEFT_ALL_Off Left_All_Off
+    button RIGHT_ALL_ON Right_All_On
+    #button RIGHT_ALL_Off Right_All_Off
+    button INNER_ALL_ON Inner_All_On
+    button LEFT_INNER_ALL_ON Left_Inner_All_On
+    button RIGHT_INNER_ALL_ON Right_Inner_All_On
+    button QUIT Bye
+    quit
+  control
+    show $p
+    quit
+  quit
+
+do
+  os events quit
+  while 1
+
+

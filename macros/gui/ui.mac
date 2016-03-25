@@ -1,0 +1,98 @@
+Define Debug_Button 0
+button Debug debug
+.
+
+Define Open_Button 2 label panel
+button $1 "interface control show '${2}' unshow '${main_panel}' quit quit"
+.
+
+Define Revert_Button 2 panel new_panel
+button Close "interface control unshow '${1}' show '${2}' quit quit"
+.
+
+Define Close_Button 1 panel
+button Close "interface control unshow '${1}' show '${main_panel}' quit quit"
+.
+
+Define Quit_Button 0
+button Quit 'interface notice "Really Quit?" Yes exit No quit'
+.
+
+Define Panel_On 1 'panel name'
+interface control show "${1}" quit quit
+.
+
+Define Panel_Off 1 'panel name'
+interface control unshow "${1}" quit quit
+.
+
+Define Interface_Start 0
+interface control dispatch quit quit
+.
+
+Define Interface_Go 0
+interface control show $main_panel dispatch quit quit
+.
+
+Define Update_Toggle 3 name value panel
+interface
+  decorate $3
+    If $2
+      Then "set_toggle '$1' yes"
+      Else "set_toggle '$1' no"
+    quit
+  quit
+.
+
+Define Update_Chooser 3 name value panel
+interface
+  decorate $3
+    set_choice $1 $2
+    quit
+  quit
+.
+
+# need a set chooser also...
+
+Define Label_Panel 2 panel_name label
+interface
+  decorate $1
+    label_window $2
+    quit
+  quit
+.
+
+# things used on iOS...
+
+Define Notify_Busy 2 title msg
+interface notify_busy $1 $2 quit
+.
+
+Define End_Busy 0
+interface end_busy quit
+.
+
+Define Alert 2 heading message
+interface alert $1 $2 quit
+.
+
+Define Confirm 2 title question
+interface confirm $1 $2 quit
+.
+
+Define Push_Nav 1 panel_name
+interface push_nav $1 quit
+.
+
+Define Top_Nav 0
+interface top_nav quit
+.
+
+Define Pop_Nav 0
+interface pop_nav 1 quit
+.
+
+Define Pop_Navs 1 n_levels
+interface pop_nav $1 quit
+.
+

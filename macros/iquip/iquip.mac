@@ -1,0 +1,219 @@
+# macros for a device that will connect to a script server...
+
+Set script_download_panel	'Download scripts'
+Set script_run_panel		'Run scripts'
+Set no_sel_str	"(nothing selected)"
+
+Define DoDownloadScripts 0
+If !$connected Init_Server_Connection
+If !$connected exit_macro
+
+If !panel_exists('$script_download_panel') Init_Download_Panel
+If !panel_exists('$script_download_panel') "Alert Oops 'Failed to create download panel!?' exit_macro"
+
+Push_Nav $script_download_panel
+.
+
+Define DoConnectToServer 0
+Init_Server_Connection
+If !$connected "Alert Oops 'Failed to connect to server!?'"
+.
+
+
+Define Add_Names_To_Cmd 2 cmd_varname array
+If !obj_exists('$2') exit_macro
+Assign n_to_add ncols('$2')
+Set i 0
+repeat $n_to_add
+  Get_String s $2[$i]
+  Set $1 "$$1 $s"
+  Increment i
+  end
+.
+
+Define Init_Download_Panel 0
+advise "Init_Download_Panel BEGIN"
+Set_Default_Server_Params
+Set n_scripts 0
+## Don't require the server to be started here...
+## WHY NOT???
+#Init_Server_Connection
+If $connected Get_Server_Scripts
+
+#Display filename_array
+Set picker_cmd "picker File SelectFile 1 1+$n_scripts '$no_sel_str'"
+If obj_exists(filename_array)
+  "Add_Names_To_Cmd picker_cmd filename_array Delete_Image filename_array"
+
+interface
+  panel $script_download_panel $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate $script_download_panel
+    interpret $picker_cmd
+    button Download DownloadScript
+    quit
+  quit
+.
+
+Define Get_Local_Scripts 0
+If obj_exists(local_filenames) "Delete_Image local_filenames"
+get_filenames local_filenames $user_script_dir
+If !obj_exists(local_filenames) "Set n_local_scripts 0 exit_macro"
+#Display local_filenames
+Assign n_local_scripts ncols(local_filenames)
+.
+
+Define Get_Extra_Startup_Name 0
+Set extra_startup "$system_script_dir/extra_startup.scr"
+.
+
+Define SetStartupScript 0
+Get_Extra_Startup_Name
+If !strcmp('$choice','$no_sel_str')
+  "rm '$extra_startup' exit_macro"
+append no
+output_file $extra_startup
+echo "< '$user_script_dir/$choice'"
+output_file -
+.
+
+Define Init_Run_Panel 0
+Get_Local_Scripts
+Set picker_cmd "picker Script SelectScript 1 1+$n_local_scripts '$no_sel_str'"
+Add_Names_To_Cmd picker_cmd local_filenames
+interface
+  panel $script_run_panel $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate $script_run_panel
+    interpret $picker_cmd
+    button Run RunScript
+    button 'Delete From Device' DelScript
+    button 'Execute at startup'  SetStartupScript
+    quit
+  quit
+.
+
+# After we download a file, we want to update the run script picker
+# But before we add to the chooser again and again, we should
+# try to find out whether the files is already there - we may
+# oftern want to download a revised copy of an existing file.
+
+Define Update_Run_Chooser 1 filename
+interface
+  decorate $script_run_panel
+    add_choice Script "$1"
+    quit
+  quit
+.
+
+Define Get_Script_Count 0
+Send_Server_Cmd "Count_Scripts"
+Send_Server_Cmd 'ports xmit text ss_ear "Set n_scripts $n_scripts" quit'
+ports
+  text_variable server_client_mouth gsc_text
+  receive server_client_mouth text
+  quit
+# DEBUG
+If !var_exists(gsc_text) 'advise "Get_Script_Count:  NO TEXT RECEIVED!?!?" exit_macro'
+interpret $gsc_text
+.
+
+Define Get_Server_Scripts 0
+Get_Script_Count
+If $n_scripts<=0 exit_macro
+Send_Server_Cmd "Send_Script_Filenames"
+ports
+  receive server_client_mouth data
+  quit
+#If !obj_exists(filename_array)
+#  Then 'warn "Did not receive filename_array!?"'
+#  Else 'exit_macro Display filename_array'
+.
+
+Define SelectFile 0
+Set download_file $choice
+#Print download_file
+.
+
+Define DownloadScript 0
+If !strcmp('$download_file','$no_sel_str')
+  "warn 'no file selected!?' exit_macro"
+#Print download_file
+Send_Server_Cmd "Send_Script_File $download_file"
+ports
+  port_output_file server_client_mouth "$user_script_dir/$download_file"
+  receive server_client_mouth plain_file
+  quit
+If file_exists('$user_script_dir/$download_file')
+  Then "Update_Run_Chooser $download_file Alert 'Success!' 'File $download_file downloaded'"
+  Else "Alert 'Failure!?' 'Failed to download file $download_file'"
+.
+
+Define DoRunScripts 0
+Push_Nav $script_run_panel
+.
+
+Define RunScript 0
+If !var_exists(script_to_run) "Alert Warning 'No script to run' exit_macro"
+If !strcmp('$script_to_run','$no_sel_str') "Alert Warning 'No script selected' exit_macro"
+#Print script_to_run
+< $user_script_dir/$script_to_run
+.
+
+Define DelScript 0
+# Is this a CAUTIOUS test???
+If !var_exists(script_to_run) "Alert Warning 'No script to delete!?' exit_macro"
+If !strcmp('$script_to_run','$no_sel_str') "Alert Warning 'No script selected' exit_macro"
+# how to delete a file???
+# should we confirm that the file really exists???
+rm $user_script_dir/$script_to_run
+# BUG now we need to remove this file from the list!?!?
+.
+
+
+Define SelectScript 0
+Set script_to_run $choice
+.
+
+Define Close_Slave_Connection 0
+If !port_exists(server_client_mouth)
+  "warn 'Close_Slave_Connection:  No server_client_mouth, cannot close?' exit_macro"
+ports
+  close server_client_mouth
+  quit
+.
+
+# interrupted macro - what was this going to be?
+Define Check_For_Input 0
+ports
+  quit
+.
+
+Define DoEnslaveToServer 0
+If !port_exists(server_client_mouth)
+  "warn 'No server_client_mouth, cannot enslave?' exit_macro"
+
+advise "sending Start_Slave_Master..."
+Send_Server_Cmd "Start_Slave_Master"
+
+advise "redirecting to server_client_mouth..."
+# should we go to a new screen?
+ports
+  # The redir command causes us to hang waiting for input
+  # That means we don't process events unless the slave driver
+  # tells us to.  (That is unlike the unix situation, where
+  # we check for events while waiting for input text.)
+  # That code was tried with iOS but didn't work...
+  redir server_client_mouth	# doesn't return unless port is closed at the other end
+  top_menu
+If port_exists(server_client_mouth) 'ports close server_client_mouth quit'
+# Do we need to set a variable???
+.
+
+Define Start_Handshake 0
+If !port_exists(server_client_mouth)
+  "warn 'No server_client_mouth, cannot shake hands?' exit_macro"
+
+advise "Start_Handshake sending handshake_token..."
+Send_Server_Cmd handshake_token		# not a command!?
+.
+
+

@@ -1,0 +1,173 @@
+# compute the t distribution
+#
+# How should the user use these macros???
+#
+# The formulas came from wikipedia, but they should be repeated here!
+
+Define Declare_TD_Objects 0
+
+Assign n_t_samps 10*4096
+Assign n_isamps	100	# number of inverse samples...
+Set td_xmax 40	# range limit of domain - for computing
+
+Assign bin_width 2*$td_xmax/$n_t_samps
+
+Vector domain $n_t_samps 1 double
+
+Vector tdist $n_t_samps 1 double
+Vector cum_tdist $n_t_samps 1 double
+
+Vector idom $n_isamps 1 double	# inverse domain
+Vector iidx $n_isamps 1 u_short # inverse index
+Vector icum $n_isamps 1 double  # inverse cumulative
+.
+
+Define JJunk 0
+
+Vector ipts $n_isamps 2 float
+
+Subvector ic1 icum $n_isamps-1 0
+Subvector ic2 icum $n_isamps-1 1
+Vector dcum $n_isamps-1 1 double
+Vector ibw $n_isamps 1 double
+Subvector ibw1 ibw $n_isamps-1 0
+Subvector ibw2 ibw $n_isamps-1 1
+
+Vector ierror $n_isamps 1 double
+Vector iadj $n_isamps 1 double
+Vector last_ierror $n_isamps 1 double
+Vector delta_error $n_isamps 1 double
+Vector igain_vec $n_isamps 1 double
+expressions
+  export delta_error
+  export last_ierror
+  export ierror
+  export iadj
+  export igain_vec
+  quit
+
+Vector itd $n_isamps 1 double
+Vector trial $n_isamps 1 double
+Vector indices $n_isamps 1 u_short
+.
+
+
+Define Compute_TDist 3 dest domain dof
+Ramp1D domain -$td_xmax 2*$td_xmax/($n_t_samps-1)
+Assign v $3
+VVMul $1 $2 $2	# t^2
+VSMul $1 $1 1/$v
+VSAdd $1 $1 1
+VSPow $1 $1 -($v+1)/2
+Get_TD_Coeff _c $v
+VSMul $1 $1 $_c
+.
+
+Set prev_tdist_dof -1
+
+Define T_Dist 1 degrees_of_freedom
+If ($1)==$prev_tdist_dof exit_macro
+
+If !obj_exists(tdist) Declare_TD_Objects
+
+Compute_TDist tdist domain $1
+
+# Now it is all good except for normalization...
+#Convert pts{1} plot_tdist
+#Select_Plotter p
+#XYPlot pts
+
+
+# integrate
+VSMul tdist tdist $bin_width
+Cumsum cum_tdist tdist
+
+#Convert pts{1} plot_cum_tdist
+#XYPlot pts
+
+# Now invert the cumulative
+#
+# We don't need so many samples here, just enough
+# for the resolution we are interested.  For example,
+# if we want the 99% confidence interval, then
+# we need the values for 0.005 and 0.995.
+# Because we can represent the values for 0 and 1
+# (which are -inf and +inf), each bin represents
+# the value at its center, so in this example the
+# minimal case would be where the first bin represents
+# 0.005 would go from 0 to 0.01, so we would need 100
+# bins total.
+# 0.005
+# 0.015
+# 0.025		- this bin for 95% conf. int.
+
+Assign inc 1/$n_isamps
+Ramp1D idom $inc/2 $inc
+
+Set i 0		# index of the current inverse sample
+Set j 0		# index into the cumulative
+Set last_j -1
+repeat $n_isamps
+  Assign t value(idom[$i])	# target
+  Set found 0
+  do
+    If $j>=ncols(cum_tdist)
+      "error_exit 'OOPS i=$i t=$t j=$j'"
+    Assign v value(cum_tdist[$j])
+    If $v>$t
+      Then "Select_IIdx Set found 1"
+      Else "Increment j"
+    while !$found
+  Checkit
+  Set last_j $j
+  # should we check whether a value is repeated?
+  Increment i
+  end
+# Now iidx is set, we have to scale...
+Map icum iidx domain
+## # Print some values to check against published table...
+# This is a two-tailed test?
+# bin center is 0.005 - bin width is 0.01?
+#advise "DOF = $1   p = 0.01"
+#Display icum[99]
+#Display icum[0]
+#Display icum[1]
+#advise "DOF = $1   p = 0.05"
+#Display icum[97]
+
+Assign prev_tdist_dof $1
+.
+
+Define Checkit 0
+If $j!=$last_j exit_macro
+advise "Repeated index $j (last_j = $last_j), consider using more samples..."
+advise "i = $i, t = $t, v = $v"
+Assign frac $j/$n_t_samps
+Assign _t value(domain[$j])
+advise "frac = $frac, t = $_t"
+.
+
+Define Select_IIdx 0
+If $j==0 "VSet iidx[$i] $j exit_macro"
+Assign v2 value(cum_tdist[$j-1])
+VSet iidx[$i] ($v-$t)<($t-$v2)?$j:$j-1
+#Display iidx[$i]
+.
+
+# compute the normalizing coefficient for the t distribution
+
+# v is the degrees of freedom
+# v must be larger than 2...
+
+Define Get_TD_Coeff 2 dest_var dof
+Set _v $2
+If $_v<=2 "error_exit 'Get_TD_Coeff:  degrees of freedom ($_v) must be > 2'"
+If $_v&1		# odd
+  Then "Assign $1 1/(4*atan(1)*sqrt($_v))"
+  Else "Assign $1 1/(2*sqrt($_v))"
+do
+  Add_Var _v -2
+  Mul_Var $1 (($_v+1)/$_v)
+  while $_v>2
+.
+

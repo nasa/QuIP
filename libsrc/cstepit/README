@@ -1,0 +1,33 @@
+
+What is the new_stepit.c?  Was that created with the idea that the
+routine would be structured and made intelligible?
+
+
+__________________
+
+What packages are needed to install sparselm?
+
+Sparselm itself is compiled from source...
+http://users.ics.forth.gr/~lourakis/sparseLM/
+using version 1.3
+
+Needs SuiteSparse:
+http://www.cise.ufl.edu/research/sparse/SuiteSparse (bad URL from sparseLM)
+http://faculty.cse.tamu.edu/davis/suitesparse.html
+using version 4.4.4
+
+SuiteSparse depends on -llapack and -lopenblas...
+
+For Ubuntu:
+% apt-get install liblapack-dev
+% apt-get install libopenblas-dev
+(libopenblas libraries installed in /usr/lib/openblas-base, which wasn't found,
+so I made hard links to /usr/lib...)
+
+cholmod requires METIS?
+http://www.cs.umn.edu/~metis
+
+% apt-get install suitesparse-metis-dev
+% apt-get install libf2c2-dev
+
+

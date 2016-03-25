@@ -1,0 +1,26 @@
+
+Set n 8
+
+Define Tryit 1 type
+Vector d $n 1 $1
+Vector e $n 1 $1
+Vector d2 $n 1 $1
+
+Ramp1D d 0 0.33
+VErf e d
+VErfInv d2 e
+Display d
+Display e
+Display d2
+
+Delete_Image d
+Delete_Image d2
+Delete_Image e
+.
+
+Tryit double
+Tryit float
+
+exit
+
+

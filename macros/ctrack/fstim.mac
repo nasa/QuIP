@@ -1,0 +1,198 @@
+# flickering stimulus, computed on the gpu
+
+Set stim_zoom 2
+Set period 120
+#Set start_freq 50	# 0.5 x 100
+Set sample_freq	60	# video frame rate (Hz)
+
+Assign traj_radius 200/$stim_zoom
+
+Assign default_sigma 10/$stim_zoom
+
+Assign sigma $default_sigma
+
+< $macro_dir/compute/gaussian.mac
+
+
+Set max_atten 200
+Set a_factor 1
+
+Define Declare_Stim_Objects 0
+Print stim_h
+Print stim_w
+Print stim_zoom
+If obj_exists(g_noise) exit_macro
+
+data areas select ram quit quit
+Image h_fbuf $stim_h/$stim_zoom $stim_w/$stim_zoom 1 float
+Image h_cbuf $stim_h/$stim_zoom $stim_w/$stim_zoom 1 complex
+data areas select $DEFAULT_CUDA_DEVICE quit quit
+Image g_gaussian $stim_h/$stim_zoom $stim_w/$stim_zoom 1 float
+Image s_gaussian $stim_h/$stim_zoom $stim_w/$stim_zoom 1 float
+Image g_noise $stim_h/$stim_zoom $stim_w/$stim_zoom 1 float
+Image g_b $stim_h/$stim_zoom $stim_w/$stim_zoom 1 u_byte
+Image g_pattern $stim_h/$stim_zoom $stim_w/$stim_zoom 1 bit
+Image g_bitmap $stim_h/$stim_zoom $stim_w/$stim_zoom 1 bit
+# operate on the bitmaps as long words
+Equivalence a_pattern g_pattern 1 1 nrows(g_pattern)
+			ncols(g_pattern)/64 1 uint64
+Equivalence a_bitmap g_bitmap 1 1 nrows(g_bitmap)
+			ncols(g_bitmap)/64 1 uint64
+Image g_buffer $stim_h $stim_w 32 float	# debugging spacer
+
+data areas select ${DEFAULT_CUDA_DEVICE}_host quit quit
+
+# Stuff for circular trajectory
+Set n_minutes 2
+Set seconds_per_minute 60
+Set frames_per_second 60
+
+Set traj_len $n_minutes*$seconds_per_minute*$frames_per_second
+Vector coords $traj_len 2 float
+
+cuda
+  cuda_gl
+    buffer g_rgb $stim_w/$stim_zoom $stim_h/$stim_zoom 3
+    quit
+  quit
+.
+
+Define Recompute_Coords 0
+Ramp1D coords{0} 0 8*atan(1)/$period
+VSin coords{1} coords{0}
+VCos coords{0} coords{0}
+VSMul coords coords $traj_radius
+.
+
+Define Prepare_Noise_Texture 0
+VUni g_noise
+VSMul g_noise g_noise 255
+Convert g_rgb{0} g_noise
+Convert g_rgb{1} g_noise
+Convert g_rgb{2} g_noise
+#advise "Showing noise image"
+#cuda cuda_gl load v_stim g_rgb quit quit
+#gl vbl_wait 1 swap_buffers quit
+#Pause
+# Now binarize the noise
+compute compare vsm_gt g_pattern g_noise 255/2 quit quit
+#Show_Bits g_pattern
+.
+
+
+Define Show_Bits 1 bitmap
+advise "Show_Bits $1"
+compute compare ss_select $1 g_b 0 255 quit quit
+
+VMov g_rgb{0} g_b VMov g_rgb{1} g_b VMov g_rgb{2} g_b
+cuda cuda_gl load v_stim g_rgb quit quit
+gl vbl_wait 1 swap_buffers quit
+Pause
+.
+
+Define Show_It 2 image string
+cuda dnload h_fbuf $1 quit
+Disp_Image h_fbuf v_stim
+advise $2
+Pause
+.
+
+#Gaussian_At g_gaussian $sigma 0 0
+#
+#VSMul s_gaussian g_gaussian 255
+#Convert g_rgb{0} s_gaussian
+#Convert g_rgb{1} s_gaussian
+#Convert g_rgb{2} s_gaussian
+
+
+Define Follow_Traj 0
+Set i_traj 0
+Set stimulating 1
+do
+  Next_Traj
+  while $stimulating
+.
+
+Define Next_Traj 0
+Assign x value(coords[$i_traj]{0})
+Assign y value(coords[$i_traj]{1})
+Order${stim_order}_Dot $x $y
+os events quit
+Increment i_traj
+If $i_traj>=$traj_len "Set i_traj 0"
+.
+
+Define Order2_Dot 2 x y
+#advise "Order2_Dot $1 $2"
+Gaussian_At g_gaussian $sigma $1 $2
+VUni g_noise
+VSMul s_gaussian g_gaussian $a_factor
+compute compare vvm_gt g_bitmap s_gaussian g_noise quit quit
+
+VVXor a_pattern a_pattern a_bitmap
+compute compare ss_select g_pattern g_b 0 255 quit quit
+VMov g_rgb{0} g_b VMov g_rgb{1} g_b VMov g_rgb{2} g_b
+cuda cuda_gl load v_stim g_rgb quit quit
+# load no longer does swap_buffers...
+gl vbl_wait 1 swap_buffers quit
+.
+
+Set stim_l0 140
+Assign stim_amp 255-$stim_l0
+
+Define Order1_Dot 2 x y
+advise "Order1_Dot BEGIN"
+Gaussian_At g_gaussian $sigma $1 $2
+VSMul g_gaussian g_gaussian $stim_amp
+VSAdd g_gaussian g_gaussian $stim_l0
+Convert g_rgb{0} g_gaussian
+Convert g_rgb{1} g_gaussian
+Convert g_rgb{2} g_gaussian
+cuda cuda_gl load v_stim g_rgb quit quit
+gl
+  advise "Order1_Dot waiting"
+  vbl_wait 1
+  advise "Order1_Dot swapping"
+  swap_buffers
+  quit
+advise "Order1_Dot DONE"
+.
+
+Set n_delay 0		# total number presented, reset in init macro
+Set i_delay 0		# index into the delay buffer
+Set max_delay 122
+Vector delay_buf $max_delay 2 short
+
+Define Next_DFB 0
+advise "Next_DFB  n_delay = $n_delay"
+Map_Gaze$calib_suffix	# returns in fx,fy
+#Order2_Dot $fx $fy
+Assign dx $fx-ncols(v_stim)/2
+
+VSet delay_buf[$i_delay]{0} $dx
+Increment i_delay
+If $i_delay>=$max_delay "Set i_delay 0"
+
+If $n_delay>$delay_delta+1
+  Then 'Assign j_delay $i_delay-$delay_delta \
+	If $j_delay<0 "Add_Var j_delay $max_delay" \
+	Assign old_dx value(delay_buf[$j_delay]{0}) '
+  Else "Set old_dx 0"
+
+Add_Var dx -$old_dx
+
+# Put the dot at dx to stabilize
+
+Order${stim_order}_Dot $dx 0
+Increment n_delay
+advise "Next_DFB DONE  n_delay = $n_delay"
+.
+
+Define Service_Stim 0
+$stim_macro
+.
+
+Set stim_macro Next_Traj	# default
+
+
+Set i_traj 0

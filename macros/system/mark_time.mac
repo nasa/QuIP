@@ -1,0 +1,30 @@
+
+Set zero_secs -1
+
+Define Mark_Time 0
+If $zero_secs<0 "warn 'Mark_Time:  need to call Zero_Time first!?' Zero_Time"
+Check_Time
+Assign delta_ms $total_ms-$last_time		# time from last mark (or zero)
+Set last_time $total_ms
+.
+
+Define Tell_Time 0
+Mark_Time
+advise "$delta_ms ms elapsed"
+.
+
+Define Check_Time 0
+If $zero_secs<0 "warn 'Check_Time:  need to call Zero_Time first!?' Zero_Time"
+os usecs secs usecs quit
+Assign delta_secs $secs-$zero_secs
+Assign delta_usecs $usecs-$zero_usecs
+Assign total_ms 1000*$delta_secs+$delta_usecs/1000
+.
+
+Define Zero_Time 0
+os usecs zero_secs zero_usecs quit
+Set last_time 0
+Set total_ms 0
+.
+
+

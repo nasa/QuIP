@@ -1,0 +1,27 @@
+Vector v 100 1 float
+Ramp1D v 0 1
+Subvector s v 6 0
+#Info v
+#Display s[3]
+#Info s
+#Info s[3]
+Display s
+Info s
+Display s[3]
+Info s[3]
+
+Pause_If
+
+advise "Relocating s to offset 3"
+Relocate s 3 0 0
+#Info s
+#Info s[3]
+Display s
+Info s
+Display s[3]
+Info s[3]
+
+Pause_If
+exit
+
+

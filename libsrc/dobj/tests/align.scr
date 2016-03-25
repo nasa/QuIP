@@ -1,0 +1,9 @@
+
+debug data
+data
+  alignment 16
+  vector v 4096 1 float
+  info v
+  quit
+exit
+

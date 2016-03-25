@@ -1,0 +1,130 @@
+# %Z% $RCSfile: mmvi.mac,v $ ver: $Revision: 1.11 $ $Date: 2010/09/23 23:32:21 $
+
+#
+# meteor movie macros
+#
+# BUG mmvi does not yet use the generic movie interface 
+
+Start_File mmvi.mac
+
+Set field_mode_set 0
+
+Define Field_Mode 1 yesno
+meteor
+  geometry
+    field_mode $1
+    quit
+  quit
+Set field_mode_set 1
+.
+
+# There are two kinds of timestamps (yes?)
+# One kind is collected by the meteor driver and stuck
+# in the frame itself... (?)  The other is collected by the
+# application program, with separate stamps for frame acquisition
+# and disk writing...
+#
+# Which are these?  Probably the driver???
+
+Define Disable_Timestamps 0
+meteor
+  capture
+    enable_timestamps no
+    quit
+  quit
+.
+
+Define Enable_Timestamps 0
+meteor
+  capture
+    enable_timestamps yes
+    quit
+  quit
+.
+
+Define Create_Meteor_Timestamp_Vector 2 vecname movie_name
+If obj_exists('$1') "Delete_Image $1"
+Vector $1 nframes('$2') 2 double
+Set i 0
+repeat nframes('$2')
+  VSet $1[$i]{0} seconds('$2',$i)
+  VSet $1[$i]{1} milliseconds('$2',$i)
+  Increment i
+  end
+#Display $1
+.
+
+Define Xmit_Meteor_Timestamp_Vector 1 vecname
+Xmit_Data mvi_response $1
+.
+
+#< $macro_dir/movie/movie.mac
+Define Movie_Record_Directory 1 name
+Set meteor_movie_dir $1
+.
+
+Define RV_Mkdir 1 name
+rawvol
+  mkdir $1
+  quit
+.
+
+Define RV_Cd 1 name
+rawvol
+  cd $1
+  quit
+.
+
+Define Meteor_Async_Record 1 yes_no
+movie
+  control
+    capture
+      async $1
+      quit
+    quit
+  quit
+.
+
+# what if we use the movie/assemble command???
+
+Define Old_Record_Movie 2 name nfields
+meteor
+  capture
+#    record $meteor_movie_dir/$1 $2
+    record $1 $2
+    quit
+  quit
+.
+
+Define Record_Movie 2 name nfields
+advise "Record_Movie $1 $2"
+movie
+  assemble
+    record $1 $2
+    quit
+  quit
+#rawvol
+#  error_frames fifo_error_vec $1 fifo_errors
+#  quit
+#If obj_exists(fifo_error_vec)
+#  "Display fifo_error_vec Put_Ascii fifo_error_vec $1.fifo_errs Delete_Image fifo_error_vec"
+.
+
+Define Meteor_Defaults 0
+advise "Meteor_Defaults BEGIN"
+meteor
+  advise 'selecting meteor input...'
+  set_input rgb
+  advise 'setting meteor geometry...'
+  geometry
+#    advise "setting size to 320x240"
+#    size 320 240
+#    advise "setting number of memory frames to 16"
+#    nframes 16
+    quit
+  quit
+advise "Meteor_Defaults DONE"
+.
+
+Stop_File mmvi.mac
+

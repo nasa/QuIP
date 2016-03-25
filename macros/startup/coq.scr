@@ -1,0 +1,27 @@
+#
+
+verbose no
+
+If !var_exists(QUIPSTARTUPDIR)
+  "variables set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup quit"
+
+
+#view debug xsupp quit
+
+< $QUIPSTARTUPDIR/generic.scr
+< $QUIPSTARTUPDIR/gendata.scr
+< $QUIPSTARTUPDIR/gencomp.scr
+< $QUIPSTARTUPDIR/genclient.scr
+< $QUIPSTARTUPDIR/genview.scr
+#< $QUIPSTARTUPDIR/../system/unix_helper.mac
+
+#view xsync yes quit
+
+#verbose yes
+compute control n_processors 1 quit quit
+max_warnings 200
+
+#debug lookahead
+
+Stop_File .coq
+

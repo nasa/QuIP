@@ -1,0 +1,7 @@
+
+problems w/ openGL on mac, set these for debugging output:
+
+setenv LIBGL_DEBUG 1
+setenv LIBGL_DIAGNOSTIC 1
+setenv LIBGL_DUMP_VISUALID 1
+

@@ -1,0 +1,12 @@
+Software module for the Ocean Optics USB2000 spectometer.  Note that
+(unlike when this code was developed), Ocean Optics now offers linux
+support in their software, although it has not been purchased yet...
+
+This version was developed to run over a serial port using the adaptor.
+(What would be required to interface over the USB subsystem??)
+
+The two .lmp files are the calibration data for the tungsten lamp
+LS-1-CAL, s/n LSC677.  The .SMA file was collected with a "bare
+SMA-terminated optical fiber," while the .CC3 date were collected
+with a "cosine corrected irradiance probe."
+

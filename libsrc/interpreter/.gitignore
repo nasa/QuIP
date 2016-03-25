@@ -1,0 +1,12 @@
+*.o
+.deps
+*.a
+y.tab.c
+nexpr.c
+output
+testout
+Makefile
+Makefile.in
+memcheck
+t.scr
+

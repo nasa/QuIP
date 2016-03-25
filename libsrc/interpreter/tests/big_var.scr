@@ -1,0 +1,16 @@
+
+Set i 1
+Set v start
+Set n 200
+repeat $n
+  Set v "$v word $i"
+  Increment i
+  end
+advise 'printing v'
+Print v
+
+Assign n strlen("$v")
+Print n
+
+exit
+

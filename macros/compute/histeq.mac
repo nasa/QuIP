@@ -1,0 +1,46 @@
+
+Set hist_eq_inited 0
+
+Define Init_HistEq 0
+Vector histbuf 256 1 float
+Vector cumbuf 256 1 float
+Vector histmap 256 1 float
+Set hist_eq_inited 1
+.
+
+Define Plot_Histogram 0
+Select_Plotter pv
+Plot_Space 0 0 255 5000
+YPlot histbuf
+Plot_Space 0 0 255 50000
+YPlot cumbuf
+.
+
+
+# this works for byte images...
+
+Define Histogram_Equalize 1 image
+If !$hist_eq_inited Init_HistEq
+Dup_Float he_f $1
+Convert he_f $1
+compute
+  misc
+    histogram histbuf he_f 0 1	# min bin ctr, width
+    cumsum cumbuf histbuf
+    quit
+  quit
+If $plotting&&viewer_exists(pv) Plot_Histogram
+
+VMov histmap cumbuf
+Scale histmap 0 255
+VRound histmap histmap
+compute
+  misc
+    map he_f $1 histmap
+    quit
+  quit
+Convert $1 he_f
+Delete_Image he_f
+.
+
+

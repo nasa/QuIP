@@ -1,0 +1,555 @@
+
+# Fit the calibration data
+
+# linear fit:
+#
+# sx = a mx + b my + c
+# sy = d mx + e my + f
+#
+#
+# set up for SVD:
+#
+# sx1    mx1 my1 1  0   0   0
+# sy1	 0   0   0  mx1 my1 1
+
+
+# in the simples case, we use the pupil-glint vector, but for more accuracy we might
+# treat pupil & glint as separate variables, and also include the pupil diameter or area...
+
+Set cal_stm_x_i	0
+Set cal_stm_y_i 1
+Set cal_pcr_x_i	2
+Set cal_pcr_y_i	3
+Set cal_pup_x_i	4
+Set cal_pup_y_i	5
+Set cal_cr_x_i	6
+Set cal_cr_y_i	7
+Set cal_pup_a_i	8
+Set n_calib_comps	9
+
+# Number of points must be at least the half number of parameters
+Set min_valid_samples_1	4
+Set min_valid_samples_2	5
+Set min_valid_samples_3	5
+Set min_valid_samples_4	6
+
+Define Fit_Calibration_Points 0
+Get_Calib_Suffix
+Fit_Set$calib_suffix
+.
+
+Define Get_Calib_Suffix 0
+Set calib_suffix none
+If !strcmp('$calib_var_set','P-CR') "Set calib_suffix _1"
+If !strcmp('$calib_var_set','P-CR,PA') "Set calib_suffix _2"
+If !strcmp('$calib_var_set','P,CR') "Set calib_suffix _3"
+If !strcmp('$calib_var_set','P,CR,PA') "Set calib_suffix _4"
+If !strcmp('$calib_suffix','none')
+  "warn 'No calib suffix for var set $calib_var_set!?'"
+.
+
+# P,CR plus pupil area...
+# 12 coefficients ( 2 * ( 5 + 1 ) ) 
+
+Define Fit_Set_4 0
+Set have_calib 0
+
+Count_Valid_Samples
+If $n_valid_samples<$min_valid_samples_4 exit_macro
+
+data areas select ram quit quit	# must be in RAM
+
+If obj_exists(lincal_u_matrix) "Delete_SVD_Objects lincal"
+data areas select ram quit quit
+Create_SVD_Objects lincal 2*$n_valid_samples 12
+
+# Set up U matrix
+VSet calib_valid 1
+Set i 0
+Set which_pt 0
+repeat $n_calib_stimuli
+  Set i_samp 0
+  Assign sx value(calib_data[$which_pt][$i_samp]{$cal_stm_x_i})
+  Assign sy value(calib_data[$which_pt][$i_samp]{$cal_stm_y_i})
+  repeat $n_calib_samples
+    Assign px value(calib_data[$which_pt][$i_samp]{$cal_pup_x_i})
+    Assign py value(calib_data[$which_pt][$i_samp]{$cal_pup_y_i})
+    Assign cx value(calib_data[$which_pt][$i_samp]{$cal_cr_x_i})
+    Assign cy value(calib_data[$which_pt][$i_samp]{$cal_cr_y_i})
+    Assign pa value(calib_data[$which_pt][$i_samp]{$cal_pup_a_i})
+    If $px!=0&&$py!=0&&$cx!=0&&$cy!=0
+      Then "Add_Sample_4 $px $py $cx $cy $pa"
+      Else "VSet calib_valid[$which_pt][$i_samp] 0"
+    Increment i_samp
+    end	# end sample loop
+  Increment which_pt
+  end
+
+numrec svd lincal_u_matrix lincal_eigenvalues lincal_v_matrix quit
+numrec svbk lincal_coeffs lincal_u_matrix lincal_eigenvalues lincal_v_matrix lincal_datain quit
+Display lincal_coeffs
+Assign c_a value(lincal_coeffs[0])
+Assign c_b value(lincal_coeffs[1])
+Assign c_c value(lincal_coeffs[2])
+Assign c_d value(lincal_coeffs[3])
+Assign c_e value(lincal_coeffs[4])
+Assign c_f value(lincal_coeffs[5])
+
+Assign c_g value(lincal_coeffs[6])
+Assign c_h value(lincal_coeffs[7])
+Assign c_i value(lincal_coeffs[8])
+Assign c_j value(lincal_coeffs[9])
+Assign c_k value(lincal_coeffs[10])
+Assign c_l value(lincal_coeffs[11])
+advise "Fit_Set_4:  c_a $c_a, c_b $c_b, c_c $c_c, c_d $c_d, c_e $c_e, c_f $c_f"
+Set have_calib 1
+.
+
+
+# P,CR ...
+# 10 coefficients ( 2 * ( 4 + 1 ) ) 
+
+Define Fit_Set_3 0
+Set have_calib 0
+
+Count_Valid_Samples
+If $n_valid_samples<$min_valid_samples_3 exit_macro
+
+data areas select ram quit quit	# must be in RAM
+#If obj_exists(data_to_save)
+#  "Delete_Image data_to_save Delete_Image scratch_to_save"
+#Vector data_to_save $n_valid_samples 5 float
+#Vector scratch_to_save $n_valid_samples 3 float
+
+If obj_exists(lincal_u_matrix) "Delete_SVD_Objects lincal"
+data areas select ram quit quit
+Create_SVD_Objects lincal 2*$n_valid_samples 10
+
+# Set up U matrix
+VSet calib_valid 1
+Set i 0
+Set which_pt 0
+repeat $n_calib_stimuli
+  Set i_samp 0
+  Assign sx value(calib_data[$which_pt][$i_samp]{$cal_stm_x_i})
+  Assign sy value(calib_data[$which_pt][$i_samp]{$cal_stm_y_i})
+  repeat $n_calib_samples
+    Assign px value(calib_data[$which_pt][$i_samp]{$cal_pup_x_i})
+    Assign py value(calib_data[$which_pt][$i_samp]{$cal_pup_y_i})
+    Assign cx value(calib_data[$which_pt][$i_samp]{$cal_cr_x_i})
+    Assign cy value(calib_data[$which_pt][$i_samp]{$cal_cr_y_i})
+    If $px!=0&&$py!=0&&$cx!=0&&$cy!=0
+      Then "Add_Sample_3 $px $py $cx $cy"
+      Else "VSet calib_valid[$which_pt][$i_samp] 0"
+    Increment i_samp
+    end	# end sample loop
+  Increment which_pt
+  end
+
+numrec svd lincal_u_matrix lincal_eigenvalues lincal_v_matrix quit
+numrec svbk lincal_coeffs lincal_u_matrix lincal_eigenvalues lincal_v_matrix lincal_datain quit
+Display lincal_coeffs
+Assign c_a value(lincal_coeffs[0])
+Assign c_b value(lincal_coeffs[1])
+Assign c_c value(lincal_coeffs[2])
+Assign c_d value(lincal_coeffs[3])
+Assign c_e value(lincal_coeffs[4])
+
+Assign c_f value(lincal_coeffs[5])
+Assign c_g value(lincal_coeffs[6])
+Assign c_h value(lincal_coeffs[7])
+Assign c_i value(lincal_coeffs[8])
+Assign c_j value(lincal_coeffs[9])
+Set have_calib 1
+.
+
+# P-CR plus pupil area...
+# 8 coefficients instead of 6
+
+Define Fit_Set_2 0
+Set have_calib 0
+
+Count_Valid_Samples
+If $n_valid_samples<$min_valid_samples_2 exit_macro
+
+data areas select ram quit quit	# must be in RAM
+#If obj_exists(data_to_save)
+#  "Delete_Image data_to_save Delete_Image scratch_to_save"
+#Vector data_to_save $n_valid_samples 5 float
+#Vector scratch_to_save $n_valid_samples 3 float
+
+If obj_exists(lincal_u_matrix) "Delete_SVD_Objects lincal"
+data areas select ram quit quit
+Create_SVD_Objects lincal 2*$n_valid_samples 8
+
+# Set up U matrix
+VSet calib_valid 1
+Set i 0
+Set which_pt 0
+repeat $n_calib_stimuli
+  Set i_samp 0
+  Assign sx value(calib_data[$which_pt][$i_samp]{$cal_stm_x_i})
+  Assign sy value(calib_data[$which_pt][$i_samp]{$cal_stm_y_i})
+  repeat $n_calib_samples
+    Assign ex value(calib_data[$which_pt][$i_samp]{$cal_pcr_x_i})
+    Assign ey value(calib_data[$which_pt][$i_samp]{$cal_pcr_y_i})
+    Assign pa value(calib_data[$which_pt][$i_samp]{$cal_pup_a_i})
+    If $ex!=0&&$ey!=0
+      Then "Add_Sample_2 $ex $ey $pa"
+      Else "VSet calib_valid[$which_pt][$i_samp] 0"
+    Increment i_samp
+    end	# end sample loop
+  Increment which_pt
+  end
+
+numrec svd lincal_u_matrix lincal_eigenvalues lincal_v_matrix quit
+numrec svbk lincal_coeffs lincal_u_matrix lincal_eigenvalues lincal_v_matrix lincal_datain quit
+Display lincal_coeffs
+Assign c_a value(lincal_coeffs[0])
+Assign c_b value(lincal_coeffs[1])
+Assign c_c value(lincal_coeffs[2])
+Assign c_d value(lincal_coeffs[3])
+
+Assign c_e value(lincal_coeffs[4])
+Assign c_f value(lincal_coeffs[5])
+Assign c_g value(lincal_coeffs[6])
+Assign c_h value(lincal_coeffs[7])
+Set have_calib 1
+.
+
+# This version is hard-coded to use pcr vector...
+# It fits all the points that have been collected so far
+
+Define Fit_Set_1 0
+Set have_calib 0
+
+Count_Valid_Samples
+If $n_valid_samples<$min_valid_samples_1 exit_macro
+
+data areas select ram quit quit	# must be in RAM
+#If obj_exists(data_to_save)
+#  "Delete_Image data_to_save Delete_Image scratch_to_save"
+#Vector data_to_save $n_valid_samples 4 float
+#Vector scratch_to_save $n_valid_samples 3 float
+
+If obj_exists(lincal_u_matrix) "Delete_SVD_Objects lincal"
+data areas select ram quit quit
+Create_SVD_Objects lincal 2*$n_valid_samples 6
+
+# Set up U matrix
+VSet calib_valid 1
+Set i 0
+Set which_pt 0
+repeat $n_calib_stimuli
+  Set i_samp 0
+  Assign sx value(calib_data[$which_pt][$i_samp]{$cal_stm_x_i})
+  Assign sy value(calib_data[$which_pt][$i_samp]{$cal_stm_y_i})
+  repeat $n_calib_samples
+    Assign ex value(calib_data[$which_pt][$i_samp]{$cal_pcr_x_i})
+    Assign ey value(calib_data[$which_pt][$i_samp]{$cal_pcr_y_i})
+    If $ex!=0&&$ey!=0
+      Then "Add_Sample $ex $ey"
+      Else "VSet calib_valid[$which_pt][$i_samp] 0"
+    Increment i_samp
+    end	# end sample loop
+  Increment which_pt
+  end
+
+numrec svd lincal_u_matrix lincal_eigenvalues lincal_v_matrix quit
+numrec svbk lincal_coeffs lincal_u_matrix lincal_eigenvalues lincal_v_matrix lincal_datain quit
+Display lincal_coeffs
+Assign c_a value(lincal_coeffs[0])
+Assign c_b value(lincal_coeffs[1])
+Assign c_c value(lincal_coeffs[2])
+
+Assign c_d value(lincal_coeffs[3])
+Assign c_e value(lincal_coeffs[4])
+Assign c_f value(lincal_coeffs[5])
+Set have_calib 1
+.
+
+Define Add_Sample 2 x y
+#data ascii read data_to_save[$i/2] - $sx $sy $1 $2 quit quit
+
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      $1 $2 1
+      0 0 0
+    quit
+  quit
+VSet lincal_datain[$i] $sx
+Increment i
+
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      0 0 0
+      $1 $2 1
+    quit
+  quit
+VSet lincal_datain[$i] $sy
+Increment i
+.
+
+Define Add_Sample_2 3 x y pa
+#data ascii read data_to_save[$i/2] - $sx $sy $1 $2 $3 quit quit
+
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      $1 $2 $3 1
+      0 0 0 0
+    quit
+  quit
+VSet lincal_datain[$i] $sx
+Increment i
+
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      0 0 0 0
+      $1 $2 $3 1
+    quit
+  quit
+VSet lincal_datain[$i] $sy
+Increment i
+.
+
+Define Add_Sample_3 4 px py cx cy
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      $1 $2 $3 $4 1
+      0 0 0 0 0
+    quit
+  quit
+VSet lincal_datain[$i] $sx
+Increment i
+
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      0 0 0 0 0
+      $1 $2 $3 $4 1
+    quit
+  quit
+VSet lincal_datain[$i] $sy
+Increment i
+.
+
+Define Add_Sample_4 5 px py cx cy pa
+advise "Add_Sample_4 $1 $2 $3 $4 $5"
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      $1 $2 $3 $4 $5 1
+      0 0 0 0 0 0
+    quit
+  quit
+VSet lincal_datain[$i] $sx
+Increment i
+
+data
+  ascii
+    read lincal_u_matrix[$i] -
+      0 0 0 0 0 0
+      $1 $2 $3 $4 $5 1
+    quit
+  quit
+VSet lincal_datain[$i] $sy
+Increment i
+.
+
+Define Count_Valid_Samples 0
+# Scan the data looking for 0,0
+Set which_pt 0
+Set n_valid_samples 0
+If $n_calib_stimuli<=0 "Print n_valid_samples exit_macro"
+
+repeat $n_calib_stimuli
+  Set i_samp 0
+  repeat $n_calib_samples
+    Assign ex value(calib_data[$which_pt][$i_samp]{$cal_pcr_x_i})
+    Assign ey value(calib_data[$which_pt][$i_samp]{$cal_pcr_y_i})
+    If $ex!=0&&$ey!=0 "Increment n_valid_samples"
+    Increment i_samp
+    end	# end sample loop
+  Increment which_pt
+  end		# end point loop
+Print n_valid_samples
+.
+
+# What does Map_Calib_1 do?
+# It appears to map all the data into calib_estimate
+# and then does the same with data_to_save???
+
+Define Map_Calib_1 0
+VSMul calib_estimate{0} calib_data{$cal_pcr_x_i} $c_a
+VSMul calib_tmp calib_data{$cal_pcr_y_i} $c_b
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSAdd calib_estimate{0} calib_estimate{0} $c_c
+
+VSMul calib_estimate{1} calib_data{$cal_pcr_x_i} $c_d
+VSMul calib_tmp calib_data{$cal_pcr_y_i} $c_e
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSAdd calib_estimate{1} calib_estimate{1} $c_f
+.
+
+Define Map_Calib_2 0
+VSMul calib_estimate{0} calib_data{$cal_pcr_x_i} $c_a
+VSMul calib_tmp calib_data{$cal_pcr_y_i} $c_b
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSMul calib_tmp calib_data{$cal_pup_a_i} $c_c
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSAdd calib_estimate{0} calib_estimate{0} $c_d
+
+VSMul calib_estimate{1} calib_data{$cal_pcr_x_i} $c_e
+VSMul calib_tmp calib_data{$cal_pcr_y_i} $c_f
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSMul calib_tmp calib_data{$cal_pup_a_i} $c_g
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSAdd calib_estimate{1} calib_estimate{1} $c_h
+.
+
+Define Map_Calib_3 0
+VSMul calib_estimate{0} calib_data{$cal_pup_x_i} $c_a
+VSMul calib_tmp calib_data{$cal_pup_y_i} $c_b
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_x_i} $c_c
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_y_i} $c_d
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSAdd calib_estimate{0} calib_estimate{0} $c_e
+
+VSMul calib_estimate{1} calib_data{$cal_pup_x_i} $c_f
+VSMul calib_tmp calib_data{$cal_pup_y_i} $c_g
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_x_i} $c_h
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_y_i} $c_i
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSAdd calib_estimate{1} calib_estimate{1} $c_j
+.
+
+Define Map_Calib_4 0
+VSMul calib_estimate{0} calib_data{$cal_pup_x_i} $c_a
+VSMul calib_tmp calib_data{$cal_pup_y_i} $c_b
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_x_i} $c_c
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_y_i} $c_d
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSMul calib_tmp calib_data{$cal_pup_a_i} $c_e
+VVAdd calib_estimate{0} calib_estimate{0} calib_tmp
+VSAdd calib_estimate{0} calib_estimate{0} $c_f
+
+VSMul calib_estimate{1} calib_data{$cal_pup_x_i} $c_g
+VSMul calib_tmp calib_data{$cal_pup_y_i} $c_h
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_x_i} $c_i
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSMul calib_tmp calib_data{$cal_cr_y_i} $c_j
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSMul calib_tmp calib_data{$cal_pup_a_i} $c_k
+VVAdd calib_estimate{1} calib_estimate{1} calib_tmp
+VSAdd calib_estimate{1} calib_estimate{1} $c_l
+.
+
+Set max_calib_stimuli	100	# what the heck
+Set n_calib_stimuli 0
+
+Define Init_Calib_Grid 0
+Image calib_grid $n_calib_y $n_calib_x 2 short
+Image calib_data $max_calib_stimuli $n_calib_samples $n_calib_comps float
+Image calib_valid $max_calib_stimuli $n_calib_samples 1 float
+Image calib_estimate $max_calib_stimuli $n_calib_samples 2 float
+Image calib_tmp $max_calib_stimuli $n_calib_samples 1 float
+# used to be stim_w stim_h
+#Assign calib_dx round($disp_w/$n_calib_x)
+#Assign calib_dy round($disp_h/$n_calib_y)
+Assign calib_dx round($stim_w/$n_calib_x)
+Assign calib_dy round($stim_h/$n_calib_y)
+Ramp2D calib_grid{0} round($calib_dx/2) $calib_dx 0
+Ramp2D calib_grid{1} round($calib_dy/2) 0 $calib_dy
+.
+
+# Include_Datum based on Add_Sample
+Define Include_Datum 2 x y
+data
+  ascii
+    read lincal_u_matrix[$i_u_row] -
+      $1 $2 1
+      0 0 0
+    quit
+  quit
+VSet lincal_datain[$i_u_row] $sx
+Increment i_u_row
+
+data
+  ascii
+    read lincal_u_matrix[$i_u_row] -
+      0 0 0
+      $1 $2 1
+    quit
+  quit
+VSet lincal_datain[$i_u_row] $sy
+Increment i_u_row
+.
+
+Define Map_Gaze_1 0
+# Now compute the fixation loc
+# Get p-cr from the result vector
+Assign ex value(${prefix}_result[$i_cam]{$result_pcr_x_idx})
+Assign ey value(${prefix}_result[$i_cam]{$result_pcr_y_idx})
+
+Assign fx $c_a*$ex+$c_b*$ey+$c_c
+Assign fy $c_d*$ex+$c_e*$ey+$c_f
+#advise "Map_Gaze_1:  ex $ex, ey $ey, fx = $fx   fy = $fy"
+.
+
+
+Define Map_Gaze_2 0
+# Now compute the fixation loc
+# Get p-cr from the result vector
+Assign ex value(${prefix}_result[$i_cam]{$result_pcr_x_idx})
+Assign ey value(${prefix}_result[$i_cam]{$result_pcr_y_idx})
+Assign pa value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+
+Assign fx $c_a*$ex+$c_b*$ey+$c_c*$pa+$c_d
+Assign fy $c_e*$ex+$c_f*$ey+$c_g*$pa+$c_h
+.
+
+
+Define Map_Gaze_3 0
+# Now compute the fixation loc
+# Get p-cr from the result vector
+Assign roi_x	value(${prefix}_result[$i_cam]{$result_pup_roi_x_idx})
+Assign roi_y	value(${prefix}_result[$i_cam]{$result_pup_roi_y_idx})
+Assign px $roi_x+value(${prefix}_result[$i_cam]{$result_pup_x_idx})
+Assign py $roi_y+value(${prefix}_result[$i_cam]{$result_pup_y_idx})
+Assign cx $roi_x+value(${prefix}_result[$i_cam]{$result_pcr_x_idx})+value(${prefix}_result[$i_cam]{$result_cr_x_idx})
+Assign cy $roi_y+value(${prefix}_result[$i_cam]{$result_pcr_y_idx})+value(${prefix}_result[$i_cam]{$result_cr_y_idx})
+
+Assign fx $c_a*$px+$c_b*$py+$c_c*$cx+$c_d*$cy+$c_e
+Assign fy $c_f*$px+$c_g*$py+$c_h*$cx+$c_i*$cy+$c_j
+.
+
+
+Define Map_Gaze_4 0
+Assign roi_x	value(${prefix}_result[$i_cam]{$result_pup_roi_x_idx})
+Assign roi_y	value(${prefix}_result[$i_cam]{$result_pup_roi_y_idx})
+Assign px $roi_x+value(${prefix}_result[$i_cam]{$result_pup_x_idx})
+Assign py $roi_y+value(${prefix}_result[$i_cam]{$result_pup_y_idx})
+Assign cx $roi_x+value(${prefix}_result[$i_cam]{$result_pcr_x_idx})+value(${prefix}_result[$i_cam]{$result_cr_x_idx})
+Assign cy $roi_y+value(${prefix}_result[$i_cam]{$result_pcr_y_idx})+value(${prefix}_result[$i_cam]{$result_cr_y_idx})
+Assign pa value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+
+Assign fx $c_a*$px+$c_b*$py+$c_c*$cx+$c_d*$cy+$c_e*$pa+$c_f
+Assign fy $c_g*$px+$c_h*$py+$c_i*$cx+$c_j*$cy+$c_k*$pa+$c_l
+#advise "Map_Gaze_4:  px $px, py $py, cx $cx, cy $cy, pa $pa,   fx = $fx   fy = $fy"
+#advise "Map_Gaze_4:  c_a $c_a, c_b $c_b, c_c $c_c, c_d $c_d, c_e $c_e, c_f $c_f"
+.
+
+
+

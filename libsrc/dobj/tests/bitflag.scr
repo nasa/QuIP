@@ -1,0 +1,20 @@
+# Check setting of contiguous_bitmap_data flag...
+
+Sequence m1 4 6 10 1 float
+Info m1
+
+data
+  subsample m2 m1
+  	ncols(m1) 0 1
+	nrows(m1) 0 1
+	2 0 2
+  quit
+Info m2
+
+Pause_If
+
+Image b1 6 10 1 bit
+Info b1
+
+exit
+

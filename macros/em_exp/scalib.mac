@@ -1,0 +1,274 @@
+#
+# cmvimenu script
+# make a spatial eye tracker calibration movie for cosmo
+#
+
+Start_File scalib.mac
+
+Set bg_level 		0		# default background
+Set target_level	255
+Set box_level		0
+
+Set odd_field 1
+
+Set fixlen 10
+Assign box_extra		$fixlen
+
+#Movie_Directory /u/jbm/airy/cosmo/calib
+
+Define Declare_Cross_Objs 0
+Set_Sizes 640 248
+Print xsize
+Print ysize
+
+data
+  image rgba $ysize $xsize 4 byte
+  image myframe 2*$ysize $xsize 1 byte
+  interlace oddlines myframe odd
+  interlace evenlines myframe even
+  quit
+.
+
+Define Delete_Cross_Objs 0
+Delete_Image myframe
+Delete_Image rgba
+.
+
+Define Spiral 0
+Set center_x	320
+Set center_y	240
+Set rad		1
+Set n_spiral	480	# 8 seconds
+Set n_rev	5
+Assign arginc	($n_rev*8*atan(1))/$n_spiral
+Assign radinc	400/$n_spiral
+Set arg 0.0
+Set sp_maxx	600
+Set sp_minx	40
+Set sp_maxy	440
+Set sp_miny	40
+
+Set moviename "spiral.mvi"
+Print moviename
+Start_Movie $moviename
+
+Cross_At $center_x $center_y
+Open $n_spiral
+  Assign sp_x $center_x+floor($rad*cos($arg)+0.5)
+  Assign sp_y $center_y+floor($rad*sin($arg)+0.5)
+  echo "spiral point at $sp_x $sp_y"
+  Assign _x min($sp_x,$sp_maxx)
+  Assign sp_x max($_x,$sp_minx)
+  Assign _y min($sp_y,$sp_maxy)
+  Assign sp_y max($_y,$sp_miny)
+  Cross_Field $sp_x $sp_y
+  Add_Var rad $radinc
+  Add_Var arg $arginc
+  Close
+
+Finish_Movie $moviename
+.
+
+
+Define Cross_At 2 x y
+echo "drawing cross at $1 $2"
+VSet myframe $bg_level
+Subimage box myframe 2*($fixlen+$box_extra)+1 2*($fixlen+$box_extra)+1
+	$1-($fixlen+$box_extra) $2-($fixlen+$box_extra)
+VSet box $box_level
+Delete_Image box
+
+# draw a fat cross
+Draw_Cross_At $1 $2
+Draw_Cross_At $1+1 $2
+Draw_Cross_At $1-1 $2
+Draw_Cross_At $1 $2+1
+Draw_Cross_At $1 $2-1
+Draw_Cross_At $1+2 $2
+Draw_Cross_At $1-2 $2
+Draw_Cross_At $1 $2+2
+Draw_Cross_At $1 $2-2
+
+Odd_Field
+Even_Field
+.
+
+Define Cross_Field 2 x y
+Draw_Cross_At $1 $2
+Next_Field
+.
+
+Define Next_Field 0
+If $odd_field
+  Then Odd_Field
+  Else Even_Field
+.
+
+
+Define Draw_Cross_At 2 x y
+Assign dcax $1
+Assign dcay $2
+
+#VSet myframe $bg_level
+#Subimage box myframe 2*($fixlen+$box_extra)+1 2*($fixlen+$box_extra)+1
+#	$dcax-($fixlen+$box_extra) $dcay-($fixlen+$box_extra)
+#VSet box $box_level
+#Delete_Image box
+
+VSet myframe[$dcay][$dcax] $target_level
+Set i 1
+Open $fixlen
+  VSet myframe[$dcay+$i][$dcax+$i] $target_level
+  VSet myframe[$dcay+$i][$dcax-$i] $target_level
+  VSet myframe[$dcay-$i][$dcax-$i] $target_level
+  VSet myframe[$dcay-$i][$dcax+$i] $target_level
+  Increment i
+  Close
+.
+
+Define Odd_Field 0
+Setup_Field rgba oddlines
+Movie_Add $moviename rgba
+Set odd_field 0
+.
+
+Define Even_Field 0
+Setup_Field rgba evenlines
+Movie_Add $moviename rgba
+Set odd_field 1
+.
+
+Define Setup_Field 2 target source
+VMov "$1{0}" $2
+VMov "$1{1}" $2
+VMov "$1{2}" $2
+VMov "$1{3}" $2
+.
+
+Define Fixation_Movie 3 stem x y
+Assign fx $2
+Assign fy $3
+Set moviename "fix.$1.$fx.$fy"
+Print moviename
+Start_Movie $moviename
+Cross_At $fx $fy
+Finish_Movie $moviename
+.
+
+Define Make_Grid 2 stem delta
+Assign delta $2
+Assign grid_x0 320
+Assign grid_y0 240
+Fixation_Movie $1 $grid_x0-$delta $grid_y0-$delta
+Fixation_Movie $1 $grid_x0        $grid_y0-$delta
+Fixation_Movie $1 $grid_x0+$delta $grid_y0-$delta
+Fixation_Movie $1 $grid_x0-$delta $grid_y0
+Fixation_Movie $1 $grid_x0        $grid_y0
+Fixation_Movie $1 $grid_x0+$delta $grid_y0
+Fixation_Movie $1 $grid_x0-$delta $grid_y0+$delta
+Fixation_Movie $1 $grid_x0        $grid_y0+$delta
+Fixation_Movie $1 $grid_x0+$delta $grid_y0+$delta
+.
+
+Define Make_Big_Grid 3 stem delta n
+Scan_Big_Grid "Fixation_Movie $1" $2 $3
+.
+
+Define Scan_Big_Grid 3 Command delta n
+echo "Scan_Big_Grid:  command is '$1'"
+Assign delta $2
+Assign grid_x0 320
+Assign grid_y0 240
+push_text $1 $grid_x0        $grid_y0
+Set ctr 2
+Open $3
+  Add_Var grid_x0 -$delta
+  Add_Var grid_y0 $delta
+  Open $ctr
+Print delta
+    push_text $1 $grid_x0        $grid_y0
+    Add_Var grid_x0 $delta
+    Close
+  Open $ctr
+    push_text $1 $grid_x0        $grid_y0
+    Add_Var grid_y0 -$delta
+    Close
+  Open $ctr
+    push_text $1 $grid_x0        $grid_y0
+    Add_Var grid_x0 -$delta
+    Close
+  Open $ctr
+    push_text $1 $grid_x0        $grid_y0
+    Add_Var grid_y0 $delta
+    Close
+  Add_Var ctr 2
+  Close
+.
+	
+Define Sq_Spiral 0
+Set moviename "sqspiral.mvi"
+Print moviename
+Start_Movie $moviename
+
+# traverse a grid in spiral order...
+# number of points is
+Set n_grid 7
+Assign dx floor(600/($n_grid-1))
+Assign dy floor(440/($n_grid-1))
+Print dx
+Print dy
+Set nstep 1
+Set incsteps 24
+Assign ncyc floor(($n_grid-1)/2)
+
+Set c_x 320
+Set c_y 240
+
+Cross_At $c_x $c_y
+Open $ncyc
+  Move_Cross_By $dx 0
+  Open $nstep
+    Move_Cross_By 0 $dy
+    Close
+  Open $nstep+1
+    Move_Cross_By -$dx 0
+    Close
+  Open $nstep+1
+    Move_Cross_By 0 -$dy
+    Close
+  Open $nstep+1
+    Move_Cross_By $dx 0
+    Close
+  Add_Var nstep 2
+  Close
+Finish_Movie $moviename
+.
+
+Define Move_Cross_By 2 dx dy
+Assign xinc "sign($1)*floor(abs($1)/$incsteps)"
+Assign yinc "sign($2)*floor(abs($2)/$incsteps)"
+Print dy
+Print yinc
+Open $incsteps
+  Add_Var c_x $xinc
+  Add_Var c_y $yinc
+  Cross_Field $c_x $c_y
+#  Cross_At $c_x $c_y
+  Close
+.
+
+# for playback
+
+Define Get_Fixation 4 subject stem x y
+Assign x $3
+Assign y $4
+Play_Movie "fix.$2.$x.$y"
+echo 'hit right or middle mouse button when fixating, left to quit'
+Get_Click		# wait for user to hit mouse button
+If $recording "Record_Sirius_Movie $1.$2.$x.$y 6"
+If $recording Movie_Wait
+If !strcmp($click_word,LClick) 'echo LClick quit'
+.
+
+Stop_File scalib.mac
+

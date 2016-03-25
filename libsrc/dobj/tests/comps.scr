@@ -1,0 +1,14 @@
+
+Set h 4
+Set w 3
+
+debug data
+
+Image rgb $h $w 3 float
+advise "Displaying info about RGB image"
+Info rgb
+advise "Displaying info about one color plane from an RGB image"
+Info rgb{0}
+
+exit
+

@@ -1,0 +1,88 @@
+
+Start_File vars.mac
+
+Define Insure_Var 1 name
+If !var_exists($1) "Set $1 0"
+.
+
+Define Delete_Var 1 name
+variables unset $1 quit
+.
+
+Define Increment 1 'variable name'
+Assign $1 "1+$$1"
+.
+
+Define Decrement 1 'variable name'
+Assign $1 "$$1 - 1"
+.
+
+Define Add_Var 2 'variable name' addend
+#advise "adding $2 to variable $1 (initial val $$1)"
+Assign $1 "$2+$$1"
+.
+
+Define Subtract_Var 2 'variable name' subtractand
+Assign $1 "$$1-$2"
+.
+
+Define Mul_Var 2 'variable name' multiplicand
+Set _tmp $1
+Assign multiplicand $2
+Assign __tmp "$$_tmp*$multiplicand"
+Set $1 $__tmp
+.
+
+Define Print 1 'variable name'
+Set __tmp $1
+echo "$__tmp = $$__tmp"
+.
+
+Set temp_index 100
+
+Define Temp_Name 2 'target variable' 'name stem'
+Increment temp_index
+Set $1 "$2$temp_index"
+.
+
+Define Assign 2 variable value
+variables assign $1 $2 quit
+.
+
+# We had trouble with $${1} and ${1}_stuff
+
+Define Push_Var 1 varname
+Set vn $1
+If "var_exists(${vn}_stk_count)"
+  Then "Increment ${vn}_stk_count"
+  Else "Set ${vn}_stk_count 1"
+Set pv_n_name ${vn}_stk_count
+Set pv_n $$pv_n_name
+Set ${vn}_stk_$pv_n $$vn
+.
+
+Define Pop_Var 1 varname
+Set vn $1
+If "!var_exists(${vn}_stk_count)"
+  "warn 'Variable $1 never pushed!?' exit_macro"
+Set pv_n_name ${vn}_stk_count
+Set pv_n $$pv_n_name
+If $pv_n<1
+  "warn 'Variable $1 stack empty!?' exit_macro"
+Set stk_name ${vn}_stk_$pv_n
+Set $1 $$stk_name
+Decrement "${1}_stk_count"
+.
+
+Define Swap_Vars 2 var1 var2
+Set sv_tmp $$1
+Set $1 $$2
+Set $2 $sv_tmp
+.
+
+Define Limit_Var 3 varname min max
+Assign $1 max($2,min($$1,$3))
+.
+
+Stop_File vars.mac
+

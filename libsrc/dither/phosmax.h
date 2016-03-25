@@ -1,0 +1,2 @@
+#define PHOSMAX	255
+

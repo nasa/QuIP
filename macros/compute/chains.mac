@@ -1,0 +1,23 @@
+
+Start_File chains.mac
+
+Define New_Chain 0
+compute control chains new_chain quit quit quit
+.
+
+Define End_Chain 1 name
+compute control chains end_chain $1 quit quit quit
+.
+
+Define Dump_Chain 1 name
+compute control chains dump $1 quit quit quit
+.
+
+Define Exec_Chain 1 name
+echo "Executing chain $1"
+compute control chains exec $1 quit quit quit
+echo "Done executing chain $1"
+.
+
+Stop_File chains.mac
+

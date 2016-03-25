@@ -1,0 +1,26 @@
+# lost the content...
+# added to the project, but not the git source repo
+
+# how can we Pause?  We can throw up an alert, how can we
+# suspend execution?
+
+Define Pause 0
+advise "Pause not implemented yet..."
+.
+
+Define Mkdir 1 dir_name
+#advise "Mkdir $1 BEGIN"
+mkdir $1
+#advise "Mkdir $1 DONE"
+.
+
+
+Define Count_Lines 2 varname filename
+# This is a special built-in command for iOS
+count_lines $1 $2
+.
+
+Define Load_Resource_If 1 file
+If !var_exists(loading_encrypted) "< '$RESOURCE_DIR/$1'"
+.
+

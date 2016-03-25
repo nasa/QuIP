@@ -1,0 +1,40 @@
+
+Set y unset
+
+#encrypt_string x 'This is a test of the string encryption function.'
+#encrypt_string x 'test'
+# until we do padding, we fail if not a multiple of the blocksize
+#Set s 'abcdabcdabcdabcdabcdabcdabcdabcd'
+# Set s 'This is a string with the correc'
+ Set s 'This is a string which requires padding.'
+Print s
+encrypt_string x $s
+Print x
+
+decrypt_string y $x
+Print y
+
+advise 'Writing foo.txt...'
+append no
+#output_file $BUNDLE_DIR/Documents/foo.txt
+output_file /tmp/foo.txt
+echo "advise 'This is line 1 of the file created by coq'"
+echo "advise 'This is line 2 of the file created by coq'"
+echo "advise 'This is line 3 of the file created by coq'"
+output_file -
+
+advise 'Reading foo.txt...'
+< /tmp/foo.txt
+
+advise 'Encrypting foo.txt...'
+encrypt_file /tmp/foo.txt /tmp/foo.enc
+
+advise 'Reading foo.enc...'
+read_encrypted_file /tmp/foo.enc
+
+advise 'Decrypting foo.enc...'
+decrypt_file /tmp/foo.enc /tmp/foo2.txt
+
+advise 'Reading foo2.txt'
+< /tmp/foo2.txt
+

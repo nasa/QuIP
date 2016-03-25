@@ -1,0 +1,457 @@
+
+# use New_Plotter instead of Viewer to install color defs
+
+Define Declare_Images 0
+
+Image key_strips $key_h/4 $key_w 1 u_byte
+
+Image strips $stim_h $stim_w 1 u_byte
+Vector stripe_lut1 256 3 u_byte
+Vector stripe_lut2 256 3 u_byte
+Vector stripe_lut3 256 3 u_byte
+Vector stripe_lut4 256 3 u_byte
+Subvector use_lut1 stripe_lut1 8 0
+Subvector use_lut2 stripe_lut2 8 0
+Subvector use_lut3 stripe_lut3 8 0
+Subvector use_lut4 stripe_lut4 8 0
+
+Image frm1 $stim_h $stim_w 3 u_byte
+Image frm2 $stim_h $stim_w 3 u_byte
+Image frm3 $stim_h $stim_w 3 u_byte
+Image frm4 $stim_h $stim_w 3 u_byte
+Image key_frm $key_h $key_w 3 u_byte
+Subimage key_frm1 key_frm ncols(key_frm) nrows(key_frm)/4 0 0
+Subimage key_frm2 key_frm ncols(key_frm) nrows(key_frm)/4 0 nrows(key_frm)/4
+Subimage key_frm3 key_frm ncols(key_frm) nrows(key_frm)/4 0 nrows(key_frm)/2
+Subimage key_frm4 key_frm ncols(key_frm) nrows(key_frm)/4 0 3*nrows(key_frm)/4
+
+Set stripe_width 32
+Assign strip_width $stripe_width/2
+.
+
+# We don't paint the strips with uniform color,
+# but with halftone checks!
+
+Define Stipple 2 image color
+Subsample_Image c1 $1
+#       N           x0 inc
+	ncols($1)/2 0 2
+	nrows($1)/2 0 2
+Subsample_Image c2 $1
+	ncols($1)/2 1 2
+	nrows($1)/2 0 2
+Subsample_Image c3 $1
+	ncols($1)/2 0 2
+	nrows($1)/2 1 2
+Subsample_Image c4 $1
+	ncols($1)/2 1 2
+	nrows($1)/2 1 2
+VSet c1 $2
+VSet c2 1+$2
+VSet c3 1+$2
+VSet c4 $2
+Delete_Image c1
+Delete_Image c2
+Delete_Image c3
+Delete_Image c4
+.
+
+Define Paint_Strips 1 image
+Set strip_x 0
+Assign n_periods ncols($1)/(4*$strip_width)
+repeat $n_periods
+  Set color 0
+  repeat 4
+    Subimage strip $1 $strip_width nrows($1) $strip_x 0
+    Stipple strip $color
+    Delete_Image strip
+    Add_Var strip_x $strip_width
+    Add_Var color 2
+    end
+  end
+.
+
+Define Color_Strips 0
+.
+
+Set which_color_component Gray
+
+Define Set_Components 0
+If !strcmp($which_color_component,Gray) Set_Gray_Comps
+If !strcmp($which_color_component,Red) Set_Red_Comps
+If !strcmp($which_color_component,Green) Set_Green_Comps
+If !strcmp($which_color_component,Blue) Set_Blue_Comps
+.
+
+Define Set_Gray_Comps 0
+Set r0 $l0
+Set g0 $l0
+Set b0 $l0
+Set r1 $l1
+Set g1 $l1
+Set b1 $l1
+Set r2 $l2
+Set g2 $l2
+Set b2 $l2
+.
+
+Define Set_Red_Comps 0
+Set r0 $l0
+Set g0 0
+Set b0 0
+Set r1 $l1
+Set g1 0
+Set b1 0
+Set r2 $l2
+Set g2 0
+Set b2 0
+.
+
+Define Set_Green_Comps 0
+Set r0 0
+Set g0 $l0
+Set b0 0
+Set r1 0
+Set g1 $l1
+Set b1 0
+Set r2 0
+Set g2 $l2
+Set b2 0
+.
+
+Define Set_Blue_Comps 0
+Set r0 0
+Set g0 0
+Set b0 $l0
+Set r1 0
+Set g1 0
+Set b1 $l1
+Set r2 0
+Set g2 0
+Set b2 $l2
+.
+
+Define Setup_Luts 3 lmin lmax lvar
+Set l0 $1
+Set l2 $2
+Set l1 $3
+Set_Components
+data
+  ascii
+    read use_lut1 -
+        # b/w checks
+    	$b0 $g0 $r0
+    	$b2 $g2 $r2
+	# uniform gray
+	$b1 $g1 $r1
+	$b1 $g1 $r1
+	# uniform gray
+	$b1 $g1 $r1
+	$b1 $g1 $r1
+        # b/w checks
+    	$b0 $g0 $r0
+    	$b2 $g2 $r2
+    read use_lut2 -
+        # g/w checks
+    	$b1 $g1 $r1
+    	$b2 $g2 $r2
+        # g/w checks
+    	$b1 $g1 $r1
+    	$b2 $g2 $r2
+        # b/g checks
+    	$b0 $g0 $r0
+    	$b1 $g1 $r1
+        # b/g checks
+    	$b0 $g0 $r0
+    	$b1 $g1 $r1
+    read use_lut3 -
+	# uniform gray
+	$b1 $g1 $r1
+	$b1 $g1 $r1
+        # b/w checks
+    	$b0 $g0 $r0
+    	$b2 $g2 $r2
+        # b/w checks
+    	$b0 $g0 $r0
+    	$b2 $g2 $r2
+	# uniform gray
+	$b1 $g1 $r1
+	$b1 $g1 $r1
+    read use_lut4 -
+        # b/g checks
+    	$b0 $g0 $r0
+    	$b1 $g1 $r1
+        # b/g checks
+    	$b0 $g0 $r0
+    	$b1 $g1 $r1
+        # g/w checks
+    	$b1 $g1 $r1
+    	$b2 $g2 $r2
+        # g/w checks
+    	$b1 $g1 $r1
+    	$b2 $g2 $r2
+    quit
+  quit
+.
+
+Define Map_Stripes 0
+Map key_frm1 key_strips stripe_lut1
+Map key_frm2 key_strips stripe_lut2
+Map key_frm3 key_strips stripe_lut3
+Map key_frm4 key_strips stripe_lut4
+
+Map frm1 strips stripe_lut1
+Map frm2 strips stripe_lut2
+Map frm3 strips stripe_lut3
+Map frm4 strips stripe_lut4
+.
+
+Define SetVarLum 0
+Set middle_lum $slider_val
+Update_Colors
+.
+
+Set lower_lum 0
+Set upper_lum 255
+Set middle_lum 127
+
+Define SetLowerLum 0
+Assign lower_lum $slider_val
+Update_Colors
+.
+
+Define SetUpperLum 0
+Assign upper_lum $slider_val
+Update_Colors
+.
+
+Define Update_Colors 0
+Setup_Luts $lower_lum $upper_lum $middle_lum
+Map_Stripes
+Show_Bytes key_frm key_v
+.
+
+Define Make_Adjustment 0
+If $left_button_up "exit_macro"	# no action on up-click
+# Responses can be left, right, or accept
+If abs(ncols(adjuster_v)/2-$view_xpos)<=$disk_rad
+  "AcceptSetting exit_macro"
+Assign which_half floor($view_xpos/(ncols(adjuster_v)/2))
+If $which_half==$last_adjustment Increase_Increment
+If $which_half!=$last_adjustment&&$last_adjustment!=$no_adjustment
+  Decrease_Increment
+If $which_half
+  Then Increase_Gray
+  Else Decrease_Gray
+Set last_adjustment $which_half
+Update_Colors
+# Now should update the green slider!
+interface
+  decorate stim_panel
+    set_scale L_var $middle_lum
+    quit
+  quit
+.
+
+Define Increase_Gray 0
+Assign middle_lum min(255,$middle_lum+$adjustment_increment)
+.
+
+Define Decrease_Gray 0
+Assign middle_lum max(0,$middle_lum-$adjustment_increment)
+.
+
+Set no_adjustment -1
+Set last_adjustment $no_adjustment
+Set adjustment_increment 127
+
+Define StimPanel 0
+Panel_Off master_panel
+Panel_On stim_panel
+.
+
+Define EndStim 0
+Panel_Off stim_panel
+Panel_On master_panel
+.
+
+Define Inform_Status 1 'status message'
+interface
+  decorate master_panel
+    set_message STATUS $1
+    quit
+  quit
+.
+
+Define Pick_Component 0
+Print choice
+Set which_color_component $choice
+Update_Colors
+.
+
+Define Gamma_Panel 0
+interface
+  panel master_panel $panel_w $panel_h
+  decorate master_panel
+    message STATUS Ready
+    button Stim_Panel StimPanel
+    chooser Component Pick_Component 4 Gray Red Green Blue
+    button Run_Full_Protocol RunProtocol
+    button Accept_Setting AcceptSetting
+    button QUIT exit
+    quit
+  control
+    show master_panel
+    quit
+  panel stim_panel $panel_w $panel_h
+  decorate stim_panel
+    button Slow_Cycle SlowCycle
+    #button Fast_Cycles FastCycles
+    adjuster L_0 SetLowerLum 0 255 0
+    adjuster L_2 SetUpperLum 0 255 255
+    adjuster L_var SetVarLum 0 255 127
+    adjuster Log2_Stripe_Width SetStripeWidth 1 7 5
+    toggle VBL_Sync TogVBL
+    set_toggle VBL_Sync yes
+    adjuster delay SetDelay 1 8 3
+    button Close EndStim
+    quit
+  #control
+  #  show stim_panel
+  #  quit
+Posn_Window stim_panel $left_x $top_y
+Posn_Window master_panel $left_x $top_y
+.
+
+Define Cycle_It 2 n_cycles delay
+Cycle_4 $1 $2
+.
+
+Set n_preset_limits 10
+Vector preset_limits $n_preset_limits 2 float
+data ascii read preset_limits -
+	0	255
+	#
+	64	255
+	0	192
+	#
+	0	127
+	127	255
+	64	192
+	#
+	0	64
+	64	128
+	128	192
+	192	255
+
+  quit quit
+
+Set max_queue_len 128
+Set n_in_queue 0
+Set next_adjustment 0
+Vector adjustment_queue $max_queue_len 2 float
+
+Define Add_Adjustment 2 low high
+advise "Add_Adjustment $1 $2"
+If $n_in_queue>=$max_queue_len "error_exit 'adjustment queue overflow'"
+data ascii read adjustment_queue[$n_in_queue] - $1 $2 quit quit
+Increment n_in_queue
+advise 'Add_Adjustment DONE'
+.
+
+Define Next_Adjustment 0
+Assign lower_lum value(adjustment_queue[$next_adjustment]{0})
+Assign upper_lum value(adjustment_queue[$next_adjustment]{1})
+Inform_Status "Bisecting $lower_lum and $upper_lum"
+Increment next_adjustment
+Assign middle_lum floor(($upper_lum+$lower_lum)/2)
+Update_Lum_Sliders
+Set last_adjustment $no_adjustment
+Assign adjustment_increment ceil(($upper_lum-$lower_lum)/4)
+Update_Colors
+Set accepted 0
+.
+
+Define Update_Lum_Sliders 0
+interface
+  decorate stim_panel
+    set_scale L_0 $lower_lum
+    set_scale L_2 $upper_lum
+    set_scale L_var $middle_lum
+    quit
+  quit
+.
+
+Define Set_Preset_Level 0
+Assign lower_lum value(preset_limits[$n_settings_made]{0}) 
+Assign upper_lum value(preset_limits[$n_settings_made]{1}) 
+Assign middle_lum floor(($upper_lum+$lower_lum)/2)
+Update_Lum_Sliders
+Set last_adjustment $no_adjustment
+Assign adjustment_increment ceil(($upper_lum-$lower_lum)/4)
+Update_Colors
+.
+
+Set max_settings 128
+Vector protocol_results $max_settings 3 float
+
+Set in_protocol 0
+Set n_settings_made 0
+
+Define RunProtocol 0
+Set in_protocol 1
+Set n_settings_made 0
+Set next_adjustment 0
+Set n_in_queue 0
+Add_Adjustment 0 255
+Next_Adjustment
+.
+
+# See if a setting has been accepted, if so proceed to next
+# level...
+
+Define Check_Protocol 0
+.
+
+Define Record_Setting 0
+data
+  ascii
+    read protocol_results[$n_settings_made] -
+    	$lower_lum $upper_lum $middle_lum
+    quit
+  quit
+Increment n_settings_made
+Record_Bisection $lower_lum $upper_lum $middle_lum
+.
+
+Define AcceptSetting 0
+If !$in_protocol "exit_macro"
+If $n_settings_made<$max_settings Record_Setting
+If $n_settings_made<$n_in_queue 
+  Then Next_Adjustment
+  Else Protocol_Done
+# Now set the new levels
+# We bisect...
+#If $n_settings_made<$n_preset_limits Set_Preset_Level
+#Show_Matches
+.
+
+Define Show_Matches 0
+Subvector matches_made protocol_results $n_settings_made 0
+Display matches_made
+Delete_Image matches_made
+.
+
+Define Protocol_Done 0
+Set in_protocol 0
+Inform_Status "Protocol Done!"
+Save_Protocol_Data
+.
+
+Define Save_Protocol_Data 0
+Subvector save_results protocol_results $n_settings_made 0
+Clobber yes
+Put_Ascii save_results results.asc
+Delete_Image save_results
+.
+

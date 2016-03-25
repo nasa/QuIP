@@ -1,0 +1,52 @@
+
+# some initial values that will be overridden...
+Set cam1_pan	0
+Set cam1_tilt	0
+Set cam1_zoom	$zoom_min
+Set cam1_focus_pos	$focus_min
+Set cam1_af	0
+Set cam1_ir	0
+Set cam1_ae	0
+Set cam1_gain	0
+Set cam1_shutter	0
+
+Set cam2_pan	0
+Set cam2_tilt	0
+Set cam2_zoom	$zoom_min
+Set cam2_focus_pos	$focus_min
+Set cam2_af	0
+Set cam2_ir	0
+Set cam2_ae	0
+Set cam2_gain	0
+Set cam2_shutter	0
+
+Set cam3_pan	0
+Set cam3_tilt	0
+Set cam3_zoom	$zoom_min
+Set cam3_focus_pos	$focus_min
+Set cam3_af	0
+Set cam3_ir	0
+Set cam3_ae	0
+Set cam3_gain	0
+Set cam3_shutter	0
+
+Set cam4_pan	0
+Set cam4_tilt	0
+Set cam4_zoom	$zoom_min
+Set cam4_focus_pos	$focus_min
+Set cam4_af	0
+Set cam4_ir	0
+Set cam4_ae	0
+Set cam4_gain	0
+Set cam4_shutter	0
+
+Set cam5_pan	0
+Set cam5_tilt	0
+Set cam5_zoom	$zoom_min
+Set cam5_focus_pos	$focus_min
+Set cam5_af	0
+Set cam5_ir	0
+Set cam5_ae	0
+Set cam5_gain	0
+Set cam5_shutter	0
+

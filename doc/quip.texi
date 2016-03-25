@@ -1,0 +1,769 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename quip.info
+@settitle QuIP Manual
+@c %**end of header
+
+@dircategory QuIP - A interpreted system for Quick Image Processing
+@direntry
+* QuIP: (quip).           Quick Image Processing for unix and iOS.
+@end direntry
+
+@paragraphindent 0
+
+@include version.texi
+
+@ifnothtml
+@copying
+@c Copyright © 2011 National Aeronatics and Space Administration
+Copyright 2011 National Aeronatics and Space Administration
+
+QuIP Manual for version @value{VERSION}, generated @value{UPDATED}
+
+@c @quotation
+@c Permission is granted to ...
+@c @end quotation
+
+@end copying
+@end ifnothtml
+
+@titlepage
+@title QuIP Manual
+@subtitle A system for QUick Image Processing
+@subtitle with simple scripts or quips
+@author Jeffrey B. Mulligan, NASA Ames Research Center
+
+@c The following two commands
+@c start the copyright page.
+@page
+
+@include COPYING
+
+@vskip 0pt plus 1filll
+
+@c The NASA web page security scanner doesn't like web page
+@c comments that contain the string 'admin' !?
+
+@ifnothtml
+@insertcopying
+@end ifnothtml
+
+@end titlepage
+
+@c Output the table of the contents at the beginning.
+@contents
+@c If and when the manual gets too long,
+@c we have the option of using @shortcontents
+
+@ifnottex
+@node Top
+@top QuIP User Manual
+
+This manual is for QuIP, version 0.2.
+
+@ifnothtml
+@insertcopying
+@end ifnothtml
+
+@end ifnottex
+
+@menu
+* Overview              ::  A brief tour of QuIP
+* Command Language      ::  Writing scripts in QuIP's command language
+* Data Objects          ::  QuIP data objects 
+* Expression Language   ::  Writing scripts using QuIP's expression language
+* Displaying Images     ::  Displaying images using QuIP viewers
+* Image Files           ::  Loading and storing images
+* Plotting Data         ::  Using the plotting macros
+* Control Panels        ::  Using a GUI to control the program
+* Advanced Graphics     ::  Sythesizing images using OpenGL
+* Interfacing Hardware  ::  Controlling various hardware devices
+* Installing QuIP       ::  Obtaining and installing QuIP
+* Index                 ::  Complete index
+
+@detailmenu
+@c --- The Detailed Node Listing---
+@c 
+@c Overview of QuIP
+@c * Reporting Bugs:: What to do when you discover a bug.
+@c 
+@c Writing QuIP scripts
+@c * First steps::  A simple sample of QuIP
+@c Macros
+@c * Predefined macros::  Finding predefined macros
+@c * Writing new macros::  Writing your own macros
+@c 
+@end detailmenu
+
+@end menu
+
+@c CHAPTER 1 - OVERVIEW
+
+@node Overview
+@chapter Overview
+@cindex chapter, first
+
+QuIP stands for QUick Image Processing, and is also a reference
+to its scripting language which allows the user to implement
+a variety of useful operations with short fragments of script or "quips."
+
+@menu
+* History       ::  Some background about QuIP
+* First steps   ::  A simple example QuIP script
+@end menu
+
+@node History
+@section History
+QuIP has been developed continously over a period
+of several decades, under a series of flavors of UNIX.
+The QuIP interpreter is a front end for a number of libraries;
+some of these are system libraries, such as X Windows and OpenGL
+for image display, and Motif for GUI widgets.  Other libraries
+are distributed as part of the QuIP package, and provide support
+for various specialized functions, including support for a variety
+of hardware devices, and psychophysical experimentation.
+It provides an environment for visual and numerical
+computing similar in functionality to Matlab and the like.
+
+The QuIP interpreter has its roots in a simple terminal-based
+system to interactively control experiments.  It was designed
+to facilitate the interaction and minimize the amount of typing
+required of the user.  It only gradually grew into a full-fledged
+programming language, and still exhibits various shortcomings.
+At various times, switching to another interpreter (such as Tcl)
+was considered, but the loss of some of QuIP's unique features
+seemed too high a price to pay.  You can be the judge.
+
+
+@cindex index entry, another
+
+@node First steps
+@section First steps
+
+Here we present the simplest possible QuIP script.  Invoke QuIP by typing
+'quip' at your command shell prompt.  (QuIP command prompts typically end
+with the string '> '; the top level prompt is 'quip> '.)
+Characters typed by the user are appear as @kbd{user_input}.
+
+quip>  @kbd{echo "Hello world" @key{RET}} @*
+Hello world @*
+quip>
+
+If you type this example in, you might notice that after the first 'e' is typed,
+the interpreter completes the word 'expressions', but that the
+completion disappears as soon as the following 'c' is typed.
+
+Here is a slightly longer version:
+
+quip> @kbd{view @key{RET}} @*
+quip/view> @kbd{viewers @key{RET}} @*
+quip/view/viewers> @kbd{ new v 300 100 @key{RET}} @*
+quip/view/viewers> @kbd{ quit @key{RET}} @*
+quip/view> @kbd{ draw v @key{RET}} @*
+quip/view/draw> @kbd{ string "Hello world" 20 20 @key{RET}} @*
+quip/view/draw> @kbd{ quit @key{RET}} @*
+quip/view> @kbd{ quit @key{RET}} @*
+quip>
+
+The first command @code{view} causes the interpreter to enter a submenu,
+which is reflected in the prompt.  By convention, submenus are exited
+with the @code{quit} command.
+
+@c CHAPTER 2 - COMMAND LANGUAGE
+
+@node Command Language
+@chapter Command Language
+The simplest way to interact with QuIP is via the command language.
+
+@menu
+* Interactive Features  ::  Typing directly into QuIP
+* Menus			::  Command menus
+* Startup		::  QuIP initialization
+* Variables             ::  Using script variables
+* Macros                ::  Writing and using QuIP macros
+@end menu
+
+@node Interactive Features
+@section Interactive Features
+QuIP has many unique interactive features.
+
+@menu
+* Prompts              ::  Prompts and prompt suppression
+* Response completion  ::  QuIP's history mechanism
+* Input redirection    ::  Changing the input source
+* Transcripts          ::  Saving what you type
+@end menu
+
+@node Prompts
+@subsection Prompts
+Prompts and prompt suppression
+
+When QuIP is waiting for user input, a prompt is printed.  Command prompts
+typically end in "> ", preceded by a string indicating the menu hierarchy. 
+Parameter prompts are typically of the form "Enter <parameter description>: ".
+
+Prompts are only printed when QuIP is starved for input.  So if multiple
+commands are entered on a single line, no prompt will be printed before the
+second command is read.
+
+The fact that commands prompt for missing arguments
+makes them somewhat self-documenting.  If you forget the number or order
+of parameters to a given command, you can simply enter it interactively
+and note the prompts.  The transcripting facility (LINK) provides
+a convenient way of recording the results.
+
+@node Response completion
+@subsection Response completion
+
+As you start to type in the name of a command, QuIP will complete the word for you if it can.
+
+@node Input redirection
+@subsection Input redirection
+
+You can read the contents of a file by using the '<' builtin command.  The effect is the same
+as if you were to type in the contents of the file, with the exception that commands and command
+arguments are not added to the respective history lists.
+
+@node Transcripts
+@subsection Transcripts
+
+You can save a transcript of your typing for later re-execution.  Usually this is not done
+without a bit of editing of the transcript.  A common use of this feature is that you are unsure of
+what arguments are required for a particular command,
+so you execute it interactively, using the prompts as guides for the arguments.
+Transcripting offers an alternative to paper-and-pencil notes concerning the order and types
+of arguments.
+
+A transcript file is started using the '>' builtin command.
+
+@node Menus
+@section Menus
+QuIP's command menus
+
+Commands in QuIP are grouped into menus.  The menu hierarchy
+is designed so that all of the commands in a menu can be displayed
+on a single screen (i.e., fewer than 20 commands per menu).
+
+@menu
+* Displaying the menu  ::  How to display the current menu
+* Builtin commands     ::  Commands available from any menu
+* Exiting the menu     ::  Returning to the previous menu
+@end menu
+
+@node Displaying the menu
+@subsection Displaying the menu
+How to display the current menu
+
+The commands in the current menu can be shown using the command @code{?}.
+This is a builtin command, i.e. it is universally available in any menu.
+
+@node Builtin commands
+@subsection Builtin commands
+Commands available from any menu
+
+Some commands are so useful that it is desireable to have them available
+regardless of the menu context.  These include commands for manipulating
+variables, loop control, and file redirection.  The complete list of builtin
+commands can be displayed using the @code{??} command.
+
+@menu
+* Loop control                  ::  Commands for iteration and conditionals
+* Generating output             ::  Printing messages and warnings
+* Interacting with the system   ::  OS-specific commands
+@end menu
+
+@node Loop control
+@subsubsection Loop control
+
+These commands are useful for creating control structures.
+
+If <condition> <command> @*
+If <condition> Then <command> Else <command>
+
+When an @code{If} is encountered, the next word is read and interpreted as a boolean
+condition using the scalar expression parser.  If the word following the condition is
+the reserved word @code{Then}, then three words are read, the second of which must be
+the reserved word @code{Else}.
+
+Multi-word commands (or multiple commands) may be executed following
+an @code{If} by enclosing the entire group in single or double quotes.
+@code{If} commands can be nested, but because the command language does
+not use braces for grouping, it is often better to write a macro to encapsulate
+the predicate of an @code{If} statement.
+
+
+do <commands> while <condition>
+
+repeat <count> <commands> end
+
+foreach <varname> ( <wordlist> ) <commands> end
+
+These three forms provide for looping.  After the loop is opened, commands
+are read until the closing word is encountered.  Unlike command shells such
+as (t)csh, the commands are immediately executed as they are read.  When the loop
+is scanned for the first time, the commands are saved to a buffer before each
+one is executed.  When the end of the loop is reached, the condition is evaluated,
+and when appropriate the stored loop body is pushed back onto the input.
+
+@node Generating output
+@subsubsection Generating output
+Printing messages and warnings
+
+@node Interacting with the system
+@subsubsection Interacting with the system
+OS-specific commands
+
+@node Exiting the menu
+@subsection Exiting the menu
+Returning to the previous menu
+
+By convention, menus are exited using the @code{quit} command.  This command is
+not a builtin, it is specified individually for each menu.  Most menus
+will use the default menu exit method, but occasionally it is necessary
+to perform cleanup actions on menu exit.
+
+@node Startup
+@section Startup
+QuIP initialization
+
+Before interpreting user input, QuIP attempts to read a startup file.
+QuIP looks for a startup file with the same name as by which the program
+was invoked, with the .scr (script) extension added.  Thus, the default
+startup file is named quip.scr.  Creating links to the QuIP executable
+with different names provides a way to produce different behavior on startup
+through the use of specialized startup scripts.
+
+QuIP searches for a startup script in the following series of directories:
+1)  the current directory;
+2)  $QUIPSTARTUPDIR (if defined in the environment);
+3)  $HOME/.quip/startup (if it exists);
+4)  the macro installation directory (/usr/local/share/quip/macros/startup).
+
+Options 2 and 3 happen only when the user customizes his or her environment
+appropriately.  The installation directory used in the last case can
+be modified during the configuration process (XREF building).
+
+
+@node Variables
+@section Variables
+Using script variables
+
+The QuIP has a set of string variables that have a usage similar to command
+interpreters such as bash and csh.
+
+@menu
+* The variables submenu    ::  Commands to manipulate variables
+* Setting variables        ::  How to set a variable
+* Using variables          ::  How to dereference a variable
+* Special variables        ::  Variables that are set for you
+* Numeric variables        ::  Assigning a number to a variable
+* Advanced variable usage  ::  Pushing the limits
+@end menu
+
+@node The variables submenu
+@subsection The variables submenu
+Commands to manipulate variables are found in the variables submenu,
+accessed via the @code{variables} builtin command.  The commonly
+used functions such as setting a variable are generally invoked via
+a macro which hides the descent into the submenu.
+
+From the variables submenu, the @code{list} command lists the names
+of all variables.  The @code{find} command lists the names of variables
+containing a given text string, while the @code{search} command
+lists the names of variables whose values contain a given string.
+
+Other commands are described in the following sections.
+
+
+@node Setting variables
+@subsection Setting variables
+
+Variables are normally set using the @code{Set} macro:
+
+@code{Set <var_name> <value_string>}
+
+Variable names can be made up of alphanumeric characters and the underscore '_'.
+
+By convention, normal variable names begin with an alphabetic character, and
+numeric variables are reserved for macro arguments.  This is not strictly enforced,
+however.  If a variable with name @code{1} is created and set to a value, then that
+will prevent the first macro argument from being accessed.  This is not a good thing.
+
+@node Using variables
+@subsection Using variables
+Variable expansion is peformed when lines are read.  Variable substitution is triggered
+by the dollar sign character @code{$}.  As in the UNIX command shells, variable expansion
+is inhibited by enclosing a string in single quotes, and always performed for strings in
+double quotes.
+
+Nested quotes can become rather complicated.  It is the outermost set of quotes that matter;
+In the following example, the variable will be expanded when the line is first read;
+the text interpreted after evaluation of the @code{If} condition will be @code{echo 'John is a minor'}.
+
+Set name John @*
+Set age 15 @*
+If $age>=18 @*
+  Then "echo '$name is an adult'" @*
+  Else "echo '$name is a minor'"
+
+On the other hand, the quotes could be switched:
+
+If $age>=18 @*
+  Then 'echo "$name is an adult"' @*
+  Else 'echo "$name is a minor"'
+
+In this case, the text to be interpreted will be @code{echo "$name is a minor"}.
+This difference can become important if such a statement is encountered in a loop in
+which the value of the variable changes from one iteration to the next.
+
+Another example where immediate variable expansion must be inhibited is when the variable
+may not exist:
+
+If var_exists(test) @*
+  Then 'echo "variable test exists and has value = $test"' @*
+  Else 'echo "variable test does not exist"'
+
+In this example, the first echo command after the @code{Then} must
+be enclosed in single quotes, because all of the text is scanned
+and subjected to variable expansion before evaluation of the condition.
+Enclosing the first @code{echo} command in double quotes would
+generate an undefined variable warning in the case where the
+variable does not exist, even though the command will not be executed.
+This might be considered a design flaw.
+
+@node Special variables
+@subsection Special variables
+
+Some variables are preset by the system.  In particular, command line
+arguments given when the program is invoked may be accessed as @code{$argv1},
+@code{$argv2}, etc.  The may also be accessed using the abbreviated form used
+for macro arguments, e.g. @code{$1}, @code{$2}, etc., but the longer form is
+useful inside a macro where the short form accesses the macro arguments.
+
+Scripts may refer to external environment variables, but they are loaded
+as needed.  For example, @code{HOME} will not show up on the initial list
+of variables, but an attempt to dereference @code{$HOME} will cause the
+environment variable @code{HOME} to be imported if it exists.
+
+Other special variables may be set by particular functions.  These are
+described in the description of the functions.
+
+@node Numeric variables
+@subsection Numeric variables
+
+It is not uncommon to use a variable to hold a numeric value.  The
+interpreter functions which fetch numeric arguments to commands process
+their arguments through a scalar expression parser, but sometimes we
+would like to have the result of the expression evaluation stored in
+the variable, instead of the expression.  This is accomplished using
+the @code{Assign} macro.  @code{Assign} is like @code{Set} in that it
+sets the value of a variable, but it does so after running the value
+through the scalar expression parser, and formatting the result
+as a number.  For example:
+
+quip> Set pi 4*atan(1) @*
+quip> Print pi @*
+pi = 4*atan(1) @*
+quip> Assign pi 4*atan(1) @*
+quip> Print pi @*
+pi = 3.141593 @*
+
+Several macros are provided to facilitate the manipulation of numeric variables:
+
+@code{Add_Var <var_name> <number>} @*
+@code{Mul_Var <var_name> <number>} @*
+@code{Increment <var_name>} @*
+@code{Decrement <var_name>} @*
+
+These correspond to the C language operators @code{+=}, @code{*=}, @code{++} and @code{--}, respectively.
+
+@node Advanced variable usage
+@subsection Advanced variable usage
+
+Unlike the UNIX command shells, QuIP does not provide for indexing
+of variables.  In part, that is because QuIP uses braces for subscripting
+data objects, and variables are commonly used to hold the names of
+data objects.
+
+QuIP does provide, however, a slightly cumbersome way to do indexing via double indirection:
+
+Set person1 Larry @*
+Set person2 Moe @*
+Set person3 Curly @*
+Set i 1 @*
+repeat 3 @*
+  Set var_name person$i @*
+  echo "Person $i is $$var_name" @*
+  Increment i @*
+  end @*
+
+@node Macros
+@section Macros
+
+A macro is a block of text that is substituted when the macro
+name is encountered.  Macros provide one of the primary means
+of writing compact programs for QuIP. 
+
+@menu
+* Predefined macros::  Finding predefined macros
+* Writing new macros::  Writing your own macros
+@end menu
+
+@node Predefined macros
+@subsection Predefined macros
+
+A number of useful macros are loaded on program startup.  (XREF startup file)
+The predefined macros may be displayed by entering the @code{list} command
+in the
+@code{macros} submenu.
+
+
+@node Writing new macros
+@subsection Writing new macros
+
+While the predefined macros may access to the functionality desired
+by a user, most everyone will want to combine these building blocks
+to accomplish specific things.  Any group of commands which is repeated
+more than once is a candidate for inclusion in a macro.
+
+Macro definitions are begun the the command @code{Define} (which is itself a macro, albeit
+a very simple one).  The syntax is as follows:
+
+Define <macro_name> <n_args> [ <prompt_specifications> ] @*
+<macro_body> @*
+.
+
+The macro body is terminated by a line containing a single period @code{.}.  This is the one case where
+white space (or the lack of it) is important:  this period must be on a line by itself with no leading
+white space.
+
+The number of prompt specifications must match the number of arguments specified.
+Each prompt specification consists of a prompt string (quoted if it contains spaces),
+which may be preceded by an optional object type specifier enclosed in brackets @code{<}
+and @code{>}.  The purpose of object type specifiers is to enable reponse completion
+when a macro is invoked interactively.
+
+@c CHAPTER 3 - DATA OBJECTS
+
+@node Data Objects
+@chapter Data Objects
+
+Data objects are blocks of memory containing data, and a small block of meta-data describing
+the object.  Data objects can be scalars, vectors, matrices, images, or image sequences.
+
+@menu
+* Dimensions             ::  Defining the shapes of objects
+* Creating Data Objects  ::  Creating objects from the data submenu
+* Subscripting           ::  Subobjects and insets
+@end menu
+
+@node Dimensions
+@section Dimensions
+
+Data objects can have up to five dimensions.  These are the component
+dimension or depth, the row dimension or width, the column dimension or height,
+the sequence dimension or number of frames, and hypersequence dimension or number
+of sequences.  (Hypersequences were introduced to ease compatibility with file
+formats in which color images are stored as a sequence of color component frames;
+in this framework, a color image is a 3-frame sequence, thus a color movie is
+a hypersequence of 3-frame sequences.)
+
+@node Creating Data Objects
+@section Creating Data Objects
+
+Data objects can be created using the commands in the data submenu.
+
+
+@node Subscripting
+@section Subscripting
+
+Subscripting allows the user to reference parts of an object.
+For example, if m is a matrix (image) of real numbers,
+then m[0] selects the first row of the image, while m@{0@} selects
+the first column.
+
+
+
+@c CHAPTER 4 - EXPRESSION LANGUAGE
+
+@node Expression Language
+@chapter Expression Language
+Writing scripts using QuIP's expression language
+
+The command language described in the previous chapter can be cumbersome
+when writing complicated image processing operations.  Consider, for example,
+synthesizing a floating point sinusoidal grating image, scaling it to the range 0 to 255,
+and converting it to byte.  In the command language, we would do it with the
+following script:
+
+@samp{
+Set h 256 @*
+Set w 256 @*
+Set period 64 @*
+Assign two_pi 8*atan(1) @*
+Image f $h $w 1 float @*
+Image b $h $w 1 u_byte @*
+Ramp2D f 0 $two_pi/$period 0 @*
+VSin f f @*
+VSAdd f f 1 @*
+VSMul f f 255/2 @*
+Convert b f}
+
+Here is the exact same thing written using the expression language:
+
+@samp{
+expressions @*
+  read - @*
+  int h=256, w=256; @*
+  int period=64; @*
+  float two_pi=8*atan(1); @*
+  float f[h][w]; @*
+  u_byte b[h][w]; @*
+  f=ramp2d(0,two_pi/period,0); @*
+  b = (sin(f)+1)*255/2; @*
+  end @*
+  quit}
+
+While the second version is not significantly shorter in terms of characters,
+it is arguably easier to read and understand.  In the command language, each
+operation is one command, while in the expression language multiple operations
+can be packed into a complex vector expression.
+
+@c CHAPTER 5 - DISPLAYING IMAGES
+
+@node Displaying Images
+@chapter Displaying Images
+Displaying images using QuIP viewers
+
+QuIP provides a simple interface to the X Windows system to enable
+display of images.
+
+@menu
+* Creating a viewer     ::  Creating a new viewing window
+* Loading a viewer      ::  Displaying an image in a viewer
+* Manipulating viewers  ::  Repositioning and hiding viewers
+@end menu
+
+@node Creating a viewer
+@section Creating a viewer
+Creating a new viewing window
+
+@node Loading a viewer
+@section Loading a viewer
+Displaying an image in a viewer
+
+@node Manipulating viewers
+@section Manipulating viewers
+Repositioning and hiding viewers
+
+
+@c CHAPTER 6 - IMAGE FILES
+
+@node Image Files
+@chapter Image Files
+Loading and storing images
+
+@c CHAPTER 7 - PLOTTING DATA
+
+@node Plotting Data
+@chapter Plotting Data
+Using the plotting macros
+
+@c CHAPTER 8 - CONTROL PANELS
+
+@node Control Panels
+@chapter Control Panels
+Using a GUI to control the program
+
+@c CHAPTER 9 - ADVANCED GRAPHICS
+
+@node Advanced Graphics
+@chapter Advanced Graphics
+Sythesizing images using OpenGL
+
+
+@c CHAPTER 10 - INTERFACING HARDWARE
+
+
+@node Interfacing Hardware
+@chapter Interfacing Hardware
+
+Modules have been written to allow QuIP to control a variety
+of hardware devices.  Most of these rely on LINUX drivers.
+
+@menu
+* Frame grabbers  ::  Getting images from analog cameras
+* Video cameras   ::  Getting images from digital cameras
+* Analog I/O      ::  Reading and sending signals
+* Serial devices  ::  Devices that communcate via RS232
+* Parallel port   ::  Using the PC parallel port
+@end menu
+
+@node Frame grabbers
+@section Frame grabbers
+Getting images from analog cameras.
+
+Support is provided for several frame grabbers.
+
+@menu
+* Matrox meteor RGB  ::  Matrox component grabber
+* V4L2 devices       ::  Composite grabbers with standard s/w interface
+@end menu
+
+@node Matrox meteor RGB
+@subsection Matrox meteor RGB
+The matrox meteor is an older PCI frame grabber that allows capturing
+of RGB images via composite or component signals.  The component inputs
+can be used to capture 3 monochrome signals provided that the 3 cameras
+are synchronized.
+
+@node V4L2 devices
+@subsection V4L2 devices
+
+@menu
+* LML BT848     ::  Linux Media Labs PCI 4-channel grabber
+* Sensoray 811  ::  Sensoray PCI-E 4-channel grabber
+@end menu
+
+@node LML BT848
+@subsubsection LML BT848
+
+@node Sensoray 811
+@subsubsection Sensoray 811
+
+@node Video cameras
+@section Video cameras
+Getting images from digital cameras.
+
+@node Analog I/O
+@section Analog I/O
+Reading & sending signals.
+
+@node Serial devices
+@section Serial devices
+Devices that communicate via RS232.
+
+@node Parallel port
+@section Parallel port
+Using the PC parallel port.
+
+
+@c CHAPTER 11 - INSTALLING QUIP
+
+
+@node Installing QuIP
+@chapter Installing QuIP
+
+This section describes how to build QuIP from the source tarball.
+
+QuIP can be downloaded from:
+http://scanpath.arc.nasa.gov/quip
+
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye
+

@@ -1,0 +1,9 @@
+# script for testing csf program on regular computer.
+# quip needs to be invoked without a startup file...
+
+variables
+  set BUNDLE_DIR .
+  quit
+
+< csf_startup.scr
+

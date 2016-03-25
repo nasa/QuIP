@@ -1,0 +1,20 @@
+# this file contains macros taken from postproc/get_rec.mac,
+# which were missing from the newer eyemov/get_rec.mac.
+
+Define Apply_Interlace_Correction 0
+# read_data_with_corr leaves the data where?
+Dup_Float icorr record{1}
+Dup_Float aic_tmp record{1}
+Ramp1D icorr 0 0.5
+VFloor aic_tmp icorr
+VSMul aic_tmp aic_tmp -2
+VSMul icorr icorr 2
+VVAdd icorr icorr aic_tmp
+VSMul icorr icorr $interlace_correction
+Delete_Image aic_tmp
+Delete_Image icorr
+.
+
+Set interlace_correction 0		# default - no correction
+
+

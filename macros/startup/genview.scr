@@ -1,0 +1,15 @@
+
+# generic macros for viewers
+
+Start_File genview.scr
+
+< $macro_dir/view/common.mac
+< $macro_dir/view/luts.mac
+#< $macro_dir/view/dither.mac
+< $macro_dir/view/view.mac
+< $macro_dir/view/dpysize.scr
+#< $macro_dir/view/plotsupp.mac
+< $macro_dir/gui/ui.mac
+
+Stop_File genview.scr
+

@@ -1,0 +1,1806 @@
+# oscope package
+#
+# usage:
+#
+#	Init_Oscope $w $h
+#             or
+#       New_Oscope name w h
+#
+#	Add_Trace signal
+#	Display_Waveform_Segments
+#	Clear_Traces
+
+If !var_exists(plotsupp_loaded) "< $macro_dir/view/plotsupp.mac"
+If !var_exists(range_read) "< $macro_dir/view/range.mac"
+
+Set default_scope_type time_plot	# default
+Set scope_type $default_scope_type
+					# other values:  freq_plot
+# bins per unit is the number of bins that make up the frequency unit,
+# such as 1 Hz or 1 kHz
+# it may not be an integer, but we always want to put the tick values at round numbers...
+#Set samples_per_unit 1			# to avoid undef var warnings...
+#Set first_x_value 0			# This represents the x coord of the first
+					# data point in the actual units...
+
+Set _n_x_ticks	6			# 5 divisions - good if mantissa is 5...
+
+Set oscope_y_max	0
+Set oscope_y_min	0
+Set max_possible_sample_index 0
+
+Set desired_indicator_position 0.5	# a fraction between 0 and 1
+
+Set show_now_indicator	1	# default
+Set ds_factor		1		# default - no downsampling
+
+# n_plot samples is the number of samples from our buffer that we plot
+# data_start_index is integer index of first point to plot
+# This changes with downsampling...
+#
+# what is x_min_index?
+#
+# x_axis_delta			range in units (seconds, Hz)
+#
+# sample_frequency
+#
+#	TIME_PLOT				FREQ_PLOT
+#	samples_per_unit			samples_per_unit
+
+Set oscope_axis_color	$white		# plotsupp.mac should be read in already...
+
+Vector max_envelope 4 1 float	# a dummy
+Vector min_envelope 4 1 float	# a dummy
+Delete_Image max_envelope
+Delete_Image min_envelope
+
+###Vector envelope_data_source 4 1 float	# a dummy
+###expressions
+###  export max_envelope
+###  export min_envelope
+###  export envelope_data_source
+###  read $macro_dir/view/oscope_util.exp
+###  read $macro_dir/view/oscope_private.exp
+####  dump get_envelope
+####  dump get_bin_max
+###  quit
+###Delete_Image envelope_data_source
+
+# sample frequency is specified in Hz (sec ^ -1)
+# default time base unit is seconds (1 sec)
+# so samples_per_unit is sample_freq
+#
+# For frequency plots, the x axis unit is Hz (sec ^ -1 )
+# n_freq_bins spans a range of 1 cyc/sample...
+# samples_per_unit means how many bins span 1 Hz, for
+# a sample rate of 60 Hz samples_per_unit would be n_freq_bins/60
+# So samples_per_unit is n_freq_bins/sample_freq
+
+Define Set_Sample_Frequency 1 freq
+Assign sample_frequency	$1
+#Set x_axis_units seconds
+#Assign samples_per_unit $sample_frequency
+.
+
+
+# We want to be able to vary the time base over a large logarithmic range,
+# like on an o-scope...
+# Let's assume 10 "divisions", and control things with usecs_per_division
+
+#Set_Sample_Frequency	30	# 30 Hz is default value for SNI video...
+Set_Sample_Frequency	120	# 120 Hz is default value for UHCO dpi tracker data...
+
+Define Restore_Var 2 varname scope_name
+Set varname ${2}_$1
+Set $1	$$varname
+.
+
+
+Define Restore_X_Axis_Parameters 1 scope_name
+#advise "Restore $1"
+Restore_Var x_axis_specified	$1
+If !$x_axis_specified "exit_macro"
+Restore_Var data_vector_len	$1
+Restore_Var samples_per_unit	$1
+Restore_Var x_axis_units	$1
+Restore_Var x_unit_mantissa	$1
+Restore_Var x_unit_exponent	$1
+Restore_Var x_axis_delta	$1
+Restore_Var x_tick_spacing	$1
+Restore_Var x_axis_min		$1
+Restore_Var current_sample	$1
+Restore_Var first_x_value	$1
+Restore_Var _n_x_ticks		$1
+Restore_Var max_possible_sample_index	$1
+Restore_Var x_min_index	$1
+Restore_Var x_max_index	$1
+Restore_Var data_start_index		$1
+Restore_Var data_end		$1
+Restore_Var desired_indicator_position		$1
+#If strcmp($current_oscope,"none") Recenter_Oscilloscope
+.
+
+Define Save_Var 2 varname scope_name
+Set ${2}_$1		$$1
+.
+
+Define Save_X_Axis_Parameters 1 scope_name
+#advise "Save $1"
+Save_Var x_axis_specified	$1
+If !$x_axis_specified "exit_macro"
+Save_Var data_vector_len	$1
+Save_Var x_unit_mantissa	$1
+Save_Var x_unit_exponent	$1
+Save_Var x_axis_delta		$1
+Save_Var x_tick_spacing		$1
+Save_Var x_axis_min		$1
+Save_Var current_sample		$1
+Save_Var first_x_value		$1
+Save_Var samples_per_unit	$1
+Save_Var x_axis_units		$1
+Save_Var _n_x_ticks		$1
+Save_Var data_end		$1
+Save_Var x_min_index		$1
+Save_Var x_max_index		$1
+Save_Var max_possible_sample_index	$1
+Save_Var data_start_index		$1
+Save_Var desired_indicator_position	$1
+.
+
+Define Show_X_Axis_Parameters 0
+Print	x_axis_units
+Print	x_unit_mantissa
+Print	x_unit_exponent
+Print	x_axis_delta
+Print	x_tick_spacing
+Print	current_sample
+.
+
+
+#Default_X_Axis_Parameters
+
+Set vrange_mantissa	1
+Set vrange_exponent	0
+Set vrange		1
+
+# Get_Oscilloscope_Limits
+#
+# sets vertical range based on $oscope_y_max/min
+#
+# oscope_y_min,max are input data range...
+
+Define Get_Oscilloscope_Limits 0
+#advise "Get_Oscilloscope_Limits BEGIN oscope limits:  $oscope_y_min - $oscope_y_max"
+If $manual_y_range "exit_macro"
+#advise "Get_Oscilloscope_Limits BEGIN, data range is $oscope_y_min - $oscope_y_max"
+Assign drange $oscope_y_max-$oscope_y_min
+If $drange==0 "Set oscope_y_max 1 Set oscope_y_min -1 Set chunk 0.5 exit_macro"
+
+#Set i 0
+do
+  Decrement_VRange
+#  Increment i
+  while $vrange>$drange
+#exit
+do
+  Increment_VRange
+  while $drange>$vrange
+Adjust_VRange
+#advise "Get_Oscilloscope_Limits before Get_Round_Range:  $oscope_y_min - $oscope_y_max"
+#verbose yes
+Get_Round_Range oscope_y_min oscope_y_max
+#verbose no
+#advise "Get_Oscilloscope_Limits DONE oscope limits:  $oscope_y_min - $oscope_y_max"
+.
+
+Define Increment_VRange 0
+Increment_Pair vrange vrange_mantissa vrange_exponent
+Finish_VRange
+.
+
+Define Decrement_VRange 0
+Decrement_Pair vrange vrange_mantissa vrange_exponent
+Finish_VRange
+.
+
+Set n_desired_chunks 4
+
+Define Check_VRange 0
+Assign chunk $vrange/$n_desired_chunks
+#advise "Assign top $chunk*ceil($oscope_y_max/$chunk)"
+Assign top $chunk*ceil($oscope_y_max/$chunk)
+Assign bot $chunk*floor($oscope_y_min/$chunk)
+#advise "Check_VRange:  y range:  $oscope_y_min - $oscope_y_max     vrange = $vrange   chunk = $chunk   bot-top:  $bot-$top"
+Assign n_chunks ($top-$bot)/$chunk
+.
+
+# Now we have a vrange which is rounded and encompasses the data range
+# But can we pick limits which work?
+
+Define Finish_VRange 0
+Finish_Pair vrange vrange_mantissa vrange_exponent
+#advise "Finish_VRange:  vrange = $vrange"
+.
+
+
+Define Adjust_VRange 0
+Check_VRange
+If $n_chunks>$n_desired_chunks+0.1 "Increment_Pair vrange vrange_mantissa vrange_exponent Finish_Pair vrange vrange_mantissa vrange_exponent"
+Check_VRange
+Assign oscope_y_max $top
+Assign oscope_y_min $bot
+.
+
+Define IncTimeBase 0
+Increment_Pair x_tick_spacing x_unit_mantissa x_unit_exponent
+Finish_X_Axis
+.
+
+
+Define DecTimeBase 0
+#advise "DecTimeBase:  before $x_tick_spacing"
+Decrement_Pair x_tick_spacing x_unit_mantissa x_unit_exponent
+#advise "DecTimeBase:  after $x_tick_spacing"
+Finish_X_Axis
+.
+
+#Define Update_X_Tick_Spacing 0
+#Assign x_tick_spacing $x_axis_delta/($_n_x_ticks-1)			# this gets us into seconds...
+##advise "Update_X_Tick_Spacing:  x_tick_spacing = $x_tick_spacing"
+## based on the values we might want to do something here...  set units to milliseconds?
+#.
+
+Define Propagate_Spacing 1 spacing
+Assign x_unit_exponent floor(log($1)/log(10))
+Assign x_unit_mantissa $1/pow(10,$x_unit_exponent)
+Assign x_tick_spacing $1
+.
+
+Define New_Spacing 1 spacing
+Show_Delta "New_Spacing $1 BEGIN"
+Propagate_Spacing $1
+Show_Delta "New_Spacing $1 after Propagate_Spacing"
+Update_Delta
+Show_Delta "New_Spacing $1 after Update_Delta"
+.
+
+# Switch from seconds to minutes when the tick spacing reaches 100 seconds
+# change this to 1 minute
+
+Define Seconds_To_Minutes 0
+Set x_axis_units minutes
+Assign samples_per_unit $sample_frequency*60
+New_Spacing 1
+.
+
+# Switch from seconds to milliseconds when the spacing is 100 ms or less
+Define Seconds_To_Milliseconds 0
+Set x_axis_units milliseconds
+Assign samples_per_unit $sample_frequency/1000
+New_Spacing 100
+.
+
+Define Milliseconds_To_Seconds 0
+Set x_axis_units seconds
+Assign samples_per_unit $sample_frequency
+New_Spacing 0.2
+.
+
+# spacing = 200, change to 500 = 0.5 kHz
+
+Define Hertz_To_Kilohertz 0
+#advise Hertz_To_Kilohertz
+Set x_axis_units kilohertz
+Mul_Var samples_per_unit 1000
+New_Spacing 0.5
+.
+
+Define Kilohertz_To_Hertz 0
+#advise KiloHertz_To_hertz
+Set x_axis_units hertz
+Mul_Var samples_per_unit 0.001
+New_Spacing 100
+.
+
+# Switch from minutes to seconds when the time base falls below 5 minutes
+# This would be 2 minutes, or 120 seconds, round up to 200
+
+Define Minutes_To_Seconds 0
+Set x_axis_units seconds
+Assign samples_per_unit $sample_frequency
+New_Spacing 20
+.
+
+Define Minutes_To_Hours 0
+Set x_axis_units hours
+Assign samples_per_unit $sample_frequency*3600
+New_Spacing 0.5
+.
+
+Define Hours_To_Minutes 0
+Set x_axis_units minutes
+Assign samples_per_unit $sample_frequency*60
+New_Spacing 20
+.
+
+Define Show_Delta 1 string
+#advise "$1:  _n_x_ticks = $_n_x_ticks     x_tick_spacing = $x_tick_spacing    x_axis_delta = $x_axis_delta"
+.
+
+# x_axis_delta needs to be updated if we changed units
+Define Update_Delta 0
+Assign x_axis_delta ($_n_x_ticks-1)*$x_tick_spacing
+.
+
+# Time base is determined by tick spacing and number of ticks
+# samples_per_unit
+
+Define Finish_X_Axis 0
+#advise "Finish_X_Axis  samples_per_unit = $samples_per_unit"
+#Print _n_x_ticks
+Assign x_axis_delta ($_n_x_ticks-1)*$x_tick_spacing
+#advise "Finish_X_Axis: _n_x_ticks = $_n_x_ticks   x_axis_delta = $x_axis_delta"
+# See if we need to change the units
+Check_X_Axis_Units
+#advise "Finish_X_Axis: x_axis_delta = $x_axis_delta   samples_per_unit = $samples_per_unit"
+Assign n_plot_samples 1+floor($x_axis_delta*$samples_per_unit)
+#advise "Finish_X_Axis: n_plot_samples = $n_plot_samples   x_axis_delta = $x_axis_delta"
+#If !strcmp('$x_axis_units','kilohertz') "Mul_Var n_plot_samples 1000"
+
+#Update_X_Tick_Spacing
+#advise "Inputs:  $x_unit_mantissa $x_unit_exponent    Time Base:  $x_axis_delta"
+Update_Oscilloscope
+.
+
+Define Finish_Freq_Base 0
+# See if we need to change the units
+# Switch from Hz to kHz when the time base exceeds 200 Hz
+Check_X_Axis_Units
+Assign n_plot_samples floor($x_axis_delta*$samples_per_unit)
+
+#Update_X_Tick_Spacing
+#advise "Inputs:  $x_unit_mantissa $x_unit_exponent    Time Base:  $x_axis_delta"
+Update_Oscilloscope
+.
+
+# call this the first time when we know nothing...
+# Check_X_Axis_Units (below) is used when we know we only need t change the units by one step...
+
+Define Init_X_Axis_Units 0
+#advise "Init_X_Axis_Units   n_plot_samples = $n_plot_samples   x_tick_spacing = $x_tick_spacing"
+Assign total_extent $x_tick_spacing*($_n_x_ticks-1)
+#Print total_extent
+If $x_tick_spacing>30&&$x_tick_spacing<600
+  "Set x_axis_units minutes Assign samples_per_unit $sample_frequency*60 Set _spacing 1"
+If $x_tick_spacing>=600
+  "Set x_axis_units hours Assign samples_per_unit $sample_frequency*3600 Set _spacing 0.5"
+#Print samples_per_unit
+Assign _spacing $total_extent/($samples_per_unit*($_n_x_ticks-1))
+#Print _spacing
+# round up
+Assign e floor(log($_spacing)/log(10))
+#Print e
+Assign m $_spacing/pow(10,$e)
+#Print m
+If $m>5	"Set m 10"
+If $m<2&&$m>1 "Set m 2"
+If $m>2&&$m<5 "Set m 5"
+Assign _spacing $m*pow(10,$e)
+#Print _spacing
+
+# now need to round...  exponent & mantissa
+New_Spacing $_spacing
+.
+
+Define Check_X_Axis_Units 0
+#advise "Check_X_Axis_Units:  x_axis_units = $x_axis_units"
+# switch to kilohertz 200 hz -> 0.5 kHz
+If (!strcmp('$x_axis_units','hertz'))&&$x_tick_spacing>200
+  Hertz_To_Kilohertz
+If (!strcmp('$x_axis_units','kilohertz'))&&$x_tick_spacing<0.5
+  Kilohertz_To_Hertz
+# Switch from seconds to minutes when the time base exceeds 200 seconds
+# The next would be 500 seconds, this is about 8 minutes, we round down to 5 minutes
+If (!strcmp('$x_axis_units','milliseconds'))&&$x_axis_delta>500
+  Milliseconds_To_Seconds
+If (!strcmp('$x_axis_units','seconds'))&&$x_tick_spacing<=0.1
+  Seconds_To_Milliseconds
+If (!strcmp('$x_axis_units','seconds'))&&$x_tick_spacing>30
+  Seconds_To_Minutes
+If (!strcmp('$x_axis_units','minutes'))&&$x_tick_spacing<1
+  Minutes_To_Seconds
+If (!strcmp('$x_axis_units','minutes'))&&$x_tick_spacing>=20
+  Minutes_To_Hours
+If (!strcmp('$x_axis_units','hours'))&&$x_tick_spacing<0.5
+  Hours_To_Minutes
+
+#advise "Check_X_Axis_Units DONE:  x_axis_units = $x_axis_units  x_axis_delta = $x_axis_delta"
+.
+
+# We start out labelling the X axis with seconds - but when it gets large, we'd like
+# to switch to minutes...
+
+Define Increment_Pair 3 var_name mantissa_name exponent_name
+Set inc_done 0
+
+If $$2==1
+  "Set $2 2 Set inc_done 1"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
+
+If $$2==2
+  "Set $2 5 Set inc_done 1"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
+
+If $$2==5
+  "Set $2 1 Increment $3 Set inc_done 1"
+
+Finish_Pair $1 $2 $3
+.
+
+Define Decrement_Pair 3 var_name mantissa_name exponent_name
+Set inc_done 0
+
+If $$2==1
+  "Set $2 5 Decrement $3 Set inc_done 1"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
+
+If $$2==2
+  "Set $2 1 Set inc_done 1"
+If $inc_done "Finish_Pair $1 $2 $3 exit_macro"
+
+If $$2==5
+  "Set $2 2 Set inc_done 1"
+
+Finish_Pair $1 $2 $3
+.
+
+# Sets a range variable given a mantissa and exponent...
+
+Define Finish_Pair 3 var_name mantissa_name exponent_name
+Assign $1 $$2*pow(10.0,$$3)
+#advise "Finish_Pair:  $1 = $$1    mantissa = $$2   exponent = $$3"
+.
+
+Set n_plot_samples 800
+Set plot_drawn 0
+
+Set smoothing 0
+Set n_curves 4
+
+#Set data_start_index 0		# default
+
+
+# We provide a callback facility so that changing the current scope sample
+# can be used to change other actions, such as audio playback, or movie display
+# (e.g. sni navigator)
+
+# BUG need for multiple scopes?
+Set have_scope_callback 0
+Set scope_callback nop
+
+# We store the name of the callback macro in a variable, this is tricky
+# because we have to inhibit macro expansion when we make the assignment...
+
+Define Set_Scope_Callback 1 macro
+Set scope_callback $1
+Set have_scope_callback 1
+.
+
+# PlotRecenter is the callback routine for a click within the scope
+# window.  We update current_sample and data_start_index, then call Update_Oscilloscope.
+
+Define PlotRecenter 0
+If $left_button_up "exit_macro"
+#Print event_window
+Select_Oscope $event_window
+#advise "PlotRecenter $current_oscope"
+# now that we are plotting axes, we need to account for the plotting area...
+# left_margin and right_margin are fractions of the total width
+# xfract is fractional position of the click within the plotting window
+Assign xfract (($view_xpos/ncols($current_oscope))-$left_margin)/(1-$left_margin-$right_margin)
+#Print xfract
+Assign tmpi	$x_min_index*(1-$xfract)+$x_max_index*$xfract
+#Print tmpi
+#advise "PlotRecenter:  axis goes from $x_min_index to $x_max_index"
+# current sample is the index in the whole buffer, not just the displayed subvector...
+Assign current_sample max(round($tmpi),0)	# BUG make sure not off on the right...
+#Print current_sample
+#Print data_end
+Assign current_sample min($current_sample,$data_end)	# BUG make sure not off on the right...
+#Print current_sample
+#advise "PlotRecenter:  data_start_index = $data_start_index  n_plot_samples = $n_plot_samples   xfract = $xfract  current_sample = $current_sample"
+
+Recenter_Oscilloscope
+.
+
+# Call Recenter_Oscilloscope after current_sample has been changed...
+Define Recenter_Oscilloscope 0
+Position_Indicator 0.5
+
+# Because we have done a floor with data_start_index, do we need to recompute the plot scale factors?
+
+#advise "PlotRecenter:  after rounding data_start_index = $data_start_index (x_tick_spacing = $x_tick_spacing)"
+Update_Oscilloscope
+If $have_scope_callback $scope_callback
+.
+
+# Compute the spectrogram of the currently displayed waveform
+# We want to make the number of time bins exactly equal to the width in pixels
+# of the waveform plot.  How do we figure out what this is?
+# x range is 0 to n_plot_samples... 
+#
+# n_spectrum_bins is the number of time shifts we compute.
+# This does not seem to be a good name...
+
+# One thing we can do is to compute one spectrum for each pixel in the display.
+# 
+# For example, If we are sampling at 48 KHz, and we are displaying 4 seconds
+# using 600 pixels, we would have 600 spectra separated in time by
+# 1/150 sec = 6.6 msec.  If the overlap factor is 2, then each spectrum would
+# use 13.2 msec...  If we pretend we sample at 50 KHz, that is 20 usec/sample,
+# 50 samples/msec, so 64*16 samples is a power of 2 larger than 13.2 msec...
+# This is 1024 samples, at 50 KHz that is 20 msec or 2 centiseconds.
+#
+# We don't compute anything unless we can extend the window back...
+#
+# How many frequency bins shall we keep?
+# 1024 samples in the fft, 44 kHz sample rate...
+# bin 512 is 0.5 cycles/sample, 1/44 msec/sample
+# bin 512 is 0.5 * 44 cycles/msec = 22 kHz
+# bin 1 is 22000/512 = 44 Hz - what note is that???
+# bin 128 is 44*128 = 5120+512= 5632 factor of 100, 6 octaves?
+
+# For the baden powell preludio, it is about 100 msec/note...
+# at 44 KHz, a 4096 pt fft covers just under 100 msec, so
+# given the windowing 8192 seems like a good size.  Any larger
+# and the notes will overlap...  but should we try it?
+Set min_fft_len	8192
+
+Set freq_samples_to_show 128
+
+Set overlap_factor	2
+
+Define DoSpectrogram 0
+Set sig_name ${current_oscope}_signal1
+Set oscope_data_source $$sig_name
+Print oscope_data_source
+# We want to find out how many pixels the plot area is,
+# and how many samples that is
+# h_plot_units_per_screen_unit is samples/pixel
+# We get the screen width in pixels:
+Print n_plot_samples
+Print h_plot_units_per_screen_unit
+Assign n_spectrum_bins floor($n_plot_samples/$h_plot_units_per_screen_unit)
+Assign samples_per_epoch $n_plot_samples/$n_spectrum_bins	# for non-overlapping bins
+Mul_Var samples_per_epoch $overlap_factor
+# round up to nearest power of 2
+Set s 1
+do
+  Mul_Var s 2
+  while $s<$samples_per_epoch
+If $s<$min_fft_len "Set s $min_fft_len"		# FOR AUDIO !!!
+Assign samples_per_epoch $s 
+# This is the fft len...
+Assign hertz_per_bin $sample_frequency/$samples_per_epoch
+Print samples_per_epoch
+
+Vector sigbuf $samples_per_epoch 1 float
+Vector spectrum_window $samples_per_epoch 1 float
+# use raised cosine window
+Ramp1D spectrum_window 0 8*atan(1)/(ncols(spectrum_window)-1)
+VCos spectrum_window spectrum_window
+VSMul spectrum_window spectrum_window -0.5
+VSAdd spectrum_window spectrum_window 0.5
+
+###Image spectrogram $samples_per_epoch $n_spectrum_bins 1 float
+#Vector sig_xf 1+$samples_per_epoch/2 1 complex
+Xform_For sig_xf sigbuf
+Vector sig_power ncols(sig_xf) 1 float
+Subvector cs_input sig_power ncols(sig_power)-1 0
+Xform_For cs_xf cs_input
+Vector cs_power ncols(cs_xf) 1 float
+
+Image spectrogram_image ncols(sig_power) $n_spectrum_bins 1 float
+Image cepstrum_image ncols(cs_power) $n_spectrum_bins 1 float
+Image staff_image $staff_image_h $n_spectrum_bins 1 float
+Image staff_rgb $staff_image_h $n_spectrum_bins 3 float
+If !obj_exists(staff_coords) "Image staff_coords $staff_image_h $n_spectrum_bins 2 float"
+
+Subimage si0 spectrogram_image ncols(spectrogram_image)-1 nrows(spectrogram_image) 0 0
+Subimage si1 spectrogram_image ncols(spectrogram_image)-1 nrows(spectrogram_image) 1 0
+Image spectrogram_delta nrows(spectrogram_image) ncols(spectrogram_image)-1 1 float
+
+Assign delta_bin ($n_plot_samples-$samples_per_epoch)/($n_spectrum_bins-1)
+
+Set i_bin 0
+Print n_spectrum_bins
+
+repeat $n_spectrum_bins
+  Get_Spectrum_Bin $i_bin
+  Increment i_bin
+  end
+Select_Plotter $current_oscope	# to recall the margins...
+
+#VSMax spectrogram_image spectrogram_image 0.0000001
+#VLog spectrogram_image spectrogram_image
+
+# noise suppression?
+#Get_Max mx spectrogram_image
+#Assign fl $mx/(1.0*log(10))
+#VSMax spectrogram_image spectrogram_image $fl
+
+If !viewer_exists(spectrogram_viewer) "Viewer_For spectrogram_viewer spectrogram_image"
+#If !viewer_exists(cepstrum_viewer) "Viewer_For cepstrum_viewer cepstrum_image"
+
+#Disp_Image spectrogram_image $current_oscope	# BUG need a separate window
+
+# Now warp the spectrogram to the staff
+Render_Staff
+
+VVSub spectrogram_delta si1 si0
+VSMax spectrogram_delta spectrogram_delta 0
+Disp_Image spectrogram_image spectrogram_viewer
+#Disp_Image cepstrum_image cepstrum_viewer
+
+#Disp_Image spectrogram_delta spectrogram_viewer
+
+# what about the cepstrum?
+# pitches have a harmonic series, so by doing a frequency analysis
+# of the power spectrum then we should pick this up...
+
+Delete_Image sigbuf
+Delete_Image spectrum_window
+#Delete_Image spectrogram
+Delete_Image sig_xf
+Delete_Image sig_power
+Delete_Image spectrogram_image
+Delete_Image spectrogram_delta
+
+Delete_Image staff_image
+Delete_Image staff_rgb
+Delete_Image cepstrum_image
+Delete_Image cs_xf
+Delete_Image cs_power
+.
+
+Define Get_Spectrum_Bin 1 index
+Subvector sv $oscope_data_source $samples_per_epoch $data_start_index+floor($1*$delta_bin)
+Convert sigbuf sv
+VVMul sigbuf sigbuf spectrum_window
+
+# now compute the transform
+RFFT sig_xf sigbuf
+VMagSq sig_power sig_xf
+
+VSMax sig_power sig_power 0.0000001
+VLog sig_power sig_power
+Get_Max mx sig_power
+VSMax sig_power sig_power $mx/(0.7*log(10))
+Scale sig_power 0 255
+Transpose spectrogram_image{$1} sig_power
+
+#Plot_Power
+
+# Compute_Cepstrum
+
+Delete_Image sv
+.
+
+# The staff is a logarithmic freqency scale
+# There are 5 staff lines:
+#
+#                                     --- e --- 659
+#                                         d     587
+#                                     --- c --- 523
+#                                         b     494
+#                                     --- a --- 440
+#                                         g     392
+# --------------------------------------- f --- 349
+#                                         e     330
+# --------------------------------------- d --- 294
+#                                         c     262
+# --------------------------------------- b --- 247
+#                                         a     220
+# --------------------------------------- g --- 196
+#                                         f     175
+# --------------------------------------- e --- 165
+#                                         d     145
+#                                     --- c --- 131
+#                                         b	123
+#                                     --- a --- 110
+#                                         g      98
+#                                     --- f ---  82
+#                                         e      78
+#                                     --- d ---  73
+
+# Which is A440?
+# A in the middle of the staff is 220
+#
+# If we assume 20 pixels between each pair of staff lines,
+# then an octave takes up 3.5*20 = 70 pixels.  A 5th (from a to e)
+# takes up 40, 4/7 of an octave.  pow(2,4/7) = 1.486, while the
+# pure harmonic interval is 1.5.  The error is about 1%, probably ok.
+#
+# If fft_len is 8192 and sample rate is 44000, what is the Hz/bin?
+# 44000/8192 = 5.5 Hz!? pretty low...
+# If the a in the middle of the staff is A440...
+#
+# We will plot the range of the guitar...
+#
+# In the original spectrum, it is a linear frequency scale.
+# The staff is a subset of this space, perhaps best gotten with
+# a "sample" operation instead of a "render" operation.
+#
+# We will have the 5 staff lines in the center, with room for 4 lines
+# above and below.  14 spaces...
+
+Set pixels_per_staff_line 20
+Assign staff_line0	5*$pixels_per_staff_line	
+Assign staff_line1	6*$pixels_per_staff_line	
+Assign staff_line2	7*$pixels_per_staff_line	
+Assign staff_line3	8*$pixels_per_staff_line	
+Assign staff_line4	9*$pixels_per_staff_line	
+
+Assign staff_image_h 14*$pixels_per_staff_line+1
+Assign pixels_per_octave $pixels_per_staff_line*3.5
+# If 0 is at the bottom and y increases up:
+#Assign a220_height floor($staff_image_h/2)-$pixels_per_staff_line/2
+# If 0 is at the top:
+Assign a220_height floor($staff_image_h/2)+$pixels_per_staff_line/2
+
+# To determine the position of a given frequency f,
+#
+# p(f) = pixels_per_octave*((log(f)-log(220))/log(2))+a220_height
+
+Define Init_Staff 0
+Vector staff_frequencies $staff_image_h 1 float
+Vector bin_index $staff_image_h 1 float
+Ramp1D staff_frequencies 0 -log(2)/$pixels_per_octave
+# Without the factor of log(2), would be the count in octaves...
+# The factor is added so that exp() acts like pow(2,x) instead
+# of pow(e,x)
+VExp staff_frequencies staff_frequencies
+# Because we initialized the ramp above w/ 0, the overall scale is
+# at an arbitrary position.  This normalization pins 220 Hz to the bin
+# at $a220_height.  It would be more efficient to incorporate this
+# into the ramp command!
+VSMul staff_frequencies staff_frequencies 220/value(staff_frequencies[$a220_height])
+
+# Now the frequencies are in Hz
+# what is the corresponding position in the spectrogram?
+VSMul bin_index staff_frequencies 1/$hertz_per_bin
+
+# Now we want to "pull" samples from the spectrogram using these
+# coordinates.  Our images are represented in memory top-to-bottom,
+# So that in the spectrogram low frequencies are at the top.  But we
+# want to have low frequencies on the bottom.  We create an image
+# of coordinates which is isomorphic to the staff image.
+# The x coord (time) is the identity:
+
+Ramp2D staff_coords{0} 0 1 0
+
+Info staff_coords{1}{0}
+Info bin_index
+Transpose staff_coords{1}{0} bin_index
+VMov staff_coords{1} staff_coords{1}{0}
+
+Set staff_inited 1
+.
+
+Set staff_inited 0
+
+Define Render_Staff 0
+
+If !$staff_inited Init_Staff
+
+# Now we're ready to pull the samples!
+#advise "ready to sample..."
+Display staff_coords[0][0]
+Display staff_coords[0][1]
+Display staff_coords[1][0]
+Sample staff_image spectrogram_image staff_coords
+
+Scale staff_image 0 255
+
+If !viewer_exists(staff_viewer) "Viewer_For staff_viewer staff_image"
+VMov staff_rgb{0} staff_image
+VMov staff_rgb{1} staff_image
+VMov staff_rgb{2} staff_image
+Staff_Line 2 1*$pixels_per_staff_line
+Staff_Line 2 2*$pixels_per_staff_line
+Staff_Line 2 3*$pixels_per_staff_line
+Staff_Line 2 4*$pixels_per_staff_line
+Staff_Line 1 5*$pixels_per_staff_line
+Staff_Line 1 6*$pixels_per_staff_line
+Staff_Line 1 7*$pixels_per_staff_line
+Staff_Line 1 8*$pixels_per_staff_line
+Staff_Line 1 9*$pixels_per_staff_line
+Staff_Line 2 10*$pixels_per_staff_line
+Staff_Line 2 11*$pixels_per_staff_line
+Staff_Line 2 12*$pixels_per_staff_line
+Staff_Line 2 13*$pixels_per_staff_line
+
+Disp_Image staff_rgb staff_viewer
+.
+
+Define Staff_Line 2 bright_index v_posn
+Set __i 0
+repeat 3
+  If $__i==$1
+    Then "VSet staff_rgb{$__i}[$2] 255"
+    Else "VSet staff_rgb{$__i}[$2] 0"
+  Increment __i
+  end
+.
+
+Define Compute_Cepstrum 0
+# now compute the cepstrum
+RFFT cs_xf cs_input
+VMagSq cs_power cs_xf
+VSet cs_power[0] 0
+VSMax cs_power cs_power 0.00001
+VLog cs_power cs_power
+Transpose cepstrum_image{$1} cs_power
+.
+
+Define Plot_Signal_Chunk 0
+Select_Plotter sigwin
+Erase_Plot
+# this plots the signal
+#advise "y range:  $oscope_y_min - $oscope_y_max"
+#Plot_Space 0 $oscope_y_min ncols(sigbuf) $oscope_y_max
+Plot_Space 0 min(0,$oscope_y_min) ncols(sigbuf) max(0,$oscope_y_max)
+Select_Pen $red
+YPlot sigbuf		# this is the windowed signal
+.
+
+Define Plot_Power 0
+Select_Plotter pwrwin
+Erase_Plot
+Get_Max mxp sig_power
+Plot_Space 0 0 ncols(sig_power) $mxp
+Select_Pen $green
+YPlot sig_power
+.
+
+#
+# Init_Oscope width height
+#
+# probably should give name?
+#
+
+Set default_oscope_name		default_oscope
+
+Set use_custom_oscope_controls 0
+
+Set scope_border_width 4
+
+Define Init_Oscope 2 width height
+If !strcmp('$current_oscope','none')
+  "Set current_oscope $default_oscope_name"
+New_Oscope $current_oscope $1 $2
+#New_Oscope $default_oscope_name $1 $2
+.
+
+Set current_oscope none
+
+Define New_Oscope 3 name width height
+#advise "New_Oscope $1 $2 $3, current = $current_oscope"
+#If strcmp($current_oscope,"none") "Save_X_Axis_Parameters $current_oscope"
+#advise "New_Oscope $1 $2 $3"
+Assign oscope_width $2
+Assign oscope_height $3
+New_Plotter $1 $oscope_width $oscope_height
+view wait $1 quit
+White_On_Black
+Assign oscope_left ncols('$DISPLAY')-$oscope_width-2*$scope_border_width
+Posn_Window $1 $oscope_left 20
+Select_Plotter $1
+Assign_Margins
+#Show_Plotter_Params
+
+Set_Button_Actions $1 PlotRecenter nop exit
+
+If (!strcmp($current_oscope,"none"))&&!$use_custom_oscope_controls Standard_Oscope_Controls
+
+Set ${1}_scope_type $scope_type
+
+Set x_axis_specified 0
+Set current_oscope $1
+Save_X_Axis_Parameters $1
+.
+
+Define Select_Oscope 1 scope_name
+#advise "Select_Oscope $1, current = $current_oscope"
+# If we are changing scopes, and there is an old scope, save and restore
+If strcmp($current_oscope,"$1")&&strcmp($current_oscope,"none")
+  "Save_X_Axis_Parameters $current_oscope \
+   Restore_X_Axis_Parameters $1"
+
+#advise "Setting current_oscope to $1"
+Set current_oscope $1
+Set scope_type_name ${current_oscope}_scope_type
+Set scope_type $$scope_type_name
+#Show_X_Axis_Parameters
+Select_Plotter $current_oscope	# to recall the margins...
+.
+
+Define FewerTicks 0
+Decrement _n_x_ticks
+Update_N_Ticks
+.
+
+Define MoreTicks 0
+Increment _n_x_ticks
+Update_N_Ticks
+.
+
+Define Propagate_N_Ticks 1 n_samples
+#advise "Propagate_N_Ticks $1"
+Assign x_axis_delta ($_n_x_ticks-1)*$x_tick_spacing
+Assign x_axis_max $x_axis_min+$x_axis_delta
+Assign n_plot_samples min(floor($x_axis_delta*$samples_per_unit),$1)
+#advise "Propagate_N_Ticks $1:  n_plot_samples = $n_plot_samples"
+Position_Indicator $desired_indicator_position
+.
+
+Define Update_N_Ticks 0
+Propagate_N_Ticks $n_plot_samples
+Update_Oscilloscope
+.
+
+Define Standard_Oscope_Controls 0
+interface
+  Set p oscope_controls
+  #panel $p $oscope_width 300
+  panel $p 300 300
+  decorate $p
+    #chooser Select_Region Pick_Region 7 11 12 13 14 15 16 17
+    #chooser Time_Base SetTimeBase 10 1_sec 2_sec 5_sec 10_sec 20_sec 1_min 2_min 5_min 10_min 20_min
+    #chooser Smoothing PickSmoothing 6 1 30 150 300 600 1800
+
+    button Zoom_Out_X_Axis IncTimeBase
+    button Zoom_In_X_Axis DecTimeBase
+    button Zoom_Out_Y_Axis IncYRange
+    button Zoom_In_Y_Axis DecYRange
+    button More_X_Ticks MoreTicks
+    button Fewer_X_Ticks FewerTicks
+
+    #button Signals DoSignals
+    text Channel1_Source DoChannel1Select "no data source selected"
+
+    button Spectrogram DoSpectrogram
+    toggle AutoSpectrum TogAutoSpec
+    button Quit exit
+    #toggle Smooth ToggleSmooth
+    quit
+  control
+    show $p
+    quit
+  decorate $p
+    #set_position Time_Base 20 20
+    #set_position Smoothing 220 20
+#    set_position Select_Region 20 20
+    set_position Quit 220 60
+    #set_position Smooth 420 20
+    quit
+  quit
+
+Posn_Window $p $oscope_left $oscope_height+50
+.
+
+Set auto_spectrum 0
+
+Define TogAutoSpec 0
+Set auto_spectrum $toggle_state
+.
+
+# This stuff is sni-specific and should not be in this file...
+
+#Set display_eye_signals		1
+#Set display_mosaic_angles	0
+#
+#Set display_face_angles	0
+#Set angle_units	radians		# default
+#
+#Set display_face_posn	0
+
+Define PickSmoothing 0
+Set boxlen $choice
+If $boxlen!=$old_boxlen
+  Compute_Smoothed
+Update_Oscilloscope
+.
+
+Assign data_color $white+1		# default?
+
+Define Pick_Region 0
+Assign data_index $choice-11
+Set data_source region_data{$data_index}
+Assign data_color $white+$choice-10
+Update_Axes
+.
+
+# Update_Axes - erase the screen, and replot the axes
+
+Define Update_Axes 0
+#advise "Update_Axes current_oscope = $current_oscope"
+Select_Plotter $current_oscope
+Erase_Plot
+
+Position_Indicator $desired_indicator_position
+
+# we use indices here so we don't have to maintain a separate time track...
+# But this does wreak a little havoc with the tick marks...
+#advise "Update_Axes:  Plot_Data_Range 0 $oscope_y_min $n_plot_samples $oscope_y_max"
+#advise "Plot_Data_Range 0 $oscope_y_min $n_plot_samples $oscope_y_max"
+#advise "Update_Axes:  Plot_Data_Range $x_min_index $oscope_y_min $x_max_index $oscope_y_max"
+Plot_Data_Range $x_min_index-$data_start_index $oscope_y_min $x_max_index-$data_start_index $oscope_y_max
+Select_Pen $oscope_axis_color
+Y_Legend "raw units"
+If !strcmp($scope_type,"time_plot")
+  "X_Legend 'time ($x_axis_units)'"
+If !strcmp($scope_type,"freq_plot")
+  "X_Legend 'frequency ($x_axis_units)'"
+#Plot_Y_Axis $region_min_coord $region_max_coord 0.5 0
+# the 0.5 is the tick spacing?
+# the 0 is what, the start label?
+
+#advise "Plot_Y_Axis_Offset $oscope_y_min $oscope_y_max  $chunk $x_min_index 0"
+Plot_Y_Axis_Offset $oscope_y_min $oscope_y_max  $chunk $x_min_index-$data_start_index 0
+#                                                      ^this 0 is the x position
+#                                  this is an offset where the first tick is plotted ^
+#advise "Update_Axes:  plotter $current_oscope is type $scope_type"
+#Show_Tick_Params
+
+# This labelling assumes that we are labelling the x values we use
+# for the plot...  but here the x units are samples, but we want to incorporate
+# the frequency to display the correct times.
+
+#Select_Pen $red
+
+# first_x_value is the first x value of the data record
+# it may not be the leftmost point of the x axis, because we
+# want round numbers...
+
+#Get_X_Axis_Min $first_x_value+$data_start_index/$samples_per_unit
+Position_Indicator $desired_indicator_position
+
+# the first three args specify the positions (in plotting units - indices )
+# and the last two give the numbers to display (in scale units)
+
+#Show_Tick_Params
+
+Assign xl $x_min_index-$data_start_index
+Assign xr $x_max_index-$data_start_index
+Plot_X_Axis $xl $xr $samples_per_unit*$x_tick_spacing $oscope_y_min
+#advise "Calling Linear_X_Tick_Labels"
+#Print xl
+#Print xr
+Linear_X_Tick_Labels $xl $xr
+			$samples_per_unit*$x_tick_spacing
+			$x_axis_min $x_tick_spacing
+#advise "Linear_X_Tick_Labels DONE"
+
+#advise "Label_Y_Ticks $oscope_y_min $oscope_y_max $chunk"
+Label_Y_Ticks $oscope_y_min $oscope_y_max $chunk
+.
+
+Define Show_Tick_Params 0
+advise "n_plot_samples = $n_plot_samples   data_start_index = $data_start_index   current_sample = $current_sample"
+advise "x_axis_units = $x_axis_units   samples_per_unit = $samples_per_unit"
+advise "x_tick_spacing = $x_tick_spacing"
+advise "x_axis_min = $x_axis_min   x_axis_max = $x_axis_max x_axis_delta = $x_axis_delta"
+advise "x_min_coord = $x_min_coord   x_max_coord = $x_max_coord"
+advise "x_min_index = $x_min_index   x_max_index = $x_max_index"
+.
+
+# Center the current sample, but if we have empty space on either side and data that we
+# can't see, then we shift it over...
+
+# We have different strategies for deciding how to position the data.
+# When we bring up a new curve, we may want to show the whole thing,
+# unless we have already specified otherwise.  When we are showing a movie,
+# we might want to show a few seconds worth initially, with a drifting cursor.
+# When we reposition the cursor, we may want to center it, or if we are moving
+# it to the right as time passes we want to put it near the left edge.  Similarly,
+# if we are playing in reverse we want to put it on the right.  We therefore
+# define 3 centering modes, left_justify, center, and right_justify.
+# We implement this with a macro Position_Indicator, which takes an
+# argument which is a fraction...  So 0.0 would be full left justification,
+# 0.1 or 0.2 might be what we want during movie playing, and 0.5 would
+# be centering.
+
+Define Position_Indicator 1 fractional_position
+Assign old_x_axis_min $x_axis_min
+#advise "Position_Indicator $1 BEGIN"
+X_Index_To_Scale current_x_val $current_sample
+#advise "Position_Indicator:  current_sample $current_sample maps to x value $current_x_val"
+
+# we want to arrange things so that current_x_val falls
+# (1) cx = (1-k) x_axis_min + k x_axis_max
+# We also know that 
+# (2) x_axis_delta = x_axis_max - x_axis_min
+# Combining, we find
+#
+# cx = (1-k) xmin + k ( xdelta + xmin )
+# cx = xmin + k xdelta
+# which seems pretty obvious...
+#
+# xmin = cx - k xdelta
+#
+# We round down to the nearest tick value.
+
+Assign desired_x_min $current_x_val-$1*$x_axis_delta
+
+Assign x_axis_min $x_tick_spacing*round($desired_x_min/$x_tick_spacing)
+#advise "Position_Indicator:  desired x_min $desired_x_min, actual is $x_axis_min"
+
+Assign x_axis_max $x_axis_min+$x_axis_delta
+#advise "Position_Indicator:  provisional x axis goes from $x_axis_min to $x_axis_max"
+
+# Before we settle on this, make sure we aren't scrolling data off the screen unnecessarily
+X_Index_To_Scale data_x_min 0
+X_Index_To_Scale data_x_max $max_possible_sample_index
+#advise "Position_Indicator:  data range is $data_x_min to $data_x_max"
+Assign n_offscreen_left ($x_axis_min-$data_x_min)/$x_tick_spacing
+Assign n_offscreen_right ($data_x_max-$x_axis_max)/$x_tick_spacing
+#advise "Position_Indicator:  n_offscreen_left = $n_offscreen_left   n_offscreen_right = $n_offscreen_right"
+# If either of these are negative, it means that there is unused graph space
+If $n_offscreen_left<=(-1)&&$n_offscreen_right>0 Shift_Right
+If $n_offscreen_right<=(-1)&&$n_offscreen_left>0 Shift_Left
+
+#advise "Position_Indicator:  final axis posn is $x_axis_min - $x_axis_max"
+#advise 'converting to indices'
+X_Scale_To_Index x_min_index $x_axis_min
+X_Scale_To_Index x_max_index $x_axis_max
+#advise 'DONE converting to indices'
+
+Assign data_start_index max(0,ceil($x_min_index))
+Assign data_end min($max_possible_sample_index,floor($x_max_index))
+
+#advise "Position_Indicator:  data_start_index = $data_start_index   data_end = $data_end"
+Assign n_plot_samples 1+$data_end-$data_start_index
+#advise "Position_Indicator:  data_start_index = $data_start_index   data_end = $data_end  n_plot_samples = $n_plot_samples"
+
+If $x_axis_min!=$old_x_axis_min "Set x_axis_changed 1"
+.
+
+Define Shift_Right 0
+Assign n_shift min(floor(-$n_offscreen_left),ceil($n_offscreen_right))
+#advise "Shift_Right:  n_offscreen_left = $n_offscreen_left   n_offscreen_right = $n_offscreen_right   n_shift = $n_shift"
+Add_Var x_axis_min $n_shift*$x_tick_spacing
+# these had a '.' after x_axis_delta, to force float???
+Assign x_axis_max $x_axis_min+$x_axis_delta
+#advise "Shift_Right:  x axis goes from $x_axis_min to $x_axis_max"
+.
+
+Define Shift_Left 0
+Assign n_shift min(ceil($n_offscreen_left),floor(-$n_offscreen_right))
+#advise "Shift_Left:  n_offscreen_left = $n_offscreen_left   n_offscreen_right = $n_offscreen_right   n_shift = $n_shift"
+Add_Var x_axis_max -$n_shift*$x_tick_spacing
+Assign x_axis_min $x_axis_max-$x_axis_delta
+#advise "Shift_Left:  x axis goes from $x_axis_min to $x_axis_max"
+.
+
+
+# call Update_Oscilloscope after a change to the controls
+# or a change in the plot center
+
+Define Update_Oscilloscope 0
+
+#advise "Update_Oscilloscope:  desired_indicator_position = $desired_indicator_position"
+Position_Indicator $desired_indicator_position
+
+# isn't this overkill?
+Display_Waveform_Segments
+
+Assign center_sample $data_start_index+floor($n_plot_samples/2)
+Set plot_drawn 1
+.
+
+Set current_sample 0				# initial value
+Set n_traces 0
+
+Define Clear_Traces 0
+#advise "Clear_Traces setting n_traces to 0"
+Set n_traces 0
+.
+
+Set data_vector_len -1
+
+Define Set_X_Axis_Sampling 1 n_samples
+#advise "Set_X_Axis_Sampling $1"
+Assign n_plot_samples $1
+Assign data_vector_len $1
+#Print scope_type
+If !strcmp($scope_type,"time_plot")
+  "Set x_axis_units seconds \
+   Set first_x_value 0 \
+   Assign samples_per_unit $sample_frequency \
+   Assign record_extent $n_plot_samples/$sample_frequency"
+If !strcmp($scope_type,"freq_plot")
+  'Set x_axis_units hertz \
+   Assign samples_per_unit $1/$sample_frequency \
+   Assign first_x_value -$sample_frequency/2 \
+   Assign record_extent $sample_frequency \
+   Assign hertz_per_bin 1/$samples_per_unit Print hertz_per_bin'
+Assign x_axis_min $first_x_value
+Set current_sample 0
+Assign len_exponent floor(log($record_extent)/log(10))
+Assign len_mantissa $record_extent/pow(10,$len_exponent)
+Assign _n_x_ticks ceil($len_mantissa)+1
+Assign x_tick_spacing pow(10,$len_exponent)		# in seconds
+#advise "Set_X_Axis_Sampling:  x_tick_spacing = $x_tick_spacing"
+#Update_N_Ticks
+Propagate_N_Ticks $1
+Set x_axis_specified 1
+# get mantissa etc
+Propagate_Spacing $x_tick_spacing
+.
+# end Set_X_Axis_Sampling
+
+Define Add_Trace 1 signal
+#advise "Add_Trace $1"
+Assign max_possible_sample_index ncols('$1')-1
+If (!$x_axis_specified)||ncols('$1')!=$data_vector_len
+  "Set_X_Axis_Sampling ncols('$1')"
+#Print x_axis_delta
+#Print samples_per_unit
+# this assumes the scope will be filled?  what about centering?
+# x_axis_delta is expressed in the plotting units...
+Assign n_plot_samples min(floor($x_axis_delta*$samples_per_unit),ncols('$1'))
+#advise "Add_Trace $1:  n_plot_samples set to $n_plot_samples"
+#advise "Add_Trace set n_plot_samples to $n_plot_samples"
+Add_Signal $1
+.
+
+# signals have names like 
+Define Add_Signal 1 signal
+#advise "Add_Signal $1"
+Set start_sample 0
+Increment n_traces
+Set signal_name ${current_oscope}_signal$n_traces
+Set $signal_name $1
+If ncols('$1')>2*$oscope_width  "Downsample_Signal $signal_name"
+#advise "Add_Signal:  n_traces = $n_traces"
+.
+
+# recursively downsample by factors of two
+# signal names are things like default_oscope_signal1 etc
+# BUG what if the signal is something{0} - the bracket can't
+# be in the data object name...
+#
+# We do this once when we add a signal (trace) for the first time.
+
+Define Downsample_Signal 1 name
+Set insignal $$1
+#Print insignal
+Assign n ncols('$insignal')
+#Print n
+Set inmax $$1
+Set inmin $$1
+Set ds_factor 2
+Cleanup_Name clean_name $$1
+do
+
+  Set dsvec $clean_name.ds_$ds_factor
+  Set dsmin $clean_name.min_$ds_factor
+  Set dsmax $clean_name.max_$ds_factor
+
+  Assign n floor(ncols('$insignal')/2)
+  advise "Downsampling $insignal at ds_factor $ds_factor, new n = $n"
+  Subsample_Vector s1 $insignal  $n 0 2
+  Subsample_Vector s2 $insignal  $n 1 2
+  Subsample_Vector min_s1 $inmin  $n 0 2
+  Subsample_Vector min_s2 $inmin  $n 1 2
+  Subsample_Vector max_s1 $inmax  $n 0 2
+  Subsample_Vector max_s2 $inmax  $n 1 2
+
+  If !obj_exists('$dsvec') "Vector $dsvec $n 1 float"
+  If !obj_exists('$dsmin') "Vector $dsmin $n 1 float"
+  If !obj_exists('$dsmax') "Vector $dsmax $n 1 float"
+
+  VVAdd $dsvec s1 s2
+  VSMul $dsvec $dsvec 0.5
+  VVMax $dsmax max_s1 max_s2
+  VVMin $dsmin min_s1 min_s2
+
+  Set insignal $dsvec
+  Set inmax $dsmax
+  Set inmin $dsmin
+
+  Delete_Image s1
+  Delete_Image s2
+  Delete_Image min_s1
+  Delete_Image min_s2
+  Delete_Image max_s1
+  Delete_Image max_s2
+
+  Mul_Var ds_factor 2
+
+  while $n>2*$oscope_width
+#advise "Downsample_Signal:  $n = $n   oscope_width = $oscope_width   ds_factor = $ds_factor"
+.
+
+
+Define Pad_Oscilloscope_Limits 0
+Assign y_range $oscope_y_max-$oscope_y_min
+Add_Var oscope_y_min -$y_range*0.05
+Add_Var oscope_y_max  $y_range*0.05
+.
+
+Define X_Scale_To_Index 2 varname scale_value
+Assign $1 ($2-$first_x_value)*$samples_per_unit
+#Print $1
+.
+
+Define X_Index_To_Scale 2 varname index
+Assign $1 ($2/$samples_per_unit)+$first_x_value
+.
+
+# Pick a downsamp level (power of 2) given n_plot_samples...
+# We know we will downsample by at least a factor of 2...
+
+Define Get_Downsamp_Level 0
+Set ds_factor 1
+#Print n_plot_samples
+Set n_samps $n_plot_samples
+do
+  Mul_Var ds_factor 2
+  Assign new_n_samps floor($n_samps/2)
+  Set n_samps $new_n_samps
+  while $n_samps>2*$oscope_width
+#advise "Get_Downsamp_Level:  n_plot_samples = $n_plot_samples   ds_factor = $ds_factor, n_samps = $n_samps, oscope_width = $oscope_width"
+.
+
+### # Set the variables
+### Define Get_Signal 1 index
+  ### Set signal_name ${current_oscope}_signal$dws_i
+### 
+  ### # Now, before we actually draw the data me may need to downsample it.
+  ### # Otherwise, drawing can take too long...
+### 
+  ### Print signal_name
+  ### Print $signal_name
+  ### Set showsig $$signal_name
+### 
+  ### If $downsampling
+    ### "Set ds_sig $$signal_name.ds_$ds_factor \
+     ### Set ds_min $$signal_name.min_$ds_factor \
+     ### Set ds_max $$signal_name.max_$ds_factor "
+### .
+
+# Display_Waveform_Segment
+#
+# Given a current signal, and vars data_start_index and n_plot_samples, plot
+# the correct segment, rescaling the axes as necessary...
+
+Define Display_Waveform_Segments 0
+Select_Plotter $current_oscope
+
+#advise "Display_Waveform_Segments:  n_plot_samples = $n_plot_samples   oscope_width = $oscope_width"
+If $n_plot_samples>2*$oscope_width
+  Then "Get_Downsamp_Level Set downsampling 1"
+  Else "Set downsampling 0 Set ds_factor 1"
+
+#Print downsampling
+
+Set_Scope_Window		# set up subvectors for all traces...
+
+Get_Y_Range
+Pad_Oscilloscope_Limits
+#advise "oscope limits:  $oscope_y_min - $oscope_y_max"
+#Get_Oscilloscope_Limits		# round up, should set chunk
+#advise "oscope limits:  $oscope_y_min - $oscope_y_max"
+Get_Round_Range oscope_y_min oscope_y_max
+
+#advise "After Get_Round_Range oscope limits:  $oscope_y_min - $oscope_y_max"
+
+# don't update axes if they haven't changed!?
+Update_Axes
+
+#advise 'back from Update_Axes'
+
+# The x coord of the first point should be near 0, but now we need to compute
+# the Tick...
+###Plot_Data_Range $x_min_index-$data_start_index $oscope_y_min $x_max_index-$data_start_index $oscope_y_max
+Plot_Data_Range ($x_min_index-$data_start_index)/$ds_factor $oscope_y_min
+                ($x_max_index-$data_start_index)/$ds_factor $oscope_y_max
+
+
+Set dws_i 1
+If $n_traces<=0 "exit_macro"
+
+#advise "drawing $n_traces traces..."
+
+repeat $n_traces
+
+  If $downsampling
+    'Set max_sig ${current_oscope}_cropped_max$dws_i \
+     Set min_sig ${current_oscope}_cropped_min$dws_i \
+     Select_Pen $yellow YPlot $max_sig \
+     Select_Pen $magenta YPlot $min_sig'
+
+#  Draw_Full
+
+  Set color_name color$dws_i
+  #advise "Select_Pen $$color_name"
+  Select_Pen $$color_name
+
+  Set draw_name ${current_oscope}_draw_signal$dws_i
+  #advise "YPlot $$draw_name"
+  YPlot $$draw_name
+#  Info $$draw_name
+
+  Increment dws_i
+  end
+
+
+Remember_Oscope_Image
+If $show_now_indicator Show_Now_Indicator
+
+# now make sure the axis data range is installed,
+# in case we want to plot a spectrogram...
+Plot_Data_Range $x_min_index-$data_start_index $oscope_y_min $x_max_index-$data_start_index $oscope_y_max
+
+If $auto_spectrum DoSpectrogram
+.
+
+# Variables:
+#
+# scope_signal1		the raw signal
+# scope_ds_signal1	the downsampled signal
+
+# Why is this called Draw_Full ?
+Define Draw_Full 0
+  Set color_name color$dws_i
+  Select_Pen $$color_name
+
+  Set draw_name ${current_oscope}_draw_signal$dws_i
+  YPlot $$draw_name
+.
+
+# Set up subvectors for all traces
+
+Define Set_Scope_Window 0
+
+# These calculations are all done on the full-res data...
+# ___n is the number of samples we will use to plot...
+# We use scope_signal1 and assume other traces have the same
+# number of samples???
+Set first_signal_name ${current_oscope}_signal1
+Assign ___n min($n_plot_samples,ncols('$$first_signal_name')-$data_start_index)
+Assign _use_n floor($___n/$ds_factor)
+Assign _use_start floor($data_start_index/$ds_factor)
+
+#advise "Set_Scope_Window:  n_plot_samples = $n_plot_samples   data_start_index = $data_start_index   ds_factor = $ds_factor  ___n = $___n    _use_n = $_use_n  _use_start = $_use_start"
+
+Delete_If scope_max
+Delete_If scope_min
+
+If $n_traces<1 "warn 'Set_Scope_Window:  No traces!?' exit_macro"
+Set i_trace 1
+#Print n_traces
+repeat $n_traces
+  # are we downsampling?
+
+  Print current_oscope
+  Set signal_name ${current_oscope}_signal$i_trace
+  Print signal_name
+  If $downsampling
+    Then "Cleanup_Name clean_name $$signal_name \
+          Set source_signal $clean_name.ds_$ds_factor \
+          Set max_source $clean_name.max_$ds_factor \
+	  Set min_source $clean_name.min_$ds_factor \
+	  Min_Max_Crop"
+    Else "Set source_signal $$signal_name \
+          Set max_source $$signal_name \
+	  Set min_source $$signal_name "
+
+  Set cropped_name ${current_oscope}_cropped_signal$i_trace
+  Delete_If $cropped_name
+  Subvector $cropped_name $source_signal $_use_n $_use_start
+
+  Set draw_name ${current_oscope}_draw_signal$i_trace
+  Set $draw_name $cropped_name
+
+  Increment i_trace
+  end
+.
+
+Define Min_Max_Crop 0
+advise "Min_Max_Crop:  current_oscope = $current_oscope, i_trace = $i_trace"
+Print min_source
+Set cropped_name ${current_oscope}_cropped_min$i_trace
+Delete_If $cropped_name
+advise "Subvector $cropped_name $min_source $_use_n $_use_start"
+Subvector $cropped_name $min_source $_use_n $_use_start
+Set cropped_name ${current_oscope}_cropped_max$i_trace
+Delete_If $cropped_name
+Subvector $cropped_name $max_source $_use_n $_use_start
+.
+
+Define Delete_If 1 object
+If obj_exists('$1') "Delete_Object $1"
+.
+
+# We call Update_Trace to replot the data curve, without eraseing and redrawing
+# Useful for 2nd, 3rd traces on a plot...
+
+Define Update_Trace 1 data_source
+#advise "Update_Trace $1"
+Assign ___n min($n_plot_samples,ncols('$1')-$data_start_index)
+If $___n<=0 "warn 'Update_Trace:  No samples to plot!?' exit_macro"
+Subvector show_region $1 $___n $data_start_index
+Select_Pen $data_color
+YPlot show_region
+Delete_Image show_region
+.
+
+Set color1	$red
+Set color2	$green
+Set color3	$yellow
+Set color4	$cyan
+Set color5	$magenta
+Set color6	$blue
+Set color7	$orange
+Set color8	$purple
+Set color9	$gray
+
+Set manual_y_range 0
+
+Define Get_Y_Range 0
+If !$manual_y_range Get_Y_Auto_Range
+.
+
+# Automatically pick the y range that will display all the signals.
+# We step through each of the traces, and find the max and min in
+# the current segment...
+
+Define Get_Y_Auto_Range 0
+Set gyr_i 1
+If $n_traces==0 "exit_macro"
+repeat $n_traces
+  Set _cnv_seg_name cnv_segment$gyr_i		# converted segment
+  Set _raw_seg_name raw_segment$gyr_i		# raw segment
+  Set name_name ${current_oscope}_segment_name$gyr_i
+  If obj_exists($_cnv_seg_name) "Delete_Image $_cnv_seg_name"
+  If obj_exists($_raw_seg_name) "Delete_Image $_raw_seg_name"
+  Set signal_name ${current_oscope}_signal$gyr_i
+  Subvector $_raw_seg_name $$signal_name min(ncols('$$signal_name')-$data_start_index,$n_plot_samples) $data_start_index
+  Tell_Precision $_raw_seg_name src_prec
+  If !strcmp('$src_prec','float')
+    Then "Set $name_name $_raw_seg_name"
+    Else "Dup_Float $_cnv_seg_name $_raw_seg_name Convert $_cnv_seg_name $_raw_seg_name Set $name_name $_cnv_seg_name"
+  Get_Min tymin $$name_name
+  Get_Max tymax $$name_name
+  If $gyr_i==1 "Set oscope_y_min $tymin Set oscope_y_max $tymax"
+  If $tymin<$oscope_y_min "Set oscope_y_min $tymin"
+  If $tymax>$oscope_y_max "Set oscope_y_max $tymax"
+  Increment gyr_i
+  end
+.
+
+Define DecYRange 0
+Assign yr $oscope_y_max-$oscope_y_min
+Add_Var oscope_y_max -$yr/4
+Add_Var oscope_y_min $yr/4
+# Now need to round...
+Get_Oscilloscope_Limits		# round up, should set chunk
+Set manual_y_range 1
+#advise "oscope limits:  $oscope_y_min - $oscope_y_max"
+Update_Oscilloscope
+.
+
+Define IncYRange 0
+Assign yr $oscope_y_max-$oscope_y_min
+Add_Var oscope_y_max $yr/2
+Add_Var oscope_y_min -$yr/2
+# We need to round the values, and set the number of ticks!
+Get_Oscilloscope_Limits		# round up, should set chunk
+Set manual_y_range 1
+#advise "oscope limits:  $oscope_y_min - $oscope_y_max"
+Update_Oscilloscope
+.
+
+# Scope_Downsample is now obsolete, it was too slow so now
+# we compute all the downsamples recursively in Add_Signal...
+
+# Pass Scope_Downsample the name of a variable that contains the vector name...
+
+# Define Scope_Downsample 1 data_vector
+# advise "Scope_Downsample $1 BEGIN"
+# date
+# Assign ds_factor floor(ncols('$1')/ncols($current_oscope))
+# Assign n_ds floor(ncols('$1')/$ds_factor)	# new number of samples
+# advise "Scope_Downsample $1, ds_factor = $ds_factor   n_ds = $n_ds"
+# Assign n_reduce $n_ds*$ds_factor		# number of samples we will draw from...
+# # creating sd_src eliminates a warning about non-integral size change...
+# Subvector sd_src $1 $n_reduce 0
+# #Info sd_src
+# Assign scale_change_factor $n_plot_samples/$n_ds
+# 
+# If obj_exists(ds_waveform) "Delete_Image ds_waveform"
+# Vector ds_waveform $n_ds depth('$1') float
+# ###If obj_exists(envelope_data_source) "Delete_Image envelope_data_source"
+# #### cast this object to a long row vector...  (why?)
+# ###Equivalence envelope_data_source $1 1 1 1 ncols('$1') depth('$1') float
+# 
+# # BUG we should do something better than just dropping samples...
+# #advise "reducing..."
+# 
+# #Reduce ds_waveform sd_src
+# 
+# Get_Bin_Stats ds_waveform sd_src VVAdd
+# VSMul ds_waveform ds_waveform 1/$ds_factor
+# 
+# 
+# # Need to reset Plot_Data_Range to reflect new number of plot samples...
+# #advise "Plot_Data_Range ($x_min_index-$data_start_index)/$scale_change_factor $oscope_y_min ($x_max_index-$data_start_index)/$scale_change_factor $oscope_y_max"
+# Plot_Data_Range ($x_min_index-$data_start_index)/$scale_change_factor $oscope_y_min ($x_max_index-$data_start_index)/$scale_change_factor $oscope_y_max
+# 
+# If obj_exists(max_envelope) "Delete_Image max_envelope"
+# If obj_exists(min_envelope) "Delete_Image min_envelope"
+# #Vector max_envelope ncols('$$1') 1 float
+# #Vector min_envelope ncols('$$1') 1 float
+# Vector max_envelope ncols(ds_waveform) 1 float
+# Vector min_envelope ncols(ds_waveform) 1 float
+# 
+# ####Set envelope_data_source $$1
+# # Expression_Envelope
+# # this is broken!?
+# 
+# Get_Envelope sd_src
+# Delete_Image sd_src
+# .
+
+# Define Get_Bin_Stats 3 destination source loop_macro
+# Assign n_per floor(ncols($2)/ncols($1))
+# Subsample_Vector sss $2 ncols($1) 0 $n_per
+# Assign x $n_per*ncols($1)
+# VMov $1 sss
+# Delete_Image sss
+# Set gbs_i 1
+# repeat $n_per-1
+  # Subsample_Vector sss $2 ncols($1) $gbs_i $n_per
+  # $3 $1 $1 sss
+  # Delete_Image sss
+  # Increment gbs_i
+  # end
+# .
+
+# Define Get_Bin_Mins 1 source
+# Get_Bin_Stats min_envelope $1  VVMin
+# .
+# 
+# Define Get_Bin_Maxs 1 source
+# Get_Bin_Stats max_envelope $1  VVMax
+# .
+# 
+# Define Old_Get_Bin_Maxs 1 source
+# # max_envelope should already be created...
+# #Info $1
+# #Info max_envelope
+# Get_Min minval $1
+# VSet max_envelope $minval
+# Assign n_per floor(ncols($1)/ncols(max_envelope))
+# Subsample_Vector sss $1 ncols(max_envelope) 0 $n_per
+# #Info sss
+# Assign x $n_per*ncols(max_envelope)
+# #VMov sss $1		# this was a bug
+# VMov max_envelope sss
+# Delete_Image sss
+# Set gbm_i 1
+# repeat $n_per-1
+  # Subsample_Vector sss $1 ncols(max_envelope) $gbm_i $n_per
+  # VVMax max_envelope max_envelope sss
+  # Delete_Image sss
+  # Increment gbm_i
+  # end
+# .
+
+# Define Old_Get_Bin_Mins 1 source
+# # min_envelope should already be created...
+# Assign n_per floor(ncols($1)/ncols(min_envelope))
+# Get_Max maxval $1
+# VSet min_envelope $maxval
+# Subsample_Vector sss $1 ncols(min_envelope) 0 $n_per
+# #VMov sss $1
+# VMov min_envelope sss
+# Delete_Image sss
+# Set gbm_i 1
+# repeat $n_per-1
+  # Subsample_Vector sss $1 ncols(min_envelope) $gbm_i $n_per
+  # VVMin min_envelope min_envelope sss
+  # Delete_Image sss
+  # Increment gbm_i
+  # end
+# .
+
+
+# Define Get_Envelope 1 source
+# #advise "Get_Envelope $1"
+# Get_Bin_Maxs $1
+# Get_Bin_Mins $1
+# .
+
+
+Define Expression_Envelope 0
+
+expressions
+  unexport max_envelope
+  unexport min_envelope
+###  unexport envelope_data_source
+  export max_envelope
+  export min_envelope
+###  export envelope_data_source
+#  dump get_envelope
+#  dump get_bin_max
+  advise 'running get_envelope'
+  debug resolver
+  run get_envelope
+  quit
+.
+
+Define Show_Now_Indicator 0
+Label_Viewer $current_oscope "Current sample = $current_sample"
+#advise "Show_Now_Indicator:  current_sample = $current_sample   data_start_index = $data_start_index"
+#advise "Show_Now_Indicator:  x_leftmost = $x_min_index   x_rightmost = $x_max_index"
+Set copy_name ${current_oscope}_copy
+Set oscope_image_name ${current_oscope}_image
+VMov $copy_name $oscope_image_name
+
+
+Select_Plotter $current_oscope	# to recall the margins...
+X_Index_To_Scale current_x_value $current_sample
+#advise "Show_Now_Indicator:  current_x_value = $current_x_value    current_sample = $current_sample"
+Assign plot_fraction ($current_x_value-$x_axis_min)/$x_axis_delta
+Assign total_fraction ($left_margin+$plot_fraction*(1-$left_margin-$right_margin))
+Assign now_col min(ncols($current_oscope)-1,round(ncols($current_oscope)*$total_fraction))
+If $now_col<=0 "warn 'Show_Now_Indicator:  now_col ($now_col) too far to left' exit_macro"
+Subimage now_line $copy_name 1 nrows($oscope_image_name) $now_col 0
+VSet now_line{2} 255
+VSet now_line{1} 0
+Delete_Image now_line
+view embed $current_oscope $copy_name 0 0 quit
+#Info oscope_image
+.
+
+Define Remember_Oscope_Image 0
+#advise "Remember_Oscope_Image $current_oscope"
+Set oscope_image_name ${current_oscope}_image
+If !obj_exists($oscope_image_name)
+# use single quotes to inhibit expansion of $copy_name before it is set
+  'Set copy_name ${current_oscope}_copy \
+   Dup_UByte $oscope_image_name $current_oscope Dup_UByte $copy_name $oscope_image_name'
+view extract $oscope_image_name $current_oscope 0 0 quit
+.
+
+Define Set_Scope_Sample 1 sample_index
+Assign current_sample $1
+# now check and see if this sample is within the plotting area
+# BUT we don't want to recenter if we are near the left edge of the record...
+# For example, if we start increasing the time base, eventually the now ptr will
+# be over at the left edge of the plot, and recentering won't move it...
+If ($current_sample<($data_start_index+$n_plot_samples*0.15)&&$data_start_index>0)||$current_sample>($data_start_index+$n_plot_samples*0.85)
+  Recenter_Oscilloscope
+.
+
+Define Cleanup_Name 2 var_name string
+Vector _cn_string strlen('$2')+1 1 string
+data import_string _cn_string "$2" quit
+expressions
+  export _cn_string
+  read -
+    _cn_string = _cn_string == '}' ? '_' : _cn_string;
+    _cn_string = _cn_string == '{' ? '_' : _cn_string;
+    _cn_string = _cn_string == ']' ? '_' : _cn_string;
+    _cn_string = _cn_string == '[' ? '_' : _cn_string;
+    end
+  quit
+data stringify $1 _cn_string quit
+Delete_Image _cn_string
+advise "Cleanup_Name $$1 <- $2"
+.
+

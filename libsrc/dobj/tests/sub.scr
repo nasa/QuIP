@@ -1,0 +1,23 @@
+
+Set w 5
+Set h 7
+Set sw 2
+Set sh 3
+Set x 1
+Set y 1
+
+Image b $h $w 3 u_byte
+Subimage s b $sw $sh $x $y
+
+advise 'Setting b...'
+VSet b 7
+advise 'Setting s...'
+VSet s 3
+
+Display b{0}
+
+Info b
+Info s
+
+exit
+

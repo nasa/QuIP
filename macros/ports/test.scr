@@ -1,0 +1,8 @@
+
+< comm.mac
+
+Make_Connection
+Send_File foo1.scr test.scr
+Send_File foo2.scr test.scr
+Break_Connection
+

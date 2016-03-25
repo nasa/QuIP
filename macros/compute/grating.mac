@@ -1,0 +1,49 @@
+If $verbose "echo 'interpreting file grating.macs'"
+
+Define Ramp 4 'target float image' 'base' 'dx' 'dy'
+Ramp2D $1 $2 $3 $4
+.
+
+# frequencies in units of cycles per image
+
+Define Oriented_Grating 4 target 'frequency in cycles per image width'
+				'orientation in degrees' phase
+Assign angle_in_radians $3*atan(1)/45
+Assign __xf $2*sin($angle_in_radians)
+Assign __yf $2*cos($angle_in_radians)
+Phase_Grating $1 $__xf $__yf $4
+.
+
+Define Phase_Grating 4 'float image' 'x_frequency' 'y_frequency' 'phase in radians'
+#echo "Phase_Grating $1 $2 $3 $4"
+Ramp_Setup $1 $2 $3
+VSAdd $1 $1 $4
+VSin $1 $1
+.
+
+Define Old_Grating 4 'float image' 'x_frequency' 'y_frequency' 'amplitude'
+Ramp_Setup $1 $2 $3
+VSin $1 $1
+VSMul $1 $1 $4
+.
+
+Define Ramp_Setup 3 'target float image' 'x freq' 'y freq'
+Assign _xf $2
+Assign _tmp " $_xf * 8 * atan(1.0) / ncols($1)"
+Set rmpxf $_tmp
+Assign _yf $3
+Assign _tmp " $_yf * 8 * atan(1.0) / nrows($1)"
+Set rmpyf $_tmp
+# we want zero to be right in the middle
+Ramp $1 -($xsize*$rmpxf+$ysize*$rmpyf)/2 $rmpxf $rmpyf
+.
+
+Define Grating 5
+	'float image' 'x_frequency' 'y_frequency' 'amplitude' 'function'
+Ramp_Setup $1 $2 $3
+$5 $1 $1
+VSMul $1 $1 $4
+.
+
+If $verbose "echo 'finished interpreting file grating.macs'"
+

@@ -1,0 +1,54 @@
+# Macros to access a mouse or trackball attached to a serial port.
+
+Define Mouse_Init 1 device
+os
+  mouse
+    mouse $1
+    stty
+      baud 1200
+      databits 7
+      setflag cstopb no	# one stop bit
+      setflag parenb no # no parity
+      show
+      quit
+    advise 'Initializing mouse...'
+    sleep 1
+    flush
+    advise 'Mouse ready.'
+    quit
+  quit
+.
+
+Define Mouse_Action 2 event text
+os
+  mouse
+    action $1 $2
+    quit
+  quit
+.
+
+Define Poll_Mouse 0
+os
+  mouse
+    poll yes
+    quit
+  quit
+.
+
+Define Enable_Mouse 1 yes_no
+os
+  mouse
+#    flush
+    poll $1
+    quit
+  quit
+.
+
+Define Flush_Mouse 0
+os
+  mouse
+    flush
+    quit
+  quit
+.
+

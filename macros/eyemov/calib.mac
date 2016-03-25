@@ -1,0 +1,270 @@
+# %Z% $RCSfile: calib.mac,v $ ver: $Revision: 1.6 $ $Date: 2004/12/15 01:15:14 $
+
+# macros for spatial calibration
+
+Start_File calib.mac
+
+Vector affpar 6 1 float
+
+# the older simpler method was to assume no rotation or shear,
+# and just add offsets & scale
+
+Define Simple_Calibrate 1 record_name
+# subtract off most of the DC, & convert to degrees
+VSAdd $1{0} $1{0} $x_posn_offset
+VSAdd $1{1} $1{1} $y_posn_offset
+VSMul $1{0} $1{0} 1/$raw_calx	# 1 / eye pixels per degree
+VSMul $1{1} $1{1} 1/$raw_caly	# data are now in degrees
+.
+
+
+# fit with affine transformation
+
+
+# transform the whole record, and convert to degrees!
+# this assumes that the inverse affine parameters are
+# in the script variables ap,bp,...,fp ("A prime" etc)
+# we initialize them here to be an identity transform
+
+Set have_affine_params	0
+
+Define Default_Affine_Params 0
+warn 'Affine_Calibrate:  No affine params loaded, using identity xform'
+data
+  ascii
+    read affpar -
+      1 0 0 0 1 0
+    quit
+  quit
+.
+
+# the records are column vectors
+
+Define Affine_Calibrate 1 record_name
+Image urec "nrows('$1')" "ncols('$1')" 1 float
+Dup_Float vrec urec
+Dup_Float wrec urec
+If !$have_affine_params Default_Affine_Params
+VSMul urec $1{0} value(affpar[0])
+VSMul vrec $1{1} value(affpar[1])
+VVAdd urec urec vrec
+VSAdd urec urec value(affpar[2])
+
+VSMul vrec $1{0} value(affpar[3])
+VSMul wrec $1{1} value(affpar[4])
+VVAdd vrec vrec wrec
+VSAdd vrec vrec value(affpar[5])
+
+VMov $1{0} urec
+VMov $1{1} vrec
+Delete_Image urec
+Delete_Image vrec
+Delete_Image wrec
+.
+
+Define Save_Affine_Params 1 filename
+#Display affpar
+Tell_If "Saving affine parameters to file $1"
+Put_Ascii affpar $1
+.
+
+Define Load_Affine_Params 1 filename
+If $have_affine_params
+  "warn 'Load_Affine_Params: already have affine parameters!?' exit_macro"
+advise "Loading affine parameters from file $1"
+Get_Ascii affpar $1
+Set have_affine_params 1
+#Display affpar
+.
+
+# what is dlen?
+# this should probably be an argument...
+
+### Define Declare_Calib_Vectors 0
+### data
+###   vector affpar 6 1 float		# parameters for affine xform
+###   #vector urec $dlen 1 float
+###   #vector vrec $dlen 1 float
+###   #vector wrec $dlen 1 float
+###   vector xt $dlen 2 float
+###   vector yt $dlen 2 float
+###   quit
+### .
+
+
+# SVD ls fit of calibration data
+# It would be nice to allow this to do arbitraty #'s of grid points...
+#
+
+# Fit eye movement calibration data with an affine transformation
+#
+#  x' = ax + by + c     y' = dx + ey + f
+#
+# Assume the fixation points have coordinate values +-1,0
+# (positive to the right and up)
+# and the grid is scanned left-to-right (fast), top-to-bottom (slow).
+#
+# The following matrix takes a vector of parameter values to the measurements:
+#
+#     x1	|  -1   1   1   0   0   0  |
+#     x2	|   0   1   1   0   0   0  |
+#     x3	|   1   1   1   0   0   0  |
+#     x4	|  -1   0   1   0   0   0  |
+#     x5	|   0   0   1   0   0   0  |
+#     x6	|   1   0   1   0   0   0  |    a
+#     x7	|  -1  -1   1   0   0   0  |    b
+#     x8	|   0  -1   1   0   0   0  |    c
+#     x9   =    |   1  -1   1   0   0   0  |    d
+#     y1	|   0   0   0  -1   1   1  |    e
+#     y2	|   0   0   0   0   1   1  |    f
+#     y3	|   0   0   0   1   1   1  |
+#     y4	|   0   0   0  -1   0   1  |
+#     y5	|   0   0   0   0   0   1  |
+#     y6	|   0   0   0   1   0   1  |
+#     y7	|   0   0   0  -1  -1   1  |
+#     y8	|   0   0   0   0  -1   1  |
+#     y9	|   0   0   0   1  -1   1  |
+#
+# We would like to obtain the pseudoinverse of this matrix, which will
+# take tracker readings to normalized screen coords...
+
+# this procedure initializes the inputs, and computes U, V, and W
+
+# Setup to do an SVD with an arbitrary number of input points
+#
+# The arguments are the number of points, a list containing
+# the coordinates of each test point, and the number of degrees
+# between the fixation point targets
+
+Define Setup_Arb_Pt_SVD 2 n_grid_pts grid_pt_list
+echo "Setup_Arb_Pt_SVD $1 $2"
+Assign n_data_pts	"2*$1"
+Print n_data_pts
+Set n_parameters	6
+Create_SVD_Objects aff $n_data_pts $n_parameters
+# do the x's first
+Set i 0
+repeat $1
+  VSet aff_u_matrix[$i][0] "value($2[$i]{0})"
+  VSet aff_u_matrix[$i][1] "value($2[$i]{1})"
+  VSet aff_u_matrix[$i][2] 1
+  VSet aff_u_matrix[$i][3] 0
+  VSet aff_u_matrix[$i][4] 0
+  VSet aff_u_matrix[$i][5] 0
+  # Display aff_u_matrix[$i]
+  Increment i
+  end
+# now the y's
+Set j 0
+repeat $1
+  VSet aff_u_matrix[$i][0] 0
+  VSet aff_u_matrix[$i][1] 0
+  VSet aff_u_matrix[$i][2] 0
+  VSet aff_u_matrix[$i][3] "value($2[$j]{0})"
+  VSet aff_u_matrix[$i][4] "value($2[$j]{1})"
+  VSet aff_u_matrix[$i][5] 1
+  # Display aff_u_matrix[$i]
+  Increment i
+  Increment j
+  end
+#If $chatty "Display aff_u_matrix"
+#VSet aff_v_matrix 0
+#If $chatty "Display aff_v_matrix"
+numrec svd aff_u_matrix aff_eigenvalues aff_v_matrix quit
+.
+
+Define Delete_Cal_SVD_Objs 0
+Delete_SVD_Objects aff
+.
+
+
+# the data vector is a length $n_data_pts , xy pairs
+#
+# We run the data vector through the SVD matrix, and get the coefficients
+# of the best fitting affine transformation taking them to the target coords
+
+Define Solve_Affine 1 data_vector
+Print n_data_pts
+#Print n_cal_pts
+#Info aff_datain
+#Info $1
+#Display test_points
+Set _i 0
+repeat $n_data_pts/2
+  VSet aff_datain[$_i]   "value($1[$_i]{0})"
+  VSet aff_datain[$_i+$n_data_pts/2] "value($1[$_i]{1})"
+  Increment _i
+  end
+numrec svbk aff_coeffs aff_u_matrix aff_eigenvalues aff_v_matrix aff_datain quit
+.
+
+Define Aff_Test 0
+data
+  column affxy $n_cal_pts 2 float
+  ascii
+    read affxy -
+	0 0
+	2 1
+	4 2
+	1 -2
+	3 -1
+	5 0
+	2 -4
+	4 -3
+	6 -2
+    quit
+  quit
+#Setup_Affine_SVD
+Solve_Affine affxy
+.
+#DG block comment to explain Invert_Affine
+#DG the result of Solve_Affine is aff_coeffs array
+#DG aff_coeffs is vector of parameters for transforming screen coordinates to !
+#DG position coordinates
+#DG what we want is a vector of affine parameters for transforming eye position
+#DG coordinates to screen coordinates
+#DG To convert the aff_coeffs that results from Solve_Affine to the affine
+#DG parameters that we need, we invert aff_coeffs
+#DG Note that we are inverting an affine transformation to get an
+#DG affine transformation
+#DG originally x,y is screen and x',y' eye posn.
+#DG a,b,c,d,e,f are forward affine transform parameters
+#DG x' = ax + by + c
+#DG y' = dx + ey + f
+#DG
+#DG a' b' c' d' e' f' are inverted affine transform parameters we want
+#DG x = a'x' + b'y' + c'
+#DG y = d'x' + e'y' + f'
+#DG
+#DG a' b' c' d' e' f' are written into aff_coeffs[0...5] in this macro
+#DG Proof that a' b' c' d' e' f' are correctly computed in this macro is
+#DG verified by the most obvious algebraic technique of substitution and
+#DG simplification.
+#DG a' = 1/(a - bd/e)    b' = b/(bd-ae)     c' = (bf-ce)/(ae-bd)
+#DG d' = d/(bd-ae)       e' = 1/(e - bd/a)  f' = (cd-af)/(ae-bd)
+#DG these are equivalent to the expressions in the code below
+ 
+Define Invert_Affine 0
+Assign a value(aff_coeffs[0])
+Assign b value(aff_coeffs[1])
+Assign c value(aff_coeffs[2])
+Assign d value(aff_coeffs[3])
+Assign e value(aff_coeffs[4])
+Assign f value(aff_coeffs[5])
+Tell_If "Affine coeffs:  $a $b $c $d $e $f"
+
+VSet affpar[0]	1/($b*($a/$b-$d/$e))
+VSet affpar[3]	1/($a*($b/$a-$e/$d))
+
+VSet affpar[1]	1/($e*($d/$e-$a/$b))
+VSet affpar[4]	1/($d*($e/$d-$b/$a))
+
+VSet affpar[2]	($f/$e-$c/$b)/($a/$b-$d/$e)
+VSet affpar[5]	($f/$d-$c/$a)/($b/$a-$e/$d)
+
+Set have_affine_params 1
+.
+
+
+Stop_File calib.mac
+

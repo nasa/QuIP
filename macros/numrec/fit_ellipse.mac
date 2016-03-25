@@ -1,0 +1,365 @@
+
+Start_File fit_ellipse.mac
+
+# algorithm from Fitzgibbon, Pilu & Fisher, PAMI '99
+#
+# return the coefficients in result vec.
+# ptlist is a row vector of points...
+
+Define Fit_Ellipse 2 result_vec ptlist
+
+advise "Fit_Ellipse BEGIN"
+#Display $2
+
+
+Image D_matrix ncols($2) 6 1 $std_type		# "design matrix" D
+Image D_transpose 6 ncols($2) 1 $std_type
+
+If !obj_exists(DtD)
+  "Image DtD 6 6 1 $std_type \
+   Image tmp6 6 6 1 $std_type \
+   Image DtDinv 6 6 1 $std_type \
+   Image C 6 6 1 $std_type \
+   Image M 6 6 1 $std_type"
+
+#Column_Vector null_v 6 $std_type
+Dup_Obj norm_pts $2
+#Display $2
+Normalize_Coords norm_pts $2	# we need to save the normalization factors!
+				# x_mean, y_mean, x_sigma, y_sigma
+advise "Normalization params:  offset $x_mean $y_mean,  scale $x_sigma $y_sigma"
+#Display norm_pts
+
+# don't normalize...
+#VMov norm_pts $2
+
+
+# here is where we might check for one of the sigma's being too small...
+#
+# for a skinny ellipse at the origin,
+# x^2/r1^2 + y^2/r2^2 = 1
+
+Set fci 0
+repeat ncols($2)
+  Assign x value(norm_pts[$fci]{0})
+  Assign y value(norm_pts[$fci]{1})
+  data ascii read D_matrix[$fci] -
+	$x*$x $x*$y $y*$y $x $y 1
+	quit quit
+  Increment fci
+  end
+
+#Display D_matrix
+
+Transpose D_transpose D_matrix
+Inner_Prod DtD D_transpose D_matrix
+
+#Display DtD
+
+# DtD a = lambda C a
+# so a is an eigenvector is (DtD)inv C...
+
+VSet C 0
+VSet C[2][0] -2
+VSet C[0][2] -2
+VSet C[1][1] 1
+
+#Display $2
+#Display D_matrix
+#Display D_transpose
+#Display DtD
+#Display C
+
+Invert2 DtDinv DtD
+#Display DtDinv
+
+### # check invert working correctly...
+### Inner_Prod tmp6 DtDinv DtD
+### advise "Tmp6 should be the identity matrix..."
+### Display tmp6
+
+Inner_Prod M DtDinv C
+
+# now we want the eigenvectors of M - svd or jacobi?  jacobi is only for symmetric matrix, right?
+#
+#
+###Display v_matrix
+###Display M
+###
+#### now back-sub to get the eigen vectors?
+#### Or the eigenvectors are in the v_matrix???
+
+# Xavier did this differently, just pushing a vector of 1's through
+# the matrix, repeating a few times...
+# you have to normalize each time!
+
+# what we want is not the vector with the largest eigenvalue - it is the one
+# with the negative eigenvalue!  (see the paper).
+# We can find this simply by pushing through a vector, negating, normalizing, and then
+# averaging with the original vector, and repeating a few times...
+
+Column my_ev1 6 1 $std_type
+
+Find_Negative_Eigenvector my_ev1 M
+Get_Ellipse_Coefficients my_ev1
+
+#Pause
+#Delete_Image eigenvalues
+#Delete_Image v_matrix
+Delete_Image D_matrix
+Delete_Image D_transpose
+Delete_Image norm_pts
+Delete_Image my_ev1
+.
+
+# end Fit_Ellipse
+
+Define Get_Ellipse_Coefficients 1 eigenvector
+# the coefficients can have an arbitrary scale factor applied,
+# Our quadratic constraint is b^b-4ac=1?
+Assign a value($1[0])
+Assign b value($1[1])
+Assign c value($1[2])
+Assign discriminant $b*$b-4*$a*$c
+Print discriminant
+#VSMul $1 $1 1/abs($discriminant)
+
+#Transpose $1 my_ev1	# BUG - need to un-norm params...
+
+#
+#  a x^2 + b x + c = 0
+#  a' (x-x0)/sx)^2 + b' (x-x0)/sx + c' = 0
+# a'/sx^2 x^2   - 2a'/sx^2 x0 x + a'/sx^2 x0^2 + b'/sx x - b'x0/sx + c' = 0 
+#
+# a = a' /sx^2
+# b = -2a'x0/sx^2 + b'/sx
+# c = a'x0^2/sx^2 -b'x0/sx + c'
+#
+# a x^2 + b xy + c y^2 + dx + ey +f = 0
+#
+# a'((x-x0)/sx)^2 + b' ((x-x0)/sx)((y-y0)/sy) + c' ((y-y0)/sy)^2 ...
+#
+#                  b'/(sx sy) xy - b'y0/(sx sy) x - b'x0/(sx sy) y + b'x0 y0/(sx sy)
+#
+# a = a' / sx^2
+# c = c' / sy^2
+#
+# b = b'/(sx sy)
+#
+# d = -2a'x0/sx^2 + d'/sx - b'y0/(sx sy)
+# e = -2c'y0/sy^2 + e'/sy - b'x0/(sx sy)
+#
+# f = a'x0^2/sx^2 + b'x0y0/(sx sy) + c'y0^2/sy^2 -d'x0/sx - e'y0/sy + f'
+
+If $x_sigma==0||$y_sigma==0 "warn 'zero sigma!?' exit_macro"
+
+Assign a value($1[0])/($x_sigma*$x_sigma)
+Assign b value($1[1])/($x_sigma*$y_sigma)
+Assign c value($1[2])/($y_sigma*$y_sigma)
+
+Assign d -2*value($1[0])*$x_mean/($x_sigma*$x_sigma)+value($1[3])/$x_sigma-value($1[1])*$y_mean/($x_sigma*$y_sigma)
+Assign e -2*value($1[2])*$y_mean/($y_sigma*$y_sigma)+value($1[4])/$y_sigma-value($1[1])*$x_mean/($x_sigma*$y_sigma)
+
+Assign f value($1[0])*$x_mean*$x_mean/($x_sigma*$x_sigma)+value($1[1])*$x_mean*$y_mean/($x_sigma*$y_sigma)+value($1[2])*$y_mean*$y_mean/($y_sigma*$y_sigma)-value($1[3])*$x_mean/$x_sigma-value($1[4])*$y_mean/$y_sigma+value($1[5])
+
+# now normalize...
+Assign disc $b*$b-4*$a*$c
+Print disc
+Mul_Var a 1/sqrt(abs($disc))
+Mul_Var b 1/sqrt(abs($disc))
+Mul_Var c 1/sqrt(abs($disc))
+Mul_Var d 1/sqrt(abs($disc))
+Mul_Var e 1/sqrt(abs($disc))
+Mul_Var f 1/sqrt(abs($disc))
+
+advise "PARAMS:  $a   $b  $c   $d   $e   $f"
+.
+
+Define Render_Ellipse 1 target
+advise "Render_Ellipse $1, params = $a $b $c $d $e $f"
+Dup_Std _re_x $1
+Dup_Std _re_y $1
+Dup_Std _re_xx $1
+Dup_Std _re_yy $1
+Dup_Std _re_xy $1
+Dup_Std _re__scratch $1
+Dup_Std _re__accum $1
+Ramp2D _re_x 0 1 0
+Ramp2D _re_y 0 0 1
+VVMul _re_xx _re_x _re_x
+VVMul _re_xy _re_x _re_y
+VVMul _re_yy _re_y _re_y
+VSet _re__accum $f
+VSMul _re__scratch _re_xx $a
+VVAdd _re__accum _re__accum _re__scratch
+VSMul _re__scratch _re_xy $b
+VVAdd _re__accum _re__accum _re__scratch
+VSMul _re__scratch _re_yy $c
+VVAdd _re__accum _re__accum _re__scratch
+VSMul _re__scratch _re_x $d
+VVAdd _re__accum _re__accum _re__scratch
+VSMul _re__scratch _re_y $e
+VVAdd _re__accum _re__accum _re__scratch
+
+VVMul _re__accum _re__accum _re__accum
+VSMul _re__accum _re__accum -1/50000
+VExp $1 _re__accum
+
+Delete_Image _re_x
+Delete_Image _re_y
+Delete_Image _re_xx
+Delete_Image _re_xy
+Delete_Image _re_yy
+Delete_Image _re__scratch
+Delete_Image _re__accum
+.
+
+Define Normalize 1 vector
+If !obj_exists(tmpvec) "Dup_Std tmpvec $1"
+VVMul tmpvec $1 $1
+Get_Sum sos tmpvec
+Assign factor sqrt($sos)
+#advise "Normalization factor for $1 is $factor"
+VSMul $1 $1 1/$factor
+.
+
+Define Declare_Eigenvectors 0
+Column _ev1 6 1 $std_type
+Column _ev2 6 1 $std_type
+Column _ev3 6 1 $std_type
+Column vdiff 6 1 $std_type
+.
+
+
+Set max_fne_iterations 32
+
+Define Find_Negative_Eigenvector 2 target matrix
+
+Set n_fne_iterations 0
+If !obj_exists(_ev1) Declare_Eigenvectors
+VSet _ev1 1
+
+do
+  Normalize _ev1
+  Inner_Prod _ev2 M _ev1
+  #Normalize _ev2
+  VSMul _ev2 _ev2 -1
+  VVAdd _ev3 _ev1 _ev2
+  # _ev3 is our new try...
+
+  Normalize _ev3
+
+  VVSub vdiff _ev1 _ev3
+advise "calling Get_RMS"
+  Get_RMS rms vdiff
+advise "back from Get_RMS"
+  #Print rms
+  VMov _ev1 _ev3
+  Increment n_fne_iterations
+  If $n_fne_iterations>$max_fne_iterations "Set rms -1"
+  while $rms>0.001
+
+VMov $1 _ev1
+
+If $rms==(-1)
+  Then Try_Other_Methods
+  Else "advise 'largest eigenvector w/ negative eigenvector found after $n_fne_iterations iterations' Show_EV"
+
+.
+
+Define Show_EV 0
+Display _ev1
+Inner_Prod _ev2 M _ev1
+#Normalize _ev2
+Display _ev2
+Assign ev value(_ev2[0])/value(_ev1[0])
+Print ev
+Display M
+.
+
+Define Find_Largest_Eigenvector 2 target matrix
+Dup_Std _fle_tmp $1
+Dup_Std _fle_tmp2 $1
+Dup_Std _fle_diff $1
+VMov _fle_tmp $1
+Set n_fle_iterations 0
+do
+  Normalize _fle_tmp
+  Inner_Prod _fle_tmp2 $2 _fle_tmp
+  Normalize _fle_tmp2
+  VVSub _fle_diff _fle_tmp _fle_tmp2
+  Get_RMS rms _fle_diff
+  VMov _fle_tmp _fle_tmp2
+  Print rms
+  Increment n_fle_iterations
+  while $rms>0.0001
+
+advise "Eigenvector w/ largest eigenvalue found after $n_fle_iterations iterations"
+Delete_Image _fle_tmp
+Delete_Image _fle_tmp2
+Delete_Image _fle_diff
+.
+
+Define Try_Positive_Eigenvalue 0
+Find_Largest_Eigenvector my_ev1 M
+.
+
+Define Try_Other_Methods 0
+advise "Failed to converge on eigenvector w/ negative eigenvector after $n_fne_iterations iterations, trying positive..."
+Try_Positive_Eigenvalue
+Try_SVD
+.
+
+Define Try_SVD 0
+Vector eigenvalues 6 1 $std_type
+Image v_matrix 6 6 1 $std_type
+Dup_Std tmpM M
+VMov tmpM M
+numrec svd tmpM eigenvalues v_matrix quit
+Display eigenvalues
+Display M
+Display tmpM
+#Display v_matrix
+
+# neigher works...
+#VMov my_ev1 v_matrix{0}
+#Transpose my_ev1 v_matrix[0]
+Transpose my_ev1 tmpM[0]
+#VMov my_ev1 tmpM{0}
+Test_Eigenvector my_ev1
+
+Delete_Image eigenvalues
+Delete_Image v_matrix
+Delete_Image tmpM
+#exit
+.
+
+Define Test_Eigenvector 1 v
+Display $1
+VMov _ev1 $1
+Normalize _ev1
+Inner_Prod _ev2 M _ev1
+Check_Eigenvalue _ev2 _ev1
+.
+
+Define Check_Eigenvalue 2 v2 v1
+# first make sure they really are scaled copies...
+Assign v value($1[0])/value($2[0])
+Print v
+Dup_Std _t $1
+VSMul _t $1 1/$v
+VVSub _t _t $2
+Get_RMS rms _t
+Delete_Image _t
+advise "Check_Eigenvalue:  eigenvalue $v, rms = $rms"
+.
+
+Define Get_RMS 2 varname object
+Dup_Std gr_tmp $2
+VVMul gr_tmp $2 $2
+Get_Sum $1 gr_tmp
+Assign $1 sqrt($$1/nelts('$2'))
+Delete_Image gr_tmp
+.
+
+Stop_File fit_ellipse.mac

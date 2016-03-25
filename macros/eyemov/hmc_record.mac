@@ -1,0 +1,74 @@
+
+Set have_record 1
+
+Set deg_per_pixel 0.01
+
+Define Load_HMC_Cal 1 which_cal
+data ascii read affpar -
+	$deg_per_pixel 0 0
+	0 $deg_per_pixel 0
+quit quit
+Set have_affine_params 1
+.
+
+Define Read_Record 1 param_string
+advise "Read_Record $1"
+Set infile $HOME/data/$PROJECT/traces/exp$EXPERIMENT/$1.asc
+If !file_exists('$infile') "error_exit 'File $infile does NOT exist'"
+VSet eye_pos 0
+
+Count_Lines nl $infile
+Vector indata $nl 2 float	# indata for uhco experiments is binocular...
+data ascii input_fmt "%s %s %s %f %f" quit quit
+Get_Ascii indata $infile
+
+Subvector _use_pos eye_pos $nl 0
+
+VMov _use_pos{0} indata{0}
+VMov _use_pos{1} indata{1}
+Delete_Image indata
+Delete_Image _use_pos
+
+Affine_Calibrate eye_pos
+.
+
+Define OLD_Load_Stimulus 1 param_string
+advise "Load_Stimulus $1"
+# ignore param_string, just use signal_index...
+Set infile $HOME/data/$PROJECT/stimuli/exp$EXPERIMENT/ixy$signal_index.asc
+If !file_exists('$infile') "error_exit 'Load_Stimulus:  File $infile does NOT exist'"
+Count_Lines nl $infile
+Vector indata $nl 2 float
+data ascii input_fmt '' quit quit
+Get_Ascii indata $infile
+
+Subvector _use_pos stimpos $nl 0
+VMov _use_pos{0} indata{0}
+VMov _use_pos{1} indata{1}
+Delete_Image indata
+Delete_Image _use_pos
+
+Affine_Calibrate stimpos
+.
+
+Define Load_Stimulus 1 param_string
+advise "Load_Stimulus $1"
+Set infile $HOME/data/$PROJECT/traces/exp$EXPERIMENT/$1.asc
+If !file_exists('$infile') "error_exit 'File $infile does NOT exist'"
+VSet stimpos 0
+
+Count_Lines nl $infile
+Vector indata $nl 2 float	# indata for uhco experiments is binocular...
+data ascii input_fmt "%s %f %f %s %s" quit quit
+Get_Ascii indata $infile
+
+Subvector _use_pos stimpos $nl 0
+
+VMov _use_pos{0} indata{0}
+VMov _use_pos{1} indata{1}
+Delete_Image indata
+Delete_Image _use_pos
+
+Affine_Calibrate stimpos
+#Display stimpos
+.

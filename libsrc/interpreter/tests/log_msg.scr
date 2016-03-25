@@ -1,0 +1,16 @@
+# test of message logging
+
+log_message 'This is the first message'
+sleep 1
+log_message 'This is the second message (1 sec later)'
+sleep 3
+log_message 'This is the third message (3 secs later)'
+repeat 20
+  log_message looping
+  end
+repeat 20
+  log_message looping2
+  end
+log_message 'Done looping'
+exit
+

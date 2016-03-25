@@ -1,0 +1,140 @@
+# la_util.mac	- 	utilities for linear algebra
+
+# Hartley & Zisserman's algorithm A5.4, p. 593
+# Find the vector x which minimizes mag Ax for some matrix A
+
+Define Get_Right_Null_Vector 2 dest_vector src_matrix
+#advise "Get_Right_Null_Vector $1 $2"
+#Create_SVD_Objects grnv ncols($2) nrows($1)
+Create_SVD_Objects grnv nrows($2) ncols($2)
+VMov grnv_u_matrix $2
+numrec svd grnv_u_matrix grnv_eigenvalues grnv_v_matrix quit
+
+# now find the smallest eigenvalue
+# BUG there is a vector routine to do this...
+
+Set grnv_i 0
+Set i_min 0
+repeat nrows(grnv_v_matrix)
+  If value(grnv_eigenvalues[$grnv_i])<value(grnv_eigenvalues[$i_min]) "Set i_min $grnv_i"
+  Increment grnv_i
+  end
+Tell_If "smallest eigenvalue at position $i_min"
+
+#advise "Get_Right_Null_Vector:  smallest eigenvalue at position $i_min"
+#Display grnv_eigenvalues
+
+#Info grnv_v_matrix
+
+VMov $1 grnv_v_matrix{$i_min}
+Delete_SVD_Objects grnv
+.
+
+# key component for Hartley & Zisserman's algorithm A5.6 (p. 595)
+#
+# I think "deleting columns" means making the matrix smaller, not zeroing...
+
+Define Get_Span 2 dst_matrix src_matrix
+Create_SVD_Objects span nrows($2) ncols($2)
+VMov span_u_matrix E_matrix
+numrec svd span_u_matrix span_eigenvalues span_v_matrix quit
+
+SVD_Sort span
+
+# what is the rank of G?
+# It seemed we had 3 zero eigenvalues...
+
+#Display span_eigenvalues
+
+# Now we need to "delete" columns?  I guess that means zero'ing the unwanted ones...
+# Count the number of non-zero eigenvalues.
+# We count the very small ones as effectively zero
+Set span_dim 0
+Set col 0
+repeat ncols(span_u_matrix)
+  If abs(value(span_eigenvalues[$col]))>0.0000001 "Increment span_dim"
+  Increment col
+  end
+
+Image $1 nrows($2) $span_dim 1 $std_type
+Subimage good_span span_u_matrix $span_dim nrows(span_u_matrix) 0 0
+
+VMov $1 good_span
+
+Delete_SVD_Objects span
+.
+
+
+
+# this checks that the matrices multiply out correctly after SVD_Sort...
+# They do, so we can probably delete this...
+
+Define Checkit 0
+# Check that this is correct
+Dup_Obj v3 v2
+# We need to transpose v and scale the rows
+Transpose v3 v2
+Set ss_i 0
+repeat ncols(eig2)
+  VSMul v3[$ss_i] v3[$ss_i] value(eig2[$ss_i])
+  Increment ss_i
+  end
+
+Dup_Obj E2 E_matrix
+Inner_Prod E2 u2 v3
+# E2 should match E_matrix
+#VVSub E2 E2 E_matrix
+VVSub E2 E_matrix E2	# VVSub order doesn't matter since we square next...
+VVMul E2 E2 E2
+Get_Sum s E2
+Assign meansq $s/(ncols(E2)*nrows(E2))
+Assign rms sqrt($meansq)
+
+advise "rms error after permuting is $rms"
+.
+
+# sort the eigenvalues from largest to smallest, then permute all the matrices accordingly
+#
+Define SVD_Sort 1 stem
+advise "SVD_Sort $1 BEGIN"
+Vector ss_indices ncols(${1}_eigenvalues) 1 uint32
+Ramp1D ss_indices 0 1
+compute misc sort_indices ss_indices ${1}_eigenvalues quit quit
+
+#advise "largest?"
+#Display ${1}_eigenvalues{value(ss_indices[0])}
+#advise "smallest?"
+#Display ${1}_eigenvalues{value(ss_indices[ncols(ss_indices)-1])}
+# they are sorted smallest to largest
+
+Dup_Obj v2 ${1}_v_matrix
+Dup_Obj eig2 ${1}_eigenvalues
+Dup_Obj u2 ${1}_u_matrix
+
+# We permute the columns of V, the elements of the eigenvalue array,
+# and the columns of U
+
+Set ss_i ncols(ss_indices)-1
+Set i_to 0
+repeat ncols(ss_indices)
+  Assign i_from value(ss_indices[$ss_i])
+  VMov u2{$i_to} ${1}_u_matrix{$i_from}
+  VMov eig2[$i_to] ${1}_eigenvalues[$i_from]
+  VMov v2{$i_to} ${1}_v_matrix{$i_from}
+  Increment i_to
+  Decrement ss_i
+  end
+
+# Checkit
+
+VMov ${1}_u_matrix u2
+VMov ${1}_eigenvalues eig2
+VMov ${1}_v_matrix v2
+
+Delete_Image v2
+Delete_Image u2
+Delete_Image eig2
+Delete_Image ss_indices
+.
+
+

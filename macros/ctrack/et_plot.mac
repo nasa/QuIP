@@ -1,0 +1,224 @@
+Define Insure_Var_Name 1 stem
+Tell_If "Insure_Var_Name $1"
+Tell_If "Set ${1}_name ${1}1"
+If !var_exists('${1}_name') "Set ${1}_name ${1}1"
+.
+
+Insure_Var_Name lm_thr
+Insure_Var_Name um_thr
+Insure_Var_Name lpa_thr
+Insure_Var_Name upa_thr
+Insure_Var_Name lca_thr
+Insure_Var_Name uca_thr
+
+# default values set here but also set in cmon.mac !?  BUG
+
+If !var_exists($lm_thr_name) "Set $lm_thr_name 20"
+If !var_exists($um_thr_name) "Set $um_thr_name 230"
+
+If !var_exists($lpa_thr_name) "Set $lpa_thr_name 1600"
+If !var_exists($upa_thr_name) "Set $upa_thr_name 7000"
+If !var_exists(max_pupil_area) "Set max_pupil_area 9000"
+If !var_exists(max_dMdT) "Set max_dMdT 70"	# 7 x 10
+If !var_exists($dmdt_thr_name) "Assign $dmdt_thr_name $max_dMdT/2"
+
+If !var_exists($lca_thr_name) "Set $lca_thr_name 1"
+If !var_exists($uca_thr_name) "Set $uca_thr_name 200"
+If !var_exists(max_cr_area) "Set max_cr_area 250"
+
+If !var_exists(current_y_max) "Set current_y_max 255"
+If !var_exists(current_y_min) "Set current_y_min 0"
+
+Set trace_choice Mean	# starting value
+
+Define Reset_Plot 0
+VSet g_plot 0		# erase old contents
+# Bug should use variables for trace names!
+If !strcmp('$trace_choice',Mean) 'Show_Mean_Thresholds exit_macro'
+If !strcmp('$trace_choice','Pupil area') 'Show_Pupil_Area_Thresholds exit_macro'
+If !strcmp('$trace_choice','CR area') 'Show_CR_Area_Thresholds exit_macro'
+If !strcmp('$trace_choice','dM/dT') 'Show_dMdT_Threshold exit_macro'
+# these have no thresholds
+If !strcmp('$trace_choice','Pupil') exit_macro
+If !strcmp('$trace_choice','CR') exit_macro
+If !strcmp('$trace_choice','P-CR') exit_macro
+warn "Reset_Plot '$trace_choice':  trace not found!?"
+.
+
+Define Show_CR_Area_Thresholds 0
+Draw_Indicator $$lca_thr_name 255
+Draw_Indicator $$uca_thr_name 255
+.
+
+Define Show_Pupil_Area_Thresholds 0
+advise "Show_Pupil_Area_Thresholds:  lpa_thr_name = $lpa_thr_name   $lpa_thr_name = $$lpa_thr_name"
+Draw_Indicator $$lpa_thr_name 255
+Draw_Indicator $$upa_thr_name 255
+.
+
+Define Show_Mean_Thresholds 0
+Draw_Indicator $$lm_thr_name 255
+Draw_Indicator $$um_thr_name 255
+.
+
+Define Show_dMdT_Threshold 0
+Draw_Indicator $$dmdt_thr_name 255
+.
+
+Define Bound_Var 3 varname min max
+Assign $1 max($2,min($3,$$1))
+.
+
+Define Bound_Y 0
+Bound_Var y 0 nrows(g_plot)-1
+.
+
+Define Draw_Indicator 2 y value
+Assign y round($yscale*(($1-$current_y_min)/($current_y_max-$current_y_min)))
+Bound_Y
+VSet g_plot[$plot_h-1-$y]{2} $2
+.
+
+# each trace has:
+#
+#	source data (data vector component)
+#	color
+#	vertical scale
+#	vertical offset
+
+Set n_traces 2		# user settable?
+
+Assign yscale $plot_h
+
+Define Plotem 0
+Assign t_plot $t%ncols(g_plot)
+If $t_plot==0 Reset_Plot
+
+Set trace_found 0
+If !strcmp('$trace_choice',Mean) Plot_Mean
+If !strcmp('$trace_choice','dM/dT') Plot_dMdT
+If !strcmp('$trace_choice','Pupil area') Plot_Pupil_Area
+If !strcmp('$trace_choice','CR area') Plot_CR_Area
+If !strcmp('$trace_choice',Pupil) Plot_Pupil_Posn
+If !strcmp('$trace_choice',CR) Plot_CR_Posn
+If !strcmp('$trace_choice','P-CR') Plot_PCR_Posn
+If !$trace_found "warn 'Plotem:  no match found for trace \\\\'$trace_choice\\\\'!?'"
+.
+
+Define Plot_Mean 0
+# First let's plot the image mean...
+Assign m value(${prefix}_result[$i_cam]{$result_img_mean_idx})
+Assign y round($m*$yscale/255)
+#advise "Plot_Mean:  m = $m   y = $y" 
+Bound_Y
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+Set trace_found 1
+.
+
+Define Plot_dMdT 0
+# we amplify by 10 so that we can use the slider to set in tenths
+Assign dmdt 10*value(${prefix}_result[$i_cam]{$result_img_dmdt_idx})
+# 2.2 is to give a little bit of headroom
+Assign y round($plot_h/2+$dmdt*$yscale/(2.2*$max_dMdT))
+Bound_Y
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+Set trace_found 1
+.
+
+Define Plot_Pupil_Area 0
+#advise Plot_Pupil_Area
+#Print result_pup_a_idx
+Assign pa value(${prefix}_result[$i_cam]{$result_pup_a_idx})
+#Print pa
+Assign y round($pa*$yscale/$max_pupil_area)
+Bound_Y
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+Set trace_found 1
+.
+
+Define Plot_Pupil_Posn 0
+Assign prx value(${prefix}_result[$i_cam]{$result_pup_roi_x_idx})
+Assign pdx value(${prefix}_result[$i_cam]{$result_pup_x_idx})
+Assign px $prx+$pdx
+Assign y round($px)*$yscale/$in_w
+Bound_Y
+# plot px in green
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+
+Assign pry value(${prefix}_result[$i_cam]{$result_pup_roi_y_idx})
+Assign pdy value(${prefix}_result[$i_cam]{$result_pup_y_idx})
+Assign py $pry+$pdy
+Assign y round($py)*$yscale/$in_h
+Bound_Y
+# plot py in green
+VSet g_plot[$plot_h-1-$y][$t_plot]{2} 255
+Set trace_found 1
+.
+
+Define Plot_PCR_Posn 0
+Assign cx value(${prefix}_result[$i_cam]{$result_pcr_x_idx})
+Assign y round($cx+$pup_roi_w/2)*$yscale/$pup_roi_w
+Bound_Y
+# plot cr_x in green
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+
+Assign cy value(${prefix}_result[$i_cam]{$result_pcr_y_idx})
+Assign y round($cy+$pup_roi_h/2)*$yscale/$pup_roi_h
+Bound_Y
+# plot cy in red
+VSet g_plot[$plot_h-1-$y][$t_plot]{2} 255
+Set trace_found 1
+.
+
+Define Plot_CR_Posn 0
+Assign crx value(${prefix}_result[$i_cam]{$result_pcr_dx_idx})
+Assign cdx value(${prefix}_result[$i_cam]{$result_cr_x_idx})
+Assign cx $crx+$cdx
+Assign y round($cx+$pup_roi_w/2)*$yscale/$pup_roi_w
+Bound_Y
+# plot cr_x in green
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+
+Assign cry value(${prefix}_result[$i_cam]{$result_pcr_dy_idx})
+Assign cdy value(${prefix}_result[$i_cam]{$result_cr_y_idx})
+Assign cy $cry+$cdy
+Assign y round($cy+$pup_roi_h/2)*$yscale/$pup_roi_h
+Bound_Y
+# plot cy in green
+VSet g_plot[$plot_h-1-$y][$t_plot]{2} 255
+Set trace_found 1
+.
+
+Define Plot_CR_Area 0
+# make sure we get the correct value for cr area...
+cuda streams sync default quit quit
+Assign y round(value(${prefix}_result[$i_cam]{$result_cr_area_idx})*$yscale/$max_cr_area)
+Bound_Y
+VSet g_plot[$plot_h-1-$y][$t_plot]{1} 255
+Set trace_found 1
+.
+
+Define Switch_Plot 1 new_choice
+Set trace_choice $1
+Set current_y_min 0
+Set current_y_max -1
+If !strcmp('$trace_choice',Mean) "Set current_y_max 255"
+If !strcmp('$trace_choice','Pupil area') "Set current_y_max $max_pupil_area"
+If !strcmp('$trace_choice','CR area') "Set current_y_max $max_cr_area"
+If !strcmp('$trace_choice','dM/dT')
+  "Set current_y_min -$max_dMdT Set current_y_max $max_dMdT"
+If !strcmp('$trace_choice','Pupil')
+  "Set current_y_min 0 Set current_y_max $in_w"
+If !strcmp('$trace_choice','CR')
+  "Set current_y_min -$pup_roi_w/2 Set current_y_max $pup_roi_w/2"
+If !strcmp('$trace_choice','P-CR')
+  "Set current_y_min -$pup_roi_w/2 Set current_y_max $pup_roi_w/2"
+If $current_y_max==-1
+  "error_exit 'Switch_Plot $1:  no match found!?'"
+Label_Viewer plotwin $trace_choice
+# make sure the plot control panel reflects this setting
+Update_Plot_Choice $trace_choice
+Reset_Plot
+.
+
+

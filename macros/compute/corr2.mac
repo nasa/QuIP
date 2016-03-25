@@ -1,0 +1,341 @@
+
+##########################################
+#
+# This file is an altered version of 'corr.mac' by Xavier
+# It computes cross-correlation too, but for the sub-image correlation
+# this new version estimates automatically the threshold needed
+# In 'corr.mac' the threshold to adjust was called 'min_tmpl_norm'
+# The new normalized threshold is called 'var_normed_thresh'. It shouldn't
+# need any adjustment, and even if it did, it would be a much more controled one
+# (controled means you know can vary this param between 0 and 1 only, and what
+# this change would do)
+#
+##########################################
+
+# warmenu macros to register images with cross-correlation
+
+
+Start_File corr.mac
+
+
+# Normalized cross-correlation
+#
+# When the images cover the entire staging area it is appropriate
+# (i.e., the two images completely overlap for all possible
+# registrations), then it is reasonable just to compute a single
+# "norm" number of each image, to normalize the value of the cross
+# correlation (so that it is LTE 1).  However, when there is only
+# image content in a small subregion, then this unfairly penalizes
+# matches with little overlap.  In this case we should compute
+# a norm image.
+#
+# The norm image is computed using the valid window from the *other*
+# image...  We square the pixels and then convolve with the window
+# of the other, yielding the SOS of the given image that contribute
+# to the cross correlation for each possible registration.
+# We need two convolve routines becuase of the the asymmetry
+# in the correlation computation...
+#
+# If one image falls entirely within another, then a single norm
+# value can be used for the smaller image.  This can afford a computational
+# savings for applications like eye tracking (input match to template)
+#
+# This is all somewhat tricky...
+#
+# For fundus tracking, we know the windows, but what can we do
+# in general?  We can look for non-zero pixels...
+
+
+# The first image (img1) is the "input" in the retinal tracking sense,
+# while the second image (img2) is the "template" in the retinal tracking sense.
+# This means that img2 may cover the whole area, while img1 may cover only
+# a small area.  region1 and region2 indicate where each image has useful
+# data; when $production is set, it will be assumed that region2 covers
+# the whole image, so that a single norm value may be used.
+#
+# We imagine the input (img1) being moved over the template (img2), the location
+# of the final peak represents the diplacement we have to move img1 to obtain
+# registration.
+
+
+## Correlate
+#########################
+Set _nv1	1
+Set _nv2	1
+Define Correlate 3  target in1 in2
+
+Prepare_Xforms $2 $3
+
+# Get standard deviation of images
+Get_Norm_Value $2 _nv1
+Get_Norm_Value $3 _nv2
+
+# Multiply two images (done in Fourier domain)
+Fast_Raw_Corr $1 cin clast
+
+# Normalized correlation
+VSMul $1 $1 1/($_nv1*$_nv2)
+
+Delete_Xforms
+.
+
+
+
+## Correlate_Subimages
+# Assumes the 'img' are zero outside the 'regions' 
+########################
+Define Correlate_Subimages 5 target img1_input img2_tmpl region1 region2
+
+Dup_Float input_norm_img $2
+Dup_Float tmpl_norm_img $3
+Prepare_Xforms $2 $3		# outputs 'cin' and 'clast'
+
+# Get WINDOWED standard deviation IMAGES of input images
+Get_Norm_Image input_norm_img $2 $5 0
+Get_Norm_Image tmpl_norm_img  $3 $4 1
+
+# Multiply two images (done in Fourier domain)
+Fast_Raw_Corr $1 cin clast
+
+###Show_If $1 2 "unnormalized correlation"
+
+# Normalized correlation
+VVMul $1 $1 input_norm_img	# NEW
+VVMul $1 $1 tmpl_norm_img
+
+Delete_Xforms
+Delete_Image input_norm_img
+Delete_Image tmpl_norm_img
+.
+
+
+
+## Correlate_Subimages_Fast
+# Need to load the template before (with 'Prepare_Correlate_Subimages_Fast')
+########################
+Set fast_corr_setup 0
+Define Correlate_Subimages_Fast 5 target img1_input img2_tmpl region1 region2
+
+If !$fast_corr_setup	"Prepare_Correlate_Subimages_Fast $3"
+
+# FFT of input image
+RFFT cin $2
+
+# Get WINDOWED standard deviation IMAGES of input images
+Get_Norm_Image input_norm_img $2 $5 0
+Get_Norm_Image tmpl_norm_img  $3 $4 1
+
+# Multiply two images (done in Fourier domain)
+Fast_Raw_Corr $1 cin clast
+
+# Normalized correlation
+VVMul $1 $1 input_norm_img	# NEW
+VVMul $1 $1 tmpl_norm_img
+.
+
+
+
+
+## Prepare_Xforms
+## Declares the transform images and computes the transforms (no wrapping)
+###################################
+Define Prepare_Xforms 2 img1 img2
+Xform_For cin $1
+Xform_For clast $2
+RFFT cin $1
+RFFT clast $2
+.
+
+
+## Delete_Transforms
+#######################
+Define Delete_Xforms 0
+Delete_Image cin
+Delete_Image clast
+.
+
+
+## Prepare_Correlate_Subimages_Fast
+############################
+Define Prepare_Correlate_Subimages_Fast 1 img2_tmpl
+
+Dup_Float input_norm_img $1
+Dup_Float tmpl_norm_img $1
+
+Xform_For cin $1
+Xform_For clast $1
+
+# FFT of template image
+RFFT clast $1
+
+Set fast_corr_setup 1
+.
+
+
+# This correlation is "fast" because we assume we have already computed
+# the transforms...  it is "raw" because it is not normalized.
+# We wrap the result to put 0 in the middle.
+
+## Fast_Raw_Corr
+#############################
+Define Fast_Raw_Corr 3 target in1 in2
+Dup_Complex cscratch $2
+IXform_For rscratch $2
+VVCmul cscratch $3 $2
+RInvFFT rscratch cscratch
+Delete_Image cscratch
+Wrap $1 rscratch		# mainly for viewing pleasure...
+				# but also helps with interpolation about 0
+Delete_Image rscratch
+.
+
+
+## Get_Norm_Value
+## This macro computes the square root of the sum of squares (~= Standard deviation)
+#######################
+Define Get_Norm_Value 2 image varname
+
+Dup_Float gnv_squares $1
+Scalar gnv_sumscal 1 float
+VVMul gnv_squares $1 $1
+#VSum gnv_squares gnv_sumscal
+VSum gnv_sumscal gnv_squares
+Assign $2 sqrt(value(gnv_sumscal))
+Delete_Image gnv_squares
+Delete_Image gnv_sumscal
+.
+
+
+# Get_Norm_Image
+#
+# This function computes the pixel-wise squares of an image
+# and convolves with a window - the window represents the non-zero
+# portion of the OTHER image, so the convolution results in
+# the effective norm...
+#
+# Why not just use the (scalar) image norms???
+# Because when we know that the image only covers part of the staging area,
+# we only want to normalize by the portion that overlaps...
+
+Set tmp_norm_value 0
+#Set gni_mask_min 0.1	# so we don't divide by 0...
+Set gni_mask_min 0.1	# so we don't divide by 0...
+#Set gni_mask_min 0.001	# so we don't divide by 0...
+
+
+## Get_Norm_Images (new version from brollyx)
+# Without windowing, the norm would simply be the SOS of the input image
+# (constant) With windowing compensation, the norm is only a partial sum
+# of squares (PSOS). This PSOS is weighted by the window for each
+# convolution position.  So at the position of the information, we get
+# high value of the PSOS, with a maximum value equal to the SOS (as if no
+# windowing). Far away for the information, the PSOS reaches 0, which 
+# has the consequence to boost the normalized correlation (as the PSOS
+# is used as the normalization factor). Actually, the PSOS represents
+# the variance of the overlapping region between the two images. 
+# But we're not interested in solutions (i.e. high normalized correlation)
+# where the two input images barely overlap. We want solutions where the
+# informative regions of each image correlates, and not where the
+# non-informative regions correlates (those 'zero' regions always
+# correlate). So we want the overlapping region to have a decent variance
+# (not too small).  That's why we can clip the small values of the PSOS,
+# and set a minimum variance (function of the maximum). Then, the
+# non-informative regions will be assigned that minimum variance,
+# and thus have a very low normed correlation.
+#
+# For now, the minimum variance is linearly dependant on the max variance,
+# but one could use another formula.  The following threshold should be
+# defined between 0 and 1.  Values close to 1 make this windowed correlation
+# behave like the non-windowed one. They assume the two images have a big
+# overlap (the solution 'translation' is quite small) Small values would
+# enable a larger search, and pre-assumes the two images don't have much
+# overlap
+#  
+###### NORMALIZED PARAMETER #########
+Set var_normed_thresh	0.5		# min_var = max_var * var_normed_thresh
+#####################################
+#
+################################################################
+Define Get_Norm_Image 4 target source window order
+
+Dup_Float gni_mask $3
+
+# Setup window
+If $4
+  Then "Scroll gni_mask $3 1-ncols('$3')/2 1-nrows('$3')/2"
+  Else "Wrap gni_mask $3"
+
+# Square source image
+Dup_Std tmp_squares $2
+VVMul tmp_squares $2 $2
+
+# Convolve square of source with window
+If $4
+  Then "Convolve tmp_squares tmp_squares gni_mask"
+  Else "CConvolve tmp_squares tmp_squares gni_mask"
+
+# Clip convolution
+Get_Max max_var tmp_squares
+Assign var_thresh $var_normed_thresh*$max_var	# NEW (compared to corr.mac)
+VSMax tmp_squares tmp_squares $var_thresh
+
+# Square root, norm with sum_window and inverse
+VSqrt tmp_squares tmp_squares
+VSDiv $1 tmp_squares 1
+
+Delete_Image tmp_squares
+Delete_Image gni_mask
+Show_If $1 6 "norm image"
+.
+
+
+## Convolve
+###############
+Define Convolve 3 target ip1 ip2
+Xform_For _xf1 $2
+Xform_For _xf2 $3
+RFFT _xf1 $2
+RFFT _xf2 $3
+VVMul _xf1 _xf1 _xf2
+RInvFFT $1 _xf1
+Delete_Image _xf1
+Delete_Image _xf2
+.
+
+## CConvolve
+# like a convolve, but flip the output (like a correlation)
+# We probably should call this Correlate!?
+# note that the output is not wrapped...
+##############################
+Define CConvolve 3 target ip1 ip2
+Xform_For _xf1 $2
+Xform_For _xf2 $3
+RFFT _xf1 $2
+RFFT _xf2 $3
+VVCmul _xf1 _xf2 _xf1
+RInvFFT $1 _xf1
+Delete_Image _xf1
+Delete_Image _xf2
+.
+
+
+## CCConvolve
+# like a convolve, but conjugate BOTH xforms
+#######################
+Define CCConvolve 3 target ip1 ip2
+Xform_For _xf1 $2
+Xform_For _xf2 $3
+RFFT _xf1 $2
+RFFT _xf2 $3
+VSMul _xf1{1} _xf1{1} -1
+VSMul _xf2{1} _xf2{1} -1
+VVMul _xf1 _xf2 _xf1
+RInvFFT $1 _xf1
+Delete_Image _xf1
+Delete_Image _xf2
+.
+
+
+
+Stop_File corr.mac
+

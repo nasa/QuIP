@@ -1,0 +1,34 @@
+
+< $macro_dir/view/plotsupp.mac
+
+advise 'calling New_Plotter'
+New_Plotter plotwin 600 400
+advise 'Back from New_Plotter'
+
+Set xmin 0
+Set xmax 30
+Set ymin -4
+Set ymax 4
+Set x_tick_spacing 10
+Set y_tick_spacing 2
+
+Plot_Data_Range $xmin $ymin $xmax $ymax
+Y_Legend value
+X_Legend 'time (seconds)'
+Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
+Label_X_Ticks $xmin $xmax $x_tick_spacing
+Label_Y_Ticks $ymin $ymax $y_tick_spacing
+
+Set npts 20
+
+Vector data_vector $npts 2 float
+Ramp1D data_vector{0} $xmin ($xmax-$xmin)/($npts-1)
+VUni data_vector{1}
+VSMul data_vector{1} data_vector{1} $ymax-$ymin
+VSAdd data_vector{1} data_vector{1} $ymin
+
+XYPlot data_vector
+
+Pause
+

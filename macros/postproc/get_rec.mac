@@ -1,0 +1,124 @@
+
+#system "dm x5 x6 < $rawdir/$filename > $scrdir/rettmp"
+#system "abut $scrdir/rettmp $scrdir/ycorr.$camera_index | \
+#  dm x1 x2+x3 > $scrdir/retdata"
+#< /dev/tty
+#Read_Data_File $scrdir/retdata
+
+Set corr_norm 1		# use 4000 for munged data
+
+# This is for retina files...
+
+Define Get_Retina_Data 1 filename
+# corr_norm is a hack until correlation coefficient is fixed...
+#system "dm x5 x6 x10/$corr_norm < $rawdir/$1 > $scrdir/retdata"
+advise "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
+system "dm x5 x6 x10 < $rawdir/$1 > $scrdir/retdata"
+Read_Data_With_Corr $scrdir/retdata
+.
+
+Set dm_string "x8-x10 x9-x11 1"			# this string uses CR-p4
+
+Define Get_Pupil_Data 1 filename
+system "grep FRAME $rawdir/$1 | dm $dm_string > $scrdir/retdata"
+Read_Data_With_Corr $scrdir/retdata
+.
+
+Set read_data_function Get_Pupil_Data		# default
+
+# from expts 1,2,3...
+#Define Get_Stim_Filename 1 paramstr
+#Set stim_filename "stimuli/exp$EXPERIMENT/posn.$1.asc"
+#.
+
+Define Apply_Interlace_Correction 0
+# read_data_with_corr leaves the data where?
+Dup_Float icorr record{1}
+Dup_Float aic_tmp record{1}
+Ramp1D icorr 0 0.5
+VFloor aic_tmp icorr
+VSMul aic_tmp aic_tmp -2
+VSMul icorr icorr 2
+VVAdd icorr icorr aic_tmp
+VSMul icorr icorr $interlace_correction
+Delete_Image aic_tmp
+Delete_Image icorr
+.
+
+Set interlace_correction 0		# default - no correction
+
+Define Get_Record 1 param_string
+Set filename "d.$ANALYSIS_SIZE.$1.asc"	# camera index is in directory
+advise "Get_Record:  filename is $filename"
+Erase_All
+
+# read data function is vectored to handle pupil & retina files...
+#Read_Data_With_Corr $scrdir/retdata
+$read_data_function $filename
+
+# Here is where we should apply any extra interlace correction
+# There is a small BUG, in that we should really apply this
+# correction to the calibration data too...
+# should centralize where this is done!
+
+# BUG blink zeroing has already occured in read_data_func...
+If $interlace_correction!=0 Apply_Interlace_Correction
+
+# here is a good place to show the stimuli...
+## But what are the stimuli for experiment 2???
+#Get_Ascii xstimvec "stim.x.$2"
+#Get_Ascii ystimvec "stim.y.$2"
+#echo "Get_Ascii stim_posn 'stimuli/exp$EXPERIMENT/posn.$1.asc'"
+#Get_Ascii stim_posn "stimuli/exp$EXPERIMENT/posn.$1.asc"
+Get_Stim_Filename $1
+echo "Get_Ascii stimpos $stim_filename"
+Get_Ascii stimpos $stim_filename
+### # ignore blink periods of stimulus
+### VVMul stimpos{0} stimpos{0} blink
+### VVMul stimpos{1} stimpos{1} blink
+
+# why is this minus sign here?
+# is it because the y coordinates go down
+# but this seems to apply both to x and y...
+VSMul stimpos stimpos -$zoom_factor*$degrees_per_pixel
+
+# has the trace been plotted yet?
+
+#Overlay_PPlot stimpos{0} stimpos{1}
+
+Process_Record		# get velocities
+
+echo Process_Trace
+Process_Trace		# remove saccdes
+echo ' done w/ Process_Trace'
+
+.
+
+Define Accum_Init 0
+VSet axvaccum 0.0
+VSet ayvaccum 0.0
+VSet bxvaccum 0.0
+VSet byvaccum 0.0
+VSet cxvaccum 0.0
+VSet cyvaccum 0.0
+
+# now make the stimulus trace...
+#
+# we have 90,110,or 130 fields before and after, the things
+# are left-shifted to make the transitions line up,
+# so they will start at 90
+
+Set event_start 90
+Subvector stimseg stimvec $event_start 0
+VSet stimseg 0.0
+Delete_Image stimseg
+# the transition segment is 16 fields...
+Subvector stimseg stimvec 17 $event_start-1
+Ramp1D stimseg 0.0 1/16
+Delete_Image stimseg
+# the final segment is the rest...
+Subvector stimseg stimvec ncols(stimvec)-($event_start+16) $event_start+16
+VSet stimseg 1.0
+Delete_Image stimseg
+.
+

@@ -1,0 +1,764 @@
+RUNNING TEST align.scr
+enabling debugging messages for data module
+make_dobj v, requesting 16384 data bytes
+get_data_space:  requesting 16384 (0x4000) bytes for object v
+get_data_space:  aligning area provided by getbuf (align = 16)
+ram:v               row vector, 4096 elements             float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 1
+	range_mindim = 1, range_maxdim = 1
+	   1     sequence   inc=0
+	   1        frame   inc=0
+	   1          row   inc=0
+	4096      columns   inc=1
+	   1    component   inc=0
+machine type dimensions:
+	   1     sequence   inc=0
+	   1        frame   inc=0
+	   1          row   inc=0
+	4096      columns   inc=1
+	   1    component   inc=0
+	4096 float elements
+	data at   0x7ff98b84ae00
+	flags (0x7004):
+		row vector (0x4)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+	incr[0] = 0 (0)
+	incr[1] = 1 (1)
+	incr[2] = 0 (0)
+	incr[3] = 0 (0)
+	incr[4] = 0 (0)
+shpp = 0x7ff98b6a57e0
+row vector, 4096 elements             float, real
+prec = 0x5
+dim[0] = 1 (1), dim[1] = 4096 (4096), dim[2] = 1 (1), dim[3] = 1 (1), dim[4] = 1 (1), 
+n_elts = 0x1000 (0x1000)
+mindim = 0x1
+maxdim = 0x1
+flags = 0x7004
+RUNNING TEST asc.scr
+ram:t               row vector,    5 elements             float, real
+ 1
+ 2
+ 3
+ 4
+ 5
+ram:t               row vector,    5 elements             double, real
+(null)1
+(null)2
+(null)3
+(null)4
+(null)5
+reading t
+ram:t               row vector,    5 elements             float, complex
+ 1
+ 1e+01
+ 2
+ 2e+01
+ 3
+ 3e+01
+ 4
+ 4e+01
+ 5
+ 5e+01
+reading t
+ram:t               row vector,    5 elements             double, dblcpx
+ 1
+ 1e+01
+ 2
+ 2e+01
+ 3
+ 3e+01
+ 4
+ 4e+01
+ 5
+ 5e+01
+reading t
+ram:t               row vector,    5 elements             float, real, 3 components
+ 1
+ 1e+01
+ 1e+02
+ 2
+ 2e+01
+ 2e+02
+ 3
+ 3e+01
+ 3e+02
+ 4
+ 4e+01
+ 4e+02
+ 5
+ 5e+01
+ 5e+02
+reading t
+ram:t               row vector,    5 elements             short, real, 3 components
+          1
+         10
+        100
+          2
+         20
+        200
+          3
+         30
+        300
+          4
+         40
+        400
+          5
+         50
+        500
+RUNNING TEST bit_index.scr
+ram:b               image,    3 rows      8 columns       bit
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+ram:b               image,    3 rows      8 columns       bit
+0 0 1 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+ram:b               image,    3 rows      8 columns       bit
+0 0 1 0 1 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+ram:b[1]            row vector,    8 elements             bit
+0 0 1 0 1 0 0 0
+RUNNING TEST bitflag.scr
+ram:m1              sequence,   4 6x10 frames                  float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 3
+	range_mindim = 1, range_maxdim = 3
+	   4       frames   inc=60
+	   6         rows   inc=10
+	  10      columns   inc=1
+	240 float elements
+	data at   0x7fcfd26a5aa0
+	flags (0x7001):
+		sequence (0x1)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+Assertion failed: (DIMENSION(dsp,i) != 0), function check_inset, file sub_obj.c, line 103.
+Abort
+RUNNING TEST bitmap.scr
+reading small bitmap data...
+ram:bm0             image,    6 rows      5 columns       bit
+1 1 1 1 1
+1 1 0 0 1
+1 1 0 0 1
+1 1 1 1 1
+1 1 1 1 1
+1 1 1 1 1
+ram:e0              column vector,    6 elements          uint64, real
+(null)0x1f        
+(null)0x13        
+(null)0x13        
+(null)0x1f        
+(null)0x1f        
+(null)0x1f        
+creating larger bit image
+creating larger subimage
+ram:bm1             image,   16 rows     30 columns       bit
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	  16         rows   inc=64
+	  30      columns   inc=1
+	16 uint64 elements
+	data at   0x7f8f9aea6ac0
+		bit0 = 0
+	subobjects:
+		sbm1
+	flags (0x7202):
+		image (0x2)
+		bitmap (0x200)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+ram:sbm1            image,    5 rows     22 columns       bit
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   5         rows   inc=64
+	  22      columns   inc=1
+	15 uint64 elements
+	data at   0x7f8f9aea6ac0
+		bit0 = 130
+	parent data object:  bm1
+	data offset:  0x2
+	flags (0x807202):
+		image (0x2)
+		bitmap (0x200)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+setting...
+Set to 1
+ram:bm1             image,   16 rows     30 columns       bit
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+VSet sbm1 0
+ram:sbm1            image,    5 rows     22 columns       bit
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+ram:bm1             image,   16 rows     30 columns       bit
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+VSet sbm1 1
+ram:sbm1            image,    5 rows     22 columns       bit
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+ram:bm1             image,   16 rows     30 columns       bit
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+ram:bm1             image,   16 rows     30 columns       bit
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+RUNNING TEST complex.scr
+ram:c1{1}           image,    2 rows      3 columns       float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   2         rows   inc=6
+	   3      columns   inc=2
+	6 float elements
+	data at   0x7ff6a1ea5a04
+	parent data object:  c1
+	data offset:  0x4
+	flags (0xc56002):
+		image (0x2)
+		not data owner (0x800000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		locked (0x10000)
+		temporary object (0x40000)
+		volatile (0x400000)
+ram:c1              image,    2 rows      3 columns       float, complex
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+ 1
+ 0
+EOF on First_Query_Stack
+RUNNING TEST comps.scr
+enabling debugging messages for data module
+make_dobj rgb, requesting 144 data bytes
+get_data_space:  requesting 144 (0x90) bytes for object rgb
+get_data_space:  aligning area provided by getbuf (align = 4)
+Displaying info about RGB image
+ram:rgb             image,    4 rows      3 columns       float, real, 3 components
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 0, maxdim = 2
+	range_mindim = 0, range_maxdim = 2
+	   1     sequence   inc=0
+	   1        frame   inc=0
+	   4         rows   inc=9
+	   3      columns   inc=3
+	   3   components   inc=1
+machine type dimensions:
+	   1     sequence   inc=0
+	   1        frame   inc=0
+	   4         rows   inc=9
+	   3      columns   inc=3
+	   3   components   inc=1
+	36 float elements
+	data at   0x7fb14bea5a90
+	flags (0x7102):
+		image (0x2)
+		multidimensional (0x100)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+	incr[0] = 1 (1)
+	incr[1] = 3 (3)
+	incr[2] = 9 (9)
+	incr[3] = 0 (0)
+	incr[4] = 0 (0)
+shpp = 0x7fb14bea59c0
+image,    4 rows      3 columns       float, real, 3 components
+prec = 0x5
+dim[0] = 3 (3), dim[1] = 3 (3), dim[2] = 4 (4), dim[3] = 1 (1), dim[4] = 1 (1), 
+n_elts = 0x24 (0x24)
+mindim = 0x0
+maxdim = 0x2
+flags = 0x7102
+Displaying info about one color plane from an RGB image
+locking temp object rgb{0}
+ram:rgb{0}          image,    4 rows      3 columns       float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   1     sequence   inc=0
+	   1        frame   inc=0
+	   4         rows   inc=9
+	   3      columns   inc=3
+	   1    component   inc=0
+machine type dimensions:
+	   1     sequence   inc=0
+	   1        frame   inc=0
+	   4         rows   inc=9
+	   3      columns   inc=3
+	   1    component   inc=0
+	12 float elements
+	data at   0x7fb14bea5a90
+	parent data object:  rgb
+	data offset:  0x0
+	flags (0xc56002):
+		image (0x2)
+		not data owner (0x800000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		locked (0x10000)
+		temporary object (0x40000)
+		volatile (0x400000)
+	incr[0] = 0 (0)
+	incr[1] = 3 (3)
+	incr[2] = 9 (9)
+	incr[3] = 0 (0)
+	incr[4] = 0 (0)
+shpp = 0x7fb14bea6550
+image,    4 rows      3 columns       float, real
+prec = 0x5
+dim[0] = 1 (1), dim[1] = 3 (3), dim[2] = 4 (4), dim[3] = 1 (1), dim[4] = 1 (1), 
+n_elts = 0xc (0xc)
+mindim = 0x1
+maxdim = 0x2
+flags = 0xc56002
+RUNNING TEST contig.scr
+ram:c1              image,    3 rows      2 columns       float, complex
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 0, maxdim = 2
+	range_mindim = 0, range_maxdim = 2
+	   3         rows   inc=2
+	   2      columns   inc=1
+	   1    component   inc=0
+	12 float elements
+	data at   0x7fd278ea59e0
+	flags (0x7082):
+		image (0x2)
+		complex (0x80)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+EOF on First_Query_Stack
+RUNNING TEST disp2.scr
+Setting GL window...
+Using platform CUDA
+Using GPU GeForce_GTX_680MX
+Current platform device is:  GeForce_GTX_680MX (CUDA)
+Setting platform viewer...
+WARNING:  Command "viewer" not found!?
+list                    	list platforms
+info                    	print device information
+list_devices            	list devices
+device_info             	print device information
+select                  	select platform/device
+device_type             	use device of specified type
+show                    	show current default platform
+upload                  	upload a data object to a device
+dnload                  	download a data object from a device
+quit                    	exit submenu
+?                       	list commands in current menu
+??                      	list commands in builtin menu
+quit                    	exit submenu
+WARNING:  Command "Test_Viewer" not found!?
+
+ERROR:  program quip:  Too many warnings (2 max)
+RUNNING TEST equiv.scr
+ram:b1              sequence,   1 4x76 frames                  bit
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 3
+	range_mindim = 1, range_maxdim = 3
+	   1        frame   inc=0
+	   4         rows   inc=128
+	  76      columns   inc=1
+	8 uint64 elements
+	data at   0x7ffb88ea4c90
+		bit0 = 0
+	flags (0x7201):
+		sequence (0x1)
+		bitmap (0x200)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+Equivalencing bit to uint32:
+ram:el1             image,    4 rows      4 columns       uint32, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   4         rows   inc=4
+	   4      columns   inc=1
+	16 uint32 elements
+	data at   0x7ffb88ea4c90
+	parent data object:  b1
+	data offset:  0x0
+	flags (0x807002):
+		image (0x2)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+ 
+Equivalencing bit to uint64:
+ram:el2             image,    4 rows      2 columns       uint64, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   4         rows   inc=2
+	   2      columns   inc=1
+	8 uint64 elements
+	data at   0x7ffb88ea4c90
+	parent data object:  b1
+	data offset:  0x0
+	flags (0x807002):
+		image (0x2)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+ 
+Equivalencing back to bit
+ram:eb1             image,    4 rows    128 columns       bit
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   4         rows   inc=8192
+	 128      columns   inc=64
+	8 uint64 elements
+	data at   0x7ffb88ea4c90
+		bit0 = 0
+	parent data object:  el2
+	data offset:  0x0
+	flags (0x806202):
+		image (0x2)
+		bitmap (0x200)
+		not data owner (0x800000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+ 
+Equivalencing floats to complex...
+ram:ef1             image,    2 rows      5 columns       float, complex
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 0, maxdim = 2
+	range_mindim = 0, range_maxdim = 2
+	   2         rows   inc=5
+	   5      columns   inc=1
+	   1    component   inc=0
+	20 float elements
+	data at   0x7ffb88ea5650
+	parent data object:  f1
+	data offset:  0x0
+	flags (0x807082):
+		image (0x2)
+		complex (0x80)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+Equivalencing complex to float...
+ram:ec1             image,    4 rows      5 columns       float, real, 2 components
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 0, maxdim = 2
+	range_mindim = 0, range_maxdim = 2
+	   4         rows   inc=10
+	   5      columns   inc=2
+	   2   components   inc=1
+	40 float elements
+	data at   0x7ffb88ea5780
+	parent data object:  c1
+	data offset:  0x0
+	flags (0x807102):
+		image (0x2)
+		multidimensional (0x100)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+RUNNING TEST info.scr
+enabling debugging messages for veclib module
+ram:w               image,    4 rows      4 columns       float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   4         rows   inc=4
+	   4      columns   inc=1
+	16 float elements
+	data at   0x7f8080f9ca60
+	flags (0x7002):
+		image (0x2)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+ram:w               image,    4 rows      4 columns       float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 2
+	range_mindim = 1, range_maxdim = 2
+	   4         rows   inc=4
+	   4      columns   inc=1
+	16 float elements
+	data at   0x7f8080f9ca60
+	flags (0x7002):
+		image (0x2)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+RUNNING TEST obj_exists.scr
+foo does not exist
+Now, foo exists
+EOF on First_Query_Stack
+RUNNING TEST relocate.scr
+ram:s               row vector,    6 elements             float, real
+ 0
+ 1
+ 2
+ 3
+ 4
+ 5
+ram:s               row vector,    6 elements             float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 1
+	range_mindim = 1, range_maxdim = 1
+	   6      columns   inc=1
+	6 float elements
+	data at   0x7f8b5204e9f0
+	parent data object:  v
+	data offset:  0x0
+	flags (0x827004):
+		row vector (0x4)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		assigned (0x20000)
+ram:s[3]            scalar                                float, real
+ 3
+ram:s[3]            scalar                                float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 4, maxdim = 0
+	range_mindim = 4, range_maxdim = 0
+	1 float element
+	data at   0x7f8b5204e9fc
+	parent data object:  s
+	data offset:  0xc
+	flags (0xc67010):
+		scalar (0x10)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		assigned (0x20000)
+		temporary object (0x40000)
+		volatile (0x400000)
+Relocating s to offset 3
+ram:s               row vector,    6 elements             float, real
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ram:s               row vector,    6 elements             float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 1, maxdim = 1
+	range_mindim = 1, range_maxdim = 1
+	   6      columns   inc=1
+	6 float elements
+	data at   0x7f8b5204e9fc
+	parent data object:  v
+	data offset:  0xc
+	subobjects:
+		s[3]
+	flags (0x827004):
+		row vector (0x4)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		assigned (0x20000)
+ram:s[3]            scalar                                float, real
+ 6
+ram:s[3]            scalar                                float, real
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 4, maxdim = 0
+	range_mindim = 4, range_maxdim = 0
+	1 float element
+	data at   0x7f8b5204ea08
+	parent data object:  s
+	data offset:  0xc
+	flags (0xc67010):
+		scalar (0x10)
+		not data owner (0x800000)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		assigned (0x20000)
+		temporary object (0x40000)
+		volatile (0x400000)
+RUNNING TEST sub.scr
+Setting b...
+Setting s...
+ram:b{0}            image,    7 rows      5 columns       u_byte, real
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         3
+(null)         3
+(null)         7
+(null)         7
+(null)         7
+(null)         3
+(null)         3
+(null)         7
+(null)         7
+(null)         7
+(null)         3
+(null)         3
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+(null)         7
+ram:b               image,    7 rows      5 columns       u_byte, real, 3 components
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 0, maxdim = 2
+	range_mindim = 0, range_maxdim = 2
+	   7         rows   inc=15
+	   5      columns   inc=3
+	   3   components   inc=1
+	105 u_byte elements
+	data at   0x7faaa5805650
+	subobjects:
+		b{0}
+		s
+	flags (0x27102):
+		image (0x2)
+		multidimensional (0x100)
+		contiguous (0x1000)
+		contiguity checked (0x2000)
+		evenly spaced (0x4000)
+		assigned (0x20000)
+ram:s               image,    3 rows      2 columns       u_byte, real, 3 components
+	device:  CPU1
+	item context:  Data_Obj.default
+	mindim = 0, maxdim = 2
+	range_mindim = 0, range_maxdim = 2
+	   3         rows   inc=15
+	   2      columns   inc=3
+	   3   components   inc=1
+	18 u_byte elements
+	data at   0x7faaa5805662
+	parent data object:  b
+	data offset:  0x12
+	flags (0x822102):
+		image (0x2)
+		multidimensional (0x100)
+		not data owner (0x800000)
+		contiguity checked (0x2000)
+		assigned (0x20000)

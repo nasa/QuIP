@@ -1,0 +1,29 @@
+
+Define SetColor 0
+advise "color = $choice"
+.
+
+Define SetFilename 0
+Set filename $input_string
+Print filename
+.
+
+interface
+  panel test_panel 400 400
+  decorate test_panel
+    text Filename SetFilename fooandthenalooooooongstring
+    chooser Colors SetColor 3 red green blue
+    button QUIT exit
+    quit
+  control
+    show test_panel
+    quit
+  quit
+
+advise 'Entering event loop...'
+do
+  os events quit
+  while 1
+
+exit
+

@@ -1,0 +1,150 @@
+# kalman.mac
+#
+# Linear Kalman Filtering macros
+#
+# not sure that these are working correctly?
+#########################################
+
+Start_File kalman.mac
+
+Define Create_Kalman_Images 2 Nstate Nmeas
+
+# Once those images declared, one need to define the model (D, Vd) and the measurement (M, Vm)
+# Also, before starting the kalman update iteration, remember to initialize the prediction (p,Vp)
+
+# Dynamic model
+Image kMdynamics	$1 $1 1 float		# state transition matrix 
+Image kMdyn_noise_covar	$1 $1 1 float		# covariance of noise in transition equation
+
+# Measurement model
+Image kMmeasurement	$2 $1 1 float		# measurement matrix
+Image kMmeas_noise_covar	$2 $2 1 float		# covariance of measerement noise
+
+# Prediction and correction covariance matrices
+Image kMpred_covar	$1 $1 1 float		# prediction covariance (=state cov right before meas)
+Image kMcorrect_covar	$1 $1 1 float		# state covariance matrix, right after measurement
+Image kMgain	$1 $2 1 float		# gain matrix
+
+# Temp images
+Image kM21	$1 $2 1 float
+Image kM21_2	$1 $2 1 float
+Image kM12	$2 $1 1 float
+Image kM11	$2 $2 1 float
+Image kM11_2	$2 $2 1 float
+Image kM22	$1 $1 1 float
+Image kM22_2	$1 $1 1 float
+Image kM10	$2 1 1 float
+Image kM20	$1 1 1 float
+Image kI22	$1 $1 1 float
+Image kI11	$2 $2 1 float
+VSet kI22 0
+Set i 0
+repeat $1
+	VSet kI22[$i][$i] 1
+	Increment i
+end
+Set i 0
+repeat $2
+	VSet kI11[$i][$i] 1
+	Increment i
+end
+
+VSet kMdynamics 0
+VSet kMmeasurement 0
+VSet kMdyn_noise_covar 0
+VSet kMmeas_noise_covar 0
+Set i 0
+repeat ncols(kMdyn_noise_covar)
+	VSet kMdyn_noise_covar[$i][$i] 1
+	VSet kMmeas_noise_covar[$i][$i] 1
+	Increment i
+	end
+
+Set zoom 30
+Assign mvw ncols(kMgain)*$zoom
+Assign mvh nrows(kMgain)*$zoom
+
+Viewer v_gain $mvw $mvh
+Viewer v_pred_covar $mvw $mvh
+Viewer v_dynamics $mvw $mvh
+Viewer v_prev_state $mvw $mvh
+Viewer v_pred $mvw $mvh
+Posn_Window v_gain 1200 50
+Posn_Window v_pred_covar 1200 1.2*$mvh
+Posn_Window v_dynamics 1200 2*1.2*$mvh
+Posn_Window v_prev_state 1200 3*1.2*$mvh
+Posn_Window v_pred 1200 4*1.2*$mvh
+
+.
+
+
+
+Define Kalman_Prediction 2 p_prediction x_km1_previous_state
+
+Disp_Gray kMdynamics v_dynamics
+Disp_Gray $2 v_prev_state
+
+# prediction
+Inner_Prod $1 kMdynamics $2
+
+# covariance of prediction
+Inner_Prod kM22 kMdynamics kMcorrect_covar
+Transpose kM22_2 kMdynamics
+Inner_Prod kMpred_covar kM22 kM22_2
+VVAdd kMpred_covar kMpred_covar kMdyn_noise_covar
+Disp_Gray kMpred_covar v_pred_covar
+Display kMpred_covar
+.
+
+
+
+
+Define Kalman_Correction 3 x_state p_prediction m_measurement
+#advise "Kalman_Correction BEGIN"
+
+# Gain matrix
+Inner_Prod kM12 kMmeasurement kMpred_covar
+Transpose kM21 kMmeasurement
+Inner_Prod kM11 kM12 kM21
+VVAdd kM11 kM11 kMmeas_noise_covar
+advise "operations before invert"
+Display kM11
+Invert kM11
+Inner_Prod kM21_2 kMpred_covar kM21
+Inner_Prod kMgain kM21_2 kM11
+Display kMgain
+
+
+#Display kMgain
+Disp_Gray kMgain v_gain
+
+
+# estimated state
+advise "measurement"
+Display $3
+advise "prediction"
+Display $2
+Inner_Prod kM10 kMmeasurement $2
+advise "measure matrix"
+Display kMmeasurement
+advise "product Mmeasure pred_covar"
+Display kM10
+VVSub kM10 $3 kM10
+advise "before multiply by gain"
+Display kM10
+Inner_Prod kM20 kMgain kM10
+advise "after multiply by gain"
+Display kM20
+VVAdd $1 $2 kM20
+advise "correction"
+Display $1
+
+# covariance of state
+Inner_Prod kM22 kMgain kMmeasurement
+VVSub kM22 kM22 kI22
+Inner_Prod kMcorrect_covar kM22 kMpred_covar
+Display kMcorrect_covar
+.
+
+Stop_File kalman.mac
+
