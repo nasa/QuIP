@@ -25,6 +25,10 @@
 #include <ctype.h>
 #endif
 
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+
 #include "query_prot.h"
 #include "query.h"
 #include "warn.h"

@@ -35,7 +35,9 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 {
 	Query_Stack *qsp;
 
-	set_progname(argv[0]);
+    assert( initial_menu_p != NULL );
+    
+    set_progname(argv[0]);
 	first_menu = initial_menu_p;
 
 	//debug |= CTX_DEBUG_MASK;

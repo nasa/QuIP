@@ -1,0 +1,5810 @@
+If var_exists(startup_file_read) 'exit_file'
+# FILE system/builtin.mac BEGIN
+#
+# macros to simplify use of builtin submenus
+#
+
+#verbose yes
+
+If $verbose "echo 'interpreting file builtin.mac'"
+
+# macro control
+
+macros define Define 0
+macros define
+.
+
+Define Delete_Macro 1 name
+macros delete $1 quit
+.
+
+Define Find_Macro 1 string
+macros find $1 quit
+.
+
+# variable control
+
+Define Set 2 'variable name' 'value'
+variables set $1 $2 quit
+.
+
+Define UnSet 1 'variable name'
+variables unset $1 quit
+.
+
+Define Variables 0
+variables list quit
+.
+
+# generally useful
+
+Define Idle 0
+Set idling 1
+os
+  do
+    events
+    while $idling
+  quit
+.
+
+# needs to be different for unix & iOS
+#Define Pause 0
+#advise 'type ^D to proceed'
+#< /dev/tty
+#.
+
+Set pausing 0
+
+Define Pause_If 0
+If $pausing Pause
+.
+
+Set chatty 0
+
+Define Tell_If 1 string
+# Problems if the argument has single quotes in it...
+# Also problems if there is a newline...  For direct
+# input, we can escape a newline by preceding with a backslash...
+If $verbose||$chatty "advise '$1'"
+.
+
+Define Print_If 1 varname
+If $verbose||$chatty "Print $1"
+.
+
+Define Check_Version_Match 0
+If strcmp('$script_version','$git_version')
+  "error_exit 'Version mismatch:  script is $script_version, but code is $git_version'"
+.
+
+Define Require_Version 1 version_string
+advise "Require_Version $1 BEGIN"
+Print git_version
+If strcmp('$1','$git_version')
+  "error_exit 'Script requires version $1, but code is $git_version'"
+#advise "Require_Version $1 DONE"
+.
+
+If $verbose "echo 'finished interpreting file builtin.mac'"
+
+# FILE system/msgs.mac BEGIN
+
+If $verbose 'advise "interpreting file msgs.mac"'
+
+Define Start_File 1 filename
+If $verbose "advise 'interpreting file $1'"
+.
+
+Define Stop_File 1 filename
+If $verbose "advise 'finished interpreting file $1'"
+.
+
+Stop_File msgs.mac
+
+# FILE system/vars.mac BEGIN
+
+Start_File vars.mac
+
+Define Insure_Var 1 name
+If !var_exists($1) "Set $1 0"
+.
+
+Define Delete_Var 1 name
+variables unset $1 quit
+.
+
+Define Increment 1 'variable name'
+Assign $1 "1+$$1"
+.
+
+Define Decrement 1 'variable name'
+Assign $1 "$$1 - 1"
+.
+
+Define Add_Var 2 'variable name' addend
+#advise "adding $2 to variable $1 (initial val $$1)"
+Assign $1 "$2+$$1"
+.
+
+Define Subtract_Var 2 'variable name' subtractand
+Assign $1 "$$1-$2"
+.
+
+Define Mul_Var 2 'variable name' multiplicand
+Set _tmp $1
+Assign multiplicand $2
+Assign __tmp "$$_tmp*$multiplicand"
+Set $1 $__tmp
+.
+
+Define Print 1 'variable name'
+Set __tmp $1
+echo "$__tmp = $$__tmp"
+.
+
+Set temp_index 100
+
+Define Temp_Name 2 'target variable' 'name stem'
+Increment temp_index
+Set $1 "$2$temp_index"
+.
+
+Define Assign 2 variable value
+variables assign $1 $2 quit
+.
+
+# We had trouble with $${1} and ${1}_stuff
+
+Define Push_Var 1 varname
+Set vn $1
+If "var_exists(${vn}_stk_count)"
+  Then "Increment ${vn}_stk_count"
+  Else "Set ${vn}_stk_count 1"
+Set pv_n_name ${vn}_stk_count
+Set pv_n $$pv_n_name
+Set ${vn}_stk_$pv_n $$vn
+.
+
+Define Pop_Var 1 varname
+Set vn $1
+If "!var_exists(${vn}_stk_count)"
+  "warn 'Variable $1 never pushed!?' exit_macro"
+Set pv_n_name ${vn}_stk_count
+Set pv_n $$pv_n_name
+If $pv_n<1
+  "warn 'Variable $1 stack empty!?' exit_macro"
+Set stk_name ${vn}_stk_$pv_n
+Set $1 $$stk_name
+Decrement "${1}_stk_count"
+.
+
+Define Swap_Vars 2 var1 var2
+Set sv_tmp $$1
+Set $1 $$2
+Set $2 $sv_tmp
+.
+
+Define Limit_Var 3 varname min max
+Assign $1 max($2,min($$1,$3))
+.
+
+Stop_File vars.mac
+
+# FILE system/files.mac BEGIN
+# useful stuff for file system manipulation
+
+Start_File files.mac
+
+# Why TopMenu here???  (TopMenu used to be in the second
+# error then clause...
+
+# for unix, Create_Dir is defined to use a system cmd...
+
+Define Insure_Directory 1 name
+If "!file_exists('$1')"
+  "advise 'creating subdirectory \"$1\"' Mkdir '$1'"
+#  Then "advise 'creating subdirectory \"$1\"' Mkdir '$1'"
+#  Else "advise 'directory \"$1\" already exists!'"
+If "!file_exists('$1')"
+  "warn 'Couldn\\\\'t create subdirectory \"$1\"'"
+.
+
+# Insure_Public_Directory does a chmod 777...
+
+Define Insure_Public_Directory 1 name
+If "!file_exists('$1')"
+  "advise 'creating subdirectory \"$1\"' Mkdir '$1' Chmod 777 '$1'"
+If "!file_exists('$1')"
+  "warn 'Couldn\\'t create subdirectory \"$1\"' quit"
+.
+
+Stop_File files.mac
+
+# FILE system/ios_helper.mac BEGIN
+# lost the content...
+# added to the project, but not the git source repo
+
+# how can we Pause?  We can throw up an alert, how can we
+# suspend execution?
+
+Define Pause 0
+advise "Pause not implemented yet..."
+.
+
+Define Mkdir 1 dir_name
+#advise "Mkdir $1 BEGIN"
+mkdir $1
+#advise "Mkdir $1 DONE"
+.
+
+
+Define Count_Lines 2 varname filename
+# This is a special built-in command for iOS
+count_lines $1 $2
+.
+
+Define Load_Resource_If 1 file
+If !var_exists(loading_encrypted) "< '$RESOURCE_DIR/$1'"
+.
+
+# FILE data/ascii.mac BEGIN
+
+# %Z% $RCSfile: ascii.mac,v $ ver: $Revision: 1.10 $ $Date: 2005/11/17 06:16:01 $
+
+Start_File ascii.mac
+
+Define Get_String 2 varname string_obj
+data ascii get_string $2 $1 quit quit
+.
+
+Define Set_String 2 string_obj string
+data ascii set_string $1 "$2" quit quit
+.
+
+Set ascii_read_dir .
+Set ascii_write_dir .
+
+Define Get_Ascii 2 'data object' 'ascii filename'
+data
+  ascii
+    If strcmp('$2','-')==0||strstr('$2','/')==0
+      Then "read $1 '$2'"
+      Else "read $1 '$ascii_read_dir/$2'"
+    quit
+  quit
+.
+
+Define Append_Ascii 2 'data object' 'ascii filename'
+data
+  ascii
+    If strcmp('$2','-')==0||strstr('$2','/')==0
+      Then "append $1 '$2'"
+      Else "append $1 '$ascii_write_dir/$2'"
+    quit
+  quit
+.
+
+Define Put_Ascii 2 'data object' 'ascii filename'
+data
+  ascii
+    If strcmp('$2','-')==0||strstr('$2','/')==0
+      Then "write $1 '$2'"
+      Else "write $1 '$ascii_write_dir/$2'"
+    quit
+  quit
+.
+
+Define Ascii_Write_Dir 1 dirname
+Set ascii_write_dir $1
+.
+
+Define Ascii_Read_Dir 1 dirname
+Set ascii_read_dir $1
+.
+
+Define Info 1 'data object'
+data info $1 quit
+.
+
+Define Display_If 1 object
+If $chatty "Display $1"
+.
+
+Define Display 1 'data object'
+data
+  ascii
+    display $1
+    quit
+  quit
+.
+
+Define Get_Scalar 2 scalar file
+Scalar sc_tmp 1 float
+Get_Ascii sc_tmp $2
+Assign $1 value(sc_tmp)
+Delete_Image sc_tmp
+.
+
+Define Put_Scalar 2 scalar file
+Scalar sc_tmp 1 float
+VSet sc_tmp $1
+Put_Ascii sc_tmp $2
+Delete_Image sc_tmp
+.
+
+Define Read_Data 1 object
+data ascii read $1 -
+.
+
+# user needs to quit!?
+
+Define End_Data 0
+quit quit
+.
+
+
+
+Stop_File ascii.mac
+
+
+# FILE data/decl.mac BEGIN
+
+# %Z% $RCSfile: decl.mac,v $ ver: $Revision: 1.25 $ $Date: 2012/01/21 17:14:40 $
+
+Start_File decl.mac
+
+Define Check_Dup 2 name prototype
+If obj_exists($1)&&(ncols('$1')!=ncols('$2')||nrows('$1')!=nrows('$2'))
+  "Delete_Image $1"
+If !obj_exists($1)||ncols('$1')!=ncols('$2')||nrows('$1')!=nrows('$2')
+  "Dup_Float $1 $2"
+.
+
+# This is used when we have located a small bright feature within
+Define Set_Standard_Type 1 type
+Set std_type $1
+If "!strcmp('$std_type',\"float\")"
+  Then 'Set std_cpx_type complex'
+  Else 'Set std_cpx_type dblcpx'
+.
+
+# set default
+Set_Standard_Type float
+
+# this version for efficient real xforms
+
+Define Xform_Image 1 name
+data image $1 $ysize 1+$xsize/2 1 $std_cpx_type quit
+.
+
+Define Xform_For 2 name template
+Tell_Precision $2 srcprec
+If "!strcmp(\"$srcprec\",\"float\")"
+  Then 'Set xfprec complex'
+  Else 'Set xfprec dblcpx'
+data image $1 nrows('$2') 1+ncols('$2')/2 1 $xfprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $xfprec quit
+.
+
+Define Xform2_For 2 name template
+Tell_Precision $2 srcprec
+If "!strcmp(\"$srcprec\",\"float\")"
+  Then 'Set xfprec complex'
+  Else 'Set xfprec dblcpx'
+data image $1 1+nrows('$2')/2 ncols('$2') 1 $xfprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $xfprec quit
+.
+
+Define IXform_For 2 name template
+Tell_Precision $2 srcprec
+If "!strcmp($srcprec,\"complex\")"
+  Then 'Set ixfprec float'
+  Else 'Set ixfprec double'
+data image $1 "nrows('$2')" "2*(ncols('$2')-1)" 1 $ixfprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $ixfprec quit
+.
+
+Define Filter_For 2 name template
+Tell_Precision $2 srcprec
+data image $1 "nrows('$2')" "1+ncols('$2')/2" 1 $srcprec quit
+# use this line if not useing real/cpx transform
+#data image $1 "nrows('$2')" "ncols('$2')" 1 $srcprec quit
+.
+
+Define Image_Info 1 name
+data info $1 quit
+.
+
+Define Interlace 3 name parent odd_even
+data interlace $1 $2 $3 quit
+.
+
+Define New_Object 5 name frames rows cols type
+data object $1 $2 $3 $4 $5 quit
+.
+
+Define Std_Scalar 1 name
+Scalar $1 1 $std_type
+.
+
+Define Double_Scalar 1 name
+Scalar $1 double
+.
+
+Define Scalar 3 name depth type
+data scalar $1 $2 $3 quit
+.
+
+Define Row_Vector 3 name length type
+data vector $1 $2 1 $3 quit
+.
+
+Define Column_Vector 3 name length type
+data column $1 $2 1 $3 quit
+.
+
+Define Column 4 name length depth type
+data column $1 $2 $3 $4 quit
+.
+
+Define Vector 4 name length depth type
+data vector $1 $2 $3 $4 quit
+.
+
+Define Image 5 name height width depth type
+data image $1 $2 $3 $4 $5 quit
+.
+
+Define Hypersequence 7 name seqs frames height width ncomps type
+data hyperseq $1 $2 $3 $4 $5 $6 $7 quit
+.
+
+Define Sequence 6 name frames height width ncomps type
+data sequence $1 $2 $3 $4 $5 $6 quit
+.
+
+Define Subimage 6 name parent width height x0 y0
+data subimage $1 $2 $3 $4 $5 $6 quit
+.
+
+Define Subsequence 8 name parent width height length x0 y0 t0
+data subsequence $1 $2 $3 $4 $5 $6 $7 $8 quit
+.
+
+Define Subsample_Color_Image 11 name parent nc c0 cinc nx x0 xinc ny y0 yinc
+data subsample $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 quit
+.
+
+Define Subsample_Image 8 name parent nx x0 xinc ny y0 yinc
+data
+  subsample $1 $2 
+	# depth('$2') 0 1
+	$3 $4 $5
+	$6 $7 $8
+  quit
+.
+
+Define Subsample_Vector 5 name parent nx x0 xinc
+data subsample $1 $2 $3 $4 $5 quit
+.
+
+Define Subvector 4 name parent len offset
+data subvector $1 $2 $3 $4 quit
+.
+
+Define Subscalar 4 name parent len offset
+data subscalar $1 $2 $3 $4 quit
+.
+
+# BUG type is not a fixed number of words
+# this works for multi dim only!
+
+Define Equivalence 8 name parent nseqs nfrms nrows ncols ncomps precision
+data equivalence $1 $2 $3 $4 $5 $6 $7 $8 quit
+.
+
+Define Relocate 4 name x y t
+data relocate $1 $2 $3 $4 quit
+.
+
+Define Std_Image 1 name
+data image $1 $ysize $xsize 1 $std_type quit
+.
+
+Define Tri_Image 1 name
+data image $1 $ysize $xsize 3 float quit
+.
+
+Define Color_Image 1 name
+data image $1 $ysize $xsize 3 float quit
+.
+
+# old version with all the bits jammed together
+#Define Bit_Image 1 'name for bitmap image'
+#data vector $1 floor(($ysize*$xsize+31)/32) 1 long quit
+#.
+
+# new version with even # of words per line
+Define Bit_Image 1 'name for bitmap image'
+
+# Now we handle extra columns OK
+#If "($xsize%32)!=0"
+#  "warn 'Image width $xsize not a multiple of 32 for bit image!?'"
+
+# now we have a bit type
+#Image $1 $ysize floor(($xsize+31)/32) 1 long
+
+Image $1 $ysize $xsize 1 bit
+.
+
+Define Short_Image 1 'name for short image'
+data image $1 $ysize $xsize 1 short quit
+.
+
+Define Long_Image 1 'name for long image'
+data image $1 $ysize $xsize 1 int32 quit
+.
+
+Define Double_Image 1 'name for double image'
+data image $1 $ysize $xsize 1 double quit
+.
+
+Define Float_Image 1 'name for float image'
+data image $1 $ysize $xsize 1 float quit
+.
+
+# this default size  is for cosmo
+#Set frame_width		640
+#Set frame_height	496
+
+# this default size  is for LML33
+Set frame_width		720
+Set frame_height	480
+
+Assign field_width	$frame_width
+Assign field_height	$frame_height/2
+
+Set field_x_zoom	1
+Set field_y_zoom	1
+
+Define Float_Field 1 name
+Print field_height
+Image $1 $field_height/$field_y_zoom $field_width/$field_x_zoom 1 float
+.
+
+Define Float_Frame 1 name
+Image $1 $frame_height/$frame_y_zoom $frame_width/$frame_x_zoom 1 float
+.
+
+Define Byte_Field 1 name
+Print field_height
+Print field_width
+data image $1 $field_height $field_width 1 byte quit
+.
+
+Define Float_Vector 2 'name for float vector' size
+data vector $1 $2 1 float quit
+.
+
+Define Complex_Image 1 'name for complex image'
+data image $1 $ysize $xsize 1 $std_cpx_type quit
+.
+
+Define Dup_Complex 2 'name for complex image' prototype
+data image $1 "nrows('$2')" "ncols('$2')" 1 $std_cpx_type quit
+.
+
+Define Dup_Std 2 'new name' prototype
+Dup_Obj_With_Prec $1 $2 $std_type
+.
+
+Define Dup_UShort 2 'name for u_short image' prototype
+Dup_Obj_With_Prec $1 $2 u_short
+.
+
+Define Dup_Short 2 'name for short image' prototype
+Dup_Obj_With_Prec $1 $2 short
+.
+
+Define Dup_Bit 2 'name for bitmap image' prototype
+Dup_Obj_With_Prec $1 $2 bit
+.
+
+Define Dup_Long 2 'name for int32 image' prototype
+Dup_Obj_With_Prec $1 $2 int32
+.
+
+Define Dup_ULong 2 'name for uint32 image' prototype
+Dup_Obj_With_Prec $1 $2 uint32
+.
+
+Define Dup_Double 2 'name for double image' prototype
+Dup_Obj_With_Prec $1 $2 double
+.
+
+Define Dup_Float 2 'new name' prototype
+Dup_Obj_With_Prec $1 $2 float
+.
+
+Define Dup_Byte 2 'name for byte image' prototype
+Dup_Obj_With_Prec $1 $2 byte
+.
+
+Define Dup_UByte 2 'name for byte image' prototype
+Dup_Obj_With_Prec $1 $2 u_byte
+.
+
+Define Dup_If 2 newname proto
+If !obj_exists('$1') "Dup_Obj $1 $2"
+.
+
+Define Get_Prec 2 varname object
+data precision $2 $1 quit
+.
+
+Define Dup_Obj 2 'new name' prototype
+data
+  precision $2 dup_prec
+  quit
+Dup_Obj_With_Prec $1 $2 $dup_prec
+.
+
+Define Dup_Obj_With_Prec 3 'new name' prototype precision
+data
+  object $1
+	"nseqs('$2')" "nframes('$2')"
+	"nrows('$2')" "ncols('$2')" "depth('$2')" $3
+  quit
+.
+
+Define Dup_Image 3 'new name' prototype precision
+Dup_Obj_With_Prec $1 $2 $3
+.
+
+# We do this for cuda, but it's only appropriate for a data_object,
+# not another sizeable object such as a file or window
+
+Define Match_Area 1 sizable
+If !obj_exists('$1') exit_macro
+data
+  areas match $1 quit
+  quit
+.
+
+Define Dup_Object 3 'new name' prototype precision
+Match_Area $2
+data
+  object $1 "nframes('$2')" "nrows('$2')" "ncols('$2')" "depth('$2')" $3
+  quit
+.
+
+Define Dup_Sequence 3 'new name' prototype precision
+Match_Area $2
+data
+  sequence $1 "nframes('$2')" "nrows('$2')" "ncols('$2')" "depth('$2')" $3
+  quit
+.
+
+Define UByte_Image 1 'name for u_byte image'
+data image $1 $ysize $xsize 1 u_byte quit
+.
+
+Define Byte_Image 1 'name for byte image'
+data image $1 $ysize $xsize 1 byte quit
+.
+
+Define Byte_Display 1 'name for byte image'
+data image $1 $display_size $display_size 1 byte quit
+.
+
+Define Float_Display 1 'name for float image'
+data image $1 $display_size $display_size 1 float quit
+.
+
+Define Byte_Sequence 2 'sequence name' 'number of frames'
+data sequence $1 $2 $ysize $xsize 1 byte quit
+.
+
+Define Del_If 1 object
+If obj_exists('$1') "Delete_Image $1"
+.
+
+Define Delete_Image 1 'name of image'
+data delete $1 quit
+.
+
+Define Delete_Vector 1 'name of vector'
+data delete $1 quit
+.
+
+Define Delete_Object 1 'name of data object'
+data delete $1 quit
+.
+
+Define Set_Image_Size 2 dx dy
+Assign xsize $1
+Assign ysize $2
+.
+
+Define Dup_Sizes 1 prototype
+Assign ysize "nrows('$1')"
+Assign xsize "ncols('$1')"
+.
+
+Define Resize 1 size
+Assign size $1
+Assign xsize $1
+Assign ysize $1
+.
+
+Define Float_Scalar 1 name
+data scalar $1 1 float quit
+.
+
+Define Tell_Precision 2 object variable
+data precision $1 $2 quit
+.
+
+Define Alignment 1 val
+data alignment $1 quit
+.
+
+Define Load_Vector_From_File 2 object_name filename
+If !file_exists('$2') "error_exit 'File $2 does not exist!?'"
+Count_Lines nl $2
+Count_Columns nc $2
+Vector $1 $nl $nc float
+Get_Ascii $1 $2
+.
+
+Stop_File decl.mac
+
+# FILE data/hips.mac BEGIN
+
+# %Z% $RCSfile: hips.mac,v $ ver: $Revision: 1.16 $ $Date: 2009/09/01 05:21:32 $
+
+Start_File hips.mac
+
+Set hips_read_directory .
+Set hips_write_directory .
+
+Define JPEG_Grayscale 0
+fileio
+  jpeg
+    compressor
+      colorspace grayscale
+      quit
+    quit
+  quit
+.
+
+Define Clobber 1 bool
+fileio clobber $1 quit
+.
+
+Define Hips_Directory 1 name
+warn "obsolete macro Hips_Directory; use Hips_Read_Directory or Hips_Write_Directory"
+fileio directory $1 quit
+.
+
+Define Hips_Read_Directory 1 name
+Set hips_read_directory $1
+fileio directory $1 quit
+.
+
+Define Hips_Write_Directory 1 name
+#advise "Hips_Write_Directory $1"
+Set hips_write_directory $1
+fileio directory $1 quit
+.
+
+Define Filetype 1 typename
+fileio filetype $1 quit
+.
+
+Define File_Info 1 filename
+fileio info $1 quit
+.
+
+Define File_Seek 2 filename frameno
+fileio seek $1 $2 quit
+.
+
+Define Import_VL 1 filename
+Filetype VL
+Import_Image $1
+.
+
+Define Import_Hips2 1 filename
+Filetype hips2
+Import_Image $1
+.
+
+Define Import_Hips 1 filename
+Filetype hips1
+Import_Image $1
+.
+
+Define Import_Disk 1 filename
+Filetype disk
+Import_Image $1
+.
+
+Define Read_File_Header 1 filename
+#Tell_If "Read_File_Header $1"
+fileio directory $hips_read_directory quit
+fileio read "$1" quit
+.
+
+Define Write_File_Header 2 filename nframes
+#advise "Write_File_Header $1 $2"
+fileio directory $hips_write_directory quit
+fileio write $1 $2 quit
+.
+
+Define Get_Next 2 object filename
+fileio get $1 $2 quit
+.
+
+Define Put_Next 2 object filename
+fileio put $1 $2 quit
+.
+
+# take a float image in the range [ minval , maxval ] ,
+# remap to range 0-256...
+
+Define Put_Next_Float 4 image moviefile minval maxval
+Assign pnf_min $3
+Assign pnf_max $4
+echo "Put_Next_Float $1 $2"
+Dup_Float pnff $1
+Dup_Byte pnfb $1
+VSAdd pnff $1 -$pnf_min
+VSMul pnff pnff 255/($pnf_max-$pnf_min)
+SP2B pnfb pnff
+Put_Next pnfb $2
+Delete_Image pnff
+Delete_Image pnfb
+echo "Put_Next_Float done"
+.
+
+Define Read_Object_File 2 objname filename
+#Tell_If "Read_File_Header $2"
+Read_File_Header $2
+Assign ns "nseqs(\"$2\")"
+Assign nf "nframes(\"$2\")"
+Assign depth "depth(\"$2\")"
+Tell_If "File $2 has $ns sequences, $nf frames, and depth = $depth"
+#Print depth
+data
+  precision $2 fprec
+  hyperseq $1 $ns $nf "nrows(\"$2\")" "ncols(\"$2\")" $depth $fprec
+  quit
+# BUG?  Get_Next will only read one frame!?
+Get_Next $1 $2
+.
+
+Define Import_File 1 filename
+warn "macro Import_File is obsolete, use Import_Image instead"
+Import_Image $1
+.
+
+Define Import_Image 1 filename
+Read_Object_File $1 $1
+.
+
+Define Get_Rasterfile 1 filename
+Filetype sunras
+Import_Image $1
+.
+
+Define Get_File 3 'data object' filename filetype
+Filetype $3
+Read_File_Header $2
+Get_Next $1 $2
+.
+
+Define Open_Write_File 3 name filetype nframes
+Filetype $2
+Write_File_Header $1 $3
+.
+
+Define Open_Read_File 1 name
+warn "use Read_File_Header instead of Open_Read_File"
+fileio read $1 quit
+.
+
+Define Read_Next_Frame 2 object filename
+warn "use Get_Next instead of Read_Next_Frame"
+fileio get $1 $2 quit
+.
+
+Define Write_Next_Frame 2 object filename
+echo "use Put_Next instead of Write_Next_Frame"
+fileio put $1 $2 quit
+.
+
+Define Get_Hips 2 'data object' 'HIPS filename'
+Get_File $1 $2 hips1
+.
+
+Define Get_Hips2 2 'data object' 'HIPS2 filename'
+Get_File $1 $2 hips2
+.
+
+Define Load_Hips 2 'data object' 'HIPS filename'
+fileio
+  filetype hips1
+  read $2
+  load $1 $2
+  quit
+.
+
+Define Put_Vista 2 'data object' 'filename'
+Filetype vista
+Put_Image $1 $2
+.
+
+Define Put_Hips 2 'data object' 'HIPS filename'
+Filetype hips1
+Put_Image $1 $2
+.
+
+Define Put_Byte_Hips 2 object filename
+Dup_Float pbh_ftmp $1
+Dup_Byte pbh_tmp $1
+VMov pbh_ftmp $1
+Scale pbh_ftmp 0 255
+Convert pbh_tmp pbh_ftmp
+Put_Hips pbh_tmp $2
+Delete_Image pbh_tmp
+Delete_Image pbh_ftmp
+.
+
+Define Put_Viff 2 object filename
+Filetype viff
+Put_Image $1 $2
+.
+
+Define Put_File 2 'data object' filename
+warn 'Macro Put_File is obsolete, use Put_Image instead'
+Put_Image $1 $2
+.
+
+Define Put_Image 2 'data object' filename
+fileio
+  Tell_If "opening file $2 , to write object $1"
+  write $2 "nframes('$1')"
+#  echo "writing object $1"
+  put $1 $2
+  quit
+.
+
+Define Put_Raw 2 'data object' 'raw filename'
+Filetype raw
+Put_Image $1 $2
+.
+
+Define Put_Hips2 2 'data object' 'HIPS filename'
+Filetype hips2
+Put_Image $1 $2
+.
+
+Define Put_Bytes 2 'float data object' 'HIPS filename'
+data
+  image pbtmp nrows($1) ncols($1) 1 byte
+  image fpbtmp nrows($1) ncols($1) 1 float
+  quit
+war
+  unary mov fpbtmp $1 quit
+  misc scale fpbtmp 0 255 quit
+  unconvert sp2b pbtmp $1 quit
+  quit
+Put_Hips pbtmp $2
+data
+  delete pbtmp
+  delete fpbtmp
+  quit
+.
+
+Define Start_Hips2_Movie 2 'filename' 'number of frames'
+Filetype hips2
+Start_Movie_File $1 $2
+.
+
+Define Start_Hips_Movie 2 'filename' 'number of frames'
+Filetype hips1
+Start_Movie_File $1 $2
+.
+
+Define Start_Movie_File 2 filename nframes
+Set movie_file $1
+Set movie_frame_number 0
+fileio
+  write $1 $2
+  quit
+.
+
+Define Next_Frame 1 'data object'
+Put_Next $1 $movie_file
+Increment movie_frame_number
+echo "frame $movie_frame_number written"
+.
+
+Define Close_Hips_File 1 movie_file
+fileio close $1 quit
+.
+   
+Define Close_Hips_Movie 1 movie_file
+fileio close $1 quit
+.
+   
+Define Raw_Image_Dimensions 4 depth width height frames
+fileio raw_sizes $1 $2 $3 $4 1 quit
+.
+
+Define Raw_Image_Sizes 2 width height
+# non-positive frame count means determine from file size
+fileio raw_sizes 1 $1 $2 0 1 quit
+.
+
+
+
+# Set a script variable if the file exists in the unix filesystem
+#
+# This function is wrong for special purpose things like rtv movies...
+
+Define Check_File_Existence 1 filename
+If "exists('$1')"
+  Then "Set file_exists 1"
+  Else "warn '$1 does not exist' Set file_exists 0"
+.
+
+
+Stop_File hips.mac
+
+
+# FILE compute/funcs.mac BEGIN
+
+Start_File funcs.mac
+
+Define Select_Default_CUDA_Device 0
+If (!strcmp('$HOSTNAME','mach'))&&!var_exists(DEFAULT_CUDA_DEVICE)
+  "Set DEFAULT_CUDA_DEVICE GeForce_GTX_680MX_2"
+If var_exists(DEFAULT_CUDA_DEVICE)
+  'platforms select $DEFAULT_CUDA_DEVICE quit exit_macro'
+error_exit "DEFAULT_CUDA_DEVICE is not defined!?"
+.
+
+Define Select_Default_OpenCL_Device 0
+If var_exists(DEFAULT_OPENCL_DEVICE)
+  'platforms select $DEFAULT_OPENCL_DEVICE quit exit_macro'
+error_exit "DEFAULT_OPENCL_DEVICE is not defined!?"
+.
+
+Define Select_Default_GPU 0
+If var_exists(DEFAULT_GPU)&&var_exists(DEFAULT_PLATFORM)
+  'platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit exit_macro'
+If var_exists(GPU_DEVICE)&&var_exists(GPU_PLATFORM)
+  'platforms select $GPU_PLATFORM $GPU_DEVICE quit exit_macro'
+
+If !strcmp('$HOSTNAME','pavlov')
+  "Set GPU_DEVICE AMD_Radeon_R9_M370X_Compute_Engine"
+If !strcmp('$HOSTNAME','pavlov.local')
+  "Set GPU_DEVICE AMD_Radeon_R9_M370X_Compute_Engine"
+If !strcmp('$HOSTNAME','mach')
+  #"Set GPU_DEVICE GeForce_GTX_680MX_2"		# use this for CUDA
+  "Set GPU_DEVICE GeForce_GTX_680MX"		# use this for OpenCL
+
+If !var_exists(GPU_DEVICE)
+  "error_exit 'Select_Default_GPU:  need to add a case for host $HOSTNAME!?'"
+
+platforms select $GPU_DEVICE quit
+.
+
+# space-domain convolution
+
+Define SD_Convolve 3 target source filter
+compute misc convolve $1 $2 $3 quit quit
+.
+
+# definition of processing words
+
+# vector-vector operations
+
+Define VSquare 2 target source
+compute vvector mul $1 $2 $2 quit quit
+.
+
+Define VVMul 3 target in1 in2
+compute vvector mul $1 $2 $3 quit quit
+.
+
+Define VVSub 3 target in1 in2
+compute vvector sub $1 $2 $3 quit quit
+.
+
+Define VVAdd 3 target in1 in2
+compute vvector add $1 $2 $3 quit quit
+.
+
+Define VVCmul 3 target in1 in2
+compute vvector cmul $1 $2 $3 quit quit
+.
+
+Define VVDiv 3 target in1 in2
+compute vvector div $1 $2 $3 quit quit
+.
+
+
+# vector scalar operations
+
+Define VSXor 3 target source value
+compute svector xor $1 $2 $3 quit quit
+.
+
+Define VSAnd 3 target source value
+compute svector and $1 $2 $3 quit quit
+.
+
+Define VSMod 3 target source value
+compute svector mod $1 $2 $3 quit quit
+.
+
+Define VSMod2 3 target source value
+compute svector mod2 $1 $2 $3 quit quit
+.
+
+Define VQSMul 6 target source v1 v2 v3 v4
+compute Qsvector mul $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VQSDiv 6 target source v1 v2 v3 v4
+compute Qsvector div $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VSMul 3 target source value
+compute svector mul $1 $2 $3 quit quit
+.
+
+Define VCSMul 4 target source real imag
+compute csvector mul $1 $2 $3 $4 quit quit
+.
+
+Define VCSDiv 4 target source real imag
+compute csvector div $1 $2 $3 $4 quit quit
+.
+
+Define VSMulComplex 4 target source real imag
+warn "obsolete macro VSMulComplex, use VCSMul"
+VCSMul $1 $2 $3 $4
+.
+
+Define VPow 3 dest src exponent
+compute trig pow $1 $2 $3 quit quit
+.
+
+
+Define VSAdd 3 target source value
+compute svector add $1 $2 $3 quit quit
+.
+
+Define VCSAdd 4 target source real imag
+compute csvector add $1 $2 $3 $4 quit quit
+.
+
+Define VCSSub 4 target source real imag
+compute csvector sub $1 $2 $3 $4 quit quit
+.
+
+Define VQSAdd 6 target source re ii jj kk
+compute Qsvector add $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VQSSub 6 target source re ii jj kk
+compute Qsvector sub $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VSAddComplex 4 target source real imag
+warn "obsolete macro VSAddComplex, use VCSAdd"
+VCSAdd $1 $2 $3 $4
+.
+
+Define VSSub 3 target source value
+compute svector sub $1 $2 $3 quit quit
+.
+
+Define VSDiv2 3 target source value
+compute svector div2 $1 $2 $3 quit quit
+.
+
+Define VSDiv 3 target source value
+compute svector div $1 $2 $3 quit quit
+.
+
+Define VShL 3 target shift_count_vec src_vec
+compute logical shl $1 $2 $3 quit quit
+.
+
+Define VShR 3 target shift_count_vec src_vec
+compute logical shr $1 $2 $3 quit quit
+.
+
+Define VSShL 3 target src n
+compute logical sshl $1 $2 $3 quit quit
+.
+
+Define VSShR 3 target src n
+compute logical sshr $1 $2 $3 quit quit
+.
+
+Define VSShL2 3 target src n
+compute logical sshl2 $1 $2 $3 quit quit
+.
+
+Define VSShR2 3 target src n
+compute logical sshr2 $1 $2 $3 quit quit
+.
+
+Define VSPow 3 target src exponent
+compute svector pow $1 $2 $3 quit quit
+.
+
+Define VSPow2 3 target src exponent
+compute svector pow2 $1 $2 $3 quit quit
+.
+
+# unary operations
+
+Define VUni 1 target
+compute unary uni $1 quit quit
+.
+
+Define VSign 2 target src
+compute unary sign $1 $2 quit quit
+.
+
+Define VAbs 2 targ src
+compute unary abs $1 $2 quit quit
+.
+
+Define VMov 2 target source
+compute unary mov $1 $2 quit quit
+.
+
+Define VSetComplex 3 target real imag
+compute unary set $1 $2 $3 quit quit
+.
+
+Define VSet 2 target value
+compute unary set $1 $2 quit quit
+.
+
+Define Get_Sum 2 varname image
+data
+  precision $2 gs_prec
+  areas match $2 quit
+  quit
+Scalar gs_sum 1 $gs_prec
+VSum gs_sum $2
+Assign $1 value(gs_sum)
+#Tell_If "Sum($2) = $$1"
+Delete_Image gs_sum
+.
+
+Define Get_Mean 2 varname image
+Get_Sum $1 $2
+Mul_Var $1 "1/(depth('$2')*ncols('$2')*nrows('$2'))"
+.
+
+# var = sum ( x_i - x_bar )^2
+#     = sum ( x_i^2 - 2 x_i x_bar + x_bar^2 )
+#     = sum x_i^2 - 2 N x_bar^2  + N x_bar^2
+#     = sum x_i^2 - N x_bar^2
+
+Define Get_Variance 2 varname image
+#Dup_Image gv_tmp $2
+Dup_Float gv_tmp $2
+#verbose yes
+#Disp_Image $2 v
+VVMul gv_tmp $2 $2
+#verbose yes
+#Disp_Image gv_tmp v
+Get_Sum sos gv_tmp
+Delete_Image gv_tmp
+Get_Mean gv_mean $2
+#Print gv_mean
+Assign mean_sq "$sos/(depth('$2')*ncols('$2')*nrows('$2'))"
+#Print mean_sq
+Assign $1 $mean_sq-$gv_mean*$gv_mean
+#Print $1
+#Pause
+.
+
+Define VSum 2 destination source
+compute unary sum $1 $2 quit quit
+.
+
+Define VRound 2 target source
+compute unary round $1 $2 quit quit
+.
+
+Define VFloor 2 target source
+compute unary floor $1 $2 quit quit
+.
+
+Define VCeil 2 target source
+compute unary ceil $1 $2 quit quit
+.
+
+Define VNeg 2 target source
+compute unary neg $1 $2 quit quit
+.
+
+Define Sum_Cols 2 out_row img		# Sum along columns
+compute unary dimsum $1 $2 2 quit quit
+.
+
+Define Sum_Rows 2 out_col img		# Sum along rows
+compute unary dimsum $1 $2 1 quit quit	# can be also donw with  compute > misc > project
+.
+
+
+# trig functions etc
+
+Define VMagSq 2 target source
+compute trig magsq $1 $2 quit quit
+.
+
+Define VSqrt 2 target source
+compute trig sqrt $1 $2 quit quit
+.
+
+Define VLog10 2 target source
+compute trig log10 $1 $2 quit quit
+.
+
+Define VLog 2 target source
+compute trig log $1 $2 quit quit
+.
+
+Define VExp 2 target source
+compute trig exp $1 $2 quit quit
+.
+
+Define VErf 2 target source
+compute trig erf $1 $2 quit quit
+.
+
+Define VErfInv 2 target source
+compute trig erfinv $1 $2 quit quit
+.
+
+Define VSin 2 target source
+compute trig sin $1 $2 quit quit
+.
+
+Define VCos 2 target source
+compute trig cos $1 $2 quit quit
+.
+
+Define VAtan 2 target source
+compute trig atan $1 $2 quit quit
+.
+
+Define VAtan2 3 target src1 src2
+compute trig atan2 $1 $2 $3 quit quit
+.
+
+Define VSAtan2 3 target src1 scalar
+compute svector atan2 $1 $2 $3 quit quit
+.
+
+Define VSAtan22 3 target src1 scalar
+compute svector atan22 $1 $2 $3 quit quit
+.
+
+Define VAtn2 2 target source
+compute trig atn2 $1 $2 quit quit
+.
+
+Define VACos 2 target source
+compute trig acos $1 $2 quit quit
+.
+
+Define VASin 2 target source
+compute trig asin $1 $2 quit quit
+.
+
+Define VTan 2 target source
+compute trig tan $1 $2 quit quit
+.
+
+# logical operations
+
+Define VNot 2 target src
+compute logical not $1 $2 quit quit
+.
+
+Define VVXor 3 target in1 in2
+compute logical xor $1 $2 $3 quit quit
+.
+
+Define VVAnd 3 target in1 in2
+compute logical and $1 $2 $3 quit quit
+.
+
+Define VSOr 3 target src scalar
+compute svector or $1 $2 $3 quit quit
+.
+
+Define VVOr 3 target in1 in2
+compute logical or $1 $2 $3 quit quit
+.
+
+# comparison stuff
+
+Define VBnd 3 target in1 in2
+compute compare bound $1 $2 $3 quit quit
+.
+
+Define VCmp 3 target input1 input2	# input1 < input2
+compute compare vcmp $1 $2 $3 quit quit
+.
+
+Define VSCmp 3 target input scalar	# input >= scalar
+compute compare vscmp $1 $2 $3 quit quit
+.
+
+Define VSCmp2 3 target input scalar	# input <= scalar
+compute compare vscmp2 $1 $2 $3 quit quit
+.
+
+Define VS_GE 3 target input scalar	# same macro as VSCmp
+compute compare vscmp $1 $2 $3 quit quit
+.
+
+Define VS_GT 3 target input scalar	# LOOSE "greater than" !!!!!
+compute compare vscmp $1 $2 $3+0.0000001 quit quit
+.
+
+Define VS_LE 3 target input scalar	# same macro as VSCmp2
+compute compare vscmp2 $1 $2 $3 quit quit
+.
+
+Define VS_LT 3 target input scalar	# LOOSE "less than"  !!!!!
+compute compare vscmp2 $1 $2 $3-0.0000001 quit quit
+.
+
+
+Define IClip 3 target source value
+compute compare iclip $1 $2 $3 quit quit
+.
+
+Define Clip 3 target source value
+compute compare clip $1 $2 $3 quit quit
+.
+
+Define VMCmp 3 'target bitmap' input1 input2
+warn "VMCmp is obsolete!"
+compute compare vmcmp $1 $2 $3 quit quit
+.
+
+Define Map_Compare 3 'target bitmap' 'input1' 'input2'
+#warn "Map_Compare is obsolete!"
+#compute compare vmcmp $1 $2 $3 quit quit
+compute compare vvm_gt $1 $2 $3 quit quit
+.
+
+Define Map_Scalar_Mag_Compare 3 'target bitmat' 'input vector' 'scalar value'
+#advise "Map_Scalar_Mag_Compare $1 $2 $3"
+#compute compare vmscm $1 $2 $3 quit quit
+# vmscm is not part of veclib, but vmscp is (mapped onto a new veclib func)
+Dup_Float msmc_tmp $2
+#advise "VAbs msmc_tmp $1"
+VAbs msmc_tmp $2
+#advise "Map_Scalar_Compare $1 msmc_tmp $3"
+Map_Scalar_Compare $1 msmc_tmp $3
+Delete_Image msmc_tmp
+.
+
+Define Map_Scalar_Compare 3 'target bitmat' 'input vector' 'scalar value'
+compute compare vmscp $1 $2 $3 quit quit
+.
+
+Define Select 4 'input bitmap' 'output image' input1 input2
+compute compare select $1 $2 $3 $4 quit quit
+.
+
+# miscellaneous stuff
+
+#Define Project 2 dest src
+#compute misc project $1 $2 quit quit
+#.
+
+Define Project 2 dest src
+VSum $1 $2
+.
+
+Define Cumsum 2 dest src
+compute misc cumsum $1 $2 quit quit
+.
+
+Define Sample 3 dest src coords
+compute sample sample $1 $2 $3 quit quit
+.
+
+Define Render 3 dest src map
+compute sample render2 $1 $2 $3 quit quit
+.
+
+Define Morph 3 dest src map
+compute misc bilinear $1 $2 $3 quit quit
+#compute misc new_bilinear $1 $2 $3 quit quit
+.
+
+Define Fetch_Samples 3 dest src map
+compute misc new_bilinear $1 $2 $3 quit quit
+.
+
+Define Erode 2 dst src
+VSet $1 0.0
+compute morph erode $1 $2 quit quit
+.
+
+#Define Erode 2 dest src
+#VSet $1 0.0
+#Dup_Float etmp $2
+#VSSub $1 $2 1
+#compute misc dilate etmp $1 quit quit
+#VSSub $1 etmp 1
+#Delete_Image etmp
+#.
+
+Define Dilate 2 dst src
+VSet $1 0.0
+compute morph dilate $1 $2 quit quit
+.
+
+Define Opening 3 dst src n
+VSet $1 0.0
+compute morph opening $1 $2 $3 quit quit
+.
+
+Define Closing 3 dst src n
+VSet $1 0.0
+compute morph closing $1 $2 $3 quit quit
+.
+
+Define Thinz 2 src value
+compute morph skeletonization $1 $2 quit quit
+.
+
+
+Define Sort 1 img
+compute misc sort $1 quit quit
+.
+
+
+Define Fill 5 img x y v tol
+advise "Fill $1 $2 $3 $4 $5"
+compute misc fill $1 $2 $3 $4 $5 quit quit
+.
+
+Define Map 3 float_output byte_input map_vector
+compute misc map $1 $2 $3 quit quit
+.
+
+Define Finite 1 image
+compute misc finite $1 quit quit
+.
+
+Define Median_1D 3 targ src radius
+compute misc median_1D $1 $2 $3 quit quit
+.
+
+Define Median 2 targ src
+compute misc median $1 $2 quit quit
+.
+
+Define Median_Clip 2 targ src
+compute misc median_clip $1 $2 quit quit
+.
+
+Define Histogram 4 target source 'minimum bin center' 'bin width'
+compute misc histogram $1 $2 $3 $4 quit quit
+.
+
+Define VStitch 3 target source control
+compute misc stitch $1 $2 $3 quit quit
+.
+
+Define VInterp 3 target source control
+compute misc interpolate $1 $2 $3 quit quit
+.
+
+Define Enlarge 2 target source
+compute misc enlarge $1 $2 quit quit
+.
+
+Define Reduce 2 target source
+compute misc reduce $1 $2 quit quit
+.
+
+Define Product 3 target vec1 vec2
+#compute image product $1 $2 $3 quit quit
+VVMul $1 $2 $3
+.
+
+Define Ramp2D 4 target start dx dy
+compute image ramp2d $1 $2 $3 $4 quit quit
+.
+
+Define Ramp1D 3 target start delta
+compute image ramp1d $1 $2 $3 quit quit
+.
+
+Define Scale 3 target min max
+compute misc scale $1 $2 $3 quit quit
+.
+
+Define Diffuse 5 target source nlevels min max
+compute image diffuse $1 $2 $3 $4 $5 quit quit
+.
+
+Define UDiffuse 5 target source nlevels min max
+compute image udiffuse $1 $2 $3 $4 $5 quit quit
+.
+
+Define Scroll 4 target source dx dy
+compute fft scroll $1 $2 $3 $4 quit quit
+.
+
+Define RInvFFT 2 image xform
+compute fft irfft $1 $2 quit quit
+.
+
+Define InvFFT 1 image
+compute fft invfft $1 quit quit
+.
+
+Define Wrap 2 target source
+compute fft wrap $1 $2 quit quit
+.
+
+Define RFFT 2 xform image
+compute fft rfft $1 $2 quit quit
+.
+
+Define FFT 1 image
+compute fft fft $1 quit quit
+.
+
+Define FFT_Rows 1 image
+compute fft rows $1 quit quit
+.
+
+Define FFT_Cols 1 image
+compute fft cols $1 quit quit
+.
+
+Define DCT 1 image
+compute fft dct $1 quit quit
+.
+
+Define InvDCT 1 image
+compute fft idct $1 quit quit
+.
+
+Define VVMaxMag 3 target v1 v2
+compute compare max_mag $1 $2 $3 quit quit
+.
+
+Define VVMinMag 3 target v1 v2
+compute compare min_mag $1 $2 $3 quit quit
+.
+
+Define VVMax 3 target v1 v2
+compute compare max $1 $2 $3 quit quit
+.
+
+Define VSMax 3 target src value
+compute compare vsmax $1 $2 $3 quit quit
+.
+
+Define VVMin 3 target v1 v2
+compute compare min $1 $2 $3 quit quit
+.
+
+Define VSMin 3 target src value
+compute compare vsmin $1 $2 $3 quit quit
+.
+
+Define Min_Times 4 index_array source minval n_occurrences
+compute minmax min_times $1 $2 $3 $4 quit quit
+.
+
+Define Max_Times 4 index_array source maxval n_occurrences
+compute minmax max_times $1 $2 $3 $4 quit quit
+.
+
+Define Min_Index 2 dst src
+compute minmax min_index $1 $2 quit quit
+.
+
+#Define Min_Mag 2 vector scalar
+#compute minmax min_mag $1 $2 quit quit
+#.
+#Define Min_Index 2 source index
+#compute minmax min_index $1 $2 quit quit
+#.
+#Define Min_Mag_Index 2 source index
+#compute minmax min_mag_index $1 $2 quit quit
+#.
+#
+#Define Max_Index 2 source index
+#compute minmax max_index $1 $2 quit quit
+#.
+
+# destination used to be a scalar, now can be a projection with only
+# some dimensions collapsed...
+
+Define VMin 2 destination source
+compute minmax min $1 $2 quit quit
+.
+
+Define VMax 2 destination source
+compute minmax max $1 $2 quit quit
+.
+
+Define Get_Max 2 varname image
+data precision $2 prec quit
+Scalar gm_val 1 $prec
+VMax gm_val $2
+Assign $1 value(gm_val)		# won't work for CUDA!?
+Delete_Image gm_val
+.
+
+Define Get_Min 2 varname image
+data precision $2 prec quit
+Scalar gm_val 1 $prec
+VMin gm_val $2
+Assign $1 value(gm_val)
+Delete_Image gm_val
+.
+
+Define Selap 1 index
+compute control selap $1 quit quit
+.
+
+Define Scalar_Mode 1 mode
+compute control scalar_mode $1 quit quit
+.
+
+Define Find 3 coord_vector input_img threshold
+compute unary find $1 $2 $3 quit quit
+.
+
+Define Get_Pixel_Coords 3 pix_coords Npix binary 
+Get_Sum $2 $3
+If '$$2 != 0'
+Then	'Image $1 $$2 2 1 float	\
+	Find $1 $3 0'
+Else	'advise "FRIENDLY WARNING: binary image $1 is empty"'
+.
+
+Define RepMat 4 out in colRep rowRep	# Matrix replication
+Assign in_h nrows('$2')
+Assign in_w ncols('$2')
+Set ctmp 0
+repeat $3
+	Set rtmp 0
+	repeat $4
+		Subimage subtmp $1 $in_w $in_h $ctmp*$in_w $rtmp*$in_h
+		VMov subtmp $2
+		Delete_Image subtmp
+		Increment rtmp
+	end
+	Increment ctmp
+end
+.
+
+
+
+
+
+
+# conversions
+
+Define Convert 2 target source
+compute unary convert $1 $2 quit quit
+.
+
+#Define B2SP 2 target source
+#compute convert b2sp $1 $2 quit quit
+#.
+#
+#Define SP2B 2 target source
+#compute unconvert sp2b $1 $2 quit quit
+#.
+#
+#Define SP2I 2 target source
+#compute unconvert sp2i $1 $2 quit quit
+#.
+#
+#Define I2SP 2 target source
+#compute convert i2sp $1 $2 quit quit
+#.
+
+Define Flt2Cpx 2 target source
+VMov $1{0} $2
+VSet $1{1} 0.0
+.
+
+# matrix operations
+
+#Define VVDot 3 v1 v2 scalar
+Define VVDot 3 dst v1 v2
+#warn 'VVDOT syntax has changed!?'
+compute linear dot $1 $2 $3 quit quit
+.
+
+Define Invert 1 matrix
+compute linear invert $1 quit quit
+.
+
+
+Define Invert2 2 matrix_out matrix_in
+VMov $1 $2
+Invert $1
+.
+
+
+
+Define Inner_Prod 3 destvec srcvec matrix
+compute linear inner_prod $1 $2 $3 quit quit
+.
+
+Define Transpose 2 target source
+compute linear transpose $1 $2 quit quit
+.
+
+Define Xform_List 3 target source xform
+compute linear lxform $1 $2 $3 quit quit
+.
+
+Define Vec_Xform 3 target source xform
+compute linear xform $1 $2 $3 quit quit
+.
+
+# Find the index of the maximum pixel, convert to x,y coords
+# values in script vars $mxx $mxy
+
+# What is the point of this "gpu" version???
+Define GPU_Find_Max_Pixel 1 input
+#Vector fmp_indices ncols('$1') 1 int32
+#data precision $1 prec quit
+#Scalar fmp_extval 1 $prec
+#Scalar fmp_n_times 1 int32
+Insure_FMP_Objects
+Max_Times fmp_indices $1 fmp_extval fmp_n_times
+.
+
+Define Find_Max_Pixel 1 input
+Insure_FMP_Objects $1
+# find location of the maximum
+Max_Times fmp_indices $1 fmp_extval fmp_n_times
+Assign mxv value(fmp_extval)
+Assign mxt value(fmp_n_times)
+#Assign mxi value(fmp_indices[0])-1	# -1 was for old fortran convention?
+Assign mxi value(fmp_indices[0])	# -1 was for old fortran convention?
+#echo "max value $mxv occurred $mxt times, first at $mxi"
+Assign mxy "floor($mxi/ncols('$1'))"
+Assign mxx "($mxi)%(ncols('$1'))"
+#echo "index $mxi corresponds to location $mxx $mxy ?"
+#If "nrows($1)>1"
+#  Then "Assign tstval value($1[$mxy][$mxx])"
+#  Else "Assign tstval value($1[$mxx])"
+#
+#Print tstval
+.
+
+Define Init_FMP_Objects 1 source_vector
+#data precision $1 fmp_prec quit
+# how should we decide how many indices we need?
+Vector fmp_indices nelts('$1') 1 int32
+#Vector fmp_indices 3 1 int32
+Scalar fmp_n_times 1 int32
+VSet fmp_n_times -1	# BUG just for testing!
+#Std_Scalar fmp_extval	# BUG match precision to input
+Assign fmp_prec precision('$1')
+Scalar fmp_extval 1 $fmp_prec
+.
+
+Define Delete_FMP_Objects 0
+Delete_Image fmp_indices
+Delete_Image fmp_extval
+Delete_Image fmp_n_times
+.
+
+
+Define Insure_FMP_Objects 1 input
+If obj_exists(fmp_extval)&&strcmp(precision('$1'),precision(fmp_extval)) Delete_FMP_Objects
+If obj_exists(fmp_indices)&&ncols(fmp_indices)<nelts('$1') Delete_FMP_Objects
+If !obj_exists(fmp_indices) "Init_FMP_Objects $1"
+.
+
+Define Find_Min_Pixel 1 input
+Insure_FMP_Objects $1
+# find location of the minimum
+Min_Times fmp_indices $1 fmp_extval fmp_n_times
+Assign mnv value(fmp_extval)
+Assign mnt value(fmp_n_times)
+#Display fmp_n_times
+#Display fmp_indices
+#Assign mni value(fmp_indices[0])-1
+Assign mni value(fmp_indices[0])	# not fortran indices any more
+#echo "min value $mnv occurred $mnt times, first at $mni"
+Assign mny "floor($mni/ncols('$1'))"
+Assign mnx "($mni)%(ncols('$1'))"
+#echo "index $mni corresponds to location $mnx $mny ?"
+If "nrows('$1')>1"
+  Then "Assign tstval value($1[$mny][$mnx])"
+  Else "Assign tstval value($1[$mnx])"
+.
+
+Define YUV2RGB 2 dst src
+compute
+  misc
+    yuv2rgb $1 $2
+    quit
+  quit
+.
+
+# differentiate record
+# used to be in ../analysis/procrec.mac
+
+Define Differentiate 2 target source
+Dup_Float _d_scratch $1
+Scroll _d_scratch $2 1 0
+VSMul _d_scratch _d_scratch -1
+VVAdd $1 $2 _d_scratch
+VSet $1[0] 0.0		# or should be [n-1] ?
+Delete_Image _d_scratch
+.
+
+
+# space domain convolution
+
+#Define Convolve 3 target source filter
+#compute misc convolve $1 $2 $3 quit quit
+#.
+
+Stop_File funcs.mac
+
+# FILE compute/chains.mac BEGIN
+
+Start_File chains.mac
+
+Define New_Chain 0
+compute control chains new_chain quit quit quit
+.
+
+Define End_Chain 1 name
+compute control chains end_chain $1 quit quit quit
+.
+
+Define Dump_Chain 1 name
+compute control chains dump $1 quit quit quit
+.
+
+Define Exec_Chain 1 name
+echo "Executing chain $1"
+compute control chains exec $1 quit quit quit
+echo "Done executing chain $1"
+.
+
+Stop_File chains.mac
+
+# FILE view/common.mac BEGIN
+
+# %Z% $RCSfile: common.mac,v $ ver: $Revision: 1.28 $ $Date: 2009/12/16 05:45:31 $
+
+# stuff common to daemon clients and direct callers
+Start_File common.mac
+
+Define Viewer_For 2 name image
+#advise "Viewer_For $1 $2"
+Assign vfnc "ncols('$2')"
+Assign vfnr "nrows('$2')"
+#advise "requesding a viewer $vfnc by $vfnr"
+Viewer $1 $vfnc $vfnr
+#Dup_UByte vfbtmp $2
+#Convert vfbtmp $2
+#Show_Bytes vfbtmp $1
+#Delete_Image vfbtmp
+.
+
+Define Scale_Gray 1 target
+Init_Grayscale_Range
+#Tell_If "Scale_Gray $1, gray_base = $gray_base, n_gray_levels = $n_gray_levels"
+Scale $1 $gray_base $gray_base+$n_gray_levels-1
+.
+
+# Do this to map the byte range in a fixed way
+Define Constant_Gray 1 target
+VSMul $1 $1 ($n_gray_levels-1)/255
+VSAdd $1 $1 $gray_base
+.
+
+Define Disp_Gray_If 2 'float image' 'viewer name'
+If $showing "Disp_Gray $1 $2"
+.
+
+Set constant_gray 0
+
+Define Disp_Gray 2 'float image' 'viewer name'
+#echo "Disp_Gray $1 $2"
+Dup_Float dgftmp $1
+Convert dgftmp $1
+If $constant_gray
+  Then "Constant_Gray dgftmp"
+  Else "Scale_Gray dgftmp"
+Disp_Raw dgftmp $2
+Delete_Image dgftmp
+.
+
+# min and max scaled values for Show_Image and Disp_Image
+
+Set si_min	8
+Set si_max	254
+
+Define Disp_Image_If 2 'float image' viewer
+If $showing "Disp_Image $1 $2"
+Pause_If
+.
+
+Define Disp_Image 2 'float image' viewer
+If $verbose||$chatty 
+  "advise 'Disp_Image:  Showing $1 in viewer $2'"
+Dup_Float diftmp $1
+#VMov diftmp $1
+Convert diftmp $1
+Scale diftmp $si_min $si_max
+Disp_Raw diftmp $2
+Delete_Image diftmp
+.
+
+Define Show_Image 2 'float image' 'viewer name'
+Dup_Float siftmp $1
+Convert siftmp $1	# was VMov
+Scale siftmp $si_min $si_max
+Show_Raw siftmp "$2"
+Delete_Image siftmp
+.
+
+Define Show_Gray 2 'float image' 'viewer name'
+# echo "Show_Gray $1 $2"
+Dup_Float sgftmp $1
+Convert sgftmp $1
+Scale_Gray sgftmp
+Show_Raw sgftmp "$2"
+Delete_Image sgftmp
+.
+
+Define Show_Raw 2 'float image' 'viewer name'
+#If !$have_luts "PB_Show_Raw $1 $2 exit_macro"
+# This will fail if the viewer name has spaces in it...
+Set bbname "sr_b.$2"
+#Subst_Var bbname ' ' '_'
+Subst_Var bbname 040 '_'
+Dup_UByte $bbname $1
+Convert $bbname $1
+If !var_exists(display_depth) "Assign display_depth depth('$DISPLAY')"
+If $display_depth==16
+  Then "Show16 $bbname '$2'"
+  Else "Show_Bytes $bbname '$2'"
+Delete_Image $bbname		# what happens when we remake a zombie??
+.
+
+# hacked for powerbook
+
+Define PB_Show_Raw 2 'float image' 'viewer name'
+Set bbname "srb.$2"
+Dup_Short $bbname $1
+Dup_Float srb_ftmp $1
+VSMul srb_ftmp $1 31/255
+VSMin srb_ftmp srb_ftmp 31
+VFloor srb_ftmp srb_ftmp
+VSMul srb_ftmp srb_ftmp (1+32+32*32)
+Convert $bbname srb_ftmp
+Show_Bytes $bbname $2
+Delete_Image srb_ftmp
+Delete_Image $bbname		# what happens when we remake a zombie??
+.
+
+Define Show_Unit 2 'float image' 'viewer name'
+Float_Image su_fbuf
+VSAdd su_fbuf $1 1
+VSMul su_fbuf su_fbuf 127
+Show_Raw su_fbuf "$2"
+Delete_Image su_fbuf
+.
+
+Define Rotate_Colors 1 image
+Dup_UByte rc_tmp $1{0}
+VMov rc_tmp $1{0}
+VMov $1{0} $1{2}
+VMov $1{2} rc_tmp
+Delete_Image rc_tmp
+.
+
+Stop_File common.mac
+
+
+# FILE view/luts.mac BEGIN
+
+# %Z% $RCSfile: luts.mac,v $ ver: $Revision: 1.8 $ $Date: 2005/03/02 00:24:26 $
+
+
+Start_File luts.mac
+
+Set current_viewer need_to_specify_a_viewer_first
+
+Define Set_Lin_Exponent 1 exponent
+#Tell_If "Set_Lin_Exponent $1"
+view
+  luts $current_window
+    linearize
+      gamma $1
+      quit
+    quit
+  quit
+.
+
+Define Setcolor 4 c r g b
+#Tell_If "Setcolor $1 $2 $3 $4"
+view
+  luts $current_window
+    cmaps
+      setcolor $1 $2 $3 $4
+      quit
+    quit
+  quit
+.
+
+Define Poke_LUT 4 i r g b
+#Tell_If "Poke_LUT $1 $2 $3 $4"
+view
+  luts $current_window
+    cmaps
+      poke $1 $2 $3 $4
+      update
+      quit
+    quit
+  quit
+.
+
+Define Protect_LUT 1 n
+warn "Protect_LUT is deprecated"
+exit_macro
+view
+  luts $current_window
+    cmaps
+      #protect $1
+      quit
+    quit
+  quit
+.
+
+Define Grayscale_LUT 2 base n
+#Tell_If "Grayscale_LUT $1 $2"
+view
+  luts $current_window
+    cmaps
+      grayscale $1 $2
+      update
+      quit
+    quit
+  quit
+.
+
+Define Lin_Levels 1 n
+#Tell_If "Lin_Levels $1"
+view
+  luts $current_window
+    linearize
+      nlevels $1
+      quit
+    quit
+  quit
+.
+
+Define Setlut 1 name
+#Tell_If "Setlut $1 $2"
+view
+  luts $current_window
+    lutbuffers
+      setlut $1
+      quit
+    quit
+  quit
+.
+
+Define Newlut 2 name length
+#Tell_If "Newlut $1 $2"
+view
+  luts $current_window
+    lutbuffers
+      echo "creating lutbuffer $1"
+      newlut $1 $2
+      quit
+    cmaps
+      #protect 0
+      quit
+    quit
+  quit
+.
+
+Define Dumplut 1 name
+#Tell_If Dumplut
+view
+  luts $current_window
+    lutbuffers
+      echo "loading lutbuffer $1"
+      dump $1
+      quit
+    quit
+  quit
+.
+
+Stop_File luts.mac
+
+# FILE view/view.mac BEGIN
+# %Z% $RCSfile: view.mac,v $ ver: $Revision: 1.66 $ $Date: 2010/10/17 15:54:58 $
+
+# useful macros for view submenu
+
+Start_File view.mac
+
+If !var_exists(DISPLAY_DEPTH) "Set DISPLAY_DEPTH 24"
+
+#< $macro_dir/view/common.mac
+#< $macro_dir/view/luts.mac
+#< $macro_dir/view/dither.mac
+
+#advise protect_lut
+#Protect_LUT 0
+#< $macro_dir/view/grayscale.scr
+
+# default flag values
+If !var_exists(showall) "Set showall 0"
+If !var_exists(showing) "Set showing 1"
+
+Set n_gray_protect	8
+
+# useful macros for iview
+# the loop is there to make things happen when running as daemon
+# NEED to set loopit=1 in viewing daemons!
+
+Set loopit	0
+Set tracing	0
+
+Set saving_all	0
+
+Define Delete_Viewer 1 name
+view viewers delete $1 quit quit
+.
+
+Define Select_Viewer 1 name
+Set current_window $1
+view select $1 quit
+.
+
+Define Event_Redir 0
+view redir quit
+.
+
+Define Event_UnRedir 0
+view unredir quit
+.
+
+Define View_Loop 0
+If $loopit "view loop quit"
+.
+
+Define Destroy_Viewer 1 name
+view viewers delete "$1" quit quit
+.
+
+Define Sized_Viewer_At 5 name dx dy x y
+Viewer $1 $2 $3
+Posn_Window $1 $4 $5
+View_Loop
+.
+
+Define Set_Display_Size 2 width height
+Assign display_width $1
+Assign display_height $2
+.
+
+Define Rect_View 3 'name for viewer' 'x location' 'y location'
+#Viewer $1 $display_width $display_height
+New_Plotter $1 $display_width $display_height
+Posn_Window $1 $2 $3
+View_Loop
+.
+
+Define Default_Click 0
+Set clicked 1
+.
+
+Set left_button_up	1
+Set middle_button_up	1
+Set right_button_up	1
+Set left_button_down	0
+Set middle_button_down	0
+Set right_button_down	0
+
+Define Wait_While_Button_Up 0
+
+do
+  os events quit
+  If $left_button_up&&$middle_button_up&&$right_button_up "usleep 500000"
+  while $left_button_up&&$middle_button_up&&$right_button_up
+.
+
+Define Wait_While_Button_Up_If 0
+If $pausing Wait_While_Button_Up
+.
+
+Set current_window you_need_to_set_current_window
+
+Define Viewer 3 name width height
+Tell_If "Viewer $1 $2 $3"
+#view viewers new $1 $2 $3 quit quit
+Click_Viewer "$1" $2 $3 Default_Click Default_Click exit
+View_Loop
+view wait $1 quit
+Set_Lin_Exponent 2.6		# default value
+.
+
+Define Wait_For_Click_If 0
+If $pausing Wait_For_Click
+.
+
+
+Define Wait_For_Click 0
+Set clicked 0
+repeat 50000
+  os events quit
+  If !$clicked "usleep 100000"
+  while !$clicked
+.
+
+Define Wait_For_Up_Click 0
+Set last_button_pressed none
+Tell_If "Click to proceed..."
+Wait_For_Click
+If $left_button_down "Set last_button_pressed left"
+If $middle_button_down "Set last_button_pressed middle"
+If $right_button_down "Set last_button_pressed right"
+If $left_button_down||$middle_button_down||$right_button_down Wait_For_Click
+Tell_If "Proceeding."
+.
+
+Define Wait_For_Down_Click 0
+Wait_For_Click
+If $left_button_up&&$middle_button_up&&$right_button_up Wait_For_Click
+.
+
+
+Define Wait_For_Down_Click2 0
+
+repeat 50000
+  os events quit
+  Assign clicked2 $left_button_down||$middle_button_down||$right_button_down
+  If !$clicked2 "usleep 1000"
+while !$clicked2
+.
+
+
+Define Extract 2 target viewer
+view
+  show $2
+  extract $1 $2 0 0
+  quit
+.
+
+Define Adj_Viewer 4 name width height action_text
+Set current_window $1
+view
+  viewers
+    adjuster $1 $2 $3 $4
+    quit
+  quit
+#advise 'calling loop'
+View_Loop
+#advise 'done with Viewer'
+.
+
+Define Mousescape 4 name width height mouse_text
+view
+  viewers
+    mousescape $1 $2 $3 $4
+    quit
+  quit
+.
+
+Define Plotter 3 name width height
+Set current_window $1
+view
+  viewers
+    plotter $1 $2 $3
+    quit
+  quit
+View_Loop
+.
+
+Define Click_Viewer 6 name width height 'left text' 'middle text' 'right text'
+Set current_window "$1"
+view
+  viewers
+    buttons "$1" $2 $3 $4 $5 $6
+    quit
+  quit
+View_Loop
+.
+
+Define Exit_Up 0
+If $left_button_up&&$middle_button_up&&$right_button_up exit
+.
+
+Define Exit_If_Click 0
+os events quit
+If $left_button_down||$middle_button_down||$right_button_down	'exit'
+.
+
+Define Set_Button_Actions 4 viewer 'left text' 'middle text' 'right text'
+view
+  viewers
+#    actions $1 $2 $3 $4
+    event_action $1 left_button_up $2
+    event_action $1 left_button_down $2
+    event_action $1 middle_button_up $3
+    event_action $1 middle_button_down $3
+    event_action $1 right_button_up $4
+    event_action $1 right_button_down $4
+    quit
+  quit
+.
+
+
+Define Posn_Window 3 name x y
+# just for mac?
+usleep 10000
+#view position $1 $2 $3 quit
+genwin position $1 $2 $3 quit
+.
+
+Define Posn_Viewer 3 name x y
+advise "Posn_Viewer is deprecated, use Posn_Window instead..."
+#view position $1 $2 $3 quit
+Posn_Window $1 $2 $3
+.
+
+Define New_View 4 'name for viewer' size 'x location' 'y location'
+Viewer $1 $2 $2
+Posn_Window $1 $3 $4
+View_Loop
+.
+
+Define Label_Viewer_If 2 'view name' 'new label'
+If $showing "Label_Viewer $1 '$2'"
+.
+
+Define Label_Viewer 2 'view name' 'new label'
+view label $1 $2 quit
+View_Loop
+.
+
+Define Init_LUT 1 'viewer name'
+Select_Viewer $1
+Grayscale_LUT 0 256
+View_Loop
+.
+
+Define Poke_Lut 5 'viewer name' index r g b
+Select_Viewer $1
+Poke_LUT $2 $3 $4 $5
+View_Loop
+.
+
+Define Save_Lut 2 lutname filename
+view
+  luts
+    lutbuffers
+      save $1 $2
+      quit
+    quit
+  quit
+.
+
+Define Dump_Lut 1 lutname
+view
+  luts
+    lutbuffers
+      dump $1
+      quit
+    quit
+  quit
+.
+
+Define Load_Lut 2 lutname filename
+view
+  luts
+    lutbuffers
+      load $1 $2
+      quit
+    quit
+  quit
+.
+
+Define Show_Gappy 2 obj viewer
+Dup_Obj sgtmpobj $1
+VMov sgtmpobj $1
+Show_Contig sgtmpobj "$2"
+Delete_Image sgtmpobj
+.
+
+##########
+
+# take a byte image (0-255) and convert to short for grayscale display
+# Assume 16 bit display w/ 5 bits blue (lsb), 6 bits green, 5 bits red (msb)
+
+Define Show16 2 image viewer
+If depth($1)==3
+  Then "Show_RGB_16 $1 $2"
+  Else "Show_Gray_16 $1 $2"
+.
+
+Define Show_RGB_16 2 image viewer
+Image s16_ftmp nrows('$1') ncols('$1') 1 float
+Image s16_accum nrows('$1') ncols('$1') 1 float
+Image s16_stmp nrows('$1') ncols('$1') 1 u_short
+
+# 6 bits for green
+Convert s16_ftmp $1{1}
+VSMul s16_ftmp s16_ftmp 1/4	# 8 bits -> 6 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_accum s16_ftmp 32	# skip over 5 low - order bits
+
+# 5 bits for red and blue
+Convert s16_ftmp $1{0}
+VSMul s16_ftmp s16_ftmp 1/8	# 8 bits -> 5 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_ftmp s16_ftmp 1+32*64	# skip over 5+6 low - order bits
+VVAdd s16_accum s16_accum s16_ftmp
+
+Convert s16_stmp s16_accum
+view load $2 s16_stmp quit
+
+Delete_Image s16_stmp
+Delete_Image s16_ftmp
+Delete_Image s16_accum
+.
+
+Define Show_Gray_16 2 image viewer
+Dup_Float s16_ftmp $1
+Dup_Float s16_accum $1
+Dup_Short s16_stmp $1
+
+# 6 bits for green
+Convert s16_ftmp $1
+VSMul s16_ftmp s16_ftmp 1/4	# 8 bits -> 6 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_accum s16_ftmp 32	# skip over 5 low - order bits
+
+# 5 bits for red and blue
+Convert s16_ftmp $1
+VSMul s16_ftmp s16_ftmp 1/8	# 8 bits -> 5 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_ftmp s16_ftmp 1+32*64	# skip over 5+6 low - order bits
+VVAdd s16_accum s16_accum s16_ftmp
+
+Convert s16_stmp s16_accum
+view load $2 s16_stmp quit
+
+Delete_Image s16_stmp
+Delete_Image s16_ftmp
+Delete_Image s16_accum
+.
+
+Define VBlank 0
+view
+  vblank 1
+  quit
+.
+
+Define Show_Contig 2 obj viewer
+If "$DISPLAY_DEPTH==16" 
+  Then "Show16 $1 '$2'"
+  ##Else "view vblank 1 load $2 $1 quit"
+  Else "view load '$2' $1 quit"
+Pause_If
+.
+
+Define Show_Bytes_If 2 object viewer
+If $showing "Show_Bytes $1 '$2'"
+Pause_If
+.
+
+Define Show_Bytes 2 object viewer
+If "!is_contiguous('$1')"
+  Then "Show_Gappy $1 '$2'"
+  Else "Show_Contig $1 '$2'"
+.
+#Define Show_Bytes 2 obj viewer
+#view load $2 $1 quit
+#.
+
+
+Define Load_Viewer 2 viewer object
+view load $1 $2 quit
+.
+
+Define Show_Viewer 1 viewer
+#advise "Show_Viewer $1"
+view show $1 quit
+.
+
+Define UnShow_Viewer 1 viewer
+view unshow $1 quit
+.
+
+Define Protected_Grayscale_Viewer 1 name
+Select_Viewer $1
+#Protect_LUT $n_gray_protect
+Grayscale_LUT $n_gray_protect 256-$n_gray_protect
+.
+
+Define Grayscale_Viewer 1 name
+If $verbose "advise 'setting up grayscale color map'"
+Select_Viewer $1
+#Protect_LUT 0
+Grayscale_LUT 0 256
+.
+
+Define Fit_To_Viewer 3 image viewer varname
+Set $3 $1		# default is to return the original image
+# if the sizes match, there's nothing to do
+If "(ncols('$1')==ncols('$2')) && (nrows('$1')==nrows('$2'))"
+  "exit_macro"
+If obj_exists(ftvzoom) "Delete_Image ftvzoom"
+If obj_exists(ftvsub) "Delete_Image ftvsub"
+# if the image is bigger than the viewer, make
+# a subimage
+If "(ncols('$1')>ncols('$2')) || (nrows('$1')>nrows('$2'))"
+  "Subimage ftvsub $1 min(ncols('$1'),ncols('$2')) min(nrows('$1'),nrows('$2')) 0 0 Set $3 ftvsub"
+# If the image is smaller by a factor greater than or equal to 2,
+# then zoom by pixel replication
+Assign hz max(1,floor(ncols('$2')/ncols('$$3')))
+Assign vz max(1,floor(nrows('$2')/nrows('$$3')))
+Assign tz max(1,floor(nframes('$2')/nframes('$$3')))
+Assign nf1 nframes('$2')
+Assign nf2 nframes('$$3')
+#Tell_If "Fit_To_Viewer:  nf1  $2 $nf1   nf2 $$3 $nf2   tz $tz"
+
+#Tell_If "Fit_To_Viewer:  zoom factors are $hz, $vz, $tz"
+Tell_Precision $$3 prec
+If "$tz>1||$hz>1||$vz>1"
+  "Sequence ftvzoom $tz*nframes('$$3') $vz*nrows('$$3') $hz*ncols('$$3') depth('$$3') $prec Enlarge ftvzoom $$3 Set $3 ftvzoom"
+.
+
+Define Disp_Raw 2 image viewer
+Fit_To_Viewer $1 "$2" drvar
+Show_Raw $drvar "$2"
+.
+
+Define Old_Disp_Raw 2 image viewer
+If "(ncols('$1')==ncols('$2')) && (nrows('$1')==nrows('$2'))"
+  " Show_Raw $1 $2 exit_macro advise ERROR"
+#advise "Disp_Raw:  enlarging $1 to fit $2"
+Dup_Float dr_tmp $2
+Enlarge dr_tmp $1
+Show_Raw dr_tmp $2
+Delete_Image dr_tmp
+.
+
+Define Disp_Bytes 2 image viewer
+If "(ncols($1)==ncols($2)) && (nrows($1)==nrows($2))"
+  " Show_Bytes $1 $2 exit_macro advise ERROR"
+#advise "Disp_Bytes:  enlarging $1 to fit $2"
+#Dup_UByte db_tmp $2
+#Dup_UByte db_tmp $1
+data precision $1 dup_prec quit
+Image db_tmp nrows($2) ncols($2) depth($1) $dup_prec
+Enlarge db_tmp $1
+Show_Bytes db_tmp $2
+Delete_Image db_tmp
+.
+
+Define Show_All_If 3 image viewer string
+If $showing&&$showall "Show_Picture $1 $2 '$3'"
+.
+
+
+Define Copy_Inset 2 image index
+Dup_Float citmp $1
+VMov citmp $1
+Scale citmp 0 255
+Convert "bc$2" citmp
+Delete_Image citmp
+.
+
+Define Color_Dither_If 3 image viewer_index string
+If $showing "Dup_UByte dither_buf $1{0}"
+If $showing "Color_Dither $1 dither_buf"
+Show_Color_If dither_buf $2 $3
+Delete_Image dither_buf
+.
+
+Define Show_Color_If 3 image viewer_index string
+If $showing "Show_Color_Picture $1 v$2 '$3'"
+.
+
+Define Dump_Corner 1 image
+Subimage "${1}_top_corner" $1 3 3 0 0
+Display "${1}_top_corner"
+Delete_Image "${1}_top_corner"
+#Subimage "${1}_bot_corner" $1 3 3 0 0
+#Display "${1}_bot_corner"
+#Delete_Image "${1}_bot_corner"
+.
+
+Define Show_Raw_If 3 image viewer_index string
+If $showing "Show_Raw_Picture $1 v$2 '$3'"
+.
+
+Define Show_If 3 image viewer_index string
+# put insets in a video window...
+If $tracing "Dump_Corner $1"
+If $showing "Show_Picture $1 v$2 '$3'"
+.
+
+Define Show_Image_If 3 image viewer_index string
+# put insets in a video window...
+If $tracing "Dump_Corner $1"
+If $showing "Show_Disp_Image $1 $2 '$3'"
+.
+
+Define Label_If 2 viewer_index label
+If $showing "Label_Viewer v$1 '$2'"
+.
+
+Define Save_Picture 3 image_name viewer_name string
+#advise "Save_Picture $1 $2 $3"
+Hips_Write_Directory $demo_img_dir
+Set vname serial.$2
+If !var_exists($vname) "Set serial.$2 1" 
+Set file_name $2.$$vname.hips2
+If $$vname==1
+  Then "append no"
+  Else "append yes"
+output_file $demo_img_dir/index.$2
+echo "$2 $$vname\t$1\t$3"
+
+Increment $vname
+#Filetype hips2
+Put_Hips2 $1 $file_name
+#os Qstack quit
+.
+
+Define Save_View 2 filename viewer
+Dup_UByte sv_tmp $2
+view extract sv_tmp $2 0 0 quit
+Clobber yes
+Write_File_Header $1 1
+Put_Next sv_tmp $1
+Delete_Image sv_tmp
+.
+
+Define Show_Raw_Picture 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Raw_Picture:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Raw $1 $2
+If $saving_all&&var_exists(demo_img_dir) "Save_Picture $1 $2 '$3'"
+Pause_If
+#advise "Show_Picture done"
+.
+
+Define Show_Picture 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Picture:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Gray $1 $2
+If $saving_all&&var_exists(demo_img_dir) "Save_Picture $1 $2 '$3'"
+Pause_If
+#advise "Show_Picture done"
+.
+
+Define Show_Disp_Image 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Image:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Image $1 $2
+Pause_If
+.
+
+Define Show_Color_Picture 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Color_Picture:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Bytes $1 $2
+Pause_If
+.
+
+#Define Pause_If 0
+#If !$pausing 'exit_macro'
+#advise 'type ^D to proceed'
+#< /dev/tty
+#.
+
+#Set_Display_Size $xsize $ysize
+
+
+Define Init_8Bit_Grayscale 0
+Set n_gray_levels	32	# see default colormap, colormaps.c
+Set gray_base		16
+#Set n_gray_levels	28	# these values are consistent w/ KDE ???
+#Set gray_base		216
+.
+
+Define Init_24Bit_Grayscale 0
+Set n_gray_levels	256
+Set gray_base 		0
+.
+
+Define Init_16Bit_Grayscale 0
+Init_24Bit_Grayscale
+.
+
+Set last_depth 0
+
+Define Reset_Depth 1 depth
+If $1==24 Init_24Bit_Grayscale
+If $1==8 Init_8Bit_Grayscale
+If $1==16 Init_16Bit_Grayscale
+If $1!=8&&$1!=24&&$1!=16 "warn 'Reset_Depth (view.mac):  unexpected display depth $1'"
+Set last_depth $1
+.
+
+Define Init_Grayscale_Range 0
+view displays tell display_name quit quit
+Assign display_depth depth("$display_name")
+If $display_depth!=$last_depth "Reset_Depth $display_depth"
+Assign gray_min		$gray_base
+Assign gray_max		$gray_base+$n_gray_levels-1
+.
+
+Stop_File view.mac
+
+
+# FILE view/ios_plot.mac BEGIN
+If var_exists(plot_locale)
+  'warn "ios_plot.mac:  plot locale already initialized to $plot_locale" exit_macro'
+
+
+Define Y_Legend 1 string
+
+Assign ly ($plot_ymax+$plot_ymin)/2
+
+# BUG it might be possible for "xmin" to be larger
+# than "xmax", in which case subtracting the
+# offset would move the legend in the wrong
+# direction...
+
+Assign lx $plot_xmin-$legend_h_offset
+
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+
+view
+  draw $the_plotter
+    text_angle 90
+    text_mode centered
+    quit
+  plot $the_plotter
+    move $lx $ly
+    string "$1"
+    quit
+  draw $the_plotter
+    text_angle 0
+    quit
+  quit
+.
+
+Define Y_Legend_Right 1 string
+warn 'Sorry, Y_Legend_Right not implemented yet for iOS.'
+.
+
+
+Define X_Legend 1 string
+Legend_Font
+#Print plot_xmin
+#Print plot_xmax
+
+# these are in the plotting units...
+#Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
+# this is the centered x coord...
+Assign lx ($plot_xmin+$plot_xmax)/2
+Assign ly $plot_ymin-$legend_v_offset
+
+view
+  draw $the_plotter
+    text_angle 0
+    text_mode centered
+    quit
+  plot $the_plotter
+    move $lx $ly
+    string "$1"
+    quit
+  quit
+.
+
+# font size needs to be set separately?
+
+Define Init_Font_Stuff 0
+Set unit_font 'Times New Roman'
+Set legend_font 'Times New Roman'
+Set unit_font_size 14
+Set legend_font_size 24
+.
+
+Set plot_locale iOS
+
+# FILE view/plotsupp.mac BEGIN
+# %Z% $RCSfile: plotsupp.mac,v $ ver: $Revision: 1.81 $ $Date: 2010/12/02 17:56:12 $
+
+#
+# Call No_Reserve first to get a plotting window w/ no axes
+# Call Default_Reserve if axes desired (default)
+# but last call becomes new default in the execution of the program.
+#
+# New_Plotter name width height
+# # DONE AUTOMATICALLY:  Assign_Margins	# if axes desired...
+# Old:
+# Plot_Data_Range $xmin $ymin $xmax $ymax
+# Y_Legend string
+# (Y_Legend_Right string)
+# X_Legend string
+# (X_Legend_Top string)
+# Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+# Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
+# Label_X_Ticks $xmin $xmax $x_tick_spacing
+# Label_Y_Ticks $ymin $ymax $y_tick_spacing
+# (Label_Y_Ticks_Right first max delta)
+#
+# new:
+# Set xmin, xmax, ymin, ymax, x_tick_spacing, y_tick_spacing, x_legend, y_legend
+# Setup_Axes
+#
+# XYPlot data_vector
+# Thick_Plot thickness data_vector
+# Symbol Disk 3
+# Symbol_Plot data_vector
+
+If var_exists(plotsupp_loaded) "warn 'plotsupp.mac already read!?' exit_macro"
+
+Set plotsupp_loaded 1
+Set margins_set 0
+
+# basic plotting macros
+
+Define Require_Var 1 varname
+If !var_exists('$1')
+  "warn 'Setup_Axes:  variable $1 must be defined' Set vars_ok 0"
+.
+
+Define Setup_Axes 0
+Set vars_ok 1
+Require_Var xmin
+Require_Var ymin
+Require_Var xmax
+Require_Var ymax
+Require_Var x_tick_spacing
+Require_Var y_tick_spacing
+Require_Var x_legend
+Require_Var y_legend
+If !$vars_ok exit_macro
+
+Plot_Data_Range $xmin $ymin $xmax $ymax
+Y_Legend $y_legend
+X_Legend $x_legend
+Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
+Label_X_Ticks $xmin $xmax $x_tick_spacing
+Label_Y_Ticks $ymin $ymax $y_tick_spacing
+.
+
+#
+# record length is provided by caller in $dlen
+
+Start_File plotsupp.mac
+
+# default is white on black
+# These two macros override this for the current plotter...
+
+Define Black_On_White 0
+Plot_Foreground $black
+Plot_Background $white
+Set label_color $plot_foreground
+Set plot_mode black_on_white
+.
+
+
+Define White_On_Black 0
+Plot_Foreground	$white
+Plot_Background	$black
+#Set label_color $default_fg
+Set label_color $plot_foreground
+Set plot_mode white_on_black
+.
+
+# these two macros change the default for new plotters
+
+Define Default_White_On_Black 0
+Set default_fg $white
+Set default_bg $black
+Set label_color $default_fg
+Set plot_mode white_on_black
+.
+
+Define Default_Black_On_White 0
+Set default_fg $black
+Set default_bg $white
+Set label_color $default_fg
+Set plot_mode black_on_white
+.
+
+
+# call once to use an existing viewer as a plotter
+Define Use_Viewer_As_Plotter 1 name
+Init_New_Plotter $1
+.
+
+Define Plotter_Click 0
+If $left_button_up exit_macro
+If $middle_button_up exit_macro
+If $right_button_up exit_macro
+If $exit_on_plotter_click exit
+Set clicked 1
+.
+
+Define New_Plotter 3 name dx dy
+#Viewer $1 $2 $3
+Plotter $1 $2 $3
+view
+  xsync yes
+  #show $1	# don't show by default...  for ios
+  quit
+Init_New_Plotter $1
+Set_Button_Actions $1 Plotter_Click Plotter_Click Plotter_Click
+.
+
+Define Init_Plotter_Param_Indices 0
+# We store the plotting space parameters in a structure
+Set plot_xmin_index		0
+Set plot_xmax_index		1
+Set plot_ymin_index		2
+Set plot_ymax_index		3
+Set left_margin_index		4
+Set right_margin_index		5
+Set bot_margin_index		6
+Set top_margin_index		7
+Set plot_foreground_index	8
+Set plot_background_index	9
+Set grid_color_index		10
+Set label_color_index		11
+Set pen_color_index		12
+Set n_plotter_params		13
+.
+
+Define Get_Param_Vec_Name 1 plotter_name
+variables despace nospacename $1 quit
+Set param_vec_name ${nospacename}_params
+.
+
+Define Init_New_Plotter 1 name
+#advise "Init_New_Plotter $1"
+If strcmp('$the_plotter','no_plotter')
+  Remember_Plotter_Params
+# Here we need to forget everything about the old plotter...
+
+Set minmax_set 0		# BUG this should be a plotter param...
+
+Set the_plotter "$1"
+Set current_window "$1"
+Init_Color_Defs
+Plot_Foreground $default_fg
+Plot_Background $default_bg
+Select_Pen $default_fg
+# We set the margins here by default, but would it be better
+# to defer and give the user a chance to override the default?
+#advise "Setting up plotter '$1' with default margins of zero"
+#Zero_Margins			# default
+Assign_Margins			# margins by default...
+Grid_Color $gray
+Erase_Plot
+#advise "Init_New_Plotter:  '$1'"
+# This causes trouble if we allow spaces in the plotter name
+Get_Param_Vec_Name $1
+Vector $param_vec_name $n_plotter_params 1 float
+data ascii
+  input_fmt ' '
+	read $param_vec_name -
+	0
+	ncols('$1')-1
+	0
+	nrows('$1')-1
+	0 0 0 0
+#	$black
+#	$white
+	$plot_foreground
+	$plot_background
+	$grid_color
+	$label_color
+	$pen_color
+
+	quit quit
+.
+
+# Remember_Plotter_Params:	store script vars to memory data structure
+
+Define Remember_Plotter_Params 0
+If !strcmp('$the_plotter','no_plotter')
+  "error_exit 'Remember_Plotter_Params:  no plotter set'"
+#Show_Plotter_Params
+data
+  ascii
+    input_fmt ' '
+    read $param_vec_name -
+	$plot_xmin
+	$plot_xmax
+	$plot_ymin
+	$plot_ymax
+	$left_margin
+	$right_margin
+	$bot_margin
+	$top_margin
+	$plot_foreground
+	$plot_background
+	$grid_color
+	$label_color
+	$pen_color
+    quit
+  quit
+.
+
+# We call this to restore the settings of a plotter
+# we have used before.  But some of the settings in Update_...
+# are not recalled???
+
+Define Recall_Plotter_Params 0
+If !strcmp('$the_plotter','no_plotter')
+  "error_exit 'Recall_Plotter_Params:  no plotter set'"
+Assign plot_xmin value($param_vec_name{$plot_xmin_index})
+Assign plot_xmax value($param_vec_name{$plot_xmax_index})
+Assign plot_ymin value($param_vec_name{$plot_ymin_index})
+Assign plot_ymax value($param_vec_name{$plot_ymax_index})
+Assign left_margin value($param_vec_name{$left_margin_index})
+Assign right_margin value($param_vec_name{$right_margin_index})
+Assign bot_margin value($param_vec_name{$bot_margin_index})
+Assign top_margin value($param_vec_name{$top_margin_index})
+Assign plot_foreground value($param_vec_name{$plot_foreground_index})
+Assign plot_background value($param_vec_name{$plot_background_index})
+Assign grid_color value($param_vec_name{$grid_color_index})
+Assign label_color value($param_vec_name{$label_color_index})
+Assign pen_color value($param_vec_name{$pen_color_index})
+# show the plotter params when debugging...
+#Show_Plotter_Params
+Update_Range_Constants
+.
+
+Define Show_Plotter_Params 0
+advise "-> Plot parameters, current plotter '$the_plotter':"
+advise "  > plot limits:  $plot_xmin - $plot_xmax,   $plot_ymin - $plot_ymax"
+advise "  > plot margins:  $left_margin - $right_margin,   $bot_margin - $top_margin"
+advise "  > plot colors:  $plot_foreground, $plot_background"
+.
+
+Define Init_Color_Indices 0
+Set black 20
+Set white 21
+Set gray 22
+Set red	23
+Set green	24
+Set yellow	25
+Set cyan	26
+Set blue	27
+Set orange	28
+Set purple	29
+Set magenta	29
+Set dark_green	30
+Set dark_red	31
+.
+
+Define Init_Color_Defs 0
+#advise "Init_Color_Defs:  current_window = $current_window"
+Setcolor $black 0 0 0
+Setcolor $white 255 255 255
+Setcolor $gray 50 50 50
+Setcolor $red 255 0 0
+Setcolor $dark_red 100 0 0
+Setcolor $green 0 255 0
+Setcolor $dark_green 0 100 0
+Setcolor $blue 0 0 255
+Setcolor $purple 255 0 255	# same as $magenta
+Setcolor $yellow 255 255 0
+Setcolor $orange 250 100 0
+Setcolor $cyan 0 255 255
+Plot_Foreground $default_fg
+Plot_Background $default_bg
+Grid_Color $gray
+# wait for viewer to map - where did this come from???
+#view
+#  wait $1
+#  quit
+Erase_Plot
+.
+
+Define New_Adjuster 4 name dx dy action_text
+Adj_Viewer $1 $2 $3 $4
+view
+  xsync yes
+  show $1
+  show $1
+  quit
+Init_New_Plotter $1
+.
+
+Define Select_Plotter 1 plotter_name
+# Should selecting a plotter bring it to the front???
+view show "$1" quit		# raise viewer
+Set recall 0
+Assign plotter_changing strcmp('$1','$the_plotter')
+If $plotter_changing
+  Remember_Plotter_Params
+Set the_plotter "$1"
+Set current_window "$1"
+Get_Param_Vec_Name $1
+If $plotter_changing 
+  Recall_Plotter_Params
+# There are some parameters that are computed...
+Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax
+.
+
+Define Plot_Foreground_White 0
+Setcolor $white 255 255 255
+Plot_Foreground $white
+.
+
+
+Define Plot_Foreground 1 color
+Set plot_foreground $1
+view
+  draw $the_plotter
+    foreground $1
+    quit
+  plot $the_plotter
+    select $1
+    quit
+  quit
+.
+
+Define Plot_Background 1 color
+Set plot_background $1
+view
+  draw $the_plotter
+    background $1
+    quit
+  quit
+.
+
+Define Grid_Color 1 color
+Set grid_color $1
+.
+
+
+Define XPlot 1 vector
+view
+  plot $the_plotter
+    xplot $1
+    quit
+  quit
+.
+
+Define YPlot 1 vector
+view
+  plot $the_plotter
+    yplot $1
+    quit
+  quit
+.
+
+Define CYPlot 2 data colors
+view
+  plot $the_plotter
+    cyplot $1 $2
+    quit
+  quit
+.
+
+Define XYPlot 1 vector
+view
+  plot $the_plotter
+    xyplot $1
+    quit
+  quit
+.
+
+
+Define XYZ_Plot 1 vector
+view
+  plot $the_plotter
+    xyzplot $1
+    quit
+  quit
+.
+
+
+Define Select_Pen 1 color
+Set pen_color $1
+view
+  plot $the_plotter
+    select $pen_color
+    quit
+  quit
+.
+
+Define Plot_Space 4 xmin ymin xmax ymax
+Tell_If "Plot_Space $1 $2 $3 $4"
+If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
+If !$minmax_set "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+#advise "Plot_Space '$the_plotter' $1 $2 $3 $4"
+view
+  plot $the_plotter
+    space $1 $2 $3 $4
+    quit
+  quit
+# Why does Plot_Space call Remember_Plotter_Params???
+#advise "Plot_Space calling Remember_Plotter_Params"
+#Remember_Plotter_Params
+.
+
+Define Erase_Plotter 1 plotter
+Select_Plotter $1
+Erase_Plot
+.
+
+Define Erase_Plot 0
+#Plot_Background $plot_background
+view
+  plot $the_plotter
+    erase
+    quit
+  quit
+.
+
+Define PMove 2 x y
+view
+  plot $the_plotter
+    move $1 $2
+    quit
+  quit
+.
+
+Define PCont 2 x y
+view
+  plot $the_plotter
+    cont $1 $2
+    quit
+  quit
+.
+
+Define Hide_Viewer 1 name
+Posn_Window $1 $hidex $hidey
+.
+
+Define UnHide_Viewer 1 name
+Posn_Window $1 $showx $showy
+.
+
+# These are the default reserves... what is extra_right_reserve?
+# and what if we want two y axes, left and right?
+#
+# On iOS, we plot to the whole screen, and DISPLAY_WIDTH is pre-defined
+# when the app launches - but for unix we want to use the window size???
+
+Define Default_Reserve 0
+#Set left_reserve	90
+# 120 pixels makes sense on a big screen, but the ipod
+# is only 320 pixels wide, so this is more than 1/3...
+#Set left_reserve	120
+
+
+If !var_exists(DISPLAY_WIDTH)
+#  'view displays quit quit Assign DISPLAY_WIDTH ncols("$DISPLAY")'
+  'view displays quit quit'
+If !var_exists(DISPLAY_WIDTH)
+  "error_exit 'Displays menu has been entered, but DISPLAY_WIDTH is undefined!?'"
+
+Assign left_reserve	min(120,round($DISPLAY_WIDTH/5))
+
+Set bot_reserve		80		# in screen units
+Set right_reserve	40
+Set extra_right_reserve	$left_reserve
+Set top_reserve		40
+Set extra_top_reserve	$bot_reserve
+Set tick_len		10
+.
+
+
+Define No_Reserve 0
+Set left_reserve	0
+Set bot_reserve		0
+Set right_reserve	0
+Set top_reserve		0
+Set tick_len		0
+.
+
+
+
+# the margins are the fraction of the total window area...
+
+Define Assign_Margins 0
+Assign left_margin $left_reserve/ncols('$the_plotter')
+Assign right_margin $right_reserve/ncols('$the_plotter')
+Assign bot_margin $bot_reserve/nrows('$the_plotter')
+Assign top_margin $top_reserve/nrows('$the_plotter')
+Set margins_set 1
+#advise "Assign_Margins:  Plot margins for plotter $the_plotter set to $left_margin, $right_margin, $bot_margin, $top_margin"
+.
+
+Define Assign_Extra_Margins 1 where
+If !strcmp('$1',right) Extra_Right_Margins
+If !strcmp('$1',top) Extra_Top_Margins
+If !strcmp('$1',right_and_top) Both_Extra_Margins
+.
+
+Define Extra_Right_Margins 0
+If !$margins_set Assign_Margins	# install default
+#Assign left_margin $left_reserve/ncols('$the_plotter')
+Assign right_margin $extra_right_reserve/ncols('$the_plotter')
+#Assign bot_margin $bot_reserve/nrows('$the_plotter')
+#Assign top_margin $top_reserve/nrows('$the_plotter')
+#Set margins_set 1
+.
+
+Define Extra_Top_Margins 0
+If !$margins_set Assign_Margins	# install default
+#Assign bot_margin $bot_reserve/nrows('$the_plotter')
+Assign top_margin $extra_top_reserve/nrows('$the_plotter')
+#Assign left_margin $left_reserve/ncols('$the_plotter')
+#Assign right_margin $right_reserve/ncols('$the_plotter')
+#Set margins_set 1
+.
+
+Define Both_Extra_Margins 0
+Extra_Right_Margins
+Extra_Top_Margins
+#Assign left_margin $left_reserve/ncols('$the_plotter')
+#Assign right_margin $extra_right_reserve/ncols('$the_plotter')
+#Assign bot_margin $bot_reserve/nrows('$the_plotter')
+#Assign top_margin $extra_top_reserve/nrows('$the_plotter')
+#Set margins_set 1
+.
+
+Define Zero_Margins 0
+Set left_margin 0
+Set right_margin 0
+Set bot_margin 0
+Set top_margin 0
+Set margins_set 1
+#advise "Plot margins set to Zero"
+.
+
+# this is like Plot_Space, but leaves a gap for axes...
+# BUG margins set should be per plotter???
+
+Define Plot_Data_Range 4 xmin ymin xmax ymax
+Tell_If "Plot_Data_Range $1 $2 $3 $4"
+If !$margins_set "Tell_If 'margins not set, assigning default values' Assign_Margins"
+Set_Plot_Minmax $1 $2 $3 $4
+Assign x_delta ($3)-($1)				# width of plotting area in plotting units
+Assign y_delta ($4)-($2)
+Assign h_active 1-($left_margin+$right_margin)	# e.g. 0.7 - fraction of window width used for plotting
+Assign v_active 1-($top_margin+$bot_margin)	# e.g. 0.7
+Assign left_factor $left_margin/$h_active	# left margin expressed as a fraction of active area
+Assign bot_factor $bot_margin/$v_active
+Assign right_factor $right_margin/$h_active
+Assign top_factor $top_margin/$v_active
+Assign pdr_x1 ($1)-$x_delta*$left_factor		# edge of window in plot units
+Assign pdr_y1 ($2)-$y_delta*$bot_factor
+Assign pdr_x2 ($3)+$x_delta*$right_factor
+Assign pdr_y2 ($4)+$y_delta*$top_factor
+Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2
+Update_Range_Constants
+# tick_len is in pixels (screen units), not plot space units
+Assign y_tick_len $tick_len*$h_plot_units_per_screen_unit
+Assign x_tick_len $tick_len*$v_plot_units_per_screen_unit
+Assign unit_v_offset $x_tick_len*0.3
+Assign unit_h_offset $y_tick_len*0.3
+Init_Legend_Fonts $the_plotter
+Unit_Font
+.
+# end Plot_Data_Range
+
+Define Set_Plot_Minmax 4 xmin ymin xmax ymax
+Assign plot_xmin $1
+Assign plot_ymin $2
+Assign plot_xmax $3
+Assign plot_ymax $4
+Set minmax_set 1
+.
+
+Define Show_Plot_Limits 0
+Print plot_xmin
+Print plot_xmax
+Print plot_ymin
+Print plot_ymax
+.
+
+Define Plot_2_Screen 4 xvarname yvarname x y
+# these two statements are for debugging...
+#advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
+#Show_Plot_Limits
+
+# first get the fractional position in the plotting space
+Assign $2 ($4-$plot_ymin)/($plot_ymax-$plot_ymin)
+Assign $1 ($3-$plot_xmin)/($plot_xmax-$plot_xmin)
+# turn Y upside down
+Assign $2 1-$$2
+# scale
+Mul_Var $1 (ncols('$the_plotter')*(1-($left_margin+$right_margin)))
+Mul_Var $2 (nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+# shift origin
+Add_Var $1 ncols('$the_plotter')*$left_margin
+Add_Var $2 nrows('$the_plotter')*$top_margin
+Assign $1 floor($$1+0.5)
+Assign $2 floor($$2+0.5)
+#advise "Plot_2_Screen $$1 $$2  <-  $3 $4"
+.
+
+# Screen_2_Plot - convert from window coordinates to plotting units
+#
+# The constants we need are:
+#	plot_xmin, plot_xmax
+#	plot_ymin, plot_ymax
+#	left_margin, right_margin
+#	top_margin, bot_margin
+#
+
+
+Define Screen_2_Plot 4 xvarname yvarname x y
+#advise "Screen_2_Plot:  margins:  $left_margin - $right_margin"
+Assign $1 ($3)-ncols('$the_plotter')*$left_margin
+Assign $2 ($4)-nrows('$the_plotter')*$top_margin
+#advise "Screen_2_Plot, shifting origin:  $$1 $$2 <- $3 $4"
+Mul_Var $1 ($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
+Mul_Var $2 ($plot_ymax-$plot_ymin)/(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+#advise "Screen_2_Plot, scaling:  $$1 $$2 <- $3 $4"
+# turn Y upside down
+Assign $2 $plot_ymax-$plot_ymin-$$2
+Add_Var $1 $plot_xmin
+Add_Var $2 $plot_ymin
+#advise "Screen_2_Plot:  $$1 $$2 <- $3 $4"
+.
+
+Define Test_Coords 0
+Set sx1 10
+Set sy1 20
+Set sdx 50
+Set sdy 70
+Assign sx2 $sx1+$sdx
+Assign sy2 $sy1+$sdy
+
+view
+  draw $the_plotter
+    move $sx1	$sy1
+    cont $sx1	$sy2
+    cont $sx2	$sy2
+    cont $sx2	$sy1
+    cont $sx1	$sy1
+    cont $sx2	$sy2
+    quit
+  quit
+Screen_2_Plot px1 py1 $sx1 $sy1
+Screen_2_Plot px2 py2 $sx2 $sy2
+Select_Plotter $the_plotter
+< /dev/tty
+Select_Pen $red_pen
+view
+  #advise "px1 $px1  py1 $py1   px2 $px2   py2 $py2"
+  plot $the_plotter
+    move $px1		$py1
+    cont $px1		$py2
+    cont $px2		$py2
+    cont $px2		$py1
+    cont $px1		$py1
+    cont $px2		$py2
+    quit
+  quit
+
+Set px1	1.5
+Set py1	0.5
+Set px2 3.5
+Set py2 2.5
+view
+  #advise "px1 $px1  py1 $py1   px2 $px2   py2 $py2"
+  plot $the_plotter
+    move $px1		$py1
+    cont $px1		$py2
+    cont $px2		$py2
+    cont $px2		$py1
+    cont $px1		$py1
+    cont $px2		$py2
+    quit
+  quit
+Plot_2_Screen sx1 sy1 $px1 $py1
+Plot_2_Screen sx2 sy2 $px2 $py2
+< /dev/tty
+view
+  draw $the_plotter
+    move $sx1	$sy1
+    cont $sx1	$sy2
+    cont $sx2	$sy2
+    cont $sx2	$sy1
+    cont $sx1	$sy1
+    cont $sx2	$sy2
+    quit
+  quit
+advise "TEST DONE"
+< /dev/tty
+.
+
+Define X_Tick_At 2 x y
+PMove $1 $2
+PCont $1 $2-$x_tick_len
+.
+
+Define Plain_X_Axis 3 xmin xmax ypos
+PMove $1 $3
+PCont $2 $3
+.
+
+Define Plot_X_Axis_Offset 5 xmin xmax tick_spacing ypos first_tick_offset
+Plain_X_Axis $1 $2 $4
+Assign _x $1+$5
+do
+  X_Tick_At $_x $4
+  Add_Var _x $3
+  while $_x<=$2
+.
+
+
+Define Plot_X_Axis 4 xmin xmax tick_spacing ypos
+Plot_X_Axis_Offset $1 $2 $3 $4 0
+.
+
+Define Plot_X_Axis_Top 4 xmin xmax tick_spacing ypos
+Mul_Var x_tick_len -1
+Plot_X_Axis_Offset $1 $2 $3 $4 0
+Mul_Var x_tick_len -1
+.
+
+
+Define Plot_Y_Axis 4 ymin ymax tick_spacing xpos
+Plot_Y_Axis_Offset $1 $2 $3 $4 0
+.
+
+Define Plot_Y_Axis_Right 4 ymin ymax tick_spacing xpos
+Mul_Var y_tick_len -1
+Plot_Y_Axis_Offset $1 $2 $3 $4 0
+Mul_Var y_tick_len -1
+.
+
+Define Plot_Y_Axis_Offset 5 ymin ymax tick_spacing xpos first_tick_offset
+PMove $4 $1
+PCont $4 $2
+Assign _y $1+$5
+do
+  PMove $4 $_y
+  PCont $4-$y_tick_len $_y
+  Add_Var _y $3
+  while $_y<=$2
+.
+
+Define Plot_Grid 6 xmin ymin xmax ymax x_spacing y_spacing
+If $plot_foreground>=0 "Select_Pen $plot_foreground"
+#draw the box in the current color
+PMove $1 $2
+PCont $3 $2
+PCont $3 $4
+PCont $1 $4
+PCont $1 $2
+If $grid_color>=0 "Select_Pen $grid_color"
+Assign _x $1+$5
+do
+  PMove $_x $2
+  PCont $_x $4
+  Add_Var _x $5
+  while $_x<=$3
+Assign _y $2+$6
+do
+  PMove $1 $_y
+  PCont $3 $_y
+  Add_Var _y $6
+  while $_y<=$4
+.
+
+Define Init_Legend_Fonts 1 plotter
+If $fonts_loaded "exit_macro"
+#advise "Init_Legend_Fonts:  legend_font = $legend_font"
+view
+  draw "$1"
+    load $unit_font
+    load $legend_font
+    quit
+  quit
+Set fonts_loaded 1
+.
+
+Define Unit_Font 0
+view draw $the_plotter font $unit_font quit quit
+Set h_screen_units_per_char	6
+Set v_screen_units_per_char	10
+Update_Font_Constants
+.
+
+Define Legend_Font 0
+view draw $the_plotter font $legend_font quit quit
+#Set h_screen_units_per_char	12
+#Set h_screen_units_per_char	9.0	# works good for centering, but end is getting chopped off...
+# Not centered with a long legend, window 700x500
+Set h_screen_units_per_char	14.4	# works good for centering, but end is getting chopped off...
+# try this...
+Set h_screen_units_per_char	12.4	# works good for centering, but end is getting chopped off...
+# This is the height of the font in pixels...
+Set v_screen_units_per_char	26
+Update_Font_Constants
+.
+
+# When do we call Update_Range_Constants?
+# These things need to be per-viewer...
+
+Define Update_Range_Constants 0
+#advise "\tplot_xmax = $plot_xmax\tplot_xmin = $plot_xmin"
+#advise "\tleft_margin = $left_margin\tright_margin = $right_margin"
+Assign h_plot_units_per_screen_unit	($plot_xmax-$plot_xmin)/(ncols('$the_plotter')*(1-($left_margin+$right_margin)))
+#advise "Update_Range_Constants:  plot:  $plot_xmin - $plot_xmax, h_plot_units_per_screen_unit = $h_plot_units_per_screen_unit"
+Assign n_graph_vpixels			(nrows('$the_plotter')*(1-($top_margin+$bot_margin)))
+Assign v_plot_units_per_screen_unit	($plot_ymax-$plot_ymin)/$n_graph_vpixels
+
+# bot_reserve is in pixels, we take this to plot units...
+Assign legend_v_offset	(0.8*$bot_reserve)*$v_plot_units_per_screen_unit
+Assign legend_v_offset_top	(0.4*$extra_top_reserve)*$v_plot_units_per_screen_unit
+# The legend offset ought to depend on the length of the legend strings???
+# 0.8 worked well for x11, but when left reserve is smaller (iPod),
+# it's too much...
+Assign legend_h_offset	(0.7*$left_reserve)*$h_plot_units_per_screen_unit
+
+# should be in plot units?
+Assign legend_h_offset_right	(0.40*$extra_right_reserve)*$h_plot_units_per_screen_unit
+Assign _h nrows('$the_plotter')
+.
+
+Define Update_Font_Constants 0
+Update_Range_Constants
+Assign h_plot_units_per_char	$h_screen_units_per_char*$h_plot_units_per_screen_unit
+Assign v_plot_units_per_char	$v_screen_units_per_char*$v_plot_units_per_screen_unit
+Assign h_plot_units_per_rotated_char	$v_screen_units_per_char*$h_plot_units_per_screen_unit
+Assign v_plot_units_per_rotated_char	$h_screen_units_per_char*$v_plot_units_per_screen_unit
+#advise "Update_Font_Constants DONE"
+.
+
+Define Label_X_Tick 2 posn string
+Unit_Font
+view
+  draw $the_plotter
+    text_mode centered
+    quit
+  plot $the_plotter
+    move $1 $plot_ymin
+    cont $1 $plot_ymin-$x_tick_len
+
+    #Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    #Assign lx $1-($string_width/2)
+    Assign lx $1
+    Assign ly $plot_ymin-($x_tick_len+$string_height+$unit_v_offset)
+
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+# We used to draw the ticks here...
+
+Define Label_Y_Tick 2 posn string
+Unit_Font
+view
+  draw $the_plotter
+    text_mode right_justified
+    quit
+  plot $the_plotter
+    # We used to use the string width to determine the offset,
+    # but iOS allows us to right-justify text...
+    # or at least we've implemented it.
+    # But what will we do for unix/X11?
+    #Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign ly $1-($string_height/2)
+    #Assign lx $plot_xmin-($y_tick_len+$string_width+$unit_h_offset)
+    Assign lx $plot_xmin-($y_tick_len+$unit_h_offset)
+
+    # BUG need to get this right independent of viewer width!?
+    #Assign lx $plot_xmin-(2.5*$y_tick_len+$string_width)
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+Define Label_Y_Tick_Right 2 posn string
+Unit_Font
+Left_Justify
+view
+  plot $the_plotter
+    #move $plot_xmax $1
+    #cont $plot_xmax+$y_tick_len $1
+
+    # BUG we can get a more accurate measure now...
+    Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign ly $1-($string_height/2)
+    Assign lx $plot_xmax+($y_tick_len+$unit_h_offset)
+    # BUG need to get this right independent of viewer width!?
+    #Assign lx $plot_xmin-(2.5*$y_tick_len+$string_width)
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+Define Label_X_Tick_Top 2 posn string
+Unit_Font
+view
+  plot $the_plotter
+    # usually the tick is drawn already!?
+    move $1 $plot_ymax
+    cont $1 $plot_ymax+$x_tick_len
+
+    Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    Assign lx $1-($string_width/2)
+    Assign ly $plot_ymax+($x_tick_len+$unit_v_offset)
+
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
+Define Show_Legend_Area 0
+view
+  draw $the_plotter
+    move $sx1 $sy1
+    cont $sx1 $sy2
+    cont $sx2 $sy2
+    cont $sx2 $sy1
+    cont $sx1 $sy1
+    quit
+  quit
+.
+
+Define X_Legend_Top 1 string
+Legend_Font
+#Print plot_xmin
+#Print plot_xmax
+view
+  draw $the_plotter
+    get_string_width string_width "$1"
+    quit
+  plot $the_plotter
+    #Assign string_width strlen('$1')*$h_plot_units_per_char
+    Mul_Var string_width $h_plot_units_per_screen_unit
+
+# these are in the plotting units...
+    Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
+    Assign ly $plot_ymax+$legend_v_offset_top
+    # what about justification??? x centered, y at bottom of text...
+    move $lx $ly
+    string $1
+    quit
+  quit
+.
+
+Define Symbol_At 4 symbol_macro px py size
+#advise "Symbol_At $1 $2 $3 $4"
+Plot_2_Screen sx1 sy1 $2 $3
+$1 $sx1 $sy1 $4
+.
+
+Define Symbol 2 symbol_macro size
+Set draw_symbol $1
+Set symbol_size $2
+.
+
+Define Diamond 3 x y size
+view
+  draw $the_plotter
+    fill_poly 4
+      $1    $2-$3
+      $1+$3 $2   
+      $1    $2+$3
+      $1-$3 $2   
+    quit
+  quit
+.
+
+Define Square 3 x y size
+view
+  draw $the_plotter
+    fill_poly 4
+      $1-$3 $2-$3
+      $1+$3 $2-$3
+      $1+$3 $2+$3
+      $1-$3 $2+$3
+    quit
+  quit
+.
+
+Define Bar_At 3 x y width
+Plot_2_Screen bx1 by1 $1-$3/2 $plot_ymin
+Plot_2_Screen bx2 by2 $1+$3/2 $2
+# y increases down...
+Decrement by1
+view
+  draw $the_plotter
+    fill_poly 4
+      $bx1 $by1
+      $bx1 $by2
+      $bx2 $by2
+      $bx2 $by1
+    quit
+  quit
+.
+
+Define Bar_Key_At 3 x y size_in_pixels
+Plot_2_Screen bx1 by1 $1 $2
+view
+  draw $the_plotter
+    fill_poly 4
+      $bx1    $by1
+      $bx1+$3 $by1
+      $bx1+$3 $by1+$3
+      $bx1    $by1+$3
+    quit
+  quit
+.
+
+Define Inverted_Triangle 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1    $2-$3
+      $1-$3 $2+$3
+      $1+$3 $2+$3
+    quit
+  quit
+.
+
+
+Define Horz_Triangle_L 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1+$3 $2+$3
+      $1-$3 $2
+      $1+$3 $2-$3
+    quit
+  quit
+.
+
+Define Horz_Triangle_R 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1-$3 $2+$3
+      $1+$3 $2
+      $1-$3 $2-$3
+    quit
+  quit
+.
+
+Define Triangle 3 x y size
+view
+  draw $the_plotter
+    fill_poly 3
+      $1-$3 $2-$3
+      $1+$3 $2-$3
+      $1    $2+$3
+    quit
+  quit
+.
+
+
+Define Disk 3 x y radius
+view
+  draw $the_plotter
+    fill_arc $1-$3 $2-$3 2*$3 2*$3 0 32000
+    quit
+  quit
+.
+
+Define Sized_Symbol_Plot 1 xys_list
+Set i 0
+repeat ncols($1)
+  Assign ssp_x value($1[$i]{0})
+  Assign ssp_y value($1[$i]{1})
+  Assign symbol_size value($1[$i]{2})
+  Symbol_At $draw_symbol $ssp_x $ssp_y $symbol_size
+
+###  Plot_2_Screen sx1 sy1 $ssp_x $ssp_y
+####  advise "$sx1 <- $ssp_x"
+###  $draw_symbol $sx1 $sy1 $symbol_size
+
+  Increment i
+  end
+.
+
+Define Check_Plot_Symbol 0
+If !var_exists(draw_symbol)  "Set draw_symbol Disk"
+If !var_exists(symbol_size)  "Set symbol_size 2"
+.
+
+Define Symbol_Plot 1 xy_list
+Check_Plot_Symbol
+Assign _sp_n ncols('$1')
+If $_sp_n==1
+  Then "Plot_One_Symbol $1"
+  Else "Plot_Many_Symbols $1"
+.
+
+Define Plot_Many_Symbols 1 xy_list
+Set i 0
+repeat ncols($1)
+  Plot_One_Symbol $1[$i]
+  Increment i
+  end
+.
+
+Define Plot_One_Symbol 1 point
+Assign _pos_x value($1{0})
+Assign _pos_y value($1{1})
+Symbol_At $draw_symbol $_pos_x $_pos_y $symbol_size
+.
+
+Define Bar_Chart 2 xy_list bar_width
+Set i 0
+repeat ncols($1)
+  Assign _x value($1[$i]{0})
+  Assign _y value($1[$i]{1})
+  If $_y!=0
+    "Bar_At $_x $_y $2"
+  Increment i
+  end
+.
+
+
+Define Double_Bar_Chart 4 xy_list bar_width color1 color2
+Set i 0
+repeat ncols($1)
+  Assign _x value($1[$i]{0})
+  Assign _y1 value($1[$i]{1})
+  Assign _y2 value($1[$i]{2})
+  If $_y1>=$_y2&&$_y1>0 "Select_Pen $3 Bar_At $_x $_y1 $2"
+  If $_y1>=$_y2&&$_y2>0 "Select_Pen $4 Bar_At $_x $_y2 $2"
+  If $_y1<$_y2 "Select_Pen $4 Bar_At $_x $_y2 $2"
+  If $_y1<$_y2&&$_y1>0 "Select_Pen $3 Bar_At $_x $_y1 $2"
+  Increment i
+  end
+.
+
+
+Define PString 1 string
+view
+  plot $the_plotter
+    string $1
+    quit
+  quit
+.
+
+Define Thick_Plot_Type 1 macro_name
+Set thick_plot_macro $1
+.
+
+# Old method for thick drawing, very inefficient!?
+
+## We pass n_thick, (n_thick-1)/2 is the radius in pixels
+#Define Thicken2 2 radius dataset
+#Dup_Float shifted_points $2
+#Assign radius (($1-1)/2)
+#Assign n_circum max(1,ceil($radius*8*atan(1)))	# twopi
+#Screen_2_Plot xr yr $radius $radius
+#Screen_2_Plot xz yz 0 0
+#Add_Var xr -$xz
+#Add_Var yr -$yz
+#Assign _arginc 8*atan(1)/$n_circum
+#Set arg 0
+#Set old_xshift 0
+#Set old_yshift 0
+#VMov shifted_points $2
+#repeat $n_circum
+#  Assign x_shift $xr*cos($arg)
+#  Assign y_shift $yr*sin($arg)
+#  VSAdd shifted_points{0} shifted_points{0} $x_shift-$old_xshift
+#  VSAdd shifted_points{1} shifted_points{1} $y_shift-$old_yshift
+#  $thick_plot_macro shifted_points
+#  Set old_xshift $x_shift
+#  Set old_yshift $y_shift
+#  Add_Var arg $_arginc
+#  end
+#Set x_shift 0
+#Set y_shift 0
+## these lines restored the old values, but now we do it in a scratch buf
+##VSAdd shifted_points{0} shifted_points{0} $x_shift-$old_xshift
+##VSAdd shifted_points{1} shifted_points{1} $y_shift-$old_yshift
+#Delete_Image shifted_points
+#.
+
+# shift right, plot
+# shift up, plot
+# shift left, plot
+# shift down, plot
+
+#Define Thicken 2 multiplier data_set
+#
+## move up and right
+#VSAdd $2{0} $2{0} $1*$x_shift
+#VSAdd $2{1} $2{1} $1*$y_shift
+#$thick_plot_macro $2
+#
+## move down
+#VSAdd $2{1} $2{1} -2*$1*$y_shift
+#$thick_plot_macro $2
+#
+## move left
+#VSAdd $2{0} $2{0} -2*$1*$x_shift
+#$thick_plot_macro $2
+#
+## move up
+#VSAdd $2{1} $2{1} 2*$1*$y_shift
+#$thick_plot_macro $2
+#
+## restore
+#VSAdd $2{0} $2{0} $1*$x_shift
+#VSAdd $2{1} $2{1} -$1*$y_shift
+#.
+
+#Define Thick_Plot 2 n data_set
+##advise "Thick_Plot $1 $2"
+## We really need to determine how many pixels to determine the best shift...
+#Set __x1 0
+#Set __y1 0
+#Set __x2 1
+#Set __y2 1
+#Screen_2_Plot __px1 __py1 $__x1 $__y1
+#Screen_2_Plot __px2 __py2 $__x2 $__y2
+##Assign x_shift 0.2*($__px2-$__px1)
+##Assign y_shift 0.2*($__py2-$__py1)
+#Assign x_shift ($__px2-$__px1)
+#Assign y_shift ($__py2-$__py1)
+#
+#Set n_thick $1
+#do
+##  Thicken $n_thick $2
+##  Thicken -$n_thick $2
+#  Thicken2 $n_thick $2
+#  Decrement n_thick
+#  while $n_thick>0
+#.
+
+# New version using native thick lines
+Define Thick_Plot 2 n data_set
+Set_Line_Width $1
+XYPlot $2
+Set_Line_Width 1	# restore to preserve previous behavior
+# BUG?  default line thickness not 1 on retina display?
+.
+
+Define Set_Line_Width 1 width
+view draw $the_plotter line_width $1 quit quit
+.
+
+Define Label_X_Ticks 3 first max delta 
+Assign x ($2-$1)/$3
+Assign n_x_ticks 1+floor($x)
+Select_Pen $label_color
+Set tick_x $1
+repeat $n_x_ticks
+  Label_X_Tick $tick_x	$tick_x
+  Add_Var tick_x $3
+  end
+.
+
+# this one adds the position delta to the label
+
+Define Label_X_Ticks_Offset 4 first_posn max_posn delta_posn first_label 
+Select_Pen $label_color
+Assign n_x_ticks 1+floor(($2-$1)/$3)
+Set tick_x $1
+Assign tick_x_label $4
+repeat $n_x_ticks
+  Label_X_Tick $tick_x $tick_x_label
+  Add_Var tick_x $3
+  Add_Var tick_x_label $3
+  end
+.
+
+# this one allows an affine relation between posn and label
+
+Define Linear_X_Tick_Labels 5 first_posn max_posn delta_posn first_label delta_label
+Select_Pen $label_color
+Assign n_div (($2)-($1))/($3)
+Assign n_x_ticks 1+round($n_div)
+Set tick_x $1
+Assign tick_x_label $4
+repeat $n_x_ticks
+  Label_X_Tick $tick_x $tick_x_label
+  Add_Var tick_x $3
+  Add_Var tick_x_label $5
+  end
+.
+
+Define Label_Y_Ticks 3 first max delta 
+If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
+Assign n_y_ticks 1+floor($tiny+($2-$1)/$3)
+#advise "Label_Y_Ticks $1 $2 $3"
+#Print n_y_ticks
+Set tick_y $1
+repeat $n_y_ticks
+  Label_Y_Tick $tick_y	$tick_y
+  Add_Var tick_y $3
+  end
+If !$allow_color_tick_labels "Pop_Var pen_color"
+
+# restore left-justification for backward compatibility...
+Left_Justify
+.
+
+Define Label_Y_Ticks_Right 3 first max delta 
+If !$allow_color_tick_labels "Push_Var pen_color Select_Pen $label_color"
+Assign n_y_ticks 1+floor(($2-$1)/$3)
+Set tick_y $1
+repeat $n_y_ticks
+  Label_Y_Tick_Right $tick_y	$tick_y
+  Add_Var tick_y $3
+  end
+If !$allow_color_tick_labels "Pop_Var pen_color"
+.
+
+Define Left_Justify 0
+view draw $the_plotter text_mode left_justified quit quit
+.
+
+Define Right_Justify 0
+view draw $the_plotter text_mode right_justified quit quit
+.
+
+Define Center_Text 0
+view draw $the_plotter text_mode centered quit quit
+.
+
+Define S_At 3 string x y
+advise "S_At $1 $2 $3"
+PMove $2 $3
+PString $1
+.
+
+Define Plot_Datafile 1 filename
+Count_Lines _nl $1
+Vector _pts $_nl 2 float	# bug - should count columns
+Get_Ascii _pts $1
+XYPlot _pts
+Delete_Image _pts
+.
+
+Define Save_Plot 2 filename viewer
+If obj_exists(_plotbuf) "Delete_Image _plotbuf"
+Image _plotbuf nrows('$2') ncols('$2') 3 u_byte
+view extract _plotbuf $2 0 0 quit
+Rotate_Colors _plotbuf
+Write_File_Header $1 1
+Put_Next _plotbuf $1
+.
+
+# Now execute a few commands...
+
+Set the_plotter no_plotter
+Set y_legend none
+Set x_legend none
+Set current_window you_need_to_set_current_window
+Set exit_on_plotter_click 0
+
+# some default values
+Set plot_xmin	0
+Set plot_xmax	1
+Set plot_ymin	0
+Set plot_ymax	1
+
+Set minmax_set 0
+
+Set plot_foreground -1
+Set plot_background -1
+
+Set allow_color_tick_labels 1
+Set tiny 0.00001
+
+Set thick_plot_macro XYPlot
+Set grid_color -1
+
+
+# just set some default values to set the vars...
+#Set h_screen_units_per_char	6
+# for x11 on mac?
+Set h_screen_units_per_char	7
+Set v_screen_units_per_char	10
+Set descender_fraction	0.20
+
+Set fonts_loaded 0
+
+Init_Plotter_Param_Indices
+Init_Color_Indices
+
+If !var_exists(plot_locale)
+  '< $macro_dir/view/unix_plot.mac'	# the default
+
+Init_Font_Stuff
+
+Default_Reserve
+# default default is white on black (for slides)
+#Default_White_On_Black
+Default_Black_On_White
+
+
+Set plotsupp_read 1
+
+Stop_File plotsupp.mac
+
+# FILE gui/ui.mac BEGIN
+Define Debug_Button 0
+button Debug debug
+.
+
+Define Open_Button 2 label panel
+button $1 "interface control show '${2}' unshow '${main_panel}' quit quit"
+.
+
+Define Revert_Button 2 panel new_panel
+button Close "interface control unshow '${1}' show '${2}' quit quit"
+.
+
+Define Close_Button 1 panel
+button Close "interface control unshow '${1}' show '${main_panel}' quit quit"
+.
+
+Define Quit_Button 0
+button Quit 'interface notice "Really Quit?" Yes exit No quit'
+.
+
+Define Panel_On 1 'panel name'
+interface control show "${1}" quit quit
+.
+
+Define Panel_Off 1 'panel name'
+interface control unshow "${1}" quit quit
+.
+
+Define Interface_Start 0
+interface control dispatch quit quit
+.
+
+Define Interface_Go 0
+interface control show $main_panel dispatch quit quit
+.
+
+Define Update_Toggle 3 name value panel
+interface
+  decorate $3
+    If $2
+      Then "set_toggle '$1' yes"
+      Else "set_toggle '$1' no"
+    quit
+  quit
+.
+
+Define Update_Chooser 3 name value panel
+interface
+  decorate $3
+    set_choice $1 $2
+    quit
+  quit
+.
+
+# need a set chooser also...
+
+Define Label_Panel 2 panel_name label
+interface
+  decorate $1
+    label_window $2
+    quit
+  quit
+.
+
+# things used on iOS...
+
+Define Notify_Busy 2 title msg
+interface notify_busy $1 $2 quit
+.
+
+Define End_Busy 0
+interface end_busy quit
+.
+
+Define Alert 2 heading message
+interface alert $1 $2 quit
+.
+
+Define Confirm 2 title question
+interface confirm $1 $2 quit
+.
+
+Define Push_Nav 1 panel_name
+interface push_nav $1 quit
+.
+
+Define Top_Nav 0
+interface top_nav quit
+.
+
+Define Pop_Nav 0
+interface pop_nav 1 quit
+.
+
+Define Pop_Navs 1 n_levels
+interface pop_nav $1 quit
+.
+
+# FILE numrec/fit_polynomial.mac BEGIN
+# fit_polynomial.mac
+#
+# macros for fitting polynomials to point sets (polynomial regression).
+#
+#
+
+# Fit_Polynomial - the implied degree is one less than the dimension of result_vec
+# For now, just 1 input variable y = f(x)
+# We should allow multivariate, e.g. z=f(x,y)
+
+# We set up the U matrix:
+#
+#	|	x_1^2	x_1	1	|
+#	|	x_2^2	x_2	1	|
+#	|	x_3...
+
+Define Fit_Polynomial 2 result_vec pt_list
+Assign degree ncols('$1')-1
+Assign n_data_pts ncols('$2')
+Set init_svd 1			# why do we need this?
+Get_Prec svd_type $1
+If !obj_exists(fitpoly_coeffs)
+  "Create_SVD_Objects fitpoly $n_data_pts $degree+1"
+Dup_Obj norm_pts $2
+Normalize_Coords norm_pts $2	# we need to save the normalization factors!
+Image tmp_col ncols(norm_pts) 1 1 $svd_type
+Transpose tmp_col norm_pts{0}
+VMov fitpoly_datain norm_pts{1}
+Delete_Image norm_pts
+VSet fitpoly_u_matrix 1
+Set fp_i 0
+repeat $degree
+  Set fp_j 0
+  repeat 1+$fp_i
+    VVMul fitpoly_u_matrix{$fp_j} fitpoly_u_matrix{$fp_j} tmp_col
+    Increment fp_j
+    end
+  Increment fp_i
+  end
+Delete_Image tmp_col
+
+# now solve it!
+numrec
+	svd fitpoly_u_matrix fitpoly_eigenvalues fitpoly_v_matrix
+	quit
+
+numrec 
+	svbk fitpoly_coeffs fitpoly_u_matrix fitpoly_eigenvalues fitpoly_v_matrix fitpoly_datain
+	quit
+VMov $1 fitpoly_coeffs
+# BUG - shouldn't we un-normalize here, i.e. correct the
+# coefficients for the normalization performed on the inputs?
+Delete_SVD_Objects fitpoly
+.
+
+
+# FILE numrec/svd.mac BEGIN
+# %Z% $RCSfile: svd.mac,v $ ver: $Revision: 1.9 $ $Date: 2010/12/02 18:00:08 $
+
+# usage:
+#
+# Create_SVD_Objects prefix npts nparams
+#
+
+If var_exists(svd_loaded) exit_file
+
+Start_File svd.mac
+
+
+If !var_exists(std_type) "Set std_type float"
+
+#< $macro_dir/war/bqi.mac
+
+Define Create_SVD_Objects 3 prefix n_data_pts n_parameters
+If !var_exists(svd_type) "Set svd_type $std_type"
+Image  "${1}_u_matrix" $2 $3 1 $svd_type
+Image  "${1}_v_matrix" $3 $3 1 $svd_type
+Vector "${1}_eigenvalues" $3 1 $svd_type
+Vector "${1}_coeffs"      $3 1 $svd_type
+Vector "${1}_datain"      $2 1 $svd_type
+.
+
+Define Delete_SVD_Objects 1 prefix
+Delete_Image "${1}_u_matrix"
+Delete_Image "${1}_v_matrix"
+Delete_Image "${1}_eigenvalues"
+Delete_Image "${1}_coeffs"
+Delete_Image "${1}_datain"
+.
+
+Define Create_SVD_Objects_DP 3 prefix n_data_pts n_parameters
+Set std_type double
+Create_SVD_Objects $1 $2 $3
+.
+
+
+# Another problem:  fit a fn of 33 pts with a quartic:
+#
+# p(x) = a x^4  +  b x^3  +  c x^2  +  d x  +  e
+#
+# X values go from -8 to 8 in steps of 0.5
+#
+# then the following matrix takes parameters (coefficients) to data values:
+#
+#
+# dvec =
+#        | x^4  x^3  x^2  x^1  1  |
+#        | ...				for x=-8 to 8 ...
+
+Define Setup_Fit33 0
+Setup_Quartic_Fit $n_torsion_samples -$torsion_range/2 $torsion_range/2
+.
+
+Set svd_loaded 1
+
+
+Define Jacobi 3 eigenvectors eigenvalues "input matrix"
+numrec
+	jacobi $1 $2 $3
+	eigsrt $1 $2
+quit
+.
+
+
+
+Stop_File svd.mac
+
+# FILE numrec/norm_coords.mac BEGIN
+Start_File norm_coords.mac
+
+# used by fit_conic, etc
+# We have a bunch of x,y pairs, and we want to solve
+# y = p(x) where p is a polynomial
+#
+# x' <- (x-x_mean)/x_sigma
+# y' <- (y-y_mean)/y_sigma
+#
+# We obtain coefficients a', b', etc...
+# How to get back real coefficients a, b etc?
+# u = x_mean, v = y_mean
+#
+# a' (x-u)^2 / x_sigma^2 + b' (x-u) / x_sigma + c' = (y-y_mean)/y_sigma
+#
+# a'/(x_sigma^2) x^2 - 2u a' /(x_sigma^2) x + a' u^2/(x_sigma^2)
+#   + (b'/x_sigma) x   - (b'/x_sigma) u     + c'
+#
+# collect terms:
+# x^2 a'/x_sigma^2
+# + x ( -2u a' / x_sigma^2 + b'/x_sigma )
+# + a' u^2/x_sigma^2 - b' u / x_sigma + c'
+#
+# Then multiply everything by y_sigma, and add y_mean to the constant term
+#
+# What is the general case???
+# Maybe it is simpler to transform the coordinates...
+
+Define Normalize_Coords 2 dst src
+Get_Sum xsum $2{0}
+Assign x_mean $xsum/ncols($2)
+Get_Sum ysum $2{1}
+Assign y_mean $ysum/ncols($2)
+VSAdd $1{0} $2{0} -$x_mean
+VSAdd $1{1} $2{1} -$y_mean
+Dup_Obj csqs $1
+VVMul csqs $1 $1
+Get_Sum xsos csqs{0}
+Get_Sum ysos csqs{1}
+Assign x_sigma sqrt($xsos/ncols(csqs))
+Assign y_sigma sqrt($ysos/ncols(csqs))
+If $x_sigma!=0 "VSMul $1{0} $1{0} 1/$x_sigma"
+If $y_sigma!=0 "VSMul $1{1} $1{1} 1/$y_sigma"
+Delete_Image csqs
+#advise "Normalize_Coords:  x_mean = $x_mean  x_sigma = $x_sigma    y_mean = $y_mean  y_sigma = $y_sigma"
+.
+
+Define Adjust_Quadratic_Coefficients 2 dst src
+# These are the coefficients for normalized coords
+Assign __a value($2[0])
+Assign __b value($2[1])
+Assign __c value($2[2])
+# We need a general way to account for normalization
+# Here is the specific solution for a quadratic (see ../numrec/norm_coords.mac)
+# x^2 a'/x_sigma^2
+# + x ( -2u a' / x_sigma^2 + b'/x_sigma )
+# + a' u^2/x_sigma^2 - b' u / x_sigma + c'
+Assign _a $y_sigma*$__a/($x_sigma*$x_sigma)
+Assign _b $y_sigma*((-2)*$__a*$x_mean/($x_sigma*$x_sigma)+$__b/$x_sigma)
+Assign _c $y_mean+$y_sigma*($__a*$x_mean*$x_mean/($x_sigma*$x_sigma)-$__b*$x_mean/$x_sigma+$__c)
+data ascii read $1 - $_a $_b $_c quit quit
+.
+
+Stop_File norm_coords.mac
+
+Start_File '(included text)'
+
+If !var_exists(DISPLAY_WIDTH)
+  "Set DISPLAY_WIDTH 200 Set DISPLAY_HEIGHT 200"
+
+#max_warnings -1
+
+Set script_version v1.1-1-g7a8c87f
+Check_Version_Match
+Stop_File '(included text)'
+Set test_mode 1
+# FILE ios/sw_update.mac BEGIN
+# Macros to support the sw download client
+
+Set update_panel_name 'Software update'
+Set update_svr_panel_name 'Server config'
+
+Set local_sw_version 090813	# version code is the date
+
+Define DoCheckSW 0
+Push_Nav $update_panel_name
+.
+
+Define TellLocalSW 0
+Alert $local_sw_version "Script update code is $local_sw_version"
+.
+
+Define TellServerSW 0
+Get_Server_Version
+If $remote_version_set
+  "Alert '$current_sw_version' 'Latest version on server is $current_sw_version'"
+.
+
+
+Define UpdateSW 0
+Get_Server_Version
+If !$remote_version_set exit_macro
+If !strcmp('$current_sw_version','$local_sw_version')
+  "Alert 'Not necessary' 'device is already at latest s/w version' exit_macro"
+InstallSWUpdate
+.
+
+# The server has to be restarted when there is a software update...
+
+Define Get_Server_Version 0
+Set remote_version_set 0
+Connect_To_Update_Server
+If !$connected exit_macro
+Send_Update_Command
+  'ports\
+    xmit encrypted_text update_ear "Set current_sw_version $current_sw_version"\
+    quit'
+Receive_Update_Response
+Break_Update_Connection
+Set remote_version_set 1
+.
+
+Define InstallSWUpdate 0
+Set update_installed 0
+Connect_To_Update_Server
+If !$connected exit_macro
+Set sending_update 0
+Send_Update_Command "Send_Update $local_sw_version $current_sw_version"
+Receive_Update_Response
+If !$sending_update
+  "advise 'not sending update after Receive_Update_Response...'\
+   Break_Update_Connection\
+   Alert 'Problem' 'Failed to receive update' exit_macro"
+
+# The update server should now send a file which we will cache...
+Set local_update_script "$system_script_dir/update_from_${local_sw_version}_to_$current_sw_version.scr"
+Print local_update_script
+echo $local_update_script
+
+If file_exists('$local_update_script')
+  "Alert 'Warning!?' 'Update script already exists on the device!?'"
+
+ports
+  advise "Setting local filename = $local_update_script"
+  port_output_file update_mouth $local_update_script
+  advise 'Receiving update file'
+  receive update_mouth encrypted_file
+  advise 'After receiving update file'
+  quit
+
+#cd $script_dir
+#pwd ls
+
+If file_exists('$local_update_script')
+  Then "advise 'reading update script...'\
+        < '$local_update_script'\
+	advise 'DONE reading update script'"
+
+  Else "Alert 'Warning' 'Update script failed to transfer'"
+
+#Redir_To_Update_Server
+# do we need to break if the redirect finished?
+
+Break_Update_Connection
+
+If strcmp('$local_sw_version','$current_sw_version')
+  Then "Alert 'Problem' 'Software version did not update properly'"
+  Else "Note_SW_Update Alert 'Success!' 'Software updated properly'"
+.
+
+Define Note_SW_Update 0
+Get_SW_Update_Log_Filename
+append yes
+output_file $sw_update_log_file
+echo "< '$local_update_script'"
+output_file -
+.
+
+Define Check_For_SW_Updates 0
+Get_SW_Update_Log_Filename
+If file_exists('$sw_update_log_file')
+  "< '$sw_update_log_file'"
+.
+
+Define Get_SW_Update_Log_Filename 0
+Set sw_update_log_file $system_script_dir/sw_update_log.scr
+.
+
+Define Receive_Update_Response 0
+ports
+  text_variable update_mouth update_response
+  receive update_mouth encrypted_text
+  quit
+interpret $update_response
+.
+
+Define Init_SW_Panel 0
+interface
+  nav_panel $update_panel_name
+  navigation $update_panel_name
+    new_group "Software update"
+    plain_item "Current version" 'Report current version of scripts' TellLocalSW
+    plain_item "Latest version" 'Report latest version available' TellServerSW
+    plain_item "Update" 'Install latest version from update server' UpdateSW
+    nav_item "Configure update server" 'Specify host and port for s/w updates' ConfigSWUpdateServer
+    quit
+  quit
+.
+
+Define Connect_To_Update_Server 0
+ports
+  max_retries 1
+  client update_mouth $update_server_hostname $update_port_num
+  quit
+
+Assign connected port_exists(update_mouth)
+If !$connected "Announce_Failure exit_macro"
+
+log_message 'client connected to update server...'
+
+Send_Update_Auth "Does anybody really know what day it is?"
+Send_Update_Command "log_message 'Connected to participant $participant_id'"
+Send_Update_Command "top_menu"
+.
+
+Define Send_Update_Command 1 text
+ports
+  xmit encrypted_text update_mouth $1
+  quit
+.
+
+Define Send_Update_Auth 1 text
+ports
+  xmit authentication update_mouth $1
+  quit
+.
+
+Define Redir_To_Update_Server 0
+ports
+  redir update_mouth
+
+  # does remote script do top_menu?
+  # or do we need to quit ports menu here???
+  # we make sure by calling top_menu ourself!
+
+  top_menu
+.
+
+Define Break_Update_Connection 0
+# does the port go away on EOF?
+ports close update_mouth quit
+.
+
+Define Insist_Current_SW_Version 1 version_string
+If strcmp('$local_sw_version','$1')
+  "Alert 'Wrong version!?' 'Expected $1, found $local_sw_version' exit_file"
+.
+
+Define Ping_Update_Server 0
+Connect_To_Update_Server
+If !$connected exit_macro
+Break_Update_Connection
+Alert Success "Successfully connected to server $$server_varname, port $$port_varname"
+.
+
+# FILE ios/console.mac BEGIN
+Start_File console.mac
+
+Set console_name 'QuIP Console'
+
+Define PushConsole 0
+interface
+  push_nav $console_name
+  quit
+.
+
+Define DismissConsole 0
+Pop_Nav
+.
+
+# why show instead of push_nav???
+
+Define DisplayConsole 0
+Push_Nav $console_name
+.
+
+#Define DisplayConsole 0
+#interface
+#  control
+#    show $console_name
+#    quit
+#  quit
+#.
+
+Define InterpretString 0
+interpret $input_string
+.
+
+# BUG the name here has to match that defined in ios_gui.h
+
+Define ClearConsole 0
+interface
+  decorate $console_name
+    set_text_field 'Console output' ''
+    quit
+  quit
+.
+
+Stop_File console.mac
+
+# FILE ios/server_config.mac BEGIN
+Set server_config_panel_name	'Server configuration'
+Set server_select_panel_name	'Server select'
+
+Set connected 0	# default
+
+Set server_varname	download_server_hostname
+Set port_varname	download_server_port_num
+Set have_varname	download_server_is_connected
+
+Set download_server_is_connected 0
+
+Set which_server 1	# BUG?  what should this be really?
+			# How do we know how many server options?
+Set last_server_index $which_server	# BUG? is this right?
+
+Set server_toggle_name	server_enabled_toggle	# BUG?  what should this be really?
+
+Set server_info_name serverInfo	# never displayed
+
+# set defaults
+
+Define Set_Default_Server_Params 0
+
+#Set download_server localhost		# BUG - should we use download_server_hostname exclusively?
+If var_exists(download_server)
+  "error_exit 'Please use download_server_hostname instead of download_server!?'"
+
+# Set defaults
+If !var_exists(download_server_hostname)
+  'Set download_server_hostname localhost \
+   advise "Using default server:  $download_server_hostname" '
+
+If !var_exists(download_server_port_num)
+  'Set download_server_port_num 2223 \
+   advise "Using default server port:  $download_server_port_num" '
+
+
+#Set update_server_hostname	ace.arc.nasa.gov
+#Set update_port_num		3010
+
+.
+
+Define Cache_Server_Params 0
+advise 'Cache_Server_Params BEGIN'
+Get_Server_Param_Filename
+append no
+output_file $server_param_filename
+Cache_Var download_server_hostname
+Cache_Var download_server_port_num
+#Cache_Var update_server_hostname
+#Cache_Var update_port_num
+output_file -
+advise 'Cache_Server_Params DONE'
+.
+
+Define Init_Server_Params 0
+advise 'Init_Server_Params BEGIN'
+Set_Default_Server_Params
+advise 'Init_Server_Params: default params set'
+Get_Server_Param_Filename
+advise "Init_Server_Params: filename gotten:  $server_param_filename"
+If file_exists('$server_param_filename')
+  'advise "reading param file" < $server_param_filename advise "DONE reading server param file"'
+#  'advise "NOT reading param file $server_param_filename"'
+advise 'Init_Server_Params DONE'
+.
+
+Define Announce_Failure 0
+advise "Announce_Failure BEGIN"
+If $which_server==$last_server_index||$pinging End_Busy
+Alert "Failed to connect" "Please try again later"
+.
+
+Define Init_Server_Connection 0
+advise "Init_Server_Connection $$server_varname BEGIN"
+If !var_exists(pinging) "Set pinging 0"
+Set port_offset 0 #placeholder
+Assign dl_port $$port_varname+$port_offset
+advise "Init_Server_Connection:  attemping to connect to port $dl_port"
+
+ports
+  max_retries 1
+  #echo "Establishing connection to server... "
+  client server_client_mouth $$server_varname $dl_port
+  quit
+
+Assign connected port_exists(server_client_mouth)
+If !$connected "Announce_Failure exit_macro"
+
+advise "Connected to server... "
+advise 'NOT sending auth packet...'
+#Server_Auth
+
+#Send_Server_Cmd "top_menu log_message 'Connected to participant $participant_id'"
+# BUG we would like to identify the client somehow...
+advise 'sending log_message command to server...'
+Send_Server_Cmd "top_menu log_message 'Connected to a client'"
+Send_Server_Cmd "Set n_files_received 0"
+advise "Init_Server_Connection DONE"
+.
+
+Define Server_Auth 0
+ports
+  xmit authentication server_client_mouth "a long and winding road - I mean passphrase."
+  quit
+.
+
+Define DoPingServer 0
+Print port_varname
+Set pinging 1
+If !strcmp('$port_varname','update_port_num')
+  Then Ping_Update_Server
+  Else Ping_Download_Server
+Set pinging 0
+.
+
+Define Ping_Download_Server 0
+advise "Ping_Download_Server BEGIN"
+Notify_Busy "Pinging..." "Attempting to connect to $$server_varname, port $$port_varname"
+Init_Server_Connection
+If !$connected "Set $have_varname 0 Update_Download_Server_Info exit_macro"
+# Should we implement some additional hand-shaking
+# so that we know everything is indeed working correctly?
+Break_Server_Connection
+End_Busy
+Alert Success "Successfully connected to server $$server_varname, port $$port_varname"
+Set $have_varname 1
+Update_Download_Server_Info
+advise "Ping_Download_Server DONE"
+.
+
+# BUG?  closing the server port may drop pending connections???
+
+Define Break_Server_Connection 0
+Send_Server_Cmd
+#	"log_message 'Breaking connection with participant $participant_id'"
+	"log_message 'Breaking client connection'"
+ports close server_client_mouth quit
+.
+
+Define Finish_Upload 1 script_file
+#advise "Finish_Upload, have_server1 = $have_server1  have_server2 = $have_server2  last_server_index = $last_server_index"
+Set sync_good 0
+
+Notify_Busy "Working..." "Uploading data to $server_count"
+
+If $have_server1 "Send_To_Server 1 '$1'"
+If $sync_completed "Set sync_good 1"
+
+If $have_server2 "Send_To_Server 2 '$1'"
+If $sync_completed "Set sync_good 1"
+
+# End_Busy is called before the alert for the last server...
+.
+
+Define Send_Server_Cmd 1 text
+ports
+  xmit encrypted_text server_client_mouth $1
+  quit
+.
+
+Define Send_Server_File 1 filename
+ports
+  xmit encrypted_file server_client_mouth $1
+  quit
+.
+
+Define Get_Server_Param_Filename 0
+Set server_param_filename $system_script_dir/server_params.scr
+.
+
+# used in cleanup...
+Define Delete_Server_Param_File 0
+Get_Server_Param_Filename
+If file_exists('$server_param_filename')
+  Then "rm $server_param_filename"
+  Else "advise 'Delete_Server_Param_File:  No file $server_param_filename'"
+.
+
+Define EnterServerName 0
+advise "EnterServerName BEGIN"
+Set $server_varname $input_string
+Cache_Server_Params
+Update_Server_Info $which_server
+.
+
+# This changes the labels on the Server Configuration pane to reflect the
+# current values...
+
+Define Update_Server_Info 1 which_server
+advise "Update_Server_Info $1 BEGIN"
+Select_Server $1
+interface
+  decorate "$server_select_panel_name"
+    set_label $server_info_name "Server $which_server:  $$server_varname\n   port $$port_varname"
+    If $$have_varname
+      Then 'set_toggle $server_toggle_name yes'
+      Else 'set_toggle $server_toggle_name no'
+    quit
+  quit
+.
+
+Define Select_Server 1 server_index
+advise "Select_Server:  NOT IMPLEMENTED!?"
+.
+
+Define EnterServerPort 0
+advise "EnterServerPort BEGIN"
+Set $port_varname $input_string
+Cache_Server_Params
+Update_Server_Info $which_server
+.
+
+Define ConfigDownloadServer 0
+If !panel_exists('$server_config_panel_name')
+  Init_Server_Config_Panel
+Set port_varname download_server_port_num
+Set server_varname download_server_hostname
+Config_Server
+.
+
+# configure the software update server
+
+Define ConfigSWUpdateServer 0
+If !panel_exists('$server_config_panel_name')
+  Init_Server_Config_Panel
+Set port_varname update_port_num
+Set server_varname update_server_hostname
+Config_Server
+.
+
+Define Config_Server 0
+interface
+  decorate $server_config_panel_name
+    set_text_field Server $$server_varname
+    set_text_field Port $$port_varname
+    quit
+  quit
+Push_Nav "$server_config_panel_name"
+.
+
+##Define Declare_Server_Widgets 1 which_server
+#Select_Server $1
+#interface
+#  decorate $server_select_panel_name
+#    label $server_info_name "Server $which_server:  $$server_varname\n   port $$port_varname"
+#    button "Configure server #$which_server" ConfigServer$which_server
+#    quit
+#  quit
+#.
+
+Define ToggleServer 0
+If $toggle_state
+  Then "advise 'ToggleServer:  toggle is set'"
+  Else "advise 'ToggleServer:  toggle is NOT set'"
+.
+
+Define Init_Server_Config_Panel 0
+advise 'Init_Server_Config_Panel BEGIN'
+interface
+  panel "$server_select_panel_name" $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  quit
+interface
+  decorate $server_select_panel_name
+    label $server_info_name "Server:  $$server_varname\n   port $$port_varname"
+    toggle $server_toggle_name ToggleServer
+    button "Configure server" ConfigDownloadServer
+    quit
+  quit
+
+interface
+  panel "$server_config_panel_name" $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate "$server_config_panel_name"
+    label SName "Server name or IP address"
+    text Server EnterServerName "server name or IP addr"
+    label SPort "Port number"
+    text Port EnterServerPort "server port number"
+    button 'Ping server'  DoPingServer
+    quit
+  quit
+
+Update_Download_Server_Info
+advise 'Init_Server_Config_Panel DONE'
+.
+
+# This changes the labels on the Server Configuration pane to reflect the
+# current values...
+
+Define Update_Download_Server_Info 0
+advise "Update_Download_Server_Info BEGIN"
+Print server_varname
+interface
+  decorate "$server_select_panel_name"
+    set_label $server_info_name "Server $which_server:  $$server_varname\n   port $$port_varname"
+    If $$have_varname
+      Then 'set_toggle $server_toggle_name yes'
+      Else 'set_toggle $server_toggle_name no'
+    quit
+  quit
+advise "Update_Download_Server_Info DONE"
+.
+
+Define DoConfigServer 0
+advise 'DoConfigServer BEGIN'
+If !panel_exists('$server_config_panel_name')
+  Init_Server_Config_Panel
+Push_Nav $server_select_panel_name
+advise 'DoConfigServer DONE'
+.
+
+# We would like to treat the error log like a recent file
+# only if an error has occurred since the last update...
+#
+# But we don't bother, if there are no recent data files
+# we don't load the error file either...
+
+#Define Redirect_Error_Log 0
+#append yes
+#error_file "$q_data_dir/error_log"
+#log_message "Error output redirected"
+#.
+
+# FILE ios/cache.mac BEGIN
+Start_File cache.mac
+
+Define Cache_Var 1 varname
+echo "Set $1 $$1"
+.
+
+Stop_File cache.mac
+
+# FILE iquip/iquip_admin.mac BEGIN
+Set admin_auth_panel "Administrator access"
+Set admin_func_panel "Administration"
+Set user_func_panel "User Admin"
+Set admin_pw "iwilldoit"	# we could encrypt it...
+Set user_pw "yes i can"		# we could encrypt it...
+
+Define Init_Passphrase_Panel 0
+interface
+  panel $admin_auth_panel $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate $admin_auth_panel
+advise 'decorating admin panel BEGIN'
+    label admin_pw_label "Enter the adminstrator passphrase"
+    password Passphrase CheckAdminPassphrase "passphrase"
+    # This option is just for convenience of testing...
+    If $test_mode
+      "button 'Enter \"$admin_pw\"' Grant_Admin"
+    If $test_mode
+      "button 'Enter \"$user_pw\"' Grant_User"
+    quit
+  quit
+.
+
+Define Init_Admin_Panels 0
+Init_SW_Panel
+Init_Passphrase_Panel
+
+interface
+  nav_panel $admin_func_panel
+  navigation $admin_func_panel
+    new_group 'Adminstrative functions'
+    Add_Delete_All_Choice
+    plain_item 'Delete user scripts' 'Delete ALL user scripts from device' CleanUserScripts
+    plain_item 'Delete system scripts' 'Delete ALL system scripts from device' CleanSystemScripts
+    nav_item "Configure download server" "Set download server parameters" DoConfigServer
+
+    plain_item 'About this program' 'Display software version' DoAboutQuip
+    plain_item Console 'direct entry of commands' DisplayConsole
+    plain_item 'Exit admin mode' 'Disable access to admin functions' EndAdmin
+    nav_item "Check for S/W updates" "refresh software from server" DoCheckSW
+    quit
+
+  nav_panel $user_func_panel
+  navigation $user_func_panel
+    new_group 'User administrative functions'
+    nav_item "Configure download server" "Set download server parameters" DoConfigServer
+    plain_item 'Enslave device' 'Execute commands sent from server' DoEnslaveToServer
+    nav_item "Check for S/W updates" "refresh software from server" DoCheckSW
+    plain_item 'Delete user scripts' 'Delete ALL user scripts from device' CleanUserScripts
+    plain_item 'About this program' 'Display software version' DoAboutQuip
+    plain_item 'Exit admin mode' 'Disable access to admin functions' EndAdmin
+    quit
+  quit
+.
+
+Define GetAdminAuth 0
+Push_Nav $admin_auth_panel
+.
+
+Define CheckAdminPassphrase 0
+If !strcmp('$input_string','$admin_pw')
+  "Grant_Admin exit_macro"
+If !strcmp('$input_string','$user_pw')
+  "Grant_User exit_macro"
+Bad_Admin_PW
+.
+
+Define DoAdmin 0
+Push_Nav $admin_func_panel
+.
+
+Define DoUser 0
+Push_Nav $user_func_panel
+.
+
+Define Grant_Admin 0
+Pop_Nav
+
+# enable the extra commands
+interface
+  navigation $main_name
+    delete_group 'Administration'
+    new_group 'Administration'
+    nav_item "Admin functions" "Access administrator functions" DoAdmin
+    quit
+  quit
+.
+
+Define Grant_User 0
+Pop_Nav
+
+# enable the extra commands
+interface
+  navigation $main_name
+    delete_group 'Administration'
+    new_group 'Administration'
+    nav_item "Admin functions" "Access user admin functions" DoUser
+    quit
+  quit
+.
+
+Define EndAdmin 0
+If !$setup_completed "Alert 'Setup not completed' \"Can't end admin mode until setup complete.\" exit_macro"
+interface
+  navigation $main_name
+    delete_group 'Administration'
+    quit
+  quit
+Add_Admin_Option
+Pop_Nav
+.
+
+Define Bad_Admin_PW 0
+interface
+  decorate $admin_auth_panel
+    set_text_field Passphrase ''
+    quit
+  quit
+Alert "Incorrect passphrase" "Please check the passphrase"
+.
+
+Define Add_Admin_Option 0
+interface
+  navigation "$main_name"       # drop into submenu to add groups and items
+    new_group 'Administration'
+    nav_item "Enable administration"
+    	"Get access to administrative functions" GetAdminAuth
+    quit
+  quit
+.
+
+
+
+# FILE iquip/clean.mac BEGIN
+
+# Not really part of the questionnaires...
+Define CleanAll 0
+Confirm "Are you sure?" "Really delete ALL files from device?"
+If !$confirmed exit_macro
+# if verbose is set, then the filenames print to the console
+#verbose yes
+cd $data_dir
+rm_all
+cd $user_script_dir
+rm_all
+cd $system_script_dir
+rm_all
+Alert "Shutting down" "Please relaunch the app"
+exit
+.
+
+Define CleanScripts 0
+Confirm "Are you sure?" "Really delete ALL scripts from device?"
+If !$confirmed exit_macro
+cd $user_script_dir
+rm_all
+cd $system_script_dir
+rm_all
+Alert "Shutting down" "Please relaunch the app"
+exit
+.
+
+
+# FILE iquip/setup_iquip.mac BEGIN
+
+Define DoNetTest 0
+ports reachability www.apple.com quit
+.
+
+Set setup_group_name 'Initial setup'
+
+Define DoEndSetup 0
+Set setup_completed 1
+Get_Setup_Status_File
+append no
+output_file $setup_status_file
+echo "Set setup_completed 1"
+output_file -
+interface
+  navigation $main_name
+    delete_group $setup_group_name
+    quit
+  quit
+Add_Tasks
+Add_Admin_Option
+.
+
+
+# must be called from within navigation submenu!
+Define Add_Delete_All_Choice 0
+plain_item 'Delete ALL local files' 'Restore app to initial state' CleanAll
+.
+
+Define Add_Setup_Option 0
+interface
+  navigation "$main_name"       # drop into submenu to add groups and items
+    new_group $setup_group_name
+    Add_Delete_All_Choice
+    plain_item 'Network test' 'Check for wireless connection' DoNetTest
+
+#    If $test_mode
+#      "plain_item 'Warning test' 'Test error log file' DoWarnTest"
+
+#    If $test_mode
+#      "nav_item 'Alert tests' 'Test alerting for bugs' DoAlertTest"
+
+    nav_item "Admin functions" "Access administrator functions" DoAdmin
+    plain_item 'Done with setup' 'Configure interface for normal use' DoEndSetup
+    quit
+  quit
+.
+
+
+Define Add_Tasks 0
+interface
+  navigation "$main_name"       # drop into submenu to add groups and items
+    new_group 'Server'
+    plain_item Connect 'Connect to server' DoConnectToServer
+    nav_item Configure 'Edit server parameters' DoConfigServer
+    new_group 'Scripts'
+    nav_item Download 'Download scripts from server' DoDownloadScripts 
+    nav_item Run 'Run a script on the device' DoRunScripts 
+#    If $test_mode
+#      "plain_item Update 'Install latest version from update server' UpdateSW"
+    If $test_mode
+      "nav_item 'Admin functions' 'Access user admin functions' DoUser"
+
+    new_group 'Synchronization'
+    plain_item 'Network test' 'Check for wireless connection' DoNetTest
+    plain_item 'Sync Recent' 'Upload new data to server' UploadRecent
+
+    quit
+  quit
+.
+
+Define Get_Setup_Status_File 0
+Set setup_status_file $system_script_dir/setup_status.scr
+.
+
+Define Check_Setup_Status 0
+Get_Setup_Status_File
+If file_exists('$setup_status_file')
+  Then "< '$setup_status_file'"
+  Else "Set setup_completed 0"
+.
+
+# FILE iquip/iquip.mac BEGIN
+# macros for a device that will connect to a script server...
+
+Set script_download_panel	'Download scripts'
+Set script_run_panel		'Run scripts'
+Set no_sel_str	"(nothing selected)"
+
+Define DoDownloadScripts 0
+If !$connected Init_Server_Connection
+If !$connected exit_macro
+
+If !panel_exists('$script_download_panel') Init_Download_Panel
+If !panel_exists('$script_download_panel') "Alert Oops 'Failed to create download panel!?' exit_macro"
+
+Push_Nav $script_download_panel
+.
+
+Define DoConnectToServer 0
+Init_Server_Connection
+If !$connected "Alert Oops 'Failed to connect to server!?'"
+.
+
+
+Define Add_Names_To_Cmd 2 cmd_varname array
+If !obj_exists('$2') exit_macro
+Assign n_to_add ncols('$2')
+Set i 0
+repeat $n_to_add
+  Get_String s $2[$i]
+  Set $1 "$$1 $s"
+  Increment i
+  end
+.
+
+Define Init_Download_Panel 0
+advise "Init_Download_Panel BEGIN"
+Set_Default_Server_Params
+Set n_scripts 0
+## Don't require the server to be started here...
+## WHY NOT???
+#Init_Server_Connection
+If $connected Get_Server_Scripts
+
+#Display filename_array
+Set picker_cmd "picker File SelectFile 1 1+$n_scripts '$no_sel_str'"
+If obj_exists(filename_array)
+  "Add_Names_To_Cmd picker_cmd filename_array Delete_Image filename_array"
+
+interface
+  panel $script_download_panel $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate $script_download_panel
+    interpret $picker_cmd
+    button Download DownloadScript
+    quit
+  quit
+.
+
+Define Get_Local_Scripts 0
+If obj_exists(local_filenames) "Delete_Image local_filenames"
+get_filenames local_filenames $user_script_dir
+If !obj_exists(local_filenames) "Set n_local_scripts 0 exit_macro"
+#Display local_filenames
+Assign n_local_scripts ncols(local_filenames)
+.
+
+Define Get_Extra_Startup_Name 0
+Set extra_startup "$system_script_dir/extra_startup.scr"
+.
+
+Define SetStartupScript 0
+Get_Extra_Startup_Name
+If !strcmp('$choice','$no_sel_str')
+  "rm '$extra_startup' exit_macro"
+append no
+output_file $extra_startup
+echo "< '$user_script_dir/$choice'"
+output_file -
+.
+
+Define Init_Run_Panel 0
+Get_Local_Scripts
+Set picker_cmd "picker Script SelectScript 1 1+$n_local_scripts '$no_sel_str'"
+Add_Names_To_Cmd picker_cmd local_filenames
+interface
+  panel $script_run_panel $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate $script_run_panel
+    interpret $picker_cmd
+    button Run RunScript
+    button 'Delete From Device' DelScript
+    button 'Execute at startup'  SetStartupScript
+    quit
+  quit
+.
+
+# After we download a file, we want to update the run script picker
+# But before we add to the chooser again and again, we should
+# try to find out whether the files is already there - we may
+# oftern want to download a revised copy of an existing file.
+
+Define Update_Run_Chooser 1 filename
+interface
+  decorate $script_run_panel
+    add_choice Script "$1"
+    quit
+  quit
+.
+
+Define Get_Script_Count 0
+Send_Server_Cmd "Count_Scripts"
+Send_Server_Cmd 'ports xmit text ss_ear "Set n_scripts $n_scripts" quit'
+ports
+  text_variable server_client_mouth gsc_text
+  receive server_client_mouth text
+  quit
+# DEBUG
+If !var_exists(gsc_text) 'advise "Get_Script_Count:  NO TEXT RECEIVED!?!?" exit_macro'
+interpret $gsc_text
+.
+
+Define Get_Server_Scripts 0
+Get_Script_Count
+If $n_scripts<=0 exit_macro
+Send_Server_Cmd "Send_Script_Filenames"
+ports
+  receive server_client_mouth data
+  quit
+#If !obj_exists(filename_array)
+#  Then 'warn "Did not receive filename_array!?"'
+#  Else 'exit_macro Display filename_array'
+.
+
+Define SelectFile 0
+Set download_file $choice
+#Print download_file
+.
+
+Define DownloadScript 0
+If !strcmp('$download_file','$no_sel_str')
+  "warn 'no file selected!?' exit_macro"
+#Print download_file
+Send_Server_Cmd "Send_Script_File $download_file"
+ports
+  port_output_file server_client_mouth "$user_script_dir/$download_file"
+  receive server_client_mouth plain_file
+  quit
+If file_exists('$user_script_dir/$download_file')
+  Then "Update_Run_Chooser $download_file Alert 'Success!' 'File $download_file downloaded'"
+  Else "Alert 'Failure!?' 'Failed to download file $download_file'"
+.
+
+Define DoRunScripts 0
+Push_Nav $script_run_panel
+.
+
+Define RunScript 0
+If !var_exists(script_to_run) "Alert Warning 'No script to run' exit_macro"
+If !strcmp('$script_to_run','$no_sel_str') "Alert Warning 'No script selected' exit_macro"
+#Print script_to_run
+< $user_script_dir/$script_to_run
+.
+
+Define DelScript 0
+# Is this a CAUTIOUS test???
+If !var_exists(script_to_run) "Alert Warning 'No script to delete!?' exit_macro"
+If !strcmp('$script_to_run','$no_sel_str') "Alert Warning 'No script selected' exit_macro"
+# how to delete a file???
+# should we confirm that the file really exists???
+rm $user_script_dir/$script_to_run
+# BUG now we need to remove this file from the list!?!?
+.
+
+
+Define SelectScript 0
+Set script_to_run $choice
+.
+
+Define Close_Slave_Connection 0
+If !port_exists(server_client_mouth)
+  "warn 'Close_Slave_Connection:  No server_client_mouth, cannot close?' exit_macro"
+ports
+  close server_client_mouth
+  quit
+.
+
+# interrupted macro - what was this going to be?
+Define Check_For_Input 0
+ports
+  quit
+.
+
+Define DoEnslaveToServer 0
+If !port_exists(server_client_mouth)
+  "warn 'No server_client_mouth, cannot enslave?' exit_macro"
+
+advise "sending Start_Slave_Master..."
+Send_Server_Cmd "Start_Slave_Master"
+
+advise "redirecting to server_client_mouth..."
+# should we go to a new screen?
+ports
+  # The redir command causes us to hang waiting for input
+  # That means we don't process events unless the slave driver
+  # tells us to.  (That is unlike the unix situation, where
+  # we check for events while waiting for input text.)
+  # That code was tried with iOS but didn't work...
+  redir server_client_mouth	# doesn't return unless port is closed at the other end
+  top_menu
+If port_exists(server_client_mouth) 'ports close server_client_mouth quit'
+# Do we need to set a variable???
+.
+
+Define Start_Handshake 0
+If !port_exists(server_client_mouth)
+  "warn 'No server_client_mouth, cannot shake hands?' exit_macro"
+
+advise "Start_Handshake sending handshake_token..."
+Send_Server_Cmd handshake_token		# not a command!?
+.
+
+
+# FILE iquip/iquip.mac BEGIN
+
+Set data_dir "${DOCUMENTS_DIR}/data"
+Set system_script_dir "$DOCUMENTS_DIR/system_scripts"
+Set user_script_dir "$DOCUMENTS_DIR/user_scripts"
+
+#advise "Checking $data_dir"
+Insure_Directory "$data_dir"		# quotes prob'ly not needed
+#advise "Checking $system_script_dir"
+Insure_Directory "$system_script_dir"
+#advise "Checking $user_script_dir"
+Insure_Directory "$user_script_dir"
+
+# FILE iquip/iquip.mac BEGIN
+# For testing, we want to quit if we get too many warnings,
+# but maybe not so in production use???
+max_warnings 10
+
+# echo "Set test_mode 1" from build_startup_file.scr
+# to enable special testing features (another flavor!)...
+
+If !var_exists(test_mode)
+  "Set test_mode 0"
+
+#Redirect_Error_Log
+
+Set main_name 'iQuIP'
+
+data quit	# insure initialized
+ports quit	# insure initialized
+
+Check_Setup_Status
+
+# The main panel
+
+interface
+  console 'QuIP Console'
+
+  nav_panel $main_name
+  quit
+
+If !$setup_completed
+  Then Add_Setup_Option
+  Else "Add_Tasks Add_Admin_Option"
+
+# Override the default in server_config.mac
+Set download_server_hostname euler.arc.nasa.gov
+# default port number is 2223
+#Set download_server_port_num 3020
+
+Init_Admin_Panels
+Init_Server_Params
+#Init_Download_Panel
+
+advise 'initializing run panel...'
+
+Init_Run_Panel
+
+advise 'checking for s/w updates...'
+
+Check_For_SW_Updates		# load any previously applied update scripts
+
+# We don't need to push the main nav panel because it will
+# be done automatically - we use to do it anyway,
+# if an alert had been delivered before this point, then
+# we got a warning that the panel has already been pushed?
+
+advise 'getting extra startup name...'
+
+Get_Extra_Startup_Name
+If file_exists('$extra_startup')
+  "advise 'loading extra startup file $extra_startup' < '$extra_startup'"
+
+# where do we connect to the server???
+
+Set startup_file_read 1

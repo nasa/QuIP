@@ -21,7 +21,8 @@ ls -ld $srcdir
 outfile=/tmp/current_quip_version.h
 
 # 5 extra spaces before the date string, and a space before the trailing quote
-echo '#define' '	' 'QUIP_VERSION_STRING' '	' '"' `git describe` '"' \
+# need --tags if tag is not "annotated" !?
+echo '#define' '	' 'QUIP_VERSION_STRING' '	' '"' `git describe --tags` '"' \
 	| sed -e 's/ //' \
 	| sed -e 's/ //' \
 	| sed -e 's/ //' \

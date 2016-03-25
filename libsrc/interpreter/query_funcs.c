@@ -3934,47 +3934,6 @@ static void call_funcs_from_list(QSP_ARG_DECL  List *lp )
 }
 #endif // MOVED - to quip_exec.c
 
-#ifdef BUILD_FOR_IOS
-
-static void relinquish_to_ios(SINGLE_QSP_ARG_DECL)
-{
-	// We halt the interpreter to let ios take over
-	// and do whatever, using the same mechanism we
-	// use for alerts.  In the case of alerts, however,
-	// the users dismissal of the alert serves to send
-	// control back to the interpreter.  Here, on the other
-	// hand, we don't know if anything at all is going to happen
-	// (although it probably will, given that this will
-	// be called when the script executes os/events).
-	//
-	// We set a timer based on the display refresh to wake up
-	// the interpreter...
-
-//#ifdef CAUTIOUS
-//	if( IS_HALTING(THIS_QSP) ){
-//		// The fact that this warning statement was commented out
-//		// suggests that the code traverses this path routinely???
-//
-//		//WARN("CAUTIOUS:  relinquish_to_ios:  already halting!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
-
-	// If this assertion fails, that means that we've
-	// already called this?
-	assert( ! IS_HALTING( THIS_QSP ) );
-
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
-
-	// Now the interpreter will stop reading input.
-	// But we now need to schedule a wakeup so that it can pick up
-	// again after the OS has done it's stuff...
-
-	sync_with_ios();
-}
-
-#endif // BUILD_FOR_IOS
-
 #ifdef MOVED
 void call_event_funcs(SINGLE_QSP_ARG_DECL)
 {

@@ -8,8 +8,8 @@
 #include "warn.h"
 #include "shape_bits.h"
 
-#define YACC_HACK_PREFIX	quip
-#include "yacc_hack.h"
+//#define YACC_HACK_PREFIX	quip
+//#include "yacc_hack.h"
 
 //static char err_str[LLEN];
 static const char *original_string;
@@ -306,6 +306,7 @@ static char *get_expr_stringbuf( int index, long min_len )
 
 // %pure_parser	// make the parser rentrant (thread-safe)
 %pure-parser	// make the parser rentrant (thread-safe)
+%name-prefix="quip_"
 
 /* The YYPARSE_PARAM macro has been deprecated in favor of %parse-param
  * BUT parse-param is a bison statment that comes outside of the the C code
@@ -1456,20 +1457,20 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_double(dval);
 		break;
 
-#ifdef FOOBAR
-	case N_STRVFUNC:		// eval_expr
-		// string valued functions, tolower toupper etc
-		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-		// We take advantage of knowing that the input
-		// and output strings should have the same lengths...
-
-		// scalar_for_string doesn't allocate new string storage!?
-		dst=get_expr_stringbuf(WHICH_EXPR_STR,strlen(s));
-		ADVANCE_EXPR_STR
-		evalStrVFunction( enp->sen_func_p, dst, s );
-		tsp = scalar_for_string(dst);
-		break;
-#endif // FOOBAR
+//#ifdef FOOBAR
+//	case N_STRVFUNC:		// eval_expr
+//		// string valued functions, tolower toupper etc
+//		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+//		// We take advantage of knowing that the input
+//		// and output strings should have the same lengths...
+//
+//		// scalar_for_string doesn't allocate new string storage!?
+//		dst=get_expr_stringbuf(WHICH_EXPR_STR,strlen(s));
+//		ADVANCE_EXPR_STR
+//		evalStrVFunction( enp->sen_func_p, dst, s );
+//		tsp = scalar_for_string(dst);
+//		break;
+//#endif // FOOBAR
 
 	case N_PLUS:		// eval_expr
 		GET_TWO_DOUBLES
@@ -1518,12 +1519,12 @@ dump_enode(QSP_ARG  enp);
 	case N_OBJNAME:			// eval_expr
 	case N_SUBSCRIPT:		// eval_expr
 	case N_CSUBSCRIPT:		// eval_expr
-#ifdef FOOBAR
-	case N_SIZABLE:
-	case N_SUBSIZ:
-	case N_CSUBSIZ:
-	case N_TSABLE:
-#endif /* FOOBAR */
+//#ifdef FOOBAR
+//	case N_SIZABLE:
+//	case N_SUBSIZ:
+//	case N_CSUBSIZ:
+//	case N_TSABLE:
+//#endif /* FOOBAR */
 		sprintf(ERROR_STRING,
 			"unexpected case (%d) in eval_expr",
 			enp->sen_code);
@@ -1722,16 +1723,16 @@ dump_enode(QSP_ARG  enp);
 		RELEASE_FIRST
 		break;
 
-#ifdef FOOBAR
-	case N_SLCT_CHAR:		// eval_expr
-ADVISE("case N_SLCT_CHAR");
-		ival = EVAL_EXPR(enp->sen_child[0]);
-		if( ival < 0 || ival >= strlen(enp->sen_string) )
-			dval = -1;
-		else
-			dval = enp->sen_string[ival];
-		break;
-#endif /* FOOBAR */
+//#ifdef FOOBAR
+//	case N_SLCT_CHAR:		// eval_expr
+//ADVISE("case N_SLCT_CHAR");
+//		ival = EVAL_EXPR(enp->sen_child[0]);
+//		if( ival < 0 || ival >= strlen(enp->sen_string) )
+//			dval = -1;
+//		else
+//			dval = enp->sen_string[ival];
+//		break;
+//#endif /* FOOBAR */
 
 //#ifdef CAUTIOUS
 	default:		// eval_expr

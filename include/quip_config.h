@@ -14,10 +14,11 @@
 #define QUIP_ALERT_OBJ_TYPE		UIAlertView
 #define QUIP_COLOR_TYPE			UIColor
 #include "ios_config.h"
-#else /* ! BUILD_FOR IOS */
+#else // !BUILD_FOR IOS
+
 #ifdef BUILD_FOR_WINDOWS
 #include "win_config.h"
-#else /* ! BUILD_FOR_WINDOWS */
+#else /* ! BUILD_FOR_WINDOWS && ! BUILD_FOR_IOS */
 
 #ifdef BUILD_FOR_MACOS
 #define BUILD_FOR_OBJC
@@ -30,9 +31,11 @@
 #define QUIP_ALERT_OBJ_TYPE		NSAlert
 #define QUIP_COLOR_TYPE			NSColor
 #include "mac_config.h"
-#else /* ! BUILD_FOR_MACOS */
+
+#else /* ! BUILD_FOR_MACOS && ! BUILD_FOR_WINDOWS && ! BUILD_FOR_IOS */
 
 #include "config.h"
+
 #endif /* ! BUILD_FOR_MACOS */
 #endif /* ! BUILD_FOR_WINDOWS */
 #endif /* ! BUILD_FOR IOS */
@@ -72,10 +75,7 @@
 #define CURRENT_FILENAME		QRY_FILENAME(CURR_QRY(THIS_QSP))
 
 
-extern int verbose;
-
-/*extern const char *dimension_name[]; */
-
+extern int verbose;	// why is this here???
 
 #endif /* ! _QUIP_CONFIG_H_ */
 

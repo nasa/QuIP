@@ -8,8 +8,9 @@
 
 // The file yacc_hack redefines the symbols used by yacc so that two parsers
 // can play together...
-#define YACC_HACK_PREFIX	vt
-#include "yacc_hack.h"		// could be obviated by bison cmd line arg
+// NOW USE built-in %name-prefix=   - see below
+//#define YACC_HACK_PREFIX	vt
+//#include "yacc_hack.h"		// could be obviated by bison cmd line arg
 
 //#include "savestr.h"		/* not needed? BUG */
 #include "data_obj.h"
@@ -123,6 +124,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 /* This line stops yacc invoked on linux... */
 //%pure_parser	/* make the parser rentrant (thread-safe) */
 %pure-parser	/* updated syntax - make the parser rentrant (thread-safe) */
+%name-prefix="vt_"
 
 // parse-param also affects yyerror!
 

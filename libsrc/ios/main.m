@@ -199,6 +199,8 @@ advise(ERROR_STRING);
 	return 0;
 }
 
+#include "quip_start_menu.c"
+
 int main(int argc,char *argv[])
 {
 #ifdef NOT_ARC
@@ -219,7 +221,8 @@ freopen([logPath fileSystemRepresentation], "w", stderr);
 
 	@autoreleasepool {
 //NSLog(@"Calling start_quip...\n");
-		start_quip(argc,argv);
+        init_quip_menu();
+		start_quip_with_menu(argc,argv,quip_menu);
 
 		retVal = UIApplicationMain(argc, argv, nil, @"quipAppDelegate" );
 	}

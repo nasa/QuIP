@@ -29,7 +29,7 @@ endif
 # Make a single encrypted file containing the startup macros
 # and the startup script.
 #
-# We begin with coq_startup.scr
+# We begin with quip_startup.scr
 
 set outfile=$out_stem.scr
 set encfile=$out_stem.enc
@@ -82,7 +82,8 @@ EOF
 #echo "advise 'startup.scr: max_warnings set to -1 in build_startup_file.csh'" >> $outfile
 
 # Add the version identifier - make sure that this matches the rest of the code...
-echo "Set script_version" `git describe` >> $outfile
+# BUG added --tags because current tag is not "annotated" ???
+echo "Set script_version" `git describe --tags` >> $outfile
 echo Check_Version_Match >> $outfile
 echo Stop_File "'(included text)'" >> $outfile
 
@@ -272,12 +273,12 @@ echo "Set startup_file_read 1" >> $outfile
 
 echo File $outfile complete, encrytping...
 
-coq $outfile $encfile < encrypt_file.scr
+quip $outfile $encfile < encrypt_file.scr
 #/bin/rm $outfile
 
 # This make sure that we have a current version listing in the executable code
-cd ../../include
-./update_quip_version.sh
+#cd ../../include
+#./update_quip_version.sh .
 
 
 
