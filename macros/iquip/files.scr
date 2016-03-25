@@ -1,0 +1,12 @@
+
+Set data_dir "${DOCUMENTS_DIR}/data"
+Set system_script_dir "$DOCUMENTS_DIR/system_scripts"
+Set user_script_dir "$DOCUMENTS_DIR/user_scripts"
+
+#advise "Checking $data_dir"
+Insure_Directory "$data_dir"		# quotes prob'ly not needed
+#advise "Checking $system_script_dir"
+Insure_Directory "$system_script_dir"
+#advise "Checking $user_script_dir"
+Insure_Directory "$user_script_dir"
+

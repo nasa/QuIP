@@ -1,0 +1,24 @@
+Start_File utilz.mac
+
+Define Hide_Nav_Bar 0
+interface hide_nav_bar yes quit
+.
+
+Define Show_Nav_Bar 0
+interface hide_nav_bar no quit
+.
+
+Define Disable_Scrolling 1 viewer
+interface control scroll "$1" no quit quit
+.
+
+Define Hide_Back_Button 1 panel
+interface
+  decorate $1
+    hide_back_button yes
+    quit
+  quit
+.
+
+Stop_File utilz.mac
+

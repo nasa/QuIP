@@ -1,0 +1,18 @@
+# head data from tracking a few lower eyelashes
+
+Define Load_Head_Data 2 paramstr eyevec
+advise "Load_Head_Data $1"
+Set head_file $TRACE_DIR/$RUN_STEM.$EYE_CAMERA_INDEX/head.$1.asc
+If !file_exists('$head_file') "error_exit 'File $head_file does not exist'"
+Assign n_expect ncols($2)
+Vector head_data $n_expect 2 float
+data
+  ascii
+
+#              FRAME 0 registered at 0.0218 -0.0323 , corr = 0.668629 , OK = 1
+    input_fmt "%s    %s %s        %s %f     %f      %s %s  %s %s      %s %s %s %s"
+    read head_data $head_file
+    quit
+  quit
+.
+

@@ -1,0 +1,24 @@
+
+Autoconf version of QuIP developed with the help of Calcote book.
+
+VPATH added (p. 70)
+
+pthread checks started (p. 99), but right way described on p. 210.
+
+see p. 114 for typedef checks...
+
+up to page 137...
+
+Steps:
+
+% autoreconf
+
+___________________________________________________________________
+
+To add a library:
+
+add a line for the Makefile in configure.ac
+add the directory to libsrc/Makefile.am
+create the directory in libsrc, create Makefile.am, install the source files
+
+_____________________________________________________________

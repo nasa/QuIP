@@ -1,0 +1,92 @@
+
+Start_File analysis/blink.mac
+
+Set blink_threshold 0.2
+Set blink_threshold2 -0.15
+
+Define Detect_Blinks 0
+warn "Obsolete macro Detect_Blinks, use Detect_Pupil_Blinks or Detect_Retina_Blinks"
+Detect_Pupil_Blinks
+.
+
+# For Pupil images, we do best using the image mean
+#
+
+Define Detect_Pupil_Blinks 0
+advise "Detect_Pupil_Blinks:  not doing anything!?"
+.
+
+# Retina images:
+#
+# Detect blinks using the numerical correlation of the image
+#
+# A fixed threshold is not so good, because the correlation
+# can wander between trials as the head (and pupil) move
+# slightly...  this leads to good data being classified
+# as a blink if the threshold is too high.  An improved
+# version looks for transients in the correlation.
+#
+# Here we use a dynamic threshold.  Initially it is set to a constant;
+# when we detect blink-like transients, we reset the threshold to
+# cut the transient...
+
+Define Detect_Retina_Blinks 0
+
+VSet blink_thresh_array $blink_threshold
+
+Try_Blink_Threshold
+
+Differentiate dcorr correlation
+#Trace_If correlation dcorr $icv 'image correlation, dcorr' 1 ICorr_Axes $color1
+Threshold tblink dcorr $blink_threshold2
+# now find everywhere that the signal is zero
+VSMul tblink tblink -1
+advise 'calling Find_Max_Sample tblink'
+Find_Max_Sample tblink
+advise 'back from Find_Max_Sample tblink'
+If $mxv==(-1) "advise 'No blinks' exit_macro"	# return if no blinks
+Print mxx
+Assign lowcorr value(correlation[$mxx])
+Tell_If "first blink is at time sample $mxx, value $lowcorr"
+Assign hicorr value(correlation[$mxx-1])
+Assign new_thresh ($lowcorr+$hicorr)/2
+Tell_If "Trying revised correlation threshold of $new_thresh"
+# reset the blink threshold to the new value
+Subvector newthresh blink_thresh_array $dlen-$mxx $mxx
+VSet newthresh $new_thresh
+Delete_Image newthresh
+Try_Blink_Threshold
+.
+
+Define Try_Blink_Threshold 0
+#VVSub blink_val blink_thresh_array correlation
+VVSub blink_val correlation blink_thresh_array
+#Trace_If correlation blink_val v6 'correlation diff' 1 ICorr_Axes $color1
+Threshold blink blink_val 0
+Trace_If correlation blink $icv 'image correlation, blink' 1 ICorr_Axes $color1
+.
+
+
+# Find the index of the maximum sample, convert to coord
+# values in script vars $mxx
+
+Define Find_Max_Sample 1 input
+# find location of the maximum
+Vector fms_indices 100 1 int32
+Std_Scalar fms_maxval
+Scalar fms_maxtimes 1 int32
+Max_Times fms_indices $1 fms_maxval fms_maxtimes
+Assign mxv value(fms_maxval)
+Assign mxt value(fms_maxtimes)
+# No more fortran-isms...
+#Assign mxi value(fms_indices[0])-1
+Assign mxi value(fms_indices[0])
+Assign mxx "($mxi)%(ncols($1))"
+advise "Find_Max_Sample $1:  mxv = $mxv, mxt = $mxt, mxi = $mxi, mxx = $mxx"
+Delete_Image fms_indices
+Delete_Image fms_maxval
+Delete_Image fms_maxtimes
+.
+
+Stop_File analysis/blink.mac
+

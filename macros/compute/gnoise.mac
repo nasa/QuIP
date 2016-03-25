@@ -1,0 +1,51 @@
+#
+# macros generate gaussian-distributed noise with a mean of zero and a sigma of 1
+#
+# We do this by generating uniform random numbers, and mapping through
+# a table of inverse erf()
+
+Set have_erf_inv 0
+Set default_ei_table_size 10000
+
+Define Init_Gaussian_Noise 1 table_size
+Set n_tbl $1
+Set ei_file $HOME/.data_dir/erf_inv.$1.asc
+If !file_exists('$ei_file') "error_exit 'Init_Gaussian_Noise:  missing file $ei_file; run invert_erf.scr first'"
+Vector erf_inv $n_tbl 1 float
+Get_Ascii erf_inv $ei_file
+expressions
+  export erf_inv
+  read -
+    int _gn_i;
+    end
+  quit
+Set have_erf_inv 1
+.
+
+Define Gaussian_Noise 2 target sigma
+If !$have_erf_inv "advise 'Initializing Gaussian noise w/ default table size $default_ei_table_size' \
+			Init_Gaussian_Noise $default_ei_table_size"
+data operate uniform $1 quit quit
+VSMul $1 $1 $n_tbl-1
+VRound $1 $1
+# BUG - we could use map function instead of expression lang?
+#Set gn_j 0
+#repeat ncols($1)		# BUG assumes a row vector
+#  VSet $1[$gn_j] value(erf_inv[value($1[$gn_j])])
+#  Increment gn_j
+#  end
+expressions
+  If !id_exists('$1') "export $1"	# BUG - indexed object?
+  read -
+    if( depth($1) == 1 ){
+        $1 = erf_inv[$1];
+    } else {
+      for(_gn_i=0;_gn_i<depth($1);_gn_i++){
+        $1{_gn_i} = erf_inv[$1{_gn_i}];
+      }
+    }
+    end;
+  quit
+VSMul $1 $1 $2*sqrt(2)
+.
+

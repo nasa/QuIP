@@ -1,0 +1,595 @@
+< $macro_dir/eyemov/lpsigma.mac
+
+Define Try_Load_Cal 1 which_cal
+Tell_If "Try_Load_Cal '$1'"
+If "strlen('$1')>0"
+  Then "Set calfile params/CAL.$1.$ANALYSIS_SIZE.$RUN_STEM.$EYE_CAMERA_INDEX.asc"
+  Else "Set calfile params/CAL.$ANALYSIS_SIZE.$SUBJECT.$EYE_CAMERA_INDEX.asc"
+If "!exists('$calfile')"
+  Then "Tell_If 'calibration file $calfile does not exist' Set have_cal 0"
+  Else "Load_Affine_Params $calfile Set have_cal 1 Set which_cal '$1'"
+.
+
+# This is older - for which experiments???
+# We comment this out because this needs to be experiment-specific...
+
+#Define Get_Stim_Filename 1 paramstr
+#advise Get_Stim_Filename
+#Tell_If "paramstr = $1"
+## assume  variable $signal_index has it
+#If "strcmp('$1','$RUN_STEM.signal$signal_index')"
+#  "warn 'unexpected paramstr $1, signal $signal_index'"
+#Set_LP_Sigma
+#Set stim_dir $DATA_DIR/signals/$RUN_STEM
+#Set stim_stem sxy$EYE_CAMERA_INDEX
+#Set stim_filename "$stim_dir/${stim_stem}_${signal_set}t$signal_index.asc"
+#Print_If stim_filename
+#Pause_If
+#.
+
+# get autocorrelation of stimulus
+Define AutoCorr 2 destination signal
+Tell_If "AutoCorr $1 $2"
+Dup_Complex ac_tmp $1
+VSet ac_tmp{0} 0.0
+VSet ac_tmp{1} 0.0
+Subvector ac_inset ac_tmp "ncols($2)" 0
+VMov ac_inset{0} $2
+Delete_Image ac_inset
+###VSet _data_xf{0} 0.0
+###VSet _data_xf{1} 0.0
+###VMov data_xf{0} $2
+#### BUG?  Why do it this way , why not take 1 fft and square it?
+#### perhaps there was a bug in vvcmul?
+FFT ac_tmp
+###FFT _data_xf
+###VVCmul ac_tmp _data_xf ac_tmp
+VVCmul ac_tmp ac_tmp ac_tmp
+InvFFT ac_tmp
+#CPlot ac_tmp{0} ac_tmp{1}
+VMov $1 ac_tmp{0}
+Delete_Image ac_tmp
+.
+
+# compute the normalized cross correlation, deposit in _stim_xf...
+Define Cross_Correlate 3 destination stimulus measurement
+Tell_If "Cross_Correlate $2 $3"
+#Plot_If "VPlot $2 $3"
+#Plot_If "Label_Viewer $vpv '$2 $3'"
+Subvector stim_xf $1 "ncols($2)" 0
+VSet $1{0} 0.0
+VSet $1{1} 0.0
+VMov stim_xf{0} $2
+Delete_Image stim_xf
+Subvector data_xf _data_xf "ncols($3)" 0
+VSet _data_xf{0} 0.0
+VSet _data_xf{1} 0.0
+VMov data_xf{0} $3
+Delete_Image data_xf
+
+FFT $1
+FFT _data_xf
+VVCmul $1 _data_xf $1
+#VVCmul $1 $1 _data_xf	# this one reverses the lags
+InvFFT $1
+
+# now normalize
+Normalize_CC $1{0} $2
+Set stim_norm $normval
+Normalize_CC $1{0} $3
+Set meas_norm $normval
+Assign gain_factor	$meas_norm/$stim_norm
+Print_If gain_factor
+
+# Tell_If 'showing cross correlation'
+# #Plot_If 'CPlot $1{0} $1{0}'
+# Trace_If $1{0} $1{1} $icv 'Cross Correlations' 1 XCorr_Axes $color1
+.
+
+Define Normalize_CC 2 cc_signal input_signal
+Dup_Float cc_norm $2
+
+VSquare cc_norm $2
+Get_Sum cc_sum cc_norm
+Assign normval sqrt($cc_sum)
+Print_If normval
+VSMul $1 $1 1/$normval
+
+Delete_Image cc_norm
+.
+
+
+
+Define Accum_Correlation 3 accumulator average input
+VVAdd $1 $1 $3
+VSMul $2 $1 1/$n_in_avg
+.
+
+# Process_Trial
+#
+# We call this after we have successfully read in a single record
+#
+# variables ev and sv (eyevel, stimvel) determine which variables are correlated
+# For saccade analysis, we use position error as the input...
+
+Define Process_Trial 0
+#Set stim_desc_str "stim $type $hz $signal_index"
+
+If $filtering Filter_Velocities
+
+If $filtering
+  Then "Set ev feye_vel Set sv fstimvel"
+  Else "Set ev eye_vel  Set sv stimvel"
+
+Set xev $ev{0}
+Set yev $ev{1}
+Set xsv $sv{0}
+Set ysv $sv{1}
+
+#If_Ascii $ev eye_vel.$signal_index
+#If_Ascii $sv stim_vel.$signal_index
+
+Cross_Correlate _stim_xf $xsv $xev
+#If_Ascii _stim_xf{0} "x_xcor.$type.$hz.$signal_index"
+Scroll tmp_cx _stim_xf{0} $flen/2 0
+
+
+Cross_Correlate _stim_xf $ysv $yev
+#If_Ascii _stim_xf{0} "y_xcor.$type.$hz.$signal_index"
+Scroll tmp_cy _stim_xf{0} $flen/2 0
+
+#Trace_If tmp_cx tmp_cy $accv 'correlations' 1 XCorr_Axes $color1
+Trace_If tmp_cx tmp_cy v5 'correlations' 1 XCorr_Axes $color1
+
+#If_Ascii tmp_cx x_xcor.$RUN_STEM.$signal_index
+#If_Ascii tmp_cy "y_xcor.$RUN_STEM.$type.$hz.$signal_index"
+
+Accum_Correlation c2x a2x tmp_cx
+Accum_Correlation c2y a2y tmp_cy
+
+#Trace_If a2x a2y $xcv 'cumulative correlations' 1 XCorr_Axes $color1
+Trace_If a2x a2y v6 'cumulative correlations' 1 XCorr_Axes $color1
+Pause_If
+
+# deconvolving the individual trials just gives us noise!?
+# even deconvolving the averages just gives us noise!?
+
+If $scanning Scan_Filters
+
+Scroll xf1 xf_avg{0} ncols(xf1)/2 0
+If $scanning&&$showing "Disp_Gray xf1 accv1 "
+
+Scroll xf2 xf_avg{1} ncols(xf1)/2 0
+If $scanning&&$showing "Disp_Gray xf2 accv2 "
+
+Increment n_in_avg
+Pause_If
+.
+
+
+# This version correlates saccades w/ position error
+
+Define S2_Process_Trial 0
+Set ev eye_vel		# saccade velocity
+If $use_center
+  Then "Set sv eye_pos"
+  Else "Set sv posn_err"
+
+Set xev $ev{0}
+Set yev $ev{1}
+Set xsv $sv{0}
+Set ysv $sv{1}
+
+If_Ascii $ev eye_vel.$signal_index
+If_Ascii $sv stim_vel.$signal_index
+
+Cross_Correlate _stim_xf $xsv $xev
+#If_Ascii _stim_xf{0} "x_xcor.$type.$hz.$signal_index"
+Scroll tmp_cx _stim_xf{0} $flen/2 0
+
+
+Cross_Correlate _stim_xf $ysv $yev
+#If_Ascii _stim_xf{0} "y_xcor.$type.$hz.$signal_index"
+Scroll tmp_cy _stim_xf{0} $flen/2 0
+
+#Trace_If tmp_cx tmp_cy $accv 'correlations' 1 XCorr_Axes $color1
+Trace_If tmp_cx tmp_cy v5 'correlations' 1 XCorr_Axes $color1
+
+#If_Ascii tmp_cx x_xcor.$RUN_STEM.$signal_index
+#If_Ascii tmp_cy "y_xcor.$RUN_STEM.$type.$hz.$signal_index"
+
+Accum_Correlation c2x a2x tmp_cx
+Accum_Correlation c2y a2y tmp_cy
+
+#Trace_If a2x a2y $xcv 'cumulative correlations' 1 XCorr_Axes $color1
+Trace_If a2x a2y v6 'cumulative correlations' 1 XCorr_Axes $color1
+Pause_If
+
+# deconvolving the individual trials just gives us noise!?
+# even deconvolving the averages just gives us noise!?
+
+If $scanning Scan_Filters
+
+Scroll xf1 xf_avg{0} ncols(xf1)/2 0
+If $scanning&&$showing "Disp_Gray xf1 accv1 "
+
+Scroll xf2 xf_avg{1} ncols(xf1)/2 0
+If $scanning&&$showing "Disp_Gray xf2 accv2 "
+
+Increment n_in_avg
+Pause_If
+.
+
+Define Deconvolve_Averages 0
+# Now we've done the raw normalized cross-correlation,
+# we compute the stimulus autocorrelation and deconvolve it with the measurement...
+
+AutoCorr x_autocorr $xsv
+AutoCorr y_autocorr $ysv
+Trace_If x_autocorr y_autocorr $accv 'autocorrelations' 1 XCorr_Axes $color1
+
+Accum_Correlation ac2x aa2x x_autocorr
+Accum_Correlation ac2y aa2y y_autocorr
+Trace_If aa2x aa2y $xcv 'cum. autocorrelations' 1 XCorr_Axes $color1
+Pause_If
+
+VMov da2x a2x
+VMov da2y a2y
+Deconvolve da2x aa2x
+Deconvolve da2y aa2y
+Trace_If da2x da2y $xcv 'deconvolved' 1 XCorr_Axes $color1
+.
+
+
+Define Deconvolve_Trial 0
+Deconvolve tmp_cx x_autocorr
+Deconvolve tmp_cy y_autocorr
+Trace_If tmp_cx tmp_cy $accv 'deconvolved' 1 XCorr_Axes $color1
+
+Accum_Correlation dc2x da2x tmp_cx
+Accum_Correlation dc2y da2y tmp_cy
+
+Trace_If da2x da2y $xcv 'cumulative correlations' 1 XCorr_Axes $color1
+Pause_If
+.
+
+Define Deconvolve 2 target signal
+# make the deconvolution filter
+VMov _ac_xf{0} $2
+VSet _ac_xf{1} 0
+FFT _ac_xf
+# we conjugate the phase, and get the reciprocal of the magnitude
+VSMul _ac_xf{1} _ac_xf{1} -1
+VMagSq mag _ac_xf
+# BUG should make sure that mag is never 0
+Get_Min minmag mag
+Tell_If "minimum mag is $minmag"
+VSMax mag mag 0.0000001
+VVDiv _ac_xf{0} mag _ac_xf{0}
+VVDiv _ac_xf{1} mag _ac_xf{1}
+
+# correlation is in tmp_cx
+
+VMov _cc_xf{0} $1
+VSet _cc_xf{1} 0
+FFT _cc_xf
+VVMul _cc_xf _cc_xf _ac_xf
+InvFFT _cc_xf
+VMov $1 _cc_xf{0}
+.
+
+# Do all the different signals for one type and frequency
+
+Define Init_Set 0
+VSet xf_accum 0.0
+VSet ac_accum 0.0
+Set percent 100			# fixed for expt 7
+
+Set n_in_avg 1
+
+# maybe better to use filelist???
+
+# what are c1,c2,c3??
+# these are 3 accumulators for x and y correlations...
+# a1x etc are the averages (divided by the number of additions)
+
+# zero the correlation accumulators
+
+VSet c1x 0
+VSet c2x 0
+VSet dc2x 0
+VSet c3x 0
+
+VSet c1y 0
+VSet c2y 0
+VSet dc2y 0
+VSet c3y 0
+.
+
+Define Set_Done_Stem 1 filestem
+#Tell_If "DONE WITH ALL RECORDS run $RUN_STEM camera $EYE_CAMERA_INDEX"
+
+# Push_Var showing_plots
+# Set showing_plots 1
+# Push_Var pausing
+# Set pausing 1
+# Trace_If a2x a2y $accv 'Final averages' 1 XCorr_Axes $color1
+
+#Push_Var asciidump
+#Set asciidump 1
+#If_Ascii a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#If_Ascii a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#Pop_Var asciidump
+
+# This stuff now handled by Save_Pair
+##Save_Correlogram a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+##Save_Correlogram a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#advise "Save_Correlogram a2x x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#Save_Correlogram a2x "x_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#advise "Save_Correlogram a2y y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+#Save_Correlogram a2y "y_axcor.$RUN_STEM.$EYE_CAMERA_INDEX"
+
+Save_Pair x_$1 y_$1 a2x a2y
+
+
+# If $scanning Dump_Scan_Data
+# Pop_Var plotting
+# Pop_Var pausing
+.
+
+Define Set_Done 0
+Set_Done_Stem axcor
+.
+
+Define Save_Pair 4 xstem ystem xobj yobj
+Tell_If "Save_Correlogram $3 $1.$RUN_STEM.$EYE_CAMERA_INDEX"
+Save_Correlogram $3 "$1.$RUN_STEM.$EYE_CAMERA_INDEX"
+Tell_If "Save_Correlogram $4 $2.$RUN_STEM.$EYE_CAMERA_INDEX"
+Save_Correlogram $4 "$2.$RUN_STEM.$EYE_CAMERA_INDEX"
+.
+
+Define Get_Trial_Start 1 signal_index
+Load_Trial $1
+Remember_Zero
+If obj_exists(eye_data) "Delete_Image eye_data"
+.
+
+Set original_replication $REPLICATION
+
+Define Set_Rep 2 subject replication
+Set SUBJECT $1
+Assign REPLICATION $2
+Set RUN_STEM $SUBJECT.$EXPERIMENT.$REPLICATION
+Set TRACE_DIR $DATA_DIR/traces/$RUN_STEM
+Set rawdir $TRACE_DIR/$RUN_STEM.$EYE_CAMERA_INDEX
+.
+
+
+Define Demostim 1 signal_index
+Tell_If 'BEGIN Demostim'
+Load_Trial $1
+If obj_exists(eye_data) "Delete_Image eye_data"
+Visualize_Stim
+.
+
+Define Newer_Vis_One 1 signal_index
+
+advise Newer_Vis_One
+Print RUN_STEM
+Print REPLICATION
+
+Set_Rep $SUBJECT $original_replication
+If obj_exists(eye_data) "Delete_Image eye_data"
+Load_Trial $1
+Dup_Float eye_pos1 eye_pos
+Dup_Float eye_vel1 eye_vel
+VMov eye_pos1 eye_pos
+VMov eye_vel1 eye_vel
+
+Visualize_It
+If obj_exists(eye_data) "Delete_Image eye_data"
+Delete_Image eye_pos1
+Delete_Image eye_vel1
+.
+
+
+Define Old_Vis_One 1 signal_index
+
+advise Old_Vis_One
+Print RUN_STEM
+Print REPLICATION
+
+Set_Rep $SUBJECT $original_replication
+Load_Trial $1
+Dup_Float eye_pos1 eye_pos
+Dup_Float eye_vel1 eye_vel
+VMov eye_pos1 eye_pos
+VMov eye_vel1 eye_vel
+
+If obj_exists(eye_data) "Delete_Image eye_data"
+Set_Rep $SUBJECT $REPLICATION+4
+
+Load_Trial $1
+Dup_Float eye_pos2 eye_pos
+Dup_Float eye_vel2 eye_vel
+VMov eye_pos2 eye_pos
+VMov eye_vel2 eye_vel
+
+If obj_exists(eye_data) "Delete_Image eye_data"
+Set_Rep $SUBJECT $REPLICATION+4
+
+Load_Trial $1
+Dup_Float eye_pos3 eye_pos
+Dup_Float eye_vel3 eye_vel
+VMov eye_pos3 eye_pos
+VMov eye_vel3 eye_vel
+
+Visualize_It
+If obj_exists(eye_data) "Delete_Image eye_data"
+Delete_Image eye_pos1
+Delete_Image eye_vel1
+Delete_Image eye_pos2
+Delete_Image eye_vel2
+Delete_Image eye_pos3
+Delete_Image eye_vel3
+.
+
+Define Load_Trial 1 signal_index
+advise "Load_Trial $1"
+Set signal_index $1
+Set param_string "$RUN_STEM.signal$1"
+Print_If ilace_correction
+Read_Record $param_string
+Load_Stimulus $param_string
+If $have_record Process_Record	# differentiate etc
+.
+
+Set rotating 0
+
+Define Rotate_Signals 0
+# rotate stimpos & eye_pos
+Rotate_Signal stimpos $stimulus_angle
+Rotate_Signal eye_pos $measurement_angle
+.
+
+Define Rotate_Signal 2 object angle
+Assign cf cos($2*atan(1)/45)
+Assign sf sin($2*atan(1)/45)
+Vector tmp ncols($1{0}) 1 float
+Vector tmp2 ncols($1{0}) 1 float
+Vector tmp3 ncols($1{0}) 1 float
+VSMul tmp2 $1{0} $cf
+VSMul tmp3 $1{1} $sf
+VVAdd tmp tmp2 tmp3
+VSMul tmp2 $1{0} -$sf
+VSMul tmp3 $1{1} $cf
+VVAdd $1{1} tmp2 tmp3
+VMov $1{0} tmp
+Delete_Image tmp
+Delete_Image tmp2
+Delete_Image tmp3
+.
+
+Set bad_record 0	# default
+Set analyse_saccades 0	# default
+			# If set, different macros are called
+			# which correlate position error against
+			# saccade velocity...
+Set use_center 0	# default
+			# If set, correlate saccades with deviation
+			# from center position (0,0), instead of
+			# target position error.  This is in fact
+			# just the eye position - rather, the negative
+			# of it.  But if we use the eye position, then
+			# like the saccade correlogram we would expect
+			# negative correlations for centering...
+
+Define Do_One 1 signal_index
+Tell_If 'Do_One BEGIN'
+Set signal_index $1
+Set param_string "$RUN_STEM.signal$1"
+Read_Record $param_string
+If $bad_record "advise 'Skipping signal $signal_index due to bad data' exit_macro"
+Load_Stimulus $param_string
+If $rotating Rotate_Signals
+#Info eye_pos
+Trace_If eye_pos{0} eye_pos{1} v1 "positions, trial $1" 1 Posn_Axes $color1
+Trace_If stimpos{0} stimpos{1} v1 "positions, trial $1" 0 Null_Axes $color2
+User_Notify 'record read, stimulus loaded'
+If !$have_record exit_macro
+
+Process_Record	# differentiate etc
+
+If $analyse_saccades
+  Then S_Process_Trace		# DON'T remove saccades
+  Else Process_Trace		# remove saccades
+
+If !$have_record exit_macro	# no saccades in saccade analysis?
+
+If $analyse_saccades
+  Then S2_Process_Trial		# correlate saccades w/ posn_err
+  Else Process_Trial		# correlate stimvel w/ eyevel
+
+If obj_exists(eye_data) "Delete_Image eye_data"
+.
+
+Define Dump_Scan_Data 0
+Filetype hips2
+Dup_Byte btmp xf1
+#Put_Image xf1 $type.$hz.H_avg.hips2	# save these so we can do framevar...
+#Put_Image xf2 $type.$hz.V_avg.hips2
+# assume these go +- 0.6
+VSMul xf1 xf1 127/0.6
+VSAdd xf1 xf1 127
+Convert btmp xf1
+#Put_Image btmp $type.$hz.h_avg.hips2
+VSMul xf2 xf2 127/0.6
+VSAdd xf2 xf2 127
+Convert btmp xf2
+#Put_Image btmp $type.$hz.v_avg.hips2
+Delete_Image btmp
+.
+
+Set max_lowpass_const 50
+
+Define Init_Filters 0
+Tell_If INIT_FILTERS
+exit
+Set i_filter 0
+Assign f_inc $max_lowpass_const/$n_filters	# 16 is max 
+Assign f_fact exp(log($max_lowpass_const/$f_inc)/$n_filters)
+Set fc $f_inc
+Open $n_filters
+  BP_Init $fc 1.5*$fc	# result in g_filter
+  Set filt "bp.$i_filter"
+  Vector $filt ncols(g_filter) 1 complex
+  VMov $filt g_filter
+  #Add_Var fc $f_inc	# for linear freq scan
+  Mul_Var fc $f_fact	# for log freq scan
+  Increment i_filter
+  Close
+.
+
+Define Scan_Filters 0
+Tell_If "Scanning Filters, n_filters = $n_filters"
+
+
+# here we should apply an array of filters
+Set i_filter 0
+Assign f_inc $max_lowpass_const/$n_filters	# 16 is max 
+Set fc $f_inc
+Open $n_filters
+  Set filt "bp.$i_filter"
+  VMov g_filter $filt
+
+  # now reapply the filter
+  Filter_Velocities
+  Cross_Correlate _stim_xf fstimvel{0} feye_vel{0}
+
+  VVAdd xf_accum{0}[$i_filter] xf_accum{0}[$i_filter] _stim_xf{0}
+  VSMul xf_avg{0}[$i_filter] xf_accum{0}[$i_filter] 1/$n_in_avg
+
+  Cross_Correlate _stim_xf fstimvel{1} feye_vel{1}		# result in _stim_xf
+
+  VVAdd xf_accum{1}[$i_filter] xf_accum{1}[$i_filter] _stim_xf{0}
+  VSMul xf_avg{1}[$i_filter] xf_accum{1}[$i_filter] 1/$n_in_avg
+
+  #Plot_If 'CPlot xf_avg{0}[$i_filter] xf_avg{1}[$i_filter]'
+  Trace_If xf_avg{0}[$i_filter] xf_avg{1}[$i_filter] $vev
+    'cross correlations' 1 XCorr_Axes $color1
+
+  Scroll xf1 xf_avg{0} ncols(xf1)/2 0
+#  If $scanning&$showing "Disp_Gray xf1 accv1 "
+
+  Scroll xf2 xf_avg{1} ncols(xf1)/2 0
+#  If $scanning&$showing "Disp_Gray xf2 accv2 "
+
+  Tell_If "filter $i_filter done"
+
+  Increment i_filter
+  Close
+If $scanning&$showing "Disp_Gray xf1 accv1 "
+If $scanning&$showing "Disp_Gray xf2 accv2 "
+
+.
+

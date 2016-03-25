@@ -1,0 +1,61 @@
+# For testing, we want to quit if we get too many warnings,
+# but maybe not so in production use???
+max_warnings 10
+
+# echo "Set test_mode 1" from build_startup_file.scr
+# to enable special testing features (another flavor!)...
+
+If !var_exists(test_mode)
+  "Set test_mode 0"
+
+#Redirect_Error_Log
+
+Set main_name 'iQuIP'
+
+data quit	# insure initialized
+ports quit	# insure initialized
+
+Check_Setup_Status
+
+# The main panel
+
+interface
+  console 'QuIP Console'
+
+  nav_panel $main_name
+  quit
+
+If !$setup_completed
+  Then Add_Setup_Option
+  Else "Add_Tasks Add_Admin_Option"
+
+# Override the default in server_config.mac
+Set download_server_hostname euler.arc.nasa.gov
+# default port number is 2223
+#Set download_server_port_num 3020
+
+Init_Admin_Panels
+Init_Server_Params
+#Init_Download_Panel
+
+advise 'initializing run panel...'
+
+Init_Run_Panel
+
+advise 'checking for s/w updates...'
+
+Check_For_SW_Updates		# load any previously applied update scripts
+
+# We don't need to push the main nav panel because it will
+# be done automatically - we use to do it anyway,
+# if an alert had been delivered before this point, then
+# we got a warning that the panel has already been pushed?
+
+advise 'getting extra startup name...'
+
+Get_Extra_Startup_Name
+If file_exists('$extra_startup')
+  "advise 'loading extra startup file $extra_startup' < '$extra_startup'"
+
+# where do we connect to the server???
+

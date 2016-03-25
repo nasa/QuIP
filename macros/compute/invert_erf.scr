@@ -1,0 +1,213 @@
+#
+# In order generate gaussian distributed noise, we need to tabulate
+# the inverse of the erf() function.
+# Then we can draw a gaussian noise sample by using uniform noise
+# to generate a table index.
+#
+# We generate the inverse by 
+#
+# There ought to be a more efficient way to do this, but at least we
+# don't have to do it very often.
+#
+# But now it doesn't seem to work!?
+# What is the logic?
+
+Set n 2048
+Set gain -0.9
+#Set gain 0.01
+Set min_slope 0.000001
+Set n_refresh 5000
+
+Set n_tbl 10000
+Set outfile $HOME/.data_dir/erf_inv.$n_tbl.asc
+Set x_lim 3
+
+< $macro_dir/view/plotsupp.mac
+If $showing "New_Plotter p1 400 300"
+If $showing "New_Plotter p2 300 400"
+If $showing "Posn_Viewer p2 400 0"
+If $showing "New_Plotter p3 300 300"
+If $showing "Posn_Viewer p3 700 0"
+If $showing "advise 'type ^D when plotters are up'"
+If $showing "Pause"
+
+Vector s $n 1 float
+#Vector i $n 1 long
+
+Vector x $n_tbl 1 float
+Vector I $n_tbl 1 float
+Vector I2 $n_tbl 1 float
+
+Vector y $n_tbl 1 float
+Subvector y1 y $n_tbl-1 0
+Subvector y2 y $n_tbl-1 1
+
+Vector w $n_tbl 1 float
+Vector indices $n_tbl 1 float
+Vector yi $n_tbl 1 float
+Vector error $n_tbl 1 float
+Vector gain_v $n_tbl 1 float
+Vector slope $n_tbl 1 float
+Subvector slope1 slope $n_tbl-1 0
+Vector pred $n_tbl 1 float
+
+# initialize I2 to go from -x_lim to x_lim
+Ramp1D I2 -$x_lim 2*$x_lim/($n_tbl-1)
+
+#Ramp1D gain_v -$n_tbl 2
+#VAbs gain_v gain_v
+#VSMul gain_v gain_v 10/$n_tbl
+#VSAdd gain_v gain_v 1
+
+
+# x is like I2, except for the end...
+Ramp1D x -$x_lim 2*$x_lim/$n_tbl
+
+VErf y x
+# differentiate erf (y)
+VVSub slope1 y1 y2
+
+# fill in the last pt with a copy
+VSet slope[$n_tbl-1] value(slope[$n_tbl-2])
+
+Get_Max max_slope slope
+VSMul slope slope 1/$max_slope
+VSMax slope slope $min_slope
+Get_Min _min_slope slope
+Get_Max _max_slope slope
+advise "min slope is $_min_slope, max is $_max_slope"
+VSDiv gain_v slope 1
+VSMul gain_v gain_v $gain
+
+Set y_max 1.1
+
+If $showing "Select_Plotter p1"
+If $showing "Plot_Space 0 -$y_max $n_tbl $y_max"
+If $showing "Select_Pen $red"
+
+If $showing "Select_Plotter p2"
+If $showing "Plot_Space 0 -$x_lim $n_tbl $x_lim"
+
+If $showing "Select_Plotter p3"
+If $showing "Plot_Space 0 -$y_max $n_tbl $y_max"
+#If $showing "Plot_Space 0 -$x_lim $n_tbl $x_lim"
+If $showing "Select_Pen $red"
+If $showing "Select_Plotter p1"
+If $showing "YPlot y"
+VMov w y
+
+# now we have to invert erf...
+
+Ramp1D yi -$x_lim 2*$x_lim/$n_tbl		# initial guess
+If $showing "Select_Plotter p2"
+If $showing "Select_Pen $red"
+If $showing "YPlot yi"
+
+# init I to go from -1 to 1
+Ramp1D I -1 2/($n_tbl-1)
+
+advise "Viewer p3:  identity in green, prediction in red, error in black"
+
+Define Showit 0
+Select_Plotter p3
+Erase_Plot
+Select_Pen $green
+YPlot I
+Select_Pen $red
+YPlot pred
+Select_Pen $black
+YPlot error
+
+Select_Plotter p1
+Erase_Plot
+Select_Pen $red
+YPlot y
+Select_Pen $green
+YPlot w
+
+Select_Plotter p2
+Label_Viewer p2 "iteration $n_iter"
+Erase_Plot
+YPlot yi
+.
+
+Define Showit2 0
+Select_Plotter p3
+Erase_Plot
+Select_Pen $green
+YPlot I2
+Select_Pen $red
+YPlot pred
+Select_Pen $white
+YPlot error
+
+Select_Plotter p1
+Erase_Plot
+Select_Pen $red
+YPlot y
+Select_Pen $green
+YPlot w
+
+Select_Plotter p2
+Label_Viewer p2 "iteration $n_iter"
+Erase_Plot
+YPlot yi
+.
+
+Define Invert1 0
+Set n_iter 0
+#do
+repeat 5000
+  # yi is our guess of the inverse
+  VErf pred yi
+  VVSub error pred I
+  ##VVDiv error slope error
+  VSMul error error $gain
+  #VVMul error error gain_v
+  #VSMin error error $x_lim/10
+  #VSMax error error -$x_lim/10
+  VVAdd yi yi error
+  Increment n_iter
+#  If $showing&&(($n_iter%$n_refresh)==0) "Showit Print max_err"
+  #while $max_err>1/($n_tbl*2)
+  If $showing Showit
+  end
+VAbs error error
+Get_Max max_err error
+#Print max_err
+
+Put_Ascii yi $outfile
+advise DONE
+If $showing "Showit"
+If $showing "Pause"
+.
+
+Invert1
+exit
+
+# 
+# now generate some noise samples
+# erf() goes from 0 to 1...
+#
+
+< $macro_dir/war/rdp.mac
+Uniform s
+VSMul s s $n_tbl-1
+Convert i s
+
+
+Set j 0
+repeat $n
+  VSet s[$j] value(y[value(i[$j])])
+  Increment j
+  end
+
+Get_Sum tot s
+VVMul s s s
+Get_Sum sos s
+Assign mean $tot/$n
+Assign stddev sqrt($sos/$n)
+advise "mean $mean   sigma $stddev"
+
+
+

@@ -1,0 +1,264 @@
+# %Z% $RCSfile: newfit.mac,v $ ver: $Revision: 1.1 $ $Date: 1998/01/16 11:01:28 $
+
+Start_File newfit.mac
+
+Define Delete_Em 0
+data
+  delete sig_w
+  delete sig_g
+  delete sig_b
+  delete substim
+  delete fit
+  delete tmp1
+  delete tmp2
+  delete tmp3
+  delete diffs
+  delete sinset
+  delete sextra
+  delete einset1
+  delete einset2
+  delete simdata
+  delete simsamp
+  delete noise
+  quit
+.
+
+Set fitlen -1
+Set fitstart 0
+
+# Set up the subvectors for fitting
+# These should have been defined by the user with a call
+# to Fit_...
+# $datavec $stimvec
+
+Define Where_Fit 2 len start
+Assign wflen $1
+echo "Where_Fit $wflen $2 , fitlen = $fitlen"
+If "$wflen==$fitlen" 'echo "where_fit popping" exit_macro'
+echo "requested len = $wflen , fitlen = $fitlen"
+#echo 'NOT POPPED'
+If $fitlen>0 'echo DELETING Delete_Em'
+Set fitlen $wflen
+Set fitstart $2
+data
+  subvector subsig $datavec $fitlen $fitstart
+  subvector substim $stimvec $fitlen $fitstart
+
+  vector simdata $dlen 1 float
+  vector simsamp $dlen 1 float
+  vector noise $dlen 1 float
+
+  vector fit $fitlen 1 float
+  vector tmp1 $fitlen 1 float
+  vector tmp2 $fitlen 1 float
+  vector tmp3 $fitlen 1 float
+  vector diffs $fitlen 1 float
+
+  # stuff for filtering?
+#  subvector sinset sxf{0} $fitlen 0
+  subvector sextra sxf{0} $extralen $fitlen
+  subvector einset1 exf{0} $fitlen 0
+  subvector einset2 exf{1} $fitlen 0
+  quit
+.
+
+Define Decl_Vecs 1 veclen
+#fitlen fitstart
+Assign veclen $1
+#Set fitlen $2
+Set xflen 1024
+Set extralen 200
+#Set fitstart $3
+
+data
+  vector wxv $veclen 1 float
+  vector gxv $veclen 1 float
+  vector bxv $veclen 1 float
+#  vector stim $veclen 1 float
+
+  vector e1 $xflen 1 float
+  vector e2 $xflen 1 float
+  vector e3 $xflen 1 float
+  vector et $xflen 1 float
+
+  vector sxf $xflen 1 complex
+  vector exf $xflen 1 complex
+
+  scalar sumscal 1 float
+  quit
+.
+
+Define Init_Data 0
+echo get1
+Get_Ascii_File wxv wxva
+echo get2
+Get_Ascii_File gxv gxva
+echo get3
+Get_Ascii_File bxv bxva
+#echo get4
+#Get_Ascii_File stim stim
+.
+
+Define Get_Ascii_File 2 object stem
+Set filename
+"ascii/$2.$substem.$camera_index"
+echo "Get_Ascii $1 $filename"
+Get_Ascii $1 $filename
+echo "Get_Ascii done"
+.
+
+
+Define Get_SOS 3 scalar vec1 vec2
+VVSub diffs $2 $3
+VVMul diffs diffs diffs
+VSum diffs $1
+.
+
+Define Show_Curve 2 window data
+#echo "Show_Curve $1 $2!?"
+Select_Plotter $1
+Center_Trace $datamin $datamax
+Select_Pen $axis_color
+YPlot $2
+.
+
+Define Replot 0
+Erase_Plotter $fit_window
+Show_Curve $fit_window $datavec
+Show_Curve $fit_window $stimvec
+.
+
+Set n_overlays	10
+
+Define Fit_Wave 0
+TopMenu
+Pause_If
+Fit_2Exp subsig			# the input signal
+echo "$stim_desc_str $ntries t0 $e1_t0 tau $e1_tau a $e1_amp e $error"
+Pause_If
+If "$plotting && $ntries%$n_overlays == 0" "Replot"
+If $plotting "Show_Curve $fit_window fit"
+.
+
+
+Define Fit_2Exp 1 data
+Make_Test_Curve fit
+Show_Curve $fit_window fit
+Get_SOS sumscal fit $1
+Assign error value(sumscal)
+Increment ntries
+.
+
+# We convolve the input signal with the test
+# impulse response in the freq domain; here we precompute
+# the xform of the stimulus
+
+Define Fit_Setup 0
+Init_Stimulus_Xform sxf
+Pause_If
+.
+
+# the stimulus may not be a power of 2...
+
+Define Init_Stimulus_Xform 1 xform
+VSetComplex $1 0.0 0.0
+Subvector sinset "$1{0}" $fitlen 0
+VMov sinset substim
+Show_Curve $fit_window sinset
+VSet sextra 0.0
+
+FFT sxf
+
+#Set t0max	1.5
+Set t0max	0.4
+#Set taumax	1.5
+Set taumax	2.5
+Set taumin	0.01
+Set ampmax	100
+Set startinc	0.05
+Set start_t0_inc	0.01
+Set mininc	0.0001
+.
+
+# this is a more general version of Fit_Curve
+
+Define Fit_Data 2 record stim
+Set datavec $1
+#Set fit_window velocities
+Set fit_window correlation
+Set stimvec $2
+# should we set the fit window??
+#VVMax maxstimvec $1 $2
+VVMaxMag maxstimvec $1 $2
+Compute_Data_Range maxstimvec
+Where_Fit $dlen-40 0
+Pause_If
+Fit_Setup
+Pause_If
+stepit
+  Set ntries 0
+  function Fit_Wave		# change this???
+  parameters 3
+    #      init  min      max        inc         mininc
+    e1_t0  0     0        0.016*$fitlen/2  $startinc   $mininc 
+    e1_tau 0.1     $taumin  $taumax    $startinc   $mininc 
+    e1_amp 0.5     0        $ampmax    0.1   $mininc
+ #   e2_t0  1     0        $t0max     $startinc   $mininc 
+ #   e2_tau 1     $taumin  $taumax    $startinc   $mininc 
+ #   e2_amp 1     0        $ampmax    $startinc   $mininc
+  Set e2_t0 0
+  Set e2_tau 1
+  Set e2_amp 0.0
+  output_file "fitout.$REPLICATION"
+  optimize 2000
+  output_file -
+
+advise "$stim_desc_str $ntries t0 $e1_t0 tau $e1_tau a $e1_amp e $error"
+#If $plotting "VString $fit_window 't0 $e1_t0 tau $e1_tau a $e1_amp' 10 10"
+#If $plotting "VString $fit_window 't0 $e2_t0 tau $e2_tau a $e2_amp' 10 150"
+Delete_Image sinset
+.
+
+
+### Define BFit 0
+### Set fit_window $bfit_window
+### stepit
+###   Set ntries 0
+###   function Fit_BStim 
+###   parameters 6
+###     #      init  min      max        inc         mininc
+###     e1_t0  1     0        $t0max     $startinc   $mininc 
+###     e1_tau 1     $taumin  $taumax    $startinc   $mininc 
+###     e1_amp 1     0        $ampmax    $startinc   $mininc
+###     e2_t0  1     0        $t0max     $startinc   $mininc 
+###     e2_tau 1     $taumin  $taumax    $startinc   $mininc 
+###     e2_amp 1     0        $ampmax    $startinc   $mininc
+###   optimize 2000
+### .
+
+Define AFit 0
+Set fit_window $gfit_window
+stepit
+  Set ntries 0
+  function Fit_Grating
+  parameters 6
+    #      init  min      max        inc         mininc
+    e1_t0  1     0        $t0max     $startinc   $mininc 
+    e1_tau 1     $taumin  $taumax    $startinc   $mininc 
+    e1_amp 1     0        $ampmax    $startinc   $mininc
+    e2_t0  1     0        $t0max     $startinc   $mininc 
+    e2_tau 1     $taumin  $taumax    $startinc   $mininc 
+    e2_amp 1     0        $ampmax    $startinc   $mininc
+  Set ainc 0.1
+  init_simplex
+	1	1	1	1	1	1
+	1+$ainc	1	1	1	1	1
+	1	1+$ainc	1	1	1	1
+	1	1	1+$ainc	1	1	1
+	1	1	1	1+$ainc	1	1
+	1	1	1	1	1+$ainc	1
+	1	1	1	1	1	1+$ainc
+  amoeba
+.
+
+Stop_File newfit.mac

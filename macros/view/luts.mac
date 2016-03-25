@@ -1,0 +1,117 @@
+
+# %Z% $RCSfile: luts.mac,v $ ver: $Revision: 1.8 $ $Date: 2005/03/02 00:24:26 $
+
+
+Start_File luts.mac
+
+Set current_viewer need_to_specify_a_viewer_first
+
+Define Set_Lin_Exponent 1 exponent
+#Tell_If "Set_Lin_Exponent $1"
+view
+  luts $current_window
+    linearize
+      gamma $1
+      quit
+    quit
+  quit
+.
+
+Define Setcolor 4 c r g b
+#Tell_If "Setcolor $1 $2 $3 $4"
+view
+  luts $current_window
+    cmaps
+      setcolor $1 $2 $3 $4
+      quit
+    quit
+  quit
+.
+
+Define Poke_LUT 4 i r g b
+#Tell_If "Poke_LUT $1 $2 $3 $4"
+view
+  luts $current_window
+    cmaps
+      poke $1 $2 $3 $4
+      update
+      quit
+    quit
+  quit
+.
+
+Define Protect_LUT 1 n
+warn "Protect_LUT is deprecated"
+exit_macro
+view
+  luts $current_window
+    cmaps
+      #protect $1
+      quit
+    quit
+  quit
+.
+
+Define Grayscale_LUT 2 base n
+#Tell_If "Grayscale_LUT $1 $2"
+view
+  luts $current_window
+    cmaps
+      grayscale $1 $2
+      update
+      quit
+    quit
+  quit
+.
+
+Define Lin_Levels 1 n
+#Tell_If "Lin_Levels $1"
+view
+  luts $current_window
+    linearize
+      nlevels $1
+      quit
+    quit
+  quit
+.
+
+Define Setlut 1 name
+#Tell_If "Setlut $1 $2"
+view
+  luts $current_window
+    lutbuffers
+      setlut $1
+      quit
+    quit
+  quit
+.
+
+Define Newlut 2 name length
+#Tell_If "Newlut $1 $2"
+view
+  luts $current_window
+    lutbuffers
+      echo "creating lutbuffer $1"
+      newlut $1 $2
+      quit
+    cmaps
+      #protect 0
+      quit
+    quit
+  quit
+.
+
+Define Dumplut 1 name
+#Tell_If Dumplut
+view
+  luts $current_window
+    lutbuffers
+      echo "loading lutbuffer $1"
+      dump $1
+      quit
+    quit
+  quit
+.
+
+Stop_File luts.mac
+

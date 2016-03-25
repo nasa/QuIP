@@ -1,0 +1,68 @@
+
+Set have_record 1
+
+# On some records from uhco12, the output was null if there was a blink
+#
+# Read_Record averages the left and right eye signals for the version response...
+# (except subject gkr)
+
+Define Read_Record 1 param_string
+advise "Read_Record $1"
+Set infile $HOME/data/$PROJECT/traces/exp$EXPERIMENT/$1.asc
+If !file_exists('$infile') "error_exit 'File $infile does NOT exist'"
+VSet eye_pos 0
+
+Count_Lines nl $infile
+Vector indata $nl 4 float
+Get_Ascii indata $infile
+
+# Check for bad data
+Get_Mean m indata{0}
+If $m==0.0
+  Then "advise 'Read_Record: mean of first component is 0!?'  Set bad_record 1"
+  Else "Set bad_record 0"
+
+# LH RH LV RV
+# do version for now...
+
+# uhco06, expect 960 samples but may get 959
+If !strcmp($SUBJECT,gkr)
+  Then Right_Eye_Only
+  Else Use_Version
+.
+
+Define Right_Eye_Only 0
+advise "Using right eye only for subject $SUBJECT"
+Subvector _use_pos eye_pos $nl 0
+VMov _use_pos{0} indata{1}
+VMov _use_pos{1} indata{3}
+Delete_Image indata
+Delete_Image _use_pos
+.
+
+Define Use_Version 0
+advise "Using right & left eye average for subject $SUBJECT"
+Subvector _use_pos eye_pos $nl 0
+VVAdd _use_pos{0} indata{0} indata{1}
+VVAdd _use_pos{1} indata{2} indata{3}
+Delete_Image indata
+VSMul _use_pos _use_pos 0.5
+Delete_Image _use_pos
+.
+
+Define Load_Stimulus 1 param_string
+advise "Load_Stimulus $1"
+Set infile $HOME/data/$PROJECT/signals/exp$EXPERIMENT/$1.asc
+If !file_exists('$infile') "error_exit 'File $infile does NOT exist'"
+Count_Lines nl $infile
+Vector indata $nl 4 float
+Get_Ascii indata $infile
+
+Subvector _use_pos stimpos $nl 0
+VVAdd _use_pos{0} indata{0} indata{1}
+VVAdd _use_pos{1} indata{2} indata{3}
+Delete_Image indata
+VSMul _use_pos _use_pos 0.5
+Delete_Image _use_pos
+.
+

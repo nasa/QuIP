@@ -1,0 +1,6 @@
+# test of contiguity
+
+Image c1 3 2 1 complex
+Info c1
+
+

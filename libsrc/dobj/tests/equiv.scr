@@ -1,0 +1,68 @@
+
+Define Test_Bitmaps 0
+Set h 4
+Set w 76
+Set t 1
+
+Sequence b1 $t $h $w 1 bit
+Info b1
+
+#advise "Interlacing bit image:"
+#Interlace odd b1 odd
+#Info odd
+#Pause
+
+advise "Equivalencing bit to uint32:"
+Equivalence el1 b1 1 $t $h 4 1 uint32
+Info el1
+advise ' '
+
+advise "Equivalencing bit to uint64:"
+Equivalence el2 b1 1 $t $h 2 1 uint64
+Info el2
+advise ' '
+
+advise "Equivalencing back to bit"
+Equivalence eb1 el2 1 $t $h 128 1 bit
+Info eb1
+advise ' '
+.
+
+Define Test_Complex 0
+Set h 4
+Set w 5
+Image f1 $h $w 1 float
+Image c1 $h $w 1 complex
+
+advise "Equivalencing floats to complex..."
+Equivalence ef1 f1 1 1 $h/2 $w 1 complex
+Info ef1
+
+advise "Equivalencing complex to float..."
+Equivalence ec1 c1 1 1 $h $w 2 float
+Info ec1
+.
+
+Define Test_Misc 0
+
+Image y1 $h $w 1 u_byte
+Image f1 $h $w 1 float
+
+advise 'Equivalencing float to byte:'
+Equivalence ub1 f1 1 1 $h $w 4 u_byte
+Info f1
+Info ub1
+
+Equivalence ey1 y1 1 1 $h $w/4 1 uint32
+advise "Equivalencing byte to uint32:"
+Info y1
+Info ey1
+.
+
+Test_Bitmaps
+#Test_Misc
+Test_Complex
+
+
+exit
+

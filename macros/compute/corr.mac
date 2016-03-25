@@ -1,0 +1,499 @@
+
+# warmenu macros to register images with cross-correlation
+
+Start_File corr.mac
+
+Set debug_norms		0		# default
+
+Set input_norm_value	1		# to avoid nudef var warnings
+
+Set find_subpixel_location	1	# default, but requires a bit of low-pass filtering...
+
+If !var_exists('bqi_loaded')
+  "warn 'must load bqi.mac before corr.mac' < $macro_dir/numrec/bqi.mac"
+
+If "(!$bqi_loaded)"
+  "warn 'must load bqi.mac before corr.mac' < $macro_dir/numrec/bqi.mac"
+
+#< svd.mac		# for subpixel location
+#< xlate.mac
+
+#Complex_Image cin
+#Complex_Image clast
+
+# Normalized cross-correlation
+#
+# When the images cover the entire staging area it is appropriate
+# (i.e., the two images completely overlap for all possible
+# registrations), then it is reasonable just to compute a single
+# "norm" number of each image, to normalize the value of the cross
+# correlation (so that it is LTE 1).  However, when there is only
+# image content in a small subregion, then this unfairly penalizes
+# matches with little overlap.  In this case we should compute
+# a norm image.
+#
+# The norm image is computed using the valid window from the *other*
+# image...  We square the pixels and then convolve with the window
+# of the other, yielding the SOS of the given image that contribute
+# to the cross correlation for each possible registration.
+# We need two convolve routines becuase of the the asymmetry
+# in the correlation computation...
+#
+# If one image falls entirely within another, then a single norm
+# value can be used for the smaller image.  This can afford a computational
+# savings for applications like eye tracking (input match to template)
+#
+# This is all somewhat tricky...
+#
+# For fundus tracking, we know the windows, but what can we do
+# in general?  We can look for non-zero pixels...
+
+Assign norm_mask_max	0.05
+Assign norm_mask_min	$norm_mask_max/2
+
+Set _nv1	1
+Set _nv2	1
+
+Define Correlate 3  target in1 in2
+#Tell_If "Correlate $1 $2 $3"
+Prepare_Xforms $2 $3
+
+Get_Norm_Value $2 _nv1
+If $_nv1==0 "advise 'zero norm1, not correlating' Delete_Xforms exit_macro"
+
+#Print_If _nv1
+Get_Norm_Value $3 _nv2
+#Print_If _nv2
+
+#Get_Norm_Mask $3
+
+Fast_Raw_Corr $1 cin clast
+
+#advise "normalizing..."
+VSMul $1 $1 1/($_nv1*$_nv2)
+#advise "normalizing DONE..."
+
+Locate_Corr_Peak $1
+
+Delete_Xforms
+.
+
+# Prepare_Xforms declares the transform images and computes the transforms (no wrapping)
+
+Define Prepare_Xforms 2 img1 img2
+Xform_For cin $1
+Xform_For clast $2
+RFFT cin $1
+RFFT clast $2
+.
+
+Define Delete_Xforms 0
+Delete_Image cin
+Delete_Image clast
+.
+
+Set debug1 0			# default
+Set debug2 0			# default
+Set production 0		# default
+Set min_tmpl_norm 0.001		# default, in practice we use a much larger value
+
+# The first image (img1) is the "input" in the retinal tracking sense,
+# while the second image (img2) is the "template" in the retinal tracking sense.
+# This means that img2 may cover the whole area, while img1 may cover only
+# a small area.  region1 and region2 indicate where each image has useful
+# data; when $production is set, it will be assumed that region2 covers
+# the whole image, so that a single norm value may be used.
+#
+# We imagine the input (img1) being moved over the template (img2), the location
+# of the final peak represents the diplacement we have to move img1 to obtain
+# registration.
+
+Define Correlate_Subimages 5 target img1 img2 region1 region2
+Tell_If "Correlate_Subimages $1 $2 $3 $4 $5"
+# this is just like Correlate
+Prepare_Xforms $2 $3
+
+If $debug1 "advise 'Prepare_Norm_Imgs $2 $3 $4 $5'"
+Prepare_Norm_Imgs $2 $3 $4 $5
+
+Fast_Raw_Corr $1 cin clast
+Show_If $1 5 'raw correlation'
+
+VVMul $1 $1 tmpl_norm_img	# BUG not portable
+
+If $debug2 "advise 'Production mode is $production'"
+
+If "!$production"
+  Then "If $debug2 'advise using_norm_image verbose yes Show_If input_norm_img 2 ip' VVMul $1 $1 input_norm_img"
+Else "If $debug2 'advise using_const_val Print_If input_norm_value' VSMul $1 $1 1/$input_norm_value"
+
+# We use the correlation mask to restrict the neighborhood where we expect
+# to find the answer...
+
+Show_If corr_mask 6 'correlation mask'
+VVMul $1 $1 corr_mask
+Show_If $1 2 'normalized correlation'
+
+Locate_Corr_Peak $1
+
+Delete_Norm_Imgs
+Delete_Xforms
+.
+
+Define Prepare_Norm_Imgs 4 img1 img2 win1 win2
+If !$production
+  Then
+"Dup_Float input_norm_img $1 \
+Get_Norm_Image input_norm_img $1 $4 $min_tmpl_norm 0"		# Get_Input_Norm
+  Else "Get_Norm_Value $1 input_norm_value Print_If input_norm_value"
+
+Dup_Float tmpl_norm_img $2
+# this is what was there before
+Get_Norm_Image tmpl_norm_img $2 $3 $min_tmpl_norm 1	# Get_Template_Norm
+
+Print_If debug_norms
+If $debug_norms "Show_If tmpl_norm_img 2 'template norm image'"
+If $debug_norms&&!$production "Show_If input_norm_img 2 'input norm image'"
+If $debug_norms '< /dev/tty'
+.
+
+Define Delete_Norm_Imgs 0
+If !$production "Delete_Image input_norm_img"
+Delete_Image tmpl_norm_img
+.
+
+Define Get_Norm_Mask 1 image
+Dup_Float tnorm $1
+Dup_Float dnorm $1
+VAbs tnorm $1
+VSMin tnorm tnorm $norm_mask_max
+VSMax tnorm tnorm $norm_mask_min
+VSAdd tnorm tnorm -$norm_mask_min
+VSMul tnorm tnorm 1/($norm_mask_max-$norm_mask_min)
+#verbose yes
+Show_If tnorm 6 'non-zero mask image'
+Dilate dnorm tnorm
+Show_If dnorm 6 'dilated mask image'
+#verbose no
+Delete_Image tnorm
+Delete_Image dnorm
+.
+
+# when we are correlating against a fixed template, we can keep
+# it's freq. domain representation around...  also, since we may
+# filter the input, we assume it can be efficiently passed in
+# freq domain rep.  But why would we not need the input norm image?
+# I guess the idea is that in production mode, the input image always
+# fits entirely within the template, so ALL of its norm gets used;
+# in template building mode, this may not be the case...
+#
+# Fast_Corr has two inputs, with are transforms...
+
+Define Fast_Corr 3 target in1 in2
+Fast_Raw_Corr $1 $2 $3
+
+### VVMul $1 $1 tmpl_norm_img	# BUG not portable
+### 
+### If $debug2 "advise 'Production mode is $production'"
+### 
+### If "!$production"
+###   Then "If $debug2 'advise using_norm_image verbose yes Show_If input_norm_img 2 ip' VVMul $1 $1 input_norm_img"
+###   Else "If $debug2 'advise using_const_val' VSMul $1 $1 1/$input_norm_value"
+### Show_If $1 6 'normalized correlation'
+
+VSMul $1 $1 1/($_nv1*$_nv2)
+
+### If $saving_slides "Put_Hips $1 $imgdir/ss_ncorr.hips"
+
+#Find_Max $1		# find max & interpolate
+
+Locate_Corr_Peak $1
+
+#Absolute_Move			# update variables tt_deltax,tt_deltay
+				# from $xshift, $yshift
+				# BUG not really part of Correlate...
+Set ok 1
+#If $check_displacement Check_Displacement # set ok to 0 if displacements too big!?
+#If "$corr_peak < $blink_threshold" "Set ok 0"	# blink detector
+.
+
+# This correlation is "fast" because we assume we have already computed
+# the transforms...  it is "raw" because it is not normalized.
+# We wrap the result to put 0 in the middle.
+
+Define Fast_Raw_Corr 3 target in1 in2
+Dup_Complex cscratch $2
+IXform_For rscratch $2
+VVCmul cscratch $3 $2
+RInvFFT rscratch cscratch
+Delete_Image cscratch
+Wrap $1 rscratch		# mainly for viewing pleasure...
+				# but also helps with interpolation about 0
+Delete_Image rscratch
+#Show_If $1 2 'raw correlation'
+#Tell_If 'end of fast-raw-corr' 
+.
+
+Define Locate_Corr_Peak 1 image
+Find_Max_Pixel $1		# get indices of max pixel, mxx mxy
+# put a value in peak_value in case we don't have numrec
+Assign peak_value value($1[$mxy][$mxx])
+#Tell_If "peak_value $peak_value at $mxx $mxy"
+
+#Tell_If 'max pixel found'
+If $find_subpixel_location&&$peak_value>0
+  "Refine_Peak_Location $1"		# interpolate max
+.
+
+##### # this is the Correlate from tortrack.mac
+##### Define Correlate 2 in1 in2
+##### RFFT cin $1
+##### RFFT ctemplate $2
+##### Get_Template_Norm $2 window
+##### Get_Input_Norm $1
+##### Fast_Corr cin ctemplate
+##### .
+
+# when we are correlating against a fixed template, we can keep
+# it's freq. domain representation around...  also, since we may
+# filter the input, we assume it can be efficiently passed in
+# freq domain rep.  But why would we not need the input norm image?
+# I guess the idea is that in production mode, the input image always
+# fits entirely within the template, so ALL of its norm gets used;
+# in template building mode, this may not be the case...
+
+### Define Old_Fast_Corr 2 in1 in2
+### VVCmul cscratch $2 $1
+### RInvFFT rscratch cscratch
+### Wrap corr rscratch		# mainly for viewing pleasure...
+### 				# but also helps with interpolation about 0
+### Show_If corr 2 'raw correlation'
+### 
+### If $saving_slides "Put_Hips corr $imgdir/ss_corr.hips"
+### 
+### If $debug_norms "Show_If tmpl_norm_img 2 'template norm image'"
+### If $debug_norms "Show_If input_norm_img 2 'input norm image'"
+### If $debug_norms '< /dev/tty'
+### 
+### VVMul corr corr tmpl_norm_img	# BUG not portable
+### 
+### If $debug2 "advise 'Production mode is $production'"
+### 
+### If "!$production"
+###   Then "If $debug2 'advise using_norm_image verbose yes Show_If input_norm_img 2 ip' VVMul corr corr input_norm_img"
+###   Else "If $debug2 'advise using_const_val Print input_norm_value' VSMul corr corr 1/$input_norm_value"
+### Show_If corr 6 'normalized correlation'
+### 
+### If $saving_slides "Put_Hips corr $imgdir/ss_ncorr.hips"
+### 
+### #Find_Max corr		# find max & interpolate
+### advise 'Old_Fast_Corr calling refine_peak'
+### Refine_Peak_Location corr
+### Absolute_Move		# update variables tt_deltax,tt_deltay from $xshift, $yshift
+### Set ok 1
+### If $check_displacement Check_Displacement # set ok to 0 if displacements too big!?
+### If "$corr_peak < $blink_threshold" "Set ok 0"	# blink detector
+### .
+
+
+# end of stuff from tortrack.mac...
+
+# find the maximum in the correlation image
+
+Define Find_Max 0
+Find_Max_Pixel corr
+advise "Find_Max calling Refine_Peak_Location corr"
+Refine_Peak_Location corr
+.
+
+### Define Get_Input_Norm 1 image
+### If "!$production"
+###   Then "If $debug2 Tell_Not_Production Get_Input_Norm_Image $1 tValid"
+###   Else "Get_Norm_Value $1 input_norm_value If $debug2 Show_Input_Norm_Value"
+### .
+
+# For production work, we assume the input always falls
+# within the template, and we don't need to consider overlap
+# when normalizing; when building the template, however, this
+# may not be true - in this case we should convolve the input
+# squares with a mask corresponding to the valid template area
+
+### Define Show_Input_Norm_Value 0
+### advise "Production mode, input norm value is $input_norm_value"
+### .
+
+Define Get_Norm_Value 2 image varname
+#Tell_If "Get_Norm_Value $1 $2"
+Dup_Float gnv_squares $1
+Scalar gnv_sumscal 1 float
+VVMul gnv_squares $1 $1
+#Show_If gnv_squares 2 'image'
+#VSum gnv_squares gnv_sumscal		# 
+VSum gnv_sumscal gnv_squares		# Note order of args of VSum has changed to be consistent!
+Assign $2 sqrt(value(gnv_sumscal))
+Delete_Image gnv_squares
+Delete_Image gnv_sumscal
+.
+
+
+# warmenu macros to register images
+# NEW use real FFT
+
+# Compute a correlation weighting image
+# We do this by squaring each pixel, then convolving this
+# with the window corresponding to the image we will be correlating
+# with...
+#
+# the norm image is actually the reciprocal of the norm,
+# so we can multiply the raw correlation image by this to normalize
+# for the template
+
+### Define Get_Template_Norm 2 source window
+### 
+### Get_Norm_Image tmpl_norm_img $1 $2 $min_tmpl_norm 1
+### # Do NOT wrap template norm image!!
+### .
+
+
+# Get_Norm_Image
+#
+# This function computes the pixel-wise squares of an image
+# and convolves with a window - the window represents the non-zero
+# portion of the OTHER image, so the convolution results in
+# the effective norm...
+#
+# Why not just use the (scalar) image norms???
+# Because when we know that the image only covers part of the staging area,
+# we only want to normalize by the portion that overlaps...
+
+Set tmp_norm_value 0
+
+# gni_mask_min - what does this do?
+# Any pixel in the mask with a value greater than this threshold
+# will be set to 1...  pixels below this value will be unchanged.
+# WHY?
+#Set gni_mask_min 0.1	# so we don't divide by 0...
+Set gni_mask_min 0.1	# so we don't divide by 0...
+#Set gni_mask_min 0.001	# so we don't divide by 0...
+
+Define Get_Norm_Image 5 target source window minval order
+Tell_If "Get_Norm_Image $1 $2 $3 $4 $5 BEGIN"
+##Print debug_norms
+##advise "Get_Norm_Image pausing..."
+##Pause
+## get the overall norm for comparison...
+##If $debug_norms "Get_Norm_Value $2 tmp_norm_value"
+#If $debug_norms "advise 'unwindowed norm is $tmp_norm_value'"
+
+If $debug_norms "echo 'Get_Norm_Image $1 $2 $3 $4 $5' verbose yes"
+If $debug_norms "Show_If $2 5 'norm source'"
+#advise "If $debug_norms Show_If $3 1 'norm window'"
+If $debug_norms "Show_If $3 1 'norm window'"
+Dup_Float gni_mask $3
+
+# I don't really understand why these shifts are the way they are,
+# but it seems to be necessary to get the correct answer!?
+
+If $5
+  Then "Scroll gni_mask $3 1-ncols('$3')/2 1-nrows('$3')/2"
+  Else "Wrap gni_mask $3"
+
+If $debug_norms "Show_If gni_mask 2 'wrapped window'"
+
+If $debug_norms "Print gni_mask_min"
+VSMin gni_mask gni_mask $gni_mask_min
+VSMul gni_mask gni_mask 1/$gni_mask_min
+If $debug_norms "Show_If gni_mask 2 'binarized, wrapped window'"
+
+#VSMax gni_mask gni_mask $gni_mask_min
+
+#Std_Image tmp_squares
+Dup_Std tmp_squares $2
+VVMul tmp_squares $2 $2
+Get_Sum sos tmp_squares
+Get_Min _m1 $2
+Get_Max _m2 $2
+advise "range of $2 is $_m1 to $_m2"
+Print sos
+#advise "Assign normval sqrt($sos)"
+Assign normval sqrt($sos)
+Print_If normval
+#Pause
+If $debug_norms "Show_If tmp_squares 2 'tmp_squares'"
+# We are wrapping the correlations to view...
+# Why don't we wrap the mask before convolving?
+#CConvolve tmp_squares tmp_squares gni_mask
+If $5
+  Then "Convolve tmp_squares tmp_squares gni_mask"
+  Else "CConvolve tmp_squares tmp_squares gni_mask"
+If $debug_norms "Show_If tmp_squares 3 'convolved norm'"
+
+# sometimes the convolution can have a few negative small values,
+# even though the inputs are all positive!?
+If $debug_norms "advise 'Get_Norm_Image:  norm will be clipped at $4'"
+Tell_If "VSMax tmp_squares tmp_squares $4"
+VSMax tmp_squares tmp_squares $4
+If $debug_norms "Show_If tmp_squares 2 'clipped convolution'"
+VSqrt tmp_squares tmp_squares
+#VSMax tmp_squares tmp_squares $tmp_sq_min
+If $debug_norms "Show_If tmp_squares 2 'rooted squares'"
+# We used to wrap here, but that is taken care of better
+# by conjugating both operands to CCConvolve
+
+VSDiv $1 tmp_squares 1
+If $debug_norms "Show_If $1 6 'norm inverse' verbose no"
+Delete_Image tmp_squares
+Delete_Image gni_mask
+#If $debug_norms '< /dev/tty'
+Tell_If "Get_Norm_Image $1 $2 $3 $4 $5 DONE"
+.
+
+### Define Get_Input_Norm_Image 2 source window
+### Get_Norm_Image input_norm_img $1 $2 $min_tmpl_norm 0
+### .
+
+Define Convolve 3 target ip1 ip2
+Xform_For _xf1 $2
+Xform_For _xf2 $3
+RFFT _xf1 $2
+RFFT _xf2 $3
+VVMul _xf1 _xf1 _xf2
+RInvFFT $1 _xf1
+Delete_Image _xf1
+Delete_Image _xf2
+.
+
+# like a convolve, but flip the output (like a correlation)
+# We probably should call this Correlate!?
+# note that the output is not wrapped...
+
+Define CConvolve 3 target ip1 ip2
+Xform_For _xf1 $2
+Xform_For _xf2 $3
+RFFT _xf1 $2
+RFFT _xf2 $3
+VVCmul _xf1 _xf2 _xf1
+RInvFFT $1 _xf1
+Delete_Image _xf1
+Delete_Image _xf2
+.
+
+# like a convolve, but conjugate BOTH xforms
+Define CCConvolve 3 target ip1 ip2
+Xform_For _xf1 $2
+Xform_For _xf2 $3
+RFFT _xf1 $2
+RFFT _xf2 $3
+VSMul _xf1{1} _xf1{1} -1
+VSMul _xf2{1} _xf2{1} -1
+VVMul _xf1 _xf2 _xf1
+RInvFFT $1 _xf1
+Delete_Image _xf1
+Delete_Image _xf2
+.
+
+
+
+
+Stop_File corr.mac
+

@@ -1,0 +1,306 @@
+# %Z% $RCSfile: bqi.mac,v $ ver: $Revision: 1.17 $ $Date: 2008/06/30 06:48:40 $
+
+Start_File bqi.mac
+
+If var_exists(bqi_loaded) 'warn "bqi already loaded, popping" exit_macro'
+
+# do biquadradic interpolation using SVD
+
+#
+# assume image z = a x^2 + b xy + c y^2 + d x + e y + f
+#
+# image centered on maximum (x,y)=(0,0)
+# order data points so:
+#
+#  0 1 2
+#  3 4 5
+#  6 7 8
+#
+# then the following matrix takes parameters (coefficients) to data values:
+#
+#
+# dvec =
+#        | 1 -1  1 -1  1  1 |		-1,1
+#        | 0  0  1  0  1  1 |		0,1
+#        | 1  1  1  1  1  1 |		1,1
+#        | 1  0  0 -1  0  1 |		-1,0
+#        | 0  0  0  0  0  1 |		0,0
+#        | 1  0  0  1  0  1 |		1,0
+#        | 1  1  1 -1 -1  1 |		-1,-1
+#        | 0  0  1  0 -1  1 |		0,-1
+#        | 1 -1  1  1 -1  1 |		1,-1
+#
+# we would like to obtain the pseudoinverse of this matrix using SVD
+#
+
+# this procedure initializes the inputs, and computes U, V, and W
+
+Define BQI_Setup 0
+
+Set n_data_pts		9
+Set n_parameters	6
+Create_SVD_Objects bqi $n_data_pts $n_parameters
+
+data
+  ascii
+    read bqi_u_matrix -		# the input is passed in the U matrix...
+      1 -1  1 -1  1  1
+      0  0  1  0  1  1
+      1  1  1  1  1  1
+      1  0  0 -1  0  1
+      0  0  0  0  0  1
+      1  0  0  1  0  1
+      1  1  1 -1 -1  1
+      0  0  1  0 -1  1
+      1 -1  1  1 -1  1
+    quit
+  quit
+
+numrec svd bqi_u_matrix bqi_eigenvalues bqi_v_matrix quit
+.
+
+# synthesize a problem
+
+Define BQI_Test_Declare 0
+Image z 3 3 1 float
+Image ztmp 3 3 1 float
+Image x 3 3 1 float
+Image xx 3 3 1 float
+Image y 3 3 1 float
+Image yy 3 3 1 float
+Image xy 3 3 1 float
+.
+
+Define BQI_Test_Init 0
+data
+  ascii
+    read x -
+      -1 0 1
+      -1 0 1
+      -1 0 1
+    read y -
+      1 1 1
+      0 0 0
+      -1 -1 -1
+    quit
+  quit
+
+VVMul xx x x
+VVMul yy y y
+VVMul xy x y
+.
+
+Define Make_BQI_Data 0
+VSMul z xx $a
+
+VSMul ztmp xy $b
+VVAdd z z ztmp
+
+VSMul ztmp yy $c
+VVAdd z z ztmp
+
+VSMul ztmp x $d
+VVAdd z z ztmp
+
+VSMul ztmp y $e
+VVAdd z z ztmp
+
+VSAdd z z $f
+.
+
+Define BQI_Test1 0
+BQI_Test_Init
+Set a 1.2
+Set b 2.3
+Set c 3.4
+Set d 4.5
+Set e 5.6
+Set f 6.7
+advise "BQI_Test1:  parameters are $a $b $c $d $e $f"
+
+Make_BQI_Data
+
+# now z contains the measurements
+
+Find_Peak z
+.
+
+#
+# Test of off-peak sampling
+#
+#  z = (x-1.2)^2 + y^2
+#    = x^2 + y^2 - 2.4 x + 1.44
+#
+#	a=1, b=0, c=1, d=-2.4, e=0, f=1.44
+#
+
+Define BQI_Test2 0
+BQI_Test_Init
+Set a 1.0
+Set b 0.0
+Set c 1.0
+Set d -2.4
+Set e 0.0
+Set f 1.44
+
+Make_BQI_Data
+Display z
+Find_Peak z
+Display bqi_coeffs
+.
+
+# now that we have the coefficients, find the origin of the quadratic
+#
+# z = a x^2 + b xy + c y^2 + d x + e y + f
+# dz/dx = 2ax + by + d
+# dz/dy = bx + 2cy + e
+#
+# equate both to zero and solve for x:
+#
+# x = -(by+d)/2a
+# x = -(2cy+e)/b
+#
+# equate & multiply by -2ab
+#
+# b^2y+db = 4acy + 2ae
+#
+# y = (2ae-db)/(bb-4ac)
+#
+# Obtain solution for x by exchanging a&c, d&e :
+#
+# x = (2cd-eb)/(bb-4ac)
+
+Define Find_Peak 1 'input 3x3 image'
+Set _i 0
+Set _y 0
+repeat 3
+  Set _x 0
+  repeat 3
+    VSet bqi_datain[$_i] value($1[$_y][$_x])
+    Increment _x
+    Increment _i
+    end
+  Increment _y
+  end
+numrec svbk bqi_coeffs bqi_u_matrix bqi_eigenvalues bqi_v_matrix bqi_datain quit
+
+# Display bqi_coeffs
+
+Assign _a value(bqi_coeffs[0])
+Assign _b value(bqi_coeffs[1])
+Assign _c value(bqi_coeffs[2])
+Assign _d value(bqi_coeffs[3])
+Assign _e value(bqi_coeffs[4])
+Assign _f value(bqi_coeffs[5])
+Assign _denom $_b*$_b-4*$_a*$_c
+
+If $_denom==0 "advise 'zero denom, no subpixel estimation' Set peak_value 0.0001 exit_macro"
+Assign x0 (2*$_c*$_d-$_e*$_b)/$_denom
+Assign y0 (2*$_a*$_e-$_d*$_b)/$_denom
+#Print x0
+#Print y0
+
+# evaluate peak value
+Assign peak_value $_a*$x0*$x0+$_b*$x0*$y0+$_c*$y0*$y0+$_d*$x0+$_e*$y0+$_f
+#Print peak_value
+Add_Var mxx $x0
+Add_Var mxy -$y0
+#echo "x0 $x0    y0 $y0    mxx $mxx   mxy $mxy"
+.
+
+
+# make up some data with a known peak
+
+Define BQI_Test3 2 x y
+BQI_Test_Init
+
+VSAdd x x $1
+VSAdd y y $2
+VVMul xx x x
+VVMul yy y y
+VVMul xy x y
+VSMul xx xx 2
+VSMul yy yy 0.3
+
+VVAdd z xx yy
+
+Find_Peak z
+.
+
+
+Define Locate_Peak 1 image
+
+If !obj_exists(bqi_datain) BQI_Setup
+
+Find_Max_Pixel $1
+
+#Tell_If "integer coords of peak:  $mxx $mxy"
+# do subpixel estimate
+# find peak of quadratic surface with L.S. fit to 9 data pts
+Refine_Peak_Location $1
+.
+
+# use this after a call to Correlate
+
+Define Refine_Peak_Location 1 src_image
+#Tell_If "Refine_Peak_Location $1 BEGIN"
+If !obj_exists(bqi_datain) BQI_Setup
+#Tell_If "integer peak location is $mxx $mxy, value $mxv"
+# do subpixel estimate
+Assign nmxx min(max($mxx,1),ncols('$1')-2)
+Assign nmxy min(max($mxy,1),nrows('$1')-2)
+If $nmxx!=$mxx||$nmxy!=$mxy
+  "Tell_If 'Refine_Peak_Location:  max pixel on edge, moving from $mxx $mxy to $nmxx $nmxy' Set mxx $nmxx Set mxy $nmxy"
+Subimage max_window $1 3 3 $mxx-1 $mxy-1
+Find_Peak max_window	# updates mxx,mxy,peak_value
+#Tell_If "refined peak location is $mxx $mxy, value $peak_value"
+#
+# BUG thes are for eye tracking?
+# looks like image-centered coords...
+Assign xshift $mxx-ncols($1)/2
+Assign yshift $mxy-nrows($1)/2
+#echo "shift is $xshift $yshift"
+Delete_Image max_window
+.
+
+# Locate_Max superceded by Find_Max_Pixel
+
+####   # find the integer coordinates of the maximum value in an image
+####   
+####   Define Locate_Max 1 image
+####   
+####   Vector indices 100 1 long
+####   Std_Scalar maxval
+####   Scalar maxtimes 1 long
+####   
+####   Set chatty 0
+####   
+####   # find location of the maximum
+####   Max_Times indices $1 maxval maxtimes
+####   Assign mxv value(maxval)
+####   Assign mxt value(maxtimes)
+####   Assign mxi value(indices[0])-1
+####   # used to require that coords >= 1 ... not sure why?
+####   Assign mxy "floor($mxi/ncols($1))"
+####   Assign mxx "($mxi)%(ncols($1))"
+####   Assign corr_peak "value($1[$mxy][$mxx])"
+####   #Print corr_peak
+####   If $chatty "advise 'Value of maximum = $corr_peak'"
+####   
+####   Delete_Image indices
+####   Delete_Image maxval
+####   Delete_Image maxtimes
+####   .
+
+Define Set_Max_Coords 1 image
+Assign mxy max(floor($mxi/ncols($1)),1)
+Assign mxx max(($mxi)%(ncols($1)),1)
+#Tell_If "index $mxi corresponds to location $mxx $mxy ?"
+.
+
+Set bqi_loaded 1
+
+If !var_exists(svd_loaded) "error_exit 'must load macros/numrec/svd.mac before bqi.mac'"
+
+Stop_File bqi.mac
+

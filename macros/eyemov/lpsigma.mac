@@ -1,0 +1,23 @@
+
+Start_File lpsigma.mac
+
+Define Set_LP_Sigma 0
+Set n_bw	4	# number of bandwidths
+
+Assign bw_index $REPLICATION%$n_bw			# 1,2,3,0
+Assign signal_group_index floor(($REPLICATION-1)/$n_bw)	# 0,0,0,0,1,1,1,1,2,2,2,2, ...
+
+Set lp_sigma -1
+If $bw_index==0 "Set lp_sigma 40"
+If $bw_index==1 "Set lp_sigma 20"
+If $bw_index==2 "Set lp_sigma 10"
+If $bw_index==3 "Set lp_sigma 5"
+If $lp_sigma<0 "error_exit 'bw_index = $bw_index, bad value!?'"
+
+Assign first_signal_index 1+50*$signal_group_index
+
+Tell_If "REPLICATION is $REPLICATION, lp_sigma = $lp_sigma, first_signal = $first_signal_index"
+.
+
+Stop_File lpsigma.mac
+

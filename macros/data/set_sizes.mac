@@ -1,0 +1,16 @@
+Start_File set_sizes.mac
+
+Define ReSize 1 newsize
+Set size $1
+Set xsize $size
+Set ysize $size
+.
+
+Define Set_Sizes 2 xsize ysize
+Assign xsize $1
+Assign ysize $2
+If "$1 == $2" Then "Set size $1" Else "Set size -1"
+.
+
+Stop_File set_sizes.mac
+

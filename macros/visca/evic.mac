@@ -1,0 +1,170 @@
+# evid client macros
+
+Start_File evic.mac
+
+
+Define Evi_Connect 0
+Stem_Connect evid $evi_host
+# zero sleeptimes for faster response...
+Stem_Send evid "ports sleeptime daemon_sock 0 quit"
+ports sleeptime evid_client_sock 0 quit
+.
+
+Define Evi_Handshake 0
+Stem_Handshake evid
+.
+
+Define Evi_Get_Obj 1 obj_name
+Stem_Get_Obj evid $1
+.
+
+Define Evi_Send 1 text
+Stem_Send evid $1
+.
+
+Define Evi_Xmit 1 object
+Stem_Xmit evid $1
+.
+
+Define Init_EVI 0
+Evi_Connect
+Set have_visca 1
+.
+
+#_________mappings to functions in visca.mac_______________________#
+
+Define Power_On 0
+Evi_Send "Power_On"
+.
+
+Define Zoom_Stop 0
+Evi_Send "Zoom_Stop"
+.
+
+Define Zoom_In 1 'speed'
+# Speed 2-7
+Evi_Send "Zoom_In $1"
+.
+
+Define Zoom_Out 1 'speed'
+Evi_Send "Zoom_Out $1"
+.
+
+Define Zoom_To 1 setting
+Evi_Send "Zoom_To $1"
+.
+
+Define Auto_Focus 0
+Evi_Send "Auto_Focus"
+.
+
+Define Manual_Focus 0
+Evi_Send "Manual_Focus"
+.
+
+Define Focus 1 'position'
+Evi_Send "Focus $1"
+.
+
+Define Pantilt_Abs_Pos 4 'speed x' 'speed y' 'x' 'y'
+Evi_Send "Pantilt_Abs_Pos $1 $2 $3 $4"
+.
+
+Define Pantilt_Rel_Pos 4 'speed x' 'speed y' 'x' 'y'
+Evi_Send "Pantilt_Rel_Pos $1 $2 $3 $4"
+.
+
+Define Data_Screen_On 0
+Evi_Send "Data_Screen_On"
+.
+
+Define Data_Screen_Off 0
+Evi_Send "Data_Screen_Off"
+.
+
+Define Get_Camera_Count 1 varname
+Evi_Send "Get_Camera_Count $1"
+Set daemon_sock	daemon_sock
+Set client_sock	evic_sock
+Set string "Xmit_Text $daemon_sock \"Set $1 \$$1\""
+Evi_Send $string
+Recv_Text $client_sock response
+interpret $response
+.
+
+Define Select_PTZ 1 cam_string
+Evi_Send "Select_PTZ $1"
+.
+
+Define Set_PTZ_Posn 4 pan_speed tilt_speed pan tilt
+Evi_Send "Set_PTZ_Posn $1 $2 $3 $4"
+.
+
+Define Point_Camera 2 pan tilt
+Evi_Send "Point_Camera $1 $2"
+.
+
+Define Set_PTZ_Zoom 1 zoom_val
+Evi_Send "Set_PTZ_Zoom $1"
+.
+
+Define Set_PTZ_Focus 1 focus_val
+Evi_Send "Set_PTZ_Focus $1"
+.
+
+Define Set_PTZ_Gain 1 gain
+Evi_Send "Set_PTZ_Gain $1"
+.
+
+Define Set_PTZ_Shutter 1 shutter_val
+Evi_Send "Set_PTZ_Shutter $1"
+.
+
+Define Set_PTZ_Exposure_Auto 0
+Evi_Send Set_PTZ_Exposure_Auto
+.
+
+Define Set_PTZ_Exposure_Manual 0
+Evi_Send Set_PTZ_Exposure_Manual
+.
+
+Define Set_PTZ_IR_On 0
+Evi_Send Set_PTZ_IR_On
+.
+
+Define Set_PTZ_IR_Off 0
+Evi_Send Set_PTZ_IR_Off
+.
+
+Define Set_PTZ_Manual_Focus 0
+Evi_Send Set_PTZ_Manual_Focus
+.
+
+Define Set_PTZ_Auto_Focus 0
+Evi_Send Set_PTZ_Auto_Focus
+.
+
+Define Inquire_PTZ_Param 1 param_name
+Evi_Send "Inquire_PTZ_Param $1"
+Set daemon_sock	daemon_sock
+Set client_sock	evic_sock
+Set string "Xmit_Text $daemon_sock \"Set inquiry_result \$inquiry_result\""
+#Print string
+Evi_Send $string
+Recv_Text $client_sock response
+#Print response
+interpret $response
+.
+
+Define Inquire_PTZ_Posn 0
+Evi_Send "Inquire_PTZ_Param pantilt_posn"
+Set daemon_sock	daemon_sock
+Set client_sock	evic_sock
+Set string "Xmit_Text $daemon_sock \"Set pan_posn \$pan_posn Set tilt_posn \$tilt_posn\""
+Evi_Send $string
+Recv_Text $client_sock response
+interpret $response
+.
+
+Stop_File evic.mac
+

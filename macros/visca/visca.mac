@@ -1,0 +1,148 @@
+
+# This macro is used by daemon clients to initialize
+# the connection to the daemon - we provide it here for
+# compatibility...
+Define Init_EVI 0
+nop
+.
+
+Define Power_On 0
+visca command power on quit
+.
+
+Define Zoom_Stop 0
+visca command zoom stop quit
+.
+
+Define Zoom_In 1 'speed'
+# Speed 2-7
+visca command zoom in_rate $1 quit
+.
+
+Define Zoom_Out 1 'speed'
+# Speed 2-7
+visca command zoom out_rate $1 quit
+.
+
+Define Zoom_To 1 setting
+visca command zoom direct $1 quit
+Set zoom_cmd_setting $1
+.
+
+Set zoom_cmd_setting -1
+
+Define Wait_Zoom 0
+If $zoom_cmd_setting<0 "warn 'Wait_Zoom:  no zoom command given!?' exit_macro"
+advise "Waiting for zoom to complete..."
+.
+
+Define Focus 1 'position'
+visca command focus direct $1
+.
+
+Define Pantilt_Abs_Pos 4 'speed x' 'speed y' 'x' 'y'
+# speed x (1-18)  speed y (1-14)  x (-880 880)   y(-300 300)
+visca command pantilt absolute_pos $1 $2 $3 $4 quit
+.
+
+Define Pantilt_Rel_Pos 4 'speed x' 'speed y' 'x' 'y'
+# speed x (1-18)  speed y (1-14)  x (-880 880)   y(-300 300)
+visca command pantilt relative_pos $1 $2 $3 $4 quit
+.
+
+Define Data_Screen_On 0
+visca command datascreen on quit
+.
+
+Define Data_Screen_Off 0
+visca command datascreen off quit
+.
+
+Define Select_PTZ 1 cam_string
+visca
+  select $1
+  cameras
+    get_cam_type $1 cam_type
+    quit
+  quit
+Set_Cam_Params $cam_type
+.
+
+Define Set_Cam_Params 1 type
+Set cam_params_set 0
+If !strcmp('$1','EVI-D70') Set_D70_Params
+If !strcmp('$1','EVI-D100') Set_D100_Params
+If !strcmp('$1','EVI-D30') Set_D30_Params
+.
+
+Define Inquire_PTZ_Posn 0
+Inquire_PTZ_Param pantilt_posn
+.
+
+Define Inquire_PTZ_Param 1 param_name
+visca inquire $1 quit
+.
+
+Define Set_PTZ_Manual_Focus 0
+visca command focus manual_focus quit
+.
+
+Define Set_PTZ_Auto_Focus 0
+visca command focus auto_focus quit
+.
+
+Define Set_PTZ_IR_On 0
+visca command ir_mode on quit
+.
+
+Define Set_PTZ_IR_Off 0
+visca command ir_mode off quit
+.
+
+Define Set_PTZ_Exposure_Auto 0
+visca command exposure full_auto quit
+.
+
+Define Set_PTZ_Exposure_Manual 0
+visca command exposure manual quit
+.
+
+Define Set_PTZ_Posn 4 pan_speed tilt_speed pan tilt
+visca
+  command pantilt absolute_pos $1 $2 $3 $4
+  quit
+.
+
+Define Set_PTZ_Gain 1 gain
+visca command gain direct $1 quit
+.
+
+Define Set_PTZ_Shutter 1 shutter_val
+visca command shutter direct $1 quit
+.
+
+Define Set_PTZ_Zoom 1 zoom_val
+visca command zoom direct $1 quit
+.
+
+Define Point_Camera 2 pan tilt
+visca
+  command pantilt absolute_pos $max_pan_speed $max_tilt_speed $1 $2
+  quit
+.
+
+Define Set_PTZ_Focus 1 focus_val
+visca
+  command focus direct $1
+  quit
+.
+
+Define Get_Camera_Count 1 varname
+visca
+  cameras
+    get_n_cameras $1
+    quit
+  quit
+Print_If $1
+.
+

@@ -1,0 +1,73 @@
+# %Z% $RCSfile: threshold.mac,v $ ver: $Revision: 1.9 $ $Date: 2002/05/03 23:03:17 $
+
+# waremul macros for image thresholding
+
+Start_File threshold.mac
+
+# this may not work right when the # cols is not a multiple of 32!?
+
+Define Thresh_Init 0
+Float_Image thresh_one
+Float_Image thresh_zero
+VSet thresh_one 1
+VSet thresh_zero 0
+Bit_Image thresh_bitmap
+.
+
+Define Declare_Thresh_Objs 1 template
+Decl_Thresh_Objs thresh $1
+.
+
+Define Decl_Thresh_Objs 2 stem template
+Dup_Float "${1}_one" $2
+Dup_Float "${1}_zero" $2
+VSet "${1}_one" 1
+VSet "${1}_zero" 0
+Dup_Bitmap "${1}_bitmap" $2
+.
+
+Define Del_Thresh_Objs 1 stem
+Delete_Image "${1}_one"
+Delete_Image "${1}_zero"
+Delete_Image "${1}_bitmap"
+.
+
+Define Dup_Bitmap 2 name template
+data
+  #hyperseq $1 "nseqs('$2')" "nframes('$2')" "nrows('$2')" "floor((ncols('$2')+31)/32)" 1 long
+  hyperseq $1 "nseqs('$2')" "nframes('$2')" "nrows('$2')" ncols('$2') 1 bit
+  quit
+.
+
+Define Thresh_Select 6 'output image' 'input image' level srcimg1 srcimg2 bitmap
+#warn "Thresh_Select is disabled in macros/war/threshold.mac!?"
+#advise "Thresh_Select $1 $2 $3 $4 $5 $6"
+#war
+#  compare
+#    vmscp $6 $2 $3
+#    select $6 $1 $5 $4
+#    quit
+#  quit
+Map_Scalar_Compare $6 $2 $3
+Select $6 $1 $5 $4
+.
+
+# This version assumes standard size images, prior call to Thresh_Init
+
+Define Threshold 3 'output image' 'input image' level
+#Tell_If "Threshold $1 $2 $3"
+# order convention changed???
+#Thresh_Select $1 $2 $3 thresh_one thresh_zero thresh_bitmap
+Thresh_Select $1 $2 $3 thresh_zero thresh_one thresh_bitmap
+.
+
+# This version makes no assumptions...
+
+Define Thresh 3 'output image' 'input image' level
+Decl_Thresh_Objs thr $2
+Thresh_Select $1 $2 $3 thr_one thr_zero thr_bitmap
+Del_Thresh_Objs thr
+.
+
+Stop_File threshold.mac
+

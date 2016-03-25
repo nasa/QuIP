@@ -1,0 +1,28 @@
+
+# %Z% $RCSfile: size.scr,v $ ver: $Revision: 1.2 $ $Date: 1998/01/12 14:50:49 $
+
+Start_File size.scr
+
+# macros moved to set_sizes.mac
+
+### Define ReSize 1 newsize
+### #echo "RESIZE $1"
+### Set size $1
+### Set xsize $size
+### Set ysize $size
+### #Set_Display_Sizes
+### .
+
+### Define Set_Sizes 2 xsize ysize
+### #echo "Set_Sizes $1 $2"
+### Assign xsize $1
+### Assign ysize $2
+### If "$1 == $2" Then "Set size $1" Else "Set size -1"
+### #Set_Display_Sizes
+### .
+
+ReSize 256
+Set_Sizes 256 256
+
+Stop_File size.scr
+

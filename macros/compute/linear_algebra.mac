@@ -1,0 +1,442 @@
+# linear_algebra.mac
+#
+# vector operations (norm, cross-product, scalar-product)
+#
+#########################################################
+
+
+Assign pi 4*atan(1)
+
+Image rxMat3 		3 3 1 float
+Image ryMat3 		3 3 1 float
+Image rzMat3 		3 3 1 float
+Image rxMat4 		4 4 1 float
+Image ryMat4 		4 4 1 float
+Image rzMat4 		4 4 1 float
+Image tMat4 		4 4 1 float
+Image P0Mat34 		3 4 1 float
+Image PMat34 		3 4 1 float
+
+
+Define Get_2DNorm 2 norm vector
+Assign $1 sqrt(value($2{0})*value($2{0})+value($2{1})*value($2{1}))
+.
+
+
+
+Define Get_3DNorm 2 norm3d V3
+Assign val1 value($2{0})
+Assign val2 value($2{1})
+Assign val3 value($2{2})
+Assign $1 sqrt($val1*$val1+$val2*$val2+$val3*$val3)
+.
+
+
+
+Define Get_EuclNorm 2 norm V
+
+Dup_Float tmpv $2
+VSquare tmpv $2
+Get_Sum $1 tmpv
+Assign $1 sqrt($$1)
+Delete_Image tmpv
+.
+
+
+
+Define Normalize2D 2 normed_2dv input2d
+Get_2DNorm norm_input $2
+VSMul $1 $2 1/$norm_input
+.
+
+
+
+Define Normalize3D 2 normed_3dv input3d
+Get_3DNorm norm_input $2
+VSMul $1 $2 1/$norm_input
+.
+
+
+
+Define VNorm2D 2 norm_v input
+Dup_Float tmpv $2
+VSquare tmpv $2
+VVAdd $1 tmpv{0} tmpv{1}
+VSqrt $1 $1
+Delete_Image tmpv
+.
+
+
+
+Define VNorm3D 2 norm_v input
+Dup_Float tmpv $2
+VSquare tmpv $2
+VVAdd $1 tmpv{0} tmpv{1}
+VVAdd $1 $1 tmpv{2}
+VSqrt $1 $1
+Delete_Image tmpv
+.
+
+
+
+Define VNormalize2D 2 normed_2dv input2d
+Dup_Float tmpn $2{0}
+VNorm2D tmpn $2
+#VVDiv $1{0} tmpn{0} $2{0}
+VVDiv $1{0} $2{0} tmpn{0}
+#VVDiv $1{1} tmpn{1} $2{1}
+VVDiv $1{1} $2{1} tmpn{1}
+Delete_Image tmpn
+.
+
+
+
+Define VNormalize3D 2 normed_3dv input3d
+Dup_Float tmpn $2{0}
+VNorm3D tmpn $2
+#VVDiv $1{0} tmpn $2{0}
+VVDiv $1{0} $2{0} tmpn
+#VVDiv $1{1} tmpn $2{1}
+VVDiv $1{1} $2{1} tmpn
+#VVDiv $1{2} tmpn $2{2}
+VVDiv $1{2} $2{2} tmpn
+Delete_Image tmpn
+.
+
+
+
+Define VCrossProduct 3 crossProduct vector1 vector2
+Dup_Float tv $2 
+
+VVMul tv{0} $2{1} $3{2}
+VVMul tv{1} $2{2} $3{1}
+#VVSub $1{0} tv{1} tv{0}
+VVSub $1{0} tv{0} tv{1}
+
+VVMul tv{0} $2{2} $3{0}
+VVMul tv{1} $2{0} $3{2}
+#VVSub $1{1} tv{1} tv{0}
+VVSub $1{1} tv{0} tv{1}
+
+VVMul tv{0} $2{0} $3{1}
+VVMul tv{1} $2{1} $3{0}
+#VVSub $1{2} tv{1} tv{0}
+VVSub $1{2} tv{0} tv{1}
+
+Delete_Image tv
+.
+
+
+
+
+Define Get_ScalarProduct 3 scalarProduct vector1 vector2
+
+Dup_Float tv $2
+VVMul tv $2 $3
+Get_Sum $1 tv
+Delete_Image tv
+.
+
+
+Define Get_2DScalarProduct 3 scalarProduct vector1 vector2
+Assign $1 value($2{0})*value($3{0})+value($2{1})*value($3{1})
+.
+
+
+
+Define Get_3DScalarProduct 3 scalarProduct vector1 vector2
+
+Assign x1 value($2{0})
+Assign y1 value($2{1})
+Assign z1 value($2{2})
+
+Assign x2 value($3{0})
+Assign y2 value($3{1})
+Assign z2 value($3{2})
+
+Assign $1 $x1*$x2+$y1*$y2+$z1*$z2
+.
+
+
+
+Define ScalarProduct2D 3 scalarproduct vector_array vector_pt
+
+Dup_Float tv $2
+
+VSMul tv{0} $2{0} value($3{0})
+VSMul tv{1} $2{1} value($3{1})
+VVAdd $1 tv{0} tv{1}
+
+Delete_Image tv
+.
+
+
+
+Define ScalarProduct3D 3 scalarproduct vector_array vector_pt
+
+Dup_Float tv $2
+
+VSMul tv{0} $2{0} value($3{0})
+VSMul tv{1} $2{1} value($3{1})
+VSMul tv{2} $2{2} value($3{2})
+VVAdd $1 tv{0} tv{1}
+VVAdd $1 $1 tv{2}
+
+Delete_Image tv
+.
+
+
+
+Define VScalarProduct3D 3 scalarproduct vector1 vector2
+
+Dup_Float tv $2
+
+VVMul tv $2 $3
+VVAdd $1 tv{0} tv{1}
+VVAdd $1 $1 tv{2}
+
+Delete_Image tv
+.
+
+
+
+Define SVD_Reconstruct 4 out U singval singvec
+
+Assign _C ncols($2)
+Assign _L nrows($2)
+
+Image Dtmp $_C $_C 1 float
+Image outtmp $_L $_C 1 float
+Image Vt $_C $_C 1 float
+
+# Fill in Dtmp
+VSet Dtmp 0
+Set i 0
+repeat $_C
+	VMov Dtmp[$i][$i] $3[$i] 
+	Increment i
+end
+
+# Transpose V (<-> singvec)
+Transpose Vt $4
+
+# Reconstruction
+Inner_Prod outtmp $2 Dtmp
+Inner_Prod $1 outtmp Vt
+
+Delete_Image Dtmp
+Delete_Image outtmp
+Delete_Image Vt
+.
+
+
+
+Define Quaternion_to_RotMat 2 R q
+
+Assign s value($2[0])
+Assign l value($2[1])
+Assign m value($2[2])
+Assign n value($2[3])
+
+data ascii read $1 -
+$s*$s+$l*$l-$m*$m-$n*$n	2*($l*$m-$s*$n)	2*($l*$n+$s*$m)
+2*($l*$m+$s*$n)		$s*$s-$l*$l+$m*$m-$n*$n	2*($m*$n-$s*$l)
+2*($l*$n-$s*$m)		2*($m*$n+$s*$l)	$s*$s-$l*$l-$m*$m+$n*$n
+quit quit
+.
+
+
+
+Define Get_Homogenous 2 coords_h coords
+
+Set i 0
+repeat ncomps($2)
+	VMov $1{$i} $2{$i}
+	Increment i
+end
+VSet $1{$i} 1
+.
+
+
+
+
+#############################
+#
+# 3D TRANSFORMATION MATRICES
+#
+#############################
+
+Define Init_RotX3 2 matrix angleX
+data
+  ascii
+    read $1 -
+	1	0	0
+	0	cos($2)	-sin($2)
+	0	sin($2)	cos($2)
+  quit
+quit
+.
+
+Define Init_RotY3 2 matrix angleY
+data
+  ascii
+    read $1 -
+	cos($2)	0	sin($2)
+	0	1	0
+	-sin($2) 0	cos($2)
+  quit
+quit
+.
+
+
+Define Init_RotZ3 2 matrix angleZ
+data
+  ascii
+    read $1 -
+	cos($2)	-sin($2)	0
+	sin($2)	cos($2)		0
+	0	0		1
+  quit
+quit
+.
+
+
+
+Define Init_RotX4 2 matrix angleX
+data
+  ascii
+    read $1 -
+	1	0	0	0
+	0	cos($2)	-sin($2) 0
+	0	sin($2)	cos($2)	0
+	0	0	0	1
+  quit
+quit
+.
+
+
+Define Init_RotY4 2 matrix angleY
+data
+  ascii
+    read $1 -
+	cos($2)	0	sin($2) 0
+	0	1	0	0
+	-sin($2) 0	cos($2)	0
+	0	0	0	1
+  quit
+quit
+.
+
+Define Init_RotZ4 2 matrix angleX
+data
+  ascii
+    read $1 -
+	cos($2)	-sin($2) 0	0
+	sin($2)	cos($2)	0	0
+	0	0	1	0
+	0	0	0	1
+  quit
+quit
+.
+
+
+Define Init_Trans 4 matrix dx dy dz
+data
+  ascii
+    read $1 -
+	1	0	0	$2
+	0	1	0	$3
+	0	0	1	$4
+	0	0	0	1
+  quit
+quit
+.
+
+
+Define Init_Identity 1 M
+
+VSet $1 0
+Set _i 0
+repeat min(nrows('$1'),ncols('$1'))
+	VSet $1[$_i][$_i] 1
+	Increment _i
+end
+.
+
+
+Define Init_ProjMat0 1 projmat
+data
+  ascii
+    read $1 -
+	1	0	0	0
+	0	1	0	0
+	0	0	1	0
+  quit
+quit
+.
+
+
+Define Init_Calibration 5 calibmat alpha_u alpha_v u0 v0
+# focal length relative to height
+data
+  ascii
+    read $1 -
+	-$2		0		$4
+	0		-$3		$5	
+	0		0		1
+  quit
+quit
+.
+
+# homogenous coordinates means that we have an extra component
+# which should be normalized to 1...
+
+Define Xform_Homogenous 3 out in transfo_matrix
+Xform_List $1 $2 $3
+Assign n ncomps($1)
+Set i 0
+repeat $n-1
+	#VVDiv $1{$i} $1{$n-1} $1{$i}
+	VVDiv $1{$i} $1{$i} $1{$n-1}
+	Increment i
+end
+VSet $1{$n-1} 1
+.
+
+
+
+
+###############################
+#
+# UNRELATED WITH LINEAR ALGEBRA
+#
+###############################
+
+Define Get_NormalizedCorrelation 3 corr img1 img2
+
+Dup_Obj tmp_obj1 $2
+Dup_Obj tmp_obj2 $3
+Dup_Obj tmp_obj3 $3
+
+Get_Mean _mn1 $2
+Get_Mean _mn2 $3
+VSAdd tmp_obj1 $2 -$_mn1
+VSAdd tmp_obj2 $3 -$_mn2
+
+VVMul tmp_obj3 tmp_obj1 tmp_obj2
+VSquare tmp_obj1 tmp_obj1 
+VSquare tmp_obj2 tmp_obj2
+
+Get_Sum $1 tmp_obj3
+Get_Sum _var1 tmp_obj1
+Get_Sum _var2 tmp_obj2
+
+If '$_var1*$_var2'
+Then	'Assign $1 $$1/sqrt($_var1*$_var2)'
+Else	'Set $1 0'
+
+Delete_Image tmp_obj1
+Delete_Image tmp_obj2
+Delete_Image tmp_obj3
+.
+

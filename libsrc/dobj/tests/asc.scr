@@ -1,0 +1,60 @@
+#debug data
+
+Set n 5
+
+Define Testit 1 type
+Vector t $n 1 $1
+#Info t
+data
+  ascii
+    read t - 1 2 3 4 5
+    display t
+    quit
+  quit
+Delete_Image t
+.
+
+Define CTest 1 type
+Vector t $n 1 $1
+#Info t
+data
+  ascii
+    advise 'reading t'
+    read t -
+    	1 10
+    	2 20
+	3 30
+	4 40
+	5 50
+    display t
+    quit
+  quit
+Delete_Image t
+.
+
+Define Color_Test 1 type
+Vector t $n 3 $1
+#Info t
+data
+  ascii
+    advise 'reading t'
+    read t -
+    	1 10 100
+    	2 20 200
+	3 30 300
+	4 40 400
+	5 50 500
+    display t
+    quit
+  quit
+Delete_Image t
+.
+
+Testit float
+Testit double
+CTest complex
+CTest dblcpx
+Color_Test float
+Color_Test short
+
+exit

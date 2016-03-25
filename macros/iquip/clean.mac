@@ -1,0 +1,29 @@
+
+# Not really part of the questionnaires...
+Define CleanAll 0
+Confirm "Are you sure?" "Really delete ALL files from device?"
+If !$confirmed exit_macro
+# if verbose is set, then the filenames print to the console
+#verbose yes
+cd $data_dir
+rm_all
+cd $user_script_dir
+rm_all
+cd $system_script_dir
+rm_all
+Alert "Shutting down" "Please relaunch the app"
+exit
+.
+
+Define CleanScripts 0
+Confirm "Are you sure?" "Really delete ALL scripts from device?"
+If !$confirmed exit_macro
+cd $user_script_dir
+rm_all
+cd $system_script_dir
+rm_all
+Alert "Shutting down" "Please relaunch the app"
+exit
+.
+
+

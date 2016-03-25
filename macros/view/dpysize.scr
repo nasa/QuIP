@@ -1,0 +1,10 @@
+
+# %Z% $RCSfile: dpysize.scr,v $ ver: $Revision: 1.2 $ $Date: 1998/01/12 15:00:30 $
+
+Start_File dpysize.scr
+
+Set display_width	256
+Set display_height	256
+
+Stop_File dpysize.scr
+

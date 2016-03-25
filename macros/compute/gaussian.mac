@@ -1,0 +1,309 @@
+
+Start_File gaussian.macs
+
+# Beau's style
+#
+# the numerical value of the "scale" has the reciprocal
+# value in the frequency domain.
+#
+# "unit gaussian"  g(x) = exp( - pi * x * x )
+# FT of unit gaussian:  G(u) = exp ( - pi * u * u )
+#
+# "scaled" gaussian:  1/fabs(a) * g(x/a)
+# FT of scaled g.:  G( a * u )
+#
+# sigma (std dev) = spread / sqrt( 2 * pi )
+# 1/sqrt(2*pi) = 0.398942 ~ 0.4
+#
+# Here, scales are in pixels
+#
+# Sometimes we use this function to make up gaussian filters in
+# the frequency domain.  In this case the frequency range is from
+# +- 0.5 cycles per sample...  or N/2 cycles per image.
+# therefore 1 freq domain "pixels" corresponds to 1 cycle per image.
+
+Define Gaussian_2D 3 'target filter image' 'x scale' 'y scale'
+Tell_If "Gaussian_2D : $1 $2 $3"
+Assign g_xsize "ncols($1)"
+Assign g_ysize "nrows($1)"
+Row_Vector dx $g_xsize float
+Column_Vector dy $g_ysize float
+Assign pi 4.0*atan(1.0)
+Assign _xscale $2
+Assign _yscale $3
+Ramp1D dx -$g_xsize/(2*$_xscale) 1/$_xscale
+Ramp1D dy -$g_ysize/(2*$_yscale) 1/$_yscale
+VSquare dx dx
+VSquare dy dy
+VSMul dx dx -1*$pi
+VSMul dy dy -1*$pi
+VExp dx dx
+VExp dy dy
+#svector
+#  mul dx dx 1/($2)
+#  mul dy dy 1/($3)
+#  quit
+Product $1 dx dy
+Delete_Vector dx
+Delete_Vector dy
+.
+
+# Rotated, elongated Gaussian.
+# 0 degrees is vertical, sigma1 is up and sigma2 is sideways
+
+Define Gaussian_2D_R 4 'target image' 'sigma1' 'sigma2' angle
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+Image gr_coords $ys $xs 2 float
+# First make the (rotated) x ramp...
+Assign arg $4*atan(1)/45	# convert angle to radians
+Assign cfact cos($arg)
+Assign sfact sin($arg)
+Assign xdelta $cfact
+Assign ydelta -$sfact
+Ramp2D gr_coords{0} -$xdelta*$xs/2-$ydelta*$ys/2 $xdelta $ydelta
+# Now make the (rotated) y ramp
+Assign xdelta $sfact
+Assign ydelta $cfact
+Ramp2D gr_coords{1} -$xdelta*$xs/2-$ydelta*$ys/2 $xdelta $ydelta
+VSMul gr_coords{0} gr_coords{0} 1/$2
+VSMul gr_coords{1} gr_coords{1} 1/$3
+VVMul gr_coords gr_coords gr_coords
+VVAdd $1 gr_coords{0} gr_coords{1}
+Delete_Vector gr_coords
+VSMul $1 $1 -0.5	# sigma is one here...
+VExp $1 $1
+.
+
+Define D_Gaussian 4 'target x image' 'target y image' 'x scale' 'y scale'
+Assign g_xsize ncols($1)
+Assign g_ysize nrows($1)
+Vector dx $g_xsize 1 float
+Vector dy $g_ysize 1 float
+Dup_Float xcopy $1
+Dup_Float ycopy $1
+# BUG one of these should be a column vector
+Vector xone $g_xsize 1 float
+Vector yone $g_ysize 1 float
+VSet xone 1
+VSet yone 1
+Assign pi 4.0*atan(1.0)
+Ramp1D dx -$g_xsize/(2*$3) 1/$3
+Ramp1D dy -$g_ysize/(2*$4) 1/$4
+
+Product xcopy dx yone
+Product ycopy xone dy
+VSMul xcopy xcopy -2
+VSMul ycopy ycopy -2
+VSquare dx dx
+VSquare dy dy
+VSMul dx dx -1*$pi
+VSMul dy dy -1*$pi
+VExp dx dx
+VExp dy dy
+
+Product $1 dx dy
+VVMul $1 $1 xcopy
+
+Product $2 dx dy
+VVMul $2 $2 ycopy
+
+Delete_Vector dx
+Delete_Vector dy
+Delete_Vector xcopy
+Delete_Vector ycopy
+.
+
+# compute a gaussian, first and second derivatives
+
+Define DD_Gaussian 1 'sigma'
+Tell_If DD_Gaussian
+Float_Image gtmp
+Float_Image xossq
+Float_Image yossq
+Assign g_xsize "ncols(gtmp)"
+Assign g_ysize "nrows(gtmp)"
+Tell_If 'declaring vecs'
+Float_Vector x $g_xsize
+Float_Vector dx $g_xsize
+Float_Vector xone $g_xsize
+Column_Vector y $g_ysize float
+Column_Vector dy $g_ysize float
+Column_Vector yone $g_ysize float
+Tell_If 'setting vecs'
+VSet xone 1
+VSet yone 1
+Assign pi 4.0*atan(1.0)
+Ramp1D x -$g_xsize/2 1
+Ramp1D y -$g_ysize/2 1
+VSMul dx x "1/$1"
+VSMul dy y "1/$1"
+
+Tell_If 'computing product'
+				# make images x,y over sigma squared
+Product xossq x yone
+Tell_If 'computing product'
+Product yossq xone y
+Tell_If 'scaling'
+VSMul xossq xossq "-1/($1*$1)"
+VSMul yossq yossq "-1/($1*$1)"
+
+				# make the 1D gaussians
+VSquare dx dx
+VSquare dy dy
+VSMul dx dx -1/2
+VSMul dy dy -1/2
+VExp dx dx
+VExp dy dy
+
+Product gr dx dy		# make a gaussian
+
+VSMul gtmp gr "-1/($1*$1)"
+VVMul gx gr xossq
+VVMul gy gr yossq
+
+VVMul gxx gx xossq
+VVAdd gxx gtmp gxx
+
+VVMul gyy gy yossq
+VVAdd gyy gtmp gyy
+
+VVMul gxy gx yossq
+
+Delete_Vector x
+Delete_Vector y
+Delete_Vector dx
+Delete_Vector dy
+Delete_Vector xossq
+Delete_Vector yossq
+Delete_Vector gtmp
+.
+
+
+
+# This new version interprets the y coordinate in terms of bottom-to-top
+# row addresses, with 0 in the center (more natural)
+
+Define Make_Radius_At 3 target x y
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+Image mra_coords $ys $xs 1 complex		# dx,dy are distance from center
+Make_Coords_At mra_coords $2 $3
+#echo "VMagSq $1 mra_coords"
+VMagSq $1 mra_coords
+VSqrt $1 $1
+Delete_Image mra_coords
+.
+
+Define Make_Angle_At 3 target x y
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+Image maa_coords $ys $xs 1 complex		# dx,dy are distance from center
+Make_Coords_At maa_coords $2 $3
+#echo "VMagSq $1 maa_coords"
+VAtn2 $1 maa_coords
+Delete_Image maa_coords
+.
+
+
+Define Make_Coords_At 3 target x y
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+#Print xs
+#Print ys
+Ramp2D "$1{0}" "-$2-($xs-1)/2" 1 0	# leftmost edge is -($xs-1)/2 rel. ctr
+Ramp2D "$1{1}" "-$3+($ys-1)/2" 0 -1	# top row is ($yx-1)/2 rel. center
+.
+
+# This old version interprets the y coordinate in terms of top-to-bottom
+# row addresses, with 0 in the center
+
+Define Old_Make_Radius_At 3 target x y
+Make_Radius_At $1 $2 "-($3)"
+.
+
+Define Gaussian_At 4 target stddev x y
+Dup_Float radius $1
+Make_Radius_At radius $3 $4
+VVMul radius radius radius
+VSMul radius radius "-1/(2*$2*$2)"
+VExp $1 radius
+Delete_Image radius
+.
+
+Define Gaussian_2D_At 5 target x_sigma y_sigma x y
+#echo "Gaussian_At $1 $2 $3 $4"
+
+# we steal the code from Make_Radius_At, and throw in a twist
+Dup_Float radius $1
+Assign xs "ncols($1)"
+Assign ys "nrows($1)"
+Image mra_coords $ys $xs 1 complex		# dx,dy are distance from center
+Make_Coords_At mra_coords $4 $5
+
+# Here is where we introduce the asymmetry
+VSMul mra_coords{1} mra_coords{1} ($3)/($2) 
+#echo "VMagSq $1 mra_coords"
+VMagSq radius mra_coords
+VSqrt radius radius
+Delete_Image mra_coords
+
+VVMul radius radius radius
+VSMul radius radius "-1/(2*$2*$2)"
+VExp $1 radius
+Delete_Image radius
+.
+
+# was called BGaussian_1D ...
+
+Define Gaussian_1D 5 target
+	'coef x (pixels)' 'coefy (pixels)'
+	'x0 (from center in pixels)' 'y0 (from center in pixels)'
+#echo "Gaussian_1D : target $1 coef_x $2 coef_y $3 x0 $4 y0 $5"
+Assign dx 1.0/$2
+Assign dy 1.0/$3
+Assign x0 $4
+Assign y0 $5
+Ramp2D $1 (-$x0-$xsize/2)*$dx+(-$y0-$ysize/2)*$dy $dx $dy
+VVMul $1 $1 $1
+VSMul $1 $1 -.5
+VExp $1 $1
+.
+
+# x and y relative to the center
+
+Define Make_Doughnut 5 target x y radius width
+Make_Radius_At $1 $2 $3
+VSAdd $1 $1 "-($4)"
+VVMul $1 $1 $1
+#advise "width $5"
+VSMul $1 $1 "-1/(2*($5)*($5))"
+VExp $1 $1
+#Normalize_Volume $1
+.
+
+# make an image have unit volume
+
+Define Normalize_Volume 1 image
+# now normalize
+Scalar mdsum 1 float
+VSum $1 mdsum
+VSMul $1 $1 1/value(mdsum)
+Delete_Image mdsum
+.
+
+Define Ellipse_At 7 target x y radius width dx dy
+Dup_Float ea_tmp $1
+Make_Radius_At ea_tmp "$2+($6)" "$3+($7)"
+Make_Radius_At $1 "$2-($6)" "$3-($7)"
+VVAdd $1 $1 ea_tmp
+Delete_Image ea_tmp
+VSAdd $1 $1 "-2*($4)"
+VVMul $1 $1 $1
+VSMul $1 $1 "-1/(8*($5)*($5))"
+VExp $1 $1
+.
+
+
+Stop_File gaussian.macs
+

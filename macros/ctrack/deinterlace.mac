@@ -1,0 +1,95 @@
+Define Set_Deinterlace 1 bool
+Set __deinterlace $1	# set to 0 for full-frame analysis
+			# BUG this name without leading underscores
+			# is used in other macro files
+If $__deinterlace!=1&&$__deinterlace!=0
+  "error_exit 'Set_Deinterlace $1:  argument should be 0 or 1'"
+Assign n_interlace 1+$__deinterlace
+Set_ROI_Heights
+
+If $__deinterlace
+  Then Set_Deinterlace_Buffers
+  Else Unset_Deinterlace_Buffers
+.
+
+Define Deinterlace_Viewers 0
+UnShow_Viewer v_pup_0
+UnShow_Viewer v_cr_0
+Set i 1
+repeat 2
+  Show_Viewer v_pup_$i
+  Show_Viewer v_cr_$i
+  Increment i
+  end
+Set cam_num 1
+repeat $n_cameras
+  foreach p ( lpa upa lca uca )
+    Set pname ${p}_thr$cam_num
+    Assign $pname $$pname/2
+    advise "Deinterlace_Viewers:  $pname = $$pname"
+    end
+  Increment cam_num
+  end
+.
+
+Define Interlace_Viewers 0
+Show_Viewer v_pup_0
+Show_Viewer v_cr_0
+Set i 1
+repeat 2
+  UnShow_Viewer v_pup_$i
+  UnShow_Viewer v_cr_$i
+  Increment i
+  end
+Set cam_num 1
+repeat $n_cameras
+  foreach p ( lpa upa lca uca )
+    Set pname ${p}_thr$cam_num
+    Assign $pname $$pname*2
+    advise "Interlace_Viewers:  $pname = $$pname"
+    end
+  Increment cam_num
+  end
+.
+
+# Do these things when we switch to non-interlaced mode
+Define Unset_Deinterlace_Buffers 0
+Set input_b ${prefix}_input_b
+Set input_f ${prefix}_input_f
+Set pup_mask ${prefix}_pup_mask_b
+Set cr_mask ${prefix}_cr_mask_b
+Set roi_suffix _roi
+Set scr_suffix _scr
+
+# double the y values
+Set cam_num 1
+repeat $n_cameras
+  foreach v ( pup_roi_y cr_roi_y pcr_dy )
+    Set vname ${v}$cam_num
+    Mul_Var $vname 2
+    end
+  end
+
+Update_Stuff
+.
+
+# Do these things when we switch to deinterlaced mode
+Define Set_Deinterlace_Buffers 0
+Set input_b ${prefix}_input_b_half
+Set input_f ${prefix}_input_f_half
+Set pup_mask ${prefix}_pup_mask_b_half
+Set cr_mask ${prefix}_cr_mask_b_half
+Set roi_suffix _roi_half
+Set scr_suffix _scr_half
+
+# cut the y values in half too
+Assign $pry_name floor($$pry_name/2)
+Assign $cry_name floor($$cry_name/2)
+Assign pcr_dy floor($pcr_dy/2)
+
+Update_Stuff
+
+If $plotting Reset_Plot
+#If $plotting&&obj_exists(g_plot) Reset_Plot
+.
+

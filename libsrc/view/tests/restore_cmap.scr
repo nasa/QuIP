@@ -1,0 +1,27 @@
+# coq script to test /dev/fb on purkinje...
+
+Set fb /dev/fb0
+
+view fb open $fb quit quit
+Assign w ncols('$fb')
+Assign h nrows('$fb')
+Assign d depth('$fb')
+
+advise "Frame buffer $fb is $w x $h x $d"
+
+Image frm 480 $w $d u_byte
+Ramp2D frm 0 1 0
+Vector rmap 256 1 u_short
+Vector gmap 256 1 u_short
+Vector bmap 256 1 u_short
+Get_Ascii rmap save_red1.asc
+Get_Ascii gmap save_grn1.asc
+Get_Ascii bmap save_blu1.asc
+
+view
+  fb
+#    get_cmap rmap gmap bmap
+    set_cmap rmap gmap bmap
+    quit
+  quit
+

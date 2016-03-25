@@ -1,0 +1,14 @@
+
+# %Z% $RCSfile: .genclient,v $ ver: $Revision: 1.4 $ $Date: 2010/12/02 18:01:03 $
+
+# generic includes for daemon client
+Start_File genclient.scr
+
+If $am_client "echo 'I am already a client!' PopFile 2"
+Set am_client 1
+
+< $macro_dir/system/portids.scr
+< $macro_dir/system/daemons.mac
+
+Stop_File genclient.scr
+

@@ -1,0 +1,56 @@
+# fit_polynomial.mac
+#
+# macros for fitting polynomials to point sets (polynomial regression).
+#
+#
+
+# Fit_Polynomial - the implied degree is one less than the dimension of result_vec
+# For now, just 1 input variable y = f(x)
+# We should allow multivariate, e.g. z=f(x,y)
+
+# We set up the U matrix:
+#
+#	|	x_1^2	x_1	1	|
+#	|	x_2^2	x_2	1	|
+#	|	x_3...
+
+Define Fit_Polynomial 2 result_vec pt_list
+Assign degree ncols('$1')-1
+Assign n_data_pts ncols('$2')
+Set init_svd 1			# why do we need this?
+Get_Prec svd_type $1
+If !obj_exists(fitpoly_coeffs)
+  "Create_SVD_Objects fitpoly $n_data_pts $degree+1"
+Dup_Obj norm_pts $2
+Normalize_Coords norm_pts $2	# we need to save the normalization factors!
+Image tmp_col ncols(norm_pts) 1 1 $svd_type
+Transpose tmp_col norm_pts{0}
+VMov fitpoly_datain norm_pts{1}
+Delete_Image norm_pts
+VSet fitpoly_u_matrix 1
+Set fp_i 0
+repeat $degree
+  Set fp_j 0
+  repeat 1+$fp_i
+    VVMul fitpoly_u_matrix{$fp_j} fitpoly_u_matrix{$fp_j} tmp_col
+    Increment fp_j
+    end
+  Increment fp_i
+  end
+Delete_Image tmp_col
+
+# now solve it!
+numrec
+	svd fitpoly_u_matrix fitpoly_eigenvalues fitpoly_v_matrix
+	quit
+
+numrec 
+	svbk fitpoly_coeffs fitpoly_u_matrix fitpoly_eigenvalues fitpoly_v_matrix fitpoly_datain
+	quit
+VMov $1 fitpoly_coeffs
+# BUG - shouldn't we un-normalize here, i.e. correct the
+# coefficients for the normalization performed on the inputs?
+Delete_SVD_Objects fitpoly
+.
+
+

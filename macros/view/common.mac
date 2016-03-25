@@ -1,0 +1,135 @@
+
+# %Z% $RCSfile: common.mac,v $ ver: $Revision: 1.28 $ $Date: 2009/12/16 05:45:31 $
+
+# stuff common to daemon clients and direct callers
+Start_File common.mac
+
+Define Viewer_For 2 name image
+#advise "Viewer_For $1 $2"
+Assign vfnc "ncols('$2')"
+Assign vfnr "nrows('$2')"
+#advise "requesding a viewer $vfnc by $vfnr"
+Viewer $1 $vfnc $vfnr
+#Dup_UByte vfbtmp $2
+#Convert vfbtmp $2
+#Show_Bytes vfbtmp $1
+#Delete_Image vfbtmp
+.
+
+Define Scale_Gray 1 target
+Init_Grayscale_Range
+#Tell_If "Scale_Gray $1, gray_base = $gray_base, n_gray_levels = $n_gray_levels"
+Scale $1 $gray_base $gray_base+$n_gray_levels-1
+.
+
+# Do this to map the byte range in a fixed way
+Define Constant_Gray 1 target
+VSMul $1 $1 ($n_gray_levels-1)/255
+VSAdd $1 $1 $gray_base
+.
+
+Define Disp_Gray_If 2 'float image' 'viewer name'
+If $showing "Disp_Gray $1 $2"
+.
+
+Set constant_gray 0
+
+Define Disp_Gray 2 'float image' 'viewer name'
+#echo "Disp_Gray $1 $2"
+Dup_Float dgftmp $1
+Convert dgftmp $1
+If $constant_gray
+  Then "Constant_Gray dgftmp"
+  Else "Scale_Gray dgftmp"
+Disp_Raw dgftmp $2
+Delete_Image dgftmp
+.
+
+# min and max scaled values for Show_Image and Disp_Image
+
+Set si_min	8
+Set si_max	254
+
+Define Disp_Image_If 2 'float image' viewer
+If $showing "Disp_Image $1 $2"
+Pause_If
+.
+
+Define Disp_Image 2 'float image' viewer
+If $verbose||$chatty 
+  "advise 'Disp_Image:  Showing $1 in viewer $2'"
+Dup_Float diftmp $1
+#VMov diftmp $1
+Convert diftmp $1
+Scale diftmp $si_min $si_max
+Disp_Raw diftmp $2
+Delete_Image diftmp
+.
+
+Define Show_Image 2 'float image' 'viewer name'
+Dup_Float siftmp $1
+Convert siftmp $1	# was VMov
+Scale siftmp $si_min $si_max
+Show_Raw siftmp "$2"
+Delete_Image siftmp
+.
+
+Define Show_Gray 2 'float image' 'viewer name'
+# echo "Show_Gray $1 $2"
+Dup_Float sgftmp $1
+Convert sgftmp $1
+Scale_Gray sgftmp
+Show_Raw sgftmp "$2"
+Delete_Image sgftmp
+.
+
+Define Show_Raw 2 'float image' 'viewer name'
+#If !$have_luts "PB_Show_Raw $1 $2 exit_macro"
+# This will fail if the viewer name has spaces in it...
+Set bbname "sr_b.$2"
+#Subst_Var bbname ' ' '_'
+Subst_Var bbname 040 '_'
+Dup_UByte $bbname $1
+Convert $bbname $1
+If !var_exists(display_depth) "Assign display_depth depth('$DISPLAY')"
+If $display_depth==16
+  Then "Show16 $bbname '$2'"
+  Else "Show_Bytes $bbname '$2'"
+Delete_Image $bbname		# what happens when we remake a zombie??
+.
+
+# hacked for powerbook
+
+Define PB_Show_Raw 2 'float image' 'viewer name'
+Set bbname "srb.$2"
+Dup_Short $bbname $1
+Dup_Float srb_ftmp $1
+VSMul srb_ftmp $1 31/255
+VSMin srb_ftmp srb_ftmp 31
+VFloor srb_ftmp srb_ftmp
+VSMul srb_ftmp srb_ftmp (1+32+32*32)
+Convert $bbname srb_ftmp
+Show_Bytes $bbname $2
+Delete_Image srb_ftmp
+Delete_Image $bbname		# what happens when we remake a zombie??
+.
+
+Define Show_Unit 2 'float image' 'viewer name'
+Float_Image su_fbuf
+VSAdd su_fbuf $1 1
+VSMul su_fbuf su_fbuf 127
+Show_Raw su_fbuf "$2"
+Delete_Image su_fbuf
+.
+
+Define Rotate_Colors 1 image
+Dup_UByte rc_tmp $1{0}
+VMov rc_tmp $1{0}
+VMov $1{0} $1{2}
+VMov $1{2} rc_tmp
+Delete_Image rc_tmp
+.
+
+Stop_File common.mac
+
+

@@ -1,0 +1,26 @@
+
+Image mat 3 3 1 float
+Vector v1 8 3 float
+Vector v2 8 3 float
+
+data ascii read mat -
+	1	0	0
+	0	2	0
+	0	0	3
+	quit quit
+Display mat
+
+Ramp1D v1{0} 0 1
+VMov v1{1} v1{0}
+VMov v1{2} v1{0}
+Display v1
+Display mat
+
+compute
+  linear
+    Pause
+    quit
+  quit
+
+
+

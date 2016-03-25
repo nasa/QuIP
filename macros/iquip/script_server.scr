@@ -1,0 +1,37 @@
+# this program runs on the user's computer and downloads
+# program scripts to the device.
+
+# Transmit the list of available files
+
+# run this daemon on the script server (e.g., ace)
+#
+# Execute whatever is commanded by the client - too much trust? 
+If $argc!=1 "error_exit 'Usage:  coq port_num < script_server.scr'"
+
+Set port_num	$1
+
+If $port_num<2000||$port_num>8000 "error_exit 'script_server.scr:  bad port_num ($port_num), legal range is 2000-8000'"
+
+< $macro_dir/system/server_utilz.mac
+< script_server.mac
+
+Set log_dir ./logs
+Set_Log_Filename sw_log.$port_num
+advise "NOT redirecting output to log file $log_name"
+#error_file $log_name
+
+max_warnings -1
+
+# The redirect command causes the server to interpret commands
+# sent over the port.
+# This will never return from redir unless a client instructs
+# the program to close the server port.  When the client closes
+# its port, the server will automatically listen for more connections.
+
+# Main loop to run the server
+
+do
+  Handle_Requests
+  # never returns unless instructed to close the port by a client
+  while 1
+

@@ -1,0 +1,132 @@
+Set admin_auth_panel "Administrator access"
+Set admin_func_panel "Administration"
+Set user_func_panel "User Admin"
+Set admin_pw "iwilldoit"	# we could encrypt it...
+Set user_pw "yes i can"		# we could encrypt it...
+
+Define Init_Passphrase_Panel 0
+interface
+  panel $admin_auth_panel $DISPLAY_WIDTH $DISPLAY_HEIGHT
+  decorate $admin_auth_panel
+advise 'decorating admin panel BEGIN'
+    label admin_pw_label "Enter the adminstrator passphrase"
+    password Passphrase CheckAdminPassphrase "passphrase"
+    # This option is just for convenience of testing...
+    If $test_mode
+      "button 'Enter \"$admin_pw\"' Grant_Admin"
+    If $test_mode
+      "button 'Enter \"$user_pw\"' Grant_User"
+    quit
+  quit
+.
+
+Define Init_Admin_Panels 0
+Init_SW_Panel
+Init_Passphrase_Panel
+
+interface
+  nav_panel $admin_func_panel
+  navigation $admin_func_panel
+    new_group 'Adminstrative functions'
+    Add_Delete_All_Choice
+    plain_item 'Delete user scripts' 'Delete ALL user scripts from device' CleanUserScripts
+    plain_item 'Delete system scripts' 'Delete ALL system scripts from device' CleanSystemScripts
+    nav_item "Configure download server" "Set download server parameters" DoConfigServer
+
+    plain_item 'About this program' 'Display software version' DoAboutQuip
+    plain_item Console 'direct entry of commands' DisplayConsole
+    plain_item 'Exit admin mode' 'Disable access to admin functions' EndAdmin
+    nav_item "Check for S/W updates" "refresh software from server" DoCheckSW
+    quit
+
+  nav_panel $user_func_panel
+  navigation $user_func_panel
+    new_group 'User administrative functions'
+    nav_item "Configure download server" "Set download server parameters" DoConfigServer
+    plain_item 'Enslave device' 'Execute commands sent from server' DoEnslaveToServer
+    nav_item "Check for S/W updates" "refresh software from server" DoCheckSW
+    plain_item 'Delete user scripts' 'Delete ALL user scripts from device' CleanUserScripts
+    plain_item 'About this program' 'Display software version' DoAboutQuip
+    plain_item 'Exit admin mode' 'Disable access to admin functions' EndAdmin
+    quit
+  quit
+.
+
+Define GetAdminAuth 0
+Push_Nav $admin_auth_panel
+.
+
+Define CheckAdminPassphrase 0
+If !strcmp('$input_string','$admin_pw')
+  "Grant_Admin exit_macro"
+If !strcmp('$input_string','$user_pw')
+  "Grant_User exit_macro"
+Bad_Admin_PW
+.
+
+Define DoAdmin 0
+Push_Nav $admin_func_panel
+.
+
+Define DoUser 0
+Push_Nav $user_func_panel
+.
+
+Define Grant_Admin 0
+Pop_Nav
+
+# enable the extra commands
+interface
+  navigation $main_name
+    delete_group 'Administration'
+    new_group 'Administration'
+    nav_item "Admin functions" "Access administrator functions" DoAdmin
+    quit
+  quit
+.
+
+Define Grant_User 0
+Pop_Nav
+
+# enable the extra commands
+interface
+  navigation $main_name
+    delete_group 'Administration'
+    new_group 'Administration'
+    nav_item "Admin functions" "Access user admin functions" DoUser
+    quit
+  quit
+.
+
+Define EndAdmin 0
+If !$setup_completed "Alert 'Setup not completed' \"Can't end admin mode until setup complete.\" exit_macro"
+interface
+  navigation $main_name
+    delete_group 'Administration'
+    quit
+  quit
+Add_Admin_Option
+Pop_Nav
+.
+
+Define Bad_Admin_PW 0
+interface
+  decorate $admin_auth_panel
+    set_text_field Passphrase ''
+    quit
+  quit
+Alert "Incorrect passphrase" "Please check the passphrase"
+.
+
+Define Add_Admin_Option 0
+interface
+  navigation "$main_name"       # drop into submenu to add groups and items
+    new_group 'Administration'
+    nav_item "Enable administration"
+    	"Get access to administrative functions" GetAdminAuth
+    quit
+  quit
+.
+
+
+

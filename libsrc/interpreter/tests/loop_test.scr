@@ -1,0 +1,48 @@
+
+Set i 1
+repeat 3 advise "in-line repeat loop, iteration $i" Increment i end
+
+#Set j 1
+#repeat 3 advise "partially in-line repeat loop #1, iteration $j"
+#  Increment j end
+#
+#Set k 1
+#repeat 3
+#  advise "partially in-line loop #2, iteration $k"
+#  Increment k end
+#
+#Set l 1
+#repeat 3
+#  advise "repeat loop, iteration $l"
+#  Increment l
+#  end
+#
+#foreach i ( a b c d )
+#  advise "foreach loop, iteration $i"
+#  end
+#
+#Set i 1
+#do
+#  advise "do/while loop, iteration $i"
+#  Increment i
+#  while $i<4
+#
+# Now do the same within a macro
+
+advise "Executing tests from a macro"
+
+Define Loop_Test 0
+Set l 1
+repeat 3
+  advise "repeat loop, iteration $l"
+  advise "repeat loop, iteration is still $l"
+  Increment l
+  end
+.
+
+Loop_Test
+
+macros show Loop_Test quit
+
+exit
+

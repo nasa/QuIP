@@ -1,0 +1,64 @@
+# test of nvidia glasses with quip
+
+Viewer v 600 600
+
+gl
+  window v
+  color
+    background 0 0 0
+    color 1 1 1	# draw in white
+    quit
+  transform
+    # set up viewing here...
+    mode projection
+    identity
+    perspective 50
+    		1	# aspect
+    		0.2	# near
+		100	# far
+
+    mode modelview
+    identity
+    quit
+  stereo
+    init 119.982181
+    #init 120
+    quit
+  quit
+
+Set sq_size 1
+Set dist 10
+
+Define Refresh 1 offset
+gl
+  color
+    clear_color
+    clear_depth
+    quit
+  objects
+    begin_obj polygon
+    normal 0 0 1
+    vertex -$sq_size+$1 -$sq_size -$dist
+    vertex -$sq_size+$1  $sq_size -$dist
+    vertex  $sq_size+$1  $sq_size -$dist
+    vertex  $sq_size+$1 -$sq_size -$dist
+    end_obj
+    quit
+ # swap_buffers
+  stereo
+    swap_buffers
+    quit
+  quit
+.
+
+#repeat 12
+repeat 12000
+  Refresh 0.6
+  Refresh -0.6
+  end
+
+exit
+
+
+# draw a couple of squares...
+

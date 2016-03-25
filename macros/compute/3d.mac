@@ -1,0 +1,71 @@
+#
+# make some matrices to transform data for viewing
+#
+# This stuff uses 3x3 (non-homogenous) matrices...
+#
+
+# specify the viewing vector
+#
+# If the viewing vector is the z axis, we just plot x and y:
+#
+#	x'		|	1	0	0	|	x
+#	y'	=	|	0	1	0	|	y
+#	z'		|	0	0	1	|	z
+#
+# If the viewing vector is the x axis,
+#
+#	x'		|	0	0	-1	|	x
+#	y'	=	|	0	1	0	|	y
+#	z'		|	1	0	0	|	z
+#
+# If we rotate a about the y axis,
+#
+#	x'		|	cos a	0	-sin a	|	x
+#	y'	=	|	0	1	0	|	y
+#	z'		|	sin a	0	cos a	|	z
+#
+# If we rotate a about the x axis,
+#
+#	x'		|	1	0	0	|	x
+#	y'	=	|	0	cos a	-sin a	|	y
+#	z'		|	0	sin a	cos a	|	z
+#
+# etc
+
+Define YRot 2 matrix angle
+Assign yra $2*atan(1)/45
+VSet $1 0.0
+VSet $1[1][1] 1.0
+VSet $1[0][0] "cos($yra)"
+VSet $1[0][2] "-sin($yra)"
+VSet $1[2][0] "sin($yra)"
+VSet $1[2][2] "cos($yra)"
+.
+
+Define XRot 2 matrix angle
+Assign xra $2*atan(1)/45
+VSet $1 0.0
+VSet $1[0][0] 1.0
+VSet $1[1][1] "cos($xra)"
+VSet $1[1][2] "-sin($xra)"
+VSet $1[2][1] "sin($xra)"
+VSet $1[2][2] "cos($xra)"
+.
+
+Define ZRot 2 matrix angle
+Assign zra $2*atan(1)/45
+VSet $1 0.0
+VSet $1[2][2] 1.0
+VSet $1[1][1] "cos($zra)"
+VSet $1[1][0] "-sin($zra)"
+VSet $1[0][1] "sin($zra)"
+VSet $1[0][0] "cos($zra)"
+.
+
+Define Identity 1 matrix
+VSet $1 0.0
+VSet $1[0][0] 1.0
+VSet $1[1][1] 1.0
+VSet $1[2][2] 1.0
+.
+

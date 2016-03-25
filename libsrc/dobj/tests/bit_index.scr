@@ -1,0 +1,14 @@
+
+Image b 3 8 1 bit
+#Info b
+VSet b 0
+Display b
+#Info b[1]
+VSet b[0][2] 1
+Display b
+VSet b[1][4] 1
+Display b
+Display b[1]
+
+exit
+

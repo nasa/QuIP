@@ -1,0 +1,9 @@
+*.o
+*.a
+.deps
+y.tab.c
+vectree.output
+vectree.c
+Makefile
+Makefile.in
+t.scr

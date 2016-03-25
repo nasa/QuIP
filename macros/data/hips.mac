@@ -1,0 +1,304 @@
+
+# %Z% $RCSfile: hips.mac,v $ ver: $Revision: 1.16 $ $Date: 2009/09/01 05:21:32 $
+
+Start_File hips.mac
+
+Set hips_read_directory .
+Set hips_write_directory .
+
+Define JPEG_Grayscale 0
+fileio
+  jpeg
+    compressor
+      colorspace grayscale
+      quit
+    quit
+  quit
+.
+
+Define Clobber 1 bool
+fileio clobber $1 quit
+.
+
+Define Hips_Directory 1 name
+warn "obsolete macro Hips_Directory; use Hips_Read_Directory or Hips_Write_Directory"
+fileio directory $1 quit
+.
+
+Define Hips_Read_Directory 1 name
+Set hips_read_directory $1
+fileio directory $1 quit
+.
+
+Define Hips_Write_Directory 1 name
+#advise "Hips_Write_Directory $1"
+Set hips_write_directory $1
+fileio directory $1 quit
+.
+
+Define Filetype 1 typename
+fileio filetype $1 quit
+.
+
+Define File_Info 1 filename
+fileio info $1 quit
+.
+
+Define File_Seek 2 filename frameno
+fileio seek $1 $2 quit
+.
+
+Define Import_VL 1 filename
+Filetype VL
+Import_Image $1
+.
+
+Define Import_Hips2 1 filename
+Filetype hips2
+Import_Image $1
+.
+
+Define Import_Hips 1 filename
+Filetype hips1
+Import_Image $1
+.
+
+Define Import_Disk 1 filename
+Filetype disk
+Import_Image $1
+.
+
+Define Read_File_Header 1 filename
+#Tell_If "Read_File_Header $1"
+fileio directory $hips_read_directory quit
+fileio read "$1" quit
+.
+
+Define Write_File_Header 2 filename nframes
+#advise "Write_File_Header $1 $2"
+fileio directory $hips_write_directory quit
+fileio write $1 $2 quit
+.
+
+Define Get_Next 2 object filename
+fileio get $1 $2 quit
+.
+
+Define Put_Next 2 object filename
+fileio put $1 $2 quit
+.
+
+# take a float image in the range [ minval , maxval ] ,
+# remap to range 0-256...
+
+Define Put_Next_Float 4 image moviefile minval maxval
+Assign pnf_min $3
+Assign pnf_max $4
+echo "Put_Next_Float $1 $2"
+Dup_Float pnff $1
+Dup_Byte pnfb $1
+VSAdd pnff $1 -$pnf_min
+VSMul pnff pnff 255/($pnf_max-$pnf_min)
+SP2B pnfb pnff
+Put_Next pnfb $2
+Delete_Image pnff
+Delete_Image pnfb
+echo "Put_Next_Float done"
+.
+
+Define Read_Object_File 2 objname filename
+#Tell_If "Read_File_Header $2"
+Read_File_Header $2
+Assign ns "nseqs(\"$2\")"
+Assign nf "nframes(\"$2\")"
+Assign depth "depth(\"$2\")"
+Tell_If "File $2 has $ns sequences, $nf frames, and depth = $depth"
+#Print depth
+data
+  precision $2 fprec
+  hyperseq $1 $ns $nf "nrows(\"$2\")" "ncols(\"$2\")" $depth $fprec
+  quit
+# BUG?  Get_Next will only read one frame!?
+Get_Next $1 $2
+.
+
+Define Import_File 1 filename
+warn "macro Import_File is obsolete, use Import_Image instead"
+Import_Image $1
+.
+
+Define Import_Image 1 filename
+Read_Object_File $1 $1
+.
+
+Define Get_Rasterfile 1 filename
+Filetype sunras
+Import_Image $1
+.
+
+Define Get_File 3 'data object' filename filetype
+Filetype $3
+Read_File_Header $2
+Get_Next $1 $2
+.
+
+Define Open_Write_File 3 name filetype nframes
+Filetype $2
+Write_File_Header $1 $3
+.
+
+Define Open_Read_File 1 name
+warn "use Read_File_Header instead of Open_Read_File"
+fileio read $1 quit
+.
+
+Define Read_Next_Frame 2 object filename
+warn "use Get_Next instead of Read_Next_Frame"
+fileio get $1 $2 quit
+.
+
+Define Write_Next_Frame 2 object filename
+echo "use Put_Next instead of Write_Next_Frame"
+fileio put $1 $2 quit
+.
+
+Define Get_Hips 2 'data object' 'HIPS filename'
+Get_File $1 $2 hips1
+.
+
+Define Get_Hips2 2 'data object' 'HIPS2 filename'
+Get_File $1 $2 hips2
+.
+
+Define Load_Hips 2 'data object' 'HIPS filename'
+fileio
+  filetype hips1
+  read $2
+  load $1 $2
+  quit
+.
+
+Define Put_Vista 2 'data object' 'filename'
+Filetype vista
+Put_Image $1 $2
+.
+
+Define Put_Hips 2 'data object' 'HIPS filename'
+Filetype hips1
+Put_Image $1 $2
+.
+
+Define Put_Byte_Hips 2 object filename
+Dup_Float pbh_ftmp $1
+Dup_Byte pbh_tmp $1
+VMov pbh_ftmp $1
+Scale pbh_ftmp 0 255
+Convert pbh_tmp pbh_ftmp
+Put_Hips pbh_tmp $2
+Delete_Image pbh_tmp
+Delete_Image pbh_ftmp
+.
+
+Define Put_Viff 2 object filename
+Filetype viff
+Put_Image $1 $2
+.
+
+Define Put_File 2 'data object' filename
+warn 'Macro Put_File is obsolete, use Put_Image instead'
+Put_Image $1 $2
+.
+
+Define Put_Image 2 'data object' filename
+fileio
+  Tell_If "opening file $2 , to write object $1"
+  write $2 "nframes('$1')"
+#  echo "writing object $1"
+  put $1 $2
+  quit
+.
+
+Define Put_Raw 2 'data object' 'raw filename'
+Filetype raw
+Put_Image $1 $2
+.
+
+Define Put_Hips2 2 'data object' 'HIPS filename'
+Filetype hips2
+Put_Image $1 $2
+.
+
+Define Put_Bytes 2 'float data object' 'HIPS filename'
+data
+  image pbtmp nrows($1) ncols($1) 1 byte
+  image fpbtmp nrows($1) ncols($1) 1 float
+  quit
+war
+  unary mov fpbtmp $1 quit
+  misc scale fpbtmp 0 255 quit
+  unconvert sp2b pbtmp $1 quit
+  quit
+Put_Hips pbtmp $2
+data
+  delete pbtmp
+  delete fpbtmp
+  quit
+.
+
+Define Start_Hips2_Movie 2 'filename' 'number of frames'
+Filetype hips2
+Start_Movie_File $1 $2
+.
+
+Define Start_Hips_Movie 2 'filename' 'number of frames'
+Filetype hips1
+Start_Movie_File $1 $2
+.
+
+Define Start_Movie_File 2 filename nframes
+Set movie_file $1
+Set movie_frame_number 0
+fileio
+  write $1 $2
+  quit
+.
+
+Define Next_Frame 1 'data object'
+Put_Next $1 $movie_file
+Increment movie_frame_number
+echo "frame $movie_frame_number written"
+.
+
+Define Close_Hips_File 1 movie_file
+fileio close $1 quit
+.
+   
+Define Close_Hips_Movie 1 movie_file
+fileio close $1 quit
+.
+   
+Define Raw_Image_Dimensions 4 depth width height frames
+fileio raw_sizes $1 $2 $3 $4 1 quit
+.
+
+Define Raw_Image_Sizes 2 width height
+# non-positive frame count means determine from file size
+fileio raw_sizes 1 $1 $2 0 1 quit
+.
+
+
+
+# Set a script variable if the file exists in the unix filesystem
+#
+# This function is wrong for special purpose things like rtv movies...
+
+Define Check_File_Existence 1 filename
+If "exists('$1')"
+  Then "Set file_exists 1"
+  Else "warn '$1 does not exist' Set file_exists 0"
+.
+
+
+Stop_File hips.mac
+
+

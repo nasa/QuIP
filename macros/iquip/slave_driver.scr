@@ -1,0 +1,15 @@
+# connect to overseer
+
+If $argc!=2 "error_exit 'usage:  coq hostname port_num < slave_driver.scr'"
+
+< slave_driver.mac
+
+Init_Overseer $1 $2
+
+do
+  prompt_text 'command to send to device' cmd
+  Command_Slave $cmd
+  while 1
+
+Pause
+

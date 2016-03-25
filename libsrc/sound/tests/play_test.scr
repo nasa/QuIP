@@ -1,0 +1,33 @@
+# test playback
+max_warnings 2
+
+Set infile button-09.wav
+Read_File_Header $infile
+Assign d ncomps('$infile')
+Assign n ncols('$infile')
+
+If $d!=1 'error_exit "expected input file $infile to have one component!?"'
+
+Vector mono_sound $n 1 short
+Vector stereo_sound $n 2 short
+Get_Next mono_sound $infile
+
+VMov stereo_sound{0} mono_sound
+VMov stereo_sound{1} mono_sound
+
+Set sample_rate 44100
+
+sound
+#  sample_freq $sample_rate
+  playback
+    do
+      advise "playing mono sound..."
+      play mono_sound
+      Pause
+
+      advise "playing stereo sound..."
+      play stereo_sound
+      Pause
+
+      while 1
+

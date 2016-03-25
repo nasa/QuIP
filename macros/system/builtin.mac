@@ -1,0 +1,87 @@
+#
+# macros to simplify use of builtin submenus
+#
+
+#verbose yes
+
+If $verbose "echo 'interpreting file builtin.mac'"
+
+# macro control
+
+macros define Define 0
+macros define
+.
+
+Define Delete_Macro 1 name
+macros delete $1 quit
+.
+
+Define Find_Macro 1 string
+macros find $1 quit
+.
+
+# variable control
+
+Define Set 2 'variable name' 'value'
+variables set $1 $2 quit
+.
+
+Define UnSet 1 'variable name'
+variables unset $1 quit
+.
+
+Define Variables 0
+variables list quit
+.
+
+# generally useful
+
+Define Idle 0
+Set idling 1
+os
+  do
+    events
+    while $idling
+  quit
+.
+
+# needs to be different for unix & iOS
+#Define Pause 0
+#advise 'type ^D to proceed'
+#< /dev/tty
+#.
+
+Set pausing 0
+
+Define Pause_If 0
+If $pausing Pause
+.
+
+Set chatty 0
+
+Define Tell_If 1 string
+# Problems if the argument has single quotes in it...
+# Also problems if there is a newline...  For direct
+# input, we can escape a newline by preceding with a backslash...
+If $verbose||$chatty "advise '$1'"
+.
+
+Define Print_If 1 varname
+If $verbose||$chatty "Print $1"
+.
+
+Define Check_Version_Match 0
+If strcmp('$script_version','$git_version')
+  "error_exit 'Version mismatch:  script is $script_version, but code is $git_version'"
+.
+
+Define Require_Version 1 version_string
+advise "Require_Version $1 BEGIN"
+Print git_version
+If strcmp('$1','$git_version')
+  "error_exit 'Script requires version $1, but code is $git_version'"
+#advise "Require_Version $1 DONE"
+.
+
+If $verbose "echo 'finished interpreting file builtin.mac'"
+

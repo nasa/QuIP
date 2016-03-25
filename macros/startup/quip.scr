@@ -1,0 +1,25 @@
+# @(#) .quip ver: 1.1 1/19/99
+
+verbose no
+
+variables
+#  set QUIPSTARTUPDIR /usr/local/share/quip/macros/startup
+  set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup
+  quit
+
+
+#view debug xsupp quit
+
+< $QUIPSTARTUPDIR/generic.scr
+< $QUIPSTARTUPDIR/gendata.scr
+< $QUIPSTARTUPDIR/gencomp.scr
+< $QUIPSTARTUPDIR/genclient.scr
+< $QUIPSTARTUPDIR/genview.scr
+
+#view xsync yes quit
+
+compute control n_processors 1 quit quit
+max_warnings 200
+
+Stop_File quip.scr
+

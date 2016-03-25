@@ -1,0 +1,371 @@
+
+# Set face normals from vertex data
+
+Define Init_Face_Normals 3 face_norm_array vert_array index_array
+#advise "Init_Face_Normals $1 $2 $3"
+#Display $2
+#Display $3
+Set i 0
+# from three vertices, we compute two edge vectors, then
+# compute the cross product to get the normal vector
+#repeat $n_faces	# foreach face
+repeat ncols('$1')
+   Assign i_v0 value($3[$i]{0})
+   Assign i_v1 value($3[$i]{1})
+   Assign i_v2 value($3[$i]{2})
+#   advise "Face $i, vertices are $i_v0 $i_v1 $i_v2"
+   # v1 is the vector from vertex0 to vertex1
+   Assign v1_x value($2[$i_v1]{0})-value($2[$i_v0]{0})
+   Assign v1_y value($2[$i_v1]{1})-value($2[$i_v0]{1})
+   Assign v1_z value($2[$i_v1]{2})-value($2[$i_v0]{2})
+   # v2 is the vector from vertex0 to vertex2
+   Assign v2_x value($2[$i_v2]{0})-value($2[$i_v0]{0})
+   Assign v2_y value($2[$i_v2]{1})-value($2[$i_v0]{1})
+   Assign v2_z value($2[$i_v2]{2})-value($2[$i_v0]{2})
+#   advise "\tedge vectors are $v1_x $v1_y $v1_z   and   $v2_x $v2_y $v2_z"
+
+   # Now compute the cross product of v1 and v2
+   VSet $1[$i]{0} $v1_y*$v2_z-$v1_z*$v2_y
+   VSet $1[$i]{1} $v1_z*$v2_x-$v1_x*$v2_z
+   VSet $1[$i]{2} $v1_x*$v2_y-$v1_y*$v2_x
+#   Display $1[$i]
+   Increment i
+   end
+Dup_Float sqs $1
+Dup_Float sos $1{0}
+VVMul sqs $1 $1
+#Info sos
+#war unary sum sqs sos quit quit		# really like a projection?
+VVAdd sos sqs{0} sqs{1}
+VVAdd sos sos sqs{2}
+VSqrt sos sos
+#war outer quotient $1 $1 sos quit quit
+# we'd like to write $1 /= sos...
+# VVDiv arg order!?
+#VVDiv $1{0} sos $1{0}					# normalize
+#VVDiv $1{1} sos $1{1}					# normalize
+#VVDiv $1{2} sos $1{2}					# normalize
+VVDiv $1{0} $1{0} sos					# normalize
+VVDiv $1{1} $1{1} sos					# normalize
+VVDiv $1{2} $1{2} sos					# normalize
+### # check
+### VVMul sqs $1 $1
+### war unary sum sqs sos quit quit
+Delete_Image sos
+Delete_Image sqs
+.
+
+# Init_Vertex_Normals
+#
+# Build a list of which faces go with which vertex
+# someday we might want to weight these, but for now we weight them equally.
+# This is exactly correct for regular objects, e.g. tesselated sphere.
+
+Define Init_Vertex_Normals 3 vertex_norm_array face_normals face_array
+# We don't know the vertex valences in general.  For the sphere,
+# it is 5 or 6
+Set max_valence 6
+Assign nv ncols($1)
+#advise "Init_Vertex_Normals:  vertex normal array ($1) has $nv elements"
+Vector vertex_face_indices $nv $max_valence short
+# build the vertex face list by scanning the face list
+Vector vertex_valences $nv 1 short
+VSet vertex_valences 0
+Set j_face 0
+Assign _n_faces ncols($3)
+#advise "Init_Vertex_Normals:  Computing $_n_faces faces..."
+repeat $_n_faces	# foreach face
+  Set i_face_vertex 0
+  #advise "Init_Vertex_Normals:  scanning face $j_face..."
+  repeat 3		# foreach face_vertex - depth($3) - here we assume all faces are triangles
+    #advise "Init_Vertex_Normals:  Processing face $j_face, vertex $i_face_vertex..."
+    Assign iv value($3[$j_face]{$i_face_vertex})
+    #advise "Init_Vertex_Normals:  vertex index is $iv..."
+    # vertex $iv belongs to face $j_face
+    # increment valence of vertex, and add face index
+    # which face index do we use?
+    #Display vertex_valences[$iv]
+    Assign i_fi value(vertex_valences[$iv])
+    VSet vertex_face_indices[$iv]{$i_fi} $j_face
+    VSAdd vertex_valences[$iv] vertex_valences[$iv] 1
+    Increment i_face_vertex
+    end
+  Increment j_face
+  end
+# now we have the faces for each vertex tabulated...
+# compute the vertex normals by accumulating the face normals
+VSet $1 0
+Set iv 0
+#advise "Init_Vertex_Normals:  Computing $nv vertex normals"
+repeat $nv
+  Set j_vertex_face 0
+  Assign valence value(vertex_valences[$iv])
+  #advise "Init_Vertex_Normals:  Valence of vertex $iv is $valence"
+  repeat $valence
+    Assign j_face value(vertex_face_indices[$iv]{$j_vertex_face})
+    VVAdd $1[$iv] $1[$iv] $2[$j_face]
+    Increment j_vertex_face
+    end
+  VSMul $1[$iv] $1[$iv] 1/$valence
+  Increment iv
+  end
+Delete_Image vertex_face_indices
+Delete_Image vertex_valences
+.
+
+Define Construct_Poly 1 stem
+Set vertex_normal_array ${1}_vertex_normals	# can create...
+Set vertex_table ${1}_vertex_table
+Set face_table ${1}_face_table
+Set color_table ${1}_face_colors
+If !obj_exists('$vertex_table') "warn 'Vertex table $vertex_table does not exist!?' exit_macro"
+If !obj_exists('$face_table') "warn 'Face table $face_table does not exist!?' exit_macro"
+If !obj_exists('$color_table') "warn 'Face color table $color_table does not exist!?' exit_macro"
+
+If !obj_exists('$vertex_normal_array')
+  "Vector $vertex_normal_array ncols('$vertex_table') 3 float"
+Construct_Polyhedron $vertex_normal_array $vertex_table $face_table $color_table
+.
+
+Define Construct_Polyhedron 4 vertex_norm_array vert_array face_array color_array
+Vector face_normals ncols($3) 3 float		# not homogenous coords...
+Init_Face_Normals face_normals $2 $3
+Init_Vertex_Normals $1 face_normals $3
+#Display $4
+gl
+  objects
+    # used to set culling here, but now do globally...
+    # old setting was clockwise, but no enable was performed!?
+    #
+    # Similarly, it is better to set the material properties elsewhere...
+    begin_obj triangles
+    #material diffuse 1 0.5 1
+    #material diffuse 1 1 1
+    #material ambient 1 1 1
+    #material specular 1 1 1
+    #material shininess 100
+    #material shininess 50
+    Set i 0
+    #repeat $n_faces
+    repeat ncols('$3')
+      quit	# exit objects menu
+      color
+        color value($4[$i]{0}) value($4[$i]{1}) value($4[$i]{2})
+	quit
+      objects	# reenter objects menu
+      Set j 0
+      repeat 3	# does this assume triangular faces???
+	Assign i_v value($3[$i]{$j})
+	normal
+	  # changed from i to i_v to go from face normals to vertex normals
+          value($1[$i_v]{0})
+          value($1[$i_v]{1})
+          value($1[$i_v]{2})
+        vertex
+          value($2[$i_v]{0})
+          value($2[$i_v]{1})
+          value($2[$i_v]{2})
+        Increment j
+        end
+      Increment i
+    end
+    end_obj
+    quit
+  quit
+Delete_Image face_normals
+.
+
+# Get_New_Vertex - find the new vertex interpolated between i1 and i2
+# If it doesn't exist yet, then create it
+
+Define Get_New_Vertex 5 varname vert_vector flag_vector i1 i2
+Set gnv_i $old_nvertices
+Set $1 0
+do
+  If value($3[$gnv_i]{0})==$4&&value($3[$gnv_i]{1})==$5		# already in?
+    "Set $1 $gnv_i"
+  If value($3[$gnv_i]{0})==$5&&value($3[$gnv_i]{1})==$4		# already in?
+    "Set $1 $gnv_i"
+  Increment gnv_i
+  while $gnv_i<$new_nvertices
+
+If $$1!=0 "PopFile 2 nop"					# already in, return ans in $1
+
+# need to create the new vertex
+# first, find the next empty slot
+
+Set gnv_i $old_nvertices
+Set next_slot 0
+do
+  If value($3[$gnv_i]{0})==0&&value($3[$gnv_i]{1})==0		# empty slots have 0's for both
+    "Set next_slot $gnv_i"
+  Increment gnv_i
+  while $gnv_i<$new_nvertices&&$next_slot==0
+VSet $3[$next_slot]{0} $4
+VSet $3[$next_slot]{1} $5
+Assign _x1 value($2[$4]{0})
+Assign _x2 value($2[$5]{0})
+Assign _y1 value($2[$4]{1})
+Assign _y2 value($2[$5]{1})
+Assign _z1 value($2[$4]{2})
+Assign _z2 value($2[$5]{2})
+Assign _dx $_x1-$_x2
+Assign _dy $_y1-$_y2
+Assign _dz $_z1-$_z2
+Assign dist sqrt($_dx*$_dx+$_dy*$_dy+$_dz*$_dz)
+#advise "Creating new vertex for $1 between $4 and $5 in slot $next_slot (old dist = $dist)"
+VSet $2[$next_slot]{0} ($_x1+$_x2)/2
+VSet $2[$next_slot]{1} ($_y1+$_y2)/2
+VSet $2[$next_slot]{2} ($_z1+$_z2)/2
+Set $1 $next_slot
+.
+
+Define Add_Face 4 face_array i1 i2 i3
+#advise "Add_Face $1 $2 $3 $4  (i_newface = $i_newface)"
+VSet $1[$i_newface]{0} $2
+VSet $1[$i_newface]{1} $3
+VSet $1[$i_newface]{2} $4
+Increment i_newface
+.
+
+Define Tesselate_Polyhedron 2 new_stem old_stem
+# Euler's formula:
+# F+V-E=2
+# When we tesselate, we replace each triangular face with 4 triangular faces
+#	each edge generates a new vertex
+#	each edge is split, and each face adds 3 new edges
+# F <- 4*F
+# V <- V+E
+# E <- 2E + 3F
+
+Assign old_nfaces ncols($3)
+Assign old_nvertices ncols($2)
+Assign old_nedges $old_nfaces+$old_nvertices-2
+Assign new_nfaces $old_nfaces*4
+Assign new_nvertices $old_nvertices+$old_nedges
+
+Vector T$2 $new_nvertices 3 float	# Tesselation vertices
+Vector F$2 $new_nvertices 2 float	# flags for new vertices
+VSet F$2 0				# flag for new vertices - olds indices of edge which is split
+Subvector _verts T$2 $old_nvertices 0
+VMov _verts $2
+Delete_Image _verts
+
+Vector T$3 $new_nfaces 3 float		# Tesselation faces
+Vector T$1 $new_nfaces 3 float		# Tesselation face normals
+Vector T$4 $new_nfaces 3 float		# Tesselation face colors
+
+#              v1
+#
+#            v6    v4
+#
+#         v3    v5     v2
+# How do we number the new vertices???
+Set i_newface 0
+Set i_oldface 0
+advise "iterating over old faces"
+repeat $old_nfaces
+  Assign i_v1 value($3[$i_oldface]{0})
+  Assign i_v2 value($3[$i_oldface]{1})
+  Assign i_v3 value($3[$i_oldface]{2})
+#advise "oldface:  $i_v1 $i_v2 $i_v3"
+  Get_New_Vertex i_v4 T$2 F$2 $i_v1 $i_v2
+  Get_New_Vertex i_v5 T$2 F$2 $i_v2 $i_v3
+  Get_New_Vertex i_v6 T$2 F$2 $i_v3 $i_v1
+
+  # now create 4 new faces
+  Add_Face T$3 $i_v1 $i_v4 $i_v6
+  Add_Face T$3 $i_v2 $i_v5 $i_v4
+  Add_Face T$3 $i_v3 $i_v6 $i_v5
+  Add_Face T$3 $i_v4 $i_v5 $i_v6
+
+  Increment i_oldface
+  end
+Set normal_object T$1
+Set vertex_object T$2
+Set face_object T$3
+Set face_color_object T$4
+.
+
+# It looks like this got re-written!?
+#
+# We tesselate a polyhedron having triangular faces by subdividing each face
+# into 4 triangles.  We get a new vertex for each edge.  The number of edges
+# is equal to the number of faces times 3 divided by 2.  We create the new vertices
+# as needed, and create a table indexed by the pairs of original vertices to
+# keep track of which have been created...
+
+Define Tesselate_Poly 2 new_stem old_stem
+Set old_vertex_table ${2}_vertex_table
+Set old_face_table ${2}_face_table
+Set new_vertex_table ${1}_vertex_table
+Set new_face_table ${1}_face_table
+Assign n_old_vertices ncols('$old_vertex_table')
+Assign n_old_edges ncols('$old_face_table')*3/2
+Assign n_old_faces ncols('$old_face_table')
+Image added_vertices $n_old_vertices $n_old_vertices 1 short
+VSet added_vertices -1
+Assign n_new_vertices $n_old_vertices+$n_old_edges
+Assign n_new_faces $n_old_faces*4
+If !obj_exists('$new_face_table')
+  "Vector $new_face_table $n_new_faces 3 short"
+If !obj_exists('$new_vertex_table')
+  "Vector $new_vertex_table $n_new_vertices 3 float"
+Subvector existing_vertices $new_vertex_table $n_old_vertices 0
+VMov existing_vertices $old_vertex_table
+Delete_Image existing_vertices
+Set next_vertex $n_old_vertices
+# Now scan all of the old faces, creating 4 faces for each old one,
+# creating vertices as needed
+Set i_old_face 0
+repeat $n_old_faces
+  Subdivide_Face $i_old_face
+  Increment i_old_face
+  end
+Delete_Image added_vertices
+.
+
+#  v1      v2     v3
+#      v4     v5      v6		<-- new vertices
+#
+# We need to keep the same winding order in the new faces:
+#  v1 v4 v6
+#  v4 v2 v5
+#  v5 v3 v6
+#  v4 v5 v6
+Define Subdivide_Face 1 old_index
+Assign i_v1 value($old_face_table[$1]{0})
+Assign i_v2 value($old_face_table[$1]{1})
+Assign i_v3 value($old_face_table[$1]{2})
+Get_Edge_Midpoint i_v4 $i_v1 $i_v2
+Get_Edge_Midpoint i_v5 $i_v2 $i_v3
+Get_Edge_Midpoint i_v6 $i_v3 $i_v1
+Subvector added_faces $new_face_table 4 4*$1
+data ascii read added_faces -
+	$i_v1 $i_v4 $i_v6
+	$i_v4 $i_v2 $i_v5
+	$i_v5 $i_v3 $i_v6
+	$i_v4 $i_v5 $i_v6
+	quit quit
+Delete_Image added_faces
+.
+
+Define Get_Edge_Midpoint 3 idx_varname i1 i2
+Assign $1 value(added_vertices[$2][$3])
+If $$1>=0 exit_macro	# already created!
+Set $1 $next_vertex
+Increment next_vertex
+VSet added_vertices[$2][$3] $$1
+VSet added_vertices[$3][$2] $$1
+VVAdd $new_vertex_table[$$1] $new_vertex_table[$2] $new_vertex_table[$3]
+VSMul $new_vertex_table[$$1] $new_vertex_table[$$1] 0.5	# take mean
+# Now we should normalize...
+Dup_Float tmp_pt $new_vertex_table[$$1]
+VVMul tmp_pt $new_vertex_table[$$1] $new_vertex_table[$$1]
+Get_Sum sos tmp_pt
+Assign norm sqrt($sos)
+Delete_Image tmp_pt
+VSMul $new_vertex_table[$$1] $new_vertex_table[$$1] 1/$norm
+.
+
+

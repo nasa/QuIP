@@ -1,0 +1,28 @@
+
+Assign c2 tolower(0x42)
+Print c2
+
+Set s1 Jeffrey
+Print s1
+Assign s2 tolower('$s1')
+Print s2
+Assign s3 toupper('$s1')
+Print s3
+
+Pause
+
+Set w "'a'"
+Print w
+Assign x ascii("'")
+Print x
+Assign x ascii("`")
+Print x
+Assign x ascii('a')
+Print x
+Assign y "'a'"
+Print y
+Assign z "'\\\\\'a\\\\\''"
+Print y
+
+Pause
+

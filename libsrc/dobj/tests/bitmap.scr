@@ -1,0 +1,69 @@
+
+# test of bitmap subimages
+
+Set h 6
+Set w 5
+Image bm0 $h $w 1 bit
+#Info bm0
+Equivalence e0 bm0 1 1 $h 1 1 uint64
+advise 'reading small bitmap data...'
+data
+  ascii
+    read bm0 -
+    	1 1 1 1 1
+    	1 1 0 0 1
+    	1 1 0 0 1
+    	1 1 1 1 1
+    	1 1 1 1 1
+    	1 1 1 1 1
+    quit
+  quit
+Display bm0
+data ascii output_fmt hexadecimal quit quit
+Display e0
+
+Set h 16
+#Set w 36
+Set w 30
+
+Set sh 5
+Set sw 22
+
+Set sx0 2
+Set sy0 2
+# offset is 2*36+2 = 74, or 10 bits into the second 64 bit word.
+
+
+advise 'creating larger bit image'
+Image bm1 $h $w 1 bit
+advise 'creating larger subimage'
+Subimage sbm1 bm1 $sw $sh $sx0 $sy0
+
+#Equivalence l1 bm1 1 1 1 9 1 uint64
+Info bm1
+Info sbm1
+
+advise setting...
+VSet bm1 1
+advise 'Set to 1'
+Display bm1
+#Display l1
+#advise 'Set to 0'
+#VSet bm1 0
+#Display bm1
+
+advise "VSet sbm1 0"
+VSet sbm1 0
+Display sbm1
+Display bm1
+
+advise "VSet sbm1 1"
+VSet sbm1 1
+Display sbm1
+Display bm1
+
+VSet bm1 0
+Display bm1
+
+exit
+

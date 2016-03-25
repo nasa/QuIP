@@ -1,0 +1,192 @@
+
+# use New_Plotter instead of Viewer to install color defs
+
+
+Define Anstis_Panel 0
+interface
+  panel stim_panel $panel_w $panel_h
+  decorate stim_panel
+    button Slow_Cycle SlowCycle
+    #button Fast_Cycles FastCycles
+    adjuster dR SetDeltaR 0 127 127
+    adjuster dG SetDeltaG 0 127 127
+    adjuster dB SetDeltaB 0 127 127
+    adjuster Log2_Stripe_Width SetStripeWidth 1 7 5
+    toggle VBL_Sync TogVBL
+    set_toggle VBL_Sync yes
+    adjuster delay SetDelay 1 8 3
+    button QUIT exit
+    quit
+  control
+    show stim_panel
+    quit
+Posn_Window stim_panel $left_x $top_y
+.
+
+Define Declare_Images 0
+
+Image key_strips $key_h/4 $key_w 1 u_byte
+
+Image strips $stim_h $stim_w 1 u_byte
+Vector stripe_lut1 256 3 u_byte
+Vector stripe_lut2 256 3 u_byte
+Vector stripe_lut3 256 3 u_byte
+Vector stripe_lut4 256 3 u_byte
+Subvector use_lut1 stripe_lut1 4 0
+Subvector use_lut2 stripe_lut2 4 0
+Subvector use_lut3 stripe_lut3 4 0
+Subvector use_lut4 stripe_lut4 4 0
+
+Image frm1 $stim_h $stim_w 3 u_byte
+Image frm2 $stim_h $stim_w 3 u_byte
+Image frm3 $stim_h $stim_w 3 u_byte
+Image frm4 $stim_h $stim_w 3 u_byte
+Image key_frm $key_h $key_w 3 u_byte
+Subimage key_frm1 key_frm ncols(key_frm) nrows(key_frm)/4 0 0
+Subimage key_frm2 key_frm ncols(key_frm) nrows(key_frm)/4 0 nrows(key_frm)/4
+Subimage key_frm3 key_frm ncols(key_frm) nrows(key_frm)/4 0 nrows(key_frm)/2
+Subimage key_frm4 key_frm ncols(key_frm) nrows(key_frm)/4 0 3*nrows(key_frm)/4
+
+Set stripe_width 32
+Assign strip_width $stripe_width/2
+.
+
+Define Paint_Strips 1 image
+Set strip_x 0
+Assign n_periods ncols($1)/(4*$strip_width)
+repeat $n_periods
+  Set color 0
+  repeat 4
+    Subimage strip $1 $strip_width nrows($1) $strip_x 0
+    VSet strip $color
+    Delete_Image strip
+    Add_Var strip_x $strip_width
+    Increment color
+    end
+  end
+.
+
+Define Color_Strips 0
+.
+
+Define Setup_Luts 9 r0 g0 b0 dr dg db r_sign g_sign b_sign
+#Set r0 $1
+Set r0 $3
+Set g0 $2
+#Set b0 $3
+Set b0 $1
+#Set dr $4
+Set dr $6
+Set dg $5
+#Set db $6
+Set db $4
+#Set r_sign $7
+Set r_sign $9
+Set g_sign $8
+#Set b_sign $9
+Set b_sign $7
+data
+  ascii
+    read use_lut1 -
+    	$r0+$dr $g0+$dg $b0+$db
+    	$r0-$dr $g0-$dg $b0-$db
+    	$r0-$dr $g0-$dg $b0-$db
+    	$r0+$dr $g0+$dg $b0+$db
+    read use_lut2 -
+    	$r0+$dr*$r_sign $g0+$dg*$g_sign $b0+$db*$b_sign
+    	$r0+$dr*$r_sign $g0+$dg*$g_sign $b0+$db*$b_sign
+    	$r0-$dr*$r_sign $g0-$dg*$g_sign $b0-$db*$b_sign
+    	$r0-$dr*$r_sign $g0-$dg*$g_sign $b0-$db*$b_sign
+    read use_lut3 -
+    	$r0-$dr $g0-$dg $b0-$db
+    	$r0+$dr $g0+$dg $b0+$db
+    	$r0+$dr $g0+$dg $b0+$db
+    	$r0-$dr $g0-$dg $b0-$db
+    read use_lut4 -
+    	$r0-$dr*$r_sign $g0-$dg*$g_sign $b0-$db*$b_sign
+    	$r0-$dr*$r_sign $g0-$dg*$g_sign $b0-$db*$b_sign
+    	$r0+$dr*$r_sign $g0+$dg*$g_sign $b0+$db*$b_sign
+    	$r0+$dr*$r_sign $g0+$dg*$g_sign $b0+$db*$b_sign
+    quit
+  quit
+.
+
+Define Map_Stripes 0
+Map key_frm1 key_strips stripe_lut1
+Map key_frm2 key_strips stripe_lut2
+Map key_frm3 key_strips stripe_lut3
+Map key_frm4 key_strips stripe_lut4
+
+Map frm1 strips stripe_lut1
+Map frm2 strips stripe_lut2
+Map frm3 strips stripe_lut3
+Map frm4 strips stripe_lut4
+.
+
+Define SetDeltaR 0
+Set delta_r $slider_val
+Update_Colors
+.
+
+Define SetDeltaG 0
+Assign delta_g -$slider_val
+Update_Colors
+.
+
+Define SetDeltaB 0
+Assign delta_b -$slider_val
+If $delta_b==0 "Set red_factor 0 Set green_factor 1"
+If $delta_b==(-127) "Set red_factor 1 Set green_factor 0"
+Update_Colors
+.
+
+Define Update_Colors 0
+Setup_Luts 127 127 127 $delta_r $delta_g $delta_b 1 -1 -1
+Map_Stripes
+Show_Bytes key_frm key_v
+.
+
+Define Make_Adjustment 0
+If $left_button_up "exit_macro"	# no action on up-click
+Assign which_half floor($view_xpos/(ncols(adjuster_v)/2))
+If $which_half==$last_adjustment Increase_Increment
+If $which_half!=$last_adjustment&&$last_adjustment!=$no_adjustment
+  Decrease_Increment
+If $which_half
+  Then Increase_Green
+  Else Increase_Red
+Set last_adjustment $which_half
+Update_Colors
+# Now should update the green slider!
+interface
+  decorate stim_panel
+    set_scale dG -1*$delta_g
+    set_scale dR $delta_r
+    quit
+  quit
+.
+
+# These were originally written to vary green against fixed red...
+# but we also want to vary red against fixed blue.
+#
+# delta_g is negative...
+
+Set red_factor 0
+Set green_factor 1	# default
+
+Define Increase_Green 0
+Assign delta_g $green_factor*max(-127,$delta_g-$adjustment_increment)
+Assign delta_r $red_factor*max(0,$delta_r-$adjustment_increment)
+#advise "red_factor = $red_factor   green_factor = $green_factor  dR = $delta_r   dG = $delta_g"
+.
+
+Define Increase_Red 0
+Assign delta_g $green_factor*min(0,$delta_g+$adjustment_increment)
+Assign delta_r $red_factor*min(127,$delta_r+$adjustment_increment)
+#advise "red_factor = $red_factor   green_factor = $green_factor  dR = $delta_r   dG = $delta_g"
+.
+
+Define Cycle_It 2 n_cycles delay
+Cycle_4 $1 $2
+.
+

@@ -1,0 +1,288 @@
+# Formula probably came from wikipedia...
+# should give reference, and repeat here!
+# beta_hat appears to be the slope, and alpha_hat is the y intercept:
+# y = beta x + alpha
+
+Define Read_Data_From_File 2 vector_name datafile
+Count_Lines n_pts $2
+#advise "File $2 contains $n_pts points"
+Vector $1 $n_pts 2 float	# or double?
+Get_Ascii $1 $2
+.
+
+# Perform the regression ourselves.
+# Assumes the data is in $data_file
+
+Define Perform_Regression 0
+Read_Data_From_File input_data $data_file
+Linear_Regression input_data
+#Bootstrap input_data 100
+Delete_Image input_data
+.
+
+Define Linear_Regression 1 data_set
+Get_Mean x_bar $1{0}
+Get_Mean y_bar $1{1}
+Assign n_pts ncols('$1')
+Vector deviations $n_pts 1 float
+Vector prediction $n_pts 1 float
+Vector residuals $n_pts 1 float
+Vector prod $n_pts 1 float
+
+VVMul prod $1{0} $1{0}	# x^2
+Get_Mean meansq_x prod
+VVMul prod $1{1} $1{1}	# y^2
+Get_Mean meansq_y prod
+VVMul prod $1{0} $1{1}	# xy
+Get_Mean mean_xy prod
+
+Assign r ($mean_xy-$x_bar*$y_bar)/sqrt(($meansq_x-$x_bar*$x_bar)*($meansq_y-$y_bar*$y_bar))
+#advise "Correlation coefficient is $r"
+
+VSAdd deviations $1{0} -$x_bar
+VVMul deviations deviations deviations # squared
+Get_Mean sigma_sq deviations
+Assign sigma_x sqrt($sigma_sq)
+
+VSAdd deviations $1{1} -$y_bar
+VVMul deviations deviations deviations # squared
+Get_Mean sigma_sq deviations
+Assign sigma_y sqrt($sigma_sq)
+
+Assign beta_hat $r*$sigma_y/$sigma_x
+
+advise "Slope is $beta_hat"
+
+# Now get the residuals
+# First get the y intercept
+Assign alpha_hat $y_bar-$beta_hat*$x_bar
+VSMul prediction $1{0} $beta_hat
+VSAdd prediction prediction $alpha_hat
+
+VVSub residuals $1{1} prediction
+
+# To get the confidence interval for the slope,
+# We need to compute s_beta (s sub beta_hat)
+VVMul residuals residuals residuals
+Get_Sum sos_resid residuals
+# Now get the demonimator term:
+VSAdd residuals $1{0} -$x_bar
+VVMul residuals residuals residuals
+Get_Sum sos_xdev residuals
+Assign s_beta sqrt(($sos_resid/($n_pts-2))/$sos_xdev)
+#Print s_beta
+
+# Now we need the t statistic for n-2 degrees of freedom
+T_Dist $n_pts-2
+Assign t_val value(icum[97])	# BUG assumes 100 bins, 95% ci
+#Print t_val
+Assign delta_beta $s_beta*$t_val
+#Print delta_beta
+If !var_exists(rdesc) 'Set rdesc "(no description string rdesc defined)"'
+advise "REGRESSION $rdesc beta = $beta_hat  alpha = $alpha_hat delta_beta = $delta_beta x_bar = $x_bar   y_bar = $y_bar"
+
+
+Delete_Image prod
+Delete_Image deviations
+Delete_Image residuals
+Delete_Image prediction
+.
+
+# This version uses an external program to perform
+# the regression
+
+Define OLD_Regression_Line 0
+
+os
+  system "dm x2 x1 1 < $data_file | nregr > /tmp/regress_out"
+  pipes
+    open ppp r 'cat /tmp/regress_out'
+    read ppp slope
+    read ppp y_int
+    # y = mx + b
+    # x_int = -b/m
+    Assign x_int -$y_int/$slope
+    #Print x_int
+    #Print slope
+    close ppp
+    quit
+  quit
+# now draw the regression line
+If !obj_exists(rline) "Vector rline 2 2 float"
+VSet rline[0]{0} $x_int
+VSet rline[0]{1} 0
+Assign xr ($regression_line_y_max-$y_int)/$slope
+VSet rline[1]{0} $xr
+VSet rline[1]{1} $regression_line_y_max
+#If $plotting "Select_Pen $white"
+#Display rline
+Print plotting
+If $plotting "XYPlot rline"
+.
+
+# use xmin ymin xmax ymax from plot setup...
+Define Plot_Regression_With_Bounds 0
+Assign _alpha_hat $y_bar-($beta_hat)*$x_bar
+Assign y_left $beta_hat*$xmin+$_alpha_hat
+Assign y_right $beta_hat*$xmax+$_alpha_hat
+If $y_left>=$ymin&&$y_left<=$ymax&&$y_right>=$ymin&&$y_right<=$ymax
+  Then "Plot_Left_To_Right"
+  Else 'advise "Y out of range ($ymin-$ymax):  $y_left $y_right"'
+.
+
+Define Plot_Left_To_Right 0
+If !obj_exists(rline) "Vector rline 2 2 float"
+VSet rline[0]{0} $xmin
+VSet rline[0]{1} $y_left
+VSet rline[1]{0} $xmax
+VSet rline[1]{1} $y_right
+If $plotting "XYPlot rline"
+.
+
+Define Plot_Regression 0
+If !obj_exists(rline) "Vector rline 2 2 float"
+Plot_RLine $beta_hat
+#Plot_RLine $beta_hat+$delta_beta
+#Plot_RLine $beta_hat-$delta_beta
+.
+
+Define Plot_RLine 1 slope
+Assign _alpha_hat $y_bar-($1)*$x_bar
+Assign x_int -$_alpha_hat/($1)
+VSet rline[0]{0} $x_int
+VSet rline[0]{1} 0
+Assign xr ($regression_line_y_max-$_alpha_hat)/($1)
+VSet rline[1]{0} $xr
+VSet rline[1]{1} $regression_line_y_max
+If $plotting "XYPlot rline"
+.
+
+Set regression_line_y_max 1.5 # 1.5 is the default max y coord for plotting
+Set legend_y_inc -0.1
+
+Define Do_Regression 0
+#OLD_Regression_Line
+#advise "slope = $slope, x_int = $x_int"
+Perform_Regression
+Plot_Regression
+
+Assign slope round($beta_hat*1000)/1000
+Assign x_int round($x_int*1000)/1000
+
+#S_At "$description_string   slope = $slope, x_int = $x_int" $legend_x $legend_y
+Print legend_x
+# BUG viewer name should not be hard-coded
+view draw p1 text_mode left_justified quit quit
+S_At "$sub_str, $target, $response" $legend_x $legend_y
+Add_Var legend_y $legend_y_inc
+S_At "slope = $slope, x_int = $x_int" $legend_x $legend_y
+Add_Var legend_y $legend_y_inc
+
+# We don't seem to need to save the regression params any more?
+#append yes
+#output_file /tmp/regression_results
+echo "$description_string   slope = $slope   x_int = $x_int"
+#output_file -
+
+#Show_Other_Slopes
+.
+
+
+Define Show_Other_Slopes 0
+Set _slope 2
+Set xstop 0.60
+VSet rline[1]{0} $xstop
+Assign _y ($xstop-$x_int)*$_slope
+VSet rline[1]{1} $_y
+Select_Pen $cyan
+XYPlot rline
+S_At "slope = $_slope" $xstop+0.02 $_y
+
+Set _slope 4
+Set xstop 0.2
+VSet rline[1]{0} $xstop
+Assign _y ($xstop-$x_int)*$_slope
+VSet rline[1]{1} $_y
+Select_Pen $green
+XYPlot rline
+S_At "slope = $_slope" $xstop+0.02 $_y
+
+Save_Plot plot2.jpg p1
+
+Set _slope 1.333
+Set xstop 0.75
+VSet rline[1]{0} $xstop
+Assign _y ($xstop-$x_int)*$_slope
+VSet rline[1]{1} $_y
+Select_Pen $yellow
+XYPlot rline
+S_At "slope = $_slope" $xstop+0.02 $_y
+
+Set xstop 0.75
+Set _slope 1
+VSet rline[1]{0} $xstop
+Assign _y ($xstop-$x_int)*$_slope
+VSet rline[1]{1} $_y
+Select_Pen $red
+XYPlot rline
+S_At "slope = $_slope" $xstop+0.02 $_y
+
+Save_Plot plot3.jpg p1
+.
+
+
+# Bootstrap - we resample the point sets repeatedly (with replacement),
+# and accumulate the regression parameters...
+
+Define Bootstrap 2 data_set n_samples
+Assign n_pts ncols('$1')
+Vector sample_indices $n_pts 1 u_short
+Vector sample_random $n_pts 1 float
+Assign n_samples $2
+Vector bootstrap_slopes $n_samples 1 float
+Vector bootstrap_intercepts $n_samples 1 float
+Vector bootstrap_pts $n_pts 2 float
+Set i_bootstrap 0
+repeat $n_samples
+  VUni sample_random
+  VSMul sample_random sample_random $n_pts
+  VFloor sample_random sample_random
+  VSMin sample_random sample_random $n_pts-1	# unnecessary?
+  Convert sample_indices sample_random
+  #Map bootstrap_pts $1 sample_indices
+  Map bootstrap_pts sample_indices $1
+  Linear_Regression bootstrap_pts
+  # store the results
+  VSet bootstrap_slopes[$i_bootstrap] $beta_hat
+  VSet bootstrap_intercepts[$i_bootstrap] $alpha_hat
+  Increment i_bootstrap
+  advise "Bootstrap iteration $i_bootstrap DONE"
+  end
+Delete_Image sample_indices
+Delete_Image sample_random
+Delete_Image bootstrap_pts
+Get_Mean mean_slope bootstrap_slopes
+Get_Variance slope_var bootstrap_slopes
+Delete_Image bootstrap_slopes
+Assign slope_sigma sqrt($slope_var)
+Get_Mean mean_intercept bootstrap_intercepts
+Get_Variance intercept_var bootstrap_intercepts
+Delete_Image bootstrap_intercepts
+Assign intercept_sigma sqrt($intercept_var)
+advise "Slope:  $mean_slope +- $slope_sigma         Intercept:  $mean_intercept +- $intercept_sigma"
+.
+
+Define Test_Bootstrap 0
+Vector test_pts 6 2 float
+data ascii read test_pts -
+	0 0 1 1 2 2
+	0 0.2 1 1.2 2 2.2
+	quit quit
+Bootstrap test_pts 200
+#Display bootstrap_slopes
+#Pause
+#Display bootstrap_intercepts
+
+Linear_Regression test_pts
+.
+

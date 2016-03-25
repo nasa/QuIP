@@ -1,0 +1,71 @@
+#
+# make some "tone scrambles" using the expression language
+#
+
+expressions
+  read -
+
+int tone_duration_msec=80;
+int scramble_duration_sec=4;
+float base_freq_hz=440;
+float sample_rate=44100;
+float tone_duration_samples=ceil((tone_duration_msec/1000)*sample_rate);
+float twopi=8*atan(1);
+
+#		samples/sec  /  cycles/sec = samples/cycle
+float base_period=sample_rate/base_freq_hz;
+float base_arg_inc=twopi/base_period;
+
+float fundamental=1;
+float minor_third=pow(2,3/12);
+float major_third=pow(2,4/12);
+float fifth=pow(2,7/12);
+float octave=2;
+
+int tones_per_stim=ceil(scramble_duration_sec*1000/tone_duration_msec);
+int samples_per_stim=tones_per_stim*tone_duration_samples;
+
+float tone_list[tones_per_stim];
+u_byte tone_indices[tones_per_stim];
+
+float tone_set1[256];
+float tone_set2[256];
+tone_set1=0;
+tone_set2=0;
+
+info(tone_set1[0:3]);
+tone_set1[0:3]=[ fundamental, minor_third, fifth, octave ];
+tone_set2[0:3]=[ fundamental, major_third, fifth, octave ];
+
+float stim[samples_per_stim];
+short sound1[samples_per_stim];
+short sound2[samples_per_stim];
+
+void make_stim( short *dest, float tone_set[256] )
+{
+	tone_list=4*uni(tone_list);
+	tone_list = min(floor(tone_list),3);
+	tone_indices = tone_list;
+	tone_list = tone_set[ tone_indices ];	# map
+	tone_list *= base_arg_inc;
+	stim = enlarge(tone_list);
+	cumsum(&stim,stim);
+	stim = sin(stim) * 0x7ff0;
+	*dest = stim;
+}
+
+make_stim( &sound1, tone_set1 );
+make_stim( &sound2, tone_set2 );
+
+end	# exit expression language
+  quit	# leave expressions submenu
+
+advise "Playing tone scramble with minor third..."
+sound playback play sound1 quit quit
+
+sleep 2
+advise "Playing tone scramble with major third..."
+sound playback play sound2 quit quit
+
+exit
+

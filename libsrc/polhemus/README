@@ -1,0 +1,4 @@
+
+New modifications to talk to polhemus fasttrack in Ellis' lab, using
+usb serial port.  Serial device is /dev/ttyUSB0.
+

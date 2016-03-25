@@ -1,0 +1,82 @@
+
+#			enum_menu_calls.h
+#			gen_menu_prot.h
+#			cu2_menu_prot.h
+#			menu_call_defs.h
+#			menu_prot_defs.h
+#			menu_undefs.h
+#			ocl_menu_prot.h
+#			vl2_menu_prot.h
+
+noinst_HEADERS =					\
+			all_same_prec_vec.c		\
+			all_vec.c			\
+			asc_classes.c			\
+			bitmap_ops.c			\
+			conv_vec.c			\
+			cpx_vec.c			\
+			dispatch_tbl.c			\
+			fft_funcs.c			\
+			gen_entries.c			\
+			gen_func_array.c		\
+			gen_host_calls.c		\
+			host_fft_funcs.c		\
+			intvec.c			\
+			math_funcs.c			\
+			new_conv.c			\
+			signed_vec.c			\
+			unsigned_vec.c			\
+							\
+			bit_defs.h			\
+			bitmap_ops.h			\
+			by_defs.h			\
+			cu2_port.h			\
+			cu2_veclib_prot.h		\
+			di_defs.h			\
+			dim3.h				\
+			dp_defs.h			\
+			dp_func_defs.h			\
+			eqsp_incs.h			\
+			fast_test.h			\
+			fftsupp.h			\
+			func_undefs.h			\
+			gen_entries.h			\
+			gen_gpu_calls.h			\
+			gen_kern_args.h			\
+			gen_port.h			\
+			gen_typtbl.h			\
+			gen_veclib_prot.h		\
+			gpu_args.h			\
+			gpu_call_utils.h		\
+			host_calls_cpu.h		\
+			host_calls_gpu.h		\
+			host_calls_special.h		\
+			host_typed_call_defs.h		\
+			inby_defs.h			\
+			in_defs.h			\
+			li_defs.h			\
+			method_undefs.h			\
+			obj_args.h			\
+			ocl_port.h			\
+			ocl_veclib_prot.h		\
+			platform_funcs.h		\
+			report_args.h			\
+			slow_incs.h			\
+			slow_len.h			\
+			slow_vars.h			\
+			sp_defs.h			\
+			spdp_defs.h			\
+			sp_func_defs.h			\
+			type_undefs.h			\
+			uby_defs.h			\
+			ubyin_defs.h			\
+			udi_defs.h			\
+			uin_defs.h			\
+			uindi_defs.h			\
+			uli_defs.h			\
+			vec_func.h			\
+			vecgen.h			\
+			vl2_port.h			\
+			vl2_veclib_prot.h		\
+			xfer_args.h
+

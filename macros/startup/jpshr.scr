@@ -1,0 +1,160 @@
+#
+# shrink a jpeg file
+
+< $QUIPSTARTUPDIR/quip.scr
+
+Clobber yes
+
+max_warnings 1000
+
+If $argc!=2&&$argc!=3 "Print argc error_exit 'usage:  jpshr jpeg_filename small_filename [factor]' "
+
+Set jpeg_file $1
+Set outfile $2
+
+If $argc==3
+  Then 'Set factor $3'
+  Else 'Set factor 2'
+
+#verbose yes
+
+Filetype jpeg
+Read_File_Header $jpeg_file
+#fileio info $jpeg_file quit
+
+Image big_img nrows('$jpeg_file') ncols('$jpeg_file') ncomps('$jpeg_file') u_byte
+Image small_img floor(nrows('$jpeg_file')/$factor) floor(ncols('$jpeg_file')/$factor) ncomps('$jpeg_file') u_byte
+# for color images, we need to put into bgr order for display...
+Image tmp nrows('$jpeg_file') ncols('$jpeg_file') 1 u_byte
+
+Assign depth ncomps('$jpeg_file')
+
+Define Mono_Viewer 0
+#advise Mono_Viewer
+#Info big_img
+Viewer_For v small_img
+Posn_Window v 50 50
+#Protect_LUT 0
+Grayscale_Viewer v
+.
+
+Define RGB_Viewers 0
+Viewer_For rv small_img
+Viewer_For gv small_img
+Viewer_For bv small_img
+Posn_Window rv 50 50
+Posn_Window gv 50 350
+Posn_Window bv 50 650
+#Protect_LUT 0
+Grayscale_Viewer rv
+Grayscale_Viewer gv
+Grayscale_Viewer bv
+.
+
+Define Label3 0
+Label_Viewer rv "$jpeg_file, frame $frameno"
+Label_Viewer gv "$jpeg_file, frame $frameno"
+Label_Viewer bv "$jpeg_file, frame $frameno"
+.
+
+#If $depth==3
+#  Then RGB_Viewers
+#  Else Mono_Viewer
+
+# "mono" viewer will display color on a 24 bit display
+Mono_Viewer
+
+view wait v quit
+#advise 'type ^D to load first frame'
+#< /dev/tty
+
+Define Downsample 2 targ src
+Dup_Float ftmp $1
+Dup_Float accum $1
+VSet accum 0
+Set n_accum 0
+Set x 0
+repeat $factor
+  Set y 0
+  repeat $factor
+    Subsample_Image s $2
+    	ncols(ftmp) $x $factor
+	nrows(ftmp) $y $factor
+    Convert ftmp s
+    Delete_Image s
+
+    VVAdd accum accum ftmp
+    Increment n_accum
+    Increment y
+    end
+  Increment x
+  end
+VSMul accum accum 1/$n_accum
+Convert $1 accum
+Delete_Image accum
+Delete_Image ftmp
+.
+
+
+Define Color_Shrink 0
+# to rotate, or not to rotate, that is the question!
+# don't rotate to write the file, but rotate for display...
+#Reduce small_img{0} big_img{0}
+#Reduce small_img{1} big_img{1}
+#Reduce small_img{2} big_img{2}
+Downsample small_img{0} big_img{0}
+Downsample small_img{1} big_img{1}
+Downsample small_img{2} big_img{2}
+.
+
+Define Mono_Shrink 0
+Reduce small_img big_img
+.
+
+Assign vd depth('$DISPLAY')
+Print vd
+
+Define Show_Movie 0
+advise Show_Movie
+Set frameno 1
+Assign nf nframes('$jpeg_file')
+Print nf
+repeat nframes('$jpeg_file')
+  Get_Next big_img $jpeg_file
+  #If $depth==3 Rotate_Colors
+  If $depth==3 Color_Shrink
+  If $depth==1 Mono_Shrink
+
+  Write_File_Header $outfile 1
+  Put_Next small_img $outfile
+#  If $depth==3
+#    Then "Show_Bytes big_img{0} rv Show_Bytes big_img{1} gv Show_Bytes big_img{2} bv Label3"
+#    Else 'Show_Bytes big_img v Label_Viewer v "$jpeg_file, frame $frameno"'
+
+# this should work for color or mono
+
+  If $depth==3 "Rotate_Colors small_img"
+
+  If $vd==8&&$depth==3
+    Then "Show_Bytes small_img{1} v"
+    Else "Show_Bytes small_img v"
+
+  If $vd==16 "Show16 small_img v"
+
+  Label_Viewer v "$jpeg_file, frame $frameno"
+
+  Pause_If
+  Increment frameno
+  end
+.
+
+Show_Movie
+
+Define reshow 0
+Read_File_Header $jpeg_file
+Show_Movie
+advise "type 'reshow' to show again, or ^D to exit"
+.
+
+#advise "type 'reshow' to show again, or ^D to exit"
+#< /dev/tty

@@ -1,0 +1,30 @@
+
+Set min_time -100
+Set max_time 600
+Set corr_min	-0.5
+Set corr_max	0.5
+Set corr_per_tick 0.25
+Set ms_per_tick 100
+
+Define Init_Correlogram_Plot 0
+If !viewer_exists(plotwin)
+  "New_Plotter plotwin 800 600"
+Select_Plotter plotwin
+Plot_Foreground $white
+Plot_Background $black
+Plot_Data_Range $min_time $corr_min $max_time $corr_max 
+Init_Legend_Fonts plotwin
+.
+
+Define Setup_Correlogram_Plot 0
+Init_Correlogram_Plot
+Y_Legend "Correlation"
+X_Legend "time (msec)"
+Grid_Color $gray
+Plot_Grid $min_time $corr_min $max_time $corr_max $ms_per_tick $corr_per_tick
+Select_Pen $white
+Label_X_Ticks $min_time $max_time $ms_per_tick
+Label_Y_Ticks $corr_min $corr_max $corr_per_tick
+.
+
+

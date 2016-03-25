@@ -1,0 +1,42 @@
+
+#default values
+Set spin_overhead_milliseconds 1
+Assign iterations_per_millisecond 68.46
+
+Define MDelay 1 delay_in_milliseconds
+Assign n_spin floor(($1-$spin_overhead_milliseconds)*$iterations_per_millisecond)
+#Print n_spin
+If $n_spin<=0 "exit_macro"
+repeat $n_spin
+  nop
+  end
+.
+
+Define Testit 1 count
+Mark_Time
+MDelay $1
+Mark_Time
+advise "MDelay $1 delta_ms $delta_ms iterations_per_millisecond $iterations_per_millisecond"
+.
+
+Define Calibrate_MDelay 0
+Zero_Time
+Testit 1
+Set n 10
+Set lambda 0.1
+Set test_count 2000	# two seconds
+Assign avg_error 100000
+do
+  Testit $test_count
+  Assign new_ipm $iterations_per_millisecond*$test_count/$delta_ms
+  Assign delta_ipm $new_ipm-$iterations_per_millisecond
+  Add_Var iterations_per_millisecond $delta_ipm*$lambda
+  If $avg_error==100000
+    Then "Assign avg_error abs($delta_ms-$test_count)"
+    Else "Mul_Var avg_error 0.9 Add_Var avg_error abs($delta_ms-$test_count)*0.1"
+  advise "iterations_per_millisecond = $iterations_per_millisecond    avg_error = $avg_error"
+  while abs($avg_error)>0.1
+.
+
+#Calibrate_MDelay
+

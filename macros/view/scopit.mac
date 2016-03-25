@@ -1,0 +1,261 @@
+
+# scopit.mac  support for scopit shell utility
+# Based on Xgraph, but allows user to interactively roam around in the data...
+
+# The following comments were copied from xgraph.mac:
+# Note that for scopit we don't have command-line axis setting,
+# because the user can zoom in and out using the panel controls.
+
+# command line option processing, in the spirit of old graph(1)
+#
+# These are the old graph options:
+#
+# -a	automatically provide abscissas
+# -b	break graph after labels
+# -c	string is default label
+# -g    grid style
+# -l    next arg is graph label
+# -m    next arg is line mode (or color)
+# -s    don't erase before plotting
+# -x [l]  logarithmix if l present, next one or two args are lower (and upper) x limits
+#		third arg if present is grid spacing
+# -y [l]  like x
+# -h	fraction of space for height
+# -w	similarly for width
+# -r    fraction of space to move right
+# -u    similarly for up
+# -t    transpose axes (-x not applies to the vertical axis)
+#
+# if lower limit exceeds upper limit the axis is reversed
+# log axes may not be reversed
+#
+# Note that, unlike old graph(1), Xgraph does not handle labels embedded in the plotfile,
+# because it is read into a data object using Get_Ascii...
+#
+#
+# New long options:
+#
+# --width w			width of plotting window
+# --height h			width of plotting window
+# --x_legend string		legend for X axis
+# --y_legend string		legend for Y axis
+# --sample_freq freq
+
+Set scale_determined 0
+Set axes_drawn 0
+Set x_scale_determined 0
+Set y_scale_determined 0
+Set x_tick_spacing -1
+Set y_tick_spacing -1
+Set have_y_legend 0
+Set have_x_legend 0
+Set have_sample_freq 0
+Set y_legend none
+Set x_legend none
+Set grid_style 1		# default
+
+Define Process_Arg 1 index
+#advise "Process_Arg $1 (argc = $argc)"
+Set argname argv$1
+Set arg $$argname
+If !strncmp('$arg','--',2) "Process_Long_Option $arg $1 exit_macro"
+If !strncmp('$arg','-',1) "Process_Short_Option $arg $1 exit_macro"
+# The default action is plot a file of points
+If !$have_scope_instance Scope_Instance
+#advise "Graph_File $$argname $pen_color"
+Graph_File $$argname $pen_color
+Increment pen_color
+Assign i_arg 1+$1
+.
+
+Set pen_color $white
+
+Set plot_xmin 0
+Set plot_ymin 0
+Set plot_xmax 1
+Set plot_ymax 1
+
+Define X_Axis_Option 1 index
+Assign j_arg $1
+Increment j_arg
+Set argname argv$j_arg
+# BUG check for range?
+Assign plot_xmin $$argname
+Increment j_arg
+Set argname argv$j_arg
+Assign plot_xmax $$argname
+Add_Var i_arg 3
+Set argname argv$i_arg
+If isdigit('$$argname'[0])
+  "Set x_tick_spacing $$argname Increment i_arg"
+Set x_scale_determined 1
+If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"
+.
+
+Define Y_Axis_Option 1 index
+Assign j_arg $1
+Increment j_arg
+Set argname argv$j_arg
+# BUG check for range?
+Assign plot_ymin $$argname
+Increment j_arg
+Set argname argv$j_arg
+Assign plot_ymax $$argname
+Add_Var i_arg 3
+Set argname argv$i_arg
+If isdigit('$$argname'[0])
+  "Set y_tick_spacing $$argname Increment i_arg"
+Set y_scale_determined 1
+If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"
+.
+
+Define Grid_Style_Option 1 index
+Assign j_arg $1
+Increment j_arg
+Set argname argv$j_arg
+Assign grid_style $$argname
+#Print grid_style
+Add_Var i_arg 2
+.
+
+Define Line_Style_Option 1 index
+Assign j_arg $1
+Increment j_arg
+Set argname argv$j_arg
+Assign pen_color $white+$$argname
+#Print pen_color
+Add_Var i_arg 2
+.
+
+
+Define Process_Short_Option 2 option index
+If !strcmp('$1','-x') "X_Axis_Option $2 exit_macro"
+If !strcmp('$1','-y') "Y_Axis_Option $2 exit_macro"
+If !strcmp('$1','-g') "Grid_Style_Option $2 exit_macro"
+If !strcmp('$1','-m') "Line_Style_Option $2 exit_macro"
+warn "unrecognized short option $1"
+.
+
+Define Window_Width_Option 1 index
+Assign j_arg $1
+Increment j_arg
+Set argname argv$j_arg
+#advise "window width requested:  $$argname"
+Assign plotter_width $$argname
+Add_Var i_arg 2
+.
+
+Define Window_Height_Option 1 index
+Assign j_arg $1
+Increment j_arg
+Set argname argv$j_arg
+#advise "window width requested:  $$argname"
+Assign plotter_height $$argname
+Add_Var i_arg 2
+.
+
+Define Y_Legend_Option 1 index
+Assign j_arg $1
+Increment j_arg			# BUG need to make sure that this arg exists!
+Set argname argv$j_arg
+#Y_Legend $$argname
+Set y_legend $$argname
+Set have_y_legend 1
+Add_Var i_arg 2
+.
+
+Define Sample_Freq_Option 1 index
+Assign j_arg $1
+Increment j_arg			# BUG need to make sure that this arg exists!
+Set argname argv$j_arg
+Set scopit_sample_freq $$argname
+Set have_sample_freq 1
+Add_Var i_arg 2
+Print scopit_sample_freq
+Set_Sample_Frequency $scopit_sample_freq
+.
+
+Define X_Legend_Option 1 index
+Assign j_arg $1
+Increment j_arg			# BUG need to make sure that this arg exists!
+Set argname argv$j_arg
+#X_Legend $$argname
+Set x_legend $$argname
+Set have_x_legend 1
+Add_Var i_arg 2
+.
+
+Define Process_Long_Option 2 option index
+advise "Process_Long_Option $1"
+If !strcmp('$1','--width') "Window_Width_Option $2 exit_macro"
+If !strcmp('$1','--height') "Window_Height_Option $2 exit_macro"
+If !strcmp('$1','--x_legend') "X_Legend_Option $2 exit_macro"
+If !strcmp('$1','--y_legend') "Y_Legend_Option $2 exit_macro"
+If !strcmp('$1','--sample_freq') "Sample_Freq_Option $2 exit_macro"
+warn "unrecognized long option $1"
+.
+
+# BUG we can't get args $1 etc from within macro...
+
+Define Process_Scope_Options 0
+If $argc<1 "exit_macro"
+
+Set i_arg 1
+do
+  Process_Arg $i_arg
+  while $i_arg<=$argc
+.
+
+Set _i_trace 1
+
+Define Graph_File 2 filename pen_index
+If !file_exists('$1') "warn 'file \"$1\" does not exist!?' exit_macro"
+
+# get the number of lines (points)
+
+Count_Lines nlines $1
+
+Set v pts$_i_trace
+data
+  vector $v $nlines 1 float
+  ascii
+    read $v $1
+    quit
+  quit
+
+Add_Trace $v
+Increment _i_trace
+.
+
+Define Draw_Plot_Axes 0
+Select_Pen $white
+If $have_y_legend "Y_Legend $y_legend"
+If $have_x_legend "X_Legend $x_legend"
+Plot_X_Axis $plot_xmin $plot_xmax $plot_xmax-$plot_xmin $plot_ymin
+Plot_Y_Axis $plot_ymin $plot_ymax $plot_ymax-$plot_ymin $plot_xmin
+If $x_tick_spacing>0
+  "Label_X_Ticks $plot_xmin $plot_xmax $x_tick_spacing"
+If $y_tick_spacing>0
+  "Label_Y_Ticks $plot_ymin $plot_ymax $y_tick_spacing"
+Set axes_drawn 1
+.
+
+Set plotter_width 512	# default
+Set plotter_height 512	# default
+Set plotter_x 400
+Set plotter_y 50
+
+
+Set have_scope_instance 0
+
+Define Scope_Instance 0
+Init_Oscope $plotter_width $plotter_height
+Posn_Window $current_oscope $plotter_x $plotter_y
+# wait to make sure the window is mapped
+view wait $current_oscope quit
+Set scale_determined 0
+Set have_scope_instance 1
+#advise "Plotter_Instance DONE"
+.
+
+

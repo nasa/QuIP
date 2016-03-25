@@ -1,0 +1,11 @@
+
+If obj_exists(foo)
+  Then 'advise "foo exists"'
+  Else 'advise "foo does not exist"'
+
+Image foo 22 22 1 u_byte
+
+If obj_exists(foo)
+  Then 'advise "Now, foo exists"'
+  Else 'advise "foo still does not exist"'
+

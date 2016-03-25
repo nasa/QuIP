@@ -1,0 +1,69 @@
+# %Z% $RCSfile: dither.mac,v $ ver: $Revision: 1.5 $ $Date: 1999/04/08 15:36:51 $
+
+# depends on n_red_levels etc from disp.mac
+Start_File "$macro_dir/view/dither.mac"
+
+Set n_red_levels	6
+Set n_green_levels	11
+Set n_blue_levels	3
+Set color_base		48
+
+# error diffusion
+
+Define Color_Dither 2 'color image' 'byte buffer'
+Assign cr "nrows($1)"
+Assign cc "ncols($1)"
+data
+  image dbuf $cr $cc 1 byte
+  image fbuf $cr $cc 1 float
+  image accum $cr $cc 1 float
+  quit
+war image diffuse dbuf "$1{0}" $n_red_levels
+  # six levels
+  0*255/($n_red_levels-1)
+  1*255/($n_red_levels-1)
+  2*255/($n_red_levels-1)
+  3*255/($n_red_levels-1)
+  4*255/($n_red_levels-1)
+  5*255/($n_red_levels-1)
+  quit quit
+Convert fbuf dbuf
+VSMul accum fbuf $n_green_levels
+war image diffuse dbuf "$1{1}" $n_green_levels
+  # 11 levels
+  0*255/($n_green_levels-1)
+  1*255/($n_green_levels-1)
+  2*255/($n_green_levels-1)
+  3*255/($n_green_levels-1)
+  4*255/($n_green_levels-1)
+  5*255/($n_green_levels-1)
+  6*255/($n_green_levels-1)
+  7*255/($n_green_levels-1)
+  8*255/($n_green_levels-1)
+  9*255/($n_green_levels-1)
+  10*255/($n_green_levels-1)
+  quit quit
+Convert fbuf dbuf
+VVAdd accum accum fbuf
+VSMul accum accum $n_blue_levels
+war image diffuse dbuf "$1{2}" $n_blue_levels
+  # three blue levels
+  0*255/($n_blue_levels-1)
+  1*255/($n_blue_levels-1)
+  2*255/($n_blue_levels-1)
+  quit quit
+Convert fbuf dbuf
+VVAdd accum accum fbuf
+VSAdd accum accum $color_base
+Convert $2 accum
+Delete_Image fbuf
+Delete_Image dbuf
+Delete_Image accum
+.
+
+Define Binary_Dither 2 target source
+war image diffuse $1 $2 2 0 255 quit quit
+.
+
+Stop_File "$macro_dir/view/dither.mac"
+

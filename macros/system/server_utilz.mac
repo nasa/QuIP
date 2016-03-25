@@ -1,0 +1,23 @@
+
+# appended version number, instead of over-writing the original.
+
+Define Count_Versions 3 varname filename directory
+Set $1 0
+Set version_idx 1
+If !file_exists('$3/$2') exit_macro
+do
+  Increment version_idx
+  Increment $1
+  If !file_exists('$3/$2.$version_idx') exit_macro
+  while 1
+.
+
+Define Set_Subdir_Filename 3 varname filename dirname
+Insure_Directory $3
+Count_Versions n_existing "$2" "$3"
+If $n_existing==0
+  Then "Set $1 '$3/$2'"
+  Else "Set $1 '$3/$2.$version_idx'"
+.
+
+

@@ -1,0 +1,76 @@
+/System/Library/Frameworks/OpenCL.framework/Versions/A/Headers
+
+
+-------------------------------
+
+Include file structure is a bit tortured...
+
+Hierarchy of functions, e.g. vsadd
+
+
+extern void vsadd(Vec_Obj_Args *);	// top-level veclib function, can call device func
+					// as appropriate for object
+
+extern void h_ocl_rvsadd( Vec_Obj_Args *oap );	// openCL top level function
+
+// example of type-specific host functions
+extern void h_ocl_fast_sp_rvsadd(Vector_Args *vap);
+extern void h_ocl_eqsp_sp_rvsadd(Vector_Args *vap);
+extern void h_ocl_slow_sp_rvsadd(Vector_Args *vap);
+
+// kernel functions
+extern void gpu_fast_sp_rvsadd( float* a, float* b, float scalar1_val );
+extern void gpu_eqsp_sp_rvsadd( float* a, int inc1, float* b, int inc2, float scalar1_val );
+extern void gpu_fast_len_sp_rvsadd( float* a, float* b, float scalar1_val, int len);
+extern void gpu_eqsp_len_sp_rvsadd( float* a, int inc1, float* b, int inc2, float scalar1_val, int len);
+extern void gpu_slow_len_sp_rvsadd( float* a, my_dim3 inc1, float* b, my_dim3 inc2, float scalar1_val, my_dim3 len);
+
+We use a common set of macro names for both prototype declarations
+and function declarations, depending on appropriate definitions.
+Many other macros (e.g. std_type) are also used to get the different
+types declared.
+
+We have prototypes for:
+	menu functions		COMMAND_FUNC(do_vadd)
+	host functions		h_ocl_vadd( Vec_Obj_Args *oap )
+	host typed		h_ocl_sp_vadd( Vec_Obj_Args *oap )
+
+	kernels
+
+The overloaded macros (e.g. _KERN_FUNC_5V) need to be define in FIVE places, and undef'd once:
+
+gpu_calls.h:#define _KERN_FUNC_5V(n,c,s)                        GENERIC_KERN_CALL(n,c,s,,,,5,)
+host_call_defs.h:#define _KERN_FUNC_5V(n,c,s)           GENERIC_HOST_CALL(n,c,,,,5)
+
+host_typed_prot_defs.h:#define _KERN_FUNC_5V(n,c,s)             GENERIC_HOST_PROT(n,c)
+host_untyped_prot_defs.h:#define _KERN_FUNC_5V(n,c,s)           HOST_PROTOTYPE(n)
+kern_prot_defs.h:#define _KERN_FUNC_5V(n,c,s)           GENERIC_KERN_PROT(n,c,s,,,,5,)
+
+kern_undefs.h:#undef _KERN_FUNC_5V
+
+
+We also have two places where we need to enumerate all of the typed functions
+
+ocl_kernels.c
+ocl_host_funcs.c
+
+########################################
+
+// openCL openGL interop support
+
+/*
+
+potentially useful functions:
+
+
+clGetGLContextInfoHKR
+clCreateFromGLBuffer
+clCreateFromGLTexture
+clCreateFromGLRenderbuffer
+clGetGLObjectInfo
+clGetGLTextureInfo
+clEnqueueAcquireGLObjects
+clEnqueueReleaseGLObjects
+
+*/
+

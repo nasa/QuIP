@@ -1,0 +1,630 @@
+# %Z% $RCSfile: view.mac,v $ ver: $Revision: 1.66 $ $Date: 2010/10/17 15:54:58 $
+
+# useful macros for view submenu
+
+Start_File view.mac
+
+If !var_exists(DISPLAY_DEPTH) "Set DISPLAY_DEPTH 24"
+
+#< $macro_dir/view/common.mac
+#< $macro_dir/view/luts.mac
+#< $macro_dir/view/dither.mac
+
+#advise protect_lut
+#Protect_LUT 0
+#< $macro_dir/view/grayscale.scr
+
+# default flag values
+If !var_exists(showall) "Set showall 0"
+If !var_exists(showing) "Set showing 1"
+
+Set n_gray_protect	8
+
+# useful macros for iview
+# the loop is there to make things happen when running as daemon
+# NEED to set loopit=1 in viewing daemons!
+
+Set loopit	0
+Set tracing	0
+
+Set saving_all	0
+
+Define Delete_Viewer 1 name
+view viewers delete $1 quit quit
+.
+
+Define Select_Viewer 1 name
+Set current_window $1
+view select $1 quit
+.
+
+Define Event_Redir 0
+view redir quit
+.
+
+Define Event_UnRedir 0
+view unredir quit
+.
+
+Define View_Loop 0
+If $loopit "view loop quit"
+.
+
+Define Destroy_Viewer 1 name
+view viewers delete "$1" quit quit
+.
+
+Define Sized_Viewer_At 5 name dx dy x y
+Viewer $1 $2 $3
+Posn_Window $1 $4 $5
+View_Loop
+.
+
+Define Set_Display_Size 2 width height
+Assign display_width $1
+Assign display_height $2
+.
+
+Define Rect_View 3 'name for viewer' 'x location' 'y location'
+#Viewer $1 $display_width $display_height
+New_Plotter $1 $display_width $display_height
+Posn_Window $1 $2 $3
+View_Loop
+.
+
+Define Default_Click 0
+Set clicked 1
+.
+
+Set left_button_up	1
+Set middle_button_up	1
+Set right_button_up	1
+Set left_button_down	0
+Set middle_button_down	0
+Set right_button_down	0
+
+Define Wait_While_Button_Up 0
+
+do
+  os events quit
+  If $left_button_up&&$middle_button_up&&$right_button_up "usleep 500000"
+  while $left_button_up&&$middle_button_up&&$right_button_up
+.
+
+Define Wait_While_Button_Up_If 0
+If $pausing Wait_While_Button_Up
+.
+
+Set current_window you_need_to_set_current_window
+
+Define Viewer 3 name width height
+Tell_If "Viewer $1 $2 $3"
+#view viewers new $1 $2 $3 quit quit
+Click_Viewer "$1" $2 $3 Default_Click Default_Click exit
+View_Loop
+view wait $1 quit
+Set_Lin_Exponent 2.6		# default value
+.
+
+Define Wait_For_Click_If 0
+If $pausing Wait_For_Click
+.
+
+
+Define Wait_For_Click 0
+Set clicked 0
+repeat 50000
+  os events quit
+  If !$clicked "usleep 100000"
+  while !$clicked
+.
+
+Define Wait_For_Up_Click 0
+Set last_button_pressed none
+Tell_If "Click to proceed..."
+Wait_For_Click
+If $left_button_down "Set last_button_pressed left"
+If $middle_button_down "Set last_button_pressed middle"
+If $right_button_down "Set last_button_pressed right"
+If $left_button_down||$middle_button_down||$right_button_down Wait_For_Click
+Tell_If "Proceeding."
+.
+
+Define Wait_For_Down_Click 0
+Wait_For_Click
+If $left_button_up&&$middle_button_up&&$right_button_up Wait_For_Click
+.
+
+
+Define Wait_For_Down_Click2 0
+
+repeat 50000
+  os events quit
+  Assign clicked2 $left_button_down||$middle_button_down||$right_button_down
+  If !$clicked2 "usleep 1000"
+while !$clicked2
+.
+
+
+Define Extract 2 target viewer
+view
+  show $2
+  extract $1 $2 0 0
+  quit
+.
+
+Define Adj_Viewer 4 name width height action_text
+Set current_window $1
+view
+  viewers
+    adjuster $1 $2 $3 $4
+    quit
+  quit
+#advise 'calling loop'
+View_Loop
+#advise 'done with Viewer'
+.
+
+Define Mousescape 4 name width height mouse_text
+view
+  viewers
+    mousescape $1 $2 $3 $4
+    quit
+  quit
+.
+
+Define Plotter 3 name width height
+Set current_window $1
+view
+  viewers
+    plotter $1 $2 $3
+    quit
+  quit
+View_Loop
+.
+
+Define Click_Viewer 6 name width height 'left text' 'middle text' 'right text'
+Set current_window "$1"
+view
+  viewers
+    buttons "$1" $2 $3 $4 $5 $6
+    quit
+  quit
+View_Loop
+.
+
+Define Exit_Up 0
+If $left_button_up&&$middle_button_up&&$right_button_up exit
+.
+
+Define Exit_If_Click 0
+os events quit
+If $left_button_down||$middle_button_down||$right_button_down	'exit'
+.
+
+Define Set_Button_Actions 4 viewer 'left text' 'middle text' 'right text'
+view
+  viewers
+#    actions $1 $2 $3 $4
+    event_action $1 left_button_up $2
+    event_action $1 left_button_down $2
+    event_action $1 middle_button_up $3
+    event_action $1 middle_button_down $3
+    event_action $1 right_button_up $4
+    event_action $1 right_button_down $4
+    quit
+  quit
+.
+
+
+Define Posn_Window 3 name x y
+# just for mac?
+usleep 10000
+#view position $1 $2 $3 quit
+genwin position $1 $2 $3 quit
+.
+
+Define Posn_Viewer 3 name x y
+advise "Posn_Viewer is deprecated, use Posn_Window instead..."
+#view position $1 $2 $3 quit
+Posn_Window $1 $2 $3
+.
+
+Define New_View 4 'name for viewer' size 'x location' 'y location'
+Viewer $1 $2 $2
+Posn_Window $1 $3 $4
+View_Loop
+.
+
+Define Label_Viewer_If 2 'view name' 'new label'
+If $showing "Label_Viewer $1 '$2'"
+.
+
+Define Label_Viewer 2 'view name' 'new label'
+view label $1 $2 quit
+View_Loop
+.
+
+Define Init_LUT 1 'viewer name'
+Select_Viewer $1
+Grayscale_LUT 0 256
+View_Loop
+.
+
+Define Poke_Lut 5 'viewer name' index r g b
+Select_Viewer $1
+Poke_LUT $2 $3 $4 $5
+View_Loop
+.
+
+Define Save_Lut 2 lutname filename
+view
+  luts
+    lutbuffers
+      save $1 $2
+      quit
+    quit
+  quit
+.
+
+Define Dump_Lut 1 lutname
+view
+  luts
+    lutbuffers
+      dump $1
+      quit
+    quit
+  quit
+.
+
+Define Load_Lut 2 lutname filename
+view
+  luts
+    lutbuffers
+      load $1 $2
+      quit
+    quit
+  quit
+.
+
+Define Show_Gappy 2 obj viewer
+Dup_Obj sgtmpobj $1
+VMov sgtmpobj $1
+Show_Contig sgtmpobj "$2"
+Delete_Image sgtmpobj
+.
+
+##########
+
+# take a byte image (0-255) and convert to short for grayscale display
+# Assume 16 bit display w/ 5 bits blue (lsb), 6 bits green, 5 bits red (msb)
+
+Define Show16 2 image viewer
+If depth($1)==3
+  Then "Show_RGB_16 $1 $2"
+  Else "Show_Gray_16 $1 $2"
+.
+
+Define Show_RGB_16 2 image viewer
+Image s16_ftmp nrows('$1') ncols('$1') 1 float
+Image s16_accum nrows('$1') ncols('$1') 1 float
+Image s16_stmp nrows('$1') ncols('$1') 1 u_short
+
+# 6 bits for green
+Convert s16_ftmp $1{1}
+VSMul s16_ftmp s16_ftmp 1/4	# 8 bits -> 6 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_accum s16_ftmp 32	# skip over 5 low - order bits
+
+# 5 bits for red and blue
+Convert s16_ftmp $1{0}
+VSMul s16_ftmp s16_ftmp 1/8	# 8 bits -> 5 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_ftmp s16_ftmp 1+32*64	# skip over 5+6 low - order bits
+VVAdd s16_accum s16_accum s16_ftmp
+
+Convert s16_stmp s16_accum
+view load $2 s16_stmp quit
+
+Delete_Image s16_stmp
+Delete_Image s16_ftmp
+Delete_Image s16_accum
+.
+
+Define Show_Gray_16 2 image viewer
+Dup_Float s16_ftmp $1
+Dup_Float s16_accum $1
+Dup_Short s16_stmp $1
+
+# 6 bits for green
+Convert s16_ftmp $1
+VSMul s16_ftmp s16_ftmp 1/4	# 8 bits -> 6 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_accum s16_ftmp 32	# skip over 5 low - order bits
+
+# 5 bits for red and blue
+Convert s16_ftmp $1
+VSMul s16_ftmp s16_ftmp 1/8	# 8 bits -> 5 bits
+VFloor s16_ftmp s16_ftmp	# truncate fractional part...
+VSMul s16_ftmp s16_ftmp 1+32*64	# skip over 5+6 low - order bits
+VVAdd s16_accum s16_accum s16_ftmp
+
+Convert s16_stmp s16_accum
+view load $2 s16_stmp quit
+
+Delete_Image s16_stmp
+Delete_Image s16_ftmp
+Delete_Image s16_accum
+.
+
+Define VBlank 0
+view
+  vblank 1
+  quit
+.
+
+Define Show_Contig 2 obj viewer
+If "$DISPLAY_DEPTH==16" 
+  Then "Show16 $1 '$2'"
+  ##Else "view vblank 1 load $2 $1 quit"
+  Else "view load '$2' $1 quit"
+Pause_If
+.
+
+Define Show_Bytes_If 2 object viewer
+If $showing "Show_Bytes $1 '$2'"
+Pause_If
+.
+
+Define Show_Bytes 2 object viewer
+If "!is_contiguous('$1')"
+  Then "Show_Gappy $1 '$2'"
+  Else "Show_Contig $1 '$2'"
+.
+#Define Show_Bytes 2 obj viewer
+#view load $2 $1 quit
+#.
+
+
+Define Load_Viewer 2 viewer object
+view load $1 $2 quit
+.
+
+Define Show_Viewer 1 viewer
+#advise "Show_Viewer $1"
+view show $1 quit
+.
+
+Define UnShow_Viewer 1 viewer
+view unshow $1 quit
+.
+
+Define Protected_Grayscale_Viewer 1 name
+Select_Viewer $1
+#Protect_LUT $n_gray_protect
+Grayscale_LUT $n_gray_protect 256-$n_gray_protect
+.
+
+Define Grayscale_Viewer 1 name
+If $verbose "advise 'setting up grayscale color map'"
+Select_Viewer $1
+#Protect_LUT 0
+Grayscale_LUT 0 256
+.
+
+Define Fit_To_Viewer 3 image viewer varname
+Set $3 $1		# default is to return the original image
+# if the sizes match, there's nothing to do
+If "(ncols('$1')==ncols('$2')) && (nrows('$1')==nrows('$2'))"
+  "exit_macro"
+If obj_exists(ftvzoom) "Delete_Image ftvzoom"
+If obj_exists(ftvsub) "Delete_Image ftvsub"
+# if the image is bigger than the viewer, make
+# a subimage
+If "(ncols('$1')>ncols('$2')) || (nrows('$1')>nrows('$2'))"
+  "Subimage ftvsub $1 min(ncols('$1'),ncols('$2')) min(nrows('$1'),nrows('$2')) 0 0 Set $3 ftvsub"
+# If the image is smaller by a factor greater than or equal to 2,
+# then zoom by pixel replication
+Assign hz max(1,floor(ncols('$2')/ncols('$$3')))
+Assign vz max(1,floor(nrows('$2')/nrows('$$3')))
+Assign tz max(1,floor(nframes('$2')/nframes('$$3')))
+Assign nf1 nframes('$2')
+Assign nf2 nframes('$$3')
+#Tell_If "Fit_To_Viewer:  nf1  $2 $nf1   nf2 $$3 $nf2   tz $tz"
+
+#Tell_If "Fit_To_Viewer:  zoom factors are $hz, $vz, $tz"
+Tell_Precision $$3 prec
+If "$tz>1||$hz>1||$vz>1"
+  "Sequence ftvzoom $tz*nframes('$$3') $vz*nrows('$$3') $hz*ncols('$$3') depth('$$3') $prec Enlarge ftvzoom $$3 Set $3 ftvzoom"
+.
+
+Define Disp_Raw 2 image viewer
+Fit_To_Viewer $1 "$2" drvar
+Show_Raw $drvar "$2"
+.
+
+Define Old_Disp_Raw 2 image viewer
+If "(ncols('$1')==ncols('$2')) && (nrows('$1')==nrows('$2'))"
+  " Show_Raw $1 $2 exit_macro advise ERROR"
+#advise "Disp_Raw:  enlarging $1 to fit $2"
+Dup_Float dr_tmp $2
+Enlarge dr_tmp $1
+Show_Raw dr_tmp $2
+Delete_Image dr_tmp
+.
+
+Define Disp_Bytes 2 image viewer
+If "(ncols($1)==ncols($2)) && (nrows($1)==nrows($2))"
+  " Show_Bytes $1 $2 exit_macro advise ERROR"
+#advise "Disp_Bytes:  enlarging $1 to fit $2"
+#Dup_UByte db_tmp $2
+#Dup_UByte db_tmp $1
+data precision $1 dup_prec quit
+Image db_tmp nrows($2) ncols($2) depth($1) $dup_prec
+Enlarge db_tmp $1
+Show_Bytes db_tmp $2
+Delete_Image db_tmp
+.
+
+Define Show_All_If 3 image viewer string
+If $showing&&$showall "Show_Picture $1 $2 '$3'"
+.
+
+
+Define Copy_Inset 2 image index
+Dup_Float citmp $1
+VMov citmp $1
+Scale citmp 0 255
+Convert "bc$2" citmp
+Delete_Image citmp
+.
+
+Define Color_Dither_If 3 image viewer_index string
+If $showing "Dup_UByte dither_buf $1{0}"
+If $showing "Color_Dither $1 dither_buf"
+Show_Color_If dither_buf $2 $3
+Delete_Image dither_buf
+.
+
+Define Show_Color_If 3 image viewer_index string
+If $showing "Show_Color_Picture $1 v$2 '$3'"
+.
+
+Define Dump_Corner 1 image
+Subimage "${1}_top_corner" $1 3 3 0 0
+Display "${1}_top_corner"
+Delete_Image "${1}_top_corner"
+#Subimage "${1}_bot_corner" $1 3 3 0 0
+#Display "${1}_bot_corner"
+#Delete_Image "${1}_bot_corner"
+.
+
+Define Show_Raw_If 3 image viewer_index string
+If $showing "Show_Raw_Picture $1 v$2 '$3'"
+.
+
+Define Show_If 3 image viewer_index string
+# put insets in a video window...
+If $tracing "Dump_Corner $1"
+If $showing "Show_Picture $1 v$2 '$3'"
+.
+
+Define Show_Image_If 3 image viewer_index string
+# put insets in a video window...
+If $tracing "Dump_Corner $1"
+If $showing "Show_Disp_Image $1 $2 '$3'"
+.
+
+Define Label_If 2 viewer_index label
+If $showing "Label_Viewer v$1 '$2'"
+.
+
+Define Save_Picture 3 image_name viewer_name string
+#advise "Save_Picture $1 $2 $3"
+Hips_Write_Directory $demo_img_dir
+Set vname serial.$2
+If !var_exists($vname) "Set serial.$2 1" 
+Set file_name $2.$$vname.hips2
+If $$vname==1
+  Then "append no"
+  Else "append yes"
+output_file $demo_img_dir/index.$2
+echo "$2 $$vname\t$1\t$3"
+
+Increment $vname
+#Filetype hips2
+Put_Hips2 $1 $file_name
+#os Qstack quit
+.
+
+Define Save_View 2 filename viewer
+Dup_UByte sv_tmp $2
+view extract sv_tmp $2 0 0 quit
+Clobber yes
+Write_File_Header $1 1
+Put_Next sv_tmp $1
+Delete_Image sv_tmp
+.
+
+Define Show_Raw_Picture 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Raw_Picture:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Raw $1 $2
+If $saving_all&&var_exists(demo_img_dir) "Save_Picture $1 $2 '$3'"
+Pause_If
+#advise "Show_Picture done"
+.
+
+Define Show_Picture 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Picture:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Gray $1 $2
+If $saving_all&&var_exists(demo_img_dir) "Save_Picture $1 $2 '$3'"
+Pause_If
+#advise "Show_Picture done"
+.
+
+Define Show_Disp_Image 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Image:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Image $1 $2
+Pause_If
+.
+
+Define Show_Color_Picture 3 image viewer string
+If $verbose||$chatty 
+  "advise 'Show_Color_Picture:  Showing $3 ($1) in viewer $2'"
+Label_Viewer $2 "$3"
+Disp_Bytes $1 $2
+Pause_If
+.
+
+#Define Pause_If 0
+#If !$pausing 'exit_macro'
+#advise 'type ^D to proceed'
+#< /dev/tty
+#.
+
+#Set_Display_Size $xsize $ysize
+
+
+Define Init_8Bit_Grayscale 0
+Set n_gray_levels	32	# see default colormap, colormaps.c
+Set gray_base		16
+#Set n_gray_levels	28	# these values are consistent w/ KDE ???
+#Set gray_base		216
+.
+
+Define Init_24Bit_Grayscale 0
+Set n_gray_levels	256
+Set gray_base 		0
+.
+
+Define Init_16Bit_Grayscale 0
+Init_24Bit_Grayscale
+.
+
+Set last_depth 0
+
+Define Reset_Depth 1 depth
+If $1==24 Init_24Bit_Grayscale
+If $1==8 Init_8Bit_Grayscale
+If $1==16 Init_16Bit_Grayscale
+If $1!=8&&$1!=24&&$1!=16 "warn 'Reset_Depth (view.mac):  unexpected display depth $1'"
+Set last_depth $1
+.
+
+Define Init_Grayscale_Range 0
+view displays tell display_name quit quit
+Assign display_depth depth("$display_name")
+If $display_depth!=$last_depth "Reset_Depth $display_depth"
+Assign gray_min		$gray_base
+Assign gray_max		$gray_base+$n_gray_levels-1
+.
+
+Stop_File view.mac
+
+

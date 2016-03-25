@@ -1,0 +1,41 @@
+
+README file for /dev/fb usage
+
+The external programs that we user are fbset, matroxset, and con2fb.
+
+
+* Setting the virtual frame buffer resolution:
+
+fbset affects /dev/fb0, but not X...
+For X, need to add line "Virtual 2048 2048" to /etc/X11/xorg.conf,
+in screen section, display subsection...
+
+For non-X use, modes are controlled by /etc/fb.modes.  (Virtual resolution
+numbers follow displayed resolution.)  Simply edit, then install with
+% fbset <mode_name>
+
+
+
+
+DUAL HEAD
+
+have to modprobe matroxfb_crtc2
+before /dev/fb1 shows up...
+
+
+# set outputs:
+matroxset -f /dev/fb0 -m 1		# fb0 on primary head
+matroxset -f /dev/fb1 -m 2		# fb1 on secondary head
+
+# second head can only be 16 or 32 bpp
+
+
+
+USING /dev/fb with X11
+
+X configuration is independent, should match...
+If frame buffer has off-screen memory, X will treat it as
+big screen larger than the monitor...
+For X, need to add line "Virtual 2048 2048" to /etc/X11/xorg.conf,
+
+

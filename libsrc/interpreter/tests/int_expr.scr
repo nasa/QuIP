@@ -1,0 +1,12 @@
+variables format hex quit
+Set x 16
+Assign y ~$x
+advise "x = $x, ~ x = $y"
+Assign z 511&$y
+advise "511 & ~ x = $z"
+
+Assign x 0x8000000000000000
+Print x
+Assign y ~$x
+Print y
+

@@ -1,0 +1,917 @@
+
+Start_File funcs.mac
+
+Define Select_Default_CUDA_Device 0
+If (!strcmp('$HOSTNAME','mach'))&&!var_exists(DEFAULT_CUDA_DEVICE)
+  "Set DEFAULT_CUDA_DEVICE GeForce_GTX_680MX_2"
+If var_exists(DEFAULT_CUDA_DEVICE)
+  'platforms select $DEFAULT_CUDA_DEVICE quit exit_macro'
+error_exit "DEFAULT_CUDA_DEVICE is not defined!?"
+.
+
+Define Select_Default_OpenCL_Device 0
+If var_exists(DEFAULT_OPENCL_DEVICE)
+  'platforms select $DEFAULT_OPENCL_DEVICE quit exit_macro'
+error_exit "DEFAULT_OPENCL_DEVICE is not defined!?"
+.
+
+Define Select_Default_GPU 0
+If var_exists(DEFAULT_GPU)&&var_exists(DEFAULT_PLATFORM)
+  'platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit exit_macro'
+If var_exists(GPU_DEVICE)&&var_exists(GPU_PLATFORM)
+  'platforms select $GPU_PLATFORM $GPU_DEVICE quit exit_macro'
+
+If !strcmp('$HOSTNAME','pavlov')
+  "Set GPU_DEVICE AMD_Radeon_R9_M370X_Compute_Engine"
+If !strcmp('$HOSTNAME','pavlov.local')
+  "Set GPU_DEVICE AMD_Radeon_R9_M370X_Compute_Engine"
+If !strcmp('$HOSTNAME','mach')
+  #"Set GPU_DEVICE GeForce_GTX_680MX_2"		# use this for CUDA
+  "Set GPU_DEVICE GeForce_GTX_680MX"		# use this for OpenCL
+
+If !var_exists(GPU_DEVICE)
+  "error_exit 'Select_Default_GPU:  need to add a case for host $HOSTNAME!?'"
+
+platforms select $GPU_DEVICE quit
+.
+
+# space-domain convolution
+
+Define SD_Convolve 3 target source filter
+compute misc convolve $1 $2 $3 quit quit
+.
+
+# definition of processing words
+
+# vector-vector operations
+
+Define VSquare 2 target source
+compute vvector mul $1 $2 $2 quit quit
+.
+
+Define VVMul 3 target in1 in2
+compute vvector mul $1 $2 $3 quit quit
+.
+
+Define VVSub 3 target in1 in2
+compute vvector sub $1 $2 $3 quit quit
+.
+
+Define VVAdd 3 target in1 in2
+compute vvector add $1 $2 $3 quit quit
+.
+
+Define VVCmul 3 target in1 in2
+compute vvector cmul $1 $2 $3 quit quit
+.
+
+Define VVDiv 3 target in1 in2
+compute vvector div $1 $2 $3 quit quit
+.
+
+
+# vector scalar operations
+
+Define VSXor 3 target source value
+compute svector xor $1 $2 $3 quit quit
+.
+
+Define VSAnd 3 target source value
+compute svector and $1 $2 $3 quit quit
+.
+
+Define VSMod 3 target source value
+compute svector mod $1 $2 $3 quit quit
+.
+
+Define VSMod2 3 target source value
+compute svector mod2 $1 $2 $3 quit quit
+.
+
+Define VQSMul 6 target source v1 v2 v3 v4
+compute Qsvector mul $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VQSDiv 6 target source v1 v2 v3 v4
+compute Qsvector div $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VSMul 3 target source value
+compute svector mul $1 $2 $3 quit quit
+.
+
+Define VCSMul 4 target source real imag
+compute csvector mul $1 $2 $3 $4 quit quit
+.
+
+Define VCSDiv 4 target source real imag
+compute csvector div $1 $2 $3 $4 quit quit
+.
+
+Define VSMulComplex 4 target source real imag
+warn "obsolete macro VSMulComplex, use VCSMul"
+VCSMul $1 $2 $3 $4
+.
+
+Define VPow 3 dest src exponent
+compute trig pow $1 $2 $3 quit quit
+.
+
+
+Define VSAdd 3 target source value
+compute svector add $1 $2 $3 quit quit
+.
+
+Define VCSAdd 4 target source real imag
+compute csvector add $1 $2 $3 $4 quit quit
+.
+
+Define VCSSub 4 target source real imag
+compute csvector sub $1 $2 $3 $4 quit quit
+.
+
+Define VQSAdd 6 target source re ii jj kk
+compute Qsvector add $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VQSSub 6 target source re ii jj kk
+compute Qsvector sub $1 $2 $3 $4 $5 $6 quit quit
+.
+
+Define VSAddComplex 4 target source real imag
+warn "obsolete macro VSAddComplex, use VCSAdd"
+VCSAdd $1 $2 $3 $4
+.
+
+Define VSSub 3 target source value
+compute svector sub $1 $2 $3 quit quit
+.
+
+Define VSDiv2 3 target source value
+compute svector div2 $1 $2 $3 quit quit
+.
+
+Define VSDiv 3 target source value
+compute svector div $1 $2 $3 quit quit
+.
+
+Define VShL 3 target shift_count_vec src_vec
+compute logical shl $1 $2 $3 quit quit
+.
+
+Define VShR 3 target shift_count_vec src_vec
+compute logical shr $1 $2 $3 quit quit
+.
+
+Define VSShL 3 target src n
+compute logical sshl $1 $2 $3 quit quit
+.
+
+Define VSShR 3 target src n
+compute logical sshr $1 $2 $3 quit quit
+.
+
+Define VSShL2 3 target src n
+compute logical sshl2 $1 $2 $3 quit quit
+.
+
+Define VSShR2 3 target src n
+compute logical sshr2 $1 $2 $3 quit quit
+.
+
+Define VSPow 3 target src exponent
+compute svector pow $1 $2 $3 quit quit
+.
+
+Define VSPow2 3 target src exponent
+compute svector pow2 $1 $2 $3 quit quit
+.
+
+# unary operations
+
+Define VUni 1 target
+compute unary uni $1 quit quit
+.
+
+Define VSign 2 target src
+compute unary sign $1 $2 quit quit
+.
+
+Define VAbs 2 targ src
+compute unary abs $1 $2 quit quit
+.
+
+Define VMov 2 target source
+compute unary mov $1 $2 quit quit
+.
+
+Define VSetComplex 3 target real imag
+compute unary set $1 $2 $3 quit quit
+.
+
+Define VSet 2 target value
+compute unary set $1 $2 quit quit
+.
+
+Define Get_Sum 2 varname image
+data
+  precision $2 gs_prec
+  areas match $2 quit
+  quit
+Scalar gs_sum 1 $gs_prec
+VSum gs_sum $2
+Assign $1 value(gs_sum)
+#Tell_If "Sum($2) = $$1"
+Delete_Image gs_sum
+.
+
+Define Get_Mean 2 varname image
+Get_Sum $1 $2
+Mul_Var $1 "1/(depth('$2')*ncols('$2')*nrows('$2'))"
+.
+
+# var = sum ( x_i - x_bar )^2
+#     = sum ( x_i^2 - 2 x_i x_bar + x_bar^2 )
+#     = sum x_i^2 - 2 N x_bar^2  + N x_bar^2
+#     = sum x_i^2 - N x_bar^2
+
+Define Get_Variance 2 varname image
+#Dup_Image gv_tmp $2
+Dup_Float gv_tmp $2
+#verbose yes
+#Disp_Image $2 v
+VVMul gv_tmp $2 $2
+#verbose yes
+#Disp_Image gv_tmp v
+Get_Sum sos gv_tmp
+Delete_Image gv_tmp
+Get_Mean gv_mean $2
+#Print gv_mean
+Assign mean_sq "$sos/(depth('$2')*ncols('$2')*nrows('$2'))"
+#Print mean_sq
+Assign $1 $mean_sq-$gv_mean*$gv_mean
+#Print $1
+#Pause
+.
+
+Define VSum 2 destination source
+compute unary sum $1 $2 quit quit
+.
+
+Define VRound 2 target source
+compute unary round $1 $2 quit quit
+.
+
+Define VFloor 2 target source
+compute unary floor $1 $2 quit quit
+.
+
+Define VCeil 2 target source
+compute unary ceil $1 $2 quit quit
+.
+
+Define VNeg 2 target source
+compute unary neg $1 $2 quit quit
+.
+
+Define Sum_Cols 2 out_row img		# Sum along columns
+compute unary dimsum $1 $2 2 quit quit
+.
+
+Define Sum_Rows 2 out_col img		# Sum along rows
+compute unary dimsum $1 $2 1 quit quit	# can be also donw with  compute > misc > project
+.
+
+
+# trig functions etc
+
+Define VMagSq 2 target source
+compute trig magsq $1 $2 quit quit
+.
+
+Define VSqrt 2 target source
+compute trig sqrt $1 $2 quit quit
+.
+
+Define VLog10 2 target source
+compute trig log10 $1 $2 quit quit
+.
+
+Define VLog 2 target source
+compute trig log $1 $2 quit quit
+.
+
+Define VExp 2 target source
+compute trig exp $1 $2 quit quit
+.
+
+Define VErf 2 target source
+compute trig erf $1 $2 quit quit
+.
+
+Define VErfInv 2 target source
+compute trig erfinv $1 $2 quit quit
+.
+
+Define VSin 2 target source
+compute trig sin $1 $2 quit quit
+.
+
+Define VCos 2 target source
+compute trig cos $1 $2 quit quit
+.
+
+Define VAtan 2 target source
+compute trig atan $1 $2 quit quit
+.
+
+Define VAtan2 3 target src1 src2
+compute trig atan2 $1 $2 $3 quit quit
+.
+
+Define VSAtan2 3 target src1 scalar
+compute svector atan2 $1 $2 $3 quit quit
+.
+
+Define VSAtan22 3 target src1 scalar
+compute svector atan22 $1 $2 $3 quit quit
+.
+
+Define VAtn2 2 target source
+compute trig atn2 $1 $2 quit quit
+.
+
+Define VACos 2 target source
+compute trig acos $1 $2 quit quit
+.
+
+Define VASin 2 target source
+compute trig asin $1 $2 quit quit
+.
+
+Define VTan 2 target source
+compute trig tan $1 $2 quit quit
+.
+
+# logical operations
+
+Define VNot 2 target src
+compute logical not $1 $2 quit quit
+.
+
+Define VVXor 3 target in1 in2
+compute logical xor $1 $2 $3 quit quit
+.
+
+Define VVAnd 3 target in1 in2
+compute logical and $1 $2 $3 quit quit
+.
+
+Define VSOr 3 target src scalar
+compute svector or $1 $2 $3 quit quit
+.
+
+Define VVOr 3 target in1 in2
+compute logical or $1 $2 $3 quit quit
+.
+
+# comparison stuff
+
+Define VBnd 3 target in1 in2
+compute compare bound $1 $2 $3 quit quit
+.
+
+Define VCmp 3 target input1 input2	# input1 < input2
+compute compare vcmp $1 $2 $3 quit quit
+.
+
+Define VSCmp 3 target input scalar	# input >= scalar
+compute compare vscmp $1 $2 $3 quit quit
+.
+
+Define VSCmp2 3 target input scalar	# input <= scalar
+compute compare vscmp2 $1 $2 $3 quit quit
+.
+
+Define VS_GE 3 target input scalar	# same macro as VSCmp
+compute compare vscmp $1 $2 $3 quit quit
+.
+
+Define VS_GT 3 target input scalar	# LOOSE "greater than" !!!!!
+compute compare vscmp $1 $2 $3+0.0000001 quit quit
+.
+
+Define VS_LE 3 target input scalar	# same macro as VSCmp2
+compute compare vscmp2 $1 $2 $3 quit quit
+.
+
+Define VS_LT 3 target input scalar	# LOOSE "less than"  !!!!!
+compute compare vscmp2 $1 $2 $3-0.0000001 quit quit
+.
+
+
+Define IClip 3 target source value
+compute compare iclip $1 $2 $3 quit quit
+.
+
+Define Clip 3 target source value
+compute compare clip $1 $2 $3 quit quit
+.
+
+Define VMCmp 3 'target bitmap' input1 input2
+warn "VMCmp is obsolete!"
+compute compare vmcmp $1 $2 $3 quit quit
+.
+
+Define Map_Compare 3 'target bitmap' 'input1' 'input2'
+#warn "Map_Compare is obsolete!"
+#compute compare vmcmp $1 $2 $3 quit quit
+compute compare vvm_gt $1 $2 $3 quit quit
+.
+
+Define Map_Scalar_Mag_Compare 3 'target bitmat' 'input vector' 'scalar value'
+#advise "Map_Scalar_Mag_Compare $1 $2 $3"
+#compute compare vmscm $1 $2 $3 quit quit
+# vmscm is not part of veclib, but vmscp is (mapped onto a new veclib func)
+Dup_Float msmc_tmp $2
+#advise "VAbs msmc_tmp $1"
+VAbs msmc_tmp $2
+#advise "Map_Scalar_Compare $1 msmc_tmp $3"
+Map_Scalar_Compare $1 msmc_tmp $3
+Delete_Image msmc_tmp
+.
+
+Define Map_Scalar_Compare 3 'target bitmat' 'input vector' 'scalar value'
+compute compare vmscp $1 $2 $3 quit quit
+.
+
+Define Select 4 'input bitmap' 'output image' input1 input2
+compute compare select $1 $2 $3 $4 quit quit
+.
+
+# miscellaneous stuff
+
+#Define Project 2 dest src
+#compute misc project $1 $2 quit quit
+#.
+
+Define Project 2 dest src
+VSum $1 $2
+.
+
+Define Cumsum 2 dest src
+compute misc cumsum $1 $2 quit quit
+.
+
+Define Sample 3 dest src coords
+compute sample sample $1 $2 $3 quit quit
+.
+
+Define Render 3 dest src map
+compute sample render2 $1 $2 $3 quit quit
+.
+
+Define Morph 3 dest src map
+compute misc bilinear $1 $2 $3 quit quit
+#compute misc new_bilinear $1 $2 $3 quit quit
+.
+
+Define Fetch_Samples 3 dest src map
+compute misc new_bilinear $1 $2 $3 quit quit
+.
+
+Define Erode 2 dst src
+VSet $1 0.0
+compute morph erode $1 $2 quit quit
+.
+
+#Define Erode 2 dest src
+#VSet $1 0.0
+#Dup_Float etmp $2
+#VSSub $1 $2 1
+#compute misc dilate etmp $1 quit quit
+#VSSub $1 etmp 1
+#Delete_Image etmp
+#.
+
+Define Dilate 2 dst src
+VSet $1 0.0
+compute morph dilate $1 $2 quit quit
+.
+
+Define Opening 3 dst src n
+VSet $1 0.0
+compute morph opening $1 $2 $3 quit quit
+.
+
+Define Closing 3 dst src n
+VSet $1 0.0
+compute morph closing $1 $2 $3 quit quit
+.
+
+Define Thinz 2 src value
+compute morph skeletonization $1 $2 quit quit
+.
+
+
+Define Sort 1 img
+compute misc sort $1 quit quit
+.
+
+
+Define Fill 5 img x y v tol
+advise "Fill $1 $2 $3 $4 $5"
+compute misc fill $1 $2 $3 $4 $5 quit quit
+.
+
+Define Map 3 float_output byte_input map_vector
+compute misc map $1 $2 $3 quit quit
+.
+
+Define Finite 1 image
+compute misc finite $1 quit quit
+.
+
+Define Median_1D 3 targ src radius
+compute misc median_1D $1 $2 $3 quit quit
+.
+
+Define Median 2 targ src
+compute misc median $1 $2 quit quit
+.
+
+Define Median_Clip 2 targ src
+compute misc median_clip $1 $2 quit quit
+.
+
+Define Histogram 4 target source 'minimum bin center' 'bin width'
+compute misc histogram $1 $2 $3 $4 quit quit
+.
+
+Define VStitch 3 target source control
+compute misc stitch $1 $2 $3 quit quit
+.
+
+Define VInterp 3 target source control
+compute misc interpolate $1 $2 $3 quit quit
+.
+
+Define Enlarge 2 target source
+compute misc enlarge $1 $2 quit quit
+.
+
+Define Reduce 2 target source
+compute misc reduce $1 $2 quit quit
+.
+
+Define Product 3 target vec1 vec2
+#compute image product $1 $2 $3 quit quit
+VVMul $1 $2 $3
+.
+
+Define Ramp2D 4 target start dx dy
+compute image ramp2d $1 $2 $3 $4 quit quit
+.
+
+Define Ramp1D 3 target start delta
+compute image ramp1d $1 $2 $3 quit quit
+.
+
+Define Scale 3 target min max
+compute misc scale $1 $2 $3 quit quit
+.
+
+Define Diffuse 5 target source nlevels min max
+compute image diffuse $1 $2 $3 $4 $5 quit quit
+.
+
+Define UDiffuse 5 target source nlevels min max
+compute image udiffuse $1 $2 $3 $4 $5 quit quit
+.
+
+Define Scroll 4 target source dx dy
+compute fft scroll $1 $2 $3 $4 quit quit
+.
+
+Define RInvFFT 2 image xform
+compute fft irfft $1 $2 quit quit
+.
+
+Define InvFFT 1 image
+compute fft invfft $1 quit quit
+.
+
+Define Wrap 2 target source
+compute fft wrap $1 $2 quit quit
+.
+
+Define RFFT 2 xform image
+compute fft rfft $1 $2 quit quit
+.
+
+Define FFT 1 image
+compute fft fft $1 quit quit
+.
+
+Define FFT_Rows 1 image
+compute fft rows $1 quit quit
+.
+
+Define FFT_Cols 1 image
+compute fft cols $1 quit quit
+.
+
+Define DCT 1 image
+compute fft dct $1 quit quit
+.
+
+Define InvDCT 1 image
+compute fft idct $1 quit quit
+.
+
+Define VVMaxMag 3 target v1 v2
+compute compare max_mag $1 $2 $3 quit quit
+.
+
+Define VVMinMag 3 target v1 v2
+compute compare min_mag $1 $2 $3 quit quit
+.
+
+Define VVMax 3 target v1 v2
+compute compare max $1 $2 $3 quit quit
+.
+
+Define VSMax 3 target src value
+compute compare vsmax $1 $2 $3 quit quit
+.
+
+Define VVMin 3 target v1 v2
+compute compare min $1 $2 $3 quit quit
+.
+
+Define VSMin 3 target src value
+compute compare vsmin $1 $2 $3 quit quit
+.
+
+Define Min_Times 4 index_array source minval n_occurrences
+compute minmax min_times $1 $2 $3 $4 quit quit
+.
+
+Define Max_Times 4 index_array source maxval n_occurrences
+compute minmax max_times $1 $2 $3 $4 quit quit
+.
+
+Define Min_Index 2 dst src
+compute minmax min_index $1 $2 quit quit
+.
+
+#Define Min_Mag 2 vector scalar
+#compute minmax min_mag $1 $2 quit quit
+#.
+#Define Min_Index 2 source index
+#compute minmax min_index $1 $2 quit quit
+#.
+#Define Min_Mag_Index 2 source index
+#compute minmax min_mag_index $1 $2 quit quit
+#.
+#
+#Define Max_Index 2 source index
+#compute minmax max_index $1 $2 quit quit
+#.
+
+# destination used to be a scalar, now can be a projection with only
+# some dimensions collapsed...
+
+Define VMin 2 destination source
+compute minmax min $1 $2 quit quit
+.
+
+Define VMax 2 destination source
+compute minmax max $1 $2 quit quit
+.
+
+Define Get_Max 2 varname image
+data precision $2 prec quit
+Scalar gm_val 1 $prec
+VMax gm_val $2
+Assign $1 value(gm_val)		# won't work for CUDA!?
+Delete_Image gm_val
+.
+
+Define Get_Min 2 varname image
+data precision $2 prec quit
+Scalar gm_val 1 $prec
+VMin gm_val $2
+Assign $1 value(gm_val)
+Delete_Image gm_val
+.
+
+Define Selap 1 index
+compute control selap $1 quit quit
+.
+
+Define Scalar_Mode 1 mode
+compute control scalar_mode $1 quit quit
+.
+
+Define Find 3 coord_vector input_img threshold
+compute unary find $1 $2 $3 quit quit
+.
+
+Define Get_Pixel_Coords 3 pix_coords Npix binary 
+Get_Sum $2 $3
+If '$$2 != 0'
+Then	'Image $1 $$2 2 1 float	\
+	Find $1 $3 0'
+Else	'advise "FRIENDLY WARNING: binary image $1 is empty"'
+.
+
+Define RepMat 4 out in colRep rowRep	# Matrix replication
+Assign in_h nrows('$2')
+Assign in_w ncols('$2')
+Set ctmp 0
+repeat $3
+	Set rtmp 0
+	repeat $4
+		Subimage subtmp $1 $in_w $in_h $ctmp*$in_w $rtmp*$in_h
+		VMov subtmp $2
+		Delete_Image subtmp
+		Increment rtmp
+	end
+	Increment ctmp
+end
+.
+
+
+
+
+
+
+# conversions
+
+Define Convert 2 target source
+compute unary convert $1 $2 quit quit
+.
+
+#Define B2SP 2 target source
+#compute convert b2sp $1 $2 quit quit
+#.
+#
+#Define SP2B 2 target source
+#compute unconvert sp2b $1 $2 quit quit
+#.
+#
+#Define SP2I 2 target source
+#compute unconvert sp2i $1 $2 quit quit
+#.
+#
+#Define I2SP 2 target source
+#compute convert i2sp $1 $2 quit quit
+#.
+
+Define Flt2Cpx 2 target source
+VMov $1{0} $2
+VSet $1{1} 0.0
+.
+
+# matrix operations
+
+#Define VVDot 3 v1 v2 scalar
+Define VVDot 3 dst v1 v2
+#warn 'VVDOT syntax has changed!?'
+compute linear dot $1 $2 $3 quit quit
+.
+
+Define Invert 1 matrix
+compute linear invert $1 quit quit
+.
+
+
+Define Invert2 2 matrix_out matrix_in
+VMov $1 $2
+Invert $1
+.
+
+
+
+Define Inner_Prod 3 destvec srcvec matrix
+compute linear inner_prod $1 $2 $3 quit quit
+.
+
+Define Transpose 2 target source
+compute linear transpose $1 $2 quit quit
+.
+
+Define Xform_List 3 target source xform
+compute linear lxform $1 $2 $3 quit quit
+.
+
+Define Vec_Xform 3 target source xform
+compute linear xform $1 $2 $3 quit quit
+.
+
+# Find the index of the maximum pixel, convert to x,y coords
+# values in script vars $mxx $mxy
+
+# What is the point of this "gpu" version???
+Define GPU_Find_Max_Pixel 1 input
+#Vector fmp_indices ncols('$1') 1 int32
+#data precision $1 prec quit
+#Scalar fmp_extval 1 $prec
+#Scalar fmp_n_times 1 int32
+Insure_FMP_Objects
+Max_Times fmp_indices $1 fmp_extval fmp_n_times
+.
+
+Define Find_Max_Pixel 1 input
+Insure_FMP_Objects $1
+# find location of the maximum
+Max_Times fmp_indices $1 fmp_extval fmp_n_times
+Assign mxv value(fmp_extval)
+Assign mxt value(fmp_n_times)
+#Assign mxi value(fmp_indices[0])-1	# -1 was for old fortran convention?
+Assign mxi value(fmp_indices[0])	# -1 was for old fortran convention?
+#echo "max value $mxv occurred $mxt times, first at $mxi"
+Assign mxy "floor($mxi/ncols('$1'))"
+Assign mxx "($mxi)%(ncols('$1'))"
+#echo "index $mxi corresponds to location $mxx $mxy ?"
+#If "nrows($1)>1"
+#  Then "Assign tstval value($1[$mxy][$mxx])"
+#  Else "Assign tstval value($1[$mxx])"
+#
+#Print tstval
+.
+
+Define Init_FMP_Objects 1 source_vector
+#data precision $1 fmp_prec quit
+# how should we decide how many indices we need?
+Vector fmp_indices nelts('$1') 1 int32
+#Vector fmp_indices 3 1 int32
+Scalar fmp_n_times 1 int32
+VSet fmp_n_times -1	# BUG just for testing!
+#Std_Scalar fmp_extval	# BUG match precision to input
+Assign fmp_prec precision('$1')
+Scalar fmp_extval 1 $fmp_prec
+.
+
+Define Delete_FMP_Objects 0
+Delete_Image fmp_indices
+Delete_Image fmp_extval
+Delete_Image fmp_n_times
+.
+
+
+Define Insure_FMP_Objects 1 input
+If obj_exists(fmp_extval)&&strcmp(precision('$1'),precision(fmp_extval)) Delete_FMP_Objects
+If obj_exists(fmp_indices)&&ncols(fmp_indices)<nelts('$1') Delete_FMP_Objects
+If !obj_exists(fmp_indices) "Init_FMP_Objects $1"
+.
+
+Define Find_Min_Pixel 1 input
+Insure_FMP_Objects $1
+# find location of the minimum
+Min_Times fmp_indices $1 fmp_extval fmp_n_times
+Assign mnv value(fmp_extval)
+Assign mnt value(fmp_n_times)
+#Display fmp_n_times
+#Display fmp_indices
+#Assign mni value(fmp_indices[0])-1
+Assign mni value(fmp_indices[0])	# not fortran indices any more
+#echo "min value $mnv occurred $mnt times, first at $mni"
+Assign mny "floor($mni/ncols('$1'))"
+Assign mnx "($mni)%(ncols('$1'))"
+#echo "index $mni corresponds to location $mnx $mny ?"
+If "nrows('$1')>1"
+  Then "Assign tstval value($1[$mny][$mnx])"
+  Else "Assign tstval value($1[$mnx])"
+.
+
+Define YUV2RGB 2 dst src
+compute
+  misc
+    yuv2rgb $1 $2
+    quit
+  quit
+.
+
+# differentiate record
+# used to be in ../analysis/procrec.mac
+
+Define Differentiate 2 target source
+Dup_Float _d_scratch $1
+Scroll _d_scratch $2 1 0
+VSMul _d_scratch _d_scratch -1
+VVAdd $1 $2 _d_scratch
+VSet $1[0] 0.0		# or should be [n-1] ?
+Delete_Image _d_scratch
+.
+
+
+# space domain convolution
+
+#Define Convolve 3 target source filter
+#compute misc convolve $1 $2 $3 quit quit
+#.
+
+Stop_File funcs.mac
+

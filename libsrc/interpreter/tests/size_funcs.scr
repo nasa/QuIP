@@ -1,0 +1,54 @@
+# test new generalized scheme for size, position functions
+
+Image f 200 200 1 float
+Viewer_For v f
+
+Assign w ncols(f)
+advise "ncols(f) = $w"
+
+Assign w ncols(v)
+advise "ncols(v) = $w"
+
+Assign x x_position(v)
+Assign y y_position(v)
+advise "position(v) = $x, $y"
+
+advise 'Will move the window programmatically...'
+Pause
+
+Posn_Window v 200 300
+Assign x x_position(v)
+Assign y y_position(v)
+advise "position(v) = $x, $y"
+
+advise 'Move the window by hand...'
+Pause
+
+Assign x x_position(v)
+Assign y y_position(v)
+advise "position(v) = $x, $y"
+
+Pause
+
+view
+  unshow v show v Pause
+#  unshow v show v Pause
+#  unshow v show v Pause
+#  unshow v show v Pause
+  quit
+
+Image b 200 200 4 u_byte
+Subimage c b{1} 10 10 90 20
+
+Assign x x_position(c)
+Assign y y_position(c)
+advise "position of subimage c is $x $y"
+
+Assign i is_interlaced(c)
+If $i
+  Then "advise 'c is interlaced'"
+  Else "advise 'c is NOT interlaced'"
+
+
+exit
+

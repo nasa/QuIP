@@ -1,0 +1,17 @@
+
+# %Z% $RCSfile: .gendata,v $ ver: $Revision: 1.5 $ $Date: 1999/12/02 12:09:41 $
+
+# useful macros for programs that have the data menu
+Start_File gendata.scr
+
+< $macro_dir/data/set_sizes.mac
+< $macro_dir/data/size.scr
+< $macro_dir/data/hips.mac
+< $macro_dir/data/ascii.mac
+< $macro_dir/data/decl.mac
+< $macro_dir/data/string_edit.mac
+
+Filetype hips2		# change default filetype from hips1
+
+Stop_File gendata.scr
+

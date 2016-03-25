@@ -1,0 +1,41 @@
+
+If var_exists('range_read') "error_exit 'File range.mac already loaded!?'"
+
+Set range_read 1
+
+# We want to use round numbers to label the ticks...
+
+Define Get_Round_Range 2 minname maxname
+Roundem $1 $2
+If $$1==$$2 "Add_Var $1 -1 Add_Var $2 1 Roundem $1 $2"
+.
+
+Define Roundem 2 minname maxname
+Assign data_range $$2-$$1
+If $data_range<=0 "Assign data_range $$1"
+Assign rlog log($data_range)/log(10)
+# the data spans rlog log units...
+Assign grr_exponent floor($rlog)
+Assign grr_mantissa exp(log(10)*($rlog-$grr_exponent))
+Tell_If "initial range $$1 - $$2, $grr_mantissa * 10 ^ $grr_exponent"
+
+# round down and divide by two for tick spacing
+If $grr_mantissa<2 "Set grr_mantissa 5 Decrement grr_exponent"
+If $grr_mantissa>=2&&$grr_mantissa<5 "Set grr_mantissa 1"
+If $grr_mantissa>=5 "Set grr_mantissa 2"
+
+Tell_If "After adjustment, mantissa = $grr_mantissa   exp = $grr_exponent"
+
+# Now make sure that the limits are multiples of this...
+Assign chunk $grr_mantissa*exp(log(10)*$grr_exponent)
+#Print chunk
+If $chunk==0 exit_macro
+
+Assign new_min $chunk*floor($$1/$chunk)
+Assign new_max $chunk*ceil($$2/$chunk)
+Tell_If "new range:  $new_min - $new_max"
+
+Set $1 $new_min
+Set $2 $new_max
+.
+

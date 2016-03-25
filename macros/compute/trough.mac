@@ -1,0 +1,51 @@
+# functions for finding features in histograms
+
+Start_File trough.mac
+
+Define Find_Next_Indexed_Peak 5 index_varname vector increment result_vector result_counter_varname
+Set searching 1
+Set givup 0
+do
+  Assign curr_val value($2[$$1])
+  Set peak_index $$1
+  Add_Var $1 $3
+  Assign next_val value($2[$$1])
+  If $next_val<$curr_val&&$peak_index>0 "Add_Var $1 -($3)"
+  If $next_val<$curr_val&&$peak_index>0
+    "Tell_If 'peak (value = $curr_val) at $$1' Set searching 0"
+  If $$1>=(ncols($2)-1)||$$1<=0 "Set givup 1 Tell_If 'ending search with $1 = $$1'"
+  while $searching&&!$givup
+Tell_If 'Find_Next_Peak DONE'
+If !$givup "Note_Peak $4 $5 $$1"
+.
+
+Define Find_Next_Indexed_Trough 5 index_varname src_vector inc result_vector result_counter_varname
+Set searching 1
+Set givup 0
+do
+  Assign curr_val value($2[$$1])
+  Add_Var $1 $3
+  Assign next_val value($2[$$1])
+  If $next_val>$curr_val "Add_Var $1 -($3)"
+  If $next_val>$curr_val
+    "Tell_If 'trough (value = $curr_val) at $$1' Set searching 0"
+  If $$1>=ncols($2)-1||$$1<=0 "Set givup 1"
+  while $searching&&!$givup
+Tell_If 'Find_Next_Trough DONE'
+If !$givup "Note_Trough $4 $5 $$1"
+.
+
+Define Note_Peak 3 vector varname index
+Tell_If "Note_Peak $curr_val (n_peaks = $$2)"
+VSet $1[$$2] $3
+Increment $2
+.
+
+Define Note_Trough 3 vector varname index
+Tell_If "Note_Trough $curr_val (n_troughs = $$2)"
+VSet $1[$$2] $3
+Increment $2
+.
+
+Stop_File trough.mac
+

@@ -1,0 +1,53 @@
+# macros common to daemon clients and direct hardware clients
+
+
+Define Set_D30_Params 0
+warn "Set_D30_Params not fully implemented!?"
+advise "using D70 values..."
+Set_D70_Params
+.
+
+Define Set_D100_Params 0
+warn "Set_D100_Params not fully implemented!?"
+advise "using D70 values..."
+Set_D70_Params
+.
+
+Define Set_D70_Params 0
+Set pan_min	-2267		# specific to evi-d70
+Set pan_max	2267		# specific to evi-d70
+
+# These are the normal values, but if the camera is flipped
+# then the limits are -1200 to 400 !?
+# Can we dynamically set slider limits???
+Set tilt_min	-400
+Set tilt_max	1200
+
+Set zoom_min	0		# wide
+Set zoom_max	0x3ff8		# tele
+Set focus_min	0x1000		# far
+Set focus_max	0x8400		# near
+Set gain_min	0
+Set gain_max	7
+Set shutter_min 0
+Set shutter_max	0x13
+
+Set max_pan_speed	0x18
+Set max_tilt_speed	0x17
+.
+
+Define Count_Visca_Cameras 0
+Set n_total_cams 0
+
+Get_Camera_Count n_cameras
+Print_If n_cameras
+
+Set cam_list ""
+Set i 1
+repeat $n_cameras
+  Set cam_list "$cam_list cam$i"
+  Increment i
+  end
+Print_If cam_list
+.
+

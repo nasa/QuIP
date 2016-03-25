@@ -1,0 +1,29 @@
+# try to break it with logical and...
+# Not sure exactly what this was testing???
+
+Define Testit 0
+Set i 0
+Set j 20
+repeat 10
+  advise "i = $i   and    j = $j"
+  If $i<6&&$j>5
+    Then "advise 'Yes (i<6 && j>5)'"
+    Else "advise 'No (! (i<6 && j>5) )'"
+  Assign y $i<6?1:0
+  advise "y = i<6?1:0"
+  Print y
+  Increment i
+  end
+.
+
+Set k 1
+repeat 50
+  advise "Testing, iteration $k"
+  Testit
+  Increment k
+  end
+
+advise DONE
+
+exit
+
