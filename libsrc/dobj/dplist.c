@@ -45,7 +45,7 @@ Precision *prec_for_code(prec_t prec)
 //	sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  prec_for_code:  missing precision %"PREC_FMT_D" (0x%x)!?",prec,prec);
 //	NERROR1(DEFAULT_ERROR_STRING);
 //#endif /* CAUTIOUS */
-	assert( ! "Missing precision code in list of precisions!?" );
+	assert( AERROR("Missing precision code in list of precisions!?") );
 
 	return NO_PRECISION;
 }
@@ -102,7 +102,7 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 //			(long long unsigned int) SHP_FLAGS(shpp));
 //		WARN(DEFAULT_ERROR_STRING);
 //		sprintf(MSG_STR,"                                 ");
-		assert( ! "describe_shape:  bad object type flag!?" );
+		assert( AERROR("describe_shape:  bad object type flag!?") );
 	}
 //#endif /* CAUTIOUS */
 	prt_msg_frag(MSG_STR);
@@ -154,7 +154,7 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 //			sprintf(ERROR_STRING,
 //	"CAUTIOUS:  describe_shape:  unexpected complex machine precision (%s)!?",PREC_NAME(SHP_MACH_PREC_PTR(shpp)));
 //			WARN(ERROR_STRING);
-			assert( ! "Unexpected complex machine precision!?" );
+			assert( AERROR("Unexpected complex machine precision!?") );
 		}
 #endif /* CAUTIOUS */
 	} else if( QUAT_PRECISION(SHP_PREC(shpp)) ){
@@ -166,7 +166,7 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 		else {
 //			sprintf(MSG_STR,", unknown_precision_quaternion");
 //			WARN("CAUTIOUS:  describe_shape:  unexpected quaternion machine precision!?");
-			assert( ! "unexpected quaternion machine precision!?" );
+			assert( AERROR("unexpected quaternion machine precision!?") );
 		}
 #endif /* CAUTIOUS */
 	} else {

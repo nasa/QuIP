@@ -310,7 +310,7 @@ double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p
 		default:
 //			WARN("CAUTIOUS:  cast_from_scalar_value:  unrecognized precision");
 //			retval =0;
-			assert( ! "cast_from_scalar_value:  unrecognized precision");
+			assert( AERROR("cast_from_scalar_value:  unrecognized precision") );
 
 			break;
 //#endif /* CAUTIOUS */
@@ -336,7 +336,7 @@ void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,dou
 		case PREC_LP: svp->u_ld = val; break;
 #endif // USE_LONG_DOUBLE
 		case PREC_BIT:
-			if( val )
+			if( val != 0 )
 				svp->u_l =  1;
 			else
 				svp->u_l =  0;
@@ -350,7 +350,7 @@ void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,dou
 //#ifdef CAUTIOUS
 		default:
 //			WARN("CAUTIOUS:  cast_to_scalar_value:  unrecognized precision");
-			assert( ! "cast_to_scalar_value:  unrecognized precision");
+			assert( AERROR("cast_to_scalar_value:  unrecognized precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -373,7 +373,7 @@ void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *p
 //#ifdef CAUTIOUS
 		default:
 //			WARN("CAUTIOUS:  cast_to_cpx_scalar:  unexpected machine precision");
-			assert( ! "cast_to_cpx_scalar:  unexpected machine precision");
+			assert( AERROR("cast_to_cpx_scalar:  unexpected machine precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -396,7 +396,7 @@ void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *
 //#ifdef CAUTIOUS
 		default:
 //			WARN("CAUTIOUS:  cast_to_quat_scalar:  unexpected machine precision");
-			assert( ! "cast_to_quat_scalar:  unexpected machine precision");
+			assert( AERROR("cast_to_quat_scalar:  unexpected machine precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}

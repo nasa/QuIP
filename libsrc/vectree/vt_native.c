@@ -48,7 +48,7 @@ void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 		default:
 //			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  eval_vt_native_assignment (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
 //			NWARN(DEFAULT_ERROR_STRING);
-			assert( ! "eval_vt_native_assignment:  unhandled keyword!?" );
+			assert( AERROR("eval_vt_native_assignment:  unhandled keyword!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -369,7 +369,7 @@ advise("evaluating choldc...");
 		default:
 			sprintf(ERROR_STRING,"CAUTIOUS:  eval_vt_native_work (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
 			NWARN(ERROR_STRING);
-//			assert( ! "eval_vt_native_work:  unhandled keyword!?" );
+//			assert( AERROR("eval_vt_native_work:  unhandled keyword!?") );
 			break;
 #endif /* CAUTIOUS */
 	}
@@ -382,7 +382,7 @@ void update_vt_native_shape(Vec_Expr_Node *enp)
 		default:
 //			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  update_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
 //			NWARN(DEFAULT_ERROR_STRING);
-			assert( ! "update_native_shape:  unhandled keyword!?");
+			assert( AERROR("update_native_shape:  unhandled keyword!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -420,7 +420,7 @@ void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		default:
 //			sprintf(ERROR_STRING,"CAUTIOUS:  prelim_vt_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
 //			NWARN(ERROR_STRING);
-			assert( ! "prelim_vt_native_shape:  unhandled native func!?" );
+			assert( AERROR("prelim_vt_native_shape:  unhandled native func!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}

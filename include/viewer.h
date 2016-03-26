@@ -601,12 +601,12 @@ extern void _xp_select(Viewer *vp,u_long color);
 extern void _xp_bgselect(Viewer *vp,u_long color);
 extern void _xp_text(Viewer *vp,int x1,int y1,const char *);
 extern void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2);
-#ifdef BUILD_FOR_IOS
+#ifdef BUILD_FOR_OBJC
 extern void _xp_linewidth(Viewer *vp,CGFloat w);
 extern int is_image_viewer(QSP_ARG_DECL  Viewer *vp);
-#else // ! BUILD_FOR_IOS
+#else // ! BUILD_FOR_OBJC
 extern void _xp_linewidth(Viewer *vp,int w);
-#endif // ! BUILD_FOR_IOS
+#endif // ! BUILD_FOR_OBJC
 extern void _xp_cont(Viewer *vp,int x,int y);
 extern void _xp_arc(Viewer *,int,int,int,int,int,int);
 extern void _xp_erase(Viewer *vp);

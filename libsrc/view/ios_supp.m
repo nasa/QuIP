@@ -1,5 +1,7 @@
 /* IOS support for viewers and images */
 
+// Is this file used for MacOS also???
+
 #include "quip_config.h"
 
 #include "view_prot.h"

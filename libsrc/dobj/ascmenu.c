@@ -91,7 +91,7 @@ longlist(QSP_ARG  dp);
 			OA_ARGSTYPE(oap) = QUATERNION_ARGS;
 		else
 			//ERROR1("CAUTIOUS:  insure_ram_obj:  bad argset type!?");
-			assert( ! "insure_ram_obj:  bad argset type!?" );
+			assert( AERROR("insure_ram_obj:  bad argset type!?") );
 
 //fprintf(stderr,"insure_ram_obj:  moving remote data to a contiguous object\n");  
 		call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
@@ -394,7 +394,7 @@ static void init_print_fmt_names(void)
 //				sprintf(DEFAULT_ERROR_STRING,
 //	"CAUTIOUS:  Oops, no initialization for print format %d!?",i);
 //				NERROR1(DEFAULT_ERROR_STRING);
-				assert( ! "Missing format initialization!?");
+				assert( AERROR("Missing format initialization!?") );
 				break;
 //#endif /* CAUTIOUS */
 		}

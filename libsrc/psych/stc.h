@@ -17,8 +17,8 @@ char VersionId_inc_stc[] = QUIP_VERSION_STRING;
 #define MAX_X_VALUES	1024
 
 typedef struct datum {
-	short ntotal;
-	short ncorr;
+	int ntotal;
+	int ncorr;
 } Datum;
 
 #define DATUM_NTOTAL(dtm)	(dtm).ntotal
@@ -30,8 +30,8 @@ typedef struct datum {
 #define SET_DATUM_NCORR(dtm,v)	(dtm).ncorr = v
 
 typedef struct data_tbl {
-	short	dt_size;	// number of allocated entries (x values)
-	short	dt_npts;	// number that have non-zero n trials
+	int	dt_size;	// number of allocated entries (x values)
+	int	dt_npts;	// number that have non-zero n trials
 	Datum	*dt_data;
 } Data_Tbl;
 
@@ -48,8 +48,8 @@ typedef struct data_tbl {
 typedef struct trial_class {
 	Item		tc_item;
 	const char *	tc_cmd;		/* general purpose string field */
-	short		tc_nstairs;
-	short		tc_index;
+	int		tc_nstairs;
+	int		tc_index;
 	Data_Tbl *	tc_dtp;
 } Trial_Class;
 
@@ -71,16 +71,16 @@ typedef struct staircase {
 #define stc_name	stc_item.item_name
 
 	Trial_Class *	stc_tcp;
-	short	stc_type;
-	short	stc_inc;
-	short	stc_min_inc;
-	short	stc_val;
-	short	stc_inc_rsp;
-	short	stc_crct_rsp;
-	short	stc_last_rsp;
-	short	stc_last_rsp3;
-	short	stc_last_trial;
-	short	stc_index;
+	int	stc_type;
+	int	stc_inc;
+	int	stc_min_inc;
+	int	stc_val;
+	int	stc_inc_rsp;
+	int	stc_crct_rsp;
+	int	stc_last_rsp;
+	int	stc_last_rsp3;
+	int	stc_last_trial;
+	int	stc_index;
 } Staircase;
 
 #define NO_STAIR	((Staircase *)NULL)
@@ -168,13 +168,13 @@ ITEM_INTERFACE_PROTOTYPES(Staircase,stc)
 
 #define PICK_STC(p)	pick_stc(QSP_ARG  p)
 
-extern Trial_Class *class_for(QSP_ARG_DECL  short index);
+extern Trial_Class *class_for(QSP_ARG_DECL  int index);
 extern void save_response(QSP_ARG_DECL  int rsp,Staircase *stc);
 extern void _run_init(SINGLE_QSP_ARG_DECL);
 extern void new_exp(SINGLE_QSP_ARG_DECL);
 extern void clrit(void);
 extern void set_recording(int flag);
-extern int makestair( QSP_ARG_DECL  short st, Trial_Class *tcp, short mi, short cr, short ir );
+extern int makestair( QSP_ARG_DECL  int st, Trial_Class *tcp, int mi, int cr, int ir );
 extern COMMAND_FUNC( do_save_data );
 #ifdef CATCH_SIGS
 extern void icatch(void);
@@ -182,7 +182,7 @@ extern void icatch(void);
 extern void _run_stairs(QSP_ARG_DECL  int np,int nt);
 extern void set_dribble_file(FILE *fp);
 extern void set_summary_file(FILE *fp);
-extern void add_stair(QSP_ARG_DECL  short type,Trial_Class *tcp);
+extern void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp);
 extern void list_stairs(void);
 extern void del_stair(QSP_ARG_DECL  Staircase *stcp);
 extern COMMAND_FUNC( del_all_stairs );

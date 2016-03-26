@@ -751,7 +751,7 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 //"CAUTIOUS:  img_file_creat:  file type %s doesn't specify i/o type?",
 //			FT_NAME(ftp));
 //	  	ERROR1(ERROR_STRING);
-		assert( ! "img_file_creat:  file type %s doesn't specify i/o type?");
+		assert( AERROR("img_file_creat:  file type %s doesn't specify i/o type?") );
 	}
 //#endif // CAUTIOUS
 #endif // FOOBAR
@@ -902,7 +902,7 @@ void if_info(QSP_ARG_DECL  Image_File *ifp)
 //#ifdef CAUTIOUS
 	else
 //		prt_msg("Wacky RW mode!?");
-		assert( ! "Wacky RW mode!?" );
+		assert( AERROR("Wacky RW mode!?") );
 //#endif // CAUTIOUS
 
 	/* print format-specific info, if any */

@@ -139,7 +139,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //				node_desc(enp),VN_DATA_TYPE(enp));
 //			NERROR1(DEFAULT_ERROR_STRING);
 //#endif /* CAUTIOUS */
-			assert( ! "init_expr_node:  bad data type code!?" );
+			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
 	}
 
@@ -491,7 +491,7 @@ void rls_vectree(Vec_Expr_Node *enp)
 //				node_desc(enp),VN_DATA_TYPE(enp) );
 //			NERROR1(DEFAULT_ERROR_STRING);
 //#endif /* CAUTIOUS */
-			assert( ! "init_expr_node:  bad data type code!?" );
+			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
 		/*
 		default:

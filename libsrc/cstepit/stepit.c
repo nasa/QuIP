@@ -121,8 +121,8 @@ int stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
 			if (mask[i])
 				continue;
 			atempo = signif*fabs(deltax[i]) - fabs(x[i]);
-			if (atempo <= 0.0) {
-				if (x[i])
+			if (atempo <= 0.0f) {
+				if (x[i] != 0 )
 					deltax[i] = .01*x[i];
 				else
 					deltax[i] = .01;
@@ -373,7 +373,7 @@ L630:		fprev = fbest;
 			goto L630;
 		cinder = 0.;
 		denom = ack * fprev - (ack + 1.) * fbest + fobj;
-		if (denom)
+		if ( denom != 0 )
 			cinder = (.5 / ack) * (pow(ack, 2.) * fprev - (pow(ack, 2.) - 1.)
 			    * fbest - fobj) / denom;
 		x[i] = save + cinder * del;

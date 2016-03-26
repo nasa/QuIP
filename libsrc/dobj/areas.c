@@ -203,7 +203,7 @@ void data_area_info(QSP_ARG_DECL  Data_Area *ap )
 //			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  data_area_info %s:  Bad data area type flag 0x%x (flags = 0x%x)",
 //				ap->da_name,ap->da_flags & DA_TYPE_MASK, ap->da_flags);
 //			NWARN(DEFAULT_ERROR_STRING);
-			assert( ! "Bad data area type!?" );
+			assert( AERROR("Bad data area type!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}

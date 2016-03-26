@@ -413,7 +413,7 @@ void make_array_name( QSP_ARG_DECL  char *target_str, Data_Obj *dp, index_t inde
 //		left_delim  = '{';
 //		right_delim = '}';
 //		nstars = which_dim - OBJ_MINDIM(dp);
-		assert( ! "Bad subscript type!?" );
+		assert( AERROR("Bad subscript type!?") );
 	}
 //#endif /* CAUTIOUS */
 

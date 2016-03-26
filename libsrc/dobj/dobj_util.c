@@ -90,7 +90,7 @@ static void release_data(QSP_ARG_DECL  Data_Obj *dp )
 //"CAUTIOUS:  release_data:  Object %s owns data but has a null data pointer!?",
 //			OBJ_NAME(dp) );
 //		WARN(ERROR_STRING);
-		assert( ! "Object owns data but has a null data ptr!?" );
+		assert( AERROR("Object owns data but has a null data ptr!?") );
 	}
 //#endif /* CAUTIOUS */
 
@@ -379,7 +379,7 @@ static void set_minmaxdim(Shape_Info *shpp,uint32_t shape_flag)
 //#ifdef CAUTIOUS
 		else {
 			//NWARN("CAUTIOUS:  set_minmaxdim:  unexpected type flag!?");
-			assert( ! "set_minmaxdim:  unexpected type flag!?");
+			assert( AERROR("set_minmaxdim:  unexpected type flag!?") );
 		}
 //#endif /* CAUTIOUS */
 	}
@@ -787,7 +787,7 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 //#ifdef CAUTIOUS
 		default:
 //			ERROR1("CAUTIOUS:  get_dobj_posn:  bad index!?");
-			assert( ! "get_dobj_posn:  bad index!?" );
+			assert( AERROR("get_dobj_posn:  bad index!?") );
 			break;
 //#endif // CAUTIOUS
 	}

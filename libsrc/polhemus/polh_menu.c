@@ -160,7 +160,7 @@ static COMMAND_FUNC( do_set_curr_ref_bore )
 {
 	char bore[LLEN];
 	//short pdp[2*N_OUTPUT_TYPES];	/* conservative overestimate */
-	Fmt_Pt fp1;
+	//Fmt_Pt fp1;
 	
 	INSURE_TMP_PT
 
@@ -172,8 +172,9 @@ static COMMAND_FUNC( do_set_curr_ref_bore )
 
 	/* BUG make sure we have euler angles */
 
-	format_polh_data(&fp1,tmp_pt_dp, &station_info[curr_station_idx].sd_single_prf );
-	sprintf(bore, "%3.2f %3.2f %3.2f", fp1.fp_azim, fp1.fp_elev, fp1.fp_roll);
+	//format_polh_data(&fp1,tmp_pt_dp, &station_info[curr_station_idx].sd_single_prf );
+	//sprintf(bore, "%3.2f %3.2f %3.2f", fp1.fp_azim, fp1.fp_elev, fp1.fp_roll);
+	WARN("do_set_curr_ref_bore:  Need to determine correct format for data!?");
 
 	if( send_polh_cmd(PH_REF_BORESIGHT, bore) < 0 ) 
 		WARN("Unable to set boresight reference angles!");

@@ -64,7 +64,7 @@ int scalars_are_equal(Typed_Scalar *tsp1, Typed_Scalar *tsp2)
 //#ifdef CAUTIOUS
 		  else {
 //		  	NWARN("CAUTIOUS:  scalars_are_equal:  Unexpected type!?");
-		  	assert( ! "scalars_are_equal:  Unexpected type #1!?");
+		  	assert( AERROR("scalars_are_equal:  Unexpected type #1!?") );
 		}
 //#endif // CAUTIOUS
 	} else if( TS_PREC(tsp1) == PREC_LI ){
@@ -82,14 +82,14 @@ int scalars_are_equal(Typed_Scalar *tsp1, Typed_Scalar *tsp2)
 //#ifdef CAUTIOUS
 		  else {
 //		  	NWARN("CAUTIOUS:  scalars_are_equal:  Unexpected type!?");
-		  	assert( ! "scalars_are_equal:  Unexpected type #1!?");
+		  	assert( AERROR("scalars_are_equal:  Unexpected type #1!?") );
 		}
 //#endif // CAUTIOUS
 	}	
 //#ifdef CAUTIOUS
 	  else {
 //	  	NWARN("CAUTIOUS:  scalars_are_equal:  Unexpected type!?");
-	  	assert( ! "scalars_are_equal:  Unexpected type #3!?");
+	  	assert( AERROR("scalars_are_equal:  Unexpected type #3!?") );
 	}
 //#endif // CAUTIOUS
 	return 0;
@@ -123,7 +123,7 @@ int has_zero_value(Typed_Scalar *tsp )
 //	"CAUTIOUS:  has_zero_value:  Unexpected type (%d)!?",
 //	TS_PREC(tsp));
 //	  	NERROR1(DEFAULT_ERROR_STRING);
-		assert( ! "has_zero_value:  Unexpected type (%"PRId64")!?" );
+		assert( AERROR("has_zero_value:  Unexpected type (%"PRId64")!?") );
 	}
 //#endif // CAUTIOUS
 	return 0;
@@ -190,7 +190,7 @@ double double_for_scalar(Typed_Scalar *tsp)
 //                (uintptr_t)tsp,TS_PREC(tsp),TS_PREC(tsp),NAME_FOR_PREC_CODE(TS_PREC(tsp)));
 //       NADVISE(DEFAULT_ERROR_STRING);
 //	  	NWARN("CAUTIOUS:  double_for_scalar:  Unexpected type code!?");
-	  	assert( ! "double_for_scalar:  Unexpected type code!?");
+	  	assert( AERROR("double_for_scalar:  Unexpected type code!?") );
 	}
 //#endif // CAUTIOUS
 	return 0.0;
@@ -206,7 +206,7 @@ int64_t llong_for_scalar(Typed_Scalar *tsp)
 //#ifdef CAUTIOUS
 	  else {
 //	  	NWARN("CAUTIOUS:  llong_for_scalar:  Unexpected type code!?");
-	  	assert( ! "llong_for_scalar:  Unexpected type code!?");
+	  	assert( AERROR("llong_for_scalar:  Unexpected type code!?") );
 	}
 //#endif // CAUTIOUS
 	return 0;
@@ -227,7 +227,7 @@ int32_t long_for_scalar(Typed_Scalar *tsp)
 //#ifdef CAUTIOUS
 	  else {
 //	  	NWARN("CAUTIOUS:  long_for_scalar:  Unexpected type code!?");
-	  	assert( ! "long_for_scalar:  Unexpected type code!?");
+	  	assert( AERROR( "long_for_scalar:  Unexpected type code!?") );
 	}
 //#endif // CAUTIOUS
 	return 0;
@@ -252,7 +252,7 @@ index_t index_for_scalar(Typed_Scalar *tsp)
                   (long long) tsp,TS_PREC(tsp),PREC_DP,PREC_LI);
 //	  	NWARN("CAUTIOUS:  index_for_scalar:  Unexpected type code!?");
 		v=0;
-	  	assert( ! "index_for_scalar:  Unexpected type code!?");
+	  	assert( AERROR( "index_for_scalar:  Unexpected type code!?") );
 	}
 //#endif // CAUTIOUS
 	if( v < 0 ){

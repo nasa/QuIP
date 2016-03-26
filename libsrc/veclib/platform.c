@@ -64,7 +64,7 @@ static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform
 //#ifdef CAUTIOUS
 		default:
 //			ERROR1("CAUTIOUS:  init_platform:  Unexpected platform type code!?");
-			assert( ! "Unexpected platform type code!?" );
+			assert( AERROR("Unexpected platform type code!?") );
 			break;
 //#endif // CAUTIOUS
 	}

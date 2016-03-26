@@ -71,6 +71,11 @@ typedef uint32_t debug_flag_t;
 
 #endif /* ! DEBUG_SYSTEM */
 
+// helper macro for assertions with nothing but a message...
+// We used to write assert( ! "message" )
+// but this produces warnings in xcode...
+#define AERROR(s)	strlen(s)==0
+
 
 #include "node.h"
 

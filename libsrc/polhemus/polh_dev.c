@@ -84,7 +84,7 @@ int polh_units = PH_CM_FMT;		/* units format (default is cm.) */
 int n_active_stations=0;
 Station_Data station_info[2];
 
-static int polh_software_hz = DEFAULT_SYNC_HZ;	/* software synchronization hz rate */
+static long polh_software_hz = DEFAULT_SYNC_HZ;	/* software synchronization hz rate */
 static char last_command[64];
 
 #define RESP_BUF_SIZE	64
@@ -93,7 +93,7 @@ static char last_command[64];
 short resp_buf[RESP_BUF_SIZE];
 #define polh_line_buffer	((char *)resp_buf)
 
-int n_response_chars;
+ssize_t n_response_chars;
 
 /* Implement data buffering for polhemus device */
 //#define POLHEMUS_BUFFER_SIZE	4096
@@ -108,7 +108,7 @@ static int n_polh_avail=0;
 #define POLH_BUF_DEBUG							\
 		if( debug & debug_polhemus ){				\
 			sprintf(DEFAULT_ERROR_STRING,			\
-				"fill_polh_buffer read %d bytes",m);	\
+				"fill_polh_buffer read %ld bytes",(long)m);	\
 			NADVISE(DEFAULT_ERROR_STRING);			\
 		}
 #else	// ! QUIP_DEBUG
@@ -124,7 +124,7 @@ static int n_polh_avail=0;
 			NWARN("error reading polhemus data");		\
 		} else {						\
 			sprintf(DEFAULT_ERROR_STRING,			\
-		"Expected %d polhemus bytes, got %d",n_want,m);		\
+		"Expected %ld polhemus bytes, got %ld",(long)n_want,(long)m);		\
 			NWARN(DEFAULT_ERROR_STRING);			\
 		}							\
 	} else {							\
@@ -253,7 +253,8 @@ void flush_polh_buffer(void)
 
 void fill_polh_buffer(void)
 {
-	int n,m,n1;
+	int n, n1;
+	ssize_t m;
 
 	if( ioctl(polh_fd,FIONREAD,&n) < 0 ){
 		perror("ioctl (FIONREAD)");
@@ -382,12 +383,12 @@ void read_response(int display_flag)
 			_tell_sys_error(DEFAULT_QSP_ARG  "read_response");
 			NWARN("error reading polhemus data");
 		} else {
-			sprintf(DEFAULT_ERROR_STRING,"read_response:  %d bytes requested, %d actually read",n,n_response_chars);
+			sprintf(DEFAULT_ERROR_STRING,"read_response:  %d bytes requested, %zd actually read",n,n_response_chars);
 			NWARN(DEFAULT_ERROR_STRING);
 		}
 	}
 	if( display_flag )
-		display_buffer(resp_buf,n_response_chars/2);
+		display_buffer(resp_buf,(int)n_response_chars/2);
 }
 
 void clear_polh_dev(void)
@@ -395,7 +396,7 @@ void clear_polh_dev(void)
 	short clear_buf[RESP_BUF_SIZE];
 	int n;
 	int n_want;
-	int n_read;
+	ssize_t n_read;
 	int total=0;
 
 	if( polhemus_word_count()<0 ){
@@ -414,7 +415,7 @@ void clear_polh_dev(void)
 				NWARN("error clearing polhemus device");
 				return;
 			} else {
-				sprintf(DEFAULT_ERROR_STRING,"clear_polh_dev: %d bytes requested, %d actually read",n_want*2, n_read);
+				sprintf(DEFAULT_ERROR_STRING,"clear_polh_dev: %d bytes requested, %zd actually read",n_want*2, n_read);
 				NWARN(DEFAULT_ERROR_STRING);
 			}	
 		}	
@@ -434,7 +435,7 @@ static void init_output_data_format(int station_idx)
 	prfp->rf_output[1] = MSECS;
 	prfp->rf_output[2] = XYZ_INT;
 	prfp->rf_output[3] = EULER_INT;
-	prfp->rf_station = station_idx;
+	prfp->rf_station = (short)station_idx;
 	prfp->rf_n_words = 12;
 	polhemus_output_data_format( prfp );
 
@@ -712,7 +713,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 			 * the next line, the first char we see is an \n - skip it!
 			 */
 			if( i!=0 || c!='\n')
-				polh_line_buffer[i++] = c;
+				polh_line_buffer[i++] = (char)c;
 			if( c == '\r' ){
 				polh_line_buffer[i] = 0;
 				return(polh_line_buffer);
@@ -1099,7 +1100,7 @@ fprintf(stderr,"get_polh_info:  command sent, calling recv_polh_data\n");
 
 int send_string(const char *cmd)
 {
-	int numwritten;
+	ssize_t numwritten;
 	int len;
 	
 	if(cmd == NULL) {
@@ -1114,14 +1115,14 @@ if( debug & debug_polhemus ){
 }
 #endif
 	
-	len = strlen(cmd);
+	len = (int)strlen(cmd);
 	numwritten = write(polh_fd, (const void*)cmd, len);
 
 	if( numwritten != len ) {
 		if(numwritten < 0 ) 
 			_tell_sys_error(DEFAULT_QSP_ARG  "send_string");
 		else {
-			sprintf(DEFAULT_ERROR_STRING, "Requested %d bytes to be written to polhemus device, %d actually written",
+			sprintf(DEFAULT_ERROR_STRING, "Requested %d bytes to be written to polhemus device, %zd actually written",
 				len, numwritten);
 			NWARN(DEFAULT_ERROR_STRING);
 		}
@@ -1361,7 +1362,7 @@ int polhemus_output_data_format( Polh_Record_Format *prfp )
 	}
 #endif /* CAUTIOUS */
 
-	sprf.rf_station = station_idx;
+	sprf.rf_station = (short)station_idx;
 
 	CHECK_POL_FD("polhemus_output_data");
 
@@ -1460,7 +1461,7 @@ fprintf(stderr,"get_active_stations:  getting active station...\n");
 		return;
 	}
 fprintf(stderr,"get_active_stations:  response buffer:\n");
-display_buffer(&resp_buf[0],n_response_chars/2);
+display_buffer(&resp_buf[0],(int)n_response_chars/2);
 
 	s=(char *)resp_buf;
 

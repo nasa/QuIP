@@ -401,7 +401,7 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		// not necessary when using noreturn attribute!
 //			ERROR1("CAUTIOUS:  unexpected 3 scalar function!?");
 //			  return -1;	// iOS
-			assert( ! "unexpected 3 scalar function!?" );
+			assert( AERROR("unexpected 3 scalar function!?") );
 		}
 //#endif /* CAUTIOUS */
 		SET_OA_SVAL(oap,0, get_sv(prec_p) );
@@ -472,7 +472,7 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 //			WARN("CAUTIOUS:  unhandled case in getscal");
 //			p1=p2="dummy value";
 //			retval=(-1);
-			assert( ! "unhandled case in getscal");
+			assert( AERROR("unhandled case in getscal") );
 		}
 //#endif /* CAUTIOUS */
 		SET_OA_SVAL(oap,0, get_sv(prec_p) );
@@ -690,7 +690,7 @@ int prompt_scalar_value(QSP_ARG_DECL  Data_Obj *dp, const char *pmpt, prec_t pre
 //			NAME_FOR_PREC_CODE(prec),prec);
 //		WARN(ERROR_STRING);
 //		return(-1);
-		assert( ! "prompt_scalar_value:  unsupported precision!?");
+		assert( AERROR("prompt_scalar_value:  unsupported precision!?") );
 	}
 //#endif /* CAUTIOUS */
 	return(0);

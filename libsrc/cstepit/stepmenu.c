@@ -122,9 +122,11 @@ ADD_CMD( parameters,	set_params,	specify parameters to be varied )
 ADD_CMD( optimize,	run_opt,	search for minimum error )
 ADD_CMD( halt,		halt_opt,	halt optimization )
 ADD_CMD( list,		do_list_opt_params,	list current parameters )
-#ifndef BUILD_FOR_IOS
+// BUG?  shouldn't we configure for presence of this library???
+// and parse the commands even if the lib isn't present?
+#ifndef BUILD_FOR_OBJC
 ADD_CMD( sparse,	do_sparse_menu,	sparse L-M sover )
-#endif // ! BUILD_FOR_IOS
+#endif // ! BUILD_FOR_OBJC
 ADD_CMD( info,		do_opt_param_info,	report information about a parameter )
 
 MENU_END(stepit)

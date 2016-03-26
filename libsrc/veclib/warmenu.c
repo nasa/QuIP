@@ -68,7 +68,7 @@ static COMMAND_FUNC( do_convert )
 //#ifdef CAUTIOUS
 		default:
 //			WARN("CAUTIOUS:  do_convert:  unhandled machine precision!?");
-			assert( ! "do_convert:  unhandled machine precision!?");
+			assert( AERROR("do_convert:  unhandled machine precision!?") );
 			return;
 //#endif // CAUTIOUS
 	}

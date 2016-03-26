@@ -271,8 +271,8 @@
 /* Define to 1 if you have the <nppi.h> header file. */
 /* #undef HAVE_NPPI_H */
 
-/* Numerical Recipes support enabled */
-#define HAVE_NUMREC 1
+/* Numerical Recipes support enabled   - NOT */
+//#define HAVE_NUMREC 1
 
 /* Linkage to OpenCV library */
 //#define HAVE_OPENCV 1

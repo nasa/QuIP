@@ -186,7 +186,7 @@ static int which_child(Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 //	NWARN("CAUTIOUS:  which_child:  node not found among parent's children!?!?");
 //#endif /* CAUTIOUS */
-	assert( ! "not not found among parent's children!?" );
+	assert( AERROR("not not found among parent's children!?") );
 	return(-1);
 }
 
@@ -427,7 +427,7 @@ static int get_subvec_indices(QSP_ARG_DECL Vec_Expr_Node *enp, dimension_t *i1p,
 //#ifdef CAUTIOUS
 	  else {
 //	  	ERROR1("CAUTIOUS:  get_subvec_indices:  unexpected node code");
-		assert( ! "get_subvec_indices:  unexpected node code");
+		assert( AERROR("get_subvec_indices:  unexpected node code") );
 	}
 //#endif /* CAUTIOUS */
 
@@ -2711,7 +2711,7 @@ static void set_vv_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //			WARN(ERROR_STRING);
 //			sprintf(ERROR_STRING,"CAUTIOUS:  unexpected case (%s) in set_vv_bool_code",
 //				VF_NAME( FIND_VEC_FUNC( VN_VFUNC_CODE(enp) ) ) );
-			assert( ! "unexpected case in set_vv_bool_code!?" );
+			assert( AERROR("unexpected case in set_vv_bool_code!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -2751,7 +2751,7 @@ static void set_vs_bool_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //			advise(node_desc(enp));
 //			sprintf(ERROR_STRING,"CAUTIOUS:  unexpected case in set_vs_bool_code");
 //			WARN(ERROR_STRING);
-			assert( ! "unexecpected case in set_vs_bool_code!?" );
+			assert( AERROR("unexecpected case in set_vs_bool_code!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -2811,7 +2811,7 @@ static void set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 	else {
 //		WARN("CAUTIOUS:  set_bool_vecop_code:  no vector shapes");
-		assert( ! "set_bool_vecop_code:  no vector shapes!?");
+		assert( AERROR("set_bool_vecop_code:  no vector shapes!?") );
 	}
 //#endif /* CAUTIOUS */
 }
@@ -3226,7 +3226,7 @@ static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //				sprintf(ERROR_STRING,
 //	"CAUTIOUS:  check_arith_code:  unhandled vector-vector operation %s",NNAME(enp));
 //				WARN(ERROR_STRING);
-				assert( ! "check_arith_code:  unhandled vector-vector op!?");
+				assert( AERROR("check_arith_code:  unhandled vector-vector op!?") );
 			}
 //#endif /* CAUTIOUS */
 
@@ -3309,7 +3309,7 @@ static void check_arith_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //			sprintf(ERROR_STRING,
 //	"CAUTIOUS:  check_arith_code:  unhandled vector-scalar operation %s",NNAME(enp));
 //			WARN(ERROR_STRING);
-			assert( ! "check_arith_code:  unhandled vector-scalar op!?");
+			assert( AERROR("check_arith_code:  unhandled vector-scalar op!?") );
 		}
 //#endif /* CAUTIOUS */
 
@@ -3447,7 +3447,7 @@ static Vec_Func_Code vv_vv_test_code(Tree_Code bool_code)
 //#ifdef CAUTIOUS
 		default:
 //			NERROR1("CAUTIOUS:  vv_vv_test_code:  unexpected boolean test");
-			assert( ! "vv_vv_test_code:  unexpected boolean test");
+			assert( AERROR("vv_vv_test_code:  unexpected boolean test") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -3466,7 +3466,7 @@ static Vec_Func_Code vv_vs_test_code(Tree_Code bool_code)
 //#ifdef CAUTIOUS
 		default:
 //			NERROR1("CAUTIOUS:  vv_vs_test_code:  unexpected boolean test");
-			assert( ! "vv_vs_test_code:  unexpected boolean test");
+			assert( AERROR("vv_vs_test_code:  unexpected boolean test") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -3509,7 +3509,7 @@ static void invert_vec4_condass(Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 		default:
 //			NERROR1("CAUTIOUS:  invert_vec4_condass:  unexpected function code!?");
-			assert( ! "invert_vec4_condass:  unexpected function code!?");
+			assert( AERROR("invert_vec4_condass:  unexpected function code!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -3528,7 +3528,7 @@ static Vec_Func_Code vs_vv_test_code(Tree_Code bool_code)
 //#ifdef CAUTIOUS
 		default:
 //			NERROR1("CAUTIOUS:  vs_vv_test_code:  unexpected boolean test");
-			assert( ! "vs_vv_test_code:  unexpected boolean test");
+			assert( AERROR("vs_vv_test_code:  unexpected boolean test") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -3547,7 +3547,7 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
 //#ifdef CAUTIOUS
 		default:
 //			NERROR1("CAUTIOUS:  vs_vs_test_code:  unexpected boolean test");
-			assert( ! "vs_vs_test_code:  unexpected boolean test");
+			assert( AERROR("vs_vs_test_code:  unexpected boolean test") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -3649,7 +3649,7 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 		  else {
 //		  	ERROR1("CAUTIOUS:  check_xx_xx_condass_code should not have been called!?");
-		  	assert( ! "check_xx_xx_condass_code should not have been called!?");
+		  	assert( AERROR("check_xx_xx_condass_code should not have been called!?") );
 		}
 //#endif /* CAUTIOUS */
 		
@@ -3678,7 +3678,7 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 		  else {
 //		  	ERROR1("CAUTIOUS:  check_xx_xx_condass_code should not have been called!?");
-		  	assert( ! "check_xx_xx_condass_code should not have been called!?");
+		  	assert( AERROR("check_xx_xx_condass_code should not have been called!?") );
 		}
 //#endif /* CAUTIOUS */
 
@@ -3686,7 +3686,7 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 	  else {
 //	  	ERROR1("CAUTIOUS:  unexpected node code in check_xx_xx_condass_code!?");
-	  	assert( ! "unexpected node code in check_xx_xx_condass_code!?");
+	  	assert( AERROR("unexpected node code in check_xx_xx_condass_code!?") );
 	}
 //#endif /* CAUTIOUS */
 }
@@ -7005,7 +7005,7 @@ Shape_Info *uk_shape(prec_t prec)
 //			sprintf(DEFAULT_ERROR_STRING,"uk_shape:  No complex support for machine precision %s",
 //				NAME_FOR_PREC_CODE(prec&MACH_PREC_MASK));
 //			NERROR1(DEFAULT_ERROR_STRING);
-			assert( ! "uk_shape:  bad machine precision" );
+			assert( AERROR("uk_shape:  bad machine precision") );
 			i_prec=0;	/* silence compiler warning NOTREACHED */
 		}
 	} else if( QUAT_PRECISION(prec) ){
@@ -7017,7 +7017,7 @@ Shape_Info *uk_shape(prec_t prec)
 //			sprintf(DEFAULT_ERROR_STRING,"uk_shape:  No quaternion support for machine precision %s",
 //				NAME_FOR_PREC_CODE(prec&MACH_PREC_MASK));
 //			NERROR1(DEFAULT_ERROR_STRING);
-			assert( ! "uk_shape:  bad machine precision" );
+			assert( AERROR("uk_shape:  bad machine precision") );
 			i_prec=0;	/* silence compiler warning NOTREACHED */
 		}
 	} else {
@@ -7026,7 +7026,7 @@ Shape_Info *uk_shape(prec_t prec)
 //		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  uk_shape:  don't know how to handle pseudo prec  %d (0%o 0x%x)",
 //			prec,prec,prec);
 //		NERROR1(DEFAULT_ERROR_STRING);
-		assert( ! "uk_shape:  bad pseudo precision" );
+		assert( AERROR("uk_shape:  bad pseudo precision") );
 		i_prec=0;	/* silence compiler warning NOTREACHED */
 	}
 //#endif /* CAUTIOUS */

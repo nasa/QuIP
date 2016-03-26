@@ -58,7 +58,7 @@ static const char *name_for_type(Data_Obj *dp)
 //		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  name_for_type:  type of object %s is unknown",OBJ_NAME(dp) );
 //		NWARN(DEFAULT_ERROR_STRING);
 //		return("unknown");
-		assert( ! "name_for_type:  unexpected type code!?" );
+		assert( AERROR("name_for_type:  unexpected type code!?") );
 	}
 //#endif /* CAUTIOUS */
 }

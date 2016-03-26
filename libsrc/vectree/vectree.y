@@ -2689,7 +2689,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 //#ifdef CAUTIOUS
 			default:
 //				NERROR1("CAUTIOUS:  name_token:  bad function type!?");
-				assert( ! "name_token:  bad function type!?");
+				assert( AERROR("name_token:  bad function type!?") );
 				break;
 //#endif /* CAUTIOUS */
 		}
@@ -2744,7 +2744,7 @@ WARN(ERROR_STRING);
 //#ifdef CAUTIOUS
 		else {
 //			WARN("CAUTIOUS:  unhandled identifier type!?");
-			assert( ! "unhandled identifier type!?" );
+			assert( AERROR("unhandled identifier type!?") );
 		}
 //#endif /* CAUTIOUS */
 

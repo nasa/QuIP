@@ -102,7 +102,7 @@ static void try_collapse(QSP_ARG_DECL Vec_Expr_Node *enp)
 //				VN_VFUNC_CODE(tmp_enp));
 //			WARN(ERROR_STRING);
 //			return;
-			assert( ! "try_collapse:  unhandled function code" );
+			assert( AERROR("try_collapse:  unhandled function code") );
 			break;
 //#endif /* CAUTIOUS */
 	}

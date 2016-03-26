@@ -705,7 +705,7 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 //#ifdef CAUTIOUS
 		default:
 //			NWARN("unexpected case in eval_tsbl_expr");
-			assert( !  "unexpected case in eval_tsbl_expr" );
+			assert( AERROR("unexpected case in eval_tsbl_expr") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -1358,7 +1358,7 @@ dump_enode(QSP_ARG  enp);
 		break;
 	case N_CHARFUNC:		// eval_expr
 		GET_ONE_DOUBLE
-		dval = evalCharFunction(enp->sen_func_p,dval2);
+		dval = evalCharFunction(enp->sen_func_p,(char)dval2);
 		tsp = scalar_for_double(dval);
 		break;
 	case N_MATH2FUNC:		// eval_expr
@@ -2068,7 +2068,7 @@ static int token_for_func_type(int type)
 //#ifdef CAUTIOUS
 		default:
 //			NERROR1("CAUTIOUS:  token_for_func_type:  bad type!?");
-			assert( ! "token_for_func_type:  bad type!?" );
+			assert( AERROR("token_for_func_type:  bad type!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}

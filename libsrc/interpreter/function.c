@@ -542,7 +542,8 @@ static double _nefunc(QSP_ARG_DECL  Item *ip)
 	return(d);
 }
 
-#define SIGN(x)	(x<0?-1.0:1.0)
+#define SIGN(x)		(x<0?-1.0:1.0)
+#define SIGNF(x)	(x<0?-1.0f:1.0f)
 
 // This approximation to erfinv comes from wikipedia, which cites:
 // Winitzki, Sergei (6 February 2008). "A handy approximation for
@@ -579,10 +580,10 @@ float erfinvf(float x)
 		a = 8 * ( pi - 3 ) / ( 3 * pi * ( 4 - pi ) );
 	}
 
-	y = SIGN(x) *
+	y = SIGNF(x) *
 	    sqrtf(
-	    sqrtf( powf( 2/(pi*a) + log(1-x*x)/2, 2 ) - log(1-x*x)/a )
-	     - ( 2/(pi*a) + log(1-x*x)/2 )
+	    sqrtf( powf( 2.0f/(pi*a) + logf(1.0f-x*x)/2.0f, 2.0f ) - logf(1.0f-x*x)/a )
+	     - ( 2.0f/(pi*a) + logf(1.0f-x*x)/2.0f )
 	     );
 
 	return y;

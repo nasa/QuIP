@@ -285,7 +285,7 @@ static COMMAND_FUNC( do_linewidth )
 #else // ! BUILD_FOR_IOS
 	int w;
 
-	w = HOW_MANY("line width in pixels");
+	w = (int) HOW_MANY("line width in pixels");
 
 	DRAW_CHECK(do_linewidth)
 

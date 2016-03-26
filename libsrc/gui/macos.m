@@ -50,6 +50,31 @@ static NSAlert *ending_busy_p=NULL;
 //#define MACOS_PO_CURR_Y(p,s)	(PO_HEIGHT(p) - PO_CURR_Y(p) - SOB_HEIGHT(s))
 #define MACOS_PO_CURR_Y(p,s)	(PO_HEIGHT(p) - PO_CURR_Y(p))
 
+// find_any_scrnobj should search all contexts...
+// taken from ios.m...
+
+Screen_Obj *find_any_scrnobj(NSView *cp)
+{
+	IOS_List *lp;
+	IOS_Node *np;
+	Screen_Obj *sop;
+
+	// Does this return all objects, or just current context stack?
+	lp = all_scrnobjs(SGL_DEFAULT_QSP_ARG);
+	if( lp == NO_IOS_LIST ) return NULL;
+
+	np=IOS_LIST_HEAD(lp);
+	while(np!=NO_IOS_NODE){
+		sop = (Screen_Obj *)IOS_NODE_DATA(np);
+//fprintf(stderr,"find_any_scrnobj 0x%lx:  %s, ctrl = 0x%lx\n",
+//(u_long)cp,SOB_NAME(sop),(u_long) SOB_CONTROL(sop));
+		if( SOB_CONTROL(sop) == cp ) return sop;
+		np=IOS_NODE_NEXT(np);
+	}
+
+	return NULL;
+}
+
 void window_sys_init(SINGLE_QSP_ARG_DECL)
 {
 	// nop

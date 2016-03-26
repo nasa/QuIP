@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>E620E883-6583-4D4F-B9F0-D3F0F787C861</string>
+	<key>IDESourceControlProjectName</key>
+	<string>MacQuIP</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>4D99ABD9-E932-4FDC-9405-7294F7B70654</key>
+		<string>mulligan@n262vcs-git:MacQuIP</string>
+		<key>8CBD497E-F831-4958-9C0A-F2C9B52E8230</key>
+		<string>mulligan@n262vcs-git:numrec</string>
+		<key>C83B6163-6EAE-4DDD-AB44-61C2E2996313</key>
+		<string>mulligan@n262vcs-git:oq</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>MacQuIP.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>4D99ABD9-E932-4FDC-9405-7294F7B70654</key>
+		<string>../..</string>
+		<key>8CBD497E-F831-4958-9C0A-F2C9B52E8230</key>
+		<string>../../../../working/numrec</string>
+		<key>C83B6163-6EAE-4DDD-AB44-61C2E2996313</key>
+		<string>../../../../working/oq</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>mulligan@n262vcs-git:MacQuIP</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>4D99ABD9-E932-4FDC-9405-7294F7B70654</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>4D99ABD9-E932-4FDC-9405-7294F7B70654</string>
+			<key>IDESourceControlWCCName</key>
+			<string>MacQuIP</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>8CBD497E-F831-4958-9C0A-F2C9B52E8230</string>
+			<key>IDESourceControlWCCName</key>
+			<string>numrec</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>C83B6163-6EAE-4DDD-AB44-61C2E2996313</string>
+			<key>IDESourceControlWCCName</key>
+			<string>oq</string>
+		</dict>
+	</array>
+</dict>
+</plist>

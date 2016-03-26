@@ -45,10 +45,10 @@ static FILE *summ_file=NULL;		/* summary data */
 static int recording;
 static int prelim;
 static int trialno;
-static short _trans;		/* possible transition of current trial */
+static int _trans;		/* possible transition of current trial */
 static SCRAMBLE_TYPE *order=NULL;	/* permutation buffer */
 
-static short nstairs=0;
+static int nstairs=0;
 
 #define NO_STAIR_PTR	((Staircase **)NULL)
 static Staircase **stair_tbl=NO_STAIR_PTR;
@@ -142,7 +142,7 @@ static void adj_val(Staircase *stc)	/* set the value for the next trial */
 		default: break;
 	}
 	if( stc->stc_val < 0 ) stc->stc_val = 0;
-	if( stc->stc_val >= _nvals ) stc->stc_val = (short) _nvals-1;
+	if( stc->stc_val >= _nvals ) stc->stc_val = (int) _nvals-1;
 }
 
 #define FC_RSP(stc,rsp)		(STAIR_CRCT_RSP(stc)==YES?rsp:(rsp^3))
@@ -178,7 +178,7 @@ static int iftrans(Staircase *stc,int rsp)	/* see if this response warrants a tr
 	}
 
 	SET_STAIR_LAST_RSP3(stc, STAIR_LAST_RSP(stc) );
-	SET_STAIR_LAST_RSP(stc, (short) FC_RSP(stc,rsp) );
+	SET_STAIR_LAST_RSP(stc, (int) FC_RSP(stc,rsp) );
 	return(retval);
 }
 
@@ -232,7 +232,7 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 
 	if( rsp != REDO ){
 		if( recording ) tally(stc,rsp);
-		_trans= (short) iftrans(stc,rsp);
+		_trans= (int) iftrans(stc,rsp);
 		if( STAIR_INC(stc) != STAIR_MIN_INC(stc) ) adj_inc(stc);
 		adj_val(stc);
 	} else {
@@ -268,11 +268,11 @@ static int step(QSP_ARG_DECL Staircase *stc)
 	return(rsp);
 }
 
-int makestair( QSP_ARG_DECL  short st,	/* staircase type */
+int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 		Trial_Class *tcp,	/* staircase class */
-		short mi,		/* mininimum increment */
-		short cr,		/* correct response */
-		short ir		/* increment response */
+		int mi,		/* mininimum increment */
+		int cr,		/* correct response */
+		int ir		/* increment response */
 		)
 {
 	char str[64];
@@ -306,7 +306,7 @@ int makestair( QSP_ARG_DECL  short st,	/* staircase type */
 		WARN("X values should be read before setting up staircases");
 		advise("setting initial staircase increment to 1");
 		SET_STAIR_INC(stcp,1);
-	} else SET_STAIR_INC(stcp, (short) _nvals/2);
+	} else SET_STAIR_INC(stcp, (int) _nvals/2);
 
 	/* random initialization is ok in general, but not good
 		for different types of stair on a U-shaped function! */
@@ -321,7 +321,7 @@ int makestair( QSP_ARG_DECL  short st,	/* staircase type */
 	/* n/2 is not so good for real forced choice,
 		but it's probably not much worse than random */
 
-	stcp->stc_val = (short) _nvals/2 ;
+	stcp->stc_val = (int) _nvals/2 ;
 
 	SET_STAIR_MIN_INC(stcp,mi);
 	if( mi < 0 ) SET_STAIR_INC(stcp,STAIR_INC(stcp)*(-1));
@@ -509,7 +509,7 @@ static int prestep(SINGLE_QSP_ARG_DECL)	/* step stairs below criterion in a rand
 
 void set_summary_file(FILE *fp) { summ_file=fp; }
 
-void add_stair(QSP_ARG_DECL  short type,Trial_Class *tcp )
+void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp )
 {
 	if( makestair(QSP_ARG  type,tcp,1,YES,YES) < 0 )
 		WARN("Error creating staircase!?");
@@ -587,7 +587,7 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 {
 	Trial_Class *tcp;
 	List *lp;
-	short n;
+	int n;
 
 	if( trial_class_itp == NO_ITEM_TYPE )
 		init_trial_classs(SINGLE_QSP_ARG);
@@ -600,7 +600,7 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 
 	lp=item_list(QSP_ARG  trial_class_itp);
 	if( lp == NO_LIST ) n=0;
-	else n=(short)eltcount(lp);
+	else n=(int)eltcount(lp);
 
 	tcp = class_for(QSP_ARG  n);
 	return(tcp);
@@ -621,7 +621,7 @@ static void init_data_tbl(Data_Tbl *dtp)
 
 // class_for creates a new class...
 
-Trial_Class *class_for( QSP_ARG_DECL  short class_index )
+Trial_Class *class_for( QSP_ARG_DECL  int class_index )
 {
 	char newname[32];
 	Trial_Class *tcp;

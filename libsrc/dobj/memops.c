@@ -268,7 +268,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 //		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  fast_copy:  unsupported precision %s",
 //			OBJ_MACH_PREC_NAME(dp_to) );
 //		NWARN(DEFAULT_ERROR_STRING);
-		assert( ! "Unsupported precision in fast_copy!?" );
+		assert( AERROR("Unsupported precision in fast_copy!?") );
 	}
 //#endif /* CAUTIOUS */
 

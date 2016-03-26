@@ -703,7 +703,7 @@ WARN("set_fmt:  not sure what to do with FMT_POSTSCRIPT - using decimal.");
 		default:
 //			sprintf(ERROR_STRING,"CAUTIOUS:  set_fmt:  unexpected format code %d!?",i);
 //			WARN(ERROR_STRING);
-			assert( ! "set_fmt:  unexpected format code!?" );
+			assert( AERROR("set_fmt:  unexpected format code!?") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -1560,7 +1560,7 @@ static COMMAND_FUNC( do_timezone )
 //#ifdef CAUTIOUS
 		default:
 //			WARN("CAUTIOUS:  do_timezone:  bad timezone choice!?");
-			assert( ! "do_timezone:  bad timezone !?");
+			assert( AERROR("do_timezone:  bad timezone !?") );
 
 			break;
 //#endif // CAUTIOUS

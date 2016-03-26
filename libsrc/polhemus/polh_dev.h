@@ -260,7 +260,7 @@ extern int which_receiver;
 extern int polh_units;
 extern int polh_continuous;	/* flag */
 extern int n_active_stations;
-extern int n_response_chars;
+extern ssize_t n_response_chars;
 
 /* prototypes */
 
