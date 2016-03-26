@@ -302,7 +302,7 @@ static void dbl_to_scalar(Scalar_Value *svp,double dblval,Precision *prec_p)
 			break;
 
 		case PREC_BIT:
-			if( dblval )
+			if( dblval != 0 )
 				svp->u_l = 1;
 			else
 				svp->u_l = 0;
@@ -732,7 +732,7 @@ advise(ERROR_STRING);\
 			ERROR1(ERROR_STRING);				\
 			IOS_RETURN					\
 			offset = 0;*/	/* quiet compiler */		\
-			assert(!"map_iteration:  illegal machine precision!?");	\
+			assert(AERROR("map_iteration:  illegal machine precision!?"));	\
 			break;
 
 //#else /* ! CAUTIOUS */
@@ -2569,7 +2569,7 @@ static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,i
 //#ifdef CAUTIOUS
 //			MISSING_CASE(enp,"set_script_args");
 //#endif /* CAUTIOUS */
-			assert( ! "missing case in set_script_args" );
+			assert( AERROR("missing case in set_script_args") );
 			break;
 	}
 	return(0);
@@ -2967,7 +2967,7 @@ print_float:
 			  else {
 //			  	ERROR1("CAUTIOUS:  bad reference type");
 //				IOS_RETURN
-				assert( ! "bad reference type" );
+				assert( AERROR("bad reference type") );
 			}
 //#endif /* CAUTIOUS */
 			break;
@@ -4263,7 +4263,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 //					ERROR1(ERROR_STRING);
 //					IOS_RETURN_VAL(0)
 //#endif /* CAUTIOUS */
-					assert( ! "eval_int_exp:  unhandled precision" );
+					assert( AERROR("eval_int_exp:  unhandled precision") );
 			}
 			break;
 
@@ -4407,7 +4407,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 //			"CAUTIOUS: eval_int_exp:  %s has nonsense precision",
 //					OBJ_NAME(dp));
 //					WARN(ERROR_STRING);
-					assert( ! "eval_int_exp:  nonsense precision" );
+					assert( AERROR("eval_int_exp:  nonsense precision") );
 					lval=0.0;	// quiet compiler
 					break;
 //#endif /* CAUTIOUS */
@@ -5493,7 +5493,7 @@ DUMP_TREE(enp);
 		case T_SUBSAMP:					/* eval_obj_ref */
 			{
 			//Dimension_Set *ss_dsp;
-			Dimension_Set ds1;	// BUG not good if these are ObjC objects...
+			//Dimension_Set ds1;	// BUG not good if these are ObjC objects...
 			//index_t ss_offsets[N_DIMENSIONS]={0,0,0,0,0};
 			incr_t incrs[N_DIMENSIONS]={1,1,1,1,1};
 			incr_t inc;
@@ -5784,7 +5784,7 @@ static double scalar_to_double(Scalar_Value *svp,Precision *prec_p)
 		default:
 //			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  unhandled precision \"%s\" in scalar_to_double()",PREC_NAME(PREC_MACH_PREC_PTR(prec_p)));
 //			NWARN(DEFAULT_ERROR_STRING);
-			assert( ! "scalar_to_double:  unhandled precision" );
+			assert( AERROR("scalar_to_double:  unhandled precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -5930,7 +5930,7 @@ return(0.0);
 				case PREC_SP:   return( (double) ((float)   dval ) );
 				case PREC_DP:   return(                     dval   );
 				case PREC_BIT:
-					if( dval )
+					if( dval != 0 )
 						dval = 1.0;
 					else
 						dval = 0.0;
@@ -5942,7 +5942,7 @@ return(0.0);
 //		"CAUTIOUS:  eval_flt_exp:  unhandled precision (%s) in TYPECAST switch",
 //						NAME_FOR_PREC_CODE(VN_PREC(enp)));
 //					ERROR1(ERROR_STRING);
-					assert( ! "eval_flt_exp:  unhandled precision" );
+					assert( AERROR("eval_flt_exp:  unhandled precision") );
 					dval = 0.0;
 					break;
 //#endif /* CAUTIOUS */
@@ -8079,7 +8079,7 @@ DUMP_TREE(enp);
 //				sprintf(ERROR_STRING,"CAUTIOUS:  eval_work_tree T_SET_PTR:  rhs is neither a pointer nor a reference!?");
 //				ERROR1(ERROR_STRING);
 //				IOS_RETURN_VAL(0)
-				assert( ! "eval_work_tree:  rhs is neither ptr nor reference");
+				assert( AERROR("eval_work_tree:  rhs is neither ptr nor reference") );
 			}
 //#endif /* CAUTIOUS */
 

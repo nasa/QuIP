@@ -686,7 +686,7 @@ int response(QSP_ARG_DECL  const char *s)
 //#ifdef CAUTIOUS
 		default:
 //			ERROR1("CAUTIOUS:  response:  crazy response value");
-			assert( ! "response:  crazy response value");
+			assert( AERROR("response:  crazy response value") );
 //#endif /* CAUTIOUS */
 	}
 	/* should never be reached */
