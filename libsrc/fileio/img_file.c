@@ -1311,7 +1311,7 @@ advise(ERROR_STRING);
 	else {
 //		WARN("CAUTIOUS:  bad r/w string passed to open_image_file");
 //		ifp = NO_IMAGE_FILE;
-		assert( ! "bad r/w string passed to open_image_file");
+		assert( AERROR("bad r/w string passed to open_image_file") );
 	}
 //#endif /* CAUTIOUS */
 
