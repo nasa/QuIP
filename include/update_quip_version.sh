@@ -18,7 +18,7 @@ fi
 # simple script to create a file with the version string as provide by git
 # What do all of these sed commands do?  It looks like they are removing some spaces?
 
-ls -ld $srcdir
+#ls -ld $srcdir
 
 outfile=/tmp/current_quip_version.h
 
