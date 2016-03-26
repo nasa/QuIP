@@ -192,7 +192,7 @@ static long get_long_scalar_value(Data_Obj *dp)
 		case PREC_NONE:
 		case N_MACHINE_PRECS:
 			//NWARN("CAUTIOUS:  get_long_scalar_value:  nonsense precision");
-			assert( ! "get_long_scalar_value:  nonsense precision");
+			assert( AERROR("get_long_scalar_value:  nonsense precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -222,7 +222,7 @@ static double get_dbl_scalar_value(Data_Obj *dp)
 		case PREC_INVALID:
 		case N_MACHINE_PRECS:
 			//NWARN("CAUTIOUS:  get_dbl_scalar_value:  nonsense precision");
-			assert( ! "get_dbl_scalar_value:  nonsense precision");
+			assert( AERROR("get_dbl_scalar_value:  nonsense precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -350,7 +350,7 @@ static void int_to_scalar(Scalar_Value *svp,long intval,Precision *prec_p)
 //				PREC_NAME(prec_p));
 //			NERROR1(DEFAULT_ERROR_STRING);
 //			IOS_RETURN
-			assert( ! "int_to_scalar:  unhandled target precision");
+			assert( AERROR("int_to_scalar:  unhandled target precision") );
 			break;
 //#endif /* CAUTIOUS */
 	}
@@ -448,7 +448,7 @@ int zero_dp(QSP_ARG_DECL  Data_Obj *dp)
 		default:
 //			ERROR1("CAUTIOUS:  unhandled machine precision in zero_dp()");
 //			IOS_RETURN_VAL(-1)
-			assert( ! "zero_dp:  unhandled precision" );
+			assert( AERROR("zero_dp:  unhandled precision") );
 			break;
 	}
 	if( dp_const(QSP_ARG  dp,&sval) == NO_OBJ ) return(-1);
@@ -1008,7 +1008,7 @@ static Scalar_Value * take_inner(Data_Obj *dp1,Data_Obj *dp2)
 //				"CAUTIOUS:  take_inner:  %s has nonsense machine precision",
 //				OBJ_NAME(dp1));
 //			WARN(ERROR_STRING);
-			assert( ! "take_inner:  nonsense precision!?");
+			assert( AERROR("take_inner:  nonsense precision!?") );
 			/* can't happen? */
 			break;
 //#endif /* CAUTIOUS */
@@ -1472,7 +1472,7 @@ static void eval_scalar(QSP_ARG_DECL Scalar_Value *svp, Vec_Expr_Node *enp, Prec
 		case PREC_UBY:  svp->u_ub = (u_char) EVAL_INT_EXP(enp); break;
 		default:
 //			WARN("CAUTIOUS:  unhandled machine precision in eval_scalar()");
-			assert( ! "eval_scalar:  unhandled machine precision" );
+			assert( AERROR("eval_scalar:  unhandled machine precision") );
 			break;
 	}
 }
