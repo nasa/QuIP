@@ -4,8 +4,10 @@
 
 if [ $# -eq 1 ]; then
   srcdir=$1
+elif [ $# -eq 0 ]; then
+  srcdir=.
 else
-  echo usage:  $0 srcdir
+  echo usage:  $0 '[srcdir]'
   exit
 fi
 
