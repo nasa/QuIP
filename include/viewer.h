@@ -144,6 +144,7 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 #define VW_DEPTH(vp)		(vp).depth
 #define VW_GW(vp)		(vp).gwp
 
+//#ifdef BUILD_FOR_OBJC
 #ifdef BUILD_FOR_IOS
 #define VW_QVC(vp)		((quipViewController *)GW_VC(VW_GW(vp)))
 #define VW_QV(vp)		((quipView *)VW_QVC(vp).view)
@@ -155,6 +156,7 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 #define SET_VW_CANVAS(vp,v)	SET_QV_CANVAS(VW_QV(vp),v)
 #define SET_VW_BG_IMG(vp,iv)	SET_QV_BG_IMG(VW_QV(vp),iv)
 #endif // BUILD_FOR_IOS
+//#endif // BUILD_FOR_OBJC
 
 #ifdef BUILD_FOR_MACOS
 #define VW_WINDOW(vp)		GW_WINDOW(VW_GW(vp))

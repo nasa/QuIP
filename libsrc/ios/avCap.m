@@ -48,12 +48,17 @@ fprintf(stderr,"captureOutput BEGIN\n");
 		newImage = createImageFromBuffer(pixelBuffer,0,0,
 			VW_HEIGHT(mon_vp),VW_WIDTH(mon_vp));
 			// BUG?  args are declared width,height???
+#ifdef BUILD_FOR_IOS
 		UIImage *img = [UIImage imageWithCGImage:newImage
 			scale:1.0 orientation:UIImageOrientationRight ];
 		CGImageRelease(newImage);
-
+		
 		(VW_QV(mon_vp)).bgImageView.image = img;
-	}
+#else
+		NWARN("captureOutput:  Need to implement for MAC OS!?");
+		return;
+#endif // BUILD_FOR_IOS
+			}
 	if( grab_dp != NO_OBJ ){
 		if( pixelBuffer == NULL )
 			pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
@@ -94,7 +99,7 @@ fprintf(stderr,"captureOutput BEGIN\n");
 		memcpy(OBJ_DATA_PTR(grab_dp), baseAddress, size);
 		CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
 #endif // FOOBAR
-		copyImageFromBuffer(grab_dp,pixelBuffer,0,0,s.width,s.height);
+		copyImageFromBuffer(grab_dp,pixelBuffer,0,0,(size_t)s.width,(size_t)s.height);
 
 		grab_dp=NULL;
 	}

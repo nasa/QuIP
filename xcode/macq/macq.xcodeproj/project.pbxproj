@@ -275,6 +275,11 @@
 		7C63B38317E27A0E00CBA8CA /* mac_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7C63B38217E27A0E00CBA8CA /* mac_startup.enc */; };
 		7C63B38517E27B4100CBA8CA /* encrypt.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C63B38417E27B4100CBA8CA /* encrypt.m */; };
 		7C63B38717E8DE1300CBA8CA /* quipWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C63B38617E8DE1300CBA8CA /* quipWindowController.m */; };
+		7C653CB41CA7303B00F33A85 /* camera.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C653CB31CA7303B00F33A85 /* camera.m */; };
+		7C653CB61CA7311B00F33A85 /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C653CB51CA7311B00F33A85 /* avCap.m */; };
+		7C653CB81CA7323000F33A85 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C653CB71CA7323000F33A85 /* CoreMedia.framework */; };
+		7C653CBA1CA7324900F33A85 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C653CB91CA7324900F33A85 /* AVFoundation.framework */; };
+		7C653CBC1CA7326100F33A85 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C653CBB1CA7326100F33A85 /* CoreVideo.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -553,6 +558,11 @@
 		7C63B38217E27A0E00CBA8CA /* mac_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = mac_startup.enc; path = ../../../working/oq/libsrc/ios/mac_startup.enc; sourceTree = "<group>"; };
 		7C63B38417E27B4100CBA8CA /* encrypt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = encrypt.m; sourceTree = "<group>"; };
 		7C63B38617E8DE1300CBA8CA /* quipWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipWindowController.m; sourceTree = "<group>"; };
+		7C653CB31CA7303B00F33A85 /* camera.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = camera.m; sourceTree = "<group>"; };
+		7C653CB51CA7311B00F33A85 /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
+		7C653CB71CA7323000F33A85 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		7C653CB91CA7324900F33A85 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		7C653CBB1CA7326100F33A85 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -560,6 +570,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C653CBC1CA7326100F33A85 /* CoreVideo.framework in Frameworks */,
+				7C653CBA1CA7324900F33A85 /* AVFoundation.framework in Frameworks */,
+				7C653CB81CA7323000F33A85 /* CoreMedia.framework in Frameworks */,
 				71AC49D517E000A400AABB78 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -597,6 +610,9 @@
 		71AC49D317E000A400AABB78 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7C653CBB1CA7326100F33A85 /* CoreVideo.framework */,
+				7C653CB91CA7324900F33A85 /* AVFoundation.framework */,
+				7C653CB71CA7323000F33A85 /* CoreMedia.framework */,
 				71AC49D417E000A400AABB78 /* Cocoa.framework */,
 				71AC49D617E000A400AABB78 /* Other Frameworks */,
 			);
@@ -1017,6 +1033,8 @@
 		7C63B33C17E0FDD300CBA8CA /* objc */ = {
 			isa = PBXGroup;
 			children = (
+				7C653CB51CA7311B00F33A85 /* avCap.m */,
+				7C653CB31CA7303B00F33A85 /* camera.m */,
 				7C63B38617E8DE1300CBA8CA /* quipWindowController.m */,
 				7C63B38417E27B4100CBA8CA /* encrypt.m */,
 				7C63B37E17E274EC00CBA8CA /* macos_main.m */,
@@ -1253,6 +1271,7 @@
 				7C63B38517E27B4100CBA8CA /* encrypt.m in Sources */,
 				71AC4A8C17E4D14B00AABB78 /* menu_bar.m in Sources */,
 				71AC4A9517E5259F00AABB78 /* chn_menu.c in Sources */,
+				7C653CB41CA7303B00F33A85 /* camera.m in Sources */,
 				7C2B120A1CA709810089B27A /* vt_native.c in Sources */,
 				71AC4A9717E525B000AABB78 /* warmenu.c in Sources */,
 				71AC4A9B17E52A2400AABB78 /* sampmenu.c in Sources */,
@@ -1331,6 +1350,7 @@
 				71CE755317E59B0300D93DE7 /* clrdat.c in Sources */,
 				71CE755417E59B0300D93DE7 /* errbars.c in Sources */,
 				71CE755517E59B0300D93DE7 /* lookmenu.c in Sources */,
+				7C653CB61CA7311B00F33A85 /* avCap.m in Sources */,
 				71CE755617E59B0300D93DE7 /* lump.c in Sources */,
 				71CE755D17E59B1600D93DE7 /* mlfit.c in Sources */,
 				71CE755E17E59B1600D93DE7 /* ptoz.c in Sources */,

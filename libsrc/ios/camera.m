@@ -37,8 +37,14 @@ static double get_camera_size(QSP_ARG_DECL  IOS_Item *ip,int index)
 	return(d);
 }
 
+static const char * get_camera_prec(QSP_ARG_DECL  IOS_Item *ip )
+{
+	return "unimp";
+}
+
 IOS_Size_Functions camera_sf={
-		get_camera_size
+		get_camera_size,
+		get_camera_prec
 };
 
 @implementation Camera
