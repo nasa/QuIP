@@ -1,0 +1,142 @@
+Define SetSetting1 0
+Assign s1 $slider_val
+Print s1
+.
+
+Define SetSetting2 0
+Assign s2 $slider_val
+Print s2
+.
+
+Define SetUsername 0
+advise "SetUsername not implemented..."
+nop
+.
+
+Define SetColor 0
+advise "color = $choice"
+.
+
+Define SelectGreen 0
+advise "Setting chooser to green..."
+interface
+  decorate test_panel
+    set_choice Colors green
+    quit
+  quit
+.
+
+Define CheckUName 0
+interface
+  decorate test_panel
+    get_text Username uname
+    quit
+  quit
+advise "Username = $uname"
+.
+
+Define Test_Button 0
+If panel_exists(test_panel) "warn 'panel already exists' exit_macro"
+
+interface
+  panel test_panel 400 800
+  decorate test_panel
+    label LLL1 "This is the first label text"
+    button Shout 'advise Hello'
+    slider MySlider SetSetting1 0 30 15
+    adjuster MyAdjuster SetSetting2 0 30 15
+    label L2 "username text input should appear below this"
+    text Username SetUsername "default value"
+    button 'Check username' CheckUName
+    chooser Colors SetColor 3 red green blue
+    button Green 'SelectGreen'
+    button Quit 'advise BYE advise exiting exit'
+    quit
+  control
+    show test_panel
+    quit
+  quit
+view
+  draw test_panel
+    # In macos, y starts at bottom, not top...
+    Set y 3
+    do
+      move 5 $y cont 153 $y
+      Add_Var y 4
+      while $y<400
+    string "this is a test" 100 20
+    quit
+  quit
+.
+
+Define Show_Ramp 1 viewer
+Assign d depth('$1')
+advise "Depth of window $1 is $d"
+Set d 4
+If !obj_exists(ramp) "Image ramp nrows('$1') ncols('$1') $d u_byte"
+
+Set i 0
+repeat 2
+#  Ramp2D ramp{$i} 0 (1+$i)%2 $i%2
+  Ramp2D ramp{$i} 0 1 0
+  Increment i
+  end
+VSet ramp{2} 0
+VSet ramp{3} 255
+Show_Bytes ramp $1
+.
+
+Define Moveit 0
+If !viewer_exists(v) exit_macro
+Posn_Window v 300 300
+.
+
+Define TestPlot 0
+Set xmin 0
+Set xmax 10
+Set ymin -1
+Set ymax 1
+Set y_tick_spacing 0.5
+Set x_tick_spacing 2
+New_Plotter plotwin 444 444
+Plot_Data_Range $xmin $ymin $xmax $ymax
+Y_Legend "amplitude"
+X_Legend time
+Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
+Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
+Label_X_Ticks $xmin $xmax $x_tick_spacing
+Label_Y_Ticks $ymin $ymax $y_tick_spacing
+.
+
+Define Init_Test_Menus 0
+advise "Init_Test_Menus BEGIN"
+interface
+  menu_bar
+    Set m Viewers
+    new_menu $m
+    populate $m
+      item 'New viewer' 'Viewer v 256 256'
+      item 'Draw to viewer' 'Show_Ramp v'
+      item 'Move viewer' 'Moveit'
+      separator
+      item Test_Panel Test_Button
+      separator
+      item Test_Plot TestPlot
+      quit
+    add_to_bar $m
+    Set m 'More tests'
+    new_menu $m
+    populate $m
+      item Test1 'advise hello1'
+      separator
+      item Test2 'advise hello2'
+      separator
+      item Test3 'advise hello3'
+      quit
+    add_to_bar $m
+    quit
+  quit
+Set test_menu_inited 1
+advise "Init_Test_Menus DONE"
+.
+

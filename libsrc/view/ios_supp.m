@@ -649,6 +649,7 @@ void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 
 int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 {
+#ifdef BUILD_FOR_IOS
 	switch( GW_VC_TYPE(VW_GW(vp)) ){
 		case GW_VC_QVC:		return 1;
 		case GW_VC_QTVC:	return 0;
@@ -656,6 +657,9 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 			warn("Unhandled view controller case in is_image_viewer!?");
 			return 0;
 	}
+#else // ! BUILD_FOR_IOS
+	warn("is_image_viewer:  need to implement!?");
+#endif // ! BUILD_FOR_IOS
 }
 
 /* We would like to be able to bring an image to the front,
