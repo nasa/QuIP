@@ -1412,8 +1412,9 @@ Set fonts_loaded 0
 Init_Plotter_Param_Indices
 Init_Color_Indices
 
-If !var_exists(plot_locale)
-  '< $macro_dir/view/unix_plot.mac'	# the default
+# Can't reference macro_dir here...
+#If !var_exists(plot_locale)
+#  '< $macro_dir/view/unix_plot.mac'	# the default
 
 Init_Font_Stuff
 

@@ -1,4 +1,8 @@
 #!/bin/csh
+#
+# On a fresh install, or a system where we do not build
+# the command line version, we may not be able to encrypt
+# at this stage...
 
 if( $#argv != 1 && $#argv != 2 ) then
   echo 'usage:  ./build_startup_file.csh demo [test]'
@@ -36,6 +40,8 @@ cat < /dev/null > $outfile
 
 echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
 
+set suffix=mac
+
 # not yet
 #set sfile=/usr/local/share/coq/macros/startup/coq.scr
 #if( -e $sfile) then
@@ -58,7 +64,7 @@ echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
 
   set subdir=view
   # dpysize.scr
-  set file_list=( common luts view plotsupp ios_plot )
+  set file_list=( common luts view ios_plot plotsupp )
   source add_files.csh
   
   set subdir=gui
@@ -97,6 +103,33 @@ endif
 
 echo File $outfile complete, encrytping...
 
-coq $outfile $encfile < encrypt_file.scr
+# We tried using 'which' to determine the presence of quip,
+# but we couldn't eliminate the annoying "quip:  command not found"
+# message from the output...
+
+#set q=`which quip` >& /dev/null
+#echo status = $status
+#if( status != 0 ) then
+#  quip binary not found, not encrypting startup file.
+#  if( -e $encfile ) then
+#    /bin/rm $encfile
+#  endif
+#  # make a zero-len file so the bundle will build
+#  touch $encfile
+#else
+#  quip $outfile $encfile < encrypt_file.scr
+#endif
+
+quip $outfile $encfile < encrypt_file.scr >& /tmp/enc_errors
+if( status != 0 ) then
+  echo Problem encrytping: `cat /tmp/enc_errors`
+  /bin/rm /tmp/enc_errors
+  echo Creating zero-length encrypted file.
+  if( -e $encfile ) then
+    /bin/rm $encfile
+  endif
+  # make a zero-len file so the bundle will build
+  touch $encfile
+endif
 
 

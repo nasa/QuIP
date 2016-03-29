@@ -218,6 +218,7 @@
 		7934D54519DB5CF5003FA1FF /* polh_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54419DB5CF5003FA1FF /* polh_menu.c */; };
 		7934D54719DB60E6003FA1FF /* polh_tbl.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54619DB60E6003FA1FF /* polh_tbl.c */; };
 		7934D54919DB6112003FA1FF /* polh_func.c in Sources */ = {isa = PBXBuildFile; fileRef = 7934D54819DB6112003FA1FF /* polh_func.c */; };
+		7C152F991CA9FDDB007F2FA2 /* mac_startup.scr in Resources */ = {isa = PBXBuildFile; fileRef = 7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */; };
 		7C2B11F41CA707520089B27A /* questions.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F31CA707520089B27A /* questions.c */; };
 		7C2B11F61CA707640089B27A /* pipe_support.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F51CA707640089B27A /* pipe_support.c */; };
 		7C2B11F81CA7076D0089B27A /* pipes.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C2B11F71CA7076D0089B27A /* pipes.c */; };
@@ -499,6 +500,7 @@
 		7934D54419DB5CF5003FA1FF /* polh_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_menu.c; sourceTree = "<group>"; };
 		7934D54619DB60E6003FA1FF /* polh_tbl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_tbl.c; sourceTree = "<group>"; };
 		7934D54819DB6112003FA1FF /* polh_func.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = polh_func.c; sourceTree = "<group>"; };
+		7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = mac_startup.scr; path = ../../../macros/startup/mac_startup.scr; sourceTree = "<group>"; };
 		7C2B11F31CA707520089B27A /* questions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = questions.c; sourceTree = "<group>"; };
 		7C2B11F51CA707640089B27A /* pipe_support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipe_support.c; sourceTree = "<group>"; };
 		7C2B11F71CA7076D0089B27A /* pipes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipes.c; sourceTree = "<group>"; };
@@ -639,6 +641,7 @@
 		71AC49DB17E000A400AABB78 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				7C152F981CA9FDDB007F2FA2 /* mac_startup.scr */,
 				7C63B38217E27A0E00CBA8CA /* mac_startup.enc */,
 				71AC49DC17E000A500AABB78 /* MacQuIP-Info.plist */,
 				71AC49DD17E000A500AABB78 /* InfoPlist.strings */,
@@ -1132,6 +1135,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7C152F991CA9FDDB007F2FA2 /* mac_startup.scr in Resources */,
 				71AC49DF17E000A500AABB78 /* InfoPlist.strings in Resources */,
 				71AC49E517E000A500AABB78 /* Credits.rtf in Resources */,
 				7C63B38317E27A0E00CBA8CA /* mac_startup.enc in Resources */,
