@@ -36,8 +36,7 @@ libinterpreter_a_SOURCES =		\
 		param.c			\
 		pathnm.c		\
 		query.c			\
-		pipes.c			\
-		pipe_support.c			\
+		pipe_support.c		\
 		questions.c		\
 		nexpr.y			\
 		ptoz.c			\
@@ -63,7 +62,6 @@ noinst_HEADERS =			\
 					\
 		chewtext.h		\
 		func_helper.h		\
-		pipe_support.h		\
 		query_prot.h
 
 win_nexpr.c:	nexpr.c

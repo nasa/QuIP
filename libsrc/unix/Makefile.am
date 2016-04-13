@@ -20,7 +20,8 @@ libunix_util_a_SOURCES =		\
 		threads.c		\
 		timex.c			\
 		alarm.c			\
-		unix_menu.c
+		unix_menu.c		\
+		pipe_menu.c
 
 noinst_HEADERS =			\
 		my_stty.h		\

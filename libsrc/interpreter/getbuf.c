@@ -557,7 +557,7 @@ void * getbuf(size_t size)
 #ifdef QUIP_DEBUG
 if( debug & gbdebug ){
     /* DEAFULT_ERROR_STRING not valid at startup!? */
-    fprintf(stderr,"getbuf:  %10ld at addr = 0x%lx\n", size, (u_long)p );
+    fprintf(stderr,"getbuf:  %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
 }
 #endif /* QUIP_DEBUG */
 

@@ -77,6 +77,7 @@ noinst_HEADERS =			\
 			optimize.h	\
 			panel_obj.h	\
 			param_api.h	\
+			pipe_support.h	\
 			pf_viewer.h	\
 			platform.h	\
 			polh_menu.h	\

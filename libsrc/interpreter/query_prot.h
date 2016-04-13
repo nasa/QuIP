@@ -7,9 +7,11 @@
 
 #include "quip_prot.h"
 
+/* moved to pipe_support.h
 extern void creat_pipe(QSP_ARG_DECL  const char *name, const char* command, const char* rw);
 extern void sendto_pipe(QSP_ARG_DECL  Pipe *pp,const char* text);
 extern void readfr_pipe(QSP_ARG_DECL  Pipe *pp,const char* varname);
+*/
 
 extern void call_funcs_from_list(QSP_ARG_DECL  List *lp );
 

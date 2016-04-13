@@ -473,7 +473,7 @@ if( debug & qldebug ){
 if( strlen(args[i]) < LLEN-80 ){
 sprintf(ERROR_STRING,"exp_mac:  macro arg %d saved at 0x%lx (%s)",i,(long)args[i],args[i]);
 } else {
-sprintf(ERROR_STRING,"exp_mac:  macro arg %d saved at 0x%lx (%lu chars)",i,(long)args[i],strlen(args[i]));
+sprintf(ERROR_STRING,"exp_mac:  macro arg %d saved at 0x%lx (%lu chars)",i,(long)args[i],(long)strlen(args[i]));
 }
 advise(ERROR_STRING);
 }
@@ -494,7 +494,7 @@ advise(ERROR_STRING);
 if( debug&qldebug ){
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  Pushing text for macro %s, addr 0x%lx",
 WHENCE_L(exp_mac),
-MACRO_NAME(mp),(int_for_addr)MACRO_TEXT(mp));
+MACRO_NAME(mp),(u_long)MACRO_TEXT(mp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -565,10 +565,10 @@ advise(ERROR_STRING);
 if( debug & qldebug ){
 if( strlen(buf) < LLEN-80 ){
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  gword returned 0x%lx \"%s\"",
-WHENCE_L(qword),(int_for_addr)buf,buf);
+WHENCE_L(qword),(u_long)buf,buf);
 } else {
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  gword returned 0x%lx (%lu chars)",
-WHENCE_L(qword),(int_for_addr)buf,strlen(buf));
+WHENCE_L(qword),(u_long)buf,(long)strlen(buf));
 }
 advise(ERROR_STRING);
 }
@@ -703,7 +703,7 @@ advise("reading additional line after escaped newline");
 				buf=start+nhave;
 //if( verbose ){
 //sprintf(ERROR_STRING,"after_backslash %s:  enlarged buffer, new start = 0x%lx",
-//THIS_QSP->qs_name,(int_for_addr)start);
+//THIS_QSP->qs_name,(u_long)start);
 //advise(ERROR_STRING);
 //}
 			}
@@ -715,7 +715,7 @@ advise("continuing to read word after escaped newline");
 if( strlen(s)<80 ){
 sprintf(ERROR_STRING,"remaining text:  \"%s\"",s);
 } else {
-sprintf(ERROR_STRING,"%lu characters remaining",strlen(s));
+sprintf(ERROR_STRING,"%lu characters remaining",(long)strlen(s));
 }
 advise(ERROR_STRING);
 }
@@ -1032,7 +1032,7 @@ WHENCE_L(get_varval),
 } else {
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  copying value string from 0x%lx ( %lu chars)",
 WHENCE_L(get_varval),
-(long)val_str,strlen(val_str));
+(long)val_str,(long)strlen(val_str));
 }
 advise(ERROR_STRING);
 }
@@ -1052,7 +1052,7 @@ QS_WHICH_VAR_BUF(THIS_QSP),
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  copied value in var buf #%d, at 0x%lx (%lu chars)",
 WHENCE_L(get_varval),
 QS_WHICH_VAR_BUF(THIS_QSP),
-(long)s,strlen(s));
+(long)s,(long)strlen(s));
 }
 advise(ERROR_STRING);
 }
@@ -1096,7 +1096,7 @@ SB_BUF(sbp));
 } else {
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  var_expand (%ld chars) BEGIN",
 WHENCE_L(var_expand),
-strlen(SB_BUF(sbp)));
+(long)strlen(SB_BUF(sbp)));
 }
 advise(ERROR_STRING);
 }
@@ -1184,7 +1184,7 @@ WHENCE_L(var_expand),
 } else {
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  get_varval returned 0x%lx (%lu chars)",
 WHENCE_L(var_expand),
-(long)vv,strlen(vv));
+(long)vv,(long)strlen(vv));
 }
 advise(ERROR_STRING);
 }
@@ -1932,7 +1932,7 @@ sprintf(ERROR_STRING,
 WHENCE_L(getmarg),
 index,
 (long)QRY_ARG_AT_IDX(CURR_QRY(THIS_QSP),index),
-strlen(QRY_ARG_AT_IDX(CURR_QRY(THIS_QSP),index))
+(long)strlen(QRY_ARG_AT_IDX(CURR_QRY(THIS_QSP),index))
 );
 }
 advise(ERROR_STRING);
@@ -2974,7 +2974,7 @@ advise(ERROR_STRING);
 sprintf(ERROR_STRING,"dup_input:  current input file is %s",CURRENT_FILENAME);
 advise(ERROR_STRING);
 sprintf(ERROR_STRING,"q_file = 0x%lx\nq_readfunc = 0x%lx",
-(int_for_addr)QRY_FILE_PTR(CURR_QRY(THIS_QSP)),(int_for_addr)QRY_READFUNC(CURR_QRY(THIS_QSP)));
+(u_long)QRY_FILE_PTR(CURR_QRY(THIS_QSP)),(u_long)QRY_READFUNC(CURR_QRY(THIS_QSP)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -3240,11 +3240,11 @@ if( debug & qldebug ){
 if( strlen(text) < LLEN-80 ){
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  pushing at level %d, text 0x%lx  \"%s\"",
 WHENCE_L(push_text),
-QLEVEL,(int_for_addr)text,text);
+QLEVEL,(u_long)text,text);
 } else {
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  pushing at level %d, text 0x%lx  (%lu chars)",
 WHENCE_L(push_text),
-QLEVEL,(int_for_addr)text,strlen(text));
+QLEVEL,(u_long)text,(long)strlen(text));
 }
 advise(ERROR_STRING);
 }
@@ -3519,7 +3519,7 @@ static void show_query_level(QSP_ARG_DECL int i)
 
 	if( QRY_HAS_TEXT(qp) ){
 		sprintf(ERROR_STRING,
-			"\tLevel %d line buffer at 0x%lx:\n\"%s\"",i,(int_for_addr)QRY_LINE_PTR(qp),QRY_LINE_PTR(qp));
+			"\tLevel %d line buffer at 0x%lx:\n\"%s\"",i,(u_long)QRY_LINE_PTR(qp),QRY_LINE_PTR(qp));
 		advise(ERROR_STRING);
 	}
 
@@ -3695,7 +3695,7 @@ v,
 } else {
 sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  found macro arg with %lu chars at 0x%lx",
 WHENCE_L(var_of),
-strlen(v),
+(long)strlen(v),
 (long)v
 );
 }
