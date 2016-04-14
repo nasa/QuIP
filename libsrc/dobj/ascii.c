@@ -383,6 +383,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	return(0);
 }
 
+#ifdef FOOBAR
 #ifdef HAVE_CUDA
 int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 {
@@ -401,6 +402,7 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 	return 1;
 }
 #endif //HAVE_CUDA
+#endif // FOOBAR
 
 #define DEREF(ptr,type)	 (*((type *)ptr))
 
@@ -410,9 +412,11 @@ static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_pt
 	long l;
 	static Data_Obj *warned_dp=NO_OBJ;
 
+#ifdef FOOBAR
 #ifdef HAVE_CUDA
 	if( ! object_is_in_ram(QSP_ARG  dp,"set a value") ) return;
 #endif //HAVE_CUDA
+#endif // FOOBAR
 
 	mp = OBJ_MACH_PREC(dp);
 	switch( mp ){
@@ -1056,9 +1060,11 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	set_integer_print_fmt(QSP_ARG   THE_FMT_CODE);	/* handles integer formats */
 	set_pad_ffmt_str(SINGLE_QSP_ARG);
 
+#ifdef FOOBAR
 #ifdef HAVE_CUDA
 	if( ! object_is_in_ram(QSP_ARG  dp,"display") ) return;
 #endif //HAVE_CUDA
+#endif // FOOBAR
 
 	if( OBJ_MACH_PREC(dp) == PREC_SP )
 		sp_pntvec(QSP_ARG  dp,fp);

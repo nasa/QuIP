@@ -39,6 +39,7 @@ set encfile=mac_startup.enc
 cat < /dev/null > $outfile
 
 echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
+echo 'advise "in startup file..."' >> $outfile
 
 set suffix=mac
 
@@ -87,8 +88,10 @@ If !var_exists(DISPLAY_WIDTH)
 
 max_warnings -1
 
+echo "initializing subsystems..."
 view quit		# init viewer subsystem
 data quit		# init data subsystem
+compute quit		# init veclib
 
 Set chatty 1
 Init_Test_Menus
@@ -121,7 +124,7 @@ echo File $outfile complete, encrytping...
 #endif
 
 quip $outfile $encfile < encrypt_file.scr >& /tmp/enc_errors
-if( status != 0 ) then
+if( $status != 0 ) then
   echo Problem encrytping: `cat /tmp/enc_errors`
   /bin/rm /tmp/enc_errors
   echo Creating zero-length encrypted file.

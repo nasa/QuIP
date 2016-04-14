@@ -43,12 +43,14 @@ double comp_func( Data_Obj *dp, index_t index )
 
 	if( dp==NO_OBJ ) return(0.0);
 
+#ifdef FOOBAR
 #ifdef HAVE_CUDA
 	if( ! object_is_in_ram(DEFAULT_QSP_ARG  dp,
 		"use value functions on CUDA object") ){
 		return(0.0);
 	}
 #endif /* HAVE_CUDA */
+#endif // FOOBAR
 			
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,"comp_func:  %s is not a scalar",

@@ -5,9 +5,6 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
-#ifdef HAVE_CUDA
-#include "cuda_api.h"
-#endif // HAVE_CUDA
 
 //#include "img_file.h"
 

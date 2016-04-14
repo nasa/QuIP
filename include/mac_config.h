@@ -66,6 +66,8 @@
 /* GPU operations with CUDA enabled */
 /* #undef HAVE_CUDA */
 
+#define HAVE_OPENCL	1
+
 /* Define to 1 if you have the <curand.h> header file. */
 /* #undef HAVE_CURAND_H */
 

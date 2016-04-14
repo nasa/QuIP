@@ -206,12 +206,19 @@ void init_all_platforms(SINGLE_QSP_ARG_DECL)
 	if( inited ) return;
 
 	vl2_init_platform(SINGLE_QSP_ARG);
+
 #ifdef HAVE_OPENCL
+fprintf(stderr,"Calling ocl_init_platform...\n");
 	ocl_init_platform(SINGLE_QSP_ARG);
 #endif // HAVE_OPENCL
+
 #ifdef HAVE_CUDA
 	cu2_init_platform(SINGLE_QSP_ARG);
 #endif // HAVE_CUDA
+
+#ifdef HAVE_METAL
+	mtl_init_platform(SINGLE_QSP_ARG);
+#endif // HAVE_METAL
 
 	inited=1;
 }

@@ -2,10 +2,6 @@
 
 #include <stdio.h>
 
-//#ifdef HAVE_CUDA
-//#include "cuda_supp.h"
-//#endif /* HAVE_CUDA */
-
 #ifdef HAVE_OPENCL
 #include "my_ocl.h"
 #endif /* HAVE_OPENCL */
@@ -644,9 +640,9 @@ comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 	Data_Obj *dp2;
 	Dimension_Set ds1, *dsp=(&ds1);
 
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 	push_data_area(OBJ_AREA(dp));
-#endif /* HAVE_CUDA */
+#endif /* HAVE_ANY_GPU */
 
 	DIMSET_COPY(dsp , OBJ_TYPE_DIMS(dp) );
 
@@ -670,9 +666,9 @@ comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 		dp2 = _make_dp(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));
 		SET_OBJ_FLAG_BITS(dp2,DT_NO_DATA);
 	}
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 	pop_data_area();
-#endif /* HAVE_CUDA */
+#endif /* HAVE_ANY_GPU */
 
 	return(dp2);
 } /* end comp_replicate */

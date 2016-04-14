@@ -17,17 +17,6 @@
 #include "../vectree/vectree.h"
 #include "nexpr.h"		// set_obj_funcs
 #include "nports_api.h"		// define_port_data_type
-
-#ifdef FOOBAR
-#ifdef HAVE_CUDA
-#include "cuda_supp.h"
-#endif /* HAVE_CUDA */
-
-#ifdef HAVE_OPENCL
-#include "my_ocl.h"
-#endif /* HAVE_OPENCL */
-#endif // FOOBAR
-
 #include "debug.h"
 
 // Originally zombies were introduced to be able to refresh

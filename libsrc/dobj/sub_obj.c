@@ -8,11 +8,6 @@
 #include "ocl_platform.h"
 #endif // HAVE_OPENCL
 
-#ifdef HAVE_CUDA
-//#include "cuda_supp.h"
-#include "cuda_helper.h"
-#endif // HAVE_CUDA
-
 /* This used to be declared withing check_posn(),
  * but old sun compiler says "no automatic aggregate initialization"
  */
@@ -173,7 +168,6 @@ void parent_relationship( Data_Obj *parent, Data_Obj *child )
 	if( IS_GL_BUFFER(parent) ){
 		// Unaligned_data is an overloaded field here... ?
 		SET_OBJ_GL_INFO(child,OBJ_GL_INFO(parent) );
-	// BUG? - do we need this code for OpenCL too?
 		// These two flag transfer commands
 		// used to be ifdef'd HAVE_CUDA...
 		xfer_dobj_flag(child,parent,DT_GL_BUF);

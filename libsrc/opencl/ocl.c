@@ -23,8 +23,9 @@
 
 #include "veclib/ocl_veclib_prot.h"
 
-#include <OpenGL.h>		// apple only?
-#include <gl.h>			// apple only?
+// When we build in Xcode, we need to precede these with OpenGL:
+#include <OpenGL/OpenGL.h>		// apple only?
+#include <OpenGL/gl.h>			// apple only?
 #include "gl_info.h"
 
 #include "../opengl/glx_supp.h"
@@ -249,7 +250,7 @@ static void ocl_info(QSP_ARG_DECL  Compute_Platform *cdp)
 	prt_msg(MSG_STR);
 
 	// The extensions can be long...
-	s = strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
+	s = (int) strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
 	if( s > SB_SIZE(QS_SCRATCH(DEFAULT_QSP)) )
 		enlarge_buffer( QS_SCRATCH(DEFAULT_QSP), s );
 	sprintf(SB_BUF(QS_SCRATCH(DEFAULT_QSP)),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
@@ -347,12 +348,12 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	status = clGetDeviceInfo(dev_id,CL_DEVICE_EXTENSIONS,psize+1,extensions,&psize);
 	OCL_STATUS_CHECK(status,clGetDeviceInfo)
 	{
-		char *s;
-		s=extensions;
+		char *es;
+		es=extensions;
 		// change spaces to newlines for easier reading...
-		while(*s){
-			if( *s == ' ' ) *s = '\n';	
-			s++;
+		while(*es){
+			if( *es == ' ' ) *es = '\n';
+			es++;
 		}
 	}
 
