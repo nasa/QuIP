@@ -220,6 +220,13 @@ AC_ARG_ENABLE([use_opencl],
 	[AS_HELP_STRING([--disable-opencl],[disable GPU operations with OpenCL @<:@default: no@:>@])],
 	[ use_opencl=${enableval}], [use_opencl=yes])
 
+# Metal seems to only work with objective C, so we can't test for it
+# with a regular C program...
+## Enable metal by default:
+#AC_ARG_ENABLE([use_metal],
+#	[AS_HELP_STRING([--disable-metal],[disable GPU operations with Metal @<:@default: no@:>@])],
+#	[ use_metal=${enableval}], [use_metal=yes])
+
 # Enable X11 by default:
 AC_ARG_ENABLE([use_x11],
 	[AS_HELP_STRING([--disable-x11],[disable X11 @<:@default: no@:>@])],
@@ -319,6 +326,7 @@ if test "x${minimal_build}" = xyes; then
 	use_avi=no
 	use_cuda=no
 	use_opencl=no
+#	use_metal=no
 	use_x11=no
 	use_gsl=no
 	use_pthreads=no
@@ -614,6 +622,21 @@ AC_GNU_SOURCE
 if test "x${use_opencl}" = xyes; then
   have_libopencl=yes
 fi
+
+##################################################
+##
+## metal Metal checks
+##
+####################################################
+#
+## how to do this on Mac?
+## until we figure this out, we enable by default...
+#
+#if test "x${use_metal}" = xyes; then
+#  have_libmetal=yes
+#fi
+#
+##################################################
 
 AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
 AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
@@ -1273,7 +1296,7 @@ if test "x${use_opencl}" = xyes; then
   # capability of the device.
   # what about linux?
   AC_MSG_CHECKING([for OpenCL])
-  cat>vsync_test.c<<EOF
+  cat>ocl_test.c<<EOF
 #ifdef __APPLE__ //Mac OSX has a different name for the header file
 #include <OpenCL/opencl.h>
 #else
@@ -1288,13 +1311,13 @@ if test "x${use_opencl}" = xyes; then
     ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
   }
 EOF
-  if $CC $CPPFLAGS $LDFLAGS vsync_test.c $LIBS 2> /dev/null
+  if $CC $CPPFLAGS $LDFLAGS ocl_test.c $LIBS 2> /dev/null
   then
     have_libopencl=yes
   else
     # try adding -framework option
     #AC_MSG_CHECKING([for OpenCL with -framework option])
-    if $CC $CPPFLAGS $LDFLAGS -framework OpenCL vsync_test.c $LIBS 2> /dev/null
+    if $CC $CPPFLAGS $LDFLAGS -framework OpenCL ocl_test.c $LIBS 2> /dev/null
     then
       LDFLAGS="$LDFLAGS -framework OpenCL -framework OpenGL"
       have_libopencl=yes
@@ -1303,10 +1326,45 @@ EOF
       have_libopencl=no
     fi
   fi
-  /bin/rm vsync_test.c
+  /bin/rm ocl_test.c
   #echo Done checking for OpenCL, have_libopencl=$have_libopencl
   echo $have_libopencl
 fi
+
+
+#if test "x${use_metal}" = xyes; then
+#  # metal libraries
+#  # On mac, this is not in user lib, rather it's included with a -framework option!?
+#  # EOF
+#  AC_MSG_CHECKING([for Metal])
+#  cat>mtl_test.c<<EOF
+##ifdef __APPLE__ //Mac OSX has a different name for the header file
+##include <Metal/Metal.h>
+##endif
+# 
+#  int main(int ac,char **av)
+#  {
+#  }
+#EOF
+#  echo $CC $CPPFLAGS $LDFLAGS mtl_test.c $LIBS
+#  if $CC $CPPFLAGS $LDFLAGS mtl_test.c $LIBS 2> /tmp/mtl_errs # /dev/null
+#  then
+#    have_libmetal=yes
+#  else
+#    # try adding -framework option
+#    #AC_MSG_CHECKING([for OpenCL with -framework option])
+#    if $CC $CPPFLAGS $LDFLAGS -framework Metal mtl_test.c $LIBS 2> /dev/null
+#    then
+#      LDFLAGS="$LDFLAGS -framework Metal"
+#      have_libmetal=yes
+#      /bin/rm a.out
+#    else
+#      have_libmetal=no
+#    fi
+#  fi
+#  /bin/rm mtl_test.c
+#  echo $have_libmetal
+#fi
 
 if test "x${use_cuda}" = xyes; then
   # cuda libraries
