@@ -1551,9 +1551,39 @@ fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 				FILE *fp;
 				fp = fopen(url.path.UTF8String,"r");
 				if( ! fp ) {
+					// Should we send up an alert here?
 	fprintf(stderr,"Error opening file %s\n",
 	url.path.UTF8String);
 				} else {
+					// Because scripts often redirect
+					// to other files in the same directory,
+					// it might make sense to set the directory here?
+fprintf(stderr,"url.path = %s\n",url.path.UTF8String);
+int n;
+n=strlen(url.path.UTF8String);
+char *s;
+s=getbuf(n+1);
+strcpy(s,url.path.UTF8String);
+char *t=s+n;
+while( t!=s && *t != '/' ) t--;
+if( t != s ){
+	*t=0;
+	fprintf(stderr,"will cd to %s\n",s);
+	if( chdir(s) < 0 ){
+		tell_sys_error("chdir");
+		sprintf(ERROR_STRING,"Failed to chdir to %s",s);
+		WARN(ERROR_STRING);
+	}
+}
+givbuf(s);
+
+
+					// add the file to the recent files menu
+					[[NSDocumentController sharedDocumentController]
+						noteNewRecentDocumentURL:
+							/*[NSURL fileURLWithPath:url.path]*/
+							url ];
+
 					redir(DEFAULT_QSP_ARG  fp,
 						url.path.UTF8String );
 					exec_quip(SGL_DEFAULT_QSP_ARG);
@@ -1595,7 +1625,8 @@ fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 
 	menuItem = [aMenu
 			addItemWithTitle:NSLocalizedString(@"Open Recent", nil)
-			action:NULL
+			/*action:NULL*/
+			action:@selector(quipOpenRecent:)
 			keyEquivalent:@""];
 
 	NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"Open Recent"];
@@ -1695,6 +1726,13 @@ EMPTY_SELECTOR(showHelp)	// BUG not needed, target is NSApp
 						keyEquivalent:@"?"];
 	[menuItem setTarget:NSApp];
 }
+
+- (BOOL)application:(NSApplication *)theApplication
+           openFile:(NSString *)filename
+{
+fprintf(stderr,"openFile called, filename = %s\n",filename.UTF8String);
+}
+
 
 EMPTY_SELECTOR(showGuessPanel)
 EMPTY_SELECTOR(checkSpelling)

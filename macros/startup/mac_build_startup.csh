@@ -96,6 +96,8 @@ compute quit		# init veclib
 Set chatty 1
 Init_Test_Menus
 
+Set macro_dir /usr/local/share/quip/macros
+
 EOF
 # the max_warnings line was in the fragment above...
 echo "advise 'startup.scr: max_warnings set to -1 in build_startup_file.csh'" >> $outfile
