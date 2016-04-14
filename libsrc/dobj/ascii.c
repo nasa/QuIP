@@ -383,8 +383,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	return(0);
 }
 
-#ifdef FOOBAR
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 {
 	static Data_Obj *warned_dp=NO_OBJ;
@@ -401,8 +400,7 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 	}
 	return 1;
 }
-#endif //HAVE_CUDA
-#endif // FOOBAR
+#endif // HAVE_ANY_GPU
 
 #define DEREF(ptr,type)	 (*((type *)ptr))
 

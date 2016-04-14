@@ -667,7 +667,11 @@ int response(QSP_ARG_DECL  const char *s)
 
 
 	if( get_response_from_keyboard ){
+#ifndef BUILD_FOR_OBJC
 		redir( QSP_ARG tfile(SINGLE_QSP_ARG), "/dev/tty" );	/* get response from keyboard */
+#else // BUILD_FOR_OBJC
+		WARN("response (exp.c):  can't get response from keyboard!?");
+#endif // BUILD_FOR_OBJC
 	}
 
 

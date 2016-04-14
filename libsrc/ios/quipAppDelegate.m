@@ -1282,11 +1282,20 @@ static double accel[3]={0,0,0};
 @synthesize dev_size;
 static NSString *applicationName=NULL;
 
-- (BOOL)applicationDidFinishLaunching:(NSNotification *) notif
+- (BOOL)applicationWillFinishLaunching:(NSNotification *) notif
 {
 	globalAppDelegate = self;
 
+fprintf(stderr,"applicationWillFinishLaunching BEGIN\n");
 	[self init_main_menu];
+fprintf(stderr,"applicationWillFinishLaunching DONE\n");
+}
+
+- (BOOL)applicationDidFinishLaunching:(NSNotification *) notif
+{
+//	globalAppDelegate = self;
+//
+//	[self init_main_menu];
 
 	dev_size = [[NSScreen mainScreen] visibleFrame].size;
 fprintf(stderr,"dev_size initialized, %f x %f\n",dev_size.width,dev_size.height);
@@ -1478,7 +1487,12 @@ fprintf(stderr,"menuItem target = 0x%lx\n",(long)menuItem.target);
 	[aMenu setSubmenu:spellingMenu forItem:menuItem];
 }
 
-EMPTY_SELECTOR(clearRecentDocuments)
+-(void) clearRecentDocuments : (id) sender
+{
+fprintf(stderr,"clearRecentDocuments CALLED\n");
+    [[NSDocumentController sharedDocumentController] clearRecentDocuments:sender];
+}
+
 EMPTY_SELECTOR(performClose)
 EMPTY_SELECTOR(runPageLayout)
 EMPTY_SELECTOR(print)
@@ -1625,14 +1639,17 @@ fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 
 	menuItem = [aMenu
 			addItemWithTitle:NSLocalizedString(@"Open Recent", nil)
-			/*action:NULL*/
-			action:@selector(quipOpenRecent:)
+			action:NULL
+			/*action:@selector(quipOpenRecent:)*/
 			keyEquivalent:@""];
 
-	NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"Open Recent"];
-//	[openRecentMenu performSelector:@selector(_setMenuName:)
-//				withObject:@"NSRecentDocumentsMenu"];
-	//[openRecentMenu setMenuName:@"NSRecentDocumentsMenu"];
+	//NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"Open Recent"];
+    NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"NSRecentDocumentsMenu"];
+    
+	// This is a private method, so the compiler complains...
+	// But, without this line, the thingies do not appear in the recent
+	// files menu...
+	[openRecentMenu performSelector:@selector(_setMenuName:) withObject:@"NSRecentDocumentsMenu"];
 
 	[aMenu setSubmenu:openRecentMenu forItem:menuItem];
 
@@ -1731,6 +1748,7 @@ EMPTY_SELECTOR(showHelp)	// BUG not needed, target is NSApp
            openFile:(NSString *)filename
 {
 fprintf(stderr,"openFile called, filename = %s\n",filename.UTF8String);
+    return TRUE;
 }
 
 

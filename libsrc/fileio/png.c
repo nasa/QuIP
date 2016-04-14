@@ -545,11 +545,11 @@ FIO_RD_FUNC( pngfio )
 	u_char *dst;
 	dimension_t row,col,comp;
 
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 	// BUG it would be nice to create a temp object, and fetch the data...
 	if( ! object_is_in_ram(QSP_ARG  dp, "read object from png file") )
 		return;
-#endif // HAVE_CUDA
+#endif // HAVE_ANY_GPU
 
 	if(ifp->if_nfrms) {
 		advise("ERROR: png format does not have a stream of frames!");
@@ -626,11 +626,11 @@ FIO_WT_FUNC( pngfio )
 	// BUG?  can we declare this array with a variable size?
 	png_bytep row_pointers[OBJ_ROWS(dp)];
 
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 	// BUG it would be nice to create a temp object, and fetch the data...
 	if( ! object_is_in_ram(QSP_ARG  dp, "write object to png file") )
 		return(-1);
-#endif // HAVE_CUDA
+#endif // HAVE_ANY_GPU
 
 	if( ifp->if_dp == NO_OBJ ){	/* first time? */
 		/* what should be here? */

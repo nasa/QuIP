@@ -1605,14 +1605,18 @@ static COMMAND_FUNC( do_pmpttext )
 
 	p=savestr( NAMEOF("prompt string") );
 	s=savestr( NAMEOF("variable name") );
+#ifndef BUILD_FOR_OBJC
 	//push_input_file(QSP_ARG   "-" );
 	redir(QSP_ARG  tfile(SINGLE_QSP_ARG), "-" );
 	t=savestr( NAMEOF(p) );
 	pop_file(SINGLE_QSP_ARG);
 	ASSIGN_VAR(s,t);
+	rls_str(t);
+#else // BUILD_FOR_OBJC
+	WARN("Sorry, pmpttext (bi_menu.c) not yet implemented!?");
+#endif // BUILD_FOR_OBJC
 	rls_str(p);
 	rls_str(s);
-	rls_str(t);
 }
 
 static COMMAND_FUNC( my_quick_exit ){ exit(0); }

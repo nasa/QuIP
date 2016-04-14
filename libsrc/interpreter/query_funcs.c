@@ -3134,8 +3134,14 @@ Query * pop_file(SINGLE_QSP_ARG_DECL)
 			 * input
 			 */
 			if( QLEVEL == 0 ||
-		( QRY_FILE_PTR(qp) != QRY_FILE_PTR(PREV_QRY(THIS_QSP)) && QRY_FILE_PTR(qp) != tfile(SINGLE_QSP_ARG) ) ){
+		QRY_FILE_PTR(qp) != QRY_FILE_PTR(PREV_QRY(THIS_QSP)) ){
+#ifdef BUILD_FOR_OBJC
 				fclose(QRY_FILE_PTR(qp));
+#else // ! BUILD_FOR_OBJC
+				if( QRY_FILE_PTR(qp) != tfile(SINGLE_QSP_ARG) )
+					fclose(QRY_FILE_PTR(qp));
+#endif // ! BUILD_FOR_OBJC
+				
 			}
 #ifdef HAVE_POPEN
 		}
@@ -3588,6 +3594,7 @@ void set_qflags(QSP_ARG_DECL int flag)
 }
 #endif /* NOT_USED */
 
+#ifndef BUILD_FOR_OBJC
 
 /**/
 /**		stuff to do with the control terminal	**/
@@ -3627,6 +3634,7 @@ FILE *tfile(SINGLE_QSP_ARG_DECL)
 
 	return(ttyfile);
 }
+#endif // ! BUILD_FOR_OBJC
 
 /*
  * Return a pointer to the named variable or NO_VARIABLE.
