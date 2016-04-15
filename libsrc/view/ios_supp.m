@@ -659,6 +659,7 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 	}
 #else // ! BUILD_FOR_IOS
 	warn("is_image_viewer:  need to implement!?");
+    return 1;
 #endif // ! BUILD_FOR_IOS
 }
 
@@ -907,7 +908,7 @@ void _xp_linewidth(Viewer *vp,CGFloat w)
 	Draw_Op *do_p;
 
 	do_p = new_drawop(DO_LINEWIDTH);
-	SET_DOA_LINEWIDTH(do_p, w);
+	SET_DOA_LINEWIDTH(do_p, (float)w);
 	ADD_DRAW_OP(vp,do_p);
 	// This doesn't draw anything, so by itself
 	// it doesn't require a redraw?

@@ -75,7 +75,7 @@ int version_major, version_minor, version_release;
 
 // We can put this define in the build settings to force this for a project
 #ifdef XCODE_DEBUG
-int xcode_debug=1;	// 
+int xcode_debug=1;	//
 #else // ! XCODE_DEBUG
 int xcode_debug=0;	// production build, disable in project settings
 #endif // ! XCODE_DEBUG
@@ -243,7 +243,7 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 			initWithStyle:UITableViewCellStyleDefault
 			reuseIdentifier:kCellIdentifier];
 		//c.textLabel.lineBreakMode = UILineBreakModeWordWrap;
-        c.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
+		c.textLabel.lineBreakMode = NSLineBreakByWordWrapping;
 		c.textLabel.numberOfLines = 0;
 	}
 
@@ -538,7 +538,7 @@ static void updateMultipleChoices(Screen_Obj *sop)
 //			return;
 //		}
 		assert( component == 0 );
-		
+
 //		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
 //			NWARN("CAUTIOUS:  titleForRow (PickerView):  unexpected row index!?");
 //			return;
@@ -546,7 +546,7 @@ static void updateMultipleChoices(Screen_Obj *sop)
 //#endif /* CAUTIOUS */
 
 		assert( row>=0 && row < SOB_N_SELECTORS(sop) );
-		
+
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
 	} else if( SOB_TYPE(sop) == SOT_PICKER ){
 //#ifdef CAUTIOUS
@@ -558,7 +558,7 @@ static void updateMultipleChoices(Screen_Obj *sop)
 //		}
 
 		assert( component >= 0 && component < SOB_N_CYLINDERS(sop));
-		
+
 //		if( row < 0 || row >= SOB_N_SELECTORS_AT_IDX(sop,component) ){
 //			sprintf(DEFAULT_ERROR_STRING,
 //	"CAUTIOUS:  titleForRow (PickerView):  unexpected row index %ld for component %ld!?",
@@ -569,7 +569,7 @@ static void updateMultipleChoices(Screen_Obj *sop)
 //#endif /* CAUTIOUS */
 
 		assert(row>=0&&row<SOB_N_SELECTORS_AT_IDX(sop,component));
-		
+
 		char choice_idx[16];
 		// We cast this because NSInteger can be int or long,
 		// depending on platform.
@@ -623,7 +623,7 @@ fprintf(stderr,"non-editable text box changed!?\n");
 		sprintf(DEFAULT_ERROR_STRING,
 	"CAUTIOUS:  Unexpected screen object %s generated textViewDidChange callback!?",
 			SOB_NAME(sop));
-	 	NWARN(DEFAULT_ERROR_STRING);
+		NWARN(DEFAULT_ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -825,8 +825,8 @@ static int is_portrait(void)
 					return 0;
 				// no other cases - include
 				// a CAUTIOUS default?
-				
-					
+
+
 				//This case is present in XCode 6, but not 5...
 				case UIInterfaceOrientationUnknown:
 				return 1;
@@ -1181,12 +1181,12 @@ static void init_ios_device(void)
 
 - (CMMotionManager *)motionManager
 {
-    CMMotionManager *mgr = nil;
-    id appDelegate = [UIApplication sharedApplication].delegate;
-    if ([appDelegate respondsToSelector:@selector(motionManager)]) {
-        mgr = [appDelegate motionManager];
-    }
-    return mgr;
+	CMMotionManager *mgr = nil;
+	id appDelegate = [UIApplication sharedApplication].delegate;
+	if ([appDelegate respondsToSelector:@selector(motionManager)]) {
+		mgr = [appDelegate motionManager];
+	}
+	return mgr;
 }
 
 #ifdef FOOBAR		// part of old UIAccelerometerDelegate...
@@ -1289,6 +1289,7 @@ static NSString *applicationName=NULL;
 fprintf(stderr,"applicationWillFinishLaunching BEGIN\n");
 	[self init_main_menu];
 fprintf(stderr,"applicationWillFinishLaunching DONE\n");
+    return TRUE;
 }
 
 - (BOOL)applicationDidFinishLaunching:(NSNotification *) notif
@@ -1489,8 +1490,7 @@ fprintf(stderr,"menuItem target = 0x%lx\n",(long)menuItem.target);
 
 -(void) clearRecentDocuments : (id) sender
 {
-fprintf(stderr,"clearRecentDocuments CALLED\n");
-    [[NSDocumentController sharedDocumentController] clearRecentDocuments:sender];
+	[[NSDocumentController sharedDocumentController] clearRecentDocuments:sender];
 }
 
 EMPTY_SELECTOR(performClose)
@@ -1511,7 +1511,7 @@ fprintf(stderr,"sheetDidEnd DONE\n");
 
 #ifdef FOOBAR
 	static NSWindow *win=NULL;
-	
+
 	//if( win == NULL ){
 		NSRect r;
 		r.origin.x = 100;
@@ -1551,6 +1551,50 @@ fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 		contextInfo: (__bridge void *)(win)];
 #endif // FOOBAR
 
+static void chdir_to_file(const char *filename)
+{
+    int n;
+    char *s, *t;
+    
+    n=(int)strlen(filename);
+    s=getbuf(n+1);
+    strcpy(s,filename);
+    t=s+n;
+    while( t!=s && *t != '/' ) t--;
+    if( t != s ){
+        *t=0;
+        //fprintf(stderr,"will cd to %s\n",s);
+        if( chdir(s) < 0 ){
+            tell_sys_error("chdir");
+            sprintf(ERROR_STRING,"Failed to chdir to %s",s);
+            WARN(ERROR_STRING);
+        }
+    }
+    givbuf(s);
+}
+
+// BUG it would be nice for this to work with arbitrary URLs...
+
+static bool read_quip_file(const char *pathname)
+{
+	FILE *fp;
+	fp = fopen(pathname,"r");
+	if( ! fp ) {
+		// Should we send up an alert here?
+fprintf(stderr,"Error opening file %s\n", pathname);
+		return FALSE;
+    } else {
+		// Because scripts often redirect
+		// to other files in the same directory,
+		// it might make sense to set the directory here?
+        chdir_to_file(pathname);
+
+		redir(DEFAULT_QSP_ARG  fp, pathname );
+		exec_quip(SGL_DEFAULT_QSP_ARG);
+		return TRUE;
+	}
+}
+
 -(void) quipOpen : (id) sender
 {
 	NSOpenPanel *op = [NSOpenPanel openPanel];
@@ -1562,48 +1606,15 @@ fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 			if( result == NSFileHandlingPanelOKButton ){
 				NSURL *url;
 				url = op.URL;
-				FILE *fp;
-				fp = fopen(url.path.UTF8String,"r");
-				if( ! fp ) {
-					// Should we send up an alert here?
-	fprintf(stderr,"Error opening file %s\n",
-	url.path.UTF8String);
-				} else {
-					// Because scripts often redirect
-					// to other files in the same directory,
-					// it might make sense to set the directory here?
-fprintf(stderr,"url.path = %s\n",url.path.UTF8String);
-int n;
-n=strlen(url.path.UTF8String);
-char *s;
-s=getbuf(n+1);
-strcpy(s,url.path.UTF8String);
-char *t=s+n;
-while( t!=s && *t != '/' ) t--;
-if( t != s ){
-	*t=0;
-	fprintf(stderr,"will cd to %s\n",s);
-	if( chdir(s) < 0 ){
-		tell_sys_error("chdir");
-		sprintf(ERROR_STRING,"Failed to chdir to %s",s);
-		WARN(ERROR_STRING);
-	}
-}
-givbuf(s);
-
-
+				if( read_quip_file(url.path.UTF8String) ){
 					// add the file to the recent files menu
 					[[NSDocumentController sharedDocumentController]
-						noteNewRecentDocumentURL:
+						noteNewRecentDocumentURL: url ];
 							/*[NSURL fileURLWithPath:url.path]*/
-							url ];
 
-					redir(DEFAULT_QSP_ARG  fp,
-						url.path.UTF8String );
-					exec_quip(SGL_DEFAULT_QSP_ARG);
 					// BUG?  We might like to close
 					// the open file dialog window
-					// BEFORE we execute the script 
+					// BEFORE we execute the script
 					// We might like to execute the
 					// script on a different thread,
 					// but on iOS UI stuff has to happen
@@ -1611,7 +1622,7 @@ givbuf(s);
 					// may be true for Cocoa.
 				}
 			} else if( result == NSFileHandlingPanelCancelButton ){
-fprintf(stderr,"Will NOT open any file.\n");
+fprintf(stderr,"User cancel, will NOT open any file.\n");
 			}
 #ifdef CAUTIOUS
 			  else {
@@ -1640,12 +1651,12 @@ fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 	menuItem = [aMenu
 			addItemWithTitle:NSLocalizedString(@"Open Recent", nil)
 			action:NULL
-			/*action:@selector(quipOpenRecent:)*/
+			//action:@selector(quipOpen:)
 			keyEquivalent:@""];
 
-	//NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"Open Recent"];
-    NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"NSRecentDocumentsMenu"];
-    
+	NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"Open Recent"];
+	//NSMenu * openRecentMenu = [[NSMenu alloc] initWithTitle:@"NSRecentDocumentsMenu"];
+
 	// This is a private method, so the compiler complains...
 	// But, without this line, the thingies do not appear in the recent
 	// files menu...
@@ -1745,10 +1756,12 @@ EMPTY_SELECTOR(showHelp)	// BUG not needed, target is NSApp
 }
 
 - (BOOL)application:(NSApplication *)theApplication
-           openFile:(NSString *)filename
+		   openFile:(NSString *)filename
 {
 fprintf(stderr,"openFile called, filename = %s\n",filename.UTF8String);
-    return TRUE;
+	// borrow code from quipOpen...
+	read_quip_file(filename.UTF8String);
+	return TRUE;
 }
 
 

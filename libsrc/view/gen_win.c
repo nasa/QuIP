@@ -125,23 +125,26 @@ Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 	Gen_Win *gwp;
 	CGSize s;
 
+fprintf(stderr,"make_genwin %s BEGIN\n",name);
 	gwp = new_genwin(QSP_ARG  name);
 
 	s.width = width;
 	s.height = height;
-#ifdef BUILD_FOR_IOS
+//#ifdef BUILD_FOR_IOS
 	//initWithSize:[[UIScreen mainScreen] bounds].size
 	quipViewController *qvc=[[quipViewController alloc]
 		initWithSize:s
 		withDelegate:globalAppDelegate];
 	SET_QVC_GW(qvc,gwp);
+#ifdef BUILD_FOR_IOS
 	qvc.view.backgroundColor = [QUIP_COLOR_TYPE blackColor];
-	[QVC_QV(qvc) addDefaultBG];
+    [QVC_QV(qvc) addDefaultBG];
+    SET_GW_VC_TYPE(gwp,GW_VC_QVC);
+#endif // BUILD_FOR_IOS
 
 	/* store the pointer in our named struct */
 	SET_GW_VC(gwp,qvc);
-	SET_GW_VC_TYPE(gwp,GW_VC_QVC);
-#endif // BUILD_FOR_IOS
+//#endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
 	NSWindow * win;
@@ -161,7 +164,8 @@ Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 		defer: NO
 		];
 fprintf(stderr,"make_genwin:  win = 0x%lx\n",(long)win);
-	gwp.window = win;
+	//gwp.window = win;
+	SET_GW_WINDOW(gwp,win);
 
 	quipWindowController *qwc_p;
 	qwc_p = [[quipWindowController alloc] initWithWindow:win];

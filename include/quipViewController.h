@@ -23,7 +23,7 @@
 
 @property (nonatomic, retain) quipAppDelegate *	qadp;
 @property CGSize				_size;
-@property (retain) Gen_Win *			qvc_gwp;
+@property (retain) Gen_Win *			qvc_gwp;	// retain because this points back...
 @property int					qvc_flags;
 @property const char *				qvc_done_action;
 
@@ -49,11 +49,15 @@
 #define QVC_ALLOWS_AUTOROTATION		1
 #define QVC_BLOCKED_AUTOROTATION	2
 #define QVC_HIDE_BACK_BUTTON		4
+#define QVC_QV(qvc)		((quipView *)(qvc).view)
 #endif // BUILD_FOR_IOS
+
+#ifdef BUILD_FOR_MACOS
+#define QVC_QV(qvc)		((quipView *)(qvc).view)
+#endif // BUILD_FOR_MACOS
 
 extern void addConsoleToQVC(quipViewController *qvc_p);
 
-#define QVC_QV(qvc)		((quipView *)(qvc).view)
 #define QVC_GW(qvc)		(qvc).qvc_gwp
 
 // We keep these because of the casts

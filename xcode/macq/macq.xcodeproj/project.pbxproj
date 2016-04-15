@@ -281,12 +281,23 @@
 		7C6CDBF41CBF7469001AC12F /* pipe_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBF31CBF7469001AC12F /* pipe_menu.c */; };
 		7C6CDBF71CBF74AD001AC12F /* ocl.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBF61CBF74AD001AC12F /* ocl.c */; };
 		7C6CDBF91CBF7529001AC12F /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C6CDBF81CBF7529001AC12F /* OpenCL.framework */; };
-		7C6CDBFB1CBF7553001AC12F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C6CDBFA1CBF7553001AC12F /* OpenGL.framework */; };
 		7C6CDBFD1CBF759A001AC12F /* ocl_veclib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBFC1CBF759A001AC12F /* ocl_veclib.c */; };
 		7C6CDBFF1CBF75E2001AC12F /* ocl_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDBFE1CBF75E2001AC12F /* ocl_utils.c */; };
 		7C6CDC011CBF7619001AC12F /* ocl_rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC001CBF7619001AC12F /* ocl_rand.c */; };
 		7C6CDC031CBF763E001AC12F /* ocl_fft.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC021CBF763E001AC12F /* ocl_fft.c */; };
 		7C6CDC051CBF76BD001AC12F /* slow_len.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C6CDC041CBF76BD001AC12F /* slow_len.c */; };
+		7CDCA7101CC16F84004AD95C /* glmenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA70F1CC16F84004AD95C /* glmenu.m */; };
+		7CDCA7141CC18CAB004AD95C /* dl.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7131CC18CAB004AD95C /* dl.m */; };
+		7CDCA7151CC18D9D004AD95C /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C6CDBFA1CBF7553001AC12F /* OpenGL.framework */; };
+		7CDCA7171CC18FB3004AD95C /* gl_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7161CC18FB3004AD95C /* gl_util.c */; };
+		7CDCA7191CC1905D004AD95C /* glfb.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7181CC1905D004AD95C /* glfb.c */; };
+		7CDCA71D1CC190C1004AD95C /* glx_supp.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA71C1CC190C1004AD95C /* glx_supp.m */; };
+		7CDCA71F1CC191B9004AD95C /* stereo.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA71E1CC191B9004AD95C /* stereo.c */; };
+		7CDCA7211CC19235004AD95C /* tilemenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7201CC19235004AD95C /* tilemenu.c */; };
+		7CDCA7231CC19255004AD95C /* tile.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7221CC19255004AD95C /* tile.c */; };
+		7CDCA7251CC1941F004AD95C /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CDCA7241CC1941F004AD95C /* GLUT.framework */; };
+		7CDCA7271CC1A932004AD95C /* quipViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7261CC1A932004AD95C /* quipViewController.m */; };
+		7CDCA7291CC1A9F0004AD95C /* quipView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CDCA7281CC1A9F0004AD95C /* quipView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -577,6 +588,17 @@
 		7C6CDC001CBF7619001AC12F /* ocl_rand.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ocl_rand.c; sourceTree = "<group>"; };
 		7C6CDC021CBF763E001AC12F /* ocl_fft.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ocl_fft.c; sourceTree = "<group>"; };
 		7C6CDC041CBF76BD001AC12F /* slow_len.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = slow_len.c; sourceTree = "<group>"; };
+		7CDCA70F1CC16F84004AD95C /* glmenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = glmenu.m; sourceTree = "<group>"; };
+		7CDCA7131CC18CAB004AD95C /* dl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dl.m; sourceTree = "<group>"; };
+		7CDCA7161CC18FB3004AD95C /* gl_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gl_util.c; sourceTree = "<group>"; };
+		7CDCA7181CC1905D004AD95C /* glfb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glfb.c; sourceTree = "<group>"; };
+		7CDCA71C1CC190C1004AD95C /* glx_supp.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = glx_supp.m; sourceTree = "<group>"; };
+		7CDCA71E1CC191B9004AD95C /* stereo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stereo.c; sourceTree = "<group>"; };
+		7CDCA7201CC19235004AD95C /* tilemenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tilemenu.c; sourceTree = "<group>"; };
+		7CDCA7221CC19255004AD95C /* tile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tile.c; sourceTree = "<group>"; };
+		7CDCA7241CC1941F004AD95C /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		7CDCA7261CC1A932004AD95C /* quipViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipViewController.m; sourceTree = "<group>"; };
+		7CDCA7281CC1A9F0004AD95C /* quipView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = quipView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -584,7 +606,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7C6CDBFB1CBF7553001AC12F /* OpenGL.framework in Frameworks */,
+				7CDCA7251CC1941F004AD95C /* GLUT.framework in Frameworks */,
+				7CDCA7151CC18D9D004AD95C /* OpenGL.framework in Frameworks */,
 				7C6CDBF91CBF7529001AC12F /* OpenCL.framework in Frameworks */,
 				7C653CBC1CA7326100F33A85 /* CoreVideo.framework in Frameworks */,
 				7C653CBA1CA7324900F33A85 /* AVFoundation.framework in Frameworks */,
@@ -626,6 +649,7 @@
 		71AC49D317E000A400AABB78 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7CDCA7241CC1941F004AD95C /* GLUT.framework */,
 				7C6CDBFA1CBF7553001AC12F /* OpenGL.framework */,
 				7C6CDBF81CBF7529001AC12F /* OpenCL.framework */,
 				7C653CBB1CA7326100F33A85 /* CoreVideo.framework */,
@@ -675,6 +699,7 @@
 		71AC49F117E0065400AABB78 /* libsrc */ = {
 			isa = PBXGroup;
 			children = (
+				7CDCA70C1CC16D0A004AD95C /* opengl */,
 				7C6CDBF51CBF748D001AC12F /* opencl */,
 				7C2B12151CA70D310089B27A /* vl2 */,
 				7177F9011A00ABF600BB5918 /* sound */,
@@ -1052,6 +1077,8 @@
 		7C63B33C17E0FDD300CBA8CA /* objc */ = {
 			isa = PBXGroup;
 			children = (
+				7CDCA7281CC1A9F0004AD95C /* quipView.m */,
+				7CDCA7261CC1A932004AD95C /* quipViewController.m */,
 				7C653CB51CA7311B00F33A85 /* avCap.m */,
 				7C653CB31CA7303B00F33A85 /* camera.m */,
 				7C63B38617E8DE1300CBA8CA /* quipWindowController.m */,
@@ -1115,6 +1142,21 @@
 				7C6CDBF61CBF74AD001AC12F /* ocl.c */,
 			);
 			path = opencl;
+			sourceTree = "<group>";
+		};
+		7CDCA70C1CC16D0A004AD95C /* opengl */ = {
+			isa = PBXGroup;
+			children = (
+				7CDCA7221CC19255004AD95C /* tile.c */,
+				7CDCA7201CC19235004AD95C /* tilemenu.c */,
+				7CDCA71E1CC191B9004AD95C /* stereo.c */,
+				7CDCA71C1CC190C1004AD95C /* glx_supp.m */,
+				7CDCA7181CC1905D004AD95C /* glfb.c */,
+				7CDCA7161CC18FB3004AD95C /* gl_util.c */,
+				7CDCA7131CC18CAB004AD95C /* dl.m */,
+				7CDCA70F1CC16F84004AD95C /* glmenu.m */,
+			);
+			path = opengl;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1240,12 +1282,14 @@
 				71AC4A5417E0100000AABB78 /* dobj_menu.c in Sources */,
 				7C2B121A1CA70D650089B27A /* vl2_utils.c in Sources */,
 				71AC4A5517E0100000AABB78 /* dobj_util.c in Sources */,
+				7CDCA71D1CC190C1004AD95C /* glx_supp.m in Sources */,
 				71AC4A5617E0100000AABB78 /* dplist.c in Sources */,
 				71AC4A5917E0120C00AABB78 /* get_obj.c in Sources */,
 				71AC4A5A17E0120C00AABB78 /* index.c in Sources */,
 				71AC4A5C17E0126A00AABB78 /* makedobj.c in Sources */,
 				71AC4A5F17E0127B00AABB78 /* shape_info.c in Sources */,
 				71AC4A6017E0127B00AABB78 /* sub_obj.c in Sources */,
+				7CDCA7271CC1A932004AD95C /* quipViewController.m in Sources */,
 				7C2B12251CA712220089B27A /* seqparse.y in Sources */,
 				71AC4A6317E0128B00AABB78 /* memops.c in Sources */,
 				71AC4A6417E0128B00AABB78 /* ops_menu.c in Sources */,
@@ -1310,6 +1354,7 @@
 				7C653CB41CA7303B00F33A85 /* camera.m in Sources */,
 				7C2B120A1CA709810089B27A /* vt_native.c in Sources */,
 				71AC4A9717E525B000AABB78 /* warmenu.c in Sources */,
+				7CDCA7101CC16F84004AD95C /* glmenu.m in Sources */,
 				71AC4A9B17E52A2400AABB78 /* sampmenu.c in Sources */,
 				71AC4A9D17E52A3800AABB78 /* vec_call.c in Sources */,
 				71AC4A9F17E52A5000AABB78 /* vec_chain.c in Sources */,
@@ -1356,6 +1401,8 @@
 				7C2B12001CA707C60089B27A /* platform.m in Sources */,
 				7C2B120C1CA7098B0089B27A /* vectree.y in Sources */,
 				71AC4AEB17E58CF400AABB78 /* identifier.c in Sources */,
+				7CDCA7211CC19235004AD95C /* tilemenu.c in Sources */,
+				7CDCA71F1CC191B9004AD95C /* stereo.c in Sources */,
 				71AC4AF317E58D1C00AABB78 /* vecnodes.c in Sources */,
 				71AC4AF417E58D1C00AABB78 /* subrt_funcs.c in Sources */,
 				71AC4AF517E58D1C00AABB78 /* resolve.c in Sources */,
@@ -1382,8 +1429,10 @@
 				71CE754517E5992300D93DE7 /* wav.c in Sources */,
 				71CE754717E59A2700D93DE7 /* img_file.c in Sources */,
 				71CE754917E59A6400D93DE7 /* fioasc.c in Sources */,
+				7CDCA7231CC19255004AD95C /* tile.c in Sources */,
 				71CE755217E59B0300D93DE7 /* asc_data.c in Sources */,
 				71CE755317E59B0300D93DE7 /* clrdat.c in Sources */,
+				7CDCA7191CC1905D004AD95C /* glfb.c in Sources */,
 				71CE755417E59B0300D93DE7 /* errbars.c in Sources */,
 				71CE755517E59B0300D93DE7 /* lookmenu.c in Sources */,
 				7C653CB61CA7311B00F33A85 /* avCap.m in Sources */,
@@ -1399,6 +1448,7 @@
 				71CE756C17E5A07B00D93DE7 /* stepsupp.c in Sources */,
 				71CE756D17E5A07B00D93DE7 /* stepmenu.c in Sources */,
 				71CE757217E5A0A900D93DE7 /* am_supp.c in Sources */,
+				7CDCA7291CC1A9F0004AD95C /* quipView.m in Sources */,
 				71CE757317E5A0A900D93DE7 /* cs_supp.c in Sources */,
 				71CE757717E5A13200D93DE7 /* param.c in Sources */,
 				71CE757917E5A15B00D93DE7 /* server.c in Sources */,
@@ -1413,6 +1463,7 @@
 				71CE759217E5A44600D93DE7 /* dspread.c in Sources */,
 				71CE759617E5A47400D93DE7 /* getbest.c in Sources */,
 				71CE759717E5A47400D93DE7 /* getwhite.c in Sources */,
+				7CDCA7171CC18FB3004AD95C /* gl_util.c in Sources */,
 				71CE759817E5A47400D93DE7 /* gspread.c in Sources */,
 				71CE759A17E5A49500D93DE7 /* cdiff.c in Sources */,
 				71CE759C17E5A4C200D93DE7 /* vl_menu.c in Sources */,
@@ -1437,6 +1488,7 @@
 				71CE75F617E5ABD200D93DE7 /* fileport.c in Sources */,
 				71CE75FB17E5ACFA00D93DE7 /* readhdr.c in Sources */,
 				71CCD99E19CC7B4F009DE8D9 /* bmp.c in Sources */,
+				7CDCA7141CC18CAB004AD95C /* dl.m in Sources */,
 				71CE75FE17E5AD1B00D93DE7 /* xparam.c in Sources */,
 				7C2B12141CA70D100089B27A /* sched.c in Sources */,
 				71CE75FF17E5AD1B00D93DE7 /* writehdr.c in Sources */,
@@ -1560,7 +1612,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
-				"HEADER_SEARCH_PATHS[arch=*]" = ../../include;
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					../../include,
+					/sw/include,
+				);
 				INFOPLIST_FILE = "MacQuIP/MacQuIP-Info.plist";
 				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS";
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
@@ -1593,7 +1648,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
-				"HEADER_SEARCH_PATHS[arch=*]" = ../../include;
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					../../include,
+					/sw/include,
+				);
 				INFOPLIST_FILE = "MacQuIP/MacQuIP-Info.plist";
 				"OTHER_CFLAGS[arch=*]" = "-DBUILD_FOR_MACOS";
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";

@@ -8,7 +8,11 @@
 
 #ifdef HAVE_OPENGL
 #ifdef HAVE_GL_GLX_H
+#ifdef BUILD_FOR_OBJC
+#include <OpenGL/glx.h>
+#else // ! BUILD_FOR_OBJC
 #include <GL/glx.h>
+#endif // ! BUILD_FOR_OBJC
 #endif /* HAVE_GL_GLX_H */
 #endif /* HAVE_OPENGL */
 

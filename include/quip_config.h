@@ -4,11 +4,20 @@
 #define _QUIP_CONFIG_H_
 
 #ifdef BUILD_FOR_IOS
+#define SCROLLABLE_QUIP_VIEW
+
 #define BUILD_FOR_OBJC
 #define QUIP_APPLICATION_TYPE		UIApplication
 #define QUIP_NAV_CONTROLLER_TYPE	UINavigationController
 #define QUIP_NAV_ITEM_TYPE		UINavigationItem
 #define QUIP_VIEW_CONTROLLER_TYPE	UIViewController
+
+#ifdef SCROLLABLE_QUIP_VIEW
+#define QUIP_VIEW_TYPE			UIScrollView
+#else // ! SCROLLABLE_QUIP_VIEW
+#define QUIP_VIEW_TYPE			UIView
+#endif // ! SCROLLABLE_QUIP_VIEW
+
 #define QUIP_IMAGE_VIEW_TYPE		UIImageView
 #define QUIP_IMAGE_TYPE			UIImage
 #define QUIP_ALERT_OBJ_TYPE		UIAlertView
@@ -25,7 +34,9 @@
 #define QUIP_APPLICATION_TYPE		NSApplication
 #define QUIP_NAV_CONTROLLER_TYPE	NSViewController
 #define QUIP_NAV_ITEM_TYPE		NSObject
-#define QUIP_VIEW_CONTROLLER_TYPE	quipWindowController
+//#define QUIP_VIEW_CONTROLLER_TYPE	quipWindowController
+#define QUIP_VIEW_CONTROLLER_TYPE	NSViewController
+#define QUIP_VIEW_TYPE			NSView
 #define QUIP_IMAGE_VIEW_TYPE		NSImageView
 #define QUIP_IMAGE_TYPE			NSImage
 #define QUIP_ALERT_OBJ_TYPE		NSAlert

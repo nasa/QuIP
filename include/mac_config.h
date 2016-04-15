@@ -30,7 +30,7 @@
 /* #undef C_ALLOCA */
 
 /* debug features enabled */
-//#define QUIP_DEBUG 1
+#define QUIP_DEBUG 1
 
 /* clock adjustment with adjtimex supported */
 /* #undef HAVE_ADJTIMEX */
@@ -126,17 +126,19 @@
 #define HAVE_GETUID 1
 
 /* GLUT library present */
-//#define HAVE_GLUT 1
+#define HAVE_GLUT 1
 
 /* Define to 1 if you have the <GL/glew.h> header file. */
-/* #undef HAVE_GL_GLEW_H */
+#define HAVE_GL_GLEW_H 1
+#define HAVE_LIB_GLEW 1
 
 /* Define to 1 if you have the <GL/glut.h> header file. */
-//#define HAVE_GL_GLUT_H 1
+#define HAVE_GL_GLUT_H 1
 
 /* Define to 1 if you have the <GL/glu.h> header file. */
 //#define HAVE_GL_GLU_H 1
 
+// GLX is for OpenGL X11 interop, but for mac we don't use X11!
 /* Define to 1 if you have the <GL/glx.h> header file. */
 //#define HAVE_GL_GLX_H 1
 
@@ -292,7 +294,7 @@
 //#define HAVE_OPENCV_HIGHGUI_H 1
 
 /* OpenGL graphics support enabled */
-//#define HAVE_OPENGL 1
+#define HAVE_OPENGL 1
 
 /* parallel port support enabled */
 /* #undef HAVE_PARPORT */
@@ -356,6 +358,7 @@
 
 /* Define to 1 if you have the `sleep' function. */
 #define HAVE_SLEEP 1
+#define HAVE_USLEEP 1
 
 /* Define to 1 if you have the `socket' function. */
 #define HAVE_SOCKET 1

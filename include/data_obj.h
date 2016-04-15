@@ -292,7 +292,8 @@ extern int max_vectorizable;
 
 #ifdef HAVE_OPENGL
 #define OBJ_GL_INFO(dp)		((struct gl_info *)(dp)->dt_unaligned_ptr)
-#define SET_OBJ_GL_INFO(dp,p)	(dp)->dt_unaligned_ptr = p
+//#define SET_OBJ_GL_INFO(dp,p)	(dp)->dt_unaligned_ptr = p
+#define SET_OBJ_GL_INFO(dp,p)	{ fprintf(stderr,"SET_OBJ_GL_INFO(%s,0x%lx)\n",OBJ_NAME(dp),(long)p); (dp)->dt_unaligned_ptr = p; }
 #else // ! HAVE_OPENGL
 #define OBJ_GL_INFO(dp)		((dp)->dt_unaligned_ptr)
 #define SET_OBJ_GL_INFO(dp,p)

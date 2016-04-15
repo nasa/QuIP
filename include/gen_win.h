@@ -42,9 +42,9 @@ typedef struct gen_win {
 
 #include "ios_item.h"
 #include "quipAppDelegate.h"
-#ifdef BUILD_FOR_IOS
+//#ifdef BUILD_FOR_IOS
 #include "quipViewController.h"
-#endif // BUILD_FOR_IOS
+//#endif // BUILD_FOR_IOS
 #ifdef BUILD_FOR_MACOS
 #include "quipWindowController.h"
 #endif // BUILD_FOR_MACOS
@@ -80,6 +80,7 @@ typedef enum {
 @property Genwin_VC_Code		vc_type;
 #endif // BUILD_FOR_IOS
 #ifdef BUILD_FOR_MACOS
+@property (retain) quipViewController *	vc;
 @property (retain) quipWindowController *	wc;
 @property (retain) NSWindow *		window;
 @property (nonatomic, retain) quipCanvas *	canvas;		// for drawing
@@ -107,12 +108,12 @@ typedef enum {
 
 #define GW_CONTEXT(gwp)		(gwp).icp
 
-#ifdef BUILD_FOR_IOS
+//#ifdef BUILD_FOR_IOS
 #define GW_VC(gwp)		(gwp).vc
 #define GW_VC_TYPE(gwp)		(gwp).vc_type
 #define SET_GW_VC(gwp,v)		(gwp).vc = v
 #define SET_GW_VC_TYPE(gwp,t)		(gwp).vc_type = t
-#endif // BUILD_FOR_IOS
+//#endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
 #define GW_WINDOW(gwp)		(gwp).window

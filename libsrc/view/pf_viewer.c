@@ -1,9 +1,6 @@
 // Based on old cuda_viewer.cpp, this file provides
 // a platform-independent linkage between gpu and openGL
 
-// This file doesn't really belong in libdata, but as that
-// is where the platform menu is, we leave it here for now
-
 // OpenGL appears not to have access to GLEW...
 // So the port from Cuda may not be so simple
 // as implementing REGBUF_FN etc...
@@ -23,9 +20,12 @@
 //#include <GL/glext.h>
 //#endif
 
+
+#ifndef BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLEW_H
 #include <GL/glew.h>
 #endif
+#endif // ! BUILD_FOR_OBJC
 
 // used to include GL/glut.h and rendercheck_gl.h...
 
@@ -43,18 +43,23 @@
 #include "pf_viewer.h"
 #include "opengl_utils.h"
 
-static Item_Type *pf_vwr_itp=NULL;
-static ITEM_INIT_FUNC(Platform_Viewer,pf_vwr)
-static ITEM_NEW_FUNC(Platform_Viewer,pf_vwr)
-static ITEM_PICK_FUNC(Platform_Viewer,pf_vwr)
+static IOS_Item_Type *pf_vwr_itp=NULL;
+static IOS_ITEM_INIT_FUNC(Platform_Viewer,pf_vwr)
+#ifdef BUILD_FOR_OBJC
+static IOS_ITEM_CHECK_FUNC(Platform_Viewer,pf_vwr)
+#endif // BUILD_FOR_OBJC
+static IOS_ITEM_NEW_FUNC(Platform_Viewer,pf_vwr)
+static IOS_ITEM_PICK_FUNC(Platform_Viewer,pf_vwr)
 
 #define PICK_PF_VWR(p)	pick_pf_vwr(QSP_ARG  p)
 
 static void init_pf_viewer(Platform_Viewer *pvp)
 {
 #ifdef HAVE_OPENGL
-	pvp->pv_pbo_buffer = 0;
-	pvp->pv_texid = 0;
+//	pvp->pv_pbo_buffer = 0;
+//	pvp->pv_texid = 0;
+	SET_PFVWR_BUFFER(pvp,0);
+	SET_PFVWR_TEXID(pvp,0);
 #endif // HAVE_OPENGL
 }
 
@@ -235,7 +240,7 @@ COMMAND_FUNC( do_load_pf_vwr )
 	if( pvp == NO_PF_VWR || dp == NO_OBJ ) return;
 
 #ifdef HAVE_OPENGL
-	select_gl_viewer( QSP_ARG  pvp->pv_vp );
+	select_gl_viewer( QSP_ARG  /*pvp->pv_vp*/ PFVWR_VIEWER(pvp) );
 
 	if( ! IS_GL_BUFFER(dp) ){
 		sprintf(ERROR_STRING,"Object %s is not a GL buffer object.",OBJ_NAME(dp));
@@ -255,149 +260,22 @@ COMMAND_FUNC( do_load_pf_vwr )
 }
 #endif // BUILD_FOR_IOS
 
-#ifdef FOOBAR
-// moved to glmenu.c in opengl...
+#ifdef BUILD_FOR_OBJC
 
+@implementation Platform_Viewer
 
-// Does the GL context have to be set when we do this??
-
-COMMAND_FUNC( do_new_gl_buffer )
-{
-	const char *s;
-	Data_Obj *dp;
-	Platform_Device *pdp;
-	Compute_Platform *cdp;
-	dimension_t d,w,h;
+@synthesize pv_vp;
 #ifdef HAVE_OPENGL
-	Dimension_Set ds;
-	int t;
+@synthesize pv_pbo_buffer;
+@synthesize pv_texid;
 #endif // HAVE_OPENGL
 
-	s = NAMEOF("name for GL buffer object");
-	cdp = PICK_PLATFORM("platform");
-	if( cdp != NO_PLATFORM )
-		push_pfdev_context(QSP_ARG  PF_CONTEXT(cdp) );
-	pdp = PICK_PFDEV("device");
-	if( cdp != NO_PLATFORM )
-		pop_pfdev_context(SINGLE_QSP_ARG);
++(void) initClass
+{
+	pf_vwr_itp = new_ios_item_type(DEFAULT_QSP_ARG  "Platform_Viewer");
+}
 
-	w = HOW_MANY("width");
-	h = HOW_MANY("height");
-	d = HOW_MANY("depth");
+@end
 
-	/* what should the depth be??? default to 1 for now... */
+#endif // BUILD_FOR_OBJC
 
-	if( pdp == NO_PFDEV ) return;
-
-	/* Make sure this name isn't already in use... */
-	dp = dobj_of(QSP_ARG  s);
-	if( dp != NO_OBJ ){
-		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
-		NWARN(ERROR_STRING);
-		return;
-	}
-
-#ifdef HAVE_OPENGL
-	// BUG need to be able to set the cuda device.
-	// Note, however, that we don't need GL buffers on the Tesla...
-	//set_data_area(cuda_data_area[0][0]);
-	set_data_area( PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX) );
-
-	ds.ds_dimension[0]=d;
-	ds.ds_dimension[1]=w;
-	ds.ds_dimension[2]=h;
-	ds.ds_dimension[3]=1;
-	ds.ds_dimension[4]=1;
-	dp = _make_dp(QSP_ARG  s,&ds,PREC_FOR_CODE(PREC_UBY));
-	if( dp == NO_OBJ ){
-		sprintf(ERROR_STRING,
-			"Error creating data_obj header for %s",s);
-		ERROR1(ERROR_STRING);
-	}
-
-	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);	/* can't free this data */
-	SET_OBJ_FLAG_BITS(dp, DT_GL_BUF);	/* indicate obj is a GL buffer */
-
-	SET_OBJ_DATA_PTR(dp, NULL);
-	SET_OBJ_GL_INFO(dp, (GL_Info *) getbuf( sizeof(GL_Info) ) );
-
-	glew_check(SINGLE_QSP_ARG);	/* without this, we get a segmentation
-			 * violation on glGenBuffers???
-			 */
-
-	// We need an extra field in which to store the GL identifier...
-	// AND another extra field in which to store the associated texid.
-
-// Why is this ifdef here?  These don't seem to depend
-// on libglew???
-// Answer:  We need libglew to bring in openGL extensions like glBindBuffer...
-advise("calling glGenBuffers");
-	glGenBuffers(1, OBJ_BUF_ID_P(dp) );	// first arg is # buffers to generate?
-
-//sprintf(ERROR_STRING,"glGenBuffers gave us buf_id = %d",OBJ_BUF_ID(dp));
-//advise(ERROR_STRING);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER,  OBJ_BUF_ID(dp) ); 
-
-	// glBufferData will allocate the memory for the buffer,
-	// but won't copy unless the pointer is non-null
-	// How do we get the gpu memory space address?
-	// That must be with map
-
-	glBufferData(GL_PIXEL_UNPACK_BUFFER,
-		OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp), NULL, GL_STREAM_DRAW);  
-
-	/* buffer arg set to 0 unbinds any previously bound buffers...
-	 * and restores client memory usage.
-	 */
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-//#endif // HAVE_LIBGLEW
-
-	glGenTextures(1, OBJ_TEX_ID_P(dp) );		// makes a texture name
-	glBindTexture(GL_TEXTURE_2D, OBJ_TEX_ID(dp) );
-	t = gl_pixel_type(dp);
-	glTexImage2D(	GL_TEXTURE_2D,
-			0,			// level-of-detail - is this the same as miplevel???
-			OBJ_COMPS(dp),		// internal format, can also be symbolic constant such as
-						// GL_RGBA etc
-			OBJ_COLS(dp),		// width - must be 2^n+2 (border) for some n???
-			OBJ_ROWS(dp),		// height - must be 2^m+2 (border) for some m???
-			0,			// border - must be 0 or 1
-			t,			// format of pixel data
-			GL_UNSIGNED_BYTE,	// type of pixel data
-			NULL			// pixel data - null pointer means
-						// allocate but do not copy?
-						// - offset into PIXEL_UNPACK_BUFFER??
-			);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// Why was this here?  It would seem to un-bind the target???
-	glBindTexture(GL_TEXTURE_2D, 0);
-	
-	//glFinish();	// necessary or not?
-
-advise("calling platform-specific buffer registration function");
-	if( (*PF_REGBUF_FN(PFDEV_PLATFORM(pdp)))( QSP_ARG  dp ) < 0 ){
-		WARN("do_new_gl_buffer:  Error in platform-specific buffer registration!?");
-		// BUG? - should clean up here!
-	}
-
-	// Leave the buffer mapped by default
-	//cutilSafeCall(cudaGLMapBufferObject( &OBJ_DATA_PTR(dp),  OBJ_BUF_ID(dp) ));
-advise("calling platform-specific buffer mapping function");
-	if( (*PF_MAPBUF_FN(PFDEV_PLATFORM(pdp)))( QSP_ARG  dp ) < 0 ){
-		WARN("do_new_gl_buffer:  Error in platform-specific buffer mapping!?");
-		// BUG? - should clean up here!
-	}
-
-	SET_OBJ_FLAG_BITS(dp, DT_BUF_MAPPED);
-	// propagate change to children and parents
-	propagate_flag(dp,DT_BUF_MAPPED);
-
-#else // ! HAVE_OPENGL
-	NO_OGL_MSG
-#endif // ! HAVE_OPENGL
-} /* end do_new_gl_buffer */
-
-
-#endif // FOOBAR

@@ -53,7 +53,7 @@ int tile_serial=1;
 /*#define D_THRESH	0.3 */
 /*#define D_THRESH	5.0 */
 //#define DEFAULT_D_THRESH	0.6
-#define DEFAULT_D_THRESH	1.6
+#define DEFAULT_D_THRESH	1.6f
 
 static float d_thresh=DEFAULT_D_THRESH;
 
@@ -521,7 +521,7 @@ void subdivide_tile(Tile *tp)
 	Vertex *e_ptp[4];
 	float d_nw, d_ne, d_sw, d_se;
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"\t %s original vertices:\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g\n\t\t\t%g, %g, %g",tp->t_name,
 tp->t_v[NW]->v_x,tp->t_v[NW]->v_y,tp->t_v[NW]->v_z,
@@ -539,7 +539,7 @@ tp->t_v[SW]->v_xf.p_x,tp->t_v[SW]->v_xf.p_y
 );
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 #ifdef CAUTIOUS
 	if( IS_SUBDIVIDED(tp) ){
@@ -1082,24 +1082,28 @@ static void xdraw_tile(Tile *tp,Quad_Coords *qcp)
 	float y_u,y_c,y_l;
 
 	if( NOT_VISIBLE(tp) ){
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  NOT_VISIBLE",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
+#endif // QUIP_DEBUG
 		return;
 	}
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  TILE_IS_VISIBLE",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
+#endif // QUIP_DEBUG
 
 	/* compute coords for texture mapping */
 	x_l=qcp->qc_x0;
-	x_c=x_l+qcp->qc_delx/2.0;
+	x_c=x_l+qcp->qc_delx/2.0f;
 	x_r=x_l+qcp->qc_delx;
 
 	y_l=qcp->qc_y0;
-	y_c=y_l+qcp->qc_dely/2.0;
+	y_c=y_l+qcp->qc_dely/2.0f;
 	y_u=y_l+qcp->qc_dely;
 
 	/* flip y coord */
@@ -1110,10 +1114,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 	if( tp->t_level == tp->t_max ){
 		/* this is just a quadrilateral, a fan with two triangles. */
 		/* this code draws the outline ... */
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  drawing 2-fan",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
+#endif // QUIP_DEBUG
 		if( debug & gl_debug ) NADVISE("xdraw_tile:  glBegin (2-fan)");
 #ifdef HAVE_OPENGL
 		glBegin(GL_TRIANGLE_FAN);
@@ -1143,10 +1149,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 		Data_Obj *dem_dp;
 		Data_Obj *tex_dp;
 
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"xdraw_tile %s:  drawing 8-fan",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
+#endif // QUIP_DEBUG
 		dem_dp = tp->t_mtp->mt_dem_dp[0];		/* which index? */
 		tex_dp = tp->t_mtp->mt_tex_dp[3];		/* which index? */
 
@@ -1255,7 +1263,7 @@ static void elevate_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	SET_Z(tp->t_v[NE],x2,y2)
 	SET_Z(tp->t_v[SE],x2,y1)
 	SET_Z(tp->t_v[SW],x1,y1)
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"elevate_tile %s z values:  %g %g %g %g",tp->t_name,
 tp->t_v[NW]->v_z,
@@ -1264,7 +1272,7 @@ tp->t_v[SE]->v_z,
 tp->t_v[SW]->v_z);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 }
 #endif /* FOOBAR */
 
@@ -1498,7 +1506,7 @@ void tile_check_subdiv(Tile *tp,Data_Obj *matp)
 
 	tp->t_flags &= ~(TILE_BEHIND_CAMERA|TILE_OUTSIDE_FOV);		/* assume visible */
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  BEGIN\n\n\tmatrix:",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
@@ -1509,7 +1517,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 sprintf(DEFAULT_ERROR_STRING,"\t%g\t%g\t%g\t%g",cp[8],cp[9],cp[10],cp[11]);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	/* transform the vertices */
 
@@ -1545,12 +1553,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 			behind[i]=1;
 		}
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"\tx = %g\t\ty = %g\t\tdenom = %g",x,y,denom);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		x /= denom;
 		y /= denom;
 /*
@@ -1573,21 +1581,21 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	if( n_vertices_behind == 4 ){
 		tp->t_flags |= TILE_BEHIND_CAMERA;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"COMPLETELY_BEHIND_CAMERA %s",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return;
 	} else if( n_vertices_behind>0 && tp->t_level >= MAX_CAMERA_PLANE_SUBDIVISIONS ){
 		tp->t_flags |= TILE_BEHIND_CAMERA;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"SMALL_TILE_PARTIALLY_BEHIND_CAMERA %s",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return;
 	}
 
@@ -1599,24 +1607,24 @@ NADVISE(DEFAULT_ERROR_STRING);
 	below = 1;
 	for(i=0;i<4;i++){
 		if( ! behind[i] ){
-			float x,y;
-			x = tp->t_v[i]->v_xf.p_x;
-			y = tp->t_v[i]->v_xf.p_y;
+			float _x,_y;
+			_x = tp->t_v[i]->v_xf.p_x;
+			_y = tp->t_v[i]->v_xf.p_y;
 
-			if( x > x_left_limit ) left_of = 0;
-			if( x < x_right_limit ) right_of = 0;
-			if( y < y_top_limit ) above = 0;
-			if( y > y_bottom_limit ) below = 0;
+			if( _x > x_left_limit ) left_of = 0;
+			if( _x < x_right_limit ) right_of = 0;
+			if( _y < y_top_limit ) above = 0;
+			if( _y > y_bottom_limit ) below = 0;
 		}
 	}
 	if( left_of || right_of || above || below ){
 		tp->t_flags |= TILE_OUTSIDE_FOV;
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"OUTSIDE_FOV %s",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		return;
 	}
 
@@ -1625,27 +1633,27 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* measure the two diagonals... */
 	dx = tp->t_v[NW]->v_xf.p_x - tp->t_v[SE]->v_xf.p_x;
 	dy = tp->t_v[NW]->v_xf.p_y - tp->t_v[SE]->v_xf.p_y;
-	d1 = sqrt(dx*dx+dy*dy);
+	d1 = sqrtf(dx*dx+dy*dy);
 
 	dx = tp->t_v[NE]->v_xf.p_x - tp->t_v[SW]->v_xf.p_x;
 	dy = tp->t_v[NE]->v_xf.p_y - tp->t_v[SW]->v_xf.p_y;
-	d2 = sqrt(dx*dx+dy*dy);
+	d2 = sqrtf(dx*dx+dy*dy);
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"CHECKING %s:  d1 = %g, d2 = %g, THRESH = %g)",
 tp->t_name,d1,d2,d_thresh);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 	if( n_vertices_behind > 0 ){
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  subdividing partially visible tile",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		subdivide_tile(tp);
 		tile_check_subdiv(tp->t_q[NW],matp);
 		tile_check_subdiv(tp->t_q[NE],matp);
@@ -1653,12 +1661,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 		tile_check_subdiv(tp->t_q[SE],matp);
 	} else if( d1 > d_thresh || d2 > d_thresh ){
 
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  subdividing large tile",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 		subdivide_tile(tp);
 		tile_check_subdiv(tp->t_q[NW],matp);
 		tile_check_subdiv(tp->t_q[NE],matp);
@@ -1669,19 +1677,19 @@ NADVISE(DEFAULT_ERROR_STRING);
 		 * in that case, mark this tile as invisible also.
 		 */
 	} else {
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  READY_TO_RENDER",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 	}
-#ifdef DEBUG
+#ifdef QUIP_DEBUG
 if( debug & debug_tiles ){
 sprintf(DEFAULT_ERROR_STRING,"tile_check_subdiv %s:  DONE",tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
-#endif /* DEBUG */
+#endif /* QUIP_DEBUG */
 
 } /* end tile_check_subdiv() */
 

@@ -111,6 +111,11 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 @property float				xdel;
 @property float				ymin;
 @property float				ydel;
+#ifdef HAVE_OPENGL
+// This is an X11-ism - for native Cocoa implementation,
+// we will need something different...
+//@property GLXContext			vw_ctx;
+#endif /* HAVE_OPENGL */
 
 @property quipImageView	*	vw_qiv_p;
 
@@ -144,22 +149,24 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 #define VW_DEPTH(vp)		(vp).depth
 #define VW_GW(vp)		(vp).gwp
 
-//#ifdef BUILD_FOR_OBJC
-#ifdef BUILD_FOR_IOS
+//#ifdef BUILD_FOR_IOS
 #define VW_QVC(vp)		((quipViewController *)GW_VC(VW_GW(vp)))
+
+#ifdef BUILD_FOR_IOS
 #define VW_QV(vp)		((quipView *)VW_QVC(vp).view)
 #define VW_CANVAS(vp)		QV_CANVAS(VW_QV(vp))
 #define VW_IMAGES(vp)		QV_IMAGES(VW_QV(vp))
+#endif // BUILD_FOR_IOS
+
 #define VW_BG_IMG(vp)		QV_BG_IMG(VW_QV(vp))
 
 #define SET_VW_QVC(vp,v)	SET_GW_VC(VW_GW(vp),v)
 #define SET_VW_CANVAS(vp,v)	SET_QV_CANVAS(VW_QV(vp),v)
 #define SET_VW_BG_IMG(vp,iv)	SET_QV_BG_IMG(VW_QV(vp),iv)
-#endif // BUILD_FOR_IOS
-//#endif // BUILD_FOR_OBJC
+//#endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
-#define VW_WINDOW(vp)		GW_WINDOW(VW_GW(vp))
+//#define VW_WINDOW(vp)		GW_WINDOW(VW_GW(vp))
 #define VW_IMAGES(vp)		QWC_IMAGES(VW_QWC(vp))
 #define VW_QWC(vp)		(GW_WC(VW_GW(vp)))
 #define VW_CANVAS(vp)		GW_CANVAS(VW_GW(vp))
@@ -305,6 +312,8 @@ typedef struct viewer {
 	/* Should this be ifdef'd? */
 #ifdef HAVE_OPENGL
 	GLXContext	vw_ctx;
+#define VW_CTX(vp)		(vp)->vw_ctx
+#define SET_VW_CTX(vp,v)	(vp)->vw_ctx = v
 #endif /* HAVE_OPENGL */
 } Viewer;
 

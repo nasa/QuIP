@@ -16,7 +16,12 @@
 
 #ifdef HAVE_GL_GL_H
 #include <GL/gl.h>
-#endif
+#else // ! HAVE_GL_GL_H
+#ifdef BUILD_FOR_OBJC
+#include <OpenGL/gl.h>
+#endif // BUILD_FOR_OBJC
+#endif // ! HAVE_GL_GL_H
+
 
 #ifdef HAVE_GL_GLU_H
 #include <GL/glu.h>

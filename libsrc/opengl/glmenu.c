@@ -2,9 +2,12 @@
 
 #ifdef HAVE_OPENGL
 
+// This needs to come first, but on the mac it complains!?
+#ifndef BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLEW_H
 #include <GL/glew.h>
 #endif
+#endif // BUILD_FOR_OBJC
 
 #ifdef HAVE_GLUT
 #include "glut_supp.h"
@@ -54,9 +57,9 @@ static void _check_gl_error(QSP_ARG_DECL  char *s)
 
 static void get_rgb_triple(QSP_ARG_DECL float *v)
 {
-	v[0]=HOW_MUCH("red");
-	v[1]=HOW_MUCH("green");
-	v[2]=HOW_MUCH("blue");
+	v[0]=(float)HOW_MUCH("red");
+	v[1]=(float)HOW_MUCH("green");
+	v[2]=(float)HOW_MUCH("blue");
 }
 
 static COMMAND_FUNC( set_clear_color )
@@ -189,9 +192,9 @@ static COMMAND_FUNC(	do_gl_vertex )
 {
 	float x,y,z;
 
-	x=HOW_MUCH("x coordinate");
-	y=HOW_MUCH("y coordinate");
-	z=HOW_MUCH("z coordinate");
+	x=(float)HOW_MUCH("x coordinate");
+	y=(float)HOW_MUCH("y coordinate");
+	z=(float)HOW_MUCH("z coordinate");
 
 	if( debug & gl_debug ){
 		sprintf(ERROR_STRING,"glVertex3f %g %g %g",x,y,z);
@@ -204,9 +207,9 @@ static COMMAND_FUNC(	do_gl_color )
 {
 	float r,g,b;
 
-	r=HOW_MUCH("red");
-	g=HOW_MUCH("green");
-	b=HOW_MUCH("blue");
+	r=(float)HOW_MUCH("red");
+	g=(float)HOW_MUCH("green");
+	b=(float)HOW_MUCH("blue");
 
 	if( debug & gl_debug ){
 		sprintf(ERROR_STRING,"glColor3f %g %g %g",r,g,b);
@@ -219,9 +222,9 @@ static COMMAND_FUNC(	do_gl_normal )
 {
 	float x,y,z;
 
-	x=HOW_MUCH("x coordinate");
-	y=HOW_MUCH("y coordinate");
-	z=HOW_MUCH("z coordinate");
+	x=(float)HOW_MUCH("x coordinate");
+	y=(float)HOW_MUCH("y coordinate");
+	z=(float)HOW_MUCH("z coordinate");
 
 	if( debug & gl_debug ){
 		sprintf(ERROR_STRING,"glNormal3f %g %g %g",x,y,z);
@@ -234,8 +237,8 @@ static COMMAND_FUNC(	do_gl_tc )
 {
 	float s,t;
 
-	s=HOW_MUCH("s coordinate");
-	t=HOW_MUCH("t coordinate");
+	s=(float)HOW_MUCH("s coordinate");
+	t=(float)HOW_MUCH("t coordinate");
 
 	if( debug & gl_debug ) advise("glTexCoord2f");
 	glTexCoord2f(s,t);
@@ -265,39 +268,39 @@ static COMMAND_FUNC(	do_gl_material )
 
 	switch(i){
 		case 0: {
-			pvec[0] = HOW_MUCH("ambient red");
-			pvec[1] = HOW_MUCH("ambient green");
-			pvec[2] = HOW_MUCH("ambient blue");
+			pvec[0] = (float)HOW_MUCH("ambient red");
+			pvec[1] = (float)HOW_MUCH("ambient green");
+			pvec[2] = (float)HOW_MUCH("ambient blue");
 			pvec[3] = 1.0;
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DIFFUSE (ambient?)");
 			/* diffuse or ambient??? */
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
 			break; }
 		case 1: {
-			pvec[0] = HOW_MUCH("diffuse red");
-			pvec[1] = HOW_MUCH("diffuse green");
-			pvec[2] = HOW_MUCH("diffuse blue");
+			pvec[0] = (float)HOW_MUCH("diffuse red");
+			pvec[1] = (float)HOW_MUCH("diffuse green");
+			pvec[2] = (float)HOW_MUCH("diffuse blue");
 			pvec[3] = 1.0;
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DUFFUSE");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
 			break; }
 		case 2: {
-			pvec[0] = HOW_MUCH("specular red");
-			pvec[1] = HOW_MUCH("specular green");
-			pvec[2] = HOW_MUCH("specular blue");
+			pvec[0] = (float)HOW_MUCH("specular red");
+			pvec[1] = (float)HOW_MUCH("specular green");
+			pvec[2] = (float)HOW_MUCH("specular blue");
 			pvec[3] = 1.0;
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SPECULAR");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, pvec);
 			break; }
 		case 3: {
-			pvec[0] = HOW_MUCH("shininess");
+			pvec[0] = (float)HOW_MUCH("shininess");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SHININESS");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, pvec);
 			break; }
 		case 4: {
-			pvec[0] = HOW_MUCH("emission red");
-			pvec[1] = HOW_MUCH("emission green");
-			pvec[2] = HOW_MUCH("emission blue");
+			pvec[0] = (float)HOW_MUCH("emission red");
+			pvec[1] = (float)HOW_MUCH("emission green");
+			pvec[2] = (float)HOW_MUCH("emission blue");
 			pvec[3] = 1.0;
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_EMISSION");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, pvec);
@@ -344,7 +347,7 @@ static COMMAND_FUNC(	do_gl_ptsize )
 {
 	float size;
 
-	size = HOW_MUCH("size");
+	size = (float)HOW_MUCH("size");
 
 	if( debug & gl_debug ) advise("glPointSize");
 	glPointSize(size);
@@ -377,8 +380,8 @@ static COMMAND_FUNC( do_slct_obj )
 	GLuint j;
 	char ret_str[32];
 
-	x=HOW_MANY("x location");
-	y=HOW_MANY("y location");
+	x=(int)HOW_MANY("x location");
+	y=(int)HOW_MANY("y location");
 	s=NAMEOF("scene render command");
 	s=savestr(s);
 
@@ -484,7 +487,7 @@ static COMMAND_FUNC( do_load_name )
 {
 	int n;
 
-	n=HOW_MANY("'name' number");
+	n=(int)HOW_MANY("'name' number");
 	if( debug & gl_debug ){
 		sprintf(ERROR_STRING,"glLoadName %d",n);
 		advise(ERROR_STRING);
@@ -497,7 +500,7 @@ static COMMAND_FUNC( do_push_name )
 {
 	int n;
 
-	n=HOW_MANY("'name' number");
+	n=(int)HOW_MANY("'name' number");
 	if( debug & gl_debug ){
 		sprintf(ERROR_STRING,"glPushName %d",n);
 		advise(ERROR_STRING);
@@ -756,11 +759,15 @@ static COMMAND_FUNC( do_check_extension )
 	i=WHICH_ONE("GL extension",N_KNOWN_EXTENSIONS,extension_table);
 	if( i < 0 ) return;
 
+#ifndef BUILD_FOR_OBJC
 	if( check_extension(QSP_ARG  extension_table[i]) ){
 		ASSIGN_RESERVED_VAR("extension_present","1");
 	} else {
 		ASSIGN_RESERVED_VAR("extension_present","0");
 	}
+#else // ! BUILD_FOR_OBJC
+	WARN("Sorry, can't check for extensions in native Apple build...");
+#endif // ! BUILD_FOR_OBJC
 }
 
 static COMMAND_FUNC( do_tex_image )
@@ -835,7 +842,7 @@ static COMMAND_FUNC( set_pt_size )
 {
 	GLfloat s;
 
-	s=HOW_MUCH("width in pixels for rendered points");
+	s=(float)HOW_MUCH("width in pixels for rendered points");
 	if( s <= 0 ){
 		sprintf(ERROR_STRING,"Requested point size (%g) must be positive",s);
 		WARN(ERROR_STRING);
@@ -849,7 +856,7 @@ static COMMAND_FUNC( set_line_width )
 {
 	GLfloat w;
 
-	w=HOW_MUCH("width in pixels for rendered lines");
+	w=(float)HOW_MUCH("width in pixels for rendered lines");
 	if( w <= 0 ){
 		sprintf(ERROR_STRING,"Requested line width (%g) must be positive",w);
 		WARN(ERROR_STRING);
@@ -964,15 +971,15 @@ static COMMAND_FUNC( do_look_at )
 	float cx,cy,cz;
 	float ux,uy,uz;
 
-	x = HOW_MUCH("x camera position");
-	y = HOW_MUCH("y camera position");
-	z = HOW_MUCH("z camera position");
-	cx = HOW_MUCH("x target position");
-	cy = HOW_MUCH("y target position");
-	cz = HOW_MUCH("z target position");
-	ux = HOW_MUCH("x up direction");
-	uy = HOW_MUCH("y up direction");
-	uz = HOW_MUCH("z up direction");
+	x = (float)HOW_MUCH("x camera position");
+	y = (float)HOW_MUCH("y camera position");
+	z = (float)HOW_MUCH("z camera position");
+	cx = (float)HOW_MUCH("x target position");
+	cy = (float)HOW_MUCH("y target position");
+	cz = (float)HOW_MUCH("z target position");
+	ux = (float)HOW_MUCH("x up direction");
+	uy = (float)HOW_MUCH("y up direction");
+	uz = (float)HOW_MUCH("z up direction");
 
 	if( debug & gl_debug ) advise("gluLookAt");
 	gluLookAt(x,y,z,cx,cy,cz,ux,uy,uz);
@@ -982,9 +989,9 @@ static COMMAND_FUNC( do_scale )
 {
 	float fx,fy,fz;
 
-	fx=HOW_MUCH("x scale factor");
-	fy=HOW_MUCH("y scale factor");
-	fz=HOW_MUCH("z scale factor");
+	fx=(float)HOW_MUCH("x scale factor");
+	fy=(float)HOW_MUCH("y scale factor");
+	fz=(float)HOW_MUCH("z scale factor");
 
 	if( debug & gl_debug ) advise("glScalef");
 	glScalef(fx,fy,fz);
@@ -994,9 +1001,9 @@ static COMMAND_FUNC( do_xlate )
 {
 	float tx,ty,tz;
 
-	tx=HOW_MUCH("x translation");
-	ty=HOW_MUCH("y translation");
-	tz=HOW_MUCH("z translation");
+	tx=(float)HOW_MUCH("x translation");
+	ty=(float)HOW_MUCH("y translation");
+	tz=(float)HOW_MUCH("z translation");
 
 	if( debug & gl_debug ) advise("glTranslatef");
 	glTranslatef(tx,ty,tz);
@@ -1084,10 +1091,10 @@ static COMMAND_FUNC( do_rotate )
 	float angle;
 	float dx,dy,dz;
 
-	angle = HOW_MUCH("angle in degrees");
-	dx = HOW_MUCH("rotation axis x");
-	dy = HOW_MUCH("rotation axis y");
-	dz = HOW_MUCH("rotation axis z");
+	angle = (float)HOW_MUCH("angle in degrees");
+	dx = (float)HOW_MUCH("rotation axis x");
+	dy = (float)HOW_MUCH("rotation axis y");
+	dz = (float)HOW_MUCH("rotation axis z");
 
 	if( debug & gl_debug ) advise("glRotatef");
 	glRotatef(angle,dx,dy,dz);
@@ -1192,9 +1199,9 @@ static COMMAND_FUNC( set_ambient )
 {
 	float v[4];
 
-	v[0] = HOW_MUCH("red component");
-	v[1] = HOW_MUCH("green component");
-	v[2] = HOW_MUCH("blue component");
+	v[0] = (float)HOW_MUCH("red component");
+	v[1] = (float)HOW_MUCH("green component");
+	v[2] = (float)HOW_MUCH("blue component");
 	v[3] = 1.0;
 
 	CHECK_LIGHT("ambient");
@@ -1207,9 +1214,9 @@ static COMMAND_FUNC( set_diffuse )
 {
 	float v[4];
 
-	v[0]=HOW_MUCH("red component");
-	v[1]=HOW_MUCH("green component");
-	v[2]=HOW_MUCH("blue component");
+	v[0]=(float)HOW_MUCH("red component");
+	v[1]=(float)HOW_MUCH("green component");
+	v[2]=(float)HOW_MUCH("blue component");
 	v[3]=1.0;
 
 	CHECK_LIGHT("diffuse");
@@ -1222,9 +1229,9 @@ static COMMAND_FUNC( set_specular )
 {
 	float v[4];
 
-	v[0] = HOW_MUCH("red component");
-	v[1] = HOW_MUCH("green component");
-	v[2] = HOW_MUCH("blue component");
+	v[0] = (float)HOW_MUCH("red component");
+	v[1] = (float)HOW_MUCH("green component");
+	v[2] = (float)HOW_MUCH("blue component");
 	v[3] = 1.0;
 
 	CHECK_LIGHT("specular");
@@ -1237,10 +1244,10 @@ static COMMAND_FUNC( set_light_position )
 {
 	float v[4];
 
-	v[0]=HOW_MUCH("x position");
-	v[1]=HOW_MUCH("y position");
-	v[2]=HOW_MUCH("z position");
-	v[3]=HOW_MUCH("w position");
+	v[0]=(float)HOW_MUCH("x position");
+	v[1]=(float)HOW_MUCH("y position");
+	v[2]=(float)HOW_MUCH("z position");
+	v[3]=(float)HOW_MUCH("w position");
 
 	CHECK_LIGHT("position")
 
@@ -1252,9 +1259,9 @@ static COMMAND_FUNC( set_spot_dir )
 {
 	float v[3];
 
-	v[0]=HOW_MUCH("x component");
-	v[1]=HOW_MUCH("y component");
-	v[2]=HOW_MUCH("z component");
+	v[0]=(float)HOW_MUCH("x component");
+	v[1]=(float)HOW_MUCH("y component");
+	v[2]=(float)HOW_MUCH("z component");
 
 	CHECK_LIGHT("spot direction")
 
@@ -1266,9 +1273,9 @@ static COMMAND_FUNC( set_global_ambient )
 {
 	float v[4];
 
-	v[0]=HOW_MUCH("red");
-	v[1]=HOW_MUCH("green");
-	v[2]=HOW_MUCH("blue");
+	v[0]=(float)HOW_MUCH("red");
+	v[1]=(float)HOW_MUCH("green");
+	v[2]=(float)HOW_MUCH("blue");
 	v[3]=1.0;
 
 	if( debug & gl_debug ) advise("glLightModelfv");
@@ -1319,7 +1326,7 @@ static COMMAND_FUNC( set_atten )
 	float f;
 
 	i=WHICH_ONE("attenuation model",N_ATTENUATIONS,atten_names);
-	f=HOW_MUCH("attenuation constant");
+	f=(float)HOW_MUCH("attenuation constant");
 	if( i < 0 ) return;
 	if( debug & gl_debug ) advise("glLightf");
 	switch(i){
@@ -1396,7 +1403,7 @@ static COMMAND_FUNC( do_vbl_wait )
 {
 	int n;
 
-	n = HOW_MANY("number of frames to wait");
+	n = (int)HOW_MANY("number of frames to wait");
 	wait_video_sync(n);
 }
 
@@ -1409,8 +1416,8 @@ static COMMAND_FUNC( do_create_fb )
 	int w,h;
 
 	s = NAMEOF("name for framebuffer");
-	w = HOW_MANY("width in pixels");
-	h = HOW_MANY("height in pixels");
+	w = (int)HOW_MANY("width in pixels");
+	h = (int)HOW_MANY("height in pixels");
 
 	fbp = create_framebuffer(QSP_ARG  s,w,h);
 	if( fbp == NULL ) {
@@ -1539,9 +1546,9 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	if( cdp != NO_PLATFORM )
 		pop_pfdev_context(SINGLE_QSP_ARG);
 
-	w = HOW_MANY("width");
-	h = HOW_MANY("height");
-	d = HOW_MANY("depth");
+	w = (int)HOW_MANY("width");
+	h = (int)HOW_MANY("height");
+	d = (int)HOW_MANY("depth");
 
 	/* what should the depth be??? default to 1 for now... */
 
@@ -1577,7 +1584,9 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	SET_OBJ_FLAG_BITS(dp, DT_GL_BUF);	/* indicate obj is a GL buffer */
 
 	SET_OBJ_DATA_PTR(dp, NULL);
+fprintf(stderr,"do_new_gl_buffer:  allocating gl_info for %s\n",OBJ_NAME(dp));
 	SET_OBJ_GL_INFO(dp, (GL_Info *) getbuf( sizeof(GL_Info) ) );
+fprintf(stderr,"do_new_gl_buffer:  DONE allocating gl_info for %s\n",OBJ_NAME(dp));
 
 	glew_check(SINGLE_QSP_ARG);	/* without this, we get a segmentation
 			 * violation on glGenBuffers???
@@ -1590,6 +1599,8 @@ static COMMAND_FUNC( do_new_gl_buffer )
 // on libglew???
 // Answer:  We need libglew to bring in openGL extensions like glBindBuffer...
 advise("calling glGenBuffers");
+    fprintf(stderr,"OBJ_GL_INFO(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_GL_INFO(dp));
+    fprintf(stderr,"OBJ_BUF_ID_P(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_BUF_ID_P(dp));
 	glGenBuffers(1, OBJ_BUF_ID_P(dp) );	// first arg is # buffers to generate?
 
 //sprintf(ERROR_STRING,"glGenBuffers gave us buf_id = %d",OBJ_BUF_ID(dp));

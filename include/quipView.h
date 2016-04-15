@@ -26,6 +26,8 @@ typedef struct device_prefs {
 
 @class Viewer;
 @class Panel_Obj;
+@class quipViewController;
+@class quipWindowController;
 
 // We changed from UIView to UIScrollView to enable scrolling automatically...
 // But that is a problem when we simply want to catch tap events, because
@@ -37,31 +39,50 @@ typedef struct device_prefs {
 
 // But in our test, the PVT added latency was the same whether or not scrolling
 // was enabled, so we leave it in.
-#define SCROLLABLE_QUIP_VIEW
+
+@interface quipView : QUIP_VIEW_TYPE
 
 #ifdef BUILD_FOR_IOS
-
-@class quipViewController;
-
-#ifdef SCROLLABLE_QUIP_VIEW
-@interface quipView : UIScrollView
-#else // ! SCROLLABLE_QUIP_VIEW
-@interface quipView : UIView
-#endif // ! SCROLLABLE_QUIP_VIEW
 
 -(void) getEventTime:(UIEvent *)event;
 -(void) addDefaultBG;
 @property (nonatomic, retain) QUIP_IMAGE_VIEW_TYPE *	bgImageView;
-@property (retain) quipViewController *	qvc;
-#define QV_QVC(qv)		(qv).qvc
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
-@class quipWindowController;
-@interface quipView : NSView
+
+#ifdef HAVE_OPENGL
+{
+@private
+NSOpenGLContext *	qv_ctx;
+NSOpenGLPixelFormat *	qv_pxlfmt;
+}
+
+// methods specified in listing 2-5, OpenGL Programming Guide for Mac
++(NSOpenGLPixelFormat*) defaultPixelFormat;
+- (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat*)format;
+- (void)setOpenGLContext:(NSOpenGLContext*)context;
+- (NSOpenGLContext*)openGLContext;
+- (void)clearGLContext;
+- (void)prepareOpenGL;
+- (void)update;
+- (void)setPixelFormat:(NSOpenGLPixelFormat*)pixelFormat;
+- (NSOpenGLPixelFormat*)pixelFormat;
+#endif // HAVE_OPENGL
+
 @property (retain) quipWindowController *	qwc;
+
 #define QV_QWC(qv)		(qv).qwc
+
+#define QV_CTX(qv)		(qv).qv_ctx
+#define QV_PXLFMT(qv)		(qv).qv_pxlfmt
+#define SET_QV_CTX(qv,v)	(qv).qv_ctx = v
+#define SET_QV_PXLFMT(qv,v)	(qv).qv_pxlfmt = v
+
 #endif // BUILD_FOR_MACOS
+
+@property (retain) quipViewController *	qvc;
+#define QV_QVC(qv)		(qv).qvc
 
 
 // Here are the subviews, from back to front:

@@ -2,9 +2,13 @@
 
 #ifdef HAVE_OPENGL
 
+#ifdef BUILD_FOR_OBJC
+#include <OpenGL/gl.h>
+#else // ! BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLX_H
 #include <GL/glx.h>
-#endif
+#endif // HAVE_GL_GLX_H
+#endif // ! BUILD_FOR_OBJC
 
 #include "quip_prot.h"
 #include "dl.h"

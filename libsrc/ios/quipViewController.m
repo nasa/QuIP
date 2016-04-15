@@ -53,7 +53,7 @@
 }
 
 /********** end UIAlertView delegate methods ************/
-
+#ifdef BUILD_FOR_IOS
 - (void)didReceiveMemoryWarning
 {
 	// Releases the view if it doesn't have a superview.
@@ -62,7 +62,6 @@
 	// Release any cached data, images, etc that aren't in use.
 }
 
-#ifdef BUILD_FOR_IOS
 - (void) hideBackButton:(bool) yesno
 {
 	if( yesno )

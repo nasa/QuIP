@@ -45,9 +45,9 @@ static COMMAND_FUNC( do_add )
 
 	for(i=0;i<4;i++){
 		sprintf(prompt,"x coordinate of %s vertex",quad_name[i]);
-		x = HOW_MUCH(prompt);
+		x = (float)HOW_MUCH(prompt);
 		sprintf(prompt,"y coordinate of %s vertex",quad_name[i]);
-		y = HOW_MUCH(prompt);
+		y = (float)HOW_MUCH(prompt);
 
 		vp[i] = new_vertex(x,y);
 	}
@@ -121,10 +121,10 @@ static COMMAND_FUNC( do_set_bb )
 {
 	float xl,xr,yb,yt;
 
-	xl=HOW_MUCH("left x limit");
-	yb=HOW_MUCH("bottom y limit");
-	xr=HOW_MUCH("right x limit");
-	yt=HOW_MUCH("top y limit");
+	xl=(float)HOW_MUCH("left x limit");
+	yb=(float)HOW_MUCH("bottom y limit");
+	xr=(float)HOW_MUCH("right x limit");
+	yt=(float)HOW_MUCH("top y limit");
 
 	set_coord_limits(xl,yb,xr,yt);
 }
@@ -165,7 +165,7 @@ static COMMAND_FUNC( do_set_dthresh )
 {
 	float d;
 
-	d=HOW_MUCH("distance threshold");
+	d=(float)HOW_MUCH("distance threshold");
 	set_dthresh(d);
 }
 

@@ -44,7 +44,11 @@ void swap_buffers(void)
 	// IF __GL_SYNC_TO_VBLANK is set to 1!?
 
 	//glutSwapBuffers();
+#ifndef BUILD_FOR_OBJC
 	glXSwapBuffers(gl_vp->vw_dpy,gl_vp->vw_xwin);
+#else // BUILD_FOR_OBJC
+	NWARN("Need to implement glXSwapBuffers for Apple...");
+#endif // BUILD_FOR_OBJC
 }
 
 #ifdef HAVE_VIDEOSYNCSGI
@@ -64,6 +68,7 @@ static int (*m_glXGetVideoSyncSGI)(unsigned int*)=NULL;
 
 void wait_video_sync(int n)
 {
+#ifndef BUILD_FOR_OBJC
 	unsigned int count;
 	int divisor, remainder;
 #ifndef HAVE_VIDEOSYNCSGI
@@ -122,11 +127,14 @@ advise(ERROR_STRING);
 
 	(*m_glXWaitVideoSyncSGI)(divisor,remainder,&count);
 
+#else // BUILD_FOR_OBJC
+	NWARN("Need to implement wait_video_sync for Apple!");
+#endif // BUILD_FOR_OBJC
 }
 
 static void show_extensions( QSP_ARG_DECL  Renderer_Info *rip )
 {
-	int n_chars;
+	long n_chars;
 	const char *start, *end;
 
 	start = rip->glr_extensions;
@@ -198,6 +206,7 @@ int check_extension( QSP_ARG_DECL  const char *extension )
 		(GLubyte *)curr_renderer_info_p->glr_extensions);
 }
 
+#ifndef BUILD_FOR_OBJC
 static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 {
 	XVisualInfo vinfo_template, *vis_info_p;
@@ -298,6 +307,7 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 		}
 	}
 }
+#endif // ! BUILD_FOR_OBJC
 
 COMMAND_FUNC( do_render_to )
 {
@@ -360,6 +370,7 @@ COMMAND_FUNC( do_set_fullscreen )
 
 void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 {
+#ifndef BUILD_FOR_OBJC
 	if( ! READY_FOR_GLX(vp) ) {
 		init_glx_context(QSP_ARG  vp);
 		vp->vw_flags |= VIEW_GLX_RDY;
@@ -389,6 +400,9 @@ advise(ERROR_STRING);
 
 	check_gl_capabilities(SINGLE_QSP_ARG);
 
+#else // ! BUILD_FOR_OBJC
+	WARN("Need to implement select_gl_viewer for Apple!?");
+#endif // ! BUILD_FOR_OBJC
 } /* end select_gl_viewer */
 
 #endif /* HAVE_OPENGL */

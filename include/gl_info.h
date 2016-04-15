@@ -3,11 +3,11 @@
 
 #ifdef HAVE_OPENGL
 
-#ifndef BUILD_FOR_OPENCL
-#ifdef HAVE_GL_GLEW_H
-#include <GL/glew.h>
-#endif
-#endif // ! BUILD_FOR_OPENCL
+//#ifndef BUILD_FOR_OPENCL
+//#ifdef HAVE_GL_GLEW_H
+//#include <GL/glew.h>
+//#endif
+//#endif // ! BUILD_FOR_OPENCL
 
 // This structure may be pointed to by unaligned_data...  a kludge!
 
