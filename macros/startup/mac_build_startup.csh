@@ -101,6 +101,7 @@ Set macro_dir /usr/local/share/quip/macros
 EOF
 # the max_warnings line was in the fragment above...
 echo "advise 'startup.scr: max_warnings set to -1 in build_startup_file.csh'" >> $outfile
+echo "platforms list_all show quit" >> $outfile
 
 if( $flavor == demo ) then
   echo No flavor-specific files known...

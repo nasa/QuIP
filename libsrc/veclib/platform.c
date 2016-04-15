@@ -170,7 +170,6 @@ void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 //	}
 //#endif // CAUTIOUS
 	assert( PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpfr))) != NULL );
-	
 
 	( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dpfr)) )
 		(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz, OBJ_PFDEV(dpfr) );

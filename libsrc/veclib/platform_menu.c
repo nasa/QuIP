@@ -28,9 +28,32 @@ static COMMAND_FUNC( do_list_pfdevs )
 	//	ERROR1("do_list_pfdevs:  Failed to pop platform device context!?");
 }
 
+static COMMAND_FUNC( do_list_all_pfdevs )
+{
+	Compute_Platform *cpp;
+	List *lp;
+	Node *np;
+
+	lp = platform_list(SINGLE_QSP_ARG);
+	if( lp == NO_LIST ) {
+		return;
+	}
+
+	np = QLIST_HEAD(lp);
+	while( np != NO_NODE ){
+		cpp = (Compute_Platform *) NODE_DATA(np);
+		sprintf(msg_str,"%s platform:",PLATFORM_NAME(cpp));
+		prt_msg(msg_str);
+		list_item_context(QSP_ARG  PF_CONTEXT(cpp));
+		prt_msg("");
+
+		np = NODE_NEXT(np);
+	}
+}
+
 void select_pfdev( QSP_ARG_DECL  Platform_Device *pdp )
 {
-	curr_pdp = pdp;	// select_pfdef
+	curr_pdp = pdp;	// select_pfdev
 
 	// How do we specify host-mapped objects???  BUG!
 	set_data_area( PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX) );
@@ -101,18 +124,34 @@ static COMMAND_FUNC(do_show_pfdev)
 
 static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 {
-	List *lp;
-	Node *np;
+	List *cp_lp, *pfd_lp;
+	Node *cp_np, *pfd_np;
+	Compute_Platform *cpp;
 	Platform_Device *pdp;
 
-	lp = pfdev_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return NO_PFDEV;
-	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){
-		pdp = (Platform_Device *) NODE_DATA(np);
-		if( PF_TYPE( PFDEV_PLATFORM(pdp) ) == typ ) return pdp;
-		np = NODE_NEXT(np);
+	cp_lp = platform_list(SINGLE_QSP_ARG);
+	cp_np = QLIST_HEAD(cp_lp);
+	while( cp_np != NO_NODE ){
+		cpp = NODE_DATA(cp_np);
+		// We need to push a context before we can get a list of devices...
+		push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
+
+		pfd_lp = pfdev_list(SINGLE_QSP_ARG);
+		if( pfd_lp == NO_LIST ) return NO_PFDEV;
+		pfd_np = QLIST_HEAD(pfd_lp);
+		while( pfd_np != NO_NODE ){
+			pdp = (Platform_Device *) NODE_DATA(pfd_np);
+			if( PF_TYPE( PFDEV_PLATFORM(pdp) ) == typ ){
+				pop_pfdev_context( SINGLE_QSP_ARG );
+				return pdp;
+			}
+			pfd_np = NODE_NEXT(pfd_np);
+		}
+
+		pop_pfdev_context( SINGLE_QSP_ARG );
+		cp_np = NODE_NEXT(cp_np);
 	}
+
 	return NO_PFDEV;
 }
 
@@ -142,6 +181,27 @@ static COMMAND_FUNC(do_set_dev_type)
 	advise(ERROR_STRING);
 
 	select_pfdev(QSP_ARG  pdp);
+}
+
+// We call this if the user has not set DEFAULT_PLATFORM and DEFAULT_GPU in the enviroment...
+
+static void check_platform_defaults(SINGLE_QSP_ARG_DECL)
+{
+	Platform_Device *pdp;
+	Variable *vp1, *vp2;
+
+	vp1 = get_var(QSP_ARG  "DEFAULT_PLATFORM");
+	vp2 = get_var(QSP_ARG  "DEFAULT_GPU");
+
+	if( vp1 != NULL && vp2 != NULL ) return;	// already set by user
+
+	pdp = find_pfdev(QSP_ARG  PLATFORM_OPENCL);
+	if( pdp == NULL ) pdp = find_pfdev(QSP_ARG  PLATFORM_CUDA);
+
+	if( pdp == NULL ) return;
+
+	ASSIGN_VAR("DEFAULT_PLATFORM",PLATFORM_NAME(PFDEV_PLATFORM(pdp)));
+	ASSIGN_VAR("DEFAULT_GPU",PFDEV_NAME(pdp));
 }
 
 static COMMAND_FUNC( do_pfdev_info )
@@ -175,7 +235,8 @@ MENU_BEGIN(platform)
 // should we have a platform info command?
 ADD_CMD( list,		do_list_pfs,		list platforms )
 ADD_CMD( info,		do_pf_info,		print device information )
-ADD_CMD( list_devices,	do_list_pfdevs,		list devices )
+ADD_CMD( list_devices,	do_list_pfdevs,		list devices for one platform )
+ADD_CMD( list_all,	do_list_all_pfdevs,	list all devices from all platforms )
 ADD_CMD( device_info,	do_pfdev_info,		print device information )
 ADD_CMD( select,	do_select_pfdev,	select platform/device )
 ADD_CMD( device_type,	do_set_dev_type,	use device of specified type )
@@ -219,6 +280,8 @@ fprintf(stderr,"Calling ocl_init_platform...\n");
 #ifdef HAVE_METAL
 	mtl_init_platform(SINGLE_QSP_ARG);
 #endif // HAVE_METAL
+
+	check_platform_defaults(SINGLE_QSP_ARG);
 
 	inited=1;
 }
