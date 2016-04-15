@@ -196,8 +196,8 @@ static void check_platform_defaults(SINGLE_QSP_ARG_DECL)
 	Platform_Device *pdp;
 	Variable *vp1, *vp2;
 
-	vp1 = get_var(QSP_ARG  "DEFAULT_PLATFORM");
-	vp2 = get_var(QSP_ARG  "DEFAULT_GPU");
+	vp1 = var_of(QSP_ARG  "DEFAULT_PLATFORM");
+	vp2 = var_of(QSP_ARG  "DEFAULT_GPU");
 
 	if( vp1 != NULL && vp2 != NULL ) return;	// already set by user
 
@@ -205,7 +205,6 @@ static void check_platform_defaults(SINGLE_QSP_ARG_DECL)
 	if( pdp == NULL ) pdp = find_pfdev(QSP_ARG  PLATFORM_CUDA);
 
 	if( pdp == NULL ) return;
-
 	ASSIGN_VAR("DEFAULT_PLATFORM",PLATFORM_NAME(PFDEV_PLATFORM(pdp)));
 	ASSIGN_VAR("DEFAULT_GPU",PFDEV_NAME(pdp));
 }
@@ -289,7 +288,7 @@ void init_all_platforms(SINGLE_QSP_ARG_DECL)
 	check_platform_defaults(SINGLE_QSP_ARG);
 
 	inited=1;
-}
+} // init_all_platforms
 
 COMMAND_FUNC( do_platform_menu )
 {
