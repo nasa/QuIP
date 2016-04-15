@@ -24,7 +24,7 @@ else if( !strcmp(#type,"dim3") ) fprintf(stderr,"\tdim3 arg = %d %d %d\n",\
 else fprintf(stderr,"\tunhandled case for type %s\n",#type);
 
 
-#define SET_KERNEL_ARG(type,value)	_SET_KERNEL_ARG(kernel,type,value)
+#define SET_KERNEL_ARG(type,value)	_SET_KERNEL_ARG(kernel[pd_idx],type,value)
 
 #define _SET_KERNEL_ARG(kernel,type,value)				\
 	/*SHOW_KERNEL_ARG(type,value)*/					\

@@ -36,6 +36,7 @@ struct ocl_dev_info {
 	cl_device_id		odi_dev_id;
 	cl_context		odi_ctx;
 	cl_command_queue	odi_queue; //"stream" in CUDA
+	int			odi_idx;
 } ;
 
 #define PFDEV_ODI(pdp)		(pdp)->pd_dev_info.u_odi_p
@@ -43,10 +44,12 @@ struct ocl_dev_info {
 #define OCLDEV_DEV_ID(pdp)		(PFDEV_ODI(pdp))->odi_dev_id
 #define OCLDEV_CTX(pdp)			(PFDEV_ODI(pdp))->odi_ctx
 #define OCLDEV_QUEUE(pdp)		(PFDEV_ODI(pdp))->odi_queue
+#define OCLDEV_IDX(pdp)			(PFDEV_ODI(pdp))->odi_idx
 
 #define SET_OCLDEV_DEV_ID(pdp,v)	(PFDEV_ODI(pdp))->odi_dev_id = v
 #define SET_OCLDEV_CTX(pdp,v)		(PFDEV_ODI(pdp))->odi_ctx = v
 #define SET_OCLDEV_QUEUE(pdp,v)		(PFDEV_ODI(pdp))->odi_queue = v
+#define SET_OCLDEV_IDX(pdp,v)		(PFDEV_ODI(pdp))->odi_idx = v
 
 struct ocl_stream_info {
 	int foobar;

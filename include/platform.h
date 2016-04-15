@@ -10,6 +10,7 @@ struct vector_function;
 
 #ifdef HAVE_OPENCL
 #define HAVE_ANY_GPU
+#define MAX_OPENCL_DEVICES	4
 #else // ! HAVE_OPENCL
 #ifdef HAVE_CUDA
 #define HAVE_ANY_GPU

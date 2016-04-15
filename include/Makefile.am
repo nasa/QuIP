@@ -11,6 +11,10 @@ SUBDIRS = veclib img_file hips
 # How can we make the update script execute when doing a VPATH build???
 # $< is first prerequisite...  $^ is all prerequisites
 
+# PROBLEM:  FORCE causes quip_version.h to be made all the time,
+# not just when we run make with no args.  In particular, this
+# runs when we do make install, which we don't want...
+
 quip_version.h:	update_quip_version.sh FORCE
 	./$< $(srcdir)
 

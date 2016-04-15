@@ -9,6 +9,9 @@
 //#define QUOTE_CHAR	\"
 #define QUOTE_CHAR	'"'
 
+#define QUOTE_IT(string)	_QUOTE_IT(string)
+#define _QUOTE_IT(string)	#string
+
 // PORT
 #define KERN_SOURCE_NAME(name,stem)	_KERN_SOURCE_NAME(name,stem,type_code,pf_str)
 #define _KERN_SOURCE_NAME(name,stem,tc,pf)	__KERN_SOURCE_NAME(name,stem,tc,pf)
@@ -34,10 +37,6 @@ char KERN_SOURCE_NAME(name,eqsp)[]= QUOTE_IT( __GENERIC_EQSP_VEC_FUNC(name,state
 
 #define _GENERIC_SLOW_VEC_FUNC(name,statement,bm,typ,scalars,vectors,extra)	\
 char KERN_SOURCE_NAME(name,slow)[]= QUOTE_IT( __GENERIC_SLOW_VEC_FUNC(name,statement,bm,typ,scalars,vectors,extra) );
-
-
-#define QUOTE_IT(string)	_QUOTE_IT(string)
-#define _QUOTE_IT(string)	#string
 
 
 // For cuda, this is __global__

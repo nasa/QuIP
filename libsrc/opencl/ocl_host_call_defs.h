@@ -181,12 +181,19 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 // Make this a nop if not waiting for kernels
 #define DECLARE_OCL_EVENT	cl_event event;
 
+// BUG we need a different OCL kernel for every device...
+// We could 
+// BUG - the initialization here needs to be changed if we change MAX_OPENCL_DEVICES
+// But - we are probably safe, because the compiler will set un-specified
+// elements to 0...
+
 #define DECLARE_OCL_VARS						\
 	static cl_program program = NULL;				\
-	static cl_kernel kernel = NULL;					\
+	static cl_kernel kernel[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};	\
 	cl_int status;							\
 	DECLARE_OCL_EVENT						\
 	int ki_idx=0;							\
+	int pd_idx; /* need to set! */					\
 	const char *ksrc;						\
 	/* define the global size and local size			\
 	 * (grid size and block size in CUDA) */			\
@@ -209,14 +216,15 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	_CHECK_KERNEL(name,ktyp,kname)
 
 #define _CHECK_KERNEL(name,ktyp,kname)					\
-	if( kernel == NULL ){	/* one-time initialization */		\
+	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));				\
+	if( kernel[pd_idx] == NULL ){	/* one-time initialization */	\
 		ksrc = KERN_SOURCE_NAME(name,ktyp);			\
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));	\
 		if( program == NULL ) 					\
 			NERROR1("program creation failure!?");		\
 									\
-		kernel = ocl_create_kernel(program, #kname, VA_PFDEV(vap));\
-		if( kernel == NULL ){ 					\
+		kernel[pd_idx] = ocl_create_kernel(program, #kname, VA_PFDEV(vap));\
+		if( kernel[pd_idx] == NULL ){ 					\
 			NADVISE("Source code of failed program:");	\
 			NADVISE(ksrc);					\
 			NERROR1("kernel creation failure!?");		\
@@ -352,7 +360,7 @@ global_work_size[0],global_work_size[1],global_work_size[2]);*/\
 	REPORT_KERNEL_ENQUEUE(n_dims)					\
 	status = clEnqueueNDRangeKernel(				\
 		OCLDEV_QUEUE( VA_PFDEV(vap) ),				\
-		kernel,							\
+		kernel[pd_idx],							\
 		n_dims,	/* work_dim, 1-3 */				\
 		NULL,							\
 		global_work_size,					\

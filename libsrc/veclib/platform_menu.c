@@ -142,6 +142,12 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 		while( pfd_np != NO_NODE ){
 			pdp = (Platform_Device *) NODE_DATA(pfd_np);
 			if( PF_TYPE( PFDEV_PLATFORM(pdp) ) == typ ){
+				// Some computers have multiple devices,
+				// how should we decide which to use?
+				// For example, the 2015 MacBook Pro has
+				// and AMD gpu (which we use), and something
+				// called Iris_Pro - which is not usable!?
+				// But Iris_Pro comes up first in the list...
 				pop_pfdev_context( SINGLE_QSP_ARG );
 				return pdp;
 			}
@@ -269,7 +275,6 @@ void init_all_platforms(SINGLE_QSP_ARG_DECL)
 	vl2_init_platform(SINGLE_QSP_ARG);
 
 #ifdef HAVE_OPENCL
-fprintf(stderr,"Calling ocl_init_platform...\n");
 	ocl_init_platform(SINGLE_QSP_ARG);
 #endif // HAVE_OPENCL
 

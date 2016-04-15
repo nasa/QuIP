@@ -396,64 +396,6 @@ static void print_pfdev_info_short(QSP_ARG_DECL  Platform_Device *pdp)
 }
 #endif // NOT_USED
 
-#ifdef FOOBAR
-PF_COMMAND_FUNC( dev_info )
-{
-	Platform_Device *pdp;
-
-	pdp = PICK_PFDEV((char *)"device");
-	if( pdp == NO_PFDEV ) return;
-
-	print_pfdev_info_short(QSP_ARG  pdp);
-}
-
-#ifdef NOT_YET
-
-static void print_pfdev_info_long(QSP_ARG_DECL  Platform_Device *pdp)
-{
-	sprintf(MSG_STR,"Device %s:",PFDEV_NAME(pdp));
-	prt_msg(MSG_STR);
-	display_dev_params(QSP_ARG  pdp,dev_param_tbl_long,N_DEV_PARAMS_LONG);
-}
-
-static COMMAND_FUNC( do_ocl_dev_info_long )
-{
-	Platform_Device *pdp;
-
-	pdp = PICK_PFDEV((char *)"device");
-	if( pdp == NO_PFDEV ) return;
-
-	print_pfdev_info_long(QSP_ARG  pdp);
-}
-#endif // NOT_YET
-
-#ifdef NOT_USED_ANY_MORE
-int PF_FUNC_NAME(dispatch)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
-{
-	int vf_code;
-
-	// We need to get the kernel...
-	// The kernel sources are put together by name,
-	// but here we are using a table...
-
-	vf_code=VF_CODE(vfp);
-	(*ocl_vfa_tbl[vf_code].vfa_func[OA_FUNCTYPE(oap)])(HOST_CALL_ARGS);
-
-	// BUG - make this a subroutine...
-	/* This should be done in the object method instead? */
-	if( OA_DEST(oap)  != NO_OBJ )
-		SET_OBJ_FLAG_BITS( OA_DEST(oap) , DT_ASSIGNED );
-	
-	/* This should be done in the object method? */
-	if( VF_FLAGS(vfp) & TWO_SCALAR_RESULTS ){
-		SET_OBJ_FLAG_BITS( OA_SCLR1(oap) , DT_ASSIGNED );
-		SET_OBJ_FLAG_BITS( OA_SCLR2(oap) , DT_ASSIGNED );
-	}
-
-	return(0);
-}
-#endif // NOT_USED_ANY_MORE
-#endif // FOOBAR
 
 void shutdown_opencl_platform(void)
 {
@@ -508,14 +450,11 @@ done:
 	return buf;
 }
 
-// BUG ultimately we want to get the kernel source from
-// initialized strings...
-
 /* This utility routine could useful beyond opencl... */
 
 // Apparently we have to create kernels on a per-context basis...
 
-cl_program ocl_create_program(/*QSP_ARG_DECL*/  const char *buf, Platform_Device *pdp )
+cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 {
 	cl_program program;	//cl_program is a program executable
 	size_t len;
@@ -679,7 +618,8 @@ cl_kernel create_kernel(QSP_ARG_DECL  const char * name, const char *pathname)
 
 	//create a program object for a context
 	//load the source code specified by the text strings into the program object
-	prog = ocl_create_program(/*QSP_ARG*/  buf,curr_pdp);
+	// BUG this uses curr_pdp, but we need different kernels for different devices...
+	prog = ocl_create_program(buf,curr_pdp);
 	if( prog == NULL ) return NULL;
 
 	// name needs to match a kernel routine name?

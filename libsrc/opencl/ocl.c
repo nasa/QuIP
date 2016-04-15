@@ -277,6 +277,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	char *name;
 	char *extensions;
 	char scratch[LLEN];
+	static int n_ocl_devs=0;
 	const char *name_p;
 	char *s;
 	Platform_Device *pdp;
@@ -359,6 +360,13 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	SET_OCLDEV_DEV_ID(pdp,dev_id);
 	SET_PFDEV_PLATFORM(pdp,cpp);
+	if( n_ocl_devs >= MAX_OPENCL_DEVICES ){
+		sprintf(ERROR_STRING,"More than %d OpenCL devices found;"
+			"need to increase MAX_OPENCL_DEVICES and recompile",
+			MAX_OPENCL_DEVICES);
+		ERROR1(ERROR_STRING);
+	}
+	SET_OCLDEV_IDX(pdp,n_ocl_devs++);
 
 	SET_PFDEV_MAX_DIMS(pdp,DEFAULT_PFDEV_MAX_DIMS);
 
@@ -481,8 +489,6 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	curr_pdp = pdp;
 }
-
-#define MAX_OPENCL_DEVICES	4
 
 static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 {
