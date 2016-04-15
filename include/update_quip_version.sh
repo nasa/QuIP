@@ -21,6 +21,8 @@ fi
 #ls -ld $srcdir
 
 outfile=/tmp/current_quip_version.h
+cmpfile1=/tmp/dateless_current_quip_version.h
+cmpfile2=/tmp/dateless_previous_quip_version.h
 
 # 5 extra spaces before the date string, and a space before the trailing quote
 # need --tags if tag is not "annotated" !?
@@ -56,7 +58,9 @@ if test ! -e $srcdir/quip_version.h; then
   exit 0
 fi
 
-diff $srcdir/quip_version.h $outfile > /dev/null
+grep -v BUILD_DATE < $srcdir/quip_version.h > $cmpfile1
+grep -v BUILD_DATE < $outfile > $cmpfile2
+diff $cmpfile1 $cmpfile2 > /dev/null
 
 if test "$?" != 0; then
   echo Updating quip_version.h ...
@@ -66,6 +70,8 @@ else
 fi
 
 /bin/rm $outfile
+/bin/rm $cmpfile1
+/bin/rm $cmpfile2
 
 exit 0
 
