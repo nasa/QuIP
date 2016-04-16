@@ -13,8 +13,10 @@
 //#endif
 
 #ifdef HAVE_GL_GLUT_H
+#ifndef BUILD_FOR_OBJC
 #include <GL/glut.h>
-#endif
+#endif // ! BUILD_FOR_OBJC
+#endif // HAVE_GL_GLUT_H
 
 #include "viewer.h"
 

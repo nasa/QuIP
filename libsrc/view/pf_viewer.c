@@ -24,8 +24,11 @@
 #ifndef BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLEW_H
 #include <GL/glew.h>
-#endif
-#endif // ! BUILD_FOR_OBJC
+#endif // HAVE_GL_GLEW_H
+#else // BUILD_FOR_OBJC
+#include <OpenGL/gl.h>
+#include <GLUT/glut.h>
+#endif // BUILD_FOR_OBJC
 
 // used to include GL/glut.h and rendercheck_gl.h...
 

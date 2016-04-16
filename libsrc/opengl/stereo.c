@@ -6,7 +6,11 @@
 //#include <stdlib.h>
 
 #ifdef HAVE_GL_GLUT_H
+#ifndef BUILD_FOR_OBJC
 #include <GL/glut.h>
+#else // BUILD_FOR_OBJC
+#include <GLUT/glut.h>
+#endif // BUILD_FOR_OBJC
 #endif // HAVE_GL_GLUT_H
 
 #include "quip_prot.h"
