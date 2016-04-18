@@ -1,0 +1,44 @@
+#
+# test program for vblank hang bug
+#
+# We try to reproduce the problem by sleeping for various amounts
+# before calling some vblanks
+
+< $macro_dir/system/mark_time.mac
+
+Zero_Time
+
+Viewer v 500 500
+gl 
+  window v 
+  quit
+
+Set n_rep 30
+
+Define Tryit 1 delay
+
+Mark_Time
+repeat $n_rep
+  gl vbl_wait 1 quit 
+  usleep $1
+  end
+Mark_Time
+Assign msec_per_wait $delta_ms/$n_rep
+advise "Tryit $1  msec_per_wait = $msec_per_wait"
+.
+
+#Set d 16000
+#Set d 17000
+#Set delta 100
+#do
+#  Tryit $d
+#  Add_Var d -$delta
+#  while 1
+
+Set d 14000
+Set delta 100
+repeat 50
+  Tryit $d
+  Add_Var d $delta
+  end
+

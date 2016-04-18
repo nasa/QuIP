@@ -125,7 +125,7 @@ Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 	Gen_Win *gwp;
 	CGSize s;
 
-fprintf(stderr,"make_genwin %s BEGIN\n",name);
+//fprintf(stderr,"make_genwin %s BEGIN\n",name);
 	gwp = new_genwin(QSP_ARG  name);
 
 	s.width = width;
@@ -163,7 +163,7 @@ fprintf(stderr,"make_genwin %s BEGIN\n",name);
 		backing: NSBackingStoreBuffered
 		defer: NO
 		];
-fprintf(stderr,"make_genwin:  win = 0x%lx\n",(long)win);
+//fprintf(stderr,"make_genwin:  win = 0x%lx\n",(long)win);
 	//gwp.window = win;
 	SET_GW_WINDOW(gwp,win);
 
@@ -376,7 +376,7 @@ static
 	NSRect r;
 
 	r = [GW_WINDOW(gwp) frame];
-fprintf(stderr,"old position:  %f %f\n",r.origin.x,r.origin.y);
+//fprintf(stderr,"old position:  %f %f\n",r.origin.x,r.origin.y);
 	pt.x = x;
 	pt.y = y;
 	[GW_WINDOW(gwp) setFrameTopLeftPoint:pt];

@@ -1,0 +1,8 @@
+
+Viewer v 400 400
+error_file caps
+gl
+  verbose yes	# will cause printing of gl extensions present
+  window v
+  exit
+

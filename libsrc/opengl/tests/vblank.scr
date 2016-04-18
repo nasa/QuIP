@@ -1,0 +1,42 @@
+#
+# test of vblank
+
+Viewer v 200 200
+
+Define Try_Swaps 0
+gl
+  window v
+  date
+  repeat 120 # 2 seconds?
+    swap_buffers
+    end
+  date
+  quit
+.
+
+# Setting the environment var has no effect
+# once the program has started...
+
+advise "Trying using default environment state"
+Try_Swaps
+
+gl sync_to_vblank no quit
+advise "Trying with vblank disabled"
+Try_Swaps
+
+gl sync_to_vblank yes quit
+advise "Trying with vblank enabled"
+Try_Swaps
+
+advise "Creating a new window"
+Viewer w 200 200
+gl window w quit
+Try_Swaps
+
+advise "Waiting with vbl_wait"
+date
+gl vbl_wait 120 quit
+date
+
+  Pause
+

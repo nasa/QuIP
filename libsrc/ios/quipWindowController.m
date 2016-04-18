@@ -71,7 +71,7 @@
 
 -(id) initWithWindow:(NSWindow *) window
 {
-fprintf(stderr,"quipWindowController initializing\n");
+//fprintf(stderr,"quipWindowController initializing\n");
 	return [super initWithWindow:window];
 }
 

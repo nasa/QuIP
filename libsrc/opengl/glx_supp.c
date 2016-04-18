@@ -47,7 +47,8 @@ void swap_buffers(void)
 #ifndef BUILD_FOR_OBJC
 	glXSwapBuffers(gl_vp->vw_dpy,gl_vp->vw_xwin);
 #else // BUILD_FOR_OBJC
-	NWARN("Need to implement glXSwapBuffers for Apple...");
+	//glSwapBuffers();
+	glFlush();
 #endif // BUILD_FOR_OBJC
 }
 
@@ -265,11 +266,11 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 	 * Make a share list for all viewers on the same display.
 	 */
 
-	if( vp->vw_ctx == NULL ){
-		vp->vw_ctx = glXCreateContext(vp->vw_dpy,vis_info_p,
+	if( VW_OGL_CTX(vp) == NULL ){
+		VW_OGL_CTX(vp) = glXCreateContext(vp->vw_dpy,vis_info_p,
 			vp->vw_dop->do_ctx,	/* list of shared contexts? */
 			True);
-		if( vp->vw_ctx== NULL ){
+		if( VW_OGL_CTX(vp)== NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
 		"init_glx_context( %s ): glXCreateContext failed!?",
 				vp->vw_name);
@@ -278,12 +279,12 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 			if( verbose ){
 				sprintf(DEFAULT_ERROR_STRING,
 		"init_glx_context( %s ):  created GL context 0x%lx",
-			vp->vw_name,(int_for_addr)vp->vw_ctx);
+			vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
 				advise(DEFAULT_ERROR_STRING);
 			}
 
 			if( vp->vw_dop->do_ctx == NULL )
-				vp->vw_dop->do_ctx = vp->vw_ctx;
+				vp->vw_dop->do_ctx = VW_OGL_CTX(vp);
 
 #ifdef FOOBAR
 			/* now see if there is a z buffer? */
@@ -368,6 +369,14 @@ COMMAND_FUNC( do_set_fullscreen )
 #endif // ! HAVE_GLUT
 }
 
+#ifdef BUILD_FOR_MACOS
+static NSOpenGLPixelFormatAttribute attrs[] = {
+	NSOpenGLPFADoubleBuffer,
+	NSOpenGLPFADepthSize, 32,
+	0
+};
+#endif // BUILD_FOR_MACOS
+
 void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 #ifndef BUILD_FOR_OBJC
@@ -377,7 +386,7 @@ void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 	}
 
 #ifdef CAUTIOUS
-	if( vp->vw_ctx == NULL ){
+	if( VW_OGL_CTX(vp) == NULL ){
 		sprintf(ERROR_STRING,
 	"CAUTIOUS:  select_gl_viewer %s:  no GL context!?",vp->vw_name);
 		ERROR1(ERROR_STRING);
@@ -387,11 +396,11 @@ void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 /*
 if( verbose ){
 sprintf(ERROR_STRING,"select_gl_viewer( %s ) setting current context to 0x%lx",
-vp->vw_name,(int_for_addr)vp->vw_ctx);
+vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
 advise(ERROR_STRING);
 }
 */
-	if( glXMakeCurrent(vp->vw_dpy,vp->vw_xwin,vp->vw_ctx) != True ){
+	if( glXMakeCurrent(vp->vw_dpy,vp->vw_xwin,VW_OGL_CTX(vp)) != True ){
 		sprintf(ERROR_STRING,
 		"Unable to set current GLX context to %s!?",vp->vw_name);
 		WARN(ERROR_STRING);
@@ -401,7 +410,23 @@ advise(ERROR_STRING);
 	check_gl_capabilities(SINGLE_QSP_ARG);
 
 #else // ! BUILD_FOR_OBJC
-	WARN("Need to implement select_gl_viewer for Apple!?");
+	if( VW_OGLV(vp) == NULL ){
+		SET_VW_OGLV(vp,[NSOpenGLView alloc]);
+		NSOpenGLPixelFormat* pixFmt = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+		if( pixFmt == NULL ) ERROR1("Error creating OpenGL pixel format!?");
+		 
+
+		if( [VW_OGLV(vp)
+	initWithFrame : NSMakeRect(0,0,VW_WIDTH(vp),VW_HEIGHT(vp))
+			pixelFormat : pixFmt
+			] == NULL )
+			ERROR1("Error initializing OpenGLView!?");
+	}
+
+fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",
+(long)VW_OGL_CTX(vp));
+	[ VW_OGL_CTX(vp) makeCurrentContext ];
+	gl_vp = vp;
 #endif // ! BUILD_FOR_OBJC
 } /* end select_gl_viewer */
 

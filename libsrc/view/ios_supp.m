@@ -325,7 +325,7 @@ static CGPoint get_string_offset(CGContextRef ctx, const char *str)
 static void init_text_font(Viewer *vp)
 {
 #ifdef CAUTIOUS
-	if( VW_CTX(vp) == NULL ){
+	if( VW_GFX_CTX(vp) == NULL ){
 		NWARN("CAUTIOUS:  init_text_font:  viewer has null context!?");
 		return;
 	}
@@ -339,10 +339,10 @@ static void init_text_font(Viewer *vp)
 //		size:kBarLabelSize] }];
 
 //fprintf(stderr,"Selecting Helvetica-Bold...\n");
-	CGContextSelectFont (VW_CTX(vp),
+	CGContextSelectFont (VW_GFX_CTX(vp),
 		"Helvetica-Bold", font_size, kCGEncodingMacRoman);
-	CGContextSetCharacterSpacing (VW_CTX(vp), char_spacing);
-	CGContextSetTextDrawingMode (VW_CTX(vp), kCGTextFillStroke);
+	CGContextSetCharacterSpacing (VW_GFX_CTX(vp), char_spacing);
+	CGContextSetTextDrawingMode (VW_GFX_CTX(vp), kCGTextFillStroke);
 
 	if( ! VW_TXT_MTRX_READY(vp) ){
 		// BUG global should be per-viewer?
@@ -359,7 +359,7 @@ static void init_text_font(Viewer *vp)
 	}
 //fprintf(stderr,"installing myTextTransform\n");
 //dump_matrix(myTextTransform);
-	CGContextSetTextMatrix (VW_CTX(vp), myTextTransform);
+	CGContextSetTextMatrix (VW_GFX_CTX(vp), myTextTransform);
 }
 
 static int exec_drawop(Viewer *vp, Draw_Op *do_p)
@@ -373,7 +373,7 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 #ifdef CAUTIOUS
 	if( do_p == NULL ) NERROR1("CAUTIOUS:  exec_drawop:  null operation ptr!?");
 
-	if( VW_CTX(vp) == NULL ){
+	if( VW_GFX_CTX(vp) == NULL ){
 		NWARN("CAUTIOUS:  exec_drawop:  null context!?");
 		return -1;
 	}
@@ -384,8 +384,8 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 			return 0;
 			break;
 		case DO_MOVE:
-			CGContextBeginPath(VW_CTX(vp));
-			CGContextMoveToPoint(VW_CTX(vp),(int)(x=DOA_X(do_p)),(int)(y=DOA_Y(do_p)));
+			CGContextBeginPath(VW_GFX_CTX(vp));
+			CGContextMoveToPoint(VW_GFX_CTX(vp),(int)(x=DOA_X(do_p)),(int)(y=DOA_Y(do_p)));
 
 			break;
 
@@ -394,7 +394,7 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 //DOA_STR(do_p));
 // BUG - CGContextSelectFont fails silently if the font name is bad...
 
-			CGContextSelectFont (VW_CTX(vp), DOA_STR(do_p),font_size,kCGEncodingMacRoman);
+			CGContextSelectFont (VW_GFX_CTX(vp), DOA_STR(do_p),font_size,kCGEncodingMacRoman);
 			break;
 
 		case DO_CHAR_SPACING:
@@ -436,7 +436,7 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 			SET_VW_FLAG_BITS(vp,VW_TXT_MTRX_INITED);
 //fprintf(stderr,"installing transform at 0x%lx for rotated text\n",(long)myTextTransform);
 //fprintf(stderr,"DO_TEXT_ANGLE:  installing myTextTransform\n");
-			CGContextSetTextMatrix (VW_CTX(vp), myTextTransform);
+			CGContextSetTextMatrix (VW_GFX_CTX(vp), myTextTransform);
 //dump_matrix(myTextTransform);
 			break;
 		case DO_TEXT:
@@ -462,17 +462,17 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 
 			if( VW_TEXT_LJUST(vp) ){
 //fprintf(stderr,"drawing left-justified text \"%s\"\n",DOA_STR(do_p));
-				CGContextShowTextAtPoint (VW_CTX(vp),
+				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x, y, DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 			} else if( VW_TEXT_CENTER(vp) ){
 //fprintf(stderr,"drawing centered text \"%s\"\n",DOA_STR(do_p));
-				CGPoint pt = get_string_offset(VW_CTX(vp),DOA_STR(do_p));
+				CGPoint pt = get_string_offset(VW_GFX_CTX(vp),DOA_STR(do_p));
 #define OLD_TEXT_METHOD
 
 #ifdef OLD_TEXT_METHOD
 //fprintf(stderr,"x = %g   y = %g\n",x,y);
 //fprintf(stderr,"string offset = %g %g\n",pt.x,pt.y);
-				CGContextShowTextAtPoint (VW_CTX(vp),
+				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x-pt.x/2, y-pt.y/2,
 					DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 
@@ -493,8 +493,8 @@ CGSize drawn_size =
 #endif // ! OLD_TEXT_METHOD
 			} else if( VW_TEXT_RJUST(vp) ){
 //fprintf(stderr,"drawing right-justified text \"%s\"\n",DOA_STR(do_p));
-				CGPoint pt = get_string_offset(VW_CTX(vp),DOA_STR(do_p));
-				CGContextShowTextAtPoint (VW_CTX(vp),
+				CGPoint pt = get_string_offset(VW_GFX_CTX(vp),DOA_STR(do_p));
+				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x-pt.x, y-pt.y, DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 			} else {
 				sprintf(DEFAULT_ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
@@ -503,13 +503,13 @@ CGSize drawn_size =
 			break;
 
 		case DO_CONT:
-			CGContextAddLineToPoint(VW_CTX(vp),x=DOA_X(do_p),y=DOA_Y(do_p));
-			CGContextStrokePath(VW_CTX(vp));
+			CGContextAddLineToPoint(VW_GFX_CTX(vp),x=DOA_X(do_p),y=DOA_Y(do_p));
+			CGContextStrokePath(VW_GFX_CTX(vp));
 			break;
 		case DO_LINEWIDTH:
 			// BUG - Apple specifies this in points, not pixels,
 			// and uses a different scale factor on "retina" displays...
-			CGContextSetLineWidth(VW_CTX(vp),DOA_LINEWIDTH(do_p));
+			CGContextSetLineWidth(VW_GFX_CTX(vp),DOA_LINEWIDTH(do_p));
 			break;
 		case DO_SET_BG:
 #ifdef BUILD_FOR_IOS
@@ -518,8 +518,8 @@ CGSize drawn_size =
             break;
 		case DO_SELECT_PEN:
 			c =  DOA_COLOR(do_p) ;
-			CGContextSetStrokeColorWithColor( VW_CTX(vp), c.CGColor );
-			CGContextSetFillColorWithColor( VW_CTX(vp), c.CGColor );
+			CGContextSetStrokeColorWithColor( VW_GFX_CTX(vp), c.CGColor );
+			CGContextSetFillColorWithColor( VW_GFX_CTX(vp), c.CGColor );
 			break;
 		case DO_ERASE:
 			// Because we are executing the drawlist when we call this,
@@ -547,11 +547,11 @@ int exec_drawlist(Viewer *vp)
 //fprintf(stderr,"exec_drawlist BEGIN\n");
 
 #ifdef BUILD_FOR_IOS
-	if( VW_CTX(vp) != UIGraphicsGetCurrentContext() )
+	if( VW_GFX_CTX(vp) != UIGraphicsGetCurrentContext() )
 		NWARN("viewer context does not match UIGraphicsGetCurrentContext !?");
 #endif // BUILD_FOR_IOS
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	CGContextSetStrokeColorSpace( VW_CTX(vp), colorSpace );
+	CGContextSetStrokeColorSpace( VW_GFX_CTX(vp), colorSpace );
     CGColorSpaceRelease(colorSpace);
 
 	// We do this in exec_draw_op too!?!?
@@ -971,7 +971,7 @@ void _xp_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 
 	// Not sure what the args are???
 	//advise("_xp_arc:  UNIMPLEMENTED!?");
-	//CGContextAddArc(VW_CTX(vp),x,y,radius,startAngle,endAngle,clockwise);
+	//CGContextAddArc(VW_GFX_CTX(vp),x,y,radius,startAngle,endAngle,clockwise);
 }
 
 void _xp_fill_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
@@ -1094,7 +1094,7 @@ Disp_Obj *pick_disp_obj(QSP_ARG_DECL  const char *pmpt)
 int get_string_width(Viewer *vp, const char *s)
 {
 	// Do we really initialize here???
-	if( VW_CTX(vp) == NULL ){
+	if( VW_GFX_CTX(vp) == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"get_string_width '%s':  drawing context for viewer %s is NULL!?",
 			s,VW_NAME(vp));
@@ -1108,7 +1108,7 @@ fprintf(stderr,"get_string_width(%s) calling init_text_font\n",s);
 		init_text_font(vp);
 	}
 
-	CGPoint pt = get_string_offset(VW_CTX(vp),s);
+	CGPoint pt = get_string_offset(VW_GFX_CTX(vp),s);
 //fprintf(stderr,
 //"get_string_width '%s':  offset %g %g, width is %d, char_spacing = %d\n",
 //s,pt.x,pt.y,(int)(pt.x-char_spacing),char_spacing);
@@ -1149,11 +1149,11 @@ void init_viewer_canvas(Viewer *vp)
 	SET_GW_CANVAS(VW_GW(vp),qc);
 
 	// set context here?
-	if( VW_CTX(vp) == NULL ){
-		//SET_VW_CTX(vp, [[CGContext alloc] init] );
-		//SET_VW_CTX(vp, getbuf( sizeof(*CGContextRef) ) );
-		//SET_VW_CTX(vp, ((GW_WINDOW(VW_GW(vp))).contentView) );
-		SET_VW_CTX(vp, (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort ] );
+	if( VW_GFX_CTX(vp) == NULL ){
+		//SET_VW_GFX_CTX(vp, [[CGContext alloc] init] );
+		//SET_VW_GFX_CTX(vp, getbuf( sizeof(*CGContextRef) ) );
+		//SET_VW_GFX_CTX(vp, ((GW_WINDOW(VW_GW(vp))).contentView) );
+		SET_VW_GFX_CTX(vp, (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort ] );
 	//	ERROR1("init_viewer_canvas:  need to set drawing context!?");
 	}
 #endif // BUILD_FOR_MACOS

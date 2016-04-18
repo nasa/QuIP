@@ -407,8 +407,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	SET_VW_OBJ(vp, NO_OBJ);
 
 #ifdef HAVE_OPENGL
-	//vp->vw_ctx = NULL;
-	SET_VW_CTX(vp,NULL);
+	SET_VW_OGL_CTX(vp,NULL);
 #endif /* HAVE_OPENGL */
 
 	SET_GW_TYPE( VW_GW(vp), GW_VIEWER );

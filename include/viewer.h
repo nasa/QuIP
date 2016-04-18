@@ -115,6 +115,11 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 // This is an X11-ism - for native Cocoa implementation,
 // we will need something different...
 //@property GLXContext			vw_ctx;
+@property NSOpenGLView			*nsogl_vp;
+#define VW_OGLV(vp)		(vp).nsogl_vp
+#define SET_VW_OGLV(vp,v)	(vp).nsogl_vp = v
+#define VW_OGL_CTX(vp)		(vp).nsogl_vp.openGLContext
+#define SET_VW_OGL_CTX(vp,v)	(vp).nsogl_vp.openGLContext = v
 #endif /* HAVE_OPENGL */
 
 @property quipImageView	*	vw_qiv_p;
@@ -174,7 +179,7 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 
 #define VW_EVENT_TBL(vp)	GW_EVENT_TBL(VW_GW(vp))
 #define VW_CMAP(vp)		(vp).cmap
-#define VW_CTX(vp)		(vp).ctx_ref
+#define VW_GFX_CTX(vp)		(vp).ctx_ref
 #define VW_BGCOLOR(vp)		(vp).bgcolor
 #define VW_FGCOLOR(vp)		(vp).fgcolor
 
@@ -202,7 +207,7 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 #define SET_VW_FLAGS(vp,v)	SET_GW_FLAGS(VW_GW(vp),v)
 #define SET_VW_EVENT_TBL(vp,v)	SET_GW_EVENT_TBL(VW_GW(vp),v)
 #define SET_VW_CMAP(vp,v)	(vp).cmap = v
-#define SET_VW_CTX(vp,v)	(vp).ctx_ref = v
+#define SET_VW_GFX_CTX(vp,v)	(vp).ctx_ref = v
 
 #define SET_VW_BGCOLOR(vp,v)	(vp).bgcolor = v
 #define SET_VW_FGCOLOR(vp,v)	(vp).fgcolor = v
@@ -312,8 +317,8 @@ typedef struct viewer {
 	/* Should this be ifdef'd? */
 #ifdef HAVE_OPENGL
 	GLXContext	vw_ctx;
-#define VW_CTX(vp)		(vp)->vw_ctx
-#define SET_VW_CTX(vp,v)	(vp)->vw_ctx = v
+#define VW_OGL_CTX(vp)		(vp)->vw_ctx
+#define SET_VW_OGL_CTX(vp,v)	(vp)->vw_ctx = v
 #endif /* HAVE_OPENGL */
 } Viewer;
 

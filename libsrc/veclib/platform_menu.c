@@ -138,7 +138,8 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 
 		pfd_lp = pfdev_list(SINGLE_QSP_ARG);
 		if( pfd_lp == NO_LIST ) return NO_PFDEV;
-		pfd_np = QLIST_HEAD(pfd_lp);
+		//pfd_np = QLIST_HEAD(pfd_lp);
+		pfd_np = QLIST_TAIL(pfd_lp);
 		while( pfd_np != NO_NODE ){
 			pdp = (Platform_Device *) NODE_DATA(pfd_np);
 			if( PF_TYPE( PFDEV_PLATFORM(pdp) ) == typ ){
@@ -151,7 +152,8 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 				pop_pfdev_context( SINGLE_QSP_ARG );
 				return pdp;
 			}
-			pfd_np = NODE_NEXT(pfd_np);
+			//pfd_np = NODE_NEXT(pfd_np);
+			pfd_np = NODE_PREV(pfd_np);
 		}
 
 		pop_pfdev_context( SINGLE_QSP_ARG );
