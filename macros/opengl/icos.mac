@@ -1,24 +1,19 @@
-# gl menu script to make an icosahedron
+Set ogl_macros_loaded 0
+Set icos_inited 0
 
-max_warnings 2
-
+Define Load_OGL_Macros 0
+If $ogl_macros_loaded exit_macro
+Set ogl_macros_loaded 1
 < $macro_dir/compute/rdp.mac	# Uniform
 < $macro_dir/opengl/poly.mac
 < $macro_dir/opengl/viewpoint.mac
-#< $macro_dir/view/view.mac
+.
 
-Viewer my_win 300 300
-Posn_Window my_win 50 50
-Viewer win2 400 400
-Posn_Window win2 400 50
-
-gl window my_win quit
-
-#< /dev/tty
-
+Define Init_Icosahedron 0
+If $icos_inited exit_macro
+Set icos_inited 1
 Set x 0.52573
 Set z 0.85065
-
 Set n_vertices	12
 Set n_faces	20
 
@@ -89,6 +84,8 @@ gl
     clear_color
     quit
   quit
+.
+
 
 #Set d_theta	0.2	# degrees
 Set d_theta	2	# degrees
@@ -146,6 +143,7 @@ repeat ceil(360/$d_theta)
   end
 .
 
+Define Setup_OGL 0
 gl
   modes
     polygon_mode front fill
@@ -170,10 +168,17 @@ gl
   quit
 
 Init_Projection
+.
 
-Spin
+#Spin
+#
+##< /dev/tty
+#Pause_If
 
-#< /dev/tty
-Pause_If
-
+Define Run_Icos_Demo 0
+Load_OGL_Macros
+Init_Icosahedron
+Setup_OGL
+Update 0
+.
 

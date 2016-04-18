@@ -63,6 +63,10 @@ set suffix=mac
   set file_list=( funcs chains )
   source add_files.csh
 
+  set subdir=opengl
+  set file_list=( icos )
+  source add_files.csh
+
   set subdir=view
   # dpysize.scr
   set file_list=( common luts view ios_plot plotsupp )

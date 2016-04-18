@@ -1,3 +1,12 @@
+Define Create_OGL_Window 0
+Viewer ogl_v 400 400
+gl window ogl_v quit
+.
+
+Define Draw_To_OGL_Window 0
+Run_Icos_Demo
+.
+
 Define SetSetting1 0
 Assign s1 $slider_val
 Print s1
@@ -124,6 +133,7 @@ interface
       item Test_Plot TestPlot
       quit
     add_to_bar $m
+
     Set m 'More tests'
     new_menu $m
     populate $m
@@ -134,6 +144,18 @@ interface
       item Test3 'advise hello3'
       quit
     add_to_bar $m
+
+    Set m 'OpenGL tests'
+    new_menu $m
+    populate $m
+      item 'Create OpenGL window' 'Create_OGL_Window'
+      separator
+      item 'Draw to window' 'Draw_To_OGL_Window'
+      #separator
+      #item Test3 'advise hello3'
+      quit
+    add_to_bar $m
+
     quit
   quit
 Set test_menu_inited 1
