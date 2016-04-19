@@ -9,8 +9,8 @@ max_warnings 2
 
 Viewer my_win 300 300
 Posn_Window my_win 50 50
-Viewer win2 400 400
-Posn_Window win2 400 50
+#Viewer win2 400 400
+#Posn_Window win2 400 50
 
 gl window my_win quit
 
