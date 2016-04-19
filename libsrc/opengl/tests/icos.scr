@@ -173,7 +173,7 @@ Init_Projection
 
 Spin
 
-#< /dev/tty
+< /dev/tty
 Pause_If
 
 

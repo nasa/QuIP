@@ -49,6 +49,7 @@ void swap_buffers(void)
 #else // BUILD_FOR_OBJC
 	//glSwapBuffers();
 	glFlush();
+	glutPostRedisplay();
 #endif // BUILD_FOR_OBJC
 }
 
