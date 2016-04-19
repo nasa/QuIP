@@ -273,12 +273,16 @@ echo "Set startup_file_read 1" >> $outfile
 
 echo File $outfile complete, encrytping...
 
-quip $outfile $encfile < encrypt_file.scr
-#/bin/rm $outfile
-
-# This make sure that we have a current version listing in the executable code
-#cd ../../include
-#./update_quip_version.sh .
-
+quip $outfile $encfile < encrypt_file.scr >& /tmp/enc_errors
+if( status != 0 ) then
+  echo Problem encrytping: `cat /tmp/enc_errors`
+  /bin/rm /tmp/enc_errors
+  echo Creating zero-length encrypted file.
+  if( -e $encfile ) then
+    /bin/rm $encfile
+  endif
+  # make a zero-len file so the bundle will build
+  touch $encfile
+endif
 
 
