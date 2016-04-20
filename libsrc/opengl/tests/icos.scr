@@ -1,6 +1,6 @@
 # gl menu script to make an icosahedron
 
-advise "icos.scr BEGIN"
+#advise "icos.scr BEGIN"
 
 max_warnings 2
 
@@ -25,7 +25,6 @@ Set n_vertices	12
 Set n_faces	20
 
 Vector vdata $n_vertices 3 float
-advise "reading vertex data..."
 data ascii read vdata -
 	-$x	0	$z
 	$x	0	$z
@@ -153,15 +152,13 @@ gl
   modes
     polygon_mode front fill
     quit
-  advise "Enabling lighting..."
   capabilities
     enable lighting
     query lighting
-    advise "After enabling lighting, query returns $cap_enabled"
+    #advise "After enabling lighting, query returns $cap_enabled"
     enable light0
     enable light1
     quit
-  advise "Enabling smooth shading..."
   lighting
     shading_model smooth
     select_light light0

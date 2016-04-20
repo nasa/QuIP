@@ -232,8 +232,15 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 
 	valuemask = CWBackPixel | CWBorderPixel ;
 
+#define SHOW_MASK_BITS(k)				\
+fprintf(stderr,"%s = 0x%lx\n",#k,k);
+
+//SHOW_MASK_BITS(CWBackPixel)
+//SHOW_MASK_BITS(CWBorderPixel)
+
 	attributes.event_mask = StructureNotifyMask;
 	valuemask |= CWEventMask;
+//SHOW_MASK_BITS(CWEventMask)
 
 
 	/* According to the manual, TrueColor visuals have immutable colormaps */
@@ -242,6 +249,7 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 		colormap = XCreateColormap (dop->do_dpy, dop->do_rootw,
 			dop->do_visual, AllocNone);
 		valuemask |= CWColormap;
+//SHOW_MASK_BITS(CWColormap)
 		attributes.colormap = colormap;
 	}
 
@@ -265,6 +273,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 /*
 */
+
+/*fprintf(stderr,"Calling XCreateWindow\n"
+"\tdepth = %d\n"
+"\tvaluemask = 0x%lx\n",
+dop->do_depth,valuemask);*/
+// what about the visual???
 
 	win = XCreateWindow(dop->do_dpy, dop->do_rootw, x, y, w, h,
 		WINDOW_BORDER_WIDTH, dop->do_depth, InputOutput,

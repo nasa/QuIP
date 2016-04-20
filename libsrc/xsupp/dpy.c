@@ -19,6 +19,7 @@ ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj)
 #endif
 
 static int window_sys_inited=0;
+// BUG static vars not thread-safe...
 static XVisualInfo *	visualList = NULL;
 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -123,6 +124,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	return(visualList);
 }
 
+#ifndef HAVE_OPENGL
 static int find_visual_by_id( XVisualInfo *list, int n,unsigned int id )
 {
 	int i;
@@ -132,6 +134,7 @@ static int find_visual_by_id( XVisualInfo *list, int n,unsigned int id )
 		if( list[i].visualid == id  ) return(i);
 	return(-1);
 }
+#endif // ! HAVE_OPENGL
 
 static int find_visual( XVisualInfo *list, int n, int cl, int depth )
 {
@@ -180,6 +183,19 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 static Visual *GetSpecifiedVisual( Disp_Obj * dop, int depth )
 {
+#ifdef HAVE_OPENGL
+
+	XVisualInfo *vi_p;
+	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, depth, GLX_DOUBLEBUFFER, None };
+	vi_p = glXChooseVisual(dop->do_dpy,0,att);
+	if( vi_p == NULL ){
+		NERROR1("glXChooseVisual failed!?");
+	}
+//fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
+	return vi_p->visual;
+
+#else // ! HAVE_OPENGL
+
 	XVisualInfo *	vip;
 	int		visualsMatched;
 	int i;
@@ -235,6 +251,7 @@ i, vip[i].visualid,name,depth);
 NADVISE(DEFAULT_ERROR_STRING);
 }
 	return(vip[i].visual);
+#endif // ! HAVE_OPENGL
 }
 
 static Visual *Get16BitVisual( Disp_Obj * dop)
@@ -287,7 +304,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 	if( desired_depth == 8 ){
 		dop->do_visual	= GetEightBitVisual(dop);
 	} else if( desired_depth == 24 ){
+//fprintf(stderr,"calling Get24BitVisual...\n");
 		dop->do_visual	= Get24BitVisual(dop);
+//fprintf(stderr,"Using visual 0x%p\n",(void *)dop->do_visual->visualid);
 	} else if( desired_depth == 16 ){
 		dop->do_visual = Get16BitVisual(dop);
 	} else {
@@ -333,10 +352,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 	list = XGetVisualInfo(dop->do_dpy,VisualIDMask,&vinfo,&n);
 	if( n != 1 ){
 		NWARN("more than one visual with specified ID!?");
-		dop->do_depth = 8;
-	} else {
+		//dop->do_depth = 8;	// why was this 8???
+	} /*else {
 		dop->do_depth = list[0].depth;
-	}
+	}*/
+	dop->do_depth = list[0].depth;
 	XFree(list);
 
 	dop->do_width	= DisplayWidth(dop->do_dpy,dop->do_screen);
@@ -549,4 +569,29 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 Disp_Obj *curr_dop(void)
 { return(current_dop); }
 
+void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
+{
+	int nvis,i;
+	XVisualInfo *	vlp;
+
+	vlp=get_vis_list(dop,&nvis);
+
+	sprintf(ERROR_STRING,"%d visuals found:",nvis);
+	ADVISE(ERROR_STRING);
+
+	for(i=0;i<nvis;i++){
+		sprintf(ERROR_STRING,"id %p    screen %d   class %d   depth %d    masks %ld %ld %ld   cmap siz %d   bits_per_rgb %d",
+			(void *)vlp[i].visualid,
+			vlp[i].screen,
+			vlp[i].xvi_class,
+			vlp[i].depth,
+			vlp[i].red_mask,
+			vlp[i].green_mask,
+			vlp[i].blue_mask,
+			vlp[i].colormap_size,
+			vlp[i].bits_per_rgb
+			);
+		ADVISE(DEFAULT_ERROR_STRING);
+	}
+}
 

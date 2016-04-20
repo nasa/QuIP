@@ -229,10 +229,12 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 #define GLX_PARAM(flag,val)		list[index++]=(flag); list[index++]=val;
 
 	index=0;
-	GLX_PARAM(GLX_DEPTH_SIZE,/*24 */ 16 )
-	GLX_PARAM(GLX_LEVEL,0)
 	GLX_FLAG(GLX_RGBA)
+	GLX_PARAM(GLX_DEPTH_SIZE,24 )
+	// This was set to 16 - why???
+	//GLX_PARAM(GLX_DEPTH_SIZE,/*24 */ 16 )
 	GLX_FLAG(GLX_DOUBLEBUFFER)
+	GLX_PARAM(GLX_LEVEL,0)		// what does this do?
 	list[index++]=None;
 
 	vis_info_p = glXChooseVisual(vp->vw_dpy,vp->vw_screen_no,list);
@@ -268,6 +270,9 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 	 */
 
 	if( VW_OGL_CTX(vp) == NULL ){
+//fprintf(stderr,"Creating glX context...\n");
+//fprintf(stderr,"vp->vw_dop->do_ctx = 0x%lx\n",vp->vw_dop->do_ctx);
+
 		VW_OGL_CTX(vp) = glXCreateContext(vp->vw_dpy,vis_info_p,
 			vp->vw_dop->do_ctx,	/* list of shared contexts? */
 			True);
@@ -424,8 +429,8 @@ advise(ERROR_STRING);
 			ERROR1("Error initializing OpenGLView!?");
 	}
 
-fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",
-(long)VW_OGL_CTX(vp));
+//fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",
+//(long)VW_OGL_CTX(vp));
 	[ VW_OGL_CTX(vp) makeCurrentContext ];
 	gl_vp = vp;
 #endif // ! BUILD_FOR_OBJC

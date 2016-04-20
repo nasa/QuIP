@@ -1,6 +1,8 @@
 # duplicate the opengl program in t.c for quip...
+verbose yes
 
 Viewer v 600 600
+#view displays quit quit
 Posn_Window v 900 200
 gl window v quit
 
