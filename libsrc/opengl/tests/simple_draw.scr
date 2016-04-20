@@ -1,7 +1,7 @@
 # duplicate the opengl program in t.c for quip...
 
 Viewer v 600 600
-Posn_Window v 1200 200
+Posn_Window v 900 200
 gl window v quit
 
 Define DrawQuad 0
@@ -34,5 +34,13 @@ gl
 DrawQuad
 
 gl
+  swap_buffers
   Pause
+  swap_buffers
+  Pause
+  swap_buffers
+  Pause
+  swap_buffers
+  Pause
+  exit
 
