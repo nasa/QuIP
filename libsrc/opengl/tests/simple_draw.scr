@@ -1,0 +1,38 @@
+# duplicate the opengl program in t.c for quip...
+
+Viewer v 600 600
+Posn_Window v 1200 200
+gl window v quit
+
+Define DrawQuad 0
+gl
+  color
+    background 1 1 1
+    clear_color
+    quit
+  transform
+    mode projection
+    identity
+    ortho -1 1 -1 1 1 20
+    mode modelview
+    identity
+    look_at	0 0 10	# cam posn
+    		0 0 0	# target posn
+		0 1 0	# up vector
+    quit
+  objects
+    begin_obj quads
+    color 1 0 0 vertex -.75 -.75 0
+    color 0 1 0 vertex  .75 -.75 0
+    color 0 0 1 vertex  .75  .75 0
+    color 1 1 0 vertex -.75  .75 0
+    end_obj
+    quit
+  quit
+.
+
+DrawQuad
+
+gl
+  Pause
+

@@ -1,5 +1,7 @@
 # gl menu script to make an icosahedron
 
+advise "icos.scr BEGIN"
+
 max_warnings 2
 
 < $macro_dir/compute/rdp.mac	# Uniform
@@ -8,7 +10,7 @@ max_warnings 2
 #< $macro_dir/view/view.mac
 
 Viewer my_win 300 300
-Posn_Window my_win 50 50
+Posn_Window my_win 350 150
 #Viewer win2 400 400
 #Posn_Window win2 400 50
 
@@ -23,6 +25,7 @@ Set n_vertices	12
 Set n_faces	20
 
 Vector vdata $n_vertices 3 float
+advise "reading vertex data..."
 data ascii read vdata -
 	-$x	0	$z
 	$x	0	$z

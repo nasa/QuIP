@@ -475,6 +475,15 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	//create the command_queue (stream)
 //fprintf(stderr,"clContext = 0x%lx...\n",(long)context);
 //fprintf(stderr,"init_ocl_device:  dev_id = 0x%lx\n",(long)dev_id);
+
+	// At least once we have gotten an invalid value error here,
+	// after receiving the advisory "OpenCL initialized without an OpenGL context
+	// (which may or may not be relevant).  This behavior was not repeatable,
+	// perhaps because of different stack contents???
+
+	// The third arg is a properties bit field, with valid values being:
+	// CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+	// CL_QUEUE_PROFILING_ENABLE
 	command_queue = clCreateCommandQueue(context, dev_id, 0, &status);
 	if( status != CL_SUCCESS ){
 		report_ocl_error(QSP_ARG  status, "clCreateCommandQueue");
