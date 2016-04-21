@@ -3,8 +3,10 @@
 
 Viewer v 600 600
 #view displays quit quit
-#Posn_Window v 200 800
-Posn_Window v 200 100
+# for macq because y coord is flipped!?
+Posn_Window v 200 800
+# for normal unix
+#Posn_Window v 200 100
 gl window v quit
 
 Define DrawQuad 0

@@ -382,7 +382,8 @@ static
 	// in cocoa, the y origin is at the lower left,
 	// not the upper left.  So for consistency, we need
 	// to invert the y coord...
-	y = DO_HEIGHT(GW_DO(gwp)) - y;
+	// BUT - in cocoa, how do we get the dimensions of the display???BUT
+//	y = DO_HEIGHT(GW_DO(gwp)) - y;
 
 	pt.y = y;
 	[GW_WINDOW(gwp) setFrameTopLeftPoint:pt];
