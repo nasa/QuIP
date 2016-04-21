@@ -103,10 +103,19 @@ typedef struct panel_object {
 #define po_cm_dp	po_dpyable.dpa_cm_dp
 #define po_lt_dp	po_dpyable.dpa_lt_dp
 
-#define po_dop		po_dpyable.dpa_dop
+//#define po_dop		po_dpyable.dpa_dop
+#define PO_DPA(pop)	(&((pop)->po_dpyable))
+#define PO_GWP(po)	(&((po)->po_genwin))
 
-#define po_name		po_genwin.gw_name
-#define po_width	po_dpyable.dpa_width
+#define PO_NAME(pop)	GW_NAME(PO_GWP(pop))
+
+#define PO_WIDTH(pop)		DPA_WIDTH(PO_DPA(pop))
+#define SET_PO_WIDTH(po,v)	SET_DPA_WIDTH(PO_DPA(po),v)
+
+#define PO_DOP(po)			DPA_DOP(PO_DPA(po))
+#define SET_PO_DOP(po,v)		SET_DPA_DOP(PO_DPA(po),v)
+#define PO_ROOTW(po)			DO_ROOTW(PO_DOP(po))
+
 #define po_height	po_dpyable.dpa_height
 #define po_dx		po_dpyable.dpa_width
 #define po_dy		po_dpyable.dpa_height
@@ -128,8 +137,6 @@ typedef struct panel_object {
 #define PANEL_HAS_SYSCOLS( po )		HAS_SYSCOLS(po->po_xldp)
 #define PANEL_KNOWS_SYSCOLS( po )	(po->po_flags & PANEL_KNOWS_SYSTEM_COLORS)
 
-//#define PANEL_NAME(po)			po->po_name
-
 
 #define PO_DPYABLE(po)			(&(po->po_dpyable))
 #define PO_CMAP_OBJ(po)			DPA_CMAP_OBJ( PO_DPYABLE(po) )
@@ -138,10 +145,8 @@ typedef struct panel_object {
 #define SET_PO_LINTBL_OBJ(po,v)		DPA_LINTBL_OBJ( PO_DPYABLE(po) ) = v
 
 #define PO_FLAGS(po)			po->po_flags
-#define PO_NAME(po)			po->po_name
 #define PO_CURR_X(po)			po->po_currx
 #define PO_CURR_Y(po)			po->po_curry
-#define PO_WIDTH(po)			po->po_width
 #define PO_HEIGHT(po)			po->po_height
 #define PO_X(po)			po->po_x
 #define PO_Y(po)			po->po_y
@@ -152,7 +157,6 @@ typedef struct panel_object {
 #define SET_PO_CURR_X(po,v)		PO_CURR_X(po) = v
 #define SET_PO_CURR_Y(po,v)		PO_CURR_Y(po) = v
 #define INC_PO_CURR_Y(po,v)		PO_CURR_Y(po) += v
-#define SET_PO_WIDTH(po,v)		PO_WIDTH(po) = v
 #define SET_PO_HEIGHT(po,v)		PO_HEIGHT(po) = v
 #define SET_PO_X(po,v)			PO_X(po) = v
 #define SET_PO_Y(po,v)			PO_Y(po) = v

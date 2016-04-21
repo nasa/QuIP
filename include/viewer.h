@@ -112,9 +112,6 @@ IOS_ITEM_LIST_PROT(Canvas_Event,canvas_event)
 @property float				ymin;
 @property float				ydel;
 #ifdef HAVE_OPENGL
-// This is an X11-ism - for native Cocoa implementation,
-// we will need something different...
-//@property GLXContext			vw_ctx;
 @property NSOpenGLView			*nsogl_vp;
 #define VW_OGLV(vp)		(vp).nsogl_vp
 #define SET_VW_OGLV(vp,v)	(vp).nsogl_vp = v
@@ -315,12 +312,15 @@ typedef struct viewer {
 	Line_Params	vw_line_params;
 
 	/* Should this be ifdef'd? */
-#ifdef HAVE_OPENGL
-	GLXContext	vw_ctx;
-#define VW_OGL_CTX(vp)		(vp)->vw_ctx
-#define SET_VW_OGL_CTX(vp,v)	(vp)->vw_ctx = v
-#endif /* HAVE_OPENGL */
+//	GLXContext	vw_ctx;
 } Viewer;
+
+#define VW_DOP(vp)	DPA_DOP(VW_DPA(vp))
+
+#ifdef HAVE_OPENGL
+#define VW_OGL_CTX(vp)		DO_OGL_CTX(VW_DOP(vp))
+#define SET_VW_OGL_CTX(vp,v)	SET_DO_OGL_CTX(VW_DOP(vp),v)
+#endif /* HAVE_OPENGL */
 
 #define vw_cmap_dp		vw_dpyable.dpa_cmap_dp
 #define vw_lintbl_dp		vw_dpyable.dpa_lintbl_dp
@@ -340,9 +340,17 @@ typedef struct viewer {
 #define vw_xwin		vw_dpyable.dpa_xwin
 #define vw_flags	vw_dpyable.dpa_flags
 #define vw_dop		vw_dpyable.dpa_dop
-#define vw_dpy		vw_dpyable.dpa_dpy
-#define vw_screen_no	vw_dpyable.dpa_screen_no
-#define vw_visual	vw_dpyable.dpa_visual
+//#define vw_dpy		vw_dpyable.dpa_dpy
+#define VW_DPA(vp)	(&((vp)->vw_dpyable))
+
+#define VW_DPY(vp)	DPA_DPY(VW_DPA(vp))
+#define VW_ROOTW(vp)	DPA_ROOTW(VW_DPA(vp))
+#define VW_VISUAL(vp)	DPA_VISUAL(VW_DPA(vp))
+#define VW_SCREEN_NO(vp)	DPA_SCREEN_NO(VW_DPA(vp))
+#define VW_CTX(vp)
+
+//#define vw_screen_no	vw_dpyable.dpa_screen_no
+//#define vw_visual	vw_dpyable.dpa_visual
 
 // X11 stuff
 #define VW_CMAP_OBJ(vp)		DPA_CMAP_OBJ( VW_DPYABLE(vp) )
@@ -355,7 +363,7 @@ typedef struct viewer {
 #define SET_VW_XCTBL_BLUE(vp,i,v)	SET_DPA_XCTBL_BLUE(VW_DPYABLE(vp),i,v)
 #define SET_VW_XCTBL_FLAGS(vp,i,v)	SET_DPA_XCTBL_FLAGS(VW_DPYABLE(vp),i,v)
 #define VW_DPYABLE(cp)		(&((vp)->vw_dpyable))
-#define VW_DPY(vp)		(vp)->vw_dpy
+//#define VW_DPY(vp)		(vp)->vw_dpy
 #define VW_GC(vp)		(vp)->vw_gc
 #define VW_XWIN(vp)		(vp)->vw_xwin
 

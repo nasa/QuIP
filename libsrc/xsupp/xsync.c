@@ -12,7 +12,7 @@ void x_sync_off()
 	dop = curr_dop();
 	if( dop == NO_DISP_OBJ ) return;
 
-	XSynchronize(dop->do_dpy,False);
+	XSynchronize(DO_DISPLAY(dop),False);
 }
 
 
@@ -23,7 +23,7 @@ void x_sync_on()
 	dop = curr_dop();
 	if( dop == NO_DISP_OBJ ) return;
 
-	XSynchronize(dop->do_dpy,True);
+	XSynchronize(DO_DISPLAY(dop),True);
 }
 
 #endif /* HAVE_X11 */

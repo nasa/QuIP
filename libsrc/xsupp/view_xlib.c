@@ -58,8 +58,6 @@
 #include "glxhelper.h"
 #endif /* SGI_GL */
 
-#define vw_Disp vw_dpy		/* so can search for vw_dp */
-
 #include "cmaps.h"
 
 const char *def_geom="";
@@ -213,8 +211,8 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 
 	hints.flags |= USSize;
 
-	if (i&XValue && i&XNegative) x = dop->do_width - w - abs(x);
-	if (i&YValue && i&YNegative) y = dop->do_height - h - abs(y);
+	if (i&XValue && i&XNegative) x = DO_WIDTH(dop) - w - abs(x);
+	if (i&YValue && i&YNegative) y = DO_HEIGHT(dop) - h - abs(y);
 
 //fprintf(stderr,"Hint posn is %d, %d\n",x,y);
 	hints.x = x;				hints.y = y;
@@ -223,7 +221,7 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 	hints.max_width  = w;		hints.max_height = h;
 	hints.flags |= PMaxSize | PMinSize;
 
-	if( XGetGCValues( dop->do_dpy,dop->do_gc,
+	if( XGetGCValues( DO_DISPLAY(dop),DO_GC(dop),
 		GCBackground,&gcvals) == 0 )
 		NWARN("error getting GC value for bg");
 
@@ -245,9 +243,9 @@ fprintf(stderr,"%s = 0x%lx\n",#k,k);
 
 	/* According to the manual, TrueColor visuals have immutable colormaps */
 
-	if( dop->do_depth == 24 ) {
-		colormap = XCreateColormap (dop->do_dpy, dop->do_rootw,
-			dop->do_visual, AllocNone);
+	if( DO_DEPTH(dop) == 24 ) {
+		colormap = XCreateColormap (DO_DISPLAY(dop), DO_ROOTW(dop),
+			DO_VISUAL(dop), AllocNone);
 		valuemask |= CWColormap;
 //SHOW_MASK_BITS(CWColormap)
 		attributes.colormap = colormap;
@@ -257,12 +255,12 @@ fprintf(stderr,"%s = 0x%lx\n",#k,k);
 if( debug & xdebug ){
 NADVISE("XCreateWindow");
 sprintf(DEFAULT_ERROR_STRING,"dpy = %s,  dispDEEP = %d",
-dop->do_name,dop->do_depth);
+DO_NAME(dop),DO_DEPTH(dop));
 NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"calling XCreateWindow, depth = %d",dop->do_depth);
+sprintf(DEFAULT_ERROR_STRING,"calling XCreateWindow, depth = %d",DO_DEPTH(dop));
 NADVISE(DEFAULT_ERROR_STRING);
 sprintf(DEFAULT_ERROR_STRING,"\tx = %d, y = %d, w = %d, h = %d, border = %d, vis = %ld (0x%lx)",
-x,y,w,h,WINDOW_BORDER_WIDTH,(u_long)dop->do_visual,(u_long)dop->do_visual);
+x,y,w,h,WINDOW_BORDER_WIDTH,(u_long)DO_VISUAL(dop),(u_long)DO_VISUAL(dop));
 NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif
@@ -277,23 +275,23 @@ NADVISE(DEFAULT_ERROR_STRING);
 /*fprintf(stderr,"Calling XCreateWindow\n"
 "\tdepth = %d\n"
 "\tvaluemask = 0x%lx\n",
-dop->do_depth,valuemask);*/
+DO_DEPTH(dop),valuemask);*/
 // what about the visual???
 
-	win = XCreateWindow(dop->do_dpy, dop->do_rootw, x, y, w, h,
-		WINDOW_BORDER_WIDTH, dop->do_depth, InputOutput,
-		dop->do_visual, valuemask, &attributes);
+	win = XCreateWindow(DO_DISPLAY(dop), DO_ROOTW(dop), x, y, w, h,
+		WINDOW_BORDER_WIDTH, DO_DEPTH(dop), InputOutput,
+		DO_VISUAL(dop), valuemask, &attributes);
 
 	if (!win){
 		NWARN("error creating window");
 		return(win);   /* leave immediately if couldn't create */
 	}
 
-	XMapWindow(dop->do_dpy,win);
+	XMapWindow(DO_DISPLAY(dop),win);
 	{
 		/* what is this for? */
 		XEvent event;
-		XIfEvent(dop->do_dpy,&event,WaitForNotify,(char*)win);
+		XIfEvent(DO_DISPLAY(dop),&event,WaitForNotify,(char*)win);
 	}
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
@@ -301,23 +299,23 @@ NADVISE("window created");
 }
 #endif
 
-	dop->do_currw = win;
+	SET_DO_CURRW(dop, win);
 
-	if( dop->do_depth == 24 )
-		XSetWindowColormap(dop->do_dpy, dop->do_currw, colormap);
+	if( DO_DEPTH(dop) == 24 )
+		XSetWindowColormap(DO_DISPLAY(dop), DO_CURRW(dop), colormap);
 
 	set_curr_win(win);	/* for lut_xlib */
 
-	XSetStandardProperties(dop->do_dpy, win, name, name, None, NULL, 0, &hints);
+	XSetStandardProperties(DO_DISPLAY(dop), win, name, name, None, NULL, 0, &hints);
 
 	xwmh.input = True;
 	xwmh.flags = InputHint;
 	/*
 	if (iconPix) { xwmh.icon_pixmap = iconPix;  xwmh.flags |= IconPixmapHint; }
 	*/
-	XSetWMHints(dop->do_dpy, win, &xwmh);
+	XSetWMHints(DO_DISPLAY(dop), win, &xwmh);
 
-	XClearArea(dop->do_dpy,win,0,0,w,h,True);
+	XClearArea(DO_DISPLAY(dop),win,0,0,w,h,True);
 
 	return(win);
 
@@ -351,8 +349,8 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 
 	hints.flags |= USSize;
 
-	if (i&XValue && i&XNegative) x = dop->do_width - w - abs(x);
-	if (i&YValue && i&YNegative) y = dop->do_height - h - abs(y);
+	if (i&XValue && i&XNegative) x = DO_WIDTH(dop) - w - abs(x);
+	if (i&YValue && i&YNegative) y = DO_HEIGHT(dop) - h - abs(y);
 
 	hints.x = x;				hints.y = y;
 	hints.width = w;			hints.height = h;
@@ -360,7 +358,7 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 	hints.max_width  = w;		hints.max_height = h;
 	hints.flags |= PMaxSize | PMinSize;
 
-	if( XGetGCValues(dop->do_dpy,dop->do_gc,
+	if( XGetGCValues(DO_DISPLAY(dop),DO_GC(dop),
 		GCBackground,&gcvals) == 0 )
 		NWARN("error getting GC value for bg");
 
@@ -371,7 +369,7 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 	valuemask = CWBackPixel | CWBorderPixel ;
 	*/
 
-	win = GLXCreateWindow(dop->do_dpy, dop->do_rootw, x, y, w, h,
+	win = GLXCreateWindow(DO_DISPLAY(dop), DO_ROOTW(dop), x, y, w, h,
 		WINDOW_BORDER_WIDTH, valuemask, &attributes, GLXrgbSingleBuffer);
 
 	if (!win){
@@ -385,11 +383,11 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 //#endif /* CAUTIOUS */
 	assert( dop != NO_DISP_OBJ );
 
-	dop->do_currw = win;
+	SET_DO_CURRW(dop, win);
 
 	set_curr_win(win);	/* for lut_xlib */
 
-	XSetStandardProperties(dop->do_dpy, win, name, name, None, NULL, 0, &hints);
+	XSetStandardProperties(DO_DISPLAY(dop), win, name, name, None, NULL, 0, &hints);
 
 	xwmh.input = True;
 	xwmh.flags = InputHint;
@@ -400,7 +398,7 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 	}
 */
 
-	XSetWMHints(dop->do_dpy, win, &xwmh);
+	XSetWMHints(DO_DISPLAY(dop), win, &xwmh);
 
 	return(win);
 
@@ -421,17 +419,17 @@ Window creat_gl_window(const char *name,int w,int h,long event_mask)
 
 	classh.res_name = (char *)tell_progname();
 	classh.res_class = (char *)name;
-	XSetClassHint(dop->do_dpy, scrW, &classh);
+	XSetClassHint(DO_DISPLAY(dop), scrW, &classh);
 
-	data[0] = (CARD32)XInternAtom(dop->do_dpy, "WM_DELETE_WINDOW", False);
+	data[0] = (CARD32)XInternAtom(DO_DISPLAY(dop), "WM_DELETE_WINDOW", False);
 	data[1] = (CARD32)time((long *)0);
-	prop = XInternAtom(dop->do_dpy, "WM_PROTOCOLS", False);
+	prop = XInternAtom(DO_DISPLAY(dop), "WM_PROTOCOLS", False);
 
 
-	XChangeProperty(dop->do_dpy, scrW, prop, prop,
+	XChangeProperty(DO_DISPLAY(dop), scrW, prop, prop,
 		32, PropModeReplace, (u_char *) data, 2);
 
-	XSelectInput(dop->do_dpy, scrW,
+	XSelectInput(DO_DISPLAY(dop), scrW,
 		  ExposureMask
 		| StructureNotifyMask
 		| KeyPressMask		/* receive keystrokes in windows */
@@ -474,17 +472,17 @@ static Window creat_window(const char *name,int w,int h,long event_mask)
 
 	classh.res_name = (char *) tell_progname();
 	classh.res_class = (char *)name;
-	XSetClassHint(dop->do_dpy, scrW, &classh);
+	XSetClassHint(DO_DISPLAY(dop), scrW, &classh);
 
-	data[0] = (CARD32)XInternAtom(dop->do_dpy, "WM_DELETE_WINDOW", False);
+	data[0] = (CARD32)XInternAtom(DO_DISPLAY(dop), "WM_DELETE_WINDOW", False);
 	data[1] = (CARD32)time((long *)0);
-	prop = XInternAtom(dop->do_dpy, "WM_PROTOCOLS", False);
+	prop = XInternAtom(DO_DISPLAY(dop), "WM_PROTOCOLS", False);
 
 
-	XChangeProperty(dop->do_dpy, scrW, prop, prop,
+	XChangeProperty(DO_DISPLAY(dop), scrW, prop, prop,
 		32, PropModeReplace, (u_char *) data, 2);
 
-	XSelectInput(dop->do_dpy, scrW, event_mask );
+	XSelectInput(DO_DISPLAY(dop), scrW, event_mask );
 
 	return(scrW);
 } /* end creat_window */
@@ -515,7 +513,7 @@ static int make_generic_window(QSP_ARG_DECL  Viewer *vp, int width, int height, 
 
 	vp->vw_xwin = scrW;
 	vp->vw_dop = curr_dop();
-	vp->vw_gc = XCreateGC(vp->vw_dop->do_dpy,vp->vw_xwin,0L,&values);
+	vp->vw_gc = XCreateGC(VW_DPY(vp),vp->vw_xwin,0L,&values);
 	vp->vw_event_mask = event_mask;
 
 	return(0);
@@ -524,14 +522,14 @@ static int make_generic_window(QSP_ARG_DECL  Viewer *vp, int width, int height, 
 void enable_masked_events(Viewer *vp, long event_mask)
 {
 	vp->vw_event_mask |= event_mask;
-	XSelectInput(vp->vw_dop->do_dpy, vp->vw_xwin, vp->vw_event_mask );
+	XSelectInput(VW_DPY(vp), vp->vw_xwin, vp->vw_event_mask );
 }
 
 #ifdef FOOBAR		// no longer needed???
 static void disable_masked_events(Viewer *vp, long event_mask)
 {
 	vp->vw_event_mask &= ~event_mask;
-	XSelectInput(vp->vw_dop->do_dpy, vp->vw_xwin, vp->vw_event_mask );
+	XSelectInput(VW_DPY(vp), vp->vw_xwin, vp->vw_event_mask );
 }
 #endif /* FOOBAR */
 
@@ -582,7 +580,7 @@ static int is_mapped(Viewer *vp)
 {
 	XWindowAttributes attr;
 
-	XGetWindowAttributes(vp->vw_Disp,vp->vw_xwin,&attr);
+	XGetWindowAttributes(VW_DPY(vp),vp->vw_xwin,&attr);
 
 	if( attr.map_state != IsViewable ) return(0);
 	return(1);
@@ -592,18 +590,18 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	window_sys_init(SINGLE_QSP_ARG);
 
-	//XMapRaised(dop->do_dpy,vp->vw_xwin);
+	//XMapRaised(DO_DISPLAY(dop),vp->vw_xwin);
 //sprintf(ERROR_STRING,"show_viewer %s calling XMapRaised...",vp->vw_name);
 //advise(ERROR_STRING);
-	XMapRaised(vp->vw_Disp,vp->vw_xwin);
+	XMapRaised(VW_DPY(vp),vp->vw_xwin);
 	// When we command a movement, the content window ends up lower
 	// by the width of the top border (22 pixels)
 	// Is this why we sometimes see the window march down the screen?
-	XMoveWindow(vp->vw_Disp,vp->vw_xwin,VW_X_REQUESTED(vp),
+	XMoveWindow(VW_DPY(vp),vp->vw_xwin,VW_X_REQUESTED(vp),
 					VW_Y_REQUESTED(vp));
 
 	//usleep(100);
-	XSync(vp->vw_Disp,False);
+	XSync(VW_DPY(vp),False);
 
 	/* but window may be mapped but not raised? */
 
@@ -619,7 +617,7 @@ void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 	// Does it make sense to have to do this here???
 	window_sys_init(SINGLE_QSP_ARG);
 
-	XUnmapWindow(vp->vw_dpy,vp->vw_xwin);
+	XUnmapWindow(VW_DPY(vp),vp->vw_xwin);
 }
 
 /* create a suitable image to be use with XPutImage */
@@ -671,7 +669,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	vp->vw_ip = XCreateImage(vp->vw_Disp,vp->vw_visual,vp->vw_depth,ZPixmap,
+	vp->vw_ip = XCreateImage(VW_DPY(vp),VW_VISUAL(vp),vp->vw_depth,ZPixmap,
 		/* offset */ 0, (char *) OBJ_DATA_PTR(dp),
 		OBJ_COLS(dp),OBJ_ROWS(dp),8,0);
 
@@ -868,7 +866,7 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 //}
 #endif /* QUIP_DEBUG */
 
-	XPutImage(vp->vw_Disp, vp->vw_xwin, vp->vw_gc, vp->vw_ip,
+	XPutImage(VW_DPY(vp), vp->vw_xwin, vp->vw_gc, vp->vw_ip,
 		0, 0, x, y, OBJ_COLS(dp), OBJ_ROWS(dp));
 
 	if( disp_dp != dp ){
@@ -1071,9 +1069,9 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 
 	/* if( ! is_mapped(vp) ){ */
 
-		XMapRaised(vp->vw_Disp,vp->vw_xwin);
+		XMapRaised(VW_DPY(vp),vp->vw_xwin);
 		usleep(100);
-		XSync(vp->vw_Disp,False);
+		XSync(VW_DPY(vp),False);
 
 		/*
 		 * To be sure, we could explicitly call refresh_drawing here?
@@ -1094,7 +1092,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	/* should we do something based on depth??? */
 	plane_mask = 0xffffffff;
 
-	vp->vw_ip2=XGetImage(vp->vw_Disp, vp->vw_xwin,
+	vp->vw_ip2=XGetImage(VW_DPY(vp), vp->vw_xwin,
 		x, y, OBJ_COLS(dp), OBJ_ROWS(dp), plane_mask, ZPixmap );
 
 	if( vp->vw_ip2 == NO_X_IMAGE ){
@@ -1220,12 +1218,12 @@ void posn_viewer(Viewer *vp,int x,int y)
 //fprintf(stderr,"requested position set to %d, %d\n",x,y);
 	// These are now set by StructureNotify events...
 	// move window seems to be relative!?
-	XMoveWindow(vp->vw_dpy,vp->vw_xwin,x,y);
+	XMoveWindow(VW_DPY(vp),vp->vw_xwin,x,y);
 }
 
 void zap_viewer(Viewer *vp)
 {
-	XDestroyWindow(vp->vw_dpy,vp->vw_xwin);
+	XDestroyWindow(VW_DPY(vp),vp->vw_xwin);
 }
 
 /* The "old" method, using XSetWMName() caused Xlib errors on the newer
@@ -1245,22 +1243,22 @@ void relabel_viewer(Viewer *vp,const char *s)
 	vp->vw_label = savestr(s);
 
 #ifdef OLD_LABEL
-	XGetWMName(dop->do_dpy,vp->vw_xwin,&xtp);
+	XGetWMName(DO_DISPLAY(dop),vp->vw_xwin,&xtp);
 
 	xtp.value=(u_char *)vp->vw_label;
 	xtp.nitems=strlen(s);
 
-	XSetWMName(dop->do_dpy,vp->vw_xwin,&xtp);
+	XSetWMName(DO_DISPLAY(dop),vp->vw_xwin,&xtp);
 #endif /* OLD_LABEL */
 
-	XStoreName(vp->vw_dpy,vp->vw_xwin,vp->vw_label);
+	XStoreName(VW_DPY(vp),vp->vw_xwin,vp->vw_label);
 }
 
 void set_font(Viewer *vp,XFont *xfp)
 {
 	current_xfp = xfp;
 
-	XSetFont(vp->vw_dpy,vp->vw_gc,xfp->xf_id);
+	XSetFont(VW_DPY(vp),vp->vw_gc,xfp->xf_id);
 }
 
 int get_string_width(Viewer *vp, const char *s)
@@ -1573,7 +1571,7 @@ void _xp_text(Viewer *vp,int x,int y,const char *s)
 
 //proceed:
 
-	XDrawString(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
+	XDrawString(VW_DPY(vp),vp->vw_xwin,vp->vw_gc,
 		x,y,s,strlen(s));
 
 	if( REMEMBER_GFX ){
@@ -1591,7 +1589,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	XDrawLine(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,x1,y1,x2,y2);
+	XDrawLine(VW_DPY(vp),vp->vw_xwin,vp->vw_gc,x1,y1,x2,y2);
 
 	if( REMEMBER_GFX ){
 		remember_move(vp,x1,y1);
@@ -1615,7 +1613,7 @@ void _xp_linewidth(Viewer *vp,int w)
 
 void _xp_cont(Viewer *vp,int x,int y)
 {
-	XDrawLine(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,currx,curry,x,y);
+	XDrawLine(VW_DPY(vp),vp->vw_xwin,vp->vw_gc,currx,curry,x,y);
 	if( REMEMBER_GFX ){
 		remember_cont(vp,x,y);
 	}
@@ -1631,7 +1629,7 @@ void _xp_move(Viewer *vp,int x,int y)
 
 void _xp_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
 {
-	XDrawArc(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
+	XDrawArc(VW_DPY(vp),vp->vw_xwin,vp->vw_gc,
 		xl,yu,w,h,a1,a2);
 
 	if( REMEMBER_GFX ){
@@ -1641,7 +1639,7 @@ void _xp_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
 
 void _xp_fill_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2)
 {
-	XFillArc(vp->vw_dpy,vp->vw_xwin,vp->vw_gc,
+	XFillArc(VW_DPY(vp),vp->vw_xwin,vp->vw_gc,
 		xl,yu,w,h,a1,a2);
 
 	if( REMEMBER_GFX ){
@@ -1659,14 +1657,14 @@ void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
 		pxp[i].y = py_vals[i];
 	}
 
-	XFillPolygon(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, pxp, num_points, Nonconvex, CoordModeOrigin);
+	XFillPolygon(VW_DPY(vp), vp->vw_xwin, vp->vw_gc, pxp, num_points, Nonconvex, CoordModeOrigin);
 
 	givbuf(pxp);
 }
 
 void _xp_erase(Viewer *vp)
 {
-	XClearWindow(vp->vw_Disp,vp->vw_xwin);
+	XClearWindow(VW_DPY(vp),vp->vw_xwin);
 	forget_drawing(vp);
 	// The call to forget_drawing was commented out, but I think that
 	// was an attempt to find out why the digits in a timer weren't displaying.
@@ -1685,7 +1683,7 @@ void _xp_select(Viewer *vp,u_long color)
 	if( SIMULATING_LUTS(vp) )
 		color = simulate_lut_mapping(vp,color);
 
-	XSetForeground(vp->vw_Disp,vp->vw_gc,color);
+	XSetForeground(VW_DPY(vp),vp->vw_gc,color);
 }
 
 void _xp_bgselect(Viewer *vp,u_long color)
@@ -1698,9 +1696,9 @@ void _xp_bgselect(Viewer *vp,u_long color)
 	}
 
 	/*
-	XSetBackground(vp->vw_dpy,vp->vw_gc,c);
+	XSetBackground(VW_DPY(vp),vp->vw_gc,c);
 	*/
-	XSetWindowBackground(vp->vw_dpy,vp->vw_xwin,color);
+	XSetWindowBackground(VW_DPY(vp),vp->vw_xwin,color);
 }
 
 #ifdef FOOBAR		// no longer needed???
@@ -1709,7 +1707,7 @@ static void get_geom(Viewer* vp, u_int* width, u_int* height, u_int* depth)
 	Window root;
 	int x,y;  /* who cares */
 	u_int border_width;
-	if( XGetGeometry(vp->vw_dpy,vp->vw_top.c_xwin,&root,&x,&y,width,height,
+	if( XGetGeometry(VW_DPY(vp),vp->vw_top.c_xwin,&root,&x,&y,width,height,
 			 &border_width,depth) == False ){
 		NWARN("can't get geometry");
 		return;
@@ -1724,7 +1722,7 @@ void show_geom(QSP_ARG_DECL  Viewer *vp)
 	u_int width, height, border_width, depth;
 	int x,y;
 
-	if( XGetGeometry(vp->vw_dpy,VW_XWIN(vp),&root,&x,&y,&width,&height,
+	if( XGetGeometry(VW_DPY(vp),VW_XWIN(vp),&root,&x,&y,&width,&height,
 		&border_width,&depth) == False ){
 		NWARN("can't get geometry");
 		return;
@@ -1738,9 +1736,9 @@ void show_geom(QSP_ARG_DECL  Viewer *vp)
 
 void extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
 {
-	sprintf(msg_str,"\tDisplay\t0x%lx",(u_long)vp->vw_Disp);
+	sprintf(msg_str,"\tDisplay\t0x%lx",(u_long)VW_DPY(vp));
 	prt_msg(msg_str);
-	sprintf(msg_str,"\tScreen\t0x%x",vp->vw_screen_no);
+	sprintf(msg_str,"\tScreen\t0x%x",VW_SCREEN_NO(vp));
 	prt_msg(msg_str);
 	sprintf(msg_str,"\tGC\t0x%lx",(u_long)vp->vw_gc);
 	prt_msg(msg_str);
@@ -1872,9 +1870,9 @@ void refresh_shm_window(Viewer *vp)
 	assert( have_shmimage );
 
 	/* Draw screen onto display */
-	XShmPutImage(vp->vw_dpy , vp->vw_xwin, vp->vw_gc, shmimage,
+	XShmPutImage(VW_DPY(vp) , vp->vw_xwin, vp->vw_gc, shmimage,
 														0, 0, 0, 0, vp->vw_width, vp->vw_height, False);
-	XSync(vp->vw_dpy, 0);
+	XSync(VW_DPY(vp), 0);
 }
 #endif /* NOT_USED */
 
@@ -1883,12 +1881,12 @@ int shm_setup(Viewer *vp)
 	/* SHARED MEMORY PORTION */
 
 	shminfo = (XShmSegmentInfo*) getbuf (sizeof(XShmSegmentInfo));
-	//XMapRaised(dop->do_dpy,vp->vw_xwin);
-	XMapRaised(vp->vw_Disp,vp->vw_xwin);
+	//XMapRaised(DO_DISPLAY(dop),vp->vw_xwin);
+	XMapRaised(VW_DPY(vp),vp->vw_xwin);
 	//usleep(100);
-	XSync(vp->vw_Disp,False);
+	XSync(VW_DPY(vp),False);
 
-	shmimage = XShmCreateImage(vp->vw_dpy, vp->vw_visual,
+	shmimage = XShmCreateImage(VW_DPY(vp), VW_VISUAL(vp),
 					vp->vw_depth,
 					ZPixmap,
 					NULL,
@@ -1922,7 +1920,7 @@ int shm_setup(Viewer *vp)
 	}
 	shmimage->data = shminfo->shmaddr;
 
-	XShmAttach(vp->vw_dpy, shminfo);	/* check return val?? */
+	XShmAttach(VW_DPY(vp), shminfo);	/* check return val?? */
 	have_shmimage=1;
 	return(0);
 }
@@ -1968,9 +1966,9 @@ void update_shm_viewer(Viewer *vp,char *src,int pinc,int cinc,int dx,int dy,int 
 #endif /* HAVE_VBL */
 
 	/* Draw screen onto display */
-	XShmPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, shmimage,
+	XShmPutImage(VW_DPY(vp), vp->vw_xwin, vp->vw_gc, shmimage,
 		0, 0, 0, 0, vp->vw_width, vp->vw_height, False);
-	XSync(vp->vw_dpy, 0);
+	XSync(VW_DPY(vp), 0);
 } // end update_shm_viewer
 
 #endif /* HAVE_X11_EXT */

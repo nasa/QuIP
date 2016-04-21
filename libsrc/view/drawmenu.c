@@ -83,7 +83,7 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 		return;
 	}
 
-	flist = XListFonts(draw_vp->vw_dpy,fontname,MAX_FONT_NAMES,&nfonts);
+	flist = XListFonts(VW_DPY(draw_vp),fontname,MAX_FONT_NAMES,&nfonts);
 	if( nfonts > 1 ){
 		/* This is not really an error, not sure
 		 * why it would be that a font would list twice??
@@ -105,11 +105,11 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 	}
 	XFreeFontNames(flist);
 
-	id = XLoadFont(draw_vp->vw_dpy,fontname);
+	id = XLoadFont(VW_DPY(draw_vp),fontname);
 	xfp = new_xfont(QSP_ARG  fontname);
 	if( xfp != NO_XFONT ){
 		xfp->xf_id = id;
-		xfp->xf_fsp = XQueryFont(draw_vp->vw_dpy,id);
+		xfp->xf_fsp = XQueryFont(VW_DPY(draw_vp),id);
 		// If we ever delete this thing, we have to free
 		// with XFreeFontInfo
 	}
@@ -241,9 +241,9 @@ static COMMAND_FUNC( do_show_gc )
 
 	mask = GCPlaneMask | GCForeground | GCBackground;
 
-	XGetGCValues(draw_vp->vw_dpy,draw_vp->vw_gc,mask,&gcvals);
+	XGetGCValues(VW_DPY(draw_vp),VW_GC(draw_vp),mask,&gcvals);
 
-	sprintf(msg_str,"Graphics Context for viewer %s:",draw_vp->vw_name);
+	sprintf(msg_str,"Graphics Context for viewer %s:",VW_NAME(draw_vp));
 	prt_msg(msg_str);
 	sprintf(msg_str,"planemask\t%ld",gcvals.plane_mask);
 	prt_msg(msg_str);

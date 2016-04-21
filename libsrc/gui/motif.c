@@ -110,7 +110,7 @@ WARN("no panel list");
 	while( np != NO_NODE ){
 		po=(Panel_Obj *)np->n_data;
 #ifdef QUIP_DEBUG
-//if( debug ) fprintf(stderr,"Searching panel %s\n",po->po_name);
+//if( debug ) fprintf(stderr,"Searching panel %s\n",PO_NAME(po));
 #endif
 		lp2=po->po_children;
 		if( lp2 == NO_LIST )
@@ -235,14 +235,14 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 	Arg al[64];
 	int ac = 0;
 
-	po->po_dop = curr_dop();
+	SET_PO_DOP(po, curr_dop());
 #ifdef CAUTIOUS
-	if( po->po_dop == NO_DISP_OBJ )
+	if( PO_DOP(po) == NO_DISP_OBJ )
 		ERROR1("CAUTIOUS:  no display object");
 #endif
 
 
-	set_curr_win(po->po_dop->do_rootw);
+	set_curr_win(PO_ROOTW(po));
 	/* let the panel share a colormap? */
 
 	/* set parameters for the "panel" (shell) to be created */
@@ -252,7 +252,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 	XtSetArg(al[ac], XmNwidth, width); ac++;
 	XtSetArg(al[ac], XmNheight, height); ac++;
 
-	po->po_frame_obj = (Widget) XtAppCreateShell(po->po_name, "guimenu",
+	po->po_frame_obj = (Widget) XtAppCreateShell(PO_NAME(po), "guimenu",
 				applicationShellWidgetClass, display,
 				al, ac);
 
@@ -1259,7 +1259,7 @@ void show_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
 #ifdef HAVE_MOTIF
 	if( PANEL_MAPPED(po) ){
-		sprintf(ERROR_STRING,"show_panel:  panel %s is already mapped!?",po->po_name);
+		sprintf(ERROR_STRING,"show_panel:  panel %s is already mapped!?",PO_NAME(po));
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -1310,7 +1310,7 @@ void unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
 #ifdef HAVE_MOTIF
 	if( PANEL_UNMAPPED(po) ){
-		sprintf(ERROR_STRING,"unshow_panel:  panel %s is not currently mapped!?",po->po_name);
+		sprintf(ERROR_STRING,"unshow_panel:  panel %s is not currently mapped!?",PO_NAME(po));
 		WARN(ERROR_STRING);
 		return;
 	}
@@ -1327,7 +1327,7 @@ void posn_panel(Panel_Obj *po)
 	int ac = 0;
 
 //fprintf(stderr,"posn_panel:  setting position of %s to %d %d\n",
-//po->po_name,po->po_x,po->po_y);
+//PO_NAME(po),po->po_x,po->po_y);
 	XtSetArg(al[ac], XmNx, po->po_x); ac++;
 	XtSetArg(al[ac], XmNy, po->po_y); ac++;
 	XtSetValues(po->po_frame_obj, al, ac);

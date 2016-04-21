@@ -72,7 +72,7 @@ static COMMAND_FUNC( do_tell_dpy )
 	}
 #endif /* CAUTIOUS */
 
-	ASSIGN_VAR(s,dop->do_name);
+	ASSIGN_VAR(s,DO_NAME(dop));
 }
 
 static COMMAND_FUNC( do_info_do )
