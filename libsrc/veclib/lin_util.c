@@ -184,6 +184,8 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
 	else			SET_OA_ARGSTYPE(oap,REAL_ARGS);
 
+	SET_OA_ARGSPREC(oap,ARGSET_PREC( OBJ_MACH_PREC(dpto) ) );
+
 	/* vdot things it's inputs have the same shape, so if we are taking the inner
 	 * product of a column vector with a row vector, we have to transpose one of
 	 * the inputs...

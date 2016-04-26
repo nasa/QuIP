@@ -277,7 +277,7 @@ COMMAND_FUNC( do_load_viewer )
 	INSIST_RAM_OBJ(dp,"load_viewer");
 
 	INSURE_X11_SERVER
-fprintf(stderr,"Calling load_viewer %s %s\n",VW_NAME(vp),OBJ_NAME(dp));
+//fprintf(stderr,"Calling load_viewer %s %s\n",VW_NAME(vp),OBJ_NAME(dp));
 	load_viewer(QSP_ARG  vp,dp);
 	select_viewer(QSP_ARG  vp);
 }

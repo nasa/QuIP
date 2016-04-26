@@ -344,7 +344,6 @@ extern void lookahead(SINGLE_QSP_ARG_DECL);
 
 extern Query_Stack *new_qstack(QSP_ARG_DECL  const char *name);
 
-extern Query_Stack *init_first_query_stack(void);
 extern void qs_do_cmd(Query_Stack *qsp);
 
 extern void open_loop(QSP_ARG_DECL  int n);

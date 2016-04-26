@@ -167,7 +167,7 @@ os
     close f
     quit
   quit
-Print x
+#Print x
 If !strcmp('$x','$1') "Set font_present 1"
 .
 
