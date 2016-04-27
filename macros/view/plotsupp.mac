@@ -1352,7 +1352,6 @@ view draw $the_plotter text_mode centered quit quit
 .
 
 Define S_At 3 string x y
-advise "S_At $1 $2 $3"
 PMove $2 $3
 PString $1
 .

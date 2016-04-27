@@ -1940,7 +1940,11 @@ advise(ERROR_STRING);
 //#endif /* CAUTIOUS */
 	// Can we assert that this is not null???
 	if( dst_dp != NO_OBJ ){
-		assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dst_dp)) );
+		//assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dst_dp)) );
+		// This can happen with a declaration error...
+		if( UNKNOWN_SHAPE(OBJ_SHAPE(dst_dp)) )
+			return NO_OBJ;
+
 		assert( OBJ_PREC(dst_dp) == VN_PREC(enp) );
 	}
 
