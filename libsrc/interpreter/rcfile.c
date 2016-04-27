@@ -48,6 +48,7 @@
 
 /* BUG?  Should we let this directory be set in configure? */
 #define QUIP_DEFAULT_DIR	"/usr/local/share/coq/macros/startup"
+#define QUIP_DEFAULT_FMT	"/usr/local/share/%s/macros/startup"
 
 #define STARTUP_DIRNAME	"QUIPSTARTUPDIR"
 
@@ -182,7 +183,16 @@ static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in 
 
 static char *try_default(QSP_ARG_DECL  char *progname) /* look for dotfile in default system directory */
 {
-	return( try_directory(QSP_ARG  QUIP_DEFAULT_DIR,progname) );
+	char default_dir_name[MAXPATHLEN];
+
+	// This test is conservative because we count the 2 chars in %s 
+	if( strlen(progname) + strlen(QUIP_DEFAULT_FMT) >= MAXPATHLEN ){
+		sprintf(ERROR_STRING,"try_default:  Program name '%s' is too long!?",progname);
+		ERROR1(ERROR_STRING);
+	}
+	sprintf(default_dir_name,QUIP_DEFAULT_FMT,progname);
+
+	return( try_directory(QSP_ARG  default_dir_name /*QUIP_DEFAULT_DIR*/,progname) );
 }
 
 #endif // BUILD_FOR_OBJC

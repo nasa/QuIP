@@ -2,8 +2,11 @@
 
 verbose no
 
+If !var_exists(QUIP)
+  "variables set QUIP coq"
+
 If !var_exists(QUIPSTARTUPDIR)
-  "variables set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup quit"
+  "variables set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup quit"
 
 
 #view debug xsupp quit
