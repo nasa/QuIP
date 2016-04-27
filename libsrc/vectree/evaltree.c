@@ -1779,11 +1779,13 @@ static void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,do
 	cast_to_scalar_value(QSP_ARG  &sv3,OBJ_PREC_PTR(dst_dp),(double)dy);
 
 	clear_obj_args(&oa1);
-	SET_OA_SRC_OBJ(&oa1,0, dst_dp);			// why set this???
+	//SET_OA_SRC_OBJ(&oa1,0, dst_dp);			// why set this???
 	SET_OA_DEST(&oa1, dst_dp);
 	SET_OA_SVAL(&oa1,0, &sv1);
 	SET_OA_SVAL(&oa1,1, &sv2);
 	SET_OA_SVAL(&oa1,2, &sv3);
+
+	set_obj_arg_flags(&oa1);
 
 	platform_dispatch_by_code( QSP_ARG  FVRAMP2D, &oa1 );
 }
