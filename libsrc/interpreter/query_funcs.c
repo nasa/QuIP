@@ -1381,7 +1381,7 @@ static char * rd_word(SINGLE_QSP_ARG_DECL)
 //#endif // FOO
 //#endif // CAUTIOUS
 		// We can get UTF8 chars when using other editors!?
-		assert( isascii(c) );
+		//assert( isascii(c) );
 
 		if( flags & RW_SAVING ) {
 			savechar(QSP_ARG  qp,c);
