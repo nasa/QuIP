@@ -3,7 +3,7 @@
 verbose no
 
 If !var_exists(QUIP)
-  "variables set QUIP quip"
+  "variables set QUIP quip quit"
 
 variables
   set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
