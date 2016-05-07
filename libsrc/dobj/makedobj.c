@@ -510,16 +510,18 @@ make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
 
 int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
-	int retval=0;
+//	int retval=0;
 
 	if( set_shape_dimensions(QSP_ARG  OBJ_SHAPE(dp),dsp,prec_p) < 0 ){
-		sprintf(ERROR_STRING,
-			"set_obj_dimensions:  error setting shape dimensions for object %s",
-			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
-		retval=(-1);
+//		sprintf(ERROR_STRING,
+//			"set_obj_dimensions:  error setting shape dimensions for object %s",
+//			OBJ_NAME(dp));
+//		WARN(ERROR_STRING);
+//		retval=(-1);
+		return -1;
 	}
-	return(retval);
+//	return(retval);
+	return 0;
 }
 
 /*
@@ -556,21 +558,17 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 		DIMSET_COPY(SHP_TYPE_DIMS(shpp),dsp);
 		SET_SHP_N_MACH_ELTS(shpp,0);
 		SET_SHP_N_TYPE_ELTS(shpp,0);
-		return(0);
+		return 0;
 	}
 
 	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) ){
-//advise("complex precision...");
-
-//#ifdef CAUTIOUS
-//		if( DIMENSION(dsp,0) != 1 ){
-//			sprintf(ERROR_STRING,
-//"CAUTIOUS:  set_shape_dimensions:  Sorry, multi-component (%d) not allowed for complex",
-//				DIMENSION(dsp,0));
-//			WARN(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
-		assert( DIMENSION(dsp,0) == 1 );
+		if( DIMENSION(dsp,0) != 1 ){
+			sprintf(ERROR_STRING,
+		"Sorry, multi-component (%d) not allowed for complex",
+				DIMENSION(dsp,0));
+			WARN(ERROR_STRING);
+			return -1;
+		}
 
 		SET_DIMENSION(dsp,0,1);
 		SET_SHP_N_MACH_ELTS(shpp,2);

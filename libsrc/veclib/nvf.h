@@ -127,7 +127,8 @@ extern void homog_xform(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
 
 /* obj_args.c */
 extern void private_show_obj_args(QSP_ARG_DECL  char *,const Vec_Obj_Args *,void (*f)(QSP_ARG_DECL  const char *));
-extern void set_obj_arg_flags(Vec_Obj_Args *);
+// moved to master include...
+//extern void set_obj_arg_flags(Vec_Obj_Args *);
 
 /* cksiz.c */
 extern int cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
@@ -139,21 +140,21 @@ extern COMMAND_FUNC( do_samp_menu );
 /* typtbl.c */
 extern int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size);
 
-#ifdef USE_SSE
-/* fast_mov.c */
-extern void simd_vec_rvmov(float *,float *,u_long);
-extern void simd_obj_rvmov(Vec_Obj_Args *oap);
-
-/* fast_sp.c */
-extern void simd_obj_rvadd(Vec_Obj_Args *oap);
-extern void simd_obj_rvsub(Vec_Obj_Args *oap);
-extern void simd_obj_rvmul(Vec_Obj_Args *oap);
-extern void simd_obj_rvdiv(Vec_Obj_Args *oap);
-extern void simd_obj_rvsadd(Vec_Obj_Args *oap);
-extern void simd_obj_rvssub(Vec_Obj_Args *oap);
-extern void simd_obj_rvsmul(Vec_Obj_Args *oap);
-extern void simd_obj_rvsdiv(Vec_Obj_Args *oap);
-#endif /* USE_SSE */
+//#ifdef USE_SSE
+///* fast_mov.c */
+//extern void simd_vec_rvmov(float *,float *,u_long);
+//extern void simd_obj_rvmov(Vec_Obj_Args *oap);
+//
+///* fast_sp.c */
+//extern void simd_obj_rvadd(Vec_Obj_Args *oap);
+//extern void simd_obj_rvsub(Vec_Obj_Args *oap);
+//extern void simd_obj_rvmul(Vec_Obj_Args *oap);
+//extern void simd_obj_rvdiv(Vec_Obj_Args *oap);
+//extern void simd_obj_rvsadd(Vec_Obj_Args *oap);
+//extern void simd_obj_rvssub(Vec_Obj_Args *oap);
+//extern void simd_obj_rvsmul(Vec_Obj_Args *oap);
+//extern void simd_obj_rvsdiv(Vec_Obj_Args *oap);
+//#endif /* USE_SSE */
 
 /* bm_funcs.c */
 

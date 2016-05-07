@@ -1,6 +1,7 @@
 #ifndef _VL2_VECLIB_PROT_H_
 #define _VL2_VECLIB_PROT_H_
 
+#include "veclib/vecgen.h"
 #include "veclib/vl2_port.h"
 
 //#include "veclib/gen_veclib_prot.h"

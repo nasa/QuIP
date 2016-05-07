@@ -105,8 +105,10 @@ static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 	/*clear_obj_args(oap);*/	/* now const */
 #endif /* CAUTIOUS */
 
+#ifdef FOOBAR
 	/* BUG need to do this elsewhere!? */
 	// Is ARGSTYPE set by the caller???
+
 if( OA_ARGSTYPE(oap) == COMPLEX_ARGS )
 fprintf(stderr,"complex args\n");
 else if( OA_ARGSTYPE(oap) == REAL_ARGS )
@@ -117,6 +119,7 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 	else			SET_OA_ARGSTYPE(oap, REAL_ARGS);
 	*/
+#endif // FOOBAR
 
 	//sizes = dpto->dt_type_dimset;
 	// Copy values, don't assign pointer!
@@ -145,7 +148,8 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 	SET_OA_DEST(oap2,sub_dst_dp);
 	SET_OA_SRC1(oap2,sub_src_dp);
 	SET_OA_SRC2(oap2,xf_row_dp);
-	SET_OA_ARGSPREC(oap2,ARGSET_PREC( OBJ_MACH_PREC(dpto) ) );
+	//SET_OA_ARGSPREC(oap2,ARGSET_PREC( OBJ_MACH_PREC(dpto) ) );
+	set_obj_arg_flags(oap2);
 
 	for(i=0;i<OBJ_ROWS(dpto);i++){
 		dst_indices[2]=(index_t)i;		/* i_th row */
@@ -177,7 +181,6 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 	RELEASE_DIMSET(row_dimset)
 }
 
-#ifdef FOOBAR
 
 /* like xform_list(), but vectorizes over list instead of matrix row.
  * good for long lists of short vectors, prototypical examples
@@ -185,9 +188,16 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
  * or geometric transformations of arrays of points or vectors.
  */
 
-static void HOST_TYPED_CALL_NAME(vec_xform,type_code)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
+static void HOST_TYPED_CALL_NAME(rvsmul,type_code)(HOST_CALL_ARG_DECLS);
+static void HOST_TYPED_CALL_NAME(rvadd,type_code)(HOST_CALL_ARG_DECLS);
+
+static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
+/*(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)*/
 {
 	Data_Obj *sub_src_dp, *sub_dst_dp, *tmp_dst_dp;
+	Data_Obj *dpto;
+	Data_Obj *dpfr;
+	Data_Obj *xform_dp;
 	// Data_Obj *coeff_dp;
 	void *coeff_ptr;
 	dimension_t i,j;
@@ -200,6 +210,10 @@ static void HOST_TYPED_CALL_NAME(vec_xform,type_code)(QSP_ARG_DECL  Data_Obj *dp
 	index_t src_indices[N_DIMENSIONS]={0,0,0,0,0};
 	index_t dst_indices[N_DIMENSIONS]={0,0,0,0,0};
 
+	dpto = OA_DEST(oap);
+	dpfr = OA_SRC1(oap);
+	xform_dp = OA_SRC2(oap);
+
 	if( xform_chk(dpto,dpfr,xform_dp) == -1 )
 		return;
 
@@ -209,24 +223,34 @@ static void HOST_TYPED_CALL_NAME(vec_xform,type_code)(QSP_ARG_DECL  Data_Obj *dp
 	/* make a temporary output component */
 	/* like the destination except for tdim */
 
-	//coeff_dp = mk_subimg(QSP_ARG  xform_dp, 0, 0, "_xform_coeff",1,1);	/* 1x1 subimage at 0 0 */
+	//coeff_dp = mk_subimg(DEFAULT_QSP_ARG  xform_dp, 0, 0, "_xform_coeff",1,1);	/* 1x1 subimage at 0 0 */
 
 	tmp_sizes = *( OBJ_TYPE_DIMS(dpto) );
 	ASSIGN_IDX_COUNT(&tmp_sizes,0,1);			/* single component */
-	sub_dst_dp = mk_subseq(QSP_ARG  "_sub_dst",dpto,offsets,&tmp_sizes);	/* vec_xform - RxC image w/ one component */
+	sub_dst_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,&tmp_sizes);	/* vec_xform - RxC image w/ one component */
 
-	sub_src_dp = mk_subseq(QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
-	tmp_dst_dp = make_dobj(QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
+	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
+	tmp_dst_dp = make_dobj(DEFAULT_QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
 
 	if( sub_dst_dp == NO_OBJ || sub_src_dp == NO_OBJ || tmp_dst_dp == NO_OBJ ){
 		NWARN("error creating temporary object for vec_xform");
 		return;
 	}
 
+#ifdef FOOBAR
+	// BUG now this is rvec_xform, so we don't need complex!?
 	/* BUG should we check for mixed types here???  */
-	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap1,COMPLEX_ARGS);
-	else			SET_OA_ARGSTYPE(oap1,REAL_ARGS);
 
+	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap1,COMPLEX_ARGS);
+	else if( IS_REAL(dpto) )SET_OA_ARGSTYPE(oap1,REAL_ARGS);
+	else {
+		NWARN("Sorry, args must be real or complex");
+	}
+#endif // FOOBAR
+
+	assert( IS_REAL(dpto) );
+
+	SET_OA_ARGSTYPE(oap1,REAL_ARGS);
 	SET_OA_ARGSTYPE(oap2,OA_ARGSTYPE(oap1) );
 	SET_OA_ARGSTYPE(oap3,OA_ARGSTYPE(oap1) );
 
@@ -273,17 +297,13 @@ static void HOST_TYPED_CALL_NAME(vec_xform,type_code)(QSP_ARG_DECL  Data_Obj *dp
 		SET_OBJ_DATA_PTR(sub_src_dp,multiply_indexed_data(dpfr,src_indices));
 		SET_OBJ_DATA_PTR(sub_dst_dp,multiply_indexed_data(dpto,dst_indices));
 
-		vsmul(oap1);
+		//vsmul(oap1);
+		HOST_TYPED_CALL_NAME(rvsmul,type_code)(FVSMUL,oap1);
 
 		for(j=1;j<OBJ_COLS(xform_dp);j++){
 			/* choose the matrix coefficient with xform_indices */
 			/* row is the same as above */
 			xform_indices[1] = j;
-			/*
-			SET_OBJ_DATA_PTR(coeff_dp,multiply_indexed_data(xform_dp,xform_indices));
-			SET_OA_SVAL1(oap1,(Scalar_Value *) OBJ_DATA_PTR(coeff_dp) );
-			SET_OA_SVAL1(oap2,(Scalar_Value *) OBJ_DATA_PTR(coeff_dp) );
-			*/
 			coeff_ptr=multiply_indexed_data(xform_dp,xform_indices);
 			SET_OA_SVAL1(oap1,(Scalar_Value *) coeff_ptr );
 			SET_OA_SVAL1(oap2,(Scalar_Value *) coeff_ptr );
@@ -291,17 +311,14 @@ static void HOST_TYPED_CALL_NAME(vec_xform,type_code)(QSP_ARG_DECL  Data_Obj *dp
 			src_indices[0]=j;	/* select j_th component */
 			SET_OBJ_DATA_PTR(sub_src_dp,multiply_indexed_data(dpfr,src_indices));
 
-			h_vl2_vsmul(oap2);
-			h_vl2_vadd(oap3);
+			HOST_TYPED_CALL_NAME(rvsmul,type_code)(FVSMUL,oap2);
+			HOST_TYPED_CALL_NAME(rvadd,type_code)(FVADD,oap3);
 		}
 	}
-	delvec(QSP_ARG  sub_src_dp);
-	delvec(QSP_ARG  sub_dst_dp);
-	delvec(QSP_ARG  tmp_dst_dp);
-	//delvec(QSP_ARG  coeff_dp);
-
-} /* end vec_xform() */
-#endif // FOOBAR
+	delvec(DEFAULT_QSP_ARG  sub_src_dp);
+	delvec(DEFAULT_QSP_ARG  sub_dst_dp);
+	delvec(DEFAULT_QSP_ARG  tmp_dst_dp);
+} /* end rvec_xform() */
 
 #ifdef FOOBAR
 

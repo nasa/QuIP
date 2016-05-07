@@ -240,9 +240,9 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	stem,							\
+	/*stem,*/							\
 	/* SIMD_NAME(stem), */					\
-	/* HOST_TYPED_CALL_NAME_REAL(stem,sp), */		\
+	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
@@ -276,9 +276,9 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	stem,							\
+	/*stem,*/							\
 	/* SIMD_NAME(stem), */					\
-	/* HOST_TYPED_CALL_NAME_REAL(stem,sp), */		\
+	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
@@ -293,9 +293,9 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	stem,							\
+	/*stem,*/							\
 	/* SIMD_NAME(stem), */					\
-	/* HOST_TYPED_CALL_NAME_REAL(stem,sp), */		\
+	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
@@ -443,13 +443,6 @@
 #define RCQALL_ARR( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
-/*
-#define RCQALL_SAME_PREC_ARR_SSE( stem, code )					\
-	{ code, { ALL_REAL_SAME_PREC_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
-	*/
-#define RCQALL_SAME_PREC_ARR_SSE( stem, code )					\
-	{ code, { ALL_REAL_SAME_PREC(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
-
 #define RCQPALL_ARR( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_QMIXD(stem) } }
 
@@ -474,6 +467,13 @@
 #define RCQALL_ARR_SSE( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP_SSE(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
+/*
+#define RCQALL_SAME_PREC_ARR_SSE( stem, code )					\
+	{ code, { ALL_REAL_SAME_PREC_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
+#define RCQALL_SAME_PREC_ARR_SSE( stem, code )					\
+	{ code, { ALL_REAL_SAME_PREC(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
+	*/
+
 #define RCQALL_SAME_PREC_ARR_SSE( stem, code )					\
 	{ code, { ALL_REAL_SAME_PREC_NO_BITMAP_SSE(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
@@ -484,8 +484,9 @@
 
 #else /* ! USE_SSE */
 
-#define RCQALL_ARR_SSE( stem, code )		RCQALL_ARR( stem, code )
 #define ALL_ARR_SSE( stem, code )		ALL_ARR( stem, code ) 
+#define RCQALL_ARR_SSE( stem, code )		RCQALL_ARR( stem, code )
+#define RCQALL_SAME_PREC_ARR_SSE( stem, code )	RCQALL_ARR( stem, code )
 #define QALL_ARR_SSE( stem, code )		QALL_ARR( stem, code )
 #define RCMQPALL_ARR_SSE( stem, code )		RCMQPALL_ARR( stem, code )
 

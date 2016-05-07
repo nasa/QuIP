@@ -149,6 +149,23 @@ view
   quit
 .
 
+Define X_Legend_Top 1 string
+Legend_Font
+view
+  draw $the_plotter
+    text_mode centered
+    quit
+  plot $the_plotter
+# these are in the plotting units...
+    Assign lx ($plot_xmin+$plot_xmax)/2
+    Assign ly $plot_ymax+$legend_v_offset_top
+    # what about justification??? x centered, y at bottom of text...
+    move $lx $ly
+    string $1
+    quit
+  quit
+.
+
 Define Validate_Fonts 0
 Set fonts_present 0
 Validate_Font $unit_font

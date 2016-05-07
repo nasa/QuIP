@@ -18,9 +18,23 @@ Display mat
 
 compute
   linear
-    Pause
+    lxform v2 v1 mat
     quit
   quit
+Display v2
+
+Image cmat 3 3 1 complex
+Image c1 8 3 1 complex
+Image c2 8 3 1 complex
+
+compute
+  linear
+    lxform c2 c1 cmat
+    quit
+  quit
+
+exit
+
 
 
 

@@ -16,6 +16,7 @@ libvl2_a_SOURCES =			\
 			vl2.c		\
 			slow_len.c	\
 			fftsupp.c	\
+			fast_sp.c	\
 			vl2_platform.c
 
 #			linear_funcs.c

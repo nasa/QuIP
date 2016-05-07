@@ -15,8 +15,6 @@ extern COMMAND_FUNC( do_vl_menu );
 
 extern int use_sse_extensions;
 
-extern void show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *);
-
 extern void setvarg1(Vec_Obj_Args *oap, Data_Obj *dp);
 extern void setvarg2(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *srcv);
 extern void setvarg3(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *src1,Data_Obj *src2);
@@ -50,6 +48,7 @@ extern void set_perf(int);
 extern COMMAND_FUNC( do_yuv2rgb );
 
 
+#ifdef FOOBAR
 /* convert.c */
 extern void convert(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
 
@@ -65,15 +64,21 @@ extern void vramp2d(HOST_CALL_ARG_DECLS);
 /* lin_util.c */
 extern void inner(QSP_ARG_DECL  Data_Obj *, Data_Obj *, Data_Obj *);
 extern void xform_list(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
+#endif // FOOBAR
 
 /* obj_args.c */
 extern void clear_obj_args(Vec_Obj_Args *);
+extern void show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *);
+extern void set_obj_arg_flags(Vec_Obj_Args *);
 
+
+#ifdef FOOBAR
 /* these were moved here from nvf.h when wrap() and scale() were moved to vec_util */
 extern void vmov(HOST_CALL_ARG_DECLS);
 extern void vsmul(HOST_CALL_ARG_DECLS);
 extern void vsadd(HOST_CALL_ARG_DECLS);
 extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
+#endif // FOOBAR
 
 extern debug_flag_t veclib_debug;
 

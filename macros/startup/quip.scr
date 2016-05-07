@@ -13,7 +13,6 @@ variables
 #view debug xsupp quit
 
 < $QUIPSTARTUPDIR/generic.scr
-Print macro_dir
 < $QUIPSTARTUPDIR/gendata.scr
 < $QUIPSTARTUPDIR/gencomp.scr
 < $QUIPSTARTUPDIR/genclient.scr

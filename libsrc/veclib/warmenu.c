@@ -1992,6 +1992,7 @@ static COMMAND_FUNC( do_determinant )
 static COMMAND_FUNC(do_xform_list )
 {
 	Data_Obj *dpto, *dpfr, *xform;
+	Vec_Obj_Args oa1;
 
 	dpto=PICK_OBJ( "target data object" );
 	dpfr=PICK_OBJ( "source data object" );
@@ -1999,7 +2000,14 @@ static COMMAND_FUNC(do_xform_list )
 
 	if( dpto==NO_OBJ || dpfr==NO_OBJ || xform==NO_OBJ ) return;
 
-	xform_list(QSP_ARG  dpto,dpfr,xform);
+	clear_obj_args(&oa1);
+	SET_OA_DEST(&oa1,dpto);
+	SET_OA_SRC1(&oa1,dpfr);
+	SET_OA_SRC2(&oa1,xform);
+	set_obj_arg_flags(&oa1);
+
+	// BUG need to make this a platform function!?
+	h_vl2_xform_list( -1,  &oa1);
 	//TEMP_UNIMP(xform_list)
 }
 
@@ -2140,13 +2148,13 @@ static COMMAND_FUNC( do_report_status )
 	if( use_sse_extensions )
 		prt_msg("Using SSE extensions when possible");
 	else
-		prt_msg("Never using SSE extensions");
+		prt_msg("Not using SSE extensions");
 #else /* ! USE_SSE */
 	prt_msg("No SSE support (compile with USE_SSE defined)");
 #endif /* ! USE_SSE */
 
-	sprintf(msg_str,"Using %d processors (%d max on this machine",
-			n_processors,N_PROCESSORS);
+	sprintf(msg_str,"Using %d processor%s (%d max on this machine)",
+			n_processors,n_processors==1?"":"s",N_PROCESSORS);
 	prt_msg(msg_str);
 }
 
