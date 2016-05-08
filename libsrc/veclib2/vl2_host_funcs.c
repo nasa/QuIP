@@ -23,7 +23,3 @@
 #include "vl2_host_untyped_call_defs.h"
 #include "veclib/host_fft_funcs.c"
 
-#ifdef FOOBAR
-#include "veclib/gen_entries.c"
-#endif // FOOBAR
-

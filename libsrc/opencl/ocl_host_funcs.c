@@ -36,11 +36,4 @@ static void h_ocl_dp_cvift(HOST_CALL_ARG_DECLS)
 { NWARN("h_ocl_dp_cvift not implemented!?"); }
 
 
-#ifdef FOOBAR
-// Now we make the untyped calls
-// We use entries.c instead of the *vec.c files from the include directory...
-
-#include "ocl_host_untyped_call_defs.h"
-#include "veclib/gen_entries.c"
-#endif // FOOBAR
 

@@ -7085,6 +7085,7 @@ DUMP_TREE(enp);
 		return;	/* probably an undefined reference */
 	}
 
+
 #ifdef QUIP_DEBUG
 if( debug & eval_debug ){
 sprintf(ERROR_STRING,"eval_obj_assignment %s",OBJ_NAME(dp));
@@ -7197,6 +7198,10 @@ DUMP_TREE(enp);
 		 * to one or the other...
 		 * But if the conditional is a vector, then
 		 * we need to evaluate it into a scratch vector...
+		 *
+		 * For these tree codes, the first two keys indicate the result types,
+		 * while the third is the test type.  Test can be S (scalar), or B (bitmap).
+		 * The bitmap case handles all tests involving one or more vectors.
 		 */
 		case T_SS_S_CONDASS:		/* eval_obj_assignment */
 			{

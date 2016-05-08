@@ -99,6 +99,7 @@ typedef struct draw_op_args {
 
 #define doa_x		doa_int[0]
 #define doa_y		doa_int[1]
+#define doa_lw		doa_int[0]
 
 #define doa_xl		doa_int[0]
 #define doa_yu		doa_int[1]
@@ -118,7 +119,8 @@ typedef enum {
 	DRAW_OP_FOREGROUND,	// 5
 	DRAW_OP_BACKGROUND,	// 6
 	DRAW_OP_ARC,		// 7
-	N_DRAW_OP_TYPES		// 8
+	DRAW_OP_LINEWIDTH,	// 8
+	N_DRAW_OP_TYPES		// 9
 } Draw_Op_Code;
 
 typedef struct draw_op {
@@ -128,6 +130,7 @@ typedef struct draw_op {
 
 #define do_x		do_doa.doa_x
 #define do_y		do_doa.doa_y
+#define do_lw		do_doa.doa_lw
 #define do_str		do_doa.doa_str
 #define do_xfp		do_doa.doa_xfp
 #define do_color	do_doa.doa_color
@@ -973,6 +976,9 @@ dop_info(DEFAULT_QSP_ARG  dop);
 				cx = dop->do_x;
 				cy = dop->do_y;
 				break;
+			case DRAW_OP_LINEWIDTH:
+				_xp_linewidth(vp,dop->do_lw);
+				break;
 			case DRAW_OP_TEXT:
 				if( dop->do_xfp != NO_XFONT ){
 					set_font(vp,dop->do_xfp);
@@ -1372,6 +1378,16 @@ static void remember_cont(Viewer *vp,int x,int y)
 	}
 }
 
+static void remember_linewidth(Viewer *vp, int w)
+{
+	Draw_Op_Args doa;
+
+	if( vp != NO_VIEWER && !quick ){
+		doa.doa_lw = w;
+		remember_drawing(vp,DRAW_OP_LINEWIDTH,&doa);
+	}
+}
+
 static void remember_text(Viewer *vp,const char *s)
 {
 	Draw_Op_Args doa;
@@ -1607,6 +1623,9 @@ void _xp_linewidth(Viewer *vp,int w)
 							VW_LINE_STYLE(vp),
 							VW_CAP_STYLE(vp),
 							VW_JOIN_STYLE(vp) );
+	if( REMEMBER_GFX ){
+		remember_linewidth(vp,w);
+	}
 
 	// how do we check for errors???
 }

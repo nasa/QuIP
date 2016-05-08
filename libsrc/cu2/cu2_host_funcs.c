@@ -57,7 +57,4 @@ void h_cu2_dp_cvift(HOST_CALL_ARG_DECLS)
 	UNIMP_MSG(h_cu2_dp_cvift)
 }
 
-#ifdef FOOBAR
-#include "veclib/gen_entries.c"
-#endif // FOOBAR
 
