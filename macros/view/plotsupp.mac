@@ -869,7 +869,6 @@ view
 .
 
 Define Label_X_Tick_Top 2 posn string
-advise "Label_X_Tick_Top $1 $2 BEGIN"
 Unit_Font
 view
   draw $the_plotter text_mode centered quit
