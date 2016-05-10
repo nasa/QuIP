@@ -88,9 +88,7 @@ _VEC_FUNC_2V_SCAL( vsmin , dst = (dest_type)(scalar1_val < src1 ? scalar1_val : 
  * Here are the real versions.
  */
 
-#ifdef NOT_YET
-_VEC_FUNC_2V( vnot , if( src1 == 0 ) dst = (dest_type) 1; else dst= (dest_type) 0; )
-#endif
+// vnot used to be here, but now it is integer-only...
 
 // With the new style conversions, we don't need vmov any more,
 // as we have same type conversions... 
