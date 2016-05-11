@@ -269,6 +269,27 @@
 	NULL_4,							\
 	nullobjf
 
+#ifdef BUILD_FOR_GPU
+#define NO_GPUBITMAP_FUNC(stem)		nullobjf
+#else // ! BUILD_FOR_GPU
+#define NO_GPUBITMAP_FUNC(stem)		HOST_TYPED_CALL_NAME_REAL(stem,bit)
+#endif // ! BUILD_FOR_GPU
+
+#define ALL_REAL_SAME_PREC_NO_GPUBITMAP(stem)			\
+								\
+	HOST_TYPED_CALL_NAME_REAL(stem,by),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,sp),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,udi),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,uli),			\
+	NULL_4,							\
+	NO_GPUBITMAP_FUNC(stem)
+
 
 #define ALL_REAL_SAME_PREC_NO_BITMAP_SSE(stem)			\
 								\
@@ -286,6 +307,23 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,uli),			\
 	NULL_4,							\
 	nullobjf
+
+#define ALL_REAL_SAME_PREC_NO_GPUBITMAP_SSE(stem)			\
+								\
+	HOST_TYPED_CALL_NAME_REAL(stem,by),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
+	/*stem,*/						\
+	/* SIMD_NAME(stem), */					\
+	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
+	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,udi),			\
+	HOST_TYPED_CALL_NAME_REAL(stem,uli),			\
+	NULL_4,							\
+	NO_GPUBITMAP_FUNC(stem)
 
 #define ALL_REAL_SSE(stem)					\
 								\
@@ -444,7 +482,7 @@
 	{ code, { ALL_REAL_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
 #define RCQALL_SAME_PREC_ARR( stem, code )					\
-	{ code, { ALL_REAL_SAME_PREC_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
+	{ code, { ALL_REAL_SAME_PREC_NO_GPUBITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
 #define RCQPALL_ARR( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_QMIXD(stem) } }
@@ -478,7 +516,7 @@
 	*/
 
 #define RCQALL_SAME_PREC_ARR_SSE( stem, code )					\
-	{ code, { ALL_REAL_SAME_PREC_NO_BITMAP_SSE(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
+	{ code, { ALL_REAL_SAME_PREC_NO_GPUBITMAP_SSE(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
 #define QALL_ARR_SSE( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP_SSE(stem), ALL_COMPLEX(stem), ALL_MIXED(stem), ALL_QUAT(stem), ALL_NULL } }

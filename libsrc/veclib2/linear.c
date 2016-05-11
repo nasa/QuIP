@@ -201,9 +201,9 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 	// Data_Obj *coeff_dp;
 	void *coeff_ptr;
 	dimension_t i,j;
-	Vec_Obj_Args oa1, *oap1=&oa1;
-	Vec_Obj_Args oa2, *oap2=&oa2;
-	Vec_Obj_Args oa3, *oap3=&oa3;
+	Vec_Obj_Args oa1, *oap1=(&oa1);
+	Vec_Obj_Args oa2, *oap2=(&oa2);
+	Vec_Obj_Args oa3, *oap3=(&oa3);
 	Dimension_Set tmp_sizes;
 	index_t offsets[N_DIMENSIONS]={0,0,0,0,0};
 	index_t xform_indices[N_DIMENSIONS]={0,0,0,0,0};
@@ -331,9 +331,9 @@ static void HOST_TYPED_CALL_NAME(homog_xform,type_code)(QSP_ARG_DECL  Data_Obj *
 {
 	Data_Obj *tmp_obj;
 	dimension_t i,j;
-	Vec_Obj_Args oa1, *oap1=&oa1;
-	Vec_Obj_Args oa2, *oap2=&oa2;
-	Vec_Obj_Args oa3, *oap3=&oa3;
+	Vec_Obj_Args oa1, *oap1=(&oa1);
+	Vec_Obj_Args oa2, *oap2=(&oa2);
+	Vec_Obj_Args oa3, *oap3=(&oa3);
 
 	if( xform_chk(dpto,dpfr,xform) == -1 )
 		return;
