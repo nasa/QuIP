@@ -250,6 +250,7 @@
 		71E8AF0D17065C9C00015F52 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71E8AF0C17065C9C00015F52 /* Security.framework */; };
 		71FA2A021736E6D9005A2173 /* pr_supp.c in Sources */ = {isa = PBXBuildFile; fileRef = 71FA2A011736E6D9005A2173 /* pr_supp.c */; };
 		71FA2A041736E6FE005A2173 /* am_supp.c in Sources */ = {isa = PBXBuildFile; fileRef = 71FA2A031736E6FE005A2173 /* am_supp.c */; };
+		7C0C6D1A1CEFD06900D7D2FB /* pipe_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C0C6D191CEFD06900D7D2FB /* pipe_menu.c */; };
 		7C1BD1BA1C4EC9870093125D /* ios_sound.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1B91C4EC9870093125D /* ios_sound.mm */; };
 		7C1BD1BC1C4EC9B20093125D /* AudioController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1BB1C4EC9B20093125D /* AudioController.mm */; };
 		7C1BD1BE1C4EC9C40093125D /* BufferManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C1BD1BD1C4EC9C40093125D /* BufferManager.cpp */; };
@@ -279,7 +280,6 @@
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
 		7CE5FE011A60754A0029C7AE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
 		7CF4CFAA1CA5F059004F07AE /* start_quip.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFA91CA5F059004F07AE /* start_quip.c */; };
-		7CF4CFAC1CA5F066004F07AE /* pipes.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFAB1CA5F066004F07AE /* pipes.c */; };
 		7CF4CFAE1CA5F06E004F07AE /* pipe_support.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFAD1CA5F06E004F07AE /* pipe_support.c */; };
 		7CF4CFB01CA5F07F004F07AE /* callback.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFAF1CA5F07F004F07AE /* callback.c */; };
 		7CF4CFB21CA5F091004F07AE /* questions.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFB11CA5F091004F07AE /* questions.c */; };
@@ -548,6 +548,7 @@
 		71E8AF0C17065C9C00015F52 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		71FA2A011736E6D9005A2173 /* pr_supp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pr_supp.c; sourceTree = "<group>"; };
 		71FA2A031736E6FE005A2173 /* am_supp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = am_supp.c; sourceTree = "<group>"; };
+		7C0C6D191CEFD06900D7D2FB /* pipe_menu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipe_menu.c; sourceTree = "<group>"; };
 		7C1BD1B91C4EC9870093125D /* ios_sound.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ios_sound.mm; sourceTree = "<group>"; };
 		7C1BD1BB1C4EC9B20093125D /* AudioController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AudioController.mm; sourceTree = "<group>"; };
 		7C1BD1BD1C4EC9C40093125D /* BufferManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BufferManager.cpp; sourceTree = "<group>"; };
@@ -579,7 +580,6 @@
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7CE5FE001A60754A0029C7AE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		7CF4CFA91CA5F059004F07AE /* start_quip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = start_quip.c; sourceTree = "<group>"; };
-		7CF4CFAB1CA5F066004F07AE /* pipes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipes.c; sourceTree = "<group>"; };
 		7CF4CFAD1CA5F06E004F07AE /* pipe_support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipe_support.c; sourceTree = "<group>"; };
 		7CF4CFAF1CA5F07F004F07AE /* callback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = callback.c; sourceTree = "<group>"; };
 		7CF4CFB11CA5F091004F07AE /* questions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = questions.c; sourceTree = "<group>"; };
@@ -713,7 +713,6 @@
 				7CF4CFB11CA5F091004F07AE /* questions.c */,
 				7CF4CFAF1CA5F07F004F07AE /* callback.c */,
 				7CF4CFAD1CA5F06E004F07AE /* pipe_support.c */,
-				7CF4CFAB1CA5F066004F07AE /* pipes.c */,
 				7CF4CFA91CA5F059004F07AE /* start_quip.c */,
 				71828EE01726165E00F7CB35 /* bi_menu.c */,
 				71828EE21726167300F7CB35 /* class.c */,
@@ -875,6 +874,7 @@
 		7115AE8B16076AF70004645A /* unix */ = {
 			isa = PBXGroup;
 			children = (
+				7C0C6D191CEFD06900D7D2FB /* pipe_menu.c */,
 				2299DE12196C6F2500844988 /* sched.c */,
 				7C3904C217F64901005163CD /* my_stty.c */,
 				7C3904C017F64894005163CD /* stamps.c */,
@@ -1299,6 +1299,7 @@
 				71828F291726171000F7CB35 /* ios_list.m in Sources */,
 				7CF4CFB81CA5F1CD004F07AE /* nexpr.y in Sources */,
 				71828F2A1726171000F7CB35 /* ios_node.m in Sources */,
+				7C0C6D1A1CEFD06900D7D2FB /* pipe_menu.c in Sources */,
 				71828F2B1726171000F7CB35 /* ios_sizable.m in Sources */,
 				71828F2C1726171000F7CB35 /* ios_stack.m in Sources */,
 				71828F2D1726171000F7CB35 /* main.m in Sources */,
@@ -1389,7 +1390,6 @@
 				718290021726196F00F7CB35 /* ctx_pair.c in Sources */,
 				718290031726196F00F7CB35 /* dumptree.c in Sources */,
 				718290041726196F00F7CB35 /* evaltree.c in Sources */,
-				7CF4CFAC1CA5F066004F07AE /* pipes.c in Sources */,
 				718290061726196F00F7CB35 /* identifier.c in Sources */,
 				7182900C172619A900F7CB35 /* viewer.m in Sources */,
 				7182900E172619A900F7CB35 /* viewmenu.m in Sources */,

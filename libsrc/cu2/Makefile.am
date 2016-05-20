@@ -45,7 +45,6 @@ cu2_funcs.o:		cu2_funcs.cu			\
 			../../include/veclib/gen_gpu_calls.h	\
 			../../include/veclib/gpu_args.h	\
 			../../include/veclib/gen_entries.h	\
-			../../include/veclib/gen_entries.c	\
 			../../include/veclib/gen_host_calls.c	\
 			../../include/veclib/dp_func_defs.h	\
 			../../include/veclib/gpu_call_utils.h	\

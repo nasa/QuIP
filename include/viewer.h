@@ -347,7 +347,7 @@ typedef struct viewer {
 #define VW_ROOTW(vp)	DPA_ROOTW(VW_DPA(vp))
 #define VW_VISUAL(vp)	DPA_VISUAL(VW_DPA(vp))
 #define VW_SCREEN_NO(vp)	DPA_SCREEN_NO(VW_DPA(vp))
-#define VW_CTX(vp)
+//#define VW_CTX(vp)
 
 //#define vw_screen_no	vw_dpyable.dpa_screen_no
 //#define vw_visual	vw_dpyable.dpa_visual

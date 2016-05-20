@@ -6,13 +6,6 @@
 #include "veclib/host_typed_call_defs.h"
 #include "veclib/gen_host_calls.c"
 
-#ifdef FOOBAR
-// Now we make the untyped calls
-// We use entries.c instead of the *vec.c files from the include directory...
-
-#include "cu2_host_untyped_call_defs.h"
-#endif // FOOBAR
-
 
 #define UNIMP_MSG(f)	sprintf(DEFAULT_ERROR_STRING,"%s is unimplemented!?",#f);\
 	NWARN(DEFAULT_ERROR_STRING);

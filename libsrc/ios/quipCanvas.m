@@ -48,13 +48,13 @@
  - (void)drawRect:(CGRect)rect
 {
 #ifdef BUILD_FOR_IOS
-	SET_VW_CTX( CANVAS_VW(self), UIGraphicsGetCurrentContext());
+	SET_VW_GFX_CTX( CANVAS_VW(self), UIGraphicsGetCurrentContext());
 
 //fprintf(stderr,"quipCanvas:drawRect:  viewer context set to 0x%lx\n",
-//(long)VW_CTX(CANVAS_VW(self)));
+//(long)VW_GFX_CTX(CANVAS_VW(self)));
 
 #ifdef CAUTIOUS
-	if( VW_CTX( CANVAS_VW(self) ) == NULL ){
+	if( VW_GFX_CTX( CANVAS_VW(self) ) == NULL ){
 		fprintf(stderr,"UIGraphicsGetCurrentContext returns 0x%lx\n",
 			(long)UIGraphicsGetCurrentContext());
 		NERROR1("CAUTIOUS:  drawRect:  Unable to obtain current graphics context!?");
