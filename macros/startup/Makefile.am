@@ -18,6 +18,7 @@ macros_DATA	=	Xgraph.scr		\
 			jpz.scr			\
 			jpshr.scr		\
 			jpshow.scr		\
+			kdrw.scr		\
 			knoxd.scr		\
 			evid.scr		\
 			coq.scr			\

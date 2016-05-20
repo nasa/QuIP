@@ -1,0 +1,73 @@
+# Peano curve drawing program, emulates old 8-bit display
+
+variables set DOTFILEDIR /usr/local/share/quip/macros/startup quit
+< $DOTFILEDIR/quip.scr
+
+Set gap 7
+Set size 128
+Set n_colors 256
+
+Assign n_seg $size*$size
+Vector coords $n_seg 2 u_short
+
+Image rgb $size $size 3 u_byte
+Image s $size $size 1 short
+Vector lut 1024 3 u_byte
+ 
+compute
+  misc
+    krast coords
+    quit
+  quit
+
+Set i 0
+Set c 0
+Set r 0
+Set g 0
+Set b 0
+Set rinc 1
+Set ginc 1.3
+Set binc 1.2
+
+Viewer v $size*(1+$gap)+$gap $size*(1+$gap)+$gap
+
+view draw v quit quit
+Setcolor 0 0 0 0
+view
+  draw v
+    background 0
+    clear
+    quit
+  quit
+
+view
+  Assign x $gap+value(coords[$n_seg-1]{0})*(1+$gap)
+  Assign y $gap+value(coords[$n_seg-1]{1})*(1+$gap)
+  draw v
+    move $x $y
+    quit
+  quit
+repeat $n_seg
+  Setcolor $c round($r)%256 round($g)%256 round($b)%256
+  Assign x $gap+value(coords[$i]{0})*(1+$gap)
+  Assign y $gap+value(coords[$i]{1})*(1+$gap)
+  view
+    draw v
+      foreground $c
+      cont $x $y
+      quit
+    quit
+  Increment i
+  Assign c ($c+1)%$n_colors
+  Add_Var r $rinc
+  Add_Var g $ginc
+  Add_Var b $binc
+  end
+
+Pause
+
+Clobber yes
+Save_View peano.png v
+
+Pause
+

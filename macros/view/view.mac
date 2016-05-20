@@ -540,6 +540,7 @@ Put_Hips2 $1 $file_name
 Define Save_View 2 filename viewer
 Dup_UByte sv_tmp $2
 view extract sv_tmp $2 0 0 quit
+If depth(sv_tmp)==3 "Rotate_Colors sv_tmp"
 Clobber yes
 Write_File_Header $1 1
 Put_Next sv_tmp $1
