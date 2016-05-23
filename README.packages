@@ -1,15 +1,16 @@
 
 Here is a list of packages (names for yum,
-may be different with apt-get) that need to
+different for apt-get) that need to
 be installed to access all the functions of QuIP:
 
 libpng-devel
 libtiff-devel
 libX11-devel
-lib-alsa-devel
+#lib-alsa-devel
+portaudio-devel	# or portaudio2???
 libtermcap-devel
 openmotif-devel
-ffmpeg-devel
+#ffmpeg-devel	# this has a different name now???
 freeglut-devel
 texinfo-tex
 libdc1394-devel
@@ -18,4 +19,14 @@ ncurses-devel
 opencv-devel
 matio-devel
 curl-devel		(was libcurl-devel ???)
+libgcrypt-devel
+
+Notes:
+
+ffmpeg does not seem to be available for CentOS 6, perhaps need additional repos?
+
+opencv causes a dependency on libdc1394, which gets linked even when not included in the load command???
+The solution (from stackOverflow) was the following command:
+% sudo ln /dev/null /dev/raw1394
+
 
