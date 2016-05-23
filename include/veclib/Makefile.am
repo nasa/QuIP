@@ -8,6 +8,8 @@
 #			ocl_menu_prot.h
 #			vl2_menu_prot.h
 
+#		gen_entries.c
+
 noinst_HEADERS =					\
 			all_same_prec_vec.c		\
 			all_vec.c			\
@@ -17,7 +19,6 @@ noinst_HEADERS =					\
 			cpx_vec.c			\
 			dispatch_tbl.c			\
 			fft_funcs.c			\
-			gen_entries.c			\
 			gen_func_array.c		\
 			gen_host_calls.c		\
 			host_fft_funcs.c		\

@@ -2,7 +2,7 @@
 #define _VL2_PORT_H_
 
 #define QUATERNION_SUPPORT
-#undef USE_SSE
+//#undef USE_SSE
 #undef BUILD_FOR_GPU
 
 // PORT put things here...

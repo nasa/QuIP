@@ -45,7 +45,7 @@ void swap_buffers(void)
 
 	//glutSwapBuffers();
 #ifndef BUILD_FOR_OBJC
-	glXSwapBuffers(gl_vp->vw_dpy,gl_vp->vw_xwin);
+	glXSwapBuffers(VW_DPY(gl_vp),gl_vp->vw_xwin);
 #else // BUILD_FOR_OBJC
 	//glSwapBuffers();
 	glFlush();
@@ -219,9 +219,9 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 
 //sprintf(ERROR_STRING,"width: %d height: %d\n", vp->vw_width, vp->vw_height);
 //advise(ERROR_STRING);
-	vinfo_template.visual = vp->vw_visual;
-	vinfo_template.depth = vp->vw_depth;
-	vinfo_template.screen = vp->vw_screen_no;
+	vinfo_template.visual = VW_VISUAL(vp);
+	vinfo_template.depth = VW_DEPTH(vp);
+	vinfo_template.screen = VW_SCREEN_NO(vp);
 	mask |= VisualScreenMask | VisualDepthMask;
 
 	/* We don't seem to get a depth buffer... */
@@ -229,18 +229,20 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 #define GLX_PARAM(flag,val)		list[index++]=(flag); list[index++]=val;
 
 	index=0;
-	GLX_PARAM(GLX_DEPTH_SIZE,/*24 */ 16 )
-	GLX_PARAM(GLX_LEVEL,0)
 	GLX_FLAG(GLX_RGBA)
+	GLX_PARAM(GLX_DEPTH_SIZE,24 )
+	// This was set to 16 - why???
+	//GLX_PARAM(GLX_DEPTH_SIZE,/*24 */ 16 )
 	GLX_FLAG(GLX_DOUBLEBUFFER)
+	GLX_PARAM(GLX_LEVEL,0)		// what does this do?
 	list[index++]=None;
 
-	vis_info_p = glXChooseVisual(vp->vw_dpy,vp->vw_screen_no,list);
+	vis_info_p = glXChooseVisual(VW_DPY(vp),VW_SCREEN_NO(vp),list);
 
 	if( vis_info_p == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"unable to get a visual with DEPTH_SIZE %d",list[1]);
 		NWARN(DEFAULT_ERROR_STRING);
-		vis_info_p = XGetVisualInfo(vp->vw_dpy,mask,&vinfo_template,&n);
+		vis_info_p = XGetVisualInfo(VW_DPY(vp),mask,&vinfo_template,&n);
 		if( vis_info_p == NULL )
 			NERROR1("XGetVisualInfo failed!?");
 	} else {
@@ -268,8 +270,9 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 	 */
 
 	if( VW_OGL_CTX(vp) == NULL ){
-		VW_OGL_CTX(vp) = glXCreateContext(vp->vw_dpy,vis_info_p,
-			vp->vw_dop->do_ctx,	/* list of shared contexts? */
+
+		VW_OGL_CTX(vp) = glXCreateContext(VW_DPY(vp),vis_info_p,
+			NULL,	/* list of shared contexts? */
 			True);
 		if( VW_OGL_CTX(vp)== NULL ){
 			sprintf(DEFAULT_ERROR_STRING,
@@ -284,9 +287,6 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 				advise(DEFAULT_ERROR_STRING);
 			}
 
-			if( vp->vw_dop->do_ctx == NULL )
-				vp->vw_dop->do_ctx = VW_OGL_CTX(vp);
-
 #ifdef FOOBAR
 			/* now see if there is a z buffer? */
 			/* Why? */
@@ -294,7 +294,7 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 			{
 			int val;
 
-			if( glXGetConfig(vp->vw_dpy,vis_info_p,
+			if( glXGetConfig(VW_DPY(vp),vis_info_p,
 				GLX_DEPTH_SIZE,&val) == 0 ){
 
 				sprintf(DEFAULT_ERROR_STRING,
@@ -401,7 +401,7 @@ vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
 advise(ERROR_STRING);
 }
 */
-	if( glXMakeCurrent(vp->vw_dpy,vp->vw_xwin,VW_OGL_CTX(vp)) != True ){
+	if( glXMakeCurrent(VW_DPY(vp),vp->vw_xwin,VW_OGL_CTX(vp)) != True ){
 		sprintf(ERROR_STRING,
 		"Unable to set current GLX context to %s!?",vp->vw_name);
 		WARN(ERROR_STRING);
@@ -424,8 +424,8 @@ advise(ERROR_STRING);
 			ERROR1("Error initializing OpenGLView!?");
 	}
 
-fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",
-(long)VW_OGL_CTX(vp));
+//fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",
+//(long)VW_OGL_CTX(vp));
 	[ VW_OGL_CTX(vp) makeCurrentContext ];
 	gl_vp = vp;
 #endif // ! BUILD_FOR_OBJC

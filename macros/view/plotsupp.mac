@@ -827,7 +827,7 @@ Assign v_plot_units_per_screen_unit	($plot_ymax-$plot_ymin)/$n_graph_vpixels
 
 # bot_reserve is in pixels, we take this to plot units...
 Assign legend_v_offset	(0.8*$bot_reserve)*$v_plot_units_per_screen_unit
-Assign legend_v_offset_top	(0.4*$extra_top_reserve)*$v_plot_units_per_screen_unit
+Assign legend_v_offset_top	(0.5*$extra_top_reserve)*$v_plot_units_per_screen_unit
 # The legend offset ought to depend on the length of the legend strings???
 # 0.8 worked well for x11, but when left reserve is smaller (iPod),
 # it's too much...
@@ -850,9 +850,7 @@ Assign v_plot_units_per_rotated_char	$h_screen_units_per_char*$v_plot_units_per_
 Define Label_X_Tick 2 posn string
 Unit_Font
 view
-  draw $the_plotter
-    text_mode centered
-    quit
+  draw $the_plotter text_mode centered quit
   plot $the_plotter
     move $1 $plot_ymin
     cont $1 $plot_ymin-$x_tick_len
@@ -869,6 +867,30 @@ view
     quit
   quit
 .
+
+Define Label_X_Tick_Top 2 posn string
+Unit_Font
+view
+  draw $the_plotter text_mode centered quit
+  plot $the_plotter
+    # usually the tick is drawn already!?
+    move $1 $plot_ymax
+    cont $1 $plot_ymax+$x_tick_len
+
+    # don't need this with text_mode implemented...
+    #Assign string_width strlen('$2')*$h_plot_units_per_char
+    Assign string_height $v_plot_units_per_char
+
+    #Assign lx $1-($string_width/2)
+    Assign lx $1
+    Assign ly $plot_ymax+($x_tick_len+$unit_v_offset)
+
+    move $lx $ly
+    string $2
+    quit
+  quit
+.
+
 
 # We used to draw the ticks here...
 
@@ -920,26 +942,6 @@ view
   quit
 .
 
-Define Label_X_Tick_Top 2 posn string
-Unit_Font
-view
-  plot $the_plotter
-    # usually the tick is drawn already!?
-    move $1 $plot_ymax
-    cont $1 $plot_ymax+$x_tick_len
-
-    Assign string_width strlen('$2')*$h_plot_units_per_char
-    Assign string_height $v_plot_units_per_char
-
-    Assign lx $1-($string_width/2)
-    Assign ly $plot_ymax+($x_tick_len+$unit_v_offset)
-
-    move $lx $ly
-    string $2
-    quit
-  quit
-.
-
 Define Show_Legend_Area 0
 view
   draw $the_plotter
@@ -948,28 +950,6 @@ view
     cont $sx2 $sy2
     cont $sx2 $sy1
     cont $sx1 $sy1
-    quit
-  quit
-.
-
-Define X_Legend_Top 1 string
-Legend_Font
-#Print plot_xmin
-#Print plot_xmax
-view
-  draw $the_plotter
-    get_string_width string_width "$1"
-    quit
-  plot $the_plotter
-    #Assign string_width strlen('$1')*$h_plot_units_per_char
-    Mul_Var string_width $h_plot_units_per_screen_unit
-
-# these are in the plotting units...
-    Assign lx ($plot_xmin+$plot_xmax-$string_width)/2
-    Assign ly $plot_ymax+$legend_v_offset_top
-    # what about justification??? x centered, y at bottom of text...
-    move $lx $ly
-    string $1
     quit
   quit
 .
@@ -1352,7 +1332,6 @@ view draw $the_plotter text_mode centered quit quit
 .
 
 Define S_At 3 string x y
-advise "S_At $1 $2 $3"
 PMove $2 $3
 PString $1
 .
@@ -1412,9 +1391,12 @@ Set fonts_loaded 0
 Init_Plotter_Param_Indices
 Init_Color_Indices
 
-# Can't reference macro_dir here...
+# Can't reference macro_dir here...  WHY NOT?
 #If !var_exists(plot_locale)
 #  '< $macro_dir/view/unix_plot.mac'	# the default
+
+If !var_exists(plot_locale)
+  '< $macro_dir/view/unix_plot.mac'	# the default
 
 Init_Font_Stuff
 

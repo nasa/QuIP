@@ -7,7 +7,7 @@
 verbose no
 
 variables
-  set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup
+  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
   quit
 
 

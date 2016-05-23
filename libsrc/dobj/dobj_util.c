@@ -79,7 +79,11 @@ static void release_data(QSP_ARG_DECL  Data_Obj *dp )
 //"CAUTIOUS:  release_data:  Object %s owns data but has a null data pointer!?",
 //			OBJ_NAME(dp) );
 //		WARN(ERROR_STRING);
-		assert( AERROR("Object owns data but has a null data ptr!?") );
+//		assert( AERROR("Object owns data but has a null data ptr!?") );
+
+		// This is normally an error, but this case can occur if we
+		// are deleting an partially created object that had some other
+		// initialization error...
 	}
 //#endif /* CAUTIOUS */
 

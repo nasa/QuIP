@@ -9,6 +9,8 @@
 
 // How do we handle bit precision?
 _VEC_FUNC_1V_SCAL( rvset , dst = scalar1_val )
+/* don't need this for all types */
+/* SCALAR_BIT_METHOD( bvset , SETBIT( scalar1_val ) ) */
 
 
 // vmov used to be defined differently, presumably to do
@@ -16,7 +18,5 @@ _VEC_FUNC_1V_SCAL( rvset , dst = scalar1_val )
 // We should bring that back, if possible
 
 _VEC_FUNC_2V( rvmov , dst = src1 )
-/* don't need this for all types */
-/* SCALAR_BIT_METHOD( bvset , SETBIT( scalar1_val ) ) */
 
 

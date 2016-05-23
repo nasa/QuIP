@@ -12,30 +12,25 @@
 #include <string.h>
 #endif // HAVE_STRING_H
 
-#ifdef HAVE_OPENCL
+#ifdef HAVE_METAL
 
-#define BUILD_FOR_OPENCL
+#define BUILD_FOR_METAL
 
 #include "quip_prot.h"
-#include "my_ocl.h"	// 
-#include "ocl_platform.h"	// 
+#include "my_metal.h"	// 
+#include "mtl_platform.h"	// 
 #include "veclib_api.h"
 
-#include "veclib/ocl_veclib_prot.h"
+#include "veclib/mtl_veclib_prot.h"
 
-// When we build in Xcode, we need to precede these with OpenGL:
-#include <OpenGL/OpenGL.h>		// apple only?
-#include <OpenGL/gl.h>			// apple only?
-#include "gl_info.h"
+#include <Metal.h>		// apple only?
+//#include <gl.h>			// apple only?
+//#include "gl_info.h"
+//#include "../opengl/glx_supp.h"
 
-#include "../opengl/glx_supp.h"
-
-// global var
-int max_threads_per_block;	// BUG should we have this?
-
-static const char *default_ocl_dev_name=NULL;
-static const char *first_ocl_dev_name=NULL;
-static int default_ocl_dev_found=0;
+static const char *default_mtl_dev_name=NULL;
+static const char *first_mtl_dev_name=NULL;
+static int default_mtl_dev_found=0;
 
 
 // Where does this comment go?
@@ -49,7 +44,7 @@ static int default_ocl_dev_found=0;
 
 // We treat the device as a server, so "upload" transfers from host to device
 
-static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void mtl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
 {
 	cl_int status;
 
@@ -72,11 +67,11 @@ static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 			NULL);		// event - id for use if asynchronous
  
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueWriteBuffer");
+		report_mtl_error(QSP_ARG  status, "clEnqueueWriteBuffer");
 	}
 }
 
-static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void mtl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
 {
 	cl_int status;
 
@@ -86,7 +81,7 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 
 	//copy memory from device to host
 
-//fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %d, dst = 0x%lx\n",
+//fprintf(stderr,"mtl_mem_dnload:  device = %s, src = 0x%lx, siz = %d, dst = 0x%lx\n",
 //PFDEV_NAME(pdp),(long)src,siz,(long)dst);
 	status = clEnqueueReadBuffer( OCLDEV_QUEUE(pdp),
 			src,		// cl_mem
@@ -99,24 +94,24 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 			NULL);
  
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueReadBuffer");
+		report_mtl_error(QSP_ARG  status, "clEnqueueReadBuffer");
 	}
 }
 
 void *TMPVEC_NAME(size_t size,size_t len,const char *whence)
 {
-	NWARN("ocl_tmpvec not implemented!?");
+	NWARN("mtl_tmpvec not implemented!?");
 	return NULL;
 }
 
 void FREETMP_NAME(void *ptr,const char *whence)
 {
-	NWARN("ocl_freetmp not implemented!?");
+	NWARN("mtl_freetmp not implemented!?");
 }
 
 #define MAX_OCL_DEVICES 5
 
-static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,char *scratch_string)
+static const char * available_mtl_device_name(QSP_ARG_DECL  const char *name,char *scratch_string)
 {
 	Platform_Device *pdp;
 	const char *s;
@@ -141,7 +136,7 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 	return(NULL);	// NOTREACHED - quiet compiler
 }
 
-static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
+static void init_mtl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 {
 	char area_name[LLEN];
 	Data_Area *ap;
@@ -158,7 +153,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	ap = pf_area_init(QSP_ARG  area_name,NULL,0, MAX_OCL_GLOBAL_OBJECTS,DA_OCL_GLOBAL,pdp);
 	if( ap == NO_AREA ){
 		sprintf(ERROR_STRING,
-	"init_ocl_dev_memory:  error creating global data area %s",area_name);
+	"init_mtl_dev_memory:  error creating global data area %s",area_name);
 		WARN(ERROR_STRING);
 	}
 	// g++ won't take this line!?
@@ -191,7 +186,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 							DA_OCL_HOST,pdp);
 	if( ap == NO_AREA ){
 		sprintf(ERROR_STRING,
-	"init_ocl_dev_memory:  error creating host data area %s",area_name);
+	"init_mtl_dev_memory:  error creating host data area %s",area_name);
 		ERROR1(ERROR_STRING);
 	}
 	SET_AREA_PFDEV(ap, pdp);
@@ -216,14 +211,14 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 						DA_OCL_HOST_MAPPED,pdp);
 	if( ap == NO_AREA ){
 		sprintf(ERROR_STRING,
-	"init_ocl_dev_memory:  error creating host-mapped data area %s",area_name);
+	"init_mtl_dev_memory:  error creating host-mapped data area %s",area_name);
 		ERROR1(ERROR_STRING);
 	}
 	SET_AREA_PFDEV(ap,pdp);
 	pdp->pd_ap[PF_HOST_MAPPED_AREA_INDEX] = ap;
 
 	if( verbose ){
-		sprintf(ERROR_STRING,"init_ocl_dev_memory DONE");
+		sprintf(ERROR_STRING,"init_mtl_dev_memory DONE");
 		advise(ERROR_STRING);
 	}
 }
@@ -231,14 +226,14 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 #define OCLDEV_EXTENSIONS(pdp)	OCLPF_EXTENSIONS(PFDEV_PLATFORM(pdp))
 #define EXTENSIONS_PREFIX	"Extensions:  "
 
-static void ocl_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
+static void mtl_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
 {
 	sprintf(MSG_STR,"%s:",PFDEV_NAME(pdp));
 	prt_msg(MSG_STR);
 	prt_msg("Sorry, no OpenCL-specific device info yet.");
 }
 
-static void ocl_info(QSP_ARG_DECL  Compute_Platform *cdp)
+static void mtl_info(QSP_ARG_DECL  Compute_Platform *cdp)
 {
 	int s;
 
@@ -250,7 +245,7 @@ static void ocl_info(QSP_ARG_DECL  Compute_Platform *cdp)
 	prt_msg(MSG_STR);
 
 	// The extensions can be long...
-	s = (int) strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
+	s = strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
 	if( s > SB_SIZE(QS_SCRATCH(DEFAULT_QSP)) )
 		enlarge_buffer( QS_SCRATCH(DEFAULT_QSP), s );
 	sprintf(SB_BUF(QS_SCRATCH(DEFAULT_QSP)),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
@@ -267,7 +262,7 @@ static int extension_supported( Platform_Device *pdp, const char *ext_str )
 
 #define MAX_PARAM_SIZE	128
 
-static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
+static void init_mtl_device(QSP_ARG_DECL  cl_device_id dev_id,
 							Compute_Platform *cpp)
 {
 	cl_int status;
@@ -277,7 +272,6 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	char *name;
 	char *extensions;
 	char scratch[LLEN];
-	static int n_ocl_devs=0;
 	const char *name_p;
 	char *s;
 	Platform_Device *pdp;
@@ -313,29 +307,29 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	 * make sure that the name is not in use already.  If it is, then we append
 	 * a number to the string...
 	 */
-	name_p = available_ocl_device_name(QSP_ARG  name,scratch);	// use cname as scratch string
+	name_p = available_mtl_device_name(QSP_ARG  name,scratch);	// use cname as scratch string
 	pdp = new_pfdev(QSP_ARG  name_p);
 
 	givbuf(name);
 
 #ifdef CAUTIOUS
 	if( pdp == NO_PFDEV ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  init_ocl_device:  Error creating cuda device struct for %s!?",name_p);
+		sprintf(ERROR_STRING,"CAUTIOUS:  init_mtl_device:  Error creating cuda device struct for %s!?",name_p);
 		WARN(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
 
 	/* Remember this name in case the default is not found */
-	if( first_ocl_dev_name == NULL )
-		first_ocl_dev_name = PFDEV_NAME(pdp);
+	if( first_mtl_dev_name == NULL )
+		first_mtl_dev_name = PFDEV_NAME(pdp);
 
 	/* Compare this name against the default name set in
 	 * the environment, if it exists...
 	 */
-	if( default_ocl_dev_name != NULL && ! default_ocl_dev_found ){
-		if( !strcmp(PFDEV_NAME(pdp),default_ocl_dev_name) )
-			default_ocl_dev_found=1;
+	if( default_mtl_dev_name != NULL && ! default_mtl_dev_found ){
+		if( !strcmp(PFDEV_NAME(pdp),default_mtl_dev_name) )
+			default_mtl_dev_found=1;
 	}
 
 	// allocate the memory for the platform-specific data
@@ -349,24 +343,17 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	status = clGetDeviceInfo(dev_id,CL_DEVICE_EXTENSIONS,psize+1,extensions,&psize);
 	OCL_STATUS_CHECK(status,clGetDeviceInfo)
 	{
-		char *es;
-		es=extensions;
+		char *s;
+		s=extensions;
 		// change spaces to newlines for easier reading...
-		while(*es){
-			if( *es == ' ' ) *es = '\n';
-			es++;
+		while(*s){
+			if( *s == ' ' ) *s = '\n';	
+			s++;
 		}
 	}
 
 	SET_OCLDEV_DEV_ID(pdp,dev_id);
 	SET_PFDEV_PLATFORM(pdp,cpp);
-	if( n_ocl_devs >= MAX_OPENCL_DEVICES ){
-		sprintf(ERROR_STRING,"More than %d OpenCL devices found;"
-			"need to increase MAX_OPENCL_DEVICES and recompile",
-			MAX_OPENCL_DEVICES);
-		ERROR1(ERROR_STRING);
-	}
-	SET_OCLDEV_IDX(pdp,n_ocl_devs++);
 
 	SET_PFDEV_MAX_DIMS(pdp,DEFAULT_PFDEV_MAX_DIMS);
 
@@ -390,7 +377,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 			if( share_group != NULL )
 				props[1] = (cl_context_properties) share_group;
 			else
-				ERROR1("CAUTIOUS:  init_ocl_device:  CGL context found, but null share group!?");
+				ERROR1("CAUTIOUS:  init_mtl_device:  CGL context found, but null share group!?");
 		} else {
 			advise("OpenCL initialized without an OpenGL context.");
 		}
@@ -464,7 +451,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 		);
 	}
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateContext");
+		report_mtl_error(QSP_ARG  status, "clCreateContext");
 		SET_OCLDEV_CTX(pdp,NULL);
 		//return;
 	}
@@ -474,19 +461,10 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	//create the command_queue (stream)
 //fprintf(stderr,"clContext = 0x%lx...\n",(long)context);
-//fprintf(stderr,"init_ocl_device:  dev_id = 0x%lx\n",(long)dev_id);
-
-	// At least once we have gotten an invalid value error here,
-	// after receiving the advisory "OpenCL initialized without an OpenGL context
-	// (which may or may not be relevant).  This behavior was not repeatable,
-	// perhaps because of different stack contents???
-
-	// The third arg is a properties bit field, with valid values being:
-	// CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
-	// CL_QUEUE_PROFILING_ENABLE
+//fprintf(stderr,"init_mtl_device:  dev_id = 0x%lx\n",(long)dev_id);
 	command_queue = clCreateCommandQueue(context, dev_id, 0, &status);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateCommandQueue");
+		report_mtl_error(QSP_ARG  status, "clCreateCommandQueue");
 		SET_OCLDEV_QUEUE(pdp,NULL);
 		//return;
 	} else {
@@ -494,30 +472,32 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	}
 	// set a ready flag?
 
-	init_ocl_dev_memory(QSP_ARG  pdp);
+	init_mtl_dev_memory(QSP_ARG  pdp);
 
 	curr_pdp = pdp;
 }
 
-static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
+#define MAX_METAL_DEVICES	4
+
+static void init_mtl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 {
 	cl_int	status;
 	cl_uint		n_devs;
 	int i;
-	cl_device_id dev_tbl[MAX_OPENCL_DEVICES];
+	cl_device_id dev_tbl[MAX_METAL_DEVICES];
 
 	if( cpp == NULL ) return;	// print warning?
 
 	//get the device info
 	status = clGetDeviceIDs( PF_OPD_ID(cpp), CL_DEVICE_TYPE_DEFAULT,
-		MAX_OPENCL_DEVICES, dev_tbl, &n_devs);
+		MAX_METAL_DEVICES, dev_tbl, &n_devs);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clGetDeviceIDs");
+		report_mtl_error(QSP_ARG  status, "clGetDeviceIDs");
 		return;
 		// BUG make sure to return cleanly...
 	}
-//fprintf(stderr,"init_ocl_devices:  %d device%s found\n",n_devs,n_devs==1?"":"s");
+//fprintf(stderr,"init_mtl_devices:  %d device%s found\n",n_devs,n_devs==1?"":"s");
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d OpenCL device%s found...",n_devs,
@@ -525,7 +505,7 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 		advise(ERROR_STRING);
 	}
 
-	//default_ocl_dev_name = getenv(DEFAULT_OCL_DEV_VAR);
+	//default_mtl_dev_name = getenv(DEFAULT_OCL_DEV_VAR);
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
@@ -538,19 +518,19 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 		check_file_access(QSP_ARG  s);
 		*/
 
-		init_ocl_device(QSP_ARG  dev_tbl[i],cpp);
+		init_mtl_device(QSP_ARG  dev_tbl[i],cpp);
 	}
 
-	//SET_PF_DISPATCH_FUNC( cpp, ocl_dispatch );
-} // end init_ocl_devices
+	//SET_PF_DISPATCH_FUNC( cpp, mtl_dispatch );
+} // end init_mtl_devices
 
-static int ocl_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+static int mtl_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
 {
 	cl_int status;
 
 	// don't need current device, use object's...
-	//INSURE_CURR_ODP(ocl_alloc_data);
-//fprintf(stderr,"ocl_mem_alloc:  object %s device = %s\n",
+	//INSURE_CURR_ODP(mtl_alloc_data);
+//fprintf(stderr,"mtl_mem_alloc:  object %s device = %s\n",
 //OBJ_NAME(dp),PFDEV_NAME(OBJ_PFDEV(dp)));
 
 	// BUG what about alignment???
@@ -558,11 +538,11 @@ static int ocl_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align
 		OBJ_DATA_PTR(dp) = clCreateBuffer(OCLDEV_CTX(OBJ_PFDEV(dp)),
 				CL_MEM_READ_WRITE, size, NULL, &status);
 
-//fprintf(stderr,"ocl_mem_alloc:  object %s data ptr set to 0x%lx\n",
+//fprintf(stderr,"mtl_mem_alloc:  object %s data ptr set to 0x%lx\n",
 //OBJ_NAME(dp),(u_long)OBJ_DATA_PTR(dp));
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status,"clCreateBuffer");
+		report_mtl_error(QSP_ARG  status,"clCreateBuffer");
 		sprintf(ERROR_STRING,"Attempting to allocate %d bytes.",size);
 		advise(ERROR_STRING);
 		return -1;
@@ -570,7 +550,7 @@ static int ocl_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align
 	return 0;
 }
 
-static void ocl_mem_free(QSP_ARG_DECL  Data_Obj *dp)
+static void mtl_mem_free(QSP_ARG_DECL  Data_Obj *dp)
 {
 	cl_int		ret;
 
@@ -580,12 +560,12 @@ static void ocl_mem_free(QSP_ARG_DECL  Data_Obj *dp)
 	// BUG check return value
 }
 
-static void ocl_update_offset(QSP_ARG_DECL  Data_Obj *dp )
+static void mtl_update_offset(QSP_ARG_DECL  Data_Obj *dp )
 {
-	ERROR1("ocl_update_offset not implemented!?");
+	ERROR1("mtl_update_offset not implemented!?");
 }
 
-#ifdef USE_OPENCL_SUBREGION
+#ifdef USE_METAL_SUBREGION
 static cl_mem find_parent_buf(QSP_ARG_DECL  Data_Obj *dp, int *offset_p )
 {
 	int offset=0;
@@ -601,7 +581,7 @@ static cl_mem find_parent_buf(QSP_ARG_DECL  Data_Obj *dp, int *offset_p )
 //fprintf(stderr,"returning %s data ptr at 0x%lx\n",OBJ_NAME(dp),(u_long)OBJ_DATA_PTR(dp));
 	return OBJ_DATA_PTR(dp);
 }
-#endif // USE_OPENCL_SUBREGION
+#endif // USE_METAL_SUBREGION
 
 /*
  * BUG - if we create a subregion for the offset area, then
@@ -610,9 +590,9 @@ static cl_mem find_parent_buf(QSP_ARG_DECL  Data_Obj *dp, int *offset_p )
  * buffer.
  */
 
-static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
+static void mtl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 {
-#ifndef USE_OPENCL_SUBREGION
+#ifndef USE_METAL_SUBREGION
 	/* The original code used subBuffers, but overlapping subregions
 	 * don't work...
 	 * So instead we use a common memory buffer, but keep track
@@ -620,7 +600,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 	 * to be passed to the kernels.
 	 */
 
-//fprintf(stderr,"ocl_offset_data:  obj %s, offset = %d\n",OBJ_NAME(dp),offset);
+//fprintf(stderr,"mtl_offset_data:  obj %s, offset = %d\n",OBJ_NAME(dp),offset);
 //fprintf(stderr,"\tparent obj %s, parent offset = %d\n",OBJ_NAME(OBJ_PARENT(dp)),
 //OBJ_OFFSET(OBJ_PARENT(dp)));
 
@@ -628,7 +608,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 #ifdef CAUTIOUS
 		if( offset & 1 ){
 			sprintf(ERROR_STRING,
-	"CAUTIOUS:  ocl_offset_data:  odd element offset (%d) requested for complex object %s!?",
+	"CAUTIOUS:  mtl_offset_data:  odd element offset (%d) requested for complex object %s!?",
 				offset,OBJ_NAME(dp));
 			ERROR1(ERROR_STRING);
 		}
@@ -639,7 +619,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 #ifdef CAUTIOUS
 		if( (offset & 3) != 0 ){
 			sprintf(ERROR_STRING,
-"CAUTIOUS:  ocl_offset_data:  element offset (%d) not a multiple of 4 for quaternion object %s!?",
+"CAUTIOUS:  mtl_offset_data:  element offset (%d) not a multiple of 4 for quaternion object %s!?",
 				offset,OBJ_NAME(dp));
 			ERROR1(ERROR_STRING);
 		}
@@ -650,7 +630,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 	SET_OBJ_DATA_PTR(dp,OBJ_DATA_PTR(OBJ_PARENT(dp)));
 	SET_OBJ_OFFSET( dp, OBJ_OFFSET(OBJ_PARENT(dp)) + offset );
 
-#else // USE_OPENCL_SUBREGION
+#else // USE_METAL_SUBREGION
 	cl_mem buf;
 	cl_mem parent_buf;
 	cl_buffer_region reg;
@@ -661,7 +641,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 
 #ifdef CAUTIOUS
 	if( parent_buf == NULL )
-		ERROR1("CAUTIOUS: ocl_offset_data:  no parent buffer!?");
+		ERROR1("CAUTIOUS: mtl_offset_data:  no parent buffer!?");
 #endif // CAUTIOUS
 
 	reg.origin = (offset+extra_offset) * ELEMENT_SIZE(dp);
@@ -693,7 +673,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 		&reg,
 			&status);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateSubBuffer");
+		report_mtl_error(QSP_ARG  status, "clCreateSubBuffer");
 		SET_OBJ_DATA_PTR(dp,OBJ_DATA_PTR(OBJ_PARENT(dp)));
 	} else {
 		SET_OBJ_DATA_PTR(dp,buf);
@@ -703,18 +683,18 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 	// leak...
 	// We need to add a special case, or make data releasing a
 	// platform-specific function...
-#endif // USE_OPENCL_SUBREGION
+#endif // USE_METAL_SUBREGION
 }
 
 // use register_buf for interoperability with OpenGL...
 
-static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
+static int mtl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
 #ifdef HAVE_OPENGL
 	cl_mem img;
 	cl_int status;
 
-advise("ocl_register_buf calling clCreateFromGLTexture");
+advise("mtl_register_buf calling clCreateFromGLTexture");
 
 	// Texture2D deprecated on Apple
 //fprintf(stderr,"obj %s has texture id %d\n",OBJ_NAME(dp),OBJ_TEX_ID(dp));
@@ -736,7 +716,7 @@ advise("ocl_register_buf calling clCreateFromGLTexture");
 				&status);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clCreateFromGLTexture");
+		report_mtl_error(QSP_ARG  status, "clCreateFromGLTexture");
 		return -1;
 	} else {
 		SET_OBJ_DATA_PTR(dp,img);
@@ -748,19 +728,19 @@ advise("ocl_register_buf calling clCreateFromGLTexture");
 	//cl_mem = clCreate
 	return 0;
 #else // ! HAVE_OPENGL
-	WARN("ocl_register_buf:  Sorry, no OpenGL support in this build!?");
+	WARN("mtl_register_buf:  Sorry, no OpenGL support in this build!?");
 	return -1;
 #endif // ! HAVE_OPENGL
 }
 
 // map_buf makes an opengl buffer object usable by OpenCL?
-static int ocl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
+static int mtl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
 	cl_int status;
 
 	glFlush();
 
-//fprintf(stderr,"ocl_map_buf mapping %s\n",OBJ_NAME(dp));
+//fprintf(stderr,"mtl_map_buf mapping %s\n",OBJ_NAME(dp));
 	// Acquire ownership of GL texture for OpenCL Image
 	status = clEnqueueAcquireGLObjects(//cl_cmd_queue,
 			OCLDEV_QUEUE(OBJ_PFDEV(dp)),
@@ -771,7 +751,7 @@ static int ocl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
 			0);
 
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueAcquireGLObjects");
+		report_mtl_error(QSP_ARG  status, "clEnqueueAcquireGLObjects");
 		return -1;
 	}
 
@@ -779,12 +759,12 @@ static int ocl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
 	return 0;
 }
 
-static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
+static int mtl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
 #ifdef HAVE_OPENGL
 	cl_int status;
 
-//fprintf(stderr,"ocl_unmap_buf un-mapping %s\n",OBJ_NAME(dp));
+//fprintf(stderr,"mtl_unmap_buf un-mapping %s\n",OBJ_NAME(dp));
 	// Release ownership of GL texture for OpenCL Image
 	status = clEnqueueReleaseGLObjects(//cl_cmd_queue,
 			OCLDEV_QUEUE(OBJ_PFDEV(dp)),
@@ -795,13 +775,13 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 			NULL		// cl_event *event
 			);
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clEnqueueReleaseGLObjects");
+		report_mtl_error(QSP_ARG  status, "clEnqueueReleaseGLObjects");
 		return -1;
 	}
 	// Force pending CL commands to get executed
 	status = clFlush( OCLDEV_QUEUE(OBJ_PFDEV(dp)) );
 	if( status != CL_SUCCESS ){
-		report_ocl_error(QSP_ARG  status, "clFlush");
+		report_mtl_error(QSP_ARG  status, "clFlush");
 	}
 	
 	// Bind GL texture and use for rendering
@@ -813,7 +793,7 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 			);
 	return 0;
 #else // ! HAVE_OPENGL
-	WARN("ocl_unmap_buf:  Sorry, no OpenGL support in this build!?");
+	WARN("mtl_unmap_buf:  Sorry, no OpenGL support in this build!?");
 	return -1;
 #endif // ! HAVE_OPENGL
 }
@@ -831,7 +811,7 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 	status = clGetPlatformInfo(platform_id,code,			\
 		0,NULL,&ret_size);					\
 	if( status != CL_SUCCESS ){					\
-		report_ocl_error(QSP_ARG  status, "clGetPlatformInfo");	\
+		report_mtl_error(QSP_ARG  status, "clGetPlatformInfo");	\
 		return;							\
 		/* BUG make sure to return cleanly... */		\
 	}								\
@@ -839,12 +819,12 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 	status = clGetPlatformInfo(platform_id,code,			\
 		ret_size+1,platform_str,&ret_size);			\
 	if( status != CL_SUCCESS ){					\
-		report_ocl_error(QSP_ARG  status, "clGetPlatformInfo");	\
+		report_mtl_error(QSP_ARG  status, "clGetPlatformInfo");	\
 		return;							\
 		/* BUG make sure to return cleanly... */		\
 	}
 
-static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
+static void init_mtl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 {
 	Compute_Platform *cpp;
 	cl_int status;
@@ -854,7 +834,7 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 
 	GET_PLATFORM_STRING(CL_PLATFORM_NAME)
 
-	cpp = creat_platform(QSP_ARG  platform_str, PLATFORM_OPENCL);
+	cpp = creat_platform(QSP_ARG  platform_str, PLATFORM_METAL);
 	givbuf(platform_str);
 
 	GET_PLATFORM_STRING(CL_PLATFORM_PROFILE)
@@ -871,18 +851,18 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 
 	SET_PF_OPD_ID(cpp,platform_id);
 
-	SET_PLATFORM_FUNCTIONS(cpp,ocl)
+	SET_PLATFORM_FUNCTIONS(cpp,mtl)
 
-	SET_PF_FUNC_TBL(cpp,ocl_vfa_tbl);
+	SET_PF_FUNC_TBL(cpp,mtl_vfa_tbl);
 
 	// BUG need to set vfa_tbl here too!
 
 	//icp = create_item_context(QSP_ARG  pfdev_itp, PLATFORM_NAME(cpp) );
 	//push_item_context(QSP_ARG  pfdev_itp, icp );
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
-	init_ocl_devices(QSP_ARG  cpp);
+	init_mtl_devices(QSP_ARG  cpp);
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
-		ERROR1("init_ocl_platform:  Failed to pop platform device context!?");
+		ERROR1("init_mtl_platform:  Failed to pop platform device context!?");
 }
 
 //In general Intel CPU and NV/AMD's GPU are in different platforms
@@ -890,7 +870,7 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 
 #define MAX_CL_PLATFORMS	3
 
-static int init_ocl_platforms(SINGLE_QSP_ARG_DECL)
+static int init_mtl_platforms(SINGLE_QSP_ARG_DECL)
 {
 	cl_platform_id	platform_ids[MAX_CL_PLATFORMS];
 	cl_uint		num_platforms;
@@ -900,22 +880,22 @@ static int init_ocl_platforms(SINGLE_QSP_ARG_DECL)
 	// BUG need to add error checking on the return values...
 
 	ret = clGetPlatformIDs(MAX_CL_PLATFORMS, platform_ids, &num_platforms);
-//fprintf(stderr,"init_ocl_platform:  %d platform%s found\n",num_platforms,num_platforms==1?"":"s");
+//fprintf(stderr,"init_mtl_platform:  %d platform%s found\n",num_platforms,num_platforms==1?"":"s");
 
 	for(i=0;i<num_platforms;i++)
-		init_ocl_platform(QSP_ARG  platform_ids[i]);
+		init_mtl_platform(QSP_ARG  platform_ids[i]);
 
 	return num_platforms;
 }
 
 // this "platform" is OpenCL, not an OpenCL "platform" ...
 
-void ocl_init_platform(SINGLE_QSP_ARG_DECL)
+void mtl_init_platform(SINGLE_QSP_ARG_DECL)
 {
-	init_ocl_platforms(SINGLE_QSP_ARG);
+	init_mtl_platforms(SINGLE_QSP_ARG);
 
-	check_ocl_vfa_tbl(SINGLE_QSP_ARG);
+	check_mtl_vfa_tbl(SINGLE_QSP_ARG);
 }
 
-#endif /* HAVE_OPENCL */
+#endif /* HAVE_METAL */
 

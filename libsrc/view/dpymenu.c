@@ -72,7 +72,7 @@ static COMMAND_FUNC( do_tell_dpy )
 	}
 #endif /* CAUTIOUS */
 
-	ASSIGN_VAR(s,dop->do_name);
+	ASSIGN_VAR(s,DO_NAME(dop));
 }
 
 static COMMAND_FUNC( do_info_do )
@@ -83,6 +83,17 @@ static COMMAND_FUNC( do_info_do )
 	if( dop == NO_DISP_OBJ ) return;
 #ifdef HAVE_X11
 	info_do(dop);
+#endif /* HAVE_X11 */
+}
+
+static COMMAND_FUNC( do_show_visuals )
+{
+	Disp_Obj *dop;
+
+	dop= PICK_DISP_OBJ("");
+	if( dop == NO_DISP_OBJ ) return;
+#ifdef HAVE_X11
+	show_visuals(QSP_ARG  dop);
 #endif /* HAVE_X11 */
 }
 
@@ -97,6 +108,7 @@ MENU_BEGIN(displays)
 ADD_CMD( new,	do_new_do,		open new display )
 ADD_CMD( open,	do_open_do,		open new display w/ specified depth )
 ADD_CMD( info,	do_info_do,		give information about a display )
+ADD_CMD( visuals,	do_show_visuals,	list available visuals for a display )
 ADD_CMD( list,	do_list_dos,		list displays )
 ADD_CMD( set,	set_do,			select display for succeeding operations )
 ADD_CMD( tell,	do_tell_dpy,		report current default display )

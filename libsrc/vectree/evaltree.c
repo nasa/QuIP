@@ -1779,11 +1779,13 @@ static void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,do
 	cast_to_scalar_value(QSP_ARG  &sv3,OBJ_PREC_PTR(dst_dp),(double)dy);
 
 	clear_obj_args(&oa1);
-	SET_OA_SRC_OBJ(&oa1,0, dst_dp);			// why set this???
+	//SET_OA_SRC_OBJ(&oa1,0, dst_dp);			// why set this???
 	SET_OA_DEST(&oa1, dst_dp);
 	SET_OA_SVAL(&oa1,0, &sv1);
 	SET_OA_SVAL(&oa1,1, &sv2);
 	SET_OA_SVAL(&oa1,2, &sv3);
+
+	set_obj_arg_flags(&oa1);
 
 	platform_dispatch_by_code( QSP_ARG  FVRAMP2D, &oa1 );
 }
@@ -1938,7 +1940,11 @@ advise(ERROR_STRING);
 //#endif /* CAUTIOUS */
 	// Can we assert that this is not null???
 	if( dst_dp != NO_OBJ ){
-		assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dst_dp)) );
+		//assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dst_dp)) );
+		// This can happen with a declaration error...
+		if( UNKNOWN_SHAPE(OBJ_SHAPE(dst_dp)) )
+			return NO_OBJ;
+
 		assert( OBJ_PREC(dst_dp) == VN_PREC(enp) );
 	}
 
@@ -7079,6 +7085,7 @@ DUMP_TREE(enp);
 		return;	/* probably an undefined reference */
 	}
 
+
 #ifdef QUIP_DEBUG
 if( debug & eval_debug ){
 sprintf(ERROR_STRING,"eval_obj_assignment %s",OBJ_NAME(dp));
@@ -7191,6 +7198,10 @@ DUMP_TREE(enp);
 		 * to one or the other...
 		 * But if the conditional is a vector, then
 		 * we need to evaluate it into a scratch vector...
+		 *
+		 * For these tree codes, the first two keys indicate the result types,
+		 * while the third is the test type.  Test can be S (scalar), or B (bitmap).
+		 * The bitmap case handles all tests involving one or more vectors.
 		 */
 		case T_SS_S_CONDASS:		/* eval_obj_assignment */
 			{

@@ -1600,7 +1600,9 @@ static COMMAND_FUNC( do_seed )
 static COMMAND_FUNC( do_pmpttext )
 {
 	const char *p;
+#ifndef BUILD_FOR_OBJC
 	const char *t;
+#endif // BUILD_FOR_OBJC
 	const char *s;
 
 	p=savestr( NAMEOF("prompt string") );

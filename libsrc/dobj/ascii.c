@@ -24,7 +24,7 @@
  */
 
 #define DEFAULT_MAX_PER_LINE	12
-#define ENFORCED_MAX_PER_LINE	50
+#define ENFORCED_MAX_PER_LINE	64
 
 /* We have different needs for formats;
  * When we are print a table of dobj values, we'd like to have fixed length fields,

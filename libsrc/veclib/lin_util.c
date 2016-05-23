@@ -181,8 +181,14 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 
 	//_n=OBJ_COLS(dpfr1);		/* the length of each dot product we will compute */
 
+#ifdef FOOBAR
+	// this stuff is encapsulated into set_obj_arg_flags
 	if( IS_COMPLEX(dpto) )	SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
 	else			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+
+	SET_OA_ARGSPREC(oap,ARGSET_PREC( OBJ_MACH_PREC(dpto) ) );
+#endif // FOOBAR
+	set_obj_arg_flags(oap);
 
 	/* vdot things it's inputs have the same shape, so if we are taking the inner
 	 * product of a column vector with a row vector, we have to transpose one of
@@ -323,9 +329,14 @@ void xform_list(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 	*/
 	//WARN("xform_list:  need to implement sp_obj_xform_list and dp_obj_xform_list !?");
 	// BUG should use platform-specific routine!?
+#ifdef CAUTIOUS
+	clear_obj_args(oap);
+#endif /* CAUTIOUS */
 	SET_OA_DEST(oap,dpto);
 	SET_OA_SRC1(oap,dpfr);
 	SET_OA_SRC2(oap,xform);
+	set_obj_arg_flags(oap);
+
 	h_vl2_xform_list(-1,oap);
 }
 
@@ -334,8 +345,20 @@ void xform_list(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 
 void vec_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 {
+	Vec_Obj_Args oa1,*oap=&oa1;
+
 	if( xform_chk(dpto,dpfr,xform) == -1 )
 		return;
+
+#ifdef CAUTIOUS
+	clear_obj_args(oap);
+#endif /* CAUTIOUS */
+	SET_OA_DEST(oap,dpto);
+	SET_OA_SRC1(oap,dpfr);
+	SET_OA_SRC2(oap,xform);
+	set_obj_arg_flags(oap);
+
+	h_vl2_vec_xform(-1,oap);
 
 	/*
 	switch( OBJ_MACH_PREC(dpto) ){

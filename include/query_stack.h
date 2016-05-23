@@ -349,4 +349,6 @@ extern Query_Stack *default_qsp;		// global needs to be set at init...
 extern void rls_mouthful(Mouthful *mfp);
 extern Mouthful *new_mouthful(const char * text, const char *filename);
 
+extern Query_Stack *init_first_query_stack(void);
+
 #endif /* !  _QUERY_STACK_H_ */

@@ -45,7 +45,6 @@ noinst_HEADERS =				\
 				calling_args.h	\
 				convert.h	\
 				dp_common.h	\
-				fast_sp.h	\
 				method_prot.h	\
 				my_cpuid.h	\
 				new_ops.h	\

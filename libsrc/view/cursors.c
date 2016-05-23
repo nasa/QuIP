@@ -97,8 +97,8 @@ void mk_cursor( QSP_ARG_DECL  const char *name, u_short *data, dimension_t dx,di
 
 	dop = curr_dop();
 #ifdef HAVE_X11
-	src_pixmap = XCreatePixmapFromBitmapData(dop->do_dpy,
-		dop->do_rootw,
+	src_pixmap = XCreatePixmapFromBitmapData(DO_DISPLAY(dop),
+		DO_ROOTW(dop),
 		(char *)data, dx, dy,fg,bg,CURSOR_DEPTH);
 
 	fg_col.red=200;
@@ -109,7 +109,7 @@ void mk_cursor( QSP_ARG_DECL  const char *name, u_short *data, dimension_t dx,di
 	bg_col.green=0;
 	bg_col.blue=200;
 
-	vcp->vc_cursor = XCreatePixmapCursor(dop->do_dpy,src_pixmap,
+	vcp->vc_cursor = XCreatePixmapCursor(DO_DISPLAY(dop),src_pixmap,
 		/*NULL*/src_pixmap/*mask*/,
 		&fg_col,&bg_col, 0 /* x_hot */, 0 /* y_hot */ );
 #endif /* HAVE_X11 */
@@ -123,14 +123,14 @@ void root_cursor( View_Cursor *vcp )
 	Disp_Obj *dop;
 	dop = curr_dop();
 #ifdef HAVE_X11
-	XDefineCursor(dop->do_dpy,dop->do_rootw,vcp->vc_cursor);
+	XDefineCursor(DO_DISPLAY(dop),DO_ROOTW(dop),vcp->vc_cursor);
 #endif /* HAVE_X11 */
 }
 
 void assign_cursor( Viewer *vp, View_Cursor *vcp )
 {
 #ifdef HAVE_X11
-	XDefineCursor(vp->vw_dpy,vp->vw_xwin,vcp->vc_cursor);
+	XDefineCursor(VW_DPY(vp),vp->vw_xwin,vcp->vc_cursor);
 #endif /* HAVE_X11 */
 }
 

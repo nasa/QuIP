@@ -111,7 +111,7 @@ if( $flavor == demo ) then
   echo No flavor-specific files known...
 endif
 
-echo File $outfile complete, encrytping...
+echo File $outfile complete, encrypting...
 
 # We tried using 'which' to determine the presence of quip,
 # but we couldn't eliminate the annoying "quip:  command not found"
@@ -132,7 +132,7 @@ echo File $outfile complete, encrytping...
 
 quip $outfile $encfile < encrypt_file.scr >& /tmp/enc_errors
 if( $status != 0 ) then
-  echo Problem encrytping: `cat /tmp/enc_errors`
+  echo Problem encrypting: `cat /tmp/enc_errors`
   /bin/rm /tmp/enc_errors
   echo Creating zero-length encrypted file.
   if( -e $encfile ) then

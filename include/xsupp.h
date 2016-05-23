@@ -31,6 +31,7 @@ extern Viewer *find_viewer(QSP_ARG_DECL  Window win);
 extern void		set_display(Disp_Obj *dop);
 extern Disp_Obj *	open_display(QSP_ARG_DECL  const char *name,int desired_depth);
 extern void		info_do(Disp_Obj *dop);
+extern void		show_visuals(QSP_ARG_DECL  Disp_Obj *dop);
 
 /* xsync.c */
 

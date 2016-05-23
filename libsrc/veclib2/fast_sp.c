@@ -2,9 +2,13 @@
 
 #ifdef USE_SSE
 
-#include "nvf.h"
-#include "sp_prot.h"
+//#include "nvf.h"
+#include "quip_prot.h"
+//#include "veclib/vl2_veclib_prot.h"
+#include "simd_prot.h"
+//#include "sp_prot.h"
 
+extern int use_sse_extensions;	// in ../veclib/nvf.h, dispatch.c
 
 /* Tips on intrinsic simd using gcc, from http://ds9a.nl/gcc-simd/example.html */
 
@@ -145,6 +149,7 @@ void simd_vec_##name(float *v1,float *v2,unsigned long n)	\
 }
 
 #include "simd_funcs.c"
+
 //SIMD_VEC_FUNC_3(rvadd,+)
 //SIMD_VEC_FUNC_3(rvsub,-)
 //SIMD_VEC_FUNC_3(rvmul,*)
@@ -165,14 +170,16 @@ void simd_obj_##name(HOST_CALL_ARG_DECLS)					\
 		(!N_IS_CONTIGUOUS(OA_SRC1(oap))) ||				\
 		(!N_IS_CONTIGUOUS(OA_SRC2(oap))) || 				\
 		( ! use_sse_extensions ) ){				\
-		sp_obj_##name(oap);					\
+		/*h_vl2_sp_##name(oap);*/					\
+		NERROR1("bad SIMD call #1");\
 	} else {							\
 		/* make sure that addresses are aligned */		\
 		if( NOT_ALIGNED(OBJ_DATA_PTR(OA_DEST(oap))) ||		\
 		    NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC1(oap))) ||			\
 		    NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC2(oap))) ){			\
 NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
-			sp_obj_##name(oap);				\
+			/*h_vl2_sp_##name(oap);*/				\
+			NERROR1("Bad SIMD call #2");\
 		} else {						\
 			simd_vec_##name((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
 				(float *)OBJ_DATA_PTR(OA_SRC1(oap)),		\
@@ -264,11 +271,11 @@ SIMD_FUNC( _simd_vsmax, SIMD_VSMAX )
 SIMD_FUNC( _simd_vsmin, SIMD_VSMIN )
 
 SIMD_FUNC( _simd_vvnand, SIMD_VVNAND )
-SIMD_FUNC( _simd_vvor,   SIMD_VVNAND )
-SIMD_FUNC( _simd_vvxor,  SIMD_VVNAND )
+SIMD_FUNC( _simd_vvor,   SIMD_VVOR )
+SIMD_FUNC( _simd_vvxor,  SIMD_VVXOR )
 SIMD_FUNC( _simd_vsnand, SIMD_VSNAND )
-SIMD_FUNC( _simd_vsor,   SIMD_VSNAND )
-SIMD_FUNC( _simd_vsxor,  SIMD_VSNAND )
+SIMD_FUNC( _simd_vsor,   SIMD_VSOR )
+SIMD_FUNC( _simd_vsxor,  SIMD_VSXOR )
 
 
 #define SIMD_2_VEC_SCALAR( normfunc, sse_func )				\

@@ -51,10 +51,10 @@ static /* int */ void flush_one_display( Disp_Obj *dop )
 	/* Does XCheckMaskEvent actually flush the events???
 	 */
 
-	XCheckMaskEvent(dop->do_dpy,mask,&event);
+	XCheckMaskEvent(DO_DISPLAY(dop),mask,&event);
 
 #ifdef FOOBAR
-	if( XCheckMaskEvent(dop->do_dpy,mask,&event) == True ){
+	if( XCheckMaskEvent(DO_DISPLAY(dop),mask,&event) == True ){
 		/* we just discard the event */
 		return(0);
 	} else {
@@ -79,10 +79,10 @@ static void drag_to( int x, int y, Viewer *vp )
 	/* erase at old location */
 
 	/*
-	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, bg_xim,
+	XPutImage(VW_DPY(vp), vp->vw_xwin, vp->vw_gc, bg_xim,
 		x, y, x, y, carried->dg_width, carried->dg_height);
 	*/
-	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, bg_xim,
+	XPutImage(VW_DPY(vp), vp->vw_xwin, vp->vw_gc, bg_xim,
 		0, 0, 0, 0, vp->vw_width, vp->vw_height);
 
 	carried->dg_x=0;
@@ -99,7 +99,7 @@ static void drag_to( int x, int y, Viewer *vp )
 	embed_draggable(drag_image,carried);
 
 	/* redraw thingy at new location */
-	XPutImage(vp->vw_dpy, vp->vw_xwin, vp->vw_gc, drag_xim,
+	XPutImage(VW_DPY(vp), vp->vw_xwin, vp->vw_gc, drag_xim,
 		0, 0, x-carried->dg_rx, y-carried->dg_ry,
 		OBJ_COLS(drag_image), OBJ_ROWS(drag_image));
 
@@ -158,11 +158,11 @@ static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 	drag_image = mk_img(QSP_ARG  "drag_image",dgp->dg_height,
 		dgp->dg_width,vp->vw_depth/8,PREC_FOR_CODE(PREC_BY));
 
-	drag_xim = XCreateImage(vp->vw_dpy,vp->vw_visual,vp->vw_depth,ZPixmap,0,
+	drag_xim = XCreateImage(VW_DPY(vp),VW_VISUAL(vp),vp->vw_depth,ZPixmap,0,
 		(char *)OBJ_DATA_PTR(drag_image),
 		OBJ_COLS(drag_image),OBJ_ROWS(drag_image),8,0);
 
-	bg_xim = XCreateImage(vp->vw_dpy,vp->vw_visual,vp->vw_depth,ZPixmap,0,
+	bg_xim = XCreateImage(VW_DPY(vp),VW_VISUAL(vp),vp->vw_depth,ZPixmap,0,
 		(char *)OBJ_DATA_PTR(vp->vw_dp),
 		OBJ_COLS(vp->vw_dp),OBJ_ROWS(vp->vw_dp),8,0);
 }
@@ -174,10 +174,10 @@ static void do_enter_leave( XEvent *event )
 	XCrossingEvent *cross_event = (XCrossingEvent *) event;
 
 	if (cross_event->type == EnterNotify && LocalCmap && !ninstall) 
-		XInstallColormap(curr_dop()->do_dpy,LocalCmap);
+		XInstallColormap(DO_DISPLAY(curr_dop()),LocalCmap);
 
 	if (cross_event->type == LeaveNotify && LocalCmap && !ninstall) 
-		XUninstallColormap(curr_dop()->do_dpy,LocalCmap);
+		XUninstallColormap(DO_DISPLAY(curr_dop()),LocalCmap);
 	*/
 	return;
 }
@@ -475,7 +475,7 @@ advise(ERROR_STRING);
 				/* eat up motion events */
 
 				while( XCheckMaskEvent(
-					vp->vw_dop->do_dpy,ButtonMotionMask|PointerMotionMask,event) )
+					VW_DPY(vp),ButtonMotionMask|PointerMotionMask,event) )
 					;
 			}
 
@@ -701,7 +701,7 @@ static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
 	 * events, otherwise we could get into a bad loop!
 	 */
 
-	if( XCheckMaskEvent(dop->do_dpy,mask,&event) == True ){
+	if( XCheckMaskEvent(DO_DISPLAY(dop),mask,&event) == True ){
 		retval = HandleEvent(QSP_ARG  &event,&done);
 	} else {
 		return(NOTHING_HAPPENED);

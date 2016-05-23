@@ -52,7 +52,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	/* only create colormap if visual is psuedocolor */
 
-	if( vp->vw_dop->do_depth == 8 ){
+	if( VW_DEPTH(vp) == 8 ){
 
 /* NADVISE("xld_setup:  creating colormap..."); */
 
@@ -60,8 +60,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 		 * But we might like to initialize to the system's default map, not
 		 * our own peculiar map...
 		 */
-		vp->vw_cmap = XCreateColormap(vp->vw_dop->do_dpy, vp->vw_dop->do_rootw,
-				vp->vw_visual, AllocAll );
+		vp->vw_cmap = XCreateColormap(VW_DPY(vp), VW_ROOTW(vp),
+				VW_VISUAL(vp), AllocAll );
 
 	} else {
 		if( verbose )
@@ -150,11 +150,11 @@ void x_init_lb_data( Lutbuf *lbp )
 	if( (dop=curr_dop()) == NO_DISP_OBJ )
 		return;
 
-	if( dop->do_depth != 8 ){
+	if( DO_DEPTH(dop) != 8 ){
 		if( verbose && !depth_warned ){
 			sprintf(ERROR_STRING,
 				"Display depth (%d) must be 8 for colormaps, simulating...",
-				dop->do_depth);
+				DO_DEPTH(dop));
 			advise(ERROR_STRING);
 			depth_warned++;
 		}

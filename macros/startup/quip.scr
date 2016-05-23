@@ -2,12 +2,14 @@
 
 verbose no
 
+If !var_exists(QUIP)
+  "variables set QUIP quip quit"
+
 variables
-#  set QUIPSTARTUPDIR /usr/local/share/quip/macros/startup
-  set QUIPSTARTUPDIR /usr/local/share/coq/macros/startup
+  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
   quit
 
-
+#echo "QUIPSTARTUPDIR = $QUIPSTARTUPDIR"
 #view debug xsupp quit
 
 < $QUIPSTARTUPDIR/generic.scr

@@ -333,19 +333,25 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 
 	/* BUG we aren't making sure that we don't overrun printable_str!? */
 	while(*fr){
-		if( isprint(*fr) || isspace(*fr) ){
-			/* Don't escape backslashes */
-			/*
-			if( *fr == '\\' )
+		if( isascii(*fr) ){
+			if( isprint(*fr) || isspace(*fr) ){
+				/* Don't escape backslashes */
+				/*
+				if( *fr == '\\' )
+					*to++ = '\\';
+				*/
+				*to++ = *fr;
+			} else {
+//ADVISE("show_unprintable expanding a non-printing char...");
 				*to++ = '\\';
-			*/
-			*to++ = *fr;
+				*to++ = '0' + (((*fr)>>6)&0x3);
+				*to++ = '0' + (((*fr)>>3)&0x7);
+				*to++ = '0' + (((*fr)>>0)&0x7);
+			}
 		} else {
-ADVISE("show_unprintable expanding a non-printing char...");
-			*to++ = '\\';
-			*to++ = '0' + (((*fr)>>6)&0x3);
-			*to++ = '0' + (((*fr)>>3)&0x7);
-			*to++ = '0' + (((*fr)>>0)&0x7);
+			// assume UTF8???
+			// are there any unprintable UTF8 characters???
+			*to++ = *fr;
 		}
 		fr++;
 	}

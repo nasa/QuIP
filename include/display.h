@@ -56,6 +56,12 @@ typedef struct dpyable {		/* canvas & panel shared */
 	unsigned int	dpa_width;
 	unsigned int	dpa_height;
 	int		dpa_depth;
+#define DPA_WIDTH(dpy)	(dpy)->dpa_width
+#define DPA_HEIGHT(dpy)	(dpy)->dpa_height
+#define DPA_DEPTH(dpy)	(dpy)->dpa_depth
+#define SET_DPA_WIDTH(dpy,v)	(dpy)->dpa_width = v
+#define SET_DPA_HEIGHT(dpy,v)	(dpy)->dpa_height = v
+#define SET_DPA_DEPTH(dpy,v)	(dpy)->dpa_depth = v
 	int		dpa_x;
 	int		dpa_y;		/* for the viewer */
 	// "requested" values were introduced when it appeared
@@ -83,10 +89,11 @@ typedef struct dpyable {		/* canvas & panel shared */
 	Disp_Obj *	dpa_dop;
 	Window		dpa_xwin;
 
-#define dpa_dpy		dpa_dop->do_dpy
-#define dpa_gc		dpa_dop->do_gc
-#define dpa_screen_no	dpa_dop->do_screen
-#define dpa_visual	dpa_dop->do_visual
+//#define dpa_dpy		DO_DISPLAY(dpa_dop)
+//#define dpa_gc		DO_GC(dpa_dop)
+//#define dpa_screen_no		DO_SCREEN(dpa_dop)
+//#define dpa_visual		DO_VISUAL(dpa_dop)
+
 
 	Colormap	dpa_cmap;			/* X color map */
 	XColor *	dpa_xctbl;
@@ -113,13 +120,22 @@ typedef struct dpyable {		/* canvas & panel shared */
 
 #define NO_DISPLAY ((Dpyable *)NULL)
 
+#define DPA_DPY(dpy)		DO_DISPLAY(DPA_DOP(dpy))
+#define DPA_ROOTW(dpy)		DO_ROOTW(DPA_DOP(dpy))
+#define DPA_SCREEN_NO(dpy)	DO_SCREEN(DPA_DOP(dpy))
+
 #define DPA_CMAP(dpy)		(dpy)->dpa_cmap
 #define DPA_CMAP_OBJ(dpy)	(dpy)->dpa_cmap_dp
 #define DPA_LINTBL_OBJ(dpy)	(dpy)->dpa_lintbl_dp
 #define DPA_N_PROT_CLRS(dpy)	(dpy)->dpa_n_protected_colors
 #define DPA_DEPTH(dpy)		(dpy)->dpa_depth
 
-#define DPA_DISPLAY(dpy)	(dpy)->dpa_dpy
+//#define DPA_DISPLAY(dpy)	(dpy)->dpa_dpy
+#define DPA_DOP(dpy)		(dpy)->dpa_dop
+#define SET_DPA_DOP(dpy,v)	(dpy)->dpa_dop = v
+#define DPA_DISPLAY(dpy)	DO_DISPLAY(DPA_DOP(dpy))
+#define DPA_VISUAL(dpy)		DO_VISUAL(DPA_DOP(dpy))
+
 #define DPA_XCTBL(dpy)		(dpy)->dpa_xctbl
 #define DPA_XWIN(dpy)		(dpy)->dpa_xwin
 #define SET_DPA_XCTBL(dpy,v)	(dpy)->dpa_xctbl = v

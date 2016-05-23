@@ -702,7 +702,6 @@ int platform_dispatch_by_code( QSP_ARG_DECL   int code, Vec_Obj_Args *oap )
 
 	vfp = &(vec_func_tbl[code]);
 	cpp = set_oargs_platform(QSP_ARG  oap);
-
 	return platform_dispatch( QSP_ARG  cpp, vfp, oap );
 }
 

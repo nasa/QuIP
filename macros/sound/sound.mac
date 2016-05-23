@@ -1,0 +1,66 @@
+
+Set sound_test_panel_name Sound
+
+Define Init_Sound_Panel 0
+interface
+  nav_panel $sound_test_panel_name
+  navigation $sound_test_panel_name
+    new_group 'Test Functions'
+    plain_item 'Record' 'Record test sound' RecordTestSound
+    plain_item 'Play' 'Play test sound' PlayTestSound
+    plain_item 'Synthesize' 'Synthesize test sound' SynthTestSound
+    plain_item 'Display' 'Display test sound' DispTestSound
+    quit
+  quit
+.
+
+Define SoundMenu 0
+Push_Nav $sound_test_panel_name
+.
+
+Define RecordTestSound 0
+If !obj_exists(ssound) Init_Test_Sound_Objs
+advise "testing sound recording..."
+sound
+  acquire
+    record ssound
+    quit
+  quit
+.
+
+Set test_seconds 4
+Set samp_freq 44100	# what is it really?
+Assign test_len $test_seconds*$samp_freq
+Print test_len
+Set test_freq 440	# A 440
+Set test_freq 1000
+
+Define Init_Test_Sound_Objs 0
+If obj_exists(fsound) exit_macro
+Vector fsound $test_len 1 float
+#Vector ssound $test_len 1 int32	# not short on iOS?
+Vector ssound $test_len 1 float		# really?
+.
+
+Define SynthTestSound 0
+If !obj_exists(ssound) Init_Test_Sound_Objs
+Ramp1D fsound 0 8*atan(1)*$test_freq/$samp_freq
+VSin fsound fsound
+#VSMul fsound fsound 0x7fffffff
+#Convert ssound fsound
+VMov ssound fsound
+.
+
+Define PlayTestSound 0
+If !obj_exists(ssound) "warn 'Need to record or synthesize a sound first!?' exit_macro"
+sound
+  playback
+    play ssound
+    quit
+  quit
+.
+
+Define DispTestSound 0
+Display ssound
+.
+

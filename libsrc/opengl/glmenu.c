@@ -603,10 +603,8 @@ static COMMAND_FUNC( do_cap_q )
 	}
 
 	if( glIsEnabled(cap) == GL_TRUE ){
-advise("cap_enabled = 1");
 		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"1");
 	} else {
-advise("cap_enabled = 0");
 		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"0");
 	}
 }

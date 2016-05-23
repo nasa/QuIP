@@ -5,6 +5,7 @@
 
 #ifndef BUILD_FOR_GPU
 void HOST_CALL_NAME(xform_list)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( xform_list, OA_DEST(oap) ) }
+void HOST_CALL_NAME(vec_xform)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( vec_xform, OA_DEST(oap) ) }
 
 void HOST_CALL_NAME(fft2d)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
 {

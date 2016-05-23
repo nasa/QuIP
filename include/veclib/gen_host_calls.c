@@ -131,12 +131,18 @@
 #include "veclib/type_undefs.h"
 
 // bit stuff
+//
+// This may not work on a GPU, because different threads will need to read
+// and write the same word!?
+
+#ifndef BUILD_FOR_GPU
 
 #include "veclib/bit_defs.h"
 _VEC_FUNC_DBM_1S(rvset, SET_DBM_BIT(scalar1_val) )
 _VEC_FUNC_DBM_SBM(rvmov, SET_DBM_BIT(srcbit) )
-
 #include "veclib/type_undefs.h"
+
+#endif // ! BUILD_FOR_GPU
 
 
 // Why is this only for not building kernels?
