@@ -139,6 +139,7 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 					goto ccdun;
 				}
 			} else {
+				// hips1 etc
 				if( (n2=read(ifp->if_fd,cbuf,4*n)) != 4*n ){
 					sprintf(ERROR_STRING,
 				"read_object %s from file %s:  %d bytes requested, %d bytes read",
@@ -395,12 +396,12 @@ FIO_RD_FUNC( raw )
 
 	if( FILE_FINISHED(ifp) ){
 
-		if( verbose ){
+		//if( verbose ){
 			sprintf(ERROR_STRING,
 				"closing file \"%s\" after reading %d frames",
 				ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
-		}
+		//}
 		(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
 	}
 	return;

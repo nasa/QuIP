@@ -1,0 +1,28 @@
+
+Set t tst.hips1
+
+Clobber yes
+Write_File_Header $t 3
+
+Image x 10 10 1 u_byte
+VSet x 3
+
+Put_Next x $t
+Put_Next x $t
+Put_Next x $t
+
+
+Read_File_Header $t
+fileio autoclose $t no quit
+fileio info $t quit
+
+Get_Next x $t
+Get_Next x $t
+Get_Next x $t
+#Get_Next x $t
+
+File_Seek $t 0
+Get_Next x $t
+
+Pause
+

@@ -77,21 +77,6 @@ static int no_clobber=1;		// BUG not thread-safe!?
 
 static const char *iofile_directory=NULL;
 
-
-#ifdef FOOBAR
-/* local prototypes */
-
-static void create_filetypes(SINGLE_QSP_ARG_DECL);
-static off_t fio_seek_setup(Image_File *ifp, index_t n);
-
-static double get_if_size(QSP_ARG_DECL  Item *ifp,int index);
-static double get_if_il_flg(QSP_ARG_DECL  Item *ifp);
-
-static void update_pathname(Image_File *ifp);
-static int check_clobber(QSP_ARG_DECL  Image_File *ifp);
-static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name);
-#endif // FOOBAR
-
 ITEM_INTERFACE_DECLARATIONS(Image_File,img_file)
 
 
@@ -1337,10 +1322,13 @@ void write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
 
 static off_t fio_seek_setup(Image_File *ifp, index_t n)
 {
-	long frms_to_seek;
+	off_t frms_to_seek;
 	index_t frmsiz;
 
-	frms_to_seek = (long)(n - ifp->if_nfrms);
+	// if_nfrms holds the number of frames already read...
+	// index_t is unsigned, so we have to cast this to be sure to get
+	// the correct sign...
+	frms_to_seek = ((off_t)n) - ifp->if_nfrms;
 
 	/* figure out frame size */
 
@@ -1358,7 +1346,7 @@ static off_t fio_seek_setup(Image_File *ifp, index_t n)
 	 * we pass the frame number to rv_seek_frame() and let it worry
 	 * about it...
 	 */
-	
+
 	return( frms_to_seek * frmsiz );
 }
 
