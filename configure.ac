@@ -658,6 +658,9 @@ AC_CHECK_FILE([/usr/local/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/include"])
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
 AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
 
+# ffmpeg headers may be installed under /usr/include OR /usr/include/ffmpeg...
+AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
+
 if test "x${use_x11}" = xyes; then
   AC_CHECK_FILE([/usr/X11/lib],[LDFLAGS="$LDFLAGS -L/usr/X11/lib"])
   AC_CHECK_FILE([/usr/X11R6/lib],[LDFLAGS="$LDFLAGS -L/usr/X11R6/lib"])
