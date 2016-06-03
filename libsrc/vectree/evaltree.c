@@ -4422,12 +4422,23 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			break;
 
 		case T_BOOL_OR:
+			// BUG - not performing short-circuit
+			// evaluation if the first subexpression
+			// is true - see comment below...
 			lval=EVAL_INT_EXP(VN_CHILD(enp,0));
 			lval2=EVAL_INT_EXP(VN_CHILD(enp,1));
 			if( lval || lval2 ) return(1);
 			else return(0);
 			break;
 		case T_BOOL_AND:
+			// Originally, we used short-circuit
+			// evaluation here, where if the first
+			// subexpression was false, then we didn't
+			// need to evaluate the rest.
+			// But that resulted in a memory leak.
+			// BUG - there should be a way to
+			// do the necessary to the subtree without
+			// actually evaluating?
 			lval=EVAL_INT_EXP(VN_CHILD(enp,0));
 			lval2=EVAL_INT_EXP(VN_CHILD(enp,1));
 			if( lval && lval2 ) return(1);
