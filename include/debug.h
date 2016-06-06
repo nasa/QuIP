@@ -62,7 +62,7 @@ typedef uint32_t debug_flag_t;
 #define GETBUF_DEBUG_MASK	0
 #define FREEL_DEBUG_MASK	0
 #define HASH_DEBUG_MASK		0
-#define DICT_DEBUG_MASK	0
+#define DICT_DEBUG_MASK		0
 #define NODE_DEBUG_MASK		0
 #define ITEM_DEBUG_MASK		0
 #define CTX_DEBUG_MASK		0

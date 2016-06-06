@@ -115,6 +115,7 @@ endif
 # Comment out these two lins to test on unix...
 if( $flavor == demo ) then
   # these files were added to make the old demos work:
+  #set subdir=../../oq/macros/demo
   set subdir=demo
   #cat ../../macros/demo/login.mac >> $outfile
   #cat ../../macros/demo/gui_demo.mac >> $outfile
@@ -163,7 +164,7 @@ else if( $flavor == pvt ) then
   #cat ../../macros/pvt/pvt_main.scr >> $outfile
   source add_file.csh pvt/pvt_main.scr
 else if( $flavor == csf ) then
-  set subdir=demo
+  set subdir=../../oq/macros/demo
   set file_list=( login gui_demo graph )
   source add_files.csh
 
@@ -171,7 +172,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/demo/gui_demo.mac >> $outfile
   #cat ../../macros/demo/graph.mac >> $outfile
 
-  set subdir=csf
+  set subdir=../../oq/macros/csf
   set file_list=( csf calib arrows csf_cam sync_files csf_admin psych )
   source add_files.csh
 
@@ -194,7 +195,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/pvt/pvt_params.mac >> $outfile
   #cat ../../macros/pvt/pvt_dist.mac >> $outfile
   #cat ../../macros/pvt/pvt_plot.mac >> $outfile
-  set subdir=pvt
+  set subdir=../../oq/macros/pvt
   set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
   source add_files.csh
 
@@ -211,7 +212,7 @@ else if( $flavor == csf ) then
 #  cat ../../macros/view/opt_ht.mac >> $outfile
   #cat ../../macros/csf/csf_admin.mac >> $outfile	# csf
   #cat ../../macros/csf/csf_main.scr >> $outfile
-  source add_file.csh csf/csf_main.scr
+  source add_file.csh ../../oq/macros/csf/csf_main.scr
 
 else if( $flavor == ezjet ) then
   if( $test_mode != 0 ) then
