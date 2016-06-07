@@ -189,10 +189,16 @@ If $_v==1 "Mul_Var $1 1/gamma(0.5) exit_macro"
 #If $_v<=2 exit_macro
 
 # This appears correct for _v odd, but not _v even!?
+Set __v $_v
+Set _factor 1
 do
-  Add_Var _v -2
-  Mul_Var $1 (($_v+1)/$_v)
-  while $_v>2
+  Add_Var __v -2
+  Assign __u $__v+1
+  Mul_Var _factor $__u/$__v
+  advise "_factor = $_factor, numerator = $__u   denom = $__v"
+  while $__v>2
+Assign _factor2 gamma(($_v+1)/2)/(sqrt(4*atan(1))*gamma($_v/2))
+advise "v = $_v   FACTOR = $_factor   FACTOR2 = $_factor2"
 #Mul_Var $1 gamma(($_v+1)/2)/gamma($_v/2)
 .
 

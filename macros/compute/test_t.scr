@@ -3,6 +3,27 @@
 < tdist.mac
 < $macro_dir/view/plotsupp.mac
 
+Assign f1 1
+
+#Set i 1
+#repeat 10
+#  Set pname f$i
+#  Increment i
+#  Set vname f$i
+#  Assign $vname $i*$$pname
+#  Assign g gamma($i)
+#  advise "factorial $i = $$vname  gamma($i) = $g"
+#  end
+#exit
+
+
+Set i 1
+repeat 10
+  Get_TD_Coeff _c $i
+  Increment i
+  end
+exit
+
 # First confirm that we duplicate the graphs on the wikipedia page
 # https://en.wikipedia.org/wiki/Student's_t-distribution
 
@@ -91,5 +112,6 @@ Do_One 5 $cyan
 Do_One 6 $red
 Do_One 50 $black
 
+exit
 Pause
 
