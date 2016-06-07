@@ -1,0 +1,94 @@
+# Test the t distribution macros
+
+< tdist.mac
+< $macro_dir/view/plotsupp.mac
+
+# First confirm that we duplicate the graphs on the wikipedia page
+# https://en.wikipedia.org/wiki/Student's_t-distribution
+
+New_Plotter PDF 500 500
+Posn_Window PDF 50 50
+Set xmin -6
+Set xmax 6
+Set x_tick_spacing 2
+Set x_legend x
+Set ymin 0
+Set ymax 0.4
+Set y_tick_spacing 0.1
+Set y_legend P(x)
+Setup_Axes
+
+New_Plotter CDF 500 500
+Posn_Window CDF 650 50
+Set xmin -6
+Set xmax 6
+Set x_tick_spacing 2
+Set x_legend x
+Set ymin 0
+Set ymax 1.0
+Set y_tick_spacing 0.2
+Set y_legend P(X<=x)
+Setup_Axes
+
+Define Do_One 2 dof color
+T_Dist $1
+# This computes the cumulative, and so has scaled the t_dist by the bin width...
+# We undo that here
+VSMul tdist tdist 1/$bin_width
+
+# x values in domain, y values in tdist
+advise "Finding first sample..."
+Set i_first 0
+do
+  Assign x value(domain[$i_first])
+  Increment i_first
+  while $x<$xmin
+
+advise "Finding last sample..."
+Set i_last $i_first
+do
+  Increment i_last
+  Assign x value(domain[$i_last])
+  while $x<$xmax
+
+advise "i_first = $i_first   i_last = $i_last"
+
+Assign n_to_plot $i_last-$i_first
+Print n_to_plot
+Subvector __d domain $n_to_plot $i_first
+Subvector __t tdist $n_to_plot $i_first
+Subvector __c cum_tdist $n_to_plot $i_first
+Set downsample_factor 10
+Assign n_ds $n_to_plot/$downsample_factor
+Vector pts $n_ds 2 float
+Subsample_Vector _d __d $n_ds 0 $downsample_factor
+Subsample_Vector _t __t $n_ds 0 $downsample_factor
+Subsample_Vector _c __c $n_ds 0 $downsample_factor
+
+advise "Converting..."
+Convert pts{0} _d
+Convert pts{1} _t
+advise "plotting..."
+Select_Plotter PDF
+Select_Pen $2
+XYPlot pts
+
+Convert pts{1} _c
+Select_Plotter CDF
+Select_Pen $2
+XYPlot pts
+
+Delete_Image pts
+Delete_Image __d
+Delete_Image __t
+Delete_Image __c
+.
+
+# Note we can't do dof = 1 or 2 for some reason???
+#Do_One 1 $red
+Do_One 2 $blue
+Do_One 5 $cyan
+Do_One 50 $black
+
+Pause
+
