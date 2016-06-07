@@ -54,15 +54,19 @@ Vector indices $n_isamps 1 u_short
 .
 
 # Compute the t distribution (not the cumulative)
+#
+# The form of this is a complicated coefficient (quotient of gamma fns),
+# times pow( 1+t^2/v , -(v+1)/2 )
 
 Define Compute_TDist 3 dest domain dof
-Ramp1D domain -$td_xmax 2*$td_xmax/($n_t_samps-1)
+Ramp1D $2 -$td_xmax 2*$td_xmax/($n_t_samps-1)
 Assign v $3
 VVMul $1 $2 $2	# t^2
 VSMul $1 $1 1/$v
 VSAdd $1 $1 1
 VSPow $1 $1 -($v+1)/2
 Get_TD_Coeff _c $v
+advise "dof = $3, coeff = $_c"
 VSMul $1 $1 $_c
 .
 
@@ -174,13 +178,21 @@ Define Get_TD_Coeff 2 dest_var dof
 Set _v $2
 #If $_v<=2 "error_exit 'Get_TD_Coeff:  degrees of freedom ($_v) must be > 2'"
 If $_v<1 "error_exit 'Get_TD_Coeff:  degrees of freedom ($_v) must be >= 1'"
-If $_v&1		# odd
-  Then "Assign $1 1/(4*atan(1)*sqrt($_v))"
-  Else "Assign $1 1/(2*sqrt($_v))"
-If $_v<=2 exit_macro
+#If $_v&1		# odd
+#  Then "Assign $1 1/(4*atan(1)*sqrt($_v))"	# odd
+#  Else "Assign $1 1/(2*sqrt($_v))"		# even
+#Assign $1 1/(4*atan(1)*sqrt($_v))	# 1 over pi root v
+Assign $1 1/sqrt(4*atan(1)*$_v)		# 1 over root pi v
+# gamma(1)=1
+If $_v==2 "Mul_Var $1 gamma(1.5) exit_macro"
+If $_v==1 "Mul_Var $1 1/gamma(0.5) exit_macro"
+#If $_v<=2 exit_macro
+
+# This appears correct for _v odd, but not _v even!?
 do
   Add_Var _v -2
   Mul_Var $1 (($_v+1)/$_v)
   while $_v>2
+#Mul_Var $1 gamma(($_v+1)/2)/gamma($_v/2)
 .
 

@@ -88,6 +88,7 @@ Delete_Image __c
 #Do_One 1 $red
 Do_One 2 $blue
 Do_One 5 $cyan
+Do_One 6 $red
 Do_One 50 $black
 
 Pause

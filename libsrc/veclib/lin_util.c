@@ -188,7 +188,6 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 
 	SET_OA_ARGSPREC(oap,ARGSET_PREC( OBJ_MACH_PREC(dpto) ) );
 #endif // FOOBAR
-	set_obj_arg_flags(oap);
 
 	/* vdot things it's inputs have the same shape, so if we are taking the inner
 	 * product of a column vector with a row vector, we have to transpose one of
@@ -206,6 +205,9 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 		col_dp=dpfr2;
 
 	SET_OA_DEST(oap,mk_subimg(QSP_ARG  dpto,0,0,"target pixel",1,1) );
+
+	// This has to be called after src/dest are set!
+	set_obj_arg_flags(oap);
 
 	//[sizes setDimensionAtIndex : 1 withValue : OBJ_ROWS(col_dp) ];
 	SET_DIMENSION(sizes,1,OBJ_ROWS(col_dp));

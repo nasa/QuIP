@@ -59,6 +59,7 @@ Import_Image $1
 .
 
 Define Import_Hips 1 filename
+advise "Import_Hips $1"
 Filetype hips1
 Import_Image $1
 .
@@ -109,14 +110,14 @@ echo "Put_Next_Float done"
 Define Read_Object_File 2 objname filename
 #Tell_If "Read_File_Header $2"
 Read_File_Header $2
-Assign ns "nseqs(\"$2\")"
-Assign nf "nframes(\"$2\")"
-Assign depth "depth(\"$2\")"
+Assign ns nseqs('$2')
+Assign nf nframes('$2')
+Assign depth depth('$2')
 Tell_If "File $2 has $ns sequences, $nf frames, and depth = $depth"
 #Print depth
+Assign fprec precision('$2')
 data
-  precision $2 fprec
-  hyperseq $1 $ns $nf "nrows(\"$2\")" "ncols(\"$2\")" $depth $fprec
+  hyperseq $1 $ns $nf nrows('$2') ncols('$2') $depth $fprec
   quit
 # BUG?  Get_Next will only read one frame!?
 Get_Next $1 $2
