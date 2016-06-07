@@ -299,10 +299,13 @@ static COMMAND_FUNC( dotan ){	DO_VCODE(FVTAN); }
 static COMMAND_FUNC( doacos ){	DO_VCODE(FVACOS); }
 static COMMAND_FUNC( dopow ){	DO_VCODE(FVPOW); }
 static COMMAND_FUNC( doasin ){	DO_VCODE(FVASIN); }
-#ifdef HAVE_BESSEL
+// BUG - need to add configure tests for these?
+//#ifdef HAVE_BESSEL
 static COMMAND_FUNC( do_j0 ){	DO_VCODE(FVJ0); }
 static COMMAND_FUNC( do_j1 ){	DO_VCODE(FVJ1); }
-#endif /* HAVE_BESSEL */
+static COMMAND_FUNC( do_gamma ){	DO_VCODE(FVGAMMA); }
+static COMMAND_FUNC( do_lngamma ){	DO_VCODE(FVLNGAMMA); }
+//#endif /* HAVE_BESSEL */
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(trig_menu,s,f,h)
@@ -325,10 +328,12 @@ ADD_CMD( tan,	dotan,		compute tangent	)
 ADD_CMD( pow,	dopow,		raise to a power	)
 ADD_CMD( acos,	doacos,		compute inverse cosine	)
 ADD_CMD( asin,	doasin,		compute inverse sine	)
-#ifdef HAVE_BESSEL
+//#ifdef HAVE_BESSEL
 ADD_CMD( j0,	do_j0,		compute bessel function J0	)
 ADD_CMD( j1,	do_j1,		compute bessel function J1	)
-#endif /* HAVE_BESSEL */
+ADD_CMD( gamma,	do_gamma,	compute gamma function		)
+ADD_CMD( lngamma, do_lngamma,	compute log gamma function	)
+//#endif /* HAVE_BESSEL */
 
 MENU_END(trig)
 

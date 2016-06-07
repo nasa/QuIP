@@ -24,5 +24,12 @@
 #define log10_func	log10f
 #define log_func	logf
 #define pow_func	powf
+// these are double precision funcs...
+//#define gamma_func	gsl_sf_gamma
+//#define lngamma_func	gsl_sf_lngamma
+
+// these are single-prec versions...
+#define gamma_func	tgammaf
+#define lngamma_func	lgammaf
 
 #endif // ! BUILD_FOR_OPENCL

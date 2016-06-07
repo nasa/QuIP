@@ -18,4 +18,6 @@
 #undef log10_func
 #undef log_func
 #undef pow_func
+#undef gamma_func
+#undef lngamma_func
 

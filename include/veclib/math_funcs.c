@@ -28,6 +28,8 @@ _VEC_FUNC_2V(		visnorm ,	dst = (dest_type) isnormal( src1 )	)
 
 _VEC_FUNC_2V(		vj0 ,		dst = (dest_type)j0	( src1 )		)
 _VEC_FUNC_2V(		vj1 ,		dst = (dest_type)j1	( src1 )		)
+_VEC_FUNC_2V(		vgamma,		dst = gamma_func( src1 )		)
+_VEC_FUNC_2V(		vlngamma,	dst = lngamma_func( src1 )		)
 
 // vuni has no source, so mixed precision makes no sense
 #ifndef MIXED_PRECISION

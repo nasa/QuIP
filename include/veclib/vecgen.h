@@ -298,6 +298,9 @@ typedef enum {
 	FVTRUNC,			/* would add after FVFLOOR, but that would mess up numbers in comments */
 	FVERFINV,			/* ditto... */
 
+	FVGAMMA,		// new funcs from libgsl...
+	FVLNGAMMA,
+
 	N_VEC_FUNCS,		/* must be next-to-last! */
 	INVALID_VFC		/* must be last! */
 

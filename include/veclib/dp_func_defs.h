@@ -18,4 +18,8 @@
 #define log10_func	log10
 #define log_func	log
 #define pow_func	pow
+//#define gamma_func	gsl_sf_gamma
+//#define lngamma_func	gsl_sf_lngamma
+#define gamma_func	tgamma
+#define lngamma_func	lgamma
 

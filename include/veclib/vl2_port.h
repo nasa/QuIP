@@ -23,5 +23,10 @@ extern void FREETMP_NAME(void *a, const char *whence);
 
 #include <math.h>	// isinf etc
 
+// include these lines if we use functions from libgsl?
+//#ifdef HAVE_GSL
+//#include "gsl/gsl_sf_gamma.h"
+//#endif // HAVE_GSL
+
 #endif // ! _VL2_PORT_H_
 
