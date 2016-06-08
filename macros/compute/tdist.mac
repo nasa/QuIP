@@ -18,6 +18,8 @@ Vector domain $n_t_samps 1 double
 
 Vector tdist $n_t_samps 1 double
 Vector cum_tdist $n_t_samps 1 double
+#Vector cum_tdist2 $n_t_samps 1 double	# for careful computation...
+#Vector tdist_copy $n_t_samps 1 double	# sorted copy for careful Cumsum
 
 Vector idom $n_isamps 1 double	# inverse domain
 Vector iidx $n_isamps 1 u_short # inverse index
@@ -70,6 +72,31 @@ advise "dof = $3, coeff = $_c"
 VSMul $1 $1 $_c
 .
 
+# When we compute sums, we have best precision if we add small numbers
+# together first.
+
+Define Careful_Cumsum 2 target source
+VMov tdist_copy $2
+VMov $1[0] tdist_copy[0]
+# in the first half, the values are already sorted...
+Subvector _s tdist_copy floor(ncols(tdist_copy)/2) 0
+Subvector _d $1 floor(ncols(tdist_copy)/2) 0
+Cumsum _d _s
+Delete_Image _s
+Delete_Image _d
+
+Assign i floor(ncols(tdist_copy)/2)
+Assign n ncols(tdist_copy)-$i
+repeat $n
+  Subvector _s tdist_copy $i+1 0
+  # sort these values
+  Sort _s
+  VSum $1[$i] _s
+  Delete_Image _s
+  Increment i
+  end
+.
+
 Set prev_tdist_dof -1
 
 # Compute the t distribution, with the specified degrees of freedom...
@@ -92,6 +119,10 @@ VSMul tdist tdist $bin_width
 # This has problems with numerical precision when we start adding the small
 # values on the right tail...  Maybe it would be better to reflect?
 Cumsum cum_tdist tdist
+
+#Careful_Cumsum cum_tdist2 tdist
+#Display cum_tdist[ncols(cum_tdist)-1]
+#Display cum_tdist2[ncols(cum_tdist)-1]
 
 #Convert pts{1} plot_cum_tdist
 #XYPlot pts
@@ -122,7 +153,7 @@ Set last_j -1
 Set half_passed 0
 repeat $n_isamps
   Assign t value(idom[$i])	# target
-  advise "i = $i   target = $t"
+  #advise "i = $i   target = $t"
   Set found 0
   do
     If $j>=ncols(cum_tdist)
@@ -174,18 +205,20 @@ VSet iidx[$i] ($v-$t)<($t-$v2)?$j:$j-1
 # v is the degrees of freedom
 # v must be larger than 2...
 
+Assign pi 4*atan(1)
+
 Define Get_TD_Coeff 2 dest_var dof
 Set _v $2
 #If $_v<=2 "error_exit 'Get_TD_Coeff:  degrees of freedom ($_v) must be > 2'"
 If $_v<1 "error_exit 'Get_TD_Coeff:  degrees of freedom ($_v) must be >= 1'"
-#If $_v&1		# odd
-#  Then "Assign $1 1/(4*atan(1)*sqrt($_v))"	# odd
-#  Else "Assign $1 1/(2*sqrt($_v))"		# even
-#Assign $1 1/(4*atan(1)*sqrt($_v))	# 1 over pi root v
-Assign $1 1/sqrt(4*atan(1)*$_v)		# 1 over root pi v
+If $_v==2 "Assign $1 gamma(1.5)/sqrt($pi*$_v) exit_macro"
+If $_v==1 "Assign $1 1/(sqrt($pi*$_v)*gamma(0.5)) exit_macro"
+If $_v&1		# odd
+  Then "Assign $1 1/($pi*sqrt($_v))"	# odd
+  Else "Assign $1 1/(2*sqrt($_v))"		# even
+##Assign $1 1/($pi*sqrt($_v))	# 1 over pi root v
+#Assign $1 1/sqrt($pi*$_v)		# 1 over root pi v
 # gamma(1)=1
-If $_v==2 "Mul_Var $1 gamma(1.5) exit_macro"
-If $_v==1 "Mul_Var $1 1/gamma(0.5) exit_macro"
 #If $_v<=2 exit_macro
 
 # This appears correct for _v odd, but not _v even!?
@@ -195,10 +228,10 @@ do
   Add_Var __v -2
   Assign __u $__v+1
   Mul_Var _factor $__u/$__v
-  advise "_factor = $_factor, numerator = $__u   denom = $__v"
+#  advise "_factor = $_factor, numerator = $__u   denom = $__v"
   while $__v>2
-Assign _factor2 gamma(($_v+1)/2)/(sqrt(4*atan(1))*gamma($_v/2))
-advise "v = $_v   FACTOR = $_factor   FACTOR2 = $_factor2"
-#Mul_Var $1 gamma(($_v+1)/2)/gamma($_v/2)
+Mul_Var $1 $_factor
+#Assign _factor2 gamma(($_v+1)/2)/(sqrt($pi*$_v)*gamma($_v/2))
+#advise "v = $_v   FACTOR = $$1   FACTOR2 = $_factor2"
 .
 
