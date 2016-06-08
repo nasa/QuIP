@@ -325,7 +325,16 @@ static void clear_decl_obj( Item *ip )
 	dp = (Data_Obj *) ip;
 	enp = (Vec_Expr_Node *) OBJ_EXTRA(dp);
 
-	assert( enp != NULL );
+//fprintf(stderr,"clear_decl_obj:  obj is %s\n",OBJ_NAME(dp));
+	// This assertion fails when a local temp obj is passed???
+//	assert( enp != NULL );
+	if( enp == NULL ){
+		// This should be a temp object that we created,
+		// with name of the form L.[0-9]*
+		assert( strncmp(OBJ_NAME(dp),"L.",2) == 0 );
+		return;
+	}
+
 	assert( VN_DECL_OBJ(enp) == dp );
 
 	SET_VN_DECL_OBJ(enp,NULL);

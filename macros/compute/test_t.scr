@@ -40,6 +40,25 @@ Setup_Axes
 
 Define Do_One 2 dof color
 T_Dist $1
+Display tdist[ncols(tdist)/2-2]
+Display tdist[ncols(tdist)/2-1]
+Display tdist[ncols(tdist)/2]
+Display tdist[ncols(tdist)/2+1]
+Display tdist[ncols(tdist)/2+2]
+
+Display cum_tdist[ncols(tdist)/2-2]
+Display cum_tdist[ncols(tdist)/2-1]
+Display cum_tdist[ncols(tdist)/2]
+Display cum_tdist[ncols(tdist)/2+1]
+Display cum_tdist[ncols(tdist)/2+2]
+
+Display tdist[0]
+Display tdist[ncols(tdist)-1]
+
+Display cum_tdist[0]
+Display cum_tdist[ncols(tdist)-1]
+Pause
+
 # This computes the cumulative, and so has scaled the t_dist by the bin width...
 # We undo that here
 VSMul tdist tdist 1/$bin_width

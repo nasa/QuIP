@@ -4807,6 +4807,8 @@ static Identifier *eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_CSUBSAMP:		/* eval_obj_id() */
 		case T_SUBVEC:			/* eval_obj_id() */
 		case T_CSUBVEC:			/* eval_obj_id() */
+		case T_SQUARE_SUBSCR:		/* eval_obj_id() */
+		case T_CURLY_SUBSCR:		/* eval_obj_id() */
 			/* Subvectors & subscripted objects normally don't have permenent identifiers.
 			 * We'll make one here from the object itself, but this creates a big
 			 * problem with memory getting eaten up.  This was solved in the data library

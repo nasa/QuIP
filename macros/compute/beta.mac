@@ -1,0 +1,61 @@
+# beta function utilities
+#
+# complete beta function:
+# beta(a,b) = exp( lngamma(a) + lngamma(b) - lngamma(a+b) )
+#
+# beta distribution:
+# betadist(x,a,b) = pow(x,a-1)*pow(1-x,b-1)/beta(a,b)
+#
+# from wikipedia, for excel... here "betadist" must be the cumulative in excel???
+# incomplete beta function:
+# ibeta(x,a,b) = betadist(x,a,b) * beta(a,b)
+#
+# regularized incomplete beta function:
+# I_x(a,b) = ibeta(x,a,b)/beta(a,b) = betadist(x,a,b) 
+#
+# implies ibeta(x,a,b) = pow(x,a-1) * pow(1-x,b-1) ???
+#
+# cdf of the beta distribution I_x(a,b) = ibeta(x,a,b) ?
+#
+# beta distribution only defined on the interval 0 < x < 1 ?
+
+Set nsamp 512
+Set nc 5
+
+#Vector domain $nsamp 1 double
+#Ramp1D domain 0 1/($nsamp-1)
+
+expressions
+  read -
+
+double domain[$nsamp];
+
+domain=ramp(0,1/($nsamp-1),0);
+
+double dist[$nc][$nsamp];
+
+print("declaring beta...");
+
+double beta(double a, double b)
+{
+	return exp( lngamma(a) + lngamma(b) - lngamma(a+b) );
+}
+
+print("declaring betadist...");
+void betadist(double *dest, double *dom, double a, double b)
+{
+	*dest = pow(*dom,a-1) * pow(1-(*dom),b-1) / beta(a,b);
+}
+
+print("calling betadist...");
+betadist(&dist[0],&domain,0.5,0.5);
+betadist(&dist[1],&domain,5,1);
+betadist(&dist[2],&domain,1,3);
+betadist(&dist[3],&domain,2,2);
+betadist(&dist[4],&domain,2,5);
+
+end
+  quit
+
+Pause
+

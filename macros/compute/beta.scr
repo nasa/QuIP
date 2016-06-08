@@ -1,0 +1,40 @@
+
+< beta.mac
+< $macro_dir/view/plotsupp.mac
+
+New_Plotter beta 512 512
+Set xmin 0
+Set xmax 1
+Set x_tick_spacing 0.2
+Set ymin 0
+Set ymax 2.5
+Set y_tick_spacing 0.5
+Set x_legend x
+Set y_legend PDF
+Setup_Axes
+
+Vector pts $nsamp 2 float
+Ramp1D pts{0} 0 1/($nsamp-1)
+
+Select_Pen $red
+Convert pts{1} dist[0]
+XYPlot pts
+
+Select_Pen $blue
+Convert pts{1} dist[1]
+XYPlot pts
+
+Select_Pen $green
+Convert pts{1} dist[2]
+XYPlot pts
+
+Select_Pen $purple
+Convert pts{1} dist[3]
+XYPlot pts
+
+Select_Pen $orange
+Convert pts{1} dist[4]
+XYPlot pts
+
+Pause
+
