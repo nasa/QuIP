@@ -9,7 +9,7 @@
 Define Declare_TD_Objects 0
 
 Assign n_t_samps 10*4096+1
-Assign n_isamps	100	# number of inverse samples...
+Assign n_isamps	999	# number of inverse samples...
 Set td_xmax 40	# range limit of domain - for computing
 
 Assign bin_width 2*$td_xmax/$n_t_samps
@@ -21,17 +21,17 @@ Vector cum_tdist $n_t_samps 1 double
 #Vector cum_tdist2 $n_t_samps 1 double	# for careful computation...
 #Vector tdist_copy $n_t_samps 1 double	# sorted copy for careful Cumsum
 
-Vector idom $n_isamps 1 double	# inverse domain
-Vector iidx $n_isamps 1 u_short # inverse index
-Vector icum $n_isamps 1 double  # inverse cumulative
+Vector inv_domain $n_isamps 1 double	# inverse domain (0-1)
+Vector inv_idx $n_isamps 1 u_short	# index into inverse
+Vector inv_cum $n_isamps 1 double  	# inverse cumulative
 .
 
 Define JJunk 0
 
 Vector ipts $n_isamps 2 float
 
-Subvector ic1 icum $n_isamps-1 0
-Subvector ic2 icum $n_isamps-1 1
+Subvector ic1 inv_cum $n_isamps-1 0
+Subvector ic2 inv_cum $n_isamps-1 1
 Vector dcum $n_isamps-1 1 double
 Vector ibw $n_isamps 1 double
 Subvector ibw1 ibw $n_isamps-1 0
@@ -134,25 +134,23 @@ Cumsum cum_tdist tdist
 # for the resolution we are interested.  For example,
 # if we want the 99% confidence interval, then
 # we need the values for 0.005 and 0.995.
-# Because we can represent the values for 0 and 1
+# Because we can't represent the values for 0 and 1
 # (which are -inf and +inf), each bin represents
 # the value at its center, so in this example the
 # minimal case would be where the first bin represents
-# 0.005 would go from 0 to 0.01, so we would need 100
-# bins total.
-# 0.005
-# 0.015
-# 0.025		- this bin for 95% conf. int.
+# 0.01 and the last bin 0.99, with steps of 0.01 (99 bins)
+# Let't do 0.001, then we have 999 bins
 
-Assign inc 1/$n_isamps
-Ramp1D idom $inc/2 $inc
+
+Assign inc 1/($n_isamps+1)
+Ramp1D inv_domain $inc $inc
 
 Set i 0		# index of the current inverse sample
 Set j 0		# index into the cumulative
 Set last_j -1
 Set half_passed 0
 repeat $n_isamps
-  Assign t value(idom[$i])	# target
+  Assign t value(inv_domain[$i])	# target
   #advise "i = $i   target = $t"
   Set found 0
   do
@@ -169,17 +167,23 @@ repeat $n_isamps
   # should we check whether a value is repeated?
   Increment i
   end
-# Now iidx is set, we have to scale...
-Map icum iidx domain
+# Now inv_idx is set, we have to scale...
+Map inv_cum inv_idx domain
 ## # Print some values to check against published table...
 # This is a two-tailed test?
 # bin center is 0.005 - bin width is 0.01?
 #advise "DOF = $1   p = 0.01"
-#Display icum[99]
-#Display icum[0]
-#Display icum[1]
+# first bin is 0.001, last is 0.999
+advise "t value for p=0.001"
+Display inv_cum[998]
+advise "t value for p=0.01"
+Display inv_cum[989]
+advise "t value for p=0.05"
+Display inv_cum[949]
+#Display inv_cum[0]
+#Display inv_cum[1]
 #advise "DOF = $1   p = 0.05"
-#Display icum[97]
+#Display inv_cum[97]
 
 Assign prev_tdist_dof $1
 .
@@ -194,10 +198,10 @@ advise "frac = $frac, t = $_t"
 .
 
 Define Select_IIdx 0
-If $j==0 "VSet iidx[$i] $j exit_macro"
+If $j==0 "VSet inv_idx[$i] $j exit_macro"
 Assign v2 value(cum_tdist[$j-1])
-VSet iidx[$i] ($v-$t)<($t-$v2)?$j:$j-1
-#Display iidx[$i]
+VSet inv_idx[$i] ($v-$t)<($t-$v2)?$j:$j-1
+#Display inv_idx[$i]
 .
 
 # compute the normalizing coefficient for the t distribution

@@ -306,6 +306,7 @@ int xform_chk(Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 	return(0);
 } // end xform_chk
 
+#ifdef FOOBAR
 /* apply a matrix to a list of elements */
 /* this routine vectorizes the dot products;
 	good for big matrices or short lists */
@@ -341,6 +342,7 @@ void xform_list(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 
 	h_vl2_xform_list(-1,oap);
 }
+#endif // FOOBAR
 
 /* like xform_list(), but vectorizes over list instead of matrix row */
 /* good for long lists or big images */
