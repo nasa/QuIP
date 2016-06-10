@@ -5,7 +5,7 @@ if( ! $?suffix ) then
 endif
 
 foreach macro_file ( $file_list )
-  set p=../../macros/$subdir/$macro_file.mac
+  set p=../$subdir/$macro_file.mac
   if( ! -e $p ) then
     echo Macro file $p not found.
   else

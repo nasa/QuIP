@@ -99,6 +99,8 @@ fprintf(stderr,"%s set to %s\n",BUNDLE_DIR_VARNAME,path_string);
 
 #define ASSIGN_STRING(target,value)	_ASSIGN_STRING(target,value)
 #define _ASSIGN_STRING(target,value)	target = #value
+#define STRINGVAL(v)	_STRINGVAL(v)
+#define _STRINGVAL(v)	#v
 
 #ifndef STARTUP_FILE
 #define STARTUP_FILE	startup
@@ -120,6 +122,7 @@ int ios_read_global_startup(SINGLE_QSP_ARG_DECL)
 
 	// Now we do the same thing for a plaintext file...
 	//STARTUP_FILE = "foobar";
+fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGVAL(STARTUP_FILE));
 	ASSIGN_STRING(startup_filename,STARTUP_FILE) ;	// default value
 
 	startup_path = [main_bundle pathForResource:STRINGOBJ(startup_filename)

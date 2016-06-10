@@ -34,6 +34,8 @@ endif
 set outfile=$out_stem.scr
 set encfile=$out_stem.enc
 
+set oq_macro_dir=../../oq/macros
+
 cat < /dev/null > $outfile
 
 echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
@@ -103,7 +105,8 @@ endif
 if( $flavor == ezjet || $flavor == pvt ) then
 #echo verbose yes >> $outfile	# for debugging
 #echo debug query >> $outfile	# for debugging
-  set subdir=pvt
+#  set subdir=pvt
+  set subdir=$oq_macro_dir/pvt
   set file_list=( pvt pvt_params pvt_plot pvt_dist pre_pvt )
   source add_files.csh
   #set subdir=sound
@@ -115,7 +118,7 @@ endif
 # Comment out these two lins to test on unix...
 if( $flavor == demo ) then
   # these files were added to make the old demos work:
-  #set subdir=../../oq/macros/demo
+  #set subdir=$oq_macro_dir/demo
   set subdir=demo
   #cat ../../macros/demo/login.mac >> $outfile
   #cat ../../macros/demo/gui_demo.mac >> $outfile
@@ -164,7 +167,7 @@ else if( $flavor == pvt ) then
   #cat ../../macros/pvt/pvt_main.scr >> $outfile
   source add_file.csh pvt/pvt_main.scr
 else if( $flavor == csf ) then
-  set subdir=../../oq/macros/demo
+  set subdir=$oq_macro_dir/demo
   set file_list=( login gui_demo graph )
   source add_files.csh
 
@@ -172,7 +175,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/demo/gui_demo.mac >> $outfile
   #cat ../../macros/demo/graph.mac >> $outfile
 
-  set subdir=../../oq/macros/csf
+  set subdir=$oq_macro_dir/csf
   set file_list=( csf calib arrows csf_cam sync_files csf_admin psych )
   source add_files.csh
 
@@ -195,7 +198,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/pvt/pvt_params.mac >> $outfile
   #cat ../../macros/pvt/pvt_dist.mac >> $outfile
   #cat ../../macros/pvt/pvt_plot.mac >> $outfile
-  set subdir=../../oq/macros/pvt
+  set subdir=$oq_macro_dir/pvt
   set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
   source add_files.csh
 
@@ -212,12 +215,12 @@ else if( $flavor == csf ) then
 #  cat ../../macros/view/opt_ht.mac >> $outfile
   #cat ../../macros/csf/csf_admin.mac >> $outfile	# csf
   #cat ../../macros/csf/csf_main.scr >> $outfile
-  source add_file.csh ../../oq/macros/csf/csf_main.scr
+  source add_file.csh $oq_macro_dir/csf/csf_main.scr
 
 else if( $flavor == ezjet ) then
   if( $test_mode != 0 ) then
     echo "Set ezjet_test_mode 1" >> $outfile
-    cat ../../macros/ezjet/alert_tests.mac >> $outfile
+    cat ../$oq_macro_dir/ezjet/alert_tests.mac >> $outfile
   endif
 
   set subdir=demo
@@ -228,12 +231,12 @@ else if( $flavor == ezjet ) then
   set file_list=( utilz console )
   source add_files.csh
 
-  set subdir=ezjet
+  set subdir=$oq_macro_dir/ezjet
   set file_list=( questionnaire ezj_qs admin unimp sync_files sw_update participant sleep_diary workload )
   source add_files.csh
 
   echo "# FILE ezjet/ezjet_init.scr BEGIN" >> $outfile
-  cat ../../macros/ezjet/ezjet_init.scr >> $outfile
+  cat ../$oq_macro_dir/ezjet/ezjet_init.scr >> $outfile
 
   #And then the questionnaires:
   # we set the variable to 0 if we want to test a different part
@@ -242,12 +245,12 @@ else if( $flavor == ezjet ) then
   if( $load_questionnaires ) then
     foreach qfile ( demog cis morn_eve ess Samn-Perelli countermeasures commute_time flying tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
       echo "# FILE ezjet/$qfile.scr BEGIN" >> $outfile
-      cat ../../macros/ezjet/$qfile.scr >> $outfile
+      cat ../$oq_macro_dir/ezjet/$qfile.scr >> $outfile
       #cp ../../macros/ezjet/$qfile.scr ~/txt_files/$qfile.txt
     end
     foreach qfile ( skip_pvt )
       echo "# FILE pvt/$qfile.scr BEGIN" >> $outfile
-      cat ../../macros/pvt/$qfile.scr >> $outfile
+      cat ../$oq_macro_dir/pvt/$qfile.scr >> $outfile
       #cp ../../macros/pvt/$qfile.scr ~/txt_files/$qfile.txt
     end
   else
@@ -257,7 +260,7 @@ else if( $flavor == ezjet ) then
 #  echo "# FILE ios/udids.scr BEGIN" >> $outfile
 #  cat ../../macros/ios/udids.scr >> $outfile
   echo "# FILE ezjet/ezjet.scr BEGIN" >> $outfile
-  cat ../../macros/ezjet/ezjet.scr >> $outfile
+  cat ../$oq_macro_dir/ezjet/ezjet.scr >> $outfile
 else if( $flavor == fdm ) then
   echo "Set plot_locale ios" >> $outfile
   cat $HOME/exps/uhco13/stimuli/ios_twinkle.mac >> $outfile
