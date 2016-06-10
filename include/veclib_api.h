@@ -77,8 +77,10 @@ extern void set_obj_arg_flags(Vec_Obj_Args *);
 extern void vmov(HOST_CALL_ARG_DECLS);
 extern void vsmul(HOST_CALL_ARG_DECLS);
 extern void vsadd(HOST_CALL_ARG_DECLS);
-extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
 #endif // FOOBAR
+
+/* cksiz.c */
+extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
 
 extern debug_flag_t veclib_debug;
 
