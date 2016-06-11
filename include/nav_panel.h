@@ -79,9 +79,10 @@ IOS_ITEM_LIST_PROT(Nav_Group,nav_group)
 #define GET_NAV_GROUP(s)	get_nav_group(QSP_ARG  s)
 #define PICK_NAV_GROUP(pmpt)	pick_nav_group(QSP_ARG  pmpt)
 
+// ios macros
 #define NO_NAV_GROUP	((Nav_Group *) NULL)
-
 #define NAVGRP_ITEM_CONTEXT(nav_g)	(nav_g).itm_icp
+#define NAVGRP_NAME(nav_g)		(nav_g).name.UTF8String
 
 @interface Nav_Item : IOS_Item
 // Do we need a weak reference up?
@@ -152,6 +153,7 @@ typedef struct nav_group {
 	Item_Context *	ng_itm_icp;
 } Nav_Group;
 
+// UNIX macros
 #define NO_NAV_GROUP	((Nav_Group *)NULL)
 
 #define NAVGRP_ITEM_CONTEXT(ng_p)		(ng_p)->ng_itm_icp

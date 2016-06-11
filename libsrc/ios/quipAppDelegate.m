@@ -1286,9 +1286,9 @@ static NSString *applicationName=NULL;
 {
 	globalAppDelegate = self;
 
-fprintf(stderr,"applicationWillFinishLaunching BEGIN\n");
+//fprintf(stderr,"applicationWillFinishLaunching BEGIN\n");
 	[self init_main_menu];
-fprintf(stderr,"applicationWillFinishLaunching DONE\n");
+//fprintf(stderr,"applicationWillFinishLaunching DONE\n");
     return TRUE;
 }
 
@@ -1299,7 +1299,7 @@ fprintf(stderr,"applicationWillFinishLaunching DONE\n");
 //	[self init_main_menu];
 
 	dev_size = [[NSScreen mainScreen] visibleFrame].size;
-fprintf(stderr,"dev_size initialized, %f x %f\n",dev_size.width,dev_size.height);
+//fprintf(stderr,"dev_size initialized, %f x %f\n",dev_size.width,dev_size.height);
 
 	// these things use the dev_size property
 	init_dynamic_var(DEFAULT_QSP_ARG  "DISPLAY_WIDTH",get_display_width);
@@ -1429,7 +1429,7 @@ EMPTY_SELECTOR(selectAll)
 			keyEquivalent:@"z"];
 	menuItem.target = self;
 
-fprintf(stderr,"menuItem target = 0x%lx\n",(long)menuItem.target);
+//fprintf(stderr,"menuItem target = 0x%lx\n",(long)menuItem.target);
 
 	menuItem = [aMenu
 			addItemWithTitle:NSLocalizedString(@"Redo", nil)
@@ -1503,10 +1503,10 @@ EMPTY_SELECTOR(print)
 	NSWindow *win;
 
 	win = (__bridge NSWindow *) info;
-fprintf(stderr,"sheetDidEnd BEGIN\n");
+//fprintf(stderr,"sheetDidEnd BEGIN\n");
 	[sheet orderOut:self];
 	// dismiss the window too?
-fprintf(stderr,"sheetDidEnd DONE\n");
+//fprintf(stderr,"sheetDidEnd DONE\n");
 }
 
 #ifdef FOOBAR
@@ -1529,13 +1529,13 @@ fprintf(stderr,"sheetDidEnd DONE\n");
 		completionHander:
 		^(NSInteger result){
 			if( result == NSFileHandlingPanelOKButton ){
-fprintf(stderr,"Will open file!\n");
+//fprintf(stderr,"Will open file!\n");
 			} else if( result == NSFileHandlingPanelCancelButton ){
-fprintf(stderr,"Will NOT open any file.\n");
+//fprintf(stderr,"Will NOT open any file.\n");
 			}
 #ifdef CAUTIOUS
 			  else {
-fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
+//fprintf(stderr,"CAUTIOUS:  unexpected file dialog result %ld!?\n",(long)result);
 			}
 #endif // CAUTIOUS
 
@@ -1581,7 +1581,7 @@ static bool read_quip_file(const char *pathname)
 	fp = fopen(pathname,"r");
 	if( ! fp ) {
 		// Should we send up an alert here?
-fprintf(stderr,"Error opening file %s\n", pathname);
+//fprintf(stderr,"Error opening file %s\n", pathname);
 		return FALSE;
     } else {
 		// Because scripts often redirect
@@ -1887,9 +1887,10 @@ EMPTY_SELECTOR(setAppleMenu)
 	[self populateMainMenu];
 
 	NSMenu *mm = [NSApp mainMenu];
-long n = [mm numberOfItems];
-fprintf(stderr,"main menu has %ld items\n",n);
-int i;
+	long n = [mm numberOfItems];
+//fprintf(stderr,"main menu has %ld items\n",n);
+	int i;
+
 	for(i=0;i<n;i++){
 		NSMenuItem *_mi;
 		_mi = [mm itemAtIndex:i];

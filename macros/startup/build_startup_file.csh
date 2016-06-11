@@ -223,8 +223,9 @@ else if( $flavor == ezjet ) then
     cat ../$oq_macro_dir/ezjet/alert_tests.mac >> $outfile
   endif
 
-  set subdir=demo
-  set file_list=( demo_util admin )
+  set subdir=$oq_macro_dir/demo
+  #set file_list=( demo_util admin )
+  set file_list=( demo_util )
   source add_files.csh
 
   set subdir=ios

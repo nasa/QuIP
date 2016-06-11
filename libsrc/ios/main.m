@@ -97,10 +97,8 @@ fprintf(stderr,"%s set to %s\n",BUNDLE_DIR_VARNAME,path_string);
 // the first one read...  So we push the plain-text file first, so that
 // the encrypted file is the first one read...
 
-#define ASSIGN_STRING(target,value)	_ASSIGN_STRING(target,value)
-#define _ASSIGN_STRING(target,value)	target = #value
-#define STRINGVAL(v)	_STRINGVAL(v)
-#define _STRINGVAL(v)	#v
+#define STRINGIFY(v)	_STRINGIFY(v)
+#define _STRINGIFY(v)	#v
 
 #ifndef STARTUP_FILE
 #define STARTUP_FILE	startup
@@ -122,8 +120,8 @@ int ios_read_global_startup(SINGLE_QSP_ARG_DECL)
 
 	// Now we do the same thing for a plaintext file...
 	//STARTUP_FILE = "foobar";
-fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGVAL(STARTUP_FILE));
-	ASSIGN_STRING(startup_filename,STARTUP_FILE) ;	// default value
+//fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP_FILE));
+	startup_filename=STRINGIFY(STARTUP_FILE);	// default value
 
 	startup_path = [main_bundle pathForResource:STRINGOBJ(startup_filename)
 								ofType:@"scr"];

@@ -269,8 +269,14 @@ void remove_nav_group( QSP_ARG_DECL  Nav_Group *nav_g )
 	Nav_Item *nav_i;
 	Nav_Panel *nav_p;
 	IOS_Node *np;
+//    IOS_Item_Context *icp;
 
 	// first remove all the items
+	// Do we know that the context has been pushed???
+
+//	// this line prevents the error crash, but doesn't seem to be needed???
+//	push_navitm_context(QSP_ARG NAVGRP_ITEM_CONTEXT(nav_g) );
+
 	while( nav_g.items.count > 0 ){
 		nav_i = [nav_g.items objectAtIndex:0];
 		remove_nav_item(QSP_ARG  nav_i);
@@ -288,9 +294,6 @@ void remove_nav_group( QSP_ARG_DECL  Nav_Group *nav_g )
 #endif /* CAUTIOUS */
 	rls_ios_node(np);
 
-	// Now that the groups have their own context, we
-	// should either remove it, or allow it to pre-exist
-	// when we recreate...
 	delete_ios_item_context(QSP_ARG  nav_g.itm_icp);
 
 	// remove from dictionary

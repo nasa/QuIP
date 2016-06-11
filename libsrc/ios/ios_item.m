@@ -133,6 +133,10 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 
 -(void) push : (IOS_Item_Context *) icp	// IOS_Item_Type
 {
+//fprintf(stderr,"IOS_Item_Type %s push:  pushing context %s\n",
+//IOS_ITEM_NAME(self),
+//IOS_CTX_NAME(icp));
+//fflush(stderr);
 	[contextStack push : icp];
 	flags &= ~LIST_IS_CURRENT;
 }
@@ -159,6 +163,10 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	IOS_Item_Context *icp;
 	icp = [contextStack pop];
 	flags &= ~LIST_IS_CURRENT;
+//fprintf(stderr,"IOS_Item_Type %s pop:  popped %s\n",
+//IOS_ITEM_NAME(self),
+//IOS_CTX_NAME(icp));
+//fflush(stderr);
 	return icp;
 }
 
@@ -169,6 +177,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	int status;
 	
 	IOS_Item_Context *icp = contextStack.top;
+	assert(icp!=NULL);
 	status = [icp addItem: ip];
 	flags &= ~(LIST_IS_CURRENT|ALL_LIST_IS_CURRENT);
 	return status;
@@ -242,6 +251,11 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	IOS_Item *ip=NO_IOS_ITEM;
 
 	// Are these errors all CAUTIOUS only???
+/*
+//fprintf(stderr,"%s check \"%s\" BEGIN\n",
+//self.name.UTF8String,s.UTF8String);
+//fflush(stderr);
+*/
 
 	if( contextStack == NULL ) NERROR1("check:  context stack is NULL!?\n");
 	IOS_List *lp=contextStack.list;

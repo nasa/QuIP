@@ -72,17 +72,24 @@ Define DoUser 0
 Push_Nav $user_func_panel
 .
 
+# Grand_Admin is called when we are on the password panel,
+# so first we pop back (to the main panel)
+
 Define Grant_Admin 0
 Pop_Nav
 
 # enable the extra commands
 interface
   navigation $main_name
+advise 'deleting old admin group'
     delete_group 'Administration'
+advise 'making new admin group'
     new_group 'Administration'
+advise 'adding admin functions item'
     nav_item "Admin functions" "Access administrator functions" DoAdmin
     quit
   quit
+advise 'Grant_Admin DONE'
 .
 
 Define Grant_User 0

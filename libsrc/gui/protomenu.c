@@ -23,6 +23,8 @@
 #include "xsupp.h"		/* which_display(), set_curr_win */
 #endif /* BUILD_FOR_IOS */
 
+static IOS_Item_Context *pushed_navitm_context=NULL;
+
 static COMMAND_FUNC( do_panel_cmap )
 {
 	Panel_Obj *po;
@@ -362,7 +364,7 @@ static COMMAND_FUNC( do_new_nav_group )
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
 	}
 	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
-	/* nav_g.itm_icp */
+	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
 
 	curr_nav_g = nav_g;
 
@@ -411,7 +413,7 @@ static COMMAND_FUNC( do_set_nav_group )
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
 	}
 	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
-	/* nav_g.itm_icp */
+	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
 
 	curr_nav_g = nav_g;
 }
@@ -564,7 +566,15 @@ static COMMAND_FUNC( do_end_navigation )
 	assert( curr_nav_p != NULL );
 
 	icp=pop_navgrp_context( SINGLE_QSP_ARG  );
-	icp=pop_navitm_context(SINGLE_QSP_ARG);
+
+	// We can't be sure that we have pushed a navitm context
+	// without checking the flag...
+	if( pushed_navitm_context != NULL ){
+		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		assert( icp == pushed_navitm_context );
+		pushed_navitm_context = NULL;
+
+	}
 
 	pop_menu(SINGLE_QSP_ARG);
 }
@@ -635,6 +645,10 @@ static COMMAND_FUNC( do_nav_menu )
 
 	push_navgrp_context(QSP_ARG  NAVP_GRP_CONTEXT(curr_nav_p));
 	// we push the item context when we have the group...
+	// But how do we know whether or not we pushed a navitm context???
+	// We use a (non thread-safe) global, pushed_navitm_context
+	// Here we set it to null to indicate that we haven't pushed anything...
+	pushed_navitm_context = NULL;
 
 	// Setting the group to nothing makes sense for creation,
 	// but what about deletion?
