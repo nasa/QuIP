@@ -1685,6 +1685,7 @@ AC_CONFIG_FILES([Makefile
 		 macros/visca/Makefile
 		 macros/v4l2/Makefile
 		 macros/gui/Makefile
+		 macros/colors/Makefile
 		 macros/ctrack/Makefile
 		 macros/em_exp/Makefile
 		 macros/eyemov/Makefile

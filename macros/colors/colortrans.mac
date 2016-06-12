@@ -1,0 +1,359 @@
+# color space transformation macros
+If $verbose "echo 'interpreting colortrans.macs'"
+
+< $macro_dir/colors/matrices.mac
+
+Define Matrix_Init 0
+warn "Obsolete macro Matrix_Init:  use Init_Color_Xforms instead"
+Init_Color_Xforms
+.
+
+Define Init_Color_Xforms 0
+
+Matrix RGB2YCbCr_mat		#rgb to YCbCr
+Matrix YCbCr2RGB_mat		#YCbCr to rgb
+
+Matrix ntsc2XYZ_mat		# rgb to cie XYZ
+Matrix XYZ2ntsc_mat		# cie to rgb
+
+Matrix XYZ2judd_mat		# CIE XYZ to judd XYZ
+Matrix judd2XYZ_mat		# Judd XYZ to CIE XYZ
+
+Matrix ntsc2judd_mat
+Matrix judd2ntsc_mat
+
+Matrix judd2lms_mat		# judd XYZ to cones
+Matrix lms2judd_mat		# cones to judd XYZ
+
+Matrix cie2judd_mat		# cie xy to judd xy
+				# homogenous coords
+Matrix judd2rb_mat		# judd xy to r-b
+Matrix rb2judd_mat		# r-b to judd xy
+
+Matrix ntsc2lms_mat
+Matrix lms2ntsc_mat
+
+Matrix opp2lms_mat
+Matrix lms2opp_mat
+
+Matrix opp2ntsc_mat
+Matrix ntsc2opp_mat
+
+#Image white_lms $nrows $ncols $ncomps float
+#Image white_rgb $nrows $ncols $ncomps float
+#Image white_xyz $nrows $ncols $ncomps float
+#Image white_judd $nrows $ncols $ncomps float
+#Image white_lum $nrows $ncols $ncomps float
+#Image white_ycbcr $nrows $ncols $ncomps float
+
+Scalar white_rgb 3 float
+Scalar white_xyz 3 float
+Scalar white_judd 3 float
+Scalar white_lms 3 float
+Scalar white_lum 1 float
+
+data
+ # new white_lms scalar multidimensional $nccomps
+#  new white_rgb scalar multidimensional $nccomps
+#  new white_xyz scalar multidimensional $nccomps
+#  new white_judd scalar multidimensional $nccomps
+#  new white_lum scalar float
+
+  ascii
+
+    # the origin of this matrix should be from some book...
+    # make sure it's not transposed...
+
+    read RGB2YCbCr_mat -
+      1/3	1/3		1/3
+      0 	-1/2		-1/2	
+      0		-sqrt(3/2)	sqrt(3/2)
+
+    read ntsc2XYZ_mat -
+      0.607 0.174 0.201
+      0.299 0.587 0.114
+      0.000 0.066 1.117
+
+    # this matrix is for a projective transformation in homogenous
+    # coordinates; from Vos (1982?)
+    read cie2judd_mat -
+      1.0271		-0.00008	-0.00009
+      0.00376		1.0072		0.00764
+      0.03845		0.01496		1.0
+    read judd2rb_mat -
+      0.15514		0.54312		-0.03286
+      0.0		0.0		0.01608
+      0			1		0
+    # coefficients from MacLeod & Boynton (Smith & Pokorny?)
+    read judd2lms_mat -
+      0.15514		0.54312		-0.03286
+      -0.15514		0.45684		0.03286
+      0.0		0.0		0.01608
+    read XYZ2judd_mat -
+      1.02701		-0.00017	-0.00009
+      0.0114		1.01484		0.00764
+      0.00004		0.00029		1.0
+    quit
+quit 
+
+# BUG when a matrix operates on a multidimensional object, it treats
+# each element like a column vector, but when it operates on a vector
+# it treats it like a row vector
+# thus the equivalent matrices for the two cases are transposes of each other
+
+#linear transpose XYZ2ntsc_mat ntsc2XYZ_mat quit
+#unary mov XYZ2ntsc_mat ntsc2XYZ_mat quit
+
+Make_Inverse YCbCr2RGB_mat RGB2YCbCr_mat
+Make_Inverse XYZ2ntsc_mat ntsc2XYZ_mat
+Make_Inverse judd2XYZ_mat XYZ2judd_mat
+Make_Inverse lms2judd_mat judd2lms_mat
+Make_Inverse rb2judd_mat judd2rb_mat
+
+Inner_Prod ntsc2judd_mat XYZ2judd_mat ntsc2XYZ_mat
+Inner_Prod ntsc2lms_mat judd2lms_mat ntsc2judd_mat
+Make_Inverse lms2ntsc_mat ntsc2lms_mat
+Make_Inverse judd2ntsc_mat ntsc2judd_mat
+.
+
+Define RGB_2_YCbCr 2 'target' 'source'
+Xform_List $1 $2 RGB2YCbCr_mat
+.
+
+Define YCbCr_2_RGB 2 'target' 'source'
+Xform_List $1 $2 YCbCr2RGB_mat
+.
+
+Define XYZ_2_RGB 2 'target list' 'source list'
+Xform_List $1 $2 XYZ2ntsc_mat
+.
+
+Define RGB_2_XYZ 2 'target list' 'source list'
+Xform_List $1 $2 ntsc2XYZ_mat
+.
+
+Define XYZ_2_Judd 2 target source
+Xform_List $1 $2 XYZ2judd_mat
+.
+
+Define Judd_2_XYZ 2 target source
+Xform_List $1 $2 judd2XYZ_mat
+.
+
+Define XYZ_2_xy 2 'target list' 'source list'
+Tri_Image accum
+VMov accum $2{0}
+VVAdd accum accum $2{1}
+VVAdd accum accum $2{2}
+
+#echo 'X+Y+Z'
+#data ascii display accum quit quit
+VVDiv $1{0} accum $2{0}
+VVDiv $1{1} accum $2{1}
+VVDiv $1{2} accum $2{2}
+Delete_Image accum
+.
+
+
+Define CIExy_2_JUDDxy 2 'target list' 'source list'
+VSet $2{2} 1		# homogenous coords
+Xform_List $1 $2 cie2judd_mat
+#echo 'judd, unnormalized'
+#data ascii display $1 quit quit
+VVDiv $1{0} $1{2} $1{0}
+VVDiv $1{1} $1{2} $1{1}
+VVDiv $1{2} $1{2} $1{2}
+.
+
+
+Define Judd_2_LMS 2 'target list' 'source list'
+Xform_List $1 $2 judd2lms_mat
+.
+
+Define LMS_2_Judd 2 'target list' 'source list'
+Xform_List $1 $2 lms2judd_mat
+.
+
+Define LMS_2_rb 2 'target list' 'source list'
+Tri_Image r_plus_g
+VVAdd r_plus_g $2{0} $2{1}
+VVDiv $1{0} r_plus_g $2{0}	# R/(R+G)
+VVDiv $1{1} r_plus_g $2{2}
+VMov $1{2} r_plus_g quit	# luminance
+Delete_Image r_plus_g
+.
+
+Define rb_2_LMS 2 'target list' 'source list'
+VVMul $1{0} $2{2} $2{0}
+VVMul $1{2} $2{2} $2{1}
+VVSub $1{1} $1{0} $2{2}
+.
+
+Define JUDDxy_2_rb 2 'target list' 'source list'
+# transform to MacLeod-Boynton
+# trashes source list
+
+# first put little z in the third component
+VVSub $2{2} $2{0} $2{2}
+VVSub $2{2} $2{1} $2{2}
+#echo 'judd, x y z'
+#data ascii display $2 quit quit
+VVDiv $2{0} $2{1} $2{0}
+VVDiv $2{2} $2{1} $2{2}
+VVDiv $2{1} $2{1} $2{1}
+Xform_List $1 $2 judd2rb_mat 
+.
+
+Define JUDDxy_2_JUDDXYZ 3 'target list' 'source list' 'luminance list'
+#echo 'original'
+#data ascii display $2 quit quit
+VMov $1 $2
+VSet $1{2} 1
+VVSub $1{2} $1{0} $1{2}
+VVSub $1{2} $1{1} $1{2}
+#echo 'with z'
+#data ascii display $1 quit quit
+VVDiv $1{2} $1{1} $1{2}
+VVDiv $1{0} $1{1} $1{0}
+VVDiv $1{1} $1{1} $1{1}
+VVMul $1{2} $3 $1{2}
+VVMul $1{0} $3 $1{0}
+VVMul $1{1} $3 $1{1}
+.
+
+# for each point, get a white with same luminance
+# assume source is in LMS rep
+# assume white is normalized to have unit luminance
+
+Define Equilum_White 2 target source
+Float_Copy luminance $1
+VVAdd luminance $2{0} $2{1}
+VVMul $1{0} luminance value(white_lms{0})
+VVMul $1{1} luminance value(white_lms{1})
+VVMul $1{2} luminance value(white_lms{2})
+Delete_Image luminance
+.
+
+Define Get_Lum 2 'target float image' 'source tri-image'
+VVAdd $1 $2{0} $2{1} 
+.
+
+Define Tri_Splitup 4 achrom rg by source
+Equilum_White $1 $4
+VVSub $2 $1 $4 
+VMov $3{2} $2{2}
+VSet $2{2} 0.0
+VSet $3{0} 0.0
+VSet $3{1} 0.0
+.
+
+Define Splitup 4 achrom rg by source
+Tri_Image cc_tmp
+Tri_Image cc_achrom
+Get_Lum $1 $4
+echo 'getting white component'
+Equilum_White cc_achrom $4
+echo 'subtracting'
+VVSub cc_tmp cc_achrom $4
+VVSub $2 cc_tmp{1} cc_tmp{0}
+VMov $3 cc_tmp{2}
+Delete_Image cc_tmp
+Delete_Image cc_achrom
+.
+
+Define White_Init 0
+data ascii read white_rgb - 255 255 255 quit quit
+RGB_2_XYZ white_xyz white_rgb
+#Display white_xyz
+XYZ_2_Judd white_judd white_xyz
+Judd_2_LMS white_lms white_judd
+VVAdd white_lum white_lms{0} white_lms{1}
+VVDiv white_lms{0} white_lum white_lms{0}
+VVDiv white_lms{1} white_lum white_lms{1}
+VVDiv white_lms{2} white_lum white_lms{2}
+#Display white_lms
+.
+
+Define Opp_Init 0
+# white must be initialized first
+# set up opp to lms first
+
+  # first column is white vector
+VSet opp2lms_mat[0][0] value(white_lms{0})
+VSet opp2lms_mat[1][0] value(white_lms{1})
+VSet opp2lms_mat[2][0] value(white_lms{2})
+  # second column is R-G
+VSet opp2lms_mat[0][1] 1
+VSet opp2lms_mat[1][1] -1
+VSet opp2lms_mat[2][1] 0
+  # third column is B
+VSet opp2lms_mat[0][2] 0
+VSet opp2lms_mat[1][2] 0
+VSet opp2lms_mat[2][2] 1
+VMov lms2opp_mat opp2lms_mat
+Invert lms2opp_mat
+Inner_Prod ntsc2opp_mat lms2opp_mat ntsc2lms_mat
+Inner_Prod opp2ntsc_mat lms2ntsc_mat opp2lms_mat
+#Display opp2lms_mat
+#Display lms2opp_mat
+.
+
+Define Old_LMS_2_RGB 2 target source
+Tri_Copy cc_tmp $2
+LMS_2_Judd $1 $2
+Judd_2_XYZ cc_tmp $1
+XYZ_2_RGB $1 cc_tmp
+Delete_Image cc_tmp
+.
+
+Define Old_LMS_2_XYZ 2 target source
+Tri_Copy cc_tmp $2
+LMS_2_Judd cc_tmp $2
+Judd_2_XYZ $1 cc_tmp
+Delete_Image cc_tmp
+.
+
+Define Old_Judd_2_RGB 2 target source
+Tri_Copy cc_tmp $2
+Judd_2_XYZ cc_tmp $2
+XYZ_2_RGB $1 cc_tmp
+Delete_Image cc_tmp
+.
+
+Define Old_RGB_2_LMS 2 target source
+Tri_Copy cc_tmp $2
+echo 'converting to xyz'
+RGB_2_XYZ $1 $2
+echo 'converting to judd'
+XYZ_2_Judd cc_tmp $1
+echo 'converting to lms'
+Judd_2_LMS $1 cc_tmp
+echo done
+Delete_Image cc_tmp
+.
+
+Define RGB_2_LMS 2 target source
+Xform_List $1 $2 ntsc2lms_mat
+.
+
+Define LMS_2_RGB 2 target source
+Xform_List $1 $2 lms2ntsc_mat
+.
+
+Define RGB_2_Opp 2 target source
+Xform_List $1 $2 ntsc2opp_mat
+.
+
+Define Opp_2_RGB 2 target source
+Xform_List $1 $2 opp2ntsc_mat
+.
+
+Define Show_Matrices 0
+Display ntsc2XYZ_mat
+Display XYZ2ntsc_mat
+.
+
+#Matrix_Init
+#Show_Matrices
+
+If $verbose "echo 'finished interpreting colortrans.macs'"

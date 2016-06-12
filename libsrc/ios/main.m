@@ -97,8 +97,9 @@ fprintf(stderr,"%s set to %s\n",BUNDLE_DIR_VARNAME,path_string);
 // the first one read...  So we push the plain-text file first, so that
 // the encrypted file is the first one read...
 
-#define STRINGIFY(v)	_STRINGIFY(v)
-#define _STRINGIFY(v)	#v
+// defined in platform.h?  but why is that included here?
+//#define STRINGIFY(v)	_STRINGIFY(v)
+//#define _STRINGIFY(v)	#v
 
 #ifndef STARTUP_FILE
 #define STARTUP_FILE	startup

@@ -1,0 +1,28 @@
+If $verbose "echo 'interpreting matrices.macs'"
+
+Set nccomps 3
+Set npixels 3
+
+Define Tri_Copy 2 name model
+Image $1 nrows($2) ncols($2) $nccomps float quit
+.
+
+#Obsolete, use Dup_Float
+#Define Float_Copy 2 name model
+#Image $1 nrows($2) ncols($2) 1 float
+#.
+
+#Define Vector 1 name
+#data new $1 vector $nccomps float quit
+#.
+
+Define Matrix 1 name
+Image $1 $nccomps $nccomps 1 float 
+.
+
+Define Make_Inverse 2 'target matrix' 'source matrix'
+VMov $1 $2
+Invert $1
+.
+
+If $verbose "echo 'finished interpreting matrices.macs'"
