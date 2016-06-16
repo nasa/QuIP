@@ -1498,7 +1498,7 @@ ADD_CMD( fill,		do_fill,	flood fill from seed point	)
 
 ADD_CMD( sort,		do_sort,	sort elements of a vector in-place	)
 ADD_CMD( sort_indices,	do_sort_indices,sort indices of data array	)
-ADD_CMD( scramble,	do_scramble,	permute elements of a uint32 vector	)
+ADD_CMD( scramble,	do_scramble,	permute elements of a real data object	)
 
 #ifdef NOT_YET
 #ifdef FOOBAR

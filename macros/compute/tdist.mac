@@ -239,3 +239,65 @@ Mul_Var $1 $_factor
 #advise "v = $_v   FACTOR = $$1   FACTOR2 = $_factor2"
 .
 
+Set signif_idx -1
+
+Define Init_Tcrit_Tbl 0
+advise "Init_Tcrit_Tbl BEGIN"
+#Set n_tcrit 360		# where does this number come from???
+Vector tcrit_tbl $n_tcrit 1 float	# high and low values should be symmetric...
+					
+VSet tcrit_tbl 0
+If !var_exists(tcrit_cache_file)
+  "Set tcrit_cache_file ascii/tcrit_tbl.$n_tcrit.$significance.asc"
+If file_exists('$tcrit_cache_file')
+  "Get_Ascii tcrit_tbl $tcrit_cache_file"
+advise "Init_Tcrit_Tbl DONE"
+.
+
+Define Get_Tcrit 1 n_dof
+If $signif_idx<0 "error_exit 'Get_Tcrit:  need to set significance level for t-test (with Set_Significance)!?'"
+Assign n_dof $1
+If !obj_exists(tcrit_tbl) Init_Tcrit_Tbl
+Assign tcrit value(tcrit_tbl[$n_dof-1])
+If $tcrit==0
+  # must be single quotes to defer evaluation of $tcrit
+ # Then
+  ' advise "Computing tcrit for n_dof = $n_dof" \
+   T_Dist $n_dof \
+   Assign tcrit value(inv_cum[$signif_idx]) \
+   VSet tcrit_tbl[$n_dof-1] $tcrit \
+   Put_Ascii tcrit_tbl $tcrit_cache_file'
+  #Else 'advise "Using cached value of tcrit, n_dof = $n_dof"'
+.
+
+# Where do these indices come from?
+# What assumptions are made about the table?
+# What determines the table size n_tcrit (5000)?
+#
+# The T_Dist macro computes the distribution...
+#
+# If we ask for 0.01, that should be single-tailed...
+#
+# signif_idx is used to index the inverse cumulative
+# distribution.  So we put in a proportion and get out a t value.
+# The domain goes from 0 to 1.  We compute the inverse cumulative
+# n_isamps is the number of columns of inv_cum
+
+Define Set_Significance 1 p_value
+Set significance $1
+Set n_tcrit 5000	# different n DOF
+If $n_samples>$n_tcrit "Set n_tcrit $n_samples"
+Set sig_idx -1
+If !var_exists('n_isamps') "Set n_isamps 999"
+#If !strcmp('$significance','05')
+#  "Assign signif_idx round(($n_isamps+1)*0.95)-1"
+#If !strcmp('$significance','01')
+#  "Assign signif_idx round(($n_isamps+1)*0.99)-1"
+#If !strcmp('$significance','001')
+#  "Assign signif_idx round(($n_isamps+1)*0.999)-1"
+#If $signif_idx<0
+#  "error_exit 'Significance ($significance) must be 05, 01 or 001'"
+Set _p 0.$significance
+Assign signif_idx round(($n_isamps+1)*(1-$_p))-1
+advise "idx for p=0.$significance is $signif_idx"
+.

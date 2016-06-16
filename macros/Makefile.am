@@ -1,8 +1,9 @@
 
+#		colors		
+
 SUBDIRS = 			\
 				\
 		analysis	\
-		colors		\
 		compute		\
 		ctrack		\
 		data		\

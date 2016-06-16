@@ -11,6 +11,9 @@
 
 // rn(N) returns a random integer in the range 0-N...
 // So if j is initialized to N, we need to call rn(j-1)...
+//
+// BUG rn is implemented with modulo operator, is not
+// perfectly distributed...
 
 #define SCRAMBLE_DATA(type)				\
 							\
@@ -40,6 +43,12 @@ void dp_scramble(QSP_ARG_DECL  Data_Obj *dp)
 		WARN(ERROR_STRING);
 		return;
 	}
+	if( ! IS_REAL(dp) ){
+		sprintf(ERROR_STRING,"dp_scrable:  Sorry, scrambling non-real data is not yet supported");
+		WARN(ERROR_STRING);
+		return;
+	}
+
 	//scramble(QSP_ARG  ((SCRAMBLE_TYPE *)OBJ_DATA_PTR(dp)), OBJ_N_TYPE_ELTS(dp) );
 
 	j=OBJ_N_TYPE_ELTS(dp)-1;

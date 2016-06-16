@@ -1672,6 +1672,8 @@ AC_CHECK_FUNCS([gethostbyname select socket])
 AC_CHECK_FUNCS([drand48 srand48 random srandom rand srand])
 AC_CHECK_FUNCS([ioperm],[have_ioperm=yes],[have_ioperm=no])
 
+#		 macros/colors/Makefile
+
 AC_CONFIG_FILES([Makefile
 		 macros/Makefile
 		 macros/system/Makefile
@@ -1685,7 +1687,6 @@ AC_CONFIG_FILES([Makefile
 		 macros/visca/Makefile
 		 macros/v4l2/Makefile
 		 macros/gui/Makefile
-		 macros/colors/Makefile
 		 macros/ctrack/Makefile
 		 macros/em_exp/Makefile
 		 macros/eyemov/Makefile
