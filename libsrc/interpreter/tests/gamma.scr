@@ -1,0 +1,25 @@
+
+Vector x 10 1 float
+Vector y 10 1 float
+Ramp1D x 1 1.1
+Display x
+
+Set i 0
+repeat 10
+  Assign v value(x[$i])
+  Assign g gamma($v)
+  Assign l lngamma($v)
+  advise "x = $v   gamma(x) = $g   lngamma(x) = $l"
+  Increment i
+  end
+
+compute trig gamma y x quit quit
+Display x
+Display y
+compute trig lngamma y x quit quit
+Display y
+
+Pause
+
+exit
+

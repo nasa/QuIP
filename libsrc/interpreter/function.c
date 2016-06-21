@@ -20,9 +20,9 @@
 #include <math.h>
 #endif /* HAVE_MATH_H */
 
-#ifdef HAVE_GSL
-#include "gsl/gsl_sf_gamma.h"
-#endif /* HAVE_GSL */
+//#ifdef HAVE_GSL
+//#include "gsl/gsl_sf_gamma.h"
+//#endif /* HAVE_GSL */
 
 //#import "nexpr_func.h"
 
@@ -652,10 +652,13 @@ DECLARE_D1_FUNCTION(	cos,	t_cos,		FVCOS,		INVALID_VFC,	INVALID_VFC	)
 DECLARE_D1_FUNCTION(	sin,	sin,		FVSIN,		INVALID_VFC,	INVALID_VFC	)
 DECLARE_D1_FUNCTION(	cos,	cos,		FVCOS,		INVALID_VFC,	INVALID_VFC	)
 #endif /* ! SINE_TBL */
-#ifdef HAVE_GSL
-DECLARE_D1_FUNCTION(	gamma,	gsl_sf_gamma,	FVGAMMA,	INVALID_VFC,	INVALID_VFC	)
-DECLARE_D1_FUNCTION(	lngamma, gsl_sf_lngamma, FVLNGAMMA,	INVALID_VFC,	INVALID_VFC	)
-#endif /* HAVE_GSL */
+//#ifdef HAVE_GSL
+//#ifdef FOOBAR
+// disable this while linking with texinfo...
+DECLARE_D1_FUNCTION(	gamma,	tgamma,		FVGAMMA,	INVALID_VFC,	INVALID_VFC	)
+DECLARE_D1_FUNCTION(	lngamma, lgamma,	FVLNGAMMA,	INVALID_VFC,	INVALID_VFC	)
+//#endif // FOOBAR
+//#endif /* HAVE_GSL */
 DECLARE_D1_FUNCTION(	exp,	exp,		FVEXP,		INVALID_VFC,	INVALID_VFC	)
 DECLARE_D1_FUNCTION(	log,	log,		FVLOG,		INVALID_VFC,	INVALID_VFC	)
 DECLARE_D1_FUNCTION(	log10,	log10,		FVLOG10,	INVALID_VFC,	INVALID_VFC	)
