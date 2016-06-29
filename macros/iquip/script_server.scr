@@ -6,7 +6,7 @@
 # run this daemon on the script server (e.g., ace)
 #
 # Execute whatever is commanded by the client - too much trust? 
-If $argc!=1 "error_exit 'Usage:  coq port_num < script_server.scr'"
+If $argc!=1 "error_exit 'Usage:  $QUIP port_num < script_server.scr'"
 
 Set port_num	$1
 

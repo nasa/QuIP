@@ -6,6 +6,8 @@
 #
 # The formulas came from wikipedia, but they should be repeated here!
 
+advise "TDIST.MAC BEGIN!"
+
 Define Declare_TD_Objects 0
 
 Assign n_t_samps 10*4096+1
