@@ -301,3 +301,4 @@ Set _p 0.$significance
 Assign signif_idx round(($n_isamps+1)*(1-$_p))-1
 advise "idx for p=0.$significance is $signif_idx"
 .
+

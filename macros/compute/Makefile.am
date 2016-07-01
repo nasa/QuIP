@@ -19,14 +19,15 @@ macros_DATA	=	3d.mac			\
 			homog.mac		\
 			invert_erf.scr		\
 			kalman.mac		\
-			tdist.mac		\
 			linear_algebra.mac	\
 			nfilter.mac		\
 			nsubsamp.mac		\
 			nxlate.mac		\
+			permute.mac		\
 			rdp.mac			\
 			rotimg.mac		\
 			sph.mac			\
+			tdist.mac		\
 			threshold.mac		\
 			trough.mac		\
 			xfcoords.mac

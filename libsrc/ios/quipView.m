@@ -9,6 +9,9 @@
 #import "quip_prot.h"
 #include "viewer.h"
 
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+
 @implementation quipView
 @synthesize _size;
 #ifdef BUILD_FOR_IOS
@@ -18,6 +21,7 @@
 @synthesize canvas;
 @synthesize images;
 @synthesize baseTime;
+@synthesize baseTime_2;
 
 -(id)initWithSize:(CGSize) size
 {
@@ -27,6 +31,7 @@
 	r.origin.y = 0;
 	r.size = size;
 	baseTime=0.0;
+	baseTime_2=0;
 	self = [self initWithFrame:r];
 
 	// These lines were added in an attempt
@@ -153,11 +158,22 @@ fprintf(stderr,"CAUTIOUS:  process_action:  error fetching action for event code
 	// gettimeofday or something else?
 	char time_buf[64];
 
+	uint64_t now_time = mach_absolute_time();
+
 	if( baseTime==0.0 )
 		baseTime = event.timestamp;
 
+	if( baseTime_2==0 )
+		baseTime_2 = mach_absolute_time();
+
 	sprintf(time_buf,"%g",event.timestamp-baseTime);
 	assign_var(DEFAULT_QSP_ARG  "event_time",time_buf);
+
+	now_time -= baseTime_2;
+	//uint64_t ns = AbsoluteToNanoseconds( *(AbsoluteTime *) &now_time );
+	uint64_t ns = my_absolute_to_nanoseconds( &now_time );
+	sprintf(time_buf,"%g",round(ns/100000)/10.0);
+	assign_var(DEFAULT_QSP_ARG  "event_time_2",time_buf);
 }
 
 -(void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event

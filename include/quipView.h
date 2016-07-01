@@ -96,6 +96,7 @@ NSOpenGLPixelFormat *	qv_pxlfmt;
 // More properties...
 @property CGSize				_size;
 @property NSTimeInterval			baseTime;
+@property uint64_t				baseTime_2;	// for mach_absolute_time()
 
 -(id) initWithSize:(CGSize)size;
 

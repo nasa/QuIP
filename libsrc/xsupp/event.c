@@ -179,6 +179,7 @@ static void do_enter_leave( XEvent *event )
 	if (cross_event->type == LeaveNotify && LocalCmap && !ninstall) 
 		XUninstallColormap(DO_DISPLAY(curr_dop()),LocalCmap);
 	*/
+fprintf(stderr,"do_enter_leave:  doing nothing\n");
 	return;
 }
 
@@ -613,6 +614,7 @@ NWARN(ERROR_STRING);
 		*/
 		case EnterNotify:
 		case LeaveNotify:
+fprintf(stderr,"enter/leave event type %d\n",event->type);
 #ifdef QUIP_DEBUG
 if( debug ){
 sprintf(ERROR_STRING,"enter/leave event type %d",event->type);

@@ -367,6 +367,7 @@ extern COMMAND_FUNC(do_protomenu);
 #ifdef BUILD_FOR_IOS
 extern int ios_read_global_startup(SINGLE_QSP_ARG_DECL);
 extern void sync_with_ios(void);
+extern uint64_t my_absolute_to_nanoseconds( uint64_t *t );
 #endif /* BUILD_FOR_IOS */
 
 #ifdef BUILD_FOR_MACOS

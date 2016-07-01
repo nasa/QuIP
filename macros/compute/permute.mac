@@ -1,0 +1,31 @@
+# the built-in permute function scrambles the elements of a data
+# object without regard to the shape.  Here we provide a function
+# that preserves the components while shuffling the order of the points.
+#
+# This is not very efficient, we might like to provide a built-in
+# function, but it is not obvious how to specify what is
+# desired for an arbitrary object?
+#
+# Perhaps the order specification could drop all non-1 dimensions
+# that are to be preserved?
+
+# This operates in-place, which is slightly inefficient if we are
+# going to copy later anyway...
+
+Define Permute_Points 1 vector
+If nrows('$1')>1 "error_exit 'Permute_Points:  object $1 has more than one row!?'"
+If ncols('$1')==1 "error_exit 'Permute_Points:  object $1 has only one column!?'"
+If obj_exists(_pp_order)&&ncols(_pp_order)!=ncols('$1') "Delete_Image _pp_order"
+If !obj_exists(_pp_order) "Vector _pp_order ncols('$1') 1 short"
+Ramp1D _pp_order 0 1
+compute misc scramble _pp_order quit quit
+Set _pp_i 0
+Dup_Obj _pp_tmp $1
+repeat ncols(_pp_order)
+  VMov _pp_tmp[$_pp_i] $1[value(_pp_order[$_pp_i])]
+  Increment _pp_i
+  end
+VMov $1 _pp_tmp
+Delete_Image _pp_tmp
+.
+

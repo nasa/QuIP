@@ -3,10 +3,30 @@
 //
 #include <QuartzCore/QuartzCore.h>
 
+// for mach_absolute_time()
+//#include <CoreServices/CoreServices.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+
 #include "quipImages.h"
 #include "quipImageView.h"
 #include "quip_prot.h"
 #include "viewer.h"
+
+
+
+uint64_t my_absolute_to_nanoseconds( uint64_t *t )
+{
+	static mach_timebase_info_data_t	timebase_info;
+
+	if( timebase_info.denom == 0 ){	// relies on bss initialized to 0?
+		mach_timebase_info(&timebase_info);
+fprintf(stderr,"timebase_info:  numer = %u, denom = %u\n",timebase_info.numer,
+timebase_info.denom);
+	}
+	uint64_t ns = (*t) * timebase_info.numer / timebase_info.denom;
+	return ns;
+}
 
 @implementation quipImages
 
@@ -15,6 +35,7 @@
 #endif // BUILD_FOR_IOS
 
 @synthesize _time0;
+@synthesize _time0_2;
 @synthesize _flags;
 @synthesize _vbl_count;
 @synthesize _frame_duration;
@@ -60,6 +81,8 @@
 		// This is a one-shot
 		[self disableUpdates];
 #ifdef BUILD_FOR_IOS
+		uint64_t ltime;
+		ltime = mach_absolute_time();
 
 		// This is not what we need for PVT, because
 		// This is called at the start of the trial...
@@ -72,6 +95,15 @@
 //NADVISE(DEFAULT_ERROR_STRING);
 		sprintf(time_buf,"%g",t - (QI_QV(self)).baseTime);
 		assign_var(DEFAULT_QSP_ARG  "refresh_time", time_buf );
+
+		//ltime -= _time0_2;
+		ltime -= (QI_QV(self)).baseTime_2;
+		uint64_t ns;
+		//ns = AbsoluteToNanoseconds( *(AbsoluteTime *) &ltime );
+		ns = my_absolute_to_nanoseconds( &ltime );
+		sprintf(time_buf,"%g",round(ns/100000)/10.0);
+		assign_var(DEFAULT_QSP_ARG  "refresh_time2", time_buf );
+
 #endif // BUILD_FOR_IOS
 		chew_text(DEFAULT_QSP_ARG  cycle_func, "(refresh event)");
 	} else {

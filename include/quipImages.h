@@ -34,6 +34,7 @@
 
 
 @property CFTimeInterval		_time0;
+@property uint64_t			_time0_2;	// for mach_absolute_time()
 @property long				_flags;
 @property int				_vbl_count;
 @property int				_frame_duration;

@@ -825,10 +825,12 @@ COMMAND_FUNC( do_protomenu )
 #ifdef HAVE_X11
 		const char *display_name;
 		display_name = which_display(SINGLE_QSP_ARG);
+fprintf(stderr,"do_protomenu:  display is %s\n",display_name);
 #endif /* HAVE_X11 */
 
 		prog_name = tell_progname();
 		so_init(QSP_ARG  1,&prog_name);
+fprintf(stderr,"do_protomenu:  back from so_init\n");
 
 		DECLARE_STR1_FUNCTION(	panel_exists,	panel_exists )
 

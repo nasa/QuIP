@@ -322,8 +322,8 @@ Panel_Obj *new_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 	// to have a stripped down version of new_panel
 	// to set up an existing viewer for getting widgets.
 
-//sprintf(ERROR_STRING,"new_panel %s calling make_panel",PO_NAME(po));
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"new_panel %s calling make_panel",PO_NAME(po));
+advise(ERROR_STRING);
 	make_panel(QSP_ARG  po,dx,dy);			/* Xlib calls */
 
 #ifdef BUILD_FOR_OBJC

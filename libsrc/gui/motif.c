@@ -241,6 +241,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 		ERROR1("CAUTIOUS:  no display object");
 #endif
 
+fprintf(stderr,"make_panel BEGIN\n");
 
 	set_curr_win(PO_ROOTW(po));
 	/* let the panel share a colormap? */
@@ -252,17 +253,21 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 	XtSetArg(al[ac], XmNwidth, width); ac++;
 	XtSetArg(al[ac], XmNheight, height); ac++;
 
+fprintf(stderr,"calling XtAppCreateShell\n");
 	po->po_frame_obj = (Widget) XtAppCreateShell(PO_NAME(po), "guimenu",
 				applicationShellWidgetClass, display,
 				al, ac);
+fprintf(stderr,"back from XtAppCreateShell\n");
 
 	if( po->po_frame_obj == (Widget) NULL )
 		ERROR1("error creating frame");
 
 	ac = 0;
 	XtSetArg(al[ac], XmNautoUnmanage, FALSE); ac++;
+fprintf(stderr,"calling XmCreateForm, al = 0x%lx, ac = %d\n",(long)al,ac);
 	po->po_panel_obj = XmCreateForm(po->po_frame_obj, (String) NULL,
 				al, ac);
+fprintf(stderr,"back from XmCreateForm\n");
 
 	if( (Widget) po->po_panel_obj == (Widget) NULL )
 		ERROR1("error creating panel");
@@ -276,6 +281,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 	po->po_realized = 0;
 	/* po->po_flags = 0; */		/* the caller did this already... */
 
+fprintf(stderr,"calling XtManageChile, panel_obj = 0x%lx\n",(long)po->po_panel_obj);
 	XtManageChild(po->po_panel_obj);
 
 	/* XXX unsupported until I figure this out */
