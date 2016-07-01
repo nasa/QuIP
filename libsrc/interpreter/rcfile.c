@@ -11,6 +11,7 @@
  * look for a global quip startup file (where?)
  * But for testing and comparing to the old quip,
  * we call this file $HOME/.coqrc instead...
+ * UPDATE:  use {progname}rc, no hard-coded references to coq or quip
  *
  * Directories are searched in the following order:
  *	1) current directory
@@ -55,7 +56,7 @@
 #include "debug.h"		/* verbose */
 #include "query.h"
 
-static int read_global_startup(SINGLE_QSP_ARG_DECL)
+static int read_global_startup(QSP_ARG_DECL const char *progname)
 {
 #ifdef BUILD_FOR_OBJC
 #ifdef BUILD_FOR_IOS
@@ -83,11 +84,18 @@ static int read_global_startup(SINGLE_QSP_ARG_DECL)
 	// There is an install script to copy the file, but this fails when
 	// we copy the file to the device...
 
-	sprintf(filename,"%s/.coqrc",home);	// BUG possible buffer overrun
+	// BUG possible buffer overrun
+	sprintf(filename,"%s/.%src",home,progname);
 	fp=fopen(filename,"r");
 
 	if( fp!=NULL ) {
 //		int lvl;
+
+		if( verbose ){
+			sprintf(ERROR_STRING,
+	"Interpreting global startup file %s",filename);
+			advise(ERROR_STRING);
+		}
 
 		/* We might like to interpret commands here,
 		 * but no menus have been pushed, so we can't!?
@@ -226,13 +234,12 @@ void rcfile( Query_Stack *qsp, char* progname )
 	 * used here, but when this is executed no menus have been pushed...
 	 * We could push the builtin menu?
 	 */
-	status = read_global_startup(SINGLE_QSP_ARG);
+	status = read_global_startup(QSP_ARG  progname);
 
 	if( status < 0 && s == NULL ){
 		advise("No startup file found");
 	} else if( verbose ){
 		/* How would verbose ever be set here? Only by changing compilation default? */
-		if( status == 0 ) advise("Interpreting global startup file $HOME/.coqrc");
 		if( s != NULL ){
 			sprintf(ERROR_STRING,"Interpreting startup file %s",s);
 			advise(ERROR_STRING);

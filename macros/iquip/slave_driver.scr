@@ -1,6 +1,6 @@
 # connect to overseer
 
-If $argc!=2 "error_exit 'usage:  coq hostname port_num < slave_driver.scr'"
+If $argc!=2 "error_exit 'usage:  $QUIP hostname port_num < slave_driver.scr'"
 
 < slave_driver.mac
 
