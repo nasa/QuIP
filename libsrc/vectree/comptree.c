@@ -5928,11 +5928,6 @@ gen_obj_shape:
 			 */
 			decl_enp = (Vec_Expr_Node *)OBJ_EXTRA(dp);
 
-/*
-sprintf(ERROR_STRING,"prelim_node_shape OBJECT:  decl_enp = 0x%lx",
-(u_long)decl_enp);
-advise(ERROR_STRING);
-*/
 			/* We used to think it was an error if there was no decl_enp,
 			 * and it would be if we were operating strictly within
 			 * the expression language - but since we are initially

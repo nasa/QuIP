@@ -193,7 +193,7 @@ struct data_obj {
 	Shape_Info *		dt_shpp;
 	void *			dt_data_ptr;
 	void *			dt_unaligned_ptr;
-	void *			dt_extra;
+	void *			dt_extra;	// used for decl_enp - what else?
 	int			dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;

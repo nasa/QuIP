@@ -150,6 +150,12 @@ static COMMAND_FUNC( do_export )
 	// object's name
 	dp = base_object(dp);
 
+	// The OBJ_EXTRA field holds decl_enp for objects declared in the
+	// expression language...  exported objects are not, so we have to
+	// explicitly clear the field here.  WHAT ELSE MIGHT THIS FIELD BE
+	// USED FOR???
+	SET_OBJ_EXTRA(dp,NULL);
+
 	idp = ID_OF(OBJ_NAME(dp));
 	if( idp != NO_IDENTIFIER ){
 		sprintf(ERROR_STRING,"do_export:  identifier %s already exists!?",ID_NAME(idp));
