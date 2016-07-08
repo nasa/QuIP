@@ -244,15 +244,33 @@ fprintf(stderr,"%s = 0x%lx\n",#k,k);
 //SHOW_MASK_BITS(CWEventMask)
 
 
-	/* According to the manual, TrueColor visuals have immutable colormaps */
+	/* On the mac, X11 sometimes aborts because of a BadMatch error
+	 * (invalid parameter attributes)
+	 * The random nature of this occurrence suggests that 
+	 * there may be some kind of race condition...
+	 *
+	 * It also seems to happen slightly less frequently when the printf
+	 * statement is present???
+	 *
+	 * Do we really need a colormap when the depth is 24 bpp???
+	 * For TrueColor, the colormap is read-only, but for DirectColor
+	 * we can write it?
+	 *
+	 * If these lines are commented out, the XCreateWindow ALWAYS fails!?
+	 *
+	 * AllocNone is right for TrueColor, but not for DirectColor???
+	 */
 
+//#ifdef TRY_WITHOUT_THIS
 	if( DO_DEPTH(dop) == 24 ) {
+//fprintf(stderr,"CreateWindow calling XCreateColormap...\n");
 		colormap = XCreateColormap (DO_DISPLAY(dop), DO_ROOTW(dop),
 			DO_VISUAL(dop), AllocNone);
 		valuemask |= CWColormap;
 //SHOW_MASK_BITS(CWColormap)
 		attributes.colormap = colormap;
 	}
+//#endif // TRY_WITHOUT_THIS
 
 #ifdef QUIP_DEBUG
 if( debug & xdebug ){
