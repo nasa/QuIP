@@ -86,13 +86,13 @@
 		REPORT_THREAD_INFO					\
 		GPU_FLEN_CALL_NAME(name)<<< NN_GPU >>> 			\
 			(KERN_ARGS_FLEN_##bitmap##typ##scalars##vectors );\
-    		CHECK_CUDA_ERROR(flen name:  kernel launch failure);	\
+    		CHECK_CUDA_ERROR(CALL_FAST_KERNEL flen name:  kernel launch failure);	\
 	} else {							\
 		REPORT_THREAD_INFO					\
 		GPU_FAST_CALL_NAME(name)<<< NN_GPU >>>			\
 			(KERN_ARGS_FAST_##bitmap##typ##scalars##vectors );\
 		/* BUG?  should we put this check everywhere? */	\
-    		CHECK_CUDA_ERROR(fast name:  kernel launch failure);	\
+    		CHECK_CUDA_ERROR(CALL_FAST_KERNEL fast name:  kernel launch failure);	\
 	}								\
 
 
