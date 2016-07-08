@@ -714,21 +714,14 @@ static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 	cl_mem img;
 	cl_int status;
 
-advise("ocl_register_buf calling clCreateFromGLTexture");
 
 	// Texture2D deprecated on Apple
 //fprintf(stderr,"obj %s has texture id %d\n",OBJ_NAME(dp),OBJ_TEX_ID(dp));
 //fprintf(stderr,"obj %s has platform device %s\n",OBJ_NAME(dp),PFDEV_NAME(OBJ_PFDEV(dp)));
 
-#ifdef FOOBAR
-	img = clCreateFromGLTexture/*2D*/(//cl_context,
-				OCLDEV_CTX( OBJ_PFDEV(dp) ),	// OCL context
-				CL_MEM_READ_WRITE,
-				GL_TEXTURE_2D,			// texture target, buffer must match
-				0,				// mip level ?
-				OBJ_TEX_ID(dp),			//gl_texture_id,
-				&status);
-#endif // FOOBAR
+//advise("ocl_register_buf calling clCreateFromGLBuffer");
+//longlist(QSP_ARG  dp);
+	// Used to call clCreateFromGLTexture, but this works:
 	img = clCreateFromGLBuffer(
 				OCLDEV_CTX( OBJ_PFDEV(dp) ),	// OCL context
 				CL_MEM_READ_WRITE,		// flags

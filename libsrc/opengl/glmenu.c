@@ -1582,9 +1582,9 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	SET_OBJ_FLAG_BITS(dp, DT_GL_BUF);	/* indicate obj is a GL buffer */
 
 	SET_OBJ_DATA_PTR(dp, NULL);
-fprintf(stderr,"do_new_gl_buffer:  allocating gl_info for %s\n",OBJ_NAME(dp));
+//fprintf(stderr,"do_new_gl_buffer:  allocating gl_info for %s\n",OBJ_NAME(dp));
 	SET_OBJ_GL_INFO(dp, (GL_Info *) getbuf( sizeof(GL_Info) ) );
-fprintf(stderr,"do_new_gl_buffer:  DONE allocating gl_info for %s\n",OBJ_NAME(dp));
+//fprintf(stderr,"do_new_gl_buffer:  DONE allocating gl_info for %s\n",OBJ_NAME(dp));
 
 	glew_check(SINGLE_QSP_ARG);	/* without this, we get a segmentation
 			 * violation on glGenBuffers???
@@ -1596,9 +1596,10 @@ fprintf(stderr,"do_new_gl_buffer:  DONE allocating gl_info for %s\n",OBJ_NAME(dp
 // Why is this ifdef here?  These don't seem to depend
 // on libglew???
 // Answer:  We need libglew to bring in openGL extensions like glBindBuffer...
-advise("calling glGenBuffers");
-    fprintf(stderr,"OBJ_GL_INFO(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_GL_INFO(dp));
-    fprintf(stderr,"OBJ_BUF_ID_P(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_BUF_ID_P(dp));
+
+//advise("calling glGenBuffers");
+//fprintf(stderr,"OBJ_GL_INFO(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_GL_INFO(dp));
+//fprintf(stderr,"OBJ_BUF_ID_P(%s) = 0x%lx\n",OBJ_NAME(dp),(long)OBJ_BUF_ID_P(dp));
 	glGenBuffers(1, OBJ_BUF_ID_P(dp) );	// first arg is # buffers to generate?
 
 //sprintf(ERROR_STRING,"glGenBuffers gave us buf_id = %d",OBJ_BUF_ID(dp));
@@ -1643,7 +1644,7 @@ advise("calling glGenBuffers");
 	
 	//glFinish();	// necessary or not?
 
-advise("calling platform-specific buffer registration function");
+//advise("calling platform-specific buffer registration function");
 	if( (*PF_REGBUF_FN(PFDEV_PLATFORM(pdp)))( QSP_ARG  dp ) < 0 ){
 		WARN("do_new_gl_buffer:  Error in platform-specific buffer registration!?");
 		// BUG? - should clean up here!
@@ -1651,7 +1652,7 @@ advise("calling platform-specific buffer registration function");
 
 	// Leave the buffer mapped by default
 	//cutilSafeCall(cudaGLMapBufferObject( &OBJ_DATA_PTR(dp),  OBJ_BUF_ID(dp) ));
-advise("calling platform-specific buffer mapping function");
+//advise("calling platform-specific buffer mapping function");
 	if( (*PF_MAPBUF_FN(PFDEV_PLATFORM(pdp)))( QSP_ARG  dp ) < 0 ){
 		WARN("do_new_gl_buffer:  Error in platform-specific buffer mapping!?");
 		// BUG? - should clean up here!
