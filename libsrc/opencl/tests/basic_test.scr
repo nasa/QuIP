@@ -1,0 +1,19 @@
+Set n 8
+Vector v_h $n 1 float
+Ramp1D v_h 1 1
+Info v_h
+Display v_h
+
+#Set DEFAULT_OPENCL_DEVICE GeForce_GTX_680MX
+
+platforms
+  select Apple $DEFAULT_GPU
+  quit
+
+# default data area is now gpu?
+Vector v_g $n 1 float
+Info v_g
+Ramp1D v_g 1 1
+Display v_g
+
+  Pause
