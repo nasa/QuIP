@@ -1,0 +1,48 @@
+Set size 200
+Viewer v1 $size $size
+Posn_Window v1 50 50
+Viewer v2 $size $size
+Posn_Window v2 100+$size 50
+
+Image h_b $size $size 4 u_byte
+Ramp2D h_b{0} 0 1 0
+Ramp2D h_b{1} 0 1 1
+Ramp2D h_b{2} 0 0 1
+VSet h_b{3} 255
+
+Show_Bytes h_b v1
+
+gl window v2 quit
+
+platforms
+  select Apple $DEFAULT_GPU
+  quit
+
+Image g_b $size $size 4 u_byte
+
+#VMov g_b h_b
+platforms
+  upload g_b h_b
+  quit
+
+#Ramp2D g_b{0} 0 1 0
+#Ramp2D g_b{1} 0 1 1
+#Ramp2D g_b{2} 0 0 1
+#VSet g_b{3} 0
+
+# This call seems to break x11 display!?
+#view
+#  viewers
+#    platform_viewer v2
+#    quit
+#  quit
+
+gl
+  advise "Creating new GL buffer"
+  gl_buffer bb Apple $DEFAULT_GPU $size $size 4
+  quit
+
+
+#Display g_b[0][0]
+
+  Pause

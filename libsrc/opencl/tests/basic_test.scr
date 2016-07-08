@@ -10,15 +10,11 @@ platforms
   select Apple $DEFAULT_GPU
   quit
 
-#opencl
-#  list
-#  info $DEFAULT_OCL_DEVICE
-#  quit
-
 # default data area is now gpu?
 Vector v_g $n 1 float
 Info v_g
 
-#opencl
+Ramp1D v_g 1 1
+Display v_g
 
   Pause

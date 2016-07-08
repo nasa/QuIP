@@ -175,6 +175,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 	return(vip[i].visual);
 }
 
+// According to the documentation, TrueColor has a fixed read-only colormap,
+// while DirectColor has a programmable colormap...
+
 #define PREFERRED_MODE TrueColor
 #define ALTERNATE_MODE DirectColor
 #define PREFERRED_NAME "TrueColor"
@@ -191,7 +194,7 @@ static Visual *GetSpecifiedVisual( Disp_Obj * dop, int depth )
 	if( vi_p == NULL ){
 		NERROR1("glXChooseVisual failed!?");
 	}
-//fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
+fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
 	return vi_p->visual;
 
 #else // ! HAVE_OPENGL
@@ -245,11 +248,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 		name = PREFERRED_NAME;
 	}
 
-if( verbose ){
+//if( verbose ){
 sprintf(DEFAULT_ERROR_STRING,"i=%d, using visual %ld (%s, depth = %d)",
 i, vip[i].visualid,name,depth);
 NADVISE(DEFAULT_ERROR_STRING);
-}
+//}
 	return(vip[i].visual);
 #endif // ! HAVE_OPENGL
 }
