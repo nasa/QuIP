@@ -99,6 +99,13 @@ Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t
 
 } // creat_platform
 
+void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp)
+{
+	// BUG memory leak of we don't also delete the icp...
+	del_platform(QSP_ARG  cpp);
+}
+
+
 void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
 {
 	size_t siz;

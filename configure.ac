@@ -377,6 +377,7 @@ if test "x${use_cuda}" = xyes; then
         fi
       fi
     fi
+echo Found cuda software in $cuda_dir
     if test "x${cuda_dir}" != xno; then
       AC_CHECK_FILE([$cuda_dir/include],[CPPFLAGS="$CPPFLAGS -I$cuda_dir/include"])
       PATH=$PATH:$cuda_dir/bin
@@ -934,7 +935,7 @@ EOF
       if $CC -o /tmp/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
       then
         comp_cap=`/tmp/gpu_test`
-        rm -f /tmp/gpu_test
+        #rm -f /tmp/gpu_test
       else
         comp_cap=0.0
       fi
@@ -943,12 +944,12 @@ EOF
       if $CC $CPPFLAGS $LDFLAGS -o /tmp/gpu_test gpu_check.c -lcudart # 2> /dev/null
       then
         comp_cap=`/tmp/gpu_test`
-        rm -f /tmp/gpu_test
+        #rm -f /tmp/gpu_test
       else
         comp_cap=0.0
       fi
     fi
-    rm -f gpu_check.c
+    #rm -f gpu_check.c
     AC_MSG_RESULT([compute capability $comp_cap])
     arch_set=no
     if test "x${comp_cap}" = x1.0; then
@@ -990,6 +991,12 @@ EOF
       # I assume that the 10 here is not a typo, but that we have to provide
       # some sort of valid value???  BUG?
       AC_DEFINE([CUDA_COMP_CAP],10,[CUDA Compute Capability 0.0])
+      arch_set=yes
+    fi
+    if test "x${comp_cap}" = x0.01; then
+      # I assume that the 10 here is not a typo, but that we have to provide
+      # some sort of valid value???  BUG?
+      AC_DEFINE([CUDA_COMP_CAP],10,[CUDA Compute Capability 0.01 (invalid)])
       arch_set=yes
     fi
     if test "x${arch_set}" = xno; then

@@ -230,7 +230,8 @@ int check_file_access(QSP_ARG_DECL  const char *filename)
 {
 	if( ! file_exists(QSP_ARG  filename) ){
 		sprintf(ERROR_STRING,"File %s does not exist.",filename);
-		ERROR1(ERROR_STRING);
+		//ERROR1(ERROR_STRING);
+		WARN(ERROR_STRING);
 		return -1;
 	}
 	/*if( ! can_read_from(filename) ){
@@ -239,7 +240,8 @@ int check_file_access(QSP_ARG_DECL  const char *filename)
 	}*/
 	if( ! can_write_to(QSP_ARG  filename) ){
 		sprintf(ERROR_STRING,"File %s exists, but no write permission.",filename);
-		ERROR1(ERROR_STRING);
+		//ERROR1(ERROR_STRING);
+		WARN(ERROR_STRING);
 		return -1;
 	}
 	return 0;

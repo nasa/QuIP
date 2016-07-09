@@ -445,7 +445,7 @@ static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 }
 
 
-static void init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
+static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 {
 	int n_devs,i;
 
@@ -453,13 +453,14 @@ static void init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	 * are not readable...  So we check that first.
 	 */
 
-	check_file_access(QSP_ARG  "/dev/nvidiactl");
+	if( check_file_access(QSP_ARG  "/dev/nvidiactl") < 0 )
+		return -1;
 
 	cudaGetDeviceCount(&n_devs);
 
 	if( n_devs == 0 ){
 		WARN("No CUDA devices found!?");
-		return;
+		return -1;
 	}
 
 	if( verbose ){
@@ -474,7 +475,15 @@ static void init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 		char s[32];
 
 		sprintf(s,"/dev/nvidia%d",i);
-		check_file_access(QSP_ARG  s);
+		if( check_file_access(QSP_ARG  s) < 0 ){
+			// BUG do we need to unwind some things
+			// at this point?
+			//
+			// Probably not a big concern, because if the
+			// device files are missing then nvidia_ctl
+			// is also likely to be missing, trapped above...
+			return -1;
+		}
 
 		init_cu2_device(QSP_ARG  i, cpp);
 	}
@@ -501,6 +510,7 @@ static void init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	SET_PF_FUNC_TBL(cpp,cu2_vfa_tbl);
 	//SET_PLATFORM_DISPATCH_TBL(cpp,cu2_func_tbl);
 
+	return 0;
 } // end init_cu2_devices
 #endif // HAVE_CUDA
 
@@ -527,10 +537,19 @@ ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
 #endif // CAUTIOUS
 
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
-	init_cu2_devices(QSP_ARG  cpp);
+	if( init_cu2_devices(QSP_ARG  cpp) < 0 ){
+		/*	/dev/nvidia_ctl may be missing after a reboot
+		 */
+		inited = -1;
+	}
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
 		ERROR1("cu2_init_platform:  Failed to pop platform device context!?");
 	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_VEC_FUNCS);
+
+	if( inited < 0 ){
+		// problem above
+		delete_platform(QSP_ARG  cpp);
+	}
 
 #else // ! HAVE_CUDA
 	WARN("Sorry, no CUDA support in this build.");

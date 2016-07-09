@@ -367,6 +367,7 @@ extern void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
 extern void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
 
 extern Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t);
+extern void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp);
 
 extern void init_all_platforms(SINGLE_QSP_ARG_DECL);
 

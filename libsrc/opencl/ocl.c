@@ -529,15 +529,6 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
-		/* how to name??? */
-
-		/*
-		char s[32];
-
-		sprintf(s,"/dev/nvidia%d",i);
-		check_file_access(QSP_ARG  s);
-		*/
-
 		init_ocl_device(QSP_ARG  dev_tbl[i],cpp);
 	}
 
