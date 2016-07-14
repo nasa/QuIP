@@ -886,6 +886,7 @@ if test "x$have_nvidia0" == xyes; then
    AC_MSG_RESULT([not present])
   fi
 fi
+have_cuda_device=no
 if test "x$working_nvcc" == xyes; then
   if test "x$have_nvidiactl" == xyes; then
     AC_MSG_CHECKING([for CUDA-capable device])
@@ -909,7 +910,7 @@ int main() {
 	    return 0;	// just print out for first device
 	}
     }
-    printf("0.01\n");
+    printf("0.0\n");
 
     /* dont just return the number of gpus, because other runtime cuda
        errors can also yield non-zero return values */
@@ -956,48 +957,56 @@ EOF
       AC_DEFINE([CUDA_COMP_CAP],10,[CUDA Compute Capability 1.0])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_10'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x1.1; then
       AC_DEFINE([CUDA_COMP_CAP],11,[CUDA Compute Capability 1.1])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_11'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x1.2; then
       AC_DEFINE([CUDA_COMP_CAP],12,[CUDA Compute Capability 1.2])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_12'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x1.3; then
       AC_DEFINE([CUDA_COMP_CAP],13,[CUDA Compute Capability 1.3])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_13'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x2.0; then
       AC_DEFINE([CUDA_COMP_CAP],20,[CUDA Compute Capability 2.0])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_20'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x2.1; then
       AC_DEFINE([CUDA_COMP_CAP],21,[CUDA Compute Capability 2.1])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_21'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x3.0; then
       AC_DEFINE([CUDA_COMP_CAP],30,[CUDA Compute Capability 3.0])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_30'])
       arch_set=yes
+      have_cuda_device=yes
     fi
     if test "x${comp_cap}" = x0.0; then
+    AC_MSG_WARN([
+------------------------------------------------------
+CUDA development tools are present, but can't find
+any CUDA devices.  Make sure that the correct driver
+is installed.
+------------------------------------------------------])
       # I assume that the 10 here is not a typo, but that we have to provide
       # some sort of valid value???  BUG?
-      AC_DEFINE([CUDA_COMP_CAP],10,[CUDA Compute Capability 0.0])
+      AC_DEFINE([CUDA_COMP_CAP],00,[CUDA Compute Capability 0.0])
       arch_set=yes
-    fi
-    if test "x${comp_cap}" = x0.01; then
-      # I assume that the 10 here is not a typo, but that we have to provide
-      # some sort of valid value???  BUG?
-      AC_DEFINE([CUDA_COMP_CAP],10,[CUDA Compute Capability 0.01 (invalid)])
-      arch_set=yes
+      have_cuda_device=no
     fi
     if test "x${arch_set}" = xno; then
       AC_SUBST(NVCC_ARCH_FLAGS,[])
@@ -2058,19 +2067,27 @@ fi
 if test "x${use_cuda}" = xyes; then
   if test "x${working_nvcc}" = xyes ;  then
     if test "x${have_nv_sdk}" = xyes ; then
-      # We could conceivably have all the software installed,
-      # but not have an actual cuda-capable device???
-      # Check for devices when determining compute capability!
-      AC_DEFINE([HAVE_CUDA], 1, [GPU operations with CUDA enabled])
-      if test "x${have_libcurand}" = xyes ; then
-	AC_DEFINE([HAVE_LIBCURAND], 1, [GPU random number generation with libcurand enabled])
-      fi
-      if test "x${have_libnpp}" = xyes ; then
-	AC_DEFINE([HAVE_LIBNPP], 1, [CUDA GPU operations with libnpp enabled])
-      else
-        if test "x${have_libnppi}" = xyes ; then
-	  AC_DEFINE([HAVE_LIBNPP], 1, [CUDA GPU operations with libnpp enabled])
+      if test "x${have_cuda_device}" = xyes ; then
+        # We could conceivably have all the software installed,
+        # but not have an actual cuda-capable device???
+        # Check for devices when determining compute capability!
+        AC_DEFINE([HAVE_CUDA], 1, [GPU operations with CUDA enabled])
+        if test "x${have_libcurand}" = xyes ; then
+	  AC_DEFINE([HAVE_LIBCURAND], 1, [GPU random number generation with libcurand enabled])
         fi
+        if test "x${have_libnpp}" = xyes ; then
+	  AC_DEFINE([HAVE_LIBNPP], 1, [CUDA GPU operations with libnpp enabled])
+        else
+          if test "x${have_libnppi}" = xyes ; then
+	    AC_DEFINE([HAVE_LIBNPP], 1, [CUDA GPU operations with libnpp enabled])
+          fi
+        fi
+      else
+        AC_MSG_WARN([
+-------------------------------------------------
+Unable to find any cuda devices (although working nvcc found).
+Building without CUDA support.
+-------------------------------------------------])
       fi
     else
       AC_MSG_WARN([
