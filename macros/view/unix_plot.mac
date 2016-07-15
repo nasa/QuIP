@@ -15,7 +15,14 @@ If var_exists(plot_locale)
 # visibility is not the issue.  An inserted delay seems to fix it.
 
 Define Y_Legend 1 string
+Push_Var xsync_state
+Set_XSync yes
+
 Get_Legend_Image $1
+
+Pop_Var xsync_state
+Set_XSync $xsync_state
+
 # now need to erase so that this isn't in the redraw list
 # there ought to be an easier way to clear this list!
 view plot $the_plotter erase quit quit

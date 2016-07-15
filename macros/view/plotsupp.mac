@@ -115,11 +115,14 @@ If $exit_on_plotter_click exit
 Set clicked 1
 .
 
+Set xsync_state no	# default:  no sync
+
 Define New_Plotter 3 name dx dy
 #Viewer $1 $2 $3
 Plotter $1 $2 $3
+#Print xsync_state
 view
-  xsync yes	# we need this sometimes, but not always?
+  xsync $xsync_state	# we need this sometimes, but not always?
   #show $1	# don't show by default...  for ios
   quit
 Init_New_Plotter $1
@@ -302,6 +305,10 @@ view
 Init_New_Plotter $1
 .
 
+Define Set_XSync 1 yesno
+view xsync $1 quit
+.
+
 Define Select_Plotter 1 plotter_name
 # Should selecting a plotter bring it to the front???
 view show "$1" quit		# raise viewer
@@ -402,7 +409,7 @@ view
 .
 
 Define Plot_Space 4 xmin ymin xmax ymax
-Tell_If "Plot_Space $1 $2 $3 $4"
+#Tell_If "Plot_Space $1 $2 $3 $4"
 If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
 If !$minmax_set "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
 #advise "Plot_Space '$the_plotter' $1 $2 $3 $4"
@@ -552,7 +559,7 @@ Set margins_set 1
 # BUG margins set should be per plotter???
 
 Define Plot_Data_Range 4 xmin ymin xmax ymax
-Tell_If "Plot_Data_Range $1 $2 $3 $4"
+#Tell_If "Plot_Data_Range $1 $2 $3 $4"
 If !$margins_set "Tell_If 'margins not set, assigning default values' Assign_Margins"
 Set_Plot_Minmax $1 $2 $3 $4
 Assign x_delta ($3)-($1)				# width of plotting area in plotting units

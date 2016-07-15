@@ -742,7 +742,9 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 	char msg[LLEN];
 	int i;
 	int n_levels_to_print;
-	int level_to_print[MAX_Q_LVLS];
+	static int max_levels_to_print=(-1);
+	//int level_to_print[MAX_Q_LVLS];
+	static int *level_to_print=NULL;
 	Query *qp;
 
 	if( THIS_QSP == NULL ) return;
@@ -762,6 +764,17 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 	}
 
 	ql = QLEVEL;
+	//assert( ql >= 0 && ql < MAX_Q_LVLS );
+	// We allocate level_to_print array here, instead
+	// of declaring a fixed-size array...
+	if( (ql+1) > max_levels_to_print ){
+		if( max_levels_to_print > 0 )
+			givbuf(level_to_print);
+		max_levels_to_print = ql + 1;
+		level_to_print = getbuf( max_levels_to_print *
+					sizeof(*level_to_print) );
+	}
+
 	// We would like to print the macro names with the deepest one
 	// last, but for cases where the macro is repeated (e.g. loops)
 	// we only want to print the deepest case.
@@ -770,7 +783,7 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 	// in the reverse order...
 	n_levels_to_print=1;
 	level_to_print[0]=ql;
-	ql--;
+	ql--;	// it looks like this line could be deleted...
 	//i = THIS_QSP->qs_fn_depth;
 	i=QLEVEL;
 	i--;
@@ -788,9 +801,11 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 }
 		i--;
 	}
+fprintf(stderr,"tell_input_location:  n_levels_to_print = %d\n",n_levels_to_print);
 	i=n_levels_to_print-1;
 	while(i>=0){
 		ql=level_to_print[i];	// assume ql matches fn_level?
+		//assert( ql >= 0 && ql < MAX_Q_LVLS );
 		//filename=THIS_QSP->qs_fn_stack[ql];
 		filename=QRY_FILENAME(QRY_AT_LEVEL(THIS_QSP,ql));
 		n = QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql) );

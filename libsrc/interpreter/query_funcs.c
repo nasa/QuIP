@@ -2668,16 +2668,11 @@ void redir_with_flags(QSP_ARG_DECL FILE *fp, const char *filename, uint32_t flag
 		init_query_stack(THIS_QSP);
 	}
 
-	/*
-	if( ++QLEVEL >= MAX_Q_LVLS ){
-		QLEVEL--;
-		qdump(SINGLE_QSP_ARG);
-		ERROR1("too many nested files");
-		IOS_RETURN
-	}
-	*/
-	// We used to have a fixed array of these things...
+	// We used to check QLEVEL here against MAX_Q_LVLS,
+	// because we used to have a fixed array of these things...
+
 	qp = new_query();
+
 	/* the stack is initialized in init_query_stack */
 	SET_QRY_IDX(qp,eltcount(QS_QRY_STACK(THIS_QSP)));
 	push_item( QS_QRY_STACK(THIS_QSP), qp );

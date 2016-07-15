@@ -39,9 +39,6 @@ extern "C" {
 #define LLEN	512
 #endif /* ! LLEN */
 
-/* number of query structs */
-#define MAX_Q_LVLS	64
-
 /* query struct flags values */
 #define Q_SOCKET		1
 #define Q_INTERACTIVE		2
