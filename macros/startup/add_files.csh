@@ -1,7 +1,12 @@
 
 if( ! $?suffix ) then
-  echo Error:  suffix not defined, setting to default .mac
+  echo add_files.csh:  Error:  suffix not defined, setting to default .mac
   set suffix=mac
+endif
+
+if( ! $?subdir ) then
+  echo add_files.csh:  Error:  subdir not defined
+  exit
 endif
 
 foreach macro_file ( $file_list )
