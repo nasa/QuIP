@@ -58,6 +58,7 @@ typedef enum {
 	N_CHARFUNC,			/* 43 */
 	N_ILACEFUNC,			/* 44 */
 	N_POSNFUNC,			/* 45 */
+	N_STRING,			/* 46 */
 	/* N_SLCT_CHAR */		/* 40 */	/* obsolete? */
 } Scalar_Expr_Node_Code;
 

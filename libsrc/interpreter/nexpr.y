@@ -309,7 +309,9 @@ static char *get_expr_stringbuf( int index, long min_len )
 
 // %pure_parser	// make the parser rentrant (thread-safe)
 %pure-parser	// make the parser rentrant (thread-safe)
-%name-prefix="quip_"
+// not on brewster...
+//%name-prefix="quip_"
+%name-prefix "quip_"
 
 /* The YYPARSE_PARAM macro has been deprecated in favor of %parse-param
  * BUT parse-param is a bison statment that comes outside of the the C code
@@ -381,6 +383,14 @@ static char *get_expr_stringbuf( int index, long min_len )
 //%type <enp> sizable_object
 %type <enp> timestampable_object
 %type <enp> e_string
+%type <enp> strv_func
+
+/* Why did we allow topexp to be an e_string?  That broke the ability
+ * to have expressions like isdigit("abc"[0])...
+ *
+ * Now it is disabled, but what is now broken?
+ * Probably string functions like toupper() - ?
+ */
 
 %%
 
@@ -388,20 +398,17 @@ topexp		: expression {
 			// qsp is passed to yyparse through YYPARSE_PARAM, but it is void *
 			final_expr_node_p = $1 ;
 			}
+		/*
 		| e_string {
 			final_expr_node_p = $1;
 			}
+			*/
+		| strv_func {
+			final_expr_node_p = $1;
+			}
 		;
-
-e_string	: E_STRING {
-			$$ = NODE0(N_LITSTR);
-			$$->sen_tsp = $1;
-			}
-		| E_QSTRING {
-			$$ = NODE0(N_LITSTR);
-			$$->sen_tsp = $1;
-			}
-		| STRV_FUNC '(' /* e_string */ data_object ')' {
+			
+strv_func	: STRV_FUNC '(' /* e_string */ data_object ')' {
 			// This doesn't have to be a data_object,
 			// it can be the name of a sizable object...
 
@@ -416,7 +423,17 @@ e_string	: E_STRING {
 			}
 		;
 
-data_object	: E_STRING {
+e_string	: E_STRING {
+			$$ = NODE0(N_LITSTR);
+			$$->sen_tsp = $1;
+			}
+		| E_QSTRING {
+			$$ = NODE0(N_LITSTR);
+			$$->sen_tsp = $1;
+			}
+		;
+
+data_object	: /* E_STRING {
 			Scalar_Expr_Node *enp;
 			enp=NODE0(N_LITSTR);
 			enp->sen_tsp = $1;
@@ -433,11 +450,19 @@ data_object	: E_STRING {
 			 * but if the data_obj does not exist, THEN treat it
 			 * as a string... messy!
 			 */
+			 /*
 			Scalar_Expr_Node *enp;
 			enp=NODE0(N_LITSTR);
 			enp->sen_tsp = $1;
 			$$=NODE1(N_QUOT_STR,enp);
 			}
+		| */ e_string {
+			Scalar_Expr_Node *enp;
+			enp=NODE1(N_STRING,$1);
+			//enp->sen_tsp = $1;
+			$$=NODE1(N_QUOT_STR,enp);
+			}
+
 		| data_object '[' expression ']' {
 			$$=NODE2(N_SUBSCRIPT,$1,$3); }
 		| data_object '{' expression '}' {
@@ -568,6 +593,8 @@ expression	: NUMBER {
 			$$->sen_string = savestr($1);
 			}
 			*/
+		| data_object
+			{ $$=NODE1(N_SCALAR_OBJ,$1); }
 
 		// We used to allow a named scalar object to be given -
 		// equivalent to value(objname), but without having to explicitly
@@ -676,6 +703,9 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			return (char *) tsp->ts_value.u_vp;
 			break;
 //#ifdef CAUTIOUS
+		case N_STRING:
+			return eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
+			break;
 		default:
 //			sprintf(DEFAULT_ERROR_STRING,
 //		"CAUTIOUS:  eval_scalexp_string:  unhandled node code %d!?",enp->sen_code);
