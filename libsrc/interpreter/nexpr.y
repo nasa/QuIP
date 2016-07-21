@@ -310,8 +310,9 @@ static char *get_expr_stringbuf( int index, long min_len )
 // %pure_parser	// make the parser rentrant (thread-safe)
 %pure-parser	// make the parser rentrant (thread-safe)
 // not on brewster...
-//%name-prefix="quip_"
-%name-prefix "quip_"
+%name-prefix="quip_"
+// this does not work on pavlov:
+//%name-prefix "quip_"
 
 /* The YYPARSE_PARAM macro has been deprecated in favor of %parse-param
  * BUT parse-param is a bison statment that comes outside of the the C code
@@ -407,8 +408,11 @@ topexp		: expression {
 			final_expr_node_p = $1;
 			}
 		;
+
 			
 strv_func	: STRV_FUNC '(' /* e_string */ data_object ')' {
+			// string-valued functions (e.g. precision(obj))
+			//
 			// This doesn't have to be a data_object,
 			// it can be the name of a sizable object...
 
@@ -431,6 +435,7 @@ e_string	: E_STRING {
 			$$ = NODE0(N_LITSTR);
 			$$->sen_tsp = $1;
 			}
+		| strv_func
 		;
 
 data_object	: /* E_STRING {
