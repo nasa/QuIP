@@ -201,6 +201,27 @@ advise(ERROR_STRING);
 	return 0;
 }
 
+static void write_test_file(void)
+{
+	NSError *error;
+	NSString *stringToWrite = @"1\n2\n3\n4";
+	NSString *filePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"myTestFile.txt"];
+fprintf(stderr,"writing test file\n");
+	[stringToWrite writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:&error];
+	
+
+	NSString *msgString=@"this is a test message\n";
+	NSArray *documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentsDirectory = [documentPaths objectAtIndex:0];
+	NSString *documentTXTPath = [documentsDirectory stringByAppendingPathComponent:@"myTestFile2.txt"];
+	NSFileHandle *myHandle = [NSFileHandle fileHandleForUpdatingAtPath:documentTXTPath ];
+	[myHandle seekToEndOfFile];
+fprintf(stderr,"writing second test file\n");
+	[myHandle writeData:  [msgString dataUsingEncoding:NSUTF8StringEncoding]];
+	[myHandle closeFile];
+
+}
+
 #include "quip_start_menu.c"
 
 int main(int argc,char *argv[])
@@ -224,6 +245,7 @@ freopen([logPath fileSystemRepresentation], "w", stderr);
 	@autoreleasepool {
 //NSLog(@"Calling start_quip...\n");
         init_quip_menu();
+		write_test_file();
 		start_quip_with_menu(argc,argv,quip_menu);
 
 		retVal = UIApplicationMain(argc, argv, nil, @"quipAppDelegate" );
