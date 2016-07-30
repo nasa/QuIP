@@ -4,6 +4,16 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>CSF.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>iQuIP copy.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 		<key>iQuIP.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -13,6 +23,11 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>7106ECFC16004437006BF850</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7C43318B1D4D43FC0033687C</key>
 		<dict>
 			<key>primary</key>
 			<true/>

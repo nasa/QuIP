@@ -121,7 +121,7 @@ int ios_read_global_startup(SINGLE_QSP_ARG_DECL)
 
 	// Now we do the same thing for a plaintext file...
 	//STARTUP_FILE = "foobar";
-//fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP_FILE));
+fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP_FILE));
 	startup_filename=STRINGIFY(STARTUP_FILE);	// default value
 
 	startup_path = [main_bundle pathForResource:STRINGOBJ(startup_filename)
