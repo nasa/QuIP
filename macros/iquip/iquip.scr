@@ -51,11 +51,17 @@ Check_For_SW_Updates		# load any previously applied update scripts
 # if an alert had been delivered before this point, then
 # we got a warning that the panel has already been pushed?
 
-advise 'getting extra startup name...'
+#advise 'getting extra startup name...'
 
 Get_Extra_Startup_Name
 If file_exists('$extra_startup')
   "advise 'loading extra startup file $extra_startup' < '$extra_startup'"
+
+# just for testing:  create a file just for testing
+output_file $DOCUMENTS_DIR/test1.asc
+echo "This is some test data."
+echo "This is the last line of the test data."
+output_file -
 
 # where do we connect to the server???
 

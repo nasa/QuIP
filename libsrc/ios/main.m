@@ -201,12 +201,13 @@ advise(ERROR_STRING);
 	return 0;
 }
 
+#ifdef FOOBAR
 static void write_test_file(void)
 {
 	NSError *error;
 	NSString *stringToWrite = @"1\n2\n3\n4";
 	NSString *filePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"myTestFile.txt"];
-fprintf(stderr,"writing test file\n");
+fprintf(stderr,"writing test file %s\n",filePath.UTF8String);
 	[stringToWrite writeToFile:filePath atomically:YES encoding:NSUTF8StringEncoding error:&error];
 	
 
@@ -214,13 +215,23 @@ fprintf(stderr,"writing test file\n");
 	NSArray *documentPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentsDirectory = [documentPaths objectAtIndex:0];
 	NSString *documentTXTPath = [documentsDirectory stringByAppendingPathComponent:@"myTestFile2.txt"];
-	NSFileHandle *myHandle = [NSFileHandle fileHandleForUpdatingAtPath:documentTXTPath ];
+	
+	NSFileManager* myFileMgr = [NSFileManager defaultManager];
+	if( ! [myFileMgr createFileAtPath:documentTXTPath contents:nil attributes:nil] )
+		fprintf(stderr,"FAILED TO CREATE FILE!?\n");
+	
+	// this opens an existing file?
+//	NSFileHandle *myHandle = [NSFileHandle fileHandleForUpdatingAtPath:documentTXTPath ];
+	NSFileHandle *myHandle = [NSFileHandle fileHandleForWritingAtPath:documentTXTPath];
+	
+fprintf(stderr,"myHandle = 0x%lx\n",(long)myHandle);
 	[myHandle seekToEndOfFile];
-fprintf(stderr,"writing second test file\n");
+fprintf(stderr,"writing second test file %s\n",documentTXTPath.UTF8String);
 	[myHandle writeData:  [msgString dataUsingEncoding:NSUTF8StringEncoding]];
 	[myHandle closeFile];
 
 }
+#endif // FOOBAR
 
 #include "quip_start_menu.c"
 
@@ -245,7 +256,7 @@ freopen([logPath fileSystemRepresentation], "w", stderr);
 	@autoreleasepool {
 //NSLog(@"Calling start_quip...\n");
         init_quip_menu();
-		write_test_file();
+		//write_test_file();
 		start_quip_with_menu(argc,argv,quip_menu);
 
 		retVal = UIApplicationMain(argc, argv, nil, @"quipAppDelegate" );
