@@ -9,10 +9,10 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
-		<key>iQuIP copy.xcscheme</key>
+		<key>EZJet.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>3</integer>
 		</dict>
 		<key>iQuIP.xcscheme</key>
 		<dict>
@@ -28,6 +28,11 @@
 			<true/>
 		</dict>
 		<key>7C43318B1D4D43FC0033687C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7C4332B21D4D49450033687C</key>
 		<dict>
 			<key>primary</key>
 			<true/>
