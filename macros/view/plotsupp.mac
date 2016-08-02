@@ -41,24 +41,40 @@ If !var_exists('$1')
 .
 
 Define Setup_Axes 0
+Setup_Y_Axis
+Setup_X_Axis
+.
+
+Define Setup_Y_Axis 0
 Set vars_ok 1
 Require_Var xmin
 Require_Var ymin
 Require_Var xmax
 Require_Var ymax
-Require_Var x_tick_spacing
-Require_Var y_tick_spacing
-Require_Var x_legend
 Require_Var y_legend
+Require_Var y_tick_spacing
 If !$vars_ok exit_macro
 
 Plot_Data_Range $xmin $ymin $xmax $ymax
+
 Y_Legend $y_legend
+Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
+Label_Y_Ticks $ymin $ymax $y_tick_spacing
+.
+
+Define Setup_X_Axis 0
+Set vars_ok 1
+Require_Var xmin
+Require_Var ymin
+Require_Var xmax
+Require_Var ymax
+Require_Var x_legend
+Require_Var x_tick_spacing
+If !$vars_ok exit_macro
+
 X_Legend $x_legend
 Plot_X_Axis $xmin $xmax $x_tick_spacing $ymin
-Plot_Y_Axis $ymin $ymax $y_tick_spacing $xmin
 Label_X_Ticks $xmin $xmax $x_tick_spacing
-Label_Y_Ticks $ymin $ymax $y_tick_spacing
 .
 
 #

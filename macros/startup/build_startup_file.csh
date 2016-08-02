@@ -1,15 +1,15 @@
 #!/bin/csh
 
 if( $#argv != 1 && $#argv != 2 ) then
-  echo 'usage:  ./build_startup_file.csh demo|ezjet|pvt|csf|iquip|fdm [test]'
+  echo 'usage:  ./build_startup_file.csh demo|ezjet|AFalert|pvt|csf|iquip|fdm [test]'
   exit
 endif
 
 set flavor=$1
-if( $flavor != demo && $flavor != ezjet && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
+if( $flavor != demo && $flavor != ezjet && $flavor != AFalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
   echo './build_startup_file.csh:  bad flavor requested:  $flavor'
   echo 'usage:  ./build_startup_file.csh <flavor> [test]'
-  echo 'known flavors:  demo ezjet csf pvt iquip fdm'
+  echo 'known flavors:  demo ezjet AFalert csf pvt iquip fdm'
   exit
 endif
 
@@ -34,7 +34,8 @@ endif
 set outfile=$out_stem.scr
 set encfile=$out_stem.enc
 
-set oq_macro_dir=../../oq/macros
+#set extra_macro_dir=../../oq/macros	# relative to ../macros
+set extra_macro_dir=../../quip-extra/macros	# relative to ../macros
 
 cat < /dev/null > $outfile
 
@@ -106,7 +107,7 @@ if( $flavor == ezjet || $flavor == pvt ) then
 #echo verbose yes >> $outfile	# for debugging
 #echo debug query >> $outfile	# for debugging
 #  set subdir=pvt
-  set subdir=$oq_macro_dir/pvt
+  set subdir=$extra_macro_dir/pvt
   set file_list=( pvt pvt_params pvt_plot pvt_dist pre_pvt )
   source add_files.csh
   #set subdir=sound
@@ -118,7 +119,7 @@ endif
 # Comment out these two lins to test on unix...
 if( $flavor == demo ) then
   # these files were added to make the old demos work:
-  #set subdir=$oq_macro_dir/demo
+  #set subdir=$extra_macro_dir/demo
   set subdir=demo
   #cat ../../macros/demo/login.mac >> $outfile
   #cat ../../macros/demo/gui_demo.mac >> $outfile
@@ -167,7 +168,7 @@ else if( $flavor == pvt ) then
   #cat ../../macros/pvt/pvt_main.scr >> $outfile
   source add_file.csh pvt/pvt_main.scr
 else if( $flavor == csf ) then
-  set subdir=$oq_macro_dir/demo
+  set subdir=$extra_macro_dir/demo
   set file_list=( login gui_demo graph )
   source add_files.csh
 
@@ -175,7 +176,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/demo/gui_demo.mac >> $outfile
   #cat ../../macros/demo/graph.mac >> $outfile
 
-  set subdir=$oq_macro_dir/csf
+  set subdir=$extra_macro_dir/csf
   set file_list=( csf calib arrows csf_cam sync_files csf_admin psych )
   source add_files.csh
 
@@ -198,7 +199,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/pvt/pvt_params.mac >> $outfile
   #cat ../../macros/pvt/pvt_dist.mac >> $outfile
   #cat ../../macros/pvt/pvt_plot.mac >> $outfile
-  set subdir=$oq_macro_dir/pvt
+  set subdir=$extra_macro_dir/pvt
   set file_list=( pvt dashboard pvt_params pvt_dist pvt_plot )
   source add_files.csh
 
@@ -215,29 +216,25 @@ else if( $flavor == csf ) then
 #  cat ../../macros/view/opt_ht.mac >> $outfile
   #cat ../../macros/csf/csf_admin.mac >> $outfile	# csf
   #cat ../../macros/csf/csf_main.scr >> $outfile
-  source add_file.csh $oq_macro_dir/csf/csf_main.scr
+  source add_file.csh $extra_macro_dir/csf/csf_main.scr
 
-else if( $flavor == ezjet ) then
+else if( $flavor == AFalert ) then
   if( $test_mode != 0 ) then
     echo "Set ezjet_test_mode 1" >> $outfile
-    cat ../$oq_macro_dir/ezjet/alert_tests.mac >> $outfile
+    cat ../$extra_macro_dir/ezjet/alert_tests.mac >> $outfile
   endif
-
-  set subdir=$oq_macro_dir/demo
-  #set file_list=( demo_util admin )
-  set file_list=( demo_util )
-  source add_files.csh
 
   set subdir=ios
   set file_list=( utilz console )
   source add_files.csh
 
-  set subdir=$oq_macro_dir/ezjet
-  set file_list=( questionnaire ezj_qs admin unimp sync_files sw_update participant sleep_diary workload )
+  set subdir=$extra_macro_dir/AFalert
+  set file_list=( questionnaire ezj_qs admin unimp sw_update participant sleep_diary workload )
   source add_files.csh
 
-  echo "# FILE ezjet/ezjet_init.scr BEGIN" >> $outfile
-  cat ../$oq_macro_dir/ezjet/ezjet_init.scr >> $outfile
+  echo "# FILE AFalert/AFalert_init.scr BEGIN" >> $outfile
+  cat ../$extra_macro_dir/AFalert/AFalert_init.scr >> $outfile
+
 
   #And then the questionnaires:
   # we set the variable to 0 if we want to test a different part
@@ -246,12 +243,56 @@ else if( $flavor == ezjet ) then
   if( $load_questionnaires ) then
     foreach qfile ( demog cis morn_eve ess Samn-Perelli countermeasures commute_time flying tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
       echo "# FILE ezjet/$qfile.scr BEGIN" >> $outfile
-      cat ../$oq_macro_dir/ezjet/$qfile.scr >> $outfile
+      cat ../$extra_macro_dir/ezjet/$qfile.scr >> $outfile
       #cp ../../macros/ezjet/$qfile.scr ~/txt_files/$qfile.txt
     end
     foreach qfile ( skip_pvt )
       echo "# FILE pvt/$qfile.scr BEGIN" >> $outfile
-      cat ../$oq_macro_dir/pvt/$qfile.scr >> $outfile
+      cat ../$extra_macro_dir/pvt/$qfile.scr >> $outfile
+      #cp ../../macros/pvt/$qfile.scr ~/txt_files/$qfile.txt
+    end
+  else
+    echo Warning:  NOT loading questionnaire definitions...
+  endif
+
+  echo "# FILE AFalert/AFalert.scr BEGIN" >> $outfile
+  cat ../$extra_macro_dir/AFalert/AFalert.scr >> $outfile
+
+else if( $flavor == ezjet ) then
+  if( $test_mode != 0 ) then
+    echo "Set ezjet_test_mode 1" >> $outfile
+    cat ../$extra_macro_dir/ezjet/alert_tests.mac >> $outfile
+  endif
+
+  set subdir=$extra_macro_dir/demo
+  #set file_list=( demo_util admin )
+  set file_list=( demo_util )
+  source add_files.csh
+
+  set subdir=ios
+  set file_list=( utilz console )
+  source add_files.csh
+
+  set subdir=$extra_macro_dir/ezjet
+  set file_list=( questionnaire ezj_qs admin unimp sync_files sw_update participant sleep_diary workload )
+  source add_files.csh
+
+  echo "# FILE ezjet/ezjet_init.scr BEGIN" >> $outfile
+  cat ../$extra_macro_dir/ezjet/ezjet_init.scr >> $outfile
+
+  #And then the questionnaires:
+  # we set the variable to 0 if we want to test a different part
+  # of the system, and want to have a shorter start-up file.
+  set  load_questionnaires=1
+  if( $load_questionnaires ) then
+    foreach qfile ( demog cis morn_eve ess Samn-Perelli countermeasures commute_time flying tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
+      echo "# FILE ezjet/$qfile.scr BEGIN" >> $outfile
+      cat ../$extra_macro_dir/ezjet/$qfile.scr >> $outfile
+      #cp ../../macros/ezjet/$qfile.scr ~/txt_files/$qfile.txt
+    end
+    foreach qfile ( skip_pvt )
+      echo "# FILE pvt/$qfile.scr BEGIN" >> $outfile
+      cat ../$extra_macro_dir/pvt/$qfile.scr >> $outfile
       #cp ../../macros/pvt/$qfile.scr ~/txt_files/$qfile.txt
     end
   else
@@ -261,7 +302,8 @@ else if( $flavor == ezjet ) then
 #  echo "# FILE ios/udids.scr BEGIN" >> $outfile
 #  cat ../../macros/ios/udids.scr >> $outfile
   echo "# FILE ezjet/ezjet.scr BEGIN" >> $outfile
-  cat ../$oq_macro_dir/ezjet/ezjet.scr >> $outfile
+  cat ../$extra_macro_dir/ezjet/ezjet.scr >> $outfile
+
 else if( $flavor == fdm ) then
   echo "Set plot_locale ios" >> $outfile
   cat $HOME/exps/uhco13/stimuli/ios_twinkle.mac >> $outfile
