@@ -1,15 +1,19 @@
 #!/bin/csh
 
 if( $#argv != 1 && $#argv != 2 ) then
-  echo 'usage:  ./build_startup_file.csh demo|ezjet|AFalert|pvt|csf|iquip|fdm [test]'
+  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm [test]'
   exit
 endif
 
+pushd ../../include
+./update_quip_version.sh
+popd
+
 set flavor=$1
-if( $flavor != demo && $flavor != ezjet && $flavor != AFalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
+if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
   echo './build_startup_file.csh:  bad flavor requested:  $flavor'
   echo 'usage:  ./build_startup_file.csh <flavor> [test]'
-  echo 'known flavors:  demo ezjet AFalert csf pvt iquip fdm'
+  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm'
   exit
 endif
 
@@ -218,7 +222,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/csf/csf_main.scr >> $outfile
   source add_file.csh $extra_macro_dir/csf/csf_main.scr
 
-else if( $flavor == AFalert ) then
+else if( $flavor == afalert ) then
   if( $test_mode != 0 ) then
     echo "Set ezjet_test_mode 1" >> $outfile
     cat ../$extra_macro_dir/ezjet/alert_tests.mac >> $outfile
@@ -229,7 +233,7 @@ else if( $flavor == AFalert ) then
   source add_files.csh
 
   set subdir=$extra_macro_dir/AFalert
-  set file_list=( questionnaire ezj_qs admin unimp sw_update participant sleep_diary workload )
+  set file_list=( questionnaire afa_qs admin unimp pvt_reminder sw_update participant sleep_diary )
   source add_files.csh
 
   echo "# FILE AFalert/AFalert_init.scr BEGIN" >> $outfile
@@ -241,15 +245,10 @@ else if( $flavor == AFalert ) then
   # of the system, and want to have a shorter start-up file.
   set  load_questionnaires=1
   if( $load_questionnaires ) then
-    foreach qfile ( demog cis morn_eve ess Samn-Perelli countermeasures commute_time flying tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
+    foreach qfile ( demog morn_eve Samn-Perelli countermeasures flying tlx wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap mission_num )
       echo "# FILE ezjet/$qfile.scr BEGIN" >> $outfile
-      cat ../$extra_macro_dir/ezjet/$qfile.scr >> $outfile
+      cat ../$extra_macro_dir/AFalert/$qfile.scr >> $outfile
       #cp ../../macros/ezjet/$qfile.scr ~/txt_files/$qfile.txt
-    end
-    foreach qfile ( skip_pvt )
-      echo "# FILE pvt/$qfile.scr BEGIN" >> $outfile
-      cat ../$extra_macro_dir/pvt/$qfile.scr >> $outfile
-      #cp ../../macros/pvt/$qfile.scr ~/txt_files/$qfile.txt
     end
   else
     echo Warning:  NOT loading questionnaire definitions...
