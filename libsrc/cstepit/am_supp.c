@@ -1,6 +1,7 @@
 #include "quip_config.h"
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 
 /*
  * linkage to numerical recipes amoeba routine
@@ -207,5 +208,6 @@ printf("&nfunk = 0x%x\n",&nfunk);
 	amoeba(p_rowlist-1,y-1,n,ftol,func, &nfunk);
 }
 
+#endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 

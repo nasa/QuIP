@@ -7,20 +7,24 @@
 #include "veclib_api.h"				/* setvarg1() etc */
 #include "veclib/vl2_veclib_prot.h"		/* h_vl2_xform_list() */
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 #include "nrm_api.h"
+#endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 #include "debug.h"		/* verbose */
 
 #define EVAL_VT_NATIVE_WORK(enp)		eval_vt_native_work(QSP_ARG enp)
 
 Keyword vt_native_func_tbl[N_VT_NATIVE_FUNCS+1]={
-#ifdef HAVE_NUMREC
+//#ifdef HAVE_NUMREC
+//#ifdef USE_NUMREC
 {	"svdcmp",	NATIVE_SVDCMP	},
 {	"svbksb",	NATIVE_SVBKSB	},
 {	"jacobi",	NATIVE_JACOBI	},
 {	"eigsrt",	NATIVE_EIGSRT	},
 {	"choldc",	NATIVE_CHOLDC	},
-#endif /* HAVE_NUMREC */
+//#endif /* USE_NUMREC */
+//#endif /* HAVE_NUMREC */
 {	"system",	NATIVE_SYSTEM	},
 {	"render",	NATIVE_RENDER	},
 {	"xform_list",	NATIVE_XFORM_LIST	},
@@ -181,7 +185,6 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			}
 			break;
 
-#ifdef HAVE_NUMREC
 		case NATIVE_CHOLDC:
 			{
 			Data_Obj *inmat_dp, *diag_dp;
@@ -203,12 +206,19 @@ advise("evaluating choldc...");
 			if ( inmat_dp == NO_OBJ || diag_dp == NO_OBJ )
 				return;
 
-#ifdef HAVE_NUMREC	
+#ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			dp_choldc(inmat_dp,diag_dp);
-#else
+#else // ! USE_NUMREC	
+			NWARN("Program not configured to use numerical recipes library, can't compute CHOLESKY");
+#endif // ! USE_NUMREC	
+
+#else // ! HAVE_NUMREC
 			NWARN("No numerical recipes library, can't compute CHOLESKY");
-#endif
+#endif // ! HAVE_NUMREC
+
 			}
+
 			break;
 		case NATIVE_SVDCMP:
 			{
@@ -239,9 +249,13 @@ advise("evaluating choldc...");
 			*/
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			dp_svd(umat_dp,ev_dp,vmat_dp);
+#else // USE_NUMREC
+			NWARN("Program not configured to use numerical recipes library, can't compute SVD! - try GSL?");
+#endif // USE_NUMREC
 #else
-			NWARN("No numerical recipes library, can't compute SVD");
+			NWARN("Numerical recipes library not present, can't compute SVD");
 #endif
 			}
 			break;
@@ -270,10 +284,14 @@ advise("evaluating choldc...");
 				return;
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			dp_svbksb(x_dp,umat_dp,ev_dp,vmat_dp,b_dp);
-#else
+#else // ! USE_NUMREC
+			NWARN("Program not configured to use numerical recipes library, can't compute SVBKSB");
+#endif // ! USE_NUMREC
+#else // ! HAVE_NUMREC
 			NWARN("No numerical recipes library, can't compute SVBKSB");
-#endif
+#endif // ! HAVE_NUMREC
 			}
 			break;
 		case NATIVE_JACOBI:			/* eval_vt_native_work */
@@ -296,6 +314,7 @@ advise("evaluating choldc...");
 				return;
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			dp_jacobi(QSP_ARG  v_dp,d_dp,a_dp,&nrot);
 			if( verbose ){
 				sprintf(ERROR_STRING,"jacobi(%s,%s,%s) done after %d rotations",
@@ -304,9 +323,13 @@ advise("evaluating choldc...");
 			}
 			//SET_OBJ_FLAG_BITS(v_dp, DT_ASSIGNED);
 			note_assignment(v_dp);
-#else
+#else // ! USE_NUMREC
+			NWARN("Program not configured to use numerical recipes library, can't compute JACOBI");
+#endif // ! USE_NUMREC
+
+#else // ! HAVE_NUMREC
 			NWARN("No numerical recipes library, can't compute JACOBI");
-#endif
+#endif // ! HAVE_NUMREC
 			}
 			break;
 		case NATIVE_EIGSRT:
@@ -322,13 +345,17 @@ advise("evaluating choldc...");
 				return;
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			dp_eigsrt(QSP_ARG  v_dp,d_dp);
-#else
+#else // ! USE_NUMREC
+			NWARN("Program not configured to use numerical recipes library, can't compute EIGSRT");
+#endif // ! USE_NUMREC
+
+#else // ! HAVE_NUMREC
 			NWARN("No numerical recipes library, can't compute EIGSRT");
-#endif
+#endif // ! HAVE_NUMREC
 			}
 			break;
-#endif /* HAVE_NUMREC */
 
 		case NATIVE_XFORM_LIST:
 			{
@@ -402,19 +429,21 @@ void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case  NATIVE_XFORM_LIST:
 		case  NATIVE_INVERT:
 		case  NATIVE_CUMSUM:
-#ifdef HAVE_NUMREC
+//#ifdef HAVE_NUMREC
+//#ifdef USE_NUMREC
 		case  NATIVE_CHOLDC:
 		case  NATIVE_SVDCMP:
 		case  NATIVE_SVBKSB:
 		case  NATIVE_JACOBI:
 		case  NATIVE_EIGSRT:
+//#endif // USE_NUMREC
+//#endif /* HAVE_NUMREC */
 			/* no shape, do nothing */
 //#ifdef CAUTIOUS
 //			verify_null_shape(QSP_ARG  enp);
 //#endif /* CAUTIOUS */
 			assert( VN_SHAPE(enp) == NO_SHAPE );
 			break;
-#endif /* HAVE_NUMREC */
 
 //#ifdef CAUTIOUS
 		default:

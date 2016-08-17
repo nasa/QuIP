@@ -3,6 +3,7 @@
 #include "quip_config.h"
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 
 /*
  * linkage to numerical recipes Polak Ribiere routine
@@ -187,5 +188,6 @@ void run_frprmn_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) )
 }
 
 
+#endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 

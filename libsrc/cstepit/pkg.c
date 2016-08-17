@@ -58,8 +58,10 @@ static void init_all_opt_pkgs(SINGLE_QSP_ARG_DECL)
 	init_one_pkg(QSP_ARG  "cstepit",	run_cstepit_scr,run_cstepit_c,halt_cstepit);
 	/* init_one_pkg(QSP_ARG  "stepit",run_stepit_scr,run_stepit_c); */
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 	init_one_pkg(QSP_ARG  AMOEBA_PKG_NAME,run_amoeba_scr,run_amoeba_c,halt_amoeba);
 	init_one_pkg(QSP_ARG  FRPRMN_PKG_NAME,run_frprmn_scr,run_frprmn_c,halt_frprmn);
+#endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 }
 

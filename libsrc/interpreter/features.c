@@ -170,10 +170,16 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_ABSENT(SWF_MPLAYER);
 #endif
 
+// HAVE_NUMREC can be set by autoconf based on whether numerical recipes is present
+// on the system.  But USE_NUMREC is set by the user to indicate whether it should be used...
 
 #ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 	FEATURE_PRESENT(SWF_NUMREC);
-#else
+#else // ! USE_NUMREC
+	FEATURE_ABSENT(SWF_NUMREC);
+#endif // ! USE_NUMREC
+#else // ! HAVE_NUMREC
 	FEATURE_ABSENT(SWF_NUMREC);
 #endif
 
