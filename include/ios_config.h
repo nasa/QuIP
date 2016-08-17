@@ -275,7 +275,7 @@
 /* #undef HAVE_NPPI_H */
 
 /* Numerical Recipes support enabled */
-//#define HAVE_NUMREC 1
+#define HAVE_NUMREC 1
 
 /* Linkage to OpenCV library */
 //#define HAVE_OPENCV 1
