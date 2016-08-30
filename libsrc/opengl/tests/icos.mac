@@ -1,0 +1,184 @@
+Set ogl_macros_loaded 0
+Set icos_inited 0
+
+Define Load_OGL_Macros 0
+If $ogl_macros_loaded exit_macro
+Set ogl_macros_loaded 1
+< $macro_dir/compute/rdp.mac	# Uniform
+< $macro_dir/opengl/poly.mac
+< $macro_dir/opengl/viewpoint.mac
+.
+
+Define Init_Icosahedron 0
+If $icos_inited exit_macro
+Set icos_inited 1
+Set x 0.52573
+Set z 0.85065
+Set n_vertices	12
+Set n_faces	20
+
+Vector vdata $n_vertices 3 float
+data ascii read vdata -
+	-$x	0	$z
+	$x	0	$z
+	-$x	0	-$z
+	$x	0	-$z
+	0	$z	$x
+	0	$z	-$x
+	0	-$z	$x
+	0	-$z	-$x
+	$z	$x	0
+	-$z	$x	0
+	$z	-$x	0
+	-$z	-$x	0
+	quit quit
+
+VSMul vdata vdata 5
+
+#Vector face_normals $n_faces 3 float
+Vector vertex_normals $n_vertices 3 float
+
+Vector tindices $n_faces 3 short
+data ascii read tindices -
+	1	4	0
+	4	9	0
+	4	5	9
+#	5	4	9
+	8	5	4
+	1	8	4
+
+	1	10	8
+	10	3	8
+	8	3	5
+	3	2	5
+	3	7	2
+
+	3	10	7
+	10	6	7
+	6	11	7
+	6	0	11
+	6	1	0
+
+	10	1	6
+	11	0	9
+	2	11	9
+	5	2	9
+	11	2	7
+	quit quit
+
+Vector face_colors $n_faces 3 float
+Uniform face_colors
+VSMul face_colors face_colors 0.8
+data ascii read face_colors[1] - 1 1 1 quit quit
+data ascii read face_colors[2] - 1 0 0 quit quit
+data ascii read face_colors[3] - 0 1 0 quit quit
+data ascii read face_colors[4] - 1 1 0 quit quit
+
+# make them all white to test shading
+VSet face_colors 1
+
+gl
+  color
+#    background 255 0 0
+    background 0.5 0.5 0
+    clear_color
+    quit
+  quit
+.
+
+
+#Set d_theta	0.2	# degrees
+Set d_theta	2	# degrees
+
+Define Update 1 angle
+gl color clear_color quit quit
+
+gl
+  transform
+    identity
+#    translate 0 0 -30
+    translate 0 0 -20
+    quit
+  quit
+#Construct_Polyhedron normals vdata tindices face_colors
+gl
+  lighting select_light light0 position 1 0 1 0 quit
+  lighting select_light light1 position -1 0 0 0 quit
+  transform
+    push_matrix
+    identity
+    translate 0 0 -50
+    rotate 40 1 0 0
+    rotate $1 0 1 0
+    #look_at 0 0 10   0 0 0     0 1 0
+    quit
+  lighting select_light light0 position 0 0 -1 0 quit
+  quit
+#advise 'calling construct_polyhedron'
+# BUG - why not make this object just once!?
+Construct_Polyhedron vertex_normals vdata tindices face_colors
+#advise 'back from construct_polyhedron'
+gl
+  transform
+    pop_matrix
+    identity
+    quit
+  lighting select_light light0 position 1 1 1 0 quit
+  quit
+
+gl
+  swap_buffers
+  quit
+.
+
+Define Spin 0
+Set ang 0
+repeat ceil(360/$d_theta)
+  #gl window win2 quit
+  #Update $ang
+  gl window my_win quit
+  Update $ang
+  Add_Var ang $d_theta
+  Pause_If
+  end
+.
+
+Define Setup_OGL 0
+gl
+  modes
+    polygon_mode front fill
+    quit
+  advise "Enabling lighting..."
+  capabilities
+    enable lighting
+    query lighting
+    advise "After enabling lighting, query returns $cap_enabled"
+    enable light0
+    enable light1
+    quit
+  advise "Enabling smooth shading..."
+  lighting
+    shading_model smooth
+    select_light light0
+    diffuse 1 1 0
+    two_side yes
+    select_light light1
+    diffuse 0 0 1
+    quit
+  quit
+
+Init_Projection
+.
+
+#Spin
+#
+##< /dev/tty
+#Pause_If
+
+Define Run_Icos_Demo 0
+Load_OGL_Macros
+Init_Icosahedron
+Setup_OGL
+Update
+.
+
