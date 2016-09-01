@@ -16,5 +16,7 @@ Info v_g
 
 Ramp1D v_g 1 1
 Display v_g
+VSet v_g 2
+Display v_g
 
   Pause
