@@ -1,0 +1,15 @@
+Set n 8
+Image i_h $n $n 1 float
+
+platforms
+  select Apple $DEFAULT_GPU
+  quit
+# default data area is now gpu?
+Image i_g $n $n 1 float
+# ramp2d has a problem!?
+Ramp2D i_g 0 1 10
+#advise 'back from ramp2D, displaying...'
+Pause
+Display i_g
+exit
+
