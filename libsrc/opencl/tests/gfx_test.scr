@@ -23,9 +23,7 @@ platforms
 Image g_b $size $size 4 u_byte
 
 #VMov g_b h_b
-platforms
-  upload g_b h_b
-  quit
+platforms upload g_b h_b quit
 
 #Ramp2D g_b{0} 0 1 0
 #Ramp2D g_b{1} 0 1 1
@@ -47,15 +45,26 @@ gl
 
 advise "copying image to gl buffer"
 VMov bb g_b
+advise "redundant copy of image to gl buffer"
+VSet g_b{0} 100
+VSet g_b{1} 255
+VSet g_b{2} 200
+VMov bb g_b
 
 advise "calling platform_load"
-view
-  platform_load v2 bb
-  quit
+view platform_load v2 bb quit
 advise "calling swap_buffers"
-gl
-  swap_buffers
-  quit
+gl swap_buffers quit
+Pause
+advise 'calling first ramp...'
+Ramp2D g_b{0} 0 1 0
+advise 'calling second ramp...'
+Ramp2D g_b{1} 0 1 1
+advise 'calling third ramp...'
+Ramp2D g_b{2} 0 0 1
+VSet g_b{3} 0
+VMov bb g_b
+view platform_load v2 bb quit
+gl swap_buffers quit
+Pause
 
-
-  Pause

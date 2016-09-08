@@ -460,6 +460,8 @@ cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 	size_t len;
 	cl_int status;
 
+//fprintf(stderr,"ocl_create_program:  program source is:\n%s\n",buf);
+//fflush(stderr);
 	len = strlen(buf);		// count trailing null?
 	// BUG?  should we check that device is OCL device?
 	program = clCreateProgramWithSource(OCLDEV_CTX(pdp), 1,
@@ -550,6 +552,8 @@ strlen(bufp));
 	}
 }
 
+// this routine seems to only be used for the random number generator???
+
 cl_kernel ocl_make_kernel(const char *ksrc,const char *kernel_name,Platform_Device *pdp)
 {
 	cl_program program;
@@ -577,6 +581,8 @@ cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 
 	// build (compiles and links) a program executable
 	// from the program source or binary
+fprintf(stderr,"ocl_create_kernel %s BEGIN\n",name);
+fflush(stderr);
 	status = clBuildProgram(program,	// compiled program
 				1,		// num_devices
 				&OCLDEV_DEV_ID(pdp),	// device list
