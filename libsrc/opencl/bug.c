@@ -176,9 +176,13 @@ static int extension_supported( const char *ext_str )
 static void init_ocl_device(cl_device_id dev_id, cl_platform_id pf_id)
 {
 	cl_int status;
+	cl_context this_context;
+	cl_command_queue this_queue;
 	size_t psize;
 	char *this_name;
 	char *extensions;
+	int use_for_test=0;
+
 	CGLContextObj cgl_ctx=NULL;
 	cl_context_properties props[3]={
 		CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
@@ -194,6 +198,7 @@ static void init_ocl_device(cl_device_id dev_id, cl_platform_id pf_id)
 	status = clGetDeviceInfo(dev_id,CL_DEVICE_NAME,psize+1, this_name,&psize);
 	OCL_STATUS_CHECK(status,clGetDeviceInfo)
 
+fprintf(stderr,"Initializing %s\n",this_name);
 	// Check for other properties...
 	// find out how much space required...
 	status = clGetDeviceInfo(dev_id,CL_DEVICE_EXTENSIONS,0,NULL,&psize);
@@ -211,12 +216,12 @@ static void init_ocl_device(cl_device_id dev_id, cl_platform_id pf_id)
 	// inappropriate?
 
 	if( extension_supported("cl_APPLE_gl_sharing") &&
-			strcmp(this_name,"Iris_Pro")){
+			strcmp(this_name,"Iris Pro")){
 
 		CGLShareGroupObj share_group;
 	
-		the_extensions=extensions;
-		the_dev_id = dev_id;
+fprintf(stderr,"Will use %s for the test...\n",this_name);
+		use_for_test=1;
 		cgl_ctx = CGLGetCurrentContext();
 		if( cgl_ctx != NULL){
 			// This means that we have an OpenGL window available...
@@ -279,7 +284,7 @@ static void init_ocl_device(cl_device_id dev_id, cl_platform_id pf_id)
 //if( cgl_ctx != NULL )
 //fprintf(stderr,"creating clContext with share properties for %s...\n",PFDEV_NAME(pdp));
 	if( cgl_ctx == NULL ){
-		the_context = clCreateContext(
+		this_context = clCreateContext(
 			NULL,		// cl_context_properties *properties
 			1,		// num_devices
 			&dev_id,	// devices
@@ -288,7 +293,7 @@ static void init_ocl_device(cl_device_id dev_id, cl_platform_id pf_id)
 			&status		// cl_int *errcode_ret
 		);
 	} else {
-		the_context = clCreateContext(
+		this_context = clCreateContext(
 			props,		// cl_context_properties *properties
 			0,		// num_devices
 			NULL,	// devices
@@ -315,14 +320,19 @@ static void init_ocl_device(cl_device_id dev_id, cl_platform_id pf_id)
 	// The third arg is a properties bit field, with valid values being:
 	// CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
 	// CL_QUEUE_PROFILING_ENABLE
-	the_queue = clCreateCommandQueue(the_context, dev_id, 0, &status);
+	this_queue = clCreateCommandQueue(this_context, dev_id, 0, &status);
 	if( status != CL_SUCCESS ){
 		report_ocl_error(status, "clCreateCommandQueue");
 		error1("failed to create command queue");
 	}
 	// set a ready flag?
 
-	//init_ocl_dev_memory();
+	if( use_for_test ){
+		the_extensions=extensions;
+		the_dev_id = dev_id;
+		the_context = this_context;
+		the_queue = this_queue;
+	}
 }
 
 #define MAX_OPENCL_DEVICES	4
@@ -358,48 +368,9 @@ static void init_ocl_devices(cl_platform_id pf_id)
 
 static void init_ocl_platform(cl_platform_id pf_id)
 {
-	//cl_int status;
-	//char param_data[MAX_PARAM_SIZE];
-	//char *str;
-	//size_t ret_size;
-
-	/*
-	str=get_platform_string(platform_id,CL_PLATFORM_NAME)
-
-	cpp = creat_platform(platform_str, PLATFORM_OPENCL);
-	givbuf(platform_str);
-
-	str=get_platform_string(platform_id,CL_PLATFORM_PROFILE)
-	if( str == NULL ) return;
-	SET_OCLPF_PROFILE(cpp,platform_str);
-
-	str=get_platform_string(platform_id,CL_PLATFORM_VERSION)
-	if( str == NULL ) return;
-	SET_OCLPF_VERSION(cpp,platform_str);
-
-	str=get_platform_string(platform_id,CL_PLATFORM_VENDOR)
-	if( str == NULL ) return;
-	SET_OCLPF_VENDOR(cpp,platform_str);
-	*/
-
 	the_extensions=get_platform_string(pf_id,CL_PLATFORM_EXTENSIONS);
 	if( the_extensions == NULL ) return;
-
-	/*
-	SET_OCLPF_EXTENSIONS(cpp,platform_str);
-	SET_PF_OPD_ID(cpp,platform_id);
-	SET_PLATFORM_FUNCTIONS(cpp,ocl)
-	SET_PF_FUNC_TBL(cpp,ocl_vfa_tbl);
-	*/
-
-	// BUG need to set vfa_tbl here too!
-
-	//icp = create_item_context(pfdev_itp, PLATFORM_NAME(cpp) );
-	//push_item_context(pfdev_itp, icp );
-	//push_pfdev_context(PF_CONTEXT(cpp) );
 	init_ocl_devices(pf_id);
-	//if( pop_pfdev_context(SINGLE_) == NO_ITEM_CONTEXT )
-	//	ERROR1("init_ocl_platform:  Failed to pop platform device context!?");
 }
 
 //In general Intel CPU and NV/AMD's GPU are in different platforms
