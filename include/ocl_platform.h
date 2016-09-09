@@ -5,10 +5,8 @@
 
 #ifdef __APPLE__ //Mac OSX has a different name for the header file
 #include <OpenCL/opencl.h>
-//#error "__APPLE__ is defined"
 #else
 #include <CL/cl.h>
-//#error "__APPLE__ is NOT defined"
 #endif
 
 struct ocl_platform_data {

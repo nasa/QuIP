@@ -7,7 +7,8 @@ platforms
 # default data area is now gpu?
 Image i_g $n $n 1 float
 # ramp2d has a problem!?
-Ramp2D i_g 0 1 10
+#Ramp2D i_g 0 1 10
+VSet i_g 4
 #advise 'back from ramp2D, displaying...'
 Pause
 Display i_g

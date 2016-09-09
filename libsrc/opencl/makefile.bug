@@ -1,0 +1,8 @@
+LIBS=
+CC=	gcc
+CFLAGS=	-Wall
+LDOPTS=	-framework OpenCL -framework OpenGL
+
+bug_demo:	bug.o
+	$(CC) $(LDOPTS)	-o bug_demo bug.o $(LIBS)
+
