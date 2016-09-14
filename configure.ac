@@ -13,7 +13,9 @@ AC_INIT([quip], [1.0], [jeffrey.b.mulligan@nasa.gov])
 
 # this line prevents -O2...
 #: ${CXXFLAGS=-g}
-# didn't work - try CFLAGS="-g" on configure command line
+# didn't work - but CFLAGS="-g" on configure command line does.
+# Maybe it would work here with CFLAGS instead of CXXFLAGS?
+# see def_config.csh...
 
 AC_CONFIG_SRCDIR([src/quip_main.c])
 AC_CONFIG_HEADERS([config.h])

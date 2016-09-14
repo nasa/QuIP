@@ -971,7 +971,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 
 static List *alpha_sort(QSP_ARG_DECL  List *lp)
 {
-	short n2sort;
+	count_t n2sort;
 	void **ptr_array;
 	Node *np;
 	int i;
@@ -985,7 +985,7 @@ static List *alpha_sort(QSP_ARG_DECL  List *lp)
 //#endif /* CAUTIOUS */
 	assert( lp != NO_LIST );
 
-	n2sort=(short)eltcount(lp);
+	n2sort=eltcount(lp);
 
 	if( n2sort == 0 ) return(lp);
 
