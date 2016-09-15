@@ -42,6 +42,7 @@ vuni.i:	$(srcdir)/vuni.ocl
 #ocl_veclib.c:	ocl_veclib_stripped.c
 
 #./strip_it2.sh
+#			ocl_api.h
 
 noinst_HEADERS =					\
 			ocl_host_funcs.c		\
@@ -54,7 +55,6 @@ noinst_HEADERS =					\
 			enum_menu_calls.h		\
 			host_conv_prot.h		\
 			kern_src.h			\
-			ocl_api.h			\
 			ocl_host_call_defs.h		\
 			ocl_host_untyped_call_defs.h	\
 			ocl_kern_args.h			\
