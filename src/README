@@ -1,0 +1,8 @@
+
+Linker problems w/ cuda libs, even when not building with cuda?
+
+dyld: Library not loaded: @rpath/libnpps.7.5.dylib
+  Referenced from: /usr/local/bin/quip
+  Reason: image not found
+  Trace/BPT trap
+
