@@ -490,7 +490,7 @@ List *ht_list(QSP_ARG_DECL  Hash_Tbl *htp)
 	unsigned int i;
 	List *lp;
 
-advise("ht_list creating list for table");
+//advise("ht_list creating list for table");
 	lp=new_list();
 	entry = htp->ht_entries;
 	for(i=0;i<htp->ht_size;i++){

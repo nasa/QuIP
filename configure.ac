@@ -367,13 +367,16 @@ fi
 if test "x${use_cuda}" = xyes; then
   AC_CHECK_FILE([/Developer/NVIDIA],[cuda_on_mac="yes"],[cuda_on_mac="no"])
   if test "x${cuda_on_mac}" = xyes; then
-    AC_CHECK_FILE([/Developer/NVIDIA/CUDA-7.5],[cuda_dir="/Developer/NVIDIA/CUDA-7.5"],[cuda_dir="no"])
+    AC_CHECK_FILE([/Developer/NVIDIA/CUDA-8.0],[cuda_dir="/Developer/NVIDIA/CUDA-8.0"],[cuda_dir="no"])
     if test "x${cuda_dir}" = xno; then
-      AC_CHECK_FILE([/Developer/NVIDIA/CUDA-7.0],[cuda_dir="/Developer/NVIDIA/CUDA-7.0"],[cuda_dir="no"])
+      AC_CHECK_FILE([/Developer/NVIDIA/CUDA-7.5],[cuda_dir="/Developer/NVIDIA/CUDA-7.5"],[cuda_dir="no"])
       if test "x${cuda_dir}" = xno; then
-        AC_CHECK_FILE([/Developer/NVIDIA/CUDA-6.5],[cuda_dir="/Developer/NVIDIA/CUDA-6.5"],[cuda_dir="no"])
+        AC_CHECK_FILE([/Developer/NVIDIA/CUDA-7.0],[cuda_dir="/Developer/NVIDIA/CUDA-7.0"],[cuda_dir="no"])
         if test "x${cuda_dir}" = xno; then
-          AC_CHECK_FILE([/Developer/NVIDIA/CUDA-5.5],[cuda_dir="/Developer/NVIDIA/CUDA-5.5"],[cuda_dir="no"])
+          AC_CHECK_FILE([/Developer/NVIDIA/CUDA-6.5],[cuda_dir="/Developer/NVIDIA/CUDA-6.5"],[cuda_dir="no"])
+          if test "x${cuda_dir}" = xno; then
+            AC_CHECK_FILE([/Developer/NVIDIA/CUDA-5.5],[cuda_dir="/Developer/NVIDIA/CUDA-5.5"],[cuda_dir="no"])
+          fi
         fi
       fi
     fi
