@@ -48,13 +48,16 @@ struct dictionary;
 #define NO_ITEM	((Item *) NULL)
 
 
-
 typedef struct item_context {
 	Item			ic_item;
 	struct dictionary *	ic_dict;
 	List *			ic_lp;
 	Item_Type *		ic_itp;
 	int			ic_flags;
+	// We use a "dictionary" to store the items; traditionally,
+	// this has been a hash table, but to support partial name
+	// lookup (for more efficient completion), we might prefer
+	// to use a red-black tree...
 	struct dictionary *	ic_dict_p;
 } Item_Context;
 
@@ -86,9 +89,15 @@ struct item_type {
 	List *		it_lp;
 	List *		it_free_lp;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
+	/*
 	const char **	it_choices;
 	int		it_n_choices;
+	*/
 	List *		it_class_lp;
+
+	// If we can have multiple interpreter threads, then each thread
+	// needs its own context stack...
+
 #ifdef THREAD_SAFE_QUERY
 
 #ifdef HAVE_PTHREADS
@@ -104,8 +113,8 @@ struct item_type {
 	Stack *		it_context_stack;
 	Item_Context *	it_icp;			// current context
 	int 		it_ctx_restricted;	// flags
-
 #endif /* ! THREAD_SAFE_QUERY */
+
 };
 
 #define it_name	it_item.item_name

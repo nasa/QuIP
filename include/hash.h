@@ -1,9 +1,10 @@
-
-#ifndef NO_HASH_TBL
+#ifndef _HASH_H_
+#define _HASH_H_
 
 #include "typedefs.h"
 #include "node.h"
 #include "list.h"
+#include "query_stack.h"
 
 typedef struct hash_tbl {
 	const char *	ht_name;
@@ -45,5 +46,5 @@ extern void *		fetch_hash(const char *name,Hash_Tbl *table);
 extern int		remove_hash(void *ptr,Hash_Tbl *table);
 extern void		tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *table);
 
+#endif // ! _HASH_H_
 
-#endif /* NO_HASH_TBL */

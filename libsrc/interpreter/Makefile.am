@@ -14,6 +14,8 @@ libinterpreter_a_SOURCES =		\
 		fake_cam.c		\
 		start_quip.c		\
 		bi_menu.c		\
+		container.c		\
+		rbtree.c		\
 		class.c			\
 		command.c		\
 		complete.c		\

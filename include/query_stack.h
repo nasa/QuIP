@@ -119,6 +119,7 @@ struct query_stack {
 	Parser_Data *	qs_parser_data;
 
 	struct dobj_ascii_info *	qs_dai_p;
+	Item_Type *	qs_picking_item_itp;
 
 #ifdef BUILD_FOR_IOS
 #ifdef USE_QS_QUEUE
@@ -140,6 +141,9 @@ struct query_stack {
 #endif // HAVE_LIBCURL
 	
 };
+
+#define picking_item_itp	(THIS_QSP->qs_picking_item_itp)
+#define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(THIS_QSP->qs_picking_item_itp) = itp
 
 #define	qs_top_enp		qs_parser_data->pd_top_enp
 #define	qs_last_enp		qs_parser_data->pd_last_enp

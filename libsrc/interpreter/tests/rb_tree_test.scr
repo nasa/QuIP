@@ -1,0 +1,99 @@
+max_warnings 2
+set_seed 1
+
+Set op_counter 1
+
+Set n_names		32
+Set max_name_len	12
+
+Define Stringify 2 varname obj
+data stringify $1 $2 quit
+.
+
+Image name_tbl $n_names $max_name_len 1 string
+data
+  import_string name_tbl[0] Jeff
+  import_string name_tbl[1] Brooke
+  import_string name_tbl[2] Tina
+  import_string name_tbl[3] Bruno
+  import_string name_tbl[4] Frank
+  import_string name_tbl[5] Joyce
+  import_string name_tbl[6] Shelley
+  import_string name_tbl[7] Dolly
+  import_string name_tbl[8] Rene
+  import_string name_tbl[9] Les
+  import_string name_tbl[10] Tim
+  import_string name_tbl[11] Peyton
+  import_string name_tbl[12] David
+  import_string name_tbl[13] Licia
+  import_string name_tbl[14] Robby
+  import_string name_tbl[15] Billy
+  import_string name_tbl[16] Fefe
+  import_string name_tbl[17] Joan
+  import_string name_tbl[18] Kelly
+  import_string name_tbl[19] George
+  import_string name_tbl[20] Steve
+  import_string name_tbl[21] Kathleen
+  import_string name_tbl[22] Mitchell
+  import_string name_tbl[23] Pat
+  import_string name_tbl[24] Joe
+  import_string name_tbl[25] Shawn
+  import_string name_tbl[26] Bryce
+  import_string name_tbl[27] Nick
+  import_string name_tbl[28] Julia
+  import_string name_tbl[29] Josh
+  import_string name_tbl[30] Herb
+  import_string name_tbl[31] Shiela
+  quit
+
+Vector is_added $n_names 1 u_byte
+VSet is_added 0
+#Display is_added
+Set n_added 0
+
+rbtree_test
+  quit
+
+Define Maybe_Add 0
+#advise "Maybe_Add BEGIN"
+Assign i random($n_names-1)
+#Print i
+Assign already_added value(is_added[$i])
+Print already_added
+If $already_added exit_macro
+VSet is_added[$i] 1
+#Display is_added
+Stringify n name_tbl[$i]
+advise "OPERATION $op_counter:  Adding $n"
+Increment op_counter
+Increment n_added
+rbtree_test
+  add $n
+  check
+  print
+  quit
+.
+
+Define Maybe_Delete 0
+#advise "Maybe_Delete BEGIN"
+Assign i random($n_names-1)
+#Print i
+Assign already_added value(is_added[$i])
+If !$already_added "advise 'Not deleting anything...' exit_macro"
+VSet is_added[$i] 0
+Stringify n name_tbl[$i]
+advise "OPERATION $op_counter:  Deleting $n"
+Increment op_counter
+Decrement n_added
+rbtree_test
+  delete $n
+  check
+  print
+  quit
+.
+
+do
+  If $n_added<$n_names Maybe_Add
+  If $n_added>0 Maybe_Delete
+  while 1
+

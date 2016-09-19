@@ -209,6 +209,7 @@ void make_prompt(QSP_ARG_DECL char buffer[LLEN],const char* s)
 	}
 }
 
+#ifdef USE_CHOICE_LIST
 static const char **make_choices( QSP_ARG_DECL  int* countp, List* lp )
 {
 	const char **choices;
@@ -238,7 +239,9 @@ static const char **make_choices( QSP_ARG_DECL  int* countp, List* lp )
 	}
 	return(choices);
 }
+#endif // USE_CHOICE_LIST
 
+#ifdef USE_CHOICE_LIST
 static void setup_item_choices( QSP_ARG_DECL  Item_Type *itp )
 {
 	int count;
@@ -250,15 +253,21 @@ static void setup_item_choices( QSP_ARG_DECL  Item_Type *itp )
 	SET_IT_N_CHOICES(itp, count);
 	CLEAR_IT_FLAG_BITS(itp, NEED_CHOICES);
 }
+#endif // USE_CHOICE_LIST
 
 
 /*
  * Use this function instead of get_xxx(nameof("item name"))
+ *
+ * When the number of items is large, the current algorithm is unacceptably slow.
+ * (Here large means 100,000 items or more - but how few items can cause the problem?
  */
 
 Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 {
+#ifdef USE_CHOICE_LIST
 	int i;
+#endif // USE_CHOICE_LIST
 	Item *ip;
 	const char *s;
 
@@ -273,10 +282,25 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 //#endif /* CAUTIOUS */
 	assert( itp != NO_ITEM_TYPE );
 
+	if( ! IS_COMPLETING(THIS_QSP) ){
+		s = NAMEOF(prompt);
+		return get_item(QSP_ARG  itp, s);
+	}
 
 	/* use the item type name as the prompt if unspecified */
 	if( prompt == NULL || *prompt==0 )
 		prompt=IT_NAME(itp);
+
+#ifdef USE_CHOICE_LIST
+	// Before we setup the choices, we should make sure that the number
+	// is not so large that the program will appear to hang...
+	//
+	// We tackle this in a new way - instead of adding all of the item names
+	// to the history list, we keep the history list to be just what was actually
+	// entered previously - if we don't find a match there, then we may look
+	// in the list/table/tree of items...
+	// But that would be tricky, because response completion happens inside
+	// of nameof()...
 
 	if( NEEDS_NEW_CHOICES(itp) ){
 		setup_item_choices(QSP_ARG  itp);
@@ -321,6 +345,15 @@ NADVISE(ERROR_STRING);
 		return(NO_ITEM);
 
 	s=IT_CHOICES(itp)[i];
+#endif // USE_CHOICE_LIST
+
+	// The old way with an array of choices is no good when there are 100k items...
+
+	assert( picking_item_itp == NULL );
+	picking_item_itp = itp;
+	s=NAMEOF(prompt);
+	picking_item_itp = NULL;
+
 	ip=get_item(QSP_ARG  itp,s);
 
 	return(ip);
@@ -345,6 +378,9 @@ void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 //	}
 //#endif /* CAUTIOUS */
 	assert( itp != NO_ITEM_TYPE );
+
+	// Don't do this if the number of choices is too large...
+	// We should set a flag in the itp...
 
 	lp=item_list(QSP_ARG  itp);
 	if( lp == NO_LIST ) return;

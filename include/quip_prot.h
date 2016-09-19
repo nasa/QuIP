@@ -27,6 +27,7 @@ extern "C" {
 #include "stdc_defs.h"	// BUG break this up
 #include "query_stack.h"
 #include "item_type.h"
+#include "hash.h"
 #include "function.h"
 #include "debug.h"
 #include "warn.h"

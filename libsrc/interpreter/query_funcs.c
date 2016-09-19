@@ -1793,7 +1793,8 @@ nltop:
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
 			if( IS_TRACKING_HISTORY(THIS_QSP) &&
-					(QS_FLAGS(THIS_QSP) & QS_COMPLETING) ){
+					/*(QS_FLAGS(THIS_QSP) & QS_COMPLETING)*/
+					IS_COMPLETING(THIS_QSP) ){
 				qp=hist_select(QSP_ARG  buf,LLEN,pline);
 				if( QRY_HAS_TEXT(qp) ){
 					return(QRY_LINE_PTR(qp) );
@@ -2610,6 +2611,7 @@ void init_query_stack(Query_Stack *qsp)
 	init_dobj_ascii_info(QSP_ARG  QS_DOBJ_ASCII_INFO(qsp) );
 	*/
 	SET_QS_DOBJ_ASCII_INFO(qsp,NULL);
+	SET_QS_PICKING_ITEM_ITP(qsp,NULL);
 
 	/* used to initialize query structs here, now do as needed */
 

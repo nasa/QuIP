@@ -134,8 +134,10 @@ static void init_itp(Item_Type *itp)
 	/* should we really do this? */
 	SET_IT_LIST(itp, new_list() );
 	SET_IT_FREE_LIST(itp, new_list() );
+#ifdef USE_CHOICE_LIST
 	SET_IT_FLAGS(itp, NEED_CHOICES);
 	SET_IT_CHOICES(itp, NO_STR_ARRAY);
+#endif // USE_CHOICE_LIST
 
 	//SET_IT_CTX_IT(itp,NO_ITEM_TYPE);
 

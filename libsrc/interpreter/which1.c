@@ -23,7 +23,7 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 	const char *last_pick;
 
 #ifdef HAVE_HISTORY
-	if( intractive(SINGLE_QSP_ARG) && *prompt ){
+	if( IS_COMPLETING(THIS_QSP) && intractive(SINGLE_QSP_ARG) && *prompt ){
 		char pline[LLEN];
 		if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT )
 			sprintf(pline,PROMPT_FORMAT,prompt);

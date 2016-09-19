@@ -735,6 +735,10 @@ AC_CHECK_FILE([/dev/fb0],[fb_dev_present=yes],[fb_dev_present=no])
 
 # consider silent-rules option, see p. 122
 AM_INIT_AUTOMAKE
+#export TAR_OPTIONS = --owner=0 --group=0 --numeric-owner
+TAR_OPTIONS=--owner=0
+TAR_OPTIONS+=--group=0
+TAR_OPTIONS+=--numeric-owner
 
 # BUG g++ required for cuda even when HW not present!?
 

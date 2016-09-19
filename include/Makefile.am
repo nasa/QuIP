@@ -30,6 +30,7 @@ noinst_HEADERS =			\
 			camera_api.h	\
 			cmaps.h		\
 			command.h	\
+			container.h	\
 			cuda_api.h	\
 			cuda_helper.h	\
 			cuda_supp.h	\
@@ -94,6 +95,7 @@ noinst_HEADERS =			\
 			quip_menu.h	\
 			quip_prot.h	\
 			quip_version.h	\
+			rbtree.h	\
 			rn.h		\
 			rt_sched.h	\
 			rv_api.h	\

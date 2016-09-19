@@ -46,7 +46,7 @@ Dictionary *create_dictionary(const char *name)
 	
 	SET_DICT_NAME(dict_p, savestr(name) );
 	SET_DICT_LIST(dict_p, new_list() );
-	SET_DICT_HT(dict_p, NO_HASH_TBL);
+	SET_DICT_HT(dict_p, NULL);
 	SET_DICT_FLAGS(dict_p, NS_LIST_IS_CURRENT);
 	SET_DICT_N_COMPS(dict_p, 0);
 	SET_DICT_N_FETCHES(dict_p, 0);
@@ -101,6 +101,14 @@ void delete_dictionary(Dictionary *dict_p)
 	rls_str((char *)DICT_NAME(dict_p));
 	givbuf(dict_p);	/* these are not items, so we return the mem */
 }
+
+// We create a hash table if the number of fetches is > 8.  This is completely
+// arbitrary, and has never been tested to see when we actually break even.
+//
+// It is not clear that we should be using the fetch count for this trigger -
+// unless we are sure that we attempt a fetch every time we create a new item.
+// Otherwise, we might create many, many items, adding to a long list, and then
+// We are considering switching from hash tables to red-black trees...
 
 Item *fetch_name(const char *name,Dictionary *dict_p)
 {
@@ -307,7 +315,7 @@ Dictionary *new_dictionary(void)
 	dict_p = getbuf(sizeof(Dictionary));
 
 	dict_p->dict_name = NULL;
-	dict_p->dict_htp = NO_HASH_TBL;
+	dict_p->dict_htp = NULL;
 	dict_p->dict_lp = NO_LIST;
 	dict_p->dict_flags = 0;
 	dict_p->dict_fetches = 0;

@@ -540,6 +540,15 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 
 			if( l > n_so_far )
 				show_def(&def_str[n_so_far],1);
+			else if( picking_item_itp != NULL ){
+				// No match on the history list, but
+				// we are picking an item...
+
+//fprintf(stderr,"Need to check %s items for a completion...\n",picking_item_itp->it_item.item_name);
+
+				// not implemented yet...
+				//find_partial_match(picking_item_itp,sel_str);
+			}
 
 			if( l == 0 ) def_str=sel_str;
 		} else {	/* nothing typed yet... */

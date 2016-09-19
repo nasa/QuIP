@@ -106,6 +106,7 @@ extern "C" {
 
 #define IS_SILENT(qsp)		(QS_FLAGS(qsp) & QS_SILENT)
 #define SILENCE_CHECKED(qsp)	(QS_FLAGS(qsp) & QS_SILENCE_CHECKED)
+#define IS_COMPLETING(qsp)	(QS_FLAGS(qsp) & QS_COMPLETING)
 
 #define IS_CHEWING(qsp)		(QS_FLAGS(qsp) & QS_CHEWING)
 #define IS_HALTING(qsp)		(QS_FLAGS(qsp) & QS_HALTING)

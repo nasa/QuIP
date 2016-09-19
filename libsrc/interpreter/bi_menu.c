@@ -37,11 +37,14 @@ static COMMAND_FUNC( list_types )
 
 static COMMAND_FUNC( select_type )
 {
-	const char *s;
+	//const char *s;
 	Item_Type *itp;
     
+	/*
 	s=NAMEOF("item type name");
 	itp = get_item_type(QSP_ARG  s);
+	*/
+	itp = (Item_Type *) pick_item(QSP_ARG  ittyp_itp, "item type name");
 	if( itp != NO_ITEM_TYPE )
 		curr_itp = itp;
 }
@@ -60,10 +63,89 @@ ADD_CMD( list,		do_list_items,	list items of selected type)
 MENU_END(items)
 
 
-static COMMAND_FUNC( do_items )
+static COMMAND_FUNC( do_items ) { PUSH_MENU(items); }
+
+//////////////////////////////////////
+
+#include "rbtree.h"
+
+static rb_tree *the_tree_p=NULL;
+
+static COMMAND_FUNC( do_rbt_add )
 {
-	PUSH_MENU(items);
+	const char *s;
+	Item *ip;
+
+	s=NAMEOF("new item name");
+
+	// first look for this name in the tree
+
+	ip = malloc(sizeof(Item));
+	ip->item_name = savestr(s);
+
+	rb_insert_item( the_tree_p, ip );
 }
+
+static void rb_item_print( rb_node *np )
+{
+	const Item *ip;
+
+	ip = np->data;
+	printf("\t%s\n",ip->item_name);
+	fflush(stdout);
+}
+
+static COMMAND_FUNC( do_rbt_print )
+{
+	rb_traverse( the_tree_p->root, rb_item_print );
+}
+
+static COMMAND_FUNC( do_rbt_del )
+{
+	const char *s;
+
+	s = NAMEOF("item name");
+
+	// find the item in the tree
+	rb_delete_key(the_tree_p,s);
+}
+
+#ifdef DEBUG
+static COMMAND_FUNC( do_rbt_check )
+{
+	rb_check(the_tree_p);
+}
+#endif // DEBUG
+
+#undef ADD_CMD
+#define ADD_CMD(s,f,h)	ADD_COMMAND(rbt_menu,s,f,h)
+MENU_BEGIN(rbt)
+ADD_CMD( add,		do_rbt_add,	add an item to the tree )
+ADD_CMD( print,		do_rbt_print,	show contents of the tree )
+#ifdef DEBUG
+ADD_CMD( check,		do_rbt_check,	check consistency of the tree )
+#endif // DEBUG
+ADD_CMD( delete,	do_rbt_del,	delete an item from the tree )
+MENU_END(rbt)
+
+//// this routine should compare keys...
+//static int test_compare( const void *kp1, const void *kp2 )	// assume these are items
+//{
+//	return( strcmp( (const char *)kp1, (const char *)kp2) );
+//}
+
+//static void test_destroy_key( void *ip ) {}
+//static void test_destroy_data( void *ip ) {}
+
+static COMMAND_FUNC( do_rbtree_test )
+{
+	if( the_tree_p == NULL ){
+		//the_tree_p = create_rb_tree( test_compare, test_destroy_key, test_destroy_data );
+		the_tree_p = create_rb_tree();
+	}
+	PUSH_MENU(rbt);
+}
+
 
 #ifdef FOOBAR
 static COMMAND_FUNC( do_pop_file )
@@ -1651,6 +1733,7 @@ ADD_CMD( exit_macro,	do_exit_macro,	exit current macro )
 ADD_CMD( exit_file,	do_exit_file,	exit current file )
 //ADD_CMD( PopFile,	do_pop_file,	pop input file(s)	)
 ADD_CMD( items,		do_items,	item submenu		)
+ADD_CMD( rbtree_test,	do_rbtree_test,	test red-black tree functions)
 ADD_CMD( version,	do_report_version,	report software version of this build )
 ADD_CMD( features,	do_list_features,	list features present in this build )
 ADD_CMD( set_seed,	do_seed,	set random number generator seed )
