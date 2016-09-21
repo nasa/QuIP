@@ -554,24 +554,6 @@ int display_depth(SINGLE_QSP_ARG_DECL)
 	return( DO_DEPTH(current_dop) );
 }
 
-#else /* !HAVE_X11 */
-
-/* dummy functions to allow linking w/o X11 */
-
-int display_depth(SINGLE_QSP_ARG_DECL)
-{
-	UNIMP_MSG(display_depth)
-	return 0;
-}
-
-void window_sys_init(SINGLE_QSP_ARG_DECL)
-{ UNIMP_MSG(window_sys_init) }
-
-#endif /* !HAVE_X11 */
-
-Disp_Obj *curr_dop(void)
-{ return(current_dop); }
-
 void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 {
 	int nvis,i;
@@ -597,4 +579,25 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 		ADVISE(DEFAULT_ERROR_STRING);
 	}
 }
+
+#else /* !HAVE_X11 */
+
+/* dummy functions to allow linking w/o X11 */
+
+int display_depth(SINGLE_QSP_ARG_DECL)
+{
+	UNIMP_MSG(display_depth)
+	return 0;
+}
+
+void window_sys_init(SINGLE_QSP_ARG_DECL)
+{ UNIMP_MSG(window_sys_init) }
+
+void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
+{ UNIMP_MSG(show_visuals) }
+
+#endif /* !HAVE_X11 */
+
+Disp_Obj *curr_dop(void)
+{ return(current_dop); }
 
