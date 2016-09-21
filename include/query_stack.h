@@ -143,7 +143,7 @@ struct query_stack {
 };
 
 #define picking_item_itp	(THIS_QSP->qs_picking_item_itp)
-#define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(THIS_QSP->qs_picking_item_itp) = itp
+#define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(qsp->qs_picking_item_itp) = itp
 
 #define	qs_top_enp		qs_parser_data->pd_top_enp
 #define	qs_last_enp		qs_parser_data->pd_last_enp
