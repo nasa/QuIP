@@ -4,11 +4,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#define BUILD_FOR_OPENCL
 #include "quip_prot.h"
 //#include "data_obj.h"
 //#include "veclib/vecgen.h"
 
-#define BUILD_FOR_OPENCL
 #include "my_ocl.h"
 
 /* No need to explicitely include the OpenCL headers */
