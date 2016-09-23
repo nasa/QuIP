@@ -38,7 +38,7 @@ static char *get_hist_ctx_name(const char *prompt);
 
 /* local prototypes */
 static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp);
-static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char *string);
+static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char *string);
 static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char **choices);
 
 // need macro to make these all static
@@ -125,7 +125,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 	}
 }
 
-void set_defs(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choices)
+void preload_history_list(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choices)
 {
 	Item_Context *icp;
 	unsigned int i;
@@ -156,13 +156,13 @@ void set_defs(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choic
 
 #ifdef QUIP_DEBUG
 if( debug & hist_debug ){
-sprintf(ERROR_STRING,"set_defs for prompt \"%s\"",prompt);
+sprintf(ERROR_STRING,"preload_history_list for prompt \"%s\"",prompt);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 	for(i=0;i<n;i++){
-		add_hl_def(QSP_ARG  icp,choices[i]);
+		add_word_to_history_list(QSP_ARG  icp,choices[i]);
 	}
 }
 
@@ -210,16 +210,18 @@ void new_defs(QSP_ARG_DECL  const char* prompt)
 	clr_defs_if(QSP_ARG  icp,0,(const char **)NULL);
 }
 
-static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char* string)
+static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char* string)
 {
 	Node *np;
 	Hist_Choice *hcp;
 	List *lp;
 
+//fprintf(stderr,"add_word_to_history_list BEGIN\n");
+
 //#ifdef CAUTIOUS
 //	if( string[0]==0 ) {		/* don't add empty string */
 //		sprintf(ERROR_STRING,
-//			"CAUTIOUS: add_hl_def:  not adding empty string to context %s",
+//			"CAUTIOUS: add_word_to_history_list:  not adding empty string to context %s",
 //			CTX_NAME(icp));
 //		WARN(ERROR_STRING);
 //		return;
@@ -227,6 +229,7 @@ static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char* string)
 //#endif /* CAUTIOUS */
 	assert( string[0] != 0 );		/* don't add empty string */
 
+//fprintf(stderr,"add_word_to_history_list, adding \"%s\" to context %s\n",string,CTX_NAME(icp));
 	/* first see if this string is already on the list */
 
 	PUSH_ITEM_CONTEXT(choice_itp,icp);
@@ -239,12 +242,15 @@ static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char* string)
 	 */
 //	lp = dictionary_list(CTX_DICT(icp));
 	lp = container_list(CTX_CONTAINER(icp));
+//fprintf(stderr,"add_word_to_history_list, container list has %d elements\n",eltcount(lp));
 
 	if( hcp != NO_CHOICE ){
 
+//fprintf(stderr,"found choice %s\n",ITEM_NAME((Item *)hcp));
+
 #ifdef QUIP_DEBUG
 if( debug & hist_debug ){
-sprintf(ERROR_STRING,"add_hl_def:  increasing priority for choice \"%s\"",string);
+sprintf(ERROR_STRING,"add_word_to_history_list:  increasing priority for choice \"%s\"",string);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -252,7 +258,7 @@ advise(ERROR_STRING);
 		np = nodeOf(lp,hcp);
 //#ifdef CAUTIOUS
 //		if( np==NO_NODE ){
-//	WARN("CAUTIOUS:  add_hl_def can't find node of existing choice");
+//	WARN("CAUTIOUS:  add_word_to_history_list can't find node of existing choice");
 //			return;
 //		}
 //#endif	/* CAUTIOUS */
@@ -261,6 +267,7 @@ advise(ERROR_STRING);
 		np->n_pri++;
 		p_sort(lp);
 		pop_item_context(QSP_ARG  choice_itp);
+//fprintf(stderr,"add_word_to_history_list, returning after increasing node priority\n");
 		return;
 	}
 
@@ -276,6 +283,7 @@ advise(ERROR_STRING);
 //	}
 //#endif /* CAUTIOUS */
 	assert( hcp != NO_CHOICE );
+//fprintf(stderr,"add_word_to_history_list, returning after creating new choice\n");
 }
 
 void add_def( QSP_ARG_DECL  const char *prompt, const char *string )
@@ -290,7 +298,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	icp=find_hist(QSP_ARG  prompt);
-	add_hl_def(QSP_ARG  icp,string);
+	add_word_to_history_list(QSP_ARG  icp,string);
 }
 
 void rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
@@ -420,7 +428,7 @@ advise(ERROR_STRING);
 	while(np!=NO_NODE){
 		Item *ip;
 		ip=(Item *) NODE_DATA(np);
-		add_hl_def(QSP_ARG  icp,ITEM_NAME(ip));
+		add_word_to_history_list(QSP_ARG  icp,ITEM_NAME(ip));
 		np=NODE_NEXT(np);
 	}
 }

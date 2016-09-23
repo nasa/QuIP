@@ -92,6 +92,7 @@ int add_to_container(Container *cnt_p, Item *ip)
 	rb_node *tnp;
 	int stat=0;
 
+//fprintf(stderr,"add_to_container:  adding %s to %s\n",ITEM_NAME(ip),cnt_p->name);
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:
 			np = mk_node(ip);
@@ -101,6 +102,7 @@ int add_to_container(Container *cnt_p, Item *ip)
 			addTail( cnt_p->cnt_lp, np );
 			break;
 		case HASH_TBL_CONTAINER:
+//fprintf(stderr,"add_to_container:  calling insert_hash\n");
 			stat=insert_hash(ip,cnt_p->cnt_htp);
 			break;
 		case RB_TREE_CONTAINER:
@@ -112,6 +114,7 @@ int add_to_container(Container *cnt_p, Item *ip)
 			break;
 	}
 	cnt_p->is_current = cnt_p->primary_type;
+//fprintf(stderr,"add_to_container:  types = %d, primary_type = %d, is_current = %d\n", cnt_p->types,cnt_p->primary_type,cnt_p->is_current);
 	return stat;
 }
 
@@ -215,6 +218,7 @@ void cat_container_items(List *lp, Container *cnt_p)
 
 	while( ep != NULL ){
 		ip = enumerator_item(ep);
+//fprintf(stderr,"cat_container_items:  ip = 0x%lx\n",(long)ip);
 		if( ip != NULL ){
 			np = mk_node(ip);
 			addTail(lp,np);
@@ -248,12 +252,15 @@ List *container_list(Container *cnt_p)
 		return cnt_p->cnt_lp;
 
 	if( cnt_p->cnt_lp == NO_LIST ){
+//fprintf(stderr,"container_list:  creating new list for container %s...\n",cnt_p->name);
 		cnt_p->cnt_lp = new_list();
 		cnt_p->types |= LIST_CONTAINER;
-	}
-	else
+	} else {
+//fprintf(stderr,"container_list:  releasing old nodes, container %s...\n",cnt_p->name);
 		rls_nodes_from_list( cnt_p->cnt_lp );
+	}
 
+//fprintf(stderr,"container_list:  building list, container %s...\n",cnt_p->name);
 	cat_container_items(cnt_p->cnt_lp,cnt_p);
 	cnt_p->is_current |= LIST_CONTAINER;
 	return cnt_p->cnt_lp;
@@ -344,6 +351,8 @@ Enumerator *new_enumerator (Container *cnt_p, int type)
 		}
 		make_container_current(cnt_p,type);
 	}
+//else
+//fprintf(stderr,"new_enumerator: containter %s is current for type = %d\n",cnt_p->name,type);
 
 	ep->type = type;
 	ep->e_cnt_p = cnt_p;	// is this used?

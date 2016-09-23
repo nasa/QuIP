@@ -29,7 +29,7 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 			sprintf(pline,PROMPT_FORMAT,prompt);
 		else
 			strcpy(pline,prompt);
-		set_defs(QSP_ARG  pline,n,choices);
+		preload_history_list(QSP_ARG  pline,n,choices);
 	}
 #endif /* HAVE_HISTORY */
 

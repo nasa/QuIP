@@ -38,7 +38,7 @@ extern FILE *_tty_out;	/* used to be static in complete.c ... */
 /* history.c */
 
 extern Item_Context *	find_hist(QSP_ARG_DECL  const char *);
-extern void		set_defs(QSP_ARG_DECL  const char *prompt,unsigned int n,const char **choices);
+extern void		preload_history_list(QSP_ARG_DECL  const char *prompt,unsigned int n,const char **choices);
 extern void		rem_def(QSP_ARG_DECL  const char *,const char *);
 extern void		new_defs(QSP_ARG_DECL  const char *);
 extern void		add_def(QSP_ARG_DECL  const char *,const char *);

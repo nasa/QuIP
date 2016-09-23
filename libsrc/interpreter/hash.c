@@ -195,7 +195,9 @@ htp->ht_size);
 NADVISE(DEFAULT_ERROR_STRING);
 }
 
+//fprintf(stderr,"enlarging hash table at 0x%lx\n",(long)htp);
 		htp=enlarge_ht(htp);
+//fprintf(stderr,"enlarged hash table at 0x%lx\n",(long)htp);
 	}
 
 	/*
@@ -207,8 +209,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & hash_debug ){
-sprintf(DEFAULT_ERROR_STRING,"insert_hash %s %s",
-htp->ht_name,name);
+sprintf(DEFAULT_ERROR_STRING,"insert_hash: table %s at 0x%lx, item %s",
+htp->ht_name,(long)htp,name);
 NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -227,9 +229,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	/* now we've found an empty slot */
 
+//fprintf(stderr,"insert_hash: setting entry at 0x%lx to 0x%lx\n", (long)&entry[key],(long)ptr);
 	entry[key] = ptr;
 	htp->ht_n_entries++;
 
+//fprintf(stderr,"insert_hash: table at 0x%lx now has %d entries\n", (long)htp,htp->ht_n_entries);
 	return(0);
 }
 
@@ -550,10 +554,16 @@ Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
 	htep->current_entry = htp->ht_entries;
 
 	// advance to the first non-null entry
-	while( *(htep->current_entry) == NULL && htep->current_entry < htep->htp->ht_entries+htep->htp->ht_n_entries )
+	while( *(htep->current_entry) == NULL && htep->current_entry < htep->htp->ht_entries+htep->htp->ht_size ){
+//fprintf(stderr,"new_hash_tbl_enumerator:  * 0x%lx = 0x%lx\n", (long)htep->current_entry,(long)*htep->current_entry);
 		htep->current_entry ++;
-	if( htep->current_entry == htep->htp->ht_entries+htep->htp->ht_n_entries )
+	}
+	if( htep->current_entry == htep->htp->ht_entries+htep->htp->ht_size ){
 		htep->current_entry = NULL;	// nothing there.
+//fprintf(stderr,"new_hash_tbl_enumerator:  table at 0x%lx is empty!?\n",(long)htp);
+	}
+//else
+//fprintf(stderr,"new_hash_tbl_enumerator:  first item is 0x%lx\n",(long)*(htep->current_entry));
 
 	return htep;
 }
