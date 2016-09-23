@@ -32,7 +32,7 @@
 
 static Item_Type *function_itp=NULL;
 
-ITEM_INIT_FUNC(Function,function)
+ITEM_INIT_FUNC(Function,function,0)
 ITEM_NEW_FUNC(Function,function)
 ITEM_CHECK_FUNC(Function,function)
 

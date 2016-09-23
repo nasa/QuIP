@@ -9,7 +9,7 @@ static Item_Type * icl_itp=NO_ITEM_TYPE;
 static ITEM_INIT_PROT(Item_Class,icl)
 static ITEM_NEW_PROT(Item_Class,icl)
 
-static ITEM_INIT_FUNC(Item_Class,icl)
+static ITEM_INIT_FUNC(Item_Class,icl,0)
 static ITEM_NEW_FUNC(Item_Class,icl)
 
 

@@ -32,7 +32,7 @@ static Debug_Module *	add_auto_module(QSP_ARG_DECL  const char *, debug_flag_t m
 
 static Item_Type *debug_itp=NULL;
 
-ITEM_INIT_FUNC(Debug_Module,debug)
+ITEM_INIT_FUNC(Debug_Module,debug,0)
 ITEM_NEW_FUNC(Debug_Module,debug)
 ITEM_CHECK_FUNC(Debug_Module,debug)
 ITEM_GET_FUNC(Debug_Module,debug)

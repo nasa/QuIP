@@ -42,8 +42,9 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char 
 static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char **choices);
 
 // need macro to make these all static
+ITEM_INTERFACE_CONTAINER(choice,LIST_CONTAINER)
 ITEM_INTERFACE_PROTOTYPES(Hist_Choice,choice)
-ITEM_INTERFACE_DECLARATIONS(Hist_Choice,choice)
+ITEM_INTERFACE_DECLARATIONS(Hist_Choice,choice,LIST_CONTAINER)
 
 /* This has to match what is up above!!! */
 #define HIST_CHOICE_STRING	"Hist_Choice"
@@ -330,6 +331,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	if( *prompt == 0 ) return("");	/* e.g. hand entry of macros */
 
+fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
 	icp=find_hist(QSP_ARG  prompt);
 
 //	lp = dictionary_list(CTX_DICT(icp));
@@ -343,6 +345,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 		/* priority sorted!? */
 
 		hcp=(Hist_Choice *) NODE_DATA(np);
+fprintf(stderr,"comparing %s to %s\n",so_far,hcp->hc_text);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			cur_list=lp;

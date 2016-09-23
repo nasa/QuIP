@@ -65,7 +65,7 @@ static void		dump_item_context(QSP_ARG_DECL  Item_Context *);
 #define ITEM_TYPE_STRING	"Item_Type"
 Item_Type * ittyp_itp=NO_ITEM_TYPE;
 
-/*static*/ ITEM_INIT_FUNC(Item_Type,ittyp)
+/*static*/ ITEM_INIT_FUNC(Item_Type,ittyp,0)
 static ITEM_NEW_FUNC(Item_Type,ittyp)
 
 ITEM_LIST_FUNC(Item_Type,ittyp)
@@ -77,7 +77,7 @@ static Item_Type *ctx_itp=NO_ITEM_TYPE;
 #define CTX_IT_NAME	"Context"
 #define DEF_CTX_NAME	"default"
 
-static ITEM_INIT_FUNC(Item_Context,ctx)
+static ITEM_INIT_FUNC(Item_Context,ctx,0)
 ITEM_CHECK_FUNC(Item_Context,ctx)
 //static ITEM_GET_FUNC(Item_Context,ctx)
 //static ITEM_LIST_FUNC(Item_Context,ctx)

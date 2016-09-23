@@ -23,7 +23,7 @@
 
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
-ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc)
+ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc,0)
 
 #define UNIMP_FUNC(name)						\
 	sprintf(ERROR_STRING,"Function %s is not implemented!?",name);	\

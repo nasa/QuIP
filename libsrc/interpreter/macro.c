@@ -4,7 +4,7 @@
 
 Item_Type * macro_itp=NULL;
 
-ITEM_INIT_FUNC(Macro,macro)
+ITEM_INIT_FUNC(Macro,macro,0)
 ITEM_NEW_FUNC(Macro,macro)
 ITEM_CHECK_FUNC(Macro,macro)
 //ITEM_PICK_FUNC(Macro,macro)

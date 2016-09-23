@@ -5,7 +5,7 @@
 
 Item_Type *id_itp=NULL;
 
-ITEM_INIT_FUNC(Identifier,id)
+ITEM_INIT_FUNC(Identifier,id,0)
 ITEM_GET_FUNC(Identifier,id)
 ITEM_CHECK_FUNC(Identifier,id)
 ITEM_NEW_FUNC(Identifier,id)

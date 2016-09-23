@@ -6,7 +6,7 @@
 //#include "fitsine.h"
 #include "optimize.h"
 
-ITEM_INTERFACE_DECLARATIONS(Opt_Param,opt_param)
+ITEM_INTERFACE_DECLARATIONS(Opt_Param,opt_param,0)
 
 const char *opt_func_string=NULL;
 

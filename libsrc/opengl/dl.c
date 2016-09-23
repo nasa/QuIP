@@ -19,7 +19,7 @@ static int next_serial_number=0;
 
 static GLenum dl_mode=GL_COMPILE;
 
-ITEM_INTERFACE_DECLARATIONS(Display_List,dl)
+ITEM_INTERFACE_DECLARATIONS(Display_List,dl,0)
 #define PICK_DL(pmpt)	pick_dl(QSP_ARG pmpt)
 
 

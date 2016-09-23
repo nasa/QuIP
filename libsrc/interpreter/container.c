@@ -52,6 +52,8 @@ static void make_container_current( Container *cnt_p, int type )
 
 void set_container_type(Container *cnt_p, int type)
 {
+	if( type == 0 ) return;	// keep default
+
 	if( ! (cnt_p->types & type) ){
 		add_type_to_container(cnt_p,type);
 		cnt_p->types |= type;

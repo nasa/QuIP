@@ -46,7 +46,7 @@ IOS_ITEM_DEL_FUNC(Viewer,vwr)
 
 
 static IOS_Item_Type *canvas_event_itp=NO_IOS_ITEM_TYPE;
-IOS_ITEM_INIT_FUNC(Canvas_Event,canvas_event)
+IOS_ITEM_INIT_FUNC(Canvas_Event,canvas_event,0)
 IOS_ITEM_NEW_FUNC(Canvas_Event,canvas_event)
 IOS_ITEM_CHECK_FUNC(Canvas_Event,canvas_event)
 IOS_ITEM_PICK_FUNC(Canvas_Event,canvas_event)

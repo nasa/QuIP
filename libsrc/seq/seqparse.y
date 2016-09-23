@@ -236,7 +236,7 @@ movie		: NUMBER '*' MY_MOVIE_NAME
 
 %%
 
-ITEM_INTERFACE_DECLARATIONS( Seq, mviseq )
+ITEM_INTERFACE_DECLARATIONS( Seq, mviseq, 0 )
 
 void load_seq_module(Seq_Module *smp)
 {

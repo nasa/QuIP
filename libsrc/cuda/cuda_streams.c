@@ -23,7 +23,7 @@ typedef struct my_cuda_stream {
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC( My_Cuda_Stream , cuda_stream )
 static Item_Type *cuda_stream_itp=NULL;
-static ITEM_INIT_FUNC(My_Cuda_Stream,cuda_stream)
+static ITEM_INIT_FUNC(My_Cuda_Stream,cuda_stream,0)
 //static ITEM_CHECK_FUNC(My_Cuda_Stream,cuda_stream)
 static ITEM_NEW_FUNC(My_Cuda_Stream,cuda_stream)
 static ITEM_PICK_FUNC(My_Cuda_Stream,cuda_stream)

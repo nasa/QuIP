@@ -15,7 +15,7 @@ int is_chaining=0;
 static Chain *curr_cp=NULL;
 
 static Item_Type *vec_chain_itp=NO_ITEM_TYPE;
-static ITEM_INIT_FUNC(Chain,vec_chain)
+static ITEM_INIT_FUNC(Chain,vec_chain,0)
 ITEM_CHECK_FUNC(Chain,vec_chain)
 ITEM_LIST_FUNC(Chain,vec_chain)
 ITEM_PICK_FUNC(Chain,vec_chain)

@@ -5,8 +5,8 @@
 #include "platform.h"
 #include "ocl_platform.h"
 
-ITEM_INTERFACE_DECLARATIONS( Platform_Device, pfdev )
-ITEM_INTERFACE_DECLARATIONS( Compute_Platform, platform )
+ITEM_INTERFACE_DECLARATIONS( Platform_Device, pfdev, 0 )
+ITEM_INTERFACE_DECLARATIONS( Compute_Platform, platform, 0 )
 
 Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name)
 {

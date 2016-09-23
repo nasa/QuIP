@@ -13,7 +13,7 @@
 #include "query_prot.h"
 #include "pipe_support.h"
 
-ITEM_INTERFACE_DECLARATIONS(Pipe,pipe)
+ITEM_INTERFACE_DECLARATIONS(Pipe,pipe,0)
 
 void creat_pipe(QSP_ARG_DECL  const char *name, const char* command, const char* rw)
 {

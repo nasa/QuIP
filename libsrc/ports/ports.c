@@ -10,7 +10,7 @@
 
 debug_flag_t debug_ports=0;
 
-ITEM_INTERFACE_DECLARATIONS(Port,port)
+ITEM_INTERFACE_DECLARATIONS(Port,port,0)
 
 /* del_port deletes given a name */
 

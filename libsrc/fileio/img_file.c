@@ -77,7 +77,7 @@ static int no_clobber=1;		// BUG not thread-safe!?
 
 static const char *iofile_directory=NULL;
 
-ITEM_INTERFACE_DECLARATIONS(Image_File,img_file)
+ITEM_INTERFACE_DECLARATIONS(Image_File,img_file,0)
 
 
 static int direct_flag=1;
@@ -97,7 +97,7 @@ static Timestamp_Functions if_tsf={
 #endif /* HAVE_GETTIMEOFDAY */
 
 static Item_Type *file_type_itp=NO_ITEM_TYPE;
-ITEM_INIT_FUNC(Filetype,file_type)
+ITEM_INIT_FUNC(Filetype,file_type,0)
 ITEM_NEW_FUNC(Filetype,file_type)
 ITEM_CHECK_FUNC(Filetype,file_type)
 ITEM_PICK_FUNC(Filetype,file_type)
@@ -990,7 +990,7 @@ typedef struct known_suffix {
 
 #define NO_SUFFIX		((Known_Suffix *)NULL)
 
-static ITEM_INIT_FUNC(Known_Suffix,suffix)
+static ITEM_INIT_FUNC(Known_Suffix,suffix,0)
 static ITEM_NEW_FUNC(Known_Suffix,suffix)
 static ITEM_CHECK_FUNC(Known_Suffix,suffix)
 

@@ -53,8 +53,8 @@ static int nstairs=0;
 #define NO_STAIR_PTR	((Staircase **)NULL)
 static Staircase **stair_tbl=NO_STAIR_PTR;
 
-ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class)
-ITEM_INTERFACE_DECLARATIONS(Staircase,stc)
+ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class,0)
+ITEM_INTERFACE_DECLARATIONS(Staircase,stc,0)
 
 static List *stair_list(SINGLE_QSP_ARG_DECL)
 {

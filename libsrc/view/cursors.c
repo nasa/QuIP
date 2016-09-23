@@ -5,7 +5,7 @@
 #include "viewer.h"
 #include "xsupp.h"
 
-ITEM_INTERFACE_DECLARATIONS(View_Cursor,cursor)
+ITEM_INTERFACE_DECLARATIONS(View_Cursor,cursor,0)
 
 u_short busy_bitmap[]={
 #include "busy.cursor"

@@ -63,6 +63,7 @@ struct item_type {
 	int		it_flags;
 	List *		it_lp;
 	List *		it_free_lp;
+	int		it_default_container_type;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
 	/*
 	const char **	it_choices;
@@ -130,6 +131,7 @@ struct item_type {
 #define IT_N_CHOICES(itp)		(itp)->it_n_choices
 #define IT_LIST(itp)			(itp)->it_lp
 #define IT_CLASS_LIST(itp)		(itp)->it_class_lp
+#define IT_CONTAINER_TYPE(itp)		(itp)->it_default_container_type
 #define SET_IT_FLAGS(itp,f)		(itp)->it_flags=f
 #define SET_IT_FLAG_BITS(itp,f)		(itp)->it_flags |= f
 #define CLEAR_IT_FLAG_BITS(itp,f)	(itp)->it_flags &= ~(f)
@@ -141,6 +143,7 @@ struct item_type {
 #define SET_IT_N_CHOICES(itp,n)		(itp)->it_n_choices = n
 #define SET_IT_CTX_IT(itp,citp)		(itp)->it_ctx_itp = citp
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
+#define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_default_container_type = t
 
 
 #ifdef THREAD_SAFE_QUERY
@@ -228,16 +231,17 @@ storage ITEM_ENUM_PROT(type,stem)				\
 storage ITEM_DEL_PROT(type,stem)				\
 storage ITEM_PICK_PROT(type,stem)
 
+#define ITEM_INTERFACE_CONTAINER(stem,type)
 
-#define ITEM_INTERFACE_DECLARATIONS(type,stem)	IIF_DECLS(type,stem,)
+#define ITEM_INTERFACE_DECLARATIONS(type,stem,container_type)	IIF_DECLS(type,stem,,container_type)
 
-#define ITEM_INTERFACE_DECLARATIONS_STATIC(type,stem)		\
-						IIF_DECLS(type,stem,static)
+#define ITEM_INTERFACE_DECLARATIONS_STATIC(type,stem,container_type)		\
+						IIF_DECLS(type,stem,static,container_type)
 
-#define IIF_DECLS(type,stem,storage)				\
+#define IIF_DECLS(type,stem,storage,container_type)		\
 								\
 static Item_Type *stem##_itp=NO_ITEM_TYPE;			\
-storage ITEM_INIT_FUNC(type,stem)				\
+storage ITEM_INIT_FUNC(type,stem,container_type)		\
 storage ITEM_NEW_FUNC(type,stem)				\
 storage ITEM_CHECK_FUNC(type,stem)				\
 storage ITEM_GET_FUNC(type,stem)				\
@@ -269,11 +273,12 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 	return stem##_p;					\
 }
 
-#define ITEM_INIT_FUNC(type,stem)				\
+#define ITEM_INIT_FUNC(type,stem,container_type)		\
 								\
 void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 {								\
 	stem##_itp = new_item_type(QSP_ARG  #type);		\
+	SET_IT_CONTAINER_TYPE(stem##_itp,container_type);	\
 }
 
 #define ITEM_CHECK_FUNC(type,stem)				\

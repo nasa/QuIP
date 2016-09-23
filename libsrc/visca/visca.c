@@ -522,8 +522,8 @@ static Visca_Inq_Def vid_evi70_tbl[]={
 static int n_vcams=0;
 #endif // HAVE_VISCA
 
-ITEM_INTERFACE_DECLARATIONS(Visca_Cam,vcam)
-ITEM_INTERFACE_DECLARATIONS(Visca_Port,vport)
+ITEM_INTERFACE_DECLARATIONS(Visca_Cam,vcam,0)
+ITEM_INTERFACE_DECLARATIONS(Visca_Port,vport,0)
 
 static const char *error_message(int code)
 {

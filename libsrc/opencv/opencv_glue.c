@@ -9,15 +9,15 @@
 #include "opencv_glue.h"
 
 /* OpenCV_Image */
-ITEM_INTERFACE_DECLARATIONS(OpenCV_Image,ocvi)
+ITEM_INTERFACE_DECLARATIONS(OpenCV_Image,ocvi,0)
 /* OpenCV_MemStorage */
-ITEM_INTERFACE_DECLARATIONS(OpenCV_MemStorage,ocv_mem)
+ITEM_INTERFACE_DECLARATIONS(OpenCV_MemStorage,ocv_mem,0)
 /* OpenCV_Scanner */
-ITEM_INTERFACE_DECLARATIONS(OpenCV_Scanner,ocv_scanner)
+ITEM_INTERFACE_DECLARATIONS(OpenCV_Scanner,ocv_scanner,0)
 /* OpenCV_Seq */
-ITEM_INTERFACE_DECLARATIONS(OpenCV_Seq,ocv_seq)
+ITEM_INTERFACE_DECLARATIONS(OpenCV_Seq,ocv_seq,0)
 /* OpenCV_ classifier cascade */
-ITEM_INTERFACE_DECLARATIONS(OpenCV_Cascade,ocv_ccasc)
+ITEM_INTERFACE_DECLARATIONS(OpenCV_Cascade,ocv_ccasc,0)
 
 static OpenCV_Image *make_new_ocvi(QSP_ARG_DECL  const char * obj_name);
 static OpenCV_MemStorage *make_new_ocv_mem(QSP_ARG_DECL  const char * obj_name);

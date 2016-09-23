@@ -9,7 +9,7 @@
 #include "item_type.h"
 #include "item_prot.h"
 
-ITEM_INTERFACE_DECLARATIONS(Draggable,dragg)
+ITEM_INTERFACE_DECLARATIONS(Draggable,dragg,0)
 
 void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
 {

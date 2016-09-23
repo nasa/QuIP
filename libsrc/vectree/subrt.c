@@ -5,7 +5,7 @@
 
 Item_Type *subrt_itp=NULL;
 
-ITEM_INIT_FUNC(Subrt,subrt)
+ITEM_INIT_FUNC(Subrt,subrt,0)
 ITEM_CHECK_FUNC(Subrt,subrt)
 
 //Subrt *subrt_of(QSP_ARG_DECL  const char *name)

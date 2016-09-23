@@ -9,7 +9,7 @@
 
 static void init_all_opt_pkgs(SINGLE_QSP_ARG_DECL);
 
-ITEM_INTERFACE_DECLARATIONS(Opt_Pkg,opt_pkg)
+ITEM_INTERFACE_DECLARATIONS(Opt_Pkg,opt_pkg,0)
 
 void insure_opt_pkg(SINGLE_QSP_ARG_DECL)
 {
