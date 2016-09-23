@@ -6,42 +6,15 @@
 #include "list.h"
 #include "getbuf.h"
 #include "qs_basic.h"
+//#include "container.h"
 //#include "dictionary.h"
 
-struct item_type;
-typedef struct item_type Item_Type;
+#include "item_obj.h"
 
-typedef struct item {
-	const char *	item_name;
-#ifdef ITEMS_KNOW_OWN_TYPE
-	Item_Type *	item_itp;
-#endif /* ITEMS_KNOW_OWN_TYPE */
-
-#ifdef BUILD_FOR_OBJC
-	uint64_t	item_magic;
-#define QUIP_ITEM_MAGIC	0x8765432187654321
-#endif /* BUILD_FOR_OBJC */
-
-} Item;
-
-/* Item */
-#define ITEM_NAME(ip)		(ip)->item_name
-#define SET_ITEM_NAME(ip,s)	(ip)->item_name = s
-
-#ifdef BUILD_FOR_OBJC
-#define ITEM_MAGIC(ip)		(ip)->item_magic
-#define SET_ITEM_MAGIC(ip,v)	(ip)->item_magic = v
-#endif /* BUILD_FOR_OBJC */
-
-#ifdef ITEMS_KNOW_OWN_TYPE
-#define ITEM_TYPE(ip)		(ip)->item_itp
-#define SET_ITEM_TYPE(ip,itp)	(ip)->item_itp = itp
-#endif /* ITEMS_KNOW_OWN_TYPE */
-
-#define NO_STR_ARRAY	((const char **)NULL)
-
-
-struct dictionary;
+//struct dictionary;
+// forward declarations...
+struct container;
+typedef struct container Container;
 
 #include "dict.h"
 
@@ -50,7 +23,6 @@ struct dictionary;
 
 typedef struct item_context {
 	Item			ic_item;
-	struct dictionary *	ic_dict;
 	List *			ic_lp;
 	Item_Type *		ic_itp;
 	int			ic_flags;
@@ -58,7 +30,8 @@ typedef struct item_context {
 	// this has been a hash table, but to support partial name
 	// lookup (for more efficient completion), we might prefer
 	// to use a red-black tree...
-	struct dictionary *	ic_dict_p;
+//	struct dictionary *	ic_dict_p;
+	Container *		ic_cnt_p;
 } Item_Context;
 
 
@@ -68,14 +41,16 @@ typedef struct item_context {
 
 /* Item_Context */
 #define CTX_NAME(icp)			(icp)->ic_item.item_name
-#define CTX_DICT(icp)			(icp)->ic_dict_p
+//#define CTX_DICT(icp)			(icp)->ic_dict_p
+#define CTX_CONTAINER(icp)		(icp)->ic_cnt_p
 #define CTX_FLAGS(icp)			(icp)->ic_flags
 #define CTX_IT(icp)			(icp)->ic_itp
 
 #define SET_CTX_NAME(icp,s)		(icp)->ic_item.item_name = s
 #define SET_CTX_IT(icp,itp)		(icp)->ic_itp = itp
 #define SET_CTX_FLAGS(icp,f)		(icp)->ic_flags = f
-#define SET_CTX_DICT(icp,dict_p)	(icp)->ic_dict_p = dict_p
+//#define SET_CTX_DICT(icp,dict_p)	(icp)->ic_dict_p = dict_p
+#define SET_CTX_CONTAINER(icp,cnt_p)	(icp)->ic_cnt_p = cnt_p
 #define SET_CTX_FLAG_BITS(icp,f)	(icp)->ic_flags |= f
 #define CLEAR_CTX_FLAG_BITS(icp,f)	(icp)->ic_flags &= ~(f)
 

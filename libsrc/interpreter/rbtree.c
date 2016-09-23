@@ -27,6 +27,7 @@ rb_tree* create_rb_tree( void )
 //	new_tree_p->key_destroy_func = destroy_key;
 //	new_tree_p->data_destroy_func= destroy_data;
 	new_tree_p->root = NULL;
+	new_tree_p->node_count = 0;
 
 	return(new_tree_p);
 }
@@ -128,7 +129,7 @@ static void func_name(rb_tree *tree_p, rb_node *np)		\
 GENERAL_ROTATION(rotate_right,left,right)
 GENERAL_ROTATION(rotate_left,right,left)
 
-rb_node * rb_insert_item(rb_tree* tree_p, const Item *ip )
+rb_node * rb_insert_item(rb_tree* tree_p, Item *ip )
 {
 	rb_node * x_p;
 	rb_node * new_node_p;
@@ -199,6 +200,9 @@ rb_node * rb_insert_item(rb_tree* tree_p, const Item *ip )
 		}
 	} // end tail recursion loop
 	//MAKE_BLACK( RB_TREE_ROOT(tree) );
+
+	tree_p->node_count ++;
+
 	return new_node_p;
 } // rb_insert
 
@@ -220,6 +224,9 @@ rb_node* rb_find( rb_tree * tree, const char * key )
 		}
 	}
 }
+
+// a misnomer - this exchanges the data of the node-to-be-deleted with its predecessor,
+// in preparation for the real deletion.
 
 static rb_node * binary_tree_delete(rb_node *np)
 {
@@ -386,14 +393,20 @@ static void replace_node( rb_tree *tree_p, rb_node *n_p, rb_node *c_p)
 	assert( tree_p->root != n_p );
 }
 
+// delete a single node from the tree
+// Don't worry about the pointed-to data, that's someone else's responsibility.
+
 static void rb_delete(rb_tree *tree_p, rb_node *n_p )
 {
 	rb_node *c_p;		// the single non-leaf child
 	rb_node *parent;
 
+	tree_p->node_count --;
+
 	if( IS_ROOT_NODE(n_p) ){
 		givbuf(n_p);
 		tree_p->root = NULL;
+		assert(tree_p->node_count == 0);
 		return;
 	}
 
@@ -412,6 +425,7 @@ static void rb_delete(rb_tree *tree_p, rb_node *n_p )
 	// if c_p is null, then we need to keep a reference to the parent...
 	parent=n_p->parent;
 	replace_node(tree_p,n_p,c_p);
+
 
 	if( IS_RED(n_p) ){
 		givbuf(n_p);
@@ -434,18 +448,27 @@ static void rb_delete(rb_tree *tree_p, rb_node *n_p )
 	rebalance(tree_p,c_p,parent);
 }
 
-void rb_delete_key(rb_tree *tree_p, const void *key)
+// delete the node containing an item from the tree
+
+int rb_delete_key(rb_tree *tree_p, const char *key)
 {
 	rb_node *n_p;
 
 	n_p = rb_find(tree_p,key);
 	if( n_p == NULL ){
-		fprintf(stderr,"rb_delete_key:  failed to find key %s!?\n",(char *)key);
-		return;
+		fprintf(stderr,"rb_delete_key:  failed to find key \"%s\"!?\n",key);
+		return -1;
 	}
 	rb_delete(tree_p,n_p);
+	// release the node?
+	givbuf(n_p);
+	return 0;
 }
 
+int rb_delete_item(rb_tree *tree_p, Item *ip)
+{
+	return rb_delete_key(tree_p,ITEM_NAME(ip));
+}
 
 void rb_traverse( rb_node *np, void (*func)(rb_node *) )
 {
@@ -571,4 +594,71 @@ rb_node* func_name(rb_node* n_p)				\
 
 GENERIC_NEXT_NODE_FUNC( rb_successor_node, right, left )
 GENERIC_NEXT_NODE_FUNC( rb_predecessor_node, left, right )
+
+static long rb_branch_count(rb_node *np)
+{
+	long l,r;
+	if( np->left != NULL )
+		l = rb_branch_count(np->left);
+	else
+		l = 0;
+	if( np->right != NULL )
+		r = rb_branch_count(np->right);
+	else
+		r=0;
+	return 1 + l + r;
+}
+
+// BUG - should we keep a count while inserting and deleting???
+long rb_node_count(rb_tree *tree_p)
+{
+	long count = 0;
+
+	if( tree_p->node_count >= 0 ) return(tree_p->node_count);
+
+	if( tree_p->root != NULL )
+		count = rb_branch_count(tree_p->root);
+
+	return count;
+}
+
+void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep)
+{
+	if( rbtep->node_p == NULL ) return;
+	rbtep->node_p = rb_successor_node(rbtep->node_p);
+}
+
+static void release_rb_branch(rb_node *np)
+{
+	assert( np != NULL );
+
+	if( np->left != NULL ) release_rb_branch(np->left);
+	if( np->right != NULL ) release_rb_branch(np->right);
+	// eventually we might want to put this on a free list instead of returning to heap...
+	givbuf(np);
+}
+
+void release_rb_tree(rb_tree *tree_p)
+{
+	if( tree_p->root != NULL ) release_rb_branch(tree_p->root);
+	givbuf(tree_p);
+}
+
+RB_Tree_Enumerator *new_rbtree_enumerator(rb_tree *tree_p)
+{
+	RB_Tree_Enumerator *rbtep;
+
+	rbtep = getbuf( sizeof(*rbtep) );
+	rbtep->tree_p = tree_p;
+	rbtep->node_p = tree_p->root;
+	while( rbtep->node_p != NULL )
+		rbtep->node_p = rbtep->node_p->left;
+	return rbtep;
+}
+
+Item *rbtree_enumerator_item(RB_Tree_Enumerator *rbtep)
+{
+	if( rbtep->node_p == NULL ) return NULL;
+	return rbtep->node_p->data;
+}
 

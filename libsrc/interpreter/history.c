@@ -17,6 +17,7 @@
 #include "quip_prot.h"	// should be just for external API
 #include "query_prot.h"	// should be for things used in interpreter module
 #include "history.h"
+#include "container.h"
 //#include "debug.h"
 //#include "getbuf.h"
 //#include "savestr.h"
@@ -87,22 +88,27 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 
 static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choices)
 {
-	Node *np;
-	List *lp;
+	//Node *np;
+	//List *lp;
+	Enumerator *ep;
 
-	lp = dictionary_list(CTX_DICT(icp));
-	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	//lp = dictionary_list(CTX_DICT(icp));
+	//np=QLIST_HEAD(lp);
+	ep = new_enumerator(CTX_CONTAINER(icp), 0);	// 0 -> default type
+//	while(np!=NO_NODE){
+	while(ep!=NULL){
 		Hist_Choice *hcp;
-		Node *next;
+//		Node *next;
 		int i, found;
 
 		/* Because the item nodes get moved to the item free
 		 * list when they are deleted, we have to get the next
 		 * node BEFORE deletion!!!
 		 */
-		next=NODE_NEXT(np);
-		hcp = (Hist_Choice *) NODE_DATA(np);
+//		next=NODE_NEXT(np);
+//		hcp = (Hist_Choice *) NODE_DATA(np);
+		hcp = (Hist_Choice *) enumerator_item(ep);
+		ep = advance_enumerator(ep);
 		found=0;
 
 		/*
@@ -115,7 +121,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 				found++;
 		if( !found )
 			rem_hcp(QSP_ARG  icp,hcp);
-		np=next;
+//		np=next;
 	}
 }
 
@@ -138,7 +144,9 @@ void set_defs(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choic
 	 * are equal.
 	 */
 
-	if( eltcount(dictionary_list(CTX_DICT(icp))) == n )
+//	if( eltcount(dictionary_list(CTX_DICT(icp))) == n )
+// don't insist that we listify!
+	if( container_eltcount(CTX_CONTAINER(icp)) == n )
 		return;
 
 	/*
@@ -229,10 +237,11 @@ static void add_hl_def(QSP_ARG_DECL  Item_Context *icp,const char* string)
 	 * so that the initial list order matches that of the
 	 * passed list.
 	 */
-
-	lp = dictionary_list(CTX_DICT(icp));
+//	lp = dictionary_list(CTX_DICT(icp));
+	lp = container_list(CTX_CONTAINER(icp));
 
 	if( hcp != NO_CHOICE ){
+
 #ifdef QUIP_DEBUG
 if( debug & hist_debug ){
 sprintf(ERROR_STRING,"add_hl_def:  increasing priority for choice \"%s\"",string);
@@ -257,7 +266,7 @@ advise(ERROR_STRING);
 
 	/* make a new choice */
 
-	hcp=new_choice(QSP_ARG  string);
+	hcp=new_choice(QSP_ARG  string);	// do we save this somewhere???
 	pop_item_context(QSP_ARG  choice_itp);
 
 //#ifdef CAUTIOUS
@@ -315,7 +324,8 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	icp=find_hist(QSP_ARG  prompt);
 
-	lp = dictionary_list(CTX_DICT(icp));
+//	lp = dictionary_list(CTX_DICT(icp));
+	lp = container_list(CTX_CONTAINER(icp));
 
 	np=QLIST_HEAD(lp);
 

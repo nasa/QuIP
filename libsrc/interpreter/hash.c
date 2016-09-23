@@ -135,7 +135,11 @@ Hash_Tbl *ht_init(const char *name)
 		IOS_RETURN_VAL(NULL)
 	}
 	
-	htp->ht_name=savestr(name);
+	if( name != NULL )
+		htp->ht_name=savestr(name);
+	else
+		htp->ht_name=NULL;
+
 	setup_ht(htp,prime[0]);
 
 	return(htp);
@@ -328,22 +332,30 @@ NADVISE(DEFAULT_ERROR_STRING);
 }
 
 /*
+ * was called remove_hash...
+ *
  * Remove the pointed to item from the given hash table.
  * Returns 0 on success, -1 if the item is not found.
  */
 
-int remove_hash(void *ptr,Hash_Tbl *htp)
+int remove_item_from_hash(const Item *ptr,Hash_Tbl *htp)
 			/* pointer to the item to remove */
 		/* table to search */
 {
+	const char *name;
+
+//	name = * (char **) ptr;
+	name = ITEM_NAME(ptr);
+	return remove_name_from_hash(name,htp);
+}
+
+int remove_name_from_hash(const char * name, Hash_Tbl *htp )
+{
 	u_long key;
-	char *s;
+	const char *s;
 	u_long start;
-	char *name;
 	u_long k2;
 	void **entry;
-
-	name = * (char **) ptr;
 
 	entry = htp->ht_entries;
 		
@@ -504,5 +516,45 @@ List *ht_list(QSP_ARG_DECL  Hash_Tbl *htp)
 		}
 	}
 	return(lp);
+}
+
+void advance_ht_enumerator(Hash_Tbl_Enumerator *htep)
+{
+	void **entry;
+
+	entry = htep->current_entry;
+	if( entry == NULL ) return;
+
+	while( ++entry < htep->htp->ht_entries+htep->htp->ht_size ){
+		if( *entry != NULL ){
+			htep->current_entry = entry;
+			return;
+		}
+	}
+	// end of table reached
+	htep->current_entry = NULL;
+}
+
+Item *ht_enumerator_item(Hash_Tbl_Enumerator *htep)
+{
+	if( htep->current_entry == NULL ) return NULL;
+	return (Item *) *(htep->current_entry);
+}
+
+Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
+{
+	Hash_Tbl_Enumerator *htep;
+
+	htep = getbuf( sizeof(*htep) );
+	htep->htp = htp;	// needed!  we will need to know the size...
+	htep->current_entry = htp->ht_entries;
+
+	// advance to the first non-null entry
+	while( *(htep->current_entry) == NULL && htep->current_entry < htep->htp->ht_entries+htep->htp->ht_n_entries )
+		htep->current_entry ++;
+	if( htep->current_entry == htep->htp->ht_entries+htep->htp->ht_n_entries )
+		htep->current_entry = NULL;	// nothing there.
+
+	return htep;
 }
 

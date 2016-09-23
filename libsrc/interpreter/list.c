@@ -615,3 +615,46 @@ void init_node(Node *np,void* dp)
 	np->n_pri = 0;
 }
 
+void advance_list_enumerator(List_Enumerator *lep)
+{
+	if( lep->np == NULL ) return;
+	if( lep->np == lep->lp->l_tail ){	// already at end?
+		lep->np = NULL;
+	} else {
+		lep->np = NODE_NEXT(lep->np);
+	}
+}
+
+Item *list_enumerator_item(List_Enumerator *lep)
+{
+	if( lep->np == NULL ) return NULL;
+	return (Item *) NODE_DATA(lep->np);
+}
+
+Node *list_find_named_item(List *lp, const char *name)
+{
+	Node *np;
+	Item *ip;
+
+	assert(lp!=NULL);
+
+	np = QLIST_HEAD(lp);
+	while( np != NO_NODE ){	// BUG?  won't work for circular list!
+		ip = NODE_DATA(np);
+		if( !strcmp(name,ITEM_NAME(ip)) )
+			return np;
+		np = NODE_NEXT(np);
+	}
+	return NULL;
+}
+
+List_Enumerator *new_list_enumerator(List *lp)
+{
+	List_Enumerator *lep;
+
+	lep = getbuf(sizeof(List_Enumerator));
+	lep->lp = lp;	// needed?
+	lep->np = QLIST_HEAD(lp);
+	return lep;
+}
+

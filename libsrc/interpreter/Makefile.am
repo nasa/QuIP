@@ -8,6 +8,7 @@ noinst_LIBRARIES = libinterpreter.a
 #
 libinterpreter_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes -D_GNU_SOURCE
 
+#		dict.c
 
 libinterpreter_a_SOURCES =		\
 					\
@@ -23,7 +24,6 @@ libinterpreter_a_SOURCES =		\
 		features.c		\
 		gcrypt.c		\
 		debug.c			\
-		dict.c			\
 		error.c			\
 		fileck.c		\
 		freel.c			\

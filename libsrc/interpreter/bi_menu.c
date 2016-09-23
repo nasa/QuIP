@@ -1787,7 +1787,7 @@ MENU_END(builtin)
 MENU_BEGIN(help)
 ADD_CMD( ?,	do_list_current_menu,	list commands in current menu	)
 ADD_CMD( ??,	do_list_builtin_menu,	list commands in builtin menu	)
-MENU_END(help)
+MENU_SIMPLE_END(help)
 
 void init_builtins(void)
 {

@@ -1,8 +1,7 @@
 
 #include "quip_config.h"
-#include <stdio.h>
-#include "pf_viewer.h"	// has to come first to pick up glew.h first
 #include "quip_prot.h"
+#include "pf_viewer.h"	// has to come first to pick up glew.h first
 #include "platform.h"
 #include "ocl_platform.h"
 

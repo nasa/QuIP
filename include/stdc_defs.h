@@ -284,12 +284,6 @@
 /* Command */
 #define CMD_SELECTOR(cp)	cp->cmd_selector
 
-/* Menu */
-/* BUG?  should this be dictionary_list() ??? */
-#define MENU_DICT(mp)		mp->mn_dict
-#define MENU_LIST(mp)		DICT_LIST(MENU_DICT(mp))
-#define MENU_PROMPT(mp)		mp->mn_prompt
-
 /* Vector_Function stuff - moved to obj_args.h */
 
 #define VF_NAME(vfp)			(vfp)->vf_item.item_name

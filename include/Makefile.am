@@ -31,6 +31,7 @@ noinst_HEADERS =			\
 			cmaps.h		\
 			command.h	\
 			container.h	\
+			container_fwd.h	\
 			cuda_api.h	\
 			cuda_helper.h	\
 			cuda_supp.h	\
@@ -59,6 +60,7 @@ noinst_HEADERS =			\
 			img_file.h	\
 			ios_config.h	\
 			ios_gui.h	\
+			item_obj.h	\
 			item_prot.h	\
 			item_type.h	\
 			linear.h	\

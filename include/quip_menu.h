@@ -3,10 +3,15 @@
 
 #include "command.h"
 //#include "dictionary.h"
-#include "dict.h"
+//#include "dict.h"
+
+
+#include "container_fwd.h"
+
 
 typedef struct menu {
-	Dictionary *		mn_dict;
+//	Dictionary *		mn_dict;
+	Container *		mn_cnt_p;
 	const char *		mn_prompt;
 
 #ifdef HAVE_HISTORY
@@ -40,7 +45,9 @@ static void init_##prompt##_menu(void)					\
 									\
 	prompt##_menu = (Menu *)getbuf(sizeof(Menu));			\
 	prompt##_menu->mn_prompt = savestr(#prompt);			\
-	prompt##_menu->mn_dict = create_dictionary(#prompt);		\
+	/*prompt##_menu->mn_dict = create_dictionary(#prompt);*/	\
+	prompt##_menu->mn_cnt_p = create_container(#prompt);		\
+	set_container_type(prompt##_menu->mn_cnt_p,LIST_CONTAINER);	\
 	CLEAR_MENU_FLAGS(prompt)
 
 #define ADD_COMMAND(mp,selector,function,help_string)			\
@@ -81,6 +88,13 @@ extern void list_menu( QSP_ARG_DECL  Menu *mp );
 
 
 #define POP_MENU		pop_menu(SINGLE_QSP_ARG)
+
+/* BUG?  should this be dictionary_list() ??? */
+//#define MENU_DICT(mp)		mp->mn_dict
+//#define MENU_LIST(mp)		DICT_LIST(MENU_DICT(mp))
+#define MENU_CONTAINER(mp)	mp->mn_cnt_p
+#define MENU_LIST(mp)		container_list(MENU_CONTAINER(mp))
+#define MENU_PROMPT(mp)		mp->mn_prompt
 
 
 #endif /* ! _QUIP_MENU_H_ */

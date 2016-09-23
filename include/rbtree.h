@@ -3,7 +3,7 @@
 
 //#include"misc.h"
 //#include"stack.h"
-#include "item_type.h"
+#include "item_obj.h"
 
 typedef enum {
 	RBT_RED,
@@ -12,7 +12,7 @@ typedef enum {
 
 typedef struct rb_node {
 //	const void * key;
-	const Item *		data;
+	Item *			data;	// Item *
 	rbnode_color		color;
 	struct rb_node *	left;
 	struct rb_node *	right;
@@ -45,6 +45,7 @@ typedef struct rb_tree {
 	void (*key_destroy_func)(void* a);
 	void (*data_destroy_func)(void* a);
 
+	long	node_count;
 	rb_node* root;             
 } rb_tree;
 
@@ -57,8 +58,10 @@ typedef struct rb_tree {
 
 extern rb_tree* create_rb_tree(void);
 
-extern rb_node * rb_insert_item(rb_tree*, const Item * ip );
-extern void rb_delete_key(rb_tree*, const void *);
+extern rb_node * rb_insert_item(rb_tree*, Item * ip );
+extern int rb_delete_key(rb_tree*, const char *);
+extern int rb_delete_named_item(rb_tree*, const char *name);
+extern int rb_delete_item(rb_tree*, Item *ip);
 extern rb_node* rb_find(rb_tree*, const char * key );
 extern void rb_traverse( rb_node *np, void (*func)(rb_node *) );
 extern void rb_check(rb_tree *);
@@ -74,6 +77,17 @@ extern rb_node * rb_predecessor_node( rb_node *n_p );
 
 //stk_stack * RBEnumerate(rb_tree* tree,void* low, void* high);
 //void NullFunction(void*);
+
+typedef struct {
+	rb_tree *	tree_p;
+	rb_node *	node_p;
+} RB_Tree_Enumerator;
+
+extern RB_Tree_Enumerator *new_rbtree_enumerator(rb_tree *tp);
+extern void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
+extern Item * rbtree_enumerator_item(RB_Tree_Enumerator *rbtep);
+extern long rb_node_count(rb_tree *tree_p);
+extern void release_rb_tree(rb_tree *tree_p);
 
 #endif // ! _RBTREE_H_
 

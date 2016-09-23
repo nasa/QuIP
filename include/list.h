@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "typedefs.h"
+#include "item_obj.h"
 
 #ifdef THREAD_SAFE_QUERY
 extern int n_active_threads;	// Number of qsp's
@@ -91,12 +92,22 @@ extern void rls_nodes_from_list(List *lp);
 extern void addTail(List *lp, Node *np);
 extern void dellist(List *lp);
 extern Node *nodeOf( List *lp, void * ip );
+extern Node * list_find_named_item(List *lp, const char *name);
 
 extern void p_sort(List *lp);
 extern Node *nth_elt(List *lp, count_t k);
 extern Node *nth_elt_from_tail(List *lp, count_t k);
 
 #define IS_EMPTY(lp)	(QLIST_HEAD(lp)==NO_NODE)
+
+typedef struct {
+	List *lp;
+	Node *np;
+} List_Enumerator;
+
+extern void advance_list_enumerator(List_Enumerator *lep);
+extern Item *list_enumerator_item(List_Enumerator *lep);
+extern List_Enumerator *new_list_enumerator(List *lp);
 
 #endif /* ! _LIST_H_ */
 

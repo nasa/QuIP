@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+#include "quip_prot.h"
 #include "veclib_prot.h"
 
 #include <stdio.h>
@@ -9,7 +10,6 @@
 //#include "debug.h"
 //#include "warn.h"
 //#include "getbuf.h"
-#include "quip_prot.h"
 
 /* globals */
 int insist_real=0, insist_cpx=0, insist_quat=0;

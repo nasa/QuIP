@@ -7,28 +7,36 @@
 #include "hash.h"
 #include "rbtree.h"
 #include "item_type.h"
-
-typedef enum {
-	LIST_CONTAINER,
-	HASH_TBL_CONTAINER,
-	RB_TREE_CONTAINER,
-	N_CONTAINER_TYPES
-} container_type_code;
+#include "container_fwd.h"
 
 typedef struct container {
-	container_type_code	type;
-	union {
-		List *		cnt_lp;
-		Hash_Tbl *	cnt_htp;
-		rb_tree *	cnt_tree_p;
-	} ptr;
+	const char *	name;
+	int		types;		// mask with bit set
+					// if container type exists
+	int		primary_type;	// operate on this one first?
+	int		is_current;	// mask with bit set if container
+					// type is up-to-date
+	List *		cnt_lp;
+	Hash_Tbl *	cnt_htp;
+	rb_tree *	cnt_tree_p;
 } Container;
 
-extern Container * new_container(QSP_ARG_DECL  container_type_code type);
-extern void add_to_container(QSP_ARG_DECL  Container *cnt_p, Item *ip);
-extern void remove_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name);
-extern Item *container_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name);
-extern Item *container_find_substring_match(QSP_ARG_DECL  Container *cnt_p, const char *frag);
+typedef struct enumerator {
+	int type;	// should only have 1 bit set
+	Container *e_cnt_p;
+	union {
+		List_Enumerator *lep;
+		Hash_Tbl_Enumerator *htep;
+		RB_Tree_Enumerator *rbtep;
+	} e_p;
+} Enumerator;
+
+extern Enumerator *new_enumerator(Container *cnt_p, int type);
+extern Enumerator *advance_enumerator(Enumerator *ep );
+extern Enumerator *backup_enumerator(Enumerator *ep );
+extern void *enumerator_item(Enumerator *ep);
+extern List_Enumerator *new_list_enumerator(List *lp);
+
 
 #endif // ! _CONTAINER_H_
 

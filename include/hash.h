@@ -4,6 +4,7 @@
 #include "typedefs.h"
 #include "node.h"
 #include "list.h"
+#include "item_obj.h"
 #include "query_stack.h"
 
 typedef struct hash_tbl {
@@ -43,8 +44,19 @@ extern Hash_Tbl *	ht_init(const char *name);
 extern int		insert_hash(void *ptr,Hash_Tbl *table);
 extern void		show_ht(Hash_Tbl *table);
 extern void *		fetch_hash(const char *name,Hash_Tbl *table);
-extern int		remove_hash(void *ptr,Hash_Tbl *table);
+//extern int		remove_hash(void *ptr,Hash_Tbl *table);
+extern int		remove_name_from_hash(const char *name,Hash_Tbl *table);
+extern int		remove_item_from_hash(const Item *ip,Hash_Tbl *table);
 extern void		tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *table);
+
+typedef struct {
+	Hash_Tbl *htp;
+	void **current_entry;
+} Hash_Tbl_Enumerator;
+
+extern Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp);
+extern void advance_ht_enumerator(Hash_Tbl_Enumerator *htep);
+extern Item * ht_enumerator_item(Hash_Tbl_Enumerator *htep);
 
 #endif // ! _HASH_H_
 

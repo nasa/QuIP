@@ -258,7 +258,11 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
 
 		/* BUG make sure DEF_CTX_NAME matches what is here... */
 		SET_CTX_NAME( icp, savestr("Item_Type.default") );
-		SET_CTX_DICT( icp,  create_dictionary("Item_Type.default") );
+		// change Dictionary to Container here?
+		//SET_CTX_DICT( icp,  create_dictionary("Item_Type.default") );
+		SET_CTX_CONTAINER( icp,
+			create_container("Item_Type.default") );
+
 		SET_CTX_IT( icp, ittyp_itp );
 		/*np =*/ mk_node(icp);
 
@@ -334,7 +338,11 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename)
 
 static void store_item( QSP_ARG_DECL  Item_Type *itp, Item *ip, Node *np )
 {
-	if( insert_name(ip,np,CTX_DICT(CURRENT_CONTEXT(itp))) < 0 ){
+	if(
+		/* insert_name(ip,np,CTX_DICT(CURRENT_CONTEXT(itp))) */
+		add_to_container(CTX_CONTAINER(CURRENT_CONTEXT(itp)),ip) 
+		< 0
+		){
 
 		/* We used to enlarge the hash table here, but now we automatically enlarge
 		 * the hash table before it becomes completely full...
@@ -405,7 +413,9 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 	/* We will allow name conflicts if they are not in the same context */
 
 	/* Only check for conflicts in the current context */
-	ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
+	//ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
+	ip = container_find_match(CTX_CONTAINER(CURRENT_CONTEXT(itp)),
+							name );
 
 	if( ip != NO_ITEM ){
 		UNLOCK_ITEM_TYPE(itp);
@@ -531,17 +541,23 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 
 	sprintf(cname,"%s.%s",IT_NAME(itp),name);
 
+	// special case for the default context of the context item type
+	// 
 	if( (!strcmp(IT_NAME(itp),CTX_IT_NAME)) && !strcmp(name,DEF_CTX_NAME) ){
 		static Item_Context first_context;
 
 		/* can't use new_ctx()
-		 *
-		 * Why not???
+		 * because ctx_itp isn't up and running yet.
 		 */
 		icp = &first_context;
 		SET_CTX_NAME( icp, savestr(cname) );
 		SET_CTX_IT( icp, itp );
-		SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
+		// See the comment below regarding create_dictionary...
+		// Because the number of item_types and contexts is
+		// not too large (e.g. dozens), we probably don't need
+		// to be TOO concerned with efficiency here...
+//		SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
+		SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp)) );
 		SET_CTX_FLAGS(icp,0);
 		/* BUG?  not in the context database?? */
 		return(icp);
@@ -576,8 +592,16 @@ advise(ERROR_STRING);
 		return(icp);
 	}
 
+	// Now initialize the fields of the new context
 	SET_CTX_IT( icp, itp );
-	SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
+	// Here we might like to have a flag control
+	// which type of dictionary we use?
+	// We have been using hash tables all these
+	// years, but a tree would be better for item types
+	// with many, many items, to speed partial name
+	// matching!
+	//SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
+	SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp)) );
 	SET_CTX_FLAGS(icp,0);
 
 //#ifdef CAUTIOUS
@@ -587,7 +611,8 @@ advise(ERROR_STRING);
 //		NERROR1(ERROR_STRING);
 //	}
 //#endif /* CAUTIOUS */
-	assert( CTX_DICT(icp) != NO_DICTIONARY );
+	//assert( CTX_DICT(icp) != NO_DICTIONARY );
+	assert( CTX_CONTAINER(icp) != NULL );
 
 	return(icp);
 }
@@ -737,7 +762,8 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	} else {
 		List *lp;
 
-		lp=dictionary_list(CTX_DICT(icp));
+		//lp=dictionary_list(CTX_DICT(icp));
+		lp=container_list(CTX_CONTAINER(icp));
 
 		/* Don't use remHead to get the node, del_item()
 		 * will remove it for us, and put it on the free list.
@@ -748,11 +774,14 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 			if( func != NULL ) (*func)(ip);
 			(*IT_DEL_METHOD(itp))(QSP_ARG  ip);
 			/* force list update in case hashing */
-			lp=dictionary_list(CTX_DICT(icp));
+			//lp=dictionary_list(CTX_DICT(icp));
+			lp=container_list(CTX_CONTAINER(icp));
 		}
 	}
 
-	delete_dictionary(CTX_DICT(icp));
+	//delete_dictionary(CTX_DICT(icp));
+	delete_container(CTX_CONTAINER(icp));
+
 	/* zap_hash_tbl(icp->ic_htp); */
 
 	del_ctx(QSP_ARG  icp);	// why shouldn't rls_item free the name?  CHECK BUG?
@@ -777,7 +806,8 @@ Item *check_context(Item_Context *icp, const char *name)
 //	}
 //#endif // CAUTIOUS
 	assert( icp != NULL );
-	return fetch_name(name,CTX_DICT(icp));
+	//return fetch_name(name,CTX_DICT(icp));
+	return container_find_match(CTX_CONTAINER(icp),name);
 }
 
 
@@ -919,6 +949,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 //#endif /* CAUTIOUS */
 	assert( itp != NO_ITEM_TYPE );
 
+//fprintf(stderr,"item_list %s BEGIN\n",ITEM_NAME((Item *)itp));
 	/* First check and see if any of the contexts have been updated */
 
 	if( CONTEXT_LIST(itp) != NO_LIST ){
@@ -940,6 +971,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 
 	if( ! NEEDS_NEW_LIST(itp) ){
 		/* Nothing changed, just return the existing list */
+//fprintf(stderr,"returning existing item list...\n");
 		return(IT_LIST(itp));
 	}
 
@@ -947,6 +979,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 	 * Begin by trashing the old list.
 	 */
 	
+//fprintf(stderr,"rebuilding item list...\n");
 	while( (np=remHead(IT_LIST(itp))) != NO_NODE )
 		rls_node(np);
 
@@ -957,7 +990,10 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 		while(context_np!=NO_NODE){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
-			cat_dict_items(IT_LIST(itp),CTX_DICT(icp));
+//fprintf(stderr,"adding items from context %s...\n",CTX_NAME(icp));
+//			cat_dict_items(IT_LIST(itp),CTX_DICT(icp));
+			cat_container_items(IT_LIST(itp),CTX_CONTAINER(icp));
+//fprintf(stderr,"After adding items from context %s, list len = %d...\n",CTX_NAME(icp),eltcount(IT_LIST(itp)));
 			context_np=NODE_NEXT(context_np);
 			CLEAR_CTX_FLAG_BITS(icp,CONTEXT_CHANGED);
 		}
@@ -965,6 +1001,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 
 	CLEAR_IT_FLAG_BITS(itp, (CONTEXT_CHANGED|NEED_LIST) );
 
+//fprintf(stderr,"Returning list at 0x%lx, len = %d...\n",(long)IT_LIST(itp),eltcount(IT_LIST(itp)));
 	return(IT_LIST(itp));
 }
 
@@ -1243,7 +1280,8 @@ void item_stats(QSP_ARG_DECL  Item_Type * itp)
 		icp=(Item_Context *) NODE_DATA(np);
 		sprintf(MSG_STR,"Context %s:",CTX_NAME(icp));
 		prt_msg(MSG_STR);
-		tell_name_stats(CTX_DICT(icp));
+//		tell_name_stats(CTX_DICT(icp));
+		tell_container_stats(QSP_ARG  CTX_CONTAINER(icp));
 		np = NODE_NEXT(np);
 	}
 }
@@ -1347,9 +1385,14 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 		Item_Context *icp;
 
 		icp = (Item_Context*) NODE_DATA(np);
-		tmp_ip = fetch_name( ITEM_NAME(((Item *)ip)),CTX_DICT(icp));
+//		tmp_ip = fetch_name( ITEM_NAME(((Item *)ip)),CTX_DICT(icp));
+		tmp_ip = container_find_match( CTX_CONTAINER(icp),
+					ITEM_NAME((Item *)ip) );
 		if( tmp_ip == ip ){	/* found it */
-			if( remove_name(ip,CTX_DICT(icp) ) < 0 ){
+			if(
+			/*remove_name(ip,CTX_DICT(icp) ) */
+				remove_name_from_container(QSP_ARG  CTX_CONTAINER(icp), ITEM_NAME((Item *)ip) )
+						< 0 ){
 				sprintf(ERROR_STRING,
 		"zombie_item:  unable to remove %s item %s from context %s",
 					IT_NAME(itp),ITEM_NAME(ip),CTX_NAME(icp));
@@ -1401,7 +1444,8 @@ static void dump_item_context(QSP_ARG_DECL  Item_Context *icp)
 	sprintf(MSG_STR,"\tContext \"%s\"",CTX_NAME(icp));
 	prt_msg(MSG_STR);
 
-	dump_dict_info(CTX_DICT(icp));
+//	dump_dict_info(CTX_DICT(icp));
+	dump_container_info(QSP_ARG  CTX_CONTAINER(icp));
 
 	list_item_context(QSP_ARG  icp);
 }
@@ -1409,7 +1453,8 @@ static void dump_item_context(QSP_ARG_DECL  Item_Context *icp)
 void list_item_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	List *lp;
-	lp=dictionary_list(CTX_DICT(icp));
+//	lp=dictionary_list(CTX_DICT(icp));
+	lp=container_list(CTX_CONTAINER(icp));
 	print_list_of_items(QSP_ARG  lp);
 }
 

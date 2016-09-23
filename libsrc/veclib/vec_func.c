@@ -1,6 +1,8 @@
 
 /* Public data structures */
 
+#include "quip_config.h"
+#include "quip_prot.h"
 #include "veclib/vec_func.h"
 #include "item_type.h"
 #include "veclib_prot.h"

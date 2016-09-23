@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "quip_prot.h"
 //#include "data_obj.h"
 //#include "veclib/vecgen.h"
 

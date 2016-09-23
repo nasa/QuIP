@@ -24,7 +24,8 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 //#endif /* CAUTIOUS */
 	assert( mp != NO_MENU );
 
-	lp = dictionary_list( MENU_DICT(mp) );
+	//lp = dictionary_list( MENU_DICT(mp) );
+	lp = container_list( MENU_CONTAINER(mp) );
 //#ifdef CAUTIOUS
 //	if( lp == NO_LIST ){
 //		WARN("CAUTIOUS:  stash_menu_commands:  no dictionary list!?");
@@ -100,13 +101,16 @@ void qs_do_cmd( Query_Stack *qsp )
 //if( QLEVEL < 0 )
 	if( cmd == NULL || strlen(cmd) == 0 ) return;
 	/* Now find the command */
-	cp = (Command *) fetch_name(cmd, mp->mn_dict);
+//	cp = (Command *) fetch_name(cmd, mp->mn_dict);
+	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);
 
 	if( cp == NO_COMMAND )
-		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_builtin_menu->mn_dict);
+//		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_builtin_menu->mn_dict);
+		cp = (Command *) container_find_match( MENU_CONTAINER(THIS_QSP->qs_builtin_menu), cmd );
 
 	if( cp == NO_COMMAND )
-		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_help_menu->mn_dict);
+//		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_help_menu->mn_dict);
+		cp = (Command *) container_find_match( MENU_CONTAINER(THIS_QSP->qs_help_menu), cmd );
 
 	if( cp == NO_COMMAND ){
 
