@@ -31,8 +31,11 @@ debug_flag_t hist_debug=0;
 #endif /* QUIP_DEBUG */
 
 /* local variables */
+// These two vars allow us to cycle through multiple possibilities...
 static Node *cur_node;
 static List *cur_list;
+// BUT they are not so helpful when we also have item names that are not
+// copied to a list!?
 
 static char *get_hist_ctx_name(const char *prompt);
 
@@ -183,6 +186,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
+fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */

@@ -798,6 +798,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	pop_item_context(QSP_ARG  itp);
 }
 
+#ifdef NOT_NEEDED
 Item *check_context(Item_Context *icp, const char *name)
 {
 //#ifdef CAUTIOUS
@@ -810,6 +811,7 @@ Item *check_context(Item_Context *icp, const char *name)
 	//return fetch_name(name,CTX_DICT(icp));
 	return container_find_match(CTX_CONTAINER(icp),name);
 }
+#endif // NOT_NEEDED
 
 
 /*
@@ -866,11 +868,13 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		Item *ip;
 
 		icp= (Item_Context*) NODE_DATA(np);
-if( icp == NULL )
-ERROR1("context stack contains null context!?");
+		assert(icp!=NULL);
+//if( icp == NULL )
+//ERROR1("context stack contains null context!?");
 
 //		ip=fetch_name(name,CTX_DICT(icp));
-		ip=check_context(icp,name);
+//		ip=check_context(icp,name);
+		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
 			return(ip);
 		}
@@ -1636,3 +1640,29 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 #endif /* HAVE_PTHREADS */
 
 #endif /* THREAD_SAFE_QUERY */
+
+const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Node *np;
+	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	assert( np != NO_NODE );
+
+	/* check the top context first */
+
+	while(np!=NO_NODE){
+		Item_Context *icp;
+		Item *ip;
+
+		icp= (Item_Context*) NODE_DATA(np);
+		// BUG we would like for the container to somehow remember which substring was
+		// returned, so we can cycle through them?
+		ip=container_find_substring_match(CTX_CONTAINER(icp),s);
+		if( ip != NULL ){
+			return ITEM_NAME(ip);
+		}
+		np = NODE_NEXT(np);
+	}
+	// nothing found
+	return "";
+}
+

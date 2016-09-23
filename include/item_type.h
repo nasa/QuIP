@@ -40,6 +40,7 @@ typedef struct item_context {
 
 /* Item_Context */
 #define CTX_NAME(icp)			(icp)->ic_item.item_name
+//#define CONTEXT_NAME(icp)		(icp)->ic_item.item_name
 //#define CTX_DICT(icp)			(icp)->ic_dict_p
 #define CTX_CONTAINER(icp)		(icp)->ic_cnt_p
 #define CTX_FLAGS(icp)			(icp)->ic_flags
@@ -178,6 +179,8 @@ struct item_type {
 
 #endif /* ! THREAD_SAFE_QUERY */
 
+#define CONTEXT_LIST(itp)		THIS_CTX_STACK(itp)	/* this is the list of contexts,
+								 * not the list of items in a context */
 
 #define SET_IT_NAME(itp,s)		(itp)->it_item.item_name=s
 
@@ -333,7 +336,8 @@ void del_##stem(QSP_ARG_DECL  type *ip)				\
 
 extern ITEM_INIT_PROT(Item_Type,ittyp)
 extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
-extern Item *check_context(Item_Context *icp, const char *name);
+//extern Item *check_context(Item_Context *icp, const char *name);
+extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 
 #endif /* ! _ITEM_TYPE_H_ */
 

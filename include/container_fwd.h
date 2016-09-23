@@ -30,7 +30,7 @@ extern Container * new_container(int type);
 extern int add_to_container(Container *cnt_p, Item *ip);
 extern int remove_name_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name);
 extern Item *container_find_match(Container *cnt_p, const char *name);
-extern Item *container_find_substring_match(QSP_ARG_DECL  Container *cnt_p, const char *frag);
+extern Item *container_find_substring_match(Container *cnt_p, const char *frag);
 //extern void set_container_primary(QSP_ARG_DECL  Container *cnt_p, int type);
 extern void set_container_type(Container *cnt_p,int type);
 
