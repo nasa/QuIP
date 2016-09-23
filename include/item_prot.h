@@ -23,7 +23,7 @@ extern void recycle_item(Item_Type *itp, void *ip );
 extern void delete_item_context(QSP_ARG_DECL Item_Context *icp );
 extern void delete_item_context_with_callback(QSP_ARG_DECL Item_Context *icp, void (*func)(Item *) );
 
-extern Item_Type *new_item_type(QSP_ARG_DECL  const char *name);
+extern Item_Type *new_item_type(QSP_ARG_DECL  const char *name, int container_type);
 
 extern Item *	new_item(QSP_ARG_DECL  Item_Type * item_type,const char *name,size_t size);
 extern void list_items(QSP_ARG_DECL  Item_Type *itp);

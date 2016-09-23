@@ -276,8 +276,7 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 								\
 void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 {								\
-	stem##_itp = new_item_type(QSP_ARG  #type);		\
-	SET_IT_CONTAINER_TYPE(stem##_itp,container_type);	\
+	stem##_itp = new_item_type(QSP_ARG  #type, container_type);	\
 }
 
 #define ITEM_CHECK_FUNC(type,stem)				\

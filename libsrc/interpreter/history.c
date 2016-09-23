@@ -331,7 +331,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	if( *prompt == 0 ) return("");	/* e.g. hand entry of macros */
 
-fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
+//fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
 	icp=find_hist(QSP_ARG  prompt);
 
 //	lp = dictionary_list(CTX_DICT(icp));
@@ -345,7 +345,7 @@ fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
 		/* priority sorted!? */
 
 		hcp=(Hist_Choice *) NODE_DATA(np);
-fprintf(stderr,"comparing %s to %s\n",so_far,hcp->hc_text);
+//fprintf(stderr,"comparing %s to %s\n",so_far,hcp->hc_text);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			cur_list=lp;

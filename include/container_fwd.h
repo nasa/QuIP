@@ -14,6 +14,8 @@ typedef enum {
 #define HASH_TBL_CONTAINER	(1<<HASH_TBL_CONTAINER_BIT)
 #define RB_TREE_CONTAINER	(1<<RB_TREE_CONTAINER_BIT)
 
+#define DEFAULT_CONTAINER_TYPE	HASH_TBL_CONTAINER
+
 // fwd declarations...
 struct container;
 typedef struct container Container;
@@ -22,7 +24,7 @@ extern long container_eltcount(Container *cnt_p);
 extern void cat_container_items(List *lp,Container *cnt_p);
 extern void delete_container(Container *cnt_p);
 extern void dump_container_info(QSP_ARG_DECL  Container *cnt_p);
-extern Container * create_container(const char *name);
+extern Container * create_container(const char *name,int type);
 extern List *container_list(Container *cnt_p);
 extern Container * new_container(int type);
 extern int add_to_container(Container *cnt_p, Item *ip);

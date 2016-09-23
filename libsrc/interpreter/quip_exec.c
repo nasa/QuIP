@@ -24,7 +24,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 //#endif /* CAUTIOUS */
 	assert( mp != NO_MENU );
 
-fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
+//fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
 	//lp = dictionary_list( MENU_DICT(mp) );
 	lp = container_list( MENU_CONTAINER(mp) );
 //#ifdef CAUTIOUS

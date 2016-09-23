@@ -31,7 +31,7 @@ IOS_ITEM_INIT_FUNC(Viewer,vwr)
 
 void init_vwrs(SINGLE_QSP_ARG_DECL)
 {
-	vwr_itp = new_item_type(QSP_ARG  "Viewer");
+	vwr_itp = new_item_type(QSP_ARG  "Viewer", DEFAULT_CONTAINER_TYPE);
 	declare_canvas_events(SINGLE_QSP_ARG);
 }
 

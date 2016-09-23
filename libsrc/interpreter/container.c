@@ -3,11 +3,12 @@
 #include "container.h"
 #include <assert.h>
 
-Container * create_container(const char *name)
+Container * create_container(const char *name,int type)
 {
 	Container *cnt_p;
 
-	cnt_p = new_container(HASH_TBL_CONTAINER);	// the default
+	if( type == 0 ) type=HASH_TBL_CONTAINER;	// default
+	cnt_p = new_container(type);
 	cnt_p->name = savestr(name);
 	return cnt_p;
 }
@@ -66,7 +67,7 @@ Container * new_container(int type)
 {
 	Container *cnt_p=NULL;
 
-//	assert( type >= 0 && type < N_CONTAINER_TYPES );
+//fprintf(stderr,"new_container:  type = %d\n",type);
 	assert( type == LIST_CONTAINER ||
 		type == HASH_TBL_CONTAINER ||
 		type == RB_TREE_CONTAINER );
