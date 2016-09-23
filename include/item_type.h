@@ -13,8 +13,7 @@
 
 //struct dictionary;
 // forward declarations...
-struct container;
-typedef struct container Container;
+#include "container_fwd.h"
 
 #include "dict.h"
 
