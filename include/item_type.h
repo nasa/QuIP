@@ -21,11 +21,11 @@
 
 struct rb_node;
 
-struct frag_match_info {
-	Item			fragment;	// the partial string
-	struct rb_node *	curr_n_p;
-	struct rb_node *	first_n_p;
-	struct rb_node *	last_n_p;
+typedef struct frag_match_info {
+	Item				frag;	// the partial string - stored in their own context
+	struct rb_node *		curr_n_p;
+	struct rb_node *		first_n_p;
+	struct rb_node *		last_n_p;
 } Frag_Match_Info;
 
 typedef struct item_context {
@@ -63,6 +63,9 @@ typedef struct item_context {
 #define SET_CTX_FLAG_BITS(icp,f)	(icp)->ic_flags |= f
 #define CLEAR_CTX_FLAG_BITS(icp,f)	(icp)->ic_flags &= ~(f)
 
+#define CTX_FRAG_ICP(icp)		(icp)->ic_frag_icp
+#define SET_CTX_FRAG_ICP(icp,icp2)	(icp)->ic_frag_icp = icp2
+
 
 #define MAX_QUERY_STACKS	5	// why do we need to have a limit?
 
@@ -91,6 +94,8 @@ struct item_type {
 	Stack *		it_context_stack[MAX_QUERY_STACKS];	// need to have one per thread
 	Item_Context *	it_icp[MAX_QUERY_STACKS];		// current context
 	int 		it_ctx_restricted[MAX_QUERY_STACKS];	// flags
+
+	Frag_Match_Info *	it_fmi_p;			// only one???
 
 //#define FIRST_CONTEXT(itp)	itp->it_icp[0]
 
@@ -153,6 +158,9 @@ struct item_type {
 #define SET_IT_CTX_IT(itp,citp)		(itp)->it_ctx_itp = citp
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
 #define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_default_container_type = t
+
+#define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
+#define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
 
 
 #ifdef THREAD_SAFE_QUERY

@@ -407,12 +407,34 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	return(hcp->hc_text);
 }
 
-const char *cyc_match(QSP_ARG_DECL  const char *sofar, int direction )
+static const char * cyc_tree_match(QSP_ARG_DECL  const char *so_far, int direction )
+{
+	Frag_Match_Info *fmi_p;
+	Item *ip;
+
+	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
+	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
+	assert(fmi_p!=NULL);
+
+	if( direction == CYC_FORWARD ){
+		fmi_p->curr_n_p = rb_successor_node( fmi_p->curr_n_p );
+		if( fmi_p->curr_n_p == NULL )
+			fmi_p->curr_n_p = fmi_p->first_n_p;
+	} else {
+		fmi_p->curr_n_p = rb_predecessor_node( fmi_p->curr_n_p );
+		if( fmi_p->curr_n_p == NULL )
+			fmi_p->curr_n_p = fmi_p->last_n_p;
+	}
+	ip = fmi_p->curr_n_p->data;
+	return ip->item_name;
+}
+
+const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
 	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL )
-		cyc_tree_match(QSP_ARG  so_far, direction );
+		return cyc_tree_match(QSP_ARG  so_far, direction );
 	else
-		cyc_list_match(QSP_ARG  so_far, direction );
+		return cyc_list_match(QSP_ARG  so_far, direction );
 }
 
 /* this was introduced to simplify the initialization of cmd menus */

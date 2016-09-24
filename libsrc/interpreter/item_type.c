@@ -32,6 +32,7 @@
 #include "quip_prot.h"
 #include "query_prot.h"
 #include "item_prot.h"
+#include "rbtree.h"
 
 #ifdef QUIP_DEBUG
 static u_long item_debug=ITEM_DEBUG_MASK;
@@ -144,6 +145,7 @@ static void init_itp(Item_Type *itp, int container_type)
 	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
 	SET_IT_CONTAINER_TYPE(itp,container_type);
+	SET_IT_FRAG_MATCH_INFO(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
 	{
@@ -1540,9 +1542,57 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 
 #endif /* THREAD_SAFE_QUERY */
 
-const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+static Item_Type *frag_itp=NULL;
+static ITEM_INIT_FUNC(Frag_Match_Info,frag,HASH_TBL_CONTAINER);
+static ITEM_NEW_FUNC(Frag_Match_Info,frag);
+//static ITEM_CHECK_FUNC(Frag_Match_Info,frag);
+
+static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
+{
+	char cname[LLEN];
+	Item_Context *frag_icp;
+
+	if( frag_itp == NULL ) init_frags(SINGLE_QSP_ARG);
+	sprintf(cname,"fragments.%s",CTX_NAME(icp));
+	frag_icp = new_ctx(QSP_ARG  cname);
+	assert(frag_icp!=NULL);
+
+	// should we have a function to encapsulate the setup?
+	SET_CTX_IT( icp, frag_itp );
+	SET_CTX_CONTAINER(frag_icp , create_container(CTX_NAME(frag_icp),HASH_TBL_CONTAINER) );
+	SET_CTX_FLAGS(icp,0);
+
+	return frag_icp;
+}
+
+//		if( frag_itp == NULL )
+static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, const char *s )
+{
+	Frag_Match_Info *fmi_p;
+
+	// first see if we have fragment context for this contex
+	if( CTX_FRAG_ICP(icp) == NULL ){
+		SET_CTX_FRAG_ICP( icp, setup_frag_context(QSP_ARG  icp) );
+	}
+	// now search the context for the string
+	fmi_p = (Frag_Match_Info *) container_find_match(CTX_CONTAINER(CTX_FRAG_ICP(icp)),s);
+	if( fmi_p!=NULL ){
+		// create the struct
+		push_item_context(QSP_ARG  frag_itp, CTX_FRAG_ICP(icp) );
+		fmi_p = new_frag(QSP_ARG  s );
+		// Now we need to fill in the entries!
+		fmi_p->curr_n_p=NULL;
+		fmi_p->first_n_p=NULL;
+		fmi_p->last_n_p=NULL;
+	}
+	return fmi_p;
+}
+
+static Frag_Match_Info * get_partial_match_info(QSP_ARG_DECL  Item_Type *itp, const char *s )
 {
 	Node *np;
+	Frag_Match_Info *fmi_p;
+
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
 	assert( np != NO_NODE );
 
@@ -1550,18 +1600,36 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 
 	while(np!=NO_NODE){
 		Item_Context *icp;
-		Item *ip;
 
 		icp= (Item_Context*) NODE_DATA(np);
-		// BUG we would like for the container to somehow remember which substring was
-		// returned, so we can cycle through them?
-		ip=container_find_substring_match(CTX_CONTAINER(icp),s);
-		if( ip != NULL ){
-			return ITEM_NAME(ip);
-		}
-		np = NODE_NEXT(np);
+
+		fmi_p=context_partial_match(QSP_ARG  icp,s);
+		assert( fmi_p != NULL );
+
+		// If we have a cached set of partial matches, see if they need to be updated.
+		// This will only happen if items are added or deleted
+		// BUG test for update!
+
+		// The context may have no matches
+		if( fmi_p->curr_n_p != NULL )
+			return fmi_p;
 	}
 	// nothing found
-	return "";
+	return NULL;
 }
+
+const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Frag_Match_Info *pmi_p;
+	Item *ip;
+
+	if( (pmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL ){
+		pmi_p=get_partial_match_info(QSP_ARG  itp, s);
+		SET_IT_FRAG_MATCH_INFO(itp,pmi_p);
+	}
+	if( pmi_p == NULL ) return "";	// there may be no matches
+	ip = pmi_p->curr_n_p->data;
+	return ITEM_NAME(ip);
+}
+
 
