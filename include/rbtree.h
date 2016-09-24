@@ -63,6 +63,7 @@ extern int rb_delete_key(rb_tree*, const char *);
 extern int rb_delete_named_item(rb_tree*, const char *name);
 extern int rb_delete_item(rb_tree*, Item *ip);
 extern rb_node* rb_find(rb_tree*, const char * key );
+extern rb_node* rb_substring_find(rb_tree*, const char * frag );
 extern void rb_traverse( rb_node *np, void (*func)(rb_node *) );
 extern void rb_check(rb_tree *);
 extern rb_node * rb_successor_node( rb_node *n_p );

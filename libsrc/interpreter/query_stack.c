@@ -14,7 +14,7 @@
 
 Query_Stack *_defaultQSP=NULL;
 static Item_Type *query_stack_itp=NULL;
-ITEM_INIT_FUNC(Query_Stack,query_stack)
+ITEM_INIT_FUNC(Query_Stack,query_stack,0)
 ITEM_LIST_FUNC(Query_Stack,query_stack)
 
 #define IS_LEGAL_VARNAME_CHAR(c)	(isalnum(c) || c=='_')

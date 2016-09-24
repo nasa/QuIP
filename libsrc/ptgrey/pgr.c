@@ -33,7 +33,7 @@
 
 #define TMPSIZE	32	// for temporary object names, e.g. _frame55
 
-ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc)
+ITEM_INTERFACE_DECLARATIONS(PGR_Cam,pgc,0)
 
 //dc1394error_t dc1394_get_camera_feature_set(dc1394camera_t *camera, dc1394featureset_t *features);
 

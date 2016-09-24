@@ -225,6 +225,37 @@ rb_node* rb_find( rb_tree * tree, const char * key )
 	}
 }
 
+rb_node* rb_substring_find( rb_tree * tree, const char * frag )
+{
+	int compVal;
+	int n;
+	rb_node* n_p = RB_TREE_ROOT(tree);
+
+	n = strlen(frag);
+	while(1){
+		if( n_p == NULL ) return(NULL);
+
+		compVal = strncmp( frag, RB_NODE_KEY(n_p), n );
+		if( compVal == 0 ){
+			// We have found a node that may be a match,
+			// but we want to return the first match
+			rb_node *p_p;
+
+			p_p = rb_predecessor_node(n_p);
+			while( p_p != NULL &&  ! strncmp(frag,RB_NODE_KEY(p_p),n) ){
+				n_p = p_p;
+				p_p = rb_predecessor_node(n_p);
+			}
+			// BUG we should remember where we are, so we can cycle...
+			return n_p;
+		} else if( compVal < 0 ){
+			n_p = n_p->left;
+		} else {
+			n_p = n_p->right;
+		}
+	}
+}
+
 // a misnomer - this exchanges the data of the node-to-be-deleted with its predecessor,
 // in preparation for the real deletion.
 

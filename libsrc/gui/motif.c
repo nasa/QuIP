@@ -75,19 +75,19 @@ static void motif_dispatch(SINGLE_QSP_ARG_DECL);
 Stack *nav_stack=NULL;
 
 static Item_Type *nav_item_itp=NO_ITEM_TYPE;
-ITEM_INIT_FUNC(Nav_Item,nav_item)
+ITEM_INIT_FUNC(Nav_Item,nav_item,0)
 ITEM_NEW_FUNC(Nav_Item,nav_item)
 ITEM_PICK_FUNC(Nav_Item,nav_item)
 
 static Item_Type *nav_panel_itp=NO_ITEM_TYPE;
-ITEM_INIT_FUNC(Nav_Panel,nav_panel)
+ITEM_INIT_FUNC(Nav_Panel,nav_panel,0)
 ITEM_NEW_FUNC(Nav_Panel,nav_panel)
 ITEM_CHECK_FUNC(Nav_Panel,nav_panel)
 ITEM_GET_FUNC(Nav_Panel,nav_panel)
 ITEM_PICK_FUNC(Nav_Panel,nav_panel)
 
 static Item_Type *nav_group_itp=NO_ITEM_TYPE;
-ITEM_INIT_FUNC(Nav_Group,nav_group)
+ITEM_INIT_FUNC(Nav_Group,nav_group,0)
 ITEM_NEW_FUNC(Nav_Group,nav_group)
 ITEM_PICK_FUNC(Nav_Group,nav_group)
 

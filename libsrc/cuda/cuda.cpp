@@ -40,7 +40,7 @@ Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
 #endif // HAVE_CUDA
 
-ITEM_INTERFACE_DECLARATIONS( Cuda_Device, cudev )
+ITEM_INTERFACE_DECLARATIONS( Cuda_Device, cudev, 0 )
 
 #define PICK_CUDEV(pmpt)	pick_cudev(QSP_ARG  pmpt)
 

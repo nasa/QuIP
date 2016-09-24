@@ -72,7 +72,7 @@ static Interlace_Functions mvi_if={
 	get_mvi_il_flg
 };
 
-ITEM_INTERFACE_DECLARATIONS(Movie,mvi)
+ITEM_INTERFACE_DECLARATIONS(Movie,mvi,0)
 
 static Movie_Module *the_mmp=NO_MOVIE_MODULE;
 

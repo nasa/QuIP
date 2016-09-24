@@ -47,7 +47,7 @@
 #include "opengl_utils.h"
 
 static IOS_Item_Type *pf_vwr_itp=NULL;
-static IOS_ITEM_INIT_FUNC(Platform_Viewer,pf_vwr)
+static IOS_ITEM_INIT_FUNC(Platform_Viewer,pf_vwr,0)
 #ifdef BUILD_FOR_OBJC
 static IOS_ITEM_CHECK_FUNC(Platform_Viewer,pf_vwr)
 #endif // BUILD_FOR_OBJC

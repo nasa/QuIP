@@ -45,7 +45,7 @@
 
 Video_Device *curr_vdp=NO_VIDEO_DEVICE;
 
-ITEM_INTERFACE_DECLARATIONS(Video_Device,video_dev)
+ITEM_INTERFACE_DECLARATIONS(Video_Device,video_dev,0)
 
 /* Call ioctl, repeating if interrupted */
 

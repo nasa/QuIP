@@ -3,11 +3,12 @@
 #include "container.h"
 #include <assert.h>
 
-Container * create_container(const char *name)
+Container * create_container(const char *name,int type)
 {
 	Container *cnt_p;
 
-	cnt_p = new_container(HASH_TBL_CONTAINER);	// the default
+	if( type == 0 ) type=HASH_TBL_CONTAINER;	// default
+	cnt_p = new_container(type);
 	cnt_p->name = savestr(name);
 	return cnt_p;
 }
@@ -52,6 +53,8 @@ static void make_container_current( Container *cnt_p, int type )
 
 void set_container_type(Container *cnt_p, int type)
 {
+	if( type == 0 ) return;	// keep default
+
 	if( ! (cnt_p->types & type) ){
 		add_type_to_container(cnt_p,type);
 		cnt_p->types |= type;
@@ -64,7 +67,7 @@ Container * new_container(int type)
 {
 	Container *cnt_p=NULL;
 
-//	assert( type >= 0 && type < N_CONTAINER_TYPES );
+//fprintf(stderr,"new_container:  type = %d\n",type);
 	assert( type == LIST_CONTAINER ||
 		type == HASH_TBL_CONTAINER ||
 		type == RB_TREE_CONTAINER );
@@ -170,6 +173,52 @@ Item *container_find_match(Container *cnt_p, const char *name)
 	}
 	return ip;
 }
+
+Item *container_find_substring_match(Container *cnt_p, const char *frag)
+{
+	Item *ip=NULL;
+	Enumerator *ep;
+	rb_node *tnp;
+	int n;
+
+//fprintf(stderr,"container_find_substring_match:  looking for %s\n",frag);
+	if( cnt_p->types & RB_TREE_CONTAINER ){
+		if( ! (cnt_p->is_current&RB_TREE_CONTAINER) ){
+			make_container_current(cnt_p,RB_TREE_CONTAINER);
+		}
+		tnp = rb_substring_find(cnt_p->cnt_tree_p,frag);
+		if( tnp != NULL )
+			ip = tnp->data;
+		else
+			ip = NULL;
+
+		return ip;
+	}
+	switch(cnt_p->primary_type){
+		case LIST_CONTAINER:
+		case HASH_TBL_CONTAINER:
+			// We have no way to find anything based on substrings,
+			// so we simply enumerate...
+			ep = new_enumerator(cnt_p,cnt_p->primary_type);
+			n = strlen(frag);
+			while( ep != NULL ){
+				ip = enumerator_item(ep);
+				assert(ip!=NULL);
+				if( ! strncmp(ITEM_NAME(ip),frag,n) ){
+					// found a match!
+					// BUG - can we remember where we are?
+					return ip;
+				}
+				ep = advance_enumerator(ep);
+			}
+			break;
+		default:
+			NERROR1("container_find_substring_match:  unexpected container type!?");
+			break;
+	}
+	return NULL;
+}
+
 
 //extern Item *container_find_substring_match(QSP_ARG_DECL  Container *cnt_p, const char *frag);
 

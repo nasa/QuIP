@@ -6,7 +6,7 @@
 #include "viewer.h"
 
 static IOS_Item_Type *camera_itp;
-IOS_ITEM_INIT_FUNC(Camera,camera)
+IOS_ITEM_INIT_FUNC(Camera,camera,0)
 IOS_ITEM_NEW_FUNC(Camera,camera)
 IOS_ITEM_CHECK_FUNC(Camera,camera)
 IOS_ITEM_PICK_FUNC(Camera,camera)

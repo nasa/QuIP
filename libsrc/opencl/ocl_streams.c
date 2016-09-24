@@ -8,7 +8,7 @@
 #include "veclib/ocl_port.h"
 
 
-ITEM_INTERFACE_DECLARATIONS( Platform_Stream , stream )
+ITEM_INTERFACE_DECLARATIONS( Platform_Stream , stream, 0 )
 
 #ifdef NOT_USED
 static int have_first_ocl_stream=0;

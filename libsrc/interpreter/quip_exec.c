@@ -24,6 +24,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 //#endif /* CAUTIOUS */
 	assert( mp != NO_MENU );
 
+//fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
 	//lp = dictionary_list( MENU_DICT(mp) );
 	lp = container_list( MENU_CONTAINER(mp) );
 //#ifdef CAUTIOUS
@@ -89,6 +90,7 @@ void qs_do_cmd( Query_Stack *qsp )
 	if( (! MENU_COMMANDS_STASHED(mp))  &&  intractive(SINGLE_QSP_ARG) ){
 		stash_menu_commands(QSP_ARG  mp);
 		stash_menu_commands(QSP_ARG  QS_BUILTIN_MENU(THIS_QSP));
+		SET_MENU_FLAG_BITS(mp,MENU_FLAG_CMDS_STASHED);
 	}
 #endif /* TTY_CTL */
 #endif /* HAVE_HISTORY */
@@ -123,7 +125,7 @@ void qs_do_cmd( Query_Stack *qsp )
 				){
 
 
-			rem_def(QSP_ARG  QS_PROMPT_STR(qsp),cmd);
+			rem_def(QSP_ARG  QS_PROMPT_STR(qsp),cmd);	// erase from history list
 		}
 #endif /* HAVE_HISTORY */
 

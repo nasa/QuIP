@@ -36,7 +36,7 @@ const char *var_p_value(QSP_ARG_DECL  Variable *vp)
 	}
 }
 
-ITEM_INIT_FUNC(Variable,var_)
+ITEM_INIT_FUNC(Variable,var_,0)
 ITEM_NEW_FUNC(Variable,var_)
 ITEM_CHECK_FUNC(Variable,var_)
 ITEM_PICK_FUNC(Variable,var_)

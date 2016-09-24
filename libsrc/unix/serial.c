@@ -71,7 +71,7 @@ static Serial_Port *default_spp=NO_SERIAL_PORT;
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC(Serial_Port,serial_port)
 static Item_Type *serial_port_itp=NO_ITEM_TYPE;
-static ITEM_INIT_FUNC(Serial_Port,serial_port)
+static ITEM_INIT_FUNC(Serial_Port,serial_port,0)
 static ITEM_NEW_FUNC(Serial_Port,serial_port)
 static ITEM_CHECK_FUNC(Serial_Port,serial_port)
 //static ITEM_GET_FUNC(Serial_Port,serial_port)

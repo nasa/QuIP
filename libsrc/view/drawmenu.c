@@ -47,7 +47,7 @@ static int curr_x=0;
 static int curr_y=0;
 
 #ifdef HAVE_X11
-ITEM_INTERFACE_DECLARATIONS(XFont,xfont)
+ITEM_INTERFACE_DECLARATIONS(XFont,xfont,0)
 #endif /* HAVE_X11 */
 
 static void get_cpair(QSP_ARG_DECL  int *px, int *py)

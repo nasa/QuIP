@@ -33,9 +33,14 @@ debug_flag_t hist_debug=0;
 /* local variables */
 
 // These maintain info about a list of possible command completions...
+// These two vars allow us to cycle through multiple possibilities...
 static Node *cur_node;	// might make more sense to put in qsp, but we will only ever have one
 			// interactive shell...
+static Node *cur_node;
 static List *cur_list;
+
+// BUT they are not so helpful when we also have item names that are not
+// copied to a list!?
 
 
 static char *get_hist_ctx_name(const char *prompt);
@@ -46,8 +51,9 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char 
 static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char **choices);
 
 // need macro to make these all static
+ITEM_INTERFACE_CONTAINER(choice,LIST_CONTAINER)
 ITEM_INTERFACE_PROTOTYPES(Hist_Choice,choice)
-ITEM_INTERFACE_DECLARATIONS(Hist_Choice,choice)
+ITEM_INTERFACE_DECLARATIONS(Hist_Choice,choice,LIST_CONTAINER)
 
 /* This has to match what is up above!!! */
 #define HIST_CHOICE_STRING	"Hist_Choice"
@@ -186,6 +192,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
+fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */
@@ -334,6 +341,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	if( *prompt == 0 ) return("");	/* e.g. hand entry of macros */
 
+//fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
 	icp=find_hist(QSP_ARG  prompt);
 
 //	lp = dictionary_list(CTX_DICT(icp));
@@ -347,6 +355,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 		/* priority sorted!? */
 
 		hcp=(Hist_Choice *) NODE_DATA(np);
+//fprintf(stderr,"comparing %s to %s\n",so_far,hcp->hc_text);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			cur_list=lp;

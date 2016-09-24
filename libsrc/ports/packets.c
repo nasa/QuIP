@@ -14,7 +14,7 @@
 #include "data_obj.h"
 
 static Item_Type *pdt_itp=NULL;
-static ITEM_INIT_FUNC(Port_Data_Type,pdt)
+static ITEM_INIT_FUNC(Port_Data_Type,pdt,0)
 ITEM_CHECK_FUNC(Port_Data_Type,pdt)
 static ITEM_NEW_FUNC(Port_Data_Type,pdt)
 static ITEM_PICK_FUNC(Port_Data_Type,pdt)

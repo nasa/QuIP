@@ -46,7 +46,7 @@
 #include "my_fb.h"
 #include "view_cmds.h"
 
-ITEM_INTERFACE_DECLARATIONS(FB_Info,fbi)
+ITEM_INTERFACE_DECLARATIONS(FB_Info,fbi,0)
 
 static FB_Info *curr_fbip=NO_FBI;
 

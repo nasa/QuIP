@@ -80,8 +80,8 @@ static const char *widget_type_name[N_WIDGET_TYPES]={
 };
 
 #ifndef BUILD_FOR_OBJC
-ITEM_INTERFACE_DECLARATIONS(Panel_Obj,panel_obj)
-ITEM_INTERFACE_DECLARATIONS(Screen_Obj,scrnobj)
+ITEM_INTERFACE_DECLARATIONS(Panel_Obj,panel_obj,0)
+ITEM_INTERFACE_DECLARATIONS(Screen_Obj,scrnobj,0)
 #endif /* ! BUILD_FOR_OBJC */
 
 #ifdef NOT_USED

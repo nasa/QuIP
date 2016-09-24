@@ -14,7 +14,7 @@
 static Item_Type *vec_func_itp=NO_ITEM_TYPE;
 static ITEM_INIT_PROT(Vector_Function, vec_func)
 
-static ITEM_INIT_FUNC(Vector_Function, vec_func)
+static ITEM_INIT_FUNC(Vector_Function, vec_func, 0)
 ITEM_LIST_FUNC(Vector_Function, vec_func)
 ITEM_PICK_FUNC(Vector_Function, vec_func)
 

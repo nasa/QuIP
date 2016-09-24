@@ -6,7 +6,7 @@
 
 static Disp_Obj *current_dop=NO_DISP_OBJ;
 
-ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj)
+ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 
 #ifdef HAVE_X11
 

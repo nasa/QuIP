@@ -65,7 +65,7 @@
 #include "llseek.h"
 #include "fio_api.h"
 
-ITEM_INTERFACE_DECLARATIONS(RV_Inode,rv_inode)
+ITEM_INTERFACE_DECLARATIONS(RV_Inode,rv_inode,0)
 
 #ifdef HAVE_RAWVOL
 

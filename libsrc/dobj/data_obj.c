@@ -15,7 +15,7 @@ const char * dimension_name[N_DIMENSIONS]={
 
 debug_flag_t debug_data=0;
 
-ITEM_INIT_FUNC(Data_Obj,dobj)
+ITEM_INIT_FUNC(Data_Obj,dobj,0)
 ITEM_LIST_FUNC(Data_Obj,dobj)
 ITEM_CHECK_FUNC(Data_Obj,dobj)
 ITEM_NEW_FUNC(Data_Obj,dobj)		// what does this do?

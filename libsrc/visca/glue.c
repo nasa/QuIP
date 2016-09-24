@@ -4,9 +4,9 @@
 #include "quip_prot.h"
 #include "visca.h"
 
-ITEM_INTERFACE_DECLARATIONS(Visca_Cmd_Set,cmd_set)
-ITEM_INTERFACE_DECLARATIONS(Visca_Command,visca_cmd)
-ITEM_INTERFACE_DECLARATIONS(Visca_Inquiry,visca_inq)
+ITEM_INTERFACE_DECLARATIONS(Visca_Cmd_Set,cmd_set,0)
+ITEM_INTERFACE_DECLARATIONS(Visca_Command,visca_cmd,0)
+ITEM_INTERFACE_DECLARATIONS(Visca_Inquiry,visca_inq,0)
 
 
 Item_Context *create_visca_cmd_context(QSP_ARG_DECL  const char *name)

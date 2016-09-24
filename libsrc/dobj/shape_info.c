@@ -46,7 +46,8 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 {
 	Precision *prec_p;
 
-	prec_itp = new_item_type(QSP_ARG  "Precision");
+	prec_itp = new_item_type(QSP_ARG  "Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
+									// should sort based on access?
 
 	INIT_PREC(byte,char,PREC_BY)
 	INIT_PREC(u_byte,u_char,PREC_UBY)

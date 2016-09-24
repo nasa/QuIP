@@ -31,7 +31,7 @@
 //#include "glx_supp.h"
 #include "glfb.h"
 
-ITEM_INTERFACE_DECLARATIONS(Framebuffer,glfb)
+ITEM_INTERFACE_DECLARATIONS(Framebuffer,glfb,0)
 
 Framebuffer *create_framebuffer(QSP_ARG_DECL  const char *name, int width, int height)
 {

@@ -20,7 +20,7 @@ Data_Area *curr_ap=NO_AREA, *ram_area_p=NO_AREA;
 
 static int n_areas=0;
 
-ITEM_INTERFACE_DECLARATIONS(Data_Area,data_area)
+ITEM_INTERFACE_DECLARATIONS(Data_Area,data_area,0)
 
 // BUG not thread-safe...
 static Stack *data_area_stack_p=NO_STACK;

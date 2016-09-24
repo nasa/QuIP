@@ -76,7 +76,7 @@ static Sound_Device *the_sdp=NO_SOUND_DEVICE;
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC( Sound_Device, snddev )
 static Item_Type *snddev_itp=NO_ITEM_TYPE;
-static ITEM_INIT_FUNC(Sound_Device,snddev)
+static ITEM_INIT_FUNC(Sound_Device,snddev,0)
 static ITEM_CHECK_FUNC(Sound_Device,snddev)
 static ITEM_NEW_FUNC(Sound_Device,snddev)
 

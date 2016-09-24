@@ -9,13 +9,13 @@
 //IOS_ITEM_INTERFACE_DECLARATIONS(Menu_Bar_Item,menu_bar_item)
 
 static IOS_Item_Type *menu_bar_menu_itp=NULL;
-IOS_ITEM_INIT_FUNC(Menu_Bar_Menu,menu_bar_menu)
+IOS_ITEM_INIT_FUNC(Menu_Bar_Menu,menu_bar_menu,0)
 IOS_ITEM_NEW_FUNC(Menu_Bar_Menu,menu_bar_menu)
 IOS_ITEM_CHECK_FUNC(Menu_Bar_Menu,menu_bar_menu)
 IOS_ITEM_PICK_FUNC(Menu_Bar_Menu,menu_bar_menu)
 
 static IOS_Item_Type *menu_bar_item_itp=NULL;
-IOS_ITEM_INIT_FUNC(Menu_Bar_Item,menu_bar_item)
+IOS_ITEM_INIT_FUNC(Menu_Bar_Item,menu_bar_item,0)
 IOS_ITEM_NEW_FUNC(Menu_Bar_Item,menu_bar_item)
 IOS_ITEM_CHECK_FUNC(Menu_Bar_Item,menu_bar_item)
 IOS_ITEM_PICK_FUNC(Menu_Bar_Item,menu_bar_item)

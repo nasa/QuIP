@@ -47,9 +47,9 @@ static u_long debug_contexts=CTX_DEBUG_MASK;
 //static void check_item_type(Item_Type *itp);
 //#endif /* CAUTIOUS */
 static void make_needy(Item_Type *itp);
-static void init_itp(Item_Type *itp);
+static void init_itp(Item_Type *itp, int container_type);
 static int item_cmp(const void *,const void *);
-static Item_Type * init_item_type(QSP_ARG_DECL  const char *name);
+static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_type);
 static void store_item(QSP_ARG_DECL  Item_Type *itp,Item *ip,Node *np);
 
 static ITEM_INIT_PROT(Item_Context,ctx)
@@ -65,7 +65,7 @@ static void		dump_item_context(QSP_ARG_DECL  Item_Context *);
 #define ITEM_TYPE_STRING	"Item_Type"
 Item_Type * ittyp_itp=NO_ITEM_TYPE;
 
-/*static*/ ITEM_INIT_FUNC(Item_Type,ittyp)
+/*static*/ ITEM_INIT_FUNC(Item_Type,ittyp,0)
 static ITEM_NEW_FUNC(Item_Type,ittyp)
 
 ITEM_LIST_FUNC(Item_Type,ittyp)
@@ -77,7 +77,7 @@ static Item_Type *ctx_itp=NO_ITEM_TYPE;
 #define CTX_IT_NAME	"Context"
 #define DEF_CTX_NAME	"default"
 
-static ITEM_INIT_FUNC(Item_Context,ctx)
+static ITEM_INIT_FUNC(Item_Context,ctx,0)
 ITEM_CHECK_FUNC(Item_Context,ctx)
 //static ITEM_GET_FUNC(Item_Context,ctx)
 //static ITEM_LIST_FUNC(Item_Context,ctx)
@@ -129,7 +129,7 @@ void set_del_method(QSP_ARG_DECL  Item_Type *itp,void (*func)(QSP_ARG_DECL  Item
 	SET_IT_DEL_METHOD(itp, func);
 }
 
-static void init_itp(Item_Type *itp)
+static void init_itp(Item_Type *itp, int container_type)
 {
 	/* should we really do this? */
 	SET_IT_LIST(itp, new_list() );
@@ -143,6 +143,7 @@ static void init_itp(Item_Type *itp)
 
 	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
+	SET_IT_CONTAINER_TYPE(itp,container_type);
 
 #ifdef THREAD_SAFE_QUERY
 	{
@@ -217,7 +218,7 @@ void setup_all_item_type_contexts(QSP_ARG_DECL  void *new_qsp)
 
 #endif /* THREAD_SAFE_QUERY */
 
-static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
+static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_type)
 {
 	static int is_first=1;	// how many times is this auto-initialized?
 	Item_Type *itp;
@@ -250,7 +251,7 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
 		ittyp_itp = &first_item_type;
 		SET_IT_NAME(ittyp_itp, ITEM_TYPE_STRING );
 		is_first=0;
-		init_itp(ittyp_itp);
+		init_itp(ittyp_itp,DEFAULT_CONTAINER_TYPE);
 
 		/* We need to create the first context, but we don't want
 		 * infinite recursion...
@@ -261,7 +262,7 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
 		// change Dictionary to Container here?
 		//SET_CTX_DICT( icp,  create_dictionary("Item_Type.default") );
 		SET_CTX_CONTAINER( icp,
-			create_container("Item_Type.default") );
+			create_container("Item_Type.default",IT_CONTAINER_TYPE(ittyp_itp)) );
 
 		SET_CTX_IT( icp, ittyp_itp );
 		/*np =*/ mk_node(icp);
@@ -290,7 +291,7 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
 	assert( strcmp(name,ITEM_TYPE_STRING) );
 
 	itp = new_ittyp(QSP_ARG  name);
-	init_itp(itp);
+	init_itp(itp,container_type);
 	icp = create_item_context(QSP_ARG  itp,DEF_CTX_NAME);
 	PUSH_ITEM_CONTEXT(itp,icp);
 
@@ -302,7 +303,7 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name)
  * entries.  Return the item type index or -1 on failure.
  */
 
-Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename)
+Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_type)
 {
 	Item_Type * itp;
 
@@ -318,7 +319,7 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename)
 	}
 	/* else we are initializing the item type Item_Type */
 
-	itp=init_item_type(QSP_ARG  atypename);
+	itp=init_item_type(QSP_ARG  atypename, container_type);
 //#ifdef CAUTIOUS
 //	if( itp == NO_ITEM_TYPE )
 //		WARN("CAUTIOUS:  new_item_type failed!?");
@@ -557,7 +558,7 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 		// not too large (e.g. dozens), we probably don't need
 		// to be TOO concerned with efficiency here...
 //		SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
-		SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp)) );
+		SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp), IT_CONTAINER_TYPE(itp)) );
 		SET_CTX_FLAGS(icp,0);
 		/* BUG?  not in the context database?? */
 		return(icp);
@@ -570,7 +571,7 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 	 */
 
 	if( ctx_itp == NO_ITEM_TYPE )
-		ctx_itp = new_item_type(QSP_ARG  CTX_IT_NAME);
+		ctx_itp = new_item_type(QSP_ARG  CTX_IT_NAME, DEFAULT_CONTAINER_TYPE);
 
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
@@ -601,7 +602,7 @@ advise(ERROR_STRING);
 	// with many, many items, to speed partial name
 	// matching!
 	//SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
-	SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp)) );
+	SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp),IT_CONTAINER_TYPE(itp)) );
 	SET_CTX_FLAGS(icp,0);
 
 //#ifdef CAUTIOUS
@@ -797,6 +798,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	pop_item_context(QSP_ARG  itp);
 }
 
+#ifdef NOT_NEEDED
 Item *check_context(Item_Context *icp, const char *name)
 {
 //#ifdef CAUTIOUS
@@ -809,6 +811,7 @@ Item *check_context(Item_Context *icp, const char *name)
 	//return fetch_name(name,CTX_DICT(icp));
 	return container_find_match(CTX_CONTAINER(icp),name);
 }
+#endif // NOT_NEEDED
 
 
 /*
@@ -865,11 +868,13 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		Item *ip;
 
 		icp= (Item_Context*) NODE_DATA(np);
-if( icp == NULL )
-ERROR1("context stack contains null context!?");
+		assert(icp!=NULL);
+//if( icp == NULL )
+//ERROR1("context stack contains null context!?");
 
 //		ip=fetch_name(name,CTX_DICT(icp));
-		ip=check_context(icp,name);
+//		ip=check_context(icp,name);
+		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
 			return(ip);
 		}
@@ -1535,4 +1540,28 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 
 #endif /* THREAD_SAFE_QUERY */
 
-//
+const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Node *np;
+	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	assert( np != NO_NODE );
+
+	/* check the top context first */
+
+	while(np!=NO_NODE){
+		Item_Context *icp;
+		Item *ip;
+
+		icp= (Item_Context*) NODE_DATA(np);
+		// BUG we would like for the container to somehow remember which substring was
+		// returned, so we can cycle through them?
+		ip=container_find_substring_match(CTX_CONTAINER(icp),s);
+		if( ip != NULL ){
+			return ITEM_NAME(ip);
+		}
+		np = NODE_NEXT(np);
+	}
+	// nothing found
+	return "";
+}
+
