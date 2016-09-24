@@ -1108,6 +1108,8 @@ void decap(char* sto,const char* sfr)
  * contain a geven substring.
  * Return a pointer to a list of the items,
  * caller must dispose of the list.
+ *
+ * BUG - should this be redone now that items are in rb trees?
  */
 
 List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
@@ -1127,6 +1129,7 @@ List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
 		ip = (Item*) np->n_data;
 		/* make the match case insensitive */
 		decap(str1,ip->item_name);
+		// strstr will match anywhere in the string!
 		if( strstr(str1,lc_frag) != NULL ){
 			if( newlp == NO_LIST )
 				newlp=new_list();
@@ -1502,114 +1505,10 @@ void dump_items(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-#ifdef NOT_USED
-/* convert a string from mixed case to all lower case.
- * we do this allow case-insensitive matching.
- */
-
-static void decap(char* sto,const char* sfr)
-{
-	while(*sfr){
-
-		/* use braces in case macro is multiple statements... */
-		/* don't increment inside macro ... */
-		/* superstitious pc behavior */
-
-
-#ifdef HAVE_ISUPPER
-
-#ifdef SGI	/* or other SYSV os... */
-		if( isupper(*sfr) ) { *sto++ = _tolower(*sfr); }
-
-#else		/* sun 4.1.2 */
-		if( isupper(*sfr) ) { *sto++ = tolower(*sfr); }
-#endif
-		else *sto++ = *sfr;
-
-#else /* ! HAVE_ISUPPER */
-		// BUG we could add our own implementation here?
-		*sto++ = *sfr;
-#endif /* ! HAVE_ISUPPER */
-
-		sfr++;
-	}
-	*sto = 0;	/* terminate string */
-}
-
-/*
- * Find all items of a given type whose names
- * contain a geven substring.
- * Return a pointer to a list of the items,
- * caller must dispose of the list.
- */
-
-static List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
-{
-	List *lp, *newlp=NO_LIST;
-	Node *np, *newnp;
-	Item *ip;
-	char lc_frag[LLEN];
-
-	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return(lp);
-
-	np=QLIST_HEAD(lp);
-	decap(lc_frag,frag);
-	while(np!=NO_NODE){
-		char str1[LLEN];
-		ip = (Item*) NODE_DATA(np);
-		/* make the match case insensitive */
-		decap(str1,ITEM_NAME(ip));
-		if( strstr(str1,lc_frag) != NULL ){
-			if( newlp == NO_LIST )
-				newlp=new_list();
-			newnp=mk_node(ip);
-			addTail(newlp,newnp);
-		}
-		np=NODE_NEXT(np);
-	}
-	return(newlp);
-}
-#endif /* NOT_USED */
-
 Item_Type *get_item_type(QSP_ARG_DECL  const char* name)
 {
 	return( (Item_Type *) get_item(QSP_ARG  ittyp_itp,name) );
 }
-
-#ifdef NOT_USED
-/*
- * Search all item types for items with matching names
- * BUG? this needs to be tested, may not work...
- */
-
-List *find_all_items(QSP_ARG_DECL  const char* frag)
-{
-	List *lp, *newlp=NO_LIST;
-	List *itlp;
-	Node *itnp;
-
-	itlp=item_list(QSP_ARG  ittyp_itp);
-	if( itlp == NO_LIST ) return(itlp);
-	itnp=QLIST_HEAD(itlp);
-	while(itnp!=NO_NODE){
-		lp=find_items(QSP_ARG  (Item_Type *)NODE_DATA(itnp),frag);
-		if( lp != NO_LIST ){
-			if( newlp == NO_LIST )
-				newlp=lp;
-			else {
-				Node *np;
-
-				while( (np=remHead(lp)) != NO_NODE )
-					addTail(newlp,np);
-				rls_list(lp);
-			}
-		}
-		itnp=NODE_NEXT(itnp);
-	}
-	return(newlp);
-}
-#endif /* NOT_USED */
 
 #ifdef THREAD_SAFE_QUERY
 
@@ -1635,3 +1534,5 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 #endif /* HAVE_PTHREADS */
 
 #endif /* THREAD_SAFE_QUERY */
+
+//

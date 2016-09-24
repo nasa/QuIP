@@ -31,8 +31,12 @@ debug_flag_t hist_debug=0;
 #endif /* QUIP_DEBUG */
 
 /* local variables */
-static Node *cur_node;
+
+// These maintain info about a list of possible command completions...
+static Node *cur_node;	// might make more sense to put in qsp, but we will only ever have one
+			// interactive shell...
 static List *cur_list;
+
 
 static char *get_hist_ctx_name(const char *prompt);
 
@@ -368,7 +372,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 			np=QLIST_TAIL(cur_list);					\
 	}
 
-const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
+static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int direction)
 {
 	Node *np, *first;
 	Hist_Choice *hcp;
@@ -392,6 +396,14 @@ const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
 
 	hcp=(Hist_Choice *) NODE_DATA(first);
 	return(hcp->hc_text);
+}
+
+const char *cyc_match(QSP_ARG_DECL  const char *sofar, int direction )
+{
+	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL )
+		cyc_tree_match(QSP_ARG  so_far, direction );
+	else
+		cyc_list_match(QSP_ARG  so_far, direction );
 }
 
 /* this was introduced to simplify the initialization of cmd menus */

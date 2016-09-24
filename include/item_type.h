@@ -20,11 +20,20 @@ typedef struct container Container;
 
 #define NO_ITEM	((Item *) NULL)
 
+struct rb_node;
+
+struct frag_match_info {
+	Item			fragment;	// the partial string
+	struct rb_node *	curr_n_p;
+	struct rb_node *	first_n_p;
+	struct rb_node *	last_n_p;
+} Frag_Match_Info;
 
 typedef struct item_context {
 	Item			ic_item;
 	List *			ic_lp;
-	Item_Type *		ic_itp;
+	Item_Type *		ic_itp;		// points to the owner of this context
+	struct item_context *	ic_frag_icp;	// fragment match database just for this context
 	int			ic_flags;
 	// We use a "dictionary" to store the items; traditionally,
 	// this has been a hash table, but to support partial name
