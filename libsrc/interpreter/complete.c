@@ -548,7 +548,6 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 
 //fprintf(stderr,"Need to check %s items for a completion...\n",picking_item_itp->it_item.item_name);
 
-				// not implemented yet...
 				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
 				l=strlen(def_str);
 			}
@@ -817,6 +816,7 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 					sel_str[n_so_far++] = c;
 				}
 				sel_str[n_so_far] = 0;
+				// we have a new fragment!
 			}
 		} /* end regular character */
 	} /* while(1) */

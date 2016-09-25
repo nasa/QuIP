@@ -1632,15 +1632,18 @@ static Frag_Match_Info * get_partial_match_info(QSP_ARG_DECL  Item_Type *itp, co
 
 const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 {
-	Frag_Match_Info *pmi_p;
+	Frag_Match_Info *fmi_p;
 	Item *ip;
 
-	if( (pmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL ){
-		pmi_p=get_partial_match_info(QSP_ARG  itp, s);
-		SET_IT_FRAG_MATCH_INFO(itp,pmi_p);
+	if( (fmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL  ||
+			strcmp( s, IT_FRAG_MATCH_INFO(itp)->frag.item_name) ){
+		// we keep the old frag match...
+		fmi_p=get_partial_match_info(QSP_ARG  itp, s);
+		SET_IT_FRAG_MATCH_INFO(itp,fmi_p);
 	}
-	if( pmi_p == NULL ) return "";	// there may be no matches
-	ip = pmi_p->curr_n_p->data;
+		
+	if( fmi_p == NULL ) return "";	// there may be no matches
+	ip = fmi_p->curr_n_p->data;
 	return ITEM_NAME(ip);
 }
 

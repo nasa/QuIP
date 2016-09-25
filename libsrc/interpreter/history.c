@@ -192,7 +192,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
-fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
+//fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */
@@ -348,6 +348,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 	lp = container_list(CTX_CONTAINER(icp));
 
 	np=QLIST_HEAD(lp);
+//fprintf(stderr,"get_match:  list has %d elements\n",eltcount(lp));
 
 	while(np!=NO_NODE) {
 		Hist_Choice *hcp;
@@ -415,7 +416,9 @@ static const char * cyc_tree_match(QSP_ARG_DECL  const char *so_far, int directi
 
 	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
 	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
-	assert(fmi_p!=NULL);
+
+	// there may be no items!?
+	if( fmi_p == NULL ) return so_far;
 
 	if( direction == CYC_FORWARD ){
 		if( fmi_p->curr_n_p == fmi_p->last_n_p )

@@ -188,6 +188,7 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, 
 		if( ! (cnt_p->is_current&RB_TREE_CONTAINER) ){
 			make_container_current(cnt_p,RB_TREE_CONTAINER);
 		}
+//fprintf(stderr,"container_find_substring_matches:  calling rb_substring_find, frag = %s\n",frag);
 		rb_substring_find(fmi_p,cnt_p->cnt_tree_p,frag);
 //fprintf(stderr,"container_find_substring_matches:  after rb_substring_find, first = 0x%lx, last = 0x%lx\n", (long)fmi_p->first_n_p,(long)fmi_p->last_n_p);
 		return;
@@ -369,12 +370,9 @@ void * enumerator_item(Enumerator *ep)
 			if( ep->e_p.htep->current_entry == NULL )
 				return NULL;
 			else {
-/*
-fprintf(stderr,"enumerator_item returning current hash table entry, 0x%lx at 0x%lx\n",(long)*(ep->e_p.htep->current_entry),
-(long)ep->e_p.htep->current_entry);
-fprintf(stderr,"entries at 0x%lx, n = %ld\n",(long)ep->e_p.htep->htp->ht_entries,ep->e_p.htep->htp->ht_n_entries);
-fprintf(stderr,"first invalid entry at 0x%lx\n",(long)(ep->e_p.htep->htp->ht_entries+ep->e_p.htep->htp->ht_n_entries));
-*/
+//fprintf(stderr,"enumerator_item returning current hash table entry, 0x%lx at 0x%lx\n",(long)*(ep->e_p.htep->current_entry), (long)ep->e_p.htep->current_entry);
+//fprintf(stderr,"entries at 0x%lx, n = %ld\n",(long)ep->e_p.htep->htp->ht_entries,ep->e_p.htep->htp->ht_n_entries);
+//fprintf(stderr,"first invalid entry at 0x%lx\n",(long)(ep->e_p.htep->htp->ht_entries+ep->e_p.htep->htp->ht_n_entries));
 				return *(ep->e_p.htep->current_entry);
 			}
 			break;

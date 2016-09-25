@@ -244,14 +244,14 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 	while(1){
 		if( n_p == NULL ) return;
 
-//fprintf(stderr,"rb_substring_find:  comparing '%s' to '%s', n = %d\n",frag,RB_NODE_KEY(n_p),n);
+fprintf(stderr,"rb_substring_find:  comparing '%s' to '%s', n = %d\n",frag,RB_NODE_KEY(n_p),n);
 		compVal = strncmp( frag, RB_NODE_KEY(n_p), n );
 		if( compVal == 0 ){
 			// We have found a node that may be a match,
 			// but we want to return the first match
 			rb_node *p_p;
 
-//fprintf(stderr,"rb_substring_find:  match found at 0x%lx\n",(long)n_p);
+fprintf(stderr,"rb_substring_find:  match found at 0x%lx\n",(long)n_p);
 			fmi_p->curr_n_p = n_p;
 
 			// find the first one
