@@ -411,19 +411,26 @@ static const char * cyc_tree_match(QSP_ARG_DECL  const char *so_far, int directi
 {
 	Frag_Match_Info *fmi_p;
 	Item *ip;
+	rb_node *next_np;
 
 	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
 	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
 	assert(fmi_p!=NULL);
 
 	if( direction == CYC_FORWARD ){
-		fmi_p->curr_n_p = rb_successor_node( fmi_p->curr_n_p );
-		if( fmi_p->curr_n_p == NULL )
+		if( fmi_p->curr_n_p == fmi_p->last_n_p )
 			fmi_p->curr_n_p = fmi_p->first_n_p;
+		else {
+			fmi_p->curr_n_p = rb_successor_node( fmi_p->curr_n_p );
+			assert( fmi_p->curr_n_p != NULL );
+		}
 	} else {
-		fmi_p->curr_n_p = rb_predecessor_node( fmi_p->curr_n_p );
-		if( fmi_p->curr_n_p == NULL )
+		if( fmi_p->curr_n_p == fmi_p->first_n_p )
 			fmi_p->curr_n_p = fmi_p->last_n_p;
+		else {
+			fmi_p->curr_n_p = rb_predecessor_node( fmi_p->curr_n_p );
+			assert( fmi_p->curr_n_p != NULL );
+		}
 	}
 	ip = fmi_p->curr_n_p->data;
 	return ip->item_name;

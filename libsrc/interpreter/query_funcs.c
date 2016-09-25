@@ -576,7 +576,7 @@ advise(ERROR_STRING);
 
 #ifdef HAVE_HISTORY
 		if( IS_INTERACTIVE(CURR_QRY(THIS_QSP)) && *buf && IS_TRACKING_HISTORY(THIS_QSP) ){
-fprintf(stderr,"adding response '%s' to history list for prompt '%s'\n",buf,pline);
+//fprintf(stderr,"adding response '%s' to history list for prompt '%s'\n",buf,pline);
 			add_def(QSP_ARG  pline,buf);
 		}
 #endif /* HAVE_HISTORY */

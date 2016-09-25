@@ -1,6 +1,8 @@
 #ifndef _RBTREE_H_
 #define _RBTREE_H_
 
+//#define RB_TREE_DEBUG
+
 //#include"misc.h"
 //#include"stack.h"
 #include "item_obj.h"
@@ -18,13 +20,13 @@ typedef struct rb_node {
 	struct rb_node *	right;
 	struct rb_node *	parent;
 
-#ifdef DEBUG
+#ifdef RB_TREE_DEBUG
 	// these fields are for debugging consistency checks
 	int			depth;
 	int			black_depth;
 	int			max_black_leaf;
 	int			min_black_leaf;
-#endif // DEBUG
+#endif // RB_TREE_DEBUG
 
 } rb_node;
 
@@ -63,9 +65,11 @@ extern int rb_delete_key(rb_tree*, const char *);
 extern int rb_delete_named_item(rb_tree*, const char *name);
 extern int rb_delete_item(rb_tree*, Item *ip);
 extern rb_node* rb_find(rb_tree*, const char * key );
-extern rb_node* rb_substring_find(rb_tree*, const char * frag );
+extern void rb_substring_find(Frag_Match_Info * fmi_p, rb_tree*, const char * frag );
 extern void rb_traverse( rb_node *np, void (*func)(rb_node *) );
+#ifdef RB_TREE_DEBUG
 extern void rb_check(rb_tree *);
+#endif //  RB_TREE_DEBUG
 extern rb_node * rb_successor_node( rb_node *n_p );
 extern rb_node * rb_predecessor_node( rb_node *n_p );
 

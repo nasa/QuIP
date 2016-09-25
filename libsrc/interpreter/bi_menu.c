@@ -110,21 +110,21 @@ static COMMAND_FUNC( do_rbt_del )
 	rb_delete_key(the_tree_p,s);
 }
 
-#ifdef DEBUG
+#ifdef RB_TREE_DEBUG
 static COMMAND_FUNC( do_rbt_check )
 {
 	rb_check(the_tree_p);
 }
-#endif // DEBUG
+#endif // RB_TREE_DEBUG
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(rbt_menu,s,f,h)
 MENU_BEGIN(rbt)
 ADD_CMD( add,		do_rbt_add,	add an item to the tree )
 ADD_CMD( print,		do_rbt_print,	show contents of the tree )
-#ifdef DEBUG
+#ifdef RB_TREE_DEBUG
 ADD_CMD( check,		do_rbt_check,	check consistency of the tree )
-#endif // DEBUG
+#endif // RB_TREE_DEBUG
 ADD_CMD( delete,	do_rbt_del,	delete an item from the tree )
 MENU_END(rbt)
 
