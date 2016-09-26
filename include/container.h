@@ -9,7 +9,7 @@
 #include "item_type.h"
 #include "container_fwd.h"
 
-typedef struct container {
+struct container {
 	const char *	name;
 	int		types;		// mask with bit set
 					// if container type exists
@@ -19,7 +19,7 @@ typedef struct container {
 	List *		cnt_lp;
 	Hash_Tbl *	cnt_htp;
 	rb_tree *	cnt_tree_p;
-} Container;
+};
 
 typedef struct enumerator {
 	int type;	// should only have 1 bit set

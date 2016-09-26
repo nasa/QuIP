@@ -30,7 +30,7 @@
 #include "my_parport.h"
 //#include "debug.h"
 
-ITEM_INTERFACE_DECLARATIONS(ParPort,parport)
+ITEM_INTERFACE_DECLARATIONS(ParPort,parport,DEFAULT_CONTAINER_TYPE)
 
 static char *default_parport="/dev/parport0";
 
