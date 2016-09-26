@@ -465,6 +465,8 @@ extern int max_vectorizable;
 		return;							\
 	}
 
+#define FETCH_OBJ_FROM_CONTEXT( dp, icp )	container_find_match( CTX_CONTAINER(icp) , OBJ_NAME(dp) )
+
 /* BUG should go elsewhere */
 extern const char *dimension_name[];
 extern void dobj_init(SINGLE_QSP_ARG_DECL);

@@ -486,25 +486,29 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 		/* can we search this context only? */
 /*
 sprintf(ERROR_STRING,
-"Searching context %s for object %s",CONTEXT_NAME(icp),OBJ_NAME(dp));
+"Searching context %s for object %s",CTX_NAME(icp),OBJ_NAME(dp));
 advise(ERROR_STRING);
 */
 		//ip=fetch_name(OBJ_NAME(dp),icp->ic_nsp);
 		//ip=FETCH_NAME_FROM_CONTEXT( OBJ_NAME(dp), icp );
 		ip=FETCH_OBJ_FROM_CONTEXT( dp, icp );
+//		ip = container_find_match( CTX_CONTAINER(icp), OBJ_NAME(dp) );
 		if( ((Data_Obj *)ip) == dp ){	/* found it! */
-			cname=CONTEXT_NAME(icp);
+			cname=CTX_NAME(icp);
 			goto show_context;
 		}
 		np=NODE_NEXT(np);
 	}
-	// fall-throuhg if not found, use default string
+	// fall-through if not found, use default string
+	//
+	// Why isn't it an error not to find an object's context?
+	// Is it possible for an object to persist when its context is popped?
 show_context:
 	sprintf(MSG_STR,"\titem context:  %s",cname);
 	prt_msg(MSG_STR);
 	return;
 
-}
+} // list context
 
 static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 {

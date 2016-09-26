@@ -19,11 +19,20 @@
 
 #define NO_ITEM	((Item *) NULL)
 
+struct rb_node;
+
+typedef struct frag_match_info {
+	Item				frag;	// the partial string - stored in their own context
+	struct rb_node *		curr_n_p;
+	struct rb_node *		first_n_p;
+	struct rb_node *		last_n_p;
+} Frag_Match_Info;
 
 typedef struct item_context {
 	Item			ic_item;
 	List *			ic_lp;
-	Item_Type *		ic_itp;
+	Item_Type *		ic_itp;		// points to the owner of this context
+	struct item_context *	ic_frag_icp;	// fragment match database just for this context
 	int			ic_flags;
 	// We use a "dictionary" to store the items; traditionally,
 	// this has been a hash table, but to support partial name
@@ -40,6 +49,7 @@ typedef struct item_context {
 
 /* Item_Context */
 #define CTX_NAME(icp)			(icp)->ic_item.item_name
+//#define CONTEXT_NAME(icp)		(icp)->ic_item.item_name
 //#define CTX_DICT(icp)			(icp)->ic_dict_p
 #define CTX_CONTAINER(icp)		(icp)->ic_cnt_p
 #define CTX_FLAGS(icp)			(icp)->ic_flags
@@ -52,6 +62,9 @@ typedef struct item_context {
 #define SET_CTX_CONTAINER(icp,cnt_p)	(icp)->ic_cnt_p = cnt_p
 #define SET_CTX_FLAG_BITS(icp,f)	(icp)->ic_flags |= f
 #define CLEAR_CTX_FLAG_BITS(icp,f)	(icp)->ic_flags &= ~(f)
+
+#define CTX_FRAG_ICP(icp)		(icp)->ic_frag_icp
+#define SET_CTX_FRAG_ICP(icp,icp2)	(icp)->ic_frag_icp = icp2
 
 
 #define MAX_QUERY_STACKS	5	// why do we need to have a limit?
@@ -81,6 +94,8 @@ struct item_type {
 	Stack *		it_context_stack[MAX_QUERY_STACKS];	// need to have one per thread
 	Item_Context *	it_icp[MAX_QUERY_STACKS];		// current context
 	int 		it_ctx_restricted[MAX_QUERY_STACKS];	// flags
+
+	Frag_Match_Info *	it_fmi_p;			// only one???
 
 //#define FIRST_CONTEXT(itp)	itp->it_icp[0]
 
@@ -144,6 +159,9 @@ struct item_type {
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
 #define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_default_container_type = t
 
+#define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
+#define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
+
 
 #ifdef THREAD_SAFE_QUERY
 
@@ -178,6 +196,8 @@ struct item_type {
 
 #endif /* ! THREAD_SAFE_QUERY */
 
+#define CONTEXT_LIST(itp)		THIS_CTX_STACK(itp)	/* this is the list of contexts,
+								 * not the list of items in a context */
 
 #define SET_IT_NAME(itp,s)		(itp)->it_item.item_name=s
 
@@ -333,7 +353,8 @@ void del_##stem(QSP_ARG_DECL  type *ip)				\
 
 extern ITEM_INIT_PROT(Item_Type,ittyp)
 extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
-extern Item *check_context(Item_Context *icp, const char *name);
+//extern Item *check_context(Item_Context *icp, const char *name);
+extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 
 #endif /* ! _ITEM_TYPE_H_ */
 

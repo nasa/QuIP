@@ -538,16 +538,22 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 				l=strlen(def_str);
 			}
 
-			if( l > n_so_far )
+			if( l > n_so_far ){
+				// We have found a match from the history list...
+//fprintf(stderr,"found match from history list...\n");
 				show_def(&def_str[n_so_far],1);
-			else if( picking_item_itp != NULL ){
+			} else if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
 				// No match on the history list, but
 				// we are picking an item...
 
 //fprintf(stderr,"Need to check %s items for a completion...\n",picking_item_itp->it_item.item_name);
 
-				// not implemented yet...
-				//find_partial_match(picking_item_itp,sel_str);
+				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
+				l=strlen(def_str);
+			}
+			if( l > n_so_far ){
+				// We have found a match from the history list...
+				show_def(&def_str[n_so_far],1);
 			}
 
 			if( l == 0 ) def_str=sel_str;
@@ -810,6 +816,7 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 					sel_str[n_so_far++] = c;
 				}
 				sel_str[n_so_far] = 0;
+				// we have a new fragment!
 			}
 		} /* end regular character */
 	} /* while(1) */

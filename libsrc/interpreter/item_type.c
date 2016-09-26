@@ -32,6 +32,8 @@
 #include "quip_prot.h"
 #include "query_prot.h"
 #include "item_prot.h"
+#include "container.h"
+//#include "rbtree.h"
 
 #ifdef QUIP_DEBUG
 static u_long item_debug=ITEM_DEBUG_MASK;
@@ -131,6 +133,7 @@ void set_del_method(QSP_ARG_DECL  Item_Type *itp,void (*func)(QSP_ARG_DECL  Item
 
 static void init_itp(Item_Type *itp, int container_type)
 {
+//fprintf(stderr,"init_itp %s %d BEGIN\n",itp->it_item.item_name,container_type);
 	/* should we really do this? */
 	SET_IT_LIST(itp, new_list() );
 	SET_IT_FREE_LIST(itp, new_list() );
@@ -144,6 +147,7 @@ static void init_itp(Item_Type *itp, int container_type)
 	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
 	SET_IT_CONTAINER_TYPE(itp,container_type);
+	SET_IT_FRAG_MATCH_INFO(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
 	{
@@ -251,7 +255,9 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_
 		ittyp_itp = &first_item_type;
 		SET_IT_NAME(ittyp_itp, ITEM_TYPE_STRING );
 		is_first=0;
-		init_itp(ittyp_itp,DEFAULT_CONTAINER_TYPE);
+
+//fprintf(stderr,"calling init_itp with type code %d\n",RB_TREE_CONTAINER);
+		init_itp(ittyp_itp,/*DEFAULT_CONTAINER_TYPE*/ RB_TREE_CONTAINER );
 
 		/* We need to create the first context, but we don't want
 		 * infinite recursion...
@@ -798,6 +804,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	pop_item_context(QSP_ARG  itp);
 }
 
+#ifdef NOT_NEEDED
 Item *check_context(Item_Context *icp, const char *name)
 {
 //#ifdef CAUTIOUS
@@ -810,6 +817,7 @@ Item *check_context(Item_Context *icp, const char *name)
 	//return fetch_name(name,CTX_DICT(icp));
 	return container_find_match(CTX_CONTAINER(icp),name);
 }
+#endif // NOT_NEEDED
 
 
 /*
@@ -866,11 +874,13 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		Item *ip;
 
 		icp= (Item_Context*) NODE_DATA(np);
-if( icp == NULL )
-ERROR1("context stack contains null context!?");
+		assert(icp!=NULL);
+//if( icp == NULL )
+//ERROR1("context stack contains null context!?");
 
 //		ip=fetch_name(name,CTX_DICT(icp));
-		ip=check_context(icp,name);
+//		ip=check_context(icp,name);
+		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
 			return(ip);
 		}
@@ -1109,6 +1119,8 @@ void decap(char* sto,const char* sfr)
  * contain a geven substring.
  * Return a pointer to a list of the items,
  * caller must dispose of the list.
+ *
+ * BUG - should this be redone now that items are in rb trees?
  */
 
 List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
@@ -1128,6 +1140,7 @@ List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
 		ip = (Item*) np->n_data;
 		/* make the match case insensitive */
 		decap(str1,ip->item_name);
+		// strstr will match anywhere in the string!
 		if( strstr(str1,lc_frag) != NULL ){
 			if( newlp == NO_LIST )
 				newlp=new_list();
@@ -1503,114 +1516,10 @@ void dump_items(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-#ifdef NOT_USED
-/* convert a string from mixed case to all lower case.
- * we do this allow case-insensitive matching.
- */
-
-static void decap(char* sto,const char* sfr)
-{
-	while(*sfr){
-
-		/* use braces in case macro is multiple statements... */
-		/* don't increment inside macro ... */
-		/* superstitious pc behavior */
-
-
-#ifdef HAVE_ISUPPER
-
-#ifdef SGI	/* or other SYSV os... */
-		if( isupper(*sfr) ) { *sto++ = _tolower(*sfr); }
-
-#else		/* sun 4.1.2 */
-		if( isupper(*sfr) ) { *sto++ = tolower(*sfr); }
-#endif
-		else *sto++ = *sfr;
-
-#else /* ! HAVE_ISUPPER */
-		// BUG we could add our own implementation here?
-		*sto++ = *sfr;
-#endif /* ! HAVE_ISUPPER */
-
-		sfr++;
-	}
-	*sto = 0;	/* terminate string */
-}
-
-/*
- * Find all items of a given type whose names
- * contain a geven substring.
- * Return a pointer to a list of the items,
- * caller must dispose of the list.
- */
-
-static List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
-{
-	List *lp, *newlp=NO_LIST;
-	Node *np, *newnp;
-	Item *ip;
-	char lc_frag[LLEN];
-
-	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return(lp);
-
-	np=QLIST_HEAD(lp);
-	decap(lc_frag,frag);
-	while(np!=NO_NODE){
-		char str1[LLEN];
-		ip = (Item*) NODE_DATA(np);
-		/* make the match case insensitive */
-		decap(str1,ITEM_NAME(ip));
-		if( strstr(str1,lc_frag) != NULL ){
-			if( newlp == NO_LIST )
-				newlp=new_list();
-			newnp=mk_node(ip);
-			addTail(newlp,newnp);
-		}
-		np=NODE_NEXT(np);
-	}
-	return(newlp);
-}
-#endif /* NOT_USED */
-
 Item_Type *get_item_type(QSP_ARG_DECL  const char* name)
 {
 	return( (Item_Type *) get_item(QSP_ARG  ittyp_itp,name) );
 }
-
-#ifdef NOT_USED
-/*
- * Search all item types for items with matching names
- * BUG? this needs to be tested, may not work...
- */
-
-List *find_all_items(QSP_ARG_DECL  const char* frag)
-{
-	List *lp, *newlp=NO_LIST;
-	List *itlp;
-	Node *itnp;
-
-	itlp=item_list(QSP_ARG  ittyp_itp);
-	if( itlp == NO_LIST ) return(itlp);
-	itnp=QLIST_HEAD(itlp);
-	while(itnp!=NO_NODE){
-		lp=find_items(QSP_ARG  (Item_Type *)NODE_DATA(itnp),frag);
-		if( lp != NO_LIST ){
-			if( newlp == NO_LIST )
-				newlp=lp;
-			else {
-				Node *np;
-
-				while( (np=remHead(lp)) != NO_NODE )
-					addTail(newlp,np);
-				rls_list(lp);
-			}
-		}
-		itnp=NODE_NEXT(itnp);
-	}
-	return(newlp);
-}
-#endif /* NOT_USED */
 
 #ifdef THREAD_SAFE_QUERY
 
@@ -1636,3 +1545,106 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 #endif /* HAVE_PTHREADS */
 
 #endif /* THREAD_SAFE_QUERY */
+
+static Item_Type *frag_itp=NULL;
+static ITEM_INIT_FUNC(Frag_Match_Info,frag,HASH_TBL_CONTAINER);
+static ITEM_NEW_FUNC(Frag_Match_Info,frag);
+//static ITEM_CHECK_FUNC(Frag_Match_Info,frag);
+
+static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
+{
+	char cname[LLEN];
+	Item_Context *frag_icp;
+
+	if( frag_itp == NULL ) init_frags(SINGLE_QSP_ARG);
+	sprintf(cname,"fragments.%s",CTX_NAME(icp));
+	frag_icp = new_ctx(QSP_ARG  cname);
+	assert(frag_icp!=NULL);
+
+	// should we have a function to encapsulate the setup?
+	SET_CTX_IT( icp, frag_itp );
+	SET_CTX_CONTAINER(frag_icp , create_container(CTX_NAME(frag_icp),HASH_TBL_CONTAINER) );
+	SET_CTX_FLAGS(icp,0);
+
+	return frag_icp;
+}
+
+static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, const char *s )
+{
+	Frag_Match_Info *fmi_p;
+
+//fprintf(stderr,"context_partial_match searching %s for %s\n",CTX_NAME(icp),s);
+	// first see if we have fragment context for this contex
+	if( CTX_FRAG_ICP(icp) == NULL ){
+		SET_CTX_FRAG_ICP( icp, setup_frag_context(QSP_ARG  icp) );
+	}
+	// now search the context for the string
+	fmi_p = (Frag_Match_Info *) container_find_match(CTX_CONTAINER(CTX_FRAG_ICP(icp)),s);
+	if( fmi_p==NULL ){
+		// create the struct
+//fprintf(stderr,"creating new struct for fragment %s\n",s);
+		push_item_context(QSP_ARG  frag_itp, CTX_FRAG_ICP(icp) );
+		fmi_p = new_frag(QSP_ARG  s );
+		// Now we need to fill in the entries!
+		fmi_p->curr_n_p=NULL;
+		fmi_p->first_n_p=NULL;
+		fmi_p->last_n_p=NULL;
+
+		// Now we need to actually search the tree...
+//fprintf(stderr,"context_partial_match calling container_find_substring_matches %s\n",s);
+		container_find_substring_matches(fmi_p,CTX_CONTAINER(icp),s);
+	}
+	return fmi_p;
+}
+
+static Frag_Match_Info * get_partial_match_info(QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Node *np;
+	Frag_Match_Info *fmi_p;
+
+	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	assert( np != NO_NODE );
+
+	/* check the top context first */
+
+	while(np!=NO_NODE){
+		Item_Context *icp;
+
+		icp= (Item_Context*) NODE_DATA(np);
+
+		fmi_p=context_partial_match(QSP_ARG  icp,s);
+
+		assert( fmi_p != NULL );
+
+		// If we have a cached set of partial matches, see if they need to be updated.
+		// This will only happen if items are added or deleted
+		// BUG test for update!
+
+		// The context may have no matches
+		if( fmi_p->curr_n_p != NULL )
+			return fmi_p;
+
+		np = NODE_NEXT(np);
+	}
+	// nothing found
+	return NULL;
+}
+
+const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
+{
+	Frag_Match_Info *fmi_p;
+	Item *ip;
+
+	if( (fmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL  ||
+			strcmp( s, IT_FRAG_MATCH_INFO(itp)->frag.item_name) ){
+		// we keep the old frag match...
+		fmi_p=get_partial_match_info(QSP_ARG  itp, s);
+		SET_IT_FRAG_MATCH_INFO(itp,fmi_p);
+	}
+		
+	if( fmi_p == NULL ) return "";	// there may be no matches
+	ip = fmi_p->curr_n_p->data;
+	return ITEM_NAME(ip);
+}
+
+

@@ -5,6 +5,10 @@
 #include <assert.h>
 #include <stdio.h>
 
+// just for debugging
+static void rb_tree_dump( rb_tree *tree_p );
+static void dump_rb_node( rb_node *np );
+
 // This assumes that the keys are strings!
 #define NODE_NAME(np)	(np==NULL?"<null>":RB_NODE_KEY(np))
 
@@ -48,7 +52,7 @@ static void binary_tree_insert(rb_tree* tree, rb_node* new_node_p)
 	// descend the tree to find where the new key goes
 
 	while( curr_node_p != NULL ){
-		if( /*tree->comp_func*/( RB_NODE_KEY(new_node_p),RB_NODE_KEY(curr_node_p)) < 0 ){
+		if( /*tree->comp_func*/ strcmp( RB_NODE_KEY(new_node_p),RB_NODE_KEY(curr_node_p)) < 0 ){
 			if( curr_node_p->left == NULL ){
 				new_node_p->parent = curr_node_p;
 				curr_node_p->left = new_node_p;
@@ -225,6 +229,60 @@ rb_node* rb_find( rb_tree * tree, const char * key )
 	}
 }
 
+void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * frag )
+{
+	int compVal;
+	int n;
+	rb_node* n_p = RB_TREE_ROOT(tree);
+
+	n = strlen(frag);
+	fmi_p->curr_n_p = NULL;	// default
+	fmi_p->first_n_p = NULL;
+	fmi_p->last_n_p = NULL;
+
+//rb_tree_dump( tree );
+	while(1){
+		if( n_p == NULL ) return;
+
+fprintf(stderr,"rb_substring_find:  comparing '%s' to '%s', n = %d\n",frag,RB_NODE_KEY(n_p),n);
+		compVal = strncmp( frag, RB_NODE_KEY(n_p), n );
+		if( compVal == 0 ){
+			// We have found a node that may be a match,
+			// but we want to return the first match
+			rb_node *p_p;
+
+fprintf(stderr,"rb_substring_find:  match found at 0x%lx\n",(long)n_p);
+			fmi_p->curr_n_p = n_p;
+
+			// find the first one
+			p_p = rb_predecessor_node(n_p);
+			while( p_p != NULL &&  ! strncmp(frag,RB_NODE_KEY(p_p),n) ){
+				n_p = p_p;
+				p_p = rb_predecessor_node(n_p);
+			}
+			fmi_p->first_n_p = n_p;
+
+			// find the last one
+			p_p = rb_successor_node(n_p);
+			while( p_p != NULL &&  ! strncmp(frag,RB_NODE_KEY(p_p),n) ){
+				n_p = p_p;
+				p_p = rb_successor_node(n_p);
+			}
+			fmi_p->last_n_p = n_p;
+
+			// now set current to the first
+			fmi_p->curr_n_p = fmi_p->first_n_p;
+			return;
+		} else if( compVal < 0 ){
+//fprintf(stderr,"descending left\n");
+			n_p = n_p->left;
+		} else {
+//fprintf(stderr,"descending right\n");
+			n_p = n_p->right;
+		}
+	}
+}
+
 // a misnomer - this exchanges the data of the node-to-be-deleted with its predecessor,
 // in preparation for the real deletion.
 
@@ -236,14 +294,16 @@ static rb_node * binary_tree_delete(rb_node *np)
 
 	assert(np->left!=NULL && np->right!=NULL );
 
-	if( IS_ROOT_NODE(np) ) return np;
+// WHY WAS THIS HERE???
+//	if( IS_ROOT_NODE(np) ) return np;
 
 	// find the predecessor node
 	p = np->left;
 	if( p == NULL ){	// no predecessor
 		// find the successor
 		p = np->right;
-		if( p == NULL ) return np;
+		assert(p!=NULL);	// per assertion above
+//		if( p == NULL ) return np;
 		while( p->left != NULL )
 			p = p->left;
 	} else {
@@ -403,17 +463,29 @@ static void rb_delete(rb_tree *tree_p, rb_node *n_p )
 
 	tree_p->node_count --;
 
-	if( IS_ROOT_NODE(n_p) ){
+	if( tree_p->node_count == 0 ){
+		assert( IS_ROOT_NODE(n_p) );
 		givbuf(n_p);
 		tree_p->root = NULL;
-		assert(tree_p->node_count == 0);
 		return;
 	}
 
 	if( n_p->left != NULL && n_p->right != NULL ){
+//fprintf(stderr,"before calling binary_tree_delete:\n");
+//dump_rb_node(n_p);
 		n_p = binary_tree_delete(n_p);
+//fprintf(stderr,"after calling binary_tree_delete:\n");
+//dump_rb_node(n_p);
+	} else if( IS_ROOT_NODE(n_p) ){
+		// we are deleting a root node with only one child
+		if( n_p->left != NULL ){
+			set_root_node(tree_p,n_p->left);
+		} else {
+			set_root_node(tree_p,n_p->right);
+		}
+		givbuf(n_p);
+		return;
 	}
-	assert( ! IS_ROOT_NODE(n_p) );
 
 	assert( n_p->left == NULL || n_p->right == NULL );
 
@@ -459,9 +531,7 @@ int rb_delete_key(rb_tree *tree_p, const char *key)
 		fprintf(stderr,"rb_delete_key:  failed to find key \"%s\"!?\n",key);
 		return -1;
 	}
-	rb_delete(tree_p,n_p);
-	// release the node?
-	givbuf(n_p);
+	rb_delete(tree_p,n_p);	// rb_delete frees the memory...
 	return 0;
 }
 
@@ -480,7 +550,7 @@ void rb_traverse( rb_node *np, void (*func)(rb_node *) )
 
 }
 
-#ifdef DEBUG
+#ifdef RB_TREE_DEBUG
 
 #define MIN(a,b)	(a<b?a:b)
 #define MAX(a,b)	(a>b?a:b)
@@ -543,6 +613,18 @@ static void rb_node_scan( rb_node *n_p )
 			fprintf(stderr,"OOPS node %s is not a child of parent %s!?\n",NODE_NAME(n_p),NODE_NAME(n_p->parent));
 	}
 
+	// make sure that the order is correct!
+	if( n_p->left != NULL ){
+		if( strcmp(NODE_NAME(n_p->left),NODE_NAME(n_p)) > 0 )
+			fprintf(stderr,"OOPS left child %s out of order with node %s!?\n",
+				NODE_NAME(n_p->left),NODE_NAME(n_p));
+	}
+	if( n_p->right != NULL ){
+		if( strcmp(NODE_NAME(n_p),NODE_NAME(n_p->right)) > 0 )
+			fprintf(stderr,"OOPS right child %s out of order with node %s!?\n",
+				NODE_NAME(n_p->right),NODE_NAME(n_p));
+	}
+
 fprintf(stderr,"rb_node_scan 0x%lx (%s)\n"
 "\tcolor = %s, left = 0x%lx (%s), right = 0x%lx (%s), parent = 0x%lx (%s)\n"
 "\tdepth = %d, black_depth = %d, min_black_leaf = %d, max_black_leaf = %d\n",
@@ -564,7 +646,7 @@ void rb_check( rb_tree *tree_p )
 	tree_p->root->black_depth=1;
 	rb_node_scan(tree_p->root);
 }
-#endif // DEBUG
+#endif // RB_TREE_DEBUG
 
 // Comments are written for dir = right, and opp_dir = left
 
@@ -651,7 +733,7 @@ RB_Tree_Enumerator *new_rbtree_enumerator(rb_tree *tree_p)
 	rbtep = getbuf( sizeof(*rbtep) );
 	rbtep->tree_p = tree_p;
 	rbtep->node_p = tree_p->root;
-	while( rbtep->node_p != NULL )
+	while( rbtep->node_p->left != NULL )
 		rbtep->node_p = rbtep->node_p->left;
 	return rbtep;
 }
@@ -660,5 +742,22 @@ Item *rbtree_enumerator_item(RB_Tree_Enumerator *rbtep)
 {
 	if( rbtep->node_p == NULL ) return NULL;
 	return rbtep->node_p->data;
+}
+
+// for debugging
+
+static void dump_rb_node( rb_node *np )
+{
+	fprintf(stderr,"node 0x%lx (%s)\n",(long)np,ITEM_NAME( (Item *)(np->data) ) );
+	fprintf(stderr,"\tleft 0x%lx (%s)\t\tright 0x%lx (%s)\n",
+		(long)np->left,np->left==NULL?"<null>":ITEM_NAME( (Item *)(np->left->data) ),
+		(long)np->right,np->right==NULL?"<null>":ITEM_NAME( (Item *)(np->right->data) )
+		);
+}
+
+static void rb_tree_dump( rb_tree *tree_p )
+{
+	if( tree_p->root == NULL ) return;
+	rb_traverse(tree_p->root,dump_rb_node);
 }
 

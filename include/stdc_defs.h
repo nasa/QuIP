@@ -337,10 +337,7 @@
 #define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
 #define DOBJ_CONTEXT_LIST		CONTEXT_LIST(dobj_itp)
 #define ID_CONTEXT_LIST			CONTEXT_LIST(id_itp)
-#define CONTEXT_LIST(itp)		THIS_CTX_STACK(itp)	/* this is the list of contexts, not the list of items in a context */
 
-#define FETCH_OBJ_FROM_CONTEXT( ip, icp )	check_context( icp , ((Item *) ip)->item_name )
-#define CONTEXT_NAME(icp)		(icp)->ic_item.item_name
 /* in the multi-thread environment, we have per-qsp context stacks!? */
 
 #define INIT_INCSET_PTR(isp)		isp=((Increment_Set *)getbuf(sizeof(Increment_Set)));

@@ -7,6 +7,7 @@ Container * create_container(const char *name,int type)
 {
 	Container *cnt_p;
 
+//fprintf(stderr,"create_container %s %d BEGIN\n",name,type);
 	if( type == 0 ) type=HASH_TBL_CONTAINER;	// default
 	cnt_p = new_container(type);
 	cnt_p->name = savestr(name);
@@ -15,6 +16,7 @@ Container * create_container(const char *name,int type)
 
 static void add_type_to_container(Container *cnt_p, int type)
 {
+//fprintf(stderr,"add_type_to_container %s %d (primary type %d)\n",cnt_p->name,type,cnt_p->primary_type);
 	switch(type){
 		case LIST_CONTAINER:
 			cnt_p->cnt_lp = new_list();
@@ -24,6 +26,7 @@ static void add_type_to_container(Container *cnt_p, int type)
 			break;
 		case RB_TREE_CONTAINER:
 			cnt_p->cnt_tree_p = create_rb_tree();
+			break;
 		default:
 			// could be assertion?
 			sprintf(DEFAULT_ERROR_STRING,"add_type_to_container:  Invalid container type code %d",type);
@@ -174,7 +177,51 @@ Item *container_find_match(Container *cnt_p, const char *name)
 	return ip;
 }
 
-//extern Item *container_find_substring_match(QSP_ARG_DECL  Container *cnt_p, const char *frag);
+//Item *container_find_substring_match(Container *cnt_p, const char *frag)
+void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, const char *frag)
+{
+	Item *ip=NULL;
+	Enumerator *ep;
+	int n;
+
+	if( cnt_p->types & RB_TREE_CONTAINER ){
+		if( ! (cnt_p->is_current&RB_TREE_CONTAINER) ){
+			make_container_current(cnt_p,RB_TREE_CONTAINER);
+		}
+//fprintf(stderr,"container_find_substring_matches:  calling rb_substring_find, frag = %s\n",frag);
+		rb_substring_find(fmi_p,cnt_p->cnt_tree_p,frag);
+//fprintf(stderr,"container_find_substring_matches:  after rb_substring_find, first = 0x%lx, last = 0x%lx\n", (long)fmi_p->first_n_p,(long)fmi_p->last_n_p);
+		return;
+	}
+	switch(cnt_p->primary_type){
+		case LIST_CONTAINER:
+		case HASH_TBL_CONTAINER:
+			// We have no way to find anything based on substrings,
+			// so we simply enumerate...
+			ep = new_enumerator(cnt_p,cnt_p->primary_type);
+			n = strlen(frag);
+			while( ep != NULL ){
+				ip = enumerator_item(ep);
+				assert(ip!=NULL);
+				if( ! strncmp(ITEM_NAME(ip),frag,n) ){
+					// found a match!
+					// BUG - can we remember where we are?
+					//return ip;
+//fprintf(stderr,"container_find_substring_matches, found something but wrong container type!?\n");
+					return;
+				}
+				ep = advance_enumerator(ep);
+			}
+			break;
+		default:
+			NERROR1("container_find_substring_matches:  unexpected container type!?");
+			break;
+	}
+	return;
+}
+
+
+//extern Item *container_find_substring_matches(QSP_ARG_DECL  Container *cnt_p, const char *frag);
 
 
 Enumerator *advance_enumerator(Enumerator *ep)
@@ -216,13 +263,17 @@ void cat_container_items(List *lp, Container *cnt_p)
 	Item *ip;
 	Enumerator *ep;
 
+//fprintf(stderr,"cat_container_items lp = 0x%lx  container = %s BEGIN\n",(long)lp,cnt_p->name);
 	ep = new_enumerator(cnt_p,0);
 	assert(ep!=NULL);
 
+//fprintf(stderr,"cat_container_items ep = 0x%lx  container = %s, entering while loop\n",(long)lp,cnt_p->name);
 	while( ep != NULL ){
+//fprintf(stderr,"cat_container_items ep = 0x%lx  container = %s, calling enumerator_item\n",(long)lp,cnt_p->name);
 		ip = enumerator_item(ep);
 //fprintf(stderr,"cat_container_items:  ip = 0x%lx\n",(long)ip);
 		if( ip != NULL ){
+//fprintf(stderr,"cat_container_items:  adding item %s\n",ITEM_NAME(ip));
 			np = mk_node(ip);
 			addTail(lp,np);
 		}
@@ -309,6 +360,8 @@ void dump_container_info(QSP_ARG_DECL  Container *cnt_p)
 
 void * enumerator_item(Enumerator *ep)
 {
+//fprintf(stderr,"enumerator_item BEGIN\n");
+//fprintf(stderr,"enumerator_item ep = 0x%lx, type = %d\n",(long)ep,ep->type);
 	switch(ep->type){
 		case LIST_CONTAINER:
 			return NODE_DATA(ep->e_p.lep->np);
@@ -317,16 +370,14 @@ void * enumerator_item(Enumerator *ep)
 			if( ep->e_p.htep->current_entry == NULL )
 				return NULL;
 			else {
-/*
-fprintf(stderr,"enumerator_item returning current hash table entry, 0x%lx at 0x%lx\n",(long)*(ep->e_p.htep->current_entry),
-(long)ep->e_p.htep->current_entry);
-fprintf(stderr,"entries at 0x%lx, n = %ld\n",(long)ep->e_p.htep->htp->ht_entries,ep->e_p.htep->htp->ht_n_entries);
-fprintf(stderr,"first invalid entry at 0x%lx\n",(long)(ep->e_p.htep->htp->ht_entries+ep->e_p.htep->htp->ht_n_entries));
-*/
+//fprintf(stderr,"enumerator_item returning current hash table entry, 0x%lx at 0x%lx\n",(long)*(ep->e_p.htep->current_entry), (long)ep->e_p.htep->current_entry);
+//fprintf(stderr,"entries at 0x%lx, n = %ld\n",(long)ep->e_p.htep->htp->ht_entries,ep->e_p.htep->htp->ht_n_entries);
+//fprintf(stderr,"first invalid entry at 0x%lx\n",(long)(ep->e_p.htep->htp->ht_entries+ep->e_p.htep->htp->ht_n_entries));
 				return *(ep->e_p.htep->current_entry);
 			}
 			break;
 		case RB_TREE_CONTAINER:
+//fprintf(stderr,"enumerator_item:  returning item from tree node at 0x%lx\n",(long)ep->e_p.rbtep->node_p);
 			return ep->e_p.rbtep->node_p->data;
 			break;
 		default:

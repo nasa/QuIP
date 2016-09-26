@@ -125,7 +125,7 @@ void qs_do_cmd( Query_Stack *qsp )
 				){
 
 
-			rem_def(QSP_ARG  QS_PROMPT_STR(qsp),cmd);
+			rem_def(QSP_ARG  QS_PROMPT_STR(qsp),cmd);	// erase from history list
 		}
 #endif /* HAVE_HISTORY */
 

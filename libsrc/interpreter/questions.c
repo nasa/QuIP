@@ -349,12 +349,21 @@ NADVISE(ERROR_STRING);
 
 	// The old way with an array of choices is no good when there are 100k items...
 
-	assert( picking_item_itp == NULL );
-	picking_item_itp = itp;
+	// picking_item_itp
+	assert( QS_PICKING_ITEM_ITP(THIS_QSP) == NULL );
+
+	SET_QS_PICKING_ITEM_ITP(THIS_QSP,itp);
 	s=NAMEOF(prompt);
-	picking_item_itp = NULL;
+	SET_QS_PICKING_ITEM_ITP(THIS_QSP,NULL);
 
 	ip=get_item(QSP_ARG  itp,s);
+
+	if( ip == NULL ){
+		// remove from history list
+		char pline[LLEN];
+		make_prompt(QSP_ARG  pline,prompt);
+		rem_def(QSP_ARG  pline,s);
+	}
 
 	return(ip);
 }

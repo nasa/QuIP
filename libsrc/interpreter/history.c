@@ -31,8 +31,17 @@ debug_flag_t hist_debug=0;
 #endif /* QUIP_DEBUG */
 
 /* local variables */
+
+// These maintain info about a list of possible command completions...
+// These two vars allow us to cycle through multiple possibilities...
+static Node *cur_node;	// might make more sense to put in qsp, but we will only ever have one
+			// interactive shell...
 static Node *cur_node;
 static List *cur_list;
+
+// BUT they are not so helpful when we also have item names that are not
+// copied to a list!?
+
 
 static char *get_hist_ctx_name(const char *prompt);
 
@@ -183,6 +192,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
+//fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */
@@ -338,6 +348,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 	lp = container_list(CTX_CONTAINER(icp));
 
 	np=QLIST_HEAD(lp);
+//fprintf(stderr,"get_match:  list has %d elements\n",eltcount(lp));
 
 	while(np!=NO_NODE) {
 		Hist_Choice *hcp;
@@ -371,7 +382,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 			np=QLIST_TAIL(cur_list);					\
 	}
 
-const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
+static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int direction)
 {
 	Node *np, *first;
 	Hist_Choice *hcp;
@@ -395,6 +406,45 @@ const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction)
 
 	hcp=(Hist_Choice *) NODE_DATA(first);
 	return(hcp->hc_text);
+}
+
+static const char * cyc_tree_match(QSP_ARG_DECL  const char *so_far, int direction )
+{
+	Frag_Match_Info *fmi_p;
+	Item *ip;
+	rb_node *next_np;
+
+	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
+	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
+
+	// there may be no items!?
+	if( fmi_p == NULL ) return so_far;
+
+	if( direction == CYC_FORWARD ){
+		if( fmi_p->curr_n_p == fmi_p->last_n_p )
+			fmi_p->curr_n_p = fmi_p->first_n_p;
+		else {
+			fmi_p->curr_n_p = rb_successor_node( fmi_p->curr_n_p );
+			assert( fmi_p->curr_n_p != NULL );
+		}
+	} else {
+		if( fmi_p->curr_n_p == fmi_p->first_n_p )
+			fmi_p->curr_n_p = fmi_p->last_n_p;
+		else {
+			fmi_p->curr_n_p = rb_predecessor_node( fmi_p->curr_n_p );
+			assert( fmi_p->curr_n_p != NULL );
+		}
+	}
+	ip = fmi_p->curr_n_p->data;
+	return ip->item_name;
+}
+
+const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
+{
+	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL )
+		return cyc_tree_match(QSP_ARG  so_far, direction );
+	else
+		return cyc_list_match(QSP_ARG  so_far, direction );
 }
 
 /* this was introduced to simplify the initialization of cmd menus */

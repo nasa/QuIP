@@ -1257,8 +1257,8 @@ advise(ERROR_STRING);
 	POP_SUBRT_CPAIR(curr_cpp,SR_NAME(curr_srp));
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"assign_ptr_arg:  current contexts %s, %s popped",CONTEXT_NAME(CP_ID_CTX(curr_cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(curr_cpp)));
+sprintf(ERROR_STRING,"assign_ptr_arg:  current contexts %s, %s popped",CTX_NAME(CP_ID_CTX(curr_cpp)),
+CTX_NAME(CP_OBJ_CTX(curr_cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -1275,8 +1275,8 @@ advise(ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"assign_ptr_arg:  previous contexts %s, %s pushed",CONTEXT_NAME(CP_ID_CTX(prev_cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(prev_cpp)));
+sprintf(ERROR_STRING,"assign_ptr_arg:  previous contexts %s, %s pushed",CTX_NAME(CP_ID_CTX(prev_cpp)),
+CTX_NAME(CP_OBJ_CTX(prev_cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -1295,8 +1295,8 @@ advise(ERROR_STRING);
 		POP_DOBJ_CONTEXT;
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"assign_ptr_arg:  previous contexts %s, %s popped",CONTEXT_NAME(CP_ID_CTX(prev_cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(prev_cpp)));
+sprintf(ERROR_STRING,"assign_ptr_arg:  previous contexts %s, %s popped",CTX_NAME(CP_ID_CTX(prev_cpp)),
+CTX_NAME(CP_OBJ_CTX(prev_cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -1312,8 +1312,8 @@ advise(ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"assign_ptr_arg:  current contexts %s, %s pushed",CONTEXT_NAME(CP_ID_CTX(curr_cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(curr_cpp)));
+sprintf(ERROR_STRING,"assign_ptr_arg:  current contexts %s, %s pushed",CTX_NAME(CP_ID_CTX(curr_cpp)),
+CTX_NAME(CP_OBJ_CTX(curr_cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2185,8 +2185,8 @@ WARN(ERROR_STRING);
 				Item_Context *icp;
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"assign_subrt_args T_IMG_DECL:  previous contexts %s, %s popped",CONTEXT_NAME(CP_ID_CTX(prev_cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(prev_cpp)));
+sprintf(ERROR_STRING,"assign_subrt_args T_IMG_DECL:  previous contexts %s, %s popped",CTX_NAME(CP_ID_CTX(prev_cpp)),
+CTX_NAME(CP_OBJ_CTX(prev_cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2195,8 +2195,8 @@ advise(ERROR_STRING);
 //#ifdef CAUTIOUS
 //				if( icp != CP_OBJ_CTX(prev_cpp) ){
 //					sprintf(ERROR_STRING,
-//		"CAUTIOUS:  popped context %s does not match expected context %s!?",CONTEXT_NAME(icp),
-//						CONTEXT_NAME(CP_OBJ_CTX(prev_cpp)));
+//		"CAUTIOUS:  popped context %s does not match expected context %s!?",CTX_NAME(icp),
+//						CTX_NAME(CP_OBJ_CTX(prev_cpp)));
 //					WARN(ERROR_STRING);
 //				}
 //#endif /* CAUTIOUS */
@@ -2207,7 +2207,7 @@ advise(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"assign_subrt_args T_IMG_DECL:  pushing current context %s",prev_cpp==NULL?
-	"(null previous context)":CONTEXT_NAME(CP_OBJ_CTX(prev_cpp)));
+	"(null previous context)":CTX_NAME(CP_OBJ_CTX(prev_cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2611,7 +2611,7 @@ static void set_script_context(SINGLE_QSP_ARG_DECL)
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"set_script_context:  current context %s popped",CONTEXT_NAME(icp));
+sprintf(ERROR_STRING,"set_script_context:  current context %s popped",CTX_NAME(icp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2619,7 +2619,7 @@ advise(ERROR_STRING);
 	for(i=0;i<n_hidden_contexts;i++){
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"set_script_context:  pushing hidden context %s",CONTEXT_NAME(hidden_context[i]));
+sprintf(ERROR_STRING,"set_script_context:  pushing hidden context %s",CTX_NAME(hidden_context[i]));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2627,7 +2627,7 @@ advise(ERROR_STRING);
 	}
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"set_script_context:  pushing current context %s",CONTEXT_NAME(icp));
+sprintf(ERROR_STRING,"set_script_context:  pushing current context %s",CTX_NAME(icp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2647,7 +2647,7 @@ static void unset_script_context(SINGLE_QSP_ARG_DECL)
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"unset_script_context:  top context %s popped",CONTEXT_NAME(top_icp));
+sprintf(ERROR_STRING,"unset_script_context:  top context %s popped",CTX_NAME(top_icp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2665,7 +2665,7 @@ advise(ERROR_STRING);
 //		if( icp != hidden_context[n_hidden_contexts-(1+i)] ){
 //			sprintf(ERROR_STRING,
 //"CAUTIOUS:  unset_script_context:  popped context %d %s does not match hidden stack context %s!?",
-//				i+1,CONTEXT_NAME(icp),CONTEXT_NAME(hidden_context[n_hidden_contexts-(i+1)]));
+//				i+1,CTX_NAME(icp),CTX_NAME(hidden_context[n_hidden_contexts-(i+1)]));
 //			WARN(ERROR_STRING);
 //		}
 //#endif /* CAUTIOUS */
@@ -2673,7 +2673,7 @@ advise(ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"unset_script_context:  hidden context %s popped",CONTEXT_NAME(icp));
+sprintf(ERROR_STRING,"unset_script_context:  hidden context %s popped",CTX_NAME(icp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -2682,7 +2682,7 @@ advise(ERROR_STRING);
 	PUSH_DOBJ_CONTEXT(top_icp);
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
-sprintf(ERROR_STRING,"unset_script_context:  top context %s pushed",CONTEXT_NAME(top_icp));
+sprintf(ERROR_STRING,"unset_script_context:  top context %s pushed",CTX_NAME(top_icp));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -3214,8 +3214,8 @@ advise(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"pop_previous:  previous contexts %s, %s popped",
-CONTEXT_NAME(CP_ID_CTX(cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(cpp)));
+CTX_NAME(CP_ID_CTX(cpp)),
+CTX_NAME(CP_OBJ_CTX(cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -3234,8 +3234,8 @@ void restore_previous(QSP_ARG_DECL  Context_Pair *cpp)
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"restore_previous:  previous contexts %s, %s pushed",
-CONTEXT_NAME(CP_ID_CTX(cpp)),
-CONTEXT_NAME(CP_OBJ_CTX(cpp)));
+CTX_NAME(CP_ID_CTX(cpp)),
+CTX_NAME(CP_OBJ_CTX(cpp)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -3852,7 +3852,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 		if( ID_TYPE(idp) == ID_OBJECT ){
 			Vec_Expr_Node *decl_enp;
 			sprintf(ERROR_STRING,"context of %s (%s) is %s",
-				ID_NAME(idp),OBJ_NAME(idp->id_dp),CONTEXT_NAME(ID_DOBJ_CTX(idp)));
+				ID_NAME(idp),OBJ_NAME(idp->id_dp),CTX_NAME(ID_DOBJ_CTX(idp)));
 			advise(ERROR_STRING);
 			decl_enp = OBJ_EXTRA(idp->id_dp);
 			if( decl_enp != NO_VEXPR_NODE ){
@@ -3860,7 +3860,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 				NODE_ERROR(decl_enp);
 			}
 			sprintf(ERROR_STRING,"current context is %s",
-				CONTEXT_NAME(((Item_Context *)NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)))));
+				CTX_NAME(((Item_Context *)NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)))));
 			advise(ERROR_STRING);
 		}
 		*/
