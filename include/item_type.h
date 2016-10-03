@@ -95,8 +95,6 @@ struct item_type {
 	Item_Context *	it_icp[MAX_QUERY_STACKS];		// current context
 	int 		it_ctx_restricted[MAX_QUERY_STACKS];	// flags
 
-	Frag_Match_Info *	it_fmi_p;			// only one???
-
 //#define FIRST_CONTEXT(itp)	itp->it_icp[0]
 
 #else /* ! THREAD_SAFE_QUERY */
@@ -105,6 +103,7 @@ struct item_type {
 	int 		it_ctx_restricted;	// flags
 #endif /* ! THREAD_SAFE_QUERY */
 
+	Frag_Match_Info *	it_fmi_p;			// only one???
 };
 
 #define it_name	it_item.item_name
