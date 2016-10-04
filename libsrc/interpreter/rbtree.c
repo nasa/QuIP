@@ -236,9 +236,9 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 	rb_node* n_p = RB_TREE_ROOT(tree);
 
 	n = strlen(frag);
-	fmi_p->curr_n_p = NULL;	// default
-	fmi_p->first_n_p = NULL;
-	fmi_p->last_n_p = NULL;
+	fmi_p->u.rbti.curr_n_p = NULL;	// default
+	fmi_p->u.rbti.first_n_p = NULL;
+	fmi_p->u.rbti.last_n_p = NULL;
 
 //rb_tree_dump( tree );
 	while(1){
@@ -252,7 +252,7 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 			rb_node *p_p;
 
 //fprintf(stderr,"rb_substring_find:  match found at 0x%lx\n",(long)n_p);
-			fmi_p->curr_n_p = n_p;
+			fmi_p->u.rbti.curr_n_p = n_p;
 
 			// find the first one
 			p_p = rb_predecessor_node(n_p);
@@ -260,7 +260,7 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 				n_p = p_p;
 				p_p = rb_predecessor_node(n_p);
 			}
-			fmi_p->first_n_p = n_p;
+			fmi_p->u.rbti.first_n_p = n_p;
 
 			// find the last one
 			p_p = rb_successor_node(n_p);
@@ -268,10 +268,10 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 				n_p = p_p;
 				p_p = rb_successor_node(n_p);
 			}
-			fmi_p->last_n_p = n_p;
+			fmi_p->u.rbti.last_n_p = n_p;
 
 			// now set current to the first
-			fmi_p->curr_n_p = fmi_p->first_n_p;
+			fmi_p->u.rbti.curr_n_p = fmi_p->u.rbti.first_n_p;
 			return;
 		} else if( compVal < 0 ){
 //fprintf(stderr,"descending left\n");

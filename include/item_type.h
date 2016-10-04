@@ -20,12 +20,28 @@
 #define NO_ITEM	((Item *) NULL)
 
 struct rb_node;
+struct item_context;
 
-typedef struct frag_match_info {
-	Item				frag;	// the partial string - stored in their own context
+typedef struct {
 	struct rb_node *		curr_n_p;
 	struct rb_node *		first_n_p;
 	struct rb_node *		last_n_p;
+} rbtree_frag_match_info;
+
+typedef struct {
+	Node *		curr_np;
+	Node *		first_np;
+	Node *		last_np;
+} list_frag_match_info;
+
+typedef struct frag_match_info {
+	Item				it;	// the partial string - stored in their own context
+	struct item_context *		icp;
+	int type;	// LIST_CONTAINER or RB_TREE_CONTAINER
+	union {
+		rbtree_frag_match_info	rbti;
+		list_frag_match_info	li;
+	} u;
 } Frag_Match_Info;
 
 typedef struct item_context {
@@ -95,8 +111,6 @@ struct item_type {
 	Item_Context *	it_icp[MAX_QUERY_STACKS];		// current context
 	int 		it_ctx_restricted[MAX_QUERY_STACKS];	// flags
 
-	Frag_Match_Info *	it_fmi_p;			// only one???
-
 //#define FIRST_CONTEXT(itp)	itp->it_icp[0]
 
 #else /* ! THREAD_SAFE_QUERY */
@@ -105,6 +119,7 @@ struct item_type {
 	int 		it_ctx_restricted;	// flags
 #endif /* ! THREAD_SAFE_QUERY */
 
+	Frag_Match_Info *	it_fmi_p;			// only one???
 };
 
 #define it_name	it_item.item_name
@@ -355,6 +370,7 @@ extern ITEM_INIT_PROT(Item_Type,ittyp)
 extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
 //extern Item *check_context(Item_Context *icp, const char *name);
 extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
+extern List *alpha_sort(QSP_ARG_DECL  List *lp);
 
 #endif /* ! _ITEM_TYPE_H_ */
 

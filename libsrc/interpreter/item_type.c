@@ -566,6 +566,7 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 //		SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
 		SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp), IT_CONTAINER_TYPE(itp)) );
 		SET_CTX_FLAGS(icp,0);
+		SET_CTX_FRAG_ICP(icp,NULL);
 		/* BUG?  not in the context database?? */
 		return(icp);
 	}
@@ -609,6 +610,7 @@ advise(ERROR_STRING);
 	// matching!
 	//SET_CTX_DICT(icp , create_dictionary(CTX_NAME(icp)) );
 	SET_CTX_CONTAINER(icp , create_container(CTX_NAME(icp),IT_CONTAINER_TYPE(itp)) );
+	SET_CTX_FRAG_ICP(icp,NULL);
 	SET_CTX_FLAGS(icp,0);
 
 //#ifdef CAUTIOUS
@@ -1019,7 +1021,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 /* reorder a list of items into alphanumeric order of item names */
 /* the caller must dispose of the list! */
 
-static List *alpha_sort(QSP_ARG_DECL  List *lp)
+List *alpha_sort(QSP_ARG_DECL  List *lp)
 {
 	count_t n2sort;
 	void **ptr_array;
@@ -1056,7 +1058,7 @@ static List *alpha_sort(QSP_ARG_DECL  List *lp)
 	/* now sort the pointers */
 	qsort(ptr_array,(size_t)n2sort,(size_t)sizeof(char *),item_cmp);
 
-	lp = new_list();
+	lp = new_list();	// who is going to release this list!?
 	for(i=0;i<n2sort;i++){
 		np=mk_node(ptr_array[i]);
 		addTail(lp,np);
@@ -1585,10 +1587,18 @@ static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, c
 //fprintf(stderr,"creating new struct for fragment %s\n",s);
 		push_item_context(QSP_ARG  frag_itp, CTX_FRAG_ICP(icp) );
 		fmi_p = new_frag(QSP_ARG  s );
+		assert(fmi_p!=NULL);
+		fmi_p->icp = icp; 
+		if( icp->ic_itp->it_default_container_type == RB_TREE_CONTAINER )
+			fmi_p->type = RB_TREE_CONTAINER;
+		else
+			fmi_p->type = LIST_CONTAINER;
+
 		// Now we need to fill in the entries!
-		fmi_p->curr_n_p=NULL;
-		fmi_p->first_n_p=NULL;
-		fmi_p->last_n_p=NULL;
+		//fmi_p->u.rbti.curr_n_p=NULL;
+		//fmi_p->u.rbti.first_n_p=NULL;
+		//fmi_p->u.rbti.last_n_p=NULL;
+		bzero(&(fmi_p->u),sizeof(fmi_p->u));
 
 		// Now we need to actually search the tree...
 //fprintf(stderr,"context_partial_match calling container_find_substring_matches %s\n",s);
@@ -1621,7 +1631,7 @@ static Frag_Match_Info * get_partial_match_info(QSP_ARG_DECL  Item_Type *itp, co
 		// BUG test for update!
 
 		// The context may have no matches
-		if( fmi_p->curr_n_p != NULL )
+		if( fmi_p->u.rbti.curr_n_p != NULL )
 			return fmi_p;
 
 		np = NODE_NEXT(np);
@@ -1636,14 +1646,15 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 	Item *ip;
 
 	if( (fmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL  ||
-			strcmp( s, IT_FRAG_MATCH_INFO(itp)->frag.item_name) ){
+			strcmp( s, IT_FRAG_MATCH_INFO(itp)->it.item_name) ){
 		// we keep the old frag match...
 		fmi_p=get_partial_match_info(QSP_ARG  itp, s);
+//fprintf(stderr,"find_partial_match %s %s, back from get_partial_match_info\n",ITEM_TYPE_NAME(itp),s);
 		SET_IT_FRAG_MATCH_INFO(itp,fmi_p);
 	}
 		
 	if( fmi_p == NULL ) return "";	// there may be no matches
-	ip = fmi_p->curr_n_p->data;
+	ip = current_frag_item(fmi_p);	// BUG should be agnostic with regard to container type!
 	return ITEM_NAME(ip);
 }
 

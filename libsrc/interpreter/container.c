@@ -37,21 +37,28 @@ static void add_type_to_container(Container *cnt_p, int type)
 
 static void make_container_current( Container *cnt_p, int type )
 {
-		switch(type){
-			case LIST_CONTAINER:
-				// BUG first release the nodes from the list!?
-				cat_container_items(cnt_p->cnt_lp,cnt_p);
-				break;
-			case HASH_TBL_CONTAINER:
-				NERROR1("make_container_current:  Sorry, can't transfer to hash table!?");
-				break;
-			case RB_TREE_CONTAINER:
-				NERROR1("make_container_current:  Sorry, can't transfer to red-black tree!?");
-				break;
-			default:
-				NERROR1("make_container_current:  bad container type!?");
-				break;
-		}
+	switch(type){
+		case LIST_CONTAINER:
+			if( cnt_p->cnt_lp == NULL ){
+				cnt_p->cnt_lp = new_list();
+				cnt_p->types |= LIST_CONTAINER;
+			} else {
+				// BUG release the old nodes from the list!?
+//fprintf(stderr,"make_container_current:  NOT releasing old nodes from list!?\n");
+			}
+			cat_container_items(cnt_p->cnt_lp,cnt_p);
+			break;
+		case HASH_TBL_CONTAINER:
+			NERROR1("make_container_current:  Sorry, can't transfer to hash table!?");
+			break;
+		case RB_TREE_CONTAINER:
+			NERROR1("make_container_current:  Sorry, can't transfer to red-black tree!?");
+			break;
+		default:
+			NERROR1("make_container_current:  bad container type!?");
+			break;
+	}
+	cnt_p->is_current |= type;
 }
 
 void set_container_type(Container *cnt_p, int type)
@@ -177,12 +184,55 @@ Item *container_find_match(Container *cnt_p, const char *name)
 	return ip;
 }
 
+// assume the items in the list are sorted...
+static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *frag )
+{
+	int n;
+	Node* np;
+
+	lp = alpha_sort(DEFAULT_QSP_ARG  lp);	// BUG should sort in-place???
+
+	np = QLIST_HEAD(lp);
+
+	n = strlen(frag);
+	fmi_p->u.li.curr_np = NULL;	// default
+	fmi_p->u.li.first_np = NULL;
+	fmi_p->u.li.last_np = NULL;
+
+	while( np != NULL ){
+		Item *ip;
+		int compVal;
+
+		ip = NODE_DATA(np);
+		compVal = strncmp( frag, ITEM_NAME(ip), n );
+		if( compVal == 0 ){
+			// We have found the first node that is a match,
+			// but we want also determine the last...
+			fmi_p->u.li.curr_np = np;
+			fmi_p->u.li.first_np = np;
+			fmi_p->u.li.last_np = np;
+			np = NODE_NEXT(np);
+			while( np != NULL ){
+				ip = NODE_DATA(np);
+				compVal = strncmp( frag, ITEM_NAME(ip), n );
+				if( compVal != 0 )
+					return;
+				fmi_p->u.li.last_np = np;
+				np = NODE_NEXT(np);
+			}
+			return;
+		}
+		np = NODE_NEXT(np);
+	}
+}
+
+
 //Item *container_find_substring_match(Container *cnt_p, const char *frag)
 void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, const char *frag)
 {
-	Item *ip=NULL;
-	Enumerator *ep;
-	int n;
+//	Item *ip=NULL;
+//	Enumerator *ep;
+//	int n;
 
 	if( cnt_p->types & RB_TREE_CONTAINER ){
 		if( ! (cnt_p->is_current&RB_TREE_CONTAINER) ){
@@ -193,8 +243,24 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, 
 //fprintf(stderr,"container_find_substring_matches:  after rb_substring_find, first = 0x%lx, last = 0x%lx\n", (long)fmi_p->first_n_p,(long)fmi_p->last_n_p);
 		return;
 	}
+//fprintf(stderr,"container_find_substring_matches:  types = %d, primary = %d, is_current = %d\n",
+//cnt_p->types,cnt_p->primary_type,cnt_p->is_current);
+	if( cnt_p->primary_type == HASH_TBL_CONTAINER ){
+//fprintf(stderr,"calling make_container_current\n");
+		make_container_current(cnt_p,LIST_CONTAINER);
+		// NEED TO ALPHA-SORT !!!
+	}
+//fprintf(stderr,"container_find_substring_matches:  types = %d, primary = %d, is_current = %d\n",
+//cnt_p->types,cnt_p->primary_type,cnt_p->is_current);
+	if( cnt_p->types & LIST_CONTAINER ){
+		if( ! (cnt_p->is_current&LIST_CONTAINER) ){
+			make_container_current(cnt_p,LIST_CONTAINER);
+		}
+		list_substring_find(fmi_p,cnt_p->cnt_lp,frag);
+		return;
+	}
+#ifdef FOOBAR
 	switch(cnt_p->primary_type){
-		case LIST_CONTAINER:
 		case HASH_TBL_CONTAINER:
 			// We have no way to find anything based on substrings,
 			// so we simply enumerate...
@@ -204,10 +270,11 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, 
 				ip = enumerator_item(ep);
 				assert(ip!=NULL);
 				if( ! strncmp(ITEM_NAME(ip),frag,n) ){
+					
 					// found a match!
 					// BUG - can we remember where we are?
 					//return ip;
-//fprintf(stderr,"container_find_substring_matches, found something but wrong container type!?\n");
+fprintf(stderr,"container_find_substring_matches, found something but wrong container type!?\n");
 					return;
 				}
 				ep = advance_enumerator(ep);
@@ -217,7 +284,8 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, 
 			NERROR1("container_find_substring_matches:  unexpected container type!?");
 			break;
 	}
-	return;
+#endif // FOOBAR
+	NERROR1("container_find_substring_matches:  Unhandled container type!?");
 }
 
 
@@ -434,5 +502,23 @@ Enumerator *new_enumerator (Container *cnt_p, int type)
 	ep->e_p.vp = vp;
 
 	return ep;
+}
+
+Item *current_frag_item( Frag_Match_Info *fmi_p )
+{
+	// what type of container is used?
+	switch( fmi_p->icp->ic_itp->it_default_container_type ){
+		case RB_TREE_CONTAINER:
+			return fmi_p->u.rbti.curr_n_p->data;
+			break;
+		case LIST_CONTAINER:
+		case HASH_TBL_CONTAINER:
+			return fmi_p->u.li.curr_np->n_data;
+			break;
+		default:
+			NERROR1("current_frag_item:  Bad container type!?");
+			break;
+	}
+	return NULL;
 }
 
