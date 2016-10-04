@@ -546,7 +546,7 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 				// No match on the history list, but
 				// we are picking an item...
 
-//fprintf(stderr,"Need to check %s items for a completion...\n",picking_item_itp->it_item.item_name);
+//fprintf(stderr,"Need to check %s items for a completion...\n",ITEM_TYPE_NAME(QS_PICKING_ITEM_ITP(THIS_QSP)));
 
 				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
 				l=strlen(def_str);

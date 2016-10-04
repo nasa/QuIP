@@ -387,7 +387,6 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	Node *np, *first;
 	Hist_Choice *hcp;
 
-
 	first=np=cur_node;
 	if( np == NO_NODE ) return("");
 
@@ -408,43 +407,93 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	return(hcp->hc_text);
 }
 
-static const char * cyc_tree_match(QSP_ARG_DECL  const char *so_far, int direction )
+static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 {
-	Frag_Match_Info *fmi_p;
 	Item *ip;
-	rb_node *next_np;
-
-	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
-	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
 
 	// there may be no items!?
-	if( fmi_p == NULL ) return so_far;
+	assert( fmi_p != NULL );
 
 	if( direction == CYC_FORWARD ){
-		if( fmi_p->curr_n_p == fmi_p->last_n_p )
-			fmi_p->curr_n_p = fmi_p->first_n_p;
+		if( fmi_p->u.rbti.curr_n_p == fmi_p->u.rbti.last_n_p )
+			fmi_p->u.rbti.curr_n_p = fmi_p->u.rbti.first_n_p;
 		else {
-			fmi_p->curr_n_p = rb_successor_node( fmi_p->curr_n_p );
-			assert( fmi_p->curr_n_p != NULL );
+			fmi_p->u.rbti.curr_n_p = rb_successor_node( fmi_p->u.rbti.curr_n_p );
+			assert( fmi_p->u.rbti.curr_n_p != NULL );
 		}
 	} else {
-		if( fmi_p->curr_n_p == fmi_p->first_n_p )
-			fmi_p->curr_n_p = fmi_p->last_n_p;
+		if( fmi_p->u.rbti.curr_n_p == fmi_p->u.rbti.first_n_p )
+			fmi_p->u.rbti.curr_n_p = fmi_p->u.rbti.last_n_p;
 		else {
-			fmi_p->curr_n_p = rb_predecessor_node( fmi_p->curr_n_p );
-			assert( fmi_p->curr_n_p != NULL );
+			fmi_p->u.rbti.curr_n_p = rb_predecessor_node( fmi_p->u.rbti.curr_n_p );
+			assert( fmi_p->u.rbti.curr_n_p != NULL );
 		}
 	}
-	ip = fmi_p->curr_n_p->data;
+	ip = fmi_p->u.rbti.curr_n_p->data;
 	return ip->item_name;
 }
 
+static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
+{
+	Item *ip;
+
+	assert( fmi_p != NULL );
+
+	if( direction == CYC_FORWARD ){
+		if( fmi_p->u.li.curr_np == fmi_p->u.li.last_np )
+			fmi_p->u.li.curr_np = fmi_p->u.li.first_np;
+		else {
+			fmi_p->u.li.curr_np = NODE_NEXT(fmi_p->u.li.curr_np);
+			assert( fmi_p->u.li.curr_np != NULL );
+		}
+	} else {
+		if( fmi_p->u.li.curr_np == fmi_p->u.li.first_np )
+			fmi_p->u.li.curr_np = fmi_p->u.li.last_np;
+		else {
+			fmi_p->u.li.curr_np = NODE_PREV( fmi_p->u.li.curr_np );
+			assert( fmi_p->u.li.curr_np != NULL );
+		}
+	}
+	ip = fmi_p->u.li.curr_np->n_data;
+	return ip->item_name;
+}
+
+static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int direction )
+{
+	Frag_Match_Info *fmi_p;
+
+	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
+
+	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
+	if( fmi_p == NULL ) return so_far;
+
+//fprintf(stderr,"cyc_item_match: frag_match_info '%s' has type %d\n",
+//fmi_p->it.item_name,fmi_p->type);
+
+	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
+
+	switch( fmi_p->type ){
+		case LIST_CONTAINER:
+			return cyc_item_list(fmi_p,direction);
+			break;
+		case RB_TREE_CONTAINER:
+			return cyc_tree_match(fmi_p,direction);
+			break;
+		default:
+			NERROR1("cyc_item_match:  bad type!?");
+			break;
+	}
+	return NULL;
+}
+
+
+	// find out what kind of container...
 const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
-	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL )
-		return cyc_tree_match(QSP_ARG  so_far, direction );
-	else
-		return cyc_list_match(QSP_ARG  so_far, direction );
+	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
+		return cyc_item_match(QSP_ARG  so_far, direction );
+	}
+	return cyc_list_match(QSP_ARG  so_far, direction );
 }
 
 /* this was introduced to simplify the initialization of cmd menus */

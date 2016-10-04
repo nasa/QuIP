@@ -353,6 +353,7 @@ NADVISE(ERROR_STRING);
 	assert( QS_PICKING_ITEM_ITP(THIS_QSP) == NULL );
 
 	SET_QS_PICKING_ITEM_ITP(THIS_QSP,itp);
+//fprintf(stderr,"pick_item:  picking_item_itp set to %s\n",ITEM_TYPE_NAME(itp));
 	s=NAMEOF(prompt);
 	SET_QS_PICKING_ITEM_ITP(THIS_QSP,NULL);
 
