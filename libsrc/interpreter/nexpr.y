@@ -422,6 +422,8 @@ strv_func	: STRV_FUNC '(' /* e_string */ data_object ')' {
 			// are using it to return the precision of a sizable object...
 			// We will worry what to do about viewers later...
 
+			// Does it break the grammar to put a string here?
+
 			$$=NODE1(N_STRVFUNC,$3);
 			$$->sen_func_p = $1;
 			}

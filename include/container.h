@@ -28,6 +28,7 @@ typedef struct enumerator {
 		List_Enumerator *lep;
 		Hash_Tbl_Enumerator *htep;
 		RB_Tree_Enumerator *rbtep;
+		void *vp;
 	} e_p;
 } Enumerator;
 

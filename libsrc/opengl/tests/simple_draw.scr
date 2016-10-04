@@ -3,11 +3,12 @@
 
 < simple_draw.mac
 
+view quit
 If !viewer_exists(v) "Viewer v 600 600"
 
 #view displays quit quit
 # for macq because y coord is flipped!?
-Posn_Window v 200 800
+Posn_Window v 200 200
 # for normal unix
 #Posn_Window v 200 100
 gl window v quit
@@ -15,6 +16,7 @@ gl window v quit
 DrawQuad
 
 gl swap_buffers quit
+Pause
 
 Pause_If
 

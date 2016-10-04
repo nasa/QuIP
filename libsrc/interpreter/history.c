@@ -105,18 +105,16 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
 	ep = new_enumerator(CTX_CONTAINER(icp), 0);	// 0 -> default type
-//	while(np!=NO_NODE){
+	if( ep == NULL ) return;
+
 	while(ep!=NULL){
 		Hist_Choice *hcp;
-//		Node *next;
 		int i, found;
 
 		/* Because the item nodes get moved to the item free
 		 * list when they are deleted, we have to get the next
 		 * node BEFORE deletion!!!
 		 */
-//		next=NODE_NEXT(np);
-//		hcp = (Hist_Choice *) NODE_DATA(np);
 		hcp = (Hist_Choice *) enumerator_item(ep);
 		ep = advance_enumerator(ep);
 		found=0;
@@ -131,7 +129,6 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 				found++;
 		if( !found )
 			rem_hcp(QSP_ARG  icp,hcp);
-//		np=next;
 	}
 }
 

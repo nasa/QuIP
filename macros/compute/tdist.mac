@@ -14,7 +14,30 @@ Assign n_t_samps 10*4096+1
 Assign n_isamps	999	# number of inverse samples...
 Set td_xmax 40	# range limit of domain - for computing
 
-Assign bin_width 2*$td_xmax/$n_t_samps
+Assign _t_bin_width 2*$td_xmax/$n_t_samps
+
+Vector domain $n_t_samps 1 double
+
+Vector tdist $n_t_samps 1 double
+Vector cum_tdist $n_t_samps 1 double
+#Vector cum_tdist2 $n_t_samps 1 double	# for careful computation...
+#Vector tdist_copy $n_t_samps 1 double	# sorted copy for careful Cumsum
+
+Vector inv_domain $n_isamps 1 double	# inverse domain (0-1)
+Vector inv_idx $n_isamps 1 u_short	# index into inverse
+Vector inv_cum $n_isamps 1 double  	# inverse cumulative
+.
+
+Define Declare_TD_Objects_With_Bin_Width 1 bin_width
+
+#Assign _t_bin_width 2*$td_xmax/$n_t_samps
+Assign _t_bin_width $1
+Set td_xmax 40	# range limit of domain - for computing
+Assign n_t_samps 2*$td_max/$_t_bin_width
+#Assign n_t_samps 10*4096+1
+
+Assign n_isamps	999	# number of inverse samples...
+
 
 Vector domain $n_t_samps 1 double
 
@@ -64,6 +87,10 @@ Vector indices $n_isamps 1 u_short
 
 Define Compute_TDist 3 dest domain dof
 Ramp1D $2 -$td_xmax 2*$td_xmax/($n_t_samps-1)
+Compute_TDist_From_Domain $1 $2 $3
+.
+
+Define Compute_TDist_From_Domain 3 dest domain dof
 Assign v $3
 VVMul $1 $2 $2	# t^2
 VSMul $1 $1 1/$v
@@ -117,7 +144,7 @@ Compute_TDist tdist domain $1
 
 
 # integrate
-VSMul tdist tdist $bin_width
+VSMul tdist tdist $_t_bin_width
 # This has problems with numerical precision when we start adding the small
 # values on the right tail...  Maybe it would be better to reflect?
 Cumsum cum_tdist tdist

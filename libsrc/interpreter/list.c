@@ -652,6 +652,8 @@ List_Enumerator *new_list_enumerator(List *lp)
 {
 	List_Enumerator *lep;
 
+	if( QLIST_HEAD(lp) == NULL ) return NULL;
+
 	lep = getbuf(sizeof(List_Enumerator));
 	lep->lp = lp;	// needed?
 	lep->np = QLIST_HEAD(lp);

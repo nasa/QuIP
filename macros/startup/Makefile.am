@@ -22,6 +22,7 @@ macros_DATA	=	Xgraph.scr		\
 			knoxd.scr		\
 			evid.scr		\
 			coq.scr			\
+			airway.scr			\
 			quip.scr
 
 EXTRA_DIST	=	$(macros_DATA)

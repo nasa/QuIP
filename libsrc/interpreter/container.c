@@ -265,7 +265,7 @@ void cat_container_items(List *lp, Container *cnt_p)
 
 //fprintf(stderr,"cat_container_items lp = 0x%lx  container = %s BEGIN\n",(long)lp,cnt_p->name);
 	ep = new_enumerator(cnt_p,0);
-	assert(ep!=NULL);
+	if( ep == NULL ) return;	// enumerator is null if the container is empty
 
 //fprintf(stderr,"cat_container_items ep = 0x%lx  container = %s, entering while loop\n",(long)lp,cnt_p->name);
 	while( ep != NULL ){
@@ -389,9 +389,30 @@ void * enumerator_item(Enumerator *ep)
 
 Enumerator *new_enumerator (Container *cnt_p, int type)
 {
+	void *vp;
 	Enumerator *ep;
 
+	if( type == 0 ) type = cnt_p->primary_type;
+
+	switch( type ){
+		case LIST_CONTAINER:
+			vp = new_list_enumerator(cnt_p->cnt_lp);
+			break;
+		case HASH_TBL_CONTAINER:
+			vp = new_hash_tbl_enumerator(cnt_p->cnt_htp);
+//fprintf(stderr,"back from new_hash_tbl_enumerator\n");
+			break;
+		case RB_TREE_CONTAINER:
+			vp = new_rbtree_enumerator(cnt_p->cnt_tree_p);
+			break;
+		default:
+			NERROR1("new_enumerator:  bad container type!?");
+			vp = NULL;
+			break;
+	}
+	if( vp == NULL ) return NULL;
 //fprintf(stderr,"new_enumerator %s at 0x%lx BEGIN\n",cnt_p->name,(long)cnt_p);
+
 	ep = getbuf( sizeof(Enumerator) );
 
 	if( type == 0 ) type = cnt_p->primary_type;
@@ -410,23 +431,8 @@ Enumerator *new_enumerator (Container *cnt_p, int type)
 
 	ep->type = type;
 	ep->e_cnt_p = cnt_p;	// is this used?
-	switch( type ){
-		case LIST_CONTAINER:
-			ep->e_p.lep = new_list_enumerator(cnt_p->cnt_lp);
-			break;
-		case HASH_TBL_CONTAINER:
-			ep->e_p.htep = new_hash_tbl_enumerator(cnt_p->cnt_htp);
-//fprintf(stderr,"back from new_hash_tbl_enumerator\n");
-			break;
-		case RB_TREE_CONTAINER:
-			ep->e_p.rbtep = new_rbtree_enumerator(cnt_p->cnt_tree_p);
-			break;
-		default:
-			// give memory back here, if not erroring out...
-			NERROR1("new_enumerator:  bad container type!?");
-			return NULL;
-			break;
-	}
+	ep->e_p.vp = vp;
+
 	return ep;
 }
 

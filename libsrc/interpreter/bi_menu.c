@@ -449,6 +449,8 @@ static COMMAND_FUNC( do_push_text )
 
 	s=NAMEOF("command string");
 
+	// We have used push_text here for a long time, but if we want
+	// to push a foreach command, then it needs to be at the same level...
 	PUSH_TEXT(s,"-");
 }
 
@@ -981,6 +983,7 @@ static COMMAND_FUNC( do_fore_loop )
 				zap_fore(frp);
 			} else {
 				SET_FL_NODE(frp, QLIST_HEAD(FL_LIST(frp)) );
+fprintf(stderr,"calling fore_loop\n");
 				fore_loop(QSP_ARG  frp);
 			}
 			return;

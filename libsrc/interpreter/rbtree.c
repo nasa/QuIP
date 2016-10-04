@@ -730,6 +730,8 @@ RB_Tree_Enumerator *new_rbtree_enumerator(rb_tree *tree_p)
 {
 	RB_Tree_Enumerator *rbtep;
 
+	if( tree_p->root == NULL ) return NULL;
+
 	rbtep = getbuf( sizeof(*rbtep) );
 	rbtep->tree_p = tree_p;
 	rbtep->node_p = tree_p->root;

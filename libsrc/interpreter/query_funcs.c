@@ -2762,6 +2762,8 @@ static void mpass(QSP_ARG_DECL Query *qpto,Query *qpfr)
  * continue processing...  when the loop is done, we pop, and decide whether
  * or not to re-push.  The first time through, all text read gets saved
  * at the next level down (?)
+ *
+ * We stop duping if the level is popped...
  */
 
 static void dup_input(SINGLE_QSP_ARG_DECL)
