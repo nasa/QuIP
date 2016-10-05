@@ -6,8 +6,6 @@
 #
 # The formulas came from wikipedia, but they should be repeated here!
 
-advise "TDIST.MAC BEGIN!"
-
 Define Declare_TD_Objects 0
 
 Assign n_t_samps 10*4096+1
@@ -97,7 +95,7 @@ VSMul $1 $1 1/$v
 VSAdd $1 $1 1
 VSPow $1 $1 -($v+1)/2
 Get_TD_Coeff _c $v
-advise "dof = $3, coeff = $_c"
+#advise "dof = $3, coeff = $_c"
 VSMul $1 $1 $_c
 .
 

@@ -346,6 +346,10 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 #define SET_LOG_MSG_COUNT(qsp,c)	(qsp)->qs_log_msg_count = c
 #define INCREMENT_LOG_MSG_COUNT(qsp)	SET_LOG_MSG_COUNT(qsp,1+LOG_MSG_COUNT(qsp))
 
+#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
+#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
+#define CURRENT_FILENAME		QRY_FILENAME(CURR_QRY(THIS_QSP))
+
 extern Query_Stack *default_qsp;		// global needs to be set at init...
 
 // some prototypes

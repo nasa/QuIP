@@ -81,10 +81,6 @@
 
 //#include "stdc_defs.h"
 
-#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
-#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
-#define CURRENT_FILENAME		QRY_FILENAME(CURR_QRY(THIS_QSP))
-
 
 extern int verbose;	// why is this here???
 
