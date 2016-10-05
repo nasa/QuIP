@@ -188,7 +188,9 @@ os
   pipes
     open f read "xlsfonts | grep -e '$1'"
     read f x
-    close f
+    # xlsfonts will print an error message if we don't own the display,
+    # in which case the pipe will close automatically when we try to read...
+    If pipe_exists(f) "close f"
     quit
   quit
 #Print x

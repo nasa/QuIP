@@ -1,0 +1,55 @@
+# test of SSE simd instructions
+
+< $macro_dir/system/mark_time.mac
+
+Set n_it 100
+
+Define Enable_SSE 0
+advise "Enabling use of SSE instructions..."
+compute
+  control
+    use_sse yes
+    status
+    quit
+  quit
+.
+
+Define Disable_SSE 0
+advise "Disabling use of SSE instructions..."
+compute
+  control
+    use_sse no
+    status
+    quit
+  quit
+.
+
+Assign len 8192*1024
+Vector f $len 1 float
+Vector g $len 1 float
+Vector h $len 1 float
+
+VSet f 6.2
+VSet g 1
+
+Define Doit 1 n_repeats
+Zero_Time
+repeat $1
+  VVAdd h f g
+  end
+Check_Time
+Assign ms_per_iteration $total_ms/$1
+advise "$ms_per_iteration milliseconds per iteration"
+Assign n_flops $len*$1
+Assign flops 1000*$n_flops/$total_ms
+advise "$flops floating point operations per second"
+.
+
+Disable_SSE
+Doit $n_it
+Enable_SSE
+Doit $n_it
+
+Pause
+
+

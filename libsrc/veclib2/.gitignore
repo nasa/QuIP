@@ -5,4 +5,5 @@
 *.noindent
 old*.h
 junk
+*.bak
 

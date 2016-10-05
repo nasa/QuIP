@@ -983,7 +983,6 @@ static COMMAND_FUNC( do_fore_loop )
 				zap_fore(frp);
 			} else {
 				SET_FL_NODE(frp, QLIST_HEAD(FL_LIST(frp)) );
-fprintf(stderr,"calling fore_loop\n");
 				fore_loop(QSP_ARG  frp);
 			}
 			return;
