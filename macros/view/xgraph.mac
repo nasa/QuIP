@@ -99,6 +99,7 @@ Assign plot_ymax $$argname
 Add_Var i_arg 3
 Set argname argv$i_arg
 advise "Y_Axis_Option:  3rd arg $argname = $$argname"
+# If the next arg is not a number, then it is probably a filename...
 If isdigit('$$argname'[0])
   "Set y_tick_spacing $$argname Increment i_arg"
 Set y_scale_determined 1

@@ -1,0 +1,16 @@
+#
+# tests for the parser
+
+Define Testit 1 string
+advise "testing first character of '$1'"
+Assign x isdigit('$1'[0])	# works
+Print x
+.
+
+
+Testit 0
+Testit kitty
+Testit kitty.cat
+
+exit
+
