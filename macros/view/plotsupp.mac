@@ -159,8 +159,9 @@ Set plot_foreground_index	8
 Set plot_background_index	9
 Set grid_color_index		10
 Set label_color_index		11
-Set pen_color_index		12
-Set n_plotter_params		13
+Set n_plotter_params		12
+#Set pen_color_index		12	# isn't the pen the foreground???
+#Set n_plotter_params		13
 .
 
 Define Get_Param_Vec_Name 1 plotter_name
@@ -207,7 +208,7 @@ data ascii
 	$plot_background
 	$grid_color
 	$label_color
-	$pen_color
+#	$pen_color
 
 	quit quit
 .
@@ -234,7 +235,7 @@ data
 	$plot_background
 	$grid_color
 	$label_color
-	$pen_color
+#	$pen_color
     quit
   quit
 .
@@ -258,7 +259,7 @@ Assign plot_foreground value($param_vec_name{$plot_foreground_index})
 Assign plot_background value($param_vec_name{$plot_background_index})
 Assign grid_color value($param_vec_name{$grid_color_index})
 Assign label_color value($param_vec_name{$label_color_index})
-Assign pen_color value($param_vec_name{$pen_color_index})
+#Assign pen_color value($param_vec_name{$pen_color_index})
 # show the plotter params when debugging...
 #Show_Plotter_Params
 Update_Range_Constants
@@ -338,7 +339,7 @@ Get_Param_Vec_Name $1
 If $plotter_changing 
   Recall_Plotter_Params
 # There are some parameters that are computed...
-advise "Select_Plotter $1   right_margin = $right_margin"
+#advise "Select_Plotter $1   right_margin = $right_margin"
 Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax
 .
 
@@ -417,10 +418,11 @@ view
 
 
 Define Select_Pen 1 color
-Set pen_color $1
+#Set pen_color $1
+Set plot_foreground $1
 view
   plot $the_plotter
-    select $pen_color
+    select $plot_foreground
     quit
   quit
 .
@@ -774,6 +776,10 @@ Plot_Y_Axis_Offset $1 $2 $3 $4 0
 Mul_Var y_tick_len -1
 .
 
+Define Draw_Y_Axis_Right 3 ymin ymax xpos
+Draw_Y_Axis $1 $2 $3
+.
+
 Define Draw_Y_Axis 3 ymin ymax xpos
 PMove $3 $1
 PCont $3 $2
@@ -787,6 +793,11 @@ Draw_Y_Ticks $1 $2 $3 $4 $5
 Define Draw_Y_Tick_At 2 x y
 PMove $1 $2
 PCont $1-$y_tick_len $2
+.
+
+Define Draw_Y_Tick_Right_At 2 x y
+PMove $1 $2
+PCont $1+$y_tick_len $2
 .
 
 Define Draw_Y_Ticks 5 ymin ymax tick_spacing xpos first_tick_offset
