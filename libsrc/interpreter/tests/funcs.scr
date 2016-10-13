@@ -1,0 +1,37 @@
+# test of string and size functions
+
+Vector v 4 1 float
+
+Assign r nrows(v)
+Assign c ncols(v)
+advise "Size of v:  $r rows x $c columns"
+
+Assign p precision(v)
+advise "precision of v is $p"
+
+Assign s strcat("Jeff","mulligan")
+Print s
+
+advise "calling toupper(\"$s\")"
+Assign s toupper("$s")
+Print s
+
+# vectree test - moved to vectree subdir
+
+#Vector sv 12 1 string
+#Vector sv2 12 1 string
+#data import_string sv "jbmulligan" quit
+#Display sv
+#
+#expressions
+#  export sv
+#  export sv2
+#  read -
+#
+#sv2 = toupper(sv);
+#print(sv2);
+#end
+#  quit
+
+exit
+

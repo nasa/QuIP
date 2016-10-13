@@ -53,8 +53,33 @@ DECLARE_CHAR_FUNC( isspace )
 DECLARE_CHAR_FUNC( iscntrl )
 DECLARE_CHAR_FUNC( isblank )
 
+/*
 static int c_tolower( char c ) { return( tolower(c) ); }
 static int c_toupper( char c ) { return( toupper(c) ); }
+*/
+
+#define DECLARE_STRINGMAP_FUNCTION( funcname, test_macro, map_macro )	\
+									\
+static const char * funcname(QSP_ARG_DECL  const char *s )				\
+{									\
+	char *t, *p;							\
+									\
+	t = getbuf(strlen(s)+1);					\
+	p=t;								\
+	while( *s ){							\
+		if( test_macro(*s) )					\
+			*p = map_macro(*s);				\
+		else							\
+			*p = *s;					\
+		p++;							\
+		s++;							\
+	}								\
+	*p = 0;								\
+	return( t );							\
+}
+
+DECLARE_STRINGMAP_FUNCTION(s_tolower,isupper,tolower)
+DECLARE_STRINGMAP_FUNCTION(s_toupper,islower,toupper)
 
 static double modtimefunc(QSP_ARG_DECL  const char *s)
 {
@@ -531,8 +556,21 @@ static double _frmfunc(QSP_ARG_DECL  Item *ip)
 static double _seqfunc(QSP_ARG_DECL  Item *ip)
 { return( get_object_size(QSP_ARG  ip,4) ); }
 
-static const char *_precfunc(QSP_ARG_DECL  Item *ip)
-{ return get_object_prec_string(QSP_ARG  ip); }
+static const char *_precfunc(QSP_ARG_DECL  const char *s)
+{
+	Item *ip;
+	ip = find_sizable( DEFAULT_QSP_ARG  s );
+	return get_object_prec_string(QSP_ARG  ip);
+}
+
+static const char *strcat_func(QSP_ARG_DECL  const char *s1, const char *s2 )
+{
+	char *s;
+	s = getbuf( strlen(s1) + strlen(s2) + 1 );
+	strcpy(s,s1);
+	strcat(s,s2);
+	return s;
+}
 
 static double _nefunc(QSP_ARG_DECL  Item *ip)
 {
@@ -709,8 +747,10 @@ DECLARE_STR2_FUNCTION(	strcmp,	dstrcmp		)
 DECLARE_STR2_FUNCTION(	strstr,	dstrstr		)
 DECLARE_STR3_FUNCTION(	strncmp,dstrncmp	)
 
-DECLARE_CHAR_FUNCTION(	tolower, c_tolower,	FVTOLOWER, INVALID_VFC,	INVALID_VFC	)
-DECLARE_CHAR_FUNCTION(	toupper, c_toupper,	FVTOUPPER, INVALID_VFC,	INVALID_VFC	)
+// shouldn't these be string valued functions that translat a whole string?
+// But what about the mapping functions???
+DECLARE_STRV_FUNCTION(	tolower, s_tolower,	FVTOLOWER, INVALID_VFC,	INVALID_VFC	)
+DECLARE_STRV_FUNCTION(	toupper, s_toupper,	FVTOUPPER, INVALID_VFC,	INVALID_VFC	)
 
 DECLARE_CHAR_FUNCTION(	islower, c_islower,	FVISLOWER, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	isupper, c_isupper,	FVISUPPER, INVALID_VFC, INVALID_VFC	)
@@ -722,7 +762,8 @@ DECLARE_CHAR_FUNCTION(	iscntrl, c_iscntrl,	FVISCNTRL, INVALID_VFC, INVALID_VFC	)
 DECLARE_CHAR_FUNCTION(	isblank, c_isblank,	FVISBLANK, INVALID_VFC, INVALID_VFC	)
 
 // This was called prec_name, but that was defined by a C macro to be prec_item.item_name!?
-DECLARE_STRV_FUNCTION(	precision,	_precfunc	)
+DECLARE_STRV_FUNCTION(	precision,	_precfunc, INVALID_VFC, INVALID_VFC, INVALID_VFC	)
+DECLARE_STRV2_FUNCTION(	strcat,		strcat_func	)
 
 DECLARE_SIZE_FUNCTION(	depth,	_dpfunc,	0	)
 DECLARE_SIZE_FUNCTION(	ncols,	_colfunc,	1	)

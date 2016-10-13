@@ -1,0 +1,9 @@
+
+the interpret builtin command should insert the text at the current level instead of pushing.
+That would allow us to push a foreach command without pushing the entire loop.
+
+Command completion was redone (9/2016) in order to accommodate very large numbers of items
+(e.g., 360,000 in the CIFP database).  Red-black trees were introduced to help with this,
+but the current implementation does not correctly handle situations where the set of items
+is dynamically changing...
+

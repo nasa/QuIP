@@ -20,6 +20,10 @@
 #include "glut_supp.h"
 #include "glx_supp.h"
 
+//#ifndef BUILD_FOR_OBJC
+//#include "xsupp.h"	// wait_for_mapped()
+//#endif // BUILD_FOR_OBJC
+
 static Viewer *gl_vp=NO_VIEWER;
 
 //static GLXContext the_ctx;
@@ -401,6 +405,14 @@ vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
 advise(ERROR_STRING);
 }
 */
+	// Sometimes when drawing lines, nothing appears - this seems to happen at random,
+	// althought the frequency is modulated by a delay before the call to this function!?
+	// So it seems like some kind of race/timing issue, but putting wait_for_mapped here does
+	// not have any effect...
+
+	// Should we wait for mapped?
+	//wait_for_mapped( QSP_ARG  vp, 10 );
+
 	if( glXMakeCurrent(VW_DPY(vp),vp->vw_xwin,VW_OGL_CTX(vp)) != True ){
 		sprintf(ERROR_STRING,
 		"Unable to set current GLX context to %s!?",vp->vw_name);
@@ -410,7 +422,7 @@ advise(ERROR_STRING);
 
 	check_gl_capabilities(SINGLE_QSP_ARG);
 
-#else // ! BUILD_FOR_OBJC
+#else // BUILD_FOR_OBJC
 	if( VW_OGLV(vp) == NULL ){
 		SET_VW_OGLV(vp,[NSOpenGLView alloc]);
 		NSOpenGLPixelFormat* pixFmt = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
@@ -428,7 +440,8 @@ advise(ERROR_STRING);
 //(long)VW_OGL_CTX(vp));
 	[ VW_OGL_CTX(vp) makeCurrentContext ];
 	gl_vp = vp;
-#endif // ! BUILD_FOR_OBJC
+#endif // BUILD_FOR_OBJC
+
 } /* end select_gl_viewer */
 
 #endif /* HAVE_OPENGL */

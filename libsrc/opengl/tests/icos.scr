@@ -87,7 +87,7 @@ VSet face_colors 1
 gl
   color
 #    background 255 0 0
-    background 0.5 0.5 0
+    background 0.1 0.1 0
     clear_color
     quit
   quit
@@ -107,8 +107,12 @@ gl
   quit
 #Construct_Polyhedron normals vdata tindices face_colors
 gl
+  # these positions make it look yellow on top right front, and blue at lower left
   lighting select_light light0 position 1 0 1 0 quit
   lighting select_light light1 position -1 0 0 0 quit
+#  # these positions make it look all blue...
+#  lighting select_light light0 position 1 1 1 0 quit
+#  lighting select_light light0 position 0 0 -1 0 quit
   transform
     push_matrix
     identity
@@ -117,7 +121,7 @@ gl
     rotate $1 0 1 0
     #look_at 0 0 10   0 0 0     0 1 0
     quit
-  lighting select_light light0 position 0 0 -1 0 quit
+#  lighting select_light light0 position 0 0 -1 0 quit
   quit
 #advise 'calling construct_polyhedron'
 # BUG - why not make this object just once!?
@@ -128,7 +132,9 @@ gl
     pop_matrix
     identity
     quit
-  lighting select_light light0 position 1 1 1 0 quit
+#  # positioning the lights here makes them not rotate with the object
+#  lighting select_light light0 position 1 1 1 0 quit
+#  lighting select_light light0 position 0 0 -1 0 quit
   quit
 
 gl
@@ -162,10 +168,10 @@ gl
   lighting
     shading_model smooth
     select_light light0
-    diffuse 1 1 0
+    diffuse 1 1 0		# yellow
     two_side yes
     select_light light1
-    diffuse 0 0 1
+    diffuse 0 0 1		# blue
     quit
   quit
 

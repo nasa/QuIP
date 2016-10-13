@@ -1,6 +1,7 @@
 
 # field of view is 2*atan(_d/near)
 # to model a 1/4" camera, we set  
+
 Define Init_Projection 0
 gl capabilities enable culling quit quit
 gl
@@ -12,6 +13,7 @@ gl
 #   Set _d 0.1
 #    Set near 0.5
     Assign near 6/25.4		# 6 mm lens?
+    identity
     frustum -$_d $_d -$_d $_d $near 100
     mode modelview
     quit
