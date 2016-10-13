@@ -57,11 +57,15 @@ If !strncmp('$arg','-',1) "Process_Short_Option $arg $1 exit_macro"
 If !$have_plotter_instance Plotter_Instance
 #advise "Graph_File $$argname $pen_color"
 Graph_File $$argname $pen_color
-Increment pen_color
-If $pen_color==$plot_background "Increment pen_color"
+Next_Pen_Color
 Assign i_arg 1+$1
 .
 
+Define Next_Pen_Color 0
+If $pen_color==$dark_red "Set pen_color $black-1"
+Increment pen_color
+If $pen_color==$plot_background "Increment pen_color"
+.
 
 Set plot_xmin 0
 Set plot_ymin 0

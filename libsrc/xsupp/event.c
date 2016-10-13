@@ -644,7 +644,7 @@ NWARN(ERROR_STRING);
 // On Mac, we sometimes get spurious keypress events that are
 // never cleared!?
 //
-//fprintf(stderr,"Keypress event, ks_len = %d\n",ks_len);
+fprintf(stderr,"Keypress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
 				if( keystr[0] == 015 )
 					keystr[0]=012;	/* map CR to LF */
 				keystr[1]=0;
