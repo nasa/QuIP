@@ -1,0 +1,43 @@
+# test of permutation
+
+< $macro_dir/compute/permute.mac
+
+Vector pts 8 2 float
+Vector pts2 8 2 float
+Vector permbuf 8 1 short
+
+VUni pts{0}
+VSAdd pts{0} pts{0} 1
+VUni pts{1}
+VSAdd pts{1} pts{1} -2
+Display pts
+
+VMov pts2 pts	# save a copy
+
+# this scrambles all of the data, without regard to vector component
+compute misc scramble pts quit quit
+Display pts
+
+VMov pts pts2	# restore from backup
+
+Ramp1D permbuf 0 1
+compute misc scramble permbuf quit quit
+Display permbuf
+#compute misc reorder pts2 pts permbuf quit quit
+
+Set i 0
+repeat ncols(permbuf)
+  VMov pts2[$i] pts[value(permbuf[$i])]
+  Increment i
+  end
+
+Display pts2
+
+VMov pts2 pts
+Permute_Points pts
+Display pts
+
+Pause
+
+exit
+

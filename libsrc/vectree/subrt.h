@@ -37,6 +37,8 @@ ITEM_INIT_PROT(Subrt,subrt)
 ITEM_CHECK_PROT(Subrt,subrt)
 ITEM_NEW_PROT(Subrt,subrt)
 ITEM_PICK_PROT(Subrt,subrt)
+ITEM_ENUM_PROT(Subrt,subrt)
+ITEM_LIST_PROT(Subrt,subrt)
 
 //extern Subrt *subrt_of(QSP_ARG_DECL  const char *name);
 //extern Subrt *new_subrt(QSP_ARG_DECL  const char *name);
@@ -46,6 +48,8 @@ ITEM_PICK_PROT(Subrt,subrt)
 
 extern Item_Type *subrt_itp;
 
+/*
 extern void list_subrts(SINGLE_QSP_ARG_DECL);
 extern List * list_of_subrts(SINGLE_QSP_ARG_DECL);
+*/
 

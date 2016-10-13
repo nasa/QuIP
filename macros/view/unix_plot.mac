@@ -81,7 +81,7 @@ Delete_Image save_buf
 # hack we have put in a 100 msec delay here...
 
 Define Get_Legend_Image 1 string
-If $plot_foreground>=0 "Select_Pen $plot_foreground"
+If $plot_foreground>=0 "advise 'Get_Legend_Image setting default foreground color' Select_Pen $plot_foreground"
 Image save_buf nrows('$the_plotter') ncols('$the_plotter') depth('$DISPLAY')/8 u_byte
 #usleep 300000
 #advise 'Type ^D when window is visible...'
@@ -188,7 +188,9 @@ os
   pipes
     open f read "xlsfonts | grep -e '$1'"
     read f x
-    close f
+    # xlsfonts will print an error message if we don't own the display,
+    # in which case the pipe will close automatically when we try to read...
+    If pipe_exists(f) "close f"
     quit
   quit
 #Print x
