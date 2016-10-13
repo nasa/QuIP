@@ -4344,6 +4344,7 @@ DUMP_TREE(enp);
 
 			break;
 
+		case T_STRV_FN:			/* compile_node */
 		case T_CHAR_FN:			/* compile_node */
 
 			// This code mostly copied from above - good candidate for a macro or

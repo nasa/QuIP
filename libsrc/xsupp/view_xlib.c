@@ -755,6 +755,7 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	incr_t fno;
 
 	if( display_to_mapped && ! is_mapped(vp) ){
+		// Can we be sure that a mapping has been requested???
 		if( verbose ) advise("embed_image:  viewer not mapped, waiting...");
 		wait_for_mapped(QSP_ARG  vp,10);
 	}

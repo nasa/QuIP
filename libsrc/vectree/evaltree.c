@@ -6589,6 +6589,7 @@ const char *eval_string(QSP_ARG_DECL Vec_Expr_Node *enp)
 			s="bad_strv_result";		// set default value
 			if( VN_CODE(VN_CHILD(enp,0)) == T_STRING ){
 				/* name of a sizable object */
+				/*
 				Item *ip;
 				ip = find_sizable(QSP_ARG  VN_STRING(VN_CHILD(enp,0)));
 				if(ip==NO_ITEM){
@@ -6598,7 +6599,8 @@ const char *eval_string(QSP_ARG_DECL Vec_Expr_Node *enp)
 					WARN(ERROR_STRING);
 					break;
 				}
-				s = (*(FUNC_STRV_FUNC(VN_FUNC_PTR(enp))))(QSP_ARG  ip);
+				*/
+				s = (*(FUNC_STRV_FUNC(VN_FUNC_PTR(enp))))(QSP_ARG  VN_STRING(VN_CHILD(enp,0)) );
 			} else {
 				/* an objref expressions */
 				int save_e;	/* objs don't need values to query their size */

@@ -367,6 +367,7 @@ static char *get_expr_stringbuf( int index, long min_len )
 %token <func_p> STR2_FUNC
 %token <func_p> STR3_FUNC
 %token <func_p> STRV_FUNC
+%token <func_p> STRV2_FUNC
 %token <func_p> CHAR_FUNC
 // What is the difference between an E_STRING and an E_QSTRING??
 // QSTRING is quoted, and can be used to initialize a data object.
@@ -423,10 +424,14 @@ strv_func	: STRV_FUNC '(' /* e_string */ data_object ')' {
 			// We will worry what to do about viewers later...
 
 			// Does it break the grammar to put a string here?
-
 			$$=NODE1(N_STRVFUNC,$3);
 			$$->sen_func_p = $1;
 			}
+		| STRV2_FUNC '(' data_object ',' data_object ')' {
+			$$=NODE2(N_STRV2FUNC,$3,$5);
+			$$->sen_func_p = $1;
+			}
+
 		;
 
 e_string	: E_STRING {
@@ -674,8 +679,7 @@ static Scalar_Expr_Node *alloc_expr_node(void)
 const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 {
 	Typed_Scalar *tsp;
-	const char *s;
-	Item *szp;
+	const char *s, *s2;
 
 	switch(enp->sen_code){
 		case N_OBJNAME:
@@ -692,8 +696,33 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 				return s;
 			}
 #endif /* BUILD_FOR_OBJC */
+			// why sizable?  this is supposed to be a string arg...
+			// This makes sense only for the "precision" function -
+			// but what about touuper etc?
+			//szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
+			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+			s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG  s );
+			return s;
+			break;
+
+		case N_STRV2FUNC:
+#ifdef BUILD_FOR_OBJC
+			// BUG BUG BUG ? (why?)
+			if( check_ios_strv2_func(&s,enp->sen_func_p,
+					enp->sen_child[0],enp->sen_child[1]) ){
+				// BUG?  does the function get called in check_ios_sizable_func???
+				return s;
+			}
+#endif /* BUILD_FOR_OBJC */
+			// why sizable???
+			/*
 			szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
 			s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG  szp );
+			return s;
+			*/
+			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+			s2 = EVAL_SCALEXP_STRING(enp->sen_child[1]);
+			s = (*enp->sen_func_p->fn_u.strv2_func)( QSP_ARG  s, s2 );
 			return s;
 			break;
 
@@ -711,7 +740,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 //#ifdef CAUTIOUS
 		case N_STRING:
-			return eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
+			return EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			break;
 		default:
 //			sprintf(DEFAULT_ERROR_STRING,
@@ -787,6 +816,11 @@ N_CONDITIONAL
 
 		case N_STRVFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tstrvfunc\t%s",
+				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
+			break;
+
+		case N_STRV2FUNC:
+			sprintf(ERROR_STRING,"0x%lx\tstrv2func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
 			break;
 
@@ -1464,10 +1498,30 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
+		// BUG - if this is to support the precision function, then
+		// the sizable lookup should be done within the function, not here!
+		/*
 		szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
 		s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG  szp );
+		*/
+		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+		s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG s );
 		tsp = scalar_for_string(s);
 		break;
+	case N_STRV2FUNC:		// eval_expr
+#ifdef BUILD_FOR_OBJC
+		if( check_ios_strv2_func(&s,enp->sen_func_p,
+				enp->sen_child[0],enp->sen_child[0]) ){
+			tsp = scalar_for_string(s);
+			return tsp;
+		}
+#endif /* BUILD_FOR_OBJC */
+		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
+		s2 = EVAL_SCALEXP_STRING(enp->sen_child[1]);
+		s = (*enp->sen_func_p->fn_u.strv2_func)( QSP_ARG s, s2 );
+		tsp = scalar_for_string(s);
+		break;
+
 	case N_TSFUNC:		// eval_expr
 		szp = eval_tsbl_expr(QSP_ARG  enp->sen_child[0]);
 		tsp2=EVAL_EXPR(enp->sen_child[1]);
@@ -2099,6 +2153,7 @@ static int token_for_func_type(int type)
 		case STR2_FUNCTYP:	return(STR2_FUNC);	break;
 		case STR3_FUNCTYP:	return(STR3_FUNC);	break;
 		case STRV_FUNCTYP:	return(STRV_FUNC);	break;
+		case STRV2_FUNCTYP:	return(STRV2_FUNC);	break;
 		case CHAR_FUNCTYP:	return(CHAR_FUNC);	break;
 		case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 		case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;

@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "viewer.h"
 #include "xsupp.h"
+#include <X11/Xproto.h>	// the request codes
 
 static Disp_Obj *current_dop=NO_DISP_OBJ;
 
@@ -501,16 +502,211 @@ advise(ERROR_STRING);
 	return(dop);
 } /* end default_x_display */
 
+static char *x_request_name[128];
+
+// normal error codes go from 0 to 17 (see X.h)
+
+#define N_X11_ERROR_CODES	18
+static char *x_error_description[N_X11_ERROR_CODES];
+
+
+#define INIT_NAME_ENTRY(code)	x_request_name[code] = #code
+#define INIT_ERROR_ENTRY(code)	{ assert(code<N_X11_ERROR_CODES); x_error_description[code] = #code; }
+
+static void init_error_names(void)
+{
+	bzero( x_request_name, 128 * sizeof(char *) );
+	// don't bother to zero error names because there are no gaps
+
+	INIT_NAME_ENTRY( X_CreateWindow );
+	INIT_NAME_ENTRY( X_ChangeWindowAttributes );
+	INIT_NAME_ENTRY( X_GetWindowAttributes );
+	INIT_NAME_ENTRY( X_DestroyWindow );
+	INIT_NAME_ENTRY( X_DestroySubwindows );
+	INIT_NAME_ENTRY( X_ChangeSaveSet );
+	INIT_NAME_ENTRY( X_ReparentWindow );
+	INIT_NAME_ENTRY( X_MapWindow );
+	INIT_NAME_ENTRY( X_MapSubwindows );
+	INIT_NAME_ENTRY( X_UnmapWindow );
+	INIT_NAME_ENTRY( X_UnmapSubwindows );
+	INIT_NAME_ENTRY( X_ConfigureWindow );
+	INIT_NAME_ENTRY( X_CirculateWindow );
+	INIT_NAME_ENTRY( X_GetGeometry );
+	INIT_NAME_ENTRY( X_QueryTree );
+	INIT_NAME_ENTRY( X_InternAtom );
+	INIT_NAME_ENTRY( X_GetAtomName );
+	INIT_NAME_ENTRY( X_ChangeProperty );
+	INIT_NAME_ENTRY( X_DeleteProperty );
+	INIT_NAME_ENTRY( X_GetProperty );
+	INIT_NAME_ENTRY( X_ListProperties );
+	INIT_NAME_ENTRY( X_SetSelectionOwner );
+	INIT_NAME_ENTRY( X_GetSelectionOwner );
+	INIT_NAME_ENTRY( X_ConvertSelection );
+	INIT_NAME_ENTRY( X_SendEvent );
+	INIT_NAME_ENTRY( X_GrabPointer );
+	INIT_NAME_ENTRY( X_UngrabPointer );
+	INIT_NAME_ENTRY( X_GrabButton );
+	INIT_NAME_ENTRY( X_UngrabButton );
+	INIT_NAME_ENTRY( X_ChangeActivePointerGrab );
+	INIT_NAME_ENTRY( X_GrabKeyboard );
+	INIT_NAME_ENTRY( X_UngrabKeyboard );
+	INIT_NAME_ENTRY( X_GrabKey );
+	INIT_NAME_ENTRY( X_UngrabKey );
+	INIT_NAME_ENTRY( X_AllowEvents );
+	INIT_NAME_ENTRY( X_GrabServer );
+	INIT_NAME_ENTRY( X_UngrabServer );
+	INIT_NAME_ENTRY( X_QueryPointer );
+	INIT_NAME_ENTRY( X_GetMotionEvents );
+	INIT_NAME_ENTRY( X_TranslateCoords );
+	INIT_NAME_ENTRY( X_WarpPointer );
+	INIT_NAME_ENTRY( X_SetInputFocus );
+	INIT_NAME_ENTRY( X_GetInputFocus );
+	INIT_NAME_ENTRY( X_QueryKeymap );
+	INIT_NAME_ENTRY( X_OpenFont );
+	INIT_NAME_ENTRY( X_CloseFont );
+	INIT_NAME_ENTRY( X_QueryFont );
+	INIT_NAME_ENTRY( X_QueryTextExtents );
+	INIT_NAME_ENTRY( X_ListFonts );
+	INIT_NAME_ENTRY( X_ListFontsWithInfo );
+	INIT_NAME_ENTRY( X_SetFontPath );
+	INIT_NAME_ENTRY( X_GetFontPath );
+	INIT_NAME_ENTRY( X_CreatePixmap );
+	INIT_NAME_ENTRY( X_FreePixmap );
+	INIT_NAME_ENTRY( X_CreateGC );
+	INIT_NAME_ENTRY( X_ChangeGC );
+	INIT_NAME_ENTRY( X_CopyGC );
+	INIT_NAME_ENTRY( X_SetDashes );
+	INIT_NAME_ENTRY( X_SetClipRectangles );
+	INIT_NAME_ENTRY( X_FreeGC );
+	INIT_NAME_ENTRY( X_ClearArea );
+	INIT_NAME_ENTRY( X_CopyArea );
+	INIT_NAME_ENTRY( X_CopyPlane );
+	INIT_NAME_ENTRY( X_PolyPoint );
+	INIT_NAME_ENTRY( X_PolyLine );
+	INIT_NAME_ENTRY( X_PolySegment );
+	INIT_NAME_ENTRY( X_PolyRectangle );
+	INIT_NAME_ENTRY( X_PolyArc );
+	INIT_NAME_ENTRY( X_FillPoly );
+	INIT_NAME_ENTRY( X_PolyFillRectangle );
+	INIT_NAME_ENTRY( X_PolyFillArc );
+	INIT_NAME_ENTRY( X_PutImage );
+	INIT_NAME_ENTRY( X_GetImage );
+	INIT_NAME_ENTRY( X_PolyText8 );
+	INIT_NAME_ENTRY( X_PolyText16 );
+	INIT_NAME_ENTRY( X_ImageText8 );
+	INIT_NAME_ENTRY( X_ImageText16 );
+	INIT_NAME_ENTRY( X_CreateColormap );
+	INIT_NAME_ENTRY( X_FreeColormap );
+	INIT_NAME_ENTRY( X_CopyColormapAndFree );
+	INIT_NAME_ENTRY( X_InstallColormap );
+	INIT_NAME_ENTRY( X_UninstallColormap );
+	INIT_NAME_ENTRY( X_ListInstalledColormaps );
+	INIT_NAME_ENTRY( X_AllocColor );
+	INIT_NAME_ENTRY( X_AllocNamedColor );
+	INIT_NAME_ENTRY( X_AllocColorCells );
+	INIT_NAME_ENTRY( X_AllocColorPlanes );
+	INIT_NAME_ENTRY( X_FreeColors );
+	INIT_NAME_ENTRY( X_StoreColors );
+	INIT_NAME_ENTRY( X_StoreNamedColor );
+	INIT_NAME_ENTRY( X_QueryColors );
+	INIT_NAME_ENTRY( X_LookupColor );
+	INIT_NAME_ENTRY( X_CreateCursor );
+	INIT_NAME_ENTRY( X_CreateGlyphCursor );
+	INIT_NAME_ENTRY( X_FreeCursor );
+	INIT_NAME_ENTRY( X_RecolorCursor );
+	INIT_NAME_ENTRY( X_QueryBestSize );
+	INIT_NAME_ENTRY( X_QueryExtension );
+	INIT_NAME_ENTRY( X_ListExtensions );
+	INIT_NAME_ENTRY( X_ChangeKeyboardMapping );
+	INIT_NAME_ENTRY( X_GetKeyboardMapping );
+	INIT_NAME_ENTRY( X_ChangeKeyboardControl );
+	INIT_NAME_ENTRY( X_GetKeyboardControl );
+	INIT_NAME_ENTRY( X_Bell );
+	INIT_NAME_ENTRY( X_ChangePointerControl );
+	INIT_NAME_ENTRY( X_GetPointerControl );
+	INIT_NAME_ENTRY( X_SetScreenSaver );
+	INIT_NAME_ENTRY( X_GetScreenSaver );
+	INIT_NAME_ENTRY( X_ChangeHosts );
+	INIT_NAME_ENTRY( X_ListHosts );
+	INIT_NAME_ENTRY( X_SetAccessControl );
+	INIT_NAME_ENTRY( X_SetCloseDownMode );
+	INIT_NAME_ENTRY( X_KillClient );
+	INIT_NAME_ENTRY( X_RotateProperties );
+	INIT_NAME_ENTRY( X_ForceScreenSaver );
+	INIT_NAME_ENTRY( X_SetPointerMapping );
+	INIT_NAME_ENTRY( X_GetPointerMapping );
+	INIT_NAME_ENTRY( X_SetModifierMapping );
+	INIT_NAME_ENTRY( X_GetModifierMapping );
+	INIT_NAME_ENTRY( X_NoOperation );
+
+	INIT_ERROR_ENTRY( Success );
+	INIT_ERROR_ENTRY( BadRequest );
+	INIT_ERROR_ENTRY( BadValue );
+	INIT_ERROR_ENTRY( BadWindow );
+	INIT_ERROR_ENTRY( BadPixmap );
+	INIT_ERROR_ENTRY( BadAtom );
+	INIT_ERROR_ENTRY( BadCursor );
+	INIT_ERROR_ENTRY( BadFont );
+	INIT_ERROR_ENTRY( BadMatch );
+	INIT_ERROR_ENTRY( BadDrawable );
+	INIT_ERROR_ENTRY( BadAccess );
+	INIT_ERROR_ENTRY( BadAlloc );
+	INIT_ERROR_ENTRY( BadColor );
+	INIT_ERROR_ENTRY( BadGC );
+	INIT_ERROR_ENTRY( BadIDChoice );
+	INIT_ERROR_ENTRY( BadName );
+	INIT_ERROR_ENTRY( BadLength );
+	INIT_ERROR_ENTRY( BadImplementation );
+
+}
+
+static void identify_x11_request( unsigned char code )
+{
+	const char *s;
+
+	assert( code < 128 );	// BUG use symbolic constant
+	s = x_request_name[code];
+	if( s == NULL )
+		NERROR1("identify_x11_request:  undefined code!?");
+	sprintf(DEFAULT_ERROR_STRING,"X11 error in %s:  ",s);
+	NADVISE(DEFAULT_ERROR_STRING);
+}
+
+static void identify_x11_error( unsigned char code )
+{
+	if( code >= N_X11_ERROR_CODES ){
+		sprintf(DEFAULT_ERROR_STRING,"Unexpected X11 error code %d!?",code);
+		NERROR1(DEFAULT_ERROR_STRING);
+	}
+	sprintf(DEFAULT_ERROR_STRING,"%s",x_error_description[code]);
+	NADVISE(DEFAULT_ERROR_STRING);
+}
+
+static int quip_x_error_handler(Display *dpy_p, XErrorEvent *event_p)
+{
+	identify_x11_request( event_p->request_code );
+	identify_x11_error( event_p->error_code );
+	return -1;
+}
+
 void window_sys_init(SINGLE_QSP_ARG_DECL)
 {
 	char s[8];
 	Variable *vp;
+	int (*old_handler)(Display *,XErrorEvent*);
 
 	if( window_sys_inited ) return;
 
 #ifdef QUIP_DEBUG
 	xdebug = add_debug_module(QSP_ARG  "xsupp");
 #endif /* QUIP_DEBUG */
+
+//int (*XSetErrorHandler(handler))()
+     // int (*handler)(Display *, XErrorEvent *)
+	init_error_names();
+     	old_handler = XSetErrorHandler(quip_x_error_handler);
+fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
+
 
 	add_event_func(QSP_ARG  i_loop);
 	set_discard_func( discard_events );
