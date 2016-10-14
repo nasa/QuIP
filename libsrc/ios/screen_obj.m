@@ -84,7 +84,7 @@ static IOS_Item_Type *scrnobj_itp=NO_IOS_ITEM_TYPE;
 }
 @end
 
-IOS_ITEM_INIT_FUNC(Screen_Obj,scrnobj)
+IOS_ITEM_INIT_FUNC(Screen_Obj,scrnobj,0)
 IOS_ITEM_CHECK_FUNC(Screen_Obj,scrnobj)
 IOS_ITEM_NEW_FUNC(Screen_Obj,scrnobj)
 IOS_ITEM_PICK_FUNC(Screen_Obj,scrnobj)

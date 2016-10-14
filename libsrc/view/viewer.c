@@ -22,7 +22,7 @@ static IOS_Item_Type *vwr_itp=NO_IOS_ITEM_TYPE;
 // This is almost all of them!?
 #ifdef BUILD_FOR_OBJC
 
-IOS_ITEM_INIT_FUNC(Viewer,vwr)
+IOS_ITEM_INIT_FUNC(Viewer,vwr,0)
 
 #else /* ! BUILD_FOR_OBJC */
 

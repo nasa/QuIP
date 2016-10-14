@@ -105,19 +105,19 @@ static IOS_Item_Type *nav_item_itp=NO_IOS_ITEM_TYPE;
 
 
 
-IOS_ITEM_INIT_FUNC(Nav_Panel,nav_panel)
+IOS_ITEM_INIT_FUNC(Nav_Panel,nav_panel,0)
 IOS_ITEM_NEW_FUNC(Nav_Panel,nav_panel)
 IOS_ITEM_CHECK_FUNC(Nav_Panel,nav_panel)
 IOS_ITEM_PICK_FUNC(Nav_Panel,nav_panel)
 IOS_ITEM_ENUM_FUNC(Nav_Panel,nav_panel)
 
-IOS_ITEM_INIT_FUNC(Nav_Group,nav_group)
+IOS_ITEM_INIT_FUNC(Nav_Group,nav_group,0)
 IOS_ITEM_NEW_FUNC(Nav_Group,nav_group)
 IOS_ITEM_CHECK_FUNC(Nav_Group,nav_group)
 IOS_ITEM_PICK_FUNC(Nav_Group,nav_group)
 IOS_ITEM_DEL_FUNC(Nav_Group,nav_group)
 
-IOS_ITEM_INIT_FUNC(Nav_Item,nav_item)
+IOS_ITEM_INIT_FUNC(Nav_Item,nav_item,0)
 IOS_ITEM_NEW_FUNC(Nav_Item,nav_item)
 IOS_ITEM_PICK_FUNC(Nav_Item,nav_item)
 IOS_ITEM_CHECK_FUNC(Nav_Item,nav_item)

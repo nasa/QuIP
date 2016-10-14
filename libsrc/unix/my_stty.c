@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "quip_prot.h"
+#include "quip_menu.h"
 
 #ifdef TTY_CTL
 #include "ttyctl.h"

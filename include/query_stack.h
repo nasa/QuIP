@@ -352,7 +352,6 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 // some prototypes
 
 extern void rls_mouthful(Mouthful *mfp);
-extern Mouthful *new_mouthful(const char * text, const char *filename);
 
 
 #endif /* !  _QUERY_STACK_H_ */

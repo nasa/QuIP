@@ -1,4 +1,6 @@
 
+OBSOLET_FILE!!!
+
 #include "quip_config.h"
 
 /*
@@ -22,6 +24,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "debug.h"
+#include "debug.h"
 
 #ifdef QUIP_DEBUG
 static u_long debug_dictionary=DICT_DEBUG_MASK;

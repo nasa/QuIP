@@ -1,6 +1,10 @@
 #ifndef _FUNCTION_H_
 #define _FUNCTION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "item_type.h"
 #include "shape_bits.h"
 #include "data_obj.h"
@@ -244,7 +248,8 @@ extern Item *find_tsable(QSP_ARG_DECL  const char *name);
 extern double erfinv(double);
 extern float erfinvf(float);
 
-// from psych library...
+// formerly from psych library...
+// now in libinterpreter to support expressions
 extern double ptoz( double p );
 extern double ztop( double z );
 
@@ -253,10 +258,10 @@ extern void add_##type_stem(QSP_ARG_DECL  Item_Type *itp,	\
 	func_type *func_str_ptr, Item *(*lookup)(QSP_ARG_DECL  const char *));
 
 #ifdef FOOBAR
-extern void add_sizable(QSP_ARG_DECL  Item_Type *itp,Size_Functions *sfp,
-			Item *(*lookup)(QSP_ARG_DECL  const char *));
-extern void add_tsable(QSP_ARG_DECL  Item_Type *itp,Timestamp_Functions *sfp,
-			Item *(*lookup)(QSP_ARG_DECL  const char *));
+//extern void add_sizable(QSP_ARG_DECL  Item_Type *itp,Size_Functions *sfp,
+//			Item *(*lookup)(QSP_ARG_DECL  const char *));
+//extern void add_tsable(QSP_ARG_DECL  Item_Type *itp,Timestamp_Functions *sfp,
+//			Item *(*lookup)(QSP_ARG_DECL  const char *));
 #endif // FOOBAR
 
 ADD_CLASS_PROTOTYPE(sizable,Size_Functions)
@@ -264,6 +269,11 @@ ADD_CLASS_PROTOTYPE(tsable,Timestamp_Functions)
 ADD_CLASS_PROTOTYPE(interlaceable,Interlace_Functions)
 ADD_CLASS_PROTOTYPE(positionable,Position_Functions)
 ADD_CLASS_PROTOTYPE(subscriptable,Subscript_Functions)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _FUNCTION_H_ */
 

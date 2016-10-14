@@ -210,10 +210,12 @@ char *message_string(SINGLE_QSP_ARG_DECL)
 	return THIS_QSP->qs_msg_str;
 }
 
+#ifdef HAVE_LIBCURL
 Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
 {
 	return THIS_QSP->qs_curl_info;
 }
+#endif // HAVE_LIBCURL
 
 Vec_Expr_Node * qs_top_node( SINGLE_QSP_ARG_DECL  )
 {
@@ -252,7 +254,7 @@ const char *qs_curr_string(SINGLE_QSP_ARG_DECL)
 
 char *qs_expr_string(SINGLE_QSP_ARG_DECL)
 {
-	return (qsp)->_qs_expr_string;
+	return THIS_QSP->_qs_expr_string;
 }
 
 Input_Format_Spec *qs_ascii_input_format(SINGLE_QSP_ARG_DECL)

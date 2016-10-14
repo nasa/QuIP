@@ -2522,7 +2522,7 @@ static void init_parser_data(Query_Stack *qsp)
 	SET_QS_YY_LAST_LINE(qsp,getbuf(LLEN));
 	SET_QS_EXPR_STRING(qsp,getbuf(LLEN));
 	SET_QS_EDEPTH(qsp, -1);
-	SET_QS_CURR_STRING(qsp, QS_EXPR_STRING );
+	SET_QS_CURR_STRING(qsp, qsp->_qs_expr_string );
 }
 
 // Initialize a Query_Stack

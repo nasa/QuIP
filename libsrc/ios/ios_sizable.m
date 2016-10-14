@@ -225,6 +225,7 @@ DECLARE_CLASS_FCHECK_FUNC(sizable,IOS_Size_Functions,sz_func)
 DECLARE_CLASS_FCHECK_FUNC(positionable,IOS_Position_Functions,posn_func)
 DECLARE_CLASS_FCHECK_FUNC(interlaceable,IOS_Interlace_Functions,il_func)
 
+#ifdef FOOBAR
 int check_ios_strv_func( const char **strptr, Function *funcp,
 						Scalar_Expr_Node *argp )
 {
@@ -243,10 +244,44 @@ int check_ios_strv_func( const char **strptr, Function *funcp,
 		NERROR1("Error getting ios functions!?");
 		return 0;
 	}
+    /*
 	*strptr = (*(funcp->fn_u.strv_func) )
 				(DEFAULT_QSP_ARG  (__bridge Item *) ip );
+     */
+    *strptr = (*(funcp->fn_u.strv_func) )
+				(DEFAULT_QSP_ARG  IOS_ITEM_NAME(ip) );
+    
 	return 1;
 }
+
+int check_ios_strv2_func( const char **strptr, Function *funcp,
+				Scalar_Expr_Node *argp, Scalar_Expr_Node *arg2p )
+{
+	IOS_Item *ip;
+
+	ip = eval_ios_sizable(argp);
+	if( ip == NO_IOS_ITEM ){
+		/* *retval = -1; */	/* don't really need to set anything */
+		return 0;
+	}
+
+	IOS_Size_Functions *isfp =
+			get_ios_sizable_functions(DEFAULT_QSP_ARG  ip);
+
+	if( isfp == NULL ){
+		NERROR1("Error getting ios functions!?");
+		return 0;
+	}
+    /*
+	*strptr = (*(funcp->fn_u.strv_func) )
+				(DEFAULT_QSP_ARG  (__bridge Item *) ip );
+     */
+    *strptr = (*(funcp->fn_u.strv_func) )
+				(DEFAULT_QSP_ARG  IOS_ITEM_NAME(ip) );
+    
+	return 1;
+}
+#endif // FOOBAR
 
 const char *default_prec_name(QSP_ARG_DECL  void *ip)
 {

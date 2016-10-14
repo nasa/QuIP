@@ -1,6 +1,8 @@
 #ifndef _NODE_H_
 #define _NODE_H_
 
+#include "quip_fwd.h"
+
 struct node {
 	void *		n_data;
 	struct node *	n_next;

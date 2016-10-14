@@ -1,6 +1,10 @@
 #ifndef _QUIP_PROT_H_
 #define _QUIP_PROT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "quip_config.h"
 
 #ifndef CAUTIOUS
@@ -170,6 +174,8 @@ extern Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name);
 ITEM_INIT_PROT(Query_Stack,query_stack)
 ITEM_LIST_PROT(Query_Stack,query_stack)
 
+extern Mouthful *new_mouthful(const char * text, const char *filename);
+
 // item_type.c
 ITEM_LIST_PROT(Item_Type,ittyp)
 ITEM_PICK_PROT(Item_Type,ittyp)
@@ -180,6 +186,9 @@ ITEM_PICK_PROT(Item_Type,ittyp)
 //#define CURL_STRINGBUF	curl_stringbuf(SINGLE_QSP_ARG)
 extern Curl_Info *		qs_curl_info(SINGLE_QSP_ARG_DECL);
 #define QS_CURL_INFO		qs_curl_info(SINGLE_QSP_ARG)
+
+#endif // HAVE_LIBCURL
+
 
 extern String_Buf *		qs_scratch_buffer(SINGLE_QSP_ARG_DECL);
 #define QS_SCRATCH		qs_scratch_buffer(SINGLE_QSP_ARG)
@@ -209,8 +218,6 @@ extern char *			qs_expr_string(SINGLE_QSP_ARG_DECL);
 
 //#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
 
-
-#endif // HAVE_LIBCURL
 
 extern char *error_string(SINGLE_QSP_ARG_DECL);
 extern char *message_string(SINGLE_QSP_ARG_DECL);
@@ -514,6 +521,11 @@ extern int quip_verbose;
 #define verbose quip_verbose
 
 #include "warn.h"
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _QUIP_PROT_H_ */
 

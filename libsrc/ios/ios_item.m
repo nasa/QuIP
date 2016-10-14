@@ -561,10 +561,10 @@ void delete_ios_item_context(QSP_ARG_DECL  IOS_Item_Context *icp)
 	// nothing bad will happen if we do!
 }
 
-IOS_ITEM_INIT_FUNC(IOS_Item_Type,ios_item_type)
+IOS_ITEM_INIT_FUNC(IOS_Item_Type,ios_item_type,0)
 IOS_ITEM_NEW_FUNC(IOS_Item_Type,ios_item_type)
 IOS_ITEM_CHECK_FUNC(IOS_Item_Type,ios_item_type)
-IOS_ITEM_INIT_FUNC(IOS_Item_Context,ios_ctx)
+IOS_ITEM_INIT_FUNC(IOS_Item_Context,ios_ctx,0)
 IOS_ITEM_NEW_FUNC(IOS_Item_Context,ios_ctx)
 IOS_ITEM_DEL_FUNC(IOS_Item_Context,ios_ctx)
 

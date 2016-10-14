@@ -12,12 +12,12 @@ typedef int QUIP_BOOL;
 /* BUT conflicts with X11 !? */
 #define Quip_String	const char
 
-
 #define FWD_TYPEDEF(struct_name,typedef_name)			\
 struct struct_name; typedef struct struct_name typedef_name;
 
 FWD_TYPEDEF(query,Query)
 FWD_TYPEDEF(query_stack,Query_Stack)
+
 FWD_TYPEDEF(mouthful,Mouthful)
 FWD_TYPEDEF(my_pipe,Pipe)
 FWD_TYPEDEF(list,List)
@@ -44,7 +44,6 @@ FWD_TYPEDEF(dimension_set,Dimension_Set)
 FWD_TYPEDEF(increment_set,Increment_Set)
 FWD_TYPEDEF(item_class,Item_Class)
 FWD_TYPEDEF(member_info,Member_Info)
-FWD_TYPEDEF(viewer,Viewer)
 FWD_TYPEDEF(foreach_loop,Foreach_Loop)
 FWD_TYPEDEF(frag_match_info,Frag_Match_Info)
 FWD_TYPEDEF(hash_tbl,Hash_Tbl)
@@ -54,6 +53,10 @@ FWD_TYPEDEF(platform_device,Platform_Device)
 FWD_TYPEDEF(curl_info,Curl_Info)
 
 typedef List Stack;
+
+#ifndef BUILD_FOR_OBJC
+FWD_TYPEDEF(viewer,Viewer)
+#endif // ! BUILD_FOR_OBJC
 
 #include "thread_safe_defs.h"
 
@@ -82,6 +85,9 @@ storage ITEM_LIST_PROT(type,stem)				\
 storage ITEM_ENUM_PROT(type,stem)				\
 storage ITEM_DEL_PROT(type,stem)				\
 storage ITEM_PICK_PROT(type,stem)
+
+#define STRINGIFY(s)	_STRINGIFY(s)
+#define _STRINGIFY(s)	#s
 
 #endif // ! _QUIP_FWD_H_
 

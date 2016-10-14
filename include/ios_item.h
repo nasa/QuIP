@@ -109,7 +109,7 @@ extern IOS_Item_Context *new_ctx(QSP_ARG_DECL  const char *name);
 extern IOS_Item *new_ios_item(QSP_ARG_DECL  IOS_Item_Type *itp, const char *name, int size);
 
 
-#define IOS_ITEM_INIT_PROT(type,stem)				\
+#define IOS_ITEM_INIT_PROT(type,stem)		\
 								\
 extern void init_##stem##s(SINGLE_QSP_ARG_DECL);
 
@@ -197,7 +197,7 @@ type *stem##_of(QSP_ARG_DECL  const char *name)			\
 
 // This init_func definition used to set up the itp,
 // but this is already done in the initClass method!?
-#define IOS_ITEM_INIT_FUNC(type,stem)				\
+#define IOS_ITEM_INIT_FUNC(type,stem,container_type)		\
 								\
 void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 {								\

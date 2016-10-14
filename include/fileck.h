@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
 #include "quip_fwd.h"
 
 extern int path_exists(QSP_ARG_DECL  const char *name);

@@ -692,6 +692,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 
 		case N_STRVFUNC:
+#ifdef FOOBAR
 #ifdef BUILD_FOR_OBJC
 			// BUG BUG BUG
 			if( check_ios_strv_func(&s,enp->sen_func_p,
@@ -700,6 +701,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 				return s;
 			}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 			// why sizable?  this is supposed to be a string arg...
 			// This makes sense only for the "precision" function -
 			// but what about touuper etc?
@@ -710,6 +712,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 			break;
 
 		case N_STRV2FUNC:
+#ifdef FOOBAR
 #ifdef BUILD_FOR_OBJC
 			// BUG BUG BUG ? (why?)
 			if( check_ios_strv2_func(&s,enp->sen_func_p,
@@ -718,6 +721,7 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 				return s;
 			}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 			// why sizable???
 			/*
 			szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
@@ -1494,6 +1498,7 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_double(dval);
 		break;
 	case N_STRVFUNC:		// eval_expr
+#ifdef FOOBAR
 		/* We have problems mixing IOS objects and C structs... */
 #ifdef BUILD_FOR_OBJC
 		if( check_ios_strv_func(&s,enp->sen_func_p,
@@ -1502,6 +1507,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 		// BUG - if this is to support the precision function, then
 		// the sizable lookup should be done within the function, not here!
 		/*
@@ -1513,6 +1519,7 @@ dump_enode(QSP_ARG  enp);
 		tsp = scalar_for_string(s);
 		break;
 	case N_STRV2FUNC:		// eval_expr
+#ifdef FOOBAR
 #ifdef BUILD_FOR_OBJC
 		if( check_ios_strv2_func(&s,enp->sen_func_p,
 				enp->sen_child[0],enp->sen_child[0]) ){
@@ -1520,6 +1527,7 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
+#endif // FOOBAR
 		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 		s2 = EVAL_SCALEXP_STRING(enp->sen_child[1]);
 		s = (*enp->sen_func_p->fn_u.strv2_func)( QSP_ARG s, s2 );

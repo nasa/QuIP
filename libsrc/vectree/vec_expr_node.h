@@ -106,7 +106,7 @@ typedef enum {
 	N_NODE_DATA_TYPES	/* 14 */
 } Node_Data_Type;
 
-typedef struct vec_expr_node {
+struct vec_expr_node {
 	struct vec_expr_node *		ven_child[MAX_NODE_CHILDREN];
 	int				ven_serial;
 	int				ven_flags;
@@ -120,7 +120,7 @@ typedef struct vec_expr_node {
 	uint32_t			ven_flops;
 	uint32_t			ven_nmath;
 	Node_Data			ven_data;
-} Vec_Expr_Node;
+} ;
 
 #define INIT_ENODE_PTR(enp)		enp=((Vec_Expr_Node *)getbuf(sizeof(Vec_Expr_Node)));
 

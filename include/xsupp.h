@@ -17,10 +17,8 @@ typedef struct sfont {
 
 #define NO_XFONT	((XFont *)NULL)
 
-#ifdef HAVE_VBL
-/* vgt.c */
+/* vbl.c */
 extern void vbl_wait(void);
-#endif /* HAVE_VBL */
 
 extern void set_font(Viewer *,XFont *);
 extern Viewer *find_viewer(QSP_ARG_DECL  Window win);

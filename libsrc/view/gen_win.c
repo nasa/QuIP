@@ -102,7 +102,7 @@ static IOS_Position_Functions genwin_pf={
 
 @end
 
-IOS_ITEM_INIT_FUNC(Gen_Win,genwin)
+IOS_ITEM_INIT_FUNC(Gen_Win,genwin,0)
 IOS_ITEM_NEW_FUNC(Gen_Win,genwin)
 IOS_ITEM_CHECK_FUNC(Gen_Win,genwin)
 IOS_ITEM_GET_FUNC(Gen_Win,genwin)

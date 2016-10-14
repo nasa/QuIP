@@ -4,6 +4,7 @@
 #include "quipAppDelegate.h"
 #include "quip_prot.h"
 #include "ios_prot.h"
+#include "quip_menu.h"
 
 // Someday we may want to use these event queues???
 

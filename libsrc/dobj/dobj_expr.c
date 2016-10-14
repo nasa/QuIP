@@ -1,5 +1,5 @@
 
-#include "quip_config.h"
+#include <string.h>
 #include "quip_prot.h"
 #include "nexpr.h"
 #include "function.h"

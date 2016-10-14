@@ -390,7 +390,4 @@ extern int platform_dispatch(QSP_ARG_DECL  const Compute_Platform *cpp,
 extern int platform_dispatch_by_code(QSP_ARG_DECL  int code, Vec_Obj_Args *oap );
 extern void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 
-#define STRINGIFY(s)	_STRINGIFY(s)
-#define _STRINGIFY(s)	#s
-
 #endif // _PLATFORM_H_

@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+#include "function.h"
 
 #ifdef BUILD_FOR_IOS
 

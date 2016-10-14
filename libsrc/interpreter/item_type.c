@@ -1551,8 +1551,8 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 #endif /* THREAD_SAFE_QUERY */
 
 static Item_Type *frag_itp=NULL;
-static ITEM_INIT_FUNC(Frag_Match_Info,frag,HASH_TBL_CONTAINER);
-static ITEM_NEW_FUNC(Frag_Match_Info,frag);
+static ITEM_INIT_FUNC(Frag_Match_Info,frag,HASH_TBL_CONTAINER)
+static ITEM_NEW_FUNC(Frag_Match_Info,frag)
 //static ITEM_CHECK_FUNC(Frag_Match_Info,frag);
 
 static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
