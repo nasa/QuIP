@@ -215,3 +215,48 @@ Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
 	return THIS_QSP->qs_curl_info;
 }
 
+Vec_Expr_Node * qs_top_node( SINGLE_QSP_ARG_DECL  )
+{
+	return THIS_QSP->qs_top_enp;
+}
+
+void set_top_node( QSP_ARG_DECL  Vec_Expr_Node *enp )
+{
+	THIS_QSP->qs_top_enp = enp;
+}
+
+const char * qs_filename( SINGLE_QSP_ARG_DECL )
+{
+	return QRY_FILENAME(CURR_QRY(THIS_QSP));
+}
+
+int qs_serial_func(SINGLE_QSP_ARG_DECL)
+{
+	return _QS_SERIAL(THIS_QSP);
+}
+
+String_Buf *qs_scratch_buffer(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_scratch;
+}
+
+void set_curr_string(QSP_ARG_DECL  const char *s)
+{
+	SET_QS_CURR_STRING(THIS_QSP,s);
+}
+
+const char *qs_curr_string(SINGLE_QSP_ARG_DECL)
+{
+	return _QS_CURR_STRING(THIS_QSP);
+}
+
+char *qs_expr_string(SINGLE_QSP_ARG_DECL)
+{
+	return (qsp)->_qs_expr_string;
+}
+
+Input_Format_Spec *qs_ascii_input_format(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_dai_p->dai_input_fmt;
+}
+

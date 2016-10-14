@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "query_stack.h"
+#include "quip_fwd.h"
 
 extern int path_exists(QSP_ARG_DECL  const char *name);
 extern int directory_exists(QSP_ARG_DECL  const char *dirname);

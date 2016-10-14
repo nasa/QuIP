@@ -5,6 +5,8 @@
 #include "quip_prot.h"
 #include "my_encryption.h"
 #include "fileck.h"
+#include "getbuf.h"
+#include "strbuf.h"
 
 #ifdef HAVE_SECRET_KEY
 
@@ -343,9 +345,11 @@ cleanup:
 // We know the size of the text when we allocate the data buffer,
 // So as long as we only call here we should be OK.
 
+#define MAX_LINE_SIZE	512
+
 static long convert_lines_from_hex(uint8_t *data, const char *text)
 {
-	char linebuf[LLEN];
+	char linebuf[MAX_LINE_SIZE];
 	const char *line_end, *line_start;
 	long total_converted=0;
 	long n_converted;
@@ -373,7 +377,7 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 //#endif /* CAUTIOUS */
 		assert( n_to_copy > 0 );
 
-		if( n_to_copy >= LLEN ){
+		if( n_to_copy >= MAX_LINE_SIZE ){
 			NWARN("convert_lines_from_hex:  line too long!?");
 			return -1;
 		}
@@ -461,11 +465,11 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	inbuf = getbuf(buf_size);
 
 #ifdef READ_LINE_BY_LINE
-	char line_buf[LLEN];	// the actual line should be much smaller
+	char line_buf[MAX_LINE_SIZE];	// the actual line should be much smaller
 	long n_converted;
 
 	uint8_t *buf=inbuf;
-	while( fgets(line_buf,LLEN,fp_in) != NULL ){
+	while( fgets(line_buf,MAX_LINE_SIZE,fp_in) != NULL ){
 		int i;
 		i=strlen(line_buf)-1;
 		if( line_buf[i] == '\n' ) line_buf[i]=0;

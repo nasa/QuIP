@@ -10,6 +10,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "dobj_prot.h"
+#include "debug.h"
 
 // BUG prec_for_code should use table lookup instead of list search
 

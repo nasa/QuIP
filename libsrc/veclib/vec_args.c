@@ -7,7 +7,7 @@
 
 #include "nvf.h"
 //#include "new_chains.h"
-//#include "debug.h"
+#include "debug.h"
 //#include "warn.h"
 //#include "getbuf.h"
 

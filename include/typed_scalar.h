@@ -55,7 +55,7 @@ extern int64_t llong_for_scalar(Typed_Scalar *tsp);
 extern int32_t long_for_scalar(Typed_Scalar *tsp);
 extern index_t index_for_scalar(Typed_Scalar *tsp);
 extern void show_typed_scalar(Typed_Scalar *tsp);
-extern void string_for_typed_scalar(char *buf, Typed_Scalar *tsp);
+extern void string_for_typed_scalar(char *buf, int buflen, Typed_Scalar *tsp);
 extern char *scalar_string(Typed_Scalar *tsp);
 
 #endif // _TYPED_SCALAR_H

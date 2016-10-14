@@ -1,6 +1,7 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "container.h"
+#include "getbuf.h"
 #include <assert.h>
 #include <string.h>
 

@@ -21,7 +21,6 @@ struct list {
 #endif /* THREAD_SAFE_QUERY */
 } ;
 
-#define NEW_LIST		new_list()
 #define INIT_LIST(lp)		{ lp->l_head=NO_NODE; lp->l_tail=NO_NODE; }
 #define ALLOC_LIST		((List *)getbuf(sizeof(List)))
 
@@ -80,23 +79,6 @@ struct list {
 #define QLIST_TAIL(lp)	lp->l_tail
 #define SET_QLIST_HEAD(lp,np)	lp->l_head = np
 #define SET_QLIST_TAIL(lp,np)	lp->l_tail = np
-
-extern List *new_list(void);
-extern Node *remHead(List *lp);
-extern Node *remTail(List *lp);
-extern void addHead(List *lp, Node *np);
-extern Node * remNode(List *lp, Node *np);
-extern Node *remData(List *lp, void * data);
-extern void rls_list(List *lp);
-extern void rls_nodes_from_list(List *lp);
-extern void addTail(List *lp, Node *np);
-extern void dellist(List *lp);
-extern Node *nodeOf( List *lp, void * ip );
-extern Node * list_find_named_item(List *lp, const char *name);
-
-extern void p_sort(List *lp);
-extern Node *nth_elt(List *lp, count_t k);
-extern Node *nth_elt_from_tail(List *lp, count_t k);
 
 #define IS_EMPTY(lp)	(QLIST_HEAD(lp)==NO_NODE)
 

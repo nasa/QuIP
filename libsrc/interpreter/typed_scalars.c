@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "typed_scalar.h"
+#include "debug.h"
 
 #define MAX_TYPED_SCALARS	32
 
@@ -271,15 +272,19 @@ index_t index_for_scalar(Typed_Scalar *tsp)
 	return (index_t) v;
 }
 
-void string_for_typed_scalar(char *buf, Typed_Scalar *tsp)
+void string_for_typed_scalar(char *buf,int buflen, Typed_Scalar *tsp)
 {
+	// BUG should check buffer length even for the numbers...
 	if( TS_PREC(tsp) == PREC_DP ){
 		sprintf(buf,"%g",tsp->ts_value.u_d);
 	} else if( TS_PREC(tsp) == PREC_LI ){
 		sprintf(buf,"0x%"PRIx64, tsp->ts_value.u_ll);
 	} else if( TS_PREC(tsp) == PREC_STR ){
-		// BUG possible buffer overrun!?
-		sprintf(buf,"%s",(char *)tsp->ts_value.u_vp);
+		if( strlen( (char *) tsp->ts_value.u_vp ) >= buflen ){
+			NWARN("string_for_typed_scalar:  value would overrun fixed-size buffer!?");
+		}
+		//sprintf(buf,"%s",(char *)tsp->ts_value.u_vp);
+		strncpy(buf,tsp->ts_value.u_vp,buflen);
 	} else {
 		/*
 		sprintf(DEFAULT_ERROR_STRING,
@@ -291,11 +296,14 @@ void string_for_typed_scalar(char *buf, Typed_Scalar *tsp)
 	}
 }
 
+#define BUFLEN	80
+
 void show_typed_scalar(Typed_Scalar *tsp)
 {
-	char str[LLEN];
+	char str[BUFLEN];
 
-	string_for_typed_scalar(str,tsp);
+	string_for_typed_scalar(str,BUFLEN,tsp);
+
 	if( TS_PREC(tsp) == PREC_DP ){
 		printf("double precision float:  %s\n",str);
 	} else if( TS_PREC(tsp) == PREC_LI ){

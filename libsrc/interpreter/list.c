@@ -372,25 +372,25 @@ void rls_list(List *lp)
 	addHead(free_list_list,np);
 }
 
-void addHead( List *lp, Node* node )		/**/
+void addHead( List *lp, Node* np )		/**/
 {
 	LOCK_LIST(lp)
 	if( QLIST_HEAD(lp) != NO_NODE ){
 		if( NODE_PREV(QLIST_HEAD(lp)) != NO_NODE ){	/* ring */
-			SET_NODE_PREV(node, QLIST_TAIL(lp));
-			SET_NODE_NEXT(QLIST_TAIL(lp), node);
+			SET_NODE_PREV(np, QLIST_TAIL(lp));
+			SET_NODE_NEXT(QLIST_TAIL(lp), np);
 
 		}
-		SET_NODE_PREV(QLIST_HEAD(lp), node);
-		SET_NODE_NEXT(node, QLIST_HEAD(lp));
+		SET_NODE_PREV(QLIST_HEAD(lp), np);
+		SET_NODE_NEXT(np, QLIST_HEAD(lp));
 	} else {
 		/* don't initialize this (for rings)
-		SET_NODE_NEXT(node, NO_NODE);
+		SET_NODE_NEXT(np, NO_NODE);
 		*/
 
-		SET_QLIST_TAIL(lp, node);
+		SET_QLIST_TAIL(lp, np);
 	}
-	SET_QLIST_HEAD(lp, node);
+	SET_QLIST_HEAD(lp, np);
 	UNLOCK_LIST(lp)
 }
 

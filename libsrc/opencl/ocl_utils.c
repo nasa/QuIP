@@ -477,10 +477,12 @@ cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 	return program;
 }
 
+#define BUF_SIZE	256
+
 static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pdp)
 {
 	cl_int ret;
-	char buf[LLEN];
+	char buf[BUF_SIZE];
 	char *bufp=buf;
 	size_t bytes_returned;
 	cl_build_status bs;
@@ -508,15 +510,15 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 		ret = clGetProgramBuildInfo( prog,
 				OCLDEV_DEV_ID(pdp),
 				CL_PROGRAM_BUILD_LOG,
-				LLEN,
+				BUF_SIZE,
 				bufp,
 				&bytes_returned
 				);
 		if( ret == CL_INVALID_VALUE ){
 			// probably insufficient buffer size?
-			if( bytes_returned > LLEN ){
+			if( bytes_returned > BUF_SIZE ){
 				int n;
-				bufp = getbuf(n=bytes_returned);
+				bufp = getbuf(n=bytes_returned);	// BUG?  memory leak?
 				ret = clGetProgramBuildInfo( prog,
 						OCLDEV_DEV_ID(pdp),
 						CL_PROGRAM_BUILD_LOG,

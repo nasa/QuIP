@@ -15,6 +15,7 @@
 
 #include "quip_prot.h"
 #include "query_prot.h"
+#include "query_stack.h"
 #include "nexpr.h"
 #include "rn.h"	// set_seed
 
@@ -187,18 +188,19 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 	Node *np, *newnp;
 	Macro *mp;
 	const char *mbuf;
-	char lc_frag[LLEN];
+	char *lc_frag;
 
 	if( macro_itp == NO_ITEM_TYPE ) return(NO_LIST);
 	lp=item_list(QSP_ARG  macro_itp);
 	if( lp == NO_LIST ) return(lp);
 
 	np=QLIST_HEAD(lp);
+	lc_frag = getbuf( strlen(frag) + 1 );
 	decap(lc_frag,frag);
 	while(np!=NO_NODE){
 		mp = (Macro*) NODE_DATA(np);
-		if( mp->m_text != NULL ){	/* NULL if no macro text... */
-			mbuf = savestr( MACRO_TEXT(mp) );
+		if( MACRO_TEXT(mp) != NULL ){	/* NULL if no macro text... */
+			mbuf = getbuf( strlen(MACRO_TEXT(mp))+1 );
 			/* make the match case insensitive */
 			decap((char *)mbuf,mbuf);
 			if( strstr(mbuf,lc_frag) != NULL ){
@@ -207,10 +209,11 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 				newnp=mk_node(mp);
 				addTail(newlp,newnp);
 			}
-			rls_str(mbuf);
+			givbuf((void *)mbuf);
 		}
 		np=NODE_NEXT(np);
 	}
+	givbuf(lc_frag);
 	return(newlp);
 }
 
@@ -234,7 +237,7 @@ static COMMAND_FUNC( do_show_mac )
 	Macro *mp;
 
 	mp=PICK_MACRO("macro name");
-	if( mp!= NO_MACRO )
+	if( mp!= NULL )
 		show_macro(QSP_ARG  mp);
 }
 
@@ -243,7 +246,7 @@ static COMMAND_FUNC( do_dump_mac )
 	Macro *mp;
 
 	mp=PICK_MACRO("macro name");
-	if( mp!= NO_MACRO )
+	if( mp!= NULL )
 		dump_macro(QSP_ARG  mp);
 }
 
@@ -276,7 +279,7 @@ static COMMAND_FUNC( do_info_mac )
 	Macro *mp;
 
 	mp=PICK_MACRO("macro name");
-	if( mp!= NO_MACRO )
+	if( mp!= NULL )
 		macro_info(QSP_ARG  mp);
 }
 
@@ -285,7 +288,7 @@ static COMMAND_FUNC( do_allow_macro_recursion )
 	Macro *mp;
 	
 	mp=PICK_MACRO("");
-	if( mp == NO_MACRO ) return;
+	if( mp == NULL ) return;
 	mp->m_flags |= ALLOW_RECURSION;
 }
 
@@ -351,7 +354,7 @@ static COMMAND_FUNC( do_def_mac )
 
 	// Now make sure this macro doesn't already exist
 	mp = macro_of(QSP_ARG  name);
-	if( mp != NO_MACRO ){
+	if( mp != NULL ){
 		sprintf(ERROR_STRING,"Macro \"%s\" already exists!?",name);
 		WARN(ERROR_STRING);
 		// Report where the macro was declared...
@@ -388,7 +391,7 @@ static COMMAND_FUNC( do_del_mac )
 
 	mp = PICK_MACRO("");
 
-	if( mp == NO_MACRO ) return;
+	if( mp == NULL ) return;
 
 	// first release the resources
 	rls_str( MACRO_FILENAME(mp) );
@@ -1103,22 +1106,22 @@ static COMMAND_FUNC( do_exit_macro )
 
 	done_level=(-1);	// pointless initialization to quiet compiler
 	i=QLEVEL;
-	mp = NO_MACRO;
+	mp = NULL;
 	while( i >= 0 ){
-		if( mp != NO_MACRO ){
+		if( mp != NULL ){
 			if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != mp ){
 				done_level=i;
 				i = -1;
 			}
 			// We need another test here to see if we are
 			// in a different invocation of a recursive macro!?
-		} else if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != NO_MACRO ){
+		} else if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != NULL ){
 			/* There is a macro to pop... */
 			mp = QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i));
 		}
 		i--;
 	}
-	if( mp == NO_MACRO ){
+	if( mp == NULL ){
 		WARN("exit_macro:  no macro to exit!?");
 		return;
 	}

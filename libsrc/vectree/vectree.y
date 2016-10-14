@@ -24,6 +24,7 @@
 #include "quip_prot.h"
 #include "veclib/vec_func.h"
 #include "warn.h"
+#include "query_stack.h"	// BUG?
 
 #include "vectree.h"
 
@@ -117,7 +118,8 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp);
 //#endif
 int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
-#define YY_ERR_STR	QS_ERROR_STRING(((Query_Stack *)qsp))	// this macro casts qsp, unlike ERROR_STRING
+//#define YY_ERR_STR	QS_ERROR_STRING(((Query_Stack *)qsp))	// this macro casts qsp, unlike ERROR_STRING
+#define YY_ERR_STR	ERROR_STRING
 
 %}
 
@@ -1210,15 +1212,15 @@ prog_elt	: subroutine
 		;
 
 program		: prog_elt END
-			{ TOP_NODE=$1;  }
+			{ SET_TOP_NODE($1);  }
 		| prog_elt
-			{ TOP_NODE=$1; }
+			{ SET_TOP_NODE($1); }
 		| program prog_elt END {
 			$$=NODE2(T_STAT_LIST,$1,$2);
 			if( $1 != NULL && NODE_IS_FINISHED($1) &&
 					$2 != NULL && NODE_IS_FINISHED($2) )
 				SET_VN_FLAG_BITS($$,NODE_FINISHED);
-			TOP_NODE=$$;
+			SET_TOP_NODE($$);
 			}
 		| program prog_elt {
 			// We don't need to make lists of statements
@@ -1227,12 +1229,12 @@ program		: prog_elt END
 			if( $1 != NULL && NODE_IS_FINISHED($1) &&
 					$2 != NULL && NODE_IS_FINISHED($2) )
 				SET_VN_FLAG_BITS($$,NODE_FINISHED);
-			TOP_NODE=$$;
+			SET_TOP_NODE($$);
 			}
 		| error END
 			{
 			$$ = NO_VEXPR_NODE;
-			TOP_NODE=$$;
+			SET_TOP_NODE($$);
 			}
 		;
 
@@ -2174,8 +2176,8 @@ static const char *match_quote(QSP_ARG_DECL  const char **spp)
 	*s=0;
 	if( c != '"' ) {
 		NWARN("missing quote");
-		sprintf(DEFAULT_ERROR_STRING,"string \"%s\" stored",CURR_STRING);
-		advise(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"string \"%s\" stored",CURR_STRING);
+		advise(ERROR_STRING);
 	} else (*spp)++;			/* skip over closing quote */
 
 	s=(char *)save_parse_string(VEXP_STR);
@@ -2781,7 +2783,7 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 				 * but may screw up EOF detection!?
 				 */
 
-	TOP_NODE=NO_VEXPR_NODE;
+	SET_TOP_NODE(NULL);
 
 	// we only use the last node for a commented out error dump?
 	LAST_NODE=NO_VEXPR_NODE;

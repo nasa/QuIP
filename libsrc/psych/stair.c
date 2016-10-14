@@ -5,6 +5,8 @@
 #include "stc.h"
 #include "rn.h"
 #include "item_type.h"
+#include "list.h"
+#include "getbuf.h"
 
 /* If CATCH_SIGS is defined, then we can use ^C to interrupt trials...
  *
@@ -59,7 +61,7 @@ ITEM_INTERFACE_DECLARATIONS(Staircase,stc,0)
 
 static List *stair_list(SINGLE_QSP_ARG_DECL)
 {
-	if( stc_itp==NO_ITEM_TYPE ) return(NO_LIST);
+	if( stc_itp==NO_ITEM_TYPE ) return(NULL);
 	return(item_list(QSP_ARG  stc_itp) );
 }
 
@@ -79,7 +81,7 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 	nstairs=0;
 
 	lp = stair_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
 	/* Don't we have a routine to delete all staircases? */
 	np=lp->l_head;
@@ -533,7 +535,7 @@ COMMAND_FUNC( del_all_stairs )
 advise("deleting all staircases");
 
 	lp=stair_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	np=lp->l_head;
 	while( np != NO_NODE ){
@@ -553,12 +555,12 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 
 	lp=item_list(QSP_ARG  trial_class_itp);
 //#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
+//	if( lp == NULL ){
 //		WARN("CAUTIOUS:  index_class:  no classes defined");
 //		return(NO_CLASS);
 //	}
 //#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	np=lp->l_head;
 	while(np!=NO_NODE){
@@ -600,7 +602,7 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	assert( trial_class_itp != NO_ITEM_TYPE );
 
 	lp=item_list(QSP_ARG  trial_class_itp);
-	if( lp == NO_LIST ) n=0;
+	if( lp == NULL ) n=0;
 	else n=(int)eltcount(lp);
 
 	tcp = class_for(QSP_ARG  n);
@@ -669,7 +671,7 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 
 List *class_list(SINGLE_QSP_ARG_DECL)
 {
-	if( trial_class_itp == NO_ITEM_TYPE ) return(NO_LIST);
+	if( trial_class_itp == NO_ITEM_TYPE ) return(NULL);
 	return( item_list(QSP_ARG  trial_class_itp) );
 }
 

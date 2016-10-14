@@ -7,6 +7,7 @@
 
 #include "xsupp.h"
 #include "xsupp_prot.h"
+#include "debug.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* getpid() */

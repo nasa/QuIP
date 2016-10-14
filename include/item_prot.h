@@ -6,9 +6,7 @@ extern "C" {
 #endif
 
 
-#include "query_stack.h"
-#include "item_type.h"
-
+#include "quip_fwd.h"
 
 extern void dump_items(SINGLE_QSP_ARG_DECL);
 extern void rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname);

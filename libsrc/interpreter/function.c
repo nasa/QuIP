@@ -1,4 +1,5 @@
 #include <string.h>
+#include <ctype.h>
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "function.h"
@@ -180,7 +181,7 @@ static double dmacroexists(QSP_ARG_DECL  const char *s)
 	Macro *mp;
 
 	mp = macro_of(QSP_ARG  s);
-	if( mp == NO_MACRO ) return 0.0;
+	if( mp == NULL ) return 0.0;
 	return 1.0;
 }
 

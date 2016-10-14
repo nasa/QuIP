@@ -152,7 +152,7 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 			// in the environment are reserved!
 			Variable *vp;
 			vp = VAR_OF(STARTUP_DIRNAME);
-			if( vp == NO_VARIABLE ){
+			if( vp == NULL ){
 				assign_var(QSP_ARG  STARTUP_DIRNAME,dir);
 			}
 		}

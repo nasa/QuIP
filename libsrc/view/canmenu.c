@@ -101,19 +101,28 @@ COMMAND_FUNC( mk_gl_window )
 		WARN("Error creating gl_window!?");
 }
 
+//#define MAX_ACTION_LEN		512	// BUG check for overrun or use string buffer...
+
 COMMAND_FUNC( mk_button_arena )
 {
 	Viewer *vp;
-	char b1[LLEN],b2[LLEN],b3[LLEN];
+	//char b1[MAX_ACTION_LEN],b2[MAX_ACTION_LEN],b3[MAX_ACTION_LEN];
+	const char *b1,*b2,*b3;
 
 	vp=mk_new_viewer(QSP_ARG VIEW_BUTTON_ARENA);
-	strcpy(b1,NAMEOF("left button text"));
-	strcpy(b2,NAMEOF("middle button text"));
-	strcpy(b3,NAMEOF("right button text"));
-	if( vp == NO_VIEWER ) return;
-	SET_VW_TEXT1(vp, savestr(b1) );
-	SET_VW_TEXT2(vp, savestr(b2) );
-	SET_VW_TEXT3(vp, savestr(b3) );
+	// Do we really have to copy these?
+	b1=savestr(NAMEOF("left button text"));
+	b2=savestr(NAMEOF("middle button text"));
+	b3=savestr(NAMEOF("right button text"));
+	if( vp == NO_VIEWER ){
+		rls_str(b1);
+		rls_str(b2);
+		rls_str(b3);
+	} else {
+		SET_VW_TEXT1(vp, b1 );
+		SET_VW_TEXT2(vp, b2 );
+		SET_VW_TEXT3(vp, b3 );
+	}
 }
 
 // reset_button_funcs was written when the only events
@@ -125,24 +134,30 @@ COMMAND_FUNC( mk_button_arena )
 COMMAND_FUNC( reset_button_funcs )
 {
 	Viewer *vp;
-	char b1[LLEN],b2[LLEN],b3[LLEN];
+	//char b1[LLEN],b2[LLEN],b3[LLEN];
+	const char *b1, *b2, *b3;
 
 	vp = PICK_VWR("");
 
-	strcpy(b1,NAMEOF("left button text"));
-	strcpy(b2,NAMEOF("middle button text"));
-	strcpy(b3,NAMEOF("right button text"));
+	b1=savestr(NAMEOF("left button text"));
+	b2=savestr(NAMEOF("middle button text"));
+	b3=savestr(NAMEOF("right button text"));
 
 advise("NOTE:  reset_button_funcs:  actions command is deprecated, use event_action instead");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NO_VIEWER ){
+		rls_str(b1);
+		rls_str(b2);
+		rls_str(b3);
+	} else {
+		// BUG?  do we know these are set already?
+		rls_str((char *)VW_TEXT1(vp));
+		rls_str((char *)VW_TEXT2(vp));
+		rls_str((char *)VW_TEXT3(vp));
 
-	rls_str((char *)VW_TEXT1(vp));
-	rls_str((char *)VW_TEXT2(vp));
-	rls_str((char *)VW_TEXT3(vp));
-
-	SET_VW_TEXT1(vp, savestr(b1) );
-	SET_VW_TEXT2(vp, savestr(b2) );
-	SET_VW_TEXT3(vp, savestr(b3) );
+		SET_VW_TEXT1(vp, b1 );
+		SET_VW_TEXT2(vp, b2 );
+		SET_VW_TEXT3(vp, b3 );
+	}
 }
 
 COMMAND_FUNC( do_set_event_action )

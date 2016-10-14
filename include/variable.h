@@ -51,22 +51,15 @@ extern const char *var_p_value(QSP_ARG_DECL  Variable *vp);
 ITEM_INIT_PROT(Variable,var_)
 ITEM_NEW_PROT(Variable,var_)
 ITEM_CHECK_PROT(Variable,var_)
-ITEM_PICK_PROT(Variable,var_)
-
-#define VAR_OF(s)	var_of(QSP_ARG  s)
-#define PICK_VAR(s)	pick_var_(QSP_ARG  s)
 
 extern Variable *create_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
 extern Variable *force_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
-extern Variable *var_of(QSP_ARG_DECL const char *name);
 extern void init_dynamic_var(QSP_ARG_DECL  const char *name,
 			const char *(*func)(SINGLE_QSP_ARG_DECL) );
-extern void init_variables(SINGLE_QSP_ARG_DECL);
 extern void reserve_variable(QSP_ARG_DECL  const char *name);
 extern void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 							const char *replace);
 extern void show_var(QSP_ARG_DECL  Variable *vp );
-extern void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val );
 
 
 

@@ -15,6 +15,7 @@
 #include "xsupp.h"
 #include "xsupp_prot.h"
 #include "viewer.h"
+#include "debug.h"
 
 #define NO_WINDOW ((Window)NULL)
 static Window curr_window=NO_WINDOW;

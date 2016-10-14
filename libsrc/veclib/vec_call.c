@@ -3,6 +3,7 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "nvf.h"
+#include "debug.h"
 
 /* BUG - this is only correct when the order of words in this table corresponds
  * to the ordering of the corresponding constants.  Better to have a software initialization

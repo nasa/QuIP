@@ -43,11 +43,12 @@ longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
 	for(i=0;i<MAX_SRCSCAL_ARGS; i++){
 		if( OA_SVAL(oap,i) != NULL ){
 			prec_t prec;
-			char msgbuf[LLEN];
+#define MSG_LEN	80
+			char msgbuf[MSG_LEN];
 			prec = PREC_FOR_ARGSET( OA_ARGSPREC(oap) );
 //fprintf(stderr,"formatting as float:  %g\n",*((float *)OA_SVAL(oap,i)) );
 			if( prec != PREC_NONE ){
-				format_scalar_value(QSP_ARG  msgbuf,(void *)OA_SVAL(oap,i),prec_for_code(prec));
+				format_scalar_value(QSP_ARG  msgbuf,MSG_LEN,(void *)OA_SVAL(oap,i),prec_for_code(prec));
 			}
 			else	strcpy(msgbuf,"(invalid precision)");
 				

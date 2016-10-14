@@ -10,8 +10,8 @@
 #include <string.h>
 
 #include "quip_prot.h"
+#include "debug.h"
 //#include "sigpush.h"
-//#include "debug.h"
 //#include "vars.h"
 //#include "tryhard.h"		/* try_open */
 

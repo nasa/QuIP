@@ -15,10 +15,10 @@ typedef enum {
 	IN_FMT_LIT
 } Input_Format_Type;
 
-typedef struct input_fmt_spec {
+struct input_format_spec {
 	Input_Format_Type	fmt_type;
 	const char *		fmt_litstr;
-} Input_Format_Spec;
+} ;
 
 #define MAX_FORMAT_FIELDS	64
 
@@ -51,7 +51,7 @@ typedef struct dobj_ascii_info {
 	Input_Format_Spec	dai_input_fmt[MAX_FORMAT_FIELDS];
 } Dobj_Ascii_Info;
 
-#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
+//#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
 #define	ascii_warned		THIS_QSP->qs_dai_p->dai_ascii_warned
 #define	ascii_data_dp		THIS_QSP->qs_dai_p->dai_ascii_data_dp
 #define	dobj_n_gotten		THIS_QSP->qs_dai_p->dai_dobj_n_gotten

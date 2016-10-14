@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 #include "quip_config.h"
 #include "fileck.h"

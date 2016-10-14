@@ -29,6 +29,7 @@
 #include "fileck.h"
 #include "vectree.h"
 #include "vt_native.h"
+#include "query_stack.h"		// BUG?
 
 //#include "mlab.h"
 
@@ -2544,7 +2545,7 @@ static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,i
 			/* maybe we could check the node shape instead of looking up the object? */
 			dp=EVAL_OBJ_REF(enp);
 			if( IS_SCALAR(dp) ){
-				format_scalar_obj(QSP_ARG  buf,dp,OBJ_DATA_PTR(dp));
+				format_scalar_obj(QSP_ARG  buf,64,dp,OBJ_DATA_PTR(dp));
 				STORE_QUERY_ARG( savestr(buf) )
 				return(1);
 			}
@@ -2813,7 +2814,7 @@ static const char *eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 			dp = EVAL_OBJ_REF(enp);
 			if( dp==NO_OBJ ) return("(null)");
 			if( IS_SCALAR(dp) )
-				format_scalar_obj(QSP_ARG  buf,dp,OBJ_DATA_PTR(dp));
+				format_scalar_obj(QSP_ARG  buf,128,dp,OBJ_DATA_PTR(dp));
 			else {
 				/*
 				NODE_ERROR(enp);
@@ -2991,7 +2992,7 @@ print_float:
 			else if( VN_CODE(enp) == T_PREDEC ) dec_obj(dp);
 
 			if( IS_SCALAR(dp) ){
-				format_scalar_obj(QSP_ARG  msg_str,dp,OBJ_DATA_PTR(dp));
+				format_scalar_obj(QSP_ARG  msg_str,LLEN,dp,OBJ_DATA_PTR(dp));
 				prt_msg_frag(msg_str);
 			} else {
 				/*

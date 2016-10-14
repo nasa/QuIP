@@ -15,6 +15,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "ascii_fmts.h"
+#include "query_stack.h"	// like to eliminate this dependency...
 
 
 
@@ -97,9 +98,9 @@ static void show_input_format(SINGLE_QSP_ARG_DECL)
 
 	while(i<n_format_fields){
 		if( i > 0 ) prt_msg_frag(" ");
-		switch( ascii_input_fmt[i].fmt_type ){
+		switch( ascii_input_fmt_tbl[i].fmt_type ){
 			case IN_FMT_STR:  prt_msg_frag("%s"); break;
-			case IN_FMT_LIT:  prt_msg_frag(ascii_input_fmt[i].fmt_litstr); break;
+			case IN_FMT_LIT:  prt_msg_frag(ascii_input_fmt_tbl[i].fmt_litstr); break;
 			case IN_FMT_FLT:  prt_msg_frag("%f"); break;
 			case IN_FMT_INT:  prt_msg_frag("%d"); break;
 		}
@@ -108,16 +109,18 @@ static void show_input_format(SINGLE_QSP_ARG_DECL)
 	prt_msg("");
 }
 
+#define MAX_LIT_STR_LEN	255
+
 void set_input_format_string( QSP_ARG_DECL  const char *s )
 {
 	const char *orig_str=s;
-	char lit_str[256];
+	char lit_str[MAX_LIT_STR_LEN+1];
 
 	while( n_format_fields > 0 ){
 		/* release any old literal strings */
 		n_format_fields--;
-		if( ascii_input_fmt[n_format_fields].fmt_type == IN_FMT_LIT )
-			rls_str( (char *) ascii_input_fmt[n_format_fields].fmt_litstr );
+		if( ascii_input_fmt_tbl[n_format_fields].fmt_type == IN_FMT_LIT )
+			rls_str( (char *) ascii_input_fmt_tbl[n_format_fields].fmt_litstr );
 	}
 
 	/* parse the string */
@@ -139,14 +142,14 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 				case 'x':
 				case 'o':
 				case 'i':
-					ascii_input_fmt[n_format_fields].fmt_type = IN_FMT_INT;
+					ascii_input_fmt_tbl[n_format_fields].fmt_type = IN_FMT_INT;
 					break;
 				case 'f':
 				case 'g':
-					ascii_input_fmt[n_format_fields].fmt_type = IN_FMT_FLT;
+					ascii_input_fmt_tbl[n_format_fields].fmt_type = IN_FMT_FLT;
 					break;
 				case 's':
-					ascii_input_fmt[n_format_fields].fmt_type = IN_FMT_STR;
+					ascii_input_fmt_tbl[n_format_fields].fmt_type = IN_FMT_STR;
 					break;
 			}
 			s++;
@@ -159,13 +162,13 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 		} else {	/* literal string */
 			int i=0;
 
-			ascii_input_fmt[n_format_fields].fmt_type=IN_FMT_LIT;
-			while( *s && !isspace(*s) && i < (LLEN-1) )
+			ascii_input_fmt_tbl[n_format_fields].fmt_type=IN_FMT_LIT;
+			while( *s && !isspace(*s) && i < MAX_LIT_STR_LEN )
 				lit_str[i++]=(*s++);
 			lit_str[i] = 0;
 			if( *s && !isspace(*s) )
 				WARN("literal string overflow in input format spec");
-			ascii_input_fmt[n_format_fields].fmt_litstr = savestr(lit_str);
+			ascii_input_fmt_tbl[n_format_fields].fmt_litstr = savestr(lit_str);
 		}
 		n_format_fields++;
 	}
@@ -186,11 +189,11 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 
 #define READ_LITERAL		{					\
 									\
-	s=NAMEOF(ascii_input_fmt[curr_fmt_i].fmt_litstr);			\
-	if( strcmp(s,ascii_input_fmt[curr_fmt_i].fmt_litstr) ){		\
+	s=NAMEOF(ascii_input_fmt_tbl[curr_fmt_i].fmt_litstr);			\
+	if( strcmp(s,ascii_input_fmt_tbl[curr_fmt_i].fmt_litstr) ){		\
 		sprintf(ERROR_STRING,					\
 	"expected literal string \"%s\", saw string \"%s\"",		\
-			ascii_input_fmt[curr_fmt_i].fmt_litstr,s);		\
+			ascii_input_fmt_tbl[curr_fmt_i].fmt_litstr,s);		\
 		WARN(ERROR_STRING);					\
 	}								\
 }
@@ -205,7 +208,7 @@ static long next_input_int(QSP_ARG_DECL   const char *pmpt)
 	int done=0;
 
 	do {
-		switch( ascii_input_fmt[curr_fmt_i].fmt_type ){
+		switch( ascii_input_fmt_tbl[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT:
 				READ_LITERAL;
 				break;
@@ -247,7 +250,7 @@ static double next_input_flt(QSP_ARG_DECL   const char *pmpt)
 	int done=0;
 
 	do {
-		switch( ascii_input_fmt[curr_fmt_i].fmt_type ){
+		switch( ascii_input_fmt_tbl[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT: READ_LITERAL; break;
 			case IN_FMT_STR: /*s=*/NAMEOF("don't-care string"); break;
 			case IN_FMT_FLT:
@@ -281,7 +284,7 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 	int done=0;
 
 	do {
-		switch( ascii_input_fmt[curr_fmt_i].fmt_type ){
+		switch( ascii_input_fmt_tbl[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT: READ_LITERAL; break;
 			case IN_FMT_STR:
 				if( havit ) SET_DONE
@@ -699,13 +702,14 @@ advise(ERROR_STRING);
  * It seems we are confused about what to do about bitmaps - BUG?
  */
 
-void format_scalar_obj(QSP_ARG_DECL  char *buf,Data_Obj *dp,void *data)
+void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data)
 {
 	//int64_t l;
 	int c;
 
 	if( OBJ_PREC(dp) == PREC_CHAR || OBJ_PREC(dp) == PREC_STR ){
 		c=(*(char *)data);
+		// BUG we don't check against buflen here, but should be OK
 		if( isalnum(c) || ispunct(c) )
 			sprintf(buf,"'%c'",c);
 		else
@@ -714,7 +718,7 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,Data_Obj *dp,void *data)
 	}
 
 	if( ! IS_BITMAP(dp) ){
-		format_scalar_value(QSP_ARG  buf,data,OBJ_PREC_PTR(dp));
+		format_scalar_value(QSP_ARG  buf,buflen,data,OBJ_PREC_PTR(dp));
 	}
 	/*
 	else {
@@ -724,7 +728,7 @@ void format_scalar_obj(QSP_ARG_DECL  char *buf,Data_Obj *dp,void *data)
 	*/
 }
 
-void format_scalar_value(QSP_ARG_DECL  char *buf,void *data,Precision *prec_p)
+void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p)
 {
 	mach_prec mp;
 	// long double is kind of inefficient unless we really need it?  BUG
@@ -764,6 +768,7 @@ pntflt:
 			 * But for a number like 4.000000001, we'd like to
 			 * suppress the fraction if "digits" is set to something small...
 			 */
+			// BUG - need to use safe snprintf or something!?
 			sprintf(buf,ffmtstr,ddata);
 			break;
 
@@ -787,7 +792,7 @@ char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
 	static char buf[64];
 
 fprintf(stderr,"string_for_scalar using precision %s\n",PREC_NAME(prec_p));
-	format_scalar_value(QSP_ARG  buf,data,prec_p);
+	format_scalar_value(QSP_ARG  buf,64,data,prec_p);
 	return buf;
 }
 
@@ -886,13 +891,13 @@ static void pnt_one(QSP_ARG_DECL  FILE *fp, Data_Obj *dp,  u_char *data )
 				if( j>0 && OBJ_MACH_DIM(dp,0) > dobj_max_per_line ){
 					fprintf(fp,"\n");
 				}
-				format_scalar_obj(QSP_ARG  buf,dp,data);
+				format_scalar_obj(QSP_ARG  buf,128,dp,data);
 				fprintf(fp," %s",buf);
 				data += inc;
 			}
 		}
 	} else {
-		format_scalar_obj(QSP_ARG  buf,dp,data);
+		format_scalar_obj(QSP_ARG  buf,128,dp,data);
 		fprintf(fp,"%s%s",ascii_separator,buf);
 	}
 } /* end pnt_one */

@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "viewer.h"
 #include "xsupp.h"
+#include "debug.h"
 #include <X11/Xproto.h>	// the request codes
 
 static Disp_Obj *current_dop=NO_DISP_OBJ;

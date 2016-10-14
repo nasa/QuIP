@@ -17,6 +17,7 @@
 #define BUILD_FOR_OPENCL
 
 #include "quip_prot.h"
+#include "strbuf.h"
 #include "my_ocl.h"	// 
 #include "ocl_platform.h"	// 
 #include "veclib_api.h"
@@ -115,8 +116,9 @@ void FREETMP_NAME(void *ptr,const char *whence)
 }
 
 #define MAX_OCL_DEVICES 5
+#define MAX_DIGIT_CHARS	12	// overkill
 
-static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,char *scratch_string)
+static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,char *scratch_string, int scratch_len)
 {
 	Platform_Device *pdp;
 	const char *s;
@@ -131,6 +133,10 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 
 		// This name is in use
 		n++;
+
+		if( strlen(name)+1+MAX_DIGIT_CHARS+1 > scratch_len )
+			ERROR1("available_ocl_device_name:  size of scratch_string is insufficient!?");
+
 		sprintf(scratch_string,"%s_%d",name,n);
 		s=scratch_string;
 	}
@@ -141,13 +147,18 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 	return(NULL);	// NOTREACHED - quiet compiler
 }
 
+#define MAX_AREA_NAME_LEN	80
+
 static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 {
-	char area_name[LLEN];
+	char area_name[MAX_AREA_NAME_LEN+1];
 	Data_Area *ap;
 
 	//strcpy(area_name,PFDEV_NAME(pdp));
-	// BUG - make sure names will fit?
+	// make sure names will fit - longest name is %s.%s_host_mapped
+	if( strlen(PLATFORM_NAME(PFDEV_PLATFORM(pdp)))+strlen(PFDEV_NAME(pdp))+strlen("._host_mapped") > MAX_AREA_NAME_LEN )
+		ERROR1("init_ocl_dev_memory:  area name too large for buffer, increase MAX_AREA_NAME_LEN!?");
+
 	sprintf(area_name,"%s.%s",
 		PLATFORM_NAME(PFDEV_PLATFORM(pdp)),PFDEV_NAME(pdp));
 
@@ -251,10 +262,10 @@ static void ocl_info(QSP_ARG_DECL  Compute_Platform *cdp)
 
 	// The extensions can be long...
 	s = (int) strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
-	if( s > SB_SIZE(QS_SCRATCH(DEFAULT_QSP)) )
-		enlarge_buffer( QS_SCRATCH(DEFAULT_QSP), s );
-	sprintf(SB_BUF(QS_SCRATCH(DEFAULT_QSP)),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
-	prt_msg(SB_BUF(QS_SCRATCH(DEFAULT_QSP)));
+	if( s > SB_SIZE(QS_SCRATCH) )
+		enlarge_buffer( QS_SCRATCH, s );
+	sprintf(SB_BUF(QS_SCRATCH),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
+	prt_msg(SB_BUF(QS_SCRATCH));
 }
 
 static int extension_supported( Platform_Device *pdp, const char *ext_str )
@@ -267,6 +278,8 @@ static int extension_supported( Platform_Device *pdp, const char *ext_str )
 
 #define MAX_PARAM_SIZE	128
 
+#define SCRATCH_LEN	128
+
 static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 							Compute_Platform *cpp)
 {
@@ -276,7 +289,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	//char name[LLEN];
 	char *name;
 	char *extensions;
-	char scratch[LLEN];
+	char scratch[SCRATCH_LEN];
 	static int n_ocl_devs=0;
 	const char *name_p;
 	char *s;
@@ -313,7 +326,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 	 * make sure that the name is not in use already.  If it is, then we append
 	 * a number to the string...
 	 */
-	name_p = available_ocl_device_name(QSP_ARG  name,scratch);	// use cname as scratch string
+	name_p = available_ocl_device_name(QSP_ARG  name,scratch,SCRATCH_LEN);	// use cname as scratch string
 	pdp = new_pfdev(QSP_ARG  name_p);
 
 	givbuf(name);

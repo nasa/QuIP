@@ -76,7 +76,7 @@ extern void set_array_base_index(QSP_ARG_DECL  int);
 extern void init_tmp_dps(SINGLE_QSP_ARG_DECL);
 extern Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp);
 extern Data_Obj * temp_child(QSP_ARG_DECL  const char *name,Data_Obj * dp);
-extern void make_array_name(QSP_ARG_DECL  char *target_str,Data_Obj * dp,
+extern void make_array_name(QSP_ARG_DECL  char *target_str,int buflen,Data_Obj * dp,
    index_t index,int which_dim,int subscr_type);
 extern Data_Obj * gen_subscript(QSP_ARG_DECL  Data_Obj * dp,
    int which_dim,index_t index,int subscr_type);
@@ -259,8 +259,8 @@ extern void verdata(SINGLE_QSP_ARG_DECL);
 
 /* ascii.c */
 extern void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
-extern void format_scalar_obj(QSP_ARG_DECL  char *buf,Data_Obj *dp,void *data);
-extern void format_scalar_value(QSP_ARG_DECL  char *buf,void *data,Precision *prec_p);
+extern void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
+extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p);
 extern char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p);
 extern void pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
 extern void read_ascii_data(QSP_ARG_DECL Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count);

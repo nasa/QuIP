@@ -1,11 +1,11 @@
 #ifndef _HASH_H_
 #define _HASH_H_
 
-#include "typedefs.h"
-#include "node.h"
-#include "list.h"
-#include "item_obj.h"
-#include "query_stack.h"
+#include "quip_fwd.h"
+//#include "node.h"
+//#include "list.h"
+//#include "item_obj.h"
+//#include "query_stack.h"
 
 struct hash_tbl {
 	const char *	ht_name;

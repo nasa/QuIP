@@ -6,6 +6,7 @@
 
 #include "stc.h"
 #include "param_api.h"
+#include "quip_menu.h"
 
 static Staircase s1;
 

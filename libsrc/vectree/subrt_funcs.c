@@ -6,6 +6,7 @@
 
 #include "quip_prot.h"
 #include "vectree.h"
+#include "query_stack.h"	// BUG
 
 
 /* We call this after we scan the body of a subroutine for which

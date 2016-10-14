@@ -9,6 +9,8 @@
 #include "warn.h"
 #include "shape_bits.h"
 #include "function.h"
+#include "strbuf.h"
+#include "query_stack.h"
 
 //#define YACC_HACK_PREFIX	quip
 //#include "yacc_hack.h"
@@ -995,7 +997,7 @@ N_CONDITIONAL
 			break;
 
 		case N_LITNUM:
-			string_for_typed_scalar(MSG_STR,enp->sen_tsp);
+			string_for_typed_scalar(MSG_STR,LLEN,enp->sen_tsp);
 			sprintf(ERROR_STRING,"0x%lx\tlit_num\t%s",
 				(long/*int_for_addr*/)enp,MSG_STR);
 			ADVISE(ERROR_STRING);

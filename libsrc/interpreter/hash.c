@@ -8,6 +8,7 @@
 #include "quip_prot.h"
 #include "debug.h"
 #include "hash.h"
+#include "getbuf.h"
 
 #ifdef QUIP_DEBUG
 static u_long hash_debug=HASH_DEBUG_MASK;

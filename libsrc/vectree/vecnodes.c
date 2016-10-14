@@ -8,6 +8,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "vectree.h"
+#include "query_stack.h"	// BUG?
 
 /* for definition of function codes */
 #include "veclib/vecgen.h"

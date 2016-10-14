@@ -35,6 +35,7 @@
 #include "query_prot.h"
 #include "item_prot.h"
 #include "container.h"
+#include "debug.h"
 
 #ifdef QUIP_DEBUG
 static u_long item_debug=ITEM_DEBUG_MASK;

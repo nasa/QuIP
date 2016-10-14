@@ -1076,7 +1076,7 @@ advise(ERROR_STRING);
  */
 
 #define RESULT		(QS_RESULT(THIS_QSP))
-#define SCRATCHBUF	(QS_SCRATCH(THIS_QSP))
+#define SCRATCHBUF	(QS_SCRATCH)
 
 static void var_expand(QSP_ARG_DECL  String_Buf *sbp)
 {
@@ -1690,7 +1690,7 @@ COMMAND_FUNC( set_completion )
 
 static void halt_stack(SINGLE_QSP_ARG_DECL)
 {
-	if( QS_SERIAL(THIS_QSP) == FIRST_QUERY_SERIAL )
+	if( QS_SERIAL == FIRST_QUERY_SERIAL )
 		nice_exit(QSP_ARG  0);
 	else {
 		SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
@@ -2274,7 +2274,7 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 #ifdef THREAD_SAFE_QUERY
 	n_active_threads++;
 
-	if( QS_SERIAL(new_qsp) == FIRST_QUERY_SERIAL )
+	if( _QS_SERIAL(new_qsp) == FIRST_QUERY_SERIAL )
 		SET_QS_FLAG_BITS(new_qsp,QS_HISTORY);
 	else {
 		CLEAR_QS_FLAG_BITS(new_qsp,QS_HISTORY);
@@ -2522,7 +2522,7 @@ static void init_parser_data(Query_Stack *qsp)
 	SET_QS_YY_LAST_LINE(qsp,getbuf(LLEN));
 	SET_QS_EXPR_STRING(qsp,getbuf(LLEN));
 	SET_QS_EDEPTH(qsp, -1);
-	SET_QS_CURR_STRING(qsp, QS_EXPR_STRING(qsp) );
+	SET_QS_CURR_STRING(qsp, QS_EXPR_STRING );
 }
 
 // Initialize a Query_Stack

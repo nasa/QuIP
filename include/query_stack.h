@@ -151,9 +151,9 @@ struct query_stack {
 #define	qs_yy_last_line		qs_parser_data->pd_yy_last_line
 #define	qs_yy_input_line	qs_parser_data->pd_yy_input_line
 #define	qs_semi_seen		qs_parser_data->pd_semi_seen
-#define	qs_expr_string		qs_parser_data->pd_expr_string
+#define	_qs_expr_string		qs_parser_data->pd_expr_string
 #define	qs_edepth		qs_parser_data->pd_edepth
-#define	qs_curr_string		qs_parser_data->pd_curr_string
+#define	_qs_curr_string		qs_parser_data->pd_curr_string
 #define	qs_final		qs_parser_data->pd_final
 #define	qs_curr_infile		qs_parser_data->pd_curr_infile
 #define qs_subrt_ctx_stack	qs_parser_data->pd_subroutine_context_stack
@@ -233,11 +233,11 @@ struct query_stack {
 #define SET_QS_VAR_BUF(qsp,idx,sbp)	(qsp)->qs_varbuf[idx]=sbp
 #define QS_RESULT(qsp)			(qsp)->qs_result
 #define SET_QS_RESULT(qsp,sbp)		(qsp)->qs_result = sbp
-#define QS_SCRATCH(qsp)			(qsp)->qs_scratch
+//#define QS_SCRATCH(qsp)			(qsp)->qs_scratch
 #define SET_QS_SCRATCH(qsp,sbp)		(qsp)->qs_scratch = sbp
 #define QS_NAME(qsp)			(qsp)->qs_item.item_name
 #define SET_QS_NAME(qsp,s)		(qsp)->qs_item.item_name = s
-#define QS_SERIAL(qsp)			(qsp)->qs_serial
+#define _QS_SERIAL(qsp)			(qsp)->qs_serial
 #define SET_QS_SERIAL(qsp,n)		(qsp)->qs_serial=n
 #define QS_LEVEL(qsp)			(qsp)->qs_level
 #define SET_QS_LEVEL(qsp,l)		(qsp)->qs_level = l
@@ -275,8 +275,10 @@ struct query_stack {
 //#define SET_QS_ESTR_ARRAY(qsp,str_p)	(qsp)->qs_estr = str_p
 //#define QS_ESTRING(qsp)			(qsp)->qs_expr_string
 //#define SET_QS_ESTRING(qsp,s)		(qsp)->qs_expr_string = s
-#define QS_CURR_STRING(qsp)		(qsp)->qs_curr_string
-#define SET_QS_CURR_STRING(qsp,s)	(qsp)->qs_curr_string=s
+#define _QS_CURR_STRING(qsp)		(qsp)->_qs_curr_string
+#define SET_QS_CURR_STRING(qsp,s)	(qsp)->_qs_curr_string=s
+//#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
+//#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
 
 #define QS_MAX_WARNINGS(qsp)		(qsp)->qs_max_warnings
 #define QS_N_WARNINGS(qsp)		(qsp)->qs_n_warnings
@@ -305,7 +307,7 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 
 // Are these for the scalar parser, the vector parser, or both?
 
-#define TOP_NODE		((Query_Stack *)THIS_QSP)->qs_top_enp
+//#define TOP_NODE		((Query_Stack *)THIS_QSP)->qs_top_enp
 #define LAST_NODE		THIS_QSP->qs_last_enp
 #define END_SEEN		THIS_QSP->qs_end_seen
 #define YY_CP			THIS_QSP->qs_yy_cp
@@ -321,15 +323,15 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 #define SEMI_SEEN 		THIS_QSP->qs_semi_seen
 #define SET_SEMI_SEEN(v) 	THIS_QSP->qs_semi_seen = v
 //#define VEXP_STR		((THIS_QSP->qs_estr)[THIS_QSP->qs_which_estr])
-#define VEXP_STR		QS_EXPR_STRING(THIS_QSP)
+//#define VEXP_STR		QS_EXPR_STRING(THIS_QSP)
 #define FINAL			THIS_QSP->qs_final
 #define CURR_INFILE		THIS_QSP->qs_curr_infile
 #define SUBRT_CTX_STACK		THIS_QSP->qs_subrt_ctx_stack
 
 #define SET_QS_YY_INPUT_LINE(qsp,l)	(qsp)->qs_yy_input_line=l
 #define SET_QS_YY_LAST_LINE(qsp,l)	(qsp)->qs_yy_last_line=l
-#define QS_EXPR_STRING(qsp)		(qsp)->qs_expr_string
-#define SET_QS_EXPR_STRING(qsp,l)	(qsp)->qs_expr_string=l
+//#define QS_EXPR_STRING(qsp)		(qsp)->qs_expr_string
+#define SET_QS_EXPR_STRING(qsp,l)	(qsp)->_qs_expr_string=l
 
 
 #define NEW_QUERY_STACK		((Query_Stack *)getbuf(sizeof(Query_Stack)))
@@ -341,9 +343,7 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 #define SET_LOG_MSG_COUNT(qsp,c)	(qsp)->qs_log_msg_count = c
 #define INCREMENT_LOG_MSG_COUNT(qsp)	SET_LOG_MSG_COUNT(qsp,1+LOG_MSG_COUNT(qsp))
 
-#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
-#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
-#define CURRENT_FILENAME		QRY_FILENAME(CURR_QRY(THIS_QSP))
+//#define CURRENT_FILENAME		QRY_FILENAME(CURR_QRY(THIS_QSP))
 
 /*#define CURRENT_INPUT_FILENAME	"(CURRENT_INPUT_FILENAME not implemented)" */
 //#define CURRENT_INPUT_FILENAME	QRY_FILENAME(CURR_QRY(THIS_QSP))
@@ -354,6 +354,5 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 extern void rls_mouthful(Mouthful *mfp);
 extern Mouthful *new_mouthful(const char * text, const char *filename);
 
-extern Query_Stack *init_first_query_stack(void);
 
 #endif /* !  _QUERY_STACK_H_ */

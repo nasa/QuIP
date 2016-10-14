@@ -1,8 +1,13 @@
 #include <string.h>
+#include <stdlib.h>		// getenv
+#include <sys/param.h>		// MAXPATHLEN
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "item_prot.h"
 #include "quip_version.h"
+#include "variable.h"
+#include "list.h"
+#include "getbuf.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	// getcwd
@@ -24,7 +29,7 @@ const char *var_value(QSP_ARG_DECL  const char *s)
 	Variable *vp;
 	
 	vp=VAR_OF(s);
-	if( vp == NO_VARIABLE ) return NULL;
+	if( vp == NULL ) return NULL;
 	return var_p_value(QSP_ARG  vp);
 }
 
@@ -47,11 +52,11 @@ Variable *create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *va
 	Variable *vp;
 
 	vp=var_of(QSP_ARG  var_name);
-	if( vp != NO_VARIABLE ){
+	if( vp != NULL ){
 		sprintf(ERROR_STRING,
 "create_reserved_var:  variable %s already exists!?",var_name);
 		WARN(ERROR_STRING);
-		return NO_VARIABLE;
+		return NULL;
 	}
 	return force_reserved_var(QSP_ARG  var_name,var_val);
 }
@@ -71,9 +76,9 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 	Variable *vp;
 	const char *val_str;
 
-	if( *name == 0 ) return NO_VARIABLE;
+	if( *name == 0 ) return NULL;
 	vp=VAR_OF(name);
-	if( vp != NO_VARIABLE ){
+	if( vp != NULL ){
 		return(vp);
 	}
 	vp = new_var_(QSP_ARG  name);
@@ -104,7 +109,7 @@ Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 
 	vp = insure_variable(QSP_ARG  var_name, VAR_SIMPLE );
 
-	if( vp == NO_VARIABLE ) return vp;
+	if( vp == NULL ) return vp;
 
 	// reserved variables are not assignable from scripts, but
 	// are assigned programmatically from code using assign_var
@@ -137,7 +142,7 @@ Variable *assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *va
 
 	vp = insure_variable(QSP_ARG  var_name, VAR_RESERVED );
 
-	if( vp == NO_VARIABLE ) return vp;
+	if( vp == NULL ) return vp;
 
 	if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(ERROR_STRING,
@@ -166,7 +171,7 @@ Variable *get_var(QSP_ARG_DECL  const char *name)
 	Variable *vp;
 
 	vp=VAR_OF(name);
-	if( vp == NO_VARIABLE ){
+	if( vp == NULL ){
 		sprintf(ERROR_STRING,"No variable \"%s\"!?",name);
 		WARN(ERROR_STRING);
 	}
@@ -179,7 +184,7 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 
 	vp=VAR_OF(name);
 //#ifdef CAUTIOUS
-//	if( vp != NO_VARIABLE ){
+//	if( vp != NULL ){
 //		sprintf(ERROR_STRING,
 //		"CAUTIOUS:  init_dynamic_var:  variable %s already exists!?",
 //			VAR_NAME(vp));
@@ -188,7 +193,7 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 //	}
 //#endif /* CAUTIOUS */
 
-	assert( vp == NO_VARIABLE );
+	assert( vp == NULL );
 
 	vp = new_var_(QSP_ARG  name);
 	SET_VAR_FLAGS(vp, VAR_DYNAMIC | VAR_RESERVED );
@@ -197,10 +202,10 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 
 static const char *my_getcwd(SINGLE_QSP_ARG_DECL)
 {
-	static char buf[LLEN];	// BUG should be MAXPATHLEN?
+	static char buf[MAXPATHLEN];	// BUG should be MAXPATHLEN?
 
 #ifdef HAVE_GETCWD
-	if( getcwd(buf,LLEN) == NULL ){
+	if( getcwd(buf,MAXPATHLEN) == NULL ){
 		tell_sys_error("getcwd");
 		return ".";
 	}
@@ -316,25 +321,40 @@ void find_vars(QSP_ARG_DECL  const char *s)
 	List *lp;
 
 	lp=find_items(QSP_ARG  var__itp,s);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 	print_list_of_items(QSP_ARG  lp);
 }
+
+#define N_EXTRA_CHARS	20
 
 void search_vars(QSP_ARG_DECL  const char *frag)
 {
 	List *lp;
 	Node *np;
 	Variable *vp;
-	char lc_frag[LLEN];
+	char *lc_frag;
+	char *str1=NULL;
+	int str1_size;
 
 	lp=item_list(QSP_ARG  var__itp);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	np=lp->l_head;
+	lc_frag = getbuf(strlen(frag)+1);
 	decap(lc_frag,frag);
 	while(np!=NO_NODE){
-		char str1[LLEN];
 		vp = (Variable *) NODE_DATA(np);
+		if( str1 == NULL ){
+			str1_size = strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
+			str1 = getbuf( str1_size );
+		} else {
+			if( str1_size < strlen(VAR_VALUE(vp))+1 ){
+				givbuf(str1);
+				str1_size = strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
+				str1 = getbuf( str1_size );
+			}
+		}
+
 		/* make the match case insensitive */
 		decap(str1,VAR_VALUE(vp));
 		if( strstr(str1,lc_frag) != NULL ){
@@ -343,6 +363,8 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 		}
 		np=NODE_NEXT(np);
 	}
+	if( str1 != NULL ) givbuf(str1);
+	givbuf(lc_frag);
 }
 
 void reserve_variable(QSP_ARG_DECL  const char *name)
@@ -416,9 +438,11 @@ void show_var(QSP_ARG_DECL  Variable *vp)
 	prt_msg(MSG_STR);
 }
 
+#define MAX_INT_STRING_LEN	80	// BUG should check...
+
 void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val )
 {
-	char str[LLEN];
+	char str[MAX_INT_STRING_LEN];
 
 	sprintf(str,"%ld",val);	// BUG possible buffer overrun???
 

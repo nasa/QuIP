@@ -5,6 +5,7 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "debug.h"
 
 /* Sbscripted objects are implemented from a fixed-size pool of temporary
  * objects.  The thinking is that these will be used in an expression
@@ -392,11 +393,13 @@ void unlock_children(Data_Obj *dp)
  *	equal to (which_dim-min_dim)
  */
 
-void make_array_name( QSP_ARG_DECL  char *target_str, Data_Obj *dp, index_t index, int which_dim, int subscr_type )
+#define MAX_INDEX_STRING_LEN	32	// how many digits can actually print???
+
+void make_array_name( QSP_ARG_DECL  char *target_str, int buflen, Data_Obj *dp, index_t index, int which_dim, int subscr_type )
 {
 	int left_delim, right_delim, nstars;
 	int i;
-	char str2[LLEN];
+	char index_string[MAX_INDEX_STRING_LEN];
 
 	if( subscr_type == SQUARE ){
 		left_delim  = '[';
@@ -420,11 +423,11 @@ void make_array_name( QSP_ARG_DECL  char *target_str, Data_Obj *dp, index_t inde
 	/* now make the name */
 	strcpy(target_str,OBJ_NAME(dp));
 	for(i=0;i<nstars;i++){
-		sprintf(str2,"%c*%c",left_delim,right_delim);
-		strcat(target_str,str2);
+		sprintf(index_string,"%c*%c",left_delim,right_delim);
+		strcat(target_str,index_string);
 	}
-	sprintf(str2,"%c%d%c",left_delim,index,right_delim);
-	strcat(target_str,str2);
+	sprintf(index_string,"%c%d%c",left_delim,index,right_delim);
+	strcat(target_str,index_string);
 }
 
 static Node *existing_tmpobj_node(const char *name)
@@ -447,11 +450,13 @@ static Node *existing_tmpobj_node(const char *name)
 	return(NO_NODE);
 }
 
+#define MAX_OBJ_NAME_LEN	128
+
 Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t index, int subscr_type )
 {
 	Data_Obj *newdp=NO_OBJ;
 	Node *np;
-	char str[LLEN];	/* BUG how long can this be really? */
+	char name_with_subscript[MAX_OBJ_NAME_LEN];	/* BUG how long can this be really? */
 	int i;
 
 	if( dp==NO_OBJ ) return(dp);
@@ -499,13 +504,13 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 		}
 	}
 
-	make_array_name(QSP_ARG  str,dp,index,which_dim,subscr_type);
+	make_array_name(QSP_ARG  name_with_subscript,MAX_OBJ_NAME_LEN,dp,index,which_dim,subscr_type);
 
 	/* first see if this subobject may exist!? */
 	/* these names aren't hashed, so just scan the list */
 	/* maybe we would be better off with a linked list?? */
 
-	np = existing_tmpobj_node(str);
+	np = existing_tmpobj_node(name_with_subscript);
 	if( np != NO_NODE ){
 		/* before returning, move this node up the the head of the list.
 		 *
@@ -522,7 +527,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 
 	/* the object doesn't exist, so create it */
 
-	newdp=temp_child(QSP_ARG  str,dp);
+	newdp=temp_child(QSP_ARG  name_with_subscript,dp);
 	SET_OBJ_MACH_DIM(newdp,which_dim, 1 );
 	SET_OBJ_MACH_INC(newdp,which_dim, 0 );
 	SET_OBJ_TYPE_DIM(newdp,which_dim, 1 );
@@ -625,13 +630,13 @@ void reindex( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t index )
 {
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-	char str[LLEN];
+	char str[MAX_OBJ_NAME_LEN];
 
 	/* BUG don't necessarily know it's square!? */
 	/* But this is usually called from dp_vectorize(), then it is... */
 	/* the name isn't always right here, but it is useful for debugging... */
 
-	make_array_name(QSP_ARG  str, OBJ_PARENT(dp) ,index,which_dim,SQUARE);
+	make_array_name(QSP_ARG  str,MAX_OBJ_NAME_LEN, OBJ_PARENT(dp) ,index,which_dim,SQUARE);
 	rls_str((char *)OBJ_NAME(dp));	// reindex
 	SET_OBJ_NAME(dp,savestr(str));
 }

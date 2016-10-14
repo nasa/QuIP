@@ -10,6 +10,9 @@
 #include "gui_cmds.h"
 #include "gui_prot.h"
 #include "sizable.h"
+#include "debug.h"
+#include "stack.h"		// BUG
+#include "query_stack.h"		// BUG
 
 #ifdef BUILD_FOR_OBJC
 

@@ -23,6 +23,7 @@
 
 #include "stc.h"
 #include "query.h"
+#include "getbuf.h"
 
 
 /* printf/scanf format strings */

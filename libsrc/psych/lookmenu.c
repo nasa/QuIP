@@ -5,6 +5,7 @@
 #include "quip_prot.h"
 #include "stc.h"
 #include "variable.h"
+#include "quip_menu.h"
 
 //static Trial_Class *curr_tcp=NULL;
 static int n_have_classes=0;

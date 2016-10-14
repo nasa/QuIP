@@ -12,6 +12,8 @@
 //#include "ioctl_polhemus.h"
 #include "polh_menu.h"
 
+#define MAX_CMD_STRING_LEN	512	// BUG overkill, but we need to check for overrun!
+
 #ifdef QUIP_DEBUG
 debug_flag_t debug_polhemus;
 #endif /* QUIP_DEBUG */
@@ -69,7 +71,7 @@ static COMMAND_FUNC( do_reset_align )
 
 static COMMAND_FUNC( do_set_curr_align )
 {
-	char align[LLEN];
+	char align[MAX_CMD_STRING_LEN];
 	//short pdp[2*N_OUTPUT_TYPES];	
 	//Fmt_Pt fdp;
 
@@ -103,7 +105,7 @@ static COMMAND_FUNC( do_set_curr_align )
 
 static COMMAND_FUNC( do_set_align )
 {
-	char align[LLEN];
+	char align[MAX_CMD_STRING_LEN];
 	float Ox, Oy, Oz, Xx, Xy, Xz, Yx, Yy, Yz;
 
 	/* We have to reset the alignment before setting it
@@ -158,7 +160,7 @@ static COMMAND_FUNC( do_set_ref_bore )
 
 static COMMAND_FUNC( do_set_curr_ref_bore )
 {
-	char bore[LLEN];
+	char bore[MAX_CMD_STRING_LEN];
 	//short pdp[2*N_OUTPUT_TYPES];	/* conservative overestimate */
 	//Fmt_Pt fp1;
 	
@@ -235,7 +237,7 @@ static COMMAND_FUNC( do_get_angl )
 
 static COMMAND_FUNC( do_set_post )
 {
-	char post[LLEN];
+	char post[MAX_CMD_STRING_LEN];
 	float max, min;
 	float xmax, ymax, zmax, xmin, ymin, zmin;
 
@@ -281,7 +283,7 @@ static COMMAND_FUNC( do_get_post )
 
 static COMMAND_FUNC( do_set_hemi )
 {
-	char hemi[LLEN];
+	char hemi[MAX_CMD_STRING_LEN];
 	float vecs[N_HEMI_COMPS];
 	char *ask_strs[N_HEMI_COMPS] = { "x-component", "y-component", "z-component" };
 	int i=0;
@@ -458,7 +460,7 @@ static COMMAND_FUNC( do_set_record )
 static COMMAND_FUNC( do_mk_vector )
 {
 	Data_Obj *dp;
-	char name[LLEN];
+	char name[MAX_CMD_STRING_LEN];
 	Dimension_Set ds1;
 	uint32_t n;
 
@@ -666,7 +668,7 @@ static COMMAND_FUNC( do_clr )
 	
 static COMMAND_FUNC( do_set_angl )
 {
-	char angl[LLEN];
+	char angl[MAX_CMD_STRING_LEN];
 	float amax, emax, rmax, amin, emin, rmin;
 
 	if( (ASK_ENV("azimuth angle", "angular operational envelop", &amax, &amin, MAX_AZ, MIN_AZ) < 0) 

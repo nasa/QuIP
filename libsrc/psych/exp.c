@@ -32,6 +32,8 @@
 #include "param_api.h"
 #include "stc.h"
 #include "rn.h"
+#include "stack.h"	// BUG
+#include "query_stack.h"	// BUG
 
 /* local prototypes */
 

@@ -26,6 +26,7 @@
 #include "panel_obj.h"
 #include "nav_panel.h"
 #include "xsupp.h"
+#include "stack.h"
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -919,11 +920,14 @@ void make_gauge(QSP_ARG_DECL  Screen_Obj *sop)
 }
 
 #ifdef HAVE_MOTIF
+
+#define MAX_NUMBER_STRING_LEN	64
+
 static void slider_func(Widget sliderID, XtPointer app_data,
 	XtPointer widget_data)
 {
 	Screen_Obj *sop;
-	char str[LLEN];
+	char str[MAX_NUMBER_STRING_LEN];
 	int value;
 	QSP_DECL
 
@@ -934,7 +938,7 @@ static void slider_func(Widget sliderID, XtPointer app_data,
 
 		/* get the value from the slider */
 		XmScaleGetValue(sliderID, &value);
-		sprintf(str,"%d",value);
+		sprintf(str,"%d",value);			// BUG overrun?
 		ASSIGN_RESERVED_VAR("slider_val",str);
 		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(slider event)");
 	} else ERROR1("can't locate slider");

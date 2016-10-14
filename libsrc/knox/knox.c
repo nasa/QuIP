@@ -15,6 +15,8 @@
 static int range_ok;
 static int doing_command_set = 0;	/* flag for sending set of commands */
 
+#define MAX_ARGS_LEN	512	// string length - BUG need to check for overrun
+
 
 #define MIN_SIGNAL_NUMBER	1
 #define MAX_SIGNAL_NUMBER	8
@@ -386,10 +388,10 @@ static int get_knox_args(QSP_ARG_DECL   char* arg_buf)
 #ifdef HAVE_KNOX
 static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 {
-	char buf[LLEN];
+	char buf[MAX_ARGS_LEN];
 	int stat;
 	
-	sprintf(buf, "%s", knox_tbl[code].kc_str);
+	sprintf(buf, "%s", knox_tbl[code].kc_str);	// BUG check for overrun
 	if( args ) strcat(buf, args);
 	reset_buffer(curr_kdp->kd_sbp);
 	send_knox_cmd(QSP_ARG  buf);
@@ -408,7 +410,7 @@ static int do_knox_cmd(QSP_ARG_DECL  Knox_Cmd_Code code, char* args)
 
 static COMMAND_FUNC( do_route_both )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
@@ -417,7 +419,7 @@ static COMMAND_FUNC( do_route_both )
 
 static COMMAND_FUNC( do_route_diff )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 	int output, video_input, audio_input;
 	int ret_stat=0;
 
@@ -434,7 +436,7 @@ static COMMAND_FUNC( do_route_diff )
 
 static COMMAND_FUNC( do_route_video )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
@@ -443,7 +445,7 @@ static COMMAND_FUNC( do_route_video )
 
 static COMMAND_FUNC( do_route_audio )
 {
-	char knox_args[LLEN];
+	char knox_args[MAX_ARGS_LEN];
 
 	if( GET_KNOX_ARGS(knox_args) < 0 ) return;
 
@@ -543,7 +545,7 @@ static COMMAND_FUNC( do_knox_main_cmds )
 
 static COMMAND_FUNC( do_knox_recall )
 {
-	char args[LLEN];
+	char args[MAX_ARGS_LEN];
 	int pattern;
 	int ret_stat=0;
 
@@ -561,7 +563,7 @@ static COMMAND_FUNC( do_knox_recall )
 
 static COMMAND_FUNC( do_knox_store )
 {
-	char args[LLEN];
+	char args[MAX_ARGS_LEN];
 	int pattern_index;
 	int ret_stat=0;
 
@@ -590,7 +592,7 @@ static COMMAND_FUNC( do_knox_cross_cmds )
 
 static COMMAND_FUNC( do_knox_timer_start )
 {
-	char args[LLEN];
+	char args[MAX_ARGS_LEN];
 	int time_cycle;
 
 	time_cycle = (int)HOW_MANY("time cycle");

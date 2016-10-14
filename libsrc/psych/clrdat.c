@@ -3,6 +3,7 @@
 #include "stc.h"
 #include "node.h"
 #include "debug.h"
+#include "list.h"
 
 void clrdat(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
 {
@@ -13,7 +14,7 @@ void clrdat(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
 	int i;
 
 	lp=class_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	np=lp->l_head;
 	while(np!=NO_NODE){

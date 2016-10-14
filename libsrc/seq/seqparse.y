@@ -17,6 +17,7 @@
 
 #include "quip_prot.h"
 #include "seq.h"
+#include "getbuf.h"
 
 typedef union {
 	Seq *yysp;

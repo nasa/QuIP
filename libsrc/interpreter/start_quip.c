@@ -1,7 +1,8 @@
 
 #include "quip_config.h"
 #include "query_prot.h"
-#include "data_obj.h"
+#include "query_stack.h"
+//#include "data_obj.h"
 #include "veclib_api.h"
 #include "vt_api.h"
 #include "camera_api.h"

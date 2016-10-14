@@ -188,12 +188,20 @@ struct item_type {
 #define SET_IT_CSTK_AT_IDX(itp,i,sp)	(itp)->it_context_stack[i] = sp
 #define SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,flag)	\
 					(itp)->it_ctx_restricted[i] = flag
-#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[((Query_Stack *)THIS_QSP)->qs_serial])
+//#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL((Query_Stack *)THIS_QSP)])
+#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL])
 
-#define CURRENT_CONTEXT(itp)	(itp)->it_icp[((Query_Stack *)qsp)->qs_serial]
-#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp[((Query_Stack *)qsp)->qs_serial] = icp
-#define CONTEXT_STACK(itp)	(itp)->it_context_stack[((Query_Stack *)qsp)->qs_serial]
-#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[((Query_Stack *)qsp)->qs_serial]
+//#define CURRENT_CONTEXT(itp)	(itp)->it_icp[QS_SERIAL((Query_Stack *)qsp)]
+//#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp[QS_SERIAL((Query_Stack *)qsp)] = icp
+//#define CONTEXT_STACK(itp)	(itp)->it_context_stack[QS_SERIAL((Query_Stack *)qsp)]
+//#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[QS_SERIAL((Query_Stack *)qsp)]
+
+#define CURRENT_CONTEXT(itp)	(itp)->it_icp[QS_SERIAL]
+#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp[QS_SERIAL] = icp
+
+#define CONTEXT_STACK(itp)	(itp)->it_context_stack[QS_SERIAL]
+#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[QS_SERIAL]
+
 #define FIRST_CONTEXT_STACK(itp)	(itp)->it_context_stack[0]
 
 

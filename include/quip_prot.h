@@ -120,6 +120,24 @@ extern int history_flag;
 // list.c
 extern void report_node_data(SINGLE_QSP_ARG_DECL);
 extern count_t eltcount( List * lp );
+#define NEW_LIST		new_list()
+extern List *new_list(void);
+extern Node *remHead(List *lp);
+extern Node *remTail(List *lp);
+extern Node * remNode(List *lp, Node *np);
+extern Node *remData(List *lp, void * data);
+extern void rls_list(List *lp);
+extern void rls_nodes_from_list(List *lp);
+extern void addTail(List *lp, Node *np);
+extern void addHead( List *lp, Node* np );
+extern void dellist(List *lp);
+extern Node *nodeOf( List *lp, void * ip );
+extern Node * list_find_named_item(List *lp, const char *name);
+
+extern void p_sort(List *lp);
+extern Node *nth_elt(List *lp, count_t k);
+extern Node *nth_elt_from_tail(List *lp, count_t k);
+
 
 // bi_menu.c
 extern void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) );
@@ -129,8 +147,14 @@ extern void init_aux_menus(Query_Stack *qsp);
 extern void simulate_typing(const char *str);
 
 // query_stack.h
+extern Query_Stack *init_first_query_stack(void);
 extern const char *nameof( QSP_ARG_DECL  const char *pmpt);
+extern long how_many(QSP_ARG_DECL  const char *);
+extern double how_much(QSP_ARG_DECL  const char *);
 #define NAMEOF(s)			nameof(QSP_ARG  s)
+#define HOW_MANY(pmpt)			how_many(QSP_ARG  pmpt)
+#define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
+
 
 extern const char * nameof2(QSP_ARG_DECL  const char *prompt);
 extern int askif( QSP_ARG_DECL  const char *pmpt);
@@ -142,6 +166,10 @@ extern int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices);
 #define WHICH_ONE(p,n,ch)	which_one(QSP_ARG  p, n, ch )
 #define WHICH_ONE2(p,n,ch)	which_one2(QSP_ARG  p, n, ch )
 
+extern Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name);
+ITEM_INIT_PROT(Query_Stack,query_stack)
+ITEM_LIST_PROT(Query_Stack,query_stack)
+
 // item_type.c
 ITEM_LIST_PROT(Item_Type,ittyp)
 ITEM_PICK_PROT(Item_Type,ittyp)
@@ -152,6 +180,35 @@ ITEM_PICK_PROT(Item_Type,ittyp)
 //#define CURL_STRINGBUF	curl_stringbuf(SINGLE_QSP_ARG)
 extern Curl_Info *		qs_curl_info(SINGLE_QSP_ARG_DECL);
 #define QS_CURL_INFO		qs_curl_info(SINGLE_QSP_ARG)
+
+extern String_Buf *		qs_scratch_buffer(SINGLE_QSP_ARG_DECL);
+#define QS_SCRATCH		qs_scratch_buffer(SINGLE_QSP_ARG)
+
+extern Input_Format_Spec *	qs_ascii_input_format(SINGLE_QSP_ARG_DECL);
+#define	ascii_input_fmt_tbl	qs_ascii_input_format(SINGLE_QSP_ARG)
+
+extern int			qs_serial_func(SINGLE_QSP_ARG_DECL);
+#define QS_SERIAL		qs_serial_func(SINGLE_QSP_ARG)
+
+extern const char *		qs_filename(SINGLE_QSP_ARG_DECL);
+#define CURRENT_FILENAME	qs_filename(SINGLE_QSP_ARG)
+
+extern const char *		qs_curr_string(SINGLE_QSP_ARG_DECL);
+extern void			set_curr_string(QSP_ARG_DECL  const char *);
+#define CURR_STRING		qs_curr_string(SINGLE_QSP_ARG)
+#define SET_CURR_STRING(s)	set_curr_string(QSP_ARG  s)
+
+extern Vec_Expr_Node *		qs_top_node(SINGLE_QSP_ARG_DECL);
+#define TOP_NODE		qs_top_node(SINGLE_QSP_ARG)
+extern void			set_top_node(QSP_ARG_DECL  Vec_Expr_Node *);
+#define SET_TOP_NODE(enp)	set_top_node(QSP_ARG  enp)
+
+#define VEXP_STR		QS_EXPR_STRING
+extern char *			qs_expr_string(SINGLE_QSP_ARG_DECL);
+#define QS_EXPR_STRING		qs_expr_string(SINGLE_QSP_ARG)
+
+//#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt
+
 
 #endif // HAVE_LIBCURL
 
@@ -198,12 +255,6 @@ extern int		remove_name(Item *ip,Dictionary *dict_p);
 extern void		_dump_dict_info(QSP_ARG_DECL  Dictionary *dict_p);
 
 
-
-// query_stack?
-extern long how_many(QSP_ARG_DECL  const char *);
-extern double how_much(QSP_ARG_DECL  const char *);
-#define HOW_MANY(pmpt)			how_many(QSP_ARG  pmpt)
-#define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
 
 
 // query_funcs.c
@@ -343,6 +394,16 @@ extern COMMAND_FUNC( heap_report );
 extern void set_alarm_script(QSP_ARG_DECL  const char *s);
 extern void set_alarm_time(QSP_ARG_DECL  float f);
 
+// macro.c
+extern const char *macro_text(Macro *);
+#define MACRO_TEXT(mp)	macro_text(mp)
+ITEM_INIT_PROT(Macro,macro)
+ITEM_NEW_PROT(Macro,macro)
+ITEM_CHECK_PROT(Macro,macro)
+ITEM_PICK_PROT(Macro,macro)
+ITEM_DEL_PROT(Macro,macro)
+#define PICK_MACRO(pmpt)	pick_macro(QSP_ARG  pmpt)
+
 
 // from query_stack.h
 
@@ -388,17 +449,34 @@ extern void list_builtin_menu(SINGLE_QSP_ARG_DECL);
 #define LIST_CURRENT_MENU	list_current_menu(SINGLE_QSP_ARG)
 #define LIST_BUILTIN_MENU	list_builtin_menu(SINGLE_QSP_ARG)
 
-extern Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name);
 
 // variable.c
+extern void init_variables(SINGLE_QSP_ARG_DECL);
+extern void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val );
 extern Variable *assign_var(QSP_ARG_DECL  const char *name, const char *value);
 extern Variable *assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
 #define ASSIGN_VAR( s1 , s2 )	assign_var(QSP_ARG  s1 , s2 )
 #define ASSIGN_RESERVED_VAR( s1 , s2 )	assign_reserved_var(QSP_ARG  s1 , s2 )
+ITEM_PICK_PROT(Variable,var_)
+#define VAR_OF(s)	var_of(QSP_ARG  s)
+extern Variable *var_of(QSP_ARG_DECL const char *name);
+#define PICK_VAR(s)	pick_var_(QSP_ARG  s)
 
 
-ITEM_INIT_PROT(Query_Stack,query_stack)
-ITEM_LIST_PROT(Query_Stack,query_stack)
+// strbuf.c
+extern void enlarge_buffer(String_Buf *sbp,size_t size);
+extern void copy_string(String_Buf *sbp,const char *str);
+extern void copy_strbuf(String_Buf *dst_sbp,String_Buf *src_sbp);
+extern void cat_string(String_Buf *sbp,const char *str);
+extern void copy_string_n(String_Buf *sbp,const char *str,int n);
+extern void cat_string_n(String_Buf *sbp,const char *str, int n);
+extern char *sb_buffer(String_Buf *sbp);
+#define SB_BUF(sbp)	sb_buffer(sbp)
+
+#define NEW_STRINGBUF		new_stringbuf()
+extern String_Buf *new_stringbuf(void);
+extern void rls_stringbuf(String_Buf *);
+
 
 extern COMMAND_FUNC(do_protomenu);
 

@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+#include "quip_prot.h"
 
 /* utilities for manipulating strings of arbitrary length */
 
@@ -92,5 +93,10 @@ void rls_stringbuf(String_Buf *sbp)
 	if( sbp->sb_buf != NULL )
 		givbuf(sbp->sb_buf);
 	givbuf(sbp);
+}
+
+char * sb_buffer(String_Buf *sbp)
+{
+	return sbp->sb_buf;
 }
 

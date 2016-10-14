@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "viewer.h"
 #include "xsupp.h"
+#include "debug.h"
 
 #ifdef HAVE_X11
 

@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+#include <string.h>
 
 #include "quip_prot.h"
 #include "data_obj.h"
@@ -592,6 +593,8 @@ advise("component dim 3 for color");
 		WARN("error making equivalence");
 }
 
+#define MAX_PMPT_LEN	128	// BUG check for overrun
+
 static COMMAND_FUNC( mk_subsample )
 {
 	const char *s;
@@ -600,7 +603,7 @@ static COMMAND_FUNC( mk_subsample )
 	Dimension_Set ds1, *dsp=(&ds1);
 	index_t offsets[N_DIMENSIONS];
 	incr_t incrs[N_DIMENSIONS];
-	char pmpt[LLEN];
+	char pmpt[MAX_PMPT_LEN];
 	int i;
 
 	s=NAMEOF("name for subsample object");
@@ -620,6 +623,7 @@ static COMMAND_FUNC( mk_subsample )
 			long l;
 
 			if( i < (N_DIMENSIONS-1) )
+		// BUG check length
 		sprintf(pmpt,"number of %ss per %s",dimension_name[i],
 		dimension_name[i+1]);
 			else

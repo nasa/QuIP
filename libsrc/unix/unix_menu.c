@@ -41,6 +41,8 @@
 #include "sigpush.h"
 #include "unix_prot.h"
 #include "dobj_prot.h"
+#include "stack.h"	// BUG
+#include "query_stack.h"	// BUG
 
 #ifdef BUILD_FOR_IOS
 #include "ios_prot.h"

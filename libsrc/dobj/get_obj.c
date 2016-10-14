@@ -11,10 +11,12 @@
  * no warning issued if the object does not exist
  */
 
+#define MAX_NAME_LEN	512	// BUG need to check for buffer overrun
+
 Data_Obj * hunt_obj(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
-	char stem[LLEN], *cp;
+	char stem[MAX_NAME_LEN], *cp;
 	const char *s;
 
 #ifdef QUIP_DEBUG

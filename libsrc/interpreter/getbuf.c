@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "quip_prot.h"
 #include "debug.h"
+#include "getbuf.h"
 
 #ifdef QUIP_DEBUG
 static u_long gbdebug=GETBUF_DEBUG_MASK;
@@ -511,6 +512,8 @@ COMMAND_FUNC( heap_report )
 #endif /* QUIP_DEBUG */
 
 #else /* ! USE_GETBUF */
+
+#include <stdlib.h>	// calloc()
 
 #ifdef MAX_DEBUG
 static void mem_alert(size_t size)

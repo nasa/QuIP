@@ -20,6 +20,7 @@
 //#include "warn.h"
 #include "quip_prot.h"
 #include "platform.h"
+#include "debug.h"
 
 /* int n_processors=N_PROCESSORS; */
 int n_processors=1;
@@ -66,9 +67,14 @@ static int n_threads_started=0;
  * buffer to avoid conflicts.
  */
 
+#define MAX_MSG_LEN	256
+#define MAX_DIGITS	8	// overkill
+
 static void mpnadvise(int index, const char *msg)
 {
-	char str[LLEN];
+	char str[MAX_MSG_LEN+1];
+	if( strlen("thread :  ")+MAX_DIGITS+strlen(msg) >= MAX_MSG_LEN )
+		NERROR1("mpnadvise:  need to increase MAX_MSG_LEN!?");
 
 	sprintf(str,"thread %d:  %s",index,msg);
 	NADVISE(str);
@@ -158,7 +164,8 @@ static void *data_processor(void *argp)
 {
 	Proc_Info *pip;
 #ifdef QUIP_DEBUG
-	char mystring[LLEN];
+#define BUF_LEN	256
+	char mystring[BUF_LEN];	// BUG need to insure no overrun
 	int myindex;
 #endif /* QUIP_DEBUG */
 	Query_Stack *qsp;

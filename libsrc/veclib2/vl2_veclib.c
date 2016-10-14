@@ -1,5 +1,7 @@
 #include "quip_config.h"
 #include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 #include "quip_prot.h"
 #include "function.h"
 #include "rn.h"

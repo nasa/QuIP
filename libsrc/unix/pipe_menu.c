@@ -13,6 +13,7 @@
 #include "query_bits.h"	// for some reason that is where my_pipe is layed out...
 #include "pipe_support.h"
 #include "function.h"
+#include "query_stack.h"	// BUG eliminate dependency
 
 #define N_RW_CHOICES	2
 

@@ -6,6 +6,7 @@
 //#include "fitsine.h"
 #include "optimize.h"
 #include "item_type.h"
+#include "list.h"
 
 ITEM_INTERFACE_DECLARATIONS(Opt_Param,opt_param,0)
 
@@ -37,7 +38,7 @@ void delete_opt_params(SINGLE_QSP_ARG_DECL)
 	Node *np;
 
 	lp = opt_param_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 	np=lp->l_head;
 	while( np!= NO_NODE ){
 		Opt_Param *opp;

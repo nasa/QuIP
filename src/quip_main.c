@@ -11,6 +11,7 @@
 #include "view_cmds.h"
 #include "server.h"	// do_http_menu
 #include "polh_menu.h"	// do_polh
+#include "query_stack.h"	// BUG?  elim dependency...
 
 #ifdef HAVE_CUDA
 #include "cuda_api.h"

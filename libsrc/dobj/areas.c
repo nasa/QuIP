@@ -16,6 +16,7 @@
 #include "stack.h"
 #include "data_obj.h"
 #include "shape_info.h"
+#include "debug.h"
 
 Data_Area *curr_ap=NO_AREA, *ram_area_p=NO_AREA;
 
@@ -302,9 +303,11 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 
 /* init_scratch_scalar - make up a scalar object to get the return value of vmaxv & vminv */
 
+#define MAX_NAME_LEN	80
+
 static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
-	char name[LLEN];
+	char name[MAX_NAME_LEN];
 
 //#ifdef CAUTIOUS
 //	if( AREA_SCALAR_OBJ(ap) != NO_OBJ ){
@@ -317,6 +320,8 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 //#endif /* CAUTIOUS */
 
 	assert( AREA_SCALAR_OBJ(ap) == NO_OBJ );
+	if( strlen(name)+strlen(".scratch_scalar")+1 > MAX_NAME_LEN )
+		ERROR1("init_scratch_scalar:  need to increase MAX_NAME_LEN!?");
 
 	/* Can we make this not hashed??? */
 	sprintf(name,"%s.scratch_scalar",AREA_NAME(ap));
