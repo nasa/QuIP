@@ -1,8 +1,9 @@
 
+#include <string.h>
 #include "quip_config.h"
 #include "quip_prot.h"
-#include "list.h"
 #include "query_stack.h"
+#include "list.h"
 
 /*	the term "ring" refers to a circular list
 	rings have head and tail pointers, which should

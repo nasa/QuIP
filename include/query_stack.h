@@ -16,7 +16,7 @@
 #include <dispatch/dispatch.h>
 #endif /* BUILD_FOR_IOS */
 
-#include "my_curl.h"
+//#include "my_curl.h"
 
 // For which parser?  scalar or vector???
 
@@ -133,10 +133,6 @@ struct query_stack {
 #ifdef HAVE_LIBCURL
 	Curl_Info *	qs_curl_info;
 
-#define EASY_HANDLE	(THIS_QSP->qs_curl_info->ci_easy_handle)
-#define CURL_STRINGBUF	(THIS_QSP->qs_curl_info->ci_sbp)
-#define MY_CURL_ERROR_BUFFER	(THIS_QSP->qs_curl_info->ci_error_buffer)
-#define CURL_VERSION_INFO	(THIS_QSP->qs_curl_info->ci_vdp)
 
 #endif // HAVE_LIBCURL
 	

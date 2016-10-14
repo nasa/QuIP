@@ -1,6 +1,11 @@
 #ifndef _ITEM_PROT_H_
 #define _ITEM_PROT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "query_stack.h"
 #include "item_type.h"
 
@@ -50,6 +55,10 @@ extern void decap(char *,const char *);
 #ifdef HAVE_HISTORY
 void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt );
 #endif /* HAVE_HISTORY */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! _ITEM_PROT_H_ */
 

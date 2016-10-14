@@ -82,7 +82,6 @@ struct list {
 #define SET_QLIST_TAIL(lp,np)	lp->l_tail = np
 
 extern List *new_list(void);
-extern count_t eltcount( List * lp );
 extern Node *remHead(List *lp);
 extern Node *remTail(List *lp);
 extern void addHead(List *lp, Node *np);

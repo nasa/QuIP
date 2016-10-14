@@ -1,3 +1,4 @@
+#include <string.h>
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "data_obj.h"

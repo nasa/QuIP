@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "function.h"

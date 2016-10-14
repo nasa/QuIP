@@ -11,6 +11,7 @@
 #endif // HAVE_TIME_H
 
 #include <math.h>
+#include <string.h>
 
 #include "quip_prot.h"
 #include "query_prot.h"

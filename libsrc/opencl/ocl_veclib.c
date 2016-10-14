@@ -3,6 +3,7 @@
 #ifdef HAVE_OPENCL
 
 #include <stdio.h>
+#include <string.h>
 #include "quip_prot.h"
 #include "my_ocl.h"
 #include "veclib/ocl_port.h"

@@ -73,19 +73,6 @@
 //#define int_for_addr	long
 #define int_for_addr	uintptr_t
 
-
-
-/* most of the following is not configuration stuff */
-
-/* but should go into other .h files... */
-
-//#include "stdc_defs.h"
-
-
-extern int verbose;	// why is this here???
-
 #endif /* ! _QUIP_CONFIG_H_ */
-
-
 
 

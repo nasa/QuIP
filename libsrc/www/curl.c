@@ -8,6 +8,7 @@
 #include "quip_prot.h"
 #include "server.h"
 #include "my_encryption.h"
+#include "strbuf.h"
 #include "query_stack.h"
 
 static void add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
@@ -15,21 +16,31 @@ static void add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
 	u_int n_need;
 	u_int n_have;
 	u_int i_start;
+	String_Buf *sbp;
 
+	sbp = CURL_STRINGBUF;
+	assert( sbp != NULL );
+	/*
 	if( CURL_STRINGBUF == NULL ){
 		CURL_STRINGBUF = new_stringbuf();
 		n_have = 0;
 	} else {
 		n_have = strlen(CURL_STRINGBUF->sb_buf);
 	}
+	*/
+	if(sbp->sb_buf == NULL)
+		n_have=0;
+	else
+		n_have = strlen(sbp->sb_buf);
 
-	if( (n_need=n_have+nbytes+1) > CURL_STRINGBUF->sb_size ){
-		enlarge_buffer(CURL_STRINGBUF,n_need);
+
+	if( (n_need=n_have+nbytes+1) > sbp->sb_size ){
+		enlarge_buffer(sbp,n_need);
 	}
 
-	i_start = strlen(CURL_STRINGBUF->sb_buf);
-	memcpy(&((CURL_STRINGBUF->sb_buf)[i_start]),data,nbytes);
-	(CURL_STRINGBUF->sb_buf)[i_start+nbytes]=0;
+	i_start = strlen(sbp->sb_buf);
+	memcpy(&((sbp->sb_buf)[i_start]),data,nbytes);
+	(sbp->sb_buf)[i_start+nbytes]=0;
 }
 
 static size_t buffer_url_text(void *buffer, size_t size, size_t nmemb, void *userp)

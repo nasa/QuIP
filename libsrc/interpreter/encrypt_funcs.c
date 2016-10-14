@@ -1,8 +1,8 @@
 #include <math.h>
+#include <string.h>
 #include <ctype.h>
 #include "quip_config.h"
 #include "quip_prot.h"
-#include "query_stack.h"
 #include "my_encryption.h"
 #include "fileck.h"
 

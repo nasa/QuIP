@@ -70,6 +70,7 @@
 
 #endif /* ! DEBUG_SYSTEM */
 
+#include <string.h>
 // helper macro for assertions with nothing but a message...
 // We used to write assert( ! "message" )
 // but this produces warnings in xcode...
@@ -79,11 +80,6 @@
 #include "node.h"
 
 extern debug_flag_t debug;
-
-// BUG this should be per-qsp
-extern int quip_verbose;
-// We need to un-define this when we declare the menu...
-#define verbose quip_verbose
 
 extern List *dbm_list(void);
 extern void clr_verbose(SINGLE_QSP_ARG_DECL);

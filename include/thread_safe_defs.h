@@ -37,10 +37,10 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define UNLOCK_ITEM_TYPE(itp)	// do nothing
 #endif /* ! HAVE_PTHREADS */
 
-#define DEFAULT_ERROR_STRING	DEFAULT_QSP->qs_error_string
-#define ERROR_STRING		qsp->qs_error_string
-#define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)
-#define MSG_STR			(qsp->qs_msg_str)
+//#define DEFAULT_ERROR_STRING	DEFAULT_QSP->qs_error_string
+//#define ERROR_STRING		qsp->qs_error_string
+//#define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)
+//#define MSG_STR			(qsp->qs_msg_str)
 
 
 #else /* ! THREAD_SAFE_QUERY */
@@ -62,14 +62,14 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define SELF_QSP_ARG
 #define FGETS			fgets
 
-#define DEFAULT_ERROR_STRING	DEFAULT_QSP->qs_error_string
-#define ERROR_STRING		DEFAULT_ERROR_STRING
-#define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)
-#define MSG_STR			DEFAULT_MSG_STR
+//#define DEFAULT_ERROR_STRING	DEFAULT_QSP->qs_error_string
+//#define ERROR_STRING		DEFAULT_ERROR_STRING
+//#define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)
+//#define MSG_STR			DEFAULT_MSG_STR
 
 #endif /* ! THREAD_SAFE_QUERY */
 
-#define msg_str 		MSG_STR
+//#define msg_str 		MSG_STR
 
 #endif /* ! _THREAD_SAFE_DEFS_H_ */
 

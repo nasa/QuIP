@@ -2,6 +2,7 @@
 #include "quip_prot.h"
 #include "container.h"
 #include <assert.h>
+#include <string.h>
 
 Container * create_container(const char *name,int type)
 {

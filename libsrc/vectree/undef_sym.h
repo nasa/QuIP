@@ -1,6 +1,5 @@
 
 #include "item_type.h"
-#include "query_stack.h"
 
 typedef struct undef_sym {
 	Item		us_item;

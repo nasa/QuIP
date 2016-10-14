@@ -17,8 +17,8 @@
 #endif
 
 #include "quip_prot.h"
-#include "query_stack.h"
 #include "rn.h"
+#include "debug.h"
 
 
 static int is_seeded=0;

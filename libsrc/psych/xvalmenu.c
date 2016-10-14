@@ -17,7 +17,8 @@
 #include <math.h>
 
 #include "stc.h"
-#include "query_stack.h"
+#include "getbuf.h"
+#include "quip_menu.h"
 
 
 /* local prototypes */

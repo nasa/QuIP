@@ -11,7 +11,6 @@
 #endif
 
 #include "quip_prot.h"
-#include "query_stack.h"
 
 // when is this ever undefined???  BUG
 #ifndef PATH_MAX

@@ -3,6 +3,7 @@
 #include "quip_config.h"
 #include <errno.h>
 #include <math.h>
+#include <string.h>
 
 #include "quip_prot.h"
 #include "warn.h"
@@ -311,9 +312,9 @@ static char *get_expr_stringbuf( int index, long min_len )
 // %pure_parser	// make the parser rentrant (thread-safe)
 %pure-parser	// make the parser rentrant (thread-safe)
 // not on brewster or mach...
-//%name-prefix="quip_"
+%name-prefix="quip_"
 // this does not work on pavlov:
-%name-prefix "quip_"
+//%name-prefix "quip_"
 
 /* The YYPARSE_PARAM macro has been deprecated in favor of %parse-param
  * BUT parse-param is a bison statment that comes outside of the the C code

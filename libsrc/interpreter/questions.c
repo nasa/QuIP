@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "quip_config.h"
 
 /* used to be query.c ... */

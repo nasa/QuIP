@@ -1,4 +1,5 @@
 
+#include <string.h>
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "query_stack.h"
@@ -197,5 +198,20 @@ static void pop_prompt(SINGLE_QSP_ARG_DECL)
 		SB_BUF(sbp)[n]=0;
 		strcat(SB_BUF(sbp),"> ");
 	}
+}
+
+char *error_string(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_error_string;
+}
+
+char *message_string(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_msg_str;
+}
+
+Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
+{
+	return THIS_QSP->qs_curl_info;
 }
 

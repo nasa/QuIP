@@ -3,7 +3,8 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
-#include "query_stack.h"
+#include "quip_menu.h"
+#include "debug.h"
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
@@ -42,8 +43,9 @@
 #endif
 
 #include "stamps.h"
+#include "list.h"
 
-List *sc_list=NO_LIST;
+List *sc_list=NULL;
 
 static struct timeval zero_tv;
 static int zero_set=0;
@@ -206,7 +208,7 @@ static COMMAND_FUNC( show_stamps )
 	Node *np;
 	Stamped_Char *scp;
 
-	if( sc_list == NO_LIST ) return;
+	if( sc_list == NULL ) return;
 
 	np = sc_list->l_head;
 	while(np!=NO_NODE){

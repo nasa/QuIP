@@ -1,7 +1,7 @@
 #ifndef _UNIX_PROT_H_
 #define _UNIX_PROT_H_
 
-#include "query_stack.h"
+#include "quip_fwd.h"
 
 extern COMMAND_FUNC( do_sched_menu );
 

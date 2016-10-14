@@ -1,6 +1,11 @@
 #ifndef _WARN_H_
 #define _WARN_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "quip_fwd.h"
 
 extern void warn(QSP_ARG_DECL  const char *msg);
@@ -76,6 +81,11 @@ extern void tty_advise(QSP_ARG_DECL  const char *s);
 
 extern void _tell_sys_error(QSP_ARG_DECL  const char* s);
 extern void set_warn_func(void (*func)(QSP_ARG_DECL  const char *));
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* ! _WARN_H_ */

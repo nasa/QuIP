@@ -4,6 +4,7 @@
 #include <stdlib.h>	/* system() */
 #endif
 
+#include <string.h>
 #include "quip_prot.h"
 
 #ifdef TTY_CTL

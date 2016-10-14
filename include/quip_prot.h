@@ -119,6 +119,7 @@ extern int history_flag;
 
 // list.c
 extern void report_node_data(SINGLE_QSP_ARG_DECL);
+extern count_t eltcount( List * lp );
 
 // bi_menu.c
 extern void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) );
@@ -146,6 +147,22 @@ ITEM_LIST_PROT(Item_Type,ittyp)
 ITEM_PICK_PROT(Item_Type,ittyp)
 #define PICK_ITTYP(pmpt)	pick_ittyp(QSP_ARG  pmpt)
 
+#ifdef HAVE_LIBCURL
+//extern String_Buf *curl_stringbuf(SINGLE_QSP_ARG_DECL);
+//#define CURL_STRINGBUF	curl_stringbuf(SINGLE_QSP_ARG)
+extern Curl_Info *		qs_curl_info(SINGLE_QSP_ARG_DECL);
+#define QS_CURL_INFO		qs_curl_info(SINGLE_QSP_ARG)
+
+#endif // HAVE_LIBCURL
+
+extern char *error_string(SINGLE_QSP_ARG_DECL);
+extern char *message_string(SINGLE_QSP_ARG_DECL);
+#define ERROR_STRING		error_string(SINGLE_QSP_ARG)
+#define DEFAULT_ERROR_STRING	error_string(SGL_DEFAULT_QSP_ARG)
+#define MSG_STR			message_string(SINGLE_QSP_ARG)
+#define DEFAULT_MSG_STR		message_string(SGL_DEFAULT_QSP_ARG)
+
+#define msg_str 		MSG_STR
 
 // quip_menu.h
 
@@ -406,6 +423,11 @@ extern Data_Obj *	pick_obj(QSP_ARG_DECL const char *pmpt);
 #define VWR_OF( s )	vwr_of(QSP_ARG  s )
 #define GET_VWR( s )	get_vwr(QSP_ARG  s )
 #define PICK_VWR( s )	pick_vwr(QSP_ARG  s )
+
+// BUG this should be per-qsp
+extern int quip_verbose;
+// We need to un-define this when we declare the menu...
+#define verbose quip_verbose
 
 #include "warn.h"
 

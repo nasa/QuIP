@@ -1,7 +1,6 @@
 #include "quip_config.h"
 
 #include "stc.h"
-#include "query_stack.h"
 
 static void _lump(Trial_Class *,Trial_Class *);
 
