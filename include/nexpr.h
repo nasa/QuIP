@@ -6,7 +6,6 @@
 //#include "dobj_basic.h"
 #include "data_obj.h"
 #include "typed_scalar.h"
-#include "function_basic.h"
 
 struct scalar_expression_node;
 typedef struct scalar_expression_node Scalar_Expr_Node;

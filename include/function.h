@@ -5,7 +5,6 @@
 #include "shape_bits.h"
 #include "data_obj.h"
 #include "veclib/vecgen.h"
-#include "function_basic.h"
 
 // These function types have to do with the number and type of args
 // This is somewhat confusing in that we have also introduced our

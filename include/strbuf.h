@@ -6,10 +6,10 @@
 
 /* string buffer structure */
 
-typedef struct string_buf {
+struct string_buf {
 	char *		sb_buf;
 	size_t		sb_size;
-} String_Buf;
+} ;
 
 
 #define NO_STRINGBUF ((String_Buf *)NULL)

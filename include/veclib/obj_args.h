@@ -69,7 +69,7 @@ typedef enum {
 
 struct platform_device;	// incomplete type, defined later...
 
-typedef struct vec_obj_args {
+struct vec_obj_args {
 	struct platform_device *	oa_pdp;
 	Data_Obj *	oa_dest;			// result vector
 	Data_Obj *	oa_sdp[MAX_RETSCAL_ARGS];	// for return scalars
@@ -81,7 +81,7 @@ typedef struct vec_obj_args {
 	int		oa_functype;
 	argset_prec	oa_argsprec;
 	argset_type	oa_argstype;
-} Vec_Obj_Args;
+} ;
 
 #define NO_VEC_OBJ_ARGS	((Vec_Obj_Args *) NULL)
 

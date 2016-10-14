@@ -139,11 +139,11 @@ extern "C" {
 
 
 //
-typedef struct foreach_loop {
+struct foreach_loop {
 	const char *	f_varname;
 	List *		f_word_lp;
 	Node *		f_word_np;
-} Foreach_Loop;
+} ;
 
 
 /* Foreach_Loop */
@@ -176,12 +176,12 @@ typedef struct foreach_loop {
 
 #if HAVE_POPEN
 
-typedef struct my_pipe {
+struct my_pipe {
 	const char *	p_name;
 	const char *	p_cmd;
 	FILE *		p_fp;
 	int		p_flgs;
-} Pipe ;
+} ;
 
 #define NO_PIPE ((Pipe *) NULL)
 

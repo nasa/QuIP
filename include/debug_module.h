@@ -1,11 +1,11 @@
 #ifndef _DEBUG_MODULE_H_
 #define _DEBUG_MODULE_H_
 
-typedef struct debug_module {
+struct debug_module {
 	Item		db_item;
 	debug_flag_t	db_mask;
 	debug_flag_t	db_flags;
-} Debug_Module;
+} ;
 
 // flag bits
 

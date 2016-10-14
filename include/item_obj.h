@@ -1,10 +1,10 @@
 #ifndef _ITEM_OBJ_H_
 #define _ITEM_OBJ_H_
 
-struct item_type;
-typedef struct item_type Item_Type;
+//struct item_type;
+//typedef struct item_type Item_Type;
 
-typedef struct item {
+struct item {
 	const char *	item_name;
 #ifdef ITEMS_KNOW_OWN_TYPE
 	Item_Type *	item_itp;
@@ -15,7 +15,7 @@ typedef struct item {
 #define QUIP_ITEM_MAGIC	0x8765432187654321
 #endif /* BUILD_FOR_OBJC */
 
-} Item;
+};
 
 /* Item */
 #define ITEM_NAME(ip)		(ip)->item_name

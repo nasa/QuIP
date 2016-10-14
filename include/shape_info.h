@@ -7,10 +7,10 @@
 /*#define ELEMENT_SIZE(dp)	(siztbl[ MACHINE_PREC(dp) ]) */
 #define ELEMENT_SIZE(dp)	OBJ_PREC_MACH_SIZE(dp)
 
-typedef struct dimension_set {
+struct dimension_set {
 	dimension_t	ds_dimension[N_DIMENSIONS];
 	uint32_t	ds_n_elts;	/* total number of elements */
-} Dimension_Set;
+} ;
 
 #define DS_N_ELTS(dsp)			(dsp)->ds_n_elts
 #define DS_DIM(dsp,idx)			(dsp)->ds_dimension[idx]
@@ -53,21 +53,21 @@ typedef struct dimension_set {
  * type instead???
  */
 
-typedef struct increment_set {
+struct increment_set {
 	incr_t		is_increment[N_DIMENSIONS];
-} Increment_Set;
+} ;
 
 /* IncrementSet macros */
 #define INCREMENT(isp,idx)		isp->is_increment[idx]
 #define SET_INCREMENT(isp,idx,v)	isp->is_increment[idx]=v
 
 
-typedef struct precision {
+struct precision {
 	Item			prec_item;
 	prec_t			prec_code;
 	int			prec_size;	// type size in bytes
 	struct precision *	prec_mach_p;	// NULL for machine precisions
-} Precision;
+} ;
 
 #define NO_PRECISION	((Precision *)NULL)
 #define prec_name	prec_item.item_name
@@ -94,7 +94,7 @@ typedef struct precision {
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
 
 
-typedef struct shape_info {
+struct shape_info {
 	Dimension_Set *		si_mach_dims;
 	Dimension_Set *		si_type_dims;
 	Increment_Set *		si_mach_incs;
@@ -106,7 +106,7 @@ typedef struct shape_info {
 	int32_t			si_range_mindim;
 	shape_flag_t		si_flags;
 	/*int32_t			si_last_subi; */
-} Shape_Info;
+} ;
 
 #define NO_SHAPE ((Shape_Info *) NULL)
 

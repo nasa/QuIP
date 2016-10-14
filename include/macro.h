@@ -6,17 +6,17 @@
 #include "item_type.h"
 
 
-typedef struct macro_arg {
+struct macro_arg {
 	const char *		ma_prompt;
 	Item_Type *		ma_itp;
-} Macro_Arg;
+} ;
 
 /* Macro argument */
 #define MA_PROMPT(map)			map->ma_prompt
 #define MA_ITP(map)			map->ma_itp
 
 
-typedef struct macro {
+struct macro {
 	Item			m_item;
 	Macro_Arg **		m_arg_tbl;
 	int			m_n_args;
@@ -24,7 +24,7 @@ typedef struct macro {
 	int			m_flags;
 	const char *		m_filename;
 	int			m_lineno;
-} Macro;
+} ;
 
 /* Macro macros */
 #define SET_MACRO_NAME(mp,s)		(mp)->m_item.item_name=s

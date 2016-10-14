@@ -12,7 +12,7 @@
 				// But as long as this is larger than the max number
 				// of command args we should be OK... ?
 
-typedef struct query {
+struct query {
 	char *			(*q_readfunc)(QSP_ARG_DECL  void *buf, int size, void *stream);
 	int			q_idx;
 	char *			q_databuf;	// was NSString - do we need?
@@ -36,7 +36,7 @@ typedef struct query {
 	const char **		q_args;
 	Macro *			q_mp;
 	Foreach_Loop *		q_forloop;
-} Query;
+} ;
 
 #define NO_QUERY	((Query *)NULL)
 

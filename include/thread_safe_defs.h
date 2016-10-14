@@ -41,7 +41,6 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define ERROR_STRING		qsp->qs_error_string
 #define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)
 #define MSG_STR			(qsp->qs_msg_str)
-#define msg_str 		MSG_STR
 
 
 #else /* ! THREAD_SAFE_QUERY */
@@ -70,6 +69,7 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 
 #endif /* ! THREAD_SAFE_QUERY */
 
+#define msg_str 		MSG_STR
 
 #endif /* ! _THREAD_SAFE_DEFS_H_ */
 

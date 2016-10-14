@@ -276,7 +276,7 @@ typedef struct ocl_dev_info  OCL_Dev_Info;
 
 #endif // HAVE_OPENCL
 
-typedef struct platform_device {
+struct platform_device {
 	Item			pd_item;
 	Compute_Platform *	pd_cpp;
 	Data_Area *		pd_ap[N_PFDEV_AREA_TYPES];
@@ -294,7 +294,7 @@ typedef struct platform_device {
 #endif // HAVE_CUDA
 	} pd_dev_info;
 #endif // HAVE_ANY_GPU
-} Platform_Device;
+} ;
 
 #define NO_PFDEV	((Platform_Device *)NULL)
 

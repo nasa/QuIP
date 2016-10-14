@@ -285,7 +285,7 @@ typedef struct line_params {
 	int		lp_join_style;
 } Line_Params;
 
-typedef struct viewer {
+struct viewer {
 	Gen_Win		vw_genwin;
 	Dpyable		vw_dpyable;
 #ifdef HAVE_X11
@@ -313,7 +313,7 @@ typedef struct viewer {
 
 	/* Should this be ifdef'd? */
 //	GLXContext	vw_ctx;
-} Viewer;
+} ;
 
 #define VW_DOP(vp)	DPA_DOP(VW_DPA(vp))
 

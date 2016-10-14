@@ -1,12 +1,12 @@
 #ifndef _NODE_H_
 #define _NODE_H_
 
-typedef struct node {
+struct node {
 	void *		n_data;
 	struct node *	n_next;
 	struct node *	n_prev;
 	int		n_pri;
-} Node;
+} ;
 
 
 #define NO_NODE 	((Node *)NULL)

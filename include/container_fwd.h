@@ -16,9 +16,10 @@ typedef enum {
 
 #define DEFAULT_CONTAINER_TYPE	HASH_TBL_CONTAINER
 
-// fwd declarations...
-struct container;
-typedef struct container Container;
+//// fwd declarations...
+// now in quip_fwd.h
+//struct container;
+//typedef struct container Container;
 
 extern long container_eltcount(Container *cnt_p);
 extern void cat_container_items(List *lp,Container *cnt_p);

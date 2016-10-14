@@ -3,14 +3,14 @@
 
 #include "item_type.h"
 
-typedef struct variable {
+struct variable {
 	Item			var_item;
 	int			var_flags;
 	union {
 		const char *	u_value;
 		const char *	(*u_func)(SINGLE_QSP_ARG_DECL);
 	}			var_u;
-} Variable;
+} ;
 
 // flag bits
 #define	VAR_SIMPLE	1

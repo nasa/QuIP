@@ -42,10 +42,10 @@ typedef struct parser_data {
 
 // This struct is used to push text frags around...
 
-typedef struct mouthful {
+struct mouthful {
 	const char *text;
 	const char *filename;
-} Mouthful;
+} ;
 
 #define DBL_QUOTE	'"'
 #define SGL_QUOTE	'\''

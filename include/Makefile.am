@@ -22,6 +22,7 @@ FORCE:
 
 # obsolete file
 #			stdc_defs.h
+#			function_basic.h
 
 noinst_HEADERS =			\
 					\
@@ -50,7 +51,6 @@ noinst_HEADERS =			\
 			fio_api.h	\
 			freel.h		\
 			function.h	\
-			function_basic.h	\
 			gen_win.h	\
 			genwin_flags.h	\
 			getbuf.h	\

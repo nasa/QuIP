@@ -37,7 +37,7 @@ typedef struct {
 	Node *		last_np;
 } list_frag_match_info;
 
-typedef struct frag_match_info {
+struct frag_match_info {
 	Item				it;	// the partial string - stored in their own context
 	struct item_context *		icp;
 	int type;	// LIST_CONTAINER or RB_TREE_CONTAINER
@@ -45,9 +45,9 @@ typedef struct frag_match_info {
 		rbtree_frag_match_info	rbti;
 		list_frag_match_info	li;
 	} u;
-} Frag_Match_Info;
+} ;
 
-typedef struct item_context {
+struct item_context {
 	Item			ic_item;
 	List *			ic_lp;
 	Item_Type *		ic_itp;		// points to the owner of this context
@@ -59,7 +59,7 @@ typedef struct item_context {
 	// to use a red-black tree...
 //	struct dictionary *	ic_dict_p;
 	Container *		ic_cnt_p;
-} Item_Context;
+} ;
 
 
 //#define NO_NAMESPACE		NULL
@@ -224,11 +224,11 @@ struct item_type {
 
 
 
-typedef struct item_class {
+struct item_class {
 	Item		icl_item;
 	List *		icl_lp;		// list of itp's
 	int		icl_flags;
-} Item_Class;
+} ;
 
 #define NO_ITEM_CLASS	((Item_Class *)NULL)
 
@@ -239,11 +239,11 @@ typedef struct item_class {
 // flag bits
 #define NEED_CLASS_CHOICES	1
 
-typedef struct member_info {
+struct member_info {
 	Item_Type *	mi_itp;
 	void *		mi_data;
 	Item *		(*mi_lookup)(QSP_ARG_DECL  const char *);
-} Member_Info;
+} ;
 
 #define MBR_DATA(mp)	(mp)->mi_data
 

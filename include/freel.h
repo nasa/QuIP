@@ -11,10 +11,10 @@ typedef struct freeblk {
 	u_long size;
 } FreeBlk;
 
-typedef struct freelist {
+struct freelist {
 	u_long		fl_n_blocks;
 	FreeBlk *	fl_blockp;
-} FreeList;
+} ;
 
 #define NO_FREELIST	((FreeList *) NULL)
 #define NO_FREEBLK	((FreeBlk *) NULL )

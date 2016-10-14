@@ -9,7 +9,7 @@
 extern int n_active_threads;	// Number of qsp's
 #endif /* THREAD_SAFE_QUERY */
 
-typedef struct list {
+struct list {
 	Node *		l_head;
 	Node *		l_tail;
 #ifdef THREAD_SAFE_QUERY
@@ -18,7 +18,7 @@ typedef struct list {
 	int		l_flags;	// Flags
 #endif /* HAVE_PTHREADS */
 #endif /* THREAD_SAFE_QUERY */
-} List;
+} ;
 
 #define NEW_LIST		new_list()
 #define INIT_LIST(lp)		{ lp->l_head=NO_NODE; lp->l_tail=NO_NODE; }

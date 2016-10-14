@@ -10,7 +10,7 @@
 #include "container_fwd.h"
 
 
-typedef struct menu {
+struct menu {
 //	Dictionary *		mn_dict;
 	Container *		mn_cnt_p;
 	const char *		mn_prompt;
@@ -27,7 +27,7 @@ typedef struct menu {
 
 #endif /* HAVE_HISTORY */
 
-} Menu;
+} ;
 
 #define NO_MENU	((Menu *) NULL)
 
