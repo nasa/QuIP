@@ -3,7 +3,7 @@
 #include "quip_menu.h"
 #include "ascii_fmts.h"
 #include "data_obj.h"
-#define CONST const
+//#define CONST const	// why needed?
 
 // BUG - this file contains both prototypes for functions which are private
 // to the module, and also the external api...
@@ -173,7 +173,7 @@ extern Data_Area *	pf_area_init(QSP_ARG_DECL  const char *name,u_char *buffer,ui
 extern Data_Area *	new_area(QSP_ARG_DECL  const char *s,uint32_t siz,int n);
 extern void		list_area(QSP_ARG_DECL  Data_Area *ap);
 extern void		data_area_info(QSP_ARG_DECL  Data_Area *ap);
-extern int		dp_addr_cmp(CONST void *dpp1,CONST void *dpp2);
+extern int		dp_addr_cmp(const void *dpp1,const void *dpp2);
 extern void		show_area_space(QSP_ARG_DECL  Data_Area *ap);
 extern Data_Obj *	area_scalar(QSP_ARG_DECL  Data_Area *ap);
 

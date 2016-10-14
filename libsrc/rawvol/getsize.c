@@ -74,7 +74,7 @@ static int valid_offset (int fd,off64_t offset)
 /*
  * Returns the number of blocks in a partition
  */
-errcode_t get_device_size(QSP_ARG_DECL  CONST char *file,int blocksize,blk_t *retblocks)
+errcode_t get_device_size(QSP_ARG_DECL  const char *file,int blocksize,blk_t *retblocks)
 {
 	int	fd;
 #ifdef BLKGETSIZE

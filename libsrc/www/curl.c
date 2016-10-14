@@ -8,6 +8,7 @@
 #include "quip_prot.h"
 #include "server.h"
 #include "my_encryption.h"
+#include "query_stack.h"
 
 static void add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
 {

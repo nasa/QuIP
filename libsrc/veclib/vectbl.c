@@ -372,15 +372,15 @@ static void create_vfs(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-static int vf_cmp(CONST void *vfp1,CONST void *vfp2)
+static int vf_cmp(const void *vfp1,const void *vfp2)
 {
-	if( ((CONST Vector_Function *)vfp1)->vf_code > ((CONST Vector_Function *)vfp2)->vf_code ) return(1);
+	if( ((const Vector_Function *)vfp1)->vf_code > ((const Vector_Function *)vfp2)->vf_code ) return(1);
 	else return(-1);
 }
 
-static int vfa_cmp(CONST void *vfp1,CONST void *vfp2)
+static int vfa_cmp(const void *vfp1,const void *vfp2)
 {
-	if( ((CONST Vec_Func_Array *)vfp1)->vfa_code > ((CONST Vec_Func_Array *)vfp2)->vfa_code ) return(1);
+	if( ((const Vec_Func_Array *)vfp1)->vfa_code > ((const Vec_Func_Array *)vfp2)->vfa_code ) return(1);
 	else return(-1);
 }
 

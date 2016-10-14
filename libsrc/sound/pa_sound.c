@@ -11,6 +11,7 @@
 
 #include "quip_prot.h"
 #include "sound.h"
+#include "function.h"
 
 static unsigned int nchannels=2;		/* default */
 static int halting=0;

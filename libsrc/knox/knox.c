@@ -9,6 +9,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_stack.h"
+#include "data_obj.h"
 
 // BUG static vars not thread safe
 static int range_ok;

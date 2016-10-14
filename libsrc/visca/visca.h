@@ -8,6 +8,7 @@ char VersionId_inc_visca[] = QUIP_VERSION_STRING;
 #endif /* INC_VERSION */
 
 #include "quip_prot.h"
+#include "item_obj.h"
 
 #define MAX_VISCA_REQS 10 /* size of the buffer of requests */
 

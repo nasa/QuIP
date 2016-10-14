@@ -3,6 +3,8 @@
 #include "quip_prot.h"
 #include "server.h"
 #include "my_encryption.h"
+#include "strbuf.h"
+#include "quip_menu.h"
 
 static COMMAND_FUNC( do_read_file_from_server )
 {

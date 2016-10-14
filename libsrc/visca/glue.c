@@ -3,6 +3,7 @@
 
 #include "quip_prot.h"
 #include "visca.h"
+#include "item_type.h"
 
 ITEM_INTERFACE_DECLARATIONS(Visca_Cmd_Set,cmd_set,0)
 ITEM_INTERFACE_DECLARATIONS(Visca_Command,visca_cmd,0)
