@@ -2,16 +2,20 @@
 #define _DATA_OBJ_H_
 
 #include "quip_config.h"
+#include "quip_fwd.h"
 #ifdef FOOBAR
 #include "quip_menu.h"
 #endif // FOOBAR
-#include "query_api.h"
+
+#include "shape_bits.h"
+
+//#include "query_api.h"
 #include "item_type.h"
 #include "shape_info.h"
 #include "freel.h"
-#include "list.h"
-#include "debug.h"
-#include "dobj_basic.h"
+//#include "list.h"
+//#include "debug.h"
+//#include "dobj_basic.h"
 
 struct platform_device;
 
@@ -278,6 +282,8 @@ extern int max_vectorizable;
 
 /* Data_Obj macros */
 
+#define DOBJ_COPY(dpto,dpfr)    *dpto = *dpfr
+#define NEW_DATA_OBJ(dp)	dp=(Data_Obj *)getbuf(sizeof(Data_Obj))
 #define NEW_DOBJ		((Data_Obj *)getbuf(sizeof(Data_Obj)))
 #define INDEX_COUNT(dsp,i)		(dsp)->ds_dimension[i]
 #define ASSIGN_IDX_COUNT(dsp,i,v)	(dsp)->ds_dimension[i]=v
@@ -467,6 +473,11 @@ extern int max_vectorizable;
 
 #define FETCH_OBJ_FROM_CONTEXT( dp, icp )	container_find_match( CTX_CONTAINER(icp) , OBJ_NAME(dp) )
 
+#define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
+#define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
+#define DOBJ_CONTEXT_LIST		CONTEXT_LIST(dobj_itp)
+#define ID_CONTEXT_LIST			CONTEXT_LIST(id_itp)
+
 /* BUG should go elsewhere */
 extern const char *dimension_name[];
 extern void dobj_init(SINGLE_QSP_ARG_DECL);
@@ -500,9 +511,15 @@ ITEM_CHECK_PROT(Data_Obj,dobj)
 ITEM_NEW_PROT(Data_Obj,dobj)
 ITEM_DEL_PROT(Data_Obj,dobj)
 
+/* remove from the dictionary... */
+#define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
+#define ADD_OBJ_ITEM(dp)		/* add to the dictionary...  BUG LOOKS LIKE A NO-OP??? */
+
 // areas.c
 
 ITEM_INTERFACE_PROTOTYPES(Data_Area,data_area)
+#define PICK_DATA_AREA(p)	pick_data_area(QSP_ARG  p)
+
 
 // sub_obj.c
 extern void default_offset_data_func(QSP_ARG_DECL  Data_Obj *dp, index_t pix_offset );

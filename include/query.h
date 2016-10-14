@@ -5,6 +5,7 @@
 #include "list.h"
 #include "macro.h"
 #include "query_bits.h"
+#include "qs_basic.h"
 
 #define QBUF_LEN	256
 #define N_QRY_RETSTRS	32	// BUG shouldn't be a fixed number,
@@ -67,6 +68,9 @@ typedef struct query {
 #define QRY_HAS_FILE_PTR(qp)		(QRY_FILE_PTR(qp) != NULL && ! QRY_IS_SOCKET(qp) )
 #define QRY_READFUNC(qp)		(qp)->q_readfunc
 #define SET_QRY_READFUNC(qp,f)		(qp)->q_readfunc = f
+/*#define READFUNC_CAST		char *(*)(TMP_QSP_ARG_DECL  void *, int, void *) */
+#define READFUNC_CAST		char *(*)(QSP_ARG_DECL  void *, int, void *)
+
 #define QRY_BUFFER(qp)			(qp)->q_buffer
 #define SET_QRY_BUFFER(qp,s)		(qp)->q_buffer = s
 #define QRY_FILENAME(qp)		(qp)->q_filename

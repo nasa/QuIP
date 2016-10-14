@@ -1,6 +1,7 @@
 
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "item_prot.h"
 #include "quip_version.h"
 
 #ifdef HAVE_UNISTD_H

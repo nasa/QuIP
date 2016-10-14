@@ -30,6 +30,22 @@ typedef struct variable {
 #define ASSIGN_VAR( s1 , s2 )	assign_var(QSP_ARG  s1 , s2 )
 #define ASSIGN_RESERVED_VAR( s1 , s2 )	assign_reserved_var(QSP_ARG  s1 , s2 )
 
+/* Variable */
+#define VAR_NAME(vp)		vp->var_item.item_name
+#define VAR_VALUE(vp)		vp->var_u.u_value
+#define VAR_TYPE(vp)		vp->var_type
+#define VAR_FUNC(vp)		vp->var_u.u_func
+#define SET_VAR_NAME(vp,s)	vp->var_item.item_name=s
+/* this crashes if the value is NULL... */
+/*#define SET_VAR_VALUE(vp,s)	{if (vp->var_u.u_value != NULL ) rls_str(vp->var_u.u_value); vp->var_u.u_value=savestr(s); } */
+#define SET_VAR_VALUE(vp,s)	vp->var_u.u_value=s
+#define SET_VAR_TYPE(vp,t)		vp->var_type=t
+#define SET_VAR_FUNC(vp,f)		vp->var_u.u_func=f
+
+#define NEW_VARIABLE(vp)	{vp=(Variable *)getbuf(sizeof(Variable));	\
+				SET_VAR_NAME(vp,NULL); SET_VAR_VALUE(vp,NULL); }
+
+
 extern void find_vars(QSP_ARG_DECL  const char *s);
 extern void search_vars(QSP_ARG_DECL  const char *s);
 extern const char *var_value(QSP_ARG_DECL  const char *vname);
@@ -39,6 +55,9 @@ ITEM_INIT_PROT(Variable,var_)
 ITEM_NEW_PROT(Variable,var_)
 ITEM_CHECK_PROT(Variable,var_)
 ITEM_PICK_PROT(Variable,var_)
+
+#define VAR_OF(s)	var_of(QSP_ARG  s)
+#define PICK_VAR(s)	pick_var_(QSP_ARG  s)
 
 extern Variable *assign_var(QSP_ARG_DECL  const char *name, const char *value);
 extern Variable *create_reserved_var(QSP_ARG_DECL  const char *name, const char *value);

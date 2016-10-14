@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 
-#ifdef HAVE_OPENCL
-#include "my_ocl.h"
-#endif /* HAVE_OPENCL */
+//#ifdef HAVE_OPENCL
+//#include "my_ocl.h"		// why was this needed?  FOOBAR
+//#endif /* HAVE_OPENCL */
 
 #ifdef HAVE_CTYPE_H
 #include <ctype.h>
@@ -140,7 +140,7 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 {
 	SET_OBJ_PREC_PTR(dp,prec_p);
 	SET_OBJ_REFCOUNT(dp,0);
-	SET_OBJ_DECLFILE(dp, savestr( CURRENT_INPUT_FILENAME ) );
+	SET_OBJ_DECLFILE(dp, savestr( CURRENT_FILENAME ) );
 // current_input_stack(SINGLE_QSP_ARG)
 	SET_OBJ_BIT0(dp,0);
 
@@ -383,7 +383,7 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 			advise(ERROR_STRING);
 			sprintf(ERROR_STRING,
 		"Ignoring redeclaration w/ filestack: %s",
-				CURRENT_INPUT_FILENAME );
+				CURRENT_FILENAME );
 				//current_input_stack(SINGLE_QSP_ARG)
 			advise(ERROR_STRING);
 		}

@@ -2,6 +2,7 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "nexpr.h"
+#include "function.h"
 //#include "shape_bits.h"
 
 static Data_Obj *obj_for_string(const char *string)

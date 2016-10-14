@@ -1,6 +1,7 @@
 
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "item_type.h"
 
 Item_Type * macro_itp=NULL;
 

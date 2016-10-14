@@ -6,7 +6,7 @@
 
 /* string buffer structure */
 
-typedef struct string_buffer {
+typedef struct string_buf {
 	char *		sb_buf;
 	size_t		sb_size;
 } String_Buf;

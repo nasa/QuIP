@@ -30,6 +30,23 @@ typedef struct vector_function {
 
 #define NO_VEC_FUNC	((Vector_Function *)NULL)
 
+
+/* Vector_Function stuff - moved to obj_args.h */
+
+#define VF_NAME(vfp)			(vfp)->vf_item.item_name
+#define VF_FLAGS(vfp)			(vfp)->vf_flags
+#define VF_CODE(vfp)			(vfp)->vf_code
+#define VF_TYPEMASK(vfp)		(vfp)->vf_typemask
+#define VF_PRECMASK(vfp)		(vfp)->vf_precmask
+
+#define SET_VF_NAME(vfp,s)		(vfp)->vf_item.item_name = s
+#define SET_VF_FLAGS(vfp,f)		(vfp)->vf_flags = f
+#define SET_VF_CODE(vfp,c)		(vfp)->vf_code = c
+#define SET_VF_TYPEMASK(vfp,m)		(vfp)->vf_typemask = m
+#define SET_VF_PRECMASK(vfp,m)		(vfp)->vf_precmask = m
+
+#define FIND_VEC_FUNC(code)		(&vec_func_tbl[code])
+
 /* flag bits */
 #define DST_VEC			1
 #define SRC1_VEC		2

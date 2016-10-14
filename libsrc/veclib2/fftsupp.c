@@ -2,6 +2,8 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
+#include "getbuf.h"
+#include "data_obj.h"
 #include "veclib/fftsupp.h"
 
 #ifndef TRUE

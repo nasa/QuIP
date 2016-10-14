@@ -15,5 +15,14 @@ typedef struct debug_module {
 
 #define NO_DEBUG_MODULE	((Debug_Module *)NULL)
 
+/* Debug_Module */
+#define DEBUG_NAME(dbmp)		(dbmp)->db_name
+#define DEBUG_MASK(dbmp)		(dbmp)->db_mask
+#define SET_DEBUG_MASK(dbmp,m)		(dbmp)->db_mask = m
+#define DEBUG_FLAGS(dbmp)		(dbmp)->db_flags
+#define SET_DEBUG_FLAGS(dbmp,f)		(dbmp)->db_flags = f
+#define CLEAR_DEBUG_FLAG_BITS(dbmp,b)	(dbmp)->db_flags &= ~(b)
+
+
 #endif /* ! _DEBUG_MODULE_H_ */
 

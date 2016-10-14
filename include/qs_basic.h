@@ -1,12 +1,8 @@
 #ifndef _QS_BASIC_H_
 #define _QS_BASIC_H_
 
-struct query_stack;
 
-#ifndef _QUIP_SIMPLE_PROT_H_
-typedef struct query_stack Query_Stack;
-#endif // ! _QUIP_SIMPLE_PROT_H_
-
+#ifdef FOOBAR	// moved to thread_safe_query.h
 #ifdef THREAD_SAFE_QUERY
 
 #define QSP_DECL		Query_Stack *qsp;
@@ -68,5 +64,7 @@ typedef struct query_stack Query_Stack;
 #define UNLOCK_ITEM_TYPE(itp)	/* do nothing */
 
 #endif /* ! THREAD_SAFE_QUERY */
+#endif // FOOBAR	// moved to thread_safe_query.h
+
 #endif /* ! _QS_BASIC_H */
 

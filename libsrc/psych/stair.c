@@ -4,6 +4,7 @@
 #include "quip_prot.h"
 #include "stc.h"
 #include "rn.h"
+#include "item_type.h"
 
 /* If CATCH_SIGS is defined, then we can use ^C to interrupt trials...
  *

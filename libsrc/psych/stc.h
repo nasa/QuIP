@@ -8,6 +8,7 @@ char VersionId_inc_stc[] = QUIP_VERSION_STRING;
 
 #include <stdio.h>
 #include "quip_prot.h"
+#include "item_obj.h"
 
 #ifdef SUN
 #define STEPIT

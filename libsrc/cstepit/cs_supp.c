@@ -11,6 +11,8 @@
 //#include "fitsine.h"
 #include "cstepit.h"
 #include "optimize.h"
+#include "list.h"
+#include "variable.h"
 
 static int n_prms;
 

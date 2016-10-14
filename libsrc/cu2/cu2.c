@@ -11,6 +11,7 @@
 
 #define BUILD_FOR_CUDA
 
+#include "fileck.h"
 #include "my_cu2.h"
 #include "cuda_supp.h"
 

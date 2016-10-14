@@ -15,6 +15,7 @@
 #include "getbuf.h"
 #include "stack.h"
 #include "data_obj.h"
+#include "shape_info.h"
 
 Data_Area *curr_ap=NO_AREA, *ram_area_p=NO_AREA;
 

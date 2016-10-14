@@ -26,6 +26,7 @@
 #include "ports.h"
 #include "getbuf.h"
 #include "debug.h"
+#include "rn.h"
 //#include "submenus.h"	/* call_event_funcs */
 
 //static char * remote_filename=NULL;

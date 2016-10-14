@@ -22,7 +22,6 @@
 #include "item_type.h"
 
 /* change to uint64_t if we run out of modules... */
-typedef uint32_t debug_flag_t;
 #define ALL_DEBUG_MODULES	0xffffffff
 
 #include "debug_module.h"

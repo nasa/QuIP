@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "function.h"
 
 /* support for data functions in expr.y */
 

@@ -5,6 +5,7 @@
 
 #include "quip_prot.h"
 #include "my_ocl.h"
+#include "platform.h"
 #include "veclib/ocl_port.h"
 
 

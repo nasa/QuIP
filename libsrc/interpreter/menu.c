@@ -1,6 +1,8 @@
 
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "container_fwd.h"
+#include "quip_menu.h"
 
 void add_command_to_menu( Menu *mp, Command *cp )
 {

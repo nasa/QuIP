@@ -1,6 +1,7 @@
 /* Linkage to libgcrypt */
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "query_stack.h"
 #include "my_encryption.h"
 
 #ifdef HAVE_LIBGCRYPT

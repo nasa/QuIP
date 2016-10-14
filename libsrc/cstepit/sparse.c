@@ -17,6 +17,7 @@
 
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "data_obj.h"
 #include "sparse.h"
 #ifdef HAVE_SPARSELM
 #include "splm.h"

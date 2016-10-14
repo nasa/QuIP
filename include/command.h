@@ -3,7 +3,7 @@
 #define _COMMAND_H_
 
 //struct query_stack;
-#include "qs_basic.h"
+#include "quip_fwd.h"
 
 typedef struct command {
 	const char *	cmd_selector;
@@ -11,6 +11,8 @@ typedef struct command {
 	int		cmd_serial;
 	void		(*cmd_action)(SINGLE_QSP_ARG_DECL);
 } Command;
+
+#define CMD_SELECTOR(cp)	cp->cmd_selector
 
 
 #define NO_COMMAND		((Command *) NULL)

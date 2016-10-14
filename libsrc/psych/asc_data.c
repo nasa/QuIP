@@ -22,6 +22,7 @@
 #endif
 
 #include "stc.h"
+#include "query.h"
 
 
 /* printf/scanf format strings */

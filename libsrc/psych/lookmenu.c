@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "quip_prot.h"
 #include "stc.h"
+#include "query_stack.h"
 
 //static Trial_Class *curr_tcp=NULL;
 static int n_have_classes=0;

@@ -8,6 +8,7 @@
 #include "veclib_api.h"
 #include "veclib/vec_func.h"
 #include "ocl_platform.h"
+#include "fileck.h"
 
 //#define MEM_SIZE (16)//suppose we have a vector with 128 elements
 #define MAX_SOURCE_SIZE (0x100000)

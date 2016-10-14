@@ -1,3 +1,4 @@
+#include "veclib/vecgen.h"
 
 extern void simd_vec_rvmov(float *,float*,unsigned long);
 

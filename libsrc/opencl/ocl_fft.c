@@ -4,19 +4,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #define BUILD_FOR_OPENCL
+
 #include "quip_prot.h"
 //#include "data_obj.h"
 //#include "veclib/vecgen.h"
 
-#include "my_ocl.h"
+//#include "my_ocl.h"
 
 /* No need to explicitely include the OpenCL headers */
 #ifdef HAVE_CLFFT_H
 #include <clFFT.h>
 #endif // HAVE_CLFFT_H
 
-#include "quip_prot.h"
 #include "veclib_api.h"
 #include "veclib/ocl_veclib_prot.h"
 #include "veclib/fftsupp.h"

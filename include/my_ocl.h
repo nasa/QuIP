@@ -5,10 +5,14 @@
 #include <CL/cl.h>
 #endif
 
-#include "item_type.h"
-#include "veclib/vec_func.h"
-#include "veclib/obj_args.h"
-#include "platform.h"
+//#include "item_type.h"
+#include "quip_fwd.h"
+#include "item_obj.h"
+
+#include "veclib/vecgen.h"
+//#include "veclib/vec_func.h"
+//#include "veclib/obj_args.h"
+//#include "platform.h"
 
 #define BUILD_FOR_OPENCL
 

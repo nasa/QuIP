@@ -1,6 +1,7 @@
 #include "quip_config.h"
 #include <stdio.h>
 #include "quip_prot.h"
+#include "debug.h"
 
 #ifdef QUIP_DEBUG
 static u_long gbdebug=GETBUF_DEBUG_MASK;

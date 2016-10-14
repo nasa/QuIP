@@ -11,6 +11,7 @@
 #include "item_prot.h"
 #include "veclib/vecgen.h"
 #include "sizable.h"
+#include "fileck.h"
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>

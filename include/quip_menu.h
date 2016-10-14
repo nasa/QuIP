@@ -2,6 +2,7 @@
 #define _QUIP_MENU_H_
 
 #include "command.h"
+#include "getbuf.h"
 //#include "dictionary.h"
 //#include "dict.h"
 
@@ -66,7 +67,7 @@ static void init_##prompt##_menu(void)					\
 
 //#define PUSHCMD(menu,prompt)	pushcmd(THIS_QSP menu)
 
-#define COMMAND_FUNC(name)  void name(SINGLE_QSP_ARG_DECL)
+// COMMAND_FUNC macro moved to quip_fwd.h
 
 #define CHECK_MENU(prompt)					\
 								\

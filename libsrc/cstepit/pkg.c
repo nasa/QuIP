@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "optimize.h"
 #include "cstepit.h"
+#include "item_type.h"
 //#include "new_cstepit.h"	/* just for testing! */
 
 /* local prototypes */

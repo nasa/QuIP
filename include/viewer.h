@@ -518,10 +518,6 @@ typedef struct view_cursor {
 
 extern void init_viewer_genwin(SINGLE_QSP_ARG_DECL);
 
-#define VWR_OF( s )	vwr_of(QSP_ARG  s )
-#define GET_VWR( s )	get_vwr(QSP_ARG  s )
-#define PICK_VWR( s )	pick_vwr(QSP_ARG  s )
-
 extern void zap_image_list(Viewer *vp);
 extern void select_viewer(QSP_ARG_DECL  Viewer *vp);
 extern void release_image(QSP_ARG_DECL  Data_Obj *dp);

@@ -1,6 +1,7 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
+#include "query_stack.h"
 
 typedef enum {
 	SWF_DEBUG,

@@ -20,6 +20,7 @@
 
 #include "quip_prot.h"
 #include "freel.h"
+#include "debug.h"
 
 #ifdef LONG_64_BIT
 #define MAX_SIGNED_LONG	0x7fffffffffffffff

@@ -1,3 +1,5 @@
+#include "shape_bits.h"
+
 extern dimension_t bitrev_size;
 extern dimension_t *bitrev_data;
 

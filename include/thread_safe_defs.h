@@ -5,6 +5,10 @@
 
 struct query_stack;
 
+#define DEFAULT_QSP			default_qsp
+extern Query_Stack *default_qsp;		// global needs to be set at init...
+
+
 #ifdef THREAD_SAFE_QUERY
 
 #define QSP_DECL		Query_Stack *qsp;
@@ -15,6 +19,7 @@ struct query_stack;
 #define TMP_QSP_ARG_DECL	struct query_stack *qsp,
 #define TMP_QSP_ARG		(void *)qsp,
 #define QSP_ARG			qsp,
+#define QSP_ARG_FOR(_qsp)	_qsp,
 #define SINGLE_QSP_ARG		qsp
 #define DEFAULT_QSP_ARG		DEFAULT_QSP,
 #define NULL_QSP_ARG		NULL,
@@ -36,6 +41,7 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define ERROR_STRING		qsp->qs_error_string
 #define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)
 #define MSG_STR			(qsp->qs_msg_str)
+#define msg_str 		MSG_STR
 
 
 #else /* ! THREAD_SAFE_QUERY */
@@ -48,6 +54,7 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define TMP_QSP_ARG_DECL
 #define TMP_QSP_ARG
 #define QSP_ARG
+#define QSP_ARG_FOR(_qsp)
 #define SINGLE_QSP_ARG
 #define DEFAULT_QSP_ARG
 #define NULL_QSP_ARG
@@ -64,7 +71,7 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #endif /* ! THREAD_SAFE_QUERY */
 
 
-#define /* ! _THREAD_SAFE_DEFS_H_ */
+#endif /* ! _THREAD_SAFE_DEFS_H_ */
 
 
 

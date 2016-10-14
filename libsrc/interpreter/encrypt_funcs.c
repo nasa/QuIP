@@ -1,6 +1,10 @@
 #include <math.h>
+#include <ctype.h>
+#include "quip_config.h"
 #include "quip_prot.h"
+#include "query_stack.h"
 #include "my_encryption.h"
+#include "fileck.h"
 
 #ifdef HAVE_SECRET_KEY
 

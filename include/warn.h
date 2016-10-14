@@ -1,7 +1,7 @@
 #ifndef _WARN_H_
 #define _WARN_H_
 
-#include "query_stack.h"
+#include "quip_fwd.h"
 
 extern void warn(QSP_ARG_DECL  const char *msg);
 #ifdef BUILD_FOR_IOS

@@ -9,8 +9,8 @@
 #include <curand.h>
 
 #include "quip_prot.h"
-#include "veclib/cu2_veclib_prot.h"
 #include "veclib/vecgen.h"
+#include "veclib/cu2_veclib_prot.h"
 #include "veclib/obj_args.h"
 
 

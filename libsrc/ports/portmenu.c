@@ -10,6 +10,7 @@
 //#include "uio.h"
 #include "data_obj.h"
 #include "query.h"
+#include "function.h"
 #include "debug.h"
 
 /* this function gets called instead of fgets ... */

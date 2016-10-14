@@ -71,6 +71,31 @@ typedef struct filetype {
 } Filetype;
 
 
+/* Filetype */
+#define FT_NAME(ftp)		(ftp)->ft_item.item_name
+#define FT_CODE(ftp)		(ftp)->ft_code
+#define FT_FLAGS(ftp)		(ftp)->ft_flags
+#define FT_OPEN_FUNC(ftp)	(ftp)->op_func
+#define FT_READ_FUNC(ftp)	(ftp)->rd_func
+#define FT_WRITE_FUNC(ftp)	(ftp)->wt_func
+#define FT_CLOSE_FUNC(ftp)	(ftp)->close_func
+#define FT_CONV_FUNC(ftp)	(ftp)->conv_func
+#define FT_UNCONV_FUNC(ftp)	(ftp)->unconv_func
+#define FT_SEEK_FUNC(ftp)	(ftp)->seek_func
+#define FT_INFO_FUNC(ftp)	(ftp)->info_func
+
+#define SET_FT_CODE(ftp,c)		(ftp)->ft_code = c
+#define SET_FT_FLAGS(ftp,v)		(ftp)->ft_flags = v
+#define SET_FT_OPEN_FUNC(ftp,f)		(ftp)->op_func = f
+#define SET_FT_READ_FUNC(ftp,f)		(ftp)->rd_func = f
+#define SET_FT_WRITE_FUNC(ftp,f)	(ftp)->wt_func = f
+#define SET_FT_CLOSE_FUNC(ftp,f)	(ftp)->close_func = f
+#define SET_FT_CONV_FUNC(ftp,f)		(ftp)->conv_func = f
+#define SET_FT_UNCONV_FUNC(ftp,f)	(ftp)->unconv_func = f
+#define SET_FT_SEEK_FUNC(ftp,f)		(ftp)->seek_func = f
+#define SET_FT_INFO_FUNC(ftp,f)		(ftp)->info_func = f
+
+
 #define NO_FILETYPE	((Filetype *)NULL)
 
 ITEM_INIT_PROT(Filetype,file_type)
@@ -101,6 +126,13 @@ typedef struct image_file {
 //	UIImage *	if_imgp;	// for iOS png...
 //#endif // BUILD_FOR_IOS
 } Image_File;
+
+
+/* Image_File */
+#define IF_NAME(ifp)		(ifp)->if_name
+#define IF_TYPE(ifp)		(ifp)->if_ftp
+#define SET_IF_TYPE(ifp,ftp)	(ifp)->if_ftp = ftp
+#define IF_TYPE_CODE(ifp)	FT_CODE( IF_TYPE(ifp) )
 
 #define if_fp	if_file_u.u_fp
 #define if_fd	if_file_u.u_fd

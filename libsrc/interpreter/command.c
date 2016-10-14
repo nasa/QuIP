@@ -1,6 +1,8 @@
 
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "command.h"
+#include "query_stack.h"
 
 void list_command(QSP_ARG_DECL  Command *cp)
 {

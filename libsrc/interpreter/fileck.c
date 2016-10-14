@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+#include "fileck.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

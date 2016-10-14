@@ -2,9 +2,8 @@
 #ifndef _STACK_H_
 #define _STACK_H_
 
+#include "quip_fwd.h"
 #include "list.h"
-
-typedef List Stack;
 
 #define NO_STACK ((Stack *)NULL)
 #define new_stack new_list

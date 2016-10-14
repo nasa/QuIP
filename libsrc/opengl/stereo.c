@@ -14,6 +14,7 @@
 #endif // HAVE_GL_GLUT_H
 
 #include "quip_prot.h"
+#include "query_stack.h"
 #include "glut_supp.h"
 
 #include "nvstusb.h"

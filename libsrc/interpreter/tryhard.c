@@ -29,7 +29,8 @@
 #endif
 
 #include "quip_prot.h"	
-#include "warn.h"	// ERROR_STRING
+#include "query_stack.h"	
+//#include "warn.h"	// ERROR_STRING
 
 #ifdef HAVE_GETPWENT
 

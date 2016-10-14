@@ -6,6 +6,8 @@
 #include "stc.h"
 #include "quip_prot.h"
 #include "rn.h"
+#include "getbuf.h"
+#include "variable.h"
 
 int is_fc=0;
 

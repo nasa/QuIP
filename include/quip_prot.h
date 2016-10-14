@@ -24,16 +24,19 @@ extern "C" {
 #define FALSE 0
 #endif // ! FALSE
 
-#include "stdc_defs.h"	// BUG break this up
-#include "query_stack.h"
-#include "item_type.h"
-#include "hash.h"
-#include "function.h"
-#include "debug.h"
-#include "warn.h"
-#include "fileck.h"
-#include "item_prot.h"
-#include "rn.h"
+#include <stdio.h>
+#include "quip_fwd.h"	// forward definitions of structs and typedefs
+
+//#include "stdc_defs.h"	// BUG break this up
+//#include "query_stack.h"
+//#include "item_type.h"
+//#include "hash.h"
+//#include "function.h"
+//#include "debug.h"
+//#include "warn.h"
+//#include "fileck.h"
+//#include "item_prot.h"
+//#include "rn.h"
 
 // This used to be a macro - do we still need it?
 extern Query * query_at_level(QSP_ARG_DECL  int l);
@@ -88,6 +91,14 @@ ITEM_INTERFACE_PROTOTYPES( Pipe, pipe )
 // try_hard.c
 extern FILE *try_hard( QSP_ARG_DECL  const char *filename, const char *mode );
 extern FILE *trynice(QSP_ARG_DECL  const char *fnam, const char *mode);
+extern QUIP_BOOL confirm(QSP_ARG_DECL  const char *pmpt);
+extern FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode);
+
+#define TRY_OPEN(s,m)		try_open(QSP_ARG  s,m)
+#define TRY_HARD(s,m)		try_hard(QSP_ARG  s,m)
+#define TRYNICE(s,m)		trynice(QSP_ARG  s,m)
+#define CONFIRM(p)		confirm(QSP_ARG  p)
+
 extern COMMAND_FUNC( togclobber );
 
 
@@ -118,8 +129,12 @@ extern void simulate_typing(const char *str);
 
 // query_stack.h
 extern const char *nameof( QSP_ARG_DECL  const char *pmpt);
+#define NAMEOF(s)			nameof(QSP_ARG  s)
+
 extern const char * nameof2(QSP_ARG_DECL  const char *prompt);
 extern int askif( QSP_ARG_DECL  const char *pmpt);
+#define ASKIF(p)		askif(QSP_ARG  p )
+
 
 extern int which_one( QSP_ARG_DECL  const char *pmpt, int n, const char **choices );
 extern int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices);
@@ -170,6 +185,9 @@ extern void		_dump_dict_info(QSP_ARG_DECL  Dictionary *dict_p);
 // query_stack?
 extern long how_many(QSP_ARG_DECL  const char *);
 extern double how_much(QSP_ARG_DECL  const char *);
+#define HOW_MANY(pmpt)			how_many(QSP_ARG  pmpt)
+#define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
+
 
 // query_funcs.c
 
@@ -262,9 +280,6 @@ extern const char *parent_directory_of(const char *pathname);
 // function.c ?
 extern void declare_functions(SINGLE_QSP_ARG_DECL);
 
-// tryhard.c 
-extern FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode);
-
 // callback.c
 extern COMMAND_FUNC( call_event_funcs );
 
@@ -325,7 +340,6 @@ extern Query * pop_file( SINGLE_QSP_ARG_DECL );
 
 extern void redir_with_flags( QSP_ARG_DECL  FILE *fp, const char *filename, uint32_t flags );
 extern void redir( QSP_ARG_DECL  FILE *fp, const char *filename );
-extern QUIP_BOOL confirm(QSP_ARG_DECL  const char *pmpt);
 
 extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
@@ -385,6 +399,15 @@ extern COMMAND_FUNC(do_show_prompt);
 #ifdef THREAD_SAFE_QUERY
 extern void report_mutex_error(QSP_ARG_DECL  int status, const char *whence);
 #endif // THREAD_SAFE_QUERY
+
+extern Data_Obj *	pick_obj(QSP_ARG_DECL const char *pmpt);
+#define PICK_OBJ(pmpt)		pick_obj(QSP_ARG   pmpt)
+
+#define VWR_OF( s )	vwr_of(QSP_ARG  s )
+#define GET_VWR( s )	get_vwr(QSP_ARG  s )
+#define PICK_VWR( s )	pick_vwr(QSP_ARG  s )
+
+#include "warn.h"
 
 #endif /* ! _QUIP_PROT_H_ */
 

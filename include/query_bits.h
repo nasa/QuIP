@@ -139,11 +139,23 @@ extern "C" {
 
 
 //
-typedef struct {
+typedef struct foreach_loop {
 	const char *	f_varname;
 	List *		f_word_lp;
 	Node *		f_word_np;
 } Foreach_Loop;
+
+
+/* Foreach_Loop */
+#define FL_VARNAME(flp)		flp->f_varname
+#define FL_LIST(flp)		flp->f_word_lp
+#define FL_NODE(flp)		flp->f_word_np
+#define FL_WORD(flp)		((const char *)NODE_DATA(FL_NODE(flp)))
+
+#define SET_FL_VARNAME(flp,s)	flp->f_varname = s
+#define SET_FL_LIST(flp,lp)	flp->f_word_lp = lp
+#define SET_FL_NODE(flp,np)	flp->f_word_np = np
+#define NEW_FOREACH_LOOP	((Foreach_Loop*) getbuf( sizeof(*frp) ))
 
 
 /* We use the number of contexts to determine whether we have popped

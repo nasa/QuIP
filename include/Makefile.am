@@ -20,6 +20,8 @@ quip_version.h:	update_quip_version.sh FORCE
 
 FORCE:
 
+# obsolete file
+#			stdc_defs.h
 
 noinst_HEADERS =			\
 					\
@@ -94,6 +96,7 @@ noinst_HEADERS =			\
 			query_bits.h	\
 			query_stack.h	\
 			quip_config.h	\
+			quip_fwd.h	\
 			quip_menu.h	\
 			quip_prot.h	\
 			quip_version.h	\
@@ -111,7 +114,6 @@ noinst_HEADERS =			\
 			sigpush.h	\
 			sizable.h	\
 			stack.h		\
-			stdc_defs.h	\
 			strbuf.h	\
 			string_ref.h	\
 			treecode.h	\

@@ -7,24 +7,8 @@
 #include <string.h>		/* strcmp */
 
 
-#define msg_str 		MSG_STR
 /* this is used in a cuda struct... */
 /*#define error_string 		ERROR_STRING */
-
-/*#define READFUNC_CAST		char *(*)(TMP_QSP_ARG_DECL  void *, int, void *) */
-#define READFUNC_CAST		char *(*)(QSP_ARG_DECL  void *, int, void *)
-
-
-/* Foreach_Loop */
-#define FL_VARNAME(flp)		flp->f_varname
-#define FL_LIST(flp)		flp->f_word_lp
-#define FL_NODE(flp)		flp->f_word_np
-#define FL_WORD(flp)		((const char *)NODE_DATA(FL_NODE(flp)))
-
-#define SET_FL_VARNAME(flp,s)	flp->f_varname = s
-#define SET_FL_LIST(flp,lp)	flp->f_word_lp = lp
-#define SET_FL_NODE(flp,np)	flp->f_word_np = np
-#define NEW_FOREACH_LOOP	((Foreach_Loop*) getbuf( sizeof(*frp) ))
 
 
 /* Dictionary */
@@ -119,35 +103,11 @@
 #define NEW_NODE(np)		{np=(Node *)getbuf(sizeof(Node));	\
 				(np)->n_data=NULL; (np)->n_next=NO_NODE; (np)->n_prev=NO_NODE; }
 
-#define NEW_VARIABLE(vp)	{vp=(Variable *)getbuf(sizeof(Variable));	\
-				SET_VAR_NAME(vp,NULL); SET_VAR_VALUE(vp,NULL); }
-
-/* BUG?  do init here??? */
-#define NEW_DATA_OBJ(dp)	dp=(Data_Obj *)getbuf(sizeof(Data_Obj))
-
 #define NEW_QUERY_STACK		((Query_Stack *)getbuf(sizeof(Query_Stack)))
 
 #define NEW_FUNC_PTR		((Subrt *)getbuf(sizeof(Subrt)))
 #define NEW_REFERENCE		((Reference *)getbuf(sizeof(Reference)))
 #define NEW_POINTER		((Pointer *)getbuf(sizeof(Pointer)))
-#define NEW_ITEM_CONTEXT(icp)	icp=((Item_Context *)getbuf(sizeof(Item_Context)))
-
-/* Variable */
-#define VAR_NAME(vp)		vp->var_item.item_name
-#define VAR_VALUE(vp)		vp->var_u.u_value
-#define VAR_TYPE(vp)		vp->var_type
-#define VAR_FUNC(vp)		vp->var_u.u_func
-#define SET_VAR_NAME(vp,s)	vp->var_item.item_name=s
-/* this crashes if the value is NULL... */
-/*#define SET_VAR_VALUE(vp,s)	{if (vp->var_u.u_value != NULL ) rls_str(vp->var_u.u_value); vp->var_u.u_value=savestr(s); } */
-#define SET_VAR_VALUE(vp,s)	vp->var_u.u_value=s
-#define SET_VAR_TYPE(vp,t)		vp->var_type=t
-#define SET_VAR_FUNC(vp,f)		vp->var_u.u_func=f
-
-
-/* Item_Class */
-#define CL_NAME(icp)			(icp)->icl_item.item_name
-#define SET_CL_FLAG_BITS(iclp,f)	(iclp)->icl_flags |= f
 
 /* Need macros for push and pop, but these are functions? */
 
@@ -236,75 +196,6 @@
 
 /*#define SET_SR_CALL_ENP(srp,enp)	[srp setCall_enp : enp] */
 
-
-/* Dimension_Set macros */
-
-//#define ALLOC_DIMSET			((Dimension_Set *)getbuf(sizeof(Dimension_Set)))
-#define NEW_DIMSET			((Dimension_Set *)getbuf(sizeof(Dimension_Set)))
-#define INIT_DIMSET_PTR(dsp)		dsp=NEW_DIMSET;
-#define RELEASE_DIMSET(dsp)		givbuf(dsp);
-
-#define NEW_INCSET			((Increment_Set *)getbuf(sizeof(Increment_Set)))
-
-#define DIMENSION(dsp,idx)		(dsp)->ds_dimension[idx]
-#define SET_DIMENSION(dsp,idx,v)	(dsp)->ds_dimension[idx]=(dimension_t)v
-
-/* IncrementSet macros */
-#define INCREMENT(isp,idx)		isp->is_increment[idx]
-#define SET_INCREMENT(isp,idx,v)	isp->is_increment[idx]=v
-
-/* Macro argument */
-#define MA_PROMPT(map)			map->ma_prompt
-#define MA_ITP(map)			map->ma_itp
-
-/* Macro macros */
-#define SET_MACRO_NAME(mp,s)		(mp)->m_item.item_name=s
-#define SET_MACRO_N_ARGS(mp,n)		(mp)->m_n_args=n
-#define SET_MACRO_TEXT(mp,t)		(mp)->m_text=t
-#define SET_MACRO_FLAGS(mp,f)		(mp)->m_flags=f
-#define SET_MACRO_ARG_TBL(mp,tbl)	(mp)->m_arg_tbl=tbl
-#define SET_MACRO_FILENAME(mp,s)	(mp)->m_filename = s
-#define SET_MACRO_LINENO(mp,n)		(mp)->m_lineno = n
-
-#define MACRO_NAME(mp)			(mp)->m_item.item_name
-#define MACRO_N_ARGS(mp)		(mp)->m_n_args
-#define MACRO_TEXT(mp)			(mp)->m_text
-#define MACRO_FLAGS(mp)			(mp)->m_flags
-#define MACRO_ARG_TBL(mp)		(mp)->m_arg_tbl
-#define MACRO_ARG(mp,idx)		MACRO_ARG_TBL(mp)[idx]
-#define MACRO_PROMPT(mp,idx)		MA_PROMPT(MACRO_ARG(mp,idx))
-#define MACRO_ITPS(mp)			(mp)->m_itps
-#define MACRO_FILENAME(mp)		(mp)->m_filename
-#define MACRO_LINENO(mp)		(mp)->m_lineno
-#define SET_MACRO_FLAG_BITS(mp,f)	(mp)->m_flags |= f
-#define CLEAR_MACRO_FLAG_BITS(mp,f)	(mp)->m_flags &= ~(f)
-
-#define DIMENSION_NAME(idx)	dimension_name[idx]
-
-/* Command */
-#define CMD_SELECTOR(cp)	cp->cmd_selector
-
-/* Vector_Function stuff - moved to obj_args.h */
-
-#define VF_NAME(vfp)			(vfp)->vf_item.item_name
-#define VF_FLAGS(vfp)			(vfp)->vf_flags
-#define VF_CODE(vfp)			(vfp)->vf_code
-#define VF_TYPEMASK(vfp)		(vfp)->vf_typemask
-#define VF_PRECMASK(vfp)		(vfp)->vf_precmask
-
-#define SET_VF_NAME(vfp,s)		(vfp)->vf_item.item_name = s
-#define SET_VF_FLAGS(vfp,f)		(vfp)->vf_flags = f
-#define SET_VF_CODE(vfp,c)		(vfp)->vf_code = c
-#define SET_VF_TYPEMASK(vfp,m)		(vfp)->vf_typemask = m
-#define SET_VF_PRECMASK(vfp,m)		(vfp)->vf_precmask = m
-
-#define FIND_VEC_FUNC(code)		(&vec_func_tbl[code])
-
-#define UNKNOWN_OBJ_SHAPE(dp)		UNKNOWN_SHAPE(OBJ_SHAPE(dp))
-
-#define HOW_MANY(pmpt)			how_many(QSP_ARG  pmpt)
-#define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
-
 #define DV_VEC(dvp)			dvp->dv_vec
 #define DV_INC(dvp)			dvp->dv_inc
 #define DV_COUNT(dvp)			dvp->dv_count
@@ -318,25 +209,13 @@
 #define SET_DV_BIT0(dvp,v)		dvp->dv_bit0=v
 #define SET_DV_FLAG_BITS(dvp,v)		dvp->dv_flags |= v
 
-#define NAMEOF(s)			nameof(QSP_ARG  s)
 
-
-
-/* remove from the dictionary... */
-#define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
-
-#define ADD_OBJ_ITEM(dp)		/* add to the dictionary... */
 
 #define SUBRT_ITEM_TYPE			subrt_itp
 #define ID_ITEM_TYPE			id_itp
 #define DOBJ_ITEM_TYPE			dobj_itp
 #define POP_SUBRT_ID_CTX(s)		pop_subrt_ctx(QSP_ARG  s, ID_ITEM_TYPE)
 #define POP_SUBRT_DOBJ_CTX(s)		pop_subrt_ctx(QSP_ARG  s, DOBJ_ITEM_TYPE)
-
-#define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
-#define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
-#define DOBJ_CONTEXT_LIST		CONTEXT_LIST(dobj_itp)
-#define ID_CONTEXT_LIST			CONTEXT_LIST(id_itp)
 
 /* in the multi-thread environment, we have per-qsp context stacks!? */
 
@@ -362,90 +241,13 @@
 	INIT_INCSET_PTR(isp)
 #endif // FOOBAR
 
-/* Deep or shallow copy??? */
-#define DIMSET_COPY(dsp_to,dsp_fr)	*dsp_to = *dsp_fr
-
 //#define _prt_msg_frag	c_prt_msg_frag
 
 /* is p a code or a precision struct ptr??? */
 
-/*#define CURRENT_INPUT_FILENAME	"(CURRENT_INPUT_FILENAME not implemented)" */
-#define CURRENT_INPUT_FILENAME	QRY_FILENAME(CURR_QRY(THIS_QSP))
-
 /*#define ASSIGN_VAR(vname,val)	[[Variable insure : STRINGOBJ(vname) ] setValue : STRINGOBJ(val) ] */
 
-#define ASKIF(p)		askif(QSP_ARG  p )
-
 //#define _prt_msg			c_prt_msg
-
-#define LONGLIST(dp)		longlist(QSP_ARG  dp)
-
-#define PICK_DATA_AREA(p)	pick_data_area(QSP_ARG  p)
-
-#define TRY_OPEN(s,m)		try_open(QSP_ARG  s,m)
-#define TRY_HARD(s,m)		try_hard(QSP_ARG  s,m)
-#define TRYNICE(s,m)		trynice(QSP_ARG  s,m)
-
-#define CONFIRM(p)		confirm(QSP_ARG  p)
-
-#define DOBJ_COPY(dpto,dpfr)    *dpto = *dpfr
-
-
-/* added for standard C: */
-/* BUT conflict with X11 !? */
-typedef int QUIP_BOOL;
-
-
-/* to make it easy to switch to NSStrings later... */
-/* BUT conflicts with X11 !? */
-#define Quip_String	const char
-
-#define VAR_OF(s)	var_of(QSP_ARG  s)
-#define PICK_VAR(s)	pick_var_(QSP_ARG  s)
-
-/*#define ELEMENT_SIZE(dp)	(siztbl[ MACHINE_PREC(dp) ]) */
-#define ELEMENT_SIZE(dp)	OBJ_PREC_MACH_SIZE(dp)
-
-#define PICK_OBJ(pmpt)		pick_obj(QSP_ARG   pmpt)
-
-/* Filetype */
-#define FT_NAME(ftp)		(ftp)->ft_item.item_name
-#define FT_CODE(ftp)		(ftp)->ft_code
-#define FT_FLAGS(ftp)		(ftp)->ft_flags
-#define FT_OPEN_FUNC(ftp)	(ftp)->op_func
-#define FT_READ_FUNC(ftp)	(ftp)->rd_func
-#define FT_WRITE_FUNC(ftp)	(ftp)->wt_func
-#define FT_CLOSE_FUNC(ftp)	(ftp)->close_func
-#define FT_CONV_FUNC(ftp)	(ftp)->conv_func
-#define FT_UNCONV_FUNC(ftp)	(ftp)->unconv_func
-#define FT_SEEK_FUNC(ftp)	(ftp)->seek_func
-#define FT_INFO_FUNC(ftp)	(ftp)->info_func
-
-#define SET_FT_CODE(ftp,c)		(ftp)->ft_code = c
-#define SET_FT_FLAGS(ftp,v)		(ftp)->ft_flags = v
-#define SET_FT_OPEN_FUNC(ftp,f)		(ftp)->op_func = f
-#define SET_FT_READ_FUNC(ftp,f)		(ftp)->rd_func = f
-#define SET_FT_WRITE_FUNC(ftp,f)	(ftp)->wt_func = f
-#define SET_FT_CLOSE_FUNC(ftp,f)	(ftp)->close_func = f
-#define SET_FT_CONV_FUNC(ftp,f)		(ftp)->conv_func = f
-#define SET_FT_UNCONV_FUNC(ftp,f)	(ftp)->unconv_func = f
-#define SET_FT_SEEK_FUNC(ftp,f)		(ftp)->seek_func = f
-#define SET_FT_INFO_FUNC(ftp,f)		(ftp)->info_func = f
-
-/* Image_File */
-#define IF_NAME(ifp)		(ifp)->if_name
-#define IF_TYPE(ifp)		(ifp)->if_ftp
-#define SET_IF_TYPE(ifp,ftp)	(ifp)->if_ftp = ftp
-#define IF_TYPE_CODE(ifp)	FT_CODE( IF_TYPE(ifp) )
-
-/* Debug_Module */
-#define DEBUG_NAME(dbmp)		(dbmp)->db_name
-#define DEBUG_MASK(dbmp)		(dbmp)->db_mask
-#define SET_DEBUG_MASK(dbmp,m)		(dbmp)->db_mask = m
-#define DEBUG_FLAGS(dbmp)		(dbmp)->db_flags
-#define SET_DEBUG_FLAGS(dbmp,f)		(dbmp)->db_flags = f
-#define CLEAR_DEBUG_FLAG_BITS(dbmp,b)	(dbmp)->db_flags &= ~(b)
-
 
 #endif /* ! _STDC_DEFS_H_ */
 

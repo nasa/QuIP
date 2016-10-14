@@ -12,6 +12,7 @@
 #include "quip_prot.h"
 #include "query_prot.h"
 #include "pipe_support.h"
+#include "item_type.h"
 
 ITEM_INTERFACE_DECLARATIONS(Pipe,pipe,0)
 

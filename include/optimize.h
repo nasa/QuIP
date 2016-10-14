@@ -2,6 +2,7 @@
 #ifndef NO_OPT_PARAM
 
 #include "quip_prot.h"
+#include "item_obj.h"
 
 #define OPTIMIZER_FILENAME	"(optimizer pushed text)"
 

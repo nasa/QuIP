@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "cstepit.h"
 #include "quip_prot.h"
+#include "query_stack.h"
 #include "sigpush.h"		/* sigpush(), sigpop() */
 
 #define	amax1(a,b) ((a>b)?a:b)

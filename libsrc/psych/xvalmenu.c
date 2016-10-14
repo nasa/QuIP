@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "stc.h"
+#include "query_stack.h"
 
 
 /* local prototypes */

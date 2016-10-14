@@ -26,7 +26,7 @@ extern Data_Obj *	dobj_of(QSP_ARG_DECL  const char *);
 extern void		list_dobjs(SINGLE_QSP_ARG_DECL);
 extern Data_Obj *	new_dobj(QSP_ARG_DECL  const char *);
 extern List *		dobj_list(SINGLE_QSP_ARG_DECL);
-extern Data_Obj *	pick_obj(QSP_ARG_DECL const char *pmpt);
+
 extern void		disown_child(QSP_ARG_DECL  Data_Obj * dp);
 extern void		delvec(QSP_ARG_DECL  Data_Obj * dp);
 extern void		info_area(QSP_ARG_DECL  Data_Area *ap);
@@ -58,6 +58,7 @@ extern Precision *	prec_for_code(prec_t prec);
 extern void		dump_shape(QSP_ARG_DECL  Shape_Info *shpp);
 extern void		list_dobj(QSP_ARG_DECL  Data_Obj * dp);
 extern void		longlist(QSP_ARG_DECL  Data_Obj * dp);
+
 //extern void		describe_shape(Shape_Info *shpp);
 extern void show_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp);
 

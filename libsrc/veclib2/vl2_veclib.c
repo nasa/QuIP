@@ -1,6 +1,8 @@
 #include "quip_config.h"
 #include <stdio.h>
 #include "quip_prot.h"
+#include "function.h"
+#include "rn.h"
 #include "veclib_api.h"
 #include "my_vl2.h"
 #include "veclib/vl2_port.h"

@@ -5,6 +5,7 @@
 #include "quip_prot.h"
 //#include "fitsine.h"
 #include "optimize.h"
+#include "item_type.h"
 
 ITEM_INTERFACE_DECLARATIONS(Opt_Param,opt_param,0)
 

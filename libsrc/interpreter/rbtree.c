@@ -1,9 +1,12 @@
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "rbtree.h"
 #include "getbuf.h"
-#include <assert.h>
-#include <stdio.h>
+#include "item_type.h"
 
 // just for debugging
 static void rb_tree_dump( rb_tree *tree_p );

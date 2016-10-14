@@ -14,6 +14,7 @@
 #include "stc.h"
 #include "debug.h"
 #include "optimize.h"
+#include "function.h"	// ptoz
 
 #define PREC		.005
 #define MAXTRIES	20

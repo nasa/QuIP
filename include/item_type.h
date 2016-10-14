@@ -2,20 +2,23 @@
 #define _ITEM_TYPE_H_
 
 //#include "query_stack.h"
-#include "stack.h"
-#include "list.h"
-#include "getbuf.h"
-#include "qs_basic.h"
+#include "quip_fwd.h"
+//#include "stack.h"
+//#include "list.h"
+//#include "getbuf.h"
+
 //#include "container.h"
 //#include "dictionary.h"
 
 #include "item_obj.h"
+#include "item_prot.h"
+
 
 //struct dictionary;
 // forward declarations...
-#include "container_fwd.h"
+//#include "container_fwd.h"
 
-#include "dict.h"
+//#include "dict.h"
 
 #define NO_ITEM	((Item *) NULL)
 
@@ -82,6 +85,7 @@ typedef struct item_context {
 #define CTX_FRAG_ICP(icp)		(icp)->ic_frag_icp
 #define SET_CTX_FRAG_ICP(icp,icp2)	(icp)->ic_frag_icp = icp2
 
+#define NEW_ITEM_CONTEXT(icp)	icp=((Item_Context *)getbuf(sizeof(Item_Context)))
 
 #define MAX_QUERY_STACKS	5	// why do we need to have a limit?
 
@@ -228,6 +232,10 @@ typedef struct item_class {
 
 #define NO_ITEM_CLASS	((Item_Class *)NULL)
 
+/* Item_Class */
+#define CL_NAME(icp)			(icp)->icl_item.item_name
+#define SET_CL_FLAG_BITS(iclp,f)	(iclp)->icl_flags |= f
+
 // flag bits
 #define NEED_CLASS_CHOICES	1
 
@@ -240,30 +248,6 @@ typedef struct member_info {
 #define MBR_DATA(mp)	(mp)->mi_data
 
 #define NO_MEMBER_INFO	((Member_Info *)NULL)
-
-#define ITEM_NEW_PROT(type,stem)	type * new_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_INIT_PROT(type,stem)	void init_##stem##s(SINGLE_QSP_ARG_DECL );
-#define ITEM_CHECK_PROT(type,stem)	type * stem##_of(QSP_ARG_DECL  const char *name);
-#define ITEM_GET_PROT(type,stem)	type * get_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(SINGLE_QSP_ARG_DECL );
-#define ITEM_PICK_PROT(type,stem)	type *pick_##stem(QSP_ARG_DECL  const char *pmpt);
-#define ITEM_ENUM_PROT(type,stem)	List *stem##_list(SINGLE_QSP_ARG_DECL);
-#define ITEM_DEL_PROT(type,stem)	void del_##stem(QSP_ARG_DECL  type *ip);
-
-#define ITEM_INTERFACE_PROTOTYPES(type,stem)	IIF_PROTS(type,stem,extern)
-#define ITEM_INTERFACE_PROTOTYPES_STATIC(type,stem)		\
-						IIF_PROTS(type,stem,static)
-
-#define IIF_PROTS(type,stem,storage)				\
-								\
-storage ITEM_INIT_PROT(type,stem)				\
-storage ITEM_NEW_PROT(type,stem)				\
-storage ITEM_CHECK_PROT(type,stem)				\
-storage ITEM_GET_PROT(type,stem)				\
-storage ITEM_LIST_PROT(type,stem)				\
-storage ITEM_ENUM_PROT(type,stem)				\
-storage ITEM_DEL_PROT(type,stem)				\
-storage ITEM_PICK_PROT(type,stem)
 
 #define ITEM_INTERFACE_CONTAINER(stem,type)
 

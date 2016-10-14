@@ -4,6 +4,9 @@
 #include "item_type.h"
 #include "shape_bits.h"
 
+/*#define ELEMENT_SIZE(dp)	(siztbl[ MACHINE_PREC(dp) ]) */
+#define ELEMENT_SIZE(dp)	OBJ_PREC_MACH_SIZE(dp)
+
 typedef struct dimension_set {
 	dimension_t	ds_dimension[N_DIMENSIONS];
 	uint32_t	ds_n_elts;	/* total number of elements */
@@ -13,6 +16,23 @@ typedef struct dimension_set {
 #define DS_DIM(dsp,idx)			(dsp)->ds_dimension[idx]
 #define SET_DS_N_ELTS(dsp,v)		(dsp)->ds_n_elts = v
 #define SET_DS_DIM(dsp,idx,v)		(dsp)->ds_dimension[idx] = v
+
+/* Dimension_Set macros */
+
+//#define ALLOC_DIMSET			((Dimension_Set *)getbuf(sizeof(Dimension_Set)))
+#define NEW_DIMSET			((Dimension_Set *)getbuf(sizeof(Dimension_Set)))
+#define INIT_DIMSET_PTR(dsp)		dsp=NEW_DIMSET;
+#define RELEASE_DIMSET(dsp)		givbuf(dsp);
+
+/* Deep or shallow copy??? */
+#define DIMSET_COPY(dsp_to,dsp_fr)	*dsp_to = *dsp_fr
+
+#define NEW_INCSET			((Increment_Set *)getbuf(sizeof(Increment_Set)))
+
+#define DIMENSION(dsp,idx)		(dsp)->ds_dimension[idx]
+#define SET_DIMENSION(dsp,idx,v)	(dsp)->ds_dimension[idx]=(dimension_t)v
+
+#define DIMENSION_NAME(idx)	dimension_name[idx]
 
 
 #define STRING_DIMENSION(dsp,len)		\
@@ -36,6 +56,10 @@ typedef struct dimension_set {
 typedef struct increment_set {
 	incr_t		is_increment[N_DIMENSIONS];
 } Increment_Set;
+
+/* IncrementSet macros */
+#define INCREMENT(isp,idx)		isp->is_increment[idx]
+#define SET_INCREMENT(isp,idx,v)	isp->is_increment[idx]=v
 
 
 typedef struct precision {
@@ -100,6 +124,9 @@ typedef struct shape_info {
 #define SCALAR_SHAPE( shpp )		( ( SHP_FLAGS( shpp ) & DT_SCALAR ) && ( DIMENSION(SHP_TYPE_DIMS(shpp),0) == 1 ) )
 #define PIXEL_SHAPE( shpp )		( ( SHP_FLAGS( shpp ) & DT_SCALAR ) )
 #define UNKNOWN_SHAPE( shpp )		( SHP_FLAGS( shpp ) & DT_UNKNOWN_SHAPE )
+
+#define UNKNOWN_OBJ_SHAPE(dp)		UNKNOWN_SHAPE(OBJ_SHAPE(dp))
+
 #define INTERLACED_SHAPE( shpp )	( SHP_FLAGS( shpp ) & DT_INTERLACED )
 
 #define COMPLEX_SHAPE( shpp )		( COMPLEX_PRECISION( SHP_PREC(shpp) ) )

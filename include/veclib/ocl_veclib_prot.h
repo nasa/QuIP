@@ -2,6 +2,7 @@
 #define _OCL_VECLIB_PROT_H_
 
 #include "veclib/ocl_port.h"
+#include "veclib/vecgen.h"
 //#include "veclib/gen_veclib_prot.h"
 
 ///* Here are the conversions */

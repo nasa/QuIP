@@ -11,11 +11,11 @@ extern "C" {
 
 #include <stdio.h>
 #include "typedefs.h"
-#include "data_obj.h"
+//#include "data_obj.h"
 // Does this need to be a separate file?
 #include "veclib/obj_args.h"
 
-typedef uint32_t	index_type;
+//typedef uint32_t	index_type;
 typedef uint32_t	count_type;
 
 #define FWD_FFT		(-1)

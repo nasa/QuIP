@@ -65,7 +65,7 @@ typedef struct dobj_ascii_info {
 #define	display_precision	THIS_QSP->qs_dai_p->dai_display_precision
 #define	padflag			THIS_QSP->qs_dai_p->dai_padflag
 
-extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code );
+//extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code );
 
 #endif /* ! _ASCII_FMTS_H */
 

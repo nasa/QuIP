@@ -15,6 +15,7 @@
 #include "quip_prot.h"
 #include "query_prot.h"
 #include "nexpr.h"
+#include "rn.h"	// set_seed
 
 #include <fcntl.h>
 #include <dirent.h>

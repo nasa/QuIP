@@ -1,5 +1,7 @@
 #include "quip_config.h"
 #include "quip_prot.h"
+#include "dobj_prot.h"
+#include "item_type.h"
 
 #include "camera.h"
 #include "camera_api.h"

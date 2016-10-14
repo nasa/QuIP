@@ -42,7 +42,7 @@ typedef struct parser_data {
 
 // This struct is used to push text frags around...
 
-typedef struct {
+typedef struct mouthful {
 	const char *text;
 	const char *filename;
 } Mouthful;
@@ -217,7 +217,6 @@ struct query_stack {
 #define QS_PARSER_DATA(qsp)		(qsp)->qs_parser_data
 #define SET_QS_PARSER_DATA(qsp,d)	(qsp)->qs_parser_data = d
 
-#define DEFAULT_QSP			default_qsp
 #define QS_TMPVAR(qsp)			(qsp)->qs_tmpvar
 #define QS_BUILTIN_MENU(qsp)		(qsp)->qs_builtin_menu
 #define SET_QS_BUILTIN_MENU(qsp,mp)	(qsp)->qs_builtin_menu=mp
@@ -350,7 +349,9 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 #define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
 #define CURRENT_FILENAME		QRY_FILENAME(CURR_QRY(THIS_QSP))
 
-extern Query_Stack *default_qsp;		// global needs to be set at init...
+/*#define CURRENT_INPUT_FILENAME	"(CURRENT_INPUT_FILENAME not implemented)" */
+//#define CURRENT_INPUT_FILENAME	QRY_FILENAME(CURR_QRY(THIS_QSP))
+
 
 // some prototypes
 
