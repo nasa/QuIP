@@ -7,7 +7,7 @@
 #include "item_obj.h"
 #include "query_stack.h"
 
-typedef struct hash_tbl {
+struct hash_tbl {
 	const char *	ht_name;
 	u_long		ht_size;
 	u_long		ht_n_entries;
@@ -32,7 +32,7 @@ typedef struct hash_tbl {
 	double		ht_searches;
 	double		ht_collisions;
 #endif /* MONITOR_COLLIISIONS */
-} Hash_Tbl ;
+} ;
 
 #define NO_HASH_TBL		((Hash_Tbl *) NULL)
 

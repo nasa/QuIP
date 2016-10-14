@@ -5,7 +5,7 @@
 #include "list.h"
 #include "macro.h"
 #include "query_bits.h"
-#include "qs_basic.h"
+//#include "qs_basic.h"
 
 #define QBUF_LEN	256
 #define N_QRY_RETSTRS	32	// BUG shouldn't be a fixed number,

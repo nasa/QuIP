@@ -26,12 +26,12 @@
 #include <curl/curl.h>
 #endif
 
-typedef struct curl_info {
+struct curl_info {
 	CURL *				ci_easy_handle;
 	String_Buf *			ci_sbp;
 	char				ci_error_buffer[1024];
 	curl_version_info_data *	ci_vdp;
-} Curl_Info;
+} ;
 
 #define _CURL_STRINGBUF(ci_p)		(ci_p)->ci_sbp
 #define _CURL_EASY_HANDLE(ci_p)		(ci_p)->ci_easy_handle

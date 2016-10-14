@@ -3,7 +3,7 @@
 
 #include "quip_config.h"
 #include "shape_info.h"
-#include "dobj_basic.h"
+//#include "dobj_basic.h"
 
 // This was introduced to that pexpr can return long long's
 // in addition to doubles...

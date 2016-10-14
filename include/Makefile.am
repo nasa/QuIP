@@ -23,6 +23,8 @@ FORCE:
 # obsolete file
 #			stdc_defs.h
 #			function_basic.h
+#			dobj_basic.h
+#			qs_basic.h
 
 noinst_HEADERS =			\
 					\
@@ -45,7 +47,6 @@ noinst_HEADERS =			\
 			dict.h		\
 			display.h	\
 			dispobj.h	\
-			dobj_basic.h	\
 			dobj_prot.h	\
 			fileck.h	\
 			fio_api.h	\
@@ -90,7 +91,6 @@ noinst_HEADERS =			\
 			pf_viewer.h	\
 			platform.h	\
 			polh_menu.h	\
-			qs_basic.h	\
 			query.h		\
 			query_api.h	\
 			query_bits.h	\

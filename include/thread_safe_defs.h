@@ -62,6 +62,9 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define SELF_QSP_ARG
 #define FGETS			fgets
 
+#define LOCK_ITEM_TYPE(itp)	// do nothing
+#define UNLOCK_ITEM_TYPE(itp)	// do nothing
+
 //#define DEFAULT_ERROR_STRING	DEFAULT_QSP->qs_error_string
 //#define ERROR_STRING		DEFAULT_ERROR_STRING
 //#define DEFAULT_MSG_STR		(DEFAULT_QSP->qs_msg_str)

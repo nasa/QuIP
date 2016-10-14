@@ -17,6 +17,7 @@
 
 //#include "jtimex.h"
 #include "quip_prot.h"
+#include "quip_menu.h"
 
 static void tell_timex_retval(QSP_ARG_DECL  int retval)
 {

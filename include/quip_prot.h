@@ -390,6 +390,12 @@ extern void list_builtin_menu(SINGLE_QSP_ARG_DECL);
 
 extern Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name);
 
+// variable.c
+extern Variable *assign_var(QSP_ARG_DECL  const char *name, const char *value);
+extern Variable *assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
+#define ASSIGN_VAR( s1 , s2 )	assign_var(QSP_ARG  s1 , s2 )
+#define ASSIGN_RESERVED_VAR( s1 , s2 )	assign_reserved_var(QSP_ARG  s1 , s2 )
+
 
 ITEM_INIT_PROT(Query_Stack,query_stack)
 ITEM_LIST_PROT(Query_Stack,query_stack)
