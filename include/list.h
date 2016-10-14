@@ -1,6 +1,7 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 
+#include "quip_fwd.h"
 #include "node.h"
 #include "typedefs.h"
 #include "item_obj.h"
