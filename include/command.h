@@ -2,7 +2,6 @@
 #ifndef _COMMAND_H_
 #define _COMMAND_H_
 
-//struct query_stack;
 #include "quip_fwd.h"
 
 struct command {

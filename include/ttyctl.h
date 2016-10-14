@@ -9,7 +9,7 @@
 #endif
 
 #include "typedefs.h"
-#include "query_stack.h"
+#include "quip_fwd.h"
 
 typedef struct termio_option {
 	const char *	to_name;

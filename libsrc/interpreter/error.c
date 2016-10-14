@@ -30,7 +30,7 @@
 #endif
 
 #include "query_prot.h"
-#include "query.h"
+#include "query_stack.h"	// BUG?
 #include "warn.h"
 #include "ttyctl.h"
 #ifdef NO_STDIO
