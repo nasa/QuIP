@@ -32,12 +32,12 @@ typedef struct {
 static Pixel pix_arr[N_NEIGHBORHOOD];
 static int order[N_NEIGHBORHOOD];
 
-static int pix_comp(CONST void *ip1,CONST void *ip2) /* args are pointers into the order array */
+static int pix_comp(const void *ip1,const void *ip2) /* args are pointers into the order array */
 {
-	if( pix_arr[*(CONST int *)ip1].pval.ucv >
-		pix_arr[*(CONST int *)ip2].pval.ucv ) return(1);
-	else if( pix_arr[*(CONST int *)ip1].pval.ucv <
-		pix_arr[*(CONST int *)ip2].pval.ucv ) return(-1);
+	if( pix_arr[*(const int *)ip1].pval.ucv >
+		pix_arr[*(const int *)ip2].pval.ucv ) return(1);
+	else if( pix_arr[*(const int *)ip1].pval.ucv <
+		pix_arr[*(const int *)ip2].pval.ucv ) return(-1);
 	else return(0);
 }
 
@@ -272,12 +272,12 @@ void median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	process_median(QSP_ARG  dpto,dpfr);
 }
 
-static int fpix_comp(CONST void *ip1,CONST void *ip2) /* args are pointers into the order array */
+static int fpix_comp(const void *ip1,const void *ip2) /* args are pointers into the order array */
 {
-	if( pix_arr[*(CONST int *)ip1].pval.fv >
-		pix_arr[*(CONST int *)ip2].pval.fv ) return(1);
-	else if( pix_arr[*(CONST int *)ip1].pval.fv <
-		pix_arr[*(CONST int *)ip2].pval.fv ) return(-1);
+	if( pix_arr[*(const int *)ip1].pval.fv >
+		pix_arr[*(const int *)ip2].pval.fv ) return(1);
+	else if( pix_arr[*(const int *)ip1].pval.fv <
+		pix_arr[*(const int *)ip2].pval.fv ) return(-1);
 	else return(0);
 }
 
@@ -417,17 +417,17 @@ void median_1D(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int median_radius)
 	}
 }
 
-static int comp_dbl_pix(CONST void *ptr1,CONST void *ptr2) /* args are pointers into the order array */
+static int comp_dbl_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
 {
-	if( *((CONST double *)ptr1) > *((CONST double *)ptr2) ) return(1);
-	else if( *((CONST double *)ptr1) < *((CONST double *)ptr2)  ) return(-1);
+	if( *((const double *)ptr1) > *((const double *)ptr2) ) return(1);
+	else if( *((const double *)ptr1) < *((const double *)ptr2)  ) return(-1);
 	else return(0);
 }
 
-static int comp_flt_pix(CONST void *ptr1,CONST void *ptr2) /* args are pointers into the order array */
+static int comp_flt_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
 {
-	if( *((CONST float *)ptr1) > *((CONST float *)ptr2) ) return(1);
-	else if( *((CONST float *)ptr1) < *((CONST float *)ptr2)  ) return(-1);
+	if( *((const float *)ptr1) > *((const float *)ptr2) ) return(1);
+	else if( *((const float *)ptr1) < *((const float *)ptr2)  ) return(-1);
 	else return(0);
 }
 
@@ -466,13 +466,13 @@ void sort_data(QSP_ARG_DECL  Data_Obj *dp)
 
 static Data_Obj *index_sort_data_dp;
 
-static int comp_indexed_flt_pix(CONST void *ptr1,CONST void *ptr2) /* args are pointers into the order array */
+static int comp_indexed_flt_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
 {
 	INDEX_TYPE i1, i2, inc;
 	float *p1, *p2;
 
-	i1 = *((CONST INDEX_TYPE *)ptr1);
-	i2 = *((CONST INDEX_TYPE *)ptr2);
+	i1 = *((const INDEX_TYPE *)ptr1);
+	i2 = *((const INDEX_TYPE *)ptr2);
 
 	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );
 
@@ -484,13 +484,13 @@ static int comp_indexed_flt_pix(CONST void *ptr1,CONST void *ptr2) /* args are p
 	else return(0);
 }
 
-static int comp_indexed_dbl_pix(CONST void *ptr1,CONST void *ptr2) /* args are pointers into the order array */
+static int comp_indexed_dbl_pix(const void *ptr1,const void *ptr2) /* args are pointers into the order array */
 {
 	INDEX_TYPE i1, i2, inc;
 	double *p1, *p2;
 
-	i1 = *((CONST INDEX_TYPE *)ptr1);
-	i2 = *((CONST INDEX_TYPE *)ptr2);
+	i1 = *((const INDEX_TYPE *)ptr1);
+	i2 = *((const INDEX_TYPE *)ptr2);
 
 	inc = OBJ_TYPE_INC(index_sort_data_dp, OBJ_MINDIM(index_sort_data_dp) );
 	p1 = ((double *)OBJ_DATA_PTR(index_sort_data_dp)) + i1*inc;

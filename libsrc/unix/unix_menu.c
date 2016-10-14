@@ -40,6 +40,7 @@
 #include "quip_prot.h"
 #include "sigpush.h"
 #include "unix_prot.h"
+#include "dobj_prot.h"
 
 #ifdef BUILD_FOR_IOS
 #include "ios_prot.h"
@@ -141,8 +142,8 @@ static COMMAND_FUNC( set_history )
 }
 #endif /* HAVE_HISTORY */
 
-static Data_Obj *ckpt_tbl_dp=NO_OBJ;
-static Data_Obj *ckpt_msg_dp=NO_OBJ;
+static Data_Obj *ckpt_tbl_dp=NULL;
+static Data_Obj *ckpt_msg_dp=NULL;
 static int n_ckpts=0;
 #define MAX_CKPTS	512
 #define MAX_MSG_LEN	60
@@ -159,7 +160,7 @@ static COMMAND_FUNC( do_ckpt )
 
 	s = NAMEOF("tag for this checkpoint");
 
-	if( ckpt_tbl_dp == NO_OBJ ){
+	if( ckpt_tbl_dp == NULL ){
 		int siz,siz2;
 		prec_t prec;
 
@@ -186,11 +187,11 @@ static COMMAND_FUNC( do_ckpt )
 #endif /* HAVE_CUDA */
 
 		ckpt_tbl_dp = mk_vec(QSP_ARG  CKPT_TBL_NAME, MAX_CKPTS, 2, PREC_FOR_CODE(prec) );
-		if( ckpt_tbl_dp == NO_OBJ ) ERROR1("Error creating checkpoint table");
+		if( ckpt_tbl_dp == NULL ) ERROR1("Error creating checkpoint table");
 
 		ckpt_msg_dp = mk_img(QSP_ARG  CKPT_MSG_NAME, MAX_CKPTS, MAX_MSG_LEN, 1,
 			PREC_FOR_CODE(PREC_STR) );
-		if( ckpt_msg_dp == NO_OBJ ) ERROR1("Error creating checkpoint messages");
+		if( ckpt_msg_dp == NULL ) ERROR1("Error creating checkpoint messages");
 
 #ifdef HAVE_CUDA
 		pop_data_area();

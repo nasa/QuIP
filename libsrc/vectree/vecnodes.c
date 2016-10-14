@@ -575,16 +575,16 @@ void unset_global_ctx(SINGLE_QSP_ARG_DECL)
 {
 #ifdef QUIP_DEBUG
 	Item_Context *icp;
-	icp= pop_item_context(QSP_ARG  DOBJ_ITEM_TYPE);
+	icp= pop_item_context(QSP_ARG  dobj_itp);
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"unset_global_ctx:  global context %s popped",CTX_NAME(icp));
 advise(ERROR_STRING);
 }
 #else // ! QUIP_DEBUG
-	pop_item_context(QSP_ARG  DOBJ_ITEM_TYPE);
+	pop_item_context(QSP_ARG  dobj_itp);
 #endif /* QUIP_DEBUG */
 	
-	/*icp=*/ pop_item_context(QSP_ARG  ID_ITEM_TYPE);
+	/*icp=*/ pop_item_context(QSP_ARG  id_itp);
 }
 
 

@@ -231,15 +231,15 @@ void list_area(QSP_ARG_DECL  Data_Area *ap )
  * of the const keyword...  jbm
  */
 
-typedef CONST Data_Obj * DataPtr;
+typedef const Data_Obj * DataPtr;
 
-int dp_addr_cmp( CONST void *dpp1, CONST void *dpp2 )
+int dp_addr_cmp( const void *dpp1, const void *dpp2 )
 {
-	CONST Data_Obj *dp1,*dp2;
+	const Data_Obj *dp1,*dp2;
 
-	dp1= *(CONST DataPtr *)dpp1;
+	dp1= *(const DataPtr *)dpp1;
 
-	dp2= *(CONST DataPtr *)dpp2;
+	dp2= *(const DataPtr *)dpp2;
 
 	if( OBJ_DATA_PTR(dp1) > OBJ_DATA_PTR(dp2) ) return(1);
 	else if( OBJ_DATA_PTR(dp1) < OBJ_DATA_PTR(dp2) ) return(-1);

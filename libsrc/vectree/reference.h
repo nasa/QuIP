@@ -26,6 +26,19 @@ typedef struct reference {
 	String_Buf *		ref_sbp;
 } Reference;
 
+/* Reference */
+#define REF_OBJ(refp)		(refp)->ref_dp
+#define SET_REF_OBJ(refp,dp)	(refp)->ref_dp = dp
+#define REF_ID(refp)		(refp)->ref_idp
+#define SET_REF_ID(refp,idp)	(refp)->ref_idp = idp
+#define REF_TYPE(refp)		(refp)->ref_type
+#define SET_REF_TYPE(refp,t)	(refp)->ref_type = t
+#define REF_SBUF(refp)		(refp)->ref_sbp
+#define SET_REF_SBUF(refp,sbp)	(refp)->ref_sbp = sbp
+#define REF_DECL_VN(refp)	(refp)->ref_decl_enp
+#define SET_REF_DECL_VN(refp,enp)	(refp)->ref_decl_enp = enp
+
+#define NEW_REFERENCE		((Reference *)getbuf(sizeof(Reference)))
 
 #define NO_REFERENCE	((Reference *)NULL)
 

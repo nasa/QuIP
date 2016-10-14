@@ -17,6 +17,41 @@ typedef struct subrt {
 	Vec_Expr_Node *	sr_call_enp;
 } Subrt;
 
+/* Subrt */
+
+#define NEW_FUNC_PTR		((Subrt *)getbuf(sizeof(Subrt)))
+
+#define SR_DEST_SHAPE(srp)		(srp)->sr_dest_shpp
+#define SET_SR_DEST_SHAPE(srp,shpp)	(srp)->sr_dest_shpp = shpp
+#define SR_ARG_DECLS(srp)		(srp)->sr_arg_decls
+#define SET_SR_ARG_DECLS(srp,enp)	(srp)->sr_arg_decls = enp
+#define SR_ARG_VALS(srp)		(srp)->sr_arg_vals
+#define SET_SR_ARG_VALS(srp,lp)		(srp)->sr_arg_vals = lp
+#define SR_SHAPE(srp)			(srp)->sr_shpp
+#define SET_SR_SHAPE(srp,shpp)		(srp)->sr_shpp = shpp
+#define SR_BODY(srp)			(srp)->sr_body
+#define SET_SR_BODY(srp,enp)		(srp)->sr_body = enp
+#define SR_ARG_DECLS(srp)		(srp)->sr_arg_decls
+#define SR_FLAGS(srp)			(srp)->sr_flags
+#define SET_SR_FLAG_BITS(srp,b)		(srp)->sr_flags |= b
+#define CLEAR_SR_FLAG_BITS(srp,b)	(srp)->sr_flags &= ~(b)
+#define SET_SR_FLAGS(srp,f)		(srp)->sr_flags = f
+#define SR_NAME(srp)			(srp)->sr_item.item_name
+#define SR_N_ARGS(srp)			(srp)->sr_n_args
+#define SET_SR_N_ARGS(srp,n)		(srp)->sr_n_args = n
+#define SR_RET_LIST(srp)		(srp)->sr_ret_lp
+#define SET_SR_RET_LIST(srp,lp)		(srp)->sr_ret_lp = lp
+#define SR_CALL_LIST(srp)		(srp)->sr_call_lp
+#define SET_SR_CALL_LIST(srp,lp)	(srp)->sr_call_lp = lp
+#define SR_CALL_VN(srp)			(srp)->sr_call_enp
+#define SET_SR_CALL_VN(srp,enp)		(srp)->sr_call_enp = enp
+
+#define SR_PREC_PTR(srp)		(srp)->sr_prec_p
+#define SR_PREC_CODE(srp)		PREC_CODE(SR_PREC_PTR(srp))
+#define SET_SR_PREC_PTR(srp,p)		(srp)->sr_prec_p = p
+
+/*#define SET_SR_CALL_ENP(srp,enp)	[srp setCall_enp : enp] */
+
 	
 
 /* flag bits */

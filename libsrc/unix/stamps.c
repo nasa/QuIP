@@ -3,6 +3,7 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
+#include "query_stack.h"
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>

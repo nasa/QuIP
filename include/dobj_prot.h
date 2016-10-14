@@ -147,12 +147,15 @@ extern Data_Obj * init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *,Precision *
 
 #define ALLOC_SHAPE		alloc_shape()
 extern void alloc_shape_elts(Shape_Info *shpp);
+#define INIT_SHAPE_PTR(shpp)		shpp=alloc_shape();
 
 extern void rls_shape_elts(Shape_Info *shpp);
 
 extern Shape_Info *alloc_shape(void);
 extern void copy_shape(Shape_Info *dst, Shape_Info *src);
 extern void rls_shape(Shape_Info *shpp);
+#define RELEASE_SHAPE_PTR(shpp)		rls_shape(shpp);
+/*#define RELEASE_SHAPE_PTR(shpp)		givbuf(shpp); */
 
 
 /* formerly in areas.h */

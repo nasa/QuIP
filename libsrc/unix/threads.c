@@ -18,6 +18,7 @@
  */
 
 #include "quip_prot.h"
+#include "query_stack.h"
 
 #ifdef THREAD_SAFE_QUERY
 

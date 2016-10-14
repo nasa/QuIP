@@ -232,7 +232,8 @@ extern void dump_subrt(QSP_ARG_DECL  Subrt *);
 extern Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int);
 
 extern Item_Context *	pop_subrt_ctx(QSP_ARG_DECL  const char *,Item_Type *);
-//#define POP_SUBRT_CTX(s,itp)	pop_subrt_ctx(QSP_ARG  s, itp)
+#define POP_SUBRT_ID_CTX(s)		pop_subrt_ctx(QSP_ARG  s, id_itp)
+#define POP_SUBRT_DOBJ_CTX(s)		pop_subrt_ctx(QSP_ARG  s, dobj_itp)
 
 
 //ITEM_INTERFACE_PROTOTYPES(Identifier,id)

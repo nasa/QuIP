@@ -29,6 +29,25 @@ typedef struct identifier {
 	Item_Context *	id_icp;
 } Identifier;
 
+/* Identifier */
+#define ID_NAME(idp)			(idp)->id_item.item_name
+
+#define ID_TYPE(idp)			(idp)->id_type
+#define SET_ID_TYPE(idp,t)		(idp)->id_type = t
+#define ID_REF(idp)			((Reference *)(idp)->id_data)
+#define SET_ID_REF(idp,refp)		(idp)->id_data = refp
+#define ID_FUNC(idp)			((Function_Ptr *)(idp)->id_data)
+#define SET_ID_FUNC(idp,funcp)		(idp)->id_data = funcp
+#define ID_DOBJ_CTX(idp)		(idp)->id_icp
+#define SET_ID_DOBJ_CTX(idp,icp)	(idp)->id_icp = icp
+#define ID_PTR(idp)			((Pointer *)(idp)->id_data)
+#define SET_ID_PTR(idp,p)		(idp)->id_data = p
+
+#define ID_SHAPE(idp)			(idp)->id_shpp
+#define SET_ID_SHAPE(idp,shpp)		(idp)->id_shpp = shpp
+#define PUSH_ID_CONTEXT(icp)		PUSH_ITEM_CONTEXT(id_itp,icp)
+#define POP_ID_CONTEXT			POP_ITEM_CONTEXT(id_itp)
+
 
 #define NO_IDENTIFIER	((Identifier *)NULL)
 

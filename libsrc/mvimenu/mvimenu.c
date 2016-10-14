@@ -14,6 +14,7 @@
 #include "seq_api.h"		/* seq_menu() prototype */
 #include "history.h"	/* init_hist_from_item_list() prototype */
 #include "gmovie.h"
+#include "function.h"
 #include "xmvi.h"
 
 //#ifdef BUILD_FOR_OBJC

@@ -2,7 +2,8 @@
 
 #ifndef NO_STRINGBUF
 
-#include "typedefs.h"
+#include "quip_fwd.h"
+//#include "typedefs.h"
 
 /* string buffer structure */
 

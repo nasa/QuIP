@@ -4,6 +4,7 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
+#include "item_obj.h"
 
 /* Public structures */
 

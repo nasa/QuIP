@@ -105,96 +105,7 @@
 
 #define NEW_QUERY_STACK		((Query_Stack *)getbuf(sizeof(Query_Stack)))
 
-#define NEW_FUNC_PTR		((Subrt *)getbuf(sizeof(Subrt)))
-#define NEW_REFERENCE		((Reference *)getbuf(sizeof(Reference)))
-#define NEW_POINTER		((Pointer *)getbuf(sizeof(Pointer)))
-
 /* Need macros for push and pop, but these are functions? */
-
-/* Query */
-#define SET_QUERY_MACRO(qp,mp)		(qp)->q_mp = mp
-#define SET_QUERY_ARGLIST(qp,lp)	(qp)->q_arg_lp = lp
-
-
-/* Identifier */
-#define ID_NAME(idp)			(idp)->id_item.item_name
-
-#define ID_TYPE(idp)			(idp)->id_type
-#define SET_ID_TYPE(idp,t)		(idp)->id_type = t
-#define ID_REF(idp)			((Reference *)(idp)->id_data)
-#define SET_ID_REF(idp,refp)		(idp)->id_data = refp
-#define ID_FUNC(idp)			((Function_Ptr *)(idp)->id_data)
-#define SET_ID_FUNC(idp,funcp)		(idp)->id_data = funcp
-#define ID_DOBJ_CTX(idp)		(idp)->id_icp
-#define SET_ID_DOBJ_CTX(idp,icp)	(idp)->id_icp = icp
-#define ID_PTR(idp)			((Pointer *)(idp)->id_data)
-#define ID_SHAPE(idp)			(idp)->id_shpp
-#define SET_ID_SHAPE(idp,shpp)		(idp)->id_shpp = shpp
-#define PUSH_ID_CONTEXT(icp)		PUSH_ITEM_CONTEXT(id_itp,icp)
-#define POP_ID_CONTEXT			POP_ITEM_CONTEXT(id_itp)
-
-/* ContextPair */
-#define CP_ID_CTX(cpp)			(cpp)->id_icp
-#define SET_CP_ID_CTX(cpp,icp)		(cpp)->id_icp = icp
-#define CP_OBJ_CTX(cpp)			(cpp)->dobj_icp
-#define SET_CP_OBJ_CTX(cpp,icp)		(cpp)->dobj_icp = icp
-
-#define SET_ID_PTR(idp,p)		(idp)->id_data = p
-
-/* Reference */
-#define REF_OBJ(refp)		(refp)->ref_dp
-#define SET_REF_OBJ(refp,dp)	(refp)->ref_dp = dp
-#define REF_ID(refp)		(refp)->ref_idp
-#define SET_REF_ID(refp,idp)	(refp)->ref_idp = idp
-#define REF_TYPE(refp)		(refp)->ref_type
-#define SET_REF_TYPE(refp,t)	(refp)->ref_type = t
-#define REF_SBUF(refp)		(refp)->ref_sbp
-#define SET_REF_SBUF(refp,sbp)	(refp)->ref_sbp = sbp
-#define REF_DECL_VN(refp)	(refp)->ref_decl_enp
-#define SET_REF_DECL_VN(refp,enp)	(refp)->ref_decl_enp = enp
-
-/* Pointer */
-#define PTR_DECL_VN(ptrp)		(ptrp)->ptr_decl_enp
-#define SET_PTR_DECL_VN(ptrp,enp)	(ptrp)->ptr_decl_enp = enp
-#define PTR_REF(ptrp)			(ptrp)->ptr_refp
-#define SET_PTR_REF(ptrp,refp)		(ptrp)->ptr_refp = refp
-#define PTR_FLAGS(ptrp)			(ptrp)->ptr_flags
-#define SET_PTR_FLAGS(ptrp,f)		(ptrp)->ptr_flags = f
-#define SET_PTR_FLAG_BITS(ptrp,f)	(ptrp)->ptr_flags |= f
-#define CLEAR_PTR_FLAG_BITS(ptrp,f)	(ptrp)->ptr_flags &= ~(f)
-
-/* Subrt */
-
-#define SR_DEST_SHAPE(srp)		(srp)->sr_dest_shpp
-#define SET_SR_DEST_SHAPE(srp,shpp)	(srp)->sr_dest_shpp = shpp
-#define SR_ARG_DECLS(srp)		(srp)->sr_arg_decls
-#define SET_SR_ARG_DECLS(srp,enp)	(srp)->sr_arg_decls = enp
-#define SR_ARG_VALS(srp)		(srp)->sr_arg_vals
-#define SET_SR_ARG_VALS(srp,lp)		(srp)->sr_arg_vals = lp
-#define SR_SHAPE(srp)			(srp)->sr_shpp
-#define SET_SR_SHAPE(srp,shpp)		(srp)->sr_shpp = shpp
-#define SR_BODY(srp)			(srp)->sr_body
-#define SET_SR_BODY(srp,enp)		(srp)->sr_body = enp
-#define SR_ARG_DECLS(srp)		(srp)->sr_arg_decls
-#define SR_FLAGS(srp)			(srp)->sr_flags
-#define SET_SR_FLAG_BITS(srp,b)		(srp)->sr_flags |= b
-#define CLEAR_SR_FLAG_BITS(srp,b)	(srp)->sr_flags &= ~(b)
-#define SET_SR_FLAGS(srp,f)		(srp)->sr_flags = f
-#define SR_NAME(srp)			(srp)->sr_item.item_name
-#define SR_N_ARGS(srp)			(srp)->sr_n_args
-#define SET_SR_N_ARGS(srp,n)		(srp)->sr_n_args = n
-#define SR_RET_LIST(srp)		(srp)->sr_ret_lp
-#define SET_SR_RET_LIST(srp,lp)		(srp)->sr_ret_lp = lp
-#define SR_CALL_LIST(srp)		(srp)->sr_call_lp
-#define SET_SR_CALL_LIST(srp,lp)	(srp)->sr_call_lp = lp
-#define SR_CALL_VN(srp)			(srp)->sr_call_enp
-#define SET_SR_CALL_VN(srp,enp)		(srp)->sr_call_enp = enp
-
-#define SR_PREC_PTR(srp)		(srp)->sr_prec_p
-#define SR_PREC_CODE(srp)		PREC_CODE(SR_PREC_PTR(srp))
-#define SET_SR_PREC_PTR(srp,p)		(srp)->sr_prec_p = p
-
-/*#define SET_SR_CALL_ENP(srp,enp)	[srp setCall_enp : enp] */
 
 #define DV_VEC(dvp)			dvp->dv_vec
 #define DV_INC(dvp)			dvp->dv_inc
@@ -214,8 +125,6 @@
 #define SUBRT_ITEM_TYPE			subrt_itp
 #define ID_ITEM_TYPE			id_itp
 #define DOBJ_ITEM_TYPE			dobj_itp
-#define POP_SUBRT_ID_CTX(s)		pop_subrt_ctx(QSP_ARG  s, ID_ITEM_TYPE)
-#define POP_SUBRT_DOBJ_CTX(s)		pop_subrt_ctx(QSP_ARG  s, DOBJ_ITEM_TYPE)
 
 /* in the multi-thread environment, we have per-qsp context stacks!? */
 
@@ -223,13 +132,7 @@
 #define INIT_OBJARG_PTR(oap)		oap=((Vec_Obj_Args *)getbuf(sizeof(Vec_Obj_Args)));
 #define RELEASE_OBJARG_PTR(oap)		givbuf(oap)
 #define INIT_OBJ_PTR(dp)		dp=((Data_Obj *)getbuf(sizeof(Data_Obj)));
-#define INIT_ENODE_PTR(enp)		enp=((Vec_Expr_Node *)getbuf(sizeof(Vec_Expr_Node)));
 /*#define INIT_SHAPE_PTR(shpp)		shpp=((Shape_Info *)getbuf(sizeof(Shape_Info))); */
-/*#define RELEASE_SHAPE_PTR(shpp)		givbuf(shpp); */
-#define INIT_SHAPE_PTR(shpp)		shpp=alloc_shape();
-#define RELEASE_SHAPE_PTR(shpp)		rls_shape(shpp);
-#define INIT_MACRO_PTR(mp)		mp=((Macro *)getbuf(sizeof(Macro)));
-#define INIT_CPAIR_PTR(cpp)		cpp=((Context_Pair *)getbuf(sizeof(Context_Pair)));
 
 #ifdef FOOBAR
 #define DECLARE_INCSET(s)		/* nop for objective C... */

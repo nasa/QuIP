@@ -10,7 +10,9 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// for some reason that is where my_pipe is layed out...
 #include "pipe_support.h"
+#include "function.h"
 
 #define N_RW_CHOICES	2
 
@@ -47,7 +49,7 @@ static COMMAND_FUNC( do_sendpipe )
 	pp=PICK_PIPE("");
 	s=NAMEOF("text to send");
 
-	if( pp == NO_PIPE ) return;
+	if( pp == NULL ) return;
 	sendto_pipe(QSP_ARG  pp,s);
 }
 
@@ -59,7 +61,7 @@ static COMMAND_FUNC( do_readpipe )
 	pp=PICK_PIPE("");
 	s=NAMEOF("variable for text storage");
 
-	if( pp == NO_PIPE ) {
+	if( pp == NULL ) {
 		ASSIGN_VAR(s,"error_missing_pipe");
 		return;
 	}
@@ -72,7 +74,7 @@ static COMMAND_FUNC( do_pipe_info )
 	int i;
 
 	pp = PICK_PIPE("");
-	if( pp == NO_PIPE ) return;
+	if( pp == NULL ) return;
 
 	if( pp->p_flgs & READ_PIPE ) i=0;
 	else if( pp->p_flgs & READ_PIPE ) i=1;
@@ -94,7 +96,7 @@ static COMMAND_FUNC( do_closepipe )
 	Pipe *pp;
 
 	pp = PICK_PIPE("");
-	if( pp == NO_PIPE ) return;
+	if( pp == NULL ) return;
 
 	close_pipe(QSP_ARG  pp);
 }
@@ -108,7 +110,7 @@ static COMMAND_FUNC( do_pipe_redir )
 	Pipe *pp;
 
 	pp = PICK_PIPE("");
-	if( pp == NO_PIPE ) return;
+	if( pp == NULL ) return;
 
 	if( (pp->p_flgs & READ_PIPE) == 0 ) {
 		sprintf(ERROR_STRING,
@@ -141,7 +143,7 @@ static double pipe_exists(QSP_ARG_DECL  const char *s)
 	Pipe *pp;
 
 	pp=pipe_of(QSP_ARG  s);
-	if( pp==NO_PIPE ) return(0.0);
+	if( pp==NULL ) return(0.0);
 	else return(1.0);
 }
 

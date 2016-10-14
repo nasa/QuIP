@@ -40,6 +40,10 @@ struct query {
 
 #define NO_QUERY	((Query *)NULL)
 
+/* Query */
+#define SET_QUERY_MACRO(qp,mp)		(qp)->q_mp = mp
+#define SET_QUERY_ARGLIST(qp,lp)	(qp)->q_arg_lp = lp
+
 #define QRY_FLAGS(qp)			(qp)->q_flags
 #define SET_QRY_FLAGS(qp,f)		(qp)->q_flags = f
 #define SET_QRY_FLAG_BITS(qp,f)		(qp)->q_flags |= f

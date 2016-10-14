@@ -515,7 +515,7 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 	Subrt *srp;
 	Node *np;
 
-	if( SUBRT_ITEM_TYPE == NO_ITEM_TYPE ) return(NO_VEXPR_NODE);
+	if( subrt_itp == NO_ITEM_TYPE ) return(NO_VEXPR_NODE);
 
 	//lp=list_of_subrts(SINGLE_QSP_ARG);
 	lp=subrt_list(SINGLE_QSP_ARG);

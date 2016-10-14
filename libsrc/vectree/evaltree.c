@@ -26,6 +26,7 @@
 //#include "fio_api.h"
 //#include "filetype.h"
 
+#include "fileck.h"
 #include "vectree.h"
 #include "vt_native.h"
 

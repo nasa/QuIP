@@ -26,6 +26,8 @@ struct macro {
 	int			m_lineno;
 } ;
 
+#define INIT_MACRO_PTR(mp)		mp=((Macro *)getbuf(sizeof(Macro)));
+
 /* Macro macros */
 #define SET_MACRO_NAME(mp,s)		(mp)->m_item.item_name=s
 #define SET_MACRO_N_ARGS(mp,n)		(mp)->m_n_args=n

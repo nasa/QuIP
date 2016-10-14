@@ -122,6 +122,8 @@ typedef struct vec_expr_node {
 	Node_Data			ven_data;
 } Vec_Expr_Node;
 
+#define INIT_ENODE_PTR(enp)		enp=((Vec_Expr_Node *)getbuf(sizeof(Vec_Expr_Node)));
+
 /* VecExprNode */
 #define VN_FLOPS(enp)		(enp)->ven_flops
 #define SET_VN_FLOPS(enp,n)	(enp)->ven_flops = n

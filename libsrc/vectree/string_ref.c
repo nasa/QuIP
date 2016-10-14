@@ -1,6 +1,7 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "string_ref.h"
+#include "getbuf.h"
 
 String_Ref *save_stringref(const char *s)
 {
