@@ -31,7 +31,7 @@ abort();
 
 
 
-/*static*/ IOS_ITEM_INIT_PROT(IOS_Item_Class,ios_icl,0)
+/*static*/ IOS_ITEM_INIT_PROT(IOS_Item_Class,ios_icl)
 /*static*/ IOS_ITEM_NEW_PROT(IOS_Item_Class,ios_icl)
 
 IOS_ITEM_CHECK_PROT(IOS_Item_Class,ios_icl)
