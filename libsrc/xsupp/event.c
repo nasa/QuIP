@@ -45,6 +45,7 @@ static /* int */ void flush_one_display( Disp_Obj *dop )
 		| PointerMotionMask
 		| StructureNotifyMask
 		| KeyPressMask
+		| KeyReleaseMask
 		/* | SubstructureRedirectMask */
 		;
 		/* | Button1MotionMask */
@@ -632,6 +633,9 @@ NWARN(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 			break;		/* what is this??? */
+		case KeyRelease:
+//fprintf(stderr,"Keyrelease event\n",ks_len,keystr[0]);
+			break;
 		case KeyPress:
 			ks_len = XLookupString((XKeyEvent *)event,
 				keystr,KEYBYTES,NULL,NULL);
@@ -644,8 +648,9 @@ NWARN(ERROR_STRING);
 			} else {
 // On Mac, we sometimes get spurious keypress events that are
 // never cleared!?
+// Maybe faulty auto-repeat?  We could check KeyRelease?
 //
-fprintf(stderr,"Keypress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
+//fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
 				if( keystr[0] == 015 )
 					keystr[0]=012;	/* map CR to LF */
 				keystr[1]=0;
@@ -694,6 +699,7 @@ static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
 		| ButtonMotionMask
 		| PointerMotionMask
 		| KeyPressMask
+		| KeyReleaseMask
 		// what about when the user moves or resizes a window?
 		| StructureNotifyMask
 		// | SubstructureRedirectMask
