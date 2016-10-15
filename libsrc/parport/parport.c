@@ -1,4 +1,5 @@
 #include "quip_config.h"
+#include "container_fwd.h"
 
 #ifdef HAVE_PARPORT
 
