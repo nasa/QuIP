@@ -6,7 +6,6 @@
 
 #include "vl2_host_call_defs.h"
 #include "veclib/host_typed_call_defs.h"
-
 #include "veclib/gen_host_calls.c"
 
 

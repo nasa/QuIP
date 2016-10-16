@@ -339,6 +339,11 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
  * and the number of occurrences.
  *
  * BUG this should be broken into two functions?
+ *
+ * BUG - source scalars get their precision from OA_DEST, but this is wrong
+ * for mixed precision ops like spdp_rvsmul... or at least it was when
+ * the kernel code assumed that all the source ops have the same precision.
+ * The easiest fix is probably to change the cast in the kernel code...
  */
 
 #define SET_PREC							\

@@ -196,7 +196,7 @@ static Visual *GetSpecifiedVisual( Disp_Obj * dop, int depth )
 	if( vi_p == NULL ){
 		NERROR1("glXChooseVisual failed!?");
 	}
-fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
+//fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
 	return vi_p->visual;
 
 #else // ! HAVE_OPENGL
@@ -706,7 +706,7 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
      // int (*handler)(Display *, XErrorEvent *)
 	init_error_names();
      	old_handler = XSetErrorHandler(quip_x_error_handler);
-fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
+//fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
 
 
 	add_event_func(QSP_ARG  i_loop);

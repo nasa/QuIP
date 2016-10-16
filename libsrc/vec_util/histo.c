@@ -7,12 +7,13 @@
 
 static void zero_dimension(Data_Obj *dp,float *base,int dim,long index);
 
+// it would be convenient to support double destination also?
 
-#define HISTOGRAM(type)							\
+#define HISTOGRAM(src_type)						\
 									\
 	{								\
-	type *frm_base, *row_base, *p_ptr;				\
-	frm_base = (type *) OBJ_DATA_PTR(data_dp);			\
+	src_type *frm_base, *row_base, *p_ptr;				\
+	frm_base = (src_type *) OBJ_DATA_PTR(data_dp);			\
 	n_bins = OBJ_COLS(histo_dp);					\
 	histbuf = (float *) OBJ_DATA_PTR(histo_dp);			\
 									\
@@ -83,7 +84,8 @@ void compute_histo(QSP_ARG_DECL  Data_Obj *histo_dp,Data_Obj *data_dp,double bin
 		case PREC_UDI: HISTOGRAM(u_long) break;
 		case PREC_DI: HISTOGRAM(long) break;
 		default:
-			NWARN("unhandled source precision in histogram");
+			sprintf(ERROR_STRING,"Sorry, precision %s not allowed for histogram source",PREC_NAME(OBJ_PREC_PTR(data_dp)));
+			WARN(ERROR_STRING);
 			return;
 	}
 

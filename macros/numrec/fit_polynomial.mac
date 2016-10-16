@@ -4,6 +4,10 @@
 #
 #
 
+If !var_exists(svd_loaded) "error_exit 'Please read numrec/svd.mac before numrec/fit_polynomial.mac'"
+If !var_exists(norm_coords_loaded) "error_exit 'Please read numrec/norm_coords.mac before numrec/fit_polynomial.mac'"
+# We could just read it here?
+
 # Fit_Polynomial - the implied degree is one less than the dimension of result_vec
 # For now, just 1 input variable y = f(x)
 # We should allow multivariate, e.g. z=f(x,y)
@@ -50,6 +54,30 @@ numrec
 VMov $1 fitpoly_coeffs
 # BUG - shouldn't we un-normalize here, i.e. correct the
 # coefficients for the normalization performed on the inputs?
+# Yes we should!!!
+# The normalization factors are stored in x_mean, y_mean, x_sigma, y_sigma
+# The normalization transformation is x' <- (x - x_mean)/x_sigma
+#                                     y' <- (y - y_mean)/y_sigma
+# Let's figure out how to un-normalize the coefficients...
+# y' = m x' + b 
+# (y - y_mean)/y_sigma = (x-x_mean)/x_sigma + b
+# x_sigma( y - y_mean ) = m y_sigma ( x - x_mean ) + b x_sigma y_sigma
+# y - y_mean = (y_sigma/x_sigma) m x - (y_sigma/x_sigma) m x_mean + b y_sigma
+# y          = (y_sigma/x_sigma) m x - (y_sigma/x_sigma) m x_mean + b y_sigma + y_mean
+#
+# m' <- m y_sigma/x_sigma
+# b' <- y_mean + b y_sigma - (y_sigma/x_sigma) m x_mean
+#
+# What about the quadratic?
+#
+# y' = a x'^2 + b x' + c
+#
+# (y-y_mean)/y_sigma = a (x-x_mean)^2 / x_sigma^2 + b (x-x_mean)/x_sigma + c
+# (y-y_mean)/y_sigma = a x^2 / x_sigma^2 - a 2 x x_mean / x_sigma^2 + a x_mean^2/x_sigma^2 + b x / x_sigma - b x_mean / x_sigma + c
+# ...
+# Rather than transform the coefficients, it might be simpler to norm the coefficients, compute the polynomial,
+# and the un-norm the result...
+
 Delete_SVD_Objects fitpoly
 .
 

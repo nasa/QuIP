@@ -119,6 +119,7 @@ dst = scalar1_val + scalar2_val * (index1.x / inc1.x ) + scalar3_val * (index1.y
 
 _VEC_FUNC_2V_SCAL( rvsadd , dst = (dest_type)(scalar1_val + src1) )
 _VEC_FUNC_2V_SCAL( rvssub , dst = (dest_type)(scalar1_val - src1) )
+//_VEC_FUNC_2V_SCAL( rvsmul , fprintf(stderr,"scalar1_val = %g (%g)\n",scalar1_val, (*((double *) ((vap)->va_sval[0])))); dst = (dest_type)(src1 * scalar1_val) )
 _VEC_FUNC_2V_SCAL( rvsmul , dst = (dest_type)(src1 * scalar1_val) )
 _VEC_FUNC_2V_SCAL( rvsdiv , dst = (dest_type)(scalar1_val / src1) )
 _VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )

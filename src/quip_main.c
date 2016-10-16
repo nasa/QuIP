@@ -92,9 +92,10 @@ ADD_CMD(	stepit,		do_step_menu,	stepit submenu )
 #endif /* STEPIT */
 
 #ifdef HAVE_NUMREC
-#ifdef USE_NUMREC
+// Apparently there are situations where we have numrec but don't want to use it?
+//#ifdef USE_NUMREC
 ADD_CMD(	numrec,		do_nr_menu,	numerical recipes submenu )
-#endif // USE_NUMREC
+//#endif // USE_NUMREC
 #endif /* HAVE_NUMREC */
 
 #ifndef BUILD_FOR_OBJC
