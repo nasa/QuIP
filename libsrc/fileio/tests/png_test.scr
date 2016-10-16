@@ -1,0 +1,21 @@
+
+Image b 64 64 3 u_byte
+VSet b 200
+#Display b
+
+Set f b.png
+
+Clobber yes
+Write_File_Header $f 1
+Put_Next b $f
+
+Pause
+
+# BUG png file not auto-closed after writing!?
+
+Read_File_Header $f
+Assign p precision('$f')
+Print p
+
+exit
+

@@ -363,6 +363,7 @@ static char *get_expr_stringbuf( int index, long min_len )
 %token <func_p> MATH2_FUNC
 %token <func_p> INT1_FUNC
 %token <func_p> DATA_FUNC
+%token <func_p> DOBJV_FUNC
 %token <func_p> SIZE_FUNC
 %token <func_p> TS_FUNC
 %token <func_p> IL_FUNC
@@ -415,7 +416,7 @@ topexp		: expression {
 		;
 
 			
-strv_func	: STRV_FUNC '(' /* e_string */ data_object ')' {
+strv_func	: STRV_FUNC '(' e_string /* data_object*/  ')' {
 			// string-valued functions (e.g. precision(obj))
 			//
 			// This doesn't have to be a data_object,
@@ -449,6 +450,10 @@ e_string	: E_STRING {
 		| strv_func
 		;
 
+// We would really like a data object to be a quoted string only...
+// Because when we say ncols(xxx) we want the number of columns of an object
+// named xxx, not the length of the string "xxx"...
+
 data_object	: /* E_STRING {
 			Scalar_Expr_Node *enp;
 			enp=NODE0(N_LITSTR);
@@ -472,13 +477,17 @@ data_object	: /* E_STRING {
 			enp->sen_tsp = $1;
 			$$=NODE1(N_QUOT_STR,enp);
 			}
-		| */ e_string {
+		| e_string {
 			Scalar_Expr_Node *enp;
 			enp=NODE1(N_STRING,$1);
 			//enp->sen_tsp = $1;
 			$$=NODE1(N_QUOT_STR,enp);
 			}
-
+*/ 
+		  DOBJV_FUNC '(' e_string ')' {
+			$$=NODE1(N_DOBJVFUNC,$3);
+			$$->sen_func_p=$1;
+		  	}
 		| data_object '[' expression ']' {
 			$$=NODE2(N_SUBSCRIPT,$1,$3); }
 		| data_object '{' expression '}' {
@@ -541,15 +550,19 @@ expression	: NUMBER {
 			$$=NODE1(N_ILACEFUNC,$3);
 			$$->sen_func_p=$1;
 			}
-		| POSN_FUNC '(' data_object ')' {
+		| POSN_FUNC '(' e_string ')' {
 			// This doesn't have to be a data_object,
 			// it can be the name of a sizable object...
 			$$=NODE1(N_POSNFUNC,$3);
 			$$->sen_func_p=$1;
 			}
-		| SIZE_FUNC '(' data_object ')' {
+		| SIZE_FUNC '(' e_string ')' {
 			// This doesn't have to be a data_object,
 			// it can be the name of a sizable object...
+			$$=NODE1(N_SIZFUNC,$3);
+			$$->sen_func_p=$1;
+			}
+		| SIZE_FUNC '(' data_object ')' {
 			$$=NODE1(N_SIZFUNC,$3);
 			$$->sen_func_p=$1;
 			}
@@ -2169,6 +2182,7 @@ static int token_for_func_type(int type)
 		case CHAR_FUNCTYP:	return(CHAR_FUNC);	break;
 		case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 		case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
+		case DOBJV_FUNCTYP:	return(DOBJV_FUNC);	break;
 		case TS_FUNCTYP:	return(TS_FUNC);	break;
 		case ILACE_FUNCTYP:	return(IL_FUNC);	break;
 		case POSN_FUNCTYP:	return(POSN_FUNC);	break;

@@ -1,6 +1,7 @@
 #include "quip_config.h"
 
 #include <stdio.h>
+#include <string.h>
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "function.h"
@@ -184,12 +185,42 @@ static double contig_func(QSP_ARG_DECL  Data_Obj *dp )
 	}
 }
 
+static Data_Obj *obj_for_string(const char *string)
+{
+	Dimension_Set *dsp;
+	Data_Obj *dp;
+
+	INIT_DIMSET_PTR(dsp)
+
+	/* this is just a string that we treat as a row vector
+	 * of character data...
+	 * We haven't actually created the data yet.
+	 */
+	SET_DIMENSION(dsp,0,1);
+	SET_DIMENSION(dsp,1,(dimension_t)strlen(string)+1);
+	SET_DIMENSION(dsp,2,1);
+	SET_DIMENSION(dsp,3,1);
+	SET_DIMENSION(dsp,4,1);
+	dp=make_dobj(DEFAULT_QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
+	if( dp != NULL ) strcpy((char *)OBJ_DATA_PTR(dp),string);
+	return(dp);
+}
+
+static Data_Obj *stringobj_func(QSP_ARG_DECL  const char *string)
+{
+	Data_Obj *dp;
+
+	dp = obj_for_string(string);
+	return(dp);
+}
+
 void init_dfuncs(SINGLE_QSP_ARG_DECL)
 {
 	DECLARE_DOBJ_FUNCTION( value,		val_func	)
 	DECLARE_DOBJ_FUNCTION( Re,		re_func		)
 	DECLARE_DOBJ_FUNCTION( Im,		im_func		)
 	DECLARE_DOBJ_FUNCTION( is_contiguous,	contig_func	)
+	DECLARE_DOBJV_FUNCTION( string_obj,	stringobj_func	)
 	DECLARE_STR1_FUNCTION( obj_exists,	obj_exists	)
 }
 

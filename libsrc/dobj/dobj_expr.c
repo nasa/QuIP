@@ -1,30 +1,15 @@
 
+// support for the scalar expression parser
+
+// This is kind of messed-up right now, because there is some ambiguity about
+// when a string should be converted to a data object...
+// maybe we should not convert objects to strings unless we put them
+// inside a function string_obj() ?
+
 #include <string.h>
 #include "quip_prot.h"
 #include "nexpr.h"
 #include "function.h"
-//#include "shape_bits.h"
-
-static Data_Obj *obj_for_string(const char *string)
-{
-	Dimension_Set *dsp;
-	Data_Obj *dp;
-
-	INIT_DIMSET_PTR(dsp)
-
-	/* this is just a string that we treat as a row vector
-	 * of character data...
-	 * We haven't actually created the data yet.
-	 */
-	SET_DIMENSION(dsp,0,1);
-	SET_DIMENSION(dsp,1,(dimension_t)strlen(string)+1);
-	SET_DIMENSION(dsp,2,1);
-	SET_DIMENSION(dsp,3,1);
-	SET_DIMENSION(dsp,4,1);
-	dp=make_dobj(DEFAULT_QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
-	if( dp != NULL ) strcpy((char *)OBJ_DATA_PTR(dp),string);
-	return(dp);
-}
 
 static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
@@ -33,13 +18,22 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	const char *s;
 
 	switch(enp->sen_code){
+		case N_LITSTR:
 		case N_QUOT_STR:
 			s = EVAL_SCALEXP_STRING(enp);
 			szp = check_sizable( DEFAULT_QSP_ARG  s );
+			/*
 			if( szp == NULL ){
 				Data_Obj *dp;
 				dp = obj_for_string(s);
 				szp = (Item *)dp;
+			}
+			*/
+			if( szp == NULL ){
+				sprintf(ERROR_STRING,
+					"No sizable object \"%s\"!?",s);
+				WARN(ERROR_STRING);
+				return(NULL);
 			}
 			break;
 
@@ -51,7 +45,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);
-				NWARN(ERROR_STRING);
+				WARN(ERROR_STRING);
 				return(NULL);
 			}
 			break;
@@ -71,11 +65,19 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
+		case N_DOBJVFUNC:	// eval_szbl_expr
+			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
+			if( s == NULL ){
+				WARN("Error evaluating arg for object-valued function!?");
+				return NULL;
+			}
+			szp = (Item *) (*enp->sen_func_p->fn_u.dobjv_func)( QSP_ARG  s );
+			break;
 //#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
+			sprintf(ERROR_STRING,
+		"unexpected case in eval_szbl_expr %d",enp->sen_code);
+			WARN(ERROR_STRING);
 			assert(0);
 			break;
 //#endif /* CAUTIOUS */
@@ -94,15 +96,15 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 static Data_Obj * _def_obj(QSP_ARG_DECL  const char *name)
 {
 	sprintf(DEFAULT_ERROR_STRING,"can't search for object \"%s\"; ",name);
-	NWARN(DEFAULT_ERROR_STRING);
+	WARN(DEFAULT_ERROR_STRING);
 
-	NWARN("data module not linked");
+	WARN("data module not linked");
 	return(NULL);
 }
 
 static Data_Obj *_def_sub(QSP_ARG_DECL  Data_Obj *object,index_t index)
 {
-	NWARN("can't get subobject; data module not linked");
+	WARN("can't get subobject; data module not linked");
 	return(NULL);
 }
 
@@ -142,11 +144,13 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			/* We have a problem here with indexed objects,
 			 * since the indexed names aren't in the database...
 			 */
+			/*
 			if( dp == NULL ){
-				/* treat the string like a rowvec of chars */
+				// treat the string like a rowvec of chars
 				dp = obj_for_string(s);
 				return(dp);
 			}
+			*/
 			break;
 
 		case N_SCALAR_OBJ:
@@ -172,12 +176,20 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			RELEASE_SCALAR(tsp)
 			dp=(*csub_func)( QSP_ARG  dp2, index );
 			break;
+		case N_DOBJVFUNC:	// eval_szbl_expr
+			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
+			if( s == NULL ){
+				WARN("Error evaluating arg for object-valued function!?");
+				return NULL;
+			}
+			dp = (*enp->sen_func_p->fn_u.dobjv_func)( QSP_ARG  s );
+			break;
 
 //#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
-//			NWARN(ERROR_STRING);
+			sprintf(ERROR_STRING,
+		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
+			WARN(ERROR_STRING);
 			assert(0);
 			break;
 //#endif /* CAUTIOUS */

@@ -86,7 +86,7 @@ Set argname argv$j_arg
 Assign plot_xmax $$argname
 Add_Var i_arg 3
 Set argname argv$i_arg
-If isdigit('$$argname'[0])
+If isdigit(string_obj('$$argname')[0])
   "Set x_tick_spacing $$argname Increment i_arg"
 Set x_scale_determined 1
 If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"
@@ -103,7 +103,7 @@ Set argname argv$j_arg
 Assign plot_ymax $$argname
 Add_Var i_arg 3
 Set argname argv$i_arg
-If isdigit('$$argname'[0])
+If isdigit(string_obj('$$argname')[0])
   "Set y_tick_spacing $$argname Increment i_arg"
 Set y_scale_determined 1
 If $x_scale_determined&&$y_scale_determined "Set scale_determined 1"

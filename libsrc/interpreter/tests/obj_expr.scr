@@ -1,0 +1,31 @@
+
+Vector v 4 1 float
+
+Assign w ncols(v)
+advise "ncols(v) = $w"
+
+Assign w ncols("v")
+advise "ncols(\"v\") = $w"
+
+Assign w ncols(w)
+advise "ncols(w) = $w"
+
+Assign w ncols(string_obj(w))
+advise "ncols(string_obj(w)) = $w"
+
+
+Assign s toupper(jeff)
+advise "toupper(jeff) = $s"
+
+Assign p precision(v)
+advise "precision(v) = $p"
+
+Assign b isdigit(string_obj("a12")[0])
+advise "isdigit(string_obj(\"a12\")[0]) = $b"
+
+Assign b isdigit(string_obj(a12)[0])
+advise "isdigit(string_obj(a12)[0]) = $b"
+
+Assign b isdigit(string_obj(a12)[1])
+advise "isdigit(string_obj(a12)[1]) = $b"
+
