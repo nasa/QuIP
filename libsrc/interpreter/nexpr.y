@@ -387,6 +387,7 @@ static char *get_expr_stringbuf( int index, long min_len )
 %start topexp
 %type <enp> expression
 %type <enp> data_object
+%type <enp> scalar_obj
 //%type <enp> sizable_object
 %type <enp> timestampable_object
 %type <enp> e_string
@@ -405,14 +406,14 @@ topexp		: expression {
 			// qsp is passed to yyparse through YYPARSE_PARAM, but it is void *
 			final_expr_node_p = $1 ;
 			}
-		/*
 		| e_string {
 			final_expr_node_p = $1;
 			}
-			*/
+		/*
 		| strv_func {
 			final_expr_node_p = $1;
 			}
+			*/
 		;
 
 			
@@ -454,7 +455,7 @@ e_string	: E_STRING {
 // Because when we say ncols(xxx) we want the number of columns of an object
 // named xxx, not the length of the string "xxx"...
 
-data_object	: /* E_STRING {
+data_object	: /* E_STRING {			// the name of an object
 			Scalar_Expr_Node *enp;
 			enp=NODE0(N_LITSTR);
 			enp->sen_tsp = $1;
@@ -477,14 +478,12 @@ data_object	: /* E_STRING {
 			enp->sen_tsp = $1;
 			$$=NODE1(N_QUOT_STR,enp);
 			}
-		| e_string {
-			Scalar_Expr_Node *enp;
-			enp=NODE1(N_STRING,$1);
-			//enp->sen_tsp = $1;
-			$$=NODE1(N_QUOT_STR,enp);
+		|*/ e_string {
+			$$=NODE1(N_OBJNAME,$1);
 			}
-*/ 
-		  DOBJV_FUNC '(' e_string ')' {
+ 
+		 | DOBJV_FUNC '(' data_object ')' {
+		 	// Not really a data_obj here, but strings get reduced to data_obj...
 			$$=NODE1(N_DOBJVFUNC,$3);
 			$$->sen_func_p=$1;
 		  	}
@@ -493,6 +492,8 @@ data_object	: /* E_STRING {
 		| data_object '{' expression '}' {
 			$$=NODE2(N_CSUBSCRIPT,$1,$3); }
 		;
+
+scalar_obj	: data_object { $$=NODE1(N_SCALAR_OBJ,$1); }
 
 /* Because the size functions can take things other than data objects
  * as arguments (e.g., a viewer name), it seemed more readable to
@@ -540,6 +541,10 @@ expression	: NUMBER {
 			$$=NODE1(N_CHARFUNC,$3);
 			$$->sen_func_p = $1;
 			}
+		| CHAR_FUNC '(' scalar_obj ')' {
+			$$=NODE1(N_CHARFUNC,$3);
+			$$->sen_func_p = $1;
+			}
 		| DATA_FUNC '(' data_object ')' {
 			$$=NODE1(N_DATAFUNC,$3);
 			$$->sen_func_p=$1;
@@ -556,16 +561,18 @@ expression	: NUMBER {
 			$$=NODE1(N_POSNFUNC,$3);
 			$$->sen_func_p=$1;
 			}
-		| SIZE_FUNC '(' e_string ')' {
+		| SIZE_FUNC '(' data_object ')' {
 			// This doesn't have to be a data_object,
 			// it can be the name of a sizable object...
 			$$=NODE1(N_SIZFUNC,$3);
 			$$->sen_func_p=$1;
 			}
+		/*
 		| SIZE_FUNC '(' data_object ')' {
 			$$=NODE1(N_SIZFUNC,$3);
 			$$->sen_func_p=$1;
 			}
+			*/
 		| TS_FUNC '(' timestampable_object ',' expression ')' {
 			$$=NODE2(N_TSFUNC,$3,$5);
 			$$->sen_func_p=$1;
@@ -622,8 +629,10 @@ expression	: NUMBER {
 			$$->sen_string = savestr($1);
 			}
 			*/
+		/*
 		| data_object
 			{ $$=NODE1(N_SCALAR_OBJ,$1); }
+			*/
 
 		// We used to allow a named scalar object to be given -
 		// equivalent to value(objname), but without having to explicitly

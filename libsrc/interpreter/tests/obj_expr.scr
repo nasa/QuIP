@@ -1,14 +1,21 @@
 
 Vector v 4 1 float
+Ramp1D v 10 1
+
+Assign v value(v[0])
+advise "value(v[0]) = $v"
 
 Assign w ncols(v)
 advise "ncols(v) = $w"
 
+Assign w ncols(v[1])
+advise "ncols(v[1]) = $w"
+
 Assign w ncols("v")
 advise "ncols(\"v\") = $w"
 
-Assign w ncols(w)
-advise "ncols(w) = $w"
+#Assign w ncols(w)
+#advise "ncols(w) = $w"
 
 Assign w ncols(string_obj(w))
 advise "ncols(string_obj(w)) = $w"
