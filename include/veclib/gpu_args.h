@@ -154,15 +154,22 @@
 
 ////////////// generic args for kernel declaration
 
-#define DECLARE_KERN_ARGS_1S		std_type scalar1_val
-#define DECLARE_KERN_ARGS_2S		DECLARE_KERN_ARGS_1S, std_type scalar2_val
-#define DECLARE_KERN_ARGS_3S		DECLARE_KERN_ARGS_2S, std_type scalar3_val
+//#define DECLARE_KERN_ARGS_1S		std_type scalar1_val
+//#define DECLARE_KERN_ARGS_2S		DECLARE_KERN_ARGS_1S, std_type scalar2_val
+//#define DECLARE_KERN_ARGS_3S		DECLARE_KERN_ARGS_2S, std_type scalar3_val
+#define DECLARE_KERN_ARGS_1S		dest_type scalar1_val
+#define DECLARE_KERN_ARGS_2S		DECLARE_KERN_ARGS_1S, dest_type scalar2_val
+#define DECLARE_KERN_ARGS_3S		DECLARE_KERN_ARGS_2S, dest_type scalar3_val
 
-#define DECLARE_KERN_ARGS_CPX_1S	std_cpx cscalar1_val
-#define DECLARE_KERN_ARGS_CPX_2S	DECLARE_KERN_ARGS_CPX_1S , std_cpx cscalar2_val
+//#define DECLARE_KERN_ARGS_CPX_1S	std_cpx cscalar1_val
+//#define DECLARE_KERN_ARGS_CPX_2S	DECLARE_KERN_ARGS_CPX_1S , std_cpx cscalar2_val
+#define DECLARE_KERN_ARGS_CPX_1S	dest_cpx cscalar1_val
+#define DECLARE_KERN_ARGS_CPX_2S	DECLARE_KERN_ARGS_CPX_1S , dest_cpx cscalar2_val
 
-#define DECLARE_KERN_ARGS_QUAT_1S	std_quat qscalar1_val
-#define DECLARE_KERN_ARGS_QUAT_2S	DECLARE_KERN_ARGS_QUAT_1S , std_quat qscalar2_val
+//#define DECLARE_KERN_ARGS_QUAT_1S	std_quat qscalar1_val
+//#define DECLARE_KERN_ARGS_QUAT_2S	DECLARE_KERN_ARGS_QUAT_1S , std_quat qscalar2_val
+#define DECLARE_KERN_ARGS_QUAT_1S	dest_quat qscalar1_val
+#define DECLARE_KERN_ARGS_QUAT_2S	DECLARE_KERN_ARGS_QUAT_1S , dest_quat qscalar2_val
 
 #ifdef BUILD_FOR_OPENCL
 

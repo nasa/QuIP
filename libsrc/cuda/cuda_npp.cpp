@@ -22,6 +22,8 @@
 
 #define NPP_VERSION	NPP_VERSION_CODE(NPP_VERSION_MAJOR,NPP_VERSION_MINOR,NPP_VERSION_BUILD)
 
+#else
+#undef HAVE_LIBNPP	// we may hand-edit out HAVE_CUDA on a system that has it?
 #endif // HAVE_CUDA
 
 #include "quip_prot.h"
@@ -44,6 +46,7 @@
 	}
 
 
+#ifdef HAVE_CUDA
 #ifdef HAVE_LIBNPP
 
 #define NPP_ERR_CASE(code,msg)					\
@@ -181,7 +184,6 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 		NWARN(DEFAULT_ERROR_STRING);
 	}
 }
-#endif /* HAVE_LIBNPP */
 
 /* For dilation and erosion, the mask needs to fall completely
  * within the input image.  So the output that we can set is
@@ -239,7 +241,6 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 	divisor = HOW_MANY("divisor");
 
 
-#ifdef HAVE_CUDA
 static int good_img_for_morph(QSP_ARG_DECL  Data_Obj *dp, const char *whence )
 {
 	if( OBJ_PREC(dp) != PREC_UBY ){
@@ -297,9 +298,6 @@ static int good_kernel_for_filter(Data_Obj *dp, const char *whence )
 	}
 	return(1);
 }
-#endif // HAVE_CUDA
-
-#ifdef HAVE_LIBNPP
 
 static int good_for_morph( QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp,
 				Data_Obj *mask_dp, const char * whence )
@@ -358,6 +356,7 @@ static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 }
 
 #endif // HAVE_LIBNPP
+#endif // HAVE_CUDA
 
 #define CHECK_MORPH_ARGS(whence)					\
 									\
