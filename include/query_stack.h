@@ -88,7 +88,7 @@ struct query_stack {
 	int		qs_n_warnings;
 	int		qs_num_warnings;
 	int		qs_flags;	// where are the flag bits declared???
-	int		qs_level;
+	int		_qs_level;
 	int		qs_chew_level;
 #ifdef NOT_USED
 	int		qs_lookahead_level;
@@ -239,8 +239,8 @@ struct query_stack {
 #define SET_QS_NAME(qsp,s)		(qsp)->qs_item.item_name = s
 #define _QS_SERIAL(qsp)			(qsp)->qs_serial
 #define SET_QS_SERIAL(qsp,n)		(qsp)->qs_serial=n
-#define QS_LEVEL(qsp)			(qsp)->qs_level
-#define SET_QS_LEVEL(qsp,l)		(qsp)->qs_level = l
+#define QS_LEVEL(qsp)			(qsp)->_qs_level
+#define SET_QS_LEVEL(qsp,l)		(qsp)->_qs_level = l
 #define QS_CHEW_LEVEL(qsp)		(qsp)->qs_chew_level
 #define SET_QS_CHEW_LEVEL(qsp,l)	(qsp)->qs_chew_level = l
 #define QS_ASCII_LEVEL(qsp)		(qsp)->qs_ascii_level

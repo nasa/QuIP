@@ -1,0 +1,27 @@
+# test mixed mode
+
+Vector d 8 1 double
+Vector f 8 1 float
+Vector g 8 1 float
+Ramp1D f 0 1
+VSet d -1
+
+advise "Initializing f with ramp, and d with -1..."
+Display f
+Display d
+
+VSAdd d f 10
+advise "d = f + 10"
+Display d
+
+
+VSAtan2 g f 2
+advise "g = atan2(f,2)"
+Display g
+
+VSAtan2 d f 2
+advise "d = atan2(f,2)"
+Display d
+
+exit
+

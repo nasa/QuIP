@@ -44,6 +44,8 @@ extern "C" {
 
 // This used to be a macro - do we still need it?
 extern Query * query_at_level(QSP_ARG_DECL  int l);
+extern int qs_level(SINGLE_QSP_ARG_DECL);
+extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);
 
 // quip_main.c
 extern void push_quip_menu(Query_Stack *qsp);
@@ -468,6 +470,19 @@ ITEM_PICK_PROT(Variable,var_)
 #define VAR_OF(s)	var_of(QSP_ARG  s)
 extern Variable *var_of(QSP_ARG_DECL const char *name);
 #define PICK_VAR(s)	pick_var_(QSP_ARG  s)
+
+// hash.c
+extern void		zap_hash_tbl(Hash_Tbl *);
+extern List *		ht_list(QSP_ARG_DECL  Hash_Tbl *);
+extern Hash_Tbl *	enlarge_ht(Hash_Tbl *);
+extern Hash_Tbl *	ht_init(const char *name);
+extern int		insert_hash(void *ptr,Hash_Tbl *table);
+extern void		show_ht(Hash_Tbl *table);
+extern void *		fetch_hash(const char *name,Hash_Tbl *table);
+//extern int		remove_hash(void *ptr,Hash_Tbl *table);
+extern int		remove_name_from_hash(const char *name,Hash_Tbl *table);
+extern int		remove_item_from_hash(const Item *ip,Hash_Tbl *table);
+extern void		tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *table);
 
 
 // strbuf.c

@@ -217,45 +217,46 @@ static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 	return(0);
 }
 
-#ifdef FOOBAR
-static Scalar_Value *sv_array=NULL;
-static int sv_idx=0;
-#define N_SV_ARRAY 8	// 3 might be enough?
-#endif // FOOBAR
+static List *free_sval_lp=NULL;
 
-static Scalar_Value *get_sv(Precision * prec_p)
+/* We pass the precision so that we don't have
+ * to allocate the huge Scalar_Value union for just one float...
+ */
+/* But we're not taking advantage of that here... */
+
+static Scalar_Value *get_sval(Precision * prec_p)
 {
-#ifndef FOOBAR
 	Scalar_Value *svp;
 
-	/* We pass the precision so that we don't have
-	 * to allocate the huge Scalar_Value union for just one float...
-	 */
+	if( free_sval_lp == NULL ) free_sval_lp = new_list();
 
-	/* But we're not taking advantage of that here... */
+	if( QLIST_HEAD(free_sval_lp) != NULL ){
+		Node *np;
+		np = remHead(free_sval_lp);
+		return NODE_DATA(np);
+	}
 
 	svp = (Scalar_Value *)getbuf( sizeof(Scalar_Value) );
 	/* BUG?  should we initialize value? */
 	return(svp);			/* BUG possible memory leak? */
 	// BUT we free these later???
-#else // FOOBAR
-	Scalar_Value *svp;
+	// where do we free?  memory leak?
+}
 
-	if( sv_array == NULL ){
-		sv_array = getbuf( N_SV_ARRAY * sizeof(Scalar_Value) );
-	}
+static void rls_sval(Scalar_Value *svp)
+{
+	Node *np;
 
-	svp = &sv_array[sv_idx++];
-	sv_idx %= N_SV_ARRAY;
-	return svp;
-#endif // FOOBAR
+	np = mk_node(svp);
+	assert(free_sval_lp!=NULL);
+	addHead(free_sval_lp,np);
 }
 
 /*
  * Get a scalar object that the user specifies.
  */
 
-static Data_Obj * getascal(QSP_ARG_DECL const char *pmpt,Precision *prec_p)
+static Data_Obj * get_return_scalar(QSP_ARG_DECL const char *pmpt,Precision *prec_p)
 {
 	Data_Obj *dp;
 
@@ -264,20 +265,20 @@ static Data_Obj * getascal(QSP_ARG_DECL const char *pmpt,Precision *prec_p)
 	if( dp==NO_OBJ ) return(NO_OBJ);
 	if( !IS_SCALAR(dp) ){
 		sprintf(ERROR_STRING,
-			"getascal:  %s is not a scalar",OBJ_NAME(dp));
+			"get_return_scalar:  %s is not a scalar",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 	if( OBJ_PREC_PTR( dp) != prec_p ){
 		sprintf(ERROR_STRING,
-			"getascal:  %s scalar %s should have precision %s",
+			"get_return_scalar:  %s scalar %s should have precision %s",
 			OBJ_PREC_NAME(dp),OBJ_NAME(dp),PREC_NAME(prec_p));
 		WARN(ERROR_STRING);
 		return(NO_OBJ);
 	}
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
-sprintf(ERROR_STRING,"getascal:  returning %s scalar %s",OBJ_MACH_PREC_NAME(dp),OBJ_NAME(dp));
+sprintf(ERROR_STRING,"get_return_scalar:  returning %s scalar %s",OBJ_MACH_PREC_NAME(dp),OBJ_NAME(dp));
 NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -325,7 +326,7 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 #endif // HAVE_ANY_GPU
 
-/* BUG - getscal gets a scalar object, but for an arg we don't need to create
+/* BUG - get_scalar_args gets a scalar object, but for an arg we don't need to create
  * the object.  We only need to do that to return a scalar value.
  *
  * Now that we are supporting CUDA (multiple data areas), we have to
@@ -346,12 +347,28 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
  * The easiest fix is probably to change the cast in the kernel code...
  */
 
+#define SET_MACH_PREC_FROM_OBJ( prec_ptr, dp )				\
+									\
+	{								\
+		assert(dp!=NULL);					\
+		prec_ptr = OBJ_MACH_PREC_PTR( dp );			\
+	}
+
+#define SET_PREC_FROM_OBJ( prec_ptr, dp )				\
+									\
+	{								\
+		assert(dp!=NULL);					\
+		prec_ptr = OBJ_PREC_PTR( dp );				\
+	}
+
+#ifdef FOOBAR
 #define SET_PREC							\
 									\
 	if( OA_DEST(oap) !=NO_OBJ ) prec_p=OBJ_PREC_PTR( OA_DEST(oap) );\
 	else prec_p=prec_for_code(PREC_SP);
+#endif // FOOBAR
 
-static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
+static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 {
 	int ir, ic, iq;
 	Precision * prec_p;
@@ -387,38 +404,39 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 	if( VF_FLAGS(vfp) & SRC_SCALAR3 /* HAS_3_SCALARS */ ){
 		const char *p1,*p2,*p3;
 
-		SET_PREC
+		// Ramp2D or 3 scalar conditional...
+		//SET_PREC
 
 		if( VF_CODE(vfp) == FVRAMP2D ){
+			SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
 			p1="starting value";
 			p2="horizontal increment";
 			p3="vertical increment";
 		} else if( VF_CODE(vfp) >= FSS_VS_LT &&
 				VF_CODE(vfp) <= FSS_VS_NE ){
+			// Here the result scalars should match OA_DEST,
+			// but the source scalar should match OA_SRC1
+			SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
 			p1="result value if condition satisfied";
 			p2="result value if condition not satisfied";
 			p3="scalar value for comparison";
 		}
-//#ifdef CAUTIOUS
 		  else {
-			// quiet compiler
-			//p1=p2=p3="";
-		// not necessary when using noreturn attribute!
-//			ERROR1("CAUTIOUS:  unexpected 3 scalar function!?");
-//			  return -1;	// iOS
 			assert( AERROR("unexpected 3 scalar function!?") );
 		}
-//#endif /* CAUTIOUS */
-		SET_OA_SVAL(oap,0, get_sv(prec_p) );
-		SET_OA_SVAL(oap,1, get_sv(prec_p) );
-		SET_OA_SVAL(oap,2, get_sv(prec_p) );
+		SET_OA_SVAL(oap,0, get_sval(prec_p) );
+		SET_OA_SVAL(oap,1, get_sval(prec_p) );
+		SET_OA_SVAL(oap,2, get_sval(prec_p) );
+		// BUG - could have an array of prec_p's ???
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,2), prec_p, HOW_MUCH(p3) );
 	} else if( VF_FLAGS(vfp) & SRC_SCALAR2 /* HAS_2_SCALARS */ ){
 		const char *p1,*p2;
 
-		SET_PREC
+		// RAMP1D or ???
+		//SET_PREC
+		SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
 
 		if( COMPLEX_PRECISION(PREC_CODE(prec_p)) ){
 			/* this should not happen!? */
@@ -431,11 +449,11 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 				// it could be null...
 				if( OA_DEST(oap) != NO_OBJ )
 					sprintf(ERROR_STRING,
-"getscal:  function %s does not permit operations with complex targets (%s)",
+"get_scalar_args:  function %s does not permit operations with complex targets (%s)",
 		VF_NAME(vfp),OBJ_NAME(OA_DEST(oap) ));
 				else
 					sprintf(ERROR_STRING,
-"getscal:  function %s does not permit operations with complex targets",
+"get_scalar_args:  function %s does not permit operations with complex targets",
 						VF_NAME(vfp) );
 				WARN(ERROR_STRING);
 				retval=(-1);
@@ -447,7 +465,7 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			/* Does the function permit quaternions? */
 			if( (VF_TYPEMASK(vfp) & (QUAT_ARG_MASK)) == 0 ){
 				sprintf(ERROR_STRING,
-	"getscal:  function %s does not permit operations with quaternion targets (%s)",
+	"get_scalar_args:  function %s does not permit operations with quaternion targets (%s)",
 					VF_NAME(vfp),
 					OA_DEST(oap)==NULL ?
 					"(null destination)" :
@@ -474,14 +492,14 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		}
 //#ifdef CAUTIOUS
 		else {
-//			WARN("CAUTIOUS:  unhandled case in getscal");
+//			WARN("CAUTIOUS:  unhandled case in get_scalar_args");
 //			p1=p2="dummy value";
 //			retval=(-1);
-			assert( AERROR("unhandled case in getscal") );
+			assert( AERROR("unhandled case in get_scalar_args") );
 		}
 //#endif /* CAUTIOUS */
-		SET_OA_SVAL(oap,0, get_sv(prec_p) );
-		SET_OA_SVAL(oap,1, get_sv(prec_p) );
+		SET_OA_SVAL(oap,0, get_sval(prec_p) );
+		SET_OA_SVAL(oap,1, get_sval(prec_p) );
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
 	}
@@ -491,8 +509,9 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			if( OA_SRC1(oap) ==NO_OBJ ){
 				goto get_dummy;
 			}
-			SET_OA_SVAL(oap,0, get_sv(OBJ_PREC_PTR( OA_SRC1(oap) )) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), OBJ_PREC_PTR( OA_SRC1(oap) ),
+			SET_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
+			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value") );
 		} else if( OA_DEST(oap) == NO_OBJ ){	/* error condition */
 			/*double d;
@@ -503,30 +522,39 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			if( iq ) WARN("Multiplication by a quaternion scalar with a real target");
 			/* BUG we can't use destination for precision
 			 * in the mixed precision ops...
+			 * Well we can, but it breaks vsatan2 with cuda...
 			 */
-			SET_OA_SVAL(oap,0,get_sv(OBJ_MACH_PREC_PTR(OA_DEST(oap) )) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			if( VF_FLAGS(vfp) & SRC1_VEC ){
+				SET_MACH_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
+			} else {
+				SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
+			}
+			SET_OA_SVAL(oap,0,get_sval( prec_p ) );
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source real scalar value") );
 		} else if( (IS_COMPLEX(OA_DEST(oap) ) && !ir) || ic ) {
-			SET_OA_SVAL(oap,0, get_sv(OBJ_MACH_PREC_PTR(OA_DEST(oap) )) );
-			cast_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
+			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
+			cast_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value real part") );
-			cast_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			cast_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value imaginary part") );
 		} else if( (IS_QUAT(OA_DEST(oap) ) && !ir) || iq ) {
-			SET_OA_SVAL(oap,0, get_sv(OBJ_MACH_PREC_PTR(OA_DEST(oap) )) );
-			cast_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
+			SET_OA_SVAL(oap,0, get_sval( prec_p ));
+			cast_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value real part") );
-			cast_to_quat_scalar(QSP_ARG  1,OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			cast_to_quat_scalar(QSP_ARG  1,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value i part") );
-			cast_to_quat_scalar(QSP_ARG  2,OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			cast_to_quat_scalar(QSP_ARG  2,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value j part") );
-			cast_to_quat_scalar(QSP_ARG  3,OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			cast_to_quat_scalar(QSP_ARG  3,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value k part") );
 		} else {
 			/* use a single scalar for all components */
-			SET_OA_SVAL(oap,0, get_sv(OBJ_MACH_PREC_PTR(OA_DEST(oap) )) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), OBJ_MACH_PREC_PTR(OA_DEST(oap) ),
+			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
+			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value") );
 		}
 		if( OA_SVAL(oap,0) == NO_SCALAR_VALUE ){
@@ -538,15 +566,15 @@ static int getscal(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		Data_Obj *_dp1, *_dp2;
 		if( OA_SRC1(oap) == NO_OBJ ){
 			sprintf(ERROR_STRING,
-	"getscal (%s):  no argument to use for precision prototype!?",
+	"get_scalar_args (%s):  no argument to use for precision prototype!?",
 				VF_NAME(vfp));
 			WARN(ERROR_STRING);
 			retval=(-1);
 		} else {
-			_dp1 = getascal(QSP_ARG
+			_dp1 = get_return_scalar(QSP_ARG
 				"name of scalar for extreme value",
 				OBJ_PREC_PTR( OA_SRC1(oap) ));
-			_dp2 = getascal(QSP_ARG
+			_dp2 = get_return_scalar(QSP_ARG
 				"name of scalar for # of occurrences",
 				prec_for_code(PREC_DI));
 			if( _dp1 == NO_OBJ || _dp2 == NO_OBJ )
@@ -616,7 +644,7 @@ static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 		
 	/* BUG?  We should sort out passing a value vs. receiving a value in a scalar object... */
 	if( VF_FLAGS(vfp) & (SRC_SCALAR1|SRC_SCALAR2|TWO_SCALAR_RESULTS) ){
-		if( getscal(QSP_ARG  oap, vfp) == (-1) ) oops|=1;
+		if( get_scalar_args(QSP_ARG  oap, vfp) == (-1) ) oops|=1;
 #ifdef PROBABLY_NOT_NEEDED
 		/* Here we point the scalar value to the object data - why? */
 		for(i=0;i<MAX_RETSCAL_ARGS;i++){
@@ -628,7 +656,7 @@ static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 
 	if( oops) return(-1);		/* if a requested object doesn't exist... */
 
-	/* getscal() gets (or makes) objects? */
+	/* get_scalar_args() gets (or makes) objects? */
 
 	return(0);
 } /* end get_args */
@@ -858,7 +886,7 @@ WARN(ERROR_STRING);
 	 */
 	for(i=0;i<MAX_SRCSCAL_ARGS;i++){
 		if( OA_SVAL(oap,i) != NO_SCALAR_VALUE )
-			givbuf( OA_SVAL(oap,i) );
+			rls_sval( OA_SVAL(oap,i) );	// free scalars allocated by get_sval()
 	}
 }
 

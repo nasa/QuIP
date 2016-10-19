@@ -33,18 +33,6 @@ struct hash_tbl {
 #define NO_HASH_TBL		((Hash_Tbl *) NULL)
 
 
-extern void		zap_hash_tbl(Hash_Tbl *);
-extern List *		ht_list(QSP_ARG_DECL  Hash_Tbl *);
-extern Hash_Tbl *	enlarge_ht(Hash_Tbl *);
-extern Hash_Tbl *	ht_init(const char *name);
-extern int		insert_hash(void *ptr,Hash_Tbl *table);
-extern void		show_ht(Hash_Tbl *table);
-extern void *		fetch_hash(const char *name,Hash_Tbl *table);
-//extern int		remove_hash(void *ptr,Hash_Tbl *table);
-extern int		remove_name_from_hash(const char *name,Hash_Tbl *table);
-extern int		remove_item_from_hash(const Item *ip,Hash_Tbl *table);
-extern void		tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *table);
-
 typedef struct {
 	Hash_Tbl *htp;
 	void **current_entry;
