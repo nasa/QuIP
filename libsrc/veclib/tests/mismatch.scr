@@ -1,0 +1,27 @@
+
+# We should test this under opencl and cuda also...
+
+Vector v 8 1 float
+Vector w 8 1 float
+Vector d 8 1 double
+
+Ramp1D v 0 1
+
+#VSMul v d 2	# error caught
+Display v
+VSet d -1
+Display d
+
+VSMul d v 2	# not an error because spdp is an allowed mixed precision...
+		
+Display d
+
+# But what about atan2???
+
+advise "w and d should be the same..."
+VSAtan2 w v 1
+Display w
+VSAtan2 d v 1
+Display d
+
+
