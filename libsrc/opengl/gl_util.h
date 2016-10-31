@@ -25,6 +25,7 @@ extern GLenum choose_viewing_mode(QSP_ARG_DECL const char *);
 extern GLenum choose_primitive(QSP_ARG_DECL const char *);
 extern GLenum choose_winding_dir(QSP_ARG_DECL const char *);
 extern GLenum choose_facing_dir(QSP_ARG_DECL const char *);
+extern GLenum choose_lighting_component(QSP_ARG_DECL const char *);
 extern GLenum choose_cap(QSP_ARG_DECL const char *);
 extern GLenum choose_shading_model(QSP_ARG_DECL const char *);
 extern GLenum choose_draw_buffer(QSP_ARG_DECL const char *);
@@ -37,6 +38,7 @@ extern GLenum choose_polygon_mode(QSP_ARG_DECL const char *prompt);
 #define CHOOSE_PRIMITIVE(pmpt)			choose_primitive(QSP_ARG pmpt)
 #define CHOOSE_WINDING_DIR(pmpt)		choose_winding_dir(QSP_ARG pmpt)
 #define CHOOSE_FACING_DIR(pmpt)			choose_facing_dir(QSP_ARG pmpt)
+#define CHOOSE_LIGHTING_COMPONENT(pmpt)		choose_lighting_component(QSP_ARG pmpt)
 #define CHOOSE_CAP(pmpt)			choose_cap(QSP_ARG pmpt)
 #define CHOOSE_SHADING_MODEL(pmpt)		choose_shading_model(QSP_ARG pmpt)
 #define CHOOSE_LIGHT_SOURCE(pmpt)		choose_light_source(QSP_ARG pmpt)

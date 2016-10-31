@@ -218,6 +218,15 @@ static COMMAND_FUNC(	do_gl_color )
 	glColor3f(r,g,b);
 }
 
+static COMMAND_FUNC(	do_gl_color_material )
+{
+	GLenum face, mode;
+
+	face = CHOOSE_FACING_DIR("facing direction of polygons");
+	mode = CHOOSE_LIGHTING_COMPONENT("reflectivity components to link with color commands");
+	glColorMaterial(face,mode);
+}
+
 static COMMAND_FUNC(	do_gl_normal )
 {
 	float x,y,z;
@@ -258,6 +267,8 @@ static const char *property_names[N_MATERIAL_PROPERTIES]={
 	"emission",
 };
 
+// missing here are GL_AMBIENT_AND_DIFFUSE and GL_COLOR_INDICES!
+
 static COMMAND_FUNC(	do_gl_material )
 {
 	int i;
@@ -271,7 +282,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[0] = (float)HOW_MUCH("ambient red");
 			pvec[1] = (float)HOW_MUCH("ambient green");
 			pvec[2] = (float)HOW_MUCH("ambient blue");
-			pvec[3] = 1.0;
+			pvec[3] = (float)HOW_MUCH("ambient alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DIFFUSE (ambient?)");
 			/* diffuse or ambient??? */
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
@@ -280,7 +291,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[0] = (float)HOW_MUCH("diffuse red");
 			pvec[1] = (float)HOW_MUCH("diffuse green");
 			pvec[2] = (float)HOW_MUCH("diffuse blue");
-			pvec[3] = 1.0;
+			pvec[3] = (float)HOW_MUCH("diffuse alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_DUFFUSE");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pvec);
 			break; }
@@ -288,7 +299,7 @@ static COMMAND_FUNC(	do_gl_material )
 			pvec[0] = (float)HOW_MUCH("specular red");
 			pvec[1] = (float)HOW_MUCH("specular green");
 			pvec[2] = (float)HOW_MUCH("specular blue");
-			pvec[3] = 1.0;
+			pvec[3] = (float)HOW_MUCH("specular alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SPECULAR");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, pvec);
 			break; }
@@ -297,14 +308,17 @@ static COMMAND_FUNC(	do_gl_material )
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_SHININESS");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, pvec);
 			break; }
-		case 4: {
+		case 4:
 			pvec[0] = (float)HOW_MUCH("emission red");
 			pvec[1] = (float)HOW_MUCH("emission green");
 			pvec[2] = (float)HOW_MUCH("emission blue");
-			pvec[3] = 1.0;
+			pvec[2] = (float)HOW_MUCH("emission alpha");
 			if( debug & gl_debug ) advise("glMaterialfv GL_FRONT_AND_BACK GL_EMISSION");
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, pvec);
-			break; }
+			break;
+		default:
+			ERROR1("do_gl_material:  bad property (shouldn't happen)");
+			break;
 	}
 }
 
@@ -538,6 +552,7 @@ ADD_CMD( begin_obj,	do_gl_begin,	begin primitive description )
 ADD_CMD( end_obj,	do_gl_end,	end primitive description )
 ADD_CMD( vertex,	do_gl_vertex,	specify a vertex )
 ADD_CMD( color,		do_gl_color,	set current color )
+ADD_CMD( color_material,		do_gl_color_material,	specify material properties set by color command (when material_properties enabled) )
 ADD_CMD( normal,	do_gl_normal,	set normal vector )
 ADD_CMD( tex_coord,	do_gl_tc,	set texture coordinate )
 ADD_CMD( edge_flag,	do_gl_ef,	control drawing of edges )
