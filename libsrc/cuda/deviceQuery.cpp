@@ -138,6 +138,22 @@ void print_cudev_properties(QSP_ARG_DECL  int dev, cudaDeviceProp *propp)
 	prt_msg("");		// a blank line at the end
 }
 
+extern "C" {
+
+void query_cuda_device(QSP_ARG_DECL  int dev)
+{
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties(&deviceProp, dev);
+
+	// This function call returns 9999 for both major & minor fields, if no CUDA capable devices are present
+	if (deviceProp.major == 9999 && deviceProp.minor == 9999)
+		printf("There is no CUDA device with dev = %d!?.\n",dev);
+
+	print_cudev_properties(QSP_ARG  dev,&deviceProp);
+}
+
+}
+
 COMMAND_FUNC( query_cuda_devices ){
 
 #if defined(USE_DLL_LINKING)
@@ -167,19 +183,6 @@ COMMAND_FUNC( query_cuda_devices ){
 		}
 		query_cuda_device(QSP_ARG  dev);
 	}
-}
-
-
-void query_cuda_device(QSP_ARG_DECL  int dev)
-{
-	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, dev);
-
-	// This function call returns 9999 for both major & minor fields, if no CUDA capable devices are present
-	if (deviceProp.major == 9999 && deviceProp.minor == 9999)
-		printf("There is no CUDA device with dev = %d!?.\n",dev);
-
-	print_cudev_properties(QSP_ARG  dev,&deviceProp);
 }
 
 #else

@@ -327,6 +327,7 @@ extern "C" {
 //#include "veclib/cu2_menu_prot.h"	// cu2_init_platform()
 extern void cu2_init_platform(SINGLE_QSP_ARG_DECL);	// BUG include file conflicts with old macros...
 
+#ifdef FOOBAR
 void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_CUDA
@@ -338,6 +339,7 @@ void init_cuda_devices(SINGLE_QSP_ARG_DECL)
 	WARN("init_cuda_devices:  no CUDA support in this build!?");
 #endif // ! HAVE_CUDA
 }
+#endif // FOOBAR
 
 COMMAND_FUNC( do_cuda_menu )
 {

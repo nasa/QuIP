@@ -1,3 +1,4 @@
+This library contains an interface based on libdc1394 - ptgrey is a bit of a misnomer.
 
 what is the module that needs to be loaded?
 The following would seem to be the answer for linux, but what about mac?

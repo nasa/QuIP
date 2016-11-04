@@ -375,7 +375,7 @@ static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 	icp = ctx_of(QSP_ARG  ctxname);
 	if( icp == NO_ITEM_CONTEXT ){
 		if( rv_inode_itp == NO_ITEM_TYPE )
-			rv_inode_itp = new_item_type(QSP_ARG  "RV_Inode");
+			rv_inode_itp = new_item_type(QSP_ARG  "RV_Inode", DEFAULT_CONTAINER_TYPE);
 
 		icp = create_item_context(QSP_ARG  rv_inode_itp,rv_pathname);
 		if( icp == NO_ITEM_CONTEXT ){
@@ -607,7 +607,7 @@ advise(ERROR_STRING);
 		SET_SHP_MAXDIM( RV_MOVIE_SHAPE(inp), 0 );
 		SET_SHP_MINDIM( RV_MOVIE_SHAPE(inp), 0 );
 		SET_SHP_FLAGS( RV_MOVIE_SHAPE(inp), 0 );
-		SET_SHP_LAST_SUBI( RV_MOVIE_SHAPE(inp), 0 );
+//		SET_SHP_LAST_SUBI( RV_MOVIE_SHAPE(inp), 0 );
 		// copy data, not pointers...
 		COPY_DIMS( SHP_TYPE_DIMS( RV_MOVIE_SHAPE(inp) ), &RV_MOVIE_DIMS(inp));
 		COPY_DIMS( SHP_MACH_DIMS( RV_MOVIE_SHAPE(inp) ), &RV_MOVIE_DIMS(inp));
