@@ -58,7 +58,7 @@ void select_pfdev( QSP_ARG_DECL  Platform_Device *pdp )
 	set_data_area( PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX) );
 }
 
-static COMMAND_FUNC( do_select_pfdev )
+static Platform_Device *pick_platform_device(SINGLE_QSP_ARG_DECL)
 {
 	Platform_Device *pdp;
 	Compute_Platform *cpp;
@@ -71,14 +71,21 @@ static COMMAND_FUNC( do_select_pfdev )
 		// Now use it just to suppress a compiler warning...
 		sprintf(ERROR_STRING,"Ignoring \"%s\"",s);
 		advise(ERROR_STRING);
-		return;
+		return NULL;
 	}
 
 	push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
 	pdp = PICK_PFDEV("");
 	pop_pfdev_context( SINGLE_QSP_ARG );
+	return pdp;
+}
 
-	if( pdp == NO_PFDEV ) return;
+static COMMAND_FUNC( do_select_pfdev )
+{
+	Platform_Device *pdp;
+
+	pdp = pick_platform_device(SINGLE_QSP_ARG);
+	if( pdp == NULL ) return;
 	select_pfdev(QSP_ARG  pdp);
 }
 
@@ -110,7 +117,7 @@ static COMMAND_FUNC( do_obj_upload )
 
 static COMMAND_FUNC(do_show_pfdev)
 {
-	if( curr_pdp == NO_PFDEV ){
+	if( curr_pdp == NULL ){
 		advise("No platform device selected.");
 	} else {
 		sprintf(ERROR_STRING,"Current platform device is:  %s (%s)",
@@ -136,7 +143,7 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 		push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
 
 		pfd_lp = pfdev_list(SINGLE_QSP_ARG);
-		if( pfd_lp == NO_LIST ) return NO_PFDEV;
+		if( pfd_lp == NO_LIST ) return NULL;
 		//pfd_np = QLIST_HEAD(pfd_lp);
 		pfd_np = QLIST_TAIL(pfd_lp);
 		while( pfd_np != NO_NODE ){
@@ -159,7 +166,7 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 		cp_np = NODE_NEXT(cp_np);
 	}
 
-	return NO_PFDEV;
+	return NULL;
 }
 
 static const char *dev_type_names[]={"cuda","openCL"};
@@ -168,7 +175,7 @@ static const char *dev_type_names[]={"cuda","openCL"};
 static COMMAND_FUNC(do_set_dev_type)
 {
 	int i;
-	Platform_Device *pdp=NO_PFDEV;
+	Platform_Device *pdp=NULL;
 
 	i=WHICH_ONE( "software interface",N_DEVICE_TYPES , dev_type_names);
 	if( i < 0 ) return;
@@ -178,7 +185,7 @@ static COMMAND_FUNC(do_set_dev_type)
 	else if( i == 1 )
 		pdp = find_pfdev(QSP_ARG  PLATFORM_OPENCL);
 
-	if( pdp == NO_PFDEV ){
+	if( pdp == NULL ){
 		sprintf(ERROR_STRING,"No %s device found!?",dev_type_names[i]);
 		WARN(ERROR_STRING);
 		return;
@@ -214,8 +221,8 @@ static COMMAND_FUNC( do_pfdev_info )
 {
 	Platform_Device *pdp;
 
-	pdp = PICK_PFDEV("");
-	if( pdp == NO_PFDEV ) return;
+	pdp = pick_platform_device(SINGLE_QSP_ARG);
+	if( pdp == NULL ) return;
 
 	(* PF_DEVINFO_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  pdp);
 }

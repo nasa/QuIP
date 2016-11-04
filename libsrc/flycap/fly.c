@@ -3,6 +3,7 @@
 #include "quip_config.h"
 
 #include "quip_prot.h"
+#include "function.h"
 #include "data_obj.h"
 
 #include <stdio.h>
@@ -354,7 +355,7 @@ static void report_fc2_error(QSP_ARG_DECL  fc2Error error, const char *whence )
 	WARN(ERROR_STRING);
 }
 
-ITEM_INTERFACE_DECLARATIONS(PGR_Property_Type,pgr_prop)
+ITEM_INTERFACE_DECLARATIONS(PGR_Property_Type,pgr_prop,0)
 
 //  When we change cameras, we have to refresh all properties!
 

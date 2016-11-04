@@ -21,6 +21,7 @@
 
 #include "veclib/cu2_veclib_prot.h"
 #include "veclib/platform_funcs.h"
+#include "../cuda/my_cuda.h"	// query_cuda_device()
 #include "cuda_supp.h"
 #include <cuda_gl_interop.h>
 #include "gl_info.h"
@@ -435,13 +436,19 @@ static void cu2_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
 {
 	sprintf(MSG_STR,"%s:",PFDEV_NAME(pdp));
 	prt_msg(MSG_STR);
-	prt_msg("Sorry, Cuda-specific device info not implemented yet!?");
+
+	// should print info from device query...
+	//prt_msg("Sorry, Cuda-specific device info not implemented yet!?");
+
+	query_cuda_device(QSP_ARG  PFDEV_CUDA_DEV_INDEX(pdp) );
 }
 
 static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 {
 	sprintf(MSG_STR,"%s:",PLATFORM_NAME(cdp));
 	prt_msg(MSG_STR);
+
+	// Should print the names of the available devices...
 	prt_msg("Sorry, Cuda-specific platform info not implemented yet!?");
 }
 
@@ -545,6 +552,7 @@ ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
 	}
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
 		ERROR1("cu2_init_platform:  Failed to pop platform device context!?");
+
 	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_VEC_FUNCS);
 
 	if( inited < 0 ){

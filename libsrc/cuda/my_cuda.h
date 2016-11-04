@@ -12,15 +12,16 @@
 
 #include <cuda.h>
 
+#ifndef CUDA_ERROR_CHECK
 #if CUDA_VERSION >= 6000
 #define CUDA_ERROR_CHECK(string)	/* what to do? */
 #elif CUDA_VERSION >= 5000
 // CUDA 5
 #define CUDA_ERROR_CHECK(string)	getLastCudaError(string);
-#else
-// CUDA 4
+#else // CUDA 4
 #define CUDA_ERROR_CHECK(string)	cutilCheckMsg(string);
 #endif
+#endif // ! CUDA_ERROR_CHECK
 
 #include "cuda_port.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
 
@@ -116,7 +117,11 @@ extern COMMAND_FUNC( do_list_cudevs );
 extern COMMAND_FUNC( do_cudev_info );
 extern COMMAND_FUNC( do_report_npp_version );
 
+#ifdef cplusplus
+extern "C" {
 extern void query_cuda_device(QSP_ARG_DECL  int dev);
+}
+#endif
 
 /* cuda.cpp */
 extern void _init_cuda_devices(SINGLE_QSP_ARG_DECL);

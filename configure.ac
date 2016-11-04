@@ -1299,6 +1299,7 @@ fi
 # 
 if test "x${use_flycap}" = xyes; then
   AC_SEARCH_LIBS([fc2CreateContext],[flycapture-c],[have_libflycap=yes],[have_libflycap=no])
+  # we also need to include our interface library???
   if test "x${have_libflycap}" = xyes; then
     use_dc1394=no
   fi
