@@ -70,7 +70,7 @@ static const char * funcname(QSP_ARG_DECL  const char *s )				\
 	p=t;								\
 	while( *s ){							\
 		if( test_macro(*s) )					\
-			*p = map_macro(*s);				\
+			*p = (char) map_macro(*s);				\
 		else							\
 			*p = *s;					\
 		p++;							\

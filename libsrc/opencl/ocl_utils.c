@@ -518,7 +518,7 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 			// probably insufficient buffer size?
 			if( bytes_returned > BUF_SIZE ){
 				int n;
-				bufp = getbuf(n=bytes_returned);	// BUG?  memory leak?
+				bufp = getbuf(n=(int)bytes_returned);	// BUG?  memory leak?
 				ret = clGetProgramBuildInfo( prog,
 						OCLDEV_DEV_ID(pdp),
 						CL_PROGRAM_BUILD_LOG,

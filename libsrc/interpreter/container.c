@@ -196,7 +196,7 @@ static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *fr
 
 	np = QLIST_HEAD(lp);
 
-	n = strlen(frag);
+	n = (int) strlen(frag);
 	fmi_p->u.li.curr_np = NULL;	// default
 	fmi_p->u.li.first_np = NULL;
 	fmi_p->u.li.last_np = NULL;

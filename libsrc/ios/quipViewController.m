@@ -238,6 +238,7 @@
 -(void) releaseView
 {
 	if( self.view != NULL )
+        // This line generates a compiler warning???  Null passed to a callee that requires a non-null argument
 		self.view = NULL;	// remove the ref, should free the view?
 }
 

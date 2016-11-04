@@ -345,12 +345,12 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	while(np!=NO_NODE){
 		vp = (Variable *) NODE_DATA(np);
 		if( str1 == NULL ){
-			str1_size = strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
+			str1_size = (int) strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
 			str1 = getbuf( str1_size );
 		} else {
 			if( str1_size < strlen(VAR_VALUE(vp))+1 ){
 				givbuf(str1);
-				str1_size = strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
+				str1_size = (int) strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
 				str1 = getbuf( str1_size );
 			}
 		}
