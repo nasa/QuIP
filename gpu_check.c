@@ -1,8 +1,3 @@
-// code used in configure.ac to test for presence of a GPU
-//
-// Note:  configure.ac does not include this file, rather the code
-// here is duplicated within configure.ac.  This copy allows us to
-// compile and test the code separately...
 #include <stdio.h>
 #include <cuda_runtime.h>
 int main() {
@@ -31,4 +26,3 @@ int main() {
     else
 	return 1; /* failure */
 }
-
