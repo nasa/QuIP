@@ -57,6 +57,7 @@ advise(DEFAULT_ERROR_STRING);*/ \
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
+#include <AppKit/NSOpenGLView.h>
 #define MAKE_NEEDY(vp)
 #endif // BUILD_FOR_MACOS
 

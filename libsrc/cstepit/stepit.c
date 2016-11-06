@@ -26,7 +26,7 @@
 
 static int ccflag;
 static int nf;
-static double err[VARS][VARS];
+static double fit_err[VARS][VARS];	// used to be just err, but symbol collision on Mac OS - jbm
 static double fobj;
 static int ntrace=(-1);
 static int n_params,mask[VARS];
@@ -222,7 +222,7 @@ int stepit (QSP_ARG_DECL  void (*cstepit_fn)(void))
 		dx[i] = deltax[i];
 		vec[i] = 0.;
 		for (j = 0; j < mosque; j++)
-			err[i][j] = 0.;
+			fit_err[i][j] = 0.;
 	}
 
 	fbest = fobj;
@@ -405,7 +405,7 @@ L690:		if (nzip < 1)
 			vec[i] /= ack;
 			oldvec[i] /= ack;
 			for (j = 0; j < mosque; j++)
-				err[i][j] /= ack;
+				fit_err[i][j] /= ack;
 			if (ntrace > 0){
 				fprintf(stderr,"\nStep size %d increased to %11.4g", i, dx[i]);
 				fflush(stderr);
@@ -464,13 +464,13 @@ L830:		if (ntrace > 0) {
 				chiosc[k - 1] = chiosc[k];
 				for (j = 0; j < n_params; j++) {
 					xosc[j][k - 1] = xosc[j][k];
-					err[j][k - 1] = err[j][k];
+					fit_err[j][k - 1] = fit_err[j][k];
 				}
 			}
 		}
 		for (j = 0; j < n_params; j++) {
 			xosc[j][nosc] = x[j];
-			err[j][nosc] = vec[j] / sumv;
+			fit_err[j][nosc] = vec[j] / sumv;
 		}
 
 		chiosc[nosc] = fbest;
@@ -484,13 +484,13 @@ L830:		if (ntrace > 0) {
  */
 
 		for (coxcom = 0., j = 0; j < n_params; j++)
-			coxcom += err[j][nosc] * err[j][nosc - 1];
+			coxcom += fit_err[j][nosc] * fit_err[j][nosc - 1];
 		nah = nosc - 2;
 L930:		ntry = 0;
 		for (k = kl; k < nah + 1; k++) {
 			nretry = nah - k;
 			for (j = 0, cosine = 0.; j < n_params; j++)
-				cosine += err[j][nosc] * err[j][k];
+				cosine += fit_err[j][nosc] * fit_err[j][k];
 			if (cosine > coxcom)
 				goto L970;
 		}

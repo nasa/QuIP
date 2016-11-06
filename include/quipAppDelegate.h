@@ -65,6 +65,9 @@ typedef enum {
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
+#include <AppKit/NSTextView.h>
+#include <AppKit/NSMatrix.h>
+#include <AppKit/NSTextField.h>
 @interface quipAppDelegate : NSObject <NSTextViewDelegate,
 					NSMatrixDelegate,
 					NSTextFieldDelegate>

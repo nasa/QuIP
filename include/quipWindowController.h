@@ -4,6 +4,8 @@
 #include "quipImages.h"
 #include "quipCanvas.h"
 
+#include <AppKit/NSWindowController.h>
+#include <AppKit/NSWindow.h>
 @interface quipWindowController: NSWindowController <NSWindowDelegate>
 
 // these were taken from quipView...

@@ -8,7 +8,8 @@ extern "C" {
 
 #include "quip_fwd.h"
 
-extern void warn(QSP_ARG_DECL  const char *msg);
+//extern void warn(QSP_ARG_DECL  const char *msg);
+
 #ifdef BUILD_FOR_IOS
 extern void error1(QSP_ARG_DECL  const char *msg);
 #else // ! BUILD_FOR_IOS

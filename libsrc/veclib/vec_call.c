@@ -493,7 +493,9 @@ OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ));		\
 
 static int chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
-	prec_t srcp1,srcp2,dst_prec;
+    // We initialize these prec vars to silence a compiler warning,
+    // but probably not necessary...
+	prec_t srcp1=PREC_INVALID, srcp2=PREC_INVALID, dst_prec;
 	int n_srcs=0;
 	if( IS_NEW_CONVERSION(vfp) ){
 		// New conversions specify the destination precision
@@ -544,7 +546,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		return(-1);
 	}
 
-	if(  OA_SRC1(oap)  != NO_OBJ ){
+	if(  OA_SRC1(oap) != NO_OBJ ){
 		srcp1=OBJ_MACH_PREC( OA_SRC1(oap) );
 		if( ( VF_PRECMASK(vfp) & (1<<srcp1)) == 0 ){
 			sprintf(ERROR_STRING,

@@ -26,6 +26,13 @@
 #include "viewer.h"
 #include "cmaps.h"
 
+//#include <Foundation/NSString.h>
+#include <AppKit/NSButton.h>
+#include <AppKit/NSStringDrawing.h>
+#include <AppKit/NSColor.h>
+#include <AppKit/NSTableView.h>
+#include <AppKit/NSTextContainer.h>
+
 #include "quipWindowController.h"
 
 static NSAlert *fatal_alert_view=NULL;
@@ -356,9 +363,10 @@ static NSTextView * new_label(const char *s, int x, int y, int justification_cod
 	// BUG should cache these things...
 	NSFont *labelFont = [NSFont fontWithName:STRINGOBJ(label_font_name)
 							size:label_font_size];
+    // sizeWithAttributes is documented for UIKit only?
 	NSSize ns_size=[label_string sizeWithAttributes:
 		[NSDictionary dictionaryWithObject:labelFont
-				forKey:NSFontAttributeName]];
+				forKey:NSFontAttributeName]  ];
 	CGSize labelSize = NSSizeToCGSize(ns_size);
 
 	int dy=(int)ceil(labelSize.height);

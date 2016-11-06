@@ -32,7 +32,8 @@ static const char *original_string;
 
 double rn_number();
 
-#include "query_prot.h"
+//#include "query_prot.h"
+
 #include "nexpr.h"
 
 //#include "nexpr_func.h"

@@ -14,7 +14,7 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
-#include "../vectree/vectree.h"
+#include "vectree.h"
 #include "nexpr.h"		// set_obj_funcs
 #include "nports_api.h"		// define_port_data_type
 #include "debug.h"

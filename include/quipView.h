@@ -12,6 +12,11 @@
 #import <UIKit/UIKit.h>
 #endif // BUILD_FOR_IOS
 
+#ifdef BUILD_FOR_MACOS
+#import <AppKit/NSImageView.h>
+#endif // BUILD_FOR_IOS
+
+
 
 #include "quipCanvas.h"
 #include "quipImages.h"
@@ -39,6 +44,9 @@ typedef struct device_prefs {
 
 // But in our test, the PVT added latency was the same whether or not scrolling
 // was enabled, so we leave it in.
+#ifdef BUILD_FOR_MACOS
+#include <AppKit/NSOpenGL.h>
+#endif // BUILD_FOR_MACOS
 
 @interface quipView : QUIP_VIEW_TYPE
 
@@ -52,6 +60,7 @@ typedef struct device_prefs {
 #ifdef BUILD_FOR_MACOS
 
 #ifdef HAVE_OPENGL
+
 {
 @private
 NSOpenGLContext *	qv_ctx;

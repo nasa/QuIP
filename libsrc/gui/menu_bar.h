@@ -1,5 +1,7 @@
 #include "ios_item.h"
 
+#include <AppKit/NSMenu.h>
+
 @interface Menu_Bar_Menu : IOS_Item
 @property (retain) NSMenu *		menu;
 @property (retain) NSMenuItem *		bar_item;

@@ -360,7 +360,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	if( ip == NO_IOS_ITEM ){
 		NSString *msg=[[NSString alloc] initWithFormat :
 	@"No %@ \"%@\"",self.name,name ];
-		warn(DEFAULT_QSP_ARG  msg.UTF8String);
+		q_warn(DEFAULT_QSP_ARG  msg.UTF8String);
 	}
 	return ip;
 }

@@ -23,6 +23,9 @@
 //#ifndef BUILD_FOR_OBJC
 //#include "xsupp.h"	// wait_for_mapped()
 //#endif // BUILD_FOR_OBJC
+#ifdef BUILD_FOR_MACOS
+#include <OpenGL/glu.h>
+#endif // BUILD_FOR_MACOS
 
 static Viewer *gl_vp=NO_VIEWER;
 
@@ -202,14 +205,19 @@ static void check_gl_capabilities(SINGLE_QSP_ARG_DECL)
 		show_renderer_info(QSP_ARG  curr_renderer_info_p);
 }
 
-int check_extension( QSP_ARG_DECL  const char *extension )
+#ifdef BUILD_FOR_MACOS
+GLboolean
+#else
+int
+#endif // ! BUILD_FOR_MACOS
+      check_extension( QSP_ARG_DECL  const char *extension )
 {
 	if( curr_renderer_info_p == NULL ){
 		WARN("Renderer info not available!?");
 		return 0;
 	}
-	return gluCheckExtension((GLubyte *)extension,
-		(GLubyte *)curr_renderer_info_p->glr_extensions);
+	return gluCheckExtension((const GLubyte *)extension,
+		(const GLubyte *)(curr_renderer_info_p->glr_extensions));
 }
 
 #ifndef BUILD_FOR_OBJC

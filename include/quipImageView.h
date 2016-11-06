@@ -18,6 +18,9 @@
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
+#include <AppKit/NSImageView.h>
+#include <AppKit/NSImage.h>
+
 @interface quipImageView : NSImageView
 #endif // BUILD_FOR_MACOS
 

@@ -104,7 +104,7 @@ Container * new_container(int type)
 int add_to_container(Container *cnt_p, Item *ip)
 {
 	Node *np;
-	rb_node *tnp;
+	qrb_node *tnp;
 	int stat=0;
 
 //fprintf(stderr,"add_to_container:  adding %s to %s\n",ITEM_NAME(ip),cnt_p->name);
@@ -162,7 +162,7 @@ Item *container_find_match(Container *cnt_p, const char *name)
 {
 	Item *ip;
 	Node *np;
-	rb_node *tnp;
+	qrb_node *tnp;
 
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:

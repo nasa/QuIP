@@ -28,6 +28,10 @@
 #include "glfb.h"
 #include "opengl_utils.h"
 
+#ifdef BUILD_FOR_MACOS
+#include <OpenGL/glu.h>
+#endif // BUILD_FOR_MACOS
+
 #define NOT_IMP(s)	{ sprintf(ERROR_STRING,"Sorry, %s not implemented yet.",s); NWARN(ERROR_STRING); }
 
 #include "string.h"

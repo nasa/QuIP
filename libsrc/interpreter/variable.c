@@ -334,7 +334,7 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	Variable *vp;
 	char *lc_frag;
 	char *str1=NULL;
-	int str1_size;
+	int str1_size=0;
 
 	lp=item_list(QSP_ARG  var__itp);
 	if( lp == NULL ) return;

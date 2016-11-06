@@ -11,6 +11,15 @@
 #include "quipController.h"
 #include "ios_item.h"
 #include "screen_obj.h"
+#ifdef BUILD_FOR_MACOS
+#include <AppKit/NSAlert.h>
+#include <AppKit/NSSlider.h>
+#include <AppKit/NSScreen.h>
+#include <AppKit/NSMenu.h>
+#include <AppKit/NSMenuitem.h>
+#include <AppKit/NSDocumentController.h>
+#include <AppKit/NSOpenPanel.h>
+#endif // BUILD_FOR_MACOS
 
 typedef enum {
 	QUIP_ALERT_NONE,

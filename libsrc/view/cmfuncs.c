@@ -16,6 +16,9 @@
 #include "cmaps.h"
 #include "linear.h"
 #include "xsupp.h"		/* x_dump_lut() */
+#ifdef BUILD_FOR_MACOS
+#include <AppKit/NSColor.h>
+#endif // BUILD_FOR_MACOS
 
 #define MAX_CHAR		80
 

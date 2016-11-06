@@ -160,7 +160,7 @@ void set_max_warnings(QSP_ARG_DECL  int n)
  * To do that, we introduced another function q_warn, w/ macro WARN
  */
 
-void warn(QSP_ARG_DECL  const char* msg)
+static void _warn(QSP_ARG_DECL  const char* msg)
 	/* warning message */
 {
 	if( ! silent(SINGLE_QSP_ARG) ){
@@ -853,6 +853,6 @@ void q_error1( QSP_ARG_DECL  const char *msg )
 void q_warn( QSP_ARG_DECL  const char *msg )
 {
 	tell_input_location(SINGLE_QSP_ARG);
-	warn(QSP_ARG  msg);
+	_warn(QSP_ARG  msg);
 }
 

@@ -25,7 +25,7 @@ static void get_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL),
 static float u_confidence(SINGLE_QSP_ARG_DECL);
 static float l_confidence(SINGLE_QSP_ARG_DECL);
 
-static FTYPE err, pk, num, sum, denom;
+static FTYPE fit_err, pk, num, sum, denom;
 static int numfact, denomfact;
 
 static float u_confidence(SINGLE_QSP_ARG_DECL)	/* return sq. deviation from .975 */
@@ -71,9 +71,9 @@ static float u_confidence(SINGLE_QSP_ARG_DECL)	/* return sq. deviation from .975
 	} else WARN("zero observations!?");
 	/* sum is the probability of observing n_obs or more */
 
-	err = ((1-alpha)-sum)*((1-alpha)-sum);
+	fit_err = ((1-alpha)-sum)*((1-alpha)-sum);
 
-	return(err);
+	return(fit_err);
 }
 
 static float l_confidence(SINGLE_QSP_ARG_DECL)
@@ -119,8 +119,8 @@ static float l_confidence(SINGLE_QSP_ARG_DECL)
 	}
 	/* sum is the probability of observing n_obs or more */
 
-	err = ((1-alpha)-sum)*((1-alpha)-sum);
-	return(err);
+	fit_err = ((1-alpha)-sum)*((1-alpha)-sum);
+	return(fit_err);
 }
 
 static void get_bar(QSP_ARG_DECL  int index, float (*func)(SINGLE_QSP_ARG_DECL), float *ptr )

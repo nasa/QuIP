@@ -18,7 +18,7 @@ struct container {
 					// type is up-to-date
 	List *		cnt_lp;
 	Hash_Tbl *	cnt_htp;
-	rb_tree *	cnt_tree_p;
+	qrb_tree *	cnt_tree_p;
 };
 
 typedef struct enumerator {

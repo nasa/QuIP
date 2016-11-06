@@ -10,9 +10,11 @@
 // this line was commented out to compile on ace...
 //#include <GL/glew.h>	// on craik???
 // needed on poisson...
+#ifndef BUILD_FOR_OBJC
 #ifdef HAVE_GL_GLEW_H
 #include <GL/glew.h>	// on craik???
 #endif // HAVE_GL_GLEW_H
+#endif // BUILD_FOR_OBJC
 
 #ifdef HAVE_GL_GLX_H
 #include <GL/glx.h>

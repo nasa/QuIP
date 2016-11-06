@@ -72,7 +72,7 @@ static COMMAND_FUNC( do_items ) { PUSH_MENU(items); }
 
 #include "rbtree.h"
 
-static rb_tree *the_tree_p=NULL;
+static qrb_tree *the_tree_p=NULL;
 
 static COMMAND_FUNC( do_rbt_add )
 {
@@ -89,7 +89,7 @@ static COMMAND_FUNC( do_rbt_add )
 	rb_insert_item( the_tree_p, ip );
 }
 
-static void rb_item_print( rb_node *np )
+static void rb_item_print( qrb_node *np )
 {
 	const Item *ip;
 

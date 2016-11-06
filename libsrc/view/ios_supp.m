@@ -19,6 +19,11 @@
 #include <UIKit/UIScreen.h>
 #endif // BUILD_FOR_IOS
 
+#ifdef BUILD_FOR_MACOS
+#include <AppKit/NSColor.h>
+#include <AppKit/NSGraphicsContext.h>
+#endif // BUILD_FOR_MACOS
+
 typedef enum {
 	DO_UNUSED,	// don't use 0
 	DO_MOVE,
@@ -658,7 +663,7 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 			return 0;
 	}
 #else // ! BUILD_FOR_IOS
-	warn("is_image_viewer:  need to implement!?");
+	WARN("is_image_viewer:  need to implement!?");
     return 1;
 #endif // ! BUILD_FOR_IOS
 }

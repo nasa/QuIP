@@ -22,13 +22,13 @@
 
 #define NO_ITEM	((Item *) NULL)
 
-struct rb_node;
+struct qrb_node;
 struct item_context;
 
 typedef struct {
-	struct rb_node *		curr_n_p;
-	struct rb_node *		first_n_p;
-	struct rb_node *		last_n_p;
+	struct qrb_node *		curr_n_p;
+	struct qrb_node *		first_n_p;
+	struct qrb_node *		last_n_p;
 } rbtree_frag_match_info;
 
 typedef struct {

@@ -18,8 +18,10 @@ static float ierror3[3][MAXCOLS];
 static unsigned char image[3][MAXCOLS];
 //static float qerror[3][MAXCOLS];	/* the actual pointwise error */
 
+// raw causes a symbol conflict w/ ncurses!?
 
-static float raw[3], rbraw[3];
+//static float fraw[3];
+static float rbraw[3];
 //static int zz;
 
 /* pseudo-impulse responses */
@@ -45,8 +47,10 @@ float s3_pir[4][4]={
 static void get_raw_err(QSP_ARG_DECL  int col)		/* get raw rgb error */
 {
 	int zz;
-	for(zz=0;zz<3;zz++)
-		rbraw[zz]=raw[zz]=desired[zz][col]-quant_level[ thebest[zz] ];
+	for(zz=0;zz<3;zz++){
+		rbraw[zz]=desired[zz][col]-quant_level[ thebest[zz] ];
+		//fraw[zz]=rbraw[zz];	// not needed?
+	}
 	rgb2o(QSP_ARG  rbraw);	/* tranform to r,b,l */
 }
 

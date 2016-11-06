@@ -9,27 +9,27 @@
 #include "item_type.h"
 
 // just for debugging
-static void rb_tree_dump( rb_tree *tree_p );
-static void dump_rb_node( rb_node *np );
+static void rb_tree_dump( qrb_tree *tree_p );
+static void dump_rb_node( qrb_node *np );
 
 // This assumes that the keys are strings!
 #define NODE_NAME(np)	(np==NULL?"<null>":RB_NODE_KEY(np))
 
-static void set_root_node(rb_tree *tree_p, rb_node *np)
+static void set_root_node(qrb_tree *tree_p, qrb_node *np)
 {
 	tree_p->root = np;
 	np->parent = NULL;
 	MAKE_BLACK(np);
 }
 
-rb_tree* create_rb_tree( void )
+qrb_tree* create_rb_tree( void )
 /* int (*compare) (const void*,const void*),
 						void (*destroy_key) (void*),
 						void (*destroy_data) (void*) */
 {
-	rb_tree* new_tree_p;
+	qrb_tree* new_tree_p;
 
-	new_tree_p=(rb_tree*) getbuf(sizeof(rb_tree));
+	new_tree_p=(qrb_tree*) getbuf(sizeof(qrb_tree));
 //	new_tree_p->comp_func =  compare;
 //	new_tree_p->key_destroy_func = destroy_key;
 //	new_tree_p->data_destroy_func= destroy_data;
@@ -41,9 +41,9 @@ rb_tree* create_rb_tree( void )
 
 // binary_tree_insert - stick the new node where it goes, regardless of red-black stuff
 
-static void binary_tree_insert(rb_tree* tree, rb_node* new_node_p)
+static void binary_tree_insert(qrb_tree* tree, qrb_node* new_node_p)
 {
-	rb_node* curr_node_p;
+	qrb_node* curr_node_p;
 
 	if( RB_TREE_ROOT(tree) == NULL ){	// first time
 //fprintf(stderr,"making new node %s root\n",(char *)(new_node_p->key));
@@ -75,16 +75,16 @@ static void binary_tree_insert(rb_tree* tree, rb_node* new_node_p)
 	assert(1==0);
 }
 
-static rb_node *grandparent( rb_node *np )
+static qrb_node *grandparent( qrb_node *np )
 {
 	if( IS_ROOT_NODE(np) ) return NULL;
 	if( IS_ROOT_NODE(np->parent) ) return NULL;
 	return np->parent->parent;
 }
 
-static rb_node *uncle( rb_node *np )
+static qrb_node *uncle( qrb_node *np )
 {
-	rb_node *g_p;
+	qrb_node *g_p;
 
 	g_p = grandparent(np);
 	if( g_p == NULL ) return NULL;
@@ -100,11 +100,11 @@ static rb_node *uncle( rb_node *np )
 
 #define GENERAL_ROTATION(func_name,current_side,direction)	\
 								\
-static void func_name(rb_tree *tree_p, rb_node *np)		\
+static void func_name(qrb_tree *tree_p, qrb_node *np)		\
 {								\
-	rb_node *gp_p;						\
-	rb_node *parent;					\
-	rb_node *tmp;						\
+	qrb_node *gp_p;						\
+	qrb_node *parent;					\
+	qrb_node *tmp;						\
 								\
 	assert( np->parent != NULL );				\
 	assert( np->parent->current_side == np );		\
@@ -136,14 +136,14 @@ static void func_name(rb_tree *tree_p, rb_node *np)		\
 GENERAL_ROTATION(rotate_right,left,right)
 GENERAL_ROTATION(rotate_left,right,left)
 
-rb_node * rb_insert_item(rb_tree* tree_p, Item *ip )
+qrb_node * rb_insert_item(qrb_tree* tree_p, Item *ip )
 {
-	rb_node * x_p;
-	rb_node * new_node_p;
-	rb_node * gp_p;	// grandparent
-	rb_node * u_p;	// uncle
+	qrb_node * x_p;
+	qrb_node * new_node_p;
+	qrb_node * gp_p;	// grandparent
+	qrb_node * u_p;	// uncle
 
-	new_node_p = (rb_node*) getbuf(sizeof(rb_node));
+	new_node_p = (qrb_node*) getbuf(sizeof(qrb_node));
 //	new_node_p->key = key;
 	new_node_p->data  = ip;
 	new_node_p->left = NULL;
@@ -213,10 +213,10 @@ rb_node * rb_insert_item(rb_tree* tree_p, Item *ip )
 	return new_node_p;
 } // rb_insert
 
-rb_node* rb_find( rb_tree * tree, const char * key )
+qrb_node* rb_find( qrb_tree * tree, const char * key )
 {
 	int compVal;
-	rb_node* n_p = RB_TREE_ROOT(tree);
+	qrb_node* n_p = RB_TREE_ROOT(tree);
 
 	while(1){
 		if( n_p == NULL ) return(NULL);
@@ -232,13 +232,13 @@ rb_node* rb_find( rb_tree * tree, const char * key )
 	}
 }
 
-void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * frag )
+void rb_substring_find( Frag_Match_Info *fmi_p, qrb_tree * tree, const char * frag )
 {
 	int compVal;
 	int n;
-	rb_node* n_p = RB_TREE_ROOT(tree);
+	qrb_node* n_p = RB_TREE_ROOT(tree);
 
-	n = strlen(frag);
+	n = (int) strlen(frag);
 	fmi_p->u.rbti.curr_n_p = NULL;	// default
 	fmi_p->u.rbti.first_n_p = NULL;
 	fmi_p->u.rbti.last_n_p = NULL;
@@ -252,7 +252,7 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 		if( compVal == 0 ){
 			// We have found a node that may be a match,
 			// but we want to return the first match
-			rb_node *p_p;
+			qrb_node *p_p;
 
 //fprintf(stderr,"rb_substring_find:  match found at 0x%lx\n",(long)n_p);
 			fmi_p->u.rbti.curr_n_p = n_p;
@@ -289,9 +289,9 @@ void rb_substring_find( Frag_Match_Info *fmi_p, rb_tree * tree, const char * fra
 // a misnomer - this exchanges the data of the node-to-be-deleted with its predecessor,
 // in preparation for the real deletion.
 
-static rb_node * binary_tree_delete(rb_node *np)
+static qrb_node * binary_tree_delete(qrb_node *np)
 {
-	rb_node *p;
+	qrb_node *p;
 //const void *tmp_p1;
 //void *tmp_p2;
 
@@ -330,7 +330,7 @@ static rb_node * binary_tree_delete(rb_node *np)
 	return p;
 }
 
-static rb_node *sibling( rb_node *np, rb_node *parent )
+static qrb_node *sibling( qrb_node *np, qrb_node *parent )
 {
 	if( parent == NULL ) return NULL;
 
@@ -340,9 +340,9 @@ static rb_node *sibling( rb_node *np, rb_node *parent )
 		return parent->left;
 }
 
-static void rebalance(rb_tree *tree_p, rb_node *n_p, rb_node *parent)
+static void rebalance(qrb_tree *tree_p, qrb_node *n_p, qrb_node *parent)
 {
-	rb_node *s_p;		// sibling
+	qrb_node *s_p;		// sibling
 	int c;
 
 	if( n_p != NULL && IS_ROOT_NODE(n_p) ) return;	// wikipedia case 1
@@ -437,7 +437,7 @@ static void rebalance(rb_tree *tree_p, rb_node *n_p, rb_node *parent)
 // replace a node by one of its children (the other child is known to by NULL)
 //
 
-static void replace_node( rb_tree *tree_p, rb_node *n_p, rb_node *c_p)
+static void replace_node( qrb_tree *tree_p, qrb_node *n_p, qrb_node *c_p)
 {
 	// point the parent to the new node
 
@@ -459,10 +459,10 @@ static void replace_node( rb_tree *tree_p, rb_node *n_p, rb_node *c_p)
 // delete a single node from the tree
 // Don't worry about the pointed-to data, that's someone else's responsibility.
 
-static void rb_delete(rb_tree *tree_p, rb_node *n_p )
+static void rb_delete(qrb_tree *tree_p, qrb_node *n_p )
 {
-	rb_node *c_p;		// the single non-leaf child
-	rb_node *parent;
+	qrb_node *c_p;		// the single non-leaf child
+	qrb_node *parent;
 
 	tree_p->node_count --;
 
@@ -525,9 +525,9 @@ static void rb_delete(rb_tree *tree_p, rb_node *n_p )
 
 // delete the node containing an item from the tree
 
-int rb_delete_key(rb_tree *tree_p, const char *key)
+int rb_delete_key(qrb_tree *tree_p, const char *key)
 {
-	rb_node *n_p;
+	qrb_node *n_p;
 
 	n_p = rb_find(tree_p,key);
 	if( n_p == NULL ){
@@ -538,12 +538,12 @@ int rb_delete_key(rb_tree *tree_p, const char *key)
 	return 0;
 }
 
-int rb_delete_item(rb_tree *tree_p, Item *ip)
+int rb_delete_item(qrb_tree *tree_p, Item *ip)
 {
 	return rb_delete_key(tree_p,ITEM_NAME(ip));
 }
 
-void rb_traverse( rb_node *np, void (*func)(rb_node *) )
+void rb_traverse( qrb_node *np, void (*func)(qrb_node *) )
 {
 	if( np == NULL ) return;
 
@@ -558,7 +558,7 @@ void rb_traverse( rb_node *np, void (*func)(rb_node *) )
 #define MIN(a,b)	(a<b?a:b)
 #define MAX(a,b)	(a>b?a:b)
 
-static void rb_node_scan( rb_node *n_p )
+static void rb_node_scan( qrb_node *n_p )
 {
 	int min,max;
 
@@ -637,7 +637,7 @@ IS_BLACK(n_p)?"black":"red",(long)n_p->left,NODE_NAME(n_p->left),(long)n_p->righ
 n_p->depth,n_p->black_depth,n_p->min_black_leaf,n_p->max_black_leaf);
 }
 
-void rb_check( rb_tree *tree_p )
+void rb_check( qrb_tree *tree_p )
 {
 	if( tree_p->root == NULL ) return;
 
@@ -655,9 +655,9 @@ void rb_check( rb_tree *tree_p )
 
 #define GENERIC_NEXT_NODE_FUNC( func_name, dir, opp_dir )	\
 								\
-rb_node* func_name(rb_node* n_p)				\
+qrb_node* func_name(qrb_node* n_p)				\
 {								\
-	rb_node* s_p;						\
+	qrb_node* s_p;						\
 								\
 	if( n_p->dir != NULL ){	/* has right subtree */		\
 		/* find minimum (left-most) node */		\
@@ -680,7 +680,7 @@ rb_node* func_name(rb_node* n_p)				\
 GENERIC_NEXT_NODE_FUNC( rb_successor_node, right, left )
 GENERIC_NEXT_NODE_FUNC( rb_predecessor_node, left, right )
 
-static long rb_branch_count(rb_node *np)
+static long rb_branch_count(qrb_node *np)
 {
 	long l,r;
 	if( np->left != NULL )
@@ -695,7 +695,7 @@ static long rb_branch_count(rb_node *np)
 }
 
 // BUG - should we keep a count while inserting and deleting???
-long rb_node_count(rb_tree *tree_p)
+long rb_node_count(qrb_tree *tree_p)
 {
 	long count = 0;
 
@@ -713,7 +713,7 @@ void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep)
 	rbtep->node_p = rb_successor_node(rbtep->node_p);
 }
 
-static void release_rb_branch(rb_node *np)
+static void release_rb_branch(qrb_node *np)
 {
 	assert( np != NULL );
 
@@ -723,13 +723,13 @@ static void release_rb_branch(rb_node *np)
 	givbuf(np);
 }
 
-void release_rb_tree(rb_tree *tree_p)
+void release_rb_tree(qrb_tree *tree_p)
 {
 	if( tree_p->root != NULL ) release_rb_branch(tree_p->root);
 	givbuf(tree_p);
 }
 
-RB_Tree_Enumerator *new_rbtree_enumerator(rb_tree *tree_p)
+RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tree_p)
 {
 	RB_Tree_Enumerator *rbtep;
 
@@ -751,7 +751,7 @@ Item *rbtree_enumerator_item(RB_Tree_Enumerator *rbtep)
 
 // for debugging
 
-static void dump_rb_node( rb_node *np )
+static void dump_rb_node( qrb_node *np )
 {
 	fprintf(stderr,"node 0x%lx (%s)\n",(long)np,ITEM_NAME( (Item *)(np->data) ) );
 	fprintf(stderr,"\tleft 0x%lx (%s)\t\tright 0x%lx (%s)\n",
@@ -760,7 +760,7 @@ static void dump_rb_node( rb_node *np )
 		);
 }
 
-static void rb_tree_dump( rb_tree *tree_p )
+static void rb_tree_dump( qrb_tree *tree_p )
 {
 	if( tree_p->root == NULL ) return;
 	rb_traverse(tree_p->root,dump_rb_node);

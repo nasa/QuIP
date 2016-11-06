@@ -141,12 +141,20 @@ MENU_END(quip)
 
 int main(int argc,char *argv[])
 {
+#ifdef BUILD_FOR_MACOS
+    @autoreleasepool {
+#endif // BUILD_FOR_MACOS
 	input_on_stdin();
 	CHECK_MENU(quip);
 	start_quip_with_menu(argc,argv,quip_menu);
 	while( QS_LEVEL(DEFAULT_QSP) >= 0 ){
 		qs_do_cmd(DEFAULT_QSP);
 	}
+#ifdef BUILD_FOR_MACOS
+    } // closing brace for autoreleasepool
+#endif // BUILD_FOR_MACOS
 	return 0;
 }
+//#import <Foundation/Foundation.h>
+
 
