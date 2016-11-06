@@ -51,18 +51,19 @@ Menu *pop_menu(SINGLE_QSP_ARG_DECL)
 
 	// If the last menu was popped, then exit the program.
 	if( STACK_IS_EMPTY(QS_MENU_STACK(THIS_QSP)) ){
-#ifdef BUILD_FOR_OBJC
-		WARN("unexpected call to pop_menu!?");
+#ifdef BUILD_FOR_CMD_LINE
+        
+        do_exit_prog(SINGLE_QSP_ARG);
+        
+#else // ! BUILD_FOR_CMD_LINE
+
+	WARN("unexpected call to pop_menu!?");
         
 fprintf(stderr,"pop_menu:  menu stack empty, exiting program...\n");
 abort();    // for debugging...
             // need to call do_exit_prog if not debugging!
         
-#else // ! BUILD_FOR_OBJC
-        
-        do_exit_prog(SINGLE_QSP_ARG);
-        
-#endif // ! BUILD_FOR_OBJC
+#endif // ! BUILD_FOR_CMD_LINE
 	}
 
 	return mp;

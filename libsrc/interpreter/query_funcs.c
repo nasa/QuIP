@@ -2213,10 +2213,14 @@ static void first_query_stack(Query_Stack *qsp)
 	// cause any harm, because reading it must return
 	// EOF...  But on MacOS, it is a problem because
 	// the program hangs waiting for input
+	//
+	// The above comment was written for the cocoa app,
+	// but for the native mac command line version
+	// we need to do this too...
 
-#ifndef BUILD_FOR_OBJC
+#ifdef BUILD_FOR_CMD_LINE
 	redir(QSP_ARG  stdin, "-" );
-#endif // BUILD_FOR_OBJC
+#endif // BUILD_FOR_CMD_LINE
 
 #ifdef QUIP_DEBUG
 	qldebug = add_debug_module(QSP_ARG  "query");;
@@ -2287,7 +2291,7 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 #endif /* ! THREAD_SAFE_QUERY */
 
 	return(new_qsp);
-}
+} // new_query_stack
 
 #ifdef NOT_USED
 /* dup stuff */

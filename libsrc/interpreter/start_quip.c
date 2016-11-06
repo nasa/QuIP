@@ -36,9 +36,9 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 {
 	Query_Stack *qsp;
 
-    assert( initial_menu_p != NULL );
-    
-    set_progname(argv[0]);
+	assert( initial_menu_p != NULL );
+
+	set_progname(argv[0]);
 	first_menu = initial_menu_p;
 
 	//debug |= CTX_DEBUG_MASK;
@@ -59,7 +59,7 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 	// If we have commands to create a widget in the startup file,
 	// we get an error, so don't call exec_quip until after the appDelegate
 	// has started...
-	
+
 } // end start_quip_with_menu
 
 // start_quip executes on the main thread...

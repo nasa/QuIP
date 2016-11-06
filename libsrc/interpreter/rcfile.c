@@ -56,7 +56,7 @@
 #include "debug.h"		/* verbose */
 #include "query.h"
 
-#if (!defined(BUILD_FOR_OBJC)) || ((!defined(BUILD_FOR_MACOS_APP)) && !defined(BUILD_FOR_IOS))
+#ifdef BUILD_FOR_CMD_LINE
 static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 {
 	char *home;
@@ -102,36 +102,30 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 	}
 	return -1;
 }
-#endif // unix or mac command line
+#endif // BUILD_FOR_CMD_LINE
 
 static int read_global_startup(QSP_ARG_DECL const char *progname)
 {
-#ifdef BUILD_FOR_OBJC
+#ifdef BUILD_FOR_CMD_LINE
+
+	return read_traditional_startup(QSP_ARG  progname);
+
+#else // ! BUILD_FOR_CMD_LINE
+
 #ifdef BUILD_FOR_IOS
 	// this is called from the main thread at startup...
 	return ios_read_global_startup(SINGLE_QSP_ARG);	// in .m file
 #endif // BUILD_FOR_IOS
 
-#ifdef BUILD_FOR_MACOS
 #ifdef BUILD_FOR_MACOS_APP
 	// We do this only when building a cocoa app, but not
 	// for the native Mac command line version...
 	//
 	// this is called from the main thread at startup...
 	return macos_read_global_startup(SINGLE_QSP_ARG);
+#endif // BUILD_FOR_MACOS_APP
 
-#else // ! BUILD_FOR_MACOS_APP
-
-	return read_traditional_startup(QSP_ARG  progname);
-
-#endif // ! BUILD_FOR_MACOS_APP
-#endif // BUILD_FOR_MACOS
-
-#else /* ! BUILD_FOR_OBJC */
-
-	return read_traditional_startup(QSP_ARG  progname);
-
-#endif /* ! BUILD_FOR_OBJC */
+#endif /* ! BUILD_FOR_CMD_LINE */
 
 }
 

@@ -30,6 +30,11 @@
 #else /* ! BUILD_FOR_WINDOWS && ! BUILD_FOR_IOS */
 
 #ifdef BUILD_FOR_MACOS
+
+#ifndef BUILD_FOR_MACOS_APP
+#define BUILD_FOR_CMD_LINE
+#endif // ! BUILD_FOR_MACOS_APP
+
 #define BUILD_FOR_OBJC
 #define QUIP_APPLICATION_TYPE		NSApplication
 #define QUIP_NAV_CONTROLLER_TYPE	NSViewController
@@ -46,6 +51,7 @@
 #else /* ! BUILD_FOR_MACOS && ! BUILD_FOR_WINDOWS && ! BUILD_FOR_IOS */
 
 #include "config.h"
+#define BUILD_FOR_CMD_LINE
 
 #endif /* ! BUILD_FOR_MACOS */
 #endif /* ! BUILD_FOR_WINDOWS */
