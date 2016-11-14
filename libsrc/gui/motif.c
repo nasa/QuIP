@@ -236,7 +236,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 	Arg al[64];
 	int ac = 0;
 
-fprintf(stderr,"(motif.c) make_panel BEGIN\n");
+//fprintf(stderr,"(motif.c) make_panel BEGIN\n");
 	SET_PO_DOP(po, curr_dop());
 #ifdef CAUTIOUS
 	if( PO_DOP(po) == NO_DISP_OBJ )
@@ -253,7 +253,7 @@ fprintf(stderr,"(motif.c) make_panel BEGIN\n");
 	XtSetArg(al[ac], XmNwidth, width); ac++;
 	XtSetArg(al[ac], XmNheight, height); ac++;
 
-fprintf(stderr,"make_panel calling XtAppCreateShell\n");
+//fprintf(stderr,"make_panel calling XtAppCreateShell\n");
 	po->po_frame_obj = (Widget) XtAppCreateShell(PO_NAME(po), "guimenu",
 				applicationShellWidgetClass, display,
 				al, ac);
@@ -262,16 +262,16 @@ fprintf(stderr,"make_panel calling XtAppCreateShell\n");
 		ERROR1("error creating frame");
 
 	ac = 0;
-fprintf(stderr,"make_panel calling XmNautoUnmanage\n");
+//fprintf(stderr,"make_panel calling XmNautoUnmanage\n");
 	XtSetArg(al[ac], XmNautoUnmanage, FALSE); ac++;
-fprintf(stderr,"make_panel calling XmCreateForm\n");
+//fprintf(stderr,"make_panel calling XmCreateForm\n");
 	po->po_panel_obj = XmCreateForm(po->po_frame_obj, (String) NULL,
 				al, ac);
 
 	if( (Widget) po->po_panel_obj == (Widget) NULL )
 		ERROR1("error creating panel");
 
-fprintf(stderr,"make_panel calling XtDisplay\n");
+//fprintf(stderr,"make_panel calling XtDisplay\n");
 	po->po_dpy = XtDisplay(po->po_frame_obj);
 	po->po_screen_no = DefaultScreen(po->po_dpy);
 	po->po_gc = DefaultGC(po->po_dpy,DefaultScreen(po->po_dpy));
@@ -281,7 +281,7 @@ fprintf(stderr,"make_panel calling XtDisplay\n");
 	po->po_realized = 0;
 	/* po->po_flags = 0; */		/* the caller did this already... */
 
-fprintf(stderr,"make_panel calling XtManageChild\n");
+//fprintf(stderr,"make_panel calling XtManageChild\n");
 	XtManageChild(po->po_panel_obj);
 
 	/* XXX unsupported until I figure this out */
@@ -626,7 +626,7 @@ static void text_func(Widget textID, XtPointer app_data, XtPointer widget_data )
 	}
 
 	/* We should chew the text when a return is typed, or something? */
-NADVISE("text_func calling chew_text...");
+//NADVISE("text_func calling chew_text...");
 	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text event)");
 } // text_func
 
@@ -657,7 +657,7 @@ static void text_func2(Widget textID, XtPointer app_data, XtPointer widget_data 
 		free((void *)s);
 	}
 
-NADVISE("text_func2 calling chew_text...");
+//NADVISE("text_func2 calling chew_text...");
 	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text2 event)");
 } // text_func2
 #endif /* HAVE_MOTIF */

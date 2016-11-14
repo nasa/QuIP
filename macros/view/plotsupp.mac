@@ -185,7 +185,7 @@ Set param_vec_name ${nospacename}_params
 Define Init_New_Plotter 1 name
 #advise "Init_New_Plotter $1"
 If strcmp('$the_plotter','no_plotter')
-  Remember_Plotter_Params
+  "advise 'the_plotter = $the_plotter' Remember_Plotter_Params"
 # Here we need to forget everything about the old plotter...
 
 Set minmax_set 0		# BUG this should be a plotter param...
@@ -224,6 +224,21 @@ data ascii
 #	$pen_color
 
 	quit quit
+.
+
+Define Delete_Plotter 1 plotter_name
+advise "Delete_Plotter BEGIN"
+Push_Var the_plotter
+Push_Var current_window
+Select_Plotter $1
+Delete_Viewer $1
+advise "Delete_Plotter calling Delete_Image $param_vec_name"
+Delete_Image $param_vec_name
+Pop_Var the_plotter
+Pop_Var current_window
+If strcmp('$the_plotter','no_plotter')
+  "advise 'Delete_Plotter setting the_plotter to no_plotter' Set the_plotter no_plotter"
+advise "Delete_Plotter DONE"
 .
 
 # Remember_Plotter_Params:	store script vars to memory data structure

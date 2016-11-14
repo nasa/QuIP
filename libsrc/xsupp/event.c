@@ -548,8 +548,10 @@ advise(ERROR_STRING);
 
 			//NADVISE("ConfigureNotify event!");
 			win = event->xconfigure.window;
+
 			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
-		NWARN("can't find viewer for configure event");
+				// Apparently we receive this event after we delete a window
+		//NWARN("can't find viewer for configure event");
 				return 0;
 			}
 //show_configure_notify(event);
@@ -590,7 +592,7 @@ VW_X(vp),VW_Y(vp),VW_X_REQUESTED(vp),VW_Y_REQUESTED(vp));
 			break;
 
 		case DestroyNotify:
-			NADVISE("DestroyNotify event!");
+			//NADVISE("DestroyNotify event!");
 			break;
 
 		case GravityNotify:

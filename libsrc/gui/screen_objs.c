@@ -302,7 +302,7 @@ Panel_Obj *new_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 		printf("ERROR creating new panel object!?\n");
 		return(po);
 	}
-fprintf(stderr,"panel obj created...\n");
+//fprintf(stderr,"panel obj created...\n");
 
 
 #ifndef BUILD_FOR_OBJC
@@ -326,8 +326,8 @@ fprintf(stderr,"panel obj created...\n");
 	// to have a stripped down version of new_panel
 	// to set up an existing viewer for getting widgets.
 
-sprintf(ERROR_STRING,"new_panel %s calling make_panel",PO_NAME(po));
-advise(ERROR_STRING);
+//sprintf(ERROR_STRING,"new_panel %s calling make_panel",PO_NAME(po));
+//advise(ERROR_STRING);
 	make_panel(QSP_ARG  po,dx,dy);			/* Xlib calls */
 
 #ifdef BUILD_FOR_OBJC
@@ -349,7 +349,7 @@ advise(ERROR_STRING);
 	SET_PO_CURR_Y(po,OBJECT_GAP);
 
 	curr_panel=po;
-fprintf(stderr,"new_panel DONE\n");
+//fprintf(stderr,"new_panel DONE\n");
 	return(po);
 }
 
