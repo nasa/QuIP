@@ -299,7 +299,11 @@ advise("evaluating choldc...");
 			/* jacobi(eigenvectors,eigenvalues,input_matrix,nrot) */
 			/* do we use nrot?? */
 			Data_Obj *a_dp,*d_dp,*v_dp;
+#ifdef HAVE_NUMREC
+#ifdef USE_NUMREC
 			int nrot;
+#endif  // USE_NUMREC
+#endif // HAVE_NUMREC
 
 			enp=VN_CHILD(enp,0);		/* the arg list */
 			CHECK_ARGLIST(enp,"jacobi")
