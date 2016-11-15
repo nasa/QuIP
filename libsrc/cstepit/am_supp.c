@@ -12,6 +12,8 @@
 #include "quip_prot.h"
 //#include "fitsine.h"
 #include "optimize.h"
+#include "list.h"
+#include "variable.h"
 
 static Query_Stack *am_qsp=NULL;
 
@@ -53,7 +55,7 @@ static void init_simplex()
 	int i,j;
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		NWARN("init_simplex:  no params!?");
 		return;
 	}
@@ -61,7 +63,7 @@ static void init_simplex()
 	np=lp->l_head;
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Opt_Param *opp;
 
 		opp=(Opt_Param*)np->n_data;

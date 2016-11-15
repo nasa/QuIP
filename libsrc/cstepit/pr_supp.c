@@ -14,6 +14,8 @@
 #include "quip_prot.h"
 //#include "fitsine.h"
 #include "optimize.h"
+#include "list.h"
+#include "variable.h"
 
 static Query_Stack *pr_qsp=NULL;
 
@@ -70,7 +72,7 @@ static float frprmn_scr_funk(float *p)
 	qsp = pr_qsp;
 #endif // THREAD_SAFE_QUERY
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp==NO_LIST ) {
+	if( lp==NULL ) {
 		NWARN("no parameters!?");
 		return(0.0);
 	}
@@ -91,7 +93,7 @@ static float frprmn_scr_funk(float *p)
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=var__of(QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
+	if( vp == NULL ) {
 		NWARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);

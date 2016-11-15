@@ -6,7 +6,7 @@
 @class Nav_Item;
 
 #ifdef BUILD_FOR_IOS
-#include <NSString.h>
+//#include <NSString.h>
 
 @interface quipTableViewController : UITableViewController <UIAlertViewDelegate>
 #endif // BUILD_FOR_IOS

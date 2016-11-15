@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "quip_prot.h"
-//#include "function.h"
+#include "function.h"
 
 #ifdef FOOBAR
 // BUG instead of a table, we should compute using erf!?

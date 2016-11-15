@@ -659,7 +659,7 @@ int is_image_viewer(QSP_ARG_DECL  Viewer *vp)
 		case GW_VC_QVC:		return 1;
 		case GW_VC_QTVC:	return 0;
 		default:
-			warn("Unhandled view controller case in is_image_viewer!?");
+			WARN("Unhandled view controller case in is_image_viewer!?");
 			return 0;
 	}
 #else // ! BUILD_FOR_IOS

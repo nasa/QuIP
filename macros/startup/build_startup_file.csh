@@ -72,7 +72,7 @@ set file_list=( ui )
 source add_files.csh
 
 set subdir=numrec
-set file_list=( fit_polynomial svd norm_coords )
+set file_list=( svd norm_coords fit_polynomial )
 source add_files.csh
 
 cat >> $outfile << EOF
@@ -173,7 +173,8 @@ else if( $flavor == pvt ) then
   source add_file.csh pvt/pvt_main.scr
 else if( $flavor == csf ) then
   set subdir=$extra_macro_dir/demo
-  set file_list=( login gui_demo graph )
+  #set file_list=( login gui_demo graph )
+  set file_list=( login gui_demo )
   source add_files.csh
 
   #cat ../../macros/demo/login.mac >> $outfile
