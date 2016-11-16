@@ -27,14 +27,14 @@ libvectree_a_SOURCES =			\
 			string_ref.c	\
 			vt_native.h
 
-noinst_HEADERS = vectree.h vt_native.h \
-			ctx_pair.h	\
-			identifier.h	\
-			pointer.h	\
-			reference.h	\
-			subrt.h		\
-			undef_sym.h	\
-			vec_expr_node.h
+#noinst_HEADERS = vectree.h vt_native.h \
+#			ctx_pair.h	\
+#			identifier.h	\
+#			pointer.h	\
+#			reference.h	\
+#			subrt.h		\
+#			undef_sym.h	\
+#			vec_expr_node.h
 
 AM_YFLAGS=-v
 
