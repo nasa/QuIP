@@ -1,7 +1,7 @@
 Vector xor_in 4 2 float
 Vector xor_out 4 1 float
-Get_Ascii xor_in xor_in.asc
-Get_Ascii xor_out xor_out.asc
+Get_Ascii xor_in tests/xor_in.asc
+Get_Ascii xor_out tests/xor_out.asc
 
 fann
   create_std 	xor_nn	#	nickname

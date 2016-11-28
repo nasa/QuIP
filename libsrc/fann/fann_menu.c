@@ -8,18 +8,42 @@
 
 static COMMAND_FUNC(do_create_std)
 {
-	int n_layers;
+	int n_hidden_layers;
 	int n_input;
-	int n_hidden;
 	int n_output;
 	My_FANN *mfp;
 	const char *s;
+	int i;
+#define MAX_HIDDEN_LAYERS	32		// BUG avoid fixed size...
+	unsigned int layer_size[2+MAX_HIDDEN_LAYERS];
 
 	s=NAMEOF("name for network");
 	n_input = HOW_MANY("number of inputs");
 	n_output = HOW_MANY("number of outputs");
-	n_layers = HOW_MANY("number of layers");
-	n_hidden = HOW_MANY("number of hidden units");
+	n_hidden_layers = HOW_MANY("number of hidden layers");
+
+	if( n_hidden_layers > MAX_HIDDEN_LAYERS ){
+		sprintf(ERROR_STRING,
+	"do_create_std:  Sorry, max. number of hidden layers is hard-coded to %d.",
+			MAX_HIDDEN_LAYERS);
+		WARN(ERROR_STRING);
+		// eat the args before returning
+		for(i=0;i<n_hidden_layers;i++)
+			layer_size[1] = HOW_MANY("dummy node count");
+		return;
+	}
+
+	layer_size[0] = n_input;
+	for(i=0;i<n_hidden_layers;i++){
+		char pmpt[128];
+		sprintf(pmpt,"number of nodes in hidden layer %d",i+1);
+		layer_size[1+i] = HOW_MANY(pmpt);
+		if( layer_size[1+i] <= 0 ){
+			WARN("layer size must be positive");
+			layer_size[1+i] = 1;
+		}
+	}
+	layer_size[1+i] = n_output;
 
 	// make sure not in use
 	mfp = fann_of(QSP_ARG  s);
@@ -32,7 +56,10 @@ static COMMAND_FUNC(do_create_std)
 	assert(mfp!=NULL);
 
 #ifdef HAVE_FANN
-	mfp->mf_fann_p = fann_create_standard(n_layers, n_input, n_hidden, n_output);
+	// BUG fann_create_standard uses varargs, so the number of neurons in each
+	// layer must be specified...
+	//mfp->mf_fann_p = fann_create_standard(n_layers, n_input, n_hidden, n_output);
+	mfp->mf_fann_p = fann_create_standard_array(2+n_hidden_layers, layer_size);
 	if( mfp->mf_fann_p == NULL ){
 //		enum fann_errno_enum e;
 //fprintf(stderr,"getting errno\n");
@@ -146,10 +173,17 @@ static COMMAND_FUNC(do_fann_train)
 	*/
 
 	n_data = OBJ_N_MACH_ELTS(output_dp) / OBJ_COMPS(output_dp);
+
+	/* fann_create_train_array seems to have gone away in v 2.2 !?
 	data = fann_create_train_array(n_data,OBJ_COMPS(input_dp),(fann_type *)OBJ_DATA_PTR(input_dp),
 		OBJ_COMPS(output_dp),(fann_type *)OBJ_DATA_PTR(output_dp));
+		*/
+	data = fann_create_train(n_data,OBJ_COMPS(input_dp),OBJ_COMPS(output_dp));
 
-//	fann_init_weights(mfp->mf_fann_p, data);
+	// This block copy assumes that the block is contiguous...
+	memcpy(data->input[0],OBJ_DATA_PTR(input_dp),n_data*OBJ_COMPS(input_dp)*sizeof(fann_type));
+	memcpy(data->output[0],OBJ_DATA_PTR(output_dp),n_data*OBJ_COMPS(output_dp)*sizeof(fann_type));
+
 	fann_train_on_data(mfp->mf_fann_p, data, max_epochs, epochs_between_reports, desired_error);
 
 	fann_destroy_train(data);
@@ -213,8 +247,15 @@ static COMMAND_FUNC(do_init_weights)
 	*/
 
 	n_data = OBJ_N_MACH_ELTS(output_dp) / OBJ_COMPS(output_dp);
-	data = fann_create_train_array(n_data,OBJ_COMPS(input_dp),(fann_type *)OBJ_DATA_PTR(input_dp),
-		OBJ_COMPS(output_dp),(fann_type *)OBJ_DATA_PTR(output_dp));
+//	data = fann_create_train_array(n_data,OBJ_COMPS(input_dp),(fann_type *)OBJ_DATA_PTR(input_dp),
+//		OBJ_COMPS(output_dp),(fann_type *)OBJ_DATA_PTR(output_dp));
+	data = fann_create_train(n_data,OBJ_COMPS(input_dp),OBJ_COMPS(output_dp));
+
+	// This block copy assumes that the block is contiguous...
+	memcpy(data->input[0],OBJ_DATA_PTR(input_dp),n_data*OBJ_COMPS(input_dp)*sizeof(fann_type));
+	memcpy(data->output[0],OBJ_DATA_PTR(output_dp),n_data*OBJ_COMPS(output_dp)*sizeof(fann_type));
+
+
 
 	// Not clear why weight initialization requires the data???
 	fann_init_weights(mfp->mf_fann_p, data);
