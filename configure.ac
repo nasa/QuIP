@@ -259,6 +259,11 @@ AC_ARG_ENABLE([opencv],
 	[AS_HELP_STRING([--disable-opencv],[disable OpenCV support@<:@default: no@:>@])],
 	[ use_opencv=${enableval}], [use_opencv=yes])
 
+# Enable FANN by default:
+AC_ARG_ENABLE([use_fann],
+	[AS_HELP_STRING([--disable-fann],[disable support for neural networks w/ libfann@<:@default: no@:>@])],
+	[ use_fann=${enableval}], [use_fann=yes])
+
 # Enable fileio by default:
 AC_ARG_ENABLE([use_fileio],
 	[AS_HELP_STRING([--disable-fileio],[disable support for image file I/O@<:@default: no@:>@])],
@@ -1239,6 +1244,10 @@ if test "x${use_opencl}" = xyes; then
   AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
 fi
 
+if test "x${use_fann}" = xyes; then
+  AC_SEARCH_LIBS([fann_create_standard],[fann],[have_fann=yes],[have_fann=no])
+fi
+
 if test "x${use_fileio}" = xyes; then
   AC_SEARCH_LIBS([TIFFGetField],[tiff],[have_libtiff=yes],[have_libtiff=no])
   AC_SEARCH_LIBS([png_read_image],[png],[have_libpng=yes],[have_libpng=no])
@@ -1733,6 +1742,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/interpreter/Makefile
 		 libsrc/dobj/Makefile
 		 libsrc/ports/Makefile
+		 libsrc/fann/Makefile
 		 libsrc/fileio/Makefile
 		 libsrc/hips/Makefile
 		 libsrc/rawvol/Makefile
@@ -2303,6 +2313,10 @@ if test "x${have_libgslcblas}" = xyes; then
   fi
 fi
 
+if test "x${have_fann}" = xyes; then
+  AC_DEFINE([HAVE_FANN], 1, [FANN neural network support enabled])
+fi
+
 if test "x${have_libtiff}" = xyes; then
   AC_DEFINE([HAVE_TIFF], 1, [TIFF file support enabled])
 fi
@@ -2428,6 +2442,16 @@ if test "x${have_pthreads}" = xno; then
 Unable to find the pthreads library.
 Building without multi-threading...
 ----------------------------------------])
+fi
+
+if test "x${use_fann}" = xyes; then
+  if test "x${have_fann}" != xyes; then
+    AC_MSG_WARN([
+-----------------------------------------
+Unable to find the fann library.
+Building without FANN neural network support...
+-----------------------------------------])
+  fi
 fi
 
 if test "x${use_matio}" = xyes; then
