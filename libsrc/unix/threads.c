@@ -42,9 +42,9 @@ static void *thread_exec(void *argp)
 
 	// Threads can't call exit() without killing the whole
 	// process, so they set a flag instead.
-	while( ! IS_HALTING(qsp) ) qs_do_cmd(qsp);
-advise("thread_exec: DONE!!!");
-
+	while( ! IS_HALTING(qsp) ){
+		qs_do_cmd(qsp);
+	}
 	return(NULL);
 }
 

@@ -102,7 +102,10 @@ void qs_do_cmd( Query_Stack *qsp )
 	cmd = nameof2(QSP_ARG  QS_PROMPT_STR(qsp));
 
 //if( QLEVEL < 0 )
-	if( cmd == NULL || strlen(cmd) == 0 ) return;
+	if( cmd == NULL || strlen(cmd) == 0 ){
+fprintf(stderr,"qs_do_cmd:  null or empty command\n");
+		return;
+	}
 	/* Now find the command */
 //	cp = (Command *) fetch_name(cmd, mp->mn_dict);
 	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);

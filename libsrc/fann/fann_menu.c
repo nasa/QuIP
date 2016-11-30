@@ -6,7 +6,8 @@
 #include "my_fann.h"
 #include <string.h>	// memcpy()
 
-static COMMAND_FUNC(do_create_std)
+//static COMMAND_FUNC(do_create_std)
+static void create_network(QSP_ARG_DECL  struct fann *(*func)(unsigned int,const unsigned int *))
 {
 	int n_hidden_layers;
 	int n_input;
@@ -59,7 +60,7 @@ static COMMAND_FUNC(do_create_std)
 	// BUG fann_create_standard uses varargs, so the number of neurons in each
 	// layer must be specified...
 	//mfp->mf_fann_p = fann_create_standard(n_layers, n_input, n_hidden, n_output);
-	mfp->mf_fann_p = fann_create_standard_array(2+n_hidden_layers, layer_size);
+	mfp->mf_fann_p = (*func)(2+n_hidden_layers, layer_size);
 	if( mfp->mf_fann_p == NULL ){
 //		enum fann_errno_enum e;
 //fprintf(stderr,"getting errno\n");
@@ -83,6 +84,16 @@ static COMMAND_FUNC(do_create_std)
 	fann_set_training_algorithm(mfp->mf_fann_p, FANN_TRAIN_RPROP);
 	
 #endif // HAVE_FANN
+}
+
+static COMMAND_FUNC(do_create_std)
+{
+	create_network(QSP_ARG  fann_create_standard_array);
+}
+
+static COMMAND_FUNC(do_create_shortcut)
+{
+	create_network(QSP_ARG  fann_create_shortcut_array);
 }
 
 static int check_network(QSP_ARG_DECL  My_FANN *mfp, Data_Obj *input_dp, Data_Obj *output_dp)
@@ -185,6 +196,41 @@ static COMMAND_FUNC(do_fann_train)
 	memcpy(data->output[0],OBJ_DATA_PTR(output_dp),n_data*OBJ_COMPS(output_dp)*sizeof(fann_type));
 
 	fann_train_on_data(mfp->mf_fann_p, data, max_epochs, epochs_between_reports, desired_error);
+
+	fann_destroy_train(data);
+#endif // HAVE_FANN
+}
+
+static COMMAND_FUNC(do_cascade)
+{
+	unsigned int max_neurons=1000;		// BUG make this a parameter...
+	unsigned int neurons_between_reports=2;	// BUG make this a parameter...
+	const float desired_error = (const float) 0;
+	My_FANN *mfp;
+	Data_Obj *input_dp, *output_dp;
+#ifdef HAVE_FANN
+	struct fann_train_data *data;
+	int n_data;
+#endif // HAVE_FANN
+
+	mfp = pick_fann(QSP_ARG  "");
+	//s = NAMEOF("name of file containing training data");
+	input_dp = PICK_OBJ("name of object containing input data");
+	output_dp = PICK_OBJ("name of object containing output data");
+
+	if( check_network(QSP_ARG  mfp, input_dp, output_dp) < 0 ) return;
+
+#ifdef HAVE_FANN
+	n_data = OBJ_N_MACH_ELTS(output_dp) / OBJ_COMPS(output_dp);
+
+	data = fann_create_train(n_data,OBJ_COMPS(input_dp),OBJ_COMPS(output_dp));
+
+	// This block copy assumes that the block is contiguous...
+	memcpy(data->input[0],OBJ_DATA_PTR(input_dp),n_data*OBJ_COMPS(input_dp)*sizeof(fann_type));
+	memcpy(data->output[0],OBJ_DATA_PTR(output_dp),n_data*OBJ_COMPS(output_dp)*sizeof(fann_type));
+
+	fann_cascadetrain_on_data(mfp->mf_fann_p, data, max_neurons,
+		neurons_between_reports, desired_error);
 
 	fann_destroy_train(data);
 #endif // HAVE_FANN
@@ -300,8 +346,10 @@ static COMMAND_FUNC(do_del_fann)
 
 MENU_BEGIN(fann)
 ADD_CMD(create_std,	do_create_std,		create standard network	)
+ADD_CMD(create_shortcut, do_create_shortcut,	create shortcut network	)
 ADD_CMD(init_weights,	do_init_weights,	initialize network weights )
 ADD_CMD(train,		do_fann_train,		train a network)
+ADD_CMD(cascade,	do_cascade,		perform casade training )
 ADD_CMD(run,		do_fann_run,		run a network)
 ADD_CMD(list,		do_list_fanns,		list all networks)
 ADD_CMD(info,		do_info_fann,		print info about a network)
@@ -313,75 +361,3 @@ COMMAND_FUNC(do_fann_menu)
 	PUSH_MENU(fann)
 }
 
-#ifdef FOOBAR
-
-int FANN_API test_callback(struct fann *ann, struct fann_train_data *train,
-	unsigned int max_epochs, unsigned int epochs_between_reports, 
-	float desired_error, unsigned int epochs)
-{
-	printf("Epochs     %8d. MSE: %.5f. Desired-MSE: %.5f\n", epochs, fann_get_MSE(ann), desired_error);
-	return 0;
-}
-
-int main()
-{
-	fann_type *calc_out;
-	const unsigned int num_input = 2;
-	const unsigned int num_output = 1;
-	const unsigned int num_layers = 3;
-	const unsigned int num_neurons_hidden = 3;
-	const float desired_error = (const float) 0;
-	const unsigned int max_epochs = 1000;
-	const unsigned int epochs_between_reports = 10;
-	struct fann *ann;
-	struct fann_train_data *data;
-
-	unsigned int i = 0;
-	unsigned int decimal_point;
-
-	printf("Creating network.\n");
-	ann = fann_create_standard(num_layers, num_input, num_neurons_hidden, num_output);
-
-	data = fann_read_train_from_file("xor.data");
-
-	fann_set_activation_steepness_hidden(ann, 1);
-	fann_set_activation_steepness_output(ann, 1);
-
-	fann_set_activation_function_hidden(ann, FANN_SIGMOID_SYMMETRIC);
-	fann_set_activation_function_output(ann, FANN_SIGMOID_SYMMETRIC);
-
-	fann_set_train_stop_function(ann, FANN_STOPFUNC_BIT);
-	fann_set_bit_fail_limit(ann, 0.01f);
-
-	fann_set_training_algorithm(ann, FANN_TRAIN_RPROP);
-
-	fann_init_weights(ann, data);
-	
-	printf("Training network.\n");
-	fann_train_on_data(ann, data, max_epochs, epochs_between_reports, desired_error);
-
-	printf("Testing network. %f\n", fann_test_data(ann, data));
-
-	for(i = 0; i < fann_length_train_data(data); i++)
-	{
-		calc_out = fann_run(ann, data->input[i]);
-		printf("XOR test (%f,%f) -> %f, should be %f, difference=%f\n",
-			   data->input[i][0], data->input[i][1], calc_out[0], data->output[i][0],
-			   fann_abs(calc_out[0] - data->output[i][0]));
-	}
-
-	printf("Saving network.\n");
-
-	fann_save(ann, "xor_float.net");
-
-	decimal_point = fann_save_to_fixed(ann, "xor_fixed.net");
-	fann_save_train_to_fixed(data, "xor_fixed.data", decimal_point);
-
-	printf("Cleaning up.\n");
-	fann_destroy_train(data);
-	fann_destroy(ann);
-
-	return 0;
-}
-
-#endif // FOOBAR

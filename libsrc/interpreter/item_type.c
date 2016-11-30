@@ -861,6 +861,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 	if( *name == 0 ) return(NO_ITEM);
 
+//	assert( CONTEXT_LIST(itp) != NULL );
+
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
 
 //#ifdef CAUTIOUS
@@ -869,6 +871,21 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //ERROR1(ERROR_STRING);
 //}
 //#endif /* CAUTIOUS */
+#ifdef THREAD_SAFE_QUERY
+	if( np == NO_NODE ){
+		Item_Context *icp;
+		// This occurs when we have a brand new thread...
+		assert(QS_SERIAL!=0);
+		// get the bottom of the stack from the root qsp, and push it...
+		np = QLIST_TAIL( FIRST_CONTEXT_STACK(itp) );
+		assert( np != NO_NODE );
+		icp = NODE_DATA(np);
+		assert(icp!=NULL);
+		push_item_context(QSP_ARG  itp, icp );
+		np=QLIST_HEAD(CONTEXT_LIST(itp));
+	}
+#endif // THREAD_SAFE_QUERY
+
 	assert( np != NO_NODE );
 
 	/* check the top context first */
