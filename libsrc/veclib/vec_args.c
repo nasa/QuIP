@@ -952,7 +952,7 @@ static void show_increments(Increment_Set *isp)
 		isp->is_increment[0] );
 }
 
-void show_vec_args(Vector_Args *vap)
+void show_vec_args(const Vector_Args *vap)
 {
 	int i;
 

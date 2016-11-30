@@ -31,8 +31,11 @@
 #define _VEC_FUNC_QUAT_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr_re,gpu_expr_im1,gpu_expr_im2,gpu_expr_im3)	H_CALL_PROJ_2V( name, std_quat )
 
 // This was H_CALL_MM - ???
+// The statements are used in the kernels, this just declares the function that fixes the args
+// and then calls the kernel...
 #define _VEC_FUNC_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr)	\
 						H_CALL_PROJ_2V( name, std_type )
+
 #define _VEC_FUNC_3V_PROJ(name,s1,s2)		H_CALL_PROJ_3V( name, std_type )
 #define _VEC_FUNC_CPX_3V_PROJ(name,s1,s2)	H_CALL_PROJ_3V( name, std_cpx )
 #define _VEC_FUNC_QUAT_3V_PROJ(name,s1,s2)	H_CALL_PROJ_3V( name, std_quat )

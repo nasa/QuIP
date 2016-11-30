@@ -283,9 +283,9 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 #define CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */			\
-/*show_vec_args(vap);\
+show_vec_args(vap);\
 fprintf(stderr,"global_work_size = %ld %ld %ld\n",\
-global_work_size[0],global_work_size[1],global_work_size[2]);*/\
+global_work_size[0],global_work_size[1],global_work_size[2]);\
 	FINISH_KERNEL_CALL(1)
 
 #define CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)                     \
@@ -315,6 +315,7 @@ global_work_size[0],global_work_size[1],global_work_size[2]);*/\
 	/*(GPU_CALL_NAME(name##_nocc_helper) (dst_values, dst_counts, src_values, src_counts, indices, len1, len2, stride); */
 
 #define CALL_GPU_PROJ_2V_FUNC(name)					\
+fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 	CHECK_NOSPEED_KERNEL(name)					\
 	SET_KERNEL_ARGS_PROJ_2V						\
 	CALL_FAST_KERNEL(name,,,,)

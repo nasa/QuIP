@@ -121,7 +121,8 @@ NADVISE(DEFAULT_ERROR_STRING);							\
 
 
 
-#define CALL_GPU_PROJ_2V_FUNC(name)					\
+// CUDA only!
+#define CALL_GPU_PROJ_2V_FUNC(name) /* CUDA only */			\
 	CLEAR_GPU_ERROR(name)						\
 	REPORT_THREAD_INFO2						\
 fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %ld, len2 = %ld\n",\
@@ -553,6 +554,8 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 //
 // To compute the sum to a scalar, we have to divide and conquer
 // as we did with vmaxv...
+//
+// This looks wrong - the destination does not have to be a scalar!?
 
 // BUG? gpu_expr? used?
 
@@ -574,6 +577,17 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 
 
 // This started as the cuda version...
+// where do we set dst_values for the first iteration???  ans:  in SETUP_PROJ_ITERATION...
+//
+// The idea of the original implementation was this:  we can't find the max in parallel, so instead
+// we divide and conquer:  we split the input data in two, and then store the pairwise maxima
+// to a temporary array.  We repeat on the temporary array, until we have a single value.
+//
+// That works fine if the final target is a scalar, but what if we are projecting an image
+// to a row or column?  Let's analyze the case of projecting an image to a row...  Following the
+// analogy, we would divide the image into the top and bottom halves, and then store the pairwise
+// maxima to a temporary half-size image, and so on...  We have a problem because the Vector_Args
+// struct doesn't contain shape information!?
 
 #define H_CALL_PROJ_2V( name, type )					\
 									\
@@ -584,8 +598,11 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	type *src_to_free, *dst_to_free;				\
 	DECLARE_PLATFORM_VARS						\
 									\
+fprintf(stderr,"HOST_SLOW_CALL(%s) BEGIN\n",#name);\
 	/*len = OBJ_N_TYPE_ELTS(oap->oa_dp[0]);*/			\
 	len = VARG_LEN( VA_SRC(vap,0) );					\
+fprintf(stderr,"%s:  len = %ld\n",#name,len);\
+show_vec_args(vap);\
 	src_values = (type *) VA_SRC_PTR(vap,0);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
@@ -593,6 +610,7 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	src_to_free=NULL;						\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(type,name)				\
+fprintf(stderr,"%s:  start of iteration, len = %ld, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);\
 		CALL_GPU_PROJ_2V_FUNC(name)				\
 		len=len1;						\
 		src_values = dst_values;				\
@@ -613,15 +631,21 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 									\
 static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 {									\
-	Vector_Args va1, *vap=(&va1);						\
-										\
+	Vector_Args va1, *vap=(&va1);					\
+									\
 	CHECK_MM(name)							\
 									\
-	/* BUG need to set vap entries from oap */				\
-	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))					\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);				\
+	CLEAR_VEC_ARGS(vap) /* mostly for debugging */			\
+	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))				\
+	/* BUG need to set vap entries from oap */			\
+	SET_VA_PFDEV(vap,OA_PFDEV(oap));				\
+	XFER_SLOW_ARGS_2						\
+	SETUP_SLOW_LEN_2						\
+	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 
+// for host code, we do this instead of a direct call:
+//	CHAIN_CHECK( HOST_SLOW_CALL_NAME(name) )
 
 // vdot, cvdot, etc
 

@@ -91,6 +91,7 @@ else fprintf(stderr,"\tunhandled case for type %s\n",#type);
 
 #define SET_KERNEL_ARGS_PROJ_2V					\
 								\
+fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 	SET_KERNEL_ARG(void *,&dst_values)		\
 	SET_KERNEL_ARG(void *,&src_values)		\
 	SET_KERNEL_ARG( dimension_t, &len1 )		\

@@ -148,6 +148,9 @@ typedef struct vector_arg {
 
 // BUG we let CUDA and OPENCL do multidimensional iterations,
 // but that limits us to 3 dimensions!?
+//
+// I had an idea for how to get around that - but now I forget...  maybe it was to pass an array of increments and dimensions?
+// and not to use to kernel grid for the dimensions?
 
 typedef struct vector_args {
 	Vector_Arg	va_dst;
@@ -163,8 +166,8 @@ typedef struct vector_args {
 // Really BUILD_FOR_GPU get set and unset during the build,
 // but we need the struct to have a constant size.  We really
 // should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
-	DIM3		va_xyz_len;
-	int		va_dim_indices[3];
+	DIM3		va_xyz_len;		// used for kernels...
+	int		va_dim_indices[3];	// do these refer to the dobj dimensions?
 /*#endif // BUILD_FOR_GPU*/
 	argset_type	va_argstype;
 	argset_prec	va_argsprec;
@@ -222,7 +225,7 @@ typedef struct vector_args {
 #define VA_PFDEV(vap)			(vap)->va_pfdev
 #define SET_VA_PFDEV(vap,v)		(vap)->va_pfdev = v
 
-extern void show_vec_args(Vector_Args *vap);	// for debug
+extern void show_vec_args(const Vector_Args *vap);	// for debug
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */
