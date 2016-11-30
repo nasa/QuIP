@@ -339,6 +339,8 @@ __VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
 // This only has a slow version...
 //
 // BUG - no increments on the source or dest???
+//
+// for vmaxv, expr is:  psrc1 > psrc2 ? psrc1 : psrc2
 
 #define ___VEC_FUNC_2V_PROJ( func_name, expr )			\
 								\

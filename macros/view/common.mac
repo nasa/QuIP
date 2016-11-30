@@ -68,8 +68,11 @@ Delete_Image diftmp
 
 Define Show_Image 2 'float image' 'viewer name'
 Dup_Float siftmp $1
+Info siftmp
 Convert siftmp $1	# was VMov
+advise "Show_Image calling scale..."
 Scale siftmp $si_min $si_max
+advise "Show_Image back from scale..."
 Show_Raw siftmp "$2"
 Delete_Image siftmp
 .
@@ -84,6 +87,7 @@ Delete_Image sgftmp
 .
 
 Define Show_Raw 2 'float image' 'viewer name'
+# We need to insure that this is a CPU object...
 #If !$have_luts "PB_Show_Raw $1 $2 exit_macro"
 # This will fail if the viewer name has spaces in it...
 Set bbname "sr_b.$2"

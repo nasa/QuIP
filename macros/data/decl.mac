@@ -319,6 +319,8 @@ Dup_Obj_With_Prec $1 $2 $3
 
 Define Match_Area 1 sizable
 If !obj_exists('$1') exit_macro
+advise "Match_Area matching to $1"
+Info $1
 data
   areas match $1 quit
   quit

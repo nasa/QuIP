@@ -124,6 +124,8 @@ NADVISE(DEFAULT_ERROR_STRING);							\
 #define CALL_GPU_PROJ_2V_FUNC(name)					\
 	CLEAR_GPU_ERROR(name)						\
 	REPORT_THREAD_INFO2						\
+fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %ld, len2 = %ld\n",\
+#name,(long)dst_values,(long)src_values,len1,len2);\
 	GPU_CALL_NAME(name)<<< NN_GPU >>>( dst_values, src_values, len1, len2 );	\
 	CHECK_GPU_ERROR(name)
 

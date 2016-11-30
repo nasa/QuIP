@@ -404,9 +404,11 @@ void extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 {
 	if( ! OBJ_IS_RAM(dp) ){
 		// BUG may not be cuda, use platform-specific function!
+advise("extract_scalar_value:  calling platform-specific memory download func");
 		( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dp)) )
 			(QSP_ARG  &svp->u_d, OBJ_DATA_PTR(dp),
 				PREC_SIZE(OBJ_PREC_PTR(dp)), OBJ_PFDEV(dp) );
+advise("extract_scalar_value:  back from platform-specific memory download func");
 		return;
 	}
 

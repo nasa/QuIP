@@ -301,7 +301,9 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 
 
 
-/* init_scratch_scalar - make up a scalar object to get the return value of vmaxv & vminv */
+/* init_scratch_scalar - make up a two scalar objects
+ * to get the return values of vmaxv & vminv
+ */
 
 #define MAX_NAME_LEN	80
 
@@ -320,17 +322,18 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 //#endif /* CAUTIOUS */
 
 	assert( AREA_SCALAR_OBJ(ap) == NO_OBJ );
-	if( strlen(name)+strlen(".scratch_scalar")+1 > MAX_NAME_LEN )
+
+	if( strlen(AREA_NAME(ap))+strlen(".scratch_scalar")+1 > MAX_NAME_LEN )
 		ERROR1("init_scratch_scalar:  need to increase MAX_NAME_LEN!?");
 
 	/* Can we make this not hashed??? */
-	sprintf(name,"%s.scratch_scalar",AREA_NAME(ap));
 
 	// The scalar should be the largest type...
 	// Do we need quaternion, complex, etc?
 
 	//set_data_area(ap);	// init_scratch_scalar
 	push_data_area(ap);	// init_scratch_scalar
+	sprintf(name,"%s.scratch_scalar",AREA_NAME(ap));
 	ap->da_dp = mk_scalar(QSP_ARG  name, PREC_FOR_CODE(PREC_DP) );
 	pop_data_area();	// init_scratch_scalar
 }
@@ -341,4 +344,5 @@ Data_Obj *area_scalar(QSP_ARG_DECL  Data_Area *ap)
 		init_scratch_scalar(QSP_ARG  ap);
 	return AREA_SCALAR_OBJ(ap);
 }
+
 

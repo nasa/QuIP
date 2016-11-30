@@ -270,6 +270,12 @@ static COMMAND_FUNC( new_gen_obj )
 	SET_DIMENSION(dsp,2,HOW_MANY("number of rows"));
 	SET_DIMENSION(dsp,1,HOW_MANY("number of columns"));
 	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+
+	if( *s == 0 ){
+		WARN("new_gen_obj:  Null object name!?");
+		return;	// shouldn't happen, but can
+	}
+
 	finish_obj(QSP_ARG  s,dsp,AUTO_SHAPE);
 }
 
