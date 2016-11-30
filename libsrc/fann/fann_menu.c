@@ -6,61 +6,75 @@
 #include "my_fann.h"
 #include <string.h>	// memcpy()
 
-//static COMMAND_FUNC(do_create_std)
-static void create_network(QSP_ARG_DECL  struct fann *(*func)(unsigned int,const unsigned int *))
+static My_FANN *get_new_net(SINGLE_QSP_ARG_DECL)
 {
-	int n_hidden_layers;
-	int n_input;
-	int n_output;
-	My_FANN *mfp;
 	const char *s;
-	int i;
-#define MAX_HIDDEN_LAYERS	32		// BUG avoid fixed size...
-	unsigned int layer_size[2+MAX_HIDDEN_LAYERS];
+	My_FANN *mfp;
 
-	s=NAMEOF("name for network");
+	s = NAMEOF("name for network");
+	// make sure not in use
+	mfp = fann_of(QSP_ARG  s);
+	if( mfp != NULL ){
+		sprintf(ERROR_STRING,"get_new_net:  network name %s is already in use!?",s);
+		WARN(ERROR_STRING);
+		return NULL;
+	}
+	mfp = new_fann(QSP_ARG  s);
+	assert(mfp!=NULL);
+	return mfp;
+}
+
+static int get_network_params(QSP_ARG_DECL  struct net_params *np_p )
+{
+	int n_input, n_output, n_hidden_layers;
+	int i;
+
 	n_input = HOW_MANY("number of inputs");
 	n_output = HOW_MANY("number of outputs");
 	n_hidden_layers = HOW_MANY("number of hidden layers");
 
-	if( n_hidden_layers > MAX_HIDDEN_LAYERS ){
+	if( n_hidden_layers > MAX_LAYERS-2 ){
+		int junk;
 		sprintf(ERROR_STRING,
 	"do_create_std:  Sorry, max. number of hidden layers is hard-coded to %d.",
-			MAX_HIDDEN_LAYERS);
+			MAX_LAYERS-2);
 		WARN(ERROR_STRING);
 		// eat the args before returning
 		for(i=0;i<n_hidden_layers;i++)
-			layer_size[1] = HOW_MANY("dummy node count");
-		return;
+			junk = HOW_MANY("dummy node count");
+		return -1;
+	}
+	if( n_hidden_layers < 0 ){
+		sprintf(ERROR_STRING,"number of hidden layers (%d) must be non-negative!?",
+			n_hidden_layers);
+		WARN(ERROR_STRING);
+		return -1;
 	}
 
-	layer_size[0] = n_input;
+	np_p->n_layers = 2 + n_hidden_layers;
+	np_p->layer_size[0] = n_input;
 	for(i=0;i<n_hidden_layers;i++){
 		char pmpt[128];
 		sprintf(pmpt,"number of nodes in hidden layer %d",i+1);
-		layer_size[1+i] = HOW_MANY(pmpt);
-		if( layer_size[1+i] <= 0 ){
+		np_p->layer_size[1+i] = HOW_MANY(pmpt);
+		if( np_p->layer_size[1+i] <= 0 ){
 			WARN("layer size must be positive");
-			layer_size[1+i] = 1;
+			np_p->layer_size[1+i] = 1;
 		}
 	}
-	layer_size[1+i] = n_output;
+	np_p->layer_size[1+i] = n_output;
+	return 0;
+}
 
-	// make sure not in use
-	mfp = fann_of(QSP_ARG  s);
-	if( mfp != NULL ){
-		sprintf(ERROR_STRING,"do_create_std:  network name %s is already in use!?",s);
-		WARN(ERROR_STRING);
-		return;
-	}
-	mfp = new_fann(QSP_ARG  s);
-	assert(mfp!=NULL);
-
+//static COMMAND_FUNC(do_create_std)
 #ifdef HAVE_FANN
+static void create_network(QSP_ARG_DECL  My_Fann *mfp, struct net_params *np_p,
+	struct fann *(*func)(unsigned int,const unsigned int *))
+{
 	// BUG fann_create_standard uses varargs, so the number of neurons in each
 	// layer must be specified...
 	//mfp->mf_fann_p = fann_create_standard(n_layers, n_input, n_hidden, n_output);
-	mfp->mf_fann_p = (*func)(2+n_hidden_layers, layer_size);
+	mfp->mf_fann_p = (*func)(np_p->n_layers, np_p->layer_size);
 	if( mfp->mf_fann_p == NULL ){
 //		enum fann_errno_enum e;
 //fprintf(stderr,"getting errno\n");
@@ -83,17 +97,37 @@ static void create_network(QSP_ARG_DECL  struct fann *(*func)(unsigned int,const
 
 	fann_set_training_algorithm(mfp->mf_fann_p, FANN_TRAIN_RPROP);
 	
-#endif // HAVE_FANN
 }
+#endif // HAVE_FANN
 
 static COMMAND_FUNC(do_create_std)
 {
-	create_network(QSP_ARG  fann_create_standard_array);
+	struct net_params np1;
+	My_FANN *mfp;
+
+	mfp = get_new_net(SINGLE_QSP_ARG);
+	if( get_network_params(QSP_ARG  &np1) < 0 )
+		return;
+	if( mfp == NULL ) return;
+
+#ifdef HAVE_FANN
+	create_network(QSP_ARG  mfp, &np1, fann_create_standard_array);
+#endif // HAVE_FANN
 }
 
 static COMMAND_FUNC(do_create_shortcut)
 {
-	create_network(QSP_ARG  fann_create_shortcut_array);
+	struct net_params np1;
+	My_FANN *mfp;
+
+	mfp = get_new_net(SINGLE_QSP_ARG);
+	if( get_network_params(QSP_ARG  &np1) < 0 )
+		return;
+	if( mfp == NULL ) return;
+
+#ifdef HAVE_FANN
+	create_network(QSP_ARG  mfp, &np1, fann_create_shortcut_array);
+#endif // HAVE_FANN
 }
 
 static int check_network(QSP_ARG_DECL  My_FANN *mfp, Data_Obj *input_dp, Data_Obj *output_dp)
@@ -157,12 +191,12 @@ static int check_network(QSP_ARG_DECL  My_FANN *mfp, Data_Obj *input_dp, Data_Ob
 
 static COMMAND_FUNC(do_fann_train)
 {
-	const unsigned int max_epochs = 1000;
-	const unsigned int epochs_between_reports = 10;
-	const float desired_error = (const float) 0;
 	My_FANN *mfp;
 	Data_Obj *input_dp, *output_dp;
 #ifdef HAVE_FANN
+	const unsigned int max_epochs = 1000;
+	const unsigned int epochs_between_reports = 10;
+	const float desired_error = (const float) 0;
 	struct fann_train_data *data;
 	int n_data;
 #endif // HAVE_FANN
@@ -203,12 +237,12 @@ static COMMAND_FUNC(do_fann_train)
 
 static COMMAND_FUNC(do_cascade)
 {
-	unsigned int max_neurons=1000;		// BUG make this a parameter...
-	unsigned int neurons_between_reports=2;	// BUG make this a parameter...
-	const float desired_error = (const float) 0;
 	My_FANN *mfp;
 	Data_Obj *input_dp, *output_dp;
 #ifdef HAVE_FANN
+	unsigned int max_neurons=1000;		// BUG make this a parameter...
+	unsigned int neurons_between_reports=2;	// BUG make this a parameter...
+	const float desired_error = (const float) 0;
 	struct fann_train_data *data;
 	int n_data;
 #endif // HAVE_FANN
@@ -241,7 +275,10 @@ static COMMAND_FUNC(do_fann_run)
 	My_FANN *mfp;
 	Data_Obj *input_dp, *output_dp;
 	dimension_t n_data;
-	float *src, *dst, *result;
+	float *src, *dst;
+#ifdef HAVE_FANN
+	float *result;
+#endif // HAVE_FANN
 
 	mfp = pick_fann(QSP_ARG  "");
 	//s = NAMEOF("name of file containing training data");

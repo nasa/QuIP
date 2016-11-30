@@ -1,0 +1,14 @@
+
+Define Test_Thread 0
+echo 'Test_Thread BEGIN'
+os threads tell quit quit
+sleep 1
+echo 'Test_Thread DONE'
+.
+
+os
+  threads
+    new_thread thr1 Test_Thread
+    Pause
+
+

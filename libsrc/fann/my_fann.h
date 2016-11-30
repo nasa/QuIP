@@ -23,3 +23,10 @@ typedef struct my_fann {
 
 ITEM_INTERFACE_PROTOTYPES(My_FANN,fann)
 
+#define MAX_LAYERS	32		// BUG avoid fixed size...
+
+struct net_params {
+	int n_layers;
+	int layer_size[MAX_LAYERS];
+};
+
