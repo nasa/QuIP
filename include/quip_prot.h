@@ -396,6 +396,8 @@ extern COMMAND_FUNC( do_cuda_menu );
 
 extern COMMAND_FUNC( do_platform_menu );
 
+extern COMMAND_FUNC( do_fann_menu );
+
 // freel.c
 extern COMMAND_FUNC( heap_report );
 

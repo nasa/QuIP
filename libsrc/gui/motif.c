@@ -1764,6 +1764,7 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 	Panel_Obj *po;
 #endif
 
+fprintf(stderr,"create_nav_panel %s BEGIN\n",name);
 
 	np_p = new_nav_panel(QSP_ARG  name);
 	if( np_p == NO_NAV_PANEL ){
@@ -1819,11 +1820,14 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 	prepare_for_decoration(QSP_ARG  NAVP_PANEL(np_p) );
 
 	// next 7 lines from get_parts, screen_objs.c
+fprintf(stderr,"create_nav_panel adding back button...\n");
 	bo = simple_object(QSP_ARG  "Back");
 	if( bo == NO_SCREEN_OBJ ){
 		WARN("Error creating back button for nav_panel!?");
 		goto no_back_button;
 	}
+
+	// Is pop_nav enough here???
 
 	SET_SOB_ACTION(bo, savestr("Pop_Nav"));
 
@@ -1924,12 +1928,13 @@ void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
 
 	// We can push a viewer or anything!?
 	//assert( GW_TYPE(NAVP_GW(np_p)) == GW_NAV_PANEL );
-
+fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
 	if( nav_stack == NULL )
 		nav_stack = new_stack();
 
 	// We need to keep a stack of panels...
 	if( (current_gwp=TOP_OF_STACK(nav_stack)) != NULL ){
+fprintf(stderr,"push_nav %s:  un-showing %s\n",GW_NAME(gwp),GW_NAME(current_gwp));
 		unshow_genwin(QSP_ARG  current_gwp);
 	}
 
@@ -1942,19 +1947,23 @@ void pop_nav(QSP_ARG_DECL  int count)
 {
 	Gen_Win *gwp;
 
+fprintf(stderr,"pop_nav %d BEGIN\n",count);
 	if( nav_stack == NULL )
 		nav_stack = new_stack();
 
 	gwp = POP_FROM_STACK(nav_stack);
 	assert( gwp != NULL );
+fprintf(stderr,"pop_nav un-showing current top-of-stack %s\n",GW_NAME(gwp));
 	unshow_genwin(QSP_ARG  gwp);
 
 	count --;
 	while( count -- ){
+fprintf(stderr,"pop_nav popping again, count = %d\n",count);
 		gwp = POP_FROM_STACK(nav_stack);
 		assert( gwp != NULL );
 	}
 
+fprintf(stderr,"pop_nav done popping\n");
 	assert( (gwp=TOP_OF_STACK(nav_stack)) != NULL );
 	show_genwin(QSP_ARG  gwp);
 }

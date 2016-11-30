@@ -29,6 +29,7 @@ SUBDIRS =			\
 		nrmenu		\
 		www		\
 		cstepit		\
+		fann		\
 		opencv		\
 		flycap		\
 		ptgrey		\

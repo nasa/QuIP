@@ -88,6 +88,8 @@ struct item_context {
 #define NEW_ITEM_CONTEXT(icp)	icp=((Item_Context *)getbuf(sizeof(Item_Context)))
 
 #define MAX_QUERY_STACKS	5	// why do we need to have a limit?
+					// Because we have fixed size arrays
+					// of per-query stack ptrs...
 
 
 struct item_type {
@@ -105,6 +107,11 @@ struct item_type {
 
 	// If we can have multiple interpreter threads, then each thread
 	// needs its own context stack...
+	//
+	// WHY?  Well, if we have multiple threads running the expression language,
+	// then they will be pushing and popping contexts...
+	// But for many things, like variables and macros,
+	// we don't really need multiple contexts???
 
 #ifdef THREAD_SAFE_QUERY
 

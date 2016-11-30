@@ -898,7 +898,8 @@ compute
 # used to be in ../analysis/procrec.mac
 
 Define Differentiate 2 target source
-Dup_Float _d_scratch $1
+#Dup_Float _d_scratch $1
+Dup_Obj _d_scratch $1
 Scroll _d_scratch $2 1 0
 VSMul _d_scratch _d_scratch -1
 VVAdd $1 $2 _d_scratch

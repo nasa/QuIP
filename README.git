@@ -1,0 +1,10 @@
+
+To list remote repositories:
+
+git remote -v
+
+How to control which remote is used?
+
+add a remote:
+git remote add nasa http://github.com/nasa/QuIP.git
+

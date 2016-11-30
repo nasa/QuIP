@@ -1690,9 +1690,9 @@ COMMAND_FUNC( set_completion )
 
 static void halt_stack(SINGLE_QSP_ARG_DECL)
 {
-	if( QS_SERIAL == FIRST_QUERY_SERIAL )
+	if( QS_SERIAL == FIRST_QUERY_SERIAL ){
 		nice_exit(QSP_ARG  0);
-	else {
+	} else {
 		SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
 		CLEAR_QS_FLAG_BITS(THIS_QSP,QS_STILL_TRYING);
 	}
@@ -1840,12 +1840,12 @@ advise(ERROR_STRING);
 			pop_file(SINGLE_QSP_ARG);
 			return("");
 		} else if( has_stdin ){
-			sprintf(ERROR_STRING,"EOF on %s",QS_NAME(THIS_QSP));
-			advise(ERROR_STRING);
+sprintf(ERROR_STRING,"EOF on %s",QS_NAME(THIS_QSP));
+advise(ERROR_STRING);
 			halt_stack(SINGLE_QSP_ARG);
 			// halting master stack will exit program,
 			// but other threads have to get out gracefully...
-			return("");
+			return("");		// nextline
 		} else {
 			// Normally if we encounter EOF on the root
 			// query stack, we want to quit.
@@ -2237,6 +2237,7 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 	//
 	// We need to have a non-null arg to pass to new_qstack...
 
+	// qsp will be null the first time that this is called...
 	if( qsp == NULL ){
 		//qsp=&dummy_qs;	// may be passed to new_qstack
 		// if NEW_QUERY_STACK calls new_query_stack, this
@@ -2260,7 +2261,9 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 	SET_QS_SERIAL(new_qsp, 0);
 #endif /* ! THREAD_SAFE_QUERY */
 
+
 	init_query_stack(new_qsp);
+
 
 #ifdef THREAD_SAFE_QUERY
 	if( n_active_threads == 0 ){
@@ -2535,6 +2538,7 @@ void init_query_stack(Query_Stack *qsp)
 {
 	int i;
 	const char *save_name;
+	int save_serial;
 
 //#ifdef CAUTIOUS
 //	if( qsp == NULL ) {
@@ -2550,9 +2554,12 @@ void init_query_stack(Query_Stack *qsp)
 	//if( QS_FLAGS(qsp) & QS_INITED ) return;
 
 	// Should set everything to zero first...
+	// But we have to restore the name pointer and serial number
 	save_name = QS_NAME(qsp);
+	save_serial = _QS_SERIAL(qsp);
 	memset(qsp,0,sizeof(*qsp));
 	SET_QS_NAME(qsp,save_name);
+	SET_QS_SERIAL(qsp,save_serial);
 
 
 	SET_QS_FLAGS(qsp,
