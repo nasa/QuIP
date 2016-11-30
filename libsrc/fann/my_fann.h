@@ -27,6 +27,6 @@ ITEM_INTERFACE_PROTOTYPES(My_FANN,fann)
 
 struct net_params {
 	int n_layers;
-	int layer_size[MAX_LAYERS];
+	unsigned int layer_size[MAX_LAYERS];
 };
 

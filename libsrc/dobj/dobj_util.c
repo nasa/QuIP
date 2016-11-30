@@ -819,6 +819,8 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)
 
 	debug_data = add_debug_module(QSP_ARG  "data");
 
+	// BUG?  this happens here on the main thread, but child threads
+	// will need to be initialized elsewhere!
 	INSURE_QS_DOBJ_ASCII_INFO(THIS_QSP)
 	init_dobj_ascii_info(QSP_ARG  QS_DOBJ_ASCII_INFO(THIS_QSP) );
     

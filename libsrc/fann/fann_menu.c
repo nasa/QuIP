@@ -68,7 +68,7 @@ static int get_network_params(QSP_ARG_DECL  struct net_params *np_p )
 
 //static COMMAND_FUNC(do_create_std)
 #ifdef HAVE_FANN
-static void create_network(QSP_ARG_DECL  My_Fann *mfp, struct net_params *np_p,
+static void create_network(QSP_ARG_DECL  My_FANN *mfp, struct net_params *np_p,
 	struct fann *(*func)(unsigned int,const unsigned int *))
 {
 	// BUG fann_create_standard uses varargs, so the number of neurons in each

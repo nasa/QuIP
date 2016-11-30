@@ -349,18 +349,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	/* FIXME should use strncpy() here */
 	t=datap;
 
-#ifdef FOOBAR
-	// This old code assumes strings are in image rows...
-	i=0;
-	while( *s && i < OBJ_COLS(dp) ){
-		*t = *s;
-		t += OBJ_PXL_INC(dp);
-		s++;
-		i++;
-	}
-	if( i < OBJ_COLS(dp) )
-		*t = 0;
-#endif // FOOBAR
+	// Old (deleted) code assumed strings were in image rows...
 	// This new code takes the dimension passed in the arg.
 	i=0;
 	orig=s;
@@ -796,14 +785,6 @@ fprintf(stderr,"string_for_scalar using precision %s\n",PREC_NAME(prec_p));
 	return buf;
 }
 
-#ifdef FOOBAR
-	REAL_ARGS,
-	COMPLEX_ARGS,
-	MIXED_ARGS,		/* real/complex */
-	QUATERNION_ARGS,
-	QMIXED_ARGS,		/* real/quaternion */
-#endif // FOOBAR
-
 Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
 {
 	int code=PREC_NONE;
@@ -1045,11 +1026,16 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 {
 	const char *save_ifmt;
 	const char *save_ffmt;
-	
 	/* first let's figure out when to print returns */
 	/* ret_dim == 0 means a return is printed after every pixel */
 	/* ret_dim == 1 means a return is printed after every row */
 
+#ifdef THREAD_SAFE_QUERY
+	// This is done for the main thread in dataobj_init()
+	INSURE_QS_DOBJ_ASCII_INFO(THIS_QSP)
+#endif // THREAD_SAFE_QUERY
+
+// where is ret_dim declared?  part of qsp?
 	if( OBJ_MACH_DIM(dp,0) == 1 && OBJ_COLS(dp) <= dobj_max_per_line )
 		ret_dim=1;
 	else ret_dim=0;
@@ -1069,9 +1055,9 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 #endif //HAVE_CUDA
 #endif // FOOBAR
 
-	if( OBJ_MACH_PREC(dp) == PREC_SP )
+	if( OBJ_MACH_PREC(dp) == PREC_SP ){
 		sp_pntvec(QSP_ARG  dp,fp);
-	else if( OBJ_PREC(dp) == PREC_BIT )
+	} else if( OBJ_PREC(dp) == PREC_BIT )
 		display_bitmap(QSP_ARG  dp,fp);
 	else {
 		/* the call to pnt_dim() was commented out,
