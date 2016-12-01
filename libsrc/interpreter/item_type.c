@@ -874,8 +874,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
-fflush(stderr);
+//fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
+//fflush(stderr);
 	if( *name == 0 ) return(NO_ITEM);
 
 //	assert( CONTEXT_LIST(itp) != NULL );
@@ -890,8 +890,8 @@ fflush(stderr);
 //#endif /* CAUTIOUS */
 #ifdef THREAD_SAFE_QUERY
 	if( np == NO_NODE ){
-fprintf(stderr,"Initializing context in thread %d\n",QS_SERIAL);
-fflush(stderr);
+//fprintf(stderr,"Initializing context in thread %d\n",QS_SERIAL);
+//fflush(stderr);
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
 		assert(QS_SERIAL!=0);
@@ -910,7 +910,7 @@ fflush(stderr);
 
 	/* check the top context first */
 
-fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
+//fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
 	while(np!=NO_NODE){
 		Item_Context *icp;
 		Item *ip;
@@ -922,7 +922,7 @@ fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)))
 
 //		ip=fetch_name(name,CTX_DICT(icp));
 //		ip=check_context(icp,name);
-fprintf(stderr,"Checking container of context %s for '%s'\n",CTX_NAME(icp),name);
+//fprintf(stderr,"Checking container of context %s for '%s'\n",CTX_NAME(icp),name);
 fflush(stderr);
 		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
@@ -936,7 +936,7 @@ fflush(stderr);
 
 			//CTX_RSTRCT_FLAG(itp)=0;
 
-fprintf(stderr,"item_of:  Item_Type %s is restricted, returning NULL\n",ITEM_TYPE_NAME(itp));
+//fprintf(stderr,"item_of:  Item_Type %s is restricted, returning NULL\n",ITEM_TYPE_NAME(itp));
 			return(NO_ITEM);
 		}
 		np=NODE_NEXT(np);
