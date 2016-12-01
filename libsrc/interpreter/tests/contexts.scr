@@ -19,3 +19,22 @@ os
   quit
 Pause
 
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+
+Vector g1 4 1 float
+Ramp1D g1 0 1
+Display g1
+
+Define Test_Thread2 0
+Display g1
+.
+
+os
+  threads
+    new_thread thr2 Test_Thread2
+    quit
+  quit
+
+Pause
+exit
+

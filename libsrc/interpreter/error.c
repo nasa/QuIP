@@ -494,7 +494,6 @@ void nice_exit(QSP_ARG_DECL  int status)
 {
 	int i;
 
-fprintf(stderr,"nice_exit:  BEGIN\n");
 //call_mcleanup();
 	for(i=0;i<n_exit_funcs;i++){
 		(*exit_func_tbl[i])(SINGLE_QSP_ARG);

@@ -212,20 +212,9 @@ static void rv_popd(SINGLE_QSP_ARG_DECL)
 	}
 	dir_stack_depth--;
 	rv_cd(QSP_ARG  dir_stack[dir_stack_depth]);
-	givbuf( (void *) dir_stack[dir_stack_depth]);
+	/*givbuf( (void *) dir_stack[dir_stack_depth]);*/
+	rls_str( dir_stack[dir_stack_depth] );
 }
-
-#ifdef FOOBAR
-/* what we want here is all the inodes, not just those in the current context */
-/* BUT the current implementation returns this, not just the current context???  BUG?? */
-
-List *rv_inode_list(SINGLE_QSP_ARG_DECL)
-{
-	if( rv_inode_itp == NO_ITEM_TYPE ) return(NO_LIST);
-
-	return(item_list(QSP_ARG  rv_inode_itp));
-}
-#endif /* FOOBAR */
 
 static void close_disk_files(QSP_ARG_DECL  int ndisks, int *fd_arr)
 {
@@ -384,6 +373,7 @@ static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 			return;
 		}
 	}
+fprintf(stderr,"Pushing RV inode context %s\n",CTX_NAME(icp));
 	PUSH_ITEM_CONTEXT(rv_inode_itp,icp);
 }
 
@@ -570,6 +560,7 @@ advise(ERROR_STRING);
 
 	/* now create a heap struct for this inode */
 
+fprintf(stderr,"creating new heap rv_inode '%s'\n",rv_stp+RV_NAME_IDX(dk_inp));
 	inp = new_rv_inode(QSP_ARG  rv_stp+RV_NAME_IDX(dk_inp));
 	if( inp == NO_INODE ){
 		sprintf(ERROR_STRING,
@@ -2189,7 +2180,15 @@ void traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
 {
 	RV_Inode *inp;
 
+fprintf(stderr,"traverse_rv_inodes BEGIN:  QS_SERIAL = %d\n",QS_SERIAL);
+fflush(stderr);
 	CHECK_VOLUME("traverse_rv_inodes")
+
+fprintf(stderr,"traverse_rv_inodes:  listing rv_inodes...\n");
+fflush(stderr);
+	list_items( QSP_ARG  rv_inode_itp );
+fprintf(stderr,"traverse_rv_inodes:  DONE listing, looking up root '%s'...\n",ROOT_DIR_NAME);
+fflush(stderr);
 
 	inp = rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
 //#ifdef CAUTIOUS

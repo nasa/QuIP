@@ -136,12 +136,16 @@ struct item_type {
 #define it_name	it_item.item_name
 #define ITEM_TYPE_NAME(itp)	((itp)->it_name)
 
-// flag bits
+// context flag bits
 #define LIST_IS_CURRENT	1
 #define NEED_CHOICES	2
 #define NEED_LIST	4
-#define RESTRICTED	8
 #define CONTEXT_CHANGED	16
+// "Restricted" means that only the top context will be searched.
+// This feature was introduced in the expression language to support
+// scoping of variables to subroutines.  To allow multiple instances
+// to run in parallel, this has to be a per-thread flag...
+//#define RESTRICTED	8	// what does restricted mean???
 
 
 #define NO_ITEM_TYPE		((Item_Type *)NULL)
@@ -149,6 +153,7 @@ struct item_type {
 
 // BUG for thread-safe operation, this flag needs to be per-context stack!
 
+#ifdef FOOBAR
 #define RESTRICT_ITEM_CONTEXT(itp,yesno)		\
 							\
 {							\
@@ -159,6 +164,8 @@ struct item_type {
 }
 
 #define IS_RESTRICTED(itp)	(IT_FLAGS(itp) & RESTRICTED)
+#endif // FOOBAR
+
 #define NEEDS_NEW_CHOICES(itp)	(IT_FLAGS(itp) & NEED_CHOICES)
 #define NEEDS_NEW_LIST(itp)	(IT_FLAGS(itp) & NEED_LIST)
 
@@ -193,8 +200,12 @@ struct item_type {
 
 #define IT_CSTK_AT_IDX(itp,i)		(itp)->it_context_stack[i]
 #define SET_IT_CSTK_AT_IDX(itp,i,sp)	(itp)->it_context_stack[i] = sp
+#define IT_CTX_RESTRICTED_AT_IDX(itp,i)	(itp)->it_ctx_restricted[i]
 #define SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,flag)	\
 					(itp)->it_ctx_restricted[i] = flag
+#define IS_RESTRICTED(itp)		(IT_CTX_RESTRICTED_AT_IDX(itp,QS_SERIAL))
+#define RESTRICT_ITEM_CONTEXT(itp,yesno)	SET_IT_CTX_RESTRICTED_AT_IDX(itp,QS_SERIAL,yesno)
+
 //#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL((Query_Stack *)THIS_QSP)])
 #define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL])
 
@@ -221,12 +232,16 @@ struct item_type {
 #define SET_IT_CSTK_AT_IDX(itp,i,sp)	SET_IT_CSTK(itp,sp)
 #define THIS_CTX_STACK(itp)		((itp)->it_context_stack)
 
-#define CURRENT_CONTEXT(itp)	(itp)->it_icp
+#define CURRENT_CONTEXT(itp)		(itp)->it_icp
 #define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp = icp
-#define CONTEXT_STACK(itp)	(itp)->it_context_stack
+#define CONTEXT_STACK(itp)		(itp)->it_context_stack
 #define FIRST_CONTEXT_STACK(itp)	(itp)->it_context_stack
-#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted
-/*#define FIRST_CONTEXT(itp)	(itp)->it_icp */
+#define CTX_RSTRCT_FLAG(itp)		(itp)->it_ctx_restricted
+#define SET_CTX_RSTRCT_FLAG(itp,val)	(itp)->it_ctx_restricted = val
+
+#define IS_RESTRICTED(itp)		(CTX_RSTRCT_FLAG(itp))
+#define RESTRICT_ITEM_CONTEXT(itp,yesno)	SET_CTX_RSTRCT_FLAG(itp,yesno)
+
 
 #endif /* ! THREAD_SAFE_QUERY */
 

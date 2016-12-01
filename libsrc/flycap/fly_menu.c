@@ -4,7 +4,8 @@
 #include "fly.h"
 #include "data_obj.h"
 
-static PGR_Cam *the_cam_p=NULL;
+static PGR_Cam *the_cam_p=NULL;	// should this be per-thread?
+				// no need yet...
 
 // local prototypes
 static COMMAND_FUNC( do_cam_menu );
@@ -813,6 +814,14 @@ static COMMAND_FUNC( do_bmode )
 #endif
 }
 
+static COMMAND_FUNC(do_quit_fly)
+{
+	if( the_cam_p != NULL )
+		pop_camera_context(SINGLE_QSP_ARG);
+
+	do_pop_menu(SINGLE_QSP_ARG);
+}
+
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(fly_menu,s,f,h)
 
@@ -833,10 +842,13 @@ ADD_CMD( bandwidth,	do_bw,		report bandwidth usage )
 ADD_CMD( bmode,		do_bmode,	set/clear B-mode )
 ADD_CMD( close,		do_close,	shutdown firewire subsystem )
 ADD_CMD( camera,	do_cam_menu,	camera submenu )
-MENU_END(fly)
+ADD_CMD( quit,		do_quit_fly,	exit submenu )
+MENU_SIMPLE_END(fly)	// doesn't add quit command automatically
 
 COMMAND_FUNC( do_fly_menu )
 {
+	if( the_cam_p != NULL )
+		push_camera_context(QSP_ARG  the_cam_p);
 	PUSH_MENU( fly );
 }
 

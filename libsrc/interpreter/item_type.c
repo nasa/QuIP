@@ -165,6 +165,7 @@ static void init_itp(Item_Type *itp, int container_type)
 		/* What the heck - just allocate all the lists */
 		for(i=0;i<MAX_QUERY_STACKS;i++){
 			SET_IT_CSTK_AT_IDX(itp,i,new_stack());
+			// This appear to clear the restriction bit...
 			SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,0);
 		}
 	}
@@ -183,16 +184,21 @@ static void init_itp(Item_Type *itp, int container_type)
 	SET_IT_CSTK(itp,new_stack());
 	SET_IT_CTX_RESTRICTED(itp,0);
 #endif /* ! THREAD_SAFE_QUERY */
-}
+} // init_itp
 
 #ifdef THREAD_SAFE_QUERY
 
 #ifdef NOT_USED
 
-/* In the multi-thread environment, each item type has to have a separate context stack
- * for each query stack.  When we create a new query stack, we have to initialize
+/* In the multi-thread environment, each item type has a separate context stack
+ * for each query stack.  This is done so that each thread can have different
+ * variables, for example...
+ * When we create a new query stack, we have to initialize
  * the corresponding context stack.
  * We call this when we have added a new query stream; But how do we know???
+ * There are many instances where we WANT the threads to share contexts...
+ * particularly data objects.  Maybe the best strategy is to have new threads
+ * inherit the context of their invoking thread (usually the main thread)?
  */
 
 static void setup_item_type_context(QSP_ARG_DECL  Item_Type *itp, Query_Stack *new_qsp)
@@ -417,12 +423,21 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 //#endif /* CAUTIOUS */
 	assert( *name != 0 );
 
+//fprintf(stderr,"new_item %s, preparing to lock item type %s\n",
+//name,ITEM_TYPE_NAME(itp));
 	LOCK_ITEM_TYPE(itp)
+//fprintf(stderr,"new_item %s, done locking item type %s\n",
+//name,ITEM_TYPE_NAME(itp));
 
 	/* We will allow name conflicts if they are not in the same context */
 
 	/* Only check for conflicts in the current context */
 	//ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
+//fprintf(stderr,"new_item:  using current context %s for new item %s\n",
+//CTX_NAME(CURRENT_CONTEXT(itp)),name);
+
+	// When we start a new thread, the current context may be null!?
+
 	ip = container_find_match(CTX_CONTAINER(CURRENT_CONTEXT(itp)),
 							name );
 
@@ -859,6 +874,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
+fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
+fflush(stderr);
 	if( *name == 0 ) return(NO_ITEM);
 
 //	assert( CONTEXT_LIST(itp) != NULL );
@@ -873,6 +890,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //#endif /* CAUTIOUS */
 #ifdef THREAD_SAFE_QUERY
 	if( np == NO_NODE ){
+fprintf(stderr,"Initializing context in thread %d\n",QS_SERIAL);
+fflush(stderr);
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
 		assert(QS_SERIAL!=0);
@@ -881,6 +900,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		assert( np != NO_NODE );
 		icp = NODE_DATA(np);
 		assert(icp!=NULL);
+		// We tried pushing
 		push_item_context(QSP_ARG  itp, icp );
 		np=QLIST_HEAD(CONTEXT_LIST(itp));
 	}
@@ -890,6 +910,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 	/* check the top context first */
 
+fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
 	while(np!=NO_NODE){
 		Item_Context *icp;
 		Item *ip;
@@ -901,6 +922,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 //		ip=fetch_name(name,CTX_DICT(icp));
 //		ip=check_context(icp,name);
+fprintf(stderr,"Checking container of context %s for '%s'\n",CTX_NAME(icp),name);
+fflush(stderr);
 		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
 			return(ip);
@@ -913,6 +936,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 			//CTX_RSTRCT_FLAG(itp)=0;
 
+fprintf(stderr,"item_of:  Item_Type %s is restricted, returning NULL\n",ITEM_TYPE_NAME(itp));
 			return(NO_ITEM);
 		}
 		np=NODE_NEXT(np);
@@ -921,7 +945,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 	/* not found in any context, including default */
 
 	return(NO_ITEM);
-}
+} // item_of
 
 /*
  * Return a pointer to the item of the given type with the given name,

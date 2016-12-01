@@ -423,7 +423,7 @@ advise(ERROR_STRING);
 
 	if( glXMakeCurrent(VW_DPY(vp),vp->vw_xwin,VW_OGL_CTX(vp)) != True ){
 		sprintf(ERROR_STRING,
-		"Unable to set current GLX context to %s!?",vp->vw_name);
+		"select_gl_viewer:  Unable to set current GLX context to %s!?",vp->vw_name);
 		WARN(ERROR_STRING);
 	}
 	gl_vp = vp;
