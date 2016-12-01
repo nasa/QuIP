@@ -49,7 +49,7 @@ struct frag_match_info {
 
 struct item_context {
 	Item			ic_item;
-	List *			ic_lp;
+	List *			ic_lp;		// list of items in this context
 	Item_Type *		ic_itp;		// points to the owner of this context
 	struct item_context *	ic_frag_icp;	// fragment match database just for this context
 	int			ic_flags;
@@ -91,11 +91,43 @@ struct item_context {
 					// Because we have fixed size arrays
 					// of per-query stack ptrs...
 
+// This struct contains all of the things that we need to have copied for each thread...
+
+typedef struct item_type_context_info {
+	List *		itci_item_lp;			// list of all of the items -
+	Stack *		itci_context_stack;		// need to have one per thread
+	Item_Context *	itci_icp;			// current context
+	//int 		it_ctx_restricted;		// flags
+	int		itci_flags;
+} Item_Type_Context_Info;
+
+// Flag bits
+#define ITCI_CTX_RESTRICTED_FLAG		1
+//#define ITCI_LIST_IS_CURRENT			2
+#define ITCI_NEEDS_LIST				2
+//#define NEEDS_NEW_CHOICES(itp)	(IT_FLAGS(itp) & NEED_CHOICES)
+//#define NEED_CHOICES	2
+//#define CTX_NEEDS_LIST	4
+
+#define NEEDS_NEW_LIST(itp)	(ITCI_FLAGS(THIS_ITCI(itp)) & ITCI_NEEDS_LIST)
+
+#define ITCI_ITEM_LIST(itci_p)			(itci_p)->itci_item_lp
+#define SET_ITCI_ITEM_LIST(itci_p,lp)		(itci_p)->itci_item_lp = lp
+
+#define ITCI_CSTK(itci_p)			(itci_p)->itci_context_stack
+#define SET_ITCI_CSTK(itci_p,sp)		(itci_p)->itci_context_stack = sp
+
+#define ITCI_FLAGS(itci_p)			(itci_p)->itci_flags
+#define SET_ITCI_FLAGS(itci_p,val)		(itci_p)->itci_flags = val
+#define SET_ITCI_FLAG_BITS(itci_p,val)		(itci_p)->itci_flags |= val
+#define CLEAR_ITCI_FLAG_BITS(itci_p,val)	(itci_p)->itci_flags &= ~(val)
+
+#define ITCI_CTX_RESTRICTED(itci_p)		(ITCI_FLAGS(itci_p) & ITCI_CTX_RESTRICTED_FLAG)
+//#define SET_IT_CTX_RESTRICTED(itci_p,flag)	(itp)->it_ctx_restricted[i] = flag
 
 struct item_type {
 	Item		it_item;
-	int		it_flags;
-	List *		it_lp;
+	int		it_flags;	// don't need?
 	List *		it_free_lp;
 	int		it_default_container_type;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
@@ -118,16 +150,20 @@ struct item_type {
 #ifdef HAVE_PTHREADS
 	pthread_mutex_t	it_mutex;
 #endif /* HAVE_PTHREADS */
+	/*
+	List *		it_lp;			// list of all of the items -
+						// but if each thread can have a different context stack, then this needs to be
+						// per-qsp also!
 	Stack *		it_context_stack[MAX_QUERY_STACKS];	// need to have one per thread
 	Item_Context *	it_icp[MAX_QUERY_STACKS];		// current context
 	int 		it_ctx_restricted[MAX_QUERY_STACKS];	// flags
+	*/
+	Item_Type_Context_Info	it_itci[MAX_QUERY_STACKS];
 
 //#define FIRST_CONTEXT(itp)	itp->it_icp[0]
 
 #else /* ! THREAD_SAFE_QUERY */
-	Stack *		it_context_stack;
-	Item_Context *	it_icp;			// current context
-	int 		it_ctx_restricted;	// flags
+	Item_Type_Context_Info	it_itci[1];
 #endif /* ! THREAD_SAFE_QUERY */
 
 	Frag_Match_Info *	it_fmi_p;			// only one???
@@ -137,10 +173,8 @@ struct item_type {
 #define ITEM_TYPE_NAME(itp)	((itp)->it_name)
 
 // context flag bits
-#define LIST_IS_CURRENT	1
-#define NEED_CHOICES	2
-#define NEED_LIST	4
-#define CONTEXT_CHANGED	16
+#define CTX_CHANGED_FLAG	1
+
 // "Restricted" means that only the top context will be searched.
 // This feature was introduced in the expression language to support
 // scoping of variables to subroutines.  To allow multiple instances
@@ -163,34 +197,34 @@ struct item_type {
 		CLEAR_IT_FLAG_BITS(itp,RESTRICTED);	\
 }
 
-#define IS_RESTRICTED(itp)	(IT_FLAGS(itp) & RESTRICTED)
+//#define IS_RESTRICTED(itp)	(IT_FLAGS(itp) & RESTRICTED)
 #endif // FOOBAR
-
-#define NEEDS_NEW_CHOICES(itp)	(IT_FLAGS(itp) & NEED_CHOICES)
-#define NEEDS_NEW_LIST(itp)	(IT_FLAGS(itp) & NEED_LIST)
 
 
 /* Item_Type */
 #define IT_NAME(itp)			(itp)->it_item.item_name
 #define IT_FREE_LIST(itp)		(itp)->it_free_lp
-#define IT_FLAGS(itp)			(itp)->it_flags
-#define IT_CHOICES(itp)			(itp)->it_choices
-#define IT_N_CHOICES(itp)		(itp)->it_n_choices
-#define IT_LIST(itp)			(itp)->it_lp
+
+// eliminate it_flags?
+//#define IT_FLAGS(itp)			(itp)->it_flags
+//#define SET_IT_FLAGS(itp,f)		(itp)->it_flags=f
+//#define SET_IT_FLAG_BITS(itp,f)		(itp)->it_flags |= f
+//#define CLEAR_IT_FLAG_BITS(itp,f)	(itp)->it_flags &= ~(f)
+
+//#define IT_LIST(itp)			(itp)->it_lp
 #define IT_CLASS_LIST(itp)		(itp)->it_class_lp
 #define IT_CONTAINER_TYPE(itp)		(itp)->it_default_container_type
-#define SET_IT_FLAGS(itp,f)		(itp)->it_flags=f
-#define SET_IT_FLAG_BITS(itp,f)		(itp)->it_flags |= f
-#define CLEAR_IT_FLAG_BITS(itp,f)	(itp)->it_flags &= ~(f)
 #define IT_DEL_METHOD(itp)		(itp)->it_del_method
 #define SET_IT_DEL_METHOD(itp,f)	(itp)->it_del_method = f
-#define SET_IT_LIST(itp,lp)		(itp)->it_lp = lp
 #define SET_IT_FREE_LIST(itp,lp)	(itp)->it_free_lp = lp
-#define SET_IT_CHOICES(itp,choices)	(itp)->it_choices = choices
-#define SET_IT_N_CHOICES(itp,n)		(itp)->it_n_choices = n
 #define SET_IT_CTX_IT(itp,citp)		(itp)->it_ctx_itp = citp
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
 #define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_default_container_type = t
+
+//#define IT_N_CHOICES(itp)		(itp)->it_n_choices
+//#define SET_IT_N_CHOICES(itp,n)		(itp)->it_n_choices = n
+//#define IT_CHOICES(itp)			(itp)->it_choices
+//#define SET_IT_CHOICES(itp,choices)	(itp)->it_choices = choices
 
 #define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
 #define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
@@ -198,13 +232,6 @@ struct item_type {
 
 #ifdef THREAD_SAFE_QUERY
 
-#define IT_CSTK_AT_IDX(itp,i)		(itp)->it_context_stack[i]
-#define SET_IT_CSTK_AT_IDX(itp,i,sp)	(itp)->it_context_stack[i] = sp
-#define IT_CTX_RESTRICTED_AT_IDX(itp,i)	(itp)->it_ctx_restricted[i]
-#define SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,flag)	\
-					(itp)->it_ctx_restricted[i] = flag
-#define IS_RESTRICTED(itp)		(IT_CTX_RESTRICTED_AT_IDX(itp,QS_SERIAL))
-#define RESTRICT_ITEM_CONTEXT(itp,yesno)	SET_IT_CTX_RESTRICTED_AT_IDX(itp,QS_SERIAL,yesno)
 
 //#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL((Query_Stack *)THIS_QSP)])
 #define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL])
@@ -214,13 +241,12 @@ struct item_type {
 //#define CONTEXT_STACK(itp)	(itp)->it_context_stack[QS_SERIAL((Query_Stack *)qsp)]
 //#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[QS_SERIAL((Query_Stack *)qsp)]
 
-#define CURRENT_CONTEXT(itp)	(itp)->it_icp[QS_SERIAL]
-#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp[QS_SERIAL] = icp
+#define CURRENT_CONTEXT(itp)		(itp)->it_itci[QS_SERIAL].itci_icp
+#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_itci[QS_SERIAL].itci_icp = icp
 
 #define CONTEXT_STACK(itp)	(itp)->it_context_stack[QS_SERIAL]
 #define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[QS_SERIAL]
 
-#define FIRST_CONTEXT_STACK(itp)	(itp)->it_context_stack[0]
 
 
 #else /* ! THREAD_SAFE_QUERY */
@@ -232,6 +258,7 @@ struct item_type {
 #define SET_IT_CSTK_AT_IDX(itp,i,sp)	SET_IT_CSTK(itp,sp)
 #define THIS_CTX_STACK(itp)		((itp)->it_context_stack)
 
+// BUG no good!  need to fix...
 #define CURRENT_CONTEXT(itp)		(itp)->it_icp
 #define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp = icp
 #define CONTEXT_STACK(itp)		(itp)->it_context_stack
@@ -240,13 +267,31 @@ struct item_type {
 #define SET_CTX_RSTRCT_FLAG(itp,val)	(itp)->it_ctx_restricted = val
 
 #define IS_RESTRICTED(itp)		(CTX_RSTRCT_FLAG(itp))
-#define RESTRICT_ITEM_CONTEXT(itp,yesno)	SET_CTX_RSTRCT_FLAG(itp,yesno)
+
 
 
 #endif /* ! THREAD_SAFE_QUERY */
 
-#define CONTEXT_LIST(itp)		THIS_CTX_STACK(itp)	/* this is the list of contexts,
-								 * not the list of items in a context */
+#define ITCI_AT_INDEX(itp,idx)		(&((itp)->it_itci[idx]))
+#define THIS_ITCI(itp)			ITCI_AT_INDEX(itp,_QS_SERIAL(THIS_QSP))
+
+//#define CONTEXT_LIST(itp)		ITCI_CSTK( THIS_ITCI(itp) )	// this is the list of contexts,
+//									// not the list of items in a context
+#define CONTEXT_LIST(itp)		context_list(QSP_ARG  itp)
+#define SET_CONTEXT_LIST(itp,lp)	SET_ITCI_CSTK( THIS_ITCI(itp), lp )
+
+#define FIRST_CONTEXT_STACK(itp)	ITCI_CSTK( ITCI_AT_INDEX(itp,0) )
+
+#define IS_RESTRICTED(itp)		ITCI_CTX_RESTRICTED( THIS_ITCI(itp) )
+
+// We use ITCI_AT_INDEX instead of THIS_ITCI() when we can't see the qsp internals...
+#define RESTRICT_ITEM_CONTEXT(itp,yesno)	{											\
+							if( yesno ) SET_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);	\
+							else CLEAR_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);		\
+						}
+
+//#define IT_LIST(itp)			ITCI_ITEM_LIST( THIS_ITCI(itp) )
+
 
 #define SET_IT_NAME(itp,s)		(itp)->it_item.item_name=s
 
@@ -267,7 +312,7 @@ struct item_class {
 #define SET_CL_FLAG_BITS(iclp,f)	(iclp)->icl_flags |= f
 
 // flag bits
-#define NEED_CLASS_CHOICES	1
+#define NEED_CLASS_CHOICES	1	// BUG item_type items are per-thread, so class choices should be too!?
 
 struct member_info {
 	Item_Type *	mi_itp;
@@ -385,6 +430,7 @@ extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
 //extern Item *check_context(Item_Context *icp, const char *name);
 extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 extern List *alpha_sort(QSP_ARG_DECL  List *lp);
+extern List *context_list(QSP_ARG_DECL  Item_Type *itp);
 
 #endif /* ! _ITEM_TYPE_H_ */
 

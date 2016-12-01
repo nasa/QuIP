@@ -103,6 +103,7 @@ ITEM_NEW_PROT(Filetype,file_type)
 ITEM_CHECK_PROT(Filetype,file_type)
 ITEM_PICK_PROT(Filetype,file_type)
 ITEM_ENUM_PROT(Filetype,file_type)
+ITEM_LIST_PROT(Filetype,file_type)	// added for debugging
 
 typedef struct image_file {
 	Item		if_item;

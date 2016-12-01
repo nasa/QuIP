@@ -367,6 +367,10 @@ advise(ERROR_STRING);
 			// But because it can pop a level, we should not any
 			// the space here...
 
+			// halting bit can be set if we run out of input on a secondary thread
+			// (primary thread will exit)
+			if( IS_HALTING(THIS_QSP) ) return 0;
+
 			if( QLEVEL == _level && QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
 				eatup_space(SINGLE_QSP_ARG);
 			}
@@ -1654,6 +1658,8 @@ const char * qline(QSP_ARG_DECL  const char *pline)
 		/* if the current level is out, nextline will pop 1 level */
 		buf=nextline(QSP_ARG  pline);	// qline
 
+		if( IS_HALTING(THIS_QSP) ) return NULL;
+
 		if( QLEVEL < 0 ){
 			return NULL;
 		}
@@ -1842,7 +1848,7 @@ advise(ERROR_STRING);
 		} else if( has_stdin ){
 sprintf(ERROR_STRING,"EOF on %s",QS_NAME(THIS_QSP));
 advise(ERROR_STRING);
-			halt_stack(SINGLE_QSP_ARG);
+			halt_stack(SINGLE_QSP_ARG);		// nextline
 			// halting master stack will exit program,
 			// but other threads have to get out gracefully...
 			return("");		// nextline
@@ -2228,7 +2234,7 @@ static void first_query_stack(Query_Stack *qsp)
 #endif /* QUIP_DEBUG */
 }
 
-Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
+Query_Stack *new_qstk(QSP_ARG_DECL  const char *name)
 {
 	Query_Stack *new_qsp;
 	Query_Stack *qsp_to_free=NULL;
@@ -2240,7 +2246,7 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 	// qsp will be null the first time that this is called...
 	if( qsp == NULL ){
 		//qsp=&dummy_qs;	// may be passed to new_qstack
-		// if NEW_QUERY_STACK calls new_query_stack, this
+		// if NEW_QUERY_STACK calls new_qsp, this
 		// could lead to infinite recursion???
 		qsp = NEW_QUERY_STACK;	// getbuf
 		SET_QS_SERIAL(qsp, n_active_threads);
@@ -2248,10 +2254,11 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 	}
 #endif /* THREAD_SAFE_QUERY */
 
-	new_qsp = new_qstack(QSP_ARG  name);
+	// We used to use a custom routine here - are there problems using the template??
+	new_qsp = new_query_stack(QSP_ARG  name);
 
 	if( qsp_to_free != NULL ){
-		DEFAULT_QSP = qsp_to_free;
+		//DEFAULT_QSP = qsp_to_free;	// why?  appears to do nothing?
 		givbuf(qsp_to_free);
 	}
 
@@ -2294,7 +2301,7 @@ Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 #endif /* ! THREAD_SAFE_QUERY */
 
 	return(new_qsp);
-} // new_query_stack
+} // new_qsp
 
 #ifdef NOT_USED
 /* dup stuff */

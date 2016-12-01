@@ -8,7 +8,6 @@
 #include "query_bits.h"
 #include "variable.h"
 #include "quip_menu.h"
-//#include "qs_basic.h"
 #include "ascii_fmts.h"
 #include "string_ref.h"
 

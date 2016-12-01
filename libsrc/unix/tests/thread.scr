@@ -2,6 +2,8 @@
 Define Test_Thread 0
 echo 'Test_Thread BEGIN'
 os threads tell quit quit
+advise "listing threads from child thread:"
+os threads list quit quit
 sleep 1
 echo 'Test_Thread DONE'
 .
@@ -9,6 +11,21 @@ echo 'Test_Thread DONE'
 os
   threads
     new_thread thr1 Test_Thread
-    Pause
+    quit
+  quit
+
+advise "Executing main thread..."
+sleep 3
+
+os
+  threads
+    advise "listing threads from main thread:"
+    list
+    advise "waiting ..."
+    wait thr1
+    advise "DONE waiting ..."
+    quit
+  quit
+
 
 

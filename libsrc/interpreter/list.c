@@ -448,6 +448,7 @@ Node *remHead( List *lp )		/**/
 {
 	Node *np;
 
+	assert(lp!=NULL);
 	if( (np=QLIST_HEAD(lp)) == NO_NODE ){
 		return( NO_NODE );
 	}

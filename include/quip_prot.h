@@ -172,9 +172,11 @@ extern int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices);
 #define WHICH_ONE(p,n,ch)	which_one(QSP_ARG  p, n, ch )
 #define WHICH_ONE2(p,n,ch)	which_one2(QSP_ARG  p, n, ch )
 
-extern Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name);
+extern Query_Stack *new_qstk(QSP_ARG_DECL  const char *name);
 ITEM_INIT_PROT(Query_Stack,query_stack)
 ITEM_LIST_PROT(Query_Stack,query_stack)
+ITEM_NEW_PROT(Query_Stack,query_stack)
+ITEM_PICK_PROT(Query_Stack,query_stack)
 
 extern Mouthful *new_mouthful(const char * text, const char *filename);
 

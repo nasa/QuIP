@@ -45,6 +45,7 @@ static void *thread_exec(void *argp)
 	while( ! IS_HALTING(qsp) ){
 		qs_do_cmd(qsp);
 	}
+	// return is like pthread_exit...
 	return(NULL);
 }
 
@@ -57,11 +58,14 @@ static COMMAND_FUNC( do_new_thread )
 	s=NAMEOF("name for thread");
 	c=NAMEOF("script to execute");
 
-	new_qsp = new_query_stack(QSP_ARG  s);
+	new_qsp = new_qstk(QSP_ARG  s);
 	if( new_qsp == NULL ) return;
 
 	// change the flags from the default values
 	CLEAR_QS_FLAG_BITS(new_qsp, QS_INTERACTIVE_TTYS|QS_FORMAT_PROMPT|QS_COMPLETING );
+
+	// The new thread should inherit context stacks from the parent thread,
+	// but we don't want to bother to do all that now - ?
 
 //if( verbose ){
 //sprintf(ERROR_STRING,"do_new_thread %s:  qs_flags = 0x%x",
@@ -88,6 +92,7 @@ static COMMAND_FUNC( do_new_thread )
 
 static COMMAND_FUNC( do_list_threads )
 {
+	prt_msg("All threads:");
 	list_query_stacks(SINGLE_QSP_ARG);
 }
 
@@ -97,12 +102,32 @@ static COMMAND_FUNC( do_tell_thread )
 	prt_msg(MSG_STR);
 }
 
+static COMMAND_FUNC( do_wait_thread )
+{
+	int status;
+	void **val_ptr=NULL;
+	Query_Stack *thread_qsp;
+
+	thread_qsp = pick_query_stack(QSP_ARG  "thread name");
+	if( thread_qsp == NULL ) return;
+
+	if( _QS_SERIAL(thread_qsp) == 0 ){
+		WARN("do_wait_thread:  can't wait for main thread!?");
+		return;
+	}
+
+	status = pthread_join( thread_qsp->qs_thr, val_ptr );
+	if( status != 0 )
+		WARN("pthread_join returned an error status!?");
+}
+
 #define ADD_CMD(s,f,h)		ADD_COMMAND(threads_menu,s,f,h)
 
 MENU_BEGIN(threads)
 ADD_CMD( new_thread,	do_new_thread,		create a new thread )
 ADD_CMD( list,		do_list_threads,	list all active threads )
 ADD_CMD( tell,		do_tell_thread,		report name of current thread )
+ADD_CMD( wait,		do_wait_thread,		wait for thread to exit )
 MENU_END(threads)
 
 COMMAND_FUNC( do_thread_menu )

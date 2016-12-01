@@ -50,7 +50,7 @@ static u_long debug_contexts=CTX_DEBUG_MASK;
 //#ifdef CAUTIOUS
 //static void check_item_type(Item_Type *itp);
 //#endif /* CAUTIOUS */
-static void make_needy(Item_Type *itp);
+static void make_needy(QSP_ARG_DECL  Item_Type *itp);
 static void init_itp(Item_Type *itp, int container_type);
 static int item_cmp(const void *,const void *);
 static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_type);
@@ -65,6 +65,8 @@ static Item_Type *	new_ittyp(QSP_ARG_DECL  const char *);
 
 static void		dump_item_context(QSP_ARG_DECL  Item_Context *);
 
+static List *_item_list(QSP_ARG_DECL  Item_Type *itp);
+#define IT_LIST(itp)	_item_list(QSP_ARG  itp)
 
 #define ITEM_TYPE_STRING	"Item_Type"
 Item_Type * ittyp_itp=NO_ITEM_TYPE;
@@ -133,11 +135,25 @@ void set_del_method(QSP_ARG_DECL  Item_Type *itp,void (*func)(QSP_ARG_DECL  Item
 	SET_IT_DEL_METHOD(itp, func);
 }
 
+static void init_itci(Item_Type *itp,int idx)
+{
+	Item_Type_Context_Info *itci_p;
+
+	itci_p = &(itp->it_itci[idx]);
+
+	SET_ITCI_ITEM_LIST(itci_p, new_list() );
+	SET_ITCI_CSTK(itci_p,new_stack());
+	// This appear to clear the restriction bit...
+	SET_ITCI_FLAGS(itci_p,0);
+}
+
 static void init_itp(Item_Type *itp, int container_type)
 {
 //fprintf(stderr,"init_itp %s %d BEGIN\n",itp->it_item.item_name,container_type);
 	/* should we really do this? */
-	SET_IT_LIST(itp, new_list() );
+	init_itci(itp,0);
+	//SET_IT_LIST(itp, new_list() );
+
 	SET_IT_FREE_LIST(itp, new_list() );
 #ifdef USE_CHOICE_LIST
 	SET_IT_FLAGS(itp, NEED_CHOICES);
@@ -152,6 +168,8 @@ static void init_itp(Item_Type *itp, int container_type)
 	SET_IT_FRAG_MATCH_INFO(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
+#ifdef FOOBAR
+	// now done in init_itci
 	{
 		int i;
 //if( n_active_threads==0 )NERROR1("init_itp:  no active threads!?");
@@ -169,6 +187,7 @@ static void init_itp(Item_Type *itp, int container_type)
 			SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,0);
 		}
 	}
+#endif // FOOBAR
 #ifdef HAVE_PTHREADS
 	{
 		//itp->it_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -390,7 +409,7 @@ int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np )
 
 	SET_IT_FLAG_BITS(itp, NEED_CHOICES);
 	*/
-	make_needy(itp);
+	make_needy(QSP_ARG  itp);
 
 	return 0;
 }
@@ -699,14 +718,20 @@ NADVISE(ERROR_STRING);
 
 	// This is really a stack push!
 	np=mk_node(icp);
+
+	// context_list auto-creates now?
+	/*
 	if( CONTEXT_LIST(itp) == NO_LIST )
-		CONTEXT_LIST(itp) = new_list();
+		SET_CONTEXT_LIST(itp,new_list());
+		*/
+	assert(CONTEXT_LIST(itp)!=NULL);
+
 	addHead(CONTEXT_LIST(itp),np);
 
 	SET_CURRENT_CONTEXT(itp, icp);
 
 	// BUG - flags should be qsp-specific???
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
+	//SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
 } // end push_item_context
 
 /*
@@ -744,7 +769,8 @@ NADVISE(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	// BUG - flags should be qsp-specific???
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
+	//SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
+	SET_ITCI_FLAG_BITS( THIS_ITCI(itp), ITCI_NEEDS_LIST );	// mark list as not current
 
 	return(popped_icp);
 }
@@ -878,7 +904,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //fflush(stderr);
 	if( *name == 0 ) return(NO_ITEM);
 
-//	assert( CONTEXT_LIST(itp) != NULL );
+	assert( CONTEXT_LIST(itp) != NULL );
 
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
 
@@ -894,6 +920,10 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //fflush(stderr);
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
+if( QS_SERIAL==0 ){
+fprintf(stderr,"item_of(%s,%s):  no contexts on stack but QS_SERIAL = %d!?\n",
+ITEM_TYPE_NAME(itp),name,QS_SERIAL);
+}
 		assert(QS_SERIAL!=0);
 		// get the bottom of the stack from the root qsp, and push it...
 		np = QLIST_TAIL( FIRST_CONTEXT_STACK(itp) );
@@ -1008,26 +1038,24 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 //fprintf(stderr,"item_list %s BEGIN\n",ITEM_NAME((Item *)itp));
 	/* First check and see if any of the contexts have been updated */
 
-	if( CONTEXT_LIST(itp) != NO_LIST ){
+	assert(CONTEXT_LIST(itp)!=NO_LIST);
+
+	/*if( CONTEXT_LIST(itp) != NO_LIST )*/
+	{
 		Node *context_np;
 		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
 		while(context_np!=NO_NODE){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
-			/* We can't look just at the dictionary LIST_IS_CURRENT
-			 * flag, because if the name space is not using hashing,
-			 * then its list is always current, although the context
-			 * may have had items added or deleted.
-			 */
-			if( CTX_FLAGS(icp) & CONTEXT_CHANGED )
-				SET_IT_FLAG_BITS(itp, CONTEXT_CHANGED);
+			if( CTX_FLAGS(icp) & CTX_CHANGED_FLAG )
+				SET_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST);
 			context_np=NODE_NEXT(context_np);
 		}
 	}
 
 	if( ! NEEDS_NEW_LIST(itp) ){
 		/* Nothing changed, just return the existing list */
-//fprintf(stderr,"returning existing item list...\n");
+//fprintf(stderr,"item_list:  nothing changed, returning existing item list...\n");
 		return(IT_LIST(itp));
 	}
 
@@ -1036,6 +1064,9 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 	 */
 	
 //fprintf(stderr,"rebuilding item list...\n");
+//if( IT_LIST(itp)==NULL ) fprintf(stderr,"Item_Type %s has null item list, thread %d\n",ITEM_TYPE_NAME(itp),QS_SERIAL);
+//assert(IT_LIST(itp)!=NULL);
+
 	while( (np=remHead(IT_LIST(itp))) != NO_NODE )
 		rls_node(np);
 
@@ -1043,6 +1074,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 	if( CONTEXT_LIST(itp) != NO_LIST ){
 		Node *context_np;
 		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
+//fprintf(stderr,"scanning list of %d contexts\n",eltcount(CONTEXT_LIST(itp)));
 		while(context_np!=NO_NODE){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
@@ -1051,11 +1083,11 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 			cat_container_items(IT_LIST(itp),CTX_CONTAINER(icp));
 //fprintf(stderr,"After adding items from context %s, list len = %d...\n",CTX_NAME(icp),eltcount(IT_LIST(itp)));
 			context_np=NODE_NEXT(context_np);
-			CLEAR_CTX_FLAG_BITS(icp,CONTEXT_CHANGED);
+			CLEAR_CTX_FLAG_BITS(icp,CTX_CHANGED_FLAG);
 		}
 	}
 
-	CLEAR_IT_FLAG_BITS(itp, (CONTEXT_CHANGED|NEED_LIST) );
+	CLEAR_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST );
 
 //fprintf(stderr,"Returning list at 0x%lx, len = %d...\n",(long)IT_LIST(itp),eltcount(IT_LIST(itp)));
 	return(IT_LIST(itp));
@@ -1125,6 +1157,7 @@ void list_items(QSP_ARG_DECL  Item_Type *itp)
 	CHECK_ITEM_INDEX(itp)
 
 	lp=item_list(QSP_ARG  itp);
+//fprintf(stderr,"list_items %s:  %d items in the list\n",ITEM_TYPE_NAME(itp),eltcount(lp));
 	print_list_of_items(QSP_ARG  lp);
 }
 
@@ -1389,9 +1422,10 @@ void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
  * it is a member.
  */
 
-static void make_needy(Item_Type *itp)
+static void make_needy(QSP_ARG_DECL  Item_Type *itp)
 {
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES | NEED_LIST );
+	//SET_IT_FLAG_BITS(itp, NEED_CHOICES | NEED_LIST );
+	SET_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST );
 
 	if( IT_CLASS_LIST(itp) != NO_LIST ){
 		Node *np;
@@ -1460,9 +1494,9 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 			}
 			/* BUG make the context needy... */
 			/* does this do it? */
-			SET_CTX_FLAG_BITS(icp, CONTEXT_CHANGED);
+			SET_CTX_FLAG_BITS(icp, CTX_CHANGED_FLAG);
 
-			make_needy(itp);
+			make_needy(QSP_ARG  itp);
 			np=NO_NODE; /* or return? */
 		} else
 			np=NODE_NEXT(np);
@@ -1493,7 +1527,7 @@ void rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname)
 	np=mk_node(ip);
 	store_item(QSP_ARG  itp,(Item*) ip,np);
 
-	make_needy(itp);
+	make_needy(QSP_ARG  itp);
 
 	UNLOCK_ITEM_TYPE(itp)
 }
@@ -1701,4 +1735,29 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 	return ITEM_NAME(ip);
 }
 
+// These used to be accessed directly from the struct, but now we provide accessor functions
+// to insure proper initialization (necessary when multi-threading)
+
+List *context_list(QSP_ARG_DECL  Item_Type *itp)
+{
+	if( ITCI_CSTK( THIS_ITCI(itp) ) == NULL ){
+//fprintf(stderr,"context_list %s:  creating new empty list for thread %d\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP));
+		SET_ITCI_CSTK(THIS_ITCI(itp),new_list());
+	}
+//else
+//fprintf(stderr,"context_list %s:  returning existing list with %d elements, thread %d\n",ITEM_TYPE_NAME(itp),eltcount(ITCI_CSTK(THIS_ITCI(itp))),_QS_SERIAL(THIS_QSP));
+	return ITCI_CSTK(THIS_ITCI(itp));
+}
+
+static List *_item_list(QSP_ARG_DECL  Item_Type *itp)
+{
+	if( ITCI_ITEM_LIST( THIS_ITCI(itp) ) == NULL ){
+//fprintf(stderr,"context_list %s:  creating new empty list for thread %d\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP));
+		SET_ITCI_ITEM_LIST(THIS_ITCI(itp),new_list());
+		make_needy(QSP_ARG  itp);
+	}
+//else
+//fprintf(stderr,"context_list %s:  returning existing list with %d elements, thread %d\n",ITEM_TYPE_NAME(itp),eltcount(ITCI_ITEM_LIST(THIS_ITCI(itp))),_QS_SERIAL(THIS_QSP));
+	return ITCI_ITEM_LIST(THIS_ITCI(itp));
+}
 

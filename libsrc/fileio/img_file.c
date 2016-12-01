@@ -102,6 +102,7 @@ ITEM_NEW_FUNC(Filetype,file_type)
 ITEM_CHECK_FUNC(Filetype,file_type)
 ITEM_PICK_FUNC(Filetype,file_type)
 ITEM_ENUM_FUNC(Filetype,file_type)
+//ITEM_LIST_FUNC(Filetype,file_type)	// added for debugging...
 
 void set_direct_io(int flag)
 {

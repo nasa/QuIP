@@ -22,7 +22,7 @@ Item_Class * new_item_class(QSP_ARG_DECL  const char *name)
 		return(icp);
 
 	icp->icl_lp = new_list();
-	icp->icl_flags = NEED_CLASS_CHOICES;
+	icp->icl_flags = NEED_CLASS_CHOICES;	// BUG item_class items are per-thread!
 	return(icp);
 }
 
@@ -47,7 +47,7 @@ void add_items_to_class(Item_Class *icp,Item_Type * itp,void* data,
 	np = mk_node(icp);
 	addTail(IT_CLASS_LIST(itp),np);
 
-	icp->icl_flags |= NEED_CLASS_CHOICES;
+	icp->icl_flags |= NEED_CLASS_CHOICES;	// BUG item_class items are per-thread!
 }
 
 /* return the member info struct for this item */

@@ -24,7 +24,6 @@ FORCE:
 #			stdc_defs.h
 #			function_basic.h
 #			dobj_basic.h
-#			qs_basic.h
 
 noinst_HEADERS =			\
 					\

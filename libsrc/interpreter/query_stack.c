@@ -17,10 +17,13 @@ Query_Stack *_defaultQSP=NULL;
 static Item_Type *query_stack_itp=NULL;
 ITEM_INIT_FUNC(Query_Stack,query_stack,0)
 ITEM_LIST_FUNC(Query_Stack,query_stack)
+ITEM_NEW_FUNC(Query_Stack,query_stack)
+ITEM_PICK_FUNC(Query_Stack,query_stack)
+// new_query_stack is defined here, not using the standard template...
 
 #define IS_LEGAL_VARNAME_CHAR(c)	(isalnum(c) || c=='_')
 
-static List *qstack_free_list=NO_LIST;
+//static List *qstack_free_list=NO_LIST;
 
 static void push_prompt(QSP_ARG_DECL  const char *pmpt);
 static void pop_prompt(SINGLE_QSP_ARG_DECL);
@@ -95,13 +98,14 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 
 Query_Stack * init_first_query_stack(void)
 {
-	qstack_free_list = new_list();
+	//qstack_free_list = new_list();
 
-	default_qsp = new_query_stack(NULL_QSP_ARG  "First_Query_Stack");
+	default_qsp = new_qstk(NULL_QSP_ARG  "First_Query_Stack");
 	return(default_qsp);
 }
 
-Query_Stack *new_qstack(QSP_ARG_DECL  const char *name)
+#ifdef FOOBAR
+Query_Stack *new_query_stack(QSP_ARG_DECL  const char *name)
 {
 	Query_Stack *new_qsp;
 	Node *np;
@@ -109,17 +113,18 @@ Query_Stack *new_qstack(QSP_ARG_DECL  const char *name)
 	np = QLIST_HEAD(qstack_free_list);
 	if( np == NO_NODE ){
 		new_qsp=(Query_Stack *)getbuf(sizeof(Query_Stack));
-//fprintf(stderr,"new_qstack calling savestr #1\n");
+//fprintf(stderr,"new_query_stack calling savestr #1\n");
 		new_qsp->qs_item.item_name = savestr(name);
 	} else {
 		np = remHead(qstack_free_list);
 		new_qsp = (Query_Stack *) NODE_DATA(np);
-//fprintf(stderr,"new_qstack calling savestr #2\n");
+//fprintf(stderr,"new_query_stack calling savestr #2\n");
 		new_qsp->qs_item.item_name = savestr(name);
 	}
 
 	return(new_qsp);
 }
+#endif // FOOBAR
 
 /* push_prompt - concatenate the new prompt fragment onto the existing prompt
  *

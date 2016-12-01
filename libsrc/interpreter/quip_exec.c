@@ -103,9 +103,10 @@ void qs_do_cmd( Query_Stack *qsp )
 
 //if( QLEVEL < 0 )
 	if( cmd == NULL || strlen(cmd) == 0 ){
-fprintf(stderr,"qs_do_cmd:  null or empty command\n");
+//fprintf(stderr,"qs_do_cmd:  null or empty command\n");
 		return;
 	}
+//fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
 	/* Now find the command */
 //	cp = (Command *) fetch_name(cmd, mp->mn_dict);
 	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);
