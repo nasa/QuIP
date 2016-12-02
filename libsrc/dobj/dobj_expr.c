@@ -17,13 +17,10 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	index_t index;
 	const char *s;
 
-fprintf(stderr,"eval_szbl_expr BEGIN, thread %d\n",QS_SERIAL);
 	switch(enp->sen_code){
 		case N_LITSTR:
 		case N_QUOT_STR:
-fprintf(stderr,"eval_szbl_expr: quoted or literal string, thread %d\n",QS_SERIAL);
 			s = EVAL_SCALEXP_STRING(enp);
-fprintf(stderr,"eval_szbl_expr: s = '%s', thread %d\n",s,QS_SERIAL);
 			szp = check_sizable( DEFAULT_QSP_ARG  s );
 			/*
 			if( szp == NULL ){
@@ -38,7 +35,6 @@ fprintf(stderr,"eval_szbl_expr: s = '%s', thread %d\n",s,QS_SERIAL);
 				WARN(ERROR_STRING);
 				return(NULL);
 			}
-fprintf(stderr,"eval_szbl_expr: sizable object found at 0x%lx, thread %d\n",(long)szp,QS_SERIAL);
 			break;
 
 		//case N_SIZABLE:

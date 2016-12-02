@@ -57,28 +57,19 @@ Member_Info *check_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Node *np;
 	Member_Info *mip;
 
-fprintf(stderr,"check_member_info %s BEGIN, thread %d\n",name,QS_SERIAL);
 	np = icp->icl_lp->l_head;
 	while(np!=NO_NODE){
 		Item *ip;
 
 		mip = (Member_Info*) np->n_data;
-fprintf(stderr,"check_member_info %s trying member_info at 0x%lx, thread %d\n",
-name,(long)mip,QS_SERIAL);
 
 		if( mip->mi_lookup != NULL ){
-fprintf(stderr,"check_member_info %s calling member lookup func at 0x%lx, thread %d\n",
-name,(long)mip->mi_lookup,QS_SERIAL);
 			ip = (*mip->mi_lookup)(QSP_ARG  name);
 		} else {
-fprintf(stderr,"check_member_info %s calling item_of, item_type %s, thread %d\n",
-name,ITEM_TYPE_NAME(mip->mi_itp),QS_SERIAL);
 			ip = item_of(QSP_ARG  mip->mi_itp,name);
 		}
 
 		if( ip != NO_ITEM ){
-fprintf(stderr,"check_member_info %s returning member_info at 0x%lx, thread %d\n",
-name,(long)mip,QS_SERIAL);
 			return(mip);
 		}
 

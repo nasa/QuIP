@@ -333,15 +333,9 @@ DECLARE_CHECK_FUNC(sizable)
 func_type *get_##type_stem##_functions(QSP_ARG_DECL  Item *ip)		\
 {									\
 	Member_Info *mip;						\
-fprintf(stderr,"get_%s_functions:  %s_icp = 0x%lx, thread %d\n",\
-#type_stem,#type_stem,(long)type_stem##_icp,QS_SERIAL);\
 	if( type_stem##_icp == NO_ITEM_CLASS )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
-fprintf(stderr,"get_%s_functions:  calling get_member_info, thread %d\n",\
-#type_stem,QS_SERIAL);\
 	mip = get_member_info(QSP_ARG  type_stem##_icp,ip->item_name);	\
-fprintf(stderr,"get_%s_functions:  member_info = 0x%lx, thread %d\n",\
-#type_stem,(long)mip,QS_SERIAL);\
 	/*MEMBER_CAUTIOUS_CHECK(type_stem)*/				\
 	assert( mip != NO_MEMBER_INFO );				\
 	return (func_type *) mip->mi_data;				\
@@ -387,17 +381,13 @@ double get_object_size(QSP_ARG_DECL  Item *ip,int d_index)
 
 	if( ip == NO_ITEM ) return(0.0);
 
-fprintf(stderr,"get_object_size calling get_sizable_functions...\n");
 	sfp = get_sizable_functions(QSP_ARG  ip);
-fprintf(stderr,"get_object_size found size_functions at 0x%lx...\n",(long)sfp);
 
 //#ifdef CAUTIOUS
 //	if( sfp == NULL ) ERROR1("CAUTIOUS:  get_object_size:  shouldn't happen");
 //#endif /* CAUTIOUS */
 	assert( sfp != NULL );
 
-fprintf(stderr,"get_object_size calling size func at 0x%lx with index %d, thread %d...\n",
-(long)sfp->sz_func,d_index,QS_SERIAL);
 	return( (*sfp->sz_func)(QSP_ARG  ip,d_index) );
 }
 
@@ -557,9 +547,7 @@ static double _dpfunc(QSP_ARG_DECL  Item *ip)
 { return( get_object_size(QSP_ARG  ip,0) ); }
 
 static double _colfunc(QSP_ARG_DECL  Item *ip)
-{
-fprintf(stderr,"_colfunc calling get_object_size, thread %d\n",QS_SERIAL);
-return( get_object_size(QSP_ARG  ip,1) ); }
+{ return( get_object_size(QSP_ARG  ip,1) ); }
 
 static double _rowfunc(QSP_ARG_DECL  Item *ip)
 { return( get_object_size(QSP_ARG  ip,2) ); }

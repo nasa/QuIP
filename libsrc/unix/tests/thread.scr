@@ -1,12 +1,17 @@
 
 Define Test_Thread 0
 echo 'Test_Thread BEGIN'
+Vector w 4 1 float
+data list quit
 os threads tell quit quit
 advise "listing threads from child thread:"
 os threads list quit quit
 sleep 1
 echo 'Test_Thread DONE'
 .
+
+Vector v 4 1 float
+data list quit
 
 os
   threads
@@ -26,6 +31,7 @@ os
     advise "DONE waiting ..."
     quit
   quit
+data list quit
 
 
 

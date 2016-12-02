@@ -283,9 +283,9 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 #define CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */			\
-show_vec_args(vap);\
-fprintf(stderr,"global_work_size = %ld %ld %ld\n",\
-global_work_size[0],global_work_size[1],global_work_size[2]);\
+/*show_vec_args(vap);*/\
+/*fprintf(stderr,"global_work_size = %ld %ld %ld\n",*/\
+/*global_work_size[0],global_work_size[1],global_work_size[2]);*/\
 	FINISH_KERNEL_CALL(1)
 
 #define CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)                     \

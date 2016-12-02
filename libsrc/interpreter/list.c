@@ -333,7 +333,7 @@ static void init_list(List *lp)
 		NERROR1("error initializing mutex!?");
 		IOS_RETURN
 	}
-fprintf(stderr,"mutex initialized for list at 0x%lx\n",(long)lp);
+//fprintf(stderr,"mutex initialized for list at 0x%lx\n",(long)lp);
 #endif /* HAVE_PTHREADS */
 
 	//lp->l_flags=0;
@@ -363,7 +363,7 @@ List *new_list()
 		rls_node(np);
 	}
 	init_list(lp);
-fprintf(stderr,"new_list returning initialized list at 0x%lx\n",(long)lp);
+//fprintf(stderr,"new_list returning initialized list at 0x%lx\n",(long)lp);
 	return(lp);
 }
 

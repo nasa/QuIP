@@ -38,6 +38,21 @@ static const char *default_ocl_dev_name=NULL;
 static const char *first_ocl_dev_name=NULL;
 static int default_ocl_dev_found=0;
 
+// We get a crash if we specify an openGL window
+// *after* we initialize OpenCL, so if we want to render
+// to a window we must specify a window first.  But for compute
+// only programs, it is not necessarily an error not to have
+// a window.  So if we initialize OpenCL before a window has
+// been specified, we prohibit later associations with windows.
+// There ought to be a better way!?
+
+static int opengl_prohibited=0;
+
+static void prohibit_opengl(void)
+{
+	opengl_prohibited=1;
+}
+
 
 // Where does this comment go?
 
@@ -405,7 +420,15 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 			else
 				ERROR1("CAUTIOUS:  init_ocl_device:  CGL context found, but null share group!?");
 		} else {
-			advise("OpenCL initialized without an OpenGL context.");
+			// If we let this go, it sometimes causes a seg fault
+			// when we try to set the GL window afterwards!?
+			//
+			// But it should not be an error, because we don't know
+			// for sure that we will ever attempt it.
+			// We need to set a flag to prohibit it later...
+			advise("init_ocl_device:  OpenCL initialized without an OpenGL context;");
+			advise("init_ocl_device:  Prohibiting OpenGL operations.");
+			prohibit_opengl();
 		}
 	}
 
@@ -714,6 +737,9 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 
 static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
+	if( opengl_prohibited )
+		ERROR1("ocl_register_buf:  Need to specify GL window BEFORE initializing OpenCL!?");
+
 #ifdef HAVE_OPENGL
 	cl_mem img;
 	cl_int status;

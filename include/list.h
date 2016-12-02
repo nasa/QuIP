@@ -38,12 +38,12 @@ struct list {
 	{							\
 		int status;					\
 								\
-fprintf(stderr,"%s:  locking list 0x%lx\n",#whence,(long)lp);\
+/*fprintf(stderr,"%s:  locking list 0x%lx\n",#whence,(long)lp);*/\
 		status = pthread_mutex_lock(&lp->l_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(DEFAULT_QSP_ARG  status,"LOCK_LIST");	\
 		lp->l_flags |= LIST_LOCKED;			\
-fprintf(stderr,"%s:  list 0x%lx is locked\n",#whence,(long)lp);\
+/*fprintf(stderr,"%s:  list 0x%lx is locked\n",#whence,(long)lp);*/\
 	}
 
 #define UNLOCK_LIST(lp,whence)						\
@@ -53,11 +53,11 @@ fprintf(stderr,"%s:  list 0x%lx is locked\n",#whence,(long)lp);\
 		int status;					\
 								\
 		lp->l_flags &= ~LIST_LOCKED;			\
-fprintf(stderr,"%s:  unlocking list 0x%lx\n",#whence,(long)lp);\
+/*fprintf(stderr,"%s:  unlocking list 0x%lx\n",#whence,(long)lp);*/\
 		status = pthread_mutex_unlock(&lp->l_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(DEFAULT_QSP_ARG  status,"UNLOCK_LIST");\
-fprintf(stderr,"%s:  list 0x%lx is unlocked\n\n",#whence,(long)lp);\
+/*fprintf(stderr,"%s:  list 0x%lx is unlocked\n\n",#whence,(long)lp);*/\
 	}
 
 #else /* ! HAVE_PTHREADS */

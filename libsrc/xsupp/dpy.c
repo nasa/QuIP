@@ -665,7 +665,13 @@ static void identify_x11_request( unsigned char code )
 {
 	const char *s;
 
-	assert( code < 128 );	// BUG use symbolic constant
+	//assert( code < 128 );	// BUG use symbolic constant
+	if( code >= 128 ){
+		sprintf(DEFAULT_ERROR_STRING,
+	"identify_x11_request:  code %d out of range!?",code);
+		NADVISE(DEFAULT_ERROR_STRING);
+		return;
+	}
 	s = x_request_name[code];
 	if( s == NULL )
 		NERROR1("identify_x11_request:  undefined code!?");

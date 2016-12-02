@@ -243,8 +243,8 @@ COMMAND_FUNC( do_load_pf_vwr )
 	if( pvp == NO_PF_VWR || dp == NO_OBJ ) return;
 
 #ifdef HAVE_OPENGL
-fprintf(stderr,"do_load_pf_vwr:  calling select_gl_viewer %s\n",
-VW_NAME(PFVWR_VIEWER(pvp)));
+//fprintf(stderr,"do_load_pf_vwr:  calling select_gl_viewer %s\n",
+//VW_NAME(PFVWR_VIEWER(pvp)));
 	select_gl_viewer( QSP_ARG  /*pvp->pv_vp*/ PFVWR_VIEWER(pvp) );
 
 	if( ! IS_GL_BUFFER(dp) ){

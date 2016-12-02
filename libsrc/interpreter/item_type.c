@@ -143,26 +143,40 @@ static void init_itci(Item_Type *itp,int idx)
 
 	SET_ITCI_ITEM_LIST(itci_p, new_list() );
 	SET_ITCI_CSTK(itci_p,new_stack());
+	SET_ITCI_CTX(itci_p,NULL);
 	// This appear to clear the restriction bit...
 	SET_ITCI_FLAGS(itci_p,0);
+
+	//make_needy(QSP_ARG  itp);
 }
 
 static void init_itp(Item_Type *itp, int container_type)
 {
 	int i;
+
+	// first zero everything except the name (which is first)
+	memset(((char *)itp)+sizeof(char *),0,sizeof(Item_Type)-sizeof(char *));
+
 //fprintf(stderr,"init_itp %s %d BEGIN\n",itp->it_item.item_name,container_type);
 	/* should we really do this? */
+	for(i=0;i<MAX_QUERY_STACKS;i++)
+		init_itci(itp,i);
+
+
+	// We used to only initialize the first one.
+	// What we do here is wasteful, but at least we don't
+	// have to constantly be checking!
+	/*
 	init_itci(itp,0);
 	memset(&(itp->it_itci[1]),0,(MAX_QUERY_STACKS-1)*sizeof(Item_Type_Context_Info));
-	//SET_IT_LIST(itp, new_list() );
+	*/
 
 	SET_IT_FREE_LIST(itp, new_list() );
 #ifdef USE_CHOICE_LIST
+	// BUG are choices a per-thread thing?
 	SET_IT_FLAGS(itp, NEED_CHOICES);
 	SET_IT_CHOICES(itp, NO_STR_ARRAY);
 #endif // USE_CHOICE_LIST
-
-	//SET_IT_CTX_IT(itp,NO_ITEM_TYPE);
 
 	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
@@ -170,26 +184,6 @@ static void init_itp(Item_Type *itp, int container_type)
 	SET_IT_FRAG_MATCH_INFO(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
-#ifdef FOOBAR
-	// now done in init_itci
-	{
-		int i;
-//if( n_active_threads==0 )NERROR1("init_itp:  no active threads!?");
-		/*
-		SET_IT_CSTK_AT_IDX(itp,0,new_stack());
-		for(i=1;i<n_active_threads;i++)
-			SET_IT_CSTK_AT_IDX(itp,i,new_stack());
-		for(;i<MAX_QUERY_STACKS;i++)
-			SET_IT_CSTK_AT_IDX(itp,i,NO_LIST);
-			*/
-		/* What the heck - just allocate all the lists */
-		for(i=0;i<MAX_QUERY_STACKS;i++){
-			SET_IT_CSTK_AT_IDX(itp,i,new_stack());
-			// This appear to clear the restriction bit...
-			SET_IT_CTX_RESTRICTED_AT_IDX(itp,i,0);
-		}
-	}
-#endif // FOOBAR
 #ifdef HAVE_PTHREADS
 	{
 		//itp->it_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -200,10 +194,6 @@ static void init_itp(Item_Type *itp, int container_type)
 			NERROR1("error initializing mutex");
 	}
 #endif /* HAVE_PTHREADS */
-
-#else /* ! THREAD_SAFE_QUERY */
-	SET_IT_CSTK(itp,new_stack());
-	SET_IT_CTX_RESTRICTED(itp,0);
 #endif /* ! THREAD_SAFE_QUERY */
 } // init_itp
 
@@ -327,11 +317,12 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_
 
 	itp = new_ittyp(QSP_ARG  name);
 	init_itp(itp,container_type);
+
 	icp = create_item_context(QSP_ARG  itp,DEF_CTX_NAME);
 	PUSH_ITEM_CONTEXT(itp,icp);
 
 	return(itp);
-}
+} // init_item_type
 
 /*
  * Create a new item type.  Allocate a hash table with hashsize
@@ -701,6 +692,9 @@ void push_item_context( QSP_ARG_DECL   Item_Type *itp, Item_Context *icp )
 	 * matches itp.
 	 */
 
+//fprintf(stderr,"push_item_context(%s,%s) thread %d\n",
+//ITEM_TYPE_NAME(itp),CTX_NAME(icp),QS_SERIAL);
+
 //#ifdef CAUTIOUS
 //	if( icp == NO_ITEM_CONTEXT ){
 //		sprintf(ERROR_STRING,"CAUTIOUS:  attempted to push null context, %s item type!?",
@@ -718,8 +712,8 @@ NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-fprintf(stderr,"push_item_context:  pushing %s context %s, thread %d\n",
-IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
+//fprintf(stderr,"push_item_context:  pushing %s context %s, thread %d\n",
+//IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
 	// This is really a stack push!
 	np=mk_node(icp);
 
@@ -730,16 +724,16 @@ IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
 		*/
 	assert(CONTEXT_LIST(itp)!=NULL);
 
-fprintf(stderr,"adding node to context list with %d elements...\n",eltcount(CONTEXT_LIST(itp)));
+//fprintf(stderr,"adding node to context list with %d elements...\n",eltcount(CONTEXT_LIST(itp)));
 	addHead(CONTEXT_LIST(itp),np);
 
-fprintf(stderr,"setting current context...\n");
+//fprintf(stderr,"setting current context...\n");
 	SET_CURRENT_CONTEXT(itp, icp);
 
 	// BUG - flags should be qsp-specific???
 	//SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
-fprintf(stderr,"push_item_context(%s,%s) DONE, thread %d\n",
-IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
+//fprintf(stderr,"push_item_context(%s,%s) DONE, thread %d\n",
+//IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
 } // end push_item_context
 
 /*
@@ -750,6 +744,9 @@ Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 {
 	Node *np;
 	Item_Context *new_icp, *popped_icp;
+
+//fprintf(stderr,"pop_item_context(%s) thread %d\n",
+//ITEM_TYPE_NAME(itp),QS_SERIAL);
 
 	/* don't remove the context from the list yet, it needs
 	 * to be there to find the objects in the context...
@@ -764,7 +761,14 @@ Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 	rls_node(np);
 
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
-	new_icp = (Item_Context *) NODE_DATA(np);
+	// Normally this is not null, because we always have
+	// the default context, but currently secondary threads
+	// may not inherit the default!?
+//	assert(np!=NULL);
+	if( np != NULL )
+		new_icp = (Item_Context *) NODE_DATA(np);
+	else
+		new_icp = NULL;
 
 	popped_icp = CURRENT_CONTEXT(itp);
 	SET_CURRENT_CONTEXT(itp,new_icp);
@@ -908,8 +912,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
-fflush(stderr);
+//fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
+//fflush(stderr);
 	if( *name == 0 ) return(NO_ITEM);
 
 	assert( CONTEXT_LIST(itp) != NULL );
@@ -924,14 +928,14 @@ fflush(stderr);
 //#endif /* CAUTIOUS */
 #ifdef THREAD_SAFE_QUERY
 	if( np == NO_NODE ){
-fprintf(stderr,"item_of:  Initializing context stack in thread %d\n",QS_SERIAL);
-fflush(stderr);
+//fprintf(stderr,"item_of:  Initializing context stack in thread %d\n",QS_SERIAL);
+//fflush(stderr);
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
-if( QS_SERIAL==0 ){
-fprintf(stderr,"item_of(%s,%s):  no contexts on stack but QS_SERIAL = %d!?\n",
-ITEM_TYPE_NAME(itp),name,QS_SERIAL);
-}
+//if( QS_SERIAL==0 ){
+//fprintf(stderr,"item_of(%s,%s):  no contexts on stack but QS_SERIAL = %d!?\n",
+//ITEM_TYPE_NAME(itp),name,QS_SERIAL);
+//}
 		assert(QS_SERIAL!=0);
 		// get the bottom of the stack from the root qsp, and push it...
 		np = QLIST_TAIL( FIRST_CONTEXT_STACK(itp) );
@@ -941,9 +945,9 @@ ITEM_TYPE_NAME(itp),name,QS_SERIAL);
 		// We tried pushing
 		// BUG?  if a context can be pushed on two stacks, what happens when
 		// it is popped from one?  Will it be released?
-fprintf(stderr,"item_of:  pushing context %s, thread %d\n",CTX_NAME(icp),QS_SERIAL);
+//fprintf(stderr,"item_of:  pushing context %s, thread %d\n",CTX_NAME(icp),QS_SERIAL);
 		push_item_context(QSP_ARG  itp, icp );
-fprintf(stderr,"item_of:  DONE pushing context %s, thread %d\n",CTX_NAME(icp),QS_SERIAL);
+//fprintf(stderr,"item_of:  DONE pushing context %s, thread %d\n",CTX_NAME(icp),QS_SERIAL);
 		np=QLIST_HEAD(CONTEXT_LIST(itp));
 	}
 #endif // THREAD_SAFE_QUERY
@@ -952,7 +956,7 @@ fprintf(stderr,"item_of:  DONE pushing context %s, thread %d\n",CTX_NAME(icp),QS
 
 	/* check the top context first */
 
-fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
+//fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
 	while(np!=NO_NODE){
 		Item_Context *icp;
 		Item *ip;
@@ -964,11 +968,11 @@ fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)))
 
 //		ip=fetch_name(name,CTX_DICT(icp));
 //		ip=check_context(icp,name);
-fprintf(stderr,"Checking container of context %s for '%s', thread %d\n",CTX_NAME(icp),name,QS_SERIAL);
-fflush(stderr);
+//fprintf(stderr,"Checking container of context %s for '%s', thread %d\n",CTX_NAME(icp),name,QS_SERIAL);
+//fflush(stderr);
 		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
-fprintf(stderr,"item_of:  found it!\n");
+//fprintf(stderr,"item_of:  found it!\n");
 			return(ip);
 		}
 		if( IS_RESTRICTED(itp) ){
@@ -1757,21 +1761,51 @@ List *context_list(QSP_ARG_DECL  Item_Type *itp)
 		SET_ITCI_CSTK(THIS_ITCI(itp),new_list());
 fprintf(stderr,"context_list %s:  created new empty list for thread %d at 0x%lx\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP),(long)ITCI_CSTK(THIS_ITCI(itp)));
 	}
-else
-fprintf(stderr,"context_list %s:  returning existing list at 0x%lx with %d elements, thread %d\n",
-ITEM_TYPE_NAME(itp),(long)ITCI_CSTK(THIS_ITCI(itp)),eltcount(ITCI_CSTK(THIS_ITCI(itp))),_QS_SERIAL(THIS_QSP));
 	return ITCI_CSTK(THIS_ITCI(itp));
 }
 
 static List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 {
-	if( ITCI_ITEM_LIST( THIS_ITCI(itp) ) == NULL ){
-//fprintf(stderr,"context_list %s:  creating new empty list for thread %d\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP));
-		SET_ITCI_ITEM_LIST(THIS_ITCI(itp),new_list());
-		make_needy(QSP_ARG  itp);
-	}
-//else
-//fprintf(stderr,"context_list %s:  returning existing list with %d elements, thread %d\n",ITEM_TYPE_NAME(itp),eltcount(ITCI_ITEM_LIST(THIS_ITCI(itp))),_QS_SERIAL(THIS_QSP));
 	return ITCI_ITEM_LIST(THIS_ITCI(itp));
 }
+
+Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
+{
+	List *lp;
+	Item_Context *icp;
+
+	if( ITCI_CTX( THIS_ITCI(itp) ) != NULL )
+		return ITCI_CTX(THIS_ITCI(itp));
+
+	// If it is null, then this is probably the first access
+	// from a new thread
+
+	lp = context_list(QSP_ARG  itp);
+	if( eltcount(lp) > 0 ){
+		Node *np;
+		np = QLIST_HEAD(lp);
+		icp = NODE_DATA(np);
+		SET_ITCI_CTX(THIS_ITCI(itp),icp);
+		return icp;
+	}
+
+	// The context stack is empty...
+	// Get the default context from the parent thread,
+	// and push it.  It is conceivable that the parent
+	// thread doesn't have a context - then we would like
+	// it to go to its own parent.  But for now we
+	// won't worry about that...
+
+	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
+	assert(icp!=NULL);
+
+fprintf(stderr,"current_context %s (thread %d):  pushing context %s from thread %d\n",
+ITEM_TYPE_NAME(itp),QS_SERIAL,CTX_NAME(icp),QS_PARENT_SERIAL(THIS_QSP));
+
+	push_item_context(QSP_ARG  itp, icp );
+
+	assert(ITCI_CTX(THIS_ITCI(itp))!=NULL);
+	return ITCI_CTX(THIS_ITCI(itp));
+}
+
 

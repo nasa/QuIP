@@ -97,7 +97,6 @@ typedef struct item_type_context_info {
 	List *		itci_item_lp;			// list of all of the items -
 	Stack *		itci_context_stack;		// need to have one per thread
 	Item_Context *	itci_icp;			// current context
-	//int 		it_ctx_restricted;		// flags
 	int		itci_flags;
 } Item_Type_Context_Info;
 
@@ -117,13 +116,21 @@ typedef struct item_type_context_info {
 #define ITCI_CSTK(itci_p)			(itci_p)->itci_context_stack
 #define SET_ITCI_CSTK(itci_p,sp)		(itci_p)->itci_context_stack = sp
 
+#define ITCI_CTX(itci_p)			(itci_p)->itci_icp
+#define SET_ITCI_CTX(itci_p,icp)		(itci_p)->itci_icp = icp
+
 #define ITCI_FLAGS(itci_p)			(itci_p)->itci_flags
 #define SET_ITCI_FLAGS(itci_p,val)		(itci_p)->itci_flags = val
 #define SET_ITCI_FLAG_BITS(itci_p,val)		(itci_p)->itci_flags |= val
 #define CLEAR_ITCI_FLAG_BITS(itci_p,val)	(itci_p)->itci_flags &= ~(val)
 
 #define ITCI_CTX_RESTRICTED(itci_p)		(ITCI_FLAGS(itci_p) & ITCI_CTX_RESTRICTED_FLAG)
-//#define SET_IT_CTX_RESTRICTED(itci_p,flag)	(itp)->it_ctx_restricted[i] = flag
+
+/*
+#define INSURE_ITCI(itp)				\
+							\
+	if( ITCI_CSTK(THIS_ITCI(itp)) == NULL ) init_itci(itp,QS_SERIAL);
+	*/
 
 struct item_type {
 	Item		it_item;
@@ -150,14 +157,7 @@ struct item_type {
 #ifdef HAVE_PTHREADS
 	pthread_mutex_t	it_mutex;
 #endif /* HAVE_PTHREADS */
-	/*
-	List *		it_lp;			// list of all of the items -
-						// but if each thread can have a different context stack, then this needs to be
-						// per-qsp also!
-	Stack *		it_context_stack[MAX_QUERY_STACKS];	// need to have one per thread
-	Item_Context *	it_icp[MAX_QUERY_STACKS];		// current context
-	int 		it_ctx_restricted[MAX_QUERY_STACKS];	// flags
-	*/
+
 	Item_Type_Context_Info	it_itci[MAX_QUERY_STACKS];
 
 //#define FIRST_CONTEXT(itp)	itp->it_icp[0]
@@ -229,49 +229,11 @@ struct item_type {
 #define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
 #define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
 
-
-#ifdef THREAD_SAFE_QUERY
-
-
-//#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL((Query_Stack *)THIS_QSP)])
-#define THIS_CTX_STACK(itp)		((itp)->it_context_stack[QS_SERIAL])
-
-//#define CURRENT_CONTEXT(itp)	(itp)->it_icp[QS_SERIAL((Query_Stack *)qsp)]
-//#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp[QS_SERIAL((Query_Stack *)qsp)] = icp
-//#define CONTEXT_STACK(itp)	(itp)->it_context_stack[QS_SERIAL((Query_Stack *)qsp)]
-//#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[QS_SERIAL((Query_Stack *)qsp)]
-
-#define CURRENT_CONTEXT(itp)		(itp)->it_itci[QS_SERIAL].itci_icp
-#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_itci[QS_SERIAL].itci_icp = icp
-
-#define CONTEXT_STACK(itp)	(itp)->it_context_stack[QS_SERIAL]
-#define CTX_RSTRCT_FLAG(itp)	(itp)->it_ctx_restricted[QS_SERIAL]
-
-
-
-#else /* ! THREAD_SAFE_QUERY */
-
-#define IT_CSTK(itp)			(itp)->it_context_stack
-#define SET_IT_CSTK(itp,sp)		(itp)->it_context_stack = sp
-#define SET_IT_CTX_RESTRICTED(itp,flag)	(itp)->it_ctx_restricted = flag
-#define IT_CSTK_AT_IDX(itp,i)		IT_CSTK(itp)
-#define SET_IT_CSTK_AT_IDX(itp,i,sp)	SET_IT_CSTK(itp,sp)
-#define THIS_CTX_STACK(itp)		((itp)->it_context_stack)
-
-// BUG no good!  need to fix...
-#define CURRENT_CONTEXT(itp)		(itp)->it_icp
-#define SET_CURRENT_CONTEXT(itp,icp)	(itp)->it_icp = icp
-#define CONTEXT_STACK(itp)		(itp)->it_context_stack
-#define FIRST_CONTEXT_STACK(itp)	(itp)->it_context_stack
-#define CTX_RSTRCT_FLAG(itp)		(itp)->it_ctx_restricted
-#define SET_CTX_RSTRCT_FLAG(itp,val)	(itp)->it_ctx_restricted = val
-
-#define IS_RESTRICTED(itp)		(CTX_RSTRCT_FLAG(itp))
-
-
-
-#endif /* ! THREAD_SAFE_QUERY */
-
+// The context field may be null, so we have a function to do the checking
+// and initialization if necessary...
+extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
+#define CURRENT_CONTEXT(itp)		current_context(QSP_ARG  itp)
+#define SET_CURRENT_CONTEXT(itp,icp)	SET_ITCI_CTX(THIS_ITCI(itp),icp)
 #define ITCI_AT_INDEX(itp,idx)		(&((itp)->it_itci[idx]))
 #define THIS_ITCI(itp)			ITCI_AT_INDEX(itp,_QS_SERIAL(THIS_QSP))
 
@@ -289,8 +251,6 @@ struct item_type {
 							if( yesno ) SET_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);	\
 							else CLEAR_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);		\
 						}
-
-//#define IT_LIST(itp)			ITCI_ITEM_LIST( THIS_ITCI(itp) )
 
 
 #define SET_IT_NAME(itp,s)		(itp)->it_item.item_name=s

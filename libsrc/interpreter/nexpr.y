@@ -1361,11 +1361,11 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	static Function *val_func_p=NO_FUNCTION;
 
 #ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
+if( debug & expr_debug ){
 sprintf(ERROR_STRING,"eval_expr:  code = %d",enp->sen_code);
 ADVISE(ERROR_STRING);
 dump_enode(QSP_ARG  enp);
-//}
+}
 #endif /* QUIP_DEBUG */
 
 	switch(enp->sen_code){
@@ -1440,13 +1440,8 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
-fprintf(stderr,"eval_expr:  calling eval_szbl_expr_func, thread %d\n",QS_SERIAL);
 		szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
-fprintf(stderr,"eval_expr:  back from eval_szbl_expr_func, thread %d\n",QS_SERIAL);
-fprintf(stderr,"eval_expr:  calling size function at 0x%lx, thread %d\n",
-		(long)enp->sen_func_p->fn_u.sz_func,	QS_SERIAL);
 		dval = (*enp->sen_func_p->fn_u.sz_func)( QSP_ARG  szp );
-fprintf(stderr,"eval_expr:  converting double to typed scalar, thread %d\n",QS_SERIAL);
 		tsp = scalar_for_double(dval);
 		break;
 	case N_STRVFUNC:		// eval_expr
@@ -2201,7 +2196,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			if( yylvp->func_p != NULL ){
 				int t;
 				t = token_for_func_type(FUNC_TYPE(yylvp->func_p));
-fprintf(stderr,"Found function at 0x%lx, token = %d\n",(long)yylvp->func_p,t);
+//fprintf(stderr,"Found function at 0x%lx, token = %d\n",(long)yylvp->func_p,t);
 				return t;
 			}
 
@@ -2461,9 +2456,9 @@ ADVISE("pexpr:  nested call to pexpr, calling parse_number");
 	IN_PEXPR=1;
 	EDEPTH=0;
 	YY_ORIGINAL=YYSTRPTR[EDEPTH]=buf;
-fprintf(stderr,"pexpr:  input set to '%s', thread %d\n",buf,QS_SERIAL);
+//fprintf(stderr,"pexpr:  input set to '%s', thread %d\n",buf,QS_SERIAL);
 	stat=yyparse(/*SINGLE_QSP_ARG*/ THIS_QSP );
-fprintf(stderr,"pexpr:  back from yyparse, thread %d\n",QS_SERIAL);
+//fprintf(stderr,"pexpr:  back from yyparse, thread %d\n",QS_SERIAL);
 
 	if( stat != 0 ){
 		/* Need to somehow free allocated nodes... */
@@ -2483,9 +2478,9 @@ dump_etree(QSP_ARG  FINAL_EXPR_NODE_P);
 }
 #endif /* QUIP_DEBUG */
 
-fprintf(stderr,"pexpr:  evaluating expression tree, thread %d\n",QS_SERIAL);
+//fprintf(stderr,"pexpr:  evaluating expression tree, thread %d\n",QS_SERIAL);
 	tsp = EVAL_EXPR(FINAL_EXPR_NODE_P);
-fprintf(stderr,"pexpr:  done with expression tree, thread %d\n",QS_SERIAL);
+//fprintf(stderr,"pexpr:  done with expression tree, thread %d\n",QS_SERIAL);
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){

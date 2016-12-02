@@ -64,6 +64,8 @@ static COMMAND_FUNC( do_new_thread )
 	// change the flags from the default values
 	CLEAR_QS_FLAG_BITS(new_qsp, QS_INTERACTIVE_TTYS|QS_FORMAT_PROMPT|QS_COMPLETING );
 
+	SET_QS_PARENT_SERIAL(new_qsp,_QS_SERIAL(THIS_QSP));
+
 	// The new thread should inherit context stacks from the parent thread,
 	// but we don't want to bother to do all that now - ?
 

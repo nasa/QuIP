@@ -278,6 +278,8 @@ struct query_stack {
 #define SET_QS_NAME(qsp,s)		(qsp)->qs_item.item_name = s
 #define _QS_SERIAL(qsp)			(qsp)->qs_serial
 #define SET_QS_SERIAL(qsp,n)		(qsp)->qs_serial=n
+#define QS_PARENT_SERIAL(qsp)		(qsp)->qs_parent_serial
+#define SET_QS_PARENT_SERIAL(qsp,n)	(qsp)->qs_parent_serial=n
 #define QS_LEVEL(qsp)			(qsp)->_qs_level
 #define SET_QS_LEVEL(qsp,l)		(qsp)->_qs_level = l
 #define QS_CHEW_LEVEL(qsp)		(qsp)->qs_chew_level

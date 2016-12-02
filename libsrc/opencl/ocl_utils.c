@@ -585,8 +585,8 @@ cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 
 	// build (compiles and links) a program executable
 	// from the program source or binary
-fprintf(stderr,"ocl_create_kernel %s BEGIN\n",name);
-fflush(stderr);
+//fprintf(stderr,"ocl_create_kernel %s BEGIN\n",name);
+//fflush(stderr);
 	status = clBuildProgram(program,	// compiled program
 				1,		// num_devices
 				&OCLDEV_DEV_ID(pdp),	// device list
