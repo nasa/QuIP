@@ -554,7 +554,9 @@ static COMMAND_FUNC( do_assign_var )
     
 	CHECK_FMT_STRINGS
 
+fprintf(stderr,"do_assign_var calling pexpr, thread %d\n",QS_SERIAL);
 	tsp=pexpr(QSP_ARG  estr);
+fprintf(stderr,"do_assign_var back from pexpr, thread %d\n",QS_SERIAL);
 	// Make sure we have a free string buffer
 	if( QS_AV_STRINGBUF(THIS_QSP) == NO_STRINGBUF ){
 		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );

@@ -141,6 +141,7 @@ int remove_name_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name)
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:
 			np = list_find_named_item(cnt_p->cnt_lp,name);
+fprintf(stderr,"remove_name_from_container calling remNode, lp = 0x%lx\n",(long)cnt_p->cnt_lp);
 			np=remNode(cnt_p->cnt_lp,np);
 			if( np!=NO_NODE ) rls_node(np);
 			break;

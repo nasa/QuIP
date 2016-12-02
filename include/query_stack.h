@@ -10,6 +10,7 @@
 #include "quip_menu.h"
 #include "ascii_fmts.h"
 #include "string_ref.h"
+#include "typed_scalar.h"
 
 #ifdef BUILD_FOR_IOS
 #include <dispatch/dispatch.h>
@@ -19,25 +20,54 @@
 
 // For which parser?  scalar or vector???
 
-typedef struct parser_data {
-	void *		pd_top_enp;	// really Vec_Expr_Node
-	void *		pd_last_enp;	// really Vec_Expr_Node
-	int		pd_end_seen;	// boolean flag?
-	const char *	pd_yy_cp;
-	int		pd_expr_level;
-	int		pd_last_line_num;
-	int		pd_parser_line_num;
-	char *		pd_yy_last_line;
-	char *		pd_yy_input_line;
-	int		pd_semi_seen;		// boolean flag...
-	char *		pd_expr_string;
-	int		pd_edepth;		// same as expr_level???
-	const char *	pd_curr_string;
-	double		pd_final;
+typedef struct vector_parser_data {
+	void *		vpd_top_enp;	// really Vec_Expr_Node
+	void *		vpd_last_enp;	// really Vec_Expr_Node
+	int		vpd_end_seen;	// boolean flag?
+	const char *	vpd_yy_cp;
+	int		vpd_expr_level;
+	int		vpd_last_line_num;
+	int		vpd_parser_line_num;
+	char *		vpd_yy_last_line;
+	char *		vpd_yy_input_line;
+	int		vpd_semi_seen;		// boolean flag...
+	char *		vpd_expr_string;
+	int		vpd_edepth;		// same as expr_level???
+	const char *	vpd_curr_string;
+	double		vpd_final;
 	//int parser_lineno;
-	String_Ref *	pd_curr_infile;
-	List *		pd_subroutine_context_stack /* =NO_LIST */ ;
-} Parser_Data;
+	String_Ref *	vpd_curr_infile;
+	List *		vpd_subroutine_context_stack /* =NO_LIST */ ;
+} Vector_Parser_Data;
+
+#define MAXEDEPTH	20
+#define MAX_E_STRINGS	64
+
+typedef struct scalar_parser_data {
+	const char *	spd_yystrptr[MAXEDEPTH];
+	const char *	spd_original_string;
+	int		spd_edepth;	// init to -1
+	int		spd_which_str;	// init to 0
+	int		spd_in_pexpr;	// init to 0
+	int		spd_estrings_inited;	// init to 0
+	String_Buf *	spd_expr_string[MAX_E_STRINGS];
+	Typed_Scalar	spd_string_scalar[MAX_E_STRINGS];
+	Scalar_Expr_Node * spd_final_expr_node_p;
+} Scalar_Parser_Data;
+
+#define QS_SPD_YYSTRPTR(qsp)	(qsp)->qs_scalar_parser_data->spd_yystrptr
+#define QS_SPD_ORIGINAL_STRING(qsp)	(qsp)->qs_scalar_parser_data->spd_original_string
+#define QS_SPD_EDEPTH(qsp)	(qsp)->qs_scalar_parser_data->spd_edepth
+#define QS_SPD_WHICH_STR(qsp)	(qsp)->qs_scalar_parser_data->spd_which_str
+#define QS_SPD_IN_PEXPR(qsp)	(qsp)->qs_scalar_parser_data->spd_in_pexpr
+#define QS_SPD_ESTRINGS_INITED(qsp)	(qsp)->qs_scalar_parser_data->spd_estrings_inited
+
+#define SET_QS_SPD_YYSTRPTR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_yystrptr = val
+#define SET_QS_SPD_ORIGINAL_STRING(qsp,val)	(qsp)->qs_scalar_parser_data->spd_original_string = val
+#define SET_QS_SPD_EDEPTH(qsp,val)	(qsp)->qs_scalar_parser_data->spd_edepth = val
+#define SET_QS_SPD_WHICH_STR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_which_str = val
+#define SET_QS_SPD_IN_PEXPR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_in_pexpr = val
+#define SET_QS_SPD_ESTRINGS_INITED(qsp,val)	(qsp)->qs_scalar_parser_data->spd_estrings_inited = val
 
 // This struct is used to push text frags around...
 
@@ -115,7 +145,8 @@ struct query_stack {
 #endif /* HAVE_PTHREADS */
 #endif /* THREAD_SAFE_QUERY */
 
-	Parser_Data *	qs_parser_data;
+	Vector_Parser_Data *	qs_vector_parser_data;
+	Scalar_Parser_Data *	qs_scalar_parser_data;
 
 	struct dobj_ascii_info *	qs_dai_p;
 	Item_Type *	qs_picking_item_itp;
@@ -135,34 +166,40 @@ struct query_stack {
 
 #endif // HAVE_LIBCURL
 	
+#ifdef THREAD_SAFE_QUERY
+	// Because item context stacks are now per-thread,
+	// we might like to import contexts from the invoking thread...
+	int		qs_parent_serial;
+#endif // THREAD_SAFE_QUERY
 };
 
 #define QS_PICKING_ITEM_ITP(qsp)		((qsp)->qs_picking_item_itp)
 #define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(qsp->qs_picking_item_itp) = itp
 
-#define	qs_top_enp		qs_parser_data->pd_top_enp
-#define	qs_last_enp		qs_parser_data->pd_last_enp
-#define	qs_end_seen		qs_parser_data->pd_end_seen
-#define	qs_yy_cp		qs_parser_data->pd_yy_cp
-#define	qs_expr_level		qs_parser_data->pd_expr_level
-#define	qs_last_line_num	qs_parser_data->pd_last_line_num
-#define	qs_parser_line_num	qs_parser_data->pd_parser_line_num
-#define	qs_yy_last_line		qs_parser_data->pd_yy_last_line
-#define	qs_yy_input_line	qs_parser_data->pd_yy_input_line
-#define	qs_semi_seen		qs_parser_data->pd_semi_seen
-#define	_qs_expr_string		qs_parser_data->pd_expr_string
-#define	qs_edepth		qs_parser_data->pd_edepth
-#define	_qs_curr_string		qs_parser_data->pd_curr_string
-#define	qs_final		qs_parser_data->pd_final
-#define	qs_curr_infile		qs_parser_data->pd_curr_infile
-#define qs_subrt_ctx_stack	qs_parser_data->pd_subroutine_context_stack
+#define	qs_top_enp		qs_vector_parser_data->vpd_top_enp
+#define	qs_last_enp		qs_vector_parser_data->vpd_last_enp
+#define	qs_end_seen		qs_vector_parser_data->vpd_end_seen
+#define	qs_yy_cp		qs_vector_parser_data->vpd_yy_cp
+#define	qs_expr_level		qs_vector_parser_data->vpd_expr_level
+#define	qs_last_line_num	qs_vector_parser_data->vpd_last_line_num
+#define	qs_parser_line_num	qs_vector_parser_data->vpd_parser_line_num
+#define	qs_yy_last_line		qs_vector_parser_data->vpd_yy_last_line
+#define	qs_yy_input_line	qs_vector_parser_data->vpd_yy_input_line
+#define	qs_semi_seen		qs_vector_parser_data->vpd_semi_seen
+#define	_qs_expr_string		qs_vector_parser_data->vpd_expr_string
+#define	qs_edepth		qs_vector_parser_data->vpd_edepth
+#define	_qs_curr_string		qs_vector_parser_data->vpd_curr_string
+#define	qs_final		qs_vector_parser_data->vpd_final
+#define	qs_curr_infile		qs_vector_parser_data->vpd_curr_infile
+#define qs_subrt_ctx_stack	qs_vector_parser_data->vpd_subroutine_context_stack
 
 
-#define ALLOC_QS_PARSER_DATA(qsp)	SET_QS_PARSER_DATA(qsp,getbuf(sizeof(Parser_Data)))
+#define ALLOC_QS_VECTOR_PARSER_DATA(qsp)	SET_QS_VECTOR_PARSER_DATA(qsp,getbuf(sizeof(Vector_Parser_Data)))
 
-#define INSURE_QS_PARSER_DATA(qsp)	if( QS_PARSER_DATA(qsp)==NULL )		\
-						ALLOC_QS_PARSER_DATA(qsp);
+#define INSURE_QS_VECTOR_PARSER_DATA(qsp)	if( QS_VECTOR_PARSER_DATA(qsp)==NULL )		\
+						ALLOC_QS_VECTOR_PARSER_DATA(qsp);
 
+#define ALLOC_QS_SCALAR_PARSER_DATA(qsp)	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)))
 
 
 #define NO_QUERY_STACK ((Query_Stack *)NULL)
@@ -209,8 +246,11 @@ struct query_stack {
 #define QS_AV_STRINGBUF(qsp)		(qsp)->qs_av_sbp
 #define SET_QS_AV_STRINGBUF(qsp,sbp)	(qsp)->qs_av_sbp = sbp
 
-#define QS_PARSER_DATA(qsp)		(qsp)->qs_parser_data
-#define SET_QS_PARSER_DATA(qsp,d)	(qsp)->qs_parser_data = d
+#define QS_VECTOR_PARSER_DATA(qsp)		(qsp)->qs_vector_parser_data
+#define SET_QS_VECTOR_PARSER_DATA(qsp,d)	(qsp)->qs_vector_parser_data = d
+
+#define QS_SCALAR_PARSER_DATA(qsp)		(qsp)->qs_scalar_parser_data
+#define SET_QS_SCALAR_PARSER_DATA(qsp,d)	(qsp)->qs_scalar_parser_data = d
 
 #define QS_TMPVAR(qsp)			(qsp)->qs_tmpvar
 #define QS_BUILTIN_MENU(qsp)		(qsp)->qs_builtin_menu

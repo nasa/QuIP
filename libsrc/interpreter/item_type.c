@@ -149,9 +149,11 @@ static void init_itci(Item_Type *itp,int idx)
 
 static void init_itp(Item_Type *itp, int container_type)
 {
+	int i;
 //fprintf(stderr,"init_itp %s %d BEGIN\n",itp->it_item.item_name,container_type);
 	/* should we really do this? */
 	init_itci(itp,0);
+	memset(&(itp->it_itci[1]),0,(MAX_QUERY_STACKS-1)*sizeof(Item_Type_Context_Info));
 	//SET_IT_LIST(itp, new_list() );
 
 	SET_IT_FREE_LIST(itp, new_list() );
@@ -716,6 +718,8 @@ NADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
+fprintf(stderr,"push_item_context:  pushing %s context %s, thread %d\n",
+IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
 	// This is really a stack push!
 	np=mk_node(icp);
 
@@ -726,12 +730,16 @@ NADVISE(ERROR_STRING);
 		*/
 	assert(CONTEXT_LIST(itp)!=NULL);
 
+fprintf(stderr,"adding node to context list with %d elements...\n",eltcount(CONTEXT_LIST(itp)));
 	addHead(CONTEXT_LIST(itp),np);
 
+fprintf(stderr,"setting current context...\n");
 	SET_CURRENT_CONTEXT(itp, icp);
 
 	// BUG - flags should be qsp-specific???
 	//SET_IT_FLAG_BITS(itp, NEED_CHOICES|NEED_LIST );
+fprintf(stderr,"push_item_context(%s,%s) DONE, thread %d\n",
+IT_NAME(itp),CTX_NAME(icp),QS_SERIAL);
 } // end push_item_context
 
 /*
@@ -900,8 +908,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-//fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
-//fflush(stderr);
+fprintf(stderr,"item_of(%s,%s) BEGIN\n",ITEM_TYPE_NAME(itp),name);
+fflush(stderr);
 	if( *name == 0 ) return(NO_ITEM);
 
 	assert( CONTEXT_LIST(itp) != NULL );
@@ -916,8 +924,8 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 //#endif /* CAUTIOUS */
 #ifdef THREAD_SAFE_QUERY
 	if( np == NO_NODE ){
-//fprintf(stderr,"Initializing context in thread %d\n",QS_SERIAL);
-//fflush(stderr);
+fprintf(stderr,"item_of:  Initializing context stack in thread %d\n",QS_SERIAL);
+fflush(stderr);
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
 if( QS_SERIAL==0 ){
@@ -931,7 +939,11 @@ ITEM_TYPE_NAME(itp),name,QS_SERIAL);
 		icp = NODE_DATA(np);
 		assert(icp!=NULL);
 		// We tried pushing
+		// BUG?  if a context can be pushed on two stacks, what happens when
+		// it is popped from one?  Will it be released?
+fprintf(stderr,"item_of:  pushing context %s, thread %d\n",CTX_NAME(icp),QS_SERIAL);
 		push_item_context(QSP_ARG  itp, icp );
+fprintf(stderr,"item_of:  DONE pushing context %s, thread %d\n",CTX_NAME(icp),QS_SERIAL);
 		np=QLIST_HEAD(CONTEXT_LIST(itp));
 	}
 #endif // THREAD_SAFE_QUERY
@@ -940,7 +952,7 @@ ITEM_TYPE_NAME(itp),name,QS_SERIAL);
 
 	/* check the top context first */
 
-//fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
+fprintf(stderr,"item_of:  will check %d contexts\n",eltcount(CONTEXT_LIST(itp)));
 	while(np!=NO_NODE){
 		Item_Context *icp;
 		Item *ip;
@@ -952,10 +964,11 @@ ITEM_TYPE_NAME(itp),name,QS_SERIAL);
 
 //		ip=fetch_name(name,CTX_DICT(icp));
 //		ip=check_context(icp,name);
-//fprintf(stderr,"Checking container of context %s for '%s'\n",CTX_NAME(icp),name);
+fprintf(stderr,"Checking container of context %s for '%s', thread %d\n",CTX_NAME(icp),name,QS_SERIAL);
 fflush(stderr);
 		ip = container_find_match(CTX_CONTAINER(icp),name);
 		if( ip!=NO_ITEM ){
+fprintf(stderr,"item_of:  found it!\n");
 			return(ip);
 		}
 		if( IS_RESTRICTED(itp) ){
@@ -1741,11 +1754,12 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 List *context_list(QSP_ARG_DECL  Item_Type *itp)
 {
 	if( ITCI_CSTK( THIS_ITCI(itp) ) == NULL ){
-//fprintf(stderr,"context_list %s:  creating new empty list for thread %d\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP));
 		SET_ITCI_CSTK(THIS_ITCI(itp),new_list());
+fprintf(stderr,"context_list %s:  created new empty list for thread %d at 0x%lx\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP),(long)ITCI_CSTK(THIS_ITCI(itp)));
 	}
-//else
-//fprintf(stderr,"context_list %s:  returning existing list with %d elements, thread %d\n",ITEM_TYPE_NAME(itp),eltcount(ITCI_CSTK(THIS_ITCI(itp))),_QS_SERIAL(THIS_QSP));
+else
+fprintf(stderr,"context_list %s:  returning existing list at 0x%lx with %d elements, thread %d\n",
+ITEM_TYPE_NAME(itp),(long)ITCI_CSTK(THIS_ITCI(itp)),eltcount(ITCI_CSTK(THIS_ITCI(itp))),_QS_SERIAL(THIS_QSP));
 	return ITCI_CSTK(THIS_ITCI(itp));
 }
 

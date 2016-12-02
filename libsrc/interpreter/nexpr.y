@@ -12,50 +12,18 @@
 #include "strbuf.h"
 #include "query_stack.h"
 
-//#define YACC_HACK_PREFIX	quip
-//#include "yacc_hack.h"
-
-//static char err_str[LLEN];
-static const char *original_string;
-#define YY_ORIGINAL	original_string
-//#define ERROR_STRING err_str
-
-//#include <stdio.h>
-//
-//#include <stdlib.h>
-//#include <string.h>
-//#include <ctype.h>
-
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif // HAVE_LIMITS_H
 
 double rn_number();
 
-//#include "query_prot.h"
-
 #include "nexpr.h"
-
-//#include "nexpr_func.h"
-
-//typedef void Function;  // so (Function *) is (void *)
-
 #include "func_helper.h"
-
-#ifdef MOVED
-// Need this local prototype because of call structure...
-static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *);
-#endif // MOVED
-
-#ifdef MOVED
-static Data_Obj *obj_for_string(const char *string);
-#endif // MOVED
 
 static Item * default_eval_szbl( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 { return NULL; }
 
-//#define EVAL_EXPR( s )		eval_expr( QSP_ARG  s )
-//#define EVAL_SZBL_EXPR( s )	eval_szbl_expr( QSP_ARG  s )
 static Item * ( * eval_szbl_func ) ( QSP_ARG_DECL  Scalar_Expr_Node *enp ) = default_eval_szbl;
 #define EVAL_SZBL_EXPR_FUNC( s )	(*eval_szbl_func)( QSP_ARG  s )
 #define EVAL_ILBL_EXPR( s )	eval_interlaceable_expr( QSP_ARG  s )
@@ -83,8 +51,6 @@ static debug_flag_t expr_debug=0;
 #define IS_LEGAL_FIRST_CHAR(c)	( isalpha( c ) || IS_LEGAL_NAME_PUNCT(c) )
 #define IS_LEGAL_NAME_CHAR(c)	( isalnum( c ) || IS_LEGAL_NAME_PUNCT(c) )
 
-// moved to query.h
-#define MAXEDEPTH	20
 
 // BUG all these static globals are not thread-safe!?
 
@@ -92,29 +58,20 @@ static List *free_enp_lp=NO_LIST;
 
 // BUG - probably 4 is not enough now that these are being used
 // to store strings for the whole tree...
-#define MAX_E_STRINGS	64
-static String_Buf *expr_string[MAX_E_STRINGS];
-static Typed_Scalar string_scalar[MAX_E_STRINGS];
-static int estrings_inited=0;
 
 static Scalar_Expr_Node *alloc_expr_node(void);
 
-/* These have to be put into query stream... */
-/*
-static Scalar_Expr_Node * final;
-*/
 
-static Scalar_Expr_Node * final_expr_node_p;
-// BUG not thread-sage
-static const char *yystrptr[MAXEDEPTH];
-static int edepth=(-1);
-static int which_str=0;
-static int in_pexpr=0;
-#define FINAL_EXPR_NODE_P	final_expr_node_p
-#define YYSTRPTR yystrptr
-#define EDEPTH edepth
-#define WHICH_EXPR_STR	which_str
-#define IN_PEXPR	in_pexpr
+
+#define YYSTRPTR 	(THIS_QSP->qs_scalar_parser_data->spd_yystrptr)
+#define YY_ORIGINAL	(THIS_QSP)->qs_scalar_parser_data->spd_original_string
+#define EDEPTH 		(THIS_QSP)->qs_scalar_parser_data->spd_edepth
+#define WHICH_EXPR_STR	(THIS_QSP)->qs_scalar_parser_data->spd_which_str
+#define IN_PEXPR	(THIS_QSP)->qs_scalar_parser_data->spd_in_pexpr
+#define EXPR_STRING	(THIS_QSP)->qs_scalar_parser_data->spd_expr_string
+#define FINAL_EXPR_NODE_P	(THIS_QSP)->qs_scalar_parser_data->spd_final_expr_node_p
+#define STRING_SCALAR	(THIS_QSP)->qs_scalar_parser_data->spd_string_scalar
+#define ESTRINGS_INITED	(THIS_QSP)->qs_scalar_parser_data->spd_estrings_inited
 
 #define ADVANCE_EXPR_STR				\
 							\
@@ -218,33 +175,6 @@ static int enode_flags=0;
 static int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
 int yyerror(Query_Stack *, char *);
-/* int yyparse(void); */
-
-#ifdef MOVED
-// We try to avoid local prototypes, but these have to be here...
-static Data_Obj * _def_obj(QSP_ARG_DECL  const char *);
-static Data_Obj * _def_sub(QSP_ARG_DECL  Data_Obj * , index_t);
-#endif // MOVED
-
-
-#ifdef FOOBAR
-// we avoid local prototypes, but this has to be here
-// because of circular calls between eval_expr and eval_dobj_expr...
-//static double eval_expr(QSP_ARG_DECL  Scalar_Expr_Node *);
-//static Typed_Scalar * eval_expr(QSP_ARG_DECL  Scalar_Expr_Node *);
-#endif // FOOBAR
-
-
-/* globals */
-
-#ifdef MOVED
-// These pointers are here so that this module can be build (and loaded)
-// independently of the data_obj module.
-Data_Obj * (*obj_get_func)(QSP_ARG_DECL  const char *)=_def_obj;
-//Data_Obj * (*exist_func)(QSP_ARG_DECL  const char *)=_def_obj;
-Data_Obj * (*sub_func)(QSP_ARG_DECL  Data_Obj *,index_t)=_def_sub;
-Data_Obj * (*csub_func)(QSP_ARG_DECL  Data_Obj *,index_t)=_def_sub;
-#endif // MOVED
 
 #define NODE0(code)	node0(code)
 #define NODE1(code,enp)	node1(code,enp)
@@ -295,17 +225,17 @@ static Scalar_Expr_Node *node3( Scalar_Expr_Node_Code code, Scalar_Expr_Node *ch
 
 // New version to avoid fixed length strings
 
-static char *get_expr_stringbuf( int index, long min_len )
+static char *get_expr_stringbuf( QSP_ARG_DECL   int index, long min_len )
 {
 	String_Buf *sbp;
 
-	if( expr_string[index] == NULL ){
+	if( EXPR_STRING[index] == NULL ){
 		sbp = new_stringbuf();
-		expr_string[index]=sbp;
+		EXPR_STRING[index]=sbp;
 	} else {
-		sbp = expr_string[index];
+		sbp = EXPR_STRING[index];
 	}
-	if( expr_string[index]->sb_size < min_len )
+	if( EXPR_STRING[index]->sb_size < min_len )
 		enlarge_buffer(sbp,min_len);
 	return(sbp->sb_buf);
 }
@@ -405,10 +335,10 @@ static char *get_expr_stringbuf( int index, long min_len )
 
 topexp		: expression { 
 			// qsp is passed to yyparse through YYPARSE_PARAM, but it is void *
-			final_expr_node_p = $1 ;
+			FINAL_EXPR_NODE_P = $1 ;
 			}
 		| e_string {
-			final_expr_node_p = $1;
+			FINAL_EXPR_NODE_P = $1;
 			}
 		/*
 		| strv_func {
@@ -568,12 +498,6 @@ expression	: NUMBER {
 			$$=NODE1(N_SIZFUNC,$3);
 			$$->sen_func_p=$1;
 			}
-		/*
-		| SIZE_FUNC '(' data_object ')' {
-			$$=NODE1(N_SIZFUNC,$3);
-			$$->sen_func_p=$1;
-			}
-			*/
 		| TS_FUNC '(' timestampable_object ',' expression ')' {
 			$$=NODE2(N_TSFUNC,$3,$5);
 			$$->sen_func_p=$1;
@@ -1437,11 +1361,11 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	static Function *val_func_p=NO_FUNCTION;
 
 #ifdef QUIP_DEBUG
-if( debug & expr_debug ){
+//if( debug & expr_debug ){
 sprintf(ERROR_STRING,"eval_expr:  code = %d",enp->sen_code);
 ADVISE(ERROR_STRING);
 dump_enode(QSP_ARG  enp);
-}
+//}
 #endif /* QUIP_DEBUG */
 
 	switch(enp->sen_code){
@@ -1516,8 +1440,13 @@ dump_enode(QSP_ARG  enp);
 			return tsp;
 		}
 #endif /* BUILD_FOR_OBJC */
+fprintf(stderr,"eval_expr:  calling eval_szbl_expr_func, thread %d\n",QS_SERIAL);
 		szp = EVAL_SZBL_EXPR_FUNC(enp->sen_child[0]);
+fprintf(stderr,"eval_expr:  back from eval_szbl_expr_func, thread %d\n",QS_SERIAL);
+fprintf(stderr,"eval_expr:  calling size function at 0x%lx, thread %d\n",
+		(long)enp->sen_func_p->fn_u.sz_func,	QS_SERIAL);
 		dval = (*enp->sen_func_p->fn_u.sz_func)( QSP_ARG  szp );
+fprintf(stderr,"eval_expr:  converting double to typed scalar, thread %d\n",QS_SERIAL);
 		tsp = scalar_for_double(dval);
 		break;
 	case N_STRVFUNC:		// eval_expr
@@ -2136,7 +2065,7 @@ static Typed_Scalar * yynumber(SINGLE_QSP_ARG_DECL)
 
 #define TMPBUF_LEN	128
 
-static const char * varval(void)
+static const char * varval(SINGLE_QSP_ARG_DECL)
 {
 	char tmpbuf[TMPBUF_LEN];
 	const char *s;
@@ -2147,7 +2076,7 @@ static const char * varval(void)
 
 	if( *YYSTRPTR[EDEPTH] == '$' ){
 		YYSTRPTR[EDEPTH]++;
-		s = varval() ;
+		s = varval(SINGLE_QSP_ARG) ;
 	} else {
 		/* read in the variable name */
 		char *sp;
@@ -2245,41 +2174,42 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 				LLERROR("expression depth too large");
 				return(0);
 			}
-			YYSTRPTR[EDEPTH+1]=varval();
+			YYSTRPTR[EDEPTH+1]=varval(SINGLE_QSP_ARG);
 			/* varval should advance YYSTRPTR[edpth] */
 			EDEPTH++;
 			/* keep looping */
 		} else if( IS_LEGAL_FIRST_CHAR(c) ){	/* get a name */
 			int n=1;
-			s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
+			s=get_expr_stringbuf(QSP_ARG  WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
 			*s++ = (*YYSTRPTR[EDEPTH]++);
 			while( IS_LEGAL_NAME_CHAR(*YYSTRPTR[EDEPTH]) ){
 				*s++ = (*YYSTRPTR[EDEPTH]++);
 				n++;
 //#ifdef CAUTIOUS
-//				if( n >= expr_string[WHICH_EXPR_STR]->sb_size ){
+//				if( n >= EXPR_STRING[WHICH_EXPR_STR]->sb_size ){
 //					LLERROR("string buffer overflow #1");
 //					s--;
 //					n--;
 //				}
 //#endif // CAUTIOUS
-				assert(n< SB_SIZE(expr_string[WHICH_EXPR_STR]));
+				assert(n< SB_SIZE(EXPR_STRING[WHICH_EXPR_STR]));
 			}
 			*s=0;
 
 			yylvp->func_p = function_of(QSP_ARG
-				expr_string[WHICH_EXPR_STR]->sb_buf);
+				EXPR_STRING[WHICH_EXPR_STR]->sb_buf);
 			if( yylvp->func_p != NULL ){
 				int t;
 				t = token_for_func_type(FUNC_TYPE(yylvp->func_p));
+fprintf(stderr,"Found function at 0x%lx, token = %d\n",(long)yylvp->func_p,t);
 				return t;
 			}
 
 			// use an array of tsp's here instead???
-			//yylvp->e_string=expr_string[WHICH_EXPR_STR]->sb_buf;
-			string_scalar[WHICH_EXPR_STR].ts_value.u_vp=
-				expr_string[WHICH_EXPR_STR]->sb_buf;
-			yylvp->tsp=(&string_scalar[WHICH_EXPR_STR]);
+			//yylvp->e_string=EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
+			STRING_SCALAR[WHICH_EXPR_STR].ts_value.u_vp=
+				EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
+			yylvp->tsp=(&STRING_SCALAR[WHICH_EXPR_STR]);
 			ADVANCE_EXPR_STR
 			return(E_STRING);	/* unquoted string */
 
@@ -2348,7 +2278,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 				 * like to skip escaped quotes...
 				 */
 				qchar=c;
-				s=get_expr_stringbuf(WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
+				s=get_expr_stringbuf(QSP_ARG  WHICH_EXPR_STR,strlen(YYSTRPTR[EDEPTH]));
 				/* copy string into a buffer */
 				c = *YYSTRPTR[EDEPTH];
 				while( c && c != qchar ){
@@ -2370,7 +2300,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 					}
 					c = *YYSTRPTR[EDEPTH];
 //#ifdef CAUTIOUS
-//					if( n >= expr_string[WHICH_EXPR_STR]->sb_size ){
+//					if( n >= EXPR_STRING[WHICH_EXPR_STR]->sb_size ){
 //						LLERROR("CAUTIOUS:  string buffer overflow #2");
 //						s--;
 //						*s = 0;
@@ -2378,7 +2308,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 //						n--;
 //					}
 //#endif // CAUTIOUS
-					assert(n<SB_SIZE(expr_string[WHICH_EXPR_STR]));
+					assert(n<SB_SIZE(EXPR_STRING[WHICH_EXPR_STR]));
 				}
 				*s=0;
 				if( *YYSTRPTR[EDEPTH] == qchar ){
@@ -2388,9 +2318,9 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 					 */
 				} else LLERROR("unmatched quote");
 
-				yylvp->tsp=(&string_scalar[WHICH_EXPR_STR]);
-				string_scalar[WHICH_EXPR_STR].ts_value.u_vp
-					= expr_string[WHICH_EXPR_STR]->sb_buf;
+				yylvp->tsp=(&STRING_SCALAR[WHICH_EXPR_STR]);
+				STRING_SCALAR[WHICH_EXPR_STR].ts_value.u_vp
+					= EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
 
 				ADVANCE_EXPR_STR
 #ifdef QUIP_DEBUG
@@ -2449,18 +2379,18 @@ static void rls_tree( Scalar_Expr_Node *enp )
 	addHead(free_enp_lp,np);
 }
 
-static void initialize_estrings(void)
+static void initialize_estrings(SINGLE_QSP_ARG_DECL)
 {
 	// BUG using these static structs is not thread-safe!
 
 	int i;
 
 	for(i=0;i<MAX_E_STRINGS;i++){
-		expr_string[i]=NULL;
-		string_scalar[i].ts_value.u_vp = NULL;
-		string_scalar[i].ts_prec_code = PREC_STR;
+		EXPR_STRING[i]=NULL;
+		STRING_SCALAR[i].ts_value.u_vp = NULL;
+		STRING_SCALAR[i].ts_prec_code = PREC_STR;
 	}
-	estrings_inited=1;
+	ESTRINGS_INITED=1;
 }
 
 /*
@@ -2492,7 +2422,8 @@ pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 	int stat;
 	Typed_Scalar *tsp;
 
-	if( ! estrings_inited ) initialize_estrings();
+//fprintf(stderr,"pexpr('%s') BEGIN, thread %d, IN_PEXPR = %d\n",buf,QS_SERIAL,IN_PEXPR);
+	if( ! ESTRINGS_INITED ) initialize_estrings(SINGLE_QSP_ARG);
 
 #ifdef QUIP_DEBUG
 	if( expr_debug <= 0 )
@@ -2507,20 +2438,32 @@ ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
+	// Can the parser be reentrant?
+	// From the point of view of yacc/bison, I think the answer is yes,
+	// but we have global vars that are per-qsp...
+	// The gets used for things like is_contiguous('img[1]')
+	// where img[1] is processed by the object name lookup function
+	// which calls the parser on the index.
+	// The parser won't parse things inside of quote strings.
+	// The proper solution would be to make pexpr rentrant (like yyparse)
+
 	if( IN_PEXPR ) {
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
 ADVISE("pexpr:  nested call to pexpr, calling parse_number");
 }
 #endif /* QUIP_DEBUG */
+//ADVISE("pexpr:  nested call to pexpr, calling parse_number");
 		return( parse_number(QSP_ARG  &buf) );
 	}
 
+//fprintf(stderr,"pexpr setting IN_PEXPR in thread %d\n",QS_SERIAL);
 	IN_PEXPR=1;
 	EDEPTH=0;
 	YY_ORIGINAL=YYSTRPTR[EDEPTH]=buf;
-
+fprintf(stderr,"pexpr:  input set to '%s', thread %d\n",buf,QS_SERIAL);
 	stat=yyparse(/*SINGLE_QSP_ARG*/ THIS_QSP );
+fprintf(stderr,"pexpr:  back from yyparse, thread %d\n",QS_SERIAL);
 
 	if( stat != 0 ){
 		/* Need to somehow free allocated nodes... */
@@ -2529,6 +2472,7 @@ ADVISE("pexpr:  nested call to pexpr, calling parse_number");
 			ADVISE(ERROR_STRING);
 		}
 		IN_PEXPR=0;
+//fprintf(stderr,"pexpr clearing IN_PEXPR (#1) in thread %d\n",QS_SERIAL);
 		//return(0.0);
 		return(&ts_dbl_zero);
 	}
@@ -2539,7 +2483,9 @@ dump_etree(QSP_ARG  FINAL_EXPR_NODE_P);
 }
 #endif /* QUIP_DEBUG */
 
+fprintf(stderr,"pexpr:  evaluating expression tree, thread %d\n",QS_SERIAL);
 	tsp = EVAL_EXPR(FINAL_EXPR_NODE_P);
+fprintf(stderr,"pexpr:  done with expression tree, thread %d\n",QS_SERIAL);
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
@@ -2581,6 +2527,7 @@ ADVISE(ERROR_STRING);
 
 	UNLOCK_ENODES
 
+//fprintf(stderr,"pexpr clearing IN_PEXPR (#2) in thread %d\n",QS_SERIAL);
 	IN_PEXPR=0;
 
 	return( tsp );
@@ -2617,8 +2564,7 @@ int yyerror(Query_Stack *qsp, char *s)
 	 * large number...  causes all sorts of problems!
 	 */
 cleanup:
-	//FINAL_EXPR_NODE_P=NO_EXPR_NODE;
-	final_expr_node_p = NO_EXPR_NODE;
+	FINAL_EXPR_NODE_P=NO_EXPR_NODE;
 	/* BUG need to release nodes here... */
 	return(0);
 }

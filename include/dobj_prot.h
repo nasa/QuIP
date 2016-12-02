@@ -3,6 +3,7 @@
 #include "quip_menu.h"
 #include "ascii_fmts.h"
 #include "data_obj.h"
+#include "scalar_value.h"
 //#define CONST const	// why needed?
 
 // BUG - this file contains both prototypes for functions which are private

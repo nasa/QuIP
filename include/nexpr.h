@@ -4,11 +4,9 @@
 
 //#include "shape_bits.h"
 //#include "dobj_basic.h"
+#include "quip_fwd.h"
 #include "data_obj.h"
 #include "typed_scalar.h"
-
-struct scalar_expression_node;
-typedef struct scalar_expression_node Scalar_Expr_Node;
 
 typedef enum {
 	N_OBJNAME,			/*  0 */
@@ -65,7 +63,7 @@ typedef enum {
 
 #define MAX_SEN_CHILDREN  3
 
-struct scalar_expression_node {
+struct scalar_expr_node {
 	Scalar_Expr_Node_Code	sen_code;
 //	const char *		sen_string;
 //	const char *		sen_string2;

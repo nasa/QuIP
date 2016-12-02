@@ -236,6 +236,7 @@ static double get_vw_size(QSP_ARG_DECL  IOS_Item *ip,int index)
 	double d;
 	Viewer *vp;
 
+fprintf(stderr,"get_vw_size BEGIN, thread %d\n",QS_SERIAL);
 	vp = (Viewer *)ip;
 	switch(index){
 		case 0: d = VW_DEPTH(vp)/8; break;
@@ -243,6 +244,7 @@ static double get_vw_size(QSP_ARG_DECL  IOS_Item *ip,int index)
 		case 2:	d = VW_HEIGHT(vp); break;
 		default: d=1.0; break;
 	}
+fprintf(stderr,"get_vw_size returning %g, thread %d\n",d,QS_SERIAL);
 	return(d);
 }
 

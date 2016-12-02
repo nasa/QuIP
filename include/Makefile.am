@@ -108,6 +108,7 @@ noinst_HEADERS =			\
 			rn.h		\
 			rt_sched.h	\
 			rv_api.h	\
+			scalar_value.h	\
 			screen_obj.h	\
 			seq.h		\
 			seq_api.h	\

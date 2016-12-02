@@ -1037,7 +1037,9 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	}
 
 	if( RV_PARENT(inp) != NO_INODE ){
+fprintf(stderr,"rls_inode calling remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
 		np=remData(RV_PARENT(inp)->rvi_lp,inp);
+fprintf(stderr,"rls_inode back from remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
 //#ifdef CAUTIOUS
 //		if( np==NO_NODE ){
 //			sprintf(ERROR_STRING,"CAUTIOUS:  error removing inode %s from list of parent %s",
@@ -1451,6 +1453,7 @@ advise(ERROR_STRING);
 	if( (!in_mkfs) && rv_sbp->rv_cwd!=NO_INODE ){
 		Node *np;
 		np = mk_node(inp);
+fprintf(stderr,"rv_newfile adding inode to directory list 0x%lx...\n",(long)rv_sbp->rv_cwd->rvi_lp);
 		addTail(rv_sbp->rv_cwd->rvi_lp,np);
 		RV_PARENT(inp) = rv_sbp->rv_cwd;
 	} else {

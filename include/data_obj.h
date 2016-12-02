@@ -19,6 +19,7 @@
 
 struct platform_device;
 
+#ifdef MOVED
 typedef union {
 	double		u_d;	// this is first to be the default initializer
 	long double	u_ld;
@@ -57,6 +58,7 @@ typedef union {
 #define SVAL_STD(svp)		(svp)->std_scalar
 #define SVAL_STD_CPX(svp)	(svp)->std_cpx_scalar
 #define SVAL_STD_QUAT(svp)	(svp)->std_quat_scalar
+#endif // MOVED
 
 /* Data areas were a largely obsolete construct, which were
  * originally introduced to allow objects to be placed in a particular

@@ -63,7 +63,7 @@ Node *remNode( List * lp, Node* node )
 	np=QLIST_HEAD(lp);
 	if( np == NO_NODE ) return(NO_NODE);
 
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,remNode)
 
 	if( NODE_PREV(np) != NO_NODE ) is_ring=1;
 	while( np != NO_NODE ){
@@ -93,16 +93,18 @@ Node *remNode( List * lp, Node* node )
 				SET_NODE_PREV(np,NO_NODE);
 			}
 
+			UNLOCK_LIST(lp,remNode)
 			return(np);
 		}
 		np = NODE_NEXT(np);
 		if( np == QLIST_HEAD(lp) ) np=NO_NODE;
 	}
 
-	UNLOCK_LIST(lp)
+	NWARN("remNode:  node not found!?");	// can this ever happen?
+	UNLOCK_LIST(lp,remNode)
 
 	return(np);
-}
+} // remNode
 
 /*
  * search list for node pointing to data
@@ -230,7 +232,7 @@ static Node *newnode()			/**/
 	if( free_node_list == NO_LIST )
 		free_node_list = new_list();
 
-	LOCK_LIST(free_node_list)
+	LOCK_LIST(free_node_list,newnode)
 
 	if( IS_EMPTY(free_node_list) ){		/* grab another page's worth of nodes */
 		int n_per_page;
@@ -263,7 +265,7 @@ static Node *newnode()			/**/
 	}
 	np=safe_remHead(free_node_list);
 
-	UNLOCK_LIST(free_node_list)
+	UNLOCK_LIST(free_node_list,newnode)
 
 	SET_NODE_NEXT(np,NO_NODE);
 	SET_NODE_PREV(np,NO_NODE);
@@ -276,7 +278,7 @@ static Node *newnode()			/**/
 //}
 #endif /* QUIP_DEBUG */
 	return(np);
-}
+} // newnode
 
 /*
  * Release all of the nodes belonging to a list,
@@ -293,7 +295,7 @@ void rls_nodes_from_list(List *lp)
 {
 	Node *np, *np2;
 
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,rls_nodes_from_list)
 	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		np2=np;
@@ -303,7 +305,7 @@ void rls_nodes_from_list(List *lp)
 	}
 	SET_QLIST_HEAD(lp,NO_NODE);
 	SET_QLIST_TAIL(lp,NO_NODE);
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,rls_nodes_from_list)
 }
 
 static void init_list(List *lp)
@@ -320,12 +322,18 @@ static void init_list(List *lp)
 #ifdef THREAD_SAFE_QUERY
 #ifdef HAVE_PTHREADS
 	int status;
+	pthread_mutexattr_t attr;
 
-	status = pthread_mutex_init(&lp->l_mutex,NULL);
+	if( pthread_mutexattr_init(&attr) != 0 )
+		NWARN("error initializing mutex attributes!?");
+	if( pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0 )
+		NWARN("error setting mutex type!?");
+	status = pthread_mutex_init(&lp->l_mutex,/*NULL*/&attr);
 	if( status != 0 ){
-		NERROR1("error initializing mutex");
+		NERROR1("error initializing mutex!?");
 		IOS_RETURN
 	}
+fprintf(stderr,"mutex initialized for list at 0x%lx\n",(long)lp);
 #endif /* HAVE_PTHREADS */
 
 	//lp->l_flags=0;
@@ -355,6 +363,7 @@ List *new_list()
 		rls_node(np);
 	}
 	init_list(lp);
+fprintf(stderr,"new_list returning initialized list at 0x%lx\n",(long)lp);
 	return(lp);
 }
 
@@ -374,7 +383,7 @@ void rls_list(List *lp)
 
 void addHead( List *lp, Node* np )		/**/
 {
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,addHead)
 	if( QLIST_HEAD(lp) != NO_NODE ){
 		if( NODE_PREV(QLIST_HEAD(lp)) != NO_NODE ){	/* ring */
 			SET_NODE_PREV(np, QLIST_TAIL(lp));
@@ -391,7 +400,7 @@ void addHead( List *lp, Node* np )		/**/
 		SET_QLIST_TAIL(lp, np);
 	}
 	SET_QLIST_HEAD(lp, np);
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,addHead)
 }
 
 #define ADD_TAIL(lp,np)						\
@@ -410,9 +419,9 @@ void addHead( List *lp, Node* np )		/**/
 
 void addTail( List *lp, Node* np )		/**/
 {
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,addTail)
 	ADD_TAIL(lp,np)
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,addTail)
 }
 
 void safe_addTail( List *lp, Node* np )		/**/
@@ -453,9 +462,9 @@ Node *remHead( List *lp )		/**/
 		return( NO_NODE );
 	}
 
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,remHead)
 	REM_HEAD(np,lp)
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,remHead)
 
 	return(np);
 }
@@ -478,7 +487,7 @@ Node *remTail( List *lp )		/**/
 	Node *np;
 
 	if( (np=QLIST_TAIL(lp)) == NO_NODE ) return(NO_NODE);
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,remTail)
 	SET_QLIST_TAIL(lp, NODE_PREV(np));
 	if( NODE_NEXT(np) != NO_NODE ){		/* ring */
 		if( QLIST_TAIL(lp) == np ){	/* last link of ring */
@@ -500,7 +509,7 @@ Node *remTail( List *lp )		/**/
 		SET_NODE_NEXT(np, NO_NODE);
 		SET_NODE_PREV(np, NO_NODE);
 	}
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,remTail)
 	return(np);
 }
 
@@ -509,7 +518,7 @@ static void l_exch( List *lp, Node* np1, Node* np2 )		/** exchange two list elem
 	Node tmp;
 	Node *tmp_np=(&tmp);
 
-	LOCK_LIST(lp)
+	LOCK_LIST(lp,l_exch)
 
 	/* this procedure has to be different for adjacent nodes! */
 
@@ -557,7 +566,7 @@ static void l_exch( List *lp, Node* np1, Node* np2 )		/** exchange two list elem
 	
 	if( QLIST_TAIL(lp) == np1 ) SET_QLIST_TAIL(lp,np2);
 	else if( QLIST_TAIL(lp) == np2 ) SET_QLIST_TAIL(lp,np1);
-	UNLOCK_LIST(lp)
+	UNLOCK_LIST(lp,l_exch)
 }
 	
 void p_sort( List* lp )		/** sort list with highest priority at head */

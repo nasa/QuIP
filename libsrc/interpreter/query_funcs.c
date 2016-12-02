@@ -2530,13 +2530,23 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 
 static void init_parser_data(Query_Stack *qsp)
 {
-	ALLOC_QS_PARSER_DATA(qsp);
+	ALLOC_QS_VECTOR_PARSER_DATA(qsp);
 	// Now allocate the strings
 	SET_QS_YY_INPUT_LINE(qsp,getbuf(LLEN));
 	SET_QS_YY_LAST_LINE(qsp,getbuf(LLEN));
 	SET_QS_EXPR_STRING(qsp,getbuf(LLEN));
 	SET_QS_EDEPTH(qsp, -1);
 	SET_QS_CURR_STRING(qsp, qsp->_qs_expr_string );
+
+	ALLOC_QS_SCALAR_PARSER_DATA(qsp);
+	// initialize the fields
+	SET_QS_SPD_EDEPTH(qsp,-1);
+	SET_QS_SPD_WHICH_STR(qsp,0);
+	SET_QS_SPD_IN_PEXPR(qsp,0);
+	SET_QS_SPD_ORIGINAL_STRING(qsp,NULL);
+	SET_QS_SPD_ESTRINGS_INITED(qsp,0);
+	// set spd_expr_string's to NULL ???
+	//SET_QS_SPD_YYSTRPTR(qsp,NULL);
 }
 
 // Initialize a Query_Stack

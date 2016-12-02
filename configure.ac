@@ -1719,6 +1719,7 @@ AC_CONFIG_FILES([Makefile
 		 macros/numrec/Makefile
 		 macros/gsl/Makefile
 		 macros/knox/Makefile
+		 macros/flycap/Makefile
 		 macros/visca/Makefile
 		 macros/v4l2/Makefile
 		 macros/gui/Makefile

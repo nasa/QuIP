@@ -20,6 +20,7 @@ macros_DATA	=	Xgraph.scr		\
 			jpshow.scr		\
 			kdrw.scr		\
 			knoxd.scr		\
+			flyd.scr		\
 			evid.scr		\
 			coq.scr			\
 			airway.scr			\

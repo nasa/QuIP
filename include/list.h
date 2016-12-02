@@ -32,28 +32,32 @@ struct list {
 
 #define LIST_IS_LOCKED(lp)	(lp->l_flags&LIST_LOCKED)
 
-#define LOCK_LIST(lp)						\
+#define LOCK_LIST(lp,whence)						\
 								\
 	if( n_active_threads > 1 )				\
 	{							\
 		int status;					\
 								\
+fprintf(stderr,"%s:  locking list 0x%lx\n",#whence,(long)lp);\
 		status = pthread_mutex_lock(&lp->l_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(DEFAULT_QSP_ARG  status,"LOCK_LIST");	\
 		lp->l_flags |= LIST_LOCKED;			\
+fprintf(stderr,"%s:  list 0x%lx is locked\n",#whence,(long)lp);\
 	}
 
-#define UNLOCK_LIST(lp)						\
+#define UNLOCK_LIST(lp,whence)						\
 								\
 	if( LIST_IS_LOCKED(lp) )				\
 	{							\
 		int status;					\
 								\
 		lp->l_flags &= ~LIST_LOCKED;			\
+fprintf(stderr,"%s:  unlocking list 0x%lx\n",#whence,(long)lp);\
 		status = pthread_mutex_unlock(&lp->l_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(DEFAULT_QSP_ARG  status,"UNLOCK_LIST");\
+fprintf(stderr,"%s:  list 0x%lx is unlocked\n\n",#whence,(long)lp);\
 	}
 
 #else /* ! HAVE_PTHREADS */
