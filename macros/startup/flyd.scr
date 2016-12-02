@@ -1,0 +1,17 @@
+#
+# mmvi record daemon
+
+
+
+< $DOTFILEDIR/.daemon
+#< $DOTFILEDIR/.generic
+< $DOTFILEDIR/.gendata
+< $DOTFILEDIR/.genwar
+< $DOTFILEDIR/.genview
+
+< $macro_dir/flycap/fly.mac
+
+#verbose yes
+
+Daemon_Start $flyd_port
+
