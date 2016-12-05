@@ -83,7 +83,7 @@ static COMMAND_FUNC( do_rbt_add )
 
 	// first look for this name in the tree
 
-	ip = malloc(sizeof(Item));
+	ip = getbuf(sizeof(Item));
 	ip->item_name = savestr(s);
 
 	rb_insert_item( the_tree_p, ip );

@@ -151,7 +151,6 @@ void set_iofile_directory(QSP_ARG_DECL  const char *dirname)
 
 static FIO_WT_FUNC( dummy )
 {
-fprintf(stderr,"dummy_wt:  doing nothing!?\n");
 	return(0);
 }
 

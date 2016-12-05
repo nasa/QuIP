@@ -348,11 +348,9 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
 {
 	Data_Obj *dp;
-	Dimension_Set *dsp;
+	Dimension_Set ds1, *dsp=(&ds1);
 	int i;
 	index_t offset;
-
-	INIT_DIMSET_PTR(dsp)
 
 	dp=new_dobj(QSP_ARG  name);
 	if( dp==NO_OBJ ) return(NO_OBJ);
@@ -494,11 +492,7 @@ Data_Obj *
 mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols )
 {
 	index_t offsets[N_DIMENSIONS];
-	Dimension_Set ds1;
-	Dimension_Set *dsp=(&ds1);
-//	Dimension_Set *dsp;
-
-	//INIT_DIMSET_PTR(dsp)
+	Dimension_Set ds1, *dsp=(&ds1);
 
 	offsets[0]=0L;	SET_DIMENSION(dsp,0,OBJ_TYPE_DIM(parent,0));
 	offsets[1]=xos;	SET_DIMENSION(dsp,1,cols);
@@ -513,9 +507,7 @@ mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *
 Data_Obj * nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )
 {
 	index_t offsets[N_DIMENSIONS];
-	Dimension_Set *dsp;
-
-	INIT_DIMSET_PTR(dsp)
+	Dimension_Set ds1, *dsp=(&ds1);
 
 	offsets[0]=0L;	SET_DIMENSION(dsp,0,tdim);
 	offsets[1]=xos;	SET_DIMENSION(dsp,1,cols);

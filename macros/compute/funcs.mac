@@ -520,7 +520,6 @@ compute misc sort $1 quit quit
 
 
 Define Fill 5 img x y v tol
-advise "Fill $1 $2 $3 $4 $5"
 compute misc fill $1 $2 $3 $4 $5 quit quit
 .
 

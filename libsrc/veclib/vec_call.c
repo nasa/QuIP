@@ -981,6 +981,8 @@ void set_gpu_dispatch_func( int (*func)(Vector_Function *vfp, Vec_Obj_Args *oap)
 
 int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 {
+	int retval;
+
 	/* Set the default function type.
 	 * Why do we use src1 in preference to oa_dest?
 	 *
@@ -1019,12 +1021,10 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 		return -1;
 
 	assert( OA_PFDEV(oap) != NULL );
-/*
-fprintf(stderr,"call_vfunc:  oap = 0x%lx  vfp = 0x%lx\n",
-(long)oap,(long)vfp );
-fprintf(stderr,"call_vfunc:  func at 0x%lx\n",(long)OA_DISPATCH_FUNC(oap));
-*/
+//fprintf(stderr,"call_vfunc:  oap = 0x%lx  vfp = 0x%lx\n", (long)oap,(long)vfp );
+//fprintf(stderr,"call_vfunc:  func at 0x%lx\n",(long)OA_DISPATCH_FUNC(oap));
 	//return (* OA_DISPATCH_FUNC( oap ) )(QSP_ARG  vfp,oap);
-	return platform_dispatch( QSP_ARG  PFDEV_PLATFORM(OA_PFDEV(oap)), vfp,oap);
+	retval = platform_dispatch( QSP_ARG  PFDEV_PLATFORM(OA_PFDEV(oap)), vfp,oap);
+	return retval;
 } // call_vfunc
 

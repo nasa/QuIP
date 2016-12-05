@@ -729,6 +729,11 @@ void release_rb_tree(qrb_tree *tree_p)
 	givbuf(tree_p);
 }
 
+void rls_rbtree_enumerator(RB_Tree_Enumerator *ep)
+{
+	givbuf(ep);	// keep a pool for efficiency?  Maybe the tree should have an enumerator as part of it?
+}
+
 RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tree_p)
 {
 	RB_Tree_Enumerator *rbtep;

@@ -548,6 +548,11 @@ Item *ht_enumerator_item(Hash_Tbl_Enumerator *htep)
 	return (Item *) *(htep->current_entry);
 }
 
+void rls_hash_tbl_enumerator(Hash_Tbl_Enumerator *ep)
+{
+	givbuf(ep);	// We might save a bit by keeping a pool of these?
+}
+
 Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
 {
 	Hash_Tbl_Enumerator *htep;

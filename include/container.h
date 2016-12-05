@@ -36,7 +36,6 @@ extern Enumerator *new_enumerator(Container *cnt_p, int type);
 extern Enumerator *advance_enumerator(Enumerator *ep );
 extern Enumerator *backup_enumerator(Enumerator *ep );
 extern void *enumerator_item(Enumerator *ep);
-extern List_Enumerator *new_list_enumerator(List *lp);
 extern Item *current_frag_item(Frag_Match_Info *fmi_p);
 
 extern void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, const char *frag);

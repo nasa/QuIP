@@ -95,6 +95,7 @@ typedef struct {
 
 extern RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tp);
 extern void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
+extern void rls_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
 extern Item * rbtree_enumerator_item(RB_Tree_Enumerator *rbtep);
 extern long rb_node_count(qrb_tree *tree_p);
 extern void release_rb_tree(qrb_tree *tree_p);

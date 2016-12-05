@@ -368,6 +368,7 @@ If $plotter_changing
   Recall_Plotter_Params
 # There are some parameters that are computed...
 #advise "Select_Plotter $1   right_margin = $right_margin"
+advise "Select_Plotter $1:  Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax"
 Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax
 .
 
@@ -456,9 +457,11 @@ view
 .
 
 Define Plot_Space 4 xmin ymin xmax ymax
-#Tell_If "Plot_Space $1 $2 $3 $4"
+Tell_If "Plot_Space ($the_plotter) $1 $2 $3 $4"
 If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
-If !$minmax_set "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+If !$minmax_set
+  Then "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+  Else "advise 'Plot_Space NOT calling Set_Plot_Minmax...'"
 #advise "Plot_Space '$the_plotter' $1 $2 $3 $4"
 view
   plot $the_plotter
@@ -607,9 +610,10 @@ Set margins_set 1
 # BUG margins set should be per plotter???
 
 Define Plot_Data_Range 4 xmin ymin xmax ymax
-#Tell_If "Plot_Data_Range $1 $2 $3 $4"
+Tell_If "Plot_Data_Range $1 $2 $3 $4"
 If !$margins_set "Tell_If 'margins not set, assigning default values' Assign_Margins"
 Print_If right_margin
+advise "Plot_Data_Range calling Set_Plot_Minmax"
 Set_Plot_Minmax $1 $2 $3 $4
 Assign x_delta ($3)-($1)				# width of plotting area in plotting units
 Assign y_delta ($4)-($2)
@@ -623,6 +627,7 @@ Assign pdr_x1 ($1)-$x_delta*$left_factor		# edge of window in plot units
 Assign pdr_y1 ($2)-$y_delta*$bot_factor
 Assign pdr_x2 ($3)+$x_delta*$right_factor
 Assign pdr_y2 ($4)+$y_delta*$top_factor
+advise "Plot_Data_Range calling Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2"
 Plot_Space $pdr_x1 $pdr_y1 $pdr_x2 $pdr_y2
 Update_Range_Constants
 # tick_len is in pixels (screen units), not plot space units
@@ -636,6 +641,7 @@ Unit_Font
 # end Plot_Data_Range
 
 Define Set_Plot_Minmax 4 xmin ymin xmax ymax
+advise "Set_Plot_Minmax $1 $2 $3 $4"
 Assign plot_xmin $1
 Assign plot_ymin $2
 Assign plot_xmax $3

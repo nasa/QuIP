@@ -575,29 +575,6 @@ expression	: NUMBER {
 
 %%
 
-#ifdef MOVED
-static Data_Obj *obj_for_string(const char *string)
-{
-	Dimension_Set *dsp;
-	Data_Obj *dp;
-
-	INIT_DIMSET_PTR(dsp)
-
-	/* this is just a string that we treat as a row vector
-	 * of character data...
-	 * We haven't actually created the data yet.
-	 */
-	SET_DIMENSION(dsp,0,1);
-	SET_DIMENSION(dsp,1,(dimension_t)strlen(string)+1);
-	SET_DIMENSION(dsp,2,1);
-	SET_DIMENSION(dsp,3,1);
-	SET_DIMENSION(dsp,4,1);
-	dp=make_dobj(DEFAULT_QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
-	if( dp != NULL ) strcpy((char *)OBJ_DATA_PTR(dp),string);
-	return(dp);
-}
-#endif // MOVED
-
 static Scalar_Expr_Node *alloc_expr_node(void)
 {
 	Scalar_Expr_Node *enp;

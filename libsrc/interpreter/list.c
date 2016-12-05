@@ -673,3 +673,8 @@ List_Enumerator *new_list_enumerator(List *lp)
 	return lep;
 }
 
+void rls_list_enumerator(List_Enumerator *lep)
+{
+	givbuf(lep);	// keep a pool?
+}
+

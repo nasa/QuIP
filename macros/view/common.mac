@@ -70,9 +70,7 @@ Define Show_Image 2 'float image' 'viewer name'
 Dup_Float siftmp $1
 Info siftmp
 Convert siftmp $1	# was VMov
-advise "Show_Image calling scale..."
 Scale siftmp $si_min $si_max
-advise "Show_Image back from scale..."
 Show_Raw siftmp "$2"
 Delete_Image siftmp
 .

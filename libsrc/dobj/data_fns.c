@@ -529,10 +529,12 @@ const char *localname(void)
 {
 	static short localn=0;
 	char buf[32];
+	const char *s;
 
 	localn++;
 	sprintf(buf,"L.%d",localn);
-	return( savestr(buf) );
+	s = savestr(buf);
+	return s;
 }
 
 /* Make an object of the same size and type, with an arbitrary, unique name 
@@ -542,7 +544,10 @@ const char *localname(void)
 Data_Obj *
 dupdp(QSP_ARG_DECL  Data_Obj *dp)
 {
-	return( dup_obj(QSP_ARG  dp,localname()) );
+	Data_Obj *new_dp;
+	new_dp = dup_obj(QSP_ARG  dp,localname());
+	assert(new_dp!=NULL);
+	return new_dp;
 }
 
 int is_valid_dname(QSP_ARG_DECL  const char *name)

@@ -41,13 +41,17 @@
 #define POP_CPAIR		POP_ID_CONTEXT;				\
 				POP_DOBJ_CONTEXT
 
+static void delete_local_objs(SINGLE_QSP_ARG_DECL);
+
+// BUG TOO MANY GLOBALS, NOT THREAD-SAFE!?
+
 // BUG not thread-safe!?
 static Dimension_Set *scalar_dsp=NULL;
 
-/* BUG use of this global list make this not reentrant... */
+/* BUG use of this global list make this not thread-safe - should be an element of parser_data! ... */
 static List *local_obj_lp=NO_LIST;
-static void delete_local_objs(SINGLE_QSP_ARG_DECL);
 
+// Not sure what these are used for ???  BUG not thread-safe!?
 static Item_Context *hidden_context[MAX_HIDDEN_CONTEXTS];
 static int n_hidden_contexts=0;
 
@@ -71,10 +75,6 @@ static int breaking=0;
 static int going=0;
 
 static int expect_perfection=0;		/* for mapping... */
-
-#ifdef SGI
-#include <alloca.h>
-#endif
 
 #ifdef QUIP_DEBUG
 debug_flag_t eval_debug=0;
@@ -1498,21 +1498,18 @@ static Data_Obj *create_bitmap( QSP_ARG_DECL  Dimension_Set *src_dsp )
 	 */
 
 	bmdp = make_local_dobj(QSP_ARG  dsp,prec_for_code(PREC_BIT));
+// This seems to be leaked!?
 	return(bmdp);
 }
 
 static Data_Obj *dup_bitmap(QSP_ARG_DECL  Data_Obj *dp)
 {
-//#ifdef CAUTIOUS
-//	if( UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
-//		sprintf(ERROR_STRING,"dup_bitmap:  can't dup from unknown shape object %s",OBJ_NAME(dp));
-//		ERROR1(ERROR_STRING);
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
+	Data_Obj *new_dp;
+
 	assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) );
 
-	return( create_bitmap(QSP_ARG  OBJ_TYPE_DIMS(dp) ) );
+	new_dp = create_bitmap(QSP_ARG  OBJ_TYPE_DIMS(dp) ) ;
+	return new_dp;
 }
 
 /* vs_bitmap:  vsm_lt etc. */
@@ -1526,34 +1523,11 @@ static Data_Obj * vs_bitmap(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp,Scalar_
 #endif // FOOBAR
 	int status;
 
-//#ifdef CAUTIOUS
-//	switch(code){
-//		case FVSMLT:
-//		case FVSMGT:
-//		case FVSMLE:
-//		case FVSMGE:
-//		case FVSMNE:
-//		case FVSMEQ:
-//			break;
-//		default:
-//			sprintf(ERROR_STRING,
-//				"CAUTIOUS:  unexpected code (%d) in vs_bitmap",code);
-//			WARN(ERROR_STRING);
-//			return(NO_OBJ);
-//	}
-//#endif /* CAUTIOUS */
 	assert( code == FVSMLT || code == FVSMGT || code == FVSMLE ||
 	        code == FVSMGE || code == FVSMNE || code == FVSMEQ );
 
 	if( dst_dp == NO_OBJ ){
 		bmdp = dup_bitmap(QSP_ARG  dp);
-//#ifdef CAUTIOUS
-//	if( bmdp == NO_OBJ ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  vs_bitmap:  unable to dup bitmap for obj %s",OBJ_NAME(dp));
-//		ERROR1(ERROR_STRING);
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
 		assert( bmdp != NO_OBJ );
 	}
 	else
@@ -1581,11 +1555,13 @@ static Data_Obj * vs_bitmap(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp,Scalar_
 static Data_Obj *dup_bitmap2(QSP_ARG_DECL  Data_Obj *dp1, Data_Obj *dp2)
 {
 	Shape_Info *shpp;
+	Data_Obj *dp;
 
 	shpp = product_shape(OBJ_SHAPE(dp1),OBJ_SHAPE(dp2));
 	if( shpp == NO_SHAPE ) return(NO_OBJ);
 
-	return( create_bitmap(QSP_ARG  SHP_TYPE_DIMS(shpp) ) );
+	dp = create_bitmap(QSP_ARG  SHP_TYPE_DIMS(shpp) );
+	return dp;
 }
 
 
@@ -2018,7 +1994,7 @@ LONGLIST(dp);
 		case T_SUM:
 			goto handle_it;
 
-		default:
+		default:			// eval_typecast
 			MISSING_CASE(VN_CHILD(enp,0),"eval_typecast");
 			/* missing_case calls dump_tree?? */
 			DUMP_TREE(enp);
@@ -2034,10 +2010,11 @@ handle_it:
 
 			EVAL_OBJ_ASSIGNMENT(tmp_dp,VN_CHILD(enp,0));
 
-			if( dst_dp == NO_OBJ )
+			if( dst_dp == NO_OBJ ){
 				dst_dp=make_local_dobj(QSP_ARG  
 					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
 					VN_PREC_PTR(enp));
+			}
 
 			if( c_convert(QSP_ARG  dst_dp,tmp_dp) < 0 ){
 				NODE_ERROR(enp);
@@ -3223,7 +3200,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	}
 	return(cpp);
-}
+} // pop_previous
 
 /* We call restore_previous when we return from a subroutine call to go back
  * the the original context.
@@ -6969,8 +6946,12 @@ make_local_dobj(QSP_ARG_DECL  Dimension_Set *dsp,Precision *prec_p)
 	Node *np;
 	const char *s;
 
-	dp=make_dobj(QSP_ARG  localname(),dsp,prec_p);
-	if( dp == NO_OBJ ) return(dp);
+	s=localname();	// localname() uses savestr, so we have to free or else there will be a leak
+	dp=make_dobj(QSP_ARG  s,dsp,prec_p);
+	rls_str(s);
+
+	//if( dp == NO_OBJ ) return(dp);	// does this ever happen?
+	assert(dp!=NULL);
 
 	/* remember this for later deletion... */
 	if( local_obj_lp == NO_LIST )
@@ -6998,26 +6979,24 @@ static void delete_local_objs(SINGLE_QSP_ARG_DECL)
 
 	if( local_obj_lp == NO_LIST ) return;
 
-	np=QLIST_HEAD(local_obj_lp);
+	//np=QLIST_HEAD(local_obj_lp);
+	np = remHead(local_obj_lp);
 	while(np!=NO_NODE){
 		s = (char *)NODE_DATA(np);
-		dp = DOBJ_OF(s);
-
-//#ifdef CAUTIOUS
-//		if( strncmp(s,"L.",2) ){
-//			sprintf(ERROR_STRING,
-//				"CAUTIOUS:  delete_local_objs:  Oops, object %s is on local object list!?",
-//				OBJ_NAME(dp));
-//			ERROR1(ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( ! strncmp(s,"L.",2) );
 
-		if( dp != NO_OBJ ){
+		dp = DOBJ_OF(s);
+	//	assert(dp!=NULL);
+		if( dp != NULL ){
+
 			delvec(QSP_ARG  dp);
 		}
-		np = NODE_NEXT(np);
+		  else {
+		}
+		rls_str(s);
+		rls_node(np);
+		//np = NODE_NEXT(np);
+		np = remHead(local_obj_lp);
 	}
 }
 
@@ -7569,7 +7548,7 @@ DUMP_TREE(enp);
 				read_object_from_file(QSP_ARG  dp1,ifp);
 				//h_vl2_convert(QSP_ARG  dp,dp1);
 				dp_convert(QSP_ARG  dp,dp1);
-				delvec(QSP_ARG  dp1);
+				delvec(QSP_ARG  dp1);	// doesn't need delete_local_objects?
 			}
 			break;
 #endif /* NOT_YET */
@@ -7946,7 +7925,7 @@ DUMP_TREE(enp);
 
 	/* We also need to remove the "local" objects... */
 
-	delete_local_objs(SINGLE_QSP_ARG);
+	delete_local_objs(SINGLE_QSP_ARG);	// eval_work_tree
 
 	switch(VN_CODE(enp)){
 

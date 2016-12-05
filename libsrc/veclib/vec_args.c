@@ -233,9 +233,12 @@ static Scalar_Value *get_sval(Precision * prec_p)
 	if( QLIST_HEAD(free_sval_lp) != NULL ){
 		Node *np;
 		np = remHead(free_sval_lp);
-		return NODE_DATA(np);
+		svp = NODE_DATA(np);
+		rls_node(np);
+		return svp;
 	}
 
+	// We could get a block of svp's and add to the list here!  BUG
 	svp = (Scalar_Value *)getbuf( sizeof(Scalar_Value) );
 	/* BUG?  should we initialize value? */
 	return(svp);			/* BUG possible memory leak? */
@@ -248,6 +251,7 @@ static void rls_sval(Scalar_Value *svp)
 	Node *np;
 
 	np = mk_node(svp);
+
 	assert(free_sval_lp!=NULL);
 	addHead(free_sval_lp,np);
 }

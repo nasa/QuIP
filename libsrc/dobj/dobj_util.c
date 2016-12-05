@@ -203,8 +203,8 @@ void delvec(QSP_ARG_DECL  Data_Obj *dp)
 #ifdef ZOMBIE_SUPPORT
 	// This should go back in eventually!
 	if( OBJ_FLAGS(dp) & DT_STATIC && OWNS_DATA(dp) ){
-//sprintf(ERROR_STRING,"delvec:  static object %s will be made a zombie",OBJ_NAME(dp));
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"delvec:  static object %s will be made a zombie",OBJ_NAME(dp));
+advise(ERROR_STRING);
 		make_zombie(QSP_ARG  dp);
 		return;
 	}
@@ -224,8 +224,8 @@ void delvec(QSP_ARG_DECL  Data_Obj *dp)
 		 * be able to crash the program either...
 		 */
 
-//sprintf(ERROR_STRING,"delvec:  object %s (refcount = %d) will be made a zombie",OBJ_NAME(dp),dp->dt_refcount);
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"delvec:  object %s (refcount = %d) will be made a zombie",OBJ_NAME(dp),dp->dt_refcount);
+advise(ERROR_STRING);
 		make_zombie(QSP_ARG  dp);
 		return;
 	}

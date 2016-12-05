@@ -94,6 +94,7 @@ typedef struct {
 extern void advance_list_enumerator(List_Enumerator *lep);
 extern Item *list_enumerator_item(List_Enumerator *lep);
 extern List_Enumerator *new_list_enumerator(List *lp);
+extern void rls_list_enumerator(List_Enumerator *lp);
 
 #endif /* ! _LIST_H_ */
 

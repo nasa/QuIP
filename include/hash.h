@@ -40,6 +40,7 @@ typedef struct {
 
 extern Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp);
 extern void advance_ht_enumerator(Hash_Tbl_Enumerator *htep);
+extern void rls_hash_tbl_enumerator(Hash_Tbl_Enumerator *htep);
 extern Item * ht_enumerator_item(Hash_Tbl_Enumerator *htep);
 
 #endif // ! _HASH_H_

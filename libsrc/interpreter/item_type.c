@@ -489,6 +489,7 @@ NADVISE(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 		/* get a pages worth of items */
 		nip = (char*)  malloc( n_per_page * size );
+		//nip = (char*)  getbuf( n_per_page * size );
 		total_from_malloc += n_per_page*size;
 
 		if( nip == NULL ){
@@ -516,7 +517,10 @@ NADVISE(ERROR_STRING);
 	assert( np != NO_NODE );
 
 	ip = (Item *) NODE_DATA(np);
+	rls_node(np);
+
 	SET_ITEM_NAME( ip, savestr(name) );
+
 //sprintf(ERROR_STRING,"Item name %s stored at 0x%lx",ITEM_NAME(ip),(u_long)ITEM_NAME(ip));
 //advise(ERROR_STRING);
 
@@ -1759,7 +1763,6 @@ List *context_list(QSP_ARG_DECL  Item_Type *itp)
 {
 	if( ITCI_CSTK( THIS_ITCI(itp) ) == NULL ){
 		SET_ITCI_CSTK(THIS_ITCI(itp),new_list());
-fprintf(stderr,"context_list %s:  created new empty list for thread %d at 0x%lx\n",ITEM_TYPE_NAME(itp),_QS_SERIAL(THIS_QSP),(long)ITCI_CSTK(THIS_ITCI(itp)));
 	}
 	return ITCI_CSTK(THIS_ITCI(itp));
 }
@@ -1799,8 +1802,8 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
 	assert(icp!=NULL);
 
-fprintf(stderr,"current_context %s (thread %d):  pushing context %s from thread %d\n",
-ITEM_TYPE_NAME(itp),QS_SERIAL,CTX_NAME(icp),QS_PARENT_SERIAL(THIS_QSP));
+//fprintf(stderr,"current_context %s (thread %d):  pushing context %s from thread %d\n",
+//ITEM_TYPE_NAME(itp),QS_SERIAL,CTX_NAME(icp),QS_PARENT_SERIAL(THIS_QSP));
 
 	push_item_context(QSP_ARG  itp, icp );
 

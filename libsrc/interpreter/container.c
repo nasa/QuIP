@@ -107,7 +107,6 @@ int add_to_container(Container *cnt_p, Item *ip)
 	qrb_node *tnp;
 	int stat=0;
 
-//fprintf(stderr,"add_to_container:  adding %s to %s\n",ITEM_NAME(ip),cnt_p->name);
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:
 			np = mk_node(ip);
@@ -117,7 +116,6 @@ int add_to_container(Container *cnt_p, Item *ip)
 			addTail( cnt_p->cnt_lp, np );
 			break;
 		case HASH_TBL_CONTAINER:
-//fprintf(stderr,"add_to_container:  calling insert_hash\n");
 			stat=insert_hash(ip,cnt_p->cnt_htp);
 			break;
 		case RB_TREE_CONTAINER:
@@ -141,7 +139,7 @@ int remove_name_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name)
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:
 			np = list_find_named_item(cnt_p->cnt_lp,name);
-fprintf(stderr,"remove_name_from_container calling remNode, lp = 0x%lx\n",(long)cnt_p->cnt_lp);
+//fprintf(stderr,"remove_name_from_container calling remNode, lp = 0x%lx\n",(long)cnt_p->cnt_lp);
 			np=remNode(cnt_p->cnt_lp,np);
 			if( np!=NO_NODE ) rls_node(np);
 			break;
@@ -326,30 +324,47 @@ Enumerator *advance_enumerator(Enumerator *ep)
 	}
 }
 
+static void rls_enumerator( Enumerator *ep )
+{
+	// Do type-specific releasing first
+	switch(ep->type){
+		case LIST_CONTAINER:
+			rls_list_enumerator(ep->e_p.lep);
+			break;
+		case HASH_TBL_CONTAINER:
+			rls_hash_tbl_enumerator(ep->e_p.htep);
+			break;
+		case RB_TREE_CONTAINER:
+			rls_rbtree_enumerator(ep->e_p.rbtep);
+			break;
+		default:
+			NERROR1("rls_enumerator:  bad container type!?");
+			break;
+	}
+	givbuf(ep);
+}
 // add the items from this container to the given list
 
 void cat_container_items(List *lp, Container *cnt_p)
 {
 	Node *np;
 	Item *ip;
-	Enumerator *ep;
+	Enumerator *ep, *orig;
 
-//fprintf(stderr,"cat_container_items lp = 0x%lx  container = %s BEGIN\n",(long)lp,cnt_p->name);
 	ep = new_enumerator(cnt_p,0);
 	if( ep == NULL ) return;	// enumerator is null if the container is empty
 
-//fprintf(stderr,"cat_container_items ep = 0x%lx  container = %s, entering while loop\n",(long)lp,cnt_p->name);
+	orig = ep;
+
 	while( ep != NULL ){
-//fprintf(stderr,"cat_container_items ep = 0x%lx  container = %s, calling enumerator_item\n",(long)lp,cnt_p->name);
 		ip = enumerator_item(ep);
-//fprintf(stderr,"cat_container_items:  ip = 0x%lx\n",(long)ip);
 		if( ip != NULL ){
-//fprintf(stderr,"cat_container_items:  adding item %s\n",ITEM_NAME(ip));
 			np = mk_node(ip);
 			addTail(lp,np);
 		}
 		ep = advance_enumerator(ep);
 	}
+	rls_enumerator(orig);
 }
 
 long container_eltcount(Container *cnt_p)
@@ -506,6 +521,8 @@ Enumerator *new_enumerator (Container *cnt_p, int type)
 
 	return ep;
 }
+
+
 
 Item *current_frag_item( Frag_Match_Info *fmi_p )
 {
