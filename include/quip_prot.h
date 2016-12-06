@@ -128,6 +128,8 @@ extern void report_node_data(SINGLE_QSP_ARG_DECL);
 extern count_t eltcount( List * lp );
 #define NEW_LIST		new_list()
 extern List *new_list(void);
+extern void zap_list(List *lp);
+extern Node *mk_node( void * ip );
 extern Node *remHead(List *lp);
 extern Node *remTail(List *lp);
 extern Node * remNode(List *lp, Node *np);
@@ -477,7 +479,7 @@ extern Variable *var_of(QSP_ARG_DECL const char *name);
 
 // hash.c
 extern void		zap_hash_tbl(Hash_Tbl *);
-extern List *		ht_list(QSP_ARG_DECL  Hash_Tbl *);
+extern List *		ht_list(Hash_Tbl *);
 extern Hash_Tbl *	enlarge_ht(Hash_Tbl *);
 extern Hash_Tbl *	ht_init(const char *name);
 extern int		insert_hash(void *ptr,Hash_Tbl *table);

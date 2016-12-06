@@ -61,6 +61,9 @@ struct item_context {
 	Container *		ic_cnt_p;
 } ;
 
+// context flag bits
+#define CTX_CHANGED_FLAG	1	// NEEDY
+#define CTX_IS_NEEDY(icp)	(CTX_FLAGS(icp) & CTX_CHANGED_FLAG )
 
 //#define NO_NAMESPACE		NULL
 
@@ -136,7 +139,7 @@ struct item_type {
 	Item		it_item;
 	int		it_flags;	// don't need?
 	List *		it_free_lp;
-	int		it_default_container_type;
+	int		it_container_type;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
 	/*
 	const char **	it_choices;
@@ -171,9 +174,6 @@ struct item_type {
 
 #define it_name	it_item.item_name
 #define ITEM_TYPE_NAME(itp)	((itp)->it_name)
-
-// context flag bits
-#define CTX_CHANGED_FLAG	1
 
 // "Restricted" means that only the top context will be searched.
 // This feature was introduced in the expression language to support
@@ -213,13 +213,13 @@ struct item_type {
 
 //#define IT_LIST(itp)			(itp)->it_lp
 #define IT_CLASS_LIST(itp)		(itp)->it_class_lp
-#define IT_CONTAINER_TYPE(itp)		(itp)->it_default_container_type
+#define IT_CONTAINER_TYPE(itp)		(itp)->it_container_type
 #define IT_DEL_METHOD(itp)		(itp)->it_del_method
 #define SET_IT_DEL_METHOD(itp,f)	(itp)->it_del_method = f
 #define SET_IT_FREE_LIST(itp,lp)	(itp)->it_free_lp = lp
 #define SET_IT_CTX_IT(itp,citp)		(itp)->it_ctx_itp = citp
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
-#define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_default_container_type = t
+#define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_container_type = t
 
 //#define IT_N_CHOICES(itp)		(itp)->it_n_choices
 //#define SET_IT_N_CHOICES(itp,n)		(itp)->it_n_choices = n
@@ -386,7 +386,7 @@ void del_##stem(QSP_ARG_DECL  type *ip)				\
 }
 
 extern ITEM_INIT_PROT(Item_Type,ittyp)
-extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
+extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip );
 //extern Item *check_context(Item_Context *icp, const char *name);
 extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 extern List *alpha_sort(QSP_ARG_DECL  List *lp);

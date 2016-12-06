@@ -51,6 +51,7 @@ extern const char *var_p_value(QSP_ARG_DECL  Variable *vp);
 ITEM_INIT_PROT(Variable,var_)
 ITEM_NEW_PROT(Variable,var_)
 ITEM_CHECK_PROT(Variable,var_)
+ITEM_DEL_PROT(Variable,var_)
 
 extern Variable *create_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
 extern Variable *force_reserved_var(QSP_ARG_DECL  const char *name, const char *value);

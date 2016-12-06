@@ -450,8 +450,11 @@ static int next_character(FILE *tty_in)
 	sel_str[n_so_far]=0;
 
 /* BUG globals are not thread-safe */
+// BUT we probably will never have two threads interactive at the same time???
 static char sel_str[LLEN];
 static char edit_string[LLEN];
+
+#define IS_PICKING_ITEM		QS_PICKING_ITEM_ITP(THIS_QSP) != NULL
 
 const char *get_sel( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out )
 {
@@ -515,7 +518,7 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 
 		if( strlen(sel_str) > 0 ){	/* if something typed */
 			u_int l;
-
+try_again:
 			def_str=get_match(QSP_ARG  prompt,sel_str);
 			l=strlen(def_str);
 
@@ -541,6 +544,15 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 			if( l > n_so_far ){
 				// We have found a match from the history list...
 //fprintf(stderr,"found match from history list...\n");
+				// BUT if we are picking, make sure that the item exists!
+				if( IS_PICKING_ITEM ){
+					Item *ip;
+					ip = item_of(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP), def_str);
+					if( ip == NULL ){	// it's gone!
+						rem_def(QSP_ARG  prompt,def_str);
+						goto try_again;
+					}
+				}
 				show_def(&def_str[n_so_far],1);
 			} else if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
 				// No match on the history list, but

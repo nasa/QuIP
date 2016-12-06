@@ -89,7 +89,7 @@ static COMMAND_FUNC( do_rbt_add )
 	rb_insert_item( the_tree_p, ip );
 }
 
-static void rb_item_print( qrb_node *np )
+static void rb_item_print( qrb_node *np, qrb_tree *tree_p )
 {
 	const Item *ip;
 
@@ -100,7 +100,7 @@ static void rb_item_print( qrb_node *np )
 
 static COMMAND_FUNC( do_rbt_print )
 {
-	rb_traverse( the_tree_p->root, rb_item_print );
+	rb_traverse( the_tree_p->root, rb_item_print, the_tree_p );
 }
 
 static COMMAND_FUNC( do_rbt_del )
@@ -688,6 +688,18 @@ static COMMAND_FUNC( do_show_var )
 	show_var(QSP_ARG  vp);
 }
 
+static COMMAND_FUNC( do_del_var )
+{
+	Variable *vp;
+    
+	vp = PICK_VAR("");
+	if( vp == NULL ) return;
+
+	// remove from history list?
+
+	del_var_(QSP_ARG  vp);
+}
+
 static COMMAND_FUNC( do_list_vars )
 {
 	//[Variable list];
@@ -882,6 +894,7 @@ MENU_BEGIN(variables)
 ADD_CMD( set,		do_set_var,	set a variable	)
 ADD_CMD( assign,	do_assign_var,	assign a variable from an expression	)
 ADD_CMD( show,		do_show_var,	show the value of a variable	)
+ADD_CMD( delete,	do_del_var,	delete a variable	)
 ADD_CMD( list,		do_list_vars,	list all variables	)
 ADD_CMD( digits,	do_set_nsig,	specify number of significant digits )
 ADD_CMD( format,	do_set_fmt,	format for numeric vars )

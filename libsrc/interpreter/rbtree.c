@@ -9,8 +9,8 @@
 #include "item_type.h"
 
 // just for debugging
-static void rb_tree_dump( qrb_tree *tree_p );
-static void dump_rb_node( qrb_node *np );
+//static void rb_tree_dump( qrb_tree *tree_p );
+//static void dump_rb_node( qrb_node *np );
 
 // This assumes that the keys are strings!
 #define NODE_NAME(np)	(np==NULL?"<null>":RB_NODE_KEY(np))
@@ -35,6 +35,10 @@ qrb_tree* create_rb_tree( void )
 //	new_tree_p->data_destroy_func= destroy_data;
 	new_tree_p->root = NULL;
 	new_tree_p->node_count = 0;
+
+	// added for list support
+	new_tree_p->flags = 0;
+	new_tree_p->item_lp = NULL;
 
 	return(new_tree_p);
 }
@@ -543,13 +547,13 @@ int rb_delete_item(qrb_tree *tree_p, Item *ip)
 	return rb_delete_key(tree_p,ITEM_NAME(ip));
 }
 
-void rb_traverse( qrb_node *np, void (*func)(qrb_node *) )
+void rb_traverse( qrb_node *np, void (*func)(qrb_node *, qrb_tree *), qrb_tree* tree_p )
 {
 	if( np == NULL ) return;
 
-	rb_traverse( np->left, func );
-	(*func)(np);
-	rb_traverse( np->right, func );
+	rb_traverse( np->left, func, tree_p );
+	(*func)(np, tree_p);
+	rb_traverse( np->right, func, tree_p );
 
 }
 
@@ -754,9 +758,10 @@ Item *rbtree_enumerator_item(RB_Tree_Enumerator *rbtep)
 	return rbtep->node_p->data;
 }
 
+/*
 // for debugging
 
-static void dump_rb_node( qrb_node *np )
+static void dump_rb_node( qrb_node *np, qrb_tree *tree_p )
 {
 	fprintf(stderr,"node 0x%lx (%s)\n",(long)np,ITEM_NAME( (Item *)(np->data) ) );
 	fprintf(stderr,"\tleft 0x%lx (%s)\t\tright 0x%lx (%s)\n",
@@ -768,6 +773,40 @@ static void dump_rb_node( qrb_node *np )
 static void rb_tree_dump( qrb_tree *tree_p )
 {
 	if( tree_p->root == NULL ) return;
-	rb_traverse(tree_p->root,dump_rb_node);
+	rb_traverse(tree_p->root,dump_rb_node,tree_p);
 }
+*/
+
+static void add_rb_node_to_list(qrb_node *rbn_p, qrb_tree *tree_p)
+{
+	Node *np;
+	Item *ip;
+
+	ip = RB_NODE_ITEM(rbn_p);
+	np = mk_node(ip);
+	addTail( RB_TREE_ITEM_LIST(tree_p), np );
+}
+
+static void make_rbtree_list(qrb_tree *tree_p)
+{
+	assert( RB_TREE_ITEM_LIST(tree_p) == NULL );
+
+	SET_RB_TREE_ITEM_LIST(tree_p,new_list());
+	rb_traverse(tree_p->root,add_rb_node_to_list,tree_p);
+	MARK_RB_TREE_CURRENT(tree_p);
+}
+
+List *rbtree_list(qrb_tree *tree_p)
+{
+	if( RB_TREE_ITEM_LIST(tree_p) == NULL ){
+		make_rbtree_list(tree_p);	// allocates and populates a new list
+	} else {
+		if( ! RB_TREE_LIST_IS_CURRENT(tree_p) ){
+			zap_list( RB_TREE_ITEM_LIST(tree_p) );
+			make_rbtree_list(tree_p);	// allocates and populates a new list
+		}
+	}
+	return RB_TREE_ITEM_LIST(tree_p);
+}
+
 

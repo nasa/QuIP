@@ -303,6 +303,7 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 	// But that would be tricky, because response completion happens inside
 	// of nameof()...
 
+fprintf(stderr,"pick_item %s:  NEEDS_NEW_CHOICES = %d\n",ITEM_TYPE_NAME(itp),NEEDS_NEW_CHOICES(itp));
 	if( NEEDS_NEW_CHOICES(itp) ){
 		setup_item_choices(QSP_ARG  itp);
 #ifdef HAVE_HISTORY

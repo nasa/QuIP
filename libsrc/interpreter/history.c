@@ -104,7 +104,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
-	ep = new_enumerator(CTX_CONTAINER(icp), 0);	// 0 -> default type
+	ep = new_enumerator(CTX_CONTAINER(icp));
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){

@@ -22,6 +22,7 @@ static Item_Type * var__itp=NULL;
 extern void list_vars(SINGLE_QSP_ARG_DECL)
 {
 	list_items(QSP_ARG  var__itp);
+fprintf(stderr,"list_vars, item_type %s at 0x%lx\n",ITEM_TYPE_NAME(var__itp),(long)var__itp);
 }
 
 const char *var_value(QSP_ARG_DECL  const char *s)
@@ -34,8 +35,7 @@ const char *var_value(QSP_ARG_DECL  const char *s)
 }
 
 const char *var_p_value(QSP_ARG_DECL  Variable *vp)
-{
-	if( IS_DYNAMIC_VAR(vp) ){
+{ if( IS_DYNAMIC_VAR(vp) ){
 		return (*(VAR_FUNC(vp)))(SINGLE_QSP_ARG);
 	} else {
 		return VAR_VALUE(vp);
@@ -46,6 +46,7 @@ ITEM_INIT_FUNC(Variable,var_,0)
 ITEM_NEW_FUNC(Variable,var_)
 ITEM_CHECK_FUNC(Variable,var_)
 ITEM_PICK_FUNC(Variable,var_)
+ITEM_DEL_FUNC(Variable,var_)
 
 Variable *create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {

@@ -678,3 +678,13 @@ void rls_list_enumerator(List_Enumerator *lep)
 	givbuf(lep);	// keep a pool?
 }
 
+// release all the nodes in a list and the list too
+
+void zap_list(List *lp)
+{
+	Node *np;
+	while( (np=remHead(lp)) != NO_NODE )
+		rls_node(np);
+	rls_list(lp);
+}
+

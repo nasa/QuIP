@@ -50,11 +50,11 @@ static u_long debug_contexts=CTX_DEBUG_MASK;
 //#ifdef CAUTIOUS
 //static void check_item_type(Item_Type *itp);
 //#endif /* CAUTIOUS */
-static void make_needy(QSP_ARG_DECL  Item_Type *itp);
+static void make_needy(QSP_ARG_DECL  Item_Context *icp);
 static void init_itp(Item_Type *itp, int container_type);
 static int item_cmp(const void *,const void *);
 static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_type);
-static void store_item(QSP_ARG_DECL  Item_Type *itp,Item *ip,Node *np);
+static void store_item(QSP_ARG_DECL  Item_Context *icp, Item *ip);
 
 static ITEM_INIT_PROT(Item_Context,ctx)
 //static ITEM_GET_PROT(Item_Context,ctx)
@@ -146,8 +146,6 @@ static void init_itci(Item_Type *itp,int idx)
 	SET_ITCI_CTX(itci_p,NULL);
 	// This appear to clear the restriction bit...
 	SET_ITCI_FLAGS(itci_p,0);
-
-	//make_needy(QSP_ARG  itp);
 }
 
 static void init_itp(Item_Type *itp, int container_type)
@@ -180,7 +178,7 @@ static void init_itp(Item_Type *itp, int container_type)
 
 	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
-	SET_IT_CONTAINER_TYPE(itp,container_type);
+	SET_IT_CONTAINER_TYPE(itp,container_type);	// init_itp
 	SET_IT_FRAG_MATCH_INFO(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
@@ -304,14 +302,8 @@ static Item_Type * init_item_type(QSP_ARG_DECL  const char *name, int container_
 #endif /* THREAD_SAFE_QUERY */
 
 		/* why do this? Do we really need to? */
-		add_item(QSP_ARG  ittyp_itp,ittyp_itp,NO_NODE);
+		add_item(QSP_ARG  ittyp_itp,ittyp_itp);
 	}
-//#ifdef CAUTIOUS
-//	if( !strcmp(name,ITEM_TYPE_STRING) ){
-//		WARN("CAUTIOUS:  don't call init_item_type for item_type");
-//		return(NO_ITEM_TYPE);
-//	}
-//#endif /* CAUTIOUS */
 
 	assert( strcmp(name,ITEM_TYPE_STRING) );
 
@@ -345,6 +337,9 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_typ
 	}
 	/* else we are initializing the item type Item_Type */
 
+	if( container_type == 0 )
+		container_type = DEFAULT_CONTAINER_TYPE;
+
 	itp=init_item_type(QSP_ARG  atypename, container_type);
 //#ifdef CAUTIOUS
 //	if( itp == NO_ITEM_TYPE )
@@ -363,18 +358,9 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_typ
  * Put an item into the corresponding name space
  */
 
-static void store_item( QSP_ARG_DECL  Item_Type *itp, Item *ip, Node *np )
+static void store_item( QSP_ARG_DECL  Item_Context *icp, Item *ip )
 {
-	if(
-		/* insert_name(ip,np,CTX_DICT(CURRENT_CONTEXT(itp))) */
-		add_to_container(CTX_CONTAINER(CURRENT_CONTEXT(itp)),ip) 
-		< 0
-		){
-
-		/* We used to enlarge the hash table here, but now we automatically enlarge
-		 * the hash table before it becomes completely full...
-		 */
-
+	if( add_to_container(CTX_CONTAINER(icp),ip) < 0){
 		sprintf(ERROR_STRING,
 			"Error storing name %s",ITEM_NAME(ip));
 		NERROR1(ERROR_STRING);
@@ -385,24 +371,13 @@ static void store_item( QSP_ARG_DECL  Item_Type *itp, Item *ip, Node *np )
  * command tables can be preallocated items.
  */
 
-int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np )
+int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip )
 {
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
+	assert( ip != NULL );
 
-	store_item(QSP_ARG  itp,(Item*) ip,np);
-
-	/*
-	if( np==NO_NODE )
-	*/
-	/*
-		SET_IT_FLAG_BITS(itp, CONTEXT_CHANGED);
-
-	SET_IT_FLAG_BITS(itp, NEED_CHOICES);
-	*/
-	make_needy(QSP_ARG  itp);
+	store_item(QSP_ARG  CURRENT_CONTEXT(itp), (Item*) ip);
+	make_needy(QSP_ARG  CURRENT_CONTEXT(itp));		// add_item
 
 	return 0;
 }
@@ -424,29 +399,14 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 	Item *ip;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( *name == 0 ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS Can't create item of type \"%s\" with null name",
-//			IT_NAME(itp));
-//		WARN(ERROR_STRING);
-//		return(NO_ITEM);
-//	}
-//#endif /* CAUTIOUS */
 	assert( *name != 0 );
 
-//fprintf(stderr,"new_item %s, preparing to lock item type %s\n",
-//name,ITEM_TYPE_NAME(itp));
 	LOCK_ITEM_TYPE(itp)
-//fprintf(stderr,"new_item %s, done locking item type %s\n",
-//name,ITEM_TYPE_NAME(itp));
 
 	/* We will allow name conflicts if they are not in the same context */
 
 	/* Only check for conflicts in the current context */
 	//ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
-//fprintf(stderr,"new_item:  using current context %s for new item %s\n",
-//CTX_NAME(CURRENT_CONTEXT(itp)),name);
 
 	// When we start a new thread, the current context may be null!?
 
@@ -507,26 +467,11 @@ NADVISE(ERROR_STRING);
 	}
 
 	np = remHead(IT_FREE_LIST(itp));
-
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		NERROR1("CAUTIOUS:  new_item:  couldn't remove node from item free list!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
-
 	ip = (Item *) NODE_DATA(np);
 	rls_node(np);
 
 	SET_ITEM_NAME( ip, savestr(name) );
-
-//sprintf(ERROR_STRING,"Item name %s stored at 0x%lx",ITEM_NAME(ip),(u_long)ITEM_NAME(ip));
-//advise(ERROR_STRING);
-
-#ifdef ITEMS_KNOW_OWN_TYPE
-	SET_ITEM_TYPE( ip, itp );
-#endif /* ITEMS_KNOW_OWN_TYPE */
+	SET_ITEM_CTX( ip, CURRENT_CONTEXT(itp) );
 
 #ifdef BUILD_FOR_OBJC
 	SET_ITEM_MAGIC(ip,QUIP_ITEM_MAGIC);
@@ -534,7 +479,7 @@ NADVISE(ERROR_STRING);
 
 	/* BUG? should we worry about nodes here? */
 
-	add_item(QSP_ARG  itp,ip,np);
+	add_item(QSP_ARG  itp,ip);
 
 	UNLOCK_ITEM_TYPE(itp)
 
@@ -815,6 +760,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	 */
 
 	itp = (Item_Type *) CTX_IT(icp);
+	assert(itp!=NULL);
 
 	while( (np=remData(CONTEXT_LIST(itp),icp)) != NO_NODE ){
 		rls_node(np);
@@ -1443,9 +1389,22 @@ void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
  * it is a member.
  */
 
-static void make_needy(QSP_ARG_DECL  Item_Type *itp)
+static void make_needy(QSP_ARG_DECL  Item_Context *icp)
 {
-	//SET_IT_FLAG_BITS(itp, NEED_CHOICES | NEED_LIST );
+	Item_Type *itp;
+
+	if( CTX_IS_NEEDY(icp) ) {
+//fprintf(stderr,"make_needy %s, redundant call\n",CTX_NAME(icp));
+		return;
+	}
+
+fprintf(stderr,"make_needy %s\n",CTX_NAME(icp));
+	SET_CTX_FLAG_BITS(icp,CTX_CHANGED_FLAG);	// NEEDY
+
+	itp = CTX_IT(icp);
+	assert(itp!=NULL);
+fprintf(stderr,"make_needy itp = 0x%lx\n",(long)itp);
+	// BUG?  do we know that this is the correct context stack?
 	SET_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST );
 
 	if( IT_CLASS_LIST(itp) != NO_LIST ){
@@ -1465,7 +1424,7 @@ static void make_needy(QSP_ARG_DECL  Item_Type *itp)
 /* Remove an item from the item database, but do not return it to the
  * item free list.  This function was introduced to allow image objects
  * to be deleted after they have been displayed in viewers.  The
- * viewers retain a ptr to the data which they need to access in
+ * viewers can retain a ptr to the data which they need to access in
  * order to refresh the window.
  *
  * This function could have a more descriptive name, like zombieize_item,
@@ -1487,10 +1446,7 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 //#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
-	/* We used to remove the item from the item list here...
-	 * but now with the dictionary abstraction, we just remove
-	 * it from the the dictionary, and count on item_list()
-	 * to detect when the list needs to be updated...
+	/* Find the context that contains the item, then remove it.
 	 */
 
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
@@ -1499,7 +1455,6 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 		Item_Context *icp;
 
 		icp = (Item_Context*) NODE_DATA(np);
-//		tmp_ip = fetch_name( ITEM_NAME(((Item *)ip)),CTX_DICT(icp));
 		tmp_ip = container_find_match( CTX_CONTAINER(icp),
 					ITEM_NAME((Item *)ip) );
 		if( tmp_ip == ip ){	/* found it */
@@ -1516,25 +1471,26 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 			/* BUG make the context needy... */
 			/* does this do it? */
 			SET_CTX_FLAG_BITS(icp, CTX_CHANGED_FLAG);
-
-			make_needy(QSP_ARG  itp);
+			make_needy(QSP_ARG  icp);		// zombie_item
 			np=NO_NODE; /* or return? */
 		} else
 			np=NODE_NEXT(np);
 	}
+	// Is this point ever reached?
 }
 
 /* Rename an item.
  *
  * This function frees the old name and allocates permanent
  * storage for the new name.
+ *
+ * BUG?  It looks as if this could change the context, because it stores using
+ * the current context, not the one  associated with the original object...
  */
 
 void rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname)
 		/* itp = type of item to be deleted */
 {
-	Node *np;
-
 	LOCK_ITEM_TYPE(itp)
 
 //#ifdef CAUTIOUS
@@ -1545,10 +1501,8 @@ void rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname)
 	zombie_item(QSP_ARG  itp,(Item*) ip);
 	rls_str( (char *) ITEM_NAME(((Item *)ip)) );
 	SET_ITEM_NAME( ((Item *)ip), savestr(newname) );
-	np=mk_node(ip);
-	store_item(QSP_ARG  itp,(Item*) ip,np);
-
-	make_needy(QSP_ARG  itp);
+	store_item(QSP_ARG  ITEM_CTX( (Item *)ip ),(Item*) ip);
+	make_needy(QSP_ARG  ITEM_CTX( (Item *)ip ) );		// rename_item
 
 	UNLOCK_ITEM_TYPE(itp)
 }
@@ -1662,7 +1616,7 @@ static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
 	assert(frag_icp!=NULL);
 
 	// should we have a function to encapsulate the setup?
-	SET_CTX_IT( icp, frag_itp );
+	SET_CTX_IT( frag_icp, frag_itp );
 	SET_CTX_CONTAINER(frag_icp , create_container(CTX_NAME(frag_icp),HASH_TBL_CONTAINER) );
 	SET_CTX_FLAGS(icp,0);
 
@@ -1682,12 +1636,12 @@ static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, c
 	fmi_p = (Frag_Match_Info *) container_find_match(CTX_CONTAINER(CTX_FRAG_ICP(icp)),s);
 	if( fmi_p==NULL ){
 		// create the struct
-//fprintf(stderr,"creating new struct for fragment %s\n",s);
+fprintf(stderr,"creating new struct for fragment %s\n",s);
 		push_item_context(QSP_ARG  frag_itp, CTX_FRAG_ICP(icp) );
 		fmi_p = new_frag(QSP_ARG  s );
 		assert(fmi_p!=NULL);
 		fmi_p->icp = icp; 
-		if( icp->ic_itp->it_default_container_type == RB_TREE_CONTAINER )
+		if( IT_CONTAINER_TYPE(CTX_IT(icp)) == RB_TREE_CONTAINER )
 			fmi_p->type = RB_TREE_CONTAINER;
 		else
 			fmi_p->type = LIST_CONTAINER;
@@ -1701,6 +1655,14 @@ static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, c
 		// Now we need to actually search the tree...
 //fprintf(stderr,"context_partial_match calling container_find_substring_matches %s\n",s);
 		container_find_substring_matches(fmi_p,CTX_CONTAINER(icp),s);
+	}
+	  else {
+fprintf(stderr,"found existing fragment %s\n",s);
+		// If the context has changed, then we need to make sure that this
+		// fragment doesn't match something which has been deleted
+		if( CTX_IS_NEEDY(icp) ){
+			
+		}
 	}
 	return fmi_p;
 }
@@ -1729,6 +1691,7 @@ static Frag_Match_Info * get_partial_match_info(QSP_ARG_DECL  Item_Type *itp, co
 		// BUG test for update!
 
 		// The context may have no matches
+		// BUG?  is this OK for all container types?
 		if( fmi_p->u.rbti.curr_n_p != NULL )
 			return fmi_p;
 
@@ -1743,13 +1706,16 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 	Frag_Match_Info *fmi_p;
 	Item *ip;
 
+fprintf(stderr,"find_partial_match BEGIN\n");
 	if( (fmi_p=IT_FRAG_MATCH_INFO(itp)) == NULL  ||
 			strcmp( s, IT_FRAG_MATCH_INFO(itp)->it.item_name) ){
 		// we keep the old frag match...
 		fmi_p=get_partial_match_info(QSP_ARG  itp, s);
-//fprintf(stderr,"find_partial_match %s %s, back from get_partial_match_info\n",ITEM_TYPE_NAME(itp),s);
+fprintf(stderr,"find_partial_match %s %s, back from get_partial_match_info\n",ITEM_TYPE_NAME(itp),s);
 		SET_IT_FRAG_MATCH_INFO(itp,fmi_p);
 	}
+else
+fprintf(stderr,"find_partial_match using cached fragment info\n");
 		
 	if( fmi_p == NULL ) return "";	// there may be no matches
 	ip = current_frag_item(fmi_p);	// BUG should be agnostic with regard to container type!

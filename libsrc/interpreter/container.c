@@ -5,6 +5,10 @@
 #include <assert.h>
 #include <string.h>
 
+#define HAS_VALID_CONTAINER_TYPE(cnt_p)	VALID_CONTAINER_TYPE( CONTAINER_TYPE(cnt_p) )
+
+#define VALID_CONTAINER_TYPE(t)	( t == LIST_CONTAINER || t == HASH_TBL_CONTAINER || t == RB_TREE_CONTAINER )
+
 Container * create_container(const char *name,int type)
 {
 	Container *cnt_p;
@@ -16,6 +20,7 @@ Container * create_container(const char *name,int type)
 	return cnt_p;
 }
 
+#ifdef FOOBAR
 static void add_type_to_container(Container *cnt_p, int type)
 {
 //fprintf(stderr,"add_type_to_container %s %d (primary type %d)\n",cnt_p->name,type,cnt_p->primary_type);
@@ -36,7 +41,9 @@ static void add_type_to_container(Container *cnt_p, int type)
 			break;
 	}
 }
+#endif // FOOBAR
 
+#ifdef FOOBAR
 static void make_container_current( Container *cnt_p, int type )
 {
 	switch(type){
@@ -62,9 +69,13 @@ static void make_container_current( Container *cnt_p, int type )
 	}
 	cnt_p->is_current |= type;
 }
+#endif // FOOBAR
 
 void set_container_type(Container *cnt_p, int type)
 {
+	assert(type!=0);
+
+#ifdef FOOBAR
 	if( type == 0 ) return;	// keep default
 
 	if( ! (cnt_p->types & type) ){
@@ -73,6 +84,26 @@ void set_container_type(Container *cnt_p, int type)
 	}
 	make_container_current(cnt_p,type);
 	cnt_p->primary_type = type;
+#endif // FOOBAR
+
+	// This code used to be add_type_to_container
+//fprintf(stderr,"set_container_type %s %d\n",cnt_p->name,type);
+	switch(type){
+		case LIST_CONTAINER:
+			cnt_p->cnt_lp = new_list();
+			break;
+		case HASH_TBL_CONTAINER:
+			cnt_p->cnt_htp = ht_init(NULL);
+			break;
+		case RB_TREE_CONTAINER:
+			cnt_p->cnt_tree_p = create_rb_tree();
+			break;
+		default:
+			// could be assertion?
+			sprintf(DEFAULT_ERROR_STRING,"add_type_to_container:  Invalid container type code %d",type);
+			NERROR1(DEFAULT_ERROR_STRING);
+			break;
+	}
 }
 
 Container * new_container(int type)
@@ -80,15 +111,13 @@ Container * new_container(int type)
 	Container *cnt_p=NULL;
 
 //fprintf(stderr,"new_container:  type = %d\n",type);
-	assert( type == LIST_CONTAINER ||
-		type == HASH_TBL_CONTAINER ||
-		type == RB_TREE_CONTAINER );
+	assert( VALID_CONTAINER_TYPE(type) );
 
 	cnt_p = getbuf( sizeof(Container) );
 
-	cnt_p->types = type;
+//	cnt_p->types = type;
 	cnt_p->primary_type = type;
-	cnt_p->is_current = type;
+//	cnt_p->is_current = type;
 	cnt_p->name = NULL;
 
 	// null all pointers by default
@@ -97,7 +126,8 @@ Container * new_container(int type)
 	cnt_p->cnt_tree_p = NULL;
 
 //fprintf(stderr,"new_container %s at 0x%lx calling add_type_to_container %d\n",cnt_p->name,(long)cnt_p,type);
-	add_type_to_container(cnt_p,type);
+	//add_type_to_container(cnt_p,type);
+	set_container_type(cnt_p,type);
 	return cnt_p;
 }
 
@@ -126,7 +156,7 @@ int add_to_container(Container *cnt_p, Item *ip)
 			NERROR1("add_to_container:  invalid container type!?");
 			break;
 	}
-	cnt_p->is_current = cnt_p->primary_type;
+//	cnt_p->is_current = cnt_p->primary_type;
 //fprintf(stderr,"add_to_container:  types = %d, primary_type = %d, is_current = %d\n", cnt_p->types,cnt_p->primary_type,cnt_p->is_current);
 	return stat;
 }
@@ -153,7 +183,7 @@ int remove_name_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name)
 			NERROR1("remove_from_container:  invalid container type!?");
 			break;
 	}
-	cnt_p->is_current = cnt_p->primary_type;
+//	cnt_p->is_current = cnt_p->primary_type;
 	return stat;
 }
 
@@ -227,14 +257,53 @@ static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *fr
 	}
 }
 
+// Because the hash table items are not sorted, we need to keep a list of the items...
 
-//Item *container_find_substring_match(Container *cnt_p, const char *frag)
+static void hash_tbl_substring_find(Frag_Match_Info *fmi_p,Hash_Tbl *htp,const char *frag)
+{
+	List *lp;
+
+	//lp = hash_tbl_list(htp);
+	lp = ht_list(htp);
+	list_substring_find(fmi_p,lp,frag);
+	zap_list(lp);
+}
+
+
+
+// container_find_substring_matches
+//
+// It the container is a list, it's pretty easy, we just traverse the list...
+//
+// Similarly, for an rbtree, we should be even quicker, because we can find the start (like
+// an insertion), and then traverse until we hit a mismatch.
+//
+// The hash table is a little more complicated, because we have to scan the entire table.
+// We used to cache the corresponding list...
+//
+// We used to call make_container_current to map things to a list...
+
 void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, const char *frag)
 {
-//	Item *ip=NULL;
-//	Enumerator *ep;
-//	int n;
+	switch(cnt_p->primary_type){
+		case LIST_CONTAINER:
+			list_substring_find(fmi_p,cnt_p->cnt_lp,frag);
+			break;
+		case HASH_TBL_CONTAINER:
+			//make_container_current(cnt_p,LIST_CONTAINER);
+			//list_substring_find(fmi_p,cnt_p->cnt_lp,frag);
+			// NEED TO ALPHA-SORT !!!
+			hash_tbl_substring_find(fmi_p,cnt_p->cnt_htp,frag);
+			break;
+		case RB_TREE_CONTAINER:
+			rb_substring_find( fmi_p, cnt_p->cnt_tree_p, frag );
+			break;
+		default:
+			NERROR1("container_find_substring_matches:  bad container type!?");
+			break;
+	}
 
+#ifdef FOOBAR
 	if( cnt_p->types & RB_TREE_CONTAINER ){
 		if( ! (cnt_p->is_current&RB_TREE_CONTAINER) ){
 			make_container_current(cnt_p,RB_TREE_CONTAINER);
@@ -260,33 +329,9 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, 
 		list_substring_find(fmi_p,cnt_p->cnt_lp,frag);
 		return;
 	}
-#ifdef FOOBAR
-	switch(cnt_p->primary_type){
-		case HASH_TBL_CONTAINER:
-			// We have no way to find anything based on substrings,
-			// so we simply enumerate...
-			ep = new_enumerator(cnt_p,cnt_p->primary_type);
-			n = strlen(frag);
-			while( ep != NULL ){
-				ip = enumerator_item(ep);
-				assert(ip!=NULL);
-				if( ! strncmp(ITEM_NAME(ip),frag,n) ){
-					
-					// found a match!
-					// BUG - can we remember where we are?
-					//return ip;
-fprintf(stderr,"container_find_substring_matches, found something but wrong container type!?\n");
-					return;
-				}
-				ep = advance_enumerator(ep);
-			}
-			break;
-		default:
-			NERROR1("container_find_substring_matches:  unexpected container type!?");
-			break;
-	}
-#endif // FOOBAR
 	NERROR1("container_find_substring_matches:  Unhandled container type!?");
+#endif // FOOBAR
+
 }
 
 
@@ -295,7 +340,7 @@ fprintf(stderr,"container_find_substring_matches, found something but wrong cont
 
 Enumerator *advance_enumerator(Enumerator *ep)
 {
-	switch(ep->type){
+	switch( ENUMERATOR_TYPE(ep) ){
 		case LIST_CONTAINER:
 			advance_list_enumerator(ep->e_p.lep);
 			if( list_enumerator_item(ep->e_p.lep) == NULL )
@@ -327,7 +372,7 @@ Enumerator *advance_enumerator(Enumerator *ep)
 static void rls_enumerator( Enumerator *ep )
 {
 	// Do type-specific releasing first
-	switch(ep->type){
+	switch( ENUMERATOR_TYPE(ep) ){
 		case LIST_CONTAINER:
 			rls_list_enumerator(ep->e_p.lep);
 			break;
@@ -351,7 +396,7 @@ void cat_container_items(List *lp, Container *cnt_p)
 	Item *ip;
 	Enumerator *ep, *orig;
 
-	ep = new_enumerator(cnt_p,0);
+	ep = new_enumerator(cnt_p);
 	if( ep == NULL ) return;	// enumerator is null if the container is empty
 
 	orig = ep;
@@ -388,44 +433,49 @@ long container_eltcount(Container *cnt_p)
 
 List *container_list(Container *cnt_p)
 {
-	if( cnt_p->is_current & LIST_CONTAINER )
-		return cnt_p->cnt_lp;
-
-	if( cnt_p->cnt_lp == NO_LIST ){
-//fprintf(stderr,"container_list:  creating new list for container %s...\n",cnt_p->name);
-		cnt_p->cnt_lp = new_list();
-		cnt_p->types |= LIST_CONTAINER;
-	} else {
-//fprintf(stderr,"container_list:  releasing old nodes, container %s...\n",cnt_p->name);
-		rls_nodes_from_list( cnt_p->cnt_lp );
+	//if( cnt_p->is_current & LIST_CONTAINER )
+	//	return cnt_p->cnt_lp;
+	switch( CONTAINER_TYPE(cnt_p) ){
+		case LIST_CONTAINER:
+			return cnt_p->cnt_lp;
+			break;
+		case HASH_TBL_CONTAINER:
+			return hash_tbl_list(cnt_p->cnt_htp);
+			break;
+		case RB_TREE_CONTAINER:
+			return rbtree_list(cnt_p->cnt_tree_p);
+			break;
+		default:
+			NERROR1("container_list:  bad container type!?");
+			break;
 	}
+	return NULL;
 
-//fprintf(stderr,"container_list:  building list, container %s...\n",cnt_p->name);
+	/*
 	cat_container_items(cnt_p->cnt_lp,cnt_p);
 	cnt_p->is_current |= LIST_CONTAINER;
 	return cnt_p->cnt_lp;
+	*/
 }
 
 void delete_container(Container *cnt_p)
 {
-	if( cnt_p->types & LIST_CONTAINER ){
-		Node *np;
-
-		while( (np=remHead(cnt_p->cnt_lp)) != NO_NODE )
-			rls_node(np);
-		rls_list(cnt_p->cnt_lp);
+	switch(CONTAINER_TYPE(cnt_p)){
+		case LIST_CONTAINER:
+			zap_list(cnt_p->cnt_lp);
+			break;
+		case HASH_TBL_CONTAINER:
+			zap_hash_tbl(cnt_p->cnt_htp);
+			break;
+		case RB_TREE_CONTAINER:
+			release_rb_tree(cnt_p->cnt_tree_p);
+			break;
+		default:
+			NERROR1("delete_container:  bad container type!?");
+			break;
 	}
-	if( cnt_p->types & HASH_TBL_CONTAINER ){
-		zap_hash_tbl(cnt_p->cnt_htp);
-	}
-	if( cnt_p->types & RB_TREE_CONTAINER ){
-		release_rb_tree(cnt_p->cnt_tree_p);
-	}
-
-
 	rls_str((char *)cnt_p->name);
 	givbuf(cnt_p);
-
 }
 
 void dump_container_info(QSP_ARG_DECL  Container *cnt_p)
@@ -433,22 +483,27 @@ void dump_container_info(QSP_ARG_DECL  Container *cnt_p)
 	sprintf(MSG_STR,"Container %s:\n",cnt_p->name==NULL?"<null>":cnt_p->name);
 	prt_msg(MSG_STR);
 
-	if( cnt_p->types & LIST_CONTAINER ){
-		prt_msg("\tSorry, no linked list stats...");
-	}
-	if( cnt_p->types & HASH_TBL_CONTAINER ){
-		tell_hash_stats(QSP_ARG  cnt_p->cnt_htp );
-	}
-	if( cnt_p->types & RB_TREE_CONTAINER ){
-		prt_msg("\tSorry, no linked red-black tree stats...");
+	switch(CONTAINER_TYPE(cnt_p)){
+		case LIST_CONTAINER:
+			sprintf(MSG_STR,"\tlist with %d elements\n",eltcount(cnt_p->cnt_lp));
+			prt_msg(MSG_STR);
+			break;
+		case HASH_TBL_CONTAINER:
+			tell_hash_stats(QSP_ARG  cnt_p->cnt_htp );
+			break;
+		case RB_TREE_CONTAINER:
+			prt_msg("\tRed-black tree, sorry no stats...");
+			break;
+		default:
+			NERROR1("dump_container_info:  bad container type!?");
+			break;
 	}
 }
 
 void * enumerator_item(Enumerator *ep)
 {
 //fprintf(stderr,"enumerator_item BEGIN\n");
-//fprintf(stderr,"enumerator_item ep = 0x%lx, type = %d\n",(long)ep,ep->type);
-	switch(ep->type){
+	switch( ENUMERATOR_TYPE(ep) ){
 		case LIST_CONTAINER:
 			return NODE_DATA(ep->e_p.lep->np);
 			break;
@@ -473,14 +528,14 @@ void * enumerator_item(Enumerator *ep)
 	}
 }
 
-Enumerator *new_enumerator (Container *cnt_p, int type)
+Enumerator *new_enumerator (Container *cnt_p )
 {
 	void *vp;
 	Enumerator *ep;
 
-	if( type == 0 ) type = cnt_p->primary_type;
+	assert( HAS_VALID_CONTAINER_TYPE(cnt_p) );
 
-	switch( type ){
+	switch( CONTAINER_TYPE(cnt_p) ){
 		case LIST_CONTAINER:
 			vp = new_list_enumerator(cnt_p->cnt_lp);
 			break;
@@ -501,21 +556,6 @@ Enumerator *new_enumerator (Container *cnt_p, int type)
 
 	ep = getbuf( sizeof(Enumerator) );
 
-	if( type == 0 ) type = cnt_p->primary_type;
-
-	if( ! (cnt_p->is_current & type) ){
-		// now we have to transfer the items to a different container type!?
-		//NERROR1("new_enumerator:  Sorry, container transfer not implemented yet...");
-		if( ! (cnt_p->types & type) ){
-//fprintf(stderr,"new_enumerator calling add_type_to_container %s, type code = %d\n",cnt_p->name,type);
-			add_type_to_container(cnt_p,type);
-		}
-		make_container_current(cnt_p,type);
-	}
-//else
-//fprintf(stderr,"new_enumerator: containter %s is current for type = %d\n",cnt_p->name,type);
-
-	ep->type = type;
 	ep->e_cnt_p = cnt_p;	// is this used?
 	ep->e_p.vp = vp;
 
@@ -527,7 +567,7 @@ Enumerator *new_enumerator (Container *cnt_p, int type)
 Item *current_frag_item( Frag_Match_Info *fmi_p )
 {
 	// what type of container is used?
-	switch( fmi_p->icp->ic_itp->it_default_container_type ){
+	switch( IT_CONTAINER_TYPE(CTX_IT(fmi_p->icp)) ){
 		case RB_TREE_CONTAINER:
 			return fmi_p->u.rbti.curr_n_p->data;
 			break;
@@ -536,6 +576,9 @@ Item *current_frag_item( Frag_Match_Info *fmi_p )
 			return fmi_p->u.li.curr_np->n_data;
 			break;
 		default:
+fprintf(stderr,"current_frag_item:  context %s at 0x%lx\n", CTX_NAME(fmi_p->icp), (long) fmi_p->icp );
+fprintf(stderr,"current_frag_item:  item_type %s at 0x%lx\n", ITEM_TYPE_NAME(CTX_IT(fmi_p->icp)), (long) CTX_IT(fmi_p->icp) );
+fprintf(stderr,"current_frag_item:  container_type = %d\n", IT_CONTAINER_TYPE(CTX_IT(fmi_p->icp)) );
 			NERROR1("current_frag_item:  Bad container type!?");
 			break;
 	}
