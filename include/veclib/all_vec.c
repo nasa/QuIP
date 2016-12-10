@@ -108,13 +108,13 @@ _VEC_FUNC_3V( rvmul , dst = (dest_type)(src1 * src2) )
 _VEC_FUNC_3V( rvdiv , dst = (dest_type)(src1 / src2) )
 
 _VEC_FUNC_1V_2SCAL( vramp1d , dst = (dest_type)scalar1_val; scalar1_val+=scalar2_val,
-				dst = scalar1_val + index1.x * scalar2_val )
+				dst = scalar1_val + IDX1_0 * scalar2_val )
 
 // Why are stat1, stat2 not used?
 // cpu implementation?
 
 _VEC_FUNC_1V_3SCAL( vramp2d , stat1, stat2,
-dst = scalar1_val + scalar2_val * (index1.x / inc1.x ) + scalar3_val * (index1.y / inc1.y )
+dst = scalar1_val + scalar2_val * (IDX1_1 / INC1_1 ) + scalar3_val * (IDX1_2 / INC1_2 )
 )
 
 _VEC_FUNC_2V_SCAL( rvsadd , dst = (dest_type)(scalar1_val + src1) )

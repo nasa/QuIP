@@ -2,7 +2,8 @@
 #define _OBJ_ARGS_H_
 
 #include "data_obj.h"
-#include "veclib/dim3.h"
+//#include "veclib/dim3.h"
+#include "veclib/dim5.h"
 
 /* MAX_N_ARGS originally was 3.
  * Increased to 4 to accomodate bitmaps.
@@ -151,6 +152,7 @@ typedef struct vector_arg {
 //
 // I had an idea for how to get around that - but now I forget...  maybe it was to pass an array of increments and dimensions?
 // and not to use to kernel grid for the dimensions?
+// Well, guess what:  Vector_Arg contains a dimension_set and an increment_set, so we should be ready!
 
 typedef struct vector_args {
 	Vector_Arg	va_dst;
@@ -166,8 +168,12 @@ typedef struct vector_args {
 // Really BUILD_FOR_GPU get set and unset during the build,
 // but we need the struct to have a constant size.  We really
 // should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
+	/*
 	DIM3		va_xyz_len;		// used for kernels...
 	int		va_dim_indices[3];	// do these refer to the dobj dimensions?
+	*/
+	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
+
 /*#endif // BUILD_FOR_GPU*/
 	argset_type	va_argstype;
 	argset_prec	va_argsprec;
@@ -179,6 +185,14 @@ typedef struct vector_args {
 	Vector_Arg	va_values;
 	Vector_Arg	va_counts;
 } Vector_Args;
+
+#define VA_SLOW_SIZE(vap)			(vap)->va_iteration_size.ds_dimension
+
+#define VA_ITERATION_COUNT(vap,idx)		(vap)->va_iteration_size.ds_dimension[idx]
+#define SET_VA_ITERATION_COUNT(vap,idx,v)	(vap)->va_iteration_size.ds_dimension[idx] = v
+
+#define VA_ITERATION_TOTAL(vap)		(vap)->va_iteration_size.ds_n_elts
+#define SET_VA_ITERATION_TOTAL(vap,v)	(vap)->va_iteration_size.ds_n_elts = v
 
 #define VA_ARGSET_PREC(vap)	(vap)->va_argsprec
 #define VA_ARGSET_TYPE(vap)	(vap)->va_argstype
@@ -205,8 +219,10 @@ typedef struct vector_args {
 #define SET_VA_LEN_Y(vap,v)	(vap)->va_xyz_len.y = v
 #define SET_VA_LEN_Z(vap,v)	(vap)->va_xyz_len.z = v
 
+/*
 #define VA_DIM_INDEX(vap,which)		(vap)->va_dim_indices[which]
 #define SET_VA_DIM_INDEX(vap,which,v)	(vap)->va_dim_indices[which] = v
+*/
 
 // va_flags
 #define VA_FAST_ARGS	1

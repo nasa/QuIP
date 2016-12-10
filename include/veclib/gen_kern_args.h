@@ -33,7 +33,9 @@
 #define GEN_ARGS_SLOW_SBM(prefix)	prefix##_SLOW_SBM
 
 #define GEN_ARGS_EQSP_DBM(prefix)	prefix##_EQSP_DBM
-#define GEN_ARGS_SLOW_DBM(prefix)	prefix##_SLOW_DBM
+
+#define GEN_ARGS_SLOW_DBM(prefix)	GEN_SLOW_SIZE(prefix)		\
+					prefix##_SLOW_DBM	// SLOW_SIZE
 
 ////////// FAST
 
@@ -650,8 +652,17 @@
 					GEN_SEP(prefix)		\
 					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_1(prefix)	GEN_ARGS_FAST_1(prefix)	\
-					GEN_SEP(prefix)		\
+//#define GEN_ARGS_FAST_1(p)		p##_FAST_1		OS_ARG(p,DEST)
+//
+//#define GEN_ARGS_SLOW_1(prefix)		GEN_ARGS_FAST_1(prefix)	\
+//					GEN_SEP(prefix)		\
+//					GEN_SLOW_ARG_INC1(prefix)
+
+#define GEN_SLOW_SIZE(p)		 p##_SLOW_SIZE		OS_ARG(p,SLOW_SIZE)
+
+#define GEN_ARGS_SLOW_1(prefix)		GEN_SLOW_SIZE(prefix)		\
+					GEN_ARGS_FAST_1(prefix)		\
+					GEN_SEP(prefix) 		\
 					GEN_SLOW_ARG_INC1(prefix)
 
 #define GEN_ARGS_SLOW_CPX_1(prefix)	GEN_ARGS_FAST_CPX_1(prefix)	\
@@ -866,11 +877,6 @@
 
 #define GEN_ARGS_SLOW_CPX_1(prefix)	GEN_ARGS_FAST_CPX_1(prefix)	\
 					GEN_SEP(prefix)		\
-					GEN_SLOW_ARG_INC1(prefix)
-
-
-#define GEN_ARGS_SLOW_1(prefix)	GEN_ARGS_FAST_1(prefix)	\
-					GEN_SEP(prefix) \
 					GEN_SLOW_ARG_INC1(prefix)
 
 #define GEN_ARGS_SLOW_CONV(prefix,t)	GEN_SLOW_CONV_DEST(prefix,t) \

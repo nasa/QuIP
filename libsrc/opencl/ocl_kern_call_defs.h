@@ -18,7 +18,8 @@ typedef unsigned long uint64_t;						\
 typedef long int64_t;							\
 typedef unsigned int uint32_t;						\
 typedef int int32_t;							\
-typedef struct { int x; int y; int z; } dim3 ;				\
+/*typedef struct { int x; int y; int z; } dim3 ;*/			\
+typedef struct { int d5_dim[5]; } dim5 ;				\
 typedef struct { float re; float im; } SP_Complex;			\
 typedef struct { float re; float _i; float _j; float _k; } SP_Quaternion;\
 EXTRA_PRELUDE(type_code)

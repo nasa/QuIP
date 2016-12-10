@@ -111,8 +111,13 @@ char KERN_SOURCE_NAME(func_name##_nocc_helper,)[]= QUOTE_IT( ___VEC_FUNC_MM_NOCC
 // It's the same except for the sum line, which would be replaced with
 //
 
-#define psrc1	s1[index1.x]
-#define psrc2	s2[index1.x]
+#ifdef FOOBAR
+#define psrc1	s1[index1.x]	// FOOBAR
+#define psrc2	s2[index1.x]	// FOOBAR
+#else // ! FOOBAR
+//#define psrc1	s1[index1.d5_dim[0]]
+//#define psrc2	s2[index1.d5_dim[0]]
+#endif  // ! FOOBAR
 
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2

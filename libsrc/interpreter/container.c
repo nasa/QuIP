@@ -226,9 +226,9 @@ static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *fr
 	np = QLIST_HEAD(lp);
 
 	n = (int) strlen(frag);
-	fmi_p->u.li.curr_np = NULL;	// default
-	fmi_p->u.li.first_np = NULL;
-	fmi_p->u.li.last_np = NULL;
+	fmi_p->fmi_u.li.curr_np = NULL;	// default
+	fmi_p->fmi_u.li.first_np = NULL;
+	fmi_p->fmi_u.li.last_np = NULL;
 
 	while( np != NULL ){
 		Item *ip;
@@ -239,16 +239,16 @@ static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *fr
 		if( compVal == 0 ){
 			// We have found the first node that is a match,
 			// but we want also determine the last...
-			fmi_p->u.li.curr_np = np;
-			fmi_p->u.li.first_np = np;
-			fmi_p->u.li.last_np = np;
+			fmi_p->fmi_u.li.curr_np = np;
+			fmi_p->fmi_u.li.first_np = np;
+			fmi_p->fmi_u.li.last_np = np;
 			np = NODE_NEXT(np);
 			while( np != NULL ){
 				ip = NODE_DATA(np);
 				compVal = strncmp( frag, ITEM_NAME(ip), n );
 				if( compVal != 0 )
 					return;
-				fmi_p->u.li.last_np = np;
+				fmi_p->fmi_u.li.last_np = np;
 				np = NODE_NEXT(np);
 			}
 			return;
@@ -567,18 +567,18 @@ Enumerator *new_enumerator (Container *cnt_p )
 Item *current_frag_item( Frag_Match_Info *fmi_p )
 {
 	// what type of container is used?
-	switch( IT_CONTAINER_TYPE(CTX_IT(fmi_p->icp)) ){
+	switch( IT_CONTAINER_TYPE(CTX_IT(FMI_CTX(fmi_p))) ){
 		case RB_TREE_CONTAINER:
-			return fmi_p->u.rbti.curr_n_p->data;
+			return fmi_p->fmi_u.rbti.curr_n_p->data;
 			break;
 		case LIST_CONTAINER:
 		case HASH_TBL_CONTAINER:
-			return fmi_p->u.li.curr_np->n_data;
+			return fmi_p->fmi_u.li.curr_np->n_data;
 			break;
 		default:
-fprintf(stderr,"current_frag_item:  context %s at 0x%lx\n", CTX_NAME(fmi_p->icp), (long) fmi_p->icp );
-fprintf(stderr,"current_frag_item:  item_type %s at 0x%lx\n", ITEM_TYPE_NAME(CTX_IT(fmi_p->icp)), (long) CTX_IT(fmi_p->icp) );
-fprintf(stderr,"current_frag_item:  container_type = %d\n", IT_CONTAINER_TYPE(CTX_IT(fmi_p->icp)) );
+fprintf(stderr,"current_frag_item:  context %s at 0x%lx\n", CTX_NAME(FMI_CTX(fmi_p)), (long) FMI_CTX(fmi_p) );
+fprintf(stderr,"current_frag_item:  item_type %s at 0x%lx\n", ITEM_TYPE_NAME(CTX_IT(FMI_CTX(fmi_p))), (long) CTX_IT(FMI_CTX(fmi_p)) );
+fprintf(stderr,"current_frag_item:  container_type = %d\n", IT_CONTAINER_TYPE(CTX_IT(FMI_CTX(fmi_p))) );
 			NERROR1("current_frag_item:  Bad container type!?");
 			break;
 	}

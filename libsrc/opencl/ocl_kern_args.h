@@ -59,6 +59,11 @@ else fprintf(stderr,"\tunhandled case for type %s\n",#type);
 
 #define SET_KERNEL_ARGS_FAST_CONV_DEST(t)	SET_KERNEL_ARGS_FAST_1
 
+#define SET_KERNEL_ARGS_SLOW_SIZE				\
+	SET_KERNEL_ARG(DIM5,VA_SLOW_SIZE(vap))
+
+#define SET_KERNEL_ARGS_SLOW_SIZE_OFFSET	/* nop */
+
 #define SET_KERNEL_ARGS_FAST_1					\
 	SET_KERNEL_ARG(void *,&(VARG_PTR( VA_DEST(vap))) )
 
@@ -145,7 +150,8 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 
 #define SET_KERNEL_ARGS_SLOW_SBM	SET_KERNEL_ARG(void *,&(VA_SBM_PTR(vap)))	\
 					SET_KERNEL_ARG(int,&(VA_SBM_BIT0(vap)))	\
-					SET_KERNEL_ARG(DIM3,&sbm_xyz_incr)
+					/* SET_KERNEL_ARG(DIM3,&sbm_xyz_incr) */ \
+					SET_KERNEL_ARG(DIM5,&sbm_vwxyz_incr)
 
 
 
@@ -159,7 +165,8 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 
 #define SET_KERNEL_ARGS_SLOW_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
 					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))	\
-					SET_KERNEL_ARG(DIM3,&dbm_xyz_incr)
+					/*SET_KERNEL_ARG(DIM3,&dbm_xyz_incr)*/ \
+					SET_KERNEL_ARG(DIM5,&dbm_vwxyz_incr)
 
 
 
@@ -381,12 +388,20 @@ fprintf(stderr,"Oops:  Need to implement %s!?\n",#mname);
 #define SET_KERNEL_ARGS_EQSP_INC5	SET_KERNEL_ARG(int,&VA_SRC4_INC(vap))
 
 // BUG?  do we need DIM3 increments in Vector_Args ???
+// Now we have DIM5 sizes and increments in Vector_Args!
 
+/*
 #define SET_KERNEL_ARGS_SLOW_INC1	SET_KERNEL_ARG(DIM3,&dst_xyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC2	SET_KERNEL_ARG(DIM3,&s1_xyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC3	SET_KERNEL_ARG(DIM3,&s2_xyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC4	SET_KERNEL_ARG(DIM3,&s3_xyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC5	SET_KERNEL_ARG(DIM3,&s4_xyz_incr)
+*/
+#define SET_KERNEL_ARGS_SLOW_INC1	SET_KERNEL_ARG(DIM5,&dst_vwxyz_incr)
+#define SET_KERNEL_ARGS_SLOW_INC2	SET_KERNEL_ARG(DIM5,&s1_vwxyz_incr)
+#define SET_KERNEL_ARGS_SLOW_INC3	SET_KERNEL_ARG(DIM5,&s2_vwxyz_incr)
+#define SET_KERNEL_ARGS_SLOW_INC4	SET_KERNEL_ARG(DIM5,&s3_vwxyz_incr)
+#define SET_KERNEL_ARGS_SLOW_INC5	SET_KERNEL_ARG(DIM5,&s4_vwxyz_incr)
 
 #define SET_KERNEL_ARGS_FAST_1S_2	GEN_ARGS_FAST_1S_2(SET_KERNEL_ARGS)
 

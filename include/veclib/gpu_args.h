@@ -2,7 +2,8 @@
 #define _GPU_ARGS_H_
 
 #include "veclib/gen_kern_args.h"
-#include "veclib/dim3.h"
+//#include "veclib/dim3.h"
+#include "veclib/dim5.h"
 
 /* These are the arguments used in the declarations
  * of the kernel functions: DECLARE_KERN_ARGS_FAST_2 etc
@@ -199,6 +200,9 @@
 
 #endif // ! BUILD_FOR_OPENCL
 
+#define DECLARE_KERN_ARGS_SLOW_SIZE		dim5 szarr
+#define DECLARE_KERN_ARGS_SLOW_SIZE_OFFSET	/* nop */
+
 #define DECLARE_KERN_ARGS_FAST_CONV_DEST(type)	KERNEL_ARG_QUALIFIER type* a
 #define DECLARE_KERN_ARGS_FAST_1   	KERNEL_ARG_QUALIFIER dest_type* a
 #define DECLARE_KERN_ARGS_FAST_SRC1	KERNEL_ARG_QUALIFIER std_type* b
@@ -234,23 +238,24 @@
 // real, slow
 
 
-#define DECLARE_KERN_ARGS_SLOW_INC1	DIM3 inc1
-#define DECLARE_KERN_ARGS_SLOW_INC2	DIM3 inc2
-#define DECLARE_KERN_ARGS_SLOW_INC3	DIM3 inc3
-#define DECLARE_KERN_ARGS_SLOW_INC4	DIM3 inc4
-#define DECLARE_KERN_ARGS_SLOW_INC5	DIM3 inc5
+#define DECLARE_KERN_ARGS_SLOW_INC1	GPU_INDEX_TYPE inc1
+#define DECLARE_KERN_ARGS_SLOW_INC2	GPU_INDEX_TYPE inc2
+#define DECLARE_KERN_ARGS_SLOW_INC3	GPU_INDEX_TYPE inc3
+#define DECLARE_KERN_ARGS_SLOW_INC4	GPU_INDEX_TYPE inc4
+#define DECLARE_KERN_ARGS_SLOW_INC5	GPU_INDEX_TYPE inc5
 
 #define DECLARE_KERN_ARGS_FAST_LEN	int len
 #define DECLARE_KERN_ARGS_EQSP_LEN	int len
-#define DECLARE_KERN_ARGS_SLOW_LEN	DIM3 xyz_len
+//#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE xyz_len	// BUG vwxyz_len
+#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE vwxyz_len
 
 #define DECLARE_KERN_ARGS_FAST_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0
 #define DECLARE_KERN_ARGS_EQSP_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , int sbm_inc
-#define DECLARE_KERN_ARGS_SLOW_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , DIM3 sbm_inc
+#define DECLARE_KERN_ARGS_SLOW_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , GPU_INDEX_TYPE sbm_inc
 
 #define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0
 #define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , int dbm_inc
-#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , DIM3 dbm_inc
+#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , GPU_INDEX_TYPE dbm_inc
 
 /****************************************/
 
@@ -704,6 +709,8 @@
 #define KERN_ARGS_QUAT_1S	VA_SCALAR_VAL_STDQUAT(vap,0)
 #define KERN_ARGS_QUAT_2S	KERN_ARGS_QUAT_1S , VA_SCALAR_VAL_STDQUAT(vap,1)
 
+#define KERN_ARGS_SLOW_SIZE		VA_SLOW_SIZE(vap)
+
 #define KERN_ARGS_FAST_CONV_DEST(t)	(t *) VA_DEST_PTR(vap)
 #define KERN_ARGS_FAST_1		(dest_type *) VA_DEST_PTR(vap)
 #define KERN_ARGS_FAST_SRC1	(std_type *) VA_SRC1_PTR(vap)
@@ -743,23 +750,34 @@
 
 // these are DIM3's, not the object increment sets...
 
+#ifdef FOOBAR
 #define KERN_ARGS_SLOW_INC1	dst_xyz_incr
 #define KERN_ARGS_SLOW_INC2	s1_xyz_incr
 #define KERN_ARGS_SLOW_INC3	s2_xyz_incr
 #define KERN_ARGS_SLOW_INC4	s3_xyz_incr
 #define KERN_ARGS_SLOW_INC5	s4_xyz_incr
+#else // ! FOOBAR
+#define KERN_ARGS_SLOW_INC1	dst_vwxyz_incr
+#define KERN_ARGS_SLOW_INC2	s1_vwxyz_incr
+#define KERN_ARGS_SLOW_INC3	s2_vwxyz_incr
+#define KERN_ARGS_SLOW_INC4	s3_vwxyz_incr
+#define KERN_ARGS_SLOW_INC5	s4_vwxyz_incr
+#endif // ! FOOBAR
 
 #define KERN_ARGS_FAST_LEN	VA_LENGTH(vap)
 #define KERN_ARGS_EQSP_LEN	VA_LENGTH(vap)
-#define KERN_ARGS_SLOW_LEN	VA_XYZ_LEN(vap)			// a local variable!?
+//#define KERN_ARGS_SLOW_LEN	VA_XYZ_LEN(vap)			// a local variable!?
+#define KERN_ARGS_SLOW_LEN	VA_ITERATION_TOTAL(vap)			// a local variable!?
 
 #define KERN_ARGS_FAST_SBM	(bitmap_word *) VA_SBM_PTR(vap) , VA_SBM_BIT0(vap)
 #define KERN_ARGS_EQSP_SBM	KERN_ARGS_FAST_SBM, VA_SBM_INC(vap)
-#define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_xyz_incr
+//#define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_xyz_incr
+#define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_vwxyz_incr
 
 #define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap) , VA_DBM_BIT0(vap)
 #define KERN_ARGS_EQSPS_DBM	KERN_ARGS_FAST_DBM , VA_DBM_INC(vap)
-#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_xyz_incr
+//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_xyz_incr
+#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_vwxyz_incr
 
 #define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , KERN_ARGS_DBM_INC
 

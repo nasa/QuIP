@@ -64,7 +64,7 @@
 #endif // BUILD_FOR_CUDA
 
 #ifdef BUILD_FOR_OPENCL
-#define GPU_INDEX_TYPE	DIM3
+#define GPU_INDEX_TYPE	DIM5
 #endif // BUILD_FOR_OPENCL
 
 #define DECL_INDICES_1		GPU_INDEX_TYPE index1;
@@ -143,19 +143,33 @@
 
 #ifdef BUILD_FOR_OPENCL
 
+#ifdef FOOBAR
 #define SET_INDEX( which_index )					\
 									\
 	which_index.x = get_global_id(0);				\
 	which_index.y = which_index.z = 0;
+#else // ! FOOBAR
+#define SET_INDEX( which_index )					\
+									\
+	which_index.d5_dim[0] = get_global_id(0);			\
+	which_index.d5_dim[1] = which_index.d5_dim[2] = which_index.d5_dim[3] = which_index.d5_dim[4] = 0;
+#endif // ! FOOBAR
 
 #endif // BUILD_FOR_OPENCL
 
 #ifdef BUILD_FOR_CUDA
 
+#ifdef FOOBAR
 #define SET_INDEX( which_index )					\
 									\
-		which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
-		which_index.y = which_index.z = 0;
+	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
+	which_index.y = which_index.z = 0;
+#else // ! FOOBAR
+#define SET_INDEX( which_index )					\
+									\
+	which_index.d5_dim[0] = blockIdx.x * blockDim.x + threadIdx.x;	\
+	which_index.d5_dim[1] = which_index.d5_dim[2] = which_index.d5_dim[3] = which_index.d5_dim[4] = 0;
+#endif // ! FOOBAR
 
 #endif // BUILD_FOR_CUDA
 
@@ -177,9 +191,15 @@
 #define SET_INDICES_SBM_2	SET_INDICES_2 SET_INDICES_SBM
 #define SET_INDICES_SBM_3	SET_INDICES_3 SET_INDICES_SBM
 
+#ifdef FOOBAR
 #define SET_INDICES_DBM		SET_INDEX(dbmi)				\
 				i_dbm_word = dbmi.x;			\
 				dbmi.x *= BITS_PER_BITMAP_WORD;
+#else // ! FOOBAR
+#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
+				i_dbm_word = dbmi.d5_dim[0];			\
+				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
+#endif // ! FOOBAR
 
 #define SET_INDICES_DBM_	SET_INDICES_DBM
 
@@ -197,6 +217,7 @@
 
 #ifdef BUILD_FOR_CUDA
 
+#ifdef FOOBAR
 #if CUDA_COMP_CAP < 20
 
 #define SET_INDEX_XYZ( which_index )					\
@@ -215,17 +236,45 @@
 	which_index.z = blockIdx.z * blockDim.z + threadIdx.z;
 
 #endif /* CUDA_COMP_CAP >= 20 */
+#endif // FOOBAR
 
 #endif // BUILD_FOR_CUDA
 
 
 #ifdef BUILD_FOR_OPENCL
 
+#ifdef FOOBAR
 #define SET_INDEX_XYZ( which_index )					\
 									\
 	which_index.x = get_global_id(0);				\
 	which_index.y = get_global_id(1);				\
 	which_index.z = get_global_id(2);
+#else // ! FOOBAR
+
+	// We need to get the index settings from global_id(0) and another dimension variable!?
+	//
+	// We pass the divisors in a dimension var for the op, not an individual object...
+	// Say we have an image with 1 component, 4 columns, and 3 rows; then there will be
+	// 12 threads, with global_id 0-11
+	// idx[0] = N % d0
+	// idx[1] = ( N / d0 ) % d1
+	// idx[2] = ( N / (d0*d1) ) % d2
+	// idx[3] = ( N / (d0*d1*d2) ) % d3
+	// etc
+#define SET_INDEX_XYZ( which_index )						\
+										\
+	which_index.d5_dim[0] = get_global_id(0);				\
+	which_index.d5_dim[1] = which_index.d5_dim[0] / szarr.d5_dim[0];	\
+	which_index.d5_dim[2] = which_index.d5_dim[1] / szarr.d5_dim[1];	\
+	which_index.d5_dim[3] = which_index.d5_dim[2] / szarr.d5_dim[2];	\
+	which_index.d5_dim[4] = which_index.d5_dim[3] / szarr.d5_dim[3];	\
+	which_index.d5_dim[0] %= szarr.d5_dim[0];				\
+	which_index.d5_dim[1] %= szarr.d5_dim[1];				\
+	which_index.d5_dim[2] %= szarr.d5_dim[2];				\
+	which_index.d5_dim[3] %= szarr.d5_dim[3];				\
+	which_index.d5_dim[4] %= szarr.d5_dim[4];
+
+#endif // ! FOOBAR
 
 #endif // BUILD_FOR_OPENCL
 
@@ -254,12 +303,19 @@
 /* BUG? is bmi set correctly? Is len.x the divided length?  or all the pixels? */
 #define SET_INDICES_XYZ_SBM	sbmi = index1;
 
+#ifdef FOOBAR
 #define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
 				i_dbm_word = dbmi.x;	\
 				dbmi.x *= BITS_PER_BITMAP_WORD;
+#else // ! FOOBAR
+#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
+				i_dbm_word = dbmi.d5_dim[0];	\
+				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
+#endif // ! FOOBAR
 
 /**************** SCALE_INDICES_ ********************/
 
+#ifdef FOOBAR
 #define SCALE_INDICES_1		index1.x *= inc1;
 #define SCALE_INDICES_SRC1	index2.x *= inc2;
 #define SCALE_INDICES_SRC2	index3.x *= inc3;
@@ -267,6 +323,15 @@
 #define SCALE_INDICES_SRC4	index5.x *= inc5;
 #define SCALE_INDICES_SBM	sbmi.x *= sbm_inc;
 #define SCALE_INDICES_DBM	dbmi.x *= dbm_inc;
+#else // ! FOOBAR
+#define SCALE_INDICES_1		index1.d5_dim[0] *= inc1;
+#define SCALE_INDICES_SRC1	index2.d5_dim[0] *= inc2;
+#define SCALE_INDICES_SRC2	index3.d5_dim[0] *= inc3;
+#define SCALE_INDICES_SRC3	index4.d5_dim[0] *= inc4;
+#define SCALE_INDICES_SRC4	index5.d5_dim[0] *= inc5;
+#define SCALE_INDICES_SBM	sbmi.d5_dim[0] *= sbm_inc;
+#define SCALE_INDICES_DBM	dbmi.d5_dim[0] *= dbm_inc;
+#endif // ! FOOBAR
 
 #define SCALE_INDICES_2		SCALE_INDICES_1 SCALE_INDICES_SRC1
 #define SCALE_INDICES_3		SCALE_INDICES_2 SCALE_INDICES_SRC2
@@ -275,9 +340,17 @@
 
 
 
+#ifdef FOOBAR
 #define SCALE_XYZ(n)	index##n.x *= inc##n.x;		\
 			index##n.y *= inc##n.y;		\
 			index##n.z *= inc##n.z;
+#else // ! FOOBAR
+#define SCALE_XYZ(n)	index##n.d5_dim[0] *= inc##n.d5_dim[0];		\
+			index##n.d5_dim[1] *= inc##n.d5_dim[1];		\
+			index##n.d5_dim[2] *= inc##n.d5_dim[2];		\
+			index##n.d5_dim[3] *= inc##n.d5_dim[3];		\
+			index##n.d5_dim[4] *= inc##n.d5_dim[4];
+#endif // ! FOOBAR
 
 #define SCALE_INDICES_XYZ_1	SCALE_XYZ(1)
 #define SCALE_INDICES_XYZ_2	SCALE_INDICES_XYZ_1 SCALE_XYZ(2)
@@ -294,11 +367,23 @@
 // BUG do any checking here???
 #define SCALE_INDICES_XYZ_SBM_LEN	SCALE_INDICES_XYZ_SBM	// anything with len?
 
+#ifdef FOOBAR
 #define SCALE_INDICES_XYZ_DBM_LEN	dbmi.x *= dbm_inc.x;		\
 					if( dbmi.y >= len.y ) return;	\
 					dbmi.y *= dbm_inc.y;		\
 					if( dbmi.z >= len.z ) return;	\
 					dbmi.z += dbm_inc.z;
+#else // ! FOOBAR
+#define SCALE_INDICES_XYZ_DBM_LEN	dbmi.d5_dim[0] *= dbm_inc.d5_dim[0];		\
+					if( dbmi.d5_dim[1] >= len.d5_dim[1] ) return;	\
+					dbmi.d5_dim[1] *= dbm_inc.d5_dim[1];		\
+					if( dbmi.d5_dim[2] >= len.d5_dim[2] ) return;	\
+					dbmi.d5_dim[2] += dbm_inc.d5_dim[2];		\
+					if( dbmi.d5_dim[3] >= len.d5_dim[3] ) return;	\
+					dbmi.d5_dim[3] += dbm_inc.d5_dim[3];		\
+					if( dbmi.d5_dim[4] >= len.d5_dim[4] ) return;	\
+					dbmi.d5_dim[4] += dbm_inc.d5_dim[4];
+#endif // ! FOOBAR
 
 #define SCALE_INDICES_XYZ_2SRCS		SCALE_XYZ(2) SCALE_XYZ(3)
 
@@ -368,6 +453,7 @@
 #define OFFSET_E
 #endif // ! BUILD_FOR_OPENCL
 
+#ifdef FOOBAR
 #if CUDA_COMP_CAP < 20
 
 #define eqsp_dst	a[(index1.x+index1.y)*inc1	OFFSET_A ]
@@ -423,6 +509,38 @@
 
 #endif /* CUDA_COMP_CAP >= 20 */
 
+#else // ! FOOBAR
+
+// This used to be x+y+z ... (for dim3 indices)
+#define INDEX_SUM(idx)	idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4]
+
+#define eqsp_dst	a[(INDEX_SUM(index1))*inc1	OFFSET_A ]
+#define eqsp_src1	b[(INDEX_SUM(index2))*inc2	OFFSET_B ]
+
+#define dst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define src1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define src2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define src3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define src4	e[INDEX_SUM(index5)	OFFSET_E ]
+
+#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
+		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
+
+#define cdst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define csrc1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define csrc2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define csrc3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define csrc4	e[INDEX_SUM(index5)	OFFSET_E ]
+
+#define qdst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define qsrc1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define qsrc2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define qsrc3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
+
+#endif // ! FOOBAR
+
+#ifdef FOOBAR
 /* Even if we can't do XYZ indexing, we don't do much harm by multiplying the z */
 
 #define SCALE_INDICES_XYZ_SBM	sbmi.x *= sbm_inc.x;	\
@@ -432,6 +550,21 @@
 #define SCALE_INDICES_XYZ_DBM	dbmi.x *= dbm_inc.x;		\
 				dbmi.y *= dbm_inc.y;		\
 				dbmi.z *= dbm_inc.z;
+#else // ! FOOBAR
+
+#define SCALE_INDICES_XYZ_SBM	sbmi.d5_dim[0] *= sbm_inc.d5_dim[0];	\
+				sbmi.d5_dim[1] *= sbm_inc.d5_dim[1];	\
+				sbmi.d5_dim[2] *= sbm_inc.d5_dim[2];	\
+				sbmi.d5_dim[3] *= sbm_inc.d5_dim[3];	\
+				sbmi.d5_dim[4] *= sbm_inc.d5_dim[4];
+
+#define SCALE_INDICES_XYZ_DBM	dbmi.d5_dim[0] *= dbm_inc.d5_dim[0];	\
+				dbmi.d5_dim[1] *= dbm_inc.d5_dim[1];	\
+				dbmi.d5_dim[2] *= dbm_inc.d5_dim[2];	\
+				dbmi.d5_dim[3] *= dbm_inc.d5_dim[3];	\
+				dbmi.d5_dim[4] *= dbm_inc.d5_dim[4];
+
+#endif // ! FOOBAR
 
 
 #define SET_DBM_BIT(cond)	if( cond ) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= ~dbm_bit;

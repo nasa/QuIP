@@ -518,65 +518,51 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 
 		if( strlen(sel_str) > 0 ){	/* if something typed */
 			u_int l;
-try_again:
-			def_str=get_match(QSP_ARG  prompt,sel_str);
-			l=strlen(def_str);
+//try_again:
+			if( IS_PICKING_ITEM ){
+				// we are picking an item...
+				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
+				l=strlen(def_str);
+				if( l > n_so_far ){
+					show_def(&def_str[n_so_far],1);
+				}
+			} else {	// not picking an item
+				def_str=get_match(QSP_ARG  prompt,sel_str);
+				l=strlen(def_str);
 
-			/* We only want to check against builtins
-			 * if we're parsing a command, not if we're
-			 * fetching an argument;
-			 * so we assume that the convention is that
-			 * command prompts always end in "> "
-			 */
+				/* We only want to check against builtins
+				 * if we're parsing a command, not if we're
+				 * fetching an argument;
+				 * so we assume that the convention is that
+				 * command prompts always end in "> "
+				 */
 
 #define IS_COMMAND_PROMPT(s)	(!strcmp((s)+strlen((s))-2,"> "))
 
-			/* If we don't have a match yet, and we are
-			 * looking for a command, then try to match
-			 * against the builtin menu.
-			 */
+				/* If we don't have a match yet, and we are
+				 * looking for a command, then try to match
+				 * against the builtin menu.
+				 */
 
-			if( l == 0 && IS_COMMAND_PROMPT(prompt) ) {
-				def_str=get_match(QSP_ARG  h_bpmpt,sel_str);
-				l=strlen(def_str);
-			}
-
-			if( l > n_so_far ){
-				// We have found a match from the history list...
-//fprintf(stderr,"found match from history list...\n");
-				// BUT if we are picking, make sure that the item exists!
-				if( IS_PICKING_ITEM ){
-					Item *ip;
-					ip = item_of(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP), def_str);
-					if( ip == NULL ){	// it's gone!
-						rem_def(QSP_ARG  prompt,def_str);
-						goto try_again;
-					}
+				if( l == 0 && IS_COMMAND_PROMPT(prompt) ) {
+					def_str=get_match(QSP_ARG  h_bpmpt,sel_str);
+					l=strlen(def_str);
 				}
-				show_def(&def_str[n_so_far],1);
-			} else if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
-				// No match on the history list, but
-				// we are picking an item...
 
-//fprintf(stderr,"Need to check %s items for a completion...\n",ITEM_TYPE_NAME(QS_PICKING_ITEM_ITP(THIS_QSP)));
-
-				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
-				l=strlen(def_str);
+				if( l == 0 ) def_str=sel_str;
+				if( l > n_so_far ){
+					// We have found a match from the history list...
+					show_def(&def_str[n_so_far],1);
+				} else {	/* nothing typed yet... */
+					/* get the match to reset the current history list,
+					 * but don't show it if nothing has been typed.
+					 * The user can see the defaults with ^N.
+					 */
+					def_str=get_match(QSP_ARG  prompt,sel_str);
+					def_str=sel_str;
+				}
 			}
-			if( l > n_so_far ){
-				// We have found a match from the history list...
-				show_def(&def_str[n_so_far],1);
-			}
-
-			if( l == 0 ) def_str=sel_str;
-		} else {	/* nothing typed yet... */
-			/* get the match to reset the current history list,
-			 * but don't show it if nothing has been typed.
-			 * The user can see the defaults with ^N.
-			 */
-			def_str=get_match(QSP_ARG  prompt,sel_str);
-			def_str=sel_str;
-		}
+		} // someting typed
 
 nextchar:
 		/*

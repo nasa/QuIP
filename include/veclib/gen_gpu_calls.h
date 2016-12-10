@@ -342,6 +342,13 @@ __VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
 //
 // for vmaxv, expr is:  psrc1 > psrc2 ? psrc1 : psrc2
 
+#define IDX1_0	index1.d5_dim[0]		// used to be index1.x
+#define IDX1_1	index1.d5_dim[1]		// used to be index1.y
+#define IDX1_2	index1.d5_dim[2]		// used to be index1.y
+#define INC1_0	inc1.d5_dim[0]			// used to be inc1.x
+#define INC1_1	inc1.d5_dim[1]			// used to be inc1.x
+#define INC1_2	inc1.d5_dim[2]			// used to be inc1.x
+
 #define ___VEC_FUNC_2V_PROJ( func_name, expr )			\
 								\
 KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
@@ -350,12 +357,12 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 {								\
 	INIT_INDICES_1						\
 								\
-	if( index1.x < len2 ){					\
+	if( IDX1_0 < len2 ){					\
 		std_type *s2;					\
 		s2 = s1 + len1;					\
-		dest[index1.x] = expr ;				\
-	} else if( index1.x < len1 ){				\
-		dest[index1.x] = s1[index1.x];			\
+		dest[IDX1_0] = expr ;				\
+	} else if( IDX1_0 < len1 ){				\
+		dest[IDX1_0] = s1[IDX1_0];			\
 	}							\
 }
 
@@ -372,14 +379,14 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 	{								\
 		INIT_INDICES_1						\
 									\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			std_cpx *s2;					\
 			s2 = s1 + len1;					\
-			dest[index1.x].re = re_expr ;				\
-			dest[index1.x].im = im_expr ;				\
-		} else if( index1.x < len1 ){				\
-			dest[index1.x].re = s1[index1.x].re;			\
-			dest[index1.x].im = s1[index1.x].im;			\
+			dest[IDX1_0].re = re_expr ;				\
+			dest[IDX1_0].im = im_expr ;				\
+		} else if( IDX1_0 < len1 ){				\
+			dest[IDX1_0].re = s1[IDX1_0].re;			\
+			dest[IDX1_0].im = s1[IDX1_0].im;			\
 		}							\
 	}
 
@@ -394,18 +401,18 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 	{								\
 		INIT_INDICES_1						\
 									\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			std_quat *s2;					\
 			s2 = s1 + len1;					\
-			dest[index1.x].re = re_expr ;				\
-			dest[index1.x]._i = im_expr1 ;				\
-			dest[index1.x]._j = im_expr2 ;				\
-			dest[index1.x]._k = im_expr3 ;				\
-		} else if( index1.x < len1 ){				\
-			dest[index1.x].re = s1[index1.x].re;			\
-			dest[index1.x]._i = s1[index1.x]._i;			\
-			dest[index1.x]._j = s1[index1.x]._j;			\
-			dest[index1.x]._k = s1[index1.x]._k;			\
+			dest[IDX1_0].re = re_expr ;				\
+			dest[IDX1_0]._i = im_expr1 ;				\
+			dest[IDX1_0]._j = im_expr2 ;				\
+			dest[IDX1_0]._k = im_expr3 ;				\
+		} else if( IDX1_0 < len1 ){				\
+			dest[IDX1_0].re = s1[IDX1_0].re;			\
+			dest[IDX1_0]._i = s1[IDX1_0]._i;			\
+			dest[IDX1_0]._j = s1[IDX1_0]._j;			\
+			dest[IDX1_0]._k = s1[IDX1_0]._k;			\
 		}							\
 	}
 
@@ -424,7 +431,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 		INIT_INDICES_3						\
 		if( index3.x < len2 )					\
 			statement1 ;					\
-		else if( index1.x < len1 )				\
+		else if( IDX1_0 < len1 )				\
 			dst = index2.x ;				\
 	}								\
 									\
@@ -435,7 +442,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 		INIT_INDICES_3						\
 		if( index3.x < len2 )					\
 			statement2 ;					\
-		else if( index1.x < len1 )				\
+		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
@@ -471,8 +478,8 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 // It's the same except for the sum line, which would be replaced with
 //
 
-#define psrc1	s1[index1.x]
-#define psrc2	s2[index1.x]
+#define psrc1	s1[IDX1_0]
+#define psrc2	s2[IDX1_0]
 
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
@@ -539,8 +546,8 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 // It's the same except for the sum line, which would be replaced with
 //
 
-#define psrc1	s1[index1.x]
-#define psrc2	s2[index1.x]
+#define psrc1	s1[IDX1_0]
+#define psrc2	s2[IDX1_0]
 
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
@@ -555,12 +562,12 @@ KERNEL_FUNC_PRELUDE							\
 	{								\
 		INIT_INDICES_1						\
 									\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			std_type *s2;					\
 			s2 = s1 + len1;					\
-			dest[index1.x] = expr ;				\
-		} else if( index1.x < len1 ){				\
-			dest[index1.x] = s1[index1.x];			\
+			dest[IDX1_0] = expr ;				\
+		} else if( IDX1_0 < len1 ){				\
+			dest[IDX1_0] = s1[IDX1_0];			\
 		}							\
 	}
 
@@ -574,15 +581,15 @@ KERNEL_FUNC_PRELUDE							\
 		( DECLARE_KERN_ARGS_3V_PROJ )				\
 	{								\
 		INIT_INDICES_1						\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			std_type *s1b;					\
 			std_type *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[index1.x] = s1[index1.x] * s2[index1.x] +	\
-				s1b[index1.x] * s2b[index1.x] ;		\
-		} else if( index1.x < len1 ){				\
-			dest[index1.x] = s1[index1.x];			\
+			dest[IDX1_0] = s1[IDX1_0] * s2[IDX1_0] +	\
+				s1b[IDX1_0] * s2b[IDX1_0] ;		\
+		} else if( IDX1_0 < len1 ){				\
+			dest[IDX1_0] = s1[IDX1_0];			\
 		}							\
 	}
 
@@ -596,7 +603,7 @@ KERNEL_FUNC_PRELUDE							\
 		INIT_INDICES_3						\
 		if( index3.x < len2 )					\
 			statement ;					\
-		else if( index1.x < len1 )				\
+		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
@@ -626,25 +633,25 @@ KERNEL_FUNC_PRELUDE							\
 	{								\
 		INIT_INDICES_2						\
 		index2.x *= 2;						\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			if( test1 ){					\
-				dst_extrema[index1.x] = src_vals[index2.x];	\
-				dst_counts[index1.x]=1;			\
+				dst_extrema[IDX1_0] = src_vals[index2.x];	\
+				dst_counts[IDX1_0]=1;			\
 				dst_indices[index2.x]=index2.x;		\
 			} else if( test2 ){				\
-				dst_extrema[index1.x] = src_vals[index2.x+1];\
-				dst_counts[index1.x]=1;			\
+				dst_extrema[IDX1_0] = src_vals[index2.x+1];\
+				dst_counts[IDX1_0]=1;			\
 				dst_indices[index2.x]=index2.x+1;		\
 			} else {					\
-				dst_extrema[index1.x] = src_vals[index2.x];	\
-				dst_counts[index1.x]=2;			\
+				dst_extrema[IDX1_0] = src_vals[index2.x];	\
+				dst_counts[IDX1_0]=2;			\
 				dst_indices[index2.x]=index2.x;		\
 				dst_indices[index2.x+1]=index2.x+1;		\
 			}						\
 		} else {						\
 			/* Nothing to compare */			\
-			dst_extrema[index1.x] = src_vals[index2.x];		\
-			dst_counts[index1.x]=1;				\
+			dst_extrema[IDX1_0] = src_vals[index2.x];		\
+			dst_counts[IDX1_0]=1;				\
 			dst_indices[index2.x]=index2.x;			\
 		}							\
 	}								\
@@ -656,32 +663,32 @@ KERNEL_FUNC_PRELUDE							\
 		int i;							\
 		INIT_INDICES_2						\
 		index2.x *= 2;						\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			if( test1 ){					\
-				dst_extrema[index1.x]=src_vals[index2.x];	\
-				dst_counts[index1.x]=src_counts[index2.x];	\
+				dst_extrema[IDX1_0]=src_vals[index2.x];	\
+				dst_counts[IDX1_0]=src_counts[index2.x];	\
 				/* No copy necessary */			\
 			} else if( test2 ){				\
-				dst_extrema[index1.x]=src_vals[index2.x+1];	\
-				dst_counts[index1.x]=src_counts[index2.x+1];\
+				dst_extrema[IDX1_0]=src_vals[index2.x+1];	\
+				dst_counts[IDX1_0]=src_counts[index2.x+1];\
 				/* Now copy the indices down */		\
-				for(i=0;i<dst_counts[index1.x];i++){	\
-					dst_indices[index1.x*stride+i] =	\
-			dst_indices[index1.x*stride+stride/2+i];		\
+				for(i=0;i<dst_counts[IDX1_0];i++){	\
+					dst_indices[IDX1_0*stride+i] =	\
+			dst_indices[IDX1_0*stride+stride/2+i];		\
 				}					\
 			} else {					\
-				dst_extrema[index1.x]=src_vals[index2.x];	\
-				dst_counts[index1.x] = src_counts[index2.x] + \
+				dst_extrema[IDX1_0]=src_vals[index2.x];	\
+				dst_counts[IDX1_0] = src_counts[index2.x] + \
 					src_counts[index2.x+1];		\
 				/* Now copy the second half of the indices */\
 				for(i=0;i<src_counts[index2.x+1];i++){	\
-		dst_indices[index1.x*stride+src_counts[index2.x]+i] =	\
-			dst_indices[index1.x*stride+stride/2+i];		\
+		dst_indices[IDX1_0*stride+src_counts[index2.x]+i] =	\
+			dst_indices[IDX1_0*stride+stride/2+i];		\
 				}					\
 			}						\
 		} else {						\
-			dst_extrema[index1.x]=src_vals[index2.x];		\
-			dst_counts[index1.x]=src_counts[index2.x];		\
+			dst_extrema[IDX1_0]=src_vals[index2.x];		\
+			dst_counts[IDX1_0]=src_counts[index2.x];		\
 			/* No copy necessary */				\
 		}							\
 	}
@@ -719,25 +726,25 @@ KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name)		\
 {									\
 	INIT_INDICES_2							\
 	index2.x *= 2;							\
-	if( index1.x < len2 ){						\
+	if( IDX1_0 < len2 ){						\
 		if( test1 ){						\
-			dst_extrema[index1.x] = src_vals[index2.x];	\
-			dst_counts[index1.x]=1;				\
+			dst_extrema[IDX1_0] = src_vals[index2.x];	\
+			dst_counts[IDX1_0]=1;				\
 			dst_indices[index2.x]=index2.x;			\
 		} else if( test2 ){					\
-			dst_extrema[index1.x] = src_vals[index2.x+1];	\
-			dst_counts[index1.x]=1;				\
+			dst_extrema[IDX1_0] = src_vals[index2.x+1];	\
+			dst_counts[IDX1_0]=1;				\
 			dst_indices[index2.x]=index2.x+1;		\
 		} else {						\
-			dst_extrema[index1.x] = src_vals[index2.x];	\
-			dst_counts[index1.x]=2;				\
+			dst_extrema[IDX1_0] = src_vals[index2.x];	\
+			dst_counts[IDX1_0]=2;				\
 			dst_indices[index2.x]=index2.x;			\
 			dst_indices[index2.x+1]=index2.x+1;		\
 		}							\
 	} else {							\
 		/* Nothing to compare */				\
-		dst_extrema[index1.x] = src_vals[index2.x];		\
-		dst_counts[index1.x]=1;					\
+		dst_extrema[IDX1_0] = src_vals[index2.x];		\
+		dst_counts[IDX1_0]=1;					\
 		dst_indices[index2.x]=index2.x;				\
 	}								\
 }
@@ -750,32 +757,32 @@ KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_HELPER_NAME(func_name)		\
 	int i;								\
 	INIT_INDICES_2							\
 	index2.x *= 2;							\
-	if( index1.x < len2 ){						\
+	if( IDX1_0 < len2 ){						\
 		if( test1 ){						\
-			dst_extrema[index1.x]=src_vals[index2.x];	\
-			dst_counts[index1.x]=src_counts[index2.x];	\
+			dst_extrema[IDX1_0]=src_vals[index2.x];	\
+			dst_counts[IDX1_0]=src_counts[index2.x];	\
 			/* No copy necessary */				\
 		} else if( test2 ){					\
-			dst_extrema[index1.x]=src_vals[index2.x+1];	\
-			dst_counts[index1.x]=src_counts[index2.x+1];	\
+			dst_extrema[IDX1_0]=src_vals[index2.x+1];	\
+			dst_counts[IDX1_0]=src_counts[index2.x+1];	\
 			/* Now copy the indices down */			\
-			for(i=0;i<dst_counts[index1.x];i++){		\
-				dst_indices[index1.x*stride+i] =	\
-		dst_indices[index1.x*stride+stride/2+i];		\
+			for(i=0;i<dst_counts[IDX1_0];i++){		\
+				dst_indices[IDX1_0*stride+i] =	\
+		dst_indices[IDX1_0*stride+stride/2+i];		\
 			}						\
 		} else {						\
-			dst_extrema[index1.x]=src_vals[index2.x];	\
-			dst_counts[index1.x] = src_counts[index2.x] + 	\
+			dst_extrema[IDX1_0]=src_vals[index2.x];	\
+			dst_counts[IDX1_0] = src_counts[index2.x] + 	\
 				src_counts[index2.x+1];			\
 			/* Now copy the second half of the indices */	\
 			for(i=0;i<src_counts[index2.x+1];i++){		\
-	dst_indices[index1.x*stride+src_counts[index2.x]+i] =		\
-		dst_indices[index1.x*stride+stride/2+i];		\
+	dst_indices[IDX1_0*stride+src_counts[index2.x]+i] =		\
+		dst_indices[IDX1_0*stride+stride/2+i];		\
 			}						\
 		}							\
 	} else {							\
-		dst_extrema[index1.x]=src_vals[index2.x];		\
-		dst_counts[index1.x]=src_counts[index2.x];		\
+		dst_extrema[IDX1_0]=src_vals[index2.x];		\
+		dst_counts[IDX1_0]=src_counts[index2.x];		\
 		/* No copy necessary */					\
 	}								\
 }
@@ -829,7 +836,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_##bm
 {									\
 	DECL_EXTRA_##extra						\
 	INIT_INDICES_##bm##vectors					\
-	if( index1.x < len) {						\
+	if( IDX1_0 < len) {						\
 		statement ;						\
 	}								\
 }
@@ -842,7 +849,7 @@ KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_##bm
 {									\
 	DECL_EXTRA_##extra						\
 	INIT_INDICES_##bm##vectors					\
-	if( index1.x < len ){					\
+	if( IDX1_0 < len ){					\
 		SCALE_INDICES_EQSP_##bm##vectors			\
 		statement;						\
 	}								\
@@ -858,7 +865,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_##bm
 {									\
 	DECL_EXTRA_##extra						\
 	INIT_INDICES_XYZ_##bm##vectors					\
-	if( index1.x < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){	\
+	if( IDX1_0 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){	\
 		SCALE_INDICES_XYZ_##bm##vectors				\
 		statement;						\
 	}								\
@@ -956,7 +963,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_CONV(to_type) )	\
 {									\
 	INIT_INDICES_2							\
-	if( index1.x < len) {						\
+	if( IDX1_0 < len) {						\
 		dst = (to_type) src1 ;					\
 	}								\
 }
@@ -968,7 +975,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_CONV(to_type) )	\
 {									\
 	INIT_INDICES_2							\
-	if( index1.x < len) {						\
+	if( IDX1_0 < len) {						\
 		SCALE_INDICES_2						\
 		dst = (to_type) src1 ;					\
 	}								\
@@ -981,7 +988,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_CONV(to_type) )	\
 {									\
 	INIT_INDICES_XYZ_2						\
-	if( index1.x < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){	\
+	if( IDX1_0 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){	\
 		SCALE_INDICES_XYZ_2					\
 		dst = (to_type) src1 ;					\
 	}								\
@@ -1084,7 +1091,7 @@ KERNEL_FUNC_PRELUDE							\
 		INIT_INDICES_3						\
 		if( index3.x < len2 )					\
 			statement ;					\
-		else if( index1.x < len1 )				\
+		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
@@ -1099,7 +1106,7 @@ KERNEL_FUNC_PRELUDE							\
 		INIT_INDICES_3						\
 		if( index3.x < len2 )					\
 			statement1 ;					\
-		else if( index1.x < len1 )				\
+		else if( IDX1_0 < len1 )				\
 			dst = index2.x ;				\
 	}								\
 									\
@@ -1110,7 +1117,7 @@ KERNEL_FUNC_PRELUDE							\
 		INIT_INDICES_3						\
 		if( index3.x < len2 )					\
 			statement2 ;					\
-		else if( index1.x < len1 )				\
+		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
@@ -1128,15 +1135,15 @@ KERNEL_FUNC_PRELUDE							\
 		( DECLARE_KERN_ARGS_3V_PROJ )				\
 	{								\
 		INIT_INDICES_1						\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			std_type *s1b;					\
 			std_type *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[index1.x] = s1[index1.x] * s2[index1.x] +	\
-				s1b[index1.x] * s2b[index1.x] ;		\
-		} else if( index1.x < len1 ){				\
-			dest[index1.x] = s1[index1.x];			\
+			dest[IDX1_0] = s1[IDX1_0] * s2[IDX1_0] +	\
+				s1b[IDX1_0] * s2b[IDX1_0] ;		\
+		} else if( IDX1_0 < len1 ){				\
+			dest[IDX1_0] = s1[IDX1_0];			\
 		}							\
 	}
 
@@ -1152,22 +1159,22 @@ KERNEL_FUNC_PRELUDE							\
 		( DECLARE_KERN_ARGS_CPX_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
-		if( index1.x < len2 ){					\
+		if( IDX1_0 < len2 ){					\
 			std_cpx *s1b;					\
 			std_cpx *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[index1.x].re = s1[index1.x].re * s2[index1.x].re -	\
-					s1[index1.x].im * s2[index1.x].im +	\
-				s1b[index1.x].re * s2b[index1.x].re -	\
-				s1b[index1.x].im * s2b[index1.x].im ;		\
-			dest[index1.x].im = s1[index1.x].re * s2[index1.x].im +	\
-				s1[index1.x].im * s2[index1.x].re +	\
-				s1b[index1.x].re * s2b[index1.x].im +		\
-				s1b[index1.x].im * s2b[index1.x].re ;		\
-		} else if( index1.x < len1 ){				\
-			dest[index1.x].re = s1[index1.x].re;			\
-			dest[index1.x].im = s1[index1.x].im;			\
+			dest[IDX1_0].re = s1[IDX1_0].re * s2[IDX1_0].re -	\
+					s1[IDX1_0].im * s2[IDX1_0].im +	\
+				s1b[IDX1_0].re * s2b[IDX1_0].re -	\
+				s1b[IDX1_0].im * s2b[IDX1_0].im ;		\
+			dest[IDX1_0].im = s1[IDX1_0].re * s2[IDX1_0].im +	\
+				s1[IDX1_0].im * s2[IDX1_0].re +	\
+				s1b[IDX1_0].re * s2b[IDX1_0].im +		\
+				s1b[IDX1_0].im * s2b[IDX1_0].re ;		\
+		} else if( IDX1_0 < len1 ){				\
+			dest[IDX1_0].re = s1[IDX1_0].re;			\
+			dest[IDX1_0].im = s1[IDX1_0].im;			\
 		}							\
 	}
 

@@ -259,23 +259,47 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 #define SETUP_EQSP_BLOCKS_DBM_SBM_	SETUP_FAST_BLOCKS_DBM_SBM_
 #define SETUP_EQSP_BLOCKS_DBM_SBM	SETUP_FAST_BLOCKS_DBM_SBM
 
+#ifdef FOOBAR
 #define SETUP_SLOW_BLOCKS_						\
 									\
 /*fprintf(stderr,"SETUP_SLOW_BLOCKS_:  %d %d %d\n",VA_LEN_X(vap),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
 	global_work_size[0] = VA_LEN_X(vap);					\
 	global_work_size[1] = VA_LEN_Y(vap);					\
 	global_work_size[2] = VA_LEN_Z(vap);
+#else // ! FOOBAR
+#define SETUP_SLOW_BLOCKS_						\
+									\
+/*fprintf(stderr,"SETUP_SLOW_BLOCKS_:  %d %d %d\n",VA_LEN_X(vap),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
+	global_work_size[0] = VA_ITERATION_TOTAL(vap);					\
+	global_work_size[1] = 1;					\
+	global_work_size[2] = 1;
+#endif // ! FOOBAR
 
 #define SETUP_SLOW_BLOCKS_SBM_	SETUP_SLOW_BLOCKS_
 
 
 // BUG - need to consider bit0
+// BUG - also need to consider line rounding up???
+// This is going to be a problem!?
+// We need to have one thread per bitmap word...
+// But we can have a fractional number of words per line, so we need to round up!
+// Basically, we cannot use VA_ITERATION_TOTAL, we have to compute from the dimensions...
+
+#ifdef FOOBAR
 #define SETUP_SLOW_BLOCKS_DBM_						\
 									\
 /*fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  %ld %d %d\n",N_BITMAP_WORDS(VA_LEN_X(vap)),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
 	global_work_size[0] = N_BITMAP_WORDS(VA_LEN_X(vap));			\
 	global_work_size[1] = VA_LEN_Y(vap);					\
 	global_work_size[2] = VA_LEN_Z(vap);
+#else // ! FOOBAR
+#define SETUP_SLOW_BLOCKS_DBM_						\
+									\
+/*fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  %ld %d %d\n",N_BITMAP_WORDS(VA_LEN_X(vap)),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
+	global_work_size[0] = N_BITMAP_WORDS(VA_ITERATION_TOTAL(vap));			\
+	global_work_size[1] = 1;					\
+	global_work_size[2] = 1;
+#endif // ! FOOBAR
 
 #define SETUP_SLOW_BLOCKS_DBM_SBM	SETUP_SLOW_BLOCKS_DBM_
 

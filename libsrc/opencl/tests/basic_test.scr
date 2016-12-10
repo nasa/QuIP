@@ -16,21 +16,27 @@ Vector v_g $n 1 float
 Image i_g $n $n 1 float
 Info v_g
 
+advise "Should be a ramp from 1, counting by 1..."
 Ramp1D v_g 1 1
 Display v_g
+advise "Should constant value 2..."
 VSet v_g 2
 Display v_g
 
 Pause
 
-advise 'testing 2-D set, mul, add'
-VSet i_g 1
-VVMul i_g i_g i_g
-VVAdd i_g i_g i_g
+# ramp2d has a problem!?
+advise "Should be a ramp with increments of 1 (columns) and 10 (rows)"
+Ramp2D i_g 0 1 10
+Display i_g
 Pause
 
-# ramp2d has a problem!?
-Ramp2D i_g 0 1 10
+advise 'testing 2-D set, mul, add'
+VVMul i_g i_g i_g
+advise "Should be ramp-squared"
+Display i_g
+advise "Should be doubled..."
+VVAdd i_g i_g i_g
 Display i_g
 Pause
 

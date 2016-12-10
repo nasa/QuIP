@@ -292,63 +292,6 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 	if( prompt == NULL || *prompt==0 )
 		prompt=IT_NAME(itp);
 
-#ifdef USE_CHOICE_LIST
-	// Before we setup the choices, we should make sure that the number
-	// is not so large that the program will appear to hang...
-	//
-	// We tackle this in a new way - instead of adding all of the item names
-	// to the history list, we keep the history list to be just what was actually
-	// entered previously - if we don't find a match there, then we may look
-	// in the list/table/tree of items...
-	// But that would be tricky, because response completion happens inside
-	// of nameof()...
-
-fprintf(stderr,"pick_item %s:  NEEDS_NEW_CHOICES = %d\n",ITEM_TYPE_NAME(itp),NEEDS_NEW_CHOICES(itp));
-	if( NEEDS_NEW_CHOICES(itp) ){
-		setup_item_choices(QSP_ARG  itp);
-#ifdef HAVE_HISTORY
-
-#ifdef QUIP_DEBUG
-if( debug & hist_debug ){
-sprintf(ERROR_STRING,"resetting history list for %s items",IT_NAME(itp));
-NADVISE(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-
-		/*
-		 * clear the old history list in case an item was deleted.
-		 *
-		 * this is a kind of BUG, since we lose the old item priorities...
-		 * It might be better to have separate flags for additions
-		 * and deletions...
-		 */
-
-		if( intractive(SINGLE_QSP_ARG) ){
-			char pline[LLEN];
-			sprintf(pline,PROMPT_FORMAT,prompt);
-			new_defs(QSP_ARG  pline);
-		}
-#endif /* HAVE_HISTORY */
-	}
-
-	/* eat a meaningless word if there are no items */
-
-	if( IT_N_CHOICES(itp) <= 0 ){
-		s=NAMEOF(prompt);	/* eat a word */
-		sprintf(ERROR_STRING,"No %s %s (No items in existence)",
-			IT_NAME(itp),s);
-		WARN(ERROR_STRING);
-		return(NO_ITEM);
-	}
-
-	i = WHICH_ONE(prompt,IT_N_CHOICES(itp),IT_CHOICES(itp));
-
-	if( i < 0 )
-		return(NO_ITEM);
-
-	s=IT_CHOICES(itp)[i];
-#endif // USE_CHOICE_LIST
-
 	// The old way with an array of choices is no good when there are 100k items...
 
 	// picking_item_itp
