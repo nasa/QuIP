@@ -169,8 +169,8 @@ typedef struct vector_args {
 // but we need the struct to have a constant size.  We really
 // should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
 	/*
-	DIM3		va_xyz_len;		// used for kernels...
-	int		va_dim_indices[3];	// do these refer to the dobj dimensions?
+	DIM3		va_xyz_len;		// used for kernels...	FOOBAR
+	int		va_dim_indices[3];	// do these refer to the dobj dimensions?	FOOBAR
 	*/
 	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
 

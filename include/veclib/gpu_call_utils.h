@@ -60,7 +60,8 @@
 /****************** DECL_INDICES ***********************/
 
 #ifdef BUILD_FOR_CUDA
-#define GPU_INDEX_TYPE	DIM3
+//#define GPU_INDEX_TYPE	DIM3
+#define GPU_INDEX_TYPE	DIM5	// was DIM3 (cuda)
 #endif // BUILD_FOR_CUDA
 
 #ifdef BUILD_FOR_OPENCL
@@ -165,6 +166,9 @@
 	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
 	which_index.y = which_index.z = 0;
 #else // ! FOOBAR
+
+	// What if we have to have blocks in 2 or more dims?
+
 #define SET_INDEX( which_index )					\
 									\
 	which_index.d5_dim[0] = blockIdx.x * blockDim.x + threadIdx.x;	\
@@ -236,7 +240,11 @@
 	which_index.z = blockIdx.z * blockDim.z + threadIdx.z;
 
 #endif /* CUDA_COMP_CAP >= 20 */
-#endif // FOOBAR
+#else // ! // FOOBAR
+
+#define THREAD_INDEX_X		which_index.x = blockIdx.x * blockDim.x + threadIdx.x
+
+#endif // ! FOOBAR
 
 #endif // BUILD_FOR_CUDA
 
@@ -261,9 +269,28 @@
 	// idx[2] = ( N / (d0*d1) ) % d2
 	// idx[3] = ( N / (d0*d1*d2) ) % d3
 	// etc
-#define SET_INDEX_XYZ( which_index )						\
-										\
-	which_index.d5_dim[0] = get_global_id(0);				\
+#define THREAD_INDEX_X	which_index.d5_dim[0] = get_global_id(0)
+
+//#define SET_INDEX_XYZ( which_index )						\
+//										\
+//	which_index.d5_dim[0] = get_global_id(0);				\
+//	which_index.d5_dim[1] = which_index.d5_dim[0] / szarr.d5_dim[0];	\
+//	which_index.d5_dim[2] = which_index.d5_dim[1] / szarr.d5_dim[1];	\
+//	which_index.d5_dim[3] = which_index.d5_dim[2] / szarr.d5_dim[2];	\
+//	which_index.d5_dim[4] = which_index.d5_dim[3] / szarr.d5_dim[3];	\
+//	which_index.d5_dim[0] %= szarr.d5_dim[0];				\
+//	which_index.d5_dim[1] %= szarr.d5_dim[1];				\
+//	which_index.d5_dim[2] %= szarr.d5_dim[2];				\
+//	which_index.d5_dim[3] %= szarr.d5_dim[3];				\
+//	which_index.d5_dim[4] %= szarr.d5_dim[4];
+
+#endif // ! FOOBAR
+
+#endif // BUILD_FOR_OPENCL
+
+#define SET_INDEX_XYZ( which_index )					\
+									\
+	which_index.d5_dim[0] = THREAD_INDEX_X;					\
 	which_index.d5_dim[1] = which_index.d5_dim[0] / szarr.d5_dim[0];	\
 	which_index.d5_dim[2] = which_index.d5_dim[1] / szarr.d5_dim[1];	\
 	which_index.d5_dim[3] = which_index.d5_dim[2] / szarr.d5_dim[2];	\
@@ -273,10 +300,6 @@
 	which_index.d5_dim[2] %= szarr.d5_dim[2];				\
 	which_index.d5_dim[3] %= szarr.d5_dim[3];				\
 	which_index.d5_dim[4] %= szarr.d5_dim[4];
-
-#endif // ! FOOBAR
-
-#endif // BUILD_FOR_OPENCL
 
 #define SET_INDICES_XYZ_1	SET_INDEX_XYZ(index1)
 #define SET_INDICES_XYZ_SRC1(dst_idx)	index2 = dst_idx;
