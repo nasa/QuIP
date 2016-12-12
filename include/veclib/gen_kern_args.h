@@ -35,6 +35,7 @@
 #define GEN_ARGS_EQSP_DBM(prefix)	prefix##_EQSP_DBM
 
 #define GEN_ARGS_SLOW_DBM(prefix)	GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix)			\
 					prefix##_SLOW_DBM	// SLOW_SIZE
 
 ////////// FAST

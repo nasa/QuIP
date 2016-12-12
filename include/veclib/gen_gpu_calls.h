@@ -176,8 +176,8 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 		advance							\
 	}
 
-#define DBM_FAST_LEN_TEST	dbmi.x >= dbm_bit0  && dbmi.x < dbm_bit0+len
-#define DBM_SLOW_LEN_TEST	dbmi.x >= dbm_bit0  && dbmi.x < dbm_bit0+xyz_len.x
+#define DBM_FAST_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+len
+#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
 
 #define FLEN_DBM_LOOP( statement, advance )				\
 									\
@@ -207,30 +207,34 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 
 // PORT ?
 // BUG these seem to be re-defined in ocl...
-#define ADVANCE_FAST_DBM	dbmi.x++;
-#define ADVANCE_FAST_SBM	sbmi.x++;
-#define ADVANCE_FAST_SRC1	index2.x++;
-#define ADVANCE_FAST_SRC2	index3.x++;
+
+#define ADVANCE_FAST_SRC1	index2++;
+#define ADVANCE_FAST_SRC2	index3++;
+#define ADVANCE_FAST_SRC3	index4++;
+#define ADVANCE_FAST_SRC4	index5++;
+#define ADVANCE_FAST_DBM	/* do something??? */
+
+#define ADVANCE_EQSP_SRC1	index2 += inc2;
+#define ADVANCE_EQSP_SRC2	index3 += inc3;
+#define ADVANCE_EQSP_SRC3	index4 += inc4;
+#define ADVANCE_EQSP_SRC4	index5 += inc5;
+#define ADVANCE_EQSP_DBM	/* do something??? */
+
+#define ADVANCE_SLOW_SRC1	index2.d5_dim[1]+=inc2.d5_dim[1];
+#define ADVANCE_SLOW_SRC2	index3.d5_dim[1]+=inc3.d5_dim[1];
+#define ADVANCE_SLOW_SRC3	index4.d5_dim[1]+=inc4.d5_dim[1];
+#define ADVANCE_SLOW_SRC4	index5.d5_dim[1]+=inc5.d5_dim[1];
+#define ADVANCE_SLOW_DBM	/* do something??? */
 
 #define ADVANCE_FAST_DBM_	ADVANCE_FAST_DBM
 #define ADVANCE_FAST_DBM_1SRC	ADVANCE_FAST_DBM ADVANCE_FAST_SRC1
 #define ADVANCE_FAST_DBM_2SRCS	ADVANCE_FAST_DBM_1SRC ADVANCE_FAST_SRC2
 #define ADVANCE_FAST_DBM_SBM	ADVANCE_FAST_DBM ADVANCE_FAST_SBM
 
-#define ADVANCE_EQSP_DBM	dbmi.x += dbm_inc;
-#define ADVANCE_EQSP_SBM	sbmi.x += sbm_inc;
-#define ADVANCE_EQSP_SRC1	index2.x+=inc2;
-#define ADVANCE_EQSP_SRC2	index3.x+=inc3;
-
 #define ADVANCE_EQSP_DBM_	ADVANCE_EQSP_DBM
 #define ADVANCE_EQSP_DBM_1SRC	ADVANCE_EQSP_DBM ADVANCE_EQSP_SRC1
 #define ADVANCE_EQSP_DBM_2SRCS	ADVANCE_EQSP_DBM_1SRC ADVANCE_EQSP_SRC2
 #define ADVANCE_EQSP_DBM_SBM	ADVANCE_EQSP_DBM ADVANCE_EQSP_SBM
-
-#define ADVANCE_SLOW_DBM	dbmi.x += dbm_inc.x;
-#define ADVANCE_SLOW_SBM	sbmi.x += sbm_inc.x;
-#define ADVANCE_SLOW_SRC1	index2.x+=inc2.x;
-#define ADVANCE_SLOW_SRC2	index3.x+=inc3.x;
 
 #define ADVANCE_SLOW_DBM_	ADVANCE_SLOW_DBM
 #define ADVANCE_SLOW_DBM_1SRC	ADVANCE_SLOW_DBM ADVANCE_SLOW_SRC1
@@ -244,9 +248,9 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 // We assume that i_dbm_word is initilized to dbmi.x, before upscaling to the bit index.
 // Here we add the row offset
 // But when adjust is called, the y increment has already been scaled.
-#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbmi.y /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
+#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbmi.d5_dim[2] /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
 
-#define SET_SBM_WORD_IDX	i_sbm_word=(sbmi.x+sbmi.y)/BITS_PER_BITMAP_WORD;
+#define SET_SBM_WORD_IDX	i_sbm_word=(sbmi.d5_dim[1]+sbmi.d5_dim[2])/BITS_PER_BITMAP_WORD;
 
 
 #define GENERIC_FAST_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)	\
@@ -391,10 +395,10 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 		( DECLARE_KERN_ARGS_IDX_SETUP )				\
 	{								\
 		INIT_INDICES_3						\
-		if( index3.x < len2 )					\
+		if( index3.d5_dim[1] < len2 )					\
 			statement1 ;					\
 		else if( IDX1_0 < len1 )				\
-			dst = index2.x ;				\
+			dst = index2.d5_dim[1] ;				\
 	}								\
 									\
 	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_HELPER_NAME(func_name)		\
@@ -402,7 +406,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 		( DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER )			\
 	{								\
 		INIT_INDICES_3						\
-		if( index3.x < len2 )					\
+		if( index3.d5_dim[1] < len2 )					\
 			statement2 ;					\
 		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
@@ -563,7 +567,7 @@ KERNEL_FUNC_PRELUDE							\
 	( DECLARE_KERN_ARGS_MM )						\
 	{								\
 		INIT_INDICES_3						\
-		if( index3.x < len2 )					\
+		if( index3.d5_dim[1] < len2 )					\
 			statement ;					\
 		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
@@ -594,27 +598,27 @@ KERNEL_FUNC_PRELUDE							\
 		( DECLARE_KERN_ARGS_NOCC_SETUP )				\
 	{								\
 		INIT_INDICES_2						\
-		index2.x *= 2;						\
+		index2.d5_dim[1] *= 2;						\
 		if( IDX1_0 < len2 ){					\
 			if( test1 ){					\
-				dst_extrema[IDX1_0] = src_vals[index2.x];	\
+				dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
 				dst_counts[IDX1_0]=1;			\
-				dst_indices[index2.x]=index2.x;		\
+				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];		\
 			} else if( test2 ){				\
-				dst_extrema[IDX1_0] = src_vals[index2.x+1];\
+				dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]+1];\
 				dst_counts[IDX1_0]=1;			\
-				dst_indices[index2.x]=index2.x+1;		\
+				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1]+1;		\
 			} else {					\
-				dst_extrema[IDX1_0] = src_vals[index2.x];	\
+				dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
 				dst_counts[IDX1_0]=2;			\
-				dst_indices[index2.x]=index2.x;		\
-				dst_indices[index2.x+1]=index2.x+1;		\
+				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];		\
+				dst_indices[index2.d5_dim[1]+1]=index2.d5_dim[1]+1;		\
 			}						\
 		} else {						\
 			/* Nothing to compare */			\
-			dst_extrema[IDX1_0] = src_vals[index2.x];		\
+			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];		\
 			dst_counts[IDX1_0]=1;				\
-			dst_indices[index2.x]=index2.x;			\
+			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
 		}							\
 	}								\
 									\
@@ -624,33 +628,33 @@ KERNEL_FUNC_PRELUDE							\
 	{								\
 		int i;							\
 		INIT_INDICES_2						\
-		index2.x *= 2;						\
+		index2.d5_dim[1] *= 2;						\
 		if( IDX1_0 < len2 ){					\
 			if( test1 ){					\
-				dst_extrema[IDX1_0]=src_vals[index2.x];	\
-				dst_counts[IDX1_0]=src_counts[index2.x];	\
+				dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
+				dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];	\
 				/* No copy necessary */			\
 			} else if( test2 ){				\
-				dst_extrema[IDX1_0]=src_vals[index2.x+1];	\
-				dst_counts[IDX1_0]=src_counts[index2.x+1];\
+				dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]+1];	\
+				dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]+1];\
 				/* Now copy the indices down */		\
 				for(i=0;i<dst_counts[IDX1_0];i++){	\
 					dst_indices[IDX1_0*stride+i] =	\
 			dst_indices[IDX1_0*stride+stride/2+i];		\
 				}					\
 			} else {					\
-				dst_extrema[IDX1_0]=src_vals[index2.x];	\
-				dst_counts[IDX1_0] = src_counts[index2.x] + \
-					src_counts[index2.x+1];		\
+				dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
+				dst_counts[IDX1_0] = src_counts[index2.d5_dim[1]] + \
+					src_counts[index2.d5_dim[1]+1];		\
 				/* Now copy the second half of the indices */\
-				for(i=0;i<src_counts[index2.x+1];i++){	\
-		dst_indices[IDX1_0*stride+src_counts[index2.x]+i] =	\
+				for(i=0;i<src_counts[index2.d5_dim[1]+1];i++){	\
+		dst_indices[IDX1_0*stride+src_counts[index2.d5_dim[1]]+i] =	\
 			dst_indices[IDX1_0*stride+stride/2+i];		\
 				}					\
 			}						\
 		} else {						\
-			dst_extrema[IDX1_0]=src_vals[index2.x];		\
-			dst_counts[IDX1_0]=src_counts[index2.x];		\
+			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];		\
+			dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];		\
 			/* No copy necessary */				\
 		}							\
 	}
@@ -687,27 +691,27 @@ KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name)		\
 	( DECLARE_KERN_ARGS_NOCC_SETUP )				\
 {									\
 	INIT_INDICES_2							\
-	index2.x *= 2;							\
+	index2.d5_dim[1] *= 2;							\
 	if( IDX1_0 < len2 ){						\
 		if( test1 ){						\
-			dst_extrema[IDX1_0] = src_vals[index2.x];	\
+			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
 			dst_counts[IDX1_0]=1;				\
-			dst_indices[index2.x]=index2.x;			\
+			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
 		} else if( test2 ){					\
-			dst_extrema[IDX1_0] = src_vals[index2.x+1];	\
+			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]+1];	\
 			dst_counts[IDX1_0]=1;				\
-			dst_indices[index2.x]=index2.x+1;		\
+			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1]+1;		\
 		} else {						\
-			dst_extrema[IDX1_0] = src_vals[index2.x];	\
+			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
 			dst_counts[IDX1_0]=2;				\
-			dst_indices[index2.x]=index2.x;			\
-			dst_indices[index2.x+1]=index2.x+1;		\
+			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
+			dst_indices[index2.d5_dim[1]+1]=index2.d5_dim[1]+1;		\
 		}							\
 	} else {							\
 		/* Nothing to compare */				\
-		dst_extrema[IDX1_0] = src_vals[index2.x];		\
+		dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];		\
 		dst_counts[IDX1_0]=1;					\
-		dst_indices[index2.x]=index2.x;				\
+		dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];				\
 	}								\
 }
 
@@ -718,33 +722,33 @@ KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_HELPER_NAME(func_name)		\
 {									\
 	int i;								\
 	INIT_INDICES_2							\
-	index2.x *= 2;							\
+	index2.d5_dim[1] *= 2;							\
 	if( IDX1_0 < len2 ){						\
 		if( test1 ){						\
-			dst_extrema[IDX1_0]=src_vals[index2.x];	\
-			dst_counts[IDX1_0]=src_counts[index2.x];	\
+			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
+			dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];	\
 			/* No copy necessary */				\
 		} else if( test2 ){					\
-			dst_extrema[IDX1_0]=src_vals[index2.x+1];	\
-			dst_counts[IDX1_0]=src_counts[index2.x+1];	\
+			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]+1];	\
+			dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]+1];	\
 			/* Now copy the indices down */			\
 			for(i=0;i<dst_counts[IDX1_0];i++){		\
 				dst_indices[IDX1_0*stride+i] =	\
 		dst_indices[IDX1_0*stride+stride/2+i];		\
 			}						\
 		} else {						\
-			dst_extrema[IDX1_0]=src_vals[index2.x];	\
-			dst_counts[IDX1_0] = src_counts[index2.x] + 	\
-				src_counts[index2.x+1];			\
+			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
+			dst_counts[IDX1_0] = src_counts[index2.d5_dim[1]] + 	\
+				src_counts[index2.d5_dim[1]+1];			\
 			/* Now copy the second half of the indices */	\
-			for(i=0;i<src_counts[index2.x+1];i++){		\
-	dst_indices[IDX1_0*stride+src_counts[index2.x]+i] =		\
+			for(i=0;i<src_counts[index2.d5_dim[1]+1];i++){		\
+	dst_indices[IDX1_0*stride+src_counts[index2.d5_dim[1]]+i] =		\
 		dst_indices[IDX1_0*stride+stride/2+i];		\
 			}						\
 		}							\
 	} else {							\
-		dst_extrema[IDX1_0]=src_vals[index2.x];		\
-		dst_counts[IDX1_0]=src_counts[index2.x];		\
+		dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];		\
+		dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];		\
 		/* No copy necessary */					\
 	}								\
 }
@@ -956,7 +960,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_CONV(to_type) )	\
 {									\
 	INIT_INDICES_XYZ_2						\
-	if( IDX1_0 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){	\
+	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
 		SCALE_INDICES_XYZ_2					\
 		dst = (to_type) src1 ;					\
 	}								\
@@ -1057,7 +1061,7 @@ KERNEL_FUNC_PRELUDE							\
 	( DECLARE_KERN_ARGS_MM )						\
 	{								\
 		INIT_INDICES_3						\
-		if( index3.x < len2 )					\
+		if( index3.d5_dim[1] < len2 )					\
 			statement ;					\
 		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\
@@ -1072,10 +1076,10 @@ KERNEL_FUNC_PRELUDE							\
 	(index_type* a, std_type* b, std_type* c, u_long len1, u_long len2)\
 	{								\
 		INIT_INDICES_3						\
-		if( index3.x < len2 )					\
+		if( index3.d5_dim[1] < len2 )					\
 			statement1 ;					\
 		else if( IDX1_0 < len1 )				\
-			dst = index2.x ;				\
+			dst = index2.d5_dim[1] ;				\
 	}								\
 									\
 	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name##_index_helper	\
@@ -1083,7 +1087,7 @@ KERNEL_FUNC_PRELUDE							\
 				std_type *orig, int len1, int len2)	\
 	{								\
 		INIT_INDICES_3						\
-		if( index3.x < len2 )					\
+		if( index3.d5_dim[1] < len2 )					\
 			statement2 ;					\
 		else if( IDX1_0 < len1 )				\
 			dst = src1 ;					\

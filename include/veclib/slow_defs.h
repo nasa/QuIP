@@ -79,27 +79,14 @@
 
 #define GPU_INDEX_TYPE	SLOW_GPU_INDEX_TYPE
 
-
-#ifdef BUILD_FOR_OPENCL
-
-#define SET_INDEX( this_index )					\
-									\
-	this_index.d5_dim[0] = get_global_id(0);			\
-	this_index.d5_dim[1] = this_index.d5_dim[2] = this_index.d5_dim[3] = this_index.d5_dim[4] = 0;
-
-#endif // BUILD_FOR_OPENCL
-
-
-#ifdef BUILD_FOR_CUDA
+//	this_index.d5_dim[0] = blockIdx.x * blockDim.x + threadIdx.x;	// CUDA THREAD_INDEX_X
 
 	// What if we have to have blocks in 2 or more dims?
 
 #define SET_INDEX( this_index )					\
 									\
-	this_index.d5_dim[0] = blockIdx.x * blockDim.x + threadIdx.x;	\
+	this_index.d5_dim[0] = THREAD_INDEX_X;		\
 	this_index.d5_dim[1] = this_index.d5_dim[2] = this_index.d5_dim[3] = this_index.d5_dim[4] = 0;
-
-#endif // BUILD_FOR_CUDA
 
 #define IDX1_0	index1.d5_dim[0]		// used to be index1.x
 #define IDX1_1	index1.d5_dim[1]		// used to be index1.y

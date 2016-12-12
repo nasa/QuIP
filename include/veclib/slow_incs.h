@@ -43,55 +43,7 @@
 
 
 #define REPORT_INCS(incs)					\
-	fprintf(stderr,"%s:  %d %d %d\n",#incs,incs.x,incs.y,incs.z);
-
-#ifdef FOOBAR
-#define SETUP_SLOW_INCS_1						\
-									\
-dst_xyz_incr.x = INCREMENT(VA_DEST_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-dst_xyz_incr.y = INCREMENT(VA_DEST_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-dst_xyz_incr.z = INCREMENT(VA_DEST_INCSET(vap),VA_DIM_INDEX(vap,2));		\
-/*REPORT_INCS(dst_xyz_incr)*/
-
-
-#define SETUP_SLOW_INCS_DBM						\
-									\
-dbm_xyz_incr.x = INCREMENT(VA_DEST_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-dbm_xyz_incr.y = INCREMENT(VA_DEST_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-dbm_xyz_incr.z = INCREMENT(VA_DEST_INCSET(vap),VA_DIM_INDEX(vap,2));		\
-/*REPORT_INCS(dbm_xyz_incr)*/
-
-#define SETUP_SLOW_INCS_SRC1					\
-								\
-s1_xyz_incr.x = INCREMENT(VA_SRC1_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-s1_xyz_incr.y = INCREMENT(VA_SRC1_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-s1_xyz_incr.z = INCREMENT(VA_SRC1_INCSET(vap),VA_DIM_INDEX(vap,2));
-
-#define SETUP_SLOW_INCS_SRC2					\
-								\
-s2_xyz_incr.x = INCREMENT(VA_SRC2_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-s2_xyz_incr.y = INCREMENT(VA_SRC2_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-s2_xyz_incr.z = INCREMENT(VA_SRC2_INCSET(vap),VA_DIM_INDEX(vap,2));
-
-#define SETUP_SLOW_INCS_SRC3					\
-								\
-s3_xyz_incr.x = INCREMENT(VA_SRC3_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-s3_xyz_incr.y = INCREMENT(VA_SRC3_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-s3_xyz_incr.z = INCREMENT(VA_SRC3_INCSET(vap),VA_DIM_INDEX(vap,2));
-
-#define SETUP_SLOW_INCS_SRC4					\
-								\
-s4_xyz_incr.x = INCREMENT(VA_SRC4_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-s4_xyz_incr.y = INCREMENT(VA_SRC4_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-s4_xyz_incr.z = INCREMENT(VA_SRC4_INCSET(vap),VA_DIM_INDEX(vap,2));
-
-#define SETUP_SLOW_INCS_SRC5					\
-								\
-sbm_xyz_incr.x = INCREMENT(VA_SRC5_INCSET(vap),VA_DIM_INDEX(vap,0));		\
-sbm_xyz_incr.y = INCREMENT(VA_SRC5_INCSET(vap),VA_DIM_INDEX(vap,1));		\
-sbm_xyz_incr.z = INCREMENT(VA_SRC5_INCSET(vap),VA_DIM_INDEX(vap,2));
-
-#else // ! FOOBAR
+	fprintf(stderr,"%s:  %d %d %d %d %d\n",#incs,incs.d5_dim[0],incs.d5_dim[1],incs.d5_dim[2],incs.d5_dim[3],incs.d5_dim[4]);
 
 #define SETUP_SLOW_INCS_1						\
 									\
@@ -152,7 +104,6 @@ sbm_vwxyz_incr.d5_dim[2] = INCREMENT(VA_DEST_INCSET(vap),2);	\
 sbm_vwxyz_incr.d5_dim[3] = INCREMENT(VA_DEST_INCSET(vap),3);	\
 sbm_vwxyz_incr.d5_dim[4] = INCREMENT(VA_DEST_INCSET(vap),4);
 
-#endif // ! FOOBAR
 
 #define SETUP_SLOW_INCS_SBM	SETUP_SLOW_INCS_SRC5
 

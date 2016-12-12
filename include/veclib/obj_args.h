@@ -210,14 +210,20 @@ typedef struct vector_args {
 #define VA_DEST_LEN(vap)	VARG_LEN( VA_DEST(vap) )
 #define VA_SRC1_LEN(vap)	VARG_LEN( VA_SRC1(vap) )
 
+#ifdef FOOBAR
 #define VA_XYZ_LEN(val)		(vap)->va_xyz_len
 
 #define VA_LEN_X(vap)		(vap)->va_xyz_len.x
-#define VA_LEN_Y(vap)		(vap)->va_xyz_len.y
+#define VA_LEN_Y(vap)		(vap)->va_xyz_len.y		FOOBAR
 #define VA_LEN_Z(vap)		(vap)->va_xyz_len.z
 #define SET_VA_LEN_X(vap,v)	(vap)->va_xyz_len.x = v
-#define SET_VA_LEN_Y(vap,v)	(vap)->va_xyz_len.y = v
+#define SET_VA_LEN_Y(vap,v)	(vap)->va_xyz_len.y = v		FOOBAR
 #define SET_VA_LEN_Z(vap,v)	(vap)->va_xyz_len.z = v
+#endif // FOOBAR
+
+#define VA_LEN_X(vap)		VA_ITERATION_COUNT(vap,1)
+#define VA_LEN_Y(vap)		VA_ITERATION_COUNT(vap,2)
+#define VA_LEN_Z(vap)		VA_ITERATION_COUNT(vap,3)
 
 /*
 #define VA_DIM_INDEX(vap,which)		(vap)->va_dim_indices[which]

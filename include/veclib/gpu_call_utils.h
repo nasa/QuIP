@@ -191,6 +191,10 @@
 #define THREAD_INDEX_X		get_global_id(0)
 #endif // BUILD_FOR_OPENCL
 
+#ifdef BUILD_FOR_CUDA
+#define THREAD_INDEX_X		blockIdx.x * blockDim.x + threadIdx.x
+#endif // BUILD_FOR_CUDA
+
 #define SET_INDEX_XYZ( this_index )					\
 									\
 	this_index.d5_dim[0] = THREAD_INDEX_X;					\
@@ -276,17 +280,11 @@
 
 
 
-#ifdef FOOBAR
-#define SCALE_XYZ(n)	index##n.x *= inc##n.x;		\
-			index##n.y *= inc##n.y;		\
-			index##n.z *= inc##n.z;
-#else // ! FOOBAR
 #define SCALE_XYZ(n)	index##n.d5_dim[0] *= inc##n.d5_dim[0];		\
 			index##n.d5_dim[1] *= inc##n.d5_dim[1];		\
 			index##n.d5_dim[2] *= inc##n.d5_dim[2];		\
 			index##n.d5_dim[3] *= inc##n.d5_dim[3];		\
 			index##n.d5_dim[4] *= inc##n.d5_dim[4];
-#endif // ! FOOBAR
 
 #define SCALE_INDICES_XYZ_1	SCALE_XYZ(1)
 #define SCALE_INDICES_XYZ_2	SCALE_INDICES_XYZ_1 SCALE_XYZ(2)
@@ -303,13 +301,6 @@
 // BUG do any checking here???
 #define SCALE_INDICES_XYZ_SBM_LEN	SCALE_INDICES_XYZ_SBM	// anything with len?
 
-#ifdef FOOBAR
-#define SCALE_INDICES_XYZ_DBM_LEN	dbmi.x *= dbm_inc.x;		\
-					if( dbmi.y >= len.y ) return;	\
-					dbmi.y *= dbm_inc.y;		\
-					if( dbmi.z >= len.z ) return;	\
-					dbmi.z += dbm_inc.z;
-#else // ! FOOBAR
 #define SCALE_INDICES_XYZ_DBM_LEN	dbmi.d5_dim[0] *= dbm_inc.d5_dim[0];		\
 					if( dbmi.d5_dim[1] >= len.d5_dim[1] ) return;	\
 					dbmi.d5_dim[1] *= dbm_inc.d5_dim[1];		\
@@ -319,7 +310,6 @@
 					dbmi.d5_dim[3] += dbm_inc.d5_dim[3];		\
 					if( dbmi.d5_dim[4] >= len.d5_dim[4] ) return;	\
 					dbmi.d5_dim[4] += dbm_inc.d5_dim[4];
-#endif // ! FOOBAR
 
 #define SCALE_INDICES_XYZ_2SRCS		SCALE_XYZ(2) SCALE_XYZ(3)
 
@@ -389,63 +379,6 @@
 #define OFFSET_E
 #endif // ! BUILD_FOR_OPENCL
 
-#ifdef FOOBAR
-#if CUDA_COMP_CAP < 20
-
-#define eqsp_dst	a[(index1.x+index1.y)*inc1	OFFSET_A ]
-#define eqsp_src1	b[(index2.x+index2.y)*inc2	OFFSET_B ]
-
-#define dst	a[index1.x+index1.y	OFFSET_A ]
-#define src1	b[index2.x+index2.y	OFFSET_B ]
-#define src2	c[index3.x+index3.y	OFFSET_C ]
-#define src3	d[index4.x+index4.y	OFFSET_D ]
-#define src4	e[index5.x+index5.y	OFFSET_E ]
-
-#define srcbit	(sbm[(sbmi.x+sbmi.y+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
-			NUMBERED_BIT((sbmi.x+sbmi.y+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
-
-#define cdst	a[index1.x+index1.y	OFFSET_A ]
-#define csrc1	b[index2.x+index2.y	OFFSET_B ]
-#define csrc2	c[index3.x+index3.y	OFFSET_C ]
-#define csrc3	d[index4.x+index4.y	OFFSET_D ]
-#define csrc4	e[index5.x+index5.y	OFFSET_E ]
-
-#define qdst	a[index1.x+index1.y	OFFSET_A ]
-#define qsrc1	b[index2.x+index2.y	OFFSET_B ]
-#define qsrc2	c[index3.x+index3.y	OFFSET_C ]
-#define qsrc3	d[index4.x+index4.y	OFFSET_D ]
-#define qsrc4	e[index5.x+index5.y	OFFSET_E ]
-
-#else /* CUDA_COMP_CAP >= 20 */
-
-// doing this now to fix cuda, but may not be the right fix...
-#define eqsp_dst	a[(index1.x+index1.y+index1.z)*inc1	OFFSET_A ]
-#define eqsp_src1	b[(index2.x+index2.y+index2.z)*inc2	OFFSET_B ]
-
-#define dst	a[index1.x+index1.y+index1.z	OFFSET_A ]
-#define src1	b[index2.x+index2.y+index2.z	OFFSET_B ]
-#define src2	c[index3.x+index3.y+index3.z	OFFSET_C ]
-#define src3	d[index4.x+index4.y+index4.z	OFFSET_D ]
-#define src4	e[index5.x+index5.y+index5.z	OFFSET_E ]
-
-#define srcbit	(sbm[(sbmi.x+sbmi.y+sbmi.z+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
-		NUMBERED_BIT((sbmi.x+sbmi.y+sbmi.z+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
-
-#define cdst	a[index1.x+index1.y+index1.z	OFFSET_A ]
-#define csrc1	b[index2.x+index2.y+index2.z	OFFSET_B ]
-#define csrc2	c[index3.x+index3.y+index3.z	OFFSET_C ]
-#define csrc3	d[index4.x+index4.y+index4.z	OFFSET_D ]
-#define csrc4	e[index5.x+index5.y+index5.z	OFFSET_E ]
-
-#define qdst	a[index1.x+index1.y+index1.z	OFFSET_A ]
-#define qsrc1	b[index2.x+index2.y+index2.z	OFFSET_B ]
-#define qsrc2	c[index3.x+index3.y+index3.z	OFFSET_C ]
-#define qsrc3	d[index4.x+index4.y+index4.z	OFFSET_D ]
-#define qsrc4	e[index5.x+index5.y+index5.z	OFFSET_E ]
-
-#endif /* CUDA_COMP_CAP >= 20 */
-
-#else // ! FOOBAR
 
 // This used to be x+y+z ... (for dim3 indices)
 #define INDEX5_SUM(idx)	idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4]
@@ -456,20 +389,12 @@
 #define fast_src3	b[index4	OFFSET_D ]
 #define fast_src4	b[index5	OFFSET_E ]
 
-#ifdef FOOBAR
-#define eqsp_dst	a[index1*inc1	OFFSET_A ]
-#define eqsp_src1	b[index2*inc2	OFFSET_B ]
-#define eqsp_src2	b[index3*inc3	OFFSET_C ]
-#define eqsp_src3	b[index4*inc4	OFFSET_D ]
-#define eqsp_src4	b[index5*inc5	OFFSET_E ]
-#else // ! FOOBAR
 // Indices are scaled in the function prelude
 #define eqsp_dst	a[index1	OFFSET_A ]
 #define eqsp_src1	b[index2	OFFSET_B ]
 #define eqsp_src2	b[index3	OFFSET_C ]
 #define eqsp_src3	b[index4	OFFSET_D ]
 #define eqsp_src4	b[index5	OFFSET_E ]
-#endif // ! FOOBAR
 
 #define INDEX_SUM(idx)	(idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4])
 
@@ -519,19 +444,6 @@
 #define slow_qsrc3	d[INDEX_SUM(index4)	OFFSET_D ]
 #define slow_qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
 
-#endif // ! FOOBAR
-
-#ifdef FOOBAR
-/* Even if we can't do XYZ indexing, we don't do much harm by multiplying the z */
-
-#define SCALE_INDICES_XYZ_SBM	sbmi.x *= sbm_inc.x;	\
-				sbmi.y *= sbm_inc.y;	\
-				sbmi.z *= sbm_inc.z;
-
-#define SCALE_INDICES_XYZ_DBM	dbmi.x *= dbm_inc.x;		\
-				dbmi.y *= dbm_inc.y;		\
-				dbmi.z *= dbm_inc.z;
-#else // ! FOOBAR
 
 #define SCALE_INDICES_XYZ_SBM	sbmi.d5_dim[0] *= sbm_inc.d5_dim[0];	\
 				sbmi.d5_dim[1] *= sbm_inc.d5_dim[1];	\
@@ -544,8 +456,6 @@
 				dbmi.d5_dim[2] *= dbm_inc.d5_dim[2];	\
 				dbmi.d5_dim[3] *= dbm_inc.d5_dim[3];	\
 				dbmi.d5_dim[4] *= dbm_inc.d5_dim[4];
-
-#endif // ! FOOBAR
 
 
 #define SET_DBM_BIT(cond)	if( cond ) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= ~dbm_bit;
