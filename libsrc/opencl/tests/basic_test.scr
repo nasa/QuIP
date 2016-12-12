@@ -1,7 +1,9 @@
 Set n 8
+Set h 8
+Set w 32
 Vector v_h $n 1 float
-Image i_h $n $n 1 float
-Image db_h $n $n 1 bit
+Image i_h $h $w 1 float
+Image db_h $h $w 1 bit
 Ramp1D v_h 1 1
 Info v_h
 Display v_h
@@ -14,8 +16,8 @@ platforms
 
 # default data area is now gpu?
 Vector v_g $n 1 float
-Image i_g $n $n 1 float
-Image db_g $n $n 1 bit
+Image i_g $h $w 1 float
+Image db_g $h $w 1 bit
 Info v_g
 
 advise "Should be a ramp from 1, counting by 1..."
@@ -37,6 +39,7 @@ veclib
   execute vsm_le db_h i_h 23
   quit
 Display db_h
+Info db_h
 Pause
 
 Ramp2D i_g 0 1 10
@@ -45,6 +48,9 @@ Display i_g
 veclib
   execute vsm_le db_g i_g 23
   quit
+Display db_g
+Pause
+VSet db_g 0
 Display db_g
 Pause
 

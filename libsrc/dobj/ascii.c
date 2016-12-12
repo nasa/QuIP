@@ -888,9 +888,6 @@ static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, 
 	dimension_t i;
 	incr_t inc;
 
-//#ifdef CAUITOUS
-//	if( IS_BITMAP(dp) ) ERROR1("CAUTIOUS:  pnt_dim called with bitmap argument.");
-//#endif /* CAUTIOUS */
 	assert( ! IS_BITMAP(dp) );
 
 	if( dim > 0 ){
@@ -1022,6 +1019,14 @@ static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 	}
 }
 
+// Not needed, because bitmaps don't use ret_dim
+#ifdef FOOBAR
+#define MULTIPLE_COLUMNS_OK(dp)						\
+									\
+	( ( IS_BITMAP(dp) && OBJ_COLS(dp) <= BITS_PER_BITMAP_WORD ) ||	\
+	( ( ! IS_BITMAP(dp) ) && OBJ_COLS(dp) <= dobj_max_per_line ) )
+#endif // FOOBAR
+
 void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 {
 	const char *save_ifmt;
@@ -1036,7 +1041,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 #endif // THREAD_SAFE_QUERY
 
 // where is ret_dim declared?  part of qsp?
-	if( OBJ_MACH_DIM(dp,0) == 1 && OBJ_COLS(dp) <= dobj_max_per_line )
+	if( OBJ_MACH_DIM(dp,0) == 1 && OBJ_COLS(dp) <= dobj_max_per_line)
 		ret_dim=1;
 	else ret_dim=0;
 
