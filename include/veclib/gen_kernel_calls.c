@@ -1,72 +1,72 @@
-// used for host calls NOT kernels 
+// used for host calls and kernels, should be renamed...
 
 //#include "veclib/both_call_utils.h"
 
 // SP stuff
 
 #include "veclib/sp_defs.h"
-#include "veclib/gen_float_calls.h"
+#include "veclib/all_float_kernels.h"
 #include "veclib/type_undefs.h"
 
 // DP stuff
 
 #include "veclib/dp_defs.h"
-#include "veclib/gen_float_calls.h"
+#include "veclib/all_float_kernels.h"
 #include "veclib/type_undefs.h"
 
 // BY stuff
 
 #include "veclib/by_defs.h"
-#include "veclib/gen_int_calls.h"
+#include "veclib/all_int_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // IN stuff
 
 #include "veclib/in_defs.h"
-#include "veclib/gen_int_calls.h"
+#include "veclib/all_int_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // DI stuff
 
 #include "veclib/di_defs.h"
-#include "veclib/gen_int_calls.h"
+#include "veclib/all_int_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // LI stuff
 
 #include "veclib/li_defs.h"
-#include "veclib/gen_int_calls.h"
+#include "veclib/all_int_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // UBY stuff
 
 #include "veclib/uby_defs.h"
-#include "veclib/gen_uint_calls.h"
+#include "veclib/all_uint_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // UIN stuff
 
 #include "veclib/uin_defs.h"
-#include "veclib/gen_uint_calls.h"
+#include "veclib/all_uint_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // UDI stuff
 
 #include "veclib/udi_defs.h"
-#include "veclib/gen_uint_calls.h"
+#include "veclib/all_uint_kernels.h"
 #include "veclib/type_undefs.h"
 
 
 // ULI stuff
 
 #include "veclib/uli_defs.h"
-#include "veclib/gen_uint_calls.h"
+#include "veclib/all_uint_kernels.h"
 // gpu_int.cl contains special case for left-shift!?  cuda bug?
 #include "veclib/type_undefs.h"
 
@@ -96,19 +96,19 @@ _VEC_FUNC_DBM_SBM(rvmov, SET_DBM_BIT(srcbit) )
 // Most common use is vsum
 
 #include "veclib/inby_defs.h"
-#include "veclib/gen_mixed_int_calls.h"
+#include "veclib/all_mixed_int_kernels.h"
 #include "veclib/type_undefs.h"
 
 #include "veclib/uindi_defs.h"
-#include "veclib/gen_mixed_uint_calls.h"
+#include "veclib/all_mixed_uint_kernels.h"
 #include "veclib/type_undefs.h"
 
 #include "veclib/ubyin_defs.h"
-#include "veclib/gen_mixed_uint_calls.h"
+#include "veclib/all_mixed_uint_kernels.h"
 #include "veclib/type_undefs.h"
 
 #include "veclib/spdp_defs.h"
-#include "veclib/gen_mixed_float_calls.h"
+#include "veclib/all_mixed_float_kernels.h"
 #include "veclib/type_undefs.h"
 
 #endif // ! BUILDING_KERNELS

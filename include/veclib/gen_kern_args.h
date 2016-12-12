@@ -39,6 +39,8 @@
 
 ////////// FAST
 
+// OS_ARG is the offset arg...  that is how we do indexing with opencl
+
 #ifdef BUILD_FOR_OPENCL
 #define OS_ARG(p,wh)	GEN_SEP(p) p##_##wh##_OFFSET
 #else // ! BUILD_FOR_OPENCL
@@ -658,9 +660,10 @@
 //					GEN_SEP(prefix)		\
 //					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_SLOW_SIZE(p)		 p##_SLOW_SIZE		OS_ARG(p,SLOW_SIZE)
+#define GEN_SLOW_SIZE(p)		 p##_SLOW_SIZE
 
 #define GEN_ARGS_SLOW_1(prefix)		GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix) 		\
 					GEN_ARGS_FAST_1(prefix)		\
 					GEN_SEP(prefix) 		\
 					GEN_SLOW_ARG_INC1(prefix)
@@ -883,7 +886,7 @@
 					GEN_SEP(prefix)		\
 					GEN_ARGS_SLOW_SRC1(prefix)
 
-#define GEN_ARGS_SLOW_2(prefix)	GEN_ARGS_SLOW_1(prefix) \
+#define GEN_ARGS_SLOW_2(prefix)		GEN_ARGS_SLOW_1(prefix) \
 					GEN_SEP(prefix)		\
 					GEN_ARGS_SLOW_SRC1(prefix)
 

@@ -7,6 +7,7 @@
 
 /**********************************************************************/
 
+#ifdef FOOBAR
 // statement arg not needed?
 
 #ifdef BUILD_FOR_CUDA
@@ -30,6 +31,7 @@ _GENERIC_SLOW_CONV_FUNC(n,std_type,type)
 
 #endif // ! BUILD_FOR_CUDA
 
+#endif // FOOBAR
 
 // args n, s  are func_name, statement
 
@@ -123,35 +125,6 @@ _GENERIC_SLOW_CONV_FUNC(n,std_type,type)
 
 
 
-#ifdef BUILD_FOR_CUDA
-
-#define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)			\
-										\
-GENERIC_FAST_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_EQSP_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_SLOW_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_FLEN_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_ELEN_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_SLEN_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)
-
-#define SLOW_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)	\
-								\
-GENERIC_SLOW_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)		\
-GENERIC_SLEN_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)
-
-#else // ! BUILD_FOR_CUDA
-
-#define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)			\
-										\
-GENERIC_FAST_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_EQSP_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)	\
-GENERIC_SLOW_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)
-
-#define SLOW_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)	\
-								\
-GENERIC_SLOW_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)
-
-#endif // ! BUILD_FOR_CUDA
 
 // PORT ?
 
@@ -189,27 +162,6 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
  * in a given word.
  */
 
-#ifdef BUILD_FOR_CUDA
-
-#define GENERIC_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)		\
-									\
-GENERIC_FAST_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_EQSP_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_SLOW_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_FLEN_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_ELEN_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_SLEN_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)
-
-#else // ! BUILD_FOR_CUDA
-
-
-#define GENERIC_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)		\
-									\
-GENERIC_FAST_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_EQSP_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-GENERIC_SLOW_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)
-
-#endif // ! BUILD_FOR_CUDA
 
 // This loops over all of the bits in one word.  We have a problem here if
 // all of the bits are not used - there is no harm in reading or setting
@@ -327,13 +279,16 @@ __VEC_FUNC_MM( func_name, statement );
 #define _VEC_FUNC_MM_IND( func_name, statement1, statement2 )\
 __VEC_FUNC_MM_IND( func_name, statement1, statement2 )
 
+#ifdef FOOBAR
 #define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )	\
 __VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
+#endif // FOOBAR
 
 
+#ifdef FOOBAR
 
 #define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )		\
-	__VEC_FUNC_2V_PROJ( func_name, gpu_expr )		\
+	__VEC_FUNC_2V_PROJ( func_name, gpu_expr )
 
 // Use macros for args?
 // This only has a slow version...
@@ -348,6 +303,7 @@ __VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
 #define INC1_0	inc1.d5_dim[0]			// used to be inc1.x
 #define INC1_1	inc1.d5_dim[1]			// used to be inc1.x
 #define INC1_2	inc1.d5_dim[2]			// used to be inc1.x
+#endif // FOOBAR
 
 #define ___VEC_FUNC_2V_PROJ( func_name, expr )			\
 								\
@@ -368,8 +324,10 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 
 //_VEC_FUNC_CPX_2V_PROJ(cvsum,
 
+#ifdef FOOBAR
 #define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )		\
-	__VEC_FUNC_CPX_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )		\
+	__VEC_FUNC_CPX_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )
+#endif // FOOBAR
 
 #define ___VEC_FUNC_CPX_2V_PROJ( func_name, re_expr, im_expr )		\
 									\
@@ -390,8 +348,10 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 		}							\
 	}
 
+#ifdef FOOBAR
 #define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )		\
-	__VEC_FUNC_QUAT_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )		\
+	__VEC_FUNC_QUAT_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
+#endif // FOOBAR
 
 #define ___VEC_FUNC_QUAT_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
 									\
@@ -419,8 +379,10 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 
 
 
+#ifdef FOOBAR
 #define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )		\
-	__VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )		\
+	__VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )
+#endif // FOOBAR
 
 #define ___VEC_FUNC_2V_PROJ_IDX( func_name, statement1, statement2 )	\
 									\
@@ -857,6 +819,12 @@ KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_##bm
 
 // Does OpenCL have a limit (like CUDA) on the number of dimensions (3)?
 
+//	if( IDX1_0 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){
+
+#define SLEN_SUBTST(index_name,len,dim_idx)	index_name.d5_dim[dim_idx] < len.d5_dim[dim_idx]
+
+#define SLEN_IDX_TEST(idx,len)	( SLEN_SUBTST(idx,len,0) && SLEN_SUBTST(idx,len,1) && SLEN_SUBTST(idx,len,2) && SLEN_SUBTST(idx,len,3) && SLEN_SUBTST(idx,len,4) )
+
 #define __GENERIC_SLEN_VEC_FUNC(name,statement,bm,typ,scalars,vectors,extra)	\
 									\
 KERNEL_FUNC_PRELUDE							\
@@ -865,7 +833,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_##bm
 {									\
 	DECL_EXTRA_##extra						\
 	INIT_INDICES_XYZ_##bm##vectors					\
-	if( IDX1_0 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){	\
+	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
 		SCALE_INDICES_XYZ_##bm##vectors				\
 		statement;						\
 	}								\
@@ -1122,9 +1090,11 @@ KERNEL_FUNC_PRELUDE							\
 	}								\
 									\
 
+#ifdef FOOBAR
 // hard coded for vdot?
 #define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )				\
 	__VEC_FUNC_3V_PROJ( func_name)
+#endif // FOOBAR
 
 // hard-coded for vdot!?
 
@@ -1148,9 +1118,11 @@ KERNEL_FUNC_PRELUDE							\
 	}
 
 
+#ifdef FOOBAR
 // hard coded for vdot?
 #define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )				\
 	__VEC_FUNC_CPX_3V_PROJ( func_name )
+#endif // FOOBAR
 
 #define ___VEC_FUNC_CPX_3V_PROJ( func_name)					\
 									\

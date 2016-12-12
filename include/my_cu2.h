@@ -12,6 +12,7 @@
 
 #ifdef HAVE_CUDA
 #define BUILD_FOR_CUDA
+
 #include <cuda.h>
 
 #if CUDA_VERSION >= 5000

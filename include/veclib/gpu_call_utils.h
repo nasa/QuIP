@@ -59,14 +59,18 @@
 
 /****************** DECL_INDICES ***********************/
 
+#ifdef FOOBAR
 #ifdef BUILD_FOR_CUDA
 //#define GPU_INDEX_TYPE	DIM3
-#define GPU_INDEX_TYPE	DIM5	// was DIM3 (cuda)
+#define SLOW_GPU_INDEX_TYPE	DIM5	// was DIM3 (cuda)
 #endif // BUILD_FOR_CUDA
 
 #ifdef BUILD_FOR_OPENCL
-#define GPU_INDEX_TYPE	DIM5
+#define SLOW_GPU_INDEX_TYPE	DIM5
 #endif // BUILD_FOR_OPENCL
+#endif // FOOBAR
+
+#define SLOW_GPU_INDEX_TYPE	DIM5
 
 #define DECL_INDICES_1		GPU_INDEX_TYPE index1;
 #define DECL_INDICES_SRC1	GPU_INDEX_TYPE index2;
@@ -142,41 +146,6 @@
 
 /******************** SET_INDICES ***************************/
 
-#ifdef BUILD_FOR_OPENCL
-
-#ifdef FOOBAR
-#define SET_INDEX( which_index )					\
-									\
-	which_index.x = get_global_id(0);				\
-	which_index.y = which_index.z = 0;
-#else // ! FOOBAR
-#define SET_INDEX( which_index )					\
-									\
-	which_index.d5_dim[0] = get_global_id(0);			\
-	which_index.d5_dim[1] = which_index.d5_dim[2] = which_index.d5_dim[3] = which_index.d5_dim[4] = 0;
-#endif // ! FOOBAR
-
-#endif // BUILD_FOR_OPENCL
-
-#ifdef BUILD_FOR_CUDA
-
-#ifdef FOOBAR
-#define SET_INDEX( which_index )					\
-									\
-	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
-	which_index.y = which_index.z = 0;
-#else // ! FOOBAR
-
-	// What if we have to have blocks in 2 or more dims?
-
-#define SET_INDEX( which_index )					\
-									\
-	which_index.d5_dim[0] = blockIdx.x * blockDim.x + threadIdx.x;	\
-	which_index.d5_dim[1] = which_index.d5_dim[2] = which_index.d5_dim[3] = which_index.d5_dim[4] = 0;
-#endif // ! FOOBAR
-
-#endif // BUILD_FOR_CUDA
-
 #define SET_INDICES_1		SET_INDEX( index1 )
 #define SET_INDICES_SRC1(dst_idx)	index2 = dst_idx;
 #define SET_INDICES_SRC2	index3 = index2;
@@ -218,88 +187,22 @@
 
 /**************************** SET_INDICES_XYZ ******************************/
 
-
-#ifdef BUILD_FOR_CUDA
-
-#ifdef FOOBAR
-#if CUDA_COMP_CAP < 20
-
-#define SET_INDEX_XYZ( which_index )					\
-									\
-	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;		\
-	which_index.y = blockIdx.y * blockDim.y + threadIdx.y;		\
-	which_index.z = 0;
-
-
-#else /* CUDA_COMP_CAP >= 20 */
-
-#define SET_INDEX_XYZ( which_index )					\
-									\
-	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;		\
-	which_index.y = blockIdx.y * blockDim.y + threadIdx.y;		\
-	which_index.z = blockIdx.z * blockDim.z + threadIdx.z;
-
-#endif /* CUDA_COMP_CAP >= 20 */
-#else // ! // FOOBAR
-
-#define THREAD_INDEX_X		which_index.x = blockIdx.x * blockDim.x + threadIdx.x
-
-#endif // ! FOOBAR
-
-#endif // BUILD_FOR_CUDA
-
-
 #ifdef BUILD_FOR_OPENCL
-
-#ifdef FOOBAR
-#define SET_INDEX_XYZ( which_index )					\
-									\
-	which_index.x = get_global_id(0);				\
-	which_index.y = get_global_id(1);				\
-	which_index.z = get_global_id(2);
-#else // ! FOOBAR
-
-	// We need to get the index settings from global_id(0) and another dimension variable!?
-	//
-	// We pass the divisors in a dimension var for the op, not an individual object...
-	// Say we have an image with 1 component, 4 columns, and 3 rows; then there will be
-	// 12 threads, with global_id 0-11
-	// idx[0] = N % d0
-	// idx[1] = ( N / d0 ) % d1
-	// idx[2] = ( N / (d0*d1) ) % d2
-	// idx[3] = ( N / (d0*d1*d2) ) % d3
-	// etc
-#define THREAD_INDEX_X	which_index.d5_dim[0] = get_global_id(0)
-
-//#define SET_INDEX_XYZ( which_index )						\
-//										\
-//	which_index.d5_dim[0] = get_global_id(0);				\
-//	which_index.d5_dim[1] = which_index.d5_dim[0] / szarr.d5_dim[0];	\
-//	which_index.d5_dim[2] = which_index.d5_dim[1] / szarr.d5_dim[1];	\
-//	which_index.d5_dim[3] = which_index.d5_dim[2] / szarr.d5_dim[2];	\
-//	which_index.d5_dim[4] = which_index.d5_dim[3] / szarr.d5_dim[3];	\
-//	which_index.d5_dim[0] %= szarr.d5_dim[0];				\
-//	which_index.d5_dim[1] %= szarr.d5_dim[1];				\
-//	which_index.d5_dim[2] %= szarr.d5_dim[2];				\
-//	which_index.d5_dim[3] %= szarr.d5_dim[3];				\
-//	which_index.d5_dim[4] %= szarr.d5_dim[4];
-
-#endif // ! FOOBAR
-
+#define THREAD_INDEX_X		get_global_id(0)
 #endif // BUILD_FOR_OPENCL
 
-#define SET_INDEX_XYZ( which_index )					\
+#define SET_INDEX_XYZ( this_index )					\
 									\
-	which_index.d5_dim[0] = THREAD_INDEX_X;					\
-	which_index.d5_dim[1] = which_index.d5_dim[0] / szarr.d5_dim[0];	\
-	which_index.d5_dim[2] = which_index.d5_dim[1] / szarr.d5_dim[1];	\
-	which_index.d5_dim[3] = which_index.d5_dim[2] / szarr.d5_dim[2];	\
-	which_index.d5_dim[4] = which_index.d5_dim[3] / szarr.d5_dim[3];	\
-	which_index.d5_dim[0] %= szarr.d5_dim[0];				\
-	which_index.d5_dim[1] %= szarr.d5_dim[1];				\
-	which_index.d5_dim[2] %= szarr.d5_dim[2];				\
-	which_index.d5_dim[3] %= szarr.d5_dim[3];				\
-	which_index.d5_dim[4] %= szarr.d5_dim[4];
+	this_index.d5_dim[0] = THREAD_INDEX_X;					\
+	this_index.d5_dim[1] = this_index.d5_dim[0] / szarr.d5_dim[0];	\
+	this_index.d5_dim[2] = this_index.d5_dim[1] / szarr.d5_dim[1];	\
+	this_index.d5_dim[3] = this_index.d5_dim[2] / szarr.d5_dim[2];	\
+	this_index.d5_dim[4] = this_index.d5_dim[3] / szarr.d5_dim[3];	\
+	this_index.d5_dim[0] %= szarr.d5_dim[0];				\
+	this_index.d5_dim[1] %= szarr.d5_dim[1];				\
+	this_index.d5_dim[2] %= szarr.d5_dim[2];				\
+	this_index.d5_dim[3] %= szarr.d5_dim[3];				\
+	this_index.d5_dim[4] %= szarr.d5_dim[4];
 
 #define SET_INDICES_XYZ_1	SET_INDEX_XYZ(index1)
 #define SET_INDICES_XYZ_SRC1(dst_idx)	index2 = dst_idx;
@@ -338,6 +241,7 @@
 
 /**************** SCALE_INDICES_ ********************/
 
+#ifdef FOOFOOBAR
 #ifdef FOOBAR
 #define SCALE_INDICES_1		index1.x *= inc1;
 #define SCALE_INDICES_SRC1	index2.x *= inc2;
@@ -355,6 +259,15 @@
 #define SCALE_INDICES_SBM	sbmi.d5_dim[0] *= sbm_inc;
 #define SCALE_INDICES_DBM	dbmi.d5_dim[0] *= dbm_inc;
 #endif // ! FOOBAR
+#endif // FOOFOOBAR
+
+#define SCALE_INDICES_1		SCALE_INDEX(index1,inc1)	// index1.d5_dim[0] *= inc1;
+#define SCALE_INDICES_SRC1	SCALE_INDEX(index2,inc2)	// index2.d5_dim[0] *= inc2;
+#define SCALE_INDICES_SRC2	SCALE_INDEX(index3,inc3)	// index3.d5_dim[0] *= inc3;
+#define SCALE_INDICES_SRC3	SCALE_INDEX(index4,inc4)	// index4.d5_dim[0] *= inc4;
+#define SCALE_INDICES_SRC4	SCALE_INDEX(index5,inc5)	// index5.d5_dim[0] *= inc5;
+#define SCALE_INDICES_SBM	SCALE_INDEX(sbmi,sbm_inc)	// sbmi.d5_dim[0] *= sbm_inc;
+#define SCALE_INDICES_DBM	SCALE_INDEX(dbmi,dbm_inc)	// dbmi.d5_dim[0] *= dbm_inc;
 
 #define SCALE_INDICES_2		SCALE_INDICES_1 SCALE_INDICES_SRC1
 #define SCALE_INDICES_3		SCALE_INDICES_2 SCALE_INDICES_SRC2
@@ -535,31 +448,76 @@
 #else // ! FOOBAR
 
 // This used to be x+y+z ... (for dim3 indices)
-#define INDEX_SUM(idx)	idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4]
+#define INDEX5_SUM(idx)	idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4]
 
-#define eqsp_dst	a[(INDEX_SUM(index1))*inc1	OFFSET_A ]
-#define eqsp_src1	b[(INDEX_SUM(index2))*inc2	OFFSET_B ]
+#define fast_dst	a[index1	OFFSET_A ]
+#define fast_src1	b[index2	OFFSET_B ]
+#define fast_src2	b[index3	OFFSET_C ]
+#define fast_src3	b[index4	OFFSET_D ]
+#define fast_src4	b[index5	OFFSET_E ]
 
-#define dst	a[INDEX_SUM(index1)	OFFSET_A ]
-#define src1	b[INDEX_SUM(index2)	OFFSET_B ]
-#define src2	c[INDEX_SUM(index3)	OFFSET_C ]
-#define src3	d[INDEX_SUM(index4)	OFFSET_D ]
-#define src4	e[INDEX_SUM(index5)	OFFSET_E ]
+#ifdef FOOBAR
+#define eqsp_dst	a[index1*inc1	OFFSET_A ]
+#define eqsp_src1	b[index2*inc2	OFFSET_B ]
+#define eqsp_src2	b[index3*inc3	OFFSET_C ]
+#define eqsp_src3	b[index4*inc4	OFFSET_D ]
+#define eqsp_src4	b[index5*inc5	OFFSET_E ]
+#else // ! FOOBAR
+// Indices are scaled in the function prelude
+#define eqsp_dst	a[index1	OFFSET_A ]
+#define eqsp_src1	b[index2	OFFSET_B ]
+#define eqsp_src2	b[index3	OFFSET_C ]
+#define eqsp_src3	b[index4	OFFSET_D ]
+#define eqsp_src4	b[index5	OFFSET_E ]
+#endif // ! FOOBAR
+
+#define INDEX_SUM(idx)	(idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4])
+
+#define slow_dst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define slow_src1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define slow_src2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define slow_src3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define slow_src4	e[INDEX_SUM(index5)	OFFSET_E ]
 
 #define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
 		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
 
-#define cdst	a[INDEX_SUM(index1)	OFFSET_A ]
-#define csrc1	b[INDEX_SUM(index2)	OFFSET_B ]
-#define csrc2	c[INDEX_SUM(index3)	OFFSET_C ]
-#define csrc3	d[INDEX_SUM(index4)	OFFSET_D ]
-#define csrc4	e[INDEX_SUM(index5)	OFFSET_E ]
+#define fast_cdst	a[index1	OFFSET_A ]
+#define fast_csrc1	b[index2	OFFSET_B ]
+#define fast_csrc2	c[index3	OFFSET_C ]
+#define fast_csrc3	d[index4	OFFSET_D ]
+#define fast_csrc4	e[index5	OFFSET_E ]
 
-#define qdst	a[INDEX_SUM(index1)	OFFSET_A ]
-#define qsrc1	b[INDEX_SUM(index2)	OFFSET_B ]
-#define qsrc2	c[INDEX_SUM(index3)	OFFSET_C ]
-#define qsrc3	d[INDEX_SUM(index4)	OFFSET_D ]
-#define qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
+#define eqsp_cdst	a[index1*inc1	OFFSET_A ]
+#define eqsp_csrc1	b[index2*inc2	OFFSET_B ]
+#define eqsp_csrc2	c[index3*inc3	OFFSET_C ]
+#define eqsp_csrc3	d[index4*inc4	OFFSET_D ]
+#define eqsp_csrc4	e[index5*inc5	OFFSET_E ]
+
+#define slow_cdst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define slow_csrc1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define slow_csrc2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define slow_csrc3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define slow_csrc4	e[INDEX_SUM(index5)	OFFSET_E ]
+
+
+#define fast_qdst	a[index1	OFFSET_A ]
+#define fast_qsrc1	b[index2	OFFSET_B ]
+#define fast_qsrc2	c[index3	OFFSET_C ]
+#define fast_qsrc3	d[index4	OFFSET_D ]
+#define fast_qsrc4	e[index5	OFFSET_E ]
+
+#define eqsp_qdst	a[index1*inc1	OFFSET_A ]
+#define eqsp_qsrc1	b[index2*inc2	OFFSET_B ]
+#define eqsp_qsrc2	c[index3*inc3	OFFSET_C ]
+#define eqsp_qsrc3	d[index4*inc4	OFFSET_D ]
+#define eqsp_qsrc4	e[index5*inc5	OFFSET_E ]
+
+#define slow_qdst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define slow_qsrc1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define slow_qsrc2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define slow_qsrc3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define slow_qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
 
 #endif // ! FOOBAR
 
