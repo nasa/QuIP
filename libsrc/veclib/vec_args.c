@@ -948,7 +948,7 @@ static void show_increments(Increment_Set *isp)
 {
 	if( isp == NULL ) return;
 
-	fprintf(stderr,"\t%d, %d, %d, %d, %d\n",
+	fprintf(stderr,"\t\t%d, %d, %d, %d, %d\n",
 		isp->is_increment[4],
 		isp->is_increment[3],
 		isp->is_increment[2],
@@ -956,16 +956,39 @@ static void show_increments(Increment_Set *isp)
 		isp->is_increment[0] );
 }
 
+static void show_dimensions(Dimension_Set *dsp)
+{
+	if( dsp == NULL ) return;
+
+	fprintf(stderr,"\t\t%d, %d, %d, %d, %d\n",
+		dsp->ds_dimension[4],
+		dsp->ds_dimension[3],
+		dsp->ds_dimension[2],
+		dsp->ds_dimension[1],
+		dsp->ds_dimension[0] );
+}
+
+static void show_vector_arg(const char *name, const Vector_Arg *varg_p)
+{
+	fprintf(stderr,"\t%s = 0x%lx\n",name,(long)VARG_PTR(*varg_p));
+	show_dimensions(VARG_DIMSET(*varg_p));
+	show_increments(VARG_INCSET(*varg_p));
+}
+
 void show_vec_args(const Vector_Args *vap)
 {
 	int i;
 
-	fprintf(stderr,"show_vec_args 0x%lx:\n\tdst = 0x%lx\n",
-		(long)vap,(long)VA_DEST_PTR(vap));
+	fprintf(stderr,"show_vec_args 0x%lx:\n", (long)vap);
+
+	show_vector_arg( "dest", & VA_DEST(vap) );
 
 	for(i=0;i<MAX_N_ARGS;i++){
-		if( VA_SRC_PTR(vap,i) != NULL )
-			fprintf(stderr,"\tsrc[%d]\t0x%lx\n",i,(long)VA_SRC_PTR(vap,i) );
+		if( VA_SRC_PTR(vap,i) != NULL ){
+			char name[8];
+			sprintf(name,"src%d",i+1);
+			show_vector_arg( name, & VA_SRC(vap,i) );
+		}
 	}
 	if( vap->va_sval[0] != NULL ){
 		fprintf(stderr,"\tscalars:\n");

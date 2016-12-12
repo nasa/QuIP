@@ -57,7 +57,7 @@
 #define bitmap_dst_dp	OA_DEST(oap)
 #define bitmap_src_dp	OA_SBM(oap)
 
-//#define MAX_DEBUG
+#define MAX_DEBUG
 
 #ifdef MAX_DEBUG
 
@@ -466,7 +466,7 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define COPY_BASES_DBM_1SRC(index)	COPY_BASES_DBM(index) COPY_BASES_SRC1(index)
 #define COPY_BASES_DBM_SBM(index)	COPY_BASES_DBM(index) COPY_BASES_SBM(index)
 #define COPY_BASES_2SRCS(index)		COPY_BASES_SRC1(index) COPY_BASES_SRC2(index)
-#define COPY_BASES_DBM_2SRCS(index)	COPY_BASES_DBM_1SRC(index) COPY_BASES_2SRCS(index)
+#define COPY_BASES_DBM_2SRCS(index)	COPY_BASES_DBM(index) COPY_BASES_2SRCS(index)
 
 #define COPY_BASES_DBM_			COPY_BASES_DBM
 
@@ -530,7 +530,7 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INIT_PTRS_DBM_1SRC	INIT_PTRS_DBM INIT_PTRS_SRC1
 #define INIT_PTRS_DBM_SBM	INIT_PTRS_DBM INIT_PTRS_SBM
 #define INIT_PTRS_2SRCS		INIT_PTRS_SRC1 INIT_PTRS_SRC2
-#define INIT_PTRS_DBM_2SRCS	INIT_PTRS_DBM_1SRC INIT_PTRS_2SRCS
+#define INIT_PTRS_DBM_2SRCS	INIT_PTRS_DBM INIT_PTRS_2SRCS
 
 #define INIT_PTRS_SBM_1		INIT_PTRS_1 INIT_PTRS_SBM
 #define INIT_PTRS_SBM_2		INIT_PTRS_2 INIT_PTRS_SBM
@@ -589,7 +589,7 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INC_PTRS_DBM_1SRC	INC_PTRS_DBM INC_PTRS_SRC1
 #define INC_PTRS_DBM_SBM	INC_PTRS_DBM INC_PTRS_SBM
 #define INC_PTRS_2SRCS		INC_PTRS_SRC1 INC_PTRS_SRC2
-#define INC_PTRS_DBM_2SRCS	INC_PTRS_DBM_1SRC INC_PTRS_2SRCS
+#define INC_PTRS_DBM_2SRCS	INC_PTRS_DBM INC_PTRS_2SRCS
 
 #define INC_PTRS_SBM_1		INC_PTRS_1 INC_PTRS_SBM
 #define INC_PTRS_SBM_2		INC_PTRS_2 INC_PTRS_SBM
@@ -637,6 +637,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   dbm_bit = %d",\
 (int_for_addr)dbm_ptr,dbm_bit);\
 NADVISE(DEFAULT_ERROR_STRING);
+
+#define DEBUG_DBM_1SRC		DEBUG_DBM_		\
+				DEBUG_SRC1
 
 #define srcbit		((*(sbm_ptr + (sbm_bit/BITS_PER_BITMAP_WORD)))\
 			& NUMBERED_BIT(sbm_bit))
@@ -726,10 +729,10 @@ NADVISE(DEFAULT_ERROR_STRING);
 #define INIT_COUNT( var, index ) _INIT_COUNT(var,count,index)
 
 //#define _INIT_COUNT( var, array, index ) var=array[index];
-#define _INIT_COUNT( var, array, index ) var=INDEX_COUNT(array,index);
+#define _INIT_COUNT( var, array, index )	var=INDEX_COUNT(array,index);
 
-#define COPY_BASES_1(index)	dst_base[index] = dst_base[index+1];
-#define COPY_BASES_CPX_1(index)	cdst_base[index] = cdst_base[index+1];
+#define COPY_BASES_1(index)		dst_base[index] = dst_base[index+1];
+#define COPY_BASES_CPX_1(index)		cdst_base[index] = cdst_base[index+1];
 #define COPY_BASES_QUAT_1(index)	qdst_base[index] = qdst_base[index+1];
 
 #define COPY_BASES_IDX_1(index)	COPY_BASES_1(index) index_base[index] = index_base[index+1];
@@ -1048,25 +1051,6 @@ sprintf(DEFAULT_ERROR_STRING,"s1_base:  0x%lx  0x%lx  0x%lx  0x%lx",(int_for_add
 NADVISE(DEFAULT_ERROR_STRING);
 
 
-#ifdef FOOBAR
-#define OBJ_METHOD_DECL(name)					\
-								\
-static void HOST_TYPED_CALL_NAME(name,type_code)( Vec_Obj_Args *oap )
-
-#define IMPOSSIBLE_METHOD( name )					\
-									\
-	OBJ_METHOD_DECL(name)						\
-	{								\
-		/*DECLARE_FUNC_NAME(name)*/					\
-		sprintf(DEFAULT_ERROR_STRING,					\
-	"%s:  Sorry, this operation is impossible.",			\
-			STRINGIFY( TYPED_NAME(obj_##name) ) );		\
-		NWARN(DEFAULT_ERROR_STRING);					\
-	}
-
-
-
-#endif // FOOBAR
 
 #define CONV_METHOD_DECL(name)					\
 								\
@@ -1144,14 +1128,6 @@ INDEX_COUNT(count,1),		\
 INDEX_COUNT(count,2),		\
 INDEX_COUNT(count,3),		\
 INDEX_COUNT(count,4));		\
-NADVISE(DEFAULT_ERROR_STRING);\
-sprintf(DEFAULT_ERROR_STRING,"sbminc = %d %d %d %d %d",\
-IDX_INC(sbminc,0),IDX_INC(sbminc,1),IDX_INC(sbminc,2),IDX_INC(sbminc,3), \
-IDX_INC(sbminc,4));\
-NADVISE(DEFAULT_ERROR_STRING);\
-sprintf(DEFAULT_ERROR_STRING,"dbminc = %d %d %d %d %d",\
-IDX_INC(dbminc,0),IDX_INC(dbminc,1),IDX_INC(dbminc,2),	\
-IDX_INC(dbminc,3),IDX_INC(dbminc,4));\
 NADVISE(DEFAULT_ERROR_STRING);
 
 #define GENERIC_SLOW_BODY( name, statement, decls, inits,	\
@@ -1161,7 +1137,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	decls							\
 	inits							\
 								\
-/*SHOW_SLOW_COUNT*/ 						\
 	INIT_COUNT(i,4)						\
 	while(i-- > 0){						\
 		copy_macro(2)					\
@@ -1190,17 +1165,21 @@ NADVISE(DEFAULT_ERROR_STRING);
 	}							\
 }
 
-#define DEBUG_2							\
-sprintf(DEFAULT_ERROR_STRING,"executing dst = 0x%lx   src = 0x%lx",\
-(int_for_addr)dst_ptr,\
-(int_for_addr)s1_ptr);\
-NADVISE(DEFAULT_ERROR_STRING);
+#define DEBUG_2		DEBUG_DST DEBUG_SRC1
 
-#define DEBUG_2SRCS							\
-sprintf(DEFAULT_ERROR_STRING,"executing src1 = 0x%lx   src2 = 0x%lx",\
-(int_for_addr)s1_ptr,\
-(int_for_addr)s2_ptr);\
-NADVISE(DEFAULT_ERROR_STRING);
+#define DEBUG_2SRCS	DEBUG_SRC1 DEBUG_SRC2
+				
+#define DEBUG_DST								\
+	sprintf(DEFAULT_ERROR_STRING,"\tdst = 0x%lx",(int_for_addr)dst_ptr);	\
+	NADVISE(DEFAULT_ERROR_STRING);
+
+#define DEBUG_SRC1								\
+	sprintf(DEFAULT_ERROR_STRING,"\tsrc1 = 0x%lx",(int_for_addr)s1_ptr);	\
+	NADVISE(DEFAULT_ERROR_STRING);
+
+#define DEBUG_SRC2								\
+	sprintf(DEFAULT_ERROR_STRING,"\tsrc2 = 0x%lx",(int_for_addr)s2_ptr);	\
+	NADVISE(DEFAULT_ERROR_STRING);
 
 
 #define GENERIC_XXX_SLOW_BODY( name, statement, decls,	\
@@ -1349,7 +1328,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 #define SLOW_BODY_4(name,statement)	SIMPLE_SLOW_BODY(name,statement,,4,)
 #define SLOW_BODY_5(name,statement)	SIMPLE_SLOW_BODY(name,statement,,5,)
 #define SLOW_BODY_DBM_(name,statement)	SIMPLE_SLOW_BODY(name,statement,,DBM_,)
-#define SLOW_BODY_DBM_1SRC(name,statement)	SIMPLE_SLOW_BODY(name,statement,,DBM_1SRC,)
+// put DEBUG_DBM_1SRC in last position to see debug info
+#define SLOW_BODY_DBM_1SRC(name,statement)	SIMPLE_SLOW_BODY(name,statement,,DBM_1SRC,/*DEBUG_DBM_1SRC*/)
 #define SLOW_BODY_DBM_SBM_(name,statement)	SIMPLE_SLOW_BODY(name,statement,,DBM_SBM,)
 #define SLOW_BODY_SBM_3(name,statement)	SIMPLE_SLOW_BODY(name,statement,,SBM_3,)
 #define SLOW_BODY_SBM_2(name,statement)	SIMPLE_SLOW_BODY(name,statement,,SBM_2,)
@@ -2142,75 +2122,6 @@ EF_DECL(name)( LINK_FUNC_ARG_DECLS )					\
 	}						\
 }
 
-#ifdef FOOBAR	// not used?
-/* We don't want to do the special case if that already is the type? */
-
-#define FAST_BODY_MOV(name,typ)				\
-{							\
-	FAST_DECLS_##typ##2				\
-	FAST_INIT_##typ##2				\
-							\
-	TYPED_NAME(FAST_ESCAPE)				\
-	while(fl_ctr-- > 0){				\
-		dst = (dest_type) src1 ;		\
-		FAST_ADVANCE_##typ##2			\
-	}						\
-}
-
-#define spdp_FAST_ESCAPE	/* no fast move for mixed types */
-#define ubyin_FAST_ESCAPE	/* no fast move for mixed types */
-#define uindi_FAST_ESCAPE	/* no fast move for mixed types */
-#define inby_FAST_ESCAPE	/* no fast move for mixed types */
-#define li_FAST_ESCAPE		/* no fast move for int64 */
-#define uli_FAST_ESCAPE		/* no fast move for int64 */
-#define dp_FAST_ESCAPE		/* no fast move for dp */
-
-#define by_FAST_ESCAPE		GEN_FAST_ESCAPE(8)
-#define uby_FAST_ESCAPE		GEN_FAST_ESCAPE(8)
-#define in_FAST_ESCAPE		GEN_FAST_ESCAPE(4)
-#define uin_FAST_ESCAPE		GEN_FAST_ESCAPE(4)
-
-#if __WORDSIZE == 64
-#define di_FAST_ESCAPE		GEN_FAST_ESCAPE(2)
-#define udi_FAST_ESCAPE		GEN_FAST_ESCAPE(2)
-#define sp_FAST_ESCAPE		GEN_FAST_ESCAPE(2)
-#else	/* __WORDSIZE == 32 */
-#define di_FAST_ESCAPE		/* this is the machine size */
-#define udi_FAST_ESCAPE		/* this is the machine size */
-#define sp_FAST_ESCAPE		/* this is the machine size */
-#endif	/* __WORDSIZE == 32 */
-
-// Seg violation here with 9 float elements, aligned at 4 and c,
-// fl_ctr=9, elts_per_64=2...
-//
-#define GEN_FAST_ESCAPE( elts_per_64 )			\
-							\
-	if( fl_ctr > (elts_per_64*4) && 		\
-	L_ALIGNMENT(dst_ptr) == L_ALIGNMENT(s1_ptr) ){	\
-		uint64_t *ldp, *lsp;			\
-		int n_pre,n_post;			\
-		if( L_ALIGNMENT(dst_ptr) != 0 ){	\
-			n_pre = elts_per_64-L_ALIGNMENT(dst_ptr)/sizeof(*(dst_ptr));	\
-			fl_ctr -= n_pre;		\
-			while(n_pre--)			\
-				*dst_ptr++ = *s1_ptr++;	\
-		}					\
-		n_post = fl_ctr % elts_per_64;		\
-		fl_ctr = fl_ctr / elts_per_64;		\
-		ldp = (uint64_t *)dst_ptr;		\
-		lsp = (uint64_t *)s1_ptr;		\
-		while( fl_ctr-- )			\
-			*ldp++ = *lsp++;		\
-		if( n_post > 0 ){			\
-			dst_ptr = (std_type *) ldp;	\
-			s1_ptr = (std_type *) lsp;	\
-			while( n_post-- )		\
-				*dst_ptr++ = *s1_ptr++;	\
-		}					\
-		return;					\
-	}
-
-#endif // FOOBAR	// not used?
 
 #define FAST_BODY_CONV_2(name, statement,dsttyp,srctyp)	\
 							\
@@ -2352,9 +2263,6 @@ if( FAST_TEST_##bitmap##vectors ){				\
 /*********************** Section 8 - object methods ***************/
 
 #define _VEC_FUNC_2V_CONV(name,type,statement)			\
-/* #define CONV_METHOD(name,type,statement) */			\
-								\
-/*GENERIC_FUNC_DECLS(name, statement,,,,2,)*/			\
 								\
 FF_DECL(name)( LINK_FUNC_ARG_DECLS )			\
 {							\
@@ -2401,44 +2309,18 @@ SF_DECL(name)( LINK_FUNC_ARG_DECLS )					\
 		INIT_PTRS_2,			\
 		INC_PTRS_2,			\
 		INC_BASES_2,		\
-		)						\
-						\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_2						\
-	FAST_SWITCH_2(name)					\
-	REPORT_OBJ_METHOD_DONE					\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/								\
-
-#ifdef FOOBAR
-#define GENERIC_OBJ_METHOD(name,bitmap,typ,scalars,vectors)	\
-								\
-OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_##bitmap##vectors				\
-	GENERIC_FAST_SWITCH(name,bitmap,typ,scalars,vectors)	\
-	REPORT_OBJ_METHOD_DONE					\
-	RELEASE_VEC_ARGS_STRUCT					\
-}
-#endif // FOOBAR
+		)
 
 
 #define OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)	\
-								\
-GENERIC_FUNC_DECLS(name, statement,bitmap,typ,scalars,vectors,extra)	\
-								\
-/*GENERIC_OBJ_METHOD(name,bitmap,typ,scalars,vectors)*/
+									\
+GENERIC_FUNC_DECLS(name, statement,bitmap,typ,scalars,vectors,extra)		// OBJ_METHOD
 
 
 
-#define OBJ_MOV_METHOD(name,statement,bitmap,typ,scalars,vectors)\
-								\
-MOV_FUNC_DECLS(name, statement,bitmap,typ,scalars,vectors)	\
-								\
-/*GENERIC_OBJ_METHOD(name,bitmap,typ,scalars,vectors)*/		\
+#define OBJ_MOV_METHOD(name,statement,bitmap,typ,scalars,vectors)	\
+									\
+MOV_FUNC_DECLS(name, statement,bitmap,typ,scalars,vectors)
 
 
 #define _VEC_FUNC_2V_SCAL( name, statement )			\
@@ -2458,24 +2340,6 @@ EXTLOC_FAST_FUNC(name,EXTLOC_STATEMENT(augment_condition,restart_condition,assig
 EXTLOC_EQSP_FUNC(name,EXTLOC_STATEMENT(augment_condition,restart_condition,assignment))	\
 EXTLOC_SLOW_FUNC(name,EXTLOC_STATEMENT(augment_condition,restart_condition,assignment)) \
 									\
-/*
-OBJ_METHOD_DECL(name)							\
-{									\
-	DECL_VEC_ARGS_STRUCT(name)					\
-	DECLARE_VA_SCALARS						\
-	ANNOUNCE_FUNCTION						\
-	OBJ_ARG_CHK_2							\
-	SET_VA_SCALAR_VAL_UDI(vap,0,OBJ_N_TYPE_ELTS( OA_DEST(oap) ));		\
-	FAST_SWITCH_EXTLOC(name)					\
-									\
-	*((std_type *)OBJ_DATA_PTR( OA_SCLR_OBJ(oap,0) )) = VA_SCALAR_VAL_STD(vap,0);\
-									\
-	*((index_type *)OBJ_DATA_PTR( OA_SCLR_OBJ(oap,1) )) = VA_SCALAR_VAL_UDI(vap,1);	\
-									\
-	SET_ASSIGNED_FLAG( OA_SCLR_OBJ(oap,0) )				\
-	SET_ASSIGNED_FLAG( OA_SCLR_OBJ(oap,1) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/
 
 #define _VEC_FUNC_2V( name, statement )				\
 	OBJ_METHOD(name,statement,,,,2,)
@@ -2622,159 +2486,6 @@ OBJ_METHOD_DECL(name)							\
 #define _VEC_FUNC_QUAT_1S_1V( name, statement )			\
 	OBJ_METHOD(name,statement,,QUAT_,1S_,1,)
 
-#ifdef FOOBAR
-// These need to be redefined in terms of _VEC_FUNC_XXX ...
-
-
-#define CPX_VV_SELECTION_METHOD(name, statement)		\
-	OBJ_METHOD(name,statement,SBM_,CPX_,,3,)
-
-
-#define QUAT_VV_SELECTION_METHOD(name, statement)			\
-	OBJ_METHOD(name,statement,SBM_,QUAT_,,3,)
-
-
-#define CPX_SS_SELECTION_METHOD(name, statement)			\
-	OBJ_METHOD(name,statement,SBM_,CPX_,2S_,1,)
-
-
-
-#define QUAT_SS_SELECTION_METHOD(name, statement)			\
-	OBJ_METHOD(name,statement,SBM_,QUAT_,2S_,1,)
-
-
-
-#define CPX_VS_SELECTION_METHOD(name, statement)		\
-	OBJ_METHOD(name,statement,SBM_,CPX_,1S_,2,)
-
-
-
-#define QUAT_VS_SELECTION_METHOD(name, statement)		\
-	OBJ_METHOD(name,statement,SBM_,QUAT_,1S_,2,)
-
-
-/* Start FIX here... */
-
-
-
-
-#define ONE_CPX_VEC_SCALAR_METHOD( name,stat)	_VF_CPX_1S_1V( name, type_code, stat)
-#define ONE_CPX_VEC_SCALAR_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,1S_,1,)
-
-
-#define ONE_QUAT_VEC_SCALAR_METHOD( name,stat)	_VF_QUAT_1S_1V( name, type_code, stat)
-#define ONE_QUAT_VEC_SCALAR_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,QUAT_,1S_,1,)
-
-
-/* this is for vmagsq, vatn2:  real result, cpx source */
-#define TWO_MIXED_RC_VEC_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,RC_,,2,)
-
-
-
-#define TWO_MIXED_CR_VEC_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,CR_,,2,)
-
-
-
-#define THREE_MIXED_VEC_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,CCR_,,3,)
-
-/* real and quaternion sources for a quaternion result */
-
-#define THREE_QMIXD_VEC_METHOD( name , stat )	_VF_QQR_3V( name, type_code, stat)
-#define THREE_QMIXD_VEC_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,QQR_,,3,)
-
-
-
-#define TWO_CPX_VEC_SCALAR_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,1S_,2,)
-
-#define TWO_CPX_VEC_SCALAR_METHOD_T2( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,1S_,2,_T2)
-
-#define TWO_CPX_VEC_SCALAR_METHOD_T3( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,1S_,2,_T3)
-
-
-#define TWO_QUAT_VEC_SCALAR_METHOD( name,stat)	_VF_QUAT_1S_2V( name, type_code, stat)
-#define TWO_QUAT_VEC_SCALAR_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,,QUAT_,1S_,2,)
-
-#define TWO_QUAT_VEC_SCALAR_METHOD_T4( name, statement )		\
-	OBJ_METHOD(name,statement,,QUAT_,1S_,2,_T4)
-
-#define TWO_QUAT_VEC_SCALAR_METHOD_T5( name, statement )		\
-	OBJ_METHOD(name,statement,,QUAT_,1S_,2,_T5)
-
-
-
-
-#define TWO_VEC_METHOD( name, statement )				\
-	OBJ_METHOD(name,statement,,,,2,)
-
-#define TWO_VEC_CONV_METHOD( name, type, statement )		\
-	CONV_METHOD(name,type,statement)
-
-
-#define TWO_QUAT_VEC_METHOD( name,stat )	_VF_QUAT_2V( name, type_code, stat)
-#define TWO_QUAT_VEC_METHOD( name, statement )				\
-	OBJ_METHOD(name,statement,,QUAT_,,2,)
-
-#define TWO_QUAT_VEC_METHOD_T4( name, statement )			\
-	OBJ_METHOD(name,statement,,QUAT_,,2,_T4)
-
-#define TWO_QUAT_VEC_METHOD_T5( name, statement )			\
-	OBJ_METHOD(name,statement,,QUAT_,,2,_T5)
-
-
-#define THREE_QUAT_VEC_METHOD( name, statement )		\
-	OBJ_METHOD(name,statement,,QUAT_,,3,)
-
-#define THREE_QUAT_VEC_METHOD_T4( name, statement )		\
-	OBJ_METHOD(name,statement,,QUAT_,,3,_T4)
-
-#define THREE_QUAT_VEC_METHOD_T5( name, statement )		\
-	OBJ_METHOD(name,statement,,QUAT_,,3,_T5)
-
-
-
-#define THREE_CPX_VEC_METHOD_T2( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,,3,_T2)
-
-#define THREE_CPX_VEC_METHOD_T3( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,,3,_T3)
-
-#define THREE_CPX_VEC_METHOD_T1( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,,3,_T1)
-
-#define THREE_CPX_VEC_METHOD( name, statement )				\
-	OBJ_METHOD(name,statement,,CPX_,,3,)
-
-#define TWO_CPX_VEC_METHOD( name, statement )				\
-	OBJ_METHOD(name,statement,,CPX_,,2,)
-
-#define TWO_CPX_VEC_METHOD_T2( name, statement )			\
-	OBJ_METHOD(name,statement,,CPX_,,2,_T2)
-
-
-/* complex destination, real source; im part of dst set to zero... */
-
-#define TWO_MIXED_CR_VEC_SCALAR_METHOD( name, statement )	\
-	OBJ_METHOD(name,statement,,CR_,1S_,2,)
-
-
-/* quaternion destination, real source; im part of dst set to zero... */
-
-#define TWO_QMIXD_QR_VEC_SCALAR_METHOD(name,stat)	\
-						_VF_QR_1S_2V( name, type_code, stat)
-#define TWO_QMIXD_QR_VEC_SCALAR_METHOD( name, statement )	\
-	OBJ_METHOD(name,statement,,QR_,1S_,2,)
-
-#endif // FOOBAR
 
 /* PROJECTION_METHOD_2 is for vmaxv, vminv, vsum
  * Destination can be a scalar or we can collapse along any dimension...
@@ -2798,18 +2509,7 @@ OBJ_METHOD_DECL(name)							\
 #define _VEC_FUNC_2V_PROJ( name, init_statement, statement, gpu_expr )	\
 								\
 static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
-SLOW_BODY_PROJ_2(name,init_statement,statement)			\
-								\
-/*
-OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_SRC1					\
-	OBJ_ARG_CHK_1						\
-	XFER_SLOW_ARGS_2					\
-	CHAIN_CHECK( SLOW_NAME(name) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/								\
+SLOW_BODY_PROJ_2(name,init_statement,statement)
 
 
 
@@ -2817,37 +2517,13 @@ OBJ_METHOD_DECL(name)						\
 #define _VEC_FUNC_CPX_2V_PROJ( name, init_statement, statement, gpu_expr_re, gpu_expr_im )	\
 								\
 static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
-SLOW_BODY_PROJ_CPX_2(name,init_statement,statement)			\
-								\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_SRC1					\
-	OBJ_ARG_CHK_1						\
-	XFER_SLOW_ARGS_CPX_2					\
-	CHAIN_CHECK( SLOW_NAME(name) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/								\
-
-
+SLOW_BODY_PROJ_CPX_2(name,init_statement,statement)
 
 
 #define _VEC_FUNC_QUAT_2V_PROJ( name, init_statement, statement, expr_re, expr_im1, expr_im2, expr_im3 )	\
 								\
 static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
-SLOW_BODY_PROJ_QUAT_2(name,init_statement,statement)		\
-								\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_SRC1					\
-	OBJ_ARG_CHK_1						\
-	XFER_SLOW_ARGS_QUAT_2					\
-	CHAIN_CHECK( SLOW_NAME(name) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/								\
-
-
+SLOW_BODY_PROJ_QUAT_2(name,init_statement,statement)
 
 
 
@@ -2878,49 +2554,14 @@ static void SLOW_NAME(name)( LINK_FUNC_ARG_DECLS )		\
 		row_ptr += IDX_INC(dinc,2);			\
 		row_start_val += scalar3_val;			\
 	}							\
-}								\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_1						\
-								\
-	if( OBJ_COMPS(dst_dp) > 1 ){				\
-		sprintf(DEFAULT_ERROR_STRING,				\
-"%s:  Sorry, object %s has depth %d, can only handle depth 1 currently...",\
-			#name, OBJ_NAME(dst_dp),OBJ_COMPS(dst_dp));\
-		NWARN(DEFAULT_ERROR_STRING);				\
-		return;						\
-	}							\
-	if( OBJ_FRAMES(dst_dp) > 1 ){				\
-		sprintf(DEFAULT_ERROR_STRING,				\
-"%s:  Sorry, object %s has %d frames, can only handle 1 frame currently...",\
-			#name ,					\
-			OBJ_NAME(dst_dp),OBJ_FRAMES(dst_dp));	\
-		NWARN(DEFAULT_ERROR_STRING);				\
-		return;						\
-	}							\
-	XFER_SLOW_ARGS_3S_1					\
-	CHAIN_CHECK( SLOW_NAME(name) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/								\
-								\
+}
+
+
 
 #define _VEC_FUNC_2V_PROJ_IDX( name, init_statement, statement, gpu_s1, gpu_s2 )	\
 								\
 static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
-SLOW_BODY_PROJ_IDX_2(name,init_statement,statement)		\
-								\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_SRC1					\
-	OBJ_ARG_CHK_1						\
-	XFER_SLOW_ARGS_2					\
-	CHAIN_CHECK( SLOW_NAME(name) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/								\
-
-
+SLOW_BODY_PROJ_IDX_2(name,init_statement,statement)
 
 
 
@@ -2938,19 +2579,7 @@ SLOW_BODY_PROJ_IDX_2(name,init_statement,statement)		\
 #define __VEC_FUNC_3V_PROJ( name, typ, init_statement, statement )	\
 								\
 static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
-PROJ3_SLOW_BODY(name,typ,init_statement,statement)		\
-								\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_SRC1					\
-	OBJ_ARG_CHK_SRC2					\
-	OBJ_ARG_CHK_1						\
-	XFER_SLOW_ARGS_3					\
-	XFER_SLOW_ARGS_##typ##3					\
-	CHAIN_CHECK( SLOW_NAME(name) )				\
-	RELEASE_VEC_ARGS_STRUCT					\
-}*/
+PROJ3_SLOW_BODY(name,typ,init_statement,statement)
 
 
 
@@ -2976,185 +2605,6 @@ PROJ3_SLOW_BODY(name,typ,init_statement,statement)		\
 #define _VEC_FUNC_VSMAP( name, op )		\
 	OBJ_METHOD(name,SET_DBM_BIT(src1 op scalar1_val),DBM_,,1S_,1SRC,)
 
-#ifdef FOOBAR
-
-
-#define CPX_PROJECTION_METHOD_2( name, init_statement, statement, gpu_re_expr, gpu_im_expr )	\
-									\
-static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)			\
-SLOW_BODY_PROJ_CPX_2(name,init_statement,statement)			\
-									\
-/*OBJ_METHOD_DECL(name)							\
-{									\
-	DECL_VEC_ARGS_STRUCT(name)					\
-	OBJ_ARG_CHK_SRC1						\
-	OBJ_ARG_CHK_1							\
-	XFER_SLOW_ARGS_CPX_2						\
-	CHAIN_CHECK( SLOW_NAME(name) )					\
-	RELEASE_VEC_ARGS_STRUCT						\
-}*/									\
-
-
-
-
-
-#define CPX_PROJECTION_METHOD_3( name, init_statement, statement )	\
-									\
-static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)			\
-SLOW_BODY_PROJ_CPX_3(name,init_statement,statement)			\
-									\
-/*OBJ_METHOD_DECL(name)							\
-{									\
-	DECL_VEC_ARGS_STRUCT(name)					\
-	OBJ_ARG_CHK_SRC2						\
-	OBJ_ARG_CHK_SRC1						\
-	OBJ_ARG_CHK_1							\
-	XFER_SLOW_ARGS_CPX_3						\
-	CHAIN_CHECK( SLOW_NAME(name) )					\
-	RELEASE_VEC_ARGS_STRUCT						\
-}*/									\
-
-
-
-#define QUAT_PROJECTION_METHOD_2( name, init_statement, statement, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )	\
-									\
-static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)			\
-SLOW_BODY_PROJ_QUAT_2(name,init_statement,statement)			\
-									\
-/*OBJ_METHOD_DECL(name)							\
-{									\
-	DECL_VEC_ARGS_STRUCT(name)					\
-	OBJ_ARG_CHK_SRC1						\
-	OBJ_ARG_CHK_1							\
-	XFER_SLOW_ARGS_QUAT_2						\
-	CHAIN_CHECK( SLOW_NAME(name) )					\
-	RELEASE_VEC_ARGS_STRUCT						\
-}*/									\
-
-
-/* vset for bitmap type */
-
-#define SCALAR_BIT_METHOD( name, statement )			\
-	OBJ_METHOD(name,statement,DBM_,,1S,,)
-
-
-/* bitmap conversion to another type */
-
-#define BITMAP_SRC_CONVERSION_METHOD( name, statement )		\
-	OBJ_METHOD(name,statement,SBM_,,,1,)
-
-
-
-// above this needs _VEC_FUNC_XXX macros instead of METHOD macros...
-
-/* This is the ramp1d object method - but where is the vector method? */
-
-#define RAMP1D_METHOD(name)					\
-								\
-/*OBJ_METHOD_DECL(name)						\
-{								\
-	dimension_t i,n;					\
-	incr_t inc;						\
-	std_type val;						\
-	std_type *ptr;						\
-	DECLARE_FUNC_NAME(name)						\
-								\
-	OBJ_ARG_CHK_1						\
-								\
-	if( OBJ_COMPS(dst_dp) > 1 ){				\
-		sprintf(DEFAULT_ERROR_STRING,				\
-"%s:  Sorry, object %s has depth %d, can only handle depth 1 currently...",\
-			#name ,					\
-			OBJ_NAME(dst_dp),OBJ_COMPS(dst_dp));	\
-		NWARN(DEFAULT_ERROR_STRING);				\
-		return;						\
-	}							\
-	if( OBJ_FRAMES(dst_dp) > 1 ){				\
-		sprintf(DEFAULT_ERROR_STRING,				\
-"%s:  Sorry, object %s has %d frames, can only handle 1 frame currently...",\
-			#name ,					\
-			OBJ_NAME(dst_dp),OBJ_FRAMES(dst_dp));	\
-		NWARN(DEFAULT_ERROR_STRING);				\
-		return;						\
-	}							\
-								\
-	if( dst_dp->dt_rows==1 ){				\
-		n = dst_dp->dt_cols;				\
-		inc = dst_dp->dt_pinc;				\
-	} else if( dst_dp->dt_cols==1 ){			\
-		n = dst_dp->dt_rows;				\
-		inc = dst_dp->dt_rinc;				\
-	} else {						\
-		sprintf(DEFAULT_ERROR_STRING,				\
-"vramp:  destination object %s is neither a row nor a column!?",	\
-			OBJ_NAME(dst_dp));			\
-		NWARN(DEFAULT_ERROR_STRING);				\
-		return;						\
-	}							\
-								\
-	val = scalar1_val;					\
-	ptr = (std_type *)OBJ_DATA_PTR(dst_dp);			\
-	for(i=0; i < n; i ++ ){					\
-		*ptr = val;					\
-								\
-		ptr += inc;					\
-		val += scalar2_val;				\
-	}							\
-	SET_ASSIGNED_FLAG(dst_dp)				\
-}*/
-
-
-#define _REAL_CONVERSION(name,dsttyp,srctyp)			\
-								\
-static void fast_##name(LINK_FUNC_ARG_DECLS)			\
-FAST_BODY_CONV_2(name,dst=(dsttyp)src1,dsttyp,srctyp)		\
-								\
-static void slow_##name(LINK_FUNC_ARG_DECLS)			\
-SLOW_BODY_XX_2(name,dst=(dsttyp)src1,dsttyp,srctyp)		\
-								\
-static void name ( Vec_Obj_Args *oap )				\
-{								\
-	DECL_VEC_ARGS_STRUCT(name)				\
-	OBJ_ARG_CHK_2						\
-	FAST_SWITCH_CONV(name,dsttyp,srctyp)			\
-	RELEASE_VEC_ARGS_STRUCT					\
-}								\
-
-
-
-#define REAL_CONVERSION( key1, type1, key2, type2 )			\
-_REAL_CONVERSION( v##key2##2##key1, type1, type2 )
-
-#define ALL_SIGNED_CONVERSIONS( key, type )			\
-REAL_CONVERSION( key, type, by,  char    )			\
-REAL_CONVERSION( key, type, in,  short   )			\
-REAL_CONVERSION( key, type, di,  int32_t    )			\
-REAL_CONVERSION( key, type, li,  int64_t    )
-
-#define ALL_FLOAT_CONVERSIONS( key, type )			\
-REAL_CONVERSION( key, type, sp, float   )			\
-REAL_CONVERSION( key, type, dp, double  )
-
-#define ALL_UNSIGNED_CONVERSIONS( key, type )			\
-REAL_CONVERSION( key, type, uby, u_char  )			\
-REAL_CONVERSION( key, type, uin, u_short )			\
-REAL_CONVERSION( key, type, udi, uint32_t  )			\
-REAL_CONVERSION( key, type, uli, uint64_t  )
-
-/*
-// Is this used?
-#define FAST_SWITCH_EXTLOC(name)		\
-						\
-if( FAST_TEST_1SRC ){				\
-	XFER_FAST_ARGS_EXTLOC			\
-	CHAIN_CHECK( FAST_NAME(name) )		\
-} else {					\
-	XFER_SLOW_ARGS_EXTLOC			\
-	CHAIN_CHECK( SLOW_NAME(name) )		\
-}
-*/
-
-#endif /* FOOBAR */
 
 #define scalar1_val	VA_SCALAR_VAL_STD(vap,0)
 #define scalar2_val	VA_SCALAR_VAL_STD(vap,1)

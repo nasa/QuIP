@@ -61,7 +61,7 @@ extern void		list_dobj(QSP_ARG_DECL  Data_Obj * dp);
 extern void		longlist(QSP_ARG_DECL  Data_Obj * dp);
 
 //extern void		describe_shape(Shape_Info *shpp);
-extern void show_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp);
+extern void show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp);
 
 #define LONGLIST(dp)	longlist(QSP_ARG  dp)
 

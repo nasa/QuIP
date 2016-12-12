@@ -163,8 +163,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define DEFAULT_YZ	// for MM_NOCC, should be cleaned up...
 
-#define REPORT_INCS(incs)					\
-	fprintf(stderr,"%s:  %d %d %d\n",#incs,incs.x,incs.y,incs.z);
+//#define REPORT_INCS(incs)					\
+//	fprintf(stderr,"%s:  %d %d %d\n",#incs,incs.x,incs.y,incs.z);
 
 // above stuff was cribbed from cuda code...
 // How much can we use?

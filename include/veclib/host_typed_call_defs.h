@@ -1,6 +1,8 @@
 #ifndef _HOST_TYPED_CALL_DEFS_H_
 #define _HOST_TYPED_CALL_DEFS_H_
 
+//#define MORE_DEBUG	// uncomment this for extra debugging
+
 #define HOST_NAME_STRING	STRINGIFY(HOST_TYPED_CALL_NAME(name,type_code))
 
 #define HOST_CALL_VAR_DECLS						\
@@ -191,8 +193,6 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
 #define MISSING_CALL(func)	_MISSING_CALL(func)
 #define _MISSING_CALL(func)	fprintf(stderr,"Missing code body for function %s!?\n",#func);
 
-//#define MORE_DEBUG
-
 #ifdef MORE_DEBUG
 
 #define REPORT_SWITCH(name,sw)		_REPORT_SWITCH(name,sw)
@@ -211,24 +211,21 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
 {									\
 	HOST_CALL_VAR_DECLS						\
 									\
-/*fprintf(stderr,"GENERIC_HOST_FAST_SWITCH %s...\n",#name);*/\
 	CLEAR_VEC_ARGS(vap)						\
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));				\
 	if( FAST_TEST_##bitmap##typ##vectors ){				\
-/*REPORT_SWITCH(STRINGIFY(HOST_TYPED_CALL_NAME(name,type_code)),fast)	\
-fprintf(stderr,"Will call XFER_FAST_ARGS_%s%s%s%s\n",\
-#bitmap,#typ,#scalars,#vectors);*/\
+REPORT_SWITCH(STRINGIFY(HOST_TYPED_CALL_NAME(name,type_code)),fast)	\
 		XFER_FAST_ARGS_##bitmap##typ##scalars##vectors		\
 		CHAIN_CHECK( HOST_FAST_CALL_NAME(name) )		\
 	} else if( EQSP_TEST_##bitmap##typ##vectors ){			\
-/*REPORT_SWITCH(name,eqsp)						*/\
+REPORT_SWITCH(name,eqsp)						\
 		XFER_EQSP_ARGS_##bitmap##typ##scalars##vectors		\
 /*sprintf(DEFAULT_ERROR_STRING,"showing vec args for eqsp %s",#name);\
 NADVISE(DEFAULT_ERROR_STRING);\
 show_vec_args(vap);*/\
 		CHAIN_CHECK( HOST_EQSP_CALL_NAME(name) )		\
 	} else {							\
-/*REPORT_SWITCH(name,slow)*/						\
+REPORT_SWITCH(name,slow)						\
 		XFER_SLOW_ARGS_##bitmap##typ##scalars##vectors		\
 		/* setup_slow_len must go here! */			\
 		SETUP_SLOW_LEN_##bitmap##vectors			\

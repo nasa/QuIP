@@ -176,8 +176,12 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 		advance							\
 	}
 
-#define DBM_FAST_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+len
-#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
+// moved to slow_defs.h, fast_eqsp_defs.h
+//
+//#define DBM_FAST_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+len
+//#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
+//#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
+//#define DBM_SLOW_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+vwxyz_len.d5_dim[1]
 
 #define FLEN_DBM_LOOP( statement, advance )				\
 									\
@@ -240,18 +244,6 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 #define ADVANCE_SLOW_DBM_1SRC	ADVANCE_SLOW_DBM ADVANCE_SLOW_SRC1
 #define ADVANCE_SLOW_DBM_2SRCS	ADVANCE_SLOW_DBM_1SRC ADVANCE_SLOW_SRC2
 #define ADVANCE_SLOW_DBM_SBM	ADVANCE_SLOW_DBM ADVANCE_SLOW_SBM
-
-//#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
-// From these definitions, it is not clear whether the rows are padded to be an 
-// integral number of words...
-//
-// We assume that i_dbm_word is initilized to dbmi.x, before upscaling to the bit index.
-// Here we add the row offset
-// But when adjust is called, the y increment has already been scaled.
-#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbmi.d5_dim[2] /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
-
-#define SET_SBM_WORD_IDX	i_sbm_word=(sbmi.d5_dim[1]+sbmi.d5_dim[2])/BITS_PER_BITMAP_WORD;
-
 
 #define GENERIC_FAST_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)	\
 	_GENERIC_FAST_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)

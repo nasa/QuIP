@@ -79,6 +79,9 @@
 #define DECL_INDICES_SRC4	GPU_INDEX_TYPE index5;
 #define DECL_INDICES_SBM	GPU_INDEX_TYPE sbmi;
 
+// dbmi indexes the bit - from it, we have to compute the index of the word, and the bit mask
+// We have an integral number of words per row.
+
 #define DECL_INDICES_DBM	GPU_INDEX_TYPE dbmi; int i_dbm_bit;	\
 				int i_dbm_word; bitmap_word dbm_bit;
 
@@ -164,16 +167,6 @@
 #define SET_INDICES_SBM_2	SET_INDICES_2 SET_INDICES_SBM
 #define SET_INDICES_SBM_3	SET_INDICES_3 SET_INDICES_SBM
 
-#ifdef FOOBAR
-#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
-				i_dbm_word = dbmi.x;			\
-				dbmi.x *= BITS_PER_BITMAP_WORD;
-#else // ! FOOBAR
-#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
-				i_dbm_word = dbmi.d5_dim[0];			\
-				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
-#endif // ! FOOBAR
-
 #define SET_INDICES_DBM_	SET_INDICES_DBM
 
 // BUG?  this looks wrong!?
@@ -194,6 +187,8 @@
 #ifdef BUILD_FOR_CUDA
 #define THREAD_INDEX_X		blockIdx.x * blockDim.x + threadIdx.x
 #endif // BUILD_FOR_CUDA
+
+// For bitmaps, the thread index is the word index...
 
 #define SET_INDEX_XYZ( this_index )					\
 									\
@@ -234,14 +229,13 @@
 #define SET_INDICES_XYZ_SBM	sbmi = index1;
 
 #ifdef FOOBAR
-#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
-				i_dbm_word = dbmi.x;	\
-				dbmi.x *= BITS_PER_BITMAP_WORD;
-#else // ! FOOBAR
+// Move to slow_defs.h
 #define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
 				i_dbm_word = dbmi.d5_dim[0];	\
 				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
-#endif // ! FOOBAR
+#endif // FOOBAR
+
+#define SET_INDICES_XYZ_DBM	SET_INDICES_DBM
 
 /**************** SCALE_INDICES_ ********************/
 

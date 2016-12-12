@@ -1,6 +1,7 @@
 Set n 8
 Vector v_h $n 1 float
 Image i_h $n $n 1 float
+Image db_h $n $n 1 bit
 Ramp1D v_h 1 1
 Info v_h
 Display v_h
@@ -14,11 +15,14 @@ platforms
 # default data area is now gpu?
 Vector v_g $n 1 float
 Image i_g $n $n 1 float
+Image db_g $n $n 1 bit
 Info v_g
 
 advise "Should be a ramp from 1, counting by 1..."
 Ramp1D v_g 1 1
 Display v_g
+Pause
+
 advise "Should constant value 2..."
 VSet v_g 2
 Display v_g
@@ -27,8 +31,21 @@ Pause
 
 # ramp2d has a problem!?
 advise "Should be a ramp with increments of 1 (columns) and 10 (rows)"
+Ramp2D i_h 0 1 10
+Display i_h
+veclib
+  execute vsm_le db_h i_h 23
+  quit
+Display db_h
+Pause
+
 Ramp2D i_g 0 1 10
 Display i_g
+
+veclib
+  execute vsm_le db_g i_g 23
+  quit
+Display db_g
 Pause
 
 advise 'testing 2-D set, mul, add'

@@ -155,7 +155,7 @@ typedef struct vector_arg {
 // Well, guess what:  Vector_Arg contains a dimension_set and an increment_set, so we should be ready!
 
 typedef struct vector_args {
-	Vector_Arg	va_dst;
+	Vector_Arg	va_dst;			// also destination bitmap?
 	Vector_Arg	va_src[MAX_N_ARGS];
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
@@ -209,17 +209,6 @@ typedef struct vector_args {
 
 #define VA_DEST_LEN(vap)	VARG_LEN( VA_DEST(vap) )
 #define VA_SRC1_LEN(vap)	VARG_LEN( VA_SRC1(vap) )
-
-#ifdef FOOBAR
-#define VA_XYZ_LEN(val)		(vap)->va_xyz_len
-
-#define VA_LEN_X(vap)		(vap)->va_xyz_len.x
-#define VA_LEN_Y(vap)		(vap)->va_xyz_len.y		FOOBAR
-#define VA_LEN_Z(vap)		(vap)->va_xyz_len.z
-#define SET_VA_LEN_X(vap,v)	(vap)->va_xyz_len.x = v
-#define SET_VA_LEN_Y(vap,v)	(vap)->va_xyz_len.y = v		FOOBAR
-#define SET_VA_LEN_Z(vap,v)	(vap)->va_xyz_len.z = v
-#endif // FOOBAR
 
 #define VA_LEN_X(vap)		VA_ITERATION_COUNT(vap,1)
 #define VA_LEN_Y(vap)		VA_ITERATION_COUNT(vap,2)

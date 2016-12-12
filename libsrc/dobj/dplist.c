@@ -336,7 +336,7 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 	assert( flags == 0 );
 }
 
-/*static*/ void show_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
+/*static*/ void show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
 {
 	int i;
 	char dn[32];
@@ -391,10 +391,10 @@ static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 		OBJ_RANGE_MINDIM(dp),OBJ_RANGE_MAXDIM(dp));
 	prt_msg(MSG_STR);
 
-	show_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
+	show_obj_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
 	if( debug & debug_data ){
 		prt_msg("machine type dimensions:");
-		show_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
+		show_obj_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
 	}
 }
 

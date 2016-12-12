@@ -97,3 +97,27 @@
 
 #define SCALE_INDEX(idx,inc)	idx.d5_dim[0] *= inc;
 
+#ifdef FOOBAR
+#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)			\
+				i_dbm_word = dbmi.d5_dim[0];		\
+				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
+#endif // FOOBAR
+
+#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
+				i_dbm_word = dbmi.d5_dim[1];		\
+				dbmi.d5_dim[1] *= BITS_PER_BITMAP_WORD;
+
+#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
+
+//#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
+// From these definitions, it is not clear whether the rows are padded to be an 
+// integral number of words...
+//
+// We assume that i_dbm_word is initilized to dbmi.x, before upscaling to the bit index.
+// Here we add the row offset
+// But when adjust is called, the y increment has already been scaled.
+// should dbmi have more than one dimension or not???
+#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbmi.d5_dim[2] /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
+#define SET_SBM_WORD_IDX	i_sbm_word=(sbmi.d5_dim[1]+sbmi.d5_dim[2])/BITS_PER_BITMAP_WORD;
+
+

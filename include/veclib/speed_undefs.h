@@ -21,6 +21,10 @@
 #undef GPU_INDEX_TYPE
 #undef SET_INDEX
 #undef SCALE_INDEX
+//#undef SET_INDICES_XYZ_DBM
+#undef SET_INDICES_DBM
+#undef ADJUST_DBM_WORD_IDX
+#undef SET_SBM_WORD_IDX
 
 #undef IDX1_0
 #undef IDX1_1
