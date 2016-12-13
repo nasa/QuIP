@@ -33,6 +33,7 @@
 	max_threads_per_block = get_max_threads_per_block(dp);
 	// BUG OpenCL doesn't use max_threads_per_block!?
 
+#ifdef FOOBAR
 #define SETUP_BLOCKS_XYZ_	SETUP_BLOCKS_XYZ
 #define SETUP_BLOCKS_XYZ_SBM_	SETUP_BLOCKS_XYZ
 
@@ -104,6 +105,7 @@ NADVISE(DEFAULT_ERROR_STRING);*/\
 		extra.z = VA_LEN_Z(vap) % n_threads_per_block.z;	\
 	}							\
 	if( extra.z > 0 ) n_blocks.z++;
+#endif // FOOBAR
 
 #ifdef MORE_DEBUG
 

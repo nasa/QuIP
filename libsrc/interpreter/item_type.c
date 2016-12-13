@@ -1812,6 +1812,7 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 
 	if( mc_p == NULL ) return "";	// there may be no matches
 	ip = current_cycle_item(mc_p);	// BUG should be agnostic with regard to container type!
+	if( ip == NULL ) return "";
 	return ITEM_NAME(ip);
 }
 

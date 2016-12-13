@@ -60,6 +60,12 @@ else fprintf(stderr,"\tunhandled case for type %s\n",#type);
 #define SET_KERNEL_ARGS_FAST_CONV_DEST(t)	SET_KERNEL_ARGS_FAST_1
 
 #define SET_KERNEL_ARGS_SLOW_SIZE				\
+fprintf(stderr,"SET_KERNEL_ARGS_SLOW_SIZE:  %d %d %d %d %d\n",\
+VA_SLOW_SIZE(vap)[0],\
+VA_SLOW_SIZE(vap)[1],\
+VA_SLOW_SIZE(vap)[2],\
+VA_SLOW_SIZE(vap)[3],\
+VA_SLOW_SIZE(vap)[4]);\
 	SET_KERNEL_ARG(DIM5,VA_SLOW_SIZE(vap))
 
 #define SET_KERNEL_ARGS_SLOW_SIZE_OFFSET	/* nop */

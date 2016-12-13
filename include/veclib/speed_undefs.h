@@ -25,6 +25,7 @@
 #undef SET_INDICES_DBM
 #undef ADJUST_DBM_WORD_IDX
 #undef SET_SBM_WORD_IDX
+#undef srcbit
 
 #undef IDX1_0
 #undef IDX1_1

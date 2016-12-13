@@ -192,8 +192,13 @@ void default_offset_data_func(QSP_ARG_DECL  Data_Obj *dp, index_t pix_offset )
 //OBJ_NAME(dp),pix_offset);
 	parent = OBJ_PARENT(dp);
 	if( IS_BITMAP(parent) ){
+		/*
 		SET_OBJ_DATA_PTR(dp, ((long *)OBJ_DATA_PTR(parent)) +
 			((OBJ_BIT0(parent)+pix_offset)>>LOG2_BITS_PER_BITMAP_WORD) );
+		*/
+		// bitmap offsets are handled by bit0
+		SET_OBJ_DATA_PTR(dp, ((long *)OBJ_DATA_PTR(parent)) );
+		pix_offset=0;
 	} else {
 		pix_offset *= ELEMENT_SIZE(dp);
 		SET_OBJ_DATA_PTR(dp, ((char *)OBJ_DATA_PTR(parent)) + pix_offset);

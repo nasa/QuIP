@@ -56,6 +56,8 @@ struct frag_match_info {
 #define FMI_CTX(fmi_p)			(fmi_p)->fmi_icp
 #define SET_FMI_CTX(fmi_p,icp)		(fmi_p)->fmi_icp = icp
 
+#define CURR_RBT_FRAG(fmi_p)	(fmi_p)->fmi_u.rbti.curr_n_p
+#define CURR_LIST_FRAG(fmi_p)	(fmi_p)->fmi_u.li.curr_np
 
 struct match_cycle {
 	Item it;				// name of the fragment

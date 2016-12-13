@@ -523,6 +523,7 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 				// we are picking an item...
 				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
 				l=strlen(def_str);
+				if( l == 0 ) def_str=sel_str;
 				if( l > n_so_far ){
 					show_def(&def_str[n_so_far],1);
 				}

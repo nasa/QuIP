@@ -83,10 +83,25 @@
 
 	// What if we have to have blocks in 2 or more dims?
 
+/*
 #define SET_INDEX( this_index )					\
 									\
 	this_index.d5_dim[0] = THREAD_INDEX_X;		\
 	this_index.d5_dim[1] = this_index.d5_dim[2] = this_index.d5_dim[3] = this_index.d5_dim[4] = 0;
+	*/
+
+#define SET_INDEX( this_index )							\
+										\
+	this_index.d5_dim[0] = THREAD_INDEX_X;					\
+	this_index.d5_dim[1] = this_index.d5_dim[0] / szarr.d5_dim[0];		\
+	this_index.d5_dim[2] = this_index.d5_dim[1] / szarr.d5_dim[1];		\
+	this_index.d5_dim[3] = this_index.d5_dim[2] / szarr.d5_dim[2];		\
+	this_index.d5_dim[4] = this_index.d5_dim[3] / szarr.d5_dim[3];		\
+	this_index.d5_dim[0] %= szarr.d5_dim[0];				\
+	this_index.d5_dim[1] %= szarr.d5_dim[1];				\
+	this_index.d5_dim[2] %= szarr.d5_dim[2];				\
+	this_index.d5_dim[3] %= szarr.d5_dim[3];				\
+	this_index.d5_dim[4] %= szarr.d5_dim[4];
 
 #define IDX1_0	index1.d5_dim[0]		// used to be index1.x
 #define IDX1_1	index1.d5_dim[1]		// used to be index1.y
@@ -95,17 +110,28 @@
 #define INC1_1	inc1.d5_dim[1]			// used to be inc1.x
 #define INC1_2	inc1.d5_dim[2]			// used to be inc1.x
 
-#define SCALE_INDEX(idx,inc)	idx.d5_dim[0] *= inc;
+#define SCALE_INDEX(idx,inc)	idx.d5_dim[0] *= inc.d5_dim[0];		\
+				idx.d5_dim[1] *= inc.d5_dim[1];		\
+				idx.d5_dim[2] *= inc.d5_dim[2];		\
+				idx.d5_dim[3] *= inc.d5_dim[3];		\
+				idx.d5_dim[4] *= inc.d5_dim[4];
 
-#ifdef FOOBAR
-#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)			\
-				i_dbm_word = dbmi.d5_dim[0];		\
-				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
-#endif // FOOBAR
+//#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
+//				i_dbm_word = dbmi.d5_dim[1];		\
+//				dbmi.d5_dim[1] *= BITS_PER_BITMAP_WORD;
 
-#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
-				i_dbm_word = dbmi.d5_dim[1];		\
-				dbmi.d5_dim[1] *= BITS_PER_BITMAP_WORD;
+#define BITMAP_ROW_IDX		(i_dbm_word/words_per_row)
+#define IDX_WITHIN_ROW		((i_dbm_word % words_per_row)*BITS_PER_BITMAP_WORD)
+#define WORDS_PER_FRAME		(words_per_row * szarr.d5_dim[2])
+#define WORDS_PER_SEQ		(words_per_row * szarr.d5_dim[2] * szarr.d5_dim[3])
+
+#define SET_INDICES_DBM		i_dbm_word = THREAD_INDEX_X;				\
+				words_per_row = ((BITS_PER_BITMAP_WORD-1)+(szarr.d5_dim[0]*szarr.d5_dim[1]))%BITS_PER_BITMAP_WORD;	\
+				dbmi.d5_dim[0] = IDX_WITHIN_ROW % szarr.d5_dim[0];			/* component index */		\
+				dbmi.d5_dim[1] = IDX_WITHIN_ROW / szarr.d5_dim[1];			/* column index */		\
+				dbmi.d5_dim[2] = (i_dbm_word / words_per_row) % szarr.d5_dim[2];	/* row index */			\
+				dbmi.d5_dim[3] = (i_dbm_word / WORDS_PER_FRAME) % szarr.d5_dim[3];	/* frame index */		\
+				dbmi.d5_dim[4] = (i_dbm_word / WORDS_PER_SEQ);				/* seq index */
 
 #define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
 
@@ -117,7 +143,9 @@
 // Here we add the row offset
 // But when adjust is called, the y increment has already been scaled.
 // should dbmi have more than one dimension or not???
-#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbmi.d5_dim[2] /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
+//#define ADJUST_DBM_WORD_IDX	i_dbm_word += ((dbmi.d5_dim[2] /* * dbm_inc.y */)/BITS_PER_BITMAP_WORD);
 #define SET_SBM_WORD_IDX	i_sbm_word=(sbmi.d5_dim[1]+sbmi.d5_dim[2])/BITS_PER_BITMAP_WORD;
 
+#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
+		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
 

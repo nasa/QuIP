@@ -779,8 +779,10 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_SLOW_CALL_NAME(name)( DECLARE_KERN_ARGS_SLOW_##bm##typ##scalars##vectors)	\
 {									\
 	DECL_EXTRA_##extra						\
-	INIT_INDICES_XYZ_##bm##vectors					\
-	SCALE_INDICES_XYZ_##bm##vectors				\
+	/*INIT_INDICES_XYZ_##bm##vectors*/					\
+	/*SCALE_INDICES_XYZ_##bm##vectors*/				\
+	INIT_INDICES_##bm##vectors					\
+	SCALE_INDICES_##bm##vectors				\
 	statement;						\
 }
 
@@ -828,9 +830,11 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_##bm##typ##scalars##vectors)	\
 {									\
 	DECL_EXTRA_##extra						\
-	INIT_INDICES_XYZ_##bm##vectors					\
+	/*INIT_INDICES_XYZ_##bm##vectors*/					\
+	INIT_INDICES_##bm##vectors					\
 	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
-		SCALE_INDICES_XYZ_##bm##vectors				\
+		/*SCALE_INDICES_XYZ_##bm##vectors*/				\
+		SCALE_INDICES_##bm##vectors				\
 		statement;						\
 	}								\
 }
@@ -915,8 +919,10 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_SLOW_CALL_NAME(name)( DECLARE_KERN_ARGS_SLOW_CONV(to_type) )	\
 {									\
-	INIT_INDICES_XYZ_2						\
-	SCALE_INDICES_XYZ_2						\
+	/*INIT_INDICES_XYZ_2*/						\
+	/*SCALE_INDICES_XYZ_2*/						\
+	INIT_INDICES_2							\
+	SCALE_INDICES_2							\
 	dst = (to_type) src1 ;						\
 }
 
@@ -951,9 +957,11 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_CONV(to_type) )	\
 {									\
-	INIT_INDICES_XYZ_2						\
+	/*INIT_INDICES_XYZ_2*/						\
+	INIT_INDICES_2							\
 	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
-		SCALE_INDICES_XYZ_2					\
+		/*SCALE_INDICES_XYZ_2*/					\
+		SCALE_INDICES_2						\
 		dst = (to_type) src1 ;					\
 	}								\
 }
@@ -966,7 +974,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_FAST_CALL_NAME(name)( DECLARE_KERN_ARGS_FAST_DBM_##typ##scalars##vectors )	\
 {									\
 	INIT_INDICES_DBM_##vectors					\
-	ADJUST_DBM_WORD_IDX							\
+	/*ADJUST_DBM_WORD_IDX*/							\
 	FAST_DBM_LOOP( statement, ADVANCE_FAST_DBM_##vectors )		\
 }
 
@@ -982,7 +990,7 @@ KERNEL_FUNC_QUALIFIER void GPU_EQSP_CALL_NAME(name)( DECLARE_KERN_ARGS_EQSP_DBM_
 {									\
 	INIT_INDICES_DBM_##vectors					\
 	SCALE_INDICES_EQSP_DBM_##vectors				\
-	ADJUST_DBM_WORD_IDX							\
+	/*ADJUST_DBM_WORD_IDX*/							\
 	FAST_DBM_LOOP(statement,ADVANCE_EQSP_DBM_##vectors)		\
 }
 
@@ -993,9 +1001,12 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_SLOW_CALL_NAME(name)( DECLARE_KERN_ARGS_SLOW_DBM_##typ##scalars##vectors)	\
 {									\
-	INIT_INDICES_XYZ_DBM_##vectors					\
-	SCALE_INDICES_XYZ_DBM_##vectors					\
-	ADJUST_DBM_WORD_IDX							\
+	/*INIT_INDICES_XYZ_DBM_##vectors*/					\
+	/*SCALE_INDICES_XYZ_DBM_##vectors*/					\
+	INIT_INDICES_DBM_##vectors					\
+	SCALE_INDICES_DBM_##vectors					\
+									\
+	/*ADJUST_DBM_WORD_IDX*/							\
 	SLOW_DBM_LOOP( statement , ADVANCE_SLOW_DBM_##vectors )		\
 }
 
@@ -1008,7 +1019,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_DBM_##typ##scalars##vectors)	\
 {									\
 	INIT_INDICES_DBM_##vectors					\
-	ADJUST_DBM_WORD_IDX							\
+	/*ADJUST_DBM_WORD_IDX*/							\
 	/* BUG need to put len test in statement */			\
 	FLEN_DBM_LOOP(statement,ADVANCE_FAST_DBM_##vectors)			\
 }
@@ -1022,7 +1033,7 @@ KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_DBM_
 	INIT_INDICES_DBM_##vectors					\
 	SCALE_INDICES_EQSP_DBM_##vectors				\
 	/* BUG need to put len test in statement */			\
-	ADJUST_DBM_WORD_IDX							\
+	/*ADJUST_DBM_WORD_IDX*/							\
 	FLEN_DBM_LOOP( statement, ADVANCE_EQSP_DBM_##vectors )		\
 }
 
@@ -1034,11 +1045,14 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_DBM_##typ##scalars##vectors)	\
 {									\
-	INIT_INDICES_XYZ_DBM_##vectors					\
-	SCALE_INDICES_XYZ_DBM_##vectors					\
+	/*INIT_INDICES_XYZ_DBM_##vectors*/					\
+	/*SCALE_INDICES_XYZ_DBM_##vectors*/					\
+	INIT_INDICES_DBM_##vectors					\
+	SCALE_INDICES_DBM_##vectors					\
+									\
 	/* BUG need to put len test in statement */			\
 	/* BUG can we test before scaling??? */				\
-	ADJUST_DBM_WORD_IDX						\
+	/*ADJUST_DBM_WORD_IDX*/						\
 	SLEN_DBM_LOOP( statement , ADVANCE_SLOW_DBM_##vectors )		\
 }
 

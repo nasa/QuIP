@@ -83,7 +83,8 @@
 // We have an integral number of words per row.
 
 #define DECL_INDICES_DBM	GPU_INDEX_TYPE dbmi; int i_dbm_bit;	\
-				int i_dbm_word; bitmap_word dbm_bit;
+				int i_dbm_word; bitmap_word dbm_bit;	\
+				int words_per_row;
 
 #define DECL_INDICES_2		DECL_INDICES_1 DECL_INDICES_SRC1
 #define DECL_INDICES_3		DECL_INDICES_2 DECL_INDICES_SRC2
@@ -131,6 +132,7 @@
 #define INIT_INDICES_DBM_1SRC	DECL_INDICES_DBM_1SRC SET_INDICES_DBM_1SRC
 #define INIT_INDICES_DBM_SBM	DECL_INDICES_DBM_SBM SET_INDICES_DBM_SBM
 
+#ifdef FOOBAR
 #define INIT_INDICES_XYZ_1	DECL_INDICES_1 SET_INDICES_XYZ_1
 #define INIT_INDICES_XYZ_2	DECL_INDICES_2 SET_INDICES_XYZ_2
 #define INIT_INDICES_XYZ_3	DECL_INDICES_3 SET_INDICES_XYZ_3
@@ -145,6 +147,7 @@
 #define INIT_INDICES_XYZ_DBM_1SRC	DECL_INDICES_DBM_1SRC SET_INDICES_XYZ_DBM_1SRC
 #define INIT_INDICES_XYZ_DBM_2SRCS	DECL_INDICES_DBM_2SRCS SET_INDICES_XYZ_DBM_2SRCS
 #define INIT_INDICES_XYZ_DBM_SBM	DECL_INDICES_DBM_SBM SET_INDICES_XYZ_DBM_SBM
+#endif // FOOBAR
 
 
 /******************** SET_INDICES ***************************/
@@ -190,6 +193,7 @@
 
 // For bitmaps, the thread index is the word index...
 
+#ifdef FOOBAR
 #define SET_INDEX_XYZ( this_index )					\
 									\
 	this_index.d5_dim[0] = THREAD_INDEX_X;					\
@@ -227,37 +231,10 @@
 
 /* BUG? is bmi set correctly? Is len.x the divided length?  or all the pixels? */
 #define SET_INDICES_XYZ_SBM	sbmi = index1;
-
-#ifdef FOOBAR
-// Move to slow_defs.h
-#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
-				i_dbm_word = dbmi.d5_dim[0];	\
-				dbmi.d5_dim[0] *= BITS_PER_BITMAP_WORD;
+#define SET_INDICES_XYZ_DBM	SET_INDICES_DBM
 #endif // FOOBAR
 
-#define SET_INDICES_XYZ_DBM	SET_INDICES_DBM
-
 /**************** SCALE_INDICES_ ********************/
-
-#ifdef FOOFOOBAR
-#ifdef FOOBAR
-#define SCALE_INDICES_1		index1.x *= inc1;
-#define SCALE_INDICES_SRC1	index2.x *= inc2;
-#define SCALE_INDICES_SRC2	index3.x *= inc3;
-#define SCALE_INDICES_SRC3	index4.x *= inc4;
-#define SCALE_INDICES_SRC4	index5.x *= inc5;
-#define SCALE_INDICES_SBM	sbmi.x *= sbm_inc;
-#define SCALE_INDICES_DBM	dbmi.x *= dbm_inc;
-#else // ! FOOBAR
-#define SCALE_INDICES_1		index1.d5_dim[0] *= inc1;
-#define SCALE_INDICES_SRC1	index2.d5_dim[0] *= inc2;
-#define SCALE_INDICES_SRC2	index3.d5_dim[0] *= inc3;
-#define SCALE_INDICES_SRC3	index4.d5_dim[0] *= inc4;
-#define SCALE_INDICES_SRC4	index5.d5_dim[0] *= inc5;
-#define SCALE_INDICES_SBM	sbmi.d5_dim[0] *= sbm_inc;
-#define SCALE_INDICES_DBM	dbmi.d5_dim[0] *= dbm_inc;
-#endif // ! FOOBAR
-#endif // FOOFOOBAR
 
 #define SCALE_INDICES_1		SCALE_INDEX(index1,inc1)	// index1.d5_dim[0] *= inc1;
 #define SCALE_INDICES_SRC1	SCALE_INDEX(index2,inc2)	// index2.d5_dim[0] *= inc2;
@@ -265,15 +242,25 @@
 #define SCALE_INDICES_SRC3	SCALE_INDEX(index4,inc4)	// index4.d5_dim[0] *= inc4;
 #define SCALE_INDICES_SRC4	SCALE_INDEX(index5,inc5)	// index5.d5_dim[0] *= inc5;
 #define SCALE_INDICES_SBM	SCALE_INDEX(sbmi,sbm_inc)	// sbmi.d5_dim[0] *= sbm_inc;
-#define SCALE_INDICES_DBM	SCALE_INDEX(dbmi,dbm_inc)	// dbmi.d5_dim[0] *= dbm_inc;
+//#define SCALE_INDICES_DBM	SCALE_INDEX(dbmi,dbm_inc)	// dbmi.d5_dim[0] *= dbm_inc;
+#define SCALE_INDICES_DBM	/* nop */
+
+#define SCALE_INDICES_2SRCS	SCALE_INDICES_SRC1 SCALE_INDICES_SRC2
+
+#define SCALE_INDICES_DBM_1SRC	SCALE_INDICES_DBM SCALE_INDICES_SRC1
+#define SCALE_INDICES_DBM_2SRCS	SCALE_INDICES_DBM SCALE_INDICES_2SRCS
+
+#define SCALE_INDICES_SBM_1	SCALE_INDICES_SBM SCALE_INDICES_1
+#define SCALE_INDICES_SBM_2	SCALE_INDICES_SBM SCALE_INDICES_2
+#define SCALE_INDICES_SBM_3	SCALE_INDICES_SBM SCALE_INDICES_3
+#define SCALE_INDICES_SBM_4	SCALE_INDICES_SBM SCALE_INDICES_4
 
 #define SCALE_INDICES_2		SCALE_INDICES_1 SCALE_INDICES_SRC1
 #define SCALE_INDICES_3		SCALE_INDICES_2 SCALE_INDICES_SRC2
 #define SCALE_INDICES_4		SCALE_INDICES_3 SCALE_INDICES_SRC3
 #define SCALE_INDICES_5		SCALE_INDICES_4 SCALE_INDICES_SRC4
 
-
-
+#ifdef FOOBAR
 #define SCALE_XYZ(n)	index##n.d5_dim[0] *= inc##n.d5_dim[0];		\
 			index##n.d5_dim[1] *= inc##n.d5_dim[1];		\
 			index##n.d5_dim[2] *= inc##n.d5_dim[2];		\
@@ -328,6 +315,7 @@
 #define SCALE_INDICES_XYZ_SBM_2_LEN		SCALE_INDICES_XYZ_SBM_2
 #define SCALE_INDICES_XYZ_SBM_3_LEN		SCALE_INDICES_XYZ_SBM_3
 
+#endif // FOOBAR
 
 /* These are used in DBM kernels, where we need to scale the bitmap index
  * even in fast loops
@@ -398,8 +386,8 @@
 #define slow_src3	d[INDEX_SUM(index4)	OFFSET_D ]
 #define slow_src4	e[INDEX_SUM(index5)	OFFSET_E ]
 
-#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
-		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
+//#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
+//		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
 
 #define fast_cdst	a[index1	OFFSET_A ]
 #define fast_csrc1	b[index2	OFFSET_B ]
@@ -439,6 +427,7 @@
 #define slow_qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
 
 
+#ifdef FOOBAR
 #define SCALE_INDICES_XYZ_SBM	sbmi.d5_dim[0] *= sbm_inc.d5_dim[0];	\
 				sbmi.d5_dim[1] *= sbm_inc.d5_dim[1];	\
 				sbmi.d5_dim[2] *= sbm_inc.d5_dim[2];	\
@@ -450,6 +439,7 @@
 				dbmi.d5_dim[2] *= dbm_inc.d5_dim[2];	\
 				dbmi.d5_dim[3] *= dbm_inc.d5_dim[3];	\
 				dbmi.d5_dim[4] *= dbm_inc.d5_dim[4];
+#endif // FOOBAR
 
 
 #define SET_DBM_BIT(cond)	if( cond ) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= ~dbm_bit;

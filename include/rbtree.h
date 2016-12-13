@@ -41,6 +41,8 @@ typedef struct qrb_node {
 #define RB_NODE_KEY(np)	(((Item *)((np)->data))->item_name)
 #define RB_NODE_ITEM(np)	((Item *)((np)->data))
 
+#define RB_NODE_DATA(np)	(np)->data
+
 /* (*comp_func)(a,b) should return 1 if *a > *b, -1 if *a < *b, and 0 otherwise */
 /* Destroy(a) takes a pointer to whatever key might be and frees it accordingly */
 

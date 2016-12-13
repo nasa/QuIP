@@ -569,11 +569,15 @@ Item *current_frag_item( Frag_Match_Info *fmi_p )
 	// what type of container is used?
 	switch( IT_CONTAINER_TYPE(CTX_IT(FMI_CTX(fmi_p))) ){
 		case RB_TREE_CONTAINER:
-			return fmi_p->fmi_u.rbti.curr_n_p->data;
+			if( CURR_RBT_FRAG(fmi_p) == NULL ) return NULL;
+			return RB_NODE_DATA( CURR_RBT_FRAG(fmi_p) );
+			// fmi_p->fmi_u.rbti.curr_n_p->data;
 			break;
 		case LIST_CONTAINER:
 		case HASH_TBL_CONTAINER:
-			return fmi_p->fmi_u.li.curr_np->n_data;
+			if( CURR_LIST_FRAG(fmi_p) == NULL ) return NULL;
+			return NODE_DATA( CURR_LIST_FRAG(fmi_p) );
+			//return fmi_p->fmi_u.li.curr_np->n_data;
 			break;
 		default:
 fprintf(stderr,"current_frag_item:  context %s at 0x%lx\n", CTX_NAME(FMI_CTX(fmi_p)), (long) FMI_CTX(fmi_p) );
