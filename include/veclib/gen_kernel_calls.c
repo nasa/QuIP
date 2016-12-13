@@ -76,8 +76,7 @@
 // and write the same word!?
 
 #include "veclib/bit_defs.h"
-_VEC_FUNC_DBM_1S(rvset, SET_DBM_BIT(scalar1_val) )
-_VEC_FUNC_DBM_SBM(rvmov, SET_DBM_BIT(srcbit) )
+#include "veclib/all_bit_kernels.h"
 #include "veclib/type_undefs.h"
 
 

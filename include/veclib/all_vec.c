@@ -126,13 +126,7 @@ _VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )
 
 // How do we handle bit precision?
 
-// moved to all_same_prec_vec.c
-//_VEC_FUNC_1V_SCAL( rvset , dst = (dest_type)scalar1_val )
-
-/* don't need this for all types */
-/* SCALAR_BIT_METHOD( bvset , SET_DBM_BIT( scalar1_val ) ) */
-
-/* FUNC_DECL( rvsum ) { RSINIT1; *scalar = 0; V1LOOP( *scalar += src1 ) */
+// rvset moved to all_same_prec_vec.c
 
 _VEC_FUNC_VVMAP( vvm_le , <= )
 _VEC_FUNC_VVMAP( vvm_ge , >= )
