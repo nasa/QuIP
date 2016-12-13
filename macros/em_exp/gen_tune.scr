@@ -1,0 +1,58 @@
+
+# @(#) gen_tune.scr ver: 1.1 1/13/98
+
+
+# GENERAL PARAMETERS
+
+# iris & pupil min and max are set on a per subject basis
+#
+# see tuneit.scr
+
+
+# PARAMETERS FOR THRESHOLD-BASED PUPIL FINDING
+
+# we first blur with a fixed filter, then threshold
+
+# this is used to select a region inside the pupil in which
+# to cancel glare
+#
+# the lower this number, the more area is selected for subsequent blurring
+
+Set glare_level 0.65	# threshold for blurred inverted pupil, area selection
+
+# the lower this number, the more area is selected for subsequent blurring
+Set pm_level 0.30	# threshold for blurred inverted pupil, area selection
+
+
+# these blur-threshold params are applied to the first
+# crudely thresholded pupil (which has a hole in it due
+# PARAMETERS FOR PUPIL MASKING
+
+# these blur-threshold params are applied to the first
+# crudely thresholded pupil (which has a hole in it due
+# to the corneal reflex)
+
+# these two get a roundish area smaller than the pupil
+# blur-threshold doesn't work well when the object
+# to be blurred is near the edges of the image, because
+# of wrap-around...
+
+# we first blur with a fixed filter, then threshold
+
+# the lower this number, the more area is selected for subsequent blurring
+
+# typical values for pf_size:  50-100
+Set pf_size	50	# the bigger this number the more blurring
+
+#Set pg_level	0.15	# the bigger this number the smaller the mask
+# pg_level .2 - .6 typically...
+Set pg_level	0.20	# the bigger this number the smaller the mask
+
+
+# PARAMETERS FOR P4 LOCALIZATION
+
+Set p4_center_size	2
+Set p4_surround_size	10
+
+#Set p4_puplevel 	$pupil_min_level  # value with which to paint over P4
+

@@ -1,0 +1,50 @@
+Start_File pupdat.mac
+
+Define Show_All_Data 0
+Show_Cal_Data img_means
+Show_Cal_Data pup_means
+Show_Cal_Data cr_means
+Show_Cal_Data p4_means
+
+Show_Cal_Data pupcr_means
+Show_Cal_Data crp4_means
+.
+
+Define Doit 1 dataset
+
+echo 'solve_affine for pup means'
+Solve_Affine $1
+echo 'solve_affine DONE'
+
+echo 'invert_affine'
+Invert_Affine
+
+Display affpar
+
+Affine_Calibrate $1
+Display $1
+advise 'calibrated pupil data'
+Show_Cal_Data $1
+< /dev/tty
+.
+
+
+# Retina data:
+# FRAME 1 registered at -60.8036 38.874 , corr = 225368 , OK = 1
+
+#Set dm_string "x5 x6 x10"
+
+# The format of the pupil data file is as follows:
+# FRAME frame_no input_mean input_xc input_yc pup_x pup_y cr_x cr_y p4_x p4_y pup_diam
+
+#Set dm_string "x6 x7"		# this string uses raw pupil position
+#Set dm_string "x8 x9"		# this string uses raw CR position
+#Set dm_string "x8-x6 x9-x7"	# this string uses CR-pupil
+#Set dm_string "x10 x11"		# this string uses p4
+#Set dm_string "x8-x10 x9-x11"	# this string uses CR-p4
+Set dm_string "x6-x10 x7-x11"	# this string uses pupil-p4
+
+Set n_measurements 2
+
+Stop_File pupdat.mac
+

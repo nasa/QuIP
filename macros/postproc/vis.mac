@@ -1,0 +1,166 @@
+
+# %Z% $RCSfile: vis.mac,v $ ver: $Revision: 1.10 $ $Date: 2010/04/29 06:17:12 $
+
+Start_File postproc/vis.mac
+
+# Show Pupil center
+
+Set pupil_gap_factor	1	# make this bigger to move the rings away from the margin
+
+Define Show_Pupil 3 image min_level max_level
+#advise "pupil location is $pup_x $pup_y, ellipse $e_dx $e_dy"
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Ctr_2_Mem mx my $pup_x $pup_y
+#Tell_If "memory coords:  $mx $my"
+#VSet "$1[$my]" $2
+#VSet "$1{$mx}" $2
+Dup_Float ring $1
+#advise "pup_sd $pup_sd  pup_radius $pup_radius"
+Ellipse_At ring $pup_x $pup_y $pup_radius+$pupil_gap_factor*$pup_sd/2 $pup_sd/4 $e_dx $e_dy
+VSMul ring ring -1
+Scale ring $2 $3
+VVMin $1 $1 ring
+Ellipse_At ring $pup_x $pup_y $pup_radius-$pupil_gap_factor*$pup_sd/2 $pup_sd/4 $e_dx $e_dy
+Scale ring $2 $3
+VVMax $1 $1 ring
+Delete_Image ring
+.
+
+# This relies upon global params e_dx, e_dy ???
+
+Define Show_Pupil_RGB 3 image min_level max_level
+advise "pupil location is $pup_x $pup_y, ellipse $e_dx $e_dy"
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Ctr_2_Mem mx my $pup_x $pup_y
+#Tell_If "memory coords:  $mx $my"
+#VSet "$1[$my]" $2
+#VSet "$1{$mx}" $2
+Dup_Float ring $1{0}
+#advise "pup_sd $pup_sd  pup_radius $pup_radius"
+Ellipse_At ring $pup_x $pup_y $pup_radius $pup_sd/4 $e_dx $e_dy
+#VSMul ring ring -1
+#Scale ring $2 $3
+Scale ring $2 $3
+#Show_If ring 4 ring
+VVMax $1{2} $1{2} ring
+Scale ring $3 $2
+VVMin $1{0} $1{0} ring
+#VVMin $1{1} $1{1} ring
+#Ellipse_At ring $pup_x $pup_y $pup_radius-$pupil_gap_factor*$pup_sd/2 $pup_sd/4 $e_dx $e_dy
+#Scale ring $2 $3
+#VVMax $1 $1 ring
+
+Delete_Image ring
+.
+
+
+Define Show_CR3 3 image x y
+Set hole 5
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Ctr_2_Mem mx my $2 $3
+XHair_At3 $1 $mx $my
+.
+
+Define Show_CR2 3 image x y
+Set hole 5
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Ctr_2_Mem mx my $2 $3
+XHair_At2 $1 $mx $my
+.
+
+Define Show_CR 3 image x y
+Set hole 5
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Ctr_2_Mem mx my $2 $3
+XHair_At $1 $mx $my
+.
+
+Set line_sigma 1.5
+
+Define VLine_At 2 image x
+Ramp2D $1 -$2 1 0
+VVMul $1 $1 $1
+VSMul $1 $1 -1/(2*$line_sigma*$line_sigma)
+VExp $1 $1
+.
+
+Define HLine_At 2 image x
+Ramp2D $1 -$2 0 1
+VVMul $1 $1 $1
+VSMul $1 $1 -1/(2*$line_sigma*$line_sigma)
+VExp $1 $1
+.
+
+Define Make_Hair 3 dest x y
+Dup_Float line $1
+VLine_At $1	$2 
+HLine_At line	$3 
+VVAdd $1 $1 line
+# now we want to clear the spot at the intersection
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Mem_2_Ctr ctrx ctry $2 $3
+Gaussian_At line 4*$line_sigma $ctrx $ctry
+VSSub line line 1
+VVMul $1 $1 line
+Delete_Image line
+.
+
+# To represent feature locations with subpixel precision, we do a weighted
+# grayscale thing...  We want the line to be 255 if it's right on the button,
+# with some flanks, otherwise we shift the luminance one way or the other.
+# The trick will be getting the flanks to look right...
+
+
+Define XHair_At 3 image x y
+Dup_Float hair $1
+Make_Hair hair $2 $3
+VSMul hair hair 255
+VVMax $1 $1 hair
+Delete_Image hair
+.
+
+# Like XHair_At, but not scaled to 255...
+Define XHair_At2 3 image x y
+Dup_Float hair $1
+Make_Hair hair $2 $3
+VVMax $1 $1 hair
+Delete_Image hair
+.
+
+# Like XHair_At, but assume range -1 - 1
+Define XHair_At3 3 image x y
+Dup_Float hair $1
+Make_Hair hair $2 $3
+VSMul hair hair 2
+VSAdd hair hair -1
+VVMax $1 $1 hair
+Delete_Image hair
+.
+
+
+Define Old_XHair_At 3 image x y
+Subimage top_line "$1{$2}" 1 "1+$3-$hole" 0 0
+VSet top_line 255
+Subimage bot_line "$1{$2}" 1 "nrows($1)-($3+$hole)" 0 $3+$hole
+VSet bot_line 255
+Subimage left_line "$1[$3]" "1+$2-$hole" 1 0 0
+VSet left_line 255
+Subimage right_line "$1[$3]" "ncols($1)-($2+$hole)" 1 $2+$hole 0
+VSet right_line 255
+Delete_Image top_line
+Delete_Image bot_line
+Delete_Image left_line
+Delete_Image right_line
+.
+
+# Show P4
+Define Show_P4 3 image x y
+#advise "P4 location in centered coords is $2 $3"
+# transform to memory coords
+Coord_Space_Dimensions ncols('$1') nrows('$1')
+Ctr_2_Mem mx my $2 $3
+XHair_At $1 $mx $my
+.
+
+Stop_File postproc/vis.mac
+

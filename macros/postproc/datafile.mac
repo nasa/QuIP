@@ -1,0 +1,29 @@
+# %Z% $RCSfile: datafile.mac,v $ ver: $Revision: 1.7 $ $Date: 2001/04/05 22:39:20 $
+
+
+Start_File postproc/datafile.mac
+
+Set recompute_data 1
+
+Define Remove_File 1 pathname
+If !file_exists('$1')
+  "warn 'Remove_File:  file $1 does not exist!?' exit_macro"
+os
+  system "/bin/rm -f $1"
+  quit
+.
+
+Define Setup_Output_File 1 paramlist
+Set datadir "$TRACE_DIR/$RUN_STEM.$EYE_CAMERA_INDEX"
+Insure_Public_Directory $datadir
+# Have we done this already?  If so, exit this and the macro above
+Set out_file "$datadir/d.$EYE_ANALYSIS_SIZE.$1.asc"
+advise "checking existence of $out_file"
+Print recompute_data
+If exists('$out_file')&&!$recompute_data "advise '$out_file exists, NOT recomputing' PopFile 4"
+If exists('$out_file')&&$recompute_data "advise '$out_file already exists, recomputing' Remove_File $out_file"
+output_file "$datadir/d.$EYE_ANALYSIS_SIZE.$1.asc"
+.
+
+Stop_File postproc/datafile.mac
+
