@@ -241,9 +241,13 @@
 #define SCALE_INDICES_SRC2	SCALE_INDEX(index3,inc3)	// index3.d5_dim[0] *= inc3;
 #define SCALE_INDICES_SRC3	SCALE_INDEX(index4,inc4)	// index4.d5_dim[0] *= inc4;
 #define SCALE_INDICES_SRC4	SCALE_INDEX(index5,inc5)	// index5.d5_dim[0] *= inc5;
-#define SCALE_INDICES_SBM	SCALE_INDEX(sbmi,sbm_inc)	// sbmi.d5_dim[0] *= sbm_inc;
+//#define SCALE_INDICES_SBM	SCALE_INDEX(sbmi,sbm_inc)	// sbmi.d5_dim[0] *= sbm_inc;
 //#define SCALE_INDICES_DBM	SCALE_INDEX(dbmi,dbm_inc)	// dbmi.d5_dim[0] *= dbm_inc;
 #define SCALE_INDICES_DBM	/* nop */
+#define SCALE_INDICES_SBM	/* nop */
+
+#define SCALE_INDICES_DBM_	SCALE_INDICES_DBM
+#define SCALE_INDICES_DBM_SBM	SCALE_INDICES_DBM SCALE_INDICES_SBM
 
 #define SCALE_INDICES_2SRCS	SCALE_INDICES_SRC1 SCALE_INDICES_SRC2
 

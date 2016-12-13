@@ -229,6 +229,7 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 #define ADVANCE_SLOW_SRC3	index4.d5_dim[1]+=inc4.d5_dim[1];
 #define ADVANCE_SLOW_SRC4	index5.d5_dim[1]+=inc5.d5_dim[1];
 #define ADVANCE_SLOW_DBM	/* do something??? */
+#define ADVANCE_SLOW_SBM	/* do something??? */
 
 #define ADVANCE_FAST_DBM_	ADVANCE_FAST_DBM
 #define ADVANCE_FAST_DBM_1SRC	ADVANCE_FAST_DBM ADVANCE_FAST_SRC1

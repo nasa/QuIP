@@ -481,8 +481,10 @@
 #define RCQALL_ARR( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
+//#define RCQALL_SAME_PREC_ARR( stem, code )					\
+//	{ code, { ALL_REAL_SAME_PREC_NO_GPUBITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 #define RCQALL_SAME_PREC_ARR( stem, code )					\
-	{ code, { ALL_REAL_SAME_PREC_NO_GPUBITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
+	{ code, { ALL_REAL_SAME_PREC(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_NULL } }
 
 #define RCQPALL_ARR( stem, code )					\
 	{ code, { ALL_REAL_NO_BITMAP(stem), ALL_COMPLEX(stem), ALL_NULL, ALL_QUAT(stem), ALL_QMIXD(stem) } }

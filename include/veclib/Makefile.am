@@ -48,7 +48,6 @@ noinst_HEADERS =					\
 			gen_kern_args.h			\
 			gen_port.h			\
 			gen_typtbl.h			\
-			gen_veclib_prot.h		\
 			gpu_args.h			\
 			gpu_call_utils.h		\
 			host_calls_cpu.h		\

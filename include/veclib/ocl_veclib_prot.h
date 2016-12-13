@@ -3,10 +3,6 @@
 
 #include "veclib/ocl_port.h"
 #include "veclib/vecgen.h"
-//#include "veclib/gen_veclib_prot.h"
-
-///* Here are the conversions */
-//#include "host_conv_prot.h"
 
 extern void h_ocl_vuni(HOST_CALL_ARG_DECLS);
 extern void h_ocl_sp_vuni(HOST_CALL_ARG_DECLS);
