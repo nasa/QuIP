@@ -806,7 +806,7 @@ static Subscript_Functions dobj_ssf={
 	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	c_subscript
 };
 
-void dataobj_init(SINGLE_QSP_ARG_DECL)
+void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 {
 	static int dobj_inited=0;
 

@@ -290,6 +290,8 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	 * parent_relationship()
 	 */
 	SET_OBJ_AREA(dp, curr_ap);
+
+	// BUG?  this code could be simplified if new_item called bzero on the struct...
 	SET_OBJ_PARENT(dp,NO_OBJ);
 	SET_OBJ_CHILDREN(dp,NO_LIST);
 	/* We make sure that these pointers are set so that
@@ -328,6 +330,10 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 		delvec(QSP_ARG  dp);
 		return(NO_OBJ);
 	}
+
+#ifdef HAVE_ANY_GPU
+	SET_BITMAP_OBJ_GPU_INFO(dp,NULL);
+#endif // HAVE_ANY_GPU
 
 	return(dp);
 } // end init_dp_with_shape

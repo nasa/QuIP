@@ -79,6 +79,19 @@
 //#define int_for_addr	long
 #define int_for_addr	uintptr_t
 
+// define HAVE_ANY_GPU if we have CUDA -or- OpenCL
+
+#ifdef HAVE_OPENCL
+#define HAVE_ANY_GPU
+#else // ! HAVE_OPENCL
+#ifdef HAVE_CUDA
+#define HAVE_ANY_GPU
+#else // ! HAVE_CUDA
+#undef HAVE_ANY_GPU
+#endif // ! HAVE_CUDA
+#endif // ! HAVE_OPENCL
+
+
 #endif /* ! _QUIP_CONFIG_H_ */
 
 

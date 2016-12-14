@@ -139,6 +139,7 @@ extern debug_flag_t debug_data;
 
 #define NO_AREA	((Data_Area *) NULL )
 
+
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
 
@@ -148,7 +149,7 @@ struct data_obj {
 	void *			dt_data_ptr;
 	void *			dt_unaligned_ptr;
 	void *			dt_extra;	// used for decl_enp - what else?
-	int			dt_bit0;
+	uint64_t		dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;
 	index_t			dt_offset;	// data offset of subobjects - in bytes
@@ -343,6 +344,11 @@ extern int max_vectorizable;
 #define OBJ_MACH_PREC_NAME(dp)	PREC_NAME(OBJ_MACH_PREC_PTR(dp))
 #define OBJ_MACH_PREC_SIZE(dp)	PREC_SIZE(OBJ_MACH_PREC_PTR(dp))
 #define OBJ_MACH_PREC_PTR(dp)	PREC_MACH_PREC_PTR(OBJ_PREC_PTR(dp))
+
+#ifdef HAVE_ANY_GPU
+#define BITMAP_OBJ_GPU_INFO(dp)		SHP_BITMAP_GPU_INFO(OBJ_SHAPE(dp))
+#define SET_BITMAP_OBJ_GPU_INFO(dp,p)	SET_SHP_BITMAP_GPU_INFO(OBJ_SHAPE(dp),p)
+#endif // HAVE_ANY_GPU
 
 /* This is not so good now that the shape info is pointed to... */
 #define OBJ_COPY_FROM(dpto,dpfr)	*dpto = *dpfr

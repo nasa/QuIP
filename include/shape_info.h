@@ -93,6 +93,44 @@ struct precision {
 #define NAME_FOR_PREC_CODE(p)		PREC_NAME(PREC_FOR_CODE(p))
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
 
+#ifdef HAVE_ANY_GPU
+
+// This struct allows us to simplify gpu kernels that deal with bitmaps.
+// Contiguous bitmaps that have no offset and exactly fill an integral number
+// of words are easy, but for bitmaps with unused word bits (including gaps
+// due to increments > 1), we compute a mask of which bits are active,
+// and the offset relative to the base of each word making up the bitmap.
+
+typedef struct bitmap_gpu_word_info {
+	dimension_t	word_offset;			// relative to the start of the base pointer, in words
+	dimension_t	first_indices[N_DIMENSIONS];	// indices of the first valid bit
+	bitmap_word	valid_bits;
+} Bitmap_GPU_Word_Info;
+
+typedef struct bitmap_gpu_info {
+	unsigned int		n_bitmap_words;
+	Bitmap_GPU_Word_Info *	word_tbl;
+} Bitmap_GPU_Info;
+
+#define BMI_N_WORDS(bmi_p)		(bmi_p)->n_bitmap_words
+#define SET_BMI_N_WORDS(bmi_p,n)	(bmi_p)->n_bitmap_words = n
+#define BMI_WORD_TBL(bmi_p)		(bmi_p)->word_tbl
+#define SET_BMI_WORD_TBL(bmi_p,p)	(bmi_p)->word_tbl = p
+#define BMI_WORD_INFO_P(bmi_p,idx)	(&((bmi_p)->word_tbl[idx]))
+
+#define BMWI_OFFSET(bmwi_p)		(bmwi_p)->word_offset
+#define BMWI_FIRST_INDICES(bmwi_p)	(bmwi_p)->first_indices
+#define BMWI_FIRST_INDEX(bmwi_p,which)	BMWI_FIRST_INDICES(bmwi_p)[which]
+#define SET_BMWI_FIRST_INDEX(bmwi_p,which,v)	BMWI_FIRST_INDICES(bmwi_p)[which] = v
+
+#define BMWI_VALID_BITS(bmwi_p)			(bmwi_p)->valid_bits
+#define SET_BMWI_VALID_BITS(bmwi_p,bits)	(bmwi_p)->valid_bits = bits
+#define SET_BMWI_VALID_BIT(bmwi_p,bits)		(bmwi_p)->valid_bits |= bits
+
+#define SET_BMWI_OFFSET(bmwi_p,v)	(bmwi_p)->word_offset = v
+
+#endif // HAVE_ANY_GPU
+
 
 struct shape_info {
 	Dimension_Set *		si_mach_dims;
@@ -107,6 +145,9 @@ struct shape_info {
 	shape_flag_t		si_flags;
 	incr_t			si_eqsp_inc;
 	/*int32_t			si_last_subi; */
+#ifdef HAVE_ANY_GPU
+	Bitmap_GPU_Info *	si_bitmap_gpu_info;	// only used for bitmaps - candidate for union
+#endif // HAVE_ANY_GPU
 } ;
 
 #define NO_SHAPE ((Shape_Info *) NULL)
@@ -240,6 +281,9 @@ struct shape_info {
 
 #define SHP_EQSP_INC(shp)		(shp)->si_eqsp_inc
 #define SET_SHP_EQSP_INC(shp,v)		(shp)->si_eqsp_inc = v
+
+#define SHP_BITMAP_GPU_INFO(shp)		(shp)->si_bitmap_gpu_info
+#define SET_SHP_BITMAP_GPU_INFO(shp,p)		(shp)->si_bitmap_gpu_info = p
 
 #endif /* ! _SHAPE_INFO_H_ */
 

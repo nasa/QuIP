@@ -9,15 +9,8 @@ struct vector_function;
 //struct vec_obj_args;
 
 #ifdef HAVE_OPENCL
-#define HAVE_ANY_GPU
 #define MAX_OPENCL_DEVICES	4
-#else // ! HAVE_OPENCL
-#ifdef HAVE_CUDA
-#define HAVE_ANY_GPU
-#else // ! HAVE_CUDA
-#undef HAVE_ANY_GPU
-#endif // ! HAVE_CUDA
-#endif // ! HAVE_OPENCL
+#endif // HAVE_OPENCL
 
 #ifdef HAVE_OPENCL
 #ifdef BUILD_FOR_OPENCL

@@ -9,6 +9,7 @@
 
 
 /* flag bits */
+// These used to be data_obj flags (hence the DT prefix), but now they are all shape_info flags
 
 enum {
 	DT_SEQ_BIT,		/* 0:6 object types */
@@ -45,6 +46,7 @@ enum {
 	DT_SHP_BIT,		/* 31 shape checked */
 	DT_PAS_BIT,		/* 32 partially assigned */
 	DT_CBT_BIT,		/* 33 contiguous bitmap data */
+	DT_BMI_BIT,		/* 34 Bitmap_GPU_Info present */
 	N_DP_FLAGS		/* must be last */
 };
 
@@ -68,6 +70,7 @@ enum {
 #define DT_ZOMBIE	SHIFT_IT(DT_ZMB_BIT)		/* set if an application needs to keep this data */
 #define	DT_CONTIG	SHIFT_IT(DT_CNT_BIT)		/* object is known to be contiguous */
 #define	DT_CONTIG_BITMAP_DATA	SHIFT_IT(DT_CBT_BIT)		/* bitmap with contiguous enclosing data */
+#define	DT_HAS_BITMAP_GPU_INFO	SHIFT_IT(DT_BMI_BIT)		/* non-contiguous bitmap gpu info present */
 #define	DT_CHECKED	SHIFT_IT(DT_CHK_BIT)		/* contiguity checked */
 #define	DT_EVENLY	SHIFT_IT(DT_EVN_BIT)		/* evenly spaced data */
 #define	DT_ALIGNED	SHIFT_IT(DT_ALN_BIT)		/* data area from memalign */
