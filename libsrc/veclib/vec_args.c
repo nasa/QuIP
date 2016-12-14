@@ -1010,12 +1010,78 @@ void show_vec_args(const Vector_Args *vap)
 		/* show sizes? */
 	} else if( ARE_EQSP_ARGS(vap) ){
 		fprintf(stderr,"\teqsp increments:\n");
-		fprintf(stderr,"\tdst_inc = %d\n",VA_DEST_INC( vap ) );
-		fprintf(stderr,"\tsrc1_inc = %d\n",VA_SRC1_INC( vap ) );
-		fprintf(stderr,"\tsrc2_inc = %d\n",VA_SRC2_INC( vap ) );
-		fprintf(stderr,"\tsrc3_inc = %d\n",VA_SRC3_INC( vap ) );
-		fprintf(stderr,"\tsrc4_inc = %d\n",VA_SRC4_INC( vap ) );
-		fprintf(stderr,"\tsrc5_inc = %d\n",VA_SRC5_INC( vap ) );
+		fprintf(stderr,"\tdst_inc = %d\n",VA_DEST_EQSP_INC( vap ) );
+		fprintf(stderr,"\tsrc1_inc = %d\n",VA_SRC1_EQSP_INC( vap ) );
+		fprintf(stderr,"\tsrc2_inc = %d\n",VA_SRC2_EQSP_INC( vap ) );
+		fprintf(stderr,"\tsrc3_inc = %d\n",VA_SRC3_EQSP_INC( vap ) );
+		fprintf(stderr,"\tsrc4_inc = %d\n",VA_SRC4_EQSP_INC( vap ) );
+		fprintf(stderr,"\tsrc5_inc = %d\n",VA_SRC5_EQSP_INC( vap ) );
 	}
 }
+
+static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, dimension_t bit0 )
+{
+	dimension_t bits_per_row, words_per_row;
+
+	assert( isp != NULL );
+
+fprintf(stderr,"varg_n_bitmap_bits (1):  dim[0] = %d, dim[1] = %d, inc[1] = %d, offset = %d\n",DS_DIM(dsp,0),
+DS_DIM(dsp,1),INCREMENT(isp,1),bit0);
+	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * INCREMENT(isp,1);
+
+fprintf(stderr,"varg_n_bitmap_bits (1):  bits_per_row = %d\n",bits_per_row);
+
+	// The number of words per row may need to be incremented, depending on the value of bit0
+	bits_per_row += bit0 % BITS_PER_BITMAP_WORD;
+
+	words_per_row = N_BITMAP_WORDS(bits_per_row);
+	return words_per_row * DS_DIM(dsp,2) * DS_DIM(dsp,3) * DS_DIM(dsp,4) ;
+}
+
+static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr, dimension_t bit0 )
+{
+	dimension_t bits_per_row, words_per_row;
+
+	assert(eqsp_incr>0);
+
+fprintf(stderr,"varg_n_bitmap_bits (1):  dim[0] = %d, dim[1] = %d, inc[1] = %d\n",DS_DIM(dsp,0),
+DS_DIM(dsp,1),eqsp_incr);
+	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * eqsp_incr;
+	bits_per_row += bit0 % BITS_PER_BITMAP_WORD;
+
+fprintf(stderr,"eqsp_bitmap_word_count:  bits_per_row = %d\n",bits_per_row);
+
+	words_per_row = N_BITMAP_WORDS(bits_per_row);
+	return words_per_row * DS_DIM(dsp,2) * DS_DIM(dsp,3) * DS_DIM(dsp,4) ;
+}
+
+static dimension_t fast_bitmap_word_count( Dimension_Set *dsp, dimension_t offset )
+{
+	return N_BITMAP_WORDS( DS_N_ELTS(dsp) + (offset%BITS_PER_BITMAP_WORD) );
+}
+
+// For bitmaps with an increment other than 1, we have to include the gaps within the rows
+// to determine the proper number of words
+
+dimension_t varg_bitmap_word_count(const Vector_Arg *varg_p)
+{
+	if(  VARG_INCSET(*varg_p) != NULL )
+		return slow_bitmap_word_count(VARG_DIMSET(*varg_p),VARG_INCSET(*varg_p),VARG_OFFSET(*varg_p));
+	else if ( VARG_EQSP_INC(*varg_p) > 0 )
+		return eqsp_bitmap_word_count(VARG_DIMSET(*varg_p),VARG_EQSP_INC(*varg_p),VARG_OFFSET(*varg_p));
+	else
+		return fast_bitmap_word_count(VARG_DIMSET(*varg_p),VARG_OFFSET(*varg_p));
+}
+
+dimension_t bitmap_obj_word_count(Data_Obj *dp)
+{
+	if( N_IS_CONTIGUOUS(dp) )
+		return fast_bitmap_word_count(SHP_MACH_DIMS(OBJ_SHAPE(dp)),OBJ_BIT0(dp));
+	else if( IS_EVENLY_SPACED(dp) )
+		return eqsp_bitmap_word_count(SHP_MACH_DIMS(OBJ_SHAPE(dp)),SHP_EQSP_INC(OBJ_SHAPE(dp)),OBJ_BIT0(dp));
+	else
+		return slow_bitmap_word_count(SHP_MACH_DIMS(OBJ_SHAPE(dp)),SHP_MACH_INCS(OBJ_SHAPE(dp)),OBJ_BIT0(dp));
+}
+
+//	return bitmap_word_count(VARG_DIMSET(*varg_p),VARG_INCSET(*varg_p),VARG_EQSP_INC(*varg_p),);
 

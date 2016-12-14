@@ -152,7 +152,7 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 // BUG incset is not increment!?
 #define SET_KERNEL_ARGS_EQSP_SBM	SET_KERNEL_ARG(void *,&(VA_SBM_PTR(vap)))	\
 					SET_KERNEL_ARG(int,&(VA_SBM_BIT0(vap)))	\
-					SET_KERNEL_ARG(int,&VA_SBM_INC(vap))
+					SET_KERNEL_ARG(int,&VA_SBM_EQSP_INC(vap))
 
 #define SET_KERNEL_ARGS_SLOW_SBM	SET_KERNEL_ARG(void *,&(VA_SBM_PTR(vap)))	\
 					SET_KERNEL_ARG(int,&(VA_SBM_BIT0(vap)))	\
@@ -167,7 +167,7 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 // BUG incset is not increment!?
 #define SET_KERNEL_ARGS_EQSP_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
 					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))	\
-					SET_KERNEL_ARG(int,&VA_SBM_INC(vap))
+					SET_KERNEL_ARG(int,&VA_SBM_EQSP_INC(vap))
 
 #define SET_KERNEL_ARGS_SLOW_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
 					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))	\
@@ -387,11 +387,11 @@ fprintf(stderr,"Oops:  Need to implement %s!?\n",#mname);
 
 
 // BUG need to figure out which dimension is the one?
-#define SET_KERNEL_ARGS_EQSP_INC1	SET_KERNEL_ARG(int,&VA_DEST_INC(vap))
-#define SET_KERNEL_ARGS_EQSP_INC2	SET_KERNEL_ARG(int,&VA_SRC1_INC(vap))
-#define SET_KERNEL_ARGS_EQSP_INC3	SET_KERNEL_ARG(int,&VA_SRC2_INC(vap))
-#define SET_KERNEL_ARGS_EQSP_INC4	SET_KERNEL_ARG(int,&VA_SRC3_INC(vap))
-#define SET_KERNEL_ARGS_EQSP_INC5	SET_KERNEL_ARG(int,&VA_SRC4_INC(vap))
+#define SET_KERNEL_ARGS_EQSP_INC1	SET_KERNEL_ARG(int,&VA_DEST_EQSP_INC(vap))
+#define SET_KERNEL_ARGS_EQSP_INC2	SET_KERNEL_ARG(int,&VA_SRC1_EQSP_INC(vap))
+#define SET_KERNEL_ARGS_EQSP_INC3	SET_KERNEL_ARG(int,&VA_SRC2_EQSP_INC(vap))
+#define SET_KERNEL_ARGS_EQSP_INC4	SET_KERNEL_ARG(int,&VA_SRC3_EQSP_INC(vap))
+#define SET_KERNEL_ARGS_EQSP_INC5	SET_KERNEL_ARG(int,&VA_SRC4_EQSP_INC(vap))
 
 // BUG?  do we need DIM3 increments in Vector_Args ???
 // Now we have DIM5 sizes and increments in Vector_Args!

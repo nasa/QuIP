@@ -356,11 +356,11 @@
 
 #define XFER_EQSP_ARGS_1	SET_VA_FLAGS(vap,VA_EQSP_ARGS);		\
 				XFER_FAST_ARGS_1			\
-				SET_VA_DEST_INC(vap,			\
+				SET_VA_DEST_EQSP_INC(vap,			\
 				OBJ_TYPE_INC(OA_DEST(oap),OBJ_MINDIM(OA_DEST(oap) ) ) );
 
 #define XFER_EQSP_ARGS_SRC(idx)	XFER_FAST_ARGS_SRC(idx)			\
-				SET_VA_SRC_INC(vap,idx,			\
+				SET_VA_SRC_EQSP_INC(vap,idx,			\
 				OBJ_TYPE_INC(OA_SRC_OBJ(oap,idx),OBJ_MINDIM(OA_SRC_OBJ(oap,idx) ) ) );
 
 #define XFER_EQSP_ARGS_SRC1	XFER_EQSP_ARGS_SRC(0)

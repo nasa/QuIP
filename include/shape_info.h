@@ -105,6 +105,7 @@ struct shape_info {
 	int32_t			si_range_maxdim;
 	int32_t			si_range_mindim;
 	shape_flag_t		si_flags;
+	incr_t			si_eqsp_inc;
 	/*int32_t			si_last_subi; */
 } ;
 
@@ -236,6 +237,9 @@ struct shape_info {
 //#define SET_SHP_LAST_SUBI(shp,v)	(shp)->si_last_subi = v
 #define SET_SHP_FLAG_BITS(shp,v)	(shp)->si_flags |= v
 #define CLEAR_SHP_FLAG_BITS(shp,v)	(shp)->si_flags &= ~(v)
+
+#define SHP_EQSP_INC(shp)		(shp)->si_eqsp_inc
+#define SET_SHP_EQSP_INC(shp,v)		(shp)->si_eqsp_inc = v
 
 #endif /* ! _SHAPE_INFO_H_ */
 

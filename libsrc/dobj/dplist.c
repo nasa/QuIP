@@ -516,7 +516,7 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 	dimension_t n;
 
 	if( IS_BITMAP(dp) )
-		n = BITMAP_WORD_COUNT(dp);
+		n = bitmap_obj_word_count(dp);
 	else
 		n = OBJ_N_MACH_ELTS(dp);
 

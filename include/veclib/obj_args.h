@@ -115,10 +115,16 @@ struct vec_obj_args {
 
 typedef struct vector_arg {
 	void *		varg_vp;	// data or struct ptr
+	// for fast or eqsp args, we only need one number...
+	// but how can we tell?
+	/*
 	union {
 		int	u_inc;
 		Increment_Set *	u_isp;
 	} varg_u;
+	*/
+	int		varg_eqsp_inc;
+	Increment_Set *	varg_isp;
 	Dimension_Set *	varg_dsp;
 
 #ifdef HAVE_OPENCL
@@ -128,23 +134,31 @@ typedef struct vector_arg {
 
 } Vector_Arg;
 
-#define VARG_DIMSET(vap)	((vap).varg_dsp)
-#define VARG_PTR(vap)		((vap).varg_vp)
-#define VARG_INCSET(vap)	((vap).varg_u.u_isp)
-#define VARG_INC(vap)		((vap).varg_u.u_inc)
-#define VARG_OFFSET(vap)	((vap).varg_offset)
+#define VARG_DIMSET(varg)	((varg).varg_dsp)
+#define VARG_PTR(varg)		((varg).varg_vp)
+//#define VARG_INCSET(varg)	((varg).varg_u.u_isp)
+//#define VARG_INC(varg)	((varg).varg_u.u_inc)
+#define VARG_INCSET(varg)	((varg).varg_isp)
+#define VARG_EQSP_INC(varg)		((varg).varg_eqsp_inc)
 
-#define VARG_LEN(vap)		DS_N_ELTS(VARG_DIMSET(vap))
+#define VARG_OFFSET(varg)	((varg).varg_offset)
 
-#define SET_VARG_DIMSET(vap,v)	VARG_DIMSET(vap) = v
-#define SET_VARG_PTR(vap,v)	VARG_PTR(vap) = v
-#define SET_VARG_INCSET(vap,v)	VARG_INCSET(vap) = v
-#define SET_VARG_INC(vap,v)	VARG_INC(vap) = v
+#define VARG_LEN(varg)		DS_N_ELTS(VARG_DIMSET(varg))
+
+#define VARG_N_BITMAP_BITS(varg)	varg_n_bitmap_bits(varg)
+
+#define SET_VARG_DIMSET(varg,v)	VARG_DIMSET(varg) = v
+#define SET_VARG_PTR(varg,v)	VARG_PTR(varg) = v
+#define SET_VARG_INCSET(varg,v)	VARG_INCSET(varg) = v
+#define SET_VARG_EQSP_INC(varg,v)	VARG_EQSP_INC(varg) = v
+
+#define VARG_DIMENSION(varg,idx)	(VARG_DIMSET(varg))->ds_dimension[idx]
+#define VARG_INCREMENT(varg,idx)	(VARG_INCSET(varg))->is_increment[idx]
 
 #ifdef HAVE_OPENCL
-#define SET_VARG_OFFSET(vap,v)	VARG_OFFSET(vap) = v
+#define SET_VARG_OFFSET(varg,v)	VARG_OFFSET(varg) = v
 #else // ! HAVE_OPENCL
-#define SET_VARG_OFFSET(vap,v)
+#define SET_VARG_OFFSET(varg,v)
 #endif // ! HAVE_OPENCL
 
 // BUG we let CUDA and OPENCL do multidimensional iterations,
@@ -237,6 +251,8 @@ typedef struct vector_args {
 #define SET_VA_PFDEV(vap,v)		(vap)->va_pfdev = v
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
+extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
+extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */
@@ -323,23 +339,23 @@ extern void show_vec_args(const Vector_Args *vap);	// for debug
 #define VA_SRC4_INCSET(vap)		VA_SRC_INCSET(vap,3)
 #define VA_SRC5_INCSET(vap)		VA_SRC_INCSET(vap,4)
 
-#define VA_DEST_INC(vap)		VARG_INC( VA_DEST(vap) )
-#define VA_SRC_INC(vap,idx)		VARG_INC( VA_SRC(vap,idx) )
-#define VA_SRC1_INC(vap)		VA_SRC_INC(vap,0)
-#define VA_SRC2_INC(vap)		VA_SRC_INC(vap,1)
-#define VA_SRC3_INC(vap)		VA_SRC_INC(vap,2)
-#define VA_SRC4_INC(vap)		VA_SRC_INC(vap,3)
-#define VA_SRC5_INC(vap)		VA_SRC_INC(vap,4)
-#define VA_SBM_INC(vap)			VARG_INC( VA_SRC5(vap) )
-#define VA_DBM_INC(vap)			VA_DEST_INC( vap )
+#define VA_DEST_EQSP_INC(vap)		VARG_EQSP_INC( VA_DEST(vap) )
+#define VA_SRC_EQSP_INC(vap,idx)	VARG_EQSP_INC( VA_SRC(vap,idx) )
+#define VA_SRC1_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,0)
+#define VA_SRC2_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,1)
+#define VA_SRC3_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,2)
+#define VA_SRC4_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,3)
+#define VA_SRC5_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,4)
+#define VA_SBM_EQSP_INC(vap)		VARG_EQSP_INC( VA_SRC5(vap) )
+#define VA_DBM_EQSP_INC(vap)		VA_DEST_EQSP_INC( vap )
 
-#define eqsp_dest_inc			VA_DEST_INC(vap)
-#define eqsp_src1_inc			VA_SRC1_INC(vap)
-#define eqsp_src2_inc			VA_SRC2_INC(vap)
-#define eqsp_src3_inc			VA_SRC3_INC(vap)
-#define eqsp_src4_inc			VA_SRC4_INC(vap)
-#define eqsp_src5_inc			VA_SRC5_INC(vap)
-#define eqsp_bit_inc			VA_SRC5_INC(vap)
+#define eqsp_dest_inc			VA_DEST_EQSP_INC(vap)
+#define eqsp_src1_inc			VA_SRC1_EQSP_INC(vap)
+#define eqsp_src2_inc			VA_SRC2_EQSP_INC(vap)
+#define eqsp_src3_inc			VA_SRC3_EQSP_INC(vap)
+#define eqsp_src4_inc			VA_SRC4_EQSP_INC(vap)
+#define eqsp_src5_inc			VA_SRC5_EQSP_INC(vap)
+#define eqsp_bit_inc			VA_SRC5_EQSP_INC(vap)
 
 #define VA_SBM_BIT0(vap)		(vap)->va_sbm_bit0
 #define VA_DBM_BIT0(vap)		(vap)->va_dbm_bit0
@@ -386,15 +402,15 @@ extern void show_vec_args(const Vector_Args *vap);	// for debug
 #define SET_VA_SRC5_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC4(vap), v )
 #define SET_VA_SBM_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC5(vap), v )
 
-#define SET_VA_DEST_INC(vap,v)	SET_VARG_INC( VA_DEST(vap), v )
-#define SET_VA_SRC_INC(vap,idx,v)	SET_VARG_INC( VA_SRC(vap,idx), v )
-#define SET_VA_SRC1_INC(vap,v)		SET_VA_SRC_INC(vap,0,v)
-#define SET_VA_SRC2_INC(vap,v)		SET_VA_SRC_INC(vap,1,v)
-#define SET_VA_SRC3_INC(vap,v)		SET_VA_SRC_INC(vap,2,v)
-#define SET_VA_SRC4_INC(vap,v)		SET_VA_SRC_INC(vap,3,v)
-#define SET_VA_SRC5_INC(vap,v)		SET_VA_SRC_INC(vap,4,v)
+#define SET_VA_DEST_EQSP_INC(vap,v)		SET_VARG_EQSP_INC( VA_DEST(vap), v )
+#define SET_VA_SRC_EQSP_INC(vap,idx,v)		SET_VARG_EQSP_INC( VA_SRC(vap,idx), v )
+#define SET_VA_SRC1_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,0,v)
+#define SET_VA_SRC2_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,1,v)
+#define SET_VA_SRC3_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,2,v)
+#define SET_VA_SRC4_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,3,v)
+#define SET_VA_SRC5_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,4,v)
 
-#define SET_VA_SBM_INC(vap,v)	SET_VARG_INC( VA_SRC5(vap), v )
+#define SET_VA_SBM_EQSP_INC(vap,v)	SET_VARG_EQSP_INC( VA_SRC5(vap), v )
 
 //#define SET_VA_COUNT(vap,v)		SET_SZI_DST_DIMS(VA_SIZE_INFO(vap),v)
 #define SET_VA_COUNT(vap,v)		SET_VARG_DIMSET(VA_DEST(vap),v)

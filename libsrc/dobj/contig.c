@@ -19,11 +19,17 @@ int is_evenly_spaced(Data_Obj *dp)
 	/* mindim is the smallest indexable dimension - but for complex,
 	 * it is always equal to 1 with an increment of 0...
 	 */
-	if( IS_SCALAR(dp) ) return 1;
+	if( IS_SCALAR(dp) ){
+		SET_SHP_EQSP_INC(OBJ_SHAPE(dp),1);
+		return 1;	// true
+	}
 
 
 	/* a complex vector with length of 1 is not flagged as a scalar... */
-	if( OBJ_N_TYPE_ELTS(dp) == 1 ) return 1;
+	if( OBJ_N_TYPE_ELTS(dp) == 1 ){
+		SET_SHP_EQSP_INC(OBJ_SHAPE(dp),1);
+		return 1;	// true
+	}
 
 	spacing = 0;
 	i=OBJ_MINDIM(dp)-1;
@@ -44,6 +50,7 @@ int is_evenly_spaced(Data_Obj *dp)
 	for(;i<=OBJ_MAXDIM(dp);i++){
 		if( OBJ_TYPE_INC(dp,i) != 0 ){
 			if( OBJ_TYPE_INC(dp,i) != spacing * n ){
+				SET_SHP_EQSP_INC(OBJ_SHAPE(dp),0);
 				return 0;
 			}
 		}
@@ -52,9 +59,12 @@ int is_evenly_spaced(Data_Obj *dp)
 
 	if( IS_BITMAP(dp) ){
 		// bitmaps can seem contiguous, but are not if the row length is not a multiple of the word size (in bits)
-		if( (OBJ_TYPE_DIM(dp,1)*OBJ_TYPE_INC(dp,1)) % BITS_PER_BITMAP_WORD != 0 )
+		if( (OBJ_TYPE_DIM(dp,1)*OBJ_TYPE_INC(dp,1)) % BITS_PER_BITMAP_WORD != 0 ){
+			SET_SHP_EQSP_INC(OBJ_SHAPE(dp),0);
 			return 0;
+		}
 	}
+	SET_SHP_EQSP_INC(OBJ_SHAPE(dp),spacing);
 	return 1;
 }
 
@@ -62,14 +72,6 @@ int is_evenly_spaced(Data_Obj *dp)
 
 int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 {
-//#ifdef CAUTIOUS
-//	if( (OBJ_FLAGS(dp)&DT_CHECKED) == 0 ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  object \"%s\" not checked for contiguity!?",OBJ_NAME(dp));
-//		advise(DEFAULT_ERROR_STRING);
-//		check_contiguity(dp);
-//	}
-//#endif /* CAUTIOUS */
 	assert( OBJ_FLAGS(dp) & DT_CHECKED );
 	return(IS_CONTIGUOUS(dp));
 }

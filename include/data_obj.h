@@ -3,62 +3,12 @@
 
 #include "quip_config.h"
 #include "quip_fwd.h"
-#ifdef FOOBAR
-#include "quip_menu.h"
-#endif // FOOBAR
-
 #include "shape_bits.h"
-
-//#include "query_api.h"
 #include "item_type.h"
 #include "shape_info.h"
 #include "freel.h"
-//#include "list.h"
-//#include "debug.h"
-//#include "dobj_basic.h"
 
 struct platform_device;
-
-#ifdef MOVED
-typedef union {
-	double		u_d;	// this is first to be the default initializer
-	long double	u_ld;
-	char		u_b;
-	short		u_s;
-	int32_t		u_l;
-	int64_t		u_ll;
-	unsigned char	u_ub;
-	unsigned short	u_us;
-	uint32_t	u_ul;
-	uint64_t	u_ull;
-	float		u_f;
-	/* Do we need both of these??? */
-	float		u_fc[2];
-	SP_Complex	u_spc;
-	float		u_fq[4];
-	SP_Quaternion	u_spq;
-
-	double		u_dc[2];
-	DP_Complex	u_dpc;
-	double		u_dq[4];
-	DP_Quaternion	u_dpq;
-
-	long double	u_lc[2];
-	LP_Complex	u_lpc;
-	long double	u_lq[4];
-	LP_Quaternion	u_lpq;
-
-	bitmap_word	u_bit;	/* should be boolean type... */
-	void *		u_vp;	// for string type
-} Scalar_Value;
-
-#define NO_SCALAR_VALUE	((Scalar_Value *)NULL)
-
-#define SVAL_FLOAT(svp)		(svp)->u_f
-#define SVAL_STD(svp)		(svp)->std_scalar
-#define SVAL_STD_CPX(svp)	(svp)->std_cpx_scalar
-#define SVAL_STD_QUAT(svp)	(svp)->std_quat_scalar
-#endif // MOVED
 
 /* Data areas were a largely obsolete construct, which were
  * originally introduced to allow objects to be placed in a particular
@@ -78,8 +28,6 @@ typedef struct memory_area {
 } Memory_Area;
 
 #define NO_MEMORY_AREA ((Memory_Area *)NULL)
-
-
 
 typedef struct data_area {
 	Item			da_item;
@@ -244,7 +192,8 @@ struct data_obj {
 
 #define IS_ZOMBIE(dp)		( OBJ_FLAGS(dp) & DT_ZOMBIE )
 
-#ifdef CAUTIOUS
+//#ifdef CAUTIOUS
+
 #define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
 				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) && is_contiguous(QSP_ARG  dp) ) )
 
@@ -254,10 +203,10 @@ struct data_obj {
 
 #define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
 
-#else /* ! CAUTIOUS */
-#define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) )
-#define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
-#endif /* ! CAUTIOUS */
+//#else /* ! CAUTIOUS */
+//#define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) )
+//#define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
+//#endif /* ! CAUTIOUS */
 
 #define HAS_CONTIGUOUS_DATA(dp)	( IS_CONTIGUOUS(dp) || (OBJ_FLAGS(dp) & DT_CONTIG_BITMAP_DATA) )
 

@@ -33,80 +33,6 @@
 	max_threads_per_block = get_max_threads_per_block(dp);
 	// BUG OpenCL doesn't use max_threads_per_block!?
 
-#ifdef FOOBAR
-#define SETUP_BLOCKS_XYZ_	SETUP_BLOCKS_XYZ
-#define SETUP_BLOCKS_XYZ_SBM_	SETUP_BLOCKS_XYZ
-
-#define SETUP_BLOCKS_XYZ					\
-								\
-	SETUP_BLOCKS_X(VA_LEN_X(vap))					\
-	SETUP_BLOCKS_Y						\
-	SETUP_BLOCKS_Z
-
-
-/* If we have a destination bitmap, we handle all the bits in one word
- * in a single thread.
- *
- * BUG - here we ignore bit0 ???
- *
- * MAX_THREADS_PER_ROW is 32...  for a 512 pixel wide image, the nmber
- * of bitmap words is either 8 (64 bit words) or 16 (32 bit words).
- * So we need to 
- */
-
-
-#define SETUP_BLOCKS_XYZ_DBM_					\
-								\
-	SETUP_BLOCKS_X( N_BITMAP_WORDS(VA_LEN_X(vap)) )			\
-	SETUP_BLOCKS_Y						\
-	SETUP_BLOCKS_Z
-
-
-#define SETUP_BLOCKS_X(w)					\
-								\
-/*sprintf(DEFAULT_ERROR_STRING,"SETUP_BLOCKS_X:  len = %d",w);\
-NADVISE(DEFAULT_ERROR_STRING);*/\
-	if( (w) < MAX_THREADS_PER_ROW ) {			\
-		n_threads_per_block.x = w;			\
-		n_blocks.x = 1;					\
-		extra.x = 0;					\
-	} else {						\
-		n_blocks.x = (w) / MAX_THREADS_PER_ROW;		\
-		n_threads_per_block.x = MAX_THREADS_PER_ROW;	\
-		extra.x = (w) % MAX_THREADS_PER_ROW;		\
-	}
-
-
-#define SETUP_BLOCKS_Y						\
-								\
-	n_threads_per_block.y = max_threads_per_block /		\
-					n_threads_per_block.x;	\
-	if( VA_LEN_Y(vap) < n_threads_per_block.y ){			\
-		n_threads_per_block.y = VA_LEN_Y(vap);			\
-		n_blocks.y = 1;					\
-		extra.y = 0;					\
-	} else {						\
-		n_blocks.y = VA_LEN_Y(vap) / n_threads_per_block.y;	\
-		extra.y = VA_LEN_Y(vap) % n_threads_per_block.y;	\
-	}							\
-	if( extra.x > 0 ) n_blocks.x++;				\
-	if( extra.y > 0 ) n_blocks.y++;
-
-#define SETUP_BLOCKS_Z						\
-								\
-	n_threads_per_block.z = max_threads_per_block /		\
-		(n_threads_per_block.x*n_threads_per_block.y);	\
-	if( VA_LEN_Z(vap) < n_threads_per_block.z ){			\
-		n_threads_per_block.z = VA_LEN_Z(vap);			\
-		n_blocks.z = 1;					\
-		extra.z = 0;					\
-	} else {						\
-		n_blocks.z = VA_LEN_Z(vap) / n_threads_per_block.z;	\
-		extra.z = VA_LEN_Z(vap) % n_threads_per_block.z;	\
-	}							\
-	if( extra.z > 0 ) n_blocks.z++;
-#endif // FOOBAR
-
 #ifdef MORE_DEBUG
 
 #define REPORT_KERNEL_CALL(name)				\
@@ -249,33 +175,30 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 
 #define SETUP_FAST_BLOCKS_DBM_						\
 									\
-/*fprintf(stderr,"SETUP_FAST_BLOCKS_:  %ld\n",N_BITMAP_WORDS(VA_LENGTH(vap)));*/\
-	global_work_size[0] = N_BITMAP_WORDS(VA_LENGTH(vap));
+	global_work_size[0] = varg_bitmap_word_count( & VA_DEST(vap));	\
+fprintf(stderr,"SETUP_FAST_BLOCKS_:  global_work_size = %ld\n",global_work_size[0]);
+
+#define SETUP_EQSP_BLOCKS_DBM_						\
+									\
+	global_work_size[0] = varg_bitmap_word_count( & VA_DEST(vap) );	\
+fprintf(stderr,"SETUP_EQSP_BLOCKS_:  global_work_size = %ld\n",global_work_size[0]);
+
 
 #define SETUP_FAST_BLOCKS_DBM_SBM	SETUP_FAST_BLOCKS_DBM_
 
 #define SETUP_EQSP_BLOCKS_	SETUP_FAST_BLOCKS_
 #define SETUP_EQSP_BLOCKS_SBM_	SETUP_FAST_BLOCKS_SBM_
-#define SETUP_EQSP_BLOCKS_DBM_	SETUP_FAST_BLOCKS_DBM_
 // BUG?  do we need both???
 #define SETUP_EQSP_BLOCKS_DBM_SBM_	SETUP_FAST_BLOCKS_DBM_SBM_
 #define SETUP_EQSP_BLOCKS_DBM_SBM	SETUP_FAST_BLOCKS_DBM_SBM
 
-#ifdef FOOBAR
-#define SETUP_SLOW_BLOCKS_						\
-									\
-/*fprintf(stderr,"SETUP_SLOW_BLOCKS_:  %d %d %d\n",VA_LEN_X(vap),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
-	global_work_size[0] = VA_LEN_X(vap);					\
-	global_work_size[1] = VA_LEN_Y(vap);					\
-	global_work_size[2] = VA_LEN_Z(vap);
-#else // ! FOOBAR
+// This looks like the non-bitmap version
 #define SETUP_SLOW_BLOCKS_						\
 									\
 /*fprintf(stderr,"SETUP_SLOW_BLOCKS_:  %d %d %d\n",VA_LEN_X(vap),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
 	global_work_size[0] = VA_ITERATION_TOTAL(vap);					\
 	global_work_size[1] = 1;					\
 	global_work_size[2] = 1;
-#endif // ! FOOBAR
 
 #define SETUP_SLOW_BLOCKS_SBM_	SETUP_SLOW_BLOCKS_
 
@@ -286,22 +209,16 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 // We need to have one thread per bitmap word...
 // But we can have a fractional number of words per line, so we need to round up!
 // Basically, we cannot use VA_ITERATION_TOTAL, we have to compute from the dimensions...
+//
+// We need to have one thread per bitmap word, but if we have an increment other than 1 then
+// it won't just depend on the total number of bits?
 
-#ifdef FOOBAR
 #define SETUP_SLOW_BLOCKS_DBM_						\
 									\
-/*fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  %ld %d %d\n",N_BITMAP_WORDS(VA_LEN_X(vap)),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
-	global_work_size[0] = N_BITMAP_WORDS(VA_LEN_X(vap));			\
-	global_work_size[1] = VA_LEN_Y(vap);					\
-	global_work_size[2] = VA_LEN_Z(vap);
-#else // ! FOOBAR
-#define SETUP_SLOW_BLOCKS_DBM_						\
-									\
-/*fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  %ld %d %d\n",N_BITMAP_WORDS(VA_LEN_X(vap)),VA_LEN_Y(vap),VA_LEN_Z(vap));*/\
-	global_work_size[0] = N_BITMAP_WORDS(VA_ITERATION_TOTAL(vap));			\
-	global_work_size[1] = 1;					\
-	global_work_size[2] = 1;
-#endif // ! FOOBAR
+	global_work_size[0] = varg_bitmap_word_count( & VA_DEST(vap));			\
+fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  work_size = %ld\n",global_work_size[0]);\
+	/*global_work_size[1] = 1;					\
+	global_work_size[2] = 1;*/
 
 #define SETUP_SLOW_BLOCKS_DBM_SBM	SETUP_SLOW_BLOCKS_DBM_
 
@@ -370,10 +287,10 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 
 #define CALL_SLOW_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
-/*show_vec_args(vap);\
-fprintf(stderr,"global_work_size = %ld %ld %ld\n",\
-global_work_size[0],global_work_size[1],global_work_size[2]);*/\
-	FINISH_KERNEL_CALL(3)
+/*show_vec_args(vap);*/\
+fprintf(stderr,"CALL_SLOW_KERNEL global_work_size = %ld\n",\
+global_work_size[0]);\
+	FINISH_KERNEL_CALL(/*3*/ 1 )
 
 // Normally we don't want to wait
 // So we can define this to be a nop

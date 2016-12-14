@@ -192,7 +192,8 @@ typedef BITMAP_DATA_TYPE bitmap_word;
 /* This macro just divides by bits per word and rounds up to the nearest integer */
 #define N_BITMAP_WORDS(n)	(((n)+BITS_PER_BITMAP_WORD-1)/BITS_PER_BITMAP_WORD)
 
-#define BITMAP_WORD_COUNT(dp)	(N_BITMAP_WORDS(OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))+OBJ_BIT0(dp))*(OBJ_N_TYPE_ELTS(dp)/OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))))
+//#define BITMAP_WORD_COUNT(dp)	(N_BITMAP_WORDS(OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))+OBJ_BIT0(dp))*(OBJ_N_TYPE_ELTS(dp)/OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))))
+#define BITMAP_WORD_COUNT(dp)	bitmap_obj_word_count(dp)
 
 // The mask wasn't needed before - that is this worked with n greater than
 // the number of bits, it just rolled around.  But on iOS devices, this failed.
