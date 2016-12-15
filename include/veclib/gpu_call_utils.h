@@ -371,16 +371,16 @@
 
 #define fast_dst	a[index1	OFFSET_A ]
 #define fast_src1	b[index2	OFFSET_B ]
-#define fast_src2	b[index3	OFFSET_C ]
-#define fast_src3	b[index4	OFFSET_D ]
-#define fast_src4	b[index5	OFFSET_E ]
+#define fast_src2	c[index3	OFFSET_C ]
+#define fast_src3	d[index4	OFFSET_D ]
+#define fast_src4	e[index5	OFFSET_E ]
 
 // Indices are scaled in the function prelude
 #define eqsp_dst	a[index1	OFFSET_A ]
 #define eqsp_src1	b[index2	OFFSET_B ]
-#define eqsp_src2	b[index3	OFFSET_C ]
-#define eqsp_src3	b[index4	OFFSET_D ]
-#define eqsp_src4	b[index5	OFFSET_E ]
+#define eqsp_src2	c[index3	OFFSET_C ]
+#define eqsp_src3	d[index4	OFFSET_D ]
+#define eqsp_src4	e[index5	OFFSET_E ]
 
 #define INDEX_SUM(idx)	(idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4])
 
@@ -429,6 +429,7 @@
 #define slow_qsrc2	c[INDEX_SUM(index3)	OFFSET_C ]
 #define slow_qsrc3	d[INDEX_SUM(index4)	OFFSET_D ]
 #define slow_qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
+
 
 
 #ifdef FOOBAR

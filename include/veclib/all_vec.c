@@ -60,6 +60,7 @@ _VEC_FUNC_2V_SCAL( vscmp2, dst= (dest_type) src1<=scalar1_val?1:0 )
  * storage.
  */
 
+// Do these functions have fast and slow versions?
 
 _VEC_FUNC_MM_NOCC( vmaxg, src1==extval, src1>extval, extval= src1 , src_vals[index2.x]>src_vals[index2.x+1],src_vals[index2.x]<src_vals[index2.x+1])
 _VEC_FUNC_MM_NOCC( vming, src1==extval, src1<extval, extval= src1 , src_vals[index2.x]<src_vals[index2.x+1],src_vals[index2.x]>src_vals[index2.x+1])

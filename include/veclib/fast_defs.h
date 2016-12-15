@@ -7,6 +7,18 @@
 #define src3	fast_src3
 #define src4	fast_src4
 
+#define cdst	fast_cdst
+#define csrc1	fast_csrc1
+#define csrc2	fast_csrc2
+#define csrc3	fast_csrc3
+#define csrc4	fast_csrc4
+
+#define qdst	fast_qdst
+#define qsrc1	fast_qsrc1
+#define qsrc2	fast_qsrc2
+#define qsrc3	fast_qsrc3
+#define qsrc4	fast_qsrc4
+
 #ifdef BUILD_FOR_CUDA
 
 #define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)			\

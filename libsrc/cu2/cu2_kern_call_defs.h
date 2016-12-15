@@ -5,13 +5,6 @@
 
 #define KERNEL_FUNC_PRELUDE
 
-#ifdef MOVED
-#define SET_INDEX( which_index )					\
-									\
-		which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
-		which_index.y = which_index.z = 0;
-#endif // MOVED
-
 // These can't be defined generically, because for openCL we define them
 // to declare a string variable containing the kernel source code.
 

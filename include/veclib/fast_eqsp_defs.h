@@ -28,19 +28,14 @@
 
 #define SCALE_INDEX(idx,inc)	idx *= inc;
 
-#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )
-#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )
-#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )
-#define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )
-#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )
-#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )
-#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )						// nop
+#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )							// nop
+#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )						// nop
+#define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )									// nop
+#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )					// nop
+#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )								// nop
+#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )	// nop
 
-#ifdef FOOBAR
-#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
-				i_dbm_word = dbmi;	\
-				dbmi *= BITS_PER_BITMAP_WORD;
-#endif // FOOBAR
 
 #define SET_INDICES_DBM		SET_INDEX(dbmi)			\
 				i_dbm_word = dbmi;		\

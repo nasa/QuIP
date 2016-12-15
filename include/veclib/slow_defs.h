@@ -7,6 +7,18 @@
 #define src3	slow_src3
 #define src4	slow_src4
 
+#define cdst	slow_cdst
+#define csrc1	slow_csrc1
+#define csrc2	slow_csrc2
+#define csrc3	slow_csrc3
+#define csrc4	slow_csrc4
+
+#define qdst	slow_qdst
+#define qsrc1	slow_qsrc1
+#define qsrc2	slow_qsrc2
+#define qsrc3	slow_qsrc3
+#define qsrc4	slow_qsrc4
+
 #define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )	\
 	__VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
 

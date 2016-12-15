@@ -7,6 +7,18 @@
 #define src3	eqsp_src3
 #define src4	eqsp_src4
 
+#define cdst	eqsp_cdst
+#define csrc1	eqsp_csrc1
+#define csrc2	eqsp_csrc2
+#define csrc3	eqsp_csrc3
+#define csrc4	eqsp_csrc4
+
+#define qdst	eqsp_qdst
+#define qsrc1	eqsp_qsrc1
+#define qsrc2	eqsp_qsrc2
+#define qsrc3	eqsp_qsrc3
+#define qsrc4	eqsp_qsrc4
+
 #ifdef BUILD_FOR_CUDA
 
 #define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)		\
