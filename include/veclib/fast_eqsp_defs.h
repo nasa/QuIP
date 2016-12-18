@@ -37,12 +37,6 @@
 #define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )	// nop
 
 
-#define SET_INDICES_DBM		SET_INDEX(dbmi)			\
-				i_dbm_word = dbmi;		\
-				dbmi *= BITS_PER_BITMAP_WORD;
-
-#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
-
 //#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
 // From these definitions, it is not clear whether the rows are padded to be an 
 // integral number of words...

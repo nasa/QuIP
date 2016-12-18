@@ -60,5 +60,11 @@
 
 #endif // ! BUILD_FOR_CUDA
 
+#define SET_INDICES_DBM		SET_INDEX(dbmi)			\
+				i_dbm_word = dbmi;		\
+				dbmi *= BITS_PER_BITMAP_WORD;
+
+#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
+
 #include "veclib/fast_eqsp_defs.h"
 

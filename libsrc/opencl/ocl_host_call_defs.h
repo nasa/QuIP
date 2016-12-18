@@ -21,6 +21,19 @@
 
 #define SET_MAX_THREADS_FROM_OBJ(dp)	// nop
 
+// can be shared with CUDA, should be moved?
+#define XFER_DBM_GPU_INFO	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp) == NULL ){				\
+					/* only for gpu objects! */							\
+					init_bitmap_gpu_info(bitmap_dst_dp);						\
+				}											\
+				SET_VA_DBM_GPU_INFO_PTR(vap, BITMAP_OBJ_GPU_INFO_DEV_PTR(bitmap_dst_dp));
+
+#define XFER_EQSP_DBM_GPU_INFO	XFER_DBM_GPU_INFO									\
+				SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
+
+#define XFER_SLOW_DBM_GPU_INFO	XFER_DBM_GPU_INFO									\
+				SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
+				// BUG?  need to set all sizes?
 
 
 
@@ -160,10 +173,6 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	}
 
 
-// fast and eqsp only differ in args passed...
-#define CALL_EQSP_KERNEL(name,bitmap,typ,scalars,vectors)		\
-	CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)
-
 #define SETUP_FAST_BLOCKS_						\
 									\
 /*fprintf(stderr,"SETUP_FAST_BLOCKS_:  %d\n",VA_LENGTH(vap));*/\
@@ -175,13 +184,11 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 
 #define SETUP_FAST_BLOCKS_DBM_						\
 									\
-	global_work_size[0] = varg_bitmap_word_count( & VA_DEST(vap));	\
-fprintf(stderr,"SETUP_FAST_BLOCKS_:  global_work_size = %ld\n",global_work_size[0]);
+	global_work_size[0] = VA_LENGTH( vap )/BITS_PER_BITMAP_WORD;
 
 #define SETUP_EQSP_BLOCKS_DBM_						\
 									\
-	global_work_size[0] = varg_bitmap_word_count( & VA_DEST(vap) );	\
-fprintf(stderr,"SETUP_EQSP_BLOCKS_:  global_work_size = %ld\n",global_work_size[0]);
+	global_work_size[0] = VA_ITERATION_TOTAL( vap );
 
 
 #define SETUP_FAST_BLOCKS_DBM_SBM	SETUP_FAST_BLOCKS_DBM_
@@ -213,12 +220,9 @@ fprintf(stderr,"SETUP_EQSP_BLOCKS_:  global_work_size = %ld\n",global_work_size[
 // We need to have one thread per bitmap word, but if we have an increment other than 1 then
 // it won't just depend on the total number of bits?
 
-#define SETUP_SLOW_BLOCKS_DBM_						\
-									\
-	global_work_size[0] = varg_bitmap_word_count( & VA_DEST(vap));			\
-fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  work_size = %ld\n",global_work_size[0]);\
-	/*global_work_size[1] = 1;					\
-	global_work_size[2] = 1;*/
+#define SETUP_SLOW_BLOCKS_DBM_								\
+											\
+	global_work_size[0] = VA_ITERATION_TOTAL( vap );
 
 #define SETUP_SLOW_BLOCKS_DBM_SBM	SETUP_SLOW_BLOCKS_DBM_
 
@@ -226,10 +230,11 @@ fprintf(stderr,"SETUP_SLOW_BLOCKS_DBM_:  work_size = %ld\n",global_work_size[0])
 #define CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */			\
-/*show_vec_args(vap);*/\
-/*fprintf(stderr,"global_work_size = %ld %ld %ld\n",*/\
-/*global_work_size[0],global_work_size[1],global_work_size[2]);*/\
 	FINISH_KERNEL_CALL(1)
+
+// fast and eqsp only differ in args passed...
+#define CALL_EQSP_KERNEL(name,bitmap,typ,scalars,vectors)		\
+	CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)
 
 #define CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)                     \
 	FINISH_KERNEL_CALL(1)
@@ -288,8 +293,6 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 #define CALL_SLOW_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 /*show_vec_args(vap);*/\
-fprintf(stderr,"CALL_SLOW_KERNEL global_work_size = %ld\n",\
-global_work_size[0]);\
 	FINISH_KERNEL_CALL(/*3*/ 1 )
 
 // Normally we don't want to wait

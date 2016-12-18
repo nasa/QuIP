@@ -104,30 +104,58 @@ struct precision {
 typedef struct bitmap_gpu_word_info {
 	dimension_t	word_offset;			// relative to the start of the base pointer, in words
 	dimension_t	first_indices[N_DIMENSIONS];	// indices of the first valid bit
+	uint64_t	first_bit_num;
 	bitmap_word	valid_bits;
 } Bitmap_GPU_Word_Info;
 
+// We had problems passing a pointer to an array of word_info's inside a struct,
+// so instead we put the table inside this struct definition.  We declare the array size
+// to be 1, but in practice we will allocate what we need.  This way there is only 1 allocation.
+// The down-side is that the struct no longer has a fixed size.
+
 typedef struct bitmap_gpu_info {
-	unsigned int		n_bitmap_words;
-	Bitmap_GPU_Word_Info *	word_tbl;
+	uint32_t			n_bitmap_words;
+	uint32_t			total_size;	// size of this struct in bytes
+	int32_t				next_word_idx;
+	int32_t				this_word_idx;
+	int32_t				last_word_idx;
+	Bitmap_GPU_Word_Info 		word_tbl[1];
 } Bitmap_GPU_Info;
+
+#define BITMAP_GPU_INFO_SIZE(n_words)	(sizeof(Bitmap_GPU_Info)+(n_words-1)*sizeof(Bitmap_GPU_Word_Info))
 
 #define BMI_N_WORDS(bmi_p)		(bmi_p)->n_bitmap_words
 #define SET_BMI_N_WORDS(bmi_p,n)	(bmi_p)->n_bitmap_words = n
 #define BMI_WORD_TBL(bmi_p)		(bmi_p)->word_tbl
-#define SET_BMI_WORD_TBL(bmi_p,p)	(bmi_p)->word_tbl = p
 #define BMI_WORD_INFO_P(bmi_p,idx)	(&((bmi_p)->word_tbl[idx]))
+
+#define BMI_LAST_WORD_IDX(bmi_p)	(bmi_p)->last_word_idx
+#define SET_BMI_LAST_WORD_IDX(bmi_p,v)	(bmi_p)->last_word_idx = v
+
+#define BMI_THIS_WORD_IDX(bmi_p)	(bmi_p)->this_word_idx
+#define SET_BMI_THIS_WORD_IDX(bmi_p,v)	(bmi_p)->this_word_idx = v
+
+#define BMI_NEXT_WORD_IDX(bmi_p)	(bmi_p)->next_word_idx
+#define SET_BMI_NEXT_WORD_IDX(bmi_p,v)	(bmi_p)->next_word_idx = v
+
+#define BMI_STRUCT_SIZE(bmi_p)		(bmi_p)->total_size
+#define SET_BMI_STRUCT_SIZE(bmi_p,s)	(bmi_p)->total_size = s
 
 #define BMWI_OFFSET(bmwi_p)		(bmwi_p)->word_offset
 #define BMWI_FIRST_INDICES(bmwi_p)	(bmwi_p)->first_indices
-#define BMWI_FIRST_INDEX(bmwi_p,which)	BMWI_FIRST_INDICES(bmwi_p)[which]
+#define BMWI_FIRST_INDEX(bmwi_p,which)		BMWI_FIRST_INDICES(bmwi_p)[which]
 #define SET_BMWI_FIRST_INDEX(bmwi_p,which,v)	BMWI_FIRST_INDICES(bmwi_p)[which] = v
+
+#define BMWI_FIRST_BIT_NUM(bmwi_p)		(bmwi_p)->first_bit_num
+#define SET_BMWI_FIRST_BIT_NUM(bmwi_p,n)	(bmwi_p)->first_bit_num = n
 
 #define BMWI_VALID_BITS(bmwi_p)			(bmwi_p)->valid_bits
 #define SET_BMWI_VALID_BITS(bmwi_p,bits)	(bmwi_p)->valid_bits = bits
 #define SET_BMWI_VALID_BIT(bmwi_p,bits)		(bmwi_p)->valid_bits |= bits
 
 #define SET_BMWI_OFFSET(bmwi_p,v)	(bmwi_p)->word_offset = v
+
+#define UNLIKELY_INDEX			((dimension_t) ((int32_t)-1))
 
 #endif // HAVE_ANY_GPU
 
@@ -146,7 +174,11 @@ struct shape_info {
 	incr_t			si_eqsp_inc;
 	/*int32_t			si_last_subi; */
 #ifdef HAVE_ANY_GPU
-	Bitmap_GPU_Info *	si_bitmap_gpu_info;	// only used for bitmaps - candidate for union
+	// only used for bitmaps - candidate for union
+	Bitmap_GPU_Info *	si_bitmap_gpu_info_h;	// address in host memory
+							// We may not need to keep this around once we have things working,
+							// but for now it's helpful for debugging.
+	Bitmap_GPU_Info *	si_bitmap_gpu_info_g;	// address in device memory
 #endif // HAVE_ANY_GPU
 } ;
 
@@ -282,8 +314,11 @@ struct shape_info {
 #define SHP_EQSP_INC(shp)		(shp)->si_eqsp_inc
 #define SET_SHP_EQSP_INC(shp,v)		(shp)->si_eqsp_inc = v
 
-#define SHP_BITMAP_GPU_INFO(shp)		(shp)->si_bitmap_gpu_info
-#define SET_SHP_BITMAP_GPU_INFO(shp,p)		(shp)->si_bitmap_gpu_info = p
+#define SHP_BITMAP_GPU_INFO_H(shp)		(shp)->si_bitmap_gpu_info_h
+#define SET_SHP_BITMAP_GPU_INFO_H(shp,p)	(shp)->si_bitmap_gpu_info_h = p
+
+#define SHP_BITMAP_GPU_INFO_G(shp)		(shp)->si_bitmap_gpu_info_g
+#define SET_SHP_BITMAP_GPU_INFO_G(shp,p)	(shp)->si_bitmap_gpu_info_g = p
 
 #endif /* ! _SHAPE_INFO_H_ */
 

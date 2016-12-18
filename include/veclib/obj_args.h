@@ -1,6 +1,8 @@
 #ifndef _OBJ_ARGS_H_
 #define _OBJ_ARGS_H_
 
+//#define JUST_FOR_DEBUGGING	// comment out!
+
 #include "data_obj.h"
 //#include "veclib/dim3.h"
 #include "veclib/dim5.h"
@@ -88,12 +90,8 @@ struct vec_obj_args {
 
 /* Flag values */
 #define OARGS_CHECKED	1
-//#define OARGS_RAM	2
-//#define OARGS_GPU	4
 
 #define HAS_CHECKED_ARGS(oap)	( (oap)->oa_flags & OARGS_CHECKED )
-//#define HAS_RAM_ARGS(oap)	( (oap)->oa_flags & OARGS_CHECKED ? (oap)->oa_flags & OARGS_RAM : are_ram_args(oap) )
-//#define HAS_GPU_ARGS(oap)	( (oap)->oa_flags & OARGS_CHECKED ? (oap)->oa_flags & OARGS_GPU : are_gpu_args(oap) )
 
 #define HAS_MIXED_ARGS(oap)	( OA_ARGSTYPE(oap) == MIXED_ARGS )
 #define HAS_QMIXED_ARGS(oap)	( OA_ARGSTYPE(oap) == QMIXED_ARGS )
@@ -115,17 +113,11 @@ struct vec_obj_args {
 
 typedef struct vector_arg {
 	void *		varg_vp;	// data or struct ptr
-	// for fast or eqsp args, we only need one number...
-	// but how can we tell?
-	/*
-	union {
-		int	u_inc;
-		Increment_Set *	u_isp;
-	} varg_u;
-	*/
-	int		varg_eqsp_inc;
-	Increment_Set *	varg_isp;
-	Dimension_Set *	varg_dsp;
+
+	int		varg_eqsp_inc;	// this can be zero even for evenly-spaced ops, do we need a flag?  BUG?
+
+	Increment_Set *	varg_isp;	// used only for slow ops
+	Dimension_Set *	varg_dsp;	// used only for slow ops
 
 #ifdef HAVE_OPENCL
 #define OCL_OFFSET_TYPE	int
@@ -176,17 +168,17 @@ typedef struct vector_args {
 	dimension_t	va_dbm_bit0;
 	dimension_t	va_sbm_bit0;
 	dimension_t	va_len;
-/*#ifdef BUILD_FOR_GPU*/
-// This really should be conditionally compiled, but currently
-// BUILD_FOR_GPU isn't defined in the right spot...
-// Really BUILD_FOR_GPU get set and unset during the build,
-// but we need the struct to have a constant size.  We really
-// should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
-	/*
-	DIM3		va_xyz_len;		// used for kernels...	FOOBAR
-	int		va_dim_indices[3];	// do these refer to the dobj dimensions?	FOOBAR
-	*/
+#ifdef HAVE_ANY_GPU
 	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
+	// Bitmap objects will have these structs in host memory, but these pointers will be the GPU copies.
+
+	// It is not clear that we can have both dbm and sbm with this scheme, because we have one thread per word,
+	// but the dbm and sbm words may not correspond!?  Perhaps we have to check and see if it will work?
+	// Also, source bitmaps are read-only, so it's not really a huge problem if multiple threads access the
+	// same word, although performance may suffer.
+	Bitmap_GPU_Info *	va_dbm_gpu_info;
+	Bitmap_GPU_Info *	va_sbm_gpu_info;
+#endif // HAVE_ANY_GPU
 
 /*#endif // BUILD_FOR_GPU*/
 	argset_type	va_argstype;
@@ -200,6 +192,13 @@ typedef struct vector_args {
 	Vector_Arg	va_counts;
 } Vector_Args;
 
+#define VA_SBM_GPU_INFO_PTR(vap)		(vap)->va_sbm_gpu_info
+#define SET_VA_SBM_GPU_INFO_PTR(vap,p)		(vap)->va_sbm_gpu_info = p
+
+#define VA_DBM_GPU_INFO_PTR(vap)		(vap)->va_dbm_gpu_info
+#define SET_VA_DBM_GPU_INFO_PTR(vap,p)		(vap)->va_dbm_gpu_info = p
+
+#define VA_DBM_N_BITMAP_WORDS(vap)		BMI_N_WORDS( VA_DBM_GPU_INFO_PTR(vap) )
 #define VA_SLOW_SIZE(vap)			(vap)->va_iteration_size.ds_dimension
 
 #define VA_ITERATION_COUNT(vap,idx)		(vap)->va_iteration_size.ds_dimension[idx]
@@ -350,12 +349,13 @@ extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_DBM_EQSP_INC(vap)		VA_DEST_EQSP_INC( vap )
 
 #define eqsp_dest_inc			VA_DEST_EQSP_INC(vap)
+//#define eqsp_dbm_inc			VA_DEST_EQSP_INC(vap)
 #define eqsp_src1_inc			VA_SRC1_EQSP_INC(vap)
 #define eqsp_src2_inc			VA_SRC2_EQSP_INC(vap)
 #define eqsp_src3_inc			VA_SRC3_EQSP_INC(vap)
 #define eqsp_src4_inc			VA_SRC4_EQSP_INC(vap)
 #define eqsp_src5_inc			VA_SRC5_EQSP_INC(vap)
-#define eqsp_bit_inc			VA_SRC5_EQSP_INC(vap)
+#define eqsp_sbm_inc			VA_SRC5_EQSP_INC(vap)
 
 #define VA_SBM_BIT0(vap)		(vap)->va_sbm_bit0
 #define VA_DBM_BIT0(vap)		(vap)->va_dbm_bit0
@@ -546,4 +546,8 @@ extern void clear_oargs(Vec_Obj_Args *oap);
 
 extern Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at);
 
+extern void init_bitmap_gpu_info(Data_Obj *dp);
+#ifdef JUST_FOR_DEBUGGING
+extern void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p);
+#endif // JUST_FOR_DEBUGGING
 #endif /* ! _OBJ_ARGS_H_ */

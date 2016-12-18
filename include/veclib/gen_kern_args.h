@@ -32,9 +32,16 @@
 #define GEN_ARGS_EQSP_SBM(prefix)	prefix##_EQSP_SBM
 #define GEN_ARGS_SLOW_SBM(prefix)	prefix##_SLOW_SBM
 
-#define GEN_ARGS_EQSP_DBM(prefix)	prefix##_EQSP_DBM
+#define GEN_ARGS_EQSP_DBM(prefix)					\
+					GEN_SLOW_DBM_GPU_INFO(prefix)	\
+					GEN_SEP(prefix)			\
+					prefix##_EQSP_DBM
+
+// BUG?  need to make sure that GPU_INFO gets inserted everywhere that's necessary!?
 
 #define GEN_ARGS_SLOW_DBM(prefix)	GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix)			\
+					GEN_SLOW_DBM_GPU_INFO(prefix)	\
 					GEN_SEP(prefix)			\
 					prefix##_SLOW_DBM	// SLOW_SIZE
 
@@ -661,7 +668,8 @@
 //					GEN_SEP(prefix)		\
 //					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_SLOW_SIZE(p)		 p##_SLOW_SIZE
+#define GEN_SLOW_SIZE(p)		p##_SLOW_SIZE
+#define GEN_SLOW_DBM_GPU_INFO(p)	p##_DBM_GPU_INFO
 
 #define GEN_ARGS_SLOW_1(prefix)		GEN_SLOW_SIZE(prefix)		\
 					GEN_SEP(prefix) 		\

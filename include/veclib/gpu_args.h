@@ -151,6 +151,11 @@
 	KERNEL_ARG_QUALIFIER std_cpx* s2,			\
 	int len1, int len2
 
+// is this a special case???
+#define DECLARE_KERN_ARGS_DBM_GPU_INFO				\
+								\
+	KERNEL_ARG_QUALIFIER Bitmap_GPU_Info * dbm_info_p
+
 ////////////// end of special cases
 
 ////////////// generic args for kernel declaration
@@ -253,9 +258,13 @@
 #define DECLARE_KERN_ARGS_EQSP_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , int sbm_inc
 #define DECLARE_KERN_ARGS_SLOW_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , GPU_INDEX_TYPE sbm_inc
 
-#define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0
-#define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , int dbm_inc
-#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , GPU_INDEX_TYPE dbm_inc
+
+//#define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0
+//#define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , int dbm_inc
+//#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , GPU_INDEX_TYPE dbm_inc
+#define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm
+#define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm
+#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm
 
 /****************************************/
 
@@ -750,19 +759,11 @@
 
 // these are DIM3's, not the object increment sets...
 
-#ifdef FOOBAR
-#define KERN_ARGS_SLOW_INC1	dst_xyz_incr
-#define KERN_ARGS_SLOW_INC2	s1_xyz_incr
-#define KERN_ARGS_SLOW_INC3	s2_xyz_incr
-#define KERN_ARGS_SLOW_INC4	s3_xyz_incr
-#define KERN_ARGS_SLOW_INC5	s4_xyz_incr
-#else // ! FOOBAR
 #define KERN_ARGS_SLOW_INC1	dst_vwxyz_incr
 #define KERN_ARGS_SLOW_INC2	s1_vwxyz_incr
 #define KERN_ARGS_SLOW_INC3	s2_vwxyz_incr
 #define KERN_ARGS_SLOW_INC4	s3_vwxyz_incr
 #define KERN_ARGS_SLOW_INC5	s4_vwxyz_incr
-#endif // ! FOOBAR
 
 #define KERN_ARGS_FAST_LEN	VA_LENGTH(vap)
 #define KERN_ARGS_EQSP_LEN	VA_LENGTH(vap)

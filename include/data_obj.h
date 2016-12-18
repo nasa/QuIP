@@ -198,6 +198,8 @@ struct data_obj {
 #define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
 				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) && is_contiguous(QSP_ARG  dp) ) )
 
+// These two look the same - what is the difference???
+
 #define N_IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
 				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) &&		\
 				is_contiguous(DEFAULT_QSP_ARG  dp) ) )
@@ -346,8 +348,10 @@ extern int max_vectorizable;
 #define OBJ_MACH_PREC_PTR(dp)	PREC_MACH_PREC_PTR(OBJ_PREC_PTR(dp))
 
 #ifdef HAVE_ANY_GPU
-#define BITMAP_OBJ_GPU_INFO(dp)		SHP_BITMAP_GPU_INFO(OBJ_SHAPE(dp))
-#define SET_BITMAP_OBJ_GPU_INFO(dp,p)	SET_SHP_BITMAP_GPU_INFO(OBJ_SHAPE(dp),p)
+#define BITMAP_OBJ_GPU_INFO_HOST_PTR(dp)		SHP_BITMAP_GPU_INFO_H(OBJ_SHAPE(dp))
+#define SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,p)		SET_SHP_BITMAP_GPU_INFO_H(OBJ_SHAPE(dp),p)
+#define BITMAP_OBJ_GPU_INFO_DEV_PTR(dp)			SHP_BITMAP_GPU_INFO_G(OBJ_SHAPE(dp))
+#define SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,p)		SET_SHP_BITMAP_GPU_INFO_G(OBJ_SHAPE(dp),p)
 #endif // HAVE_ANY_GPU
 
 /* This is not so good now that the shape info is pointed to... */

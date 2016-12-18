@@ -54,18 +54,15 @@ else fprintf(stderr,"\tunhandled case for type %s\n",#type);
 #define SET_KERNEL_ARGS_DBM_OFFSET				\
 	SET_KERNEL_ARG( OCL_OFFSET_TYPE, &VA_DBM_OFFSET(vap) )
 
+#define SET_KERNEL_ARGS_DBM_GPU_INFO				\
+	SET_KERNEL_ARG( void *, &VA_DBM_GPU_INFO_PTR(vap) )
+
 #define SET_KERNEL_ARGS_FAST_SRC2				\
 	SET_KERNEL_ARG(void *,&(VARG_PTR( VA_SRC2(vap))) )
 
 #define SET_KERNEL_ARGS_FAST_CONV_DEST(t)	SET_KERNEL_ARGS_FAST_1
 
 #define SET_KERNEL_ARGS_SLOW_SIZE				\
-fprintf(stderr,"SET_KERNEL_ARGS_SLOW_SIZE:  %d %d %d %d %d\n",\
-VA_SLOW_SIZE(vap)[0],\
-VA_SLOW_SIZE(vap)[1],\
-VA_SLOW_SIZE(vap)[2],\
-VA_SLOW_SIZE(vap)[3],\
-VA_SLOW_SIZE(vap)[4]);\
 	SET_KERNEL_ARG(DIM5,VA_SLOW_SIZE(vap))
 
 #define SET_KERNEL_ARGS_SLOW_SIZE_OFFSET	/* nop */
@@ -161,17 +158,19 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 
 
 
-#define SET_KERNEL_ARGS_FAST_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
-					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))
+// I don't think that "fast" bitmaps can include a bit0 parameter, unless it is a multiple of the word size!?
+// If so, then they will need the gpu_info arg, which is no longer "fast" !?
 
-// BUG incset is not increment!?
-#define SET_KERNEL_ARGS_EQSP_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
-					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))	\
-					SET_KERNEL_ARG(int,&VA_SBM_EQSP_INC(vap))
+// BUG - how can we be sure that these definitions are consistent with the kernels?
+
+//	SET_KERNEL_ARG( void *, &VA_DBM_GPU_INFO_PTR(vap) )
+
+#define SET_KERNEL_ARGS_FAST_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))
+
+#define SET_KERNEL_ARGS_EQSP_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))
 
 #define SET_KERNEL_ARGS_SLOW_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
-					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))	\
-					/*SET_KERNEL_ARG(DIM3,&dbm_xyz_incr)*/ \
+					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))		\
 					SET_KERNEL_ARG(DIM5,&dbm_vwxyz_incr)
 
 

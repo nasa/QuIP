@@ -288,6 +288,7 @@ struct _flagtbl {
 	{	"shape checked",	DT_SHAPE_CHECKED	},
 	{	"partially assigned",	DT_PARTIALLY_ASSIGNED	},
 	{	"contiguous bitmap data",	DT_CONTIG_BITMAP_DATA	},
+	{	"bitmap GPU info present",	DT_HAS_BITMAP_GPU_INFO	},
 };
 
 static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)

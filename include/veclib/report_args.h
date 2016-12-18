@@ -155,7 +155,7 @@ REPORT_SVAL1
 										\
 REPORT_DST_PTR									\
 REPORT_SVAL1									\
-REPORT_DIM3_VAR(dst_xyz_incr)
+/*REPORT_DIM3_VAR(dst_xyz_incr)*/
 
 
 #define REPORT_SLOW_ARGS_1S_2

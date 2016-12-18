@@ -57,6 +57,7 @@ int is_evenly_spaced(Data_Obj *dp)
 		n *= OBJ_TYPE_DIM(dp,i);
 	}
 
+#ifdef PAD_BITMAP
 	if( IS_BITMAP(dp) ){
 		// bitmaps can seem contiguous, but are not if the row length is not a multiple of the word size (in bits)
 		if( (OBJ_TYPE_DIM(dp,1)*OBJ_TYPE_INC(dp,1)) % BITS_PER_BITMAP_WORD != 0 ){
@@ -64,6 +65,7 @@ int is_evenly_spaced(Data_Obj *dp)
 			return 0;
 		}
 	}
+#endif // PAD_BITMAP
 	SET_SHP_EQSP_INC(OBJ_SHAPE(dp),spacing);
 	return 1;
 }
@@ -143,8 +145,9 @@ void check_contiguity(Data_Obj *dp)
 	// Note that if the dimension is equal to 1, then the increment is 0.
 	while( inc==0 && i<N_DIMENSIONS ){
 		inc = OBJ_TYPE_INC(dp,i);
-		if( inc > 0 && inc != 1 )
+		if( inc > 0 && inc != 1 ){
 			return;	/* not contiguous */
+		}
 		i++;
 	}
 

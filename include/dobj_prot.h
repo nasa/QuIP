@@ -134,8 +134,10 @@ extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
 
 /* makedobj.c */
-extern int cpu_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align );
-extern void cpu_mem_free(QSP_ARG_DECL  Data_Obj *dp );
+extern int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align );
+extern void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp );
+extern void * cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align );
+extern void cpu_mem_free(QSP_ARG_DECL  void *ptr );
 
 extern Data_Obj * make_dobj_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *,uint32_t);
 extern void	  set_dp_alignment(int);

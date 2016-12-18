@@ -129,14 +129,6 @@ _VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )
 
 // rvset moved to all_same_prec_vec.c
 
-_VEC_FUNC_VVMAP( vvm_le , <= )
-_VEC_FUNC_VVMAP( vvm_ge , >= )
-_VEC_FUNC_VVMAP( vvm_lt , <  )
-_VEC_FUNC_VVMAP( vvm_gt , >  )
-_VEC_FUNC_VVMAP( vvm_ne , != )
-_VEC_FUNC_VVMAP( vvm_eq , == )
-
-
 /* New conditional assignments */
 
 _VEC_FUNC_5V( vv_vv_lt, dst = (dest_type) ( src3 < src4 ? src1 : src2 ) )
@@ -235,6 +227,14 @@ _VEC_FUNC_3V_PROJ( rvdot, dst = (dest_type)  0, dst += (dest_type)  src1 * src2 
 _VEC_FUNC_2V( rvrand , dst = (dest_type) rn((u_long)src1)	)
 #endif /* ! BUILD_FOR_GPU */
 
+_VEC_FUNC_VVMAP( vvm_le , <= )
+_VEC_FUNC_VVMAP( vvm_ge , >= )
+_VEC_FUNC_VVMAP( vvm_lt , <  )
+_VEC_FUNC_VVMAP( vvm_gt , >  )
+_VEC_FUNC_VVMAP( vvm_ne , != )
+_VEC_FUNC_VVMAP( vvm_eq , == )
+
+
 /* bitmap, scalar magnitude compare */
 
 _VEC_FUNC_VSMAP( vsm_gt , > )
@@ -257,8 +257,4 @@ _VEC_FUNC_VVSLCT( rvvv_slct , dst = (dest_type) ( srcbit ? src1 : src2 ) )
 _VEC_FUNC_VSSLCT( rvvs_slct , dst = (dest_type) ( srcbit ? src1 : scalar1_val ) )
 _VEC_FUNC_SSSLCT( rvss_slct , dst = (dest_type) ( srcbit ? scalar1_val : scalar2_val ) )
 
-#ifdef OLD_STYLE_CONVERSIONS
-_VEC_FUNC_DBM_1V( vconv_to_bit, SET_DBM_BIT( src1!=0 ) )
-_VEC_FUNC_SBM_1( vconv_from_bit, if( srcbit ){ dst = 1; } else { dst = 0; } )
-#endif // OLD_STYLE_CONVERSIONS
 

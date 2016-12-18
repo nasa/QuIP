@@ -60,6 +60,20 @@
 
 #endif // ! BUILD_FOR_CUDA
 
+// slow defn - almost
+#define SET_INDICES_DBM		SET_DBM_TBL_INDEX							\
+				SET_DBM_INDEX_ARRAY
+
+#define SET_INDICES_DBM_1S_	SET_DBM_TBL_INDEX
+
+#define SET_DBM_TBL_INDEX	tbl_idx = THREAD_INDEX_X;						\
+  				i_dbm_word = dbm_info_p->word_tbl[tbl_idx].word_offset;
+
+#define SET_DBM_INDEX_ARRAY										\
+				dbmi = dbm_info_p->word_tbl[tbl_idx].first_bit_num;
+
+#define DBM_EQSP_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
+
 #include "veclib/fast_eqsp_defs.h"
 
 

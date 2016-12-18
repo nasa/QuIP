@@ -73,7 +73,7 @@
 #define XFER_SLOW_ARGS_DBM_1S_1SRC	XFER_SLOW_ARGS_DBM_1SRC XFER_ARGS_1S
 
 #define XFER_FAST_ARGS_DBM_1SRC	XFER_FAST_ARGS_DBM XFER_FAST_ARGS_SRC1 XFER_FAST_COUNT(SRC1_DP)
-#define XFER_EQSP_ARGS_DBM_1SRC	XFER_EQSP_ARGS_DBM XFER_FAST_ARGS_SRC1 XFER_EQSP_COUNT(SRC1_DP)
+#define XFER_EQSP_ARGS_DBM_1SRC	XFER_EQSP_ARGS_DBM XFER_EQSP_ARGS_SRC1 XFER_EQSP_COUNT(SRC1_DP)
 #define XFER_SLOW_ARGS_DBM_1SRC	XFER_SLOW_ARGS_DBM XFER_SLOW_ARGS_SRC1
 
 // for rvmov, sbm is passed as src1?
@@ -202,24 +202,6 @@
 
 #define XFER_FAST_ARGS_2	XFER_FAST_ARGS_1 XFER_FAST_ARGS_SRC1
 
-#define XFER_FAST_ARGS_DBM					\
-	XFER_DBM_PTR						\
-	XFER_FAST_COUNT(bitmap_dst_dp)				\
-	SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );
-
-#define XFER_FAST_ARGS_SBM					\
-	XFER_SBM_PTR						\
-	SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
-
-#define XFER_EQSP_ARGS_DBM					\
-	XFER_DBM_PTR						\
-	SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );		\
-	XFER_DST_INCR(bitmap_dst_dp)
-
-#define XFER_EQSP_ARGS_SBM					\
-	XFER_SBM_PTR						\
-	SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
-
 /*#define XFER_ARGS_1S						\
  *	SET_VA_SVAL1(vap, (oap->oa_svp[0])->std_scalar );
  */
@@ -250,16 +232,37 @@
 	SET_VA_SVAL2(vap, OA_SVAL(oap,1) );
 
 
-#define XFER_SLOW_ARGS_DBM	SLOW_ARGS_SETUP					\
-				XFER_DBM_PTR			\
+#define XFER_FAST_ARGS_DBM								\
+				XFER_DBM_PTR						\
+				XFER_FAST_COUNT(bitmap_dst_dp)				\
+				SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );
+
+#define XFER_FAST_ARGS_SBM								\
+				XFER_SBM_PTR						\
+				SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
+
+#define XFER_EQSP_ARGS_DBM								\
+				SET_VA_FLAGS(vap,VA_EQSP_ARGS);				\
+				XFER_FAST_ARGS_DBM					\
+				XFER_EQSP_DBM_GPU_INFO /* nop on CPU */			\
+				SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );		\
+				XFER_EQSP_INC_DBM
+
+#define XFER_EQSP_ARGS_SBM								\
+				XFER_SBM_PTR						\
+				SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
+
+#define XFER_SLOW_ARGS_DBM	SLOW_ARGS_SETUP						\
+				XFER_DBM_PTR						\
+				XFER_SLOW_DBM_GPU_INFO					\
 				SET_VA_DEST_INCSET(vap, OBJ_TYPE_INCS(bitmap_dst_dp) );	\
 				SET_VA_COUNT(vap, OBJ_TYPE_DIMS(bitmap_dst_dp) );	\
 				SET_VA_DBM_BIT0(vap, OBJ_BIT0(bitmap_dst_dp) );
 
-#define XFER_SLOW_ARGS_SBM	SLOW_ARGS_SETUP					\
-				XFER_SBM_PTR					\
+#define XFER_SLOW_ARGS_SBM	SLOW_ARGS_SETUP						\
+				XFER_SBM_PTR						\
 				SET_VA_SBM_INCSET(vap, OBJ_TYPE_INCS(bitmap_src_dp) );	\
-				SET_VA_SBM_DIMSET(vap, OBJ_TYPE_DIMS(bitmap_src_dp) );\
+				SET_VA_SBM_DIMSET(vap, OBJ_TYPE_DIMS(bitmap_src_dp) );	\
 				SET_VA_SBM_BIT0(vap, OBJ_BIT0(bitmap_src_dp) );
 
 
@@ -299,11 +302,21 @@
 #define XFER_DBM_PTR		SET_VA_DEST_PTR(vap, OBJ_DATA_PTR(bitmap_dst_dp) );
 #define XFER_SBM_PTR		SET_VA_SBM_PTR(vap, OBJ_DATA_PTR(bitmap_src_dp) );
 
+// XFER_DBM_GPU_INFO needs to be defined differently for cpu & gpu !!!
+
+#ifdef MOVED
+#define XFER_DBM_GPU_INFO	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp) == NULL ){				\
+					/* only for gpu objects! */							\
+					init_bitmap_gpu_info(bitmap_dst_dp);						\
+				}											\
+				SET_VA_DBM_GPU_INFO_PTR(vap, BITMAP_OBJ_GPU_INFO_DEV_PTR(bitmap_dst_dp));
+#endif // MOVED
+
 #define XFER_FAST_ARGS_1	XFER_DEST_PTR					\
 				XFER_FAST_COUNT(dst_dp)
 
 #define XFER_FAST_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );
-#define XFER_EQSP_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );
+#define XFER_EQSP_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );	// same as XFER_FAST_COUNT !?
 
 #define XFER_FAST_ARGS_SRC(idx)	XFER_SRC_PTR(idx)
 #define XFER_FAST_ARGS_SRC1	XFER_FAST_ARGS_SRC(0)
@@ -352,16 +365,22 @@
 #define XFER_SRC3_INCR(dp)	SET_VA_SRC3_INCSET(vap,OBJ_TYPE_INCS(dp) );
 #define XFER_SRC4_INCR(dp)	SET_VA_SRC4_INCSET(vap,OBJ_TYPE_INCS(dp) );
 
+#define XFER_EQSP_DEST_INC(dp)	SET_VA_DEST_EQSP_INC(vap, OBJ_TYPE_INC(dp,OBJ_MINDIM(dp) ) );
+
+//#define XFER_EQSP_INC_1		SET_VA_DEST_EQSP_INC(vap, OBJ_TYPE_INC(OA_DEST(oap),OBJ_MINDIM(OA_DEST(oap) ) ) );
+//#define XFER_EQSP_INC_DBM	SET_VA_DEST_EQSP_INC(vap, OBJ_TYPE_INC(bitmap_dst_dp,OBJ_MINDIM(bitmap_dst_dp ) ) );
+#define XFER_EQSP_INC_1		XFER_EQSP_DEST_INC( OA_DEST(oap) )
+#define XFER_EQSP_INC_DBM	XFER_EQSP_DEST_INC( bitmap_dst_dp )
+
 // XFER_FAST_ARGS_1 transfers the data ptr and the total count
 
 #define XFER_EQSP_ARGS_1	SET_VA_FLAGS(vap,VA_EQSP_ARGS);		\
 				XFER_FAST_ARGS_1			\
-				SET_VA_DEST_EQSP_INC(vap,			\
-				OBJ_TYPE_INC(OA_DEST(oap),OBJ_MINDIM(OA_DEST(oap) ) ) );
+				XFER_EQSP_INC_1
+
 
 #define XFER_EQSP_ARGS_SRC(idx)	XFER_FAST_ARGS_SRC(idx)			\
-				SET_VA_SRC_EQSP_INC(vap,idx,			\
-				OBJ_TYPE_INC(OA_SRC_OBJ(oap,idx),OBJ_MINDIM(OA_SRC_OBJ(oap,idx) ) ) );
+				SET_VA_SRC_EQSP_INC(vap,idx,OBJ_TYPE_INC(OA_SRC_OBJ(oap,idx),OBJ_MINDIM(OA_SRC_OBJ(oap,idx) ) ) );
 
 #define XFER_EQSP_ARGS_SRC1	XFER_EQSP_ARGS_SRC(0)
 #define XFER_EQSP_ARGS_SRC2	XFER_EQSP_ARGS_SRC(1)

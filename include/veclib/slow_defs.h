@@ -137,13 +137,14 @@
 #define WORDS_PER_FRAME		(words_per_row * szarr.d5_dim[2])
 #define WORDS_PER_SEQ		(words_per_row * szarr.d5_dim[2] * szarr.d5_dim[3])
 
-#define SET_INDICES_DBM		i_dbm_word = THREAD_INDEX_X;				\
-				words_per_row = ((BITS_PER_BITMAP_WORD-1)+(szarr.d5_dim[0]*szarr.d5_dim[1]))%BITS_PER_BITMAP_WORD;	\
-				dbmi.d5_dim[0] = IDX_WITHIN_ROW % szarr.d5_dim[0];			/* component index */		\
-				dbmi.d5_dim[1] = IDX_WITHIN_ROW / szarr.d5_dim[1];			/* column index */		\
-				dbmi.d5_dim[2] = (i_dbm_word / words_per_row) % szarr.d5_dim[2];	/* row index */			\
-				dbmi.d5_dim[3] = (i_dbm_word / WORDS_PER_FRAME) % szarr.d5_dim[3];	/* frame index */		\
-				dbmi.d5_dim[4] = (i_dbm_word / WORDS_PER_SEQ);				/* seq index */
+#define SET_INDICES_DBM		tbl_idx = THREAD_INDEX_X;						\
+  				i_dbm_word = dbm_info_p->word_tbl[tbl_idx].word_offset;			\
+				dbmi.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_indices[0];	\
+				dbmi.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_indices[1];	\
+				dbmi.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_indices[2];	\
+				dbmi.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_indices[3];	\
+				dbmi.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_indices[4];	\
+
 
 #define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
 

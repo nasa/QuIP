@@ -198,7 +198,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
 #define REPORT_SWITCH(name,sw)		_REPORT_SWITCH(name,sw)
 
 #define _REPORT_SWITCH(name,sw)						\
-sprintf(DEFAULT_ERROR_STRING,"CAlling %s version of %s",#sw,#name);	\
+sprintf(DEFAULT_ERROR_STRING,"Calling %s version of %s",#sw,#name);	\
 NADVISE(DEFAULT_ERROR_STRING);
 
 #else /* ! MORE_DEBUG */
@@ -221,8 +221,8 @@ REPORT_SWITCH(STRINGIFY(HOST_TYPED_CALL_NAME(name,type_code)),fast)	\
 REPORT_SWITCH(name,eqsp)						\
 		XFER_EQSP_ARGS_##bitmap##typ##scalars##vectors		\
 /*sprintf(DEFAULT_ERROR_STRING,"showing vec args for eqsp %s",#name);\
-NADVISE(DEFAULT_ERROR_STRING);\
-show_vec_args(vap);*/\
+NADVISE(DEFAULT_ERROR_STRING);*/\
+/*show_vec_args(vap);*/\
 		CHAIN_CHECK( HOST_EQSP_CALL_NAME(name) )		\
 	} else {							\
 REPORT_SWITCH(name,slow)						\

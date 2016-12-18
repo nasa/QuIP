@@ -183,14 +183,27 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 //#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
 //#define DBM_SLOW_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+vwxyz_len.d5_dim[1]
 
-#define FLEN_DBM_LOOP( statement, advance )				\
-									\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){	\
-		if( DBM_FAST_LEN_TEST ){				\
-			dbm_bit = NUMBERED_BIT(i_dbm_bit);		\
-			statement ;					\
-		}							\
-		advance							\
+#define FLEN_DBM_LOOP( statement, advance )						\
+											\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){			\
+		if( DBM_FAST_LEN_TEST ){						\
+			dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+			if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
+				statement;						\
+				advance;						\
+			}								\
+		}									\
+		advance									\
+	}
+
+#define EQSP_DBM_LOOP( statement, advance )					\
+										\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
+			statement;						\
+			advance;						\
+		}								\
 	}
 
 #define SLEN_DBM_LOOP( statement, advance )				\
@@ -207,7 +220,18 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 // We don't necessarily want to set all of the bits in the word, if there is
 // a skipping increment?  So this probably won't work for subsamples?  BUG?
 
-#define SLOW_DBM_LOOP( statement, advance )	FAST_DBM_LOOP( statement, advance )
+//#define SLOW_DBM_LOOP( statement, advance )	FAST_DBM_LOOP( statement, advance )
+
+//#ifdef OMIT_FOR_TESTING
+#define SLOW_DBM_LOOP( statement, advance )					\
+										\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
+			statement;						\
+			advance;						\
+		}								\
+	}
 
 // PORT ?
 // BUG these seem to be re-defined in ocl...
@@ -222,7 +246,7 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 #define ADVANCE_EQSP_SRC2	index3 += inc3;
 #define ADVANCE_EQSP_SRC3	index4 += inc4;
 #define ADVANCE_EQSP_SRC4	index5 += inc5;
-#define ADVANCE_EQSP_DBM	/* do something??? */
+#define ADVANCE_EQSP_DBM	/* dbm_bit += dbm_inc; */
 
 #define ADVANCE_SLOW_SRC1	index2.d5_dim[1]+=inc2.d5_dim[1];
 #define ADVANCE_SLOW_SRC2	index3.d5_dim[1]+=inc3.d5_dim[1];
@@ -238,6 +262,8 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 
 #define ADVANCE_EQSP_DBM_	ADVANCE_EQSP_DBM
 #define ADVANCE_EQSP_DBM_1SRC	ADVANCE_EQSP_DBM ADVANCE_EQSP_SRC1
+#define ADVANCE_EQSP_DBM_1S_1SRC	ADVANCE_EQSP_DBM_1SRC
+#define ADVANCE_EQSP_DBM_1S_	/* nop */
 #define ADVANCE_EQSP_DBM_2SRCS	ADVANCE_EQSP_DBM_1SRC ADVANCE_EQSP_SRC2
 #define ADVANCE_EQSP_DBM_SBM	ADVANCE_EQSP_DBM ADVANCE_EQSP_SBM
 
@@ -989,10 +1015,10 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_EQSP_CALL_NAME(name)( DECLARE_KERN_ARGS_EQSP_DBM_##typ##scalars##vectors )	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
-	SCALE_INDICES_EQSP_DBM_##vectors				\
+	INIT_INDICES_DBM_##scalars##vectors					\
+	SCALE_INDICES_EQSP_DBM_##scalars##vectors				\
 	/*ADJUST_DBM_WORD_IDX*/							\
-	FAST_DBM_LOOP(statement,ADVANCE_EQSP_DBM_##vectors)		\
+	EQSP_DBM_LOOP(statement,ADVANCE_EQSP_DBM_##scalars##vectors)		\
 }
 
 
@@ -1031,11 +1057,11 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_DBM_##typ##scalars##vectors)	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
-	SCALE_INDICES_EQSP_DBM_##vectors				\
+	INIT_INDICES_DBM_##scalars##vectors					\
+	SCALE_INDICES_EQSP_DBM_##scalars##vectors				\
 	/* BUG need to put len test in statement */			\
 	/*ADJUST_DBM_WORD_IDX*/							\
-	FLEN_DBM_LOOP( statement, ADVANCE_EQSP_DBM_##vectors )		\
+	FLEN_DBM_LOOP( statement, ADVANCE_EQSP_DBM_##scalars##vectors )		\
 }
 
 

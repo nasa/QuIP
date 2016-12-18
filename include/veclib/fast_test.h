@@ -91,22 +91,29 @@
 				&& IS_EVENLY_SPACED(dst_dp)	\
 				&& dp_same_size_query_rc(bitmap_src_dp,dst_dp) )
 
-/* we no longer assume contiguous bitmaps??? */
+#ifdef BUILD_FOR_GPU
+
+#define FAST_TEST_DBM_		( N_IS_CONTIGUOUS(bitmap_dst_dp)					\
+					&& OBJ_BIT0(bitmap_dst_dp)==0					\
+					&& (OBJ_N_TYPE_ELTS(bitmap_dst_dp)%BITS_PER_BITMAP_WORD)==0 )
+#else // ! BUILD_FOR_GPU
 
 #define FAST_TEST_DBM_		( N_IS_CONTIGUOUS(bitmap_dst_dp) )
 
-#define FAST_TEST_DBM_1SRC		( N_IS_CONTIGUOUS(bitmap_dst_dp)	\
-					&& N_IS_CONTIGUOUS(SRC1_DP)	\
+#endif // ! BUILD_FOR_GPU
+
+#define FAST_TEST_DBM_1SRC		( FAST_TEST_DBM_						\
+					&& N_IS_CONTIGUOUS(SRC1_DP)					\
 					&& dp_same_size_query(SRC1_DP,bitmap_dst_dp) )
 
-#define FAST_TEST_DBM_SBM		( N_IS_CONTIGUOUS(bitmap_dst_dp)	\
-					&& N_IS_CONTIGUOUS(bitmap_src_dp)	\
+#define FAST_TEST_DBM_SBM		( FAST_TEST_DBM_						\
+					&& N_IS_CONTIGUOUS(bitmap_src_dp)				\
 					&& dp_same_size_query(bitmap_src_dp,bitmap_dst_dp) )
 
-#define FAST_TEST_DBM_2SRCS	( N_IS_CONTIGUOUS(bitmap_dst_dp)	\
-					&& N_IS_CONTIGUOUS(SRC1_DP)	\
-					&& N_IS_CONTIGUOUS(SRC2_DP)	\
-					&& dp_same_size_query(SRC1_DP,bitmap_dst_dp) \
+#define FAST_TEST_DBM_2SRCS	( FAST_TEST_DBM_							\
+					&& N_IS_CONTIGUOUS(SRC1_DP)					\
+					&& N_IS_CONTIGUOUS(SRC2_DP)					\
+					&& dp_same_size_query(SRC1_DP,bitmap_dst_dp) 			\
 					&& dp_same_size_query(SRC1_DP,bitmap_dst_dp))
 
 #define EQSP_TEST_DBM_		( IS_EVENLY_SPACED(bitmap_dst_dp) )

@@ -19,6 +19,9 @@
 
 #define L_ALIGNMENT(a)		(((int_for_addr)a) & 7)
 
+#define XFER_EQSP_DBM_GPU_INFO	/* nop on cpu */
+#define XFER_SLOW_DBM_GPU_INFO	/* nop on cpu */
+
 /***************** Section 1 - definitions **********************/
 
 //#include "calling_args.h"	// declaration args, shared
@@ -278,8 +281,8 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define EQSP_ADVANCE_QUAT_SRC3	qs3_ptr += eqsp_src3_inc ;
 #define EQSP_ADVANCE_QUAT_SRC4	qs4_ptr += eqsp_src4_inc ;
 //#define EQSP_ADVANCE_BITMAP	which_bit  += eqsp_bit_inc ;
-#define EQSP_ADVANCE_DBM	dbm_bit  += eqsp_bit_inc ;
-#define EQSP_ADVANCE_SBM	sbm_bit  += eqsp_bit_inc ;
+#define EQSP_ADVANCE_DBM	dbm_bit  += eqsp_dbm_inc ;
+#define EQSP_ADVANCE_SBM	sbm_bit  += eqsp_sbm_inc ;
 #define EQSP_ADVANCE_DBM_SBM	EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM
 
 #define EQSP_ADVANCE_2		EQSP_ADVANCE_1 EQSP_ADVANCE_SRC1

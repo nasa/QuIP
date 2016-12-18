@@ -36,11 +36,9 @@ void set_dp_alignment(int aval)
 	else default_align=aval;
 }
 
-// allocate memory for a new object in ram
-
-int cpu_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
 {
-	unsigned char *st;
+	void *ptr;
 
 	/* if getbuf is not aliased to malloc but instead uses getspace,
 	 * then this is not correct!?  BUG
@@ -56,13 +54,23 @@ int cpu_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
 	if( align > 8 ){
 		size += align - 1;	/* guarantee we will be able to align */
 	}
-	st=(unsigned char *)getbuf(size);
-	if( st == (unsigned char *)NULL ){
+
+	ptr=(unsigned char *)getbuf(size);
+	if( ptr == (unsigned char *)NULL ){
 		mem_err("no more RAM for data objects");
-		return(-1);
 	}
-	SET_OBJ_DATA_PTR(dp,st);
-	SET_OBJ_UNALIGNED_PTR(dp,OBJ_DATA_PTR(dp));
+	return ptr;
+}
+
+// allocate memory for a new object in ram
+
+int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+{
+	unsigned char *st;
+	st = cpu_mem_alloc(QSP_ARG  NULL, size, align );
+
+	/* remember the original address of the data for freeing! */
+	SET_OBJ_UNALIGNED_PTR(dp,st);
 
 	if( align > 0 ){
 #ifdef QUIP_DEBUG
@@ -71,9 +79,10 @@ sprintf(ERROR_STRING,"get_data_space:  aligning area provided by getbuf (align =
 advise(ERROR_STRING);
 }
 #endif
-		/* remember the original address of the data for freeing! */
-		SET_OBJ_DATA_PTR(dp, (void *)((((u_long)OBJ_DATA_PTR(dp))+align-1) & ~(align-1)) );
+		st = (u_char *)((((u_long)st)+align-1) & ~(align-1));
 	}
+
+	SET_OBJ_DATA_PTR(dp,st);
 
 	return 0;
 }
@@ -98,9 +107,6 @@ advise(ERROR_STRING);
 
 static int get_data_space(QSP_ARG_DECL  Data_Obj *dp,dimension_t size, int min_align)
 {
-#ifdef FOOBAR
-	Data_Area *ap;
-#endif // FOOBAR
 	int align=0;
 
 #ifdef QUIP_DEBUG
@@ -111,27 +117,14 @@ advise(ERROR_STRING);
 }
 #endif
 
-#ifdef FOOBAR
-	// is this set yet?
-	ap = OBJ_AREA(dp);
-#endif // FOOBAR
-
 	if( default_align > 0 )
 		align = default_align;
 	if( min_align > 1 && min_align > align )
 		align = min_align;
 
-//#ifdef CAUTIOUS
-//	if( PF_ALLOC_FN( OBJ_PLATFORM(dp) ) == NULL ){
-//		sprintf(ERROR_STRING,
-//"CAUTIOUS: get_data_space:  Platform %s has a null memory allocator!?",
-//			PLATFORM_NAME(OBJ_PLATFORM(dp)) );
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
-	assert( PF_ALLOC_FN( OBJ_PLATFORM(dp) ) != NULL );
+	assert( PF_OBJ_ALLOC_FN( OBJ_PLATFORM(dp) ) != NULL );
 
-	return (* PF_ALLOC_FN( OBJ_PLATFORM(dp) ) )( QSP_ARG  dp, size, align );
+	return (* PF_OBJ_ALLOC_FN( OBJ_PLATFORM(dp) ) )( QSP_ARG  dp, size, align );
 
 } /* end get_data_space() */
 
@@ -238,6 +231,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 #endif // ! NOT_YET
 #endif /* HAVE_CUDA */
 
+#ifdef PAD_MINDIM
 /* fix_bitmap_increments
  */
 
@@ -275,6 +269,7 @@ static void fix_bitmap_increments(Data_Obj *dp)
 	CLEAR_OBJ_FLAG_BITS(dp,DT_CHECKED);
 	check_contiguity(dp);
 }
+#endif // PAD_MINDIM
 
 /*
  * Initialize an existing header structure
@@ -332,7 +327,7 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	}
 
 #ifdef HAVE_ANY_GPU
-	SET_BITMAP_OBJ_GPU_INFO(dp,NULL);
+	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,NULL);
 #endif // HAVE_ANY_GPU
 
 	return(dp);
@@ -434,8 +429,7 @@ make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 		SET_OBJ_DATA_PTR(dp,NULL);
 	} else {
 		if( IS_BITMAP(dp) ){
-			int n_bits, n_words, i_dim;
-
+			int n_bits, n_words;
 			/* size is in elements (bits), convert to # words */
 			/* round n bits up to an even number of words */
 
@@ -451,7 +445,17 @@ make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 			 *
 			 * In the case that there is padding, we have
 			 * to fix the increments.
+			 *
+			 * BUG now we have redone the GPU implementation, and this
+			 * doesn't seem to be an important consideration any more -
+			 * so let's go back and try it the old way, with all the bits
+			 * contiguous...  We should try to do this with macros/functions
+			 * so that it can be changed easily...
 			 */
+
+#ifdef PAD_MINDIM
+			int i_dim;
+
 			n_bits = OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
 			// n_words is generally the row length, but it doesn't have to be. TEST
 			n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/
@@ -469,6 +473,15 @@ make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 				SET_OBJ_N_MACH_ELTS(dp,
 					OBJ_N_MACH_ELTS(dp) * OBJ_MACH_DIM(dp,i_dim) );
 			}
+#else // ! PAD_MINDIM
+			n_bits = OBJ_N_TYPE_ELTS(dp);	// total bits
+			n_words = (n_bits+BITS_PER_BITMAP_WORD-1)/
+						BITS_PER_BITMAP_WORD;
+			size = n_words;
+			SET_OBJ_N_MACH_ELTS(dp,n_words);
+			/* What about the machine dimensions??? */
+#endif // ! PAD_MINDIM
+
 		} else {
 			size = OBJ_N_MACH_ELTS(dp);
 		}
