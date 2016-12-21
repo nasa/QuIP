@@ -479,6 +479,11 @@ make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 						BITS_PER_BITMAP_WORD;
 			size = n_words;
 			SET_OBJ_N_MACH_ELTS(dp,n_words);
+			SET_OBJ_MACH_DIM(dp,0,1);
+			SET_OBJ_MACH_DIM(dp,1,n_words);
+			SET_OBJ_MACH_DIM(dp,2,1);
+			SET_OBJ_MACH_DIM(dp,3,1);
+			SET_OBJ_MACH_DIM(dp,4,1);
 			/* What about the machine dimensions??? */
 #endif // ! PAD_MINDIM
 

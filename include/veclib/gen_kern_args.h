@@ -41,6 +41,9 @@
 
 #define GEN_ARGS_SLOW_DBM(prefix)	GEN_SLOW_SIZE(prefix)		\
 					GEN_SEP(prefix)			\
+					GEN_ARGS_SLOW_DBM_BASIC(prefix)
+
+#define GEN_ARGS_SLOW_DBM_BASIC(prefix)					\
 					GEN_SLOW_DBM_GPU_INFO(prefix)	\
 					GEN_SEP(prefix)			\
 					prefix##_SLOW_DBM	// SLOW_SIZE
@@ -653,9 +656,9 @@
 						GEN_SEP(prefix)			\
 						GEN_ARGS_SLOW_DBM(prefix)
 
-#define GEN_ARGS_SLOW_DBM_1S_(prefix)		GEN_ARGS_1S(prefix)	\
+#define GEN_ARGS_SLOW_DBM_1S_(prefix)		GEN_ARGS_1S(prefix)		\
 						GEN_SEP(prefix)			\
-						GEN_ARGS_SLOW_DBM(prefix)
+						GEN_ARGS_SLOW_DBM_BASIC(prefix)
 
 
 #define GEN_SLOW_CONV_DEST(prefix,t)	GEN_FAST_CONV_DEST(prefix,t)	\

@@ -1000,7 +1000,7 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_FAST_CALL_NAME(name)( DECLARE_KERN_ARGS_FAST_DBM_##typ##scalars##vectors )	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	/*ADJUST_DBM_WORD_IDX*/							\
 	FAST_DBM_LOOP( statement, ADVANCE_FAST_DBM_##vectors )		\
 }
@@ -1030,7 +1030,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLOW_CALL_NAME(name)( DECLARE_KERN_ARGS_SLOW_DBM_
 {									\
 	/*INIT_INDICES_XYZ_DBM_##vectors*/					\
 	/*SCALE_INDICES_XYZ_DBM_##vectors*/					\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	SCALE_INDICES_DBM_##vectors					\
 									\
 	/*ADJUST_DBM_WORD_IDX*/							\
@@ -1045,7 +1045,7 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_DBM_##typ##scalars##vectors)	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	/*ADJUST_DBM_WORD_IDX*/							\
 	/* BUG need to put len test in statement */			\
 	FLEN_DBM_LOOP(statement,ADVANCE_FAST_DBM_##vectors)			\
@@ -1074,7 +1074,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_DBM_
 {									\
 	/*INIT_INDICES_XYZ_DBM_##vectors*/					\
 	/*SCALE_INDICES_XYZ_DBM_##vectors*/					\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	SCALE_INDICES_DBM_##vectors					\
 									\
 	/* BUG need to put len test in statement */			\

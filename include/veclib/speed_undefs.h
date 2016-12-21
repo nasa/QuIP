@@ -37,8 +37,10 @@
 #undef SCALE_INDEX
 //#undef SET_INDICES_XYZ_DBM
 #undef SET_INDICES_DBM
+#undef SET_INDICES_DBM_1S_
 #undef ADJUST_DBM_WORD_IDX
 #undef SET_SBM_WORD_IDX
+#undef DECL_BASIC_INDICES_DBM
 #undef srcbit
 
 #undef IDX1_0

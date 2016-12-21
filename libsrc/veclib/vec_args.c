@@ -1017,6 +1017,17 @@ void show_vec_args(const Vector_Args *vap)
 		fprintf(stderr,"\tsrc4_inc = %d\n",VA_SRC4_EQSP_INC( vap ) );
 		fprintf(stderr,"\tsrc5_inc = %d\n",VA_SRC5_EQSP_INC( vap ) );
 	}
+#ifdef HAVE_ANY_GPU
+	fprintf(stderr,"iteration sizes:  %d %d %d %d %d\n",
+		vap->va_iteration_size.ds_dimension[0],
+		vap->va_iteration_size.ds_dimension[1],
+		vap->va_iteration_size.ds_dimension[2],
+		vap->va_iteration_size.ds_dimension[3],
+		vap->va_iteration_size.ds_dimension[4]);
+	fprintf(stderr,"iteration total:  %d\n",
+		vap->va_iteration_size.ds_n_elts);
+#endif HAVE_ANY_GPU
+	
 }
 
 #ifdef PAD_MINDIM

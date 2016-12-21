@@ -137,16 +137,24 @@
 #define WORDS_PER_FRAME		(words_per_row * szarr.d5_dim[2])
 #define WORDS_PER_SEQ		(words_per_row * szarr.d5_dim[2] * szarr.d5_dim[3])
 
-#define SET_INDICES_DBM		tbl_idx = THREAD_INDEX_X;						\
-  				i_dbm_word = dbm_info_p->word_tbl[tbl_idx].word_offset;			\
+#define SET_INDICES_DBM_1S_	SET_BASIC_INDICES_DBM
+
+#define SET_INDICES_DBM		SET_BASIC_INDICES_DBM							\
 				dbmi.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_indices[0];	\
 				dbmi.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_indices[1];	\
 				dbmi.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_indices[2];	\
 				dbmi.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_indices[3];	\
 				dbmi.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_indices[4];	\
 
+#define SET_BASIC_INDICES_DBM	tbl_idx = THREAD_INDEX_X;						\
+  				i_dbm_word = dbm_info_p->word_tbl[tbl_idx].word_offset;
 
-#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
+#define DECL_BASIC_INDICES_DBM	unsigned int i_dbm_bit;				\
+				int i_dbm_word; bitmap_word dbm_bit;	\
+				int tbl_idx;
+
+
+//#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
 
 //#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
 // From these definitions, it is not clear whether the rows are padded to be an 

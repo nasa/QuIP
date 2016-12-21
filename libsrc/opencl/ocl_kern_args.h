@@ -169,10 +169,12 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 
 #define SET_KERNEL_ARGS_EQSP_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))
 
-#define SET_KERNEL_ARGS_SLOW_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
-					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))		\
-					SET_KERNEL_ARG(DIM5,&dbm_vwxyz_incr)
+//#define SET_KERNEL_ARGS_SLOW_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))	\
+//					SET_KERNEL_ARG(int,&(VA_DBM_BIT0(vap)))		\
+//					SET_KERNEL_ARG(DIM5,&dbm_vwxyz_incr)
 
+// BUG - there doesn't seem to be anything that enforces these definitions to match what is done elsewhere?
+#define SET_KERNEL_ARGS_SLOW_DBM	SET_KERNEL_ARG(void *,&(VA_DBM_PTR(vap)))
 
 
 // SRC1

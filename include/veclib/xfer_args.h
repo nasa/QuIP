@@ -333,13 +333,15 @@
 	SLOW_ARGS_SETUP						\
 	XFER_DEST_PTR						\
 	SET_VA_DEST_INCSET(vap, OBJ_TYPE_INCS(dst_dp) );	\
-	SET_VA_COUNT(vap,OBJ_TYPE_DIMS(dst_dp) );
+	SET_VA_COUNT(vap,OBJ_TYPE_DIMS(dst_dp) );		\
+/*show_vec_args(vap);*/
 
 
 // Why don't we transfer the destination dimset???
 
 #define XFER_SLOW_ARGS_SRC(idx)	XFER_SRC_PTR(idx)			\
-				XFER_SLOW_SRC_SHAPE(idx)
+				XFER_SLOW_SRC_SHAPE(idx)		\
+/*show_vec_args(vap);*/
 
 #define XFER_SLOW_ARGS_SRC1	XFER_SLOW_ARGS_SRC(0)
 #define XFER_SLOW_ARGS_SRC2	XFER_SLOW_ARGS_SRC(1)

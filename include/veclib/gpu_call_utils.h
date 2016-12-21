@@ -71,9 +71,12 @@
 // dbmi indexes the bit - from it, we have to compute the index of the word, and the bit mask
 // We have an integral number of words per row.
 
+/* different for fast and slow! */
+/*
 #define DECL_BASIC_INDICES_DBM	int i_dbm_bit;				\
 				int i_dbm_word; bitmap_word dbm_bit;	\
 				int tbl_idx;
+				*/
 
 #define DECL_INDICES_DBM	GPU_INDEX_TYPE dbmi; 			\
 				DECL_BASIC_INDICES_DBM

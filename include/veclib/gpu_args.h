@@ -775,12 +775,18 @@
 //#define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_xyz_incr
 #define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_vwxyz_incr
 
-#define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap) , VA_DBM_BIT0(vap)
-#define KERN_ARGS_EQSPS_DBM	KERN_ARGS_FAST_DBM , VA_DBM_INC(vap)
-//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_xyz_incr
-#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_vwxyz_incr
+//#define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap) , VA_DBM_BIT0(vap)
+#define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap)
 
-#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , KERN_ARGS_DBM_INC
+//#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , VA_DBM_INC(vap)
+//#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , KERN_ARGS_DBM_INC
+#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM
+
+//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_xyz_incr
+//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_vwxyz_incr
+
+#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM
+
 
 // Compound arg lists
 /****************************************/

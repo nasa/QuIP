@@ -12,8 +12,8 @@ __kernel void g_ocl_fast_sp_vuni(__global float *a,int counter) {
 	threefry4x32_key_t k = {{tid, 0xdecafbad, 0xfacebead, 0x12345678}};
 	threefry4x32_ctr_t c = {{counter, 0xf00dcafe, 0xdeadbeef, 0xbeeff00d}};
 	u.c = threefry4x32(c, k);
-	long x1 = u.i.x, y1 = u.i.y;
-	long x2 = u.i.z, y2 = u.i.w;
+	long x1 = u.i.x /*, y1 = u.i.y */ ;
+	/* long x2 = u.i.z, y2 = u.i.w; */
 	a[tid] = 0.5 + ((float) x1) / 0xffffffff;
 }
 
