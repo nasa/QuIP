@@ -2,7 +2,6 @@
 #include "veclib/slow_incs.h"
 #include "veclib/eqsp_incs.h"
 #include "veclib/slow_vars.h"
-#include "veclib/dim3.h"		// needed by cuda calling syntax
 
 #if CUDA_VERSION >= 5000
 // CUDA 5
@@ -42,17 +41,11 @@
 #define SET_MAX_THREADS_FROM_OBJ(dp)					\
 	/*max_threads_per_block = PFDEV_CUDA_MAX_THREADS_PER_BLOCK(OBJ_PFDEV(dp));*/
 
-//#ifdef FOOBAR
+
 #define BLOCK_VARS_DECLS						\
 									\
 	DIM3 n_blocks, n_threads_per_block;				\
 	DIM3 extra;
-//#else // ! FOOBAR
-//#define BLOCK_VARS_DECLS						\
-//									\
-//	int n_blocks, n_threads_per_block;				\
-//	int extra;
-//#endif // ! FOOBAR
 
 #define DECLARE_PLATFORM_VARS						\
 	cudaError_t e;							\
@@ -79,7 +72,6 @@
 #define SETUP_KERNEL_SLOW_CALL(name,bitmap,typ,scalars,vectors)	// nop
 #define SETUP_KERNEL_SLOW_CALL_CONV(name,bitmap,typ,type)	// nop
 
-#ifdef FOOBAR
 #define CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 /*fprintf(stderr,"CALL_FAST_KERNEL %s, bitmap='%s', scalars='%s', vectors='%s'\n",\
@@ -94,43 +86,17 @@
 		REPORT_THREAD_INFO					\
 		GPU_FLEN_CALL_NAME(name)<<< NN_GPU >>> 			\
 			(KERN_ARGS_FLEN_##bitmap##typ##scalars##vectors );\
-    		CHECK_CUDA_ERROR(CALL_FAST_KERNEL flen name:  kernel launch failure);	\
+    		CHECK_CUDA_ERROR(flen name:  kernel launch failure);	\
 	} else {							\
 		REPORT_THREAD_INFO					\
 		GPU_FAST_CALL_NAME(name)<<< NN_GPU >>>			\
 			(KERN_ARGS_FAST_##bitmap##typ##scalars##vectors );\
 		/* BUG?  should we put this check everywhere? */	\
-    		CHECK_CUDA_ERROR(CALL_FAST_KERNEL fast name:  kernel launch failure);	\
+    		CHECK_CUDA_ERROR(fast name:  kernel launch failure);	\
 	}								\
 
-#else // ! FOOBAR
-#define CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)		\
-									\
-/*fprintf(stderr,"CALL_FAST_KERNEL %s, bitmap='%s', scalars='%s', vectors='%s'\n",\
-#name,#bitmap,#scalars,#vectors);*/\
-	CLEAR_CUDA_ERROR(GPU_FAST_CALL_NAME(name))			\
-/*fprintf(stderr,"VA_LENGTH = %d\n",VA_LENGTH(vap));*/\
-	SETUP_BLOCKS_X(VA_LENGTH(vap))					\
-	GET_THREADS_PER_##bitmap##BLOCK(VA_PFDEV(vap),VA_LENGTH(vap))	\
-/*REPORT_FAST_ARGS_##bitmap##typ##scalars##vectors*/			\
-	if (extra != 0) {						\
-		n_blocks++;						\
-		REPORT_THREAD_INFO					\
-		GPU_FLEN_CALL_NAME(name)<<< NN_GPU >>> 			\
-			(KERN_ARGS_FLEN_##bitmap##typ##scalars##vectors );\
-    		CHECK_CUDA_ERROR(CALL_FAST_KERNEL flen name:  kernel launch failure);	\
-	} else {							\
-		REPORT_THREAD_INFO					\
-		GPU_FAST_CALL_NAME(name)<<< NN_GPU >>>			\
-			(KERN_ARGS_FAST_##bitmap##typ##scalars##vectors );\
-		/* BUG?  should we put this check everywhere? */	\
-    		CHECK_CUDA_ERROR(CALL_FAST_KERNEL fast name:  kernel launch failure);	\
-	}								\
-
-#endif // ! FOOBAR
 
 
-#ifdef FOOBAR
 #define CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)			\
 									\
 	CLEAR_CUDA_ERROR(GPU_FAST_CALL_NAME(name))			\
@@ -175,54 +141,7 @@
     		CHECK_CUDA_ERROR(eqsp name:  kernel launch failure);		\
 	}								\
 
-#else // ! FOOBAR
-#define CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)			\
-									\
-	CLEAR_CUDA_ERROR(GPU_FAST_CALL_NAME(name))			\
-	SETUP_BLOCKS_X(VA_LENGTH(vap))					\
-	GET_THREADS_PER_##bitmap##BLOCK(VA_PFDEV(vap),VA_LENGTH(vap))	\
-/*REPORT_FAST_ARGS_##bitmap##typ##2*/					\
-	if (extra != 0) {						\
-		n_blocks++;						\
-		REPORT_THREAD_INFO					\
-		GPU_FLEN_CALL_NAME(name)<<< NN_GPU >>> 			\
-			(KERN_ARGS_FLEN_CONV(type) );			\
-    		CHECK_CUDA_ERROR(flen name:  kernel launch failure);	\
-	} else {							\
-		REPORT_THREAD_INFO					\
-		GPU_FAST_CALL_NAME(name)<<< NN_GPU >>>			\
-			(KERN_ARGS_FAST_CONV(type));			\
-		/* BUG?  should we put this check everywhere? */	\
-    		CHECK_CUDA_ERROR(fast name:  kernel launch failure);	\
-	}								\
 
-
-
-#define CALL_EQSP_KERNEL(name,bitmap,typ,scalars,vectors)		\
-									\
-	CLEAR_CUDA_ERROR(GPU_EQSP_CALL_NAME(name))			\
-	GET_THREADS_PER_##bitmap##BLOCK(VA_PFDEV(vap),VA_LENGTH(vap))	\
-	SETUP_BLOCKS_X(VA_LENGTH(vap))					\
-	/* BUG? shoudl this be commented out??? */			\
-	/*SETUP_SIMPLE_INCS_##vectors*/					\
-	/*GET_EQSP_INCR_##bitmap##vectors*/				\
-	if (extra != 0) {						\
-		n_blocks++;						\
-		REPORT_THREAD_INFO					\
-		GPU_ELEN_CALL_NAME(name)<<< NN_GPU >>> 		\
-			(KERN_ARGS_ELEN_##bitmap##typ##scalars##vectors );\
-    		CHECK_CUDA_ERROR(elen name:  kernel launch failure);		\
-	} else {							\
-		REPORT_THREAD_INFO					\
-		GPU_EQSP_CALL_NAME(name)<<< NN_GPU >>>			\
-			(KERN_ARGS_EQSP_##bitmap##typ##scalars##vectors );\
-		/* BUG?  should we put this check everywhere? */	\
-    		CHECK_CUDA_ERROR(eqsp name:  kernel launch failure);		\
-	}								\
-
-#endif // ! FOOBAR
-
-#ifdef FOOBAR
 #define CALL_EQSP_CONV_KERNEL(name,bitmap,typ,type)			\
 									\
 	CLEAR_CUDA_ERROR(GPU_EQSP_CALL_NAME(name))			\
@@ -246,33 +165,7 @@
 	}								\
 
 
-#else // ! FOOBAR
-#define CALL_EQSP_CONV_KERNEL(name,bitmap,typ,type)			\
-									\
-	CLEAR_CUDA_ERROR(GPU_EQSP_CALL_NAME(name))			\
-	GET_THREADS_PER_##bitmap##BLOCK(VA_PFDEV(vap),VA_LENGTH(vap))	\
-	SETUP_BLOCKS_X(VA_LENGTH(vap))					\
-	/* BUG? shoudl this be commented out??? */			\
-	/*SETUP_SIMPLE_INCS_##vectors*/					\
-	/*GET_EQSP_INCR_##bitmap##vectors*/				\
-	if (extra != 0) {						\
-		n_blocks++;						\
-		REPORT_THREAD_INFO					\
-		GPU_ELEN_CALL_NAME(name)<<< NN_GPU >>> 			\
-			( KERN_ARGS_ELEN_CONV(type) );			\
-    		CHECK_CUDA_ERROR(elen name:  kernel launch failure);	\
-	} else {							\
-		REPORT_THREAD_INFO					\
-		GPU_EQSP_CALL_NAME(name)<<< NN_GPU >>>			\
-			( KERN_ARGS_EQSP_CONV(type) );			\
-		/* BUG?  should we put this check everywhere? */	\
-    		CHECK_CUDA_ERROR(eqsp name:  kernel launch failure);	\
-	}								\
 
-
-#endif // ! FOOBAR
-
-#ifdef FOOBAR
 #define CALL_SLOW_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 	CLEAR_CUDA_ERROR(GPU_SLOW_CALL_NAME(name))			\
@@ -294,32 +187,8 @@
 		CHECK_CUDA_ERROR(slow name:  kernel launch failure);			\
 	}									\
 
-#else // !  FOOBAR
-#define CALL_SLOW_KERNEL(name,bitmap,typ,scalars,vectors)		\
-									\
-	CLEAR_CUDA_ERROR(GPU_SLOW_CALL_NAME(name))			\
-	/*SETUP_SLOW_LEN_##typ##vectors*/					\
-/*fprintf(stderr,"CALL_SLOW_KERNEL  %s bitmap='%s' scalars='%s' vectors='%s'\n",\
-#name,#bitmap,#scalars,#vectors);*/\
-	SETUP_BLOCKS_XYZ_##bitmap(VA_PFDEV(vap))	/* using len - was _XY */	\
-	SETUP_SLOW_INCRS_##bitmap##vectors				\
-/*REPORT_THREAD_INFO*/						\
-	if( extra > 0 ){		\
-/*REPORT_SLEN_ARGS_##bitmap##typ##scalars##vectors*/			\
-		GPU_SLEN_CALL_NAME(name)<<< NN_GPU >>>			\
-			(KERN_ARGS_SLEN_##bitmap##typ##scalars##vectors );	\
-		CHECK_CUDA_ERROR(slen name:  kernel launch failure);			\
-	} else {							\
-/*REPORT_SLOW_ARGS_##bitmap##typ##scalars##vectors*/			\
-		GPU_SLOW_CALL_NAME(name)<<< NN_GPU >>>				\
-			(KERN_ARGS_SLOW_##bitmap##typ##scalars##vectors );	\
-		CHECK_CUDA_ERROR(slow name:  kernel launch failure);			\
-	}									\
-
-#endif // !  FOOBAR
 
 
-#ifdef FOOBAR
 #define CALL_SLOW_CONV_KERNEL(name,bitmap,typ,type)			\
 									\
 	CLEAR_CUDA_ERROR(GPU_SLOW_CALL_NAME(name))			\
@@ -338,28 +207,6 @@
 		CHECK_CUDA_ERROR(slow name:  kernel launch failure);	\
 	}								\
 
-#else // ! FOOBAR
-#define CALL_SLOW_CONV_KERNEL(name,bitmap,typ,type)			\
-									\
-	CLEAR_CUDA_ERROR(GPU_SLOW_CALL_NAME(name))			\
-	/*SETUP_SLOW_LEN_##typ##2*/					\
-	SETUP_BLOCKS_XYZ_##bitmap(VA_PFDEV(vap))			\
-	SETUP_SLOW_INCRS_##bitmap##2					\
-	REPORT_THREAD_INFO						\
-/*REPORT_ARGS_##bitmap##typ##scalars##vectors*/				\
-	if( extra > 0 ){		\
-		GPU_SLEN_CALL_NAME(name)<<< NN_GPU >>>			\
-			( KERN_ARGS_SLEN_CONV(type) );			\
-		CHECK_CUDA_ERROR(slen name:  kernel launch failure);	\
-	} else {							\
-		GPU_SLOW_CALL_NAME(name)<<< NN_GPU >>>			\
-			( KERN_ARGS_SLOW_CONV(type) );			\
-		CHECK_CUDA_ERROR(slow name:  kernel launch failure);	\
-	}								\
-
-#endif // ! FOOBAR
-
-#ifdef FOOBAR
 
 /* For slow loops, we currently only iterate over two dimensions (x and y),
  * although in principle we should be able to handle 3...
@@ -377,17 +224,6 @@
 	else						\
 		var = INCREMENT(isp,VA_DIM_INDEX(vap,which_index));
 
-#else // ! FOOBAR
-
-#define SETUP_SLOW_INCRS(var,isp)		\
-						\
-	var.d5_dim[0] = INCREMENT(isp,0);	\
-	var.d5_dim[1] = INCREMENT(isp,1);	\
-	var.d5_dim[2] = INCREMENT(isp,2);	\
-	var.d5_dim[3] = INCREMENT(isp,3);	\
-	var.d5_dim[4] = INCREMENT(isp,4);
-
-#endif // ! FOOBAR
 /*
 sprintf(DEFAULT_ERROR_STRING,"SETUP_INC_IF:  %s = %d, dim_indices[%d] = %d",	\
 #var,var,which_index,VA_DIM_INDEX(vap,which_index));				\
@@ -642,7 +478,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 #define REPORT_VECTORIZATION1( host_func_name )				\
 									\
 	/*sprintf(DEFAULT_ERROR_STRING,						\
-"%s:  ready to vectorize:\txyz_len.x = %ld, inc1.x = %ld, inc1.y = %ld", FOOBAR	\
+"%s:  ready to vectorize:\txyz_len.x = %ld, inc1.x = %ld, inc1.y = %ld",	\
 		#host_func_name,VA_LEN_X(vap),inc1.x,inc1.y);			\
 	NADVISE(DEFAULT_ERROR_STRING);*/
 
@@ -896,7 +732,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 #define REPORT_VECTORIZATION1( host_func_name )				\
 									\
 	/*sprintf(DEFAULT_ERROR_STRING,						\
-"%s:  ready to vectorize:\txyz_len.x = %ld, inc1.x = %ld, inc1.y = %ld", FOOBAR	\
+"%s:  ready to vectorize:\txyz_len.x = %ld, inc1.x = %ld, inc1.y = %ld",	\
 		#host_func_name,VA_LEN_X(vap),inc1.x,inc1.y);			\
 	NADVISE(DEFAULT_ERROR_STRING);*/
 
@@ -950,7 +786,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 		DEFAULT_INCS5						\
 		i=OBJ_MINDIM(OA_DEST(oap));				\
-		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR			\
+		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);			\
 		inc1.x = OBJ_TYPE_INC(OA_DEST(oap),i);			\
 		inc2.x = OBJ_TYPE_INC(OA_SRC1(oap),i);		\
 		inc3.x = OBJ_TYPE_INC(OA_SRC2(oap),i);		\
@@ -960,12 +796,12 @@ NADVISE(DEFAULT_ERROR_STRING);
 		level = 1;						\
 		/* Find the longest evenly-spaced run */		\
 		while( i <= OBJ_MAXDIM(OA_DEST(oap)) && level == 1 ){	\
-	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC2(oap),i) == ( xyz_len.x * inc3.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC3(oap),i) == ( xyz_len.x * inc4.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC4(oap),i) == ( xyz_len.x * inc5.x ) ){	FOOBAR	\
-				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR	\
+	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC2(oap),i) == ( xyz_len.x * inc3.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC3(oap),i) == ( xyz_len.x * inc4.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC4(oap),i) == ( xyz_len.x * inc5.x ) ){	\
+				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 			} else {					\
 				VA_LEN_Y(vap) = OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 				inc1.y = OBJ_TYPE_INC(OA_DEST(oap),i);	\
@@ -1007,7 +843,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 		DEFAULT_INCS4						\
 		i=OBJ_MINDIM(OA_DEST(oap));				\
-		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR			\
+		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);			\
 		inc1.x = OBJ_TYPE_INC(OA_DEST(oap),i);			\
 		inc2.x = OBJ_TYPE_INC(OA_SRC1(oap),i);		\
 		inc3.x = OBJ_TYPE_INC(OA_SRC2(oap),i);		\
@@ -1016,11 +852,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 		level = 1;						\
 		/* Find the longest evenly-spaced run */		\
 		while( i <= OBJ_MAXDIM(OA_DEST(oap)) && level == 1 ){	\
-	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC2(oap),i) == ( xyz_len.x * inc3.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC3(oap),i) == ( xyz_len.x * inc4.x ) ){	FOOBAR	\
-				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR	\
+	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC2(oap),i) == ( xyz_len.x * inc3.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC3(oap),i) == ( xyz_len.x * inc4.x ) ){	\
+				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 			} else {					\
 				VA_LEN_Y(vap) = OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 				inc1.y = OBJ_TYPE_INC(OA_DEST(oap),i);	\
@@ -1060,7 +896,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 		DEFAULT_INCS3						\
 		i=OBJ_MINDIM(OA_DEST(oap));				\
-		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR			\
+		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);			\
 		inc1.x = OBJ_TYPE_INC(OA_DEST(oap),i);			\
 		inc2.x = OBJ_TYPE_INC(OA_SRC1(oap),i);		\
 		inc3.x = OBJ_TYPE_INC(OA_SRC2(oap),i);		\
@@ -1068,10 +904,10 @@ NADVISE(DEFAULT_ERROR_STRING);
 		level = 1;						\
 		/* Find the longest evenly-spaced run */		\
 		while( i <= OBJ_MAXDIM(OA_DEST(oap)) && level == 1 ){	\
-	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC2(oap),i) == ( xyz_len.x * inc3.x ) ){	FOOBAR	\
-				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR	\
+	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC2(oap),i) == ( xyz_len.x * inc3.x ) ){	\
+				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 			} else {					\
 				VA_LEN_Y(vap) = OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 				inc1.y = OBJ_TYPE_INC(OA_DEST(oap),i);	\
@@ -1109,16 +945,16 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 		DEFAULT_INCS2						\
 		i=OBJ_MINDIM(OA_DEST(oap));				\
-		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR			\
+		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);			\
 		inc1.x = OBJ_TYPE_INC(OA_DEST(oap),i);			\
 		inc2.x = OBJ_TYPE_INC(OA_SRC1(oap),i);		\
 		i++;							\
 		level = 1;						\
 		/* Find the longest evenly-spaced run */		\
 		while( i <= OBJ_MAXDIM(OA_DEST(oap)) && level == 1 ){	\
-	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	FOOBAR	\
-	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) ){	FOOBAR	\
-				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR	\
+	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) &&	\
+	    OBJ_TYPE_INC(OA_SRC1(oap),i) == ( xyz_len.x * inc2.x ) ){	\
+				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 			} else {					\
 				VA_LEN_Y(vap) = OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 				inc1.y = OBJ_TYPE_INC(OA_DEST(oap),i);	\
@@ -1158,14 +994,14 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 		DEFAULT_INCS1						\
 		i=OBJ_MINDIM(OA_DEST(oap));				\
-		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR			\
+		xyz_len.x = OBJ_TYPE_DIM(OA_DEST(oap),i);			\
 		inc1.x = OBJ_TYPE_INC(OA_DEST(oap),i);			\
 		i++;							\
 		level = 1;						\
 		/* Find the longest evenly-spaced run */		\
 		while( i <= OBJ_MAXDIM(OA_DEST(oap)) && level == 1 ){	\
-	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) ){	FOOBAR	\
-				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	FOOBAR	\
+	if( OBJ_TYPE_INC(OA_DEST(oap),i)  == ( xyz_len.x * inc1.x ) ){	\
+				xyz_len.x *= OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 			} else {					\
 				VA_LEN_Y(vap) = OBJ_TYPE_DIM(OA_DEST(oap),i);	\
 				inc1.y = OBJ_TYPE_INC(OA_DEST(oap),i);	\

@@ -292,34 +292,50 @@ int cu2_dispatch( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 // BUG - these are for host global - can we determine from the data area exactly
 // which type of memory we should allocate?
 
-static int cu2_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align)
+static void *cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align)
 {
 	cudaError_t e;
+	void *ptr;
 
 	// BUG?  align arg is ignored here?
 
 	// GLOBAL
-	e = cudaMalloc( &OBJ_DATA_PTR(dp), size);
+	e = cudaMalloc( &ptr, size);
 	if( e != cudaSuccess ){
 		if( e == cudaErrorDevicesUnavailable )
 			ERROR1("Cuda devices unavailable!?");
 		describe_cuda_driver_error2("cu2_mem_alloc","cudaMalloc",e);
 		sprintf(ERROR_STRING,"Attempting to allocate %d bytes.",size);
 		advise(ERROR_STRING);
-		return(-1);
+		return NULL;
 	}
+	return ptr;
+}
+
+static int cu2_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align)
+{
+	void *ptr;
+	ptr=cu2_mem_alloc(QSP_ARG  OBJ_PFDEV(dp), size, align);
+	SET_OBJ_DATA_PTR(dp,ptr);
+	if( ptr == NULL ) return -1;
 	return 0;
 }
 
-static void cu2_mem_free(QSP_ARG_DECL  Data_Obj *dp)
+
+static void cu2_mem_free(QSP_ARG_DECL  void *ptr)
 {
 	cudaError_t e;
 
 	// GLOBAL
-	e = cudaFree(OBJ_DATA_PTR(dp));
+	e = cudaFree(ptr);
 	if( e != cudaSuccess ){
-		describe_cuda_driver_error2("release_data","cudaFree",e);
+		describe_cuda_driver_error2("cu2_mem_free","cudaFree",e);
 	}
+}
+
+static void cu2_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+{
+	cu2_mem_free(QSP_ARG  OBJ_DATA_PTR(dp));
 }
 
 static void (*cu2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;

@@ -83,6 +83,7 @@ noinst_HEADERS =					\
 			xfer_args.h			\
 			eqsp_defs.h			\
 			fast_defs.h			\
+			flen_defs.h			\
 			fast_eqsp_defs.h		\
 			gen_float_calls.h		\
 			gpu_call_defs.h			\

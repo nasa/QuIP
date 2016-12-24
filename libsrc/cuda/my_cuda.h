@@ -119,7 +119,9 @@ extern COMMAND_FUNC( do_report_npp_version );
 
 #ifdef cplusplus
 extern "C" {
+#endif
 extern void query_cuda_device(QSP_ARG_DECL  int dev);
+#ifdef cplusplus
 }
 #endif
 

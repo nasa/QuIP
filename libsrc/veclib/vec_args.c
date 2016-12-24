@@ -1026,7 +1026,7 @@ void show_vec_args(const Vector_Args *vap)
 		vap->va_iteration_size.ds_dimension[4]);
 	fprintf(stderr,"iteration total:  %d\n",
 		vap->va_iteration_size.ds_n_elts);
-#endif HAVE_ANY_GPU
+#endif // HAVE_ANY_GPU
 	
 }
 

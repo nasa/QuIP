@@ -349,7 +349,7 @@ extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_DBM_EQSP_INC(vap)		VA_DEST_EQSP_INC( vap )
 
 #define eqsp_dest_inc			VA_DEST_EQSP_INC(vap)
-//#define eqsp_dbm_inc			VA_DEST_EQSP_INC(vap)
+#define eqsp_dbm_inc			VA_DEST_EQSP_INC(vap)
 #define eqsp_src1_inc			VA_SRC1_EQSP_INC(vap)
 #define eqsp_src2_inc			VA_SRC2_EQSP_INC(vap)
 #define eqsp_src3_inc			VA_SRC3_EQSP_INC(vap)

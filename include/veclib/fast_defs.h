@@ -19,7 +19,8 @@
 #define qsrc3	fast_qsrc3
 #define qsrc4	fast_qsrc4
 
-#ifdef BUILD_FOR_CUDA
+#ifdef FOOBAR
+//#ifdef BUILD_FOR_CUDA
 
 #define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)			\
 										\
@@ -38,7 +39,8 @@
 	_GENERIC_FAST_CONV_FUNC(n,std_type,type)	\
 	_GENERIC_FLEN_CONV_FUNC(n,std_type,type)
 
-#else // ! BUILD_FOR_CUDA
+//#else // ! BUILD_FOR_CUDA
+#endif // FOOBAR
 
 // Why is it that only CUDA needs the len versions???
 
@@ -58,13 +60,13 @@
 	_GENERIC_FAST_CONV_FUNC(n,std_type,type)
 
 
-#endif // ! BUILD_FOR_CUDA
+//#endif // ! BUILD_FOR_CUDA
 
 #define SET_INDICES_DBM		SET_INDEX(dbmi)			\
 				i_dbm_word = dbmi;		\
 				dbmi *= BITS_PER_BITMAP_WORD;
 
-#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
+//#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
 
 #define DECL_BASIC_INDICES_DBM	unsigned int i_dbm_bit;				\
 				int i_dbm_word; bitmap_word dbm_bit;

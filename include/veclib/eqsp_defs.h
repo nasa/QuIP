@@ -75,7 +75,7 @@
 #define DBM_EQSP_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
 
 #define DECL_BASIC_INDICES_DBM	unsigned int i_dbm_bit;				\
-				int i_dbm_word; bitmap_word dbm_bit;	\
+				int i_dbm_word; bitmap_word dbm_bit;		\
 				int tbl_idx;
 
 #include "veclib/fast_eqsp_defs.h"

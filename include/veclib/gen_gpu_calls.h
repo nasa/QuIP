@@ -183,6 +183,7 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 //#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
 //#define DBM_SLOW_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+vwxyz_len.d5_dim[1]
 
+#ifdef FOOBAR
 #define FLEN_DBM_LOOP( statement, advance )						\
 											\
 	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){			\
@@ -195,6 +196,9 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 		}									\
 		advance									\
 	}
+#else // ! FOOBAR
+#define FLEN_DBM_LOOP( statement, advance )		EQSP_DBM_LOOP(statement,advance)
+#endif // ! FOOBAR
 
 #define EQSP_DBM_LOOP( statement, advance )					\
 										\
@@ -1046,8 +1050,6 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_DBM_##typ##scalars##vectors)	\
 {									\
 	INIT_INDICES_DBM_##scalars##vectors					\
-	/*ADJUST_DBM_WORD_IDX*/							\
-	/* BUG need to put len test in statement */			\
 	FLEN_DBM_LOOP(statement,ADVANCE_FAST_DBM_##vectors)			\
 }
 
