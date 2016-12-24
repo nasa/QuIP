@@ -1,0 +1,484 @@
+max_warnings 2
+
+#   Image dest_$2 $h $w 1 $2 \
+#   Image src1_$2 $h $w 1 $2 \
+#   Image src2_$2 $h $w 1 $2 \
+
+Define Declare_Test_Objects 2 precision cpx_prec
+Set w 8
+Set h 1
+Image dest_$1 $h $w 1 $1
+Image dbm_$1 $h $w 1 bit
+Image sbm_$1 $h $w 1 bit
+Image src1_$1 $h $w 1 $1
+Image src2_$1 $h $w 1 $1
+Image src3_$1 $h $w 1 $1
+Image src4_$1 $h $w 1 $1
+Image indices_$1 $h $w 1 int32
+Set indices indices_$1
+Scalar extval_$1 1 $1
+Scalar extidx_$1 1 int32
+Set extidx extidx_$1
+Set extval extval_$1
+Scalar nocc_$1 1 int32
+Set nocc nocc_$1
+If strcmp('$2','none')
+  Then
+  "advise 'Declaring $2 objects' \
+   Vector dest_$2 $w 1 $2 \
+   Vector src1_$2 $w 1 $2 \
+   Vector src2_$2 $w 1 $2 \
+   Ramp2D src1_$2{0} 1 0.1 1.1 \
+   Ramp2D src1_$2{1} 2 0.1 1.1 \
+   Ramp2D src2_$2{0} 1 1.1 1.1 \
+   Ramp2D src2_$2{1} 2 2.1 1.1 \
+   Set cdest dest_$2 \
+   Set csrc1 src1_$2 \
+   Set csrc2 src2_$2 \
+   "
+  Else "advise 'NOT declaring complex objects...'"
+Set dest dest_$1
+Set dbm dbm_$1
+Set sbm sbm_$1
+Set src1 src1_$1
+Set src2 src2_$1
+Set src3 src3_$1
+Set src4 src4_$1
+Set scalar1_val 7
+Set scalar2_val 9
+Set scalar3_val 100
+Ramp2D $src1 0 1 10
+Ramp2D $src2 10 10 1
+Display $src1
+Display $src2
+foreach prec ( byte short int32 int64 u_byte u_short uint32 uint64 float double )
+  Image conv_$prec $h $w 1 $prec
+end
+.
+
+Define Test_Func_1S_1 1 func
+advise "$1 $dest $scalar1_val"
+veclib
+  execute $1 $dest $scalar1_val
+  quit
+Display $dest
+.
+
+Define Test_Func_1S_2 1 func
+advise "$1 $dest $src1 $scalar1_val"
+veclib
+  execute $1 $dest $src1 $scalar1_val
+  quit
+Display $dest
+.
+
+Define Test_Func_1S_4 1 func
+advise "$1 $dest $src1 $src2 $src3 $scalar1_val"
+veclib
+  execute $1 $dest $src1 $src2 $src3 $scalar1_val
+  quit
+Display $dest
+.
+
+Define Test_Func_2S_3 1 func
+advise "$1 $dest $src1 $src2 $scalar1_val $scalar2_val"
+veclib
+  execute $1 $dest $src1 $src2 $scalar1_val $scalar2_val
+  quit
+Display $dest
+.
+
+Define Test_Func_5 1 func
+advise "$1 $dest $src1 $src2 $src3 $src4"
+veclib
+  execute $1 $dest $src1 $src2 $src3 $src4
+  quit
+Display $dest
+.
+
+Define Test_Func_2S_1 1 func
+advise "$1 $dest $scalar1_val $scalar2_val"
+veclib
+  execute $1 $dest $scalar1_val $scalar2_val
+  quit
+Display $dest
+.
+
+Define Test_Func_3S_1 1 func
+advise "$1 $dest $scalar1_val $scalar2_val $scalar3_val"
+veclib
+  execute $1 $dest $scalar1_val $scalar2_val $scalar3_val
+  quit
+Display $dest
+.
+
+Define Test_Func_DBM_2 1 func
+advise "$1 $dbm $src1 $src2"
+veclib
+  execute $1 $dbm $src1 $src2
+  quit
+Display $src1
+Display $src2
+Display $dest
+.
+
+Define Test_Func_DBM_1S_1 1 func
+advise "$1 $dbm $src1 $scalar1_val"
+veclib
+  execute $1 $dbm $src1 $scalar1_val
+  quit
+Display $src1
+Print scalar1_val
+Display $dest
+.
+
+Define Test_Func_SBM_3 1 func
+advise "$1 $sbm $dest $src1 $src2"
+veclib
+  execute $1 $sbm $dest $src1 $src2
+  quit
+Display $src1
+Display $src2
+Display $sbm
+Display $dest
+.
+
+Define Test_Func_SBM_1S_2 1 func
+advise "$1 $sbm $dest $src1 $scalar1_val"
+veclib
+  execute $1 $sbm $dest $src1 $scalar1_val
+  quit
+Display $src1
+Display $sbm
+Print scalar1_val
+Display $dest
+.
+
+Define Test_Func_SBM_2S_1 1 func
+advise "$1 $sbm $dest $scalar1_val $scalar2_val"
+veclib
+  execute $1 $sbm $dest $scalar1_val $scalar2_val
+  quit
+Display $sbm
+Print scalar1_val
+Print scalar2_val
+Display $dest
+.
+
+Define Test_Func_1 1 func
+advise "$1 $dest"
+veclib
+  execute $1 $dest
+  quit
+Display $dest
+.
+
+Define Test_Func_2 1 func
+advise "$1 $dest $src1"
+veclib
+  execute $1 $dest $src1
+  quit
+Display $dest
+.
+
+Define Test_Func_2I 1 func
+advise "$1 $dest $src1"
+veclib
+  execute $1 $extidx $src1
+  quit
+Display $src1
+Display $extidx
+.
+
+Define Test_Func_3 1 func
+advise "$1 $dest $src1 $src2"
+veclib
+  execute $1 $dest $src1 $src2
+  quit
+Display $dest
+.
+
+Define Test_Func_2CR 1 func
+advise "$1 $dest $csrc1"
+veclib
+  execute $1 $dest $csrc1
+  quit
+Display $dest
+.
+
+Define Test_Func_2C 1 func
+advise "$1 $cdest $csrc1"
+veclib
+  execute $1 $cdest $csrc1
+  quit
+Display $cdest
+.
+
+Define Test_Func_3C 1 func
+advise "$1 $cdest $csrc1 $csrc2"
+veclib
+  execute $1 $cdest $csrc1 $csrc2
+  quit
+Display $cdest
+.
+
+Define Test_Func_Conv 2 func dest_prec
+advise "$1 conv_$2 $src1"
+veclib
+  execute $1 conv_$2 $src1
+  quit
+Display conv_$2
+.
+
+Define Test_Func_2N 1 func
+advise "$1 $dest $src1 $nocc"
+veclib
+  execute $1 $indices $src1 $extval $nocc
+  quit
+Display $src1
+Display $extval
+Display $nocc
+Display $indices
+.
+
+
+Define Test_All_Funcs 2 precision cpx_prec
+Declare_Test_Objects $1 $2
+Test_Func_1S_1 vset
+Test_Func_2 vmov
+
+Test_Func_2S_1 vramp1d
+Test_Func_3S_1 vramp2d
+
+# math funcs
+Test_Func_2 vabs
+Test_Func_3 vpow
+Test_Func_2 vexp
+Test_Func_2 vcos
+Test_Func_2 vsin
+Test_Func_2 vtan
+Test_Func_2 vacos
+Test_Func_2 vasin
+Test_Func_2 vatan
+Test_Func_2 vj0
+Test_Func_2 vj1
+Test_Func_2 vlngamma
+Test_Func_2 vlog
+Test_Func_2 vlog10
+Test_Func_2 verf
+Test_Func_2 verfinv
+Test_Func_2 vgamma
+Test_Func_3 vatan2
+Test_Func_1 vuni
+Test_Func_2 vrand
+Test_Func_2 vneg
+Test_Func_2 vsign
+
+Test_Func_1S_2 vspow
+Test_Func_1S_2 vspow2
+Test_Func_1S_2 vsatan2
+Test_Func_1S_2 vsatan22
+
+Test_Func_2 vsqr
+Test_Func_2 vsqrt
+
+Test_Func_2 vfloor
+Test_Func_2 vceil
+Test_Func_2 vround
+Test_Func_2 vrint
+Test_Func_2 vtrunc
+
+# complex numbers
+Test_Func_3C vcmul
+Test_Func_2C vconj
+Test_Func_2CR vmgsq
+Test_Func_2CR vatn2
+
+Test_Func_3 vbnd
+Test_Func_1S_2 vclip
+Test_Func_1S_2 viclp
+
+
+Test_Func_2C vfft
+Test_Func_2CR vift
+
+# arithmetic functions
+Test_Func_3 vadd
+Test_Func_3 vsub
+Test_Func_3 vmul
+Test_Func_3 vdiv
+Test_Func_1S_2 vsadd
+Test_Func_1S_2 vssub	# dst = k - src      src - k can be handled by vsadd...
+Test_Func_1S_2 vsmul
+Test_Func_1S_2 vsdiv
+Test_Func_1S_2 vsdiv2
+
+Test_Func_3 vcmp
+
+Test_Func_Conv vconv2by byte
+Test_Func_Conv vconv2di int32
+Test_Func_Conv vconv2dp double
+Test_Func_Conv vconv2in short
+Test_Func_Conv vconv2li int64
+Test_Func_Conv vconv2sp float
+Test_Func_Conv vconv2uby u_byte
+Test_Func_Conv vconv2udi uint32
+Test_Func_Conv vconv2uin u_short
+Test_Func_Conv vconv2uli uint64
+
+Test_Func_3 vdot
+Test_Func_3 vibnd
+
+# number functions
+Test_Func_2 visinf
+Test_Func_2 visnan
+Test_Func_2 visnorm
+
+# "projections"
+Test_Func_2 vsum
+Test_Func_2 vmaxv
+Test_Func_2 vminv
+Test_Func_2 vmxmv
+Test_Func_2 vmnmv
+
+# returns the index of the max?
+Test_Func_2I vmaxi
+Test_Func_2I vmini
+Test_Func_2I vmxmi
+Test_Func_2I vmnmi
+
+# comparison funcs
+Test_Func_3 vmax
+Test_Func_3 vmin
+Test_Func_3 vmaxm
+Test_Func_3 vminm
+
+Test_Func_2N vmaxg
+Test_Func_2N vming
+Test_Func_2N vmxmg
+Test_Func_2N vmnmg
+
+Test_Func_1S_2 vsmax
+Test_Func_1S_2 vsmin
+Test_Func_1S_2 vsmnm
+Test_Func_1S_2 vsmxm
+
+# these don't seem to be necessary ???
+Test_Func_1S_2 vscmp
+Test_Func_1S_2 vscmp2
+
+# bitmap result comparisons
+Test_Func_DBM_2 vvm_eq
+Test_Func_DBM_2 vvm_ge
+Test_Func_DBM_2 vvm_gt
+Test_Func_DBM_2 vvm_le
+Test_Func_DBM_2 vvm_lt
+Test_Func_DBM_2 vvm_ne
+
+Test_Func_DBM_1S_1 vsm_eq
+Test_Func_DBM_1S_1 vsm_ge
+Test_Func_DBM_1S_1 vsm_gt
+Test_Func_DBM_1S_1 vsm_le
+Test_Func_DBM_1S_1 vsm_lt
+Test_Func_DBM_1S_1 vsm_ne
+
+# bitmap-based selection
+Test_Func_SBM_2S_1 vss_slct
+Test_Func_SBM_1S_2 vvs_slct
+Test_Func_SBM_3 vvv_slct
+
+# conditional selection
+#Test_Func_3 ss_vs_eq
+#Test_Func_3 ss_vs_ge
+#Test_Func_3 ss_vs_gt
+#Test_Func_3 ss_vs_le
+#Test_Func_3 ss_vs_lt
+#Test_Func_3 ss_vs_ne
+
+#Test_Func_3 ss_vv_eq
+#Test_Func_3 ss_vv_ge
+#Test_Func_3 ss_vv_gt
+#Test_Func_3 ss_vv_le
+#Test_Func_3 ss_vv_lt
+#Test_Func_3 ss_vv_ne
+
+# These mnemonics do not make it clear which operands are tested
+# and which are selected!?
+
+Test_Func_1S_4 vv_vs_eq
+Test_Func_1S_4 vv_vs_ge
+Test_Func_1S_4 vv_vs_gt
+Test_Func_1S_4 vv_vs_le
+Test_Func_1S_4 vv_vs_lt
+Test_Func_1S_4 vv_vs_ne
+
+Test_Func_5 vv_vv_eq
+Test_Func_5 vv_vv_ge
+Test_Func_5 vv_vv_gt
+Test_Func_5 vv_vv_le
+Test_Func_5 vv_vv_lt
+Test_Func_5 vv_vv_ne
+
+Test_Func_2S_3 vs_vs_eq
+Test_Func_2S_3 vs_vs_ge
+Test_Func_2S_3 vs_vs_gt
+Test_Func_2S_3 vs_vs_le
+Test_Func_2S_3 vs_vs_lt
+Test_Func_2S_3 vs_vs_ne
+
+Test_Func_1S_4 vs_vv_eq
+Test_Func_1S_4 vs_vv_ge
+Test_Func_1S_4 vs_vv_gt
+Test_Func_1S_4 vs_vv_le
+Test_Func_1S_4 vs_vv_lt
+Test_Func_1S_4 vs_vv_ne
+
+# where are the ss versions???
+.
+
+Define Test_Int_Funcs 0
+Test_Func_3 vmod
+Test_Func_1S_2 vsmod
+Test_Func_1S_2 vsmod2
+Test_Func_3 vcomp
+
+# logical
+Test_Func_2 vnot
+Test_Func_3 vor
+Test_Func_3 vand
+Test_Func_3 vxor
+Test_Func_3 vnand
+
+Test_Func_3 vsor
+Test_Func_3 vsand
+Test_Func_3 vsxor
+# no vsnand?
+
+# bit shifts
+Test_Func_3 vshl
+Test_Func_3 vshr
+Test_Func_1S_2 vsshl
+Test_Func_1S_2 vsshl2
+Test_Func_1S_2 vsshr
+Test_Func_1S_2 vsshr2
+.
+
+Define Test_Complex_Funcs 0
+Test_Func_3 vscml
+.
+
+# character functions
+Define Test_String_Funcs 0
+Test_Func_Str visalnum
+Test_Func_Str visalpha
+Test_Func_Str visblank
+Test_Func_Str viscntrl
+Test_Func_Str visdigit
+Test_Func_Str vislower
+Test_Func_Str visspace
+Test_Func_Str visupper
+Test_Func_Str vtolower
+Test_Func_Str vtoupper
+.
+
+Test_All_Funcs float complex

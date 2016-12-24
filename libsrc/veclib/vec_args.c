@@ -193,7 +193,7 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 	if( OA_SBM(oap) ==NO_OBJ ) return(-1);
 	if( OBJ_PREC( OA_SBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
-			"bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
+			"get_src_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
 			OBJ_NAME(OA_SBM(oap) ),
 			OBJ_PREC_NAME( OA_SBM(oap) ), OBJ_PREC( OA_SBM(oap) ),PREC_BIT);
 		WARN(ERROR_STRING);
@@ -208,7 +208,7 @@ static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 	if( OA_DBM(oap) ==NO_OBJ ) return(-1);
 	if( OBJ_PREC( OA_DBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
-			"bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
+			"get_dst_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
 			OBJ_NAME(OA_DBM(oap) ),
 			OBJ_PREC_NAME( OA_DBM(oap) ), OBJ_PREC( OA_DBM(oap) ),PREC_BIT);
 		WARN(ERROR_STRING);
