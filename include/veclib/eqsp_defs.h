@@ -19,6 +19,8 @@
 #define qsrc3	eqsp_qsrc3
 #define qsrc4	eqsp_qsrc4
 
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )						// nop
+
 #ifdef BUILD_FOR_CUDA
 
 #define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)		\

@@ -19,8 +19,7 @@
 #define qsrc3	slow_qsrc3
 #define qsrc4	slow_qsrc4
 
-#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )	\
-	__VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )						// nop
 
 #define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )		\
 	__VEC_FUNC_2V_PROJ( func_name, gpu_expr )
@@ -115,12 +114,11 @@
 	this_index.d5_dim[3] %= szarr.d5_dim[3];				\
 	this_index.d5_dim[4] %= szarr.d5_dim[4];
 
-#define IDX1_0	index1.d5_dim[0]		// used to be index1.x
-#define IDX1_1	index1.d5_dim[1]		// used to be index1.y
-#define IDX1_2	index1.d5_dim[2]		// used to be index1.y
-#define INC1_0	inc1.d5_dim[0]			// used to be inc1.x
-#define INC1_1	inc1.d5_dim[1]			// used to be inc1.x
-#define INC1_2	inc1.d5_dim[2]			// used to be inc1.x
+#define IDX1	(INDEX_SUM(index1))
+#define IDX1_1	(index1.d5_dim[1])
+#define IDX1_2	(index1.d5_dim[2])
+#define INC1_1	inc1.dg_dim[1]
+#define INC1_2	inc1.dg_dim[2]
 
 #define SCALE_INDEX(idx,inc)	idx.d5_dim[0] *= inc.d5_dim[0];		\
 				idx.d5_dim[1] *= inc.d5_dim[1];		\

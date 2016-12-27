@@ -43,12 +43,7 @@
 #undef DECL_BASIC_INDICES_DBM
 #undef srcbit
 
-#undef IDX1_0
-#undef IDX1_1
-#undef IDX1_2
-#undef INC1_0
-#undef INC1_1
-#undef INC1_2
+#undef IDX1
 
 #endif // ! dst
 

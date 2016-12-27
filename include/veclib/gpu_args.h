@@ -33,6 +33,7 @@
 	dst_indices,		\
 	len1, len2, stride
 
+// BUG - how can we insure that the declarations are consistent!?
 
 #define DECLARE_KERN_ARGS_NOCC_HELPER				\
 								\
@@ -41,16 +42,17 @@
 	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
 	KERNEL_ARG_QUALIFIER index_type *src_counts,		\
 	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
-	int len1, int len2, int stride
+	DECLARE_2_LENGTHS					\
+	, uint32_t stride
 
 
 
 #define KERN_ARGS_NOCC_SETUP					\
 								\
-	dst_extrema,		\
-	dst_counts,		\
-	src_vals,		\
-	dst_indices,		\
+	dst_extrema,						\
+	dst_counts,						\
+	src_vals,						\
+	dst_indices,						\
 	len1, len2
 
 
@@ -60,7 +62,7 @@
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
 	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
 	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
-	u_long len1, u_long len2
+	DECLARE_2_LENGTHS
 
 
 // MM_ARGS or helper args?
@@ -79,7 +81,10 @@
 	KERNEL_ARG_QUALIFIER std_type* a,			\
 	KERNEL_ARG_QUALIFIER std_type* b,			\
 	KERNEL_ARG_QUALIFIER std_type* c,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
+
+#define DECLARE_2_LENGTHS					\
+	uint32_t len1, uint32_t len2
 
 #define KERN_ARGS_2V_PROJ	dest, s1, len1, len2
 
@@ -87,19 +92,19 @@
 								\
 	KERNEL_ARG_QUALIFIER std_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 #define DECLARE_KERN_ARGS_CPX_2V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 #define DECLARE_KERN_ARGS_QUAT_2V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_quat* dest,			\
 	KERNEL_ARG_QUALIFIER std_quat* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 #define KERN_ARGS_IDX_SETUP	indices,s1,s2,len1,len2
 
@@ -108,7 +113,7 @@
 	KERNEL_ARG_QUALIFIER index_type* a,			\
 	KERNEL_ARG_QUALIFIER std_type* b,			\
 	KERNEL_ARG_QUALIFIER std_type* c,			\
-	u_long len1, u_long len2
+	DECLARE_2_LENGTHS
 
 
 #define DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER			\
@@ -117,14 +122,14 @@
 	KERNEL_ARG_QUALIFIER index_type* b,			\
 	KERNEL_ARG_QUALIFIER index_type* c,			\
 	KERNEL_ARG_QUALIFIER std_type *orig,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 
 #define DECLARE_KERN_ARGS_2V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 
 #define KERN_ARGS_3V_PROJ					\
@@ -141,7 +146,7 @@
 	KERNEL_ARG_QUALIFIER std_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
 	KERNEL_ARG_QUALIFIER std_type* s2,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 
 #define DECLARE_KERN_ARGS_CPX_3V_PROJ				\
@@ -149,7 +154,7 @@
 	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s2,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 // is this a special case???
 #define DECLARE_KERN_ARGS_DBM_GPU_INFO				\

@@ -5,9 +5,9 @@
 // Can't use XFER_FAST_ARGS_2, because it uses dst_dp for the count...
 // But we need to know the length of the index array (dest)
 
-#define XFER_FAST_ARGS_NOCC		XFER_SLOW_ARGS_1		\
-					XFER_FAST_COUNT(SRC1_DP)	\
-					XFER_FAST_ARGS_SRC1		\
+#define XFER_FAST_ARGS_NOCC		XFER_SLOW_ARGS_1 /* why SLOW? */	\
+					XFER_FAST_COUNT(SRC1_DP)		\
+					XFER_FAST_ARGS_SRC1			\
 					XFER_RETSCAL1 XFER_RETSCAL2
 
 #define XFER_EQSP_ARGS_NOCC		SET_VA_FLAGS(vap,VA_EQSP_ARGS);		\
@@ -315,8 +315,8 @@
 #define XFER_FAST_ARGS_1	XFER_DEST_PTR					\
 				XFER_FAST_COUNT(dst_dp)
 
-#define XFER_FAST_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );
-#define XFER_EQSP_COUNT(dp)	SET_VA_LEN(vap, OBJ_N_TYPE_ELTS(dp) );	// same as XFER_FAST_COUNT !?
+#define XFER_FAST_COUNT(dp)	SET_VA_LENGTH(vap, OBJ_N_TYPE_ELTS(dp) );
+#define XFER_EQSP_COUNT(dp)	SET_VA_LENGTH(vap, OBJ_N_TYPE_ELTS(dp) );	// same as XFER_FAST_COUNT !?
 
 #define XFER_FAST_ARGS_SRC(idx)	XFER_SRC_PTR(idx)
 #define XFER_FAST_ARGS_SRC1	XFER_FAST_ARGS_SRC(0)

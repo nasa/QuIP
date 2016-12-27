@@ -15,16 +15,23 @@ if( !strcmp(#type,"float") ) fprintf(stderr,"\tfloat arg = %g\n",		\
 * ((float *)value));								\
 else if( !strcmp(#type,"int") ) fprintf(stderr,"\tint arg = %d\n",		\
 * ((int *)value));								\
+else if( !strcmp(#type,"uint32_t") ) fprintf(stderr,"\tuint32_t arg = %d\n",		\
+* ((uint32_t *)value));								\
 else if( !strcmp(#type,"void *") ) fprintf(stderr,"\tptr arg = 0x%lx\n",	\
 (u_long)value);									\
 else if( !strcmp(#type,"bitmap_word") ) fprintf(stderr,"\tbitmap word arg = 0x%lx\n",\
 (/*bitmap_word*/u_long)value);								\
-else if( !strcmp(#type,"dim3") ) fprintf(stderr,"\tdim3 arg = %d %d %d\n",\
-((dim3 *)value)->x,((dim3 *)value)->y,((dim3 *)value)->z);			\
-else fprintf(stderr,"\tunhandled case for type %s\n",#type);
+else if( !strcmp(#type,"dim5") ) fprintf(stderr,"\tdim5 arg = %d %d %d %d %d\n",\
+((dim5 *)value)->d5_dim[0],((dim5 *)value)->d5_dim[1],((dim5 *)value)->d5_dim[2],((dim5 *)value)->d5_dim[3],((dim5 *)value)->d5_dim[4]); \
+else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 
+/*else if( !strcmp(#type,"dim3") ) fprintf(stderr,"\tdim3 arg = %d %d %d\n",\
+((dim3 *)value)->x,((dim3 *)value)->y,((dim3 *)value)->z);			\
+*/
 
 #define SET_KERNEL_ARG(type,value)	_SET_KERNEL_ARG(kernel[pd_idx],type,value)
+#define SET_KERNEL_ARG_1(type,value)	_SET_KERNEL_ARG(kernel1[pd_idx],type,value)
+#define SET_KERNEL_ARG_2(type,value)	_SET_KERNEL_ARG(kernel2[pd_idx],type,value)
 
 #define _SET_KERNEL_ARG(kernel,type,value)				\
 	/*SHOW_KERNEL_ARG(type,value)*/					\
@@ -76,34 +83,37 @@ else fprintf(stderr,"\tunhandled case for type %s\n",#type);
 #define SET_KERNEL_ARGS_FAST_QUAT_1				\
 	SET_KERNEL_ARG(void *,&(VARG_PTR( VA_DEST(vap))) )
 
+// BUG - need to make sure consistent with expected args???
+
 #define SET_KERNEL_ARGS_NOCC_SETUP				\
 								\
-	SET_KERNEL_ARG(void *,&dst_values)		\
-	SET_KERNEL_ARG(void *,&dst_counts)		\
-	SET_KERNEL_ARG(void *,&src_values)		\
-	SET_KERNEL_ARG(void *,&indices)		\
-	SET_KERNEL_ARG( dimension_t, &len1 )		\
-	SET_KERNEL_ARG( dimension_t, &len2 )
+	SET_KERNEL_ARG_1(void *,&dst_values)			\
+	SET_KERNEL_ARG_1(void *,&dst_counts)			\
+	SET_KERNEL_ARG_1(void *,&src_values)			\
+	SET_KERNEL_ARG_1(void *,&indices)				\
+	SET_KERNEL_ARG_1( uint32_t, &len1 )			\
+	SET_KERNEL_ARG_1( uint32_t, &len2 )
 	/*GPU_CALL_NAME(name##_nocc_setup)(dst_values, dst_counts, src_values, indices, len1, len2); */
 
 #define SET_KERNEL_ARGS_NOCC_HELPER				\
 								\
-	SET_KERNEL_ARG(void *,&dst_values)		\
-	SET_KERNEL_ARG(void *,&dst_counts)		\
-	SET_KERNEL_ARG(void *,&src_values)		\
-	SET_KERNEL_ARG(void *,&src_counts)		\
-	SET_KERNEL_ARG(void *,&indices)		\
-	SET_KERNEL_ARG( dimension_t, &len1 )		\
-	SET_KERNEL_ARG( dimension_t, &len2 )
+	SET_KERNEL_ARG_2(void *,&dst_values)			\
+	SET_KERNEL_ARG_2(void *,&dst_counts)			\
+	SET_KERNEL_ARG_2(void *,&src_values)			\
+	SET_KERNEL_ARG_2(void *,&src_counts)			\
+	SET_KERNEL_ARG_2(void *,&indices)				\
+	SET_KERNEL_ARG_2( uint32_t, &len1 )			\
+	SET_KERNEL_ARG_2( uint32_t, &len2 )			\
+	SET_KERNEL_ARG_2( uint32_t, &stride )
 	/*(GPU_CALL_NAME(name##_nocc_helper) (dst_values, dst_counts, src_values, src_counts, indices, len1, len2, stride); */
 
 #define SET_KERNEL_ARGS_PROJ_2V					\
 								\
-fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
+fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
 	SET_KERNEL_ARG(void *,&dst_values)		\
 	SET_KERNEL_ARG(void *,&src_values)		\
-	SET_KERNEL_ARG( dimension_t, &len1 )		\
-	SET_KERNEL_ARG( dimension_t, &len2 )
+	SET_KERNEL_ARG( uint32_t, &len1 )		\
+	SET_KERNEL_ARG( uint32_t, &len2 )
 	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
 
 #define SET_KERNEL_ARGS_PROJ_3V					\
@@ -111,17 +121,17 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 	SET_KERNEL_ARG(void *,&dst_values)		\
 	SET_KERNEL_ARG(void *,&src1_values)		\
 	SET_KERNEL_ARG(void *,&src2_values)		\
-	SET_KERNEL_ARG( dimension_t, &len1 )		\
-	SET_KERNEL_ARG( dimension_t, &len2 )
+	SET_KERNEL_ARG( uint32_t, &len1 )		\
+	SET_KERNEL_ARG( uint32_t, &len2 )
 		/*	( arg1 , s1 , s2 , len1 , len2 ); */
 
 #define SET_KERNEL_ARGS_INDEX_SETUP				\
 								\
-	SET_KERNEL_ARG(void *,&indices)			\
-	SET_KERNEL_ARG(void *,&src1_values)		\
-	SET_KERNEL_ARG(void *,&src2_values)		\
-	SET_KERNEL_ARG( dimension_t, &len1 )		\
-	SET_KERNEL_ARG( dimension_t, &len2 )
+	SET_KERNEL_ARG_1(void *,&indices)			\
+	SET_KERNEL_ARG_1(void *,&src1_values)		\
+	SET_KERNEL_ARG_1(void *,&src2_values)		\
+	SET_KERNEL_ARG_1( uint32_t, &len1 )		\
+	SET_KERNEL_ARG_1( uint32_t, &len2 )
 		/* (idx_arg1,std_arg2,std_arg3,len1,len2,max_threads_per_block) */	\
 
 
@@ -129,12 +139,12 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %ld, len2 = %ld\n",len1,len2);\
 
 #define SET_KERNEL_ARGS_INDEX_HELPER				\
 								\
-	SET_KERNEL_ARG(void *,&indices)			\
-	SET_KERNEL_ARG(void *,&idx1_values)		\
-	SET_KERNEL_ARG(void *,&idx2_values)		\
-	SET_KERNEL_ARG(void *,&src1_values)		\
-	SET_KERNEL_ARG( dimension_t, &len1 )		\
-	SET_KERNEL_ARG( dimension_t, &len2 )
+	SET_KERNEL_ARG_2(void *,&indices)			\
+	SET_KERNEL_ARG_2(void *,&idx1_values)		\
+	SET_KERNEL_ARG_2(void *,&idx2_values)		\
+	SET_KERNEL_ARG_2(void *,&src1_values)		\
+	SET_KERNEL_ARG_2( uint32_t, &len1 )		\
+	SET_KERNEL_ARG_2( uint32_t, &len2 )
 	/*(arg1, arg2, arg3, orig, len1, len2) */
 /* ( index_type *arg1, index_type *arg2, index_type * arg3, std_type * orig, u_long len1, u_long len2, int max_threads_per_block ) */
 

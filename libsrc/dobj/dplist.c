@@ -228,7 +228,7 @@ void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(string,"(no data area):%s", OBJ_NAME(dp) );
 	else
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );
-	sprintf(MSG_STR,"%-20s",string);
+	sprintf(MSG_STR,"%-40s",string);
 	prt_msg_frag(MSG_STR);
 	describe_shape(QSP_ARG   OBJ_SHAPE(dp) );
 

@@ -522,6 +522,72 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 
 
+
+
+// MM_IND vmaxi etc
+
+#ifdef BUILD_FOR_CUDA
+
+// BUG - move to cu2 folder file...
+// CUDA definitions
+// BUG we probably want the passed vap to have constant data...
+
+#define CALL_GPU_NOCC_SETUP_FUNC(name)						\
+	CLEAR_GPU_ERROR(name##_nocc_setup)					\
+sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_setup...",#name);			\
+NADVISE(DEFAULT_ERROR_STRING);							\
+	REPORT_THREAD_INFO2							\
+	GPU_CALL_NAME(name##_nocc_setup)<<< NN_GPU >>>				\
+		(dst_values, dst_counts, src_values, indices, len1, len2);	\
+	CHECK_GPU_ERROR(name##_nocc_setup)
+
+
+#define CALL_GPU_NOCC_HELPER_FUNC(name)						\
+	CLEAR_GPU_ERROR(name##_nocc_helper)					\
+sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_helper...",#name);		\
+NADVISE(DEFAULT_ERROR_STRING);							\
+	REPORT_THREAD_INFO2							\
+	GPU_CALL_NAME(name##_nocc_helper)<<< NN_GPU >>>				\
+		(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride); \
+	CHECK_GPU_ERROR(name##_nocc_helper)
+
+
+
+// CUDA only!
+#define CALL_GPU_PROJ_2V_FUNC(name) /* CUDA only */			\
+	CLEAR_GPU_ERROR(name)						\
+	REPORT_THREAD_INFO2						\
+fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %ld, len2 = %ld\n",\
+#name,(long)dst_values,(long)src_values,len1,len2);\
+	GPU_CALL_NAME(name)<<< NN_GPU >>>( dst_values, src_values, len1, len2 );	\
+	CHECK_GPU_ERROR(name)
+
+#define CALL_GPU_PROJ_3V_FUNC(name)					\
+	CLEAR_GPU_ERROR(name)						\
+	REPORT_THREAD_INFO2						\
+	GPU_CALL_NAME(name)<<< NN_GPU >>>				\
+		( dst_values, src1_values, src2_values, len1, len2 );	\
+	CHECK_GPU_ERROR(name)
+
+
+#define CALL_GPU_INDEX_SETUP_FUNC(name)					\
+	CLEAR_GPU_ERROR(name##_index_setup)				\
+	REPORT_THREAD_INFO2						\
+	GPU_CALL_NAME(name##_index_setup)<<< NN_GPU >>>			\
+		(indices,src1_values,src2_values,len1,len2);		\
+	CHECK_GPU_ERROR(name##_index_setup)
+
+
+#define CALL_GPU_INDEX_HELPER_FUNC(name)				\
+	CLEAR_GPU_ERROR(name##_index_helper)				\
+	REPORT_THREAD_INFO2						\
+	GPU_CALL_NAME(name##_index_helper)<<< NN_GPU >>>		\
+		(indices,idx1_values,idx2_values,orig_src_values,len1,len2);	\
+	CHECK_GPU_ERROR(name##_index_helper)
+
+#endif // BUILD_FOR_CUDA
+
+
 #ifdef DUPLICATED_CODE
 // this is 80 columns
 //345678901234567890123456789012345678901234567890123456789012345678901234567890

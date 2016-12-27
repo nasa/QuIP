@@ -48,6 +48,10 @@
 					GEN_SEP(prefix)			\
 					prefix##_SLOW_DBM	// SLOW_SIZE
 
+//#define GEN_ARGS_NOCC_SETUP(prefix)	GEN_SLOW_SIZE(prefix)		\
+//					GEN_SEP(prefix)			\
+//					prefix##_NOCC_SETUP
+
 ////////// FAST
 
 // OS_ARG is the offset arg...  that is how we do indexing with opencl

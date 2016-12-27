@@ -62,11 +62,19 @@ _VEC_FUNC_2V_SCAL( vscmp2, dst= (dest_type) src1<=scalar1_val?1:0 )
 
 // Do these functions have fast and slow versions?
 
-_VEC_FUNC_MM_NOCC( vmaxg, src1==extval, src1>extval, extval= src1 , src_vals[index2.x]>src_vals[index2.x+1],src_vals[index2.x]<src_vals[index2.x+1])
-_VEC_FUNC_MM_NOCC( vming, src1==extval, src1<extval, extval= src1 , src_vals[index2.x]<src_vals[index2.x+1],src_vals[index2.x]>src_vals[index2.x+1])
+#ifndef IDX3
+#define IDX3	index3
+#endif // ! IDX3
 
-//VEC_FUNC_MM_NOCC(vmaxg,src_vals[index2.x]>src_vals[index2.x+1],src_vals[index2.x]<src_vals[index2.x+1])
-//VEC_FUNC_MM_NOCC(vming,src_vals[index2.x]<src_vals[index2.x+1],src_vals[index2.x]>src_vals[index2.x+1])
+#ifndef IDX2
+#define IDX2	index2
+#endif // ! IDX2
+
+_VEC_FUNC_MM_NOCC( vmaxg, src1==extval, src1>extval, extval= src1 , src_vals[IDX2]>src_vals[IDX2+1],src_vals[IDX2]<src_vals[IDX2+1])
+_VEC_FUNC_MM_NOCC( vming, src1==extval, src1<extval, extval= src1 , src_vals[IDX2]<src_vals[IDX2+1],src_vals[IDX2]>src_vals[IDX2+1])
+
+//VEC_FUNC_MM_NOCC(vmaxg,src_vals[IDX2]>src_vals[IDX2+1],src_vals[IDX2]<src_vals[IDX2+1])
+//VEC_FUNC_MM_NOCC(vming,src_vals[IDX2]<src_vals[IDX2+1],src_vals[IDX2]>src_vals[IDX2+1])
 
 /* used to be EXTREME_VALUE_METHOD, but logic incorporating projection operation
  * (dimension collapsing) was brought in from the java macros.
@@ -108,8 +116,10 @@ _VEC_FUNC_3V( rvsub , dst = (dest_type)(src1 - src2) )
 _VEC_FUNC_3V( rvmul , dst = (dest_type)(src1 * src2) )
 _VEC_FUNC_3V( rvdiv , dst = (dest_type)(src1 / src2) )
 
+// Ramp functions are slow - only...
+
 _VEC_FUNC_1V_2SCAL( vramp1d , dst = (dest_type)scalar1_val; scalar1_val+=scalar2_val,
-				dst = scalar1_val + IDX1_0 * scalar2_val )
+				dst = scalar1_val + IDX1 * scalar2_val )
 
 // Why are stat1, stat2 not used?
 // cpu implementation?
@@ -189,8 +199,8 @@ _VEC_FUNC_2V_PROJ( vminv ,
 	psrc1 < psrc2 ? psrc1 : psrc2 )
 
 
-//VEC_FUNC_MM_IND(vmaxi, dst = (src1 > src2 ? index2.x : index3.x+len1) , dst = (orig[src1] > orig[src2] ? src1 : src2) )
-//VEC_FUNC_MM_IND(vmini, dst = (src1 < src2 ? index2.x : index3.x+len1) , dst = (orig[src1] < orig[src2] ? src1 : src2) )
+//VEC_FUNC_MM_IND(vmaxi, dst = (src1 > src2 ? IDX2 : IDX3+len1) , dst = (orig[src1] > orig[src2] ? src1 : src2) )
+//VEC_FUNC_MM_IND(vmini, dst = (src1 < src2 ? IDX2 : IDX3+len1) , dst = (orig[src1] < orig[src2] ? src1 : src2) )
 
 
 //_VF_2V_PROJ_IDX( name, cpu_s1, cpu_s2, gpu_s1, gpu_s2 )
@@ -198,14 +208,14 @@ _VEC_FUNC_2V_PROJ( vminv ,
 _VEC_FUNC_2V_PROJ_IDX( vmaxi ,
 	dst = index_base[0] ,
 	tmp_ptr = INDEX_VDATA(dst); if ( src1 > *tmp_ptr ) dst=index_base[0] ,
-	dst = (src1 > src2 ? index2.x : index3.x+len1) ,
+	dst = (src1 > src2 ? IDX2 : IDX3+len1) ,
 	dst = (orig[src1] > orig[src2] ? src1 : src2)
 	)
 
 _VEC_FUNC_2V_PROJ_IDX( vmini ,
 	dst = index_base[0] ,
 	tmp_ptr = INDEX_VDATA(dst); if( src1 < *tmp_ptr ) dst=index_base[0] ,
-	dst = (src1 < src2 ? index2.x : index3.x+len1) ,
+	dst = (src1 < src2 ? IDX2 : IDX3+len1) ,
 	dst = (orig[src1] < orig[src2] ? src1 : src2)
 	)
 

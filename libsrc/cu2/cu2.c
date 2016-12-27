@@ -661,6 +661,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 void *TMPVEC_NAME(size_t size,size_t len,const char *whence)
 {
+	// Why is this commented out???
 /*
 	void *cuda_mem;
 	cudaError_t drv_err;

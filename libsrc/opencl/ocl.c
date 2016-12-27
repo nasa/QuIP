@@ -119,17 +119,6 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 	}
 }
 
-void *TMPVEC_NAME(size_t size,size_t len,const char *whence)
-{
-	NWARN("ocl_tmpvec not implemented!?");
-	return NULL;
-}
-
-void FREETMP_NAME(void *ptr,const char *whence)
-{
-	NWARN("ocl_freetmp not implemented!?");
-}
-
 #define MAX_OCL_DEVICES 5
 #define MAX_DIGIT_CHARS	12	// overkill
 
@@ -613,6 +602,22 @@ static void ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 
 	ret = clReleaseMemObject( (cl_mem) OBJ_DATA_PTR(dp) ); //free memory on device
 	// BUG check return value
+}
+
+void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+{
+	//NWARN("ocl_tmpvec not implemented!?");
+	//return NULL;
+	void *ptr;
+
+	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len, 0);
+	return ptr;
+}
+
+void FREETMP_NAME(void *ptr,const char *whence)
+{
+	//NWARN("ocl_freetmp not implemented!?");
+	ocl_mem_free(DEFAULT_QSP_ARG  ptr);
 }
 
 static void ocl_update_offset(QSP_ARG_DECL  Data_Obj *dp )

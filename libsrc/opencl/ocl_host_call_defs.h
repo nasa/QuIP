@@ -130,8 +130,12 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 // elements to 0...
 
 #define DECLARE_OCL_VARS						\
-	static cl_program program = NULL;				\
 	static cl_kernel kernel[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};	\
+	DECLARE_OCL_COMMON_VARS
+
+#define DECLARE_OCL_COMMON_VARS						\
+									\
+	static cl_program program = NULL;				\
 	cl_int status;							\
 	DECLARE_OCL_EVENT						\
 	int ki_idx=0;							\
@@ -142,8 +146,22 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	size_t global_work_size[3] = {1, 1, 1};				\
 	/* size_t local_work_size[3]  = {0, 0, 0}; */
 
+// two different kernels used in one call (e.g. vmaxg - nocc_setup, nocc_helper
+
+#define DECLARE_OCL_VARS_2							\
+										\
+	static cl_kernel kernel1[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};	\
+	static cl_kernel kernel2[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};	\
+	DECLARE_OCL_COMMON_VARS
+
 #define CHECK_NOSPEED_KERNEL(name)						\
 	CHECK_KERNEL(name,,GPU_CALL_NAME(name))
+
+#define CHECK_NOSPEED_KERNEL_1(name)						\
+	CHECK_KERNEL_1(name,,GPU_CALL_NAME(name))
+
+#define CHECK_NOSPEED_KERNEL_2(name)						\
+	CHECK_KERNEL_2(name,,GPU_CALL_NAME(name))
 
 #define CHECK_FAST_KERNEL(name)						\
 	CHECK_KERNEL(name,fast,GPU_FAST_CALL_NAME(name))
@@ -155,18 +173,24 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	CHECK_KERNEL(name,slow,GPU_SLOW_CALL_NAME(name))
 
 #define CHECK_KERNEL(name,ktyp,kname)					\
-	_CHECK_KERNEL(name,ktyp,kname)
+	_CHECK_KERNEL(kernel,name,ktyp,kname)
 
-#define _CHECK_KERNEL(name,ktyp,kname)					\
+#define CHECK_KERNEL_1(name,ktyp,kname)					\
+	_CHECK_KERNEL(kernel1,name,ktyp,kname)
+
+#define CHECK_KERNEL_2(name,ktyp,kname)					\
+	_CHECK_KERNEL(kernel2,name,ktyp,kname)
+
+#define _CHECK_KERNEL(k,name,ktyp,kname)				\
 	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));				\
-	if( kernel[pd_idx] == NULL ){	/* one-time initialization */	\
+	if( k[pd_idx] == NULL ){	/* one-time initialization */	\
 		ksrc = KERN_SOURCE_NAME(name,ktyp);			\
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));	\
 		if( program == NULL ) 					\
 			NERROR1("program creation failure!?");		\
 									\
-		kernel[pd_idx] = ocl_create_kernel(program, #kname, VA_PFDEV(vap));\
-		if( kernel[pd_idx] == NULL ){ 					\
+		k[pd_idx] = ocl_create_kernel(program, #kname, VA_PFDEV(vap));\
+		if( k[pd_idx] == NULL ){ 					\
 			NADVISE("Source code of failed program:");	\
 			NADVISE(ksrc);					\
 			NERROR1("kernel creation failure!?");		\
@@ -231,14 +255,24 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 #define CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */			\
-	FINISH_KERNEL_CALL(1)
+	FINISH_KERNEL_CALL(kernel,1)
+
+#define CALL_FAST_KERNEL_1(name,bitmap,typ,scalars,vectors)		\
+									\
+	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */			\
+	FINISH_KERNEL_CALL(kernel1,1)
+
+#define CALL_FAST_KERNEL_2(name,bitmap,typ,scalars,vectors)		\
+									\
+	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */			\
+	FINISH_KERNEL_CALL(kernel2,1)
 
 // fast and eqsp only differ in args passed...
 #define CALL_EQSP_KERNEL(name,bitmap,typ,scalars,vectors)		\
 	CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)
 
 #define CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)                     \
-	FINISH_KERNEL_CALL(1)
+	FINISH_KERNEL_CALL(kernel,1)
 
 #define CALL_EQSP_CONV_KERNEL(name,bitmap,typ,type)                     \
 	CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)
@@ -248,43 +282,49 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 
 #define CALL_GPU_NOCC_SETUP_FUNC(name)					\
 									\
-	CHECK_NOSPEED_KERNEL(name##_nocc_setup)				\
+/*fprintf(stderr,"checking for nocc_setup kernel\n");*/\
+	CHECK_NOSPEED_KERNEL_1(name##_nocc_setup)			\
+/*fprintf(stderr,"setting kernel args for nocc_setup\n");*/\
 	SET_KERNEL_ARGS_NOCC_SETUP					\
-	SETUP_FAST_BLOCKS_						\
-	CALL_FAST_KERNEL(name,,,,)
-	/*GPU_CALL_NAME(name##_nocc_setup)(dst_values, dst_counts, src_values, indices, len1, len2); */
+/*fprintf(stderr,"setting up blocks for nocc_setup\n");*/\
+	/*SETUP_FAST_BLOCKS_*/ /* uses VA_LENGTH */			\
+	global_work_size[0] = len1;					\
+/*fprintf(stderr,"calling fast setup kernel for %s, n_threads = %d\n",#name,len1);*/\
+	CALL_FAST_KERNEL_1(name,,,,)
 
 
 #define CALL_GPU_NOCC_HELPER_FUNC(name)					\
 									\
-	CHECK_NOSPEED_KERNEL(name##_nocc_helper)			\
+/*fprintf(stderr,"checking for nocc_helper kernel\n");*/\
+	CHECK_NOSPEED_KERNEL_2(name##_nocc_helper)			\
+/*fprintf(stderr,"setting kernel args for nocc_helper\n");*/\
+	ki_idx=0;							\
 	SET_KERNEL_ARGS_NOCC_HELPER					\
-	SETUP_FAST_BLOCKS_						\
-	CALL_FAST_KERNEL(name,,,,)
-	/*(GPU_CALL_NAME(name##_nocc_helper) (dst_values, dst_counts, src_values, src_counts, indices, len1, len2, stride); */
+/*fprintf(stderr,"setting up blocks for nocc_helper\n");*/\
+	global_work_size[0] = len1;					\
+/*fprintf(stderr,"calling fast helper kernel for %s, n_threads = %d\n",#name,len1);*/\
+	CALL_FAST_KERNEL_2(name,,,,)
 
 #define CALL_GPU_PROJ_2V_FUNC(name)					\
 fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 	CHECK_NOSPEED_KERNEL(name)					\
 	SET_KERNEL_ARGS_PROJ_2V						\
 	CALL_FAST_KERNEL(name,,,,)
-	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
 
 #define CALL_GPU_PROJ_3V_FUNC(name)					\
 	CHECK_NOSPEED_KERNEL(name)					\
 	SET_KERNEL_ARGS_PROJ_3V						\
 	CALL_FAST_KERNEL(name,,,,)
-	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
 
 #define CALL_GPU_INDEX_SETUP_FUNC(name)					\
-	CHECK_NOSPEED_KERNEL(name)					\
+	CHECK_NOSPEED_KERNEL_1(name)					\
 	SET_KERNEL_ARGS_INDEX_SETUP					\
-	CALL_FAST_KERNEL(name,,,,)
+	CALL_FAST_KERNEL_1(name,,,,)
 
 #define CALL_GPU_INDEX_HELPER_FUNC(name)					\
-	CHECK_NOSPEED_KERNEL(name)					\
+	CHECK_NOSPEED_KERNEL_2(name)					\
 	SET_KERNEL_ARGS_INDEX_HELPER					\
-	CALL_FAST_KERNEL(name,,,,)
+	CALL_FAST_KERNEL_2(name,,,,)
 
 // Slow kernel - we set the sizes from the increments,
 // but how do we know how many args we have???
@@ -294,7 +334,7 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 #define CALL_SLOW_KERNEL(name,bitmap,typ,scalars,vectors)		\
 									\
 /*show_vec_args(vap);*/\
-	FINISH_KERNEL_CALL(/*3*/ 1 )
+	FINISH_KERNEL_CALL(kernel, /*3*/ 1 )
 
 // Normally we don't want to wait
 // So we can define this to be a nop
@@ -303,12 +343,12 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 #define KERNEL_FINISH_EVENT	&event
 
 
-#define FINISH_KERNEL_CALL(n_dims)					\
+#define FINISH_KERNEL_CALL(k,n_dims)					\
 									\
 	REPORT_KERNEL_ENQUEUE(n_dims)					\
 	status = clEnqueueNDRangeKernel(				\
 		OCLDEV_QUEUE( VA_PFDEV(vap) ),				\
-		kernel[pd_idx],							\
+		k[pd_idx],							\
 		n_dims,	/* work_dim, 1-3 */				\
 		NULL,							\
 		global_work_size,					\
@@ -327,6 +367,7 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
 #define DECLARE_EQSP_VARS_2	// nop
 
 #define DECLARE_PLATFORM_VARS		DECLARE_OCL_VARS
+#define DECLARE_PLATFORM_VARS_2		DECLARE_OCL_VARS_2
 
 
 #define DECLARE_PLATFORM_FAST_VARS	DECLARE_PLATFORM_VARS

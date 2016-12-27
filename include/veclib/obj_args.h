@@ -167,7 +167,7 @@ typedef struct vector_args {
 						// used for return scalars also?
 	dimension_t	va_dbm_bit0;
 	dimension_t	va_sbm_bit0;
-	dimension_t	va_len;
+	dimension_t	va_len;			// just for fast/eqsp ops?
 #ifdef HAVE_ANY_GPU
 	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
 	// Bitmap objects will have these structs in host memory, but these pointers will be the GPU copies.
@@ -369,7 +369,7 @@ extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_SVAL3(vap)			VA_SVAL(vap,2)
 
 // BUG? use one or the other?
-#define SET_VA_LEN(vap,l)		(vap)->va_len = l
+//#define SET_VA_LEN(vap,l)		(vap)->va_len = l
 #define SET_VA_LENGTH(vap,v)		(vap)->va_len = v
 
 #define SET_VA_DEST_PTR(vap,ptr)	SET_VARG_PTR( VA_DEST(vap) , ptr )

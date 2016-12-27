@@ -19,6 +19,11 @@
 #define qsrc3	fast_qsrc3
 #define qsrc4	fast_qsrc4
 
+// vmaxg etc - require contiguous, fast only
+
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )	\
+	__VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
+
 #ifdef FOOBAR
 //#ifdef BUILD_FOR_CUDA
 

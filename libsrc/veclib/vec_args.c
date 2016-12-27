@@ -946,7 +946,10 @@ void setvarg5(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *src1,Data_Obj *src2,Dat
 
 static void show_increments(Increment_Set *isp)
 {
-	if( isp == NULL ) return;
+	if( isp == NULL ){
+		fprintf(stderr,"\t\t(null increment set)\n");
+		return;
+	}
 
 	fprintf(stderr,"\t\t%d, %d, %d, %d, %d\n",
 		isp->is_increment[4],
@@ -958,7 +961,10 @@ static void show_increments(Increment_Set *isp)
 
 static void show_dimensions(Dimension_Set *dsp)
 {
-	if( dsp == NULL ) return;
+	if( dsp == NULL ){
+		fprintf(stderr,"\t\t(null dimension set)\n");
+		return;
+	}
 
 	fprintf(stderr,"\t\t%d, %d, %d, %d, %d\n",
 		dsp->ds_dimension[4],
@@ -981,6 +987,8 @@ void show_vec_args(const Vector_Args *vap)
 
 	fprintf(stderr,"show_vec_args 0x%lx:\n", (long)vap);
 
+	fprintf(stderr,"platform_device = 0x%lx\n",(long)VA_PFDEV(vap));
+	fprintf(stderr,"platform_device = %s\n",PFDEV_NAME(VA_PFDEV(vap)));
 	show_vector_arg( "dest", & VA_DEST(vap) );
 
 	for(i=0;i<MAX_N_ARGS;i++){
