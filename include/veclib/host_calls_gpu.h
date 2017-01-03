@@ -509,6 +509,22 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 // as we did with vmaxv...
 //
 // This looks wrong - the destination does not have to be a scalar!?
+//
+// We can have a fast version when the source is contiguous and the destination is a scalar,
+// we don't need anything except lengths...
+//
+// For non-scalar outputs (projections) it is more complicated...
+// We do the same things, but with more complicated indexing calculations.
+//
+// i11 i12 i13 i14 i15	->	max(i11,i21)	max(i12,i22)	max(i13,i23)	max(i14,i24)	max(i15,i25)
+// i21 i22 i23 i24 i25		max(i31,i41)	max(i32,i42)	max(i33,i43)	max(i34,i44)	max(i35,i45)
+// i31 i32 i33 i34 i35
+// i41 i42 i43 i44 i45
+//
+//				d11		d12		d13		d14		d15
+//				d21		d22		d23		d24		d25
+//
+// We could collapse dimensions one by one...
 
 // BUG? gpu_expr? used?
 

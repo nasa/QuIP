@@ -12,6 +12,7 @@ libvec_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE -Wall -Wmissing-protot
 #				bm_funcs.c
 
 #				convert.c
+#				bitmap.c
 
 libvec_a_SOURCES =				\
 				sampmenu.c	\
@@ -26,33 +27,33 @@ libvec_a_SOURCES =				\
 				cksiz.c		\
 				cpu_flags.c	\
 				lin_util.c	\
-				bitmap.c	\
 				vec_func.c	\
 				dispatch.c	\
 				platform.c	\
 				platform_menu.c	\
 				vec_chain.c
 
-# included files (not compiled themselves
 
-EXTRA_libvec_a_SOURCES =			\
-				bit_vec.c	\
-				conv_vec.c	\
-				linear.c
+# included files (not compiled themselves
+#EXTRA_libvec_a_SOURCES =			\
+#				conv_vec.c
+#				bit_vec.c
+#				linear.c
+
+#				dp_common.h
+#				sp_common.h
+#				new_ops.h
+#				method_prot.h
+#				nv_undefs.h
+#				convert.h
+#				bitmap.h
+#				calling_args.h
 
 noinst_HEADERS =				\
-				bitmap.h	\
-				calling_args.h	\
-				convert.h	\
-				dp_common.h	\
-				method_prot.h	\
 				my_cpuid.h	\
-				new_ops.h	\
-				nv_undefs.h	\
 				nvf.h		\
 				nvproto.h	\
 				os_check.h	\
-				sp_common.h	\
 				vec_chain.h	\
 				veclib_prot.h
 

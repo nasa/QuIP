@@ -117,8 +117,8 @@
 #define IDX1	(INDEX_SUM(index1))
 #define IDX1_1	(index1.d5_dim[1])
 #define IDX1_2	(index1.d5_dim[2])
-#define INC1_1	inc1.dg_dim[1]
-#define INC1_2	inc1.dg_dim[2]
+#define INC1_1	inc1.d5_dim[1]
+#define INC1_2	inc1.d5_dim[2]
 
 #define SCALE_INDEX(idx,inc)	idx.d5_dim[0] *= inc.d5_dim[0];		\
 				idx.d5_dim[1] *= inc.d5_dim[1];		\

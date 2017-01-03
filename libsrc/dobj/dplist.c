@@ -527,7 +527,11 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 	sprintf(MSG_STR,"\tdata at   0x%lx",(int_for_addr)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 	if( IS_BITMAP(dp) ){
+#ifdef BITNUM_64
 		sprintf(MSG_STR,"\t\tbit0 = %llu",OBJ_BIT0(dp));
+#else
+		sprintf(MSG_STR,"\t\tbit0 = %u",OBJ_BIT0(dp));
+#endif
 		prt_msg(MSG_STR);
 	}
 }

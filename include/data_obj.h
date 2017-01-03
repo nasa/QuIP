@@ -143,13 +143,16 @@ extern debug_flag_t debug_data;
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
 
+//typedef uint64_t	bitnum_t;	// could be uint32_t?
+typedef uint32_t	bitnum_t;	// could be uint32_t?
+
 struct data_obj {
 	Item			dt_item;
 	Shape_Info *		dt_shpp;
 	void *			dt_data_ptr;
 	void *			dt_unaligned_ptr;
 	void *			dt_extra;	// used for decl_enp - what else?
-	uint64_t		dt_bit0;
+	bitnum_t		dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;
 	index_t			dt_offset;	// data offset of subobjects - in bytes
@@ -347,9 +350,10 @@ extern int max_vectorizable;
 #define OBJ_MACH_PREC_SIZE(dp)	PREC_SIZE(OBJ_MACH_PREC_PTR(dp))
 #define OBJ_MACH_PREC_PTR(dp)	PREC_MACH_PREC_PTR(OBJ_PREC_PTR(dp))
 
-#ifdef HAVE_ANY_GPU
 #define BITMAP_OBJ_GPU_INFO_HOST_PTR(dp)		SHP_BITMAP_GPU_INFO_H(OBJ_SHAPE(dp))
 #define SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,p)		SET_SHP_BITMAP_GPU_INFO_H(OBJ_SHAPE(dp),p)
+
+#ifdef HAVE_ANY_GPU
 #define BITMAP_OBJ_GPU_INFO_DEV_PTR(dp)			SHP_BITMAP_GPU_INFO_G(OBJ_SHAPE(dp))
 #define SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,p)		SET_SHP_BITMAP_GPU_INFO_G(OBJ_SHAPE(dp),p)
 #endif // HAVE_ANY_GPU

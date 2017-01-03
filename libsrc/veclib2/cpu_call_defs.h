@@ -337,9 +337,12 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
  *	count_type loop_count[N_DIMENSIONS];		\
  */
 
+// BUG - why are we allocating with NEW_DIMSET?
+
 #define DECLARE_LOOP_COUNT				\
 	int i_dim;					\
-	Dimension_Set *loop_count=NEW_DIMSET;
+	/*Dimension_Set *loop_count=NEW_DIMSET;*/	\
+	Dimension_Set lc_ds, *loop_count=(&lc_ds);
 
 #define PROJ_LOOP_DECLS_2				\
 							\
@@ -1023,6 +1026,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 	INIT_SPACING( VA_SPACING(vap) );
 
 
+// BUG - we should avoid dynamic allocation...
+
 #define RELEASE_VEC_ARGS_STRUCT					\
 	givbuf( VA_SPACING(vap) );				\
 	givbuf( VA_SIZE_INFO(vap) );				\
@@ -1439,6 +1444,9 @@ NADVISE(DEFAULT_ERROR_STRING);
  * column of image.  In this case, we usually initialize with the first
  * value of the column, but it may be tricky to know this when we don't
  * know which dimensions will be collapsed...
+ *
+ * The ADJ_COUNTS macro initializes the loop_count array, to be the max
+ * of all of the dimensions
  */
 
 
@@ -1447,7 +1455,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 {									\
 	PROJ_LOOP_DECLS_2						\
 									\
-	INIT_LOOP_COUNT							\
+	INIT_LOOP_COUNT	/* init loop_count to all 1's */					\
 									\
 	ADJ_COUNTS(loop_count,count)					\
 	ADJ_COUNTS(loop_count,s1_count)					\
@@ -1456,7 +1464,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* We just scan the destination once */				\
 	NEW_PLOOP_2( init_statement, count )				\
 	NEW_PLOOP_2( statement, loop_count )				\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 
@@ -1477,7 +1484,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* We just scan the destination once */				\
 	NEW_PLOOP_IDX_2( init_statement, count )			\
 	NEW_PLOOP_IDX_2( statement, loop_count )			\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 
@@ -1494,7 +1500,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 	NEW_PLOOP_##typ##3( init_statement, count )				\
 	NEW_PLOOP_##typ##3( statement, loop_count )				\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 
@@ -1528,7 +1533,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 	NEW_PLOOP_##typ##2( init_statement, count )			\
 	NEW_PLOOP_##typ##2( statement, loop_count )			\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 #define SLOW_BODY_PROJ_XXX_3( name, statement, init_statement, typ )	\
@@ -1544,9 +1548,13 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 	NEW_PLOOP_##typ##3( init_statement, count )			\
 	NEW_PLOOP_##typ##3( statement, loop_count )			\
-	RELEASE_DIMSET(loop_count)					\
 }
 
+/* Projection loop
+ *
+ * We typically call this once with the counts of the destination vector, to initialize,
+ * and then again with the source counts to perform the projection...
+ */
 
 
 #define NEW_PLOOP_2( statement,count_arr )				\

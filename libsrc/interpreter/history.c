@@ -556,6 +556,7 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 			ip = fmi_p->fmi_u.rbti.curr_n_p->data;
 			break;
 		default:			// not needed, but quiets compiler
+			ip=NULL;	// quiet compiler
 			NERROR1("current_frag_match:  bad type!?");
 			break;
 	}
@@ -568,10 +569,10 @@ static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 
 	switch( fmi_p->type ){
 		case LIST_CONTAINER:
-			return reset_item_list(fmi_p,direction);
+			reset_item_list(fmi_p,direction);
 			break;
 		case RB_TREE_CONTAINER:
-			return reset_tree_match(fmi_p,direction);
+			reset_tree_match(fmi_p,direction);
 			break;
 		default:			// not needed, but quiets compiler
 			NERROR1("reset_frag_match:  bad type!?");

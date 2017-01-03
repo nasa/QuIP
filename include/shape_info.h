@@ -93,7 +93,10 @@ struct precision {
 #define NAME_FOR_PREC_CODE(p)		PREC_NAME(PREC_FOR_CODE(p))
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
 
-#ifdef HAVE_ANY_GPU
+//#ifdef HAVE_ANY_GPU
+
+// We use this struct to count the number of words in a bitmap, which is used
+// in a non-gpu function...
 
 // This struct allows us to simplify gpu kernels that deal with bitmaps.
 // Contiguous bitmaps that have no offset and exactly fill an integral number
@@ -157,7 +160,7 @@ typedef struct bitmap_gpu_info {
 
 #define UNLIKELY_INDEX			((dimension_t) ((int32_t)-1))
 
-#endif // HAVE_ANY_GPU
+//#endif // HAVE_ANY_GPU
 
 
 struct shape_info {
@@ -173,11 +176,11 @@ struct shape_info {
 	shape_flag_t		si_flags;
 	incr_t			si_eqsp_inc;
 	/*int32_t			si_last_subi; */
-#ifdef HAVE_ANY_GPU
 	// only used for bitmaps - candidate for union
 	Bitmap_GPU_Info *	si_bitmap_gpu_info_h;	// address in host memory
 							// We may not need to keep this around once we have things working,
 							// but for now it's helpful for debugging.
+#ifdef HAVE_ANY_GPU
 	Bitmap_GPU_Info *	si_bitmap_gpu_info_g;	// address in device memory
 #endif // HAVE_ANY_GPU
 } ;

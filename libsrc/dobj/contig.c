@@ -90,7 +90,8 @@ static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 		int i_dim,n,n_words,inc;
 		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
 		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
-		n_words = (OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD;
+		// BUG make sure we don't lose precision by down-casting bit0
+		n_words = (int)((OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD);
 		for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
 			if( OBJ_TYPE_DIM(dp,i_dim) != 1 ){
 				inc = OBJ_TYPE_INC(dp,i_dim);

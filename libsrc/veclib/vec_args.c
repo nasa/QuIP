@@ -1119,10 +1119,10 @@ dimension_t varg_bitmap_word_count(const Vector_Arg *varg_p)
 }
 #endif // FOOBAR
 
-static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, uint64_t bit_num) )
+static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bit_num) )
 {
 	dimension_t i,j,k,l,m;
-	uint64_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
+	bitnum_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
 	dimension_t seq_base,frame_base, row_base, col_base;
 
 	seq_base = OBJ_BIT0(dp);
@@ -1153,7 +1153,7 @@ static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, uint64_t bi
 // in that case this needs to be more comples.  This needs to be studies to determine
 // what results in the highest-performing GPU implementation...
 
-static dimension_t word_for_bit( uint64_t bit_number )
+static dimension_t word_for_bit( bitnum_t bit_number )
 {
 	// We don't need to do anything more complicated, because we count all the bits (even the unused ones),
 	// letting the increments take care of things correctly...
@@ -1163,7 +1163,7 @@ static dimension_t word_for_bit( uint64_t bit_number )
 
 // We call this to determine how many words we need to use
 
-static void count_bitmap_word(Data_Obj *dp, uint64_t bit_number)
+static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 {
 	Bitmap_GPU_Info *bmi_p;
 	dimension_t new_word_idx;
@@ -1179,16 +1179,8 @@ static void count_bitmap_word(Data_Obj *dp, uint64_t bit_number)
 
 dimension_t bitmap_obj_word_count(Data_Obj *dp)
 {
-#ifdef FOOBAR
-	if( N_IS_CONTIGUOUS(dp) )
-		return fast_bitmap_word_count(SHP_MACH_DIMS(OBJ_SHAPE(dp)),OBJ_BIT0(dp));
-	else if( IS_EVENLY_SPACED(dp) )
-		return eqsp_bitmap_word_count(SHP_MACH_DIMS(OBJ_SHAPE(dp)),SHP_EQSP_INC(OBJ_SHAPE(dp)),OBJ_BIT0(dp));
-	else
-		return slow_bitmap_word_count(SHP_MACH_DIMS(OBJ_SHAPE(dp)),SHP_MACH_INCS(OBJ_SHAPE(dp)),OBJ_BIT0(dp));
-#else // ! FOOBAR
-	Bitmap_GPU_Info *bmi_p;
 	dimension_t n_words;
+	Bitmap_GPU_Info *bmi_p;
 
 	// New method, word boundaries not aligned with dimensions boundaries
 
@@ -1208,14 +1200,15 @@ dimension_t bitmap_obj_word_count(Data_Obj *dp)
 	SET_BMI_N_WORDS( bmi_p, 0 );
 	SET_BMI_LAST_WORD_IDX( bmi_p, -1 );
 //fprintf(stderr,"bitmap_obj_word_count, indices initialized to %d, %d\n",BMI_NEXT_WORD_IDX(bmi_p),BMI_LAST_WORD_IDX(bmi_p));
+//#endif // HAVE_ANY_GPU
 
 	traverse_bitmap(dp,count_bitmap_word);
 	n_words = BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 
 	SET_BITMAP_OBJ_GPU_INFO_HOST_PTR(dp,NULL);
 	givbuf(bmi_p);
+
 	return n_words;
-#endif // ! FOOBAR
 }
 
 //	return bitmap_word_count(VARG_DIMSET(*varg_p),VARG_INCSET(*varg_p),VARG_EQSP_INC(*varg_p),);
@@ -1249,7 +1242,7 @@ static void verify_gpu_bitmap_info(Data_Obj *dp)
 }
 #endif // JUST_FOR_DEBUGGING
 
-static void get_indices_for_bit(dimension_t idx_tbl[N_DIMENSIONS], Data_Obj *dp, uint64_t bit_number)
+static void get_indices_for_bit(dimension_t idx_tbl[N_DIMENSIONS], Data_Obj *dp, bitnum_t bit_number)
 {
 	dimension_t denom=1;
 	int i;
@@ -1266,7 +1259,7 @@ static void get_indices_for_bit(dimension_t idx_tbl[N_DIMENSIONS], Data_Obj *dp,
 //	idx_tbl[1] = (bit_number / OBJ_COMPS(dp)) % OBJ_COLS(dp);
 }
 
-static void tabulate_bitmap_word(Data_Obj *dp, uint64_t bit_number)
+static void tabulate_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 {
 	Bitmap_GPU_Word_Info *bmwi_p;
 	Bitmap_GPU_Info *bmi_p;
@@ -1309,7 +1302,7 @@ static void tabulate_bitmap_word(Data_Obj *dp, uint64_t bit_number)
 
 void init_bitmap_gpu_info(Data_Obj *dp)
 {
-	uint64_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
+	bitnum_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
 //	dimension_t i,j,k,l,m;
 	dimension_t word_idx;
 	dimension_t n_words_expected;
