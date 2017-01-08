@@ -228,6 +228,7 @@ extern void unshow_panel(QSP_ARG_DECL  Panel_Obj *po);
 
 /* panel.m */
 extern void add_to_panel(Panel_Obj *po, Screen_Obj *sop);
+extern void remove_from_panel(Panel_Obj *po, Screen_Obj *sop);
 
 #endif /* ! _PANEL_H_ */
 

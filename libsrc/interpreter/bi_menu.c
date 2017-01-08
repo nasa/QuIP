@@ -555,6 +555,8 @@ static COMMAND_FUNC( do_assign_var )
 	CHECK_FMT_STRINGS
 
 	tsp=pexpr(QSP_ARG  estr);
+	if( tsp == NULL ) return;
+
 	// Make sure we have a free string buffer
 	if( QS_AV_STRINGBUF(THIS_QSP) == NO_STRINGBUF ){
 		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );
@@ -567,6 +569,7 @@ static COMMAND_FUNC( do_assign_var )
 	// See if the expression is a string expression
 	if( tsp->ts_prec_code == PREC_STR ){
 		// It is a string...
+		assert( tsp->ts_value.u_vp != NULL );
 		copy_string(QS_AV_STRINGBUF(THIS_QSP),(char *)tsp->ts_value.u_vp);
 	} else {
     

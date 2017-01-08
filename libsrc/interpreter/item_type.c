@@ -1359,14 +1359,14 @@ void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
 		/* itp = type of item to be deleted */
 		/* ip = pointer to item to be deleted */
 {
-	LOCK_ITEM_TYPE(itp)
-
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
+	LOCK_ITEM_TYPE(itp)
+
 	zombie_item(QSP_ARG  itp,(Item*) ip);
+	rls_str( (char *) ITEM_NAME(((Item *)ip)) );
+	SET_ITEM_NAME( ((Item *)ip), NULL );
+
 	recycle_item(itp,ip);
 
 	INC_ITEM_CHANGE_COUNT(itp);

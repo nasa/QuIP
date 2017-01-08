@@ -79,6 +79,7 @@ static Item_Type *nav_item_itp=NO_ITEM_TYPE;
 ITEM_INIT_FUNC(Nav_Item,nav_item,0)
 ITEM_NEW_FUNC(Nav_Item,nav_item)
 ITEM_PICK_FUNC(Nav_Item,nav_item)
+ITEM_DEL_FUNC(Nav_Item,nav_item)
 
 static Item_Type *nav_panel_itp=NO_ITEM_TYPE;
 ITEM_INIT_FUNC(Nav_Panel,nav_panel,0)
@@ -91,6 +92,7 @@ static Item_Type *nav_group_itp=NO_ITEM_TYPE;
 ITEM_INIT_FUNC(Nav_Group,nav_group,0)
 ITEM_NEW_FUNC(Nav_Group,nav_group)
 ITEM_PICK_FUNC(Nav_Group,nav_group)
+ITEM_DEL_FUNC(Nav_Group,nav_group)
 
 #ifdef HAVE_MOTIF
 static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj)
@@ -1110,6 +1112,19 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 }
 
 #ifdef HAVE_MOTIF
+
+void delete_motif_widget(Screen_Obj *sop)
+{
+	// unmanageChild removes from panel but does not deallocate...
+	XtUnmanageChild(sop->so_obj);
+
+	if( SOB_FRAME(sop) != NULL )
+		XtDestroyWidget(SOB_FRAME(sop));
+
+	// destroy might handle unmanaging?
+	//XtDestroyWidget(sop->so_obj);
+}
+
 COMMAND_FUNC( do_dispatch )
 {
 	motif_qsp = THIS_QSP;
@@ -1729,20 +1744,56 @@ void push_navgrp_context(QSP_ARG_DECL  Item_Context *icp)
 	push_item_context(QSP_ARG  nav_group_itp, icp );
 }
 
+void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
+{
+	// get rid of motif stuff...
+	delete_motif_widget(sop);
+
+	remove_from_panel(curr_panel,sop);
+	del_so(QSP_ARG  sop);
+}
+
+// undoes the things done by create_nav_group
+
 void remove_nav_group(QSP_ARG_DECL  Nav_Group *ng_p)
 {
-	WARN("remove_nav_group:  not implemented!?");
+	// first remove the items
+	Item_Context *icp;
+
+fprintf(stderr,"remove_nav_group %s BEGIN\n",NAVGRP_NAME(ng_p));
+	icp = NAVGRP_ITEM_CONTEXT(ng_p);
+	assert(icp!=NULL);
+
+fprintf(stderr,"removing item context for nav group %s\n",NAVGRP_NAME(ng_p));
+	delete_item_context(QSP_ARG  icp);
+fprintf(stderr,"DONE removing item context for nav group %s\n",NAVGRP_NAME(ng_p));
+
+	// Now update the panel itself...
+	delete_widget( QSP_ARG  NAVGRP_SCRNOBJ(ng_p) );
+	//delete_widget( QSP_ARG  NAVGRP_SCRNOBJ(ng_p) );
+
+//fprintf(stderr,"OOPS, need to delete screen_obj %s\n",SOB_NAME(NAVGRP_SCRNOBJ(ng_p)));
+	remove_from_panel( NAVGRP_PANEL(ng_p), NAVGRP_SCRNOBJ(ng_p) );
+
+	// remove from database
+	del_nav_group(QSP_ARG  ng_p);
 }
 
 void remove_nav_item(QSP_ARG_DECL  Nav_Item *ni_p)
 {
-	WARN("remove_nav_item:  not implemented!?");
+fprintf(stderr,"remove_nav_item %s BEGIN\n",NAVITM_NAME(ni_p));
+
+	// need to remove from panel
+	delete_widget(QSP_ARG  NAVITM_SCRNOBJ(ni_p) );
+
+	del_nav_item(QSP_ARG  ni_p);
 }
 
 Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_item_itp == NO_IOS_ITEM_TYPE ){
 		init_nav_items(SINGLE_QSP_ARG);
+		set_del_method(QSP_ARG  nav_item_itp, (void (*)(Item *))&remove_nav_item);
 	}
 
 	return create_item_context(QSP_ARG  nav_item_itp, name );
@@ -1764,7 +1815,7 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 	Panel_Obj *po;
 #endif
 
-fprintf(stderr,"create_nav_panel %s BEGIN\n",name);
+//fprintf(stderr,"create_nav_panel %s BEGIN\n",name);
 
 	np_p = new_nav_panel(QSP_ARG  name);
 	if( np_p == NO_NAV_PANEL ){
@@ -1820,7 +1871,7 @@ fprintf(stderr,"create_nav_panel %s BEGIN\n",name);
 	prepare_for_decoration(QSP_ARG  NAVP_PANEL(np_p) );
 
 	// next 7 lines from get_parts, screen_objs.c
-fprintf(stderr,"create_nav_panel adding back button...\n");
+//fprintf(stderr,"create_nav_panel adding back button...\n");
 	bo = simple_object(QSP_ARG  "Back");
 	if( bo == NO_SCREEN_OBJ ){
 		WARN("Error creating back button for nav_panel!?");
@@ -1928,13 +1979,13 @@ void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
 
 	// We can push a viewer or anything!?
 	//assert( GW_TYPE(NAVP_GW(np_p)) == GW_NAV_PANEL );
-fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
+//fprintf(stderr,"push_nav %s BEGIN\n",GW_NAME(gwp));
 	if( nav_stack == NULL )
 		nav_stack = new_stack();
 
 	// We need to keep a stack of panels...
 	if( (current_gwp=TOP_OF_STACK(nav_stack)) != NULL ){
-fprintf(stderr,"push_nav %s:  un-showing %s\n",GW_NAME(gwp),GW_NAME(current_gwp));
+//fprintf(stderr,"push_nav %s:  un-showing %s\n",GW_NAME(gwp),GW_NAME(current_gwp));
 		unshow_genwin(QSP_ARG  current_gwp);
 	}
 
@@ -1947,23 +1998,23 @@ void pop_nav(QSP_ARG_DECL  int count)
 {
 	Gen_Win *gwp;
 
-fprintf(stderr,"pop_nav %d BEGIN\n",count);
+//fprintf(stderr,"pop_nav %d BEGIN\n",count);
 	if( nav_stack == NULL )
 		nav_stack = new_stack();
 
 	gwp = POP_FROM_STACK(nav_stack);
 	assert( gwp != NULL );
-fprintf(stderr,"pop_nav un-showing current top-of-stack %s\n",GW_NAME(gwp));
+//fprintf(stderr,"pop_nav un-showing current top-of-stack %s\n",GW_NAME(gwp));
 	unshow_genwin(QSP_ARG  gwp);
 
 	count --;
 	while( count -- ){
-fprintf(stderr,"pop_nav popping again, count = %d\n",count);
+//fprintf(stderr,"pop_nav popping again, count = %d\n",count);
 		gwp = POP_FROM_STACK(nav_stack);
 		assert( gwp != NULL );
 	}
 
-fprintf(stderr,"pop_nav done popping\n");
+//fprintf(stderr,"pop_nav done popping\n");
 	assert( (gwp=TOP_OF_STACK(nav_stack)) != NULL );
 	show_genwin(QSP_ARG  gwp);
 }
@@ -1975,7 +2026,9 @@ void end_busy(int final)
 
 void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 {
-	WARN("get_confirmation:  not implemented!?");
+	//WARN("get_confirmation:  not implemented!?");
+	ASSIGN_VAR("confirmed","1");
+	fprintf(stderr,"ALERT:  get_confirmation:  confirming without use input...\n");
 }
 
 void simple_alert(QSP_ARG_DECL  const char *title, const char *msg)

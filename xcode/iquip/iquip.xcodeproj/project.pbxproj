@@ -2243,6 +2243,9 @@
 					7106ECFC16004437006BF850 = {
 						DevelopmentTeam = 6NC2ML6K22;
 					};
+					7C43318B1D4D43FC0033687C = {
+						DevelopmentTeam = 6NC2ML6K22;
+					};
 				};
 			};
 			buildConfigurationList = 7106ECF716004437006BF850 /* Build configuration list for PBXProject "iquip" */;
@@ -3478,7 +3481,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "88008492-0e05-4817-8199-0a8ee47def25";
+				PROVISIONING_PROFILE = "c59484db-1a64-4ce8-a58c-3c3d8afbf262";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -3519,7 +3522,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "dccefd98-8ce7-4186-b39d-3ea78f32810e";
+				PROVISIONING_PROFILE = "fae188a4-a26c-4b0c-ac96-82aa32758a52";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -3605,8 +3608,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "5dacd558-ca13-4698-b51f-0e630c4b2a8a";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "5dacd558-ca13-4698-b51f-0e630c4b2a8a";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c59484db-1a64-4ce8-a58c-3c3d8afbf262";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3640,8 +3643,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "555349ac-7fb9-41e7-94dc-13ceb82aeb30";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "555349ac-7fb9-41e7-94dc-13ceb82aeb30";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "fae188a4-a26c-4b0c-ac96-82aa32758a52";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

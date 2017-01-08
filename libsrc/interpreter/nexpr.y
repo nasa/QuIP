@@ -604,6 +604,9 @@ static Scalar_Expr_Node *alloc_expr_node(void)
 	return(enp);
 }
 
+// This gets called from outside?
+// Where does the node come from???
+
 const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 {
 	Typed_Scalar *tsp;
@@ -1440,6 +1443,7 @@ dump_enode(QSP_ARG  enp);
 		*/
 		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 		s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG s );
+fprintf(stderr,"eval_expr:  strv_func returned string at 0x%lx\n",(long)s);
 		tsp = scalar_for_string(s);
 		break;
 	case N_STRV2FUNC:		// eval_expr
