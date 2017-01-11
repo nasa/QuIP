@@ -84,8 +84,8 @@
 #define __VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
 	___VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
 
-#define __VEC_FUNC_MM_NOCC( func_name, test1, test2 )		\
+#define __VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )		\
 								\
-	___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 )	\
-	___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 )
+	___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 )	\
+	___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 )
 

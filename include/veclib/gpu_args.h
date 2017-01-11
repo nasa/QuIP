@@ -107,17 +107,18 @@
 	KERNEL_ARG_QUALIFIER std_quat* s1,			\
 	DECLARE_2_LENGTHS
 
-#define KERN_ARGS_IDX_SETUP	indices,s1,s2,len1,len2
+#define KERN_ARGS_FAST_IDX_SETUP	indices,s1,s2,len1,len2
 
-#define DECLARE_KERN_ARGS_IDX_SETUP				\
+#define DECLARE_KERN_ARGS_FAST_IDX_SETUP				\
 								\
 	KERNEL_ARG_QUALIFIER index_type* a,			\
 	KERNEL_ARG_QUALIFIER std_type* b,			\
 	KERNEL_ARG_QUALIFIER std_type* c,			\
 	DECLARE_2_LENGTHS
 
+// BUG?  where is KERN_ARGS_FAST_IDX_HELPER?
 
-#define DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER			\
+#define DECLARE_KERN_ARGS_FAST_IDX_HELPER			\
 								\
 	KERNEL_ARG_QUALIFIER index_type* a,			\
 	KERNEL_ARG_QUALIFIER index_type* b,			\

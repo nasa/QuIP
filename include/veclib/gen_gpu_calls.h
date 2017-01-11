@@ -218,12 +218,14 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 #define ADVANCE_FAST_SRC3	index4++;
 #define ADVANCE_FAST_SRC4	index5++;
 #define ADVANCE_FAST_DBM	/* do something??? */
+#define ADVANCE_FAST_SBM	/* do something??? */
 
 #define ADVANCE_EQSP_SRC1	index2 += inc2;
 #define ADVANCE_EQSP_SRC2	index3 += inc3;
 #define ADVANCE_EQSP_SRC3	index4 += inc4;
 #define ADVANCE_EQSP_SRC4	index5 += inc5;
 #define ADVANCE_EQSP_DBM	/* dbm_bit += dbm_inc; */
+#define ADVANCE_EQSP_SBM	/* do something? */
 
 #define ADVANCE_SLOW_SRC1	index2.d5_dim[1]+=inc2.d5_dim[1];
 #define ADVANCE_SLOW_SRC2	index3.d5_dim[1]+=inc3.d5_dim[1];
@@ -353,8 +355,8 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
 
 #define ___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
 										\
-	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_SETUP_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_IDX_SETUP )					\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_IDX_SETUP_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_FAST_IDX_SETUP )				\
 	{									\
 		INIT_INDICES_3							\
 		if( index3 < len2 )						\
@@ -363,8 +365,8 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
 			dst = index2 ;						\
 	}									\
 										\
-	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_HELPER_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_IDX_HELPER_NAME(func_name)	\
+		( DECLARE_KERN_ARGS_FAST_IDX_HELPER )				\
 	{									\
 		INIT_INDICES_3							\
 		if( index3 < len2 )						\

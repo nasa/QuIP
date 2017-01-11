@@ -3,6 +3,10 @@
 #include "veclib/eqsp_incs.h"
 #include "veclib/slow_vars.h"
 
+// cuda uses dim3...
+
+#include "veclib/dim3.h"
+
 #if CUDA_VERSION >= 5000
 // CUDA 5
 //#define CUDA_ERROR_CHECK(string)	getLastCudaError(string);
@@ -529,28 +533,27 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 // MM_IND vmaxi etc
 
-#ifdef BUILD_FOR_CUDA
-
-// BUG - move to cu2 folder file...
 // CUDA definitions
 // BUG we probably want the passed vap to have constant data...
 
-#define CALL_GPU_NOCC_SETUP_FUNC(name)						\
+// BUG use symbolic constant for kernel args!
+#define CALL_GPU_FAST_NOCC_SETUP_FUNC(name)					\
 	CLEAR_GPU_ERROR(name##_nocc_setup)					\
 sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_setup...",#name);			\
 NADVISE(DEFAULT_ERROR_STRING);							\
 	REPORT_THREAD_INFO2							\
-	GPU_CALL_NAME(name##_nocc_setup)<<< NN_GPU >>>				\
+	GPU_FAST_CALL_NAME(name##_nocc_setup)<<< NN_GPU >>>				\
 		(dst_values, dst_counts, src_values, indices, len1, len2);	\
 	CHECK_GPU_ERROR(name##_nocc_setup)
 
 
-#define CALL_GPU_NOCC_HELPER_FUNC(name)						\
+// BUG use symbolic constant for kernel args!
+#define CALL_GPU_FAST_NOCC_HELPER_FUNC(name)					\
 	CLEAR_GPU_ERROR(name##_nocc_helper)					\
 sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_helper...",#name);		\
 NADVISE(DEFAULT_ERROR_STRING);							\
 	REPORT_THREAD_INFO2							\
-	GPU_CALL_NAME(name##_nocc_helper)<<< NN_GPU >>>				\
+	GPU_FAST_CALL_NAME(name##_nocc_helper)<<< NN_GPU >>>				\
 		(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride); \
 	CHECK_GPU_ERROR(name##_nocc_helper)
 
@@ -573,22 +576,20 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%
 	CHECK_GPU_ERROR(name)
 
 
-#define CALL_GPU_INDEX_SETUP_FUNC(name)					\
-	CLEAR_GPU_ERROR(name##_index_setup)				\
+#define CALL_GPU_FAST_INDEX_SETUP_FUNC(name)					\
+	CLEAR_GPU_ERROR(name##_fast_index_setup)				\
 	REPORT_THREAD_INFO2						\
-	GPU_CALL_NAME(name##_index_setup)<<< NN_GPU >>>			\
+	GPU_FAST_CALL_NAME(name##_index_setup)<<< NN_GPU >>>			\
 		(indices,src1_values,src2_values,len1,len2);		\
 	CHECK_GPU_ERROR(name##_index_setup)
 
 
-#define CALL_GPU_INDEX_HELPER_FUNC(name)				\
-	CLEAR_GPU_ERROR(name##_index_helper)				\
+#define CALL_GPU_FAST_INDEX_HELPER_FUNC(name)				\
+	CLEAR_GPU_ERROR(name##_fast_index_helper)				\
 	REPORT_THREAD_INFO2						\
-	GPU_CALL_NAME(name##_index_helper)<<< NN_GPU >>>		\
+	GPU_FAST_CALL_NAME(name##_index_helper)<<< NN_GPU >>>		\
 		(indices,idx1_values,idx2_values,orig_src_values,len1,len2);	\
 	CHECK_GPU_ERROR(name##_index_helper)
-
-#endif // BUILD_FOR_CUDA
 
 
 #ifdef DUPLICATED_CODE

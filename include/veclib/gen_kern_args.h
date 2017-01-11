@@ -39,7 +39,8 @@
 
 // BUG?  need to make sure that GPU_INFO gets inserted everywhere that's necessary!?
 
-#define GEN_ARGS_SLOW_DBM(prefix)	GEN_SLOW_SIZE(prefix)		\
+#define GEN_ARGS_SLOW_DBM(prefix)					\
+					GEN_SLOW_SIZE(prefix)		\
 					GEN_SEP(prefix)			\
 					GEN_ARGS_SLOW_DBM_BASIC(prefix)
 
@@ -684,15 +685,19 @@
 					GEN_SEP(prefix) 		\
 					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_CPX_1(prefix)	GEN_ARGS_FAST_CPX_1(prefix)	\
-					GEN_SEP(prefix)		\
+#define GEN_ARGS_SLOW_CPX_1(prefix)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix) 		\
+					GEN_ARGS_FAST_CPX_1(prefix)	\
+					GEN_SEP(prefix)			\
 					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_QUAT_1(prefix)	GEN_ARGS_FAST_QUAT_1(prefix)	\
+#define GEN_ARGS_SLOW_QUAT_1(prefix)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix) 		\
+					GEN_ARGS_FAST_QUAT_1(prefix)	\
 					GEN_SEP(prefix)		\
 					GEN_SLOW_ARG_INC1(prefix)
-
-
 
 
 #define GEN_ARGS_SLOW_CR_2(prefix)	GEN_ARGS_SLOW_CPX_1(prefix)	\
@@ -894,12 +899,12 @@
 
 /////
 
-#define GEN_ARGS_SLOW_CPX_1(prefix)	GEN_ARGS_FAST_CPX_1(prefix)	\
-					GEN_SEP(prefix)		\
-					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_CONV(prefix,t)	GEN_SLOW_CONV_DEST(prefix,t) \
-					GEN_SEP(prefix)		\
+#define GEN_ARGS_SLOW_CONV(prefix,t)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix)			\
+					GEN_SLOW_CONV_DEST(prefix,t)	\
+					GEN_SEP(prefix)			\
 					GEN_ARGS_SLOW_SRC1(prefix)
 
 #define GEN_ARGS_SLOW_2(prefix)		GEN_ARGS_SLOW_1(prefix) \
@@ -914,7 +919,7 @@
 					GEN_SEP(prefix)		\
 					GEN_ARGS_SLOW_QUAT_SRC1(prefix)
 
-#define GEN_ARGS_SLOW_3(prefix)	GEN_ARGS_SLOW_2(prefix) \
+#define GEN_ARGS_SLOW_3(prefix)		GEN_ARGS_SLOW_2(prefix) \
 					GEN_SEP(prefix)		\
 					GEN_ARGS_SLOW_SRC2(prefix)
 

@@ -47,13 +47,13 @@
 #define _VFUNC_HELPER_NAME(n,pf,ty)		__VFUNC_HELPER_NAME(n,pf,ty)
 #define __VFUNC_HELPER_NAME(n,pf,ty)		g_##pf##_##ty##_##n##_helper
 
-#define VFUNC_IDX_SETUP_NAME(func_name)		_VFUNC_IDX_SETUP_NAME(func_name,pf_str,type_code)
-#define _VFUNC_IDX_SETUP_NAME(n,pf,ty)		__VFUNC_IDX_SETUP_NAME(n,pf,ty)
-#define __VFUNC_IDX_SETUP_NAME(n,pf,ty)		g_##pf##_##ty##_##n##_index_setup
+#define VFUNC_FAST_IDX_SETUP_NAME(func_name)		_VFUNC_IDX_SETUP_NAME(func_name,fast,pf_str,type_code)
+#define _VFUNC_IDX_SETUP_NAME(n,speed,pf,ty)		__VFUNC_IDX_SETUP_NAME(n,speed,pf,ty)
+#define __VFUNC_IDX_SETUP_NAME(n,s,pf,ty)		g_##pf##_##s##_##ty##_##n##_index_setup
 
-#define VFUNC_IDX_HELPER_NAME(func_name)	_VFUNC_IDX_HELPER_NAME(func_name,pf_str,type_code)
-#define _VFUNC_IDX_HELPER_NAME(n,pf,ty)	__VFUNC_IDX_HELPER_NAME(n,pf,ty)
-#define __VFUNC_IDX_HELPER_NAME(n,pf,ty)	g_##pf##_##ty##_##n##_index_helper
+#define VFUNC_FAST_IDX_HELPER_NAME(func_name)	_VFUNC_IDX_HELPER_NAME(func_name,fast,pf_str,type_code)
+#define _VFUNC_IDX_HELPER_NAME(n,s,pf,ty)	__VFUNC_IDX_HELPER_NAME(n,s,pf,ty)
+#define __VFUNC_IDX_HELPER_NAME(n,s,pf,ty)	g_##pf##_##s##_##ty##_##n##_index_helper
 
 
 
