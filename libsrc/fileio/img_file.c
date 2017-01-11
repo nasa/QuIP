@@ -650,11 +650,16 @@ static int check_clobber(QSP_ARG_DECL  Image_File *ifp)
 		} else if( !can_write_to(QSP_ARG  ifp->if_pathname) )
 			return(-1);
 	} else {
+		if( !file_exists(QSP_ARG  dir) ){
+			sprintf(DEFAULT_ERROR_STRING, "No directory \"%s\"!?", dir);
+			NWARN(DEFAULT_ERROR_STRING);
+			return(-1);
+		}
 		/* We may have write permissions to the file even if we don't have
 		 * write permissions on the directory, e.g. /dev/null
 		 */
 		if( !can_write_to(QSP_ARG  dir) ){
-			sprintf(DEFAULT_ERROR_STRING, "Can't write to directory \"%s\"", dir);
+			sprintf(DEFAULT_ERROR_STRING, "Can't write to directory \"%s\"!?", dir);
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
 		}

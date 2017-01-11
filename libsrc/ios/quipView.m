@@ -95,7 +95,6 @@
 
 #ifdef CAUTIOUS
 		if( s == NULL ) {
-fprintf(stderr,"CAUTIOUS:  process_action:  error fetching action for event code %d\n",code);
 			return;
 		}
 #endif // CAUTIOUS
