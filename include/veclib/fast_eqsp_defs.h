@@ -23,13 +23,6 @@
 
 #define SCALE_INDEX(idx,inc)	idx *= inc;
 
-#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )							// nop
-#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )						// nop
-#define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )									// nop
-#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )					// nop
-#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )								// nop
-#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )	// nop
-
 
 //#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
 // From these definitions, it is not clear whether the rows are padded to be an 

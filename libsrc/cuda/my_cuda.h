@@ -117,13 +117,13 @@ extern COMMAND_FUNC( do_list_cudevs );
 extern COMMAND_FUNC( do_cudev_info );
 extern COMMAND_FUNC( do_report_npp_version );
 
-#ifdef cplusplus
+#ifdef __cplusplus
 extern "C" {
-#endif
+#endif // __cplusplus
 extern void query_cuda_device(QSP_ARG_DECL  int dev);
-#ifdef cplusplus
+#ifdef __cplusplus
 }
-#endif
+#endif // __cplusplus
 
 /* cuda.cpp */
 extern void _init_cuda_devices(SINGLE_QSP_ARG_DECL);

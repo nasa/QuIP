@@ -86,21 +86,22 @@
 #define DECLARE_2_LENGTHS					\
 	uint32_t len1, uint32_t len2
 
-#define KERN_ARGS_2V_PROJ	dest, s1, len1, len2
+#define KERN_ARGS_FAST_2V_PROJ	dest, s1, len1, len2
 
-#define DECLARE_KERN_ARGS_2V_PROJ				\
+#define DECLARE_KERN_ARGS_FAST_2V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
 	DECLARE_2_LENGTHS
 
-#define DECLARE_KERN_ARGS_CPX_2V_PROJ				\
+
+#define DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\
 	DECLARE_2_LENGTHS
 
-#define DECLARE_KERN_ARGS_QUAT_2V_PROJ				\
+#define DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_quat* dest,			\
 	KERNEL_ARG_QUALIFIER std_quat* s1,			\
@@ -125,14 +126,7 @@
 	DECLARE_2_LENGTHS
 
 
-#define DECLARE_KERN_ARGS_2V_PROJ				\
-								\
-	KERNEL_ARG_QUALIFIER std_type* dest,			\
-	KERNEL_ARG_QUALIFIER std_type* s1,			\
-	DECLARE_2_LENGTHS
-
-
-#define KERN_ARGS_3V_PROJ					\
+#define KERN_ARGS_FAST_3V_PROJ					\
 								\
 	dest,			\
 	s1,			\
@@ -141,7 +135,7 @@
 
 
 
-#define DECLARE_KERN_ARGS_3V_PROJ				\
+#define DECLARE_KERN_ARGS_FAST_3V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
@@ -149,7 +143,7 @@
 	DECLARE_2_LENGTHS
 
 
-#define DECLARE_KERN_ARGS_CPX_3V_PROJ				\
+#define DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\

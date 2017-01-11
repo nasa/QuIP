@@ -47,6 +47,9 @@
 	DIM3 n_blocks, n_threads_per_block;				\
 	DIM3 extra;
 
+#define DECLARE_PLATFORM_VARS_2						\
+	DECLARE_PLATFORM_VARS
+
 #define DECLARE_PLATFORM_VARS						\
 	cudaError_t e;							\
 	BLOCK_VARS_DECLS						\

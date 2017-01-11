@@ -659,7 +659,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 }
 
-void *TMPVEC_NAME(size_t size,size_t len,const char *whence)
+void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
 {
 	// Why is this commented out???
 /*

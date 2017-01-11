@@ -19,7 +19,14 @@
 #define qsrc3	eqsp_qsrc3
 #define qsrc4	eqsp_qsrc4
 
-#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )						// nop
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )		// nop 
+#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )			// nop
+#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )	// nop
+#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_r, gpu_i1, gpu_i2, gpu_i3 )	// nop
+#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )		// nop
+#define _VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_e1, gpu_e2 )			// nop
+#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )		// nop
+
 
 #ifdef BUILD_FOR_CUDA
 

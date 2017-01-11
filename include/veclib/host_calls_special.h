@@ -36,9 +36,9 @@
 #define _VEC_FUNC_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr)	\
 						H_CALL_PROJ_2V( name, std_type )
 
-#define _VEC_FUNC_3V_PROJ(name,s1,s2)		H_CALL_PROJ_3V( name, std_type )
-#define _VEC_FUNC_CPX_3V_PROJ(name,s1,s2)	H_CALL_PROJ_3V( name, std_cpx )
-#define _VEC_FUNC_QUAT_3V_PROJ(name,s1,s2)	H_CALL_PROJ_3V( name, std_quat )
+#define _VEC_FUNC_3V_PROJ(name,s1,s2,e1,e2)		H_CALL_PROJ_3V( name, std_type )
+#define _VEC_FUNC_CPX_3V_PROJ(name,s1,s2,r1,i1,r2,i2)	H_CALL_PROJ_3V( name, std_cpx )
+//#define _VEC_FUNC_QUAT_3V_PROJ(name,s1,s2,e1,e2)	H_CALL_PROJ_3V( name, std_quat )
 
 
 //#define _VEC_FUNC_MM_IND(name,stat1,stat2)	H_CALL_MM_IND( name )

@@ -229,9 +229,17 @@ _VEC_FUNC_2V_PROJ( rvsum,
 
 // vdot not yet implemented for gpu, but should be like vsum?
 //VEC_FUNC_3V_PROJ( vdot )
+// It's a little different because the first iteration we take the products,
+// and then we sum all of the products.  It might be a lot simpler not to have this
+// be a primitive, but rather to build it up from vmul and vsum...
 
 //					_VF_3V_PROJ( name, type_code, init, stat )
-_VEC_FUNC_3V_PROJ( rvdot, dst = (dest_type)  0, dst += (dest_type)  src1 * src2 )
+_VEC_FUNC_3V_PROJ( rvdot,
+	dst = (dest_type)  0,
+	dst += (dest_type)  src1 * src2,
+	psrc1 * psrc2,
+	psrc1 + psrc2
+	)
 
 #ifndef BUILD_FOR_GPU
 _VEC_FUNC_2V( rvrand , dst = (dest_type) rn((u_long)src1)	)

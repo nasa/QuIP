@@ -54,6 +54,15 @@
 #define SET_DBM_INDEX_ARRAY										\
 				dbmi = dbm_info_p->word_tbl[tbl_idx].first_bit_num;
 
+// Because the fast version has lengths, we don't need flen version...
+// No-ops
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )
+#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )
+#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )
+#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_i2, gpu_i3 )
+#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )
+#define _VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_e1, gpu_e2 )
+#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
 
 #include "veclib/fast_eqsp_defs.h"
 

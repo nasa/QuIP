@@ -176,29 +176,8 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 		advance							\
 	}
 
-// moved to slow_defs.h, fast_eqsp_defs.h
-//
-//#define DBM_FAST_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+len
-//#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
-//#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
-//#define DBM_SLOW_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+vwxyz_len.d5_dim[1]
 
-#ifdef FOOBAR
-#define FLEN_DBM_LOOP( statement, advance )						\
-											\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){			\
-		if( DBM_FAST_LEN_TEST ){						\
-			dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
-			if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
-				statement;						\
-				advance;						\
-			}								\
-		}									\
-		advance									\
-	}
-#else // ! FOOBAR
 #define FLEN_DBM_LOOP( statement, advance )		EQSP_DBM_LOOP(statement,advance)
-#endif // ! FOOBAR
 
 #define EQSP_DBM_LOOP( statement, advance )					\
 										\
@@ -212,13 +191,7 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 
 #define SLEN_DBM_LOOP( statement, advance )				\
 									\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){	\
-		if( DBM_SLOW_LEN_TEST ){				\
-			dbm_bit = NUMBERED_BIT(i_dbm_bit);		\
-			statement ;					\
-		}							\
-		advance							\
-	}
+	SLOW_DBM_LOOP( statement, advance )
 
 // len is a different type, but here we don't check the other len dimensions!?  BUG?
 // We don't necessarily want to set all of the bits in the word, if there is
@@ -306,10 +279,10 @@ __VEC_FUNC_MM( func_name, statement );
 #define _VEC_FUNC_MM_IND( func_name, statement1, statement2 )\
 __VEC_FUNC_MM_IND( func_name, statement1, statement2 )
 
-#define ___VEC_FUNC_2V_PROJ( func_name, expr )			\
+#define ___VEC_FUNC_FAST_2V_PROJ( func_name, expr )		\
 								\
-KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_2V_PROJ )				\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ )			\
 {								\
 	INIT_INDICES_1						\
 								\
@@ -318,7 +291,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 		s2 = s1 + len1;					\
 		dest[IDX1] = expr ;				\
 	} else if( IDX1 < len1 ){				\
-		dest[IDX1] = s1[IDX1];			\
+		dest[IDX1] = s1[IDX1];				\
 	}							\
 }
 
@@ -329,10 +302,10 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 	__VEC_FUNC_CPX_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )
 #endif // FOOBAR
 
-#define ___VEC_FUNC_CPX_2V_PROJ( func_name, re_expr, im_expr )		\
+#define ___VEC_FUNC_CPX_FAST_2V_PROJ( func_name, re_expr, im_expr )	\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_CPX_2V_PROJ )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
 									\
@@ -352,10 +325,10 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 	__VEC_FUNC_QUAT_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
 #endif // FOOBAR
 
-#define ___VEC_FUNC_QUAT_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+#define ___VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_QUAT_2V_PROJ )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
 									\
@@ -377,33 +350,29 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 
 
 
-#ifdef FOOBAR
-#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )		\
-	__VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )
-#endif // FOOBAR
 
-#define ___VEC_FUNC_2V_PROJ_IDX( func_name, statement1, statement2 )	\
-									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_SETUP_NAME(func_name)	\
-		( DECLARE_KERN_ARGS_IDX_SETUP )				\
-	{								\
-		INIT_INDICES_3						\
-		if( index3.d5_dim[1] < len2 )					\
-			statement1 ;					\
-		else if( IDX1 < len1 )				\
-			dst = index2.d5_dim[1] ;				\
-	}								\
-									\
+#define ___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
+										\
+	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_SETUP_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_IDX_SETUP )					\
+	{									\
+		INIT_INDICES_3							\
+		if( index3 < len2 )						\
+			statement1 ;						\
+		else if( IDX1 < len1 )						\
+			dst = index2 ;						\
+	}									\
+										\
 	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_HELPER_NAME(func_name)		\
 		( DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER )			\
-	{								\
-		INIT_INDICES_3						\
-		if( index3.d5_dim[1] < len2 )					\
-			statement2 ;					\
-		else if( IDX1 < len1 )				\
-			dst = src1 ;					\
-	}								\
-									\
+	{									\
+		INIT_INDICES_3							\
+		if( index3 < len2 )						\
+			statement2 ;						\
+		else if( IDX1 < len1 )						\
+			dst = src1 ;						\
+	}
+
 
 
 /* For nocc_setup, we index directly into the value and count temp arrays
@@ -524,17 +493,19 @@ KERNEL_FUNC_PRELUDE							\
 			s2 = s1 + len1;					\
 			dest[IDX1] = expr ;				\
 		} else if( IDX1 < len1 ){				\
-			dest[IDX1] = s1[IDX1];			\
+			dest[IDX1] = s1[IDX1];				\
 		}							\
 	}
 
+// BUG - this is vdot, needs setup and helper, because first pass is products
+// subsequent passes are sums.  Maybe it shouldn't be a primitive?
 
-#define ___VFUNC_CALL_3V_PROJ( func_name, type_code )			\
+#define ___VFUNC_CALL_FAST_3V_PROJ( func_name, type_code )		\
 									\
 KERNEL_FUNC_PRELUDE							\
 									\
-	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name		\
-		( DECLARE_KERN_ARGS_3V_PROJ )				\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_FAST_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
 		if( IDX1 < len2 ){					\
@@ -542,10 +513,10 @@ KERNEL_FUNC_PRELUDE							\
 			std_type *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[IDX1] = s1[IDX1] * s2[IDX1] +	\
-				s1b[IDX1] * s2b[IDX1] ;		\
+			dest[IDX1] = s1[IDX1] * s2[IDX1] +		\
+				s1b[IDX1] * s2b[IDX1] ;			\
 		} else if( IDX1 < len1 ){				\
-			dest[IDX1] = s1[IDX1];			\
+			dest[IDX1] = s1[IDX1];				\
 		}							\
 	}
 
@@ -1103,11 +1074,12 @@ KERNEL_FUNC_PRELUDE							\
 #endif // FOOBAR
 
 // hard-coded for vdot!?
+// BUG - for gpu needs helper and setup to take products once and then sum
 
-#define ___VEC_FUNC_3V_PROJ( func_name)					\
+#define ___VEC_FUNC_FAST_3V_PROJ( func_name)				\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_3V_PROJ )				\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_FAST_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
 		if( IDX1 < len2 ){					\
@@ -1115,24 +1087,18 @@ KERNEL_FUNC_PRELUDE							\
 			std_type *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[IDX1] = s1[IDX1] * s2[IDX1] +	\
-				s1b[IDX1] * s2b[IDX1] ;		\
+			dest[IDX1] = s1[IDX1] * s2[IDX1] +		\
+				s1b[IDX1] * s2b[IDX1] ;			\
 		} else if( IDX1 < len1 ){				\
-			dest[IDX1] = s1[IDX1];			\
+			dest[IDX1] = s1[IDX1];				\
 		}							\
 	}
 
 
-#ifdef FOOBAR
-// hard coded for vdot?
-#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )				\
-	__VEC_FUNC_CPX_3V_PROJ( func_name )
-#endif // FOOBAR
-
-#define ___VEC_FUNC_CPX_3V_PROJ( func_name)					\
+#define ___VEC_FUNC_CPX_FAST_3V_PROJ( func_name)			\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_CPX_3V_PROJ )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
 		if( IDX1 < len2 ){					\

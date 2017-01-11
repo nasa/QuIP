@@ -19,25 +19,16 @@
 #define qsrc3	slow_qsrc3
 #define qsrc4	slow_qsrc4
 
-#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )						// nop
+// Slow versions of these not implemented yet...
+#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )		// nop
+#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )			// nop
+#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )			// nop
+#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )	// nop
+#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
+#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )		// nop
+#define _VEC_FUNC_3V_PROJ( func_name, s1, s2, e1, e2 )					// nop
+#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, r1, i1, r2, i2 )		// nop
 
-#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )		\
-	__VEC_FUNC_2V_PROJ( func_name, gpu_expr )
-
-#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )	\
-	__VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )
-
-#define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )				\
-	__VEC_FUNC_3V_PROJ( func_name)
-
-#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )		\
-	__VEC_FUNC_CPX_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )
-
-#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )				\
-	__VEC_FUNC_CPX_3V_PROJ( func_name )
-
-#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )		\
-	__VEC_FUNC_QUAT_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )		\
 
 #ifdef BUILD_FOR_CUDA
 
@@ -152,6 +143,7 @@
 				int tbl_idx;
 
 
+// We need to know if we should do this bit...
 //#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
 
 //#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
