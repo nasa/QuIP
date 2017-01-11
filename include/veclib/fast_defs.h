@@ -1,3 +1,4 @@
+// Are these definitions only for gpu, or used by cpu also?
 
 #include "veclib/speed_undefs.h"
 
@@ -22,7 +23,11 @@
 // vmaxg etc - require contiguous, fast only
 
 #define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )	\
-	__VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
+	__VEC_FUNC_FAST_MM_NOCC( func_name, gpu_c1, gpu_c2 )
+
+// vmaxv, vminv, vsum
+
+// on gpu only fast version, but on cpu only slow version!?
 
 #define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )		\
 	__VEC_FUNC_FAST_2V_PROJ( func_name, gpu_expr )

@@ -219,7 +219,7 @@ static void HOST_SLOW_CALL_NAME(name)					\
 
 #define H_CALL_PROJ_2V_IDX(name)						\
 										\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
 	index_type *indices;							\
 	std_type *src1_values;							\
@@ -236,12 +236,12 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	SETUP_IDX_ITERATION(src1_values,src2_values,name)			\
 	orig_src_values = src1_values;						\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(OA_DEST(oap));*/	\
-	CALL_GPU_INDEX_SETUP_FUNC(name)						\
+	CALL_GPU_FAST_INDEX_SETUP_FUNC(name)						\
 	FINISH_MM_ITERATION(name)						\
 										\
 	while( len > 1 ){							\
 		SETUP_IDX_ITERATION(idx1_values,idx2_values,name)		\
-		CALL_GPU_INDEX_HELPER_FUNC(name)				\
+		CALL_GPU_FAST_INDEX_HELPER_FUNC(name)				\
 	/*(indices,idx1_values,idx2_values,orig_src_values,len1,len2)*/		\
 		FINISH_MM_ITERATION(name)					\
 	}									\
@@ -269,8 +269,9 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 	CHECK_MM(name)								\
 	/* BUG need to xfer args to vap */					\
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))					\
+fprintf(stderr,"H_CALL_PROJ_2V_IDX %s:  need to implement speed switch!?\n",#name);\
 										\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);				\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);				\
 }
 
 
@@ -437,13 +438,13 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	SETUP_NOCC_ITERATION(name)						\
 	/*indices = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#name);*/	\
 	indices = VA_DEST_PTR(vap);						\
-	CALL_GPU_NOCC_SETUP_FUNC(name)						\
+	CALL_GPU_FAST_NOCC_SETUP_FUNC(name)					\
 	FINISH_NOCC_ITERATION(name) 						\
 										\
 	stride = 4;								\
 	while( len > 1 ){							\
 		SETUP_NOCC_ITERATION(name)					\
-		CALL_GPU_NOCC_HELPER_FUNC(name)					\
+		CALL_GPU_FAST_NOCC_HELPER_FUNC(name)				\
 		FINISH_NOCC_ITERATION(name)					\
 		stride = 2*stride;						\
 	}									\
@@ -560,7 +561,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 
 #define H_CALL_PROJ_2V( name, type )					\
 									\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
 	uint32_t len, len1, len2;						\
 	type *src_values, *dst_values;					\
@@ -580,7 +581,7 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(type,name)				\
 /*fprintf(stderr,"%s:  start of iteration, len = %d, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);*/\
-		CALL_GPU_PROJ_2V_FUNC(name)				\
+		CALL_GPU_FAST_PROJ_2V_FUNC(name)				\
 		len=len1;						\
 		src_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
@@ -608,9 +609,12 @@ static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))				\
 	/* BUG need to set vap entries from oap */			\
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));				\
+	/* why slow args? */						\
 	XFER_SLOW_ARGS_2						\
 	SETUP_SLOW_LEN_2						\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);			\
+	/* BUG need to have a speed switch!? */				\
+fprintf(stderr,"H_CALL_PROJ_2V %s:  need to implement speed switch!?\n",#name);\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 
 // for host code, we do this instead of a direct call:
@@ -620,7 +624,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 
 #define H_CALL_PROJ_3V( name, type )					\
 									\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 {									\
 	type *dst_values;						\
 	type *src1_values, *src2_values;				\
@@ -636,7 +640,7 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 	src_to_free=NULL;						\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(type,name)				\
-		CALL_GPU_PROJ_3V_FUNC(name)				\
+		CALL_GPU_FAST_PROJ_3V_FUNC(name)				\
 		len = len1;						\
 		src1_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
@@ -656,14 +660,15 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 									\
 static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 {									\
-	Vector_Args va1, *vap=(&va1);						\
-										\
+	Vector_Args va1, *vap=(&va1);					\
+									\
 	CHECK_MM(name)							\
 									\
-	/* BUG need to set vap entries from oap */				\
-	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/					\
+	/* BUG need to set vap entries from oap */			\
+	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/			\
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])				\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);				\
+fprintf(stderr,"H_CALL_PROJ_3V %s:  need to implement speed switch!?\n",#name);\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 
 

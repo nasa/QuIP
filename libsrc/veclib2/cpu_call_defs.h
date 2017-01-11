@@ -2540,8 +2540,8 @@ EXTLOC_SLOW_FUNC(name,EXTLOC_STATEMENT(augment_condition,restart_condition,assig
 + ((index/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)*INDEX_COUNT(s1_count,3)))%INDEX_COUNT(s1_count,4))*IDX_INC(s1inc,4))
 
 #define _VEC_FUNC_2V_PROJ( name, init_statement, statement, gpu_expr )	\
-								\
-static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
+									\
+static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 SLOW_BODY_PROJ_2(name,init_statement,statement)
 
 
@@ -2606,7 +2606,7 @@ SLOW_BODY_PROJ_IDX_2(name,init_statement,statement)
 
 // complex really not different?
 // where is DECLARE_BASES?
-#define _VEC_FUNC_CPX_3V_PROJ( name, init_statement, statement )	\
+#define _VEC_FUNC_CPX_3V_PROJ( name, init_statement, statement, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )	\
 	__VEC_FUNC_3V_PROJ(name,CPX_,init_statement,statement )
 
 #define __VEC_FUNC_3V_PROJ( name, typ, init_statement, statement )	\
@@ -2616,7 +2616,7 @@ PROJ3_SLOW_BODY(name,typ,init_statement,statement)
 
 
 
-#define _VEC_FUNC_3V_PROJ( name, init_statement, statement )	\
+#define _VEC_FUNC_3V_PROJ( name, init_statement, statement, gpu_e1, gpu_e2 )	\
 								\
 	__VEC_FUNC_3V_PROJ(name,,init_statement,statement )
 

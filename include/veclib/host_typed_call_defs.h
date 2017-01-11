@@ -189,6 +189,23 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
 	CHAIN_CHECK( HOST_SLOW_CALL_NAME(name) )			\
 }
 
+//#define FAST_HOST_CALL(name,bitmap,typ,scalars,vectors)			\
+//									\
+//GENERIC_HOST_FAST_CALL(name,bitmap,typ,scalars,vectors)			\
+//									\
+//static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
+//{									\
+//	HOST_CALL_VAR_DECLS						\
+//									\
+//	CLEAR_VEC_ARGS(vap)						\
+//	SET_VA_PFDEV(vap,OA_PFDEV(oap));				\
+//	/* where do the increments get set? */				\
+//	XFER_FAST_ARGS_##bitmap##typ##scalars##vectors			\
+//	/* setup_slow_len must go here! */				\
+//	SETUP_FAST_LEN_##bitmap##vectors				\
+//	CHAIN_CHECK( HOST_FAST_CALL_NAME(name) )			\
+//}
+
 // BUG!! these need to be filled in...
 #define MISSING_CALL(func)	_MISSING_CALL(func)
 #define _MISSING_CALL(func)	fprintf(stderr,"Missing code body for function %s!?\n",#func);

@@ -1,6 +1,7 @@
 #ifndef _HOST_CALLS_CPU_H_
 #define _HOST_CALLS_CPU_H_
 
+//#define H_CALL_PROJ_2V(name,type)	SLOW_HOST_CALL(name,,,,2)
 #define H_CALL_PROJ_2V(name,type)	SLOW_HOST_CALL(name,,,,2)
 #define H_CALL_PROJ_3V(name,type)	SLOW_HOST_CALL(name,,,,3)
 #define H_CALL_PROJ_2V_IDX(name)	SLOW_HOST_CALL(name,,,,2)

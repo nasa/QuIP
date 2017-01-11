@@ -542,80 +542,9 @@ KERNEL_FUNC_PRELUDE							\
  * We assume that the data are contiguous, and use fast (single) indices.
  */
 
-#ifdef OLD_CUDA_VERSION
 
-#define ___VFUNC_CALL_MM_NOCC( func_name, type_code, test1, test2 )	\
-									\
-KERNEL_FUNC_PRELUDE							\
-									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name,type_code)\
-		( DECLARE_KERN_ARGS_NOCC_SETUP )				\
-	{								\
-		INIT_INDICES_2						\
-		index2.d5_dim[1] *= 2;						\
-		if( IDX1 < len2 ){					\
-			if( test1 ){					\
-				dst_extrema[IDX1] = src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1]=1;			\
-				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];		\
-			} else if( test2 ){				\
-				dst_extrema[IDX1] = src_vals[index2.d5_dim[1]+1];\
-				dst_counts[IDX1]=1;			\
-				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1]+1;		\
-			} else {					\
-				dst_extrema[IDX1] = src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1]=2;			\
-				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];		\
-				dst_indices[index2.d5_dim[1]+1]=index2.d5_dim[1]+1;		\
-			}						\
-		} else {						\
-			/* Nothing to compare */			\
-			dst_extrema[IDX1] = src_vals[index2.d5_dim[1]];		\
-			dst_counts[IDX1]=1;				\
-			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
-		}							\
-	}								\
-									\
-	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name##_nocc_helper	\
-		( DECLARE_KERN_ARGS_NOCC_HELPER )			\
-	{								\
-		int i;							\
-		INIT_INDICES_2						\
-		index2.d5_dim[1] *= 2;						\
-		if( IDX1 < len2 ){					\
-			if( test1 ){					\
-				dst_extrema[IDX1]=src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1]=src_counts[index2.d5_dim[1]];	\
-				/* No copy necessary */			\
-			} else if( test2 ){				\
-				dst_extrema[IDX1]=src_vals[index2.d5_dim[1]+1];	\
-				dst_counts[IDX1]=src_counts[index2.d5_dim[1]+1];\
-				/* Now copy the indices down */		\
-				for(i=0;i<dst_counts[IDX1];i++){	\
-					dst_indices[IDX1*stride+i] =	\
-			dst_indices[IDX1*stride+stride/2+i];		\
-				}					\
-			} else {					\
-				dst_extrema[IDX1]=src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1] = src_counts[index2.d5_dim[1]] + \
-					src_counts[index2.d5_dim[1]+1];		\
-				/* Now copy the second half of the indices */\
-				for(i=0;i<src_counts[index2.d5_dim[1]+1];i++){	\
-		dst_indices[IDX1*stride+src_counts[index2.d5_dim[1]]+i] =	\
-			dst_indices[IDX1*stride+stride/2+i];		\
-				}					\
-			}						\
-		} else {						\
-			dst_extrema[IDX1]=src_vals[index2.d5_dim[1]];		\
-			dst_counts[IDX1]=src_counts[index2.d5_dim[1]];		\
-			/* No copy necessary */				\
-		}							\
-	}
-
-#endif // OLD_CUDA_VERSION
-
-#define ___VFUNC_CALL_MM_NOCC( func_name, type_code, test1, test2 )	\
-	___VEC_FUNC_MM_NOCC( func_name, test1, test2 )
+#define ___VFUNC_CALL_FAST_MM_NOCC( func_name, type_code, test1, test2 )	\
+	___VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )
 
 
 /* For nocc_setup, we index directly into the value and count temp arrays
@@ -623,10 +552,10 @@ KERNEL_FUNC_PRELUDE							\
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
  */
 
-#define ___VEC_FUNC_MM_NOCC( func_name, test1, test2 )			\
+#define ___VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )			\
 									\
-	___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 )		\
-	___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 )
+	___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 )		\
+	___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 )
 
 
 #ifndef IDX2
@@ -635,12 +564,12 @@ KERNEL_FUNC_PRELUDE							\
 
 // How are we handling the indices???
 
-#define ___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 )		\
+#define ___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 )		\
 									\
 KERNEL_FUNC_PRELUDE							\
 									\
-KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_NOCC_SETUP )				\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_SETUP_NAME(func_name)	\
+	( DECLARE_KERN_ARGS_FAST_NOCC_SETUP )				\
 {									\
 	INIT_INDICES_2							\
 	IDX2 *= 2;							\
@@ -674,12 +603,12 @@ KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name)		\
 // 1  5  5  2			5   5			2  3 (2) (3)  4  X (6) (7)	2  1			helper, n=2, stride=4
 // 5  5				5			2  3  4  (3) (4) X (6) (7)	3			helper, n=1, stride=8
 
-#define ___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 )		\
+#define ___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 )	\
 									\
 KERNEL_FUNC_PRELUDE							\
 									\
-KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_HELPER_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_NOCC_HELPER )				\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_HELPER_NAME(func_name)	\
+	( DECLARE_KERN_ARGS_FAST_NOCC_HELPER )				\
 {									\
 	int i;								\
 	INIT_INDICES_2							\

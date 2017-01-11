@@ -160,8 +160,14 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 #define CHECK_NOSPEED_KERNEL_1(name)						\
 	CHECK_KERNEL_1(name,,GPU_CALL_NAME(name))
 
+#define CHECK_FAST_KERNEL_1(name)						\
+	CHECK_KERNEL_1(name,fast,GPU_CALL_NAME(name))
+
 #define CHECK_NOSPEED_KERNEL_2(name)						\
 	CHECK_KERNEL_2(name,,GPU_CALL_NAME(name))
+
+#define CHECK_FAST_KERNEL_2(name)						\
+	CHECK_KERNEL_2(name,fast,GPU_CALL_NAME(name))
 
 #define CHECK_FAST_KERNEL(name)						\
 	CHECK_KERNEL(name,fast,GPU_FAST_CALL_NAME(name))
@@ -280,12 +286,12 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 #define CALL_SLOW_CONV_KERNEL(name,bitmap,typ,type)                     \
 	CALL_FAST_CONV_KERNEL(name,bitmap,typ,type)
 
-#define CALL_GPU_NOCC_SETUP_FUNC(name)					\
+#define CALL_GPU_FAST_NOCC_SETUP_FUNC(name)					\
 									\
 /*fprintf(stderr,"checking for nocc_setup kernel\n");*/\
-	CHECK_NOSPEED_KERNEL_1(name##_nocc_setup)			\
+	CHECK_FAST_KERNEL_1(name##_nocc_setup)			\
 /*fprintf(stderr,"setting kernel args for nocc_setup\n");*/\
-	SET_KERNEL_ARGS_NOCC_SETUP					\
+	SET_KERNEL_ARGS_FAST_NOCC_SETUP					\
 /*fprintf(stderr,"setting up blocks for nocc_setup\n");*/\
 	/*SETUP_FAST_BLOCKS_*/ /* uses VA_LENGTH */			\
 	global_work_size[0] = len1;					\
@@ -293,37 +299,37 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	CALL_FAST_KERNEL_1(name,,,,)
 
 
-#define CALL_GPU_NOCC_HELPER_FUNC(name)					\
+#define CALL_GPU_FAST_NOCC_HELPER_FUNC(name)					\
 									\
 /*fprintf(stderr,"checking for nocc_helper kernel\n");*/\
-	CHECK_NOSPEED_KERNEL_2(name##_nocc_helper)			\
+	CHECK_FAST_KERNEL_2(name##_nocc_helper)			\
 /*fprintf(stderr,"setting kernel args for nocc_helper\n");*/\
 	ki_idx=0;							\
-	SET_KERNEL_ARGS_NOCC_HELPER					\
+	SET_KERNEL_ARGS_FAST_NOCC_HELPER					\
 /*fprintf(stderr,"setting up blocks for nocc_helper\n");*/\
 	global_work_size[0] = len1;					\
 /*fprintf(stderr,"calling fast helper kernel for %s, n_threads = %d\n",#name,len1);*/\
 	CALL_FAST_KERNEL_2(name,,,,)
 
-#define CALL_GPU_PROJ_2V_FUNC(name)					\
-fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s)\n",#name);\
-	CHECK_NOSPEED_KERNEL(name)					\
-	SET_KERNEL_ARGS_PROJ_2V						\
+#define CALL_GPU_FAST_PROJ_2V_FUNC(name)					\
+fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_FUNC(%s)\n",#name);\
+	CHECK_FAST_KERNEL(name)					\
+	SET_KERNEL_ARGS_FAST_PROJ_2V						\
 	CALL_FAST_KERNEL(name,,,,)
 
-#define CALL_GPU_PROJ_3V_FUNC(name)					\
-	CHECK_NOSPEED_KERNEL(name)					\
-	SET_KERNEL_ARGS_PROJ_3V						\
+#define CALL_GPU_FAST_PROJ_3V_FUNC(name)					\
+	CHECK_FAST_KERNEL(name)					\
+	SET_KERNEL_ARGS_FAST_PROJ_3V						\
 	CALL_FAST_KERNEL(name,,,,)
 
-#define CALL_GPU_INDEX_SETUP_FUNC(name)					\
-	CHECK_NOSPEED_KERNEL_1(name)					\
-	SET_KERNEL_ARGS_INDEX_SETUP					\
+#define CALL_GPU_FAST_INDEX_SETUP_FUNC(name)					\
+	CHECK_FAST_KERNEL_1(name)					\
+	SET_KERNEL_ARGS_FAST_INDEX_SETUP					\
 	CALL_FAST_KERNEL_1(name,,,,)
 
-#define CALL_GPU_INDEX_HELPER_FUNC(name)					\
-	CHECK_NOSPEED_KERNEL_2(name)					\
-	SET_KERNEL_ARGS_INDEX_HELPER					\
+#define CALL_GPU_FAST_INDEX_HELPER_FUNC(name)					\
+	CHECK_FAST_KERNEL_2(name)					\
+	SET_KERNEL_ARGS_FAST_INDEX_HELPER					\
 	CALL_FAST_KERNEL_2(name,,,,)
 
 // Slow kernel - we set the sizes from the increments,

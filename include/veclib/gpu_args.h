@@ -24,7 +24,7 @@
 // Special cases
 
 
-#define KERN_ARGS_NOCC_HELPER					\
+#define KERN_ARGS_FAST_NOCC_HELPER					\
 								\
 	dst_extrema,		\
 	dst_counts,		\
@@ -35,7 +35,7 @@
 
 // BUG - how can we insure that the declarations are consistent!?
 
-#define DECLARE_KERN_ARGS_NOCC_HELPER				\
+#define DECLARE_KERN_ARGS_FAST_NOCC_HELPER				\
 								\
 	KERNEL_ARG_QUALIFIER std_type* dst_extrema,		\
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
@@ -47,7 +47,7 @@
 
 
 
-#define KERN_ARGS_NOCC_SETUP					\
+#define KERN_ARGS_FAST_NOCC_SETUP					\
 								\
 	dst_extrema,						\
 	dst_counts,						\
@@ -56,7 +56,7 @@
 	len1, len2
 
 
-#define DECLARE_KERN_ARGS_NOCC_SETUP				\
+#define DECLARE_KERN_ARGS_FAST_NOCC_SETUP				\
 								\
 	KERNEL_ARG_QUALIFIER std_type* dst_extrema,		\
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\

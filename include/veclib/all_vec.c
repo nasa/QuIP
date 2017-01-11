@@ -190,12 +190,12 @@ _VEC_FUNC_2V_3SCAL( ss_vs_ne, dst = (dest_type) ( src1 != scalar3_val ? scalar1_
 
 _VEC_FUNC_2V_PROJ( vmaxv ,
 	dst = (dest_type) src1 ,	/* init_stat */
-	if( src1 > dst ) dst = (dest_type)  src1; ,	/* loop_stat */
+	if( src1 > dst ) dst = (dest_type)  src1 ,	/* loop_stat */
 	psrc1 > psrc2 ? psrc1 : psrc2 )			/* gpu_expr */
 
 _VEC_FUNC_2V_PROJ( vminv ,
 	dst = (dest_type) src1 ,
-	if( src1 < dst ) dst = (dest_type)  src1; ,
+	if( src1 < dst ) dst = (dest_type)  src1 ,
 	psrc1 < psrc2 ? psrc1 : psrc2 )
 
 

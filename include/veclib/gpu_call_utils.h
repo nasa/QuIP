@@ -31,13 +31,13 @@
 #define _VFUNC_SLEN_NAME(n,pf,ty)	__VFUNC_SLEN_NAME(n,pf,ty)
 #define __VFUNC_SLEN_NAME(n,pf,ty)	g_##pf##_slen_##ty##_##n
 
-#define VFUNC_NOCC_SETUP_NAME(func_name)	_VFUNC_NOCC_SETUP_NAME(func_name,pf_str,type_code)
-#define _VFUNC_NOCC_SETUP_NAME(n,pf,ty)	__VFUNC_NOCC_SETUP_NAME(n,pf,ty)
-#define __VFUNC_NOCC_SETUP_NAME(n,pf,ty)	g_##pf##_##ty##_##n##_nocc_setup
+#define VFUNC_FAST_NOCC_SETUP_NAME(func_name)	_VFUNC_FAST_NOCC_SETUP_NAME(func_name,pf_str,type_code)
+#define _VFUNC_FAST_NOCC_SETUP_NAME(n,pf,ty)	__VFUNC_FAST_NOCC_SETUP_NAME(n,pf,ty)
+#define __VFUNC_FAST_NOCC_SETUP_NAME(n,pf,ty)	g_##pf##_fast_##ty##_##n##_nocc_setup
 
-#define VFUNC_NOCC_HELPER_NAME(func_name)	_VFUNC_NOCC_HELPER_NAME(func_name,pf_str,type_code)
-#define _VFUNC_NOCC_HELPER_NAME(n,pf,ty)	__VFUNC_NOCC_HELPER_NAME(n,pf,ty)
-#define __VFUNC_NOCC_HELPER_NAME(n,pf,ty)	g_##pf##_##ty##_##n##_nocc_helper
+#define VFUNC_FAST_NOCC_HELPER_NAME(func_name)	_VFUNC_FAST_NOCC_HELPER_NAME(func_name,pf_str,type_code)
+#define _VFUNC_FAST_NOCC_HELPER_NAME(n,pf,ty)	__VFUNC_FAST_NOCC_HELPER_NAME(n,pf,ty)
+#define __VFUNC_FAST_NOCC_HELPER_NAME(n,pf,ty)	g_##pf##_fast_##ty##_##n##_nocc_helper
 
 #define VFUNC_SIMPLE_NAME(func_name)		_VFUNC_SIMPLE_NAME(func_name,pf_str,type_code)
 #define _VFUNC_SIMPLE_NAME(n,pf,ty)		__VFUNC_SIMPLE_NAME(n,pf,ty)

@@ -1,3 +1,9 @@
+// These macros are used to build the host-side function calls, which typically
+// involve a speed test, then a branch to a speed-specific host function that
+// calls the appropriate kernel.
+//
+// This file contains "special" definitions that don't follow the usual pattern...
+
 #define INSIST_CONTIG( dp , msg )					\
 									\
 	if( ! is_contiguous( DEFAULT_QSP_ARG  dp ) ){			\
