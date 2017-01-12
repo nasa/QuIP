@@ -296,13 +296,39 @@
 #define XFER_SRC4_PTR		XFER_SRC_PTR(3)
 #define XFER_SRC5_PTR		XFER_SRC_PTR(4)
 
-#define XFER_RETSCAL1		SET_VA_SVAL(vap,0,OBJ_DATA_PTR(OA_SCLR_OBJ(oap,0)));
-#define XFER_RETSCAL2		SET_VA_SVAL(vap,1,OBJ_DATA_PTR(OA_SCLR_OBJ(oap,1)));
+#define XFER_RETSCAL1		SET_VA_SVAL(vap,0,(Scalar_Value *)OBJ_DATA_PTR(OA_SCLR_OBJ(oap,0)));
+#define XFER_RETSCAL2		SET_VA_SVAL(vap,1,(Scalar_Value *)OBJ_DATA_PTR(OA_SCLR_OBJ(oap,1)));
 
 #define XFER_DBM_PTR		SET_VA_DEST_PTR(vap, OBJ_DATA_PTR(bitmap_dst_dp) );
 #define XFER_SBM_PTR		SET_VA_SBM_PTR(vap, OBJ_DATA_PTR(bitmap_src_dp) );
 
 // XFER_DBM_GPU_INFO needs to be defined differently for cpu & gpu !!!
+#ifdef BUILD_FOR_GPU
+
+// can be shared with CUDA, should be moved?
+// moved back to veclib/xfer_args.h, with BUILD_FOR_GPU guard...
+
+#define XFER_DBM_GPU_INFO								\
+											\
+	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp) == NULL ){			\
+		/* only for gpu objects! */						\
+		init_bitmap_gpu_info(bitmap_dst_dp);					\
+	}										\
+	SET_VA_DBM_GPU_INFO_PTR(vap, BITMAP_OBJ_GPU_INFO_DEV_PTR(bitmap_dst_dp));
+
+#define XFER_EQSP_DBM_GPU_INFO								\
+											\
+	XFER_DBM_GPU_INFO								\
+	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));	\
+fprintf(stderr,"XFER_EQSP_DBM_GPU_INFO:  iteration total = %d\n",VA_ITERATION_TOTAL(vap));
+
+#define XFER_SLOW_DBM_GPU_INFO								\
+											\
+	XFER_DBM_GPU_INFO								\
+	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
+	// BUG?  need to set all sizes?
+
+#endif // BUILD_FOR_GPU
 
 #ifdef MOVED
 #define XFER_DBM_GPU_INFO	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp) == NULL ){				\

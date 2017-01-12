@@ -1,3 +1,49 @@
+/* This is a file which gets included in other files...
+ * To implement each precision, we first include a file
+ * defining all the macros, then we include this file.
+ *
+ * For gpu implementation, some functions need different definitions...
+ */
+
+#include "veclib/real_args.h"
+
+
+// For sum, we may want to accumulate to a higher precision destination...
+
+_VEC_FUNC_2V_PROJ( rvsum,
+	dst = (dest_type)  0,
+	dst += (dest_type)  src1,
+	psrc1 + psrc2
+	)
+
+_VEC_FUNC_3V( rvadd , dst = (dest_type)(src1 + src2) )
+_VEC_FUNC_3V( rvsub , dst = (dest_type)(src1 - src2) )
+_VEC_FUNC_3V( rvmul , dst = (dest_type)(src1 * src2) )
+_VEC_FUNC_3V( rvdiv , dst = (dest_type)(src1 / src2) )
+_VEC_FUNC_2V( rvsqr , dst = (dest_type)(src1 * src1) )
+
+_VEC_FUNC_2V_SCAL( rvsadd , dst = (dest_type)(scalar1_val + src1) )
+_VEC_FUNC_2V_SCAL( rvssub , dst = (dest_type)(scalar1_val - src1) )
+_VEC_FUNC_2V_SCAL( rvsmul , dst = (dest_type)(src1 * scalar1_val) )
+_VEC_FUNC_2V_SCAL( rvsdiv , dst = (dest_type)(scalar1_val / src1) )
+_VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )
+
+// How do we handle bit precision?
+
+// rvset moved to all_same_prec_vec.c
+
+/* New conditional assignments */
+
+// implement vdot using vmul & vsum for gpu
+//_VEC_FUNC_3V_PROJ( rvdot,
+//	dst = (dest_type)  0,
+//	dst += (dest_type)  src1 * src2,
+//	psrc1 * psrc2,
+//	psrc1 + psrc2
+//	)
+
+
+
 
 /* This is a file which gets included in other files...
  * To implement each precision, we first include a file
@@ -109,13 +155,6 @@ _VEC_FUNC_2V_SCAL( vsmin , dst = (dest_type)(scalar1_val < src1 ? scalar1_val : 
 // moved to all_same_prec_vec.c
 //_VEC_FUNC_2V( rvmov , dst = (dest_type)src1 )
 
-_VEC_FUNC_2V( rvsqr , dst = (dest_type)(src1 * src1) )
-
-_VEC_FUNC_3V( rvadd , dst = (dest_type)(src1 + src2) )
-_VEC_FUNC_3V( rvsub , dst = (dest_type)(src1 - src2) )
-_VEC_FUNC_3V( rvmul , dst = (dest_type)(src1 * src2) )
-_VEC_FUNC_3V( rvdiv , dst = (dest_type)(src1 / src2) )
-
 // Ramp functions are slow - only...
 
 _VEC_FUNC_1V_2SCAL( vramp1d , dst = (dest_type)scalar1_val; scalar1_val+=scalar2_val,
@@ -127,13 +166,6 @@ _VEC_FUNC_1V_2SCAL( vramp1d , dst = (dest_type)scalar1_val; scalar1_val+=scalar2
 _VEC_FUNC_1V_3SCAL( vramp2d , stat1, stat2,
 dst = scalar1_val + scalar2_val * (IDX1_1 / INC1_1 ) + scalar3_val * (IDX1_2 / INC1_2 )
 )
-
-_VEC_FUNC_2V_SCAL( rvsadd , dst = (dest_type)(scalar1_val + src1) )
-_VEC_FUNC_2V_SCAL( rvssub , dst = (dest_type)(scalar1_val - src1) )
-//_VEC_FUNC_2V_SCAL( rvsmul , fprintf(stderr,"scalar1_val = %g (%g)\n",scalar1_val, (*((double *) ((vap)->va_sval[0])))); dst = (dest_type)(src1 * scalar1_val) )
-_VEC_FUNC_2V_SCAL( rvsmul , dst = (dest_type)(src1 * scalar1_val) )
-_VEC_FUNC_2V_SCAL( rvsdiv , dst = (dest_type)(scalar1_val / src1) )
-_VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )
 
 // How do we handle bit precision?
 
@@ -219,27 +251,6 @@ _VEC_FUNC_2V_PROJ_IDX( vmini ,
 	dst = (orig[src1] < orig[src2] ? src1 : src2)
 	)
 
-
-//VEC_FUNC_2V_PROJ( vsum , psrc1 + psrc2 )
-_VEC_FUNC_2V_PROJ( rvsum,
-	dst = (dest_type)  0,
-	dst += (dest_type)  src1,
-	psrc1 + psrc2
-	)
-
-// vdot not yet implemented for gpu, but should be like vsum?
-//VEC_FUNC_3V_PROJ( vdot )
-// It's a little different because the first iteration we take the products,
-// and then we sum all of the products.  It might be a lot simpler not to have this
-// be a primitive, but rather to build it up from vmul and vsum...
-
-//					_VF_3V_PROJ( name, type_code, init, stat )
-_VEC_FUNC_3V_PROJ( rvdot,
-	dst = (dest_type)  0,
-	dst += (dest_type)  src1 * src2,
-	psrc1 * psrc2,
-	psrc1 + psrc2
-	)
 
 #ifndef BUILD_FOR_GPU
 _VEC_FUNC_2V( rvrand , dst = (dest_type) rn((u_long)src1)	)

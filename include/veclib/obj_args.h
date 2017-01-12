@@ -169,7 +169,13 @@ typedef struct vector_args {
 	dimension_t	va_sbm_bit0;
 	dimension_t	va_len;			// just for fast/eqsp ops?
 #ifdef HAVE_ANY_GPU
-	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
+	//Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
+	dim5		va_slow_size;
+	uint32_t	va_total_count;
+#ifdef HAVE_CUDA
+	unsigned int	va_grid_size[3];	// dim3
+#endif // HAVE_CUDA
+
 	// Bitmap objects will have these structs in host memory, but these pointers will be the GPU copies.
 
 	// It is not clear that we can have both dbm and sbm with this scheme, because we have one thread per word,
@@ -199,13 +205,14 @@ typedef struct vector_args {
 #define SET_VA_DBM_GPU_INFO_PTR(vap,p)		(vap)->va_dbm_gpu_info = p
 
 #define VA_DBM_N_BITMAP_WORDS(vap)		BMI_N_WORDS( VA_DBM_GPU_INFO_PTR(vap) )
-#define VA_SLOW_SIZE(vap)			(vap)->va_iteration_size.ds_dimension
+//#define VA_SLOW_SIZE(vap)			(vap)->va_iteration_size.ds_dimension
+#define VA_SLOW_SIZE(vap)			(vap)->va_slow_size
 
-#define VA_ITERATION_COUNT(vap,idx)		(vap)->va_iteration_size.ds_dimension[idx]
-#define SET_VA_ITERATION_COUNT(vap,idx,v)	(vap)->va_iteration_size.ds_dimension[idx] = v
+//#define VA_ITERATION_COUNT(vap,idx)		(vap)->va_total_count
+//#define SET_VA_ITERATION_COUNT(vap,idx,v)	(vap)->va_total_count = v
 
-#define VA_ITERATION_TOTAL(vap)		(vap)->va_iteration_size.ds_n_elts
-#define SET_VA_ITERATION_TOTAL(vap,v)	(vap)->va_iteration_size.ds_n_elts = v
+#define VA_ITERATION_TOTAL(vap)		(vap)->va_total_count
+#define SET_VA_ITERATION_TOTAL(vap,v)	(vap)->va_total_count = v
 
 #define VA_ARGSET_PREC(vap)	(vap)->va_argsprec
 #define VA_ARGSET_TYPE(vap)	(vap)->va_argstype
@@ -223,9 +230,15 @@ typedef struct vector_args {
 #define VA_DEST_LEN(vap)	VARG_LEN( VA_DEST(vap) )
 #define VA_SRC1_LEN(vap)	VARG_LEN( VA_SRC1(vap) )
 
-#define VA_LEN_X(vap)		VA_ITERATION_COUNT(vap,1)
-#define VA_LEN_Y(vap)		VA_ITERATION_COUNT(vap,2)
-#define VA_LEN_Z(vap)		VA_ITERATION_COUNT(vap,3)
+//#define VA_LEN_X(vap)		VA_ITERATION_COUNT(vap,1)
+//#define VA_LEN_Y(vap)		VA_ITERATION_COUNT(vap,2)
+//#define VA_LEN_Z(vap)		VA_ITERATION_COUNT(vap,3)
+#define VA_LEN_X(vap)		VA_GRID_SIZE(vap,0)
+#define VA_LEN_Y(vap)		VA_GRID_SIZE(vap,1)
+#define VA_LEN_Z(vap)		VA_GRID_SIZE(vap,2)
+
+#define VA_GRID_SIZE(vap,idx)		(vap)->va_grid_size[idx]
+#define SET_VA_GRID_SIZE(vap,idx,v)	(vap)->va_grid_size[idx] = v
 
 /*
 #define VA_DIM_INDEX(vap,which)		(vap)->va_dim_indices[which]
@@ -329,6 +342,13 @@ extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_SRC_DIMSET(vap,idx)		VARG_DIMSET( VA_SRC(vap,idx) )
 #define VA_SRC1_DIMSET(vap)		VARG_DIMSET( VA_SRC1(vap) )
 #define VA_SRC2_DIMSET(vap)		VARG_DIMSET( VA_SRC2(vap) )
+
+#define VA_DEST_INC(vap)		VA_DEST_EQSP_INC( vap )
+#define VA_SRC1_INC(vap)		VA_SRC1_EQSP_INC( vap )
+#define VA_SRC2_INC(vap)		VA_SRC2_EQSP_INC( vap )
+#define VA_SRC3_INC(vap)		VA_SRC3_EQSP_INC( vap )
+#define VA_SRC4_INC(vap)		VA_SRC4_EQSP_INC( vap )
+#define VA_SBM_INC(vap)			VA_SBM_EQSP_INC( vap )
 
 #define VA_DEST_INCSET(vap)		VARG_INCSET( VA_DEST(vap) )
 #define VA_SRC_INCSET(vap,idx)		VARG_INCSET( VA_SRC(vap,idx) )

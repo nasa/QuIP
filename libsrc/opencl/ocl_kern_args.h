@@ -70,7 +70,7 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 #define SET_KERNEL_ARGS_FAST_CONV_DEST(t)	SET_KERNEL_ARGS_FAST_1
 
 #define SET_KERNEL_ARGS_SLOW_SIZE				\
-	SET_KERNEL_ARG(DIM5,VA_SLOW_SIZE(vap))
+	SET_KERNEL_ARG(DIM5, & VA_SLOW_SIZE(vap))
 
 #define SET_KERNEL_ARGS_SLOW_SIZE_OFFSET	/* nop */
 
@@ -112,6 +112,15 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
 	SET_KERNEL_ARG(void *,&dst_values)		\
 	SET_KERNEL_ARG(void *,&src_values)		\
+	SET_KERNEL_ARG( uint32_t, &len1 )		\
+	SET_KERNEL_ARG( uint32_t, &len2 )
+	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
+
+#define SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP					\
+								\
+fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
+	SET_KERNEL_ARG(void *,&dst_values)		\
+	SET_KERNEL_ARG(void *,&orig_src_values)		\
 	SET_KERNEL_ARG( uint32_t, &len1 )		\
 	SET_KERNEL_ARG( uint32_t, &len2 )
 	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */

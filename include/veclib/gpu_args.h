@@ -37,9 +37,9 @@
 
 #define DECLARE_KERN_ARGS_FAST_NOCC_HELPER				\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dst_extrema,		\
+	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,		\
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
-	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
+	KERNEL_ARG_QUALIFIER dest_type* src_vals,		\
 	KERNEL_ARG_QUALIFIER index_type *src_counts,		\
 	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
 	DECLARE_2_LENGTHS					\
@@ -51,14 +51,14 @@
 								\
 	dst_extrema,						\
 	dst_counts,						\
-	src_vals,						\
+	orig_src_vals,						\
 	dst_indices,						\
 	len1, len2
 
 
 #define DECLARE_KERN_ARGS_FAST_NOCC_SETUP				\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dst_extrema,		\
+	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,		\
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
 	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
 	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
@@ -90,7 +90,16 @@
 
 #define DECLARE_KERN_ARGS_FAST_2V_PROJ				\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dest,			\
+	KERNEL_ARG_QUALIFIER dest_type* dest,			\
+	KERNEL_ARG_QUALIFIER dest_type* s1,			\
+	DECLARE_2_LENGTHS
+
+
+#define KERN_ARGS_FAST_2V_PROJ_SETUP	dest, s1, len1, len2
+
+#define DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP			\
+								\
+	KERNEL_ARG_QUALIFIER dest_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
 	DECLARE_2_LENGTHS
 
@@ -155,6 +164,8 @@
 #define DECLARE_KERN_ARGS_DBM_GPU_INFO				\
 								\
 	KERNEL_ARG_QUALIFIER Bitmap_GPU_Info * dbm_info_p
+
+#define KERN_ARGS_DBM_GPU_INFO	VA_DBM_GPU_INFO_PTR(vap)
 
 ////////////// end of special cases
 
@@ -252,7 +263,9 @@
 #define DECLARE_KERN_ARGS_FAST_LEN	int len
 #define DECLARE_KERN_ARGS_EQSP_LEN	int len
 //#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE xyz_len	// BUG vwxyz_len
-#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE vwxyz_len
+
+// Now use szarr!
+//#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE vwxyz_len
 
 #define DECLARE_KERN_ARGS_FAST_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0
 #define DECLARE_KERN_ARGS_EQSP_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , int sbm_inc
@@ -718,7 +731,8 @@
 #define KERN_ARGS_QUAT_1S	VA_SCALAR_VAL_STDQUAT(vap,0)
 #define KERN_ARGS_QUAT_2S	KERN_ARGS_QUAT_1S , VA_SCALAR_VAL_STDQUAT(vap,1)
 
-#define KERN_ARGS_SLOW_SIZE		VA_SLOW_SIZE(vap)
+//
+#define KERN_ARGS_SLOW_SIZE	VA_SLOW_SIZE(vap)
 
 #define KERN_ARGS_FAST_CONV_DEST(t)	(t *) VA_DEST_PTR(vap)
 #define KERN_ARGS_FAST_1		(dest_type *) VA_DEST_PTR(vap)
@@ -768,7 +782,7 @@
 #define KERN_ARGS_FAST_LEN	VA_LENGTH(vap)
 #define KERN_ARGS_EQSP_LEN	VA_LENGTH(vap)
 //#define KERN_ARGS_SLOW_LEN	VA_XYZ_LEN(vap)			// a local variable!?
-#define KERN_ARGS_SLOW_LEN	VA_ITERATION_TOTAL(vap)			// a local variable!?
+//#define KERN_ARGS_SLOW_LEN	VA_ITERATION_TOTAL(vap)			// a local variable!?
 
 #define KERN_ARGS_FAST_SBM	(bitmap_word *) VA_SBM_PTR(vap) , VA_SBM_BIT0(vap)
 #define KERN_ARGS_EQSP_SBM	KERN_ARGS_FAST_SBM, VA_SBM_INC(vap)

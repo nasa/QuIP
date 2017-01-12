@@ -943,7 +943,8 @@
 
 #define GEN_ADD_FAST_LEN(prefix)	GEN_SEP(prefix)	GEN_FAST_ARG_LEN(prefix)
 #define GEN_ADD_EQSP_LEN(prefix)	GEN_SEP(prefix)	GEN_EQSP_ARG_LEN(prefix)
-#define GEN_ADD_SLOW_LEN(prefix)	GEN_SEP(prefix)	GEN_SLOW_ARG_LEN(prefix)
+//#define GEN_ADD_SLOW_LEN(prefix)	GEN_SEP(prefix)	GEN_SLOW_ARG_LEN(prefix)
+#define GEN_ADD_SLOW_LEN(prefix)	// nop - we now use szarr (SLOW_SIZE)
 // FLEN
 
 
@@ -974,19 +975,6 @@
 #define GEN_ARGS_FLEN_RC_2(prefix)	GEN_ARGS_FAST_RC_2(prefix)	\
 					GEN_ADD_FAST_LEN(prefix)
 
-#ifdef FOOBAR
-#define GEN_ARGS_FLEN_DBM_SBM(prefix)	GEN_ARGS_FAST_DBM_SBM(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
-
-#define GEN_ARGS_FLEN_DBM_2SRCS(prefix)	GEN_ARGS_FAST_DBM_2SRCS(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
-
-#define GEN_ARGS_FLEN_DBM_1S_1SRC(prefix)	GEN_ARGS_FAST_DBM_1S_1SRC(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
-
-#define GEN_ARGS_FLEN_DBM_1S_(prefix)	GEN_ARGS_FAST_DBM_1S_(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
-#else // ! FOOBAR
 #define GEN_ARGS_FLEN_DBM_SBM(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
 						GEN_SEP(prefix)			\
 						prefix##_EQSP_DBM_SBM
@@ -998,7 +986,6 @@
 #define GEN_ARGS_FLEN_DBM_1S_(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
 						GEN_SEP(prefix)			\
 						prefix##_EQSP_DBM_1S_
-#endif // ! FOOBAR
 
 #define GEN_ARGS_FLEN_CONV(prefix,t)	GEN_ARGS_FAST_CONV(prefix,t)	\
 					GEN_ADD_FAST_LEN(prefix)

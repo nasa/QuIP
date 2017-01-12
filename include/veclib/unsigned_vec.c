@@ -1,3 +1,5 @@
+#include "veclib/real_args.h"
+
 _VEC_FUNC_3V( vibnd , dst=src1<src2?src2:src1 )
 _VEC_FUNC_2V( vsign , dst=src1>0?1:0 )
 _VEC_FUNC_2V( vabs , dst=src1 )

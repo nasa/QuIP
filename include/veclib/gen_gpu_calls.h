@@ -732,7 +732,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_##bm
 	DECL_EXTRA_##extra						\
 	/*INIT_INDICES_XYZ_##bm##vectors*/					\
 	INIT_INDICES_##bm##vectors					\
-	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
+	if( SLEN_IDX_TEST(index1,szarr) ){				\
 		/*SCALE_INDICES_XYZ_##bm##vectors*/				\
 		SCALE_INDICES_##bm##vectors				\
 		statement;						\
@@ -859,7 +859,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_CONV
 {									\
 	/*INIT_INDICES_XYZ_2*/						\
 	INIT_INDICES_2							\
-	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
+	if( SLEN_IDX_TEST(index1,szarr) ){				\
 		/*SCALE_INDICES_XYZ_2*/					\
 		SCALE_INDICES_2						\
 		dst = (to_type) src1 ;					\

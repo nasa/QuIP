@@ -90,22 +90,37 @@ static void HOST_SLOW_CALL_NAME(name)					\
 }
 
 
-
+// is this used?
 
 #define FINISH_MM_ITERATION(whence)					\
 									\
 	/* Each temp vector gets used twice,				\
 	 * first as result, then as source */				\
-	if( src_to_free != NULL ){					\
+	if( src_to_free != (src_type *)NULL ){					\
 		FREETMP_NAME(src_to_free,#whence);			\
-		src_to_free=NULL;					\
+		src_to_free=(src_type *)NULL;					\
 	}								\
 									\
 	/* Now roll things over... */					\
 	idx1_values = indices;						\
 	len = len1;							\
 	src_to_free = dst_to_free;					\
-	dst_to_free = NULL;
+	dst_to_free = (dst_type *)NULL;
+
+#define FINISH_IDX_MM_ITERATION(whence)					\
+									\
+	/* Each temp vector gets used twice,				\
+	 * first as result, then as source */				\
+	if( src_to_free != (index_type *)NULL ){					\
+		FREETMP_NAME(src_to_free,#whence);			\
+		src_to_free=(index_type *)NULL;					\
+	}								\
+									\
+	/* Now roll things over... */					\
+	idx1_values = indices;						\
+	len = len1;							\
+	src_to_free = dst_to_free;					\
+	dst_to_free = (index_type *)NULL;
 
 #define SETUP_IDX_ITERATION(a2,a3,whence)				\
 									\
@@ -116,7 +131,7 @@ static void HOST_SLOW_CALL_NAME(name)					\
 									\
 	if( len1 == 1 ){						\
 		indices = (index_type *) VA_DEST_PTR(vap);		\
-		dst_to_free = NULL;					\
+		dst_to_free = (index_type *)NULL;					\
 	} else {							\
 		indices = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#whence);	\
 		dst_to_free = indices;					\
@@ -124,39 +139,18 @@ static void HOST_SLOW_CALL_NAME(name)					\
 
 
 
-#ifdef FOOBAR
-// args are std_type instead of index_type - ?
-
-#define SETUP_MM_ITERATION2(a2,a3,whence)				\
-									\
-	len1 = (len+1)/2;						\
-	len2 = len - len1;						\
-									\
-	a3 = a2 + len1;							\
-									\
-	if( len1 == 1 ){						\
-		arg1 = (std_type *) OBJ_DATA_PTR(OA_DEST(oap));			\
-		dst_to_free = NULL;					\
-	} else {							\
-		arg1 = (std_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(std_type),len1,#whence);	\
-		dst_to_free = arg1;					\
-	}
-
-#endif // FOOBAR
-
-
 
 #define FINISH_NOCC_ITERATION(whence)					\
 									\
 	/* Each temp vector gets used twice,				\
 	 * first as result, then as source */				\
-	if( src_vals_to_free != NULL ){					\
+	if( src_vals_to_free != (dest_type *)NULL ){					\
 		FREETMP_NAME(src_vals_to_free,#whence);			\
-		src_vals_to_free=NULL;					\
+		src_vals_to_free=(dest_type *)NULL;					\
 	}								\
-	if( src_counts_to_free != NULL ){				\
+	if( src_counts_to_free != (index_type *)NULL ){				\
 		FREETMP_NAME(src_counts_to_free,#whence);		\
-		src_counts_to_free=NULL;				\
+		src_counts_to_free=(index_type *)NULL;				\
 	}								\
 									\
 	/* Now roll things over... */					\
@@ -165,8 +159,8 @@ static void HOST_SLOW_CALL_NAME(name)					\
 	len = len1;							\
 	src_vals_to_free = dst_vals_to_free;				\
 	src_counts_to_free = dst_counts_to_free;			\
-	dst_vals_to_free = NULL;					\
-	dst_counts_to_free = NULL;
+	dst_vals_to_free = (dest_type *)NULL;					\
+	dst_counts_to_free = (index_type *)NULL;
 
 /* For vmaxg, the temp arrays don't double for the destination vector...
  * oa_sdp[0] is the extreme value, oa_sdp[1] is the count.
@@ -179,18 +173,17 @@ static void HOST_SLOW_CALL_NAME(name)					\
 /*fprintf(stderr,"SETUP_NOCC_ITERATION  len1 = %d   len2 = %d\n",len1,len2);*/\
 											\
 	if( len1 == 1 ){								\
-		dst_values = (std_type *) VA_SVAL1(vap);				\
-		dst_vals_to_free = NULL;						\
+		dst_values = (dest_type *) VA_SVAL1(vap);				\
+		dst_vals_to_free = (dest_type *)NULL;						\
 		dst_counts = (index_type *) VA_SVAL2(vap);				\
-		dst_counts_to_free = NULL;						\
+		dst_counts_to_free = (index_type *)NULL;						\
 	} else {									\
 /*fprintf(stderr,"SETUP_NOCC_ITERATION  calling tmpvec, VA_PFDEV = 0x%lx\n",(long)VA_PFDEV(vap));*/\
-		dst_values = (std_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(std_type),len1,#whence);	\
-		dst_vals_to_free = (std_type *) dst_values;				\
+		dst_values = (dest_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(dest_type),len1,#whence);	\
+		dst_vals_to_free = (dest_type *) dst_values;				\
 		dst_counts = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#whence); \
 		dst_counts_to_free = dst_counts;					\
 	}
-
 
 
 // the current implementations seem to require contiguity of all objects?
@@ -198,7 +191,7 @@ static void HOST_SLOW_CALL_NAME(name)					\
 #define INIT_MM(src_ptr)						\
 									\
 	len = OBJ_N_TYPE_ELTS(oap->oa_dp[0]);				\
-	src_ptr = (std_type *)OBJ_DATA_PTR(oap->oa_dp[0]);		\
+	orig_src_ptr = (std_type *)OBJ_DATA_PTR(oap->oa_dp[0]);		\
 									\
 	CHECK_MM(min/max)
 
@@ -226,8 +219,8 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	std_type *src2_values;							\
 	std_type *orig_src_values;						\
 	index_type *idx1_values,*idx2_values;					\
-	index_type *dst_to_free=NULL;						\
-	index_type *src_to_free=NULL;						\
+	index_type *dst_to_free=(index_type *)NULL;						\
+	index_type *src_to_free=(index_type *)NULL;						\
 	uint32_t len, len1, len2;						\
 	DECLARE_PLATFORM_VARS_2							\
 										\
@@ -237,17 +230,17 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	orig_src_values = src1_values;						\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(OA_DEST(oap));*/	\
 	CALL_GPU_FAST_INDEX_SETUP_FUNC(name)						\
-	FINISH_MM_ITERATION(name)						\
+	FINISH_IDX_MM_ITERATION(name)						\
 										\
 	while( len > 1 ){							\
 		SETUP_IDX_ITERATION(idx1_values,idx2_values,name)		\
 		CALL_GPU_FAST_INDEX_HELPER_FUNC(name)				\
 	/*(indices,idx1_values,idx2_values,orig_src_values,len1,len2)*/		\
-		FINISH_MM_ITERATION(name)					\
+		FINISH_IDX_MM_ITERATION(name)					\
 	}									\
-	if( src_to_free != NULL ){						\
+	if( src_to_free != (index_type *)NULL ){						\
 		FREETMP_NAME(src_to_free,#name);				\
-		src_to_free=NULL;						\
+		src_to_free=(index_type *)NULL;						\
 	}									\
 }										\
 										\
@@ -411,15 +404,16 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
 	DECLARE_PLATFORM_VARS_2							\
 										\
-	std_type *dst_values;							\
+	dest_type *dst_values;							\
 	index_type *dst_counts;							\
-	std_type *src_values;							\
+	std_type *orig_src_values;							\
+	dest_type *src_values;							\
 	index_type *src_counts;							\
 	index_type *indices;							\
-	std_type *dst_vals_to_free=NULL;					\
-	std_type *src_vals_to_free=NULL;					\
-	index_type *dst_counts_to_free=NULL;					\
-	index_type *src_counts_to_free=NULL;					\
+	dest_type *dst_vals_to_free=(dest_type *)NULL;					\
+	dest_type *src_vals_to_free=(dest_type *)NULL;					\
+	index_type *dst_counts_to_free=(int32_t *)NULL;					\
+	index_type *src_counts_to_free=(int32_t *)NULL;					\
 	uint32_t stride;							\
 	uint32_t len, len1, len2;						\
 	/*int max_threads_per_block;*/						\
@@ -429,7 +423,7 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 /*show_vec_args(vap);*/\
 	/*len = VA_SRC1_LEN(vap);*/						\
 	len = VA_LENGTH(vap);							\
-	src_values = (std_type *) VA_SRC1_PTR(vap);				\
+	orig_src_values = (std_type *) VA_SRC1_PTR(vap);				\
 										\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK( OA_DEST(oap) );*/	\
 	/* Set len1, len2 */							\
@@ -437,7 +431,7 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	/* Set dst_values, dst_counts to temp vectors */			\
 	SETUP_NOCC_ITERATION(name)						\
 	/*indices = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#name);*/	\
-	indices = VA_DEST_PTR(vap);						\
+	indices = (index_type *) VA_DEST_PTR(vap);						\
 	CALL_GPU_FAST_NOCC_SETUP_FUNC(name)					\
 	FINISH_NOCC_ITERATION(name) 						\
 										\
@@ -448,13 +442,13 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 		FINISH_NOCC_ITERATION(name)					\
 		stride = 2*stride;						\
 	}									\
-	if( src_vals_to_free != NULL ){						\
+	if( src_vals_to_free != (dest_type *)NULL ){						\
 		FREETMP_NAME(src_vals_to_free,#name);				\
-		src_vals_to_free=NULL;						\
+		src_vals_to_free=(dest_type *)NULL;						\
 	}									\
-	if( src_counts_to_free != NULL ){					\
+	if( src_counts_to_free != (int32_t *)NULL ){					\
 		FREETMP_NAME(src_counts_to_free,#name);				\
-		src_counts_to_free=NULL;					\
+		src_counts_to_free=(int32_t *)NULL;					\
 	}									\
 	/*FREETMP_NAME(indices,#name);*/						\
 }										\
@@ -536,7 +530,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 										\
 	if( len1 == 1 ){							\
 		dst_values = (type *) VA_DEST_PTR(vap);				\
-		dst_to_free = NULL;						\
+		dst_to_free = (dst_type *)NULL;						\
 	} else {								\
 		dst_values = (type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(type),len1,#name);	\
 		dst_to_free = dst_values;					\
@@ -559,13 +553,17 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 // maxima to a temporary half-size image, and so on...  We have a problem because the Vector_Args
 // struct doesn't contain shape information!?
 
-#define H_CALL_PROJ_2V( name, type )					\
+// We need setup and helper functions in order to support mixed-precision versions (taking sum
+// to higher precision).
+
+#define H_CALL_PROJ_2V( name, dtype, stype )					\
 									\
 static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
 	uint32_t len, len1, len2;						\
-	type *src_values, *dst_values;					\
-	type *src_to_free, *dst_to_free;				\
+	dtype *src_values, *dst_values;					\
+	dtype *src_to_free, *dst_to_free;				\
+	stype *orig_src_values;						\
 	DECLARE_PLATFORM_VARS						\
 									\
 /*fprintf(stderr,"HOST_SLOW_CALL(%s) BEGIN\n",#name);*/\
@@ -573,29 +571,33 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	len = VARG_LEN( VA_SRC(vap,0) );					\
 /*fprintf(stderr,"%s:  len = %d\n",#name,len);*/\
 /*show_vec_args(vap);*/\
-	src_values = (type *) VA_SRC_PTR(vap,0);			\
+	orig_src_values = (stype *) VA_SRC_PTR(vap,0);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])				\
-	src_to_free=NULL;						\
+	src_to_free=(dtype *)NULL;						\
+	SETUP_PROJ_ITERATION(dtype,name)				\
+	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)				\
+	len=len1;						\
+	src_values = dst_values;				\
 	while( len > 1 ){						\
-		SETUP_PROJ_ITERATION(type,name)				\
+		SETUP_PROJ_ITERATION(dtype,name)				\
 /*fprintf(stderr,"%s:  start of iteration, len = %d, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);*/\
 		CALL_GPU_FAST_PROJ_2V_FUNC(name)				\
 		len=len1;						\
 		src_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
 		 * first as result, then as source */			\
-		if( src_to_free != NULL ){				\
+		if( src_to_free != (dtype *)NULL ){				\
 			FREETMP_NAME(src_to_free,#name);		\
-			src_to_free=NULL;				\
+			src_to_free=(dtype *)NULL;				\
 		}							\
 		src_to_free = dst_to_free;				\
-		dst_to_free = NULL;					\
+		dst_to_free = (dtype *)NULL;					\
 	}								\
-	if( src_to_free != NULL ){					\
+	if( src_to_free != (dtype *)NULL ){					\
 		FREETMP_NAME(src_to_free,#name);			\
-		src_to_free=NULL;					\
+		src_to_free=(dtype *)NULL;					\
 	}								\
 }									\
 									\
@@ -637,7 +639,7 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 	src2_values = (type *) VA_SRC2_PTR(vap);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
-	src_to_free=NULL;						\
+	src_to_free=(src_type *)NULL;						\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(type,name)				\
 		CALL_GPU_FAST_PROJ_3V_FUNC(name)				\
@@ -645,16 +647,16 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 		src1_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
 		 * first as result, then as source */			\
-		if( src_to_free != NULL ){				\
+		if( src_to_free != (src_type *)NULL ){				\
 			FREETMP_NAME(src_to_free,#name);		\
-			src_to_free=NULL;				\
+			src_to_free=(src_type *)NULL;				\
 		}							\
 		src_to_free = dst_to_free;				\
-		dst_to_free = NULL;					\
+		dst_to_free = (dst_type *)NULL;					\
 	}								\
-	if( src_to_free != NULL ){					\
+	if( src_to_free != (src_type *)NULL ){					\
 		FREETMP_NAME(src_to_free,#name);			\
-		src_to_free=NULL;					\
+		src_to_free=(src_type *)NULL;					\
 	}								\
 }									\
 									\

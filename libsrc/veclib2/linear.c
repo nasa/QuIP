@@ -64,6 +64,12 @@ static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(Data_Obj *dpto, Data_Obj *dpf
 //forwar declaration of typed rvdot
 static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS);
 
+static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS)
+{
+	NWARN("Sorry, rvdot not implemented yet!?");
+}
+
+
 //static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
 static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 {

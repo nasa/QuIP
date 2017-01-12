@@ -16,6 +16,7 @@ noinst_HEADERS =					\
 			asc_classes.c			\
 			bitmap_ops.c			\
 			conv_vec.c			\
+			cpx_args.h			\
 			cpx_vec.c			\
 			dispatch_tbl.c			\
 			fft_funcs.c			\
@@ -62,6 +63,8 @@ noinst_HEADERS =					\
 			ocl_port.h			\
 			ocl_veclib_prot.h		\
 			platform_funcs.h		\
+			quat_args.h			\
+			real_args.h			\
 			report_args.h			\
 			slow_incs.h			\
 			slow_len.h			\

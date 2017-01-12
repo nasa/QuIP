@@ -21,7 +21,11 @@
 
 #define SET_MAX_THREADS_FROM_OBJ(dp)	// nop
 
+#ifdef MOVED
+
 // can be shared with CUDA, should be moved?
+// moved back to veclib/xfer_args.h, with BUILD_FOR_GPU guard...
+
 #define XFER_DBM_GPU_INFO	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp) == NULL ){				\
 					/* only for gpu objects! */							\
 					init_bitmap_gpu_info(bitmap_dst_dp);						\
@@ -36,6 +40,7 @@ fprintf(stderr,"XFER_EQSP_DBM_GPU_INFO:  iteration total = %d\n",VA_ITERATION_TO
 				SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
 				// BUG?  need to set all sizes?
 
+#endif // MOVED
 
 
 // PORT - insure_gpu_device ???
@@ -310,6 +315,12 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	global_work_size[0] = len1;					\
 /*fprintf(stderr,"calling fast helper kernel for %s, n_threads = %d\n",#name,len1);*/\
 	CALL_FAST_KERNEL_2(name,,,,)
+
+#define CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)					\
+fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(%s)\n",#name);\
+	CHECK_FAST_KERNEL(name)					\
+	SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP						\
+	CALL_FAST_KERNEL(name##_setup,,,,)
 
 #define CALL_GPU_FAST_PROJ_2V_FUNC(name)					\
 fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_FUNC(%s)\n",#name);\

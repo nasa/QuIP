@@ -6,7 +6,7 @@
 #define DECL_SLOW_INCRS_SRC3	dim5 s3_vwxyz_incr;
 #define DECL_SLOW_INCRS_SRC4	dim5 s4_vwxyz_incr;
 #define DECL_SLOW_INCRS_SBM	dim5 sbm_vwxyz_incr;
-#define DECL_SLOW_INCRS_DBM	dim5 dbm_vwxyz_incr;		\
+#define DECL_SLOW_INCRS_DBM	/*dim5 dbm_vwxyz_incr;*/		\
 				/*int dim_indices[3];*/
 
 #define DECL_SLOW_INCRS_DBM_SBM	DECL_SLOW_INCRS_DBM DECL_SLOW_INCRS_SBM
@@ -43,11 +43,11 @@ dst_vwxyz_incr.d5_dim[4] = INCREMENT(VA_DEST_INCSET(vap),4);		\
 
 #define SETUP_SLOW_INCS_DBM						\
 									\
-dbm_vwxyz_incr.d5_dim[0] = INCREMENT(VA_DEST_INCSET(vap),0);		\
+/*dbm_vwxyz_incr.d5_dim[0] = INCREMENT(VA_DEST_INCSET(vap),0);		\
 dbm_vwxyz_incr.d5_dim[1] = INCREMENT(VA_DEST_INCSET(vap),1);		\
 dbm_vwxyz_incr.d5_dim[2] = INCREMENT(VA_DEST_INCSET(vap),2);		\
 dbm_vwxyz_incr.d5_dim[3] = INCREMENT(VA_DEST_INCSET(vap),3);		\
-dbm_vwxyz_incr.d5_dim[4] = INCREMENT(VA_DEST_INCSET(vap),4);		\
+dbm_vwxyz_incr.d5_dim[4] = INCREMENT(VA_DEST_INCSET(vap),4);*/		\
 /*REPORT_INCS(dbm_xyz_incr)*/
 
 #define SETUP_SLOW_INCS_SRC1					\
