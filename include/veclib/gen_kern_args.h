@@ -975,17 +975,23 @@
 #define GEN_ARGS_FLEN_RC_2(prefix)	GEN_ARGS_FAST_RC_2(prefix)	\
 					GEN_ADD_FAST_LEN(prefix)
 
-#define GEN_ARGS_FLEN_DBM_SBM(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
-						GEN_SEP(prefix)			\
+#define GEN_ARGS_FLEN_DBM_SBM(prefix)		\
 						prefix##_EQSP_DBM_SBM
+
+//#define GEN_ARGS_FLEN_DBM_SBM(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
+//						GEN_SEP(prefix)			\
+//						prefix##_EQSP_DBM_SBM
 
 #define GEN_ARGS_FLEN_DBM_2SRCS(prefix)		prefix##_EQSP_DBM_2SRCS
 
 #define GEN_ARGS_FLEN_DBM_1S_1SRC(prefix)	prefix##_EQSP_DBM_1S_1SRC
 
-#define GEN_ARGS_FLEN_DBM_1S_(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
-						GEN_SEP(prefix)			\
+#define GEN_ARGS_FLEN_DBM_1S_(prefix)		\
 						prefix##_EQSP_DBM_1S_
+
+//#define GEN_ARGS_FLEN_DBM_1S_(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
+//						GEN_SEP(prefix)			\
+//						prefix##_EQSP_DBM_1S_
 
 #define GEN_ARGS_FLEN_CONV(prefix,t)	GEN_ARGS_FAST_CONV(prefix,t)	\
 					GEN_ADD_FAST_LEN(prefix)

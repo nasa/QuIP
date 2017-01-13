@@ -30,15 +30,18 @@
 // on gpu only fast version, but on cpu only slow version!?
 
 #define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )		\
-	__VEC_FUNC_FAST_2V_PROJ( func_name, gpu_expr )
+	__VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, gpu_expr )		\
+	__VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, gpu_expr )
 
 //#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )	// nop
 //#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
-#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )		\
-	__VEC_FUNC_CPX_FAST_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )
+#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr ) \
+	__VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, gpu_re_expr, gpu_im_expr ) \
+	__VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, gpu_re_expr, gpu_im_expr )
 
 #define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )\
-	__VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
+	__VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 ) \
+	__VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
 
 //#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )						// nop
 #define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )		\
@@ -53,28 +56,6 @@
 #define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )		\
 	__VEC_FUNC_CPX_FAST_3V_PROJ( func_name )
 
-#ifdef FOOBAR
-//#ifdef BUILD_FOR_CUDA
-
-#define GENERIC_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)			\
-										\
-	GENERIC_FAST_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)			\
-	GENERIC_FLEN_VEC_FUNC(fn,stat,bm,typ,sclrs,vecs,extra)
-
-#define SLOW_VFUNC_CALL(fn,stat,bm,typ,sclrs,vecs,extra)
-
-#define GENERIC_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)		\
-								\
-	GENERIC_FAST_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)	\
-	GENERIC_FLEN_VEC_FUNC_DBM(fn,stat,typ,sclrs,vecs)
-
-#define _VEC_FUNC_2V_CONV(n,type,statement)		\
-							\
-	_GENERIC_FAST_CONV_FUNC(n,std_type,type)	\
-	_GENERIC_FLEN_CONV_FUNC(n,std_type,type)
-
-//#else // ! BUILD_FOR_CUDA
-#endif // FOOBAR
 
 // Why is it that only CUDA needs the len versions???
 

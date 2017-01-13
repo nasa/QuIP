@@ -281,15 +281,27 @@ __VEC_FUNC_MM( func_name, statement );
 #define _VEC_FUNC_MM_IND( func_name, statement1, statement2 )\
 __VEC_FUNC_MM_IND( func_name, statement1, statement2 )
 
-#define ___VEC_FUNC_FAST_2V_PROJ( func_name, expr )		\
+// 2V_PROJ SETUP and HELPER do the same thing, but have different input types
+// (only relevant for mixed operations, e.g. summing float to double
+
+#define ___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr )	\
 								\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_FAST_2V_PROJ )			\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP )		\
+	FAST_2V_PROJ_BODY(expr,std_type)
+
+#define ___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr )	\
+								\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER )		\
+	FAST_2V_PROJ_BODY(expr,dest_type)
+
+#define FAST_2V_PROJ_BODY(expr,type)				\
 {								\
 	INIT_INDICES_1						\
 								\
 	if( IDX1 < len2 ){					\
-		std_type *s2;					\
+		type *s2;					\
 		s2 = s1 + len1;					\
 		dest[IDX1] = expr ;				\
 	} else if( IDX1 < len1 ){				\
@@ -297,50 +309,60 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
 	}							\
 }
 
-//_VEC_FUNC_CPX_2V_PROJ(cvsum,
 
-#ifdef FOOBAR
-#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )		\
-	__VEC_FUNC_CPX_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )
-#endif // FOOBAR
-
-#define ___VEC_FUNC_CPX_FAST_2V_PROJ( func_name, re_expr, im_expr )	\
+#define ___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )		\
+	FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,std_cpx)
+
+#define ___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )\
+									\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )		\
+	FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,dest_cpx)
+
+#define FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,type)			\
 	{								\
 		INIT_INDICES_1						\
 									\
 		if( IDX1 < len2 ){					\
-			std_cpx *s2;					\
+			type *s2;					\
 			s2 = s1 + len1;					\
-			dest[IDX1].re = re_expr ;				\
-			dest[IDX1].im = im_expr ;				\
+			dest[IDX1].re = re_expr ;			\
+			dest[IDX1].im = im_expr ;			\
 		} else if( IDX1 < len1 ){				\
 			dest[IDX1].re = s1[IDX1].re;			\
 			dest[IDX1].im = s1[IDX1].im;			\
 		}							\
 	}
 
-#ifdef FOOBAR
-#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )		\
-	__VEC_FUNC_QUAT_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
-#endif // FOOBAR
 
-#define ___VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+
+#define ___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP )		\
+	FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,std_quat)
+
+#define ___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+									\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER )		\
+	FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,dest_quat)
+
+
+#define FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,type)	\
 	{								\
 		INIT_INDICES_1						\
 									\
 		if( IDX1 < len2 ){					\
-			std_quat *s2;					\
+			type *s2;					\
 			s2 = s1 + len1;					\
-			dest[IDX1].re = re_expr ;				\
-			dest[IDX1]._i = im_expr1 ;				\
-			dest[IDX1]._j = im_expr2 ;				\
-			dest[IDX1]._k = im_expr3 ;				\
+			dest[IDX1].re = re_expr ;			\
+			dest[IDX1]._i = im_expr1 ;			\
+			dest[IDX1]._j = im_expr2 ;			\
+			dest[IDX1]._k = im_expr3 ;			\
 		} else if( IDX1 < len1 ){				\
 			dest[IDX1].re = s1[IDX1].re;			\
 			dest[IDX1]._i = s1[IDX1]._i;			\
@@ -999,11 +1021,6 @@ KERNEL_FUNC_PRELUDE							\
 									\
 
 #ifdef FOOBAR
-// hard coded for vdot?
-#define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )				\
-	__VEC_FUNC_3V_PROJ( func_name)
-#endif // FOOBAR
-
 // hard-coded for vdot!?
 // BUG - for gpu needs helper and setup to take products once and then sum
 
@@ -1051,4 +1068,5 @@ KERNEL_FUNC_PRELUDE							\
 		}							\
 	}
 
+#endif // FOOBAR
 

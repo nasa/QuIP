@@ -107,22 +107,22 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 	SET_KERNEL_ARG_2( uint32_t, &stride )
 	/*(GPU_CALL_NAME(name##_nocc_helper) (dst_values, dst_counts, src_values, src_counts, indices, len1, len2, stride); */
 
-#define SET_KERNEL_ARGS_FAST_PROJ_2V					\
+#define SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER			\
 								\
 fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
-	SET_KERNEL_ARG(void *,&dst_values)		\
-	SET_KERNEL_ARG(void *,&src_values)		\
-	SET_KERNEL_ARG( uint32_t, &len1 )		\
-	SET_KERNEL_ARG( uint32_t, &len2 )
+	SET_KERNEL_ARG_2(void *,&dst_values)			\
+	SET_KERNEL_ARG_2(void *,&src_values)			\
+	SET_KERNEL_ARG_2( uint32_t, &len1 )			\
+	SET_KERNEL_ARG_2( uint32_t, &len2 )
 	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
 
-#define SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP					\
+#define SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP			\
 								\
 fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
-	SET_KERNEL_ARG(void *,&dst_values)		\
-	SET_KERNEL_ARG(void *,&orig_src_values)		\
-	SET_KERNEL_ARG( uint32_t, &len1 )		\
-	SET_KERNEL_ARG( uint32_t, &len2 )
+	SET_KERNEL_ARG_1(void *,&dst_values)			\
+	SET_KERNEL_ARG_1(void *,&orig_src_values)			\
+	SET_KERNEL_ARG_1( uint32_t, &len1 )			\
+	SET_KERNEL_ARG_1( uint32_t, &len2 )
 	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
 
 #define SET_KERNEL_ARGS_FAST_PROJ_3V					\

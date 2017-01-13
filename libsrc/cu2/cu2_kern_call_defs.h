@@ -66,14 +66,25 @@
 #define _GENERIC_SLEN_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)	\
 	__GENERIC_SLEN_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)
 
-#define __VEC_FUNC_FAST_2V_PROJ( func_name, gpu_expr )		\
-	___VEC_FUNC_FAST_2V_PROJ( func_name, gpu_expr )
+#define __VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, gpu_expr )		\
+	___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, gpu_expr )
 
-#define __VEC_FUNC_CPX_FAST_2V_PROJ( func_name, re_expr, im_expr )		\
-	___VEC_FUNC_CPX_FAST_2V_PROJ( func_name, re_expr, im_expr )
+#define __VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, gpu_expr )		\
+	___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, gpu_expr )
 
-#define __VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
-	___VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )		
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )		\
+	___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )
+
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )		\
+	___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )
+
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+	___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )		
+
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+	___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )		
+
+
 
 #define __VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
 	___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )

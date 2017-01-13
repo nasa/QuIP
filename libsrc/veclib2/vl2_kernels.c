@@ -21,9 +21,9 @@
 #include "linear.c"
 #include "veclib/type_undefs.h"
 
-#include "veclib/bit_defs.h"
-#include "veclib/bitmap_ops.c"
-#include "veclib/type_undefs.h"
+//#include "veclib/bit_defs.h"
+//#include "veclib/bitmap_ops.c"
+//#include "veclib/type_undefs.h"
 
 #include "veclib/method_undefs.h"
 

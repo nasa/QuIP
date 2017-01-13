@@ -547,7 +547,7 @@ sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_setup...",#name);			\
 NADVISE(DEFAULT_ERROR_STRING);							\
 	REPORT_THREAD_INFO2							\
 	GPU_FAST_CALL_NAME(name##_nocc_setup)<<< NN_GPU >>>				\
-		(dst_values, dst_counts, src_values, indices, len1, len2);	\
+		(dst_values, dst_counts, orig_src_values, indices, len1, len2);	\
 	CHECK_GPU_ERROR(name##_nocc_setup)
 
 
@@ -564,12 +564,20 @@ NADVISE(DEFAULT_ERROR_STRING);							\
 
 
 // CUDA only!
-#define CALL_GPU_FAST_PROJ_2V_FUNC(name) /* CUDA only */			\
+#define CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name) /* CUDA only */			\
 	CLEAR_GPU_ERROR(name)						\
 	REPORT_THREAD_INFO2						\
-fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %d, len2 = %d\n",\
+fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(%s):  dst_values = 0x%lx, orig_src_values = 0x%lx, len1 = %d, len2 = %d\n",\
+#name,(long)dst_values,(long)orig_src_values,len1,len2);\
+	GPU_FAST_CALL_NAME(name##_setup)<<< NN_GPU >>>( dst_values, orig_src_values, len1, len2 );	\
+	CHECK_GPU_ERROR(name)
+
+#define CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(name) /* CUDA only */			\
+	CLEAR_GPU_ERROR(name)						\
+	REPORT_THREAD_INFO2						\
+fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %d, len2 = %d\n",\
 #name,(long)dst_values,(long)src_values,len1,len2);\
-	GPU_FAST_CALL_NAME(name)<<< NN_GPU >>>( dst_values, src_values, len1, len2 );	\
+	GPU_FAST_CALL_NAME(name##_helper)<<< NN_GPU >>>( dst_values, src_values, len1, len2 );	\
 	CHECK_GPU_ERROR(name)
 
 #define CALL_GPU_FAST_PROJ_3V_FUNC(name)					\

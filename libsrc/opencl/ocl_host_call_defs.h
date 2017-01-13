@@ -316,17 +316,17 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 /*fprintf(stderr,"calling fast helper kernel for %s, n_threads = %d\n",#name,len1);*/\
 	CALL_FAST_KERNEL_2(name,,,,)
 
-#define CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)					\
-fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(%s)\n",#name);\
-	CHECK_FAST_KERNEL(name)					\
-	SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP						\
-	CALL_FAST_KERNEL(name##_setup,,,,)
+#define CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)				\
+fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(%s)\n",#name);		\
+	CHECK_FAST_KERNEL_1(name##_setup)						\
+	SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP				\
+	CALL_FAST_KERNEL_1(name##_setup,,,,)
 
-#define CALL_GPU_FAST_PROJ_2V_FUNC(name)					\
-fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_FUNC(%s)\n",#name);\
-	CHECK_FAST_KERNEL(name)					\
-	SET_KERNEL_ARGS_FAST_PROJ_2V						\
-	CALL_FAST_KERNEL(name,,,,)
+#define CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(name)				\
+fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s)\n",#name);	\
+	CHECK_FAST_KERNEL_2(name##_helper)						\
+	SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER				\
+	CALL_FAST_KERNEL_2(name##_helper,,,,)
 
 #define CALL_GPU_FAST_PROJ_3V_FUNC(name)					\
 	CHECK_FAST_KERNEL(name)					\

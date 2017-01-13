@@ -6,9 +6,9 @@
 #include "veclib/host_typed_call_defs.h"
 #include "veclib/gen_host_calls.c"
 
-#include "veclib/bit_defs.h"
-#include "veclib/bitmap_ops.c"
-#include "veclib/type_undefs.h"
+//#include "veclib/bit_defs.h"
+//#include "veclib/bitmap_ops.c"
+//#include "veclib/type_undefs.h"
 
 
 static void h_ocl_sp_rvfft(HOST_CALL_ARG_DECLS)

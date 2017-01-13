@@ -564,7 +564,7 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	dtype *src_values, *dst_values;					\
 	dtype *src_to_free, *dst_to_free;				\
 	stype *orig_src_values;						\
-	DECLARE_PLATFORM_VARS						\
+	DECLARE_PLATFORM_VARS_2						\
 									\
 /*fprintf(stderr,"HOST_SLOW_CALL(%s) BEGIN\n",#name);*/\
 	/*len = OBJ_N_TYPE_ELTS(oap->oa_dp[0]);*/			\
@@ -583,7 +583,7 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(dtype,name)				\
 /*fprintf(stderr,"%s:  start of iteration, len = %d, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);*/\
-		CALL_GPU_FAST_PROJ_2V_FUNC(name)				\
+		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(name)				\
 		len=len1;						\
 		src_values = dst_values;				\
 		/* Each temp vector gets used twice,			\

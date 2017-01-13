@@ -9,22 +9,13 @@
  * these are functions which are implemented for ALL integer precisions.
  */
 
+#include "veclib/int_bit_vec.c"
+
 /* Real only */
 
-_VEC_FUNC_3V( vand ,	dst = (dest_type) ( src1 & src2	)	)
-_VEC_FUNC_3V( vnand ,	dst = (dest_type) ( ~(src1 & src2) )	)
-_VEC_FUNC_3V( vor ,		dst = (dest_type) ( src1 | src2	)	)
-_VEC_FUNC_3V( vxor ,	dst = (dest_type) ( src1 ^ src2	)	)
 _VEC_FUNC_3V( vmod ,	dst = (dest_type) ( src1 % src2	)	)
 _VEC_FUNC_3V( vshr ,	dst = (dest_type) ( src1 >> src2 )	)
 
-_VEC_FUNC_2V( vnot ,		dst = (dest_type) ( ~src1 )		)
-_VEC_FUNC_2V( vcomp ,		dst = (dest_type) ( ~src1 )		)
-
-_VEC_FUNC_2V_SCAL( vsand ,	dst = (dest_type) ( src1 & scalar1_val ) )
-/*_VEC_FUNC_2V_SCAL( vsnand , dst = (dest_type) ( ~(src1 & scalar1_val))) */
-_VEC_FUNC_2V_SCAL( vsor ,	dst = (dest_type) ( src1 | scalar1_val ) )
-_VEC_FUNC_2V_SCAL( vsxor ,	dst = (dest_type) ( src1 ^ scalar1_val ) )
 _VEC_FUNC_2V_SCAL( vsmod ,	dst = (dest_type) ( src1 % scalar1_val ) )
 _VEC_FUNC_2V_SCAL( vsmod2 ,	dst = (dest_type) ( scalar1_val % src1 ) )
 _VEC_FUNC_2V_SCAL( vsshr ,	dst = (dest_type) ( src1 >> scalar1_val	) )

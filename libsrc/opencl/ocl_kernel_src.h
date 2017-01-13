@@ -122,14 +122,23 @@ char KERN_SOURCE_NAME(func_name##_nocc_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_FAS
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
 
-#define __VEC_FUNC_FAST_2V_PROJ( func_name, expr )					\
-char KERN_SOURCE_NAME(func_name,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ( func_name, expr ) );
+#define __VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr )					\
+char KERN_SOURCE_NAME(func_name##_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr ) );
 
-#define __VEC_FUNC_CPX_FAST_2V_PROJ( func_name, expr_re, expr_im )		\
-char KERN_SOURCE_NAME(func_name,fast)[]= QUOTE_IT( ___VEC_FUNC_CPX_FAST_2V_PROJ( func_name, expr_re, expr_im ) );
+#define __VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr )					\
+char KERN_SOURCE_NAME(func_name##_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr ) );
 
-#define __VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, expr_re, expr_im1, expr_im2, expr_im3 )		\
-char KERN_SOURCE_NAME(func_name,fast)[]= QUOTE_IT( ___VEC_FUNC_QUAT_FAST_2V_PROJ( func_name, expr_re, expr_im1, expr_im2, expr_im3 ) );
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im )		\
+char KERN_SOURCE_NAME(func_name##_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im ) );
+
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im )		\
+char KERN_SOURCE_NAME(func_name##_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im ) );
+
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im1, expr_im2, expr_im3 )		\
+char KERN_SOURCE_NAME(func_name##_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im1, expr_im2, expr_im3 ) );
+
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im1, expr_im2, expr_im3 )		\
+char KERN_SOURCE_NAME(func_name##_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im1, expr_im2, expr_im3 ) );
 
 #define __VEC_FUNC_FAST_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )	\
 char KERN_SOURCE_NAME(func_name,fast)[]=QUOTE_IT(___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 ) );
