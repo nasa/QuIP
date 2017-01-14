@@ -25,6 +25,7 @@ noinst_HEADERS =					\
 			gen_kernel_calls.c		\
 			host_fft_funcs.c		\
 			intvec.c			\
+			int_bit_vec.c			\
 			math_funcs.c			\
 			new_conv.c			\
 			signed_vec.c			\
