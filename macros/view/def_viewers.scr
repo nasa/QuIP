@@ -1,0 +1,99 @@
+
+# %Z% $RCSfile: def_viewers.scr,v $ ver: $Revision: 1.12 $ $Date: 2007/11/20 03:03:32 $
+
+
+Start_File def_viewers.scr
+
+If !var_exists(plotsupp_read) "< $macro_dir/view/plotsupp.mac"
+
+Define Default_Viewer_Size 0
+Tell_If "def_viewers.scr:  setting viewer size to $DEFAULT_VIEWER_SIZE"
+Set display_width $DEFAULT_VIEWER_SIZE
+Set display_height $DEFAULT_VIEWER_SIZE
+Set_Display_Size $display_width $display_height
+.
+
+If '$display_width<0'
+  Then 'Default_Viewer_Size Tell_If "Using default viewer size $display_width cols x $display_height rows"'
+  Else 'Tell_If "Using user-specified viewer size $display_width cols x $display_height rows"'
+
+#Tell_If "Display size is $display_width (cols) by $display_height (rows)"
+
+
+# this works well on sun, but not linux pc
+Assign xl 1100-$display_width
+# this version is for a smaller screen
+#Set xl 20
+
+Set yt 30
+#View_Send 'Set_Lin_Exponent 2.6'
+
+#Set hgap 30
+Set hgap 4
+Set vgap 40
+
+# drop into warrior submenu to initialize warrior data area
+
+# buffer declaration now done in buffers.scr...
+
+#data
+#  image b1 $display_height $display_width 1 byte
+#  image b2 $display_height $display_width 1 byte
+#  image b3 $display_height $display_width 1 byte
+#  image b4 $display_height $display_width 1 byte
+#  image b5 $display_height $display_width 1 byte
+#  image b6 $display_height $display_width 1 byte
+#  quit
+
+
+Define Two_More 0
+Rect_View v2 $xl $yt+($display_height+$vgap)
+Rect_View v3 $xl $yt+2*($display_height+$vgap)
+.
+
+Define Five_More 0
+Two_More
+Three_More
+.
+
+Define Three_More 0
+Rect_View v4 $xl-($display_width+$gap) $yt
+Rect_View v5 $xl-($display_width+$gap) $yt+($display_height}+$vgap)
+Rect_View v6 $xl-($display_width+$gap) $yt+2*($display_height+$vgap)
+# for linux...
+#Rect_View v4 $xl+($display_width+$hgap) $yt
+#Rect_View v5 $xl+($display_width+$hgap) $yt+($display_height+$vgap)
+#Rect_View v6 $xl+($display_width+$hgap) $yt+2*($display_height+$vgap)
+.
+
+Define Grayscale_Viewers 0
+Select_Viewer v1
+Grayscale_LUT 0 256
+Select_Viewer v2
+Grayscale_LUT 0 256
+Select_Viewer v3
+Grayscale_LUT 0 256
+Select_Viewer v4
+Grayscale_LUT 0 256
+Select_Viewer v5
+Grayscale_LUT 0 256
+Select_Viewer v6
+Grayscale_LUT 0 256
+.
+
+# at one time the viewers and labels were cleared to let the user
+# know that the new program was running, but this is currently scrapped
+# for being too slow (especially for 6 viewers)
+
+#Show_Bytes b1 v1
+#Label v1 '\' \''
+
+#If '256 >= $display_height' Two_More
+#If '256 >= $display_height' Five_More
+#Rect_View v1 $xl $yt
+#Five_More
+
+< $macro_dir/view/def8.scr
+
+Stop_File def_viewers.scr
+

@@ -192,8 +192,13 @@ void default_offset_data_func(QSP_ARG_DECL  Data_Obj *dp, index_t pix_offset )
 //OBJ_NAME(dp),pix_offset);
 	parent = OBJ_PARENT(dp);
 	if( IS_BITMAP(parent) ){
+		/*
 		SET_OBJ_DATA_PTR(dp, ((long *)OBJ_DATA_PTR(parent)) +
 			((OBJ_BIT0(parent)+pix_offset)>>LOG2_BITS_PER_BITMAP_WORD) );
+		*/
+		// bitmap offsets are handled by bit0
+		SET_OBJ_DATA_PTR(dp, ((long *)OBJ_DATA_PTR(parent)) );
+		pix_offset=0;
 	} else {
 		pix_offset *= ELEMENT_SIZE(dp);
 		SET_OBJ_DATA_PTR(dp, ((char *)OBJ_DATA_PTR(parent)) + pix_offset);
@@ -348,11 +353,9 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
 {
 	Data_Obj *dp;
-	Dimension_Set *dsp;
+	Dimension_Set ds1, *dsp=(&ds1);
 	int i;
 	index_t offset;
-
-	INIT_DIMSET_PTR(dsp)
 
 	dp=new_dobj(QSP_ARG  name);
 	if( dp==NO_OBJ ) return(NO_OBJ);
@@ -494,11 +497,7 @@ Data_Obj *
 mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols )
 {
 	index_t offsets[N_DIMENSIONS];
-	Dimension_Set ds1;
-	Dimension_Set *dsp=(&ds1);
-//	Dimension_Set *dsp;
-
-	//INIT_DIMSET_PTR(dsp)
+	Dimension_Set ds1, *dsp=(&ds1);
 
 	offsets[0]=0L;	SET_DIMENSION(dsp,0,OBJ_TYPE_DIM(parent,0));
 	offsets[1]=xos;	SET_DIMENSION(dsp,1,cols);
@@ -513,9 +512,7 @@ mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *
 Data_Obj * nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )
 {
 	index_t offsets[N_DIMENSIONS];
-	Dimension_Set *dsp;
-
-	INIT_DIMSET_PTR(dsp)
+	Dimension_Set ds1, *dsp=(&ds1);
 
 	offsets[0]=0L;	SET_DIMENSION(dsp,0,tdim);
 	offsets[1]=xos;	SET_DIMENSION(dsp,1,cols);
@@ -670,7 +667,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 
 		if( n_contig < n_per_child ){
 			sprintf(ERROR_STRING,
-	"make_equivalence:  parent object %s n_contig = %d < %d, can't case to %s",
+	"make_equivalence:  parent object %s n_contig = %d < %d, can't cast to %s",
 				OBJ_NAME(parent),n_contig,n_per_child,PREC_NAME(prec_p));
 			WARN(ERROR_STRING);
 			return(NO_OBJ);
@@ -789,6 +786,8 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	 */
 
 	while( parent_dim < N_DIMENSIONS || child_dim < N_DIMENSIONS ){
+//fprintf(stderr,"make_equivalence:  parent_dim = %d (%d), total_parent_bytes = %d, child_dim = %d (%d), total_child_bytes = %d\n",
+//parent_dim,OBJ_MACH_DIM(parent,parent_dim),total_parent_bytes,child_dim,DIMENSION(new_dsp,child_dim),total_child_bytes);
 		if( total_parent_bytes == total_child_bytes ){
 			/* increase the child dimension */
 			new_mach_inc[child_dim] = child_mach_inc;

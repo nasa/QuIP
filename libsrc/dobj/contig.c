@@ -6,6 +6,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 
+// what about bitmaps???
 
 int is_evenly_spaced(Data_Obj *dp)
 {
@@ -18,11 +19,17 @@ int is_evenly_spaced(Data_Obj *dp)
 	/* mindim is the smallest indexable dimension - but for complex,
 	 * it is always equal to 1 with an increment of 0...
 	 */
-	if( IS_SCALAR(dp) ) return(1);
-	if( IS_BITMAP(dp) ) return(1);
+	if( IS_SCALAR(dp) ){
+		SET_SHP_EQSP_INC(OBJ_SHAPE(dp),1);
+		return 1;	// true
+	}
+
 
 	/* a complex vector with length of 1 is not flagged as a scalar... */
-	if( OBJ_N_TYPE_ELTS(dp) == 1 ) return(1);
+	if( OBJ_N_TYPE_ELTS(dp) == 1 ){
+		SET_SHP_EQSP_INC(OBJ_SHAPE(dp),1);
+		return 1;	// true
+	}
 
 	spacing = 0;
 	i=OBJ_MINDIM(dp)-1;
@@ -43,27 +50,30 @@ int is_evenly_spaced(Data_Obj *dp)
 	for(;i<=OBJ_MAXDIM(dp);i++){
 		if( OBJ_TYPE_INC(dp,i) != 0 ){
 			if( OBJ_TYPE_INC(dp,i) != spacing * n ){
-				return(0);
+				SET_SHP_EQSP_INC(OBJ_SHAPE(dp),0);
+				return 0;
 			}
 		}
 		n *= OBJ_TYPE_DIM(dp,i);
 	}
 
-	return(1);
+#ifdef PAD_BITMAP
+	if( IS_BITMAP(dp) ){
+		// bitmaps can seem contiguous, but are not if the row length is not a multiple of the word size (in bits)
+		if( (OBJ_TYPE_DIM(dp,1)*OBJ_TYPE_INC(dp,1)) % BITS_PER_BITMAP_WORD != 0 ){
+			SET_SHP_EQSP_INC(OBJ_SHAPE(dp),0);
+			return 0;
+		}
+	}
+#endif // PAD_BITMAP
+	SET_SHP_EQSP_INC(OBJ_SHAPE(dp),spacing);
+	return 1;
 }
 
 /* Why is this function CAUTIOUS? */
 
 int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 {
-//#ifdef CAUTIOUS
-//	if( (OBJ_FLAGS(dp)&DT_CHECKED) == 0 ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  object \"%s\" not checked for contiguity!?",OBJ_NAME(dp));
-//		advise(DEFAULT_ERROR_STRING);
-//		check_contiguity(dp);
-//	}
-//#endif /* CAUTIOUS */
 	assert( OBJ_FLAGS(dp) & DT_CHECKED );
 	return(IS_CONTIGUOUS(dp));
 }
@@ -78,20 +88,21 @@ static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( IS_BITMAP(dp) ){
 		int i_dim,n,n_words,inc;
-		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return(0);
+		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
 		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
-		n_words = (OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD;
+		// BUG make sure we don't lose precision by down-casting bit0
+		n_words = (int)((OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD);
 		for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
 			if( OBJ_TYPE_DIM(dp,i_dim) != 1 ){
 				inc = OBJ_TYPE_INC(dp,i_dim);
-				if( inc != n_words * BITS_PER_BITMAP_WORD ) return(0);
+				if( inc != n_words * BITS_PER_BITMAP_WORD ) return 0;
 				n_words *= OBJ_TYPE_DIM(dp,i_dim);
 			}
 		}
 		/* We cache the status when called from
 		 * check_contiguity()...
 		 */
-		return(1);
+		return 1;
 	} else {
 		return(IS_CONTIGUOUS(dp));
 	}
@@ -135,8 +146,9 @@ void check_contiguity(Data_Obj *dp)
 	// Note that if the dimension is equal to 1, then the increment is 0.
 	while( inc==0 && i<N_DIMENSIONS ){
 		inc = OBJ_TYPE_INC(dp,i);
-		if( inc > 0 && inc != 1 )
+		if( inc > 0 && inc != 1 ){
 			return;	/* not contiguous */
+		}
 		i++;
 	}
 

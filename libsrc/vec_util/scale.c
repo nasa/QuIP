@@ -90,28 +90,21 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	SET_OA_SRC_OBJ(oap,0,dp);
 	SET_OA_PFDEV(oap, OBJ_PFDEV(dp) );
 
-longlist(QSP_ARG  dp);
 	scratch_scalar_dp = area_scalar( QSP_ARG  OBJ_AREA(dp) );
 	SET_OBJ_PREC_PTR(scratch_scalar_dp,OBJ_PREC_PTR(dp) );
 	/* this used to be oa_sdp[0], but now with "projection" the destination
 	 * doesn't have to be a scalar.
 	 */
 	OA_DEST(oap) = scratch_scalar_dp;
-longlist(QSP_ARG  scratch_scalar_dp);
 
 
-advise("VMINV");
 	perf_vfunc(QSP_ARG  FVMINV, oap);
 
-advise("extract_scalar_value");
 	extract_scalar_value(QSP_ARG  &scratch_scalar_val, scratch_scalar_dp);
 	omn = cast_from_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp));
-fprintf(stderr,"omn = %g\n",omn);
 
-advise("VMAXV");
 	perf_vfunc(QSP_ARG  FVMAXV, oap);
 
-advise("extract_scalar_value");
 	extract_scalar_value(QSP_ARG  &scratch_scalar_val, scratch_scalar_dp);
 	omx = cast_from_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp));
 
@@ -133,20 +126,17 @@ advise("extract_scalar_value");
 		}
 		rf = (desmax-desmin)/(omx-omn);
 	}
+
+	// out = ( in - omn ) * rf + desmin
+	//     = in * rf + desmin-omn*rf
+	//
+	// We tried to save an operation by doing the scale
+	// before subtracting the original min, and then adding
+	// the scaled offset, but we had byte overflows, so we
+	// stick with the tried and true...
+
 	SET_OA_SVAL(oap,0,&scratch_scalar_val);
 	cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
-
-	OA_DEST(oap) = dp;
-	perf_vfunc(QSP_ARG  FVSMUL, oap);
-
-	offset = desmin - omn*rf;
-	if( offset != 0 ){
-		cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
-		perf_vfunc(QSP_ARG  FVSADD, oap);
-	}
-	SET_OA_SVAL(oap,0,&scratch_scalar_val);
-	cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
-
 	OA_DEST(oap) = dp;
 	perf_vfunc(QSP_ARG  FVSMUL, oap);
 

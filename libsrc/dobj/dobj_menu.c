@@ -780,8 +780,8 @@ static COMMAND_FUNC( do_import_string )
 	}
 
 	if( strlen(s)+1 > OBJ_N_TYPE_ELTS(dp) ){
-		sprintf(ERROR_STRING,"do_import_string:  object %s is too small for string \"%s\"",
-			OBJ_NAME(dp),s);
+		sprintf(ERROR_STRING,"do_import_string:  object %s (%d elements) is too small for string \"%s\" (length %ld)",
+			OBJ_NAME(dp),OBJ_N_TYPE_ELTS(dp),s,strlen(s));
 		WARN(ERROR_STRING);
 		return;
 	}

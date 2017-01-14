@@ -558,8 +558,8 @@ Pause_If
 .
 
 Define Show_Picture 3 image viewer string
-If $verbose||$chatty 
-  "advise 'Show_Picture:  Showing $3 ($1) in viewer $2'"
+#If $verbose||$chatty 
+#  "advise 'Show_Picture:  Showing $3 ($1) in viewer $2'"
 Label_Viewer $2 "$3"
 Disp_Gray $1 $2
 If $saving_all&&var_exists(demo_img_dir) "Save_Picture $1 $2 '$3'"

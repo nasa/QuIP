@@ -13,7 +13,7 @@
 
 #include "veclib/gen_port.h"
 
-extern void *TMPVEC_NAME(size_t size, size_t len, const char *whence);
+extern void *TMPVEC_NAME(Platform_Device *pdp, size_t size, size_t len, const char *whence);
 extern void FREETMP_NAME(void *a, const char *whence);
 extern int get_max_threads_per_block(Data_Obj *odp);
 extern int max_threads_per_block;

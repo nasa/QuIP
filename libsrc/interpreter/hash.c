@@ -74,10 +74,13 @@ static void setup_ht(Hash_Tbl *htp, u_long size)
 	clear_entries(htp->ht_entries,size);
 
 	htp->ht_n_entries=0;
-	htp->ht_removals=0;
-	htp->ht_moved=0;
-	htp->ht_checked=0;
-	htp->ht_warned=0;
+	htp->ht_n_removals=0;
+	htp->ht_n_moved=0;
+	htp->ht_n_checked=0;
+
+	htp->ht_flags=0;
+
+	htp->ht_item_list = NULL;
 
 #ifdef MONITOR_COLLISIONS
 	htp->ht_searches=0;
@@ -133,7 +136,7 @@ Hash_Tbl *ht_init(const char *name)
 
 	htp= (Hash_Tbl*) getbuf( sizeof(*htp) );
 	//if( htp == NO_HASH_TBL ) mem_err("ht_init");
-	if( htp == NO_HASH_TBL ) {
+	if( htp == NULL ) {
 		NERROR1("ht_init memory allocation failure");
 		IOS_RETURN_VAL(NULL)
 	}
@@ -152,6 +155,8 @@ void zap_hash_tbl(Hash_Tbl *htp)
 {
 	givbuf(htp->ht_entries);
 	rls_str(htp->ht_name);
+	if( HT_ITEM_LIST(htp) != NULL )
+		zap_list( HT_ITEM_LIST(htp) );
 }
 
 
@@ -236,6 +241,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 	entry[key] = ptr;
 	htp->ht_n_entries++;
 
+	MARK_DIRTY(htp);
+
 //fprintf(stderr,"insert_hash: table at 0x%lx now has %d entries\n", (long)htp,htp->ht_n_entries);
 	return(0);
 }
@@ -273,7 +280,7 @@ void *fetch_hash(const char *name,Hash_Tbl* htp)
 	u_long start;
 	void **entry;
 
-	if( htp->ht_warned ){
+	if( HASH_TBL_WARNED(htp) ){
 		if( verbose ){
 sprintf(DEFAULT_ERROR_STRING,
 "Enlarging hash table %s due to collisions, load factor is %g",
@@ -282,7 +289,7 @@ htp->ht_name,
 NADVISE(DEFAULT_ERROR_STRING);
 		}
 		htp=enlarge_ht(htp);
-		htp->ht_warned=0;
+		CLEAR_HT_FLAG_BITS(htp,HT_WARNED);
 	}
 
 	entry = htp->ht_entries;
@@ -317,7 +324,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 #ifdef MONITOR_COLLISIONS
 		if( htp->ht_collisions >
 			MAX_SILENT_COLL_RATE * htp->ht_searches
-			&& !htp->ht_warned ){
+			&& !HASH_TBL_WARNED(htp) ){
 			if( verbose ){
 				sprintf(DEFAULT_ERROR_STRING,
 "High collision rate (%f collisions/search), hash table \"%s\"",
@@ -325,7 +332,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 					(float) htp->ht_searches, htp->ht_name);
 				NADVISE(DEFAULT_ERROR_STRING);
 			}
-			htp->ht_warned = 1;
+			SET_HT_FLAG_BITS(htp,HT_WARNED);
 		}
 
 		htp->ht_collisions++;
@@ -398,6 +405,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 			/* found the one to remove */
 			entry[key] = NULL;
 			start=key;
+			MARK_DIRTY(htp);
+
 			/* now check for collisions */
 			while(1){
 				char **sp;
@@ -406,7 +415,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 				if( key >= htp->ht_size ) key=0;
 
 				if( entry[key] == NULL ){
-					htp->ht_removals++;
+					htp->ht_n_removals++;
 					htp->ht_n_entries--;
 					return(0);
 				}
@@ -433,11 +442,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 #endif
 					entry[start]
 					  = entry[key];
-					htp->ht_moved++;
+					htp->ht_n_moved++;
 					entry[key] = NULL;
 					start=key;
 				}
-				htp->ht_checked++;
+				htp->ht_n_checked++;
 			}
 		}
 
@@ -489,12 +498,12 @@ void tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *htp)
 		prt_msg(DEFAULT_MSG_STR);
 	}
 #endif
-	if( htp->ht_removals > 0 ){
-		sprintf(DEFAULT_MSG_STR,"\t%ld removals",htp->ht_removals);
+	if( htp->ht_n_removals > 0 ){
+		sprintf(DEFAULT_MSG_STR,"\t%ld removals",htp->ht_n_removals);
 		prt_msg(DEFAULT_MSG_STR);
-		sprintf(DEFAULT_MSG_STR,"\t%ld items checked",htp->ht_checked);
+		sprintf(DEFAULT_MSG_STR,"\t%ld items checked",htp->ht_n_checked);
 		prt_msg(DEFAULT_MSG_STR);
-		sprintf(DEFAULT_MSG_STR,"\t%ld items moved",htp->ht_moved);
+		sprintf(DEFAULT_MSG_STR,"\t%ld items moved",htp->ht_n_moved);
 		prt_msg(DEFAULT_MSG_STR);
 	}
 	if( verbose ) show_ht(htp);
@@ -503,13 +512,12 @@ void tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *htp)
 
 /* Build a list of all the items in this hash table */
 
-List *ht_list(QSP_ARG_DECL  Hash_Tbl *htp)
+List *ht_list(Hash_Tbl *htp)
 {
 	void **entry;
 	unsigned int i;
 	List *lp;
 
-//advise("ht_list creating list for table");
 	lp=new_list();
 	entry = htp->ht_entries;
 	for(i=0;i<htp->ht_size;i++){
@@ -548,6 +556,11 @@ Item *ht_enumerator_item(Hash_Tbl_Enumerator *htep)
 	return (Item *) *(htep->current_entry);
 }
 
+void rls_hash_tbl_enumerator(Hash_Tbl_Enumerator *ep)
+{
+	givbuf(ep);	// We might save a bit by keeping a pool of these?
+}
+
 Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
 {
 	Hash_Tbl_Enumerator *htep;
@@ -569,5 +582,20 @@ Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
 //fprintf(stderr,"new_hash_tbl_enumerator:  first item is 0x%lx\n",(long)*(htep->current_entry));
 
 	return htep;
+}
+
+List *hash_tbl_list(Hash_Tbl *htp)
+{
+	if( HT_ITEM_LIST(htp) == NULL ){
+		SET_HT_ITEM_LIST(htp, ht_list(htp) );	// allocates and populates a new list
+		MARK_CURRENT(htp);
+	} else {
+		if( ! HASH_TBL_LIST_IS_CURRENT(htp) ){
+			zap_list( HT_ITEM_LIST(htp) );
+			SET_HT_ITEM_LIST(htp, ht_list(htp) );	// allocates and populates a new list
+			MARK_CURRENT(htp);
+		}
+	}
+	return HT_ITEM_LIST(htp);
 }
 

@@ -888,28 +888,25 @@ static void pnt_dim( QSP_ARG_DECL  FILE *fp, Data_Obj *dp, unsigned char *data, 
 	dimension_t i;
 	incr_t inc;
 
-//#ifdef CAUITOUS
-//	if( IS_BITMAP(dp) ) ERROR1("CAUTIOUS:  pnt_dim called with bitmap argument.");
-//#endif /* CAUTIOUS */
 	assert( ! IS_BITMAP(dp) );
 
-	if( dim > 0 ){
-#ifdef FOOBAR
-		// This code assumes that strings are the rows
-		// of an image, but other code seems to insist
-		// that strings are multi-dimensional pixels...
+	// Old code assumed that strings were the rows
+	// of an image, but other code seemed to insist
+	// that strings are multi-dimensional pixels...
+	// By using OBJ_MINDIM, we handle both cases.
 
-		if( dim==1 && OBJ_PREC(dp) == PREC_STR ){
-			/* here we use .* to put the max number of chars
-			 * to print in the next arg (is this a gcc
-			 * extension or standard?).
-			 * We do this because we are not guaranteed
-			 * a null terminator char.
-			 */
-			fprintf(fp,"%.*s\n",(int)OBJ_COMPS(dp),data);
-			return;
-		}
-#endif // FOOBAR
+	if( dim==OBJ_MINDIM(dp) && OBJ_PREC(dp) == PREC_STR ){
+		/* here we use .* to put the max number of chars
+		 * to print in the next arg (is this a gcc
+		 * extension or standard?).
+		 * We do this because we are not guaranteed
+		 * a null terminator char.
+		 */
+		fprintf(fp,"%.*s\n",(int)OBJ_DIMENSION(dp,OBJ_MINDIM(dp)),data);
+		return;
+	}
+
+	if( dim > 0 ){
 		inc=(ELEMENT_SIZE(dp)*OBJ_MACH_INC(dp,dim));
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
@@ -980,7 +977,8 @@ static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 {
 	int i,j,k,l,m;
 	bitmap_word *bwp,val;
-	int which_bit, bit_index, word_offset;
+	bitnum_t which_bit;
+	int bit_index, word_offset;
 	int bits_this_line;
 
 	bwp = (bitmap_word *)OBJ_DATA_PTR(dp);
@@ -1022,6 +1020,14 @@ static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 	}
 }
 
+// Not needed, because bitmaps don't use ret_dim
+#ifdef FOOBAR
+#define MULTIPLE_COLUMNS_OK(dp)						\
+									\
+	( ( IS_BITMAP(dp) && OBJ_COLS(dp) <= BITS_PER_BITMAP_WORD ) ||	\
+	( ( ! IS_BITMAP(dp) ) && OBJ_COLS(dp) <= dobj_max_per_line ) )
+#endif // FOOBAR
+
 void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 {
 	const char *save_ifmt;
@@ -1036,7 +1042,7 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 #endif // THREAD_SAFE_QUERY
 
 // where is ret_dim declared?  part of qsp?
-	if( OBJ_MACH_DIM(dp,0) == 1 && OBJ_COLS(dp) <= dobj_max_per_line )
+	if( OBJ_MACH_DIM(dp,0) == 1 && OBJ_COLS(dp) <= dobj_max_per_line)
 		ret_dim=1;
 	else ret_dim=0;
 

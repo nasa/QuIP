@@ -12,7 +12,8 @@ extern "C" {
 #endif
 
 #include "platform.h"
-#include "veclib/dim3.h"
+//#include "veclib/dim3.h"
+#include "veclib/dim5.h"
 
 extern int setup_slow_len(	/* DIM3 *len_p, */ /* use vap */
 				/* Size_Info *szi_p, */

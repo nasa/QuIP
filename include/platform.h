@@ -9,15 +9,8 @@ struct vector_function;
 //struct vec_obj_args;
 
 #ifdef HAVE_OPENCL
-#define HAVE_ANY_GPU
 #define MAX_OPENCL_DEVICES	4
-#else // ! HAVE_OPENCL
-#ifdef HAVE_CUDA
-#define HAVE_ANY_GPU
-#else // ! HAVE_CUDA
-#undef HAVE_ANY_GPU
-#endif // ! HAVE_CUDA
-#endif // ! HAVE_OPENCL
+#endif // HAVE_OPENCL
 
 #ifdef HAVE_OPENCL
 #ifdef BUILD_FOR_OPENCL
@@ -70,17 +63,23 @@ typedef struct compute_platform {
 //#define SET_PLATFORM_DISPATCH_TBL(cpp,v)	(cpp)->cp_dispatch_tbl = v
 
 	// These are only relevant for GPUs...
-	// These are probably device functions, not platform functions!
+
+	// upload:  host-to-device
 	void (*cp_mem_upload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, struct platform_device *pdp );
+
+	// dnload:  device-to-host
 	void (*cp_mem_dnload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, struct platform_device *pdp );
+
 	/*
 	void (*cp_obj_upload_func)(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
 	void (*cp_obj_dnload_func)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
 	*/
 
 	/*int (*cp_dispatch_func)(QSP_ARG_DECL  struct dispatch_function *dfp, struct vec_obj_args *oap);*/
-	int (*cp_mem_alloc_func)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align);
-	void (*cp_mem_free_func)(QSP_ARG_DECL  Data_Obj *dp);
+	void * (*cp_mem_alloc_func)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align);
+	int (*cp_obj_alloc_func)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align);
+	void (*cp_mem_free_func)(QSP_ARG_DECL  void *ptr);
+	void (*cp_obj_free_func)(QSP_ARG_DECL  Data_Obj *dp);
 	void (*cp_offset_data_func)(QSP_ARG_DECL  Data_Obj *dp, index_t o );
 	void (*cp_update_offset_func)(QSP_ARG_DECL  Data_Obj *dp);
 	int (*cp_regbuf_func)(QSP_ARG_DECL  Data_Obj *dp);
@@ -143,8 +142,10 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
 #define PF_MEM_UPLOAD_FN(cpp)		(cpp)->cp_mem_upload_func
 #define PF_MEM_DNLOAD_FN(cpp)		(cpp)->cp_mem_dnload_func
-#define PF_ALLOC_FN(cpp)		(cpp)->cp_mem_alloc_func
-#define PF_FREE_FN(cpp)			(cpp)->cp_mem_free_func
+#define PF_MEM_ALLOC_FN(cpp)		(cpp)->cp_mem_alloc_func
+#define PF_OBJ_ALLOC_FN(cpp)		(cpp)->cp_obj_alloc_func
+#define PF_MEM_FREE_FN(cpp)		(cpp)->cp_mem_free_func
+#define PF_OBJ_FREE_FN(cpp)		(cpp)->cp_obj_free_func
 #define PF_OFFSET_DATA_FN(cpp)		(cpp)->cp_offset_data_func
 #define PF_UPDATE_OFFSET_FN(cpp)	(cpp)->cp_update_offset_func
 //#define PF_DISPATCH_FN(cpp)		(cpp)->cp_dispatch_func
@@ -171,8 +172,10 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_CONTEXT(cpp,v)	(cpp)->cp_icp = v
 #define SET_PF_MEM_UPLOAD_FN(cpp,v)	(cpp)->cp_mem_upload_func = v
 #define SET_PF_MEM_DNLOAD_FN(cpp,v)	(cpp)->cp_mem_dnload_func = v
-#define SET_PF_ALLOC_FN(cpp,v)		(cpp)->cp_mem_alloc_func = v
-#define SET_PF_FREE_FN(cpp,v)		(cpp)->cp_mem_free_func = v
+#define SET_PF_MEM_ALLOC_FN(cpp,v)	(cpp)->cp_mem_alloc_func = v
+#define SET_PF_OBJ_ALLOC_FN(cpp,v)	(cpp)->cp_obj_alloc_func = v
+#define SET_PF_MEM_FREE_FN(cpp,v)	(cpp)->cp_mem_free_func = v
+#define SET_PF_OBJ_FREE_FN(cpp,v)	(cpp)->cp_obj_free_func = v
 #define SET_PF_OFFSET_DATA_FN(cpp,v)	(cpp)->cp_offset_data_func = v
 #define SET_PF_UPDATE_OFFSET_FN(cpp,v)	(cpp)->cp_update_offset_func = v
 //#define SET_PF_DISPATCH_FN(cpp,v)	(cpp)->cp_dispatch_func = v
@@ -196,8 +199,10 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 									\
 	SET_PF_MEM_UPLOAD_FN(	cpp,	stem##_mem_upload	);	\
 	SET_PF_MEM_DNLOAD_FN(	cpp,	stem##_mem_dnload	);	\
-	SET_PF_ALLOC_FN(	cpp,	stem##_mem_alloc	);	\
-	SET_PF_FREE_FN(		cpp,	stem##_mem_free		);	\
+	SET_PF_MEM_ALLOC_FN(	cpp,	stem##_mem_alloc	);	\
+	SET_PF_OBJ_ALLOC_FN(	cpp,	stem##_obj_alloc	);	\
+	SET_PF_MEM_FREE_FN(	cpp,	stem##_mem_free		);	\
+	SET_PF_OBJ_FREE_FN(	cpp,	stem##_obj_free		);	\
 	SET_PF_OFFSET_DATA_FN(	cpp,	stem##_offset_data	);	\
 	SET_PF_UPDATE_OFFSET_FN(cpp,	stem##_update_offset	);	\
 	SET_PF_REGBUF_FN(	cpp,	stem##_register_buf	);	\

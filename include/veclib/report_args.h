@@ -8,6 +8,10 @@
 	sprintf(DEFAULT_ERROR_STRING,"%s:  %d %d %d\n",#v,v.x,v.y,v.z);	\
 	NADVISE(DEFAULT_ERROR_STRING);
 
+#define REPORT_DIM5_VAR(v)						\
+	sprintf(DEFAULT_ERROR_STRING,"%s:  %d %d %d %d %d\n",#v,v.d5_dim[0],v.d5_dim[1],v.d5_dim[2],v.d5_dim[3],v.d5_dim[4]);	\
+	NADVISE(DEFAULT_ERROR_STRING);
+
 #define REPORT_DST_PTR								\
 										\
 sprintf(DEFAULT_ERROR_STRING,"dst = 0x%lx",					\
@@ -151,7 +155,7 @@ REPORT_SVAL1
 										\
 REPORT_DST_PTR									\
 REPORT_SVAL1									\
-REPORT_DIM3_VAR(dst_xyz_incr)
+/*REPORT_DIM3_VAR(dst_xyz_incr)*/
 
 
 #define REPORT_SLOW_ARGS_1S_2

@@ -82,10 +82,10 @@ char KERN_SOURCE_NAME(func_name,mm_ind)[] = QUOTE_IT( ___VEC_FUNC_MM_IND( func_n
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
  */
 
-#define __VEC_FUNC_MM_NOCC( func_name, test1, test2 )			\
+#define __VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )			\
 									\
-char KERN_SOURCE_NAME(func_name##_nocc_setup,)[]= QUOTE_IT( ___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 ) );	\
-char KERN_SOURCE_NAME(func_name##_nocc_helper,)[]= QUOTE_IT( ___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 ) );
+char KERN_SOURCE_NAME(func_name##_nocc_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 ) );	\
+char KERN_SOURCE_NAME(func_name##_nocc_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 ) );
 
 // vsum, vdot, etc
 // BUG this is hard-coded for vsum!?
@@ -111,29 +111,43 @@ char KERN_SOURCE_NAME(func_name##_nocc_helper,)[]= QUOTE_IT( ___VEC_FUNC_MM_NOCC
 // It's the same except for the sum line, which would be replaced with
 //
 
-#define psrc1	s1[index1.x]
-#define psrc2	s2[index1.x]
+#ifdef FOOBAR
+#define psrc1	s1[index1.x]	// FOOBAR
+#define psrc2	s2[index1.x]	// FOOBAR
+#else // ! FOOBAR
+//#define psrc1	s1[index1.d5_dim[0]]
+//#define psrc2	s2[index1.d5_dim[0]]
+#endif  // ! FOOBAR
 
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
 
-#define __VEC_FUNC_2V_PROJ( func_name, expr )					\
-char KERN_SOURCE_NAME(func_name,)[]= QUOTE_IT( ___VEC_FUNC_2V_PROJ( func_name, expr ) );
+#define __VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr )					\
+char KERN_SOURCE_NAME(func_name##_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr ) );
 
-#define __VEC_FUNC_CPX_2V_PROJ( func_name, expr_re, expr_im )		\
-char KERN_SOURCE_NAME(func_name,)[]= QUOTE_IT( ___VEC_FUNC_CPX_2V_PROJ( func_name, expr_re, expr_im ) );
+#define __VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr )					\
+char KERN_SOURCE_NAME(func_name##_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr ) );
 
-#define __VEC_FUNC_QUAT_2V_PROJ( func_name, expr_re, expr_im1, expr_im2, expr_im3 )		\
-char KERN_SOURCE_NAME(func_name,)[]= QUOTE_IT( ___VEC_FUNC_QUAT_2V_PROJ( func_name, expr_re, expr_im1, expr_im2, expr_im3 ) );
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im )		\
+char KERN_SOURCE_NAME(func_name##_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im ) );
 
-#define __VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )	\
-char KERN_SOURCE_NAME(func_name,)[]=QUOTE_IT(___VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 ) );
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im )		\
+char KERN_SOURCE_NAME(func_name##_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im ) );
 
-#define __VEC_FUNC_3V_PROJ( func_name )		\
-char KERN_SOURCE_NAME(func_name,)[]=QUOTE_IT(___VEC_FUNC_3V_PROJ( func_name ) );
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im1, expr_im2, expr_im3 )		\
+char KERN_SOURCE_NAME(func_name##_setup,fast)[]= QUOTE_IT( ___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, expr_re, expr_im1, expr_im2, expr_im3 ) );
 
-#define __VEC_FUNC_CPX_3V_PROJ( func_name )		\
-char KERN_SOURCE_NAME(func_name,)[]=QUOTE_IT(___VEC_FUNC_CPX_3V_PROJ( func_name ) );
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im1, expr_im2, expr_im3 )		\
+char KERN_SOURCE_NAME(func_name##_helper,fast)[]= QUOTE_IT( ___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, expr_re, expr_im1, expr_im2, expr_im3 ) );
+
+#define __VEC_FUNC_FAST_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )	\
+char KERN_SOURCE_NAME(func_name,fast)[]=QUOTE_IT(___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 ) );
+
+#define __VEC_FUNC_FAST_3V_PROJ( func_name )		\
+char KERN_SOURCE_NAME(func_name,fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ( func_name ) );
+
+#define __VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
+char KERN_SOURCE_NAME(func_name,fast)[]=QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ( func_name ) );
 
 
 #endif // ! _OCL_GPU_CALLS_H_

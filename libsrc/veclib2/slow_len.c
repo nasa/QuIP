@@ -7,6 +7,8 @@
 // This file is a helper function for gpu routines - it is here
 // because it is shared by all gpu platforms...
 
+// OLD:
+
 /* The setup_slow_len functions initialize the len variable (dim3),
  * and return the number of dimensions that are set.  We also need to
  * return which dimensions are used, so that we know which increments
@@ -29,6 +31,14 @@
  * hold this value.
  */
 
+// NEW:
+
+/* We don't use the multi-dimensional kernel array feature of CUDA etc,
+ * instead we pass the number of dimensions and increments as a kernel parameter,
+ * from which we can compute the indices...  This frees us to work with objects
+ * with more than 3 dimensions.
+ */
+
 // BUG name conflict!?
 #define MAXD(m,n)	(m>n?m:n)
 //#define MAX2(szi_p)	MAXD(szi_p->szi_dst_dim[i_dim],szi_p->szi_src_dim[1][i_dim])
@@ -43,8 +53,11 @@ int setup_slow_len(	Vector_Args *vap,
 {
 	int i_dim;
 	dimension_t max_d;
+#ifdef FOOBAR
 	int n_set=0;
+#endif // FOOBAR
 
+	SET_VA_ITERATION_TOTAL(vap,1);
 	for(i_dim=start_dim;i_dim<N_DIMENSIONS;i_dim++){
 		int i_src;
 
@@ -56,6 +69,7 @@ int setup_slow_len(	Vector_Args *vap,
 //fprintf(stderr,"setup_slow_len:  i_dim = %d, i_src = %d, max_d = %d\n",i_dim,i_src,max_d);
 		}
 
+#ifdef FOOBAR
 		if( max_d > 1 ){
 			if( n_set == 0 ){
 				SET_VA_LEN_X(vap,max_d);
@@ -81,7 +95,11 @@ NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations")
 				return(-1);
 			}
 		}
+#endif // FOOBAR
+		//SET_VA_ITERATION_COUNT(vap,i_dim,max_d);
+		SET_VA_ITERATION_TOTAL(vap,VA_ITERATION_TOTAL(vap)*max_d);
 	}
+#ifdef FOOBAR
 //fprintf(stderr,"setup_slow_len:  n_set = %d\n",n_set);
 	if( n_set == 0 ){
 		SET_VA_LEN_X(vap,1);
@@ -100,5 +118,7 @@ NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations")
 		SET_VA_DIM_INDEX(vap,2,(-1));
 	}
 	return(n_set);
+#endif // FOOBAR
+	return 1;
 }
 

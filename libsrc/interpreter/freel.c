@@ -48,6 +48,8 @@ void freeinit(FreeList *list, count_t n_elts, u_long ntotal)
 
 	list->fl_n_blocks = n_elts;
 
+	// We don't use getbuf here, because our private implementation of getbuf
+	// uses freelists...
 	list->fl_blockp = (FreeBlk *) malloc( n_elts * sizeof(FreeBlk) );
 	if( list->fl_blockp == NULL ){
 		NERROR1("freeinit:  can't malloc FreeBlk list");

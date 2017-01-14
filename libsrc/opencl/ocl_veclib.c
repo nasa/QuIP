@@ -15,6 +15,9 @@
 // BUT with kernels being defines as strings, now the simple-minded algorithm
 // for breaking lines at braces and semicolons breaks the code;
 // The functions that are now put with quotes HAVE to be on one line!
+
+// ocl_kernels.c and ocl_host_funcs.c both include veclib/gen_host_calls.c ...
+
 #include "ocl_kernels.c"
 
 // That declares the kernels - now the host-side functions

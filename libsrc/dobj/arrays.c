@@ -227,7 +227,6 @@ Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
 Data_Obj *temp_child( QSP_ARG_DECL  const char *name, Data_Obj *dp )
 {
 	Data_Obj *newdp;
-	
 	newdp=temp_replica(QSP_ARG  dp);
 
 #ifdef QUIP_DEBUG

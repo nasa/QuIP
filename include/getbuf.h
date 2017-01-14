@@ -24,12 +24,11 @@ void * bigbuf(u_long size);
 
 /* Not using malloc... */
 #define getbuf(s)		bigbuf( (u_long) ( s ) )
-void givbuf(const void *addr);
 
 #else /* ! USE_GETBUF */
 
 // Use this define for extra debugging...
-//#define DEBUG_GETBUF
+#define DEBUG_GETBUF
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>	/* malloc */
@@ -41,7 +40,7 @@ void givbuf(const void *addr);
 extern void * getbuf(size_t size);
 
 #ifdef DEBUG_GETBUF
-extern void givbuf(void *a);
+extern void givbuf(const void *a);
 #else // ! DEBUG_GETBUF
 #define givbuf( a )	free( a )
 #endif // ! DEBUG_GETBUF

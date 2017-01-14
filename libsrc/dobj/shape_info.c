@@ -18,9 +18,10 @@ Item_Type *prec_itp=NO_ITEM_TYPE;
 	SET_PREC_CODE(prec_p, code);			\
 	if( (code & PSEUDO_PREC_MASK) == 0 )		\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);	\
-	else						\
+	else {						\
 		SET_PREC_MACH_PREC_PTR(prec_p,		\
-		prec_for_code( code & MACH_PREC_MASK ) );
+		prec_for_code( code & MACH_PREC_MASK ) ); \
+	}
 
 static Precision *new_prec(QSP_ARG_DECL  const char *name)
 {
@@ -80,8 +81,9 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 
 List *prec_list(SINGLE_QSP_ARG_DECL)
 {
-	if( prec_itp == NO_ITEM_TYPE )
+	if( prec_itp == NO_ITEM_TYPE ){
 		init_precisions(SINGLE_QSP_ARG);
+	}
 
 	return item_list(QSP_ARG  prec_itp);
 }

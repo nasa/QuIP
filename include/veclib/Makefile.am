@@ -16,13 +16,16 @@ noinst_HEADERS =					\
 			asc_classes.c			\
 			bitmap_ops.c			\
 			conv_vec.c			\
+			cpx_args.h			\
 			cpx_vec.c			\
 			dispatch_tbl.c			\
 			fft_funcs.c			\
 			gen_func_array.c		\
 			gen_host_calls.c		\
+			gen_kernel_calls.c		\
 			host_fft_funcs.c		\
 			intvec.c			\
+			int_bit_vec.c			\
 			math_funcs.c			\
 			new_conv.c			\
 			signed_vec.c			\
@@ -35,6 +38,7 @@ noinst_HEADERS =					\
 			cu2_veclib_prot.h		\
 			di_defs.h			\
 			dim3.h				\
+			dim5.h				\
 			dp_defs.h			\
 			dp_func_defs.h			\
 			eqsp_incs.h			\
@@ -46,7 +50,6 @@ noinst_HEADERS =					\
 			gen_kern_args.h			\
 			gen_port.h			\
 			gen_typtbl.h			\
-			gen_veclib_prot.h		\
 			gpu_args.h			\
 			gpu_call_utils.h		\
 			host_calls_cpu.h		\
@@ -61,6 +64,8 @@ noinst_HEADERS =					\
 			ocl_port.h			\
 			ocl_veclib_prot.h		\
 			platform_funcs.h		\
+			quat_args.h			\
+			real_args.h			\
 			report_args.h			\
 			slow_incs.h			\
 			slow_len.h			\
@@ -79,5 +84,24 @@ noinst_HEADERS =					\
 			vecgen.h			\
 			vl2_port.h			\
 			vl2_veclib_prot.h		\
-			xfer_args.h
+			xfer_args.h			\
+			eqsp_defs.h			\
+			fast_defs.h			\
+			flen_defs.h			\
+			fast_eqsp_defs.h		\
+			gen_float_calls.h		\
+			gpu_call_defs.h			\
+			slow_defs.h			\
+			speed_undefs.h			\
+			all_float_kernels.h		\
+			all_int_kernels.h		\
+			all_mixed_float_kernels.h	\
+			all_mixed_int_kernels.h		\
+			all_mixed_uint_kernels.h	\
+			all_uint_kernels.h		\
+			gen_int_calls.h			\
+			gen_mixed_float_calls.h		\
+			gen_mixed_int_calls.h		\
+			gen_mixed_uint_calls.h		\
+			gen_uint_calls.h
 

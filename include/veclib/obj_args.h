@@ -1,8 +1,11 @@
 #ifndef _OBJ_ARGS_H_
 #define _OBJ_ARGS_H_
 
+//#define JUST_FOR_DEBUGGING	// comment out!
+
 #include "data_obj.h"
-#include "veclib/dim3.h"
+//#include "veclib/dim3.h"
+#include "veclib/dim5.h"
 
 /* MAX_N_ARGS originally was 3.
  * Increased to 4 to accomodate bitmaps.
@@ -87,12 +90,8 @@ struct vec_obj_args {
 
 /* Flag values */
 #define OARGS_CHECKED	1
-//#define OARGS_RAM	2
-//#define OARGS_GPU	4
 
 #define HAS_CHECKED_ARGS(oap)	( (oap)->oa_flags & OARGS_CHECKED )
-//#define HAS_RAM_ARGS(oap)	( (oap)->oa_flags & OARGS_CHECKED ? (oap)->oa_flags & OARGS_RAM : are_ram_args(oap) )
-//#define HAS_GPU_ARGS(oap)	( (oap)->oa_flags & OARGS_CHECKED ? (oap)->oa_flags & OARGS_GPU : are_gpu_args(oap) )
 
 #define HAS_MIXED_ARGS(oap)	( OA_ARGSTYPE(oap) == MIXED_ARGS )
 #define HAS_QMIXED_ARGS(oap)	( OA_ARGSTYPE(oap) == QMIXED_ARGS )
@@ -114,11 +113,11 @@ struct vec_obj_args {
 
 typedef struct vector_arg {
 	void *		varg_vp;	// data or struct ptr
-	union {
-		int	u_inc;
-		Increment_Set *	u_isp;
-	} varg_u;
-	Dimension_Set *	varg_dsp;
+
+	int		varg_eqsp_inc;	// this can be zero even for evenly-spaced ops, do we need a flag?  BUG?
+
+	Increment_Set *	varg_isp;	// used only for slow ops
+	Dimension_Set *	varg_dsp;	// used only for slow ops
 
 #ifdef HAVE_OPENCL
 #define OCL_OFFSET_TYPE	int
@@ -127,23 +126,31 @@ typedef struct vector_arg {
 
 } Vector_Arg;
 
-#define VARG_DIMSET(vap)	((vap).varg_dsp)
-#define VARG_PTR(vap)		((vap).varg_vp)
-#define VARG_INCSET(vap)	((vap).varg_u.u_isp)
-#define VARG_INC(vap)		((vap).varg_u.u_inc)
-#define VARG_OFFSET(vap)	((vap).varg_offset)
+#define VARG_DIMSET(varg)	((varg).varg_dsp)
+#define VARG_PTR(varg)		((varg).varg_vp)
+//#define VARG_INCSET(varg)	((varg).varg_u.u_isp)
+//#define VARG_INC(varg)	((varg).varg_u.u_inc)
+#define VARG_INCSET(varg)	((varg).varg_isp)
+#define VARG_EQSP_INC(varg)		((varg).varg_eqsp_inc)
 
-#define VARG_LEN(vap)		DS_N_ELTS(VARG_DIMSET(vap))
+#define VARG_OFFSET(varg)	((varg).varg_offset)
 
-#define SET_VARG_DIMSET(vap,v)	VARG_DIMSET(vap) = v
-#define SET_VARG_PTR(vap,v)	VARG_PTR(vap) = v
-#define SET_VARG_INCSET(vap,v)	VARG_INCSET(vap) = v
-#define SET_VARG_INC(vap,v)	VARG_INC(vap) = v
+#define VARG_LEN(varg)		DS_N_ELTS(VARG_DIMSET(varg))
+
+#define VARG_N_BITMAP_BITS(varg)	varg_n_bitmap_bits(varg)
+
+#define SET_VARG_DIMSET(varg,v)	VARG_DIMSET(varg) = v
+#define SET_VARG_PTR(varg,v)	VARG_PTR(varg) = v
+#define SET_VARG_INCSET(varg,v)	VARG_INCSET(varg) = v
+#define SET_VARG_EQSP_INC(varg,v)	VARG_EQSP_INC(varg) = v
+
+#define VARG_DIMENSION(varg,idx)	(VARG_DIMSET(varg))->ds_dimension[idx]
+#define VARG_INCREMENT(varg,idx)	(VARG_INCSET(varg))->is_increment[idx]
 
 #ifdef HAVE_OPENCL
-#define SET_VARG_OFFSET(vap,v)	VARG_OFFSET(vap) = v
+#define SET_VARG_OFFSET(varg,v)	VARG_OFFSET(varg) = v
 #else // ! HAVE_OPENCL
-#define SET_VARG_OFFSET(vap,v)
+#define SET_VARG_OFFSET(varg,v)
 #endif // ! HAVE_OPENCL
 
 // BUG we let CUDA and OPENCL do multidimensional iterations,
@@ -151,23 +158,34 @@ typedef struct vector_arg {
 //
 // I had an idea for how to get around that - but now I forget...  maybe it was to pass an array of increments and dimensions?
 // and not to use to kernel grid for the dimensions?
+// Well, guess what:  Vector_Arg contains a dimension_set and an increment_set, so we should be ready!
 
 typedef struct vector_args {
-	Vector_Arg	va_dst;
+	Vector_Arg	va_dst;			// also destination bitmap?
 	Vector_Arg	va_src[MAX_N_ARGS];
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
 	dimension_t	va_dbm_bit0;
 	dimension_t	va_sbm_bit0;
-	dimension_t	va_len;
-/*#ifdef BUILD_FOR_GPU*/
-// This really should be conditionally compiled, but currently
-// BUILD_FOR_GPU isn't defined in the right spot...
-// Really BUILD_FOR_GPU get set and unset during the build,
-// but we need the struct to have a constant size.  We really
-// should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
-	DIM3		va_xyz_len;		// used for kernels...
-	int		va_dim_indices[3];	// do these refer to the dobj dimensions?
+	dimension_t	va_len;			// just for fast/eqsp ops?
+#ifdef HAVE_ANY_GPU
+	//Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
+	dim5		va_slow_size;
+	uint32_t	va_total_count;
+#ifdef HAVE_CUDA
+	unsigned int	va_grid_size[3];	// dim3
+#endif // HAVE_CUDA
+
+	// Bitmap objects will have these structs in host memory, but these pointers will be the GPU copies.
+
+	// It is not clear that we can have both dbm and sbm with this scheme, because we have one thread per word,
+	// but the dbm and sbm words may not correspond!?  Perhaps we have to check and see if it will work?
+	// Also, source bitmaps are read-only, so it's not really a huge problem if multiple threads access the
+	// same word, although performance may suffer.
+	Bitmap_GPU_Info *	va_dbm_gpu_info;
+	Bitmap_GPU_Info *	va_sbm_gpu_info;
+#endif // HAVE_ANY_GPU
+
 /*#endif // BUILD_FOR_GPU*/
 	argset_type	va_argstype;
 	argset_prec	va_argsprec;
@@ -179,6 +197,22 @@ typedef struct vector_args {
 	Vector_Arg	va_values;
 	Vector_Arg	va_counts;
 } Vector_Args;
+
+#define VA_SBM_GPU_INFO_PTR(vap)		(vap)->va_sbm_gpu_info
+#define SET_VA_SBM_GPU_INFO_PTR(vap,p)		(vap)->va_sbm_gpu_info = p
+
+#define VA_DBM_GPU_INFO_PTR(vap)		(vap)->va_dbm_gpu_info
+#define SET_VA_DBM_GPU_INFO_PTR(vap,p)		(vap)->va_dbm_gpu_info = p
+
+#define VA_DBM_N_BITMAP_WORDS(vap)		BMI_N_WORDS( VA_DBM_GPU_INFO_PTR(vap) )
+//#define VA_SLOW_SIZE(vap)			(vap)->va_iteration_size.ds_dimension
+#define VA_SLOW_SIZE(vap)			(vap)->va_slow_size
+
+//#define VA_ITERATION_COUNT(vap,idx)		(vap)->va_total_count
+//#define SET_VA_ITERATION_COUNT(vap,idx,v)	(vap)->va_total_count = v
+
+#define VA_ITERATION_TOTAL(vap)		(vap)->va_total_count
+#define SET_VA_ITERATION_TOTAL(vap,v)	(vap)->va_total_count = v
 
 #define VA_ARGSET_PREC(vap)	(vap)->va_argsprec
 #define VA_ARGSET_TYPE(vap)	(vap)->va_argstype
@@ -196,17 +230,20 @@ typedef struct vector_args {
 #define VA_DEST_LEN(vap)	VARG_LEN( VA_DEST(vap) )
 #define VA_SRC1_LEN(vap)	VARG_LEN( VA_SRC1(vap) )
 
-#define VA_XYZ_LEN(val)		(vap)->va_xyz_len
+//#define VA_LEN_X(vap)		VA_ITERATION_COUNT(vap,1)
+//#define VA_LEN_Y(vap)		VA_ITERATION_COUNT(vap,2)
+//#define VA_LEN_Z(vap)		VA_ITERATION_COUNT(vap,3)
+#define VA_LEN_X(vap)		VA_GRID_SIZE(vap,0)
+#define VA_LEN_Y(vap)		VA_GRID_SIZE(vap,1)
+#define VA_LEN_Z(vap)		VA_GRID_SIZE(vap,2)
 
-#define VA_LEN_X(vap)		(vap)->va_xyz_len.x
-#define VA_LEN_Y(vap)		(vap)->va_xyz_len.y
-#define VA_LEN_Z(vap)		(vap)->va_xyz_len.z
-#define SET_VA_LEN_X(vap,v)	(vap)->va_xyz_len.x = v
-#define SET_VA_LEN_Y(vap,v)	(vap)->va_xyz_len.y = v
-#define SET_VA_LEN_Z(vap,v)	(vap)->va_xyz_len.z = v
+#define VA_GRID_SIZE(vap,idx)		(vap)->va_grid_size[idx]
+#define SET_VA_GRID_SIZE(vap,idx,v)	(vap)->va_grid_size[idx] = v
 
+/*
 #define VA_DIM_INDEX(vap,which)		(vap)->va_dim_indices[which]
 #define SET_VA_DIM_INDEX(vap,which,v)	(vap)->va_dim_indices[which] = v
+*/
 
 // va_flags
 #define VA_FAST_ARGS	1
@@ -226,6 +263,8 @@ typedef struct vector_args {
 #define SET_VA_PFDEV(vap,v)		(vap)->va_pfdev = v
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
+extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
+extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */
@@ -304,6 +343,13 @@ extern void show_vec_args(const Vector_Args *vap);	// for debug
 #define VA_SRC1_DIMSET(vap)		VARG_DIMSET( VA_SRC1(vap) )
 #define VA_SRC2_DIMSET(vap)		VARG_DIMSET( VA_SRC2(vap) )
 
+#define VA_DEST_INC(vap)		VA_DEST_EQSP_INC( vap )
+#define VA_SRC1_INC(vap)		VA_SRC1_EQSP_INC( vap )
+#define VA_SRC2_INC(vap)		VA_SRC2_EQSP_INC( vap )
+#define VA_SRC3_INC(vap)		VA_SRC3_EQSP_INC( vap )
+#define VA_SRC4_INC(vap)		VA_SRC4_EQSP_INC( vap )
+#define VA_SBM_INC(vap)			VA_SBM_EQSP_INC( vap )
+
 #define VA_DEST_INCSET(vap)		VARG_INCSET( VA_DEST(vap) )
 #define VA_SRC_INCSET(vap,idx)		VARG_INCSET( VA_SRC(vap,idx) )
 #define VA_SRC1_INCSET(vap)		VA_SRC_INCSET(vap,0)
@@ -312,23 +358,24 @@ extern void show_vec_args(const Vector_Args *vap);	// for debug
 #define VA_SRC4_INCSET(vap)		VA_SRC_INCSET(vap,3)
 #define VA_SRC5_INCSET(vap)		VA_SRC_INCSET(vap,4)
 
-#define VA_DEST_INC(vap)		VARG_INC( VA_DEST(vap) )
-#define VA_SRC_INC(vap,idx)		VARG_INC( VA_SRC(vap,idx) )
-#define VA_SRC1_INC(vap)		VA_SRC_INC(vap,0)
-#define VA_SRC2_INC(vap)		VA_SRC_INC(vap,1)
-#define VA_SRC3_INC(vap)		VA_SRC_INC(vap,2)
-#define VA_SRC4_INC(vap)		VA_SRC_INC(vap,3)
-#define VA_SRC5_INC(vap)		VA_SRC_INC(vap,4)
-#define VA_SBM_INC(vap)			VARG_INC( VA_SRC5(vap) )
-#define VA_DBM_INC(vap)			VA_DEST_INC( vap )
+#define VA_DEST_EQSP_INC(vap)		VARG_EQSP_INC( VA_DEST(vap) )
+#define VA_SRC_EQSP_INC(vap,idx)	VARG_EQSP_INC( VA_SRC(vap,idx) )
+#define VA_SRC1_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,0)
+#define VA_SRC2_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,1)
+#define VA_SRC3_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,2)
+#define VA_SRC4_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,3)
+#define VA_SRC5_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,4)
+#define VA_SBM_EQSP_INC(vap)		VARG_EQSP_INC( VA_SRC5(vap) )
+#define VA_DBM_EQSP_INC(vap)		VA_DEST_EQSP_INC( vap )
 
-#define eqsp_dest_inc			VA_DEST_INC(vap)
-#define eqsp_src1_inc			VA_SRC1_INC(vap)
-#define eqsp_src2_inc			VA_SRC2_INC(vap)
-#define eqsp_src3_inc			VA_SRC3_INC(vap)
-#define eqsp_src4_inc			VA_SRC4_INC(vap)
-#define eqsp_src5_inc			VA_SRC5_INC(vap)
-#define eqsp_bit_inc			VA_SRC5_INC(vap)
+#define eqsp_dest_inc			VA_DEST_EQSP_INC(vap)
+#define eqsp_dbm_inc			VA_DEST_EQSP_INC(vap)
+#define eqsp_src1_inc			VA_SRC1_EQSP_INC(vap)
+#define eqsp_src2_inc			VA_SRC2_EQSP_INC(vap)
+#define eqsp_src3_inc			VA_SRC3_EQSP_INC(vap)
+#define eqsp_src4_inc			VA_SRC4_EQSP_INC(vap)
+#define eqsp_src5_inc			VA_SRC5_EQSP_INC(vap)
+#define eqsp_sbm_inc			VA_SRC5_EQSP_INC(vap)
 
 #define VA_SBM_BIT0(vap)		(vap)->va_sbm_bit0
 #define VA_DBM_BIT0(vap)		(vap)->va_dbm_bit0
@@ -342,7 +389,7 @@ extern void show_vec_args(const Vector_Args *vap);	// for debug
 #define VA_SVAL3(vap)			VA_SVAL(vap,2)
 
 // BUG? use one or the other?
-#define SET_VA_LEN(vap,l)		(vap)->va_len = l
+//#define SET_VA_LEN(vap,l)		(vap)->va_len = l
 #define SET_VA_LENGTH(vap,v)		(vap)->va_len = v
 
 #define SET_VA_DEST_PTR(vap,ptr)	SET_VARG_PTR( VA_DEST(vap) , ptr )
@@ -375,15 +422,15 @@ extern void show_vec_args(const Vector_Args *vap);	// for debug
 #define SET_VA_SRC5_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC4(vap), v )
 #define SET_VA_SBM_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC5(vap), v )
 
-#define SET_VA_DEST_INC(vap,v)	SET_VARG_INC( VA_DEST(vap), v )
-#define SET_VA_SRC_INC(vap,idx,v)	SET_VARG_INC( VA_SRC(vap,idx), v )
-#define SET_VA_SRC1_INC(vap,v)		SET_VA_SRC_INC(vap,0,v)
-#define SET_VA_SRC2_INC(vap,v)		SET_VA_SRC_INC(vap,1,v)
-#define SET_VA_SRC3_INC(vap,v)		SET_VA_SRC_INC(vap,2,v)
-#define SET_VA_SRC4_INC(vap,v)		SET_VA_SRC_INC(vap,3,v)
-#define SET_VA_SRC5_INC(vap,v)		SET_VA_SRC_INC(vap,4,v)
+#define SET_VA_DEST_EQSP_INC(vap,v)		SET_VARG_EQSP_INC( VA_DEST(vap), v )
+#define SET_VA_SRC_EQSP_INC(vap,idx,v)		SET_VARG_EQSP_INC( VA_SRC(vap,idx), v )
+#define SET_VA_SRC1_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,0,v)
+#define SET_VA_SRC2_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,1,v)
+#define SET_VA_SRC3_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,2,v)
+#define SET_VA_SRC4_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,3,v)
+#define SET_VA_SRC5_EQSP_INC(vap,v)		SET_VA_SRC_EQSP_INC(vap,4,v)
 
-#define SET_VA_SBM_INC(vap,v)	SET_VARG_INC( VA_SRC5(vap), v )
+#define SET_VA_SBM_EQSP_INC(vap,v)	SET_VARG_EQSP_INC( VA_SRC5(vap), v )
 
 //#define SET_VA_COUNT(vap,v)		SET_SZI_DST_DIMS(VA_SIZE_INFO(vap),v)
 #define SET_VA_COUNT(vap,v)		SET_VARG_DIMSET(VA_DEST(vap),v)
@@ -519,4 +566,8 @@ extern void clear_oargs(Vec_Obj_Args *oap);
 
 extern Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at);
 
+extern void init_bitmap_gpu_info(Data_Obj *dp);
+#ifdef JUST_FOR_DEBUGGING
+extern void show_bitmap_gpu_info(QSP_ARG_DECL  Bitmap_GPU_Info *bmi_p);
+#endif // JUST_FOR_DEBUGGING
 #endif /* ! _OBJ_ARGS_H_ */

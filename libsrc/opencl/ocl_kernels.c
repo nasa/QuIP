@@ -8,7 +8,7 @@
 #include "ocl_kernel_src.h"		// macros to create the kernel src arrays
 #include "ocl_kern_call_defs.h"
 
-#include "veclib/gen_host_calls.c"	// misnomer - not just host funcs BUG
+#include "veclib/gen_kernel_calls.c"
 
 #include "veclib/method_undefs.h"
 

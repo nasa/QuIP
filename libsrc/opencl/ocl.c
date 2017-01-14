@@ -78,7 +78,7 @@ static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 	if( curr_pdp == NULL ) return;
 
 	status = clEnqueueWriteBuffer(OCLDEV_QUEUE(pdp),
-			dst,
+			dst,		// device mem address (cl_mem)
 			CL_TRUE,	// blocking write
 			0,		// offset
 			siz,
@@ -117,17 +117,6 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 	if( status != CL_SUCCESS ){
 		report_ocl_error(QSP_ARG  status, "clEnqueueReadBuffer");
 	}
-}
-
-void *TMPVEC_NAME(size_t size,size_t len,const char *whence)
-{
-	NWARN("ocl_tmpvec not implemented!?");
-	return NULL;
-}
-
-void FREETMP_NAME(void *ptr,const char *whence)
-{
-	NWARN("ocl_freetmp not implemented!?");
 }
 
 #define MAX_OCL_DEVICES 5
@@ -571,40 +560,64 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 	//SET_PF_DISPATCH_FUNC( cpp, ocl_dispatch );
 } // end init_ocl_devices
 
-static int ocl_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
 {
 	cl_int status;
+	void *ptr;
 
-	// don't need current device, use object's...
-	//INSURE_CURR_ODP(ocl_alloc_data);
-//fprintf(stderr,"ocl_mem_alloc:  object %s device = %s\n",
-//OBJ_NAME(dp),PFDEV_NAME(OBJ_PFDEV(dp)));
-
-	// BUG what about alignment???
-
-		OBJ_DATA_PTR(dp) = clCreateBuffer(OCLDEV_CTX(OBJ_PFDEV(dp)),
-				CL_MEM_READ_WRITE, size, NULL, &status);
-
-//fprintf(stderr,"ocl_mem_alloc:  object %s data ptr set to 0x%lx\n",
-//OBJ_NAME(dp),(u_long)OBJ_DATA_PTR(dp));
+	ptr = clCreateBuffer(OCLDEV_CTX(pdp), CL_MEM_READ_WRITE, size, NULL, &status);
 
 	if( status != CL_SUCCESS ){
 		report_ocl_error(QSP_ARG  status,"clCreateBuffer");
-		sprintf(ERROR_STRING,"Attempting to allocate %d bytes.",size);
+		sprintf(ERROR_STRING,"ocl_mem_alloc:  Attempting to allocate %d bytes.",size);
 		advise(ERROR_STRING);
+		return NULL;
+	}
+	return ptr;
+}
+
+static int ocl_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+{
+	OBJ_DATA_PTR(dp) = ocl_mem_alloc(QSP_ARG  OBJ_PFDEV(dp), size, align );
+	if( OBJ_DATA_PTR(dp) == NULL ){
+		sprintf(ERROR_STRING,"ocl_obj_alloc:  error allocating memory for object %s!?",OBJ_NAME(dp));
+		WARN(ERROR_STRING);
 		return -1;
 	}
 	return 0;
 }
 
-static void ocl_mem_free(QSP_ARG_DECL  Data_Obj *dp)
+
+static void ocl_mem_free(QSP_ARG_DECL  void *ptr)
 {
 	cl_int		ret;
 
-	// BUG what about alignment???
-//fprintf(stderr,"calling clReleaseMemObject %s 0x%lx\n",OBJ_NAME(dp),(u_long) OBJ_DATA_PTR(dp) );
+	ret = clReleaseMemObject( (cl_mem) ptr ); //free memory on device
+	// BUG check return value
+}
+
+static void ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+{
+	cl_int		ret;
+
 	ret = clReleaseMemObject( (cl_mem) OBJ_DATA_PTR(dp) ); //free memory on device
 	// BUG check return value
+}
+
+void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+{
+	//NWARN("ocl_tmpvec not implemented!?");
+	//return NULL;
+	void *ptr;
+
+	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len, 0);
+	return ptr;
+}
+
+void FREETMP_NAME(void *ptr,const char *whence)
+{
+	//NWARN("ocl_freetmp not implemented!?");
+	ocl_mem_free(DEFAULT_QSP_ARG  ptr);
 }
 
 static void ocl_update_offset(QSP_ARG_DECL  Data_Obj *dp )

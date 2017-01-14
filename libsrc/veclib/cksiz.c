@@ -98,12 +98,15 @@ int old_cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 	return(0);
 } /* end old_cksiz() */
 
+// BUG - Please add a comment concerning the purpose of this function!
+
 int check_bitmap(QSP_ARG_DECL  Data_Obj *bitmap,Data_Obj *dst_dp)
 {
 	if( bitmap==NO_OBJ ) {
 		ERROR1("no bitmap???");
 		IOS_RETURN_VAL(-1)
 	}
+	// BUG?  Is this code correct for a "gappy" bitmap?
 	if( (OBJ_N_TYPE_ELTS(bitmap) * BITS_PER_BITMAP_WORD ) < OBJ_N_TYPE_ELTS(dst_dp) ){
 		WARN("bitmap size too small");
 		return(-1);

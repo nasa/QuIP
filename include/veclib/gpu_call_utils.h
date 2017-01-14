@@ -31,13 +31,13 @@
 #define _VFUNC_SLEN_NAME(n,pf,ty)	__VFUNC_SLEN_NAME(n,pf,ty)
 #define __VFUNC_SLEN_NAME(n,pf,ty)	g_##pf##_slen_##ty##_##n
 
-#define VFUNC_NOCC_SETUP_NAME(func_name)	_VFUNC_NOCC_SETUP_NAME(func_name,pf_str,type_code)
-#define _VFUNC_NOCC_SETUP_NAME(n,pf,ty)	__VFUNC_NOCC_SETUP_NAME(n,pf,ty)
-#define __VFUNC_NOCC_SETUP_NAME(n,pf,ty)	g_##pf##_##ty##_##n##_nocc_setup
+#define VFUNC_FAST_NOCC_SETUP_NAME(func_name)	_VFUNC_FAST_NOCC_SETUP_NAME(func_name,pf_str,type_code)
+#define _VFUNC_FAST_NOCC_SETUP_NAME(n,pf,ty)	__VFUNC_FAST_NOCC_SETUP_NAME(n,pf,ty)
+#define __VFUNC_FAST_NOCC_SETUP_NAME(n,pf,ty)	g_##pf##_fast_##ty##_##n##_nocc_setup
 
-#define VFUNC_NOCC_HELPER_NAME(func_name)	_VFUNC_NOCC_HELPER_NAME(func_name,pf_str,type_code)
-#define _VFUNC_NOCC_HELPER_NAME(n,pf,ty)	__VFUNC_NOCC_HELPER_NAME(n,pf,ty)
-#define __VFUNC_NOCC_HELPER_NAME(n,pf,ty)	g_##pf##_##ty##_##n##_nocc_helper
+#define VFUNC_FAST_NOCC_HELPER_NAME(func_name)	_VFUNC_FAST_NOCC_HELPER_NAME(func_name,pf_str,type_code)
+#define _VFUNC_FAST_NOCC_HELPER_NAME(n,pf,ty)	__VFUNC_FAST_NOCC_HELPER_NAME(n,pf,ty)
+#define __VFUNC_FAST_NOCC_HELPER_NAME(n,pf,ty)	g_##pf##_fast_##ty##_##n##_nocc_helper
 
 #define VFUNC_SIMPLE_NAME(func_name)		_VFUNC_SIMPLE_NAME(func_name,pf_str,type_code)
 #define _VFUNC_SIMPLE_NAME(n,pf,ty)		__VFUNC_SIMPLE_NAME(n,pf,ty)
@@ -47,25 +47,19 @@
 #define _VFUNC_HELPER_NAME(n,pf,ty)		__VFUNC_HELPER_NAME(n,pf,ty)
 #define __VFUNC_HELPER_NAME(n,pf,ty)		g_##pf##_##ty##_##n##_helper
 
-#define VFUNC_IDX_SETUP_NAME(func_name)		_VFUNC_IDX_SETUP_NAME(func_name,pf_str,type_code)
-#define _VFUNC_IDX_SETUP_NAME(n,pf,ty)		__VFUNC_IDX_SETUP_NAME(n,pf,ty)
-#define __VFUNC_IDX_SETUP_NAME(n,pf,ty)		g_##pf##_##ty##_##n##_index_setup
+#define VFUNC_FAST_IDX_SETUP_NAME(func_name)		_VFUNC_IDX_SETUP_NAME(func_name,fast,pf_str,type_code)
+#define _VFUNC_IDX_SETUP_NAME(n,speed,pf,ty)		__VFUNC_IDX_SETUP_NAME(n,speed,pf,ty)
+#define __VFUNC_IDX_SETUP_NAME(n,s,pf,ty)		g_##pf##_##s##_##ty##_##n##_index_setup
 
-#define VFUNC_IDX_HELPER_NAME(func_name)	_VFUNC_IDX_HELPER_NAME(func_name,pf_str,type_code)
-#define _VFUNC_IDX_HELPER_NAME(n,pf,ty)	__VFUNC_IDX_HELPER_NAME(n,pf,ty)
-#define __VFUNC_IDX_HELPER_NAME(n,pf,ty)	g_##pf##_##ty##_##n##_index_helper
+#define VFUNC_FAST_IDX_HELPER_NAME(func_name)	_VFUNC_IDX_HELPER_NAME(func_name,fast,pf_str,type_code)
+#define _VFUNC_IDX_HELPER_NAME(n,s,pf,ty)	__VFUNC_IDX_HELPER_NAME(n,s,pf,ty)
+#define __VFUNC_IDX_HELPER_NAME(n,s,pf,ty)	g_##pf##_##s##_##ty##_##n##_index_helper
 
 
 
 /****************** DECL_INDICES ***********************/
 
-#ifdef BUILD_FOR_CUDA
-#define GPU_INDEX_TYPE	DIM3
-#endif // BUILD_FOR_CUDA
-
-#ifdef BUILD_FOR_OPENCL
-#define GPU_INDEX_TYPE	DIM3
-#endif // BUILD_FOR_OPENCL
+#define SLOW_GPU_INDEX_TYPE	DIM5
 
 #define DECL_INDICES_1		GPU_INDEX_TYPE index1;
 #define DECL_INDICES_SRC1	GPU_INDEX_TYPE index2;
@@ -74,8 +68,18 @@
 #define DECL_INDICES_SRC4	GPU_INDEX_TYPE index5;
 #define DECL_INDICES_SBM	GPU_INDEX_TYPE sbmi;
 
-#define DECL_INDICES_DBM	GPU_INDEX_TYPE dbmi; int i_dbm_bit;	\
-				int i_dbm_word; bitmap_word dbm_bit;
+// dbmi indexes the bit - from it, we have to compute the index of the word, and the bit mask
+// We have an integral number of words per row.
+
+/* different for fast and slow! */
+/*
+#define DECL_BASIC_INDICES_DBM	int i_dbm_bit;				\
+				int i_dbm_word; bitmap_word dbm_bit;	\
+				int tbl_idx;
+				*/
+
+#define DECL_INDICES_DBM	GPU_INDEX_TYPE dbmi; 			\
+				DECL_BASIC_INDICES_DBM
 
 #define DECL_INDICES_2		DECL_INDICES_1 DECL_INDICES_SRC1
 #define DECL_INDICES_3		DECL_INDICES_2 DECL_INDICES_SRC2
@@ -87,8 +91,11 @@
 #define DECL_INDICES_SBM_2	DECL_INDICES_2 DECL_INDICES_SBM
 #define DECL_INDICES_SBM_3	DECL_INDICES_3 DECL_INDICES_SBM
 
+#define DECL_INDICES_DBM_1S	DECL_BASIC_INDICES_DBM
+#define DECL_INDICES_DBM_1S_	DECL_INDICES_DBM_1S
 #define DECL_INDICES_DBM_	DECL_INDICES_DBM
 #define DECL_INDICES_DBM_1SRC	DECL_INDICES_1SRC DECL_INDICES_DBM
+#define DECL_INDICES_DBM_1S_1SRC	DECL_INDICES_DBM_1SRC
 #define DECL_INDICES_DBM_2SRCS	DECL_INDICES_2SRCS DECL_INDICES_DBM
 #define DECL_INDICES_DBM_SBM	DECL_INDICES_SBM DECL_INDICES_DBM
 
@@ -121,43 +128,12 @@
 #define INIT_INDICES_DBM_	DECL_INDICES_DBM_ SET_INDICES_DBM_
 #define INIT_INDICES_DBM_2SRCS	DECL_INDICES_DBM_2SRCS SET_INDICES_DBM_2SRCS
 #define INIT_INDICES_DBM_1SRC	DECL_INDICES_DBM_1SRC SET_INDICES_DBM_1SRC
+#define INIT_INDICES_DBM_1S_	DECL_INDICES_DBM_1S_ SET_INDICES_DBM_1S_
+#define INIT_INDICES_DBM_1S_1SRC	INIT_INDICES_DBM_1SRC
 #define INIT_INDICES_DBM_SBM	DECL_INDICES_DBM_SBM SET_INDICES_DBM_SBM
-
-#define INIT_INDICES_XYZ_1	DECL_INDICES_1 SET_INDICES_XYZ_1
-#define INIT_INDICES_XYZ_2	DECL_INDICES_2 SET_INDICES_XYZ_2
-#define INIT_INDICES_XYZ_3	DECL_INDICES_3 SET_INDICES_XYZ_3
-#define INIT_INDICES_XYZ_4	DECL_INDICES_4 SET_INDICES_XYZ_4
-#define INIT_INDICES_XYZ_5	DECL_INDICES_5 SET_INDICES_XYZ_5
-
-#define INIT_INDICES_XYZ_SBM_1	DECL_INDICES_SBM_1 SET_INDICES_XYZ_SBM_1
-#define INIT_INDICES_XYZ_SBM_2	DECL_INDICES_SBM_2 SET_INDICES_XYZ_SBM_2
-#define INIT_INDICES_XYZ_SBM_3	DECL_INDICES_SBM_3 SET_INDICES_XYZ_SBM_3
-
-#define INIT_INDICES_XYZ_DBM_		DECL_INDICES_DBM_ SET_INDICES_XYZ_DBM_
-#define INIT_INDICES_XYZ_DBM_1SRC	DECL_INDICES_DBM_1SRC SET_INDICES_XYZ_DBM_1SRC
-#define INIT_INDICES_XYZ_DBM_2SRCS	DECL_INDICES_DBM_2SRCS SET_INDICES_XYZ_DBM_2SRCS
-#define INIT_INDICES_XYZ_DBM_SBM	DECL_INDICES_DBM_SBM SET_INDICES_XYZ_DBM_SBM
 
 
 /******************** SET_INDICES ***************************/
-
-#ifdef BUILD_FOR_OPENCL
-
-#define SET_INDEX( which_index )					\
-									\
-	which_index.x = get_global_id(0);				\
-	which_index.y = which_index.z = 0;
-
-#endif // BUILD_FOR_OPENCL
-
-#ifdef BUILD_FOR_CUDA
-
-#define SET_INDEX( which_index )					\
-									\
-		which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
-		which_index.y = which_index.z = 0;
-
-#endif // BUILD_FOR_CUDA
 
 #define SET_INDICES_1		SET_INDEX( index1 )
 #define SET_INDICES_SRC1(dst_idx)	index2 = dst_idx;
@@ -177,151 +153,62 @@
 #define SET_INDICES_SBM_2	SET_INDICES_2 SET_INDICES_SBM
 #define SET_INDICES_SBM_3	SET_INDICES_3 SET_INDICES_SBM
 
-#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
-				i_dbm_word = dbmi.x;			\
-				dbmi.x *= BITS_PER_BITMAP_WORD;
-
 #define SET_INDICES_DBM_	SET_INDICES_DBM
+// this one is speed-sensitive
+//#define SET_INDICES_DBM_1S_	SET_INDICES_DBM
 
 // BUG?  this looks wrong!?
 // 1SRC is only used with dbm?
 #define SET_INDICES_1SRC	index2 = dbmi;
 
 #define SET_INDICES_DBM_1SRC	SET_INDICES_DBM SET_INDICES_1SRC
+#define SET_INDICES_DBM_1S_1SRC	SET_INDICES_DBM_1SRC
 #define SET_INDICES_DBM_2SRCS	SET_INDICES_DBM_1SRC SET_INDICES_SRC2
 // Can't use SET_INDICES_SBM here...
 #define SET_INDICES_DBM_SBM	SET_INDICES_DBM sbmi = dbmi;
 
 /**************************** SET_INDICES_XYZ ******************************/
 
-
-#ifdef BUILD_FOR_CUDA
-
-#if CUDA_COMP_CAP < 20
-
-#define SET_INDEX_XYZ( which_index )					\
-									\
-	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;		\
-	which_index.y = blockIdx.y * blockDim.y + threadIdx.y;		\
-	which_index.z = 0;
-
-
-#else /* CUDA_COMP_CAP >= 20 */
-
-#define SET_INDEX_XYZ( which_index )					\
-									\
-	which_index.x = blockIdx.x * blockDim.x + threadIdx.x;		\
-	which_index.y = blockIdx.y * blockDim.y + threadIdx.y;		\
-	which_index.z = blockIdx.z * blockDim.z + threadIdx.z;
-
-#endif /* CUDA_COMP_CAP >= 20 */
-
-#endif // BUILD_FOR_CUDA
-
-
 #ifdef BUILD_FOR_OPENCL
-
-#define SET_INDEX_XYZ( which_index )					\
-									\
-	which_index.x = get_global_id(0);				\
-	which_index.y = get_global_id(1);				\
-	which_index.z = get_global_id(2);
-
+#define THREAD_INDEX_X		get_global_id(0)
 #endif // BUILD_FOR_OPENCL
 
-#define SET_INDICES_XYZ_1	SET_INDEX_XYZ(index1)
-#define SET_INDICES_XYZ_SRC1(dst_idx)	index2 = dst_idx;
-#define SET_INDICES_XYZ_SRC2	index3 = index2;
-#define SET_INDICES_XYZ_SRC3	index4 = index1;
-#define SET_INDICES_XYZ_SRC4	index5 = index1;
-#define SET_INDICES_XYZ_2	SET_INDICES_XYZ_1 SET_INDICES_XYZ_SRC1(index1)
-#define SET_INDICES_XYZ_3	SET_INDICES_XYZ_2 SET_INDICES_XYZ_SRC2
-#define SET_INDICES_XYZ_4	SET_INDICES_XYZ_3 SET_INDICES_XYZ_SRC3
-#define SET_INDICES_XYZ_5	SET_INDICES_XYZ_4 SET_INDICES_XYZ_SRC4
-#define SET_INDICES_XYZ_1SRC	SET_INDEX_XYZ(index2)
-#define SET_INDICES_XYZ_2SRCS	SET_INDICES_XYZ_1SRC SET_INDICES_XYZ_SRC2
-#define SET_INDICES_XYZ_SBM_1	SET_INDICES_XYZ_1 SET_INDICES_XYZ_SBM
-#define SET_INDICES_XYZ_SBM_2	SET_INDICES_XYZ_2 SET_INDICES_XYZ_SBM
-#define SET_INDICES_XYZ_SBM_3	SET_INDICES_XYZ_3 SET_INDICES_XYZ_SBM
-#define SET_INDICES_XYZ_DBM_	SET_INDICES_XYZ_DBM
-// This looks wrong:
-//#define SET_INDICES_XYZ_DBM_1SRC	SET_INDICES_XYZ_DBM index2=bmi;
-// Maybe correct?  BUG?:
-#define SET_INDICES_XYZ_DBM_1SRC	SET_INDICES_XYZ_DBM SET_INDICES_XYZ_SRC1(dbmi)
-#define SET_INDICES_XYZ_DBM_2SRCS	SET_INDICES_XYZ_DBM_1SRC SET_INDICES_XYZ_SRC2
-#define SET_INDICES_XYZ_DBM_SBM	SET_INDICES_XYZ_DBM sbmi = dbmi;
+#ifdef BUILD_FOR_CUDA
+#define THREAD_INDEX_X		blockIdx.x * blockDim.x + threadIdx.x
+#endif // BUILD_FOR_CUDA
 
-/* BUG? is bmi set correctly? Is len.x the divided length?  or all the pixels? */
-#define SET_INDICES_XYZ_SBM	sbmi = index1;
-
-#define SET_INDICES_XYZ_DBM	SET_INDEX_XYZ(dbmi)	\
-				i_dbm_word = dbmi.x;	\
-				dbmi.x *= BITS_PER_BITMAP_WORD;
+// For bitmaps, the thread index is the word index...
 
 /**************** SCALE_INDICES_ ********************/
 
-#define SCALE_INDICES_1		index1.x *= inc1;
-#define SCALE_INDICES_SRC1	index2.x *= inc2;
-#define SCALE_INDICES_SRC2	index3.x *= inc3;
-#define SCALE_INDICES_SRC3	index4.x *= inc4;
-#define SCALE_INDICES_SRC4	index5.x *= inc5;
-#define SCALE_INDICES_SBM	sbmi.x *= sbm_inc;
-#define SCALE_INDICES_DBM	dbmi.x *= dbm_inc;
+#define SCALE_INDICES_1		SCALE_INDEX(index1,inc1)	// index1.d5_dim[0] *= inc1;
+#define SCALE_INDICES_SRC1	SCALE_INDEX(index2,inc2)	// index2.d5_dim[0] *= inc2;
+#define SCALE_INDICES_SRC2	SCALE_INDEX(index3,inc3)	// index3.d5_dim[0] *= inc3;
+#define SCALE_INDICES_SRC3	SCALE_INDEX(index4,inc4)	// index4.d5_dim[0] *= inc4;
+#define SCALE_INDICES_SRC4	SCALE_INDEX(index5,inc5)	// index5.d5_dim[0] *= inc5;
+//#define SCALE_INDICES_SBM	SCALE_INDEX(sbmi,sbm_inc)	// sbmi.d5_dim[0] *= sbm_inc;
+//#define SCALE_INDICES_DBM	SCALE_INDEX(dbmi,dbm_inc)	// dbmi.d5_dim[0] *= dbm_inc;
+#define SCALE_INDICES_DBM	/* nop */
+#define SCALE_INDICES_SBM	/* nop */
+
+#define SCALE_INDICES_DBM_	SCALE_INDICES_DBM
+#define SCALE_INDICES_DBM_SBM	SCALE_INDICES_DBM SCALE_INDICES_SBM
+
+#define SCALE_INDICES_2SRCS	SCALE_INDICES_SRC1 SCALE_INDICES_SRC2
+
+#define SCALE_INDICES_DBM_1SRC	SCALE_INDICES_DBM SCALE_INDICES_SRC1
+#define SCALE_INDICES_DBM_1S_1SRC	SCALE_INDICES_DBM_1SRC
+#define SCALE_INDICES_DBM_2SRCS	SCALE_INDICES_DBM SCALE_INDICES_2SRCS
+
+#define SCALE_INDICES_SBM_1	SCALE_INDICES_SBM SCALE_INDICES_1
+#define SCALE_INDICES_SBM_2	SCALE_INDICES_SBM SCALE_INDICES_2
+#define SCALE_INDICES_SBM_3	SCALE_INDICES_SBM SCALE_INDICES_3
+#define SCALE_INDICES_SBM_4	SCALE_INDICES_SBM SCALE_INDICES_4
 
 #define SCALE_INDICES_2		SCALE_INDICES_1 SCALE_INDICES_SRC1
 #define SCALE_INDICES_3		SCALE_INDICES_2 SCALE_INDICES_SRC2
 #define SCALE_INDICES_4		SCALE_INDICES_3 SCALE_INDICES_SRC3
 #define SCALE_INDICES_5		SCALE_INDICES_4 SCALE_INDICES_SRC4
-
-
-
-#define SCALE_XYZ(n)	index##n.x *= inc##n.x;		\
-			index##n.y *= inc##n.y;		\
-			index##n.z *= inc##n.z;
-
-#define SCALE_INDICES_XYZ_1	SCALE_XYZ(1)
-#define SCALE_INDICES_XYZ_2	SCALE_INDICES_XYZ_1 SCALE_XYZ(2)
-#define SCALE_INDICES_XYZ_3	SCALE_INDICES_XYZ_2 SCALE_XYZ(3)
-#define SCALE_INDICES_XYZ_4	SCALE_INDICES_XYZ_3 SCALE_XYZ(4)
-#define SCALE_INDICES_XYZ_5	SCALE_INDICES_XYZ_4 SCALE_XYZ(5)
-
-#define SCALE_INDICES_XYZ_1_LEN	SCALE_INDICES_XYZ_1
-#define SCALE_INDICES_XYZ_2_LEN	SCALE_INDICES_XYZ_2
-#define SCALE_INDICES_XYZ_3_LEN	SCALE_INDICES_XYZ_3
-#define SCALE_INDICES_XYZ_4_LEN	SCALE_INDICES_XYZ_4
-#define SCALE_INDICES_XYZ_5_LEN	SCALE_INDICES_XYZ_5
-
-// BUG do any checking here???
-#define SCALE_INDICES_XYZ_SBM_LEN	SCALE_INDICES_XYZ_SBM	// anything with len?
-
-#define SCALE_INDICES_XYZ_DBM_LEN	dbmi.x *= dbm_inc.x;		\
-					if( dbmi.y >= len.y ) return;	\
-					dbmi.y *= dbm_inc.y;		\
-					if( dbmi.z >= len.z ) return;	\
-					dbmi.z += dbm_inc.z;
-
-#define SCALE_INDICES_XYZ_2SRCS		SCALE_XYZ(2) SCALE_XYZ(3)
-
-#define SCALE_INDICES_XYZ_DBM_		SCALE_INDICES_XYZ_DBM
-#define SCALE_INDICES_XYZ_DBM_1SRC	SCALE_INDICES_XYZ_DBM SCALE_XYZ(2)
-#define SCALE_INDICES_XYZ_DBM_2SRCS	SCALE_INDICES_XYZ_DBM		\
-					SCALE_INDICES_XYZ_2SRCS
-#define SCALE_INDICES_XYZ_DBM_SBM	SCALE_INDICES_XYZ_DBM SCALE_INDICES_XYZ_SBM
-
-#define SCALE_INDICES_XYZ_DBM__LEN	SCALE_INDICES_XYZ_DBM_LEN
-#define SCALE_INDICES_XYZ_DBM_1SRC_LEN	SCALE_INDICES_XYZ_DBM_LEN SCALE_XYZ(2)
-#define SCALE_INDICES_XYZ_DBM_2SRCS_LEN	SCALE_INDICES_XYZ_DBM_LEN		\
-					SCALE_INDICES_XYZ_2SRCS
-#define SCALE_INDICES_XYZ_DBM_SBM_LEN	SCALE_INDICES_XYZ_DBM_LEN \
-					SCALE_INDICES_XYZ_SBM_LEN
-
-#define SCALE_INDICES_XYZ_SBM_1		SCALE_INDICES_XYZ_SBM SCALE_INDICES_XYZ_1
-#define SCALE_INDICES_XYZ_SBM_2		SCALE_INDICES_XYZ_SBM SCALE_INDICES_XYZ_2
-#define SCALE_INDICES_XYZ_SBM_3		SCALE_INDICES_XYZ_SBM SCALE_INDICES_XYZ_3
-
-#define SCALE_INDICES_XYZ_SBM_1_LEN		SCALE_INDICES_XYZ_SBM_1
-#define SCALE_INDICES_XYZ_SBM_2_LEN		SCALE_INDICES_XYZ_SBM_2
-#define SCALE_INDICES_XYZ_SBM_3_LEN		SCALE_INDICES_XYZ_SBM_3
 
 
 /* These are used in DBM kernels, where we need to scale the bitmap index
@@ -349,6 +236,8 @@
 #define SCALE_INDICES_EQSP_SBM_3	SCALE_INDICES_EQSP_3 SCALE_INDICES_EQSP_SBM
 #define SCALE_INDICES_EQSP_DBM_		SCALE_INDICES_EQSP_DBM
 #define SCALE_INDICES_EQSP_DBM_1SRC	SCALE_INDICES_EQSP_1SRC SCALE_INDICES_EQSP_DBM
+#define SCALE_INDICES_EQSP_DBM_1S_1SRC	SCALE_INDICES_EQSP_DBM_1SRC
+#define SCALE_INDICES_EQSP_DBM_1S_	/* nop */
 #define SCALE_INDICES_EQSP_DBM_2SRCS	SCALE_INDICES_EQSP_2SRCS SCALE_INDICES_EQSP_DBM
 #define SCALE_INDICES_EQSP_DBM_SBM	SCALE_INDICES_EQSP_DBM SCALE_INDICES_EQSP_SBM
 
@@ -368,70 +257,74 @@
 #define OFFSET_E
 #endif // ! BUILD_FOR_OPENCL
 
-#if CUDA_COMP_CAP < 20
 
-#define eqsp_dst	a[(index1.x+index1.y)*inc1	OFFSET_A ]
-#define eqsp_src1	b[(index2.x+index2.y)*inc2	OFFSET_B ]
+// This used to be x+y+z ... (for dim3 indices)
+#define INDEX5_SUM(idx)	idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4]
 
-#define dst	a[index1.x+index1.y	OFFSET_A ]
-#define src1	b[index2.x+index2.y	OFFSET_B ]
-#define src2	c[index3.x+index3.y	OFFSET_C ]
-#define src3	d[index4.x+index4.y	OFFSET_D ]
-#define src4	e[index5.x+index5.y	OFFSET_E ]
+#define fast_dst	a[index1	OFFSET_A ]
+#define fast_src1	b[index2	OFFSET_B ]
+#define fast_src2	c[index3	OFFSET_C ]
+#define fast_src3	d[index4	OFFSET_D ]
+#define fast_src4	e[index5	OFFSET_E ]
 
-#define srcbit	(sbm[(sbmi.x+sbmi.y+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
-			NUMBERED_BIT((sbmi.x+sbmi.y+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
+// Indices are scaled in the function prelude
+#define eqsp_dst	a[index1	OFFSET_A ]
+#define eqsp_src1	b[index2	OFFSET_B ]
+#define eqsp_src2	c[index3	OFFSET_C ]
+#define eqsp_src3	d[index4	OFFSET_D ]
+#define eqsp_src4	e[index5	OFFSET_E ]
 
-#define cdst	a[index1.x+index1.y	OFFSET_A ]
-#define csrc1	b[index2.x+index2.y	OFFSET_B ]
-#define csrc2	c[index3.x+index3.y	OFFSET_C ]
-#define csrc3	d[index4.x+index4.y	OFFSET_D ]
-#define csrc4	e[index5.x+index5.y	OFFSET_E ]
+#define INDEX_SUM(idx)	(idx.d5_dim[0]+idx.d5_dim[1]+idx.d5_dim[2]+idx.d5_dim[3]+idx.d5_dim[4])
 
-#define qdst	a[index1.x+index1.y	OFFSET_A ]
-#define qsrc1	b[index2.x+index2.y	OFFSET_B ]
-#define qsrc2	c[index3.x+index3.y	OFFSET_C ]
-#define qsrc3	d[index4.x+index4.y	OFFSET_D ]
-#define qsrc4	e[index5.x+index5.y	OFFSET_E ]
+#define slow_dst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define slow_src1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define slow_src2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define slow_src3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define slow_src4	e[INDEX_SUM(index5)	OFFSET_E ]
 
-#else /* CUDA_COMP_CAP >= 20 */
+#define slow_dst1	slow_dst	// for gpu_cent (centroid) with two outputs
+#define slow_dst2	slow_src1	// for gpu_cent (centroid) with two outputs
 
-// doing this now to fix cuda, but may not be the right fix...
-#define eqsp_dst	a[(index1.x+index1.y+index1.z)*inc1	OFFSET_A ]
-#define eqsp_src1	b[(index2.x+index2.y+index2.z)*inc2	OFFSET_B ]
+//#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
+//		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
 
-#define dst	a[index1.x+index1.y+index1.z	OFFSET_A ]
-#define src1	b[index2.x+index2.y+index2.z	OFFSET_B ]
-#define src2	c[index3.x+index3.y+index3.z	OFFSET_C ]
-#define src3	d[index4.x+index4.y+index4.z	OFFSET_D ]
-#define src4	e[index5.x+index5.y+index5.z	OFFSET_E ]
+#define fast_cdst	a[index1	OFFSET_A ]
+#define fast_csrc1	b[index2	OFFSET_B ]
+#define fast_csrc2	c[index3	OFFSET_C ]
+#define fast_csrc3	d[index4	OFFSET_D ]
+#define fast_csrc4	e[index5	OFFSET_E ]
 
-#define srcbit	(sbm[(sbmi.x+sbmi.y+sbmi.z+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
-		NUMBERED_BIT((sbmi.x+sbmi.y+sbmi.z+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
+#define eqsp_cdst	a[index1*inc1	OFFSET_A ]
+#define eqsp_csrc1	b[index2*inc2	OFFSET_B ]
+#define eqsp_csrc2	c[index3*inc3	OFFSET_C ]
+#define eqsp_csrc3	d[index4*inc4	OFFSET_D ]
+#define eqsp_csrc4	e[index5*inc5	OFFSET_E ]
 
-#define cdst	a[index1.x+index1.y+index1.z	OFFSET_A ]
-#define csrc1	b[index2.x+index2.y+index2.z	OFFSET_B ]
-#define csrc2	c[index3.x+index3.y+index3.z	OFFSET_C ]
-#define csrc3	d[index4.x+index4.y+index4.z	OFFSET_D ]
-#define csrc4	e[index5.x+index5.y+index5.z	OFFSET_E ]
+#define slow_cdst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define slow_csrc1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define slow_csrc2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define slow_csrc3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define slow_csrc4	e[INDEX_SUM(index5)	OFFSET_E ]
 
-#define qdst	a[index1.x+index1.y+index1.z	OFFSET_A ]
-#define qsrc1	b[index2.x+index2.y+index2.z	OFFSET_B ]
-#define qsrc2	c[index3.x+index3.y+index3.z	OFFSET_C ]
-#define qsrc3	d[index4.x+index4.y+index4.z	OFFSET_D ]
-#define qsrc4	e[index5.x+index5.y+index5.z	OFFSET_E ]
 
-#endif /* CUDA_COMP_CAP >= 20 */
+#define fast_qdst	a[index1	OFFSET_A ]
+#define fast_qsrc1	b[index2	OFFSET_B ]
+#define fast_qsrc2	c[index3	OFFSET_C ]
+#define fast_qsrc3	d[index4	OFFSET_D ]
+#define fast_qsrc4	e[index5	OFFSET_E ]
 
-/* Even if we can't do XYZ indexing, we don't do much harm by multiplying the z */
+#define eqsp_qdst	a[index1*inc1	OFFSET_A ]
+#define eqsp_qsrc1	b[index2*inc2	OFFSET_B ]
+#define eqsp_qsrc2	c[index3*inc3	OFFSET_C ]
+#define eqsp_qsrc3	d[index4*inc4	OFFSET_D ]
+#define eqsp_qsrc4	e[index5*inc5	OFFSET_E ]
 
-#define SCALE_INDICES_XYZ_SBM	sbmi.x *= sbm_inc.x;	\
-				sbmi.y *= sbm_inc.y;	\
-				sbmi.z *= sbm_inc.z;
+#define slow_qdst	a[INDEX_SUM(index1)	OFFSET_A ]
+#define slow_qsrc1	b[INDEX_SUM(index2)	OFFSET_B ]
+#define slow_qsrc2	c[INDEX_SUM(index3)	OFFSET_C ]
+#define slow_qsrc3	d[INDEX_SUM(index4)	OFFSET_D ]
+#define slow_qsrc4	e[INDEX_SUM(index5)	OFFSET_E ]
 
-#define SCALE_INDICES_XYZ_DBM	dbmi.x *= dbm_inc.x;		\
-				dbmi.y *= dbm_inc.y;		\
-				dbmi.z *= dbm_inc.z;
 
 
 #define SET_DBM_BIT(cond)	if( cond ) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= ~dbm_bit;

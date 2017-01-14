@@ -1,0 +1,28 @@
+Set w 8
+Set h 9
+Set sw 4
+Set sh 3
+
+Define Test_Subimages 1 suffix
+Image big_$1 $h $w 1 float
+Image small_$1 $sh $sw 1 float
+Subimage inset_$1 big_$1 $sw $sh 2 1
+
+Ramp2D big_$1 0 1 10
+Display big_$1
+VSet inset_$1 0
+Display big_$1
+.
+
+Test_Subimages h
+Pause
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  quit
+
+Test_Subimages g
+Pause
+
+
+

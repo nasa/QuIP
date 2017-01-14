@@ -49,7 +49,6 @@ static void list_widgets(Panel_Obj *po);
 static void get_menu_items(QSP_ARG_DECL  Screen_Obj *mp);
 #define GET_MENU_ITEMS(mp)		get_menu_items(QSP_ARG  mp)
 #ifdef NOT_YET
-static void del_so(QSP_ARG_DECL  Screen_Obj *sop);
 static void del_po(QSP_ARG_DECL  Panel_Obj *po);
 #endif /* NOT_YET */
 
@@ -114,6 +113,12 @@ void add_to_panel(Panel_Obj *po, Screen_Obj *sop)	// for X11
 	addHead(PO_CHILDREN(po),mk_node(sop));
 	SET_SOB_PARENT(sop, po);
 }
+
+void remove_from_panel( Panel_Obj *po, Screen_Obj *sop)	// for X11
+{
+	remData(PO_CHILDREN(po),sop);
+}
+
 
 void add_to_navp(Nav_Panel *np_p, Screen_Obj *sop)	// for X11
 {
@@ -1376,6 +1381,17 @@ COMMAND_FUNC( do_set_active )
 #endif /* ! BUILD_FOR_IOS */
 }
 
+#ifndef BUILD_FOR_OBJC		// why do we not need this in iOS???
+void del_so(QSP_ARG_DECL  Screen_Obj *sop)
+{
+	del_scrnobj(QSP_ARG  sop);	// delete from database...
+	/* BUG? are there nameless objects? */
+	if( SOB_NAME(sop) != NULL ) rls_str(SOB_NAME(sop));
+	if( SOB_ACTION(sop) != NULL ) rls_str(SOB_ACTION(sop));
+	if( SOB_SELECTOR(sop) != NULL ) rls_str(SOB_SELECTOR(sop));
+}
+#endif // ! BUILD_FOR_OBJC
+
 #ifdef NOT_YET
 COMMAND_FUNC( clear_screen )
 {
@@ -1402,15 +1418,6 @@ COMMAND_FUNC( clear_screen )
 		np=np->n_next;
 	}
 	del_po(QSP_ARG  po);
-}
-
-static void del_so(QSP_ARG_DECL  Screen_Obj *sop)
-{
-	del_scrnobj(QSP_ARG  sop);
-	/* BUG? are there nameless objects? */
-	if( SOB_NAME(sop) != NULL ) givbuf((void *)SOB_NAME(sop));
-	if( SOB_ACTION(sop) != NULL ) givbuf((void *)SOB_ACTION(sop));
-	if( SOB_SELECTOR(sop) != NULL ) givbuf((void *)SOB_SELECTOR(sop));
 }
 
 static void del_po(QSP_ARG_DECL  Panel_Obj *po)

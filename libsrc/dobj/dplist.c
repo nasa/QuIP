@@ -228,7 +228,7 @@ void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(string,"(no data area):%s", OBJ_NAME(dp) );
 	else
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );
-	sprintf(MSG_STR,"%-20s",string);
+	sprintf(MSG_STR,"%-40s",string);
 	prt_msg_frag(MSG_STR);
 	describe_shape(QSP_ARG   OBJ_SHAPE(dp) );
 
@@ -288,6 +288,7 @@ struct _flagtbl {
 	{	"shape checked",	DT_SHAPE_CHECKED	},
 	{	"partially assigned",	DT_PARTIALLY_ASSIGNED	},
 	{	"contiguous bitmap data",	DT_CONTIG_BITMAP_DATA	},
+	{	"bitmap GPU info present",	DT_HAS_BITMAP_GPU_INFO	},
 };
 
 static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
@@ -336,7 +337,7 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 	assert( flags == 0 );
 }
 
-/*static*/ void show_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
+/*static*/ void show_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp, Dimension_Set *dsp, Increment_Set *isp)
 {
 	int i;
 	char dn[32];
@@ -391,10 +392,10 @@ static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 		OBJ_RANGE_MINDIM(dp),OBJ_RANGE_MAXDIM(dp));
 	prt_msg(MSG_STR);
 
-	show_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
+	show_obj_dimensions(QSP_ARG  dp,OBJ_TYPE_DIMS(dp),OBJ_TYPE_INCS(dp));
 	if( debug & debug_data ){
 		prt_msg("machine type dimensions:");
-		show_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
+		show_obj_dimensions(QSP_ARG  dp,OBJ_MACH_DIMS(dp),OBJ_MACH_INCS(dp));
 	}
 }
 
@@ -516,7 +517,7 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 	dimension_t n;
 
 	if( IS_BITMAP(dp) )
-		n = BITMAP_WORD_COUNT(dp);
+		n = bitmap_obj_word_count(dp);
 	else
 		n = OBJ_N_MACH_ELTS(dp);
 
@@ -526,7 +527,11 @@ static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 	sprintf(MSG_STR,"\tdata at   0x%lx",(int_for_addr)OBJ_DATA_PTR(dp));
 	prt_msg(MSG_STR);
 	if( IS_BITMAP(dp) ){
-		sprintf(MSG_STR,"\t\tbit0 = %d",OBJ_BIT0(dp));
+#ifdef BITNUM_64
+		sprintf(MSG_STR,"\t\tbit0 = %llu",OBJ_BIT0(dp));
+#else
+		sprintf(MSG_STR,"\t\tbit0 = %u",OBJ_BIT0(dp));
+#endif
 		prt_msg(MSG_STR);
 	}
 }

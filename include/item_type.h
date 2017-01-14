@@ -39,28 +39,69 @@ typedef struct {
 
 struct frag_match_info {
 	Item				it;	// the partial string - stored in their own context
-	struct item_context *		icp;
+	struct item_context *		fmi_icp;	// the item context that these fragments refer to?
+	u_long				fmi_item_serial;
+
 	int type;	// LIST_CONTAINER or RB_TREE_CONTAINER
 	union {
 		rbtree_frag_match_info	rbti;
 		list_frag_match_info	li;
-	} u;
+	} fmi_u;
 } ;
+
+#define FMI_STRING(fmi_p)	(fmi_p)->it.item_name
+#define FMI_ITEM_SERIAL(fmi_p)		(fmi_p)->fmi_item_serial
+#define SET_FMI_ITEM_SERIAL(fmi_p,c)	(fmi_p)->fmi_item_serial = c
+
+#define FMI_CTX(fmi_p)			(fmi_p)->fmi_icp
+#define SET_FMI_CTX(fmi_p,icp)		(fmi_p)->fmi_icp = icp
+
+#define CURR_RBT_FRAG(fmi_p)	(fmi_p)->fmi_u.rbti.curr_n_p
+#define CURR_LIST_FRAG(fmi_p)	(fmi_p)->fmi_u.li.curr_np
+
+struct match_cycle {
+	Item it;				// name of the fragment
+	Item_Type *	mc_itp;			// the relevant item type
+	u_long		mc_stack_serial;	// need to redo if doesn't match itci
+	u_long		mc_item_serial;		// need to redo at least one fmp if doesn't match itci
+	List *		mc_fmi_lp;		// list of frag_match_info's
+	Node *		mc_curr_np;		// for cycling
+};
+
+#define MATCH_CYCLE_STRING(mc_p)	(mc_p)->it.item_name
+
+#define MATCH_CYCLE_LIST(mc_p)		(mc_p)->mc_fmi_lp
+#define SET_MATCH_CYCLE_LIST(mc_p,lp)	(mc_p)->mc_fmi_lp = lp
+
+#define MATCH_CYCLE_CURR_NODE(mc_p)		(mc_p)->mc_curr_np
+#define SET_MATCH_CYCLE_CURR_NODE(mc_p,np)	(mc_p)->mc_curr_np = np
+
+#define MATCH_CYCLE_IT(mc_p)		(mc_p)->mc_itp
+#define SET_MATCH_CYCLE_IT(mc_p,itp)	(mc_p)->mc_itp = itp
+
+#define MC_STACK_SERIAL(mc_p)		(mc_p)->mc_stack_serial
+#define MC_ITEM_SERIAL(mc_p)		(mc_p)->mc_stack_serial
+#define SET_MC_STACK_SERIAL(mc_p,c)	(mc_p)->mc_stack_serial = c
+#define SET_MC_ITEM_SERIAL(mc_p,c)	(mc_p)->mc_stack_serial = c
 
 struct item_context {
 	Item			ic_item;
-	List *			ic_lp;		// list of items in this context
-	Item_Type *		ic_itp;		// points to the owner of this context
-	struct item_context *	ic_frag_icp;	// fragment match database just for this context
-	int			ic_flags;
-	// We use a "dictionary" to store the items; traditionally,
+
+	// We used to use a "dictionary" to store the items; traditionally,
 	// this has been a hash table, but to support partial name
 	// lookup (for more efficient completion), we might prefer
 	// to use a red-black tree...
-//	struct dictionary *	ic_dict_p;
-	Container *		ic_cnt_p;
+	Container *		ic_cnt_p;	// the primary container
+	u_long			ic_item_serial;	// count changes to the container
+
+	List *			ic_lp;			// list of items in this context
+	u_long			ic_list_serial;	// when list was last updated
+
+	Item_Type *		ic_itp;		// points to the owner of this context
+	struct item_context *	ic_frag_icp;	// fragment match database just for this context
 } ;
 
+#define CTX_IS_NEEDY(icp)	( (icp)->ic_list_serial != (icp)->ic_item_serial )
 
 //#define NO_NAMESPACE		NULL
 
@@ -74,6 +115,9 @@ struct item_context {
 #define CTX_FLAGS(icp)			(icp)->ic_flags
 #define CTX_IT(icp)			(icp)->ic_itp
 
+#define CTX_ITEM_LIST(icp)		(icp)->ic_lp
+#define SET_CTX_ITEM_LIST(icp,lp)	(icp)->ic_lp = lp
+
 #define SET_CTX_NAME(icp,s)		(icp)->ic_item.item_name = s
 #define SET_CTX_IT(icp,itp)		(icp)->ic_itp = itp
 #define SET_CTX_FLAGS(icp,f)		(icp)->ic_flags = f
@@ -85,30 +129,52 @@ struct item_context {
 #define CTX_FRAG_ICP(icp)		(icp)->ic_frag_icp
 #define SET_CTX_FRAG_ICP(icp,icp2)	(icp)->ic_frag_icp = icp2
 
+#define CTX_ITEM_SERIAL(icp)		(icp)->ic_item_serial
+#define SET_CTX_ITEM_SERIAL(icp,c)	(icp)->ic_item_serial = c
+#define INC_CTX_ITEM_SERIAL(icp)	(icp)->ic_item_serial ++
+
+#define CTX_LIST_SERIAL(icp)		(icp)->ic_list_serial
+#define SET_CTX_LIST_SERIAL(icp,c)	(icp)->ic_list_serial = c
+#define INC_CTX_LIST_SERIAL(icp)	(icp)->ic_list_serial ++
+
 #define NEW_ITEM_CONTEXT(icp)	icp=((Item_Context *)getbuf(sizeof(Item_Context)))
 
+#ifdef THREAD_SAFE_QUERY
 #define MAX_QUERY_STACKS	5	// why do we need to have a limit?
 					// Because we have fixed size arrays
 					// of per-query stack ptrs...
+#else // ! THREAD_SAFE_QUERY
+#define MAX_QUERY_STACKS	1
+#endif // ! THREAD_SAFE_QUERY
 
 // This struct contains all of the things that we need to have copied for each thread...
+// The main thing is the context stack
 
 typedef struct item_type_context_info {
-	List *		itci_item_lp;			// list of all of the items -
-	Stack *		itci_context_stack;		// need to have one per thread
-	Item_Context *	itci_icp;			// current context
-	int		itci_flags;
+	Stack *			itci_context_stack;		// need to have one per thread
+	u_long			itci_stack_serial;		// increment this when the stack is changed (push/pop)
+	u_long			itci_item_serial;		// increment this when any context is changed
+
+	int			itci_flags;
+
+	List *			itci_item_lp;			// list of all of the items -
+	u_long			itci_list_serial;		// update when list is updated
+
+	Item_Context *		itci_icp;			// current context
+	Match_Cycle *		itci_mc_p;			// why remember one???
+	struct item_context *	itci_mc_icp;			// match cycle database for this context stack
 } Item_Type_Context_Info;
 
 // Flag bits
 #define ITCI_CTX_RESTRICTED_FLAG		1
 //#define ITCI_LIST_IS_CURRENT			2
-#define ITCI_NEEDS_LIST				2
+//#define ITCI_NEEDS_LIST			2
 //#define NEEDS_NEW_CHOICES(itp)	(IT_FLAGS(itp) & NEED_CHOICES)
 //#define NEED_CHOICES	2
 //#define CTX_NEEDS_LIST	4
 
-#define NEEDS_NEW_LIST(itp)	(ITCI_FLAGS(THIS_ITCI(itp)) & ITCI_NEEDS_LIST)
+//#define NEEDS_NEW_LIST(itp)	(ITCI_FLAGS(THIS_ITCI(itp)) & ITCI_NEEDS_LIST)
+#define NEEDS_NEW_LIST(itp)	(ITCI_LIST_SERIAL(THIS_ITCI(itp)) != ITCI_ITEM_SERIAL(THIS_ITCI(itp)))
 
 #define ITCI_ITEM_LIST(itci_p)			(itci_p)->itci_item_lp
 #define SET_ITCI_ITEM_LIST(itci_p,lp)		(itci_p)->itci_item_lp = lp
@@ -126,6 +192,24 @@ typedef struct item_type_context_info {
 
 #define ITCI_CTX_RESTRICTED(itci_p)		(ITCI_FLAGS(itci_p) & ITCI_CTX_RESTRICTED_FLAG)
 
+#define ITCI_MATCH_CYCLE(itci_p)		(itci_p)->itci_mc_p
+#define SET_ITCI_MATCH_CYCLE(itci_p,p)		(itci_p)->itci_mc_p = p
+
+#define ITCI_MC_CONTEXT(itci_p)			(itci_p)->itci_mc_icp
+#define SET_ITCI_MC_CONTEXT(itci_p,icp)		(itci_p)->itci_mc_icp = icp
+
+#define INC_ITCI_ITEM_CHANGE_COUNT(itci_p)	(itci_p)->itci_item_serial ++
+#define INC_ITCI_STACK_CHANGE_COUNT(itci_p)	(itci_p)->itci_stack_serial ++
+
+#define ITCI_ITEM_SERIAL(itci_p)		(itci_p)->itci_item_serial
+#define SET_ITCI_ITEM_SERIAL(itci_p,c)		(itci_p)->itci_item_serial = c
+
+#define ITCI_STACK_SERIAL(itci_p)		(itci_p)->itci_stack_serial
+#define SET_ITCI_STACK_SERIAL(itci_p,c)		(itci_p)->itci_stack_serial = c
+
+#define ITCI_LIST_SERIAL(itci_p)		(itci_p)->itci_list_serial
+#define SET_ITCI_LIST_SERIAL(itci_p,c)		(itci_p)->itci_list_serial = c
+
 /*
 #define INSURE_ITCI(itp)				\
 							\
@@ -136,7 +220,7 @@ struct item_type {
 	Item		it_item;
 	int		it_flags;	// don't need?
 	List *		it_free_lp;
-	int		it_default_container_type;
+	int		it_container_type;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
 	/*
 	const char **	it_choices;
@@ -153,27 +237,18 @@ struct item_type {
 	// we don't really need multiple contexts???
 
 #ifdef THREAD_SAFE_QUERY
-
 #ifdef HAVE_PTHREADS
 	pthread_mutex_t	it_mutex;
 #endif /* HAVE_PTHREADS */
+#endif /* ! THREAD_SAFE_QUERY */
 
 	Item_Type_Context_Info	it_itci[MAX_QUERY_STACKS];
 
-//#define FIRST_CONTEXT(itp)	itp->it_icp[0]
-
-#else /* ! THREAD_SAFE_QUERY */
-	Item_Type_Context_Info	it_itci[1];
-#endif /* ! THREAD_SAFE_QUERY */
-
-	Frag_Match_Info *	it_fmi_p;			// only one???
+	//Frag_Match_Info *	it_fmi_p;			// only one???
 };
 
 #define it_name	it_item.item_name
 #define ITEM_TYPE_NAME(itp)	((itp)->it_name)
-
-// context flag bits
-#define CTX_CHANGED_FLAG	1
 
 // "Restricted" means that only the top context will be searched.
 // This feature was introduced in the expression language to support
@@ -213,21 +288,31 @@ struct item_type {
 
 //#define IT_LIST(itp)			(itp)->it_lp
 #define IT_CLASS_LIST(itp)		(itp)->it_class_lp
-#define IT_CONTAINER_TYPE(itp)		(itp)->it_default_container_type
+#define IT_CONTAINER_TYPE(itp)		(itp)->it_container_type
 #define IT_DEL_METHOD(itp)		(itp)->it_del_method
 #define SET_IT_DEL_METHOD(itp,f)	(itp)->it_del_method = f
 #define SET_IT_FREE_LIST(itp,lp)	(itp)->it_free_lp = lp
 #define SET_IT_CTX_IT(itp,citp)		(itp)->it_ctx_itp = citp
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
-#define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_default_container_type = t
+#define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_container_type = t
 
 //#define IT_N_CHOICES(itp)		(itp)->it_n_choices
 //#define SET_IT_N_CHOICES(itp,n)		(itp)->it_n_choices = n
 //#define IT_CHOICES(itp)			(itp)->it_choices
 //#define SET_IT_CHOICES(itp,choices)	(itp)->it_choices = choices
 
-#define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
-#define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
+//#define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
+//#define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
+#define IT_MATCH_CYCLE(itp)		ITCI_MATCH_CYCLE( THIS_ITCI(itp) )
+#define SET_IT_MATCH_CYCLE(itp,mc_p)	SET_ITCI_MATCH_CYCLE( THIS_ITCI(itp), mc_p )
+
+#define IT_MC_CONTEXT(itp)		ITCI_MC_CONTEXT( THIS_ITCI(itp) )
+#define SET_IT_MC_CONTEXT(itp,icp)	SET_ITCI_MC_CONTEXT( THIS_ITCI(itp), icp )
+
+#define ITEM_CHANGE_COUNT(itp)		ITCI_ITEM_SERIAL( THIS_ITCI(itp) )
+#define STACK_CHANGE_COUNT(itp)		ITCI_STACK_SERIAL( THIS_ITCI(itp) )
+#define INC_ITEM_CHANGE_COUNT(itp)	INC_ITCI_ITEM_CHANGE_COUNT( THIS_ITCI(itp) )
+#define INC_STACK_CHANGE_COUNT(itp)	INC_ITCI_STACK_CHANGE_COUNT( THIS_ITCI(itp) )
 
 // The context field may be null, so we have a function to do the checking
 // and initialization if necessary...
@@ -235,7 +320,7 @@ extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
 #define CURRENT_CONTEXT(itp)		current_context(QSP_ARG  itp)
 #define SET_CURRENT_CONTEXT(itp,icp)	SET_ITCI_CTX(THIS_ITCI(itp),icp)
 #define ITCI_AT_INDEX(itp,idx)		(&((itp)->it_itci[idx]))
-#define THIS_ITCI(itp)			ITCI_AT_INDEX(itp,_QS_SERIAL(THIS_QSP))
+#define THIS_ITCI(itp)			(THIS_QSP==NULL?ITCI_AT_INDEX(itp,0):ITCI_AT_INDEX(itp,_QS_SERIAL(THIS_QSP)))
 
 //#define CONTEXT_LIST(itp)		ITCI_CSTK( THIS_ITCI(itp) )	// this is the list of contexts,
 //									// not the list of items in a context
@@ -386,7 +471,7 @@ void del_##stem(QSP_ARG_DECL  type *ip)				\
 }
 
 extern ITEM_INIT_PROT(Item_Type,ittyp)
-extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip, Node *np );
+extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip );
 //extern Item *check_context(Item_Context *icp, const char *name);
 extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 extern List *alpha_sort(QSP_ARG_DECL  List *lp);

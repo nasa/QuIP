@@ -1,8 +1,12 @@
 
 macrosdir	=	$(datadir)/quip/macros/postproc
 
-macros_DATA	=	get_rec.mac	\
-			ilace.mac
+macros_DATA	=	datafile.mac	\
+			get_rec.mac	\
+			ilace.mac	\
+			procfile.mac	\
+			pupdat.mac	\
+			vis.mac
 
 
 EXTRA_DIST	=	$(macros_DATA)

@@ -36,8 +36,10 @@ static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform
 	//SET_PF_DISPATCH_TBL(cpp,NULL);
 	SET_PF_MEM_UPLOAD_FN(cpp,NULL);
 	SET_PF_MEM_DNLOAD_FN(cpp,NULL);
-	SET_PF_ALLOC_FN(cpp,NULL);
-	SET_PF_FREE_FN(cpp,NULL);
+	SET_PF_MEM_ALLOC_FN(cpp,NULL);
+	SET_PF_OBJ_ALLOC_FN(cpp,NULL);
+	SET_PF_MEM_FREE_FN(cpp,NULL);
+	SET_PF_OBJ_FREE_FN(cpp,NULL);
 	SET_PF_OFFSET_DATA_FN(cpp,NULL);
 	SET_PF_UPDATE_OFFSET_FN(cpp,NULL);
 	SET_PF_MAPBUF_FN(cpp,NULL);

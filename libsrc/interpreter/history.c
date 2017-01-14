@@ -104,7 +104,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
-	ep = new_enumerator(CTX_CONTAINER(icp), 0);	// 0 -> default type
+	ep = new_enumerator(CTX_CONTAINER(icp));
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){
@@ -412,23 +412,84 @@ static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 	assert( fmi_p != NULL );
 
 	if( direction == CYC_FORWARD ){
-		if( fmi_p->u.rbti.curr_n_p == fmi_p->u.rbti.last_n_p )
-			fmi_p->u.rbti.curr_n_p = fmi_p->u.rbti.first_n_p;
+		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.last_n_p )
+			fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
 		else {
-			fmi_p->u.rbti.curr_n_p = rb_successor_node( fmi_p->u.rbti.curr_n_p );
-			assert( fmi_p->u.rbti.curr_n_p != NULL );
+			fmi_p->fmi_u.rbti.curr_n_p = rb_successor_node( fmi_p->fmi_u.rbti.curr_n_p );
+			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
 		}
 	} else {
-		if( fmi_p->u.rbti.curr_n_p == fmi_p->u.rbti.first_n_p )
-			fmi_p->u.rbti.curr_n_p = fmi_p->u.rbti.last_n_p;
+		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.first_n_p )
+			fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
 		else {
-			fmi_p->u.rbti.curr_n_p = rb_predecessor_node( fmi_p->u.rbti.curr_n_p );
-			assert( fmi_p->u.rbti.curr_n_p != NULL );
+			fmi_p->fmi_u.rbti.curr_n_p = rb_predecessor_node( fmi_p->fmi_u.rbti.curr_n_p );
+			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
 		}
 	}
-	ip = fmi_p->u.rbti.curr_n_p->data;
+	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
 	return ip->item_name;
 }
+
+static void reset_tree_match( Frag_Match_Info *fmi_p, int direction )
+{
+	if( direction == CYC_FORWARD )
+		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
+	else
+		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
+}
+
+
+static const char * advance_tree_match(Frag_Match_Info *fmi_p, int direction )
+{
+	Item *ip;
+
+	// there may be no items!?
+	assert( fmi_p != NULL );
+
+	if( direction == CYC_FORWARD ){
+		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.last_n_p )
+			return NULL;
+		else {
+			fmi_p->fmi_u.rbti.curr_n_p = rb_successor_node( fmi_p->fmi_u.rbti.curr_n_p );
+			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
+		}
+	} else {
+		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.first_n_p )
+			return NULL;
+		else {
+			fmi_p->fmi_u.rbti.curr_n_p = rb_predecessor_node( fmi_p->fmi_u.rbti.curr_n_p );
+			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
+		}
+	}
+	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
+	return ip->item_name;
+}
+
+static const char *advance_item_list( Frag_Match_Info *fmi_p, int direction )
+{
+	Item *ip;
+
+	assert( fmi_p != NULL );
+
+	if( direction == CYC_FORWARD ){
+		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.last_np )
+			return NULL;
+		else {
+			fmi_p->fmi_u.li.curr_np = NODE_NEXT(fmi_p->fmi_u.li.curr_np);
+			assert( fmi_p->fmi_u.li.curr_np != NULL );
+		}
+	} else {
+		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.first_np )
+			return NULL;
+		else {
+			fmi_p->fmi_u.li.curr_np = NODE_PREV( fmi_p->fmi_u.li.curr_np );
+			assert( fmi_p->fmi_u.li.curr_np != NULL );
+		}
+	}
+	ip = fmi_p->fmi_u.li.curr_np->n_data;
+	return ip->item_name;
+}
+
 
 static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 {
@@ -437,51 +498,132 @@ static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 	assert( fmi_p != NULL );
 
 	if( direction == CYC_FORWARD ){
-		if( fmi_p->u.li.curr_np == fmi_p->u.li.last_np )
-			fmi_p->u.li.curr_np = fmi_p->u.li.first_np;
+		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.last_np )
+			fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
 		else {
-			fmi_p->u.li.curr_np = NODE_NEXT(fmi_p->u.li.curr_np);
-			assert( fmi_p->u.li.curr_np != NULL );
+			fmi_p->fmi_u.li.curr_np = NODE_NEXT(fmi_p->fmi_u.li.curr_np);
+			assert( fmi_p->fmi_u.li.curr_np != NULL );
 		}
 	} else {
-		if( fmi_p->u.li.curr_np == fmi_p->u.li.first_np )
-			fmi_p->u.li.curr_np = fmi_p->u.li.last_np;
+		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.first_np )
+			fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
 		else {
-			fmi_p->u.li.curr_np = NODE_PREV( fmi_p->u.li.curr_np );
-			assert( fmi_p->u.li.curr_np != NULL );
+			fmi_p->fmi_u.li.curr_np = NODE_PREV( fmi_p->fmi_u.li.curr_np );
+			assert( fmi_p->fmi_u.li.curr_np != NULL );
 		}
 	}
-	ip = fmi_p->u.li.curr_np->n_data;
+	ip = fmi_p->fmi_u.li.curr_np->n_data;
 	return ip->item_name;
 }
 
-static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int direction )
+static void reset_item_list( Frag_Match_Info *fmi_p, int direction )
 {
-	Frag_Match_Info *fmi_p;
+	if( direction == CYC_FORWARD )
+		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
+	else
+		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
+}
 
-	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
-
-	fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
-	if( fmi_p == NULL ) return so_far;
-
-//fprintf(stderr,"cyc_item_match: frag_match_info '%s' has type %d\n",
-//fmi_p->it.item_name,fmi_p->type);
-
+static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
+{
 	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
 
 	switch( fmi_p->type ){
 		case LIST_CONTAINER:
-			return cyc_item_list(fmi_p,direction);
+			return advance_item_list(fmi_p,direction);
 			break;
 		case RB_TREE_CONTAINER:
-			return cyc_tree_match(fmi_p,direction);
+			return advance_tree_match(fmi_p,direction);
 			break;
-		default:
+		default:			// not needed, but quiets compiler
 			NERROR1("cyc_item_match:  bad type!?");
 			break;
 	}
 	return NULL;
 }
+
+static const char * current_frag_match( Frag_Match_Info * fmi_p )
+{
+	Item *ip;
+
+	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
+
+	switch( fmi_p->type ){
+		case LIST_CONTAINER:
+			ip = fmi_p->fmi_u.li.curr_np->n_data;
+			break;
+		case RB_TREE_CONTAINER:
+			ip = fmi_p->fmi_u.rbti.curr_n_p->data;
+			break;
+		default:			// not needed, but quiets compiler
+			ip=NULL;	// quiet compiler
+			NERROR1("current_frag_match:  bad type!?");
+			break;
+	}
+	return ip->item_name;
+}
+
+static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
+{
+	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
+
+	switch( fmi_p->type ){
+		case LIST_CONTAINER:
+			reset_item_list(fmi_p,direction);
+			break;
+		case RB_TREE_CONTAINER:
+			reset_tree_match(fmi_p,direction);
+			break;
+		default:			// not needed, but quiets compiler
+			NERROR1("reset_frag_match:  bad type!?");
+			break;
+	}
+}
+
+// We can have matches in different contexts on the context stack.  We keep a list that has matches
+// we cycle the current one, and advance if we are at the end of the cycle for the current frag_match_info
+
+static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int direction )
+{
+	Frag_Match_Info *fmi_p;
+	Match_Cycle *mc_p;
+	const char *s;
+	Node *np;
+
+	assert( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL );
+
+	//fmi_p = IT_FRAG_MATCH_INFO( QS_PICKING_ITEM_ITP(THIS_QSP) );
+	//if( fmi_p == NULL ) return so_far;
+
+	mc_p = IT_MATCH_CYCLE( QS_PICKING_ITEM_ITP(THIS_QSP) );
+	//assert(mc_p!=NULL);
+	if( mc_p == NULL ) return so_far;
+
+	np = mc_p->mc_curr_np;
+	assert(np!=NULL);
+
+	fmi_p = NODE_DATA(np);
+	s = advance_frag_match(fmi_p,direction);
+	if( s != NULL ) return s;
+
+	if( direction == CYC_FORWARD ){
+		np = NODE_NEXT(np);
+		if( np == NULL )
+			np = QLIST_HEAD( MATCH_CYCLE_LIST(mc_p) );
+	} else {
+		np = NODE_PREV(np);
+		if( np == NULL )
+			np = QLIST_TAIL( MATCH_CYCLE_LIST(mc_p) );
+	}
+
+	fmi_p = NODE_DATA(np);
+	reset_frag_match(fmi_p,direction);
+
+	return current_frag_match(fmi_p);
+}
+
+//fprintf(stderr,"cyc_item_match: frag_match_info '%s' has type %d\n",
+//fmi_p->it.item_name,fmi_p->type);
 
 
 	// find out what kind of container...

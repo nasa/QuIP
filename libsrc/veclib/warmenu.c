@@ -108,35 +108,6 @@ COMMAND_FUNC( doaxle )
 }
 #endif /* NOT_YET */
 
-#ifdef FOO
-static COMMAND_FUNC( getfind2 )
-{
-	Data_Obj *dp_src;
-	Dimension_Set dimset;
-	char *s;
-	int sw, sh;
-	float* src_data;
-	int** ind;
-	int i, j, k;
-	int thres;
-
-	s = NAMEOF("destination object name");
-	if ((dp_src = PICK_OBJ( "source object" )) == NO_OBJ) return;
-
-	thres = HOW_MANY("threshold");
-
-	sw = OBJ_COLS(dp_src);
-	sh = OBJ_ROWS(dp_src);
-
-	k = 0;
-	src_data = (float *)(OBJ_DATA_PTR(dp_src));
-	ind = (int **) malloc(sw * sh * sizeof(int *));
-	for (i = 0; i < sw * sh; i++)
-		ind[i] = (int *) malloc(2 * sizeof(int));
-
-}
-#endif /* FOO */
-
 /*
  * This function will return the sum
  * of columns (rows) of an input image

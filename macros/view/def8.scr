@@ -1,0 +1,47 @@
+
+# %Z% $RCSfile: def8.scr,v $ ver: $Revision: 1.9 $ $Date: 2007/11/20 03:03:32 $
+
+Start_File def8.scr
+
+#Set left_edge	3
+#Set _hgap	4
+
+Set left_edge	30
+Set _hgap	14
+
+Set top_edge	40
+Set _vgap	34
+Set max_right	1000		# ought to get this from the display size,
+				# and do something smarter if we ever run dual-head
+
+New_Plotter v1 $display_width $display_height
+Set_Lin_Exponent 2.6
+New_Plotter v2 $display_width $display_height
+Set_Lin_Exponent 2.6
+New_Plotter v3 $display_width $display_height
+Set_Lin_Exponent 2.6
+New_Plotter v4 $display_width $display_height
+Set_Lin_Exponent 2.6
+
+Posn_Window v1 min($left_edge+0*($display_width+$_hgap),$max_right) $top_edge
+Posn_Window v2 min($left_edge+1*($display_width+$_hgap),$max_right) $top_edge
+Posn_Window v3 min($left_edge+2*($display_width+$_hgap),$max_right) $top_edge
+Posn_Window v4 min($left_edge+3*($display_width+$_hgap),$max_right) $top_edge
+
+New_Plotter v5 $display_width $display_height
+Set_Lin_Exponent 2.6
+New_Plotter v6 $display_width $display_height
+Set_Lin_Exponent 2.6
+New_Plotter v7 $display_width $display_height
+Set_Lin_Exponent 2.6
+New_Plotter v8 $display_width $display_height
+Set_Lin_Exponent 2.6
+
+Posn_Window v5 min($left_edge+0*($display_width+$_hgap),$max_right) $top_edge+$display_height+$_vgap
+Posn_Window v6 min($left_edge+1*($display_width+$_hgap),$max_right) $top_edge+$display_height+$_vgap
+Posn_Window v7 min($left_edge+2*($display_width+$_hgap),$max_right) $top_edge+$display_height+$_vgap
+Posn_Window v8 min($left_edge+3*($display_width+$_hgap),$max_right) $top_edge+$display_height+$_vgap
+
+
+Stop_File def8.scr
+

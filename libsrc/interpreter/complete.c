@@ -450,14 +450,17 @@ static int next_character(FILE *tty_in)
 	sel_str[n_so_far]=0;
 
 /* BUG globals are not thread-safe */
+// BUT we probably will never have two threads interactive at the same time???
 static char sel_str[LLEN];
 static char edit_string[LLEN];
+
+#define IS_PICKING_ITEM		QS_PICKING_ITEM_ITP(THIS_QSP) != NULL
 
 const char *get_sel( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out )
 {
 	int c;
 	u_int n_so_far;
-	const char *def_str;
+	const char *def_str="";
 	static int have_tty_chars=0;
 	int edit_mode=0;		/* complete until we see an arrow key */
 
@@ -515,56 +518,51 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 
 		if( strlen(sel_str) > 0 ){	/* if something typed */
 			u_int l;
+			if( IS_PICKING_ITEM ){
+				// we are picking an item...
+				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
+				l=strlen(def_str);
+				if( l == 0 ) def_str=sel_str;
+				if( l > n_so_far ){
+					show_def(&def_str[n_so_far],1);
+				}
+			} else {	// not picking an item
+				def_str=get_match(QSP_ARG  prompt,sel_str);
+				l=strlen(def_str);
 
-			def_str=get_match(QSP_ARG  prompt,sel_str);
-			l=strlen(def_str);
-
-			/* We only want to check against builtins
-			 * if we're parsing a command, not if we're
-			 * fetching an argument;
-			 * so we assume that the convention is that
-			 * command prompts always end in "> "
-			 */
+				/* We only want to check against builtins
+				 * if we're parsing a command, not if we're
+				 * fetching an argument;
+				 * so we assume that the convention is that
+				 * command prompts always end in "> "
+				 */
 
 #define IS_COMMAND_PROMPT(s)	(!strcmp((s)+strlen((s))-2,"> "))
 
-			/* If we don't have a match yet, and we are
-			 * looking for a command, then try to match
-			 * against the builtin menu.
-			 */
+				/* If we don't have a match yet, and we are
+				 * looking for a command, then try to match
+				 * against the builtin menu.
+				 */
 
-			if( l == 0 && IS_COMMAND_PROMPT(prompt) ) {
-				def_str=get_match(QSP_ARG  h_bpmpt,sel_str);
-				l=strlen(def_str);
+				if( l == 0 && IS_COMMAND_PROMPT(prompt) ) {
+					def_str=get_match(QSP_ARG  h_bpmpt,sel_str);
+					l=strlen(def_str);
+				}
+
+				if( l == 0 ) def_str=sel_str;
+				if( l > n_so_far ){
+					// We have found a match from the history list...
+					show_def(&def_str[n_so_far],1);
+				} else {	/* nothing typed yet... */
+					/* get the match to reset the current history list,
+					 * but don't show it if nothing has been typed.
+					 * The user can see the defaults with ^N.
+					 */
+					def_str=get_match(QSP_ARG  prompt,sel_str);
+					def_str=sel_str;
+				}
 			}
-
-			if( l > n_so_far ){
-				// We have found a match from the history list...
-//fprintf(stderr,"found match from history list...\n");
-				show_def(&def_str[n_so_far],1);
-			} else if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
-				// No match on the history list, but
-				// we are picking an item...
-
-//fprintf(stderr,"Need to check %s items for a completion...\n",ITEM_TYPE_NAME(QS_PICKING_ITEM_ITP(THIS_QSP)));
-
-				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
-				l=strlen(def_str);
-			}
-			if( l > n_so_far ){
-				// We have found a match from the history list...
-				show_def(&def_str[n_so_far],1);
-			}
-
-			if( l == 0 ) def_str=sel_str;
-		} else {	/* nothing typed yet... */
-			/* get the match to reset the current history list,
-			 * but don't show it if nothing has been typed.
-			 * The user can see the defaults with ^N.
-			 */
-			def_str=get_match(QSP_ARG  prompt,sel_str);
-			def_str=sel_str;
-		}
+		} // someting typed
 
 nextchar:
 		/*
@@ -712,8 +710,10 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 
 			/* we do show_def a second time
 				since the cursor will move! */
-			if( strlen(def_str) > n_so_far )
-				show_def(&def_str[n_so_far],0);
+			if( def_str != NULL ){
+				if( strlen(def_str) > n_so_far )
+					show_def(&def_str[n_so_far],0);
+			}
 			fputc(c,tty_out);	/* do the echo */
 
 			/* Add response to history lists...
@@ -726,7 +726,7 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 					add_def(QSP_ARG  prompt,edit_string);
 				return(edit_string);
 			} else {
-				if( *prompt && *def_str )
+				if( *prompt && def_str != NULL && *def_str )
 					add_def(QSP_ARG  prompt,def_str);
 
 				// Store the newline too...
@@ -808,8 +808,11 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 			} else {
 				show_char(c);
 
-				if( c != def_str[n_so_far] )
-					ers_def(&def_str[n_so_far]);
+				// what if there is no def_str???
+				if( def_str != NULL ){
+					if( c != def_str[n_so_far] )
+						ers_def(&def_str[n_so_far]);
+				}
 				if( n_so_far >= (LLEN-1) ){
 					WARN("too many input chars!?");
 				} else {

@@ -381,7 +381,7 @@ sprintf(DEFAULT_ERROR_STRING,"getbuf:  %10ld at 0x%8lx (addr = 0x%lx)",
 NADVISE(DEFAULT_ERROR_STRING);
      */
     /* DEAFULT_ERROR_STRING not valid at startup!? */
-    fprintf(stderr,"getbuf:  %10ld at 0x%8lx (addr = 0x%lx)\n",
+    fprintf(stderr,"getbuf(1):  %10ld at 0x%8lx (addr = 0x%lx)\n",
             *((u_long *) ((u_long)cp-SIZE_OFFSET)),
             (u_long)((((char *)cp)-SIZE_OFFSET)-small_heap.heap_base),(u_long)cp );
   
@@ -415,6 +415,10 @@ void givbuf(const void* addr)
 //sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%8lx",(u_long)addr);
 //NADVISE(DEFAULT_ERROR_STRING);
 //}
+if( debug & gbdebug ){
+sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%8lx",(u_long)addr);
+NADVISE(DEFAULT_ERROR_STRING);
+}
 #endif /* QUIP_DEBUG */
 
 	caddr = (char*) addr;
@@ -519,7 +523,7 @@ COMMAND_FUNC( heap_report )
 static void mem_alert(size_t size)
 {
 static int n_allow=5;
-	fprintf(stderr,"getbuf %ld (0x%lx)\n",(long)size,(long)size);
+	fprintf(stderr,"getbuf(2) %ld (0x%lx)\n",(long)size,(long)size);
 	fflush(stderr);
 	if( (n_allow--) <= 0 ) abort();
 }
@@ -534,8 +538,7 @@ void * getbuf(size_t size)
 //}
 
 //#ifdef CAUTIOUS
-	// What is the difference between calloc and malloc???
-	// calloc zeroes the memory!
+	// What is the difference between calloc and malloc???  calloc zeroes the memory!
 //	p=calloc(size,1);
 //#else // ! CAUTIOUS
 
@@ -561,7 +564,7 @@ void * getbuf(size_t size)
 #ifdef QUIP_DEBUG
 if( debug & gbdebug ){
     /* DEAFULT_ERROR_STRING not valid at startup!? */
-    fprintf(stderr,"getbuf:  %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
+    fprintf(stderr,"getbuf(3):  %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
 }
 #endif /* QUIP_DEBUG */
 
@@ -570,7 +573,7 @@ if( debug & gbdebug ){
 
 #ifdef DEBUG_GETBUF
 
-void givbuf( void * a )
+void givbuf( const void * a )
 {
 
 #ifdef QUIP_DEBUG
@@ -580,7 +583,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	free(a);
+	free((void *)a);
 }
 #endif // DEBUG_GETBUF
 

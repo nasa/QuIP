@@ -62,16 +62,16 @@ struct list {
 
 #else /* ! HAVE_PTHREADS */
 
-#define LOCK_LIST(lp)
-#define UNLOCK_LIST(lp)
+#define LOCK_LIST(lp,whence)
+#define UNLOCK_LIST(lp,whence)
 #define LIST_IS_LOCKED(lp)	0
 
 #endif /* ! HAVE_PTHREADS */
 
 #else /* ! THREAD_SAFE_QUERY */
 
-#define LOCK_LIST(lp)
-#define UNLOCK_LIST(lp)
+#define LOCK_LIST(lp,whence)
+#define UNLOCK_LIST(lp,whence)
 
 #endif /* ! THREAD_SAFE_QUERY */
 
@@ -94,6 +94,7 @@ typedef struct {
 extern void advance_list_enumerator(List_Enumerator *lep);
 extern Item *list_enumerator_item(List_Enumerator *lep);
 extern List_Enumerator *new_list_enumerator(List *lp);
+extern void rls_list_enumerator(List_Enumerator *lp);
 
 #endif /* ! _LIST_H_ */
 

@@ -5,6 +5,7 @@
 #include "query_stack.h"
 #include "list.h"
 
+
 /*	the term "ring" refers to a circular list
 	rings have head and tail pointers, which should
 	point to adjacent elements, but the tail pts
@@ -445,9 +446,9 @@ void safe_addTail( List *lp, Node* np )		/**/
 		SET_NODE_NEXT(np,np);						\
 		SET_NODE_PREV(np,np);						\
 	} else {							\
-		if( NODE_NEXT(np) != NO_NODE )				\
+		if( NODE_NEXT(np) != NO_NODE ){				\
 			SET_NODE_PREV(NODE_NEXT(np), NO_NODE);			\
-		else SET_QLIST_TAIL(lp, NO_NODE);				\
+		} else SET_QLIST_TAIL(lp, NO_NODE);				\
 									\
 		SET_NODE_NEXT(np, NO_NODE);					\
 		SET_NODE_PREV(np, NO_NODE);					\
@@ -461,7 +462,6 @@ Node *remHead( List *lp )		/**/
 	if( (np=QLIST_HEAD(lp)) == NO_NODE ){
 		return( NO_NODE );
 	}
-
 	LOCK_LIST(lp,remHead)
 	REM_HEAD(np,lp)
 	UNLOCK_LIST(lp,remHead)
@@ -672,4 +672,20 @@ List_Enumerator *new_list_enumerator(List *lp)
 	lep->np = QLIST_HEAD(lp);
 	return lep;
 }
+
+void rls_list_enumerator(List_Enumerator *lep)
+{
+	givbuf(lep);	// keep a pool?
+}
+
+// release all the nodes in a list and the list too
+
+void zap_list(List *lp)
+{
+	Node *np;
+	while( (np=remHead(lp)) != NO_NODE )
+		rls_node(np);
+	rls_list(lp);
+}
+
 

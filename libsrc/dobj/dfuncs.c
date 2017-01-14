@@ -20,7 +20,7 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 
 #define FETCH_BIT								\
 										\
-				unsigned int bitnum;				\
+				bitnum_t bitnum;				\
 				bitmap_word bit,*lp;				\
 				bitnum = OBJ_BIT0(dp);				\
 				lp = (bitmap_word *)OBJ_DATA_PTR(dp);		\
@@ -202,7 +202,9 @@ static Data_Obj *obj_for_string(const char *string)
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,4,1);
 	dp=make_dobj(DEFAULT_QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
-	if( dp != NULL ) strcpy((char *)OBJ_DATA_PTR(dp),string);
+	if( dp != NULL ){
+		strcpy((char *)OBJ_DATA_PTR(dp),string);
+	}
 	return(dp);
 }
 

@@ -3,7 +3,6 @@
 
 #include "veclib/vecgen.h"
 #include "veclib/cu2_port.h"
-//#include "veclib/gen_veclib_prot.h"
 
 // these are special cases...
 extern void h_cu2_sp_vuni(HOST_CALL_ARG_DECLS);

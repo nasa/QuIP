@@ -6,10 +6,6 @@
 
 void add_command_to_menu( Menu *mp, Command *cp )
 {
-//	Node *np;
-//
-//	np = mk_node(cp);
-//	if( insert_name((Item *)cp,np,MENU_DICT(mp)) < 0 )
 	if( add_to_container(MENU_CONTAINER(mp),(Item *)cp) < 0 )
 		NWARN("add_command_to_menu:  error adding command!?");
 }

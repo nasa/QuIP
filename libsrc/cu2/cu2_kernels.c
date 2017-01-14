@@ -9,13 +9,15 @@
 // Mixed precision complex structure assignment does not work...
 
 //#define BUILDING_KERNELS
-#include "veclib/gen_host_calls.c"	// not just host calls...
+#include "veclib/gen_kernel_calls.c"	// not just host calls...
 //#undef BUILDING_KERNELS
 
-#include "veclib/bit_defs.h"
-#include "veclib/bitmap_ops.h"
-#include "veclib/bitmap_ops.c"
-#include "veclib/type_undefs.h"
+//#include "veclib/bit_defs.h"
+//#include "veclib/bitmap_ops.h"
+//#include "veclib/bitmap_ops.c"
+//#include "veclib/type_undefs.h"
+
+#include "veclib/method_undefs.h"
 
 #endif // ! _CU2_KERNELS_C_
 

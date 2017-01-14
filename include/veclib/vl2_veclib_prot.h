@@ -4,10 +4,6 @@
 #include "veclib/vecgen.h"
 #include "veclib/vl2_port.h"
 
-//#include "veclib/gen_veclib_prot.h"
-
-///* Here are the conversions */
-//#include "host_conv_prot.h"
 
 extern void h_vl2_fft2d(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 extern void h_vl2_ift2d(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
@@ -16,11 +12,6 @@ extern void h_vl2_iftrows(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 
 extern void vl2_convert(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
 
-#ifdef FOOBAR
-extern void PF_FUNC_NAME(mem_upload)(QSP_ARG_DECL  void *to, void *fr, size_t size, Platform_Device *pdp);
-extern void PF_FUNC_NAME(mem_dnload)(QSP_ARG_DECL  void *to, void *fr, size_t size, Platform_Device *pdp);
-extern void PF_FUNC_NAME(alloc_data)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size);
-#endif // FOOBAR
 
 // other specia stuff
 

@@ -468,9 +468,9 @@ process_marker:
 			ySize = getBEshort(fp);
 			xSize = getBEshort(fp);
 			numComp = getc(fp);
-fprintf(stderr,"M_SOFX:  dy = %d, dx = %d, depth = %d\n",
-ySize,xSize,numComp);
-fflush(stderr);
+//fprintf(stderr,"M_SOFX:  dy = %d, dx = %d, depth = %d\n",
+//ySize,xSize,numComp);
+//fflush(stderr);
 
 			if( HDR_P(ifp)->jpeg_comps == (-1) ){
 				/* first time */

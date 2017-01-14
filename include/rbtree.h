@@ -39,6 +39,9 @@ typedef struct qrb_node {
 
 // This assumes that all nodes point to Items
 #define RB_NODE_KEY(np)	(((Item *)((np)->data))->item_name)
+#define RB_NODE_ITEM(np)	((Item *)((np)->data))
+
+#define RB_NODE_DATA(np)	(np)->data
 
 /* (*comp_func)(a,b) should return 1 if *a > *b, -1 if *a < *b, and 0 otherwise */
 /* Destroy(a) takes a pointer to whatever key might be and frees it accordingly */
@@ -52,11 +55,28 @@ typedef struct qrb_tree {
 	void (*key_destroy_func)(void* a);
 	void (*data_destroy_func)(void* a);
 
-	long	node_count;
-	qrb_node* root;             
+	long		node_count;
+	qrb_node* 	root;
+
+	int		flags;
+	List *		item_lp;
 } qrb_tree;
 
+// flags bits
+#define RBT_LIST_IS_CURRENT	1
+
+
 #define RB_TREE_ROOT(tp)	((tp)->root)
+#define RB_TREE_ITEM_LIST(tp)	(tp)->item_lp
+#define SET_RB_TREE_ITEM_LIST(tp,lp)	(tp)->item_lp = lp
+
+#define RB_TREE_FLAGS(tp)	(tp)->flags
+#define SET_RBT_FLAG_BITS(tp,bits)	(tp)->flags |= (bits)
+#define CLEAR_RBT_FLAG_BITS(tp,bits)	(tp)->flags &= ~(bits)
+
+#define RB_TREE_LIST_IS_CURRENT(tp)	(RB_TREE_FLAGS(tp) & RBT_LIST_IS_CURRENT)
+#define MARK_RB_TREE_CURRENT(tp)	SET_RBT_FLAG_BITS(tp, RBT_LIST_IS_CURRENT)
+#define MARK_RB_TREE_DIRTY(tp)		CLEAR_RBT_FLAG_BITS(tp, RBT_LIST_IS_CURRENT)
 
 //extern qrb_tree* create_rb_tree(int  (*comp_func)(const void*, const void*),
 //			     void (*key_destroy)(void*), 
@@ -71,7 +91,7 @@ extern int rb_delete_named_item(qrb_tree*, const char *name);
 extern int rb_delete_item(qrb_tree*, Item *ip);
 extern qrb_node* rb_find(qrb_tree*, const char * key );
 extern void rb_substring_find(Frag_Match_Info * fmi_p, qrb_tree*, const char * frag );
-extern void rb_traverse( qrb_node *np, void (*func)(qrb_node *) );
+extern void rb_traverse( qrb_node *np, void (*func)(qrb_node *,qrb_tree *), qrb_tree *tree_p );
 #ifdef RB_TREE_DEBUG
 extern void rb_check(qrb_tree *);
 #endif //  RB_TREE_DEBUG
@@ -95,9 +115,12 @@ typedef struct {
 
 extern RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tp);
 extern void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
+extern void rls_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
 extern Item * rbtree_enumerator_item(RB_Tree_Enumerator *rbtep);
 extern long rb_node_count(qrb_tree *tree_p);
 extern void release_rb_tree(qrb_tree *tree_p);
+
+extern List *rbtree_list(qrb_tree *tree_p);
 
 #endif // ! _RBTREE_H_
 

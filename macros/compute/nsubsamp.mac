@@ -135,7 +135,7 @@ repeat $3
   Xform_For sm_xf $target
   Assign smallw ncols(sm_xf)
   Assign smallh nrows(sm_xf)
-  Assign scale_factor (ncols('$2')/ncols(target))*($bigh/$smallh)
+  Assign scale_factor (ncols('$2')/ncols('$target'))*($bigh/$smallh)
  # Assign scale_factor ($bigw/$smallw)*($bigh/$smallh)
   Subimage __src big_xf $smallw $smallh/2 0 0
   Subimage __dst sm_xf $smallw $smallh/2 0 0

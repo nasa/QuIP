@@ -52,7 +52,12 @@ Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
 
 // free function for ram data area
 
-void cpu_mem_free(QSP_ARG_DECL  Data_Obj *dp)
+void cpu_mem_free(QSP_ARG_DECL  void *ptr)
+{
+	givbuf(ptr);
+}
+
+void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 {
 	givbuf(dp->dt_unaligned_ptr);
 }
@@ -69,9 +74,9 @@ static void release_data(QSP_ARG_DECL  Data_Obj *dp )
 //			IOS_RETURN;
 //		}
 //#endif // CAUTIOUS
-		assert( PF_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
+		assert( PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
 
-		(* PF_FREE_FN( OBJ_PLATFORM(dp) ) )(QSP_ARG  dp);
+		(* PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) )(QSP_ARG  dp);
 	}
 
 //#ifdef CAUTIOUS
@@ -203,8 +208,8 @@ void delvec(QSP_ARG_DECL  Data_Obj *dp)
 #ifdef ZOMBIE_SUPPORT
 	// This should go back in eventually!
 	if( OBJ_FLAGS(dp) & DT_STATIC && OWNS_DATA(dp) ){
-//sprintf(ERROR_STRING,"delvec:  static object %s will be made a zombie",OBJ_NAME(dp));
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"delvec:  static object %s will be made a zombie",OBJ_NAME(dp));
+advise(ERROR_STRING);
 		make_zombie(QSP_ARG  dp);
 		return;
 	}
@@ -224,8 +229,8 @@ void delvec(QSP_ARG_DECL  Data_Obj *dp)
 		 * be able to crash the program either...
 		 */
 
-//sprintf(ERROR_STRING,"delvec:  object %s (refcount = %d) will be made a zombie",OBJ_NAME(dp),dp->dt_refcount);
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"delvec:  object %s (refcount = %d) will be made a zombie",OBJ_NAME(dp),dp->dt_refcount);
+advise(ERROR_STRING);
 		make_zombie(QSP_ARG  dp);
 		return;
 	}
@@ -806,7 +811,7 @@ static Subscript_Functions dobj_ssf={
 	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	c_subscript
 };
 
-void dataobj_init(SINGLE_QSP_ARG_DECL)
+void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 {
 	static int dobj_inited=0;
 

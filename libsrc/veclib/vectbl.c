@@ -368,7 +368,7 @@ static void create_vfs(SINGLE_QSP_ARG_DECL)
 	init_vec_funcs(SINGLE_QSP_ARG);	// init item type
 
 	for(i=0;i<N_NVFS;i++){
-		add_item(QSP_ARG  vec_func_itp, &vec_func_tbl[i], NO_NODE );
+		add_item(QSP_ARG  vec_func_itp, &vec_func_tbl[i] );
 	}
 }
 

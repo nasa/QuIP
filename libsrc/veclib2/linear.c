@@ -64,15 +64,20 @@ static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(Data_Obj *dpto, Data_Obj *dpf
 //forwar declaration of typed rvdot
 static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS);
 
+static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS)
+{
+	NWARN("Sorry, rvdot not implemented yet!?");
+}
+
+
 //static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
 static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 {
 	u_long i,j,k;
 	//Vec_Obj_Args oa1;
 	Data_Obj *sub_dst_dp, *sub_xf_dp, *xf_row_dp, *sub_src_dp;
-	//Dimension_Set sizes, row_dimset={{1,1,1,1,1}};
-	Dimension_Set *sizes;
-	Dimension_Set *row_dimset;
+	Dimension_Set sz1, *sizes=(&sz1);
+	Dimension_Set rs1, *row_dimset=(&rs1);
 	index_t offsets[N_DIMENSIONS]={0,0,0,0,0};
 	index_t dst_indices[N_DIMENSIONS]={0,0,0,0,0};
 	index_t src_indices[N_DIMENSIONS]={0,0,0,0,0};
@@ -86,8 +91,6 @@ static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 	dpfr = OA_SRC1(oap);
 	xform_dp = OA_SRC2(oap);
 
-	sizes = NEW_DIMSET;
-	row_dimset = NEW_DIMSET;
 	SET_DIMENSION(row_dimset,0,1);
 	SET_DIMENSION(row_dimset,1,1);
 	SET_DIMENSION(row_dimset,2,1);
@@ -176,9 +179,6 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 	delvec(DEFAULT_QSP_ARG  sub_dst_dp);
 	delvec(DEFAULT_QSP_ARG  sub_src_dp);
 	delvec(DEFAULT_QSP_ARG  sub_xf_dp);
-
-	RELEASE_DIMSET(sizes)
-	RELEASE_DIMSET(row_dimset)
 }
 
 

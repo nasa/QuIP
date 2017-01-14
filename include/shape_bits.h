@@ -9,6 +9,7 @@
 
 
 /* flag bits */
+// These used to be data_obj flags (hence the DT prefix), but now they are all shape_info flags
 
 enum {
 	DT_SEQ_BIT,		/* 0:6 object types */
@@ -45,6 +46,7 @@ enum {
 	DT_SHP_BIT,		/* 31 shape checked */
 	DT_PAS_BIT,		/* 32 partially assigned */
 	DT_CBT_BIT,		/* 33 contiguous bitmap data */
+	DT_BMI_BIT,		/* 34 Bitmap_GPU_Info present */
 	N_DP_FLAGS		/* must be last */
 };
 
@@ -68,6 +70,7 @@ enum {
 #define DT_ZOMBIE	SHIFT_IT(DT_ZMB_BIT)		/* set if an application needs to keep this data */
 #define	DT_CONTIG	SHIFT_IT(DT_CNT_BIT)		/* object is known to be contiguous */
 #define	DT_CONTIG_BITMAP_DATA	SHIFT_IT(DT_CBT_BIT)		/* bitmap with contiguous enclosing data */
+#define	DT_HAS_BITMAP_GPU_INFO	SHIFT_IT(DT_BMI_BIT)		/* non-contiguous bitmap gpu info present */
 #define	DT_CHECKED	SHIFT_IT(DT_CHK_BIT)		/* contiguity checked */
 #define	DT_EVENLY	SHIFT_IT(DT_EVN_BIT)		/* evenly spaced data */
 #define	DT_ALIGNED	SHIFT_IT(DT_ALN_BIT)		/* data area from memalign */
@@ -176,7 +179,7 @@ typedef enum {
 
 typedef BITMAP_DATA_TYPE bitmap_word;
 #define BITS_PER_BYTE			8
-#define BYTES_PER_BITMAP_WORD		(sizeof(BITMAP_DATA_TYPE))
+#define BYTES_PER_BITMAP_WORD		((int)sizeof(BITMAP_DATA_TYPE))
 #define BITS_PER_BITMAP_WORD		(BYTES_PER_BITMAP_WORD*BITS_PER_BYTE)
 #define BIT_NUMBER_MASK			(BITS_PER_BITMAP_WORD-1)
 
@@ -192,7 +195,8 @@ typedef BITMAP_DATA_TYPE bitmap_word;
 /* This macro just divides by bits per word and rounds up to the nearest integer */
 #define N_BITMAP_WORDS(n)	(((n)+BITS_PER_BITMAP_WORD-1)/BITS_PER_BITMAP_WORD)
 
-#define BITMAP_WORD_COUNT(dp)	(N_BITMAP_WORDS(OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))+OBJ_BIT0(dp))*(OBJ_N_TYPE_ELTS(dp)/OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))))
+//#define BITMAP_WORD_COUNT(dp)	(N_BITMAP_WORDS(OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))+OBJ_BIT0(dp))*(OBJ_N_TYPE_ELTS(dp)/OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp))))
+#define BITMAP_WORD_COUNT(dp)	bitmap_obj_word_count(dp)
 
 // The mask wasn't needed before - that is this worked with n greater than
 // the number of bits, it just rolled around.  But on iOS devices, this failed.
