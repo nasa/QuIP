@@ -417,8 +417,6 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INC_BASES_QUAT_SRC3(which_dim)	INC_BASE(which_dim,qs3_base,s3inc)
 #define INC_BASES_QUAT_SRC4(which_dim)	INC_BASE(which_dim,qs4_base,s4inc)
 
-//#define INC_BASES_SBM(which_dim)	INC_BASE(which_dim,sbm_bit0,sbminc)
-//#define INC_BASES_DBM(which_dim)	INC_BASE(which_dim,dbm_bit0,dbminc)
 #define INC_BASES_SBM(which_dim)	INC_BASE(which_dim,sbm_base,sbminc)
 #define INC_BASES_DBM(which_dim)	INC_BASE(which_dim,dbm_base,dbminc)
 #define INC_BASES_DBM_			INC_BASES_DBM
@@ -531,8 +529,6 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INIT_PTRS_QUAT_SRC3	qs3_ptr = qs3_base[0];	/* pixel base */
 #define INIT_PTRS_QUAT_SRC4	qs4_ptr = qs4_base[0];	/* pixel base */
 
-//#define INIT_PTRS_SBM		sbm_bit = sbm_bit0[0];
-//#define INIT_PTRS_DBM		dbm_bit = dbm_bit0[0];
 #define INIT_PTRS_SBM		sbm_bit = sbm_base[0];
 #define INIT_PTRS_DBM		dbm_bit = dbm_base[0];
 #define INIT_PTRS_DBM_		INIT_PTRS_DBM
@@ -720,17 +716,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define INIT_BASES_DBM			\
 	dbm_ptr= VA_DEST_PTR(vap);	\
-	/*dbm_base[3]= VA_DEST_PTR(vap);*/	\
-	dbm_base[3]=VA_DBM_BIT0(vap);	\
-	/*dbm_bit0[3]=VA_DBM_BIT0(vap);*/	\
-	dbm_bit0=VA_DBM_BIT0(vap);
+	dbm_base[3]=VA_DBM_BIT0(vap);
 
 #define INIT_BASES_SBM				\
 	sbm_ptr= VA_SRC_PTR(vap,4);		\
-	/*sbm_base[3]= VA_SRC_PTR(vap,4);*/	\
-	sbm_base[3]=VA_SBM_BIT0(vap);		\
-	/*sbm_bit0[3]=VA_SBM_BIT0(vap);*/	\
-	sbm_bit0=VA_SBM_BIT0(vap);
+	sbm_base[3]=VA_SBM_BIT0(vap);
 
 #define INIT_BASES_SBM_1	INIT_BASES_1 INIT_BASES_SBM
 #define INIT_BASES_SBM_2	INIT_BASES_2 INIT_BASES_SBM
@@ -814,13 +804,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define COPY_BASES_DBM(index)			\
 						\
-	dbm_base[index] = dbm_base[index+1];	\
-	/*dbm_bit0[index] = dbm_bit0[index+1];*/
+	dbm_base[index] = dbm_base[index+1];
 
 #define COPY_BASES_SBM(index)			\
 						\
-	sbm_base[index] = sbm_base[index+1];	\
-	/*sbm_bit0[index] = sbm_bit0[index+1];*/
+	sbm_base[index] = sbm_base[index+1];
 
 #define COPY_BASES_DBM_SBM(index)	COPY_BASES_DBM(index)	\
 					COPY_BASES_SBM(index)
@@ -835,22 +823,16 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 
 #define DECLARE_BASES_SBM			\
-	/*bitmap_word *sbm_base[N_DIMENSIONS-1];*/	\
 	int sbm_base[N_DIMENSIONS-1];		\
 	bitmap_word *sbm_ptr;			\
-	int sbm_bit;				\
-	/*int sbm_bit0[N_DIMENSIONS-1];*/	\
-	int sbm_bit0;
+	int sbm_bit;
 
 #define DECLARE_BASES_DBM_	DECLARE_BASES_DBM
 
 /* base is not a bit number, not a pointer */
 
 #define DECLARE_BASES_DBM			\
-	/*bitmap_word *dbm_base[N_DIMENSIONS-1];*/	\
 	int dbm_base[N_DIMENSIONS-1];		\
-	/*int dbm_bit0[N_DIMENSIONS-1];*/		\
-	int dbm_bit0;				\
 	int dbm_bit;				\
 	bitmap_word *dbm_ptr;			\
 	DECLARE_FIVE_LOOP_INDICES

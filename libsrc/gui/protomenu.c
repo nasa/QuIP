@@ -73,7 +73,10 @@ static COMMAND_FUNC( do_hide_back )
 	quipViewController *qvc;
 	qvc= (quipViewController *)PO_VC(curr_panel);
 	[ qvc hideBackButton:hide ];
-#endif // BUILD_FOR_IOS
+#else // ! BUILD_FOR_IOS
+	sprintf(ERROR_STRING,"do_hide_back:  not implemented, ignoring value %d",hide);
+	advise(ERROR_STRING);
+#endif // ! BUILD_FOR_IOS
 }
 
 
@@ -87,7 +90,10 @@ static COMMAND_FUNC( do_show_done )
 	quipViewController *qvc;
 	qvc= (quipViewController *)PO_VC(curr_panel);
 	[ qvc setDoneAction:s ];
-#endif // BUILD_FOR_IOS
+#else // ! BUILD_FOR_IOS
+	sprintf(ERROR_STRING,"do_show_done:  not implemented, ignoring action '%s'",s);
+	advise(ERROR_STRING);
+#endif // ! BUILD_FOR_IOS
 }
 
 static COMMAND_FUNC(do_accept_edits)
@@ -234,7 +240,10 @@ static COMMAND_FUNC(do_scroll)
 		[po enableScrolling];
 	else
 		[po disableScrolling];
-#endif /* BUILD_FOR_IOS */
+#else /* ! BUILD_FOR_IOS */
+	sprintf(ERROR_STRING,"do_scroll:  not implemented, ignoring value %d",yn);
+	advise(ERROR_STRING);
+#endif /* ! BUILD_FOR_IOS */
 }
 
 // What does check_first do???
@@ -371,6 +380,7 @@ static COMMAND_FUNC( do_new_nav_group )
 	if( curr_nav_g != NO_NAV_GROUP ){
 		IOS_Item_Context *icp;
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		assert(icp!=NULL);
 	}
 	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
 	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
@@ -424,6 +434,7 @@ static COMMAND_FUNC( do_set_nav_group )
 	if( curr_nav_g != NO_NAV_GROUP ){
 		IOS_Item_Context *icp;
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		assert(icp!=NULL);
 	}
 	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
 	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
@@ -739,7 +750,10 @@ static COMMAND_FUNC( mk_console )
 	make_console_panel(QSP_ARG  s);
 
 	console_po = panel_obj_of(QSP_ARG  s);
-#endif /* BUILD_FOR_IOS */
+#else /* ! BUILD_FOR_IOS */
+	sprintf(ERROR_STRING,"mk_console:  not implemented, ignoring value '%s'",s);
+	advise(ERROR_STRING);
+#endif /* ! BUILD_FOR_IOS */
 }
 
 static COMMAND_FUNC( do_alert )
@@ -842,7 +856,13 @@ COMMAND_FUNC( do_protomenu )
 		const char *prog_name;
 #ifdef HAVE_X11
 		const char *display_name;
+		// why call this - does this force an init of X11?
 		display_name = which_display(SINGLE_QSP_ARG);
+		// the next lines suppress a warning about unused value of s
+		if( verbose ){
+			sprintf(MSG_STR,"Using display '%s'",display_name);
+			prt_msg(MSG_STR);
+		}
 #endif /* HAVE_X11 */
 
 		prog_name = tell_progname();

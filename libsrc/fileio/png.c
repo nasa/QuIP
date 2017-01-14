@@ -178,7 +178,7 @@ FIO_CLOSE_FUNC( pngfio )
  *	Create the library struct, and the info struct.
  */
 
-static int init_png(Image_File *ifp /* , png_infop info_ptr */ )
+static int init_png(QSP_ARG_DECL  Image_File *ifp /* , png_infop info_ptr */ )
 {
 	u_char sig[8];
 	png_infop info_ptr;
@@ -189,17 +189,20 @@ static int init_png(Image_File *ifp /* , png_infop info_ptr */ )
 	//orig_info_ptr = info_ptr;
 
 	rewind(ifp->if_fp);
-	fread(sig, 1, 8, ifp->if_fp);
+	if( fread(sig, 1 /* size */, 8 /* n_items */, ifp->if_fp) != 8 ){
+		WARN("Error reading PNG header!?");
+		return(-1);
+	}
 
 #ifdef FOOBAR
 	/* This used to work, but not on MBP with fink libpng... */
 	if (!png_check_sig(sig,8)) {
-		NWARN("init_png: not a valid PNG file (bad signature)");
+		WARN("init_png: not a valid PNG file (bad signature)");
 		return(-1);
 	}
 #else /* ! FOOBAR */
 	if( png_sig_cmp(sig,0,8) != 0 ){
-		NWARN("init_png:  not a valid PNG file (bad signature)");
+		WARN("init_png:  not a valid PNG file (bad signature)");
 		return -1;
 	}
 #endif /* ! FOOBAR */
@@ -207,14 +210,14 @@ static int init_png(Image_File *ifp /* , png_infop info_ptr */ )
 	HDR_P->png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,	NULL, NULL, NULL);
 
 	if (!HDR_P->png_ptr){
-		NWARN("error creating png read struct");
+		WARN("error creating png read struct");
 		return(-1);   /* out of memory */
 	}
 
 	info_ptr = png_create_info_struct(HDR_P->png_ptr);
 
 	if (!info_ptr) {
-		NWARN("error creating png info struct");
+		WARN("error creating png info struct");
 		png_destroy_read_struct(&HDR_P->png_ptr, NULL, NULL);
 		return(-1);   /* out of memory */
 	}
@@ -356,13 +359,13 @@ static int expand_image(Image_File *ifp)
  * (who wrote that comment?  doesn't sound like me (jbm) ...
  */
 
-static int get_hdr_info(Image_File *ifp)
+static int get_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 {
 	//png_infop info_ptr;
 
 	//info_ptr = HDR_P->info_ptr;
 
-	if( init_png(ifp /*, info_ptr*/ ) < 0)
+	if( init_png(QSP_ARG  ifp /*, info_ptr*/ ) < 0)
 		return(-1);
 
 	if( expand_image(ifp) < 0)
@@ -409,7 +412,7 @@ FIO_OPEN_FUNC( pngfio )
 
 	if( IS_READABLE(ifp) ) {
 //fprintf(stderr,"checking header info, reading png file...\n");
-		if(get_hdr_info(ifp) < 0)
+		if(get_hdr_info(QSP_ARG  ifp) < 0)
 			return(NO_IMAGE_FILE);
 
 	} else {

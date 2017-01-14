@@ -1734,12 +1734,12 @@ static void rebuild_match_cycle(QSP_ARG_DECL  Match_Cycle *mc_p)
 	Node *np;
 
 	while( (np=remHead(MATCH_CYCLE_LIST(mc_p))) != NULL ){
-		Frag_Match_Info *fmi_p;
+		//Frag_Match_Info *fmi_p;
+		//fmi_p = NODE_DATA(np);
 
-		fmi_p = NODE_DATA(np);
-		rls_node(np);
 		// We don't have to deallocate the frag_match_info structs...
 		// they should retain references through their own context.
+		rls_node(np);
 	}
 	SET_MATCH_CYCLE_CURR_NODE(mc_p,NULL);
 

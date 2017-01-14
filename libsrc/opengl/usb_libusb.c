@@ -2,6 +2,7 @@
 
 #ifdef HAVE_LIBUSB
 
+#include "quip_prot.h"
 #include "usb.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -214,9 +215,12 @@ int nvstusb_usb_read_bulk( struct nvstusb_usb_device *dev, int endpoint,
 	res = libusb_bulk_transfer(dev->handle, endpoint | LIBUSB_ENDPOINT_IN,
 			(unsigned char*) data, size, &recvd, 200);
 
-//fprintf(stderr,"nvstusb_usb_read_bulk:  res = %d\n",res);
-// figure out what the return value means,
-// so we can test return value!
+	if( verbose )
+		fprintf(stderr,"nvstusb_usb_read_bulk:  res = %d\n",res);
+
+	// figure out what the return value means,
+	// so we can test return value!
+	fprintf(stderr,"nvstusb_usb_read_bulk:  res = %d, need to test for valid value!?\n",res);
 
 	return recvd;
 }

@@ -60,6 +60,11 @@ static int doing_command_set = 0;	/* flag for sending set of commands */
 #define DO_KNOX_CMD( code, args, error_msg )				\
 	NO_KNOX_MSG
 
+#define NO_KNOX_MSG2(p,v)									\
+												\
+	sprintf(ERROR_STRING,"Sorry, no knox support in this build, can't set %s to %s!?",p,v);	\
+	WARN(ERROR_STRING);
+
 #define USES_NEWER_FIRMWARE(kdp)		0
 #define USES_OLDER_FIRMWARE(kdp)		0
 
@@ -797,7 +802,7 @@ static COMMAND_FUNC( do_select_device )
 
 	open_knox_device(QSP_ARG  s);
 #else // ! HAVE_KNOX
-	NO_KNOX_MSG
+	NO_KNOX_MSG2("device",s)
 #endif // ! HAVE_KNOX
 
 }

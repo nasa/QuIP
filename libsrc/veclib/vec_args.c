@@ -1304,9 +1304,6 @@ static void tabulate_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 
 void init_bitmap_gpu_info(Data_Obj *dp)
 {
-	bitnum_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
-//	dimension_t i,j,k,l,m;
-	dimension_t word_idx;
 	dimension_t n_words_expected;
 	Bitmap_GPU_Info *bmi_p;
 	void *ptr;
@@ -1323,17 +1320,12 @@ void init_bitmap_gpu_info(Data_Obj *dp)
 	// BUG? should zero the block just to be safe?
 
 	// initialize the word index from bit0
-	bit_number = OBJ_BIT0(dp);
-
-	// BUG - how do we know that dimension_t is 32 bits?  Well, we just know...
-	word_idx = (dimension_t) ((int32_t)-1);	// unlikely value
-
 	SET_BMI_NEXT_WORD_IDX( bmi_p, 0 );
 	SET_BMI_LAST_WORD_IDX( bmi_p, -1 );
 	traverse_bitmap(dp,tabulate_bitmap_word);
 
 #ifdef JUST_FOR_DEBUGGING
-	show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
+show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 #endif // JUST_FOR_DEBUGGING
 
 	// Now the struct has been completed - we need to allocate some memory on the gpu, and copy the data,

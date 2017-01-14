@@ -32,7 +32,10 @@ static Visca_Cam *the_vcam_p=NO_CAMERA;
 #define SET_PAN_SPEED(pkt,spd)	set_pan_speed(QSP_ARG  pkt,spd)
 #define SET_TILT_SPEED(pkt,spd)	set_tilt_speed(QSP_ARG  pkt,spd)
 
-#define NO_VISCA_MSG	WARN("Sorry, no VISCA support in this build.");
+#define NO_VISCA_MSG(p,v)									\
+												\
+	sprintf(ERROR_STRING,"Sorry, no VISCA support in this build, can't set %s to %s.",p,v);	\
+	WARN(ERROR_STRING);
 
 #ifdef FOOBAR
 #ifdef VISCA_THREADS
@@ -2443,7 +2446,11 @@ static COMMAND_FUNC( do_visca_cmd )
 		 */
 		const char *s;
 		s=NAMEOF("dummy word");
-		// generates a compiler warning, var set but not used?
+		// this message suppresses a compiler warning, var set but not used...
+		if( verbose ){
+			sprintf(ERROR_STRING,"Invalid command group, can't execute command '%s'",s);
+			advise(ERROR_STRING);
+		}
 		return;
 	}
 
@@ -2708,6 +2715,8 @@ static COMMAND_FUNC( do_set_async )
 	}
 #else	/* ! VISCA_THREADS */
 	WARN("Sorry, not compiled for asynchronous execution within VISCA library");
+	sprintf(ERROR_STRING,"Can't set async mode to %d",f);	// suppress compiler warning
+	advise(ERROR_STRING);
 #endif /* ! VISCA_THREADS */
 }
 
@@ -2982,7 +2991,7 @@ static COMMAND_FUNC( do_vport_open )
 #ifdef HAVE_VISCA
 	vport_p = open_port(QSP_ARG  s);
 #else // ! HAVE_VISCA
-	NO_VISCA_MSG
+	NO_VISCA_MSG("serial port",s)
 #endif // ! HAVE_VISCA
 }
 

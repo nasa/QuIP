@@ -31,6 +31,7 @@ noinst_HEADERS =					\
 			signed_vec.c			\
 			unsigned_vec.c			\
 							\
+			all_bit_kernels.h		\
 			bit_defs.h			\
 			bitmap_ops.h			\
 			by_defs.h			\
@@ -45,6 +46,7 @@ noinst_HEADERS =					\
 			fast_test.h			\
 			fftsupp.h			\
 			func_undefs.h			\
+			gen_bit_calls.h			\
 			gen_entries.h			\
 			gen_gpu_calls.h			\
 			gen_kern_args.h			\

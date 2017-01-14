@@ -712,7 +712,8 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
      // int (*handler)(Display *, XErrorEvent *)
 	init_error_names();
      	old_handler = XSetErrorHandler(quip_x_error_handler);
-//fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
+	if( verbose )
+		fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
 
 
 	add_event_func(QSP_ARG  i_loop);

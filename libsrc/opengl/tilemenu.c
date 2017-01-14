@@ -141,6 +141,8 @@ static COMMAND_FUNC( do_tile_info )
 
 	s=NAMEOF("tile name");
 	advise("Sorry, need to compile with HASH_TILE_NAMES defined to do lookup by name");
+	sprintf(ERROR_STRING,"Unable to print info for tile %s",s);
+	advise(ERROR_STRING);
 #endif
 }
 
