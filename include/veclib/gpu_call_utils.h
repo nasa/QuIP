@@ -282,6 +282,9 @@
 #define slow_src3	d[INDEX_SUM(index4)	OFFSET_D ]
 #define slow_src4	e[INDEX_SUM(index5)	OFFSET_E ]
 
+#define slow_dst1	slow_dst	// for gpu_cent (centroid) with two outputs
+#define slow_dst2	slow_src1	// for gpu_cent (centroid) with two outputs
+
 //#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
 //		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
 
