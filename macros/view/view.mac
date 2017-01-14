@@ -377,8 +377,6 @@ Pause_If
 .
 
 Define Show_Bytes 2 object viewer
-Assign t !is_contiguous('$1')
-advise "!is_contiguous('$1') = $t"
 If "!is_contiguous('$1')"
   Then "Show_Gappy $1 '$2'"
   Else "Show_Contig $1 '$2'"
