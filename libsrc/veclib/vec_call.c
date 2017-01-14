@@ -818,6 +818,7 @@ ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
+#ifdef FVDOT
 	/* We check the sizes of the args against the destination object - but in the case of ops like vdot,
 	 * (or any other scalar-returning projection op like vmax etc)
 	 * this may not match...
@@ -831,6 +832,7 @@ ADVISE(ERROR_STRING);
 		}
 		return 0;
 	}
+#endif // FVDOT
 
 	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), OA_SRC1(oap) ,OA_DEST(oap) )) == (-1) ){
 		sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg1 (%s) and destination (%s), function %s",
