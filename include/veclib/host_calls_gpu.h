@@ -615,7 +615,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 	XFER_SLOW_ARGS_2						\
 	SETUP_SLOW_LEN_2						\
 	/* BUG need to have a speed switch!? */				\
-fprintf(stderr,"H_CALL_PROJ_2V %s:  need to implement speed switch!?\n",#name);\
+fprintf(stderr,"H_CALL_PROJ_2V %s:  need to implement speed switch, calling fast function!?\n",#name);\
 	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 

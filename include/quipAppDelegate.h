@@ -21,6 +21,8 @@ typedef enum {
 	DEV_TYPE_NONE,	// we don't use this, so we know a value of 0 has not been set!
 	DEV_TYPE_IPAD2,
 	DEV_TYPE_IPOD_RETINA,
+	DEV_TYPE_IPAD_PRO_9_7,
+	DEV_TYPE_IPAD_PRO_12_9,
 	DEV_TYPE_UNKNOWN
 } known_device_type ;
 #endif // BUILD_FOR_IOS

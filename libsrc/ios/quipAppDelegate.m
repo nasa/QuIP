@@ -751,16 +751,11 @@ event_done:
 	// We create the dummy panel so that we can use expressions
 	// like ncols(iPad2)...
 
-	int w = dev_size.width;
+	// dev_size fields are float, can't switch
+	int w = dev_size.width, h = dev_size.height;
+
 	//Gen_Win *po;
 	switch( w ){
-		case 768:
-			// ipad Simulator - iPad 2, non-retina?
-			dev_type = DEV_TYPE_IPAD2;
-			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad2");
-			/*po=*/ dummy_panel(DEFAULT_QSP_ARG  "iPad2",
-				dev_size.width, dev_size.height);
-			break;
 		case 320:
 			// iPod w/ retina display - 320 x 480???
 			dev_type = DEV_TYPE_IPOD_RETINA;
@@ -770,6 +765,7 @@ event_done:
 				dev_size.width, dev_size.height);
 			break;
 		// What should we do if the app is launched with the device in landscape mode?
+		case 768:
 		case 1024:
 			// ipad Simulator - iPad 2, non-retina?
 			dev_type = DEV_TYPE_IPAD2;
@@ -777,9 +773,39 @@ event_done:
 			/*po=*/ dummy_panel(DEFAULT_QSP_ARG  "iPad2",
 				dev_size.width, dev_size.height);
 			break;
+		case 2732:
+ipad_pro_12_9:
+			dev_type = DEV_TYPE_IPAD_PRO_12_9;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad_Pro_12_9");
+			dummy_panel(DEFAULT_QSP_ARG  "iPad_Pro_12_9",
+				dev_size.width, dev_size.height);
+			break;
+		case 1536:
+ipad_pro_9_7:
+			dev_type = DEV_TYPE_IPAD_PRO_9_7;
+			force_reserved_var(DEFAULT_QSP_ARG  "DISPLAY","iPad_Pro_9_7");
+			dummy_panel(DEFAULT_QSP_ARG  "iPad_Pro_9_7",
+				dev_size.width, dev_size.height);
+			break;
+		case 2048:	// width
+			switch( h ){
+				case 2732:
+					goto ipad_pro_12_9;
+				case 1536:
+					goto ipad_pro_9_7;
+				default:
+					dev_type = DEV_TYPE_DEFAULT;
+					sprintf(DEFAULT_ERROR_STRING,
+						"Unexpected display size %d x %d!?",h,w);
+					NWARN(DEFAULT_ERROR_STRING);
+					break;
+			}
+			break;
 		default:
 			dev_type = DEV_TYPE_DEFAULT;
-			printf("Unexpected view width %d!?\n",w);
+			sprintf(DEFAULT_ERROR_STRING,
+				"Unexpected view width %d!?\n",w);
+			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
 }

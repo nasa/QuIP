@@ -35,6 +35,8 @@ Pause
 advise "Should be a ramp with increments of 1 (columns) and 10 (rows)"
 Ramp2D i_h 0 1 10
 Display i_h
+Pause
+advise "execute vsm_le db_h i_h 23"
 veclib
   execute vsm_le db_h i_h 23
   quit
@@ -43,8 +45,10 @@ Info db_h
 Pause
 
 Ramp2D i_g 0 1 10
+advise "Ramp2D i_g 0 1 10"
 Display i_g
 
+advise "execute vsm_le db_g i_g 23"
 veclib
   execute vsm_le db_g i_g 23
   quit
@@ -58,6 +62,7 @@ advise 'testing 2-D set, mul, add'
 VVMul i_g i_g i_g
 advise "Should be ramp-squared"
 Display i_g
+Pause
 advise "Should be doubled..."
 VVAdd i_g i_g i_g
 Display i_g

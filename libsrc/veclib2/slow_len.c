@@ -46,9 +46,9 @@
 
 
 int setup_slow_len(	Vector_Args *vap,
-			dimension_t start_dim,
-			int i_first,
-			int n_vec,
+			dimension_t start_dim,	// 0, or 1 for complex?
+			int i_first,		// index of first source vector
+			int n_vec,		// number of source vectors
 			Platform_Device *pdp )
 {
 	int i_dim;
@@ -58,6 +58,9 @@ int setup_slow_len(	Vector_Args *vap,
 #endif // FOOBAR
 
 	SET_VA_ITERATION_TOTAL(vap,1);
+	for(i_dim=0;i_dim<start_dim;i_dim++)
+		SET_VA_SLOW_SIZE_DIM(vap,i_dim,1);
+
 	for(i_dim=start_dim;i_dim<N_DIMENSIONS;i_dim++){
 		int i_src;
 
@@ -68,6 +71,7 @@ int setup_slow_len(	Vector_Args *vap,
 				DIMENSION(VARG_DIMSET(VA_SRC(vap,i_src)),i_dim));
 //fprintf(stderr,"setup_slow_len:  i_dim = %d, i_src = %d, max_d = %d\n",i_dim,i_src,max_d);
 		}
+		SET_VA_SLOW_SIZE_DIM(vap,i_dim,max_d);
 
 #ifdef FOOBAR
 		if( max_d > 1 ){

@@ -17,8 +17,10 @@ else if( !strcmp(#type,"int") ) fprintf(stderr,"\tint arg = %d\n",		\
 * ((int *)value));								\
 else if( !strcmp(#type,"uint32_t") ) fprintf(stderr,"\tuint32_t arg = %d\n",		\
 * ((uint32_t *)value));								\
-else if( !strcmp(#type,"void *") ) fprintf(stderr,"\tptr arg = 0x%lx\n",	\
-(u_long)value);									\
+else if( !strcmp(#type,"int32_t") ) fprintf(stderr,"\tint32_t arg = %d\n",		\
+* ((int32_t *)value));								\
+else if( !strcmp(#type,"void *") ) fprintf(stderr,"\tptr arg = 0x%lx (0x%lx)\n",	\
+(u_long)value,(u_long)(*((void **)value)));									\
 else if( !strcmp(#type,"bitmap_word") ) fprintf(stderr,"\tbitmap word arg = 0x%lx\n",\
 (/*bitmap_word*/u_long)value);								\
 else if( !strcmp(#type,"dim5") ) fprintf(stderr,"\tdim5 arg = %d %d %d %d %d\n",\
@@ -29,7 +31,8 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 ((dim3 *)value)->x,((dim3 *)value)->y,((dim3 *)value)->z);			\
 */
 
-#define SET_KERNEL_ARG(type,value)	_SET_KERNEL_ARG(kernel[pd_idx],type,value)
+#define SET_KERNEL_ARG(type,value)	\
+	_SET_KERNEL_ARG(kernel[pd_idx],type,value)
 #define SET_KERNEL_ARG_1(type,value)	_SET_KERNEL_ARG(kernel1[pd_idx],type,value)
 #define SET_KERNEL_ARG_2(type,value)	_SET_KERNEL_ARG(kernel2[pd_idx],type,value)
 
@@ -70,6 +73,7 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 #define SET_KERNEL_ARGS_FAST_CONV_DEST(t)	SET_KERNEL_ARGS_FAST_1
 
 #define SET_KERNEL_ARGS_SLOW_SIZE				\
+/*SHOW_SLOW_SIZE(vap)*/						\
 	SET_KERNEL_ARG(DIM5, & VA_SLOW_SIZE(vap))
 
 #define SET_KERNEL_ARGS_SLOW_SIZE_OFFSET	/* nop */
@@ -89,7 +93,7 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 								\
 	SET_KERNEL_ARG_1(void *,&dst_values)			\
 	SET_KERNEL_ARG_1(void *,&dst_counts)			\
-	SET_KERNEL_ARG_1(void *,&src_values)			\
+	SET_KERNEL_ARG_1(void *,&orig_src_values)		\
 	SET_KERNEL_ARG_1(void *,&indices)			\
 	SET_KERNEL_ARG_1( uint32_t, &len1 )			\
 	SET_KERNEL_ARG_1( uint32_t, &len2 )
@@ -97,6 +101,7 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 
 #define SET_KERNEL_ARGS_FAST_NOCC_HELPER			\
 								\
+	ki_idx=0;						\
 	SET_KERNEL_ARG_2(void *,&dst_values)			\
 	SET_KERNEL_ARG_2(void *,&dst_counts)			\
 	SET_KERNEL_ARG_2(void *,&src_values)			\
@@ -109,7 +114,8 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 
 #define SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER			\
 								\
-fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
+/*fprintf(stderr,"SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER:  len1 = %d, len2 = %d\n",len1,len2);*/\
+	ki_idx=0;						\
 	SET_KERNEL_ARG_2(void *,&dst_values)			\
 	SET_KERNEL_ARG_2(void *,&src_values)			\
 	SET_KERNEL_ARG_2( uint32_t, &len1 )			\
@@ -118,7 +124,7 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
 
 #define SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP			\
 								\
-fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
+/*fprintf(stderr,"SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP:  len1 = %d, len2 = %d\n",len1,len2);*/\
 	SET_KERNEL_ARG_1(void *,&dst_values)			\
 	SET_KERNEL_ARG_1(void *,&orig_src_values)			\
 	SET_KERNEL_ARG_1( uint32_t, &len1 )			\
@@ -148,6 +154,7 @@ fprintf(stderr,"SET_KERNEL_ARGS_PROJ_2V:  len1 = %d, len2 = %d\n",len1,len2);\
 
 #define SET_KERNEL_ARGS_FAST_INDEX_HELPER				\
 								\
+	ki_idx=0;						\
 	SET_KERNEL_ARG_2(void *,&indices)			\
 	SET_KERNEL_ARG_2(void *,&idx1_values)		\
 	SET_KERNEL_ARG_2(void *,&idx2_values)		\
@@ -423,7 +430,7 @@ fprintf(stderr,"Oops:  Need to implement %s!?\n",#mname);
 #define SET_KERNEL_ARGS_SLOW_INC4	SET_KERNEL_ARG(DIM3,&s3_xyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC5	SET_KERNEL_ARG(DIM3,&s4_xyz_incr)
 */
-#define SET_KERNEL_ARGS_SLOW_INC1	SET_KERNEL_ARG(DIM5,&dst_vwxyz_incr)
+#define SET_KERNEL_ARGS_SLOW_INC1	SET_KERNEL_ARG(DIM5,&dst_vwxyz_incr)	/* SHOW_INCR(&dst_vwxyz_incr) */
 #define SET_KERNEL_ARGS_SLOW_INC2	SET_KERNEL_ARG(DIM5,&s1_vwxyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC3	SET_KERNEL_ARG(DIM5,&s2_vwxyz_incr)
 #define SET_KERNEL_ARGS_SLOW_INC4	SET_KERNEL_ARG(DIM5,&s3_vwxyz_incr)
