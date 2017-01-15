@@ -207,6 +207,16 @@ typedef struct vector_args {
 #define VA_DBM_N_BITMAP_WORDS(vap)		BMI_N_WORDS( VA_DBM_GPU_INFO_PTR(vap) )
 //#define VA_SLOW_SIZE(vap)			(vap)->va_iteration_size.ds_dimension
 #define VA_SLOW_SIZE(vap)			(vap)->va_slow_size
+#define VA_SLOW_SIZE_DIM(vap,idx)		(vap)->va_slow_size.d5_dim[idx]
+#define SET_VA_SLOW_SIZE_DIM(vap,idx,v)		(vap)->va_slow_size.d5_dim[idx] = v
+
+#define SHOW_SLOW_SIZE(vap)			\
+fprintf(stderr,"VA_SLOW_SIZE:  %d %d %d %d %d\n",\
+(vap)->va_slow_size.d5_dim[0],	\
+(vap)->va_slow_size.d5_dim[1],	\
+(vap)->va_slow_size.d5_dim[2],	\
+(vap)->va_slow_size.d5_dim[3],	\
+(vap)->va_slow_size.d5_dim[4] );
 
 //#define VA_ITERATION_COUNT(vap,idx)		(vap)->va_total_count
 //#define SET_VA_ITERATION_COUNT(vap,idx,v)	(vap)->va_total_count = v

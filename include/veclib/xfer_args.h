@@ -320,7 +320,7 @@
 											\
 	XFER_DBM_GPU_INFO								\
 	SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));	\
-fprintf(stderr,"XFER_EQSP_DBM_GPU_INFO:  iteration total = %d\n",VA_ITERATION_TOTAL(vap));
+/*fprintf(stderr,"XFER_EQSP_DBM_GPU_INFO:  iteration total = %d\n",VA_ITERATION_TOTAL(vap));*/
 
 #define XFER_SLOW_DBM_GPU_INFO								\
 											\

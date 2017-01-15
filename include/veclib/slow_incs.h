@@ -1,4 +1,11 @@
 
+#define SHOW_INCR(inc_p)	fprintf(stderr,"%s:  %d %d %d %d %d\n",#inc_p,\
+(inc_p)->d5_dim[0],\
+(inc_p)->d5_dim[1],\
+(inc_p)->d5_dim[2],\
+(inc_p)->d5_dim[3],\
+(inc_p)->d5_dim[4]);
+
 #define DECL_SLOW_INCRS_1	dim5 dst_vwxyz_incr;		\
 				/*int dim_indices[3];*/
 #define DECL_SLOW_INCRS_SRC1	dim5 s1_vwxyz_incr;
