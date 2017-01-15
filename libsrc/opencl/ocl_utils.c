@@ -604,6 +604,10 @@ cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 	kernel = clCreateKernel(program, name, &status);
 	if( status != CL_SUCCESS ){
 		report_ocl_error(DEFAULT_QSP_ARG  status,"clCreateKernel");
+		if( status == CL_INVALID_KERNEL_NAME ){
+			sprintf(DEFAULT_ERROR_STRING,"Name:  \"%s\"",name);
+			NADVISE(DEFAULT_ERROR_STRING);
+		}
 		return NULL;
 	}
 

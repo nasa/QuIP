@@ -21,28 +21,6 @@
 
 #define SET_MAX_THREADS_FROM_OBJ(dp)	// nop
 
-#ifdef MOVED
-
-// can be shared with CUDA, should be moved?
-// moved back to veclib/xfer_args.h, with BUILD_FOR_GPU guard...
-
-#define XFER_DBM_GPU_INFO	if( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp) == NULL ){				\
-					/* only for gpu objects! */							\
-					init_bitmap_gpu_info(bitmap_dst_dp);						\
-				}											\
-				SET_VA_DBM_GPU_INFO_PTR(vap, BITMAP_OBJ_GPU_INFO_DEV_PTR(bitmap_dst_dp));
-
-#define XFER_EQSP_DBM_GPU_INFO	XFER_DBM_GPU_INFO									\
-				SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));	\
-fprintf(stderr,"XFER_EQSP_DBM_GPU_INFO:  iteration total = %d\n",VA_ITERATION_TOTAL(vap));
-
-#define XFER_SLOW_DBM_GPU_INFO	XFER_DBM_GPU_INFO									\
-				SET_VA_ITERATION_TOTAL(vap,BMI_N_WORDS( BITMAP_OBJ_GPU_INFO_HOST_PTR(bitmap_dst_dp)));
-				// BUG?  need to set all sizes?
-
-#endif // MOVED
-
-
 // PORT - insure_gpu_device ???
 
 #define GET_MAX_THREADS( dp )						\
@@ -166,13 +144,13 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	CHECK_KERNEL_1(name,,GPU_CALL_NAME(name))
 
 #define CHECK_FAST_KERNEL_1(name)						\
-	CHECK_KERNEL_1(name,fast,GPU_CALL_NAME(name))
+	CHECK_KERNEL_1(name,fast,GPU_FAST_CALL_NAME(name))
 
 #define CHECK_NOSPEED_KERNEL_2(name)						\
 	CHECK_KERNEL_2(name,,GPU_CALL_NAME(name))
 
 #define CHECK_FAST_KERNEL_2(name)						\
-	CHECK_KERNEL_2(name,fast,GPU_CALL_NAME(name))
+	CHECK_KERNEL_2(name,fast,GPU_FAST_CALL_NAME(name))
 
 #define CHECK_FAST_KERNEL(name)						\
 	CHECK_KERNEL(name,fast,GPU_FAST_CALL_NAME(name))
@@ -196,6 +174,8 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));				\
 	if( k[pd_idx] == NULL ){	/* one-time initialization */	\
 		ksrc = KERN_SOURCE_NAME(name,ktyp);			\
+/*NADVISE("_CHECK_KERNEL:  program source:");*/	\
+/*NADVISE(ksrc);*/					\
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));	\
 		if( program == NULL ) 					\
 			NERROR1("program creation failure!?");		\
@@ -295,9 +275,9 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 									\
 /*fprintf(stderr,"checking for nocc_setup kernel\n");*/\
 	CHECK_FAST_KERNEL_1(name##_nocc_setup)			\
-/*fprintf(stderr,"setting kernel args for nocc_setup\n");*/\
+/*fprintf(stderr,"setting kernel args for nocc_setup\n")*/;\
 	SET_KERNEL_ARGS_FAST_NOCC_SETUP					\
-/*fprintf(stderr,"setting up blocks for nocc_setup\n");*/\
+/*fprintf(stderr,"setting up blocks for nocc_setup\n")*/;\
 	/*SETUP_FAST_BLOCKS_*/ /* uses VA_LENGTH */			\
 	global_work_size[0] = len1;					\
 /*fprintf(stderr,"calling fast setup kernel for %s, n_threads = %d\n",#name,len1);*/\
@@ -308,22 +288,21 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 									\
 /*fprintf(stderr,"checking for nocc_helper kernel\n");*/\
 	CHECK_FAST_KERNEL_2(name##_nocc_helper)			\
-/*fprintf(stderr,"setting kernel args for nocc_helper\n");*/\
-	ki_idx=0;							\
+/*fprintf(stderr,"setting kernel args for nocc_helper\n")*/;\
 	SET_KERNEL_ARGS_FAST_NOCC_HELPER					\
-/*fprintf(stderr,"setting up blocks for nocc_helper\n");*/\
+/*fprintf(stderr,"setting up blocks for nocc_helper\n")*/;\
 	global_work_size[0] = len1;					\
 /*fprintf(stderr,"calling fast helper kernel for %s, n_threads = %d\n",#name,len1);*/\
 	CALL_FAST_KERNEL_2(name,,,,)
 
 #define CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)				\
-fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(%s)\n",#name);		\
+/*fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(%s)\n",#name);*/		\
 	CHECK_FAST_KERNEL_1(name##_setup)						\
 	SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP				\
 	CALL_FAST_KERNEL_1(name##_setup,,,,)
 
 #define CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(name)				\
-fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s)\n",#name);	\
+/*fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s)\n",#name);*/	\
 	CHECK_FAST_KERNEL_2(name##_helper)						\
 	SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER				\
 	CALL_FAST_KERNEL_2(name##_helper,,,,)

@@ -1,0 +1,25 @@
+max_warnings 2
+
+Set w 8
+Set h 7
+
+Define Testit 1 prefix
+Image ${1}_image $h $w 1 float
+
+advise '\nTest $1'
+
+Ramp2D ${1}_image 1 1 10
+Display ${1}_image
+
+VSet ${1}_image 66
+Display ${1}_image
+
+.
+
+Testit h
+platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
+Testit g
+
+exit
+
+

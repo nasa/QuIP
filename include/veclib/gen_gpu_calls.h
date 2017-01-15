@@ -286,11 +286,15 @@ __VEC_FUNC_MM_IND( func_name, statement1, statement2 )
 
 #define ___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr )	\
 								\
+KERNEL_FUNC_PRELUDE						\
+								\
 KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
 	( DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP )		\
 	FAST_2V_PROJ_BODY(expr,std_type)
 
 #define ___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr )	\
+								\
+KERNEL_FUNC_PRELUDE						\
 								\
 KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 	( DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER )		\
@@ -301,7 +305,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 	INIT_INDICES_1						\
 								\
 	if( IDX1 < len2 ){					\
-		type *s2;					\
+		KERNEL_ARG_QUALIFIER type *s2;			\
 		s2 = s1 + len1;					\
 		dest[IDX1] = expr ;				\
 	} else if( IDX1 < len1 ){				\
@@ -312,12 +316,16 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 
 #define ___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )\
 									\
+KERNEL_FUNC_PRELUDE						\
+								\
 	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
 		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )		\
 	FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,std_cpx)
 
 #define ___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )\
 									\
+KERNEL_FUNC_PRELUDE						\
+								\
 	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )		\
 	FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,dest_cpx)
@@ -341,12 +349,16 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 
 #define ___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
 									\
+KERNEL_FUNC_PRELUDE						\
+								\
 	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
 		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP )		\
 	FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,std_quat)
 
 #define ___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
 									\
+KERNEL_FUNC_PRELUDE						\
+								\
 	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER )		\
 	FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,dest_quat)
@@ -373,10 +385,13 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
 
 
 
+// BUG? does this need to be two macros, one for setup and one for helper?
 
 
 #define ___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
 										\
+KERNEL_FUNC_PRELUDE						\
+								\
 	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_IDX_SETUP_NAME(func_name)		\
 		( DECLARE_KERN_ARGS_FAST_IDX_SETUP )				\
 	{									\

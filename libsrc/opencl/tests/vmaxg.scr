@@ -6,11 +6,14 @@ Set n 8
 Define Testit 1 prefix
 Vector ${1}_indices $n 1 int32
 Vector ${1}_f $n 1 float
+advise "Initializing 1-D ramp"
 Ramp1D ${1}_f 0 1
 Scalar ${1}_nocc 1 int32
 Scalar ${1}_extval 1 float
 
+advise "Initializing indices to indicator value 99"
 VSet ${1}_indices 99
+advise "veclib execute vmaxg ${1}_indices ${1}_f ${1}_extval ${1}_nocc quit"
 veclib execute vmaxg ${1}_indices ${1}_f ${1}_extval ${1}_nocc quit
 advise '\nTest 1'
 Display ${1}_f
