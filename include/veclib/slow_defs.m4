@@ -17,6 +17,22 @@ define(`qsrc2',`slow_qsrc2')
 define(`qsrc3',`slow_qsrc3')
 define(`qsrc4',`slow_qsrc4')
 
+dnl	SET_INDEX(this_index)
+
+define(`SET_INDEX',`							\
+									\
+	$1.d5_dim[0] = THREAD_INDEX_X;					\
+	$1.d5_dim[1] = $1.d5_dim[0] / szarr.d5_dim[0];			\
+	$1.d5_dim[2] = $1.d5_dim[1] / szarr.d5_dim[1];			\
+	$1.d5_dim[3] = $1.d5_dim[2] / szarr.d5_dim[2];			\
+	$1.d5_dim[4] = $1.d5_dim[3] / szarr.d5_dim[3];			\
+	$1.d5_dim[0] %= szarr.d5_dim[0];				\
+	$1.d5_dim[1] %= szarr.d5_dim[1];				\
+	$1.d5_dim[2] %= szarr.d5_dim[2];				\
+	$1.d5_dim[3] %= szarr.d5_dim[3];				\
+	$1.d5_dim[4] %= szarr.d5_dim[4];				\
+')
+
 // Slow versions of these not implemented yet...
 define(`_VEC_FUNC_MM_NOCC',`')
 define(`_VEC_FUNC_2V_PROJ',`')
@@ -99,7 +115,7 @@ define(`IDX1_2',`(index1.d5_dim[2])')
 define(`INC1_1',`inc1.d5_dim[1]')
 define(`INC1_2',`inc1.d5_dim[2]')
 
-define(`SCALE_INDEX',					\
+define(`SCALE_INDEX',`					\
 	$1.d5_dim[0] *= $2.d5_dim[0];					\
 	$1.d5_dim[1] *= $2.d5_dim[1];					\
 	$1.d5_dim[2] *= $2.d5_dim[2];					\

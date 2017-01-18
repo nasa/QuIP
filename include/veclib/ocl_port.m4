@@ -27,7 +27,7 @@ define(`OFFSET_D',`+ d_offset')
 define(`OFFSET_E',`+ e_offset')
 
 define(`THREAD_INDEX_X',`get_global_id(0)')
-define(`SET_INDEX',$1 = get_global_id(0);)
+dnl define(`SET_INDEX',$1 = get_global_id(0);)
 define(`OCL_OFFSET_TYPE',`int')
 
 include(`../../include/veclib/gen_port.m4')
