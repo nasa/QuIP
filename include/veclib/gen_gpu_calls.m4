@@ -96,6 +96,7 @@ define(`GENERIC_LS_VFUNC_CALL', GENERIC_VFUNC_CALL($1,LSHIFT_SWITCH_32($4,$5,$6)
 
 // PORT ?
 
+dnl	What are the 7 arguments?  name statements bitmaps typ scalars vectors extra
 define(`GENERIC_FAST_VEC_FUNC', _GENERIC_FAST_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
 define(`GENERIC_EQSP_VEC_FUNC', _GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
 define(`GENERIC_SLOW_VEC_FUNC', _GENERIC_SLOW_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
@@ -126,8 +127,11 @@ void name( `DECLARE_KERN_ARGS_FAST_'$3$4$5$6)			\
 // unused bits, but it might cause a seg violation when trying to access
 // corresponding non-bit args???  BUG?
 
+dnl	FAST_DBM_LOOP(statement,advance)
+
 define(`FAST_DBM_LOOP',`							\
 							\
+	/* fast_dbm_loop /$1/ /$2/ */					\
 	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){							\
 		dbm_bit = NUMBERED_BIT(i_dbm_bit);							\
 		$1 ;							\
@@ -174,43 +178,63 @@ define(`SLOW_DBM_LOOP',`							\
 // PORT ?
 // BUG these seem to be re-defined in ocl...
 
+define(`ADVANCE_FAST_1S_',`')
+define(`ADVANCE_FAST_SBM',`')
+define(`ADVANCE_FAST_1S_1SRC',`ADVANCE_FAST_SRC1')
+define(`ADVANCE_FAST_1SRC',`ADVANCE_FAST_SRC1')
+define(`ADVANCE_FAST_2SRCS',`ADVANCE_FAST_SRC1 ADVANCE_FAST_SRC2')
+
+define(`ADVANCE_EQSP_1S_',`')
+define(`ADVANCE_EQSP_SBM',`')
+define(`ADVANCE_EQSP_1S_1SRC',`ADVANCE_EQSP_SRC1')
+define(`ADVANCE_EQSP_1SRC',`ADVANCE_EQSP_SRC1')
+define(`ADVANCE_EQSP_2SRCS',`ADVANCE_EQSP_SRC1 ADVANCE_EQSP_SRC2')
+
+define(`ADVANCE_SLOW_1S_',`')
+define(`ADVANCE_SLOW_SBM',`')
+define(`ADVANCE_SLOW_1S_1SRC',`ADVANCE_SLOW_SRC1')
+define(`ADVANCE_SLOW_1SRC',`ADVANCE_SLOW_SRC1')
+define(`ADVANCE_SLOW_2SRCS',`ADVANCE_SLOW_SRC1 ADVANCE_SLOW_SRC2')
+
 define(`ADVANCE_FAST_SRC1',index2++;)
 define(`ADVANCE_FAST_SRC2',index3++;)
 define(`ADVANCE_FAST_SRC3',index4++;)
 define(`ADVANCE_FAST_SRC4',index5++;)
-define(`ADVANCE_FAST_DBM',`')
-define(`ADVANCE_FAST_SBM',`')
+dnl	define(`ADVANCE_FAST_DBM',`')
+dnl	define(`ADVANCE_FAST_SBM',`')
 
 define(`ADVANCE_EQSP_SRC1',index2 += inc2;)
 define(`ADVANCE_EQSP_SRC2',index3 += inc3;)
 define(`ADVANCE_EQSP_SRC3',index4 += inc4;)
 define(`ADVANCE_EQSP_SRC4',index5 += inc5;)
-define(`ADVANCE_EQSP_DBM',`')
-define(`ADVANCE_EQSP_SBM',`')
+dnl	define(`ADVANCE_EQSP_DBM',`')
+dnl	define(`ADVANCE_EQSP_SBM',`')
 
+dnl BUG - why dim[1] and not dim[0] ???
 define(`ADVANCE_SLOW_SRC1',index2.d5_dim[1]+=inc2.d5_dim[1];)
 define(`ADVANCE_SLOW_SRC2',index3.d5_dim[1]+=inc3.d5_dim[1];)
 define(`ADVANCE_SLOW_SRC3',index4.d5_dim[1]+=inc4.d5_dim[1];)
 define(`ADVANCE_SLOW_SRC4',index5.d5_dim[1]+=inc5.d5_dim[1];)
-define(`ADVANCE_SLOW_DBM',`')
-define(`ADVANCE_SLOW_SBM',`')
 
-define(`ADVANCE_FAST_DBM_',ADVANCE_FAST_DBM)
-define(`ADVANCE_FAST_DBM_1SRC',ADVANCE_FAST_DBM ADVANCE_FAST_SRC1)
-define(`ADVANCE_FAST_DBM_2SRCS',ADVANCE_FAST_DBM_1SRC ADVANCE_FAST_SRC2)
-define(`ADVANCE_FAST_DBM_SBM',ADVANCE_FAST_DBM ADVANCE_FAST_SBM)
+dnl	define(`ADVANCE_SLOW_DBM',`')
+dnl	define(`ADVANCE_SLOW_SBM',`')
 
-define(`ADVANCE_EQSP_DBM_',ADVANCE_EQSP_DBM)
-define(`ADVANCE_EQSP_DBM_1SRC',ADVANCE_EQSP_DBM ADVANCE_EQSP_SRC1)
-define(`ADVANCE_EQSP_DBM_1S_1SRC',ADVANCE_EQSP_DBM_1SRC)
-define(`ADVANCE_EQSP_DBM_1S_',`')
-define(`ADVANCE_EQSP_DBM_2SRCS',ADVANCE_EQSP_DBM_1SRC ADVANCE_EQSP_SRC2)
-define(`ADVANCE_EQSP_DBM_SBM',ADVANCE_EQSP_DBM ADVANCE_EQSP_SBM)
+dnl	define(`ADVANCE_FAST_DBM_',ADVANCE_FAST_DBM)
+dnl	define(`ADVANCE_FAST_DBM_1SRC',ADVANCE_FAST_DBM ADVANCE_FAST_SRC1)
+dnl	define(`ADVANCE_FAST_DBM_2SRCS',ADVANCE_FAST_DBM_1SRC ADVANCE_FAST_SRC2)
+dnl	define(`ADVANCE_FAST_DBM_SBM',ADVANCE_FAST_DBM ADVANCE_FAST_SBM)
 
-define(`ADVANCE_SLOW_DBM_',ADVANCE_SLOW_DBM)
-define(`ADVANCE_SLOW_DBM_1SRC',ADVANCE_SLOW_DBM ADVANCE_SLOW_SRC1)
-define(`ADVANCE_SLOW_DBM_2SRCS',ADVANCE_SLOW_DBM_1SRC ADVANCE_SLOW_SRC2)
-define(`ADVANCE_SLOW_DBM_SBM',ADVANCE_SLOW_DBM ADVANCE_SLOW_SBM)
+dnl	define(`ADVANCE_EQSP_DBM_',ADVANCE_EQSP_DBM)
+dnl	define(`ADVANCE_EQSP_DBM_1SRC',ADVANCE_EQSP_DBM ADVANCE_EQSP_SRC1)
+dnl	define(`ADVANCE_EQSP_DBM_1S_1SRC',ADVANCE_EQSP_DBM_1SRC)
+dnl	define(`ADVANCE_EQSP_DBM_1S_',`')
+dnl	define(`ADVANCE_EQSP_DBM_2SRCS',ADVANCE_EQSP_DBM_1SRC ADVANCE_EQSP_SRC2)
+dnl	define(`ADVANCE_EQSP_DBM_SBM',ADVANCE_EQSP_DBM ADVANCE_EQSP_SBM)
+
+dnl	define(`ADVANCE_SLOW_DBM_',ADVANCE_SLOW_DBM)
+dnl	define(`ADVANCE_SLOW_DBM_1SRC',ADVANCE_SLOW_DBM ADVANCE_SLOW_SRC1)
+dnl	define(`ADVANCE_SLOW_DBM_2SRCS',ADVANCE_SLOW_DBM_1SRC ADVANCE_SLOW_SRC2)
+dnl	define(`ADVANCE_SLOW_DBM_SBM',ADVANCE_SLOW_DBM ADVANCE_SLOW_SBM)
 
 define(`GENERIC_FAST_VEC_FUNC_DBM', _GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
 define(`GENERIC_EQSP_VEC_FUNC_DBM', _GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
@@ -623,11 +647,13 @@ define(`__GENERIC_FAST_VEC_FUNC',`					\
 									\
 KERNEL_FUNC_PRELUDE							\
 									\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST__NAME($1)			\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1)			\
 	( `DECLARE_KERN_ARGS_FAST_'$3$4$5$6 )				\
 {									\
-	`DECL_EXTRA_'$7							\
-	`INIT_INDICES_'$3$6						\
+	dnl `DECL_EXTRA_'$7							\
+	DECL_EXTRA($7)				\
+	dnl `INIT_INDICES_'$3$6						\
+	INIT_INDICES($3,$6)			\
 	/* generic_fast_vec_func statement */							\
 	/* statement = $2 */							\
 	$2 ;								\
@@ -635,15 +661,20 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST__NAME($1)			\
 }									\
 ')
 
+dnl	__GENERIC_EQSP_VEC_FUNC( name, statements, bitmaps, typ, scalars, vectors, extra )
+
 define(`__GENERIC_EQSP_VEC_FUNC',`			\
 			\
 KERNEL_FUNC_PRELUDE			\
 			\
 KERNEL_FUNC_QUALIFIER void VFUNC_EQSP_NAME($1)( `DECLARE_KERN_ARGS_EQSP_'$3$4$5$6 )			\
 {			\
-	`DECL_EXTRA_'$7			\
-	`INIT_INDICES_'$3$6			\
-	`SCALE_INDICES_EQSP_'$3$6			\
+	dnl `DECL_EXTRA_'$7			\
+	DECL_EXTRA($7)				\
+	dnl `INIT_INDICES_'$3$6			\
+	INIT_INDICES($3,$6)			\
+	dnl `SCALE_INDICES_EQSP_'$3$6			\
+	SCALE_INDICES($3,$6)			\
 	$2;			\
 }			\
 ')
@@ -656,9 +687,12 @@ KERNEL_FUNC_PRELUDE			\
 			\
 KERNEL_FUNC_QUALIFIER void VFUNC_SLOW_NAME($1)( `DECLARE_KERN_ARGS_SLOW_'$3$4$5$6)			\
 {			\
-	`DECL_EXTRA_'$7			\
-	`INIT_INDICES_'$3$6			\
-	`SCALE_INDICES_'$3$6			\
+	dnl `DECL_EXTRA_'$7			\
+	DECL_EXTRA($7)				\
+	dnl `INIT_INDICES_'$3$6			\
+	INIT_INDICES($3,$6)			\
+	dnl `SCALE_INDICES_'$3$6			\
+	SCALE_INDICES($3,$6)			\
 	$2;			\
 }			\
 ')
@@ -669,8 +703,10 @@ KERNEL_FUNC_PRELUDE			\
 			\
 KERNEL_FUNC_QUALIFIER void VFUNC_FLEN_NAME($1)( `DECLARE_KERN_ARGS_FLEN_'$3$4$5$6)			\
 {			\
-	`DECL_EXTRA_'$7			\
-	`INIT_INDICES_'$3$6			\
+	dnl `DECL_EXTRA_'$7			\
+	DECL_EXTRA($7)				\
+	dnl `INIT_INDICES_'$3$6			\
+	INIT_INDICES($3,$6)			\
 	if( IDX1 < len) {			\
 		$2 ;			\
 	}			\
@@ -683,10 +719,13 @@ KERNEL_FUNC_PRELUDE			\
 			\
 KERNEL_FUNC_QUALIFIER void VFUNC_ELEN_NAME($1)( `DECLARE_KERN_ARGS_ELEN_'$3$4$5$6)			\
 {			\
-	`DECL_EXTRA_'$7			\
-	`INIT_INDICES_'$3$6			\
+	dnl `DECL_EXTRA_'$7			\
+	DECL_EXTRA($7)				\
+	dnl `INIT_INDICES_'$3$6			\
+	INIT_INDICES($3,$6)			\
 	if( IDX1 < len ){			\
-		`SCALE_INDICES_EQSP_'$3$6			\
+		dnl `SCALE_INDICES_EQSP_'$3$6			\
+		SCALE_INDICES($3,$6)		\
 		$2;			\
 	}			\
 }			\
@@ -704,10 +743,13 @@ KERNEL_FUNC_PRELUDE	\
 					\
 KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( `DECLARE_KERN_ARGS_SLEN_'$3$4$5$6)					\
 {					\
-	`DECL_EXTRA_'$7					\
-	`INIT_INDICES_'$3$6					\
+	dnl `DECL_EXTRA_'$7					\
+	DECL_EXTRA($7)				\
+	dnl `INIT_INDICES_'$3$6					\
+	INIT_INDICES($3,$6)			\
 	if( SLEN_IDX_TEST(index1,szarr) ){					\
-		`SCALE_INDICES_'$3$6					\
+		dnl `SCALE_INDICES_'$3$6					\
+		SCALE_INDICES($3,$6)				\
 		$2;					\
 	}					\
 }					\
@@ -826,6 +868,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( DECLARE_KERN_ARGS_SLEN_CONV($3) 
 }					\
 ')
 
+dnl	___GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
 
 define(`__GENERIC_FAST_VEC_FUNC_DBM',`					\
 					\
@@ -833,8 +876,11 @@ KERNEL_FUNC_PRELUDE					\
 					\
 KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1)( `DECLARE_KERN_ARGS_FAST_DBM_'$3$4$5 )					\
 {					\
-	`INIT_INDICES_DBM_'$4$5					\
-	FAST_DBM_LOOP( $2, `ADVANCE_FAST_DBM_'$5 )					\
+	dnl `INIT_INDICES_DBM_'$4$5					\
+	/* init_indices /DBM_/ /$5/ */					\
+	INIT_INDICES(`DBM_',$5)			\
+	/* fast_dbm_loop /$2/ /$5/ */					\
+	FAST_DBM_LOOP( $2, ADVANCE_FAST_$4$5)					\
 }					\
 ')
 
@@ -848,12 +894,16 @@ KERNEL_FUNC_PRELUDE					\
 					\
 KERNEL_FUNC_QUALIFIER void VFUNC_EQSP_NAME($1)( `DECLARE_KERN_ARGS_EQSP_DBM_'$3$4$5 )					\
 {					\
-	`INIT_INDICES_DBM_'$4$5					\
-	`SCALE_INDICES_EQSP_DBM_'$4$5					\
-	EQSP_DBM_LOOP($2,`ADVANCE_EQSP_DBM_'$4$5)					\
+	dnl `INIT_INDICES_DBM_'$4$5					\
+	INIT_INDICES(`DBM_',$5)			\
+	dnl `SCALE_INDICES_EQSP_DBM_'$4$5					\
+	SCALE_INDICES(`DBM_',$5)					\
+	EQSP_DBM_LOOP($2,ADVANCE_EQSP_$4$5)					\
 }					\
 ')
 
+
+dnl	__GENERIC_SLOW_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
 
 define(`__GENERIC_SLOW_VEC_FUNC_DBM',`								\
 												\
@@ -861,10 +911,15 @@ KERNEL_FUNC_PRELUDE										\
 												\
 KERNEL_FUNC_QUALIFIER void VFUNC_SLOW_NAME($1)( `DECLARE_KERN_ARGS_SLOW_DBM_'$3$4$5)		\
 {												\
-	`INIT_INDICES_DBM_'$4$5									\
-	`SCALE_INDICES_DBM_'$5									\
+	dnl `INIT_INDICES_DBM_'$4$5									\
+	/* init_indices /DBM_/ /$5/ */					\
+	INIT_INDICES(`DBM_',$5)			\
+	dnl `SCALE_INDICES_DBM_'$5									\
+	/* scale_indices /DBM_/ /$5/ */					\
+	SCALE_INDICES(`DBM_',$5)								\
 												\
-	SLOW_DBM_LOOP( $2 , `ADVANCE_SLOW_DBM_'$5 )						\
+	/* slow_dbm_loop /$2/ /$5/ */					\
+	SLOW_DBM_LOOP( $2 , ADVANCE_SLOW_$4$5)						\
 }												\
 												\
 ')
@@ -875,8 +930,9 @@ KERNEL_FUNC_PRELUDE					\
 					\
 KERNEL_FUNC_QUALIFIER void VFUNC_FLEN_NAME($1)( `DECLARE_KERN_ARGS_FLEN_DBM_'$3$4$5 )					\
 {					\
-	`INIT_INDICES_DBM_'$4$5					\
-	FLEN_DBM_LOOP($2,`ADVANCE_FAST_DBM_'$5)					\
+	dnl `INIT_INDICES_DBM_'$4$5					\
+	INIT_INDICES(`DBM_',$5)			\
+	FLEN_DBM_LOOP($2,ADVANCE_FAST_$4$5)					\
 }					\
 ')
 
@@ -886,9 +942,11 @@ KERNEL_FUNC_PRELUDE					\
 					\
 KERNEL_FUNC_QUALIFIER void VFUNC_ELEN_NAME($1)( `DECLARE_KERN_ARGS_ELEN_DBM_'$3$4$5 )					\
 {					\
-	`INIT_INDICES_DBM_'$4$5					\
-	`SCALE_INDICES_EQSP_DBM_'$4$5					\
-	FLEN_DBM_LOOP( $2, `ADVANCE_EQSP_DBM_'$4$5 )					\
+	dnl `INIT_INDICES_DBM_'$4$5					\
+	INIT_INDICES(`DBM_',$5)			\
+	dnl `SCALE_INDICES_EQSP_DBM_'$4$5					\
+	SCALE_INDICES(`DBM_',$5)						\
+	FLEN_DBM_LOOP( $2,ADVANCE_EQSP_$4$5)					\
 }					\
 ')
 
@@ -900,12 +958,14 @@ KERNEL_FUNC_PRELUDE					\
 					\
 KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( `DECLARE_KERN_ARGS_SLEN_DBM_'$3$4$5 )					\
 {					\
-	`INIT_INDICES_DBM_'$4$5					\
-	`SCALE_INDICES_DBM_'$5					\
+	dnl `INIT_INDICES_DBM_'$4$5					\
+	INIT_INDICES(`DBM_',$5)			\
+	dnl `SCALE_INDICES_DBM_'$5					\
+	SCALE_INDICES(`DBM_',$5)					\
 					\
 	/* BUG need to put len test in statement */					\
 	/* BUG can we test before scaling??? */					\
-	SLEN_DBM_LOOP( $2 , `ADVANCE_SLOW_DBM_'$5 )					\
+	SLEN_DBM_LOOP( $2 , ADVANCE_SLOW_$4$5)					\
 }					\
 ')
 

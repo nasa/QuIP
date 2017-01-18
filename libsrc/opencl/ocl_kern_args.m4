@@ -72,7 +72,7 @@ define(`SET_KERNEL_ARGS_SLOW',SET_KERNEL_ARGS_SLOW_$1$2$3$4)
 define(`SET_KERNEL_ARGS_EQSP',SET_KERNEL_ARGS_EQSP_$1$2$3$4)
 define(`SET_KERNEL_ARGS_FAST',SET_KERNEL_ARGS_FAST_$1$2$3$4)
 
-define(`SET_KERNEL_ARGS_SLOW_SIZE',`/*SHOW_SLOW_SIZE(vap)*/ SET_KERNEL_ARG(DIM5, & VA_SLOW_SIZE(vap))')
+define(`SET_KERNEL_ARGS_SLOW_SIZE',`/*SHOW_SLOW_SIZE(vap)*/ SET_KERNEL_ARG(dim5, & VA_SLOW_SIZE(vap))')
 
 define(`SET_KERNEL_ARGS_SLOW_SIZE_OFFSET',`')
 
@@ -168,7 +168,7 @@ define(`SET_KERNEL_ARGS_EQSP_SBM',`SET_KERNEL_ARG(void *,&(VA_SBM_PTR(vap)))
 
 define(`SET_KERNEL_ARGS_SLOW_SBM',`SET_KERNEL_ARG(void *,&(VA_SBM_PTR(vap)))
 					SET_KERNEL_ARG(int,&(VA_SBM_BIT0(vap)))
-					SET_KERNEL_ARG(DIM5,&sbm_vwxyz_incr)
+					SET_KERNEL_ARG(dim5,&sbm_vwxyz_incr)
 ')
 
 
@@ -329,13 +329,13 @@ define(`SET_KERNEL_ARGS_EQSP_INC4',`SET_KERNEL_ARG(int,&VA_SRC3_EQSP_INC(vap))')
 define(`SET_KERNEL_ARGS_EQSP_INC5',`SET_KERNEL_ARG(int,&VA_SRC4_EQSP_INC(vap))')
 
 dnl BUG?  do we need DIM3 increments in Vector_Args ???
-dnl Now we have DIM5 sizes and increments in Vector_Args!
+dnl Now we have dim5 sizes and increments in Vector_Args!
 
-define(`SET_KERNEL_ARGS_SLOW_INC1',`SET_KERNEL_ARG(DIM5,&dst_vwxyz_incr)	/* SHOW_INCR(&dst_vwxyz_incr) */')
-define(`SET_KERNEL_ARGS_SLOW_INC2',`SET_KERNEL_ARG(DIM5,&s1_vwxyz_incr)')
-define(`SET_KERNEL_ARGS_SLOW_INC3',`SET_KERNEL_ARG(DIM5,&s2_vwxyz_incr)')
-define(`SET_KERNEL_ARGS_SLOW_INC4',`SET_KERNEL_ARG(DIM5,&s3_vwxyz_incr)')
-define(`SET_KERNEL_ARGS_SLOW_INC5',`SET_KERNEL_ARG(DIM5,&s4_vwxyz_incr)')
+define(`SET_KERNEL_ARGS_SLOW_INC1',`SET_KERNEL_ARG(dim5,&dst_vwxyz_incr)	/* SHOW_INCR(&dst_vwxyz_incr) */')
+define(`SET_KERNEL_ARGS_SLOW_INC2',`SET_KERNEL_ARG(dim5,&s1_vwxyz_incr)')
+define(`SET_KERNEL_ARGS_SLOW_INC3',`SET_KERNEL_ARG(dim5,&s2_vwxyz_incr)')
+define(`SET_KERNEL_ARGS_SLOW_INC4',`SET_KERNEL_ARG(dim5,&s3_vwxyz_incr)')
+define(`SET_KERNEL_ARGS_SLOW_INC5',`SET_KERNEL_ARG(dim5,&s4_vwxyz_incr)')
 
 define(`SET_KERNEL_ARGS_FAST_1S_2',`GEN_ARGS_FAST_1S_2(SET_KERNEL_ARGS)')
 

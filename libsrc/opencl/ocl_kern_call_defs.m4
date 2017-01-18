@@ -17,6 +17,7 @@ typedef unsigned long uint64_t;					\
 typedef long int64_t;						\
 typedef unsigned int uint32_t;					\
 typedef int int32_t;						\
+typedef int index_type;						\
 /*typedef struct { int x; int y; int z; } dim3 ;*/		\
 typedef struct { int d5_dim[5]; } dim5 ;			\
 typedef unsigned long bitmap_word;				\

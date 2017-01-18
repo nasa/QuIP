@@ -14,6 +14,9 @@ dnl endif // BUILD_FOR_CUDA
 define(`IDX1',`index1')
 define(`SCALE_INDEX',$1 *= $2;)
 
+dnl SET_INDEX(this_index)
+define(`SET_INDEX',`$1 = THREAD_INDEX_X;')
+
 
 dnl#define SET_BITMAP_WORD		i_word=(bmi.x+bmi.y)/BITS_PER_BITMAP_WORD;
 dnl From these definitions, it is not clear whether the rows are padded to be an 
