@@ -25,57 +25,22 @@ define(`_VEC_FUNC_2V_PROJ_IDX',`')
 define(`_VEC_FUNC_3V_PROJ',`')
 define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
-
-ifdef(`BUILD_FOR_CUDA',`
-
-define(`GENERIC_VFUNC_CALL',
-	GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)
-	GENERIC_ELEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)
-)
-
-define(`SLOW_VFUNC_CALL',`')
-
-define(`GENERIC_VEC_FUNC_DBM',
-	GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)
-	GENERIC_ELEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)
-)
-
-define(`_VEC_FUNC_2V_CONV',
-	_GENERIC_EQSP_CONV_FUNC($1,std_type,$2)
-	_GENERIC_ELEN_CONV_FUNC($1,std_type,$2)
-)
-
-',` dnl else // ! BUILD_FOR_CUDA
-
-// Why is it that only CUDA needs the len versions???
-
-define(`GENERIC_VFUNC_CALL',
-	GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)
-)
-
-define(`SLOW_VFUNC_CALL',`')
-
-define(`GENERIC_VEC_FUNC_DBM',
-	GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)
-)
-
-define(`_VEC_FUNC_2V_CONV',
-	_GENERIC_EQSP_CONV_FUNC($1,std_type,$2)
-)
-
-') dnl endif // ! BUILD_FOR_CUDA
+include(`../../include/veclib/fast_eqsp_defs.m4')
 
 // slow defn - almost
-define(`SET_INDICES_DBM',SET_DBM_TBL_INDEX SET_DBM_INDEX_ARRAY)
+define(`SET_INDICES_DBM',`SET_DBM_TBL_INDEX SET_DBM_INDEX_ARRAY')
+dnl define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm, DECLARE_KERN_ARGS_DBM_GPU_INFO')
+define(`SET_INDICES_1SRC',`index2 = tbl_idx;')
 
-define(`SET_INDICES_DBM_1S_',SET_DBM_TBL_INDEX)
+dnl define(`SET_INDICES_DBM_1S_',SET_DBM_TBL_INDEX)
 
 define(`SET_DBM_TBL_INDEX',`						\
 	tbl_idx = THREAD_INDEX_X;					\
   	i_dbm_word = dbm_info_p->word_tbl[tbl_idx].word_offset;					\
 ')
 
-define(`SET_DBM_INDEX_ARRAY', dbmi = dbm_info_p->word_tbl[tbl_idx].first_bit_num;)
+dnl define(`SET_DBM_INDEX_ARRAY', dbmi = dbm_info_p->word_tbl[tbl_idx].first_bit_num;)
+define(`SET_DBM_INDEX_ARRAY',`')
 
 define(`DBM_EQSP_LEN_TEST', dbmi >= dbm_bit0  && dbmi < dbm_bit0+len)
 
@@ -85,6 +50,43 @@ define(`DECL_BASIC_INDICES_DBM',`			\
 	int tbl_idx;					\
 ')
 
-include(`../../include/veclib/fast_eqsp_defs.m4')
 
+ifdef(`BUILD_FOR_CUDA',`
+
+define(`GENERIC_GPU_FUNC_CALL',`
+GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)
+GENERIC_ELEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)
+')
+
+define(`SLOW_GPU_FUNC_CALL',`')
+
+define(`GENERIC_VEC_FUNC_DBM',`
+GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)
+GENERIC_ELEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)
+')
+
+define(`_VEC_FUNC_2V_CONV',`
+_GENERIC_EQSP_CONV_FUNC($1,std_type,$2)
+_GENERIC_ELEN_CONV_FUNC($1,std_type,$2)
+')
+
+',` dnl else // ! BUILD_FOR_CUDA
+
+// Why is it that only CUDA needs the len versions???
+
+define(`GENERIC_GPU_FUNC_CALL',`
+GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)
+')
+
+define(`SLOW_GPU_FUNC_CALL',`')
+
+define(`GENERIC_VEC_FUNC_DBM',`
+GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)
+')
+
+define(`_VEC_FUNC_2V_CONV',`
+_GENERIC_EQSP_CONV_FUNC($1,std_type,$2)
+')
+
+') dnl endif // ! BUILD_FOR_CUDA
 

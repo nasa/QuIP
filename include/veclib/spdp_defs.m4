@@ -1,5 +1,5 @@
 
-define(`absfunc',`fabs')
+define(`absfunc',`fabs($1)')
 define(`std_type',`float')
 define(`std_cpx',`SP_Complex')
 define(`std_quat',`SP_Quaternion')

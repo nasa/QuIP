@@ -7,6 +7,6 @@ define(`ALL_ONES',`0xff')
 
 // Broken on CUDA 6?
 //BUG ifdefs don't affect defines!?
-define(`absfunc',`abs')
+define(`absfunc',`abs($1)')
 
 
