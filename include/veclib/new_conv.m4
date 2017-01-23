@@ -1,6 +1,5 @@
 dnl add ifdef's to inhibit type-to-type "conversions"?
 
-/* new_conv `std_type =' std_type */
 _VEC_FUNC_2V_CONV( vconv2by , char , dst = (char)(src1) )
 _VEC_FUNC_2V_CONV( vconv2in , short , dst = (short)(src1) )
 _VEC_FUNC_2V_CONV( vconv2di , int32_t , dst = (int32_t)(src1) )

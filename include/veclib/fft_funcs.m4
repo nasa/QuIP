@@ -2,5 +2,9 @@
 
 dnl call platform-specific file...
 
-include(pf_str`'_fft_funcs.m4)
+/* fft_funcs.m4 `pf_str' = pf_str */
+define(`include_platform_fft',include(pf_str`'_fft_funcs.m4))
+
+include_platform_fft
+
 

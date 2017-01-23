@@ -26,9 +26,9 @@ _VEC_FUNC_CPX_2V( vconj ,		cdst.re = csrc1.re;				\
 
 // complex exponential - e ^ a + bi = e^a (cos b + i sin b)
 // This can work in-place...
-_VEC_FUNC_CPX_2V_T2( cvexp ,		tmpc.re = exp_func(csrc1.re);			\
-					cdst.re = tmpc.re * cos_func(csrc1.im);			\
-					cdst.im = tmpc.re * sin_func(csrc1.im);			\
+_VEC_FUNC_CPX_2V_T2( cvexp ,		tmpc.re = exp_func (csrc1.re);			\
+					cdst.re = tmpc.re * cos_func (csrc1.im);			\
+					cdst.im = tmpc.re * sin_func (csrc1.im);			\
 					)
 
 _VEC_FUNC_CPX_3V( cvadd , 	cdst.re = csrc1.re + csrc2.re ; cdst.im = csrc1.im + csrc2.im )
@@ -170,10 +170,10 @@ include(`../../include/veclib/quat_args.m4')
  *	k		k	j	-i	-1
  */
 
-define(`QUAT_PROD_RE'( $1.re * $2.re - $1._i * $2._i - $1._j * $2._j - $1._k * $2._k ))
-define(`QUAT_PROD_I',( $1.re * $2._i + $1._i * $2.re + $1._j * $2._k - $1._k * $2._j ))
-define(`QUAT_PROD_J',( $1.re * $2._j + $1._j * $2.re + $1._k * $2._i - $1._i * $2._k ))
-define(`QUAT_PROD_K',( $1.re * $2._k + $1._k * $2.re + $1._i * $2._j - $1._j * $2._i ))
+define(`QUAT_PROD_RE',`( $1.re * $2.re - $1._i * $2._i - $1._j * $2._j - $1._k * $2._k )')
+define(`QUAT_PROD_I',`( $1.re * $2._i + $1._i * $2.re + $1._j * $2._k - $1._k * $2._j )')
+define(`QUAT_PROD_J',`( $1.re * $2._j + $1._j * $2.re + $1._k * $2._i - $1._i * $2._k )')
+define(`QUAT_PROD_K',`( $1.re * $2._k + $1._k * $2.re + $1._i * $2._j - $1._j * $2._i )')
 
 _VEC_FUNC_QUAT_2V( qvmov ,		qdst.re = qsrc1.re ;			\
 					qdst._i = qsrc1._i ;			\

@@ -11,85 +11,85 @@ include(`../../include/veclib/gpu_call_utils.m4')
 // args n, s  are func_name, statement
 
 // 5 args
-define(`_VEC_FUNC_5V',		GENERIC_VFUNC_CALL($1,$2,,,,5,))
-define(`_VEC_FUNC_4V_SCAL',		GENERIC_VFUNC_CALL($1,$2,,,1S_,4,))
-define(`_VEC_FUNC_3V_2SCAL',		GENERIC_VFUNC_CALL($1,$2,,,2S_,3,))
-define(`_VEC_FUNC_2V_3SCAL',		GENERIC_VFUNC_CALL($1,$2,,,3S_,2,))
+define(`_VEC_FUNC_5V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,5,)')
+define(`_VEC_FUNC_4V_SCAL',`GENERIC_GPU_FUNC_CALL($1,$2,,,1S_,4,)')
+define(`_VEC_FUNC_3V_2SCAL',`GENERIC_GPU_FUNC_CALL($1,$2,,,2S_,3,)')
+define(`_VEC_FUNC_2V_3SCAL',`GENERIC_GPU_FUNC_CALL($1,$2,,,3S_,2,)')
 
 // this is vramp2d
-define(`_VEC_FUNC_1V_3SCAL',	SLOW_VFUNC_CALL($1,$4,,,3S_,1,))
+define(`_VEC_FUNC_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,3S_,1,)')
 
 // 3 args
-define(`_VEC_FUNC_3V',		GENERIC_VFUNC_CALL($1,$2,,,,3,) )
-define(`_VEC_FUNC_CPX_3V',		GENERIC_VFUNC_CALL($1,$2,,CPX_,,3,) )
-define(`_VEC_FUNC_QUAT_3V',		GENERIC_VFUNC_CALL($1,$2,,QUAT_,,3,) )
-define(`_VEC_FUNC_1V_2SCAL',	GENERIC_VFUNC_CALL($1,$3,,,2S_,1,) )
-define(`_VEC_FUNC_2V_SCAL',		GENERIC_VFUNC_CALL($1,$2,,,1S_,2,) )
-define(`_VEC_FUNC_VVSLCT',		GENERIC_VFUNC_CALL($1,$2,SBM_,,,3,) )
-define(`_VEC_FUNC_VSSLCT',		GENERIC_VFUNC_CALL($1,$2,SBM_,,1S_,2,) )
-define(`_VEC_FUNC_SSSLCT',		GENERIC_VFUNC_CALL($1,$2,SBM_,,2S_,1,) )
+define(`_VEC_FUNC_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,3,) ')
+define(`_VEC_FUNC_CPX_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,) ')
+define(`_VEC_FUNC_QUAT_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,3,) ')
+define(`_VEC_FUNC_1V_2SCAL',`GENERIC_GPU_FUNC_CALL($1,$3,,,2S_,1,) ')
+define(`_VEC_FUNC_2V_SCAL',`GENERIC_GPU_FUNC_CALL($1,$2,,,1S_,2,) ')
+define(`_VEC_FUNC_VVSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,,3,) ')
+define(`_VEC_FUNC_VSSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,1S_,2,) ')
+define(`_VEC_FUNC_SSSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,2S_,1,) ')
 
-define(`_VEC_FUNC_SBM_1',		GENERIC_VFUNC_CALL($1,$2,SBM_,,,1,) )
+define(`_VEC_FUNC_SBM_1',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,,1,) ')
 
-define(`_VEC_FUNC_1V',		GENERIC_VFUNC_CALL($1,$2,,,,1,) )
-define(`_VEC_FUNC_2V',		GENERIC_VFUNC_CALL($1,$2,,,,2,) )
-define(`_VEC_FUNC_2V_MIXED',		GENERIC_VFUNC_CALL($1,$2,,RC_,,2,) )
-define(`_VEC_FUNC_CPX_2V',		GENERIC_VFUNC_CALL($1,$2,,CPX_,,2,) )
-define(`_VEC_FUNC_QUAT_2V',		GENERIC_VFUNC_CALL($1,$2,,QUAT_,,2,) )
+define(`_VEC_FUNC_1V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,1,) ')
+define(`_VEC_FUNC_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,2,) ')
+define(`_VEC_FUNC_2V_MIXED',`GENERIC_GPU_FUNC_CALL($1,$2,,RC_,,2,) ')
+define(`_VEC_FUNC_CPX_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,2,) ')
+define(`_VEC_FUNC_QUAT_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,2,) ')
 
-define(`_VEC_FUNC_VVMAP',	GENERIC_VEC_FUNC_DBM($1,SET_DBM_BIT( src1 $2 src2 ),,,2SRCS))
+define(`_VEC_FUNC_VVMAP',`GENERIC_VEC_FUNC_DBM($1,SET_DBM_BIT( src1 $2 src2 ),,,2SRCS)')
 // vsm_gt etc
-define(`_VEC_FUNC_VSMAP',	GENERIC_VEC_FUNC_DBM($1,SET_DBM_BIT(src1 $2 scalar1_val),,1S_,1SRC))
+define(`_VEC_FUNC_VSMAP',`GENERIC_VEC_FUNC_DBM($1,SET_DBM_BIT(src1 $2 scalar1_val),,1S_,1SRC)')
 
 // this is vset
-define(`_VEC_FUNC_1V_SCAL',		GENERIC_VFUNC_CALL($1,$2,,,1S_,1,) )
+define(`_VEC_FUNC_1V_SCAL',`GENERIC_GPU_FUNC_CALL($1,$2,,,1S_,1,) ')
 // where is cpx vset??
 
 // Are these two redundant?
 // this is bit_vset
-define(`_VEC_FUNC_DBM_1S',		GENERIC_VEC_FUNC_DBM($1,$2,,1S_,))
+define(`_VEC_FUNC_DBM_1S',`GENERIC_VEC_FUNC_DBM($1,$2,,1S_,)')
 // bit_vmov
-define(`_VEC_FUNC_DBM_SBM',	GENERIC_VEC_FUNC_DBM($1,$2,,,SBM))
+define(`_VEC_FUNC_DBM_SBM',`GENERIC_VEC_FUNC_DBM($1,$2,,,SBM)')
 
-define(`_VEC_FUNC_DBM_1V',		GENERIC_VEC_FUNC_DBM($1,$2,,,1SRC))
+define(`_VEC_FUNC_DBM_1V',`GENERIC_VEC_FUNC_DBM($1,$2,,,1SRC)')
 
-define(`_VEC_FUNC_SBM_CPX_3V',	GENERIC_VFUNC_CALL($1,$2,SBM_,CPX_,,3,) )
-define(`_VEC_FUNC_SBM_CPX_1S_2V',	GENERIC_VFUNC_CALL($1,$2,SBM_,CPX_,1S_,2,) )
-define(`_VEC_FUNC_SBM_CPX_2S_1V',	GENERIC_VFUNC_CALL($1,$2,SBM_,CPX_,2S_,1,) )
-define(`_VEC_FUNC_SBM_QUAT_3V',	GENERIC_VFUNC_CALL($1,$2,SBM_,QUAT_,,3,) )
-define(`_VEC_FUNC_SBM_QUAT_1S_2V',	GENERIC_VFUNC_CALL($1,$2,SBM_,QUAT_,1S_,2,) )
-define(`_VEC_FUNC_SBM_QUAT_2S_1V',	GENERIC_VFUNC_CALL($1,$2,SBM_,QUAT_,2S_,1,) )
-define(`_VEC_FUNC_CPX_2V_T2',	GENERIC_VFUNC_CALL($1,$2,,CPX_,,2,T2) )
-define(`_VEC_FUNC_CPXT_2V',		GENERIC_VFUNC_CALL($1,$2,,CPX_,,2,T) )
-define(`_VEC_FUNC_CPXT_3V',		GENERIC_VFUNC_CALL($1,$2,,CPX_,,3,T) )
-define(`_VEC_FUNC_CPXD_3V',		GENERIC_VFUNC_CALL($1,$2,,CPX_,,3,D) )
-define(`_VEC_FUNC_CPX_1S_2V',	GENERIC_VFUNC_CALL($1,$2,,CPX_,1S_,2,) )
-define(`_VEC_FUNC_QUAT_1S_2V',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,1S_,2,) )
-define(`_VEC_FUNC_CPX_1S_2V_T2',	GENERIC_VFUNC_CALL($1,$2,,CPX_,1S_,2,T2) )
-define(`_VEC_FUNC_CPX_1S_2V_T3',	GENERIC_VFUNC_CALL($1,$2,,CPX_,1S_,2,T3) )
-define(`_VEC_FUNC_QUAT_1S_2V_T4',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,1S_,2,T4) )
-define(`_VEC_FUNC_QUAT_1S_2V_T5',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,1S_,2,T5) )
-define(`_VEC_FUNC_CPXT_1S_2V',	GENERIC_VFUNC_CALL($1,$2,,CPX_,1S_,2,T) )
-define(`_VEC_FUNC_CPXD_1S_2V',	GENERIC_VFUNC_CALL($1,$2,,CPX_,1S_,2,D) )
-define(`_VEC_FUNC_CPX_1S_1V',	GENERIC_VFUNC_CALL($1,$2,,CPX_,1S_,1,) )
-define(`_VEC_FUNC_QUAT_1S_1V',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,1S_,1,)) 
-define(`_VEC_FUNC_CPX_3V_T1',	GENERIC_VFUNC_CALL($1,$2,,CPX_,,3,T1) )
-define(`_VEC_FUNC_CPX_3V_T2',	GENERIC_VFUNC_CALL($1,$2,,CPX_,,3,T2) )
-define(`_VEC_FUNC_CPX_3V_T3',	GENERIC_VFUNC_CALL($1,$2,,CPX_,,3,T3) )
-define(`_VEC_FUNC_QUAT_2V_T4',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,,2,T4) )
-define(`_VEC_FUNC_QUAT_3V_T4',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,,3,T4) )
-define(`_VEC_FUNC_QUAT_3V_T5',	GENERIC_VFUNC_CALL($1,$2,,QUAT_,,3,T5) )
-define(`_VEC_FUNC_CCR_3V',		GENERIC_VFUNC_CALL($1,$2,,CCR_,,3,) )
-define(`_VEC_FUNC_QQR_3V',		GENERIC_VFUNC_CALL($1,$2,,QQR_,,3,) )
-define(`_VEC_FUNC_CR_1S_2V',		GENERIC_VFUNC_CALL($1,$2,,CR_,1S_,2,) )
-define(`_VEC_FUNC_QR_1S_2V',		GENERIC_VFUNC_CALL($1,$2,,QR_,1S_,2,) )
+define(`_VEC_FUNC_SBM_CPX_3V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,CPX_,,3,) ')
+define(`_VEC_FUNC_SBM_CPX_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,CPX_,1S_,2,) ')
+define(`_VEC_FUNC_SBM_CPX_2S_1V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,CPX_,2S_,1,) ')
+define(`_VEC_FUNC_SBM_QUAT_3V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,QUAT_,,3,) ')
+define(`_VEC_FUNC_SBM_QUAT_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,QUAT_,1S_,2,) ')
+define(`_VEC_FUNC_SBM_QUAT_2S_1V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,QUAT_,2S_,1,) ')
+define(`_VEC_FUNC_CPX_2V_T2',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,2,T2) ')
+define(`_VEC_FUNC_CPXT_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,2,T) ')
+define(`_VEC_FUNC_CPXT_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,T) ')
+define(`_VEC_FUNC_CPXD_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,D) ')
+define(`_VEC_FUNC_CPX_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,1S_,2,) ')
+define(`_VEC_FUNC_QUAT_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,1S_,2,) ')
+define(`_VEC_FUNC_CPX_1S_2V_T2',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,1S_,2,T2) ')
+define(`_VEC_FUNC_CPX_1S_2V_T3',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,1S_,2,T3) ')
+define(`_VEC_FUNC_QUAT_1S_2V_T4',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,1S_,2,T4) ')
+define(`_VEC_FUNC_QUAT_1S_2V_T5',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,1S_,2,T5) ')
+define(`_VEC_FUNC_CPXT_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,1S_,2,T) ')
+define(`_VEC_FUNC_CPXD_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,1S_,2,D) ')
+define(`_VEC_FUNC_CPX_1S_1V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,1S_,1,) ')
+define(`_VEC_FUNC_QUAT_1S_1V',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,1S_,1,)') 
+define(`_VEC_FUNC_CPX_3V_T1',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,T1) ')
+define(`_VEC_FUNC_CPX_3V_T2',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,T2) ')
+define(`_VEC_FUNC_CPX_3V_T3',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,T3) ')
+define(`_VEC_FUNC_QUAT_2V_T4',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,2,T4) ')
+define(`_VEC_FUNC_QUAT_3V_T4',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,3,T4) ')
+define(`_VEC_FUNC_QUAT_3V_T5',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,3,T5) ')
+define(`_VEC_FUNC_CCR_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,CCR_,,3,) ')
+define(`_VEC_FUNC_QQR_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,QQR_,,3,) ')
+define(`_VEC_FUNC_CR_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,CR_,1S_,2,) ')
+define(`_VEC_FUNC_QR_1S_2V',`GENERIC_GPU_FUNC_CALL($1,$2,,QR_,1S_,2,) ')
 // args d,s1,s2 are dst_arg, src_arg1, src_arg2
-define(`_VEC_FUNC_VS_LS',	GENERIC_LS_VFUNC_CALL($1,1S_,2,$2,$3,$4))
-define(`_VEC_FUNC_VV_LS',	GENERIC_LS_VFUNC_CALL($1,,3,$2,$3,$4))
+define(`_VEC_FUNC_VS_LS',`GENERIC_LS_GPU_FUNC_CALL($1,1S_,2,$2,$3,$4)')
+define(`_VEC_FUNC_VV_LS',`GENERIC_LS_GPU_FUNC_CALL($1,,3,$2,$3,$4)')
 
 // special case for left shift
 // is just for cuda???
-define(`GENERIC_LS_VFUNC_CALL', GENERIC_VFUNC_CALL($1,LSHIFT_SWITCH_32($4,$5,$6),,,$2,$3,))
+define(`GENERIC_LS_GPU_FUNC_CALL',`GENERIC_GPU_FUNC_CALL($1,LSHIFT_SWITCH_32($4,$5,$6),,,$2,$3,)')
 
 
 
@@ -97,20 +97,20 @@ define(`GENERIC_LS_VFUNC_CALL', GENERIC_VFUNC_CALL($1,LSHIFT_SWITCH_32($4,$5,$6)
 // PORT ?
 
 dnl	What are the 7 arguments?  name statements bitmaps typ scalars vectors extra
-define(`GENERIC_FAST_VEC_FUNC', _GENERIC_FAST_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
-define(`GENERIC_EQSP_VEC_FUNC', _GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
-define(`GENERIC_SLOW_VEC_FUNC', _GENERIC_SLOW_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
-define(`GENERIC_FLEN_VEC_FUNC', _GENERIC_FLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
-define(`GENERIC_ELEN_VEC_FUNC', _GENERIC_ELEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
-define(`GENERIC_SLEN_VEC_FUNC', _GENERIC_SLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) )
+define(`GENERIC_FAST_VEC_FUNC',`_GENERIC_FAST_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
+define(`GENERIC_EQSP_VEC_FUNC',`_GENERIC_EQSP_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
+define(`GENERIC_SLOW_VEC_FUNC',`_GENERIC_SLOW_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
+define(`GENERIC_FLEN_VEC_FUNC',`_GENERIC_FLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
+define(`GENERIC_ELEN_VEC_FUNC',`_GENERIC_ELEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
+define(`GENERIC_SLEN_VEC_FUNC',`_GENERIC_SLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
 
 
 
 // What is this???
-define(` GENERIC_FAST_VFUNC_DECL',`			\
-void name( `DECLARE_KERN_ARGS_FAST_'$3$4$5$6)			\
-{			\
-}			\
+define(` GENERIC_FAST_GPU_FUNC_DECL',`				\
+void name(DECLARE_KERN_ARGS_FAST($3,$4,$5,$6))			\
+{								\
+}								\
 ')
 
 
@@ -130,13 +130,13 @@ void name( `DECLARE_KERN_ARGS_FAST_'$3$4$5$6)			\
 dnl	FAST_DBM_LOOP(statement,advance)
 
 define(`FAST_DBM_LOOP',`							\
-							\
-	/* fast_dbm_loop /$1/ /$2/ */					\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){							\
-		dbm_bit = NUMBERED_BIT(i_dbm_bit);							\
-		$1 ;							\
-		$2							\
-	}							\
+										\
+	/* fast_dbm_loop /$1/ /$2/ */						\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		$1 ;								\
+		$2								\
+	}									\
 ')
 
 /* `FLEN_DBM_LOOP' */
@@ -145,14 +145,14 @@ define(`FLEN_DBM_LOOP', EQSP_DBM_LOOP($1,$2))
 
 /* `EQSP_DBM_LOOP' */
 define(`EQSP_DBM_LOOP',`							\
-							\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){							\
-		dbm_bit = NUMBERED_BIT(i_dbm_bit);							\
-		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){							\
+										\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
 			$1 ;							\
 			$2;							\
-		}							\
-	}							\
+		}								\
+	}									\
 ')
 
 define(`SLEN_DBM_LOOP', SLOW_DBM_LOOP( $1, $2 ) )
@@ -165,14 +165,14 @@ dnl define(`SLOW_DBM_LOOP',	FAST_DBM_LOOP( $1, $2 ))
 
 /* `SLOW_DBM_LOOP' */
 define(`SLOW_DBM_LOOP',`							\
-							\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){							\
-		dbm_bit = NUMBERED_BIT(i_dbm_bit);							\
-		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){							\
+										\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
 			$1;							\
 			$2;							\
-		}							\
-	}							\
+		}								\
+	}									\
 ')
 
 // PORT ?
@@ -196,25 +196,25 @@ define(`ADVANCE_SLOW_1S_1SRC',`ADVANCE_SLOW_SRC1')
 define(`ADVANCE_SLOW_1SRC',`ADVANCE_SLOW_SRC1')
 define(`ADVANCE_SLOW_2SRCS',`ADVANCE_SLOW_SRC1 ADVANCE_SLOW_SRC2')
 
-define(`ADVANCE_FAST_SRC1',index2++;)
-define(`ADVANCE_FAST_SRC2',index3++;)
-define(`ADVANCE_FAST_SRC3',index4++;)
-define(`ADVANCE_FAST_SRC4',index5++;)
+define(`ADVANCE_FAST_SRC1',`index2++;')
+define(`ADVANCE_FAST_SRC2',`index3++;')
+define(`ADVANCE_FAST_SRC3',`index4++;')
+define(`ADVANCE_FAST_SRC4',`index5++;')
 dnl	define(`ADVANCE_FAST_DBM',`')
 dnl	define(`ADVANCE_FAST_SBM',`')
 
-define(`ADVANCE_EQSP_SRC1',index2 += inc2;)
-define(`ADVANCE_EQSP_SRC2',index3 += inc3;)
-define(`ADVANCE_EQSP_SRC3',index4 += inc4;)
-define(`ADVANCE_EQSP_SRC4',index5 += inc5;)
+define(`ADVANCE_EQSP_SRC1',`index2 += inc2;')
+define(`ADVANCE_EQSP_SRC2',`index3 += inc3;')
+define(`ADVANCE_EQSP_SRC3',`index4 += inc4;')
+define(`ADVANCE_EQSP_SRC4',`index5 += inc5;')
 dnl	define(`ADVANCE_EQSP_DBM',`')
 dnl	define(`ADVANCE_EQSP_SBM',`')
 
 dnl BUG - why dim[1] and not dim[0] ???
-define(`ADVANCE_SLOW_SRC1',index2.d5_dim[1]+=inc2.d5_dim[1];)
-define(`ADVANCE_SLOW_SRC2',index3.d5_dim[1]+=inc3.d5_dim[1];)
-define(`ADVANCE_SLOW_SRC3',index4.d5_dim[1]+=inc4.d5_dim[1];)
-define(`ADVANCE_SLOW_SRC4',index5.d5_dim[1]+=inc5.d5_dim[1];)
+define(`ADVANCE_SLOW_SRC1',`index2.d5_dim[1]+=inc2.d5_dim[1];')
+define(`ADVANCE_SLOW_SRC2',`index3.d5_dim[1]+=inc3.d5_dim[1];')
+define(`ADVANCE_SLOW_SRC3',`index4.d5_dim[1]+=inc4.d5_dim[1];')
+define(`ADVANCE_SLOW_SRC4',`index5.d5_dim[1]+=inc5.d5_dim[1];')
 
 dnl	define(`ADVANCE_SLOW_DBM',`')
 dnl	define(`ADVANCE_SLOW_SBM',`')
@@ -236,27 +236,27 @@ dnl	define(`ADVANCE_SLOW_DBM_1SRC',ADVANCE_SLOW_DBM ADVANCE_SLOW_SRC1)
 dnl	define(`ADVANCE_SLOW_DBM_2SRCS',ADVANCE_SLOW_DBM_1SRC ADVANCE_SLOW_SRC2)
 dnl	define(`ADVANCE_SLOW_DBM_SBM',ADVANCE_SLOW_DBM ADVANCE_SLOW_SBM)
 
-define(`GENERIC_FAST_VEC_FUNC_DBM', _GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
-define(`GENERIC_EQSP_VEC_FUNC_DBM', _GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
-define(`GENERIC_SLOW_VEC_FUNC_DBM', _GENERIC_SLOW_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
-define(`GENERIC_FLEN_VEC_FUNC_DBM', _GENERIC_FLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
-define(`GENERIC_ELEN_VEC_FUNC_DBM', _GENERIC_ELEN_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
-define(`GENERIC_SLEN_VEC_FUNC_DBM', _GENERIC_SLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5) )
+define(`GENERIC_FAST_VEC_FUNC_DBM',`_GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
+define(`GENERIC_EQSP_VEC_FUNC_DBM',`_GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
+define(`GENERIC_SLOW_VEC_FUNC_DBM',`_GENERIC_SLOW_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
+define(`GENERIC_FLEN_VEC_FUNC_DBM',`_GENERIC_FLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
+define(`GENERIC_ELEN_VEC_FUNC_DBM',`_GENERIC_ELEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
+define(`GENERIC_SLEN_VEC_FUNC_DBM',`_GENERIC_SLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
 
 
 
 /* FIXME still need to convert these to generic macros if possible */
 
-define(`_VEC_FUNC_MM', __VEC_FUNC_MM($1,$2))
-define(`_VEC_FUNC_MM_IND', __VEC_FUNC_MM_IND($1,$2,$3))
+define(`_VEC_FUNC_MM',`__VEC_FUNC_MM($1,$2)')
+define(`_VEC_FUNC_MM_IND',`__VEC_FUNC_MM_IND($1,$2,$3)')
 
 // `2V_PROJ SETUP' and HELPER do the same thing, but have different input types
 // (only relevant for mixed operations, e.g. summing float to double
 
 define(`___VEC_FUNC_FAST_2V_PROJ_SETUP',`			\
 KERNEL_FUNC_PRELUDE						\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_setup')		\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')		\
 	( DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP )		\
 	FAST_2V_PROJ_BODY($2,std_type)				\
 ')
@@ -265,7 +265,7 @@ define(`___VEC_FUNC_FAST_2V_PROJ_HELPER',`			\
 								\
 KERNEL_FUNC_PRELUDE						\
 								\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_helper')		\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')		\
 	( DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER )		\
 	FAST_2V_PROJ_BODY($2,dest_type)				\
 ')
@@ -287,80 +287,80 @@ define(`FAST_2V_PROJ_BODY',`					\
 /* `CPX_FAST_2V_PROJ_SETUP' */
 
 define(`___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_setup')			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
 	( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )			\
-FAST_CPX_2V_PROJ_BODY($2,$3,std_cpx)			\
+FAST_CPX_2V_PROJ_BODY($2,$3,std_cpx)				\
 ')
 
 /* `CPX_FAST_2V_PROJ_HELPER' */
-define(`___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_helper')			\
+define(`___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER',`				\
+									\
+KERNEL_FUNC_PRELUDE							\
+									\
+	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')			\
 		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )			\
-	FAST_CPX_2V_PROJ_BODY($2,$3,dest_cpx)			\
+	FAST_CPX_2V_PROJ_BODY($2,$3,dest_cpx)				\
 ')
 
-define(`FAST_CPX_2V_PROJ_BODY',`			\
-{			\
-	INIT_INDICES_1			\
-			\
-	if( IDX1 < len2 ){			\
-		$3 *s2;			\
-		s2 = s1 + len1;			\
-		dest[IDX1].re = $1 ;			\
-		dest[IDX1].im = $2 ;			\
-	} else if( IDX1 < len1 ){			\
-		dest[IDX1].re = s1[IDX1].re;			\
-		dest[IDX1].im = s1[IDX1].im;			\
-	}			\
-}			\
+define(`FAST_CPX_2V_PROJ_BODY',`					\
+{									\
+	INIT_INDICES_1							\
+									\
+	if( IDX1 < len2 ){						\
+		$3 *s2;							\
+		s2 = s1 + len1;						\
+		dest[IDX1].re = $1 ;					\
+		dest[IDX1].im = $2 ;					\
+	} else if( IDX1 < len1 ){					\
+		dest[IDX1].re = s1[IDX1].re;				\
+		dest[IDX1].im = s1[IDX1].im;				\
+	}								\
+}									\
 ')
 
 
 /* `QUAT_FAST_2V_PROJ_SETUP' */
 
-define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_setup')			\
+define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP',`				\
+									\
+KERNEL_FUNC_PRELUDE							\
+									\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
 	( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP )			\
-FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,std_quat)			\
+FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,std_quat)				\
 ')
 
-define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_helper')			\
+define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER',`				\
+									\
+KERNEL_FUNC_PRELUDE							\
+									\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')			\
 	( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER )			\
-FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,dest_quat)			\
+FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,dest_quat)				\
 ')
 
 
-define(`FAST_QUAT_2V_PROJ_BODY',`			\
-{			\
-	INIT_INDICES_1			\
-			\
-	if( IDX1 < len2 ){			\
-		$5 *s2;			\
-		s2 = s1 + len1;			\
-		dest[IDX1].re = $1 ;			\
-		dest[IDX1]._i = $2 ;			\
-		dest[IDX1]._j = $3 ;			\
-		dest[IDX1]._k = $4 ;			\
-	} else if( IDX1 < len1 ){			\
+define(`FAST_QUAT_2V_PROJ_BODY',`				\
+{								\
+	INIT_INDICES_1						\
+								\
+	if( IDX1 < len2 ){					\
+		$5 *s2;						\
+		s2 = s1 + len1;					\
+		dest[IDX1].re = $1 ;				\
+		dest[IDX1]._i = $2 ;				\
+		dest[IDX1]._j = $3 ;				\
+		dest[IDX1]._k = $4 ;				\
+	} else if( IDX1 < len1 ){				\
 		dest[IDX1].re = s1[IDX1].re;			\
 		dest[IDX1]._i = s1[IDX1]._i;			\
 		dest[IDX1]._j = s1[IDX1]._j;			\
 		dest[IDX1]._k = s1[IDX1]._k;			\
-	}			\
-}			\
+	}							\
+}								\
 ')
 
 
@@ -368,30 +368,30 @@ define(`FAST_QUAT_2V_PROJ_BODY',`			\
 // BUG? does this need to be two macros, one for setup and one for helper?
 
 
-define(`___VEC_FUNC_FAST_2V_PROJ_IDX',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_setup')			\
+define(`___VEC_FUNC_FAST_2V_PROJ_IDX',`				\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
 	( DECLARE_KERN_ARGS_FAST_IDX_SETUP )			\
-{			\
-	INIT_INDICES_3			\
-	if( index3 < len2 )			\
-		$2 ;			\
-	else if( IDX1 < len1 )			\
-		dst = index2 ;			\
-}			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1`_helper')			\
+{								\
+	INIT_INDICES_3						\
+	if( index3 < len2 )					\
+		$2 ;						\
+	else if( IDX1 < len1 )					\
+		dst = index2 ;					\
+}								\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')			\
 	( DECLARE_KERN_ARGS_FAST_IDX_HELPER )			\
-{			\
-	INIT_INDICES_3			\
-	if( index3 < len2 )			\
-		$3 ;			\
-	else if( IDX1 < len1 )			\
-		dst = src1 ;			\
-}			\
-			\
+{								\
+	INIT_INDICES_3						\
+	if( index3 < len2 )					\
+		$3 ;						\
+	else if( IDX1 < len1 )					\
+		dst = src1 ;					\
+}								\
+								\
 ')
 
 
@@ -435,7 +435,7 @@ define(`psrc2',s2[IDX1])
 
 // left shift was broken on cuda, what about now?
 
-define(`LSHIFT_SWITCH_32',
+define(`LSHIFT_SWITCH_32',`
 	switch($3) {
 		case 0:  $1 = $2;     break;
 		case 1:  $1 = $2<<1;  break;
@@ -470,7 +470,7 @@ define(`LSHIFT_SWITCH_32',
 		case 30: $1 = $2<<30; break;
 		case 31: $1 = $2<<31; break;
 	}
-)
+')
 
 // vsum, vdot, etc
 // BUG this is hard-coded for vsum!?
@@ -496,38 +496,38 @@ define(`LSHIFT_SWITCH_32',
 // It's the same except for the sum line, which would be replaced with
 //
 
-define(`___VFUNC_CALL_2V_PROJ',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
+define(`___GPU_FUNC_CALL_2V_PROJ',`			\
+							\
+KERNEL_FUNC_PRELUDE					\
+							\
 KERNEL_FUNC_QUALIFIER void `g_'type_code`_'$1			\
 	( DECLARE_KERN_ARGS_2V_PROJ )			\
-{			\
-	INIT_INDICES_1			\
-			\
-	if( IDX1 < len2 ){			\
-		std_type *s2;			\
-		s2 = s1 + len1;			\
+{							\
+	INIT_INDICES_1					\
+							\
+	if( IDX1 < len2 ){				\
+		std_type *s2;				\
+		s2 = s1 + len1;				\
 		dest[IDX1] = $3 ;			\
 	} else if( IDX1 < len1 ){			\
 		dest[IDX1] = s1[IDX1];			\
-	}			\
-}			\
+	}						\
+}							\
 ')
 
-define(`___VEC_FUNC_MM',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_HELPER_NAME($1,$2)			\
-( DECLARE_KERN_ARGS_MM )			\
-{			\
-	INIT_INDICES_3			\
-	if( index3.d5_dim[1] < len2 )			\
-		$3 ;			\
-	else if( IDX1 < len1 )			\
-		dst = src1 ;			\
-}			\
+define(`___VEC_FUNC_MM',`					\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_HELPER_NAME($1,$2)			\
+( DECLARE_KERN_ARGS_MM )					\
+{								\
+	INIT_INDICES_3						\
+	if( index3.d5_dim[1] < len2 )				\
+		$3 ;						\
+	else if( IDX1 < len1 )					\
+		dst = src1 ;					\
+}								\
 ')
 
 
@@ -539,7 +539,7 @@ KERNEL_FUNC_QUALIFIER void VFUNC_HELPER_NAME($1,$2)			\
  */
 
 
-define(`___VFUNC_CALL_FAST_MM_NOCC', ___VEC_FUNC_FAST_MM_NOCC( $1, $2, $3 ))
+define(`___GPU_FUNC_CALL_FAST_MM_NOCC', ___VEC_FUNC_FAST_MM_NOCC( $1, $2, $3 ))
 
 
 /* For nocc_setup, we index directly into the value and count temp arrays
@@ -547,7 +547,7 @@ define(`___VFUNC_CALL_FAST_MM_NOCC', ___VEC_FUNC_FAST_MM_NOCC( $1, $2, $3 ))
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
  */
 
-define(`___VEC_FUNC_FAST_MM_NOCC',`			\
+define(`___VEC_FUNC_FAST_MM_NOCC',`					\
 	___VEC_FUNC_FAST_MM_NOCC_SETUP( $1, $2, $3 )			\
 	___VEC_FUNC_FAST_MM_NOCC_HELPER( $1, $2, $3 )			\
 ')
@@ -561,7 +561,7 @@ define(`___VEC_FUNC_FAST_MM_NOCC_SETUP',`					\
 										\
 KERNEL_FUNC_PRELUDE								\
 										\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_SETUP_NAME($1)			\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_SETUP_NAME($1)				\
 	( DECLARE_KERN_ARGS_FAST_NOCC_SETUP )					\
 {										\
 	INIT_INDICES_2								\
@@ -601,7 +601,7 @@ define(`___VEC_FUNC_FAST_MM_NOCC_HELPER',`					\
 										\
 KERNEL_FUNC_PRELUDE								\
 										\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_HELPER_NAME($1)			\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_HELPER_NAME($1)			\
 	( DECLARE_KERN_ARGS_FAST_NOCC_HELPER )					\
 {										\
 	int i;									\
@@ -640,119 +640,108 @@ KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_HELPER_NAME($1)			\
 
 /* `GENERIC_FAST_VEC_FUNC' */
 /* 2V_PROJ is OK but not this??? */
-/* that uses VFUNC_FAST_NAME... */
+/* that uses GPU_FUNC_FAST_NAME... */
 /* used to use GPU_FAST_CALL_NAME... */
+
+dnl	__GENERIC_FAST_VEC_FUNC(name,statement,bitmaps,typ,scalars,vectors)
 
 define(`__GENERIC_FAST_VEC_FUNC',`					\
 									\
+/* generic_fast_vec_func /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/ */		\
 KERNEL_FUNC_PRELUDE							\
 									\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1)			\
-	( `DECLARE_KERN_ARGS_FAST_'$3$4$5$6 )				\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)				\
+	(DECLARE_KERN_ARGS_FAST($3,$4,$5,$6))				\
 {									\
-	dnl `DECL_EXTRA_'$7							\
-	DECL_EXTRA($7)				\
-	dnl `INIT_INDICES_'$3$6						\
-	INIT_INDICES($3,$6)			\
-	/* generic_fast_vec_func statement */							\
-	/* statement = $2 */							\
+	DECL_EXTRA($7)							\
+	INIT_INDICES($3,$6)						\
+	/* generic_fast_vec_func statement */				\
+	/* statement = $2 */						\
 	$2 ;								\
-	/* generic_fast_vec_func done */							\
+	/* generic_fast_vec_func done */				\
 }									\
 ')
 
 dnl	__GENERIC_EQSP_VEC_FUNC( name, statements, bitmaps, typ, scalars, vectors, extra )
 
-define(`__GENERIC_EQSP_VEC_FUNC',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_EQSP_NAME($1)( `DECLARE_KERN_ARGS_EQSP_'$3$4$5$6 )			\
-{			\
-	dnl `DECL_EXTRA_'$7			\
-	DECL_EXTRA($7)				\
-	dnl `INIT_INDICES_'$3$6			\
-	INIT_INDICES($3,$6)			\
-	dnl `SCALE_INDICES_EQSP_'$3$6			\
-	SCALE_INDICES($3,$6)			\
-	$2;			\
-}			\
+define(`__GENERIC_EQSP_VEC_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP($3,$4,$5,$6))	\
+{											\
+	DECL_EXTRA($7)									\
+	/* generic_eqsp_vec_func to invoke init_indices */	\
+	INIT_INDICES($3,$6)								\
+	/* generic_eqsp_vec_func to invoke scale_indices */	\
+	SCALE_INDICES($3,$6)								\
+	$2;										\
+}											\
 ')
 
 // BUG change to CAN_INDEX_THREE_DIMS
 
-define(`__GENERIC_SLOW_VEC_FUNC',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_SLOW_NAME($1)( `DECLARE_KERN_ARGS_SLOW_'$3$4$5$6)			\
-{			\
-	dnl `DECL_EXTRA_'$7			\
-	DECL_EXTRA($7)				\
-	dnl `INIT_INDICES_'$3$6			\
-	INIT_INDICES($3,$6)			\
-	dnl `SCALE_INDICES_'$3$6			\
-	SCALE_INDICES($3,$6)			\
-	$2;			\
-}			\
+define(`__GENERIC_SLOW_VEC_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW($3,$4,$5,$6))	\
+{											\
+	DECL_EXTRA($7)									\
+	INIT_INDICES($3,$6)								\
+	SCALE_INDICES($3,$6)								\
+	$2;										\
+}											\
 ')
 
-define(`__GENERIC_FLEN_VEC_FUNC',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_FLEN_NAME($1)( `DECLARE_KERN_ARGS_FLEN_'$3$4$5$6)			\
-{			\
-	dnl `DECL_EXTRA_'$7			\
-	DECL_EXTRA($7)				\
-	dnl `INIT_INDICES_'$3$6			\
-	INIT_INDICES($3,$6)			\
-	if( IDX1 < len) {			\
-		$2 ;			\
-	}			\
-}			\
+define(`__GENERIC_FLEN_VEC_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN($3,$4,$5,$6))	\
+{											\
+	DECL_EXTRA($7)									\
+	INIT_INDICES($3,$6)								\
+	if( IDX1 < len) {								\
+		$2 ;									\
+	}										\
+}											\
 ')
 
-define(`__GENERIC_ELEN_VEC_FUNC',`			\
-			\
-KERNEL_FUNC_PRELUDE			\
-			\
-KERNEL_FUNC_QUALIFIER void VFUNC_ELEN_NAME($1)( `DECLARE_KERN_ARGS_ELEN_'$3$4$5$6)			\
-{			\
-	dnl `DECL_EXTRA_'$7			\
-	DECL_EXTRA($7)				\
-	dnl `INIT_INDICES_'$3$6			\
-	INIT_INDICES($3,$6)			\
-	if( IDX1 < len ){			\
-		dnl `SCALE_INDICES_EQSP_'$3$6			\
-		SCALE_INDICES($3,$6)		\
-		$2;			\
-	}			\
-}			\
+define(`__GENERIC_ELEN_VEC_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN($3,$4,$5,$6))	\
+{											\
+	DECL_EXTRA($7)									\
+	INIT_INDICES($3,$6)								\
+	if( IDX1 < len ){								\
+		SCALE_INDICES($3,$6)							\
+		$2;									\
+	}										\
+}											\
 ')
 
 // Does OpenCL have a limit (like CUDA) on the number of dimensions (3)?
 
 define(`SLEN_SUBTST', $1.d5_dim[$3] < $2.d5_dim[$3])
 
-define(`SLEN_IDX_TEST', ( SLEN_SUBTST(idx,len,0) && SLEN_SUBTST(idx,len,1) && SLEN_SUBTST(idx,len,2) && SLEN_SUBTST(idx,len,3) && SLEN_SUBTST(idx,len,4) ))
+define(`SLEN_IDX_TEST',`( SLEN_SUBTST($1,$2,0) && SLEN_SUBTST($1,$2,1) && SLEN_SUBTST($1,$2,2) && SLEN_SUBTST($1,$2,3) && SLEN_SUBTST($1,$2,4) )')
 
-define(`__GENERIC_SLEN_VEC_FUNC',`	\
-	\
-KERNEL_FUNC_PRELUDE	\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( `DECLARE_KERN_ARGS_SLEN_'$3$4$5$6)					\
-{					\
-	dnl `DECL_EXTRA_'$7					\
-	DECL_EXTRA($7)				\
-	dnl `INIT_INDICES_'$3$6					\
-	INIT_INDICES($3,$6)			\
-	if( SLEN_IDX_TEST(index1,szarr) ){					\
-		dnl `SCALE_INDICES_'$3$6					\
-		SCALE_INDICES($3,$6)				\
-		$2;					\
-	}					\
-}					\
+define(`__GENERIC_SLEN_VEC_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN($3,$4,$5,$6))	\
+{											\
+	DECL_EXTRA($7)									\
+	INIT_INDICES($3,$6)								\
+	if( SLEN_IDX_TEST(index1,szarr) ){						\
+		SCALE_INDICES($3,$6)							\
+		$2;									\
+	}										\
+}											\
 ')
 
 
@@ -767,139 +756,139 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( `DECLARE_KERN_ARGS_SLEN_'$3$4$5$
 
 /* CUDA definitions? */
 
-define(`REAL_CONVERSION',
+define(`REAL_CONVERSION',`
 FAST_CONVERSION($1,$2,$3,$4)
 EQSP_CONVERSION($1,$2,$3,$4)
 SLOW_CONVERSION($1,$2,$3,$4)
 FLEN_CONVERSION($1,$2,$3,$4)
 ELEN_CONVERSION($1,$2,$3,$4)
 SLEN_CONVERSION($1,$2,$3,$4)
-)
+')
 
 
-define(`REAL_CONVERSION',
+define(`REAL_CONVERSION',`
 FAST_CONVERSION($1,$2,$3,$4)
 EQSP_CONVERSION($1,$2,$3,$4)
 SLOW_CONVERSION($1,$2,$3,$4)
-)
+')
 
-define(`FAST_CONVERSION', _GENERIC_FAST_CONV_FUNC( `v'$1`2'$3, $2, $4 ))
-define(`EQSP_CONVERSION', _GENERIC_EQSP_CONV_FUNC( `v'$1`2'$3, $2, $4 ))
-define(`SLOW_CONVERSION', _GENERIC_SLOW_CONV_FUNC( `v'$1`2'$3, $2, $4 ))
-define(`FLEN_CONVERSION', _GENERIC_FLEN_CONV_FUNC( `v'$1`2'$3, $2, $4 ))
-define(`ELEN_CONVERSION', _GENERIC_ELEN_CONV_FUNC( `v'$1`2'$3, $2, $4 ))
-define(`SLEN_CONVERSION', _GENERIC_SLEN_CONV_FUNC( `v'$1`2'$3, $2, $4 ))
+define(`FAST_CONVERSION',`_GENERIC_FAST_CONV_FUNC( `v'$1`2'$3, $2, $4 )')
+define(`EQSP_CONVERSION',`_GENERIC_EQSP_CONV_FUNC( `v'$1`2'$3, $2, $4 )')
+define(`SLOW_CONVERSION',`_GENERIC_SLOW_CONV_FUNC( `v'$1`2'$3, $2, $4 )')
+define(`FLEN_CONVERSION',`_GENERIC_FLEN_CONV_FUNC( `v'$1`2'$3, $2, $4 )')
+define(`ELEN_CONVERSION',`_GENERIC_ELEN_CONV_FUNC( `v'$1`2'$3, $2, $4 )')
+define(`SLEN_CONVERSION',`_GENERIC_SLEN_CONV_FUNC( `v'$1`2'$3, $2, $4 )')
 
 // Here is the kernel itself...
 // BUG these seem all the same!?
-define(`__GENERIC_FAST_CONV_FUNC',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void GPU_FAST_NAME($1)( DECLARE_KERN_ARGS_FAST_CONV($3) )					\
-{					\
-	INIT_INDICES_2					\
-	dst = ($3) src1 ;					\
-}					\
+define(`__GENERIC_FAST_CONV_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FAST_CALL_NAME($1)(DECLARE_KERN_ARGS_FAST_CONV($3))	\
+{											\
+	INIT_INDICES_2									\
+	dst = ($3) src1 ;								\
+}											\
 ')
 
-define(`__GENERIC_EQSP_CONV_FUNC',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_EQSP_NAME($1)( DECLARE_KERN_ARGS_EQSP_CONV($3) )					\
-{					\
-	INIT_INDICES_2					\
-	SCALE_INDICES_2					\
-	dst = ($3) src1 ;					\
-}					\
+define(`__GENERIC_EQSP_CONV_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP_CONV($3))	\
+{											\
+	INIT_INDICES_2									\
+	SCALE_INDICES_2									\
+	dst = ($3) src1 ;								\
+}											\
 ')
 
-define(`__GENERIC_SLOW_CONV_FUNC',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_SLOW_NAME($1)( DECLARE_KERN_ARGS_SLOW_CONV($3) )					\
-{					\
-	INIT_INDICES_2					\
-	SCALE_INDICES_2					\
-	dst = ($3) src1 ;					\
-}					\
+define(`__GENERIC_SLOW_CONV_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW_CONV($3))	\
+{											\
+	INIT_INDICES_2									\
+	SCALE_INDICES_2									\
+	dst = ($3) src1 ;								\
+}											\
 ')
 
-define(`__GENERIC_FLEN_CONV_FUNC',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_FLEN_NAME($1)( DECLARE_KERN_ARGS_FLEN_CONV($3) )					\
-{					\
-	INIT_INDICES_2					\
-	if( IDX1 < len) {					\
-		dst = ($3) src1 ;					\
-	}					\
-}					\
+define(`__GENERIC_FLEN_CONV_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN_CONV($3))	\
+{											\
+	INIT_INDICES_2									\
+	if( IDX1 < len) {								\
+		dst = ($3) src1 ;							\
+	}										\
+}											\
 ')
 
-define(`__GENERIC_ELEN_CONV_FUNC',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_ELEN_NAME($1)( DECLARE_KERN_ARGS_ELEN_CONV($3) )					\
-{					\
-	INIT_INDICES_2					\
-	if( IDX1 < len) {					\
-		SCALE_INDICES_2					\
-		dst = ($3) src1 ;					\
-	}					\
-}					\
+define(`__GENERIC_ELEN_CONV_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN_CONV($3))	\
+{											\
+	INIT_INDICES_2									\
+	if( IDX1 < len) {								\
+		SCALE_INDICES_2								\
+		dst = ($3) src1 ;							\
+	}										\
+}											\
 ')
 
-define(`__GENERIC_SLEN_CONV_FUNC',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( DECLARE_KERN_ARGS_SLEN_CONV($3) )					\
-{					\
-	INIT_INDICES_2					\
-	if( SLEN_IDX_TEST(index1,szarr) ){					\
-		SCALE_INDICES_2					\
-		dst = ($3) src1 ;					\
-	}					\
-}					\
+define(`__GENERIC_SLEN_CONV_FUNC',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN_CONV($3))	\
+{											\
+	INIT_INDICES_2									\
+	if( SLEN_IDX_TEST(index1,szarr) ){						\
+		SCALE_INDICES_2								\
+		dst = ($3) src1 ;							\
+	}										\
+}											\
 ')
 
 dnl	___GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
 
-define(`__GENERIC_FAST_VEC_FUNC_DBM',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME($1)( `DECLARE_KERN_ARGS_FAST_DBM_'$3$4$5 )					\
-{					\
-	dnl `INIT_INDICES_DBM_'$4$5					\
-	/* init_indices /DBM_/ /$5/ */					\
-	INIT_INDICES(`DBM_',$5)			\
-	/* fast_dbm_loop /$2/ /$5/ */					\
-	FAST_DBM_LOOP( $2, ADVANCE_FAST_$4$5)					\
-}					\
+define(`__GENERIC_FAST_VEC_FUNC_DBM',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)(DECLARE_KERN_ARGS_FAST(`DBM_',$3,$4,$5))	\
+{											\
+	/* generic_fast_vec_func_dbm */							\
+	INIT_INDICES(`DBM_',$5)								\
+	/* fast_dbm_loop /$2/ /$5/ */							\
+	FAST_DBM_LOOP( $2, ADVANCE_FAST_$4$5)						\
+}											\
 ')
 
 // EQSP is tricky because the number of relevant bits in a word is no
 // longer all of the bits - so the LOOP should just loop over the bits
 // in a single word!?  BUG?
 
-define(`__GENERIC_EQSP_VEC_FUNC_DBM',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_EQSP_NAME($1)( `DECLARE_KERN_ARGS_EQSP_DBM_'$3$4$5 )					\
-{					\
-	dnl `INIT_INDICES_DBM_'$4$5					\
-	INIT_INDICES(`DBM_',$5)			\
-	dnl `SCALE_INDICES_EQSP_DBM_'$4$5					\
-	SCALE_INDICES(`DBM_',$5)					\
-	EQSP_DBM_LOOP($2,ADVANCE_EQSP_$4$5)					\
-}					\
+define(`__GENERIC_EQSP_VEC_FUNC_DBM',`							\
+											\
+KERNEL_FUNC_PRELUDE									\
+											\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP(`DBM_',$3,$4,$5))	\
+{											\
+	/* generic_eqsp_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */			\
+	INIT_INDICES(`DBM_',$5)								\
+	/* generic_eqsp_vec_func_dbm 2 */						\
+	SCALE_INDICES(`DBM_',$5)							\
+	/* generic_eqsp_vec_func_dbm 3 */						\
+	EQSP_DBM_LOOP($2,ADVANCE_EQSP_$4$5)						\
+}											\
 ')
 
 
@@ -909,113 +898,108 @@ define(`__GENERIC_SLOW_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-KERNEL_FUNC_QUALIFIER void VFUNC_SLOW_NAME($1)( `DECLARE_KERN_ARGS_SLOW_DBM_'$3$4$5)		\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW(`DBM_',$3,$4,$5))		\
 {												\
-	dnl `INIT_INDICES_DBM_'$4$5									\
-	/* init_indices /DBM_/ /$5/ */					\
-	INIT_INDICES(`DBM_',$5)			\
-	dnl `SCALE_INDICES_DBM_'$5									\
-	/* scale_indices /DBM_/ /$5/ */					\
+	/* generic_slow_vec_func_dbm */								\
+	INIT_INDICES(`DBM_',$5)									\
+	/* scale_indices /DBM_/ /$5/ */								\
 	SCALE_INDICES(`DBM_',$5)								\
 												\
-	/* slow_dbm_loop /$2/ /$5/ */					\
-	SLOW_DBM_LOOP( $2 , ADVANCE_SLOW_$4$5)						\
+	/* slow_dbm_loop /$2/ /$5/ */								\
+	SLOW_DBM_LOOP( $2 , ADVANCE_SLOW_$4$5)							\
 }												\
 												\
 ')
 
-define(`__GENERIC_FLEN_VEC_FUNC_DBM',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_FLEN_NAME($1)( `DECLARE_KERN_ARGS_FLEN_DBM_'$3$4$5 )					\
-{					\
-	dnl `INIT_INDICES_DBM_'$4$5					\
-	INIT_INDICES(`DBM_',$5)			\
-	FLEN_DBM_LOOP($2,ADVANCE_FAST_$4$5)					\
-}					\
+define(`__GENERIC_FLEN_VEC_FUNC_DBM',`								\
+												\
+KERNEL_FUNC_PRELUDE										\
+												\
+/* __generic_flen_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */	\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN(`DBM_'$3,$4,$5))		\
+{												\
+	INIT_INDICES(`DBM_',$5)									\
+	FLEN_DBM_LOOP($2,ADVANCE_FAST_$4$5)							\
+}												\
 ')
 
-define(`__GENERIC_ELEN_VEC_FUNC_DBM',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_ELEN_NAME($1)( `DECLARE_KERN_ARGS_ELEN_DBM_'$3$4$5 )					\
-{					\
-	dnl `INIT_INDICES_DBM_'$4$5					\
-	INIT_INDICES(`DBM_',$5)			\
-	dnl `SCALE_INDICES_EQSP_DBM_'$4$5					\
-	SCALE_INDICES(`DBM_',$5)						\
-	FLEN_DBM_LOOP( $2,ADVANCE_EQSP_$4$5)					\
-}					\
+define(`__GENERIC_ELEN_VEC_FUNC_DBM',`								\
+												\
+KERNEL_FUNC_PRELUDE										\
+												\
+dnl KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN($3,$4,$5,$6))	\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN(`DBM_',$3,$4,$5))		\
+{												\
+	INIT_INDICES(`DBM_',$5)									\
+	SCALE_INDICES(`DBM_',$5)								\
+	FLEN_DBM_LOOP( $2,ADVANCE_EQSP_$4$5)							\
+}												\
 ')
 
 
 
-define(`__GENERIC_SLEN_VEC_FUNC_DBM',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void VFUNC_SLEN_NAME($1)( `DECLARE_KERN_ARGS_SLEN_DBM_'$3$4$5 )					\
-{					\
-	dnl `INIT_INDICES_DBM_'$4$5					\
-	INIT_INDICES(`DBM_',$5)			\
-	dnl `SCALE_INDICES_DBM_'$5					\
-	SCALE_INDICES(`DBM_',$5)					\
-					\
-	/* BUG need to put len test in statement */					\
-	/* BUG can we test before scaling??? */					\
-	SLEN_DBM_LOOP( $2 , ADVANCE_SLOW_$4$5)					\
-}					\
+define(`__GENERIC_SLEN_VEC_FUNC_DBM',`								\
+												\
+KERNEL_FUNC_PRELUDE										\
+												\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN(`DBM_',$3,$4,$5))		\
+{												\
+	INIT_INDICES(`DBM_',$5)									\
+	SCALE_INDICES(`DBM_',$5)								\
+												\
+	/* BUG need to put len test in statement */						\
+	/* BUG can we test before scaling??? */							\
+	SLEN_DBM_LOOP( $2 , ADVANCE_SLOW_$4$5)							\
+}												\
 ')
 
 
 // BUG use macro for helper name
 
-define(`___VFUNC_CALL_MM',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
-KERNEL_FUNC_QUALIFIER void `g_'$2`_'$1`_helper'					\
+define(`___GPU_FUNC_CALL_MM',`					\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void `g_'$2`_'$1`_helper'			\
 ( DECLARE_KERN_ARGS_MM )					\
-{					\
-	INIT_INDICES_3					\
-	if( index3.d5_dim[1] < len2 )					\
-		$3 ;					\
+{								\
+	INIT_INDICES_3						\
+	if( index3.d5_dim[1] < len2 )				\
+		$3 ;						\
 	else if( IDX1 < len1 )					\
 		dst = src1 ;					\
-}					\
-					\
+}								\
+								\
 ')
 
 
 dnl fast or slow???
 
-define(`___VFUNC_CALL_MM_IND',`					\
-					\
-KERNEL_FUNC_PRELUDE					\
-					\
+define(`___GPU_FUNC_CALL_MM_IND',`							\
+										\
+KERNEL_FUNC_PRELUDE								\
+										\
 KERNEL_FUNC_QUALIFIER void `g_'$2`_'$1`_setup'					\
-(index_type* a, std_type* b, std_type* c, uint32_t len1, uint32_t len2)					\
-{					\
-	INIT_INDICES_3					\
-	if( index3.d5_dim[1] < len2 )					\
-		$3 ;					\
-	else if( IDX1 < len1 )					\
+(index_type* a, std_type* b, std_type* c, uint32_t len1, uint32_t len2)		\
+{										\
+	INIT_INDICES_3								\
+	if( index3.d5_dim[1] < len2 )						\
+		$3 ;								\
+	else if( IDX1 < len1 )							\
 		dst = index2.d5_dim[1] ;					\
-}					\
-					\
+}										\
+										\
 KERNEL_FUNC_QUALIFIER void `g_'$2`_'$1`_helper'					\
-	(index_type* a, index_type* b, index_type* c,					\
-			std_type *orig, uint32_t len1, uint32_t len2)					\
-{					\
-	INIT_INDICES_3					\
-	if( index3.d5_dim[1] < len2 )					\
-		$3 ;					\
-	else if( IDX1 < len1 )					\
-		dst = src1 ;					\
-}					\
-					\
+	(index_type* a, index_type* b, index_type* c,				\
+			std_type *orig, uint32_t len1, uint32_t len2)		\
+{										\
+	INIT_INDICES_3								\
+	if( index3.d5_dim[1] < len2 )						\
+		$3 ;								\
+	else if( IDX1 < len1 )							\
+		dst = src1 ;							\
+}										\
+										\
 ')
 
 

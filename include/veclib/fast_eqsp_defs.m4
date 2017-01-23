@@ -1,7 +1,8 @@
 
 // These definitions are shared between fast and eqsp functions
 
-define(`GPU_INDEX_TYPE',int)
+/* fast_eqsp_defs setting gpu_index_type */
+define(`GPU_INDEX_TYPE',`int')
 
 dnl ifdef BUILD_FOR_CUDA
 dnl

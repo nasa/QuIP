@@ -1,5 +1,5 @@
 /* sp_defs.m4 BEGIN */
-define(`absfunc',`fabsf')
+define(`absfunc',`fabsf($1)')
 define(`std_type',`float')
 define(`std_cpx',`SP_Complex')
 define(`std_quat',`SP_Quaternion')

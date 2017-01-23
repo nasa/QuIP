@@ -4,66 +4,69 @@
 // Because the kernels are static, the names don't need to include the
 // platform name...
 
-/******************** VFUNC_XXXX_NAME **********************/
+/******************** GPU_FUNC_XXXX_NAME **********************/
 
-define(`VFUNC_NAME',`````g_'pf_str`_'$2`_'''type_code```_'$1'''')
-define(`VFUNC_NAME_WITH_SUFFIX',VFUNC_NAME($1,$2)$3)
+dnl define(`GPU_FUNC_NAME',`````g_'pf_str`_'$2`_'''type_code```_'$1'''')
+define(`GPU_FUNC_NAME',``g_'pf_str`_'$2``_''type_code``_''$1')
+define(`GPU_FUNC_NAME_WITH_SUFFIX',GPU_FUNC_NAME($1,$2)$3)
 
-define(`VFUNC_FAST_NAME',VFUNC_NAME($1,`fast'))
-define(`VFUNC_EQSP_NAME',VFUNC_NAME($1,`eqsp'))
-define(`VFUNC_SLOW_NAME',VFUNC_NAME($1,`slow'))
-define(`VFUNC_FLEN_NAME',VFUNC_NAME($1,`flen'))
-define(`VFUNC_ELEN_NAME',VFUNC_NAME($1,`elen'))
-define(`VFUNC_SLEN_NAME',VFUNC_NAME($1,`slen'))
+define(`GPU_FUNC_FAST_NAME',GPU_FUNC_NAME($1,`fast'))
+define(`GPU_FUNC_EQSP_NAME',GPU_FUNC_NAME($1,`eqsp'))
+define(`GPU_FUNC_SLOW_NAME',GPU_FUNC_NAME($1,`slow'))
+define(`GPU_FUNC_FLEN_NAME',GPU_FUNC_NAME($1,`flen'))
+define(`GPU_FUNC_ELEN_NAME',GPU_FUNC_NAME($1,`elen'))
+define(`GPU_FUNC_SLEN_NAME',GPU_FUNC_NAME($1,`slen'))
 
-define(`VFUNC_FAST_NOCC_SETUP_NAME',`VFUNC_FAST_NAME($1)`_setup'')
-define(`VFUNC_FAST_NOCC_HELPER_NAME',`VFUNC_FAST_NAME($1)`_helper'')
+define(`GPU_FUNC_FAST_SETUP_NAME',`GPU_FUNC_FAST_NAME($1)`_setup'')
+define(`GPU_FUNC_FAST_HELPER_NAME',`GPU_FUNC_FAST_NAME($1)`_helper'')
 
-define(`VFUNC_SIMPLE_NAME',`g_'pf_str`_'type_code`_'$1)
-define(`VFUNC_HELPER_NAME',VFUNC_SIMPLE_NAME($1)`_helper')
+define(`GPU_FUNC_SIMPLE_NAME',`g_'pf_str`_'type_code`_'$1)
+define(`GPU_FUNC_HELPER_NAME',GPU_FUNC_SIMPLE_NAME($1)`_helper')
 
-define(`VFUNC_FAST_IDX_SETUP_NAME',VFUNC_FAST_NAME($1)`_setup')
-define(`VFUNC_FAST_IDX_HELPER_NAME',VFUNC_FAST_NAME($1)`_helper')
+define(`GPU_FUNC_FAST_IDX_SETUP_NAME',GPU_FUNC_FAST_NAME($1)`_setup')
+define(`GPU_FUNC_FAST_IDX_HELPER_NAME',GPU_FUNC_FAST_NAME($1)`_helper')
 
 
 
 /****************** DECL_INDICES ***********************/
 
-define(`SLOW_GPU_INDEX_TYPE',	dim5)
+define(`SLOW_GPU_INDEX_TYPE',`dim5')
 
-define(`DECL_INDICES_1',	GPU_INDEX_TYPE index1;)
-define(`DECL_INDICES_SRC1',	GPU_INDEX_TYPE index2;)
-define(`DECL_INDICES_SRC2',	GPU_INDEX_TYPE index3;)
-define(`DECL_INDICES_SRC3',	GPU_INDEX_TYPE index4;)
-define(`DECL_INDICES_SRC4',	GPU_INDEX_TYPE index5;)
-define(`DECL_INDICES_SBM',	GPU_INDEX_TYPE sbmi;)
+define(`DECL_INDICES_',`')
+define(`DECL_INDICES_1',`GPU_INDEX_TYPE index1;')
+define(`DECL_INDICES_SRC1',`GPU_INDEX_TYPE index2;')
+define(`DECL_INDICES_SRC2',`GPU_INDEX_TYPE index3;')
+define(`DECL_INDICES_SRC3',`GPU_INDEX_TYPE index4;')
+define(`DECL_INDICES_SRC4',`GPU_INDEX_TYPE index5;')
+define(`DECL_INDICES_SBM',`GPU_INDEX_TYPE sbmi;')
+define(`DECL_INDICES_SBM_',`GPU_INDEX_TYPE sbmi;')
 
 // dbmi indexes the bit - from it, we have to compute the index of the word, and the bit mask
 // We have an integral number of words per row.
 
 /* different for fast and slow! */
 
-define(`DECL_INDICES_DBM',	/* decl_indices_dbm */ GPU_INDEX_TYPE dbmi; DECL_BASIC_INDICES_DBM)
+define(`DECL_INDICES_DBM_',`DECLARE_DBM_INDEX DECL_BASIC_INDICES_DBM')
 
 /* DECL_INDICES */
-define(`DECL_INDICES_2',	DECL_INDICES_1 DECL_INDICES_SRC1)
-define(`DECL_INDICES_3',	DECL_INDICES_2 DECL_INDICES_SRC2)
-define(`DECL_INDICES_4',	DECL_INDICES_3 DECL_INDICES_SRC3)
-define(`DECL_INDICES_5',	DECL_INDICES_4 DECL_INDICES_SRC4)
-define(`DECL_INDICES_1SRC',	DECL_INDICES_SRC1)
-define(`DECL_INDICES_2SRCS',	DECL_INDICES_SRC1 DECL_INDICES_SRC2)
-define(`DECL_INDICES_SBM_1',	DECL_INDICES_1 DECL_INDICES_SBM)
-define(`DECL_INDICES_SBM_2',	DECL_INDICES_2 DECL_INDICES_SBM)
-define(`DECL_INDICES_SBM_3',	DECL_INDICES_3 DECL_INDICES_SBM)
+define(`DECL_INDICES_2',`/* decl_indices_2 */ DECL_INDICES_1 DECL_INDICES_SRC1')
+define(`DECL_INDICES_3',`DECL_INDICES_2 DECL_INDICES_SRC2')
+define(`DECL_INDICES_4',`DECL_INDICES_3 DECL_INDICES_SRC3')
+define(`DECL_INDICES_5',`DECL_INDICES_4 DECL_INDICES_SRC4')
+define(`DECL_INDICES_1SRC',`DECL_INDICES_SRC1')
+define(`DECL_INDICES_2SRCS',`DECL_INDICES_SRC1 DECL_INDICES_SRC2')
+dnl	define(`DECL_INDICES_SBM_1',`DECL_INDICES_1 DECL_INDICES_SBM')
+dnl	define(`DECL_INDICES_SBM_2',`DECL_INDICES_2 DECL_INDICES_SBM')
+dnl	define(`DECL_INDICES_SBM_3',`DECL_INDICES_3 DECL_INDICES_SBM')
 
-/* `DECL_INDICES_DBM' */
-define(`DECL_INDICES_DBM_1S',DECL_BASIC_INDICES_DBM)
-define(`DECL_INDICES_DBM_1S_',DECL_INDICES_DBM_1S)
-define(`DECL_INDICES_DBM_',DECL_INDICES_DBM)
-define(`DECL_INDICES_DBM_1SRC',DECL_INDICES_1SRC DECL_INDICES_DBM)
-define(`DECL_INDICES_DBM_1S_1SRC',DECL_INDICES_DBM_1SRC)
-define(`DECL_INDICES_DBM_2SRCS',DECL_INDICES_2SRCS DECL_INDICES_DBM)
-define(`DECL_INDICES_DBM_SBM',DECL_INDICES_SBM DECL_INDICES_DBM)
+dnl	/* `DECL_INDICES_DBM' */
+dnl	define(`DECL_INDICES_DBM_1S',`DECL_BASIC_INDICES_DBM')
+dnl	define(`DECL_INDICES_DBM_1S_',`DECL_INDICES_DBM_1S')
+dnl	define(`DECL_INDICES_DBM_',`DECL_INDICES_DBM')
+dnl	define(`DECL_INDICES_DBM_1SRC',`DECL_INDICES_1SRC DECL_INDICES_DBM')
+dnl	define(`DECL_INDICES_DBM_1S_1SRC',`DECL_INDICES_DBM_1SRC')
+dnl	define(`DECL_INDICES_DBM_2SRCS',`DECL_INDICES_2SRCS DECL_INDICES_DBM')
+dnl	define(`DECL_INDICES_DBM_SBM',`DECL_INDICES_SBM DECL_INDICES_DBM')
 
 
 /* DECL_EXTRA */
@@ -80,68 +83,78 @@ define(`DECL_EXTRA_T5',std_quat tmpq; std_type tmp_denom;)
 /*********************** INIT_INDICES *****************/
 
 dnl	INIT_INDICES(bitmaps,vectors)
-define(`INIT_INDICES',`/* init_indices /$1/ /$2/ */ INIT_INDICES_$1$2')
+dnl	DBM is set first, but SBM is set second...
+define(`INIT_INDICES',`/* init_indices /$1/ /$2/ */ DECL_INDICES_$1 DECL_INDICES_$2 SET_BITMAP_INDICES1_$1 SET_INDICES_$2 SET_BITMAP_INDICES2_$1 /* init_indices /$1/ /$2/ DONE */')
 
 define(`INIT_INDICES_1',`DECL_INDICES_1 SET_INDICES_1')
-define(`INIT_INDICES_2',`DECL_INDICES_2 SET_INDICES_2')
-define(`INIT_INDICES_2',`DECL_INDICES_2 SET_INDICES_2')
+define(`INIT_INDICES_2',`/* init_indices_2 */ DECL_INDICES_2 SET_INDICES_2')
 define(`INIT_INDICES_3',`DECL_INDICES_3 SET_INDICES_3')
 define(`INIT_INDICES_4',`DECL_INDICES_4 SET_INDICES_4')
 define(`INIT_INDICES_5',`DECL_INDICES_5 SET_INDICES_5')
 
 define(`INIT_INDICES_2SRCS',`DECL_INDICES_2SRCS SET_INDICES_2SRCS')
-define(`INIT_INDICES_SBM_1',`DECL_INDICES_SBM_1 SET_INDICES_SBM_1')
-define(`INIT_INDICES_SBM_2',`DECL_INDICES_SBM_2 SET_INDICES_SBM_2')
-define(`INIT_INDICES_SBM_3',`DECL_INDICES_SBM_3 SET_INDICES_SBM_3')
+dnl	define(`INIT_INDICES_SBM_1',`DECL_INDICES_SBM_1 SET_INDICES_SBM_1')
+dnl	define(`INIT_INDICES_SBM_2',`DECL_INDICES_SBM_2 SET_INDICES_SBM_2')
+dnl	define(`INIT_INDICES_SBM_3',`DECL_INDICES_SBM_3 SET_INDICES_SBM_3')
 
-define(`INIT_INDICES_DBM_',`DECL_INDICES_DBM_ SET_INDICES_DBM_')
-define(`INIT_INDICES_DBM_2SRCS',`DECL_INDICES_DBM_2SRCS SET_INDICES_DBM_2SRCS')
-define(`INIT_INDICES_DBM_1SRC',`DECL_INDICES_DBM_1SRC SET_INDICES_DBM_1SRC')
+define(`INIT_INDICES_DBM_',`/* init_indices_dbm_ */ DECL_INDICES_DBM_ SET_BITMAP_INDICES1_DBM_')
+dnl	define(`INIT_INDICES_DBM_2SRCS',`/* init_indices_dbm_2srcs */ DECL_INDICES_DBM_2SRCS SET_INDICES_DBM_2SRCS')
+dnl	define(`INIT_INDICES_DBM_1SRC',`DECL_INDICES_DBM_1SRC SET_INDICES_DBM_1SRC')
 dnl	define(`INIT_INDICES_DBM_1S_',DECL_INDICES_DBM_1S_ SET_INDICES_DBM_1S_)
 dnl	define(`INIT_INDICES_DBM_1S_1SRC',INIT_INDICES_DBM_1SRC)
-define(`INIT_INDICES_DBM_SBM',`DECL_INDICES_DBM_SBM SET_INDICES_DBM_SBM')
+dnl	define(`INIT_INDICES_DBM_SBM',`DECL_INDICES_DBM_SBM SET_INDICES_DBM_SBM')
 
 
 /******************** SET_INDICES ***************************/
 
-define(`SET_INDICES_1',SET_INDEX( index1 ))
-define(`SET_INDICES_SRC1',index2 = dst_idx;)
-define(`SET_INDICES_SRC2',index3 = index2;)
-define(`SET_INDICES_SRC3',index4 = index3;)
-define(`SET_INDICES_SRC4',index5 = index4;)
-define(`SET_INDICES_SBM',sbmi = index1;)
+define(`SET_INDICES_',`')
+define(`SET_INDICES_SBM',`')
+define(`SET_BITMAP_INDICES1_',`')
+define(`SET_BITMAP_INDICES2_',`')
+define(`SET_INDICES_1',`SET_INDEX(index1)')
+define(`SET_INDICES_SRC1',`index2 = $1;')
+define(`SET_INDICES_SRC2',`index3 = index2;')
+define(`SET_INDICES_SRC3',`index4 = index3;')
+define(`SET_INDICES_SRC4',`index5 = index4;')
+define(`SET_BITMAP_INDICES1_SBM_',`')
+define(`SET_BITMAP_INDICES2_SBM_',`sbmi = index1;')
 
-define(`SET_INDICES_2',SET_INDICES_1 SET_INDICES_SRC1(index1))
-define(`SET_INDICES_3',SET_INDICES_2 SET_INDICES_SRC2)
-define(`SET_INDICES_4',SET_INDICES_3 SET_INDICES_SRC3)
-define(`SET_INDICES_5',SET_INDICES_4 SET_INDICES_SRC4)
-define(`SET_INDICES_2SRCS',SET_INDEX(index2) SET_INDICES_SRC2)
+define(`SET_INDICES_2',`SET_INDICES_1 SET_INDICES_SRC1(index1)')
+define(`SET_INDICES_3',`SET_INDICES_2 SET_INDICES_SRC2')
+define(`SET_INDICES_4',`SET_INDICES_3 SET_INDICES_SRC3')
+define(`SET_INDICES_5',`SET_INDICES_4 SET_INDICES_SRC4')
+define(`SET_INDICES_2SRCS',`SET_INDEX(index2) SET_INDICES_SRC2')
 
 
-define(`SET_INDICES_SBM_1',SET_INDICES_1 SET_INDICES_SBM)
-define(`SET_INDICES_SBM_2',SET_INDICES_2 SET_INDICES_SBM)
-define(`SET_INDICES_SBM_3',SET_INDICES_3 SET_INDICES_SBM)
+dnl	define(`SET_INDICES_SBM_1',`SET_INDICES_1 SET_INDICES_SBM')
+dnl	define(`SET_INDICES_SBM_2',`SET_INDICES_2 SET_INDICES_SBM')
+dnl	define(`SET_INDICES_SBM_3',`SET_INDICES_3 SET_INDICES_SBM')
 
-define(`SET_INDICES_DBM_',SET_INDICES_DBM)
-// this one is speed-sensitive
-//define(`SET_INDICES_DBM_1S_',SET_INDICES_DBM)
+define(`SET_BITMAP_INDICES1_DBM_',`SET_INDICES_DBM')
+define(`SET_BITMAP_INDICES2_DBM_',`')
 
-// BUG?  this looks wrong!?
-// 1SRC is only used with dbm?
-define(`SET_INDICES_1SRC',index2 = dbmi;)
+dnl	 this one is speed-sensitive
+dnl	define(`SET_INDICES_DBM_1S_',`SET_INDICES_DBM')
 
-define(`SET_INDICES_DBM_1SRC',SET_INDICES_DBM SET_INDICES_1SRC)
-define(`SET_INDICES_DBM_1S_1SRC',SET_INDICES_DBM_1SRC)
-define(`SET_INDICES_DBM_2SRCS',SET_INDICES_DBM_1SRC SET_INDICES_SRC2)
-// Can't use SET_INDICES_SBM here...
-define(`SET_INDICES_DBM_SBM',SET_INDICES_DBM sbmi = dbmi;)
+dnl // BUG?  this looks wrong!?
+dnl // 1SRC is only used with dbm?
+dnl define(`SET_INDICES_1SRC',`index2 = dbmi;')
+
+dnl	define(`SET_INDICES_DBM_1SRC',`SET_INDICES_DBM SET_INDICES_1SRC')
+dnl	define(`SET_INDICES_DBM_1S_1SRC',`SET_INDICES_DBM_1SRC')
+dnl	define(`SET_INDICES_DBM_2SRCS',`/* set_indices_dbm_2srcs */ SET_INDICES_DBM_1SRC SET_INDICES_SRC2')
+dnl	// Can't use SET_INDICES_SBM here...
+dnl	define(`SET_INDICES_DBM_SBM',`SET_INDICES_DBM sbmi = dbmi;')
 
 /**************** SCALE_INDICES_ ********************/
 
 dnl SCALE_INDICES(bitmap,vectors)
-define(`SCALE_INDICES',`SCALE_INDICES_$1$2')
+dnl define(`SCALE_INDICES',`/* scale_indices /$1/ /$2/ */ `SCALE_INDICES_$1$2'')
+define(`SCALE_INDICES',`/* scale_indices /$1/ /$2/ */ SCALE_INDICES_$1 SCALE_INDICES_$2')
 
-define(`SCALE_INDICES_1',SCALE_INDEX(index1,inc1))
+define(`SCALE_INDICES_',`')
+define(`SCALE_INDICES_1SRC',`SCALE_INDICES_SRC1')
+define(`SCALE_INDICES_1',`SCALE_INDEX(index1,inc1)')
 define(`SCALE_INDICES_SRC1',SCALE_INDEX(index2,inc2))
 define(`SCALE_INDICES_SRC2',SCALE_INDEX(index3,inc3))
 define(`SCALE_INDICES_SRC3',SCALE_INDEX(index4,inc4))
@@ -150,6 +163,7 @@ dnl define(`SCALE_INDICES_SBM',SCALE_INDEX(sbmi,sbm_inc))
 dnl define(`SCALE_INDICES_DBM',SCALE_INDEX(dbmi,dbm_inc))
 define(`SCALE_INDICES_DBM',`')
 define(`SCALE_INDICES_SBM',`')
+define(`SCALE_INDICES_SBM_',`')
 
 define(`SCALE_INDICES_DBM_',SCALE_INDICES_DBM)
 define(`SCALE_INDICES_DBM_SBM',SCALE_INDICES_DBM SCALE_INDICES_SBM)
@@ -269,7 +283,7 @@ define(`slow_qsrc4',e[INDEX_SUM(index5) OFFSET_E ])
 
 
 
-define(`SET_DBM_BIT',if( $1 ) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= ~dbm_bit;)
+define(`SET_DBM_BIT',if($1) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= ~dbm_bit;)
 
 
 

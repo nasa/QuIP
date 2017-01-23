@@ -17,13 +17,13 @@ define(`qsrc2',`fast_qsrc2')
 define(`qsrc3',`fast_qsrc3')
 define(`qsrc4',`fast_qsrc4')
 
-define(`GENERIC_VFUNC_CALL', GENERIC_FLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7))
+define(`GENERIC_GPU_FUNC_CALL',`GENERIC_FLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
 
-define(`SLOW_VFUNC_CALL',`')
+define(`SLOW_GPU_FUNC_CALL',`')
 
-define(`GENERIC_VEC_FUNC_DBM', GENERIC_FLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5))
+define(`GENERIC_VEC_FUNC_DBM',`GENERIC_FLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
-define(`_VEC_FUNC_2V_CONV', _GENERIC_FLEN_CONV_FUNC($1,std_type,$2))
+define(`_VEC_FUNC_2V_CONV',`_GENERIC_FLEN_CONV_FUNC($1,std_type,$2)')
 
 
 
@@ -38,11 +38,11 @@ define(`DECL_BASIC_INDICES_DBM',`						\
 // slow defn - almost
 define(`SET_INDICES_DBM',`				\
 	SET_DBM_TBL_INDEX				\
-	SET_DBM_INDEX_ARRAY				\
+dnl	SET_DBM_INDEX_ARRAY				\
 ')
 
 // checkpoint_one
-define(`SET_INDICES_DBM_1S_',SET_DBM_TBL_INDEX)
+dnl define(`SET_INDICES_DBM_1S_',SET_DBM_TBL_INDEX)
 
 // checkpoint_two
 define(`SET_DBM_TBL_INDEX',`							\
@@ -51,9 +51,10 @@ define(`SET_DBM_TBL_INDEX',`							\
 ')
 
 // checkpoint_three
-define(`SET_DBM_INDEX_ARRAY',`							\
-	dbmi = dbm_info_p->word_tbl[tbl_idx].first_bit_num;			\
-')
+dnl	define(`SET_DBM_INDEX_ARRAY',`							\
+dnl		dbmi = dbm_info_p->word_tbl[tbl_idx].first_bit_num;			\
+dnl	')
+define(`SET_DBM_INDEX_ARRAY',`')
 
 // Because the fast version has lengths, we don't need flen version...
 // No-ops
@@ -66,4 +67,8 @@ define(`_VEC_FUNC_3V_PROJ',`')
 define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
 include(`../../include/veclib/fast_eqsp_defs.m4')
+
+define(`DECLARE_DBM_INDEX',`')
+define(`SET_INDICES_1SRC',`index2 = tbl_idx;')
+
 
