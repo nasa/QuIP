@@ -5,17 +5,17 @@ include(`../../include/veclib/fftsupp.m4')	// prototypes for some external helpe
 include(`cpu_call_defs.m4')
 
 // Why define "host" calls in kernel defs?
-include(`veclib/gen_host_calls.m4')	// all the precisions
+include(`../../include/veclib/gen_host_calls.m4')	// all the precisions
 
 // include fft stuff?
 // Now include the special cases...
 
 include(`../../include/veclib/sp_defs.m4')
-include(`vfft.m4')
+dnl include(`vfft.m4')
 include(`linear.m4')
 
 include(`../../include/veclib/dp_defs.m4')
-include(`vfft.m4')
+dnl include(`vfft.m4')
 include(`linear.m4')
 
 
