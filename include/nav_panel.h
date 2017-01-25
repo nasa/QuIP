@@ -151,13 +151,22 @@ ITEM_INTERFACE_PROTOTYPES(Nav_Panel,nav_panel)
 typedef struct nav_group {
 	Item		ng_item;
 	Item_Context *	ng_itm_icp;
+	Screen_Obj *	ng_sop;
+	Panel_Obj *	ng_panel_p;
 } Nav_Group;
 
 // UNIX macros
 #define NO_NAV_GROUP	((Nav_Group *)NULL)
 
+#define NAVGRP_NAME(nav_g)		(nav_g)->ng_item.item_name
+
 #define NAVGRP_ITEM_CONTEXT(ng_p)		(ng_p)->ng_itm_icp
 #define SET_NAVGRP_ITEM_CONTEXT(ng_p,icp)	(ng_p)->ng_itm_icp = icp
+
+#define NAVGRP_SCRNOBJ(ng_p)			(ng_p)->ng_sop
+#define SET_NAVGRP_SCRNOBJ(ng_p,sop)		(ng_p)->ng_sop = sop
+#define NAVGRP_PANEL(ng_p)			(ng_p)->ng_panel_p
+#define SET_NAVGRP_PANEL(ng_p,pnl_p)		(ng_p)->ng_panel_p = pnl_p
 
 ITEM_INTERFACE_PROTOTYPES(Nav_Group,nav_group)
 
@@ -168,11 +177,16 @@ typedef struct nav_item {
 	const char *	ni_explanation;
 	const char *	ni_action;
 	Table_Item_Type	ni_type;
+
+	Screen_Obj *	ni_sop;
+	Panel_Obj *	ni_panel_p;
 } Nav_Item;
 
 #define NO_NAV_ITEM	((Nav_Item *)NULL)
 
 ITEM_INTERFACE_PROTOTYPES(Nav_Item,nav_item)
+
+#define NAVITM_NAME(ni_p)		(ni_p)->ni_item.item_name
 
 #define NAVITM_EXPLANATION(ni_p)	(ni_p)->ni_explanation
 #define SET_NAVITM_EXPLANATION(ni_p,s)	(ni_p)->ni_explanation = s
@@ -181,8 +195,15 @@ ITEM_INTERFACE_PROTOTYPES(Nav_Item,nav_item)
 #define NAVITM_TYPE(ni_p)		(ni_p)->ni_type
 #define SET_NAVITM_TYPE(ni_p,t)		(ni_p)->ni_type = t
 
+#define NAVITM_SCRNOBJ(ni_p)		(ni_p)->ni_sop
+#define NAVITM_PANEL(ni_p)		(ni_p)->ni_panel_p
+#define SET_NAVITM_SCRNOBJ(ni_p,sop)	(ni_p)->ni_sop = sop
+#define SET_NAVITM_PANEL(ni_p,pnl_p)	(ni_p)->ni_panel_p = pnl_p
+
 #define NAVP_PANEL(np_p)		(np_p)->np_po
 #define SET_NAVP_PANEL(np_p,v)		(np_p)->np_po = v
+
+
 
 #endif // ! BUILD_FOR_OBJC
 

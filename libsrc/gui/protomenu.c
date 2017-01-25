@@ -73,7 +73,10 @@ static COMMAND_FUNC( do_hide_back )
 	quipViewController *qvc;
 	qvc= (quipViewController *)PO_VC(curr_panel);
 	[ qvc hideBackButton:hide ];
-#endif // BUILD_FOR_IOS
+#else // ! BUILD_FOR_IOS
+	sprintf(ERROR_STRING,"do_hide_back:  not implemented, ignoring value %d",hide);
+	advise(ERROR_STRING);
+#endif // ! BUILD_FOR_IOS
 }
 
 
@@ -87,7 +90,10 @@ static COMMAND_FUNC( do_show_done )
 	quipViewController *qvc;
 	qvc= (quipViewController *)PO_VC(curr_panel);
 	[ qvc setDoneAction:s ];
-#endif // BUILD_FOR_IOS
+#else // ! BUILD_FOR_IOS
+	sprintf(ERROR_STRING,"do_show_done:  not implemented, ignoring action '%s'",s);
+	advise(ERROR_STRING);
+#endif // ! BUILD_FOR_IOS
 }
 
 static COMMAND_FUNC(do_accept_edits)
@@ -104,6 +110,15 @@ static COMMAND_FUNC(do_accept_edits)
 	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), SOB_FILENAME );
 }
 
+static COMMAND_FUNC( do_del_widget )
+{
+	Screen_Obj *sop;
+
+	sop=PICK_SCRNOBJ("widget name");
+	if( sop == NO_SCREEN_OBJ ) return;
+
+	delete_widget(QSP_ARG sop);
+}
 static COMMAND_FUNC( do_scrnobj_info )
 {
 	Screen_Obj *sop;
@@ -187,6 +202,7 @@ ADD_CMD( enable,		do_enable_widget,	enable/disable widget )
 ADD_CMD( label_window,		set_panel_label,	set panel window label )
 ADD_CMD( hide_back_button,	do_hide_back,		hide/reveal the nav back button on new panels )
 ADD_CMD( show_done_button,	do_show_done,		specify action for the done button )
+ADD_CMD( delete,		do_del_widget,		delete a widget from the panel )
 ADD_CMD( quit,			end_decorate,		exit submenu )
 MENU_SIMPLE_END(decorate)
 
@@ -224,7 +240,10 @@ static COMMAND_FUNC(do_scroll)
 		[po enableScrolling];
 	else
 		[po disableScrolling];
-#endif /* BUILD_FOR_IOS */
+#else /* ! BUILD_FOR_IOS */
+	sprintf(ERROR_STRING,"do_scroll:  not implemented, ignoring value %d",yn);
+	advise(ERROR_STRING);
+#endif /* ! BUILD_FOR_IOS */
 }
 
 // What does check_first do???
@@ -361,6 +380,7 @@ static COMMAND_FUNC( do_new_nav_group )
 	if( curr_nav_g != NO_NAV_GROUP ){
 		IOS_Item_Context *icp;
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		assert(icp!=NULL);
 	}
 	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
 	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
@@ -396,6 +416,10 @@ static COMMAND_FUNC( do_new_nav_group )
 
 //fprintf(stderr,"after increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
 
+	// We need to associate the label object with the nav_group,
+	// in case we ever want to delete the nav_group!
+	SET_NAVGRP_SCRNOBJ(nav_g,sop);
+	SET_NAVGRP_PANEL(nav_g,curr_panel);
 #endif // ! BUILD_FOR_OBJC
 }
 
@@ -410,6 +434,7 @@ static COMMAND_FUNC( do_set_nav_group )
 	if( curr_nav_g != NO_NAV_GROUP ){
 		IOS_Item_Context *icp;
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
+		assert(icp!=NULL);
 	}
 	push_navitm_context(QSP_ARG  NAVGRP_ITEM_CONTEXT(nav_g) );
 	pushed_navitm_context = NAVGRP_ITEM_CONTEXT(nav_g);
@@ -470,7 +495,12 @@ static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 //fprintf(stderr,"do_table_item:  before increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
 	INC_PO_CURR_Y(curr_panel, BUTTON_HEIGHT + GAP_HEIGHT );
 //fprintf(stderr,"do_table_item:  after increment, panel %s y = %d\n",PO_NAME(curr_panel),PO_CURR_Y(curr_panel));
-#endif /* BUILD_FOR_OBJC */
+
+	// Now give the item a link to the screen object in case
+	// we ever want to delete it...
+	SET_NAVITM_SCRNOBJ(nav_i,bo);
+	SET_NAVITM_PANEL(nav_i,curr_panel);
+#endif /* ! BUILD_FOR_OBJC */
 }
 
 static COMMAND_FUNC( do_nav_item )
@@ -720,7 +750,10 @@ static COMMAND_FUNC( mk_console )
 	make_console_panel(QSP_ARG  s);
 
 	console_po = panel_obj_of(QSP_ARG  s);
-#endif /* BUILD_FOR_IOS */
+#else /* ! BUILD_FOR_IOS */
+	sprintf(ERROR_STRING,"mk_console:  not implemented, ignoring value '%s'",s);
+	advise(ERROR_STRING);
+#endif /* ! BUILD_FOR_IOS */
 }
 
 static COMMAND_FUNC( do_alert )
@@ -823,7 +856,13 @@ COMMAND_FUNC( do_protomenu )
 		const char *prog_name;
 #ifdef HAVE_X11
 		const char *display_name;
+		// why call this - does this force an init of X11?
 		display_name = which_display(SINGLE_QSP_ARG);
+		// the next lines suppress a warning about unused value of s
+		if( verbose ){
+			sprintf(MSG_STR,"Using display '%s'",display_name);
+			prt_msg(MSG_STR);
+		}
 #endif /* HAVE_X11 */
 
 		prog_name = tell_progname();

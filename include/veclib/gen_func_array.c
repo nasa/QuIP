@@ -120,16 +120,6 @@ REAL_INT_ARR(		vsor,		FVSOR ),
 REAL_INT_ARR(		vsxor,		FVSXOR ),
 
 /*
-REAL_INT_ARR_NO_BITMAP(		vand,		FVAND ),
-REAL_INT_ARR_NO_BITMAP(		vnand,		FVNAND ),
-REAL_INT_ARR_NO_BITMAP(		vor,		FVOR ),
-REAL_INT_ARR_NO_BITMAP(		vxor,		FVXOR ),
-REAL_INT_ARR_NO_BITMAP(		vnot,		FVNOT ),
-REAL_INT_ARR_NO_BITMAP(		vcomp,		FVCOMP ),
-REAL_INT_ARR_NO_BITMAP(		vsand,		FVSAND ),
-REAL_INT_ARR_NO_BITMAP(		vsor,		FVSOR ),
-REAL_INT_ARR_NO_BITMAP(		vsxor,		FVSXOR ),
-
 REAL_INT_ARR(		vmod,		FVMOD ),
 REAL_INT_ARR(		vsmod,		FVSMOD ),
 REAL_INT_ARR(		vsmod2,		FVSMOD2 ),
@@ -166,7 +156,8 @@ REAL_INT_ARR_NO_BITMAP(		visblank,	FVISBLANK ),
 /* RC_FIXED_ARR(	vmov,	FVMOV, bmvmov ), */
 
 RCQALL_ARR(		vsum,		FVSUM ),
-RCALL_ARR(		vdot,		FVDOT ),
+// BUG - need to deal with vdot
+//RCALL_ARR(		vdot,		FVDOT ),
 
 RALL_ARR(		vsm_lt,		FVSMLT ),
 RALL_ARR(		vsm_gt,		FVSMGT ),

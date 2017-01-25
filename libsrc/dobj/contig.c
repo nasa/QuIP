@@ -57,6 +57,7 @@ int is_evenly_spaced(Data_Obj *dp)
 		n *= OBJ_TYPE_DIM(dp,i);
 	}
 
+#ifdef PAD_BITMAP
 	if( IS_BITMAP(dp) ){
 		// bitmaps can seem contiguous, but are not if the row length is not a multiple of the word size (in bits)
 		if( (OBJ_TYPE_DIM(dp,1)*OBJ_TYPE_INC(dp,1)) % BITS_PER_BITMAP_WORD != 0 ){
@@ -64,6 +65,7 @@ int is_evenly_spaced(Data_Obj *dp)
 			return 0;
 		}
 	}
+#endif // PAD_BITMAP
 	SET_SHP_EQSP_INC(OBJ_SHAPE(dp),spacing);
 	return 1;
 }
@@ -90,7 +92,8 @@ static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 		int inc;
 		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
 		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
-		n_words = (OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD;
+		// BUG make sure we don't lose precision by down-casting bit0
+		n_words = (int)((OBJ_BIT0(dp) + n + BITS_PER_BITMAP_WORD -1 )/BITS_PER_BITMAP_WORD);
 		for(i_dim=OBJ_MINDIM(dp)+1;i_dim<N_DIMENSIONS;i_dim++){
 			if( OBJ_TYPE_DIM(dp,i_dim) != 1 ){
 				inc = OBJ_TYPE_INC(dp,i_dim);
@@ -145,8 +148,9 @@ void check_contiguity(Data_Obj *dp)
 	// Note that if the dimension is equal to 1, then the increment is 0.
 	while( inc==0 && i<N_DIMENSIONS ){
 		inc = OBJ_TYPE_INC(dp,i);
-		if( inc > 0 && inc != 1 )
+		if( inc > 0 && inc != 1 ){
 			return;	/* not contiguous */
+		}
 		i++;
 	}
 

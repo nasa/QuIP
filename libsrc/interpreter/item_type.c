@@ -165,8 +165,9 @@ static void init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
 
 //fprintf(stderr,"init_itp %s %d BEGIN\n",itp->it_item.item_name,container_type);
 	/* should we really do this? */
-	for(i=0;i<MAX_QUERY_STACKS;i++)
+	for(i=0;i<MAX_QUERY_STACKS;i++){
 		init_itci(itp,i);
+	}
 
 
 	// We used to only initialize the first one.
@@ -189,7 +190,7 @@ static void init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
 	SET_IT_CONTAINER_TYPE(itp,container_type);	// init_itp
 
 	//SET_IT_FRAG_MATCH_INFO(itp,NULL);
-//fprintf(stderr,"init_itp, itp = 0x%lx\n",(long)itp);
+
 	SET_IT_MATCH_CYCLE(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
@@ -1358,14 +1359,14 @@ void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
 		/* itp = type of item to be deleted */
 		/* ip = pointer to item to be deleted */
 {
-	LOCK_ITEM_TYPE(itp)
-
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
+	LOCK_ITEM_TYPE(itp)
+
 	zombie_item(QSP_ARG  itp,(Item*) ip);
+	rls_str( (char *) ITEM_NAME(((Item *)ip)) );
+	SET_ITEM_NAME( ((Item *)ip), NULL );
+
 	recycle_item(itp,ip);
 
 	INC_ITEM_CHANGE_COUNT(itp);
@@ -1733,12 +1734,12 @@ static void rebuild_match_cycle(QSP_ARG_DECL  Match_Cycle *mc_p)
 	Node *np;
 
 	while( (np=remHead(MATCH_CYCLE_LIST(mc_p))) != NULL ){
-		Frag_Match_Info *fmi_p;
+		//Frag_Match_Info *fmi_p;
+		//fmi_p = NODE_DATA(np);
 
-		fmi_p = NODE_DATA(np);
-		rls_node(np);
 		// We don't have to deallocate the frag_match_info structs...
 		// they should retain references through their own context.
+		rls_node(np);
 	}
 	SET_MATCH_CYCLE_CURR_NODE(mc_p,NULL);
 
@@ -1822,10 +1823,14 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 
 List *context_list(QSP_ARG_DECL  Item_Type *itp)
 {
-	if( ITCI_CSTK( THIS_ITCI(itp) ) == NULL ){
-		SET_ITCI_CSTK(THIS_ITCI(itp),new_list());
+	Item_Type_Context_Info *itci_p;
+
+	itci_p = THIS_ITCI(itp);
+
+	if( ITCI_CSTK( itci_p ) == NULL ){
+		SET_ITCI_CSTK(itci_p,new_list());
 	}
-	return ITCI_CSTK(THIS_ITCI(itp));
+	return ITCI_CSTK(itci_p);
 }
 
 static List *_item_list(QSP_ARG_DECL  Item_Type *itp)
@@ -1837,9 +1842,11 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 {
 	List *lp;
 	Item_Context *icp;
+	Item_Type_Context_Info *itci_p;
 
-	if( ITCI_CTX( THIS_ITCI(itp) ) != NULL )
-		return ITCI_CTX(THIS_ITCI(itp));
+	itci_p = THIS_ITCI(itp);
+	if( ITCI_CTX( itci_p ) != NULL )
+		return ITCI_CTX(itci_p);
 
 	// If it is null, then this is probably the first access
 	// from a new thread
@@ -1849,7 +1856,7 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 		Node *np;
 		np = QLIST_HEAD(lp);
 		icp = NODE_DATA(np);
-		SET_ITCI_CTX(THIS_ITCI(itp),icp);
+		SET_ITCI_CTX(itci_p,icp);
 		return icp;
 	}
 
@@ -1861,12 +1868,15 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 	// won't worry about that...
 
 #ifdef THREAD_SAFE_QUERY
-	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
 
+	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
 //fprintf(stderr,"current_context %s (thread %d):  pushing context %s from thread %d\n",
 //ITEM_TYPE_NAME(itp),QS_SERIAL,CTX_NAME(icp),QS_PARENT_SERIAL(THIS_QSP));
+
 #else // ! THREAD_SAFE_QUERY
+
 	icp = ITCI_CTX( ITCI_AT_INDEX(itp,0) );
+
 #endif // ! THREAD_SAFE_QUERY
 
 	assert(icp!=NULL);
@@ -1874,8 +1884,8 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 
 	push_item_context(QSP_ARG  itp, icp );
 
-	assert(ITCI_CTX(THIS_ITCI(itp))!=NULL);
-	return ITCI_CTX(THIS_ITCI(itp));
+	assert(ITCI_CTX(itci_p)!=NULL);
+	return ITCI_CTX(itci_p);
 }
 
 

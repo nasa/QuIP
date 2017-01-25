@@ -189,6 +189,25 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
 	CHAIN_CHECK( HOST_SLOW_CALL_NAME(name) )			\
 }
 
+#ifdef FOOBAR
+#define FAST_HOST_CALL(name,bitmap,typ,scalars,vectors)			\
+									\
+GENERIC_HOST_FAST_CALL(name,bitmap,typ,scalars,vectors)			\
+									\
+static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
+{									\
+	HOST_CALL_VAR_DECLS						\
+									\
+	CLEAR_VEC_ARGS(vap)						\
+	SET_VA_PFDEV(vap,OA_PFDEV(oap));				\
+	/* where do the increments get set? */				\
+	XFER_FAST_ARGS_##bitmap##typ##scalars##vectors			\
+	/* setup_slow_len must go here! */				\
+	SETUP_FAST_LEN_##bitmap##vectors				\
+	CHAIN_CHECK( HOST_FAST_CALL_NAME(name) )			\
+}
+#endif // FOOBAR
+
 // BUG!! these need to be filled in...
 #define MISSING_CALL(func)	_MISSING_CALL(func)
 #define _MISSING_CALL(func)	fprintf(stderr,"Missing code body for function %s!?\n",#func);
@@ -198,7 +217,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS)	\
 #define REPORT_SWITCH(name,sw)		_REPORT_SWITCH(name,sw)
 
 #define _REPORT_SWITCH(name,sw)						\
-sprintf(DEFAULT_ERROR_STRING,"CAlling %s version of %s",#sw,#name);	\
+sprintf(DEFAULT_ERROR_STRING,"Calling %s version of %s",#sw,#name);	\
 NADVISE(DEFAULT_ERROR_STRING);
 
 #else /* ! MORE_DEBUG */
@@ -221,8 +240,8 @@ REPORT_SWITCH(STRINGIFY(HOST_TYPED_CALL_NAME(name,type_code)),fast)	\
 REPORT_SWITCH(name,eqsp)						\
 		XFER_EQSP_ARGS_##bitmap##typ##scalars##vectors		\
 /*sprintf(DEFAULT_ERROR_STRING,"showing vec args for eqsp %s",#name);\
-NADVISE(DEFAULT_ERROR_STRING);\
-show_vec_args(vap);*/\
+NADVISE(DEFAULT_ERROR_STRING);*/\
+/*show_vec_args(vap);*/\
 		CHAIN_CHECK( HOST_EQSP_CALL_NAME(name) )		\
 	} else {							\
 REPORT_SWITCH(name,slow)						\

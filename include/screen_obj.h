@@ -437,6 +437,12 @@ extern void reposition(Screen_Obj *sop);
 extern void make_menu(QSP_ARG_DECL  Screen_Obj *mp,Screen_Obj *mip);
 extern void make_menu_choice(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *parent);
 extern void make_button(QSP_ARG_DECL  Screen_Obj *bo);
+
+#ifdef HAVE_MOTIF
+extern void delete_motif_widget(Screen_Obj *sop);
+#endif // HAVE_MOTIF
+extern void delete_widget(QSP_ARG_DECL  Screen_Obj *sop);
+
 extern void make_pullright(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *pr,Screen_Obj *parent);
 extern void make_toggle(QSP_ARG_DECL  Screen_Obj *bo);
 extern void make_label(QSP_ARG_DECL  Screen_Obj *sop);
@@ -478,6 +484,7 @@ extern void make_picker(QSP_ARG_DECL  Screen_Obj *sop);
 extern IOS_Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name);
 
 extern void get_device_dims(Screen_Obj *sop);
+extern void del_so(QSP_ARG_DECL  Screen_Obj *sop);
 
 
 extern void clear_all_selections(Screen_Obj *sop);

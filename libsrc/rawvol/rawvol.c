@@ -373,7 +373,7 @@ static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 			return;
 		}
 	}
-fprintf(stderr,"Pushing RV inode context %s\n",CTX_NAME(icp));
+//fprintf(stderr,"Pushing RV inode context %s\n",CTX_NAME(icp));
 	PUSH_ITEM_CONTEXT(rv_inode_itp,icp);
 }
 
@@ -560,7 +560,7 @@ advise(ERROR_STRING);
 
 	/* now create a heap struct for this inode */
 
-fprintf(stderr,"creating new heap rv_inode '%s'\n",rv_stp+RV_NAME_IDX(dk_inp));
+//fprintf(stderr,"creating new heap rv_inode '%s'\n",rv_stp+RV_NAME_IDX(dk_inp));
 	inp = new_rv_inode(QSP_ARG  rv_stp+RV_NAME_IDX(dk_inp));
 	if( inp == NO_INODE ){
 		sprintf(ERROR_STRING,
@@ -1037,9 +1037,9 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	}
 
 	if( RV_PARENT(inp) != NO_INODE ){
-fprintf(stderr,"rls_inode calling remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
+//fprintf(stderr,"rls_inode calling remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
 		np=remData(RV_PARENT(inp)->rvi_lp,inp);
-fprintf(stderr,"rls_inode back from remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
+//fprintf(stderr,"rls_inode back from remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
 //#ifdef CAUTIOUS
 //		if( np==NO_NODE ){
 //			sprintf(ERROR_STRING,"CAUTIOUS:  error removing inode %s from list of parent %s",
@@ -1453,7 +1453,7 @@ advise(ERROR_STRING);
 	if( (!in_mkfs) && rv_sbp->rv_cwd!=NO_INODE ){
 		Node *np;
 		np = mk_node(inp);
-fprintf(stderr,"rv_newfile adding inode to directory list 0x%lx...\n",(long)rv_sbp->rv_cwd->rvi_lp);
+//fprintf(stderr,"rv_newfile adding inode to directory list 0x%lx...\n",(long)rv_sbp->rv_cwd->rvi_lp);
 		addTail(rv_sbp->rv_cwd->rvi_lp,np);
 		RV_PARENT(inp) = rv_sbp->rv_cwd;
 	} else {
@@ -2183,15 +2183,15 @@ void traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
 {
 	RV_Inode *inp;
 
-fprintf(stderr,"traverse_rv_inodes BEGIN:  QS_SERIAL = %d\n",QS_SERIAL);
-fflush(stderr);
+//fprintf(stderr,"traverse_rv_inodes BEGIN:  QS_SERIAL = %d\n",QS_SERIAL);
+//fflush(stderr);
 	CHECK_VOLUME("traverse_rv_inodes")
 
-fprintf(stderr,"traverse_rv_inodes:  listing rv_inodes...\n");
-fflush(stderr);
-	list_items( QSP_ARG  rv_inode_itp );
-fprintf(stderr,"traverse_rv_inodes:  DONE listing, looking up root '%s'...\n",ROOT_DIR_NAME);
-fflush(stderr);
+//fprintf(stderr,"traverse_rv_inodes:  listing rv_inodes...\n");
+//fflush(stderr);
+//list_items( QSP_ARG  rv_inode_itp );
+//fprintf(stderr,"traverse_rv_inodes:  DONE listing, looking up root '%s'...\n",ROOT_DIR_NAME);
+//fflush(stderr);
 
 	inp = rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
 //#ifdef CAUTIOUS

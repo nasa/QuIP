@@ -176,38 +176,39 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 		advance							\
 	}
 
-// moved to slow_defs.h, fast_eqsp_defs.h
-//
-//#define DBM_FAST_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+len
-//#define DBM_SLOW_LEN_TEST	dbmi.d5_dim[1] >= dbm_bit0  && dbmi.d5_dim[1] < dbm_bit0+vwxyz_len.d5_dim[1]
-//#define DBM_FAST_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+len
-//#define DBM_SLOW_LEN_TEST	dbmi >= dbm_bit0  && dbmi < dbm_bit0+vwxyz_len.d5_dim[1]
 
-#define FLEN_DBM_LOOP( statement, advance )				\
-									\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){	\
-		if( DBM_FAST_LEN_TEST ){				\
-			dbm_bit = NUMBERED_BIT(i_dbm_bit);		\
-			statement ;					\
-		}							\
-		advance							\
+#define FLEN_DBM_LOOP( statement, advance )		EQSP_DBM_LOOP(statement,advance)
+
+#define EQSP_DBM_LOOP( statement, advance )					\
+										\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
+			statement;						\
+			advance;						\
+		}								\
 	}
 
 #define SLEN_DBM_LOOP( statement, advance )				\
 									\
-	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){	\
-		if( DBM_SLOW_LEN_TEST ){				\
-			dbm_bit = NUMBERED_BIT(i_dbm_bit);		\
-			statement ;					\
-		}							\
-		advance							\
-	}
+	SLOW_DBM_LOOP( statement, advance )
 
 // len is a different type, but here we don't check the other len dimensions!?  BUG?
 // We don't necessarily want to set all of the bits in the word, if there is
 // a skipping increment?  So this probably won't work for subsamples?  BUG?
 
-#define SLOW_DBM_LOOP( statement, advance )	FAST_DBM_LOOP( statement, advance )
+//#define SLOW_DBM_LOOP( statement, advance )	FAST_DBM_LOOP( statement, advance )
+
+//#ifdef OMIT_FOR_TESTING
+#define SLOW_DBM_LOOP( statement, advance )					\
+										\
+	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
+		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
+		if( dbm_info_p->word_tbl[tbl_idx].valid_bits & dbm_bit ){	\
+			statement;						\
+			advance;						\
+		}								\
+	}
 
 // PORT ?
 // BUG these seem to be re-defined in ocl...
@@ -217,12 +218,14 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 #define ADVANCE_FAST_SRC3	index4++;
 #define ADVANCE_FAST_SRC4	index5++;
 #define ADVANCE_FAST_DBM	/* do something??? */
+#define ADVANCE_FAST_SBM	/* do something??? */
 
 #define ADVANCE_EQSP_SRC1	index2 += inc2;
 #define ADVANCE_EQSP_SRC2	index3 += inc3;
 #define ADVANCE_EQSP_SRC3	index4 += inc4;
 #define ADVANCE_EQSP_SRC4	index5 += inc5;
-#define ADVANCE_EQSP_DBM	/* do something??? */
+#define ADVANCE_EQSP_DBM	/* dbm_bit += dbm_inc; */
+#define ADVANCE_EQSP_SBM	/* do something? */
 
 #define ADVANCE_SLOW_SRC1	index2.d5_dim[1]+=inc2.d5_dim[1];
 #define ADVANCE_SLOW_SRC2	index3.d5_dim[1]+=inc3.d5_dim[1];
@@ -238,6 +241,8 @@ void name( DECLARE_KERN_ARGS_FAST_##bm##typ##scalars##vectors )				\
 
 #define ADVANCE_EQSP_DBM_	ADVANCE_EQSP_DBM
 #define ADVANCE_EQSP_DBM_1SRC	ADVANCE_EQSP_DBM ADVANCE_EQSP_SRC1
+#define ADVANCE_EQSP_DBM_1S_1SRC	ADVANCE_EQSP_DBM_1SRC
+#define ADVANCE_EQSP_DBM_1S_	/* nop */
 #define ADVANCE_EQSP_DBM_2SRCS	ADVANCE_EQSP_DBM_1SRC ADVANCE_EQSP_SRC2
 #define ADVANCE_EQSP_DBM_SBM	ADVANCE_EQSP_DBM ADVANCE_EQSP_SBM
 
@@ -276,135 +281,122 @@ __VEC_FUNC_MM( func_name, statement );
 #define _VEC_FUNC_MM_IND( func_name, statement1, statement2 )\
 __VEC_FUNC_MM_IND( func_name, statement1, statement2 )
 
-#ifdef FOOBAR
-#define _VEC_FUNC_MM_NOCC( func_name, c1, c2, s1, gpu_c1, gpu_c2 )	\
-__VEC_FUNC_MM_NOCC( func_name, gpu_c1, gpu_c2 )
-#endif // FOOBAR
+// 2V_PROJ SETUP and HELPER do the same thing, but have different input types
+// (only relevant for mixed operations, e.g. summing float to double
 
-
-#ifdef FOOBAR
-
-#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )		\
-	__VEC_FUNC_2V_PROJ( func_name, gpu_expr )
-
-// Use macros for args?
-// This only has a slow version...
-//
-// BUG - no increments on the source or dest???
-//
-// for vmaxv, expr is:  psrc1 > psrc2 ? psrc1 : psrc2
-
-#define IDX1_0	index1.d5_dim[0]		// used to be index1.x
-#define IDX1_1	index1.d5_dim[1]		// used to be index1.y
-#define IDX1_2	index1.d5_dim[2]		// used to be index1.y
-#define INC1_0	inc1.d5_dim[0]			// used to be inc1.x
-#define INC1_1	inc1.d5_dim[1]			// used to be inc1.x
-#define INC1_2	inc1.d5_dim[2]			// used to be inc1.x
-#endif // FOOBAR
-
-#define ___VEC_FUNC_2V_PROJ( func_name, expr )			\
+#define ___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, expr )	\
 								\
-KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_2V_PROJ )				\
-/* std_type* dest, std_type* s1, int len1, int len2*/ 		\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP )		\
+	FAST_2V_PROJ_BODY(expr,std_type)
+
+#define ___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, expr )	\
+								\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER )		\
+	FAST_2V_PROJ_BODY(expr,dest_type)
+
+#define FAST_2V_PROJ_BODY(expr,type)				\
 {								\
 	INIT_INDICES_1						\
 								\
-	if( IDX1_0 < len2 ){					\
-		std_type *s2;					\
+	if( IDX1 < len2 ){					\
+		type *s2;					\
 		s2 = s1 + len1;					\
-		dest[IDX1_0] = expr ;				\
-	} else if( IDX1_0 < len1 ){				\
-		dest[IDX1_0] = s1[IDX1_0];			\
+		dest[IDX1] = expr ;				\
+	} else if( IDX1 < len1 ){				\
+		dest[IDX1] = s1[IDX1];				\
 	}							\
 }
 
-//_VEC_FUNC_CPX_2V_PROJ(cvsum,
 
-#ifdef FOOBAR
-#define _VEC_FUNC_CPX_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr )		\
-	__VEC_FUNC_CPX_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr )
-#endif // FOOBAR
-
-#define ___VEC_FUNC_CPX_2V_PROJ( func_name, re_expr, im_expr )		\
+#define ___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-		( DECLARE_KERN_ARGS_CPX_2V_PROJ )			\
-/* (VFUNC_std_cpx* dest, std_cpx* s1, int len1, int len2 ) */		\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )		\
+	FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,std_cpx)
+
+#define ___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )\
+									\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )		\
+	FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,dest_cpx)
+
+#define FAST_CPX_2V_PROJ_BODY(re_expr,im_expr,type)			\
 	{								\
 		INIT_INDICES_1						\
 									\
-		if( IDX1_0 < len2 ){					\
-			std_cpx *s2;					\
+		if( IDX1 < len2 ){					\
+			type *s2;					\
 			s2 = s1 + len1;					\
-			dest[IDX1_0].re = re_expr ;				\
-			dest[IDX1_0].im = im_expr ;				\
-		} else if( IDX1_0 < len1 ){				\
-			dest[IDX1_0].re = s1[IDX1_0].re;			\
-			dest[IDX1_0].im = s1[IDX1_0].im;			\
-		}							\
-	}
-
-#ifdef FOOBAR
-#define _VEC_FUNC_QUAT_2V_PROJ( func_name, s1, s2, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )		\
-	__VEC_FUNC_QUAT_2V_PROJ( func_name, gpu_re_expr, gpu_im_expr1, gpu_im_expr2, gpu_im_expr3 )
-#endif // FOOBAR
-
-#define ___VEC_FUNC_QUAT_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
-									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-/*( std_quat* dest, std_quat* s1, int len1, int len2 ) */					\
-		( DECLARE_KERN_ARGS_QUAT_2V_PROJ )			\
-	{								\
-		INIT_INDICES_1						\
-									\
-		if( IDX1_0 < len2 ){					\
-			std_quat *s2;					\
-			s2 = s1 + len1;					\
-			dest[IDX1_0].re = re_expr ;				\
-			dest[IDX1_0]._i = im_expr1 ;				\
-			dest[IDX1_0]._j = im_expr2 ;				\
-			dest[IDX1_0]._k = im_expr3 ;				\
-		} else if( IDX1_0 < len1 ){				\
-			dest[IDX1_0].re = s1[IDX1_0].re;			\
-			dest[IDX1_0]._i = s1[IDX1_0]._i;			\
-			dest[IDX1_0]._j = s1[IDX1_0]._j;			\
-			dest[IDX1_0]._k = s1[IDX1_0]._k;			\
+			dest[IDX1].re = re_expr ;			\
+			dest[IDX1].im = im_expr ;			\
+		} else if( IDX1 < len1 ){				\
+			dest[IDX1].re = s1[IDX1].re;			\
+			dest[IDX1].im = s1[IDX1].im;			\
 		}							\
 	}
 
 
 
+#define ___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+									\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP )		\
+	FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,std_quat)
 
-#ifdef FOOBAR
-#define _VEC_FUNC_2V_PROJ_IDX( func_name, s1, s2, gpu_s1, gpu_s2 )		\
-	__VEC_FUNC_2V_PROJ_IDX( func_name, gpu_s1, gpu_s2 )
-#endif // FOOBAR
+#define ___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+									\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+		( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER )		\
+	FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,dest_quat)
 
-#define ___VEC_FUNC_2V_PROJ_IDX( func_name, statement1, statement2 )	\
-									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_SETUP_NAME(func_name)	\
-/*(index_type* a, std_type* b, std_type* c, u_long len1, u_long len2)*/	\
-		( DECLARE_KERN_ARGS_IDX_SETUP )				\
+
+#define FAST_QUAT_2V_PROJ_BODY(re_expr,im_expr1,im_expr2,im_expr3,type)	\
 	{								\
-		INIT_INDICES_3						\
-		if( index3.d5_dim[1] < len2 )					\
-			statement1 ;					\
-		else if( IDX1_0 < len1 )				\
-			dst = index2.d5_dim[1] ;				\
-	}								\
+		INIT_INDICES_1						\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_IDX_HELPER_NAME(func_name)		\
-/* (index_type* a, index_type* b, index_type* c, std_type *orig, int len1, int len2) */ \
-		( DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER )			\
-	{								\
-		INIT_INDICES_3						\
-		if( index3.d5_dim[1] < len2 )					\
-			statement2 ;					\
-		else if( IDX1_0 < len1 )				\
-			dst = src1 ;					\
-	}								\
-									\
+		if( IDX1 < len2 ){					\
+			type *s2;					\
+			s2 = s1 + len1;					\
+			dest[IDX1].re = re_expr ;			\
+			dest[IDX1]._i = im_expr1 ;			\
+			dest[IDX1]._j = im_expr2 ;			\
+			dest[IDX1]._k = im_expr3 ;			\
+		} else if( IDX1 < len1 ){				\
+			dest[IDX1].re = s1[IDX1].re;			\
+			dest[IDX1]._i = s1[IDX1]._i;			\
+			dest[IDX1]._j = s1[IDX1]._j;			\
+			dest[IDX1]._k = s1[IDX1]._k;			\
+		}							\
+	}
+
+
+
+
+
+#define ___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
+										\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_IDX_SETUP_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_FAST_IDX_SETUP )				\
+	{									\
+		INIT_INDICES_3							\
+		if( index3 < len2 )						\
+			statement1 ;						\
+		else if( IDX1 < len1 )						\
+			dst = index2 ;						\
+	}									\
+										\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_IDX_HELPER_NAME(func_name)	\
+		( DECLARE_KERN_ARGS_FAST_IDX_HELPER )				\
+	{									\
+		INIT_INDICES_3							\
+		if( index3 < len2 )						\
+			statement2 ;						\
+		else if( IDX1 < len1 )						\
+			dst = src1 ;						\
+	}
+
 
 
 /* For nocc_setup, we index directly into the value and count temp arrays
@@ -437,8 +429,8 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 // It's the same except for the sum line, which would be replaced with
 //
 
-#define psrc1	s1[IDX1_0]
-#define psrc2	s2[IDX1_0]
+#define psrc1	s1[IDX1]
+#define psrc2	s2[IDX1]
 
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
@@ -505,8 +497,8 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 // It's the same except for the sum line, which would be replaced with
 //
 
-#define psrc1	s1[IDX1_0]
-#define psrc2	s2[IDX1_0]
+#define psrc1	s1[IDX1]
+#define psrc2	s2[IDX1]
 
 // for vsum:   psrc1 + psrc2
 // for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
@@ -516,39 +508,39 @@ KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
 KERNEL_FUNC_PRELUDE							\
 									\
 	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name		\
-/* ( std_type* dest, std_type* s1, int len1, int len2 ) */					\
 		( DECLARE_KERN_ARGS_2V_PROJ )				\
 	{								\
 		INIT_INDICES_1						\
 									\
-		if( IDX1_0 < len2 ){					\
+		if( IDX1 < len2 ){					\
 			std_type *s2;					\
 			s2 = s1 + len1;					\
-			dest[IDX1_0] = expr ;				\
-		} else if( IDX1_0 < len1 ){				\
-			dest[IDX1_0] = s1[IDX1_0];			\
+			dest[IDX1] = expr ;				\
+		} else if( IDX1 < len1 ){				\
+			dest[IDX1] = s1[IDX1];				\
 		}							\
 	}
 
+// BUG - this is vdot, needs setup and helper, because first pass is products
+// subsequent passes are sums.  Maybe it shouldn't be a primitive?
 
-#define ___VFUNC_CALL_3V_PROJ( func_name, type_code )			\
+#define ___VFUNC_CALL_FAST_3V_PROJ( func_name, type_code )		\
 									\
 KERNEL_FUNC_PRELUDE							\
 									\
-	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name		\
-/* ( std_type* dest, std_type* s1, std_type* s2, int len1, int len2 ) */	\
-		( DECLARE_KERN_ARGS_3V_PROJ )				\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_FAST_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
-		if( IDX1_0 < len2 ){					\
+		if( IDX1 < len2 ){					\
 			std_type *s1b;					\
 			std_type *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[IDX1_0] = s1[IDX1_0] * s2[IDX1_0] +	\
-				s1b[IDX1_0] * s2b[IDX1_0] ;		\
-		} else if( IDX1_0 < len1 ){				\
-			dest[IDX1_0] = s1[IDX1_0];			\
+			dest[IDX1] = s1[IDX1] * s2[IDX1] +		\
+				s1b[IDX1] * s2b[IDX1] ;			\
+		} else if( IDX1 < len1 ){				\
+			dest[IDX1] = s1[IDX1];				\
 		}							\
 	}
 
@@ -562,7 +554,7 @@ KERNEL_FUNC_PRELUDE							\
 		INIT_INDICES_3						\
 		if( index3.d5_dim[1] < len2 )					\
 			statement ;					\
-		else if( IDX1_0 < len1 )				\
+		else if( IDX1 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
@@ -570,92 +562,13 @@ KERNEL_FUNC_PRELUDE							\
 /* For nocc_setup, we index directly into the value and count temp arrays
  * (a and b, respectively), but we have to double the index for the source
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
+ *
+ * We assume that the data are contiguous, and use fast (single) indices.
  */
 
-/*
-BUG - need to bring in these macros in all of these definitions...
 
-	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name##_nocc_setup(	\
-		std_type* dst_extrema, index_type* dst_counts,		\
-		std_type* src_vals, index_type *dst_indices,		\
-		u_long len1, u_long len2)				\
-*/
-
-#ifdef OLD_CUDA_VERSION
-
-#define ___VFUNC_CALL_MM_NOCC( func_name, type_code, test1, test2 )	\
-									\
-KERNEL_FUNC_PRELUDE							\
-									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name,type_code)\
-		( DECLARE_KERN_ARGS_NOCC_SETUP )				\
-	{								\
-		INIT_INDICES_2						\
-		index2.d5_dim[1] *= 2;						\
-		if( IDX1_0 < len2 ){					\
-			if( test1 ){					\
-				dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1_0]=1;			\
-				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];		\
-			} else if( test2 ){				\
-				dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]+1];\
-				dst_counts[IDX1_0]=1;			\
-				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1]+1;		\
-			} else {					\
-				dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1_0]=2;			\
-				dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];		\
-				dst_indices[index2.d5_dim[1]+1]=index2.d5_dim[1]+1;		\
-			}						\
-		} else {						\
-			/* Nothing to compare */			\
-			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];		\
-			dst_counts[IDX1_0]=1;				\
-			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
-		}							\
-	}								\
-									\
-	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name##_nocc_helper	\
-/* ( std_type* dst_extrema, index_type* dst_counts, std_type* src_vals, index_type *src_counts,	index_type *dst_indices, int len1, int len2, int stride) */				\
-		( DECLARE_KERN_ARGS_NOCC_HELPER )			\
-	{								\
-		int i;							\
-		INIT_INDICES_2						\
-		index2.d5_dim[1] *= 2;						\
-		if( IDX1_0 < len2 ){					\
-			if( test1 ){					\
-				dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];	\
-				/* No copy necessary */			\
-			} else if( test2 ){				\
-				dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]+1];	\
-				dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]+1];\
-				/* Now copy the indices down */		\
-				for(i=0;i<dst_counts[IDX1_0];i++){	\
-					dst_indices[IDX1_0*stride+i] =	\
-			dst_indices[IDX1_0*stride+stride/2+i];		\
-				}					\
-			} else {					\
-				dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
-				dst_counts[IDX1_0] = src_counts[index2.d5_dim[1]] + \
-					src_counts[index2.d5_dim[1]+1];		\
-				/* Now copy the second half of the indices */\
-				for(i=0;i<src_counts[index2.d5_dim[1]+1];i++){	\
-		dst_indices[IDX1_0*stride+src_counts[index2.d5_dim[1]]+i] =	\
-			dst_indices[IDX1_0*stride+stride/2+i];		\
-				}					\
-			}						\
-		} else {						\
-			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];		\
-			dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];		\
-			/* No copy necessary */				\
-		}							\
-	}
-
-#endif // OLD_CUDA_VERSION
-
-#define ___VFUNC_CALL_MM_NOCC( func_name, type_code, test1, test2 )	\
-	___VEC_FUNC_MM_NOCC( func_name, test1, test2 )
+#define ___VFUNC_CALL_FAST_MM_NOCC( func_name, type_code, test1, test2 )	\
+	___VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )
 
 
 /* For nocc_setup, we index directly into the value and count temp arrays
@@ -663,85 +576,93 @@ KERNEL_FUNC_PRELUDE							\
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
  */
 
-/*
-BUG - need to bring in these macros in all of these definitions...
-
-	KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name)	\
-		( std_type* dst_extrema, index_type* dst_counts,	\
-		std_type* src_vals, index_type *dst_indices,		\
-		u_long len1, u_long len2)				\
-*/
-
-#define ___VEC_FUNC_MM_NOCC( func_name, test1, test2 )			\
+#define ___VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )			\
 									\
-	___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 )		\
-	___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 )
+	___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 )		\
+	___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 )
 
 
-#define ___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 )		\
+#ifndef IDX2
+#define IDX2	index2
+#endif // ! IDX2
+
+// How are we handling the indices???
+
+#define ___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 )		\
 									\
-KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_SETUP_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_NOCC_SETUP )				\
+KERNEL_FUNC_PRELUDE							\
+									\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_SETUP_NAME(func_name)	\
+	( DECLARE_KERN_ARGS_FAST_NOCC_SETUP )				\
 {									\
 	INIT_INDICES_2							\
-	index2.d5_dim[1] *= 2;							\
-	if( IDX1_0 < len2 ){						\
+	IDX2 *= 2;							\
+	if( IDX1 < len2 ){						\
 		if( test1 ){						\
-			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
-			dst_counts[IDX1_0]=1;				\
-			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
+			dst_extrema[IDX1] = src_vals[IDX2];		\
+			dst_counts[IDX1]=1;				\
+			dst_indices[IDX2]=IDX2;			\
 		} else if( test2 ){					\
-			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]+1];	\
-			dst_counts[IDX1_0]=1;				\
-			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1]+1;		\
+			dst_extrema[IDX1] = src_vals[IDX2+1];	\
+			dst_counts[IDX1]=1;				\
+			dst_indices[IDX2]=IDX2+1;			\
 		} else {						\
-			dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];	\
-			dst_counts[IDX1_0]=2;				\
-			dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];			\
-			dst_indices[index2.d5_dim[1]+1]=index2.d5_dim[1]+1;		\
+			dst_extrema[IDX1] = src_vals[IDX2];		\
+			dst_counts[IDX1]=2;				\
+			dst_indices[IDX2]=IDX2;			\
+			dst_indices[IDX2+1]=IDX2+1;			\
 		}							\
 	} else {							\
 		/* Nothing to compare */				\
-		dst_extrema[IDX1_0] = src_vals[index2.d5_dim[1]];		\
-		dst_counts[IDX1_0]=1;					\
-		dst_indices[index2.d5_dim[1]]=index2.d5_dim[1];				\
+		dst_extrema[IDX1] = src_vals[IDX2];			\
+		dst_counts[IDX1]=1;					\
+		dst_indices[IDX2]=IDX2;				\
 	}								\
 }
 
-#define ___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 )		\
+// indices and stride example:
+//
+// src data			ext_val			indices				counts
+// 0  1  5  5  5  2  2  2	1   5   5   2		1  X  2   3   4  X  6   7	1  2  1  2		setup, n=4
+// 1  5  5  2			5   5			2  3 (2) (3)  4  X (6) (7)	2  1			helper, n=2, stride=4
+// 5  5				5			2  3  4  (3) (4) X (6) (7)	3			helper, n=1, stride=8
+
+#define ___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 )	\
 									\
-KERNEL_FUNC_QUALIFIER void VFUNC_NOCC_HELPER_NAME(func_name)		\
-	( DECLARE_KERN_ARGS_NOCC_HELPER )				\
+KERNEL_FUNC_PRELUDE							\
+									\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NOCC_HELPER_NAME(func_name)	\
+	( DECLARE_KERN_ARGS_FAST_NOCC_HELPER )				\
 {									\
 	int i;								\
 	INIT_INDICES_2							\
-	index2.d5_dim[1] *= 2;							\
-	if( IDX1_0 < len2 ){						\
+	IDX2 *= 2;							\
+	if( IDX1 < len2 ){						\
 		if( test1 ){						\
-			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
-			dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];	\
+			dst_extrema[IDX1]=src_vals[IDX2];		\
+			dst_counts[IDX1]=src_counts[IDX2];		\
 			/* No copy necessary */				\
 		} else if( test2 ){					\
-			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]+1];	\
-			dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]+1];	\
+			dst_extrema[IDX1]=src_vals[IDX2+1];		\
+			dst_counts[IDX1]=src_counts[IDX2+1];	\
 			/* Now copy the indices down */			\
-			for(i=0;i<dst_counts[IDX1_0];i++){		\
-				dst_indices[IDX1_0*stride+i] =	\
-		dst_indices[IDX1_0*stride+stride/2+i];		\
+			for(i=0;i<dst_counts[IDX1];i++){		\
+				dst_indices[IDX1*stride+i] =		\
+		dst_indices[IDX1*stride+stride/2+i];			\
 			}						\
 		} else {						\
-			dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];	\
-			dst_counts[IDX1_0] = src_counts[index2.d5_dim[1]] + 	\
-				src_counts[index2.d5_dim[1]+1];			\
+			dst_extrema[IDX1]=src_vals[IDX2];		\
+			dst_counts[IDX1] = src_counts[IDX2] + 	\
+				src_counts[IDX2+1];			\
 			/* Now copy the second half of the indices */	\
-			for(i=0;i<src_counts[index2.d5_dim[1]+1];i++){		\
-	dst_indices[IDX1_0*stride+src_counts[index2.d5_dim[1]]+i] =		\
-		dst_indices[IDX1_0*stride+stride/2+i];		\
+			for(i=0;i<src_counts[IDX2+1];i++){		\
+	dst_indices[IDX1*stride+src_counts[IDX2]+i] =		\
+		dst_indices[IDX1*stride+stride/2+i];			\
 			}						\
 		}							\
 	} else {							\
-		dst_extrema[IDX1_0]=src_vals[index2.d5_dim[1]];		\
-		dst_counts[IDX1_0]=src_counts[index2.d5_dim[1]];		\
+		dst_extrema[IDX1]=src_vals[IDX2];			\
+		dst_counts[IDX1]=src_counts[IDX2];			\
 		/* No copy necessary */					\
 	}								\
 }
@@ -797,7 +718,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_##bm
 {									\
 	DECL_EXTRA_##extra						\
 	INIT_INDICES_##bm##vectors					\
-	if( IDX1_0 < len) {						\
+	if( IDX1 < len) {						\
 		statement ;						\
 	}								\
 }
@@ -810,7 +731,7 @@ KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_##bm
 {									\
 	DECL_EXTRA_##extra						\
 	INIT_INDICES_##bm##vectors					\
-	if( IDX1_0 < len ){					\
+	if( IDX1 < len ){					\
 		SCALE_INDICES_EQSP_##bm##vectors			\
 		statement;						\
 	}								\
@@ -818,7 +739,7 @@ KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_##bm
 
 // Does OpenCL have a limit (like CUDA) on the number of dimensions (3)?
 
-//	if( IDX1_0 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){
+//	if( IDX1 < xyz_len.x && index1.y < xyz_len.y && index1.z < xyz_len.z ){
 
 #define SLEN_SUBTST(index_name,len,dim_idx)	index_name.d5_dim[dim_idx] < len.d5_dim[dim_idx]
 
@@ -833,7 +754,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_##bm
 	DECL_EXTRA_##extra						\
 	/*INIT_INDICES_XYZ_##bm##vectors*/					\
 	INIT_INDICES_##bm##vectors					\
-	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
+	if( SLEN_IDX_TEST(index1,szarr) ){				\
 		/*SCALE_INDICES_XYZ_##bm##vectors*/				\
 		SCALE_INDICES_##bm##vectors				\
 		statement;						\
@@ -934,7 +855,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_CONV(to_type) )	\
 {									\
 	INIT_INDICES_2							\
-	if( IDX1_0 < len) {						\
+	if( IDX1 < len) {						\
 		dst = (to_type) src1 ;					\
 	}								\
 }
@@ -946,7 +867,7 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_CONV(to_type) )	\
 {									\
 	INIT_INDICES_2							\
-	if( IDX1_0 < len) {						\
+	if( IDX1 < len) {						\
 		SCALE_INDICES_2						\
 		dst = (to_type) src1 ;					\
 	}								\
@@ -960,7 +881,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_CONV
 {									\
 	/*INIT_INDICES_XYZ_2*/						\
 	INIT_INDICES_2							\
-	if( SLEN_IDX_TEST(index1,vwxyz_len) ){				\
+	if( SLEN_IDX_TEST(index1,szarr) ){				\
 		/*SCALE_INDICES_XYZ_2*/					\
 		SCALE_INDICES_2						\
 		dst = (to_type) src1 ;					\
@@ -974,7 +895,7 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_FAST_CALL_NAME(name)( DECLARE_KERN_ARGS_FAST_DBM_##typ##scalars##vectors )	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	/*ADJUST_DBM_WORD_IDX*/							\
 	FAST_DBM_LOOP( statement, ADVANCE_FAST_DBM_##vectors )		\
 }
@@ -989,10 +910,10 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_EQSP_CALL_NAME(name)( DECLARE_KERN_ARGS_EQSP_DBM_##typ##scalars##vectors )	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
-	SCALE_INDICES_EQSP_DBM_##vectors				\
+	INIT_INDICES_DBM_##scalars##vectors					\
+	SCALE_INDICES_EQSP_DBM_##scalars##vectors				\
 	/*ADJUST_DBM_WORD_IDX*/							\
-	FAST_DBM_LOOP(statement,ADVANCE_EQSP_DBM_##vectors)		\
+	EQSP_DBM_LOOP(statement,ADVANCE_EQSP_DBM_##scalars##vectors)		\
 }
 
 
@@ -1004,7 +925,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLOW_CALL_NAME(name)( DECLARE_KERN_ARGS_SLOW_DBM_
 {									\
 	/*INIT_INDICES_XYZ_DBM_##vectors*/					\
 	/*SCALE_INDICES_XYZ_DBM_##vectors*/					\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	SCALE_INDICES_DBM_##vectors					\
 									\
 	/*ADJUST_DBM_WORD_IDX*/							\
@@ -1019,9 +940,7 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_FLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_FLEN_DBM_##typ##scalars##vectors)	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
-	/*ADJUST_DBM_WORD_IDX*/							\
-	/* BUG need to put len test in statement */			\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	FLEN_DBM_LOOP(statement,ADVANCE_FAST_DBM_##vectors)			\
 }
 
@@ -1031,11 +950,11 @@ KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_ELEN_CALL_NAME(name)( DECLARE_KERN_ARGS_ELEN_DBM_##typ##scalars##vectors)	\
 {									\
-	INIT_INDICES_DBM_##vectors					\
-	SCALE_INDICES_EQSP_DBM_##vectors				\
+	INIT_INDICES_DBM_##scalars##vectors					\
+	SCALE_INDICES_EQSP_DBM_##scalars##vectors				\
 	/* BUG need to put len test in statement */			\
 	/*ADJUST_DBM_WORD_IDX*/							\
-	FLEN_DBM_LOOP( statement, ADVANCE_EQSP_DBM_##vectors )		\
+	FLEN_DBM_LOOP( statement, ADVANCE_EQSP_DBM_##scalars##vectors )		\
 }
 
 
@@ -1048,7 +967,7 @@ KERNEL_FUNC_QUALIFIER void GPU_SLEN_CALL_NAME(name)( DECLARE_KERN_ARGS_SLEN_DBM_
 {									\
 	/*INIT_INDICES_XYZ_DBM_##vectors*/					\
 	/*SCALE_INDICES_XYZ_DBM_##vectors*/					\
-	INIT_INDICES_DBM_##vectors					\
+	INIT_INDICES_DBM_##scalars##vectors					\
 	SCALE_INDICES_DBM_##vectors					\
 									\
 	/* BUG need to put len test in statement */			\
@@ -1070,7 +989,7 @@ KERNEL_FUNC_PRELUDE							\
 		INIT_INDICES_3						\
 		if( index3.d5_dim[1] < len2 )					\
 			statement ;					\
-		else if( IDX1_0 < len1 )				\
+		else if( IDX1 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
@@ -1080,85 +999,74 @@ KERNEL_FUNC_PRELUDE							\
 KERNEL_FUNC_PRELUDE							\
 									\
 	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name##_index_setup	\
-	(index_type* a, std_type* b, std_type* c, u_long len1, u_long len2)\
+	(index_type* a, std_type* b, std_type* c, uint32_t len1, uint32_t len2)\
 	{								\
 		INIT_INDICES_3						\
 		if( index3.d5_dim[1] < len2 )					\
 			statement1 ;					\
-		else if( IDX1_0 < len1 )				\
+		else if( IDX1 < len1 )				\
 			dst = index2.d5_dim[1] ;				\
 	}								\
 									\
 	KERNEL_FUNC_QUALIFIER void g_##type_code##_##func_name##_index_helper	\
 		(index_type* a, index_type* b, index_type* c,		\
-				std_type *orig, int len1, int len2)	\
+				std_type *orig, uint32_t len1, uint32_t len2)	\
 	{								\
 		INIT_INDICES_3						\
 		if( index3.d5_dim[1] < len2 )					\
 			statement2 ;					\
-		else if( IDX1_0 < len1 )				\
+		else if( IDX1 < len1 )				\
 			dst = src1 ;					\
 	}								\
 									\
 
 #ifdef FOOBAR
-// hard coded for vdot?
-#define _VEC_FUNC_3V_PROJ( func_name, s1, s2 )				\
-	__VEC_FUNC_3V_PROJ( func_name)
-#endif // FOOBAR
-
 // hard-coded for vdot!?
+// BUG - for gpu needs helper and setup to take products once and then sum
 
-#define ___VEC_FUNC_3V_PROJ( func_name)					\
+#define ___VEC_FUNC_FAST_3V_PROJ( func_name)				\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-/*( std_type* dest, std_type* s1, std_type* s2, int len1, int len2 ) */ \
-		( DECLARE_KERN_ARGS_3V_PROJ )				\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_FAST_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
-		if( IDX1_0 < len2 ){					\
+		if( IDX1 < len2 ){					\
 			std_type *s1b;					\
 			std_type *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[IDX1_0] = s1[IDX1_0] * s2[IDX1_0] +	\
-				s1b[IDX1_0] * s2b[IDX1_0] ;		\
-		} else if( IDX1_0 < len1 ){				\
-			dest[IDX1_0] = s1[IDX1_0];			\
+			dest[IDX1] = s1[IDX1] * s2[IDX1] +		\
+				s1b[IDX1] * s2b[IDX1] ;			\
+		} else if( IDX1 < len1 ){				\
+			dest[IDX1] = s1[IDX1];				\
 		}							\
 	}
 
 
-#ifdef FOOBAR
-// hard coded for vdot?
-#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2 )				\
-	__VEC_FUNC_CPX_3V_PROJ( func_name )
-#endif // FOOBAR
-
-#define ___VEC_FUNC_CPX_3V_PROJ( func_name)					\
+#define ___VEC_FUNC_CPX_FAST_3V_PROJ( func_name)			\
 									\
-	KERNEL_FUNC_QUALIFIER void VFUNC_SIMPLE_NAME(func_name)		\
-/* ( std_cpx* dest, std_cpx* s1, std_cpx* s2, int len1, int len2 ) */	\
-		( DECLARE_KERN_ARGS_CPX_3V_PROJ )			\
+	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name)		\
+		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ )			\
 	{								\
 		INIT_INDICES_1						\
-		if( IDX1_0 < len2 ){					\
+		if( IDX1 < len2 ){					\
 			std_cpx *s1b;					\
 			std_cpx *s2b;					\
 			s1b = s1 + len1;				\
 			s2b = s2 + len1;				\
-			dest[IDX1_0].re = s1[IDX1_0].re * s2[IDX1_0].re -	\
-					s1[IDX1_0].im * s2[IDX1_0].im +	\
-				s1b[IDX1_0].re * s2b[IDX1_0].re -	\
-				s1b[IDX1_0].im * s2b[IDX1_0].im ;		\
-			dest[IDX1_0].im = s1[IDX1_0].re * s2[IDX1_0].im +	\
-				s1[IDX1_0].im * s2[IDX1_0].re +	\
-				s1b[IDX1_0].re * s2b[IDX1_0].im +		\
-				s1b[IDX1_0].im * s2b[IDX1_0].re ;		\
-		} else if( IDX1_0 < len1 ){				\
-			dest[IDX1_0].re = s1[IDX1_0].re;			\
-			dest[IDX1_0].im = s1[IDX1_0].im;			\
+			dest[IDX1].re = s1[IDX1].re * s2[IDX1].re -	\
+					s1[IDX1].im * s2[IDX1].im +	\
+				s1b[IDX1].re * s2b[IDX1].re -	\
+				s1b[IDX1].im * s2b[IDX1].im ;		\
+			dest[IDX1].im = s1[IDX1].re * s2[IDX1].im +	\
+				s1[IDX1].im * s2[IDX1].re +	\
+				s1b[IDX1].re * s2b[IDX1].im +		\
+				s1b[IDX1].im * s2b[IDX1].re ;		\
+		} else if( IDX1 < len1 ){				\
+			dest[IDX1].re = s1[IDX1].re;			\
+			dest[IDX1].im = s1[IDX1].im;			\
 		}							\
 	}
 
+#endif // FOOBAR
 

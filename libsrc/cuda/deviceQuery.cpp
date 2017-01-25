@@ -71,7 +71,7 @@ void mapCudaFunctionPointers()
 		exit(0);
 	}
 }
-#endif
+#endif // USE_DLL_LINKING
 
 void print_cudev_properties(QSP_ARG_DECL  int dev, cudaDeviceProp *propp)
 {
@@ -185,10 +185,10 @@ COMMAND_FUNC( query_cuda_devices ){
 	}
 }
 
-#else
+#else	// ! HAVE_CUDA
 
 COMMAND_FUNC( query_cuda_devices )
 {}
 
-#endif /* HAVE_CUDA */
+#endif	// ! HAVE_CUDA
 

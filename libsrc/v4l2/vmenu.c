@@ -902,10 +902,22 @@ static int get_integer_control(QSP_ARG_DECL uint32_t id)
 {									\
 	int i;								\
 	i = HOW_MANY("dummy control value");				\
-	sprintf(ERROR_STRING,						\
-	"program not configured with V4L2 support, can't set %s!?",#control);	\
-	WARN(ERROR_STRING);						\
+	NO_V4L2_MSG(#control,i)						\
 }
+
+#define NO_V4L2_MSG(label,value)	_NO_V4L2_MSG(label,value)
+
+#define _NO_V4L2_MSG(label,value)					\
+									\
+	sprintf(ERROR_STRING,						\
+	"program not configured with V4L2 support, can't set %s to %d!?",label,value);	\
+	WARN(ERROR_STRING);
+
+#define NO_V4L2_MSG2(label,string)					\
+									\
+	sprintf(ERROR_STRING,						\
+	"program not configured with V4L2 support, can't set %s to %s!?",label,string);	\
+	WARN(ERROR_STRING);
 
 #endif // ! HAVE_V4L2
 
@@ -1218,6 +1230,7 @@ static COMMAND_FUNC( do_set_std )
 	const char *s;
 	s=NAMEOF("standard");	// dummy word to throw away
 	// print warning
+	NO_V4L2_MSG2("standard",s)
 #endif // ! HAVE_V4L2
 }
 

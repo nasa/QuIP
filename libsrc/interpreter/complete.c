@@ -460,7 +460,7 @@ const char *get_sel( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_o
 {
 	int c;
 	u_int n_so_far;
-	const char *def_str;
+	const char *def_str="";
 	static int have_tty_chars=0;
 	int edit_mode=0;		/* complete until we see an arrow key */
 
@@ -518,7 +518,6 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 
 		if( strlen(sel_str) > 0 ){	/* if something typed */
 			u_int l;
-//try_again:
 			if( IS_PICKING_ITEM ){
 				// we are picking an item...
 				def_str=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),sel_str);
@@ -711,8 +710,10 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 
 			/* we do show_def a second time
 				since the cursor will move! */
-			if( strlen(def_str) > n_so_far )
-				show_def(&def_str[n_so_far],0);
+			if( def_str != NULL ){
+				if( strlen(def_str) > n_so_far )
+					show_def(&def_str[n_so_far],0);
+			}
 			fputc(c,tty_out);	/* do the echo */
 
 			/* Add response to history lists...
@@ -725,7 +726,7 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 					add_def(QSP_ARG  prompt,edit_string);
 				return(edit_string);
 			} else {
-				if( *prompt && *def_str )
+				if( *prompt && def_str != NULL && *def_str )
 					add_def(QSP_ARG  prompt,def_str);
 
 				// Store the newline too...
@@ -807,8 +808,11 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 			} else {
 				show_char(c);
 
-				if( c != def_str[n_so_far] )
-					ers_def(&def_str[n_so_far]);
+				// what if there is no def_str???
+				if( def_str != NULL ){
+					if( c != def_str[n_so_far] )
+						ers_def(&def_str[n_so_far]);
+				}
 				if( n_so_far >= (LLEN-1) ){
 					WARN("too many input chars!?");
 				} else {

@@ -667,7 +667,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 
 		if( n_contig < n_per_child ){
 			sprintf(ERROR_STRING,
-	"make_equivalence:  parent object %s n_contig = %d < %d, can't case to %s",
+	"make_equivalence:  parent object %s n_contig = %d < %d, can't cast to %s",
 				OBJ_NAME(parent),n_contig,n_per_child,PREC_NAME(prec_p));
 			WARN(ERROR_STRING);
 			return(NO_OBJ);
@@ -786,6 +786,8 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	 */
 
 	while( parent_dim < N_DIMENSIONS || child_dim < N_DIMENSIONS ){
+//fprintf(stderr,"make_equivalence:  parent_dim = %d (%d), total_parent_bytes = %d, child_dim = %d (%d), total_child_bytes = %d\n",
+//parent_dim,OBJ_MACH_DIM(parent,parent_dim),total_parent_bytes,child_dim,DIMENSION(new_dsp,child_dim),total_child_bytes);
 		if( total_parent_bytes == total_child_bytes ){
 			/* increase the child dimension */
 			new_mach_inc[child_dim] = child_mach_inc;

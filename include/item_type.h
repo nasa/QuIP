@@ -139,9 +139,13 @@ struct item_context {
 
 #define NEW_ITEM_CONTEXT(icp)	icp=((Item_Context *)getbuf(sizeof(Item_Context)))
 
+#ifdef THREAD_SAFE_QUERY
 #define MAX_QUERY_STACKS	5	// why do we need to have a limit?
 					// Because we have fixed size arrays
 					// of per-query stack ptrs...
+#else // ! THREAD_SAFE_QUERY
+#define MAX_QUERY_STACKS	1
+#endif // ! THREAD_SAFE_QUERY
 
 // This struct contains all of the things that we need to have copied for each thread...
 // The main thing is the context stack
@@ -233,18 +237,12 @@ struct item_type {
 	// we don't really need multiple contexts???
 
 #ifdef THREAD_SAFE_QUERY
-
 #ifdef HAVE_PTHREADS
 	pthread_mutex_t	it_mutex;
 #endif /* HAVE_PTHREADS */
+#endif /* ! THREAD_SAFE_QUERY */
 
 	Item_Type_Context_Info	it_itci[MAX_QUERY_STACKS];
-
-//#define FIRST_CONTEXT(itp)	itp->it_icp[0]
-
-#else /* ! THREAD_SAFE_QUERY */
-	Item_Type_Context_Info	it_itci[1];
-#endif /* ! THREAD_SAFE_QUERY */
 
 	//Frag_Match_Info *	it_fmi_p;			// only one???
 };

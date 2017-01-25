@@ -56,14 +56,17 @@ static Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp)
 
 	// We can't download if the source data is not contiguous...
 	//
+	// OLD OBSOLETE COMMENT:
 	// We have a problem with bit precision, because the bits can
 	// be non-contiguous when the long words are - any time the number of columns
 	// is not evenly divided by the bits-per-word
+	//
+	// Now, bitmaps wrap bits around, not trying to align word and row boundaries
 
 	if( (! IS_CONTIGUOUS(dp)) && ! HAS_CONTIGUOUS_DATA(dp) ){
 		Vec_Obj_Args oa1, *oap=&oa1;
 
-advise("object is not contiguous, and does not have contiguous data...");
+advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
 longlist(QSP_ARG  dp);
 		save_ap = curr_ap;
 		curr_ap = OBJ_AREA( dp );

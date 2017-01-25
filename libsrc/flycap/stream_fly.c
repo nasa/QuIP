@@ -925,7 +925,10 @@ MSTATUS(MS_CHECKING)
 		// This difference should really be a function
 		// of the number of buffers...  But when the number of
 		// buffers is large (e.g. 500), then 10 frames is not too many.
-#define MAX_DW_ASYNCHRONY	10
+		//
+		// This should probably be a soft var - in any case,
+		// it should never be larger than the number of buffers minus 2!
+#define MAX_DW_ASYNCHRONY	20
 		if( (max_frames_written-min_frames_written) > MAX_DW_ASYNCHRONY ){
 fprintf(stderr,"video_reader %d:  Disk writer %d not keeping up, %d written, max = %d\n",
 n_frames_read,min_i,min_frames_written,max_frames_written);

@@ -52,7 +52,12 @@ Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
 
 // free function for ram data area
 
-void cpu_mem_free(QSP_ARG_DECL  Data_Obj *dp)
+void cpu_mem_free(QSP_ARG_DECL  void *ptr)
+{
+	givbuf(ptr);
+}
+
+void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 {
 	givbuf(dp->dt_unaligned_ptr);
 }
@@ -69,9 +74,9 @@ static void release_data(QSP_ARG_DECL  Data_Obj *dp )
 //			IOS_RETURN;
 //		}
 //#endif // CAUTIOUS
-		assert( PF_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
+		assert( PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
 
-		(* PF_FREE_FN( OBJ_PLATFORM(dp) ) )(QSP_ARG  dp);
+		(* PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) )(QSP_ARG  dp);
 	}
 
 //#ifdef CAUTIOUS

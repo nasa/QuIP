@@ -78,6 +78,8 @@ timebase_info.denom);
 #ifdef BUILD_FOR_IOS
 		char time_buf[64];
 #endif // BUILD_FOR_IOS
+
+fprintf(stderr,"_refresh:  cycle_func = '%s'\n",cycle_func);
 		// This is a one-shot
 		[self disableUpdates];
 #ifdef BUILD_FOR_IOS

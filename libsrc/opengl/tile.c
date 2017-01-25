@@ -326,10 +326,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 			Master_Tile *mtp2;
 
 			mtp2 = (Master_Tile *)np->n_data;
-/*
-sprintf(DEFAULT_ERROR_STRING,"checking tile %s",mtp2->mt_tp->t_name);
+sprintf(DEFAULT_ERROR_STRING,"NOT checking tile %s",mtp2->mt_tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
-*/
 			/* Not used?  why not? */
 			/*
 			CHECK_IF_NEIGHBORS(mtp->mt_tp,mtp2->mt_tp);

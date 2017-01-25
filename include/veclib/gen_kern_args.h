@@ -32,11 +32,26 @@
 #define GEN_ARGS_EQSP_SBM(prefix)	prefix##_EQSP_SBM
 #define GEN_ARGS_SLOW_SBM(prefix)	prefix##_SLOW_SBM
 
-#define GEN_ARGS_EQSP_DBM(prefix)	prefix##_EQSP_DBM
+#define GEN_ARGS_EQSP_DBM(prefix)					\
+					GEN_SLOW_DBM_GPU_INFO(prefix)	\
+					GEN_SEP(prefix)			\
+					prefix##_EQSP_DBM
 
-#define GEN_ARGS_SLOW_DBM(prefix)	GEN_SLOW_SIZE(prefix)		\
+// BUG?  need to make sure that GPU_INFO gets inserted everywhere that's necessary!?
+
+#define GEN_ARGS_SLOW_DBM(prefix)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix)			\
+					GEN_ARGS_SLOW_DBM_BASIC(prefix)
+
+#define GEN_ARGS_SLOW_DBM_BASIC(prefix)					\
+					GEN_SLOW_DBM_GPU_INFO(prefix)	\
 					GEN_SEP(prefix)			\
 					prefix##_SLOW_DBM	// SLOW_SIZE
+
+//#define GEN_ARGS_NOCC_SETUP(prefix)	GEN_SLOW_SIZE(prefix)		\
+//					GEN_SEP(prefix)			\
+//					prefix##_NOCC_SETUP
 
 ////////// FAST
 
@@ -646,9 +661,9 @@
 						GEN_SEP(prefix)			\
 						GEN_ARGS_SLOW_DBM(prefix)
 
-#define GEN_ARGS_SLOW_DBM_1S_(prefix)		GEN_ARGS_1S(prefix)	\
+#define GEN_ARGS_SLOW_DBM_1S_(prefix)		GEN_ARGS_1S(prefix)		\
 						GEN_SEP(prefix)			\
-						GEN_ARGS_SLOW_DBM(prefix)
+						GEN_ARGS_SLOW_DBM_BASIC(prefix)
 
 
 #define GEN_SLOW_CONV_DEST(prefix,t)	GEN_FAST_CONV_DEST(prefix,t)	\
@@ -661,7 +676,8 @@
 //					GEN_SEP(prefix)		\
 //					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_SLOW_SIZE(p)		 p##_SLOW_SIZE
+#define GEN_SLOW_SIZE(p)		p##_SLOW_SIZE
+#define GEN_SLOW_DBM_GPU_INFO(p)	p##_DBM_GPU_INFO
 
 #define GEN_ARGS_SLOW_1(prefix)		GEN_SLOW_SIZE(prefix)		\
 					GEN_SEP(prefix) 		\
@@ -669,15 +685,19 @@
 					GEN_SEP(prefix) 		\
 					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_CPX_1(prefix)	GEN_ARGS_FAST_CPX_1(prefix)	\
-					GEN_SEP(prefix)		\
+#define GEN_ARGS_SLOW_CPX_1(prefix)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix) 		\
+					GEN_ARGS_FAST_CPX_1(prefix)	\
+					GEN_SEP(prefix)			\
 					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_QUAT_1(prefix)	GEN_ARGS_FAST_QUAT_1(prefix)	\
+#define GEN_ARGS_SLOW_QUAT_1(prefix)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix) 		\
+					GEN_ARGS_FAST_QUAT_1(prefix)	\
 					GEN_SEP(prefix)		\
 					GEN_SLOW_ARG_INC1(prefix)
-
-
 
 
 #define GEN_ARGS_SLOW_CR_2(prefix)	GEN_ARGS_SLOW_CPX_1(prefix)	\
@@ -879,12 +899,12 @@
 
 /////
 
-#define GEN_ARGS_SLOW_CPX_1(prefix)	GEN_ARGS_FAST_CPX_1(prefix)	\
-					GEN_SEP(prefix)		\
-					GEN_SLOW_ARG_INC1(prefix)
 
-#define GEN_ARGS_SLOW_CONV(prefix,t)	GEN_SLOW_CONV_DEST(prefix,t) \
-					GEN_SEP(prefix)		\
+#define GEN_ARGS_SLOW_CONV(prefix,t)					\
+					GEN_SLOW_SIZE(prefix)		\
+					GEN_SEP(prefix)			\
+					GEN_SLOW_CONV_DEST(prefix,t)	\
+					GEN_SEP(prefix)			\
 					GEN_ARGS_SLOW_SRC1(prefix)
 
 #define GEN_ARGS_SLOW_2(prefix)		GEN_ARGS_SLOW_1(prefix) \
@@ -899,7 +919,7 @@
 					GEN_SEP(prefix)		\
 					GEN_ARGS_SLOW_QUAT_SRC1(prefix)
 
-#define GEN_ARGS_SLOW_3(prefix)	GEN_ARGS_SLOW_2(prefix) \
+#define GEN_ARGS_SLOW_3(prefix)		GEN_ARGS_SLOW_2(prefix) \
 					GEN_SEP(prefix)		\
 					GEN_ARGS_SLOW_SRC2(prefix)
 
@@ -923,7 +943,8 @@
 
 #define GEN_ADD_FAST_LEN(prefix)	GEN_SEP(prefix)	GEN_FAST_ARG_LEN(prefix)
 #define GEN_ADD_EQSP_LEN(prefix)	GEN_SEP(prefix)	GEN_EQSP_ARG_LEN(prefix)
-#define GEN_ADD_SLOW_LEN(prefix)	GEN_SEP(prefix)	GEN_SLOW_ARG_LEN(prefix)
+//#define GEN_ADD_SLOW_LEN(prefix)	GEN_SEP(prefix)	GEN_SLOW_ARG_LEN(prefix)
+#define GEN_ADD_SLOW_LEN(prefix)	// nop - we now use szarr (SLOW_SIZE)
 // FLEN
 
 
@@ -954,17 +975,23 @@
 #define GEN_ARGS_FLEN_RC_2(prefix)	GEN_ARGS_FAST_RC_2(prefix)	\
 					GEN_ADD_FAST_LEN(prefix)
 
-#define GEN_ARGS_FLEN_DBM_SBM(prefix)	GEN_ARGS_FAST_DBM_SBM(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
+#define GEN_ARGS_FLEN_DBM_SBM(prefix)		\
+						prefix##_EQSP_DBM_SBM
 
-#define GEN_ARGS_FLEN_DBM_2SRCS(prefix)	GEN_ARGS_FAST_DBM_2SRCS(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
+//#define GEN_ARGS_FLEN_DBM_SBM(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
+//						GEN_SEP(prefix)			\
+//						prefix##_EQSP_DBM_SBM
 
-#define GEN_ARGS_FLEN_DBM_1S_1SRC(prefix)	GEN_ARGS_FAST_DBM_1S_1SRC(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
+#define GEN_ARGS_FLEN_DBM_2SRCS(prefix)		prefix##_EQSP_DBM_2SRCS
 
-#define GEN_ARGS_FLEN_DBM_1S_(prefix)	GEN_ARGS_FAST_DBM_1S_(prefix)	\
-						GEN_ADD_FAST_LEN(prefix)
+#define GEN_ARGS_FLEN_DBM_1S_1SRC(prefix)	prefix##_EQSP_DBM_1S_1SRC
+
+#define GEN_ARGS_FLEN_DBM_1S_(prefix)		\
+						prefix##_EQSP_DBM_1S_
+
+//#define GEN_ARGS_FLEN_DBM_1S_(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
+//						GEN_SEP(prefix)			\
+//						prefix##_EQSP_DBM_1S_
 
 #define GEN_ARGS_FLEN_CONV(prefix,t)	GEN_ARGS_FAST_CONV(prefix,t)	\
 					GEN_ADD_FAST_LEN(prefix)

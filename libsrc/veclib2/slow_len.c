@@ -96,7 +96,7 @@ NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations")
 			}
 		}
 #endif // FOOBAR
-		SET_VA_ITERATION_COUNT(vap,i_dim,max_d);
+		//SET_VA_ITERATION_COUNT(vap,i_dim,max_d);
 		SET_VA_ITERATION_TOTAL(vap,VA_ITERATION_TOTAL(vap)*max_d);
 	}
 #ifdef FOOBAR

@@ -1,19 +1,5 @@
 // These are the variables declared for use in the host functions
 
-#ifdef FOOBAR
-#define DECLARE_SLOW_VARS_1	DIM3 dst_xyz_incr; DECLARE_SLOW_LEN
-//#define DECLARE_SLOW_LEN	DIM3 len; int dim_indices[3];
-#define DECLARE_SLOW_LEN	/*DIM3 xyz_len;*/ /* now part of vap */ int dim_indices[3];
-#define DECLARE_SLOW_VARS_2	DECLARE_SLOW_VARS_1 DIM3 s1_xyz_incr;
-#define DECLARE_SLOW_VARS_3	DECLARE_SLOW_VARS_2 DIM3 s2_xyz_incr;
-#define DECLARE_SLOW_VARS_4	DECLARE_SLOW_VARS_3 DIM3 s3_xyz_incr;
-#define DECLARE_SLOW_VARS_5	DECLARE_SLOW_VARS_4 DIM3 s4_xyz_incr;
-#define DECLARE_SLOW_VARS_2SRCS	DIM3 s1_xyz_incr; DIM3 s2_xyz_incr; DECLARE_SLOW_LEN
-#define DECLARE_SLOW_VARS_1SRC	DIM3 s1_xyz_incr; DECLARE_SLOW_LEN
-#define DECLARE_SLOW_VARS_SBM	DIM3 sbm_xyz_incr;
-#define DECLARE_SLOW_VARS_DBM		DIM3 dbm_xyz_incr;
-#endif // FOOBAR
-
 #define DECLARE_SLOW_VARS_SBM_3	DECLARE_SLOW_VARS_3 DECLARE_SLOW_VARS_SBM
 #define DECLARE_SLOW_VARS_SBM_2	DECLARE_SLOW_VARS_2 DECLARE_SLOW_VARS_SBM
 #define DECLARE_SLOW_VARS_SBM_1	DECLARE_SLOW_VARS_1 DECLARE_SLOW_VARS_SBM

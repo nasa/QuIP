@@ -1188,6 +1188,9 @@ static COMMAND_FUNC( set_shading_model )
 
 	m = CHOOSE_SHADING_MODEL("shading model");
 	// BUG need to install it!!
+
+	fprintf(stderr,"set_shading_model:  m = %d\n",m);
+	WARN("set_shading_model:  not implemented!?");
 }
 
 static GLenum which_light=INVALID_CONSTANT;

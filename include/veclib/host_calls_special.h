@@ -1,3 +1,9 @@
+// These macros are used to build the host-side function calls, which typically
+// involve a speed test, then a branch to a speed-specific host function that
+// calls the appropriate kernel.
+//
+// This file contains "special" definitions that don't follow the usual pattern...
+
 #define INSIST_CONTIG( dp , msg )					\
 									\
 	if( ! is_contiguous( DEFAULT_QSP_ARG  dp ) ){			\
@@ -26,19 +32,19 @@
 
 #define _VEC_FUNC_MM(name,statement)		H_CALL_MM( name )
 #define _VEC_FUNC_CPX_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr_re,gpu_expr_im)	\
-	H_CALL_PROJ_2V( name, std_cpx )
+	H_CALL_PROJ_2V( name, dest_cpx, std_cpx )
 
-#define _VEC_FUNC_QUAT_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr_re,gpu_expr_im1,gpu_expr_im2,gpu_expr_im3)	H_CALL_PROJ_2V( name, std_quat )
+#define _VEC_FUNC_QUAT_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr_re,gpu_expr_im1,gpu_expr_im2,gpu_expr_im3)	H_CALL_PROJ_2V( name, dest_quat, std_quat )
 
 // This was H_CALL_MM - ???
 // The statements are used in the kernels, this just declares the function that fixes the args
 // and then calls the kernel...
 #define _VEC_FUNC_2V_PROJ(name,cpu_init_stat,cpu_loop_stat,gpu_expr)	\
-						H_CALL_PROJ_2V( name, std_type )
+						H_CALL_PROJ_2V( name, dest_type, std_type )
 
-#define _VEC_FUNC_3V_PROJ(name,s1,s2)		H_CALL_PROJ_3V( name, std_type )
-#define _VEC_FUNC_CPX_3V_PROJ(name,s1,s2)	H_CALL_PROJ_3V( name, std_cpx )
-#define _VEC_FUNC_QUAT_3V_PROJ(name,s1,s2)	H_CALL_PROJ_3V( name, std_quat )
+#define _VEC_FUNC_3V_PROJ(name,s1,s2,e1,e2)		H_CALL_PROJ_3V( name, std_type )
+#define _VEC_FUNC_CPX_3V_PROJ(name,s1,s2,r1,i1,r2,i2)	H_CALL_PROJ_3V( name, std_cpx )
+//#define _VEC_FUNC_QUAT_3V_PROJ(name,s1,s2,e1,e2)	H_CALL_PROJ_3V( name, std_quat )
 
 
 //#define _VEC_FUNC_MM_IND(name,stat1,stat2)	H_CALL_MM_IND( name )

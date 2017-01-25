@@ -7,7 +7,7 @@ ocl_veclib_expanded.c
 *.debug*
 *.noindent
 junk
-foo
+foo*
 output
 vuni.i
 bug_demo

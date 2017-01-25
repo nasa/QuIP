@@ -10,6 +10,7 @@
 #include "veclib/ocl_veclib_prot.h"
 #include "ocl_kern_args.h"
 #include "ocl_platform.h"
+#include <string.h>	// strcmp - for debugging
 #include <sys/time.h>	// gettimeofday
 
 #include "vuni.i"	// kernel source string

@@ -1347,6 +1347,7 @@ static char * rd_word(SINGLE_QSP_ARG_DECL)
 	 */
 
 	s=QRY_LINE_PTR(qp) ;		/* this is the read scan pointer */
+	assert(s!=NULL);
 
 	/* Eventually we will want to strip quote marks,
 	 * but we don't do it right away, because if we are

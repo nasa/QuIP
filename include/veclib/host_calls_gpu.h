@@ -90,87 +90,37 @@ static void HOST_SLOW_CALL_NAME(name)					\
 }
 
 
-
-
-// MM_IND vmaxi etc
-
-#ifdef BUILD_FOR_CUDA
-
-// BUG - move to cu2 folder file...
-// CUDA definitions
-// BUG we probably want the passed vap to have constant data...
-
-#define CALL_GPU_NOCC_SETUP_FUNC(name)						\
-	CLEAR_GPU_ERROR(name##_nocc_setup)					\
-sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_setup...",#name);			\
-NADVISE(DEFAULT_ERROR_STRING);							\
-	REPORT_THREAD_INFO2							\
-	GPU_CALL_NAME(name##_nocc_setup)<<< NN_GPU >>>				\
-		(dst_values, dst_counts, src_values, indices, len1, len2);	\
-	CHECK_GPU_ERROR(name##_nocc_setup)
-
-
-#define CALL_GPU_NOCC_HELPER_FUNC(name)						\
-	CLEAR_GPU_ERROR(name##_nocc_helper)					\
-sprintf(DEFAULT_ERROR_STRING,"calling %s_nocc_helper...",#name);		\
-NADVISE(DEFAULT_ERROR_STRING);							\
-	REPORT_THREAD_INFO2							\
-	GPU_CALL_NAME(name##_nocc_helper)<<< NN_GPU >>>				\
-		(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride); \
-	CHECK_GPU_ERROR(name##_nocc_helper)
-
-
-
-// CUDA only!
-#define CALL_GPU_PROJ_2V_FUNC(name) /* CUDA only */			\
-	CLEAR_GPU_ERROR(name)						\
-	REPORT_THREAD_INFO2						\
-fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %ld, len2 = %ld\n",\
-#name,(long)dst_values,(long)src_values,len1,len2);\
-	GPU_CALL_NAME(name)<<< NN_GPU >>>( dst_values, src_values, len1, len2 );	\
-	CHECK_GPU_ERROR(name)
-
-#define CALL_GPU_PROJ_3V_FUNC(name)					\
-	CLEAR_GPU_ERROR(name)						\
-	REPORT_THREAD_INFO2						\
-	GPU_CALL_NAME(name)<<< NN_GPU >>>				\
-		( dst_values, src1_values, src2_values, len1, len2 );	\
-	CHECK_GPU_ERROR(name)
-
-
-#define CALL_GPU_INDEX_SETUP_FUNC(name)					\
-	CLEAR_GPU_ERROR(name##_index_setup)				\
-	REPORT_THREAD_INFO2						\
-	GPU_CALL_NAME(name##_index_setup)<<< NN_GPU >>>			\
-		(indices,src1_values,src2_values,len1,len2);		\
-	CHECK_GPU_ERROR(name##_index_setup)
-
-
-#define CALL_GPU_INDEX_HELPER_FUNC(name)				\
-	CLEAR_GPU_ERROR(name##_index_helper)				\
-	REPORT_THREAD_INFO2						\
-	GPU_CALL_NAME(name##_index_helper)<<< NN_GPU >>>		\
-		(indices,idx1_values,idx2_values,orig_src_values,len1,len2);	\
-	CHECK_GPU_ERROR(name##_index_helper)
-
-#endif // BUILD_FOR_CUDA
-
-
+// is this used?
 
 #define FINISH_MM_ITERATION(whence)					\
 									\
 	/* Each temp vector gets used twice,				\
 	 * first as result, then as source */				\
-	if( src_to_free != NULL ){					\
+	if( src_to_free != (src_type *)NULL ){					\
 		FREETMP_NAME(src_to_free,#whence);			\
-		src_to_free=NULL;					\
+		src_to_free=(src_type *)NULL;					\
 	}								\
 									\
 	/* Now roll things over... */					\
 	idx1_values = indices;						\
 	len = len1;							\
 	src_to_free = dst_to_free;					\
-	dst_to_free = NULL;
+	dst_to_free = (dst_type *)NULL;
+
+#define FINISH_IDX_MM_ITERATION(whence)					\
+									\
+	/* Each temp vector gets used twice,				\
+	 * first as result, then as source */				\
+	if( src_to_free != (index_type *)NULL ){					\
+		FREETMP_NAME(src_to_free,#whence);			\
+		src_to_free=(index_type *)NULL;					\
+	}								\
+									\
+	/* Now roll things over... */					\
+	idx1_values = indices;						\
+	len = len1;							\
+	src_to_free = dst_to_free;					\
+	dst_to_free = (index_type *)NULL;
 
 #define SETUP_IDX_ITERATION(a2,a3,whence)				\
 									\
@@ -181,33 +131,12 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%
 									\
 	if( len1 == 1 ){						\
 		indices = (index_type *) VA_DEST_PTR(vap);		\
-		dst_to_free = NULL;					\
+		dst_to_free = (index_type *)NULL;					\
 	} else {							\
-		indices = (index_type *) TMPVEC_NAME(sizeof(index_type),len1,#whence);	\
+		indices = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#whence);	\
 		dst_to_free = indices;					\
 	}
 
-
-
-#ifdef FOOBAR
-// args are std_type instead of index_type - ?
-
-#define SETUP_MM_ITERATION2(a2,a3,whence)				\
-									\
-	len1 = (len+1)/2;						\
-	len2 = len - len1;						\
-									\
-	a3 = a2 + len1;							\
-									\
-	if( len1 == 1 ){						\
-		arg1 = (std_type *) OBJ_DATA_PTR(OA_DEST(oap));			\
-		dst_to_free = NULL;					\
-	} else {							\
-		arg1 = (std_type *) TMPVEC_NAME(sizeof(std_type),len1,#whence);	\
-		dst_to_free = arg1;					\
-	}
-
-#endif // FOOBAR
 
 
 
@@ -215,13 +144,13 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%
 									\
 	/* Each temp vector gets used twice,				\
 	 * first as result, then as source */				\
-	if( src_vals_to_free != NULL ){					\
+	if( src_vals_to_free != (dest_type *)NULL ){					\
 		FREETMP_NAME(src_vals_to_free,#whence);			\
-		src_vals_to_free=NULL;					\
+		src_vals_to_free=(dest_type *)NULL;					\
 	}								\
-	if( src_counts_to_free != NULL ){				\
+	if( src_counts_to_free != (index_type *)NULL ){				\
 		FREETMP_NAME(src_counts_to_free,#whence);		\
-		src_counts_to_free=NULL;				\
+		src_counts_to_free=(index_type *)NULL;				\
 	}								\
 									\
 	/* Now roll things over... */					\
@@ -230,8 +159,8 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%
 	len = len1;							\
 	src_vals_to_free = dst_vals_to_free;				\
 	src_counts_to_free = dst_counts_to_free;			\
-	dst_vals_to_free = NULL;					\
-	dst_counts_to_free = NULL;
+	dst_vals_to_free = (dest_type *)NULL;					\
+	dst_counts_to_free = (index_type *)NULL;
 
 /* For vmaxg, the temp arrays don't double for the destination vector...
  * oa_sdp[0] is the extreme value, oa_sdp[1] is the count.
@@ -241,34 +170,28 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%
 											\
 	len1 = (len+1)/2;								\
 	len2 = len - len1;								\
+/*fprintf(stderr,"SETUP_NOCC_ITERATION  len1 = %d   len2 = %d\n",len1,len2);*/\
 											\
 	if( len1 == 1 ){								\
-		dst_values = (std_type *) VA_SVAL1(vap);				\
-		dst_vals_to_free = NULL;						\
+		dst_values = (dest_type *) VA_SVAL1(vap);				\
+		dst_vals_to_free = (dest_type *)NULL;						\
 		dst_counts = (index_type *) VA_SVAL2(vap);				\
-		dst_counts_to_free = NULL;						\
+		dst_counts_to_free = (index_type *)NULL;						\
 	} else {									\
-		dst_values = (std_type *) TMPVEC_NAME(sizeof(std_type),len1,#whence);	\
-		dst_vals_to_free = (std_type *) dst_values;				\
-		dst_counts = (index_type *) TMPVEC_NAME(sizeof(index_type),len1,#whence); \
+/*fprintf(stderr,"SETUP_NOCC_ITERATION  calling tmpvec, VA_PFDEV = 0x%lx\n",(long)VA_PFDEV(vap));*/\
+		dst_values = (dest_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(dest_type),len1,#whence);	\
+		dst_vals_to_free = (dest_type *) dst_values;				\
+		dst_counts = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#whence); \
 		dst_counts_to_free = dst_counts;					\
 	}
 
 
-#ifdef OLD
-#define INIT_MM(src_ptr)						\
-									\
-	len = OBJ_N_TYPE_ELTS(oap->oa_dp[0]);				\
-	src_ptr = (std_type *)OBJ_DATA_PTR(oap->oa_dp[0]);		\
-									\
-	INSIST_CONTIG( oap->oa_dp[0] , "min/max" )			\
-	INSIST_LENGTH( len, "min/max" , OBJ_NAME(oap->oa_dp[0]) )
-#endif // OLD
+// the current implementations seem to require contiguity of all objects?
 
 #define INIT_MM(src_ptr)						\
 									\
 	len = OBJ_N_TYPE_ELTS(oap->oa_dp[0]);				\
-	src_ptr = (std_type *)OBJ_DATA_PTR(oap->oa_dp[0]);		\
+	orig_src_ptr = (std_type *)OBJ_DATA_PTR(oap->oa_dp[0]);		\
 									\
 	CHECK_MM(min/max)
 
@@ -289,35 +212,35 @@ fprintf(stderr,"CALL_GPU_PROJ_2V_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%
 
 #define H_CALL_PROJ_2V_IDX(name)						\
 										\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
 	index_type *indices;							\
 	std_type *src1_values;							\
 	std_type *src2_values;							\
 	std_type *orig_src_values;						\
 	index_type *idx1_values,*idx2_values;					\
-	index_type *dst_to_free=NULL;						\
-	index_type *src_to_free=NULL;						\
-	u_long len, len1, len2;							\
-	DECLARE_PLATFORM_VARS							\
+	index_type *dst_to_free=(index_type *)NULL;						\
+	index_type *src_to_free=(index_type *)NULL;						\
+	uint32_t len, len1, len2;						\
+	DECLARE_PLATFORM_VARS_2							\
 										\
-	src1_values = (std_type *) VA_SRC1_PTR(vap);						\
+	src1_values = (std_type *) VA_SRC1_PTR(vap);				\
 	len = VA_SRC1_LEN(vap);							\
 	SETUP_IDX_ITERATION(src1_values,src2_values,name)			\
 	orig_src_values = src1_values;						\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(OA_DEST(oap));*/	\
-	CALL_GPU_INDEX_SETUP_FUNC(name)						\
-	FINISH_MM_ITERATION(name)						\
+	CALL_GPU_FAST_INDEX_SETUP_FUNC(name)						\
+	FINISH_IDX_MM_ITERATION(name)						\
 										\
 	while( len > 1 ){							\
 		SETUP_IDX_ITERATION(idx1_values,idx2_values,name)		\
-		CALL_GPU_INDEX_HELPER_FUNC(name)				\
+		CALL_GPU_FAST_INDEX_HELPER_FUNC(name)				\
 	/*(indices,idx1_values,idx2_values,orig_src_values,len1,len2)*/		\
-		FINISH_MM_ITERATION(name)					\
+		FINISH_IDX_MM_ITERATION(name)					\
 	}									\
-	if( src_to_free != NULL ){						\
+	if( src_to_free != (index_type *)NULL ){						\
 		FREETMP_NAME(src_to_free,#name);				\
-		src_to_free=NULL;						\
+		src_to_free=(index_type *)NULL;						\
 	}									\
 }										\
 										\
@@ -339,8 +262,9 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 	CHECK_MM(name)								\
 	/* BUG need to xfer args to vap */					\
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))					\
+fprintf(stderr,"H_CALL_PROJ_2V_IDX %s:  need to implement speed switch!?\n",#name);\
 										\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);				\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);				\
 }
 
 
@@ -453,72 +377,88 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 // We could insist that it have the same shape?  Most of the time the number of occurrences
 // will be 1...  Insisting on the same shape would simplify generalizing to projection,
 // but might complicate other things...
+//
+// The index array *should* have the same shape as the input, with the indices accumulating
+// in the dimensions(s) that are collapsed in the output extremum target.  (What about when multiple
+// dimensions are collapsed?)
+
+// The basic idea is recursive subdivision - each kernel compares two inputs, so the initial
+// number of threads is half the number of inputs (rounded up).  We use temp objects for the max's...
+//
+// example:
+//
+// input:	10   11   12   13   14   15   16   17
+//
+// itr. 1	11       13       15       17		indices:  1   3   5   7		count:  1   1   1   1
+// itr. 2	13                17         		indices:  3   7			count:  1   1
+// itr. 3	17                           		indices:  7			count:  1
+
+// BUG len is declared uint32_t, but later treated as index_type???
+
+// What is stride???
 
 #define H_CALL_MM_NOCC(name)							\
 										\
 										\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
-	/*DECLARE_HOST_SLOW_CALL_VARS(,2)*/			\
-	DECLARE_PLATFORM_VARS							\
-	/*SETUP_KERNEL_SLOW_CALL(name,,typ,scalars,2)	\
-	CALL_SLOW_KERNEL(name,bitmap,typ,scalars,vectors)*/			\
+	DECLARE_PLATFORM_VARS_2							\
 										\
-	std_type *dst_values;							\
+	dest_type *dst_values;							\
 	index_type *dst_counts;							\
-	std_type *src_values;							\
+	std_type *orig_src_values;							\
+	dest_type *src_values;							\
 	index_type *src_counts;							\
 	index_type *indices;							\
-	std_type *dst_vals_to_free=NULL;					\
-	std_type *src_vals_to_free=NULL;					\
-	index_type *dst_counts_to_free=NULL;					\
-	index_type *src_counts_to_free=NULL;					\
-	u_long stride;								\
-	u_long len, len1, len2;							\
+	dest_type *dst_vals_to_free=(dest_type *)NULL;					\
+	dest_type *src_vals_to_free=(dest_type *)NULL;					\
+	index_type *dst_counts_to_free=(int32_t *)NULL;					\
+	index_type *src_counts_to_free=(int32_t *)NULL;					\
+	uint32_t stride;							\
+	uint32_t len, len1, len2;						\
 	/*int max_threads_per_block;*/						\
 										\
-	/* BUG need to set things from vap */					\
-	len = VA_SRC1_LEN(vap);							\
-	src_values = (std_type *) VA_SRC1_PTR(vap);						\
-										\
-	/* Set len; sets std_arg2 to the input */				\
-	/*INIT_MM(src_values)*/							\
+	/* set things from vap */						\
+/*fprintf(stderr,"HOST_FAST_CALL %s BEGIN\n",#name);*/\
+/*show_vec_args(vap);*/\
+	/*len = VA_SRC1_LEN(vap);*/						\
+	len = VA_LENGTH(vap);							\
+	orig_src_values = (std_type *) VA_SRC1_PTR(vap);				\
 										\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK( OA_DEST(oap) );*/	\
 	/* Set len1, len2 */							\
 	/* sets std_arg3 to second half of input data */			\
 	/* Set dst_values, dst_counts to temp vectors */			\
 	SETUP_NOCC_ITERATION(name)						\
-	dst_values = (std_type *) VA_DEST_PTR(vap);				\
-	indices = (index_type *) TMPVEC_NAME(sizeof(index_type),len1,#name);	\
-	CALL_GPU_NOCC_SETUP_FUNC(name)						\
-/*(dst_values,dst_counts, std_arg,indices,len1,len2,max_threads_per_block); */	\
+	/*indices = (index_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(index_type),len1,#name);*/	\
+	indices = (index_type *) VA_DEST_PTR(vap);						\
+	CALL_GPU_FAST_NOCC_SETUP_FUNC(name)					\
 	FINISH_NOCC_ITERATION(name) 						\
 										\
 	stride = 4;								\
 	while( len > 1 ){							\
 		SETUP_NOCC_ITERATION(name)					\
-		CALL_GPU_NOCC_HELPER_FUNC(name)					\
-	/*(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride,max_threads_per_block); */ \
+		CALL_GPU_FAST_NOCC_HELPER_FUNC(name)				\
 		FINISH_NOCC_ITERATION(name)					\
 		stride = 2*stride;						\
 	}									\
-	if( src_vals_to_free != NULL ){						\
+	if( src_vals_to_free != (dest_type *)NULL ){						\
 		FREETMP_NAME(src_vals_to_free,#name);				\
-		src_vals_to_free=NULL;						\
+		src_vals_to_free=(dest_type *)NULL;						\
 	}									\
-	if( src_counts_to_free != NULL ){					\
+	if( src_counts_to_free != (int32_t *)NULL ){					\
 		FREETMP_NAME(src_counts_to_free,#name);				\
-		src_counts_to_free=NULL;					\
+		src_counts_to_free=(int32_t *)NULL;					\
 	}									\
-	FREETMP_NAME(indices,#name);						\
-	/* BUG need to copy final index to destination scalar */		\
+	/*FREETMP_NAME(indices,#name);*/						\
 }										\
 										\
 static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 {										\
 	Vector_Args va1, *vap=(&va1);						\
 										\
+/*fprintf(stderr,"H_CALL_MM_NOCC %s checking dest prec\n",#name);*/\
+	/* BUG? - isn't precision check done elsewhere??? */			\
 	if( OBJ_MACH_PREC(OA_DEST(oap)) != INDEX_PREC ){			\
 		sprintf(DEFAULT_ERROR_STRING,					\
 	"%s:  destination index %s has %s precision, should be %s",		\
@@ -529,6 +469,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 		return;								\
 	}									\
 										\
+/*fprintf(stderr,"H_CALL_MM_NOCC %s checking dest length\n",#name);*/\
 	if( OBJ_N_TYPE_ELTS(OA_DEST(oap)) !=					\
 		OBJ_N_TYPE_ELTS(oap->oa_dp[0]) ){				\
 		sprintf(DEFAULT_ERROR_STRING,					\
@@ -541,9 +482,16 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 		return;								\
 	}									\
 	/* BUG need to set vap entries from oap */				\
+/*fprintf(stderr,"H_CALL_MM_NOCC %s setting max threads\n",#name);*/\
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))					\
+/*fprintf(stderr,"H_CALL_MM_NOCC %s calling CHECK_MM\n",#name);*/\
 	CHECK_MM(name)								\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);				\
+/*fprintf(stderr,"H_CALL_MM_NOCC %s calling HOST_SLOW_CALL\n",#name);*/\
+	memset(vap,0,sizeof(*vap)); /* needed only if will show? */		\
+	SET_VA_PFDEV(vap,OA_PFDEV(oap));					\
+	XFER_FAST_ARGS_NOCC							\
+	SET_VA_LENGTH(vap,OBJ_N_TYPE_ELTS(OA_SRC1(oap)));			\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);				\
 }
 
 
@@ -556,6 +504,22 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 // as we did with vmaxv...
 //
 // This looks wrong - the destination does not have to be a scalar!?
+//
+// We can have a fast version when the source is contiguous and the destination is a scalar,
+// we don't need anything except lengths...
+//
+// For non-scalar outputs (projections) it is more complicated...
+// We do the same things, but with more complicated indexing calculations.
+//
+// i11 i12 i13 i14 i15	->	max(i11,i21)	max(i12,i22)	max(i13,i23)	max(i14,i24)	max(i15,i25)
+// i21 i22 i23 i24 i25		max(i31,i41)	max(i32,i42)	max(i33,i43)	max(i34,i44)	max(i35,i45)
+// i31 i32 i33 i34 i35
+// i41 i42 i43 i44 i45
+//
+//				d11		d12		d13		d14		d15
+//				d21		d22		d23		d24		d25
+//
+// We could collapse dimensions one by one...
 
 // BUG? gpu_expr? used?
 
@@ -566,9 +530,9 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 										\
 	if( len1 == 1 ){							\
 		dst_values = (type *) VA_DEST_PTR(vap);				\
-		dst_to_free = NULL;						\
+		dst_to_free = (dst_type *)NULL;						\
 	} else {								\
-		dst_values = (type *) TMPVEC_NAME(sizeof(type),len1,#name);	\
+		dst_values = (type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(type),len1,#name);	\
 		dst_to_free = dst_values;					\
 	}
 
@@ -589,43 +553,51 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 // maxima to a temporary half-size image, and so on...  We have a problem because the Vector_Args
 // struct doesn't contain shape information!?
 
-#define H_CALL_PROJ_2V( name, type )					\
+// We need setup and helper functions in order to support mixed-precision versions (taking sum
+// to higher precision).
+
+#define H_CALL_PROJ_2V( name, dtype, stype )					\
 									\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 {										\
-	u_long len, len1, len2;						\
-	type *src_values, *dst_values;					\
-	type *src_to_free, *dst_to_free;				\
-	DECLARE_PLATFORM_VARS						\
+	uint32_t len, len1, len2;						\
+	dtype *src_values, *dst_values;					\
+	dtype *src_to_free, *dst_to_free;				\
+	stype *orig_src_values;						\
+	DECLARE_PLATFORM_VARS_2						\
 									\
-fprintf(stderr,"HOST_SLOW_CALL(%s) BEGIN\n",#name);\
+/*fprintf(stderr,"HOST_SLOW_CALL(%s) BEGIN\n",#name);*/\
 	/*len = OBJ_N_TYPE_ELTS(oap->oa_dp[0]);*/			\
 	len = VARG_LEN( VA_SRC(vap,0) );					\
-fprintf(stderr,"%s:  len = %ld\n",#name,len);\
-show_vec_args(vap);\
-	src_values = (type *) VA_SRC_PTR(vap,0);			\
+/*fprintf(stderr,"%s:  len = %d\n",#name,len);*/\
+/*show_vec_args(vap);*/\
+	orig_src_values = (stype *) VA_SRC_PTR(vap,0);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])				\
-	src_to_free=NULL;						\
+	src_to_free=(dtype *)NULL;						\
+	SETUP_PROJ_ITERATION(dtype,name)				\
+	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)				\
+	len=len1;						\
+	src_values = dst_values;				\
 	while( len > 1 ){						\
-		SETUP_PROJ_ITERATION(type,name)				\
-fprintf(stderr,"%s:  start of iteration, len = %ld, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);\
-		CALL_GPU_PROJ_2V_FUNC(name)				\
+		SETUP_PROJ_ITERATION(dtype,name)				\
+/*fprintf(stderr,"%s:  start of iteration, len = %d, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);*/\
+		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(name)				\
 		len=len1;						\
 		src_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
 		 * first as result, then as source */			\
-		if( src_to_free != NULL ){				\
+		if( src_to_free != (dtype *)NULL ){				\
 			FREETMP_NAME(src_to_free,#name);		\
-			src_to_free=NULL;				\
+			src_to_free=(dtype *)NULL;				\
 		}							\
 		src_to_free = dst_to_free;				\
-		dst_to_free = NULL;					\
+		dst_to_free = (dtype *)NULL;					\
 	}								\
-	if( src_to_free != NULL ){					\
+	if( src_to_free != (dtype *)NULL ){					\
 		FREETMP_NAME(src_to_free,#name);			\
-		src_to_free=NULL;					\
+		src_to_free=(dtype *)NULL;					\
 	}								\
 }									\
 									\
@@ -639,9 +611,12 @@ static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))				\
 	/* BUG need to set vap entries from oap */			\
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));				\
+	/* why slow args? */						\
 	XFER_SLOW_ARGS_2						\
 	SETUP_SLOW_LEN_2						\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);			\
+	/* BUG need to have a speed switch!? */				\
+fprintf(stderr,"H_CALL_PROJ_2V %s:  need to implement speed switch!?\n",#name);\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 
 // for host code, we do this instead of a direct call:
@@ -651,11 +626,11 @@ static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 
 #define H_CALL_PROJ_3V( name, type )					\
 									\
-static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
+static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 {									\
 	type *dst_values;						\
 	type *src1_values, *src2_values;				\
-	u_long len, len1, len2;						\
+	uint32_t len, len1, len2;						\
 	type *src_to_free, *dst_to_free;				\
 	DECLARE_PLATFORM_VARS						\
 									\
@@ -664,37 +639,38 @@ static void HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 	src2_values = (type *) VA_SRC2_PTR(vap);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
-	src_to_free=NULL;						\
+	src_to_free=(src_type *)NULL;						\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(type,name)				\
-		CALL_GPU_PROJ_3V_FUNC(name)				\
+		CALL_GPU_FAST_PROJ_3V_FUNC(name)				\
 		len = len1;						\
 		src1_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
 		 * first as result, then as source */			\
-		if( src_to_free != NULL ){				\
+		if( src_to_free != (src_type *)NULL ){				\
 			FREETMP_NAME(src_to_free,#name);		\
-			src_to_free=NULL;				\
+			src_to_free=(src_type *)NULL;				\
 		}							\
 		src_to_free = dst_to_free;				\
-		dst_to_free = NULL;					\
+		dst_to_free = (dst_type *)NULL;					\
 	}								\
-	if( src_to_free != NULL ){					\
+	if( src_to_free != (src_type *)NULL ){					\
 		FREETMP_NAME(src_to_free,#name);			\
-		src_to_free=NULL;					\
+		src_to_free=(src_type *)NULL;					\
 	}								\
 }									\
 									\
 static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 {									\
-	Vector_Args va1, *vap=(&va1);						\
-										\
+	Vector_Args va1, *vap=(&va1);					\
+									\
 	CHECK_MM(name)							\
 									\
-	/* BUG need to set vap entries from oap */				\
-	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/					\
+	/* BUG need to set vap entries from oap */			\
+	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/			\
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])				\
-	HOST_SLOW_CALL_NAME(name)(LINK_FUNC_ARGS);				\
+fprintf(stderr,"H_CALL_PROJ_3V %s:  need to implement speed switch!?\n",#name);\
+	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 
 

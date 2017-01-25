@@ -14,10 +14,14 @@ VSet a_$1 $a
 VSet b_$1 $b
 
 Ramp2D input_$1 0 1 10
+advise 'Ramp image'
 Display input_$1
+VSet bitmap_$1 0
+advise 'initial bitmap (zeroed)'
 Display bitmap_$1
 veclib
 #  execute vsm_le bitmap_$1 input_$1 13
+  advise 'vsm_gt 13'
   execute vsm_gt bitmap_$1 input_$1 13
   quit
 Display bitmap_$1

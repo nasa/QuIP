@@ -24,7 +24,7 @@
 // Special cases
 
 
-#define KERN_ARGS_NOCC_HELPER					\
+#define KERN_ARGS_FAST_NOCC_HELPER					\
 								\
 	dst_extrema,		\
 	dst_counts,		\
@@ -33,34 +33,36 @@
 	dst_indices,		\
 	len1, len2, stride
 
+// BUG - how can we insure that the declarations are consistent!?
 
-#define DECLARE_KERN_ARGS_NOCC_HELPER				\
+#define DECLARE_KERN_ARGS_FAST_NOCC_HELPER				\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dst_extrema,		\
+	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,		\
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
-	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
+	KERNEL_ARG_QUALIFIER dest_type* src_vals,		\
 	KERNEL_ARG_QUALIFIER index_type *src_counts,		\
 	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
-	int len1, int len2, int stride
+	DECLARE_2_LENGTHS					\
+	, uint32_t stride
 
 
 
-#define KERN_ARGS_NOCC_SETUP					\
+#define KERN_ARGS_FAST_NOCC_SETUP					\
 								\
-	dst_extrema,		\
-	dst_counts,		\
-	src_vals,		\
-	dst_indices,		\
+	dst_extrema,						\
+	dst_counts,						\
+	orig_src_vals,						\
+	dst_indices,						\
 	len1, len2
 
 
-#define DECLARE_KERN_ARGS_NOCC_SETUP				\
+#define DECLARE_KERN_ARGS_FAST_NOCC_SETUP				\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dst_extrema,		\
+	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,		\
 	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
 	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
 	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
-	u_long len1, u_long len2
+	DECLARE_2_LENGTHS
 
 
 // MM_ARGS or helper args?
@@ -79,55 +81,76 @@
 	KERNEL_ARG_QUALIFIER std_type* a,			\
 	KERNEL_ARG_QUALIFIER std_type* b,			\
 	KERNEL_ARG_QUALIFIER std_type* c,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
-#define KERN_ARGS_2V_PROJ	dest, s1, len1, len2
+#define DECLARE_2_LENGTHS					\
+	uint32_t len1, uint32_t len2
 
-#define DECLARE_KERN_ARGS_2V_PROJ				\
+#define KERN_ARGS_FAST_2V_PROJ_HELPER	dest, s1, len1, len2
+
+#define DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER			\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dest,			\
+	KERNEL_ARG_QUALIFIER dest_type* dest,			\
+	KERNEL_ARG_QUALIFIER dest_type* s1,			\
+	DECLARE_2_LENGTHS
+
+
+#define KERN_ARGS_FAST_2V_PROJ_SETUP	dest, s1, len1, len2
+
+#define DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP			\
+								\
+	KERNEL_ARG_QUALIFIER dest_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
-#define DECLARE_KERN_ARGS_CPX_2V_PROJ				\
+
+#define DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP		\
 								\
-	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
-#define DECLARE_KERN_ARGS_QUAT_2V_PROJ				\
+#define DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER		\
 								\
-	KERNEL_ARG_QUALIFIER std_quat* dest,			\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,			\
+	KERNEL_ARG_QUALIFIER dest_cpx* s1,			\
+	DECLARE_2_LENGTHS
+
+#define DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP		\
+								\
+	KERNEL_ARG_QUALIFIER dest_quat* dest,			\
 	KERNEL_ARG_QUALIFIER std_quat* s1,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
-#define KERN_ARGS_IDX_SETUP	indices,s1,s2,len1,len2
+#define DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER		\
+								\
+	KERNEL_ARG_QUALIFIER dest_quat* dest,			\
+	KERNEL_ARG_QUALIFIER dest_quat* s1,			\
+	DECLARE_2_LENGTHS
 
-#define DECLARE_KERN_ARGS_IDX_SETUP				\
+
+
+#define KERN_ARGS_FAST_IDX_SETUP	indices,s1,s2,len1,len2
+
+#define DECLARE_KERN_ARGS_FAST_IDX_SETUP				\
 								\
 	KERNEL_ARG_QUALIFIER index_type* a,			\
 	KERNEL_ARG_QUALIFIER std_type* b,			\
 	KERNEL_ARG_QUALIFIER std_type* c,			\
-	u_long len1, u_long len2
+	DECLARE_2_LENGTHS
 
+// BUG?  where is KERN_ARGS_FAST_IDX_HELPER?
 
-#define DECLARE_KERN_ARGS_2V_PROJ_IDX_HELPER			\
+#define DECLARE_KERN_ARGS_FAST_IDX_HELPER			\
 								\
 	KERNEL_ARG_QUALIFIER index_type* a,			\
 	KERNEL_ARG_QUALIFIER index_type* b,			\
 	KERNEL_ARG_QUALIFIER index_type* c,			\
 	KERNEL_ARG_QUALIFIER std_type *orig,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 
-#define DECLARE_KERN_ARGS_2V_PROJ				\
-								\
-	KERNEL_ARG_QUALIFIER std_type* dest,			\
-	KERNEL_ARG_QUALIFIER std_type* s1,			\
-	int len1, int len2
-
-
-#define KERN_ARGS_3V_PROJ					\
+#define KERN_ARGS_FAST_3V_PROJ					\
 								\
 	dest,			\
 	s1,			\
@@ -136,20 +159,27 @@
 
 
 
-#define DECLARE_KERN_ARGS_3V_PROJ				\
+#define DECLARE_KERN_ARGS_FAST_3V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
 	KERNEL_ARG_QUALIFIER std_type* s2,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
 
 
-#define DECLARE_KERN_ARGS_CPX_3V_PROJ				\
+#define DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ				\
 								\
 	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s2,			\
-	int len1, int len2
+	DECLARE_2_LENGTHS
+
+// is this a special case???
+#define DECLARE_KERN_ARGS_DBM_GPU_INFO				\
+								\
+	KERNEL_ARG_QUALIFIER Bitmap_GPU_Info * dbm_info_p
+
+#define KERN_ARGS_DBM_GPU_INFO	VA_DBM_GPU_INFO_PTR(vap)
 
 ////////////// end of special cases
 
@@ -247,15 +277,21 @@
 #define DECLARE_KERN_ARGS_FAST_LEN	int len
 #define DECLARE_KERN_ARGS_EQSP_LEN	int len
 //#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE xyz_len	// BUG vwxyz_len
-#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE vwxyz_len
+
+// Now use szarr!
+//#define DECLARE_KERN_ARGS_SLOW_LEN	GPU_INDEX_TYPE vwxyz_len
 
 #define DECLARE_KERN_ARGS_FAST_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0
 #define DECLARE_KERN_ARGS_EQSP_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , int sbm_inc
 #define DECLARE_KERN_ARGS_SLOW_SBM	KERNEL_ARG_QUALIFIER bitmap_word *sbm , int sbm_bit0 , GPU_INDEX_TYPE sbm_inc
 
-#define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0
-#define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , int dbm_inc
-#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , GPU_INDEX_TYPE dbm_inc
+
+//#define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0
+//#define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , int dbm_inc
+//#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm , int dbm_bit0 , GPU_INDEX_TYPE dbm_inc
+#define DECLARE_KERN_ARGS_FAST_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm
+#define DECLARE_KERN_ARGS_EQSP_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm
+#define DECLARE_KERN_ARGS_SLOW_DBM	KERNEL_ARG_QUALIFIER bitmap_word *dbm
 
 /****************************************/
 
@@ -709,7 +745,8 @@
 #define KERN_ARGS_QUAT_1S	VA_SCALAR_VAL_STDQUAT(vap,0)
 #define KERN_ARGS_QUAT_2S	KERN_ARGS_QUAT_1S , VA_SCALAR_VAL_STDQUAT(vap,1)
 
-#define KERN_ARGS_SLOW_SIZE		VA_SLOW_SIZE(vap)
+//
+#define KERN_ARGS_SLOW_SIZE	VA_SLOW_SIZE(vap)
 
 #define KERN_ARGS_FAST_CONV_DEST(t)	(t *) VA_DEST_PTR(vap)
 #define KERN_ARGS_FAST_1		(dest_type *) VA_DEST_PTR(vap)
@@ -750,36 +787,34 @@
 
 // these are DIM3's, not the object increment sets...
 
-#ifdef FOOBAR
-#define KERN_ARGS_SLOW_INC1	dst_xyz_incr
-#define KERN_ARGS_SLOW_INC2	s1_xyz_incr
-#define KERN_ARGS_SLOW_INC3	s2_xyz_incr
-#define KERN_ARGS_SLOW_INC4	s3_xyz_incr
-#define KERN_ARGS_SLOW_INC5	s4_xyz_incr
-#else // ! FOOBAR
 #define KERN_ARGS_SLOW_INC1	dst_vwxyz_incr
 #define KERN_ARGS_SLOW_INC2	s1_vwxyz_incr
 #define KERN_ARGS_SLOW_INC3	s2_vwxyz_incr
 #define KERN_ARGS_SLOW_INC4	s3_vwxyz_incr
 #define KERN_ARGS_SLOW_INC5	s4_vwxyz_incr
-#endif // ! FOOBAR
 
 #define KERN_ARGS_FAST_LEN	VA_LENGTH(vap)
 #define KERN_ARGS_EQSP_LEN	VA_LENGTH(vap)
 //#define KERN_ARGS_SLOW_LEN	VA_XYZ_LEN(vap)			// a local variable!?
-#define KERN_ARGS_SLOW_LEN	VA_ITERATION_TOTAL(vap)			// a local variable!?
+//#define KERN_ARGS_SLOW_LEN	VA_ITERATION_TOTAL(vap)			// a local variable!?
 
 #define KERN_ARGS_FAST_SBM	(bitmap_word *) VA_SBM_PTR(vap) , VA_SBM_BIT0(vap)
 #define KERN_ARGS_EQSP_SBM	KERN_ARGS_FAST_SBM, VA_SBM_INC(vap)
 //#define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_xyz_incr
 #define KERN_ARGS_SLOW_SBM	KERN_ARGS_FAST_SBM, sbm_vwxyz_incr
 
-#define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap) , VA_DBM_BIT0(vap)
-#define KERN_ARGS_EQSPS_DBM	KERN_ARGS_FAST_DBM , VA_DBM_INC(vap)
-//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_xyz_incr
-#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_vwxyz_incr
+//#define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap) , VA_DBM_BIT0(vap)
+#define KERN_ARGS_FAST_DBM	(bitmap_word *) VA_DBM_PTR(vap)
 
-#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , KERN_ARGS_DBM_INC
+//#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , VA_DBM_INC(vap)
+//#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM , KERN_ARGS_DBM_INC
+#define KERN_ARGS_EQSP_DBM	KERN_ARGS_FAST_DBM
+
+//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_xyz_incr
+//#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM , dbm_vwxyz_incr
+
+#define KERN_ARGS_SLOW_DBM	KERN_ARGS_FAST_DBM
+
 
 // Compound arg lists
 /****************************************/

@@ -18,7 +18,7 @@
 #define INSURE_PLATFORM_DEVICE(dp)	/* nop */
 #define GLOBAL_QUALIFIER
 #define GET_MAX_THREADS( dp )		/* nop */
-extern void *TMPVEC_NAME(size_t size, size_t len, const char *whence);
+extern void *TMPVEC_NAME(Platform_Device *pdp, size_t size, size_t len, const char *whence);
 extern void FREETMP_NAME(void *a, const char *whence);
 
 #include <math.h>	// isinf etc

@@ -5,13 +5,6 @@
 
 #define KERNEL_FUNC_PRELUDE
 
-#ifdef MOVED
-#define SET_INDEX( which_index )					\
-									\
-		which_index.x = blockIdx.x * blockDim.x + threadIdx.x;	\
-		which_index.y = which_index.z = 0;
-#endif // MOVED
-
 // These can't be defined generically, because for openCL we define them
 // to declare a string variable containing the kernel source code.
 
@@ -73,28 +66,37 @@
 #define _GENERIC_SLEN_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)	\
 	__GENERIC_SLEN_VEC_FUNC_DBM(name,statement,typ,scalars,vectors)
 
-//#define _VEC_FUNC_2V_PROJ( func_name, s1, s2, gpu_expr )
-//	__VEC_FUNC_2V_PROJ( func_name, gpu_expr )
+#define __VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, gpu_expr )		\
+	___VEC_FUNC_FAST_2V_PROJ_SETUP( func_name, gpu_expr )
 
-#define __VEC_FUNC_2V_PROJ( func_name, gpu_expr )		\
-	___VEC_FUNC_2V_PROJ( func_name, gpu_expr )
+#define __VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, gpu_expr )		\
+	___VEC_FUNC_FAST_2V_PROJ_HELPER( func_name, gpu_expr )
 
-#define __VEC_FUNC_CPX_2V_PROJ( func_name, re_expr, im_expr )		\
-	___VEC_FUNC_CPX_2V_PROJ( func_name, re_expr, im_expr )
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )		\
+	___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr )
 
-#define __VEC_FUNC_QUAT_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
-	___VEC_FUNC_QUAT_2V_PROJ( func_name, re_expr, im_expr1, im_expr2, im_expr3 )		
-#define __VEC_FUNC_3V_PROJ( func_name )		\
-	___VEC_FUNC_3V_PROJ( func_name )		\
+#define __VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )		\
+	___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr )
 
-#define __VEC_FUNC_CPX_3V_PROJ( func_name )		\
-	___VEC_FUNC_CPX_3V_PROJ( func_name )		\
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+	___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP( func_name, re_expr, im_expr1, im_expr2, im_expr3 )		
 
-#define __VEC_FUNC_MM_NOCC( func_name, test1, test2 )		\
+#define __VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )	\
+	___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER( func_name, re_expr, im_expr1, im_expr2, im_expr3 )		
+
+
+
+#define __VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
+	___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )
+
+#define __VEC_FUNC_FAST_3V_PROJ( func_name )		\
+	___VEC_FUNC_FAST_3V_PROJ( func_name )		\
+
+#define __VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
+	___VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
+
+#define __VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )		\
 								\
-	___VEC_FUNC_MM_NOCC_SETUP( func_name, test1, test2 )	\
-	___VEC_FUNC_MM_NOCC_HELPER( func_name, test1, test2 )
-
-#define __VEC_FUNC_2V_PROJ_IDX( func_name, statement1, statement2 )	\
-	___VEC_FUNC_2V_PROJ_IDX( func_name, statement1, statement2 )
+	___VEC_FUNC_FAST_MM_NOCC_SETUP( func_name, test1, test2 )	\
+	___VEC_FUNC_FAST_MM_NOCC_HELPER( func_name, test1, test2 )
 

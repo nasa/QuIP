@@ -23,7 +23,7 @@
 // universal function, or needs porting???
 
 
-void *TMPVEC_NAME(size_t size, size_t len, const char *whence)
+void *TMPVEC_NAME(Platform_Device *pdp, size_t size, size_t len, const char *whence)
 {
 	return getbuf( size * len );
 }

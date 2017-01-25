@@ -167,6 +167,7 @@ Typed_Scalar *scalar_for_string(const char *s)
 {
 	Typed_Scalar *tsp;
 
+	if( s == NULL ) return NULL;
 	tsp = available_typed_scalar();
 	tsp->ts_prec_code = PREC_STR;
 	tsp->ts_value.u_vp = (void *)s;

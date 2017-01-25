@@ -278,8 +278,6 @@ struct query_stack {
 #define SET_QS_NAME(qsp,s)		(qsp)->qs_item.item_name = s
 #define _QS_SERIAL(qsp)			(qsp)->qs_serial
 #define SET_QS_SERIAL(qsp,n)		(qsp)->qs_serial=n
-#define QS_PARENT_SERIAL(qsp)		(qsp)->qs_parent_serial
-#define SET_QS_PARENT_SERIAL(qsp,n)	(qsp)->qs_parent_serial=n
 #define QS_LEVEL(qsp)			(qsp)->_qs_level
 #define SET_QS_LEVEL(qsp,l)		(qsp)->_qs_level = l
 #define QS_CHEW_LEVEL(qsp)		(qsp)->qs_chew_level
@@ -289,6 +287,12 @@ struct query_stack {
 #define SET_QS_FMT_CODE(qsp,c)		(qsp)->qs_fmt_code=c
 #define QS_LOOKAHEAD_LEVEL(qsp)		(qsp)->qs_lookahead_level
 #define SET_QS_LOOKAHEAD_LEVEL(qsp,l)	(qsp)->qs_lookahead_level = l
+
+#ifdef THREAD_SAFE_QUERY
+#define QS_PARENT_SERIAL(qsp)		(qsp)->qs_parent_serial
+#define SET_QS_PARENT_SERIAL(qsp,n)	(qsp)->qs_parent_serial=n
+#endif //  THREAD_SAFE_QUERY
+
 #ifdef NOT_USED
 #define QS_FORMER_LEVEL(qsp)		(qsp)->qs_former_level
 #define SET_QS_FORMER_LEVEL(qsp,l)	(qsp)->qs_former_level = l

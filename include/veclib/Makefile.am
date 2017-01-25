@@ -16,6 +16,7 @@ noinst_HEADERS =					\
 			asc_classes.c			\
 			bitmap_ops.c			\
 			conv_vec.c			\
+			cpx_args.h			\
 			cpx_vec.c			\
 			dispatch_tbl.c			\
 			fft_funcs.c			\
@@ -24,11 +25,13 @@ noinst_HEADERS =					\
 			gen_kernel_calls.c		\
 			host_fft_funcs.c		\
 			intvec.c			\
+			int_bit_vec.c			\
 			math_funcs.c			\
 			new_conv.c			\
 			signed_vec.c			\
 			unsigned_vec.c			\
 							\
+			all_bit_kernels.h		\
 			bit_defs.h			\
 			bitmap_ops.h			\
 			by_defs.h			\
@@ -43,6 +46,7 @@ noinst_HEADERS =					\
 			fast_test.h			\
 			fftsupp.h			\
 			func_undefs.h			\
+			gen_bit_calls.h			\
 			gen_entries.h			\
 			gen_gpu_calls.h			\
 			gen_kern_args.h			\
@@ -62,6 +66,8 @@ noinst_HEADERS =					\
 			ocl_port.h			\
 			ocl_veclib_prot.h		\
 			platform_funcs.h		\
+			quat_args.h			\
+			real_args.h			\
 			report_args.h			\
 			slow_incs.h			\
 			slow_len.h			\
@@ -83,6 +89,7 @@ noinst_HEADERS =					\
 			xfer_args.h			\
 			eqsp_defs.h			\
 			fast_defs.h			\
+			flen_defs.h			\
 			fast_eqsp_defs.h		\
 			gen_float_calls.h		\
 			gpu_call_defs.h			\

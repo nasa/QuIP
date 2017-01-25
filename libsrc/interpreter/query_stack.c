@@ -98,8 +98,6 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 
 Query_Stack * init_first_query_stack(void)
 {
-	//qstack_free_list = new_list();
-
 	default_qsp = new_qstk(NULL_QSP_ARG  "First_Query_Stack");
 	return(default_qsp);
 }

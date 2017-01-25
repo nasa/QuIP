@@ -1,0 +1,13 @@
+
+vmaxg - find the maximum, number of occurrences, and all indices...
+
+Does it make sense for this function to be a projection operator?  What would that mean?
+
+i11	i12	i13		c1	n1	ci1{}
+i21	i22	i23		c2	n2	ci2{}
+i31	i32	i33		c3	n3	ci3{}
+
+r1	r2	r3		mx, nocc, idx{}
+n1	n2	n3
+
+ri1{}	ri2{}	ri3{}

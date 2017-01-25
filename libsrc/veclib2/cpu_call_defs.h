@@ -19,6 +19,9 @@
 
 #define L_ALIGNMENT(a)		(((int_for_addr)a) & 7)
 
+#define XFER_EQSP_DBM_GPU_INFO	/* nop on cpu */
+#define XFER_SLOW_DBM_GPU_INFO	/* nop on cpu */
+
 /***************** Section 1 - definitions **********************/
 
 //#include "calling_args.h"	// declaration args, shared
@@ -278,8 +281,8 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define EQSP_ADVANCE_QUAT_SRC3	qs3_ptr += eqsp_src3_inc ;
 #define EQSP_ADVANCE_QUAT_SRC4	qs4_ptr += eqsp_src4_inc ;
 //#define EQSP_ADVANCE_BITMAP	which_bit  += eqsp_bit_inc ;
-#define EQSP_ADVANCE_DBM	dbm_bit  += eqsp_bit_inc ;
-#define EQSP_ADVANCE_SBM	sbm_bit  += eqsp_bit_inc ;
+#define EQSP_ADVANCE_DBM	dbm_bit  += eqsp_dbm_inc ;
+#define EQSP_ADVANCE_SBM	sbm_bit  += eqsp_sbm_inc ;
 #define EQSP_ADVANCE_DBM_SBM	EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM
 
 #define EQSP_ADVANCE_2		EQSP_ADVANCE_1 EQSP_ADVANCE_SRC1
@@ -334,9 +337,12 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
  *	count_type loop_count[N_DIMENSIONS];		\
  */
 
+// BUG - why are we allocating with NEW_DIMSET?
+
 #define DECLARE_LOOP_COUNT				\
 	int i_dim;					\
-	Dimension_Set *loop_count=NEW_DIMSET;
+	/*Dimension_Set *loop_count=NEW_DIMSET;*/	\
+	Dimension_Set lc_ds, *loop_count=(&lc_ds);
 
 #define PROJ_LOOP_DECLS_2				\
 							\
@@ -411,8 +417,6 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INC_BASES_QUAT_SRC3(which_dim)	INC_BASE(which_dim,qs3_base,s3inc)
 #define INC_BASES_QUAT_SRC4(which_dim)	INC_BASE(which_dim,qs4_base,s4inc)
 
-//#define INC_BASES_SBM(which_dim)	INC_BASE(which_dim,sbm_bit0,sbminc)
-//#define INC_BASES_DBM(which_dim)	INC_BASE(which_dim,dbm_bit0,dbminc)
 #define INC_BASES_SBM(which_dim)	INC_BASE(which_dim,sbm_base,sbminc)
 #define INC_BASES_DBM(which_dim)	INC_BASE(which_dim,dbm_base,dbminc)
 #define INC_BASES_DBM_			INC_BASES_DBM
@@ -525,8 +529,6 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INIT_PTRS_QUAT_SRC3	qs3_ptr = qs3_base[0];	/* pixel base */
 #define INIT_PTRS_QUAT_SRC4	qs4_ptr = qs4_base[0];	/* pixel base */
 
-//#define INIT_PTRS_SBM		sbm_bit = sbm_bit0[0];
-//#define INIT_PTRS_DBM		dbm_bit = dbm_bit0[0];
 #define INIT_PTRS_SBM		sbm_bit = sbm_base[0];
 #define INIT_PTRS_DBM		dbm_bit = dbm_base[0];
 #define INIT_PTRS_DBM_		INIT_PTRS_DBM
@@ -714,17 +716,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define INIT_BASES_DBM			\
 	dbm_ptr= VA_DEST_PTR(vap);	\
-	/*dbm_base[3]= VA_DEST_PTR(vap);*/	\
-	dbm_base[3]=VA_DBM_BIT0(vap);	\
-	/*dbm_bit0[3]=VA_DBM_BIT0(vap);*/	\
-	dbm_bit0=VA_DBM_BIT0(vap);
+	dbm_base[3]=VA_DBM_BIT0(vap);
 
 #define INIT_BASES_SBM				\
 	sbm_ptr= VA_SRC_PTR(vap,4);		\
-	/*sbm_base[3]= VA_SRC_PTR(vap,4);*/	\
-	sbm_base[3]=VA_SBM_BIT0(vap);		\
-	/*sbm_bit0[3]=VA_SBM_BIT0(vap);*/	\
-	sbm_bit0=VA_SBM_BIT0(vap);
+	sbm_base[3]=VA_SBM_BIT0(vap);
 
 #define INIT_BASES_SBM_1	INIT_BASES_1 INIT_BASES_SBM
 #define INIT_BASES_SBM_2	INIT_BASES_2 INIT_BASES_SBM
@@ -808,13 +804,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define COPY_BASES_DBM(index)			\
 						\
-	dbm_base[index] = dbm_base[index+1];	\
-	/*dbm_bit0[index] = dbm_bit0[index+1];*/
+	dbm_base[index] = dbm_base[index+1];
 
 #define COPY_BASES_SBM(index)			\
 						\
-	sbm_base[index] = sbm_base[index+1];	\
-	/*sbm_bit0[index] = sbm_bit0[index+1];*/
+	sbm_base[index] = sbm_base[index+1];
 
 #define COPY_BASES_DBM_SBM(index)	COPY_BASES_DBM(index)	\
 					COPY_BASES_SBM(index)
@@ -829,22 +823,16 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 
 #define DECLARE_BASES_SBM			\
-	/*bitmap_word *sbm_base[N_DIMENSIONS-1];*/	\
 	int sbm_base[N_DIMENSIONS-1];		\
 	bitmap_word *sbm_ptr;			\
-	int sbm_bit;				\
-	/*int sbm_bit0[N_DIMENSIONS-1];*/	\
-	int sbm_bit0;
+	int sbm_bit;
 
 #define DECLARE_BASES_DBM_	DECLARE_BASES_DBM
 
 /* base is not a bit number, not a pointer */
 
 #define DECLARE_BASES_DBM			\
-	/*bitmap_word *dbm_base[N_DIMENSIONS-1];*/	\
 	int dbm_base[N_DIMENSIONS-1];		\
-	/*int dbm_bit0[N_DIMENSIONS-1];*/		\
-	int dbm_bit0;				\
 	int dbm_bit;				\
 	bitmap_word *dbm_ptr;			\
 	DECLARE_FIVE_LOOP_INDICES
@@ -1019,6 +1007,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 								\
 	INIT_SPACING( VA_SPACING(vap) );
 
+
+// BUG - we should avoid dynamic allocation...
 
 #define RELEASE_VEC_ARGS_STRUCT					\
 	givbuf( VA_SPACING(vap) );				\
@@ -1436,6 +1426,9 @@ NADVISE(DEFAULT_ERROR_STRING);
  * column of image.  In this case, we usually initialize with the first
  * value of the column, but it may be tricky to know this when we don't
  * know which dimensions will be collapsed...
+ *
+ * The ADJ_COUNTS macro initializes the loop_count array, to be the max
+ * of all of the dimensions
  */
 
 
@@ -1444,7 +1437,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 {									\
 	PROJ_LOOP_DECLS_2						\
 									\
-	INIT_LOOP_COUNT							\
+	INIT_LOOP_COUNT	/* init loop_count to all 1's */					\
 									\
 	ADJ_COUNTS(loop_count,count)					\
 	ADJ_COUNTS(loop_count,s1_count)					\
@@ -1453,7 +1446,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* We just scan the destination once */				\
 	NEW_PLOOP_2( init_statement, count )				\
 	NEW_PLOOP_2( statement, loop_count )				\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 
@@ -1474,7 +1466,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* We just scan the destination once */				\
 	NEW_PLOOP_IDX_2( init_statement, count )			\
 	NEW_PLOOP_IDX_2( statement, loop_count )			\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 
@@ -1491,7 +1482,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 	NEW_PLOOP_##typ##3( init_statement, count )				\
 	NEW_PLOOP_##typ##3( statement, loop_count )				\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 
@@ -1525,7 +1515,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 	NEW_PLOOP_##typ##2( init_statement, count )			\
 	NEW_PLOOP_##typ##2( statement, loop_count )			\
-	RELEASE_DIMSET(loop_count)					\
 }
 
 #define SLOW_BODY_PROJ_XXX_3( name, statement, init_statement, typ )	\
@@ -1541,9 +1530,13 @@ NADVISE(DEFAULT_ERROR_STRING);
 									\
 	NEW_PLOOP_##typ##3( init_statement, count )			\
 	NEW_PLOOP_##typ##3( statement, loop_count )			\
-	RELEASE_DIMSET(loop_count)					\
 }
 
+/* Projection loop
+ *
+ * We typically call this once with the counts of the destination vector, to initialize,
+ * and then again with the source counts to perform the projection...
+ */
 
 
 #define NEW_PLOOP_2( statement,count_arr )				\
@@ -2529,8 +2522,8 @@ EXTLOC_SLOW_FUNC(name,EXTLOC_STATEMENT(augment_condition,restart_condition,assig
 + ((index/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)*INDEX_COUNT(s1_count,3)))%INDEX_COUNT(s1_count,4))*IDX_INC(s1inc,4))
 
 #define _VEC_FUNC_2V_PROJ( name, init_statement, statement, gpu_expr )	\
-								\
-static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)		\
+									\
+static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 SLOW_BODY_PROJ_2(name,init_statement,statement)
 
 
@@ -2595,7 +2588,7 @@ SLOW_BODY_PROJ_IDX_2(name,init_statement,statement)
 
 // complex really not different?
 // where is DECLARE_BASES?
-#define _VEC_FUNC_CPX_3V_PROJ( name, init_statement, statement )	\
+#define _VEC_FUNC_CPX_3V_PROJ( name, init_statement, statement, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )	\
 	__VEC_FUNC_3V_PROJ(name,CPX_,init_statement,statement )
 
 #define __VEC_FUNC_3V_PROJ( name, typ, init_statement, statement )	\
@@ -2605,7 +2598,7 @@ PROJ3_SLOW_BODY(name,typ,init_statement,statement)
 
 
 
-#define _VEC_FUNC_3V_PROJ( name, init_statement, statement )	\
+#define _VEC_FUNC_3V_PROJ( name, init_statement, statement, gpu_e1, gpu_e2 )	\
 								\
 	__VEC_FUNC_3V_PROJ(name,,init_statement,statement )
 

@@ -212,9 +212,12 @@ qrb_node * rb_insert_item(qrb_tree* tree_p, Item *ip )
 	} // end tail recursion loop
 	//MAKE_BLACK( RB_TREE_ROOT(tree) );
 
+	// NOTREACHED ???
+	/*
 	tree_p->node_count ++;
 
 	return new_node_p;
+	 */
 } // rb_insert
 
 qrb_node* rb_find( qrb_tree * tree, const char * key )

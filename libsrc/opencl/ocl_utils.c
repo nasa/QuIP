@@ -462,8 +462,6 @@ cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 	size_t len;
 	cl_int status;
 
-//fprintf(stderr,"ocl_create_program:  program source is:\n%s\n",buf);
-//fflush(stderr);
 	len = strlen(buf);		// count trailing null?
 	// BUG?  should we check that device is OCL device?
 	program = clCreateProgramWithSource(OCLDEV_CTX(pdp), 1,
@@ -533,8 +531,8 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 			report_ocl_error(QSP_ARG  ret,"clGetProgramBuildInfo");
 		}
 
-fprintf(stderr,"%zu log bytes returned, strlen(bufp) = %ld...\n",bytes_returned,
-strlen(bufp));
+//fprintf(stderr,"%zu log bytes returned, strlen(bufp) = %ld...\n",bytes_returned,
+//strlen(bufp));
 		//prt_msg(bufp);
 		fputs(bufp,stderr);
 
@@ -585,8 +583,6 @@ cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 
 	// build (compiles and links) a program executable
 	// from the program source or binary
-//fprintf(stderr,"ocl_create_kernel %s BEGIN\n",name);
-//fflush(stderr);
 	status = clBuildProgram(program,	// compiled program
 				1,		// num_devices
 				&OCLDEV_DEV_ID(pdp),	// device list
