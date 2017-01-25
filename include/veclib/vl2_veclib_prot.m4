@@ -26,3 +26,4 @@ extern void h_vl2_determinant(HOST_CALL_ARG_DECLS);
 
 extern int xform_chk(Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *xform );
 
+include(`../../include/veclib/flush_output.m4')

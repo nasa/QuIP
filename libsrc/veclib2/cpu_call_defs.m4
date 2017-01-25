@@ -214,9 +214,11 @@ define(`OBJ_ARG_CHK_SBM_1',`OBJ_ARG_CHK_SBM OBJ_ARG_CHK_1')
 define(`OBJ_ARG_CHK_SBM_2',`OBJ_ARG_CHK_SBM OBJ_ARG_CHK_2')
 define(`OBJ_ARG_CHK_SBM_3',`OBJ_ARG_CHK_SBM OBJ_ARG_CHK_3')
 
-/* DONE with CHECK definitions */
-
 dnl
+
+dnl	FAST_ADVANCE(typ,suffix)
+define(`FAST_ADVANCE',`_FAST_ADVANCE($1$2)')
+define(`_FAST_ADVANCE',FAST_ADVANCE_$1)
 
 define(`FAST_ADVANCE_SRC1',`s1_ptr++ ;')
 define(`FAST_ADVANCE_SRC2',`s2_ptr++ ;')
@@ -275,7 +277,10 @@ define(`FAST_ADVANCE_DBM_SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM')
 define(`FAST_ADVANCE_DBM_2SRCS',`FAST_ADVANCE_DBM FAST_ADVANCE_2SRCS')
 define(`FAST_ADVANCE_2SRCS',`FAST_ADVANCE_SRC1 FAST_ADVANCE_SRC2')
 
-dnl
+
+dnl	EQSP_ADVANCE(typ,suffix)
+define(`EQSP_ADVANCE',`_EQSP_ADVANCE($1$2)')
+define(`_EQSP_ADVANCE',EQSP_ADVANCE_$1)
 
 define(`EQSP_ADVANCE_SRC1',`s1_ptr += eqsp_src1_inc ;')
 define(`EQSP_ADVANCE_SRC2',`s2_ptr += eqsp_src2_inc ;')
@@ -334,8 +339,9 @@ define(`EQSP_ADVANCE_DBM_SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM')
 define(`EQSP_ADVANCE_DBM_2SRCS',`EQSP_ADVANCE_DBM EQSP_ADVANCE_2SRCS')
 define(`EQSP_ADVANCE_2SRCS',`EQSP_ADVANCE_SRC1 EQSP_ADVANCE_SRC2')
 
-dnl
 
+dnl	EXTRA_DECLS(extra_suffix)
+define(`EXTRA_DECLS',EXTRA_DECLS_$1)
 define(`EXTRA_DECLS_',`')	dnl /* nothing */
 define(`EXTRA_DECLS_T1',`dest_type r,theta,arg;')
 define(`EXTRA_DECLS_T2',`dest_cpx tmpc;')
@@ -357,55 +363,51 @@ define(`DECLARE_LOOP_COUNT',`
 	Dimension_Set lc_ds, *loop_count=(&lc_ds);
 ')
 
-define(`PROJ_LOOP_DECLS_2',`
+dnl	PROJ_LOOP_DECLS(typ,vectors)
+define(`PROJ_LOOP_DECLS',`_PROJ_LOOP_DECLS($1$2)')
+define(`_PROJ_LOOP_DECLS',PROJ_LOOP_DECLS_$1)
 
-	DECLARE_BASES_2
-	DECLARE_LOOP_COUNT
+define(`PROJ_LOOP_DECLS_2',`
+DECLARE_BASES_2
+DECLARE_LOOP_COUNT
 ')
 
 define(`PROJ_LOOP_DECLS_CPX_2',`
-
-	DECLARE_BASES_CPX_2
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_CPX_2
+DECLARE_LOOP_COUNT
 ')
 
 define(`PROJ_LOOP_DECLS_QUAT_2',`
-
-	DECLARE_BASES_QUAT_2
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_QUAT_2
+DECLARE_LOOP_COUNT
 ')
 
 define(`PROJ_LOOP_DECLS_IDX_2',`
-
-	DECLARE_BASES_IDX_2
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_IDX_2
+DECLARE_LOOP_COUNT
 	std_type *tmp_ptr;
 	std_type *orig_s1_ptr;
 	index_type this_index;
 ')
 
 define(`PROJ_LOOP_DECLS_3',`
-
-	DECLARE_BASES_3
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_3
+DECLARE_LOOP_COUNT
 ')
 
 define(`PROJ_LOOP_DECLS_CPX_3',`
-
-	DECLARE_BASES_CPX_3
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_CPX_3
+DECLARE_LOOP_COUNT
 ')
 
 define(`PROJ_LOOP_DECLS_QUAT_3',`
-
-	DECLARE_BASES_QUAT_3
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_QUAT_3
+DECLARE_LOOP_COUNT
 ')
 
 define(`PROJ_LOOP_DECLS_IDX_3',`
-
-	DECLARE_BASES_IDX_3
-	DECLARE_LOOP_COUNT
+DECLARE_BASES_IDX_3
+DECLARE_LOOP_COUNT
 	std_type *tmp_ptr;
 	index_type this_index;
 ')
@@ -415,13 +417,16 @@ define(`INIT_LOOP_COUNT',`
 	for(i_dim=0;i_dim<N_DIMENSIONS;i_dim++) ASSIGN_IDX_COUNT(loop_count,i_dim,1);
 ')
 
-/* INC_BASE is what we do at the end of a nested loop... */
 
 dnl	INC_BASE(which_dim,base_array,inc_array)
 define(`INC_BASE',`
 
 	$2[$1-1] += IDX_INC($3,$1);
 ')
+
+dnl	INC_BASES(bitmap,typ,suffix)
+define(`INC_BASES',`_INC_BASES($1$2$3)')
+define(`_INC_BASES',INC_BASES_$1)
 
 dnl	INC_BASES_1(which_dim)
 define(`INC_BASES_1',`INC_BASE($1,dst_base,dinc)')
@@ -444,10 +449,10 @@ define(`INC_BASES_QUAT_SRC4',`INC_BASE($1,qs4_base,s4inc)')
 
 define(`INC_BASES_SBM',`INC_BASE($1,sbm_base,sbminc)')
 define(`INC_BASES_DBM',`INC_BASE($1,dbm_base,dbminc)')
-define(`INC_BASES_DBM_',`INC_BASES_DBM')
+define(`INC_BASES_DBM_',`INC_BASES_DBM($1)')
 
 define(`INC_BASES_2',`INC_BASES_1($1) INC_BASES_SRC1($1)')
-define(`INC_BASES_3',`INC_BASES_2($1) INC_BASES_SRC2($1)')
+define(`INC_BASES_3',`/* inc_bases_3 /$1/ */ INC_BASES_2($1) INC_BASES_SRC2($1)')
 define(`INC_BASES_4',`INC_BASES_3($1) INC_BASES_SRC3($1)')
 define(`INC_BASES_5',`INC_BASES_4($1) INC_BASES_SRC4($1)')
 
@@ -495,12 +500,17 @@ define(`INC_BASES_2SRCS',`INC_BASES_SRC1($1) INC_BASES_SRC2($1)')
 define(`INC_BASES_DBM_1SRC',`INC_BASES_DBM($1) INC_BASES_SRC1($1)')
 define(`INC_BASES_DBM_SBM',`INC_BASES_DBM($1) INC_BASES_SBM($1)')
 define(`INC_BASES_DBM_2SRCS',`INC_BASES_DBM($1) INC_BASES_2SRCS($1)')
+
+dnl	COPY_BASES(bitmap,typ,suffix)
+define(`COPY_BASES',`/* copy_bases /$1/ /$2/ */_COPY_BASES($1$2$3)')
+define(`_COPY_BASES',COPY_BASES_$1)
+
 define(`COPY_BASES_DBM_1SRC',`COPY_BASES_DBM($1) COPY_BASES_SRC1($1)')
 define(`COPY_BASES_DBM_SBM',`COPY_BASES_DBM($1) COPY_BASES_SBM($1)')
 define(`COPY_BASES_2SRCS',`COPY_BASES_SRC1($1) COPY_BASES_SRC2($1)')
 define(`COPY_BASES_DBM_2SRCS',`COPY_BASES_DBM($1) COPY_BASES_2SRCS($1)')
 
-define(`COPY_BASES_DBM_',`COPY_BASES_DBM')
+define(`COPY_BASES_DBM_',`COPY_BASES_DBM($1)')
 
 
 define(`INC_BASES_SBM_1',`INC_BASES_1($1) INC_BASES_SBM($1)')
@@ -515,7 +525,6 @@ define(`INC_BASES_SBM_QUAT_3',`INC_BASES_QUAT_3($1) INC_BASES_SBM($1)')
 define(`INC_BASES_SBM_XXX_1',`INC_BASES_XXX_1($1) INC_BASES_SBM($1)')
 define(`INC_BASES_SBM_XXX_2',`INC_BASES_XXX_2($1) INC_BASES_SBM($1)')
 define(`INC_BASES_SBM_XXX_3',`INC_BASES_XXX_3($1) INC_BASES_SBM($1)')
-
 
 
 dnl	INIT_BASE( type, which_dim, base_array, dp )
@@ -541,23 +550,28 @@ define(`INIT_INDEX_BASE',`
 
 /* #define INIT_CPX_INDEX_3 */		/* what is this for? */
 
+dnl	INIT_PTRS(bitmap,typ,suffix)
+define(`INIT_PTRS',`_INIT_PTRS($1$2$3)')
+define(`_INIT_PTRS',INIT_PTRS_$1)
+
+
 define(`INIT_PTRS_1',`dst_ptr = dst_base[0];')
-define(`INIT_PTRS_SRC1',`s1_ptr = s1_base[0];	/* pixel base */')
-define(`INIT_PTRS_SRC2',`s2_ptr = s2_base[0];	/* pixel base */')
-define(`INIT_PTRS_SRC3',`s3_ptr = s3_base[0];	/* pixel base */')
-define(`INIT_PTRS_SRC4',`s4_ptr = s4_base[0];	/* pixel base */')
+define(`INIT_PTRS_SRC1',`s1_ptr = s1_base[0];')
+define(`INIT_PTRS_SRC2',`s2_ptr = s2_base[0];')
+define(`INIT_PTRS_SRC3',`s3_ptr = s3_base[0];')
+define(`INIT_PTRS_SRC4',`s4_ptr = s4_base[0];')
 
 define(`INIT_PTRS_CPX_1',`cdst_ptr = cdst_base[0];')
-define(`INIT_PTRS_CPX_SRC1',`cs1_ptr = cs1_base[0];	/* pixel base */')
-define(`INIT_PTRS_CPX_SRC2',`cs2_ptr = cs2_base[0];	/* pixel base */')
-define(`INIT_PTRS_CPX_SRC3',`cs3_ptr = cs3_base[0];	/* pixel base */')
-define(`INIT_PTRS_CPX_SRC4',`cs4_ptr = cs4_base[0];	/* pixel base */')
+define(`INIT_PTRS_CPX_SRC1',`cs1_ptr = cs1_base[0];')
+define(`INIT_PTRS_CPX_SRC2',`cs2_ptr = cs2_base[0];')
+define(`INIT_PTRS_CPX_SRC3',`cs3_ptr = cs3_base[0];')
+define(`INIT_PTRS_CPX_SRC4',`cs4_ptr = cs4_base[0];')
 
 define(`INIT_PTRS_QUAT_1',`qdst_ptr = qdst_base[0];')
-define(`INIT_PTRS_QUAT_SRC1',`qs1_ptr = qs1_base[0];	/* pixel base */')
-define(`INIT_PTRS_QUAT_SRC2',`qs2_ptr = qs2_base[0];	/* pixel base */')
-define(`INIT_PTRS_QUAT_SRC3',`qs3_ptr = qs3_base[0];	/* pixel base */')
-define(`INIT_PTRS_QUAT_SRC4',`qs4_ptr = qs4_base[0];	/* pixel base */')
+define(`INIT_PTRS_QUAT_SRC1',`qs1_ptr = qs1_base[0];')
+define(`INIT_PTRS_QUAT_SRC2',`qs2_ptr = qs2_base[0];')
+define(`INIT_PTRS_QUAT_SRC3',`qs3_ptr = qs3_base[0];')
+define(`INIT_PTRS_QUAT_SRC4',`qs4_ptr = qs4_base[0];')
 
 define(`INIT_PTRS_SBM',`sbm_bit = sbm_base[0];')
 define(`INIT_PTRS_DBM',`dbm_bit = dbm_base[0];')
@@ -610,6 +624,10 @@ define(`INIT_PTRS_XXX_3',`INIT_PTRS_3')
 define(`INIT_PTRS_SBM_XXX_3',`INIT_PTRS_SBM_3')
 define(`INIT_PTRS_SBM_XXX_2',`INIT_PTRS_SBM_2')
 define(`INIT_PTRS_SBM_XXX_1',`INIT_PTRS_SBM_1')
+
+dnl	INC_PTRS(typ,suffix)
+define(`INC_PTRS',`_INC_PTRS($1$2)')
+define(`_INC_PTRS',INC_PTRS_$1)
 
 define(`INC_PTRS_SRC1',`s1_ptr += IDX_INC(s1inc,0);')
 define(`INC_PTRS_SRC2',`s2_ptr += IDX_INC(s2inc,0);')
@@ -684,6 +702,10 @@ define(`DEBUG_DBM_1SRC',`DEBUG_DBM_ DEBUG_SRC1')
 define(`srcbit',`((*(sbm_ptr + (sbm_bit/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit))')
 
 
+dnl	INIT_BASES(bitmap,typ,suffix)
+define(`INIT_BASES',`_INIT_BASES($1$2$3)')
+define(`_INIT_BASES',INIT_BASES_$1)
+
 dnl	INIT_BASES_X_1(dsttyp)
 define(`INIT_BASES_X_1',`dst_base[3]=($1 *)VA_DEST_PTR(vap);')
 
@@ -718,8 +740,10 @@ dnl	INIT_BASES_X_2(dsttyp,srctyp)
 define(`INIT_BASES_X_2',`INIT_BASES_X_1($1) INIT_BASES_X_SRC1($2)')
 
 dnl	INIT_BASES_CONV_2(type)
-define(`INIT_BASES_CONV_2',`INIT_BASES_CONV_1($1) INIT_BASES_SRC1'
+define(`INIT_BASES_CONV_2',`INIT_BASES_CONV_1($1) INIT_BASES_SRC1')
+
 define(`INIT_BASES_2',`INIT_BASES_1 INIT_BASES_SRC1')
+
 define(`INIT_BASES_3',`INIT_BASES_2 INIT_BASES_SRC2')
 define(`INIT_BASES_4',`INIT_BASES_3 INIT_BASES_SRC3')
 define(`INIT_BASES_5',`INIT_BASES_4 INIT_BASES_SRC4')
@@ -863,6 +887,9 @@ define(`COPY_BASES_SBM_XXX_2',`COPY_BASES_SBM_2')
 define(`COPY_BASES_SBM_XXX_3',`COPY_BASES_SBM_3')
 define(`COPY_BASES_X_2',`COPY_BASES_2')
 
+dnl	DECLARE_BASES(bitmap,typ,suffix)
+define(`DECLARE_BASES',`_DECLARE_BASES($1$2$3)')
+define(`_DECLARE_BASES',DECLARE_BASES_$1)
 
 define(`DECLARE_BASES_SBM',`
 	int sbm_base[N_DIMENSIONS-1];
@@ -925,20 +952,23 @@ define(`DECLARE_BASES_QUAT_1',`
 DECLARE_FOUR_LOOP_INDICES
 ')
 
-define(`DECLARE_X_DST_VBASE(type)',`
-	type *dst_base[N_DIMENSIONS-1];
-	type *dst_ptr;
+dnl	DECLARE_X_DST_VBASE(type)
+define(`DECLARE_X_DST_VBASE',`
+	$1 *dst_base[N_DIMENSIONS-1];
+	$1 *dst_ptr;
 	DECLARE_FIVE_LOOP_INDICES
 ')
 
-define(`DECLARE_XXX_DST_VBASE(type,keychar)',`
-	type *keychar##dst_base[N_DIMENSIONS-1];
-	type *keychar##dst_ptr;
+dnl	DECLARE_XXX_DST_VBASE(type,keychar)
+define(`DECLARE_XXX_DST_VBASE',`
+	type *$2`dst_base'[N_DIMENSIONS-1];
+	type *$2`dst_ptr';
 	DECLARE_FOUR_LOOP_INDICES
 ')
 
-define(`DECLARE_BASES_CONV_2(type)',`
-	DECLARE_BASES_CONV_1(type)
+dnl	DECLARE_BASES_CONV_2(type)
+define(`DECLARE_BASES_CONV_2',`
+	DECLARE_BASES_CONV_1($1)
 	DECLARE_VBASE_SRC1
 ')
 
@@ -962,8 +992,10 @@ define(`DECLARE_BASES_QUAT_2',`
 	DECLARE_VBASE_QUAT_SRC1
 ')
 
-define(`DECLARE_VBASE(typ,prefix)',`	typ *prefix##_base[N_DIMENSIONS-1];
-					typ *prefix##_ptr;
+dnl	DECLARE_VBASE(typ,prefix)
+define(`DECLARE_VBASE',`
+	$1 *$2`_base'[N_DIMENSIONS-1];
+	$1 *$2`_ptr';
 ')
 
 dnl	DECLARE_XXX_SRC1_VBASE(type)
@@ -1093,47 +1125,49 @@ define(`RELEASE_VEC_ARGS_STRUCT',`
 	/*givbuf(vap);*/
 ')
 
-define(`DECL_VEC_ARGS_STRUCT(name)',`
+dnl	DECL_VEC_ARGS_STRUCT(name)
+define(`DECL_VEC_ARGS_STRUCT($1)',`
 	/*Vector_Args *vap=NEW_VEC_ARGS;*/
 	Vector_Args va1, *vap=(&va1);
-DECLARE_FUNC_NAME(name)
+DECLARE_FUNC_NAME($1)
 INIT_VEC_ARGS(vap)
 ')
+
 
 dnl  MIN is defined in the iOS Foundation headers...
 dnl  We should make sure it is the same!
 dnl#ifndef MIN
-define(`MIN( n1, n2 )',`((n1)<(n2)?(n1):(n2))
+dnl	MIN( n1, n2 )
+define(`MIN',`(($1)<($2)?($1):($2))')
 dnl#endif /* undef MIN */
 
 /* The loop_arr array holds the max of all the dimensions - either 1 or N_i.
  * If we encounter a dimension which is not N_i or 1, then it's an error.
  */
 
-define(`ADJ_COUNTS(loop_arr,obj_arr)',`
+dnl	ADJ_COUNTS(loop_arr,obj_arr)
+define(`ADJ_COUNTS',`
 
 	for(i_dim=0;i_dim<N_DIMENSIONS;i_dim++){
-		if( INDEX_COUNT(obj_arr,i_dim) > 1 ){
-			if( INDEX_COUNT(loop_arr,i_dim) == 1 ){
-				ASSIGN_IDX_COUNT(loop_arr,i_dim,INDEX_COUNT(obj_arr,i_dim));
+		if( INDEX_COUNT($2,i_dim) > 1 ){
+			if( INDEX_COUNT($1,i_dim) == 1 ){
+				ASSIGN_IDX_COUNT($1,i_dim,INDEX_COUNT($2,i_dim));
 			} else {
-				if( INDEX_COUNT(obj_arr,i_dim) != INDEX_COUNT(loop_arr,i_dim) ){
+				if( INDEX_COUNT($2,i_dim) != INDEX_COUNT($1,i_dim) ){
 					count_type n;
 
-					n = MIN(INDEX_COUNT(loop_arr,i_dim),
-						INDEX_COUNT(obj_arr,i_dim));
+					n = MIN(INDEX_COUNT($1,i_dim),
+						INDEX_COUNT($2,i_dim));
 					sprintf(DEFAULT_ERROR_STRING,
 	"Oops: %s count mismatch, (%d != %d), using %d",
 						dimension_name[i_dim],
-						INDEX_COUNT(loop_arr,i_dim),
-						INDEX_COUNT(obj_arr,i_dim),n);
-					ASSIGN_IDX_COUNT(loop_arr,i_dim,n);
+						INDEX_COUNT($1,i_dim),
+						INDEX_COUNT($2,i_dim),n);
+					ASSIGN_IDX_COUNT($1,i_dim,n);
 				}
-				/* else loop_arr already has value */
 			}
 		}
 	}
-}
 ')
 
 define(`SHOW_BASES',`
@@ -1149,7 +1183,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 dnl	CONV_METHOD_DECL(name)
 define(`CONV_METHOD_DECL',`
-static void CONV_METHOD_NAME(name)( Vec_Obj_Args *oap )
+static void CONV_METHOD_NAME($1)( Vec_Obj_Args *oap )
 ')
 
 
@@ -1234,6 +1268,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 dnl	GENERIC_SLOW_BODY( name, statement, decls, inits, copy_macro, ptr_init, comp_inc, inc_macro, debug_it )
 define(`GENERIC_SLOW_BODY',`
 
+dnl /* generic_slow_body copy_macro = /$5/  ptr_init = /$6/ */
 {
 	$3
 	$4
@@ -1321,6 +1356,7 @@ define(`GENERIC_XXX_SLOW_BODY',`
 
 dnl	SIMPLE_SLOW_BODY(name,statement,typ,suffix,debug_it)
 define(`SIMPLE_SLOW_BODY',`
+/* simple_slow_body typ = /$3/ suffix = /$4/ */
 
 		dnl DECLARE_BASES_##typ##suffix,
 		dnl INIT_BASES_##typ##suffix,
@@ -1328,7 +1364,7 @@ define(`SIMPLE_SLOW_BODY',`
 		dnl INIT_PTRS_##suffix,
 		dnl INC_PTRS_##typ##suffix,
 		dnl INC_BASES_##typ##suffix,
-GENERIC_SLOW_BODY($1,$2,DECLARE_BASES($3,$4),INIT_BASES($3,$4),COPY_BASES($4),INIT_PTRS($4),INC_PTRS($3,$4),INC_BASES($3,$4),$5)
+GENERIC_SLOW_BODY($1,$2,`DECLARE_BASES(`',$3,$4)',`INIT_BASES(`',$3,$4)',`COPY_BASES(`',$3,$4)',`INIT_PTRS($4)',`INC_PTRS($3,$4)',`INC_BASES(`',$3,$4)',$5)
 ')
 
 dnl	SIMPLE_EQSP_BODY(name, statement,typ,suffix,extra,debugit)
@@ -1361,6 +1397,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 dnl  eqsp bodies
 
+dnl	EQSP_BODY(bitmap,typ,vectors,extra)
+define(`EQSP_BODY',`_EQSP_BODY($1$2$3$4)')
+define(`_EQSP_BODY',EQSP_BODY_$1)
 
 dnl	EQSP_BODY_2(name, statement)
 define(`EQSP_BODY_2',`SIMPLE_EQSP_BODY($1,$2,`',2,`',`')')
@@ -1457,7 +1496,7 @@ define(`SLOW_BODY_DBM_2SRCS',`SIMPLE_SLOW_BODY($1,$2,`',DBM_2SRCS,`')')
 
 dnl	SLOW_BODY_XX_2( name, statement,dsttyp,srctyp )
 define(`SLOW_BODY_XX_2',`
-GENERIC_SLOW_BODY($1,$2,DECLARE_BASES_X_2($3,$4),INIT_BASES_X_2($3,$4),COPY_BASES_2,INIT_PTRS_2,INC_PTRS_2,INC_BASES_2,`')
+GENERIC_SLOW_BODY($1,$2,`DECLARE_BASES_X_2($3,$4)',`INIT_BASES_X_2($3,$4)',`COPY_BASES_2',`INIT_PTRS_2',`INC_PTRS_2',`INC_BASES_2',`')
 ')
 
 
@@ -1465,7 +1504,7 @@ dnl  XXX is complex or quaternion
 
 dnl	SIMPLE_XXX_SLOW_BODY(name, stat,bitmap,typ,suffix,extra,debugit)
 define(`SIMPLE_XXX_SLOW_BODY',`
-GENERIC_XXX_SLOW_BODY( $1, $2,EXTRA_DECLS($6) DECLARE_BASES($3,$4,$5),INIT_BASES($3,$4,$5),COPY_BASES($3,$4,$5),INIT_PTRS($3,$4,$5),INC_BASES($3,$4,$5),$7)
+GENERIC_XXX_SLOW_BODY( $1, $2,`EXTRA_DECLS($6) DECLARE_BASES($3,$4,$5)',`INIT_BASES($3,$4,$5)',`COPY_BASES($3,$4,$5)',`INIT_PTRS($3,$4,$5)',`INC_BASES($3,$4,$5)',$7)
 ')
 
 dnl	SLOW_BODY_XXX_2( name, stat, dsttyp, srctyp )
@@ -1510,6 +1549,7 @@ dnl	SLOW_BODY_PROJ_2( name, init_statement, statement )
 define(`SLOW_BODY_PROJ_2',`
 
 {
+	/* slow_body_proj_2 */
 	PROJ_LOOP_DECLS_2
 
 	INIT_LOOP_COUNT	/* init loop_count to all 1s */
@@ -1580,6 +1620,9 @@ define(`SLOW_BODY_PROJ_CPX_3',`SLOW_BODY_PROJ_XXX_3($1,$2,$3,`CPX_')')
 dnl	SLOW_BODY_PROJ_QUAT_3( name, statement, init_statement )
 define(`SLOW_BODY_PROJ_QUAT_3',`SLOW_BODY_PROJ_XXX_3($1,$2,$3,`QUAT_')')
 
+dnl	NEW_PLOOP(typ,vectors)
+define(`NEW_PLOOP',`_NEW_PLOOP($1$2)')
+define(`_NEW_PLOOP',NEW_PLOOP_$1)
 
 dnl	NEW_PLOOP_CPX_2(statement,loop_count)
 define(`NEW_PLOOP_CPX_2',`NEW_PLOOP_XXX_2($1,$2,`CPX_')')
@@ -1735,35 +1778,35 @@ dnl	NEW_PLOOP_XXX_2( statement,count_arr,typ )
 define(`NEW_PLOOP_XXX_2',`
 
 	dnl INIT_BASES_##typ##2
-	INIT_BASES($3,`2')
+	INIT_BASES(`',$3,`2')
 	_INIT_COUNT(i,$2,4)
 	while(i-- > 0){
 		dnl COPY_BASES_##typ##2(2)
-		COPY_BASES($3,`2')(2)
+		COPY_BASES(`',$3,`2')(2)
 		_INIT_COUNT(j,$2,3)
 		while(j-- > 0){
 			dnl COPY_BASES_##typ##2(1)
-			COPY_BASES($3,`2')(1)
+			COPY_BASES(`',$3,`2')(1)
 			_INIT_COUNT(k,$2,2)
 			while(k-- > 0){
 				dnl COPY_BASES_##typ##2(0)
-				COPY_BASES($3,`2')(0)
+				COPY_BASES(`',$3,`2')(0)
 				_INIT_COUNT(l,$2,1)
 				while(l-- > 0){
 					dnl INIT_PTRS_##typ##2
 					INIT_PTRS($3,`2')
 						$1 ;
 					dnl INC_BASES_##typ##2(1)
-					INC_BASES($3,`2')(1)
+					INC_BASES(`',$3,`2')(1)
 				}
 				dnl INC_BASES_##typ##2(2)
-				INC_BASES($3,`2')(2)
+				INC_BASES(`',$3,`2')(2)
 			}
 			dnl INC_BASES_##typ##2(3)
-			INC_BASES($3,`2')(3)
+			INC_BASES(`',$3,`2')(3)
 		}
 		dnl INC_BASES_##typ##2(4)
-		INC_BASES($3,`2')(4)
+		INC_BASES(`',$3,`2')(4)
 	}
 ')
 
@@ -1771,27 +1814,27 @@ define(`NEW_PLOOP_XXX_2',`
 dnl	NEW_PLOOP_XXX_3( statement, count_arr, typ )
 define(`NEW_PLOOP_XXX_3',`
 
-	INIT_BASES($3,`3')
+	INIT_BASES(`',$3,`3')
 	_INIT_COUNT(i,$2,4)
 	while(i-- > 0){
-		COPY_BASES($3,`3')(2)
+		COPY_BASES(`',$3,`3')(2)
 		_INIT_COUNT(j,$2,3)
 		while(j-- > 0){
-			COPY_BASES($3,`3')(1)
+			COPY_BASES(`',$3,`3')(1)
 			_INIT_COUNT(k,$2,2)
 			while(k-- > 0){
-				COPY_BASES($3,`3')(0)
+				COPY_BASES(`',$3,`3')(0)
 				_INIT_COUNT(l,$2,1)
 				while(l-- > 0){
 					INIT_PTRS($3,`3')
 						$1 ;
-					INC_BASES($3,`3')(1)
+					INC_BASES(`',$3,`3')(1)
 				}
-				INC_BASES($3,`3')(2)
+				INC_BASES(`',$3,`3')(2)
 			}
-			INC_BASES($3,`3')(3)
+			INC_BASES(`',$3,`3')(3)
 		}
-		INC_BASES($3,`3')(4)
+		INC_BASES(`',$3,`3')(4)
 	}
 ')
 
@@ -1845,8 +1888,16 @@ static void SLOW_NAME($1)( LINK_FUNC_ARG_DECLS )
 
 /********************* Section 5 - fast functions ****************/
 
+dnl	FAST_BODY(bitmap,typ,vectors,extra)
+define(`FAST_BODY',`_FAST_BODY($1$2$3$4)')
+define(`_FAST_BODY',FAST_BODY_$1)
+
+dnl	SLOW_BODY(bitmap,typ,vectors,extra)
+define(`SLOW_BODY',`_SLOW_BODY($1$2$3$4)')
+define(`_SLOW_BODY',SLOW_BODY_$1)
+
 dnl	FF_DECL(name)
-define(`FF_DECL',`static void FAST_NAME($1)')
+define(`FF_DECL',`/* ff_decl /$1/ */static void FAST_NAME($1)')
 define(`EF_DECL',`static void EQSP_NAME($1)')
 define(`SF_DECL',`static void SLOW_NAME($1)')
 
@@ -1863,7 +1914,7 @@ define(`GENERIC_FF_DECL',`
 
 	FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 dnl	FAST_BODY_##bitmap##typ##vectors##extra( name, statement )
-	FAST_BODY($3,$4,$6,$7)( $1, $2 )
+	FAST_BODY($3,$4,$6,$7)($1,$2)
 ')
 
 dnl	GENERIC_EF_DECL(name, statement,bitmap,typ,scalars,vectors,extra)
@@ -1939,7 +1990,7 @@ define(`SET_EXTLOC_RETURN_SCALARS',`
 dnl	EXTLOC_FAST_FUNC(name, statement)
 define(`EXTLOC_FAST_FUNC',`
 
-FF_DECL(name)( LINK_FUNC_ARG_DECLS )
+FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
 	FAST_DECLS_SRC1
 	FAST_INIT_SRC1
@@ -1992,6 +2043,10 @@ EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 
 
 /* FAST_DECLS declare variables at the top of the body */
+
+dnl	FAST_DECLS(typ,suffix)
+define(`FAST_DECLS',`_FAST_DECLS($1$2)')
+define(`_FAST_DECLS',FAST_DECLS_$1)
 
 define(`FAST_DECLS_1',`dest_type *dst_ptr; dimension_t fl_ctr;')
 define(`FAST_DECLS_SRC1',`std_type *s1_ptr;')
@@ -2048,6 +2103,10 @@ define(`FAST_DECLS_RQ_2',`FAST_DECLS_1 FAST_DECLS_QUAT_SRC1')
 
 dnl  eqsp decls
 
+dnl EQSP_DECLS(typ,suffix)
+define(`EQSP_DECLS',`_EQSP_DECLS($1$2)')
+define(`_EQSP_DECLS',EQSP_DECLS_$1)
+
 define(`EQSP_DECLS_1',`dest_type *dst_ptr; dimension_t fl_ctr;')
 define(`EQSP_DECLS_SRC1',`std_type *s1_ptr;')
 define(`EQSP_DECLS_SRC2',`std_type *s2_ptr;')
@@ -2103,6 +2162,10 @@ define(`EQSP_DECLS_RQ_2',`EQSP_DECLS_1 EQSP_DECLS_QUAT_SRC1')
 
 /* FAST_INIT sets up the local vars from the arguments passed */
 
+
+dnl	FAST_INIT(typ,suffix)
+define(`FAST_INIT',`/* fast_init /$1/ /$2/ */_FAST_INIT($1$2)')
+define(`_FAST_INIT',FAST_INIT_$1)
 
 define(`FAST_INIT_1',`
 	dst_ptr = (dest_type *)VA_DEST_PTR(vap);
@@ -2191,6 +2254,10 @@ define(`FAST_INIT_SBM_QUAT_3',`FAST_INIT_SBM FAST_INIT_QUAT_3')
 dnl
 dnl  eqsp init
 
+
+dnl EQSP_INIT(typ,suffix)
+define(`EQSP_INIT',`_EQSP_INIT($1$2)')
+define(`_EQSP_INIT',EQSP_INIT_$1)
 
 define(`EQSP_INIT_1',`
 	dst_ptr = (dest_type *)VA_DEST_PTR(vap);
@@ -2287,6 +2354,7 @@ dnl	SIMPLE_FAST_BODY(name, statement,typ,suffix,extra,debugit)
 define(`SIMPLE_FAST_BODY',`
 
 {
+	/* simple_fast_body typ = /$3/  suffix = /$4/ */
 	dnl FAST_DECLS_##typ##suffix
 	dnl FAST_INIT_##typ##suffix
 	dnl EXTRA_DECLS_##extra
@@ -2355,7 +2423,7 @@ define(`FAST_BODY_CPX_4',`SIMPLE_FAST_BODY($1,$2,CPX_,4,`',`')')
 define(`FAST_BODY_CPX_5',`SIMPLE_FAST_BODY($1,$2,CPX_,5,`',`')')
 define(`FAST_BODY_CCR_3',`SIMPLE_FAST_BODY($1,$2,CCR_,3,`',`')')
 define(`FAST_BODY_CR_2',`SIMPLE_FAST_BODY($1,$2,CR_,2,`',`')')
-define(`FAST_BODY_RC_2',`SIMPLE_FAST_BODY($1,$2,RC_,2,`',`')')
+define(`FAST_BODY_RC_2',`/* fast_body_rc_2 */SIMPLE_FAST_BODY($1,$2,RC_,2,`',`')')
 define(`FAST_BODY_QUAT_1',`SIMPLE_FAST_BODY($1,$2,QUAT_,1,`',`')')
 define(`FAST_BODY_QUAT_2',`SIMPLE_FAST_BODY($1,$2,QUAT_,2,`',`')')
 define(`FAST_BODY_QUAT_2_T4',`SIMPLE_FAST_BODY($1,$2,QUAT_,2,T4,`')')
@@ -2427,6 +2495,8 @@ SHOW_FAST_TEST_2
 dnl	GENERIC_FAST_SWITCH(name,bitmap,typ,scalars,vectors)
 define(`GENERIC_FAST_SWITCH',`
 
+	/* generic_fast_switch bitmap = /$2/ vectors = /$5/ */
+
 dnl if( FAST_TEST_##bitmap##vectors ){
 if( FAST_TEST($2,$5) ){
 	REPORT_FAST_CALL
@@ -2496,20 +2566,15 @@ EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 
 dnl /* GENERIC_SF_DECL(name,statement,bitmap,typ,scalars,vectors,extra) */
 SF_DECL($1)( LINK_FUNC_ARG_DECLS )
-	GENERIC_SLOW_BODY( $1, $3,
-		DECLARE_BASES_CONV_2($2),
-		INIT_BASES_CONV_2($2),
-		COPY_BASES_2,
-		INIT_PTRS_2,
-		INC_PTRS_2,
-		INC_BASES_2,
-		)
-')
+GENERIC_SLOW_BODY( $1, $3,`DECLARE_BASES_CONV_2($2)',`INIT_BASES_CONV_2($2)',`COPY_BASES_2',`INIT_PTRS_2',`INC_PTRS_2',`INC_BASES_2',`')')
 
 
 dnl	OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
+dnl define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
 define(`OBJ_METHOD',`
+/* obj_method /$1/ BEGIN */
 GENERIC_FUNC_DECLS($1,$2,$3,$4,$5,$6,$7)
+/* obj_method /$1/ DONE */
 ')
 
 
@@ -2533,10 +2598,12 @@ dnl					restart_condition, assignment,
 dnl					gpu_c1, gpu_c2 )
 
 define(`_VEC_FUNC_MM_NOCC',`
+/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
 
 EXTLOC_FAST_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
 EXTLOC_EQSP_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
 EXTLOC_SLOW_FUNC($1,EXTLOC_STATEMENT($2,$3,$4)) 
+/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
 ')
 
 
@@ -2621,12 +2688,12 @@ define(`_VEC_FUNC_SBM_QUAT_1S_2V',`OBJ_METHOD($1,$2,SBM_,QUAT_,1S_,2,`')')
 
 define(`_VEC_FUNC_SBM_QUAT_2S_1V',`OBJ_METHOD($1,$2,SBM_,QUAT_,2S_,1,`')')
 
-dnl #define TWO_QUAT_VEC_METHOD( name,stat )	_VF_QUAT_2V( name, type_code, stat)
+dnl #define TWO_QUAT_VEC_METHOD( name,stat )
 define(`_VEC_FUNC_QUAT_2V',`OBJ_METHOD($1,$2,`',QUAT_,`',2,`')')
 
 define(`_VEC_FUNC_QUAT_2V_T4',`OBJ_METHOD($1,$2,`',QUAT_,`',2,_T4)')
 
-dnl #define THREE_QUAT_VEC_METHOD( name,stat )	_VF_QUAT_3V( name, type_code, stat)
+dnl #define THREE_QUAT_VEC_METHOD( name,stat )
 define(`_VEC_FUNC_QUAT_3V',`OBJ_METHOD($1,$2,`',QUAT_,`',3,`')')
 
 define(`_VEC_FUNC_QUAT_3V_T4',`OBJ_METHOD($1,$2,`',QUAT_,`',3,_T4)')
@@ -2659,11 +2726,11 @@ define(`_VEC_FUNC_QUAT_1S_1V',`OBJ_METHOD($1,$2,`',QUAT_,1S_,1,`')')
 /* It is a linear index, so we have to take it apart... */
 
 dnl	INDEX_VDATA(index)
-define(`INDEX_VDATA(index)',`(orig_s1_ptr+(index%INDEX_COUNT(s1_count,0))*IDX_INC(s1inc,0)
-+ ((index/INDEX_COUNT(s1_count,0))%INDEX_COUNT(s1_count,1))*IDX_INC(s1inc,1)
-+ ((index/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)))%INDEX_COUNT(s1_count,2))*IDX_INC(s1inc,2) 
-+ ((index/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)))%INDEX_COUNT(s1_count,3))*IDX_INC(s1inc,3) 
-+ ((index/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)*INDEX_COUNT(s1_count,3)))%INDEX_COUNT(s1_count,4))*IDX_INC(s1inc,4))
+define(`INDEX_VDATA',`(orig_s1_ptr+($1%INDEX_COUNT(s1_count,0))*IDX_INC(s1inc,0)
++ (($1/INDEX_COUNT(s1_count,0))%INDEX_COUNT(s1_count,1))*IDX_INC(s1inc,1)
++ (($1/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)))%INDEX_COUNT(s1_count,2))*IDX_INC(s1inc,2) 
++ (($1/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)))%INDEX_COUNT(s1_count,3))*IDX_INC(s1inc,3) 
++ (($1/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)*INDEX_COUNT(s1_count,3)))%INDEX_COUNT(s1_count,4))*IDX_INC(s1inc,4))
 ')
 
 dnl	_VEC_FUNC_2V_PROJ( name, init_statement, statement, gpu_expr )
@@ -2730,7 +2797,7 @@ static void SLOW_NAME($1)( LINK_FUNC_ARG_DECLS )
 dnl	_VEC_FUNC_2V_PROJ_IDX( name, init_statement, statement, gpu_s1, gpu_s2 )
 define(`_VEC_FUNC_2V_PROJ_IDX',`
 
-static void SLOW_NAME(name)(LINK_FUNC_ARG_DECLS)
+static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_IDX_2($1,$2,$3)
 ')
 

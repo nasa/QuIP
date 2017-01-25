@@ -66,6 +66,7 @@ INC_M4FILES=							\
 			$(INCDIR)/fft_funcs.m4			\
 			$(INCDIR)/flen_defs.m4			\
 			$(INCDIR)/flush_output.m4		\
+			$(INCDIR)/gen_entries.m4		\
 			$(INCDIR)/gen_bit_calls.m4		\
 			$(INCDIR)/gen_float_calls.m4		\
 			$(INCDIR)/gen_func_array.m4		\

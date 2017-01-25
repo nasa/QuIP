@@ -17,7 +17,7 @@
  */
 
 include(`../../include/veclib/gen_typtbl.m4')
-include(`../../include/veclib/obj_args.m4')
+dnl include(`../../include/veclib/obj_args.m4')
 
 static void nullobjf(HOST_CALL_ARG_DECLS)
 {

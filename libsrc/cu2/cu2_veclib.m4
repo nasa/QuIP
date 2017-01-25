@@ -1,5 +1,5 @@
 
-divert(-1)
+divert(-1)	dnl suppress output
 
 dnl define(`suppressing',`')
 

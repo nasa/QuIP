@@ -54,7 +54,7 @@ define(`GPU_TYPED_CALL_NAME',`_XXX_TYPED_CALL_NAME(g,$1,$2)')
 // PF_TYPED
 
 define(`PF_TYPED_CALL_NAME',``h_'pf_str`_'type_code`_'$1'')
-define(`PF_FFT_CALL_NAME',`pf_str`_fft_'type_code`_'$1'')
+define(`PF_FFT_CALL_NAME',`pf_str`_fft_'type_code`_'$1')
 
 define(`PF_TYPED_CALL_NAME_CPX',`pf_str`_'$2`_c'$1')
 define(`PF_TYPED_CALL_NAME_REAL',`pf_str`_'$2`_r'$1')
@@ -121,4 +121,18 @@ dnl	VA_SCALAR_VAL_STDCPX(vap,idx)
 define(`VA_SCALAR_VAL_STDCPX',`(*((std_cpx *)(($1)->va_sval[$2])))')
 dnl	VA_SCALAR_VAL_STDQUAT(vap,idx)
 define(`VA_SCALAR_VAL_STDQUAT',`(*((std_quat *)(($1)->va_sval[$2])))')
+
+define(`flush_output',`include(`../../include/veclib/flush_output.m4')')
+
+ifdef(`MAXIMUM_TESTING',`
+define(`my_include',`
+// CALLING $1
+flush_output
+include($1)
+// BACK FROM $1
+flush_output
+')
+',` dnl else ! MAXIMUM_TESTING
+define(`my_include',`include($1)')
+') dnl endif ! MAXIMUM_TESTING
 

@@ -5,16 +5,24 @@
 #include <math.h>
 #endif
 
+extern int n_processors;
+
 /* this file is included in sptest.c and dptest.c */
 
-#define MIN_PARALLEL_PROCESSORS	100	// a nonsense value to inhibit the switches
-					// set to 2 to use these features on a dual proc machine.
+// BUG need to set this from config!?
+define(`N_PROCESSORS',`2')
+define(`MIN_PARALLEL_PROCESSORS',`100')	// a nonsense value to inhibit the switches
+dnl 					// set to 2 to use these features on a dual proc machine.
+dnl define(`MIN_PARALLEL_PROCESSORS',`2')	dnl for testing
+
+define(`MULTI_PROC_TEST',`eval(N_PROCESSORS >= MIN_PARALLEL_PROCESSORS)')
 
 // BUG - static globals are not thread-safe!?
 
 
 define(`revdone',`TYPED_NAME(_revdone)')
-define(`init_twiddle',`TYPED_NAME(_init_twiddle)')
+dnl define(`init_twiddle',`TYPED_NAME(_init_twiddle)')
+define(`init_twiddle',`TYPED_NAME(`init_twiddle_')')
 define(`last_cpx_len',`TYPED_NAME(_last_cpx_len)')
 define(`twiddle',`TYPED_NAME(_twiddle)')
 define(`last_real_len',`TYPED_NAME(_last_real_len)')
@@ -39,37 +47,39 @@ static u_int max_fft_len=(-1);
 
 
 
-define(`XFER_FFT_SINC( func, fap, dp )
+dnl	XFER_FFT_SINC( func, fap, dp )
+define(`XFER_FFT_SINC',`
 
-	if( IS_ROWVEC(dp) ){
-		SET_FFT_SINC(fap, OBJ_PXL_INC( (dp) ) );
-	} else if( IS_COLVEC(dp) ){
-		SET_FFT_SINC(fap, OBJ_ROW_INC( (dp) ) );
+	if( IS_ROWVEC($3) ){
+		SET_FFT_SINC($2, OBJ_PXL_INC( ($3) ) );
+	} else if( IS_COLVEC($3) ){
+		SET_FFT_SINC($2, OBJ_ROW_INC( ($3) ) );
 	} else {
 		NWARN(DEFAULT_ERROR_STRING);
 		sprintf(DEFAULT_ERROR_STRING,
-	"%s:  %s is neither a row nor a column!?",#func,OBJ_NAME(dp));
+	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
 		return;
 	}
-	if( IS_COMPLEX(dp) )
-		SET_FFT_SINC(fap, FFT_SINC(fap)/2);
+	if( IS_COMPLEX($3) )
+		SET_FFT_SINC($2, FFT_SINC($2)/2);
 ')
 
 
-define(`XFER_FFT_DINC( func, fap, dp )
+dnl	XFER_FFT_DINC( func, fap, dp )
+define(`XFER_FFT_DINC',`
 
-	if( IS_ROWVEC(dp) ){
-		SET_FFT_DINC(fap, OBJ_PXL_INC( (dp) ) );
-	} else if( IS_COLVEC(dp) ){
-		SET_FFT_DINC(fap, OBJ_ROW_INC( (dp) ) );
+	if( IS_ROWVEC($3) ){
+		SET_FFT_DINC($2, OBJ_PXL_INC( ($3) ) );
+	} else if( IS_COLVEC($3) ){
+		SET_FFT_DINC($2, OBJ_ROW_INC( ($3) ) );
 	} else {
 		NWARN(DEFAULT_ERROR_STRING);
 		sprintf(DEFAULT_ERROR_STRING,
-	"%s:  %s is neither a row nor a column!?",#func,OBJ_NAME(dp));
+	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
 		return;
 	}
 
-	/* if( IS_COMPLEX(dp) )	SET_FFT_DINC(fap, FFT_DINC(fap)/2); */
+	dnl /* if( IS_COMPLEX($3) )	SET_FFT_DINC($2, FFT_DINC($2)/2); */
 ')
 
 
@@ -91,7 +101,7 @@ dnl			fa.which_inc /= 2;
 dnl	#endif // NOT_USED
 
 
-static void init_twiddle(dimension_t len)
+static void init_twiddle (dimension_t len)
 {
 	double pi,theta;
 	dimension_t i;
@@ -170,10 +180,16 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	}
 
 	if( len != last_cpx_len ) {
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
-		if( n_processors > 1 ) WARN("cvfft:  init_twiddle is not thread-safe!?");
-#endif
-		init_twiddle(len);
+/* test = MULTI_PROC_TEST */
+ifelse(MULTI_PROC_TEST,`1',`/* test succeeded */',`/* test failed */')
+
+dnl#ifdef(`N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+dnl		if( n_processors > 1 ) NWARN("cvfft:  init_twiddle is not thread-safe!?");
+dnl#endif
+ifelse(MULTI_PROC_TEST,`1',`
+		if( n_processors > 1 ) NWARN("cvfft:  init_twiddle is not thread-safe!?");
+')
+		init_twiddle (len);
 	}
 
 	dest=(std_cpx *)FFT_DST(fap);
@@ -182,9 +198,11 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	/* inc1 should be in units of complex */
 
 	if( len != bitrev_size ){
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
-		if( n_processors > 1 ) WARN("cvfft:  bitrev_init is not thread-safe!?");
-#endif
+dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',`
+		if( n_processors > 1 ) NWARN("cvfft:  bitrev_init is not thread-safe!?");
+')
+dnl #endif
 		bitrev_init(len);
 	}
 
@@ -263,7 +281,7 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	}
 }
 
-static void PF_FFT_CALL_NAME( cvift )( FFT_Args *fap )
+static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 {
 	FFT_Args fa;
 	FFT_Args *new_fap=(&fa);
@@ -276,7 +294,7 @@ static void PF_FFT_CALL_NAME( cvift )( FFT_Args *fap )
 	PF_FFT_CALL_NAME(cvfft)(new_fap);
 }
 
-static void HOST_TYPED_CALL_NAME_CPX( vfft, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -291,7 +309,7 @@ static void HOST_TYPED_CALL_NAME_CPX( vfft, type_code )( HOST_CALL_ARG_DECLS )
 	PF_FFT_CALL_NAME(cvfft)( &fa );
 }
 
-static void HOST_TYPED_CALL_NAME_CPX( vift, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -307,7 +325,7 @@ static void HOST_TYPED_CALL_NAME_CPX( vift, type_code )( HOST_CALL_ARG_DECLS )
 }
 
 
-static void init_sinfact(dimension_t n)
+static void init_sinfact (dimension_t n)
 {
 	dimension_t i;
 	std_type arginc, arg;
@@ -344,15 +362,16 @@ static void init_sinfact(dimension_t n)
  * complex DFT on that.
  */
 
-#define RECOMBINE(inc)
+dnl	RECOMBINE(inc)
+define(`RECOMBINE',`
 
 	for(i=1;i<len/4;i++){
 		std_type s1,s2,d1,d2;
 
-		/*ctop--;
-		cbot++;*/
-		ctop -= inc;
-		cbot += inc;
+dnl		/*ctop--;
+dnl		cbot++;*/
+		ctop -= $1;
+		cbot += $1;
 
 		s1 = 0.5f * ( cbot->re + cbot->im );
 		s2 = 0.5f * ( ctop->re + ctop->im );
@@ -364,6 +383,7 @@ static void init_sinfact(dimension_t n)
 		ctop->re = s2 + d1;
 		ctop->im = s2 - d1;
 	}
+')
 
 
 
@@ -374,7 +394,7 @@ static void init_sinfact(dimension_t n)
  * Increments are not used, checked...
  */
 
-static void PF_FFT_CALL_NAME( rvfft )( const FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
 	std_cpx *cbot, *ctop;
 	std_type *top, *bottom;
@@ -398,7 +418,7 @@ static void PF_FFT_CALL_NAME( rvfft )( const FFT_Args *fap)
 	dst_inc = FFT_DINC(fap);
 
 	if( len != last_real_len ){
-		init_sinfact(len);
+		init_sinfact (len);
 	}
 
 /* we assume that the destination has 1+len/2 complex entries */
@@ -475,7 +495,7 @@ static void PF_FFT_CALL_NAME( rvfft )( const FFT_Args *fap)
  * Yes, because the first complex FFT is done in-place
  */
 
-static void PF_FFT_CALL_NAME( rvift )( FFT_Args *fap)
+static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 {
 	std_cpx *src;
 	std_type *dest;
@@ -499,7 +519,7 @@ static void PF_FFT_CALL_NAME( rvift )( FFT_Args *fap)
 	len=FFT_LEN(fap);		/* length of the real destination */
 
 	if( len != last_real_len ){
-		init_sinfact(len);
+		init_sinfact (len);
 	}
 
 	/* first fiddle the transform back */
@@ -585,7 +605,7 @@ static void PF_FFT_CALL_NAME( rvift )( FFT_Args *fap)
 	/* done */
 }
 
-static void HOST_TYPED_CALL_NAME_REAL( vfft, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap;
@@ -603,7 +623,7 @@ static void HOST_TYPED_CALL_NAME_REAL( vfft, type_code )( HOST_CALL_ARG_DECLS )
 	PF_FFT_CALL_NAME(rvfft)( &fa );
 }
 
-static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -625,27 +645,32 @@ static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
  */
 
 
-#define ROW_LOOP(real_dp,func,src_typ,dst_typ)
+dnl	ROW_LOOP(real_dp,func,src_typ,dst_typ)
+define(`ROW_LOOP',`
 
 	{
-		for (i = 0; i < OBJ_ROWS( real_dp ); ++i) {
-			func(fap);
-			SET_FFT_SRC( fap, ((src_typ *)FFT_SRC(fap))
+		for (i = 0; i < OBJ_ROWS( $1 ); ++i) {
+			$2(fap);
+			SET_FFT_SRC( fap, (($3 *)FFT_SRC(fap))
 					+ OBJ_ROW_INC( OA_SRC1(oap) ) );
-			SET_FFT_DST( fap, ((dst_typ *)FFT_DST(fap))
+			SET_FFT_DST( fap, (($4 *)FFT_DST(fap))
 					+ OBJ_ROW_INC( OA_DEST(oap) ) );
 		}
 	}
+')
 
 
-#define MULTIPROCESSOR_ROW_LOOP(real_dp,func,src_typ,dst_typ)
-	src_typ *_src_p[N_PROCESSORS];
-	dst_typ *_dest_p[N_PROCESSORS];
+dnl	MULTIPROCESSOR_ROW_LOOP(real_dp,func,src_typ,dst_typ)
+define(`MULTIPROCESSOR_ROW_LOOP',`
+	$3 *_src_p[N_PROCESSORS];
+	$4 *_dest_p[N_PROCESSORS];
+	$3 *src_p;
+	$4 *dest_p;
 	Vec_Obj_Args va[N_PROCESSORS];
 	int n_passes,n_extra,i;
 
-	src_p = (src_typ *)OBJ_DATA_PTR( src );
-	dest_p = (dst_typ *)OBJ_DATA_PTR( dest );
+	src_p = ($3 *)OBJ_DATA_PTR( src );
+	dest_p = ($4 *)OBJ_DATA_PTR( dest );
 
 	n_passes = OBJ_ROWS( src ) / n_processors ;
 	n_extra = OBJ_ROWS( src ) - n_passes*n_processors;
@@ -656,12 +681,12 @@ static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
 		_dest_p[i] = dest_p + i * n_passes * OBJ_ROW_INC( dest );
 	}
 
-	if( OBJ_COLS( real_dp )/2 != bitrev_size )
-		bitrev_init(OBJ_COLS( real_dp )/2);
-	if( OBJ_COLS( real_dp )/2 != last_cpx_len )
-		init_twiddle(OBJ_COLS( real_dp )/2);
-	if( OBJ_COLS( real_dp ) != last_real_len ){
-		init_sinfact(OBJ_COLS( real_dp ));
+	if( OBJ_COLS( $1 )/2 != bitrev_size )
+		bitrev_init(OBJ_COLS( $1 )/2);
+	if( OBJ_COLS( $1 )/2 != last_cpx_len )
+		init_twiddle (OBJ_COLS( $1 )/2);
+	if( OBJ_COLS( $1 ) != last_real_len ){
+		init_sinfact (OBJ_COLS( $1 ));
 	}
 
 	while( n_passes -- ){
@@ -672,7 +697,7 @@ static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
 			_dest_p[i] += OBJ_ROW_INC( dest );
 		}
 
-		launch_threads(QSP_ARG  func,va);
+		launch_threads(QSP_ARG  $2,va);
 	}
 	/* BUG for n_processors > 2 we would like to do these in parallel! */
 	while( n_extra -- ){
@@ -680,8 +705,9 @@ static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
 		va[0].arg_v2 = _dest_p[n_processors-1];
 		_src_p[n_processors-1] += OBJ_ROW_INC( src );
 		_dest_p[n_processors-1] += OBJ_ROW_INC( dest );
-		func(&va[0]);
+		$2(&va[0]);
 	}
+')
 
 
 
@@ -699,45 +725,51 @@ static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
  */
 
 
-#define COLUMN_LOOP(dp,func)
+dnl	COLUMN_LOOP(dp,func)
+define(`COLUMN_LOOP',`
 
 	{
 		dimension_t i;
 
 		SET_FFT_SRC( fap, NULL );
-		SET_FFT_DST( fap, OBJ_DATA_PTR( dp ) );
+		SET_FFT_DST( fap, OBJ_DATA_PTR( $1 ) );
 
-		for(i=0;i<OBJ_COLS( dp );i++){
-			func(fap);
-			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_PXL_INC( dp ) );
+		for(i=0;i<OBJ_COLS( $1 );i++){
+			$2(fap);
+			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_PXL_INC( $1 ) );
 		}
 	}
+')
 
-#define ROW_LOOP_2(dp,func)
+dnl	ROW_LOOP_2(dp,func)
+define(`ROW_LOOP_2',`
 
 	{
 		dimension_t i;
 
 		SET_FFT_SRC( fap, NULL );
 
-		for(i=0;i<OBJ_ROWS( dp );i++){
-			SET_FFT_DST( fap, ((std_cpx *)OBJ_DATA_PTR(dp))
-						+ i*OBJ_ROW_INC( dp ) );
-			func(fap);
+		for(i=0;i<OBJ_ROWS( $1 );i++){
+			SET_FFT_DST( fap, ((std_cpx *)OBJ_DATA_PTR($1))
+						+ i*OBJ_ROW_INC( $1 ) );
+			$2(fap);
 		}
 	}
+')
 
-#define COL_LOOP_2(real_dp,func,src_typ,dst_typ)
+dnl	COL_LOOP_2(real_dp,func,src_typ,dst_typ)
+define(`COL_LOOP_2',`
 
 	{
-		for (i = 0; i < OBJ_COLS( real_dp ); ++i) {
-			SET_FFT_SRC( fap, ((src_typ *)OBJ_DATA_PTR(OA_SRC1(oap)))
+		for (i = 0; i < OBJ_COLS( $1 ); ++i) {
+			SET_FFT_SRC( fap, (($3 *)OBJ_DATA_PTR(OA_SRC1(oap)))
 						+ i * OBJ_PXL_INC(OA_SRC1(oap)) );
-			SET_FFT_DST( fap, ((dst_typ *)OBJ_DATA_PTR(OA_DEST(oap)))
+			SET_FFT_DST( fap, (($4 *)OBJ_DATA_PTR(OA_DEST(oap)))
 						+ i * OBJ_PXL_INC(OA_DEST(oap)) );
-			func(fap);
+			$2(fap);
 		}
 	}
+')
 
 
 
@@ -759,51 +791,53 @@ static void HOST_TYPED_CALL_NAME_REAL( vift, type_code )( HOST_CALL_ARG_DECLS )
  * Changed pinc/2 to pinc...
  */
 
-#define MULTIPROCESSOR_COLUMN_LOOP(dp,func)
+dnl	MULTIPROCESSOR_COLUMN_LOOP(dp,func)
+define(`MULTIPROCESSOR_COLUMN_LOOP',`
 
 	Vec_Obj_Args va[N_PROCESSORS];
 	int n_passes,n_extra,i;
 	std_cpx *_cp[N_PROCESSORS];
 
-	cp = (std_type *)OBJ_DATA_PTR( dp );
+	cp = (std_type *)OBJ_DATA_PTR( $1 );
 
-	n_passes = OBJ_COLS( dp ) / n_processors ;
-	n_extra = OBJ_COLS( dp ) - n_passes*n_processors;
+	n_passes = OBJ_COLS( $1 ) / n_processors ;
+	n_extra = OBJ_COLS( $1 ) - n_passes*n_processors;
 
 	for(i=0;i<n_processors;i++){
 		va[i] = args;
-		_cp[i] = cp + i * n_passes * OBJ_PXL_INC( dp );
+		_cp[i] = cp + i * n_passes * OBJ_PXL_INC( $1 );
 	}
 
-	/* cvfft calls cvfft which calls bitrev_init() and init_twiddle()
+	/* cvfft calls cvfft which calls bitrev_init() and init_twiddle ()
 	 * which set up global arrays iff the requested
 	 * fft length is different from the last length...
 	 * This cannot be called in parallel, so we call it
 	 * here to avoid any problems...
 	 */
-	if( OBJ_ROWS( dp ) != bitrev_size )
-		bitrev_init(OBJ_ROWS( dp ));
-	if( OBJ_ROWS( dp ) != last_cpx_len )
-		init_twiddle(OBJ_ROWS( dp ));
+	if( OBJ_ROWS( $1 ) != bitrev_size )
+		bitrev_init(OBJ_ROWS( $1 ));
+	if( OBJ_ROWS( $1 ) != last_cpx_len )
+		init_twiddle (OBJ_ROWS( $1 ));
 
 	while(n_passes--){
 		for(i=0;i<n_processors;i++){
 			va[i].arg_v1 = _cp[i];
 			va[i].arg_v2 = _cp[i];
-			_cp[i] += OBJ_PXL_INC( dp )/2;
+			_cp[i] += OBJ_PXL_INC( $1 )/2;
 		}
 
-		launch_threads(QSP_ARG  func,va);
+		launch_threads(QSP_ARG  $2,va);
 	}
 	/* BUG for n_processors > 2 we would like to do these in parallel! */
 	while( n_extra -- ){
 		va[0].arg_v1 = _cp[n_processors-1];
 		va[0].arg_v2 = _cp[n_processors-1];
-		_cp[n_processors-1] += OBJ_PXL_INC( dp )/2;
-		func(&va[0]);
+		_cp[n_processors-1] += OBJ_PXL_INC( $1 )/2;
+		$2(&va[0]);
 	}
+')
 
-static void HOST_TYPED_CALL_NAME_REAL( fftrows, type_code )(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(fftrows,type_code)(HOST_CALL_ARG_DECLS)
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -818,11 +852,11 @@ static void HOST_TYPED_CALL_NAME_REAL( fftrows, type_code )(HOST_CALL_ARG_DECLS)
 	SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );	// was /2
 	SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
 
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	if( n_processors > 1 ){
 		MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
 	} else
-#endif /* N_PROCESSORS > 1 */
+') dnl endif /* N_PROCESSORS > 1 */
 		ROW_LOOP( OA_SRC1(oap), PF_FFT_CALL_NAME(rvfft),std_type,std_cpx )
 
 }
@@ -832,7 +866,7 @@ static void HOST_TYPED_CALL_NAME_REAL( fftrows, type_code )(HOST_CALL_ARG_DECLS)
 // and N rows (for a square NxN image).  This seems to be compatible with cuFFT.  However, clFFT
 // appears to do the opposite!?  Therefore, it would be a kindness to provide a column-first version...
 
-static void HOST_TYPED_CALL_NAME_REAL( fft2d_1, type_code )(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(fft2d_1,type_code)(HOST_CALL_ARG_DECLS)
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -852,11 +886,11 @@ static void HOST_TYPED_CALL_NAME_REAL( fft2d_1, type_code )(HOST_CALL_ARG_DECLS)
 		SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
 		SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
 
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
 		} else
-#endif /* N_PROCESSORS > 1 */
+') dnl endif /* N_PROCESSORS > 1 */
 			ROW_LOOP( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),
 				std_type,std_cpx)
 	}
@@ -872,16 +906,16 @@ static void HOST_TYPED_CALL_NAME_REAL( fft2d_1, type_code )(HOST_CALL_ARG_DECLS)
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){			/* more than 1 row? */
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
 
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME( cvfft ) )
+			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME(cvfft) )
 		} else
-#endif /* N_PROCESSORS > 1 */
+') dnl endif /* N_PROCESSORS > 1 */
 		COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_REAL( fft2d_2, type_code )(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(fft2d_2,type_code)(HOST_CALL_ARG_DECLS)
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -901,13 +935,11 @@ static void HOST_TYPED_CALL_NAME_REAL( fft2d_2, type_code )(HOST_CALL_ARG_DECLS)
 		SET_FFT_DINC( fap, OBJ_ROW_INC( OA_DEST(oap) ) );
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
 
-#ifdef NOT_YET
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_ROW_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),std_type,std_cpx)
 		} else
-#endif /* N_PROCESSORS > 1 */
-#endif // NOT_YET
+') dnl endif /* N_PROCESSORS > 1 */
 			COL_LOOP_2( OA_SRC1(oap),PF_FFT_CALL_NAME(rvfft),
 				std_type,std_cpx)
 	}
@@ -921,28 +953,26 @@ static void HOST_TYPED_CALL_NAME_REAL( fft2d_2, type_code )(HOST_CALL_ARG_DECLS)
 	// We don't need to set SINC because transform is done in-place...
 
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){			/* more than 1 col? */
-#ifdef NOT_YET
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
-			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME( cvfft ) )
+			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME(cvfft) )
 		} else
-#endif /* N_PROCESSORS > 1 */
-#endif // NOT_YET
+') dnl endif /* N_PROCESSORS > 1 */
 		//COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 		ROW_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_REAL( fft2d, type_code )(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(fft2d,type_code)(HOST_CALL_ARG_DECLS)
 {
 	int n;
 
 	switch( (n=real_fft_type(DEFAULT_QSP_ARG  OA_SRC1(oap),OA_DEST(oap),"rfft2d")) ){
 		case 1:
-			HOST_TYPED_CALL_NAME_REAL( fft2d_1, type_code )(HOST_CALL_ARGS);
+			HOST_TYPED_CALL_NAME_REAL(fft2d_1,type_code)(HOST_CALL_ARGS);
 			break;
 		case 2:
-			HOST_TYPED_CALL_NAME_REAL( fft2d_2, type_code )(HOST_CALL_ARGS);
+			HOST_TYPED_CALL_NAME_REAL(fft2d_2,type_code)(HOST_CALL_ARGS);
 			break;
 		// default case is error in inputs, but reported elsewhere...
 	}
@@ -952,7 +982,7 @@ static void HOST_TYPED_CALL_NAME_REAL( fft2d, type_code )(HOST_CALL_ARG_DECLS)
 // First we inverse transform the columns (complex),
 // then the rows
 
-static void HOST_TYPED_CALL_NAME_REAL( ift2d_1, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_REAL(ift2d_1,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -964,11 +994,11 @@ static void HOST_TYPED_CALL_NAME_REAL( ift2d_1, type_code )( HOST_CALL_ARG_DECLS
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){			/* more than 1 row? */
 		/* Transform the columns */
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 		} else
-#endif /* N_PROCESSORS > 1 */
+') dnl endif /* N_PROCESSORS > 1 */
 		COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 	}
 
@@ -981,11 +1011,11 @@ static void HOST_TYPED_CALL_NAME_REAL( ift2d_1, type_code )( HOST_CALL_ARG_DECLS
 		SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
 		SET_FFT_LEN( fap, OBJ_COLS( OA_DEST(oap) ) );	/* use the real len */
 
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 		} else
-#endif /* N_PROCESSORS > 1 */
+') dnl endif /* N_PROCESSORS > 1 */
 			ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
 				std_cpx,std_type)
 	}
@@ -995,7 +1025,7 @@ static void HOST_TYPED_CALL_NAME_REAL( ift2d_1, type_code )( HOST_CALL_ARG_DECLS
 // First we inverse transform the rows (complex),
 // then the columns
 
-static void HOST_TYPED_CALL_NAME_REAL( ift2d_2, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_REAL(ift2d_2,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1009,13 +1039,11 @@ static void HOST_TYPED_CALL_NAME_REAL( ift2d_2, type_code )( HOST_CALL_ARG_DECLS
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){			/* more than 1 column? */
 		/* Transform the rows */
 		SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
-#ifdef NOT_YET
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 		} else
-#endif /* N_PROCESSORS > 1 */
-#endif // NOT_YET
+') dnl endif /* N_PROCESSORS > 1 */
 		//COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 		ROW_LOOP_2(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 	}
@@ -1031,13 +1059,11 @@ static void HOST_TYPED_CALL_NAME_REAL( ift2d_2, type_code )( HOST_CALL_ARG_DECLS
 		SET_FFT_DINC( fap, OBJ_ROW_INC( OA_DEST(oap) ) );
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_DEST(oap) ) );	/* use the real len */
 
-#ifdef NOT_YET
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 		} else
-#endif /* N_PROCESSORS > 1 */
-#endif // NOT_YET
+') dnl endif /* N_PROCESSORS > 1 */
 	/*		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
 				std_cpx,std_type) */
 			COL_LOOP_2(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),
@@ -1046,22 +1072,22 @@ static void HOST_TYPED_CALL_NAME_REAL( ift2d_2, type_code )( HOST_CALL_ARG_DECLS
 }
 
 
-static void HOST_TYPED_CALL_NAME_REAL( ift2d, type_code )(HOST_CALL_ARG_DECLS)
+static void HOST_TYPED_CALL_NAME_REAL(ift2d,type_code)(HOST_CALL_ARG_DECLS)
 {
 	int n;
 
 	switch( (n=real_fft_type(DEFAULT_QSP_ARG  OA_DEST(oap),OA_SRC1(oap),"rift2d")) ){
 		case 1:
-			HOST_TYPED_CALL_NAME_REAL( ift2d_1, type_code )(HOST_CALL_ARGS);
+			HOST_TYPED_CALL_NAME_REAL(ift2d_1,type_code)(HOST_CALL_ARGS);
 			break;
 		case 2:
-			HOST_TYPED_CALL_NAME_REAL( ift2d_2, type_code )(HOST_CALL_ARGS);
+			HOST_TYPED_CALL_NAME_REAL(ift2d_2,type_code)(HOST_CALL_ARGS);
 			break;
 		// default case is error in inputs, but reported elsewhere...
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_REAL( iftrows, type_code )( HOST_CALL_ARG_DECLS )
+static void HOST_TYPED_CALL_NAME_REAL(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
@@ -1076,12 +1102,12 @@ static void HOST_TYPED_CALL_NAME_REAL( iftrows, type_code )( HOST_CALL_ARG_DECLS
 	SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
 	SET_FFT_LEN( fap, OBJ_COLS( OA_DEST(oap) ) );
 
-#if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 	if( n_processors > 1 ){
 		MULTIPROCESSOR_ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 		return;
 	} else
-#endif /* N_PROCESSORS > 1 */
+') dnl endif /* N_PROCESSORS > 1 */
 		ROW_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(rvift),std_cpx,std_type)
 }
 
@@ -1092,7 +1118,7 @@ static void HOST_TYPED_CALL_NAME_REAL( iftrows, type_code )( HOST_CALL_ARG_DECLS
  * No SMP version (yet).
  */
 
-static void HOST_TYPED_CALL_NAME_CPX( fft2d, type_code )( HOST_CALL_ARG_DECLS, int is_inv )
+static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int is_inv )
 {
 	dimension_t i;
 	FFT_Args fa;
@@ -1135,7 +1161,7 @@ static void HOST_TYPED_CALL_NAME_CPX( fft2d, type_code )( HOST_CALL_ARG_DECLS, i
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_CPX( fftrows, type_code )( HOST_CALL_ARG_DECLS, int is_inv )
+static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS, int is_inv )
 {
 	dimension_t i;
 	FFT_Args fa;
@@ -1163,9 +1189,9 @@ static void HOST_TYPED_CALL_NAME_CPX( fftrows, type_code )( HOST_CALL_ARG_DECLS,
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_CPX( iftrows, type_code )(HOST_CALL_ARG_DECLS, int is_inv)
+static void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)(HOST_CALL_ARG_DECLS, int is_inv)
 {
-	HOST_TYPED_CALL_NAME_CPX( fftrows, type_code )(HOST_CALL_ARGS,1);
+	HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)(HOST_CALL_ARGS,1);
 }
 
 
