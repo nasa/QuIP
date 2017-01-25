@@ -4,6 +4,8 @@ divert(0)
 #endif // HAVE_MATH_H
 suppress_if
 
+define(`BUILDING_KERNELS',`')
+
 include(`../../include/veclib/vl2_veclib_prot.m4')	// declare all the prototypes for the host
 
 include(`../../include/veclib/fftsupp.m4')	// prototypes for some external helpers
@@ -24,4 +26,6 @@ include(`../../include/veclib/dp_defs.m4')
 dnl include(`vfft.m4')
 include(`linear.m4')
 
+
+undefine(`BUILDING_KERNELS')
 

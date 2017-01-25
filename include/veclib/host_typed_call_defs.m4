@@ -199,6 +199,7 @@ define(`REPORT_SWITCH',`')
 
 define(`GENERIC_HOST_FAST_SWITCH',`
 
+/* generic_host_fast_switch /$1/ /$2/ /$3/ /$4/ /$5/ */
 static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS)
 {
 	HOST_CALL_VAR_DECLS

@@ -2474,7 +2474,7 @@ define(`SHOW_FAST_TEST_4',`')
 define(`SHOW_FAST_TEST_5',`')
 
 define(`SHOW_FAST_TEST_1',`
-	sprintf(DEFAULT_ERROR_STRING,"FAST_TEST_1:  %d",FAST_TEST_1?1:0);
+	sprintf(DEFAULT_ERROR_STRING,"fast_test_1:  %d",FAST_TEST_1?1:0);
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 
@@ -2482,20 +2482,20 @@ dnl  These macros that use IS_CONTIGUOUS have qsp problems...
 
 define(`SHOW_FAST_TEST_2',`
 SHOW_FAST_TEST_1
-	sprintf(DEFAULT_ERROR_STRING,"FAST_TEST_SRC1:  %d",IS_CONTIGUOUS(SRC1_DP)?1:0);
+	sprintf(DEFAULT_ERROR_STRING,"fast_test_src1:  %d",IS_CONTIGUOUS(SRC1_DP)?1:0);
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 define(`SHOW_FAST_TEST_3',`
 SHOW_FAST_TEST_2
-	sprintf(DEFAULT_ERROR_STRING,"FAST_TEST_SRC2:  %d",IS_CONTIGUOUS(SRC2_DP)?1:0);
+	sprintf(DEFAULT_ERROR_STRING,"fast_test_src2:  %d",IS_CONTIGUOUS(SRC2_DP)?1:0);
 	NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 dnl	GENERIC_FAST_SWITCH(name,bitmap,typ,scalars,vectors)
 define(`GENERIC_FAST_SWITCH',`
 
-	/* generic_fast_switch bitmap = /$2/ vectors = /$5/ */
+	/* generic_fast_switch, bitmap = /$2/ vectors = /$5/ */
 
 dnl if( FAST_TEST_##bitmap##vectors ){
 if( FAST_TEST($2,$5) ){

@@ -9,15 +9,16 @@
 // on the one source vector...
 
 dnl FAST_TEST(bitmap,typ,vectors)
-define(`FAST_TEST',FAST_TEST_$1$2$3)
+define(`FAST_TEST',`/* fast_test /$1/ /$2/ /$3/ */_FAST_TEST($1$2$3)')
+define(`_FAST_TEST',FAST_TEST_$1)
 define(`EQSP_TEST',EQSP_TEST_$1$2$3)
 
 define(`FAST_TEST_NOCC',`/* fast_test_nocc */ FAST_TEST_1SRC')
 define(`EQSP_TEST_NOCC',`/* eqsp_test_nocc */ EQSP_TEST_1SRC')
 
 // When are these used???
-define(`FAST_TEST_',`0')
-define(`EQSP_TEST_',`0')
+dnl define(`FAST_TEST_',`0')
+dnl define(`EQSP_TEST_',`0')
 
 define(`FAST_TEST_CPX_1',`FAST_TEST_1')
 define(`EQSP_TEST_CPX_1',`EQSP_TEST_1')
