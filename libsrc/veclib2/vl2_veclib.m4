@@ -1,4 +1,16 @@
 
+divert(-1)	dnl suppress output
+
+dnl define(`suppressing',`')
+
+ifdef(`suppressing',`
+/* Suppressing ! */
+define(`suppress_if',`divert(-1)')
+',`
+/* NOT Suppressing ! */
+define(`suppress_if',`divert(0)')
+')
+
 include(`../../include/veclib/vl2_port.m4')
 include(`../../include/veclib/vl2_veclib_prot.m4')
 

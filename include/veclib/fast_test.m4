@@ -12,8 +12,8 @@ dnl FAST_TEST(bitmap,typ,vectors)
 define(`FAST_TEST',FAST_TEST_$1$2$3)
 define(`EQSP_TEST',EQSP_TEST_$1$2$3)
 
-define(`FAST_TEST_NOCC',`FAST_TEST_1SRC')
-define(`EQSP_TEST_NOCC',`EQSP_TEST_1SRC')
+define(`FAST_TEST_NOCC',`/* fast_test_nocc */ FAST_TEST_1SRC')
+define(`EQSP_TEST_NOCC',`/* eqsp_test_nocc */ EQSP_TEST_1SRC')
 
 // When are these used???
 define(`FAST_TEST_',`0')

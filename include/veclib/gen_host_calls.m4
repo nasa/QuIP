@@ -1,9 +1,21 @@
-// used for host calls NOT kernels 
+// gen_host_calls.m4 BEGIN - used for host calls NOT kernels 
 
 // SP stuff
 
+// CALLING sp_defs.m4
+flush_output
 include(`../../include/veclib/sp_defs.m4')
+// BACK FROM sp_defs.m4
+flush_output
+
+// CALLING gen_float_calls.m4.m4
+flush_output
 include(`../../include/veclib/gen_float_calls.m4')
+// BACK FROM gen_float_calls.m4.m4
+flush_output
+
+// DONE with sp stuff
+flush_output
 
 // DP stuff
 
@@ -94,5 +106,6 @@ undefine(`MIXED_PRECISION')
 dnl ',`') dnl endif // BUILDING_KERNELS
 
 
+// gen_host_calls.m4 DONE
 
 
