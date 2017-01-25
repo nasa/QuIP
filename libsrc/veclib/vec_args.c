@@ -440,13 +440,15 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 		// RAMP1D or ???
 		//SET_PREC
-		SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
+		// dest can be null if arg error
+		if( OA_DEST(oap) != NULL ){
+			SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
+		} else retval = -1;
 
 		if( COMPLEX_PRECISION(PREC_CODE(prec_p)) ){
 			/* this should not happen!? */
 			/* Does the function permit complex? */
-			if( (VF_TYPEMASK(vfp) &
-					(CPX_ARG_MASK|MIXED_ARG_MASK)) == 0 ){
+			if( (VF_TYPEMASK(vfp) & (CPX_ARG_MASK|MIXED_ARG_MASK)) == 0 ){
 				// BUG??? can OA_DEST be null here???
 				// We used to print the name of the
 				// destination obj here, but in case
@@ -504,8 +506,10 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 //#endif /* CAUTIOUS */
 		SET_OA_SVAL(oap,0, get_sval(prec_p) );
 		SET_OA_SVAL(oap,1, get_sval(prec_p) );
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+		if( retval == 0 ){
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+		}
 	}
 
 	else if( VF_FLAGS(vfp) & SRC_SCALAR1 ){
@@ -1040,13 +1044,15 @@ void show_vec_args(const Vector_Args *vap)
 	
 }
 
-#ifdef PAD_MINDIM
-static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, dimension_t bit0 )
+static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, bit_count_t bit0 )
 {
 	dimension_t bits_per_row, words_per_row;
 	dimension_t n;
 
 	assert( isp != NULL );
+// BUG llu format assumes bit_count_t is 64 bits
+fprintf(stderr,"varg_n_bitmap_bits (1):  dim[0] = %d, dim[1] = %d, inc[1] = %d, offset = %llu\n",DS_DIM(dsp,0),
+DS_DIM(dsp,1),INCREMENT(isp,1),bit0);
 
 	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * INCREMENT(isp,1);
 
@@ -1058,7 +1064,7 @@ static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *is
 	return n;
 }
 
-static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr, dimension_t bit0 )
+static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr, bit_count_t bit0 )
 {
 	dimension_t bits_per_row, words_per_row;
 	dimension_t n;
@@ -1073,7 +1079,7 @@ static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr,
 	return n;
 }
 
-static dimension_t fast_bitmap_word_count( Dimension_Set *dsp, dimension_t offset )
+static dimension_t fast_bitmap_word_count( Dimension_Set *dsp, bit_count_t offset )
 {
 	dimension_t n;
 	n = N_BITMAP_WORDS( DS_N_ELTS(dsp) + (offset%BITS_PER_BITMAP_WORD) );
@@ -1179,7 +1185,7 @@ static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 	}
 }
 
-dimension_t bitmap_obj_word_count(Data_Obj *dp)
+bit_count_t bitmap_obj_word_count(Data_Obj *dp)
 {
 	dimension_t n_words;
 	Bitmap_GPU_Info *bmi_p;

@@ -20,7 +20,7 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 
 #define FETCH_BIT								\
 										\
-				bitnum_t bitnum;				\
+				bit_count_t bitnum;				\
 				bitmap_word bit,*lp;				\
 				bitnum = OBJ_BIT0(dp);				\
 				lp = (bitmap_word *)OBJ_DATA_PTR(dp);		\

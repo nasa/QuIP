@@ -87,7 +87,9 @@ int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( IS_BITMAP(dp) ){
-		int i_dim,n,n_words,inc;
+		int i_dim,n;
+		bit_count_t n_words;
+		int inc;
 		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
 		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));
 		// BUG make sure we don't lose precision by down-casting bit0

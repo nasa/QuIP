@@ -178,6 +178,7 @@ typedef enum {
 #endif
 
 typedef BITMAP_DATA_TYPE bitmap_word;
+typedef uint64_t bit_count_t;		// even if bitmap word is 32, we can have larger bit numbers...
 #define BITS_PER_BYTE			8
 #define BYTES_PER_BITMAP_WORD		((int)sizeof(BITMAP_DATA_TYPE))
 #define BITS_PER_BITMAP_WORD		(BYTES_PER_BITMAP_WORD*BITS_PER_BYTE)

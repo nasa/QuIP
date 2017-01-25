@@ -133,7 +133,11 @@ typedef struct vector_arg {
 #define VARG_INCSET(varg)	((varg).varg_isp)
 #define VARG_EQSP_INC(varg)		((varg).varg_eqsp_inc)
 
+#ifdef HAVE_OPENCL
 #define VARG_OFFSET(varg)	((varg).varg_offset)
+#else // ! HAVE_OPENCL
+#define VARG_OFFSET(varg)	0
+#endif // ! HAVE_OPENCL
 
 #define VARG_LEN(varg)		DS_N_ELTS(VARG_DIMSET(varg))
 
@@ -165,6 +169,7 @@ typedef struct vector_args {
 	Vector_Arg	va_src[MAX_N_ARGS];
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
+#ifdef FOOBAR
 	dimension_t	va_dbm_bit0;
 	dimension_t	va_sbm_bit0;
 	dimension_t	va_len;			// just for fast/eqsp ops?
@@ -185,6 +190,21 @@ typedef struct vector_args {
 	Bitmap_GPU_Info *	va_dbm_gpu_info;
 	Bitmap_GPU_Info *	va_sbm_gpu_info;
 #endif // HAVE_ANY_GPU
+#endif // FOOBAR
+	bit_count_t	va_dbm_bit0;
+	bit_count_t	va_sbm_bit0;
+	dimension_t	va_len;
+/*#ifdef BUILD_FOR_GPU*/
+// This really should be conditionally compiled, but currently
+// BUILD_FOR_GPU isn't defined in the right spot...
+// Really BUILD_FOR_GPU get set and unset during the build,
+// but we need the struct to have a constant size.  We really
+// should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
+	/*
+	DIM3		va_xyz_len;		// used for kernels...	FOOBAR
+	int		va_dim_indices[3];	// do these refer to the dobj dimensions?	FOOBAR
+	*/
+	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
 
 /*#endif // BUILD_FOR_GPU*/
 	argset_type	va_argstype;
@@ -274,7 +294,7 @@ fprintf(stderr,"VA_SLOW_SIZE:  %d %d %d %d %d\n",\
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
 extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
-extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
+extern bit_count_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */

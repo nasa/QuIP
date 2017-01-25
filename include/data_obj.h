@@ -143,16 +143,13 @@ extern debug_flag_t debug_data;
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
 
-//typedef uint64_t	bitnum_t;	// could be uint32_t?
-typedef uint32_t	bitnum_t;	// could be uint32_t?
-
 struct data_obj {
 	Item			dt_item;
 	Shape_Info *		dt_shpp;
 	void *			dt_data_ptr;
 	void *			dt_unaligned_ptr;
 	void *			dt_extra;	// used for decl_enp - what else?
-	bitnum_t		dt_bit0;
+	bit_count_t		dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;
 	index_t			dt_offset;	// data offset of subobjects - in bytes

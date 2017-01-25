@@ -211,7 +211,7 @@ Item *container_find_match(Container *cnt_p, const char *name)
 		default:
 			ip = NULL; // QUIET COMPILER
 			NERROR1("container_find_match:  invalid container type!?");
-			// never returns...
+			return NULL;
 			break;
 	}
 	return ip;
