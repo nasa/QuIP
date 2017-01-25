@@ -357,8 +357,8 @@ define(`SP_SSE_SWITCH',`HOST_TYPED_CALL_NAME_REAL($1,sp)(HOST_CALL_ARGS);')
 ') dnl endif /* ! USE_SSE */
 
 
-/* RC_SWITCH_SSE:  like RC_SWITCH, but for single precision float have mmx version...  */
-// BUG SSE is only for cpu!?
+dnl /* RC_SWITCH_SSE:  like RC_SWITCH, but for single precision float have mmx version...  */
+dnl // BUG SSE is only for cpu!?
 
 dnl	RC_SWITCH_SSE(func)
 define(`RC_SWITCH_SSE',`
@@ -613,14 +613,15 @@ define(`DSWITCH2( funcname, spf, dpf )
 ')
 
 // FFT_SWITCH is used for complex fft functions, that have the inverse flag...
-define(`FFT_SWITCH( func, _is_inv )
+dnl	FFT_SWITCH( func, _is_inv )
+define(`FFT_SWITCH',`
 
 switch( OBJ_MACH_PREC(srcdp) ){
 	case PREC_SP:
-		HOST_TYPED_CALL_NAME_CPX($1,sp)(HOST_CALL_ARGS, _is_inv);
+		HOST_TYPED_CALL_NAME_CPX($1,sp)(HOST_CALL_ARGS, $2);
 		break;
 	case PREC_DP:
-		HOST_TYPED_CALL_NAME_CPX($1,dp)(HOST_CALL_ARGS, _is_inv);
+		HOST_TYPED_CALL_NAME_CPX($1,dp)(HOST_CALL_ARGS, $2);
 		break;
 	default:	sprintf(DEFAULT_ERROR_STRING,
 "fft_switch (%s):  object %s has bad machine precision %s",

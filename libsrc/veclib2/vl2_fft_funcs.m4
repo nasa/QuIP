@@ -1,4 +1,4 @@
-
+// vl2_fft_funcs.m4 BEGIN
 /* included file, so no version string */
 
 #ifdef HAVE_MATH_H
@@ -32,6 +32,9 @@ define(`max_fft_len',`TYPED_NAME(_max_fft_len)')
 define(`init_sinfact',`TYPED_NAME(_init_sinfact)')
 
 
+ifdef(`BUILDING_KERNELS',`
+// vl2_fft_funcs.m4 buiding_kernels is set
+
 // How can we have these static vars when this file is included twice!?
 
 static dimension_t last_cpx_len=0;
@@ -44,6 +47,8 @@ static std_type *_sinfact=NULL;
 define(`MAX_FFT_LEN',`4096L')
 static char *revdone=NULL;
 static u_int max_fft_len=(-1);
+
+',`') dnl endif BUILDING_KERNELS
 
 
 
@@ -100,6 +105,8 @@ dnl		if( IS_COMPLEX(dp) )
 dnl			fa.which_inc /= 2;
 dnl	#endif // NOT_USED
 
+ifdef(`BUILDING_KERNELS',`
+// vl2_fft_funcs.m4 buiding_kernels is SET
 
 static void init_twiddle (dimension_t len)
 {
@@ -125,7 +132,7 @@ static void init_twiddle (dimension_t len)
 	last_cpx_len=len;
 }
 
-/* This is usually called in-place, but doesn't have to be.
+/* This is usually called in-place, but doesnt have to be.
  *
  * isi = -1   ->  forward xform
  * isi =  1   ->  inverse xform
@@ -158,9 +165,9 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	std_cpx *source, *dest;
 	dimension_t m, mmax, istep;
 	incr_t inc1;
-	/* BUG we really don't want to allocate and deallocate revdone each time... */
+	/* BUG we really don_t want to allocate and deallocate revdone each time... */
 	/* anyway, this is no good because getbuf/givbuf are not thread-safe!
-	 * I can't see a way to do this without passing the thread index on the stack...
+	 * I can_t see a way to do this without passing the thread index on the stack...
 	 * OR having the entire revdone array on the stack?
 	 */
 	/* char revdone[MAX_FFT_LEN]; */
@@ -180,12 +187,6 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	}
 
 	if( len != last_cpx_len ) {
-/* test = MULTI_PROC_TEST */
-ifelse(MULTI_PROC_TEST,`1',`/* test succeeded */',`/* test failed */')
-
-dnl#ifdef(`N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
-dnl		if( n_processors > 1 ) NWARN("cvfft:  init_twiddle is not thread-safe!?");
-dnl#endif
 ifelse(MULTI_PROC_TEST,`1',`
 		if( n_processors > 1 ) NWARN("cvfft:  init_twiddle is not thread-safe!?");
 ')
@@ -198,11 +199,9 @@ ifelse(MULTI_PROC_TEST,`1',`
 	/* inc1 should be in units of complex */
 
 	if( len != bitrev_size ){
-dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 ifelse(MULTI_PROC_TEST,`1',`
 		if( n_processors > 1 ) NWARN("cvfft:  bitrev_init is not thread-safe!?");
 ')
-dnl #endif
 		bitrev_init(len);
 	}
 
@@ -293,37 +292,6 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 
 	PF_FFT_CALL_NAME(cvfft)(new_fap);
 }
-
-static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
-{
-	FFT_Args fa;
-	FFT_Args *fap=(&fa);
-
-	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
-	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
-	XFER_FFT_DINC(cvfft,fap,OA_DEST(oap));
-	XFER_FFT_SINC(cvfft,fap,OA_SRC1(oap));
-	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
-	SET_FFT_ISI(fap,(-1) );
-
-	PF_FFT_CALL_NAME(cvfft)( &fa );
-}
-
-static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
-{
-	FFT_Args fa;
-	FFT_Args *fap=(&fa);
-	
-	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
-	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
-	XFER_FFT_DINC(cvift,fap,OA_DEST(oap));
-	XFER_FFT_SINC(cvift,fap,OA_SRC1(oap));
-	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
-	SET_FFT_ISI(fap, (1) );
-
-	PF_FFT_CALL_NAME(cvift)( &fa );
-}
-
 
 static void init_sinfact (dimension_t n)
 {
@@ -437,7 +405,7 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	top = source+src_inc*(len-1);
 
 	/* after we do the first one,
-	 * we don't have to worry about boundary conds
+	 * we don_t have to worry about boundary conds
 	 */
 
 	cbot->re = *bottom;	/* lots of terms cancel */
@@ -461,7 +429,7 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	}
 
 	// Why are we copying the args?
-	// Because we can't modify the input arg struct...
+	// Because we can_t modify the input arg struct...
 	SET_FFT_DST(_fap, FFT_DST(fap) );
 	SET_FFT_DINC(_fap, FFT_DINC(fap) );
 	SET_FFT_SRC(_fap, NULL);
@@ -541,7 +509,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	cbot = src;
 	B0 = cbot->im;
 
-	/* multiply B's by inverse sine factor */
+	/* multiply Bs by inverse sine factor */
 	cbot->im = 0.0;
 	for(i=1;i<len/2;i++){
 		cbot+=src_inc;
@@ -581,7 +549,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 
 	/* now integrate the odd samples */
 
-	/*	delta's		output
+	/*	deltas		output
 	 *
 	 *	1		1
 	 *	2		3
@@ -604,6 +572,40 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	}
 	/* done */
 }
+
+',` dnl else ! BUILDING_KERNELS
+// vl2_fft_funcs.m4 buiding_kernels is NOT SET
+
+static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
+{
+	FFT_Args fa;
+	FFT_Args *fap=(&fa);
+
+	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
+	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
+	XFER_FFT_DINC(cvfft,fap,OA_DEST(oap));
+	XFER_FFT_SINC(cvfft,fap,OA_SRC1(oap));
+	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
+	SET_FFT_ISI(fap,(-1) );
+
+	PF_FFT_CALL_NAME(cvfft)( &fa );
+}
+
+static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
+{
+	FFT_Args fa;
+	FFT_Args *fap=(&fa);
+	
+	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
+	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
+	XFER_FFT_DINC(cvift,fap,OA_DEST(oap));
+	XFER_FFT_SINC(cvift,fap,OA_SRC1(oap));
+	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
+	SET_FFT_ISI(fap, (1) );
+
+	PF_FFT_CALL_NAME(cvift)( &fa );
+}
+
 
 static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 {
@@ -720,7 +722,7 @@ define(`MULTIPROCESSOR_ROW_LOOP',`
  * NEW COMMENT:
  * The preceding was true before we tried for compatibility
  * with clFFT.  That package appears to transform the columns first
- * in a 2D real FFT.  So we try the same.  But we can't use exactly
+ * in a 2D real FFT.  So we try the same.  But we can_t use exactly
  * the same column loop, see COL_LOOP_2 below.
  */
 
@@ -773,13 +775,11 @@ define(`COL_LOOP_2',`
 
 
 
-//
-
 /* SMP versions of fft code.
  *
  * Originally, we had the parallel processors work on adjacent rows & cols,
  * but in this case we failed to see a linear speedup, in fact the
- * running time was about the same as a single cpu job (with double
+ * running time was about the same as a single cpu job - with double
  * the cpu time, although the number of calls was the same!?
  * My current theory is that system ram is locked in page units
  * to a particular thread (or perhaps physical cpu), so that when 
@@ -861,7 +861,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 
 }
 
-// JBM's original implementation of the real transform for 2D images performs real transforms
+// JBMs original implementation of the real transform for 2D images performs real transforms
 // of the rows first, then complex transforms of the columns, resulting in a transform with 1+N/2 cols
 // and N rows (for a square NxN image).  This seems to be compatible with cuFFT.  However, clFFT
 // appears to do the opposite!?  Therefore, it would be a kindness to provide a column-first version...
@@ -873,7 +873,7 @@ static void HOST_TYPED_CALL_NAME_REAL(fft2d_1,type_code)(HOST_CALL_ARG_DECLS)
 
 	SET_FFT_ISI( fap, FWD_FFT );			/* not used, but play it safe */
 	SET_FFT_SINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );
-	//SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) )/2 );
+dnl	//SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) )/2 );
 	SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
 
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){		/* more than 1 column ? */
@@ -950,7 +950,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 
 	SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
 	SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
-	// We don't need to set SINC because transform is done in-place...
+	// We don_t need to set SINC because transform is done in-place...
 
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){			/* more than 1 col? */
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
@@ -1150,7 +1150,7 @@ static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int 
 		SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 		SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
 		/* pixel inc used to be in machine units,
-		 * now it's in type units!? */
+		 * now it_s in type units!? */
 		//SET_FFT_DINC( fap, OBJ_PXL_INC( OA_SRC1(oap) )/2 );
 		SET_FFT_DINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );
 
@@ -1194,4 +1194,6 @@ static void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)(HOST_CALL_ARG_DECLS, int
 	HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)(HOST_CALL_ARGS,1);
 }
 
+') dnl endif ! BUILDING_KERNELS
 
+// vl2_fft_funcs.m4 DONE
