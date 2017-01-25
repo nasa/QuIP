@@ -14,11 +14,11 @@
 // Strings aren't really scalars, so it isn't clear that this
 // makes sense at all.
 
-typedef struct typed_scalar {
+/* typedef */ struct typed_scalar {
 	Scalar_Value	ts_value;
 	prec_t		ts_prec_code;
 	int		ts_flags;
-} Typed_Scalar;
+} /* Typed_Scalar */;
 
 #define TS_FREE		1
 #define TS_STATIC	2

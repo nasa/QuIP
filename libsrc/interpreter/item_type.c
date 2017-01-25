@@ -189,6 +189,7 @@ static void init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
 	SET_IT_CONTAINER_TYPE(itp,container_type);	// init_itp
 
 	//SET_IT_FRAG_MATCH_INFO(itp,NULL);
+//fprintf(stderr,"init_itp, itp = 0x%lx\n",(long)itp);
 	SET_IT_MATCH_CYCLE(itp,NULL);
 
 #ifdef THREAD_SAFE_QUERY
@@ -1859,11 +1860,17 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 	// it to go to its own parent.  But for now we
 	// won't worry about that...
 
+#ifdef THREAD_SAFE_QUERY
 	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
-	assert(icp!=NULL);
 
 //fprintf(stderr,"current_context %s (thread %d):  pushing context %s from thread %d\n",
 //ITEM_TYPE_NAME(itp),QS_SERIAL,CTX_NAME(icp),QS_PARENT_SERIAL(THIS_QSP));
+#else // ! THREAD_SAFE_QUERY
+	icp = ITCI_CTX( ITCI_AT_INDEX(itp,0) );
+#endif // ! THREAD_SAFE_QUERY
+
+	assert(icp!=NULL);
+	
 
 	push_item_context(QSP_ARG  itp, icp );
 

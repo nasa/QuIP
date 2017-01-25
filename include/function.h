@@ -56,7 +56,7 @@ typedef union {
 	double        (*posn_func)(QSP_ARG_DECL  Item *);
 } Fn_Func;
 
-struct function {
+struct quip_function {
 	const char *	fn_name;
 	int		fn_type;
 	Fn_Func		fn_u;
@@ -88,7 +88,7 @@ struct function {
 #define FUNC_VS_CODE2(f)		((f)->fn_vs_code2)
 #define SET_FUNC_VS_CODE2(f,c)		(f)->fn_vs_code2 = c
 
-#define NO_FUNCTION		((Function *)NULL)
+#define NO_FUNCTION		((Quip_Function *)NULL)
 
 #define FN_NAME(funcp)		(funcp)->fn_name
 
@@ -136,16 +136,16 @@ typedef struct genwin_functions {
 
 
 
-ITEM_INIT_PROT(Function,function)
-ITEM_NEW_PROT(Function,function)
-ITEM_CHECK_PROT(Function,function)
+ITEM_INIT_PROT(Quip_Function,function)
+ITEM_NEW_PROT(Quip_Function,function)
+ITEM_CHECK_PROT(Quip_Function,function)
 
 
 #define DECLARE_FUNCTION(name,func,code1,code2,code3,type,member,dim_index)	\
 									\
 									\
 {									\
-	Function *func_p;						\
+	Quip_Function *func_p;						\
 									\
 	func_p = new_function(QSP_ARG  #name);				\
 	if( func_p == NO_FUNCTION ){					\

@@ -210,6 +210,7 @@ Item *container_find_match(Container *cnt_p, const char *name)
 			break;
 		default:
 			NERROR1("container_find_match:  invalid container type!?");
+			return NULL;
 			break;
 	}
 	return ip;

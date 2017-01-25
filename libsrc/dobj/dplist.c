@@ -513,14 +513,14 @@ show_context:
 
 static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 {
-	dimension_t n;
+	bit_count_t n;
 
 	if( IS_BITMAP(dp) )
 		n = bitmap_obj_word_count(dp);
 	else
 		n = OBJ_N_MACH_ELTS(dp);
 
-	sprintf(MSG_STR,"\t%d %s element%s",n,OBJ_MACH_PREC_NAME(dp),n==1?"":"s");
+	sprintf(MSG_STR,"\t%llu %s element%s",n,OBJ_MACH_PREC_NAME(dp),n==1?"":"s");
 	prt_msg(MSG_STR);
 
 	sprintf(MSG_STR,"\tdata at   0x%lx",(int_for_addr)OBJ_DATA_PTR(dp));

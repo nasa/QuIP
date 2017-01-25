@@ -557,6 +557,7 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 			break;
 		default:			// not needed, but quiets compiler
 			NERROR1("current_frag_match:  bad type!?");
+			return NULL;	// quiet compiler
 			break;
 	}
 	return ip->item_name;
@@ -568,10 +569,12 @@ static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 
 	switch( fmi_p->type ){
 		case LIST_CONTAINER:
-			return reset_item_list(fmi_p,direction);
+			reset_item_list(fmi_p,direction);
+			return;
 			break;
 		case RB_TREE_CONTAINER:
-			return reset_tree_match(fmi_p,direction);
+			reset_tree_match(fmi_p,direction);
+			return;
 			break;
 		default:			// not needed, but quiets compiler
 			NERROR1("reset_frag_match:  bad type!?");

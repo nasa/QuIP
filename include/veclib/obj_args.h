@@ -141,7 +141,11 @@ typedef struct vector_arg {
 #define VARG_INCSET(varg)	((varg).varg_isp)
 #define VARG_EQSP_INC(varg)		((varg).varg_eqsp_inc)
 
+#ifdef HAVE_OPENCL
 #define VARG_OFFSET(varg)	((varg).varg_offset)
+#else // ! HAVE_OPENCL
+#define VARG_OFFSET(varg)	0
+#endif // ! HAVE_OPENCL
 
 #define VARG_LEN(varg)		DS_N_ELTS(VARG_DIMSET(varg))
 
@@ -173,8 +177,8 @@ typedef struct vector_args {
 	Vector_Arg	va_src[MAX_N_ARGS];
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
-	dimension_t	va_dbm_bit0;
-	dimension_t	va_sbm_bit0;
+	bit_count_t	va_dbm_bit0;
+	bit_count_t	va_sbm_bit0;
 	dimension_t	va_len;
 /*#ifdef BUILD_FOR_GPU*/
 // This really should be conditionally compiled, but currently
@@ -252,7 +256,7 @@ typedef struct vector_args {
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
 extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
-extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
+extern bit_count_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */

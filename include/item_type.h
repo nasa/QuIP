@@ -322,7 +322,11 @@ extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
 #define CURRENT_CONTEXT(itp)		current_context(QSP_ARG  itp)
 #define SET_CURRENT_CONTEXT(itp,icp)	SET_ITCI_CTX(THIS_ITCI(itp),icp)
 #define ITCI_AT_INDEX(itp,idx)		(&((itp)->it_itci[idx]))
+#ifdef THREAD_SAFE_QUERY
 #define THIS_ITCI(itp)			ITCI_AT_INDEX(itp,_QS_SERIAL(THIS_QSP))
+#else // ! THREAD_SAFE_QUERY
+#define THIS_ITCI(itp)			ITCI_AT_INDEX(itp,0)
+#endif // ! THREAD_SAFE_QUERY
 
 //#define CONTEXT_LIST(itp)		ITCI_CSTK( THIS_ITCI(itp) )	// this is the list of contexts,
 //									// not the list of items in a context
