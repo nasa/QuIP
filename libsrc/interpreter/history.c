@@ -558,6 +558,7 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 		default:			// not needed, but quiets compiler
 			ip=NULL;	// quiet compiler
 			NERROR1("current_frag_match:  bad type!?");
+			return NULL;	// quiet compiler
 			break;
 	}
 	return ip->item_name;

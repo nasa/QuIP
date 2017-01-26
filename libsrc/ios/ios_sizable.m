@@ -198,7 +198,7 @@ DECLARE_CLASS_EVAL_FUNC(interlaceable)
 
 #define DECLARE_CLASS_FCHECK_FUNC(type_stem,func_str_type,member)		\
 										\
-int check_ios_##type_stem##_func( double *retval, Function *funcp,		\
+int check_ios_##type_stem##_func( double *retval, Quip_Function *funcp,		\
 						Scalar_Expr_Node *argp )	\
 {										\
 	IOS_Item *ip;								\

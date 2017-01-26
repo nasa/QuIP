@@ -314,7 +314,7 @@ extern Item_Type *macro_itp;
 extern FILE *tell_msgfile(SINGLE_QSP_ARG_DECL);
 extern FILE *tell_errfile(SINGLE_QSP_ARG_DECL);
 
-extern Function *function_of(QSP_ARG_DECL  const char *name);
+extern Quip_Function *function_of(QSP_ARG_DECL  const char *name);
 extern void list_vars(SINGLE_QSP_ARG_DECL);
 extern Variable *get_var(QSP_ARG_DECL  const char *name);
 #define GET_VAR(s)	get_var(QSP_ARG  s);
