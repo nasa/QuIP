@@ -29,14 +29,14 @@
 //#import "nexpr_func.h"
 
 
-//void addFunctionWithCode(Function *f,int code);
-//const char *function_name(Function *f);
+//void addFunctionWithCode(Quip_Function *f,int code);
+//const char *function_name(Quip_Function *f);
 
 static Item_Type *function_itp=NULL;
 
-ITEM_INIT_FUNC(Function,function,0)
-ITEM_NEW_FUNC(Function,function)
-ITEM_CHECK_FUNC(Function,function)
+ITEM_INIT_FUNC(Quip_Function,function,0)
+ITEM_NEW_FUNC(Quip_Function,function)
+ITEM_CHECK_FUNC(Quip_Function,function)
 
 #define DECLARE_CHAR_FUNC( fname )					\
 									\
@@ -791,7 +791,7 @@ DECLARE_TS_FUNCTION(	microseconds,	_usecfunc	)
 #ifdef NOT_NEEDED
 void assign_func_ptr(const char *name,double (*func)(void))
 {
-	Function *func_p;
+	Quip_Function *func_p;
 
 	func_p = function_of(DEFAULT_QSP_ARG  name);
 //#ifdef CAUTIOUS
@@ -806,56 +806,56 @@ void assign_func_ptr(const char *name,double (*func)(void))
 }
 #endif /* NOT_NEEDED */
 
-double evalD0Function( Function *func_p )
+double evalD0Function( Quip_Function *func_p )
 {
 	return (*(func_p->fn_u.d0_func))();
 }
 
-double evalD1Function( Function *func_p, double arg )
+double evalD1Function( Quip_Function *func_p, double arg )
 {
 	return (*(func_p->fn_u.d1_func))(arg);
 }
 
-double evalD2Function( Function *func_p, double arg1, double arg2 )
+double evalD2Function( Quip_Function *func_p, double arg1, double arg2 )
 {
 	return (*(func_p->fn_u.d2_func))(arg1,arg2);
 }
 
-int evalI1Function( Function *func_p, double arg )
+int evalI1Function( Quip_Function *func_p, double arg )
 {
 	return (*(func_p->fn_u.i1_func))(arg);
 }
 
-double evalStr1Function( QSP_ARG_DECL  Function *func_p, const char *s )
+double evalStr1Function( QSP_ARG_DECL  Quip_Function *func_p, const char *s )
 {
 	return (*(func_p->fn_u.str1_func))(QSP_ARG  s);
 }
 
 #ifdef FOOBAR
 // original
-void evalStrVFunction( Function *func_p, char *dst, const char *s )
+void evalStrVFunction( Quip_Function *func_p, char *dst, const char *s )
 {
 	(*(func_p->fn_u.strv_func))(dst,s);
 }
 
 // new
-const char * evalStrVFunction( QSP_ARG_DECL  Function *func_p, Item *ip )
+const char * evalStrVFunction( QSP_ARG_DECL  Quip_Function *func_p, Item *ip )
 {
 	return (*(func_p->fn_u.strv_func))(QSP_ARG  ip);
 }
 #endif // FOOBAR
 
-int evalCharFunction( Function *func_p, char c )
+int evalCharFunction( Quip_Function *func_p, char c )
 {
 	return (*(func_p->fn_u.char_func))(c);
 }
 
-double evalStr2Function( Function *func_p, const char *s1, const char *s2 )
+double evalStr2Function( Quip_Function *func_p, const char *s1, const char *s2 )
 {
 	return (*(func_p->fn_u.str2_func))(s1,s2);
 }
 
-double evalStr3Function( Function *func_p, const char *s1, const char *s2, int n )
+double evalStr3Function( Quip_Function *func_p, const char *s1, const char *s2, int n )
 {
 	return (*(func_p->fn_u.str3_func))(s1,s2,n);
 }

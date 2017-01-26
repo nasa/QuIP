@@ -41,7 +41,7 @@ typedef struct cast_node_data {
 
 typedef struct vec_func_node_data {
 	// BUG crashes when this order didn't match bitmap_node_data...
-	Function *	vf_func_p;
+	Quip_Function *	vf_func_p;
 	int		vf_code;
 } Vec_Func_Node_Data;
 

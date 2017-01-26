@@ -68,7 +68,7 @@ struct scalar_expr_node {
 //	const char *		sen_string;
 //	const char *		sen_string2;
 	index_t			sen_index;
-	Function *		sen_func_p;
+	Quip_Function *		sen_func_p;
 	Scalar_Expr_Node	*sen_child[MAX_SEN_CHILDREN];
 	//double		sen_dblval;
 	Typed_Scalar *		sen_tsp;
@@ -93,10 +93,10 @@ extern void set_obj_funcs(
 	Data_Obj *(*csub_func)(QSP_ARG_DECL  Data_Obj*,index_t) );
 
 #ifdef BUILD_FOR_OBJC
-extern int check_ios_sizable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
-extern int check_ios_strv_func( const char **strptr, Function *funcp, Scalar_Expr_Node *argp );
-extern int check_ios_positionable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
-extern int check_ios_interlaceable_func( double *retval, Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_sizable_func( double *retval, Quip_Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_strv_func( const char **strptr, Quip_Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_positionable_func( double *retval, Quip_Function *funcp, Scalar_Expr_Node *argp );
+extern int check_ios_interlaceable_func( double *retval, Quip_Function *funcp, Scalar_Expr_Node *argp );
 #endif /* BUILD_FOR_OBJC */
 
 extern void set_eval_szbl_func(QSP_ARG_DECL  Item * (*func)(QSP_ARG_DECL  Scalar_Expr_Node *) );

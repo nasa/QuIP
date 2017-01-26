@@ -440,13 +440,18 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 		// RAMP1D or ???
 		//SET_PREC
-		SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
-
+		// dest can be null if arg error
+		if( OA_DEST(oap) != NULL ){
+			SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
+		} else {
+			prec_p=prec_for_code(PREC_BY);	// quiet compiler
+			retval = -1;
+		}
+		
 		if( COMPLEX_PRECISION(PREC_CODE(prec_p)) ){
 			/* this should not happen!? */
 			/* Does the function permit complex? */
-			if( (VF_TYPEMASK(vfp) &
-					(CPX_ARG_MASK|MIXED_ARG_MASK)) == 0 ){
+			if( (VF_TYPEMASK(vfp) & (CPX_ARG_MASK|MIXED_ARG_MASK)) == 0 ){
 				// BUG??? can OA_DEST be null here???
 				// We used to print the name of the
 				// destination obj here, but in case
@@ -504,8 +509,10 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 //#endif /* CAUTIOUS */
 		SET_OA_SVAL(oap,0, get_sval(prec_p) );
 		SET_OA_SVAL(oap,1, get_sval(prec_p) );
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+		if( retval == 0 ){
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
+			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+		}
 	}
 
 	else if( VF_FLAGS(vfp) & SRC_SCALAR1 ){
@@ -1041,7 +1048,7 @@ void show_vec_args(const Vector_Args *vap)
 }
 
 #ifdef PAD_MINDIM
-static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, dimension_t bit0 )
+static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, bitnum_t bit0 )
 {
 	dimension_t bits_per_row, words_per_row;
 	dimension_t n;
@@ -1058,7 +1065,7 @@ static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *is
 	return n;
 }
 
-static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr, dimension_t bit0 )
+static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr, bit_count_t bit0 )
 {
 	dimension_t bits_per_row, words_per_row;
 	dimension_t n;
@@ -1073,7 +1080,7 @@ static dimension_t eqsp_bitmap_word_count( Dimension_Set *dsp, incr_t eqsp_incr,
 	return n;
 }
 
-static dimension_t fast_bitmap_word_count( Dimension_Set *dsp, dimension_t offset )
+static dimension_t fast_bitmap_word_count( Dimension_Set *dsp, bit_count_t offset )
 {
 	dimension_t n;
 	n = N_BITMAP_WORDS( DS_N_ELTS(dsp) + (offset%BITS_PER_BITMAP_WORD) );
@@ -1125,7 +1132,7 @@ static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bi
 {
 	dimension_t i,j,k,l,m;
 	bitnum_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
-	dimension_t seq_base,frame_base, row_base, col_base;
+	bitnum_t seq_base,frame_base, row_base, col_base;
 
 	seq_base = OBJ_BIT0(dp);
 	for(i=0;i<OBJ_SEQS(dp);i++){
@@ -1155,7 +1162,7 @@ static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bi
 // in that case this needs to be more comples.  This needs to be studies to determine
 // what results in the highest-performing GPU implementation...
 
-static dimension_t word_for_bit( bitnum_t bit_number )
+static bitnum_t word_for_bit( bitnum_t bit_number )
 {
 	// We don't need to do anything more complicated, because we count all the bits (even the unused ones),
 	// letting the increments take care of things correctly...
@@ -1168,7 +1175,7 @@ static dimension_t word_for_bit( bitnum_t bit_number )
 static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 {
 	Bitmap_GPU_Info *bmi_p;
-	dimension_t new_word_idx;
+	bitnum_t new_word_idx;
 
 	bmi_p = BITMAP_OBJ_GPU_INFO_HOST_PTR(dp);
 
@@ -1179,7 +1186,7 @@ static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 	}
 }
 
-dimension_t bitmap_obj_word_count(Data_Obj *dp)
+bitnum_t bitmap_obj_word_count(Data_Obj *dp)
 {
 	dimension_t n_words;
 	Bitmap_GPU_Info *bmi_p;
