@@ -27,6 +27,10 @@ typedef union {
 
 #define YYSTYPE_IS_DECLARED		/* needed on 2.6 machine? */
 
+// This attempts to do what is accomplished with the bison
+// directive name-prefix, but doesn't suffer from the deprecated
+// syntax warnings resulting from the change in bison 3.0
+// (see nexpr.y, vectree.y)
 #define YACC_HACK_PREFIX	seq
 #include "yacc_hack.h"	// change yy prefix to seq_
 

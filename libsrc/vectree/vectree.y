@@ -126,6 +126,8 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 /* This line stops yacc invoked on linux... */
 //%pure_parser	/* make the parser rentrant (thread-safe) */
 %pure-parser	/* updated syntax - make the parser rentrant (thread-safe) */
+
+// equal sign generates a warning w/ bison 3.0!?
 %name-prefix="vt_"
 
 // parse-param also affects yyerror!
