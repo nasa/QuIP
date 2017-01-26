@@ -99,7 +99,7 @@ static Typed_Scalar ts_dbl_minus_one={
 typedef union {
 //	double			dval;		/* actual value */
 	int			fundex;		/* function index */
-	Function *		func_p;
+	Quip_Function *		func_p;
 //	char *			e_string;
 	Scalar_Expr_Node *	enp;
 	Typed_Scalar *		tsp;
@@ -1338,7 +1338,7 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	Typed_Scalar *tsp, *tsp2, *tsp3;
 
 	dimension_t frm;
-	static Function *val_func_p=NO_FUNCTION;
+	static Quip_Function *val_func_p=NO_FUNCTION;
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
