@@ -88,7 +88,7 @@ static int has_contiguous_data(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( IS_BITMAP(dp) ){
 		int i_dim,n;
-		bit_count_t n_words;
+		bitnum_t n_words;
 		int inc;
 		if( OBJ_TYPE_INC(dp,OBJ_MINDIM(dp)) != 1 ) return 0;
 		n=OBJ_TYPE_DIM(dp,OBJ_MINDIM(dp));

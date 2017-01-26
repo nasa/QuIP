@@ -443,8 +443,11 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		// dest can be null if arg error
 		if( OA_DEST(oap) != NULL ){
 			SET_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
-		} else retval = -1;
-
+		} else {
+			prec_p=prec_for_code(PREC_BY);	// quiet compiler
+			retval = -1;
+		}
+		
 		if( COMPLEX_PRECISION(PREC_CODE(prec_p)) ){
 			/* this should not happen!? */
 			/* Does the function permit complex? */
@@ -1129,7 +1132,7 @@ static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bi
 {
 	dimension_t i,j,k,l,m;
 	bitnum_t bit_number;	// even though dimension_t is 32 bits, the bit number can have 6 more bits
-	dimension_t seq_base,frame_base, row_base, col_base;
+	bitnum_t seq_base,frame_base, row_base, col_base;
 
 	seq_base = OBJ_BIT0(dp);
 	for(i=0;i<OBJ_SEQS(dp);i++){
@@ -1159,7 +1162,7 @@ static void traverse_bitmap(Data_Obj *dp, void (*func)(Data_Obj *dp, bitnum_t bi
 // in that case this needs to be more comples.  This needs to be studies to determine
 // what results in the highest-performing GPU implementation...
 
-static dimension_t word_for_bit( bitnum_t bit_number )
+static bitnum_t word_for_bit( bitnum_t bit_number )
 {
 	// We don't need to do anything more complicated, because we count all the bits (even the unused ones),
 	// letting the increments take care of things correctly...
@@ -1172,7 +1175,7 @@ static dimension_t word_for_bit( bitnum_t bit_number )
 static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 {
 	Bitmap_GPU_Info *bmi_p;
-	dimension_t new_word_idx;
+	bitnum_t new_word_idx;
 
 	bmi_p = BITMAP_OBJ_GPU_INFO_HOST_PTR(dp);
 
@@ -1183,7 +1186,7 @@ static void count_bitmap_word(Data_Obj *dp, bitnum_t bit_number)
 	}
 }
 
-bit_count_t bitmap_obj_word_count(Data_Obj *dp)
+bitnum_t bitmap_obj_word_count(Data_Obj *dp)
 {
 	dimension_t n_words;
 	Bitmap_GPU_Info *bmi_p;

@@ -514,7 +514,7 @@ show_context:
 
 static void list_data(QSP_ARG_DECL  Data_Obj *dp)
 {
-	bit_count_t n;
+	bitnum_t n;
 
 	if( IS_BITMAP(dp) )
 		n = bitmap_obj_word_count(dp);

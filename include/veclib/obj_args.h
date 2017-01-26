@@ -268,7 +268,7 @@ typedef struct vector_args {
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
 extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
-extern bit_count_t bitmap_obj_word_count( Data_Obj *dp );
+extern bitnum_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */
