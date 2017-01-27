@@ -66,11 +66,9 @@ int lutmap( QSP_ARG_DECL  Data_Obj *dest_dp, Data_Obj *src_dp, Data_Obj *lut_dp 
 	}
 	if( OBJ_COMPS(dest_dp) != OBJ_COMPS(lut_dp)*OBJ_COMPS(src_dp) ){
 		sprintf(ERROR_STRING,
-		"lutmap:  destination (%s) depth (%d) should be product of",
-			OBJ_NAME(dest_dp), OBJ_COMPS(dest_dp));
-		WARN(ERROR_STRING);
-		sprintf(ERROR_STRING,
+		"lutmap:  destination (%s) depth (%d) should be product of\n"
 		"\tsource (%s) depth (%d) and lut (%s) depth (%d)",
+			OBJ_NAME(dest_dp), OBJ_COMPS(dest_dp),
 			OBJ_NAME(src_dp),  OBJ_COMPS(src_dp),
 			OBJ_NAME(lut_dp),  OBJ_COMPS(lut_dp)
 			);
