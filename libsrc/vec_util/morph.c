@@ -572,7 +572,7 @@ void morph_process( QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *tbl_
 {
 	dimension_t i,j;
 	u_long *to, *from1, *from2, *from3;
-	int bitfr1,bitfr2,bitfr3;
+	uint64_t bitfr1,bitfr2,bitfr3;	// BUG need typedef for bit index!
 	u_long outbit,bit1,bit2,bit3;
 	int b0,b1,b2,b3,b4,b5,b6,b7,b8;
 	int index;

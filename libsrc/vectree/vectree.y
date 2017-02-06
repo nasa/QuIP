@@ -87,7 +87,7 @@ typedef union {
 	Vec_Expr_Node *enp;
 	//Vec_Func_Code fcode;	/* index to our tables here... */
 	int   fundex;		/* function index */
-	Function *func_p;
+	Quip_Function *func_p;
 	double dval;		/* actual value */
 	int intval;
 	Data_Obj *dp;
@@ -126,6 +126,8 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 /* This line stops yacc invoked on linux... */
 //%pure_parser	/* make the parser rentrant (thread-safe) */
 %pure-parser	/* updated syntax - make the parser rentrant (thread-safe) */
+
+// equal sign generates a warning w/ bison 3.0!?
 %name-prefix="vt_"
 
 // parse-param also affects yyerror!
@@ -2621,7 +2623,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	Subrt *srp;
 	const char *s;
 	const char *sptr;
-	Function *func_p;
+	Quip_Function *func_p;
 
 	/*
 	 * Currently, function names don't have

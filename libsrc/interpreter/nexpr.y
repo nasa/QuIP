@@ -99,7 +99,7 @@ static Typed_Scalar ts_dbl_minus_one={
 typedef union {
 //	double			dval;		/* actual value */
 	int			fundex;		/* function index */
-	Function *		func_p;
+	Quip_Function *		func_p;
 //	char *			e_string;
 	Scalar_Expr_Node *	enp;
 	Typed_Scalar *		tsp;
@@ -244,10 +244,16 @@ static char *get_expr_stringbuf( QSP_ARG_DECL   int index, long min_len )
 
 %pure-parser	// make the parser rentrant (thread-safe)
 
-// this form works with bison 2.X
-//%name-prefix="quip_"
+// I've installed bison 3.0 on all mac systems using fink,
+// but xcode still wants to use its own old version!?
+// I wish there was a conditional processing (ifde
+
+// this form works with bison 2.X (xcode)
+// issues a deprecated warning in 3.0, but hopefully still works?
+%name-prefix="quip_"
+
 // this form requires bison 3.0 or later
-%name-prefix "quip_"
+//%name-prefix "quip_"
 
 /* The YYPARSE_PARAM macro has been deprecated in favor of %parse-param
  * BUT parse-param is a bison statment that comes outside of the the C code
@@ -1338,7 +1344,7 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	Typed_Scalar *tsp, *tsp2, *tsp3;
 
 	dimension_t frm;
-	static Function *val_func_p=NO_FUNCTION;
+	static Quip_Function *val_func_p=NO_FUNCTION;
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){

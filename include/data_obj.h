@@ -143,9 +143,6 @@ extern debug_flag_t debug_data;
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
 
-//typedef uint64_t	bitnum_t;	// could be uint32_t?
-typedef uint32_t	bitnum_t;	// could be uint32_t?
-
 struct data_obj {
 	Item			dt_item;
 	Shape_Info *		dt_shpp;

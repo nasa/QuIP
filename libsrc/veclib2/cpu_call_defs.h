@@ -222,8 +222,8 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define FAST_ADVANCE_QUAT_SRC3	qs3_ptr++ ;
 #define FAST_ADVANCE_QUAT_SRC4	qs4_ptr++ ;
 //#define FAST_ADVANCE_BITMAP	which_bit ++ ;
-#define FAST_ADVANCE_DBM	dbm_bit ++ ;
-#define FAST_ADVANCE_SBM	sbm_bit ++ ;
+#define FAST_ADVANCE_DBM	i_dbm_bit ++ ;
+#define FAST_ADVANCE_SBM	i_sbm_bit ++ ;
 #define FAST_ADVANCE_DBM_SBM	FAST_ADVANCE_DBM FAST_ADVANCE_SBM
 
 #define FAST_ADVANCE_2		FAST_ADVANCE_1 FAST_ADVANCE_SRC1
@@ -281,8 +281,8 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define EQSP_ADVANCE_QUAT_SRC3	qs3_ptr += eqsp_src3_inc ;
 #define EQSP_ADVANCE_QUAT_SRC4	qs4_ptr += eqsp_src4_inc ;
 //#define EQSP_ADVANCE_BITMAP	which_bit  += eqsp_bit_inc ;
-#define EQSP_ADVANCE_DBM	dbm_bit  += eqsp_dbm_inc ;
-#define EQSP_ADVANCE_SBM	sbm_bit  += eqsp_sbm_inc ;
+#define EQSP_ADVANCE_DBM	i_dbm_bit  += eqsp_dbm_inc ;
+#define EQSP_ADVANCE_SBM	i_sbm_bit  += eqsp_sbm_inc ;
 #define EQSP_ADVANCE_DBM_SBM	EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM
 
 #define EQSP_ADVANCE_2		EQSP_ADVANCE_1 EQSP_ADVANCE_SRC1
@@ -529,8 +529,8 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 #define INIT_PTRS_QUAT_SRC3	qs3_ptr = qs3_base[0];	/* pixel base */
 #define INIT_PTRS_QUAT_SRC4	qs4_ptr = qs4_base[0];	/* pixel base */
 
-#define INIT_PTRS_SBM		sbm_bit = sbm_base[0];
-#define INIT_PTRS_DBM		dbm_bit = dbm_base[0];
+#define INIT_PTRS_SBM		i_sbm_bit = sbm_base[0];
+#define INIT_PTRS_DBM		i_dbm_bit = dbm_base[0];
 #define INIT_PTRS_DBM_		INIT_PTRS_DBM
 
 #define INIT_PTRS_DBM_1SRC	INIT_PTRS_DBM INIT_PTRS_SRC1
@@ -588,8 +588,8 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
 /* BUG? here we seem to assume that all bitmaps are contiguous - but
  * dobj allows bitmap subimages...
  */
-#define INC_PTRS_SBM		sbm_bit++;
-#define INC_PTRS_DBM		dbm_bit++;
+#define INC_PTRS_SBM		i_sbm_bit++;
+#define INC_PTRS_DBM		i_dbm_bit++;
 #define INC_PTRS_DBM_		INC_PTRS_DBM
 
 #define INC_PTRS_DBM_1SRC	INC_PTRS_DBM INC_PTRS_SRC1
@@ -624,33 +624,33 @@ NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");		\
  * SOLVED - 1<<n assumes that 1 is an "int" e.g. 32 bits
  * Use 1L instead!
  *
- * dbm_bit counts the bits from the start of the object
+ * i_dbm_bit counts the bits from the start of the object
  */
 
 #define SET_DBM_BIT( condition )					\
 									\
 	if( condition )							\
-		*(dbm_ptr + (dbm_bit/BITS_PER_BITMAP_WORD)) |=		\
-			NUMBERED_BIT(dbm_bit); 				\
+		*(dbm_ptr + (i_dbm_bit/BITS_PER_BITMAP_WORD)) |=		\
+			NUMBERED_BIT(i_dbm_bit); 				\
 	else								\
-		*(dbm_ptr + (dbm_bit/BITS_PER_BITMAP_WORD)) &=		\
-			~ NUMBERED_BIT(dbm_bit);
+		*(dbm_ptr + (i_dbm_bit/BITS_PER_BITMAP_WORD)) &=		\
+			~ NUMBERED_BIT(i_dbm_bit);
 
 #define DEBUG_SBM_	\
-sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   sbm_bit = %d",\
-(int_for_addr)sbm_ptr,sbm_bit);\
+sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   i_sbm_bit = %d",\
+(int_for_addr)sbm_ptr,i_sbm_bit);\
 NADVISE(DEFAULT_ERROR_STRING);
 
 #define DEBUG_DBM_	\
-sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   dbm_bit = %d",\
-(int_for_addr)dbm_ptr,dbm_bit);\
+sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   i_dbm_bit = %d",\
+(int_for_addr)dbm_ptr,i_dbm_bit);\
 NADVISE(DEFAULT_ERROR_STRING);
 
 #define DEBUG_DBM_1SRC		DEBUG_DBM_		\
 				DEBUG_SRC1
 
-#define srcbit		((*(sbm_ptr + (sbm_bit/BITS_PER_BITMAP_WORD)))\
-			& NUMBERED_BIT(sbm_bit))
+#define srcbit		((*(sbm_ptr + (i_sbm_bit/BITS_PER_BITMAP_WORD)))\
+			& NUMBERED_BIT(i_sbm_bit))
 
 
 #define INIT_BASES_X_1(dsttyp)	dst_base[3]=(dsttyp *)VA_DEST_PTR(vap);
@@ -823,17 +823,17 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 
 #define DECLARE_BASES_SBM			\
-	int sbm_base[N_DIMENSIONS-1];		\
+	bitnum_t sbm_base[N_DIMENSIONS-1];		\
 	bitmap_word *sbm_ptr;			\
-	int sbm_bit;
+	bitnum_t i_sbm_bit;
 
 #define DECLARE_BASES_DBM_	DECLARE_BASES_DBM
 
 /* base is not a bit number, not a pointer */
 
 #define DECLARE_BASES_DBM			\
-	int dbm_base[N_DIMENSIONS-1];		\
-	int dbm_bit;				\
+	bitnum_t dbm_base[N_DIMENSIONS-1];		\
+	bitnum_t i_dbm_bit;			\
 	bitmap_word *dbm_ptr;			\
 	DECLARE_FIVE_LOOP_INDICES
 
@@ -1864,8 +1864,8 @@ EF_DECL(name)( LINK_FUNC_ARG_DECLS )					\
 #define FAST_DECLS_3		FAST_DECLS_2	FAST_DECLS_SRC2
 #define FAST_DECLS_4		FAST_DECLS_3	FAST_DECLS_SRC3
 #define FAST_DECLS_5		FAST_DECLS_4	FAST_DECLS_SRC4
-#define FAST_DECLS_SBM		int sbm_bit; bitmap_word *sbm_ptr;
-#define FAST_DECLS_DBM		int dbm_bit; bitmap_word *dbm_ptr; dimension_t fl_ctr;
+#define FAST_DECLS_SBM		bitnum_t i_sbm_bit; bitmap_word *sbm_ptr;
+#define FAST_DECLS_DBM		bitnum_t i_dbm_bit; bitmap_word *dbm_ptr; dimension_t fl_ctr;
 #define FAST_DECLS_DBM_1SRC	FAST_DECLS_DBM FAST_DECLS_SRC1
 #define FAST_DECLS_DBM_SBM	FAST_DECLS_DBM FAST_DECLS_SBM
 #define FAST_DECLS_SBM_1	FAST_DECLS_SBM FAST_DECLS_1
@@ -1919,8 +1919,8 @@ EF_DECL(name)( LINK_FUNC_ARG_DECLS )					\
 #define EQSP_DECLS_3		EQSP_DECLS_2	EQSP_DECLS_SRC2
 #define EQSP_DECLS_4		EQSP_DECLS_3	EQSP_DECLS_SRC3
 #define EQSP_DECLS_5		EQSP_DECLS_4	EQSP_DECLS_SRC4
-#define EQSP_DECLS_SBM		int sbm_bit; bitmap_word *sbm_ptr;
-#define EQSP_DECLS_DBM		int dbm_bit; bitmap_word *dbm_ptr; dimension_t fl_ctr;
+#define EQSP_DECLS_SBM		bitnum_t i_sbm_bit; bitmap_word *sbm_ptr;
+#define EQSP_DECLS_DBM		bitnum_t i_dbm_bit; bitmap_word *dbm_ptr; dimension_t fl_ctr;
 #define EQSP_DECLS_DBM_1SRC	EQSP_DECLS_DBM EQSP_DECLS_SRC1
 #define EQSP_DECLS_DBM_SBM	EQSP_DECLS_DBM EQSP_DECLS_SBM
 #define EQSP_DECLS_SBM_1	EQSP_DECLS_SBM EQSP_DECLS_1
@@ -2019,11 +2019,12 @@ EF_DECL(name)( LINK_FUNC_ARG_DECLS )					\
 
 #define FAST_INIT_DBM_		FAST_INIT_DBM
 
-#define FAST_INIT_DBM		dbm_bit = VA_DBM_BIT0(vap);		\
+// bit0 = 0 is now part of fast test?
+#define FAST_INIT_DBM		i_dbm_bit = VA_DBM_BIT0(vap);		\
 				dbm_ptr=VA_DEST_PTR(vap);	\
 				FAST_INIT_COUNT
 
-#define FAST_INIT_SBM		sbm_bit = VA_SBM_BIT0(vap);		\
+#define FAST_INIT_SBM		i_sbm_bit = VA_SBM_BIT0(vap);		\
 				sbm_ptr=VA_SRC_PTR(vap,4);
 
 #define FAST_INIT_DBM_2SRCS	FAST_INIT_DBM FAST_INIT_2SRCS
@@ -2097,11 +2098,11 @@ EF_DECL(name)( LINK_FUNC_ARG_DECLS )					\
 
 #define EQSP_INIT_DBM_		EQSP_INIT_DBM
 
-#define EQSP_INIT_DBM		dbm_bit = VA_DBM_BIT0(vap);		\
+#define EQSP_INIT_DBM		i_dbm_bit = VA_DBM_BIT0(vap);		\
 				dbm_ptr=VA_DEST_PTR(vap);	\
 				EQSP_INIT_COUNT
 
-#define EQSP_INIT_SBM		sbm_bit = VA_SBM_BIT0(vap);		\
+#define EQSP_INIT_SBM		i_sbm_bit = VA_SBM_BIT0(vap);		\
 				sbm_ptr=VA_SRC_PTR(vap,4);
 
 #define EQSP_INIT_DBM_2SRCS	EQSP_INIT_DBM EQSP_INIT_2SRCS
