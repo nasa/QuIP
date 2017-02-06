@@ -163,6 +163,7 @@ typedef enum {
 	FVSUM,				/* 80 */
 	/* to implement on GPU, better to write vdot as composition of VMUL and VSUM */
 	FVDOT,				/* 81 */
+#define HAVE_FVDOT
 	FVRAND,				/* 82 */
 
 	FVSMLT,				/* 83 */

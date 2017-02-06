@@ -236,9 +236,9 @@ CREAT_VEC_FUNC( vuli2udi,	FVULI2UDI,	V_UNARY,	0,	REAL_ARG_MASK	)
 
 /* max mag,	min max changed to M_ALL to allow long destination... */
 CREAT_VEC_FUNC( vsum,		FVSUM,		V_PROJECTION,	M_ALL,	RCQ_MASK	)
-#ifdef FVDOT
+//#ifdef FVDOT
 CREAT_VEC_FUNC( vdot,		FVDOT,		V_PROJECTION2,	M_ALL,	RC_MASK	)
-#endif // FVDOT
+//#endif // FVDOT
 CREAT_CPU_VEC_FUNC( vrand,		FVRAND,		V_UNARY,	M_ALL,	RC_MASK	)
 
 CREAT_VEC_FUNC( vsm_lt,		FVSMLT,		VS_TEST,	M_ALL,	REAL_ARG_MASK	)

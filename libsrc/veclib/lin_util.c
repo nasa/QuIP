@@ -9,11 +9,11 @@ static void vdot(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 {
 	// BUG determine proper platform
 	//h_vl2_vdot(HOST_CALL_ARGS);
-#ifdef FVDOT
+#ifdef HAVE_FVDOT
 	platform_dispatch_by_code(QSP_ARG  FVDOT, oap);
-#else // ! FVDOT
+#else // ! HAVE_FVDOT
 	WARN("vdot:  FVDOT not defined!?");
-#endif // ! FVDOT
+#endif // ! HAVE_FVDOT
 }
 
 static void vmul(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )

@@ -8,3 +8,7 @@ How to control which remote is used?
 add a remote:
 git remote add nasa http://github.com/nasa/QuIP.git
 
+____________________
+
+How to revert to an earlier commit?
+

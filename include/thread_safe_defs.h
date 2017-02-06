@@ -23,6 +23,7 @@ extern Query_Stack *default_qsp;		// global needs to be set at init...
 #define SINGLE_QSP_ARG		qsp
 #define DEFAULT_QSP_ARG		DEFAULT_QSP,
 #define NULL_QSP_ARG		NULL,
+#define NULL_SINGLE_QSP_ARG	NULL
 #define SGL_DEFAULT_QSP_ARG	DEFAULT_QSP
 #define SELF_QSP		self
 #define SELF_QSP_ARG		self,
@@ -55,6 +56,7 @@ extern char *qpfgets(TMP_QSP_ARG_DECL  void *buf, int size, void *fp);
 #define QSP_ARG
 #define QSP_ARG_FOR(_qsp)
 #define SINGLE_QSP_ARG
+#define NULL_SINGLE_QSP_ARG
 #define DEFAULT_QSP_ARG
 #define NULL_QSP_ARG
 #define SGL_DEFAULT_QSP_ARG

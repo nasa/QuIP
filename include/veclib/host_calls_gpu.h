@@ -624,39 +624,41 @@ fprintf(stderr,"H_CALL_PROJ_2V %s:  need to implement speed switch, calling fast
 
 // vdot, cvdot, etc
 
-#define H_CALL_PROJ_3V( name, type )					\
+#define H_CALL_PROJ_3V( name, dtype, stype )				\
 									\
 static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 {									\
-	type *dst_values;						\
-	type *src1_values, *src2_values;				\
-	uint32_t len, len1, len2;						\
-	type *src_to_free, *dst_to_free;				\
+	dtype *dst_values;						\
+	stype *orig_src1_values, *orig_src2_values;				\
+	dtype *src1_values, *src2_values;				\
+	uint32_t len, len1, len2;					\
+	dtype *src_to_free;						\
+	dtype *dst_to_free;						\
 	DECLARE_PLATFORM_VARS						\
 									\
 	len = VA_SRC1_LEN(vap);						\
-	src1_values = (type *) VA_SRC1_PTR(vap);			\
-	src2_values = (type *) VA_SRC2_PTR(vap);			\
+	orig_src1_values = (stype *) VA_SRC1_PTR(vap);			\
+	orig_src2_values = (stype *) VA_SRC2_PTR(vap);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
-	src_to_free=(src_type *)NULL;						\
+	src_to_free=(dst_type *)NULL;						\
 	while( len > 1 ){						\
-		SETUP_PROJ_ITERATION(type,name)				\
+		SETUP_PROJ_ITERATION(dtype,name)				\
 		CALL_GPU_FAST_PROJ_3V_FUNC(name)				\
 		len = len1;						\
 		src1_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
 		 * first as result, then as source */			\
-		if( src_to_free != (src_type *)NULL ){				\
+		if( src_to_free != (dst_type *)NULL ){				\
 			FREETMP_NAME(src_to_free,#name);		\
-			src_to_free=(src_type *)NULL;				\
+			src_to_free=(dst_type *)NULL;				\
 		}							\
 		src_to_free = dst_to_free;				\
 		dst_to_free = (dst_type *)NULL;					\
 	}								\
-	if( src_to_free != (src_type *)NULL ){					\
+	if( src_to_free != (dst_type *)NULL ){					\
 		FREETMP_NAME(src_to_free,#name);			\
-		src_to_free=(src_type *)NULL;					\
+		src_to_free=(dst_type *)NULL;					\
 	}								\
 }									\
 									\
