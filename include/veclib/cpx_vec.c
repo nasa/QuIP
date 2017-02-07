@@ -82,6 +82,10 @@ _VEC_FUNC_CR_1S_2V( mvsdiv2 ,	cdst.re = src1 / scalar1_val ;
 					cdst.im = 0
 					)
 
+_VEC_FUNC_CR_1S_2V( mvssub2 ,	cdst.re = src1 - scalar1_val ;
+					cdst.im = 0
+					)
+
 _VEC_FUNC_CR_1S_2V( mvsmul ,	cdst.re = scalar1_val * src1 ;
 					cdst.im = 0
 					)
@@ -116,6 +120,10 @@ _VEC_FUNC_CPX_1S_2V_T3( cvsdiv ,	tmp_denom=CPX_NORM(csrc1);
 _VEC_FUNC_CPX_1S_2V_T3( cvsdiv2 ,	tmp_denom=CPX_NORM(cscalar1_val);
 					ASSIGN_CPX_CPROD_NORM(tmpc,csrc1,cscalar1_val,tmp_denom)
 					ASSIGN_CPX(cdst,tmpc)
+					)
+
+_VEC_FUNC_CPX_1S_2V( cvssub2 ,	cdst.re = csrc1.re - cscalar1_val.re ;
+					cdst.im = csrc1.im - cscalar1_val.im
 					)
 
 /* for mixed (MDECLS2), v1 is complex and v2 is real? */
@@ -279,6 +287,13 @@ _VEC_FUNC_QUAT_1S_2V_T5( qvsdiv2 ,	tmp_denom =	QUAT_NORM(qscalar1_val);
 					ASSIGN_QUAT_CPROD_NORM(tmpq,qsrc1,qscalar1_val,tmp_denom)
 					ASSIGN_QUAT(qdst,tmpq) )
 
+_VEC_FUNC_QUAT_1S_2V( qvssub2 ,	qdst.re = qsrc1.re - qscalar1_val.re ;
+					qdst._i = qsrc1._i - qscalar1_val._i ;
+					qdst._j = qsrc1._j - qscalar1_val._j ;
+					qdst._k = qsrc1._k - qscalar1_val._k
+					)
+
+
 
 /* float times quaternion */
 
@@ -315,6 +330,12 @@ _VEC_FUNC_QR_1S_2V( pvsdiv ,	qdst.re = scalar1_val / src1 ;
 					)
 
 _VEC_FUNC_QR_1S_2V( pvsdiv2 ,	qdst.re = src1 / scalar1_val ;
+					qdst._i = 0;
+					qdst._j = 0;
+					qdst._k = 0
+					)
+
+_VEC_FUNC_QR_1S_2V( pvssub2 ,	qdst.re = src1 - scalar1_val ;
 					qdst._i = 0;
 					qdst._j = 0;
 					qdst._k = 0

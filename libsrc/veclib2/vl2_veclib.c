@@ -17,6 +17,7 @@
 // So we only need the untyped functions...
 
 #include "vl2_host_funcs.c"
+#include "fast_sp.c"
 
 #include "vl2_typtbl.c"
 

@@ -5,7 +5,7 @@
 //#include "nvf.h"
 #include "quip_prot.h"
 //#include "veclib/vl2_veclib_prot.h"
-#include "simd_prot.h"
+//#include "simd_prot.h"
 //#include "sp_prot.h"
 
 extern int use_sse_extensions;	// in ../veclib/nvf.h, dispatch.c
@@ -44,6 +44,15 @@ typedef union {
 		return;						\
 	}
 
+#define CHECK_ALIGNMENT_1(name)					\
+								\
+	if( NOT_ALIGNED(v1) ){		\
+		sprintf(DEFAULT_ERROR_STRING,				\
+"CAUTIOUS:  simd_%s:  argument not aligned.",#name);		\
+		NWARN(DEFAULT_ERROR_STRING);			\
+		return;						\
+	}
+
 #else /* !CAUTIOUS */
 #define CHECK_ALIGNMENT_3(name) /* nop */
 #define CHECK_ALIGNMENT_2(name) /* nop */
@@ -64,7 +73,7 @@ typedef union {
 
 #define SIMD_VEC_FUNC_3(name,op)				\
 								\
-void simd_vec_##name(float *v1,float *v2,float *v3,unsigned long n)	\
+static void SIMD_VEC_NAME(name)(float *v1,float *v2,float *v3,unsigned long n)	\
 {								\
 	int n_fast,n_extra;					\
 	v4sf *fv1, *fv2, *fv3;					\
@@ -92,7 +101,7 @@ void simd_vec_##name(float *v1,float *v2,float *v3,unsigned long n)	\
 
 #define SIMD_VEC_FUNC_1S_2(name,op)				\
 								\
-void simd_vec_##name(float *v1,float *v2,float scalar_val,unsigned long n)	\
+static void SIMD_VEC_NAME(name)(float *v1,float *v2,float scalar_val,unsigned long n)	\
 {								\
 	int n_fast,n_extra;					\
 	v4sf *fv1, *fv2;					\
@@ -121,11 +130,74 @@ void simd_vec_##name(float *v1,float *v2,float scalar_val,unsigned long n)	\
 }
 
 
+
+
+#define SIMD_VEC_FUNC_1S_2_V2(name,op)				\
+								\
+static void SIMD_VEC_NAME(name)(float *v1,float *v2,float scalar_val,unsigned long n)	\
+{								\
+	int n_fast,n_extra;					\
+	v4sf *fv1, *fv2;					\
+	fv4 fvscal;						\
+								\
+	CHECK_ALIGNMENT_2(name)					\
+								\
+	n_extra = n % 4;					\
+	n_fast = n/4;						\
+	fvscal.f[0]=scalar_val;					\
+	fvscal.f[1]=scalar_val;					\
+	fvscal.f[2]=scalar_val;					\
+	fvscal.f[3]=scalar_val;					\
+	fv1 = (v4sf *)v1;					\
+	fv2 = (v4sf *)v2;					\
+								\
+	while( n_fast -- )					\
+		*fv1++ = fvscal.v4 op *fv2++;			\
+								\
+	if( n_extra > 0 ){					\
+		v1=(float *)fv1;				\
+		v2=(float *)fv2;				\
+		while(n_extra--)				\
+			*v1++ = scalar_val op *v2++ ;		\
+	}							\
+}
+
+
+
+#define SIMD_VEC_FUNC_1S_1(name)				\
+								\
+static void SIMD_VEC_NAME(name)(float *v1,float scalar_val,unsigned long n)	\
+{								\
+	int n_fast,n_extra;					\
+	v4sf *fv1;					\
+	fv4 fvscal;						\
+								\
+	CHECK_ALIGNMENT_1(name)					\
+								\
+	n_extra = n % 4;					\
+	n_fast = n/4;						\
+	fvscal.f[0]=scalar_val;					\
+	fvscal.f[1]=scalar_val;					\
+	fvscal.f[2]=scalar_val;					\
+	fvscal.f[3]=scalar_val;					\
+	fv1 = (v4sf *)v1;					\
+								\
+	while( n_fast -- )					\
+		*fv1++ = fvscal.v4;			\
+								\
+	if( n_extra > 0 ){					\
+		v1=(float *)fv1;				\
+		while(n_extra--)				\
+			*v1++ = scalar_val;		\
+	}							\
+}
+
+
 /* just for vmov? */
 
 #define SIMD_VEC_FUNC_2(name)					\
 								\
-void simd_vec_##name(float *v1,float *v2,unsigned long n)	\
+static void SIMD_VEC_NAME(name)(float *v1,float *v2,unsigned long n)	\
 {								\
 	int n_fast,n_extra;					\
 	v4sf *fv1, *fv2;					\
@@ -162,26 +234,26 @@ void simd_vec_##name(float *v1,float *v2,unsigned long n)	\
 //
 //SIMD_VEC_FUNC_2(rvmov)
 
-#define SIMD_OBJ_FUNC_3( name )						\
+#define SIMD_OBJ_FUNC_3( name, code )						\
 									\
-void simd_obj_##name(HOST_CALL_ARG_DECLS)					\
+static void SIMD_OBJ_NAME(name)(HOST_CALL_ARG_DECLS)					\
 {									\
 	if( (!N_IS_CONTIGUOUS(OA_DEST(oap))) ||				\
-		(!N_IS_CONTIGUOUS(OA_SRC1(oap))) ||				\
-		(!N_IS_CONTIGUOUS(OA_SRC2(oap))) || 				\
-		( ! use_sse_extensions ) ){				\
-		/*h_vl2_sp_##name(oap);*/					\
-		NERROR1("bad SIMD call #1");\
+			(!N_IS_CONTIGUOUS(OA_SRC1(oap))) ||				\
+			(!N_IS_CONTIGUOUS(OA_SRC2(oap))) || 				\
+			( ! use_sse_extensions ) ){				\
+		h_vl2_sp_##name(code,oap);					\
+		/*NERROR1("bad SIMD call #1");*/\
 	} else {							\
 		/* make sure that addresses are aligned */		\
 		if( NOT_ALIGNED(OBJ_DATA_PTR(OA_DEST(oap))) ||		\
-		    NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC1(oap))) ||			\
-		    NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC2(oap))) ){			\
+		    		NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC1(oap))) ||			\
+		    		NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC2(oap))) ){			\
 NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
-			/*h_vl2_sp_##name(oap);*/				\
-			NERROR1("Bad SIMD call #2");\
+			h_vl2_sp_##name(code,oap);				\
+			/*NERROR1("Bad SIMD call #2");*/\
 		} else {						\
-			simd_vec_##name((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
+			SIMD_VEC_NAME(name)((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
 				(float *)OBJ_DATA_PTR(OA_SRC1(oap)),		\
 				(float *)OBJ_DATA_PTR(OA_SRC2(oap)),		\
 				OBJ_N_MACH_ELTS(OA_DEST(oap)));		\
@@ -189,22 +261,22 @@ NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
 	}								\
 }
 
-#define SIMD_OBJ_FUNC_1S_2( name )					\
+#define SIMD_OBJ_FUNC_1S_2( name, code )					\
 									\
-void simd_obj_##name(HOST_CALL_ARG_DECLS)					\
+static void SIMD_OBJ_NAME(name)(HOST_CALL_ARG_DECLS)					\
 {									\
 	if( (!N_IS_CONTIGUOUS(OA_DEST(oap))) ||				\
 		(!N_IS_CONTIGUOUS(OA_SRC1(oap))) ||				\
 		( ! use_sse_extensions ) ){				\
-		sp_obj_##name(oap);					\
+		h_vl2_sp_##name(code,oap);					\
 	} else {							\
 		/* make sure that addresses are aligned */		\
 		if( NOT_ALIGNED(OBJ_DATA_PTR(OA_DEST(oap))) ||		\
 		    NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC1(oap))) ){			\
 NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
-			sp_obj_##name(oap);				\
+			h_vl2_sp_##name(code,oap);				\
 		} else {						\
-			simd_vec_##name((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
+			SIMD_VEC_NAME(name)((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
 				(float *)OBJ_DATA_PTR(OA_SRC1(oap)),		\
 				SVAL_FLOAT(OA_SVAL1(oap)),			\
 				OBJ_N_MACH_ELTS(OA_DEST(oap)));		\
@@ -212,40 +284,63 @@ NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
 	}								\
 }
 
-
-#define SIMD_OBJ_FUNC_2( name )						\
+#define SIMD_OBJ_FUNC_1S_1( name, code )					\
 									\
-void simd_obj_##name(HOST_CALL_ARG_DECLS)					\
+static void SIMD_OBJ_NAME(name)(HOST_CALL_ARG_DECLS)					\
+{									\
+	if( (!N_IS_CONTIGUOUS(OA_DEST(oap))) ||				\
+		( ! use_sse_extensions ) ){				\
+		h_vl2_sp_##name(code,oap);					\
+	} else {							\
+		/* make sure that addresses are aligned */		\
+		if( NOT_ALIGNED(OBJ_DATA_PTR(OA_DEST(oap)))  ){			\
+NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
+			h_vl2_sp_##name(code,oap);				\
+		} else {						\
+			SIMD_VEC_NAME(name)((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
+				SVAL_FLOAT(OA_SVAL1(oap)),			\
+				OBJ_N_MACH_ELTS(OA_DEST(oap)));		\
+		}							\
+	}								\
+}
+
+
+#define SIMD_OBJ_FUNC_2( name, code )						\
+									\
+static void SIMD_OBJ_NAME(name)(HOST_CALL_ARG_DECLS)					\
 {									\
 	if( (!N_IS_CONTIGUOUS(OA_DEST(oap))) ||				\
 		(!N_IS_CONTIGUOUS(OA_SRC1(oap))) ||				\
 		( ! use_sse_extensions ) ){				\
-		sp_obj_##name(oap);					\
+		h_vl2_sp_##name(code,oap);					\
 	} else {							\
 		/* make sure that addresses are aligned */		\
 		if( NOT_ALIGNED(OBJ_DATA_PTR(OA_DEST(oap))) ||		\
 		    NOT_ALIGNED(OBJ_DATA_PTR(OA_SRC1(oap))) ){			\
 NWARN("data vectors must be aligned on 16 byte boundary for SSE acceleration");\
-			sp_obj_##name(oap);				\
+			h_vl2_sp_##name(code,oap);				\
 		} else {						\
-			simd_vec_##name((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
+			SIMD_VEC_NAME(name)((float *)OBJ_DATA_PTR(OA_DEST(oap)),	\
 				(float *)OBJ_DATA_PTR(OA_SRC1(oap)),		\
 				OBJ_N_MACH_ELTS(OA_DEST(oap)));		\
 		}							\
 	}								\
 }
 
-SIMD_OBJ_FUNC_3(rvadd)
-SIMD_OBJ_FUNC_3(rvsub)
-SIMD_OBJ_FUNC_3(rvmul)
-SIMD_OBJ_FUNC_3(rvdiv)
+SIMD_OBJ_FUNC_3(rvadd,FVADD)
+SIMD_OBJ_FUNC_3(rvsub,FVSUB)
+SIMD_OBJ_FUNC_3(rvmul,FVMUL)
+SIMD_OBJ_FUNC_3(rvdiv,FVDIV)
 
-SIMD_OBJ_FUNC_1S_2(rvsadd)
-SIMD_OBJ_FUNC_1S_2(rvssub)
-SIMD_OBJ_FUNC_1S_2(rvsmul)
-SIMD_OBJ_FUNC_1S_2(rvsdiv)
+SIMD_OBJ_FUNC_1S_2(rvsadd,FVSADD)
+SIMD_OBJ_FUNC_1S_2(rvssub,FVSSUB)
+SIMD_OBJ_FUNC_1S_2(rvsmul,FVSMUL)
+SIMD_OBJ_FUNC_1S_2(rvsdiv,FVSDIV)
+SIMD_OBJ_FUNC_1S_2(rvsdiv2,FVSDIV2)
+SIMD_OBJ_FUNC_1S_2(rvssub2,FVSSUB2)
 
-SIMD_OBJ_FUNC_2(rvmov)
+SIMD_OBJ_FUNC_2(rvmov,FVMOV)
+SIMD_OBJ_FUNC_1S_1(rvset,FVSET)
 
 #ifdef FOOBAR
 
@@ -293,10 +388,10 @@ SIMD_FUNC( _simd_vsxor,  SIMD_VSXOR )
 			OBJ_N_MACH_ELTS(OA_DEST(oap)));			\
 	}
 
-void simd_vsadd(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( sp_obj_rvsadd, _simd_vsadd ) }
-void simd_vssub(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( sp_obj_rvssub, _simd_vssub ) }
-void simd_vsmul(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( sp_obj_rvsmul, _simd_vsmul ) }
-void simd_vsdiv(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( sp_obj_rvsdiv, _simd_vsdiv ) }
+void simd_vsadd(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( h_vl2_sp_rvsadd, _simd_vsadd ) }
+void simd_vssub(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( h_vl2_sp_rvssub, _simd_vssub ) }
+void simd_vsmul(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( h_vl2_sp_rvsmul, _simd_vsmul ) }
+void simd_vsdiv(HOST_CALL_ARG_DECLS) { SIMD_2_VEC_SCALAR( h_vl2_sp_rvsdiv, _simd_vsdiv ) }
 
 #endif /* FOOBAR */
 #endif /* USE_SSE */

@@ -26,7 +26,10 @@ _VEC_FUNC_2V_SCAL( rvsadd , dst = (dest_type)(scalar1_val + src1) )
 _VEC_FUNC_2V_SCAL( rvssub , dst = (dest_type)(scalar1_val - src1) )
 _VEC_FUNC_2V_SCAL( rvsmul , dst = (dest_type)(src1 * scalar1_val) )
 _VEC_FUNC_2V_SCAL( rvsdiv , dst = (dest_type)(scalar1_val / src1) )
+// This is really redundant with vsmul!?
 _VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )
+// This is really redundant with vsadd!?
+_VEC_FUNC_2V_SCAL( rvssub2 , dst = (dest_type)(src1 - scalar1_val) )
 
 // How do we handle bit precision?
 

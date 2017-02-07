@@ -5,6 +5,15 @@
 //#undef USE_SSE
 #undef BUILD_FOR_GPU
 
+// BUG? simd doesn't seem to be used here?
+#ifdef USE_SSE
+#define SIMD_OBJ_NAME(stem)		simd_obj_##stem
+#define SIMD_OBJ_NAME_REAL(stem)	simd_obj_r##stem
+#define SIMD_VEC_NAME(stem)		simd_vec_##stem
+#else /* ! USE_SSE */
+#define SIMD_OBJ_NAME(stem)		HOST_TYPED_CALL_NAME(stem,sp)
+#endif /* ! USE_SSE */
+
 // PORT put things here...
 // PORT - This is something that is different between cuda and opencl!
 

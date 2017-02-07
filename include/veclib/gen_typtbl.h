@@ -8,13 +8,6 @@
 // to populate the table programmatically to eliminate
 // this problem.
 
-// BUG? simd doesn't seem to be used here?
-#ifdef USE_SSE
-#define SIMD_NAME(stem)		simd_##stem
-#else /* ! USE_SSE */
-#define SIMD_NAME(stem)		nullobjf
-#endif /* ! USE_SSE */
-
 #define NULL_5							\
 								\
           nullobjf, nullobjf, nullobjf, nullobjf, nullobjf
@@ -240,9 +233,8 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	/*stem,*/							\
-	/* SIMD_NAME(stem), */					\
-	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
+	SIMD_OBJ_NAME_REAL(stem),					\
+	/*HOST_TYPED_CALL_NAME_REAL(stem,sp),*/		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
@@ -297,9 +289,8 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	/*stem,*/						\
-	/* SIMD_NAME(stem), */					\
-	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
+	SIMD_OBJ_NAME_REAL(stem),					\
+	/* HOST_TYPED_CALL_NAME_REAL(stem,sp), */		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
@@ -314,9 +305,8 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	/*stem,*/						\
-	/* SIMD_NAME(stem), */					\
-	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
+	SIMD_OBJ_NAME_REAL(stem),					\
+	/* HOST_TYPED_CALL_NAME_REAL(stem,sp), */		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\
@@ -331,9 +321,8 @@
 	HOST_TYPED_CALL_NAME_REAL(stem,in),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,di),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,li),			\
-	/*stem,*/							\
-	/* SIMD_NAME(stem), */					\
-	HOST_TYPED_CALL_NAME_REAL(stem,sp),		\
+	SIMD_OBJ_NAME_REAL(stem),					\
+	/* HOST_TYPED_CALL_NAME_REAL(stem,sp), */		\
 	HOST_TYPED_CALL_NAME_REAL(stem,dp),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uby),			\
 	HOST_TYPED_CALL_NAME_REAL(stem,uin),			\

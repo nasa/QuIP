@@ -10,13 +10,15 @@ libvl2_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
 #			vl2_func_tbl.c
 
+# Now include fast_sp.c in vl2_veclib.c...
+#			fast_sp.c
+
 libvl2_a_SOURCES =			\
 			vl2_veclib.c	\
 			vl2_utils.c	\
 			vl2.c		\
 			slow_len.c	\
 			fftsupp.c	\
-			fast_sp.c	\
 			vl2_platform.c
 
 #			linear_funcs.c

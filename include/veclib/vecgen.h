@@ -303,6 +303,8 @@ typedef enum {
 	FVGAMMA,		// new funcs from libgsl...
 	FVLNGAMMA,
 
+	FVSSUB2,		/* should be moved up, but would mess up index comments */
+
 	N_VEC_FUNCS,		/* must be next-to-last! */
 	INVALID_VFC		/* must be last! */
 
@@ -329,6 +331,7 @@ typedef enum {
 	case FVSMAX:							\
 	case FVSADD:							\
 	case FVSSUB:							\
+	case FVSSUB2:							\
 	case FVSMUL:							\
 	case FVSDIV:							\
 	case FVSDIV2:
