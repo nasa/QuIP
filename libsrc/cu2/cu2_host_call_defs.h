@@ -580,11 +580,18 @@ fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s):  dst_values = 0x%lx, src_
 	GPU_FAST_CALL_NAME(name##_helper)<<< NN_GPU >>>( dst_values, src_values, len1, len2 );	\
 	CHECK_GPU_ERROR(name)
 
-#define CALL_GPU_FAST_PROJ_3V_FUNC(name)					\
+#define CALL_GPU_FAST_PROJ_3V_SETUP(name)					\
+	CLEAR_GPU_ERROR(name)							\
+	REPORT_THREAD_INFO2							\
+	GPU_FAST_CALL_NAME(name##_setup)<<< NN_GPU >>>				\
+		( dst_values, orig_src1_values, orig_src2_values, len1, len2 );	\
+	CHECK_GPU_ERROR(name)
+
+#define CALL_GPU_FAST_PROJ_3V_HELPER(name)				\
 	CLEAR_GPU_ERROR(name)						\
 	REPORT_THREAD_INFO2						\
-	GPU_FAST_CALL_NAME(name)<<< NN_GPU >>>				\
-		( dst_values, src1_values, src2_values, len1, len2 );	\
+	GPU_FAST_CALL_NAME(name##_helper)<<< NN_GPU >>>			\
+		( dst_values, src1_values, src2_values, len1 );		\
 	CHECK_GPU_ERROR(name)
 
 

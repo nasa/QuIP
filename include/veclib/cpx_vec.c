@@ -48,6 +48,9 @@ _VEC_FUNC_CPX_3V_T2( cvmul ,	ASSIGN_CPX_PROD(tmpc,csrc1,csrc2)
 #define ASSIGN_CPX_CPROD(cd,c1,c2)		{ cd.re = CPX_CPROD_RE(c1,c2);		\
 						cd.im = CPX_CPROD_IM(c1,c2); }
 
+#define ASSIGN_CPX_SUM(cd,c1,c2)		{ cd.re = c1.re + c2.re;		\
+						  cd.im = c1.im + c2.im; }
+
 #define ASSIGN_CPX_CPROD_NORM(cd,c1,c2,denom)	{ cd.re = CPX_CPROD_RE(c1,c2)/denom;		\
 						cd.im = CPX_CPROD_IM(c1,c2)/denom; }
 

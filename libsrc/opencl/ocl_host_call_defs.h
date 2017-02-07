@@ -307,13 +307,18 @@ fprintf(stderr,"Need to implement PF_GPU_FAST_CALL (name = %s, bitmap = \"%s\", 
 	SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER				\
 	CALL_FAST_KERNEL_2(name##_helper,,,,)
 
-#define CALL_GPU_FAST_PROJ_3V_FUNC(name)					\
-	CHECK_FAST_KERNEL(name)					\
-	SET_KERNEL_ARGS_FAST_PROJ_3V						\
-	CALL_FAST_KERNEL(name,,,,)
+#define CALL_GPU_FAST_PROJ_3V_SETUP(name)					\
+	CHECK_FAST_KERNEL(name##_setup)						\
+	SET_KERNEL_ARGS_FAST_PROJ_3V_SETUP					\
+	CALL_FAST_KERNEL(name##_setup,,,,)
+
+#define CALL_GPU_FAST_PROJ_3V_HELPER(name)					\
+	CHECK_FAST_KERNEL(name##_helper)					\
+	SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER					\
+	CALL_FAST_KERNEL(name##_helper,,,,)
 
 #define CALL_GPU_FAST_INDEX_SETUP_FUNC(name)					\
-	CHECK_FAST_KERNEL_1(name)					\
+	CHECK_FAST_KERNEL_1(name)						\
 	SET_KERNEL_ARGS_FAST_INDEX_SETUP					\
 	CALL_FAST_KERNEL_1(name,,,,)
 

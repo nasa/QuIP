@@ -523,16 +523,16 @@ static void HOST_TYPED_CALL_NAME(name,type_code)(HOST_CALL_ARG_DECLS )		\
 
 // BUG? gpu_expr? used?
 
-#define SETUP_PROJ_ITERATION(type,name)						\
+#define SETUP_PROJ_ITERATION(name)						\
 										\
 	len1 = (len+1)/2;							\
 	len2 = len - len1;							\
 										\
 	if( len1 == 1 ){							\
-		dst_values = (type *) VA_DEST_PTR(vap);				\
+		dst_values = (dst_type *) VA_DEST_PTR(vap);				\
 		dst_to_free = (dst_type *)NULL;						\
 	} else {								\
-		dst_values = (type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(type),len1,#name);	\
+		dst_values = (dst_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(dst_type),len1,#name);	\
 		dst_to_free = dst_values;					\
 	}
 
@@ -576,12 +576,12 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)			\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])				\
 	src_to_free=(dtype *)NULL;						\
-	SETUP_PROJ_ITERATION(dtype,name)				\
+	SETUP_PROJ_ITERATION(name)				\
 	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)				\
 	len=len1;						\
 	src_values = dst_values;				\
 	while( len > 1 ){						\
-		SETUP_PROJ_ITERATION(dtype,name)				\
+		SETUP_PROJ_ITERATION(name)				\
 /*fprintf(stderr,"%s:  start of iteration, len = %d, dst_values = 0x%lx   src_values = 0x%lx\n",#name,len,(long)dst_values,(long)src_values);*/\
 		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(name)				\
 		len=len1;						\
@@ -641,11 +641,15 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 	orig_src2_values = (stype *) VA_SRC2_PTR(vap);			\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
-	src_to_free=(dst_type *)NULL;						\
+	/* first iteration may be mixed types... */			\
+	SETUP_PROJ_ITERATION(name)					\
+	CALL_GPU_FAST_PROJ_3V_SETUP(name)				\
+	len = len1;							\
+	src_to_free=(dst_type *)NULL;					\
+	src1_values = dst_values;					\
 	while( len > 1 ){						\
-		SETUP_PROJ_ITERATION(dtype,name)				\
-		CALL_GPU_FAST_PROJ_3V_FUNC(name)				\
-		len = len1;						\
+		SETUP_PROJ_ITERATION(name)				\
+		CALL_GPU_FAST_PROJ_3V_HELPER(name)				\
 		src1_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
 		 * first as result, then as source */			\

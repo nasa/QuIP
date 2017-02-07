@@ -12,3 +12,14 @@ ____________________
 
 How to revert to an earlier commit?
 
+____________________
+List all remotes:
+
+% git remote -v
+github	https://github.com/jbmulligan/quip.git (fetch)
+github	https://github.com/jbmulligan/quip.git (push)
+nasa	http://github.com/nasa/QuIP.git (fetch)
+nasa	http://github.com/nasa/QuIP.git (push)
+origin	mulligan@n262vcs-git:quip (fetch)
+origin	mulligan@n262vcs-git:quip (push)
+(typical output)

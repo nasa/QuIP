@@ -150,29 +150,50 @@
 	DECLARE_2_LENGTHS
 
 
-#define KERN_ARGS_FAST_3V_PROJ					\
+#define KERN_ARGS_FAST_3V_PROJ_SETUP				\
 								\
-	dest,			\
-	s1,			\
-	s2,			\
+	dest,							\
+	s1,							\
+	s2,							\
 	len1, len2
 
-
-
-#define DECLARE_KERN_ARGS_FAST_3V_PROJ				\
+#define KERN_ARGS_FAST_3V_PROJ_HELPER				\
 								\
-	KERNEL_ARG_QUALIFIER std_type* dest,			\
+	dest,							\
+	s1,							\
+	s2,							\
+	len
+
+
+
+#define DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP			\
+								\
+	KERNEL_ARG_QUALIFIER dest_type* dest,			\
 	KERNEL_ARG_QUALIFIER std_type* s1,			\
 	KERNEL_ARG_QUALIFIER std_type* s2,			\
 	DECLARE_2_LENGTHS
 
-
-#define DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ				\
+#define DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER			\
 								\
-	KERNEL_ARG_QUALIFIER std_cpx* dest,			\
+	KERNEL_ARG_QUALIFIER dest_type* dest,			\
+	KERNEL_ARG_QUALIFIER dest_type* s1,			\
+	KERNEL_ARG_QUALIFIER dest_type* s2,			\
+	uint32_t len
+
+
+#define DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP		\
+								\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s1,			\
 	KERNEL_ARG_QUALIFIER std_cpx* s2,			\
 	DECLARE_2_LENGTHS
+
+#define DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER		\
+								\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,			\
+	KERNEL_ARG_QUALIFIER dest_cpx* s1,			\
+	KERNEL_ARG_QUALIFIER dest_cpx* s2,			\
+	uint32_t len
 
 // is this a special case???
 #define DECLARE_KERN_ARGS_DBM_GPU_INFO				\

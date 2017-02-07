@@ -131,8 +131,16 @@ else fprintf(stderr,"\tSHOW_KERNEL_ARG:  unhandled case for type %s\n",#type);
 	SET_KERNEL_ARG_1( uint32_t, &len2 )
 	/* GPU_CALL_NAME(name)arg1 , s1 , len1 , len2 ); */
 
-#define SET_KERNEL_ARGS_FAST_PROJ_3V					\
-								\
+#define SET_KERNEL_ARGS_FAST_PROJ_3V_SETUP		\
+							\
+	SET_KERNEL_ARG(void *,&dst_values)		\
+	SET_KERNEL_ARG(void *,&orig_src1_values)	\
+	SET_KERNEL_ARG(void *,&orig_src2_values)	\
+	SET_KERNEL_ARG( uint32_t, &len1 )		\
+	SET_KERNEL_ARG( uint32_t, &len2 )
+
+#define SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER		\
+							\
 	SET_KERNEL_ARG(void *,&dst_values)		\
 	SET_KERNEL_ARG(void *,&src1_values)		\
 	SET_KERNEL_ARG(void *,&src2_values)		\
