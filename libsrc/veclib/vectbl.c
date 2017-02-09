@@ -46,6 +46,7 @@ CREAT_VEC_FUNC( vssub,		FVSSUB,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsmul,		FVSMUL,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsdiv,		FVSDIV,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsdiv2,		FVSDIV2,	VS_BINARY,	M_ALL,	RCMQP_MASK	)
+CREAT_VEC_FUNC( vssub2,		FVSSUB2,	VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vabs,		FVABS,		V_UNARY,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vsign,		FVSIGN,		V_UNARY,	M_ALL,	REAL_ARG_MASK	)
 
@@ -236,9 +237,7 @@ CREAT_VEC_FUNC( vuli2udi,	FVULI2UDI,	V_UNARY,	0,	REAL_ARG_MASK	)
 
 /* max mag,	min max changed to M_ALL to allow long destination... */
 CREAT_VEC_FUNC( vsum,		FVSUM,		V_PROJECTION,	M_ALL,	RCQ_MASK	)
-//#ifdef FVDOT
 CREAT_VEC_FUNC( vdot,		FVDOT,		V_PROJECTION2,	M_ALL,	RC_MASK	)
-//#endif // FVDOT
 CREAT_CPU_VEC_FUNC( vrand,		FVRAND,		V_UNARY,	M_ALL,	RC_MASK	)
 
 CREAT_VEC_FUNC( vsm_lt,		FVSMLT,		VS_TEST,	M_ALL,	REAL_ARG_MASK	)
@@ -453,13 +452,13 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 		veclib_debug = add_debug_module(QSP_ARG  "veclib");
 
 	/* sort the table to insure that each entry is at the location of its code */
-//#ifdef CAUTIOUS
-//	if( N_VEC_FUNCS != N_NVFS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
-//			N_VEC_FUNCS-N_NVFS);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
+#ifdef CAUTIOUS
+	if( N_VEC_FUNCS != N_NVFS ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
+			N_VEC_FUNCS-N_NVFS);
+		ERROR1(ERROR_STRING);
+	}
+#endif // CAUTIOUS
 
 	assert( N_VEC_FUNCS == N_NVFS );
 
