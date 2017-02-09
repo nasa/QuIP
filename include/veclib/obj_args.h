@@ -460,10 +460,13 @@ extern bitnum_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_QVAL2(vap,v)		SET_VA_SVAL(vap,1,v)
 // These macros here depend on whether scalars for spdp are src or dest
 // Here we assume src...
-#define SET_VA_SCALAR_VAL_STD(vap,idx,v)	*((std_type *)(vap)->va_sval[idx]) = v
-#define SET_VA_SCALAR_VAL_UDI(vap,idx,v)	*((uint32_t *)(vap)->va_sval[idx]) = v
-#define VA_SCALAR_VAL_STD(vap,idx)	(*((std_type *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_UDI(vap,idx)	(*((uint32_t *)((vap)->va_sval[idx])))
+#define SET_VA_SCALAR_VAL_UDI(vap,idx,v)	*((uint32_t *)(vap)->va_sval[idx]) = v
+
+// these are now m4 macros...
+// BUT we need to keep them here until veclib2 is ported also...
+#define SET_VA_SCALAR_VAL_STD(vap,idx,v)	*((std_type *)(vap)->va_sval[idx]) = v
+#define VA_SCALAR_VAL_STD(vap,idx)	(*((std_type *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_STDCPX(vap,idx)	(*((std_cpx *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_STDQUAT(vap,idx)	(*((std_quat *)((vap)->va_sval[idx])))
 

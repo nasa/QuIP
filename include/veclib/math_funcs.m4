@@ -30,8 +30,8 @@ _VEC_FUNC_2V(		visnorm ,	dst = (dest_type) isnormal( src1 )	)
 
 _VEC_FUNC_2V(		vj0 ,		dst = (dest_type)j0	( src1 )		)
 _VEC_FUNC_2V(		vj1 ,		dst = (dest_type)j1	( src1 )		)
-_VEC_FUNC_2V(		vgamma,		dst = gamma_func( src1 )		)
-_VEC_FUNC_2V(		vlngamma,	dst = lngamma_func( src1 )		)
+_VEC_FUNC_2V(		vgamma,		dst = gamma_func ( src1 )		)
+_VEC_FUNC_2V(		vlngamma,	dst = lngamma_func ( src1 )		)
 
 // vuni has no source, so mixed precision makes no sense
 ifdef(`MIXED_PRECISION',`',` dnl ifndef MIXED_PRECISION
@@ -55,20 +55,20 @@ _VEC_FUNC_2V(		vatan ,		dst = atan_func	( src1 )		)
 _VEC_FUNC_2V(		vtan ,		dst = tan_func	( src1 )		)
 _VEC_FUNC_2V(		vcos ,		dst = cos_func	( src1 )		)
 _VEC_FUNC_2V(		verf ,		dst = erf_func	( src1 )		)
-_VEC_FUNC_2V(		verfinv ,	dst = erfinv_func( src1 )		)
+_VEC_FUNC_2V(		verfinv ,	dst = erfinv_func ( src1 )		)
 _VEC_FUNC_2V(		vacos ,		dst = acos_func	( src1 )		)
 _VEC_FUNC_2V(		vsin ,		dst = sin_func	( src1 )		)
 _VEC_FUNC_2V(		vasin ,		dst = asin_func	( src1 )		)
 // does openCL have atan2f? NO!
-_VEC_FUNC_2V_MIXED(	vatn2 ,		dst = atan2_func(csrc1.im,csrc1.re)	)
-_VEC_FUNC_3V( 	rvpow ,		dst = pow_func(src1,src2)		)
-_VEC_FUNC_3V(	vatan2 ,	dst = atan2_func( src2 , src1 )		)
+_VEC_FUNC_2V_MIXED(	vatn2 ,		dst = atan2_func (csrc1.im,csrc1.re)	)
+_VEC_FUNC_3V( 	rvpow ,		dst = pow_func (src1,src2)		)
+_VEC_FUNC_3V(	vatan2 ,	dst = atan2_func ( src2 , src1 )		)
 
-_VEC_FUNC_2V_SCAL(	vsatan2 ,	dst = atan2_func( src1 , scalar1_val )	)
-_VEC_FUNC_2V_SCAL(	vsatan22 ,	dst = atan2_func( scalar1_val, src1 )	)
+_VEC_FUNC_2V_SCAL(	vsatan2 ,	dst = atan2_func ( src1 , scalar1_val )	)
+_VEC_FUNC_2V_SCAL(	vsatan22 ,	dst = atan2_func ( scalar1_val, src1 )	)
 
-_VEC_FUNC_2V_SCAL(	vspow2 ,	dst = pow_func( scalar1_val, src1 )	)
-_VEC_FUNC_2V_SCAL(	vspow ,		dst = pow_func( src1 , scalar1_val )	)
+_VEC_FUNC_2V_SCAL(	vspow2 ,	dst = pow_func ( scalar1_val, src1 )	)
+_VEC_FUNC_2V_SCAL(	vspow ,		dst = pow_func ( src1 , scalar1_val )	)
 
 /* Complex powers - need to go to polar coords!
  *
@@ -99,11 +99,11 @@ _VEC_FUNC_2V_SCAL(	vspow ,		dst = pow_func( src1 , scalar1_val )	)
 // We put this in brackets because there is a comma in the call to atan2
 
 _VEC_FUNC_CPX_3V_T1( cvpow ,					\
-	r = sqrt_func(csrc1.re*csrc1.re+csrc1.im*csrc1.im);	\
-	theta=atan2_func(csrc1.re,csrc1.im);			\
-	arg = csrc2.im * log_func(r) + csrc2.re * theta;	\
-	r = csrc2.re * log_func(r) - csrc2.im * theta;		\
-	cdst.re = r*cos_func(arg);				\
-	cdst.im = r*sin_func(arg);				\
+	r = sqrt_func (csrc1.re*csrc1.re+csrc1.im*csrc1.im);	\
+	theta=atan2_func (csrc1.re,csrc1.im);			\
+	arg = csrc2.im * log_func (r) + csrc2.re * theta;	\
+	r = csrc2.re * log_func (r) - csrc2.im * theta;		\
+	cdst.re = r*cos_func (arg);				\
+	cdst.im = r*sin_func (arg);				\
 )
 

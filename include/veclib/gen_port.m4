@@ -1,16 +1,22 @@
-
+/* gen_port.m4 BEGIN */
 define(`TMPVEC_NAME',`_TMPVEC_NAME(pf_str)')
 define(`_TMPVEC_NAME',$1`_tmp_vec')
+
+define(`IDX3',`index3')
 
 define(`FREETMP_NAME',`_FREETMP_NAME(pf_str)')
 define(`_FREETMP_NAME',$1`_free_tmp')
 
 define(`PF_COMMAND_FUNC',`COMMAND_FUNC( MENU_FUNC_NAME($1) )')
 define(`PF_FUNC_NAME',`PLATFORM_SYMBOL_NAME($1)')
-define(`PLATFORM_SYMBOL_NAME',`pf_str`_$1')
+define(`PLATFORM_SYMBOL_NAME',`pf_str`_'$1')
 
-define(`MENU_FUNC_NAME',`do_'pf_str`_'$1)
+define(`MENU_FUNC_NAME',``do_'pf_str`_'$1')
 
+define(`SETUP_NAME',`$1`_setup'')
+define(`HELPER_NAME',`$1`_helper'')
+
+define(`GPU_FUNC_FAST_SETUP_NAME',`GPU_FAST_CALL_NAME(SETUP_NAME($1))')
 
 // this is really a host call...
 define(`HOST_CALL_NAME',`_XXX_CALL_NAME(h,$1)')
@@ -22,7 +28,8 @@ define(`HOST_CALL_NAME_QMIXD',`_XXX_CALL_NAME_QMIXD(h,$1)')
 
 // XXX_CALL
 
-define(`_XXX_CALL_NAME',`$1`_'pf_str`_'$2')
+define(`_XXX_CALL_NAME',`__XXX_CALL_NAME($1`_'pf_str`_'$2)')
+define(`__XXX_CALL_NAME',`$1')
 define(`_XXX_CALL_NAME_REAL',`$1`_'pf_str`_r'$2')
 define(`_XXX_CALL_NAME_CPX',`$1`_'pf_str`_c'$2')
 define(`_XXX_CALL_NAME_QUAT',`$1`_'pf_str`_q'$2')
@@ -41,13 +48,13 @@ define(`CPU_CALL_NAME_MIXED',`_XXX_CALL_NAME_MIXED(c,$1)')
 define(`CPU_CALL_NAME_QMIXD',`_XXX_CALL_NAME_QMIXD(c,$1)')
 
 // GPU_CALL
-define(`GPU_CALL_NAME',`GPU_TYPED_CALL_NAME($1,type_code)')
+define(`GPU_CALL_NAME',`/* gpu_call_name /$1/ /type_code/ */ GPU_TYPED_CALL_NAME($1,type_code)')
 define(`GPU_TYPED_CALL_NAME',`_XXX_TYPED_CALL_NAME(g,$1,$2)')
 
 // PF_TYPED
 
 define(`PF_TYPED_CALL_NAME',``h_'pf_str`_'type_code`_'$1'')
-define(`PF_FFT_CALL_NAME',`pf_str`_fft_'type_code`_'$1'')
+define(`PF_FFT_CALL_NAME',`pf_str`_fft_'type_code`_'$1')
 
 define(`PF_TYPED_CALL_NAME_CPX',`pf_str`_'$2`_c'$1')
 define(`PF_TYPED_CALL_NAME_REAL',`pf_str`_'$2`_r'$1')
@@ -55,6 +62,7 @@ define(`_XXX_TYPED_CALL_NAME',`$1`_'pf_str`_'$3`_'$2')
 
 // HOST_TYPED
 
+/* defining host_typed_call_name */
 define(`HOST_TYPED_CALL_NAME',`_XXX_TYPED_CALL_NAME(h,$1,$2)')
 define(`HOST_TYPED_CALL_NAME_REAL',`_XXX_TYPED_CALL_NAME(h,`r'$1,$2)')
 define(`HOST_TYPED_CALL_NAME_CPX',`_XXX_TYPED_CALL_NAME(h,`c'$1,$2)')
@@ -62,16 +70,16 @@ define(`HOST_TYPED_CALL_NAME_MIXED',`_XXX_TYPED_CALL_NAME(h,`m'$1,$2)')
 define(`HOST_TYPED_CALL_NAME_QUAT',`_XXX_TYPED_CALL_NAME(h,`q'$1,$2)')
 define(`HOST_TYPED_CALL_NAME_QMIXD',`_XXX_TYPED_CALL_NAME(h,`p'$1,$2)')
 
-define(`NAME_WITH_SUFFIX',``h_'pf_str`_'type_code`_'$1$2')
-define(`SETUP_NAME',`NAME_WITH_SUFFIX($1,`_setup')')
-define(`HELPER_NAME',`NAME_WITH_SUFFIX($1,`_helper')')
-define(`INDEX_SETUP_NAME',`SETUP_NAME($1)')
-define(`INDEX_HELPER_NAME',`HELPER_NAME($1)')
+define(`HOST_NAME_WITH_SUFFIX',``h_'pf_str`_'type_code`_'$1$2')
+define(`HOST_SETUP_NAME',`HOST_TYPED_CALL_NAME(SETUP_NAME($1))')
+define(`HOST_HELPER_NAME',`HOST_TYPED_CALL_NAME(HELPER_NAME($1))')
+dnl	define(`INDEX_SETUP_NAME',`SETUP_NAME($1)')
+dnl	define(`INDEX_HELPER_NAME',`HELPER_NAME($1)')
 
 define(`MM_HELPER_NAME',`HELPER_NAME($1)')
 
-define(`NOCC_SETUP_NAME',`SETUP_NAME($1)')
-define(`NOCC_HELPER_NAME',`HELPER_NAME($1)')
+dnl	define(`NOCC_SETUP_NAME',`SETUP_NAME($1)')
+dnl	define(`NOCC_HELPER_NAME',`HELPER_NAME($1)')
 
 define(`CONV_FUNC_NAME',``h_'pf_str`_v'$2`2'$3')
 
@@ -104,4 +112,27 @@ define(`CPU_SLOW_CALL_NAME',`_XXX_SLOW_CALL_NAME(c,$1)')
 define(`CPU_FLEN_CALL_NAME',`_XXX_FLEN_CALL_NAME(c,$1)')
 define(`CPU_ELEN_CALL_NAME',`_XXX_ELEN_CALL_NAME(c,$1)')
 define(`CPU_SLEN_CALL_NAME',`_XXX_SLEN_CALL_NAME(c,$1)')
+
+dnl	SET_VA_SCALAR_VAL_STD(vap,idx,v)
+define(`SET_VA_SCALAR_VAL_STD',`*((std_type *)($1)->va_sval[$2]) = $3')
+dnl	VA_SCALAR_VAL_STD(vap,idx)
+define(`VA_SCALAR_VAL_STD',`(*((std_type *)(($1)->va_sval[$2])))')
+dnl	VA_SCALAR_VAL_STDCPX(vap,idx)
+define(`VA_SCALAR_VAL_STDCPX',`(*((std_cpx *)(($1)->va_sval[$2])))')
+dnl	VA_SCALAR_VAL_STDQUAT(vap,idx)
+define(`VA_SCALAR_VAL_STDQUAT',`(*((std_quat *)(($1)->va_sval[$2])))')
+
+define(`flush_output',`include(`../../include/veclib/flush_output.m4')')
+
+ifdef(`MAXIMUM_TESTING',`
+define(`my_include',`
+// CALLING $1
+flush_output
+include($1)
+// BACK FROM $1
+flush_output
+')
+',` dnl else ! MAXIMUM_TESTING
+define(`my_include',`include($1)')
+') dnl endif ! MAXIMUM_TESTING
 

@@ -7,6 +7,10 @@
 #include "rn.h"
 #include "veclib_api.h"
 #include "my_vl2.h"
+
+#include "vl2_veclib_expanded.c"
+
+#ifdef FOOBAR
 #include "veclib/vl2_port.h"
 #include "veclib/vl2_veclib_prot.h"
 
@@ -19,5 +23,6 @@
 #include "vl2_host_funcs.c"
 
 #include "vl2_typtbl.c"
+#endif // FOOBAR
 
 

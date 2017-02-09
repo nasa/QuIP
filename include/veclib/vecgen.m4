@@ -1,3 +1,4 @@
+/* vecgen.m4 BEGIN */
 
 /* defns shared by veclib & warlib */
 
@@ -14,4 +15,5 @@ define(`HOST_CALL_ARG_DECLS',`VFCODE_ARG_DECL  /*const*/ Vec_Obj_Args *oap')
 define(`LINK_FUNC_ARGS',`VFCODE_ARG  vap')
 define(`LINK_FUNC_ARG_DECLS',`VFCODE_ARG_DECL  const Vector_Args *vap')
 
+/* vecgen.m4 DONE */
 

@@ -173,22 +173,26 @@ _VEC_FUNC_2V_PROJ( vmaxv, dst = (dest_type) src1, if( src1 > dst ) dst = (dest_t
 _VEC_FUNC_2V_PROJ( vminv, dst = (dest_type) src1, if( src1 < dst ) dst = (dest_type)  src1, psrc1 < psrc2 ? psrc1 : psrc2 )
 
 
-//VEC_FUNC_MM_IND(vmaxi, dst = (src1 > src2 ? IDX2 : IDX3+len1), dst = (orig[src1] > orig[src2] ? src1 : src2) )
-//VEC_FUNC_MM_IND(vmini, dst = (src1 < src2 ? IDX2 : IDX3+len1), dst = (orig[src1] < orig[src2] ? src1 : src2) )
+dnl VEC_FUNC_MM_IND(vmaxi, dst = (src1 > src2 ? IDX2 : IDX3+len1), dst = (orig[src1] > orig[src2] ? src1 : src2) )
+dnl VEC_FUNC_MM_IND(vmini, dst = (src1 < src2 ? IDX2 : IDX3+len1), dst = (orig[src1] < orig[src2] ? src1 : src2) )
 
 
-//_VF_2V_PROJ_IDX( name, cpu_s1, cpu_s2, gpu_s1, gpu_s2 )
+dnl _VF_2V_PROJ_IDX( name, cpu_s1, cpu_s2, gpu_s1, gpu_s2 )
 
 _VEC_FUNC_2V_PROJ_IDX( vmaxi, dst = index_base[0], tmp_ptr = INDEX_VDATA(dst); if ( src1 > *tmp_ptr ) dst=index_base[0], dst = (src1 > src2 ? IDX2 : IDX3+len1), dst = (orig[src1] > orig[src2] ? src1 : src2))
 
 _VEC_FUNC_2V_PROJ_IDX( vmini, dst = index_base[0], tmp_ptr = INDEX_VDATA(dst); if( src1 < *tmp_ptr ) dst=index_base[0], dst = (src1 < src2 ? IDX2 : IDX3+len1), dst = (orig[src1] < orig[src2] ? src1 : src2))
+
+/* vmini DONE */
 
 
 ifdef(`BUILD_FOR_GPU',`',`	dnl	ifndef BUILD_FOR_GPU
 _VEC_FUNC_2V( rvrand, dst = (dest_type) rn((u_long)src1)	)
 ')				dnl	endif /* ! BUILD_FOR_GPU */
 
+/* vvm_le BEGIN */
 _VEC_FUNC_VVMAP( vvm_le, <= )
+/* vvm_le DONE */
 _VEC_FUNC_VVMAP( vvm_ge, >= )
 _VEC_FUNC_VVMAP( vvm_lt, <  )
 _VEC_FUNC_VVMAP( vvm_gt, >  )
@@ -206,16 +210,15 @@ _VEC_FUNC_VSMAP( vsm_ne, != )
 _VEC_FUNC_VSMAP( vsm_eq, == )
 
 // gpu versions appear compatible...
-//VEC_FUNC_VVSLCT( vvv_slct, dst = srcbit ? src1 : src2 )
-//VEC_FUNC_VSSLCT( vvs_slct, dst = srcbit ? src1 : scalar1_val )
-//VEC_FUNC_SSSLCT( vss_slct, dst = srcbit ? scalar1_val : scalar2_val )
+dnl VEC_FUNC_VVSLCT( vvv_slct, dst = srcbit ? src1 : src2 )
+dnl VEC_FUNC_VSSLCT( vvs_slct, dst = srcbit ? src1 : scalar1_val )
+dnl VEC_FUNC_SSSLCT( vss_slct, dst = srcbit ? scalar1_val : scalar2_val )
 
 
 
 
-//#define VV_SELECTION_METHOD( name, stat )	_VF_VVSLCT( name, type_code, stat)
+dnl #define VV_SELECTION_METHOD( name, stat )	_VF_VVSLCT( name, type_code, stat)
 _VEC_FUNC_VVSLCT( rvvv_slct, dst = (dest_type) ( srcbit ? src1 : src2 ) )
 _VEC_FUNC_VSSLCT( rvvs_slct, dst = (dest_type) ( srcbit ? src1 : scalar1_val ) )
 _VEC_FUNC_SSSLCT( rvss_slct, dst = (dest_type) ( srcbit ? scalar1_val : scalar2_val ) )
-
 
