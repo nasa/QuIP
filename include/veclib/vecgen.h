@@ -161,8 +161,8 @@ typedef enum {
 	FVSSHL2,			/* 79 */
 
 	FVSUM,				/* 80 */
-	/* to implement on GPU, better to write vdot as composition of VMUL and VSUM */
-	/*FVDOT,*/				/* 81 */
+	/* to implement on GPU, better to write vdot as composition of VMUL and VSUM ? */
+	FVDOT,				/* 81 */
 	FVRAND,				/* 82 */
 
 	FVSMLT,				/* 83 */

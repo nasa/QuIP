@@ -149,7 +149,7 @@ struct data_obj {
 	void *			dt_data_ptr;
 	void *			dt_unaligned_ptr;
 	void *			dt_extra;	// used for decl_enp - what else?
-	bit_count_t		dt_bit0;
+	bitnum_t		dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;
 	index_t			dt_offset;	// data offset of subobjects - in bytes

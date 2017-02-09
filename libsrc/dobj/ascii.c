@@ -977,7 +977,8 @@ static void display_bitmap(QSP_ARG_DECL  Data_Obj *dp, FILE *fp)
 {
 	int i,j,k,l,m;
 	bitmap_word *bwp,val;
-	bit_count_t which_bit, bit_index, word_offset;
+	bitnum_t which_bit;
+	bitnum_t bit_index, word_offset;
 	int bits_this_line;
 
 	bwp = (bitmap_word *)OBJ_DATA_PTR(dp);

@@ -1866,18 +1866,9 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 	// thread doesn't have a context - then we would like
 	// it to go to its own parent.  But for now we
 	// won't worry about that...
-<<<<<<< a6725c7d76ee84ad35472f81eee23d25ab9d9f67
-#ifdef THREAD_SAFE_QUERY
-	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
-#else // ! THREAD_SAFE_QUERY
-	icp = ITCI_CTX( ITCI_AT_INDEX(itp,0) );
-#endif // ! THREAD_SAFE_QUERY
-	assert(icp!=NULL);
-=======
 
 #ifdef THREAD_SAFE_QUERY
 	icp = ITCI_CTX( ITCI_AT_INDEX(itp,QS_PARENT_SERIAL(THIS_QSP)) );
->>>>>>> clearing up compiler warnings and other problems compiling iquip on brewster (single thread version).
 
 //fprintf(stderr,"current_context %s (thread %d):  pushing context %s from thread %d\n",
 //ITEM_TYPE_NAME(itp),QS_SERIAL,CTX_NAME(icp),QS_PARENT_SERIAL(THIS_QSP));
@@ -1886,7 +1877,6 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 #endif // ! THREAD_SAFE_QUERY
 
 	assert(icp!=NULL);
-	
 
 	push_item_context(QSP_ARG  itp, icp );
 

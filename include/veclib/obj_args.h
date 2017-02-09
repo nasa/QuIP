@@ -169,6 +169,11 @@ typedef struct vector_args {
 	Vector_Arg	va_src[MAX_N_ARGS];
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
+	bitnum_t	va_dbm_bit0;
+	bitnum_t	va_sbm_bit0;
+
+	dimension_t	va_len;			// just for fast/eqsp ops?
+
 #ifdef HAVE_ANY_GPU
 	//Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
 	dim5		va_slow_size;
@@ -187,9 +192,6 @@ typedef struct vector_args {
 	Bitmap_GPU_Info *	va_sbm_gpu_info;
 #endif // HAVE_ANY_GPU
 
-	bit_count_t	va_dbm_bit0;
-	bit_count_t	va_sbm_bit0;
-	dimension_t	va_len;
 #ifdef FOOBAR
 /*#ifdef BUILD_FOR_GPU*/
 // This really should be conditionally compiled, but currently
@@ -293,7 +295,7 @@ fprintf(stderr,"VA_SLOW_SIZE:  %d %d %d %d %d\n",\
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
 extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
-extern dimension_t bitmap_obj_word_count( Data_Obj *dp );
+extern bitnum_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */

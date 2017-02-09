@@ -119,11 +119,6 @@ typedef struct bitmap_gpu_word_info {
 typedef struct bitmap_gpu_info {
 	dimension_t			n_bitmap_words;
 	uint32_t			total_size;	// size of this struct in bytes
-	/*
-	bitnum_t			next_word_idx;
-	bitnum_t			this_word_idx;
-	bitnum_t			last_word_idx;
-	*/
 	dimension_t			next_word_idx;
 	dimension_t			this_word_idx;
 	dimension_t			last_word_idx;

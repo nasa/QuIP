@@ -1047,7 +1047,8 @@ void show_vec_args(const Vector_Args *vap)
 	
 }
 
-static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, bit_count_t bit0 )
+#ifdef PAD_MINDIM
+static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *isp, bitnum_t bit0 )
 {
 	dimension_t bits_per_row, words_per_row;
 	dimension_t n;
