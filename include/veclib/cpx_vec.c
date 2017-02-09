@@ -173,15 +173,15 @@ _VEC_FUNC_CPX_2V_PROJ( cvsum,
 	psrc1.im + psrc2.im
 	)
 
-// Need to implement cvdot as composite of cvmul and cvsum BUG
-//_VEC_FUNC_CPX_3V_PROJ( cvdot,
-//	cdst.re = 0; cdst.im = 0 ,
-//	cdst.re += csrc1.re * csrc2.re - csrc1.im * csrc2.im; cdst.im += csrc1.re * csrc2.im + csrc1.im * csrc2.re ,
-//	csrc1.re*csrc2.re-csrc1.im*csrc2.im,
-//	csrc1.re*csrc2.im+csrc1.im*csrc2.re,
-//	csrc1.re+csrc2.re,
-//	csrc1.im+csrc2.im
-//	)
+// Need to implement cvdot as composite of cvmul and cvsum ?
+_VEC_FUNC_CPX_3V_PROJ( cvdot,
+	cdst.re = 0; cdst.im = 0 ,
+	cdst.re += csrc1.re * csrc2.re - csrc1.im * csrc2.im; cdst.im += csrc1.re * csrc2.im + csrc1.im * csrc2.re ,
+	csrc1.re*csrc2.re-csrc1.im*csrc2.im,
+	csrc1.re*csrc2.im+csrc1.im*csrc2.re,
+	csrc1.re+csrc2.re,
+	csrc1.im+csrc2.im
+	)
 
 #ifndef BUILD_FOR_GPU
 _VEC_FUNC_CPX_2V( cvrand , cdst.re = rn((u_long)csrc1.re); cdst.im = rn((u_long)csrc1.im)	)

@@ -34,13 +34,13 @@ _VEC_FUNC_2V_SCAL( rvsdiv2 , dst = (dest_type)(src1 / scalar1_val) )
 
 /* New conditional assignments */
 
-// implement vdot using vmul & vsum for gpu
-//_VEC_FUNC_3V_PROJ( rvdot,
-//	dst = (dest_type)  0,
-//	dst += (dest_type)  src1 * src2,
-//	psrc1 * psrc2,
-//	psrc1 + psrc2
-//	)
+// implement vdot using vmul & vsum for gpu ?
+_VEC_FUNC_3V_PROJ( rvdot,
+	dst = (dest_type)  0,
+	dst += (dest_type)  src1 * src2,
+	psrc1 * psrc2,
+	psrc1 + psrc2
+	)
 
 
 
