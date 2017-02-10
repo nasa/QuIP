@@ -669,7 +669,7 @@ static void HOST_TYPED_CALL_NAME(name,type_code)( HOST_CALL_ARG_DECLS )	\
 	/* BUG need to set vap entries from oap */			\
 	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/			\
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])				\
-fprintf(stderr,"H_CALL_PROJ_3V %s:  need to implement speed switch!?\n",#name);\
+fprintf(stderr,"h_call_proj_3v %s:  need to implement speed switch!?\n",#name);\
 	HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARGS);			\
 }
 

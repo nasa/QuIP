@@ -292,7 +292,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS )
 	CHECK_MM($1)
 	/* BUG need to xfer args to vap */
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
-fprintf(stderr,"``_H_CALL_PROJ_2V_IDX'' %s:  need to implement speed switch!?\n","$1");
+fprintf(stderr,"h_call_proj_2v_idx %s:  need to implement speed switch!?\n","$1");
 
 	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
 }
@@ -645,10 +645,70 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 	XFER_SLOW_ARGS_2
 	SETUP_SLOW_LEN_2
 	/* BUG need to have a speed switch!? */
-fprintf(stderr,"``_H_CALL_PROJ_2V'' %s:  need to implement speed switch, calling fast function!?\n","$1");
+fprintf(stderr,"h_call_proj_2v %s:  need to implement speed switch, calling fast function!?\n","$1");
 	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
 }
 ')
+
+// vdot, cvdot, etc
+
+dnl	 H_CALL_PROJ_3V( name, dtype, stype )
+define(`H_CALL_PROJ_3V',`
+
+static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
+{
+	$2 *dst_values;
+	$3 *orig_src1_values, *orig_src2_values;
+	$2 *src1_values, *src2_values;
+	uint32_t len, len1, len2;
+	$2 *src_to_free;
+	$2 *dst_to_free;
+	DECLARE_PLATFORM_VARS_2
+
+	len = VA_SRC1_LEN(vap);
+	orig_src1_values = ($3 *) VA_SRC1_PTR(vap);
+	orig_src2_values = ($3 *) VA_SRC2_PTR(vap);
+
+	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
+	/* first iteration may be mixed types... */
+	SETUP_PROJ_ITERATION($2,$1)
+	CALL_GPU_FAST_PROJ_3V_SETUP($1)
+	len = len1;
+	src_to_free=(dst_type *)NULL;
+	src1_values = dst_values;
+	while( len > 1 ){
+		SETUP_PROJ_ITERATION($2,$1)
+		CALL_GPU_FAST_PROJ_3V_HELPER($1)
+		src1_values = dst_values;
+		/* Each temp vector gets used twice,
+		 * first as result, then as source */
+		if( src_to_free != (dst_type *)NULL ){
+			FREETMP_NAME`(src_to_free,"$1");'
+			src_to_free=(dst_type *)NULL;
+		}
+		src_to_free = dst_to_free;
+		dst_to_free = (dst_type *)NULL;
+	}
+	if( src_to_free != (dst_type *)NULL ){
+		FREETMP_NAME`(src_to_free,"$1");'
+		src_to_free=(dst_type *)NULL;
+	}
+}
+
+static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
+{
+	Vector_Args va1, *vap=(&va1);
+
+	CHECK_MM($1)
+
+	/* BUG need to set vap entries from oap */
+	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/
+	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])
+fprintf(stderr,"h_call_proj_3v %s:  need to implement speed switch!?\n","$1");
+	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
+}
+')
+
 
 /* end of host_calls_gpu.m4 */
 

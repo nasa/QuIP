@@ -59,13 +59,13 @@ include(`../../include/veclib/gen_func_array.m4')
 
 void check_vl2_vfa_tbl(SINGLE_QSP_ARG_DECL)
 {
-//	if( N_VL2_ARRAYED_VEC_FUNCS != N_VEC_FUNCS ){
-//		sprintf(ERROR_STRING,
-//	"vl2_vfa_tbl has %ld entries, expected %d!?\n",
-//			N_VL2_ARRAYED_VEC_FUNCS, N_VEC_FUNCS );
-//		WARN(ERROR_STRING);
-////		return -1;
-//	}
+	if( N_VL2_ARRAYED_VEC_FUNCS != N_VEC_FUNCS ){
+		sprintf(ERROR_STRING,
+	"vl2_vfa_tbl has %ld entries, expected %d!?\n",
+			N_VL2_ARRAYED_VEC_FUNCS, N_VEC_FUNCS );
+		WARN(ERROR_STRING);
+//		return -1;
+	}
 	assert( N_VL2_ARRAYED_VEC_FUNCS == N_VEC_FUNCS );
 	check_vfa_tbl(QSP_ARG  vl2_vfa_tbl, N_VL2_ARRAYED_VEC_FUNCS);
 }

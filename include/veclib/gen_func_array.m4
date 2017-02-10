@@ -155,7 +155,7 @@ dnl /* RC_FIXED_ARR(vmov,FVMOV, bmvmov), */
 
 RCQALL_ARR(vsum,FVSUM),
 dnl // BUG - need to deal with vdot
-dnl //RCALL_ARR(vdot,FVDOT),
+RCALL_ARR(vdot,FVDOT),
 
 RALL_ARR(vsm_lt,FVSMLT),
 RALL_ARR(vsm_gt,FVSMGT),

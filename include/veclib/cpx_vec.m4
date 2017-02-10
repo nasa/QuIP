@@ -139,14 +139,14 @@ _VEC_FUNC_CPX_2V_PROJ( cvsum,						\
 	)
 
 dnl Need to implement cvdot as composite of cvmul and cvsum BUG
-dnl _VEC_FUNC_CPX_3V_PROJ( cvdot,
-dnl	cdst.re = 0; cdst.im = 0 ,
-dnl	cdst.re += csrc1.re * csrc2.re - csrc1.im * csrc2.im; cdst.im += csrc1.re * csrc2.im + csrc1.im * csrc2.re ,
-dnl	csrc1.re*csrc2.re-csrc1.im*csrc2.im,
-dnl	csrc1.re*csrc2.im+csrc1.im*csrc2.re,
-dnl	csrc1.re+csrc2.re,
-dnl	csrc1.im+csrc2.im
-dnl	)
+_VEC_FUNC_CPX_3V_PROJ( cvdot,
+	cdst.re = 0; cdst.im = 0 ,
+	cdst.re += csrc1.re * csrc2.re - csrc1.im * csrc2.im; cdst.im += csrc1.re * csrc2.im + csrc1.im * csrc2.re ,
+	csrc1.re*csrc2.re-csrc1.im*csrc2.im,
+	csrc1.re*csrc2.im+csrc1.im*csrc2.re,
+	csrc1.re+csrc2.re,
+	csrc1.im+csrc2.im
+	)
 
 ifdef(`BUILD_FOR_GPU',`',`	dnl	ifndef BUILD_FOR_GPU
 _VEC_FUNC_CPX_2V( cvrand , cdst.re = rn((u_long)csrc1.re); cdst.im = rn((u_long)csrc1.im)	)

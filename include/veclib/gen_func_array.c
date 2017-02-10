@@ -157,7 +157,7 @@ REAL_INT_ARR_NO_BITMAP(		visblank,	FVISBLANK ),
 
 RCQALL_ARR(		vsum,		FVSUM ),
 // BUG - need to deal with vdot
-//RCALL_ARR(		vdot,		FVDOT ),
+RCALL_ARR(		vdot,		FVDOT ),
 
 RALL_ARR(		vsm_lt,		FVSMLT ),
 RALL_ARR(		vsm_gt,		FVSMGT ),

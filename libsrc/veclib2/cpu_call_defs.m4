@@ -1602,8 +1602,8 @@ define(`PROJ3_SLOW_BODY',`
 
 dnl	NEW_PLOOP_##typ##3( init_statement, count )
 dnl	NEW_PLOOP_##typ##3( statement, loop_count )
-	NEW_PLOOP($2,`3')( init_statement, count )
-	NEW_PLOOP($2,`3')( statement, loop_count )
+	NEW_PLOOP($2,`3')($3,count)
+	NEW_PLOOP($2,`3')($4,loop_count)
 }
 ')
 

@@ -25,6 +25,8 @@ _VEC_FUNC_2V_SCAL( rvsmul, dst = (dest_type)(src1 * scalar1_val) )
 _VEC_FUNC_2V_SCAL( rvsdiv, dst = (dest_type)(scalar1_val / src1) )
 _VEC_FUNC_2V_SCAL( rvsdiv2, dst = (dest_type)(src1 / scalar1_val) )
 
+_VEC_FUNC_3V_PROJ( rvdot, dst = (dest_type)  0, dst += (dest_type)  src1 * src2, psrc1 * psrc2, psrc1 + psrc2)
+
 _VEC_FUNC_3V( vcmp, dst= (dest_type) (src1>src2?1:0) )
 _VEC_FUNC_2V_SCAL( vscmp, dst= (dest_type) src1>=scalar1_val?1:0 )
 _VEC_FUNC_2V_SCAL( vscmp2, dst= (dest_type) src1<=scalar1_val?1:0 )
@@ -76,8 +78,8 @@ _VEC_FUNC_2V_SCAL( vscmp2, dst= (dest_type) src1<=scalar1_val?1:0 )
 _VEC_FUNC_MM_NOCC( vmaxg, src1==extval, src1>extval, extval= src1, src_vals[IDX2]>src_vals[IDX2+1],src_vals[IDX2]<src_vals[IDX2+1])
 _VEC_FUNC_MM_NOCC( vming, src1==extval, src1<extval, extval= src1, src_vals[IDX2]<src_vals[IDX2+1],src_vals[IDX2]>src_vals[IDX2+1])
 
-//VEC_FUNC_MM_NOCC(vmaxg,src_vals[IDX2]>src_vals[IDX2+1],src_vals[IDX2]<src_vals[IDX2+1])
-//VEC_FUNC_MM_NOCC(vming,src_vals[IDX2]<src_vals[IDX2+1],src_vals[IDX2]>src_vals[IDX2+1])
+dnl	VEC_FUNC_MM_NOCC(vmaxg,src_vals[IDX2]>src_vals[IDX2+1],src_vals[IDX2]<src_vals[IDX2+1])
+dnl	VEC_FUNC_MM_NOCC(vming,src_vals[IDX2]<src_vals[IDX2+1],src_vals[IDX2]>src_vals[IDX2+1])
 
 /* used to be EXTREME_VALUE_METHOD, but logic incorporating projection operation
  * (dimension collapsing) was brought in from the java macros.
