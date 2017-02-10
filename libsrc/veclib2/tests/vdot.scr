@@ -1,0 +1,17 @@
+
+Set n 4
+Set nr 3
+Vector a $n 1 float
+Image b $nr $n 1 float
+Column c $nr 1 float
+Ramp1D a 0 1
+VSAdd b[0] a 2
+VSAdd b[1] a 3
+VSAdd b[2] a 4
+Display a
+Display b
+veclib execute vdot c a b quit
+Display c
+
+exit
+
