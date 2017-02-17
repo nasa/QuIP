@@ -70,7 +70,7 @@ static u_long RMask, GMask, BMask;
 
 static	u_char bg_red=0, bg_green=0, bg_blue=0;
 
-static int color_type_to_write = -1;
+static int color_type_to_write = -1;	// BUG not thread-safe
 
 #ifdef OLD_PNG_LIB
 int png_to_dp( Data_Obj *dp, png_infop info_ptr )
@@ -635,6 +635,7 @@ FIO_WT_FUNC( pngfio )
 		return(-1);
 #endif // HAVE_ANY_GPU
 
+//fprintf(stderr,"pngfio write func BEGIN\n");
 	if( ifp->if_dp == NO_OBJ ){	/* first time? */
 		/* what should be here? */
 	} else {
@@ -717,13 +718,14 @@ FIO_WT_FUNC( pngfio )
 
 	/* we do ini mini mina mo if color type hasn't been given */
 	if(color_type_to_write < 0) {
+//fprintf(stderr,"pngfio_wt:  color_type_to_write not set, checking OBJ_COMPS...\n");
 
-		if( OBJ_COMPS(dp) == 3 )
+		if( OBJ_COMPS(dp) == 3 ){
 			color_type = PNG_COLOR_TYPE_RGB;
-
-		else if( OBJ_COMPS(dp) == 4 ){
+//fprintf(stderr,"pngfio_wt:  color_type = %d (PNG_COLOR_TYPE_RGB)\n",color_type);
+		} else if( OBJ_COMPS(dp) == 4 ){
 			color_type = PNG_COLOR_TYPE_RGB_ALPHA;
-//fprintf(stderr,"pngfio_wt:  color_type = %d\n",color_type);
+//fprintf(stderr,"pngfio_wt:  color_type = %d (PNG_COLOR_TYPE_RGB_ALPHA)\n",color_type);
 		} else {
 			sprintf(ERROR_STRING,
 				"Object %s has bad number of components (%d) for png",
@@ -953,7 +955,7 @@ FIO_WT_FUNC( pngfio )
 	// we have a dp...
 	// make a UIImage then convert and write...
 
-	myimg=objc_img_for_dp(dp,0);
+	myimg=objc_img_for_dp(dp,0);	// don't set the little-endian flag - why not?
 	if( myimg == NULL ){
 		WARN("error creating UIImage!?");
 		return -1;
@@ -1076,7 +1078,7 @@ FIO_CLOSE_FUNC( pngfio )
 		png_ifp = NULL;
 		png_uip = NULL;
 	} else {
-		advise("pngfio_close:  doing nothing.");
+		//advise("pngfio_close:  doing nothing.");
 	}
 	generic_imgfile_close(QSP_ARG  ifp);
 }

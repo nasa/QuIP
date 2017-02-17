@@ -692,14 +692,14 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 	qiv_p.frame = CGRectMake(x,y,VW_WIDTH(vp),VW_HEIGHT(vp));
 
 	// We add the new imageView as a subview of the viewer view...
-fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
+//fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
 	if( VW_IMAGES(vp) == NULL ){
-fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
+//fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
 		init_viewer_images(vp);
-fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
+//fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
 	}
 
-fprintf(stderr,"embed_image:  proceeding\n");
+//fprintf(stderr,"embed_image:  proceeding\n");
 	// What is the purpose of this bit of code???
 
 // old, duplicates lookup

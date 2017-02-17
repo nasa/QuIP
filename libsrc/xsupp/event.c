@@ -652,7 +652,7 @@ NWARN(ERROR_STRING);
 // never cleared!?
 // Maybe faulty auto-repeat?  We could check KeyRelease?
 //
-//fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
+fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
 				if( keystr[0] == 015 )
 					keystr[0]=012;	/* map CR to LF */
 				keystr[1]=0;

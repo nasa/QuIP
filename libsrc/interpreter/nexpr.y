@@ -1133,19 +1133,20 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 	switch(enp->sen_code){
 		case N_QUOT_STR:
+		case N_LITSTR:
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = EVAL_SCALEXP_STRING(enp);
 			szp = find_positionable( DEFAULT_QSP_ARG  s );
 			break;
-//#ifdef CAUTIOUS
+#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
-			assert(0);
+			sprintf(ERROR_STRING,
+		"unexpected case in eval_szbl_expr %d",enp->sen_code);
+			NWARN(ERROR_STRING);
+			//assert(0);
 			break;
-//#endif /* CAUTIOUS */
+#endif /* CAUTIOUS */
 	}
 	if( szp == NULL ){
 		sprintf(ERROR_STRING,

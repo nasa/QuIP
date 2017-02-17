@@ -396,12 +396,12 @@ FIO_RD_FUNC( raw )
 
 	if( FILE_FINISHED(ifp) ){
 
-		//if( verbose ){
+		if( verbose ){
 			sprintf(ERROR_STRING,
 				"closing file \"%s\" after reading %d frames",
 				ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
-		//}
+		}
 		(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
 	}
 	return;
