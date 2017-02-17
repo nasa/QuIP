@@ -50,10 +50,10 @@
 // There is only one function - rvdot, cvdot - so it is implemented in a non-general way.
 // Therefore, we don't have to pass the statements or expressions...
 
-//#define _VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )		\
+//#define _VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )
 //	__VEC_FUNC_FAST_3V_PROJ( func_name )
 
-//#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )		\
+//#define _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
 //	__VEC_FUNC_CPX_FAST_3V_PROJ( func_name )
 
 #define _VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )		\

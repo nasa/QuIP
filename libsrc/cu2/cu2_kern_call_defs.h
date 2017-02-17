@@ -89,11 +89,17 @@
 #define __VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )	\
 	___VEC_FUNC_FAST_2V_PROJ_IDX( func_name, statement1, statement2 )
 
-#define __VEC_FUNC_FAST_3V_PROJ( func_name )		\
-	___VEC_FUNC_FAST_3V_PROJ( func_name )		\
+#define __VEC_FUNC_FAST_3V_PROJ_SETUP( func_name )		\
+	___VEC_FUNC_FAST_3V_PROJ_SETUP( func_name )
 
-#define __VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
-	___VEC_FUNC_CPX_FAST_3V_PROJ( func_name )		\
+#define __VEC_FUNC_FAST_3V_PROJ_HELPER( func_name )		\
+	___VEC_FUNC_FAST_3V_PROJ_HELPER( func_name )
+
+#define __VEC_FUNC_CPX_FAST_3V_PROJ_SETUP( func_name )		\
+	___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP( func_name )
+
+#define __VEC_FUNC_CPX_FAST_3V_PROJ_HELPER( func_name )		\
+	___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER( func_name )
 
 #define __VEC_FUNC_FAST_MM_NOCC( func_name, test1, test2 )		\
 								\

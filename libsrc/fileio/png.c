@@ -722,10 +722,10 @@ FIO_WT_FUNC( pngfio )
 
 		if( OBJ_COMPS(dp) == 3 ){
 			color_type = PNG_COLOR_TYPE_RGB;
-//fprintf(stderr,"pngfio_wt:  color_type = %d (PNG_COLOR_TYPE_RGB)\n",color_type);
 		} else if( OBJ_COMPS(dp) == 4 ){
 			color_type = PNG_COLOR_TYPE_RGB_ALPHA;
-//fprintf(stderr,"pngfio_wt:  color_type = %d (PNG_COLOR_TYPE_RGB_ALPHA)\n",color_type);
+		} else if( OBJ_COMPS(dp) == 1 ){
+			color_type = PNG_COLOR_TYPE_GRAY;
 		} else {
 			sprintf(ERROR_STRING,
 				"Object %s has bad number of components (%d) for png",
