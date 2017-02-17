@@ -584,29 +584,29 @@ fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s):  dst_values = 0x%lx, src_
 	CLEAR_GPU_ERROR(name)							\
 	REPORT_THREAD_INFO2							\
 	GPU_FAST_CALL_NAME(name##_setup)<<< NN_GPU >>>				\
-		( dst_values, orig_src1_values, orig_src2_values, len1, len2 );	\
+		( dst_values, orig_src1_values, orig_src2_values, len );	\
 	CHECK_GPU_ERROR(name)
 
-#define CALL_GPU_FAST_PROJ_3V_HELPER(name)				\
-	CLEAR_GPU_ERROR(name)						\
-	REPORT_THREAD_INFO2						\
-	GPU_FAST_CALL_NAME(name##_helper)<<< NN_GPU >>>			\
-		( dst_values, src1_values, src2_values, len1 );		\
+#define CALL_GPU_FAST_PROJ_3V_HELPER(name)					\
+	CLEAR_GPU_ERROR(name)							\
+	REPORT_THREAD_INFO2							\
+	GPU_FAST_CALL_NAME(name##_helper)<<< NN_GPU >>>				\
+		( dst_values, src1_values, src2_values, len1, len2 );		\
 	CHECK_GPU_ERROR(name)
 
 
 #define CALL_GPU_FAST_INDEX_SETUP_FUNC(name)					\
 	CLEAR_GPU_ERROR(name##_fast_index_setup)				\
-	REPORT_THREAD_INFO2						\
+	REPORT_THREAD_INFO2							\
 	GPU_FAST_CALL_NAME(name##_index_setup)<<< NN_GPU >>>			\
-		(indices,src1_values,src2_values,len1,len2);		\
+		(indices,src1_values,src2_values,len1,len2);			\
 	CHECK_GPU_ERROR(name##_index_setup)
 
 
-#define CALL_GPU_FAST_INDEX_HELPER_FUNC(name)				\
+#define CALL_GPU_FAST_INDEX_HELPER_FUNC(name)					\
 	CLEAR_GPU_ERROR(name##_fast_index_helper)				\
-	REPORT_THREAD_INFO2						\
-	GPU_FAST_CALL_NAME(name##_index_helper)<<< NN_GPU >>>		\
+	REPORT_THREAD_INFO2							\
+	GPU_FAST_CALL_NAME(name##_index_helper)<<< NN_GPU >>>			\
 		(indices,idx1_values,idx2_values,orig_src_values,len1,len2);	\
 	CHECK_GPU_ERROR(name##_index_helper)
 
@@ -642,11 +642,11 @@ fprintf(stderr,"CALL_GPU_FAST_PROJ_2V_HELPER_FUNC(%s):  dst_values = 0x%lx, src_
 #define SETUP_BLOCKS_XYZ_(pdp)		SETUP_BLOCKS_XYZ(pdp)
 #define SETUP_BLOCKS_XYZ_SBM_(pdp)	SETUP_BLOCKS_XYZ(pdp)
 
-#define SETUP_BLOCKS_XYZ(pdp)					\
-								\
-/*fprintf(stderr,"SETUP_BLOCKS_XYZ_\n");*/			\
-	SETUP_BLOCKS_X(VA_ITERATION_TOTAL(vap))					\
-	SETUP_BLOCKS_Y(pdp)					\
+#define SETUP_BLOCKS_XYZ(pdp)						\
+									\
+/*fprintf(stderr,"SETUP_BLOCKS_XYZ_\n");*/				\
+	SETUP_BLOCKS_X(VA_ITERATION_TOTAL(vap))				\
+	SETUP_BLOCKS_Y(pdp)						\
 	SETUP_BLOCKS_Z(pdp)
 
 

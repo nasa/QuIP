@@ -117,8 +117,8 @@
 				idx.d5_dim[3] *= inc.d5_dim[3];		\
 				idx.d5_dim[4] *= inc.d5_dim[4];
 
-//#define SET_INDICES_DBM		SET_INDEX(dbmi)				\
-//				i_dbm_word = dbmi.d5_dim[1];		\
+//#define SET_INDICES_DBM		SET_INDEX(dbmi)
+//				i_dbm_word = dbmi.d5_dim[1];
 //				dbmi.d5_dim[1] *= BITS_PER_BITMAP_WORD;
 
 #define BITMAP_ROW_IDX		(i_dbm_word/words_per_row)

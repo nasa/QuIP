@@ -383,6 +383,70 @@ KERNEL_FUNC_PRELUDE						\
 		}							\
 	}
 
+// 3V_PROJ_SETUP computes the products (FVMUL), then 3V_PROJ_HELPER computes the sums (FVSUM)
+
+// rvdot
+
+#define ___VEC_FUNC_FAST_3V_PROJ_SETUP( func_name )		\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)	\
+	( DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP )		\
+{								\
+	INIT_INDICES_1						\
+								\
+	if( IDX1 < len ){					\
+		dest[IDX1] = s1[IDX1] * s2[IDX1];		\
+	}							\
+}
+
+
+#define ___VEC_FUNC_FAST_3V_PROJ_HELPER( func_name )		\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)	\
+	( DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER )		\
+{								\
+	INIT_INDICES_1						\
+								\
+	if( IDX1 < len2 ){					\
+		dest[IDX1] = s1[IDX1] + s2[IDX1] ;		\
+	} else if( IDX1 < len1 ){				\
+		dest[IDX1] = s1[IDX1];				\
+	}							\
+}
+
+
+#define ___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP( func_name)				\
+										\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)		\
+	( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP )			\
+{									\
+	INIT_INDICES_1							\
+	if( IDX1 < len ){						\
+		ASSIGN_CPX_PROD(dest[IDX1],s1[IDX1],s2[IDX1])		\
+	}								\
+}
+
+#define ___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER( func_name)			\
+									\
+KERNEL_FUNC_PRELUDE							\
+									\
+KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)		\
+	( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER )			\
+{									\
+	INIT_INDICES_1							\
+	if( IDX1 < len2 ){						\
+		ASSIGN_CPX_SUM(dest[IDX1],s1[IDX1],s2[IDX1])		\
+	} else if( IDX1 < len2 ){					\
+		dest[IDX1]=s1[IDX1];					\
+	}								\
+}
+
 
 
 // BUG? does this need to be two macros, one for setup and one for helper?
@@ -536,6 +600,7 @@ KERNEL_FUNC_PRELUDE							\
 		}							\
 	}
 
+#ifdef FOOBAR
 // BUG - this is vdot, needs setup and helper, because first pass is products
 // subsequent passes are sums.  Maybe it shouldn't be a primitive?
 
@@ -558,6 +623,7 @@ KERNEL_FUNC_PRELUDE							\
 			dest[IDX1] = s1[IDX1] * s2[IDX1];		\
 		}							\
 	}
+#endif // FOOBAR
 
 #define ___VEC_FUNC_MM( func_name, type_code, statement )		\
 									\
@@ -1035,6 +1101,7 @@ KERNEL_FUNC_PRELUDE							\
 	}								\
 									\
 
+#ifdef FOOBAR
 // hard-coded for vdot!?
 // for gpu, needs helper and setup to take products once and then sum
 // BUG?  should we have different indices for each vector?
@@ -1065,37 +1132,5 @@ KERNEL_FUNC_PRELUDE							\
 			dest[IDX1] = s1[IDX1] + s2[IDX1]; 		\
 		}							\
 	}
-
-
-#define ___VEC_FUNC_CPX_FAST_3V_PROJ( func_name)				\
-										\
-	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_setup)		\
-		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP )			\
-	{									\
-		INIT_INDICES_1							\
-		if( IDX1 < len2 ){						\
-			std_cpx *s1b;						\
-			std_cpx *s2b;						\
-			s1b = s1 + len1;					\
-			s2b = s2 + len1;					\
-			dest[IDX1].re = CPX_CPROD_RE(s1[IDX1],s2[IDX1])		\
-				+	CPX_CPROD_RE(s1b[IDX1],s2b[IDX1]);	\
-			dest[IDX1].im = CPX_CPROD_IM(s1[IDX1],s2[IDX1])		\
-				+	CPX_CPROD_IM(s1b[IDX1],s2b[IDX1]);	\
-		} else if( IDX1 < len1 ){					\
-			dest[IDX1].re = CPX_CPROD_RE(s1[IDX1],s2[IDX1]);	\
-			dest[IDX1].im = CPX_CPROD_IM(s1[IDX1],s2[IDX1]);	\
-		}								\
-	}									\
-										\
-										\
-	KERNEL_FUNC_QUALIFIER void VFUNC_FAST_NAME(func_name##_helper)		\
-		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER )			\
-	{									\
-		INIT_INDICES_1							\
-		if( IDX1 < len ){						\
-			ASSIGN_CPX_SUM(dest[IDX1],s1[IDX1],s2[IDX1])		\
-		}								\
-	}
-
+#endif // FOOBAR
 

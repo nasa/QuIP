@@ -718,11 +718,12 @@ FIO_WT_FUNC( pngfio )
 	/* we do ini mini mina mo if color type hasn't been given */
 	if(color_type_to_write < 0) {
 
-		if( OBJ_COMPS(dp) == 3 )
+		if( OBJ_COMPS(dp) == 3 ){
 			color_type = PNG_COLOR_TYPE_RGB;
-
-		else if( OBJ_COMPS(dp) == 4 ){
+		} else if( OBJ_COMPS(dp) == 4 ){
 			color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+		} else if( OBJ_COMPS(dp) == 1 ){
+			color_type = PNG_COLOR_TYPE_GRAY;
 //fprintf(stderr,"pngfio_wt:  color_type = %d\n",color_type);
 		} else {
 			sprintf(ERROR_STRING,

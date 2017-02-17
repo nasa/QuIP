@@ -49,8 +49,8 @@
 					GEN_SEP(prefix)			\
 					prefix##_SLOW_DBM	// SLOW_SIZE
 
-//#define GEN_ARGS_NOCC_SETUP(prefix)	GEN_SLOW_SIZE(prefix)		\
-//					GEN_SEP(prefix)			\
+//#define GEN_ARGS_NOCC_SETUP(prefix)	GEN_SLOW_SIZE(prefix)
+//					GEN_SEP(prefix)
 //					prefix##_NOCC_SETUP
 
 ////////// FAST
@@ -672,8 +672,8 @@
 
 //#define GEN_ARGS_FAST_1(p)		p##_FAST_1		OS_ARG(p,DEST)
 //
-//#define GEN_ARGS_SLOW_1(prefix)		GEN_ARGS_FAST_1(prefix)	\
-//					GEN_SEP(prefix)		\
+//#define GEN_ARGS_SLOW_1(prefix)		GEN_ARGS_FAST_1(prefix)
+//					GEN_SEP(prefix)
 //					GEN_SLOW_ARG_INC1(prefix)
 
 #define GEN_SLOW_SIZE(p)		p##_SLOW_SIZE
@@ -978,8 +978,8 @@
 #define GEN_ARGS_FLEN_DBM_SBM(prefix)		\
 						prefix##_EQSP_DBM_SBM
 
-//#define GEN_ARGS_FLEN_DBM_SBM(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
-//						GEN_SEP(prefix)			\
+//#define GEN_ARGS_FLEN_DBM_SBM(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)
+//						GEN_SEP(prefix)
 //						prefix##_EQSP_DBM_SBM
 
 #define GEN_ARGS_FLEN_DBM_2SRCS(prefix)		prefix##_EQSP_DBM_2SRCS
@@ -989,8 +989,8 @@
 #define GEN_ARGS_FLEN_DBM_1S_(prefix)		\
 						prefix##_EQSP_DBM_1S_
 
-//#define GEN_ARGS_FLEN_DBM_1S_(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)	\
-//						GEN_SEP(prefix)			\
+//#define GEN_ARGS_FLEN_DBM_1S_(prefix)		GEN_SLOW_DBM_GPU_INFO(prefix)
+//						GEN_SEP(prefix)
 //						prefix##_EQSP_DBM_1S_
 
 #define GEN_ARGS_FLEN_CONV(prefix,t)	GEN_ARGS_FAST_CONV(prefix,t)	\

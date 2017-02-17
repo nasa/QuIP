@@ -285,7 +285,7 @@
 #define slow_dst1	slow_dst	// for gpu_cent (centroid) with two outputs
 #define slow_dst2	slow_src1	// for gpu_cent (centroid) with two outputs
 
-//#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & \
+//#define srcbit	(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & 
 //		NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))
 
 #define fast_cdst	a[index1	OFFSET_A ]

@@ -642,13 +642,16 @@ static void HOST_FAST_CALL_NAME(name)(LINK_FUNC_ARG_DECLS)		\
 									\
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/\
 	/* first iteration may be mixed types... */			\
-	SETUP_PROJ_ITERATION(name)					\
+	/*SETUP_PROJ_ITERATION(name)*/					\
+	dst_values = (dst_type *) TMPVEC_NAME(VA_PFDEV(vap),sizeof(dst_type),len,#name);	\
 	CALL_GPU_FAST_PROJ_3V_SETUP(name)				\
-	len = len1;							\
-	src_to_free=(dst_type *)NULL;					\
+	/*len = len1;*/							\
+	/*src_to_free=(dst_type *)NULL;*/					\
 	src1_values = dst_values;					\
+	src_to_free=dst_values;						\
 	while( len > 1 ){						\
 		SETUP_PROJ_ITERATION(name)				\
+		src2_values = src1_values + len1;				\
 		CALL_GPU_FAST_PROJ_3V_HELPER(name)				\
 		src1_values = dst_values;				\
 		/* Each temp vector gets used twice,			\
