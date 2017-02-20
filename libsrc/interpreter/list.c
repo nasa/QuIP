@@ -384,6 +384,7 @@ void rls_list(List *lp)
 
 void addHead( List *lp, Node* np )		/**/
 {
+	assert(lp!=NULL);
 	LOCK_LIST(lp,addHead)
 	if( QLIST_HEAD(lp) != NO_NODE ){
 		if( NODE_PREV(QLIST_HEAD(lp)) != NO_NODE ){	/* ring */

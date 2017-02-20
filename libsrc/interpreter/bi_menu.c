@@ -838,6 +838,9 @@ static COMMAND_FUNC( do_push_fmt )
 
 	CHECK_FMT_STRINGS
 
+	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL ){
+		SET_QS_VAR_FMT_STACK(THIS_QSP,new_stack());
+	}
 	PUSH_TO_STACK( QS_VAR_FMT_STACK(THIS_QSP), QS_NUMBER_FMT(THIS_QSP) );
 
 	set_fmt(QSP_ARG  i);
@@ -845,6 +848,12 @@ static COMMAND_FUNC( do_push_fmt )
 
 static COMMAND_FUNC( do_pop_fmt )
 {
+	//assert( QS_VAR_FMT_STACK(THIS_QSP) != NULL );
+	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL || STACK_IS_EMPTY(QS_VAR_FMT_STACK(THIS_QSP)) ){
+		WARN("No variable format has been pushed, can't pop!?");
+		return;
+	}
+
 	SET_QS_NUMBER_FMT( THIS_QSP, POP_FROM_STACK( QS_VAR_FMT_STACK(THIS_QSP) ) );
 }
 
