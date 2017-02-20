@@ -948,6 +948,11 @@ static COMMAND_FUNC( do_repeat )
 {
 	int n;
 	n=(int)HOW_MANY("number of iterations");
+	if( n <= 0 ){
+		WARN("do_repeat:  number of repetitions must be positive!?");
+		return;
+	}
+
 	OPEN_LOOP(n);
 }
 
