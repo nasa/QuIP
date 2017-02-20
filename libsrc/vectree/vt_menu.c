@@ -137,7 +137,7 @@ static Data_Obj *base_object( Data_Obj *dp )
 			
 static COMMAND_FUNC( do_export )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *parent;
 	Identifier *idp;
 
 	dp = PICK_OBJ("");
@@ -148,7 +148,18 @@ static COMMAND_FUNC( do_export )
 	// If the object is subscripted from the parent,
 	// then the parent's name will be a substring of the
 	// object's name
-	dp = base_object(dp);
+	parent = base_object(dp);
+
+	// We want to export the parent if this is a subscripted object, but not if it is a subimage.
+	// We compare the names:  if the object name begins with the parent name, which is then
+	// followed by an index delimiter, then we export the parent.
+	if( !strncmp(OBJ_NAME(dp),OBJ_NAME(parent),strlen(OBJ_NAME(parent))) ){
+		int c;
+		const char *s=OBJ_NAME(dp);
+		c=s[ strlen(OBJ_NAME(parent)) ];
+		if( c == '{' || c == '[' )
+			dp = parent;
+	}
 
 	// The OBJ_EXTRA field holds decl_enp for objects declared in the
 	// expression language...  exported objects are not, so we have to
