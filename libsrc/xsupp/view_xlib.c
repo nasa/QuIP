@@ -205,7 +205,7 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 	//assert( dop != NO_DISP_OBJ );
 	if( dop == NO_DISP_OBJ ){
 		NWARN("CreateWindow:  no current display!?");
-		return NULL;
+		return (Window) 0;
 	}
 
 	/* note that only x,y are gotten from geom spec.  w,h are fixed */
