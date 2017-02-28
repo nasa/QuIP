@@ -380,6 +380,8 @@ static int expand_image(Image_File *ifp)
 
 static int skip_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 {
+	u_char sig[8];
+
 	if( fread(sig, 1, 8, ifp->if_fp) != 8 ){
 		WARN("Error reading PNG header!?");
 		return(-1);
@@ -391,6 +393,9 @@ static int skip_hdr_info(QSP_ARG_DECL  Image_File *ifp)
 	}
 	// read the header chunk - if we wanted to be very careful
 	// we could compare the contents to what we expect...
+
+	// BUG - it looks like the code I wrote before was never committed/pushed???
+	return 0;
 
 }
 
@@ -950,7 +955,7 @@ FIO_SEEK_FUNC(pngfio)
 	// BUG - should we validate the frame index?
 
 	offset = HDR_P->frame_size * n;
-	if( fseek(fp,offset,SEEK_SET) < 0 ){
+	if( fseek(ifp->if_fp,offset,SEEK_SET) < 0 ){
 		WARN("Error seeking in png file!?");
 		return -1;
 	}
