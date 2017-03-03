@@ -1793,7 +1793,7 @@ Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_item_itp == NO_IOS_ITEM_TYPE ){
 		init_nav_items(SINGLE_QSP_ARG);
-		set_del_method(QSP_ARG  nav_item_itp, (void (*)(Item *))&remove_nav_item);
+		set_del_method(QSP_ARG  nav_item_itp, (void (*)(QSP_ARG_DECL  Item *))&remove_nav_item);
 	}
 
 	return create_item_context(QSP_ARG  nav_item_itp, name );
