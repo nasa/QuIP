@@ -167,6 +167,15 @@
 }
 #endif /* FOOBAR */
 
+// try to force the thing to landscape... didn't work, never called
+-(void) viewDidAppear
+{
+fprintf(stderr,"quipViewController viewDidAppear!\n");
+	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
+	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+}
+
+
 #ifdef BUILD_FOR_IOS
 
 - (BOOL) shouldAutorotate
@@ -195,8 +204,7 @@
 		 * the view controller is created...
 		 */
 		qvc_flags |= QVC_BLOCKED_AUTOROTATION;
-		//return UIInterfaceOrientationMaskPortrait;
-		return UIInterfaceOrientationMaskLandscapeRight;
+		return UIInterfaceOrientationMaskPortrait;
 	}
 }
 
@@ -268,7 +276,7 @@ fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
 
 	// The view property is set by loadView
 
-fprintf(stderr,"quipViewController initWithSize DONE\n",(long)adp);
+fprintf(stderr,"quipViewController initWithSize DONE\n");
 	return self;
 }
 
@@ -278,7 +286,7 @@ fprintf(stderr,"quipViewController viewWillAppear BEGIN\n");
 	[super viewWillAppear:animated];
 
 	[[UIDevice currentDevice]
-		setValue: [NSNumber numberWithInteger: UIInterfaceOrientationLandscapeLeft]
+		setValue: [NSNumber numberWithInteger: UIInterfaceOrientationPortrait]
 	        forKey: @"orientation" ];
 
 fprintf(stderr,"quipViewController viewWillAppear DONE\n");

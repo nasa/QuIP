@@ -100,6 +100,28 @@ static double modtimefunc(QSP_ARG_DECL  const char *s)
 #endif /* ! HAVE_SYS_STAT_H */
 }
 
+#ifndef BUILD_FOR_IOS
+int is_portrait(void)
+{
+	NADVISE("is_portrait() called in non-tablet environment!?");
+
+	return 0;
+}
+#endif // ! BUILD_FOR_IOS
+
+static double is_landscape_dbl(void)
+{
+	if( is_portrait() )
+		return 0.0;
+	else
+		return 1.0;
+}
+
+static double is_portrait_dbl(void)
+{
+	return (double) is_portrait();
+}
+
 static double rn_uni(double arg)		/* arg is not used... */
 {
 	double d;
@@ -678,6 +700,9 @@ int func_serial=0;
 
 void declare_functions( SINGLE_QSP_ARG_DECL )
 {
+
+DECLARE_D0_FUNCTION(	is_portrait,	is_portrait_dbl,		INVALID_VFC,	INVALID_VFC,	INVALID_VFC	)
+DECLARE_D0_FUNCTION(	is_landscape,	is_landscape_dbl,		INVALID_VFC,	INVALID_VFC,	INVALID_VFC	)
 
 DECLARE_D1_FUNCTION(	uni,	rn_uni,		FVUNI,		INVALID_VFC,	INVALID_VFC	)
 DECLARE_D1_FUNCTION(	sqrt,	sqrt,		FVSQRT,		INVALID_VFC,	INVALID_VFC	)

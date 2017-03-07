@@ -184,7 +184,7 @@ void init_nav_panel(Nav_Panel *nav_p)
 		//[[UIDevice currentDevice] setOrientation:UIInterfaceOrientationLandscapeRight];
 fprintf(stderr,"init_nav_panel:  trying to force orientation to landscape...\n");
 		[[UIDevice currentDevice] performSelector:NSSelectorFromString(@"setOrientation:")
-				withObject:(__bridge id)((void*)UIInterfaceOrientationLandscapeRight)];
+				withObject:(__bridge id)((void*)UIInterfaceOrientationPortrait)];
 	}
 
 	quipTableViewController *c= [[quipTableViewController alloc]

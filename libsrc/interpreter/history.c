@@ -404,6 +404,8 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	return(hcp->hc_text);
 }
 
+#ifdef NOT_USED_YET
+
 static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 {
 	Item *ip;
@@ -429,6 +431,7 @@ static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
 	return ip->item_name;
 }
+#endif // NOT_USED_YET
 
 static void reset_tree_match( Frag_Match_Info *fmi_p, int direction )
 {
@@ -491,6 +494,8 @@ static const char *advance_item_list( Frag_Match_Info *fmi_p, int direction )
 }
 
 
+#ifdef NOT_USED_YET
+
 static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 {
 	Item *ip;
@@ -515,6 +520,7 @@ static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 	ip = fmi_p->fmi_u.li.curr_np->n_data;
 	return ip->item_name;
 }
+#endif // NOT_USED_YET
 
 static void reset_item_list( Frag_Match_Info *fmi_p, int direction )
 {

@@ -21,6 +21,14 @@ void set_autorotation_allowed( BOOL yesno )
 
 @implementation quipNavController
 
+// try to force the thing to landscape...
+-(void) viewDidAppear
+{
+fprintf(stderr,"quipNavController viewDidAppear!\n");
+	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
+	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+}
+
 // This makes the status bar go away...
 
 -(BOOL) prefersStatusBarHidden {
@@ -148,7 +156,7 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 	// BUG find out the good mask...
 	if( [self topViewController] == NULL ){
 	//	return UIInterfaceOrientationMaskAll;
-		return UIInterfaceOrientationMaskLandscapeRight;
+		return UIInterfaceOrientationMaskPortrait;
     } else {
 		return [[self topViewController] supportedInterfaceOrientations];
     }
@@ -156,7 +164,7 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
-	return UIInterfaceOrientationLandscapeRight;
+	return UIInterfaceOrientationPortrait;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

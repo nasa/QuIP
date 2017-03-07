@@ -508,6 +508,8 @@ extern void rls_stringbuf(String_Buf *);
 
 extern COMMAND_FUNC(do_protomenu);
 
+extern int is_portrait(void);
+
 #ifdef BUILD_FOR_IOS
 extern int ios_read_global_startup(SINGLE_QSP_ARG_DECL);
 extern void sync_with_ios(void);

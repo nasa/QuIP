@@ -27,6 +27,14 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 @synthesize nav_panel;
 @synthesize done_action;
 
+// try to force the thing to landscape...
+-(void) viewDidAppear
+{
+fprintf(stderr,"quipTableViewController viewDidAppear!\n");
+	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
+	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+}
+
 // This makes the status bar go away...
 
 -(BOOL) prefersStatusBarHidden {

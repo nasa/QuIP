@@ -107,6 +107,14 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 @synthesize wakeup_timer;
 @synthesize wakeup_lp;
 
+// try to force the thing to landscape... or portrait?  never called?
+-(void) viewDidAppear
+{
+fprintf(stderr,"quipAppDelegate viewDidAppear!\n");
+	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
+	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+}
+
 -(void) applicationDidEnterBackground:(UIApplication *)app
 {
 	/* Use this method to release shared resources,
@@ -810,7 +818,7 @@ ipad_pro_9_7:
 	}
 }
 
-static int is_portrait(void)
+int is_portrait(void)
 {
 	UIDevice *dev;
 	static int warned=0;
@@ -1306,14 +1314,14 @@ static double accel[3]={0,0,0};
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
 fprintf(stderr,"quipAppDelegate returning preferredInterfaceOrientationForPresentation\n");
-	return UIInterfaceOrientationLandscapeRight;
+	return UIInterfaceOrientationPortrait;
 }
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
 fprintf(stderr,"quipAppDelegate returning supportedInterfaceOrientations\n");
 	// BUG find out the good mask...
-		return UIInterfaceOrientationMaskLandscapeRight;
+		return UIInterfaceOrientationMaskPortrait;
 }
 
 #endif // BUILD_FOR_IOS
