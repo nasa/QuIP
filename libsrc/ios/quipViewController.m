@@ -195,7 +195,8 @@
 		 * the view controller is created...
 		 */
 		qvc_flags |= QVC_BLOCKED_AUTOROTATION;
-		return UIInterfaceOrientationMaskPortrait;
+		//return UIInterfaceOrientationMaskPortrait;
+		return UIInterfaceOrientationMaskLandscapeRight;
 	}
 }
 
@@ -251,6 +252,7 @@
 	self=[super initWithNibName:nil bundle:nil];
 #endif // BUILD_FOR_MACOS
 
+fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
 	qadp=adp;
 	CGRect r;
 	// This is the view controller???
@@ -260,12 +262,26 @@
 	_size = size;
 
 #ifdef BUILD_FOR_IOS
-	qvc_flags = QVC_ALLOWS_AUTOROTATION;
+	//qvc_flags = QVC_ALLOWS_AUTOROTATION;
+	qvc_flags = 0;
 #endif // BUILD_FOR_IOS
 
 	// The view property is set by loadView
 
+fprintf(stderr,"quipViewController initWithSize DONE\n",(long)adp);
 	return self;
+}
+
+-(void) viewWillAppear:(BOOL) animated
+{
+fprintf(stderr,"quipViewController viewWillAppear BEGIN\n");
+	[super viewWillAppear:animated];
+
+	[[UIDevice currentDevice]
+		setValue: [NSNumber numberWithInteger: UIInterfaceOrientationLandscapeLeft]
+	        forKey: @"orientation" ];
+
+fprintf(stderr,"quipViewController viewWillAppear DONE\n");
 }
 
 

@@ -8,6 +8,17 @@
 #include "display.h"
 #include "sizable.h"
 
+// only needed for iOS?
+typedef enum {
+	QUIP_ORI_ALL,
+	QUIP_ORI_PORTRAIT_BOTH,
+	QUIP_ORI_PORTRAIT_UP,
+	QUIP_LANDSCAPE_BOTH,
+	QUIP_LANDSCAPE_RIGHT,
+	QUIP_LANDSCAPE_LEFT,
+	N_TABLET_ORIENTATIONS
+} Quip_Allowed_Orientations;
+
 #define SOB_FILENAME	"(screen object pushed text)"
 
 typedef enum {
