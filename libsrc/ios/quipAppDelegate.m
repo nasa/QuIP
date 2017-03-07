@@ -1301,6 +1301,21 @@ static double accel[3]={0,0,0};
 			forMode:NSDefaultRunLoopMode];
 }
 
+/* delegate methods for view controllers */
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+{
+fprintf(stderr,"quipAppDelegate returning preferredInterfaceOrientationForPresentation\n");
+	return UIInterfaceOrientationLandscapeRight;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations
+{
+fprintf(stderr,"quipAppDelegate returning supportedInterfaceOrientations\n");
+	// BUG find out the good mask...
+		return UIInterfaceOrientationMaskLandscapeRight;
+}
+
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS

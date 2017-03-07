@@ -1188,10 +1188,21 @@ void init_viewer_images(Viewer *vp)
 	// but behind the controls...
 	// BUT this brings the images to the front?
 	// Does this depend on order of initialization?
+
+	// That comment says we want the controls in front - so why
+	// are we bringing the images to the front???
+
 //sprintf(DEFAULT_ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
 //(long)qip,(long)VW_QV(vp));
 //advise(DEFAULT_ERROR_STRING);
-	[VW_QV(vp) bringSubviewToFront:qip];
+
+	//[VW_QV(vp) bringSubviewToFront:qip];
+
+	// this puts it behind the default background!
+	//[VW_QV(vp) sendSubviewToBack:qip];
+    
+	// this puts it just in front of the default background?
+	[VW_QV(vp) insertSubview:qip aboveSubview:QV_BG_IMG(VW_QV(vp))];
     
 	qip.backgroundColor = [UIColor clearColor];
 #endif // BUILD_FOR_IOS
