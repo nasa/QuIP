@@ -27,14 +27,6 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 @synthesize nav_panel;
 @synthesize done_action;
 
-// try to force the thing to landscape...
--(void) viewDidAppear
-{
-fprintf(stderr,"quipTableViewController viewDidAppear!\n");
-	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
-	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-}
-
 // This makes the status bar go away...
 
 -(BOOL) prefersStatusBarHidden {
@@ -88,11 +80,13 @@ fprintf(stderr,"quipTableViewController viewDidAppear!\n");
 #ifdef BUILD_FOR_IOS
 	self = [super initWithStyle: UITableViewStyleGrouped];
 
-fprintf(stderr,"quipTableViewControoler initWithSize delegate = 0x%lx\n",(long)dgp);
+//fprintf(stderr,"quipTableViewControoler initWithSize delegate = 0x%lx\n",(long)dgp);
 
 //fprintf(stderr,"quipTableViewControoler delegate set to self = 0x%lx\n",(long)self);
-	//self.tableView.delegate = self;
-	self.tableView.delegate = dgp;
+	self.tableView.delegate = self;
+	// When we use this delegate, we lose the nav group headings,
+	// and the selections don't work!?!?
+	//self.tableView.delegate = dgp;
 
 	self.tableView.dataSource = self;
 	// BUG - this makes a new background image for every panel.

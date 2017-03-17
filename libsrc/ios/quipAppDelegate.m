@@ -107,13 +107,6 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 @synthesize wakeup_timer;
 @synthesize wakeup_lp;
 
-// try to force the thing to landscape... or portrait?  never called?
--(void) viewDidAppear
-{
-fprintf(stderr,"quipAppDelegate viewDidAppear!\n");
-	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
-	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-}
 
 -(void) applicationDidEnterBackground:(UIApplication *)app
 {
@@ -824,6 +817,7 @@ int is_portrait(void)
 	static int warned=0;
 	UIDeviceOrientation dev_ori;
 	UIInterfaceOrientation ui_ori;
+	int retval;
 
 	dev = [UIDevice currentDevice];
 	// Is this really necessary?
@@ -835,16 +829,19 @@ int is_portrait(void)
 		case UIDeviceOrientationPortrait:
 		case UIDeviceOrientationPortraitUpsideDown:
 //advise("portrait!");
-			return 1;
+			retval = 1;
+			break;
 		case UIDeviceOrientationLandscapeLeft:
 		case UIDeviceOrientationLandscapeRight:
 //advise("landscape!");
-			return 0;
+			retval = 0;
+			break;
 		case UIDeviceOrientationUnknown:
 			// This is returned when the startup script
 			// is being read...
 //fprintf(stderr,"is_portrait:  unknown orientation!?\n");
-			return -1;
+			retval = -1;
+			break;
 		case UIDeviceOrientationFaceUp:
 		case UIDeviceOrientationFaceDown:
 //fprintf(stderr,"is_portrait:  face up/down, using UI orientation...\n");
@@ -853,17 +850,20 @@ int is_portrait(void)
 			switch( ui_ori ){
 				case UIInterfaceOrientationPortrait:
 				case UIInterfaceOrientationPortraitUpsideDown:
-					return 1;
+					retval = 1;
+					break;
 				case UIInterfaceOrientationLandscapeLeft:
 				case UIInterfaceOrientationLandscapeRight:
-					return 0;
+					retval = 0;
+					break;
 				// no other cases - include
 				// a CAUTIOUS default?
 
 
 				//This case is present in XCode 6, but not 5...
 				case UIInterfaceOrientationUnknown:
-				return 1;
+				retval = 1;
+				break;
 			}
 		default:
 /*
@@ -882,8 +882,11 @@ warned=1;
 			// when the device is flat...
 			// The previous orientation is remembered by the system.
 			// How can we get it here???
-			return -1;
+			retval = -1;
+			break;
 	}
+//fprintf(stderr,"is_portrait:  retval = %d\n",retval);
+	return retval;
 }
 #else // ! BUILD_FOR_IOS
 
@@ -1307,21 +1310,6 @@ static double accel[3]={0,0,0};
 
 	[wakeup_timer addToRunLoop:[NSRunLoop currentRunLoop]
 			forMode:NSDefaultRunLoopMode];
-}
-
-/* delegate methods for view controllers */
-
-- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
-{
-fprintf(stderr,"quipAppDelegate returning preferredInterfaceOrientationForPresentation\n");
-	return UIInterfaceOrientationPortrait;
-}
-
-- (UIInterfaceOrientationMask)supportedInterfaceOrientations
-{
-fprintf(stderr,"quipAppDelegate returning supportedInterfaceOrientations\n");
-	// BUG find out the good mask...
-		return UIInterfaceOrientationMaskPortrait;
 }
 
 #endif // BUILD_FOR_IOS

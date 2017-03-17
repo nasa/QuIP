@@ -177,16 +177,6 @@ void init_nav_panel(Nav_Panel *nav_p)
 {
 	nav_p.groups = NO_IOS_LIST;
 
-	// JUST FOR CSF UNTIL WE FIGURE THIS OUT!!!
-	UIInterfaceOrientation currentOrientation = [[UIApplication sharedApplication] statusBarOrientation];
-        if (currentOrientation == UIInterfaceOrientationPortrait ||
-	            currentOrientation == UIInterfaceOrientationPortraitUpsideDown){
-		//[[UIDevice currentDevice] setOrientation:UIInterfaceOrientationLandscapeRight];
-fprintf(stderr,"init_nav_panel:  trying to force orientation to landscape...\n");
-		[[UIDevice currentDevice] performSelector:NSSelectorFromString(@"setOrientation:")
-				withObject:(__bridge id)((void*)UIInterfaceOrientationPortrait)];
-	}
-
 	quipTableViewController *c= [[quipTableViewController alloc]
 		initWithSize:globalAppDelegate.dev_size
 			withDelegate:globalAppDelegate

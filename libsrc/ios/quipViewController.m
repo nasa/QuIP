@@ -167,15 +167,6 @@
 }
 #endif /* FOOBAR */
 
-// try to force the thing to landscape... didn't work, never called
--(void) viewDidAppear
-{
-fprintf(stderr,"quipViewController viewDidAppear!\n");
-	NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationPortrait];
-	[[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-}
-
-
 #ifdef BUILD_FOR_IOS
 
 - (BOOL) shouldAutorotate
@@ -260,7 +251,7 @@ fprintf(stderr,"quipViewController viewDidAppear!\n");
 	self=[super initWithNibName:nil bundle:nil];
 #endif // BUILD_FOR_MACOS
 
-fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
+//fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
 	qadp=adp;
 	CGRect r;
 	// This is the view controller???
@@ -276,22 +267,9 @@ fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
 
 	// The view property is set by loadView
 
-fprintf(stderr,"quipViewController initWithSize DONE\n");
+//fprintf(stderr,"quipViewController initWithSize DONE\n");
 	return self;
 }
-
--(void) viewWillAppear:(BOOL) animated
-{
-fprintf(stderr,"quipViewController viewWillAppear BEGIN\n");
-	[super viewWillAppear:animated];
-
-	[[UIDevice currentDevice]
-		setValue: [NSNumber numberWithInteger: UIInterfaceOrientationPortrait]
-	        forKey: @"orientation" ];
-
-fprintf(stderr,"quipViewController viewWillAppear DONE\n");
-}
-
 
 @end
 
