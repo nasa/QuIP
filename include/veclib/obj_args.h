@@ -174,10 +174,11 @@ typedef struct vector_args {
 
 	dimension_t	va_len;			// just for fast/eqsp ops?
 
+	uint32_t	va_total_count;		// used for slow ops?
+	dim5		va_slow_size;
+
 #ifdef HAVE_ANY_GPU
 	//Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
-	dim5		va_slow_size;
-	uint32_t	va_total_count;
 #ifdef HAVE_CUDA
 	unsigned int	va_grid_size[3];	// dim3
 #endif // HAVE_CUDA
@@ -295,7 +296,7 @@ fprintf(stderr,"VA_SLOW_SIZE:  %d %d %d %d %d\n",\
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
 extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
-extern bitnum_t bitmap_obj_word_count( Data_Obj *dp );
+extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */

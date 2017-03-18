@@ -9,16 +9,16 @@ dnl SETUP_SLOW_INCS(bitmap,vectors)
 define(`SETUP_SLOW_INCS',SETUP_SLOW_INCS_$1$2)
 
 divert(0)
-/* decl_slow_incrs_1 */
+dnl /* decl_slow_incrs_1 */
 define(`DECL_SLOW_INCRS_1',`dim5 dst_vwxyz_incr;')
-/* `DECL_SLOW_INCRS_1' = DECL_SLOW_INCRS_1 */
+dnl /* `DECL_SLOW_INCRS_1' = DECL_SLOW_INCRS_1 */
 suppress_if
 define(`DECL_SLOW_INCRS_SRC1',`dim5 s1_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC2',`dim5 s2_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC3',`dim5 s3_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC4',`dim5 s4_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SBM',`dim5 sbm_vwxyz_incr;')
-define(`DECL_SLOW_INCRS_DBM',`');
+define(`DECL_SLOW_INCRS_DBM',`')
 
 define(`DECL_SLOW_INCRS_DBM_SBM',`DECL_SLOW_INCRS_DBM DECL_SLOW_INCRS_SBM')
 define(`DECL_SLOW_INCRS_2',`DECL_SLOW_INCRS_1 DECL_SLOW_INCRS_SRC1')

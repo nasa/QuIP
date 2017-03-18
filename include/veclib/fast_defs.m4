@@ -18,20 +18,21 @@ define(`qsrc2',`fast_qsrc2')
 define(`qsrc3',`fast_qsrc3')
 define(`qsrc4',`fast_qsrc4')
 
+dnl Need backslashes for quoting (OpenCL)
 
 define(`SET_INDICES_DBM',`			\
-	SET_INDEX(dbmi)			\
+	SET_INDEX(dbmi)				\
 	i_dbm_word = dbmi;			\
-	dbmi *= BITS_PER_BITMAP_WORD;			\
+	dbmi *= BITS_PER_BITMAP_WORD;		\
 ')
 
-define(`DECL_BASIC_INDICES_DBM',`			\
+define(`DECL_BASIC_INDICES_DBM',`		\
 	unsigned int i_dbm_bit;			\
-	int i_dbm_word; bitmap_word dbm_bit;			\
+	int i_dbm_word; bitmap_word dbm_bit;	\
 ')
 
 define(`SET_INDICES_DBM_1S_',`			\
-	i_dbm_word = THREAD_INDEX_X;			\
+	i_dbm_word = THREAD_INDEX_X;		\
 ')
 
 include(`../../include/veclib/fast_eqsp_defs.m4')

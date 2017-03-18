@@ -107,10 +107,10 @@ define(`GENERIC_SLEN_VEC_FUNC',`_GENERIC_SLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
 
 
 // What is this???
-define(` GENERIC_FAST_GPU_FUNC_DECL',`				\
-void name(DECLARE_KERN_ARGS_FAST($3,$4,$5,$6))			\
-{								\
-}								\
+define(` GENERIC_FAST_GPU_FUNC_DECL',`
+void name(DECLARE_KERN_ARGS_FAST($3,$4,$5,$6))
+{
+}
 ')
 
 
@@ -251,47 +251,79 @@ define(`GENERIC_SLEN_VEC_FUNC_DBM',`_GENERIC_SLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 define(`_VEC_FUNC_MM',`__VEC_FUNC_MM($1,$2)')
 define(`_VEC_FUNC_MM_IND',`__VEC_FUNC_MM_IND($1,$2,$3)')
 
-// `2V_PROJ SETUP' and HELPER do the same thing, but have different input types
-// (only relevant for mixed operations, e.g. summing float to double
+// rvdot - we need temporary space for the products!?
+// The first step should be a normal vmul...
 
-define(`___VEC_FUNC_FAST_2V_PROJ_SETUP',`			\
+define(`___VEC_FUNC_FAST_3V_PROJ_SETUP',`			\
 KERNEL_FUNC_PRELUDE						\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')		\
-	( DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP )		\
-	FAST_2V_PROJ_BODY($2,std_type)				\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+	( DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP )		\
+	FAST_3V_PROJ_BODY(std_type)				\
 ')
 
-define(`___VEC_FUNC_FAST_2V_PROJ_HELPER',`			\
+define(`___VEC_FUNC_FAST_3V_PROJ_HELPER',`			\
 								\
 KERNEL_FUNC_PRELUDE						\
 								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')		\
-	( DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER )		\
-	FAST_2V_PROJ_BODY($2,dest_type)				\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+	( DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER )		\
+	FAST_3V_PROJ_BODY(dest_type)				\
 ')
 
-define(`FAST_2V_PROJ_BODY',`					\
+define(`FAST_3V_PROJ_BODY',`					\
 {								\
-	INIT_INDICES_1						\
-								\
-	if( IDX1 < len2 ){					\
-		KERNEL_ARG_QUALIFIER $2 *s2;			\
-		s2 = s1 + len1;					\
-		dest[IDX1] = $1 ;				\
-	} else if( IDX1 < len1 ){				\
-		dest[IDX1] = s1[IDX1];				\
-	}							\
+dnl	INIT_INDICES_1
+dnl
+dnl	if( IDX1 < len2 ){
+dnl		KERNEL_ARG_QUALIFIER $2 *s2;
+dnl		s2 = s1 + len1;
+dnl		dest[IDX1] = $1 ;
+dnl	} else if( IDX1 < len1 ){
+dnl		dest[IDX1] = s1[IDX1];
+dnl	}
+	/* do nothing until we figure this out */		\
 }								\
 ')
 
+
+/* `CPX_FAST_3V_PROJ_SETUP' */
+
+define(`___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP',`			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+	( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP )		\
+FAST_CPX_3V_PROJ_BODY($2,$3,std_cpx)				\
+')
+
+/* `CPX_FAST_3V_PROJ_HELPER' */
+define(`___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER',`				\
+									\
+KERNEL_FUNC_PRELUDE							\
+									\
+	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER )		\
+	FAST_CPX_3V_PROJ_BODY($2,$3,dest_cpx)				\
+')
+
+define(`FAST_CPX_3V_PROJ_BODY',`		\
+{						\
+dnl what should we do here ?  BUG
+}						\
+')
+
+
 /* `CPX_FAST_2V_PROJ_SETUP' */
+
+dnl needs backslashes so that it can be included in a quoted string for OpenCL...
 
 define(`___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP',`			\
 								\
 KERNEL_FUNC_PRELUDE						\
 								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
-	( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )			\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+	( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )		\
 FAST_CPX_2V_PROJ_BODY($2,$3,std_cpx)				\
 ')
 
@@ -300,46 +332,120 @@ define(`___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER',`				\
 									\
 KERNEL_FUNC_PRELUDE							\
 									\
-	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')			\
-		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )			\
+	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )		\
 	FAST_CPX_2V_PROJ_BODY($2,$3,dest_cpx)				\
 ')
 
-define(`FAST_CPX_2V_PROJ_BODY',`					\
-{									\
-	INIT_INDICES_1							\
+dnl  needs backslashes for quoting for OpenCL
+define(`FAST_CPX_2V_PROJ_BODY',`			\
+{							\
+	INIT_INDICES_1					\
+							\
+	if( IDX1 < len2 ){				\
+		$3 *s2;					\
+		s2 = s1 + len1;				\
+		dest[IDX1].re = $1 ;			\
+		dest[IDX1].im = $2 ;			\
+	} else if( IDX1 < len1 ){			\
+		dest[IDX1].re = s1[IDX1].re;		\
+		dest[IDX1].im = s1[IDX1].im;		\
+	}						\
+}							\
+')
+
+// `2V_PROJ SETUP' and HELPER do the same thing, but have different input types
+// (only relevant for mixed operations, e.g. summing float to double
+
+dnl need backslashes so that OpenCL can quote as string...
+define(`___VEC_FUNC_FAST_2V_PROJ_SETUP',`			\
+KERNEL_FUNC_PRELUDE						\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP )		\
+	FAST_2V_PROJ_BODY($2,std_type)				\
+')
+
+define(`___VEC_FUNC_FAST_2V_PROJ_HELPER',`			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+	( DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER )		\
+	FAST_2V_PROJ_BODY($2,dest_type)				\
+')
+
+dnl  backslashes needed for quoting!
+
+define(`FAST_2V_PROJ_BODY',`				\
+{							\
+	INIT_INDICES_1					\
+							\
+	if( IDX1 < len2 ){				\
+		KERNEL_ARG_QUALIFIER $2 *s2;		\
+		s2 = s1 + len1;				\
+		dest[IDX1] = $1 ;			\
+	} else if( IDX1 < len1 ){			\
+		dest[IDX1] = s1[IDX1];			\
+	}						\
+}							\
+')
+
+/* `CPX_FAST_2V_PROJ_SETUP' */
+
+define(`___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP',`			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+	( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP )		\
+FAST_CPX_2V_PROJ_BODY($2,$3,std_cpx)				\
+')
+
+/* `CPX_FAST_2V_PROJ_HELPER' */
+define(`___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER',`				\
 									\
-	if( IDX1 < len2 ){						\
-		$3 *s2;							\
-		s2 = s1 + len1;						\
-		dest[IDX1].re = $1 ;					\
-		dest[IDX1].im = $2 ;					\
-	} else if( IDX1 < len1 ){					\
-		dest[IDX1].re = s1[IDX1].re;				\
-		dest[IDX1].im = s1[IDX1].im;				\
-	}								\
-}									\
+KERNEL_FUNC_PRELUDE							\
+									\
+	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+		( DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER )		\
+	FAST_CPX_2V_PROJ_BODY($2,$3,dest_cpx)				\
+')
+
+define(`FAST_CPX_2V_PROJ_BODY',`			\
+{							\
+	INIT_INDICES_1					\
+							\
+	if( IDX1 < len2 ){				\
+		$3 *s2;					\
+		s2 = s1 + len1;				\
+		dest[IDX1].re = $1 ;			\
+		dest[IDX1].im = $2 ;			\
+	} else if( IDX1 < len1 ){			\
+		dest[IDX1].re = s1[IDX1].re;		\
+		dest[IDX1].im = s1[IDX1].im;		\
+	}						\
+}							\
 ')
 
 
 /* `QUAT_FAST_2V_PROJ_SETUP' */
 
-define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP',`				\
-									\
-KERNEL_FUNC_PRELUDE							\
-									\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
-	( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP )			\
-FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,std_quat)				\
+define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP',`			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+	( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP )		\
+FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,std_quat)			\
 ')
 
-define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER',`				\
-									\
-KERNEL_FUNC_PRELUDE							\
-									\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')			\
-	( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER )			\
-FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,dest_quat)				\
+define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER',`			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+	( DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER )		\
+FAST_QUAT_2V_PROJ_BODY($2,$3,$4,$5,dest_quat)			\
 ')
 
 
@@ -372,7 +478,7 @@ define(`___VEC_FUNC_FAST_2V_PROJ_IDX',`				\
 								\
 KERNEL_FUNC_PRELUDE						\
 								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
 	( DECLARE_KERN_ARGS_FAST_IDX_SETUP )			\
 {								\
 	INIT_INDICES_3						\
@@ -382,7 +488,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')			\
 		dst = index2 ;					\
 }								\
 								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')			\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
 	( DECLARE_KERN_ARGS_FAST_IDX_HELPER )			\
 {								\
 	INIT_INDICES_3						\
@@ -496,30 +602,30 @@ define(`LSHIFT_SWITCH_32',`
 // It's the same except for the sum line, which would be replaced with
 //
 
-define(`___GPU_FUNC_CALL_2V_PROJ',`			\
-							\
-KERNEL_FUNC_PRELUDE					\
-							\
+define(`___GPU_FUNC_CALL_2V_PROJ',`				\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
 KERNEL_FUNC_QUALIFIER void `g_'type_code`_'$1			\
-	( DECLARE_KERN_ARGS_2V_PROJ )			\
-{							\
-	INIT_INDICES_1					\
-							\
-	if( IDX1 < len2 ){				\
-		std_type *s2;				\
-		s2 = s1 + len1;				\
-		dest[IDX1] = $3 ;			\
-	} else if( IDX1 < len1 ){			\
-		dest[IDX1] = s1[IDX1];			\
-	}						\
-}							\
+	( DECLARE_KERN_ARGS_2V_PROJ )				\
+{								\
+	INIT_INDICES_1						\
+								\
+	if( IDX1 < len2 ){					\
+		std_type *s2;					\
+		s2 = s1 + len1;					\
+		dest[IDX1] = $3 ;				\
+	} else if( IDX1 < len1 ){				\
+		dest[IDX1] = s1[IDX1];				\
+	}							\
+}								\
 ')
 
 define(`___VEC_FUNC_MM',`					\
 								\
 KERNEL_FUNC_PRELUDE						\
 								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_HELPER_NAME($1,$2)			\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_HELPER_NAME($1,$2)		\
 ( DECLARE_KERN_ARGS_MM )					\
 {								\
 	INIT_INDICES_3						\
@@ -547,9 +653,9 @@ define(`___GPU_FUNC_CALL_FAST_MM_NOCC', ___VEC_FUNC_FAST_MM_NOCC( $1, $2, $3 ))
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
  */
 
-define(`___VEC_FUNC_FAST_MM_NOCC',`					\
-	___VEC_FUNC_FAST_MM_NOCC_SETUP( $1, $2, $3 )			\
-	___VEC_FUNC_FAST_MM_NOCC_HELPER( $1, $2, $3 )			\
+define(`___VEC_FUNC_FAST_MM_NOCC',`				\
+	___VEC_FUNC_FAST_MM_NOCC_SETUP( $1, $2, $3 )		\
+	___VEC_FUNC_FAST_MM_NOCC_HELPER( $1, $2, $3 )		\
 ')
 
 
@@ -557,37 +663,37 @@ define(`IDX2',index2)
 
 // How are we handling the indices???
 
-define(`___VEC_FUNC_FAST_MM_NOCC_SETUP',`					\
-										\
-KERNEL_FUNC_PRELUDE								\
-										\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_SETUP_NAME($1)				\
-	( DECLARE_KERN_ARGS_FAST_NOCC_SETUP )					\
-{										\
-	INIT_INDICES_2								\
-	IDX2 *= 2;								\
-	if( IDX1 < len2 ){							\
-		if( $2 ){							\
-			dst_extrema[IDX1] = src_vals[IDX2];			\
-			dst_counts[IDX1]=1;					\
-			dst_indices[IDX2]=IDX2;					\
-		} else if( $3 ){						\
-			dst_extrema[IDX1] = src_vals[IDX2+1];			\
-			dst_counts[IDX1]=1;					\
-			dst_indices[IDX2]=IDX2+1;				\
-		} else {							\
-			dst_extrema[IDX1] = src_vals[IDX2];			\
-			dst_counts[IDX1]=2;					\
-			dst_indices[IDX2]=IDX2;					\
-			dst_indices[IDX2+1]=IDX2+1;				\
-		}								\
-	} else {								\
-		/* Nothing to compare */					\
-		dst_extrema[IDX1] = src_vals[IDX2];				\
-		dst_counts[IDX1]=1;						\
-		dst_indices[IDX2]=IDX2;						\
-	}									\
-}										\
+define(`___VEC_FUNC_FAST_MM_NOCC_SETUP',`			\
+								\
+KERNEL_FUNC_PRELUDE						\
+								\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_SETUP_NAME($1)		\
+	( DECLARE_KERN_ARGS_FAST_NOCC_SETUP )			\
+{								\
+	INIT_INDICES_2						\
+	IDX2 *= 2;						\
+	if( IDX1 < len2 ){					\
+		if( $2 ){					\
+			dst_extrema[IDX1] = src_vals[IDX2];	\
+			dst_counts[IDX1]=1;			\
+			dst_indices[IDX2]=IDX2;			\
+		} else if( $3 ){				\
+			dst_extrema[IDX1] = src_vals[IDX2+1];	\
+			dst_counts[IDX1]=1;			\
+			dst_indices[IDX2]=IDX2+1;		\
+		} else {					\
+			dst_extrema[IDX1] = src_vals[IDX2];	\
+			dst_counts[IDX1]=2;			\
+			dst_indices[IDX2]=IDX2;			\
+			dst_indices[IDX2+1]=IDX2+1;		\
+		}						\
+	} else {						\
+		/* Nothing to compare */			\
+		dst_extrema[IDX1] = src_vals[IDX2];		\
+		dst_counts[IDX1]=1;				\
+		dst_indices[IDX2]=IDX2;				\
+	}							\
+}								\
 ')
 
 // indices and stride example:
@@ -597,45 +703,45 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_SETUP_NAME($1)				\
 // 1  5  5  2			5   5			2  3 (2) (3)  4  X (6) (7)	2  1			helper, n=2, stride=4
 // 5  5				5			2  3  4  (3) (4) X (6) (7)	3			helper, n=1, stride=8
 
-define(`___VEC_FUNC_FAST_MM_NOCC_HELPER',`					\
-										\
-KERNEL_FUNC_PRELUDE								\
-										\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_HELPER_NAME($1)			\
-	( DECLARE_KERN_ARGS_FAST_NOCC_HELPER )					\
-{										\
-	int i;									\
-	INIT_INDICES_2								\
-	IDX2 *= 2;								\
-	if( IDX1 < len2 ){							\
-		if( $2 ){							\
-			dst_extrema[IDX1]=src_vals[IDX2];			\
-			dst_counts[IDX1]=src_counts[IDX2];			\
-			/* No copy necessary */					\
-		} else if( $3 ){						\
-			dst_extrema[IDX1]=src_vals[IDX2+1];			\
-			dst_counts[IDX1]=src_counts[IDX2+1];			\
-			/* Now copy the indices down */				\
-			for(i=0;i<dst_counts[IDX1];i++){			\
-				dst_indices[IDX1*stride+i] =			\
-		dst_indices[IDX1*stride+stride/2+i];				\
-			}							\
-		} else {							\
-			dst_extrema[IDX1]=src_vals[IDX2];			\
-			dst_counts[IDX1] = src_counts[IDX2] + 			\
-				src_counts[IDX2+1];				\
-			/* Now copy the second half of the indices */		\
-			for(i=0;i<src_counts[IDX2+1];i++){			\
-	dst_indices[IDX1*stride+src_counts[IDX2]+i] =				\
-		dst_indices[IDX1*stride+stride/2+i];				\
-			}							\
-		}								\
-	} else {								\
-		dst_extrema[IDX1]=src_vals[IDX2];				\
-		dst_counts[IDX1]=src_counts[IDX2];				\
-		/* No copy necessary */						\
-	}									\
-}										\
+define(`___VEC_FUNC_FAST_MM_NOCC_HELPER',`				\
+									\
+KERNEL_FUNC_PRELUDE							\
+									\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_HELPER_NAME($1)		\
+	( DECLARE_KERN_ARGS_FAST_NOCC_HELPER )				\
+{									\
+	int i;								\
+	INIT_INDICES_2							\
+	IDX2 *= 2;							\
+	if( IDX1 < len2 ){						\
+		if( $2 ){						\
+			dst_extrema[IDX1]=src_vals[IDX2];		\
+			dst_counts[IDX1]=src_counts[IDX2];		\
+			/* No copy necessary */				\
+		} else if( $3 ){					\
+			dst_extrema[IDX1]=src_vals[IDX2+1];		\
+			dst_counts[IDX1]=src_counts[IDX2+1];		\
+			/* Now copy the indices down */			\
+			for(i=0;i<dst_counts[IDX1];i++){		\
+				dst_indices[IDX1*stride+i] =		\
+		dst_indices[IDX1*stride+stride/2+i];			\
+			}						\
+		} else {						\
+			dst_extrema[IDX1]=src_vals[IDX2];		\
+			dst_counts[IDX1] = src_counts[IDX2] + 		\
+				src_counts[IDX2+1];			\
+			/* Now copy the second half of the indices */	\
+			for(i=0;i<src_counts[IDX2+1];i++){		\
+	dst_indices[IDX1*stride+src_counts[IDX2]+i] =			\
+		dst_indices[IDX1*stride+stride/2+i];			\
+			}						\
+		}							\
+	} else {							\
+		dst_extrema[IDX1]=src_vals[IDX2];			\
+		dst_counts[IDX1]=src_counts[IDX2];			\
+		/* No copy necessary */					\
+	}								\
+}									\
 ')
 
 /* `GENERIC_FAST_VEC_FUNC' */
@@ -650,7 +756,7 @@ define(`__GENERIC_FAST_VEC_FUNC',`					\
 /* generic_fast_vec_func /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/ */		\
 KERNEL_FUNC_PRELUDE							\
 									\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)				\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)			\
 	(DECLARE_KERN_ARGS_FAST($3,$4,$5,$6))				\
 {									\
 	DECL_EXTRA($7)							\
@@ -671,9 +777,9 @@ KERNEL_FUNC_PRELUDE									\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP($3,$4,$5,$6))	\
 {											\
 	DECL_EXTRA($7)									\
-	/* generic_eqsp_vec_func to invoke init_indices */	\
+	/* generic_eqsp_vec_func to invoke init_indices */				\
 	INIT_INDICES($3,$6)								\
-	/* generic_eqsp_vec_func to invoke scale_indices */	\
+	/* generic_eqsp_vec_func to invoke scale_indices */				\
 	SCALE_INDICES($3,$6)								\
 	$2;										\
 }											\
@@ -859,36 +965,36 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN_CONV($3
 
 dnl	___GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
 
-define(`__GENERIC_FAST_VEC_FUNC_DBM',`							\
-											\
-KERNEL_FUNC_PRELUDE									\
-											\
+define(`__GENERIC_FAST_VEC_FUNC_DBM',`								\
+												\
+KERNEL_FUNC_PRELUDE										\
+												\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)(DECLARE_KERN_ARGS_FAST(`DBM_',$3,$4,$5))	\
-{											\
-	/* generic_fast_vec_func_dbm */							\
-	INIT_INDICES(`DBM_',$5)								\
-	/* fast_dbm_loop /$2/ /$5/ */							\
-	FAST_DBM_LOOP( $2, ADVANCE_FAST_$4$5)						\
-}											\
+{												\
+	/* generic_fast_vec_func_dbm */								\
+	INIT_INDICES(`DBM_',$5)									\
+	/* fast_dbm_loop /$2/ /$5/ */								\
+	FAST_DBM_LOOP( $2, ADVANCE_FAST_$4$5)							\
+}												\
 ')
 
 // EQSP is tricky because the number of relevant bits in a word is no
 // longer all of the bits - so the LOOP should just loop over the bits
 // in a single word!?  BUG?
 
-define(`__GENERIC_EQSP_VEC_FUNC_DBM',`							\
-											\
-KERNEL_FUNC_PRELUDE									\
-											\
+define(`__GENERIC_EQSP_VEC_FUNC_DBM',`								\
+												\
+KERNEL_FUNC_PRELUDE										\
+												\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP(`DBM_',$3,$4,$5))	\
-{											\
-	/* generic_eqsp_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */			\
-	INIT_INDICES(`DBM_',$5)								\
-	/* generic_eqsp_vec_func_dbm 2 */						\
-	SCALE_INDICES(`DBM_',$5)							\
-	/* generic_eqsp_vec_func_dbm 3 */						\
-	EQSP_DBM_LOOP($2,ADVANCE_EQSP_$4$5)						\
-}											\
+{												\
+	/* generic_eqsp_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */				\
+	INIT_INDICES(`DBM_',$5)									\
+	/* generic_eqsp_vec_func_dbm 2 */							\
+	SCALE_INDICES(`DBM_',$5)								\
+	/* generic_eqsp_vec_func_dbm 3 */							\
+	EQSP_DBM_LOOP($2,ADVANCE_EQSP_$4$5)							\
+}												\
 ')
 
 
@@ -898,7 +1004,7 @@ define(`__GENERIC_SLOW_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW(`DBM_',$3,$4,$5))		\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW(`DBM_',$3,$4,$5))	\
 {												\
 	/* generic_slow_vec_func_dbm */								\
 	INIT_INDICES(`DBM_',$5)									\
@@ -915,8 +1021,8 @@ define(`__GENERIC_FLEN_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-/* __generic_flen_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */	\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN(`DBM_'$3,$4,$5))		\
+/* __generic_flen_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */					\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN(`DBM_'$3,$4,$5))	\
 {												\
 	INIT_INDICES(`DBM_',$5)									\
 	FLEN_DBM_LOOP($2,ADVANCE_FAST_$4$5)							\
@@ -927,8 +1033,8 @@ define(`__GENERIC_ELEN_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-dnl KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN($3,$4,$5,$6))	\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN(`DBM_',$3,$4,$5))		\
+dnl KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN($3,$4,$5,$6))
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN(`DBM_',$3,$4,$5))	\
 {												\
 	INIT_INDICES(`DBM_',$5)									\
 	SCALE_INDICES(`DBM_',$5)								\
@@ -942,7 +1048,7 @@ define(`__GENERIC_SLEN_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN(`DBM_',$3,$4,$5))		\
+KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN(`DBM_',$3,$4,$5))	\
 {												\
 	INIT_INDICES(`DBM_',$5)									\
 	SCALE_INDICES(`DBM_',$5)								\
@@ -956,26 +1062,26 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN(`DBM_',
 
 // BUG use macro for helper name
 
-define(`___GPU_FUNC_CALL_MM',`					\
-								\
-KERNEL_FUNC_PRELUDE						\
-								\
-KERNEL_FUNC_QUALIFIER void `g_'$2`_'$1`_helper'			\
-( DECLARE_KERN_ARGS_MM )					\
-{								\
-	INIT_INDICES_3						\
-	if( index3.d5_dim[1] < len2 )				\
-		$3 ;						\
-	else if( IDX1 < len1 )					\
-		dst = src1 ;					\
-}								\
-								\
+define(`___GPU_FUNC_CALL_MM',`				\
+							\
+KERNEL_FUNC_PRELUDE					\
+							\
+KERNEL_FUNC_QUALIFIER void `g_'$2`_'$1`_helper'		\
+( DECLARE_KERN_ARGS_MM )				\
+{							\
+	INIT_INDICES_3					\
+	if( index3.d5_dim[1] < len2 )			\
+		$3 ;					\
+	else if( IDX1 < len1 )				\
+		dst = src1 ;				\
+}							\
+							\
 ')
 
 
 dnl fast or slow???
 
-define(`___GPU_FUNC_CALL_MM_IND',`							\
+define(`___GPU_FUNC_CALL_MM_IND',`						\
 										\
 KERNEL_FUNC_PRELUDE								\
 										\

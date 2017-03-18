@@ -672,13 +672,13 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
 	/* first iteration may be mixed types... */
 	SETUP_PROJ_ITERATION($2,$1)
-	CALL_GPU_FAST_PROJ_3V_SETUP($1)
+	CALL_GPU_FAST_PROJ_3V_SETUP_FUNC($1)
 	len = len1;
 	src_to_free=(dst_type *)NULL;
 	src1_values = dst_values;
 	while( len > 1 ){
 		SETUP_PROJ_ITERATION($2,$1)
-		CALL_GPU_FAST_PROJ_3V_HELPER($1)
+		CALL_GPU_FAST_PROJ_3V_HELPER_FUNC($1)
 		src1_values = dst_values;
 		/* Each temp vector gets used twice,
 		 * first as result, then as source */

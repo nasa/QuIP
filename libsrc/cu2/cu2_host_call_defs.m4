@@ -50,7 +50,7 @@ DECLARE_PLATFORM_VARS
 dnl	SET_MAX_THREADS_FROM_OBJ(dp)
 
 define(`SET_MAX_THREADS_FROM_OBJ',`
-	/*max_threads_per_block = PFDEV_CUDA_MAX_THREADS_PER_BLOCK(OBJ_PFDEV(dp));*/
+dnl	/*max_threads_per_block = PFDEV_CUDA_MAX_THREADS_PER_BLOCK(OBJ_PFDEV(dp));*/
 ')
 
 
@@ -614,6 +614,31 @@ NADVISE(DEFAULT_ERROR_STRING);
 	GPU_FAST_CALL_NAME(HELPER_NAME($1))<<< NN_GPU >>>
 		(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride); 
 	CHECK_GPU_ERROR(HELPER_NAME($1))
+')
+
+
+
+// CUDA only!
+dnl	CALL_GPU_FAST_PROJ_3V_SETUP_FUNC(name)
+define(`CALL_GPU_FAST_PROJ_3V_SETUP_FUNC',`
+/* call_gpu_fast_proj_2v_setup_func */
+	CLEAR_GPU_ERROR($1)
+	REPORT_THREAD_INFO2
+fprintf(stderr,"call_gpu_fast_proj_3v_setup_func(%s):  dst_values = 0x%lx, orig_src1_values = 0x%lx, orig_src2_values = 0x%lx, len1 = %d, len2 = %d\n",
+"$1",(long)dst_values,(long)orig_src1_values,(long)orig_src2_values,len1,len2);
+	GPU_FAST_CALL_NAME($1`_setup')<<< NN_GPU >>>( dst_values, orig_src1_values,orig_src2_values, len1, len2 );
+	CHECK_GPU_ERROR($1)
+')
+
+dnl	CALL_GPU_FAST_PROJ_3V_HELPER_FUNC(name) /* CUDA only */
+define(`CALL_GPU_FAST_PROJ_3V_HELPER_FUNC',`
+/* call_gpu_fast_proj_3v_helper_func */
+	CLEAR_GPU_ERROR($1)
+	REPORT_THREAD_INFO2
+dnl fprintf(stderr,"CALL_GPU_FAST_PROJ_3V_HELPER_FUNC(%s):  dst_values = 0x%lx, src_values = 0x%lx, len1 = %d, len2 = %d\n",
+dnl "$1",(long)dst_values,(long)src_values,len1,len2);
+	GPU_FAST_CALL_NAME($1`_helper')<<< NN_GPU >>>( dst_values, src1_values, src2_values, len1, len2 );
+	CHECK_GPU_ERROR($1)
 ')
 
 
