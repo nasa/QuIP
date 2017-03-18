@@ -93,13 +93,40 @@ char KERN_SOURCE_NAME($1`_nocc_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_MM_NO
 /* `VEC_FUNC_FAST_2V_PROJ_SETUP' */
 
 define(`__VEC_FUNC_FAST_2V_PROJ_SETUP',`
-char KERN_SOURCE_NAME($1`_setup',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_SETUP($1, $2 ) );
+char KERN_SOURCE_NAME($1`_setup',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_SETUP($1,$2) );
 ')
 
 /* `VEC_FUNC_FAST_2V_PROJ_HELPER' */
 
 define(`__VEC_FUNC_FAST_2V_PROJ_HELPER',`
-char KERN_SOURCE_NAME($1`_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_HELPER($1, $2 ) );
+char KERN_SOURCE_NAME($1`_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_HELPER($1,$2) );
+')
+
+dnl	__VEC_FUNC_FAST_3V_PROJ( func_name )
+dnl	define(`__VEC_FUNC_FAST_3V_PROJ',`
+dnl	char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ( $1 ) );
+dnl	')
+
+dnl	dnl	__VEC_FUNC_CPX_FAST_3V_PROJ( func_name )
+dnl	define(`__VEC_FUNC_CPX_FAST_3V_PROJ',`
+dnl	char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ( $1 ) );
+dnl	')
+dnl	__VEC_FUNC_FAST_3V_PROJ_SETUP( func_name )
+
+define(`__VEC_FUNC_FAST_3V_PROJ_SETUP',`
+char KERN_SOURCE_NAME($1`_setup',fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ_SETUP($1));
+')
+
+define(`__VEC_FUNC_FAST_3V_PROJ_HELPER',`
+char KERN_SOURCE_NAME($1`_helper',fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ_HELPER($1));
+')
+
+define(`__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP',`
+char KERN_SOURCE_NAME($1`_setup',fast)[]= QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1));
+')
+
+define(`__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER',`
+char KERN_SOURCE_NAME($1`_helper',fast)[]=QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1));
 ')
 
 /* `VEC_FUNC_CPX_FAST_2V_PROJ_SETUP' */
@@ -131,5 +158,6 @@ char KERN_SOURCE_NAME($1`_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_QUAT_FAST_2V_PR
 define(`__VEC_FUNC_FAST_2V_PROJ_IDX',`
 char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT(___VEC_FUNC_FAST_2V_PROJ_IDX($1, $2, $3 ) );
 ')
+
 
 /* ocl_kernel_src.m4 END */

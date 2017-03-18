@@ -60,15 +60,15 @@ define(`KERN_ARGS_FAST_NOCC_HELPER',`dst_extrema, dst_counts, src_vals, src_coun
 
 // BUG - how can we insure that the declarations are consistent!?
 
-define(`DECLARE_KERN_ARGS_FAST_NOCC_HELPER',`				\
-				\
-	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,				\
-	KERNEL_ARG_QUALIFIER index_type* dst_counts,				\
-	KERNEL_ARG_QUALIFIER dest_type* src_vals,				\
-	KERNEL_ARG_QUALIFIER index_type *src_counts,				\
-	KERNEL_ARG_QUALIFIER index_type *dst_indices,				\
-	DECLARE_2_LENGTHS				\
-	, uint32_t stride				\
+define(`DECLARE_KERN_ARGS_FAST_NOCC_HELPER',`			\
+								\
+	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,		\
+	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
+	KERNEL_ARG_QUALIFIER dest_type* src_vals,		\
+	KERNEL_ARG_QUALIFIER index_type *src_counts,		\
+	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
+	DECLARE_2_LENGTHS					\
+	, uint32_t stride					\
 ')
 
 
@@ -76,12 +76,12 @@ define(`DECLARE_KERN_ARGS_FAST_NOCC_HELPER',`				\
 define(`KERN_ARGS_FAST_NOCC_SETUP',`dst_extrema, dst_counts, orig_src_vals, dst_indices, len1, len2')
 
 
-define(`DECLARE_KERN_ARGS_FAST_NOCC_SETUP',`					\
-					\
-	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,					\
-	KERNEL_ARG_QUALIFIER index_type* dst_counts,					\
-	KERNEL_ARG_QUALIFIER std_type* src_vals,					\
-	KERNEL_ARG_QUALIFIER index_type *dst_indices,					\
+define(`DECLARE_KERN_ARGS_FAST_NOCC_SETUP',`			\
+								\
+	KERNEL_ARG_QUALIFIER dest_type* dst_extrema,		\
+	KERNEL_ARG_QUALIFIER index_type* dst_counts,		\
+	KERNEL_ARG_QUALIFIER std_type* src_vals,		\
+	KERNEL_ARG_QUALIFIER index_type *dst_indices,		\
 	DECLARE_2_LENGTHS					\
 ')
 
@@ -91,61 +91,105 @@ define(`DECLARE_KERN_ARGS_FAST_NOCC_SETUP',`					\
 
 define(`KERN_ARGS_MM',`a, b, c, len1, len2')
 
-define(`DECLARE_KERN_ARGS_MM',`						\
-						\
-	KERNEL_ARG_QUALIFIER std_type* a,						\
-	KERNEL_ARG_QUALIFIER std_type* b,						\
-	KERNEL_ARG_QUALIFIER std_type* c,						\
-	DECLARE_2_LENGTHS						\
+define(`DECLARE_KERN_ARGS_MM',`				\
+							\
+	KERNEL_ARG_QUALIFIER std_type* a,		\
+	KERNEL_ARG_QUALIFIER std_type* b,		\
+	KERNEL_ARG_QUALIFIER std_type* c,		\
+	DECLARE_2_LENGTHS				\
 ')
 
 define(`DECLARE_2_LENGTHS',`uint32_t len1, uint32_t len2')
 
+dnl 3V PROJ
+
+define(`KERN_ARGS_FAST_3V_PROJ_HELPER',`dest, s1, s2, len1, len2')
+
+define(`DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_type* dest,		\
+	KERNEL_ARG_QUALIFIER dest_type* s1,		\
+	KERNEL_ARG_QUALIFIER dest_type* s2,		\
+	DECLARE_2_LENGTHS				\
+')
+
+
+define(`KERN_ARGS_FAST_3V_PROJ_SETUP',`dest, s1, s2, len1, len2')
+
+define(`DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP',`		\
+							\
+	KERNEL_ARG_QUALIFIER dest_type* dest,		\
+	KERNEL_ARG_QUALIFIER std_type* s1,		\
+	KERNEL_ARG_QUALIFIER std_type* s2,		\
+	DECLARE_2_LENGTHS				\
+')
+
+
+define(`DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
+	KERNEL_ARG_QUALIFIER std_cpx* s1,		\
+	KERNEL_ARG_QUALIFIER std_cpx* s2,		\
+	DECLARE_2_LENGTHS				\
+')
+
+define(`DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
+	KERNEL_ARG_QUALIFIER dest_cpx* s1,		\
+	KERNEL_ARG_QUALIFIER dest_cpx* s2,		\
+	DECLARE_2_LENGTHS				\
+')
+
+dnl 2V PROJ
+
 define(`KERN_ARGS_FAST_2V_PROJ_HELPER',`dest, s1, len1, len2')
 
-define(`DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER',`					\
-					\
-	KERNEL_ARG_QUALIFIER dest_type* dest,					\
-	KERNEL_ARG_QUALIFIER dest_type* s1,					\
-	DECLARE_2_LENGTHS					\
+define(`DECLARE_KERN_ARGS_FAST_2V_PROJ_HELPER',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_type* dest,		\
+	KERNEL_ARG_QUALIFIER dest_type* s1,		\
+	DECLARE_2_LENGTHS				\
 ')
 
 
 define(`KERN_ARGS_FAST_2V_PROJ_SETUP',`dest, s1, len1, len2')
 
-define(`DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP',`					\
-					\
-	KERNEL_ARG_QUALIFIER dest_type* dest,					\
-	KERNEL_ARG_QUALIFIER std_type* s1,					\
-	DECLARE_2_LENGTHS					\
-')
+dnl need backslashes so can be quoted for OpenCL...
 
-
-define(`DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP',`				\
-				\
-	KERNEL_ARG_QUALIFIER dest_cpx* dest,				\
-	KERNEL_ARG_QUALIFIER std_cpx* s1,				\
-	DECLARE_2_LENGTHS				\
-')
-
-define(`DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER',`				\
-				\
-	KERNEL_ARG_QUALIFIER dest_cpx* dest,				\
-	KERNEL_ARG_QUALIFIER dest_cpx* s1,				\
-	DECLARE_2_LENGTHS				\
-')
-
-define(`DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP',`				\
+define(`DECLARE_KERN_ARGS_FAST_2V_PROJ_SETUP',`		\
 							\
-	KERNEL_ARG_QUALIFIER dest_quat* dest,					\
-	KERNEL_ARG_QUALIFIER std_quat* s1,					\
-	DECLARE_2_LENGTHS					\
+	KERNEL_ARG_QUALIFIER dest_type* dest,		\
+	KERNEL_ARG_QUALIFIER std_type* s1,		\
+	DECLARE_2_LENGTHS				\
 ')
 
-define(`DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER',`				\
-				\
-	KERNEL_ARG_QUALIFIER dest_quat* dest,				\
-	KERNEL_ARG_QUALIFIER dest_quat* s1,				\
+
+define(`DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_SETUP',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
+	KERNEL_ARG_QUALIFIER std_cpx* s1,		\
+	DECLARE_2_LENGTHS				\
+')
+
+define(`DECLARE_KERN_ARGS_CPX_FAST_2V_PROJ_HELPER',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
+	KERNEL_ARG_QUALIFIER dest_cpx* s1,		\
+	DECLARE_2_LENGTHS				\
+')
+
+define(`DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_SETUP',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_quat* dest,		\
+	KERNEL_ARG_QUALIFIER std_quat* s1,		\
+	DECLARE_2_LENGTHS				\
+')
+
+define(`DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER',`	\
+							\
+	KERNEL_ARG_QUALIFIER dest_quat* dest,		\
+	KERNEL_ARG_QUALIFIER dest_quat* s1,		\
 	DECLARE_2_LENGTHS				\
 ')
 
@@ -153,23 +197,23 @@ define(`DECLARE_KERN_ARGS_QUAT_FAST_2V_PROJ_HELPER',`				\
 
 define(`KERN_ARGS_FAST_IDX_SETUP',`indices,s1,s2,len1,len2')
 
-define(`DECLARE_KERN_ARGS_FAST_IDX_SETUP',`						\
-						\
-	KERNEL_ARG_QUALIFIER index_type* a,						\
-	KERNEL_ARG_QUALIFIER std_type* b,						\
-	KERNEL_ARG_QUALIFIER std_type* c,						\
-	DECLARE_2_LENGTHS						\
+define(`DECLARE_KERN_ARGS_FAST_IDX_SETUP',`		\
+							\
+	KERNEL_ARG_QUALIFIER index_type* a,		\
+	KERNEL_ARG_QUALIFIER std_type* b,		\
+	KERNEL_ARG_QUALIFIER std_type* c,		\
+	DECLARE_2_LENGTHS				\
 ')
 
 // BUG?  where is KERN_ARGS_FAST_IDX_HELPER?
 
-define(`DECLARE_KERN_ARGS_FAST_IDX_HELPER',`						\
-						\
-	KERNEL_ARG_QUALIFIER index_type* a,						\
-	KERNEL_ARG_QUALIFIER index_type* b,						\
-	KERNEL_ARG_QUALIFIER index_type* c,						\
-	KERNEL_ARG_QUALIFIER std_type *orig,						\
-	DECLARE_2_LENGTHS						\
+define(`DECLARE_KERN_ARGS_FAST_IDX_HELPER',`		\
+							\
+	KERNEL_ARG_QUALIFIER index_type* a,		\
+	KERNEL_ARG_QUALIFIER index_type* b,		\
+	KERNEL_ARG_QUALIFIER index_type* c,		\
+	KERNEL_ARG_QUALIFIER std_type *orig,		\
+	DECLARE_2_LENGTHS				\
 ')
 
 dnl gpu_args.m4:  is this a special case???

@@ -18,20 +18,21 @@ define(`qsrc2',`fast_qsrc2')
 define(`qsrc3',`fast_qsrc3')
 define(`qsrc4',`fast_qsrc4')
 
+dnl Need backslashes for quoting (OpenCL)
 
 define(`SET_INDICES_DBM',`			\
-	SET_INDEX(dbmi)			\
+	SET_INDEX(dbmi)				\
 	i_dbm_word = dbmi;			\
-	dbmi *= BITS_PER_BITMAP_WORD;			\
+	dbmi *= BITS_PER_BITMAP_WORD;		\
 ')
 
-define(`DECL_BASIC_INDICES_DBM',`			\
+define(`DECL_BASIC_INDICES_DBM',`		\
 	unsigned int i_dbm_bit;			\
-	int i_dbm_word; bitmap_word dbm_bit;			\
+	int i_dbm_word; bitmap_word dbm_bit;	\
 ')
 
 define(`SET_INDICES_DBM_1S_',`			\
-	i_dbm_word = THREAD_INDEX_X;			\
+	i_dbm_word = THREAD_INDEX_X;		\
 ')
 
 include(`../../include/veclib/fast_eqsp_defs.m4')
@@ -63,14 +64,26 @@ define(`_VEC_FUNC_QUAT_2V_PROJ',`
 	__VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER($1,$4,$5,$6,$7)
 ')
 
-define(`_VEC_FUNC_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX( $1, $4, $5 )')
+dnl	_VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )
+dnl define(`_VEC_FUNC_3V_PROJ',`__VEC_FUNC_FAST_3V_PROJ($1)')
+define(`_VEC_FUNC_3V_PROJ',`
+__VEC_FUNC_FAST_3V_PROJ_SETUP($1)
+__VEC_FUNC_FAST_3V_PROJ_HELPER($1)
+')
+
+dnl	 _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
+dnl define(`_VEC_FUNC_CPX_3V_PROJ',`__VEC_FUNC_CPX_FAST_3V_PROJ($1)')
+define(`_VEC_FUNC_CPX_3V_PROJ',`
+__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1)
+__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1)
+')
+
+define(`_VEC_FUNC_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX($1,$4,$5)')
 
 // There is only one function - rvdot, cvdot - so it is implemented in a non-general way.
 // Therefore, we don't have to pass the statements or expressions...
 
-define(`_VEC_FUNC_3V_PROJ',`__VEC_FUNC_FAST_3V_PROJ( $1 )')
 
-define(`_VEC_FUNC_CPX_3V_PROJ',`__VEC_FUNC_CPX_FAST_3V_PROJ( $1 )')
 
 
 // Why is it that only CUDA needs the len versions???
