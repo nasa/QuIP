@@ -1610,6 +1610,8 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 
 	eval_enp = enp;
 
+	// if dst_dp is non-null, then we return a new object, otherwise we use dst_dp
+
 	switch( VN_CODE(enp) ){
 		/* ALL_OBJREF_CASES??? */
 		case T_STATIC_OBJ:		/* eval_bitmap */
@@ -3471,7 +3473,16 @@ node_desc(enp),OBJ_NAME(VN_DECL_OBJ(enp)));
 WARN(ERROR_STRING);
 }
 
-	assert( VN_DECL_OBJ(enp) == NO_OBJ );
+	// We are getting an error with an immediate declaration...
+	// This is a static object, but it appears it gets deleted and then evaluated again?
+	if( VN_DECL_OBJ(enp) != NO_OBJ ){
+		if( !strncmp("Z.",OBJ_NAME(VN_DECL_OBJ(enp)),2) ){
+			// the decl object is a zombie!?
+			advise("memory leak from zombie object?");
+		} else {
+			assert( VN_DECL_OBJ(enp) == NO_OBJ );
+		}
+	}
 
 	SET_VN_DECL_OBJ(enp,dp);
 
@@ -3482,7 +3493,7 @@ WARN(ERROR_STRING);
 	if( decl_flags & DECL_IS_STATIC ) SET_OBJ_FLAG_BITS(dp, DT_STATIC);
 
 	return(dp);
-}
+}	// finish_obj_decl
 
 
 /* Evaluate a declaration statement, e.g.
@@ -3791,6 +3802,8 @@ advise(ERROR_STRING);
 //	}
 //#endif /* CAUTIOUS */
 	assert( VN_STRING(enp) != NULL );
+fprintf(stderr,"eval_decl_stat creating id, string = \"%s\"...\n",VN_STRING(enp));
+dump_tree(enp);
 
 	// Make sure this name has not been used already...
 	idp = ID_OF(VN_STRING(enp));
@@ -3856,6 +3869,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 
 	idp = new_id(QSP_ARG  VN_STRING(enp));		/* eval_decl_stat */
 	SET_ID_TYPE(idp, type);
+fprintf(stderr,"new id_type = %d\n",type);
 
 
 //#ifdef CAUTIOUS
@@ -3871,6 +3885,9 @@ show_context_stack(QSP_ARG  dobj_itp);
 	switch( type ){
 
 		case ID_REFERENCE:
+fprintf(stderr,"ID_REFERENCE:  idp = 0x%lx\n",(long)idp);
+fprintf(stderr,"ID_NAME(idp) = 0x%lx\n",(long)ID_NAME(idp));
+fprintf(stderr,"ID_NAME(idp) = %s\n",ID_NAME(idp));
 			SET_ID_DOBJ_CTX(idp , (Item_Context *)NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)) );
 			SET_ID_REF(idp, NEW_REFERENCE );
 			SET_REF_ID(ID_REF(idp), idp );

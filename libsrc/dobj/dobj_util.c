@@ -180,6 +180,7 @@ static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 	zombie_item(QSP_ARG  dobj_itp,(Item *)dp);
 
 	sprintf(zname,"Z.%s.%d",OBJ_NAME(dp),n_zombie++);
+fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
 	rls_str( (char *) OBJ_NAME(dp) );	/* unsave old name, make_zombie */
 	SET_OBJ_NAME(dp,savestr(zname));
 
