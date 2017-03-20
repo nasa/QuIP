@@ -3803,7 +3803,7 @@ advise(ERROR_STRING);
 //#endif /* CAUTIOUS */
 	assert( VN_STRING(enp) != NULL );
 fprintf(stderr,"eval_decl_stat creating id, string = \"%s\"...\n",VN_STRING(enp));
-dump_tree(enp);
+dump_tree(QSP_ARG  enp);
 
 	// Make sure this name has not been used already...
 	idp = ID_OF(VN_STRING(enp));
