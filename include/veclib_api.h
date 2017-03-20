@@ -10,6 +10,15 @@ extern "C" {
 #include "veclib/obj_args.h"
 //#include "veclib/vl2_veclib_prot.h"
 
+extern int setup_slow_len(	/* DIM3 *len_p, */ /* use vap */
+				/* Size_Info *szi_p, */
+				Vector_Args *vap,
+				dimension_t start_dim,
+				/* int *dim_indices, */	/* now in vap */
+				int i_first,
+				int n_vec,
+				Platform_Device *pdp);
+
 extern COMMAND_FUNC(do_comp_menu);
 extern COMMAND_FUNC( do_vl_menu );
 

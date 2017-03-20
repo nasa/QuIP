@@ -178,7 +178,13 @@ typedef enum {
 #endif
 
 typedef BITMAP_DATA_TYPE bitmap_word;
-#define BITNUM_64	// comment out for 32 bit bit numbers
+
+// bitnum_t is used to hold the starting bit number of a subobject within a larger object.
+// Thus the maximum conceivable value is the word size in bits (32 or 64) times the largest possible
+// dimension.  So, if dimension_t is 32 bits, we might need 40 bits to hold a start bit.  However,
+// This is unlikely to arise in practice as 32 bits already gets us to a billion.  But I don't think
+// the code checks for overflow...
+//#define BITNUM_64	// comment out for 32 bit bit numbers
 #ifdef BITNUM_64
 typedef uint64_t	bitnum_t;	// could be uint32_t?
 #else

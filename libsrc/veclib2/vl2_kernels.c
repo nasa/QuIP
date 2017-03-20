@@ -1,29 +1,21 @@
 
+include(`../../include/veclib/vl2_veclib_prot.m4')	// declare all the prototypes for the host
+include(`../../include/veclib/fftsupp.m4')	// prototypes for some external helpers
 
-#include "veclib/vl2_veclib_prot.h"	// declare all the prototypes for the host
-#include "veclib/fftsupp.h"	// prototypes for some external helpers
-
-#include "cpu_call_defs.h"
+include(`cpu_call_defs.m4')
 
 // Why define "host" calls in kernel defs?
-#include "veclib/gen_host_calls.c"	// all the precisions
+include(`veclib/gen_host_calls.m4')	// all the precisions
 
 // include fft stuff?
 // Now include the special cases...
 
-#include "veclib/sp_defs.h"
-#include "vfft.c"
-#include "linear.c"
-#include "veclib/type_undefs.h"
+include(`../../include/veclib/sp_defs.m4')
+include(`vfft.m4')
+include(`linear.m4')
 
-#include "veclib/dp_defs.h"
-#include "vfft.c"
-#include "linear.c"
-#include "veclib/type_undefs.h"
+include(`../../include/veclib/dp_defs.m4')
+include(`vfft.m4')
+include(`linear.m4')
 
-//#include "veclib/bit_defs.h"
-//#include "veclib/bitmap_ops.c"
-//#include "veclib/type_undefs.h"
-
-#include "veclib/method_undefs.h"
 

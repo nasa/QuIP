@@ -171,11 +171,14 @@ typedef struct vector_args {
 						// used for return scalars also?
 	bitnum_t	va_dbm_bit0;
 	bitnum_t	va_sbm_bit0;
+
 	dimension_t	va_len;			// just for fast/eqsp ops?
+
+	uint32_t	va_total_count;		// used for slow ops?
+	dim5		va_slow_size;
+
 #ifdef HAVE_ANY_GPU
 	//Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
-	dim5		va_slow_size;
-	uint32_t	va_total_count;
 #ifdef HAVE_CUDA
 	unsigned int	va_grid_size[3];	// dim3
 #endif // HAVE_CUDA
@@ -190,7 +193,22 @@ typedef struct vector_args {
 	Bitmap_GPU_Info *	va_sbm_gpu_info;
 #endif // HAVE_ANY_GPU
 
+#ifdef FOOBAR
+/*#ifdef BUILD_FOR_GPU*/
+// This really should be conditionally compiled, but currently
+// BUILD_FOR_GPU isn't defined in the right spot...
+// Really BUILD_FOR_GPU get set and unset during the build,
+// but we need the struct to have a constant size.  We really
+// should define a new symbol BUILD_WITH_GPU...  or HAVE_ANY_GPU
+	/*
+	DIM3		va_xyz_len;		// used for kernels...	FOOBAR
+	int		va_dim_indices[3];	// do these refer to the dobj dimensions?	FOOBAR
+	*/
+	Dimension_Set	va_iteration_size;		// for gpu, number of kernel threads
+
 /*#endif // BUILD_FOR_GPU*/
+#endif // FOOBAR
+
 	argset_type	va_argstype;
 	argset_prec	va_argsprec;
 	int		va_functype;
@@ -278,7 +296,7 @@ fprintf(stderr,"VA_SLOW_SIZE:  %d %d %d %d %d\n",\
 
 extern void show_vec_args(const Vector_Args *vap);	// for debug
 extern dimension_t varg_bitmap_word_count( const Vector_Arg *varg_p );
-extern bitnum_t bitmap_obj_word_count( Data_Obj *dp );
+extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 
 
 /* Now we subtract 1 because the 0 code is "unknown" */
@@ -460,10 +478,13 @@ extern bitnum_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_QVAL2(vap,v)		SET_VA_SVAL(vap,1,v)
 // These macros here depend on whether scalars for spdp are src or dest
 // Here we assume src...
-#define SET_VA_SCALAR_VAL_STD(vap,idx,v)	*((std_type *)(vap)->va_sval[idx]) = v
-#define SET_VA_SCALAR_VAL_UDI(vap,idx,v)	*((uint32_t *)(vap)->va_sval[idx]) = v
-#define VA_SCALAR_VAL_STD(vap,idx)	(*((std_type *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_UDI(vap,idx)	(*((uint32_t *)((vap)->va_sval[idx])))
+#define SET_VA_SCALAR_VAL_UDI(vap,idx,v)	*((uint32_t *)(vap)->va_sval[idx]) = v
+
+// these are now m4 macros...
+// BUT we need to keep them here until veclib2 is ported also...
+#define SET_VA_SCALAR_VAL_STD(vap,idx,v)	*((std_type *)(vap)->va_sval[idx]) = v
+#define VA_SCALAR_VAL_STD(vap,idx)	(*((std_type *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_STDCPX(vap,idx)	(*((std_cpx *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_STDQUAT(vap,idx)	(*((std_quat *)((vap)->va_sval[idx])))
 

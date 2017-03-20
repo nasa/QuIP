@@ -5,7 +5,7 @@
 
 extern "C" {
 
-#include "cu2_veclib.c"
+#include "m4_cu2_veclib.c"
 
 }
 

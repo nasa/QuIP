@@ -8,12 +8,12 @@
 /* identifier flags */
 typedef enum {
 	/* ID_OBJECT, */
-	ID_POINTER,
-	ID_REFERENCE,
-	ID_SUBRT,
-	ID_STRING,
-	ID_FUNCPTR,
-	ID_LABEL
+	ID_POINTER,	// 0
+	ID_REFERENCE,	// 1
+	ID_SUBRT,	// 2
+	ID_STRING,	// 3
+	ID_FUNCPTR,	// 4
+	ID_LABEL	// 5
 } Id_Type;
 
 typedef struct id_data {
