@@ -19,11 +19,11 @@ include(`../../include/veclib/gen_host_calls.m4')	// all the precisions
 // Now include the special cases...
 
 include(`../../include/veclib/sp_defs.m4')
-dnl include(`vfft.m4')
+dnl include(`linear.m4')
 include(`linear.m4')
 
 include(`../../include/veclib/dp_defs.m4')
-dnl include(`vfft.m4')
+dnl include(`linear.m4')
 include(`linear.m4')
 
 

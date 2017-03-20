@@ -7,7 +7,6 @@
 #include "rn.h"
 #include "veclib_api.h"
 #include "my_vl2.h"
-#ifdef OLD
 #include "veclib/vl2_port.h"
 #include "veclib/vl2_veclib_prot.h"
 
@@ -21,7 +20,4 @@
 #include "fast_sp.c"
 
 #include "vl2_typtbl.c"
-#endif // OLD
-
-#include "vl2_veclib_expanded.c"
 
