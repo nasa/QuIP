@@ -1855,11 +1855,7 @@ static COMMAND_FUNC( docmp )
 /* static COMMAND_FUNC( do_corr ) { DO_VCODE(FVCONV); } */
 static COMMAND_FUNC( do_dot )
 {
-#ifdef FVDOT
 	DO_VCODE(FVDOT);
-#else // ! FVDOT
-	WARN("Sorry, FVDOT not implemented at present!?");
-#endif // ! FVDOT
 }
 /* static COMMAND_FUNC( do_cdot ) { DO_VCODE(FVCDOT); } */
 

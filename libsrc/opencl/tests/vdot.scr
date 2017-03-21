@@ -1,0 +1,32 @@
+
+Set n 8
+
+Define Test_VDot 1 prefix
+Vector v1_$1 $n 1 float
+Vector v2_$1 $n 1 float
+Vector v3_$1 $n 1 float
+Scalar s_$1 1 float
+Ramp1D v1_$1 0 1
+Ramp1D v2_$1 $n -1
+Display v1_$1
+Display v2_$1
+advise 'ready for vdot...'
+Pause
+VVDot v3_$1 v1_$1 v2_$1
+Display v3_$1
+VVDot s_$1 v1_$1 v2_$1
+Display s_$1
+.
+
+Test_VDot h
+Pause
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  quit
+
+Test_VDot g
+Pause
+
+exit
+

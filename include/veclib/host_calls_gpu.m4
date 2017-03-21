@@ -290,7 +290,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS )
 	}
 
 	CHECK_MM($1)
-	/* BUG need to xfer args to vap */
+	/* BUG need to xfer args to vap - proj_2v_idx */
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
 fprintf(stderr,"h_call_proj_2v_idx %s:  need to implement speed switch!?\n","$1");
 
@@ -511,7 +511,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)(HOST_CALL_ARG_DECLS )
 		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
-	/* BUG need to set vap entries from oap */
+	/* BUG need to set vap entries from oap - mm_nocc */
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
 	CHECK_MM($1)
 	memset(vap,0,sizeof(*vap)); /* needed only if will show? */
@@ -561,7 +561,9 @@ define(`SETUP_PROJ_ITERATION',`
 		dst_values = ($1 *) VA_DEST_PTR(vap);
 		dst_to_free = (dst_type *)NULL;
 	} else {
+fprintf(stderr,"setup_proj_iteration $2:  allocating temp vec\n");
 		dst_values = ($1 *) TMPVEC_NAME`(VA_PFDEV(vap),sizeof($1),len1,"$2")';
+fprintf(stderr,"setup_proj_iteration $2:  DONE allocating temp vec\n");
 		dst_to_free = dst_values;
 	}
 ')
@@ -639,7 +641,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 
 	CLEAR_VEC_ARGS(vap) /* mostly for debugging */
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
-	/* BUG need to set vap entries from oap */
+	/* BUG need to set vap entries from oap - proj_2v */
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));
 	/* why slow args? */
 	XFER_SLOW_ARGS_2
@@ -665,19 +667,24 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 	$2 *dst_to_free;
 	DECLARE_PLATFORM_VARS_2
 
+fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, vap = 0x%lx\n",(long)vap);
 	len = VA_SRC1_LEN(vap);
+fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, len = 0x%x\n",len);
 	orig_src1_values = ($3 *) VA_SRC1_PTR(vap);
 	orig_src2_values = ($3 *) VA_SRC2_PTR(vap);
+fprintf(stderr,"h_call_proj_3v $1:  args set\n");
 
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
 	/* first iteration may be mixed types... */
 	SETUP_PROJ_ITERATION($2,$1)
+fprintf(stderr,"h_call_proj_3v $1:  calling setup func, len = %d\n",len);
 	CALL_GPU_FAST_PROJ_3V_SETUP_FUNC($1)
 	len = len1;
 	src_to_free=(dst_type *)NULL;
 	src1_values = dst_values;
 	while( len > 1 ){
 		SETUP_PROJ_ITERATION($2,$1)
+fprintf(stderr,"h_call_proj_3v $1:  calling helper func, len = %d\n",len);
 		CALL_GPU_FAST_PROJ_3V_HELPER_FUNC($1)
 		src1_values = dst_values;
 		/* Each temp vector gets used twice,
@@ -701,10 +708,20 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 
 	CHECK_MM($1)
 
-	/* BUG need to set vap entries from oap */
+	/* BUG need to set vap entries from oap - proj_3v */
 	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])
 fprintf(stderr,"h_call_proj_3v %s:  need to implement speed switch!?\n","$1");
+	/* Speed switch should determine the args to copy!? */
+	SET_VA_PFDEV(vap,OA_PFDEV(oap));
+fprintf(stderr,"h_call_proj_3v $1:  pfdev set\n");
+	XFER_DEST_PTR
+fprintf(stderr,"h_call_proj_3v $1:  dest ptr set\n");
+	XFER_FAST_ARGS_2SRCS
+fprintf(stderr,"h_call_proj_3v $1:  src ptrs set\n");
+	XFER_FAST_COUNT(SRC1_DP)
+fprintf(stderr,"h_call_proj_3v $1:  count set\n");
+
 	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
 }
 ')

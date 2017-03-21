@@ -131,10 +131,15 @@ define(`SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP',`
 define(`SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER',`
 
 	ki_idx=0;
+fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting dst_values\n");
 	SET_KERNEL_ARG_2(void *,&dst_values)
+fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src1_values\n");
 	SET_KERNEL_ARG_2(void *,&src1_values)
+fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src2_values\n");
 	SET_KERNEL_ARG_2(void *,&src2_values)
+fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len1\n");
 	SET_KERNEL_ARG_2( uint32_t, &len1 )
+fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len2\n");
 	SET_KERNEL_ARG_2( uint32_t, &len2 )
 ')
 

@@ -260,7 +260,9 @@ define(`CALL_GPU_FAST_PROJ_3V_SETUP_FUNC',`
 
 define(`CALL_GPU_FAST_PROJ_3V_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1`_helper')
+fprintf(stderr,"setting helper kernel args...\n");
 	SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER
+fprintf(stderr,"DONE setting helper kernel args...\n");
 	CALL_FAST_KERNEL_2($1`_helper',,,,)
 ')
 
