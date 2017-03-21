@@ -136,6 +136,8 @@ fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting dst_values\n");
 fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src1_values\n");
 	SET_KERNEL_ARG_2(void *,&src1_values)
 fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src2_values\n");
+fprintf(stderr,"src2_values = 0x%lx, &src2_values = 0x%lx\n",(long)src2_values,(long)(&src2_values));
+fprintf(stderr,"pd_idx = %d,  kernel2[pd_idx] = 0x%lx\n",pd_idx,(long)kernel2[pd_idx]);
 	SET_KERNEL_ARG_2(void *,&src2_values)
 fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len1\n");
 	SET_KERNEL_ARG_2( uint32_t, &len1 )

@@ -653,6 +653,9 @@ fprintf(stderr,"h_call_proj_2v %s:  need to implement speed switch, calling fast
 ')
 
 // vdot, cvdot, etc
+// The following is messed up!
+// The "setup" function should to the element-wise products to a temp area (which may be large),
+// then the "helper" function should sum those.  Best approach would be to use vmul and vsum...
 
 dnl	 H_CALL_PROJ_3V( name, dtype, stype )
 define(`H_CALL_PROJ_3V',`
@@ -668,7 +671,8 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 	DECLARE_PLATFORM_VARS_2
 
 fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, vap = 0x%lx\n",(long)vap);
-	len = VA_SRC1_LEN(vap);
+	//len = VA_SRC1_LEN(vap);
+	len = VA_LENGTH(vap);
 fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, len = 0x%x\n",len);
 	orig_src1_values = ($3 *) VA_SRC1_PTR(vap);
 	orig_src2_values = ($3 *) VA_SRC2_PTR(vap);
@@ -725,6 +729,7 @@ fprintf(stderr,"h_call_proj_3v $1:  count set\n");
 	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
 }
 ')
+
 
 
 /* end of host_calls_gpu.m4 */
