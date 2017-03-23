@@ -313,6 +313,7 @@ extern void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *);
 
 /* comptree.c */
 
+extern Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
 extern Shape_Info *alloc_shape(void);
 extern Shape_Info *product_shape(Shape_Info *,Shape_Info *);
 //#ifdef CAUTIOUS

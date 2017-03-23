@@ -141,6 +141,7 @@ extern void cpu_mem_free(QSP_ARG_DECL  void *ptr );
 
 extern Data_Obj * make_dobj_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *,uint32_t);
 extern void	  set_dp_alignment(int);
+// what is the difference between make_dobj and _make_dp???
 extern Data_Obj * make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *);
 extern Data_Obj * setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision *);
 extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision * );

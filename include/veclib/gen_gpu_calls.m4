@@ -254,64 +254,64 @@ define(`_VEC_FUNC_MM_IND',`__VEC_FUNC_MM_IND($1,$2,$3)')
 // rvdot - we need temporary space for the products!?
 // The first step should be a normal vmul...
 
-define(`___VEC_FUNC_FAST_3V_PROJ_SETUP',`			\
-KERNEL_FUNC_PRELUDE						\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
-	( DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP )		\
-	FAST_3V_PROJ_BODY(std_type)				\
-')
-
-define(`___VEC_FUNC_FAST_3V_PROJ_HELPER',`			\
-								\
-KERNEL_FUNC_PRELUDE						\
-								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
-	( DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER )		\
-	FAST_3V_PROJ_BODY(dest_type)				\
-')
-
-define(`FAST_3V_PROJ_BODY',`					\
-{								\
-dnl	INIT_INDICES_1
-dnl
-dnl	if( IDX1 < len2 ){
-dnl		KERNEL_ARG_QUALIFIER $2 *s2;
-dnl		s2 = s1 + len1;
-dnl		dest[IDX1] = $1 ;
-dnl	} else if( IDX1 < len1 ){
-dnl		dest[IDX1] = s1[IDX1];
-dnl	}
-	/* do nothing until we figure this out */		\
-}								\
-')
-
-
-/* `CPX_FAST_3V_PROJ_SETUP' */
-
-define(`___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP',`			\
-								\
-KERNEL_FUNC_PRELUDE						\
-								\
-KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
-	( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP )		\
-FAST_CPX_3V_PROJ_BODY($2,$3,std_cpx)				\
-')
-
-/* `CPX_FAST_3V_PROJ_HELPER' */
-define(`___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER',`				\
-									\
-KERNEL_FUNC_PRELUDE							\
-									\
-	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
-		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER )		\
-	FAST_CPX_3V_PROJ_BODY($2,$3,dest_cpx)				\
-')
-
-define(`FAST_CPX_3V_PROJ_BODY',`		\
-{						\
-dnl what should we do here ?  BUG
-}						\
-')
+dnl	define(`___VEC_FUNC_FAST_3V_PROJ_SETUP',`			\
+dnl	KERNEL_FUNC_PRELUDE						\
+dnl	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+dnl		( DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP )		\
+dnl		FAST_3V_PROJ_BODY(std_type)				\
+dnl	')
+dnl	
+dnl	define(`___VEC_FUNC_FAST_3V_PROJ_HELPER',`			\
+dnl									\
+dnl	KERNEL_FUNC_PRELUDE						\
+dnl									\
+dnl	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+dnl		( DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER )		\
+dnl		FAST_3V_PROJ_BODY(dest_type)				\
+dnl	')
+dnl	
+dnl	define(`FAST_3V_PROJ_BODY',`					\
+dnl	{								\
+dnl	dnl	INIT_INDICES_1
+dnl	dnl
+dnl	dnl	if( IDX1 < len2 ){
+dnl	dnl		KERNEL_ARG_QUALIFIER $2 *s2;
+dnl	dnl		s2 = s1 + len1;
+dnl	dnl		dest[IDX1] = $1 ;
+dnl	dnl	} else if( IDX1 < len1 ){
+dnl	dnl		dest[IDX1] = s1[IDX1];
+dnl	dnl	}
+dnl		/* do nothing until we figure this out */		\
+dnl	}								\
+dnl	')
+dnl	
+dnl	
+dnl	/* `CPX_FAST_3V_PROJ_SETUP' */
+dnl	
+dnl	define(`___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP',`			\
+dnl									\
+dnl	KERNEL_FUNC_PRELUDE						\
+dnl									\
+dnl	KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
+dnl		( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP )		\
+dnl	FAST_CPX_3V_PROJ_BODY($2,$3,std_cpx)				\
+dnl	')
+dnl	
+dnl	/* `CPX_FAST_3V_PROJ_HELPER' */
+dnl	define(`___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER',`				\
+dnl										\
+dnl	KERNEL_FUNC_PRELUDE							\
+dnl										\
+dnl		KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_helper')	\
+dnl			( DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER )		\
+dnl		FAST_CPX_3V_PROJ_BODY($2,$3,dest_cpx)				\
+dnl	')
+dnl	
+dnl	define(`FAST_CPX_3V_PROJ_BODY',`		\
+dnl	{						\
+dnl	dnl what should we do here ?  BUG
+dnl	}						\
+dnl	')
 
 
 /* `CPX_FAST_2V_PROJ_SETUP' */

@@ -64,19 +64,23 @@ define(`_VEC_FUNC_QUAT_2V_PROJ',`
 	__VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER($1,$4,$5,$6,$7)
 ')
 
-dnl	_VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )
-dnl define(`_VEC_FUNC_3V_PROJ',`__VEC_FUNC_FAST_3V_PROJ($1)')
-define(`_VEC_FUNC_3V_PROJ',`
-__VEC_FUNC_FAST_3V_PROJ_SETUP($1)
-__VEC_FUNC_FAST_3V_PROJ_HELPER($1)
-')
+dnl  No more kernels?
+dnl	dnl	_VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )
+dnl	dnl define(`_VEC_FUNC_3V_PROJ',`__VEC_FUNC_FAST_3V_PROJ($1)')
+dnl	define(`_VEC_FUNC_3V_PROJ',`
+dnl	__VEC_FUNC_FAST_3V_PROJ_SETUP($1)
+dnl	__VEC_FUNC_FAST_3V_PROJ_HELPER($1)
+dnl	')
+dnl	
+dnl	dnl	 _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
+dnl	dnl define(`_VEC_FUNC_CPX_3V_PROJ',`__VEC_FUNC_CPX_FAST_3V_PROJ($1)')
+dnl	define(`_VEC_FUNC_CPX_3V_PROJ',`
+dnl	__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1)
+dnl	__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1)
+dnl	')
 
-dnl	 _VEC_FUNC_CPX_3V_PROJ( func_name, s1, s2, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
-dnl define(`_VEC_FUNC_CPX_3V_PROJ',`__VEC_FUNC_CPX_FAST_3V_PROJ($1)')
-define(`_VEC_FUNC_CPX_3V_PROJ',`
-__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1)
-__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1)
-')
+define(`_VEC_FUNC_3V_PROJ',`')
+define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
 define(`_VEC_FUNC_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX($1,$4,$5)')
 

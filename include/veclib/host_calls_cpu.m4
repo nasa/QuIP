@@ -1,7 +1,7 @@
 
 define(`H_CALL_PROJ_2V',	SLOW_HOST_CALL($1,,,,2) )
-define(`H_CALL_PROJ_3V',	SLOW_HOST_CALL($1,,,,3) )
 define(`H_CALL_PROJ_2V_IDX',	SLOW_HOST_CALL($1,,,,2) )
+define(`H_CALL_PROJ_3V',	SLOW_HOST_CALL($1,,,,3) )
 
 define(`H_CALL_MM_NOCC',`
 

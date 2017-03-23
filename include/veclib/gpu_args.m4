@@ -103,43 +103,43 @@ define(`DECLARE_2_LENGTHS',`uint32_t len1, uint32_t len2')
 
 dnl 3V PROJ
 
-define(`KERN_ARGS_FAST_3V_PROJ_HELPER',`dest, s1, s2, len1, len2')
-
-define(`DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER',`	\
-							\
-	KERNEL_ARG_QUALIFIER dest_type* dest,		\
-	KERNEL_ARG_QUALIFIER dest_type* s1,		\
-	KERNEL_ARG_QUALIFIER dest_type* s2,		\
-	DECLARE_2_LENGTHS				\
-')
-
-
-define(`KERN_ARGS_FAST_3V_PROJ_SETUP',`dest, s1, s2, len1, len2')
-
-define(`DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP',`		\
-							\
-	KERNEL_ARG_QUALIFIER dest_type* dest,		\
-	KERNEL_ARG_QUALIFIER std_type* s1,		\
-	KERNEL_ARG_QUALIFIER std_type* s2,		\
-	DECLARE_2_LENGTHS				\
-')
-
-
-define(`DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP',`	\
-							\
-	KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
-	KERNEL_ARG_QUALIFIER std_cpx* s1,		\
-	KERNEL_ARG_QUALIFIER std_cpx* s2,		\
-	DECLARE_2_LENGTHS				\
-')
-
-define(`DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER',`	\
-							\
-	KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
-	KERNEL_ARG_QUALIFIER dest_cpx* s1,		\
-	KERNEL_ARG_QUALIFIER dest_cpx* s2,		\
-	DECLARE_2_LENGTHS				\
-')
+dnl	define(`KERN_ARGS_FAST_3V_PROJ_HELPER',`dest, s1, s2, len1, len2')
+dnl	
+dnl	define(`DECLARE_KERN_ARGS_FAST_3V_PROJ_HELPER',`	\
+dnl								\
+dnl		KERNEL_ARG_QUALIFIER dest_type* dest,		\
+dnl		KERNEL_ARG_QUALIFIER dest_type* s1,		\
+dnl		KERNEL_ARG_QUALIFIER dest_type* s2,		\
+dnl		DECLARE_2_LENGTHS				\
+dnl	')
+dnl	
+dnl	
+dnl	define(`KERN_ARGS_FAST_3V_PROJ_SETUP',`dest, s1, s2, len1, len2')
+dnl	
+dnl	define(`DECLARE_KERN_ARGS_FAST_3V_PROJ_SETUP',`		\
+dnl								\
+dnl		KERNEL_ARG_QUALIFIER dest_type* dest,		\
+dnl		KERNEL_ARG_QUALIFIER std_type* s1,		\
+dnl		KERNEL_ARG_QUALIFIER std_type* s2,		\
+dnl		DECLARE_2_LENGTHS				\
+dnl	')
+dnl	
+dnl	
+dnl	define(`DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_SETUP',`	\
+dnl								\
+dnl		KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
+dnl		KERNEL_ARG_QUALIFIER std_cpx* s1,		\
+dnl		KERNEL_ARG_QUALIFIER std_cpx* s2,		\
+dnl		DECLARE_2_LENGTHS				\
+dnl	')
+dnl	
+dnl	define(`DECLARE_KERN_ARGS_CPX_FAST_3V_PROJ_HELPER',`	\
+dnl								\
+dnl		KERNEL_ARG_QUALIFIER dest_cpx* dest,		\
+dnl		KERNEL_ARG_QUALIFIER dest_cpx* s1,		\
+dnl		KERNEL_ARG_QUALIFIER dest_cpx* s2,		\
+dnl		DECLARE_2_LENGTHS				\
+dnl	')
 
 dnl 2V PROJ
 

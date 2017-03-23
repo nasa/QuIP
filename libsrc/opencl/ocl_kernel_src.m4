@@ -102,32 +102,24 @@ define(`__VEC_FUNC_FAST_2V_PROJ_HELPER',`
 char KERN_SOURCE_NAME($1`_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_2V_PROJ_HELPER($1,$2) );
 ')
 
-dnl	__VEC_FUNC_FAST_3V_PROJ( func_name )
-dnl	define(`__VEC_FUNC_FAST_3V_PROJ',`
-dnl	char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ( $1 ) );
-dnl	')
+dnl	We don't need kernels for vdot any more because we use the vmul and vsum kernels to build the
+dnl	operation!
 
-dnl	dnl	__VEC_FUNC_CPX_FAST_3V_PROJ( func_name )
-dnl	define(`__VEC_FUNC_CPX_FAST_3V_PROJ',`
-dnl	char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ( $1 ) );
-dnl	')
-dnl	__VEC_FUNC_FAST_3V_PROJ_SETUP( func_name )
-
-define(`__VEC_FUNC_FAST_3V_PROJ_SETUP',`
-char KERN_SOURCE_NAME($1`_setup',fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ_SETUP($1));
-')
-
-define(`__VEC_FUNC_FAST_3V_PROJ_HELPER',`
-char KERN_SOURCE_NAME($1`_helper',fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ_HELPER($1));
-')
-
-define(`__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP',`
-char KERN_SOURCE_NAME($1`_setup',fast)[]= QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1));
-')
-
-define(`__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER',`
-char KERN_SOURCE_NAME($1`_helper',fast)[]=QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1));
-')
+dnl define(`__VEC_FUNC_FAST_3V_PROJ_SETUP',`
+dnl char KERN_SOURCE_NAME($1`_setup',fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ_SETUP($1));
+dnl ')
+dnl 
+dnl define(`__VEC_FUNC_FAST_3V_PROJ_HELPER',`
+dnl char KERN_SOURCE_NAME($1`_helper',fast)[]=QUOTE_IT(___VEC_FUNC_FAST_3V_PROJ_HELPER($1));
+dnl ')
+dnl 
+dnl define(`__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP',`
+dnl char KERN_SOURCE_NAME($1`_setup',fast)[]= QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1));
+dnl ')
+dnl 
+dnl define(`__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER',`
+dnl char KERN_SOURCE_NAME($1`_helper',fast)[]=QUOTE_IT(___VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1));
+dnl ')
 
 /* `VEC_FUNC_CPX_FAST_2V_PROJ_SETUP' */
 

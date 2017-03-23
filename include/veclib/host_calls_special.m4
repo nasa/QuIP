@@ -41,8 +41,8 @@ define(`_VEC_FUNC_QUAT_2V_PROJ',`H_CALL_PROJ_2V( $1, dest_quat, std_quat )')
 // and then calls the kernel...
 define(`_VEC_FUNC_2V_PROJ',`H_CALL_PROJ_2V( $1, dest_type, std_type )')
 
-define(`_VEC_FUNC_3V_PROJ',`H_CALL_PROJ_3V( $1, dest_type, std_type )')
-define(`_VEC_FUNC_CPX_3V_PROJ',`H_CALL_PROJ_3V( $1, dest_cpx, std_cpx )')
+define(`_VEC_FUNC_3V_PROJ',`H_CALL_PROJ_3V( $1, dest_type, std_type, rvmul, rvsum)')
+define(`_VEC_FUNC_CPX_3V_PROJ',`H_CALL_PROJ_3V( $1, dest_cpx, std_cpx, cvmul, cvsum)')
 
 
 
