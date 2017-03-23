@@ -19,6 +19,7 @@ macros_DATA	=	adjuster.mac		\
 			luts.mac		\
 			opt_ht.mac		\
 			oscope.mac		\
+			plot_gui.mac		\
 			plot_utils.mac		\
 			plotsupp.mac		\
 			unix_plot.mac		\

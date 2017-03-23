@@ -1,0 +1,1080 @@
+Set fig_dir ./figures
+
+Define Init_Plot_GUI_Defaults 0
+
+Set n_data_series 0
+Set n_grids 0
+
+# We can't have spaces in the window name, because a colormap object is created
+# using it, and data objects can't have spaces in their names...
+# We could fix this by fixing the name, in xsupp.c?
+Set plotwin 'Plot_Preview'
+
+Set main_panel "Plot Generator"
+Set gen_panel "General Plot Parameters"
+Set x_axis_panel "X Axis"
+Set y_axis_panel "Y Axis"
+Set data_panel "Data"
+Set grid_panel "Grid"
+Set edit_panel "Edit Data Series"
+Set gedit_panel "Edit Data Grid"
+Set save_panel "Save Plot Image"
+
+Set panel_w	400
+Set panel_h	600
+Set plotwin_x0 500
+Set plotwin_y0 50
+
+
+################ Set default parameters
+Set save_filetype png
+Set save_filename_stem $plot_name
+
+Set series_line_thickness 1
+Set series_symbol_size 4
+
+Set grid_line_thickness 1
+Set grid_symbol_size 4
+Set grid_columns 4
+Set grid_rows 4
+
+# default values
+Set plot_w 600
+Set plot_h 600
+
+
+Set min_plot_height	200
+Set max_plot_height	1200
+Set min_plot_width	200
+Set max_plot_width	1200
+
+Set xmin 1
+Set xmax 5
+Set x_tick_spacing 1
+Set ymin 0
+Set ymax 1
+Set y_tick_spacing 0.2
+Set x_legend 'text abcissa'
+Set y_legend 'text ordinate'
+
+Set curr_series_name no_series
+
+Set datacolor_red 0
+Set datacolor_green 0
+Set datacolor_blue 0
+Set legend_x 0
+Set legend_y 0
+Set legend_delta_x 0
+Set legend_delta_y 0
+Set plot_legend_x 0
+Set plot_legend_y 0
+Set plot_legend "no_legend"
+
+Set show_frame 0
+.
+
+Define Refresh_Data 0
+Print n_data_series
+If $n_data_series<1 exit_macro
+Set data_series_idx 1
+repeat $n_data_series
+  Refresh_Series $data_series_idx
+  Increment data_series_idx
+  end
+.
+
+Define Refresh_Grids 0
+If $n_grids<1 exit_macro
+Set grid_data_idx 1
+repeat $n_grids
+  Refresh_One_Grid $grid_data_idx
+  Increment grid_data_idx
+  end
+.
+
+Define Get_Series_Points 0
+If obj_exists(series_pts) "Delete_Image series_pts"
+Count_Lines nl $series_filename
+Count_Columns nc $series_filename
+If $nc!=2 "warn 'Refresh_Series:  expected file $series_filename to have 2 columns!?' exit_macro"
+Vector series_pts $nl 2 float
+Get_Ascii series_pts $series_filename
+.
+
+Define Get_Grid_Points 0
+If obj_exists(grid_pts) "Delete_Image grid_pts"
+If obj_exists(grid_tpts) "Delete_Image grid_tpts"
+#Count_Lines nl $series_filename
+#Count_Columns nc $series_filename
+If $nc!=2 "warn 'Refresh_Series:  expected file $series_filename to have 2 columns!?' exit_macro"
+Image grid_pts $grid_rows $grid_columns 2 float
+Image grid_tpts $grid_columns $grid_rows 2 float
+Get_Ascii grid_pts $grid_filename
+Transpose grid_tpts grid_pts
+.
+
+Define Refresh_Series 1 index
+Load_Series_Vars series_$1
+If !file_exists('$series_filename') "warn 'File $series_filename does not exist!?' exit_macro"
+Get_Series_Points
+Select_Pen $series_color_index
+If $series_line_thickness==1 "XYPlot series_pts"
+If $series_line_thickness>1 "Thick_Plot $series_line_thickness series_pts"
+#Print series_symbol
+If strcmp('$series_symbol','none') "Symbol $series_symbol $series_symbol_size Symbol_Plot series_pts"
+.
+
+Define Refresh_One_Grid 1 index
+Load_Grid_Vars grid_$1
+If !file_exists('$grid_filename') "warn 'File $grid_filename does not exist!?' exit_macro"
+Get_Grid_Points
+Select_Pen $grid_color_index
+Set grid_row_idx 0
+repeat nrows(grid_pts)
+  If $grid_line_thickness==1 "XYPlot grid_pts[$grid_row_idx]"
+  If $grid_line_thickness>1 "Thick_Plot $grid_line_thickness grid_pts[$grid_row_idx]"
+  If strcmp('$grid_symbol','none') "Symbol $grid_symbol $grid_symbol_size Symbol_Plot grid_pts[$grid_row_idx]"
+  Increment grid_row_idx
+  end
+Set grid_row_idx 0
+repeat nrows(grid_tpts)
+  If $grid_line_thickness==1 "XYPlot grid_tpts[$grid_row_idx]"
+  If $grid_line_thickness>1 "Thick_Plot $grid_line_thickness grid_tpts[$grid_row_idx]"
+  Increment grid_row_idx
+  end
+.
+
+Define SetPlotWidth 0
+Set plot_w $slider_val
+Redo_Window
+Refresh_Plot
+.
+
+Define SetPlotHeight 0
+Set plot_h $slider_val
+Redo_Window
+Refresh_Plot
+.
+
+Define TogFrame 0
+Set show_frame $toggle_state
+Refresh_Plot
+.
+
+Define Redo_Window 0
+If viewer_exists('$plotwin') "Delete_Plotter $plotwin"
+New_Plotter $plotwin $plot_w $plot_h
+Posn_Window $plotwin $plotwin_x0 $plotwin_y0
+.
+
+Set plot_ready 0
+Define Refresh_Plot 0
+If !$plot_ready exit_macro
+advise "Refresh_Plot BEGIN"
+Erase_Plot
+Select_Pen $black
+If $show_frame Draw_Frame
+Setup_Axes
+advise "Refresh_Plot:  refreshing data..."
+Refresh_Data
+advise "Refresh_Plot:  refreshing grids..."
+Refresh_Grids
+advise "Refresh_Plot DONE"
+.
+
+Define Draw_Frame 0
+If !obj_exists(frame_coords) "Vector frame_coords 5 2 float"
+data ascii read frame_coords -
+	$xmin	$ymin
+	$xmax	$ymin
+	$xmax	$ymax
+	$xmin	$ymax
+	$xmin	$ymin
+	quit quit
+XYPlot frame_coords
+.
+
+Define XAxisPanel 0
+Panel_Off $main_panel
+Panel_On $x_axis_panel
+.
+
+Define YAxisPanel 0
+Panel_Off $main_panel
+Panel_On $y_axis_panel
+.
+
+Define DataPanel 0
+Panel_Off $main_panel
+Panel_On $data_panel
+.
+
+Define GridPanel 0
+Panel_Off $main_panel
+Panel_On $grid_panel
+.
+
+Define SetXMin 0
+Get_Text_Var $x_axis_panel Min xmin
+.
+
+Define SetYMin 0
+Get_Text_Var $y_axis_panel Min ymin
+.
+
+Define Get_Text_Var 3 panel_name widget_name var_name
+interface
+  decorate $1
+    get_text $2 t
+    quit
+  quit
+If strlen('$t')>0 "Set $3 '$t'"
+.
+
+Define SetXMax 0
+Get_Text_Var $x_axis_panel Max xmax
+.
+
+Define SetYMax 0
+Get_Text_Var $y_axis_panel Max ymax
+.
+
+Define SetXTick 0
+Get_Text_Var $x_axis_panel 'Tick Spacing' x_tick_spacing
+.
+
+Define SetYTick 0
+Get_Text_Var $y_axis_panel 'Tick Spacing' y_tick_spacing
+.
+
+Define SetXLegend 0
+Get_Text_Var $x_axis_panel Legend x_legend
+.
+
+Define SetYLegend 0
+Get_Text_Var $y_axis_panel Legend y_legend
+.
+
+Define SelectSeries 0
+Set selected_series_nickname $selection
+.
+
+Define SelectGrid 0
+Set selected_grid_nickname $selection
+.
+
+Define AddData 0
+Increment n_data_series
+#Set series_name_varname series_name_$n_data_series
+#Set $series_name_varname series_$n_data_series
+Set curr_series_name series_$n_data_series
+Set series_nickname $curr_series_name	# default
+Set series_color black
+Set series_symbol none
+Set_Color_Index_From_Name $series_color
+# should this really be editable?
+interface
+  decorate $edit_panel
+    set_edit_text Nickname $series_nickname
+    set_edit_text 'Source file' '(no file specified)'
+    set_choice Color $series_color
+    set_choice Symbol $series_symbol
+    quit
+  quit
+Panel_Off $data_panel
+Panel_On $edit_panel
+.
+
+Define AddGrid 0
+Increment n_grids
+Set curr_grid_name grid_$n_grids
+Set grid_nickname $curr_grid_name	# default
+Set grid_color black
+Set grid_symbol none
+Set_Color_Index_From_Name $grid_color
+# should this really be editable?
+interface
+  decorate $gedit_panel
+    set_edit_text Nickname $grid_nickname
+    set_edit_text 'Source file' '(no file specified)'
+    set_edit_text 'Columns' $grid_columns
+    set_edit_text 'Rows' $grid_rows
+    set_choice Color $grid_color
+    set_choice Symbol $grid_symbol
+    quit
+  quit
+Panel_Off $grid_panel
+Panel_On $gedit_panel
+.
+
+Define GenPanel 0
+interface
+  decorate $gen_panel
+    set_edit_text 'Legend' "$plot_legend"
+    If $show_frame
+      Then "set_toggle Frame yes"
+      Else "set_toggle Frame no"
+    quit
+  quit
+Panel_Off $main_panel
+Panel_On $gen_panel
+.
+
+Define No_Series_Msg 0
+If $n_data_series==0 "advise 'Please create a new series' exit_macro"
+advise 'Please select a series'
+.
+
+Define No_Grid_Msg 0
+If $n_grids==0 "advise 'Please create a new grid' exit_macro"
+advise 'Please select a grid'
+.
+
+Define Load_Series_Vars 1 series_name
+Load_Series_Var $1 filename
+Load_Series_Var $1 nickname
+Load_Series_Var $1 color
+Load_Series_Var $1 color_index
+Load_Series_Var $1 symbol
+Load_Series_Var $1 symbol_size
+Load_Series_Var $1 line_thickness
+.
+
+Define Store_Series_Vars 1 series_name
+Store_Series_Var $1 filename
+Store_Series_Var $1 nickname
+Store_Series_Var $1 color
+Store_Series_Var $1 color_index
+Store_Series_Var $1 symbol
+Store_Series_Var $1 symbol_size
+Store_Series_Var $1 line_thickness
+.
+
+Define Load_Grid_Vars 1 grid_name
+Load_Grid_Var $1 filename
+Load_Grid_Var $1 nickname
+Load_Grid_Var $1 color
+Load_Grid_Var $1 color_index
+Load_Grid_Var $1 symbol
+Load_Grid_Var $1 symbol_size
+Load_Grid_Var $1 line_thickness
+Load_Grid_Var $1 columns
+Load_Grid_Var $1 rows
+.
+
+Define Store_Grid_Vars 1 grid_name
+Store_Grid_Var $1 filename
+Store_Grid_Var $1 nickname
+Store_Grid_Var $1 color
+Store_Grid_Var $1 color_index
+Store_Grid_Var $1 symbol
+Store_Grid_Var $1 symbol_size
+Store_Grid_Var $1 line_thickness
+Store_Grid_Var $1 columns
+Store_Grid_Var $1 rows
+.
+
+Define Load_Series_Var 2 series_name varname
+Load_Stem_Var $1 $2 series
+.
+
+Define Load_Grid_Var 2 series_name varname
+Load_Stem_Var $1 $2 grid
+.
+
+Define Load_Stem_Var 3 obj_name varname stem
+Set src_vname ${1}_$2
+Set dst_vname ${3}_$2
+Set $dst_vname $$src_vname
+.
+
+Define Store_Series_Var 2 series_name varname
+Store_Stem_Var $1 $2 series
+.
+
+Define Store_Grid_Var 2 series_name varname
+Store_Stem_Var $1 $2 grid
+.
+
+Define Store_Stem_Var 3 obj_name varname stem
+Set dst_vname ${1}_$2
+Set src_vname ${3}_$2
+Set $dst_vname $$src_vname
+.
+
+Define Find_Series_From_Nickname 1 nickname
+Set curr_series_name no_series
+If $n_data_series==0 exit_macro
+Set i 1
+repeat $n_data_series
+  Set vname series_${i}_nickname
+  If !strcmp('$1','$$vname') "Set curr_series_name series_$i exit_macro"
+  Increment i
+  end
+.
+
+Define Find_Grid_From_Nickname 1 nickname
+Set curr_grid_name no_grid
+If $n_grids==0 exit_macro
+Set i 1
+repeat $n_grids
+  Set vname grid_${i}_nickname
+  If !strcmp('$1','$$vname') "Set curr_grid_name grid_$i exit_macro"
+  Increment i
+  end
+.
+
+Define EditData 0
+If !strcmp('$selected_series_nickname','no_series') "No_Series_Msg exit_macro"
+Find_Series_From_Nickname $selected_series_nickname
+If !strcmp('$curr_series_name','no_series') "advise 'Could not find series with nickname $selected_series_nickname!?' exit_macro"
+Load_Series_Vars $curr_series_name
+interface
+  decorate $edit_panel
+    set_edit_text Nickname $series_nickname
+    set_edit_text 'Source file' $series_filename
+    set_choice Color $series_color
+    set_choice Symbol $series_symbol
+    set_choice 'Symbol Size' $series_symbol_size
+    set_choice 'Line Thickness' $series_line_thickness
+    quit
+  quit
+Panel_Off $data_panel
+Panel_On $edit_panel
+.
+
+
+Define EditGrid 0
+If !strcmp('$selected_grid_nickname','no_grid') "No_Series_Msg exit_macro"
+Find_Grid_From_Nickname $selected_grid_nickname
+If !strcmp('$curr_grid_name','no_grid') "advise 'Could not find grid with nickname $selected_grid_nickname!?' exit_macro"
+Load_Grid_Vars $curr_grid_name
+interface
+  decorate $gedit_panel
+    set_edit_text Nickname $grid_nickname
+    set_edit_text 'Source file' $grid_filename
+    set_edit_text 'Columns' $grid_columns
+    set_edit_text 'Rows' $grid_rows
+    set_choice Color $grid_color
+    set_choice Symbol $grid_symbol
+    set_choice 'Symbol Size' $grid_symbol_size
+    set_choice 'Line Thickness' $grid_line_thickness
+    quit
+  quit
+Panel_Off $grid_panel
+Panel_On $gedit_panel
+.
+
+
+Define SetSeriesNickname 0
+Get_Text_Var $edit_panel Nickname series_nickname
+.
+
+Define SetGridNickname 0
+Get_Text_Var $gedit_panel Nickname grid_nickname
+.
+
+Define SetSeriesSourceFile 0
+Get_Text_Var $edit_panel 'Source file' series_filename
+.
+
+Define SetGridSourceFile 0
+Get_Text_Var $gedit_panel 'Source file' grid_filename
+.
+
+Define SetGridColumns 0
+Get_Text_Var $gedit_panel 'Columns' grid_columns
+.
+
+Define SetGridRows 0
+Get_Text_Var $gedit_panel 'Rows' grid_rows
+.
+
+Define SetPlotLegend 0
+Get_Text_Var $gen_panel 'Legend' plot_legend
+.
+
+Define SetSeriesColor 0
+Set series_color $choice
+Set series_color_index -1
+Set_Color_Index_From_Name $series_color
+Store_Series_Vars $curr_series_name
+Refresh_Plot
+Load_Series_Vars $curr_series_name
+.
+
+Define Set_Color_Index_From_Name 1 color_name
+Map_Color_Index $1 black $black
+Map_Color_Index $1 white $white
+Map_Color_Index $1 red $red
+Map_Color_Index $1 green $green
+Map_Color_Index $1 blue $blue
+Map_Color_Index $1 cyan $cyan
+Map_Color_Index $1 yellow $yellow
+Map_Color_Index $1 magenta $magenta
+# print a warning here if the color index is < 0 at this point
+If $series_color_index<0
+  "warn 'OOPS - color indes not set!?'"
+.
+
+Define SetSeriesSymbol 0
+Set series_symbol $choice
+Store_Series_Vars $curr_series_name
+Refresh_Plot
+Load_Series_Vars $curr_series_name
+.
+
+Define SetSymbolSize 0
+Set series_symbol_size $choice
+Store_Series_Vars $curr_series_name
+Refresh_Plot
+Load_Series_Vars $curr_series_name
+.
+
+Define Map_Color_Index 3 input_name case_name case_index
+If !strcmp('$1','$2') "Set series_color_index $3"
+.
+
+Define Make_Series_List_Cmd 1 varname
+If $n_data_series<1 "Set $1 nop exit_macro"
+Set $1 "items 'Data Series' $n_data_series"
+Set i 1
+repeat $n_data_series
+  Set vname series_${i}_nickname
+  Set $1 "$$1 $$vname"
+  Increment i
+  end
+#Print $1
+.
+
+Define Make_Grid_List_Cmd 1 varname
+If $n_grids<1 "Set $1 nop exit_macro"
+Set $1 "items 'Grid Data' $n_grids"
+Set i 1
+repeat $n_grids
+  Set vname grid_${i}_nickname
+  Set $1 "$$1 $$vname"
+  Increment i
+  end
+#Print $1
+.
+
+Define Update_Series_Choices 0
+Make_Series_List_Cmd cmd
+#Print cmd
+interface
+  decorate $data_panel
+    interpret $cmd
+    quit
+  quit
+.
+
+Define Update_Grid_Choices 0
+Make_Grid_List_Cmd cmd
+#Print cmd
+interface
+  decorate $grid_panel
+    interpret $cmd
+    quit
+  quit
+.
+
+Define SeriesEditDone 0
+advise SeriesEditDone
+Print curr_series_name
+Store_Series_Vars $curr_series_name
+Update_Series_Choices
+Panel_Off $edit_panel
+Panel_On $data_panel
+Refresh_Data
+.
+
+Define GridEditDone 0
+Print curr_grid_name
+Store_Grid_Vars $curr_grid_name
+Update_Grid_Choices
+Panel_Off $gedit_panel
+Panel_On $grid_panel
+Refresh_Grids
+.
+
+Define SavePlotParams 0
+Set plot_param_file ${plot_name}_params.scr
+append no
+output_file $plot_param_file
+Save_Gen_Params
+echo ' '
+Save_XAxis_Params
+echo ' '
+Save_YAxis_Params
+echo ' '
+Save_Data_Params
+echo ' '
+Save_Grid_Params
+output_file -
+.
+
+Define LoadPlotParams 0
+Set plot_param_file ${plot_name}_params.scr
+If !file_exists('$plot_param_file') "warn 'File $plot_param_file does not exist!?' exit_macro"
+Set old_plot_w $plot_w
+Set old_plot_h $plot_h
+Print plot_param_file
+< $plot_param_file
+Print n_data_series
+Update_Series_Choices
+Update_Grid_Choices
+If $old_plot_w!=$plot_w||$old_plot_h!=$plot_h Redo_Window
+Set plot_ready 1
+Refresh_Plot
+# BUG?  rebuild data chooser?
+.
+
+Define Save_XAxis_Params 0
+Save_Param xmin
+Save_Param xmax
+Save_Param x_tick_spacing
+Save_Text_Param x_legend
+.
+
+Define Save_YAxis_Params 0
+Save_Param ymin
+Save_Param ymax
+Save_Param y_tick_spacing
+Save_Text_Param y_legend
+.
+
+Define Save_Gen_Params 0
+Save_Param plot_w
+Save_Param plot_h
+Save_Text_Param plot_legend
+Save_Param plot_legend_x
+Save_Param plot_legend_y
+.
+
+Define Save_Series_Param 2 idx varname
+Set vname series_${1}_$2
+Save_Param $vname
+.
+
+Define Save_Grid_Param 2 idx varname
+Set vname grid_${1}_$2
+Save_Param $vname
+.
+
+Define Save_Param 1 varname
+echo "Set $1 $$1"
+.
+
+Define Save_Text_Param 1 varname
+echo "Set $1 '$$1' "
+.
+
+Define Save_Data_Params 0
+Save_Param n_data_series
+Set i 1
+If $n_data_series<1 exit_macro
+repeat $n_data_series
+  echo ' '
+  Save_Series_Param $i nickname
+  Save_Series_Param $i filename
+  Save_Series_Param $i color
+  Save_Series_Param $i color_index
+  Save_Series_Param $i symbol
+  Save_Series_Param $i symbol_size
+  Save_Series_Param $i line_thickness
+  # BUG need to save series legend parameters...
+  Increment i
+  end
+.
+
+Define Save_Grid_Params 0
+Save_Param n_grids
+Set i 1
+If $n_grids<1 exit_macro
+repeat $n_grids
+  echo ' '
+  Save_Grid_Param $i nickname
+  Save_Grid_Param $i filename
+  Save_Grid_Param $i color
+  Save_Grid_Param $i color_index
+  Save_Grid_Param $i symbol
+  Save_Grid_Param $i symbol_size
+  Save_Grid_Param $i line_thickness
+  Save_Grid_Param $i columns
+  Save_Grid_Param $i rows
+  Increment i
+  end
+.
+
+Define SavePlotImage 0
+interface
+  decorate $save_panel
+    set_edit_text Filename $save_filename_stem
+    set_choice Filetype $save_filetype
+    quit
+  quit
+Panel_Off $main_panel
+Panel_On $save_panel
+.
+
+Define CancelSave 0
+Panel_Off $save_panel
+Panel_On $main_panel
+.
+
+Define SaveIt 0
+Set save_filename $save_filename_stem.$save_filetype
+Save_Plot $save_filename $plotwin
+Panel_Off $save_panel
+Panel_On $main_panel
+.
+
+Define SetSaveFilename 0
+Get_Text_Var $save_panel 'Filename' save_filename_stem
+.
+
+Define SetLineThickness 0
+Set series_line_thickness $choice
+Store_Series_Vars $curr_series_name
+Refresh_Plot
+Load_Series_Vars $curr_series_name
+.
+
+############################ Postscript Output ###################################
+
+# We should use the dimensions of the plotting window to determine gdx and gdy!
+
+# BUG - should move this to a /usr/local/share/quip subdir!
+Set postscript_lib $HOME/working/postscript
+
+#cat $psdir/jbm_head.ps $psdir/jbm_page.ps $psdir/plotmacs.ps \
+#	$psfile $psdir/jbm_trailer.ps > /tmp/psfile
+
+Define Emit_Graph_Legend 0
+echo "/Times-Roman findfont smfsiz scalefont setfont"
+echo "0 0 0 setrgbcolor"
+echo "$plot_legend_x gxu $plot_legend_y gyu moveto"
+# Make sure we really have a graph legend!
+echo "($plot_legend) show"
+.
+
+Define Emit_Axes 0
+echo "$xmin gxu $ymin gyu moveto"
+echo "$xmax gxu $ymin gyu l"
+echo "$xmin gxu $ymin gyu moveto"
+echo "$xmin gxu $ymax gyu l"
+
+Set y $ymin
+do
+  echo "($y) $y	ylabeltick"
+  Add_Var y $y_tick_spacing
+  while $y<=$ymax
+echo "($y_legend) ylegend"
+echo "($x_legend) xlegend"
+Set x $xmin
+do
+  echo "($x) $x	xlabeltick"
+  Add_Var x $x_tick_spacing
+  while $x<=$xmax
+.
+
+Define Draw_Series_Curve 0
+Emit_Curve series_pts $series_line_thickness
+.
+
+Define Emit_Curve 2 object linewidth
+echo "$2 numberedlinewidth"
+Set pt_idx 0
+Assign x value($1[$pt_idx]{0})
+Assign y value($1[$pt_idx]{1})
+echo "$x gxu $y gyu moveto"
+repeat ncols($1)-1
+  Increment pt_idx
+  Assign x value($1[$pt_idx]{0})
+  Assign y value($1[$pt_idx]{1})
+  echo "$x gxu $y gyu l"
+  end
+.
+
+Define WritePSPlot 0
+Set psfile $fig_dir/${plot_name}.eps
+
+os
+  system "cat $postscript_lib/jbm_head.ps $postscript_lib/jbm_page.ps $postscript_lib/plotmacs.ps > $psfile"
+  quit
+
+append yes
+output_file $psfile
+
+# BEGIN prolog
+echo "0 0 0 setrgbcolor"
+echo "/ybase 2.8 in def"
+echo "/pspan 6.0 in def"
+echo "/gx0 1.6 in def"
+echo "/gy0 ybase def"
+echo "/gdx pspan def"
+echo "/gdy pspan def"
+# graph units to be mapped to graphing region
+# set these to suit the particular application
+echo "/guxmin $xmin def"
+echo "/guxmax $xmax def"
+echo "/guymin $ymin def"
+echo "/guymax $ymax def"
+echo "/gudx guxmax guxmin sub def"
+echo "/gudy guymax guymin sub def"
+echo "/Helvetica findfont smfsiz scalefont setfont"
+echo "newpath"
+echo "[ ] 0 setdash"
+
+echo "/draw_frame { simple_frame } def"
+echo "/simple_frame { frame draw_ticks } def"
+# Now print the ticks...
+# BUG - we might like to print 1 as 1.0!
+
+If $show_frame
+  'echo "frame"'
+
+Emit_Axes
+
+# BUG subject label needs to have parameterized coordinates!
+echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
+# END prolog
+# BUG need to define legend_x etc
+echo "/legend_x $legend_x def"
+echo "/legend_y $legend_y def"
+echo "/legend_delta_y $legend_delta_y def"
+echo "/legend_delta_x $legend_delta_x def"
+
+If strcmp('$plot_legend','no_legend')
+  Emit_Graph_Legend
+# Now plot the curves
+If $n_data_series>0 Emit_All_Series
+If $n_grids>0 Emit_All_Grids
+
+output_file -	# close file
+
+os
+  system "cat $postscript_lib/jbm_trailer.ps >> $psfile"
+  quit
+.
+
+Define Emit_All_Series 0
+Set series_idx 1
+repeat $n_data_series
+  Emit_One_Series $series_idx
+  Increment series_idx
+  end
+.
+
+Define Emit_All_Grids 0
+Set grid_idx 1
+repeat $n_grids
+  Emit_One_Grid $grid_idx
+  Increment grid_idx
+  end
+.
+
+Define Emit_One_Series 1 index
+Load_Series_Vars series_$1
+Get_Series_Points
+Get_PS_Symbol_For $series_symbol
+Set_Datacolor $series_color
+echo "$datacolor_red $datacolor_green $datacolor_blue setrgbcolor"
+# Print a curve legend here
+# how do we scale linewidth?
+#echo "fatdatawidth setlinewidth"
+If ncols(series_pts)>1 Draw_Series_Curve
+# Now plot symbols
+Set pt_idx 0
+repeat ncols(series_pts)
+  Assign x value(series_pts[$pt_idx]{0})
+  Assign y value(series_pts[$pt_idx]{1})
+  If strcmp('$ps_symbol_type','none')
+    "echo '/dotsize $series_symbol_size def $x gxu $y gyu $ps_symbol_type'"
+  Increment pt_idx
+  end
+.
+
+Define Emit_One_Grid 1 index
+Load_Grid_Vars grid_$1
+Get_Grid_Points
+Get_PS_Symbol_For $grid_symbol
+Set_Datacolor $grid_color
+echo "$datacolor_red $datacolor_green $datacolor_blue setrgbcolor"
+# Print a curve legend here
+# how do we scale linewidth?
+#echo "fatdatawidth setlinewidth"
+Set row_idx 0
+repeat nrows(grid_pts)
+  Emit_Curve grid_pts[$row_idx] $grid_line_thickness
+  Increment row_idx
+  end
+Set row_idx 0
+repeat nrows(grid_tpts)
+  Emit_Curve grid_tpts[$row_idx] $grid_line_thickness
+  Increment row_idx
+  end
+# Now plot symbols
+If strcmp('$ps_symbol_type','none') Emit_Grid_Symbols
+.
+
+Define Emit_Grid_Symbols 0
+Set row_idx 0
+repeat nrows(grid_pts)
+  Set col_idx 0
+  repeat ncols(grid_pts)
+    Assign x value(grid_pts[$row_idx][$col_idx]{0})
+    Assign y value(grid_pts[$row_idx][$col_idx]{1})
+    echo "/dotsize $series_symbol_size def $x gxu $y gyu $ps_symbol_type"
+    Increment col_idx
+    end
+  Increment row_idx
+  end
+.
+
+Define Set_Datacolor 1 color_name
+If !strcmp('$1','black') "Set_Datacolor_RGB 0 0 0"
+If !strcmp('$1','white') "Set_Datacolor_RGB 1 1 1"
+If !strcmp('$1','red') "Set_Datacolor_RGB 1 0 0"
+If !strcmp('$1','green') "Set_Datacolor_RGB 0 0.6 0"
+If !strcmp('$1','blue') "Set_Datacolor_RGB 0 0 1"
+If !strcmp('$1','magenta') "Set_Datacolor_RGB 1 0 1"
+If !strcmp('$1','cyan') "Set_Datacolor_RGB 0 1 1"
+If !strcmp('$1','yellow') "Set_Datacolor_RGB 1 1 0"
+.
+
+Define Set_Datacolor_RGB 3 r g b
+Set datacolor_red $1
+Set datacolor_green $2
+Set datacolor_blue $3
+.
+
+# The postscript functions have different names than the quip macros...
+# Need to set symbol size!
+# post script var is dotsize, default value is 3...
+Define Get_PS_Symbol_For 1 var_symbol
+Set ps_symbol_type none
+Map_Symbol_To_PS filled_circle Disk $1
+Map_Symbol_To_PS filled_square Square $1
+Map_Symbol_To_PS filled_triangle Triangle $1
+Map_Symbol_To_PS filled_diamond Diamond $1
+.
+
+Define Map_Symbol_To_PS 3 psname quip_name var_symbol
+If !strcmp('$3','$2') "Set ps_symbol_type $1"
+.
+
+Define SetPlotName 0
+Get_Text_Var $main_panel 'Plot name' plot_name
+.
+
+Define Declare_Plot_GUI 0
+
+interface
+  panel $x_axis_panel $panel_w $panel_h
+  decorate $x_axis_panel
+    text Min SetXMin $xmin
+    text Max SetXMax $xmax
+    text 'Tick Spacing' SetXTick $x_tick_spacing
+    text Legend SetXLegend $x_legend
+    button Apply Refresh_Plot
+    button Done 'Panel_Off $x_axis_panel Panel_On $main_panel'
+    quit
+  panel $save_panel $panel_w $panel_h
+  decorate $save_panel
+    text Filename SetSaveFilename $save_filename_stem
+    chooser Filetype SetSaveFiletype 2 png jpg
+    button Save SaveIt
+    button Cancel CancelSave
+    quit
+  panel $y_axis_panel $panel_w $panel_h
+  decorate $y_axis_panel
+    text Min SetYMin $ymin
+    text Max SetYMax $ymax
+    text 'Tick Spacing' SetYTick $y_tick_spacing
+    text Legend SetYLegend $y_legend
+    button Apply Refresh_Plot
+    button Done 'Panel_Off $y_axis_panel Panel_On $main_panel'
+    quit
+
+  panel $data_panel $panel_w $panel_h
+  decorate $data_panel
+    #chooser 'Data Series' SelectSeries 1 no_series
+    button 'Add New Series' AddData
+    scroller 'Data Series' SelectSeries
+    button 'Edit Series' EditData
+    button Done 'Panel_Off $data_panel Panel_On $main_panel'
+    quit
+
+  panel $grid_panel $panel_w $panel_h
+  decorate $grid_panel
+    #chooser 'Data Series' SelectSeries 1 no_series
+    button 'Add New Grid' AddGrid
+    scroller 'Grid Data' SelectGrid
+    button 'Edit Grid' EditGrid
+    button Done 'Panel_Off $grid_panel Panel_On $main_panel'
+    quit
+
+  panel $edit_panel $panel_w $panel_h
+  decorate $edit_panel
+    text Nickname SetSeriesNickname seriesNNN
+    text 'Source file' SetSeriesSourceFile /dev/null	# Use file chooser?
+    button Done SeriesEditDone
+    position 120 20
+    chooser Color SetSeriesColor 9 white black red blue green cyan yellow magenta gray
+    position 240 20
+    chooser Symbol SetSeriesSymbol 5 none Square Disk Triangle Diamond
+    chooser 'Symbol Size' SetSymbolSize 4    3 4 5 6
+    chooser 'Line Thickness' SetLineThickness 5 0 1 2 3 4
+    quit
+
+  panel $gedit_panel $panel_w $panel_h
+  decorate $gedit_panel
+    text Nickname SetGridNickname gridNNN
+    text 'Source file' SetGridSourceFile /dev/null	# Use file chooser?
+    text 'Columns' SetGridColumns $grid_columns
+    text 'Rows' SetGridRows $grid_rows
+    button Done GridEditDone
+    position 120 20
+    chooser Color SetSeriesColor 9 white black red blue green cyan yellow magenta gray
+    position 240 20
+    chooser Symbol SetSeriesSymbol 5 none Square Disk Triangle Diamond
+    chooser 'Symbol Size' SetSymbolSize 4    3 4 5 6
+    chooser 'Line Thickness' SetLineThickness 5 0 1 2 3 4
+    quit
+
+  panel $gen_panel $panel_w $panel_h
+  decorate $gen_panel
+    slider Width SetPlotWidth $min_plot_width $max_plot_width $plot_w
+    slider Height SetPlotHeight $min_plot_height $max_plot_height $plot_h
+    toggle 'Frame' TogFrame
+    text Legend SetPlotLegend $plot_legend
+    button Done 'Panel_Off $gen_panel Panel_On $main_panel'
+    quit
+  panel $main_panel $panel_w $panel_h
+  decorate $main_panel
+    text 'Plot name' SetPlotName $plot_name
+    button 'General' GenPanel
+    button 'X axis' XAxisPanel
+    button 'Y axis' YAxisPanel
+    button 'Data' DataPanel
+    button 'Grids' GridPanel
+    button 'Refresh Preview' Refresh_Plot
+    button 'Save plot params' SavePlotParams
+    button 'Load plot params' LoadPlotParams
+    button 'Save preview to file' SavePlotImage
+    button 'Save as Postscript' WritePSPlot
+    button 'Quit' exit
+    quit
+  control
+    show $main_panel
+    quit
+  quit
+
+Redo_Window
+Refresh_Plot
+.
+
+
+

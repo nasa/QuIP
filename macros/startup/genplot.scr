@@ -1,0 +1,33 @@
+# gui to facilitate making plots - and writing postscript versions
+
+#max_warnings 1	# exit immediately if error in specs
+
+< $macro_dir/view/plotsupp.mac
+#< $macro_dir/view/plot_gui.mac
+< plot_gui.mac
+
+Clobber yes
+
+advise 'checking for cmd line arg...'
+If $argc>0
+  Then 'Set plot_name $1'
+  Else "Set plot_name plot_1"
+
+Init_Plot_GUI_Defaults
+Declare_Plot_GUI
+
+Set plot_param_file ${plot_name}_params.scr
+Print plot_param_file
+If !file_exists('$plot_param_file')
+  "error_exit 'Plot parameter file $plot_param_file does not exist!?'"
+
+LoadPlotParams
+
+#max_warnings 0	# never exit from user error
+
+do
+  os events quit
+  while 1
+
+
+
