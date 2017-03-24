@@ -477,10 +477,11 @@ static Shape_Info *void_shape(void)
 Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *shpp1, Shape_Info *shpp2)
 {
 	int i;
-	static Shape_Info ret_shp;
-	Shape_Info *shpp=(&ret_shp);
+	/*static Shape_Info ret_shp;*/
+	Shape_Info *shpp/*=(&ret_shp)*/;
 
-	//INIT_SHAPE_PTR(shpp)	// BUG?  memory leak?
+	// The static shape caused problems because of unitialized pointers to the dimension_set etc.
+	INIT_SHAPE_PTR(shpp)	// BUG?  memory leak?
 
 	SET_SHP_N_TYPE_ELTS(shpp,1);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -609,7 +610,7 @@ DESCRIBE_SHAPE(VN_SHAPE(enp2));
 		return(shpp);	/* BUG?  can we get away with a single static shape here??? */
 #endif // FOOBAR
 		shpp = make_outer_shape(QSP_ARG  VN_SHAPE(enp1), VN_SHAPE(enp2));
-		if( shpp != NULL ) return shpp;
+		if( shpp != NULL ) return shpp;		// BUG memory leak!?
 	}
 
 mismatch:

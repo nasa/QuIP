@@ -148,10 +148,10 @@ dnl _CHECK_KERNEL(k,name,ktyp,kname)
 define(`_CHECK_KERNEL',`
 	/* _check_kernel $1 $2 $3 $4 */
 	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));
-fprintf(stderr,"_check_kernel  pd_idx = %d\n",pd_idx);
+fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 	if( $1[pd_idx] == NULL ){	/* one-time initialization */
 		ksrc = KERN_SOURCE_NAME($2,$3);
-fprintf(stderr,"_check_kernel  creating kernel\n");
+fprintf(stderr,"_check_kernel $2:  creating kernel\n");
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));
 		if( program == NULL ) 
 			NERROR1("program creation failure!?");

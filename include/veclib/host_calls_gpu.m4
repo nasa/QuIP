@@ -711,6 +711,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 dnl	Vector_Args va1, *vap=(&va1);
 	Shape_Info *shpp;
 	Data_Obj *prod_dp;
+	Data_Obj *disp_dp;	// for debugging
 	Vec_Obj_Args oa1, *prod_oap=(&oa1);
 
 	shpp = make_outer_shape(QSP_ARG  OBJ_SHAPE(OA_SRC1(oap)), OBJ_SHAPE(OA_SRC2(oap)));
@@ -738,10 +739,19 @@ dnl	Vector_Args va1, *vap=(&va1);
 	SET_OA_DEST(prod_oap,prod_dp);
 	HOST_TYPED_CALL_NAME($4,type_code)(FVMUL,prod_oap);
 
+disp_dp = insure_ram_obj(prod_dp);
+assert(disp_dp!=NULL);
+fprintf(stderr,"displaying intermediate result:\n");
+pntvec(QSP_ARG  disp_dp,stderr);
+fflush(stderr);
+delvec(QSP_ARG  disp_dp);
+
 	*prod_oap = *oap;
 	SET_OA_SRC1(prod_oap,prod_dp);
 	SET_OA_SRC2(prod_oap,NULL);
 	HOST_TYPED_CALL_NAME($5,type_code)(FVSUM,prod_oap);
+
+	delvec(QSP_ARG  prod_dp);
 
 dnl		CHECK_MM($1)
 dnl	

@@ -261,6 +261,9 @@ extern void propagate_flag_to_children(Data_Obj *dp, uint32_t flags );
 extern void verdata(SINGLE_QSP_ARG_DECL);
 
 
+/* ascmenu.c */
+extern /*static*/ Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp);
+
 /* ascii.c */
 extern void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);
 extern void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,void *data);
