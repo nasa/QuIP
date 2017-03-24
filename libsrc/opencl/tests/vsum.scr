@@ -2,7 +2,9 @@
 
 Define Testit 1 prefix
 Image ${1}_y 4 4 1 float
+Info ${1}_y
 Vector ${1}_row 4 1 float
+Column ${1}_col 4 1 float
 Scalar ${1}_scalar 1 float
 
 Ramp2D ${1}_y 1 1 10
@@ -20,6 +22,16 @@ advise "Calling vsum..."
 advise "VSum ${1}_row ${1}_y"
 VSum ${1}_row ${1}_y
 Display ${1}_row
+Pause
+
+VSet ${1}_col 7.4
+advise "VSet ${1}_col 7.4"
+Display ${1}_col
+
+advise "Calling vsum..."
+advise "VSum ${1}_col ${1}_y"
+VSum ${1}_col ${1}_y
+Display ${1}_col
 Pause
 .
 

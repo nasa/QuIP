@@ -561,9 +561,9 @@ define(`SETUP_PROJ_ITERATION',`
 		dst_values = ($1 *) VA_DEST_PTR(vap);
 		dst_to_free = (dst_type *)NULL;
 	} else {
-fprintf(stderr,"setup_proj_iteration $2:  allocating temp vec\n");
+dnl fprintf(stderr,"setup_proj_iteration $2:  allocating temp vec\n");
 		dst_values = ($1 *) TMPVEC_NAME`(VA_PFDEV(vap),sizeof($1),len1,"$2")';
-fprintf(stderr,"setup_proj_iteration $2:  DONE allocating temp vec\n");
+dnl fprintf(stderr,"setup_proj_iteration $2:  DONE allocating temp vec\n");
 		dst_to_free = dst_values;
 	}
 ')
@@ -603,19 +603,21 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 	DECLARE_PLATFORM_VARS_2
 
 	len = VARG_LEN( VA_SRC(vap,0) );
-/*show_vec_args(vap);*/
+show_vec_args(vap);
 	orig_src_values = ($3 *) VA_SRC_PTR(vap,0);
 
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])
 	src_to_free=($2 *)NULL;
 	SETUP_PROJ_ITERATION($2,$1)
+show_gpu_vector(dst_values,len1);
 	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC($1)
 	len=len1;
 	src_values = dst_values;
 	while( len > 1 ){
 		SETUP_PROJ_ITERATION($2,$1)
 		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC($1)
+show_gpu_vector(dst_values,len1);
 		len=len1;
 		src_values = dst_values;
 		/* Each temp vector gets used twice,
@@ -643,6 +645,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
 	/* BUG need to set vap entries from oap - proj_2v */
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));
+show_obj_args(QSP_ARG  oap);
 	/* why slow args? */
 	XFER_SLOW_ARGS_2
 	SETUP_SLOW_LEN_2
