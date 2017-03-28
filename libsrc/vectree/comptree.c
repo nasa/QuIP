@@ -471,6 +471,41 @@ static Shape_Info *void_shape(void)
 	return(_void_shpp);
 }
 
+// We will also use this to size temp objects for GPU operations,
+// perhaps should be in a different library?
+
+Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *shpp1, Shape_Info *shpp2)
+{
+	int i;
+	/*static Shape_Info ret_shp;*/
+	Shape_Info *shpp/*=(&ret_shp)*/;
+
+	// The static shape caused problems because of unitialized pointers to the dimension_set etc.
+	INIT_SHAPE_PTR(shpp)	// BUG?  memory leak?
+
+	SET_SHP_N_TYPE_ELTS(shpp,1);
+	for(i=0;i<N_DIMENSIONS;i++){
+		if( SHP_TYPE_DIM(shpp1,i) == 1 ){
+			SET_SHP_TYPE_DIM(shpp,i, SHP_TYPE_DIM(shpp2,i) );
+		} else if( SHP_TYPE_DIM(shpp2,i) == 1 ){
+			SET_SHP_TYPE_DIM(shpp,i, SHP_TYPE_DIM(shpp1,i) );
+		} else if( SHP_TYPE_DIM(shpp1,i) == SHP_TYPE_DIM(shpp2,i) ){
+			SET_SHP_TYPE_DIM(shpp,i, SHP_TYPE_DIM(shpp1,i) );
+		} else {
+			/* mismatch */
+			return NULL;
+		}
+		SET_SHP_N_TYPE_ELTS(shpp,
+			SHP_N_TYPE_ELTS(shpp) * SHP_TYPE_DIM(shpp,i) );
+	}
+	/* we assume the precisions match ...  is this correct?  BUG? */
+	// If the precisions are different, then it is up to the caller to change the precision...
+	SET_SHP_PREC_PTR(shpp, SHP_PREC_PTR(shpp1) );
+	auto_shape_flags(shpp,NO_OBJ);
+
+	return shpp;	/* BUG?  are we sure we can get away with a single static shape here??? */
+}
+
 /* if the shapes match, or either one is a scalar, return a pointer
  * to the larger shape.
  * Otherwise, return NO_SHAPE.
@@ -549,9 +584,10 @@ DESCRIBE_SHAPE(VN_SHAPE(enp2));
 	 */
 	{
 		Shape_Info *shpp;
+#ifdef FOOBAR	// we will encapsulate this into a library routine for more general use!
 		int i;
 
-		INIT_SHAPE_PTR(shpp)
+		INIT_SHAPE_PTR(shpp)	// BUG?  memory leak?
 
 		SET_SHP_N_TYPE_ELTS(shpp,1);
 		for(i=0;i<N_DIMENSIONS;i++){
@@ -572,6 +608,9 @@ DESCRIBE_SHAPE(VN_SHAPE(enp2));
 		SET_SHP_PREC_PTR(shpp, SHP_PREC_PTR(VN_SHAPE(enp1)) );
 		auto_shape_flags(shpp,NO_OBJ);
 		return(shpp);	/* BUG?  can we get away with a single static shape here??? */
+#endif // FOOBAR
+		shpp = make_outer_shape(QSP_ARG  VN_SHAPE(enp1), VN_SHAPE(enp2));
+		if( shpp != NULL ) return shpp;		// BUG memory leak!?
 	}
 
 mismatch:

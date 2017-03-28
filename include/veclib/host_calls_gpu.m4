@@ -657,76 +657,120 @@ fprintf(stderr,"h_call_proj_2v %s:  need to implement speed switch, calling fast
 // The "setup" function should to the element-wise products to a temp area (which may be large),
 // then the "helper" function should sum those.  Best approach would be to use vmul and vsum...
 
-dnl	 H_CALL_PROJ_3V( name, dtype, stype )
+dnl	 H_CALL_PROJ_3V( name, dtype, stype, mul_func, sum_func )
 define(`H_CALL_PROJ_3V',`
 
-static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
-{
-	$2 *dst_values;
-	$3 *orig_src1_values, *orig_src2_values;
-	$2 *src1_values, *src2_values;
-	uint32_t len, len1, len2;
-	$2 *src_to_free;
-	$2 *dst_to_free;
-	DECLARE_PLATFORM_VARS_2
-
-fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, vap = 0x%lx\n",(long)vap);
-	//len = VA_SRC1_LEN(vap);
-	len = VA_LENGTH(vap);
-fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, len = 0x%x\n",len);
-	orig_src1_values = ($3 *) VA_SRC1_PTR(vap);
-	orig_src2_values = ($3 *) VA_SRC2_PTR(vap);
-fprintf(stderr,"h_call_proj_3v $1:  args set\n");
-
-	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
-	/* first iteration may be mixed types... */
-	SETUP_PROJ_ITERATION($2,$1)
-fprintf(stderr,"h_call_proj_3v $1:  calling setup func, len = %d\n",len);
-	CALL_GPU_FAST_PROJ_3V_SETUP_FUNC($1)
-	len = len1;
-	src_to_free=(dst_type *)NULL;
-	src1_values = dst_values;
-	while( len > 1 ){
-		SETUP_PROJ_ITERATION($2,$1)
-fprintf(stderr,"h_call_proj_3v $1:  calling helper func, len = %d\n",len);
-		CALL_GPU_FAST_PROJ_3V_HELPER_FUNC($1)
-		src1_values = dst_values;
-		/* Each temp vector gets used twice,
-		 * first as result, then as source */
-		if( src_to_free != (dst_type *)NULL ){
-			FREETMP_NAME`(src_to_free,"$1");'
-			src_to_free=(dst_type *)NULL;
-		}
-		src_to_free = dst_to_free;
-		dst_to_free = (dst_type *)NULL;
-	}
-	if( src_to_free != (dst_type *)NULL ){
-		FREETMP_NAME`(src_to_free,"$1");'
-		src_to_free=(dst_type *)NULL;
-	}
-}
+dnl	static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
+dnl	{
+dnl		$2 *dst_values;
+dnl		$3 *orig_src1_values, *orig_src2_values;
+dnl		$2 *src1_values, *src2_values;
+dnl		uint32_t len, len1, len2;
+dnl		$2 *src_to_free;
+dnl		$2 *dst_to_free;
+dnl		DECLARE_PLATFORM_VARS_2
+dnl	
+dnl	fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, vap = 0x%lx\n",(long)vap);
+dnl		//len = VA_SRC1_LEN(vap);
+dnl		len = VA_LENGTH(vap);
+dnl	fprintf(stderr,"h_call_proj_3v fast $1:  BEGIN, len = 0x%x\n",len);
+dnl		orig_src1_values = ($3 *) VA_SRC1_PTR(vap);
+dnl		orig_src2_values = ($3 *) VA_SRC2_PTR(vap);
+dnl	fprintf(stderr,"h_call_proj_3v $1:  args set\n");
+dnl	
+dnl		/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
+dnl		/* first iteration may be mixed types... */
+dnl		SETUP_PROJ_ITERATION($2,$1)
+dnl	fprintf(stderr,"h_call_proj_3v $1:  calling setup func, len = %d\n",len);
+dnl		CALL_GPU_FAST_PROJ_3V_SETUP_FUNC($1)
+dnl		len = len1;
+dnl		src_to_free=(dst_type *)NULL;
+dnl		src1_values = dst_values;
+dnl		while( len > 1 ){
+dnl			SETUP_PROJ_ITERATION($2,$1)
+dnl	fprintf(stderr,"h_call_proj_3v $1:  calling helper func, len = %d\n",len);
+dnl			CALL_GPU_FAST_PROJ_3V_HELPER_FUNC($1)
+dnl			src1_values = dst_values;
+dnl			/* Each temp vector gets used twice,
+dnl			 * first as result, then as source */
+dnl			if( src_to_free != (dst_type *)NULL ){
+dnl				FREETMP_NAME`(src_to_free,"$1");'
+dnl				src_to_free=(dst_type *)NULL;
+dnl			}
+dnl			src_to_free = dst_to_free;
+dnl			dst_to_free = (dst_type *)NULL;
+dnl		}
+dnl		if( src_to_free != (dst_type *)NULL ){
+dnl			FREETMP_NAME`(src_to_free,"$1");'
+dnl			src_to_free=(dst_type *)NULL;
+dnl		}
+dnl	}
 
 static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 {
-	Vector_Args va1, *vap=(&va1);
+dnl	Vector_Args va1, *vap=(&va1);
+	Shape_Info *shpp;
+	Data_Obj *prod_dp;
+	Data_Obj *disp_dp;	// for debugging
+	Vec_Obj_Args oa1, *prod_oap=(&oa1);
 
-	CHECK_MM($1)
+	shpp = make_outer_shape(QSP_ARG  OBJ_SHAPE(OA_SRC1(oap)), OBJ_SHAPE(OA_SRC2(oap)));
+	if( shpp == NULL ){
+		WARN("$1:  incompatible operand shapes!?");
+		return;
+	}
 
-	/* BUG need to set vap entries from oap - proj_3v */
-	/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/
-	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])
-fprintf(stderr,"h_call_proj_3v %s:  need to implement speed switch!?\n","$1");
-	/* Speed switch should determine the args to copy!? */
-	SET_VA_PFDEV(vap,OA_PFDEV(oap));
-fprintf(stderr,"h_call_proj_3v $1:  pfdev set\n");
-	XFER_DEST_PTR
-fprintf(stderr,"h_call_proj_3v $1:  dest ptr set\n");
-	XFER_FAST_ARGS_2SRCS
-fprintf(stderr,"h_call_proj_3v $1:  src ptrs set\n");
-	XFER_FAST_COUNT(SRC1_DP)
-fprintf(stderr,"h_call_proj_3v $1:  count set\n");
+	/* BUG - to make this thread-safe, we need to append the thread index to the name! */
+	prod_dp = make_dobj(QSP_ARG   "prod_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+	if( prod_dp == NULL ){
+		WARN("$1:  error creating temp object for products!?");
+		return;
+	}
 
-	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
+	/*
+	clear_oargs(prod_oap);
+	SET_OA_PFDEV(prod_oap,OA_PFDEV(oap));
+	SET_OA_DEST(prod_oap,prod_dp);
+	SET_OA_SRC1(prod_oap,OA_SRC1(oap));
+	SET_OA_SRC2(prod_oap,OA_SRC2(oap));
+	*/
+
+	*prod_oap = *oap;
+	SET_OA_DEST(prod_oap,prod_dp);
+	HOST_TYPED_CALL_NAME($4,type_code)(FVMUL,prod_oap);
+
+disp_dp = insure_ram_obj(prod_dp);
+assert(disp_dp!=NULL);
+fprintf(stderr,"displaying intermediate result:\n");
+pntvec(QSP_ARG  disp_dp,stderr);
+fflush(stderr);
+delvec(QSP_ARG  disp_dp);
+
+	*prod_oap = *oap;
+	SET_OA_SRC1(prod_oap,prod_dp);
+	SET_OA_SRC2(prod_oap,NULL);
+	HOST_TYPED_CALL_NAME($5,type_code)(FVSUM,prod_oap);
+
+	delvec(QSP_ARG  prod_dp);
+
+dnl		CHECK_MM($1)
+dnl	
+dnl		/* BUG need to set vap entries from oap - proj_3v */
+dnl		/*SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))*/
+dnl		SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])
+dnl	fprintf(stderr,"h_call_proj_3v %s:  need to implement speed switch!?\n","$1");
+dnl		/* Speed switch should determine the args to copy!? */
+dnl		SET_VA_PFDEV(vap,OA_PFDEV(oap));
+dnl	fprintf(stderr,"h_call_proj_3v $1:  pfdev set\n");
+dnl		XFER_DEST_PTR
+dnl	fprintf(stderr,"h_call_proj_3v $1:  dest ptr set\n");
+dnl		XFER_FAST_ARGS_2SRCS
+dnl	fprintf(stderr,"h_call_proj_3v $1:  src ptrs set\n");
+dnl		XFER_FAST_COUNT(SRC1_DP)
+dnl	fprintf(stderr,"h_call_proj_3v $1:  count set\n");
+dnl	
+dnl		HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
+
 }
 ')
 

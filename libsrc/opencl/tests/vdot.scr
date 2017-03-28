@@ -8,13 +8,16 @@ Vector v3_$1 $n 1 float
 Scalar s_$1 1 float
 Ramp1D v1_$1 0 1
 Ramp1D v2_$1 $n -1
+advise 'displaying inputs:'
 Display v1_$1
 Display v2_$1
 advise 'ready for vdot...'
 Pause
 VVDot v3_$1 v1_$1 v2_$1
+advise 'displaying output 1:'
 Display v3_$1
 VVDot s_$1 v1_$1 v2_$1
+advise 'displaying output 2:'
 Display s_$1
 .
 
