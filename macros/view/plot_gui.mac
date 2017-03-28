@@ -4,6 +4,7 @@ Define Init_Plot_GUI_Defaults 0
 
 Set n_data_series 0
 Set n_grids 0
+Set show_plot_legend 0
 
 # We can't have spaces in the window name, because a colormap object is created
 # using it, and data objects can't have spaces in their names...
@@ -17,13 +18,30 @@ Set y_axis_panel "Y Axis"
 Set data_panel "Data"
 Set grid_panel "Grid"
 Set edit_panel "Edit Data Series"
-Set gedit_panel "Edit Data Grid"
+Set grid_edit_panel "Edit Data Grid"
 Set save_panel "Save Plot Image"
+
+Set plot_frame_toggle_widget_name 'Frame'
+Set plot_legend_toggle_widget_name 'Plot legend'
+Set plot_legend_text_widget_name 'Plot legend text'
+Set plot_legend_x_widget_name 'Plot legend X'
+Set plot_legend_y_widget_name 'Plot legend Y'
+
+Set data_source_file_widget_name 'Source file'
+Set data_legend_toggle_widget_name 'Legend'
+Set data_legend_text_widget_name 'Data legend text'
+Set data_legend_x_widget_name 'Data legend X'
+Set data_legend_y_widget_name 'Data legend Y'
+
+Set grid_source_file_widget_name 'Source file'
 
 Set panel_w	400
 Set panel_h	600
 Set plotwin_x0 500
 Set plotwin_y0 50
+Set plot_legend_text no_legend
+Set plot_legend_x 0
+Set plot_legend_y 0
 
 
 ################ Set default parameters
@@ -32,6 +50,10 @@ Set save_filename_stem $plot_name
 
 Set series_line_thickness 1
 Set series_symbol_size 4
+Set series_show_legend	0
+Set series_legend_text no_legend
+Set series_legend_x 0
+Set series_legend_y 0
 
 Set grid_line_thickness 1
 Set grid_symbol_size 4
@@ -62,13 +84,10 @@ Set curr_series_name no_series
 Set datacolor_red 0
 Set datacolor_green 0
 Set datacolor_blue 0
-Set legend_x 0
-Set legend_y 0
-Set legend_delta_x 0
-Set legend_delta_y 0
-Set plot_legend_x 0
-Set plot_legend_y 0
-Set plot_legend "no_legend"
+Set data_legend_x 0
+Set data_legend_y 0
+Set data_legend_delta_x 0
+Set data_legend_delta_y 0
 
 Set show_frame 0
 .
@@ -122,6 +141,32 @@ If $series_line_thickness==1 "XYPlot series_pts"
 If $series_line_thickness>1 "Thick_Plot $series_line_thickness series_pts"
 #Print series_symbol
 If strcmp('$series_symbol','none') "Symbol $series_symbol $series_symbol_size Symbol_Plot series_pts"
+If $series_show_legend Refresh_Series_Legend
+.
+
+Set legend_line_delta 12
+
+Define Refresh_Series_Legend 0
+Unit_Font
+Left_Justify
+S_At $series_legend_text $series_legend_x $series_legend_y
+# We want to draw a symbol - if we are plotting symbols - and a short line segment - if we are drawing lines...
+# But we want the size (and the offset from the text)
+# to be about the same regardless of the plotting units!
+Plot_2_Screen sx1 sy1 $series_legend_x $series_legend_y
+advise "Will plot symbol at $sx1 $sy1..."
+Add_Var sx1 -20		# move to the left
+Add_Var sy1 -5		# move up
+If strcmp('$series_symbol','none') "$draw_symbol $sx1 $sy1 $symbol_size"
+Assign sx2 $sx1+$legend_line_delta
+Add_Var sx1 -$legend_line_delta
+If !obj_exists(legend_line) "Vector legend_line 2 2 float"
+Screen_2_Plot px1 py1 $sx1 $sy1
+Screen_2_Plot px2 py2 $sx2 $sy1
+data ascii read legend_line - $px1 $py1 $px2 $py2 quit quit
+#Print series_line_thickness
+Display legend_line
+If $series_line_thickness>1 "Thick_Plot $series_line_thickness legend_line"
 .
 
 Define Refresh_One_Grid 1 index
@@ -156,6 +201,15 @@ Redo_Window
 Refresh_Plot
 .
 
+Define Update_Plot_Size_Sliders 0
+interface
+  decorate $gen_panel
+    set_scale Width $plot_w
+    set_scale Height $plot_h
+    quit
+  quit
+.
+
 Define TogFrame 0
 Set show_frame $toggle_state
 Refresh_Plot
@@ -179,6 +233,7 @@ advise "Refresh_Plot:  refreshing data..."
 Refresh_Data
 advise "Refresh_Plot:  refreshing grids..."
 Refresh_Grids
+Draw_Plot_Legend
 advise "Refresh_Plot DONE"
 .
 
@@ -276,7 +331,9 @@ Set_Color_Index_From_Name $series_color
 interface
   decorate $edit_panel
     set_edit_text Nickname $series_nickname
-    set_edit_text 'Source file' '(no file specified)'
+    set_edit_text $data_source_file_widget_name '(no file specified)'
+    set_toggle $data_legend_toggle_widget_name no
+    set_edit_text $data_legend_text_widget_name $series_data_legend_text
     set_choice Color $series_color
     set_choice Symbol $series_symbol
     quit
@@ -294,9 +351,9 @@ Set grid_symbol none
 Set_Color_Index_From_Name $grid_color
 # should this really be editable?
 interface
-  decorate $gedit_panel
+  decorate $grid_edit_panel
     set_edit_text Nickname $grid_nickname
-    set_edit_text 'Source file' '(no file specified)'
+    set_edit_text $grid_source_file_widget_name '(no file specified)'
     set_edit_text 'Columns' $grid_columns
     set_edit_text 'Rows' $grid_rows
     set_choice Color $grid_color
@@ -304,16 +361,21 @@ interface
     quit
   quit
 Panel_Off $grid_panel
-Panel_On $gedit_panel
+Panel_On $grid_edit_panel
 .
 
 Define GenPanel 0
 interface
   decorate $gen_panel
-    set_edit_text 'Legend' "$plot_legend"
+    set_edit_text $plot_legend_text_widget_name "$plot_legend_text"
+    set_edit_text $plot_legend_x_widget_name "$plot_legend_x"
+    set_edit_text $plot_legend_y_widget_name "$plot_legend_y"
     If $show_frame
-      Then "set_toggle Frame yes"
-      Else "set_toggle Frame no"
+      Then "set_toggle '$plot_frame_toggle_widget_name' yes"
+      Else "set_toggle '$plot_frame_toggle_widget_name' no"
+    If $show_plot_legend
+      Then "set_toggle '$plot_legend_toggle_widget_name' yes"
+      Else "set_toggle '$plot_legend_toggle_widget_name' no"
     quit
   quit
 Panel_Off $main_panel
@@ -338,6 +400,10 @@ Load_Series_Var $1 color_index
 Load_Series_Var $1 symbol
 Load_Series_Var $1 symbol_size
 Load_Series_Var $1 line_thickness
+Load_Series_Var $1 show_legend
+Load_Series_Var $1 legend_text
+Load_Series_Var $1 legend_x
+Load_Series_Var $1 legend_y
 .
 
 Define Store_Series_Vars 1 series_name
@@ -348,6 +414,10 @@ Store_Series_Var $1 color_index
 Store_Series_Var $1 symbol
 Store_Series_Var $1 symbol_size
 Store_Series_Var $1 line_thickness
+Store_Series_Var $1 show_legend
+Store_Series_Var $1 legend_text
+Store_Series_Var $1 legend_x
+Store_Series_Var $1 legend_y
 .
 
 Define Load_Grid_Vars 1 grid_name
@@ -432,7 +502,7 @@ Load_Series_Vars $curr_series_name
 interface
   decorate $edit_panel
     set_edit_text Nickname $series_nickname
-    set_edit_text 'Source file' $series_filename
+    set_edit_text $data_source_file_widget_name $series_filename
     set_choice Color $series_color
     set_choice Symbol $series_symbol
     set_choice 'Symbol Size' $series_symbol_size
@@ -450,9 +520,9 @@ Find_Grid_From_Nickname $selected_grid_nickname
 If !strcmp('$curr_grid_name','no_grid') "advise 'Could not find grid with nickname $selected_grid_nickname!?' exit_macro"
 Load_Grid_Vars $curr_grid_name
 interface
-  decorate $gedit_panel
+  decorate $grid_edit_panel
     set_edit_text Nickname $grid_nickname
-    set_edit_text 'Source file' $grid_filename
+    set_edit_text $grid_source_file_widget_name $grid_filename
     set_edit_text 'Columns' $grid_columns
     set_edit_text 'Rows' $grid_rows
     set_choice Color $grid_color
@@ -462,7 +532,7 @@ interface
     quit
   quit
 Panel_Off $grid_panel
-Panel_On $gedit_panel
+Panel_On $grid_edit_panel
 .
 
 
@@ -471,27 +541,56 @@ Get_Text_Var $edit_panel Nickname series_nickname
 .
 
 Define SetGridNickname 0
-Get_Text_Var $gedit_panel Nickname grid_nickname
+Get_Text_Var $grid_edit_panel Nickname grid_nickname
 .
 
 Define SetSeriesSourceFile 0
-Get_Text_Var $edit_panel 'Source file' series_filename
+Get_Text_Var $edit_panel $data_source_file_widget_name series_filename
+.
+
+Define TogDataLegend 0
+Set series_show_legend $toggle_state
+.
+
+Define SetDataLegendText 0
+Get_Text_Var $edit_panel $data_legend_text_widget_name series_legend_text
+.
+
+Define SetDataLegendX 0
+Get_Text_Var $edit_panel $data_legend_x_widget_name series_legend_x
+.
+
+Define SetDataLegendY 0
+Get_Text_Var $edit_panel $data_legend_y_widget_name series_legend_y
 .
 
 Define SetGridSourceFile 0
-Get_Text_Var $gedit_panel 'Source file' grid_filename
+Get_Text_Var $grid_edit_panel $grid_source_file_widget_name grid_filename
 .
 
 Define SetGridColumns 0
-Get_Text_Var $gedit_panel 'Columns' grid_columns
+Get_Text_Var $grid_edit_panel 'Columns' grid_columns
 .
 
 Define SetGridRows 0
-Get_Text_Var $gedit_panel 'Rows' grid_rows
+Get_Text_Var $grid_edit_panel 'Rows' grid_rows
 .
 
-Define SetPlotLegend 0
-Get_Text_Var $gen_panel 'Legend' plot_legend
+Define TogPlotLegend 0
+Set show_plot_legend $toggle_state
+Refresh_Plot
+.
+
+Define SetPlotLegendText 0
+Get_Text_Var $gen_panel $plot_legend_text_widget_name plot_legend_text
+.
+
+Define SetPlotLegendX 0
+Get_Text_Var $gen_panel $plot_legend_x_widget_name plot_legend_x
+.
+
+Define SetPlotLegendY 0
+Get_Text_Var $gen_panel $plot_legend_y_widget_name plot_legend_y
 .
 
 Define SetSeriesColor 0
@@ -593,13 +692,13 @@ Define GridEditDone 0
 Print curr_grid_name
 Store_Grid_Vars $curr_grid_name
 Update_Grid_Choices
-Panel_Off $gedit_panel
+Panel_Off $grid_edit_panel
 Panel_On $grid_panel
 Refresh_Grids
 .
 
 Define SavePlotParams 0
-Set plot_param_file ${plot_name}_params.scr
+Get_Plot_Param_Filename $plot_name
 append no
 output_file $plot_param_file
 Save_Gen_Params
@@ -614,20 +713,56 @@ Save_Grid_Params
 output_file -
 .
 
+Define Get_Plot_Param_Filename 1 plot_name
+Set plot_param_file plot_params.$1.scr
+If is_directory('$plot_dir')
+  "Set plot_param_file $plot_dir/$plot_param_file"
+.
+
+Define Get_Plot_Spec_Filename 1 plot_name
+Set plot_spec_file plot_spec.$1.scr
+If is_directory('$plot_dir')
+  "Set plot_spec_file $plot_dir/$plot_spec_file"
+.
+
+Define Get_PS_Filename 1 plot_name
+Set psfile $1.eps
+If is_directory('$fig_dir')
+  "Set psfile $fig_dir/$psfile"
+.
+
+Define Check_Plot_Params 1 plot_name
+Get_Plot_Param_Filename $plot_name
+If !file_exists('$plot_param_file') exit_macro
+Install_Plot_Params $plot_param_file
+.
+
+Define Check_Plot_Spec 1 plot_name
+Get_Plot_Spec_Filename $plot_name
+If !file_exists('$plot_spec_file') exit_macro
+Install_Plot_Params $plot_spec_file
+.
+
 Define LoadPlotParams 0
-Set plot_param_file ${plot_name}_params.scr
+Get_Plot_Param_Filename $plot_name
 If !file_exists('$plot_param_file') "warn 'File $plot_param_file does not exist!?' exit_macro"
+Install_Plot_Params $plot_param_file
+.
+
+Define Install_Plot_Params 1 filename
 Set old_plot_w $plot_w
 Set old_plot_h $plot_h
-Print plot_param_file
-< $plot_param_file
+echo "Loading plot parameters from file $1..."
+< $1
 Print n_data_series
 Update_Series_Choices
 Update_Grid_Choices
 If $old_plot_w!=$plot_w||$old_plot_h!=$plot_h Redo_Window
 Set plot_ready 1
+Set plot_loaded 1
 Refresh_Plot
 # BUG?  rebuild data chooser?
+Update_Plot_Size_Sliders
 .
 
 Define Save_XAxis_Params 0
@@ -647,7 +782,9 @@ Save_Text_Param y_legend
 Define Save_Gen_Params 0
 Save_Param plot_w
 Save_Param plot_h
-Save_Text_Param plot_legend
+Save_Param show_plot_frame
+Save_Param show_plot_legend
+Save_Text_Param plot_legend_text
 Save_Param plot_legend_x
 Save_Param plot_legend_y
 .
@@ -798,7 +935,7 @@ repeat ncols($1)-1
 .
 
 Define WritePSPlot 0
-Set psfile $fig_dir/${plot_name}.eps
+Get_PS_Filename $plot_name
 
 os
   system "cat $postscript_lib/jbm_head.ps $postscript_lib/jbm_page.ps $postscript_lib/plotmacs.ps > $psfile"
@@ -841,10 +978,10 @@ Emit_Axes
 echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
 # END prolog
 # BUG need to define legend_x etc
-echo "/legend_x $legend_x def"
-echo "/legend_y $legend_y def"
-echo "/legend_delta_y $legend_delta_y def"
-echo "/legend_delta_x $legend_delta_x def"
+echo "/legend_x $data_legend_x def"
+echo "/legend_y $data_legend_y def"
+echo "/legend_delta_y $data_legend_delta_y def"
+echo "/legend_delta_x $data_legend_delta_x def"
 
 If strcmp('$plot_legend','no_legend')
   Emit_Graph_Legend
@@ -1019,7 +1156,11 @@ interface
   panel $edit_panel $panel_w $panel_h
   decorate $edit_panel
     text Nickname SetSeriesNickname seriesNNN
-    text 'Source file' SetSeriesSourceFile /dev/null	# Use file chooser?
+    text $data_source_file_widget_name SetSeriesSourceFile /dev/null	# Use file chooser?
+    toggle $data_legend_toggle_widget_name TogDataLegend
+    text $data_legend_text_widget_name SetDataLegendText no_legend
+    text $data_legend_x_widget_name SetDataLegendX 0
+    text $data_legend_y_widget_name SetDataLegendY 0
     button Done SeriesEditDone
     position 120 20
     chooser Color SetSeriesColor 9 white black red blue green cyan yellow magenta gray
@@ -1029,10 +1170,10 @@ interface
     chooser 'Line Thickness' SetLineThickness 5 0 1 2 3 4
     quit
 
-  panel $gedit_panel $panel_w $panel_h
-  decorate $gedit_panel
+  panel $grid_edit_panel $panel_w $panel_h
+  decorate $grid_edit_panel
     text Nickname SetGridNickname gridNNN
-    text 'Source file' SetGridSourceFile /dev/null	# Use file chooser?
+    text $grid_source_file_widget_name SetGridSourceFile /dev/null	# Use file chooser?
     text 'Columns' SetGridColumns $grid_columns
     text 'Rows' SetGridRows $grid_rows
     button Done GridEditDone
@@ -1048,8 +1189,11 @@ interface
   decorate $gen_panel
     slider Width SetPlotWidth $min_plot_width $max_plot_width $plot_w
     slider Height SetPlotHeight $min_plot_height $max_plot_height $plot_h
-    toggle 'Frame' TogFrame
-    text Legend SetPlotLegend $plot_legend
+    toggle $plot_frame_toggle_widget_name TogFrame
+    toggle $plot_legend_toggle_widget_name TogPlotLegend
+    text $plot_legend_text_widget_name SetPlotLegendText $plot_legend_text
+    text $plot_legend_x_widget_name SetPlotLegendX $plot_legend_x
+    text $plot_legend_y_widget_name SetPlotLegendY $plot_legend_y
     button Done 'Panel_Off $gen_panel Panel_On $main_panel'
     quit
   panel $main_panel $panel_w $panel_h
@@ -1074,6 +1218,13 @@ interface
 
 Redo_Window
 Refresh_Plot
+.
+
+Define Draw_Plot_Legend 0
+If !$show_plot_legend exit_macro
+Select_Pen $black
+Legend_Font
+S_At "$plot_legend_text" $plot_legend_x $plot_legend_y
 .
 
 

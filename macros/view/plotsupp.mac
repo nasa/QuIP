@@ -656,6 +656,8 @@ Print plot_ymin
 Print plot_ymax
 .
 
+# Plot_2_Screen - convert a point in plot coords to screen coords
+
 Define Plot_2_Screen 4 xvarname yvarname x y
 # these two statements are for debugging...
 #advise "Plot_2_Screen $1 $2 $3 $4  -   the_plotter = $the_plotter"
