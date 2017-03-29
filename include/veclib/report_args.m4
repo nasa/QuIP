@@ -25,12 +25,12 @@ NADVISE(DEFAULT_ERROR_STRING);							\
 
 dnl  BUG VA_ARGSET_PREC appears to be invalid - not copied from oap?
 
-define(`REPORT_SVAL1',`								\
-										\
-sprintf(DEFAULT_ERROR_STRING,"sval1 = %s",					\
-string_for_scalar(DEFAULT_QSP_ARG  &(SVAL_STD(VA_SVAL1(vap))),					\
-src_prec_for_argset_prec(VA_ARGSET_PREC(vap),VA_ARGSET_TYPE(vap)) ) );		\
-NADVISE(DEFAULT_ERROR_STRING);							\
+define(`REPORT_SVAL1',`
+
+sprintf(DEFAULT_ERROR_STRING,"sval1 = %s",
+string_for_scalar(DEFAULT_QSP_ARG  &VA_SCALAR_VAL_STD(vap,0),
+src_prec_for_argset_prec(VA_ARGSET_PREC(vap),VA_ARGSET_TYPE(vap)) ) );
+NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 ',`	dnl #else // ! MORE_DEBUG

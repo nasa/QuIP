@@ -1,6 +1,8 @@
 
 dnl BUG - merge this file!!! (but with what???)
 
+define(`MORE_DEBUG',`x')	dnl	print extra debugging
+
 include(`ocl_kern_args.m4')
 include(`../../include/veclib/slow_len.m4')
 include(`../../include/veclib/slow_incs.m4')
@@ -64,7 +66,7 @@ define(`REPORT_KERNEL_ENQUEUE',`
 
 	if( verbose ){
 		int i;
-		fprintf(stderr,"FINISH_KERNEL_CALL, n_dims = %d\n",$1); 
+		fprintf(stderr,"finish_kernel_enqueue:  n_dims = %d\n",$1); 
 		for (i=0;i<$1;i++)
 			fprintf(stderr,"global_work_size[%d] = %ld\n",
 				i,global_work_size[i]);
@@ -166,7 +168,7 @@ fprintf(stderr,"_check_kernel $2:  creating kernel\n");
 ')
 
 
-define(`SETUP_FAST_BLOCKS_',`/*sfb*/global_work_size[0] = VA_LENGTH(vap);/*sfb*/')
+define(`SETUP_FAST_BLOCKS_',`/*sfb*/global_work_size[0] = VA_LENGTH(vap);/*sfb*/fprintf(stderr,"setup_fast_blocks_:  global_work_size[0] = %ld\n",global_work_size[0]);')
 define(`SETUP_FAST_BLOCKS_SBM_',`SETUP_FAST_BLOCKS_')
 
 dnl BUG - the number of words we need to process depends on bit0 !?
@@ -245,18 +247,21 @@ dnl CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)
 define(`CALL_GPU_FAST_PROJ_2V_SETUP_FUNC',`
 	CHECK_FAST_KERNEL_1($1`_setup')
 	SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP
+	global_work_size[0] = len1;
 	CALL_FAST_KERNEL_1($1`_setup',,,,)
 ')
 
 define(`CALL_GPU_FAST_PROJ_2V_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1`_helper')
 	SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER
+	global_work_size[0] = len1;
 	CALL_FAST_KERNEL_2($1`_helper',,,,)
 ')
 
 define(`CALL_GPU_FAST_PROJ_3V_SETUP_FUNC',`
 	CHECK_FAST_KERNEL_1($1`_setup')
 	SET_KERNEL_ARGS_FAST_PROJ_3V_SETUP
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_1($1`_setup',,,,)
 ')
 
@@ -265,18 +270,21 @@ define(`CALL_GPU_FAST_PROJ_3V_HELPER_FUNC',`
 fprintf(stderr,"setting helper kernel args...\n");
 	SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER
 fprintf(stderr,"DONE setting helper kernel args...\n");
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_2($1`_helper',,,,)
 ')
 
 define(`CALL_GPU_FAST_INDEX_SETUP_FUNC',`
 	CHECK_FAST_KERNEL_1($1)
 	SET_KERNEL_ARGS_FAST_INDEX_SETUP
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_1($1,,,,)
 ')
 
 define(`CALL_GPU_FAST_INDEX_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1)
 	SET_KERNEL_ARGS_FAST_INDEX_HELPER
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_2($1,,,,)
 ')
 
