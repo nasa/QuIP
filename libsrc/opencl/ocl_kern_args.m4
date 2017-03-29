@@ -124,7 +124,7 @@ fprintf(stderr,"set_kernal_args_fast_proj_2v_helper:  dst_values = 0x%lx, src_va
 
 define(`SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP',`
 
-fprintf(stderr,"set_kernal_args_fast_proj_2v_setup:  dst_values = 0x%lx, orig_src_values = 0x%lx, len1 = %d, len2 = %d\n",
+fprintf(stderr,"set_kernel_args_fast_proj_2v_setup:  dst_values = 0x%lx, orig_src_values = 0x%lx, len1 = %d, len2 = %d\n",
 (long)dst_values,(long)orig_src_values,len1,len2);
 	SET_KERNEL_ARG_1(void *,&dst_values)
 	SET_KERNEL_ARG_1(void *,&orig_src_values)

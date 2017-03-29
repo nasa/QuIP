@@ -610,14 +610,16 @@ show_vec_args(vap);
 	SET_MAX_THREADS_FROM_OBJ(oap->oa_dp[0])
 	src_to_free=($2 *)NULL;
 	SETUP_PROJ_ITERATION($2,$1)
-show_gpu_vector(dst_values,len1);
 	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC($1)
+fprintf(stderr,"after setup:\n");
+show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 	len=len1;
 	src_values = dst_values;
 	while( len > 1 ){
 		SETUP_PROJ_ITERATION($2,$1)
 		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC($1)
-show_gpu_vector(dst_values,len1);
+fprintf(stderr,"after helper:\n");
+show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 		len=len1;
 		src_values = dst_values;
 		/* Each temp vector gets used twice,

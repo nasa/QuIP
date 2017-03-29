@@ -7,7 +7,7 @@ Vector ${1}_row 4 1 float
 Column ${1}_col 4 1 float
 Scalar ${1}_scalar 1 float
 
-Ramp2D ${1}_y 1 1 10
+Ramp2D ${1}_y 1 10 100
 Display ${1}_y
 
 VSum ${1}_scalar ${1}_y
