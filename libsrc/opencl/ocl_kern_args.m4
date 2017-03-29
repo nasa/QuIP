@@ -114,8 +114,8 @@ define(`SET_KERNEL_ARGS_FAST_NOCC_HELPER',`
 define(`SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER',`
 
 	ki_idx=0;
-fprintf(stderr,"set_kernal_args_fast_proj_2v_helper:  dst_values = 0x%lx, src_values = 0x%lx, len1 = %d, len2 = %d\n",
-(long)dst_values,(long)src_values,len1,len2);
+dnl fprintf(stderr,"set_kernal_args_fast_proj_2v_helper:  dst_values = 0x%lx, src_values = 0x%lx, len1 = %d, len2 = %d\n",
+dnl (long)dst_values,(long)src_values,len1,len2);
 	SET_KERNEL_ARG_2(void *,&dst_values)
 	SET_KERNEL_ARG_2(void *,&src_values)
 	SET_KERNEL_ARG_2( uint32_t, &len1 )
@@ -124,8 +124,8 @@ fprintf(stderr,"set_kernal_args_fast_proj_2v_helper:  dst_values = 0x%lx, src_va
 
 define(`SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP',`
 
-fprintf(stderr,"set_kernel_args_fast_proj_2v_setup:  dst_values = 0x%lx, orig_src_values = 0x%lx, len1 = %d, len2 = %d\n",
-(long)dst_values,(long)orig_src_values,len1,len2);
+dnl fprintf(stderr,"set_kernel_args_fast_proj_2v_setup:  dst_values = 0x%lx, orig_src_values = 0x%lx, len1 = %d, len2 = %d\n",
+dnl (long)dst_values,(long)orig_src_values,len1,len2);
 	SET_KERNEL_ARG_1(void *,&dst_values)
 	SET_KERNEL_ARG_1(void *,&orig_src_values)
 	SET_KERNEL_ARG_1( uint32_t, &len1 )
@@ -135,17 +135,17 @@ fprintf(stderr,"set_kernel_args_fast_proj_2v_setup:  dst_values = 0x%lx, orig_sr
 define(`SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER',`
 
 	ki_idx=0;
-fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting dst_values\n");
+dnl fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting dst_values\n");
 	SET_KERNEL_ARG_2(void *,&dst_values)
-fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src1_values\n");
+dnl fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src1_values\n");
 	SET_KERNEL_ARG_2(void *,&src1_values)
-fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src2_values\n");
-fprintf(stderr,"src2_values = 0x%lx, &src2_values = 0x%lx\n",(long)src2_values,(long)(&src2_values));
-fprintf(stderr,"pd_idx = %d,  kernel2[pd_idx] = 0x%lx\n",pd_idx,(long)kernel2[pd_idx]);
+dnl fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting src2_values\n");
+dnl fprintf(stderr,"src2_values = 0x%lx, &src2_values = 0x%lx\n",(long)src2_values,(long)(&src2_values));
+dnl fprintf(stderr,"pd_idx = %d,  kernel2[pd_idx] = 0x%lx\n",pd_idx,(long)kernel2[pd_idx]);
 	SET_KERNEL_ARG_2(void *,&src2_values)
-fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len1\n");
+dnl fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len1\n");
 	SET_KERNEL_ARG_2( uint32_t, &len1 )
-fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len2\n");
+dnl fprintf(stderr,"set_kernel_args_fast_proj_3v_helper:  setting len2\n");
 	SET_KERNEL_ARG_2( uint32_t, &len2 )
 ')
 

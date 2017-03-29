@@ -10,9 +10,9 @@ Scalar ${1}_scalar 1 float
 Ramp2D ${1}_y 1 10 100
 Display ${1}_y
 
-verbose yes
+#verbose yes
 VSum ${1}_scalar ${1}_y
-verbose no
+#verbose no
 Display ${1}_scalar
 Pause
 

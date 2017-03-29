@@ -1,7 +1,7 @@
 
 dnl BUG - merge this file!!! (but with what???)
 
-define(`MORE_DEBUG',`x')	dnl	print extra debugging
+dnl	define(`MORE_DEBUG',`x')	dnl	print extra debugging
 
 include(`ocl_kern_args.m4')
 include(`../../include/veclib/slow_len.m4')
@@ -150,10 +150,10 @@ dnl _CHECK_KERNEL(k,name,ktyp,kname)
 define(`_CHECK_KERNEL',`
 	/* _check_kernel $1 $2 $3 $4 */
 	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));
-fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
+dnl fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 	if( $1[pd_idx] == NULL ){	/* one-time initialization */
 		ksrc = KERN_SOURCE_NAME($2,$3);
-fprintf(stderr,"_check_kernel $2:  creating kernel\n");
+dnl fprintf(stderr,"_check_kernel $2:  creating kernel\n");
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));
 		if( program == NULL ) 
 			NERROR1("program creation failure!?");
@@ -168,7 +168,7 @@ fprintf(stderr,"_check_kernel $2:  creating kernel\n");
 ')
 
 
-define(`SETUP_FAST_BLOCKS_',`/*sfb*/global_work_size[0] = VA_LENGTH(vap);/*sfb*/fprintf(stderr,"setup_fast_blocks_:  global_work_size[0] = %ld\n",global_work_size[0]);')
+define(`SETUP_FAST_BLOCKS_',`/*sfb*/global_work_size[0] = VA_LENGTH(vap);/*sfb*/')
 define(`SETUP_FAST_BLOCKS_SBM_',`SETUP_FAST_BLOCKS_')
 
 dnl BUG - the number of words we need to process depends on bit0 !?
@@ -267,9 +267,9 @@ define(`CALL_GPU_FAST_PROJ_3V_SETUP_FUNC',`
 
 define(`CALL_GPU_FAST_PROJ_3V_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1`_helper')
-fprintf(stderr,"setting helper kernel args...\n");
+dnl fprintf(stderr,"setting helper kernel args...\n");
 	SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER
-fprintf(stderr,"DONE setting helper kernel args...\n");
+dnl fprintf(stderr,"DONE setting helper kernel args...\n");
 	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_2($1`_helper',,,,)
 ')

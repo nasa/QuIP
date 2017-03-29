@@ -102,8 +102,8 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 
 	//copy memory from device to host
 
-fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %ld, dst = 0x%lx\n",
-PFDEV_NAME(pdp),(long)src,siz,(long)dst);
+//fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %ld, dst = 0x%lx\n",
+//PFDEV_NAME(pdp),(long)src,siz,(long)dst);
 	status = clEnqueueReadBuffer( OCLDEV_QUEUE(pdp),
 			src,		// cl_mem
 			CL_TRUE,	// blocking_read
@@ -574,7 +574,7 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 		advise(ERROR_STRING);
 		return NULL;
 	}
-fprintf(stderr,"ocl_mem_alloc %d:  returning 0x%lx\n",size,(long)ptr);
+//fprintf(stderr,"ocl_mem_alloc %d:  returning 0x%lx\n",size,(long)ptr);
 	return ptr;
 }
 
@@ -967,7 +967,7 @@ void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len )
 	buf=malloc(siz);
 	if( buf==NULL ) NERROR1("show_gpu_vector:  error allocating buffer!?");
 
-fprintf(stderr,"show_gpu_vector:  src = 0x%lx\n",(long)ptr);
+	fprintf(stderr,"show_gpu_vector:  src = 0x%lx\n",(long)ptr);
 	// now do the memory transfer
 	(*PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  buf, ptr, siz, pdp );
 	for(i=0;i<len;i++){

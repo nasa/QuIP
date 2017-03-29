@@ -603,7 +603,7 @@ static void HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARG_DECLS)
 	DECLARE_PLATFORM_VARS_2
 
 	len = VARG_LEN( VA_SRC(vap,0) );
-show_vec_args(vap);
+dnl	show_vec_args(vap);
 	orig_src_values = ($3 *) VA_SRC_PTR(vap,0);
 
 	/*max_threads_per_block = OBJ_MAX_THREADS_PER_BLOCK(oap->oa_dp[0]);*/
@@ -611,15 +611,15 @@ show_vec_args(vap);
 	src_to_free=($2 *)NULL;
 	SETUP_PROJ_ITERATION($2,$1)
 	CALL_GPU_FAST_PROJ_2V_SETUP_FUNC($1)
-fprintf(stderr,"after setup:\n");
-show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
+dnl	fprintf(stderr,"after setup:\n");
+dnl	show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 	len=len1;
 	src_values = dst_values;
 	while( len > 1 ){
 		SETUP_PROJ_ITERATION($2,$1)
 		CALL_GPU_FAST_PROJ_2V_HELPER_FUNC($1)
-fprintf(stderr,"after helper:\n");
-show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
+dnl	fprintf(stderr,"after helper:\n");
+dnl	show_gpu_vector(QSP_ARG  VA_PFDEV(vap), dst_values,len1);
 		len=len1;
 		src_values = dst_values;
 		/* Each temp vector gets used twice,
@@ -647,12 +647,12 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 	SET_MAX_THREADS_FROM_OBJ(OA_DEST(oap))
 	/* BUG need to set vap entries from oap - proj_2v */
 	SET_VA_PFDEV(vap,OA_PFDEV(oap));
-show_obj_args(QSP_ARG  oap);
+dnl	show_obj_args(QSP_ARG  oap);
 	/* why slow args? */
 	XFER_SLOW_ARGS_2
 	SETUP_SLOW_LEN_2
 	/* BUG need to have a speed switch!? */
-fprintf(stderr,"h_call_proj_2v %s:  need to implement speed switch, calling fast function!?\n","$1");
+dnl	fprintf(stderr,"h_call_proj_2v %s:  need to implement speed switch, calling fast function!?\n","$1");
 	HOST_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);
 }
 ')
@@ -716,7 +716,7 @@ static void HOST_TYPED_CALL_NAME($1,type_code)( HOST_CALL_ARG_DECLS )
 dnl	Vector_Args va1, *vap=(&va1);
 	Shape_Info *shpp;
 	Data_Obj *prod_dp;
-	Data_Obj *disp_dp;	// for debugging
+dnl	Data_Obj *disp_dp;	// for debugging
 	Vec_Obj_Args oa1, *prod_oap=(&oa1);
 
 	shpp = make_outer_shape(QSP_ARG  OBJ_SHAPE(OA_SRC1(oap)), OBJ_SHAPE(OA_SRC2(oap)));
@@ -744,12 +744,12 @@ dnl	Vector_Args va1, *vap=(&va1);
 	SET_OA_DEST(prod_oap,prod_dp);
 	HOST_TYPED_CALL_NAME($4,type_code)(FVMUL,prod_oap);
 
-disp_dp = insure_ram_obj(prod_dp);
-assert(disp_dp!=NULL);
-fprintf(stderr,"displaying intermediate result:\n");
-pntvec(QSP_ARG  disp_dp,stderr);
-fflush(stderr);
-delvec(QSP_ARG  disp_dp);
+dnl	disp_dp = insure_ram_obj(prod_dp);
+dnl	assert(disp_dp!=NULL);
+dnl	fprintf(stderr,"displaying intermediate result:\n");
+dnl	pntvec(QSP_ARG  disp_dp,stderr);
+dnl	fflush(stderr);
+dnl	delvec(QSP_ARG  disp_dp);
 
 	*prod_oap = *oap;
 	SET_OA_SRC1(prod_oap,prod_dp);
