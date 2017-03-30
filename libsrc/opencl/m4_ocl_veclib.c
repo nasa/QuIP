@@ -10,7 +10,6 @@
 #include "veclib_api.h"
 //#include "veclib/ocl_veclib_prot.h"
 #include "ocl_platform.h"
-#include "vectree.h"	// make_outer_shape - should be moved?
 
 #include "ocl_veclib_expanded.c"
 

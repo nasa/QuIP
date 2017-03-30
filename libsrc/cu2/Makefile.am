@@ -2,6 +2,9 @@
 all:	libcu2.a
 	cp libcu2.a ../../libs
 
+# cu2_funcs.o gets built from cu2_funcs.cu with nvcc, but how does
+# it get put into the library???
+
 noinst_LIBRARIES = libcu2.a
 
 libcu2_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
@@ -169,5 +172,3 @@ else
 noinst_HEADERS += $(NVCC_SOURCES)
 endif
 
-#else
-#
