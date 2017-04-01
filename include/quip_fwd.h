@@ -69,7 +69,7 @@ FWD_TYPEDEF(viewer,Viewer)
 #define ITEM_INIT_PROT(type,stem)	void init_##stem##s(SINGLE_QSP_ARG_DECL );
 #define ITEM_CHECK_PROT(type,stem)	type * stem##_of(QSP_ARG_DECL  const char *name);
 #define ITEM_GET_PROT(type,stem)	type * get_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(SINGLE_QSP_ARG_DECL );
+#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(QSP_ARG_DECL FILE *fp);
 #define ITEM_PICK_PROT(type,stem)	type *pick_##stem(QSP_ARG_DECL  const char *pmpt);
 #define ITEM_ENUM_PROT(type,stem)	List *stem##_list(SINGLE_QSP_ARG_DECL);
 #define ITEM_DEL_PROT(type,stem)	void del_##stem(QSP_ARG_DECL  type *ip);

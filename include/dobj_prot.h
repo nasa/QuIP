@@ -24,7 +24,7 @@ extern Precision * 	get_prec(QSP_ARG_DECL  const char *);
 
 extern Data_Obj *	dobj_of(QSP_ARG_DECL  const char *);
 #define DOBJ_OF(s)	dobj_of(QSP_ARG s)
-extern void		list_dobjs(SINGLE_QSP_ARG_DECL);
+extern void		list_dobjs(QSP_ARG_DECL  FILE *fp);
 extern Data_Obj *	new_dobj(QSP_ARG_DECL  const char *);
 extern List *		dobj_list(SINGLE_QSP_ARG_DECL);
 
@@ -87,7 +87,7 @@ extern Data_Obj * d_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
 extern Data_Obj * c_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
 extern int is_in_string(int c,const char *s);
 extern void reindex(QSP_ARG_DECL  Data_Obj * ,int,index_t);
-extern void list_temp_dps(SINGLE_QSP_ARG_DECL);
+extern void list_temp_dps(QSP_ARG_DECL  FILE *fp);
 extern void unlock_children(Data_Obj *dp);
 
 /* get_obj.c */

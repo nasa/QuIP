@@ -317,7 +317,7 @@ static COMMAND_FUNC( do_control_menu )
 	PUSH_MENU(control);
 }
 
-static COMMAND_FUNC( do_list_panels ){ list_panel_objs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_panels ){ list_panel_objs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(objects_menu,s,f,h)

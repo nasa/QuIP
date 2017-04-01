@@ -198,7 +198,7 @@ static COMMAND_FUNC( do_node_info )
 }
 
 static COMMAND_FUNC( do_list_subrts )
-{ list_subrts(SINGLE_QSP_ARG); }
+{ list_subrts(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(expressions_menu,s,f,h)
 

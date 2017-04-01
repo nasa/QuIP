@@ -309,6 +309,9 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 		char pline[LLEN];
 		make_prompt(QSP_ARG  pline,prompt);
 		rem_def(QSP_ARG  pline,s);
+
+		// should we list the valid items?
+		report_invalid_pick(QSP_ARG  itp, s);
 	}
 
 	return(ip);

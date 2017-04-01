@@ -10,7 +10,7 @@ Platform_Device *curr_pdp=NULL;
 
 static COMMAND_FUNC( do_list_pfs )
 {
-	list_platforms(SINGLE_QSP_ARG);
+	list_platforms(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_list_pfdevs )

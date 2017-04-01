@@ -100,7 +100,7 @@ static COMMAND_FUNC( do_match_area )
 }
 
 static COMMAND_FUNC( do_list_data_areas )
-{ list_data_areas(SINGLE_QSP_ARG); }
+{ list_data_areas(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 static COMMAND_FUNC( do_get_area )
 {
@@ -790,8 +790,8 @@ static COMMAND_FUNC( do_import_string )
 	strcpy((char *)OBJ_DATA_PTR(dp),s);
 }
 
-static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(SINGLE_QSP_ARG); }
-static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 static COMMAND_FUNC( do_unlock_all_tmp_objs ) { unlock_all_tmp_objs(SINGLE_QSP_ARG); }
 
 static COMMAND_FUNC( do_protect )

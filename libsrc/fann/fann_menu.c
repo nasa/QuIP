@@ -349,7 +349,7 @@ static COMMAND_FUNC(do_init_weights)
 
 static COMMAND_FUNC(do_list_fanns)
 {
-	list_fanns(SINGLE_QSP_ARG);
+	list_fanns(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC(do_info_fann)

@@ -21,7 +21,7 @@ static Item_Type * var__itp=NULL;
 
 extern void list_vars(SINGLE_QSP_ARG_DECL)
 {
-	list_items(QSP_ARG  var__itp);
+	list_items(QSP_ARG  var__itp, tell_msgfile(SINGLE_QSP_ARG));
 fprintf(stderr,"list_vars, item_type %s at 0x%lx\n",ITEM_TYPE_NAME(var__itp),(long)var__itp);
 }
 
@@ -323,7 +323,7 @@ void find_vars(QSP_ARG_DECL  const char *s)
 
 	lp=find_items(QSP_ARG  var__itp,s);
 	if( lp==NULL ) return;
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 #define N_EXTRA_CHARS	20

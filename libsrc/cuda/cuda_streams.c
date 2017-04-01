@@ -77,7 +77,7 @@ COMMAND_FUNC( do_new_stream )
 
 COMMAND_FUNC( do_list_cuda_streams )
 {
-	list_cuda_streams(SINGLE_QSP_ARG);
+	list_cuda_streams(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 COMMAND_FUNC( do_cuda_stream_info )

@@ -1096,6 +1096,13 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
 	return(lp);
 }
 
+void report_invalid_pick(QSP_ARG_DECL  Item_Type *itp, const char *s)
+{
+	sprintf(ERROR_STRING,"No %s \"%s\"",ITEM_TYPE_NAME(itp),s);
+	WARN(ERROR_STRING);
+	list_items(QSP_ARG  itp, tell_errfile(SINGLE_QSP_ARG));
+}
+
 /* BUG this should be gotten from enviroment, termcap, something... */
 #define CHARS_PER_LINE	78
 
@@ -1103,7 +1110,7 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
  * Print the names of all of the items of the given type to stdout
  */
 
-void list_items(QSP_ARG_DECL  Item_Type *itp)
+void list_items(QSP_ARG_DECL  Item_Type *itp, FILE *fp)
 	/* type of items to list */
 {
 	List *lp;
@@ -1112,7 +1119,7 @@ void list_items(QSP_ARG_DECL  Item_Type *itp)
 
 	lp=item_list(QSP_ARG  itp);
 //fprintf(stderr,"list_items %s:  %d items in the list\n",ITEM_TYPE_NAME(itp),eltcount(lp));
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, fp);
 }
 
 
@@ -1199,14 +1206,14 @@ void sort_item_list(QSP_ARG_DECL  Item_Type *itp)
 }
 #endif /* NOT_USED */
 
-void print_list_of_items(QSP_ARG_DECL  List *lp)
+void print_list_of_items(QSP_ARG_DECL  List *lp, FILE *fp)
 {
 	Node *np;
 	int n_per_line;
 	char fmtstr[16];
 	int i, n_lines, n_total;
 #ifdef HAVE_ISATTY
-	FILE *out_fp;
+	//FILE *out_fp;
 	int maxlen;
 #endif /* HAVE_ISATTY */
 
@@ -1230,8 +1237,8 @@ void print_list_of_items(QSP_ARG_DECL  List *lp)
 	 */
 
 #ifdef HAVE_ISATTY
-	out_fp = tell_msgfile(SINGLE_QSP_ARG);
-	if( isatty( fileno(out_fp) ) ){
+	//out_fp = tell_msgfile(SINGLE_QSP_ARG);
+	if( isatty( fileno(fp /*out_fp*/) ) ){
 		/* find the maximum length */
 
 		np=QLIST_HEAD(lp);
@@ -1296,7 +1303,8 @@ void print_list_of_items(QSP_ARG_DECL  List *lp)
 				strcat(MSG_STR,tmp_str);
 			}
 		}
-		prt_msg(MSG_STR);
+		//prt_msg(MSG_STR);
+		fprintf(fp,"%s\n",MSG_STR);
 	}
 
 	/* now free the list */
@@ -1474,7 +1482,7 @@ void list_item_context(QSP_ARG_DECL  Item_Context *icp)
 	List *lp;
 //	lp=dictionary_list(CTX_DICT(icp));
 	lp=container_list(CTX_CONTAINER(icp));
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 /*

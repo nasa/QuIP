@@ -95,7 +95,7 @@ static COMMAND_FUNC( do_new_thread )
 static COMMAND_FUNC( do_list_threads )
 {
 	prt_msg("All threads:");
-	list_query_stacks(SINGLE_QSP_ARG);
+	list_query_stacks(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_tell_thread )

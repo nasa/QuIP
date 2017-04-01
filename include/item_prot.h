@@ -6,6 +6,8 @@ extern "C" {
 #endif
 
 
+#include <stdio.h>
+
 #include "quip_fwd.h"
 
 extern void dump_items(SINGLE_QSP_ARG_DECL);
@@ -29,13 +31,14 @@ extern void delete_item_context_with_callback(QSP_ARG_DECL Item_Context *icp, vo
 extern Item_Type *new_item_type(QSP_ARG_DECL  const char *name, int container_type);
 
 extern Item *	new_item(QSP_ARG_DECL  Item_Type * item_type,const char *name,size_t size);
-extern void list_items(QSP_ARG_DECL  Item_Type *itp);
+extern void report_invalid_pick(QSP_ARG_DECL  Item_Type *itp, const char *s);
+extern void list_items(QSP_ARG_DECL  Item_Type *itp, FILE *fp);
 extern void list_item_context(QSP_ARG_DECL  Item_Context *icp);
 extern List * find_items(QSP_ARG_DECL  Item_Type *itp, const char *frag);
 extern Item *item_of(QSP_ARG_DECL  Item_Type *itp, const char *name);
 extern Item *	get_item(QSP_ARG_DECL  Item_Type * item_type,const char *name);
 
-extern void print_list_of_items(QSP_ARG_DECL  List *lp);
+extern void print_list_of_items(QSP_ARG_DECL  List *lp, FILE *fp);
 extern void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip);
 
 extern Item_Type * get_item_type(QSP_ARG_DECL  const char *name);
