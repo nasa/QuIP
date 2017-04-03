@@ -2937,8 +2937,14 @@ define(`INDEX_VDATA',`(orig_s1_ptr+($1%INDEX_COUNT(s1_count,0))*IDX_INC(s1inc,0)
 + (($1/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)*INDEX_COUNT(s1_count,3)))%INDEX_COUNT(s1_count,4))*IDX_INC(s1inc,4))
 ')
 
-dnl	__VEC_FUNC_2V_PROJ( name, init_statement, statement, gpu_expr )
-define(`__VEC_FUNC_2V_PROJ',`
+define(`_VEC_FUNC_FAST_2V_PROJ',`')
+define(`_VEC_FUNC_FAST_CPX_2V_PROJ',`')
+define(`_VEC_FUNC_FAST_QUAT_2V_PROJ',`')
+define(`_VEC_FUNC_FAST_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_FAST_3V_PROJ',`')
+
+dnl	_VEC_FUNC_SLOW_2V_PROJ( name, init_statement, statement, gpu_expr )
+define(`_VEC_FUNC_SLOW_2V_PROJ',`
 
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_2($1,$2,$3)
@@ -2966,9 +2972,8 @@ SLOW_BODY_PROJ_QUAT_2($1,$2,$3)
 dnl #define RAMP2D_METHOD(name)
 dnl  BUG? can we use the statement args?  now they are not used
 
-dnl	_VEC_FUNC_1V_3SCAL(name,s1,s2,s3)
-dnl	We add an extra underscore so that this can be defined for slow only!
-define(`__VEC_FUNC_1V_3SCAL',`
+dnl	_VEC_FUNC_SLOW_1V_3SCAL(name,s1,s2,s3)
+define(`_VEC_FUNC_SLOW_1V_3SCAL',`
 
 
 static void SLOW_NAME($1)( LINK_FUNC_ARG_DECLS )

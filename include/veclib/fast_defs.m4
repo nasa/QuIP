@@ -39,12 +39,14 @@ define(`SET_INDICES_DBM_1S_',`			\
 
 dnl	Are these just deferred, or are they not needed???
 define(`_VEC_FUNC_MM_NOCC',`_VEC_FUNC_FAST_MM_NOCC($1,$2,$3,$4,$5,$6)')
-define(`_VEC_FUNC_2V_PROJ',`')
-define(`_VEC_FUNC_CPX_2V_PROJ',`')
-define(`_VEC_FUNC_QUAT_2V_PROJ',`')
-define(`_VEC_FUNC_2V_PROJ_IDX',`')
-define(`_VEC_FUNC_3V_PROJ',`')
-define(`_VEC_FUNC_CPX_3V_PROJ',`')
+define(`_VEC_FUNC_2V_PROJ',`_VEC_FUNC_FAST_2V_PROJ($1,$2,$3,$4)')
+define(`_VEC_FUNC_CPX_2V_PROJ',`_VEC_FUNC_FAST_CPX_2V_PROJ($1,$2,$3,$4,$5)')
+define(`_VEC_FUNC_QUAT_2V_PROJ',`_VEC_FUNC_FAST_QUAT_2V_PROJ($1,$2,$3,$4,$5)')
+define(`_VEC_FUNC_2V_PROJ_IDX',`_VEC_FUNC_FAST_2V_PROJ_IDX($1,$2,$3,$4,$5)')
+define(`_VEC_FUNC_3V_PROJ',`_VEC_FUNC_FAST_3V_PROJ($1,`',$2,$3,$4,$5)')
+define(`_VEC_FUNC_CPX_3V_PROJ',`_VEC_FUNC_FAST_3V_PROJ($1,`CPX_',$2,$3,$4,$5)')
+
+dnl GPU-only stuff???
 
 include(`../../include/veclib/fast_eqsp_defs.m4')
 

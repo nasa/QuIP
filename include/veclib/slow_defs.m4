@@ -58,7 +58,7 @@ dnl	// Slow versions of these not implemented for GPU yet...
 dnl	// BUT fast version not for CPU!?
 dnl	// need to provide stubs in platform-specific files
 define(`_VEC_FUNC_MM_NOCC',`_VEC_FUNC_SLOW_MM_NOCC($1,$2,$3,$4,$5,$6)')
-define(`_VEC_FUNC_2V_PROJ',`__VEC_FUNC_2V_PROJ($1,$2,$3,$4)')
+define(`_VEC_FUNC_2V_PROJ',`_VEC_FUNC_SLOW_2V_PROJ($1,$2,$3,$4)')
 define(`_VEC_FUNC_CPX_2V_PROJ',`_VEC_FUNC_SLOW_CPX_2V_PROJ($1,$2,$3,$4,$5)')
 define(`_VEC_FUNC_QUAT_2V_PROJ',`_VEC_FUNC_SLOW_QUAT_2V_PROJ($1,$2,$3,$4,$5)')
 define(`_VEC_FUNC_2V_PROJ_IDX',`_VEC_FUNC_SLOW_2V_PROJ_IDX($1,$2,$3,$4,$5)')
@@ -176,6 +176,6 @@ GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
 ')
 
 dnl	_VEC_FUNC_1V_3SCAL(name,s1,s2,s3)
-define(`_VEC_FUNC_1V_3SCAL',`__VEC_FUNC_1V_3SCAL($1,$2,$3,$4)')
+define(`_VEC_FUNC_1V_3SCAL',`_VEC_FUNC_SLOW_1V_3SCAL($1,$2,$3,$4)')
 
 ') dnl endif // ! BUILD_FOR_CUDA

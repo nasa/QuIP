@@ -1,6 +1,7 @@
 /* ocl_kernel_src.m4 BEGIN */
 
 include(`../../include/veclib/gen_gpu_calls.m4')
+include(`../../include/veclib/gpu_special_defs.m4')
 
 define(`QUOTE_CHAR',`"')
 
@@ -58,10 +59,13 @@ define(`__VEC_FUNC_MM_IND',`char KERN_SOURCE_NAME($1,mm_ind)[] = QUOTE_IT( ___VE
  * array c, and the index array d.  Because we are comparing adjacent pairs, 
  */
 
-define(`__VEC_FUNC_FAST_MM_NOCC',`
+dnl define(`__VEC_FUNC_FAST_MM_NOCC',`
+define(`_VEC_FUNC_FAST_MM_NOCC',`
 char KERN_SOURCE_NAME($1`_setup',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_MM_NOCC_SETUP($1,$2,$3) );
 char KERN_SOURCE_NAME($1`_nocc_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_MM_NOCC_HELPER($1,$2,$3) );
 ')
+
+define(`_VEC_FUNC_EQSP_MM_NOCC',`')
 
 // vsum, vdot, etc
 // BUG this is hard-coded for vsum!?
@@ -87,8 +91,25 @@ char KERN_SOURCE_NAME($1`_nocc_helper',fast)[]= QUOTE_IT( ___VEC_FUNC_FAST_MM_NO
 // It's the same except for the sum line, which would be replaced with
 //
 
+dnl	Some no-ops
+define(`_VEC_FUNC_SLOW_2V_PROJ',`')
+define(`_VEC_FUNC_SLOW_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_SLOW_CPX_2V_PROJ',`')
+define(`_VEC_FUNC_SLOW_CPX_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ',`')
+define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_SLOW_3V_PROJ',`')
+define(`_VEC_FUNC_SLOW_MM_NOCC',`')
+
+define(`_VEC_FUNC_DBM_2SBM',`')	dnl	BUG - need to implement!
+define(`_VEC_FUNC_DBM_1SBM',`')	dnl	BUG - need to implement!
+define(`_VEC_FUNC_DBM_1SBM_1S',`')	dnl	BUG - need to implement!
+
+define(`_VEC_FUNC_SLOW_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,3S_,1,)')
+
 // for vsum:   psrc1 + psrc2
 // ocl_kernel_src.m4:  for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2
+
 
 /* `VEC_FUNC_FAST_2V_PROJ_SETUP' */
 
