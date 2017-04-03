@@ -18,6 +18,8 @@ define(`qsrc2',`fast_qsrc2')
 define(`qsrc3',`fast_qsrc3')
 define(`qsrc4',`fast_qsrc4')
 
+define(`this_sbm_bit',`(sbm_bit_idx)')
+
 dnl Need backslashes for quoting (OpenCL)
 
 define(`SET_INDICES_DBM',`			\
@@ -35,34 +37,48 @@ define(`SET_INDICES_DBM_1S_',`			\
 	i_dbm_word = THREAD_INDEX_X;		\
 ')
 
+dnl	Are these just deferred, or are they not needed???
+define(`_VEC_FUNC_MM_NOCC',`_VEC_FUNC_FAST_MM_NOCC($1,$2,$3,$4,$5,$6)')
+define(`_VEC_FUNC_2V_PROJ',`')
+define(`_VEC_FUNC_CPX_2V_PROJ',`')
+define(`_VEC_FUNC_QUAT_2V_PROJ',`')
+define(`_VEC_FUNC_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_3V_PROJ',`')
+define(`_VEC_FUNC_CPX_3V_PROJ',`')
+
 include(`../../include/veclib/fast_eqsp_defs.m4')
 
 define(`DECLARE_DBM_INDEX',`GPU_INDEX_TYPE dbmi;')
 define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm')
 define(`SET_INDICES_1SRC',`index2 = dbmi;')
 
-// vmaxg etc - require contiguous, fast only
+dnl	// vmaxg etc - require contiguous, fast only
+dnl	BUG?  true for gpu only???
+dnl	should this really be here?
 
-define(`_VEC_FUNC_MM_NOCC',`__VEC_FUNC_FAST_MM_NOCC($1,$5,$6)')
+dnl	move to gpu_special_defs.m4 also...
+dnl	define(`_VEC_FUNC_MM_NOCC',`__VEC_FUNC_FAST_MM_NOCC($1,$5,$6)')
 
-// vmaxv, vminv, vsum
+dnl	Moved to gpu_special_defs.m4
 
-// on gpu only fast version, but on cpu only slow version!?
+dnl	// vmaxv, vminv, vsum
 
-define(`_VEC_FUNC_2V_PROJ',`
-	__VEC_FUNC_FAST_2V_PROJ_SETUP($1,$4)
-	__VEC_FUNC_FAST_2V_PROJ_HELPER($1,$4)
-')
+dnl	// on gpu only fast version, but on cpu only slow version!?
 
-define(`_VEC_FUNC_CPX_2V_PROJ',`
-	__VEC_FUNC_CPX_FAST_2V_PROJ_SETUP($1,$4,$5) 
-	__VEC_FUNC_CPX_FAST_2V_PROJ_HELPER($1,$4,$5)
-')
+dnl	define(`_VEC_FUNC_2V_PROJ',`
+dnl		__VEC_FUNC_FAST_2V_PROJ_SETUP($1,$4)
+dnl		__VEC_FUNC_FAST_2V_PROJ_HELPER($1,$4)
+dnl	')
 
-define(`_VEC_FUNC_QUAT_2V_PROJ',`
-	__VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP($1,$4,$5,$6,$7) 
-	__VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER($1,$4,$5,$6,$7)
-')
+dnl	define(`_VEC_FUNC_CPX_2V_PROJ',`
+dnl		__VEC_FUNC_CPX_FAST_2V_PROJ_SETUP($1,$4,$5) 
+dnl		__VEC_FUNC_CPX_FAST_2V_PROJ_HELPER($1,$4,$5)
+dnl	')
+
+dnl	define(`_VEC_FUNC_QUAT_2V_PROJ',`
+dnl		__VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP($1,$4,$5,$6,$7) 
+dnl		__VEC_FUNC_QUAT_FAST_2V_PROJ_HELPER($1,$4,$5,$6,$7)
+dnl	')
 
 dnl  No more kernels?
 dnl	dnl	_VEC_FUNC_3V_PROJ( func_name, s1, s2, gpu_expr1, gpu_expr2 )
@@ -79,10 +95,9 @@ dnl	__VEC_FUNC_CPX_FAST_3V_PROJ_SETUP($1)
 dnl	__VEC_FUNC_CPX_FAST_3V_PROJ_HELPER($1)
 dnl	')
 
-define(`_VEC_FUNC_3V_PROJ',`')
-define(`_VEC_FUNC_CPX_3V_PROJ',`')
-
-define(`_VEC_FUNC_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX($1,$4,$5)')
+dnl	define(`_VEC_FUNC_3V_PROJ',`')
+dnl	define(`_VEC_FUNC_CPX_3V_PROJ',`')
+dnl	define(`_VEC_FUNC_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX($1,$4,$5)')
 
 // There is only one function - rvdot, cvdot - so it is implemented in a non-general way.
 // Therefore, we don't have to pass the statements or expressions...
@@ -99,5 +114,15 @@ define(`SLOW_GPU_FUNC_CALL',`')
 define(`GENERIC_VEC_FUNC_DBM',`GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
 
-define(`_VEC_FUNC_2V_CONV',`_GENERIC_FAST_CONV_FUNC($1,std_type,$2)')
+define(`_VEC_FUNC_2V_CONV',`_GENERIC_FAST_CONV_FUNC($1,$2)')
+
+define(`GENERIC_FUNC_DECLS',`
+/* generic_func_decls /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  BEGIN */
+/* generic_func_decls calling generic_ff_decl */
+GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
+/* generic_func_decls back from generic_ff_decl */
+/* generic_func_decls /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  DONE */
+')
+
+define(`_VEC_FUNC_1V_3SCAL',`')	dnl   No fast vramp2d
 

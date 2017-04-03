@@ -302,7 +302,8 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 	s=NAMEOF(prompt);
 	SET_QS_PICKING_ITEM_ITP(THIS_QSP,NULL);
 
-	ip=get_item(QSP_ARG  itp,s);
+	//ip=get_item(QSP_ARG  itp,s);
+	ip=item_of(QSP_ARG  itp,s);	// report_invalid_pick will complain, so don't need to here
 
 	if( ip == NULL ){
 		// remove from history list
@@ -310,7 +311,8 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 		make_prompt(QSP_ARG  pline,prompt);
 		rem_def(QSP_ARG  pline,s);
 
-		// should we list the valid items?
+		// list the valid items
+		// BUG? should only do this for interactive?
 		report_invalid_pick(QSP_ARG  itp, s);
 	}
 

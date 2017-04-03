@@ -32,11 +32,15 @@ define(`max_fft_len',`TYPED_NAME(_max_fft_len)')
 define(`init_sinfact',`TYPED_NAME(_init_sinfact)')
 
 
-ifdef(`BUILDING_KERNELS',`
+define(`MAX_FFT_LEN',`4096L')
+
 // vl2_fft_funcs.m4 buiding_kernels is set
 
 // How can we have these static vars when this file is included twice!?
 
+/* static fft vars NOT already declared */
+define(`DECLARE_STATIC_FFT_VARS',`
+/* declare_static_fft_vars DOING IT */
 static dimension_t last_cpx_len=0;
 static std_cpx *twiddle;
 
@@ -44,13 +48,14 @@ static dimension_t last_real_len=0;
 static std_type *_isinfact=NULL;
 static std_type *_sinfact=NULL;
 
-define(`MAX_FFT_LEN',`4096L')
 static char *revdone=NULL;
 static u_int max_fft_len=(-1);
+')
 
+ifdef(`BUILDING_KERNELS',`
+/* vl2_fft_funcs.m4 declaring static vars */
+DECLARE_STATIC_FFT_VARS
 ',`') dnl endif BUILDING_KERNELS
-
-
 
 dnl	XFER_FFT_SINC( func, fap, dp )
 define(`XFER_FFT_SINC',`
@@ -574,6 +579,7 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 }
 
 ',` dnl else ! BUILDING_KERNELS
+
 // vl2_fft_funcs.m4 buiding_kernels is NOT SET
 
 static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )

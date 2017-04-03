@@ -54,16 +54,19 @@ dnl this is for bitmaps with info...
 define(`SET_INDICES_1SRC',`index2.d5_dim[0] = tbl_idx; /* BUG need to initialize index2! */')
 
 
-// Slow versions of these not implemented yet...
-define(`_VEC_FUNC_MM_NOCC',`')
-define(`_VEC_FUNC_2V_PROJ',`')
-define(`_VEC_FUNC_2V_PROJ',`')
-define(`_VEC_FUNC_CPX_2V_PROJ',`')
-define(`_VEC_FUNC_QUAT_2V_PROJ',`')
-define(`_VEC_FUNC_2V_PROJ_IDX',`')
-define(`_VEC_FUNC_3V_PROJ',`')
-define(`_VEC_FUNC_CPX_3V_PROJ',`')
+dnl	// Slow versions of these not implemented for GPU yet...
+dnl	// BUT fast version not for CPU!?
+dnl	// need to provide stubs in platform-specific files
+define(`_VEC_FUNC_MM_NOCC',`_VEC_FUNC_SLOW_MM_NOCC($1,$2,$3,$4,$5,$6)')
+define(`_VEC_FUNC_2V_PROJ',`__VEC_FUNC_2V_PROJ($1,$2,$3,$4)')
+define(`_VEC_FUNC_CPX_2V_PROJ',`_VEC_FUNC_SLOW_CPX_2V_PROJ($1,$2,$3,$4,$5)')
+define(`_VEC_FUNC_QUAT_2V_PROJ',`_VEC_FUNC_SLOW_QUAT_2V_PROJ($1,$2,$3,$4,$5)')
+define(`_VEC_FUNC_2V_PROJ_IDX',`_VEC_FUNC_SLOW_2V_PROJ_IDX($1,$2,$3,$4,$5)')
+dnl define(`_VEC_FUNC_3V_PROJ',`__VEC_FUNC_3V_PROJ($1,`',$2,$3,$4,$5)')
+define(`_VEC_FUNC_3V_PROJ',`_VEC_FUNC_SLOW_3V_PROJ($1,`',$2,$3,$4,$5)')
+define(`_VEC_FUNC_CPX_3V_PROJ',`_VEC_FUNC_SLOW_3V_PROJ($1,`CPX_',$2,$3,$4,$5)')
 
+dnl GPU-only stuff???
 define(`IDX1',`(INDEX_SUM(index1))')
 define(`IDX1_1',`(index1.d5_dim[1])')
 define(`IDX1_2',`(index1.d5_dim[2])')
@@ -79,11 +82,11 @@ define(`SET_INDICES_DBM_1S_',`SET_BASIC_INDICES_DBM')
 
 define(`SET_INDICES_DBM',`				\
 	SET_BASIC_INDICES_DBM				\
-dnl	dbmi.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_indices[0];				\
-dnl	dbmi.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_indices[1];				\
-dnl	dbmi.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_indices[2];				\
-dnl	dbmi.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_indices[3];				\
-dnl	dbmi.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_indices[4];				\
+dnl	dbm_bit_idx.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_indices[0];				\
+dnl	dbm_bit_idx.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_indices[1];				\
+dnl	dbm_bit_idx.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_indices[2];				\
+dnl	dbm_bit_idx.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_indices[3];				\
+dnl	dbm_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_indices[4];				\
 ')
 
 define(`SET_BASIC_INDICES_DBM',`				\
@@ -102,13 +105,17 @@ define(`DECL_BASIC_INDICES_DBM',`				\
 // From these definitions, it is not clear whether the rows are padded to be an 
 // integral number of words...
 //
-// We assume that i_dbm_word is initilized to dbmi.x, before upscaling to the bit index.
+// We assume that i_dbm_word is initilized to dbm_bit_idx.x, before upscaling to the bit index.
 // Here we add the row offset
 // But when adjust is called, the y increment has already been scaled.
-// should dbmi have more than one dimension or not???
-define(`SET_SBM_WORD_IDX',`i_sbm_word=(sbmi.d5_dim[1]+sbmi.d5_dim[2])/BITS_PER_BITMAP_WORD;')
+// should dbm_bit_idx have more than one dimension or not???
+define(`SET_SBM_WORD_IDX',`i_sbm_word=(sbm_bit_idx.d5_dim[1]+sbm_bit_idx.d5_dim[2])/BITS_PER_BITMAP_WORD;')
 
-define(`srcbit',`(sbm[(INDEX_SUM(sbmi)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbmi)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+dnl	This was old GPU defn???
+dnl	define(`srcbit',`(sbm_ptr[(INDEX_SUM(sbm_bit_idx)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm_bit_idx)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+dnl	For cpu, bit0 is already in the base...
+dnl	define(`srcbit',`(sbm_ptr[(sbm_bit_idx+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_idx+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+define(`srcbit',`(sbm_ptr[sbm_bit_idx>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_idx)&(BITS_PER_BITMAP_WORD-1)))')
 
 
 ifdef(`BUILD_FOR_CUDA',`
@@ -163,5 +170,12 @@ define(`_VEC_FUNC_2V_CONV',`
 	_GENERIC_SLOW_CONV_FUNC($1,std_type,$2)
 ')
 
+
+define(`GENERIC_FUNC_DECLS',`
+GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
+')
+
+dnl	_VEC_FUNC_1V_3SCAL(name,s1,s2,s3)
+define(`_VEC_FUNC_1V_3SCAL',`__VEC_FUNC_1V_3SCAL($1,$2,$3,$4)')
 
 ') dnl endif // ! BUILD_FOR_CUDA

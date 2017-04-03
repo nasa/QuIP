@@ -1100,6 +1100,10 @@ void report_invalid_pick(QSP_ARG_DECL  Item_Type *itp, const char *s)
 {
 	sprintf(ERROR_STRING,"No %s \"%s\"",ITEM_TYPE_NAME(itp),s);
 	WARN(ERROR_STRING);
+
+	sprintf(ERROR_STRING,"Possible %s choices:",ITEM_TYPE_NAME(itp));
+	advise(ERROR_STRING);
+
 	list_items(QSP_ARG  itp, tell_errfile(SINGLE_QSP_ARG));
 }
 

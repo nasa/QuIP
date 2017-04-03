@@ -1,4 +1,4 @@
-
+// all_mixed_float_kernels.m4 BEGIN - can be same precision or mixed precision
 
 include(`../../include/veclib/fast_defs.m4')
 include(`../../include/veclib/gen_mixed_float_calls.m4')
@@ -14,4 +14,6 @@ include(`../../include/veclib/gen_mixed_float_calls.m4')
 
 include(`../../include/veclib/slow_defs.m4')
 include(`../../include/veclib/gen_mixed_float_calls.m4')
+
+// all_mixed_float_kernels.m4 DONE
 

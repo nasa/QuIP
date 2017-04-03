@@ -1,20 +1,27 @@
 
-/*
- * We use the fast method only if everything is contiguous, and if the shapes
- * are identical.
- */
+dnl	/*
+dnl	 * We use the fast method only if everything is contiguous, and if the shapes
+dnl	 * are identical.
+dnl	 */
 
-// But for the NOCC methods, we need to do something different...
-// We assume the index array is contiguous, and only test
-// on the one source vector...
+dnl	For pure bit operations (vand etc) there needs to be a different test!?
+dnl	The above should be true, but bit0 should also be zero or a multiple of
+dnl	the word size...
+dnl	The "bitmap" arg below is DBM or SBM or nothing, this macro does not take
+dnl	into account the type of the operand...
+dnl	So the bit operations need something special...
+
+dnl	// But for the NOCC methods, we need to do something different...
+dnl	// We assume the index array is contiguous, and only test
+dnl	// on the one source vector...
 
 dnl FAST_TEST(bitmap,typ,vectors)
-define(`FAST_TEST',`/* fast_test /$1/ /$2/ /$3/ */_FAST_TEST($1$2$3)')
+define(`FAST_TEST',`_FAST_TEST($1$2$3)')
 define(`_FAST_TEST',FAST_TEST_$1)
 define(`EQSP_TEST',EQSP_TEST_$1$2$3)
 
-define(`FAST_TEST_NOCC',`/* fast_test_nocc */ FAST_TEST_1SRC')
-define(`EQSP_TEST_NOCC',`/* eqsp_test_nocc */ EQSP_TEST_1SRC')
+define(`FAST_TEST_NOCC',`FAST_TEST_1SRC')
+define(`EQSP_TEST_NOCC',`EQSP_TEST_1SRC')
 
 // When are these used???
 dnl define(`FAST_TEST_',`0')

@@ -170,7 +170,9 @@ typedef struct vector_args {
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
 	bitnum_t	va_dbm_bit0;
-	bitnum_t	va_sbm_bit0;
+	bitnum_t	va_sbm1_bit0;
+	bitnum_t	va_sbm2_bit0;
+#define va_sbm_bit0	va_sbm1_bit0
 
 	dimension_t	va_len;			// just for fast/eqsp ops?
 
@@ -408,8 +410,12 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define eqsp_src4_inc			VA_SRC4_EQSP_INC(vap)
 #define eqsp_src5_inc			VA_SRC5_EQSP_INC(vap)
 #define eqsp_sbm_inc			VA_SRC5_EQSP_INC(vap)
+#define eqsp_sbm1_inc			VA_SRC1_EQSP_INC(vap)
+#define eqsp_sbm2_inc			VA_SRC2_EQSP_INC(vap)
 
 #define VA_SBM_BIT0(vap)		(vap)->va_sbm_bit0
+#define VA_SBM1_BIT0(vap)		(vap)->va_sbm1_bit0
+#define VA_SBM2_BIT0(vap)		(vap)->va_sbm2_bit0
 #define VA_DBM_BIT0(vap)		(vap)->va_dbm_bit0
 #define VA_SBM_PTR(vap)			VARG_PTR( VA_SBM(vap) )
 #define VA_DBM_PTR(vap)			VARG_PTR( VA_DBM(vap) )
@@ -467,6 +473,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 //#define SET_VA_COUNT(vap,v)		SET_SZI_DST_DIMS(VA_SIZE_INFO(vap),v)
 #define SET_VA_COUNT(vap,v)		SET_VARG_DIMSET(VA_DEST(vap),v)
 #define SET_VA_SBM_BIT0(vap,v)		(vap)->va_sbm_bit0 = v
+#define SET_VA_SBM1_BIT0(vap,v)		(vap)->va_sbm1_bit0 = v
+#define SET_VA_SBM2_BIT0(vap,v)		(vap)->va_sbm2_bit0 = v
 #define SET_VA_DBM_BIT0(vap,v)		(vap)->va_dbm_bit0 = v
 #define SET_VA_SVAL(vap,idx,v)		(vap)->va_sval[idx] =  v
 #define SET_VA_SVAL1(vap,v)		SET_VA_SVAL(vap,0,v)

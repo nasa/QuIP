@@ -238,15 +238,15 @@ RALL_ARR(vcmp,FVCMP),
 RALL_ARR(vscmp,FVSCMP),
 RALL_ARR(vscmp2,FVSCMP2),
 
-/* Type conversions
- *
- * For now, bitmaps are constrained to be a single unsigned type,
- * determined at compile time.  But here the conversion/unconversion
- * functions are installed for all unsigned types, regardless of which
- * one is actually used for bitmaps.  This should be safe, because
- * these are only called when one object is a bitmap, and that should
- * never be the wrong type...
- */
+dnl	/* Type conversions
+dnl	 *
+dnl	 * For now, bitmaps are constrained to be a single unsigned type,
+dnl	 * determined at compile time.  But here the conversion/unconversion
+dnl	 * functions are installed for all unsigned types, regardless of which
+dnl	 * one is actually used for bitmaps.  This should be safe, because
+dnl	 * these are only called when one object is a bitmap, and that should
+dnl	 * never be the wrong type...
+dnl	 */
 
 /* gen_func_array.m4 END */
 
