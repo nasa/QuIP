@@ -27,10 +27,9 @@ define(`_GENERIC_SLOW_VEC_FUNC',`char KERN_SOURCE_NAME($1,slow)[]= QUOTE_IT( __G
 define(`KERNEL_FUNC_QUALIFIER',`__kernel')
 
 
+dnl	What are the args???
 define(`GENERIC_FAST_VEC_FUNC_DBM',`_GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
-
 define(`GENERIC_EQSP_VEC_FUNC_DBM',`_GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
-
 define(`GENERIC_SLOW_VEC_FUNC_DBM',`_GENERIC_SLOW_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
 define(`_GENERIC_FAST_VEC_FUNC_DBM',`
@@ -101,7 +100,7 @@ define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ_IDX',`')
 define(`_VEC_FUNC_SLOW_3V_PROJ',`')
 define(`_VEC_FUNC_SLOW_MM_NOCC',`')
 
-define(`_VEC_FUNC_DBM_2SBM',`')	dnl	BUG - need to implement!
+dnl	define(`_VEC_FUNC_DBM_2SBM',`')	dnl	BUG - need to implement!
 define(`_VEC_FUNC_DBM_1SBM',`')	dnl	BUG - need to implement!
 define(`_VEC_FUNC_DBM_1SBM_1S',`')	dnl	BUG - need to implement!
 

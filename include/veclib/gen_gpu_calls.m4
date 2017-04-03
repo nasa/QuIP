@@ -51,6 +51,11 @@ define(`_VEC_FUNC_DBM_1S',`GENERIC_VEC_FUNC_DBM($1,$2,,1S_,)')
 // bit_vmov
 define(`_VEC_FUNC_DBM_SBM',`GENERIC_VEC_FUNC_DBM($1,$2,,,SBM)')
 
+// vand etc
+define(`_VEC_FUNC_DBM_2SBM',`GENERIC_VEC_FUNC_DBM($1,$2,,,2SBM)')
+// vsand etc
+define(`_VEC_FUNC_DBM_1SBM_1S',`GENERIC_VEC_FUNC_DBM($1,$2,,1S_,1SBM)')
+
 define(`_VEC_FUNC_DBM_1V',`GENERIC_VEC_FUNC_DBM($1,$2,,,1SRC)')
 
 define(`_VEC_FUNC_SBM_CPX_3V',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,CPX_,,3,) ')
@@ -236,6 +241,7 @@ dnl	define(`ADVANCE_SLOW_DBM_1SRC',ADVANCE_SLOW_DBM ADVANCE_SLOW_SRC1)
 dnl	define(`ADVANCE_SLOW_DBM_2SRCS',ADVANCE_SLOW_DBM_1SRC ADVANCE_SLOW_SRC2)
 dnl	define(`ADVANCE_SLOW_DBM_SBM',ADVANCE_SLOW_DBM ADVANCE_SLOW_SBM)
 
+dnl	GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
 define(`GENERIC_FAST_VEC_FUNC_DBM',`_GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 define(`GENERIC_EQSP_VEC_FUNC_DBM',`_GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 define(`GENERIC_SLOW_VEC_FUNC_DBM',`_GENERIC_SLOW_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
@@ -963,7 +969,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN_CONV($3
 }											\
 ')
 
-dnl	___GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
+dnl	__GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
 
 define(`__GENERIC_FAST_VEC_FUNC_DBM',`								\
 												\
