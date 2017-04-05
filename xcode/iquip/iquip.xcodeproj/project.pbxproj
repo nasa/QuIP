@@ -3544,8 +3544,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -3561,8 +3561,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "88008492-0e05-4817-8199-0a8ee47def25";
+				PROVISIONING_PROFILE = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3575,8 +3575,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
@@ -3588,8 +3588,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "b4a04816-7aa3-48db-bc28-4f88f37042d4";
+				PROVISIONING_PROFILE = "eb64a60e-9be9-4d66-9242-a8407b736397";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "eb64a60e-9be9-4d66-9242-a8407b736397";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

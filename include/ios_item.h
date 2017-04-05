@@ -31,7 +31,7 @@
 
 -(IOS_List *) getListOfItems;
 -(IOS_Item *) check : (NSString *) name;
--(int) list_items;
+-(int) list_items : (FILE *) fp;
 @end
 
 #define NO_IOS_ITEM_CONTEXT		((IOS_Item_Context *)NULL)

@@ -2721,7 +2721,7 @@ FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 	FAST_INIT_SRC1
 	/* no extra decls */
 	while(fl_ctr-- > 0){
-		*s1_ptr = ($2)(*dst_ptr) ;
+		*dst_ptr = ($2)(*s1_ptr) ;
 		FAST_ADVANCE_2
 	}
 }
@@ -2742,7 +2742,7 @@ EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 	EQSP_INIT_SRC1
 	/* no extra decls */
 	while(fl_ctr-- > 0){
-		*s1_ptr = ($2)(*dst_ptr) ;
+		*dst_ptr = ($2)(*s1_ptr) ;
 		EQSP_ADVANCE_2
 	}
 }
@@ -2751,7 +2751,7 @@ EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 dnl /* GENERIC_SF_DECL(name,statement,bitmap,typ,scalars,vectors,extra) */
 define(`_GENERIC_SLOW_CONV_FUNC',`
 SF_DECL($1)( LINK_FUNC_ARG_DECLS )
-GENERIC_SLOW_BODY( $1, *s1_ptr = ($2)(*dst_ptr),`DECLARE_BASES_CONV_2($2)',`INIT_BASES_CONV_2($2)',`COPY_BASES_2',`INIT_PTRS_2',`INC_PTRS_2',`INC_BASES_2',`')
+GENERIC_SLOW_BODY( $1, *dst_ptr = ($2)(*s1_ptr),`DECLARE_BASES_CONV_2($2)',`INIT_BASES_CONV_2($2)',`COPY_BASES_2',`INIT_PTRS_2',`INC_PTRS_2',`INC_BASES_2',`')
 ')
 
 dnl	OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
