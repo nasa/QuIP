@@ -5,7 +5,7 @@
  * For gpu implementation, some functions need different definitions...
  */
 
-include(`../../include/veclib/real_args.m4')
+my_include(`../../include/veclib/real_args.m4')
 
 
 // For sum, we may want to accumulate to a higher precision destination...

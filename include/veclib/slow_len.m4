@@ -72,6 +72,8 @@ define(`SETUP_SLOW_LEN_DBM_2SRCS',`SETUP_SLOW_LEN_3')
 define(`SETUP_SLOW_LEN_DBM_1SRC',`SETUP_SLOW_LEN_2')
 // BUG should use a symbolic constant instead of 4 here?
 define(`SETUP_SLOW_LEN_DBM_SBM',`SETUP_SLOW_LEN_F(4,1)')
+define(`SETUP_SLOW_LEN_DBM_2SBM',`SETUP_SLOW_LEN_3')
+define(`SETUP_SLOW_LEN_DBM_1SBM',`SETUP_SLOW_LEN_2')
 define(`SETUP_SLOW_LEN_DBM_',`SETUP_SLOW_LEN_1')
 
 // Not sure about how to handle source bitmaps?

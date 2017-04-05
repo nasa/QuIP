@@ -88,6 +88,7 @@ INC_M4FILES=							\
 			$(INCDIR)/gen_uint_calls.m4		\
 			$(INCDIR)/gpu_args.m4			\
 			$(INCDIR)/gpu_call_utils.m4		\
+			$(INCDIR)/gpu_special_defs.m4		\
 			$(INCDIR)/host_calls_cpu.m4		\
 			$(INCDIR)/host_calls_gpu.m4		\
 			$(INCDIR)/host_calls_special.m4		\

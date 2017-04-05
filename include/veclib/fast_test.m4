@@ -88,7 +88,13 @@ define(`FAST_TEST_DBM_',`( N_IS_CONTIGUOUS(bitmap_dst_dp) )')
 
 define(`FAST_TEST_DBM_1SRC',`( FAST_TEST_DBM_ && N_IS_CONTIGUOUS(SRC1_DP) && dp_same_size_query(SRC1_DP,bitmap_dst_dp) )')
 
-define(`FAST_TEST_DBM_SBM',`( FAST_TEST_DBM_ && N_IS_CONTIGUOUS(bitmap_src_dp) && dp_same_size_query(bitmap_src_dp,bitmap_dst_dp) )')
+define(`FAST_TEST_SBM',`( N_IS_CONTIGUOUS(bitmap_src_dp) && dp_same_size_query(bitmap_src_dp,bitmap_dst_dp) )')
+dnl	BUG	bitmap fast test should include bit0==0 and size a multiple of word size!
+define(`FAST_TEST_SBM1',`( N_IS_CONTIGUOUS(bitmap_src1_dp) && dp_same_size_query(bitmap_src1_dp,bitmap_dst_dp) )')
+define(`FAST_TEST_SBM2',`( N_IS_CONTIGUOUS(bitmap_src2_dp) && dp_same_size_query(bitmap_src2_dp,bitmap_dst_dp) )')
+define(`FAST_TEST_DBM_SBM',`( FAST_TEST_DBM_ && FAST_TEST_SBM )')
+define(`FAST_TEST_DBM_1SBM',`( FAST_TEST_DBM_ && FAST_TEST_SBM1 )')
+define(`FAST_TEST_DBM_2SBM',`( FAST_TEST_DBM_ && FAST_TEST_SBM1 && FAST_TEST_SBM2 )')
 
 define(`FAST_TEST_DBM_2SRCS',`( FAST_TEST_DBM_ && N_IS_CONTIGUOUS(SRC1_DP) && N_IS_CONTIGUOUS(SRC2_DP) && dp_same_size_query(SRC1_DP,bitmap_dst_dp) && dp_same_size_query(SRC1_DP,bitmap_dst_dp))')
 
@@ -97,6 +103,8 @@ define(`EQSP_TEST_DBM_',`( IS_EVENLY_SPACED(bitmap_dst_dp) )')
 define(`EQSP_TEST_DBM_1SRC',`( IS_EVENLY_SPACED(bitmap_dst_dp) && IS_EVENLY_SPACED(SRC1_DP) && dp_same_size_query(SRC1_DP,bitmap_dst_dp) )')
 
 define(`EQSP_TEST_DBM_SBM',`( IS_EVENLY_SPACED(bitmap_dst_dp) && IS_EVENLY_SPACED(bitmap_src_dp) && dp_same_size_query(bitmap_src_dp,bitmap_dst_dp) )')
+define(`EQSP_TEST_DBM_2SBM',`( IS_EVENLY_SPACED(bitmap_dst_dp) && IS_EVENLY_SPACED(bitmap_src1_dp) && IS_EVENLY_SPACED(bitmap_src2_dp) && dp_same_size_query(bitmap_src1_dp,bitmap_dst_dp) && dp_same_size_query(bitmap_src2_dp,bitmap_dst_dp) )')
+define(`EQSP_TEST_DBM_1SBM',`( IS_EVENLY_SPACED(bitmap_dst_dp) && IS_EVENLY_SPACED(bitmap_src1_dp) && dp_same_size_query(bitmap_src1_dp,bitmap_dst_dp) )')
 
 define(`EQSP_TEST_DBM_2SRCS',`( IS_EVENLY_SPACED(bitmap_dst_dp) && IS_EVENLY_SPACED(SRC1_DP) && IS_EVENLY_SPACED(SRC2_DP) && dp_same_size_query(SRC1_DP,bitmap_dst_dp) && dp_same_size_query(SRC1_DP,bitmap_dst_dp))')
 
@@ -167,6 +175,8 @@ define(`SRC3_DP',SRC_DP(2))
 define(`SRC4_DP',SRC_DP(3))
 define(`SRC5_DP',SRC_DP(4))
 define(`bitmap_src_dp',oap->oa_dp[4])
+define(`bitmap_src1_dp',oap->oa_dp[0])
+define(`bitmap_src2_dp',oap->oa_dp[1])
 define(`bitmap_dst_dp',oap->oa_dest)
 
 

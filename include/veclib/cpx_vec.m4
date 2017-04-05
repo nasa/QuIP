@@ -1,6 +1,6 @@
 /* complex number stuff */
 
-include(`../../include/veclib/cpx_args.m4')
+my_include(`../../include/veclib/cpx_args.m4')
 
 /* Real only */
 
@@ -72,30 +72,30 @@ _VEC_FUNC_2V_MIXED( vmgsq , dst = csrc1.re*csrc1.re + csrc1.im*csrc1.im )
 /* BUG check for divide by zero */
 // These appear to have a complex destination, but a real source,
 // and real scalar...  what's the point?
-_VEC_FUNC_CR_1S_2V( mvsdiv ,	cdst.re = scalar1_val / src1 ; cdst.im = 0)
+_VEC_FUNC_CR_2V_1S( mvsdiv ,	cdst.re = scalar1_val / src1 ; cdst.im = 0)
 
-_VEC_FUNC_CR_1S_2V( mvsdiv2 ,	cdst.re = src1 / scalar1_val ; cdst.im = 0)
+_VEC_FUNC_CR_2V_1S( mvsdiv2 ,	cdst.re = src1 / scalar1_val ; cdst.im = 0)
 
-_VEC_FUNC_CR_1S_2V( mvsmul ,	cdst.re = scalar1_val * src1 ; cdst.im = 0)
+_VEC_FUNC_CR_2V_1S( mvsmul ,	cdst.re = scalar1_val * src1 ; cdst.im = 0)
 
-_VEC_FUNC_CR_1S_2V( mvssub ,	cdst.re = scalar1_val - src1 ; cdst.im = 0)
+_VEC_FUNC_CR_2V_1S( mvssub ,	cdst.re = scalar1_val - src1 ; cdst.im = 0)
 
-_VEC_FUNC_CR_1S_2V( mvsadd ,	cdst.re = src1 + scalar1_val ; cdst.im = 0)
+_VEC_FUNC_CR_2V_1S( mvsadd ,	cdst.re = src1 + scalar1_val ; cdst.im = 0)
 
-_VEC_FUNC_CPX_1S_2V( cvsadd ,	cdst.re = csrc1.re + cscalar1_val.re ; cdst.im = csrc1.im + cscalar1_val.im)
+_VEC_FUNC_CPX_2V_1S( cvsadd ,	cdst.re = csrc1.re + cscalar1_val.re ; cdst.im = csrc1.im + cscalar1_val.im)
 
-_VEC_FUNC_CPX_1S_2V( cvssub ,	cdst.re = cscalar1_val.re - csrc1.re ; cdst.im = cscalar1_val.im - csrc1.im)
-_VEC_FUNC_CPX_1S_2V_T2( cvsmul ,	ASSIGN_CPX_PROD(tmpc,csrc1,cscalar1_val) ASSIGN_CPX(cdst,tmpc))
+_VEC_FUNC_CPX_2V_1S( cvssub ,	cdst.re = cscalar1_val.re - csrc1.re ; cdst.im = cscalar1_val.im - csrc1.im)
+_VEC_FUNC_CPX_2V_1S_T2( cvsmul ,	ASSIGN_CPX_PROD(tmpc,csrc1,cscalar1_val) ASSIGN_CPX(cdst,tmpc))
 
 define(`QUAT_NORM',( $1.re * $1.re + $1._i * $1._i + $1._j * $1._j + $1._k * $1._k ))
 
 // dst = scalar / src
-_VEC_FUNC_CPX_1S_2V_T3( cvsdiv ,	tmp_denom=CPX_NORM(csrc1);					\
+_VEC_FUNC_CPX_2V_1S_T3( cvsdiv ,	tmp_denom=CPX_NORM(csrc1);					\
 					ASSIGN_CPX_CPROD_NORM(tmpc,cscalar1_val,csrc1,tmp_denom)					\
 					ASSIGN_CPX(cdst,tmpc)					\
 					)
 
-_VEC_FUNC_CPX_1S_2V_T3( cvsdiv2 ,	tmp_denom=CPX_NORM(cscalar1_val);					\
+_VEC_FUNC_CPX_2V_1S_T3( cvsdiv2 ,	tmp_denom=CPX_NORM(cscalar1_val);					\
 					ASSIGN_CPX_CPROD_NORM(tmpc,csrc1,cscalar1_val,tmp_denom)					\
 					ASSIGN_CPX(cdst,tmpc)					\
 					)
@@ -103,7 +103,7 @@ _VEC_FUNC_CPX_1S_2V_T3( cvsdiv2 ,	tmp_denom=CPX_NORM(cscalar1_val);					\
 /* for mixed (MDECLS2), v1 is complex and v2 is real? */
 
 
-_VEC_FUNC_CPX_1S_1V( cvset , cdst.re = cscalar1_val.re ; cdst.im = cscalar1_val.im )
+_VEC_FUNC_CPX_1V_1S( cvset , cdst.re = cscalar1_val.re ; cdst.im = cscalar1_val.im )
 
 /* We use std_tmp here so this will work if called w/ in-place argument (v3 = v1 or v2)
  */
@@ -112,7 +112,7 @@ _VEC_FUNC_CPX_1S_1V( cvset , cdst.re = cscalar1_val.re ; cdst.im = cscalar1_val.
 
 /* conjugated vsmul ? */
 
-_VEC_FUNC_CPX_1S_2V_T2( vscml ,	ASSIGN_CPX_CPROD(tmpc,csrc1,cscalar1_val) ASSIGN_CPX(cdst,tmpc) )
+_VEC_FUNC_CPX_2V_1S_T2( vscml ,	ASSIGN_CPX_CPROD(tmpc,csrc1,cscalar1_val) ASSIGN_CPX(cdst,tmpc) )
 
 
 dnl /* These are clean, but don't work when destination and source have different precisions */
@@ -127,8 +127,8 @@ define(`COPY_CPX',{ cdst.re=$1.re; cdst.im=$1.im; })
 
 _VEC_FUNC_SBM_CPX_3V( cvvv_slct ,	if( srcbit ) COPY_CPX(csrc1) else COPY_CPX(csrc2) )
 
-_VEC_FUNC_SBM_CPX_1S_2V( cvvs_slct ,	if( srcbit ) COPY_CPX(csrc1) else COPY_CPX(cscalar1_val) )
-_VEC_FUNC_SBM_CPX_2S_1V( cvss_slct ,	if( srcbit ) COPY_CPX(cscalar1_val) else COPY_CPX(cscalar2_val) )
+_VEC_FUNC_SBM_CPX_2V_1S( cvvs_slct ,	if( srcbit ) COPY_CPX(csrc1) else COPY_CPX(cscalar1_val) )
+_VEC_FUNC_SBM_CPX_1V_2S( cvss_slct ,	if( srcbit ) COPY_CPX(cscalar1_val) else COPY_CPX(cscalar2_val) )
 
 // no CPX in this macro?
 _VEC_FUNC_CPX_2V_PROJ( cvsum,						\
@@ -155,7 +155,7 @@ _VEC_FUNC_CPX_2V( cvrand , cdst.re = rn((u_long)csrc1.re); cdst.im = rn((u_long)
 
 ifdef(`QUATERNION_SUPPORT',`
 
-include(`../../include/veclib/quat_args.m4')
+my_include(`../../include/veclib/quat_args.m4')
 
 /* Quaternions */
 
@@ -233,13 +233,13 @@ _VEC_FUNC_QUAT_3V_T5( qvdiv ,	tmp_denom =	QUAT_NORM(qsrc2);			\
 
 // dst = scalar / src1
 
-_VEC_FUNC_QUAT_1S_2V_T5( qvsdiv ,	tmp_denom =	QUAT_NORM(qsrc1);			\
+_VEC_FUNC_QUAT_2V_1S_T5( qvsdiv ,	tmp_denom =	QUAT_NORM(qsrc1);			\
 					ASSIGN_QUAT_CPROD_NORM(tmpq,qscalar1_val,qsrc1,tmp_denom)			\
 					ASSIGN_QUAT(qdst,tmpq) )
 
 // dst = src1 / scalar
 
-_VEC_FUNC_QUAT_1S_2V_T5( qvsdiv2 ,	tmp_denom =	QUAT_NORM(qscalar1_val);			\
+_VEC_FUNC_QUAT_2V_1S_T5( qvsdiv2 ,	tmp_denom =	QUAT_NORM(qscalar1_val);			\
 					ASSIGN_QUAT_CPROD_NORM(tmpq,qsrc1,qscalar1_val,tmp_denom)			\
 					ASSIGN_QUAT(qdst,tmpq) )
 
@@ -271,44 +271,44 @@ _VEC_FUNC_QQR_3V( pvdiv ,		qdst.re = qsrc1.re / src2;			\
 
 /* BUG check for divide by zero */
 // 
-//_VF_QR_1S_2V( name, type_code, stat)
-_VEC_FUNC_QR_1S_2V( pvsdiv ,	qdst.re = scalar1_val / src1 ;			\
+//_VF_QR_2V_1S( name, type_code, stat)
+_VEC_FUNC_QR_2V_1S( pvsdiv ,	qdst.re = scalar1_val / src1 ;			\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QR_1S_2V( pvsdiv2 ,	qdst.re = src1 / scalar1_val ;			\
+_VEC_FUNC_QR_2V_1S( pvsdiv2 ,	qdst.re = src1 / scalar1_val ;			\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QR_1S_2V( pvsmul ,	qdst.re = scalar1_val * src1 ;			\
+_VEC_FUNC_QR_2V_1S( pvsmul ,	qdst.re = scalar1_val * src1 ;			\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QR_1S_2V( pvssub ,	qdst.re = scalar1_val - src1 ;			\
+_VEC_FUNC_QR_2V_1S( pvssub ,	qdst.re = scalar1_val - src1 ;			\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QR_1S_2V( pvsadd ,	qdst.re = src1 + scalar1_val ;			\
+_VEC_FUNC_QR_2V_1S( pvsadd ,	qdst.re = src1 + scalar1_val ;			\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QUAT_1S_2V( qvsadd ,	qdst.re = qsrc1.re + qscalar1_val.re ;			\
+_VEC_FUNC_QUAT_2V_1S( qvsadd ,	qdst.re = qsrc1.re + qscalar1_val.re ;			\
 					qdst._i = qsrc1._i + qscalar1_val._i ;			\
 					qdst._j = qsrc1._j + qscalar1_val._j ;			\
 					qdst._k = qsrc1._k + qscalar1_val._k			\
 					)
 
-_VEC_FUNC_QUAT_1S_2V( qvssub ,	qdst.re = qscalar1_val.re - qsrc1.re ;			\
+_VEC_FUNC_QUAT_2V_1S( qvssub ,	qdst.re = qscalar1_val.re - qsrc1.re ;			\
 					qdst._i = qscalar1_val._i - qsrc1._i ;			\
 					qdst._j = qscalar1_val._j - qsrc1._j ;			\
 					qdst._k = qscalar1_val._k - qsrc1._k			\
@@ -316,14 +316,14 @@ _VEC_FUNC_QUAT_1S_2V( qvssub ,	qdst.re = qscalar1_val.re - qsrc1.re ;			\
 
 /* For real or complex, multiplication is commutative, but not for quaternions!? */
 
-_VEC_FUNC_QUAT_1S_2V_T4( qvsmul ,	ASSIGN_QUAT_PROD(tmpq,qsrc1,qscalar1_val)			\
+_VEC_FUNC_QUAT_2V_1S_T4( qvsmul ,	ASSIGN_QUAT_PROD(tmpq,qsrc1,qscalar1_val)			\
 					ASSIGN_QUAT(qdst,tmpq) )
 
 dnl not yet...
-dnl _VEC_FUNC_QUAT_1S_2V_T4( qvsmul2 ,ASSIGN_QUAT_PROD(tmpq,qscalar1_val,qsrc1)			\
+dnl _VEC_FUNC_QUAT_2V_1S_T4( qvsmul2 ,ASSIGN_QUAT_PROD(tmpq,qscalar1_val,qsrc1)			\
 dnl 					ASSIGN_QUAT(qdst,tmpq) )
 
-_VEC_FUNC_QUAT_1S_1V( qvset ,	qdst.re = qscalar1_val.re ;			\
+_VEC_FUNC_QUAT_1V_1S( qvset ,	qdst.re = qscalar1_val.re ;			\
 					qdst._i = qscalar1_val._i ;			\
 					qdst._j = qscalar1_val._j ;			\
 					qdst._k = qscalar1_val._k )
@@ -337,10 +337,12 @@ QUAT_SS_SELECTION_METHOD( qvss_slct ,	qdst = srcbit ? qscalar1_val : qscalar2_va
 define(`COPY_QUAT',{ qdst.re=$1.re; qdst._i=$1._i; qdst._j=$1._j; qdst._k=$1._k; })
 
 _VEC_FUNC_SBM_QUAT_3V( qvvv_slct ,	if( srcbit ) COPY_QUAT(qsrc1) else COPY_QUAT(qsrc2) )
-_VEC_FUNC_SBM_QUAT_1S_2V( qvvs_slct ,	if( srcbit ) COPY_QUAT(qsrc1) else COPY_QUAT(qscalar1_val) )
-_VEC_FUNC_SBM_QUAT_2S_1V( qvss_slct ,	if( srcbit ) COPY_QUAT(qscalar1_val) else COPY_QUAT(qscalar2_val) )
+_VEC_FUNC_SBM_QUAT_2V_1S( qvvs_slct ,	if( srcbit ) COPY_QUAT(qsrc1) else COPY_QUAT(qscalar1_val) )
+_VEC_FUNC_SBM_QUAT_1V_2S( qvss_slct ,	if( srcbit ) COPY_QUAT(qscalar1_val) else COPY_QUAT(qscalar2_val) )
 
 /* BUG - gpu implementation? */
+
+dnl	_VEC_FUNC_QUAT_2V_PROJ( name, init_stat, loop_stat, gpu_e1, gpu_e2, gpu_e3, gpu_e4 )
 
 _VEC_FUNC_QUAT_2V_PROJ( qvsum,			\
 					qdst.re = 0 ;			\

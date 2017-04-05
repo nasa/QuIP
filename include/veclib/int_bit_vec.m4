@@ -12,13 +12,16 @@ dnl	 */
 
 dnl	/* Real only */
 
-/* testing: bit_precision_kernel = BIT_PRECISION_KERNEL */
+/* testing: bit_precision = BIT_PRECISION */
 
-ifdef(`BIT_PRECISION_KERNEL',`
+ifdef(`BIT_PRECISION',`
 
 dnl	Special kernels for bit precision
 
 /* bit precision vand */
+
+_VEC_FUNC_DBM_1SBM(rvmov,SET_DBM_BIT(srcbit1))
+_VEC_FUNC_DBM_1S(rvset, SET_DBM_BIT(scalar1_val) )
 
 _VEC_FUNC_DBM_2SBM(vand,SET_DBM_BIT(srcbit1 && srcbit2) )
 _VEC_FUNC_DBM_2SBM(vnand,SET_DBM_BIT(!(srcbit1 && srcbit2)))
@@ -31,7 +34,7 @@ dnl	vsnand???
 _VEC_FUNC_DBM_1SBM_1S(vsor,SET_DBM_BIT(srcbit1||scalar1_val))
 _VEC_FUNC_DBM_1SBM_1S(vsxor,SET_DBM_BIT((srcbit1&&!scalar1_val)||((!srcbit1)&&scalar1_val)))
 
-',`	dnl	! BIT_PRECISION_KERNEL
+',`	dnl	! BIT_PRECISION
 
 dnl	Normal kernels for all integer types
 

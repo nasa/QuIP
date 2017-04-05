@@ -1,6 +1,6 @@
 /* cu2_veclib_prot.m4 BEGIN */
-include(`../../include/veclib/vecgen.m4')
-include(`../../include/veclib/cu2_port.m4')
+my_include(`../../include/veclib/vecgen.m4')
+my_include(`../../include/veclib/cu2_port.m4')
 
 // these are special cases...
 extern void h_cu2_sp_vuni(HOST_CALL_ARG_DECLS);

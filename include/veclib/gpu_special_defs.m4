@@ -1,3 +1,4 @@
+// gpu_special_defs.m4 BEGIN
 
 // vmaxg etc - require contiguous, fast only
 
@@ -25,4 +26,15 @@ define(`_VEC_FUNC_FAST_QUAT_2V_PROJ',`
 define(`_VEC_FUNC_FAST_3V_PROJ',`')
 define(`_VEC_FUNC_FAST_CPX_3V_PROJ',`')
 define(`_VEC_FUNC_FAST_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX($1,$4,$5)')
+
+define(`_VEC_FUNC_SLOW_2V_PROJ',`')
+define(`_VEC_FUNC_SLOW_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_SLOW_CPX_2V_PROJ',`')
+define(`_VEC_FUNC_SLOW_CPX_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ',`')
+define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_SLOW_3V_PROJ',`')
+define(`_VEC_FUNC_SLOW_MM_NOCC',`')
+
+// gpu_special_defs.m4 DONE
 

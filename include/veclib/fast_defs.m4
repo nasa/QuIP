@@ -33,7 +33,7 @@ define(`DECL_BASIC_INDICES_DBM',`		\
 	int i_dbm_word; bitmap_word dbm_bit;	\
 ')
 
-define(`SET_INDICES_DBM_1S_',`			\
+define(`SET_INDICES_DBM__1S',`			\
 	i_dbm_word = THREAD_INDEX_X;		\
 ')
 
@@ -41,14 +41,17 @@ dnl	Are these just deferred, or are they not needed???
 define(`_VEC_FUNC_MM_NOCC',`_VEC_FUNC_FAST_MM_NOCC($1,$2,$3,$4,$5,$6)')
 define(`_VEC_FUNC_2V_PROJ',`_VEC_FUNC_FAST_2V_PROJ($1,$2,$3,$4)')
 define(`_VEC_FUNC_CPX_2V_PROJ',`_VEC_FUNC_FAST_CPX_2V_PROJ($1,$2,$3,$4,$5)')
-define(`_VEC_FUNC_QUAT_2V_PROJ',`_VEC_FUNC_FAST_QUAT_2V_PROJ($1,$2,$3,$4,$5)')
+
+dnl	_VEC_FUNC_QUAT_2V_PROJ( name, init_stat, loop_stat, gpu_e1, gpu_e2, gpu_e3, gpu_e4 )
+define(`_VEC_FUNC_QUAT_2V_PROJ',`_VEC_FUNC_FAST_QUAT_2V_PROJ($1,$2,$3,$4,$5,$6,$7)')
+
 define(`_VEC_FUNC_2V_PROJ_IDX',`_VEC_FUNC_FAST_2V_PROJ_IDX($1,$2,$3,$4,$5)')
 define(`_VEC_FUNC_3V_PROJ',`_VEC_FUNC_FAST_3V_PROJ($1,`',$2,$3,$4,$5)')
 define(`_VEC_FUNC_CPX_3V_PROJ',`_VEC_FUNC_FAST_3V_PROJ($1,`CPX_',$2,$3,$4,$5)')
 
 dnl GPU-only stuff???
 
-include(`../../include/veclib/fast_eqsp_defs.m4')
+my_include(`../../include/veclib/fast_eqsp_defs.m4')
 
 define(`DECLARE_DBM_INDEX',`GPU_INDEX_TYPE dbmi;')
 define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm')
@@ -109,6 +112,7 @@ dnl	define(`_VEC_FUNC_2V_PROJ_IDX',`__VEC_FUNC_FAST_2V_PROJ_IDX($1,$4,$5)')
 
 // Why is it that only CUDA needs the len versions???
 
+dnl	GENERIC_GPU_FUNC_CALL(name,statement,xxx3,xxx4,scalars,vectors,xxx7)
 define(`GENERIC_GPU_FUNC_CALL',`GENERIC_FAST_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
 
 define(`SLOW_GPU_FUNC_CALL',`')
@@ -116,6 +120,7 @@ define(`SLOW_GPU_FUNC_CALL',`')
 define(`GENERIC_VEC_FUNC_DBM',`GENERIC_FAST_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
 
+dnl	_VEC_FUNC_2V_CONV( name , dest_type )
 define(`_VEC_FUNC_2V_CONV',`_GENERIC_FAST_CONV_FUNC($1,$2)')
 
 define(`GENERIC_FUNC_DECLS',`
@@ -127,4 +132,9 @@ GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
 ')
 
 define(`_VEC_FUNC_1V_3SCAL',`')	dnl   No fast vramp2d
+
+dnl	Do we need separate GPU definitions?
+define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
+define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
+define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
 

@@ -1,4 +1,4 @@
-include(`../../include/veclib/real_args.m4')
+my_include(`../../include/veclib/real_args.m4')
 
 _VEC_FUNC_3V( vibnd, dst=(dest_type)(src1<0?(src1<-src2?src1:-src2):(src1<src2?src2:src1)) )
 _VEC_FUNC_2V( vsign, if( src1 > 0 ) dst = 1; else if( src1<0 ) dst = (-1); else dst=0; )

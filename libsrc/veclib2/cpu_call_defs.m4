@@ -782,9 +782,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 define(`DEBUG_DBM_1SRC',`DEBUG_DBM_ DEBUG_SRC1')
 
-define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
-define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
-define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
+dnl	define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
+dnl	define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
+dnl	define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
 
 
 dnl	INIT_BASES(bitmap,typ,suffix)
@@ -2771,7 +2771,7 @@ MOV_FUNC_DECLS($1,$2,$3,$4,$5,$6)
 
 
 dnl	_VEC_FUNC_2V_SCAL( name, statement )
-define(`_VEC_FUNC_2V_SCAL',`OBJ_METHOD($1,$2,`',`',1S_,2,`')')
+define(`_VEC_FUNC_2V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,2,`')')
 
 define(`_VEC_FUNC_3V',`OBJ_METHOD($1,$2,`',`',`',3,`')')
 
@@ -2817,12 +2817,12 @@ define(`_VEC_FUNC_2V',`OBJ_METHOD($1,$2,`',`',`',2,`')')
 /* e.g. ramp1d */
 
 dnl	_VEC_FUNC_1V_2SCAL( name, statement, gpu_stat )
-define(`_VEC_FUNC_1V_2SCAL',`OBJ_METHOD($1,$2,`',`',2S_,1,`')')
+define(`_VEC_FUNC_1V_2SCAL',`OBJ_METHOD($1,$2,`',`',_2S,1,`')')
 
 /* e.g. vset */
 
 dnl	_VEC_FUNC_1V_SCAL( name, statement )
-define(`_VEC_FUNC_1V_SCAL',`OBJ_METHOD($1,$2,`',`',1S_,1,`')')
+define(`_VEC_FUNC_1V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,1,`')')
 
 /* used to set a bitmap based on a vector test */
 /* vvm_gt etc */
@@ -2833,18 +2833,18 @@ define(`_VEC_FUNC_VVMAP',`OBJ_METHOD($1,`SET_DBM_BIT(src1 $2 src2)',DBM_,`',`',2
 dnl	_VEC_FUNC_5V( name, statement )
 define(`_VEC_FUNC_5V',`OBJ_METHOD($1,$2,`',`',`',5,`')')
 
-define(`_VEC_FUNC_4V_SCAL',`OBJ_METHOD($1,$2,`',`',1S_,4,`')')
+define(`_VEC_FUNC_4V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,4,`')')
 
-define(`_VEC_FUNC_3V_2SCAL',`OBJ_METHOD($1,$2,`',`',2S_,3,`')')
+define(`_VEC_FUNC_3V_2SCAL',`OBJ_METHOD($1,$2,`',`',_2S,3,`')')
 
-define(`_VEC_FUNC_2V_3SCAL',`OBJ_METHOD($1,$2,`',`',3S_,2,`')')
+define(`_VEC_FUNC_2V_3SCAL',`OBJ_METHOD($1,$2,`',`',_3S,2,`')')
 
 
 define(`_VEC_FUNC_VVSLCT',`OBJ_METHOD($1,$2,SBM_,`',`',3,`')')
 
-define(`_VEC_FUNC_VSSLCT',`OBJ_METHOD($1,$2,SBM_,`',1S_,2,`')')
+define(`_VEC_FUNC_VSSLCT',`OBJ_METHOD($1,$2,SBM_,`',_1S,2,`')')
 
-define(`_VEC_FUNC_SSSLCT',`OBJ_METHOD($1,$2,SBM_,`',2S_,1,`')')
+define(`_VEC_FUNC_SSSLCT',`OBJ_METHOD($1,$2,SBM_,`',_2S,1,`')')
 
 define(`_VEC_FUNC_1V',`OBJ_METHOD($1,$2,`',`',`',1,`')')
 
@@ -2854,9 +2854,9 @@ define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
 dnl #define THREE_CPX_VEC_METHOD_T1( name, statement )
 define(`_VEC_FUNC_CPX_3V_T1',`OBJ_METHOD($1,$2,`',CPX_,`',3,_T1)')
 
-define(`_VEC_FUNC_CPX_2V',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,`')')
+define(`_VEC_FUNC_CPX_2V',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_2V_T2',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,_T2)')
+define(`_VEC_FUNC_CPX_2V_T2',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,_T2)')
 
 define(`_VEC_FUNC_CPX_3V_T2',`OBJ_METHOD($1,$2,`',CPX_,`',3,_T2)')
 
@@ -2868,29 +2868,29 @@ define(`_VEC_FUNC_CPX_3V',`OBJ_METHOD($1,$2,`',CPX_,`',3,`')')
 
 define(`_VEC_FUNC_CCR_3V',`OBJ_METHOD($1,$2,`',CCR_,`',3,`')')
 
-define(`_VEC_FUNC_CR_1S_2V',`OBJ_METHOD($1,$2,`',CR_,1S_,2,`')')
+define(`_VEC_FUNC_CR_2V_1S',`OBJ_METHOD($1,$2,`',CR_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_1S_2V',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,`')')
+define(`_VEC_FUNC_CPX_2V_1S',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_1S_2V',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,`')')
+define(`_VEC_FUNC_CPX_2V_1S',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_1S_2V_T2',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,_T2)')
+define(`_VEC_FUNC_CPX_2V_1S_T2',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,_T2)')
 
-define(`_VEC_FUNC_CPX_1S_2V_T3',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,_T3)')
+define(`_VEC_FUNC_CPX_2V_1S_T3',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,_T3)')
 
-define(`_VEC_FUNC_CPX_1S_1V',`OBJ_METHOD($1,$2,`',CPX_,1S_,1,`')')
+define(`_VEC_FUNC_CPX_1V_1S',`OBJ_METHOD($1,$2,`',CPX_,_1S,1,`')')
 
 define(`_VEC_FUNC_SBM_CPX_3V',`OBJ_METHOD($1,$2,SBM_,CPX_,`',3,`')')
 
-define(`_VEC_FUNC_SBM_CPX_1S_2V',`OBJ_METHOD($1,$2,SBM_,CPX_,1S_,2,`')')
+define(`_VEC_FUNC_SBM_CPX_2V_1S',`OBJ_METHOD($1,$2,SBM_,CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_SBM_CPX_2S_1V',`OBJ_METHOD($1,$2,SBM_,CPX_,2S_,1,`')')
+define(`_VEC_FUNC_SBM_CPX_1V_2S',`OBJ_METHOD($1,$2,SBM_,CPX_,_2S,1,`')')
 
 define(`_VEC_FUNC_SBM_QUAT_3V',`OBJ_METHOD($1,$2,SBM_,QUAT_,`',3,`')')
 
-define(`_VEC_FUNC_SBM_QUAT_1S_2V',`OBJ_METHOD($1,$2,SBM_,QUAT_,1S_,2,`')')
+define(`_VEC_FUNC_SBM_QUAT_2V_1S',`OBJ_METHOD($1,$2,SBM_,QUAT_,_1S,2,`')')
 
-define(`_VEC_FUNC_SBM_QUAT_2S_1V',`OBJ_METHOD($1,$2,SBM_,QUAT_,2S_,1,`')')
+define(`_VEC_FUNC_SBM_QUAT_1V_2S',`OBJ_METHOD($1,$2,SBM_,QUAT_,_2S,1,`')')
 
 dnl #define TWO_QUAT_VEC_METHOD( name,stat )
 define(`_VEC_FUNC_QUAT_2V',`OBJ_METHOD($1,$2,`',QUAT_,`',2,`')')
@@ -2906,15 +2906,15 @@ define(`_VEC_FUNC_QUAT_3V_T5',`OBJ_METHOD($1,$2,`',QUAT_,`',3,_T5)')
 
 define(`_VEC_FUNC_QQR_3V',`OBJ_METHOD($1,$2,`',QQR_,`',3,`')')
 
-define(`_VEC_FUNC_QR_1S_2V',`OBJ_METHOD($1,$2,`',QR_,1S_,2,`')')
+define(`_VEC_FUNC_QR_2V_1S',`OBJ_METHOD($1,$2,`',QR_,_1S,2,`')')
 
-define(`_VEC_FUNC_QUAT_1S_2V',`OBJ_METHOD($1,$2,`',QUAT_,1S_,2,`')')
+define(`_VEC_FUNC_QUAT_2V_1S',`OBJ_METHOD($1,$2,`',QUAT_,_1S,2,`')')
 
-define(`_VEC_FUNC_QUAT_1S_2V_T4',`OBJ_METHOD($1,$2,`',QUAT_,1S_,2,_T4)')
+define(`_VEC_FUNC_QUAT_2V_1S_T4',`OBJ_METHOD($1,$2,`',QUAT_,_1S,2,_T4)')
 
-define(`_VEC_FUNC_QUAT_1S_2V_T5',`OBJ_METHOD($1,$2,`',QUAT_,1S_,2,_T5)')
+define(`_VEC_FUNC_QUAT_2V_1S_T5',`OBJ_METHOD($1,$2,`',QUAT_,_1S,2,_T5)')
 
-define(`_VEC_FUNC_QUAT_1S_1V',`OBJ_METHOD($1,$2,`',QUAT_,1S_,1,`')')
+define(`_VEC_FUNC_QUAT_1V_1S',`OBJ_METHOD($1,$2,`',QUAT_,_1S,1,`')')
 
 
 /* PROJECTION_METHOD_2 is for vmaxv, vminv, vsum
@@ -3056,13 +3056,13 @@ define(`_VEC_FUNC_DBM_1SBM_1S',`OBJ_METHOD($1,$2,DBM_1SBM_,`',`1S_',`',`')')
 
 /* bitmap set from a constant */
 dnl	_VEC_FUNC_DBM_1S( name, statement )
-define(`_VEC_FUNC_DBM_1S',`OBJ_METHOD($1,$2,DBM_,`',1S_,`',`')')
+define(`_VEC_FUNC_DBM_1S',`OBJ_METHOD($1,$2,DBM_,`',_1S,`',`')')
 
 /* used to set a bitmap based on a vector test */
 /* vsm_gt etc */
 
 dnl	_VEC_FUNC_VSMAP( name, op )
-define(`_VEC_FUNC_VSMAP',`OBJ_METHOD($1,`SET_DBM_BIT(src1 $2 scalar1_val)',DBM_,`',1S_,1SRC,`')')
+define(`_VEC_FUNC_VSMAP',`OBJ_METHOD($1,`SET_DBM_BIT(src1 $2 scalar1_val)',DBM_,`',_1S,1SRC,`')')
 
 
 define(`scalar1_val',`VA_SCALAR_VAL_STD(vap,0)')

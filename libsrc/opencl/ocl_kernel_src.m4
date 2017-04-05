@@ -11,11 +11,10 @@ dnl all these quotes because type_code is not defined until later...
 dnl type_code not expanded???
 define(`KERN_SOURCE_NAME',`/* kern_source_name $1 $2 */ `kernel_source_'pf_str`_'$2`_'type_code`_'$1')
 
-define(`_GENERIC_FAST_CONV_FUNC',`char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT( __GENERIC_FAST_CONV_FUNC($1,$2,$3) );')
-
-define(`_GENERIC_EQSP_CONV_FUNC',`char KERN_SOURCE_NAME($1,eqsp)[]=QUOTE_IT( __GENERIC_EQSP_CONV_FUNC($1,$2,$3) );')
-
-define(`_GENERIC_SLOW_CONV_FUNC',`char KERN_SOURCE_NAME($1,slow)[]=QUOTE_IT( __GENERIC_SLOW_CONV_FUNC($1,$2,$3) );')
+dnl	_GENERIC_FAST_CONV_FUNC(name,dest_type)
+define(`_GENERIC_FAST_CONV_FUNC',`char KERN_SOURCE_NAME($1,fast)[]=QUOTE_IT( __GENERIC_FAST_CONV_FUNC($1,$2) );')
+define(`_GENERIC_EQSP_CONV_FUNC',`char KERN_SOURCE_NAME($1,eqsp)[]=QUOTE_IT( __GENERIC_EQSP_CONV_FUNC($1,$2) );')
+define(`_GENERIC_SLOW_CONV_FUNC',`char KERN_SOURCE_NAME($1,slow)[]=QUOTE_IT( __GENERIC_SLOW_CONV_FUNC($1,$2) );')
 
 
 define(`_GENERIC_FAST_VEC_FUNC',`char KERN_SOURCE_NAME($1,fast)[]= QUOTE_IT( __GENERIC_FAST_VEC_FUNC($1,$2,$3,$4,$5,$6,$7) );')
@@ -90,19 +89,20 @@ define(`_VEC_FUNC_EQSP_MM_NOCC',`')
 // It's the same except for the sum line, which would be replaced with
 //
 
-dnl	Some no-ops
-define(`_VEC_FUNC_SLOW_2V_PROJ',`')
-define(`_VEC_FUNC_SLOW_2V_PROJ_IDX',`')
-define(`_VEC_FUNC_SLOW_CPX_2V_PROJ',`')
-define(`_VEC_FUNC_SLOW_CPX_2V_PROJ_IDX',`')
-define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ',`')
-define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ_IDX',`')
-define(`_VEC_FUNC_SLOW_3V_PROJ',`')
-define(`_VEC_FUNC_SLOW_MM_NOCC',`')
+dnl	Moved these to include/veclib/gpu_special_defs.m4
+dnl	dnl	Some no-ops
+dnl	define(`_VEC_FUNC_SLOW_2V_PROJ',`')
+dnl	define(`_VEC_FUNC_SLOW_2V_PROJ_IDX',`')
+dnl	define(`_VEC_FUNC_SLOW_CPX_2V_PROJ',`')
+dnl	define(`_VEC_FUNC_SLOW_CPX_2V_PROJ_IDX',`')
+dnl	define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ',`')
+dnl	define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ_IDX',`')
+dnl	define(`_VEC_FUNC_SLOW_3V_PROJ',`')
+dnl	define(`_VEC_FUNC_SLOW_MM_NOCC',`')
 
 dnl	define(`_VEC_FUNC_DBM_2SBM',`')	dnl	BUG - need to implement!
-define(`_VEC_FUNC_DBM_1SBM',`')	dnl	BUG - need to implement!
-define(`_VEC_FUNC_DBM_1SBM_1S',`')	dnl	BUG - need to implement!
+dnl	define(`_VEC_FUNC_DBM_1SBM',`')	dnl	BUG - need to implement!
+dnl	define(`_VEC_FUNC_DBM_1SBM_1S',`')	dnl	BUG - need to implement!
 
 define(`_VEC_FUNC_SLOW_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,3S_,1,)')
 

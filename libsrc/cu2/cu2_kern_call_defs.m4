@@ -1,12 +1,15 @@
 include(`../../include/veclib/gen_gpu_calls.m4')
+include(`../../include/veclib/gpu_special_defs.m4')
 
 define(`KERNEL_ARG_QUALIFIER',`')
 define(`KERNEL_FUNC_QUALIFIER',`__global__')
 
 define(`KERNEL_FUNC_PRELUDE',`')
 
-// These can't be defined generically, because for openCL we define them
-// to declare a string variable containing the kernel source code.
+define(`_VEC_FUNC_SLOW_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,_3S,1,)')
+
+dnl	// These can't be defined generically, because for openCL we define them
+dnl	// to declare a string variable containing the kernel source code.
 
 dnl	_GENERIC_FAST_VEC_FUNC(name,statement,bm,typ,scalars,vectors,extra)
 define(`_GENERIC_FAST_VEC_FUNC',`__GENERIC_FAST_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
@@ -18,13 +21,13 @@ define(`_GENERIC_SLEN_VEC_FUNC',`__GENERIC_SLEN_VEC_FUNC($1,$2,$3,$4,$5,$6,$7)')
 
 /************** conversions **************/
 
-dnl	_GENERIC_FAST_CONV_FUNC(name,src_type,dst_type)
-define(`_GENERIC_FAST_CONV_FUNC',`__GENERIC_FAST_CONV_FUNC($1,$2,$3)')
-define(`_GENERIC_EQSP_CONV_FUNC',`__GENERIC_EQSP_CONV_FUNC($1,$2,$3)')
-define(`_GENERIC_SLOW_CONV_FUNC',`__GENERIC_SLOW_CONV_FUNC($1,$2,$3)')
-define(`_GENERIC_FLEN_CONV_FUNC',`__GENERIC_FLEN_CONV_FUNC($1,$2,$3)')
-define(`_GENERIC_ELEN_CONV_FUNC',`__GENERIC_ELEN_CONV_FUNC($1,$2,$3)')
-define(`_GENERIC_SLEN_CONV_FUNC',`__GENERIC_SLEN_CONV_FUNC($1,$2,$3)')
+dnl	_GENERIC_FAST_CONV_FUNC(name,dst_type)
+define(`_GENERIC_FAST_CONV_FUNC',`__GENERIC_FAST_CONV_FUNC($1,$2)')
+define(`_GENERIC_EQSP_CONV_FUNC',`__GENERIC_EQSP_CONV_FUNC($1,$2)')
+define(`_GENERIC_SLOW_CONV_FUNC',`__GENERIC_SLOW_CONV_FUNC($1,$2)')
+define(`_GENERIC_FLEN_CONV_FUNC',`__GENERIC_FLEN_CONV_FUNC($1,$2)')
+define(`_GENERIC_ELEN_CONV_FUNC',`__GENERIC_ELEN_CONV_FUNC($1,$2)')
+define(`_GENERIC_SLEN_CONV_FUNC',`__GENERIC_SLEN_CONV_FUNC($1,$2)')
 
 dnl	// cu2_kern_call_defs testing slow_conv_func
 dnl	#ifdef FOOBAR
@@ -102,4 +105,13 @@ define(`__VEC_FUNC_FAST_MM_NOCC',`
 	___VEC_FUNC_FAST_MM_NOCC_SETUP($1,$2,$3)
 	___VEC_FUNC_FAST_MM_NOCC_HELPER($1,$2,$3)
 ')
+
+define(`_VEC_FUNC_EQSP_MM_NOCC',`')
+
+dnl	Defns for bitmap ops...
+
+dnl	indices are different for fast and slow!?
+define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
+define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
+define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
 

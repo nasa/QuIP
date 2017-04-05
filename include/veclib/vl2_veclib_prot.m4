@@ -1,7 +1,7 @@
 
 
-include(`../../include/veclib/vecgen.m4')
-include(`../../include/veclib/vl2_port.m4')
+my_include(`../../include/veclib/vecgen.m4')
+my_include(`../../include/veclib/vl2_port.m4')
 
 
 extern void h_vl2_fft2d(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
@@ -26,4 +26,5 @@ extern void h_vl2_determinant(HOST_CALL_ARG_DECLS);
 
 extern int xform_chk(Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *xform );
 
-include(`../../include/veclib/flush_output.m4')
+my_include(`../../include/veclib/flush_output.m4')
+

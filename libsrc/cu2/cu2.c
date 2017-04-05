@@ -595,7 +595,7 @@ ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
 
 PF_COMMAND_FUNC( list_devs )
 {
-	list_pfdevs(SINGLE_QSP_ARG);
+	list_pfdevs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 void PF_FUNC_NAME(set_device)( QSP_ARG_DECL  Platform_Device *pdp )

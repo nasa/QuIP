@@ -122,17 +122,21 @@ define(`VA_SCALAR_VAL_STDCPX',`(*((std_cpx *)(($1)->va_sval[$2])))')
 dnl	VA_SCALAR_VAL_STDQUAT(vap,idx)
 define(`VA_SCALAR_VAL_STDQUAT',`(*((std_quat *)(($1)->va_sval[$2])))')
 
-define(`flush_output',`include(`../../include/veclib/flush_output.m4')')
+define(`flush_all_output',`include(`../../include/veclib/flush_output.m4')')
 
 ifdef(`MAXIMUM_TESTING',`
 define(`my_include',`
-// CALLING $1
-flush_output
+// BEGIN INCLUDED FILE $1
+flush_all_output
 include($1)
-// BACK FROM $1
-flush_output
+// END INCLUDED FILE $1
+flush_all_output
 ')
 ',` dnl else ! MAXIMUM_TESTING
-define(`my_include',`include($1)')
+define(`my_include',`
+// BEGIN INCLUDED FILE $1
+include($1)
+// END INCLUDED FILE $1
+')
 ') dnl endif ! MAXIMUM_TESTING
 

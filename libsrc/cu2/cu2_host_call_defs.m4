@@ -315,9 +315,18 @@ dnl /*fprintf(stderr,"SETUP_BLOCKS_XYZ_DBM_\n");*/
 
 dnl	SETUP_BLOCKS_XYZ_DBM_SBM(pdp)
 define(`SETUP_BLOCKS_XYZ_DBM_SBM',`
-
 	SETUP_BLOCKS_XYZ_DBM_($1)
 ')
+
+dnl	BUG?	we should probably consider the sources too???
+define(`SETUP_BLOCKS_XYZ_DBM_2SBM',`
+	SETUP_BLOCKS_XYZ_DBM_($1)
+')
+
+define(`SETUP_BLOCKS_XYZ_DBM_1SBM',`
+	SETUP_BLOCKS_XYZ_DBM_($1)
+')
+
 
 dnl	SETUP_BLOCKS_X(w)
 define(`SETUP_BLOCKS_X',`
@@ -484,6 +493,8 @@ define(`SET_BLOCKS_DBM_',`
 ')
 
 define(`SET_BLOCKS_DBM_SBM',`SET_BLOCKS_DBM_($1,$2)')
+define(`SET_BLOCKS_DBM_2SBM',`SET_BLOCKS_DBM_($1,$2)')
+define(`SET_BLOCKS_DBM_1SBM',`SET_BLOCKS_DBM_($1,$2)')
 
 dnl	SET_BLOCKS_SBM_(pdp,len_var)
 define(`SET_BLOCKS_SBM_',`

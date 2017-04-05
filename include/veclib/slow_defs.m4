@@ -112,10 +112,23 @@ define(`DECL_BASIC_INDICES_DBM',`				\
 define(`SET_SBM_WORD_IDX',`i_sbm_word=(sbm_bit_idx.d5_dim[1]+sbm_bit_idx.d5_dim[2])/BITS_PER_BITMAP_WORD;')
 
 dnl	This was old GPU defn???
-dnl	define(`srcbit',`(sbm_ptr[(INDEX_SUM(sbm_bit_idx)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm_bit_idx)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+ifdef(`BUILD_FOR_GPU',`
+define(`srcbit',`(sbm_ptr[(INDEX_SUM(sbm_bit_idx)+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm_bit_idx)+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+define(`srcbit1',`(sbm1_ptr[(INDEX_SUM(sbm1_bit_idx)+sbm1_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm1_bit_idx)+sbm1_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+define(`srcbit2',`(sbm2_ptr[(INDEX_SUM(sbm2_bit_idx)+sbm2_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((INDEX_SUM(sbm2_bit_idx)+sbm2_bit0)&(BITS_PER_BITMAP_WORD-1)))')
+',`	dnl else ! build_for_gpu
 dnl	For cpu, bit0 is already in the base...
-dnl	define(`srcbit',`(sbm_ptr[(sbm_bit_idx+sbm_bit0)>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_idx+sbm_bit0)&(BITS_PER_BITMAP_WORD-1)))')
-define(`srcbit',`(sbm_ptr[sbm_bit_idx>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_idx)&(BITS_PER_BITMAP_WORD-1)))')
+dnl	define(`srcbit',`(sbm_ptr[sbm_bit_idx>>LOG2_BITS_PER_BITMAP_WORD] & NUMBERED_BIT((sbm_bit_idx)&(BITS_PER_BITMAP_WORD-1)))')
+dnl	Do we need separate GPU definitions?
+define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
+define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
+define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
+
+')
+
+dnl	This defn was !BUILD_FOR_CUDA, why???
+dnl	_VEC_FUNC_1V_3SCAL(name,s1,s2,s3)
+define(`_VEC_FUNC_1V_3SCAL',`_VEC_FUNC_SLOW_1V_3SCAL($1,$2,$3,$4)')
 
 
 ifdef(`BUILD_FOR_CUDA',`
@@ -136,11 +149,11 @@ define(`GENERIC_VEC_FUNC_DBM',`
 	GENERIC_SLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)
 ')
 
-dnl _VEC_FUNC_2V_CONV(name,dest_type
+dnl _VEC_FUNC_2V_CONV(name,dest_type)
 define(`_VEC_FUNC_2V_CONV',`
 	/* cuda vec_func_2v_conv */
-	_GENERIC_SLOW_CONV_FUNC($1,std_type,$2)
-	_GENERIC_SLEN_CONV_FUNC($1,std_type,$2)
+	_GENERIC_SLOW_CONV_FUNC($1,$2)
+	_GENERIC_SLEN_CONV_FUNC($1,$2)
 ')
 
 dnl test it
@@ -167,15 +180,12 @@ define(`GENERIC_VEC_FUNC_DBM',`
 ')
 
 define(`_VEC_FUNC_2V_CONV',`
-	_GENERIC_SLOW_CONV_FUNC($1,std_type,$2)
+	_GENERIC_SLOW_CONV_FUNC($1,$2)
 ')
 
 
 define(`GENERIC_FUNC_DECLS',`
 GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
 ')
-
-dnl	_VEC_FUNC_1V_3SCAL(name,s1,s2,s3)
-define(`_VEC_FUNC_1V_3SCAL',`_VEC_FUNC_SLOW_1V_3SCAL($1,$2,$3,$4)')
 
 ') dnl endif // ! BUILD_FOR_CUDA

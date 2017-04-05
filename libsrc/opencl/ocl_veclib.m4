@@ -10,6 +10,8 @@ define(`suppress_if',`divert(-1)')
 define(`suppress_if',`divert(0)')
 ')
 
+include(`../../include/veclib/ocl_port.m4')
+
 suppress_if dnl suppresss output
 
 /* `suppress_if' = suppress_if */

@@ -1,4 +1,4 @@
-include(`../../include/veclib/report_args.m4')
+my_include(`../../include/veclib/report_args.m4')
 
 
 define(`DECLARE_HOST_FAST_CALL_VARS',`DECLARE_PLATFORM_FAST_VARS')

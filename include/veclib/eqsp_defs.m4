@@ -27,7 +27,7 @@ define(`_VEC_FUNC_2V_PROJ_IDX',`')
 define(`_VEC_FUNC_3V_PROJ',`')
 define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
-include(`../../include/veclib/fast_eqsp_defs.m4')
+my_include(`../../include/veclib/fast_eqsp_defs.m4')
 
 define(`this_sbm_bit',`(sbm_bit_idx+sbm_bit0)')
 
@@ -36,7 +36,7 @@ define(`SET_INDICES_DBM',`SET_DBM_TBL_INDEX SET_DBM_INDEX_ARRAY')
 dnl define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm, DECLARE_KERN_ARGS_DBM_GPU_INFO')
 define(`SET_INDICES_1SRC',`index2 = tbl_idx;')
 
-dnl define(`SET_INDICES_DBM_1S_',SET_DBM_TBL_INDEX)
+dnl define(`SET_INDICES_DBM__1S',SET_DBM_TBL_INDEX)
 
 define(`SET_DBM_TBL_INDEX',`						\
 	tbl_idx = THREAD_INDEX_X;					\
@@ -71,8 +71,8 @@ GENERIC_ELEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)
 ')
 
 define(`_VEC_FUNC_2V_CONV',`
-_GENERIC_EQSP_CONV_FUNC($1,std_type,$2)
-_GENERIC_ELEN_CONV_FUNC($1,std_type,$2)
+_GENERIC_EQSP_CONV_FUNC($1,$2)
+_GENERIC_ELEN_CONV_FUNC($1,$2)
 ')
 
 ',` dnl else // ! BUILD_FOR_CUDA
@@ -91,7 +91,7 @@ GENERIC_EQSP_VEC_FUNC_DBM($1,$2,$3,$4,$5)
 
 dnl	why leading underscore???
 define(`_VEC_FUNC_2V_CONV',`
-_GENERIC_EQSP_CONV_FUNC($1,std_type,$2)
+_GENERIC_EQSP_CONV_FUNC($1,$2)
 ')
 
 define(`GENERIC_FUNC_DECLS',`

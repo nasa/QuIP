@@ -13,6 +13,8 @@ define(`suppress_if',`divert(0)')
 
 suppress_if dnl suppresss output
 
+include(`../../include/veclib/cu2_port.m4')
+
 /* `suppress_if' = suppress_if */
 /* cu2_veclib.m4 BEGIN */
 

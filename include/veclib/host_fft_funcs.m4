@@ -1,7 +1,7 @@
 // This file is kind of the opposite of the type_tbl approach...
 // here we have a bunch of switches and if/then's...
 
-include(`../../include/veclib/gen_entries.m4')
+my_include(`../../include/veclib/gen_entries.m4')
 
 ifdef(`BUILD_FOR_GPU',`',` dnl ifndef BUILD_FOR_GPU
 void HOST_CALL_NAME(xform_list)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( xform_list, OA_DEST(oap) ) }

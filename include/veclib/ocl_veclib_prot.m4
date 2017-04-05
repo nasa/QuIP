@@ -1,5 +1,5 @@
 
-include(`../../include/veclib/ocl_port.m4')
+my_include(`../../include/veclib/ocl_port.m4')
 
 extern void h_ocl_vuni(HOST_CALL_ARG_DECLS);
 extern void h_ocl_sp_vuni(HOST_CALL_ARG_DECLS);

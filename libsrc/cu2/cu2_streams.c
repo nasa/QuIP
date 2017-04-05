@@ -66,7 +66,7 @@ static PF_COMMAND_FUNC( new_stream )
 
 static PF_COMMAND_FUNC( list_streams )
 {
-	list_cu2_streams(SINGLE_QSP_ARG);
+	list_cu2_streams(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static PF_COMMAND_FUNC( stream_info )

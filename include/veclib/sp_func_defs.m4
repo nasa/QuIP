@@ -1,6 +1,6 @@
 
 ifdef(`BUILD_FOR_OPENCL',`
-include(`../../include/veclib/dp_func_defs.m4')
+my_include(`../../include/veclib/dp_func_defs.m4')
 ',` dnl else // ! BUILD_FOR_OPENCL
 
 define(`floor_func',`floorf')
