@@ -58,7 +58,7 @@
 -(IOS_Item_Context *) topContext;
 -(int) addItem : (IOS_Item *) ip;
 -(IOS_Item *) delItem : (IOS_Item *) ip;
--(void) list;
+-(void) list : (FILE *) fp;
 
 -(IOS_Item *) get : (NSString *) name;
 -(IOS_Item *) check : (NSString *) name;
@@ -71,7 +71,7 @@
 -(id) initWithName : (NSString *) name;
 
 +(IOS_Item_Type *) get : (NSString *) name;
-+(void) list;
++(void) list : (FILE *) fp;
 +(void) initClass;
 
 @end
@@ -146,7 +146,7 @@ extern IOS_List *stem##_list(SINGLE_QSP_ARG_DECL );
 
 #define IOS_ITEM_LIST_PROT(type,stem)				\
 								\
-extern void list_##stem##s(SINGLE_QSP_ARG_DECL);
+extern void list_##stem##s(QSP_ARG_DECL  FILE *);
 
 
 

@@ -1,5 +1,4 @@
 
-
 #include "quip_config.h"
 
 #import "quip_prot.h"
@@ -10,7 +9,6 @@
 #ifdef BUILD_FOR_OBJC
 
 @implementation Panel_Obj
-
 
 @synthesize currx;
 @synthesize curry;
@@ -56,14 +54,6 @@
 
 @end
 
-#ifdef FOOBAR
-static IOS_Size_Functions panel_sf={
-		get_panel_size,
-		NULL,
-		NULL,
-		NULL
-};
-#endif // FOOBAR
 
 static IOS_Item_Type *panel_obj_itp=NO_IOS_ITEM_TYPE;
 

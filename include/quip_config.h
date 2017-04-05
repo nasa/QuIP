@@ -23,7 +23,9 @@
 #define QUIP_ALERT_OBJ_TYPE		UIAlertView
 #define QUIP_COLOR_TYPE			UIColor
 #include "ios_config.h"
+
 #else // !BUILD_FOR IOS
+
 
 #ifdef BUILD_FOR_WINDOWS
 #include "win_config.h"
@@ -49,6 +51,8 @@
 #include "mac_config.h"
 
 #else /* ! BUILD_FOR_MACOS && ! BUILD_FOR_WINDOWS && ! BUILD_FOR_IOS */
+
+/* unix */
 
 #include "config.h"
 #define BUILD_FOR_CMD_LINE
