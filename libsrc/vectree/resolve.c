@@ -1267,6 +1267,9 @@ static void resolve_obj_id(QSP_ARG_DECL  Identifier *idp, Shape_Info *shpp)
 	Data_Obj *dp;
 /* char remember_name[LLEN]; */
 
+fprintf(stderr,"resolve_obj_id:  BEGIN, idp = 0x%lx, shpp = 0x%lx\n",(long)idp,(long)shpp);
+fflush(stderr);
+fprintf(stderr,"resolve_obj_id:  have id %s\n",ID_NAME(idp));
 //#ifdef CAUTIOUS
 //    if( shpp == NO_SHAPE ){
 //        ERROR1("CAUTIOUS:  resolve_obj_id:  shape ptr is null!?");
@@ -1502,7 +1505,13 @@ static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 	Data_Obj *dp;
 
 	/* If this is an automatic object, and we haven't evaluated the decls yet... */
-	idp = GET_ID(VN_STRING(uk_enp));
+	// Why do we think the object name is in VN_STRING?
+dump_tree(QSP_ARG  uk_enp);
+	
+	switch(VN_CODE(uk_enp)){
+		case T_DYN_OBJ:
+fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_enp));
+			idp = GET_ID(VN_STRING(uk_enp));
 //#ifdef CAUTIOUS
 //	if( idp == NO_IDENTIFIER ){
 //		sprintf(ERROR_STRING,
@@ -1510,7 +1519,7 @@ static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 //		WARN(ERROR_STRING);
 //		return;
 //	}
-	assert( idp != NO_IDENTIFIER );
+			assert( idp != NO_IDENTIFIER );
 
 //	if( ! IS_REFERENCE(idp) ){
 //		sprintf(ERROR_STRING,
@@ -1519,9 +1528,9 @@ static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 //		return;
 //	}
 //#endif /* CAUTIOUS */
-	assert( IS_REFERENCE(idp) );
+			assert( IS_REFERENCE(idp) );
 
-	dp = REF_OBJ(ID_REF(idp));
+			dp = REF_OBJ(ID_REF(idp));
 
 //#ifdef CAUTIOUS
 //	if( dp==NO_OBJ ){
@@ -1532,7 +1541,19 @@ static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 //		return;
 //	}
 //#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+			assert( dp != NO_OBJ );
+			break;
+
+		case T_STATIC_OBJ:
+			dp = VN_OBJ(uk_enp);
+			idp = GET_ID(OBJ_NAME(dp));
+			break;
+
+		default:
+			MISSING_CASE(uk_enp,"resolve_object");
+			dp = NULL;
+			break;
+	}
 
 	SET_VN_FLAG_BITS(uk_enp, resolution_flags);		/* resolve_object */
 
@@ -1547,6 +1568,7 @@ static void resolve_object(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp)
 		return;
 	}
 
+fprintf(stderr,"resolve_object calling resolve_obj_id, idp = 0x%lx\n",(long)idp);
 	RESOLVE_OBJ_ID(idp,shpp);
 
 #ifdef QUIP_DEBUG
@@ -1679,6 +1701,7 @@ Vec_Expr_Node *resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp
 		case T_STR_PTR:
 		case T_POINTER:
 		*/
+		case T_STATIC_OBJ:
 		case T_DYN_OBJ:			/* resolve_node */
 			RESOLVE_OBJECT(uk_enp,shpp);
 			return(uk_enp);

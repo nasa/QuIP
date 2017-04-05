@@ -102,17 +102,17 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 
 	//copy memory from device to host
 
-//fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %d, dst = 0x%lx\n",
+//fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %ld, dst = 0x%lx\n",
 //PFDEV_NAME(pdp),(long)src,siz,(long)dst);
 	status = clEnqueueReadBuffer( OCLDEV_QUEUE(pdp),
 			src,		// cl_mem
 			CL_TRUE,	// blocking_read
-			0,
+			0,		// offset
 			siz,
 			dst,
-			0,
-			NULL,
-			NULL);
+			0,		// num_events_in_wait_list
+			NULL,		// event_wait_list
+			NULL);		// event
  
 	if( status != CL_SUCCESS ){
 		report_ocl_error(QSP_ARG  status, "clEnqueueReadBuffer");
@@ -565,6 +565,7 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 	cl_int status;
 	void *ptr;
 
+	// clCreateBuffer returns cl_mem...
 	ptr = clCreateBuffer(OCLDEV_CTX(pdp), CL_MEM_READ_WRITE, size, NULL, &status);
 
 	if( status != CL_SUCCESS ){
@@ -573,6 +574,7 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 		advise(ERROR_STRING);
 		return NULL;
 	}
+//fprintf(stderr,"ocl_mem_alloc %d:  returning 0x%lx\n",size,(long)ptr);
 	return ptr;
 }
 
@@ -610,7 +612,8 @@ void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whenc
 	//return NULL;
 	void *ptr;
 
-	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len, 0);
+	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len*size, 0 /* alignment arg not used? */ );
+	// Nice to zero it for testing???
 	return ptr;
 }
 
@@ -951,6 +954,26 @@ void ocl_init_platform(SINGLE_QSP_ARG_DECL)
 	init_ocl_platforms(SINGLE_QSP_ARG);
 
 	check_ocl_vfa_tbl(SINGLE_QSP_ARG);
+}
+
+void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len )
+{
+	// BUG we assume float type!?
+	float *buf;
+	size_t siz;
+	int i;
+
+	siz= len*sizeof(float);
+	buf=malloc(siz);
+	if( buf==NULL ) NERROR1("show_gpu_vector:  error allocating buffer!?");
+
+	fprintf(stderr,"show_gpu_vector:  src = 0x%lx\n",(long)ptr);
+	// now do the memory transfer
+	(*PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  buf, ptr, siz, pdp );
+	for(i=0;i<len;i++){
+		fprintf(stderr,"%d\t%g\n",i,buf[i]);
+	}
+	free(buf);
 }
 
 #endif /* HAVE_OPENCL */

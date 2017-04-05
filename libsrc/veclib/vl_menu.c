@@ -73,7 +73,7 @@ static COMMAND_FUNC( do_vf_info )
 }
 
 static COMMAND_FUNC( do_list_vfs )
-{ list_vec_funcs(SINGLE_QSP_ARG); }
+{ list_vec_funcs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(veclib_menu,s,f,h)
 

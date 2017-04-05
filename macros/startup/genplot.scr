@@ -1,0 +1,45 @@
+# gui to facilitate making plots - and writing postscript versions
+
+#max_warnings 1	# exit immediately if error in specs
+
+< $QUIPSTARTUPDIR/quip.scr
+
+< $macro_dir/view/plotsupp.mac
+< $macro_dir/view/plot_gui.mac
+
+Clobber yes
+
+advise 'checking for cmd line arg...'
+If $argc>0
+  Then 'Set plot_name $1'
+  Else "Set plot_name plot_1"
+
+If $argc>1
+  Then 'Set plot_dir $2'
+  Else 'Set plot_dir .'
+
+Init_Plot_GUI_Defaults
+Declare_Plot_GUI
+
+# old (ctrans/rgb)
+#Set plot_param_file ${plot_name}_params.scr
+# new (saccvel/fit_data)
+
+Set plot_loaded 0
+
+Check_Plot_Spec $plot_name
+
+If !$plot_loaded "Check_Plot_Params $plot_name"
+
+If !$plot_loaded "error_exit 'Could not find specification or parameter file for plot!?'"
+
+#LoadPlotParams
+
+#max_warnings 0	# never exit from user error
+
+do
+  os events quit
+  while 1
+
+
+

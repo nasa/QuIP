@@ -185,7 +185,7 @@ debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name)
 		sprintf(ERROR_STRING,"Max is %ld",(long)MAX_DEBUG_MODULES);
 		ADVISE(ERROR_STRING);
 		ADVISE("Modules:");
-		list_debugs(SINGLE_QSP_ARG);
+		list_debugs(QSP_ARG  tell_errfile(SINGLE_QSP_ARG));
 		return(0);
 	}
 

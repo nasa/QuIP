@@ -98,7 +98,7 @@ static COMMAND_FUNC( do_show_visuals )
 }
 
 static COMMAND_FUNC( do_list_dos )
-{ list_disp_objs(SINGLE_QSP_ARG); }
+{ list_disp_objs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 
 

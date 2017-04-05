@@ -754,6 +754,10 @@ TAR_OPTIONS+=--numeric-owner
 # bison -y ?
 AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(yacc)])
 
+# these didn't work
+#: ${CFLAGS="-g -O0"}
+#: ${CXXFLAGS="-g -O0"}
+
 # Check for compilers
 AC_PROG_CC
 AC_PROG_CC_C99
@@ -1241,7 +1245,8 @@ if test "x${use_matio}" = xyes; then
 fi
 
 if test "x${use_opencl}" = xyes; then
-  AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
+#  AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
+  AC_SEARCH_LIBS([clfftInitSetupData],[clFFT],[have_clfft=yes],[have_clfft=no])
 fi
 
 if test "x${use_fann}" = xyes; then

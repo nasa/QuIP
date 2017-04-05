@@ -1084,7 +1084,7 @@ int display_depth(SINGLE_QSP_ARG_DECL)
 	return 4;	// bits or bytes?
 }
 
-void list_disp_objs(SINGLE_QSP_ARG_DECL)
+void list_disp_objs(QSP_ARG_DECL  FILE *fp)
 {
 
 }

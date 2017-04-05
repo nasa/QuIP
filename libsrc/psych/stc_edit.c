@@ -73,7 +73,7 @@ static COMMAND_FUNC( do_del_stair )
 	del_stair(QSP_ARG  stcp);
 }
 
-static COMMAND_FUNC(do_list_stairs){list_stcs(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_stairs){list_stcs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
 
 static COMMAND_FUNC( do_step_stair )
 {

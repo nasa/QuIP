@@ -821,6 +821,10 @@
 		7C4333CE1D4D49450033687C /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 711F118A1637B6D50069EF13 /* Icon-72.png */; };
 		7C4333CF1D4D49450033687C /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647617D4F67B00446D65 /* Default-568h@2x.png */; };
 		7C4333D71D4D4A250033687C /* ezjet_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7C4333D51D4D4A1F0033687C /* ezjet_startup.enc */; };
+		7C4685951E7CB3A8000403FA /* slow_len.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C4685941E7CB3A8000403FA /* slow_len.c */; };
+		7C4685961E7CB41E000403FA /* slow_len.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C4685941E7CB3A8000403FA /* slow_len.c */; };
+		7C4685971E7CB41F000403FA /* slow_len.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C4685941E7CB3A8000403FA /* slow_len.c */; };
+		7C4685981E7CB420000403FA /* slow_len.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C4685941E7CB3A8000403FA /* slow_len.c */; };
 		7C495CB81AE074890055D510 /* png.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C495CB71AE074890055D510 /* png.m */; };
 		7C4D6D801D5111A400D34AC4 /* http_menu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828E7E1726139F00F7CB35 /* http_menu.c */; };
 		7C4D6D811D5111A400D34AC4 /* quipHttpDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 71828E80172613C400F7CB35 /* quipHttpDelegate.m */; };
@@ -1460,6 +1464,7 @@
 		7C4332AF1D4D47D40033687C /* csf_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = csf_startup.enc; path = macros/startup/csf_startup.enc; sourceTree = "<group>"; };
 		7C4333D41D4D49450033687C /* EZJet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZJet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4333D51D4D4A1F0033687C /* ezjet_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ezjet_startup.enc; path = macros/startup/ezjet_startup.enc; sourceTree = "<group>"; };
+		7C4685941E7CB3A8000403FA /* slow_len.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = slow_len.c; sourceTree = "<group>"; };
 		7C495CB71AE074890055D510 /* png.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = png.m; sourceTree = "<group>"; };
 		7C4D6EA11D5111A400D34AC4 /* AFalert.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AFalert.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4D6EA31D51140C00D34AC4 /* afalert_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = afalert_startup.enc; path = macros/startup/afalert_startup.enc; sourceTree = "<group>"; };
@@ -2098,6 +2103,7 @@
 		7C5940161BB512EB00F655B1 /* vl2 */ = {
 			isa = PBXGroup;
 			children = (
+				7C4685941E7CB3A8000403FA /* slow_len.c */,
 				7C61EA401E1B080A0056CC01 /* vl2_platform.c */,
 				7C1BD1C91C5017F90093125D /* fftsupp.c */,
 				7C5940191BB513BE00F655B1 /* vl2_utils.c */,
@@ -2481,6 +2487,7 @@
 				71828F62172617B800F7CB35 /* weibull.c in Sources */,
 				71828F63172617B800F7CB35 /* xvalmenu.c in Sources */,
 				71828F67172617E500F7CB35 /* unix_menu.c in Sources */,
+				7C4685951E7CB3A8000403FA /* slow_len.c in Sources */,
 				71828F6F1726180E00F7CB35 /* conv3d.c in Sources */,
 				71828F701726180E00F7CB35 /* convolve.c in Sources */,
 				71828F711726180E00F7CB35 /* cumsum.c in Sources */,
@@ -2663,6 +2670,7 @@
 				7C4331B61D4D43FC0033687C /* ops_menu.c in Sources */,
 				7C4331B71D4D43FC0033687C /* shape_info.c in Sources */,
 				7C4331B81D4D43FC0033687C /* sub_obj.c in Sources */,
+				7C4685961E7CB41E000403FA /* slow_len.c in Sources */,
 				7C5D93771D651A140096D7BC /* frprmn.c in Sources */,
 				7C4331B91D4D43FC0033687C /* alert.c in Sources */,
 				7C4331BA1D4D43FC0033687C /* fileport.c in Sources */,
@@ -3028,6 +3036,7 @@
 				7C4333321D4D49450033687C /* weibull.c in Sources */,
 				7C4333331D4D49450033687C /* xvalmenu.c in Sources */,
 				7C4333341D4D49450033687C /* unix_menu.c in Sources */,
+				7C4685971E7CB41F000403FA /* slow_len.c in Sources */,
 				7C4333351D4D49450033687C /* conv3d.c in Sources */,
 				7C4333361D4D49450033687C /* convolve.c in Sources */,
 				7C4333371D4D49450033687C /* cumsum.c in Sources */,
@@ -3291,6 +3300,7 @@
 				7C4D6DFE1D5111A400D34AC4 /* weibull.c in Sources */,
 				7C4D6DFF1D5111A400D34AC4 /* xvalmenu.c in Sources */,
 				7C4D6E001D5111A400D34AC4 /* unix_menu.c in Sources */,
+				7C4685981E7CB420000403FA /* slow_len.c in Sources */,
 				7C4D6E011D5111A400D34AC4 /* conv3d.c in Sources */,
 				7C4D6E021D5111A400D34AC4 /* convolve.c in Sources */,
 				7C4D6E031D5111A400D34AC4 /* cumsum.c in Sources */,
@@ -3534,8 +3544,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -3551,8 +3561,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "88008492-0e05-4817-8199-0a8ee47def25";
+				PROVISIONING_PROFILE = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3565,8 +3575,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
@@ -3578,8 +3588,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "b4a04816-7aa3-48db-bc28-4f88f37042d4";
+				PROVISIONING_PROFILE = "eb64a60e-9be9-4d66-9242-a8407b736397";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "eb64a60e-9be9-4d66-9242-a8407b736397";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3657,8 +3667,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
@@ -3670,8 +3680,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "5dacd558-ca13-4698-b51f-0e630c4b2a8a";
+				PROVISIONING_PROFILE = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3684,8 +3694,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = ../../include;
@@ -3698,7 +3708,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "555349ac-7fb9-41e7-94dc-13ceb82aeb30";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "555349ac-7fb9-41e7-94dc-13ceb82aeb30";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;

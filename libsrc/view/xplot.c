@@ -258,8 +258,8 @@ void xp_fmove(float x,float y)
 	fx=x; fy=y;
 	scale_fxy(plot_vp,&fx,&fy);
 
-	_currx=(int) floor(fx+0.5);
-	_curry=(int) floor(fy+0.5);
+	_currx=(int) round(fx+0.5);
+	_curry=(int) round(fy+0.5);
 	_xp_move(plot_vp,_currx,_curry);
 }
 
@@ -284,8 +284,8 @@ void xp_fcont(float x,float y)
 
 	fx=x; fy=y;
 	scale_fxy(plot_vp,&fx,&fy);
-	ix=(int)floor(fx+0.5);
-	iy=(int)floor(fy+0.5);
+	ix=(int)round(fx+0.5);
+	iy=(int)round(fy+0.5);
 
 	_xp_line(plot_vp,_currx,_curry,ix,iy);
 

@@ -241,6 +241,8 @@
 #define SRC4_DP		SRC_DP(3)
 #define SRC5_DP		SRC_DP(4)
 #define bitmap_src_dp	oap->oa_dp[4]
+#define bitmap_src1_dp	oap->oa_dp[0]
+#define bitmap_src2_dp	oap->oa_dp[1]
 #define bitmap_dst_dp	oap->oa_dest
 
 #endif /* ! dst_dp */

@@ -24,7 +24,7 @@ extern Precision * 	get_prec(QSP_ARG_DECL  const char *);
 
 extern Data_Obj *	dobj_of(QSP_ARG_DECL  const char *);
 #define DOBJ_OF(s)	dobj_of(QSP_ARG s)
-extern void		list_dobjs(SINGLE_QSP_ARG_DECL);
+extern void		list_dobjs(QSP_ARG_DECL  FILE *fp);
 extern Data_Obj *	new_dobj(QSP_ARG_DECL  const char *);
 extern List *		dobj_list(SINGLE_QSP_ARG_DECL);
 
@@ -87,7 +87,7 @@ extern Data_Obj * d_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
 extern Data_Obj * c_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
 extern int is_in_string(int c,const char *s);
 extern void reindex(QSP_ARG_DECL  Data_Obj * ,int,index_t);
-extern void list_temp_dps(SINGLE_QSP_ARG_DECL);
+extern void list_temp_dps(QSP_ARG_DECL  FILE *fp);
 extern void unlock_children(Data_Obj *dp);
 
 /* get_obj.c */
@@ -141,6 +141,7 @@ extern void cpu_mem_free(QSP_ARG_DECL  void *ptr );
 
 extern Data_Obj * make_dobj_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *,uint32_t);
 extern void	  set_dp_alignment(int);
+// what is the difference between make_dobj and _make_dp???
 extern Data_Obj * make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *);
 extern Data_Obj * setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision *);
 extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision * );
@@ -259,6 +260,9 @@ extern void propagate_flag_to_children(Data_Obj *dp, uint32_t flags );
 /* verdata.c */
 extern void verdata(SINGLE_QSP_ARG_DECL);
 
+
+/* ascmenu.c */
+extern /*static*/ Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp);
 
 /* ascii.c */
 extern void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p);

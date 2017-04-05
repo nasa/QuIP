@@ -18,7 +18,7 @@ IOS_ITEM_LIST_FUNC(Camera,camera)
 static COMMAND_FUNC( do_list_cams )
 {
 	prt_msg("A/V Capture Devices:");
-	list_cameras(SINGLE_QSP_ARG);
+	list_cameras(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_cam_info )

@@ -684,7 +684,7 @@ static void set_mvidir(QSP_ARG_DECL  const char *dirname)
 	movie_dir = savestr( dirname );
 }
 
-static COMMAND_FUNC( do_list_mvis ){ list_mvis(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_mvis ){ list_mvis(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(playback_menu,s,f,h)
 

@@ -451,11 +451,11 @@ type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 
 #define ITEM_LIST_FUNC(type,stem)				\
 								\
-void list_##stem##s(SINGLE_QSP_ARG_DECL)			\
+void list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 {								\
 	if( stem##_itp == NO_ITEM_TYPE )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
-	list_items(QSP_ARG  stem##_itp );			\
+	list_items(QSP_ARG  stem##_itp, fp );			\
 }
 
 #define ITEM_ENUM_FUNC(type,stem)				\

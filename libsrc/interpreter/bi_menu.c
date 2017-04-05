@@ -35,7 +35,7 @@ static Item_Type *curr_itp=NULL;
 
 static COMMAND_FUNC( list_types )
 {
-	list_items(QSP_ARG  ittyp_itp);
+	list_items(QSP_ARG  ittyp_itp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( select_type )
@@ -54,7 +54,7 @@ static COMMAND_FUNC( select_type )
 
 static COMMAND_FUNC( do_list_items )
 {
-	list_items(QSP_ARG  curr_itp);
+	list_items(QSP_ARG  curr_itp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(items_menu,s,f,h)
@@ -160,7 +160,7 @@ static COMMAND_FUNC( do_pop_file )
 
 static COMMAND_FUNC( do_list_macs )
 {
-	list_items(QSP_ARG  macro_itp);
+	list_items(QSP_ARG  macro_itp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_find_mac )
@@ -173,7 +173,7 @@ static COMMAND_FUNC( do_find_mac )
 	lp=find_items(QSP_ARG  macro_itp, s);
 	if( lp==NO_LIST ) return;
 
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 
 	// Need to release the list!
 	dellist(lp);	// releases nodes and list struct but not data
@@ -229,7 +229,7 @@ static COMMAND_FUNC( do_search_macs )
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
 	prt_msg(msg_str);
 
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_show_mac )

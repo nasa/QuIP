@@ -365,7 +365,7 @@ H_CALL_F( vmgsq )
 
 COMMAND_FUNC( do_list_cudevs )
 {
-	list_cudevs(SINGLE_QSP_ARG);
+	list_cudevs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 #ifdef HAVE_CUDA

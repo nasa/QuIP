@@ -75,7 +75,7 @@ static COMMAND_FUNC( do_init )
 
 static COMMAND_FUNC( do_list_cams )
 {
-	list_pgcs(SINGLE_QSP_ARG);
+	list_pgcs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_cam_info )

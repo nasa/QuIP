@@ -117,11 +117,11 @@ typedef struct bitmap_gpu_word_info {
 // The down-side is that the struct no longer has a fixed size.
 
 typedef struct bitmap_gpu_info {
-	uint32_t			n_bitmap_words;
+	dimension_t			n_bitmap_words;
 	uint32_t			total_size;	// size of this struct in bytes
-	bitnum_t			next_word_idx;
-	bitnum_t			this_word_idx;
-	bitnum_t			last_word_idx;
+	dimension_t			next_word_idx;
+	dimension_t			this_word_idx;
+	dimension_t			last_word_idx;
 	Bitmap_GPU_Word_Info 		word_tbl[1];
 } Bitmap_GPU_Info;
 
@@ -322,6 +322,9 @@ struct shape_info {
 
 #define SHP_BITMAP_GPU_INFO_G(shp)		(shp)->si_bitmap_gpu_info_g
 #define SET_SHP_BITMAP_GPU_INFO_G(shp,p)	(shp)->si_bitmap_gpu_info_g = p
+
+// BUG currently in vectree/comptree.c, but should be moved!
+extern Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
 
 #endif /* ! _SHAPE_INFO_H_ */
 

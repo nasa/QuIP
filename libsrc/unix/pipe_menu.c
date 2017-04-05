@@ -102,7 +102,7 @@ static COMMAND_FUNC( do_closepipe )
 	close_pipe(QSP_ARG  pp);
 }
 
-static COMMAND_FUNC( do_list_pipes ){ list_pipes(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_pipes ){ list_pipes(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 /* fp should be null - but where do we specify the pipe handle? */
 

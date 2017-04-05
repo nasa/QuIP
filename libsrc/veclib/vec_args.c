@@ -1054,6 +1054,9 @@ static dimension_t slow_bitmap_word_count( Dimension_Set *dsp, Increment_Set *is
 	dimension_t n;
 
 	assert( isp != NULL );
+// BUG llu format assumes bit_count_t is 64 bits
+fprintf(stderr,"varg_n_bitmap_bits (1):  dim[0] = %d, dim[1] = %d, inc[1] = %d, offset = %llu\n",DS_DIM(dsp,0),
+DS_DIM(dsp,1),INCREMENT(isp,1),bit0);
 
 	bits_per_row = 1 + (DS_DIM(dsp,0) * DS_DIM(dsp,1) - 1 ) * INCREMENT(isp,1);
 

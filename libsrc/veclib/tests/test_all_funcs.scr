@@ -326,7 +326,7 @@ Test_Func_Conv vconv2udi uint32
 Test_Func_Conv vconv2uin u_short
 Test_Func_Conv vconv2uli uint64
 
-Test_Func_3 vdot
+#Test_Func_3 vdot
 Test_Func_3 vibnd
 
 # number functions

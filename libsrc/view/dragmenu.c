@@ -52,7 +52,7 @@ COMMAND_FUNC( do_embed_draggable )
 	addTail(VW_DRAG_LIST(vp),dgp->dg_np);
 }
 
-static COMMAND_FUNC( do_list_draggs ){ list_draggs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_draggs ){ list_draggs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(dragg_menu,s,f,h)
 

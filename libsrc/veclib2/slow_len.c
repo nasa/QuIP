@@ -1,5 +1,6 @@
 
 #include "quip_config.h"
+
 #include "quip_prot.h"
 
 #ifdef HAVE_ANY_GPU

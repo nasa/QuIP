@@ -432,7 +432,7 @@ static COMMAND_FUNC( do_set_text_angle )
 static COMMAND_FUNC( do_list_xfonts )
 {
 #ifdef HAVE_X11
-	list_xfonts(SINGLE_QSP_ARG);
+	list_xfonts(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 #endif /* HAVE_X11 */
 }
 
