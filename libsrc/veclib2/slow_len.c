@@ -3,7 +3,7 @@
 
 #include "quip_prot.h"
 
-#ifdef HAVE_ANY_GPU
+//#ifdef HAVE_ANY_GPU
 
 #include "veclib/slow_len.h"
 
@@ -129,5 +129,5 @@ NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations")
 	return 1;
 }
 
-#endif // HAVE_ANY_GPU
+//#endif // HAVE_ANY_GPU
 
