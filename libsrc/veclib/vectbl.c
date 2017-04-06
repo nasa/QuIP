@@ -404,7 +404,10 @@ void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 //	if( check_vfa_tbl_size(QSP_ARG  vfa_tbl, size) < 0 )
 //		return -1;
 
-	assert( size == N_VEC_FUNCS );
+//	assert( size == N_VEC_FUNCS );
+	if( size != N_VEC_FUNCS ){
+		WARN("size not equal to N_VEC_FUNCS!?");
+	}
 
 	qsort(vfa_tbl,size,sizeof(Vec_Func_Array),vfa_cmp);
 
@@ -423,14 +426,14 @@ ADVISE(ERROR_STRING);
 }
 */
 
-//		if( vfa_tbl[i].vfa_code != i ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
-//		i,VF_NAME(&vec_func_tbl[i]),
-//		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
-//			WARN(ERROR_STRING);
+		if( vfa_tbl[i].vfa_code != i ){
+			sprintf(ERROR_STRING,
+	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
+		i,VF_NAME(&vec_func_tbl[i]),
+		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
+			WARN(ERROR_STRING);
 //			retval = (-1);
-//		}
+		}
 
 		assert( vfa_tbl[i].vfa_code == i );
 	}

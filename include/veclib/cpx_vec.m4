@@ -79,12 +79,14 @@ _VEC_FUNC_CR_2V_1S( mvsdiv2 ,	cdst.re = src1 / scalar1_val ; cdst.im = 0)
 _VEC_FUNC_CR_2V_1S( mvsmul ,	cdst.re = scalar1_val * src1 ; cdst.im = 0)
 
 _VEC_FUNC_CR_2V_1S( mvssub ,	cdst.re = scalar1_val - src1 ; cdst.im = 0)
+_VEC_FUNC_CR_2V_1S( mvssub2 ,	cdst.re = src1 - scalar1_val ; cdst.im = 0)
 
 _VEC_FUNC_CR_2V_1S( mvsadd ,	cdst.re = src1 + scalar1_val ; cdst.im = 0)
 
 _VEC_FUNC_CPX_2V_1S( cvsadd ,	cdst.re = csrc1.re + cscalar1_val.re ; cdst.im = csrc1.im + cscalar1_val.im)
 
-_VEC_FUNC_CPX_2V_1S( cvssub ,	cdst.re = cscalar1_val.re - csrc1.re ; cdst.im = cscalar1_val.im - csrc1.im)
+_VEC_FUNC_CPX_2V_1S( cvssub ,	cdst.re = cscalar1_val.re - csrc1.re ; cdst.im = cscalar1_val.im - csrc1.im )
+_VEC_FUNC_CPX_2V_1S( cvssub2 ,	cdst.re = csrc1.re - cscalar1_val.re ; cdst.im = csrc1.im - cscalar1_val.im )
 _VEC_FUNC_CPX_2V_1S_T2( cvsmul ,	ASSIGN_CPX_PROD(tmpc,csrc1,cscalar1_val) ASSIGN_CPX(cdst,tmpc))
 
 define(`QUAT_NORM',( $1.re * $1.re + $1._i * $1._i + $1._j * $1._j + $1._k * $1._k ))
@@ -290,29 +292,41 @@ _VEC_FUNC_QR_2V_1S( pvsmul ,	qdst.re = scalar1_val * src1 ;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QR_2V_1S( pvssub ,	qdst.re = scalar1_val - src1 ;			\
+_VEC_FUNC_QR_2V_1S( pvssub ,	qdst.re = scalar1_val - src1 ;		\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
-_VEC_FUNC_QR_2V_1S( pvsadd ,	qdst.re = src1 + scalar1_val ;			\
+_VEC_FUNC_QR_2V_1S( pvssub2 ,	qdst.re = src1 - scalar1_val ;		\
+					qdst._i = 0;			\
+					qdst._j = 0;			\
+					qdst._k = 0			\
+					)
+
+_VEC_FUNC_QR_2V_1S( pvsadd ,	qdst.re = src1 + scalar1_val ;		\
 					qdst._i = 0;			\
 					qdst._j = 0;			\
 					qdst._k = 0			\
 					)
 
 _VEC_FUNC_QUAT_2V_1S( qvsadd ,	qdst.re = qsrc1.re + qscalar1_val.re ;			\
-					qdst._i = qsrc1._i + qscalar1_val._i ;			\
-					qdst._j = qsrc1._j + qscalar1_val._j ;			\
-					qdst._k = qsrc1._k + qscalar1_val._k			\
-					)
+				qdst._i = qsrc1._i + qscalar1_val._i ;			\
+				qdst._j = qsrc1._j + qscalar1_val._j ;			\
+				qdst._k = qsrc1._k + qscalar1_val._k			\
+				)
 
 _VEC_FUNC_QUAT_2V_1S( qvssub ,	qdst.re = qscalar1_val.re - qsrc1.re ;			\
-					qdst._i = qscalar1_val._i - qsrc1._i ;			\
-					qdst._j = qscalar1_val._j - qsrc1._j ;			\
-					qdst._k = qscalar1_val._k - qsrc1._k			\
-					)
+				qdst._i = qscalar1_val._i - qsrc1._i ;			\
+				qdst._j = qscalar1_val._j - qsrc1._j ;			\
+				qdst._k = qscalar1_val._k - qsrc1._k			\
+				)
+
+_VEC_FUNC_QUAT_2V_1S( qvssub2 ,	qdst.re = qsrc1.re - qscalar1_val.re ;			\
+				qdst._i = qsrc1._i - qscalar1_val._i ;			\
+				qdst._j = qsrc1._j - qscalar1_val._j ;			\
+				qdst._k = qsrc1._k - qscalar1_val._k 			\
+				)
 
 /* For real or complex, multiplication is commutative, but not for quaternions!? */
 

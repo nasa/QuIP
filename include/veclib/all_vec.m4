@@ -21,6 +21,7 @@ _VEC_FUNC_2V( rvsqr, dst = (dest_type)(src1 * src1) )
 
 _VEC_FUNC_2V_SCAL( rvsadd, dst = (dest_type)(scalar1_val + src1) )
 _VEC_FUNC_2V_SCAL( rvssub, dst = (dest_type)(scalar1_val - src1) )
+_VEC_FUNC_2V_SCAL( rvssub2, dst = (dest_type)(src1 - scalar1_val) )
 _VEC_FUNC_2V_SCAL( rvsmul, dst = (dest_type)(src1 * scalar1_val) )
 _VEC_FUNC_2V_SCAL( rvsdiv, dst = (dest_type)(scalar1_val / src1) )
 _VEC_FUNC_2V_SCAL( rvsdiv2, dst = (dest_type)(src1 / scalar1_val) )
