@@ -109,7 +109,21 @@ ocl_veclib_prot.h:	ocl_veclib_prot.m4 ocl_port.m4 gen_port.m4 ocl_func_prot.m4
 
 #			platform_funcs.h
 
+# Files that need to be included in the distribution archive,
+# but not installed as system includes...
+
 noinst_HEADERS =					\
+			vl2_veclib_prot.m4		\
+			ocl_veclib_prot.m4		\
+			cu2_veclib_prot.m4		\
+			vl2_func_prot.m4		\
+			ocl_func_prot.m4		\
+			cu2_func_prot.m4		\
+			gen_port.m4			\
+			vl2_port.m4			\
+			ocl_port.m4			\
+			cu2_port.m4			\
+							\
 			asc_classes.c			\
 			bitmap_ops.c			\
 			conv_vec.c			\

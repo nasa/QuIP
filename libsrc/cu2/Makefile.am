@@ -34,6 +34,8 @@ NVCC_SOURCES =			cu2_funcs.cu
 
 # more dependencies here, but what are they?  BUG
 cu2_funcs.cu:	m4_cu2_veclib.c
+		touch cu2_funcs.cu
+
 # cu2_host_untyped_call_defs.h
 
 m4_cu2_veclib.c:	cu2_veclib_expanded.c
@@ -44,6 +46,7 @@ m4_cu2_veclib.c:	cu2_veclib_expanded.c
 
 LOCAL_M4FILES=					\
 			cu2_fft_funcs.m4	\
+			cu2_typed_fft_funcs.m4	\
 			cu2_host_call_defs.m4	\
 			cu2_host_funcs.m4	\
 			cu2_kern_call_defs.m4	\

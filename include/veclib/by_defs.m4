@@ -5,8 +5,8 @@ define(`std_scalar',`u_b')
 define(`dest_type',`char')
 define(`ALL_ONES',`0xff')
 
-// Broken on CUDA 6?
-//BUG ifdefs don't affect defines!?
-define(`absfunc',`abs($1)')
+dnl	// Broken on CUDA 6?
+dnl	// Not broken, but needs cast to avoid using host function (C++)
+define(`absfunc',`abs((int)$1)')
 
 
