@@ -344,7 +344,7 @@ struct cuda_stream_info {
 #endif // HAVE_CUDA
 
 
-typedef struct platform_stream {
+/*typedef*/ struct platform_stream {
 	Item	ps_item;
 #ifdef HAVE_ANY_GPU
 	union {
@@ -356,7 +356,7 @@ typedef struct platform_stream {
 #endif // HAVE_CUDA
 	} ps_si;
 #endif // HAVE_ANY_GPU
-} Platform_Stream;
+} /*Platform_Stream*/;
 
 #define STREAM_NAME(psp)	(psp)->ps_item.item_name
 

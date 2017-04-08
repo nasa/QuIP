@@ -5,7 +5,7 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "my_ocl.h"
-#include "veclib/ocl_port.h"
+//#include "veclib/ocl_port.h"
 #include "veclib_api.h"
 #include "veclib/vec_func.h"
 #include "ocl_platform.h"
@@ -684,11 +684,13 @@ void delete_kernel(QSP_ARG_DECL  Kernel *kp)
 }
 
 
+#ifdef FOOBAR
 int get_max_threads_per_block(Data_Obj *dp)
 {
 	NWARN("get_max_threads_per_block:  unimplemented, returning 8!?");
 	return 8;
 }
+#endif // FOOBAR
 
 #endif // HAVE_OPENCL
 

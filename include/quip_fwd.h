@@ -53,6 +53,7 @@ FWD_TYPEDEF(hash_tbl,Hash_Tbl)
 FWD_TYPEDEF(command,Command)
 FWD_TYPEDEF(vec_obj_args,Vec_Obj_Args)
 FWD_TYPEDEF(platform_device,Platform_Device)
+FWD_TYPEDEF(platform_stream,Platform_Stream)
 FWD_TYPEDEF(curl_info,Curl_Info)
 
 typedef List Stack;

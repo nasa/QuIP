@@ -1,3 +1,8 @@
+/* vl2_port.m4 BEGIN */
+
+include(`../../include/veclib/gen_port.m4')
+
+suppress_if
 
 define(`QUATERNION_SUPPORT',`')
 dnl #undef USE_SSE
@@ -8,16 +13,17 @@ dnl #undef BUILD_FOR_GPU
 
 define(`pf_str',`vl2')
 
-include(`../../include/veclib/gen_port.m4')
-
 dnl	INSURE_PLATFORM_DEVICE(dp)	/* nop */
 define(`INSURE_PLATFORM_DEVICE',`')
 define(`GLOBAL_QUALIFIER',`')
 dnl	GET_MAX_THREADS( dp )		/* nop */
 define(`GET_MAX_THREADS',`')
 
-extern void *TMPVEC_NAME(Platform_Device *pdp, size_t size, size_t len, const char *whence);
-extern void FREETMP_NAME(void *a, const char *whence);
+suppress_no
+
+// vl2_port.m4 - declaring tmp_vec functions
+extern void *TMPVEC_NAME `(Platform_Device *pdp, size_t size, size_t len, const char *whence)';
+extern void FREETMP_NAME `(void *a, const char *whence)';
 
 #include <math.h>	// isinf etc
 

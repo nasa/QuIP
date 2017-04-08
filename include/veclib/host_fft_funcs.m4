@@ -1,9 +1,19 @@
-// This file is kind of the opposite of the type_tbl approach...
-// here we have a bunch of switches and if/then's...
+dnl	 This file is kind of the opposite of the type_tbl approach...
+dnl	 here we have a bunch of switches and if/then's...
+
+dnl	This file defines the untyped functions
+dnl	BUT it doesn't seem to be included???
 
 my_include(`../../include/veclib/gen_entries.m4')
 
-ifdef(`BUILD_FOR_GPU',`',` dnl ifndef BUILD_FOR_GPU
+ifdef(`BUILD_FOR_GPU',`
+
+dnl	Need GPU definitions here!!!
+
+',` dnl ifndef BUILD_FOR_GPU
+
+dnl	These are the un-typed calls...
+
 void HOST_CALL_NAME(xform_list)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( xform_list, OA_DEST(oap) ) }
 void HOST_CALL_NAME(vec_xform)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( vec_xform, OA_DEST(oap) ) }
 

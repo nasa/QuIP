@@ -1,5 +1,5 @@
 
-include(`../../include/veclib/gen_kern_args.m4')
+my_include(`../../include/veclib/gen_kern_args.m4')
 
 define(`SET_KERNEL_SEPARATOR',`')
 

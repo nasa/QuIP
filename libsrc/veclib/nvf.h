@@ -66,7 +66,7 @@ extern COMMAND_FUNC( set_n_processors );
 extern COMMAND_FUNC( set_use_sse );
 
 /* fftsupp.c */
-#include "veclib/fftsupp.h"
+//#include "veclib/fftsupp.h"
 
 //extern void bitrev_init(dimension_t);
 //extern int real_fft_check(QSP_ARG_DECL  Data_Obj *, Data_Obj *, const char *);

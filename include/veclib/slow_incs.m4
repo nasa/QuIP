@@ -1,4 +1,6 @@
 
+suppress_if
+
 dnl SHOW_INCR(inc_p)
 
 define(`SHOW_INCR(inc_p)',`fprintf(stderr,"%s:  %d %d %d %d %d\n","$1", ($1)->d5_dim[0], ($1)->d5_dim[1], ($1)->d5_dim[2], ($1)->d5_dim[3], ($1)->d5_dim[4]);')
@@ -8,11 +10,9 @@ define(`DECL_SLOW_INCRS',DECL_SLOW_INCRS_$1$2)
 dnl SETUP_SLOW_INCS(bitmap,vectors)
 define(`SETUP_SLOW_INCS',SETUP_SLOW_INCS_$1$2)
 
-divert(0)
 dnl /* decl_slow_incrs_1 */
 define(`DECL_SLOW_INCRS_1',`dim5 dst_vwxyz_incr;')
 dnl /* `DECL_SLOW_INCRS_1' = DECL_SLOW_INCRS_1 */
-suppress_if
 define(`DECL_SLOW_INCRS_SRC1',`dim5 s1_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC2',`dim5 s2_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC3',`dim5 s3_vwxyz_incr;')
@@ -153,3 +153,4 @@ define(`SETUP_SLOW_INCS_SBM_2',`SETUP_SLOW_INCS_2 SETUP_SLOW_INCS_SBM')
 
 define(`SETUP_SLOW_INCS_SBM_3',`SETUP_SLOW_INCS_3 SETUP_SLOW_INCS_SBM')
 
+suppress_no

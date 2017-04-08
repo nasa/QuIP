@@ -5,12 +5,16 @@ all:	libcu2.a
 # cu2_funcs.o gets built from cu2_funcs.cu with nvcc, but how does
 # it get put into the library???
 
+cu2_utils.c:	cu2_utils.m4 _cu2_utils.c
+	m4 < cu2_utils.m4 > cu2_utils.c
+
 noinst_LIBRARIES = libcu2.a
 
 libcu2_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
+#			cu2.c
+
 libcu2_a_SOURCES =			\
-			cu2.c		\
 			cu2_curand.c	\
 			cu2_fft.c	\
 			cu2_streams.c	\
@@ -29,7 +33,8 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I../.. -I$(top_srcdir)/inc
 NVCC_SOURCES =			cu2_funcs.cu
 
 # more dependencies here, but what are they?  BUG
-cu2_funcs.cu:	m4_cu2_veclib.c cu2_host_untyped_call_defs.h
+cu2_funcs.cu:	m4_cu2_veclib.c
+# cu2_host_untyped_call_defs.h
 
 m4_cu2_veclib.c:	cu2_veclib_expanded.c
 
@@ -89,8 +94,7 @@ INC_M4FILES=							\
 			$(INCDIR)/gpu_args.m4			\
 			$(INCDIR)/gpu_call_utils.m4		\
 			$(INCDIR)/gpu_special_defs.m4		\
-			$(INCDIR)/host_calls_cpu.m4		\
-			$(INCDIR)/host_calls_gpu.m4		\
+			$(INCDIR)/gpu_host_call_defs.m4		\
 			$(INCDIR)/host_calls_special.m4		\
 			$(INCDIR)/host_typed_call_defs.m4	\
 			$(INCDIR)/in_defs.m4			\
@@ -128,44 +132,44 @@ cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 
 # the dependencies above don't seem to trigger the recompile!?
 
+#			cu2_kern_call_defs.h		\
+#			cu2_kernels.c			\
+#			cu2_host_call_defs.h		\
+#			cu2_host_funcs.c		\
+#			cu2_typtbl.c			\
+#			../../include/veclib/all_vec.c	\
+#			../../include/veclib/report_args.h	\
+#			cu2_host_funcs.c		\
+#			cu2_host_funcs.c		\
+#			cu2_host_call_defs.h
+#			../../include/veclib/gen_host_calls.c	\
+#			../../include/veclib/dp_func_defs.h	\
+#			../../include/veclib/gpu_call_utils.h	\
+#			../../include/veclib/host_typed_call_defs.h	\
+#			../../include/veclib/gen_gpu_calls.h	\
+#			../../include/veclib/gpu_args.h	\
+#			../../include/veclib/gen_entries.h	\
+#			../../include/veclib/cu2_port.h	\
+#			../../include/veclib/eqsp_incs.h	\
+#			../../include/veclib/slow_incs.h	\
+#			cu2_host_untyped_call_defs.h
+
 # May not have added ALL dependencies!?  BUG
 cu2_funcs.o:		cu2_funcs.cu			\
 			m4_cu2_veclib.c			\
-			cu2_kern_call_defs.h		\
-			cu2_kernels.c			\
-			cu2_host_call_defs.h		\
-			cu2_host_funcs.c		\
-			cu2_typtbl.c			\
-			cu2_host_untyped_call_defs.h	\
-			../../include/veclib/cu2_port.h	\
 			../../include/veclib/cu2_veclib_prot.h	\
-			../../include/veclib/host_typed_call_defs.h	\
-			../../include/veclib/gen_gpu_calls.h	\
-			../../include/veclib/gpu_args.h	\
-			../../include/veclib/gen_entries.h	\
-			../../include/veclib/gen_host_calls.c	\
-			../../include/veclib/dp_func_defs.h	\
-			../../include/veclib/gpu_call_utils.h	\
 			../../include/veclib/slow_len.h	\
-			../../include/veclib/eqsp_incs.h	\
-			../../include/veclib/slow_incs.h	\
-			../../include/veclib/all_vec.c	\
-			../../include/veclib/vecgen.h	\
-			../../include/veclib/report_args.h	\
-			cu2_host_funcs.c		\
-			cu2_host_call_defs.h
+			../../include/veclib/vecgen.h
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
+#			cu2_kern_call_defs.h
+#			cu2_host_call_defs.h
+#			cu2_host_untyped_call_defs.h
+#			cu2_typtbl.h
+
 noinst_HEADERS =					\
-			cu2_kern_call_defs.h		\
-			cu2_host_call_defs.h		\
 			cu2_func_tbl.h			\
-			cu2_host_funcs.c		\
-			cu2_host_untyped_call_defs.h	\
-			cu2_kernels.c			\
-			m4_cu2_veclib.c			\
-			cu2_typtbl.c			\
-			cu2_typtbl.h
+			m4_cu2_veclib.c
 
 if HAVE_NVCC
 libcu2_a_SOURCES += $(NVCC_SOURCES)

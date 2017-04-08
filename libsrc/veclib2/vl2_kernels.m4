@@ -1,4 +1,4 @@
-divert(0)
+suppress_no
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif // HAVE_MATH_H
@@ -6,9 +6,13 @@ suppress_if
 
 define(`BUILDING_KERNELS',`')
 
-include(`../../include/veclib/vl2_veclib_prot.m4')	// declare all the prototypes for the host
+dnl include(`../../include/veclib/vl2_veclib_prot.m4')	// declare all the prototypes for the host
 
-include(`../../include/veclib/fftsupp.m4')	// prototypes for some external helpers
+dnl	include(`../../include/veclib/fftsupp.m4')	// prototypes for some external helpers
+suppress_no
+#include "veclib/fftsupp.h"
+#include "veclib/vl2_veclib_prot.h"
+suppress_if
 
 include(`cpu_call_defs.m4')
 

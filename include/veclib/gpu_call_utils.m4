@@ -1,4 +1,6 @@
+suppress_no
 /* gpu_call_utils.m4 BEGIN */
+suppress_if
 
 // This file contains macros that are useful for writing kernels...
 // Because the kernels are static, the names don't need to include the
@@ -28,7 +30,7 @@ define(`GPU_FUNC_FAST_IDX_HELPER_NAME',GPU_FUNC_FAST_NAME($1)`_helper')
 
 
 
-/****************** DECL_INDICES ***********************/
+/****************** decl_indices ***********************/
 
 define(`SLOW_GPU_INDEX_TYPE',`dim5')
 
@@ -84,7 +86,7 @@ define(`DECL_EXTRA_T3',std_cpx tmpc; std_type tmp_denom;)
 define(`DECL_EXTRA_T4',std_quat tmpq;)
 define(`DECL_EXTRA_T5',std_quat tmpq; std_type tmp_denom;)
 
-/*********************** INIT_INDICES *****************/
+/*********************** init_indices *****************/
 
 dnl	INIT_INDICES(bitmaps,vectors)
 dnl	DBM is set first, but SBM is set second...
@@ -109,7 +111,7 @@ dnl	define(`INIT_INDICES_DBM_1SRC_1S',INIT_INDICES_DBM_1SRC)
 dnl	define(`INIT_INDICES_DBM_SBM',`DECL_INDICES_DBM_SBM SET_INDICES_DBM_SBM')
 
 
-/******************** SET_INDICES ***************************/
+/******************** set_indices ***************************/
 
 define(`SET_INDICES_',`')
 define(`SET_INDICES_SBM',`')
@@ -152,7 +154,7 @@ dnl	define(`SET_INDICES_DBM_2SRCS',`/* set_indices_dbm_2srcs */ SET_INDICES_DBM_
 dnl	// Can't use SET_INDICES_SBM here...
 dnl	define(`SET_INDICES_DBM_SBM',`SET_INDICES_DBM sbm_bit_idx = dbm_bit_idx;')
 
-/**************** SCALE_INDICES_ ********************/
+/**************** scale_indices ********************/
 
 dnl SCALE_INDICES(bitmap,vectors)
 dnl define(`SCALE_INDICES',`/* scale_indices /$1/ /$2/ */ `SCALE_INDICES_$1$2'')
@@ -300,5 +302,6 @@ define(`SET_DBM_BIT',if($1) dbm[i_dbm_word] |= dbm_bit; else dbm[i_dbm_word] &= 
 
 
 
+suppress_no
 /* gpu_call_utils.m4 END */
 

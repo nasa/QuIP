@@ -114,11 +114,11 @@ my_include(`../../include/veclib/host_calls_special.m4')
 
 ifdef(`BUILD_FOR_GPU',`
 
-my_include(`../../include/veclib/host_calls_gpu.m4')
+my_include(`../../include/veclib/gpu_host_call_defs.m4')
 
 ',`
 
-my_include(`../../include/veclib/host_calls_cpu.m4')
+my_include(`../../include/veclib/cpu_host_call_defs.m4')
 
 ')
 

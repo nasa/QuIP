@@ -9,6 +9,10 @@
 
 #include "quip_prot.h"
 #include "my_cuda.h"
+
+#include "yuv2rgb_expanded.c"
+
+#ifdef FOOBAR
 #include "veclib/gpu_call_utils.h"
 #include "../cu2/cu2_host_call_defs.h"
 #include "data_obj.h"
@@ -207,6 +211,8 @@ static void init_tables(void)
 	const_tbl_entries<<< 1 , CLIP  >>>( CLIP+256, 255 );
 	tbls_inited=1;
 }
+
+#endif // FOOBAR
 
 #endif /* HAVE_CUDA */
 

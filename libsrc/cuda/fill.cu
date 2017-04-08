@@ -75,6 +75,10 @@
 #include "quip_prot.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"			// describe_cuda_error
+
+#include "cu2_fill_expanded.c"
+
+#ifdef FOOBAR
 #include "veclib/gpu_call_utils.h"
 #include "veclib/slow_defs.h"
 #include "../cu2/cu2_host_call_defs.h"
@@ -387,6 +391,7 @@ void h_sp_ifl2( Data_Obj *dp, int seed_x, int seed_y, float tol, float fill_val 
 		NADVISE(DEFAULT_ERROR_STRING);
 	}
 }
+#endif // FOOBAR
 
 
 #endif /* HAVE_CUDA */

@@ -34,10 +34,11 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I../.. -I$(top_srcdir)/inc
 
 # The dependency building stuff doesn't seem to know about .cu files...
 
+#		../../include/veclib/fast_test.h	\
+#		../../include/veclib/xfer_args.h
+
 CU_DEPS =						\
 		my_cuda.h				\
-		../../include/veclib/fast_test.h	\
-		../../include/veclib/xfer_args.h	\
 		../../include/cuda_supp.h 		\
 		../../config.h 				\
 		../../include/quip_config.h 		\
@@ -54,14 +55,15 @@ host_calls.h:	host_call_utils.h ../../include/veclib/fast_test.h	\
 conversions.cu:	$(CU_DEPS)
 #	touch conversions.cu
 
-fill.cu:	$(CU_DEPS)
+
+fill.cu:	$(CU_DEPS) cu2_fill_expanded.c
 #	touch fill.cu
 
-cuda_centroid.cu:	gpu_cent.cu		\
+cu2_centroid.cu:	gpu_cent.cu cu2_centroid_expanded.c		\
 			$(CU_DEPS)
-#	touch cuda_centroid.cu
+#	touch cu2_centroid.cu
 
-yuv2rgb.cu:	$(CU_DEPS)
+yuv2rgb.cu:	$(CU_DEPS) yuv2rgb_expanded.c
 #	touch yuv2rgb.cu
 
 yuv2rgb.o:	yuv2rgb.cu
@@ -73,7 +75,7 @@ conversions.o:	conversions.cu
 fill.o:	fill.cu
 	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
 
-cuda_centroid.o:	cuda_centroid.cu
+cu2_centroid.o:	cu2_centroid.cu
 	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
 
 noinst_LIBRARIES = libqcuda.a
@@ -126,7 +128,7 @@ libqcuda_a_SOURCES =					\
 #				conversions.cu
 
 NVCC_SOURCES =						\
-				cuda_centroid.cu	\
+				cu2_centroid.cu	\
 				fill.cu			\
 				yuv2rgb.cu
 
@@ -141,6 +143,25 @@ endif
 #libqcuda_a_SOURCES += fakit.cpp
 #
 
+# BUG more dependencies!
+SYSTEM_M4_FILES=							\
+				../../include/veclib/gpu_args.m4	\
+				../../include/veclib/gpu_call_utils.m4	\
+				../../include/veclib/slow_defs.m4	\
+				../../include/veclib/dp_defs.m4		\
+				../../include/veclib/sp_defs.m4	\
+				../../include/veclib/cu2_port.m4	\
+				../cu2/cu2_host_call_defs.m4	\
+				../cu2/cu2_kern_call_defs.m4
+
+yuv2rgb_expanded.c:	yuv2rgb.m4 $(SYSTEM_M4_FILES)
+	m4 < yuv2rgb.m4 > yuv2rgb_expanded.c
+
+cu2_centroid_expanded.c:	cu2_centroid.m4 $(SYSTEM_M4_FILES)
+	m4 < cu2_centroid.m4 > cu2_centroid_expanded.c
+
+cu2_fill_expanded.c:	cu2_fill.m4 $(SYSTEM_M4_FILES)
+	m4 < cu2_fill.m4 > cu2_fill_expanded.c
 
 EXTRA_DIST	=	root_cmds.sh
 

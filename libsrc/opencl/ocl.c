@@ -18,11 +18,12 @@
 
 #include "quip_prot.h"
 #include "strbuf.h"
-#include "my_ocl.h"	// 
-#include "ocl_platform.h"	// 
+#include "my_ocl.h"
+#include "ocl_platform.h"
+#include "veclib/ocl_veclib_prot.h"
 #include "veclib_api.h"
 
-#include "veclib/ocl_veclib_prot.h"
+//#include "veclib/ocl_veclib_prot.h"
 
 // When we build in Xcode, we need to precede these with OpenGL:
 #include <OpenGL/OpenGL.h>		// apple only?
@@ -606,10 +607,9 @@ static void ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 	// BUG check return value
 }
 
-void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+//void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+void *ocl_tmp_vec(Platform_Device *pdp, size_t size,size_t len,const char *whence)
 {
-	//NWARN("ocl_tmpvec not implemented!?");
-	//return NULL;
 	void *ptr;
 
 	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len*size, 0 /* alignment arg not used? */ );
@@ -617,9 +617,9 @@ void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whenc
 	return ptr;
 }
 
-void FREETMP_NAME(void *ptr,const char *whence)
+//void FREETMP_NAME(void *ptr,const char *whence)
+void ocl_free_tmp(void *ptr,const char *whence)
 {
-	//NWARN("ocl_freetmp not implemented!?");
 	ocl_mem_free(DEFAULT_QSP_ARG  ptr);
 }
 

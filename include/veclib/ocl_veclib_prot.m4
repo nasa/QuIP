@@ -1,13 +1,8 @@
-
-my_include(`../../include/veclib/ocl_port.m4')
-
-extern void h_ocl_vuni(HOST_CALL_ARG_DECLS);
-extern void h_ocl_sp_vuni(HOST_CALL_ARG_DECLS);
-extern void h_ocl_dp_vuni(HOST_CALL_ARG_DECLS);
-
-extern void h_ocl_fft2d(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-extern void h_ocl_ift2d(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-extern void h_ocl_fftrows(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-extern void h_ocl_iftrows(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+/* ocl_veclib_prot.m4 BEGIN */
+include(`../../include/veclib/ocl_port.m4')
+my_include(`../../include/veclib/vecgen.m4')
+my_include(`../../include/veclib/ocl_func_prot.m4')
+my_include(`../../include/veclib/platform_funcs.m4')
+/* ocl_veclib_prot.m4 DONE */
 
 

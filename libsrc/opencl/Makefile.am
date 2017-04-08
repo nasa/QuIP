@@ -16,9 +16,12 @@ AM_CFLAGS= -I/System/Library/Frameworks/OpenGL.framework/Headers
 #	ocl_viewer.c
 
 #	ocl_veclib.c
+#	ocl_fft.c
+
+ocl_rand.c:	ocl_rand.m4 _ocl_rand.c $(INC_M4FILES)
+	m4 ocl_rand.m4 > ocl_rand.c
 
 libocl_a_SOURCES =			\
-			ocl_fft.c	\
 			ocl_streams.c	\
 			ocl_menu.c	\
 			ocl_rand.c	\
@@ -31,8 +34,10 @@ m4_ocl_veclib.c:	ocl_veclib_expanded.c
 #../../include/veclib/vecgen.m4:
 
 LOCAL_M4FILES=					\
-			ocl_fft_funcs.m4	\
+			ocl_typed_fft_funcs.m4	\
+			ocl_untyped_fft_funcs.m4	\
 			ocl_host_call_defs.m4	\
+			ocl_untyped_host_calls.m4	\
 			ocl_host_funcs.m4	\
 			ocl_kern_args.m4	\
 			ocl_kern_call_defs.m4	\
@@ -84,8 +89,8 @@ INC_M4FILES=							\
 			$(INCDIR)/gpu_args.m4			\
 			$(INCDIR)/gpu_call_utils.m4		\
 			$(INCDIR)/gpu_special_defs.m4		\
-			$(INCDIR)/host_calls_cpu.m4		\
-			$(INCDIR)/host_calls_gpu.m4		\
+			$(INCDIR)/cpu_host_call_defs.m4		\
+			$(INCDIR)/gpu_host_call_defs.m4		\
 			$(INCDIR)/host_calls_special.m4		\
 			$(INCDIR)/host_typed_call_defs.m4	\
 			$(INCDIR)/in_defs.m4			\
@@ -142,24 +147,25 @@ vuni.i:	$(srcdir)/vuni.ocl
 #./strip_it2.sh
 #			ocl_api.h
 
+#			conversions.h
+#			enum_menu_calls.h
+#			host_conv_prot.h
+#			kern_src.h
+#			ocl_host_call_defs.h
+#			ocl_host_untyped_call_defs.h
+#			ocl_kern_args.h
+#			ocl_kern_call_defs.h
+#			ocl_kernel_src.h
+#			type_undefs.h
+#			undefs.h
+#			ocl_host_funcs.c
+#			ocl_kernels.c
+#			ocl_typed_fft.c			\
+#			ocl_typtbl.c
+
 noinst_HEADERS =					\
-			ocl_host_funcs.c		\
-			ocl_kernels.c			\
-			ocl_typtbl.c			\
-			ocl_typed_fft.c			\
 			gencl.sh			\
-			vuni.ocl			\
-			conversions.h			\
-			enum_menu_calls.h		\
-			host_conv_prot.h		\
-			kern_src.h			\
-			ocl_host_call_defs.h		\
-			ocl_host_untyped_call_defs.h	\
-			ocl_kern_args.h			\
-			ocl_kern_call_defs.h		\
-			ocl_kernel_src.h		\
-			type_undefs.h			\
-			undefs.h
+			vuni.ocl
 
 
 clean-local:

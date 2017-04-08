@@ -51,8 +51,8 @@
 #include "veclib/vec_func.h"
 #include "veclib/obj_args.h"
 
-#include "veclib/cu2_port.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
-#include "platform.h"
+#include "veclib/cu2_veclib_prot.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
+//#include "platform.h"
 
 #include "query.h"
 #include "veclib_api.h"

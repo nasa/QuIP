@@ -3,11 +3,11 @@ dnl BUG - merge this file!!! (but with what???)
 
 dnl	define(`MORE_DEBUG',`x')	dnl	print extra debugging
 
-include(`ocl_kern_args.m4')
-include(`../../include/veclib/slow_len.m4')
-include(`../../include/veclib/slow_incs.m4')
-include(`../../include/veclib/eqsp_incs.m4')
-include(`../../include/veclib/slow_vars.m4')
+my_include(`ocl_kern_args.m4')
+my_include(`../../include/veclib/slow_len.m4')
+my_include(`../../include/veclib/slow_incs.m4')
+my_include(`../../include/veclib/eqsp_incs.m4')
+my_include(`../../include/veclib/slow_vars.m4')
 
 // this is 80 columns
 //345678901234567890123456789012345678901234567890123456789012345678901234567890

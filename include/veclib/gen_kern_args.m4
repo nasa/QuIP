@@ -1,5 +1,7 @@
-// These are used in the declarations of the kernels,
-// and the function calls of the kernels.
+suppress_if		dnl	this file is just definitions
+
+dnl	// These are used in the declarations of the kernels,
+dnl	// and the function calls of the kernels.
 
 define(`GEN_ARGS_1S',$1`_1S')
 define(`GEN_ARGS_2S',$1`_2S')
@@ -956,4 +958,6 @@ define(`GEN_ARGS_SLEN_QR_2_1S',`GEN_ARGS_SLOW_QR_2_1S($1) GEN_ADD_SLOW_LEN($1)')
 
 
 
+
+suppress_no
 

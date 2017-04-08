@@ -1,4 +1,32 @@
 /* gen_port.m4 BEGIN */
+#include "quip_prot.h"
+#include "shape_bits.h"
+divert(-1)		dnl	suppress output
+
+
+dnl	Comment out this definition to print blank lines (and C comments) in
+dnl	definition sections...
+
+define(`suppressing',`')
+
+define(`suppress_yes',`
+/* Suppressing ! */
+divert(-1)
+')
+
+define(`suppress_no',`
+divert(0)
+/* NOT Suppressing ! */
+')
+
+ifdef(`suppressing',`
+define(`suppress_if',`suppress_yes')
+',`
+define(`suppress_if',`suppress_no')
+')
+
+suppress_if
+
 define(`TMPVEC_NAME',`_TMPVEC_NAME(pf_str)')
 define(`_TMPVEC_NAME',$1`_tmp_vec')
 
@@ -126,17 +154,25 @@ define(`flush_all_output',`include(`../../include/veclib/flush_output.m4')')
 
 ifdef(`MAXIMUM_TESTING',`
 define(`my_include',`
+suppress_no
 // BEGIN INCLUDED FILE $1
 flush_all_output
 include($1)
+suppress_no
 // END INCLUDED FILE $1
 flush_all_output
 ')
 ',` dnl else ! MAXIMUM_TESTING
 define(`my_include',`
+suppress_no
 // BEGIN INCLUDED FILE $1
 include($1)
+suppress_no
 // END INCLUDED FILE $1
 ')
 ') dnl endif ! MAXIMUM_TESTING
+
+suppress_no
+
+/* gen_port.m4 DONE */
 

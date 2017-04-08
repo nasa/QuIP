@@ -1,4 +1,6 @@
-// gen_host_calls.m4 BEGIN - used for host calls NOT kernels 
+dnl	// gen_host_calls.m4 BEGIN - used for host calls NOT kernels 
+
+dnl	This file contains only un-typed functions...
 
 define(`INCLUDE_FFT_FUNCS',`')
 // SP stuff
@@ -24,7 +26,7 @@ my_include(`../../include/veclib/dp_defs.m4')
 // gen_host_calls.m4:  CALLING gen_float_calls.m4 for double
 my_include(`../../include/veclib/gen_float_calls.m4')
 
-undefine(`INCLUDE_FFT_FUNCS')
+undefine(`INCLUDE_FFT_FUNCS')		dnl	don't want to include these with mixed prec...
 
 // BY stuff
 
@@ -76,7 +78,6 @@ my_include(`../../include/veclib/gen_uint_calls.m4')
 
 dnl Why is this only for not building kernels?
 
-dnl ifndef(`BUILDING_KERNELS',`
 
 dnl Now mixed precision functions...
 dnl We currently implement 4:
@@ -95,6 +96,7 @@ my_include(`../../include/veclib/ubyin_defs.m4')
 my_include(`../../include/veclib/gen_mixed_uint_calls.m4')
 
 my_include(`../../include/veclib/spdp_defs.m4')
+suppress_no
 // gen_host_calls.m4:  CALLING gen_mixed_float_calls.m4 for float/double
 my_include(`../../include/veclib/gen_mixed_float_calls.m4')
 undefine(`MIXED_PRECISION')
@@ -112,9 +114,7 @@ my_include(`../../include/veclib/gen_bit_calls.m4')
 my_include(`../../include/veclib/all_same_prec_vec.m4')
 undefine(`BIT_PRECISION')
 
-dnl ',`') dnl endif // BUILDING_KERNELS
-
-
+suppress_no
 // gen_host_calls.m4 DONE
 
 
