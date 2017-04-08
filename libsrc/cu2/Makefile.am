@@ -37,6 +37,7 @@ cu2_funcs.cu:	m4_cu2_veclib.c
 # cu2_host_untyped_call_defs.h
 
 m4_cu2_veclib.c:	cu2_veclib_expanded.c
+	touch m4_cu2_veclib.c
 
 #			cu2_kern_args.m4
 #			cu2_kernel_src.m4
