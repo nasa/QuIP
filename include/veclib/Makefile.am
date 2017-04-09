@@ -1,5 +1,10 @@
 
-all:	vl2_veclib_prot.h ocl_veclib_prot.h cu2_veclib_prot.h
+GENERATED_SOURCE=	vl2_veclib_prot.h ocl_veclib_prot.h cu2_veclib_prot.h
+
+all:	$(GENERATED_SOURCE)
+
+clean-local:
+	rm -rf $(GENERATED_SOURCE)
 
 #			enum_menu_calls.h
 #			gen_menu_prot.h

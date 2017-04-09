@@ -20,10 +20,10 @@ AM_CFLAGS= -I/System/Library/Frameworks/OpenGL.framework/Headers
 
 M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 
-ocl_rand.c:	ocl_rand.m4 _ocl_rand.c $(INC_M4FILES)
-	m4 $(M4OPTS) $(srcdir)/ocl_rand.m4 > $(builddir)/ocl_rand.c
+ocl_rand_expanded.c:	ocl_rand.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
+	m4 $(M4OPTS) $(srcdir)/ocl_rand.m4 > $(builddir)/ocl_rand_expanded.c
 
-ocl_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+ocl_veclib_expanded.c:	ocl_veclib.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/ocl_veclib.m4 > $(builddir)/ocl_veclib_expanded.c
 
 libocl_a_SOURCES =			\
@@ -31,10 +31,11 @@ libocl_a_SOURCES =			\
 			ocl_menu.c	\
 			ocl_rand.c	\
 			ocl_utils.c	\
-			m4_ocl_veclib.c	\
+			ocl_veclib.c	\
 			ocl.c
 
-m4_ocl_veclib.c:	ocl_veclib_expanded.c
+$(srcdir)/ocl_veclib.c:	ocl_veclib_expanded.c
+	touch $(srcdir)/ocl_veclib.c
 
 #../../include/veclib/vecgen.m4:
 
@@ -48,9 +49,10 @@ LOCAL_M4FILES=						\
 			ocl_kern_call_defs.m4		\
 			ocl_kernel_src.m4		\
 			ocl_kernels.m4			\
-			ocl_typtbl.m4			\
-			ocl_rand.m4			\
-			ocl_veclib.m4 
+			ocl_typtbl.m4
+
+#			ocl_rand.m4			\
+#			ocl_veclib.m4 
 
 M4_INCDIR=$(srcdir)/../../include/veclib
 INC_M4FILES=							\
@@ -130,9 +132,10 @@ INC_M4FILES=							\
 			$(M4_INCDIR)/xfer_args.m4
 
 
-ocl_rand.c:	vuni.i
+$(srcdir)/ocl_rand.c:	vuni.i ocl_rand_expanded.c
+	touch $(srcdir)/ocl_rand.c
 
-vuni.i:	$(srcdir)/vuni.ocl
+$(srcdir)/vuni.i:	$(srcdir)/vuni.ocl
 	$(srcdir)/gencl.sh $(srcdir)/vuni.ocl vuni.i
 
 #			ocl_func_tbl.c
@@ -167,8 +170,9 @@ vuni.i:	$(srcdir)/vuni.ocl
 #			ocl_typtbl.c
 
 noinst_HEADERS =					\
+			ocl_veclib.m4			\
+			ocl_rand.m4			\
 			$(LOCAL_M4FILES)		\
-			_ocl_rand.c			\
 							\
 			gencl.sh			\
 			vuni.ocl

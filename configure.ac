@@ -969,7 +969,7 @@ EOF
         comp_cap=0.0
       fi
     fi
-    #rm -f gpu_check.c
+    rm -f gpu_check.c
     AC_MSG_RESULT([compute capability $comp_cap])
     arch_set=no
     if test "x${comp_cap}" = x1.0; then

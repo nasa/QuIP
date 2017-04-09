@@ -3,5 +3,6 @@
 *.a
 *.debug*
 *.noindent
+cu2_*_expanded.c
 junk
 
