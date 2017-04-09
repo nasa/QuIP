@@ -9,8 +9,8 @@ define(`HOST_CALL_VAR_DECLS',`
 //
 // Somewhere we have a declaration like VFUNC_PROT_2V...
 
-my_include(`../../include/veclib/fast_test.m4')
-my_include(`../../include/veclib/xfer_args.m4')
+my_include(`veclib/fast_test.m4')
+my_include(`veclib/xfer_args.m4')
 
 // args n, c, s  are func_name, type_code, statement
 
@@ -110,15 +110,15 @@ define(`_VEC_FUNC_VV_LS',	GENERIC_HOST_TYPED_CALL($1,,,,3))
 
 // These are special cases that need to be coded by hand for gpu...
 
-my_include(`../../include/veclib/host_calls_special.m4')
+my_include(`veclib/host_calls_special.m4')
 
 ifdef(`BUILD_FOR_GPU',`
 
-my_include(`../../include/veclib/gpu_host_call_defs.m4')
+my_include(`veclib/gpu_host_call_defs.m4')
 
 ',`
 
-my_include(`../../include/veclib/cpu_host_call_defs.m4')
+my_include(`veclib/cpu_host_call_defs.m4')
 
 ')
 

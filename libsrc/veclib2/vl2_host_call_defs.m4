@@ -1,7 +1,7 @@
-include(`../../include/veclib/slow_len.m4')
-include(`../../include/veclib/slow_incs.m4')
-include(`../../include/veclib/eqsp_incs.m4')
-include(`../../include/veclib/slow_vars.m4')
+my_include(`veclib/slow_len.m4')
+my_include(`veclib/slow_incs.m4')
+my_include(`veclib/eqsp_incs.m4')
+my_include(`veclib/slow_vars.m4')
 
 suppress_if
 

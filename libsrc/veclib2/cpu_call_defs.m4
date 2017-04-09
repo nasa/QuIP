@@ -1319,7 +1319,7 @@ static void CONV_METHOD_NAME($1)( Vec_Obj_Args *oap )
 ')
 
 
-include(`../../include/veclib/fast_test.m4')
+my_include(`veclib/fast_test.m4')
 
 
 define(`dst',`(*dst_ptr)')

@@ -1,6 +1,6 @@
 /* complex number stuff */
 
-my_include(`../../include/veclib/cpx_args.m4')
+my_include(`veclib/cpx_args.m4')
 
 /* Real only */
 
@@ -157,7 +157,7 @@ _VEC_FUNC_CPX_2V( cvrand , cdst.re = rn((u_long)csrc1.re); cdst.im = rn((u_long)
 
 ifdef(`QUATERNION_SUPPORT',`
 
-my_include(`../../include/veclib/quat_args.m4')
+my_include(`veclib/quat_args.m4')
 
 /* Quaternions */
 

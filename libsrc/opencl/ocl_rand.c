@@ -68,7 +68,7 @@ extern int max_threads_per_block;
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/vecgen.m4
+// BEGIN INCLUDED FILE veclib/vecgen.m4
 /* vecgen.m4 BEGIN */
 
 /* defns shared by veclib & warlib */
@@ -94,14 +94,14 @@ extern int max_threads_per_block;
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/vecgen.m4
+// END INCLUDED FILE veclib/vecgen.m4
 
 
 
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/ocl_func_prot.m4
+// BEGIN INCLUDED FILE veclib/ocl_func_prot.m4
 
 extern void h_ocl_vuni(const int vf_code,  /*const*/ Vec_Obj_Args *oap);
 extern void h_ocl_sp_vuni(const int vf_code,  /*const*/ Vec_Obj_Args *oap);
@@ -119,14 +119,14 @@ extern void h_ocl_iftrows(const int vf_code,  Data_Obj *dst_dp, Data_Obj *src_dp
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/ocl_func_prot.m4
+// END INCLUDED FILE veclib/ocl_func_prot.m4
 
 
 
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/platform_funcs.m4
+// BEGIN INCLUDED FILE veclib/platform_funcs.m4
 
 
 
@@ -165,7 +165,7 @@ extern void ocl_alloc_data(QSP_ARG_DECL  Data_Obj *dp, dimension_t size);
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/platform_funcs.m4
+// END INCLUDED FILE veclib/platform_funcs.m4
 
 /* ocl_veclib_prot.m4 DONE */
 

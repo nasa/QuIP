@@ -4,7 +4,7 @@
 //
 // A lot of this stuff is not platform specific!?
 
-my_include(`../../include/veclib/gpu_call_utils.m4')
+my_include(`veclib/gpu_call_utils.m4')
 
 /**********************************************************************/
 

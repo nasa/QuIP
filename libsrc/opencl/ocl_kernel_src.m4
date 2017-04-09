@@ -1,7 +1,7 @@
 /* ocl_kernel_src.m4 BEGIN */
 
-my_include(`../../include/veclib/gen_gpu_calls.m4')
-my_include(`../../include/veclib/gpu_special_defs.m4')
+my_include(`veclib/gen_gpu_calls.m4')
+my_include(`veclib/gpu_special_defs.m4')
 
 define(`QUOTE_CHAR',`"')
 

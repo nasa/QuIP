@@ -3,7 +3,7 @@ all:	libvectree.a
 
 noinst_LIBRARIES = libvectree.a
 
-libvectree_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
+libvectree_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -Wall -Wmissing-prototypes
 # -D__STRICT_ANSI__  this breaks u_long in sys/types.h...
 
 libvectree_a_SOURCES =			\

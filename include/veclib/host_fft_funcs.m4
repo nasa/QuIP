@@ -4,7 +4,7 @@ dnl	 here we have a bunch of switches and if/then's...
 dnl	This file defines the untyped functions
 dnl	BUT it doesn't seem to be included???
 
-my_include(`../../include/veclib/gen_entries.m4')
+my_include(`veclib/gen_entries.m4')
 
 ifdef(`BUILD_FOR_GPU',`
 

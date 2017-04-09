@@ -51,7 +51,7 @@ define(`_VEC_FUNC_CPX_3V_PROJ',`_VEC_FUNC_FAST_3V_PROJ($1,`CPX_',$2,$3,$4,$5)')
 
 dnl GPU-only stuff???
 
-my_include(`../../include/veclib/fast_eqsp_defs.m4')
+my_include(`veclib/fast_eqsp_defs.m4')
 
 define(`DECLARE_DBM_INDEX',`GPU_INDEX_TYPE dbmi;')
 define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm')

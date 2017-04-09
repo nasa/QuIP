@@ -16,7 +16,7 @@
  *
  */
 
-my_include(`../../include/veclib/gen_typtbl.m4')
+my_include(`veclib/gen_typtbl.m4')
 
 suppress_no	dnl enable output
 
@@ -43,7 +43,7 @@ static void nullobjf(HOST_CALL_ARG_DECLS)
 
 Vec_Func_Array ocl_vfa_tbl[N_VEC_FUNCS]={
 
-my_include(`../../include/veclib/gen_func_array.m4')
+my_include(`veclib/gen_func_array.m4')
 
 };
 

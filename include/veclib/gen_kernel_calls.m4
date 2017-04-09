@@ -2,62 +2,62 @@ dnl used for host calls and kernels, should be renamed...
 
 dnl SP stuff
 
-my_include(`../../include/veclib/sp_defs.m4')
+my_include(`veclib/sp_defs.m4')
 // including all_float_kernels for float
-my_include(`../../include/veclib/all_float_kernels.m4')
+my_include(`veclib/all_float_kernels.m4')
 
 // DP stuff
 
-my_include(`../../include/veclib/dp_defs.m4')
+my_include(`veclib/dp_defs.m4')
 // including all_float_kernels for double
-my_include(`../../include/veclib/all_float_kernels.m4')
+my_include(`veclib/all_float_kernels.m4')
 
 // BY stuff
 
-my_include(`../../include/veclib/by_defs.m4')
-my_include(`../../include/veclib/all_int_kernels.m4')
+my_include(`veclib/by_defs.m4')
+my_include(`veclib/all_int_kernels.m4')
 
 
 // IN stuff
 
-my_include(`../../include/veclib/in_defs.m4')
-my_include(`../../include/veclib/all_int_kernels.m4')
+my_include(`veclib/in_defs.m4')
+my_include(`veclib/all_int_kernels.m4')
 
 
 // DI stuff
 
-my_include(`../../include/veclib/di_defs.m4')
-my_include(`../../include/veclib/all_int_kernels.m4')
+my_include(`veclib/di_defs.m4')
+my_include(`veclib/all_int_kernels.m4')
 
 
 // LI stuff
 
-my_include(`../../include/veclib/li_defs.m4')
-my_include(`../../include/veclib/all_int_kernels.m4')
+my_include(`veclib/li_defs.m4')
+my_include(`veclib/all_int_kernels.m4')
 
 
 // UBY stuff
 
-my_include(`../../include/veclib/uby_defs.m4')
-my_include(`../../include/veclib/all_uint_kernels.m4')
+my_include(`veclib/uby_defs.m4')
+my_include(`veclib/all_uint_kernels.m4')
 
 
 // UIN stuff
 
-my_include(`../../include/veclib/uin_defs.m4')
-my_include(`../../include/veclib/all_uint_kernels.m4')
+my_include(`veclib/uin_defs.m4')
+my_include(`veclib/all_uint_kernels.m4')
 
 
 // UDI stuff
 
-my_include(`../../include/veclib/udi_defs.m4')
-my_include(`../../include/veclib/all_uint_kernels.m4')
+my_include(`veclib/udi_defs.m4')
+my_include(`veclib/all_uint_kernels.m4')
 
 
 // ULI stuff
 
-my_include(`../../include/veclib/uli_defs.m4')
-my_include(`../../include/veclib/all_uint_kernels.m4')
+my_include(`veclib/uli_defs.m4')
+my_include(`veclib/all_uint_kernels.m4')
 
 dnl	// Now mixed precision functions...
 dnl	// We currently implement 4:
@@ -67,18 +67,18 @@ dnl	// Most common use is vsum
 
 define(`MIXED_PRECISION',`')
 
-my_include(`../../include/veclib/inby_defs.m4')
-my_include(`../../include/veclib/all_mixed_int_kernels.m4')
+my_include(`veclib/inby_defs.m4')
+my_include(`veclib/all_mixed_int_kernels.m4')
 
-my_include(`../../include/veclib/uindi_defs.m4')
-my_include(`../../include/veclib/all_mixed_uint_kernels.m4')
+my_include(`veclib/uindi_defs.m4')
+my_include(`veclib/all_mixed_uint_kernels.m4')
 
-my_include(`../../include/veclib/ubyin_defs.m4')
-my_include(`../../include/veclib/all_mixed_uint_kernels.m4')
+my_include(`veclib/ubyin_defs.m4')
+my_include(`veclib/all_mixed_uint_kernels.m4')
 
 // including all_mixed_float_kernels for float/double
-my_include(`../../include/veclib/spdp_defs.m4')
-my_include(`../../include/veclib/all_mixed_float_kernels.m4')
+my_include(`veclib/spdp_defs.m4')
+my_include(`veclib/all_mixed_float_kernels.m4')
 
 undefine(`MIXED_PRECISION')
 
@@ -93,9 +93,9 @@ dnl	On the CPU, we also need different loops for bitmaps...
 
 /* gen_kernel_calls.m4  inclding bit_defs.m4 */
 
-my_include(`../../include/veclib/bit_defs.m4')
+my_include(`veclib/bit_defs.m4')
 
 /* gen_kernel_calls.m4  inclding all_bit_kernels.m4 */
 
-my_include(`../../include/veclib/all_bit_kernels.m4')
+my_include(`veclib/all_bit_kernels.m4')
 

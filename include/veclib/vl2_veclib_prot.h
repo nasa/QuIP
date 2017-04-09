@@ -32,7 +32,7 @@ extern void vl2_free_tmp (void *a, const char *whence);
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/vecgen.m4
+// BEGIN INCLUDED FILE veclib/vecgen.m4
 /* vecgen.m4 BEGIN */
 
 /* defns shared by veclib & warlib */
@@ -58,14 +58,14 @@ extern void vl2_free_tmp (void *a, const char *whence);
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/vecgen.m4
+// END INCLUDED FILE veclib/vecgen.m4
 
 
 
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/vl2_func_prot.m4
+// BEGIN INCLUDED FILE veclib/vl2_func_prot.m4
 
 
 //extern void h_vl2_vuni(const int vf_code,  /*const*/ Vec_Obj_Args *oap);
@@ -88,17 +88,18 @@ extern int xform_chk(Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *xform );
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/vl2_func_prot.m4
+// END INCLUDED FILE veclib/vl2_func_prot.m4
 
 
 
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/platform_funcs.m4
+// BEGIN INCLUDED FILE veclib/platform_funcs.m4
 
 
 	
+
 
 extern void vl2_init_platform(SINGLE_QSP_ARG_DECL);
 extern void vl2_init(SINGLE_QSP_ARG_DECL);
@@ -110,7 +111,7 @@ extern void vl2_alloc_data(QSP_ARG_DECL  Data_Obj *dp, dimension_t size);
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/platform_funcs.m4
+// END INCLUDED FILE veclib/platform_funcs.m4
 
 /* vl2_veclib_prot.m4 DONE */
 

@@ -1,6 +1,6 @@
 /* gpu_args.m4 BEGIN */
 
-my_include(`../../include/veclib/gen_kern_args.m4')
+my_include(`veclib/gen_kern_args.m4')
 
 dnl	 DECLARE_KERN_ARGS_FAST($3,$4,$5,$6)
 

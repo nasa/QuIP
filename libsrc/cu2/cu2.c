@@ -21,7 +21,7 @@
 
 #include "veclib/cu2_veclib_prot.h"
 //#include "veclib/platform_funcs.h"
-#include "../cuda/my_cuda.h"	// query_cuda_device()
+#include "my_cuda.h"	// query_cuda_device()
 #include "cuda_supp.h"
 #include <cuda_gl_interop.h>
 #include "gl_info.h"

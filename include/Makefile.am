@@ -72,6 +72,7 @@ noinst_HEADERS =			\
 			list.h		\
 			macro.h		\
 			map_ios_item.h	\
+			my_cuda.h	\
 			my_curl.h	\
 			my_cu2.h	\
 			my_encryption.h	\

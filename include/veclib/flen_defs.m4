@@ -66,7 +66,7 @@ define(`_VEC_FUNC_2V_PROJ_IDX',`')
 define(`_VEC_FUNC_3V_PROJ',`')
 define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
-my_include(`../../include/veclib/fast_eqsp_defs.m4')
+my_include(`veclib/fast_eqsp_defs.m4')
 
 define(`DECLARE_DBM_INDEX',`')
 define(`SET_INDICES_1SRC',`index2 = tbl_idx;')

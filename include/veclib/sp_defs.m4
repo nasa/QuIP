@@ -19,7 +19,7 @@ define(`REQUIRED_SRC_PREC',`PREC_SP')
 
 define(`MY_CLFFT_PRECISION',`CLFFT_SINGLE')
 
-my_include(`../../include/veclib/sp_func_defs.m4')
+my_include(`veclib/sp_func_defs.m4')
 
 /* `TYPE_CODE =' type_code   `dest_type ='dest_type */
 /* sp_defs.m4 DONE */

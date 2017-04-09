@@ -10,7 +10,7 @@ dnl	 * these are functions which are implemented for ALL integer precisions.
 dnl	 * But NOT bit precision!
 dnl	 */
 
-my_include(`../../include/veclib/int_bit_vec.m4')
+my_include(`veclib/int_bit_vec.m4')
 
 dnl	/* Real only */
 

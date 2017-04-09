@@ -19,5 +19,5 @@ define(`REQUIRED_SRC_PREC',`PREC_DP')
 
 define(`MY_CLFFT_PRECISION',`CLFFT_DOUBLE')
 
-my_include(`../../include/veclib/dp_func_defs.m4')
+my_include(`veclib/dp_func_defs.m4')
 

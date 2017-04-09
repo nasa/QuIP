@@ -17,10 +17,8 @@
  */
 
 // vl2_typtbl.m4 including gen_typtbl.m4 BEGIN
-include(`../../include/veclib/gen_typtbl.m4')
+my_include(`veclib/gen_typtbl.m4')
 // vl2_typtbl.m4 DONE including gen_typtbl.m4
-
-dnl include(`../../include/veclib/obj_args.m4')
 
 static void nullobjf(HOST_CALL_ARG_DECLS)
 {
@@ -50,7 +48,7 @@ static void nullobjf(HOST_CALL_ARG_DECLS)
 Vec_Func_Array vl2_vfa_tbl[]={
 
 // vl2_typtbl.m4 including gen_func_array.m4 BEGIN
-include(`../../include/veclib/gen_func_array.m4')
+my_include(`veclib/gen_func_array.m4')
 // vl2_typtbl.m4 DONE including gen_func_array.m4
 
 };

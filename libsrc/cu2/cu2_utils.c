@@ -9,6 +9,8 @@
 #include "quip_prot.h"
 #include "shape_bits.h"
 
+/* NOT Suppressing ! */
+
 
 /* gen_port.m4 DONE */
 
@@ -20,6 +22,8 @@
 
 /* Suppressing ! */
 
+/* NOT Suppressing ! */
+
 
 extern void *cu2_tmp_vec(Platform_Device *pdp, size_t size, size_t len, const char *whence);
 extern void cu2_free_tmp(void *a, const char *whence);
@@ -27,6 +31,10 @@ extern void cu2_free_tmp(void *a, const char *whence);
 /* cu2_port.m4 DONE */
 
 
+
+
+
+/* NOT Suppressing ! */
 
 // BEGIN INCLUDED FILE _cu2_utils.c
 #include "quip_config.h"
@@ -472,6 +480,10 @@ COMMAND_FUNC( do_cu2_clear_ckpts  )
 #include "cu2.c"
 
 //#endif // HAVE_OPENCL
+
+
+
+/* NOT Suppressing ! */
 
 // END INCLUDED FILE _cu2_utils.c
 

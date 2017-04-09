@@ -768,8 +768,9 @@ AM_PROG_CC_C_O
 # Check for install
 AC_PROG_INSTALL
 
-# Check for ranlib
+# Check for ranlib and ar
 AC_PROG_RANLIB
+AM_PROG_AR
 
 # Check for - what?
 AM_PROG_CC_C_O

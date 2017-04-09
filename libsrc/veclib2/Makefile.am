@@ -1,10 +1,17 @@
+## Process this file with automake to produce Makefile.in
+## (comments with ## are stripped by automake!)
+
+# this generates a warning when using BUILT_SOURCES???
 
 all:	libvl2.a
 	cp libvl2.a ../../libs
 
+#install-exec-local:
+#	cp libvl2.a ../../libs
+
 noinst_LIBRARIES = libvl2.a
 
-libvl2_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
+libvl2_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -Wall -Wmissing-prototypes
 
 #libmvimenu_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
@@ -13,8 +20,28 @@ libvl2_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 # Now include fast_sp.c in vl2_veclib.c...
 #			fast_sp.c
 
-vl2_utils.c:	vl2_utils.m4 _vl2_utils.c
-		m4 < vl2_utils.m4 > vl2_utils.c
+M4OPTS=	-I $(srcdir) -I $(top_srcdir)/include
+
+vl2_utils.c:	$(builddir)/vl2_utils_expanded.h
+		touch vl2_utils.c
+
+vl2_utils_expanded.h:	vl2_utils.m4 _vl2_utils.c
+		m4 $(M4OPTS) < $(srcdir)/vl2_utils.m4 > $(builddir)/vl2_utils_expanded.h
+
+# the sed command removes escaped newlines in functions that need
+# to be quoted for opencl...
+
+vl2_veclib_expanded.h:	$(LOCAL_M4FILES) $(INC_M4FILES)
+	m4 $(M4OPTS) $(srcdir)/vl2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/vl2_veclib_expanded.h
+
+# OOPS - BUILT_SOURCES seem to be added to sources and compiled by themselves,
+# although we intend for them just to be included... should we call them .h instead?
+BUILT_SOURCES=							\
+			$(builddir)/vl2_veclib_expanded.h	\
+			$(builddir)/vl2_utils_expanded.h
+
+# Might be better to distribute?  but would not work in vpath build???
+nodist_libvl2_a_SOURCES =	$(BUILT_SOURCES)
 
 libvl2_a_SOURCES =			\
 			vl2_veclib.c	\
@@ -30,8 +57,8 @@ libvl2_a_SOURCES =			\
 #			vl2_viewer.c
 #			vl2_func_tbl.c
 
-vl2_veclib.c:	vl2_veclib_expanded.c
-	touch vl2_veclib.c
+$(srcdir)/vl2_veclib.c:	vl2_veclib_expanded.h
+	touch $(srcdir)/vl2_veclib.c
 
 #			vfft.m4
 LOCAL_M4FILES=							\
@@ -43,9 +70,10 @@ LOCAL_M4FILES=							\
 			vl2_typed_fft_funcs.m4			\
 			vl2_typtbl.m4				\
 			vl2_veclib.m4				\
+			vl2_utils.m4				\
 			vl2_kernels.m4
 
-INCDIR=../../include/veclib
+INCDIR=$(top_srcdir)/include/veclib
 INC_M4FILES=							\
 			$(INCDIR)/all_bit_kernels.m4		\
 			$(INCDIR)/all_float_kernels.m4		\
@@ -119,38 +147,25 @@ INC_M4FILES=							\
 			$(INCDIR)/vecgen.m4			\
 			$(INCDIR)/xfer_args.m4
 
-# the sed command removes escaped newlines in functions that need
-# to be quoted for opencl...
-
-vl2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
-	m4 vl2_veclib.m4 | sed -e 's/	*\\//' > vl2_veclib_expanded.c
-
 #noinst_HEADERS = my_vl2.h
 
-vl2_veclib.debug:	vl2_veclib.c
-	gcc -E -I../.. -I$(top_srcdir)/include vl2_veclib.c > vl2_veclib.debug_
-	indent < vl2_veclib.debug_  > vl2_veclib.debug
-#./strip_it2.sh
-
-#vl2.debug:	vl2.c
-#	gcc -E -I../.. -I$(top_srcdir)/include vl2.c > vl2.debug_
-
-#			vl2_func_tbl.h
-
-#			vl2_host_call_defs.h
-
-#			cpu_call_defs.h
-#			vl2_kernels.c
-#			vl2_typtbl.c
-#			vl2_host_funcs.c
-#			vl2_host_call_defs.h
-#			vl2_host_untyped_call_defs.h
+# OLD for cpp macros...
+#vl2_veclib.debug:	vl2_veclib.c
+#	gcc -E -I../.. -I$(top_srcdir)/include vl2_veclib.c > vl2_veclib.debug_
+#	indent < vl2_veclib.debug_  > vl2_veclib.debug
+##./strip_it2.sh
+#
+##vl2.debug:	vl2.c
+##	gcc -E -I../.. -I$(top_srcdir)/include vl2.c > vl2.debug_
 
 noinst_HEADERS =					\
+			$(LOCAL_M4FILES)		\
+							\
+			_vl2_utils.c			\
 			linear.c			\
 			vfft.c
 
 
 #clean-local:
-#	-rm -rf vl2_veclib_expanded.c vl2_veclib_stripped.c
+#	-rm -rf vl2_veclib_expanded.h vl2_veclib_stripped.c
 

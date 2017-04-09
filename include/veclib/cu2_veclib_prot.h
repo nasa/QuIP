@@ -31,7 +31,7 @@ extern void cu2_free_tmp(void *a, const char *whence);
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/vecgen.m4
+// BEGIN INCLUDED FILE veclib/vecgen.m4
 /* vecgen.m4 BEGIN */
 
 /* defns shared by veclib & warlib */
@@ -57,14 +57,14 @@ extern void cu2_free_tmp(void *a, const char *whence);
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/vecgen.m4
+// END INCLUDED FILE veclib/vecgen.m4
 
 
 
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/cu2_func_prot.m4
+// BEGIN INCLUDED FILE veclib/cu2_func_prot.m4
 
 /* cu2_func_prot.m4 BEGIN */
 
@@ -90,14 +90,14 @@ extern void h_cu2_iftrows(const int vf_code,  /*const*/ Vec_Obj_Args *oap);
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/cu2_func_prot.m4
+// END INCLUDED FILE veclib/cu2_func_prot.m4
 
 
 
 
 /* NOT Suppressing ! */
 
-// BEGIN INCLUDED FILE ../../include/veclib/platform_funcs.m4
+// BEGIN INCLUDED FILE veclib/platform_funcs.m4
 
 
 
@@ -125,6 +125,7 @@ extern void cu2_insure_device(QSP_ARG_DECL  Data_Obj *dp);
 
 	
 
+
 extern void cu2_init_platform(SINGLE_QSP_ARG_DECL);
 extern void cu2_init(SINGLE_QSP_ARG_DECL);
 extern void cu2_alloc_data(QSP_ARG_DECL  Data_Obj *dp, dimension_t size);
@@ -135,7 +136,7 @@ extern void cu2_alloc_data(QSP_ARG_DECL  Data_Obj *dp, dimension_t size);
 
 /* NOT Suppressing ! */
 
-// END INCLUDED FILE ../../include/veclib/platform_funcs.m4
+// END INCLUDED FILE veclib/platform_funcs.m4
 
 /* cu2_veclib_prot.m4 DONE */
 
