@@ -14,7 +14,7 @@ AM_CFLAGS= -I/System/Library/Frameworks/OpenGL.framework/Headers
 GENERATED_SRCS=	ocl_rand_expanded.c ocl_veclib_expanded.c
 
 clean-local:
-	rm -rf $(GENERATED_SRCS)
+	rm -rf $(GENERATED_SRCS) vuni.i
 
 #libmvimenu_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
@@ -182,9 +182,6 @@ noinst_HEADERS =					\
 			gencl.sh			\
 			vuni.ocl
 
-
-clean-local:
-	-rm -rf vuni.i
 
 #	-rm -rf ocl_veclib_expanded.c ocl_veclib_stripped.c vuni.i
 
