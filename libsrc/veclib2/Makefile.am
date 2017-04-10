@@ -7,9 +7,9 @@ all:	libvl2.a
 	cp libvl2.a ../../libs
 
 clean-local:
-	rm -rf $(GENERATED_SOURCES)
+	rm -rf $(GENERATED_SRCS)
 
-GENERATED_SOURCES=						\
+GENERATED_SRCS=						\
 			$(builddir)/vl2_veclib_expanded.c	\
 			$(builddir)/vl2_utils_expanded.c
 
@@ -46,7 +46,7 @@ vl2_veclib_expanded.c:	$(srcdir)/vl2_veclib.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
 #			$(builddir)/vl2_utils_expanded.c
 
 # Might be better to distribute?  but would not work in vpath build???
-#nodist_libvl2_a_SOURCES =	$(GENERATED_SOURCES)
+#nodist_libvl2_a_SOURCES =	$(GENERATED_SRCS)
 
 libvl2_a_SOURCES =			\
 			vl2_veclib.c	\
