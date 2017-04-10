@@ -6,42 +6,47 @@
 all:	libvl2.a
 	cp libvl2.a ../../libs
 
-#install-exec-local:
-#	cp libvl2.a ../../libs
+clean-local:
+	rm -rf $(GENERATED_SRCS)
+
+GENERATED_SRCS=						\
+			$(builddir)/vl2_veclib_expanded.c	\
+			$(builddir)/vl2_utils_expanded.c
+
 
 noinst_LIBRARIES = libvl2.a
 
 libvl2_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -Wall -Wmissing-prototypes
-
-#libmvimenu_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
-
-#			vl2_func_tbl.c
 
 # Now include fast_sp.c in vl2_veclib.c...
 #			fast_sp.c
 
 M4OPTS=	-I $(srcdir) -I $(top_srcdir)/include
 
-vl2_utils.c:	$(builddir)/vl2_utils_expanded.h
-		touch vl2_utils.c
+$(srcdir)/vl2_utils.c:	$(builddir)/vl2_utils_expanded.c
+	touch $(srcdir)/vl2_utils.c
 
-vl2_utils_expanded.h:	vl2_utils.m4 _vl2_utils.c
-		m4 $(M4OPTS) < $(srcdir)/vl2_utils.m4 > $(builddir)/vl2_utils_expanded.h
+$(srcdir)/vl2_veclib.c:	$(builddir)/vl2_veclib_expanded.c
+	touch $(srcdir)/vl2_veclib.c
+
+
+vl2_utils_expanded.c:	vl2_utils.m4 _vl2_utils.c $(LOCAL_M4FILES) $(INC_M4FILES)
+		m4 $(M4OPTS) < $(srcdir)/vl2_utils.m4 > $(builddir)/vl2_utils_expanded.c
 
 # the sed command removes escaped newlines in functions that need
 # to be quoted for opencl...
 
-vl2_veclib_expanded.h:	$(LOCAL_M4FILES) $(INC_M4FILES)
-	m4 $(M4OPTS) $(srcdir)/vl2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/vl2_veclib_expanded.h
+vl2_veclib_expanded.c:	$(srcdir)/vl2_veclib.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
+	m4 $(M4OPTS) $(srcdir)/vl2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/vl2_veclib_expanded.c
 
-# OOPS - BUILT_SOURCES seem to be added to sources and compiled by themselves,
-# although we intend for them just to be included... should we call them .h instead?
-BUILT_SOURCES=							\
-			$(builddir)/vl2_veclib_expanded.h	\
-			$(builddir)/vl2_utils_expanded.h
+## OOPS - BUILT_SOURCES seem to be added to sources and compiled by themselves,
+## although we intend for them just to be included... should we call them .h instead?
+#BUILT_SOURCES=							\
+#			$(builddir)/vl2_veclib_expanded.c	\
+#			$(builddir)/vl2_utils_expanded.c
 
 # Might be better to distribute?  but would not work in vpath build???
-nodist_libvl2_a_SOURCES =	$(BUILT_SOURCES)
+#nodist_libvl2_a_SOURCES =	$(GENERATED_SRCS)
 
 libvl2_a_SOURCES =			\
 			vl2_veclib.c	\
@@ -57,10 +62,9 @@ libvl2_a_SOURCES =			\
 #			vl2_viewer.c
 #			vl2_func_tbl.c
 
-$(srcdir)/vl2_veclib.c:	vl2_veclib_expanded.h
-	touch $(srcdir)/vl2_veclib.c
-
 #			vfft.m4
+#			vl2_veclib.m4
+
 LOCAL_M4FILES=							\
 			cpu_call_defs.m4			\
 			linear.m4				\
@@ -69,7 +73,6 @@ LOCAL_M4FILES=							\
 			vl2_host_funcs.m4			\
 			vl2_typed_fft_funcs.m4			\
 			vl2_typtbl.m4				\
-			vl2_veclib.m4				\
 			vl2_utils.m4				\
 			vl2_kernels.m4
 
@@ -165,7 +168,4 @@ noinst_HEADERS =					\
 			linear.c			\
 			vfft.c
 
-
-#clean-local:
-#	-rm -rf vl2_veclib_expanded.h vl2_veclib_stripped.c
 

@@ -9,5 +9,5 @@
 #include "my_vl2.h"
 
 #include "veclib/vl2_veclib_prot.h"
-#include "vl2_veclib_expanded.h"
+#include "vl2_veclib_expanded.c"
 

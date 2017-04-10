@@ -14,6 +14,8 @@ BUILT_SOURCES=						\
 			cu2_yuv2rgb_expanded.c		\
 			cu2_centroid_expanded.c
 
+clean-local:
+	rm -rf $(BUILT_SOURCES)
 
 cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
 	m4 $(M4OPTS) < $(srcdir)/cu2_utils.m4 > $(builddir)/cu2_utils_expanded.c
@@ -99,8 +101,8 @@ NVCC_SOURCES =						\
 
 
 # more dependencies here, but what are they?  BUG
-cu2_funcs.cu:	m4_cu2_veclib.c
-		touch cu2_funcs.cu
+$(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c
+		touch $(srcdir)/cu2_funcs.cu
 
 # cu2_host_untyped_call_defs.h
 
