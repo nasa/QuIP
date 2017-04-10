@@ -5,6 +5,6 @@
 //my_include(veclib/vl2_veclib_prot.m4)
 //my_include(_vl2_utils.c)
 
-#include "vl2_utils_expanded.h"
+#include "vl2_utils_expanded.c"
 
 

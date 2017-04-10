@@ -6,5 +6,6 @@
 old*.h
 junk
 *.bak
+*_expanded.c
 derrs
 

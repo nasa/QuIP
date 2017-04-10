@@ -11,6 +11,11 @@ libocl_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 #AM_CFLAGS= -framework OpenGL
 AM_CFLAGS= -I/System/Library/Frameworks/OpenGL.framework/Headers
 
+GENERATED_SOURCES=	ocl_rand_expanded.c ocl_veclib_expanded.c
+
+clean-local:
+	rm -rf $(GENERATED_SOURCES)
+
 #libmvimenu_a_CPPFLAGS = -I$(top_srcdir)/include -Wall -Wmissing-prototypes
 
 #	ocl_viewer.c
