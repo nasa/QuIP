@@ -86,11 +86,15 @@ define(`DECL_EXTRA_T3',std_cpx tmpc; std_type tmp_denom;)
 define(`DECL_EXTRA_T4',std_quat tmpq;)
 define(`DECL_EXTRA_T5',std_quat tmpq; std_type tmp_denom;)
 
+define(`DECL_EXTRA_RAMP1D',`GPU_INDEX_TYPE ramp_idx;');
+
 /*********************** init_indices *****************/
 
 dnl	INIT_INDICES(bitmaps,vectors)
 dnl	DBM is set first, but SBM is set second...
 define(`INIT_INDICES',`/* init_indices /$1/ /$2/ */ DECL_INDICES_$1 DECL_INDICES_$2 SET_BITMAP_INDICES1_$1 SET_INDICES_$2 SET_BITMAP_INDICES2_$1 /* init_indices /$1/ /$2/ DONE */')
+
+define(`SET_EXTRA_INDICES',`SET_INDICES_$1')
 
 define(`INIT_INDICES_1',`DECL_INDICES_1 SET_INDICES_1')
 define(`INIT_INDICES_2',`/* init_indices_2 */ DECL_INDICES_2 SET_INDICES_2')
@@ -120,6 +124,12 @@ define(`SET_INDICES_1SBM',`')
 define(`SET_BITMAP_INDICES1_',`')
 define(`SET_BITMAP_INDICES2_',`')
 define(`SET_INDICES_1',`SET_INDEX(index1)')
+define(`SET_INDICES_RAMP1D',`ramp_idx = index1;')
+define(`SET_INDICES_T1',`')
+define(`SET_INDICES_T2',`')
+define(`SET_INDICES_T3',`')
+define(`SET_INDICES_T4',`')
+define(`SET_INDICES_T5',`')
 define(`SET_INDICES_SRC1',`index2 = $1;')
 define(`SET_INDICES_SRC2',`index3 = index2;')
 define(`SET_INDICES_SRC3',`index4 = index3;')

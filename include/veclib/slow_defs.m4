@@ -3,6 +3,7 @@ dnl the subsidiary defns need to come first!
 
 /* slow_defs defining gpu_index_type */
 define(`GPU_INDEX_TYPE',`SLOW_GPU_INDEX_TYPE')
+define(`RAMP_IDX',`INDEX_SUM(ramp_idx)')
 dnl define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm, DECLARE_KERN_ARGS_DBM_GPU_INFO')
 
 define(`SCALE_INDEX',`					\

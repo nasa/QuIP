@@ -103,19 +103,22 @@ _VEC_FUNC_2V_SCAL( vsmin, dst = (dest_type)(scalar1_val < src1 ? scalar1_val : s
  * Here are the real versions.
  */
 
-// vnot used to be here, but now it is integer-only...
+dnl	// vnot used to be here, but now it is integer-only...
 
-// With the new style conversions, we don't need vmov any more,
-// as we have same type conversions... 
+dnl	// With the new style conversions, we don't need vmov any more,
+dnl	// as we have same type conversions... 
 
-// vmov used to be defined differently, presumably to do
-// fast moves of contiguous objects...
-// We should bring that back, if possible
+dnl	// vmov used to be defined differently, presumably to do
+dnl	// fast moves of contiguous objects...
+dnl	// We should bring that back, if possible
 
-// Ramp functions are slow - only...
+dnl	// Ramp functions are slow - only...
+
+dnl	This is wrong, because IDX1 is used to index the destination, but can
+dnl	increase by an increment other than 1 (evenly-spaced, subimage, etc)
 
 _VEC_FUNC_1V_2SCAL( vramp1d, dst = (dest_type)scalar1_val; scalar1_val+=scalar2_val,
-				dst = scalar1_val + IDX1 * scalar2_val )
+				dst = scalar1_val + RAMP_IDX * scalar2_val )
 
 // Why are stat1, stat2 not used?
 // cpu implementation?

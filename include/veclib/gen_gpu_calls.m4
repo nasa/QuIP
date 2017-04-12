@@ -23,7 +23,8 @@ define(`_VEC_FUNC_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,_3S,1,)')
 define(`_VEC_FUNC_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,3,) ')
 define(`_VEC_FUNC_CPX_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,) ')
 define(`_VEC_FUNC_QUAT_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,3,) ')
-define(`_VEC_FUNC_1V_2SCAL',`GENERIC_GPU_FUNC_CALL($1,$3,,,_2S,1,) ')
+dnl	this is only used by ramp1d
+define(`_VEC_FUNC_1V_2SCAL',`GENERIC_GPU_FUNC_CALL($1,$3,,,_2S,1,RAMP1D) ')
 define(`_VEC_FUNC_2V_SCAL',`GENERIC_GPU_FUNC_CALL($1,$2,,,_1S,2,) ')
 define(`_VEC_FUNC_VVSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,,3,) ')
 define(`_VEC_FUNC_VSSLCT',`GENERIC_GPU_FUNC_CALL($1,$2,SBM_,,_1S,2,) ')
@@ -768,7 +769,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_HELPER_NAME($1)		\
 /* that uses GPU_FUNC_FAST_NAME... */
 /* used to use GPU_FAST_CALL_NAME... */
 
-dnl	__GENERIC_FAST_VEC_FUNC(name,statement,bitmaps,typ,scalars,vectors)
+dnl	__GENERIC_FAST_VEC_FUNC(name,statement,bitmaps,typ,scalars,vectors,extra)
 
 define(`__GENERIC_FAST_VEC_FUNC',`					\
 									\
@@ -780,6 +781,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)			\
 {									\
 	DECL_EXTRA($7)							\
 	INIT_INDICES($3,$6)						\
+	SET_EXTRA_INDICES($7)						\
 	/* generic_fast_vec_func statement */				\
 	/* statement = $2 */						\
 	$2 ;								\
@@ -798,6 +800,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP($3,$4,$
 	DECL_EXTRA($7)									\
 	/* generic_eqsp_vec_func to invoke init_indices */				\
 	INIT_INDICES($3,$6)								\
+	SET_EXTRA_INDICES($7)								\
 	/* generic_eqsp_vec_func to invoke scale_indices */				\
 	SCALE_INDICES($3,$6)								\
 	$2;										\
@@ -814,6 +817,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW($3,$4,$
 {											\
 	DECL_EXTRA($7)									\
 	INIT_INDICES($3,$6)								\
+	SET_EXTRA_INDICES($7)								\
 	SCALE_INDICES($3,$6)								\
 	$2;										\
 }											\
@@ -827,6 +831,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN($3,$4,$
 {											\
 	DECL_EXTRA($7)									\
 	INIT_INDICES($3,$6)								\
+	SET_EXTRA_INDICES($7)								\
 	if( IDX1 < len) {								\
 		$2 ;									\
 	}										\
@@ -841,6 +846,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_ELEN_NAME($1)(DECLARE_KERN_ARGS_ELEN($3,$4,$
 {											\
 	DECL_EXTRA($7)									\
 	INIT_INDICES($3,$6)								\
+	SET_EXTRA_INDICES($7)								\
 	if( IDX1 < len ){								\
 		SCALE_INDICES($3,$6)							\
 		$2;									\
@@ -862,6 +868,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN($3,$4,$
 {											\
 	DECL_EXTRA($7)									\
 	INIT_INDICES($3,$6)								\
+	SET_EXTRA_INDICES($7)								\
 	if( SLEN_IDX_TEST(index1,szarr) ){						\
 		SCALE_INDICES($3,$6)							\
 		$2;									\
@@ -1023,6 +1030,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW(`DBM_',
 {												\
 	/* generic_slow_vec_func_dbm */								\
 	INIT_INDICES(`DBM_',$5)									\
+	SET_EXTRA_INDICES($7)									\
 	/* scale_indices /DBM_/ /$5/ */								\
 	SCALE_INDICES(`DBM_',$5)								\
 												\

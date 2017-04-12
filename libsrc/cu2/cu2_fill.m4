@@ -255,6 +255,10 @@ dnl	//GET_MAX_THREADS(dp)
 		NERROR1("cuda malloc error getting filled array");
 	}
 
+	// BUG need to set other elements of va1 !?
+	if( setup_slow_len(vap,0,0,1,VA_PFDEV(vap)) < 0 )
+		return;
+
 	/* set filled to zero */
 	CLEAR_CUDA_ERROR(zeroit)
 	zeroit<<< NN_GPU >>>(szarr,filled,len);

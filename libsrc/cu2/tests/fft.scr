@@ -1,0 +1,29 @@
+
+Set n 8
+
+Define Test_CFFT 1 stem
+Vector ${1}_vec $n 1 complex
+VSet ${1}_vec{1} 0
+Ramp1D ${1}_vec{0} 0 8*atan(1)/$n
+Display ${1}_vec
+VSin ${1}_vec{0} ${1}_vec{0}
+Display ${1}_vec
+FFT ${1}_vec
+advise "transform:"
+Display ${1}_vec
+InvFFT ${1}_vec
+advise "transformed back:"
+Display ${1}_vec
+.
+
+Test_CFFT h
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  show
+  quit
+
+Test_CFFT x
+
+exit
+
