@@ -187,13 +187,8 @@ typedef enum {
 	FVCMUL, /* complex stuff */
 	FVSCML,
 	FVCONJ,
-//#ifdef NOT_YET
 	FVFFT,
 	FVIFT,
-//#else // !NOT_YET
-//#define FVFFT	(-3)
-//#define FVIFT	(-5)
-//#endif // NOT_YET
 
 	FVBND, /* comparison operators */
 	FVIBND,

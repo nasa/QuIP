@@ -179,6 +179,7 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 
 	//if( ! for_real ) return;
 
+fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
 	len = FFT_LEN(fap);
 
 	if( revdone==NULL ){
@@ -290,6 +291,7 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 	FFT_Args fa;
 	FFT_Args *new_fap=(&fa);
 
+fprintf(stderr,"PF_FFT_CALL_NAME(cvift) BEGIN\\n");
 	SET_FFT_DST(new_fap, FFT_DST(fap));
 	SET_FFT_LEN(new_fap, FFT_LEN(fap));
 	SET_FFT_DINC(new_fap, FFT_DINC(fap));

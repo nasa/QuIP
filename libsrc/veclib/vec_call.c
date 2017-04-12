@@ -208,43 +208,53 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	/* make sure that function doesn't require mixed types */
 
 	if( VF_FLAGS(vfp) & CPX_2_REAL ){
+		// For inverse fourier transform, the destination can be real
+		// but does not have to be!
 //#ifdef CAUTIOUS
 //		// quiet compiler
 //		if( OA_SRC1(oap) == NULL ){
-//			WARN("CAUITOUS:  get_scal:  Unexpected null source operand!?");
+//			WARN("chktyp:  CAUITOUS:  get_scal:  Unexpected null source operand!?");
 //			return -1;
 //		}
 //#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
-			sprintf(ERROR_STRING,"source vector %s (%s) must be complex with function %s",
+			sprintf(ERROR_STRING,"chktyp:  source vector %s (%s) must be complex with function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
 			WARN(ERROR_STRING);
 			list_dobj(QSP_ARG  OA_SRC1(oap) );
 			return -1;
 		}
-		if( ! IS_REAL(OA_DEST(oap) ) ){
-			sprintf(ERROR_STRING,"destination vector %s (%s) must be real with function %s",
-				OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
-			WARN(ERROR_STRING);
-			list_dobj(QSP_ARG OA_DEST(oap) );
-			return -1;
+		if( (VF_FLAGS(vfp) & INV_FT)==0 ){
+			if( ! IS_REAL(OA_DEST(oap)) ){
+				sprintf(ERROR_STRING,"chktyp:  destination vector %s (%s) must be real with function %s",
+					OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
+				WARN(ERROR_STRING);
+				list_dobj(QSP_ARG OA_DEST(oap) );
+				return -1;
+			}
+			SET_OA_ARGSTYPE(oap, REAL_ARGS);
+		} else {	// inverse Fourier transform
+			if( IS_REAL(OA_DEST(oap)) ){
+				SET_OA_ARGSTYPE(oap, REAL_ARGS);
+			} else {
+				SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
+			}
 		}
-		SET_OA_ARGSTYPE(oap, REAL_ARGS);
 		return 0;
 	}
 
 	if( VF_CODE(vfp) == FVFFT ){
 		/* source vector can be real or complex */
 		if( !IS_COMPLEX(OA_DEST(oap) ) ){
-			WARN("destination must be complex for fft");
+			WARN("chktyp:  destination must be complex for fft");
 			return -1;
 		}
 //#ifdef CAUTIOUS
 //		// quiet analyzer
 //		if( OA_SRC1(oap) == NULL ){
-//			WARN("CAUTIOUS:  Unexpected null src1 with fft!?");
+//			WARN("chktyp:  CAUTIOUS:  Unexpected null src1 with fft!?");
 //			return -1;
 //		}
 //#endif // CAUTIOUS
@@ -253,7 +263,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		if( IS_COMPLEX( OA_SRC1(oap) ) )
 			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
 		else if( IS_QUAT( OA_SRC1(oap) ) ){
-			WARN("Can't compute FFT of a quaternion input");
+			WARN("chktyp:  Can't compute FFT of a quaternion input");
 			return -1;
 		} else
 			SET_OA_ARGSTYPE(oap,REAL_ARGS);
@@ -265,7 +275,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 //#ifdef CAUTIOUS
 //		// quiet analyzer
 //		if( OA_SRC1(oap) == NULL ){
-//			WARN("CAUTIOUS:  Unexpected null src1 with fft!?");
+//			WARN("chktyp:  CAUTIOUS:  Unexpected null src1 with fft!?");
 //			return -1;
 //		}
 //#endif // CAUTIOUS
@@ -273,13 +283,13 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 
 		/* destination vector can be real or complex */
 		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
-			WARN("source must be complex for inverse fft");
+			WARN("chktyp:  source must be complex for inverse fft");
 			return -1;
 		}
 		if( IS_COMPLEX(OA_DEST(oap) ) )
 			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
 		else if( IS_QUAT(OA_DEST(oap) ) ){
-			WARN("Can't compute inverse FFT to a quaternion target");
+			WARN("chktyp:  Can't compute inverse FFT to a quaternion target");
 			return -1;
 		} else
 			SET_OA_ARGSTYPE(oap,REAL_ARGS);

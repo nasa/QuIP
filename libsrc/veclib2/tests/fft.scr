@@ -14,12 +14,14 @@ veclib
   quit
 advise "transform:"
 Display ${1}_vec
+Pause
 #InvFFT ${1}_vec
 veclib
   execute vift ${1}_vec ${1}_vec
   quit
 advise "transformed back:"
 Display ${1}_vec
+Pause
 .
 
 Test_CFFT h
