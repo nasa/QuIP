@@ -277,18 +277,22 @@ ifelse(MULTI_PROC_TEST,`1',`
 		mmax = istep;
 	}
 
-	if (FFT_ISI(fap)>=0){
-		std_type fn;
+dnl	This block does the scaling, but this is not done by the fftw or cuFFT,
+dnl	so maybe it is best to be compatible and skip it...
 
-		fn = (std_type) len;
-		for(i=0;i<len;i++){
-			dimension_t di;
+dnl	if (FFT_ISI(fap)>=0){
+dnl		std_type fn;
+dnl
+dnl		fn = (std_type) len;
+dnl		for(i=0;i<len;i++){
+dnl			dimension_t di;
+dnl
+dnl			di = i * inc1;
+dnl			dest[di].re /= fn;
+dnl			dest[di].im /= fn;
+dnl		}
+dnl	}
 
-			di = i * inc1;
-			dest[di].re /= fn;
-			dest[di].im /= fn;
-		}
-	}
 }
 
 static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
