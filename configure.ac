@@ -1246,8 +1246,9 @@ if test "x${use_matio}" = xyes; then
 fi
 
 if test "x${use_opencl}" = xyes; then
-#  AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
-  AC_SEARCH_LIBS([clfftInitSetupData],[clFFT],[have_clfft=yes],[have_clfft=no])
+# On pavlov w/ 2.8, we need clfftSetup
+  AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
+#  AC_SEARCH_LIBS([clfftInitSetupData],[clFFT],[have_clfft=yes],[have_clfft=no])
 fi
 
 if test "x${use_fann}" = xyes; then
