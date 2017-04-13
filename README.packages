@@ -30,3 +30,8 @@ The solution (from stackOverflow) was the following command:
 % sudo ln /dev/null /dev/raw1394
 
 
+###########################
+Building on a fresh CentOS 6 install
+
+installed:
+	texinfo

@@ -74,7 +74,10 @@ extern void init_cuda_devices(SINGLE_QSP_ARG_DECL);
 extern void insure_cu2_device( QSP_ARG_DECL   Data_Obj *dp );
 
 // whence?
+#ifdef HAVE_CUDA
 extern const char* getCUFFTError(cufftResult status);
+#endif // HAVE_CUDA
+
 extern void insure_cuda_device( Data_Obj *dp );
 
 #ifdef __cplusplus
