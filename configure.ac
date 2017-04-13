@@ -771,7 +771,8 @@ AC_PROG_INSTALL
 
 # Check for ranlib and ar
 AC_PROG_RANLIB
-AM_PROG_AR
+# AM_PROG_AR not recognized on CentOS 6 ???
+#AM_PROG_AR
 
 # Check for - what?
 AM_PROG_CC_C_O
