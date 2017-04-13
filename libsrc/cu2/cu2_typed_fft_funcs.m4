@@ -19,6 +19,7 @@ fprintf(stderr,"requested size:  %d\\n",OBJ_N_TYPE_ELTS(OA_DEST(oap)));
 		return;
 	}
 
+fprintf(stderr,"cufft complex, direction %d\\n",$3);
 	status = $1(plan, ($2 *) OBJ_DATA_PTR( OA_SRC1(oap) ),
 			($2 *) OBJ_DATA_PTR( OA_DEST(oap) ), $3);
 	if (status != CUFFT_SUCCESS) {

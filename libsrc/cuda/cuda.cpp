@@ -481,7 +481,7 @@ void freetmp(void *ptr,const char *whence)
 #ifdef HAVE_CUDA
 //CUFFT
 //static const char* getCUFFTError(cufftResult_t status)
-static const char* getCUFFTError(cufftResult status)
+const char* getCUFFTError(cufftResult status)
 {
 	switch (status) {
 		case CUFFT_SUCCESS:
