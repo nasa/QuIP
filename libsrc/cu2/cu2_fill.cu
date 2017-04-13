@@ -73,7 +73,7 @@
 #include <curand.h>
 
 #include "quip_prot.h"
-#include "my_cuda.h"
+#include "my_cu2.h"
 #include "cuda_supp.h"			// describe_cuda_error
 
 #include "cu2_fill_expanded.c"

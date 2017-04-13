@@ -218,9 +218,11 @@ REPORT_SWITCH(STRINGIFY(HOST_TYPED_CALL_NAME($1,type_code)),fast)
 REPORT_SWITCH($1,eqsp)
 		dnl `XFER_EQSP_ARGS_'$2$3$4$5
 		XFER_EQSP_ARGS($2,$3,$4,$5)
-/*sprintf(DEFAULT_ERROR_STRING,"showing vec args for eqsp %s","$1");
-NADVISE(DEFAULT_ERROR_STRING);*/
-/*show_vec_args(vap);*/
+/*
+sprintf(DEFAULT_ERROR_STRING,"showing vec args for eqsp %s","$1");
+NADVISE(DEFAULT_ERROR_STRING);
+show_vec_args(vap);
+*/
 		CHAIN_CHECK( HOST_EQSP_CALL_NAME($1) )
 	} else {
 REPORT_SWITCH($1,slow)

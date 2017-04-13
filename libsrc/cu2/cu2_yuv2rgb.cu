@@ -8,7 +8,7 @@
 #include <curand.h>
 
 #include "quip_prot.h"
-#include "my_cuda.h"
+#include "my_cu2.h"
 
 #include "cu2_yuv2rgb_expanded.c"
 

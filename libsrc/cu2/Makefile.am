@@ -7,7 +7,7 @@ all:	libcu2.a
 
 M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 
-BUILT_SOURCES=						\
+GENERATED_SRCS=						\
 			cu2_utils_expanded.c		\
 			cu2_veclib_expanded.c		\
 			cu2_fill_expanded.c		\
@@ -15,7 +15,7 @@ BUILT_SOURCES=						\
 			cu2_centroid_expanded.c
 
 clean-local:
-	rm -rf $(BUILT_SOURCES)
+	rm -rf $(GENERATED_SRCS)
 
 cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
 	m4 $(M4OPTS) < $(srcdir)/cu2_utils.m4 > $(builddir)/cu2_utils_expanded.c
@@ -84,7 +84,7 @@ libcu2_a_SOURCES =			\
 			cu2_utils.c
 
 
-NVCCFLAGS =	@NVCCFLAGS@ @NVCC_ARCH_FLAGS@ --machine 64 $(NVCPPFLAGS) -DHAVE_CONFIG_H
+NVCCFLAGS =	@NVCCFLAGS@ @NVCC_ARCH_FLAGS@ --machine 64 $(CPPFLAGS) $(NVCPPFLAGS) -DHAVE_CONFIG_H
 
 NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_srcdir)/include -I$(top_builddir)/include
 
@@ -94,9 +94,9 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_s
 #	-rm -rf cu2_veclib_expanded.c cu2_veclib_stripped.c
 
 NVCC_SOURCES =						\
+				cu2_funcs.cu		\
 				cu2_fill.cu		\
 				cu2_centroid.cu		\
-				cu2_funcs.cu		\
 				cu2_yuv2rgb.cu
 
 

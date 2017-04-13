@@ -273,6 +273,7 @@ define(`NN_GPU',`n_blocks, n_threads_per_block')
 // it's kind of tricky!?
 
 // This is kind of kludgy, but let's try it
+dnl	should be max_threads_per_block???
 define(`MAX_THREADS_PER_ROW',`32')
 
 dnl	SETUP_BLOCKS(bitmaps,pdp)
@@ -346,7 +347,7 @@ dnl NADVISE(DEFAULT_ERROR_STRING);*/
 
 
 dnl	SETUP_BLOCKS_Y(pdp)
-define(`SETUP_BLOCKS_Y',`
+define(`OLD_SETUP_BLOCKS_Y',`
 
 	assert(n_threads_per_block.x>0);
 	n_threads_per_block.y = PFDEV_CUDA_MAX_THREADS_PER_BLOCK($1) 
@@ -363,9 +364,13 @@ define(`SETUP_BLOCKS_Y',`
 	if( extra.x > 0 ) n_blocks.x++;
 	if( extra.y > 0 ) n_blocks.y++;
 ')
+define(`SETUP_BLOCKS_Y',`
+	n_threads_per_block.y = 1;
+	extra.y=0;
+')
 
 dnl	SETUP_BLOCKS_Z(pdp)
-define(`SETUP_BLOCKS_Z',`
+define(`OLD_SETUP_BLOCKS_Z',`
 
 	assert(n_threads_per_block.x>0);
 	assert(n_threads_per_block.y>0);
@@ -381,6 +386,11 @@ define(`SETUP_BLOCKS_Z',`
 		extra.z = VA_LEN_Z(vap) % n_threads_per_block.z;
 	}
 	if( extra.z > 0 ) n_blocks.z++;
+')
+
+define(`SETUP_BLOCKS_Z',`
+	n_threads_per_block.z = 1;
+	extra.z=0;
 ')
 
 dnl define(`MORE_DEBUG',`')

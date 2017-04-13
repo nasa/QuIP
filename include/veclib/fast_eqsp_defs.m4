@@ -5,6 +5,7 @@ dnl	// These definitions are shared between fast and eqsp functions
 
 dnl	/* fast_eqsp_defs setting gpu_index_type */
 define(`GPU_INDEX_TYPE',`int')
+define(`RAMP_IDX',`ramp_idx')
 
 dnl ifdef BUILD_FOR_CUDA
 dnl
