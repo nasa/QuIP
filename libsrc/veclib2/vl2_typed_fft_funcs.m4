@@ -52,6 +52,8 @@ static char *revdone=NULL;
 static u_int max_fft_len=(-1);
 ')
 
+dnl	Instead of ifdef, better to have separate file for kernels and host funcs?
+
 ifdef(`BUILDING_KERNELS',`
 /* vl2_fft_funcs.m4 declaring static vars */
 DECLARE_STATIC_FFT_VARS
@@ -70,8 +72,12 @@ define(`XFER_FFT_SINC',`
 	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
 		return;
 	}
-	if( IS_COMPLEX($3) )
-		SET_FFT_SINC($2, FFT_SINC($2)/2);
+dnl	This code was probably a relic from when the increment was from mach_inc, not type_inc?
+dnl	Doesnt seem to be needed now.
+dnl	if( IS_COMPLEX($3) ){
+dnl		SET_FFT_SINC($2, FFT_SINC($2)/2);
+dnl fprintf(stderr,"xfer_fft_sinc:  complex src inc = %d\\n",FFT_SINC($2));
+dnl	}
 ')
 
 
@@ -88,7 +94,6 @@ define(`XFER_FFT_DINC',`
 	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
 		return;
 	}
-
 	dnl /* if( IS_COMPLEX($3) )	SET_FFT_DINC($2, FFT_DINC($2)/2); */
 ')
 
@@ -492,6 +497,8 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	dst_inc = FFT_DINC(fap);
 	src_inc = FFT_SINC(fap);
 	len=FFT_LEN(fap);		/* length of the real destination */
+fprintf(stderr,"dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n",
+(long)dest,dst_inc,(long)src,src_inc,len);
 
 	if( len != last_real_len ){
 		init_sinfact (len);
@@ -589,10 +596,11 @@ static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
+fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vfft,type_code) BEGIN\\n");
 	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
-	XFER_FFT_DINC(cvfft,fap,OA_DEST(oap));
-	XFER_FFT_SINC(cvfft,fap,OA_SRC1(oap));
+	XFER_FFT_DINC(cvfft,fap,OA_DEST(oap))
+	XFER_FFT_SINC(cvfft,fap,OA_SRC1(oap))
 	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
 	SET_FFT_ISI(fap,(-1) );
 
@@ -603,11 +611,12 @@ static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 {
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
-	
+
+fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vift,type_code) BEGIN\\n");
 	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
-	XFER_FFT_DINC(cvift,fap,OA_DEST(oap));
-	XFER_FFT_SINC(cvift,fap,OA_SRC1(oap));
+	XFER_FFT_DINC(cvift,fap,OA_DEST(oap))
+	XFER_FFT_SINC(cvift,fap,OA_SRC1(oap))
 	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
 	SET_FFT_ISI(fap, (1) );
 
@@ -620,13 +629,14 @@ static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap;
 
+fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vfft,type_code) BEGIN\\n");
 	fap = (&fa);
 
 	SET_FFT_SRC( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
-	XFER_FFT_SINC(rvfft,fap,OA_SRC1(oap));
-	XFER_FFT_DINC(rvfft,fap,OA_DEST(oap));
+	XFER_FFT_SINC(rvfft,fap,OA_SRC1(oap))
+	XFER_FFT_DINC(rvfft,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_SRC1(oap) ) );
 	SET_FFT_ISI( fap, (-1) );
@@ -638,15 +648,17 @@ static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
+fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vift,type_code) BEGIN\\n");
 	SET_FFT_SRC( fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
-	XFER_FFT_SINC(rvift,fap,OA_SRC1(oap));
-	XFER_FFT_DINC(rvift,fap,OA_DEST(oap));
+	XFER_FFT_SINC(rvift,fap,OA_SRC1(oap))
+	XFER_FFT_DINC(rvift,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );
 	SET_FFT_ISI( fap, 1 );
-	PF_FFT_CALL_NAME(rvfft)( &fa );
+	//PF_FFT_CALL_NAME(rvfft)( &fa );
+	PF_FFT_CALL_NAME(rvift)( &fa );
 }
 
 /* Read 2-D fourier transform.

@@ -858,7 +858,7 @@ ADVISE(ERROR_STRING);
 //#endif /* CAUTIOUS */
 	assert( status == 0 );
 
-	if( OA_SRC2(oap)  == NO_OBJ ) return 0;
+	if( OA_SRC2(oap) == NO_OBJ ) return 0;
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg2 %s (%s)",
@@ -1076,6 +1076,7 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 //fprintf(stderr,"call_vfunc:  oap = 0x%lx  vfp = 0x%lx\n", (long)oap,(long)vfp );
 //fprintf(stderr,"call_vfunc:  func at 0x%lx\n",(long)OA_DISPATCH_FUNC(oap));
 	//return (* OA_DISPATCH_FUNC( oap ) )(QSP_ARG  vfp,oap);
+fprintf(stderr,"call_vfunc calling platform_dispatch %s\n",VF_NAME(vfp));
 	retval = platform_dispatch( QSP_ARG  PFDEV_PLATFORM(OA_PFDEV(oap)), vfp,oap);
 	return retval;
 } // call_vfunc
