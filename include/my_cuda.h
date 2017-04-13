@@ -14,7 +14,7 @@
 
 #ifndef CUDA_ERROR_CHECK
 #if CUDA_VERSION >= 6000
-#define CUDA_ERROR_CHECK(string)	/* what to do? */
+//#define CUDA_ERROR_CHECK(string)	/* what to do? */
 #elif CUDA_VERSION >= 5000
 // CUDA 5
 #define CUDA_ERROR_CHECK(string)	getLastCudaError(string);
@@ -46,6 +46,8 @@
 #endif /* HAVE_CUFFT_H */
 
 #include <cuda_runtime_api.h>
+
+extern const char* getCUFFTError(cufftResult status);
 
 #else // ! HAVE_CUDA
 

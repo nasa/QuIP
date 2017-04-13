@@ -84,7 +84,7 @@ libcu2_a_SOURCES =			\
 			cu2_utils.c
 
 
-NVCCFLAGS =	@NVCCFLAGS@ @NVCC_ARCH_FLAGS@ --machine 64 $(NVCPPFLAGS) -DHAVE_CONFIG_H
+NVCCFLAGS =	@NVCCFLAGS@ @NVCC_ARCH_FLAGS@ --machine 64 $(CPPFLAGS) $(NVCPPFLAGS) -DHAVE_CONFIG_H
 
 NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_srcdir)/include -I$(top_builddir)/include
 

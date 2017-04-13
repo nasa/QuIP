@@ -395,6 +395,7 @@ echo Found cuda software in $cuda_dir
       AC_CHECK_FILE([$cuda_dir/samples],[nv_sdk_dir="$cuda_dir/samples"],[nv_sdk_dir="no"])
 
       nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
+echo Including $nv_sdk_inc_dir
       CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
 
       AC_CHECK_FILE([$cuda_dir/samples/common/lib/darwin],

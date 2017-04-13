@@ -184,7 +184,7 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 
 	//if( ! for_real ) return;
 
-fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
+dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
 	len = FFT_LEN(fap);
 
 	if( revdone==NULL ){
@@ -296,7 +296,7 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 	FFT_Args fa;
 	FFT_Args *new_fap=(&fa);
 
-fprintf(stderr,"PF_FFT_CALL_NAME(cvift) BEGIN\\n");
+dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvift) BEGIN\\n");
 	SET_FFT_DST(new_fap, FFT_DST(fap));
 	SET_FFT_LEN(new_fap, FFT_LEN(fap));
 	SET_FFT_DINC(new_fap, FFT_DINC(fap));
@@ -596,7 +596,7 @@ static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vfft,type_code) BEGIN\\n");
+dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vfft,type_code) BEGIN\\n");
 	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	XFER_FFT_DINC(cvfft,fap,OA_DEST(oap))
@@ -612,7 +612,7 @@ static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vift,type_code) BEGIN\\n");
+dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vift,type_code) BEGIN\\n");
 	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	XFER_FFT_DINC(cvift,fap,OA_DEST(oap))
@@ -629,7 +629,7 @@ static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap;
 
-fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vfft,type_code) BEGIN\\n");
+dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vfft,type_code) BEGIN\\n");
 	fap = (&fa);
 
 	SET_FFT_SRC( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
@@ -648,7 +648,7 @@ static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vift,type_code) BEGIN\\n");
+dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vift,type_code) BEGIN\\n");
 	SET_FFT_SRC( fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 

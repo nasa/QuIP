@@ -21,3 +21,11 @@ define(`MY_CLFFT_PRECISION',`CLFFT_DOUBLE')
 
 my_include(`veclib/dp_func_defs.m4')
 
+
+dnl	definitions for CUDA cuFFT
+define(`cuda_cpx_fft_func',`cufftExecZ2Z')
+define(`cuda_real_fft_func',`cufftExecD2Z')
+define(`cuda_real_ift_func',`cufftExecZ2D')
+define(`cuda_cpx_fft_type',`cufftDoubleComplex')
+define(`cuda_real_fft_type',`cufftDoubleReal')
+
