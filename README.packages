@@ -35,3 +35,16 @@ Building on a fresh CentOS 6 install
 
 installed:
 	texinfo
+	libjpeg-turbo-devel
+	libpng-devel
+	libtiff-devel
+	matio-devel
+	gsl-devel
+	libgcrypt-devel
+	portaudio-devel
+	libcurl-devel
+	libdc1394-devel
+	libX11-devel
+	openmotif-devel
+
+
