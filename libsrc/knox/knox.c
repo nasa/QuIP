@@ -152,7 +152,7 @@ Knox_Device *curr_kdp=NULL;
 //ITEM_INTERFACE_PROTOTYPES_STATIC(Knox_Device,knox_dev)
 //ITEM_INTERFACE_DECLARATIONS_STATIC(Knox_Device,knox_dev)
 static Item_Type * knox_dev_itp=NO_ITEM_TYPE;
-static ITEM_INIT_FUNC(Knox_Device,knox_dev)
+static ITEM_INIT_FUNC(Knox_Device,knox_dev,0)
 static ITEM_NEW_FUNC(Knox_Device,knox_dev)
 static ITEM_CHECK_FUNC(Knox_Device,knox_dev)
 
