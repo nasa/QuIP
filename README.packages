@@ -46,5 +46,7 @@ installed:
 	libdc1394-devel
 	libX11-devel
 	openmotif-devel
+	opencv-devel
+	ffmpeg-devel
 
 
