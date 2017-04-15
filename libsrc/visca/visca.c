@@ -18,6 +18,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "fileck.h"	// path_exists()
 #include "quip_menu.h"
 #include "serial.h"
 #include "ttyctl.h"
