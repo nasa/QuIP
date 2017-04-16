@@ -48,5 +48,7 @@ installed:
 	openmotif-devel
 	opencv-devel
 	ffmpeg-devel
+	mesa-libGL-devel
+	mesa-libGLU-devel
 
 
