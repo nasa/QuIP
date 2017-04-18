@@ -1,4 +1,7 @@
-dnl nothing here yet
+
+#ifdef HAVE_CLFFT
+#include <clFFT.h>
+#endif // HAVE_CLFFT
 
 ifdef(`BUILDING_KERNELS',`',`
 

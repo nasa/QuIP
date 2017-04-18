@@ -314,6 +314,7 @@ Set purple	29
 Set magenta	29
 Set dark_green	30
 Set dark_red	31
+Set dark_yellow	32
 .
 
 Define Init_Color_Defs 0
@@ -328,6 +329,7 @@ Setcolor $dark_green 0 100 0
 Setcolor $blue 0 0 255
 Setcolor $purple 255 0 255	# same as $magenta
 Setcolor $yellow 255 255 0
+Setcolor $dark_yellow 180 180 0
 Setcolor $orange 250 100 0
 Setcolor $cyan 0 255 255
 Plot_Foreground $default_fg

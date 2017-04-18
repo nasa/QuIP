@@ -8,7 +8,8 @@ static void ocl_fft_shutdown(SINGLE_QSP_ARG_DECL)
 #ifdef HAVE_CLFFT
 	cl_int err;
 	err=clfftTeardown();
-	CLFFT_RESULT_CHECK(clfftTeardown)
+	//CLFFT_RESULT_CHECK(clfftTeardown)
+fprintf(stderr,"clfftTeardown returned status code %d\n",err);
 #endif // HAVE_CLFFT
 }
 
