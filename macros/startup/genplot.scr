@@ -7,16 +7,19 @@
 < $macro_dir/view/plotsupp.mac
 < $macro_dir/view/plot_gui.mac
 
+max_warnings 3
+
 Clobber yes
 
-advise 'checking for cmd line arg...'
-If $argc>0
-  Then 'Set plot_name $1'
-  Else "Set plot_name plot_1"
+#advise 'checking for cmd line arg...'
+If $argc==0
+  "error_exit 'Usage:  genplot plot_name [plot_param_dir]'"
+
+Set plot_name $1
 
 If $argc>1
-  Then 'Set plot_dir $2'
-  Else 'Set plot_dir .'
+  Then 'Set plot_param_dir $2'
+  Else 'Set plot_param_dir .'
 
 Init_Plot_GUI_Defaults
 Declare_Plot_GUI

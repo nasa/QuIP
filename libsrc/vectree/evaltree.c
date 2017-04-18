@@ -923,7 +923,7 @@ static int do_vvfunc(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr
 	} else {
 		setvarg3(oap,dpto,dpfr1,dpfr2);
 	}
-show_obj_args(QSP_ARG  oap);
+//show_obj_args(QSP_ARG  oap);
 	retval = perf_vfunc(QSP_ARG  code,oap) ;
 
 	return( retval );
@@ -1612,58 +1612,58 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 	eval_enp = enp;
 
 	// if dst_dp is non-null, then we return a new object, otherwise we use dst_dp
-fprintf(stderr,"eval_bitmap bool_bitmap BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
-dump_tree(QSP_ARG  enp);
+//fprintf(stderr,"eval_bitmap bool_bitmap BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//dump_tree(QSP_ARG  enp);
 
 	switch( VN_CODE(enp) ){
 		/* ALL_OBJREF_CASES??? */
 		case T_STATIC_OBJ:		/* eval_bitmap */
 		case T_DYN_OBJ:			/* eval_bitmap */
-fprintf(stderr,"eval_bitmap object BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//fprintf(stderr,"eval_bitmap object BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			dp = EVAL_OBJ_REF(enp);
 			return(dp);
 			break;
 
 		case T_BOOL_AND:
-fprintf(stderr,"eval_bitmap bool_and BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
-dump_tree(QSP_ARG  enp);
+//fprintf(stderr,"eval_bitmap bool_and BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//dump_tree(QSP_ARG  enp);
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
-fprintf(stderr,"eval_bitmap bool_and case 1  first child is a scalar\n");
+//fprintf(stderr,"eval_bitmap bool_and case 1  first child is a scalar\n");
 				ival = EVAL_INT_EXP(VN_CHILD(enp,0));
 				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,1));
-fprintf(stderr,"eval_bitmap bool_and case 1  back from recursive call to eval_bitmap...\n");
+//fprintf(stderr,"eval_bitmap bool_and case 1  back from recursive call to eval_bitmap...\n");
 				if( !ival )
 					constant_bitmap(bm_dp1,0L);
-fprintf(stderr,"eval_bitmap bool_and DONE #1, will return 0x%lx\n",(long) bm_dp1);
+//fprintf(stderr,"eval_bitmap bool_and DONE #1, will return 0x%lx\n",(long) bm_dp1);
 				return(bm_dp1);
 			} else if( SCALAR_SHAPE( VN_SHAPE(VN_CHILD(enp,1)) ) ){
-fprintf(stderr,"eval_bitmap bool_and case 2  second child is a scalar\n");
+//fprintf(stderr,"eval_bitmap bool_and case 2  second child is a scalar\n");
 				ival = EVAL_INT_EXP(VN_CHILD(enp,1));
 				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
-fprintf(stderr,"eval_bitmap bool_and case 2  back from recursive call to eval_bitmap...\n");
+//fprintf(stderr,"eval_bitmap bool_and case 2  back from recursive call to eval_bitmap...\n");
 				if( !ival )
 					constant_bitmap(bm_dp1,0L);
-fprintf(stderr,"eval_bitmap bool_and DONE #2, will return 0x%lx\n",(long) bm_dp1);
+//fprintf(stderr,"eval_bitmap bool_and DONE #2, will return 0x%lx\n",(long) bm_dp1);
 				return(bm_dp1);
 			} else {
-fprintf(stderr,"eval_bitmap bool_and case 3  neither child is a scalar\n");
+//fprintf(stderr,"eval_bitmap bool_and case 3  neither child is a scalar\n");
 				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
-fprintf(stderr,"eval_bitmap bool_and case 2  back from first recursive call to eval_bitmap...\n");
+//fprintf(stderr,"eval_bitmap bool_and case 2  back from first recursive call to eval_bitmap...\n");
 				bm_dp2 = EVAL_BITMAP(NO_OBJ,VN_CHILD(enp,1));
-fprintf(stderr,"eval_bitmap bool_and case 2  back from second recursive call to eval_bitmap...\n");
-longlist(QSP_ARG bm_dp1);
-longlist(QSP_ARG bm_dp2);
+//fprintf(stderr,"eval_bitmap bool_and case 2  back from second recursive call to eval_bitmap...\n");
+//longlist(QSP_ARG bm_dp1);
+//longlist(QSP_ARG bm_dp2);
 				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVAND) < 0 ){
 					NODE_ERROR(enp);
 					WARN("Error evaluating bitmap");
 					return(NO_OBJ);
 				}
-fprintf(stderr,"eval_bitmap bool_and DONE #3, will return 0x%lx\n",(long) bm_dp1);
+//fprintf(stderr,"eval_bitmap bool_and DONE #3, will return 0x%lx\n",(long) bm_dp1);
 				return(bm_dp1);
 			}
 			break;
 		case T_BOOL_OR:
-fprintf(stderr,"eval_bitmap bool_or BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//fprintf(stderr,"eval_bitmap bool_or BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
 				ival = EVAL_INT_EXP(VN_CHILD(enp,0));
 				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,1));
@@ -1688,7 +1688,7 @@ fprintf(stderr,"eval_bitmap bool_or BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			}
 			break;
 		case T_BOOL_XOR:
-fprintf(stderr,"eval_bitmap bool_xor BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//fprintf(stderr,"eval_bitmap bool_xor BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
 				ival = EVAL_INT_EXP(VN_CHILD(enp,0));
 				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,1));
@@ -1715,15 +1715,15 @@ fprintf(stderr,"eval_bitmap bool_xor BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			}
 			break;
 		case T_BOOL_NOT:
-fprintf(stderr,"eval_bitmap bool_not BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//fprintf(stderr,"eval_bitmap bool_not BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
 			bm_dp1 = complement_bitmap(QSP_ARG  bm_dp1);
 			return(bm_dp1);
 			break;
 
 		ALL_NUMERIC_COMPARISON_CASES			/* eval_bitmap */
-fprintf(stderr,"eval_bitmap numeric_comparison BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
-dump_tree(QSP_ARG  enp);
+//fprintf(stderr,"eval_bitmap numeric_comparison BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
+//dump_tree(QSP_ARG  enp);
 
 //#ifdef CAUTIOUS
 //			if( SCALAR_SHAPE( VN_SHAPE(VN_CHILD(enp,0)) ) ){
@@ -1762,7 +1762,7 @@ IOS_RETURN_VAL(NULL)
 				dp2 = EVAL_OBJ_EXP(VN_CHILD(enp,1),NO_OBJ);
 				bm_dp1 = vv_bitmap(QSP_ARG  dst_dp,dp,dp2,VN_BM_CODE(enp));
 			}
-fprintf(stderr,"eval_bitmap numeric_comparison DONE, will return 0x%lx\n",(long) bm_dp1);
+//fprintf(stderr,"eval_bitmap numeric_comparison DONE, will return 0x%lx\n",(long) bm_dp1);
 			return(bm_dp1);
 			break;
 
@@ -3826,8 +3826,8 @@ advise(ERROR_STRING);
 //	}
 //#endif /* CAUTIOUS */
 	assert( VN_STRING(enp) != NULL );
-fprintf(stderr,"eval_decl_stat creating id, string = \"%s\"...\n",VN_STRING(enp));
-dump_tree(QSP_ARG  enp);
+//fprintf(stderr,"eval_decl_stat creating id, string = \"%s\"...\n",VN_STRING(enp));
+//dump_tree(QSP_ARG  enp);
 
 	// Make sure this name has not been used already...
 	idp = ID_OF(VN_STRING(enp));
@@ -3893,7 +3893,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 
 	idp = new_id(QSP_ARG  VN_STRING(enp));		/* eval_decl_stat */
 	SET_ID_TYPE(idp, type);
-fprintf(stderr,"new id_type = %d\n",type);
+//fprintf(stderr,"new id_type = %d\n",type);
 
 
 //#ifdef CAUTIOUS
@@ -3909,9 +3909,9 @@ fprintf(stderr,"new id_type = %d\n",type);
 	switch( type ){
 
 		case ID_REFERENCE:
-fprintf(stderr,"ID_REFERENCE:  idp = 0x%lx\n",(long)idp);
-fprintf(stderr,"ID_NAME(idp) = 0x%lx\n",(long)ID_NAME(idp));
-fprintf(stderr,"ID_NAME(idp) = %s\n",ID_NAME(idp));
+//fprintf(stderr,"ID_REFERENCE:  idp = 0x%lx\n",(long)idp);
+//fprintf(stderr,"ID_NAME(idp) = 0x%lx\n",(long)ID_NAME(idp));
+//fprintf(stderr,"ID_NAME(idp) = %s\n",ID_NAME(idp));
 			SET_ID_DOBJ_CTX(idp , (Item_Context *)NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)) );
 			SET_ID_REF(idp, NEW_REFERENCE );
 			SET_REF_ID(ID_REF(idp), idp );
