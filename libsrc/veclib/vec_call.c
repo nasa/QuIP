@@ -1076,7 +1076,7 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 //fprintf(stderr,"call_vfunc:  oap = 0x%lx  vfp = 0x%lx\n", (long)oap,(long)vfp );
 //fprintf(stderr,"call_vfunc:  func at 0x%lx\n",(long)OA_DISPATCH_FUNC(oap));
 	//return (* OA_DISPATCH_FUNC( oap ) )(QSP_ARG  vfp,oap);
-fprintf(stderr,"call_vfunc calling platform_dispatch %s\n",VF_NAME(vfp));
+//fprintf(stderr,"call_vfunc calling platform_dispatch %s\n",VF_NAME(vfp));
 	retval = platform_dispatch( QSP_ARG  PFDEV_PLATFORM(OA_PFDEV(oap)), vfp,oap);
 	return retval;
 } // call_vfunc

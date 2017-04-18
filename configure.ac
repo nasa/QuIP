@@ -771,7 +771,8 @@ AC_PROG_INSTALL
 
 # Check for ranlib and ar
 AC_PROG_RANLIB
-AM_PROG_AR
+# AM_PROG_AR not recognized on CentOS 6 ???
+#AM_PROG_AR
 
 # Check for - what?
 AM_PROG_CC_C_O
@@ -2039,9 +2040,11 @@ Building without numrec support.
 #if test "x${have_numrec}" = xyes; then
 else
   if test "x${use_numrec}" = xyes; then
-    AC_DEFINE([HAVE_NUMREC], 1, [Numerical Recipes support enabled])
+    AC_DEFINE([HAVE_NUMREC], 1, [Numerical Recipes support present])
+    AC_DEFINE([USE_NUMREC], 1, [Numerical Recipes support enabled])
   fi
 fi
+# what does this do, let use test HAVE_NUMREC in makefile's?
 AM_CONDITIONAL([HAVE_NUMREC],[test x${use_numrec} = xyes])
 
 if test "x${have_sparselm}" = xno; then

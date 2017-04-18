@@ -4,7 +4,6 @@
 #include "viewer.h"
 #include "xsupp.h"
 #include "debug.h"
-#include <X11/Xproto.h>	// the request codes
 
 static Disp_Obj *current_dop=NO_DISP_OBJ;
 
@@ -12,6 +11,7 @@ ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 
 #ifdef HAVE_X11
 
+#include <X11/Xproto.h>	// the request codes
 #include "xsupp_prot.h"
 
 /* manipulate displays */
