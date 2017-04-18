@@ -660,7 +660,7 @@ fprintf(stderr,"Calling function at 0x%lx\n",
 #endif // MAX_DEBUG
 
 	// Do it!
-fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
+//fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
 	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(VF_CODE(vfp),oap);
 	return 0;
 
