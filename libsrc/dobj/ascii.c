@@ -17,6 +17,7 @@
 #include "ascii_fmts.h"
 #include "query_stack.h"	// like to eliminate this dependency...
 
+static void init_format_type_tbl(void);
 
 
 /*
@@ -72,7 +73,11 @@
  *	5) %f, %g read w/ how_much()
  */
 
-static int n_format_fields, curr_fmt_i;
+// BUG globals not thread-safe!?
+//static int n_format_fields, curr_fmt_i;
+// should have an input format list per qsp...
+
+static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 
 void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 {
@@ -85,47 +90,151 @@ void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 	dai_p->dai_ascii_separator = NORMAL_SEPARATOR;
 	dai_p->dai_ffmtstr = NOPAD_FLT_FMT_STR;
 	dai_p->dai_ifmtstr = NOPAD_INT_FMT_STR;
+	dai_p->dai_fmt_lp = NO_LIST;
 }
 
 static void show_input_format(SINGLE_QSP_ARG_DECL)
 {
-	int i=0;
+	//int i=0;
 
-	if( n_format_fields <= 0 ){
+	if( /*n_format_fields <= 0*/ HAS_FORMAT_LIST ){
 		advise("no input format specified");
 		return;
 	}
 
-	while(i<n_format_fields){
-		if( i > 0 ) prt_msg_frag(" ");
+	CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
+	while(/*i<n_format_fields*/ CURRENT_FORMAT_NODE != NULL ){
+		if( ! IS_FIRST_FORMAT )
+		/*if( i > 0 )*/
+			prt_msg_frag(" ");
+		/*
 		switch( ascii_input_fmt_tbl[i].fmt_type ){
 			case IN_FMT_STR:  prt_msg_frag("%s"); break;
 			case IN_FMT_LIT:  prt_msg_frag(ascii_input_fmt_tbl[i].fmt_litstr); break;
 			case IN_FMT_FLT:  prt_msg_frag("%f"); break;
 			case IN_FMT_INT:  prt_msg_frag("%d"); break;
 		}
-		i++;
+		*/
+		CURRENT_FORMAT->fmt_type->display_format(QSP_ARG  /*&ascii_input_fmt_tbl[i]*/ CURRENT_FORMAT);
+		//i++;
 	}
 	prt_msg("");
 }
 
+static void display_int_format(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
+{
+	prt_msg_frag("%d");
+}
+
+static void display_literal_format(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
+{
+	prt_msg_frag(fmt_p->fmt_litstr);
+}
+
+static void display_string_format(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
+{
+	prt_msg_frag("%s");
+}
+
+static void display_float_format(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
+{
+	prt_msg_frag("%f");
+}
+
+static /*Input_Format_Type*/ struct input_format_type *format_type_for_code(Input_Format_Type_Code c)
+{
+	static int inited=0;
+
+	if( ! inited ){
+		init_format_type_tbl();
+		inited=1;
+	}
+	assert( c >= 0 && c < N_INPUT_FORMAT_TYPES );
+	return( & input_format_type_tbl[c] );
+}
+
+static Input_Format_Spec *new_format_spec(Input_Format_Type_Code c)
+{
+	Input_Format_Spec *fmt_p;
+
+	fmt_p = getbuf(sizeof(*fmt_p));
+	fmt_p->fmt_type = format_type_for_code(c);
+	fmt_p->fmt_litstr = NULL;
+	return fmt_p;
+}
+
+static void add_format_for_code(QSP_ARG_DECL  Input_Format_Type_Code c)
+{
+	Input_Format_Spec *fmt_p;
+	Node *np;
+
+	fmt_p = new_format_spec(c);
+//fprintf(stderr,"add_format_for_code %d:  fmt_p = 0x%lx\n",c,(long)fmt_p);
+//fprintf(stderr,"add_format_for_code %d:  fmt_p->fmt_type = 0x%lx\n",c,(long)fmt_p->fmt_type);
+//fprintf(stderr,"add_format_for_code %d:  fmt_p->fmt_type->type_code = %ld\n",c,(long)fmt_p->fmt_type->type_code);
+	np = mk_node(fmt_p);
+	if( ! HAS_FORMAT_LIST )
+		INPUT_FORMAT_LIST = new_list();
+	addTail( INPUT_FORMAT_LIST, np );
+}
+
+static void release_format_list(SINGLE_QSP_ARG_DECL)
+{
+	Node *np;
+	Input_Format_Spec *fmt_p;
+
+	while(1){
+		np = remTail(INPUT_FORMAT_LIST);
+		if( np == NULL ) return;
+		fmt_p = (Input_Format_Spec *) NODE_DATA(np);
+		(*(fmt_p->fmt_type->release))(fmt_p);
+		rls_node(np);
+	}
+}
+
+static void set_literal_format_string(QSP_ARG_DECL  char *s)
+{
+	Input_Format_Spec *fmt_p;
+	Node *np;
+
+	np = QLIST_TAIL(INPUT_FORMAT_LIST);
+	assert(np!=NULL);
+	fmt_p = NODE_DATA(np);
+	assert( fmt_p != NULL );
+	assert( fmt_p->fmt_type->type_code == IN_FMT_LIT );
+	fmt_p->fmt_litstr = savestr(s);
+}
+
 #define MAX_LIT_STR_LEN	255
+
+static void read_literal_format_string(QSP_ARG_DECL  const char **sptr)
+{
+	const char *s;
+	int i=0;
+	char lit_str[MAX_LIT_STR_LEN+1];
+
+	s = *sptr;
+	while( *s && !isspace(*s) && i < MAX_LIT_STR_LEN )
+		lit_str[i++]=(*s++);
+	lit_str[i] = 0;
+	if( *s && !isspace(*s) )
+		WARN("literal string overflow in input format spec");
+
+	*sptr = s;
+
+	set_literal_format_string(QSP_ARG  lit_str);
+}
+
 
 void set_input_format_string( QSP_ARG_DECL  const char *s )
 {
 	const char *orig_str=s;
-	char lit_str[MAX_LIT_STR_LEN+1];
+	//Input_Format_Spec *fmt_p;
 
-	while( n_format_fields > 0 ){
-		/* release any old literal strings */
-		n_format_fields--;
-		if( ascii_input_fmt_tbl[n_format_fields].fmt_type == IN_FMT_LIT )
-			rls_str( (char *) ascii_input_fmt_tbl[n_format_fields].fmt_litstr );
-	}
-
+	if( HAS_FORMAT_LIST ) release_format_list(SINGLE_QSP_ARG);
 	/* parse the string */
 
-	while( *s && n_format_fields < MAX_FORMAT_FIELDS ){
+	while( *s /* && n_format_fields < MAX_FORMAT_FIELDS */ ){
 		while( isspace(*s) ) s++;
 		if( *s == 0 ) return;
 
@@ -142,14 +251,16 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 				case 'x':
 				case 'o':
 				case 'i':
-					ascii_input_fmt_tbl[n_format_fields].fmt_type = IN_FMT_INT;
+					add_format_for_code(QSP_ARG  IN_FMT_INT);
 					break;
 				case 'f':
 				case 'g':
-					ascii_input_fmt_tbl[n_format_fields].fmt_type = IN_FMT_FLT;
+					//ascii_input_fmt_tbl[n_format_fields].fmt_type = format_for_code(IN_FMT_FLT);
+					add_format_for_code(QSP_ARG  IN_FMT_FLT);
 					break;
 				case 's':
-					ascii_input_fmt_tbl[n_format_fields].fmt_type = IN_FMT_STR;
+					//ascii_input_fmt_tbl[n_format_fields].fmt_type = format_for_code(IN_FMT_STR);
+					add_format_for_code(QSP_ARG  IN_FMT_STR);
 					break;
 			}
 			s++;
@@ -160,54 +271,80 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 				WARN(ERROR_STRING);
 			}
 		} else {	/* literal string */
+			/*
 			int i=0;
 
-			ascii_input_fmt_tbl[n_format_fields].fmt_type=IN_FMT_LIT;
+			ascii_input_fmt_tbl[n_format_fields].fmt_type=format_for_code(IN_FMT_LIT);
 			while( *s && !isspace(*s) && i < MAX_LIT_STR_LEN )
 				lit_str[i++]=(*s++);
 			lit_str[i] = 0;
 			if( *s && !isspace(*s) )
 				WARN("literal string overflow in input format spec");
 			ascii_input_fmt_tbl[n_format_fields].fmt_litstr = savestr(lit_str);
+			*/
+			add_format_for_code(QSP_ARG  IN_FMT_LIT);
+			read_literal_format_string(QSP_ARG  &s);
 		}
-		n_format_fields++;
+		//n_format_fields++;
 	}
+	/*
 	if( n_format_fields >= MAX_FORMAT_FIELDS && *s != 0 ){
 		sprintf(ERROR_STRING,
 	"Max number of format fields (%d) used up before done processing format string!?",
 			MAX_FORMAT_FIELDS);
 		WARN(ERROR_STRING);
 	}
+	*/
 }
 
+#ifdef FOOBAR
 #define NEXT_FORMAT		{	curr_fmt_i++;				\
 					if( curr_fmt_i >= n_format_fields ){	\
 						curr_fmt_i=0;			\
 						done = havit;			\
 					}					\
 				}
+#endif // FOOBAR
 
-#define READ_LITERAL		{					\
-									\
-	s=NAMEOF(ascii_input_fmt_tbl[curr_fmt_i].fmt_litstr);			\
-	if( strcmp(s,ascii_input_fmt_tbl[curr_fmt_i].fmt_litstr) ){		\
-		sprintf(ERROR_STRING,					\
-	"expected literal string \"%s\", saw string \"%s\"",		\
-			ascii_input_fmt_tbl[curr_fmt_i].fmt_litstr,s);		\
-		WARN(ERROR_STRING);					\
-	}								\
-}
 
 #define SET_DONE	{ done=1; curr_fmt_i--; }
 
+static void literal_format_release(Input_Format_Spec *fmt_p)
+{
+	rls_str( (char *) fmt_p->fmt_litstr );
+}
+
+static void default_format_release(Input_Format_Spec *fmt_p)
+{ /* nop */ }
+
+static void advance_format(SINGLE_QSP_ARG_DECL)
+{
+	assert(HAS_FORMAT_LIST);
+	if( CURRENT_FORMAT_NODE == NULL )
+		CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
+	else {
+		CURRENT_FORMAT_NODE = NODE_NEXT(CURRENT_FORMAT_NODE);
+		if( CURRENT_FORMAT_NODE == NULL )
+			CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
+	}
+}
+
+/*
+ * get the next number (int or float format),
+ * skipping strings and literals
+ *
+ * 
+ */
+
 static long next_input_int(QSP_ARG_DECL   const char *pmpt)
 {
-	const char *s;
+//	const char *s;
 	long l=0;
-	int havit=0;
+//	int havit=0;
 	int done=0;
 
 	do {
+#ifdef FOOBAR
 		switch( ascii_input_fmt_tbl[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT:
 				READ_LITERAL;
@@ -236,20 +373,190 @@ static long next_input_int(QSP_ARG_DECL   const char *pmpt)
 				}
 				break;
 		}
-		NEXT_FORMAT;
+#endif // FOOBAR
+		assert(INPUT_FORMAT_LIST != NULL);
+		assert(CURRENT_FORMAT_NODE != NULL);
+		assert(CURRENT_FORMAT != NULL);
+		done = CURRENT_FORMAT->fmt_type->read_long(QSP_ARG  &l, pmpt, CURRENT_FORMAT);
+		advance_format(SINGLE_QSP_ARG);
 	} while(!done);
 
 	return(l);
 }
 
-static double next_input_flt(QSP_ARG_DECL   const char *pmpt)
+static int float_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	if( !ascii_warned ){
+		sprintf(ERROR_STRING,
+			"Float format data assigned to integer object %s!?",
+			OBJ_NAME( ascii_data_dp) );
+		WARN(ERROR_STRING);
+		ascii_warned=1;
+	}
+
+	*result = (long) HOW_MUCH(pmpt);
+	return 1;
+}
+
+static int int_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	*result = HOW_MANY(pmpt);
+	return 1;
+}
+
+static void consume_format_line(QSP_ARG_DECL  prec_t c)
+{
+	Input_Format_Spec *fmt_p;
+
+	do {
+		if( QLEVEL != ASCII_LEVEL ){
+			WARN("Incomplete formatted input line!?");
+			return;
+		}
+		fmt_p = CURRENT_FORMAT;
+		fmt_p->fmt_type->consume(QSP_ARG  c);
+		lookahead_til(QSP_ARG  ASCII_LEVEL-1);
+	} while( CURRENT_FORMAT_NODE != FIRST_INPUT_FORMAT_NODE );
+}
+
+static int is_numeric_prec( prec_t c )
+{
+	switch( c & PSEUDO_PREC_MASK ){
+		case PP_NORM:
+		case PP_COLOR:
+		case PP_CPX:
+		case PP_QUAT:
+		case PP_BIT:
+			return 1;
+
+		case PP_MIXED:
+		case PP_VOID:
+		case PP_STRING:
+		case PP_ANY:
+		case PP_LIST:
+		case PP_CHAR:
+			return 0;
+
+		default:
+			NWARN("is_numeric_prec:  unexpected pseudoprecision!?");
+			assert(1==0);
+	}
+}
+
+static void consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
 {
 	const char *s;
+	s=NAMEOF(fmt_p->fmt_litstr);
+	if( strcmp(s,fmt_p->fmt_litstr) ){
+		sprintf(ERROR_STRING,
+	"expected literal string \"%s\", saw string \"%s\"",
+			fmt_p->fmt_litstr,s);
+		WARN(ERROR_STRING);
+	}
+}
+
+#define RESET_INPUT_FORMAT_FIELD	CURRENT_FORMAT_NODE = QLIST_HEAD(INPUT_FORMAT_LIST);
+
+// The "consume" methods read and discard a field, UNLESS the precision code
+// is appropriate for that format.
+
+static void int_format_consume(QSP_ARG_DECL  prec_t c)
+{
+	if( is_numeric_prec(c) ){
+		RESET_INPUT_FORMAT_FIELD
+		return;
+	} else {
+		long l;
+		l=HOW_MANY("dummy integer");
+		advance_format(SINGLE_QSP_ARG);
+	}
+}
+
+static void float_format_consume(QSP_ARG_DECL  prec_t c)
+{
+	if( is_numeric_prec(c) ){
+		RESET_INPUT_FORMAT_FIELD
+		return;
+	} else {
+		double d;
+		d=HOW_MUCH("dummy float");
+		advance_format(SINGLE_QSP_ARG);
+	}
+}
+
+static void string_format_consume(QSP_ARG_DECL  prec_t c)
+{
+	if( c == PREC_STR ){
+		RESET_INPUT_FORMAT_FIELD
+		return;
+	} else {
+		const char *s;
+		s=NAMEOF("dummy string");
+		advance_format(SINGLE_QSP_ARG);
+	}
+}
+
+static void literal_format_consume(QSP_ARG_DECL  prec_t c)
+{
+	consume_literal_string(QSP_ARG  CURRENT_FORMAT);
+	advance_format(SINGLE_QSP_ARG);
+}
+
+
+static void consume_variable_string(SINGLE_QSP_ARG_DECL)
+{
+	/*s=*/NAMEOF("don't-care string");
+}
+
+static int string_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	consume_variable_string(SINGLE_QSP_ARG);
+	return 0;
+}
+
+static int literal_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	consume_literal_string(QSP_ARG  fmt_p);
+	return 0;
+}
+
+static int int_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	*result = HOW_MANY(pmpt);
+	return 1;
+}
+
+static int float_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	*result = HOW_MUCH(pmpt);
+	return 1;
+}
+
+static int string_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	consume_variable_string(SINGLE_QSP_ARG);
+	return 0;
+}
+
+static int literal_format_read_double(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	consume_literal_string(QSP_ARG  fmt_p);
+	return 0;
+}
+
+/*
+ * Read input fields until a number is encountered
+ */
+
+static double next_input_flt(QSP_ARG_DECL   const char *pmpt)
+{
+	//const char *s;
 	double d=0.0;
-	int havit=0;
+//	int havit=0;
 	int done=0;
 
 	do {
+#ifdef FOOBAR
 		switch( ascii_input_fmt_tbl[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT: READ_LITERAL; break;
 			case IN_FMT_STR: /*s=*/NAMEOF("don't-care string"); break;
@@ -269,6 +576,11 @@ static double next_input_flt(QSP_ARG_DECL   const char *pmpt)
 				break;
 		}
 		NEXT_FORMAT;
+#endif // FOOBAR
+		assert(CURRENT_FORMAT_NODE != NULL);
+		assert(CURRENT_FORMAT != NULL);
+		done = CURRENT_FORMAT->fmt_type->read_double(QSP_ARG  &d, pmpt, CURRENT_FORMAT);
+		advance_format(SINGLE_QSP_ARG);
 	} while(!done);
 
 	return(d);
@@ -280,10 +592,11 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 		= NULL		/* to elim possibly used w/o init warning */
 	;
 	//double d;
-	int havit=0;
+//	int havit=0;
 	int done=0;
 
 	do {
+#ifdef FOOBAR
 		switch( ascii_input_fmt_tbl[curr_fmt_i].fmt_type ){
 			case IN_FMT_LIT: READ_LITERAL; break;
 			case IN_FMT_STR:
@@ -301,9 +614,39 @@ static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
 				break;
 		}
 		NEXT_FORMAT;
+#endif // FOOBAR
+		assert(CURRENT_FORMAT != NULL);
+		done = CURRENT_FORMAT->fmt_type->read_string(QSP_ARG  &s, pmpt, CURRENT_FORMAT);
+		advance_format(SINGLE_QSP_ARG);
 	} while(!done);
 
 	return(s);
+}
+
+static int int_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	long l;
+	l=HOW_MANY("dummy integer value");
+	return 0;
+}
+
+static int float_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	double d;
+	d=HOW_MUCH("dummy float value");
+	return 0;
+}
+
+static int string_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	*sptr = NAMEOF(pmpt);
+	return 1;
+}
+
+static int literal_format_read_string(QSP_ARG_DECL  const char **sptr, const char *pmpt, Input_Format_Spec *fmt_p)
+{
+	consume_literal_string(QSP_ARG  fmt_p);
+	return 0;
 }
 
 static int check_input_level(SINGLE_QSP_ARG_DECL)
@@ -315,7 +658,7 @@ static int check_input_level(SINGLE_QSP_ARG_DECL)
 		advise("premature end of data");
 		sprintf(ERROR_STRING,"%d elements read so far",dobj_n_gotten);
 		advise(ERROR_STRING);
-		if( n_format_fields > 0 ){
+		if( /* n_format_fields > 0 */ HAS_FORMAT_LIST ){
 			prt_msg_frag("input_format:  ");
 			show_input_format(SINGLE_QSP_ARG);
 		}
@@ -341,7 +684,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
 
 	/* see if we need to look at the input format string */
-	if( n_format_fields == 0 )
+	if( /* n_format_fields == 0 */ ! HAS_FORMAT_LIST )
 		s = NAMEOF("string data");
 	else
 		s = next_input_str(QSP_ARG  "string data");
@@ -373,7 +716,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	lookahead_til(QSP_ARG  ASCII_LEVEL-1);
 
 	return(0);
-}
+} // get_a_string
 
 #ifdef HAVE_ANY_GPU
 int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
@@ -604,7 +947,7 @@ advise(ERROR_STRING);
 		case PREC_LP:
 #endif // USE_LONG_DOUBLE
 		case PREC_DP:  case PREC_SP:
-			if( n_format_fields == 0 )
+			if( /* n_format_fields == 0 */ ! HAS_FORMAT_LIST )
 				d_number = HOW_MUCH("real data");
 			else
 				d_number = next_input_flt(QSP_ARG  "real data");
@@ -618,7 +961,7 @@ advise(ERROR_STRING);
 		case PREC_UIN:
 		case PREC_UDI:
 		case PREC_ULI:
-			if( n_format_fields == 0 )
+			if( /* n_format_fields == 0 */ ! HAS_FORMAT_LIST )
 				l=HOW_MANY("integer data");
 			else
 				l=next_input_int(QSP_ARG  "integer data");
@@ -780,7 +1123,6 @@ char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
 {
 	static char buf[64];
 
-fprintf(stderr,"string_for_scalar using precision %s\n",PREC_NAME(prec_p));
 	format_scalar_value(QSP_ARG  buf,64,data,prec_p);
 	return buf;
 }
@@ -1214,12 +1556,16 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 	}
 
 	rls_str( orig_filename);
-}
+} // read_ascii_data
 
 void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 {
 	ASCII_LEVEL = QLEVEL;
 	dobj_n_gotten = 0;
+
+	if( HAS_FORMAT_LIST ){
+		CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
+	}
 
 	if( dp != ascii_data_dp ){
 		/* We store the target object so we can print its name if we need to... */
@@ -1241,7 +1587,16 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 			OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) );
 		WARN(ERROR_STRING);
 	}
-}
+
+	// If we are reading formatted input, there may be some irrelavant fields
+	// that could trigger a "too many values" warning...
+	if( HAS_FORMAT_LIST ){
+		if( CURRENT_FORMAT_NODE != FIRST_INPUT_FORMAT_NODE ){
+			consume_format_line(QSP_ARG  OBJ_PREC(dp));
+		}
+	}
+
+} // read_obj
 
 /* has to be external, called from datamenu/ascmenu.c */
 
@@ -1277,5 +1632,58 @@ void set_max_per_line(QSP_ARG_DECL  int n )
 		WARN(ERROR_STRING);
 	} else
 		dobj_max_per_line = n;
+}
+
+static void init_format_type_tbl(void)
+{
+	struct input_format_type *ft_p;
+
+	ft_p = &input_format_type_tbl[IN_FMT_INT];
+
+	ft_p->name = "integer";
+	ft_p->type_code = IN_FMT_INT;
+	ft_p->display_format = display_int_format;
+	ft_p->release = default_format_release;
+	ft_p->consume = int_format_consume;
+	ft_p->read_long = int_format_read_long;
+	ft_p->read_double = int_format_read_double;
+	ft_p->read_string = int_format_read_string;
+
+
+	ft_p = &input_format_type_tbl[IN_FMT_FLT];
+
+	ft_p->name = "float";
+	ft_p->type_code = IN_FMT_FLT;
+	ft_p->display_format = display_float_format;
+	ft_p->release = default_format_release;
+	ft_p->consume = float_format_consume;
+	ft_p->read_long = float_format_read_long;
+	ft_p->read_double = float_format_read_double;
+	ft_p->read_string = float_format_read_string;
+
+
+	ft_p = &input_format_type_tbl[IN_FMT_STR];
+
+	ft_p->name = "string";		// should be variable_string?
+	ft_p->type_code = IN_FMT_STR;
+	ft_p->display_format = display_string_format;
+	ft_p->release = default_format_release;
+	ft_p->consume = string_format_consume;
+	ft_p->read_long = string_format_read_long;
+	ft_p->read_double = string_format_read_double;
+	ft_p->read_string = string_format_read_string;
+
+
+	ft_p = &input_format_type_tbl[IN_FMT_LIT];
+
+	ft_p->name = "literal";
+	ft_p->type_code = IN_FMT_LIT;
+	ft_p->display_format = display_literal_format;
+	ft_p->release = literal_format_release;
+	ft_p->consume = literal_format_consume;
+	ft_p->read_long = literal_format_read_long;
+	ft_p->read_double = literal_format_read_double;
+	ft_p->read_string = literal_format_read_string;
+
 }
 

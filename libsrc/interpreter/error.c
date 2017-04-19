@@ -801,7 +801,6 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 }
 		i--;
 	}
-fprintf(stderr,"tell_input_location:  n_levels_to_print = %d\n",n_levels_to_print);
 	i=n_levels_to_print-1;
 	while(i>=0){
 		ql=level_to_print[i];	// assume ql matches fn_level?

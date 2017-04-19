@@ -261,10 +261,12 @@ char *qs_expr_string(SINGLE_QSP_ARG_DECL)
 	return THIS_QSP->_qs_expr_string;
 }
 
+/*
 Input_Format_Spec *qs_ascii_input_format(SINGLE_QSP_ARG_DECL)
 {
 	return THIS_QSP->qs_dai_p->dai_input_fmt;
 }
+*/
 
 int qs_level(SINGLE_QSP_ARG_DECL)
 {
