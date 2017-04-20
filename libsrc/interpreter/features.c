@@ -25,7 +25,7 @@ typedef enum {
 	SWF_CURL,
 	SWF_SOUND,
 //	SWF_MPLAYER,	// doesn't seem to be used anywhere???
-	SWF_XINE,
+//	SWF_XINE,
 	SWF_SSE,
 	SWF_NUMREC,
 	SWF_CUDA,
@@ -80,7 +80,7 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_CURL,		"www i/o (w/ libcurl)"		},
 { UNKNOWN, SWF_SOUND,		"sound (portaudio/ALSA)"	},
 //{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
-{ UNKNOWN, SWF_XINE,		"Xine"				},
+//{ UNKNOWN, SWF_XINE,		"Xine"				},
 { UNKNOWN, SWF_SSE,		"SSE processor acceleration"	},
 { UNKNOWN, SWF_NUMREC,		"Numerical Recipes library"	},
 { UNKNOWN, SWF_CUDA,		"nVidia CUDA"			},
@@ -252,11 +252,11 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_XINE
-	FEATURE_PRESENT(SWF_XINE);
-#else
-	FEATURE_ABSENT(SWF_XINE);
-#endif
+//#ifdef HAVE_XINE
+//	FEATURE_PRESENT(SWF_XINE);
+//#else
+//	FEATURE_ABSENT(SWF_XINE);
+//#endif
 
 
 #ifdef HAVE_X11
