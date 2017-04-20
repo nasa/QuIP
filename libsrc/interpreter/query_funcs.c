@@ -162,34 +162,35 @@ COMMAND_FUNC( tog_pmpt )
 	}
 }
 
-static void eatup_space(SINGLE_QSP_ARG_DECL)
+#define ESCAPED_SPACE	( *str == '\\' && isspace( *(str+1) ) )
+
+#define INCREMENT_LINE_NUMBER	\
+				\
+	SET_QRY_RDLINENO(CURR_QRY(THIS_QSP), QRY_RDLINENO(CURR_QRY(THIS_QSP)) + 1 );
+
+static void skip_white_space(QSP_ARG_DECL  const char **sptr)
 {
 	const char *str;
 
-	if( !QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ) return;
-
-	str=QRY_LINE_PTR(CURR_QRY(THIS_QSP)) ;
-
-//#ifdef CAUTIOUS
-//	if( str == (char *)NULL ) {
-//		NWARN("CAUTIOUS:  eatup_space:  null line buf ptr");
-//		CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_HAS_SOMETHING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
-	assert( str != NULL );
-
-skipit:
+	str = *sptr;
 
 	/* skip over spaces */
-	while( *str && isspace( *str ) ){
-		// What if file has both??
-		if( *str == '\n' || *str == '\r' ){
-			SET_QRY_RDLINENO(CURR_QRY(THIS_QSP),
-				QRY_RDLINENO(CURR_QRY(THIS_QSP)) + 1 );
+	while( *str && ( isspace( *str ) || ESCAPED_SPACE ) ){
+		// BUG What if file has both CR and NL??
+		// It appears this will count it as two lines???
+		if( *str == '\n' ){
+			INCREMENT_LINE_NUMBER
+			if( *str == '\r' ) str++;
 #ifdef QUIP_DEBUG_LINENO
-sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing newline char",
+sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing newline",
+QRY_RDLINENO(CURR_QRY(THIS_QSP)));
+advise(DEFAULT_ERROR_STRING);
+#endif /* QUIP_DEBUG_LINENO */
+		} else if( *str == '\r' ){
+			INCREMENT_LINE_NUMBER
+			if( *str == '\n' ) str++;
+#ifdef QUIP_DEBUG_LINENO
+sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing carriage return",
 QRY_RDLINENO(CURR_QRY(THIS_QSP)));
 advise(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG_LINENO */
@@ -197,23 +198,33 @@ advise(DEFAULT_ERROR_STRING);
 		str++;
 	}
 
+	*sptr = str;
+}
+
+static void discard_line_content(const char **sptr)
+{
+	const char *str;
+	str = *sptr;
+	while( *str && *str!='\n' && *str!='\r' ) str++;
+	*sptr = str;
+}
+
+static void eatup_space(SINGLE_QSP_ARG_DECL)
+{
+	const char *str;
+
+	if( !QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ) return;
+
+	str=QRY_LINE_PTR(CURR_QRY(THIS_QSP)) ;
+	assert( str != NULL );
+
+	skip_white_space(QSP_ARG  &str);
 	/* comments can be embedded in lines */
 
 	/* the buffer may contain multiple lines */
-	if( *str == '#' ){
-		while( *str && *str!='\n' && *str!='\r' ) str++;
-
-		/* We used to count the line here, but because
-		 * we weren't advancing the char ptr, the line
-		 * got counted again above after the goto skipit.
-		 */
-
-		goto skipit;
-	}
-
-	if( *str == '\\' && isspace( *(str+1) ) ){
-		str++;
-		goto skipit;
+	while( *str == '#' ){
+		discard_line_content(&str);
+		skip_white_space(QSP_ARG  &str);
 	}
 
 	if( *str == 0 )
