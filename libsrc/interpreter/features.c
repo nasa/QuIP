@@ -24,7 +24,7 @@ typedef enum {
 
 	SWF_CURL,
 	SWF_SOUND,
-	SWF_MPLAYER,
+//	SWF_MPLAYER,	// doesn't seem to be used anywhere???
 	SWF_XINE,
 	SWF_SSE,
 	SWF_NUMREC,
@@ -79,7 +79,7 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 
 { UNKNOWN, SWF_CURL,		"www i/o (w/ libcurl)"		},
 { UNKNOWN, SWF_SOUND,		"sound (portaudio/ALSA)"	},
-{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
+//{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
 { UNKNOWN, SWF_XINE,		"Xine"				},
 { UNKNOWN, SWF_SSE,		"SSE processor acceleration"	},
 { UNKNOWN, SWF_NUMREC,		"Numerical Recipes library"	},
@@ -182,11 +182,12 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_MPLAYER
-	FEATURE_PRESENT(SWF_MPLAYER);
-#else
-	FEATURE_ABSENT(SWF_MPLAYER);
-#endif
+// HAVE_MPLAYER is not ever defined in configure.ac???
+//#ifdef HAVE_MPLAYER
+//	FEATURE_PRESENT(SWF_MPLAYER);
+//#else
+//	FEATURE_ABSENT(SWF_MPLAYER);
+//#endif
 
 // HAVE_NUMREC can be set by autoconf based on whether numerical recipes is present
 // on the system.  But USE_NUMREC is set by the user to indicate whether it should be used...
