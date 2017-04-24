@@ -21,8 +21,8 @@ extern void macro_info(QSP_ARG_DECL  Macro *mp);
 extern void rls_macro_arg(Macro_Arg *map);
 
 extern const char * nextline(QSP_ARG_DECL const char *pline);
-extern const char * gword(QSP_ARG_DECL const char *pline);
-extern const char * qword(QSP_ARG_DECL const char *pline);
+//extern const char * gword(QSP_ARG_DECL const char *pline);
+extern const char * next_query_word(QSP_ARG_DECL const char *pline);
 extern void savechar(QSP_ARG_DECL Query *qp,int c);
 extern const char * qline(QSP_ARG_DECL const char *pline);
 extern void savetext(QSP_ARG_DECL Query *qp,const char *buf);

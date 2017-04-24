@@ -24,7 +24,7 @@ long how_many(QSP_ARG_DECL  const char *prompt)
 	//double dn;
 	Typed_Scalar *tsp;
 
-	// Why does how_many all qword, while how_much uses nameof???
+	// Why does how_many all next_query_word, while how_much uses nameof???
 
 	// BUG? can prompt get too long?
 	assert( strlen(prompt) < LLEN );
@@ -32,7 +32,7 @@ long how_many(QSP_ARG_DECL  const char *prompt)
 	if( prompt[0] != 0 ) sprintf(pline,PROMPT_FORMAT,prompt);
 	else pline[0]=0;
 
-	s=qword(QSP_ARG  pline);
+	s=next_query_word(QSP_ARG  pline);
 
 	tsp=pexpr(QSP_ARG  s);
 
@@ -126,7 +126,7 @@ int confirm(QSP_ARG_DECL  const char *s)
 /*
  * Get a string from the query file.
  *
- * Get a string from the query file by calling qword().
+ * Get a string from the query file by calling next_query_word().
  * Macro expansion is disabled during this call.
  * The prompt string is prefixed by "Enter " and postfixed by a colon.
  * Used to get user command arguments.
@@ -148,34 +148,26 @@ const char * nameof(QSP_ARG_DECL  const char *prompt)
 
 	v = QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS;		/* save current value */
 	CLEAR_QS_FLAG_BITS(THIS_QSP,QS_EXPAND_MACS);
-	buf=qword(QSP_ARG  pline);
+	buf=next_query_word(QSP_ARG  pline);
 	SET_QS_FLAG_BITS(THIS_QSP,v);		/* restore macro state */
 	return(buf);
 }
 
 /*
- * Get a string from the query file with macro expansion.
+ * nameof2:  Get a string from the query file with macro expansion.
  *
  * Like nameof(), but macro expansion is enabled and the prompts
  * are not modified.  Used to get command words.
  *
  * The command prompt has the potential to grow too much!?
+ *
+ * BUG?  why not eliminate this and just use next_query_word???
  */
 
 const char * nameof2(QSP_ARG_DECL  const char *prompt)
 {
-	//char pline[LLEN];
 	const char *buf;
-
-	//strcpy(pline,prompt);
-	//buf=qword(QSP_ARG  pline);
-
-	// Why were we copying the prompt?
-	// Now the prompt is allowed to grow using
-	// string buffers, so the strcpy is a potential
-	// buffer overflow!
-	buf=qword(QSP_ARG  prompt);
-
+	buf=next_query_word(QSP_ARG  prompt);
 	return(buf);
 }
 

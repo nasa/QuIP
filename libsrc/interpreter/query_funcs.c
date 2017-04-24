@@ -104,6 +104,15 @@ debug_flag_t lah_debug=0;
 static int n_cmd_args=0;
 static int has_stdin=0;		// where should we set this?
 
+// BUG!!!  not thread-safe, move to query_stack...
+static int word_scan_flags=0;
+static int start_quote=0;	/* holds the value of the starting quote char,
+				 * if in a quote, otherwise 0
+				 */
+static int n_quotations=0;	/* to handle things like "a b c"X"x y z" */
+				/* in which case we don't want to strip the outer pair... */
+
+
 #define DBL_QUOTE	'"'
 #define SGL_QUOTE	'\''
 
@@ -122,6 +131,8 @@ void input_on_stdin(void)	// call this from a unix program
 		prt_msg_frag("\t");				\
 		prt_msg(s);					\
 	}
+
+static const char * next_raw_input_word(QSP_ARG_DECL  const char* pline);
 
 static void show_query_flags(QSP_ARG_DECL  Query *qp)
 {
@@ -162,51 +173,51 @@ COMMAND_FUNC( tog_pmpt )
 	}
 }
 
-#define ESCAPED_SPACE	( *str == '\\' && isspace( *(str+1) ) )
+#define ESCAPED_SPACE	( *input_ptr == '\\' && isspace( *(input_ptr+1) ) )
 
 #define INCREMENT_LINE_NUMBER	\
 				\
 	SET_QRY_RDLINENO(CURR_QRY(THIS_QSP), QRY_RDLINENO(CURR_QRY(THIS_QSP)) + 1 );
 
-static void skip_white_space(QSP_ARG_DECL  const char **sptr)
+static void skip_white_space(QSP_ARG_DECL  const char **input_pp)
 {
-	const char *str;
+	const char *input_ptr;
 
-	str = *sptr;
+	input_ptr = *input_pp;
 
 	/* skip over spaces */
-	while( *str && ( isspace( *str ) || ESCAPED_SPACE ) ){
+	while( *input_ptr && ( isspace( *input_ptr ) || ESCAPED_SPACE ) ){
 		// BUG What if file has both CR and NL??
 		// It appears this will count it as two lines???
-		if( *str == '\n' ){
+		if( *input_ptr == '\n' ){
 			INCREMENT_LINE_NUMBER
-			if( *str == '\r' ) str++;
+			if( *input_ptr == '\r' ) input_ptr++;
 #ifdef QUIP_DEBUG_LINENO
 sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing newline",
 QRY_RDLINENO(CURR_QRY(THIS_QSP)));
 advise(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG_LINENO */
-		} else if( *str == '\r' ){
+		} else if( *input_ptr == '\r' ){
 			INCREMENT_LINE_NUMBER
-			if( *str == '\n' ) str++;
+			if( *input_ptr == '\n' ) input_ptr++;
 #ifdef QUIP_DEBUG_LINENO
 sprintf(DEFAULT_ERROR_STRING,"eatup_space:  advanced line number to %d after seeing carriage return",
 QRY_RDLINENO(CURR_QRY(THIS_QSP)));
 advise(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG_LINENO */
 		}
-		str++;
+		input_ptr++;
 	}
 
-	*sptr = str;
+	*input_pp = input_ptr;
 }
 
-static void discard_line_content(const char **sptr)
+static void discard_line_content(const char **input_pp)
 {
-	const char *str;
-	str = *sptr;
-	while( *str && *str!='\n' && *str!='\r' ) str++;
-	*sptr = str;
+	const char *input_ptr;
+	input_ptr = *input_pp;
+	while( *input_ptr && *input_ptr!='\n' && *input_ptr!='\r' ) input_ptr++;
+	*input_pp = input_ptr;
 }
 
 static void eatup_space(SINGLE_QSP_ARG_DECL)
@@ -237,7 +248,7 @@ static void eatup_space(SINGLE_QSP_ARG_DECL)
 
 
 /*
- * Try to read the next word.  Called from qword() and rdmtext().
+ * Try to read the next word.  Called from next_query_word() and rdmtext().
  *
  * Try to read the next word, after we have already got one
  * that is ready to interpret.  The reason for this is so that
@@ -543,16 +554,16 @@ advise(ERROR_STRING);
  * Get next word from the top of the query file stack.
  *
  * Get next word from the top of the query file stack.
- * Calls gword() to get the next raw word.
+ * Calls next_raw_input_word() to get the next raw word.
  * Macro and variable expansion is performed.
  * If new input is needed and the input is an interactive
  * tty, then the prompt in the argument pline will be printed.
  * Calls lookahead() before returning.
  *
- * Returns the buffer provided by gword()...
+ * Returns the buffer provided by next_raw_input_word()...
  */
 
-/*static*/ const char * qword(QSP_ARG_DECL const char *pline)
+/*static*/ const char * next_query_word(QSP_ARG_DECL const char *pline)
 		/* prompt */
 {
 	const char *buf;
@@ -563,7 +574,7 @@ advise(ERROR_STRING);
 				return NULL;
 			}
 
-			buf=gword(QSP_ARG  pline);		/* read a raw word */
+			buf=next_raw_input_word(QSP_ARG  pline);		/* read a raw word */
 			if( IS_HALTING(THIS_QSP) ){
 				// returning NULL here can cause
 				// problems when the command will complete
@@ -577,11 +588,11 @@ advise(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
 if( strlen(buf) < LLEN-80 ){
-sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  gword returned 0x%lx \"%s\"",
-WHENCE_L(qword),(u_long)buf,buf);
+sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  next_raw_input_word returned 0x%lx \"%s\"",
+WHENCE_L(next_query_word),(u_long)buf,buf);
 } else {
-sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  gword returned 0x%lx (%lu chars)",
-WHENCE_L(qword),(u_long)buf,(long)strlen(buf));
+sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  next_raw_input_word returned 0x%lx (%lu chars)",
+WHENCE_L(next_query_word),(u_long)buf,(long)strlen(buf));
 }
 advise(ERROR_STRING);
 }
@@ -603,7 +614,7 @@ advise(ERROR_STRING);
 		// But where do we do lookahead???
 
 
-//sprintf(ERROR_STRING,"qword:  setting lineno to rdlineno (%d), qlevel = %d; buf = '%s'",
+//sprintf(ERROR_STRING,"next_query_word:  setting lineno to rdlineno (%d), qlevel = %d; buf = '%s'",
 //QRY_RDLINENO(CURR_QRY(THIS_QSP)),QLEVEL,buf);
 //advise(ERROR_STRING);
 		SET_QRY_LINENO(CURR_QRY(THIS_QSP), QRY_RDLINENO(CURR_QRY(THIS_QSP)) );
@@ -619,16 +630,16 @@ advise(ERROR_STRING);
 	SET_QRY_LINENO( CURR_QRY(THIS_QSP) , QRY_RDLINENO(CURR_QRY(THIS_QSP)) );
 
 //if( verbose ){
-//sprintf(ERROR_STRING,"qword %s returning \"%s\"",
+//sprintf(ERROR_STRING,"next_query_word %s returning \"%s\"",
 //QS_NAME(THIS_QSP),buf);
 //advise(ERROR_STRING);
 //}
 	return(buf);
-} /* end qword() */
+} /* end next_query_word() */
 
 #ifdef NOT_YET
 /*
- * Force a breakout from gword().
+ * Force a breakout from next_raw_input_word().
  * Called after interrupt.
  */
 
@@ -638,111 +649,107 @@ void qgivup(SINGLE_QSP_ARG_DECL)
 }
 #endif /* NOT_YET */
 
-/********* Supporting routines for rd_word *********************/
-/*
- * These used to all be part of rd_word, but they have been broken out
- * to improve readability...  Efficiency may be impacted?
- */
 
-static void after_backslash(QSP_ARG_DECL  int c,char **bufp, const char **sp,
-	char **startp, Query *qp, u_int *need_p, String_Buf *sbp)
+static void escape_newline(QSP_ARG_DECL  const char **input_pp, char **result_bufp, char **result_pp, String_Buf *sbp)
 {
-	char *buf;
-	const char *s;
-	char *start;
+	Query *qp;
+	/* an escaped newline */
+	/* read the next line */
+	int nhave;
+	const char *input_ptr;
+	int n_need;
+	char *result_buf;
 
-	buf = *bufp;
-	s = *sp;
-	start = *startp;
+//fprintf(stderr,"escape_newline BEGIN\n");
+	qp = CURR_QRY(THIS_QSP);
+	result_buf = *result_bufp;
 
-	if( isdigit(c) ){
-		*buf=0;
-		while( isdigit(c) ){
-			*buf <<= 3;
-			*buf += c -'0';
-			c=(*s++);
-		}
-		buf++;
-		s--;
-	} else if( c == 't' ){
-		*buf++ = '\t';
-	} else if( c == 'r' ){
-		*buf++ = '\r';
-	} else if( c == 'n' ){
-		*buf++ = '\n';
-	} else if( c == 'b' ){
-		*buf++ = '\b';
-	} else if( c == '$' ){
-		*buf++ = '\\';
-		*buf++ = '$';
-	} else if( c == '\n' || c=='\r' ){
-		/* an escaped newline */
-		/* read the next line */
-		int nhave;
-
-		// advance line counter after an escaped newline
-		qp->q_rdlineno++;
+	// advance line counter after an escaped newline
+	input_ptr = *input_pp;
+	qp->q_rdlineno++;
 #ifdef QUIP_DEBUG_LINENO
 sprintf(ERROR_STRING,"after_backslash (qlevel = %d):  EOL char seen, rdlineno set to %d",
 QLEVEL,qp->q_rdlineno);
 advise(ERROR_STRING);
 #endif /* QUIP_DEBUG_LINENO */
 
-		// We need to continue after reading an escaped newline
-		// if we are in a quote!?
+	// We need to continue after reading an escaped newline
+	// if we are in a quote!?
 
-		nhave = (int) (buf-start);	/* cast for pc */
-		start[nhave]=0;
+	nhave = (int) ((*result_pp)-result_buf);	/* cast for pc */
+	result_buf[nhave]=0;
 
-		if( *s == 0 ){	/* end of line */
+	if( *input_ptr == 0 ){	/* end of line */
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
 advise("reading additional line after escaped newline");
 }
 #endif /* QUIP_DEBUG */
+//fprintf(stderr,"reading additional line after escaped newline\n");
 
-			s=qline(QSP_ARG  "");		// after_backslash
-			// BUG?  what if we are out of input???  TEST
+		input_ptr=qline(QSP_ARG  "");
+		n_need = strlen(result_buf)+strlen(input_ptr)+16;
 
-			// We used to reset qp here, but the function exits
-			// so there are no more refs...
-			//qp=CURR_QRY(THIS_QSP);
+		if( sbp->sb_size < n_need ){
+			enlarge_buffer(sbp,n_need);
 
-			*need_p += strlen(s)+16;
+			result_buf=sbp->sb_buf;
+			*result_bufp = result_buf;
 
-			if( sbp->sb_size < *need_p ){
-				enlarge_buffer(sbp,*need_p);
-
-				start=sbp->sb_buf;
-				buf=start+nhave;
-//if( verbose ){
-//sprintf(ERROR_STRING,"after_backslash %s:  enlarged buffer, new start = 0x%lx",
-//THIS_QSP->qs_name,(u_long)start);
-//advise(ERROR_STRING);
-//}
-			}
-
+			*result_pp = result_buf + nhave;
 		}
-#ifdef QUIP_DEBUG
-else if( debug & qldebug ){
-advise("continuing to read word after escaped newline");
-if( strlen(s)<80 ){
-sprintf(ERROR_STRING,"remaining text:  \"%s\"",s);
-} else {
-sprintf(ERROR_STRING,"%lu characters remaining",(long)strlen(s));
-}
-advise(ERROR_STRING);
-}
+	}
+	*input_pp = input_ptr;
+}	// end escape_newline
 
-#endif /* QUIP_DEBUG */
+/********* Supporting routines for next_word_from_input_line *********************/
+/*
+ * These used to all be part of next_word_from_input_line, but they have been broken out
+ * to improve readability...  Efficiency may be impacted?
+ */
 
+static void after_backslash(QSP_ARG_DECL  int c,char **result_pp, const char **input_pp,
+	char **result_bufp, Query *qp, String_Buf *sbp)
+{
+	char *result_ptr;
+	const char *input_ptr;
+	char *result_buf;
+
+	result_ptr = *result_pp;
+	input_ptr = *input_pp;
+	result_buf = *result_bufp;
+
+	if( isdigit(c) ){
+		// BUG should be exactly 3 digits!?!?
+		*result_ptr=0;
+		while( isdigit(c) ){
+			*result_ptr <<= 3;
+			*result_ptr += c -'0';
+			c=(*input_ptr++);
+		}
+		result_ptr++;
+		input_ptr--;
+	} else if( c == 't' ){
+		*result_ptr++ = '\t';
+	} else if( c == 'r' ){
+		*result_ptr++ = '\r';
+	} else if( c == 'n' ){
+		*result_ptr++ = '\n';
+	} else if( c == 'b' ){
+		*result_ptr++ = '\b';
+	} else if( c == '$' ){
+		*result_ptr++ = '\\';
+		*result_ptr++ = '$';
+	} else if( c == '\n' || c=='\r' ){
+		escape_newline(QSP_ARG  &input_ptr, &result_buf, &result_ptr, sbp);
+//fprintf(stderr,"after_backslash, after escape_newline input is \"%s\"\n",input_ptr);
 	} else {
-		*buf++ = (char)c; /* backslash before normal char */
+		*result_ptr++ = (char)c; /* backslash before normal char */
 	}
 
-	*sp = s;
-	*bufp = buf;
-	*startp = start;
+	*input_pp = input_ptr;
+	*result_pp = result_ptr;
+	*result_bufp = result_buf;
 
 }	// end after_backslash
 
@@ -792,7 +799,7 @@ static void unsavechar(QSP_ARG_DECL  Query *qp, int c)
 	}
 }
 
-// rd_word flags
+// next_word_from_input_line flags
 #define RW_HAVBACK	1
 #define RW_HAVSOME	2	// what is the difference between this and NWSEEN?
 #define RW_INQUOTE	4
@@ -808,15 +815,13 @@ static void unsavechar(QSP_ARG_DECL  Query *qp, int c)
  * First skip leading whitespace (RW_NWSEEN indicates non-white seen)
  */
 
-static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **bufp, const char **sp, int *flagp )
+static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **result_pp, const char **sp )
 {
-	char *buf;
+	char *result_ptr;
 	const char *s;
-	int flags;
 
-	buf = *bufp;
+	result_ptr = *result_pp;
 	s = *sp;
-	flags = *flagp;
 
 	/* Nothing special, most characters processed here.
 	 * We know that the previous character was not
@@ -828,10 +833,10 @@ static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **bufp, const ch
 	 */
 	if( c == '\\' ){
 		// To be here, we know the preceding char wasn't a backslash
-		flags |= RW_HAVBACK;
+		word_scan_flags |= RW_HAVBACK;
 	} else {
-		if( flags & RW_INQUOTE ){
-			*buf++ = (char)c;
+		if( word_scan_flags & RW_INQUOTE ){
+			*result_ptr++ = (char)c;
 			// Newlines have to be escaped into quotes
 			//
 			// The old quip didn't do this; this must have
@@ -842,16 +847,16 @@ static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **bufp, const ch
 			// We should do this check if the input is a
 			// macro or a file...  MACRO
 			if( IS_PRIMARY_INPUT(CURR_QRY(THIS_QSP)) ){
-				if( c == '\n' && !(flags & RW_HAVBACK) ){
-					flags |= RW_ALLDONE;
+				if( c == '\n' && !(word_scan_flags & RW_HAVBACK) ){
+					word_scan_flags |= RW_ALLDONE;
 					goto pn_done;
 				}
 			}
 		} else {		// not in quote
 			if( c == '#' ){		// comment delimiter
-				flags |= RW_INCOMMENT;
+				word_scan_flags |= RW_INCOMMENT;
 			} else if( isspace(c) ){
-				if( flags & RW_NWSEEN ){
+				if( word_scan_flags & RW_NWSEEN ){
 					if( c == '\n' ){
 						// Set the flag, but don't increment the line
 						// counter until the word is interpreted...
@@ -861,11 +866,11 @@ static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **bufp, const ch
 						// PROBLEM:  we've already saved
 						// the newline!?  Should we un-save?
 						s--;	// leave the newline
-						if( flags & RW_SAVING ){
+						if( word_scan_flags & RW_SAVING ){
 							unsavechar(QSP_ARG  qp,'\n');
 						}
 					}
-					flags |= RW_ALLDONE;
+					word_scan_flags |= RW_ALLDONE;
 					goto pn_done;
 				} else {
 					/* This is a space, but we haven't
@@ -876,31 +881,40 @@ static void process_normal(QSP_ARG_DECL  Query *qp, int c, char **bufp, const ch
 					 */
 					if( c == '\n' ){
 //advise("process_normal:  leading newline white space");
-						flags |= RW_NEWLINE;
+						word_scan_flags |= RW_NEWLINE;
 						goto pn_done;
 					}
 				}
 			} else {		/* a good character */
-				*buf++ = (char)c;
-				flags |= RW_NWSEEN;
-//advise("process_normal:  non-white seen");
+				*result_ptr++ = (char)c;
+				word_scan_flags |= RW_NWSEEN;
 			}
 		} // end not in quote
 		// Should we set this if we are in a comment?
-//fprintf(stderr,"process_normal '%c':  HAVSOME\n",c);
-//		flags |= RW_HAVSOME;
+//		word_scan_flags |= RW_HAVSOME;
 	} // end not backslash
 
 pn_done:
-	*bufp = buf;
+	*result_pp = result_ptr;
 	*sp = s;
-	*flagp = flags;
 
 	//return retval;
 
 }	// end process_normal
 
-static void strip_quotes(char *start,char *buf, int start_quote, int *flagp)
+static void left_shift_string(char *buf )
+{
+	assert(*buf != 0);
+
+	buf++;
+	while(*buf){
+		*(buf-1) = *buf;
+		buf++;
+	}
+	*(buf-1) = *buf;	// copy the null
+}
+
+static void strip_quotes(char *result_buf,char *result_ptr, int start_quote, int *flagp)
 {
 	/* BUG if the first character is a backslash escaped
 	 * quote, then this may do the wrong thing...
@@ -920,22 +934,17 @@ static void strip_quotes(char *start,char *buf, int start_quote, int *flagp)
 	 * strip quotes from something like 'a'b'c' ...
 	 * But that's kind of pathological, isn't it?
 	 */
-	if( *(buf-1) == start_quote ){
-		*(buf-1)=0;	/* erase the closing quote */
+	if( *(result_ptr-1) == start_quote ){
+		*(result_ptr-1)=0;	/* erase the closing quote */
 
 		/* We used to strip the leading quote by simple incrementing
 		 * the start pointer:
-		 * start++;
+		 * result_buf++;
 		 * but now that we are using the
 		 * String_Buf structure we have to move the data...
 		 * bummer.
 		 */
-		start++;
-		while(*start){
-			*(start-1) = *start;
-			start++;
-		}
-		*(start-1) = *start;	// copy the null
+		left_shift_string(result_buf);
 	}
 } // end strip_quotes
 
@@ -1151,7 +1160,7 @@ advise(ERROR_STRING);
 		if( *sp == '\\' ){
 			if( backslash_previous ){
 				/* double backslashes should normally be taken out
-				 * by rd_word
+				 * by next_word_from_input_line
 				 */
 				backslash_previous=0;
 				sp++;
@@ -1228,6 +1237,134 @@ advise(ERROR_STRING);
 	copy_strbuf(sbp,RESULT);
 }
 
+#define QRY_RETSTR	QRY_RETSTR_AT_IDX(CURR_QRY(THIS_QSP),		\
+				QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)))
+#define SET_QRY_RETSTR(sbp)						\
+			SET_QRY_RETSTR_AT_IDX(CURR_QRY(THIS_QSP),	\
+				QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)),sbp)
+
+#define NEXT_QRY_RETSTR							\
+									\
+	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),				\
+		( QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)) >= (N_QRY_RETSTRS-1) ? \
+		0 : (1+QRY_RETSTR_IDX(CURR_QRY(THIS_QSP))) ) );
+
+
+static String_Buf *query_return_string(SINGLE_QSP_ARG_DECL)
+{
+	String_Buf *sbp;
+
+	if( (sbp = QRY_RETSTR) == NO_STRINGBUF ){
+		SET_QRY_RETSTR(new_stringbuf());
+		sbp = QRY_RETSTR;
+	}
+
+	// This might be a good place to increment?
+	// We advance the index for next time
+	NEXT_QRY_RETSTR
+	return sbp;
+}
+static void clear_return_string_contents(String_Buf *sbp)
+{
+	(*(SB_BUF(sbp))) = 0;	/* default is "" */
+}
+
+static void insure_adequate_size(QSP_ARG_DECL  String_Buf *sbp)
+{
+	u_int need_size;
+	Query *qp;
+
+	qp = CURR_QRY(THIS_QSP);
+
+	// The word should really be much less than the whole mess,
+	// although it could be a quoted string?
+
+	need_size = (int)strlen(QRY_LINE_PTR(qp) )+16;	/* conservative estimate */
+
+	if( SB_SIZE(sbp) < need_size ){
+		enlarge_buffer(sbp, need_size);
+	}
+}
+
+static void check_for_end_of_comment(Query *qp, int c)
+{
+	if( c == '\n' ){
+		// increment the line counter
+		qp->q_rdlineno ++;
+		word_scan_flags &= ~RW_INCOMMENT;
+		/* We don't let backslash's escape
+		 * newlines within comments...
+		 * For multi-line comments, use a new delimiter.
+		 */
+	}
+}
+
+// return 1 if more to do, 0 otherwise
+
+static int process_next_input_character(QSP_ARG_DECL  const char **input_pp, char **result_bufp, char **result_pp, String_Buf *sbp)
+{
+	Query *qp;
+	const char *input_ptr;
+	int c;
+
+	qp = CURR_QRY(THIS_QSP);
+
+	input_ptr=(*input_pp);
+	if( *input_ptr == 0 ) return 0;
+
+	c=(*input_ptr++);
+
+	if( word_scan_flags & RW_SAVING ) {
+		savechar(QSP_ARG  qp,c);
+	}
+
+	/* now do something with this character */
+
+	if( word_scan_flags & RW_INCOMMENT ){
+		check_for_end_of_comment(qp,c);
+	} else {
+		// Check for opening or closing quote
+		// BUG?  should we do this before backslash checking???
+		if( word_scan_flags & RW_INQUOTE ){
+			/* check if the character is the closing quote mark */
+			if( c == start_quote && !(word_scan_flags & RW_HAVBACK) ){
+				word_scan_flags &= ~RW_INQUOTE;
+				n_quotations++;
+			}
+		} else {
+			if( c == DBL_QUOTE || c == SGL_QUOTE ){
+				/* this is the opening quote */
+				start_quote = c;
+				word_scan_flags |= RW_INQUOTE;
+			}
+		}
+
+		if( word_scan_flags & RW_HAVBACK ){		/* char follows backslash */
+//fprintf(stderr,"process_next_input_character:  processing char (0%o) after backslash\n",c);
+			after_backslash(QSP_ARG  c,result_pp,&input_ptr,result_bufp,qp,sbp);
+			word_scan_flags &= ~RW_HAVBACK;
+//fprintf(stderr,"process_next_input_character:  after after_backslash input is \"%s\"\n", input_ptr);
+		} else {
+			process_normal(QSP_ARG  qp,c,result_pp,input_pp);
+			if( word_scan_flags & RW_NEWLINE ){
+				// advance line counter if we process a newline
+				qp->q_rdlineno ++;
+#ifdef QUIP_DEBUG_LINENO
+sprintf(ERROR_STRING,"process_next_input_character advanced line number to %d",qp->q_rdlineno);
+advise(ERROR_STRING);
+#endif /* QUIP_DEBUG_LINENO */
+				word_scan_flags &= ~RW_NEWLINE;
+			}
+			if( word_scan_flags & RW_ALLDONE ){
+				*input_pp = input_ptr;
+				return 0;
+			}
+		}
+	} // end not in comment
+	*input_pp = input_ptr;
+	return 1;
+}	// end process_next_input_character
+
 /*
  * Copy the next query word from the query stack's
  * line buffer (q_lbptr) into a dynamically growable
@@ -1269,84 +1406,37 @@ advise(ERROR_STRING);
  * (This makes redundant the check (elsewhere) for the initial character
  * being a dollar sign.)
  *
- * BUG?  because rd_word uses a dynamically growable string buffer,
+ * BUG?  because next_word_from_input_line uses a dynamically growable string buffer,
  * it can return a string which is longer than LLEN...  This can happen
  * for instance when a closing quote is missing...
  *
- * variable expansion is performed at the end of rd_word, by calling var_expand
+ * variable expansion is performed at the end of next_word_from_input_line, by calling var_expand
  */
 
-static char * rd_word(SINGLE_QSP_ARG_DECL)
+static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 {
 	Query *qp;
 
-	int start_quote=0;	/* holds the value of the starting quote char,
-				 * if in a quote, otherwise 0
-				 */
-	int n_quotations=0;	/* to handle things like "a b c"X"x y z" */
-
-	char *start,*buf;
-	int flags=0;
-	u_int need_size;
+	char *result_buf, *result_ptr;
 	const char *s;
 	String_Buf *sbp;
 
-//QUEUE_CHECK(rd_word)
 	qp=(CURR_QRY(THIS_QSP));
 
-	//if( qp != FIRST_QRY(THIS_QSP) && QRY_IS_SAVING(PREV_QRY(THIS_QSP)) )
+	word_scan_flags=0;
+	start_quote=0;	/* holds the value of the starting quote char */
+	n_quotations=0;
+
 	if( NEED_TO_SAVE(qp) ){
-		flags |= RW_SAVING;
+		word_scan_flags |= RW_SAVING;
 	}
 
-	/* actually, the size needed is probably LESS than
-	 * the input buffer, because backslash sequences
-	 * will be reduced in length, while everything else
-	 * is copied literally.
-	 */
+	sbp = query_return_string(SINGLE_QSP_ARG);
+	insure_adequate_size(QSP_ARG  sbp);
+	clear_return_string_contents(sbp);
 
-
-#define QRY_RETSTR	QRY_RETSTR_AT_IDX(CURR_QRY(THIS_QSP),		\
-				QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)))
-#define SET_QRY_RETSTR(sbp)						\
-			SET_QRY_RETSTR_AT_IDX(CURR_QRY(THIS_QSP),	\
-				QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)),sbp)
-
-#define NEXT_QRY_RETSTR							\
-									\
-	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),				\
-		( QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)) >= (N_QRY_RETSTRS-1) ? \
-		0 : (1+QRY_RETSTR_IDX(CURR_QRY(THIS_QSP))) ) );
-
-
-/* Ideally, we should reset this before a command is read - but qline
- * could pop the level when trying to read a word, which will happen
- * when one macro calls a lot of other macros...  a qsp-wide flag
- * might solve this...
- */
-
-	if( (sbp = QRY_RETSTR) == NO_STRINGBUF ){
-		SET_QRY_RETSTR(new_stringbuf());
-		sbp = QRY_RETSTR;
-	}
-
-	// This might be a good place to increment?
-	// We advance the index for next time
-	NEXT_QRY_RETSTR
-
-	// The word should really be much less than the whole mess,
-	// although it could be a quoted string?
-
-	need_size = (int)strlen(QRY_LINE_PTR(qp) )+16;	/* conservative estimate */
-
-	if( SB_SIZE(sbp) < need_size ){
-		enlarge_buffer(sbp, need_size);
-	}
-
-	start=SB_BUF(sbp);
-	*start=0;			/* default is "" */
-
-	buf=start;
+	result_buf=SB_BUF(sbp);
+	result_ptr=result_buf;
 
 	/* Old comment:
 	 * no check for overflow in the following loop
@@ -1375,85 +1465,8 @@ static char * rd_word(SINGLE_QSP_ARG_DECL)
 	 * then it could be longer...
 	 */
 
-	while( *s ){		/* scan the input buffer */
-		int c;
-
-		c=(*s++);
-
-//#ifdef CAUTIOUS
-//		// This test detects garbage in the line buffer...
-//		// caused by memory corruption!?
-//// This is also triggered by UTF-8 multi-char sequences...
-//// We need to fix this, but if they only occur in comments, then we
-//// can safely ignore.
-//#ifdef FOO
-//		if( ! isascii(c) ){
-//			// Could be UTF8???
-//fprintf(stderr,
-//"CAUTIOUS:  rd_word encountered a non-ascii character (0x%x)!? (UTF-8?)\n",c&0xff);
-//			abort();
-//		}
-//#endif // FOO
-//#endif // CAUTIOUS
-		// We can get UTF8 chars when using other editors!?
-		//assert( isascii(c) );
-
-		if( flags & RW_SAVING ) {
-			savechar(QSP_ARG  qp,c);
-		}
-
-		/* now do something with this character */
-
-		if( flags & RW_INCOMMENT ){
-			/* skip all characters until a newline */
-			if( c == '\n' ){
-				// increment the line counter
-				qp->q_rdlineno ++;
-				flags &= ~RW_INCOMMENT;
-				/* We don't let backslash's escape
-				 * newlines within comments...
-				 * For multi-line comments, use a new delimiter.
-				 */
-			}
-		} else {
-			// Check for opening or closing quote
-			// BUG?  should we do this before backslash checking???
-			if( flags & RW_INQUOTE ){
-				/* check if the character is the closing quote mark */
-				if( c == start_quote && !(flags & RW_HAVBACK) ){
-					flags &= ~RW_INQUOTE;
-					n_quotations++;
-				}
-			} else {
-				if( c == DBL_QUOTE || c == SGL_QUOTE ){
-					/* this is the opening quote */
-					start_quote = c;
-					flags |= RW_INQUOTE;
-				}
-			}
-
-			if( flags & RW_HAVBACK ){		/* char follows backslash */
-				after_backslash(QSP_ARG  c,&buf,&s,&start,qp,&need_size,sbp);
-				/* BUG maybe we shouldn't have any after escaped nl ? */
-				//flags |= RW_HAVSOME;
-				flags &= ~RW_HAVBACK;
-			} else {
-				process_normal(QSP_ARG  qp,c,&buf,&s,&flags);
-				if( flags & RW_NEWLINE ){
-					// advance line counter if we process a newline
-					qp->q_rdlineno ++;
-#ifdef QUIP_DEBUG_LINENO
-sprintf(ERROR_STRING,"rd_word advanced line number to %d",qp->q_rdlineno);
-advise(ERROR_STRING);
-#endif /* QUIP_DEBUG_LINENO */
-					flags &= ~RW_NEWLINE;
-				}
-				if( flags & RW_ALLDONE ){
-					goto alldone;
-				}
-			}
-		} // end not in comment
-	} // end while buffer has something
+	while( process_next_input_character(QSP_ARG  &s, &result_buf, &result_ptr, sbp) )
+		;
 
 	/* If we are here, our input pointer should be pointing at a null
 	 * byte...  There was a nasty problem with the original implementation
@@ -1467,8 +1480,6 @@ advise(ERROR_STRING);
 	 * Why not just set the line ptr to NULL here??
 	 */
 
-alldone:
-
 	/* We get here when we are done reading the word, either because
 	 * we have run out of input or because we encountered a white
 	 * space character.
@@ -1477,38 +1488,28 @@ alldone:
 	 * so we check the string length.
 	 */
 
-	if( flags & RW_HAVBACK )
+	if( word_scan_flags & RW_HAVBACK )
 		advise("still have backslash at end of buffer!?");
 
-	*buf=0;
+	*result_ptr=0;
 
-//#ifdef CAUTIOUS
-//if( strlen(start) >= (SB_SIZE(sbp)-1) ){
-//sprintf(ERROR_STRING,"start len = %ld, retstr size = %zd",
-//(long)strlen(start), SB_SIZE(sbp) );
-//advise(ERROR_STRING);
-//
-//ERROR1("CAUTIOUS too much stuff!!!");
-//IOS_RETURN_VAL(NULL)
-//}
-//#endif	/* CAUTIOUS */
-	assert( strlen(start) < (SB_SIZE(sbp)-1) );
+	assert( strlen(result_buf) < (SB_SIZE(sbp)-1) );
 
-	if( start_quote && (flags & RW_INQUOTE) ){
-		sprintf(ERROR_STRING,"rd_word:  no closing quote (start_quote = %c)",start_quote);
+	if( start_quote && (word_scan_flags & RW_INQUOTE) ){
+		sprintf(ERROR_STRING,"next_word_from_input_line:  no closing quote (start_quote = %c)",start_quote);
 		WARN(ERROR_STRING);
 		/* If the buffer has overflowed, we can't print into error_string! */
 #define BC_STR	"buffer contained "
-		if( strlen(start)+strlen(BC_STR) < (LLEN-4) ){
-			sprintf(ERROR_STRING,"%s\"%s\"",BC_STR,start);
+		if( strlen(result_buf)+strlen(BC_STR) < (LLEN-4) ){
+			sprintf(ERROR_STRING,"%s\"%s\"",BC_STR,result_buf);
 			WARN(ERROR_STRING);
 		} else {
-			sprintf(ERROR_STRING,"buffer contains %ld chars",(long)strlen(start));
+			sprintf(ERROR_STRING,"buffer contains %ld chars",(long)strlen(result_buf));
 			WARN(ERROR_STRING);
 		}
 	}
 
-	if( ! (flags & RW_NWSEEN) )
+	if( ! (word_scan_flags & RW_NWSEEN) )
 		return(NULL);
 
 	if( *s ){
@@ -1521,7 +1522,7 @@ alldone:
 	}
 
 	// sync up the lbptr's at the saving levels...
-	if( flags & RW_SAVING ) {
+	if( word_scan_flags & RW_SAVING ) {
 		sync_lbptrs(SINGLE_QSP_ARG);
 	}
 
@@ -1531,35 +1532,36 @@ alldone:
 	 */
 
 	if( (QS_FLAGS(THIS_QSP) & QS_STRIPPING_QUOTES)
-			&& (*start==SGL_QUOTE || *start==DBL_QUOTE)
+			&& (*result_buf==SGL_QUOTE || *result_buf==DBL_QUOTE)
 			&& n_quotations==1 ){
-		strip_quotes(start,buf,start_quote,&flags);
+		strip_quotes(result_buf,result_ptr,start_quote,&word_scan_flags);
 	}
 
 	/* BUG this will prevent variable expansion of lines
 	 * which contain single quoted strings and vars...
 	 */
 
-	if( ! (flags & RW_NOVAREXP) )
+	if( ! (word_scan_flags & RW_NOVAREXP) )
 		var_expand(QSP_ARG  sbp);
 
+//fprintf(stderr,"next_word_from_input_line returning \"%s\"\n",SB_BUF(sbp));
 	return(SB_BUF(sbp));
-} // end rd_word
+} // end next_word_from_input_line
 
 /*
  *	Get a raw word.
  *
  *	Get a raw word from the top of the query file stack.  If there is
  *	no current text, will get more by calling qline().  Strips leading
- *	white space, returns the next space delimited word by calling rd_word().
+ *	white space, returns the next space delimited word by calling next_word_from_input_line().
  *	No macro or variable expansion is performed. (sic)
  *
- *	Variable expansion performed in rd_word, unless single-quoted...
+ *	Variable expansion performed in next_word_from_input_line, unless single-quoted...
  *
- *	returns buffer returned by rd_word()
+ *	returns buffer returned by next_word_from_input_line()
  */
 
-const char * gword(QSP_ARG_DECL  const char* pline)
+static const char * next_raw_input_word(QSP_ARG_DECL  const char* pline)
 		/* prompt string */
 {
 	Query *qp;
@@ -1596,8 +1598,8 @@ gwtop:
 	//eatup_space(SINGLE_QSP_ARG);
 
 	if( QRY_HAS_TEXT(qp) ){
-		/* rd_word() returns non-NULL if successful */
-		if( (buf=rd_word(SINGLE_QSP_ARG)) != NULL ){
+		/* next_word_from_input_line() returns non-NULL if successful */
+		if( (buf=next_word_from_input_line(SINGLE_QSP_ARG)) != NULL ){
 			need=0;
 		} else {
 			//SET_QRY_HAS_TEXT(qp,0);
@@ -1609,7 +1611,7 @@ gwtop:
 		else return(NULL);
 	}
 	return(buf);
-} // end gword
+} // end next_raw_input_word
 
 /*
  *	Save a single character.
@@ -1828,7 +1830,7 @@ nltop:
 
 
 	/* We used to advance the line number here, but when reading from a buffer
-	 * we advance the line numbers in rd_word, and that renders this unnecessary.
+	 * we advance the line numbers in next_word_from_input_line, and that renders this unnecessary.
 	 *
 	 * The problem is, lines get read from various places, and
 	 * we need to count them all...
@@ -2117,16 +2119,14 @@ String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 	s=extract_line(SINGLE_QSP_ARG);
 	if( s == NULL ) goto bad_def;
 
-	/* The first line is always the null string -
-	 * I suppose that is because the terminating newline gets eaten.
-	 *
-	 * There can be stuff here if there is a comment
-	 * on the same line as the last argument prompt.
-	 */
+	cat_string(mac_sbp,s);
+	cat_string(mac_sbp,"\n");
 
+//fprintf(stderr,"rdmtext:  first line is \"%s\"\n",s);
 	while( *s != '.' ){
 		s=extract_line(SINGLE_QSP_ARG);
 		if( s == NULL ) goto bad_def;
+//fprintf(stderr,"rdmtext:  next line is \"%s\"\n",s);
 		if( *s != '.' ){
 			cat_string(mac_sbp,s);
 			// Newlines are stripped by extract_line
@@ -2149,6 +2149,7 @@ String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 	s++;	// skip '.'
 	scan_remainder(QSP_ARG  s,"end of macro definition");
 
+//fprintf(stderr,"rdmtext:  will return buffer with \"%s\"\n",SB_BUF(mac_sbp));
 	return(mac_sbp);
 bad_def:
 	WARN("incomplete macro definition");
@@ -2506,9 +2507,6 @@ void savetext(QSP_ARG_DECL  Query *qp,const char* buf)
 //qdump(SINGLE_QSP_ARG);
 } // end savetext
 
-// end of old qdup.c
-
-// start of old qword.c
 
 #include "quip_config.h"
 
@@ -2569,12 +2567,6 @@ void init_query_stack(Query_Stack *qsp)
 	const char *save_name;
 	int save_serial;
 
-//#ifdef CAUTIOUS
-//	if( qsp == NULL ) {
-//		ERROR1("CAUTIOUS:  init_query_stack passed NULL query stack pointer");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( qsp != NULL );
 
 	// This test is bad - the new memory may not have
@@ -2606,13 +2598,6 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_MENU_STACK(qsp,new_stack());
 	SET_QS_LEVEL(qsp,(-1));
 
-	// not used?
-	//SET_QS_FORMER_LEVEL(qsp,0);
-
-	//qsp->qs_fn_depth=(-1);
-	//SET_QS_LOOKAHEAD_LEVEL(qsp, 0);	/* BUG don't need this var, because never written!? */
-	SET_QS_WHICH_VAR_BUF(qsp, 0);
-
 	for(i=0;i<MAX_VAR_BUFS;i++){
 		SET_QS_VAR_BUF(qsp,i,new_stringbuf());
 	}
@@ -2620,29 +2605,19 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_SCRATCH(qsp,new_stringbuf());
 	SET_QS_RESULT(qsp,new_stringbuf());
 
-	// We used to initialize return strings here,
-	// but those are now part of the query structure,
-	// not the query stack.
-
-	//CLEAR_QS_PROMPT(qsp);
 	SET_QS_PROMPT_SB(qsp,new_stringbuf());
 
-	//qsp->qs_cmd_itp = NO_ITEM_TYPE;
 	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
-
-	// nexpr.y initializations
-	//SET_QS_WHICH_ESTR(qsp, 0);
-	//SET_QS_ESTR_ARRAY = (char **) getbuf(sizeof(char *)*
 
 	init_parser_data(qsp);
 
-	// This is really a query flag, and no query has been pushed yet!?
-	//CLEAR_QS_FLAG_BITS(qsp,QS_CHEWING);
 	SET_QS_CHEW_LIST(qsp, NO_LIST);
 	SET_QS_CALLBACK_LIST(qsp, NO_LIST);
 
 	SET_QS_VAR_FMT_STACK(qsp,NO_STACK);
 	SET_QS_NUMBER_FMT(qsp,NULL);
+
+	SET_QS_EXPECTED_WARNING(qsp,NULL);
 
 	SET_QS_AV_STRINGBUF(qsp,NULL);
 

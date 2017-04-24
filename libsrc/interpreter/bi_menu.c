@@ -482,6 +482,14 @@ static COMMAND_FUNC( do_warn )
 	WARN( NAMEOF("warning message") );
 }
 
+static COMMAND_FUNC( do_expect_warning )
+{
+	const char *s;
+
+	s=NAMEOF("Beginning of warning message");
+	expect_warning(QSP_ARG  s);
+}
+
 /******************** variables menu ***********************/
 
 static COMMAND_FUNC( do_set_var )
@@ -1755,6 +1763,7 @@ ADD_CMD( do,		do_do_loop,	open a loop		)
 ADD_CMD( while,		do_while,	conditionally close a loop	)
 ADD_CMD( variables,	do_var_menu,	variables submenu	)
 ADD_CMD( macros,	do_mac_menu,	macros submenu		)
+ADD_CMD( expect_warning,	do_expect_warning,	specify expected warning	)
 ADD_CMD( warn,		do_warn,	print a warning message	)
 ADD_CMD( <,		do_redir,	read commands from a file	)
 ADD_CMD( >,		do_copy_cmd,	copy commands to a transcript file	)

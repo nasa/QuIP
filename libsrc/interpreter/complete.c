@@ -717,7 +717,7 @@ if( debug & comp_debug ) advise("sending SIGINT to process id");
 			fputc(c,tty_out);	/* do the echo */
 
 			/* Add response to history lists...
-			 * We do this in qword() also,
+			 * We do this in next_query_word() also,
 			 * to save values for suppressed prompts
 			 */
 
