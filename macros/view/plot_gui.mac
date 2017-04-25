@@ -145,6 +145,28 @@ Print series_show_legend
 If $series_show_legend Refresh_Series_Legend
 .
 
+# Bug the symbol coords is in screen units?
+Define Get_Series_Legend_Coords 0
+Plot_2_Screen series_legend_symbol_x series_legend_symbol_y $series_legend_x $series_legend_y
+Add_Var series_legend_symbol_x -20		# move to the left
+Add_Var series_legend_symbol_y -5		# move up
+
+Assign px1 $series_legend_symbol_x-$legend_line_delta
+Assign px2 $series_legend_symbol_x+$legend_line_delta
+Screen_2_Plot series_legend_line_x1 series_legend_line_y1 $px1 $series_legend_symbol_y
+Screen_2_Plot series_legend_line_x2 series_legend_line_y2 $px2 $series_legend_symbol_y
+
+If !obj_exists(legend_line) "Vector legend_line 2 2 float"
+
+data
+  ascii
+    read legend_line -
+      $series_legend_line_x1 $series_legend_line_y1
+      $series_legend_line_x2 $series_legend_line_y2
+    quit
+  quit
+.
+
 Set legend_line_delta 12
 
 Define Refresh_Series_Legend 0
@@ -155,21 +177,18 @@ S_At $series_legend_text $series_legend_x $series_legend_y
 # We want to draw a symbol - if we are plotting symbols - and a short line segment - if we are drawing lines...
 # But we want the size (and the offset from the text)
 # to be about the same regardless of the plotting units!
-Plot_2_Screen sx1 sy1 $series_legend_x $series_legend_y
-advise "Will plot symbol at $sx1 $sy1..."
-Add_Var sx1 -20		# move to the left
-Add_Var sy1 -5		# move up
-If strcmp('$series_symbol','none') "$series_symbol $sx1 $sy1 $symbol_size"
-Assign sx2 $sx1+$legend_line_delta
-Add_Var sx1 -$legend_line_delta
-If !obj_exists(legend_line) "Vector legend_line 2 2 float"
-Screen_2_Plot px1 py1 $sx1 $sy1
-Screen_2_Plot px2 py2 $sx2 $sy1
-data ascii read legend_line - $px1 $py1 $px2 $py2 quit quit
-#Print series_line_thickness
-Display legend_line
-If $series_line_thickness>1 "Thick_Plot $series_line_thickness legend_line"
+Get_Series_Legend_Coords
+If strcmp('$series_symbol','none')
+  "$series_symbol $series_legend_symbol_x $series_legend_symbol_y $symbol_size"
+Plot_Legend_Line
 advise "Refresh_Series_Legend DONE"
+.
+
+Define Plot_Legend_Line 0
+#Print series_line_thickness
+#Display legend_line
+If $series_line_thickness>1 "Thick_Plot $series_line_thickness legend_line"
+If $series_line_thickness==1 "XYPlot legend_line"
 .
 
 Define Refresh_One_Grid 1 index
@@ -1077,11 +1096,10 @@ Emit_Axes
 # BUG subject label needs to have parameterized coordinates!
 echo "/subj_label { 5.5 gxu 6.0 gyu moveto show } def"
 # END prolog
-# BUG need to define legend_x etc
-echo "/legend_x $series_legend_x def"
-echo "/legend_y $series_legend_y def"
-echo "/legend_delta_y $data_legend_delta_y def"
-echo "/legend_delta_x $data_legend_delta_x def"
+#echo "/legend_x $series_legend_x def"
+#echo "/legend_y $series_legend_y def"
+#echo "/legend_delta_y $data_legend_delta_y def"
+#echo "/legend_delta_x $data_legend_delta_x def"
 
 If strcmp('$plot_legend_text','no_legend')
   Emit_Graph_Legend
@@ -1112,6 +1130,11 @@ repeat $n_grids
   end
 .
 
+Define Emit_Symbol_At 2 x y
+If strcmp('$ps_symbol_type','none')
+  "echo '/dotsize $series_symbol_size def $1 gxu $2 gyu $ps_symbol_type'"
+.
+
 Define Emit_One_Series 1 index
 Load_Series_Vars series_$1
 Get_Series_Points
@@ -1121,16 +1144,41 @@ echo "$datacolor_red $datacolor_green $datacolor_blue setrgbcolor"
 # Print a curve legend here
 # how do we scale linewidth?
 #echo "fatdatawidth setlinewidth"
+# BUG? isn't thickness the flag to determine drawing???
 If ncols(series_pts)>1 Draw_Series_Curve
 # Now plot symbols
 Set pt_idx 0
 repeat ncols(series_pts)
   Assign x value(series_pts[$pt_idx]{0})
   Assign y value(series_pts[$pt_idx]{1})
-  If strcmp('$ps_symbol_type','none')
-    "echo '/dotsize $series_symbol_size def $x gxu $y gyu $ps_symbol_type'"
+  Emit_Symbol_At $x $y
   Increment pt_idx
   end
+# draw the curve legend if there is one
+# series_legend
+If $series_show_legend Emit_Series_Legend
+.
+
+#echo "/legend_x $series_legend_x def"
+#echo "/legend_y $series_legend_y def"
+#echo "/legend_delta_y $data_legend_delta_y def"
+#echo "/legend_delta_x $data_legend_delta_x def"
+Define Emit_Series_Legend 0
+Get_Series_Legend_Coords
+#Unit_Font
+# BUG - set the font?
+# Left_Justify
+# BUG - left justify?
+#S_At $series_legend_text $series_legend_x $series_legend_y
+echo "/Times-Roman findfont smfsiz scalefont setfont"
+echo "0 0 0 setrgbcolor"
+echo "$series_legend_x gxu $series_legend_y gyu moveto"
+echo "($series_legend_text) show"
+echo "$datacolor_red $datacolor_green $datacolor_blue setrgbcolor"
+Screen_2_Plot x y $series_legend_symbol_x $series_legend_symbol_y
+Emit_Symbol_At $x $y
+If $series_line_thickness>0
+  "Emit_Curve legend_line $series_line_thickness"
 .
 
 Define Emit_One_Grid 1 index
