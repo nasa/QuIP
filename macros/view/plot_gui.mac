@@ -834,9 +834,11 @@ Set plot_spec_file $plot_param_dir/$plot_spec_file
 .
 
 Define Get_PS_Filename 1 plot_name
-Set psfile $1.eps
+Set psfile $1.scratch.eps
+Set final_psfile $1.eps
 If is_directory('$fig_dir')
-  "Set psfile $fig_dir/$psfile"
+  "Set final_psfile $fig_dir/$final_psfile \
+   Set psfile $fig_dir/$psfile"
 .
 
 Define Check_Plot_Params 1 plot_name
@@ -1053,26 +1055,20 @@ repeat ncols($1)-1
   end
 .
 
-Define WritePSPlot 0
-Get_PS_Filename $plot_name
+# Originally, we would use a 6" x 6" plotting area on the page,
+# 2.8" up from the bottom
+#
+# $plot_w and $plot_h are the dimensions of the plotting window...
 
-os
-  system "cat $postscript_lib/jbm_head.ps $postscript_lib/jbm_page.ps $postscript_lib/plotmacs.ps > $psfile"
-  quit
-
-append yes
-output_file $psfile
-
-# BEGIN prolog
+Define Emit_Prolog 0
 echo "0 0 0 setrgbcolor"
-echo "/ybase 2.8 in def"
-echo "/pspan 6.0 in def"
-echo "/gx0 1.6 in def"
-echo "/gy0 ybase def"
-echo "/gdx pspan def"
-echo "/gdy pspan def"
-# graph units to be mapped to graphing region
-# set these to suit the particular application
+#echo "/pspan 6.0 in def"
+echo "/gx0 1.5 in def"
+echo "/gy0 1.5 in def"
+#echo "/gdx pspan def"
+#echo "/gdy pspan def"
+echo "/gdx $plot_w 100 div in def"
+echo "/gdy $plot_h 100 div in def"
 echo "/guxmin $xmin def"
 echo "/guxmax $xmax def"
 echo "/guymin $ymin def"
@@ -1082,15 +1078,21 @@ echo "/gudy guymax guymin sub def"
 echo "/Helvetica findfont smfsiz scalefont setfont"
 echo "newpath"
 echo "[ ] 0 setdash"
-
 echo "/draw_frame { simple_frame } def"
 echo "/simple_frame { frame draw_ticks } def"
-# Now print the ticks...
-# BUG - we might like to print 1 as 1.0!
-
 If $show_frame
   'echo "frame"'
+.
 
+Define WritePSSubFig 0
+Get_PS_Filename subfig.$plot_name
+append no
+output_file $psfile
+Emit_Plot_Content
+.
+
+Define Emit_Plot_Content 0
+Emit_Prolog
 Emit_Axes
 
 # BUG subject label needs to have parameterized coordinates!
@@ -1106,11 +1108,32 @@ If strcmp('$plot_legend_text','no_legend')
 # Now plot the curves
 If $n_data_series>0 Emit_All_Series
 If $n_grids>0 Emit_All_Grids
+.
+
+
+Define WritePSPlot 0
+Get_PS_Filename $plot_name
+
+If $plot_w>$plot_h
+  Then "Set page_orientation landscape"
+  Else "Set page_orientation portrait"
+
+os
+  system "cat $postscript_lib/jbm_head.ps $postscript_lib/jbm_${page_orientation}_page.ps $postscript_lib/plotmacs.ps > $psfile"
+  quit
+
+append yes
+output_file $psfile
+
+Emit_Plot_Content
 
 output_file -	# close file
 
 os
   system "cat $postscript_lib/jbm_trailer.ps >> $psfile"
+  system "epstool --copy --bbox $psfile $final_psfile"
+  # Should we make sure epstool succeeded?
+  system "/bin/rm $psfile"
   quit
 .
 
@@ -1359,7 +1382,8 @@ interface
     button 'Save plot params' SavePlotParams
     button 'Load plot params' LoadPlotParams
     button 'Save preview to file' SavePlotImage
-    button 'Save as Postscript' WritePSPlot
+    button 'Save as standalone Postscript' WritePSPlot
+    button 'Save as Postscript for subfigure' WritePSSubFig
     button 'Quit' exit
     quit
   control
