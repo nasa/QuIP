@@ -48,6 +48,7 @@ Set plotwin_y0 50
 
 ################ Set default parameters
 Set save_filetype png
+# BUG?  update this when plot_name changes?
 Set save_filename_stem $plot_name
 
 Set series_line_thickness 1
@@ -981,9 +982,13 @@ Panel_Off $save_panel
 Panel_On $main_panel
 .
 
-Define SaveIt 0
+Define Save_Plot_Image 0
 Set save_filename $save_filename_stem.$save_filetype
 Save_Plot $save_filename $plotwin
+.
+
+Define Save_Image_Interactive 0
+Save_Plot_Image
 Panel_Off $save_panel
 Panel_On $main_panel
 .
@@ -1294,7 +1299,7 @@ interface
   decorate $save_panel
     text Filename SetSaveFilename $save_filename_stem
     chooser Filetype SetSaveFiletype 2 png jpg
-    button Save SaveIt
+    button Save Save_Image_Interactive
     button Cancel CancelSave
     quit
   panel $y_axis_panel $panel_w $panel_h
