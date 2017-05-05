@@ -400,6 +400,10 @@ Panel_Off $grid_panel
 Panel_On $grid_edit_panel
 .
 
+Define SetPlotType 0
+Set plot_type $choice
+.
+
 Define GenPanel 0
 interface
   decorate $gen_panel
@@ -412,6 +416,8 @@ interface
     If $show_plot_legend
       Then "set_toggle '$plot_legend_toggle_widget_name' yes"
       Else "set_toggle '$plot_legend_toggle_widget_name' no"
+    # chooser
+    chooser 'Plot type' SetPlotType 2 'points' 'bar' jpg
     quit
   quit
 Panel_Off $main_panel
@@ -820,6 +826,7 @@ If !file_exists('$plot_param_dir')
   'error_exit "plot_param_dir $plot_param_dir does not exist!?"'
 If !is_directory('$plot_param_dir')
   'error_exit "plot_param_dir $plot_param_dir is not a directory!?"'
+advise "plot_param_dir specified as $plot_param_dir"
 .
 
 Define Get_Plot_Param_Filename 1 plot_name
@@ -984,6 +991,7 @@ Panel_On $main_panel
 
 Define Save_Plot_Image 0
 Set save_filename $save_filename_stem.$save_filetype
+Print save_filename
 Save_Plot $save_filename $plotwin
 .
 
