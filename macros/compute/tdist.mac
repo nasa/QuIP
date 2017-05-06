@@ -329,3 +329,12 @@ Assign signif_idx round(($n_isamps+1)*(1-$_p))-1
 advise "idx for p=0.$significance is $signif_idx"
 .
 
+Define Get_P_Value 1 tstat
+Set idx 0
+repeat $n_isamps
+  If 'value(inv_cum[$idx])>($1)' 'Display inv_cum[$idx] advise "t = $1" Assign p_value 1-$idx/1000 Set p_string "= $p_value" exit_macro'
+  Increment idx
+  end
+Set p_string "< 0.001"
+.
+
