@@ -315,6 +315,7 @@ Set magenta	29
 Set dark_green	30
 Set dark_red	31
 Set dark_yellow	32
+Set dark_cyan	33
 .
 
 Define Init_Color_Defs 0
@@ -326,6 +327,7 @@ Setcolor $red 255 0 0
 Setcolor $dark_red 100 0 0
 Setcolor $green 0 255 0
 Setcolor $dark_green 0 100 0
+Setcolor $dark_cyan 0 100 255
 Setcolor $blue 0 0 255
 Setcolor $purple 255 0 255	# same as $magenta
 Setcolor $yellow 255 255 0
