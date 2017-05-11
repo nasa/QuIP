@@ -771,9 +771,15 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_HELPER_NAME($1)		\
 
 dnl	__GENERIC_FAST_VEC_FUNC(name,statement,bitmaps,typ,scalars,vectors,extra)
 
+dnl /* generic_fast_vec_func /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/ */		\
+
+dnl	/* generic_fast_vec_func statement */				\
+dnl	/* statement = $2 */						\
+dnl	/* generic_fast_vec_func done */				\
+
+
 define(`__GENERIC_FAST_VEC_FUNC',`					\
 									\
-/* generic_fast_vec_func /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/ */		\
 KERNEL_FUNC_PRELUDE							\
 									\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)			\
@@ -782,10 +788,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)			\
 	DECL_EXTRA($7)							\
 	INIT_INDICES($3,$6)						\
 	SET_EXTRA_INDICES($7)						\
-	/* generic_fast_vec_func statement */				\
-	/* statement = $2 */						\
-	$2 ;								\
-	/* generic_fast_vec_func done */				\
+	$2;								\
 }									\
 ')
 

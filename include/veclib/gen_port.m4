@@ -32,6 +32,10 @@ define(`_TMPVEC_NAME',$1`_tmp_vec')
 
 define(`IDX3',`index3')
 
+define(`BITS_PER_BITMAP_WORD',`64')
+define(`BIT_NUMBER_MASK',`(BITS_PER_BITMAP_WORD-1)')
+define(`NUMBERED_BIT',`(1L << ( ($1) & BIT_NUMBER_MASK ) )')
+
 define(`FREETMP_NAME',`_FREETMP_NAME(pf_str)')
 define(`_FREETMP_NAME',$1`_free_tmp')
 
