@@ -88,11 +88,8 @@ static Item_Type *ctx_itp=NO_ITEM_TYPE;
 
 static ITEM_INIT_FUNC(Item_Context,ctx,0)
 ITEM_CHECK_FUNC(Item_Context,ctx)
-//static ITEM_GET_FUNC(Item_Context,ctx)
-//static ITEM_LIST_FUNC(Item_Context,ctx)
 static ITEM_NEW_FUNC(Item_Context,ctx)
 static ITEM_DEL_FUNC(Item_Context,ctx)
-/* static ITEM_PICK_FUNC(Item_Context,ctx) */
 
 #define CHECK_ITEM_INDEX( itp )	if( ( itp ) == NO_ITEM_TYPE ){		\
 					WARN("Null item type");		\
@@ -179,11 +176,6 @@ static void init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
 	*/
 
 	SET_IT_FREE_LIST(itp, new_list() );
-#ifdef USE_CHOICE_LIST
-	// BUG are choices a per-thread thing?
-	SET_IT_FLAGS(itp, NEED_CHOICES);
-	SET_IT_CHOICES(itp, NO_STR_ARRAY);
-#endif // USE_CHOICE_LIST
 
 	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
@@ -498,32 +490,6 @@ NADVISE(ERROR_STRING);
 
 	return(ip);
 } // end new_item
-
-#ifdef NOT_USED
-void list_item_contexts( QSP_ARG_DECL   Item_Type *itp )
-{
-	Node *np;
-
-	if( CONTEXT_LIST(itp)==NO_LIST ||
-		(np=QLIST_HEAD(CONTEXT_LIST(itp)))==NO_NODE){
-
-		sprintf(ERROR_STRING,"Item type \"%s\" has no contexts",
-			IT_NAME(itp));
-		NADVISE(ERROR_STRING);
-		return;
-	}
-
-	while(np!=NO_NODE ){
-		Item_Context *icp;
-
-		icp=(Item_Context *) NODE_DATA(np);
-		sprintf(MSG_STR,"%s",CTX_NAME(icp));
-		prt_msg(MSG_STR);
-
-		np=NODE_NEXT(np);
-	}
-}
-#endif /* NOT_USED */
 
 /* Create a new context with the given name.
  * It needs to be push'ed in order to make it be
@@ -1475,7 +1441,6 @@ static void dump_item_context(QSP_ARG_DECL  Item_Context *icp)
 	sprintf(MSG_STR,"\tContext \"%s\"",CTX_NAME(icp));
 	prt_msg(MSG_STR);
 
-//	dump_dict_info(CTX_DICT(icp));
 	dump_container_info(QSP_ARG  CTX_CONTAINER(icp));
 
 	list_item_context(QSP_ARG  icp);
@@ -1484,8 +1449,8 @@ static void dump_item_context(QSP_ARG_DECL  Item_Context *icp)
 void list_item_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	List *lp;
-//	lp=dictionary_list(CTX_DICT(icp));
 	lp=container_list(CTX_CONTAINER(icp));
+fprintf(stderr,"list_item_context:  context %s has %d items\n",CTX_NAME(icp),eltcount(lp));
 	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
@@ -1588,6 +1553,7 @@ static Item_Context *setup_frag_context(QSP_ARG_DECL  Item_Context *icp)
 
 static void rebuild_frag_match_info(QSP_ARG_DECL  Frag_Match_Info *fmi_p )
 {
+fprintf(stderr,"rebuild_frag_match_info BEGIN\n");
 	// nothing to free, just clear old ptrs
 	bzero(&(fmi_p->fmi_u),sizeof(fmi_p->fmi_u));
 	// BUG  no need to pass all these args - sloppy
@@ -1629,6 +1595,8 @@ static Frag_Match_Info *context_partial_match(QSP_ARG_DECL  Item_Context *icp, c
 		if( FMI_ITEM_SERIAL(fmi_p) != CTX_ITEM_SERIAL(icp) ){
 			rebuild_frag_match_info(QSP_ARG  fmi_p);
 		}
+		// BUG?  do we need to re-search after rebuilding???
+		// Or does rebuild alter the target of fmi_p???
 	}
 	return fmi_p;
 } // context_partial_match

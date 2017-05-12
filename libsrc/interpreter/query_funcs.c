@@ -1727,7 +1727,7 @@ static Query *hist_select(QSP_ARG_DECL char *buf,int buf_size,const char* pline)
 
 	qp = CURR_QRY(THIS_QSP);
 
-	s=get_sel(QSP_ARG  pline,QRY_FILE_PTR(qp),stderr);
+	s=get_response_from_user(QSP_ARG  pline,QRY_FILE_PTR(qp),stderr);
 	if( s==NULL ){			/* ^D */
 		if( QLEVEL > 0 ){
 			pop_file(SINGLE_QSP_ARG);

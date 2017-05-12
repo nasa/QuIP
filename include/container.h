@@ -21,6 +21,10 @@ struct container {
 		Hash_Tbl *	u_htp;
 		qrb_tree *	u_tree_p;
 	} cnt_u;
+
+	// methods
+	void (* substring_find_func)(Container *,Frag_Match_Info *, const char *);
+	void *(* insert_item_func)(Container *,Item *);
 };
 
 #define cnt_lp		cnt_u.u_lp

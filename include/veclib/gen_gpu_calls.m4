@@ -78,7 +78,7 @@ define(`_VEC_FUNC_QUAT_2V_1S_T4',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,_1S,2,T4) '
 define(`_VEC_FUNC_QUAT_2V_1S_T5',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,_1S,2,T5) ')
 define(`_VEC_FUNC_CPXT_2V_1S',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,_1S,2,T) ')
 define(`_VEC_FUNC_CPXD_2V_1S',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,_1S,2,D) ')
-define(`_VEC_FUNC_CPX_1V_1S',`/* _vec_func_cpx_1v_1s /$1/ /$2/ */GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,_1S,1,) ')
+define(`_VEC_FUNC_CPX_1V_1S',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,_1S,1,) ')
 define(`_VEC_FUNC_QUAT_1V_1S',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,_1S,1,)') 
 define(`_VEC_FUNC_CPX_3V_T1',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,T1) ')
 define(`_VEC_FUNC_CPX_3V_T2',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,T2) ')
@@ -135,11 +135,12 @@ void name(DECLARE_KERN_ARGS_FAST($3,$4,$5,$6))
 // unused bits, but it might cause a seg violation when trying to access
 // corresponding non-bit args???  BUG?
 
+dnl	/* fast_dbm_loop /$1/ /$2/ */						\
+
 dnl	FAST_DBM_LOOP(statement,advance)
 
 define(`FAST_DBM_LOOP',`							\
 										\
-	/* fast_dbm_loop /$1/ /$2/ */						\
 	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
 		dbm_bit = NUMBERED_BIT(i_dbm_bit);				\
 		$1 ;								\
@@ -147,7 +148,7 @@ define(`FAST_DBM_LOOP',`							\
 	}									\
 ')
 
-/* `FLEN_DBM_LOOP' */
+dnl	/* `FLEN_DBM_LOOP' */
 
 define(`FLEN_DBM_LOOP', EQSP_DBM_LOOP($1,$2))
 
@@ -171,7 +172,7 @@ define(`SLEN_DBM_LOOP', SLOW_DBM_LOOP( $1, $2 ) )
 
 dnl define(`SLOW_DBM_LOOP',	FAST_DBM_LOOP( $1, $2 ))
 
-/* `SLOW_DBM_LOOP' */
+dnl	/* `SLOW_DBM_LOOP' */
 define(`SLOW_DBM_LOOP',`							\
 										\
 	for(i_dbm_bit=0;i_dbm_bit<BITS_PER_BITMAP_WORD;i_dbm_bit++){		\
@@ -266,7 +267,7 @@ define(`GENERIC_SLEN_VEC_FUNC_DBM',`_GENERIC_SLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
 
 
-/* FIXME still need to convert these to generic macros if possible */
+dnl	/* FIXME still need to convert these to generic macros if possible */
 
 define(`_VEC_FUNC_MM',`__VEC_FUNC_MM($1,$2)')
 define(`_VEC_FUNC_MM_IND',`__VEC_FUNC_MM_IND($1,$2,$3)')
@@ -334,7 +335,7 @@ dnl	}						\
 dnl	')
 
 
-/* `CPX_FAST_2V_PROJ_SETUP' */
+dnl	/* `CPX_FAST_2V_PROJ_SETUP' */
 
 dnl needs backslashes so that it can be included in a quoted string for OpenCL...
 
@@ -347,7 +348,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
 FAST_CPX_2V_PROJ_BODY($2,$3,std_cpx)				\
 ')
 
-/* `CPX_FAST_2V_PROJ_HELPER' */
+dnl	/* `CPX_FAST_2V_PROJ_HELPER' */
 define(`___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER',`				\
 									\
 KERNEL_FUNC_PRELUDE							\
@@ -410,7 +411,7 @@ define(`FAST_2V_PROJ_BODY',`				\
 }							\
 ')
 
-/* `CPX_FAST_2V_PROJ_SETUP' */
+dnl	/* `CPX_FAST_2V_PROJ_SETUP' */
 
 define(`___VEC_FUNC_CPX_FAST_2V_PROJ_SETUP',`			\
 								\
@@ -421,7 +422,7 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1`_setup')	\
 FAST_CPX_2V_PROJ_BODY($2,$3,std_cpx)				\
 ')
 
-/* `CPX_FAST_2V_PROJ_HELPER' */
+dnl	/* `CPX_FAST_2V_PROJ_HELPER' */
 define(`___VEC_FUNC_CPX_FAST_2V_PROJ_HELPER',`				\
 									\
 KERNEL_FUNC_PRELUDE							\
@@ -448,7 +449,7 @@ define(`FAST_CPX_2V_PROJ_BODY',`			\
 ')
 
 
-/* `QUAT_FAST_2V_PROJ_SETUP' */
+dnl	/* `QUAT_FAST_2V_PROJ_SETUP' */
 
 define(`___VEC_FUNC_QUAT_FAST_2V_PROJ_SETUP',`			\
 								\
@@ -557,7 +558,7 @@ define(`psrc2',s2[IDX1])
 // for vsum:   psrc1 + psrc2
 // `for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2'
 
-/* after comment? */
+dnl	/* after comment? */
 
 // left shift was broken on cuda, what about now?
 
@@ -764,10 +765,10 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_HELPER_NAME($1)		\
 }									\
 ')
 
-/* `GENERIC_FAST_VEC_FUNC' */
-/* 2V_PROJ is OK but not this??? */
-/* that uses GPU_FUNC_FAST_NAME... */
-/* used to use GPU_FAST_CALL_NAME... */
+dnl	/* `GENERIC_FAST_VEC_FUNC' */
+dnl	/* 2V_PROJ is OK but not this??? */
+dnl	/* that uses GPU_FUNC_FAST_NAME... */
+dnl	/* used to use GPU_FAST_CALL_NAME... */
 
 dnl	__GENERIC_FAST_VEC_FUNC(name,statement,bitmaps,typ,scalars,vectors,extra)
 
@@ -792,6 +793,9 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)			\
 }									\
 ')
 
+dnl		/* generic_eqsp_vec_func to invoke init_indices */				\
+dnl		/* generic_eqsp_vec_func to invoke scale_indices */				\
+
 dnl	__GENERIC_EQSP_VEC_FUNC( name, statements, bitmaps, typ, scalars, vectors, extra )
 
 define(`__GENERIC_EQSP_VEC_FUNC',`							\
@@ -801,10 +805,8 @@ KERNEL_FUNC_PRELUDE									\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP($3,$4,$5,$6))	\
 {											\
 	DECL_EXTRA($7)									\
-	/* generic_eqsp_vec_func to invoke init_indices */				\
 	INIT_INDICES($3,$6)								\
 	SET_EXTRA_INDICES($7)								\
-	/* generic_eqsp_vec_func to invoke scale_indices */				\
 	SCALE_INDICES($3,$6)								\
 	$2;										\
 }											\
@@ -863,10 +865,11 @@ define(`SLEN_SUBTST', $1.d5_dim[$3] < $2.d5_dim[$3])
 
 define(`SLEN_IDX_TEST',`( SLEN_SUBTST($1,$2,0) && SLEN_SUBTST($1,$2,1) && SLEN_SUBTST($1,$2,2) && SLEN_SUBTST($1,$2,3) && SLEN_SUBTST($1,$2,4) )')
 
+dnl	/* generic_slen_vec_func /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/ */				\
+
 define(`__GENERIC_SLEN_VEC_FUNC',`							\
 											\
 KERNEL_FUNC_PRELUDE									\
-/* generic_slen_vec_func /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/ */				\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN($3,$4,$5,$6))	\
 {											\
 	DECL_EXTRA($7)									\
@@ -988,17 +991,17 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLEN_NAME($1)(DECLARE_KERN_ARGS_SLEN_CONV($2
 ')
 
 dnl	__GENERIC_FAST_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
+dnl	/* generic_fast_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */					\
+dnl	/* generic_fast_vec_func_dbm */								\
+dnl	/* generic_fast_vec_func dbm calling fast_dbm_loop /$2/ /$5/ */				\
 
 define(`__GENERIC_FAST_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-/* generic_fast_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */					\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)(DECLARE_KERN_ARGS_FAST(`DBM_',$3,$4,$5))	\
 {												\
-	/* generic_fast_vec_func_dbm */								\
 	INIT_INDICES(`DBM_',$5)									\
-	/* generic_fast_vec_func dbm calling fast_dbm_loop /$2/ /$5/ */				\
 	FAST_DBM_LOOP( $2, ADVANCE_FAST_$5$4)							\
 }												\
 ')
@@ -1006,6 +1009,9 @@ KERNEL_FUNC_QUALIFIER void GPU_FUNC_FAST_NAME($1)(DECLARE_KERN_ARGS_FAST(`DBM_',
 // EQSP is tricky because the number of relevant bits in a word is no
 // longer all of the bits - so the LOOP should just loop over the bits
 // in a single word!?  BUG?
+dnl	/* generic_eqsp_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */				\
+dnl	/* generic_eqsp_vec_func_dbm 2 */							\
+dnl	/* generic_eqsp_vec_func_dbm 3 */							\
 
 define(`__GENERIC_EQSP_VEC_FUNC_DBM',`								\
 												\
@@ -1013,17 +1019,17 @@ KERNEL_FUNC_PRELUDE										\
 												\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_EQSP_NAME($1)(DECLARE_KERN_ARGS_EQSP(`DBM_',$3,$4,$5))	\
 {												\
-	/* generic_eqsp_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */				\
 	INIT_INDICES(`DBM_',$5)									\
-	/* generic_eqsp_vec_func_dbm 2 */							\
 	SCALE_INDICES(`DBM_',$5)								\
-	/* generic_eqsp_vec_func_dbm 3 */							\
 	EQSP_DBM_LOOP($2,ADVANCE_EQSP_$5$4)							\
 }												\
 ')
 
 
 dnl	__GENERIC_SLOW_VEC_FUNC_DBM( name, statement, typ, scalars, vectors )
+dnl	/* generic_slow_vec_func_dbm */								\
+dnl	/* scale_indices /DBM_/ /$5/ */								\
+dnl	/* slow_dbm_loop /$2/ /$5/ */								\
 
 define(`__GENERIC_SLOW_VEC_FUNC_DBM',`								\
 												\
@@ -1031,24 +1037,21 @@ KERNEL_FUNC_PRELUDE										\
 												\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_SLOW_NAME($1)(DECLARE_KERN_ARGS_SLOW(`DBM_',$3,$4,$5))	\
 {												\
-	/* generic_slow_vec_func_dbm */								\
 	INIT_INDICES(`DBM_',$5)									\
 	SET_EXTRA_INDICES($7)									\
-	/* scale_indices /DBM_/ /$5/ */								\
 	SCALE_INDICES(`DBM_',$5)								\
 												\
-	/* slow_dbm_loop /$2/ /$5/ */								\
 	SLOW_DBM_LOOP( $2 , ADVANCE_SLOW_$5$4)							\
 }												\
 												\
 ')
 
 dnl	__GENERIC_FLEN_VEC_FUNC_DBM(name,statement,rc_type,scalars,vectors)
+dnl	/* __generic_flen_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */					\
 define(`__GENERIC_FLEN_VEC_FUNC_DBM',`								\
 												\
 KERNEL_FUNC_PRELUDE										\
 												\
-/* __generic_flen_vec_func_dbm /$1/ /$2/ /$3/ /$4/ /$5/ */					\
 KERNEL_FUNC_QUALIFIER void GPU_FUNC_FLEN_NAME($1)(DECLARE_KERN_ARGS_FLEN(`DBM_',$3,$4,$5))	\
 {												\
 	INIT_INDICES(`DBM_',$5)									\

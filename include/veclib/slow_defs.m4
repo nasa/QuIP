@@ -53,6 +53,7 @@ define(`SET_INDEX',`							\
 
 dnl this is for bitmaps with info...
 define(`SET_INDICES_1SRC',`index2.d5_dim[0] = tbl_idx; /* BUG need to initialize index2! */')
+define(`SET_INDICES_2SRCS',`SET_INDICES_1SRC index3 = index2;')
 
 
 dnl	// Slow versions of these not implemented for GPU yet...

@@ -9,6 +9,9 @@
 
 #define VALID_CONTAINER_TYPE(t)	( t == LIST_CONTAINER || t == HASH_TBL_CONTAINER || t == RB_TREE_CONTAINER )
 
+// forward declaration
+static void init_container(Container *cnt_p,int type);
+
 Container * create_container(const char *name,int type)
 {
 	Container *cnt_p;
@@ -106,6 +109,28 @@ void set_container_type(Container *cnt_p, int type)
 	}
 }
 
+static void *list_insert_item(Container *cnt_p, Item *ip)
+{
+	Node *np;
+	np = mk_node(ip);
+	addTail( cnt_p->cnt_lp, np );
+	return np;
+}
+
+static void *hash_tbl_insert_item(Container *cnt_p,Item *ip)
+{
+	int stat;
+	stat=insert_hash(ip,cnt_p->cnt_htp);
+	if( stat == 0 )
+		return ip;
+	return NULL;
+}
+
+static void *rb_tree_insert_item(Container *cnt_p,Item *ip)
+{
+	return rb_insert_item(cnt_p->cnt_tree_p, ip );
+}
+
 Container * new_container(int type)
 {
 	Container *cnt_p=NULL;
@@ -114,29 +139,18 @@ Container * new_container(int type)
 	assert( VALID_CONTAINER_TYPE(type) );
 
 	cnt_p = getbuf( sizeof(Container) );
-
-//	cnt_p->types = type;
-	cnt_p->primary_type = type;
-//	cnt_p->is_current = type;
-	cnt_p->name = NULL;
-
-	// null all pointers by default
-	cnt_p->cnt_lp = NULL;
-	cnt_p->cnt_htp = NULL;
-	cnt_p->cnt_tree_p = NULL;
-
-//fprintf(stderr,"new_container %s at 0x%lx calling add_type_to_container %d\n",cnt_p->name,(long)cnt_p,type);
-	//add_type_to_container(cnt_p,type);
+	init_container(cnt_p,type);
 	set_container_type(cnt_p,type);
 	return cnt_p;
 }
 
 int add_to_container(Container *cnt_p, Item *ip)
 {
-	Node *np;
-	qrb_node *tnp;
-	int stat=0;
+//	qrb_node *tnp;
+	void *ptr;
+//	int stat=0;
 
+#ifdef FOOBAR
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:
 			np = mk_node(ip);
@@ -156,9 +170,12 @@ int add_to_container(Container *cnt_p, Item *ip)
 			NERROR1("add_to_container:  invalid container type!?");
 			break;
 	}
-//	cnt_p->is_current = cnt_p->primary_type;
-//fprintf(stderr,"add_to_container:  types = %d, primary_type = %d, is_current = %d\n", cnt_p->types,cnt_p->primary_type,cnt_p->is_current);
-	return stat;
+#endif // FOOBAR
+	ptr = (*(cnt_p->insert_item_func))(cnt_p,ip);
+
+	if( ptr == NULL )
+		return -1;
+	return 0;
 }
 
 int remove_name_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name)
@@ -219,10 +236,13 @@ Item *container_find_match(Container *cnt_p, const char *name)
 }
 
 // assume the items in the list are sorted...
-static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *frag )
+static void list_substring_find(Container *cnt_p, Frag_Match_Info *fmi_p, const char *frag )
 {
 	int n;
+	List *lp;
 	Node* np;
+
+	lp = cnt_p->cnt_lp;
 
 	lp = alpha_sort(DEFAULT_QSP_ARG  lp);	// BUG should sort in-place???
 
@@ -260,18 +280,41 @@ static void list_substring_find(Frag_Match_Info *fmi_p, List *lp, const char *fr
 	}
 }
 
-// Because the hash table items are not sorted, we need to keep a list of the items...
-
-static void hash_tbl_substring_find(Frag_Match_Info *fmi_p,Hash_Tbl *htp,const char *frag)
+static Container *ht_list_container(Hash_Tbl *htp)
 {
-	List *lp;
+	Container *cnt_p;
 
-	//lp = hash_tbl_list(htp);
-	lp = ht_list(htp);
-	list_substring_find(fmi_p,lp,frag);
-	zap_list(lp);
+	cnt_p = new_container(LIST_CONTAINER);
+	cnt_p->cnt_lp = ht_list(htp);
+	return cnt_p;
 }
 
+static void zap_list_container(Container *cnt_p)
+{
+	assert(cnt_p->primary_type == LIST_CONTAINER);
+	zap_list(cnt_p->cnt_lp);	// what does "zap" mean?  BUG?
+}
+
+// Because the hash table items are not sorted, we need to keep a list of the items...
+
+static void hash_tbl_substring_find(Container *cnt_p, Frag_Match_Info *fmi_p,const char *frag)
+{
+//	List *lp;
+//
+//	lp = ht_list(htp);
+//	list_substring_find(fmi_p,lp,frag);
+	Container *list_cnt_p;
+
+	list_cnt_p = ht_list_container(cnt_p->cnt_htp);
+	list_substring_find(list_cnt_p,fmi_p,frag);
+	zap_list_container(list_cnt_p);
+	// BUG memory leak?
+}
+
+static void rb_tree_substring_find(Container *cnt_p, Frag_Match_Info *fmi_p, const char *frag )
+{
+	rb_substring_find( fmi_p, cnt_p->cnt_tree_p, frag );
+}
 
 
 // container_find_substring_matches
@@ -288,6 +331,7 @@ static void hash_tbl_substring_find(Frag_Match_Info *fmi_p,Hash_Tbl *htp,const c
 
 void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, const char *frag)
 {
+#ifdef FOOBAR
 	switch(cnt_p->primary_type){
 		case LIST_CONTAINER:
 			list_substring_find(fmi_p,cnt_p->cnt_lp,frag);
@@ -305,6 +349,8 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, 
 			NERROR1("container_find_substring_matches:  bad container type!?");
 			break;
 	}
+#endif // FOOBAR
+	(*(cnt_p->substring_find_func))(cnt_p,fmi_p,frag);
 
 #ifdef FOOBAR
 	if( cnt_p->types & RB_TREE_CONTAINER ){
@@ -590,5 +636,34 @@ fprintf(stderr,"current_frag_item:  container_type = %d\n", IT_CONTAINER_TYPE(CT
 			break;
 	}
 	return NULL;
+}
+
+#define INIT_CONTAINER_FUNCTIONS(stem)					\
+	cnt_p->insert_item_func = stem##_insert_item;			\
+	cnt_p->substring_find_func = stem##_substring_find;			\
+
+
+static void init_container(Container *cnt_p, int type)
+{
+	cnt_p->primary_type = type;
+	cnt_p->name = NULL;
+
+	switch(type){
+		case LIST_CONTAINER:
+			cnt_p->cnt_lp = NULL;
+			INIT_CONTAINER_FUNCTIONS(list)
+			break;
+		case HASH_TBL_CONTAINER:
+			cnt_p->cnt_htp = NULL;
+			INIT_CONTAINER_FUNCTIONS(hash_tbl)
+			break;
+		case RB_TREE_CONTAINER:
+			cnt_p->cnt_tree_p = NULL;
+			INIT_CONTAINER_FUNCTIONS(rb_tree)
+			break;
+		default:
+			assert("bad container type in init_container!?" == NULL);
+			break;
+	}
 }
 
