@@ -19,6 +19,7 @@ FWD_TYPEDEF(query,Query)
 FWD_TYPEDEF(query_stack,Query_Stack)
 FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
+FWD_TYPEDEF(subrt,Subrt)
 
 FWD_TYPEDEF(mouthful,Mouthful)
 FWD_TYPEDEF(my_pipe,Pipe)

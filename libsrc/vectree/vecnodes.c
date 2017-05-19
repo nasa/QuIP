@@ -101,11 +101,11 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			SET_VN_INTVAL(enp, 0);
 			break;
 		case ND_SUBRT:
-			SET_VN_SUBRT(enp, NO_SUBRT);
+			SET_VN_SUBRT(enp, NULL);
 			break;
 		case ND_CALLF:
 			SET_VN_UK_ARGS(enp, NO_LIST);
-			SET_VN_CALL_SUBRT(enp, NO_SUBRT);
+			SET_VN_CALL_SUBRT(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);

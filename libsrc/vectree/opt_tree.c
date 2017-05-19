@@ -7,6 +7,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "vectree.h"
+#include "subrt.h"
 #include "debug.h"	// AERROR
 
 /* for definition of function codes */

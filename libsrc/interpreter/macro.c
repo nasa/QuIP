@@ -55,7 +55,7 @@ void rls_macro(QSP_ARG_DECL  Macro *mp)
 	del_macro(QSP_ARG  mp);
 }
 
-void create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno)
+Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno)
 {
 	Macro *mp;
 
@@ -70,9 +70,33 @@ void create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, Str
 	// be released later...
 	SET_MACRO_FILENAME( mp, savestr(current_filename(SINGLE_QSP_ARG)) );
 	SET_MACRO_LINENO( mp, lineno );
+	return mp;
 }
 
 inline int macro_is_invoked(Macro *mp)
 {
 	return IS_INVOKED(mp);
 }
+
+static void setup_generic_macro_arg(Macro_Arg *map, int idx)
+{
+	char str[32];
+	map->ma_itp=NULL;		// default
+	sprintf(str,"argument %d",idx+1);
+	map->ma_prompt = savestr(str);	// memory leak?  BUG?  where freed?
+}
+
+Macro_Arg **create_generic_macro_args(int n)
+{
+	Macro_Arg **ma_tbl;
+	int i;
+
+	assert(n>0&&n<32);	// 32 is somewhat arbitrary...
+	ma_tbl = getbuf( n * sizeof(Macro_Arg *));
+	for(i=0;i<n;i++){
+		ma_tbl[i] = getbuf( sizeof(Macro_Arg) );
+		setup_generic_macro_arg(&ma_tbl[i],i);
+	}
+	return ma_tbl;
+}
+

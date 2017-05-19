@@ -291,7 +291,7 @@ extern void set_args(QSP_ARG_DECL  int ac,char** av);
 extern String_Buf * rdmtext(SINGLE_QSP_ARG_DECL);
 extern Macro_Arg ** read_macro_arg_table(QSP_ARG_DECL int n);
 extern Macro_Arg ** create_generic_macro_args(int n);
-extern void create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
+extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
 extern void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
@@ -301,6 +301,8 @@ extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
 extern const char *query_filename(SINGLE_QSP_ARG_DECL);
 extern void set_query_filename(Query *, const char *);
+extern void set_query_macro(Query *,Macro *);
+extern void set_query_args(Query *,const char **);
 extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
 extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
 
@@ -512,6 +514,7 @@ extern int sb_size(String_Buf *sbp);
 //#define SB_BUF(sbp)	sb_buffer(sbp)
 
 extern String_Buf *new_stringbuf(void);
+extern String_Buf *create_stringbuf(const char *s);
 extern void rls_stringbuf(String_Buf *);
 
 

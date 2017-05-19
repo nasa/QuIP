@@ -351,7 +351,7 @@ static COMMAND_FUNC( do_def_mac )
 			name,macro_filename(mp),macro_lineno(mp) );
 		advise(ERROR_STRING);
 	} else {
-		create_macro(QSP_ARG  name,n,ma_tbl,sbp,lineno);
+		mp=create_macro(QSP_ARG  name,n,ma_tbl,sbp,lineno);
 	}
 
 	rls_stringbuf(sbp);

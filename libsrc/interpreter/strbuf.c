@@ -106,4 +106,11 @@ inline int sb_size(String_Buf *sbp)
 	return SB_SIZE(sbp);
 }
 
+inline String_Buf *create_stringbuf(const char *str)
+{
+	String_Buf *sbp;
+	sbp = new_stringbuf();
+	copy_string(sbp,str);
+	return sbp;
+}
 

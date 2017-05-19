@@ -15,6 +15,7 @@
 #include "quip_prot.h"
 #include "warn.h"
 #include "getbuf.h"
+#include "subrt.h"
 
 // BUG global is not thread-safe
 int dumpit=0;

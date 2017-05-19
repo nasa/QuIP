@@ -121,7 +121,6 @@ noinst_HEADERS =			\
 			sizable.h	\
 			stack.h		\
 			string_ref.h	\
-			subrt.h		\
 			thread_safe_defs.h	\
 			treecode.h	\
 			ttyctl.h	\

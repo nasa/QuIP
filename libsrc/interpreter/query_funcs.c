@@ -2200,6 +2200,31 @@ bad_def:
 	return(mac_sbp);
 } /* end rdmtext */
 
+static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const char *s)
+{
+	int n;
+	char pstr[LLEN];
+	char pstr2[LLEN];
+
+	if( *s != '<' ) return s;
+
+	n=(int)strlen(s);
+	if( s[n-1] != '>' ){
+		WARN("Unterminated macro argument item type specification.");
+		return s;
+	}
+
+	strcpy(pstr2,s+1);
+	pstr2[n-2]=0;	/* kill closing bracket */
+
+	map->ma_itp = get_item_type(QSP_ARG  pstr2);
+	if( map->ma_itp == NULL ){
+		WARN("Unable to process macro argument item type specification.");
+		return s;
+	}
+	return NAMEOF(pstr);
+}
+
 static Macro_Arg * read_macro_arg(QSP_ARG_DECL int i)
 {
 	char pstr[LLEN];
@@ -2223,22 +2248,8 @@ static Macro_Arg * read_macro_arg(QSP_ARG_DECL int i)
 	 * by preceding the prompt with an item type name in brackets,
 	 * e.g. <Data_Obj>
 	 */
-	map->ma_itp=NO_ITEM_TYPE;		// default
-	if( *s == '<' ){
-		int n;
-		n=(int)strlen(s);
-		if( s[n-1] == '>' ){
-			strcpy(pstr2,s+1);
-			pstr2[n-2]=0;	/* kill closing bracket */
-			map->ma_itp = get_item_type(QSP_ARG  pstr2);
-			if( map->ma_itp == NO_ITEM_TYPE ){
-WARN("Unable to process macro argument item type specification.");
-			}
-		} else {
-			WARN("Unterminated macro argument item type specification.");
-		}
-		s=NAMEOF(pstr);
-	}
+	map->ma_itp=NULL;		// default
+	s = check_macro_arg_item_spec(QSP_ARG  map, s);
 	map->ma_prompt = savestr(s);
 	return map;
 }
@@ -3907,5 +3918,20 @@ void redir_from_pipe(QSP_ARG_DECL  Pipe *pp, const char *cmd)
 inline void set_query_filename(Query *qp, const char *filename)
 {
 	SET_QRY_FILENAME(qp,filename);
+}
+
+inline void set_query_arg_at_index(Query *qp, int idx, const char *s)
+{
+	SET_QRY_ARG_AT_IDX(qp,idx,s);
+}
+
+inline void set_query_args(Query *qp, const char **args)
+{
+	SET_QRY_ARGS(qp,args);
+}
+
+inline void set_query_macro(Query *qp, Macro *mp)
+{
+	SET_QRY_MACRO(qp,mp);
 }
 

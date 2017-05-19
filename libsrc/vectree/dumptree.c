@@ -17,6 +17,7 @@
 #include "warn.h"
 
 #include "vectree.h"
+#include "subrt.h"
 
 /* for definition of function codes */
 /* #include "wartbl.h" */

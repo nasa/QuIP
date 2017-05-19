@@ -27,6 +27,8 @@ libvectree_a_SOURCES =			\
 			string_ref.c	\
 			vt_native.h
 
+noinst_HEADERS =	subrt.h
+
 #noinst_HEADERS = vectree.h vt_native.h \
 #			ctx_pair.h	\
 #			identifier.h	\

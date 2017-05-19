@@ -215,6 +215,7 @@
 //#include "filetype.h"
 
 #include "vectree.h"
+#include "subrt.h"
 
 #define MAX_HIDDEN_CONTEXTS	32
 

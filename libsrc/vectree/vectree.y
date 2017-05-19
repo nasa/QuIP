@@ -26,6 +26,7 @@
 #include "query_stack.h"	// BUG?
 
 #include "vectree.h"
+#include "subrt.h"
 
 /* for definition of function codes */
 #include "veclib/vecgen.h"
@@ -1154,12 +1155,12 @@ subroutine	: data_type new_func_decl stat_block
 			Subrt *srp;
 			srp=subrt_of(QSP_ARG  VN_STRING($2));
 //#ifdef CAUTIOUS
-//			if( srp == NO_SUBRT ) {
+//			if( srp == NULL ) {
 //				NODE_ERROR($2);
 //				ERROR1("CAUTIOUS:  missing subrt!?");
 //			}
 //#endif /* CAUTIOUS */
-			assert( srp != NO_SUBRT );
+			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,$3);
 			$$=NODE0(T_SUBRT);
@@ -2695,7 +2696,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	 */
 	
 	srp = subrt_of(QSP_ARG  CURR_STRING);
-	if( srp != NO_SUBRT ){
+	if( srp != NULL ){
 		yylvp->srp = srp;
 		if( IS_SCRIPT(srp) )
 			return(SCRIPTFUNC);
