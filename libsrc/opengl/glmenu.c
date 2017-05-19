@@ -16,6 +16,7 @@
 #include "glx_supp.h"
 
 #include "quip_prot.h"
+#include "debug.h"
 
 #include "platform.h"
 #include "pf_viewer.h"

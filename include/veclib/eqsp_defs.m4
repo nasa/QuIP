@@ -35,6 +35,7 @@ define(`this_sbm_bit',`(sbm_bit_idx+sbm_bit0)')
 define(`SET_INDICES_DBM',`SET_DBM_TBL_INDEX SET_DBM_INDEX_ARRAY')
 dnl define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm, DECLARE_KERN_ARGS_DBM_GPU_INFO')
 define(`SET_INDICES_1SRC',`index2 = tbl_idx;')
+define(`SET_INDICES_2SRCS',`SET_INDICES_1SRC index3 = index2;')
 
 dnl define(`SET_INDICES_DBM__1S',SET_DBM_TBL_INDEX)
 

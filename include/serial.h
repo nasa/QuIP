@@ -3,8 +3,6 @@
 
 #define SERIAL_H
 
-#include "query.h"
-
 #define RAWBUF_SIZE	2048
 
 typedef struct serial_port {

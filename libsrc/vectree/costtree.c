@@ -16,6 +16,7 @@
 //#include "fio_api.h"
 
 #include "vectree.h"
+#include "subrt.h"
 #include "veclib_api.h"
 
 

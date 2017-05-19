@@ -8,6 +8,7 @@
 #include "data_obj.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_DC1394_CONTROL_H
 #include <dc1394/control.h>

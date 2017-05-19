@@ -3,8 +3,8 @@
 
 #include "quip_config.h"
 
-#include "query.h"
 #include "stack.h"
+#include "llen.h"
 #include "query_bits.h"
 #include "variable.h"
 #include "quip_menu.h"
@@ -223,7 +223,7 @@ struct query_stack {
 
 #define QS_HAS_SOMETHING(qsp)		(QLEVEL>=0 && QRY_HAS_TEXT(CURR_QRY(qsp)))
 #define QS_DO_CMD(qsp)			qs_do_cmd(qsp)
-#define QS_RDLINENO(qsp)		QRY_RDLINENO(CURR_QRY(qsp))
+#define QS_LINES_READ(qsp)		QRY_LINES_READ(CURR_QRY(qsp))
 
 #define QS_MENU_STACK(qsp)		(qsp)->qs_menu_stack
 #define SET_QS_MENU_STACK(qsp,stkp)	(qsp)->qs_menu_stack = stkp
@@ -262,7 +262,7 @@ struct query_stack {
 
 #define QS_PROMPT_SB(qsp)		(qsp)->qs_prompt_sbp
 #define SET_QS_PROMPT_SB(qsp,sbp)	(qsp)->qs_prompt_sbp = sbp
-#define QS_PROMPT_STR(qsp)		SB_BUF((qsp)->qs_prompt_sbp)
+#define QS_PROMPT_STR(qsp)		sb_buffer((qsp)->qs_prompt_sbp)
 #define CLEAR_QS_PROMPT(qsp)		QS_PROMPT_STR(qsp)[0] = 0
 
 #define QS_WHICH_VAR_BUF(qsp)		(qsp)->qs_which_var_buf

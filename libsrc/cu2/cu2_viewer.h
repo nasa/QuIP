@@ -48,7 +48,6 @@ typedef struct cuda_viewer {
 
 #define OFFSET(i) ((char *)NULL + (i))
 
-#include "query.h"
 #include "data_obj.h"
 
 extern COMMAND_FUNC( gl_test );

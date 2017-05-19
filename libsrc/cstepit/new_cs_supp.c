@@ -11,7 +11,6 @@
 #include <math.h>
 
 #include "savestr.h"
-#include "query.h"
 #include "fitsine.h"
 #include "debug.h"
 

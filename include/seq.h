@@ -9,7 +9,6 @@ char VersionId_inc_seq[] = QUIP_VERSION_STRING;
 
 /* sequencing software */
 
-#include "query.h"
 #include "seq_api.h"
 
 #define NO_SEQ	((Seq *) NULL)

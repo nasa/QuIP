@@ -56,6 +56,7 @@ my_include(`veclib/fast_eqsp_defs.m4')
 define(`DECLARE_DBM_INDEX',`GPU_INDEX_TYPE dbmi;')
 define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm')
 define(`SET_INDICES_1SRC',`index2 = dbmi;')
+define(`SET_INDICES_2SRCS',`SET_INDICES_1SRC index3 = index2;')
 
 dnl	// vmaxg etc - require contiguous, fast only
 dnl	BUG?  true for gpu only???

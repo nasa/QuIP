@@ -3,7 +3,6 @@
 #include "quip_prot.h"
 #include "server.h"
 #include "my_encryption.h"
-#include "strbuf.h"
 #include "quip_menu.h"
 
 static COMMAND_FUNC( do_read_file_from_server )
@@ -22,7 +21,7 @@ static COMMAND_FUNC( do_read_file_from_server )
 
 	if( has_encryption_suffix(url) ){
 		String_Buf *sbp;
-		sbp = decrypt_text(file_contents->sb_buf);
+		sbp = decrypt_text(sb_buffer(file_contents));
 		if( sbp == NULL ){
 			WARN("error decrypting URL text");
 			return;
@@ -30,7 +29,7 @@ static COMMAND_FUNC( do_read_file_from_server )
 		file_contents = sbp;
 	}
 
-	PUSH_TEXT( file_contents->sb_buf, url );
+	PUSH_TEXT( sb_buffer(file_contents), url );
 
 	exec_quip(SINGLE_QSP_ARG);				// interpret the commands!
 

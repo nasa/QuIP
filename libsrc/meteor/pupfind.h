@@ -1,4 +1,3 @@
-#include "query.h"
 
 extern void compute_diff_image(int newest, int previous, int component_offset);
 extern COMMAND_FUNC( setup_diff_computation );

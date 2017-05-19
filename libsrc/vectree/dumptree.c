@@ -14,10 +14,10 @@
 #include "function.h"
 #include "nexpr.h"
 #include "veclib_api.h"
-#include "query.h"
 #include "warn.h"
 
 #include "vectree.h"
+#include "subrt.h"
 
 /* for definition of function codes */
 /* #include "wartbl.h" */

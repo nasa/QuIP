@@ -3487,6 +3487,7 @@
 				HEADER_SEARCH_PATHS = (
 					../../include,
 					../../../numrec/include,
+					../vectree,
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;

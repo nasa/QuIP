@@ -113,25 +113,16 @@ static void push_prompt(QSP_ARG_DECL  const char *pmpt)
 	String_Buf *sbp;
 
 	sbp = QS_PROMPT_SB(THIS_QSP);
-	if( sbp == NO_STRINGBUF )
+	if( sbp == NULL )
 		SET_QS_PROMPT_SB(THIS_QSP,(sbp=new_stringbuf()) );
 
-	if( SB_SIZE(sbp) == 0 ){
+	if( sb_size(sbp) == 0 ){
 		enlarge_buffer(sbp,strlen(pmpt)+4);
 		// does this clear the string?
 	}
 
-	n =(strlen(SB_BUF(sbp))+strlen(pmpt)+4) ;
-	if( SB_SIZE(sbp) < n ){
-//#ifdef CAUTIOUS
-//		if( n > LLEN ){
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  push_prompt:  Attempting to append prompt \"%s\" to previous prompt \"%s\"",
-//				pmpt,SB_BUF(sbp));
-//			advise(ERROR_STRING);
-//			ERROR1("prompt overflow!?");
-//		}
-//#endif /* CAUTIOUS */
+	n =(strlen(sb_buffer(sbp))+strlen(pmpt)+4) ;
+	if( sb_size(sbp) < n ){
 
 		// BUG?  Because we are now using string buffers,
 		// we probably don't need this assertion.
@@ -145,21 +136,21 @@ static void push_prompt(QSP_ARG_DECL  const char *pmpt)
 		if( n >= LLEN ){
 			sprintf(ERROR_STRING,
 "push_prompt:  Attempting to append prompt \"%s\" to previous prompt:\n\"%s\"",
-				pmpt,SB_BUF(sbp));
+				pmpt,sb_buffer(sbp));
 			advise(ERROR_STRING);
 			advise("Probable script problem?");
 		}
 		enlarge_buffer(sbp,n);
 	}
 
-	if( (n=strlen(SB_BUF(sbp))) >= 2 ){
+	if( (n=strlen(sb_buffer(sbp))) >= 2 ){
 		n-=2;	/* assume prompt ends in "> " */
-		SB_BUF(sbp)[n]=0;
-		strcat(SB_BUF(sbp),"/");
+		sb_buffer(sbp)[n]=0;
+		strcat(sb_buffer(sbp),"/");
 	}
 
-	strcat(SB_BUF(sbp),pmpt);
-	strcat(SB_BUF(sbp),"> ");
+	strcat(sb_buffer(sbp),pmpt);
+	strcat(sb_buffer(sbp),"> ");
 }
 
 /* fix the prompt when exiting a menu... */
@@ -171,13 +162,13 @@ static void pop_prompt(SINGLE_QSP_ARG_DECL)
 	long n;
 
 	sbp=QS_PROMPT_SB(THIS_QSP);
-	n=strlen(SB_BUF(sbp));
+	n=strlen(sb_buffer(sbp));
 	n--;
 	while(n>=0 && QS_PROMPT_STR(THIS_QSP)[n] != '/' )
 		n--;
-	if( SB_BUF(sbp)[n]=='/' ){
-		SB_BUF(sbp)[n]=0;
-		strcat(SB_BUF(sbp),"> ");
+	if( sb_buffer(sbp)[n]=='/' ){
+		sb_buffer(sbp)[n]=0;
+		strcat(sb_buffer(sbp),"> ");
 	}
 }
 
@@ -206,11 +197,6 @@ Vec_Expr_Node * qs_top_node( SINGLE_QSP_ARG_DECL  )
 void set_top_node( QSP_ARG_DECL  Vec_Expr_Node *enp )
 {
 	THIS_QSP->qs_top_enp = enp;
-}
-
-const char * qs_filename( SINGLE_QSP_ARG_DECL )
-{
-	return QRY_FILENAME(CURR_QRY(THIS_QSP));
 }
 
 int qs_serial_func(SINGLE_QSP_ARG_DECL)

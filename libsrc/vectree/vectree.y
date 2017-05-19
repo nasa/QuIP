@@ -20,13 +20,13 @@
 #include "node.h"
 #include "function.h"
 /* #include "warproto.h" */
-#include "query.h"
 #include "quip_prot.h"
 #include "veclib/vec_func.h"
 #include "warn.h"
 #include "query_stack.h"	// BUG?
 
 #include "vectree.h"
+#include "subrt.h"
 
 /* for definition of function codes */
 #include "veclib/vecgen.h"
@@ -1155,12 +1155,12 @@ subroutine	: data_type new_func_decl stat_block
 			Subrt *srp;
 			srp=subrt_of(QSP_ARG  VN_STRING($2));
 //#ifdef CAUTIOUS
-//			if( srp == NO_SUBRT ) {
+//			if( srp == NULL ) {
 //				NODE_ERROR($2);
 //				ERROR1("CAUTIOUS:  missing subrt!?");
 //			}
 //#endif /* CAUTIOUS */
-			assert( srp != NO_SUBRT );
+			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,$3);
 			$$=NODE0(T_SUBRT);
@@ -2203,6 +2203,7 @@ nexttok:
 
 	if( *YY_CP == 0 ){	/* nothing in the buffer? */
 		int ql;
+		int l;
 
 		/* BUG since qword doesn't tell us about line breaks,
 		 * it is hard to know when to zero the line buffer.
@@ -2250,25 +2251,15 @@ nexttok:
 		 */
 		strcpy(yy_word_buf,NAMEOF("statement"));
 		YY_CP=yy_word_buf;
-/*
-sprintf(ERROR_STRING,"read word \"%s\", lineno is now %d, qlevel = %d",
-YY_CP,query[ql].q_lineno,qlevel);
-advise(ERROR_STRING);
-*/
 
 		/* BUG?  lookahead advances lineno?? */
 		/* BUG no line numbers in macros? */
 		// Should we compare lineno or rdlineno???
-		if( QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql)) != LASTLINENO ){
-/*
-sprintf(ERROR_STRING,"line number changed from %d to %d, saving line \"%s\"",
-LASTLINENO,query[ql].q_lineno,YY_INPUT_LINE);
-advise(ERROR_STRING);
-*/
+		if( (l=current_line_number(SINGLE_QSP_ARG)) != LASTLINENO ){
 			strcpy(YY_LAST_LINE,YY_INPUT_LINE);
 			YY_INPUT_LINE[0]=0;
-			SET_PARSER_LINENO( QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) ) );
-			SET_LASTLINENO( QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) ) );
+			SET_PARSER_LINENO( l );
+			SET_LASTLINENO( l );
 		}
 
 		if( (strlen(YY_INPUT_LINE) + strlen(YY_CP) + 2) >= YY_LLEN ){
@@ -2705,7 +2696,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	 */
 	
 	srp = subrt_of(QSP_ARG  CURR_STRING);
-	if( srp != NO_SUBRT ){
+	if( srp != NULL ){
 		yylvp->srp = srp;
 		if( IS_SCRIPT(srp) )
 			return(SCRIPTFUNC);
@@ -2835,7 +2826,7 @@ fprintf(stderr,"yyerror BEGIN\n");
 	filename=CURRENT_FILENAME;
 	ql = QLEVEL;
 	//n = THIS_QSP->qs_query[ql].q_lineno;
-	n = QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) );
+	n = current_line_number(SINGLE_QSP_ARG);
 
 	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
 	NWARN(yyerror_str);

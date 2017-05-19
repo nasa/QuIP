@@ -29,6 +29,7 @@
 #include "fileck.h"
 #include "vectree.h"
 #include "vt_native.h"
+#include "subrt.h"
 #include "query_stack.h"		// BUG?
 
 //#include "mlab.h"
@@ -55,7 +56,7 @@ static List *local_obj_lp=NO_LIST;
 static Item_Context *hidden_context[MAX_HIDDEN_CONTEXTS];
 static int n_hidden_contexts=0;
 
-Subrt *curr_srp=NO_SUBRT;
+Subrt *curr_srp=NULL;
 int scanning_args=0;
 static Vec_Expr_Node *iteration_enp = NO_VEXPR_NODE;
 static Vec_Expr_Node *eval_enp=NO_VEXPR_NODE;
@@ -1048,11 +1049,6 @@ static Identifier *ptr_for_string(QSP_ARG_DECL  const char *s,Vec_Expr_Node *enp
 sprintf(ERROR_STRING,"ptr_for_string:  creating id %s",idname);
 advise(ERROR_STRING);
 	SET_ID_TYPE(idp, ID_STRING);
-#ifdef FOOBAR
-	//idp->id_sbp = getbuf(sizeof(String_Buf));
-	//idp->id_sbp->sb_buf = NULL;
-	//idp->id_sbp->sb_size = 0;
-#endif /* FOOBAR */
 
 	/* Can't do this, because refp is in a union w/ sbp... */
 	SET_ID_REF(idp, NEW_REFERENCE );
@@ -1060,9 +1056,7 @@ advise(ERROR_STRING);
 	SET_REF_ID(ID_REF(idp), idp );
 	SET_REF_DECL_VN(ID_REF(idp), NO_VEXPR_NODE );
 	/* SET_REF_OBJ(ID_REF(idp), NO_OBJ ); */
-	SET_REF_SBUF(ID_REF(idp), NEW_STRINGBUF );
-	REF_SBUF(ID_REF(idp))->sb_buf = NULL;
-	REF_SBUF(ID_REF(idp))->sb_size = 0;
+	SET_REF_SBUF(ID_REF(idp), new_stringbuf() );
 
 	assign_string(QSP_ARG  idp,s,enp);
 
@@ -1220,7 +1214,7 @@ static Subrt *eval_funcref(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	Subrt *srp;
 	Function_Ptr *fpp;
 
-	srp=NO_SUBRT;
+	srp=NULL;
 	switch(VN_CODE(enp) ){
 		case T_FUNCREF:
 			srp=VN_SUBRT(enp);
@@ -1362,19 +1356,9 @@ advise(ERROR_STRING);
 				WARN(ERROR_STRING);
 				return(-1);
 			}
-//#ifdef CAUTIOUS
-//			if( REF_SBUF(ID_REF(src_idp))->sb_buf == NULL ){
-//				NODE_ERROR(val_enp);
-//				sprintf(ERROR_STRING,
-//			"CAUTIOUS:  assign_ptr_arg STRING %s:  source buffer from %s is NULL!?",
-//					node_desc(arg_enp),node_desc(val_enp));
-//				WARN(ERROR_STRING);
-//				return(-1);
-//			}
-//#endif /* CAUTIOUS */
-			assert( REF_SBUF(ID_REF(src_idp))->sb_buf != NULL );
+			assert( sb_buffer(REF_SBUF(ID_REF(src_idp))) != NULL );
 
-			copy_string(REF_SBUF(ID_REF(idp)),REF_SBUF(ID_REF(src_idp))->sb_buf);
+			copy_string(REF_SBUF(ID_REF(idp)),sb_buffer(REF_SBUF(ID_REF(src_idp))));
 			/* BUG need to set string set flag */
 			return(0);
 		default:
@@ -2117,7 +2101,7 @@ static int assign_subrt_args(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *
 			/* the argument is a function ptr */
 			fpp = eval_funcptr(QSP_ARG  arg_enp);
 
-			if( srp == NO_SUBRT ) {
+			if( srp == NULL ) {
 				WARN("assign_subrt_args:  error evaluating function ref");
 				return(-1);
 			}
@@ -2241,19 +2225,19 @@ Subrt *runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_INDIR_CALL:
 			srp = eval_funcref(QSP_ARG  VN_CHILD(enp,0));
 //#ifdef CAUTIOUS
-//			if( srp==NO_SUBRT ){
+//			if( srp==NULL ){
 //				NODE_ERROR(enp);
 //				WARN("CAUTIOUS:  Missing function reference");
 //				return(srp);
 //			}
 //#endif /* CAUTIOUS */
-			assert( srp!=NO_SUBRT );
+			assert( srp!=NULL );
 
 			SET_SR_ARG_VALS(srp, VN_CHILD(enp,1) );
 			break;
 		default:
 			MISSING_CASE(enp,"runnable_subrt");
-			return(NO_SUBRT);
+			return(NULL);
 	}
 
 	SET_SR_CALL_VN(srp, enp); /* what is this used for??? */
@@ -2262,7 +2246,7 @@ Subrt *runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		NODE_ERROR(enp);
 		sprintf(ERROR_STRING,"subroutine %s has not been defined!?",SR_NAME(srp));
 		WARN(ERROR_STRING);
-		return(NO_SUBRT);
+		return(NULL);
 	}
 	return(srp);
 }
@@ -2275,7 +2259,7 @@ void exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 
 	srp = runnable_subrt(QSP_ARG  enp);
 
-	if( srp != NO_SUBRT ){
+	if( srp != NULL ){
 		RUN_SUBRT(srp,enp,dst_dp);
 	} else {
 		sprintf(ERROR_STRING,"subroutine is not runnable!?");
@@ -2497,7 +2481,8 @@ keep_looking:
 #define STORE_QUERY_ARG( s )						\
 {									\
 	if( index < max_args ){						\
-		SET_QRY_ARG_AT_IDX(qp,index,s);			\
+		/*SET_QRY_ARG_AT_IDX(qp,index,s);*/			\
+		set_query_arg_at_index(qp,index,s);			\
 	} else {								\
 		sprintf(ERROR_STRING,"set_script_args:  can't assign arg %d (max %d)",\
 			index+1,max_args);				\
@@ -2787,13 +2772,13 @@ static const char *eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 //#endif /* CAUTIOUS */
 			assert( IS_STRING_ID(idp) );
 
-			if( REF_SBUF(ID_REF(idp))->sb_buf == NULL ){
+			if( sb_buffer(REF_SBUF(ID_REF(idp))) == NULL ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,"string pointer %s not set",ID_NAME(idp));
 				advise(ERROR_STRING);
 				break;
 			}
-			return(REF_SBUF(ID_REF(idp))->sb_buf);
+			return(sb_buffer(REF_SBUF(ID_REF(idp))));
 
 		case T_SET_STR:
 			EVAL_WORK_TREE(enp,NO_OBJ);	/* do the assignment! */
@@ -2972,7 +2957,7 @@ print_float:
 				else
 					prt_msg_frag(ID_NAME(idp));
 			} else if( IS_STRING_REF(PTR_REF(ID_PTR(idp))) ){
-				prt_msg_frag(REF_SBUF(PTR_REF(ID_PTR(idp)))->sb_buf);
+				prt_msg_frag(sb_buffer(REF_SBUF(PTR_REF(ID_PTR(idp)))));
 			}
 //#ifdef CAUTIOUS
 			  else {
@@ -3134,7 +3119,7 @@ static Identifier * exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
 	Subrt *srp;
 
 	srp = runnable_subrt(QSP_ARG  enp);
-	if( srp==NO_SUBRT ) return(NO_IDENTIFIER);
+	if( srp==NULL ) return(NO_IDENTIFIER);
 
 	sprintf(name,"ref.%s",SR_NAME(srp));
 
@@ -3152,7 +3137,7 @@ static Identifier * exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
 	/* need to check stuff */
 
 
-	if( srp != NO_SUBRT )
+	if( srp != NULL )
 		RUN_REFFUNC(srp,enp,idp);
 
 	return(idp);
@@ -3195,7 +3180,7 @@ Context_Pair *pop_previous(SINGLE_QSP_ARG_DECL)
 	Context_Pair *cpp;
 
 	/* If there is a previous subroutine context, pop it now */
-	if( curr_srp == NO_SUBRT ){
+	if( curr_srp == NULL ){
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 advise("pop_previous:  no current subroutine, nothing to pop");
@@ -3254,8 +3239,8 @@ static Run_Info *new_rip()
 	rip=(Run_Info *)getbuf( sizeof(Run_Info) );
 	rip->ri_prev_cpp = NO_CONTEXT_PAIR;
 	rip->ri_arg_stat = 0;
-	rip->ri_srp = NO_SUBRT;
-	rip->ri_old_srp = NO_SUBRT;
+	rip->ri_srp = NULL;
+	rip->ri_old_srp = NULL;
 	return(rip);
 }
 
@@ -3565,7 +3550,7 @@ DUMP_TREE(enp);
 			{
 			Subrt *srp;
 			srp=subrt_of(QSP_ARG  VN_STRING(enp));
-			if( srp != NO_SUBRT ){
+			if( srp != NULL ){
 				/* subroutine already declared.
 				 * We should check to make sure that the arg decls match BUG
 				 * this gets done elsewhere, but here we make sure the return
@@ -3943,9 +3928,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 			SET_REF_ID(ID_REF(idp), idp );
 			SET_REF_DECL_VN(ID_REF(idp), enp );	/* BUG? */
 			SET_REF_TYPE(ID_REF(idp), STR_REFERENCE );
-			SET_REF_SBUF(ID_REF(idp), NEW_STRINGBUF );
-			REF_SBUF(ID_REF(idp))->sb_buf = NULL;
-			REF_SBUF(ID_REF(idp))->sb_size = 0;
+			SET_REF_SBUF(ID_REF(idp), new_stringbuf() );
 			break;
 		case ID_POINTER:
 			SET_ID_PTR(idp, NEW_POINTER );
@@ -3957,7 +3940,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 		case ID_FUNCPTR:
 			//SET_ID_FUNC(idp, (Function_Ptr *)getbuf(sizeof(Function_Ptr)) );
 			SET_ID_FUNC(idp, NEW_FUNC_PTR );
-			ID_FUNC(idp)->fp_srp = NO_SUBRT;
+			ID_FUNC(idp)->fp_srp = NULL;
 			copy_node_shape(enp,uk_shape(PREC_CODE(prec_p)));
 			break;
 		default:
@@ -3979,7 +3962,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 			{
 			Subrt *srp;
 			srp=subrt_of(QSP_ARG  VN_STRING(enp));
-			if( srp == NO_SUBRT ) EVAL_DECL_STAT(prec_p,enp,decl_flags);
+			if( srp == NULL ) EVAL_DECL_STAT(prec_p,enp,decl_flags);
 			else {
 				/* This subroutine has already been declared...
 				 * make sure the type matches
@@ -6714,13 +6697,13 @@ DUMP_TREE(enp);
 //#endif /* CAUTIOUS */
 			assert( IS_STRING_ID(idp) );
 
-			if( REF_SBUF(ID_REF(idp))->sb_buf == NULL ){
+			if( sb_buffer(REF_SBUF(ID_REF(idp))) == NULL ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,"string pointer \"%s\" used before set!?",ID_NAME(idp));
 				WARN(ERROR_STRING);
 				return(NULL);
 			} else
-				s=REF_SBUF(ID_REF(idp))->sb_buf;
+				s=sb_buffer(REF_SBUF(ID_REF(idp)));
 			break;
 
 		default:
@@ -7893,6 +7876,87 @@ LONGLIST(dp);
 	note_assignment(dp);
 }		/* end eval_obj_assignment() */
 
+/****************** eval_work_tree helper funcs ********************/
+
+static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	Macro *dummy_mp;
+	Macro_Arg **ma_tbl;
+	String_Buf *sbp;
+	Subrt *srp;
+	Query *qp;
+	int n_args, start_level;
+
+	srp = VN_SUBRT(enp);
+	assert( IS_SCRIPT(srp) );
+
+	/* Set up dummy_mac so that the interpreter will
+	 * think we are in a macro...
+	 */
+	/*
+	INIT_MACRO_PTR(dummy_mp)
+	SET_MACRO_NAME(dummy_mp, SR_NAME(srp) );
+	SET_MACRO_N_ARGS(dummy_mp, SR_N_ARGS(srp) );
+	SET_MACRO_TEXT(dummy_mp, (char *) SR_BODY(srp) );
+	SET_MACRO_FLAGS(dummy_mp, 0 ); // disallow recursion
+	*/
+	ma_tbl = create_generic_macro_args(SR_N_ARGS(srp));
+	sbp = create_stringbuf(SR_TEXT(srp));
+	dummy_mp = create_macro(QSP_ARG  SR_NAME(srp), SR_N_ARGS(srp), ma_tbl, sbp,
+		current_line_number(SINGLE_QSP_ARG) );
+
+	/* Any arguments to a script function
+	 * will be treated like macro args...
+	 */
+
+	sprintf(msg_str,"Script func %s",SR_NAME(srp));
+	push_text(QSP_ARG  (char *)SR_TEXT(srp), msg_str);
+
+	qp=CURR_QRY(THIS_QSP);
+
+	set_query_macro(qp, dummy_mp);
+	set_query_args(qp, (const char **)getbuf( SR_N_ARGS(srp) * sizeof(char *) ) );
+
+	/* BUG?  we have to make sure than we never try to assign more than sr_nargs args! */
+
+	n_args=SET_SCRIPT_ARGS(VN_CHILD(enp,0),0,qp,SR_N_ARGS(srp));
+	// IN the objC implementation, the args are held in the query object as a list,
+	// not an array.  This makes the recursive population a little tricker.
+	// If we traverse the tree correctly, we may be able to simply add to the list
+	if( n_args != SR_N_ARGS(srp) ){
+		sprintf(ERROR_STRING,
+	"Script subrt %s should have %d args, passed %d",
+			SR_NAME(srp),SR_N_ARGS(srp),n_args);
+		WARN(ERROR_STRING);
+		/* BUG? poptext? */
+		givbuf(dummy_mp);
+		return -1;
+	}
+	/* If we pass object names to script functions by
+	 * dereferencing pointers, we may end up with invisible objects
+	 * whose contexts have been popped; here we restore those
+	 * contexts.
+	 */
+
+	set_script_context(SINGLE_QSP_ARG);
+
+	push_top_menu(SINGLE_QSP_ARG);	/* make sure at root menu */
+	start_level = QLEVEL;
+	enable_stripping_quotes(SINGLE_QSP_ARG);
+	while( QLEVEL >= start_level ){
+		// was do_cmd
+		qs_do_cmd(THIS_QSP);
+lookahead(SINGLE_QSP_ARG);
+	}
+	//popcmd(SINGLE_QSP_ARG);		/* go back */
+	do_pop_menu(SINGLE_QSP_ARG);		/* go back */
+
+	unset_script_context(SINGLE_QSP_ARG);
+
+	givbuf(dummy_mp);
+	return 0;
+}
+
 /* We return a 1 if we should keep working.
  * We return 0 if we encounter a return statement within a subroutine.
  *
@@ -7908,10 +7972,6 @@ static int eval_work_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 	Image_File *ifp;
 #endif /* NOT_YET */
 	//Macro dummy_mac;
-	Query *qp;
-#ifdef OLD_LOOKAHEAD
-	int la_level;
-#endif /* OLD_LOOKAHEAD */
 	const char *s;
 	Identifier *idp,*idp2;
 	Function_Ptr *fpp;
@@ -8311,89 +8371,9 @@ try_again:
 			break;
 
 		case T_SCRIPT:		/* eval_work_tree */
-			{
-			Macro *dummy_mp;
-
 			if( going ) return(1);
-			srp = VN_SUBRT(enp);
-
-//#ifdef CAUTIOUS
-//			if( ! IS_SCRIPT(srp) ){
-//				sprintf(ERROR_STRING,
-//	"Subrt %s is not a script subroutine!?",SR_NAME(srp));
-//				WARN(ERROR_STRING);
-//				return(0);
-//			}
-//#endif /* CAUTIOUS */
-			assert( IS_SCRIPT(srp) );
-
-			/* Set up dummy_mac so that the interpreter will
-			 * think we are in a macro...
-			 */
-			INIT_MACRO_PTR(dummy_mp)
-			SET_MACRO_NAME(dummy_mp, SR_NAME(srp) );
-			SET_MACRO_N_ARGS(dummy_mp, SR_N_ARGS(srp) );
-			SET_MACRO_TEXT(dummy_mp, (char *) SR_BODY(srp) );
-			SET_MACRO_FLAGS(dummy_mp, 0 ); /* disallow recursion */
-
-			/* Any arguments to a script function
-			 * will be treated like macro args...
-			 */
-
-			sprintf(msg_str,"Script func %s",SR_NAME(srp));
-			//push_input_file(QSP_ARG  msg_str);
-
-#ifdef OLD_LOOKAHEAD
-	la_level=enable_lookahead(QLEVEL);
-#endif /* OLD_LOOKAHEAD */
-			push_text(QSP_ARG  (char *)SR_BODY(srp), msg_str);
-
-			//qp=(&THIS_QSP->qs_query[QLEVEL]);
-			qp=CURR_QRY(THIS_QSP);
-
-			SET_QUERY_MACRO(qp, dummy_mp);
-
-			SET_QRY_ARGS(qp, (const char **)getbuf( SR_N_ARGS(srp) * sizeof(char *) ) );
-
-			/* BUG?  we have to make sure than we never try to assign more than sr_nargs args! */
-
-			intval=SET_SCRIPT_ARGS(VN_CHILD(enp,0),0,qp,SR_N_ARGS(srp));
-			// IN the objC implementation, the args are held in the query object as a list,
-			// not an array.  This makes the recursive population a little tricker.
-			// If we traverse the tree correctly, we may be able to simply add to the list
-			if( intval != SR_N_ARGS(srp) ){
-				sprintf(ERROR_STRING,
-	"Script subrt %s should have %d args, passed %d",
-					SR_NAME(srp),SR_N_ARGS(srp),intval);
-				WARN(ERROR_STRING);
-				/* BUG? poptext? */
-				givbuf(dummy_mp);
-				return(0);
-			}
-			/* If we pass object names to script functions by
-			 * dereferencing pointers, we may end up with invisible objects
-			 * whose contexts have been popped; here we restore those
-			 * contexts.
-			 */
-
-			set_script_context(SINGLE_QSP_ARG);
-
-			push_top_menu(SINGLE_QSP_ARG);	/* make sure at root menu */
-			intval = QLEVEL;
-			enable_stripping_quotes(SINGLE_QSP_ARG);
-			while( QLEVEL >= intval ){
-				// was do_cmd
-				qs_do_cmd(THIS_QSP);
-lookahead(SINGLE_QSP_ARG);
-			}
-			//popcmd(SINGLE_QSP_ARG);		/* go back */
-			do_pop_menu(SINGLE_QSP_ARG);		/* go back */
-
-			unset_script_context(SINGLE_QSP_ARG);
-
-			givbuf(dummy_mp);
-			}
-
+			if( execute_script_node(QSP_ARG  enp) < 0 )
+				return 0;
 			break;
 
 #ifdef NOT_YET

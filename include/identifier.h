@@ -68,7 +68,7 @@ typedef struct identifier {
 #define IS_FUNCPTR(idp)		(ID_TYPE(idp) == ID_FUNCPTR)
 #define IS_LABEL(idp)		(ID_TYPE(idp) == ID_LABEL)
 
-#define STRING_IS_SET(idp)	(REF_SBUF(ID_REF(idp))->sb_buf != NULL)
+#define STRING_IS_SET(idp)	(sb_buffer(REF_SBUF(ID_REF(idp))) != NULL)
 #define POINTER_IS_SET(idp)	(PTR_FLAGS(ID_PTR(idp)) & POINTER_SET)
 
 

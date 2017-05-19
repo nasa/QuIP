@@ -36,7 +36,6 @@
 
 #include "ttyctl.h"
 #include "serial.h"
-#include "query.h"
 
 
 static int stty_fd=(-1);

@@ -1,7 +1,6 @@
 
 #include <gsl/gsl_matrix.h>
 #include "data_obj.h"
-#include "query.h"
 
 /* gslmenu.c */
 

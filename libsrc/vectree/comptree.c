@@ -34,9 +34,12 @@
 
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "data_obj.h"
+#include "debug.h"	// AERROR
 //#include "fio_api.h"
 #include "vectree.h"
+#include "subrt.h"
 #include "veclib_api.h"
 
 /* global var */
@@ -4532,7 +4535,7 @@ DUMP_TREE(enp);
 			break;
 
 		case T_RETURN:				/* compile_node */
-			if( curr_srp == NO_SUBRT ){
+			if( curr_srp == NULL ){
 				NODE_ERROR(enp);
 				advise("return statement occurs outside of subroutine");
 				CURDLE(enp)
@@ -5502,7 +5505,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			}
 
 			/* we don't need to remember void subrts... */
-			if( curr_srp != NO_SUBRT	/* WHY??? */
+			if( curr_srp != NULL	/* WHY??? */
 				&& enp != SR_BODY(curr_srp) &&
 				VN_CODE(VN_PARENT(enp)) != T_STAT_LIST ){
 

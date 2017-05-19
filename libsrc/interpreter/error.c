@@ -764,132 +764,30 @@ void _tell_sys_error(QSP_ARG_DECL  const char* s)
 	advise(ERROR_STRING);
 }
 
-#ifdef BUILD_FOR_IOS
-
-/* On iOS, the filenames start with the full bundle path,
- * which is kind of long and clutters the screen...
- */
-
-#define ADJUST_PATH(pathname)						\
-									\
-	{								\
-		int _j=(int)strlen(pathname)-1;				\
-		while(_j>0 && pathname[_j]!='/')			\
-			_j--;						\
-		if( pathname[_j] == '/' ) _j++;				\
-		pathname += _j;						\
-	}
-
-#else /* ! BUILD_FOR_IOS */
-
-#define ADJUST_PATH(pathname)
-
-#endif /* ! BUILD_FOR_IOS */
-
 static void tell_input_location( SINGLE_QSP_ARG_DECL )
 {
-	const char *filename;
-	int ql,n;
-	char msg[LLEN];
-	int i;
 	int n_levels_to_print;
-	static int max_levels_to_print=(-1);
-	//int level_to_print[MAX_Q_LVLS];
-	static int *level_to_print=NULL;
-	Query *qp;
+	int *level_tbl;
 
 	if( THIS_QSP == NULL ) return;
 
 	if( QLEVEL < 0 ) return;	// a callback in IOS?
 
-	filename=QRY_FILENAME(CURR_QRY(THIS_QSP));
 
 	/* If it's really a file (not a macro) then
 	 * it's probably OK not to show the whole input
 	 * stack...
 	 */
 
-	/* Only print the filename if it's not the console input */
-	if( !strcmp(filename,"-") ){
-		return;
-	}
+	/* OLD:  Only print the filename if it's not the console input */
+	// BUT it could be a command line redirect, so print it anyway
+	//filename=query_filename(SINGLE_QSP_ARG);
+	//if( !strcmp(filename,"-") ){
+	//	return;
+	//}
 
-	ql = QLEVEL;
-	//assert( ql >= 0 && ql < MAX_Q_LVLS );
-	// We allocate level_to_print array here, instead
-	// of declaring a fixed-size array...
-	if( (ql+1) > max_levels_to_print ){
-		if( max_levels_to_print > 0 )
-			givbuf(level_to_print);
-		max_levels_to_print = ql + 1;
-		level_to_print = getbuf( max_levels_to_print *
-					sizeof(*level_to_print) );
-	}
-
-	// We would like to print the macro names with the deepest one
-	// last, but for cases where the macro is repeated (e.g. loops)
-	// we only want to print the deepest case.
-	// That makes things tricky, because we need to scan
-	// from deepest to shallowest, but we want to print
-	// in the reverse order...
-	n_levels_to_print=1;
-	level_to_print[0]=ql;
-	ql--;	// it looks like this line could be deleted...
-	//i = THIS_QSP->qs_fn_depth;
-	i=QLEVEL;
-	i--;
-	// When we have a loop, the same input gets duplicated;
-	// We don't want to print this twice, so we make an array of which
-	// things to print.
-	while( i >= 0 ){
-		qp=QRY_AT_LEVEL(THIS_QSP,i);
-		if( strcmp( QRY_FILENAME(qp),filename) ){
-			level_to_print[n_levels_to_print] = i;
-			filename=QRY_FILENAME(qp);
-			n_levels_to_print++;
-		}
-  else {
-}
-		i--;
-	}
-	i=n_levels_to_print-1;
-	while(i>=0){
-		ql=level_to_print[i];	// assume ql matches fn_level?
-		//assert( ql >= 0 && ql < MAX_Q_LVLS );
-		//filename=THIS_QSP->qs_fn_stack[ql];
-		filename=QRY_FILENAME(QRY_AT_LEVEL(THIS_QSP,ql));
-		n = QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql) );
-		if( !strncmp(filename,"Macro ",6) ){
-			const char *mname;
-			Macro *mp;
-			const char *mfname;	// macro file name
-			mname = filename+6;
-			// don't use get_macro, because it prints a warning,
-			// causing infinite regress!?
-			mp = macro_of(QSP_ARG  mname);
-//#ifdef CAUTIOUS
-//			if( mp == NO_MACRO ){
-//				sprintf(ERROR_STRING,
-//	"CAUTIOUS:  tell_input_loc:  macro '%s' not found!?",mname);
-//				ERROR1(ERROR_STRING);
-//				IOS_RETURN
-//			}
-//#endif /* CAUTIOUS */
-			assert( mp != NO_MACRO );
-
-			mfname = MACRO_FILENAME(mp);
-			ADJUST_PATH(mfname);
-			sprintf(msg,"%s line %d (File %s, line %d):",
-				filename, n, mfname, MACRO_LINENO(mp)+n);
-			advise(msg);
-		} else {
-			ADJUST_PATH(filename);
-			sprintf(msg,"%s (input level %d), line %d:",
-				filename,ql,n);
-			advise(msg);
-		}
-		i--;
-	}
+	level_tbl = get_levels_to_print(QSP_ARG  &n_levels_to_print);
+	print_qs_levels(QSP_ARG  level_tbl, n_levels_to_print);
 }
 
 void q_error1( QSP_ARG_DECL  const char *msg )

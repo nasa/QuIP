@@ -7,6 +7,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "seq.h"
+#include "query_bits.h"	// LLEN - get rid of this!  BUG
 
 static COMMAND_FUNC( do_show_seq )
 {

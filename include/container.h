@@ -21,6 +21,15 @@ struct container {
 		Hash_Tbl *	u_htp;
 		qrb_tree *	u_tree_p;
 	} cnt_u;
+
+	// methods
+	void (* substring_find_func)(Frag_Match_Info *, const char *);
+	void *(* insert_item_func)(Container *,Item *);
+	Item *(* frag_item_func)(Frag_Match_Info *);
+	Item *(* current_item_func)(Frag_Match_Info *);
+	const char *(* advance_func)(Frag_Match_Info *,int direction);
+	void (* reset_frag_match_func)(Frag_Match_Info *, int direction);
+	Enumerator *(* new_enumerator_func)(Container *);
 };
 
 #define cnt_lp		cnt_u.u_lp
@@ -29,7 +38,7 @@ struct container {
 
 #define CONTAINER_TYPE(cnt_p)	(cnt_p)->primary_type
 
-typedef struct enumerator {
+struct enumerator {
 	Container *e_cnt_p;
 	union {
 		List_Enumerator *lep;
@@ -37,7 +46,7 @@ typedef struct enumerator {
 		RB_Tree_Enumerator *rbtep;
 		void *vp;
 	} e_p;
-} Enumerator;
+};
 
 #define ENUMERATOR_CONTAINER(ep)	(ep)->e_cnt_p
 #define ENUMERATOR_TYPE(ep)		CONTAINER_TYPE(ENUMERATOR_CONTAINER(ep))
@@ -48,7 +57,7 @@ extern Enumerator *backup_enumerator(Enumerator *ep );
 extern void *enumerator_item(Enumerator *ep);
 extern Item *current_frag_item(Frag_Match_Info *fmi_p);
 
-extern void container_find_substring_matches(Frag_Match_Info *fmi_p, Container *cnt_p, const char *frag);
+extern void container_find_substring_matches(Frag_Match_Info *fmi_p, const char *frag);
 
 
 #endif // ! _CONTAINER_H_

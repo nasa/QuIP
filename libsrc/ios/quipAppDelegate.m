@@ -323,7 +323,7 @@ static void add_selection_to_choice( Screen_Obj *sop, NSIndexPath *path )
 	r=0;	// BUG
 #endif // BUILD_FOR_IOS
 
-	if( SB_BUF(choice_sbp) == NULL ){
+	if( sb_buffer(choice_sbp) == NULL ){
 		copy_string(choice_sbp,strings[r]);
 		n_choices = 1;
 	} else {
@@ -350,10 +350,10 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	sprintf(val_string,"%d",n);	// BUG? use snprint?
 	assign_var(DEFAULT_QSP_ARG "n_selections", val_string );
 
-	if( SB_BUF(choice_sbp) == NULL )	// no selections
+	if( sb_buffer(choice_sbp) == NULL )	// no selections
 		assign_var(DEFAULT_QSP_ARG "choice", "(nothing_selected)" );
 	else
-		assign_var(DEFAULT_QSP_ARG "choice", SB_BUF(choice_sbp) );
+		assign_var(DEFAULT_QSP_ARG "choice", sb_buffer(choice_sbp) );
 
 	rls_stringbuf(choice_sbp);
 	choice_sbp = NULL;

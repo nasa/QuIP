@@ -26,18 +26,12 @@ extern "C" {
 #endif /* HAVE_PTHREADS */
 
 #include "typedefs.h"
-#include "strbuf.h"
 
 /* This was 256,
  * things crapped out when I had an input line with 258 chars, there
  * is a bug which should be fixed, but for now it is expedient just
  * to spend a little memory.
  */
-
-#ifndef LLEN
-//#define LLEN	1024
-#define LLEN	512
-#endif /* ! LLEN */
 
 /* query struct flags values */
 #define Q_SOCKET		1

@@ -11,11 +11,11 @@
 //#include "version.h"
 #include "veclib_api.h"
 #include "vectree.h"
-//#include "query.h"		/* redir() */
 #include "vt_api.h"
 #include "quip_prot.h"
 #include "warn.h"
 #include "getbuf.h"
+#include "subrt.h"
 
 // BUG global is not thread-safe
 int dumpit=0;

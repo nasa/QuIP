@@ -36,13 +36,13 @@ define(`GEN_ARGS_SLOW_SBM2',$1`_SLOW_SBM2')
 define(`GEN_ARGS_FLEN_DBM',`GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_FLEN_DBM($1)')
 
 dnl	GEN_ARGS_EQSP_DBM(prefix)
-define(`GEN_ARGS_EQSP_DBM',`/* gen_args_eqsp_dbm /$1/ */ GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_EQSP_DBM($1)')
+define(`GEN_ARGS_EQSP_DBM',`GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_EQSP_DBM($1)')
 
 dnl	GEN_ARGS_ELEN(prefix,bitmaps,typ,scalars,vectors)
-define(`GEN_ARGS_ELEN',`/* gen_args_elen /$1/ /$2/ /$3/ /$4/ /$5/ */_GEN_ARGS_ELEN($1,$2$3$5$4)')
+define(`GEN_ARGS_ELEN',`_GEN_ARGS_ELEN($1,$2$3$5$4)')
 define(`_GEN_ARGS_ELEN',`GEN_ARGS_ELEN_'$2($1))
 
-define(`GEN_ARGS_ELEN_DBM',`/* gen_args_eqsp_dbm /$1/ */ GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_ELEN_DBM($1)')
+define(`GEN_ARGS_ELEN_DBM',`GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_ELEN_DBM($1)')
 
 define(`GEN_FLEN_DBM',$1`_FLEN_DBM')
 define(`GEN_EQSP_DBM',$1`_EQSP_DBM')
@@ -56,7 +56,7 @@ dnl define(`GEN_ARGS_SLOW_DBM',`GEN_SLOW_SIZE($1) GEN_SEP($1) GEN_DBM_GPU_INFO($
 define(`GEN_ARGS_SLOW_DBM',`GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_SLOW_DBM($1)')
 define(`GEN_ARGS_SLEN_DBM',`GEN_DBM_GPU_INFO($1) GEN_SEP($1) GEN_SLOW_DBM($1)')
 
-dnl define(`GEN_ARGS_SLOW_DBM_BASIC',`/* gen_args_slow_dbm_basic /$1/ */GEN_SLOW_DBM_GPU_INFO($1) GEN_SEP($1) $1`_SLOW_DBM'')
+dnl define(`GEN_ARGS_SLOW_DBM_BASIC',`GEN_SLOW_DBM_GPU_INFO($1) GEN_SEP($1) $1`_SLOW_DBM'')
 
 dnl // define(`GEN_ARGS_NOCC_SETUP',`GEN_SLOW_SIZE($1)
 dnl // GEN_SEP($1)
@@ -98,8 +98,8 @@ define(`GEN_ARGS_FAST',`_GEN_ARGS_FAST($1,$2$3$5$4)')
 define(`_GEN_ARGS_FAST',`GEN_ARGS_FAST_$2($1)')
 
 dnl	GEN_ARGS_FLEN(prefix,bitmaps,typ,scalars,vectors)
-define(`GEN_ARGS_FLEN',`/* gen_args_flen /$1/ /$2/ /$3/ /$4/ /$5/ */_GEN_ARGS_FLEN($1,$2$3$5$4)')
-define(`_GEN_ARGS_FLEN',`/* _gen_args_flen /$1/ /$2/ */ GEN_ARGS_FLEN_$2($1)')
+define(`GEN_ARGS_FLEN',`_GEN_ARGS_FLEN($1,$2$3$5$4)')
+define(`_GEN_ARGS_FLEN',`GEN_ARGS_FLEN_$2($1)')
 
 dnl	GEN_ARGS_EQSP(prefix,bitmaps,typ,scalars,vectors)
 define(`GEN_ARGS_EQSP',`_GEN_ARGS_EQSP($1,$2$3$5$4)')
@@ -755,7 +755,7 @@ define(`GEN_ARGS_ELEN_DBM_2SBM',`GEN_ARGS_EQSP_DBM_2SBM($1) GEN_ADD_EQSP_LEN($1)
 define(`GEN_ARGS_ELEN_DBM_1SBM',`GEN_ARGS_EQSP_DBM_1SBM($1) GEN_ADD_EQSP_LEN($1)')
 define(`GEN_ARGS_ELEN_DBM_1SBM_1S',`GEN_ARGS_EQSP_DBM_1SBM_1S($1) GEN_ADD_EQSP_LEN($1)')
 
-define(`GEN_ARGS_ELEN_DBM_2SRCS',`/* gen_args_elen_dbm_2srcs /$1/ */GEN_ARGS_EQSP_DBM_2SRCS($1) GEN_ADD_EQSP_LEN($1)')
+define(`GEN_ARGS_ELEN_DBM_2SRCS',`GEN_ARGS_EQSP_DBM_2SRCS($1) GEN_ADD_EQSP_LEN($1)')
 
 define(`GEN_ARGS_ELEN_DBM_1SRC_1S',`GEN_ARGS_EQSP_DBM_1SRC_1S($1) GEN_ADD_EQSP_LEN($1)')
 

@@ -1,21 +1,22 @@
 #include <string.h>
 #include "quip_config.h"
 #include "quip_prot.h"
-#include "query.h"
 #include "warn.h"
 #include "getbuf.h"
+#include "list.h"
+#include "query_private.h"
 
 char *end_text(QSP_ARG_DECL  void *buf,int size,void *stream);
 
 // what goes here?
 
-static List *query_free_list=NO_LIST;
+static List *query_free_list=NULL;
 
 Query *new_query(void)
 {
 	Query *qp;
 
-	if( query_free_list == NO_LIST )
+	if( query_free_list == NULL )
 		query_free_list = new_list();
 
 	if( QLIST_HEAD(query_free_list) != NO_NODE ){

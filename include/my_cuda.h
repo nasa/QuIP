@@ -60,7 +60,6 @@ extern const char* getCUFFTError(cufftResult status);
 #endif /* ! HAVE_CUDA */
 
 
-#include "query.h"
 #include "veclib_api.h"
 
 typedef struct cuda_device {

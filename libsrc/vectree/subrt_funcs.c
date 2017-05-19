@@ -6,6 +6,7 @@
 
 #include "quip_prot.h"
 #include "vectree.h"
+#include "subrt.h"
 #include "query_stack.h"	// BUG
 
 
@@ -28,7 +29,7 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	Subrt *srp;
 
 	srp=new_subrt(QSP_ARG  name);
-	if( srp==NO_SUBRT ) return(NO_SUBRT);
+	if( srp==NULL ) return(NULL);
 
 	SET_SR_ARG_DECLS(srp, args);
 	SET_SR_BODY(srp, body);
@@ -52,7 +53,7 @@ COMMAND_FUNC( do_run_subrt )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	SET_SR_ARG_VALS(srp,NO_VEXPR_NODE);
 
@@ -65,7 +66,7 @@ COMMAND_FUNC( do_dump_subrt )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 	DUMP_SUBRT(srp);
 }
 
@@ -99,7 +100,7 @@ COMMAND_FUNC( do_opt_subrt )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	OPTIMIZE_SUBRT(srp);
 }
@@ -110,7 +111,7 @@ COMMAND_FUNC( do_tell_cost )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	tell_cost(QSP_ARG  srp);
 }
@@ -123,7 +124,7 @@ COMMAND_FUNC( do_subrt_info )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	if( IS_SCRIPT(srp) ){
 		sprintf(msg_str,"\nScript subroutine %s, %d arguments:\n",SR_NAME(srp),SR_N_ARGS(srp));
@@ -185,13 +186,13 @@ Subrt *create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *
 	Subrt *srp;
 
 	srp = remember_subrt(QSP_ARG  PREC_FOR_CODE(PREC_VOID),name,NO_VEXPR_NODE,NO_VEXPR_NODE);
-	if( srp == NO_SUBRT ) return(srp);
+	if( srp == NULL ) return srp;
 
 	SET_SR_FLAG_BITS(srp, SR_SCRIPT);
 	SET_SR_N_ARGS(srp, nargs);
 
-	SET_SR_BODY(srp, (Vec_Expr_Node *) savestr(text));
-	return(srp);
+	SET_SR_TEXT(srp, savestr(text));
+	return srp;
 }
 
 static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
@@ -275,6 +276,12 @@ advise(ERROR_STRING);
 	PUSH_DOBJ_CONTEXT(icp);
 }
 
+static void rls_reference(Reference *refp)
+{
+	rls_stringbuf( REF_SBUF(refp) );
+	givbuf(refp);
+}
+
 // We may not need to do any of this on objC ???
 //
 // really a memory release function...
@@ -292,10 +299,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			givbuf(ID_REF(idp));
 			break;
 		case ID_STRING:
-			if( REF_SBUF(ID_REF(idp))->sb_buf != NULL )
-				givbuf(REF_SBUF(ID_REF(idp))->sb_buf);
-			givbuf(REF_SBUF(ID_REF(idp)));
-			givbuf(ID_REF(idp));
+			rls_reference(ID_REF(idp));
 			break;
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));
@@ -503,11 +507,11 @@ static Vec_Expr_Node *find_numbered_node_in_subrt(Subrt *srp,int n)
 
 	if( ! IS_SCRIPT(srp) ){
 		enp=find_numbered_node_in_tree(SR_BODY(srp),n);
-		if( enp != NO_VEXPR_NODE ) return(enp);
+		if( enp != NO_VEXPR_NODE ) return enp;
 	}
 
 	enp=find_numbered_node_in_tree(SR_ARG_DECLS(srp),n);
-	return(enp);
+	return enp;
 }
 
 Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
@@ -516,12 +520,12 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 	Subrt *srp;
 	Node *np;
 
-	if( subrt_itp == NO_ITEM_TYPE ) return(NO_VEXPR_NODE);
+	if( subrt_itp == NO_ITEM_TYPE ) return NO_VEXPR_NODE;
 
 	//lp=list_of_subrts(SINGLE_QSP_ARG);
 	lp=subrt_list(SINGLE_QSP_ARG);
 	if( lp == NO_LIST )
-		return(NO_VEXPR_NODE);
+		return NO_VEXPR_NODE;
 
 	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){

@@ -1,5 +1,4 @@
 #include "data_obj.h"
-#include "query.h"
 
 #define MAXCOLS	512
 

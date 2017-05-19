@@ -4,7 +4,6 @@
 #include <dc1394/dc1394.h>
 #endif
 
-#include "query.h"
 #include "data_obj.h"
 
 typedef struct pgr_cam {

@@ -1,6 +1,5 @@
 #include "quip_config.h"
 
-#include "query.h"
 #include "data_obj.h"
 #include "fio_api.h"
 

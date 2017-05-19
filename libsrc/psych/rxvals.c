@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #include "stc.h"
-#include "query.h"
 
 void rdxvals(QSP_ARG_DECL  const char *fnam)
 {

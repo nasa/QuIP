@@ -8,7 +8,6 @@
 #include "quip_prot.h"
 #include "server.h"
 #include "my_encryption.h"
-#include "strbuf.h"
 #include "query_stack.h"
 
 static void add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
@@ -28,19 +27,19 @@ static void add_text_to_buffer(QSP_ARG_DECL  void *data, size_t nbytes )
 		n_have = strlen(CURL_STRINGBUF->sb_buf);
 	}
 	*/
-	if(sbp->sb_buf == NULL)
+	if(sb_buffer(sbp) == NULL)
 		n_have=0;
 	else
-		n_have = strlen(sbp->sb_buf);
+		n_have = strlen(sb_buffer(sbp));
 
 
-	if( (n_need=n_have+nbytes+1) > sbp->sb_size ){
+	if( (n_need=n_have+nbytes+1) > sb_size(sbp) ){
 		enlarge_buffer(sbp,n_need);
 	}
 
-	i_start = strlen(sbp->sb_buf);
-	memcpy(&((sbp->sb_buf)[i_start]),data,nbytes);
-	(sbp->sb_buf)[i_start+nbytes]=0;
+	i_start = strlen(sb_buffer(sbp));
+	memcpy(sb_buffer(sbp)+i_start,data,nbytes);
+	(sb_buffer(sbp))[i_start+nbytes]=0;
 }
 
 static size_t buffer_url_text(void *buffer, size_t size, size_t nmemb, void *userp)

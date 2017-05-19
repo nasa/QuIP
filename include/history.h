@@ -57,7 +57,7 @@ extern void tty_reset(FILE *tty);
 extern void save_keystroke(int c);
 extern int get_keystroke(void);
 extern void hist_bis(const char *pmpt);
-extern const char *get_sel( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out );
+extern const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out );
 extern void sane_tty(SINGLE_QSP_ARG_DECL);
 extern void check_events(QSP_ARG_DECL  FILE *);
 extern int keyboard_hit(QSP_ARG_DECL  FILE *);

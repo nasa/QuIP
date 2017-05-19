@@ -717,7 +717,7 @@ Define Find 3 coord_vector input_img threshold
 compute unary find $1 $2 $3 quit quit
 .
 
-Define Get_Pixel_Coords 3 pix_coords Npix binary 
+Define Get_Pixel_Coords 3 pix_coords Npix binary
 Get_Sum $2 $3
 If '$$2 != 0'
 Then	'Image $1 $$2 2 1 float	\
