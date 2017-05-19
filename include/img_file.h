@@ -4,9 +4,6 @@
 
 #include "quip_config.h"
 
-#include "query.h"
-
-//#include "rawvol.h"
 #include "data_obj.h"
 
 #include "nports_api.h"

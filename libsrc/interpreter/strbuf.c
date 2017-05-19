@@ -90,13 +90,20 @@ String_Buf *new_stringbuf(void)
 
 void rls_stringbuf(String_Buf *sbp)
 {
+	assert( sbp != NULL ); 
 	if( sbp->sb_buf != NULL )
 		givbuf(sbp->sb_buf);
 	givbuf(sbp);
 }
 
-char * sb_buffer(String_Buf *sbp)
+inline char * sb_buffer(String_Buf *sbp)
 {
 	return sbp->sb_buf;
 }
+
+inline int sb_size(String_Buf *sbp)
+{
+	return SB_SIZE(sbp);
+}
+
 

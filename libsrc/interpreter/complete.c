@@ -97,7 +97,6 @@ static int hint_pushed=0;
 #define NO_TERMCAP	((char *)0)
 
 typedef struct completion_data {
-	const char *	completion_string;
 	const char *	selection_string;
 	u_int		n_so_far;
 	FILE *		tty_out;
@@ -532,7 +531,10 @@ static const char * handle_completed_line(QSP_ARG_DECL  int c,Completion_Data *c
 	if( THIS_SELECTION != NULL ){
 		if( strlen(THIS_SELECTION) > N_SO_FAR )
 			show_completion(cdp,0);
+	} else {
+		THIS_SELECTION = "";
 	}
+
 	fputc(c,TTY_OUT);	/* do the echo */
 
 	/* Add response to history lists...
@@ -557,12 +559,10 @@ static const char * handle_completed_line(QSP_ARG_DECL  int c,Completion_Data *c
 			// that way we get THIS_SELECTION also!
 		}
 		CHARS_TYPED[N_SO_FAR] = 0;
-//fprintf(stderr,"get_response_from_user:  CHARS_TYPED = \"%s\", THIS_SELECTION = \"%s\"\n",
-//CHARS_TYPED,THIS_SELECTION);
 		// should we add a newline to THIS_SELECTION?
 		return(THIS_SELECTION);
 	}
-}
+} // handle_completed_line
 
 static void check_for_completion(QSP_ARG_DECL  Completion_Data *cdp)
 {
@@ -838,7 +838,7 @@ static int check_special_char(QSP_ARG_DECL  int c, Completion_Data *cdp)
 
 static void init_completion_data(Completion_Data *cdp,const char *prompt,FILE *tty_out,FILE *tty_in)
 {
-	cdp->completion_string = "";
+	cdp->selection_string = "";
 	cdp->prompt = prompt;
 	cdp->tty_out = tty_out;
 	cdp->tty_in = tty_in;
@@ -876,8 +876,6 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 	insure_special_chars(tty_in);
 
 	while(1){
-		/* Try to complete a response from the history list first... */
-
 		if( strlen(_this_completion.chars_typed) > 0 ){	/* if something typed */
 			check_for_completion(QSP_ARG  &_this_completion);
 		}
@@ -925,13 +923,17 @@ nextchar:
 			handle_interrupt(QSP_ARG  &_this_completion);
 			return("");
 		}
-		if( c=='\r' || c=='\n' )
-			return handle_completed_line(QSP_ARG  c,&_this_completion);
-
-		if( check_special_char(QSP_ARG  c, &_this_completion) )
+		if( c=='\r' || c=='\n' ){
+			const char *s;
+			// only return if there is something
+			s = handle_completed_line(QSP_ARG  c,&_this_completion);
+			//if( s != NULL && *s != 0 )
+			return s;
+		} else if( check_special_char(QSP_ARG  c, &_this_completion) ){
 			goto nextchar;
-		else
+		} else {
 			handle_normal_character(QSP_ARG  c, &_this_completion);
+		}
 
 	} /* while(1) */
 } /* end get_response_from_user() */

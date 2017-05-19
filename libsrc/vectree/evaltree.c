@@ -1048,11 +1048,6 @@ static Identifier *ptr_for_string(QSP_ARG_DECL  const char *s,Vec_Expr_Node *enp
 sprintf(ERROR_STRING,"ptr_for_string:  creating id %s",idname);
 advise(ERROR_STRING);
 	SET_ID_TYPE(idp, ID_STRING);
-#ifdef FOOBAR
-	//idp->id_sbp = getbuf(sizeof(String_Buf));
-	//idp->id_sbp->sb_buf = NULL;
-	//idp->id_sbp->sb_size = 0;
-#endif /* FOOBAR */
 
 	/* Can't do this, because refp is in a union w/ sbp... */
 	SET_ID_REF(idp, NEW_REFERENCE );
@@ -1060,9 +1055,7 @@ advise(ERROR_STRING);
 	SET_REF_ID(ID_REF(idp), idp );
 	SET_REF_DECL_VN(ID_REF(idp), NO_VEXPR_NODE );
 	/* SET_REF_OBJ(ID_REF(idp), NO_OBJ ); */
-	SET_REF_SBUF(ID_REF(idp), NEW_STRINGBUF );
-	REF_SBUF(ID_REF(idp))->sb_buf = NULL;
-	REF_SBUF(ID_REF(idp))->sb_size = 0;
+	SET_REF_SBUF(ID_REF(idp), new_stringbuf() );
 
 	assign_string(QSP_ARG  idp,s,enp);
 
@@ -1362,19 +1355,9 @@ advise(ERROR_STRING);
 				WARN(ERROR_STRING);
 				return(-1);
 			}
-//#ifdef CAUTIOUS
-//			if( REF_SBUF(ID_REF(src_idp))->sb_buf == NULL ){
-//				NODE_ERROR(val_enp);
-//				sprintf(ERROR_STRING,
-//			"CAUTIOUS:  assign_ptr_arg STRING %s:  source buffer from %s is NULL!?",
-//					node_desc(arg_enp),node_desc(val_enp));
-//				WARN(ERROR_STRING);
-//				return(-1);
-//			}
-//#endif /* CAUTIOUS */
-			assert( REF_SBUF(ID_REF(src_idp))->sb_buf != NULL );
+			assert( sb_buffer(REF_SBUF(ID_REF(src_idp))) != NULL );
 
-			copy_string(REF_SBUF(ID_REF(idp)),REF_SBUF(ID_REF(src_idp))->sb_buf);
+			copy_string(REF_SBUF(ID_REF(idp)),sb_buffer(REF_SBUF(ID_REF(src_idp))));
 			/* BUG need to set string set flag */
 			return(0);
 		default:
@@ -2497,7 +2480,8 @@ keep_looking:
 #define STORE_QUERY_ARG( s )						\
 {									\
 	if( index < max_args ){						\
-		SET_QRY_ARG_AT_IDX(qp,index,s);			\
+		/*SET_QRY_ARG_AT_IDX(qp,index,s);*/			\
+		set_query_arg_at_index(qp,index,s);			\
 	} else {								\
 		sprintf(ERROR_STRING,"set_script_args:  can't assign arg %d (max %d)",\
 			index+1,max_args);				\
@@ -2787,13 +2771,13 @@ static const char *eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 //#endif /* CAUTIOUS */
 			assert( IS_STRING_ID(idp) );
 
-			if( REF_SBUF(ID_REF(idp))->sb_buf == NULL ){
+			if( sb_buffer(REF_SBUF(ID_REF(idp))) == NULL ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,"string pointer %s not set",ID_NAME(idp));
 				advise(ERROR_STRING);
 				break;
 			}
-			return(REF_SBUF(ID_REF(idp))->sb_buf);
+			return(sb_buffer(REF_SBUF(ID_REF(idp))));
 
 		case T_SET_STR:
 			EVAL_WORK_TREE(enp,NO_OBJ);	/* do the assignment! */
@@ -2972,7 +2956,7 @@ print_float:
 				else
 					prt_msg_frag(ID_NAME(idp));
 			} else if( IS_STRING_REF(PTR_REF(ID_PTR(idp))) ){
-				prt_msg_frag(REF_SBUF(PTR_REF(ID_PTR(idp)))->sb_buf);
+				prt_msg_frag(sb_buffer(REF_SBUF(PTR_REF(ID_PTR(idp)))));
 			}
 //#ifdef CAUTIOUS
 			  else {
@@ -3943,9 +3927,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 			SET_REF_ID(ID_REF(idp), idp );
 			SET_REF_DECL_VN(ID_REF(idp), enp );	/* BUG? */
 			SET_REF_TYPE(ID_REF(idp), STR_REFERENCE );
-			SET_REF_SBUF(ID_REF(idp), NEW_STRINGBUF );
-			REF_SBUF(ID_REF(idp))->sb_buf = NULL;
-			REF_SBUF(ID_REF(idp))->sb_size = 0;
+			SET_REF_SBUF(ID_REF(idp), new_stringbuf() );
 			break;
 		case ID_POINTER:
 			SET_ID_PTR(idp, NEW_POINTER );
@@ -6714,13 +6696,13 @@ DUMP_TREE(enp);
 //#endif /* CAUTIOUS */
 			assert( IS_STRING_ID(idp) );
 
-			if( REF_SBUF(ID_REF(idp))->sb_buf == NULL ){
+			if( sb_buffer(REF_SBUF(ID_REF(idp))) == NULL ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,"string pointer \"%s\" used before set!?",ID_NAME(idp));
 				WARN(ERROR_STRING);
 				return(NULL);
 			} else
-				s=REF_SBUF(ID_REF(idp))->sb_buf;
+				s=sb_buffer(REF_SBUF(ID_REF(idp)));
 			break;
 
 		default:
@@ -8313,6 +8295,7 @@ try_again:
 		case T_SCRIPT:		/* eval_work_tree */
 			{
 			Macro *dummy_mp;
+			Macro_Arg **ma_tbl;
 
 			if( going ) return(1);
 			srp = VN_SUBRT(enp);
@@ -8330,11 +8313,16 @@ try_again:
 			/* Set up dummy_mac so that the interpreter will
 			 * think we are in a macro...
 			 */
+			/*
 			INIT_MACRO_PTR(dummy_mp)
 			SET_MACRO_NAME(dummy_mp, SR_NAME(srp) );
 			SET_MACRO_N_ARGS(dummy_mp, SR_N_ARGS(srp) );
 			SET_MACRO_TEXT(dummy_mp, (char *) SR_BODY(srp) );
-			SET_MACRO_FLAGS(dummy_mp, 0 ); /* disallow recursion */
+			SET_MACRO_FLAGS(dummy_mp, 0 ); // disallow recursion
+			*/
+			ma_tbl = create_generic_macro_args(SR_N_ARGS(srp));
+			create_macro(QSP_ARG  SR_NAME(srp), SR_N_ARGS(srp), ma_tbl, SR_BODY(srp),
+				current_line_number(SINGLE_QSP_ARG) );
 
 			/* Any arguments to a script function
 			 * will be treated like macro args...

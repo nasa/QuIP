@@ -29,7 +29,6 @@ static u_long gbdebug=GETBUF_DEBUG_MASK;
 #include <sys/malloc.h>	/* malloc() & _halloc(), OSX */
 #endif
 
-#include "query.h"
 #include "getbuf.h"
 #include "freel.h"
 

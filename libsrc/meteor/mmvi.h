@@ -3,7 +3,6 @@
 
 #include "gmovie.h"
 #include "ioctl_meteor.h"
-#include "query.h"
 
 #ifdef ALLOW_RT_SCHED
 extern int rt_is_on;

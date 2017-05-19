@@ -42,7 +42,6 @@
 //#include "dataprot.h"
 #include "xsupp.h"
 //#include "img_file.h"
-#include "query.h"
 #include "my_fb.h"
 #include "view_cmds.h"
 

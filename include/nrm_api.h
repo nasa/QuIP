@@ -1,6 +1,5 @@
 
 #include "data_obj.h"
-#include "query.h"
 
 /* numrec.c */
 

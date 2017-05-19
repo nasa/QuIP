@@ -60,7 +60,6 @@ extern "C" {
 #include "veclib/cu2_veclib_prot.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
 //#include "platform.h"
 
-#include "query.h"
 #include "veclib_api.h"
 
 /* prototypes here */

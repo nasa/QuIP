@@ -18,6 +18,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "item_type.h"
+#include "query_bits.h"	// LLEN - get rid of this! BUG
 #include "fileck.h"	// path_exists()
 #include "quip_menu.h"
 #include "serial.h"

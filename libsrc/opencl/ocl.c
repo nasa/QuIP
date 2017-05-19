@@ -17,7 +17,6 @@
 #define BUILD_FOR_OPENCL
 
 #include "quip_prot.h"
-#include "strbuf.h"
 #include "my_ocl.h"
 #include "ocl_platform.h"
 #include "veclib/ocl_veclib_prot.h"
@@ -267,10 +266,10 @@ static void ocl_info(QSP_ARG_DECL  Compute_Platform *cdp)
 
 	// The extensions can be long...
 	s = (int) strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
-	if( s > SB_SIZE(QS_SCRATCH) )
+	if( s > sb_size(QS_SCRATCH) )
 		enlarge_buffer( QS_SCRATCH, s );
-	sprintf(SB_BUF(QS_SCRATCH),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
-	prt_msg(SB_BUF(QS_SCRATCH));
+	sprintf(sb_buffer(QS_SCRATCH),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
+	prt_msg(sb_buffer(QS_SCRATCH));
 }
 
 static int extension_supported( Platform_Device *pdp, const char *ext_str )

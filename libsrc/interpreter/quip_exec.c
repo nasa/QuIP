@@ -97,7 +97,8 @@ void qs_do_cmd( Query_Stack *qsp )
 #endif /* HAVE_HISTORY */
 
 
-	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
+	//SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
+	reset_return_strings(SINGLE_QSP_ARG);
 
 	cmd = nameof2(QSP_ARG  QS_PROMPT_STR(qsp));
 

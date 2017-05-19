@@ -9,9 +9,9 @@
 
 //#include "uio.h"
 #include "data_obj.h"
-#include "query.h"
 #include "function.h"
 #include "debug.h"
+#include "query_bits.h"	// Q_SOCKET
 
 /* this function gets called instead of fgets ... */
 

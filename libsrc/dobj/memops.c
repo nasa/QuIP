@@ -5,7 +5,6 @@
 #include "data_obj.h"
 #include "rn.h"
 #include "warn.h"
-#include "query.h"			/* assign_var() */
 #include "variable.h"			/* assign_var() */
 #include "quip_prot.h"			/* assign_var() */
 

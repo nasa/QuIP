@@ -69,19 +69,13 @@ static COMMAND_FUNC( do_new_thread )
 	// The new thread should inherit context stacks from the parent thread,
 	// but we don't want to bother to do all that now - ?
 
-//if( verbose ){
-//sprintf(ERROR_STRING,"do_new_thread %s:  qs_flags = 0x%x",
-//QS_NAME(new_qsp),new_qsp->qs_flags);
-//advise(ERROR_STRING);
-//}
 	// We have to copy the text, because the buffer returned
 	// by nameof can get recycled, and pushtext doesn't make
 	// a copy.
 
 	// This is a potential memory leak?
 	push_text(new_qsp, savestr(c), "(new thread)" );
-	SET_QRY_FILENAME( CURR_QRY(new_qsp), "thread text" );
-//qdump(new_qsp);
+	set_query_filename( CURR_QRY(new_qsp), "thread text" );
 
 	// We want to create a new variable context for this thread...
 	// and if we have cuda, a cuda execution context...

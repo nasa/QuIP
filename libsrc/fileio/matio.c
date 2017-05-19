@@ -11,6 +11,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 #include "img_file/matio_api.h"
 #include "data_obj.h"

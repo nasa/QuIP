@@ -12,6 +12,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "debug.h"
 #include "tile.h"
 #include "gl_util.h"
 #include "data_obj.h"

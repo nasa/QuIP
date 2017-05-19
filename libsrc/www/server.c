@@ -33,7 +33,6 @@
 #include "w3c-libwww/WWWInit.h"
 
 #include "server.h"
-#include "query.h"
 #include "debug.h"			/* verbose */
 
 ITEM_INTERFACE_DECLARATIONS(Server,svr)

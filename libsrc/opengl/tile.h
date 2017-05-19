@@ -1,6 +1,5 @@
 #include <stdio.h>		/* NULL */
 #include "data_obj.h"
-#include "query.h"
 
 /* Jeff's attempt to imitate GeoFusion's approach to dynamic LOD management */
 

@@ -5,7 +5,6 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "cie.h"
-#include "query.h"
 #include "ctone.h"
 
 #define W_DIR	"./"

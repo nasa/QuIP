@@ -206,6 +206,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "data_obj.h"
 #include "nexpr.h"
 #include "veclib_api.h"

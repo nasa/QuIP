@@ -15,7 +15,6 @@
 
 #include "typedefs.h"
 #include "data_obj.h"
-#include "query.h"
 #include "debug.h"
 
 #define posn_t incr_t

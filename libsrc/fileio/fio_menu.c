@@ -2,6 +2,7 @@
 
 #include "fio_prot.h"
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 
 //#include "../datamenu/dataprot.h"
 //#include "submenus.h"

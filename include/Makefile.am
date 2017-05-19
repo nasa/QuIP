@@ -95,7 +95,6 @@ noinst_HEADERS =			\
 			platform.h	\
 			pointer.h	\
 			polh_menu.h	\
-			query.h		\
 			query_api.h	\
 			query_bits.h	\
 			query_stack.h	\
@@ -121,7 +120,6 @@ noinst_HEADERS =			\
 			sigpush.h	\
 			sizable.h	\
 			stack.h		\
-			strbuf.h	\
 			string_ref.h	\
 			subrt.h		\
 			thread_safe_defs.h	\

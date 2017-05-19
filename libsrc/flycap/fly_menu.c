@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "fly.h"
 #include "data_obj.h"
+#include "query_bits.h"	// LLEN - BUG
 
 static PGR_Cam *the_cam_p=NULL;	// should this be per-thread?
 				// no need yet...

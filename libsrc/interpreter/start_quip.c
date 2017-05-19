@@ -2,6 +2,7 @@
 #include "quip_config.h"
 #include "query_prot.h"
 #include "query_stack.h"
+#include "query_private.h"
 //#include "data_obj.h"
 #include "veclib_api.h"
 #include "vt_api.h"

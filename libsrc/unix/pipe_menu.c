@@ -122,9 +122,7 @@ static COMMAND_FUNC( do_pipe_redir )
 
 	//push_input_file(QSP_ARG  msg_str);
 	sprintf(msg_str,"Pipe \"%s\"",pp->p_cmd);
-	redir(QSP_ARG pp->p_fp, msg_str);
-	SET_QRY_DUPFILE(CURR_QRY(THIS_QSP) , (FILE *) pp );
-	SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP), Q_PIPE);
+	redir_from_pipe(QSP_ARG pp, msg_str);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(pipes_menu,s,f,h)

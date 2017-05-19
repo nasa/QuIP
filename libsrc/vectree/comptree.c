@@ -34,7 +34,9 @@
 
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "data_obj.h"
+#include "debug.h"	// AERROR
 //#include "fio_api.h"
 #include "vectree.h"
 #include "veclib_api.h"

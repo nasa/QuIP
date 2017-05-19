@@ -11,7 +11,6 @@
 //#include "version.h"
 #include "veclib_api.h"
 #include "vectree.h"
-//#include "query.h"		/* redir() */
 #include "vt_api.h"
 #include "quip_prot.h"
 #include "warn.h"

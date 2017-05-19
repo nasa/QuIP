@@ -422,7 +422,7 @@ void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 		}
 	} while(*start);
 
-	assign_var(QSP_ARG  VAR_NAME(vp), SB_BUF(sbp) );
+	assign_var(QSP_ARG  VAR_NAME(vp), sb_buffer(sbp) );
 	rls_stringbuf(sbp);
 }
 

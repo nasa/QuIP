@@ -11,6 +11,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - get rid of this!  BUG
 #include "ports.h"
 #include "data_obj.h"
 #include "getbuf.h"

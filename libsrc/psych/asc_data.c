@@ -16,14 +16,15 @@
 #endif
 
 #include "quip_prot.h"		/* verbose */
+#include "query_bits.h"		// LLEN - BUG
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include "stc.h"
-#include "query.h"
 #include "getbuf.h"
+#include "list.h"
 
 
 /* printf/scanf format strings */

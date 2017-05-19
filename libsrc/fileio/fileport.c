@@ -11,6 +11,8 @@
 #include <string.h>
 #endif
 
+#include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 #include "nports_api.h"
 #include "quip_prot.h"

@@ -1,5 +1,4 @@
 
-#include "query.h"
 
 typedef struct knox_state {
 	int	ks_video[8];	/* which input is connected to each of 8 outputs */

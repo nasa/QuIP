@@ -63,7 +63,6 @@ static Platform_Device *pick_platform_device(SINGLE_QSP_ARG_DECL)
 	Platform_Device *pdp;
 	Compute_Platform *cpp;
 
-fprintf(stderr,"picking platform...\n");
 	cpp = PICK_PLATFORM("");
 
 	if( cpp == NO_PLATFORM ){
@@ -76,8 +75,6 @@ fprintf(stderr,"picking platform...\n");
 	}
 
 	push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
-list_item_context(QSP_ARG  PF_CONTEXT(cpp));
-fprintf(stderr,"picking device after pushing context %s\n",CTX_NAME(PF_CONTEXT(cpp)));
 	pdp = PICK_PFDEV("");
 	pop_pfdev_context( SINGLE_QSP_ARG );
 	return pdp;

@@ -230,7 +230,6 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 	const char *s;
 
 	/* use item type name as the prompt */
-fprintf(stderr,"pick_item BEGIN\n");
 
 	assert( itp != NO_ITEM_TYPE );
 

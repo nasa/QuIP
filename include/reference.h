@@ -2,7 +2,6 @@
 #define _REFERENCE_H_
 
 #include "vec_expr_node.h"
-#include "strbuf.h"
 
 typedef enum {
 	OBJ_REFERENCE,

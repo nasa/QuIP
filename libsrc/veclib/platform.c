@@ -4,6 +4,7 @@
 #include "quip_prot.h"
 #include "platform.h"
 #include "ocl_platform.h"
+#include "debug.h"	// AERROR
 
 ITEM_INTERFACE_DECLARATIONS( Platform_Device, pfdev, 0 )
 ITEM_INTERFACE_DECLARATIONS( Compute_Platform, platform, 0 )

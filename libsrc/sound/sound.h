@@ -9,7 +9,6 @@
 #endif
 
 #include "data_obj.h"
-#include "query.h"
 
 extern debug_flag_t sound_debug;
 

@@ -12,7 +12,6 @@
 #include "data_obj.h"
 #include "getbuf.h"
 #include "debug.h"
-#include "query.h"
 #include "optimize.h"
 
 /* these stay in fixed order */

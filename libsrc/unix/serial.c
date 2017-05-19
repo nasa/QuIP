@@ -49,7 +49,6 @@
 #ifdef NOT_SURE
 #include "stamps.h"
 #include "debug.h"
-#include "query.h"		/* ttys_are_interactive */
 #include "submenus.h"
 #endif /* NOT_SURE */
 
@@ -926,7 +925,6 @@ COMMAND_FUNC( do_ser_menu )
 
 #include <string.h>
 
-#include "query.h"
 #include "filerd.h"
 #include "debug.h"
 

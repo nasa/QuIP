@@ -275,6 +275,12 @@ advise(ERROR_STRING);
 	PUSH_DOBJ_CONTEXT(icp);
 }
 
+static void rls_reference(Reference *refp)
+{
+	rls_stringbuf( REF_SBUF(refp) );
+	givbuf(refp);
+}
+
 // We may not need to do any of this on objC ???
 //
 // really a memory release function...
@@ -292,10 +298,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			givbuf(ID_REF(idp));
 			break;
 		case ID_STRING:
-			if( REF_SBUF(ID_REF(idp))->sb_buf != NULL )
-				givbuf(REF_SBUF(ID_REF(idp))->sb_buf);
-			givbuf(REF_SBUF(ID_REF(idp)));
-			givbuf(ID_REF(idp));
+			rls_reference(ID_REF(idp));
 			break;
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));

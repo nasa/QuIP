@@ -28,7 +28,6 @@ char VersionId_inc_rawvol[] = QUIP_VERSION_STRING;
  */
 
 #include "data_obj.h"
-#include "query.h"
 #include "rv_api.h"
 
 /* #define BLOCK_SIZE	512L */

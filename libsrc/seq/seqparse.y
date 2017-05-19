@@ -16,6 +16,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "item_type.h"
+#include "query_bits.h"	// LLEN - BUG, get rid of this!
 #include "seq.h"
 #include "getbuf.h"
 
