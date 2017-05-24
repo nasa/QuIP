@@ -59,6 +59,7 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 //#endif /* CAUTIOUS */
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NO_LIST );
 
+	reset_return_strings(SINGLE_QSP_ARG);
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
 }
 

@@ -46,6 +46,8 @@ fprintf(stderr,"increment_lines_read: %s\n",#whence);				\
 	}
 
 #define DEBUG_LINENO(whence)					\
+assert(THIS_QSP!=NULL);\
+assert(CURR_QRY(THIS_QSP)!=NULL);\
 	fprintf(stderr,"%s:  Line %d (%d lines read)\n",	\
 		#whence,QRY_LINENO(CURR_QRY(THIS_QSP)),QRY_LINES_READ(CURR_QRY(THIS_QSP)));
 
@@ -130,16 +132,15 @@ abort();								\
  * to try to read ahead, in order to do things like popping
  * the input at EOF:  if we continue reading past EOF in the
  * normal case we will just get the next word from the next
- * file on the input stack.  Having lookahead on, however,
- * screws up line numbering, because the line number gets advanced
- * before the last word of the previous line has been processed.
- * Perhaps this can be fixed with different timing in the checking
- * of the line number (see ../warmenu/vectree.y).
+ * file on the input stack.
  *
- * The above comment was written a while ago - perhaps the line
- * numbering issue has been addressed by the two lineno variables,
- * lineno & rdlineno?
+ * In order to keep the line numbering correct, we keep two counters,
+ * QRY_LINENO and QRY_LINES_READ.  Lookahead may advance the latter,
+ * and they aren't sync'd until the lookahead word is used.
  *
+ * ../vectree/vectree.y uses another variable, LASTLINENO, which doesn't
+ * seem to be used anywhere else, and is part of the query stack...  Probably
+ * not very well thought through!
  */
 
 
@@ -174,6 +175,8 @@ static int n_quotations=0;	/* to handle things like "a b c"X"x y z" */
 
 #define DBL_QUOTE	'"'
 #define SGL_QUOTE	'\''
+
+#define MACRO_LOCATION_PREFIX	"Macro "
 
 
 void input_on_stdin(void)	// call this from a unix program
@@ -269,16 +272,26 @@ static void discard_line_content(QSP_ARG_DECL  const char **input_pp)
 	*input_pp = input_ptr;
 }
 
-// eatup_space is called during lookahead...
+// eatup_space_for_lookahead should never change the level!?
 
-static void eatup_space(SINGLE_QSP_ARG_DECL)
+static void eatup_space_for_lookahead(SINGLE_QSP_ARG_DECL)
 {
 	const char *str;
+	int lno;
+	Query *qp=CURR_QRY(THIS_QSP);
+#ifdef CAUTIOUS
+	int orig_level;
+#endif // CAUTIOUS
 
-	if( !QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ) return;
+	if( !QRY_HAS_TEXT(qp) ) return;
 
-	str=QRY_LINE_PTR(CURR_QRY(THIS_QSP)) ;
+	str=QRY_LINE_PTR(qp) ;
 	assert( str != NULL );
+
+	lno = QRY_LINES_READ(qp);
+#ifdef CAUTIOUS
+	orig_level = QLEVEL;
+#endif // CAUTIOUS
 
 	skip_white_space(QSP_ARG  &str);
 	/* comments can be embedded in lines */
@@ -290,12 +303,19 @@ static void eatup_space(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( *str == 0 )
-		CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_HAS_SOMETHING);
+		CLEAR_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
 
-	if( QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
-		SET_QRY_LINE_PTR(CURR_QRY(THIS_QSP),str);
+	if( QRY_HAS_TEXT(qp) ){
+		SET_QRY_LINE_PTR(qp,str);
 	}
-} // eatup_space
+
+#ifdef CAUTIOUS
+	assert(orig_level == QLEVEL);
+#endif // CAUTIOUS
+
+	if( lno != QRY_LINES_READ(qp) )
+		SET_QRY_FLAG_BITS(qp,Q_LOOKAHEAD_ADVANCED_LINE);
+} // eatup_space_for_lookahead
 
 
 /*
@@ -361,17 +381,20 @@ void lookahead(SINGLE_QSP_ARG_DECL)
 
 int lookahead_til(QSP_ARG_DECL  int stop_level)
 {
+	int initial_level = QLEVEL;
+
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
 		return 0;	// nothing to interpret
 	}
 #endif /* BUILD_FOR_OBJC */
 
+	CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
+
 	if( IS_HALTING(THIS_QSP) ) return 0;
 
 	// Not used???
 	//QS_FORMER_LEVEL( THIS_QSP ) = QS_LEVEL( THIS_QSP );
-
 	while(
 		QLEVEL >= stop_level
 	        && (QS_FLAGS(THIS_QSP) & QS_LOOKAHEAD_ENABLED)
@@ -403,8 +426,8 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 		 */
 
 		if( QRY_HAS_TEXT(qp) ) {
-DEBUG_LINENO(lookahead_til before eatup_space #1)
-			eatup_space(SINGLE_QSP_ARG);
+DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
+			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
 		if( QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
 			return 1;
@@ -422,10 +445,23 @@ DEBUG_LINENO(lookahead_til after nextline)
 			if( IS_HALTING(THIS_QSP) ) return 0;
 
 			if( QLEVEL == _level && QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
-DEBUG_LINENO(lookahead_til before eatup_space #2)
-				eatup_space(SINGLE_QSP_ARG);
+DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
+				eatup_space_for_lookahead(SINGLE_QSP_ARG);
 			}
 		}
+	}
+#ifdef BUILD_FOR_OBJC
+	if( QLEVEL < 0 ){
+		return 0;	// done with startup file?
+	}
+#endif /* BUILD_FOR_OBJC */
+	
+	assert(QLEVEL>=0);
+
+//fprintf(stderr,"lookahead_til finished, qlevel = %d\n",QLEVEL);
+	if( QLEVEL != initial_level ){
+		assert(CURR_QRY(THIS_QSP) != NULL);
+		SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 	}
 
 	return 0;
@@ -553,7 +589,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	// we use MSG_STR as a scratch buffer...
-	sprintf(MSG_STR,"Macro %s",MACRO_NAME(mp));
+	sprintf(MSG_STR,"%s%s",MACRO_LOCATION_PREFIX,MACRO_NAME(mp));
 	PUSH_TEXT(MACRO_TEXT(mp), MSG_STR);
 
 	qp = CURR_QRY(THIS_QSP) ;
@@ -636,13 +672,10 @@ advise(ERROR_STRING);
 		/* now see if the word is a macro */
 	} while( exp_mac(QSP_ARG  buf) );		/* returns 1 if a macro */
 
-//fprintf(stderr,"next_query_word will return \"%s\", remaining text:  \"%s\"\n",
-//buf,QRY_LINE_PTR(CURR_QRY(THIS_QSP)));
-
 	// This can happen if we run out of input while trying to
 	// read the macro args...
 	if( QLEVEL < 0 ) return NULL;
-	
+
 	return(buf);
 } /* end next_query_word() */
 
@@ -836,7 +869,7 @@ static void save_normal_char(QSP_ARG_DECL  char **result_pp, const char **sp, in
 				/* This is a space, but we haven't
 				 * seen any non-spaces yet.
 				 * Don't copy to output buffer.
-				 * This is like eatup_space,
+				 * This is like eatup_space_for_lookahead,
 				 * but without side effects...
 				 */
 				if( c == '\n' ){
@@ -905,7 +938,6 @@ static void strip_quotes(char *result_buf,char *result_ptr, int start_quote, int
 	/* BUG if the first character is a backslash escaped
 	 * quote, then this may do the wrong thing...
 	 */
-
 	/* start_quote should hold the right value,
 	 * because we've only seen 1 quotation
 	 */
@@ -1229,18 +1261,20 @@ advise(ERROR_STRING);
 			SET_QRY_RETSTR_AT_IDX(CURR_QRY(THIS_QSP),	\
 				QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)),sbp)
 
-#ifdef FOOBAR
-// Don't wrap around
+// This version wraps around, but there's no check that N_QRY_RETSTRS is large enough.
+// But otherwise we have to put reset_return_strings everwhere...
 #define NEXT_QRY_RETSTR							\
 									\
 	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),				\
 		( QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)) >= (N_QRY_RETSTRS-1) ? \
 		0 : (1+QRY_RETSTR_IDX(CURR_QRY(THIS_QSP))) ) );
-#endif // FOOBAR
 
+#ifdef FOOBAR
+// Don't wrap around
 #define NEXT_QRY_RETSTR							\
 									\
 	SET_QRY_RETSTR_IDX( CURR_QRY(THIS_QSP), (1+QRY_RETSTR_IDX(CURR_QRY(THIS_QSP))) );
+#endif // FOOBAR
 
 static String_Buf *query_return_string(SINGLE_QSP_ARG_DECL)
 {
@@ -1637,7 +1671,7 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 		}
 	}
 	return(buf);
-} // end next_raw_input_word
+} // end next_word_from_level
 
 /*
  *	Get a raw word.
@@ -1657,7 +1691,7 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 static const char * next_raw_input_word(QSP_ARG_DECL  const char* pline)
 		/* prompt string */
 {
-	const char *buf=NULL;	/* initialize to elim warning */
+	//const char *buf=NULL;	/* initialize to elim warning */
 
 	//Let's initialize when we create the thing!?
 	//if( !(QS_FLAGS(THIS_QSP) & QS_INITED) ) init_query_stack(THIS_QSP);
@@ -1667,13 +1701,12 @@ static const char * next_raw_input_word(QSP_ARG_DECL  const char* pline)
 	}
 
 	SET_QS_FLAG_BITS(THIS_QSP, QS_STILL_TRYING);
-	while( IS_STILL_TRYING(THIS_QSP) ){
-		buf = next_word_from_level(QSP_ARG  pline);
-		if( buf == NULL ) return NULL;
-		if( *buf != 0 ) return buf;
+	if( IS_STILL_TRYING(THIS_QSP) ){
+		return next_word_from_level(QSP_ARG  pline);
+		// used to not return empty string?
 	}
 	return NULL;
-}
+} // next_raw_input_word
 
 /*
  *	Save a single character.
@@ -2038,12 +2071,13 @@ int intractive(SINGLE_QSP_ARG_DECL)
  * before the FIRST newline.
  */
 
-static void scan_remainder(QSP_ARG_DECL  const char **sptr, const char *location )
+static int scan_remainder(QSP_ARG_DECL  const char *location )
 {
 	int c;
 	int comment_seen=0;
 	int warned=0;
-	const char *s = *sptr;
+	//const char *s = *sptr;
+	const char *s = QRY_LINE_PTR(CURR_QRY(THIS_QSP));
 
 	while( (c=(*s++)) && c != '\n' ){
 		if( !isspace(c) ){
@@ -2055,12 +2089,14 @@ static void scan_remainder(QSP_ARG_DECL  const char **sptr, const char *location
 			"scan_remainder:  Extra text encountered after %s",
 						location);
 					WARN(ERROR_STRING);
-					warned=1;
+					warned= -1;
+abort();
 				}
 			}
 		}
 	}
-	*sptr = s;
+	QRY_LINE_PTR(CURR_QRY(THIS_QSP)) = s;
+	return warned;
 }
 
 // No recursive calls.  Therefore it
@@ -2092,6 +2128,11 @@ static const char *extract_line_for_macro(SINGLE_QSP_ARG_DECL)
 	from = QRY_LINE_PTR(CURR_QRY(THIS_QSP)) ;
 	to = linebuf;
 	n=0;
+	if( *from == '.' ){
+		if( *(from+1) != '\n' ){
+	WARN("Macro definition should be terminated by a line containing a single '.'!?");
+		}
+	}
 	while( *from && *from != '\n' ){
 		// check for buffer overrun
 		if( n >= LLEN-1 ){
@@ -2128,11 +2169,26 @@ static const char *extract_line_for_macro(SINGLE_QSP_ARG_DECL)
  * great big line...
  */
 
+static int get_next_macro_line(QSP_ARG_DECL  String_Buf *mac_sbp)
+{
+	const char *s;
+
+	s=extract_line_for_macro(SINGLE_QSP_ARG);		// rdmtext
+	if( s == NULL ) return -1;
+
+	if( *s == '.' )
+		return 0;
+
+	cat_string(mac_sbp,s);
+	cat_string(mac_sbp,"\n");
+	return 1;
+}
+
 String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 {
 	const char *instructions="Enter text of macro; terminate with line beginning with '.'";
 	Query *qp;
-	const char *s;
+	int status;
 	/* we make a new one for each and every macro... */
 
 	/* The old one had a memory leak, because the string buffers were
@@ -2140,25 +2196,16 @@ String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 	 */
 	String_Buf *mac_sbp;
 
-	if(!(QS_FLAGS(THIS_QSP) & QS_INITED)) init_query_stack(THIS_QSP);
+	// How could we ever get here without initializing the query stack???
+	//if(!(QS_FLAGS(THIS_QSP) & QS_INITED)) init_query_stack(THIS_QSP);
+	assert( QS_FLAGS(THIS_QSP) & QS_INITED );
+
+	SYNC_LINENO
+
 	qp = CURR_QRY(THIS_QSP);
 
 	if( IS_INTERACTIVE(qp) || (QS_FLAGS(THIS_QSP) & QS_FORCE_PROMPT) )
 		advise(instructions);
-
-	/* lookahead line may have been read already... */
-
-	if( QRY_HAS_TEXT(qp) ){
-//fprintf(stderr,"rdmtext:  current line contains \"%s\"\n",QRY_LINE_PTR(qp));
-		/* this case only arises for scripted macros,
-		 * so don't worry about strcat'ing \n
-		 */
-
-		/* check for a null-body macro */
-
-		// this is just so we can warn if there's garbage on the line
-		scan_remainder(QSP_ARG  &QRY_LINE_PTR(qp), "macro declaration");
-	}
 
 	mac_sbp = new_stringbuf();
 	copy_string(mac_sbp,"");	// initialize - redundant?
@@ -2166,35 +2213,13 @@ String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 	//s=qline(QSP_ARG  "");
 	//qp->q_rdlineno++;	// count this line
 
-	s=extract_line_for_macro(SINGLE_QSP_ARG);		// rdmtext
-	if( s == NULL ) goto bad_def;
-
-	cat_string(mac_sbp,s);
-	cat_string(mac_sbp,"\n");
-
-//fprintf(stderr,"rdmtext:  first line is \"%s\"\n",s);
-	while( *s != '.' ){
-		s=extract_line_for_macro(SINGLE_QSP_ARG);		// rdmtext
-		if( s == NULL ) goto bad_def;
-//fprintf(stderr,"rdmtext:  next line is \"%s\"\n",s);
-		if( *s != '.' ){
-			cat_string(mac_sbp,s);
-			// Newlines are stripped by extract_line_for_macro
-			cat_string(mac_sbp,"\n");
-		}
-	}
-
-	//qp->q_lineno = qp->q_rdlineno;	// in case a warning is printed by scan_remainder
-	//scan_remainder(QSP_ARG  qp,"end of macro definition");
-	//qp->q_rdlineno++;
-
-	s++;	// skip '.'
-	scan_remainder(QSP_ARG  &s,"end of macro definition");
-
+	while( (status=get_next_macro_line(QSP_ARG  mac_sbp)) == 1 )
+		;
 //fprintf(stderr,"rdmtext:  will return buffer with \"%s\"\n",sb_buffer(mac_sbp));
-	return(mac_sbp);
-bad_def:
-	WARN("incomplete macro definition");
+
+	if( status != 0 )
+		WARN("bad macro definition");
+
 	// BUG?  We might return NULL so that we can print an error message with
 	// the macro name...
 	return(mac_sbp);
@@ -2269,6 +2294,15 @@ Macro_Arg ** read_macro_arg_table(QSP_ARG_DECL  int n)
 	ma_tbl = getbuf(n*sizeof(Macro_Arg));
 	for(i=0;i<n;i++)
 		ma_tbl[i] = read_macro_arg(QSP_ARG  i);
+
+	// At this point, there should be no more text on the line,
+	// except possibly a comment...
+
+	if( QRY_LINENO(CURR_QRY(THIS_QSP)) == QRY_LINES_READ(CURR_QRY(THIS_QSP)) ){
+		if( scan_remainder(QSP_ARG  "macro declaration") < 0 )
+			WARN("extra text after macro args!?");
+	}
+
 	return ma_tbl;
 }
 
@@ -3854,21 +3888,21 @@ int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr)
 
 #endif /* ! BUILD_FOR_IOS */
 
-static void tell_macro_location(QSP_ARG_DECL  const char *filename, int n)
+static void tell_macro_location(QSP_ARG_DECL  const char *location_string, int n)
 {
 	const char *mname;
 	Macro *mp;
-	const char *mfname;	// macro file name
-	mname = filename+6;
+	const char *filename;	// macro file name
+	mname = location_string+strlen(MACRO_LOCATION_PREFIX);
 	// don't use get_macro, because it prints a warning,
 	// causing infinite regress!?
 	mp = macro_of(QSP_ARG  mname);
 	assert( mp != NO_MACRO );
 
-	mfname = MACRO_FILENAME(mp);
-	ADJUST_PATH(mfname);
+	filename = MACRO_FILENAME(mp);
+	ADJUST_PATH(filename);
 	sprintf(MSG_STR,"%s line %d (File %s, line %d):",
-		filename, n, mfname, MACRO_LINENO(mp)+n);
+		mname, n, filename, MACRO_LINENO(mp)+n);
 	advise(MSG_STR);
 }
 
@@ -3886,7 +3920,7 @@ void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print)
 		//filename=THIS_QSP->qs_fn_stack[ql];
 		filename=QRY_FILENAME(QRY_AT_LEVEL(THIS_QSP,ql));
 		n = QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql) );
-		if( !strncmp(filename,"Macro ",6) ){
+		if( !strncmp(filename,MACRO_LOCATION_PREFIX,6) ){
 			tell_macro_location(QSP_ARG  filename, n);
 		} else {
 			ADJUST_PATH(filename);

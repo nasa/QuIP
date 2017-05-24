@@ -49,3 +49,8 @@ void rls_query(Query *qp)
 	addHead(query_free_list,np);
 }
 
+inline int last_query_line_read(Query *qp)
+{
+	return QRY_LINES_READ(qp);
+}
+
