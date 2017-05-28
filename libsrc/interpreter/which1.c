@@ -54,7 +54,8 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 	if( nmatches==1 ){
 		sprintf(ERROR_STRING,"Unambiguous substring match of \"%s\" to \"%s\"",
 			last_pick,choices[lastmatch]);
-		advise(ERROR_STRING);
+		//advise(ERROR_STRING);
+		WARN(ERROR_STRING);
 		return(lastmatch);
 	}
 	else if( nmatches > 1 ){

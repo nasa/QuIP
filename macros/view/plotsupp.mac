@@ -136,10 +136,13 @@ Define Use_Viewer_As_Plotter 1 name
 Init_New_Plotter $1
 .
 
+# should we ignore button releases?
+
 Define Plotter_Click 0
-If $left_button_up exit_macro
-If $middle_button_up exit_macro
-If $right_button_up exit_macro
+#If $left_button_up exit_macro
+#If $middle_button_up exit_macro
+#If $right_button_up exit_macro
+#If $left_button_up&&$middle_button_up&&$right_button_up exit_macro
 If $exit_on_plotter_click exit
 Set clicked 1
 .

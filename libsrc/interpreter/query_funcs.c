@@ -178,6 +178,10 @@ static int n_quotations=0;	/* to handle things like "a b c"X"x y z" */
 
 #define MACRO_LOCATION_PREFIX	"Macro "
 
+static inline void clear_query_text(Query *qp)
+{
+	copy_string(QRY_TEXT_BUF(qp),"");
+}
 
 void input_on_stdin(void)	// call this from a unix program
 {
@@ -782,31 +786,6 @@ static void after_backslash(QSP_ARG_DECL  int c,char **result_pp, const char **i
 
 }	// end after_backslash
 
-#ifdef FOOBAR
-static void unsavechar(QSP_ARG_DECL  int c)
-{
-	int n;
-	int ql;
-	Query *qp;
-
-	ql = QLEVEL;
-
-	while( ql != 0 && (QRY_FLAGS(QRY_AT_LEVEL(THIS_QSP,ql-1)) & Q_SAVING) ){
-		ql--;
-		qp=QRY_AT_LEVEL(THIS_QSP,ql);
-		assert( QRY_TEXT(qp) != NULL );
-
-		n=(int)strlen(QRY_TEXT(qp));
-		assert( n > 0 );
-
-		n--;
-		assert( QRY_TEXT(qp)[n] == c );
-
-		(QRY_TEXT(qp))[n] = 0;
-		SET_QRY_TXTFREE(qp,QRY_TXTFREE(qp)+1);
-	}
-}
-#endif // FOOBAR
 
 // next_word_from_input_line flags
 #define RW_HAVBACK	1
@@ -1282,6 +1261,7 @@ static String_Buf *query_return_string(SINGLE_QSP_ARG_DECL)
 
 	assert( QRY_RETSTR_IDX(CURR_QRY(THIS_QSP)) < N_QRY_RETSTRS );
 
+	// Better to do this at struct init?  BUG?
 	if( (sbp = QRY_RETSTR) == NULL ){
 		SET_QRY_RETSTR(new_stringbuf());
 		sbp = QRY_RETSTR;
@@ -1507,6 +1487,10 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 
 	qp=(CURR_QRY(THIS_QSP));
 
+	s=QRY_LINE_PTR(qp) ;		/* this is the read scan pointer */
+	assert(s!=NULL);
+	if( *s == 0 ) return NULL;	// input exhausted
+
 	word_scan_flags=0;
 	start_quote=0;	/* holds the value of the starting quote char */
 	n_quotations=0;
@@ -1530,11 +1514,6 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 	 * the destination buffer is dynamically growable...
 	 * but how big should it be?
 	 */
-
-	s=QRY_LINE_PTR(qp) ;		/* this is the read scan pointer */
-	assert(s!=NULL);
-	assert(*s!=0);
-	// could be a space...
 
 //fprintf(stderr,"next_word_from_input_line:  scanning \"%s\"\n",s);
 // should we skip initial spaces?
@@ -1810,7 +1789,7 @@ static void halt_stack(SINGLE_QSP_ARG_DECL)
 
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
-static Query *hist_select(QSP_ARG_DECL char *buf,int buf_size,const char* pline)
+static const char *hist_select(QSP_ARG_DECL const char* pline)
 {
 	const char *s;
 	Query *qp;
@@ -1821,13 +1800,14 @@ static Query *hist_select(QSP_ARG_DECL char *buf,int buf_size,const char* pline)
 	if( s==NULL ){			/* ^D */
 		if( QLEVEL > 0 ){
 			pop_file(SINGLE_QSP_ARG);
-			qp = CURR_QRY(THIS_QSP);
-			return(qp);
+			return NULL;
 		} else {
 			advise("EOF");
 			nice_exit(QSP_ARG  0);
 		}
 	}
+
+#ifdef FOOBAR
 	// check for buffer overrun?
 	if( strlen(s) > buf_size-2 ){
 		sprintf(ERROR_STRING,"hist_select:  buffer too small!?");
@@ -1837,10 +1817,12 @@ static Query *hist_select(QSP_ARG_DECL char *buf,int buf_size,const char* pline)
 
 	strcpy(buf,s);
 	strcat(buf,"\n");
-	SET_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
-	SET_QRY_LINE_PTR(qp,buf);
+#endif // FOOBAR
 
-	return(qp);
+	SET_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
+	SET_QRY_LINE_PTR(qp,s);
+
+	return(s);
 } // end hist_select
 #endif /* TTY_CTL */
 #endif /* HAVE_HISTORY */
@@ -1869,15 +1851,20 @@ advise(ERROR_STRING);
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
 
-static const char * get_line_interactive(QSP_ARG_DECL  char *buf, const char *pline)
+// How do we tell an empty line from a null string ('')?
+// In the latter case, we want to re
+static const char * get_line_interactive(QSP_ARG_DECL  const char *pline)
 {
-	Query *qp;
+	const char *s;
+	int start_level=QLEVEL;
 
-	do {
+	while( start_level == QLEVEL ) {
 		fputs(pline,stderr);
-		qp=hist_select(QSP_ARG  buf,LLEN,pline);
-	} while( ! QRY_HAS_TEXT(qp) );
-	return(QRY_LINE_PTR(qp) );
+		s=hist_select(QSP_ARG  pline);
+		if( s == NULL ) return NULL;
+		if( strlen(s) > 0 ) return s;
+	};
+	return NULL;
 }
 
 #endif // TTY_CTL
@@ -1934,7 +1921,7 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 		/* prompt */
 {
 	Query *qp;
-	char *buf;
+	String_Buf *sbp;
 #ifdef MAC
 	extern void set_mac_pmpt(char *);
 #endif /* MAC */
@@ -1946,7 +1933,6 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 	}
 
 	qp=(CURR_QRY(THIS_QSP));
-	buf=QRY_BUFFER(CURR_QRY((THIS_QSP)));
 
 	// buf might be NULL if we are at the end of a macro?
 
@@ -1956,8 +1942,13 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
-	if( IS_INTERACTIVE(qp) && IS_TRACKING_HISTORY(THIS_QSP) && IS_COMPLETING(THIS_QSP) ){
-		return get_line_interactive(QSP_ARG  buf, pline);
+	// shouldn't this be any interactive shell?
+	while( IS_INTERACTIVE(qp) && IS_TRACKING_HISTORY(THIS_QSP) && IS_COMPLETING(THIS_QSP) )
+	{
+		const char *s;
+		s = get_line_interactive(QSP_ARG  pline);
+		if( s != NULL ) return s;
+		qp = CURR_QRY(THIS_QSP);
 	}
 #endif /* TTY_CTL */
 #endif /* HAVE_HISTORY */
@@ -1981,7 +1972,12 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 
 	/* Call the read function - fgets if it is a regular file */
 
-	if( (*(QRY_READFUNC(qp)))(QSP_ARG  (void *)buf,LLEN,(void *)QRY_FILE_PTR(qp)) == NULL ){
+	// Make sure we have at least LLEN chars in the buffer...
+	sbp = QRY_BUFFER(qp);
+	assert(sbp!=NULL);
+	if( SB_SIZE(sbp) < LLEN )
+		enlarge_buffer(sbp,LLEN);
+	if( (*(QRY_READFUNC(qp)))(QSP_ARG  (void *)sb_buffer(sbp),sb_size(sbp),(void *)QRY_FILE_PTR(qp)) == NULL ){
 		/* this means EOF if reading with fgets()
 		 * or end of a macro...
 		 */
@@ -1989,12 +1985,12 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 		return("");
 	} else {		/* have something */
 		const char *s;
-		s=check_for_complete_line(QSP_ARG  buf);
+		s=check_for_complete_line(QSP_ARG  sb_buffer(sbp));
 		if( s != NULL ) return s;
 		//SET_QRY_HAS_TEXT(qp,1);	// why is this commented out???
 		SET_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
-		SET_QRY_LINE_PTR(qp,buf);
-		return(buf);
+		SET_QRY_LINE_PTR(qp,sb_buffer(sbp));
+		return(sb_buffer(sbp));
 	}
 	/* NOTREACHED */
 
@@ -2690,7 +2686,7 @@ char *qpfgets( QSP_ARG_DECL void *buf, int size, void *fp )
 	SET_QRY_TEXT_BUF(qp,NULL);					\
 	SET_QRY_MACRO(qp,NO_MACRO);					\
 	if( QRY_BUFFER(qp) == NULL ){					\
-		SET_QRY_BUFFER(qp, getbuf(LLEN) );			\
+		SET_QRY_BUFFER(qp,new_stringbuf());			\
 	}
 
 /*
@@ -3143,8 +3139,9 @@ COMMAND_FUNC( close_loop )
 	// BUG need to pass the filename up!?
 	s=CURRENT_FILENAME;
 
+	assert(QRY_TEXT_BUF(qp) != NULL );
 	// does fullpush push the macro pointer?
-	fullpush(QSP_ARG  QRY_TEXT(qp), s );
+	fullpush(QSP_ARG  sb_buffer(QRY_TEXT_BUF(qp)), s );
 
 	/* This is right if we haven't finished the current line yet... */
 	SET_QRY_LINES_READ(CURR_QRY(THIS_QSP),QRY_LINES_READ(qp));
@@ -3159,9 +3156,13 @@ lup_dun:
 //advise("close_loop:  loop done...");
 //qdump(qsp);
 
-	// Now we are done with the loop - why is the line number wrong??
-	givbuf(QRY_TEXT(qp));
-	SET_QRY_TEXT(qp, NULL);
+	// Now we are done with the loop
+	// - why is the line number wrong??
+	// Is it?
+
+	// set text to null string...
+	clear_query_text(qp);
+
 	SET_QRY_LINES_READ(qp, QRY_LINES_READ(loop_qp));
 
 	/* lookahead may have been inhibited by q_count==1 */
@@ -3219,8 +3220,8 @@ sprintf(ERROR_STRING,"releasing while loop text buffer at level %d",
 qp-&query[0]);
 advise(ERROR_STRING);
 */
-		givbuf(QRY_TEXT(qp));
-		SET_QRY_TEXT(qp, NULL);
+		clear_query_text(qp);
+
 		/*
 		 * Return the count to the default state;
 		 * Otherwise lookahead will be inhibited after this...
@@ -3232,7 +3233,8 @@ advise(ERROR_STRING);
 		const char *s;
 		//push_input_file( QSP_ARG CURRENT_FILENAME );
 		s = CURRENT_FILENAME ;
-		fullpush(QSP_ARG  QRY_TEXT(qp), s );
+		assert(QRY_TEXT_BUF(qp)!=NULL);
+		fullpush(QSP_ARG  sb_buffer(QRY_TEXT_BUF(qp)), s );
 	}
 }
 
@@ -3305,9 +3307,9 @@ static void show_query_level(QSP_ARG_DECL int i)
 		advise(ERROR_STRING);
 	}
 
-	if( QRY_TEXT(qp) != NULL ){
+	if( QRY_TEXT_BUF(qp) != NULL ){
 		sprintf(ERROR_STRING,
-			"\tstored text:\n%s",QRY_TEXT(qp));
+			"\tstored text:\n\"%s\"",sb_buffer(QRY_TEXT_BUF(qp)));
 		advise(ERROR_STRING);
 	}
 

@@ -402,7 +402,9 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 	Item *ip;
 	Node *np;
 
-	assert( *name != 0 );
+	//assert( *name != 0 );
+	assert( name != NULL );
+	if( *name == 0 ) return NULL;
 
 	LOCK_ITEM_TYPE(itp)
 

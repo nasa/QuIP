@@ -402,6 +402,12 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	type * stem##_p;					\
 								\
+	assert(name!=NULL);					\
+								\
+	if( *name == 0 ){					\
+		WARN("Can't create " #stem " item with null name!?");	\
+		return NULL;					\
+	}							\
 	if( stem##_itp == NO_ITEM_TYPE )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 								\

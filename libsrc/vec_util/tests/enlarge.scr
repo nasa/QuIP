@@ -1,0 +1,23 @@
+
+Set small_w	2
+Set small_h	3
+#Set large_w	8
+Set large_w	2
+Set large_h	6
+
+#platforms
+#  select $DEFAULT_PLATFORM $DEFAULT_GPU
+#  quit
+
+Image small $small_h $small_w 1 float
+Image large $large_h $large_w 1 float
+
+Ramp2D small 0 1 10
+Display small
+
+#debug veclib
+Enlarge large small
+Display large
+
+exit
+

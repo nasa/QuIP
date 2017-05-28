@@ -860,6 +860,8 @@ if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
 	/* BUG need to check here that tty_in, tty_out
 	 * are really tty's!!
 	 */
+	assert( tty_in != NULL );
+	assert( tty_out != NULL );
 
 	insure_tty_chars(SINGLE_QSP_ARG);
 

@@ -13,6 +13,7 @@
 
 struct query {
 	char *			(*q_readfunc)(QSP_ARG_DECL  void *buf, int size, void *stream);
+	String_Buf *		q_buffer;
 	int			q_idx;
 	char *			q_databuf;	// was NSString - do we need?
 	// BUG - we'd like to be able to grow this table dynamically...
@@ -29,7 +30,6 @@ struct query {
 	int			q_lineno;
 	uint32_t		q_flags;
 	const char *		q_lbptr;
-	char *			q_buffer;
 	const char **		q_args;
 	Macro *			q_mp;
 	Foreach_Loop *		q_forloop;
@@ -94,8 +94,6 @@ struct query {
 #define QRY_LBPTR(qp)			(qp)->q_lbptr
 #define SET_QRY_LBPTR(qp,p)		(qp)->q_lbptr = p
 #define QRY_TEXT_BUF(qp)		(qp)->q_text_buf
-#define QRY_TEXT(qp)			sb_buffer(QRY_TEXT_BUF(qp))
-#define SET_QRY_TEXT(qp,s)		{ assert(QRY_TEXT_BUF(qp)!=NULL); }
 #define SET_QRY_TEXT_BUF(qp,sbp)	(qp)->q_text_buf = sbp
 #define QRY_LINES_READ(qp)		(qp)->q_n_lines_read
 #define SET_QRY_LINES_READ(qp,n)	(qp)->q_n_lines_read = n

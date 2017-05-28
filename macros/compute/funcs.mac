@@ -594,10 +594,12 @@ compute fft scroll $1 $2 $3 $4 quit quit
 
 Define RInvFFT 2 image xform
 compute fft irfft $1 $2 quit quit
+VSMul $1 $1 1/(ncols('$1')*nrows('$1'))
 .
 
 Define InvFFT 1 image
 compute fft invfft $1 quit quit
+VSMul $1 $1 1/(ncols('$1')*nrows('$1'))
 .
 
 Define Wrap 2 target source

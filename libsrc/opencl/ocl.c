@@ -792,13 +792,13 @@ static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 }
 
 // map_buf makes an opengl buffer object usable by OpenCL?
+
 static int ocl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
 	cl_int status;
 
 	glFlush();
 
-//fprintf(stderr,"ocl_map_buf mapping %s\n",OBJ_NAME(dp));
 	// Acquire ownership of GL texture for OpenCL Image
 	status = clEnqueueAcquireGLObjects(//cl_cmd_queue,
 			OCLDEV_QUEUE(OBJ_PFDEV(dp)),
@@ -822,7 +822,6 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 #ifdef HAVE_OPENGL
 	cl_int status;
 
-//fprintf(stderr,"ocl_unmap_buf un-mapping %s\n",OBJ_NAME(dp));
 	// Release ownership of GL texture for OpenCL Image
 	status = clEnqueueReleaseGLObjects(//cl_cmd_queue,
 			OCLDEV_QUEUE(OBJ_PFDEV(dp)),
