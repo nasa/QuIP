@@ -100,7 +100,7 @@ Macro_Arg **create_generic_macro_args(int n)
 	ma_tbl = getbuf( n * sizeof(Macro_Arg *));
 	for(i=0;i<n;i++){
 		ma_tbl[i] = getbuf( sizeof(Macro_Arg) );
-		setup_generic_macro_arg(&ma_tbl[i],i);
+		setup_generic_macro_arg(ma_tbl[i],i);
 	}
 	return ma_tbl;
 }
