@@ -547,8 +547,9 @@ static const char * handle_completed_line(QSP_ARG_DECL  int c,Completion_Data *c
 			add_def(QSP_ARG  PROMPT,edit_string);
 		return(edit_string);
 	} else {
-		if( *PROMPT && THIS_SELECTION != NULL && *THIS_SELECTION )
+		if( *PROMPT && THIS_SELECTION != NULL && *THIS_SELECTION ){
 			add_def(QSP_ARG  PROMPT,THIS_SELECTION);
+		}
 
 		// Store the newline too...
 		if( N_SO_FAR >= (LLEN-1) ){
@@ -851,7 +852,9 @@ static void init_completion_data(Completion_Data *cdp,const char *prompt,FILE *t
 const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out )
 {
 	int c;
-	struct completion_data _this_completion;
+	// This has to be static because it is returned...
+	// We assume we don't have to worry about thread safety for interactive...
+	static struct completion_data _this_completion;
 
 #ifdef QUIP_DEBUG
 if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");

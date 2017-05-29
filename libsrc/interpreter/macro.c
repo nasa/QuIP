@@ -63,7 +63,12 @@ Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, 
 	SET_MACRO_N_ARGS(mp,n);
 	SET_MACRO_FLAGS(mp,0);
 	SET_MACRO_ARG_TBL(mp,ma_tbl);
-	SET_MACRO_TEXT(mp,savestr(sb_buffer(sbp)));
+	assert(sbp!=NULL);
+	if( *sb_buffer(sbp) != 0 )
+		SET_MACRO_TEXT(mp,savestr(sb_buffer(sbp)));
+	else
+		SET_MACRO_TEXT(mp,NULL);
+
 	// Can we access the filename here, or do we
 	// need to do it earlier because of lookahead?
 	// We have to save it, because qry_filename may

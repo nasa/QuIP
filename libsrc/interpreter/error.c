@@ -788,6 +788,7 @@ static void tell_input_location( SINGLE_QSP_ARG_DECL )
 
 	level_tbl = get_levels_to_print(QSP_ARG  &n_levels_to_print);
 	print_qs_levels(QSP_ARG  level_tbl, n_levels_to_print);
+	givbuf(level_tbl);
 }
 
 void q_error1( QSP_ARG_DECL  const char *msg )

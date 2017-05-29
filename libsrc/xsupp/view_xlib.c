@@ -2185,3 +2185,4 @@ void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
 #endif /* HAVE_VBL */
 }
 
+

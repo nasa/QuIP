@@ -1281,8 +1281,9 @@ void recycle_item(Item_Type *itp, void *ip)
 /*
  * Delete the item pointed to by ip from the item database.
  * The actual storage for the item is not freed, but is
- * added to the item type's free list.  The caller must
- * free the stored name to prevent a memory leak.
+ * added to the item type's free list.  This routine
+ * releases the name, so The caller must not
+ * free it also...
  */
 
 void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)

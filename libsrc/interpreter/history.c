@@ -179,7 +179,6 @@ static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
 	 * BUT - we expect to find it in the first one!?
 	 */
 	del_item(QSP_ARG  choice_itp,hcp);
-	rls_str((char *)hcp->hc_text);	/* BUG? saved w/ savestr??? */
 	pop_item_context(QSP_ARG  choice_itp);
 }
 
@@ -188,7 +187,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
-//fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
+fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */

@@ -30,6 +30,7 @@ void enlarge_buffer(String_Buf *sbp,size_t size)
 		memcpy(newbuf,sbp->sb_buf,sbp->sb_size);
 		givbuf(sbp->sb_buf);
 	} else {
+		assert(sbp->sb_buf==NULL);
 		/* if this is a new buffer, initialize w/ null string.
 		 * This insures that cat_string will work to a null stringbuf.
 		 */

@@ -1613,7 +1613,6 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 	if( ! (word_scan_flags & RW_NOVAREXP) )
 		var_expand(QSP_ARG  sbp);
 
-//fprintf(stderr,"next_word_from_input_line returning \"%s\"\n",sb_buffer(sbp));
 	return(sb_buffer(sbp));
 } // end next_word_from_input_line
 
@@ -1807,18 +1806,6 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 		}
 	}
 
-#ifdef FOOBAR
-	// check for buffer overrun?
-	if( strlen(s) > buf_size-2 ){
-		sprintf(ERROR_STRING,"hist_select:  buffer too small!?");
-		WARN(ERROR_STRING);
-		// BUG - well, do something about it!
-	}
-
-	strcpy(buf,s);
-	strcat(buf,"\n");
-#endif // FOOBAR
-
 	SET_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
 	SET_QRY_LINE_PTR(qp,s);
 
@@ -1947,7 +1934,9 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 	{
 		const char *s;
 		s = get_line_interactive(QSP_ARG  pline);
-		if( s != NULL ) return s;
+		if( s != NULL ){
+			return s;
+		}
 		qp = CURR_QRY(THIS_QSP);
 	}
 #endif /* TTY_CTL */
@@ -2683,7 +2672,7 @@ char *qpfgets( QSP_ARG_DECL void *buf, int size, void *fp )
 	SET_QRY_COUNT(qp,0);						\
 	SET_QRY_FLAGS(qp,0);						\
 	SET_QRY_DUPFILE(qp,NULL);					\
-	SET_QRY_TEXT_BUF(qp,NULL);					\
+	/*SET_QRY_TEXT_BUF(qp,NULL);*/					\
 	SET_QRY_MACRO(qp,NO_MACRO);					\
 	if( QRY_BUFFER(qp) == NULL ){					\
 		SET_QRY_BUFFER(qp,new_stringbuf());			\
@@ -2973,7 +2962,8 @@ Query * pop_file(SINGLE_QSP_ARG_DECL)
 	/* free macro args if any */
 
 	/* macro open && not a loop in a macro */
-	if( QRY_MACRO(qp) != NO_MACRO && NOT_PASSED(qp) ){
+	if( (QRY_MACRO(qp) != NULL) && NOT_PASSED(qp) ){
+
 		/* exiting macro, free args */
 		if( MACRO_N_ARGS(QRY_MACRO(qp)) > 0 ){
 			for(i=0;i<MACRO_N_ARGS(QRY_MACRO(qp));i++){
@@ -2990,18 +2980,6 @@ advise(ERROR_STRING);
 			SET_QRY_ARGS(qp,NULL);
 		}
 	}
-	/* We release if non-null in SET_QRY_FILENAME...
-	 * If we want to do this here, we would need to add
-	 * a check in SET_QRY_FILENAME for NULL, so we don't
-	 * try to save a string at the null ptr...
-	 */
-
-	/*
-	if( QRY_FILENAME(qp) != NULL ){
-		rls_str(QRY_FILENAME(qp));
-		SET_QRY_FILENAME(qp,NULL);
-	}
-	*/
 
 	rls_query(qp);	// add to query free list
 
@@ -3557,6 +3535,8 @@ const char *savestr(const char *s)
 {
 	char *new_s;
 	
+	assert(s!=NULL);
+	assert(*s!=0);
 	new_s = getbuf(strlen(s)+1);
 	strcpy(new_s,s);
 	return(new_s);
@@ -3823,6 +3803,7 @@ inline const char *query_filename(SINGLE_QSP_ARG_DECL)
 
 // Make a table of the unique levels.
 // n_ptr is a return argument.
+// The table has to be freed by the caller!!!
 
 int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr)
 {

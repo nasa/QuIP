@@ -532,26 +532,19 @@ void * getbuf(size_t size)
 {
 	void *p;
 
-//if( size > 200000 ){
-//mem_alert(size);
-//}
-
-//#ifdef CAUTIOUS
-	// What is the difference between calloc and malloc???  calloc zeroes the memory!
-//	p=calloc(size,1);
-//#else // ! CAUTIOUS
-
 	/* Call calloc instead of malloc to zero the memory.
 	 * We expect callers to do this themselves if required!
 	 *
 	 * When we changed this to malloc, it revealed a buf in vectree...
 	 * something that was assumed to be NULL if not set is not getting intialized!?
 	 *
+	 * setting MallocScribble can also help reveal these problems...
+	 *
 	 * Fixed one problem with VN_DECL_OBJ, but other problems appear to remain...
 	 */
-//	p=malloc(size);
+	p=malloc(size);
 
-	p=calloc(size,1);
+//	p=calloc(size,1);
 
 //#endif // ! CAUTIOUS
 
@@ -563,7 +556,7 @@ void * getbuf(size_t size)
 #ifdef QUIP_DEBUG
 if( debug & gbdebug ){
     /* DEAFULT_ERROR_STRING not valid at startup!? */
-    fprintf(stderr,"getbuf(3):  %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
+    fprintf(stderr,"getbuf:  allocated %10ld at addr = 0x%lx\n", (long)size, (u_long)p );
 }
 #endif /* QUIP_DEBUG */
 
@@ -574,10 +567,11 @@ if( debug & gbdebug ){
 
 void givbuf( const void * a )
 {
+	assert(a!=NULL);
 
 #ifdef QUIP_DEBUG
 if( debug & gbdebug ){
-sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%lx)",(long)a);
+sprintf(DEFAULT_ERROR_STRING,"givbuf:\t\t\t  freeing addr 0x%lx",(long)a);
 NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
