@@ -1078,11 +1078,12 @@ static void init_ios_device(void)
 
 	// now interpreter the startup file...
 	// We'd like the startup file to define the navigation interface...
-	//exec_pending_commands(SGL_DEFAULT_QSP_ARG);
 
 	// we can't call this thread synchronously, and then
 	// have it call us back synchronously, or we will hang...
-	exec_quip(SGL_DEFAULT_QSP_ARG);
+
+	exec_quip(SGL_DEFAULT_QSP_ARG);		// didFinishLaunching
+fprintf(stderr,"back from exec_quip, application:  didFinishLaunchingWithOptions:\n");
 
 	// this might return before doing all the commands if
 	// there is an alert...
@@ -1111,10 +1112,6 @@ static void init_ios_device(void)
 			initWithRootViewController:first_quip_controller];
 
 
-	// The done button will call qvcExitProgram,
-	// (how does it get there?)
-	// List of button types UIBarButtonSystemItem
-
 	// This button is labelled 'Done'
 	UIBarButtonItem *item = [[UIBarButtonItem alloc]
 			initWithBarButtonSystemItem:UIBarButtonSystemItemDone
@@ -1128,9 +1125,7 @@ static void init_ios_device(void)
 
 	[window setRootViewController:root_view_controller];
 
-
 	init_ios_text_output();	// set function vectors for warnings etc.
-
 
 	// If an alert occurred in the startup script,
 	// the dismiss function won't have been caught by the proper view
@@ -1139,6 +1134,7 @@ static void init_ios_device(void)
 
 	// This causes the app to exit...
 	//dismiss_quip_alert(NULL);
+
 	check_deferred_alert(SGL_DEFAULT_QSP_ARG);
 
 	if( xcode_debug )
@@ -1346,16 +1342,11 @@ static NSString *applicationName=NULL;
 
 	// now interpreter the startup file...
 
-	exec_quip(SGL_DEFAULT_QSP_ARG);
+	exec_quip(SGL_DEFAULT_QSP_ARG);	// applicationDidFinishLaunching
+fprintf(stderr,"back from exec_quip, applicationDidFinishLaunching:\n");
 
 	root_view_controller = [[quipNavController alloc]
 			initWithRootViewController:first_quip_controller];
-#ifdef FOOBAR
-	set_warn_func(ios_warn);
-	set_error_func(ios_error);
-	set_advise_func(ios_advise);
-	set_prt_msg_frag_func(ios_prt_msg_frag);
-#endif // FOOBAR
 
 	check_deferred_alert(SGL_DEFAULT_QSP_ARG);
 
@@ -1620,14 +1611,15 @@ static bool read_quip_file(const char *pathname)
 		// Should we send up an alert here?
 //fprintf(stderr,"Error opening file %s\n", pathname);
 		return FALSE;
-    } else {
+	} else {
 		// Because scripts often redirect
 		// to other files in the same directory,
 		// it might make sense to set the directory here?
         chdir_to_file(pathname);
 
 		redir(DEFAULT_QSP_ARG  fp, pathname );
-		exec_quip(SGL_DEFAULT_QSP_ARG);
+		exec_quip(SGL_DEFAULT_QSP_ARG);	// read_quip_file
+fprintf(stderr,"back from exec_quip, read_quip_file\n");
 		return TRUE;
 	}
 }

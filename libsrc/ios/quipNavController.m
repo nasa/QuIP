@@ -27,6 +27,7 @@ void set_autorotation_allowed( BOOL yesno )
 	return YES;
 }
 
+#ifdef FOOBAR
 // is this needed??
 
 /********** UIAlertView delegate methods ************/
@@ -42,6 +43,7 @@ void set_autorotation_allowed( BOOL yesno )
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // FOOBAR
 
 
 /***************** UINavigationControllerDelegate methods ********/

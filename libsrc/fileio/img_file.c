@@ -390,8 +390,7 @@ void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 	if( ifp->if_pathname != ifp->if_name ){
 		rls_str((char *)ifp->if_pathname);
 	}
-	DEL_IMG_FILE(ifp);
-	rls_str((char *)ifp->if_name);
+	DEL_IMG_FILE(ifp);	// frees the name
 
 	/* don't free the struct pointer, it's marked available
 	 * for reuse by del_item (called from del_img_file)...

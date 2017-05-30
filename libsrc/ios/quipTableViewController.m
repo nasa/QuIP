@@ -39,6 +39,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 	// nop
 }
 
+#ifdef FOOBAR
 /********** UIAlertView delegate methods ************/
 
 - (void)alertView:(QUIP_ALERT_OBJ_TYPE *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
@@ -52,6 +53,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // FOOBAR
 
 -(void) qtvcExitProgram
 {

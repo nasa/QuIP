@@ -29,17 +29,71 @@
 
 static QUIP_ALERT_OBJ_TYPE *fatal_alert_view=NULL;
 static QUIP_ALERT_OBJ_TYPE *busy_alert_p=NULL;
-static QUIP_ALERT_OBJ_TYPE *hidden_busy_p=NULL;
+static QUIP_ALERT_OBJ_TYPE *suspended_busy_p=NULL;
 static QUIP_ALERT_OBJ_TYPE *ending_busy_p=NULL;
 
-static void show_alert( QUIP_ALERT_OBJ_TYPE *alert_p )
+inline static void remember_alert(QUIP_ALERT_OBJ_TYPE *alert, int code )
+{
+	[Alert_Info rememberAlert:alert withType:code];
+}
+
+inline static void remember_normal_alert(QUIP_ALERT_OBJ_TYPE *alert)
+{
+	remember_alert(alert, QUIP_ALERT_NORMAL);
+}
+
+inline static void remember_busy_alert(QUIP_ALERT_OBJ_TYPE *alert)
+{
+	remember_alert(alert, QUIP_ALERT_BUSY);
+}
+
+inline static void remember_confirmation_alert(QUIP_ALERT_OBJ_TYPE *alert)
+{
+	remember_alert(alert, QUIP_ALERT_CONFIRMATION);
+}
+
+static void suspend_quip_interpreter(SINGLE_QSP_ARG_DECL)
+{
+	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+}
+
+static void show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 {
 #ifdef OLD
 	[alert_p show];
 #else // ! OLD
 fprintf(stderr,"show_alert will show 0x%lx\n",(long)alert_p);
-	[ root_view_controller presentViewController:alert_p animated:NO completion:nil ];
-#endif // !OLD
+	[ root_view_controller presentViewController:alert_p animated:NO completion:^(void){
+fprintf(stderr,"show_alert:  presentViewController completion block called\n");
+			if( alert_p == busy_alert_p ){
+fprintf(stderr,"show_alert calling resume_quip after displaying busy alert\n");
+				resume_quip(DEFAULT_QSP_ARG);
+			}
+	}
+	];
+fprintf(stderr,"show_alert back from presentViewController\n");
+#endif // ! OLD
+
+	// The alert won't be shown until we relinquish control
+	// back to the system...
+	// So we need to inform the system not to interpret any more commands!
+
+	suspend_quip_interpreter(SINGLE_QSP_ARG);
+}
+
+
+static void resume_busy(void)
+{
+	if( suspended_busy_p == NULL ){
+		NWARN("resume_busy:  no suspended busy alert!?");
+		return;
+	}
+	busy_alert_p=suspended_busy_p;
+	suspended_busy_p=NULL;
+	// Isn't this alert already remembered?
+	remember_busy_alert(busy_alert_p);
+fprintf(stderr,"resume_busy calling show_alert 0x%lx\n",(long)busy_alert_p);
+	show_alert(QSP_ARG  busy_alert_p);
 }
 
 void set_allowed_orientations( Quip_Allowed_Orientations o )
@@ -66,7 +120,7 @@ void set_allowed_orientations( Quip_Allowed_Orientations o )
 			m=UIInterfaceOrientationMaskLandscapeLeft;
 			break;
 		default:
-			m=UIInterfaceOrientationMaskAll;    // silence compiler warning
+			m=UIInterfaceOrientationMaskAll;	// silence compiler warning
 			// use assertion instead?
 			NERROR1("set_allowed_orientations:  illegal orienation code!?");
 			break;
@@ -370,28 +424,16 @@ void make_label(QSP_ARG_DECL  Screen_Obj *sop)
 	// or not there is more than one line, but a correct
 	// solution must incorporate the font and size etc.
 
-/* In iOS 6, use NSTextAlignment instead of UITextAlignment? */
-
 #define LABEL_CENTER_THRESHOLD	30
 
-#ifdef FOOBAR
-	// Older versions used this???
 	if( strlen(SOB_CONTENT(sop)) < LABEL_CENTER_THRESHOLD )
 		l.textAlignment = NSTextAlignmentCenter;
 	else
 		l.textAlignment = NSTextAlignmentLeft;
-#else // ! FOOBAR
-
-	if( strlen(SOB_CONTENT(sop)) < LABEL_CENTER_THRESHOLD )
-		l.textAlignment = NSTextAlignmentCenter;
-	else
-		l.textAlignment = NSTextAlignmentLeft;
-
-#endif // ! FOOBAR
 
 	l.numberOfLines = 0; //for word wrapping
 	//l.lineBreakMode = UILineBreakModeWordWrap; for word wrapping
-    [l setLineBreakMode:NSLineBreakByWordWrapping];
+	[l setLineBreakMode:NSLineBreakByWordWrapping];
 	// what does this do about the width?
 	[l sizeToFit];
 
@@ -1386,95 +1428,231 @@ struct alert_data {
 
 static struct alert_data deferred_alert = { NULL, NULL };
 
+static void clear_deferred_alert(void)
+{
+	assert(deferred_alert.type != NULL);
+	assert(deferred_alert.msg != NULL);
+
+	rls_str(deferred_alert.type);
+	rls_str(deferred_alert.msg);
+
+	deferred_alert.type=NULL;
+	deferred_alert.msg=NULL;
+}
+
 // We call suspend_busy when the busy alert is up, and we want to
 // display a different alert.  we are probably calling this from
 // finish_digestion...
 
 static void suspend_busy(void)
 {
+fprintf(stderr,"suspend_busy BEGIN\n");
 	// we need to display an alert while we are busy...
-	hidden_busy_p = busy_alert_p;
+	suspended_busy_p = busy_alert_p;
 	end_busy(0);	// takes the alert down
+fprintf(stderr,"suspend_busy DONE\n");
 }
 
-static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
+static void defer_alert(const char *type, const char *msg)
+{
+	if( deferred_alert.type != NULL ){
+		fprintf(stderr,"MORE THAN ONE DEFERRED ALERT!?\n");
+		fprintf(stderr,"Discarding deferred alert \"%s %s\"\n",
+			deferred_alert.type,deferred_alert.msg);
+		clear_deferred_alert();
+		defer_alert("TOO MANY DEFERRED ALERTS!?",msg);
+	} else {
+		assert(deferred_alert.msg==NULL);
+		deferred_alert.type = savestr(type);
+		deferred_alert.msg = savestr(msg);
+	}
+}
+
+static void alert_dismissal_busy_checks(Alert_Info *aip)
+{
+	if( aip.the_alert_p == ending_busy_p ){	// dismissed busy alert
+		// nothing more to do.
+		ending_busy_p=NULL;
+fprintf(stderr,"alert_dismissal_busy_check alert is ending_busy_p\n");
+		return;
+	}
+
+	if( aip.the_alert_p == suspended_busy_p ){
+fprintf(stderr,"alert_dismissal_busy_check alert is suspended_busy_p\n");
+		return;
+	}
+
+fprintf(stderr,"alert_dismissal_busy_check:  busy_alert_p = 0x%lx, suspended_busy_p = 0x%lx\n",
+(long)busy_alert_p,(long)suspended_busy_p);
+
+	if( busy_alert_p == NULL ){	// no suspended busy alert?
+		if( suspended_busy_p != NULL ){
+			if( aip.the_alert_p != suspended_busy_p ){
+fprintf(stderr,"alert_dismissal_busy_check calling resume_busy\n");
+				resume_busy();
+			} else {
+			// otherwise this is generated by the
+			// programmatic dismissal of the busy alert?
+fprintf(stderr,"alert_dismissal_busy_check calling resume_quip at end of busy period\n");
+				resume_quip(SGL_DEFAULT_QSP_ARG);
+			}
+		} else {
+fprintf(stderr,"alert_dismissal_busy_check calling resume_quip\n");
+			resume_quip(DEFAULT_QSP_ARG);
+		}
+	} else {
+		// don't allow the busy panel to be dismissed by the user
+fprintf(stderr,"alert_dismissal_busy_check showing busy alert\n");
+		show_alert(QSP_ARG  busy_alert_p);
+	}
+
+	// If we had an alarm while the alert was up,
+	// we now have a stored chunk...
+} // alert_dismissal_busy_check
+
+static void quip_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteger buttonIndex)
+{
+	if( alertView == fatal_alert_view ){
+		[first_quip_controller qtvcExitProgram];
+	}
+
+	Alert_Info *aip;
+
+	aip = [Alert_Info alertInfoFor:alertView];
+
+	if( IS_VALID_ALERT(aip) ){
+		if( aip.type == QUIP_ALERT_CONFIRMATION ){
+			if( buttonIndex == 0 ){
+				assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","0");
+			} else {
+				assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","1");
+			}
+		}
+fprintf(stderr,"quip_alert_dismissal_actions: forgetting alert at 0x%lx\n",
+(long)alertView);
+		[aip forget];	// removes from list
+
+fprintf(stderr,"quip_alert_dismissal_actions calling alert_dismissal_busy_check\n");
+		alert_dismissal_busy_checks(aip);
+	}
+#ifdef CAUTIOUS
+	 else {
+		sprintf(DEFAULT_ERROR_STRING,
+"CAUTIOUS:  quip_alert_dismissal_actions:  Unrecognized alert type %d!?",aip.type);
+		NWARN(DEFAULT_ERROR_STRING);
+		return;
+	}
+#endif // CAUTIOUS
+}
+
+static QUIP_ALERT_OBJ_TYPE *create_alert_with_no_buttons(const char *type, const char *msg)
+{
+	QUIP_ALERT_OBJ_TYPE *alert;
+#ifdef OLD
+	// open an alert with a single dismiss button
+	// How can we changed the behavior of the delegate???
+	alert = [[QUIP_ALERT_OBJ_TYPE alloc]
+		initWithTitle:STRINGOBJ(type)
+		message:STRINGOBJ(msg)
+		delegate:vc
+		cancelButtonTitle: @"Please be patient..."
+		otherButtonTitles: nil];
+#else // !OLD
+	alert = [UIAlertController
+				alertControllerWithTitle: STRINGOBJ(type)
+				message: STRINGOBJ(msg)
+				preferredStyle:UIAlertControllerStyleAlert];
+
+fprintf(stderr,"busy alert created at 0x%lx\n",(long)alert);
+#endif // !OLD
+
+	return alert;
+}
+
+static QUIP_ALERT_OBJ_TYPE *create_alert_with_one_button(const char *type, const char *msg)
+{
+#ifdef OLD
+	// open an alert with a single dismiss button
+	QUIP_ALERT_OBJ_TYPE *alert = [[QUIP_ALERT_OBJ_TYPE alloc]
+		initWithTitle:STRINGOBJ(type)
+		message:STRINGOBJ(msg)
+		delegate:vc
+		cancelButtonTitle: is_fatal ?  @"Exit program" : @"OK"
+		otherButtonTitles: nil];
+	fatal_alert_view= is_fatal ? alert : NULL;
+	//[alert show];
+#else // ! OLD
+	UIAlertController * alert=   [UIAlertController
+		 alertControllerWithTitle: STRINGOBJ(type)
+		 message: STRINGOBJ(msg)
+		 preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction* ok = [UIAlertAction
+		actionWithTitle:@"OK"
+		style:UIAlertActionStyleDefault
+		handler:^(UIAlertAction * action)	/* block */
+		{
+		/*
+fprintf(stderr,"UIAlertAction handler calling dismissViewControllerAnimated\n");
+			[alert dismissViewControllerAnimated:YES completion:^(void){
+fprintf(stderr,"dismissViewControllerAnimated completion block calling quip_alert_dismissal_actions\n");
+*/
+			// is the handler called before or after the alert
+			// is dismissed???
+fprintf(stderr,"UIAlertAction handler calling quip_alert_dismissal_actions 0x%lx\n",(long)alert);
+				quip_alert_dismissal_actions(alert,0);
+			}];
+
+//	UIAlertAction* cancel = [UIAlertAction
+//		actionWithTitle:@"Cancel"
+//		style:UIAlertActionStyleDefault
+//		handler:^(UIAlertAction * action)
+//		{ [alert dismissViewControllerAnimated:YES completion:nil]; }];
+
+	[alert addAction:ok];
+//	[alert addAction:cancel];
+#endif // ! OLD
+
+	return alert;
+}
+static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	UIViewController *vc;
 	int is_fatal;
-
-	if( busy_alert_p != NULL ) {
-fprintf(stderr,"generic alert \"%s\", need to suspend busy...\n",msg);
-		suspend_busy();
-	}
 
 	vc = root_view_controller.topViewController;
 
 	// vc can be null if we call this before we have set
 	// root_view_controller (during startup)
 
-	if( vc != NULL ){
-
-		is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
-
-#ifdef OLD
-		// open an alert with a single dismiss button
-		QUIP_ALERT_OBJ_TYPE *alert = [[QUIP_ALERT_OBJ_TYPE alloc]
-			initWithTitle:STRINGOBJ(type)
-			message:STRINGOBJ(msg)
-			delegate:vc
-			cancelButtonTitle: is_fatal ?  @"Exit program" : @"OK"
-			otherButtonTitles: nil];
-		fatal_alert_view= is_fatal ? alert : NULL;
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_NORMAL];
-		//[alert show];
-#else // ! OLD
-		UIAlertController * alert=   [UIAlertController
-			 alertControllerWithTitle: STRINGOBJ(type)
-			 message: STRINGOBJ(msg)
-			 preferredStyle:UIAlertControllerStyleAlert];
-
-		UIAlertAction* ok = [UIAlertAction
-			actionWithTitle:@"OK"
-			style:UIAlertActionStyleDefault
-			handler:^(UIAlertAction * action)
-			{
-				[alert dismissViewControllerAnimated:YES completion:nil];
-				dismiss_quip_alert(alert,0);
-			}
-			];
-//		UIAlertAction* cancel = [UIAlertAction
-//			actionWithTitle:@"Cancel"
-//			style:UIAlertActionStyleDefault
-//			handler:^(UIAlertAction * action)
-//			{ [alert dismissViewControllerAnimated:YES completion:nil]; }];
-
-		[alert addAction:ok];
-//		[alert addAction:cancel];
-
-		fatal_alert_view= is_fatal ? alert : NULL;
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_NORMAL];
-
-		//[ vc presentViewController:alert animated:YES completion:nil];
-#endif // ! OLD
-		show_alert(alert);
-
-	} else {
-		deferred_alert.type = savestr(type);
-		deferred_alert.msg = savestr(msg);
+	if( vc == NULL ){
+		defer_alert(type,msg);
+		return;
 	}
 
-	// The alert won't be shown until we relinquish control
-	// back to the system...
-	// So we need to inform the system not to interpret any more commands!
+	is_fatal = !strcmp(type,FATAL_ERROR_TYPE_STR) ? 1 : 0 ;
 
-	// When multiple alerts are issued, it seems to put them on a stack,
-	// so they are shown in reverse order.  We would like to inhibit
-	// script execution until the alert is dismissed...
-	//
-	// BUT if vc is null, we don't trap the callback...
-
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+	QUIP_ALERT_OBJ_TYPE *alert;
+	alert = create_alert_with_one_button(type,msg);
+	remember_normal_alert(alert);
+	fatal_alert_view= is_fatal ? alert : NULL;
+	show_alert(QSP_ARG  alert);
+fprintf(stderr,"generic_alert DONE\n");
 } // generic_alert
+
+static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
+{
+fprintf(stderr,"generic alert \"%s\", BEGIN\n",msg);
+	if( busy_alert_p != NULL ) {
+fprintf(stderr,"generic alert \"%s\", need to suspend busy...\n",msg);
+		suspend_busy();
+		// relinquish control and come back later
+		defer_alert(type,msg);
+		suspend_quip_interpreter();
+		return;
+	}
+	present_generic_alert(QSP_ARG  type, msg);
+}
 
 void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 {
@@ -1489,59 +1667,48 @@ void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 	// vc can be null if we call this before we have set
 	// root_view_controller (during startup)
 
-	if( vc != NULL ){
-#ifdef OLD
-		// open an alert with a single dismiss button
-		QUIP_ALERT_OBJ_TYPE *alert = [[QUIP_ALERT_OBJ_TYPE alloc]
-			initWithTitle:STRINGOBJ(title)
-			message:STRINGOBJ(question)
-			delegate:vc
-			cancelButtonTitle: @"Cancel"
-			otherButtonTitles: @"Proceed", nil ];
-
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_CONFIRMATION];
-		//[alert show];
-#else // ! OLD
-		UIAlertController * alert=   [UIAlertController
-			 alertControllerWithTitle: STRINGOBJ(title)
-			 message: STRINGOBJ(question)
-			 preferredStyle:UIAlertControllerStyleAlert];
-
-// BUG need to copy code from the delegate into the actions!
-		UIAlertAction* ok = [UIAlertAction
-			actionWithTitle:@"Proceed"
-			style:UIAlertActionStyleDefault
-			handler:^(UIAlertAction * action)
-			{ [alert dismissViewControllerAnimated:YES completion:nil]; }
-			];
-		UIAlertAction* cancel = [UIAlertAction
-			actionWithTitle:@"Cancel"
-			style:UIAlertActionStyleDefault
-			handler:^(UIAlertAction * action)
-			{ [alert dismissViewControllerAnimated:YES completion:nil]; }];
-
-		[alert addAction:cancel];
-		[alert addAction:ok];
-
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_NORMAL];
-
-		//[ vc presentViewController:alert animated:YES completion:nil];
-#endif // ! OLD
-		show_alert(alert);
-	} else {
-		/*
-		deferred_alert.type = savestr(type);
-		deferred_alert.msg = savestr(msg);
-		*/
+	if( vc == NULL ){
 		assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","1");
 		return;
 	}
 
-	// The alert won't be shown until we relinquish control
-	// back to the system...
-	// So we need to inform the system not to interpret any more commands!
+#ifdef OLD
+	// open an alert with a single dismiss button
+	QUIP_ALERT_OBJ_TYPE *alert = [[QUIP_ALERT_OBJ_TYPE alloc]
+		initWithTitle:STRINGOBJ(title)
+		message:STRINGOBJ(question)
+		delegate:vc
+		cancelButtonTitle: @"Cancel"
+		otherButtonTitles: @"Proceed", nil ];
 
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+	//[alert show];
+#else // ! OLD
+	UIAlertController * alert=   [UIAlertController
+		 alertControllerWithTitle: STRINGOBJ(title)
+		 message: STRINGOBJ(question)
+		 preferredStyle:UIAlertControllerStyleAlert];
+
+// BUG need to copy code from the delegate into the actions!
+	UIAlertAction* ok = [UIAlertAction
+		actionWithTitle:@"Proceed"
+		style:UIAlertActionStyleDefault
+		handler:^(UIAlertAction * action)
+		{ [alert dismissViewControllerAnimated:YES completion:nil]; }
+		];
+	UIAlertAction* cancel = [UIAlertAction
+		actionWithTitle:@"Cancel"
+		style:UIAlertActionStyleDefault
+		handler:^(UIAlertAction * action)
+		{ [alert dismissViewControllerAnimated:YES completion:nil]; }];
+
+	[alert addAction:cancel];
+	[alert addAction:ok];
+
+	//[ vc presentViewController:alert animated:YES completion:nil];
+#endif // ! OLD
+	remember_confirmation_alert(alert);
+	show_alert(QSP_ARG  alert);
+fprintf(stderr,"get_confirmation DONE\n");
 } // get_confirmation
 
 /* Like an alert, but we don't stop execution - but wait, we have to,
@@ -1552,7 +1719,7 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	UIViewController *vc;
 
-fprintf(stderr,"notify_busy BEGIN\n");
+fprintf(stderr,"notify_busy \"%s %s\" BEGIN\n",type,msg);
 	if( busy_alert_p != NULL ){
 		// we have to dismiss the busy indicator
 		// to print a warning pop-up!?
@@ -1565,44 +1732,14 @@ fprintf(stderr,"OOPS - notify_busy called twice!?\n");
 	// vc can be null if we call this before we have set
 	// root_view_controller (during startup)
 
-	if( vc != NULL ){
-#ifdef OLD
-		// open an alert with a single dismiss button
-		// How can we changed the behavior of the delegate???
-		QUIP_ALERT_OBJ_TYPE *alert = [[QUIP_ALERT_OBJ_TYPE alloc]
-			initWithTitle:STRINGOBJ(type)
-			message:STRINGOBJ(msg)
-			delegate:vc
-			cancelButtonTitle: @"Please be patient..."
-			otherButtonTitles: nil];
+	if( vc == NULL ) return;
 
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_BUSY];
+	QUIP_ALERT_OBJ_TYPE *alert;
 
-		//[alert show];
-#else // !OLD
-		UIAlertController *alert = [UIAlertController
-					alertControllerWithTitle: STRINGOBJ(type)
-					message: STRINGOBJ(msg)
-					preferredStyle:UIAlertControllerStyleAlert];
-
-fprintf(stderr,"busy alert created at 0x%lx\n",(long)alert);
-		[Alert_Info rememberAlert:alert withType:QUIP_ALERT_BUSY];
-
-		//[vc presentViewController:alert animated:YES completion:nil];
-#endif // !OLD
-		show_alert(alert);
-		busy_alert_p=alert;	// remember for later
-	}
-
-	// The alert won't be shown until we relinquish control
-	// back to the system...
-	// So we need to inform the system not to interpret any more commands!
-
-	// BUT in the case of a busy notification,
-	// we want to resume execution when the alert
-	// displays, not when it is dismissed...
-
-	SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
+	alert = create_alert_with_no_buttons(type,msg);
+	remember_busy_alert(alert);
+	show_alert(QSP_ARG  alert);
+	busy_alert_p=alert;	// remember for later
 fprintf(stderr,"notify_busy DONE\n");
 } // notify_busy
 
@@ -1643,37 +1780,28 @@ fprintf(stderr,"end_busy will call dismissWithClickedButtonIndex\n");
 
 	[a dismissWithClickedButtonIndex:0 animated:NO];
 #else // ! OLD
-	[root_view_controller dismissViewControllerAnimated:YES completion:nil];
+	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
+		{
+fprintf(stderr,"end_busy completion block running\n");
+			check_deferred_alert();
+		}
+	];
 #endif // ! OLD
 
 fprintf(stderr,"end_busy DONE\n");
 } // end_busy
 
-static void resume_busy(void)
-{
-	if( hidden_busy_p == NULL ){
-		NWARN("resume_busy:  no hidden busy alert!?");
-		return;
-	}
-	busy_alert_p=hidden_busy_p;
-	hidden_busy_p=NULL;
-	[Alert_Info rememberAlert:busy_alert_p withType:QUIP_ALERT_BUSY];
-	show_alert(busy_alert_p);
-}
-
-
 void check_deferred_alert(SINGLE_QSP_ARG_DECL)
 {
 	if( deferred_alert.type == NULL ) return;
 
+fprintf(stderr,"check_deferred_alert calling generic_alert \"%s %s\"\n",
+deferred_alert.type,deferred_alert.msg);
 	generic_alert(QSP_ARG  deferred_alert.type,deferred_alert.msg);
 
 	// We release these strings, but are we sure that the system is
 	// done with them?  Did generic_alert copy them or make NSStrings?
-	rls_str(deferred_alert.type);
-	rls_str(deferred_alert.msg);
-	deferred_alert.type=NULL;
-	deferred_alert.msg=NULL;
+	clear_deferred_alert();
 }
 
 void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
@@ -1686,77 +1814,13 @@ void fatal_alert(QSP_ARG_DECL  const char *msg)
 	generic_alert(QSP_ARG  FATAL_ERROR_TYPE_STR,msg);
 }
 
-static void dismiss_normal_alert(Alert_Info *aip)
-{
-	// level not used???
-    //int level;
-
-	//level = aip.qlevel;
-
-    [aip forget];	// removes from list
-
-	if( aip.the_alert_p == ending_busy_p ){	// dismissed busy alert
-		// nothing more to do.
-		ending_busy_p=NULL;
-		return;
-	}
-
-	if( aip.the_alert_p == hidden_busy_p ){
-		return;
-	}
-
-	if( busy_alert_p == NULL ){	// no hidden busy alert?
-		if( hidden_busy_p != NULL ){
-			if( aip.the_alert_p != hidden_busy_p ){
-				resume_busy();
-			} else {
-			// otherwise this is generated by the
-			// programmatic dismissal of the busy alert?
-				resume_quip(SGL_DEFAULT_QSP_ARG);
-			}
-		} else {
-			resume_quip(DEFAULT_QSP_ARG);
-		}
-	} else {
-		// don't allow the busy panel to be dismissed by the user
-		show_alert(busy_alert_p);
-	}
-
-	// If we had an alarm while the alert was up,
-	// we now have a stored chunk...
-}
-
 static IOS_List *alert_lp=NO_IOS_LIST;
 
-void dismiss_quip_alert(QUIP_ALERT_OBJ_TYPE *alertView, NSInteger buttonIndex)
-{
-	if( alertView == fatal_alert_view ){
-		[first_quip_controller qtvcExitProgram];
-	}
-
-	Alert_Info *aip;
-
-	aip = [Alert_Info alertInfoFor:alertView];
-
-	if( IS_VALID_ALERT(aip) ){
-		if( aip.type == QUIP_ALERT_CONFIRMATION ){
-			if( buttonIndex == 0 ){
-				assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","0");
-			} else {
-				assign_reserved_var(DEFAULT_QSP_ARG  "confirmed","1");
-			}
-		}
-		dismiss_normal_alert(aip);
-	}
-#ifdef CAUTIOUS
-	 else {
-		sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  dismiss_quip_alert:  Unrecognized alert type %d!?",aip.type);
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif // CAUTIOUS
-}
+// need to call this after the alert has been displayed...
+// This used to be a callback, but now with UIAlertController we don't have
+// a callback?
+//
+// Note that this is only needed for busy alerts...
 
 void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *alertView)
 {
@@ -1764,6 +1828,7 @@ void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *alertView)
 	aip = [Alert_Info alertInfoFor:alertView];
 	if( aip.type == QUIP_ALERT_BUSY ){
 		// we used to pass aip.qlevel here, is that needed??
+fprintf(stderr,"quip_alert_shown calling resume_quip\n");
 		resume_quip(DEFAULT_QSP_ARG);
 	}
 }

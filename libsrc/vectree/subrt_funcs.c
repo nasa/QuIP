@@ -315,9 +315,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			NWARN(ERROR_STRING);
 			break;
 	}
-	//del_item(QSP_ARG  id_itp, idp );
-	del_id(QSP_ARG  idp );
-	rls_str((char *)ID_NAME(idp));
+	del_id(QSP_ARG  idp );	// releases name for us
 }
 
 // This function is called when we delete an object declared in a subroutine...
