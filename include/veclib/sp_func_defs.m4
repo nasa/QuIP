@@ -1,8 +1,8 @@
 
 ifdef(`BUILD_FOR_OPENCL',`
-include(`../../include/veclib/dp_func_defs.m4')
+my_include(`veclib/dp_func_defs.m4')
 ',` dnl else // ! BUILD_FOR_OPENCL
-
+suppress_if
 define(`floor_func',`floorf')
 define(`trunc_func',`truncf')
 define(`ceil_func',`ceilf')
@@ -31,4 +31,6 @@ define(`gamma_func',`tgammaf')
 define(`lngamma_func',`lgammaf')
 
 ') dnl endif // ! BUILD_FOR_OPENCL
+
+suppress_no
 

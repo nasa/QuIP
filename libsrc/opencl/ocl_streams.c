@@ -6,7 +6,7 @@
 #include "quip_prot.h"
 #include "my_ocl.h"
 #include "platform.h"
-#include "veclib/ocl_port.h"
+//#include "veclib/ocl_port.h"
 
 
 ITEM_INTERFACE_DECLARATIONS( Platform_Stream , stream, 0 )

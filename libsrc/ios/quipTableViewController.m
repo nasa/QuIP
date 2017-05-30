@@ -80,7 +80,14 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 #ifdef BUILD_FOR_IOS
 	self = [super initWithStyle: UITableViewStyleGrouped];
 
+//fprintf(stderr,"quipTableViewControoler initWithSize delegate = 0x%lx\n",(long)dgp);
+
+//fprintf(stderr,"quipTableViewControoler delegate set to self = 0x%lx\n",(long)self);
 	self.tableView.delegate = self;
+	// When we use this delegate, we lose the nav group headings,
+	// and the selections don't work!?!?
+	//self.tableView.delegate = dgp;
+
 	self.tableView.dataSource = self;
 	// BUG - this makes a new background image for every panel.
 	// After rewriting make_bg_image to reuse the UIImageView,
@@ -91,6 +98,8 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 //fprintf(stderr,"Setting title to %s, nav_panel = 0x%lx\n",nav_p.name.UTF8String,(long)nav_p);
 	self.title = nav_p.name;
 	//menuList = [NSMutableArray array];
+
+	//if( dgp
 
 	// set nav bar to not hidden here?
 #endif // BUILD_FOR_IOS

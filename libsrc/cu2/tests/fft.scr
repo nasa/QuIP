@@ -1,0 +1,71 @@
+
+Set n 8
+
+Define Test_CFFT 1 stem
+Vector ${1}_cvec $n 1 complex
+Vector ${1}_cxf 1+$n/2 1 complex
+Vector ${1}_rvec $n 1 float
+VSet ${1}_cvec{1} 0
+Ramp1D ${1}_cvec{0} 0 8*atan(1)/$n
+VSin ${1}_cvec{0} ${1}_cvec{0}
+
+VMov ${1}_rvec ${1}_cvec{0}
+Display ${1}_rvec
+Display ${1}_cvec
+#FFT ${1}_cvec
+veclib
+  execute vfft ${1}_cvec ${1}_cvec
+  quit
+advise "transform of complex input:"
+Display ${1}_cvec
+Pause
+
+VSetComplex ${1}_cxf 99 999
+veclib
+  execute vfft ${1}_cxf ${1}_rvec
+  quit
+advise "transform of real input:"
+Display ${1}_cxf
+Pause
+
+#InvFFT ${1}_cvec
+
+VSet ${1}_rvec 99
+veclib
+  execute vift ${1}_rvec ${1}_cxf
+  quit
+advise "inverse transformed to real:"
+Display ${1}_rvec
+Pause
+
+Display ${1}_cvec
+veclib
+  execute vift ${1}_cvec ${1}_cvec
+  quit
+advise "inverse transformed to complex:"
+Display ${1}_cvec
+Pause
+
+## now test for length check
+#VSetComplex ${1}_cvec 99 999
+#veclib
+#  execute vfft ${1}_cvec ${1}_rvec
+#  quit
+#advise "transform of real input:"
+#Display ${1}_cvec
+#Pause
+
+
+.
+
+Test_CFFT h
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  show
+  quit
+
+Test_CFFT x
+
+exit
+

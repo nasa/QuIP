@@ -323,5 +323,8 @@ struct shape_info {
 #define SHP_BITMAP_GPU_INFO_G(shp)		(shp)->si_bitmap_gpu_info_g
 #define SET_SHP_BITMAP_GPU_INFO_G(shp,p)	(shp)->si_bitmap_gpu_info_g = p
 
+// BUG currently in vectree/comptree.c, but should be moved!
+extern Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
+
 #endif /* ! _SHAPE_INFO_H_ */
 

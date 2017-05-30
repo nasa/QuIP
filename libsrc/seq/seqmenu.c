@@ -7,6 +7,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "seq.h"
+#include "query_bits.h"	// LLEN - get rid of this!  BUG
 
 static COMMAND_FUNC( do_show_seq )
 {
@@ -70,7 +71,7 @@ static COMMAND_FUNC( do_del_seq )
 	if( seqptr != NO_SEQ ) delseq(QSP_ARG  seqptr);
 }
 
-static COMMAND_FUNC( do_list_Seqs ){ list_mviseqs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_Seqs ){ list_mviseqs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(sequence_menu,s,f,h)
 

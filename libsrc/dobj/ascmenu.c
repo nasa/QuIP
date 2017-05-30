@@ -26,7 +26,7 @@ if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "continguous_"
 
-static Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp)
+/*static*/ Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Obj *tmp_dp;
 	char *tname;

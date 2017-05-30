@@ -2,6 +2,7 @@
 #ifdef HAVE_CUDA
 #define BUILD_FOR_CUDA
 #endif // HAVE_CUDA
+
 #include "cuda_supp.h"
 #include "my_cu2.h"
 #include "quip_prot.h"
@@ -11,7 +12,7 @@
 #ifdef HAVE_CUDA
 //CUFFT
 //static const char* getCUFFTError(cufftResult_t status)
-static const char* getCUFFTError(cufftResult status)
+const char* getCUFFTError(cufftResult status)
 {
 	switch (status) {
 		case CUFFT_SUCCESS:

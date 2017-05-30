@@ -3,6 +3,8 @@
 
 #include "quip_prot.h"
 
+//#ifdef HAVE_ANY_GPU
+
 #include "veclib/slow_len.h"
 
 // This file is a helper function for gpu routines - it is here
@@ -126,4 +128,6 @@ NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations")
 #endif // FOOBAR
 	return 1;
 }
+
+//#endif // HAVE_ANY_GPU
 

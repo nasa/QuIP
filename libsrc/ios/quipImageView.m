@@ -8,7 +8,8 @@
 #include "viewer.h"
 
 /* we want little-endian for images we synthesize on the iPad...
- * but when we write and the read a png file, the bytes are swapped!?
+ * but when we write and then read a png file, the bytes are swapped!?
+ * What a mess...
  */
 
 QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
@@ -33,6 +34,7 @@ QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 	}
 
 	colorSpace = CGColorSpaceCreateDeviceRGB();
+//fprintf(stderr,"objc_img_for_dp:  little_endian_flag = %d\n",little_endian_flag);
 	CGContextRef cref = CGBitmapContextCreateWithData(OBJ_DATA_PTR(dp),
 		OBJ_COLS(dp), OBJ_ROWS(dp), 8, 4* OBJ_COLS(dp) ,
 		colorSpace,
@@ -40,7 +42,11 @@ QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 #ifdef BUILD_FOR_IOS
 		(little_endian_flag==0?0:kCGBitmapByteOrder32Little) |
 #endif // BUILD_FOR_IOS
-		kCGImageAlphaPremultipliedLast ),
+		kCGImageAlphaPremultipliedFirst
+		/*kCGImageAlphaPremultipliedLast*/
+		/*kCGImageAlphaFirst*/	// not compatible with other flags???
+		/*kCGImageAlphaLast*/	// docs say have to be premultiplied???
+		),
 
 		NULL,		// release callback
 		NULL			// release callback data arg
@@ -84,7 +90,7 @@ QUIP_IMAGE_TYPE *objc_img_for_dp(Data_Obj *dp, int little_endian_flag)
 
 -(id)initWithDataObj:(Data_Obj *) dp
 {
-	QUIP_IMAGE_TYPE *myimg=objc_img_for_dp(dp,1);
+	QUIP_IMAGE_TYPE *myimg=objc_img_for_dp(dp,1);	// the 1 is the little-endian flag...
 
 #ifdef BUILD_FOR_IOS
 	self =[super initWithImage:myimg];

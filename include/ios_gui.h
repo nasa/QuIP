@@ -36,10 +36,12 @@ typedef enum {
 @interface Alert_Info : NSObject
 
 #ifdef BUILD_FOR_IOS
-@property (retain) UIAlertView *	view;
-+(void) rememberAlert:(UIAlertView *)a withType:(Quip_Alert_Type)t;
-+(Alert_Info *) alertInfoFor:(UIAlertView *)a;
-#define ALERT_INFO_OBJ(aip)		(aip).view
+@property (retain) QUIP_ALERT_OBJ_TYPE *	the_alert_p;
+
++(void) rememberAlert:(QUIP_ALERT_OBJ_TYPE *)a withType:(Quip_Alert_Type)t;
++(Alert_Info *) alertInfoFor:(QUIP_ALERT_OBJ_TYPE *)a;
+
+#define ALERT_INFO_OBJ(aip)		(aip).the_alert_p
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS

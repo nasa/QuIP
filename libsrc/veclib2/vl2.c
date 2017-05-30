@@ -22,15 +22,3 @@
 // BUG name conflict!?
 // universal function, or needs porting???
 
-
-void *TMPVEC_NAME(Platform_Device *pdp, size_t size, size_t len, const char *whence)
-{
-	return getbuf( size * len );
-}
-
-void FREETMP_NAME(void *a, const char *whence)
-{
-	givbuf(a);
-}
-
-

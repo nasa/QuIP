@@ -49,7 +49,6 @@
 #ifdef NOT_SURE
 #include "stamps.h"
 #include "debug.h"
-#include "query.h"		/* ttys_are_interactive */
 #include "submenus.h"
 #endif /* NOT_SURE */
 
@@ -79,8 +78,6 @@ static ITEM_LIST_FUNC(Serial_Port,serial_port)
 //static ITEM_ENUM_FUNC(Serial_Port,serial_port)
 static ITEM_DEL_FUNC(Serial_Port,serial_port)
 static ITEM_PICK_FUNC(Serial_Port,serial_port)
-
-static COMMAND_FUNC( do_list_serial_ports );
 
 #define PICK_SERIAL_PORT(pmpt)		pick_serial_port(QSP_ARG  pmpt)
 
@@ -881,7 +878,7 @@ advise(ERROR_STRING);
 
 static COMMAND_FUNC( do_list_serial_ports )
 {
-	list_serial_ports(SINGLE_QSP_ARG);
+	list_serial_ports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(serial_menu,s,f,h)
@@ -928,7 +925,6 @@ COMMAND_FUNC( do_ser_menu )
 
 #include <string.h>
 
-#include "query.h"
 #include "filerd.h"
 #include "debug.h"
 

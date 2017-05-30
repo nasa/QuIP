@@ -16,6 +16,7 @@
 #include "glx_supp.h"
 
 #include "quip_prot.h"
+#include "debug.h"
 
 #include "platform.h"
 #include "pf_viewer.h"
@@ -1382,7 +1383,7 @@ static COMMAND_FUNC( do_lighting_menu )
 	PUSH_MENU(lighting);
 }
 
-static COMMAND_FUNC(do_list_dls){list_dls(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_dls){list_dls(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
 
 
 #undef ADD_CMD
@@ -1458,7 +1459,7 @@ static COMMAND_FUNC( do_delete_fb )
 
 static COMMAND_FUNC( do_list_fbs )
 {
-	list_glfbs(SINGLE_QSP_ARG);
+	list_glfbs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_fb_info )

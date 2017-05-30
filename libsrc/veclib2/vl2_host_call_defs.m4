@@ -1,7 +1,9 @@
-include(`../../include/veclib/slow_len.m4')
-include(`../../include/veclib/slow_incs.m4')
-include(`../../include/veclib/eqsp_incs.m4')
-include(`../../include/veclib/slow_vars.m4')
+my_include(`veclib/slow_len.m4')
+my_include(`veclib/slow_incs.m4')
+my_include(`veclib/eqsp_incs.m4')
+my_include(`veclib/slow_vars.m4')
+
+suppress_if
 
 // copied from opencl...
 // probably not specific, should be moved to include/veclib BUG
@@ -136,4 +138,6 @@ define(`SETUP_SLOW_LEN_DBM_SBM',`')
 define(`SETUP_SLOW_LEN_SBM_3',`')
 define(`SETUP_SLOW_LEN_SBM_2',`')
 define(`SETUP_SLOW_LEN_SBM_1',`')
+
+divert(0)
 

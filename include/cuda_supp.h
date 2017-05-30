@@ -16,7 +16,6 @@
 extern "C" {
 #endif
 
-#include "query.h"
 #include "data_obj.h"
 #include "veclib/obj_args.h"
 //#include "gl_info.h"

@@ -692,14 +692,14 @@ void embed_image(QSP_ARG_DECL Viewer *vp, Data_Obj *dp,int x,int y)
 	qiv_p.frame = CGRectMake(x,y,VW_WIDTH(vp),VW_HEIGHT(vp));
 
 	// We add the new imageView as a subview of the viewer view...
-fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
+//fprintf(stderr,"embed_image:  checking VW_IMAGES...\n");
 	if( VW_IMAGES(vp) == NULL ){
-fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
+//fprintf(stderr,"embed_image:  Calling init_viewer_images...\n");
 		init_viewer_images(vp);
-fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
+//fprintf(stderr,"embed_image:  Back from init_viewer_images...\n");
 	}
 
-fprintf(stderr,"embed_image:  proceeding\n");
+//fprintf(stderr,"embed_image:  proceeding\n");
 	// What is the purpose of this bit of code???
 
 // old, duplicates lookup
@@ -1084,7 +1084,7 @@ int display_depth(SINGLE_QSP_ARG_DECL)
 	return 4;	// bits or bytes?
 }
 
-void list_disp_objs(SINGLE_QSP_ARG_DECL)
+void list_disp_objs(QSP_ARG_DECL  FILE *fp)
 {
 
 }
@@ -1188,10 +1188,21 @@ void init_viewer_images(Viewer *vp)
 	// but behind the controls...
 	// BUT this brings the images to the front?
 	// Does this depend on order of initialization?
+
+	// That comment says we want the controls in front - so why
+	// are we bringing the images to the front???
+
 //sprintf(DEFAULT_ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
 //(long)qip,(long)VW_QV(vp));
 //advise(DEFAULT_ERROR_STRING);
-	[VW_QV(vp) bringSubviewToFront:qip];
+
+	//[VW_QV(vp) bringSubviewToFront:qip];
+
+	// this puts it behind the default background!
+	//[VW_QV(vp) sendSubviewToBack:qip];
+    
+	// this puts it just in front of the default background?
+	[VW_QV(vp) insertSubview:qip aboveSubview:QV_BG_IMG(VW_QV(vp))];
     
 	qip.backgroundColor = [UIColor clearColor];
 #endif // BUILD_FOR_IOS

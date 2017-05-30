@@ -111,7 +111,7 @@ static COMMAND_FUNC( do_opt_param_info )
 	opt_param_info(QSP_ARG  opp);
 }
 
-static COMMAND_FUNC(do_list_opt_params){list_opt_params(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_opt_params){list_opt_params(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(stepit_menu,s,f,h)
 

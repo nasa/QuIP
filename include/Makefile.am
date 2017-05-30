@@ -72,6 +72,7 @@ noinst_HEADERS =			\
 			list.h		\
 			macro.h		\
 			map_ios_item.h	\
+			my_cuda.h	\
 			my_curl.h	\
 			my_cu2.h	\
 			my_encryption.h	\
@@ -94,7 +95,6 @@ noinst_HEADERS =			\
 			platform.h	\
 			pointer.h	\
 			polh_menu.h	\
-			query.h		\
 			query_api.h	\
 			query_bits.h	\
 			query_stack.h	\
@@ -120,9 +120,7 @@ noinst_HEADERS =			\
 			sigpush.h	\
 			sizable.h	\
 			stack.h		\
-			strbuf.h	\
 			string_ref.h	\
-			subrt.h		\
 			thread_safe_defs.h	\
 			treecode.h	\
 			ttyctl.h	\

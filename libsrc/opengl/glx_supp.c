@@ -298,28 +298,9 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 			vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
 				advise(DEFAULT_ERROR_STRING);
 			}
-
-#ifdef FOOBAR
-			/* now see if there is a z buffer? */
-			/* Why? */
-
-			{
-			int val;
-
-			if( glXGetConfig(VW_DPY(vp),vis_info_p,
-				GLX_DEPTH_SIZE,&val) == 0 ){
-
-				sprintf(DEFAULT_ERROR_STRING,
-			"init_glx_context:  DEPTH_SIZE value is %d",val);
-				advise(DEFAULT_ERROR_STRING);
-			} else {
-				NWARN("glXGetConfig error");
-			}
-			}
-#endif /* FOOBAR */
-
 		}
 	}
+	XFree(vis_info_p);
 }
 #endif // ! BUILD_FOR_OBJC
 

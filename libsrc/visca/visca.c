@@ -18,6 +18,9 @@
 #endif
 
 #include "quip_prot.h"
+#include "item_type.h"
+#include "query_bits.h"	// LLEN - get rid of this! BUG
+#include "fileck.h"	// path_exists()
 #include "quip_menu.h"
 #include "serial.h"
 #include "ttyctl.h"
@@ -2995,7 +2998,7 @@ static COMMAND_FUNC( do_vport_open )
 #endif // ! HAVE_VISCA
 }
 
-static COMMAND_FUNC(do_list_vports){list_vports(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_vports){list_vports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(visca_port_menu,s,f,h)
 
@@ -3042,7 +3045,7 @@ static COMMAND_FUNC( do_get_cam_type )
 	ASSIGN_VAR(s,s2);
 }
 
-static COMMAND_FUNC(do_list_vcams){list_vcams(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_vcams){list_vcams(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
 
 static COMMAND_FUNC(do_get_n_cam)
 {

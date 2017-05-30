@@ -9,9 +9,9 @@
 
 //#include "uio.h"
 #include "data_obj.h"
-#include "query.h"
 #include "function.h"
 #include "debug.h"
+#include "query_bits.h"	// Q_SOCKET
 
 /* this function gets called instead of fgets ... */
 
@@ -340,7 +340,7 @@ static COMMAND_FUNC( do_port_redir )
 	mpp->mp_flags |= PORT_REDIR;
 }
 
-static COMMAND_FUNC(do_list_ports) {list_ports(SINGLE_QSP_ARG);}
+static COMMAND_FUNC(do_list_ports) {list_ports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
 
 // BUG?  should we have separate menus for servers and clients?
 

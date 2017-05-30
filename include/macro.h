@@ -60,6 +60,8 @@ struct macro {
 							\
 	( (MACRO_FLAGS( mp ) & ALLOW_RECURSION) == 0 )
 
+// BUG? - should be per-qsp???
+#define IS_INVOKED(mp)		(MACRO_FLAGS(mp) & MACRO_INVOKED)
 
 #endif /* ! _MACRO_H_ */
 

@@ -2,6 +2,7 @@
 
 #include "fio_prot.h"
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 
 //#include "../datamenu/dataprot.h"
 //#include "submenus.h"
@@ -263,7 +264,7 @@ static COMMAND_FUNC( do_set_autoclose )
 	else ifp->if_flags &= ~NO_AUTO_CLOSE;
 }
 
-static COMMAND_FUNC( do_list_image_files ) { list_img_files(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_image_files ) { list_img_files(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(file_io_menu,s,f,h)
 

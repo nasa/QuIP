@@ -19,7 +19,15 @@ define(`REQUIRED_SRC_PREC',`PREC_SP')
 
 define(`MY_CLFFT_PRECISION',`CLFFT_SINGLE')
 
-include(`../../include/veclib/sp_func_defs.m4')
+my_include(`veclib/sp_func_defs.m4')
 
 /* `TYPE_CODE =' type_code   `dest_type ='dest_type */
 /* sp_defs.m4 DONE */
+
+dnl	definitions for CUDA cuFFT
+define(`cuda_cpx_fft_func',`cufftExecC2C')
+define(`cuda_real_fft_func',`cufftExecR2C')
+define(`cuda_real_ift_func',`cufftExecC2R')
+define(`cuda_cpx_fft_type',`cufftComplex')
+define(`cuda_real_fft_type',`cufftReal')
+

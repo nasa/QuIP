@@ -3,7 +3,6 @@
 
 #include "quip_config.h"
 
-#include "query.h"
 
 
 #ifdef HAVE_ASM_TYPES_H

@@ -337,7 +337,7 @@ static void init_list(List *lp)
 //fprintf(stderr,"mutex initialized for list at 0x%lx\n",(long)lp);
 #endif /* HAVE_PTHREADS */
 
-	//lp->l_flags=0;
+	lp->l_flags=0;
 #endif /* THREAD_SAFE_QUERY */
 
 	SET_QLIST_HEAD(lp,NO_NODE);
@@ -384,6 +384,7 @@ void rls_list(List *lp)
 
 void addHead( List *lp, Node* np )		/**/
 {
+	assert(lp!=NULL);
 	LOCK_LIST(lp,addHead)
 	if( QLIST_HEAD(lp) != NO_NODE ){
 		if( NODE_PREV(QLIST_HEAD(lp)) != NO_NODE ){	/* ring */

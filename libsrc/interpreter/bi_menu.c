@@ -35,7 +35,7 @@ static Item_Type *curr_itp=NULL;
 
 static COMMAND_FUNC( list_types )
 {
-	list_items(QSP_ARG  ittyp_itp);
+	list_items(QSP_ARG  ittyp_itp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( select_type )
@@ -54,7 +54,7 @@ static COMMAND_FUNC( select_type )
 
 static COMMAND_FUNC( do_list_items )
 {
-	list_items(QSP_ARG  curr_itp);
+	list_items(QSP_ARG  curr_itp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(items_menu,s,f,h)
@@ -149,18 +149,9 @@ static COMMAND_FUNC( do_rbtree_test )
 	PUSH_MENU(rbt);
 }
 
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_pop_file )
-{
-	//pop_file(SINGLE_QSP_ARG);
-	ERROR1("Command 'PopFile' is deprecated - replace with exit_macro or exit_file");
-}
-#endif // FOOBAR
-
 static COMMAND_FUNC( do_list_macs )
 {
-	list_items(QSP_ARG  macro_itp);
+	list_items(QSP_ARG  macro_itp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_find_mac )
@@ -173,7 +164,7 @@ static COMMAND_FUNC( do_find_mac )
 	lp=find_items(QSP_ARG  macro_itp, s);
 	if( lp==NO_LIST ) return;
 
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 
 	// Need to release the list!
 	dellist(lp);	// releases nodes and list struct but not data
@@ -229,7 +220,7 @@ static COMMAND_FUNC( do_search_macs )
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
 	prt_msg(msg_str);
 
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 static COMMAND_FUNC( do_show_mac )
@@ -267,7 +258,7 @@ no_macros:
 	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		mp = (Macro *) NODE_DATA(np);
-		if( MACRO_FLAGS(mp) & MACRO_INVOKED ){
+		if( macro_is_invoked(mp) ){
 			dump_macro(QSP_ARG  mp);
 		}
 		np = NODE_NEXT(np);
@@ -289,7 +280,7 @@ static COMMAND_FUNC( do_allow_macro_recursion )
 	
 	mp=PICK_MACRO("");
 	if( mp == NULL ) return;
-	mp->m_flags |= ALLOW_RECURSION;
+	allow_recursion_for_macro(mp);
 }
 
 static COMMAND_FUNC( do_set_max_warnings )
@@ -322,7 +313,6 @@ static COMMAND_FUNC( do_def_mac )
 	const char *name;
 	Macro *mp;
 	Macro_Arg **ma_tbl;
-	int i;
 	int n;
 	String_Buf *sbp;
 	int lineno;
@@ -330,25 +320,24 @@ static COMMAND_FUNC( do_def_mac )
 	name=NAMEOF("macro name");
 	n=(int)HOW_MANY("number of arguments");
 
-	// subtract 2 for name and n...
-	if( n > (N_QRY_RETSTRS-2) ){
+	if( check_adequate_return_strings(QSP_ARG  n+2) < 0 ){
 		sprintf(ERROR_STRING,
-"define:  %d arguments requested for macro %s exceeds system limit of %d!?\nRebuild application with increased value of N_QRY_RETSTRS.",
-			n,name,N_QRY_RETSTRS-2);
+"define:  %d arguments requested for macro %s exceeds system limit!?\nRebuild application with increased value of N_QRY_RETSTRS.",
+			n-2,name);
 		ERROR1(ERROR_STRING);
 	}
 
+
 	if( n > 0 ){
-		ma_tbl = getbuf(n*sizeof(Macro_Arg));
-		for(i=0;i<n;i++)
-			ma_tbl[i] = read_macro_arg(QSP_ARG  i);
+		ma_tbl = read_macro_arg_table(QSP_ARG  n);
 	} else {
 		ma_tbl = NULL;
 	}
 
 	// We want to store the line number of the file where the macro
 	// is declared...  We can read it now from the query stream...
-	lineno = QRY_RDLINENO(CURR_QRY(THIS_QSP));
+	//lineno = QRY_LINES_READ(CURR_QRY(THIS_QSP));
+	lineno = current_line_number(SINGLE_QSP_ARG);
 
 	sbp = rdmtext(SINGLE_QSP_ARG);
 
@@ -359,21 +348,10 @@ static COMMAND_FUNC( do_def_mac )
 		WARN(ERROR_STRING);
 		// Report where the macro was declared...
 		sprintf(ERROR_STRING,"Macro \"%s\" defined in file %s, line %d",
-			name,MACRO_FILENAME(mp),MACRO_LINENO(mp) );
+			name,macro_filename(mp),macro_lineno(mp) );
 		advise(ERROR_STRING);
 	} else {
-		mp = new_macro(QSP_ARG  name);
-		SET_MACRO_N_ARGS(mp,n);
-		SET_MACRO_FLAGS(mp,0);
-		SET_MACRO_ARG_TBL(mp,ma_tbl);
-		SET_MACRO_TEXT(mp,savestr(sbp->sb_buf));
-		// Can we access the filename here, or do we
-		// need to do it earlier because of lookahead?
-		// We have to save it, because qry_filename may
-		// be released later...
-		SET_MACRO_FILENAME( mp,
-			savestr(QRY_FILENAME(CURR_QRY(THIS_QSP))) );
-		SET_MACRO_LINENO( mp, lineno );
+		mp=create_macro(QSP_ARG  name,n,ma_tbl,sbp,lineno);
 	}
 
 	rls_stringbuf(sbp);
@@ -386,27 +364,12 @@ static COMMAND_FUNC( do_def_mac )
 static COMMAND_FUNC( do_del_mac )
 {
 	Macro *mp;
-	Macro_Arg **ma_tbl;
-	int i;
 
 	mp = PICK_MACRO("");
 
 	if( mp == NULL ) return;
 
-	// first release the resources
-	rls_str( MACRO_FILENAME(mp) );
-
-	ma_tbl = MACRO_ARG_TBL(mp);
-	for(i=0;i<MACRO_N_ARGS(mp);i++){
-		rls_macro_arg(ma_tbl[i]);
-	}
-	givbuf(ma_tbl);
-
-	// free the stored text (body)
-	rls_str(MACRO_TEXT(mp));
-
-	rls_str(MACRO_NAME(mp));
-	del_macro(QSP_ARG  mp);
+	rls_macro(QSP_ARG  mp);
 }
 
 static COMMAND_FUNC( do_if )
@@ -480,6 +443,14 @@ static COMMAND_FUNC( do_warn )
 {
 	//[THIS_QSP warn : [THIS_QSP nameOf : @"warning message" ] ];
 	WARN( NAMEOF("warning message") );
+}
+
+static COMMAND_FUNC( do_expect_warning )
+{
+	const char *s;
+
+	s=NAMEOF("Beginning of warning message");
+	expect_warning(QSP_ARG  s);
 }
 
 /******************** variables menu ***********************/
@@ -558,13 +529,13 @@ static COMMAND_FUNC( do_assign_var )
 	if( tsp == NULL ) return;
 
 	// Make sure we have a free string buffer
-	if( QS_AV_STRINGBUF(THIS_QSP) == NO_STRINGBUF ){
+	if( QS_AV_STRINGBUF(THIS_QSP) == NULL ){
 		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );
 		enlarge_buffer(QS_AV_STRINGBUF(THIS_QSP),LLEN);
 	}
 
 // what is AV_STRINGBUF???  special for assign_var?  why?
-#define DEST	SB_BUF(QS_AV_STRINGBUF(THIS_QSP))
+#define DEST	sb_buffer(QS_AV_STRINGBUF(THIS_QSP))
 
 	// See if the expression is a string expression
 	if( tsp->ts_prec_code == PREC_STR ){
@@ -838,6 +809,9 @@ static COMMAND_FUNC( do_push_fmt )
 
 	CHECK_FMT_STRINGS
 
+	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL ){
+		SET_QS_VAR_FMT_STACK(THIS_QSP,new_stack());
+	}
 	PUSH_TO_STACK( QS_VAR_FMT_STACK(THIS_QSP), QS_NUMBER_FMT(THIS_QSP) );
 
 	set_fmt(QSP_ARG  i);
@@ -845,6 +819,12 @@ static COMMAND_FUNC( do_push_fmt )
 
 static COMMAND_FUNC( do_pop_fmt )
 {
+	//assert( QS_VAR_FMT_STACK(THIS_QSP) != NULL );
+	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL || STACK_IS_EMPTY(QS_VAR_FMT_STACK(THIS_QSP)) ){
+		WARN("No variable format has been pushed, can't pop!?");
+		return;
+	}
+
 	SET_QS_NUMBER_FMT( THIS_QSP, POP_FROM_STACK( QS_VAR_FMT_STACK(THIS_QSP) ) );
 }
 
@@ -939,6 +919,11 @@ static COMMAND_FUNC( do_repeat )
 {
 	int n;
 	n=(int)HOW_MANY("number of iterations");
+	if( n <= 0 ){
+		WARN("do_repeat:  number of repetitions must be positive!?");
+		return;
+	}
+
 	OPEN_LOOP(n);
 }
 
@@ -1091,67 +1076,12 @@ static COMMAND_FUNC(do_nop)
 
 static COMMAND_FUNC( do_exit_file )
 {
-	int i,done_level;
-	i=QLEVEL;
-	done_level=(-1);	// pointless initialization to quiet compiler
-	while( i >= 0 ){
-		if( QRY_READFUNC(QRY_AT_LEVEL(THIS_QSP,i)) == ((READFUNC_CAST) FGETS) ){
-			done_level=i;
-			i = -1;
-		}
-		i--;
-	}
-	if( done_level < 0 ){
-		WARN("exit_file:  no file to exit!?");
-		return;
-	}
-	i=QLEVEL;
-	while(i>=done_level){
-		pop_file(SINGLE_QSP_ARG);
-		i--;
-	}
+	exit_current_file(SINGLE_QSP_ARG);
 }
 
 static COMMAND_FUNC( do_exit_macro )
 {
-	int i,done_level;
-	Macro *mp;
-
-//advise("do_exit_macro BEGIN");
-//qdump(SINGLE_QSP_ARG);
-
-	done_level=(-1);	// pointless initialization to quiet compiler
-	i=QLEVEL;
-	mp = NULL;
-	while( i >= 0 ){
-		if( mp != NULL ){
-			if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != mp ){
-				done_level=i;
-				i = -1;
-			}
-			// We need another test here to see if we are
-			// in a different invocation of a recursive macro!?
-		} else if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != NULL ){
-			/* There is a macro to pop... */
-			mp = QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i));
-		}
-		i--;
-	}
-	if( mp == NULL ){
-		WARN("exit_macro:  no macro to exit!?");
-		return;
-	}
-//#ifdef CAUTIOUS
-//	if( done_level == -1 )
-//		WARN("CAUTIOUS:  do_exit_macro:  done_level not set!?");
-//#endif /* CAUTIOUS */
-	assert( done_level != (-1) );
-
-	i=QLEVEL;
-	while(i>done_level){
-		pop_file(SINGLE_QSP_ARG);
-		i--;
-	}
+	exit_current_macro(SINGLE_QSP_ARG);
 }
 
 // We used to call assign_var here, but now verbose is a "dynamic" var
@@ -1741,6 +1671,7 @@ ADD_CMD( do,		do_do_loop,	open a loop		)
 ADD_CMD( while,		do_while,	conditionally close a loop	)
 ADD_CMD( variables,	do_var_menu,	variables submenu	)
 ADD_CMD( macros,	do_mac_menu,	macros submenu		)
+ADD_CMD( expect_warning,	do_expect_warning,	specify expected warning	)
 ADD_CMD( warn,		do_warn,	print a warning message	)
 ADD_CMD( <,		do_redir,	read commands from a file	)
 ADD_CMD( >,		do_copy_cmd,	copy commands to a transcript file	)

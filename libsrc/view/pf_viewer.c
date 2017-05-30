@@ -79,41 +79,19 @@ static void update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp)
 				(QSP_ARG  dp) < 0 ) {
 			WARN("update_pf_viewer:  buffer unmap error!?");
 		}
-#ifdef FOOBAR
-		e = cudaGLUnmapBufferObject( OBJ_BUF_ID(dp) );   
-		if( e != cudaSuccess ){
-			describe_cuda_driver_error2("update_pf_viewer",
-				"cudaGLUnmapBufferObject",e);
-			NERROR1("failed to unmap buffer object");
-		}
-#endif // FOOBAR
 		CLEAR_OBJ_FLAG_BITS(dp, DT_BUF_MAPPED);
 		// propagate change to children and parents
 		propagate_flag(dp,DT_BUF_MAPPED);
 
 	}
 
-	//
-	//bind_texture(OBJ_DATA_PTR(dp));
-
 	glClear(GL_COLOR_BUFFER_BIT);
 
-/*
-sprintf(ERROR_STRING,"update_pf_viewer:  tex_id = %d, buf_id = %d",
-OBJ_TEX_ID(dp),OBJ_BUF_ID(dp));
-advise(ERROR_STRING);
-*/
 	glBindTexture(GL_TEXTURE_2D, OBJ_TEX_ID(dp));
 	// is glBindBuffer REALLY part of libGLEW???
 //#ifdef HAVE_LIBGLEW
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, OBJ_BUF_ID(dp));
 //#endif // HAVE_LIBGLEW
-
-#ifdef FOOBAR
-	switch(OBJ_COMPS(dp)){
-		/* what used to be here??? */
-	}
-#endif /* FOOBAR */
 
 	t=gl_pixel_type(dp);
 	glTexSubImage2D(GL_TEXTURE_2D, 0,	// target, level
@@ -135,13 +113,6 @@ advise(ERROR_STRING);
 	glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-#ifdef FOOBAR
-	e = cudaGLMapBufferObject( &OBJ_DATA_PTR(dp),  OBJ_BUF_ID(dp) );
-	if( e != cudaSuccess ){
-		WARN("Error mapping buffer object!?");
-		// should we return now, with possibly other cleanup???
-	}
-#endif // FOOBAR
 	if( (*PF_MAPBUF_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(QSP_ARG  dp) < 0 ){
 		WARN("update_pf_viewer:  Error mapping buffer!?");
 	}

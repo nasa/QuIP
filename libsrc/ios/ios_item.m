@@ -48,7 +48,7 @@ IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 	return ic_lp;
 }
 
--(int) list_items			// IOS_Item_Context
+-(int) list_items : (FILE *) fp			// IOS_Item_Context
 {
 	IOS_List *lp;
 	int n_listed=0;
@@ -60,7 +60,7 @@ IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 	while(np!=NO_IOS_NODE){
 		IOS_Item *ip;
 		ip = IOS_NODE_DATA(np);
-		printf("\t%s\n",ip.name.UTF8String);
+		fprintf(fp,"\t%s\n",ip.name.UTF8String);
 		np = IOS_NODE_NEXT(np);
 		n_listed++;
 	}
@@ -75,9 +75,11 @@ IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 
 	while ((ip = [enumerator nextObject])) {
 		/* code that uses the returned key */
-		printf("from dict:\t\t%s\n",IOS_ITEM_NAME(ip));
+		fprintf(fp,"from dict:\t\t%s\n",IOS_ITEM_NAME(ip));
 	}
 #endif /* JUST_FOR_TESTING */
+
+	fflush(fp);
 
 	return n_listed;
 }
@@ -211,7 +213,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 
 // This function only lists the items in the current top context!?
 
--(void) list			// IOS_Item_Type
+-(void) list : (FILE *) fp			// IOS_Item_Type
 {
 	IOS_Item_Context *icp = [contextStack top];
 	NSMutableDictionary *d=[icp dict];
@@ -232,8 +234,9 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	int i;
 	for(i=0;i<keys.count;i++){
 		NSString *s=(NSString *)[keys objectAtIndex : i];
-		sprintf(DEFAULT_ERROR_STRING,"\t%s",s.UTF8String);
-		_prt_msg(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
+		//sprintf(DEFAULT_ERROR_STRING,"\t%s",s.UTF8String);
+		//_prt_msg(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
+		fprintf(fp,"\t%s\n",s.UTF8String);
 	}
 
 	if( keys.count == 0 ){
@@ -242,7 +245,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 		NWARN(DEFAULT_ERROR_STRING);
 	}
 
-	fflush(stdout);
+	fflush(fp);
 }
 
 -(IOS_Item *) check: (NSString *) s		/* IOS_Item_Type */
@@ -348,7 +351,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	WARN(msg.UTF8String );
 
 	advise("Legal values are:");
-	[self list];
+    [self list : tell_errfile(SINGLE_QSP_ARG)];
 	return NULL;
 }
 
@@ -360,7 +363,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	if( ip == NO_IOS_ITEM ){
 		NSString *msg=[[NSString alloc] initWithFormat :
 	@"No %@ \"%@\"",self.name,name ];
-		q_warn(DEFAULT_QSP_ARG  msg.UTF8String);
+		NWARN(msg.UTF8String);
 	}
 	return ip;
 }
@@ -386,7 +389,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	if( itp != NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"IOS_Item_Type initWithName:  trying to init existing item type %s!?",s.UTF8String);
 		NADVISE(DEFAULT_ERROR_STRING);
-		[ios_item_type_itp list];
+        [ios_item_type_itp list:tell_errfile(SGL_DEFAULT_QSP_ARG)];
 		abort();
 	}
 #endif /* CAUTIOUS */
@@ -411,9 +414,9 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	return (IOS_Item_Type *)[ios_item_type_itp get : name];
 }
 
-+(void) list
++(void) list : (FILE *) fp
 {
-	[ ios_item_type_itp list ];
+	[ ios_item_type_itp list : fp ];
 }
 
 +(void) initClass	/* IOS_Item_Type */

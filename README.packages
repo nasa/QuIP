@@ -30,3 +30,25 @@ The solution (from stackOverflow) was the following command:
 % sudo ln /dev/null /dev/raw1394
 
 
+###########################
+Building on a fresh CentOS 6 install
+
+installed:
+	texinfo
+	libjpeg-turbo-devel
+	libpng-devel
+	libtiff-devel
+	matio-devel
+	gsl-devel
+	libgcrypt-devel
+	portaudio-devel
+	libcurl-devel
+	libdc1394-devel
+	libX11-devel
+	openmotif-devel
+	opencv-devel
+	ffmpeg-devel
+	mesa-libGL-devel
+	mesa-libGLU-devel
+
+

@@ -9,7 +9,7 @@
 #include "warn.h"
 #include "shape_bits.h"
 #include "function.h"
-#include "strbuf.h"
+//#include "strbuf.h"
 #include "query_stack.h"
 
 #ifdef HAVE_LIMITS_H
@@ -235,9 +235,9 @@ static char *get_expr_stringbuf( QSP_ARG_DECL   int index, long min_len )
 	} else {
 		sbp = EXPR_STRING[index];
 	}
-	if( EXPR_STRING[index]->sb_size < min_len )
+	if( sb_size(EXPR_STRING[index]) < min_len )
 		enlarge_buffer(sbp,min_len);
-	return(sbp->sb_buf);
+	return(sb_buffer(sbp));
 }
 
 %}
@@ -1133,19 +1133,20 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 
 	switch(enp->sen_code){
 		case N_QUOT_STR:
+		case N_LITSTR:
 		case N_OBJNAME:
 			// Not necessarily a data object!?
 			s = EVAL_SCALEXP_STRING(enp);
 			szp = find_positionable( DEFAULT_QSP_ARG  s );
 			break;
-//#ifdef CAUTIOUS
+#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
-			assert(0);
+			sprintf(ERROR_STRING,
+		"unexpected case in eval_szbl_expr %d",enp->sen_code);
+			NWARN(ERROR_STRING);
+			//assert(0);
 			break;
-//#endif /* CAUTIOUS */
+#endif /* CAUTIOUS */
 	}
 	if( szp == NULL ){
 		sprintf(ERROR_STRING,
@@ -1449,7 +1450,7 @@ dump_enode(QSP_ARG  enp);
 		*/
 		s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 		s = (*enp->sen_func_p->fn_u.strv_func)( QSP_ARG s );
-fprintf(stderr,"eval_expr:  strv_func returned string at 0x%lx\n",(long)s);
+//fprintf(stderr,"eval_expr:  strv_func returned string at 0x%lx\n",(long)s);
 		tsp = scalar_for_string(s);
 		break;
 	case N_STRV2FUNC:		// eval_expr
@@ -2174,12 +2175,12 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 //					n--;
 //				}
 //#endif // CAUTIOUS
-				assert(n< SB_SIZE(EXPR_STRING[WHICH_EXPR_STR]));
+				assert(n< sb_size(EXPR_STRING[WHICH_EXPR_STR]));
 			}
 			*s=0;
 
 			yylvp->func_p = function_of(QSP_ARG
-				EXPR_STRING[WHICH_EXPR_STR]->sb_buf);
+				sb_buffer(EXPR_STRING[WHICH_EXPR_STR]));
 			if( yylvp->func_p != NULL ){
 				int t;
 				t = token_for_func_type(FUNC_TYPE(yylvp->func_p));
@@ -2190,7 +2191,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			// use an array of tsp's here instead???
 			//yylvp->e_string=EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
 			STRING_SCALAR[WHICH_EXPR_STR].ts_value.u_vp=
-				EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
+				sb_buffer(EXPR_STRING[WHICH_EXPR_STR]);
 			yylvp->tsp=(&STRING_SCALAR[WHICH_EXPR_STR]);
 			ADVANCE_EXPR_STR
 			return(E_STRING);	/* unquoted string */
@@ -2290,7 +2291,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 //						n--;
 //					}
 //#endif // CAUTIOUS
-					assert(n<SB_SIZE(EXPR_STRING[WHICH_EXPR_STR]));
+					assert(n<sb_size(EXPR_STRING[WHICH_EXPR_STR]));
 				}
 				*s=0;
 				if( *YYSTRPTR[EDEPTH] == qchar ){
@@ -2302,7 +2303,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 
 				yylvp->tsp=(&STRING_SCALAR[WHICH_EXPR_STR]);
 				STRING_SCALAR[WHICH_EXPR_STR].ts_value.u_vp
-					= EXPR_STRING[WHICH_EXPR_STR]->sb_buf;
+					= sb_buffer(EXPR_STRING[WHICH_EXPR_STR]);
 
 				ADVANCE_EXPR_STR
 #ifdef QUIP_DEBUG

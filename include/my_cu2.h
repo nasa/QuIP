@@ -47,15 +47,43 @@
 
 // These need to come after the cuda includes...
 
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 #include "item_type.h"
 #include "veclib/vec_func.h"
 #include "veclib/obj_args.h"
 
-#include "veclib/cu2_port.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
-#include "platform.h"
+#include "veclib/cu2_veclib_prot.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
+//#include "platform.h"
 
-#include "query.h"
 #include "veclib_api.h"
+
+/* prototypes here */
+
+extern void query_cuda_device(QSP_ARG_DECL  int dev);
+
+// from old lib cuda - BUG consolidate!
+extern void init_cuda_devices(SINGLE_QSP_ARG_DECL);
+
+// cu2.c
+extern void insure_cu2_device( QSP_ARG_DECL   Data_Obj *dp );
+
+// whence?
+#ifdef HAVE_CUDA
+extern const char* getCUFFTError(cufftResult status);
+#endif // HAVE_CUDA
+
+extern void insure_cuda_device( Data_Obj *dp );
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+
 
 #define MAX_CUDA_GLOBAL_OBJECTS	2048
 #define MAX_CUDA_MAPPED_OBJECTS	128
@@ -94,10 +122,6 @@ extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
 #define index_type	int32_t	// for vmaxi etc
 #define INDEX_PREC	PREC_DI	// for vmaxi etc
 
-/* prototypes here */
-
-// from old lib cuda - BUG consolidate!
-extern void init_cuda_devices(SINGLE_QSP_ARG_DECL);
 
 // cu2.c
 #ifdef FOOBAR
@@ -106,8 +130,5 @@ extern void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz );
 extern int cu2_mem_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align );
 extern void cu2_mem_free(QSP_ARG_DECL  Data_Obj *dp );
 #endif // FOOBAR
-
-// cu2.c
-extern void insure_cu2_device( QSP_ARG_DECL   Data_Obj *dp );
 
 

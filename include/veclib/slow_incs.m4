@@ -1,4 +1,6 @@
 
+suppress_if
+
 dnl SHOW_INCR(inc_p)
 
 define(`SHOW_INCR(inc_p)',`fprintf(stderr,"%s:  %d %d %d %d %d\n","$1", ($1)->d5_dim[0], ($1)->d5_dim[1], ($1)->d5_dim[2], ($1)->d5_dim[3], ($1)->d5_dim[4]);')
@@ -8,19 +10,21 @@ define(`DECL_SLOW_INCRS',DECL_SLOW_INCRS_$1$2)
 dnl SETUP_SLOW_INCS(bitmap,vectors)
 define(`SETUP_SLOW_INCS',SETUP_SLOW_INCS_$1$2)
 
-divert(0)
 dnl /* decl_slow_incrs_1 */
 define(`DECL_SLOW_INCRS_1',`dim5 dst_vwxyz_incr;')
 dnl /* `DECL_SLOW_INCRS_1' = DECL_SLOW_INCRS_1 */
-suppress_if
 define(`DECL_SLOW_INCRS_SRC1',`dim5 s1_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC2',`dim5 s2_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC3',`dim5 s3_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SRC4',`dim5 s4_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_SBM',`dim5 sbm_vwxyz_incr;')
+define(`DECL_SLOW_INCRS_SBM1',`dim5 sbm1_vwxyz_incr;')
+define(`DECL_SLOW_INCRS_SBM2',`dim5 sbm2_vwxyz_incr;')
 define(`DECL_SLOW_INCRS_DBM',`')
 
 define(`DECL_SLOW_INCRS_DBM_SBM',`DECL_SLOW_INCRS_DBM DECL_SLOW_INCRS_SBM')
+define(`DECL_SLOW_INCRS_DBM_2SBM',`DECL_SLOW_INCRS_DBM DECL_SLOW_INCRS_SBM1 DECL_SLOW_INCRS_SBM2')
+define(`DECL_SLOW_INCRS_DBM_1SBM',`DECL_SLOW_INCRS_DBM DECL_SLOW_INCRS_SBM1')
 define(`DECL_SLOW_INCRS_2',`DECL_SLOW_INCRS_1 DECL_SLOW_INCRS_SRC1')
 define(`DECL_SLOW_INCRS_CONV',`DECL_SLOW_INCRS_1 DECL_SLOW_INCRS_SRC1')
 define(`DECL_SLOW_INCRS_3',`DECL_SLOW_INCRS_2 DECL_SLOW_INCRS_SRC2')
@@ -64,6 +68,15 @@ define(`SETUP_SLOW_INCS_SRC1',`
 	s1_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC1_INCSET(vap),4);
 ')
 
+define(`SETUP_SLOW_INCS_SBM1',`
+
+	sbm1_vwxyz_incr.d5_dim[0] = INCREMENT(VA_SRC1_INCSET(vap),0);
+	sbm1_vwxyz_incr.d5_dim[1] = INCREMENT(VA_SRC1_INCSET(vap),1);
+	sbm1_vwxyz_incr.d5_dim[2] = INCREMENT(VA_SRC1_INCSET(vap),2);
+	sbm1_vwxyz_incr.d5_dim[3] = INCREMENT(VA_SRC1_INCSET(vap),3);
+	sbm1_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC1_INCSET(vap),4);
+')
+
 define(`SETUP_SLOW_INCS_SRC2',`
 
 	s2_vwxyz_incr.d5_dim[0] = INCREMENT(VA_SRC2_INCSET(vap),0);
@@ -71,6 +84,15 @@ define(`SETUP_SLOW_INCS_SRC2',`
 	s2_vwxyz_incr.d5_dim[2] = INCREMENT(VA_SRC2_INCSET(vap),2);
 	s2_vwxyz_incr.d5_dim[3] = INCREMENT(VA_SRC2_INCSET(vap),3);
 	s2_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC2_INCSET(vap),4);
+')
+
+define(`SETUP_SLOW_INCS_SBM2',`
+
+	sbm2_vwxyz_incr.d5_dim[0] = INCREMENT(VA_SRC2_INCSET(vap),0);
+	sbm2_vwxyz_incr.d5_dim[1] = INCREMENT(VA_SRC2_INCSET(vap),1);
+	sbm2_vwxyz_incr.d5_dim[2] = INCREMENT(VA_SRC2_INCSET(vap),2);
+	sbm2_vwxyz_incr.d5_dim[3] = INCREMENT(VA_SRC2_INCSET(vap),3);
+	sbm2_vwxyz_incr.d5_dim[4] = INCREMENT(VA_SRC2_INCSET(vap),4);
 ')
 
 define(`SETUP_SLOW_INCS_SRC3',`
@@ -117,6 +139,8 @@ define(`SETUP_SLOW_INCS_5',`SETUP_SLOW_INCS_4 SETUP_SLOW_INCS_SRC4')
 define(`SETUP_SLOW_INCS_DBM_2SRCS',`SETUP_SLOW_INCS_DBM SETUP_SLOW_INCS_2SRCS')
 define(`SETUP_SLOW_INCS_DBM_1SRC',`SETUP_SLOW_INCS_DBM SETUP_SLOW_INCS_SRC1')
 define(`SETUP_SLOW_INCS_DBM_SBM',`SETUP_SLOW_INCS_DBM SETUP_SLOW_INCS_SBM')
+define(`SETUP_SLOW_INCS_DBM_2SBM',`SETUP_SLOW_INCS_DBM SETUP_SLOW_INCS_SBM1 SETUP_SLOW_INCS_SBM2')
+define(`SETUP_SLOW_INCS_DBM_1SBM',`SETUP_SLOW_INCS_DBM SETUP_SLOW_INCS_SBM1')
 
 define(`SETUP_SLOW_INCS_2SRCS',`SETUP_SLOW_INCS_SRC1 SETUP_SLOW_INCS_SRC2')
 
@@ -129,3 +153,4 @@ define(`SETUP_SLOW_INCS_SBM_2',`SETUP_SLOW_INCS_2 SETUP_SLOW_INCS_SBM')
 
 define(`SETUP_SLOW_INCS_SBM_3',`SETUP_SLOW_INCS_3 SETUP_SLOW_INCS_SBM')
 
+suppress_no

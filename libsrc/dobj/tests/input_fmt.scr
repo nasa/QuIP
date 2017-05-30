@@ -1,0 +1,59 @@
+# test input format
+
+Vector fv 4 1 float
+Vector iv 4 1 short
+Image sv 5 20 1 string
+
+data
+  ascii
+    read fv -
+    	1.1 2.1 3.1 4.1
+    read iv -
+    	1 2 3 4
+    read sv -
+    	"test line 1"
+    	"test line 2"
+    	"test line 3"
+    	"test line 4"
+    	"test line 5"
+    quit
+  quit
+
+Display fv
+Display iv
+Display sv
+
+data
+  ascii
+    input_fmt "%f %d %s FOO"
+    advise "\nReading float vector from test_input1..."
+    read fv tests/test_input1.asc
+    display fv
+    advise "\nReading float vector from test_input2..."
+    read fv tests/test_input2.asc
+    display fv
+    advise "\nReading float vector from test_input3..."
+    read fv tests/test_input3.asc
+    display fv
+
+    advise "\nReading int vector from test_input1..."
+    read iv tests/test_input1.asc
+    display iv
+    advise "\nReading int vector from test_input2..."
+    read iv tests/test_input2.asc
+    display iv
+    advise "\nReading int vector from test_input3..."
+    read iv tests/test_input3.asc
+    display iv
+#    read fv -
+#    	1.1 1 "foo bar1" FOO
+#    	2.1 2 "foo bar2" FOO
+#    	3.1 3 "foo bar3" FOO
+#    	4.1 4 "foo bar4" FOO
+    quit
+  quit
+
+
+Pause
+exit
+

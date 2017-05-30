@@ -11,6 +11,7 @@
 #include <mach/mach_time.h>	// mach_absolute_time()	// ticks since boot...
 #include "quip_prot.h"
 #include "sound.h"
+#include "debug.h"
 #include "CAStreamBasicDescription.h"
 #include "BufferManager.h"
 #include "DCRejectionFilter.h"

@@ -395,6 +395,7 @@ echo Found cuda software in $cuda_dir
       AC_CHECK_FILE([$cuda_dir/samples],[nv_sdk_dir="$cuda_dir/samples"],[nv_sdk_dir="no"])
 
       nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
+echo Including $nv_sdk_inc_dir
       CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
 
       AC_CHECK_FILE([$cuda_dir/samples/common/lib/darwin],
@@ -754,6 +755,10 @@ TAR_OPTIONS+=--numeric-owner
 # bison -y ?
 AC_CHECK_PROGS(YACC,'bison -y' byacc yacc,[AM_MISSING_PROG(yacc)])
 
+# these didn't work
+#: ${CFLAGS="-g -O0"}
+#: ${CXXFLAGS="-g -O0"}
+
 # Check for compilers
 AC_PROG_CC
 AC_PROG_CC_C99
@@ -764,8 +769,10 @@ AM_PROG_CC_C_O
 # Check for install
 AC_PROG_INSTALL
 
-# Check for ranlib
+# Check for ranlib and ar
 AC_PROG_RANLIB
+# AM_PROG_AR not recognized on CentOS 6 ???
+#AM_PROG_AR
 
 # Check for - what?
 AM_PROG_CC_C_O
@@ -964,7 +971,7 @@ EOF
         comp_cap=0.0
       fi
     fi
-    #rm -f gpu_check.c
+    rm -f gpu_check.c
     AC_MSG_RESULT([compute capability $comp_cap])
     arch_set=no
     if test "x${comp_cap}" = x1.0; then
@@ -1241,7 +1248,9 @@ if test "x${use_matio}" = xyes; then
 fi
 
 if test "x${use_opencl}" = xyes; then
+# On pavlov w/ 2.8, we need clfftSetup
   AC_SEARCH_LIBS([clfftSetup],[clFFT],[have_clfft=yes],[have_clfft=no])
+#  AC_SEARCH_LIBS([clfftInitSetupData],[clFFT],[have_clfft=yes],[have_clfft=no])
 fi
 
 if test "x${use_fann}" = xyes; then
@@ -2031,9 +2040,11 @@ Building without numrec support.
 #if test "x${have_numrec}" = xyes; then
 else
   if test "x${use_numrec}" = xyes; then
-    AC_DEFINE([HAVE_NUMREC], 1, [Numerical Recipes support enabled])
+    AC_DEFINE([HAVE_NUMREC], 1, [Numerical Recipes support present])
+    AC_DEFINE([USE_NUMREC], 1, [Numerical Recipes support enabled])
   fi
 fi
+# what does this do, let use test HAVE_NUMREC in makefile's?
 AM_CONDITIONAL([HAVE_NUMREC],[test x${use_numrec} = xyes])
 
 if test "x${have_sparselm}" = xno; then

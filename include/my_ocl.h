@@ -69,3 +69,10 @@ extern void h_ocl_set_seed(int seed);
 		return;						\
 	}
 
+#define OCL_STATUS_CHECK_WITH_RETURN(stat,whence,retval)	\
+								\
+	if( stat != CL_SUCCESS ){				\
+		report_ocl_error(QSP_ARG  stat, #whence );	\
+		return retval;					\
+	}
+

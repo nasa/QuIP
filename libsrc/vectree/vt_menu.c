@@ -11,11 +11,11 @@
 //#include "version.h"
 #include "veclib_api.h"
 #include "vectree.h"
-//#include "query.h"		/* redir() */
 #include "vt_api.h"
 #include "quip_prot.h"
 #include "warn.h"
 #include "getbuf.h"
+#include "subrt.h"
 
 // BUG global is not thread-safe
 int dumpit=0;
@@ -137,7 +137,7 @@ static Data_Obj *base_object( Data_Obj *dp )
 			
 static COMMAND_FUNC( do_export )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *parent;
 	Identifier *idp;
 
 	dp = PICK_OBJ("");
@@ -148,7 +148,18 @@ static COMMAND_FUNC( do_export )
 	// If the object is subscripted from the parent,
 	// then the parent's name will be a substring of the
 	// object's name
-	dp = base_object(dp);
+	parent = base_object(dp);
+
+	// We want to export the parent if this is a subscripted object, but not if it is a subimage.
+	// We compare the names:  if the object name begins with the parent name, which is then
+	// followed by an index delimiter, then we export the parent.
+	if( !strncmp(OBJ_NAME(dp),OBJ_NAME(parent),strlen(OBJ_NAME(parent))) ){
+		int c;
+		const char *s=OBJ_NAME(dp);
+		c=s[ strlen(OBJ_NAME(parent)) ];
+		if( c == '{' || c == '[' )
+			dp = parent;
+	}
 
 	// The OBJ_EXTRA field holds decl_enp for objects declared in the
 	// expression language...  exported objects are not, so we have to
@@ -198,7 +209,7 @@ static COMMAND_FUNC( do_node_info )
 }
 
 static COMMAND_FUNC( do_list_subrts )
-{ list_subrts(SINGLE_QSP_ARG); }
+{ list_subrts(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(expressions_menu,s,f,h)
 

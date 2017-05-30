@@ -33,5 +33,12 @@ Pause
 Test_Insets float
 Test_Insets bit
 
+Image bit_image2 $h $w 1 bit
+VMov bit_image2 bit_image
+Display bit_image2
+VVOr bit_image2 bit_image2 bit_image
+Display bit_image2
+VSXor bit_image2 bit_image2 1
+Display bit_image2
 exit
 

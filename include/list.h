@@ -37,6 +37,7 @@ struct list {
 	if( n_active_threads > 1 )				\
 	{							\
 		int status;					\
+fprintf(stderr,"LOCK_LIST  n_active_threads = %d\n",n_active_threads);\
 								\
 /*fprintf(stderr,"%s:  locking list 0x%lx\n",#whence,(long)lp);*/\
 		status = pthread_mutex_lock(&lp->l_mutex);	\
@@ -52,6 +53,7 @@ struct list {
 	{							\
 		int status;					\
 								\
+fprintf(stderr,"list at 0x%lx is locked, flags = 0x%x\n",(long)lp,lp->l_flags);\
 		lp->l_flags &= ~LIST_LOCKED;			\
 /*fprintf(stderr,"%s:  unlocking list 0x%lx\n",#whence,(long)lp);*/\
 		status = pthread_mutex_unlock(&lp->l_mutex);	\

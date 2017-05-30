@@ -1,11 +1,13 @@
 
 dnl BUG - merge this file!!! (but with what???)
 
-include(`ocl_kern_args.m4')
-include(`../../include/veclib/slow_len.m4')
-include(`../../include/veclib/slow_incs.m4')
-include(`../../include/veclib/eqsp_incs.m4')
-include(`../../include/veclib/slow_vars.m4')
+dnl	define(`MORE_DEBUG',`x')	dnl	print extra debugging
+
+my_include(`ocl_kern_args.m4')
+my_include(`veclib/slow_len.m4')
+my_include(`veclib/slow_incs.m4')
+my_include(`veclib/eqsp_incs.m4')
+my_include(`veclib/slow_vars.m4')
 
 // this is 80 columns
 //345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -64,7 +66,7 @@ define(`REPORT_KERNEL_ENQUEUE',`
 
 	if( verbose ){
 		int i;
-		fprintf(stderr,"FINISH_KERNEL_CALL, n_dims = %d\n",$1); 
+		fprintf(stderr,"finish_kernel_enqueue:  n_dims = %d\n",$1); 
 		for (i=0;i<$1;i++)
 			fprintf(stderr,"global_work_size[%d] = %ld\n",
 				i,global_work_size[i]);
@@ -148,8 +150,10 @@ dnl _CHECK_KERNEL(k,name,ktyp,kname)
 define(`_CHECK_KERNEL',`
 	/* _check_kernel $1 $2 $3 $4 */
 	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));
+dnl fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 	if( $1[pd_idx] == NULL ){	/* one-time initialization */
 		ksrc = KERN_SOURCE_NAME($2,$3);
+dnl fprintf(stderr,"_check_kernel $2:  creating kernel\n");
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));
 		if( program == NULL ) 
 			NERROR1("program creation failure!?");
@@ -172,12 +176,19 @@ dnl BUG - the number of words we need to process depends on bit0 !?
 define(`SETUP_FAST_BLOCKS_DBM_',`global_work_size[0] = VA_LENGTH( vap )/BITS_PER_BITMAP_WORD;')
 
 define(`SETUP_EQSP_BLOCKS_DBM_',`global_work_size[0] = VA_ITERATION_TOTAL( vap );')
+
+dnl	BUG	don't we need to consider source bitmaps, especially for slow ops?
 define(`SETUP_FAST_BLOCKS_DBM_SBM',`SETUP_FAST_BLOCKS_DBM_')
+define(`SETUP_FAST_BLOCKS_DBM_2SBM',`SETUP_FAST_BLOCKS_DBM_')
+define(`SETUP_FAST_BLOCKS_DBM_1SBM',`SETUP_FAST_BLOCKS_DBM_')
+
 define(`SETUP_EQSP_BLOCKS_',`SETUP_FAST_BLOCKS_')
 define(`SETUP_EQSP_BLOCKS_SBM_',`SETUP_FAST_BLOCKS_SBM_')
 dnl BUG?  do we need both???
 define(`SETUP_EQSP_BLOCKS_DBM_SBM_',`SETUP_FAST_BLOCKS_DBM_SBM_')
 define(`SETUP_EQSP_BLOCKS_DBM_SBM',`SETUP_FAST_BLOCKS_DBM_SBM')
+define(`SETUP_EQSP_BLOCKS_DBM_2SBM',`SETUP_FAST_BLOCKS_DBM_2SBM')
+define(`SETUP_EQSP_BLOCKS_DBM_1SBM',`SETUP_FAST_BLOCKS_DBM_1SBM')
 
 dnl SETUP_SLOW_BLOCKS(bitmap)
 define(`SETUP_SLOW_BLOCKS',`/*ssb $1*/SETUP_SLOW_BLOCKS_$1/*ssb $1*/')
@@ -198,6 +209,8 @@ define(`SETUP_SLOW_BLOCKS_SBM_',`SETUP_SLOW_BLOCKS_')
 define(`SETUP_SLOW_BLOCKS_DBM_',`global_work_size[0] = VA_ITERATION_TOTAL( vap );')
 
 define(`SETUP_SLOW_BLOCKS_DBM_SBM',`SETUP_SLOW_BLOCKS_DBM_')
+define(`SETUP_SLOW_BLOCKS_DBM_2SBM',`SETUP_SLOW_BLOCKS_DBM_')
+define(`SETUP_SLOW_BLOCKS_DBM_1SBM',`SETUP_SLOW_BLOCKS_DBM_')
 
 
 dnl CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)
@@ -243,36 +256,44 @@ dnl CALL_GPU_FAST_PROJ_2V_SETUP_FUNC(name)
 define(`CALL_GPU_FAST_PROJ_2V_SETUP_FUNC',`
 	CHECK_FAST_KERNEL_1($1`_setup')
 	SET_KERNEL_ARGS_FAST_PROJ_2V_SETUP
+	global_work_size[0] = len1;
 	CALL_FAST_KERNEL_1($1`_setup',,,,)
 ')
 
 define(`CALL_GPU_FAST_PROJ_2V_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1`_helper')
 	SET_KERNEL_ARGS_FAST_PROJ_2V_HELPER
+	global_work_size[0] = len1;
 	CALL_FAST_KERNEL_2($1`_helper',,,,)
 ')
 
 define(`CALL_GPU_FAST_PROJ_3V_SETUP_FUNC',`
 	CHECK_FAST_KERNEL_1($1`_setup')
 	SET_KERNEL_ARGS_FAST_PROJ_3V_SETUP
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_1($1`_setup',,,,)
 ')
 
 define(`CALL_GPU_FAST_PROJ_3V_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1`_helper')
+dnl fprintf(stderr,"setting helper kernel args...\n");
 	SET_KERNEL_ARGS_FAST_PROJ_3V_HELPER
+dnl fprintf(stderr,"DONE setting helper kernel args...\n");
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_2($1`_helper',,,,)
 ')
 
 define(`CALL_GPU_FAST_INDEX_SETUP_FUNC',`
 	CHECK_FAST_KERNEL_1($1)
 	SET_KERNEL_ARGS_FAST_INDEX_SETUP
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_1($1,,,,)
 ')
 
 define(`CALL_GPU_FAST_INDEX_HELPER_FUNC',`
 	CHECK_FAST_KERNEL_2($1)
 	SET_KERNEL_ARGS_FAST_INDEX_HELPER
+	/* BUG?  set global_work_size ??? */
 	CALL_FAST_KERNEL_2($1,,,,)
 ')
 
@@ -333,12 +354,10 @@ dnl SETUP_KERNEL_FAST_CALL(name,bitmap,typ,scalars,vectors)
 define(`SETUP_KERNEL_FAST_CALL',`
 
 	CHECK_FAST_KERNEL($1)
-	dnl `SET_KERNEL_ARGS_FAST_'$2$3$4$5
 	SET_KERNEL_ARGS_FAST($2,$3,$4,$5)
 	REPORT_KERNEL_CALL($1)
 	dnl `SETUP_FAST_BLOCKS_'$2
 	SETUP_FAST_BLOCKS($2)
-	dnl `REPORT_FAST_ARGS_'$2$3$4$5
 	REPORT_FAST_ARGS($2,$3,$4,$5)
 ')
 
@@ -352,7 +371,6 @@ define(`SETUP_KERNEL_FAST_CALL_CONV',`
 	REPORT_KERNEL_CALL($1)
 	dnl `SETUP_FAST_BLOCKS_'$2
 	SETUP_FAST_BLOCKS($2)
-	dnl `REPORT_FAST_ARGS_'$2$3`2'
 	REPORT_FAST_ARGS($2,$3,`',`2')
 ')
 
@@ -360,7 +378,6 @@ define(`SETUP_KERNEL_FAST_CALL_CONV',`
 define(`SETUP_KERNEL_EQSP_CALL',`
 
 	CHECK_EQSP_KERNEL($1)
-	dnl `SET_KERNEL_ARGS_EQSP_'$2$3$4$5
 	SET_KERNEL_ARGS_EQSP($2,$3,$4,$5)
 	REPORT_KERNEL_CALL($1)
 	SETUP_EQSP_BLOCKS($2)
@@ -383,7 +400,6 @@ dnl SETUP_KERNEL_SLOW_CALL(name,bitmap,typ,scalars,vectors)
 define(`SETUP_KERNEL_SLOW_CALL',`
 
 	CHECK_SLOW_KERNEL($1)
-	dnl `SET_KERNEL_ARGS_SLOW_'$2$3$4$5
 	SET_KERNEL_ARGS_SLOW($2,$3,$4,$5)
 	REPORT_KERNEL_CALL($1)
 	dnl `SETUP_SLOW_BLOCKS_'$2

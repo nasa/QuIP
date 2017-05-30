@@ -83,7 +83,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	switch( VN_DATA_TYPE(enp) ){
 		case ND_DECL:
-fprintf(stderr,"initializing ND_DECL data for node at 0x%lx, code = %d\n",(long)enp,VN_CODE(enp));
+//fprintf(stderr,"initializing ND_DECL data for node at 0x%lx, code = %d\n",(long)enp,VN_CODE(enp));
 			SET_VN_DECL_NAME(enp, NULL);
 			SET_VN_DECL_CTX(enp, NO_ITEM_CONTEXT);
 			SET_VN_DECL_PREC(enp, NO_PRECISION );
@@ -101,11 +101,11 @@ fprintf(stderr,"initializing ND_DECL data for node at 0x%lx, code = %d\n",(long)
 			SET_VN_INTVAL(enp, 0);
 			break;
 		case ND_SUBRT:
-			SET_VN_SUBRT(enp, NO_SUBRT);
+			SET_VN_SUBRT(enp, NULL);
 			break;
 		case ND_CALLF:
 			SET_VN_UK_ARGS(enp, NO_LIST);
-			SET_VN_CALL_SUBRT(enp, NO_SUBRT);
+			SET_VN_CALL_SUBRT(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);

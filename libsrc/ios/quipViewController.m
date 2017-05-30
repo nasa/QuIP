@@ -40,6 +40,7 @@
 #endif // BUILD_FOR_IOS
 
 
+#ifdef OLD
 /********** UIAlertView delegate methods ************/
 
 - (void)alertView:(QUIP_ALERT_OBJ_TYPE *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
@@ -53,6 +54,8 @@
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // OLD
+
 #ifdef BUILD_FOR_IOS
 - (void)didReceiveMemoryWarning
 {
@@ -251,6 +254,7 @@
 	self=[super initWithNibName:nil bundle:nil];
 #endif // BUILD_FOR_MACOS
 
+//fprintf(stderr,"quipViewController initWithSize delegate = 0x%lx\n",(long)adp);
 	qadp=adp;
 	CGRect r;
 	// This is the view controller???
@@ -260,14 +264,15 @@
 	_size = size;
 
 #ifdef BUILD_FOR_IOS
-	qvc_flags = QVC_ALLOWS_AUTOROTATION;
+	//qvc_flags = QVC_ALLOWS_AUTOROTATION;
+	qvc_flags = 0;
 #endif // BUILD_FOR_IOS
 
 	// The view property is set by loadView
 
+//fprintf(stderr,"quipViewController initWithSize DONE\n");
 	return self;
 }
-
 
 @end
 

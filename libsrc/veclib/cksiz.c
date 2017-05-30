@@ -34,6 +34,10 @@ int cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 		if( OBJ_TYPE_DIM(src_dp,i) != OBJ_TYPE_DIM(dst_dp,i) ){
 
 			/* special case for real/cpx fft */
+
+			/* This is usually a row, but for a 1-D fft of a column, this test wouldn't
+			 * be triggered !?  BUG
+			 */
 			if( i==1 ){
 				if( (argtyp & FWD_FT) && IS_REAL(src_dp) && IS_COMPLEX(dst_dp) ){
 					if( OBJ_COLS(dst_dp) == (1+OBJ_COLS(src_dp)/2) )
@@ -65,6 +69,33 @@ int cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 				WARN(ERROR_STRING);
 				return(-1);
 			}
+		} else {	/* dimensions match */
+
+			/* special case for real/cpx fft */
+
+			/* This is usually a row, but for a 1-D fft of a column, this test wouldn't
+			 * be triggered !?  BUG
+			 */
+			if( i==1 ){
+				if( (argtyp & FWD_FT) && IS_REAL(src_dp) && IS_COMPLEX(dst_dp) ){
+					if( OBJ_COLS(dst_dp) != (1+OBJ_COLS(src_dp)/2) ){
+						sprintf(ERROR_STRING,
+"For FFT, number of columns of transform %s (%d) should 1 plus the half number of columns of the destination %s (%d)",
+OBJ_NAME(dst_dp),OBJ_COLS(dst_dp),OBJ_NAME(src_dp),OBJ_COLS(src_dp));
+						WARN(ERROR_STRING);
+						return -1;
+					}
+				} else if( (argtyp & INV_FT) && IS_COMPLEX(src_dp) && IS_REAL(dst_dp) ){
+					if( OBJ_COLS(src_dp) == (1+OBJ_COLS(dst_dp)/2) ){
+						sprintf(ERROR_STRING,
+"For inverse FFT, number of columns of transform %s (%d) should 1 plus the half number of columns of the destination %s (%d)",
+OBJ_NAME(src_dp),OBJ_COLS(src_dp),OBJ_NAME(dst_dp),OBJ_COLS(dst_dp));
+						WARN(ERROR_STRING);
+						return -1;
+					}
+				}
+			}
+
 		}
 	}
 	return(0);

@@ -96,6 +96,41 @@ static COMMAND_FUNC( do_show_done )
 #endif // ! BUILD_FOR_IOS
 }
 
+// BUG - the order in this table has to match the enum declarations in screen_obj.h!
+static const char *orientation_choices[N_TABLET_ORIENTATIONS]={
+	"all",
+	"portrait_both",
+	"portrait_up",
+	"landscape_both",
+	"landscape_right",
+	"landscape_left"
+};
+
+static COMMAND_FUNC( do_allow_oris )
+{
+	int i;
+
+	i=WHICH_ONE("allowed orientations",N_TABLET_ORIENTATIONS,orientation_choices);
+	if( i < 0 ) return;
+#ifdef BUILD_FOR_IOS
+	set_allowed_orientations(i);
+#else // ! BUILD_FOR_IOS
+	advise("Specifying allowed orientations will have no effect!");
+#endif // ! BUILD_FOR_IOS
+}
+
+static COMMAND_FUNC( do_allow_autorot )
+{
+	int yesno;
+
+	yesno=ASKIF("allow autorotation");
+#ifdef BUILD_FOR_IOS
+	set_autorotation_allowed(yesno);
+#else // ! BUILD_FOR_IOS
+	advise("Specifying autorotation will have no effect!");
+#endif // ! BUILD_FOR_IOS
+}
+
 static COMMAND_FUNC(do_accept_edits)
 {
 	Screen_Obj *sop;
@@ -317,7 +352,7 @@ static COMMAND_FUNC( do_control_menu )
 	PUSH_MENU(control);
 }
 
-static COMMAND_FUNC( do_list_panels ){ list_panel_objs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_panels ){ list_panel_objs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(objects_menu,s,f,h)
@@ -837,6 +872,8 @@ ADD_CMD( notice,	do_notice,		give a notice )
 #endif /* HAVE_MOTIF */
 /* support for genwin */
 ADD_CMD( genwin,	do_genwin_menu,		general window operations submenu )
+ADD_CMD( allow_autorotation,	do_allow_autorot,	specify whether tablet autorotation is allowed )
+ADD_CMD( allow_orientations,	do_allow_oris,		specify valid tablet orientations )
 #ifdef NOT_YET
 ADD_CMD( luts,		do_lut_menu,		color map submenu )
 #endif /* NOT_YET */

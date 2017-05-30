@@ -54,7 +54,6 @@
 #define STARTUP_DIRNAME	"QUIPSTARTUPDIR"
 
 #include "debug.h"		/* verbose */
-#include "query.h"
 
 #ifdef BUILD_FOR_CMD_LINE
 static int read_traditional_startup(QSP_ARG_DECL  const char *progname)

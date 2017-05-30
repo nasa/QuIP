@@ -143,20 +143,28 @@ extern debug_flag_t debug_data;
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
 
+struct data_info {
+	Data_Area *		di_ap;
+	void *			di_data_ptr;
+	void *			di_unaligned_ptr;
+	index_t			di_offset;	// data offset of subobjects - in bytes
+	bitnum_t		di_bit0;
+};
+
 struct data_obj {
 	Item			dt_item;
 	Shape_Info *		dt_shpp;
-	void *			dt_data_ptr;
-	void *			dt_unaligned_ptr;
+	struct data_info	dt_data_info;
+#define dt_data_ptr		dt_data_info.di_data_ptr
+#define dt_unaligned_ptr	dt_data_info.di_unaligned_ptr
+#define dt_offset		dt_data_info.di_offset
+#define dt_bit0			dt_data_info.di_bit0
+#define dt_ap			dt_data_info.di_ap
 	void *			dt_extra;	// used for decl_enp - what else?
-	bitnum_t		dt_bit0;
 	Data_Obj *		dt_parent;
 	List *			dt_children;
-	index_t			dt_offset;	// data offset of subobjects - in bytes
-	int			dt_refcount;
 	const char *		dt_declfile;
-	Data_Area *		dt_ap;
-	//int			dt_flags;	// are the flags the same as the shape flags?
+	int			dt_refcount;
 };
 
 #define NO_OBJ		((Data_Obj *)NULL)

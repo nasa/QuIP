@@ -17,10 +17,8 @@
  */
 
 // vl2_typtbl.m4 including gen_typtbl.m4 BEGIN
-include(`../../include/veclib/gen_typtbl.m4')
+my_include(`veclib/gen_typtbl.m4')
 // vl2_typtbl.m4 DONE including gen_typtbl.m4
-
-dnl include(`../../include/veclib/obj_args.m4')
 
 static void nullobjf(HOST_CALL_ARG_DECLS)
 {
@@ -50,7 +48,7 @@ static void nullobjf(HOST_CALL_ARG_DECLS)
 Vec_Func_Array vl2_vfa_tbl[]={
 
 // vl2_typtbl.m4 including gen_func_array.m4 BEGIN
-include(`../../include/veclib/gen_func_array.m4')
+my_include(`veclib/gen_func_array.m4')
 // vl2_typtbl.m4 DONE including gen_func_array.m4
 
 };
@@ -61,12 +59,13 @@ void check_vl2_vfa_tbl(SINGLE_QSP_ARG_DECL)
 {
 	if( N_VL2_ARRAYED_VEC_FUNCS != N_VEC_FUNCS ){
 		sprintf(ERROR_STRING,
-	"vl2_vfa_tbl has %ld entries, expected %d!?\n",
+	"vl2_vfa_tbl has %ld entries, expected %d!?",
 			N_VL2_ARRAYED_VEC_FUNCS, N_VEC_FUNCS );
 		WARN(ERROR_STRING);
 //		return -1;
 	}
-	assert( N_VL2_ARRAYED_VEC_FUNCS == N_VEC_FUNCS );
+	assert( N_VL2_ARRAYED_VEC_FUNCS <= N_VEC_FUNCS );
 	check_vfa_tbl(QSP_ARG  vl2_vfa_tbl, N_VL2_ARRAYED_VEC_FUNCS);
+	assert( N_VL2_ARRAYED_VEC_FUNCS == N_VEC_FUNCS );
 }
 

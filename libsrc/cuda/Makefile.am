@@ -1,5 +1,8 @@
+# OLD COMMENT:
 # We put the .o files from .cu files here to make sure to recompile when needed
 # BUT that breaks things on non-cuda systems...
+# NEW COMMET:
+# All .cu files moved to ../cu2
 
 all:	libqcuda.a
 	cp libqcuda.a ../../libs
@@ -34,15 +37,16 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I../.. -I$(top_srcdir)/inc
 
 # The dependency building stuff doesn't seem to know about .cu files...
 
+#		../../include/veclib/fast_test.h	\
+#		../../include/veclib/xfer_args.h
+
 CU_DEPS =						\
-		my_cuda.h				\
-		../../include/veclib/fast_test.h	\
-		../../include/veclib/xfer_args.h	\
-		../../include/cuda_supp.h 		\
-		../../config.h 				\
-		../../include/quip_config.h 		\
-		../../include/quip_version.h 		\
-		../../include/veclib/vecgen.h
+		$(top_srcdir)/include/my_cuda.h				\
+		$(top_srcdir)/include/cuda_supp.h 		\
+		$(top_builddir)/config.h 				\
+		$(top_srcdir)/include/quip_config.h 		\
+		$(top_srcdir)/include/quip_version.h 		\
+		$(top_srcdir)/include/veclib/vecgen.h
 
 host_calls.h:	host_call_utils.h ../../include/veclib/fast_test.h	\
 		../../include/veclib/xfer_args.h
@@ -50,31 +54,6 @@ host_calls.h:	host_call_utils.h ../../include/veclib/fast_test.h	\
 
 # this rule doesn't seem to fire in make distcheck...
 
-
-conversions.cu:	$(CU_DEPS)
-#	touch conversions.cu
-
-fill.cu:	$(CU_DEPS)
-#	touch fill.cu
-
-cuda_centroid.cu:	gpu_cent.cu		\
-			$(CU_DEPS)
-#	touch cuda_centroid.cu
-
-yuv2rgb.cu:	$(CU_DEPS)
-#	touch yuv2rgb.cu
-
-yuv2rgb.o:	yuv2rgb.cu
-	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
-
-conversions.o:	conversions.cu
-	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
-
-fill.o:	fill.cu
-	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
-
-cuda_centroid.o:	cuda_centroid.cu
-	$(NVCC) -o $@ -c $< $(NVCCFLAGS)
 
 noinst_LIBRARIES = libqcuda.a
 
@@ -105,11 +84,8 @@ endif
 #
 
 noinst_HEADERS =					\
-				cuda_port.h		\
 				cuda_viewer.h		\
-				my_cuda.h		\
-				glx_hack.h		\
-				gpu_cent.cu
+				glx_hack.h
 
 libqcuda_a_SOURCES =					\
 				cuda.cpp		\
@@ -123,24 +99,11 @@ libqcuda_a_SOURCES =					\
 
 #libqcuda_a_SOURCES += fakit.cpp
 
-#				conversions.cu
-
-NVCC_SOURCES =						\
-				cuda_centroid.cu	\
-				fill.cu			\
-				yuv2rgb.cu
-
-if HAVE_NVCC
-libqcuda_a_SOURCES += $(NVCC_SOURCES)
-else
-noinst_HEADERS += $(NVCC_SOURCES)
-endif
 
 #else
 #
 #libqcuda_a_SOURCES += fakit.cpp
 #
-
 
 EXTRA_DIST	=	root_cmds.sh
 

@@ -107,6 +107,7 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 @synthesize wakeup_timer;
 @synthesize wakeup_lp;
 
+
 -(void) applicationDidEnterBackground:(UIApplication *)app
 {
 	/* Use this method to release shared resources,
@@ -322,7 +323,7 @@ static void add_selection_to_choice( Screen_Obj *sop, NSIndexPath *path )
 	r=0;	// BUG
 #endif // BUILD_FOR_IOS
 
-	if( SB_BUF(choice_sbp) == NULL ){
+	if( sb_buffer(choice_sbp) == NULL ){
 		copy_string(choice_sbp,strings[r]);
 		n_choices = 1;
 	} else {
@@ -349,10 +350,10 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	sprintf(val_string,"%d",n);	// BUG? use snprint?
 	assign_var(DEFAULT_QSP_ARG "n_selections", val_string );
 
-	if( SB_BUF(choice_sbp) == NULL )	// no selections
+	if( sb_buffer(choice_sbp) == NULL )	// no selections
 		assign_var(DEFAULT_QSP_ARG "choice", "(nothing_selected)" );
 	else
-		assign_var(DEFAULT_QSP_ARG "choice", SB_BUF(choice_sbp) );
+		assign_var(DEFAULT_QSP_ARG "choice", sb_buffer(choice_sbp) );
 
 	rls_stringbuf(choice_sbp);
 	choice_sbp = NULL;
@@ -810,12 +811,13 @@ ipad_pro_9_7:
 	}
 }
 
-static int is_portrait(void)
+int is_portrait(void)
 {
 	UIDevice *dev;
 	static int warned=0;
 	UIDeviceOrientation dev_ori;
 	UIInterfaceOrientation ui_ori;
+	int retval;
 
 	dev = [UIDevice currentDevice];
 	// Is this really necessary?
@@ -827,16 +829,19 @@ static int is_portrait(void)
 		case UIDeviceOrientationPortrait:
 		case UIDeviceOrientationPortraitUpsideDown:
 //advise("portrait!");
-			return 1;
+			retval = 1;
+			break;
 		case UIDeviceOrientationLandscapeLeft:
 		case UIDeviceOrientationLandscapeRight:
 //advise("landscape!");
-			return 0;
+			retval = 0;
+			break;
 		case UIDeviceOrientationUnknown:
 			// This is returned when the startup script
 			// is being read...
 //fprintf(stderr,"is_portrait:  unknown orientation!?\n");
-			return -1;
+			retval = -1;
+			break;
 		case UIDeviceOrientationFaceUp:
 		case UIDeviceOrientationFaceDown:
 //fprintf(stderr,"is_portrait:  face up/down, using UI orientation...\n");
@@ -845,17 +850,20 @@ static int is_portrait(void)
 			switch( ui_ori ){
 				case UIInterfaceOrientationPortrait:
 				case UIInterfaceOrientationPortraitUpsideDown:
-					return 1;
+					retval = 1;
+					break;
 				case UIInterfaceOrientationLandscapeLeft:
 				case UIInterfaceOrientationLandscapeRight:
-					return 0;
+					retval = 0;
+					break;
 				// no other cases - include
 				// a CAUTIOUS default?
 
 
 				//This case is present in XCode 6, but not 5...
 				case UIInterfaceOrientationUnknown:
-				return 1;
+				retval = 1;
+				break;
 			}
 		default:
 /*
@@ -874,8 +882,11 @@ warned=1;
 			// when the device is flat...
 			// The previous orientation is remembered by the system.
 			// How can we get it here???
-			return -1;
+			retval = -1;
+			break;
 	}
+//fprintf(stderr,"is_portrait:  retval = %d\n",retval);
+	return retval;
 }
 #else // ! BUILD_FOR_IOS
 

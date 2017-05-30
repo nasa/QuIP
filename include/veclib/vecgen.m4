@@ -5,6 +5,8 @@
 define(`VFCODE_ARG',`vf_code,')
 define(`VFCODE_ARG_DECL',`const int vf_code,')
 define(`HOST_CALL_ARGS',`VFCODE_ARG  oap')
+
+dnl  Should we pass QSP_ARG? 
 define(`HOST_CALL_ARG_DECLS',`VFCODE_ARG_DECL  /*const*/ Vec_Obj_Args *oap')
 
 // Why are these called link funcs?  Maybe because they can be chained?

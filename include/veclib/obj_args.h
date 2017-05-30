@@ -170,7 +170,9 @@ typedef struct vector_args {
 	Scalar_Value *	va_sval[3];		// BUG use symbolic constant
 						// used for return scalars also?
 	bitnum_t	va_dbm_bit0;
-	bitnum_t	va_sbm_bit0;
+	bitnum_t	va_sbm1_bit0;
+	bitnum_t	va_sbm2_bit0;
+#define va_sbm_bit0	va_sbm1_bit0
 
 	dimension_t	va_len;			// just for fast/eqsp ops?
 
@@ -258,6 +260,8 @@ fprintf(stderr,"VA_SLOW_SIZE:  %d %d %d %d %d\n",\
 #define VA_SRC5(vap)	VA_SRC(vap,4)
 #define VA_DBM(vap)	VA_DEST(vap)
 #define VA_SBM(vap)	VA_SRC5(vap)
+#define VA_SBM1(vap)	VA_SRC1(vap)
+#define VA_SBM2(vap)	VA_SRC2(vap)
 
 #define VA_DEST_LEN(vap)	VARG_LEN( VA_DEST(vap) )
 #define VA_SRC1_LEN(vap)	VARG_LEN( VA_SRC1(vap) )
@@ -366,6 +370,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_SRC4_OFFSET(vap)		VA_SRC_OFFSET(vap,3)
 #define VA_SRC5_OFFSET(vap)		VA_SRC_OFFSET(vap,4)
 #define VA_SBM_OFFSET(vap)		VARG_OFFSET( VA_SBM(vap) )
+#define VA_SBM1_OFFSET(vap)		VARG_OFFSET( VA_SBM1(vap) )
+#define VA_SBM2_OFFSET(vap)		VARG_OFFSET( VA_SBM2(vap) )
 #define VA_DBM_OFFSET(vap)		VARG_OFFSET( VA_DBM(vap) )
 
 #define VA_LENGTH(vap)			(vap)->va_len
@@ -381,6 +387,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_SRC3_INC(vap)		VA_SRC3_EQSP_INC( vap )
 #define VA_SRC4_INC(vap)		VA_SRC4_EQSP_INC( vap )
 #define VA_SBM_INC(vap)			VA_SBM_EQSP_INC( vap )
+#define VA_SBM1_INC(vap)		VA_SRC1_EQSP_INC( vap )
+#define VA_SBM2_INC(vap)		VA_SRC2_EQSP_INC( vap )
 
 #define VA_DEST_INCSET(vap)		VARG_INCSET( VA_DEST(vap) )
 #define VA_SRC_INCSET(vap,idx)		VARG_INCSET( VA_SRC(vap,idx) )
@@ -398,6 +406,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define VA_SRC4_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,3)
 #define VA_SRC5_EQSP_INC(vap)		VA_SRC_EQSP_INC(vap,4)
 #define VA_SBM_EQSP_INC(vap)		VARG_EQSP_INC( VA_SRC5(vap) )
+#define VA_SBM1_EQSP_INC(vap)		VARG_EQSP_INC( VA_SRC1(vap) )
+#define VA_SBM2_EQSP_INC(vap)		VARG_EQSP_INC( VA_SRC2(vap) )
 #define VA_DBM_EQSP_INC(vap)		VA_DEST_EQSP_INC( vap )
 
 #define eqsp_dest_inc			VA_DEST_EQSP_INC(vap)
@@ -408,12 +418,20 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define eqsp_src4_inc			VA_SRC4_EQSP_INC(vap)
 #define eqsp_src5_inc			VA_SRC5_EQSP_INC(vap)
 #define eqsp_sbm_inc			VA_SRC5_EQSP_INC(vap)
+#define eqsp_sbm1_inc			VA_SRC1_EQSP_INC(vap)
+#define eqsp_sbm2_inc			VA_SRC2_EQSP_INC(vap)
 
 #define VA_SBM_BIT0(vap)		(vap)->va_sbm_bit0
+#define VA_SBM1_BIT0(vap)		(vap)->va_sbm1_bit0
+#define VA_SBM2_BIT0(vap)		(vap)->va_sbm2_bit0
 #define VA_DBM_BIT0(vap)		(vap)->va_dbm_bit0
 #define VA_SBM_PTR(vap)			VARG_PTR( VA_SBM(vap) )
+#define VA_SBM1_PTR(vap)		VARG_PTR( VA_SBM1(vap) )
+#define VA_SBM2_PTR(vap)		VARG_PTR( VA_SBM2(vap) )
 #define VA_DBM_PTR(vap)			VARG_PTR( VA_DBM(vap) )
 #define VA_SBM_INCSET(vap)		VA_SRC5_INCSET(vap)
+#define VA_SBM1_INCSET(vap)		VA_SRC1_INCSET(vap)
+#define VA_SBM2_INCSET(vap)		VA_SRC2_INCSET(vap)
 
 #define VA_SVAL(vap,idx)		(vap)->va_sval[idx]
 #define VA_SVAL1(vap)			VA_SVAL(vap,0)
@@ -432,6 +450,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_SRC4_PTR(vap,ptr)	SET_VA_SRC_PTR(vap,3,ptr)
 #define SET_VA_SRC5_PTR(vap,ptr)	SET_VA_SRC_PTR(vap,4,ptr)
 #define SET_VA_SBM_PTR(vap,ptr)		SET_VARG_PTR( VA_SRC5(vap) , ptr )
+#define SET_VA_SBM1_PTR(vap,ptr)	SET_VARG_PTR( VA_SRC1(vap) , ptr )
+#define SET_VA_SBM2_PTR(vap,ptr)	SET_VARG_PTR( VA_SRC2(vap) , ptr )
 #define SET_VA_DBM_PTR(vap,ptr)		SET_VARG_PTR( VA_DEST(vap) , ptr )
 
 // We didn't have the destination dimset here?
@@ -444,6 +464,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_SRC4_DIMSET(vap,v)	SET_VA_SRC_DIMSET(vap,3,v)
 #define SET_VA_SRC5_DIMSET(vap,v)	SET_VA_SRC_DIMSET(vap,4,v)
 #define SET_VA_SBM_DIMSET(vap,v)	SET_VARG_DIMSET( VA_SRC5(vap), v )
+#define SET_VA_SBM1_DIMSET(vap,v)	SET_VARG_DIMSET( VA_SRC1(vap), v )
+#define SET_VA_SBM2_DIMSET(vap,v)	SET_VARG_DIMSET( VA_SRC2(vap), v )
 
 #define SET_VA_DEST_INCSET(vap,v)	SET_VARG_INCSET( VA_DEST(vap), v )
 #define SET_VA_SRC_INCSET(vap,idx,v)	SET_VARG_INCSET( VA_SRC(vap,idx), v )
@@ -453,6 +475,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_SRC4_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC4(vap), v )
 #define SET_VA_SRC5_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC4(vap), v )
 #define SET_VA_SBM_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC5(vap), v )
+#define SET_VA_SBM1_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC1(vap), v )
+#define SET_VA_SBM2_INCSET(vap,v)	SET_VARG_INCSET( VA_SRC2(vap), v )
 
 #define SET_VA_DEST_EQSP_INC(vap,v)		SET_VARG_EQSP_INC( VA_DEST(vap), v )
 #define SET_VA_SRC_EQSP_INC(vap,idx,v)		SET_VARG_EQSP_INC( VA_SRC(vap,idx), v )
@@ -467,6 +491,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 //#define SET_VA_COUNT(vap,v)		SET_SZI_DST_DIMS(VA_SIZE_INFO(vap),v)
 #define SET_VA_COUNT(vap,v)		SET_VARG_DIMSET(VA_DEST(vap),v)
 #define SET_VA_SBM_BIT0(vap,v)		(vap)->va_sbm_bit0 = v
+#define SET_VA_SBM1_BIT0(vap,v)		(vap)->va_sbm1_bit0 = v
+#define SET_VA_SBM2_BIT0(vap,v)		(vap)->va_sbm2_bit0 = v
 #define SET_VA_DBM_BIT0(vap,v)		(vap)->va_dbm_bit0 = v
 #define SET_VA_SVAL(vap,idx,v)		(vap)->va_sval[idx] =  v
 #define SET_VA_SVAL1(vap,v)		SET_VA_SVAL(vap,0,v)
@@ -497,6 +523,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define SET_VA_SRC4_OFFSET(vap,os)	SET_VA_SRC_OFFSET(vap,3,os)
 #define SET_VA_SRC5_OFFSET(vap,os)	SET_VA_SRC_OFFSET(vap,4,os)
 #define SET_VA_SBM_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM(vap), os )
+#define SET_VA_SBM1_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM1(vap), os )
+#define SET_VA_SBM2_OFFSET(vap,os)	SET_VARG_OFFSET( VA_SBM2(vap), os )
 #define SET_VA_DBM_OFFSET(vap,os)	SET_VARG_OFFSET( VA_DBM(vap), os )
 
 #define DECLARE_VA_SCALARS						\

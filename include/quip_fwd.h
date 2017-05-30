@@ -19,6 +19,7 @@ FWD_TYPEDEF(query,Query)
 FWD_TYPEDEF(query_stack,Query_Stack)
 FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
+FWD_TYPEDEF(subrt,Subrt)
 
 FWD_TYPEDEF(mouthful,Mouthful)
 FWD_TYPEDEF(my_pipe,Pipe)
@@ -37,6 +38,7 @@ FWD_TYPEDEF(variable,Variable)
 FWD_TYPEDEF(debug_module,Debug_Module)
 FWD_TYPEDEF(freelist,FreeList)
 FWD_TYPEDEF(container,Container)
+FWD_TYPEDEF(enumerator,Enumerator)
 FWD_TYPEDEF(data_obj,Data_Obj)
 FWD_TYPEDEF(vec_expr_node,Vec_Expr_Node)
 FWD_TYPEDEF(input_format_spec,Input_Format_Spec)
@@ -53,6 +55,7 @@ FWD_TYPEDEF(hash_tbl,Hash_Tbl)
 FWD_TYPEDEF(command,Command)
 FWD_TYPEDEF(vec_obj_args,Vec_Obj_Args)
 FWD_TYPEDEF(platform_device,Platform_Device)
+FWD_TYPEDEF(platform_stream,Platform_Stream)
 FWD_TYPEDEF(curl_info,Curl_Info)
 
 typedef List Stack;
@@ -69,7 +72,7 @@ FWD_TYPEDEF(viewer,Viewer)
 #define ITEM_INIT_PROT(type,stem)	void init_##stem##s(SINGLE_QSP_ARG_DECL );
 #define ITEM_CHECK_PROT(type,stem)	type * stem##_of(QSP_ARG_DECL  const char *name);
 #define ITEM_GET_PROT(type,stem)	type * get_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(SINGLE_QSP_ARG_DECL );
+#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(QSP_ARG_DECL FILE *fp);
 #define ITEM_PICK_PROT(type,stem)	type *pick_##stem(QSP_ARG_DECL  const char *pmpt);
 #define ITEM_ENUM_PROT(type,stem)	List *stem##_list(SINGLE_QSP_ARG_DECL);
 #define ITEM_DEL_PROT(type,stem)	void del_##stem(QSP_ARG_DECL  type *ip);

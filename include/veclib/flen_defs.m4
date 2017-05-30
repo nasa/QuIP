@@ -23,7 +23,7 @@ define(`SLOW_GPU_FUNC_CALL',`')
 
 define(`GENERIC_VEC_FUNC_DBM',`GENERIC_FLEN_VEC_FUNC_DBM($1,$2,$3,$4,$5)')
 
-define(`_VEC_FUNC_2V_CONV',`_GENERIC_FLEN_CONV_FUNC($1,std_type,$2)')
+define(`_VEC_FUNC_2V_CONV',`_GENERIC_FLEN_CONV_FUNC($1,$2)')
 
 
 
@@ -42,7 +42,7 @@ dnl	SET_DBM_INDEX_ARRAY				\
 ')
 
 // checkpoint_one
-dnl define(`SET_INDICES_DBM_1S_',SET_DBM_TBL_INDEX)
+dnl define(`SET_INDICES_DBM__1S',SET_DBM_TBL_INDEX)
 
 // checkpoint_two
 define(`SET_DBM_TBL_INDEX',`							\
@@ -66,9 +66,10 @@ define(`_VEC_FUNC_2V_PROJ_IDX',`')
 define(`_VEC_FUNC_3V_PROJ',`')
 define(`_VEC_FUNC_CPX_3V_PROJ',`')
 
-include(`../../include/veclib/fast_eqsp_defs.m4')
+my_include(`veclib/fast_eqsp_defs.m4')
 
 define(`DECLARE_DBM_INDEX',`')
 define(`SET_INDICES_1SRC',`index2 = tbl_idx;')
+define(`SET_INDICES_2SRCS',`SET_INDICES_1SRC index3 = index2;')
 
 

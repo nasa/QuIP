@@ -42,7 +42,7 @@ struct frag_match_info {
 	struct item_context *		fmi_icp;	// the item context that these fragments refer to?
 	u_long				fmi_item_serial;
 
-	int type;	// LIST_CONTAINER or RB_TREE_CONTAINER
+	//int type;	// LIST_CONTAINER or RB_TREE_CONTAINER
 	union {
 		rbtree_frag_match_info	rbti;
 		list_frag_match_info	li;
@@ -53,6 +53,7 @@ struct frag_match_info {
 #define FMI_ITEM_SERIAL(fmi_p)		(fmi_p)->fmi_item_serial
 #define SET_FMI_ITEM_SERIAL(fmi_p,c)	(fmi_p)->fmi_item_serial = c
 
+#define FMI_CONTAINER(fmi_p)		CTX_CONTAINER(FMI_CTX(fmi_p))
 #define FMI_CTX(fmi_p)			(fmi_p)->fmi_icp
 #define SET_FMI_CTX(fmi_p,icp)		(fmi_p)->fmi_icp = icp
 
@@ -65,7 +66,7 @@ struct match_cycle {
 	u_long		mc_stack_serial;	// need to redo if doesn't match itci
 	u_long		mc_item_serial;		// need to redo at least one fmp if doesn't match itci
 	List *		mc_fmi_lp;		// list of frag_match_info's
-	Node *		mc_curr_np;		// for cycling
+	Node *		mc_curr_np;		// points to a node in fmi_lp, for cycling
 };
 
 #define MATCH_CYCLE_STRING(mc_p)	(mc_p)->it.item_name
@@ -401,6 +402,12 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	type * stem##_p;					\
 								\
+	assert(name!=NULL);					\
+								\
+	if( *name == 0 ){					\
+		WARN("Can't create " #stem " item with null name!?");	\
+		return NULL;					\
+	}							\
 	if( stem##_itp == NO_ITEM_TYPE )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 								\
@@ -451,11 +458,11 @@ type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 
 #define ITEM_LIST_FUNC(type,stem)				\
 								\
-void list_##stem##s(SINGLE_QSP_ARG_DECL)			\
+void list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 {								\
 	if( stem##_itp == NO_ITEM_TYPE )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
-	list_items(QSP_ARG  stem##_itp );			\
+	list_items(QSP_ARG  stem##_itp, fp );			\
 }
 
 #define ITEM_ENUM_FUNC(type,stem)				\

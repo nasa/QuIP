@@ -8,13 +8,11 @@ char VersionId_inc_vectree[] = QUIP_VERSION_STRING;
 
 #include "data_obj.h"
 //#include "strbuf.h"
-#include "query.h"
 #include "veclib/vecgen.h"
 #include "vec_expr_node.h"
-#include "subrt.h"
+//#include "subrt.h"
 #include "identifier.h"
 #include "pointer.h"
-#include "strbuf.h"
 #include "ctx_pair.h"
 
 typedef struct keyword {

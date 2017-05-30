@@ -50,7 +50,7 @@ COMMAND_FUNC( do_root_cursor )
 	root_cursor(vcp);
 }
 
-static COMMAND_FUNC( do_list_cursors ){ list_cursors(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_cursors ){ list_cursors(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(cursors_menu,s,f,h)
 

@@ -52,7 +52,6 @@
 //#endif /*  _EiC */
 
 #include "data_obj.h"
-#include "query.h"
 
 typedef struct opencv_image {
 	Item	 ocv_item;

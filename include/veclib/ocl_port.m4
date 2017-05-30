@@ -1,12 +1,19 @@
 /* ocl_port.m4 BEGIN */
+
+dnl	DO we need these??
+dnl	#undef USE_SSE
+dnl	#define BUILD_FOR_GPU
+
+include(`../../include/veclib/gen_port.m4')
+
+suppress_if
+
 define(`BUILD_FOR_GPU',`')
+define(`BUILD_FOR_OPENCL',`')
 define(`QUATERNION_SUPPORT',`')
 ifdef(`QUATERNION_SUPPORT',`
 #define QUATERNION_SUPPORT
 ',`')
-
-#undef USE_SSE
-#define BUILD_FOR_GPU
 
 define(`pf_str',`ocl')
 define(`KERNEL_ARG_QUALIFIER',`__global')
@@ -30,15 +37,13 @@ define(`THREAD_INDEX_X',`get_global_id(0)')
 dnl define(`SET_INDEX',$1 = get_global_id(0);)
 define(`OCL_OFFSET_TYPE',`int')
 
-include(`../../include/veclib/gen_port.m4')
+suppress_no
 
-divert(0)
+#include "platform.h"
 extern void *TMPVEC_NAME`(Platform_Device *pdp, size_t size, size_t len, const char *whence);'
 extern void FREETMP_NAME`(void *a, const char *whence);'
 extern int get_max_threads_per_block(Data_Obj *odp);
 extern int max_threads_per_block;
-
-suppress_if
 
 /* ocl_port.m4 END */
 

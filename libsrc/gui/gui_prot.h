@@ -12,6 +12,8 @@ extern void set_pick(Screen_Obj *sop, int cyl, int which );
 extern void enable_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno );
 extern void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno );
 
+extern void set_allowed_orientations(Quip_Allowed_Orientations o);
+
 // Not all of these should be ios only!?
 #ifdef BUILD_FOR_OBJC
 

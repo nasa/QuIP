@@ -885,7 +885,6 @@ sprintf(ERROR_STRING,"%s:  Null destination!?!?", VF_NAME(vfp));
 WARN(ERROR_STRING);
 }
 
-//fprintf(stderr,"Calling %s...\n",VF_NAME(vfp));
 	call_vfunc(QSP_ARG  vfp,oap);
 
 	/* Now free the scalars (if any) */

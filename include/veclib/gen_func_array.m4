@@ -24,6 +24,7 @@ RALL_ARR(vramp1d,FVRAMP1D),
 RALL_ARR(vramp2d,FVRAMP2D),
 RCMQPALL_ARR(vsadd,FVSADD),
 RCMQPALL_ARR(vssub,FVSSUB),
+RCMQPALL_ARR(vssub2,FVSSUB2),
 RCMQPALL_ARR(vsmul,FVSMUL),
 RCMQPALL_ARR(vsdiv,FVSDIV),
 RCMQPALL_ARR(vsdiv2,FVSDIV2),
@@ -79,7 +80,11 @@ RFLT_ARR(vrint,FVRINT),
 
 ifdef(`BUILD_FOR_GPU',`
 dnl // put null entries here for these funcs with no GPU implementation
+ifdef(`BUILD_FOR_CUDA',`
 NULL_ARR(vuni,FVUNI),
+',`
+RFLT_SAME_PREC_ARR(vuni,FVUNI),
+')
 NULL_ARR(vj0,FVJ0),
 NULL_ARR(vj1,FVJ1),
 NULL_ARR(vgamma,FVGAMMA),
@@ -238,15 +243,15 @@ RALL_ARR(vcmp,FVCMP),
 RALL_ARR(vscmp,FVSCMP),
 RALL_ARR(vscmp2,FVSCMP2),
 
-/* Type conversions
- *
- * For now, bitmaps are constrained to be a single unsigned type,
- * determined at compile time.  But here the conversion/unconversion
- * functions are installed for all unsigned types, regardless of which
- * one is actually used for bitmaps.  This should be safe, because
- * these are only called when one object is a bitmap, and that should
- * never be the wrong type...
- */
+dnl	/* Type conversions
+dnl	 *
+dnl	 * For now, bitmaps are constrained to be a single unsigned type,
+dnl	 * determined at compile time.  But here the conversion/unconversion
+dnl	 * functions are installed for all unsigned types, regardless of which
+dnl	 * one is actually used for bitmaps.  This should be safe, because
+dnl	 * these are only called when one object is a bitmap, and that should
+dnl	 * never be the wrong type...
+dnl	 */
 
 /* gen_func_array.m4 END */
 

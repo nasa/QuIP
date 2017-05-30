@@ -113,8 +113,8 @@ IOS_ITEM_LIST_PROT(Nav_Item,nav_item)
 
 #define NO_NAV_ITEM	((Nav_Item *) NULL)
 
-
-
+extern void set_supported_orientations(UIInterfaceOrientationMask m);
+extern void set_autorotation_allowed(BOOL yesno);
 
 
 #else // ! BUILD_FOR_OBJC

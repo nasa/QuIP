@@ -61,22 +61,27 @@ static void (*error_vec)(QSP_ARG_DECL  const char *)=tty_error1;
 static void (*advise_vec)(QSP_ARG_DECL  const char *)=tty_advise;
 static void (*prt_msg_frag_vec)(QSP_ARG_DECL  const char *)=tty_prt_msg_frag;
 
-static int silent(SINGLE_QSP_ARG_DECL)
+static void check_silent(SINGLE_QSP_ARG_DECL)
 {
 	char *s;
 
-	if( ! SILENCE_CHECKED(THIS_QSP) ){
-		SET_QS_FLAG_BITS(THIS_QSP,QS_SILENCE_CHECKED);
-		s=getenv("SILENT");
-		if( s == NULL )
+	if(  SILENCE_CHECKED(THIS_QSP) ) return;
+
+	SET_QS_FLAG_BITS(THIS_QSP,QS_SILENCE_CHECKED);
+	s=getenv("SILENT");
+	if( s == NULL )
+		CLEAR_QS_FLAG_BITS(THIS_QSP,QS_SILENT);
+	else {
+		if( *s == '0' )
 			CLEAR_QS_FLAG_BITS(THIS_QSP,QS_SILENT);
-		else {
-			if( *s == '0' )
-				CLEAR_QS_FLAG_BITS(THIS_QSP,QS_SILENT);
-			else
-				SET_QS_FLAG_BITS(THIS_QSP,QS_SILENT);
-		}
+		else
+			SET_QS_FLAG_BITS(THIS_QSP,QS_SILENT);
 	}
+}
+
+static int silent(SINGLE_QSP_ARG_DECL)
+{
+	check_silent(SINGLE_QSP_ARG);
 	return( IS_SILENT(THIS_QSP) );
 }
 
@@ -152,21 +157,8 @@ void set_max_warnings(QSP_ARG_DECL  int n)
 	SET_QS_MAX_WARNINGS( THIS_QSP, n );
 }
 
-/*
- * Print warning message msg
- *
- * We'd like to print the input line number where this occurred,
- * but to do that we need a qsp?
- * To do that, we introduced another function q_warn, w/ macro WARN
- */
-
-static void _warn(QSP_ARG_DECL  const char* msg)
-	/* warning message */
+static void check_max_warnings(SINGLE_QSP_ARG_DECL)
 {
-	if( ! silent(SINGLE_QSP_ARG) ){
-		(*warn_vec)(QSP_ARG  msg);
-	}
-
 	INC_QS_N_WARNINGS(THIS_QSP);
 
 	if( QS_MAX_WARNINGS(THIS_QSP) > 0 &&
@@ -175,9 +167,24 @@ static void _warn(QSP_ARG_DECL  const char* msg)
 		sprintf(ERROR_STRING,"Too many warnings (%d max)",
 			QS_MAX_WARNINGS(THIS_QSP));
 		error1(QSP_ARG  ERROR_STRING);
-//        advise(ERROR_STRING);
-//        abort();
 	}
+}
+
+/*
+ * Print warning message msg
+ *
+ * We'd like to print the input line number where this occurred,
+ * but to do that we need a qsp?
+ * To do that, we introduced another function script_warn, w/ macro WARN
+ */
+
+static void deliver_warning(QSP_ARG_DECL  const char* msg)
+	/* warning message */
+{
+	if( ! silent(SINGLE_QSP_ARG) ){
+		(*warn_vec)(QSP_ARG  msg);
+	}
+	check_max_warnings(SINGLE_QSP_ARG);
 }
 
 #ifdef NOT_NEEDED
@@ -609,14 +616,58 @@ static void tty_error1(QSP_ARG_DECL  const char *s1)
 	nice_exit(QSP_ARG  1);
 }
 
-void tty_warn(QSP_ARG_DECL  const char *s)
+void expect_warning(QSP_ARG_DECL  const char *msg)
 {
-	char msg[LLEN];
-	sprintf(msg,"%s%s",WARNING_PREFIX,s);
-	tty_advise(QSP_ARG  msg);
+	const char *e=QS_EXPECTED_WARNING(THIS_QSP);
+	if( e != NULL ){
+		advise("OOPS - expect_warning called more than once!?");
+		rls_str(e);
+	}
+	SET_QS_EXPECTED_WARNING(THIS_QSP,savestr(msg));
+}
+	
+static int is_expected(QSP_ARG_DECL  const char *warning_msg)
+{
+	int retval=0;
+	const char *e=QS_EXPECTED_WARNING(THIS_QSP);
+
+	if( e != NULL ){
+		if( !strncmp(e,warning_msg,strlen(e)) ){
+			retval=1;
+			DEC_QS_N_WARNINGS(THIS_QSP);
+		}
+		// This is a one-shot!
+		rls_str(e);
+		SET_QS_EXPECTED_WARNING(THIS_QSP,NULL);
+	}
+	return retval;
+}
+
+static const char *get_warning_prefix(QSP_ARG_DECL  const char *warning_msg)
+{
+	if( is_expected(QSP_ARG  warning_msg) )
+		return EXPECTED_PREFIX;
+	else
+		return WARNING_PREFIX;
+}
+
+static void format_warning(QSP_ARG_DECL  char *dest, const char *msg)
+{
+	const char *prefix;
+	prefix = get_warning_prefix(QSP_ARG  msg);
+	// BUG - possible buffer overrun
+	sprintf(dest,"%s%s",prefix,msg);
+	assert(strlen(dest)<LLEN);	// at this point, it's too late!?
+}
+
+void tty_warn(QSP_ARG_DECL  const char *warning_message)
+{
+	char msg_to_print[LLEN];	// BUG use String_Buf?
+	format_warning(QSP_ARG  msg_to_print,warning_message);
+	tty_advise(QSP_ARG  msg_to_print);
 
 #ifdef MAIL_BUGS
-	report_bug("warning",msg);
+	report_bug("warning",msg_to_print);
 #endif /* MAIL_BUGS */
 }
 
@@ -713,133 +764,31 @@ void _tell_sys_error(QSP_ARG_DECL  const char* s)
 	advise(ERROR_STRING);
 }
 
-#ifdef BUILD_FOR_IOS
-
-/* On iOS, the filenames start with the full bundle path,
- * which is kind of long and clutters the screen...
- */
-
-#define ADJUST_PATH(pathname)						\
-									\
-	{								\
-		int _j=(int)strlen(pathname)-1;				\
-		while(_j>0 && pathname[_j]!='/')			\
-			_j--;						\
-		if( pathname[_j] == '/' ) _j++;				\
-		pathname += _j;						\
-	}
-
-#else /* ! BUILD_FOR_IOS */
-
-#define ADJUST_PATH(pathname)
-
-#endif /* ! BUILD_FOR_IOS */
-
 static void tell_input_location( SINGLE_QSP_ARG_DECL )
 {
-	const char *filename;
-	int ql,n;
-	char msg[LLEN];
-	int i;
 	int n_levels_to_print;
-	static int max_levels_to_print=(-1);
-	//int level_to_print[MAX_Q_LVLS];
-	static int *level_to_print=NULL;
-	Query *qp;
+	int *level_tbl;
 
 	if( THIS_QSP == NULL ) return;
 
 	if( QLEVEL < 0 ) return;	// a callback in IOS?
 
-	filename=QRY_FILENAME(CURR_QRY(THIS_QSP));
 
 	/* If it's really a file (not a macro) then
 	 * it's probably OK not to show the whole input
 	 * stack...
 	 */
 
-	/* Only print the filename if it's not the console input */
-	if( !strcmp(filename,"-") ){
-		return;
-	}
+	/* OLD:  Only print the filename if it's not the console input */
+	// BUT it could be a command line redirect, so print it anyway
+	//filename=query_filename(SINGLE_QSP_ARG);
+	//if( !strcmp(filename,"-") ){
+	//	return;
+	//}
 
-	ql = QLEVEL;
-	//assert( ql >= 0 && ql < MAX_Q_LVLS );
-	// We allocate level_to_print array here, instead
-	// of declaring a fixed-size array...
-	if( (ql+1) > max_levels_to_print ){
-		if( max_levels_to_print > 0 )
-			givbuf(level_to_print);
-		max_levels_to_print = ql + 1;
-		level_to_print = getbuf( max_levels_to_print *
-					sizeof(*level_to_print) );
-	}
-
-	// We would like to print the macro names with the deepest one
-	// last, but for cases where the macro is repeated (e.g. loops)
-	// we only want to print the deepest case.
-	// That makes things tricky, because we need to scan
-	// from deepest to shallowest, but we want to print
-	// in the reverse order...
-	n_levels_to_print=1;
-	level_to_print[0]=ql;
-	ql--;	// it looks like this line could be deleted...
-	//i = THIS_QSP->qs_fn_depth;
-	i=QLEVEL;
-	i--;
-	// When we have a loop, the same input gets duplicated;
-	// We don't want to print this twice, so we make an array of which
-	// things to print.
-	while( i >= 0 ){
-		qp=QRY_AT_LEVEL(THIS_QSP,i);
-		if( strcmp( QRY_FILENAME(qp),filename) ){
-			level_to_print[n_levels_to_print] = i;
-			filename=QRY_FILENAME(qp);
-			n_levels_to_print++;
-		}
-  else {
-}
-		i--;
-	}
-fprintf(stderr,"tell_input_location:  n_levels_to_print = %d\n",n_levels_to_print);
-	i=n_levels_to_print-1;
-	while(i>=0){
-		ql=level_to_print[i];	// assume ql matches fn_level?
-		//assert( ql >= 0 && ql < MAX_Q_LVLS );
-		//filename=THIS_QSP->qs_fn_stack[ql];
-		filename=QRY_FILENAME(QRY_AT_LEVEL(THIS_QSP,ql));
-		n = QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql) );
-		if( !strncmp(filename,"Macro ",6) ){
-			const char *mname;
-			Macro *mp;
-			const char *mfname;	// macro file name
-			mname = filename+6;
-			// don't use get_macro, because it prints a warning,
-			// causing infinite regress!?
-			mp = macro_of(QSP_ARG  mname);
-//#ifdef CAUTIOUS
-//			if( mp == NO_MACRO ){
-//				sprintf(ERROR_STRING,
-//	"CAUTIOUS:  tell_input_loc:  macro '%s' not found!?",mname);
-//				ERROR1(ERROR_STRING);
-//				IOS_RETURN
-//			}
-//#endif /* CAUTIOUS */
-			assert( mp != NO_MACRO );
-
-			mfname = MACRO_FILENAME(mp);
-			ADJUST_PATH(mfname);
-			sprintf(msg,"%s line %d (File %s, line %d):",
-				filename, n, mfname, MACRO_LINENO(mp)+n);
-			advise(msg);
-		} else {
-			ADJUST_PATH(filename);
-			sprintf(msg,"%s (input level %d), line %d:",
-				filename,ql,n);
-			advise(msg);
-		}
-		i--;
-	}
+	level_tbl = get_levels_to_print(QSP_ARG  &n_levels_to_print);
+	print_qs_levels(QSP_ARG  level_tbl, n_levels_to_print);
+	givbuf(level_tbl);
 }
 
 void q_error1( QSP_ARG_DECL  const char *msg )
@@ -848,11 +797,11 @@ void q_error1( QSP_ARG_DECL  const char *msg )
 	error1(QSP_ARG  msg);
 }
 
-// q_warn - print a warning, preceded by a script input location
+// script_warn - print a warning, preceded by a script input location
 
-void q_warn( QSP_ARG_DECL  const char *msg )
+void script_warn( QSP_ARG_DECL  const char *msg )
 {
 	tell_input_location(SINGLE_QSP_ARG);
-	_warn(QSP_ARG  msg);
+	deliver_warning(QSP_ARG  msg);
 }
 

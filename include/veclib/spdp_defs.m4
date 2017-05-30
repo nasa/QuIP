@@ -16,5 +16,5 @@ define(`ASSIGN_CPX',`$1.re = $2.re; $1.im = $2.im')
 define(`ASSIGN_QUAT',$1.re = $2.re; $1._i = $2._i; $1._j = $2._j; $1._k = $2._k)
 
 // float input and double output -
-include(`../../include/veclib/dp_func_defs.m4')
+my_include(`veclib/dp_func_defs.m4')
 

@@ -37,6 +37,7 @@
 
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 
 #ifdef HAVE_JPEG_SUPPORT

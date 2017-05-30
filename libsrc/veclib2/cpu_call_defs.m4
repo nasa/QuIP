@@ -34,7 +34,7 @@ dnl #define OBJ_METHOD_NAME(stem)	HOST_TYPED_CALL_NAME( stem , type_code )
 dnl	CONV_METHOD_NAME(stem)
 define(`CONV_METHOD_NAME',`CPU_CALL_NAME($1)')
 define(`FAST_NAME',`CPU_FAST_CALL_NAME($1)')
-define(`SLOW_NAME',`CPU_SLOW_CALL_NAME($1)')
+define(`SLOW_NAME',`/* slow_name /$1/ */CPU_SLOW_CALL_NAME($1)')
 define(`FAST_CONV_NAME',`CPU_FAST_CALL_NAME($1)')
 define(`SLOW_CONV_NAME',`CPU_SLOW_CALL_NAME($1)')
 define(`EQSP_NAME',`CPU_EQSP_CALL_NAME($1)')
@@ -43,6 +43,60 @@ dnl	TYPED_NAME(s)
 define(`TYPED_NAME',`type_code`_'$1')
 
 define(`TYPED_STRING',`"TYPED_NAME($1)"')
+
+define(`fast_dst',`(*(dst_ptr))')
+define(`fast_src1',`(*(s1_ptr))')
+define(`fast_src2',`(*(s2_ptr))')
+define(`fast_src3',`(*(s3_ptr))')
+define(`fast_src4',`(*(s4_ptr))')
+
+define(`fast_cdst',`(*(cdst_ptr))')
+define(`fast_csrc1',`(*(cs1_ptr))')
+define(`fast_csrc2',`(*(cs2_ptr))')
+define(`fast_csrc3',`(*(cs3_ptr))')
+define(`fast_csrc4',`(*(cs4_ptr))')
+
+define(`fast_qdst',`(*(qdst_ptr))')
+define(`fast_qsrc1',`(*(qs1_ptr))')
+define(`fast_qsrc2',`(*(qs2_ptr))')
+define(`fast_qsrc3',`(*(qs3_ptr))')
+define(`fast_qsrc4',`(*(qs4_ptr))')
+
+define(`eqsp_dst',`(*(dst_ptr))')
+define(`eqsp_src1',`(*(s1_ptr))')
+define(`eqsp_src2',`(*(s2_ptr))')
+define(`eqsp_src3',`(*(s3_ptr))')
+define(`eqsp_src4',`(*(s4_ptr))')
+
+define(`eqsp_cdst',`(*(cdst_ptr))')
+define(`eqsp_csrc1',`(*(cs1_ptr))')
+define(`eqsp_csrc2',`(*(cs2_ptr))')
+define(`eqsp_csrc3',`(*(cs3_ptr))')
+define(`eqsp_csrc4',`(*(cs4_ptr))')
+
+define(`eqsp_qdst',`(*(qdst_ptr))')
+define(`eqsp_qsrc1',`(*(qs1_ptr))')
+define(`eqsp_qsrc2',`(*(qs2_ptr))')
+define(`eqsp_qsrc3',`(*(qs3_ptr))')
+define(`eqsp_qsrc4',`(*(qs4_ptr))')
+
+define(`slow_dst',`(*(dst_ptr))')
+define(`slow_src1',`(*(s1_ptr))')
+define(`slow_src2',`(*(s2_ptr))')
+define(`slow_src3',`(*(s3_ptr))')
+define(`slow_src4',`(*(s4_ptr))')
+
+define(`slow_cdst',`(*(cdst_ptr))')
+define(`slow_csrc1',`(*(cs1_ptr))')
+define(`slow_csrc2',`(*(cs2_ptr))')
+define(`slow_csrc3',`(*(cs3_ptr))')
+define(`slow_csrc4',`(*(cs4_ptr))')
+
+define(`slow_qdst',`(*(qdst_ptr))')
+define(`slow_qsrc1',`(*(qs1_ptr))')
+define(`slow_qsrc2',`(*(qs2_ptr))')
+define(`slow_qsrc3',`(*(qs3_ptr))')
+define(`slow_qsrc4',`(*(qs4_ptr))')
 
 define(`dst_dp',`OA_DEST(oap)')
 dnl /*
@@ -203,6 +257,8 @@ define(`OBJ_ARG_CHK_2SRCS',`OBJ_ARG_CHK_SRC1 OBJ_ARG_CHK_SRC2')
 define(`OBJ_ARG_CHK_DBM_2SRCS',`OBJ_ARG_CHK_DBM OBJ_ARG_CHK_2SRCS')
 define(`OBJ_ARG_CHK_DBM_1SRC',`OBJ_ARG_CHK_DBM OBJ_ARG_CHK_SRC1')
 define(`OBJ_ARG_CHK_DBM_SBM',`OBJ_ARG_CHK_DBM OBJ_ARG_CHK_SBM')
+define(`OBJ_ARG_CHK_DBM_1SBM',`OBJ_ARG_CHK_DBM OBJ_ARG_CHK_SBM1')
+define(`OBJ_ARG_CHK_DBM_2SBM',`OBJ_ARG_CHK_DBM OBJ_ARG_CHK_SBM1 OBJ_ARG_CHK_SBM2')
 
 define(`OBJ_ARG_CHK_',`')
 define(`OBJ_ARG_CHK_2',`OBJ_ARG_CHK_1 OBJ_ARG_CHK_SRC1')
@@ -236,9 +292,13 @@ define(`FAST_ADVANCE_QUAT_SRC2',`qs2_ptr++ ;')
 define(`FAST_ADVANCE_QUAT_SRC3',`qs3_ptr++ ;')
 define(`FAST_ADVANCE_QUAT_SRC4',`qs4_ptr++ ;')
 dnl #define FAST_ADVANCE_BITMAP	which_bit ++ ;
-define(`FAST_ADVANCE_DBM',`dbm_bit ++ ;')
-define(`FAST_ADVANCE_SBM',`sbm_bit ++ ;')
+define(`FAST_ADVANCE_DBM',`dbm_bit_idx ++ ;')
+define(`FAST_ADVANCE_SBM',`sbm_bit_idx ++ ;')
+define(`FAST_ADVANCE_SBM1',`sbm1_bit_idx ++ ;')
+define(`FAST_ADVANCE_SBM2',`sbm2_bit_idx ++ ;')
 define(`FAST_ADVANCE_DBM_SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM')
+define(`FAST_ADVANCE_DBM_1SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM1')
+define(`FAST_ADVANCE_DBM_2SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM1 FAST_ADVANCE_SBM2')
 
 define(`FAST_ADVANCE_2',`FAST_ADVANCE_1 FAST_ADVANCE_SRC1')
 define(`FAST_ADVANCE_3',`FAST_ADVANCE_2 FAST_ADVANCE_SRC2')
@@ -274,6 +334,8 @@ define(`FAST_ADVANCE_SBM_QUAT_3',`FAST_ADVANCE_SBM FAST_ADVANCE_QUAT_3')
 define(`FAST_ADVANCE_DBM_',`FAST_ADVANCE_DBM')
 define(`FAST_ADVANCE_DBM_1SRC',`FAST_ADVANCE_DBM FAST_ADVANCE_SRC1')
 define(`FAST_ADVANCE_DBM_SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM')
+define(`FAST_ADVANCE_DBM_1SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM1')
+define(`FAST_ADVANCE_DBM_2SBM',`FAST_ADVANCE_DBM FAST_ADVANCE_SBM1 FAST_ADVANCE_SBM2')
 define(`FAST_ADVANCE_DBM_2SRCS',`FAST_ADVANCE_DBM FAST_ADVANCE_2SRCS')
 define(`FAST_ADVANCE_2SRCS',`FAST_ADVANCE_SRC1 FAST_ADVANCE_SRC2')
 
@@ -298,9 +360,13 @@ define(`EQSP_ADVANCE_QUAT_SRC2',`qs2_ptr += eqsp_src2_inc ;')
 define(`EQSP_ADVANCE_QUAT_SRC3',`qs3_ptr += eqsp_src3_inc ;')
 define(`EQSP_ADVANCE_QUAT_SRC4',`qs4_ptr += eqsp_src4_inc ;')
 dnl #define EQSP_ADVANCE_BITMAP	which_bit  += eqsp_bit_inc ;
-define(`EQSP_ADVANCE_DBM',`dbm_bit  += eqsp_dbm_inc ;')
-define(`EQSP_ADVANCE_SBM',`sbm_bit  += eqsp_sbm_inc ;')
+define(`EQSP_ADVANCE_DBM',`dbm_bit_idx  += eqsp_dbm_inc ;')
+define(`EQSP_ADVANCE_SBM',`sbm_bit_idx  += eqsp_sbm_inc ;')
+define(`EQSP_ADVANCE_SBM1',`sbm1_bit_idx  += eqsp_sbm1_inc ;')
+define(`EQSP_ADVANCE_SBM2',`sbm2_bit_idx  += eqsp_sbm2_inc ;')
 define(`EQSP_ADVANCE_DBM_SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM')
+define(`EQSP_ADVANCE_DBM_1SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM1')
+define(`EQSP_ADVANCE_DBM_2SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM1 EQSP_ADVANCE_SBM2')
 
 define(`EQSP_ADVANCE_2',`EQSP_ADVANCE_1 EQSP_ADVANCE_SRC1')
 define(`EQSP_ADVANCE_3',`EQSP_ADVANCE_2 EQSP_ADVANCE_SRC2')
@@ -335,7 +401,7 @@ define(`EQSP_ADVANCE_SBM_QUAT_3',`EQSP_ADVANCE_SBM EQSP_ADVANCE_QUAT_3')
 
 define(`EQSP_ADVANCE_DBM_',`EQSP_ADVANCE_DBM')
 define(`EQSP_ADVANCE_DBM_1SRC',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SRC1')
-define(`EQSP_ADVANCE_DBM_SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM')
+dnl define(`EQSP_ADVANCE_DBM_SBM',`EQSP_ADVANCE_DBM EQSP_ADVANCE_SBM')
 define(`EQSP_ADVANCE_DBM_2SRCS',`EQSP_ADVANCE_DBM EQSP_ADVANCE_2SRCS')
 define(`EQSP_ADVANCE_2SRCS',`EQSP_ADVANCE_SRC1 EQSP_ADVANCE_SRC2')
 
@@ -420,7 +486,6 @@ define(`INIT_LOOP_COUNT',`
 
 dnl	INC_BASE(which_dim,base_array,inc_array)
 define(`INC_BASE',`
-
 	$2[$1-1] += IDX_INC($3,$1);
 ')
 
@@ -448,6 +513,8 @@ define(`INC_BASES_QUAT_SRC3',`INC_BASE($1,qs3_base,s3inc)')
 define(`INC_BASES_QUAT_SRC4',`INC_BASE($1,qs4_base,s4inc)')
 
 define(`INC_BASES_SBM',`INC_BASE($1,sbm_base,sbminc)')
+define(`INC_BASES_SBM1',`INC_BASE($1,sbm1_base,sbm1inc)')
+define(`INC_BASES_SBM2',`INC_BASE($1,sbm2_base,sbm2inc)')
 define(`INC_BASES_DBM',`INC_BASE($1,dbm_base,dbminc)')
 define(`INC_BASES_DBM_',`INC_BASES_DBM($1)')
 
@@ -499,6 +566,8 @@ dnl	INC_BASES_2SRCS(index)
 define(`INC_BASES_2SRCS',`INC_BASES_SRC1($1) INC_BASES_SRC2($1)')
 define(`INC_BASES_DBM_1SRC',`INC_BASES_DBM($1) INC_BASES_SRC1($1)')
 define(`INC_BASES_DBM_SBM',`INC_BASES_DBM($1) INC_BASES_SBM($1)')
+define(`INC_BASES_DBM_1SBM',`INC_BASES_DBM($1) INC_BASES_SBM1($1)')
+define(`INC_BASES_DBM_2SBM',`INC_BASES_DBM($1) INC_BASES_SBM1($1) INC_BASES_SBM2($1)')
 define(`INC_BASES_DBM_2SRCS',`INC_BASES_DBM($1) INC_BASES_2SRCS($1)')
 
 dnl	COPY_BASES(bitmap,typ,suffix)
@@ -507,6 +576,8 @@ define(`_COPY_BASES',COPY_BASES_$1)
 
 define(`COPY_BASES_DBM_1SRC',`COPY_BASES_DBM($1) COPY_BASES_SRC1($1)')
 define(`COPY_BASES_DBM_SBM',`COPY_BASES_DBM($1) COPY_BASES_SBM($1)')
+define(`COPY_BASES_DBM_1SBM',`COPY_BASES_DBM($1) COPY_BASES_SBM1($1)')
+define(`COPY_BASES_DBM_2SBM',`COPY_BASES_DBM($1) COPY_BASES_SBM1($1) COPY_BASES_SBM2($1)')
 define(`COPY_BASES_2SRCS',`COPY_BASES_SRC1($1) COPY_BASES_SRC2($1)')
 define(`COPY_BASES_DBM_2SRCS',`COPY_BASES_DBM($1) COPY_BASES_2SRCS($1)')
 
@@ -573,12 +644,16 @@ define(`INIT_PTRS_QUAT_SRC2',`qs2_ptr = qs2_base[0];')
 define(`INIT_PTRS_QUAT_SRC3',`qs3_ptr = qs3_base[0];')
 define(`INIT_PTRS_QUAT_SRC4',`qs4_ptr = qs4_base[0];')
 
-define(`INIT_PTRS_SBM',`sbm_bit = sbm_base[0];')
-define(`INIT_PTRS_DBM',`dbm_bit = dbm_base[0];')
+define(`INIT_PTRS_SBM',`sbm_bit_idx = sbm_base[0];')
+define(`INIT_PTRS_SBM1',`sbm1_bit_idx = sbm1_base[0];')
+define(`INIT_PTRS_SBM2',`sbm2_bit_idx = sbm2_base[0];')
+define(`INIT_PTRS_DBM',`dbm_bit_idx = dbm_base[0];')
 define(`INIT_PTRS_DBM_',`INIT_PTRS_DBM')
 
 define(`INIT_PTRS_DBM_1SRC',`INIT_PTRS_DBM INIT_PTRS_SRC1')
 define(`INIT_PTRS_DBM_SBM',`INIT_PTRS_DBM INIT_PTRS_SBM')
+define(`INIT_PTRS_DBM_1SBM',`INIT_PTRS_DBM INIT_PTRS_SBM1')
+define(`INIT_PTRS_DBM_2SBM',`INIT_PTRS_DBM INIT_PTRS_SBM1 INIT_PTRS_SBM2')
 define(`INIT_PTRS_2SRCS',`INIT_PTRS_SRC1 INIT_PTRS_SRC2')
 define(`INIT_PTRS_DBM_2SRCS',`INIT_PTRS_DBM INIT_PTRS_2SRCS')
 
@@ -633,15 +708,23 @@ define(`INC_PTRS_SRC1',`s1_ptr += IDX_INC(s1inc,0);')
 define(`INC_PTRS_SRC2',`s2_ptr += IDX_INC(s2inc,0);')
 define(`INC_PTRS_SRC3',`s3_ptr += IDX_INC(s3inc,0);')
 define(`INC_PTRS_SRC4',`s4_ptr += IDX_INC(s4inc,0);')
-/* BUG? here we seem to assume that all bitmaps are contiguous - but
- * dobj allows bitmap subimages...
- */
-define(`INC_PTRS_SBM',`sbm_bit++;')
-define(`INC_PTRS_DBM',`dbm_bit++;')
+dnl	/* BUG? here we seem to assume that all bitmaps are contiguous - but
+dnl	 * dobj allows bitmap subimages...
+dnl	 */
+dnl	define(`INC_PTRS_SBM',`sbm_bit_idx++;')
+
+dnl	The pts stays fixed, we just increment the index...
+define(`INC_PTRS_SBM',`sbm_bit_idx+=IDX_INC(sbminc,0);')
+define(`INC_PTRS_SBM1',`sbm1_bit_idx+=IDX_INC(sbm1inc,0);')
+define(`INC_PTRS_SBM2',`sbm2_bit_idx+=IDX_INC(sbm2inc,0);')
+
+define(`INC_PTRS_DBM',`dbm_bit_idx++;')
 define(`INC_PTRS_DBM_',`INC_PTRS_DBM')
 
 define(`INC_PTRS_DBM_1SRC',`INC_PTRS_DBM INC_PTRS_SRC1')
 define(`INC_PTRS_DBM_SBM',`INC_PTRS_DBM INC_PTRS_SBM')
+define(`INC_PTRS_DBM_1SBM',`INC_PTRS_DBM INC_PTRS_SBM1')
+define(`INC_PTRS_DBM_2SBM',`INC_PTRS_DBM INC_PTRS_SBM1 INC_PTRS_SBM2')
 define(`INC_PTRS_2SRCS',`INC_PTRS_SRC1 INC_PTRS_SRC2')
 define(`INC_PTRS_DBM_2SRCS',`INC_PTRS_DBM INC_PTRS_2SRCS')
 
@@ -671,35 +754,37 @@ define(`INC_PTRS_X_2',`INC_PTRS_2')
  * SOLVED - 1<<n assumes that 1 is an "int" e.g. 32 bits
  * Use 1L instead!
  *
- * dbm_bit counts the bits from the start of the object
+ * dbm_bit_idx counts the bits from the start of the object
  */
 
 dnl	SET_DBM_BIT( condition )
 define(`SET_DBM_BIT',`
 
 	if( $1 )
-		*(dbm_ptr + (dbm_bit/BITS_PER_BITMAP_WORD)) |=
-			NUMBERED_BIT(dbm_bit); 
+		*(dbm_ptr + (dbm_bit_idx/BITS_PER_BITMAP_WORD)) |=
+			NUMBERED_BIT(dbm_bit_idx); 
 	else
-		*(dbm_ptr + (dbm_bit/BITS_PER_BITMAP_WORD)) &=
-			~ NUMBERED_BIT(dbm_bit);
+		*(dbm_ptr + (dbm_bit_idx/BITS_PER_BITMAP_WORD)) &=
+			~ NUMBERED_BIT(dbm_bit_idx);
 ')
 
 define(`DEBUG_SBM_',`
-sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   sbm_bit = %d",
-(int_for_addr)sbm_ptr,sbm_bit);
+sprintf(DEFAULT_ERROR_STRING,"sbm_ptr = 0x%lx   sbm_bit_idx = %d",
+(int_for_addr)sbm_ptr,sbm_bit_idx);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 define(`DEBUG_DBM_',`
-sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   dbm_bit = %d",
-(int_for_addr)dbm_ptr,dbm_bit);
+sprintf(DEFAULT_ERROR_STRING,"dbm_ptr = 0x%lx   dbm_bit_idx = %d",
+(int_for_addr)dbm_ptr,dbm_bit_idx);
 NADVISE(DEFAULT_ERROR_STRING);
 ')
 
 define(`DEBUG_DBM_1SRC',`DEBUG_DBM_ DEBUG_SRC1')
 
-define(`srcbit',`((*(sbm_ptr + (sbm_bit/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit))')
+dnl	define(`srcbit',`((*(sbm_ptr + (sbm_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm_bit_idx))')
+dnl	define(`srcbit1',`((*(sbm1_ptr + (sbm1_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm1_bit_idx))')
+dnl	define(`srcbit2',`((*(sbm2_ptr + (sbm2_bit_idx/BITS_PER_BITMAP_WORD))) & NUMBERED_BIT(sbm2_bit_idx))')
 
 
 dnl	INIT_BASES(bitmap,typ,suffix)
@@ -784,6 +869,16 @@ define(`INIT_BASES_SBM',`
 	sbm_base[3]=VA_SBM_BIT0(vap);
 ')
 
+define(`INIT_BASES_SBM1',`
+	sbm1_ptr= VA_SRC_PTR(vap,0);
+	sbm1_base[3]=VA_SBM2_BIT0(vap);
+')
+
+define(`INIT_BASES_SBM2',`
+	sbm2_ptr= VA_SRC_PTR(vap,1);
+	sbm2_base[3]=VA_SBM1_BIT0(vap);
+')
+
 define(`INIT_BASES_SBM_1',`INIT_BASES_1 INIT_BASES_SBM')
 define(`INIT_BASES_SBM_2',`INIT_BASES_2 INIT_BASES_SBM')
 define(`INIT_BASES_SBM_3',`INIT_BASES_3 INIT_BASES_SBM')
@@ -797,6 +892,8 @@ define(`INIT_BASES_SBM_QUAT_3',`INIT_BASES_QUAT_3 INIT_BASES_SBM')
 define(`INIT_BASES_2SRCS',`INIT_BASES_SRC1 INIT_BASES_SRC2')
 define(`INIT_BASES_DBM_1SRC',`INIT_BASES_DBM INIT_BASES_SRC1')
 define(`INIT_BASES_DBM_SBM',`INIT_BASES_DBM INIT_BASES_SBM')
+define(`INIT_BASES_DBM_1SBM',`INIT_BASES_DBM INIT_BASES_SBM1')
+define(`INIT_BASES_DBM_2SBM',`INIT_BASES_DBM INIT_BASES_SBM1 INIT_BASES_SBM2')
 define(`INIT_BASES_DBM_2',`INIT_BASES_DBM INIT_BASES_2SRCS')
 define(`INIT_BASES_DBM_2SRCS',`INIT_BASES_DBM INIT_BASES_2SRCS')
 
@@ -874,9 +971,30 @@ define(`COPY_BASES_SBM',`
 	sbm_base[$1] = sbm_base[$1+1];
 ')
 
+define(`COPY_BASES_SBM1',`
+
+	sbm1_base[$1] = sbm1_base[$1+1];
+')
+
+define(`COPY_BASES_SBM2',`
+
+	sbm2_base[$1] = sbm2_base[$1+1];
+')
+
 define(`COPY_BASES_DBM_SBM',`
 COPY_BASES_DBM($1)
 COPY_BASES_SBM($1)
+')
+
+define(`COPY_BASES_DBM_1SBM',`
+COPY_BASES_DBM($1)
+COPY_BASES_SBM1($1)
+')
+
+define(`COPY_BASES_DBM_2SBM',`
+COPY_BASES_DBM($1)
+COPY_BASES_SBM1($1)
+COPY_BASES_SBM2($1)
 ')
 
 define(`COPY_BASES_XXX_1',`COPY_BASES_1')
@@ -894,7 +1012,19 @@ define(`_DECLARE_BASES',DECLARE_BASES_$1)
 define(`DECLARE_BASES_SBM',`
 	int sbm_base[N_DIMENSIONS-1];
 	bitmap_word *sbm_ptr;
-	int sbm_bit;
+	int sbm_bit_idx;
+')
+
+define(`DECLARE_BASES_SBM1',`
+	int sbm1_base[N_DIMENSIONS-1];
+	bitmap_word *sbm1_ptr;
+	int sbm1_bit_idx;
+')
+
+define(`DECLARE_BASES_SBM2',`
+	int sbm2_base[N_DIMENSIONS-1];
+	bitmap_word *sbm2_ptr;
+	int sbm2_bit_idx;
 ')
 
 define(`DECLARE_BASES_DBM_',`DECLARE_BASES_DBM')
@@ -903,7 +1033,7 @@ define(`DECLARE_BASES_DBM_',`DECLARE_BASES_DBM')
 
 define(`DECLARE_BASES_DBM',`
 	int dbm_base[N_DIMENSIONS-1];
-	int dbm_bit;
+	int dbm_bit_idx;
 	bitmap_word *dbm_ptr;
 DECLARE_FIVE_LOOP_INDICES
 ')
@@ -1099,6 +1229,8 @@ define(`DECLARE_BASES_5',`
 
 define(`DECLARE_BASES_DBM_1SRC',`DECLARE_BASES_DBM DECLARE_VBASE_SRC1')
 define(`DECLARE_BASES_DBM_SBM',`DECLARE_BASES_DBM DECLARE_BASES_SBM')
+define(`DECLARE_BASES_DBM_1SBM',`DECLARE_BASES_DBM DECLARE_BASES_SBM1')
+define(`DECLARE_BASES_DBM_2SBM',`DECLARE_BASES_DBM DECLARE_BASES_SBM1 DECLARE_BASES_SBM2')
 define(`DECLARE_BASES_DBM_2SRCS',`DECLARE_BASES_DBM DECLARE_BASES_2SRCS')
 define(`DECLARE_BASES_2SRCS',`DECLARE_VBASE_SRC1 DECLARE_VBASE_SRC2')
 
@@ -1187,7 +1319,7 @@ static void CONV_METHOD_NAME($1)( Vec_Obj_Args *oap )
 ')
 
 
-include(`../../include/veclib/fast_test.m4')
+my_include(`veclib/fast_test.m4')
 
 
 define(`dst',`(*dst_ptr)')
@@ -1418,6 +1550,8 @@ define(`EQSP_BODY_SBM_QUAT_3',`SIMPLE_EQSP_BODY($1,$2,`',SBM_QUAT_3,`',`')')
 define(`EQSP_BODY_BM_1',`SIMPLE_EQSP_BODY($1,$2,`',BM_1,`',`')')
 define(`EQSP_BODY_DBM_1SRC',`SIMPLE_EQSP_BODY($1,$2,`',DBM_1SRC,`',`')')
 define(`EQSP_BODY_DBM_SBM_',`SIMPLE_EQSP_BODY($1,$2,`',DBM_SBM,`',`')')
+define(`EQSP_BODY_DBM_1SBM_',`SIMPLE_EQSP_BODY($1,$2,`',DBM_1SBM,`',`')')
+define(`EQSP_BODY_DBM_2SBM_',`SIMPLE_EQSP_BODY($1,$2,`',DBM_2SBM,`',`')')
 define(`EQSP_BODY_DBM_2SRCS',`SIMPLE_EQSP_BODY($1,$2,`',DBM_2SRCS,`',`')')
 define(`EQSP_BODY_DBM_',`SIMPLE_EQSP_BODY($1,$2,`',DBM_,`',`')')
 define(`EQSP_BODY_1',`SIMPLE_EQSP_BODY($1,$2,`',1,`',`')')
@@ -1485,6 +1619,8 @@ define(`SLOW_BODY_DBM_',`SIMPLE_SLOW_BODY($1,$2,`',DBM_,`')')
 dnl  put DEBUG_DBM_1SRC in last position to see debug info
 define(`SLOW_BODY_DBM_1SRC',`SIMPLE_SLOW_BODY($1,$2,`',DBM_1SRC,/*DEBUG_DBM_1SRC*/)')
 define(`SLOW_BODY_DBM_SBM_',`SIMPLE_SLOW_BODY($1,$2,`',DBM_SBM,`')')
+define(`SLOW_BODY_DBM_1SBM_',`SIMPLE_SLOW_BODY($1,$2,`',DBM_1SBM,`')')
+define(`SLOW_BODY_DBM_2SBM_',`SIMPLE_SLOW_BODY($1,$2,`',DBM_2SBM,`')')
 define(`SLOW_BODY_SBM_3',`SIMPLE_SLOW_BODY($1,$2,`',SBM_3,`')')
 define(`SLOW_BODY_SBM_2',`SIMPLE_SLOW_BODY($1,$2,`',SBM_2,`')')
 define(`SLOW_BODY_SBM_1',`SIMPLE_SLOW_BODY($1,$2,`',SBM_1,`')')
@@ -1589,6 +1725,7 @@ NEW_PLOOP_IDX_2( $3, loop_count )
 
 dnl	PROJ3_SLOW_BODY( name, typ, init_statement, statement )
 define(`PROJ3_SLOW_BODY',`
+/* proj3_slow_body /$1/ /$2/ /$3/ /$4/ */
 
 {
 	dnl PROJ_LOOP_DECLS_##typ##3
@@ -1897,7 +2034,7 @@ define(`SLOW_BODY',`_SLOW_BODY($1$2$3$4)')
 define(`_SLOW_BODY',SLOW_BODY_$1)
 
 dnl	FF_DECL(name)
-define(`FF_DECL',`/* ff_decl /$1/ */static void FAST_NAME($1)')
+define(`FF_DECL',`/* ff_decl /$1/ BEGIN */static void FAST_NAME($1) /* ff_decl /$1/ DONE */')
 define(`EF_DECL',`static void EQSP_NAME($1)')
 define(`SF_DECL',`static void SLOW_NAME($1)')
 
@@ -1912,9 +2049,11 @@ dnl	FAST_BODY_##typ##MOV( $1, $4 )
 dnl	GENERIC_FF_DECL(name, statement,bitmap,typ,scalars,vectors,extra)
 define(`GENERIC_FF_DECL',`
 
+/* generic_ff_decl /$1/ BEGIN */
 	FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 dnl	FAST_BODY_##bitmap##typ##vectors##extra( name, statement )
 	FAST_BODY($3,$4,$6,$7)($1,$2)
+/* generic_ff_decl /$1/ DONE */
 ')
 
 dnl	GENERIC_EF_DECL(name, statement,bitmap,typ,scalars,vectors,extra)
@@ -1934,12 +2073,15 @@ dnl	SLOW_BODY_##bitmap##typ##vectors##extra( name, statement )
 ')
 
 
+dnl	This worked before, but now we process fast, eqsp, and slow in batches...
+dnl	so this needs to be defined in fast_defs, eqsp_defs, slow_defs...
+
 dnl	GENERIC_FUNC_DECLS(name,statement,bitmap,typ,scalars,vectors,extra)
-define(`GENERIC_FUNC_DECLS',`
-GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
-GENERIC_EF_DECL($1,$2,$3,$4,$5,$6,$7)
-GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
-')
+dnl	define(`GENERIC_FUNC_DECLS',`
+dnl	GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
+dnl	GENERIC_EF_DECL($1,$2,$3,$4,$5,$6,$7)
+dnl	GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
+dnl	')
 
 
 dnl	MOV_FUNC_DECLS(name,statement,bitmap,typ,scalars,vectors)
@@ -2058,10 +2200,14 @@ define(`FAST_DECLS_2',`FAST_DECLS_1 FAST_DECLS_SRC1')
 define(`FAST_DECLS_3',`FAST_DECLS_2 FAST_DECLS_SRC2')
 define(`FAST_DECLS_4',`FAST_DECLS_3 FAST_DECLS_SRC3')
 define(`FAST_DECLS_5',`FAST_DECLS_4 FAST_DECLS_SRC4')
-define(`FAST_DECLS_SBM',`int sbm_bit; bitmap_word *sbm_ptr;')
-define(`FAST_DECLS_DBM',`int dbm_bit; bitmap_word *dbm_ptr; dimension_t fl_ctr;')
+define(`FAST_DECLS_SBM',`int sbm_bit_idx; bitmap_word *sbm_ptr;')
+define(`FAST_DECLS_SBM1',`int sbm1_bit_idx; bitmap_word *sbm1_ptr;')
+define(`FAST_DECLS_SBM2',`int sbm2_bit_idx; bitmap_word *sbm2_ptr;')
+define(`FAST_DECLS_DBM',`int dbm_bit_idx; bitmap_word *dbm_ptr; dimension_t fl_ctr;')
 define(`FAST_DECLS_DBM_1SRC',`FAST_DECLS_DBM FAST_DECLS_SRC1')
 define(`FAST_DECLS_DBM_SBM',`FAST_DECLS_DBM FAST_DECLS_SBM')
+define(`FAST_DECLS_DBM_1SBM',`FAST_DECLS_DBM FAST_DECLS_SBM1')
+define(`FAST_DECLS_DBM_2SBM',`FAST_DECLS_DBM FAST_DECLS_SBM1 FAST_DECLS_SBM2')
 define(`FAST_DECLS_SBM_1',`FAST_DECLS_SBM FAST_DECLS_1')
 define(`FAST_DECLS_SBM_2',`FAST_DECLS_SBM FAST_DECLS_2')
 define(`FAST_DECLS_SBM_3',`FAST_DECLS_SBM FAST_DECLS_3')
@@ -2117,10 +2263,14 @@ define(`EQSP_DECLS_2',`EQSP_DECLS_1 EQSP_DECLS_SRC1')
 define(`EQSP_DECLS_3',`EQSP_DECLS_2 EQSP_DECLS_SRC2')
 define(`EQSP_DECLS_4',`EQSP_DECLS_3 EQSP_DECLS_SRC3')
 define(`EQSP_DECLS_5',`EQSP_DECLS_4 EQSP_DECLS_SRC4')
-define(`EQSP_DECLS_SBM',`int sbm_bit; bitmap_word *sbm_ptr;')
-define(`EQSP_DECLS_DBM',`int dbm_bit; bitmap_word *dbm_ptr; dimension_t fl_ctr;')
+define(`EQSP_DECLS_SBM',`int sbm_bit_idx; bitmap_word *sbm_ptr;')
+define(`EQSP_DECLS_SBM1',`int sbm1_bit_idx; bitmap_word *sbm1_ptr;')
+define(`EQSP_DECLS_SBM2',`int sbm2_bit_idx; bitmap_word *sbm2_ptr;')
+define(`EQSP_DECLS_DBM',`int dbm_bit_idx; bitmap_word *dbm_ptr; dimension_t fl_ctr;')
 define(`EQSP_DECLS_DBM_1SRC',`EQSP_DECLS_DBM EQSP_DECLS_SRC1')
 define(`EQSP_DECLS_DBM_SBM',`EQSP_DECLS_DBM EQSP_DECLS_SBM')
+define(`EQSP_DECLS_DBM_1SBM',`EQSP_DECLS_DBM EQSP_DECLS_SBM1')
+define(`EQSP_DECLS_DBM_2SBM',`EQSP_DECLS_DBM EQSP_DECLS_SBM1 EQSP_DECLS_SBM2')
 define(`EQSP_DECLS_SBM_1',`EQSP_DECLS_SBM EQSP_DECLS_1')
 define(`EQSP_DECLS_SBM_2',`EQSP_DECLS_SBM EQSP_DECLS_2')
 define(`EQSP_DECLS_SBM_3',`EQSP_DECLS_SBM EQSP_DECLS_3')
@@ -2228,19 +2378,31 @@ define(`FAST_INIT_RQ_2',`FAST_INIT_1 FAST_INIT_QUAT_SRC1')
 define(`FAST_INIT_DBM_',`FAST_INIT_DBM')
 
 define(`FAST_INIT_DBM',`
-	dbm_bit = VA_DBM_BIT0(vap);
+	dbm_bit_idx = VA_DBM_BIT0(vap);
 	dbm_ptr=VA_DEST_PTR(vap);
 FAST_INIT_COUNT
 ')
 
 define(`FAST_INIT_SBM',`
-	sbm_bit = VA_SBM_BIT0(vap);
+	sbm_bit_idx = VA_SBM_BIT0(vap);
 	sbm_ptr=VA_SRC_PTR(vap,4);
+')
+
+define(`FAST_INIT_SBM1',`
+	sbm1_bit_idx = VA_SBM1_BIT0(vap);
+	sbm1_ptr=VA_SRC_PTR(vap,0);
+')
+
+define(`FAST_INIT_SBM2',`
+	sbm2_bit_idx = VA_SBM2_BIT0(vap);
+	sbm2_ptr=VA_SRC_PTR(vap,1);
 ')
 
 define(`FAST_INIT_DBM_2SRCS',`FAST_INIT_DBM FAST_INIT_2SRCS')
 define(`FAST_INIT_DBM_1SRC',`FAST_INIT_DBM FAST_INIT_SRC1')
 define(`FAST_INIT_DBM_SBM',`FAST_INIT_DBM FAST_INIT_SBM')
+define(`FAST_INIT_DBM_1SBM',`FAST_INIT_DBM FAST_INIT_SBM1')
+define(`FAST_INIT_DBM_2SBM',`FAST_INIT_DBM FAST_INIT_SBM1 FAST_INIT_SBM2')
 define(`FAST_INIT_SBM_1',`FAST_INIT_SBM FAST_INIT_1')
 define(`FAST_INIT_SBM_2',`FAST_INIT_SBM FAST_INIT_2')
 define(`FAST_INIT_SBM_3',`FAST_INIT_SBM FAST_INIT_3')
@@ -2320,19 +2482,31 @@ define(`EQSP_INIT_RQ_2',`EQSP_INIT_1	EQSP_INIT_QUAT_SRC1')
 define(`EQSP_INIT_DBM_',`EQSP_INIT_DBM')
 
 define(`EQSP_INIT_DBM',`
-	dbm_bit = VA_DBM_BIT0(vap);
+	dbm_bit_idx = VA_DBM_BIT0(vap);
 	dbm_ptr=VA_DEST_PTR(vap);
 EQSP_INIT_COUNT
 ')
 
 define(`EQSP_INIT_SBM',`
-	sbm_bit = VA_SBM_BIT0(vap);
+	sbm_bit_idx = VA_SBM_BIT0(vap);
 	sbm_ptr=VA_SRC_PTR(vap,4);
+')
+
+define(`EQSP_INIT_SBM1',`
+	sbm1_bit_idx = VA_SBM1_BIT0(vap);
+	sbm1_ptr=VA_SRC_PTR(vap,0);
+')
+
+define(`EQSP_INIT_SBM2',`
+	sbm2_bit_idx = VA_SBM2_BIT0(vap);
+	sbm2_ptr=VA_SRC_PTR(vap,1);
 ')
 
 define(`EQSP_INIT_DBM_2SRCS',`EQSP_INIT_DBM EQSP_INIT_2SRCS')
 define(`EQSP_INIT_DBM_1SRC',`EQSP_INIT_DBM EQSP_INIT_SRC1')
 define(`EQSP_INIT_DBM_SBM',`EQSP_INIT_DBM EQSP_INIT_SBM')
+define(`EQSP_INIT_DBM_1SBM',`EQSP_INIT_DBM EQSP_INIT_SBM1')
+define(`EQSP_INIT_DBM_2SBM',`EQSP_INIT_DBM EQSP_INIT_SBM1 EQSP_INIT_SBM2')
 define(`EQSP_INIT_SBM_1',`EQSP_INIT_SBM EQSP_INIT_1')
 define(`EQSP_INIT_SBM_2',`EQSP_INIT_SBM EQSP_INIT_2')
 define(`EQSP_INIT_SBM_3',`EQSP_INIT_SBM EQSP_INIT_3')
@@ -2371,22 +2545,23 @@ dnl		FAST_ADVANCE_##typ##suffix
 ')
 
 
-dnl	FAST_BODY_CONV_2(name, statement,dsttyp,srctyp)
-define(`FAST_BODY_CONV_2',`
-
-{
-	$3 *dst_ptr;
-	$4 *s1_ptr;
-	dimension_t fl_ctr;
-	dst_ptr = ($3 *)VA_DEST_PTR(vap);
-	s1_ptr = ($4 *)VA_SRC_PTR(vap,0);
-	fl_ctr = VA_LENGTH(vap);
-	while(fl_ctr-- > 0){
-		$2 ;
-		FAST_ADVANCE_2
-	}
-}
-')
+dnl	Not used???
+dnl	dnl	FAST_BODY_CONV_2(name, statement,dsttyp,srctyp)
+dnl	define(`FAST_BODY_CONV_2',`
+dnl	
+dnl	{
+dnl		$3 *dst_ptr;
+dnl		$4 *s1_ptr;
+dnl		dimension_t fl_ctr;
+dnl		dst_ptr = ($3 *)VA_DEST_PTR(vap);
+dnl		s1_ptr = ($4 *)VA_SRC_PTR(vap,0);
+dnl		fl_ctr = VA_LENGTH(vap);
+dnl		while(fl_ctr-- > 0){
+dnl			$2 ;
+dnl			FAST_ADVANCE_2
+dnl		}
+dnl	}
+dnl	')
 
 /* There ought to be a more compact way to do all of this? */
 
@@ -2407,8 +2582,10 @@ define(`FAST_BODY_SBM_QUAT_3',`SIMPLE_FAST_BODY($1,$2,`',SBM_QUAT_3,`',`')')
 define(`FAST_BODY_BM_1',`SIMPLE_FAST_BODY($1,$2,`',BM_1,`',`')')
 define(`FAST_BODY_DBM_1SRC',`SIMPLE_FAST_BODY($1,$2,`',DBM_1SRC,`',`')')
 define(`FAST_BODY_DBM_SBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_SBM,`',`')')
+define(`FAST_BODY_DBM_1SBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_1SBM,`',`')')
+define(`FAST_BODY_DBM_2SBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_2SBM,`',`')')
 
-define(`FAST_BODY_DBM_2SRCS',`SIMPLE_FAST_BODY($1,$2,`',DBM_2SRCS,`',`')')
+define(`FAST_BODY_DBM_2SRCS',`/* fast_body_dbm_2srcs BEGIN */SIMPLE_FAST_BODY($1,$2,`',DBM_2SRCS,`',`')/* fast_body_dbm_2srcs DONE */')
 define(`FAST_BODY_DBM_',`SIMPLE_FAST_BODY($1,$2,`',DBM_,`',`')')
 define(`FAST_BODY_1',`SIMPLE_FAST_BODY($1,$2,`',1,`',`')')
 define(`FAST_BODY_CPX_1',`SIMPLE_FAST_BODY($1,$2,CPX_,1,`',`')')
@@ -2495,25 +2672,23 @@ SHOW_FAST_TEST_2
 dnl	GENERIC_FAST_SWITCH(name,bitmap,typ,scalars,vectors)
 define(`GENERIC_FAST_SWITCH',`
 
-	/* generic_fast_switch, bitmap = /$2/ vectors = /$5/ */
+dnl	/* generic_fast_switch, bitmap = /$2/ vectors = /$5/ */
 
-dnl if( FAST_TEST_##bitmap##vectors ){
-if( FAST_TEST($2,$5) ){
-	REPORT_FAST_CALL
-	dnl XFER_FAST_ARGS_##bitmap##typ##scalars##vectors
-	XFER_FAST_ARGS($2,$3,$4,$5)
-	CHAIN_CHECK( FAST_NAME($1) )
-dnl } else if( EQSP_TEST_##bitmap##vectors ){
-} else if( EQSP_TEST($2,$5) ){
-	REPORT_EQSP_CALL
-	dnl XFER_EQSP_ARGS_##bitmap##typ##scalars##vectors
-	XFER_EQSP_ARGS($2,$3,$4,$5)
-	CHAIN_CHECK( EQSP_NAME($1) )
-} else {
-	REPORT_SLOW_CALL
-	XFER_SLOW_ARGS_##bitmap##typ##scalars##vectors
-	CHAIN_CHECK( SLOW_NAME($1) )
-}
+dnl	FAST_TEST is defined in include/veclib
+
+	if( FAST_TEST($2,$5) ){
+		REPORT_FAST_CALL
+		XFER_FAST_ARGS($2,$3,$4,$5)
+		CHAIN_CHECK( FAST_NAME($1) )
+	} else if( EQSP_TEST($2,$5) ){
+		REPORT_EQSP_CALL
+		XFER_EQSP_ARGS($2,$3,$4,$5)
+		CHAIN_CHECK( EQSP_NAME($1) )
+	} else {
+		REPORT_SLOW_CALL
+		XFER_SLOW_ARGS_##bitmap##typ##scalars##vectors
+		CHAIN_CHECK( SLOW_NAME($1) )
+	}
 ')
 
 /* Why do we need these??? */
@@ -2524,13 +2699,17 @@ define(`FAST_SWITCH_4',`GENERIC_FAST_SWITCH($1,`',`',`',4)')
 define(`FAST_SWITCH_CPX_3',`GENERIC_FAST_SWITCH($1,`',CPX_,`',3)')
 define(`FAST_SWITCH_5',`GENERIC_FAST_SWITCH($1,`',`',`',5)')
 
-#include "veclib/xfer_args.h"
+dnl #include "veclib/xfer_args.h"
 
 /*********************** Section 8 - object methods ***************/
 
 dnl	_VEC_FUNC_2V_CONV(name,type,statement)
-define(`_VEC_FUNC_2V_CONV',`
 
+dnl	How did these get lost???
+
+dnl	_GENERIC_FAST_CONV_FUNC(name,dest_type)
+// generic_fast_conv_func
+define(`_GENERIC_FAST_CONV_FUNC',`
 FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
 	/* FAST_DECLS_1 */
@@ -2542,11 +2721,15 @@ FF_DECL($1)( LINK_FUNC_ARG_DECLS )
 	FAST_INIT_SRC1
 	/* no extra decls */
 	while(fl_ctr-- > 0){
-		$3 ;
+		*dst_ptr = ($2)(*s1_ptr) ;
 		FAST_ADVANCE_2
 	}
 }
+')
 
+
+// generic_eqsp_conv_func
+define(`_GENERIC_EQSP_CONV_FUNC',`
 EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 {
 	/* EQSP_DECLS_1 */
@@ -2559,15 +2742,17 @@ EF_DECL($1)( LINK_FUNC_ARG_DECLS )
 	EQSP_INIT_SRC1
 	/* no extra decls */
 	while(fl_ctr-- > 0){
-		$3 ;
+		*dst_ptr = ($2)(*s1_ptr) ;
 		EQSP_ADVANCE_2
 	}
 }
+')
 
 dnl /* GENERIC_SF_DECL(name,statement,bitmap,typ,scalars,vectors,extra) */
+define(`_GENERIC_SLOW_CONV_FUNC',`
 SF_DECL($1)( LINK_FUNC_ARG_DECLS )
-GENERIC_SLOW_BODY( $1, $3,`DECLARE_BASES_CONV_2($2)',`INIT_BASES_CONV_2($2)',`COPY_BASES_2',`INIT_PTRS_2',`INC_PTRS_2',`INC_BASES_2',`')')
-
+GENERIC_SLOW_BODY( $1, *dst_ptr = ($2)(*s1_ptr),`DECLARE_BASES_CONV_2($2)',`INIT_BASES_CONV_2($2)',`COPY_BASES_2',`INIT_PTRS_2',`INC_PTRS_2',`INC_BASES_2',`')
+')
 
 dnl	OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
 dnl define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
@@ -2586,7 +2771,7 @@ MOV_FUNC_DECLS($1,$2,$3,$4,$5,$6)
 
 
 dnl	_VEC_FUNC_2V_SCAL( name, statement )
-define(`_VEC_FUNC_2V_SCAL',`OBJ_METHOD($1,$2,`',`',1S_,2,`')')
+define(`_VEC_FUNC_2V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,2,`')')
 
 define(`_VEC_FUNC_3V',`OBJ_METHOD($1,$2,`',`',`',3,`')')
 
@@ -2597,14 +2782,33 @@ dnl	_VEC_FUNC_MM_NOCC( name, augment_condition,
 dnl					restart_condition, assignment,
 dnl					gpu_c1, gpu_c2 )
 
-define(`_VEC_FUNC_MM_NOCC',`
-/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
-
+define(`_VEC_FUNC_FAST_MM_NOCC',`
+/* vec_func_fast_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
 EXTLOC_FAST_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
-EXTLOC_EQSP_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
-EXTLOC_SLOW_FUNC($1,EXTLOC_STATEMENT($2,$3,$4)) 
-/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
+/* vec_func_fast_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
 ')
+
+define(`_VEC_FUNC_EQSP_MM_NOCC',`
+/* vec_func_eqsp_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
+EXTLOC_EQSP_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
+/* vec_func_eqsp_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
+')
+
+define(`_VEC_FUNC_SLOW_MM_NOCC',`
+/* vec_func_slow_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
+EXTLOC_SLOW_FUNC($1,EXTLOC_STATEMENT($2,$3,$4)) 
+/* vec_func_slow_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
+')
+
+
+dnl	define(`_VEC_FUNC_MM_NOCC',`
+dnl	/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ BEGIN */
+
+dnl	EXTLOC_FAST_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
+dnl	EXTLOC_EQSP_FUNC($1,EXTLOC_STATEMENT($2,$3,$4))
+dnl	EXTLOC_SLOW_FUNC($1,EXTLOC_STATEMENT($2,$3,$4)) 
+dnl	/* vec_func_mm_nocc /$1/ /$2/ /$3/ /$4/ DONE */
+dnl	')
 
 
 dnl	_VEC_FUNC_2V( name, statement )
@@ -2613,34 +2817,34 @@ define(`_VEC_FUNC_2V',`OBJ_METHOD($1,$2,`',`',`',2,`')')
 /* e.g. ramp1d */
 
 dnl	_VEC_FUNC_1V_2SCAL( name, statement, gpu_stat )
-define(`_VEC_FUNC_1V_2SCAL',`OBJ_METHOD($1,$2,`',`',2S_,1,`')')
+define(`_VEC_FUNC_1V_2SCAL',`OBJ_METHOD($1,$2,`',`',_2S,1,`')')
 
 /* e.g. vset */
 
 dnl	_VEC_FUNC_1V_SCAL( name, statement )
-define(`_VEC_FUNC_1V_SCAL',`OBJ_METHOD($1,$2,`',`',1S_,1,`')')
+define(`_VEC_FUNC_1V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,1,`')')
 
 /* used to set a bitmap based on a vector test */
 /* vvm_gt etc */
 
 dnl	_VEC_FUNC_VVMAP( name, op )
-define(`_VEC_FUNC_VVMAP',`OBJ_METHOD($1,SET_DBM_BIT(src1 $2 src2),DBM_,`',`',2SRCS,`')')
+define(`_VEC_FUNC_VVMAP',`OBJ_METHOD($1,`SET_DBM_BIT(src1 $2 src2)',DBM_,`',`',2SRCS,`')')
 
 dnl	_VEC_FUNC_5V( name, statement )
 define(`_VEC_FUNC_5V',`OBJ_METHOD($1,$2,`',`',`',5,`')')
 
-define(`_VEC_FUNC_4V_SCAL',`OBJ_METHOD($1,$2,`',`',1S_,4,`')')
+define(`_VEC_FUNC_4V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,4,`')')
 
-define(`_VEC_FUNC_3V_2SCAL',`OBJ_METHOD($1,$2,`',`',2S_,3,`')')
+define(`_VEC_FUNC_3V_2SCAL',`OBJ_METHOD($1,$2,`',`',_2S,3,`')')
 
-define(`_VEC_FUNC_2V_3SCAL',`OBJ_METHOD($1,$2,`',`',3S_,2,`')')
+define(`_VEC_FUNC_2V_3SCAL',`OBJ_METHOD($1,$2,`',`',_3S,2,`')')
 
 
 define(`_VEC_FUNC_VVSLCT',`OBJ_METHOD($1,$2,SBM_,`',`',3,`')')
 
-define(`_VEC_FUNC_VSSLCT',`OBJ_METHOD($1,$2,SBM_,`',1S_,2,`')')
+define(`_VEC_FUNC_VSSLCT',`OBJ_METHOD($1,$2,SBM_,`',_1S,2,`')')
 
-define(`_VEC_FUNC_SSSLCT',`OBJ_METHOD($1,$2,SBM_,`',2S_,1,`')')
+define(`_VEC_FUNC_SSSLCT',`OBJ_METHOD($1,$2,SBM_,`',_2S,1,`')')
 
 define(`_VEC_FUNC_1V',`OBJ_METHOD($1,$2,`',`',`',1,`')')
 
@@ -2650,9 +2854,9 @@ define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
 dnl #define THREE_CPX_VEC_METHOD_T1( name, statement )
 define(`_VEC_FUNC_CPX_3V_T1',`OBJ_METHOD($1,$2,`',CPX_,`',3,_T1)')
 
-define(`_VEC_FUNC_CPX_2V',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,`')')
+define(`_VEC_FUNC_CPX_2V',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_2V_T2',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,_T2)')
+define(`_VEC_FUNC_CPX_2V_T2',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,_T2)')
 
 define(`_VEC_FUNC_CPX_3V_T2',`OBJ_METHOD($1,$2,`',CPX_,`',3,_T2)')
 
@@ -2664,29 +2868,29 @@ define(`_VEC_FUNC_CPX_3V',`OBJ_METHOD($1,$2,`',CPX_,`',3,`')')
 
 define(`_VEC_FUNC_CCR_3V',`OBJ_METHOD($1,$2,`',CCR_,`',3,`')')
 
-define(`_VEC_FUNC_CR_1S_2V',`OBJ_METHOD($1,$2,`',CR_,1S_,2,`')')
+define(`_VEC_FUNC_CR_2V_1S',`OBJ_METHOD($1,$2,`',CR_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_1S_2V',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,`')')
+define(`_VEC_FUNC_CPX_2V_1S',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_1S_2V',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,`')')
+define(`_VEC_FUNC_CPX_2V_1S',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_CPX_1S_2V_T2',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,_T2)')
+define(`_VEC_FUNC_CPX_2V_1S_T2',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,_T2)')
 
-define(`_VEC_FUNC_CPX_1S_2V_T3',`OBJ_METHOD($1,$2,`',CPX_,1S_,2,_T3)')
+define(`_VEC_FUNC_CPX_2V_1S_T3',`OBJ_METHOD($1,$2,`',CPX_,_1S,2,_T3)')
 
-define(`_VEC_FUNC_CPX_1S_1V',`OBJ_METHOD($1,$2,`',CPX_,1S_,1,`')')
+define(`_VEC_FUNC_CPX_1V_1S',`OBJ_METHOD($1,$2,`',CPX_,_1S,1,`')')
 
 define(`_VEC_FUNC_SBM_CPX_3V',`OBJ_METHOD($1,$2,SBM_,CPX_,`',3,`')')
 
-define(`_VEC_FUNC_SBM_CPX_1S_2V',`OBJ_METHOD($1,$2,SBM_,CPX_,1S_,2,`')')
+define(`_VEC_FUNC_SBM_CPX_2V_1S',`OBJ_METHOD($1,$2,SBM_,CPX_,_1S,2,`')')
 
-define(`_VEC_FUNC_SBM_CPX_2S_1V',`OBJ_METHOD($1,$2,SBM_,CPX_,2S_,1,`')')
+define(`_VEC_FUNC_SBM_CPX_1V_2S',`OBJ_METHOD($1,$2,SBM_,CPX_,_2S,1,`')')
 
 define(`_VEC_FUNC_SBM_QUAT_3V',`OBJ_METHOD($1,$2,SBM_,QUAT_,`',3,`')')
 
-define(`_VEC_FUNC_SBM_QUAT_1S_2V',`OBJ_METHOD($1,$2,SBM_,QUAT_,1S_,2,`')')
+define(`_VEC_FUNC_SBM_QUAT_2V_1S',`OBJ_METHOD($1,$2,SBM_,QUAT_,_1S,2,`')')
 
-define(`_VEC_FUNC_SBM_QUAT_2S_1V',`OBJ_METHOD($1,$2,SBM_,QUAT_,2S_,1,`')')
+define(`_VEC_FUNC_SBM_QUAT_1V_2S',`OBJ_METHOD($1,$2,SBM_,QUAT_,_2S,1,`')')
 
 dnl #define TWO_QUAT_VEC_METHOD( name,stat )
 define(`_VEC_FUNC_QUAT_2V',`OBJ_METHOD($1,$2,`',QUAT_,`',2,`')')
@@ -2702,15 +2906,15 @@ define(`_VEC_FUNC_QUAT_3V_T5',`OBJ_METHOD($1,$2,`',QUAT_,`',3,_T5)')
 
 define(`_VEC_FUNC_QQR_3V',`OBJ_METHOD($1,$2,`',QQR_,`',3,`')')
 
-define(`_VEC_FUNC_QR_1S_2V',`OBJ_METHOD($1,$2,`',QR_,1S_,2,`')')
+define(`_VEC_FUNC_QR_2V_1S',`OBJ_METHOD($1,$2,`',QR_,_1S,2,`')')
 
-define(`_VEC_FUNC_QUAT_1S_2V',`OBJ_METHOD($1,$2,`',QUAT_,1S_,2,`')')
+define(`_VEC_FUNC_QUAT_2V_1S',`OBJ_METHOD($1,$2,`',QUAT_,_1S,2,`')')
 
-define(`_VEC_FUNC_QUAT_1S_2V_T4',`OBJ_METHOD($1,$2,`',QUAT_,1S_,2,_T4)')
+define(`_VEC_FUNC_QUAT_2V_1S_T4',`OBJ_METHOD($1,$2,`',QUAT_,_1S,2,_T4)')
 
-define(`_VEC_FUNC_QUAT_1S_2V_T5',`OBJ_METHOD($1,$2,`',QUAT_,1S_,2,_T5)')
+define(`_VEC_FUNC_QUAT_2V_1S_T5',`OBJ_METHOD($1,$2,`',QUAT_,_1S,2,_T5)')
 
-define(`_VEC_FUNC_QUAT_1S_1V',`OBJ_METHOD($1,$2,`',QUAT_,1S_,1,`')')
+define(`_VEC_FUNC_QUAT_1V_1S',`OBJ_METHOD($1,$2,`',QUAT_,_1S,1,`')')
 
 
 /* PROJECTION_METHOD_2 is for vmaxv, vminv, vsum
@@ -2733,8 +2937,14 @@ define(`INDEX_VDATA',`(orig_s1_ptr+($1%INDEX_COUNT(s1_count,0))*IDX_INC(s1inc,0)
 + (($1/(INDEX_COUNT(s1_count,0)*INDEX_COUNT(s1_count,1)*INDEX_COUNT(s1_count,2)*INDEX_COUNT(s1_count,3)))%INDEX_COUNT(s1_count,4))*IDX_INC(s1inc,4))
 ')
 
-dnl	_VEC_FUNC_2V_PROJ( name, init_statement, statement, gpu_expr )
-define(`_VEC_FUNC_2V_PROJ',`
+define(`_VEC_FUNC_FAST_2V_PROJ',`')
+define(`_VEC_FUNC_FAST_CPX_2V_PROJ',`')
+define(`_VEC_FUNC_FAST_QUAT_2V_PROJ',`')
+define(`_VEC_FUNC_FAST_2V_PROJ_IDX',`')
+define(`_VEC_FUNC_FAST_3V_PROJ',`')
+
+dnl	_VEC_FUNC_SLOW_2V_PROJ( name, init_statement, statement, gpu_expr )
+define(`_VEC_FUNC_SLOW_2V_PROJ',`
 
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_2($1,$2,$3)
@@ -2743,16 +2953,15 @@ SLOW_BODY_PROJ_2($1,$2,$3)
 
 
 
-dnl	_VEC_FUNC_CPX_2V_PROJ( name, init_statement, statement, gpu_expr_re, gpu_expr_im )
-define(`_VEC_FUNC_CPX_2V_PROJ',`
-
+dnl	_VEC_FUNC_SLOW_CPX_2V_PROJ( name, init_statement, statement, gpu_expr_re, gpu_expr_im )
+define(`_VEC_FUNC_SLOW_CPX_2V_PROJ',`
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_CPX_2($1,$2,$3)
 ')
 
 
-dnl	_VEC_FUNC_QUAT_2V_PROJ( name, init_statement, statement, expr_re, expr_im1, expr_im2, expr_im3 )
-define(`_VEC_FUNC_QUAT_2V_PROJ',`
+dnl	_VEC_FUNC_SLOW_QUAT_2V_PROJ( name, init_statement, statement, expr_re, expr_im1, expr_im2, expr_im3 )
+define(`_VEC_FUNC_SLOW_QUAT_2V_PROJ',`
 
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_QUAT_2($1,$2,$3)
@@ -2763,8 +2972,8 @@ SLOW_BODY_PROJ_QUAT_2($1,$2,$3)
 dnl #define RAMP2D_METHOD(name)
 dnl  BUG? can we use the statement args?  now they are not used
 
-dnl	_VEC_FUNC_1V_3SCAL(name,s1,s2,s3)
-define(`_VEC_FUNC_1V_3SCAL',`
+dnl	_VEC_FUNC_SLOW_1V_3SCAL(name,s1,s2,s3)
+define(`_VEC_FUNC_SLOW_1V_3SCAL',`
 
 
 static void SLOW_NAME($1)( LINK_FUNC_ARG_DECLS )
@@ -2795,8 +3004,7 @@ static void SLOW_NAME($1)( LINK_FUNC_ARG_DECLS )
 
 
 dnl	_VEC_FUNC_2V_PROJ_IDX( name, init_statement, statement, gpu_s1, gpu_s2 )
-define(`_VEC_FUNC_2V_PROJ_IDX',`
-
+define(`_VEC_FUNC_SLOW_2V_PROJ_IDX',`
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 SLOW_BODY_PROJ_IDX_2($1,$2,$3)
 ')
@@ -2812,11 +3020,13 @@ SLOW_BODY_PROJ_IDX_2($1,$2,$3)
 dnl  complex really not different?
 dnl  where is DECLARE_BASES?
 
-dnl	_VEC_FUNC_CPX_3V_PROJ( name, init_statement, statement, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
-define(`_VEC_FUNC_CPX_3V_PROJ',`__VEC_FUNC_3V_PROJ($1,CPX_,$2,$3 )')
+dnl	dnl	_VEC_FUNC_CPX_3V_PROJ( name, init_statement, statement, gpu_r1, gpu_i1, gpu_r2, gpu_i2 )
+dnl	define(`_VEC_FUNC_CPX_3V_PROJ',`__VEC_FUNC_3V_PROJ($1,CPX_,$2,$3 )')
 
-dnl	__VEC_FUNC_3V_PROJ( name, typ, init_statement, statement )
-define(`__VEC_FUNC_3V_PROJ',`
+dnl	__VEC_FUNC_SLOW_3V_PROJ( name, typ, init_statement, statement, gpu_expr1, gpu_expr2 )
+define(`_VEC_FUNC_SLOW_3V_PROJ',`
+
+/* __vec_func_3v_proj /$1/ /$2/ /$3/ /$4/ */
 
 static void SLOW_NAME($1)(LINK_FUNC_ARG_DECLS)
 PROJ3_SLOW_BODY($1,$2,$3,$4)
@@ -2835,15 +3045,24 @@ dnl 	OBJ_METHOD(name,statement,DBM_,,,1SRC,)
 dnl	_VEC_FUNC_DBM_SBM( name, statement )
 define(`_VEC_FUNC_DBM_SBM',`OBJ_METHOD($1,$2,DBM_SBM_,`',`',`',`')')
 
+dnl	_VEC_FUNC_DBM_2SBM( name, statement )
+define(`_VEC_FUNC_DBM_2SBM',`OBJ_METHOD($1,$2,DBM_2SBM_,`',`',`',`')')
+
+dnl	_VEC_FUNC_DBM_1SBM( name, statement )
+define(`_VEC_FUNC_DBM_1SBM',`OBJ_METHOD($1,$2,DBM_1SBM_,`',`',`',`')')
+
+dnl	_VEC_FUNC_DBM_2SBM( name, statement )
+define(`_VEC_FUNC_DBM_1SBM_1S',`OBJ_METHOD($1,$2,DBM_1SBM_,`',`1S_',`',`')')
+
 /* bitmap set from a constant */
 dnl	_VEC_FUNC_DBM_1S( name, statement )
-define(`_VEC_FUNC_DBM_1S',`OBJ_METHOD($1,$2,DBM_,`',1S_,`',`')')
+define(`_VEC_FUNC_DBM_1S',`OBJ_METHOD($1,$2,DBM_,`',_1S,`',`')')
 
 /* used to set a bitmap based on a vector test */
 /* vsm_gt etc */
 
 dnl	_VEC_FUNC_VSMAP( name, op )
-define(`_VEC_FUNC_VSMAP',`OBJ_METHOD($1,SET_DBM_BIT(src1 $2 scalar1_val),DBM_,`',1S_,1SRC,`')')
+define(`_VEC_FUNC_VSMAP',`OBJ_METHOD($1,`SET_DBM_BIT(src1 $2 scalar1_val)',DBM_,`',_1S,1SRC,`')')
 
 
 define(`scalar1_val',`VA_SCALAR_VAL_STD(vap,0)')
@@ -2860,6 +3079,8 @@ define(`s1_count',`VA_SRC1_DIMSET(vap)')
 define(`s2_count',`VA_SRC2_DIMSET(vap)')
 define(`dbminc',`VA_DEST_INCSET(vap)')
 define(`sbminc',`VA_SRC5_INCSET(vap)')
+define(`sbm1inc',`VA_SRC1_INCSET(vap)')
+define(`sbm2inc',`VA_SRC2_INCSET(vap)')
 define(`dinc',`VA_DEST_INCSET(vap)')
 define(`s1inc',`VA_SRC1_INCSET(vap)')
 define(`s2inc',`VA_SRC2_INCSET(vap)')

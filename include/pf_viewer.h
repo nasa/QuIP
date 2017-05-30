@@ -67,7 +67,6 @@ typedef struct platform_viewer {
 #define OFFSET(i) ((char *)NULL + (i))	// what is this used for???
 
 
-#include "query.h"
 #include "data_obj.h"
 
 extern COMMAND_FUNC( do_new_pf_vwr );

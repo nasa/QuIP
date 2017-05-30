@@ -29,3 +29,7 @@ VMov $1 _pp_tmp
 Delete_Image _pp_tmp
 .
 
+Define Scramble 1 vector
+compute misc scramble $1 quit quit
+.
+

@@ -182,7 +182,7 @@ else if( $flavor == csf ) then
   #cat ../../macros/demo/graph.mac >> $outfile
 
   set subdir=$extra_macro_dir/csf
-  set file_list=( csf calib arrows csf_cam sync_files csf_admin psych )
+  set file_list=( csf calib arrows csf_cam sync_files csf_admin csf_util psych )
   source add_files.csh
 
   #cat ../../macros/csf/csf.mac >> $outfile

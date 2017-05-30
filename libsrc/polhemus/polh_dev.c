@@ -58,7 +58,6 @@
 #include "polh_dev.h"
 #include "debug.h"
 
-#include "query.h"
 #define POLHEMUS_SYNC_VAR_NAME	"polhemus_sync_mode"
 
 #ifdef INSIDE_TRACK

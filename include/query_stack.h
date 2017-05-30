@@ -3,8 +3,8 @@
 
 #include "quip_config.h"
 
-#include "query.h"
 #include "stack.h"
+#include "llen.h"
 #include "query_bits.h"
 #include "variable.h"
 #include "quip_menu.h"
@@ -117,12 +117,8 @@ struct query_stack {
 	int		qs_n_warnings;
 	int		qs_num_warnings;
 	int		qs_flags;	// where are the flag bits declared???
-	int		_qs_level;
+	int		_qs_level;	// used for lookahead
 	int		qs_chew_level;
-#ifdef NOT_USED
-	int		qs_lookahead_level;
-	int		qs_former_level;
-#endif /* NOT_USED */
 	int		qs_ascii_level;
 	int		qs_fmt_code;
 	int		qs_serial;
@@ -131,6 +127,7 @@ struct query_stack {
 	// BUG - we should phase these out in favor of string_buf's...
 	char 		qs_error_string[LLEN];
 	char 		qs_msg_str[LLEN];
+	const char *	qs_expected_warning;
 //	char **		qs_expr_strs;
 	String_Buf *	qs_result;
 	String_Buf *	qs_scratch;
@@ -226,13 +223,15 @@ struct query_stack {
 
 #define QS_HAS_SOMETHING(qsp)		(QLEVEL>=0 && QRY_HAS_TEXT(CURR_QRY(qsp)))
 #define QS_DO_CMD(qsp)			qs_do_cmd(qsp)
-#define QS_RDLINENO(qsp)		QRY_RDLINENO(CURR_QRY(qsp))
+#define QS_LINES_READ(qsp)		QRY_LINES_READ(CURR_QRY(qsp))
 
 #define QS_MENU_STACK(qsp)		(qsp)->qs_menu_stack
 #define SET_QS_MENU_STACK(qsp,stkp)	(qsp)->qs_menu_stack = stkp
 
 #define QS_VAR_FMT_STACK(qsp)		(qsp)->qs_var_fmt_stack
 #define SET_QS_VAR_FMT_STACK(qsp,stkp)	(qsp)->qs_var_fmt_stack = stkp
+#define QS_EXPECTED_WARNING(qsp)	(qsp)->qs_expected_warning
+#define SET_QS_EXPECTED_WARNING(qsp,s)	(qsp)->qs_expected_warning = s
 #define QS_NUMBER_FMT(qsp)		(qsp)->qs_number_fmt_string
 #define SET_QS_NUMBER_FMT(qsp,s)	(qsp)->qs_number_fmt_string = s
 #define QS_GFORMAT(qsp)			(qsp)->qs_gfmt_str
@@ -263,7 +262,7 @@ struct query_stack {
 
 #define QS_PROMPT_SB(qsp)		(qsp)->qs_prompt_sbp
 #define SET_QS_PROMPT_SB(qsp,sbp)	(qsp)->qs_prompt_sbp = sbp
-#define QS_PROMPT_STR(qsp)		SB_BUF((qsp)->qs_prompt_sbp)
+#define QS_PROMPT_STR(qsp)		sb_buffer((qsp)->qs_prompt_sbp)
 #define CLEAR_QS_PROMPT(qsp)		QS_PROMPT_STR(qsp)[0] = 0
 
 #define QS_WHICH_VAR_BUF(qsp)		(qsp)->qs_which_var_buf
@@ -329,7 +328,8 @@ struct query_stack {
 #define QS_N_WARNINGS(qsp)		(qsp)->qs_n_warnings
 #define SET_QS_MAX_WARNINGS(qsp,n)	(qsp)->qs_max_warnings=n
 #define SET_QS_N_WARNINGS(qsp,n)	(qsp)->qs_n_warnings = n
-#define INC_QS_N_WARNINGS(qsp)	SET_QS_N_WARNINGS(qsp,1+QS_N_WARNINGS(qsp))
+#define INC_QS_N_WARNINGS(qsp)	SET_QS_N_WARNINGS(qsp,QS_N_WARNINGS(qsp)+1)
+#define DEC_QS_N_WARNINGS(qsp)	SET_QS_N_WARNINGS(qsp,QS_N_WARNINGS(qsp)-1)
 
 #define QS_CALLBACK_LIST(qsp)		(qsp)->qs_callback_lp
 #define SET_QS_CALLBACK_LIST(qsp,lp)	(qsp)->qs_callback_lp = lp

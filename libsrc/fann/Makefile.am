@@ -12,6 +12,6 @@ libmyfann_a_SOURCES =				\
 		fann_menu.c
 
 
-#noinst_HEADERS = 				\
-#		seq.h
+noinst_HEADERS = 				\
+		my_fann.h
 

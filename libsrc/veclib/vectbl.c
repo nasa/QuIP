@@ -46,6 +46,7 @@ CREAT_VEC_FUNC( vssub,		FVSSUB,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsmul,		FVSMUL,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsdiv,		FVSDIV,		VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vsdiv2,		FVSDIV2,	VS_BINARY,	M_ALL,	RCMQP_MASK	)
+CREAT_VEC_FUNC( vssub2,		FVSSUB2,	VS_BINARY,	M_ALL,	RCMQP_MASK	)
 CREAT_VEC_FUNC( vabs,		FVABS,		V_UNARY,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vsign,		FVSIGN,		V_UNARY,	M_ALL,	REAL_ARG_MASK	)
 
@@ -237,7 +238,7 @@ CREAT_VEC_FUNC( vuli2udi,	FVULI2UDI,	V_UNARY,	0,	REAL_ARG_MASK	)
 /* max mag,	min max changed to M_ALL to allow long destination... */
 CREAT_VEC_FUNC( vsum,		FVSUM,		V_PROJECTION,	M_ALL,	RCQ_MASK	)
 CREAT_VEC_FUNC( vdot,		FVDOT,		V_PROJECTION2,	M_ALL,	RC_MASK	)
-CREAT_CPU_VEC_FUNC( vrand,		FVRAND,		V_UNARY,	M_ALL,	RC_MASK	)
+CREAT_CPU_VEC_FUNC( vrand,	FVRAND,		V_UNARY,	M_ALL,	RC_MASK	)
 
 CREAT_VEC_FUNC( vsm_lt,		FVSMLT,		VS_TEST,	M_ALL,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( vsm_gt,		FVSMGT,		VS_TEST,	M_ALL,	REAL_ARG_MASK	)
@@ -403,7 +404,10 @@ void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 //	if( check_vfa_tbl_size(QSP_ARG  vfa_tbl, size) < 0 )
 //		return -1;
 
-	assert( size == N_VEC_FUNCS );
+//	assert( size == N_VEC_FUNCS );
+	if( size != N_VEC_FUNCS ){
+		WARN("size not equal to N_VEC_FUNCS!?");
+	}
 
 	qsort(vfa_tbl,size,sizeof(Vec_Func_Array),vfa_cmp);
 
@@ -422,14 +426,14 @@ ADVISE(ERROR_STRING);
 }
 */
 
-//		if( vfa_tbl[i].vfa_code != i ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
-//		i,VF_NAME(&vec_func_tbl[i]),
-//		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
-//			WARN(ERROR_STRING);
+		if( vfa_tbl[i].vfa_code != i ){
+			sprintf(ERROR_STRING,
+	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
+		i,VF_NAME(&vec_func_tbl[i]),
+		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
+			WARN(ERROR_STRING);
 //			retval = (-1);
-//		}
+		}
 
 		assert( vfa_tbl[i].vfa_code == i );
 	}
@@ -451,13 +455,13 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 		veclib_debug = add_debug_module(QSP_ARG  "veclib");
 
 	/* sort the table to insure that each entry is at the location of its code */
-//#ifdef CAUTIOUS
-//	if( N_VEC_FUNCS != N_NVFS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
-//			N_VEC_FUNCS-N_NVFS);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
+#ifdef CAUTIOUS
+	if( N_VEC_FUNCS != N_NVFS ){
+		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
+			N_VEC_FUNCS-N_NVFS);
+		ERROR1(ERROR_STRING);
+	}
+#endif // CAUTIOUS
 
 	assert( N_VEC_FUNCS == N_NVFS );
 

@@ -33,7 +33,7 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 	}
 #endif /* HAVE_HISTORY */
 
-	/* last_pick=qword(prompt); */
+	/* last_pick=next_query_word(prompt); */
 	last_pick = NAMEOF(prompt);
 
 	for(i=0;i<n;i++){
@@ -54,7 +54,8 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 	if( nmatches==1 ){
 		sprintf(ERROR_STRING,"Unambiguous substring match of \"%s\" to \"%s\"",
 			last_pick,choices[lastmatch]);
-		advise(ERROR_STRING);
+		//advise(ERROR_STRING);
+		WARN(ERROR_STRING);
 		return(lastmatch);
 	}
 	else if( nmatches > 1 ){
@@ -84,24 +85,12 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 
 int which_one(QSP_ARG_DECL  const char *prompt,int n,const char** choices)
 {
-	/* char pline[LLEN]; */
-
-	/* don't need to format the prompt now that we're using nameof()
-	 * instead of qword()
-	 */
-	/* sprintf(pline,PROMPT_FORMAT,prompt); */
 	return _one_of(QSP_ARG prompt,n,choices);
 }
 
 
 int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices)
 {
-	/* When _one_of used qword(), no prompt formatting was done.
-	 * But when we switched to nameof() (to inhibit macro expansion),
-	 * it formats the prompt for us, whether we want this or not.
-	 * So we had to add a way to inhibit prompt formatting.
-	 * The inhibit function is a one-shot deal.
-	 */
 	inhibit_next_prompt_format(SINGLE_QSP_ARG);
 	return _one_of(QSP_ARG s,n,choices);
 }

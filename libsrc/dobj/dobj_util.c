@@ -206,6 +206,9 @@ fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
 void delvec(QSP_ARG_DECL  Data_Obj *dp)
 {
 
+	assert(dp!=NULL);
+	assert(OBJ_NAME(dp)!=NULL);
+
 #ifdef ZOMBIE_SUPPORT
 	// This should go back in eventually!
 	if( OBJ_FLAGS(dp) & DT_STATIC && OWNS_DATA(dp) ){
@@ -252,14 +255,6 @@ advise(ERROR_STRING);
 		Identifier *idp;
 
 		idp = ID_OF(OBJ_NAME(dp));
-//#ifdef CAUTIOUS
-//		if( idp == NO_IDENTIFIER ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  delvec:  No associated identifier found for exported object %s!?",
-//				OBJ_NAME(dp));
-//			ERROR1(ERROR_STRING);
-//		}
-//#endif // CAUTIOUS
 		assert( idp != NO_IDENTIFIER );
 		delete_id(QSP_ARG  (Item *)idp);
 	}
@@ -335,10 +330,8 @@ advise(ERROR_STRING);
 
 #endif /* ! ZOMBIE_SUPPORT */
 
-	// when we call this, bad things seem to happen, even
-	// though it seems to be a leak!?
-	rls_str( (char *) OBJ_NAME(dp) );		/* unsave stored name */
-	SET_OBJ_NAME(dp,NULL);
+	// used to release the name here
+	// and set to null, but that is done in del_item
 }
 
 

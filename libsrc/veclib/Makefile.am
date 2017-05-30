@@ -3,7 +3,7 @@ all:	libvec.a
 
 noinst_LIBRARIES = libvec.a
 
-libvec_a_CPPFLAGS = -I$(top_srcdir)/include -D_GNU_SOURCE -Wall -Wmissing-prototypes
+libvec_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -D_GNU_SOURCE -Wall -Wmissing-prototypes
 # -D__STRICT_ANSI__  this breaks u_long in sys/types.h...
 
 #				sampmenu.c	\

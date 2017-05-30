@@ -102,7 +102,7 @@ static COMMAND_FUNC( do_closepipe )
 	close_pipe(QSP_ARG  pp);
 }
 
-static COMMAND_FUNC( do_list_pipes ){ list_pipes(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_list_pipes ){ list_pipes(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 /* fp should be null - but where do we specify the pipe handle? */
 
@@ -122,9 +122,7 @@ static COMMAND_FUNC( do_pipe_redir )
 
 	//push_input_file(QSP_ARG  msg_str);
 	sprintf(msg_str,"Pipe \"%s\"",pp->p_cmd);
-	redir(QSP_ARG pp->p_fp, msg_str);
-	SET_QRY_DUPFILE(CURR_QRY(THIS_QSP) , (FILE *) pp );
-	SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP), Q_PIPE);
+	redir_from_pipe(QSP_ARG pp, msg_str);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(pipes_menu,s,f,h)

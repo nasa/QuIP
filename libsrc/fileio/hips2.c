@@ -20,6 +20,9 @@ static int num_color=1;
 
 static void rewrite_hips2_nf(FILE *fp,dimension_t n);
 
+// Apparently, hips2 cannot handle multi-component pixels?
+// Color is handled with separate color frames???
+
 int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 {
 	short type_dim=1;

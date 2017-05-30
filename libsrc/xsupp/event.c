@@ -295,12 +295,12 @@ advise(ERROR_STRING);
 						ce_code = CE_LEFT_BUTTON_DOWN;
 						break;
 					case 2:
-						ASSIGN_VAR("middle_button_down","1");
+						ASSIGN_VAR("middle_button_down","2");
 						ASSIGN_VAR("middle_button_up","0");
 						ce_code = CE_MIDDLE_BUTTON_DOWN;
 						break;
 					case 3:
-						ASSIGN_VAR("right_button_down","1");
+						ASSIGN_VAR("right_button_down","4");
 						ASSIGN_VAR("right_button_up","0");
 						ce_code = CE_RIGHT_BUTTON_DOWN;
 						break;
@@ -332,12 +332,12 @@ advise(ERROR_STRING);
 						break;
 					case 2:
 						ASSIGN_VAR("middle_button_down","0");
-						ASSIGN_VAR("middle_button_up","1");
+						ASSIGN_VAR("middle_button_up","2");
 						ce_code = CE_MIDDLE_BUTTON_UP;
 						break;
 					case 3:
 						ASSIGN_VAR("right_button_down","0");
-						ASSIGN_VAR("right_button_up","1");
+						ASSIGN_VAR("right_button_up","4");
 						ce_code = CE_RIGHT_BUTTON_UP;
 						break;
 //#ifdef CAUTIOUS
@@ -389,11 +389,6 @@ advise(ERROR_STRING);
 			// scheme instead of the old button scheme...
 
 			if( IS_BUTTON_ARENA(vp) || IS_MOUSESCAPE(vp) || IS_PLOTTER(vp) ){
-//#ifdef CAUTIOUS
-//				if( ce_code == CE_INVALID_CODE ){	// never true?
-//					NADVISE("CAUTIOUS:  HandleEvent:  Invalid canvas event code!?!?");
-//				}
-//#endif /* CAUTIOUS */
 				assert( ce_code != CE_INVALID_CODE );	// always true?
 
 				if( VW_EVENT_TBL(vp) != NULL ){
@@ -652,7 +647,7 @@ NWARN(ERROR_STRING);
 // never cleared!?
 // Maybe faulty auto-repeat?  We could check KeyRelease?
 //
-//fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
+fprintf(stderr,"KeyPress event, ks_len = %d, keystr[0] = 0x%x\n",ks_len,keystr[0]);
 				if( keystr[0] == 015 )
 					keystr[0]=012;	/* map CR to LF */
 				keystr[1]=0;

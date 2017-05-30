@@ -35,7 +35,7 @@ void init_tmp_dps(SINGLE_QSP_ARG_DECL)
 	add_cmd_callback( QSP_ARG  unlock_all_tmp_objs );
 }
 
-void list_temp_dps(SINGLE_QSP_ARG_DECL)
+void list_temp_dps(QSP_ARG_DECL  FILE *fp)
 {
 	Node *np;
 	int n, nl, nc, nr;
@@ -58,7 +58,7 @@ void list_temp_dps(SINGLE_QSP_ARG_DECL)
 	sprintf(MSG_STR,
 	"%d temporary objects, %d locked, %d w/ children, %d referenced",
 		n,nl,nc,nr);
-	prt_msg(MSG_STR);
+	fprintf(fp,"%s\n",MSG_STR);
 }
 
 /*

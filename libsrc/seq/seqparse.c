@@ -81,6 +81,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "item_type.h"
+#include "query_bits.h"	// LLEN - BUG, get rid of this!
 #include "seq.h"
 #include "getbuf.h"
 
@@ -254,7 +256,7 @@ static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
 }
 
 
-#line 258 "seqparse.c" /* yacc.c:339  */
+#line 260 "seqparse.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -310,7 +312,7 @@ int yyparse (Query_Stack *qsp);
 
 /* Copy the second part of user declarations.  */
 
-#line 314 "seqparse.c" /* yacc.c:358  */
+#line 316 "seqparse.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -608,8 +610,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   217,   217,   221,   223,   224,   226,   228,   230,   231,
-     236
+       0,   219,   219,   223,   225,   226,   228,   230,   232,   233,
+     238
 };
 #endif
 
@@ -1395,51 +1397,51 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 218 "seqparse.y" /* yacc.c:1646  */
+#line 220 "seqparse.y" /* yacc.c:1646  */
     { final_mviseq = (yyval. yysp ) ; }
-#line 1401 "seqparse.c" /* yacc.c:1646  */
+#line 1403 "seqparse.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 222 "seqparse.y" /* yacc.c:1646  */
+#line 224 "seqparse.y" /* yacc.c:1646  */
     { (yyval. yysp )=joinseq( (yyvsp[-2]. yysp ), (yyvsp[0]. yysp ) ); }
-#line 1407 "seqparse.c" /* yacc.c:1646  */
+#line 1409 "seqparse.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 225 "seqparse.y" /* yacc.c:1646  */
+#line 227 "seqparse.y" /* yacc.c:1646  */
     { (yyval. yysp )=reptseq( (yyvsp[-2].yyi), (yyvsp[0]. yysp ) ); }
-#line 1413 "seqparse.c" /* yacc.c:1646  */
+#line 1415 "seqparse.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 227 "seqparse.y" /* yacc.c:1646  */
+#line 229 "seqparse.y" /* yacc.c:1646  */
     { (yyval. yysp )=reptseq( (yyvsp[-3].yyi), (yyvsp[-1]. yysp ) ); }
-#line 1419 "seqparse.c" /* yacc.c:1646  */
+#line 1421 "seqparse.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 229 "seqparse.y" /* yacc.c:1646  */
+#line 231 "seqparse.y" /* yacc.c:1646  */
     { (yyval. yysp )=reptseq( (yyvsp[-4].yyi), (yyvsp[-1]. yysp ) ); }
-#line 1425 "seqparse.c" /* yacc.c:1646  */
+#line 1427 "seqparse.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 232 "seqparse.y" /* yacc.c:1646  */
+#line 234 "seqparse.y" /* yacc.c:1646  */
     { (yyval. yysp )=revseq( (yyvsp[-1]. yysp ) ); }
-#line 1431 "seqparse.c" /* yacc.c:1646  */
+#line 1433 "seqparse.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 237 "seqparse.y" /* yacc.c:1646  */
+#line 239 "seqparse.y" /* yacc.c:1646  */
     {
 				(yyval. yysp )=makfrm((yyvsp[-2].yyi),(yyvsp[0]. yyvp ));
 			}
-#line 1439 "seqparse.c" /* yacc.c:1646  */
+#line 1441 "seqparse.c" /* yacc.c:1646  */
     break;
 
 
-#line 1443 "seqparse.c" /* yacc.c:1646  */
+#line 1445 "seqparse.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1667,7 +1669,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 242 "seqparse.y" /* yacc.c:1906  */
+#line 244 "seqparse.y" /* yacc.c:1906  */
 
 
 ITEM_INTERFACE_DECLARATIONS( Seq, mviseq, 0 )

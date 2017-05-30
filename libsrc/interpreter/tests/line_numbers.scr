@@ -1,0 +1,18 @@
+advise 'BEGIN line 1'
+advise 'BEGIN line 2'
+# 3
+warn "Line 4"
+echo 'line 5'
+# 6
+warn "Line 7"
+warn "Line 8"
+warn \
+"line 10"
+# 11
+repeat 3	# 12
+  warn "line 13"
+  warn "line 14"
+  end		# 15
+warn "line 16"
+exit
+

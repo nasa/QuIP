@@ -1111,8 +1111,8 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 #endif /* HAVE_MOTIF */
 }
 
-#ifdef HAVE_MOTIF
 
+#ifdef HAVE_MOTIF
 void delete_motif_widget(Screen_Obj *sop)
 {
 	// unmanageChild removes from panel but does not deallocate...
@@ -1130,16 +1130,20 @@ COMMAND_FUNC( do_dispatch )
 	motif_qsp = THIS_QSP;
 	motif_dispatch(SINGLE_QSP_ARG);
 }
+#endif // HAVE_MOTIF
 
 static void motif_dispatch(SINGLE_QSP_ARG_DECL)
 {
+#ifdef HAVE_MOTIF
 	XtInputMask mask;
 
 	while( (mask = XtAppPending(globalAppContext)) != 0)
 		XtAppProcessEvent(globalAppContext, mask);
+#endif // HAVE_MOTIF
 }
 
 
+#ifdef HAVE_MOTIF
 static void navp_genwin_posn(QSP_ARG_DECL  const char *s, int x, int y)
 {
 	Nav_Panel *np_p;
@@ -1746,8 +1750,10 @@ void push_navgrp_context(QSP_ARG_DECL  Item_Context *icp)
 
 void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
 {
+#ifdef HAVE_MOTIF
 	// get rid of motif stuff...
 	delete_motif_widget(sop);
+#endif // HAVE_MOTIF
 
 	remove_from_panel(curr_panel,sop);
 	del_so(QSP_ARG  sop);
@@ -1793,7 +1799,7 @@ Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_item_itp == NO_IOS_ITEM_TYPE ){
 		init_nav_items(SINGLE_QSP_ARG);
-		set_del_method(QSP_ARG  nav_item_itp, (void (*)(Item *))&remove_nav_item);
+		set_del_method(QSP_ARG  nav_item_itp, (void (*)(QSP_ARG_DECL  Item *))&remove_nav_item);
 	}
 
 	return create_item_context(QSP_ARG  nav_item_itp, name );

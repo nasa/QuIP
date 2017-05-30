@@ -17,12 +17,13 @@
 #define BUILD_FOR_OPENCL
 
 #include "quip_prot.h"
-#include "strbuf.h"
-#include "my_ocl.h"	// 
-#include "ocl_platform.h"	// 
+#include "my_ocl.h"
+#include "ocl_platform.h"
+#include "platform.h"
+#include "veclib/ocl_veclib_prot.h"
 #include "veclib_api.h"
 
-#include "veclib/ocl_veclib_prot.h"
+//#include "veclib/ocl_veclib_prot.h"
 
 // When we build in Xcode, we need to precede these with OpenGL:
 #include <OpenGL/OpenGL.h>		// apple only?
@@ -102,17 +103,17 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 
 	//copy memory from device to host
 
-//fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %d, dst = 0x%lx\n",
+//fprintf(stderr,"ocl_mem_dnload:  device = %s, src = 0x%lx, siz = %ld, dst = 0x%lx\n",
 //PFDEV_NAME(pdp),(long)src,siz,(long)dst);
 	status = clEnqueueReadBuffer( OCLDEV_QUEUE(pdp),
 			src,		// cl_mem
 			CL_TRUE,	// blocking_read
-			0,
+			0,		// offset
 			siz,
 			dst,
-			0,
-			NULL,
-			NULL);
+			0,		// num_events_in_wait_list
+			NULL,		// event_wait_list
+			NULL);		// event
  
 	if( status != CL_SUCCESS ){
 		report_ocl_error(QSP_ARG  status, "clEnqueueReadBuffer");
@@ -243,7 +244,6 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	}
 }
 
-#define OCLDEV_EXTENSIONS(pdp)	OCLPF_EXTENSIONS(PFDEV_PLATFORM(pdp))
 #define EXTENSIONS_PREFIX	"Extensions:  "
 
 static void ocl_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
@@ -253,23 +253,23 @@ static void ocl_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
 	prt_msg("Sorry, no OpenCL-specific device info yet.");
 }
 
-static void ocl_info(QSP_ARG_DECL  Compute_Platform *cdp)
+static void ocl_info(QSP_ARG_DECL  Compute_Platform *cpp)
 {
 	int s;
 
-	sprintf(MSG_STR,"Vendor:  %s",OCLPF_VENDOR(cdp));
+	sprintf(MSG_STR,"Vendor:  %s",OCLPF_VENDOR(cpp));
 	prt_msg(MSG_STR);
-	sprintf(MSG_STR,"Version:  %s",OCLPF_VERSION(cdp));
+	sprintf(MSG_STR,"Version:  %s",OCLPF_VERSION(cpp));
 	prt_msg(MSG_STR);
-	sprintf(MSG_STR,"Profile:  %s",OCLPF_PROFILE(cdp));
+	sprintf(MSG_STR,"Profile:  %s",OCLPF_PROFILE(cpp));
 	prt_msg(MSG_STR);
 
 	// The extensions can be long...
-	s = (int) strlen(OCLPF_EXTENSIONS(cdp))+strlen(EXTENSIONS_PREFIX)+2;
-	if( s > SB_SIZE(QS_SCRATCH) )
+	s = (int) strlen(OCLPF_EXTENSIONS(cpp))+strlen(EXTENSIONS_PREFIX)+2;
+	if( s > sb_size(QS_SCRATCH) )
 		enlarge_buffer( QS_SCRATCH, s );
-	sprintf(SB_BUF(QS_SCRATCH),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cdp));
-	prt_msg(SB_BUF(QS_SCRATCH));
+	sprintf(sb_buffer(QS_SCRATCH),"%s%s\n",EXTENSIONS_PREFIX,OCLPF_EXTENSIONS(cpp));
+	prt_msg(sb_buffer(QS_SCRATCH));
 }
 
 static int extension_supported( Platform_Device *pdp, const char *ext_str )
@@ -279,50 +279,42 @@ static int extension_supported( Platform_Device *pdp, const char *ext_str )
 	return s==NULL ? 0 : 1;
 }
 
-
-#define MAX_PARAM_SIZE	128
-
-#define SCRATCH_LEN	128
-
-static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
-							Compute_Platform *cpp)
+static char *get_ocl_device_name(QSP_ARG_DECL  cl_device_id dev_id)
 {
-	cl_int status;
-	//long param_data[MAX_PARAM_SIZE/sizeof(long)];	// force alignment
 	size_t psize;
-	//char name[LLEN];
 	char *name;
-	char *extensions;
-	char scratch[SCRATCH_LEN];
-	static int n_ocl_devs=0;
-	const char *name_p;
-	char *s;
-	Platform_Device *pdp;
-	CGLContextObj cgl_ctx=NULL;
-	cl_context context;
-	cl_command_queue command_queue; //"stream" in CUDA
-	cl_context_properties props[3]={
-		CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-		0,	// need to put cgl_ctx here
-		0
-		};
+	cl_int status;
 
 	// Find out space required
-	status = clGetDeviceInfo(dev_id,CL_DEVICE_NAME,0,
-		NULL,&psize);
-	OCL_STATUS_CHECK(status,clGetDeviceInfo)
+	status = clGetDeviceInfo(dev_id,CL_DEVICE_NAME,0, NULL,&psize);
+	OCL_STATUS_CHECK_WITH_RETURN(status,clGetDeviceInfo,NULL)
 	name=getbuf(psize+1);
 	status = clGetDeviceInfo(dev_id,CL_DEVICE_NAME,psize+1, name,&psize);
-	OCL_STATUS_CHECK(status,clGetDeviceInfo)
+	OCL_STATUS_CHECK_WITH_RETURN(status,clGetDeviceInfo,NULL)
+	return name;
+}
 
-	//strcpy(name,(char *)param_data);
-
+static void replace_spaces(char *s, int c)
+{
 	/* change spaces to underscores */
-	s=name;
 	while(*s){
-		if( *s==' ' ) *s='_';
+		if( *s==' ' ) *s=c;
 		s++;
 	}
+}
+
+static Platform_Device * create_ocl_device(QSP_ARG_DECL  cl_device_id dev_id, Compute_Platform *cpp)
+{
+	char *name;
+	//size_t psize;
+	const char *name_p;
+#define SCRATCH_LEN	128
+	char scratch[SCRATCH_LEN];
+	Platform_Device *pdp;
+
+	name = get_ocl_device_name(QSP_ARG  dev_id);
+	if( name == NULL ) return NULL;
+	replace_spaces(name,'_');
 
 	/* We might have two of the same devices installed in a single system.
 	 * In this case, we can't use the device name twice, because there will
@@ -335,13 +327,66 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	givbuf(name);
 
+	// initialize all the fields?
+
 #ifdef CAUTIOUS
 	if( pdp == NO_PFDEV ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  init_ocl_device:  Error creating cuda device struct for %s!?",name_p);
 		WARN(ERROR_STRING);
-		return;
 	}
 #endif /* CAUTIOUS */
+
+	if( pdp != NO_PFDEV ){
+		SET_PFDEV_PLATFORM(pdp,cpp);
+		// allocate the memory for the platform-specific data
+		SET_PFDEV_ODI(pdp,getbuf(sizeof(*PFDEV_ODI(pdp))));
+		SET_PFDEV_OCL_DEV_ID(pdp,dev_id);
+	}
+
+	return pdp;
+}
+
+static void get_extensions(QSP_ARG_DECL  Platform_Device *pdp)
+{
+	cl_int status;
+	size_t psize;
+	char *extensions;
+
+	// Check for other properties...
+	// find out how much space required...
+	status = clGetDeviceInfo(PFDEV_OCL_DEV_ID(pdp),CL_DEVICE_EXTENSIONS,0,NULL,&psize);
+	OCL_STATUS_CHECK(status,clGetDeviceInfo)
+	extensions = getbuf(psize+1);
+	status = clGetDeviceInfo(PFDEV_OCL_DEV_ID(pdp),CL_DEVICE_EXTENSIONS,psize+1,extensions,&psize);
+	OCL_STATUS_CHECK(status,clGetDeviceInfo)
+	// change spaces to newlines for easier reading...
+	replace_spaces(extensions,'\n');
+	SET_OCLDEV_EXTENSIONS(pdp,extensions);
+}
+
+
+#define MAX_PARAM_SIZE	128
+
+
+static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
+							Compute_Platform *cpp)
+{
+	cl_int status;
+	//long param_data[MAX_PARAM_SIZE/sizeof(long)];	// force alignment
+	//char name[LLEN];
+	static int n_ocl_devs=0;
+	Platform_Device *pdp;
+	CGLContextObj cgl_ctx=NULL;
+	cl_context context;
+	cl_command_queue command_queue; //"stream" in CUDA
+	cl_context_properties props[3]={
+		CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+		0,	// need to put cgl_ctx here
+		0
+		};
+
+	pdp = create_ocl_device(QSP_ARG  dev_id, cpp);
+	if( pdp == NULL ) return;
 
 	/* Remember this name in case the default is not found */
 	if( first_ocl_dev_name == NULL )
@@ -355,26 +400,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 			default_ocl_dev_found=1;
 	}
 
-	// allocate the memory for the platform-specific data
-	PFDEV_ODI(pdp) = getbuf( sizeof( *PFDEV_ODI(pdp) ) );
-
-	// Check for other properties...
-	// find out how much space required...
-	status = clGetDeviceInfo(dev_id,CL_DEVICE_EXTENSIONS,0,NULL,&psize);
-	OCL_STATUS_CHECK(status,clGetDeviceInfo)
-	extensions = getbuf(psize+1);
-	status = clGetDeviceInfo(dev_id,CL_DEVICE_EXTENSIONS,psize+1,extensions,&psize);
-	OCL_STATUS_CHECK(status,clGetDeviceInfo)
-	{
-		char *es;
-		es=extensions;
-		// change spaces to newlines for easier reading...
-		while(*es){
-			if( *es == ' ' ) *es = '\n';
-			es++;
-		}
-	}
-
+	get_extensions(QSP_ARG  pdp);
 	SET_OCLDEV_DEV_ID(pdp,dev_id);
 	SET_PFDEV_PLATFORM(pdp,cpp);
 	if( n_ocl_devs >= MAX_OPENCL_DEVICES ){
@@ -424,46 +450,48 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	// Check for OpenGL capabilities
 	//opengl_check(pdp);
+
 #ifdef TAKEN_FROM_DEMO_PROG
 #if (USE_GL_ATTACHMENTS)
 
-    printf(SEPARATOR);
-    printf("Using active OpenGL context...\n");
+	printf(SEPARATOR);
+	printf("Using active OpenGL context...\n");
 
-    CGLContextObj kCGLContext = CGLGetCurrentContext();              
-    CGLShareGroupObj kCGLShareGroup = CGLGetShareGroup(kCGLContext);
-    
-    cl_context_properties properties[] = { 
-        CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE, 
-        (cl_context_properties)kCGLShareGroup, 0 
-    };
-        
-    // Create a context from a CGL share group
-    //
-    ComputeContext = clCreateContext(properties, 0, 0, clLogMessagesToStdoutAPPLE, 0, 0);
+	CGLContextObj kCGLContext = CGLGetCurrentContext();			  
+	CGLShareGroupObj kCGLShareGroup = CGLGetShareGroup(kCGLContext);
+	
+	cl_context_properties properties[] = { 
+		CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE, 
+		(cl_context_properties)kCGLShareGroup, 0 
+	};
+		
+	// Create a context from a CGL share group
+	//
+	ComputeContext = clCreateContext(properties, 0, 0, clLogMessagesToStdoutAPPLE, 0, 0);
 	if(!ComputeContext)
 		return -2;
 
 #else	// ! USE_GL_ATTACHMENTS	
 
-    // Connect to a compute device
-    //
-    err = clGetDeviceIDs(NULL, ComputeDeviceType, 1, &ComputeDeviceId, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to locate compute device!\n");
-        return EXIT_FAILURE;
-    }
+	// Connect to a compute device
+	//
+	err = clGetDeviceIDs(NULL, ComputeDeviceType, 1, &ComputeDeviceId, NULL);
+	if (err != CL_SUCCESS)
+	{
+		printf("Error: Failed to locate compute device!\n");
+		return EXIT_FAILURE;
+	}
   
-    // Create a compute context 
-    //
-    ComputeContext = clCreateContext(0, 1, &ComputeDeviceId, clLogMessagesToStdoutAPPLE, NULL, &err);
-    if (!ComputeContext)
-    {
-        printf("Error: Failed to create a compute context!\n");
-        return EXIT_FAILURE;
-    }
+	// Create a compute context 
+	//
+	ComputeContext = clCreateContext(0, 1, &ComputeDeviceId, clLogMessagesToStdoutAPPLE, NULL, &err);
+	if (!ComputeContext)
+	{
+		printf("Error: Failed to create a compute context!\n");
+		return EXIT_FAILURE;
+	}
 #endif	// ! USE_GL_ATTACHMENTS	
+
 #endif // TAKEN_FROM_DEMO_PROG
 
 	//create context on the specified device
@@ -534,7 +562,7 @@ static void init_ocl_devices(QSP_ARG_DECL  Compute_Platform *cpp )
 	if( cpp == NULL ) return;	// print warning?
 
 	//get the device info
-	status = clGetDeviceIDs( PF_OPD_ID(cpp), CL_DEVICE_TYPE_DEFAULT,
+	status = clGetDeviceIDs( OCLPF_ID(cpp), CL_DEVICE_TYPE_DEFAULT,
 		MAX_OPENCL_DEVICES, dev_tbl, &n_devs);
 
 	if( status != CL_SUCCESS ){
@@ -565,6 +593,7 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 	cl_int status;
 	void *ptr;
 
+	// clCreateBuffer returns cl_mem...
 	ptr = clCreateBuffer(OCLDEV_CTX(pdp), CL_MEM_READ_WRITE, size, NULL, &status);
 
 	if( status != CL_SUCCESS ){
@@ -573,6 +602,7 @@ static void *ocl_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 		advise(ERROR_STRING);
 		return NULL;
 	}
+//fprintf(stderr,"ocl_mem_alloc %d:  returning 0x%lx\n",size,(long)ptr);
 	return ptr;
 }
 
@@ -604,19 +634,19 @@ static void ocl_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 	// BUG check return value
 }
 
-void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+//void *TMPVEC_NAME(Platform_Device *pdp, size_t size,size_t len,const char *whence)
+void *ocl_tmp_vec(Platform_Device *pdp, size_t size,size_t len,const char *whence)
 {
-	//NWARN("ocl_tmpvec not implemented!?");
-	//return NULL;
 	void *ptr;
 
-	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len, 0);
+	ptr = ocl_mem_alloc(DEFAULT_QSP_ARG  pdp, len*size, 0 /* alignment arg not used? */ );
+	// Nice to zero it for testing???
 	return ptr;
 }
 
-void FREETMP_NAME(void *ptr,const char *whence)
+//void FREETMP_NAME(void *ptr,const char *whence)
+void ocl_free_tmp(void *ptr,const char *whence)
 {
-	//NWARN("ocl_freetmp not implemented!?");
 	ocl_mem_free(DEFAULT_QSP_ARG  ptr);
 }
 
@@ -790,13 +820,13 @@ static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 }
 
 // map_buf makes an opengl buffer object usable by OpenCL?
+
 static int ocl_map_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
 	cl_int status;
 
 	glFlush();
 
-//fprintf(stderr,"ocl_map_buf mapping %s\n",OBJ_NAME(dp));
 	// Acquire ownership of GL texture for OpenCL Image
 	status = clEnqueueAcquireGLObjects(//cl_cmd_queue,
 			OCLDEV_QUEUE(OBJ_PFDEV(dp)),
@@ -820,7 +850,6 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 #ifdef HAVE_OPENGL
 	cl_int status;
 
-//fprintf(stderr,"ocl_unmap_buf un-mapping %s\n",OBJ_NAME(dp));
 	// Release ownership of GL texture for OpenCL Image
 	status = clEnqueueReleaseGLObjects(//cl_cmd_queue,
 			OCLDEV_QUEUE(OBJ_PFDEV(dp)),
@@ -905,7 +934,7 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 	GET_PLATFORM_STRING(CL_PLATFORM_EXTENSIONS)
 	SET_OCLPF_EXTENSIONS(cpp,platform_str);
 
-	SET_PF_OPD_ID(cpp,platform_id);
+	SET_OCLPF_ID(cpp,platform_id);
 
 	SET_PLATFORM_FUNCTIONS(cpp,ocl)
 
@@ -951,6 +980,26 @@ void ocl_init_platform(SINGLE_QSP_ARG_DECL)
 	init_ocl_platforms(SINGLE_QSP_ARG);
 
 	check_ocl_vfa_tbl(SINGLE_QSP_ARG);
+}
+
+void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len )
+{
+	// BUG we assume float type!?
+	float *buf;
+	size_t siz;
+	int i;
+
+	siz= len*sizeof(float);
+	buf=malloc(siz);
+	if( buf==NULL ) NERROR1("show_gpu_vector:  error allocating buffer!?");
+
+	fprintf(stderr,"show_gpu_vector:  src = 0x%lx\n",(long)ptr);
+	// now do the memory transfer
+	(*PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  buf, ptr, siz, pdp );
+	for(i=0;i<len;i++){
+		fprintf(stderr,"%d\t%g\n",i,buf[i]);
+	}
+	free(buf);
 }
 
 #endif /* HAVE_OPENCL */

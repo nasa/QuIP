@@ -30,6 +30,7 @@
 
 #include "fio_prot.h"
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - get rid of this!  BUG
 #include "debug.h"
 #include "getbuf.h"
 #include "item_prot.h"

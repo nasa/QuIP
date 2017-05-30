@@ -10,22 +10,24 @@
 #endif
 
 struct ocl_platform_data {
-	cl_platform_id		opd_id;
+	cl_platform_id		opd_pf_id;
 	const char *		opd_profile;
 	const char *		opd_version;
 	const char *		opd_vendor;
 	const char *		opd_extensions;
 };
 
-#define OCLPF_PROFILE(pfp)		(PF_OPD(pfp))->opd_profile
-#define OCLPF_VERSION(pfp)		(PF_OPD(pfp))->opd_version
-#define OCLPF_VENDOR(pfp)		(PF_OPD(pfp))->opd_vendor
-#define OCLPF_EXTENSIONS(pfp)		(PF_OPD(pfp))->opd_extensions
+#define OPD_ID(opd_p)			(opd_p)->opd_pf_id
+#define OPD_PROFILE(opd_p)		(opd_p)->opd_profile
+#define OPD_VERSION(opd_p)		(opd_p)->opd_version
+#define OPD_VENDOR(opd_p)		(opd_p)->opd_vendor
+#define OPD_EXTENSIONS(opd_p)		(opd_p)->opd_extensions
 
-#define SET_OCLPF_PROFILE(pfp,v)	(PF_OPD(pfp))->opd_profile = v
-#define SET_OCLPF_VERSION(pfp,v)	(PF_OPD(pfp))->opd_version = v
-#define SET_OCLPF_VENDOR(pfp,v)		(PF_OPD(pfp))->opd_vendor = v
-#define SET_OCLPF_EXTENSIONS(pfp,v)	(PF_OPD(pfp))->opd_extensions = v
+#define SET_OPD_ID(opd_p,v)		(opd_p)->opd_pf_id = v
+#define SET_OPD_PROFILE(opd_p,v)	(opd_p)->opd_profile = v
+#define SET_OPD_VERSION(opd_p,v)	(opd_p)->opd_version = v
+#define SET_OPD_VENDOR(opd_p,v)		(opd_p)->opd_vendor = v
+#define SET_OPD_EXTENSIONS(opd_p,v)	(opd_p)->opd_extensions = v
 
 struct ocl_dev_info {
 	// implementation-specific stuff here...
@@ -35,19 +37,20 @@ struct ocl_dev_info {
 	cl_context		odi_ctx;
 	cl_command_queue	odi_queue; //"stream" in CUDA
 	int			odi_idx;
+	const char *		odi_extensions;
 } ;
 
-#define PFDEV_ODI(pdp)		(pdp)->pd_dev_info.u_odi_p
+#define ODI_DEV_ID(odi_p)	(odi_p)->odi_dev_id
+#define ODI_CTX(odi_p)		(odi_p)->odi_ctx
+#define ODI_QUEUE(odi_p)	(odi_p)->odi_queue
+#define ODI_IDX(odi_p)		(odi_p)->odi_idx
+#define ODI_EXTENSIONS(odi_p)	(odi_p)->odi_extensions
 
-#define OCLDEV_DEV_ID(pdp)		(PFDEV_ODI(pdp))->odi_dev_id
-#define OCLDEV_CTX(pdp)			(PFDEV_ODI(pdp))->odi_ctx
-#define OCLDEV_QUEUE(pdp)		(PFDEV_ODI(pdp))->odi_queue
-#define OCLDEV_IDX(pdp)			(PFDEV_ODI(pdp))->odi_idx
-
-#define SET_OCLDEV_DEV_ID(pdp,v)	(PFDEV_ODI(pdp))->odi_dev_id = v
-#define SET_OCLDEV_CTX(pdp,v)		(PFDEV_ODI(pdp))->odi_ctx = v
-#define SET_OCLDEV_QUEUE(pdp,v)		(PFDEV_ODI(pdp))->odi_queue = v
-#define SET_OCLDEV_IDX(pdp,v)		(PFDEV_ODI(pdp))->odi_idx = v
+#define SET_ODI_DEV_ID(odi_p,v)		(odi_p)->odi_dev_id = v
+#define SET_ODI_CTX(odi_p,v)		(odi_p)->odi_ctx = v
+#define SET_ODI_QUEUE(odi_p,v)		(odi_p)->odi_queue = v
+#define SET_ODI_IDX(odi_p,v)		(odi_p)->odi_idx = v
+#define SET_ODI_EXTENSIONS(odi_p,v)	(odi_p)->odi_extensions = v
 
 struct ocl_stream_info {
 	int foobar;

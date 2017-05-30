@@ -594,10 +594,12 @@ compute fft scroll $1 $2 $3 $4 quit quit
 
 Define RInvFFT 2 image xform
 compute fft irfft $1 $2 quit quit
+VSMul $1 $1 1/(ncols('$1')*nrows('$1'))
 .
 
 Define InvFFT 1 image
 compute fft invfft $1 quit quit
+VSMul $1 $1 1/(ncols('$1')*nrows('$1'))
 .
 
 Define Wrap 2 target source
@@ -717,7 +719,7 @@ Define Find 3 coord_vector input_img threshold
 compute unary find $1 $2 $3 quit quit
 .
 
-Define Get_Pixel_Coords 3 pix_coords Npix binary 
+Define Get_Pixel_Coords 3 pix_coords Npix binary
 Get_Sum $2 $3
 If '$$2 != 0'
 Then	'Image $1 $$2 2 1 float	\

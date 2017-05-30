@@ -200,11 +200,13 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 
 	colormap = (Colormap) NULL;	// quiet compiler
 	dop = curr_dop();
-//#ifdef CAUTIOUS
-//	if( dop == NO_DISP_OBJ )
-//		NERROR1("CAUTIOUS:  CreateWindow, no current display!?");
-//#endif /* CAUTIOUS */
-	assert( dop != NO_DISP_OBJ );
+
+	// dop can be null if user does not own display!?
+	//assert( dop != NO_DISP_OBJ );
+	if( dop == NO_DISP_OBJ ){
+		NWARN("CreateWindow:  no current display!?");
+		return (Window) 0;
+	}
 
 	/* note that only x,y are gotten from geom spec.  w,h are fixed */
 	x = y = 50;	// has to default to something!?
@@ -518,7 +520,13 @@ void set_viewer_display(Viewer *vp)
 //	if( dop == NO_DISP_OBJ )
 //		NERROR1("CAUTIOUS:  set_viewer_display:  no current display object");
 //#endif /* CAUTIOUS */
-	assert( dop != NO_DISP_OBJ );
+	//assert( dop != NO_DISP_OBJ );
+
+	// dop can be null if user doesn't own the X display!
+	if( dop == NO_DISP_OBJ ){
+		NWARN("CAUTIOUS:  set_viewer_display:  no current display object");
+		return;
+	}
 
 	vp->vw_dop = dop;
 }
@@ -2176,4 +2184,5 @@ void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
 	}
 #endif /* HAVE_VBL */
 }
+
 

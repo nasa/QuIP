@@ -21,7 +21,7 @@ static Item_Type * var__itp=NULL;
 
 extern void list_vars(SINGLE_QSP_ARG_DECL)
 {
-	list_items(QSP_ARG  var__itp);
+	list_items(QSP_ARG  var__itp, tell_msgfile(SINGLE_QSP_ARG));
 fprintf(stderr,"list_vars, item_type %s at 0x%lx\n",ITEM_TYPE_NAME(var__itp),(long)var__itp);
 }
 
@@ -67,7 +67,7 @@ Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var
 	Variable *vp;
 
 	vp = new_var_(QSP_ARG  var_name);
-	SET_VAR_VALUE(vp,savestr(var_val));
+	SET_VAR_VALUE(vp,save_possibly_empty_str(var_val));
 	SET_VAR_FLAGS(vp,VAR_RESERVED);
 	return vp;
 }
@@ -89,7 +89,7 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 
 	val_str=getenv(name);
 	if( val_str != NULL ) {
-		SET_VAR_VALUE(vp, savestr(val_str) );
+		SET_VAR_VALUE(vp, save_possibly_empty_str(val_str) );
 		SET_VAR_FLAGS(vp, VAR_RESERVED );
 		if( creat_flags != VAR_RESERVED ){
 			sprintf(ERROR_STRING,
@@ -130,7 +130,7 @@ Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
@@ -163,7 +163,7 @@ abort();
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
@@ -323,7 +323,7 @@ void find_vars(QSP_ARG_DECL  const char *s)
 
 	lp=find_items(QSP_ARG  var__itp,s);
 	if( lp==NULL ) return;
-	print_list_of_items(QSP_ARG  lp);
+	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 }
 
 #define N_EXTRA_CHARS	20
@@ -422,7 +422,7 @@ void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 		}
 	} while(*start);
 
-	assign_var(QSP_ARG  VAR_NAME(vp), SB_BUF(sbp) );
+	assign_var(QSP_ARG  VAR_NAME(vp), sb_buffer(sbp) );
 	rls_stringbuf(sbp);
 }
 

@@ -19,6 +19,9 @@
  *
  * enlargement_factor and reduction_factor were return variables
  * that were not used...  Maybe they can be eliminated altogether?
+ *
+ * This also seem like an inefficient strategy for the GPU...
+ * but at least it should work!?
  */
 
 static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
@@ -33,6 +36,7 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 	index_t offsets[N_DIMENSIONS]={0,0,0,0,0};
 	incr_t dst_incrs[N_DIMENSIONS], src_incrs[N_DIMENSIONS];
 	index_t dst_indices[N_DIMENSIONS]={0,0,0,0,0}, src_indices[N_DIMENSIONS]={0,0,0,0,0};
+	index_t dst_offset, src_offset;
 
 	/* For simplicity, we don't allow size changes to be combined with conversions */
 
@@ -98,8 +102,20 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 							dst_indices[0]=m;
 						else	src_indices[0]=m;
 						/* relocate the appropriate subsample */
-						SET_OBJ_DATA_PTR(dst_ss_dp, multiply_indexed_data(dst_dp,dst_indices) );
-						SET_OBJ_DATA_PTR(src_ss_dp, multiply_indexed_data(src_dp,src_indices) );
+
+						dst_offset = dst_indices[0]*OBJ_COMP_INC(dst_dp) +
+								dst_indices[1]*OBJ_PXL_INC(dst_dp) +
+								dst_indices[2]*OBJ_ROW_INC(dst_dp) +
+								dst_indices[3]*OBJ_FRM_INC(dst_dp) +
+								dst_indices[4]*OBJ_SEQ_INC(dst_dp) ;
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(dst_ss_dp)) ) (QSP_ARG  dst_ss_dp, dst_offset );
+
+						src_offset = src_indices[0]*OBJ_COMP_INC(src_dp) +
+								src_indices[1]*OBJ_PXL_INC(src_dp) +
+								src_indices[2]*OBJ_ROW_INC(src_dp) +
+								src_indices[3]*OBJ_FRM_INC(src_dp) +
+								src_indices[4]*OBJ_SEQ_INC(src_dp) ;
+	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(src_ss_dp)) ) (QSP_ARG  src_ss_dp, src_offset );
 
 						// This doesn't check for cuda obj...
 						//vmov(oap);

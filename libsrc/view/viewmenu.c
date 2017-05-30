@@ -180,7 +180,7 @@ static COMMAND_FUNC( do_shm_update )
 #endif /* HAVE_X11_EXT */
 
 static COMMAND_FUNC( do_list_viewers )
-{ list_vwrs(SINGLE_QSP_ARG); }
+{ list_vwrs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(viewers_menu,s,f,h)
 

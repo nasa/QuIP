@@ -13,7 +13,8 @@ define(`suppress_if',`divert(0)')
 
 suppress_if dnl suppresss output
 
-/* `suppress_if' = suppress_if */
+include(`../../include/veclib/cu2_port.m4')
+
 /* cu2_veclib.m4 BEGIN */
 
 define(`BUILD_FOR_GPU',`')

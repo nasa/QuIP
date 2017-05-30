@@ -22,7 +22,6 @@
 //#include "getbuf.h"
 //#include "savestr.h"
 //#include "substr.h"
-//#include "query.h"
 
 int history_flag=1;
 
@@ -180,7 +179,6 @@ static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
 	 * BUT - we expect to find it in the first one!?
 	 */
 	del_item(QSP_ARG  choice_itp,hcp);
-	rls_str((char *)hcp->hc_text);	/* BUG? saved w/ savestr??? */
 	pop_item_context(QSP_ARG  choice_itp);
 }
 
@@ -189,7 +187,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
-//fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
+fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */
@@ -338,14 +336,11 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	if( *prompt == 0 ) return("");	/* e.g. hand entry of macros */
 
-//fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
 	icp=find_hist(QSP_ARG  prompt);
 
-//	lp = dictionary_list(CTX_DICT(icp));
 	lp = container_list(CTX_CONTAINER(icp));
 
 	np=QLIST_HEAD(lp);
-//fprintf(stderr,"get_match:  list has %d elements\n",eltcount(lp));
 
 	while(np!=NO_NODE) {
 		Hist_Choice *hcp;
@@ -353,7 +348,6 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 		/* priority sorted!? */
 
 		hcp=(Hist_Choice *) NODE_DATA(np);
-//fprintf(stderr,"comparing %s to %s\n",so_far,hcp->hc_text);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			cur_list=lp;
@@ -404,6 +398,8 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	return(hcp->hc_text);
 }
 
+#ifdef NOT_USED_YET
+
 static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 {
 	Item *ip;
@@ -429,67 +425,9 @@ static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
 	return ip->item_name;
 }
+#endif // NOT_USED_YET
 
-static void reset_tree_match( Frag_Match_Info *fmi_p, int direction )
-{
-	if( direction == CYC_FORWARD )
-		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
-	else
-		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
-}
-
-
-static const char * advance_tree_match(Frag_Match_Info *fmi_p, int direction )
-{
-	Item *ip;
-
-	// there may be no items!?
-	assert( fmi_p != NULL );
-
-	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.last_n_p )
-			return NULL;
-		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_successor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
-		}
-	} else {
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.first_n_p )
-			return NULL;
-		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_predecessor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
-		}
-	}
-	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
-	return ip->item_name;
-}
-
-static const char *advance_item_list( Frag_Match_Info *fmi_p, int direction )
-{
-	Item *ip;
-
-	assert( fmi_p != NULL );
-
-	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.last_np )
-			return NULL;
-		else {
-			fmi_p->fmi_u.li.curr_np = NODE_NEXT(fmi_p->fmi_u.li.curr_np);
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
-		}
-	} else {
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.first_np )
-			return NULL;
-		else {
-			fmi_p->fmi_u.li.curr_np = NODE_PREV( fmi_p->fmi_u.li.curr_np );
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
-		}
-	}
-	ip = fmi_p->fmi_u.li.curr_np->n_data;
-	return ip->item_name;
-}
-
+#ifdef NOT_USED_YET
 
 static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 {
@@ -515,22 +453,21 @@ static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 	ip = fmi_p->fmi_u.li.curr_np->n_data;
 	return ip->item_name;
 }
-
-static void reset_item_list( Frag_Match_Info *fmi_p, int direction )
-{
-	if( direction == CYC_FORWARD )
-		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
-	else
-		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
-}
+#endif // NOT_USED_YET
 
 static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
 {
+	Container *cnt_p;
+
+	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
+	return (*(cnt_p->advance_func))(fmi_p,direction);
+}
+
+#ifdef FOOBAR
 	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
 
 	switch( fmi_p->type ){
 		case LIST_CONTAINER:
-			return advance_item_list(fmi_p,direction);
 			break;
 		case RB_TREE_CONTAINER:
 			return advance_tree_match(fmi_p,direction);
@@ -540,12 +477,17 @@ static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
 			break;
 	}
 	return NULL;
-}
+#endif // FOOBAR
 
 static const char * current_frag_match( Frag_Match_Info * fmi_p )
 {
 	Item *ip;
+	Container *cnt_p;
 
+	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
+	ip = (*(cnt_p->current_item_func))(fmi_p);
+
+#ifdef FOOBAR
 	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
 
 	switch( fmi_p->type ){
@@ -561,11 +503,18 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 			return NULL;	// quiet compiler
 			break;
 	}
+#endif // FOOBAR
 	return ip->item_name;
 }
 
 static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 {
+	Container *cnt_p;
+
+	cnt_p = FMI_CONTAINER(fmi_p);
+	(*(cnt_p->reset_frag_match_func))(fmi_p,direction);
+
+#ifdef FOOBAR
 	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
 
 	switch( fmi_p->type ){
@@ -579,6 +528,7 @@ static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 			NERROR1("reset_frag_match:  bad type!?");
 			break;
 	}
+#endif // FOOBAR
 }
 
 // We can have matches in different contexts on the context stack.  We keep a list that has matches

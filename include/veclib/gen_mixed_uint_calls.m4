@@ -1,7 +1,6 @@
 
-divert(0)
-include(`../../include/veclib/all_vec.m4')
-include(`../../include/veclib/intvec.m4')
-include(`../../include/veclib/unsigned_vec.m4')
-suppress_if
+suppress_no
+my_include(`veclib/all_vec.m4')
+my_include(`veclib/intvec.m4')
+my_include(`veclib/unsigned_vec.m4')
 

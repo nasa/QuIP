@@ -48,7 +48,7 @@ static COMMAND_FUNC( do_exec_chain )
 }
 
 static COMMAND_FUNC( do_list_chains )
-{ list_vec_chains(SINGLE_QSP_ARG); }
+{ list_vec_chains(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(chains_menu,s,f,h)
 

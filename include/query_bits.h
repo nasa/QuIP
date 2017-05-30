@@ -26,18 +26,12 @@ extern "C" {
 #endif /* HAVE_PTHREADS */
 
 #include "typedefs.h"
-#include "strbuf.h"
 
 /* This was 256,
  * things crapped out when I had an input line with 258 chars, there
  * is a bug which should be fixed, but for now it is expedient just
  * to spend a little memory.
  */
-
-#ifndef LLEN
-//#define LLEN	1024
-#define LLEN	512
-#endif /* ! LLEN */
 
 /* query struct flags values */
 #define Q_SOCKET		1
@@ -55,6 +49,7 @@ extern "C" {
 #define Q_SAVING		4096	// 0x1000
 #define Q_FILE_INPUT		8192	// 0x2000
 #define Q_MACRO_INPUT		0x4000
+#define Q_LOOKAHEAD_ADVANCED_LINE	0x8000
 
 #define Q_PRIMARY_INPUT		(Q_SOCKET|Q_INTERACTIVE|Q_MACRO_INPUT|Q_FILE_INPUT)
 #define Q_NON_INPUT_MASK	(~Q_PRIMARY_INPUT)
@@ -67,6 +62,8 @@ extern "C" {
 
 #define IS_DUPING			( QRY_DUPFILE(CURR_QRY(THIS_QSP)) != NULL )
 #define FIRST_WORD_ON_LINE		( QRY_FLAGS(CURR_QRY(THIS_QSP)) & Q_FIRST_WORD )
+
+#define LOOKAHEAD_ADVANCED_LINE(qp)	(QRY_FLAGS(qp) & Q_LOOKAHEAD_ADVANCED_LINE)
 
 /* size of memory chunks for loop buffer */
 #define LOOPSIZE	256
