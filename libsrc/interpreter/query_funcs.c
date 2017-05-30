@@ -560,7 +560,7 @@ advise(ERROR_STRING);
 				}
 			}
 			if( MACRO_TEXT(mp) != NULL ){	/* don't save if no work to do */
-				args[i] = savestr(s);
+				args[i] = save_possibly_empty_str(s);
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
 if( strlen(args[i]) < LLEN-80 ){
@@ -1630,12 +1630,11 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 		buf=qline(QSP_ARG  pline );
 	}
 
-	SYNC_LINENO
-
 	if( QLEVEL < 0 ){
 		return NULL;
 	}
 
+	SYNC_LINENO
 
 	qp=(CURR_QRY(THIS_QSP));	/* qline may pop the level!!! */
 	//eatup_space(SINGLE_QSP_ARG);
@@ -2545,6 +2544,8 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 static void init_parser_data(Query_Stack *qsp)
 {
 	ALLOC_QS_VECTOR_PARSER_DATA(qsp);
+	bzero(QS_VECTOR_PARSER_DATA(qsp),sizeof(*(QS_VECTOR_PARSER_DATA(qsp))));
+
 	// Now allocate the strings
 	SET_QS_YY_INPUT_LINE(qsp,getbuf(LLEN));
 	SET_QS_YY_LAST_LINE(qsp,getbuf(LLEN));
@@ -3530,6 +3531,16 @@ void push_top_menu(SINGLE_QSP_ARG_DECL)
 	PUSH_MENU_PTR( BOTTOM_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
 }
 
+
+const char *save_possibly_empty_str(const char *s)
+{
+	char *new_s;
+	
+	assert(s!=NULL);
+	new_s = getbuf(strlen(s)+1);
+	strcpy(new_s,s);
+	return(new_s);
+}
 
 const char *savestr(const char *s)
 {

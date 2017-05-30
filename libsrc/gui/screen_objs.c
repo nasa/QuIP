@@ -1502,7 +1502,7 @@ int get_strings(QSP_ARG_DECL Screen_Obj *sop,const char ***sss)
 	n=(int)HOW_MANY("number of items");
 	if( n < 0 ){
 		SET_SOB_N_SELECTORS(sop,0);
-		sprintf(ERROR_STRING,"get_strings:  number of selectors must be positive!?");
+		sprintf(ERROR_STRING,"get_strings:  number of selectors must be non-negative!?");
 		WARN(ERROR_STRING);
 		return -1;
 	}
@@ -1689,15 +1689,19 @@ static void get_picker_strings(QSP_ARG_DECL  Screen_Obj *sop, int n_cyl )
 		const char **selectors;
 		n=GET_STRINGS(sop,&string_arr);
 		if( n < 0 ) return;	// BUG clean up!
-		SET_SOB_N_SELECTORS_AT_IDX(sop, i, n);
-		selectors = (const char **)getbuf( n * sizeof(char **) );
-		SET_SOB_SELECTORS_AT_IDX(sop, i, selectors );
+		else if( n > 0 ){
+			SET_SOB_N_SELECTORS_AT_IDX(sop, i, n);
+			selectors = (const char **)getbuf( n * sizeof(char **) );
+			SET_SOB_SELECTORS_AT_IDX(sop, i, selectors );
 
-		for(j=0;j<n;j++){
-			SET_SOB_SELECTOR_AT_IDX(sop,i,j,string_arr[j]);
+			for(j=0;j<n;j++){
+				SET_SOB_SELECTOR_AT_IDX(sop,i,j,string_arr[j]);
+			}
+			givbuf(string_arr);
+			if( n > n_max ) n_max = n;
+		} else {
+			assert(string_arr == NULL);
 		}
-		givbuf(string_arr);
-		if( n > n_max ) n_max = n;
 	}
 }
 

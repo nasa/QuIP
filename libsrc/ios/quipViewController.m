@@ -40,6 +40,7 @@
 #endif // BUILD_FOR_IOS
 
 
+#ifdef OLD
 /********** UIAlertView delegate methods ************/
 
 - (void)alertView:(QUIP_ALERT_OBJ_TYPE *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
@@ -53,6 +54,8 @@
 }
 
 /********** end UIAlertView delegate methods ************/
+#endif // OLD
+
 #ifdef BUILD_FOR_IOS
 - (void)didReceiveMemoryWarning
 {

@@ -67,7 +67,7 @@ Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var
 	Variable *vp;
 
 	vp = new_var_(QSP_ARG  var_name);
-	SET_VAR_VALUE(vp,savestr(var_val));
+	SET_VAR_VALUE(vp,save_possibly_empty_str(var_val));
 	SET_VAR_FLAGS(vp,VAR_RESERVED);
 	return vp;
 }
@@ -89,7 +89,7 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 
 	val_str=getenv(name);
 	if( val_str != NULL ) {
-		SET_VAR_VALUE(vp, savestr(val_str) );
+		SET_VAR_VALUE(vp, save_possibly_empty_str(val_str) );
 		SET_VAR_FLAGS(vp, VAR_RESERVED );
 		if( creat_flags != VAR_RESERVED ){
 			sprintf(ERROR_STRING,
@@ -130,7 +130,7 @@ Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
@@ -163,7 +163,7 @@ abort();
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 

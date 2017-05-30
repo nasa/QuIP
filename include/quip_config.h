@@ -20,7 +20,11 @@
 
 #define QUIP_IMAGE_VIEW_TYPE		UIImageView
 #define QUIP_IMAGE_TYPE			UIImage
+#ifdef OLD
 #define QUIP_ALERT_OBJ_TYPE		UIAlertView
+#else // ! OLD
+#define QUIP_ALERT_OBJ_TYPE		UIAlertController
+#endif // ! OLD
 #define QUIP_COLOR_TYPE			UIColor
 #include "ios_config.h"
 

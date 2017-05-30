@@ -282,6 +282,7 @@ extern void q_error1(QSP_ARG_DECL  const char *);
 __attribute__ ((__noreturn__)) extern void q_error1(QSP_ARG_DECL  const char *);
 #endif // ! BUILD_FOR_IOS
 extern const char *savestr(const char *);
+extern const char *save_possibly_empty_str(const char *);
 extern void rls_str(const char *);
 extern COMMAND_FUNC( tog_pmpt );
 extern void qdump( SINGLE_QSP_ARG_DECL );
