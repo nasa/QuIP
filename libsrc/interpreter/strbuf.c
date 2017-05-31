@@ -102,7 +102,7 @@ inline char * sb_buffer(String_Buf *sbp)
 	return sbp->sb_buf;
 }
 
-inline int sb_size(String_Buf *sbp)
+inline size_t sb_size(String_Buf *sbp)
 {
 	return SB_SIZE(sbp);
 }

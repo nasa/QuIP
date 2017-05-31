@@ -703,7 +703,7 @@ static void escape_newline(QSP_ARG_DECL  const char **input_pp, char **result_bu
 	/* read the next line */
 	int nhave;
 	const char *input_ptr;
-	int n_need;
+	unsigned long n_need;
 	char *result_buf;
 
 	qp = CURR_QRY(THIS_QSP);
@@ -1965,7 +1965,7 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 	assert(sbp!=NULL);
 	if( SB_SIZE(sbp) < LLEN )
 		enlarge_buffer(sbp,LLEN);
-	if( (*(QRY_READFUNC(qp)))(QSP_ARG  (void *)sb_buffer(sbp),sb_size(sbp),(void *)QRY_FILE_PTR(qp)) == NULL ){
+	if( (*(QRY_READFUNC(qp)))(QSP_ARG  (void *)sb_buffer(sbp),(int)sb_size(sbp),(void *)QRY_FILE_PTR(qp)) == NULL ){
 		/* this means EOF if reading with fgets()
 		 * or end of a macro...
 		 */

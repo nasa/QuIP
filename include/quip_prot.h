@@ -511,7 +511,7 @@ extern void copy_string_n(String_Buf *sbp,const char *str,int n);
 extern void cat_string_n(String_Buf *sbp,const char *str, int n);
 extern char *sb_buffer(String_Buf *sbp);
 extern void rls_sb_buffer(String_Buf *sbp);
-extern int sb_size(String_Buf *sbp);
+extern size_t sb_size(String_Buf *sbp);
 //#define SB_BUF(sbp)	sb_buffer(sbp)
 
 extern String_Buf *new_stringbuf(void);

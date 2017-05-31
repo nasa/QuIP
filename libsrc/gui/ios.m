@@ -63,19 +63,15 @@ static void show_alert( QSP_ARG_DECL   QUIP_ALERT_OBJ_TYPE *alert_p )
 	[alert_p show];
 #else // ! OLD
 
-fprintf(stderr,"show_alert will show 0x%lx\n",(long)alert_p);
 	[ root_view_controller presentViewController:alert_p animated:YES completion:^(void){
 		dispatch_after(0, dispatch_get_main_queue(), ^{
-fprintf(stderr,"show_alert:  presentViewController completion block called\n");
 			if( alert_p == busy_alert_p ){
-fprintf(stderr,"show_alert calling resume_quip after displaying busy alert\n");
 				resume_quip(DEFAULT_QSP_ARG);
 			}
 		    });
 	}
 	];
 
-fprintf(stderr,"show_alert back from presentViewController\n");
 #endif // ! OLD
 
 	// The alert won't be shown until we relinquish control
@@ -96,7 +92,6 @@ static void resume_busy(void)
 	suspended_busy_p=NULL;
 	// Isn't this alert already remembered?
 	remember_busy_alert(busy_alert_p);
-fprintf(stderr,"resume_busy calling show_alert 0x%lx\n",(long)busy_alert_p);
 	show_alert(QSP_ARG  busy_alert_p);
 }
 
@@ -1450,11 +1445,9 @@ static void clear_deferred_alert(void)
 
 static void suspend__busy(void)
 {
-fprintf(stderr,"suspend__busy BEGIN\n");
 	// we need to display an alert while we are busy...
 	suspended_busy_p = busy_alert_p;
 	end_busy(0);	// takes the alert down
-fprintf(stderr,"suspend__busy DONE\n");
 }
 
 static void defer_alert(const char *type, const char *msg)
@@ -1474,13 +1467,10 @@ static void defer_alert(const char *type, const char *msg)
 
 static void busy_dismissal_checks(QUIP_ALERT_OBJ_TYPE *a)
 {
-fprintf(stderr,"busy_dismissal_checks 0x%lx BEGIN\n",(long)a);
 	if( a == final_ending_busy_p ){	// dismissed busy alert
 		// nothing more to do.
 		final_ending_busy_p=NULL;
-fprintf(stderr,"busy_dismissal_checks: alert is final_ending_busy_p, clearing\n");
 	}
-fprintf(stderr,"busy_dismissal_check calling resume_quip at end of busy period\n");
 	resume_quip(SGL_DEFAULT_QSP_ARG);
 }
 
@@ -1489,18 +1479,12 @@ fprintf(stderr,"busy_dismissal_check calling resume_quip at end of busy period\n
 static void alert_dismissal_busy_checks(Alert_Info *aip)
 {
 	assert(aip.the_alert_p != final_ending_busy_p);
-
-fprintf(stderr,"alert_dismissal_busy_check:  busy_alert_p = 0x%lx, suspended_busy_p = 0x%lx\n",
-(long)busy_alert_p,(long)suspended_busy_p);
-
 	assert( busy_alert_p == NULL );
 
 	if( suspended_busy_p != NULL ){
 		assert( aip.the_alert_p != suspended_busy_p );
-fprintf(stderr,"alert_dismissal_busy_check calling resume_busy\n");
 		resume_busy();
 	} else {
-fprintf(stderr,"alert_dismissal_busy_check calling resume_quip\n");
 		resume_quip(DEFAULT_QSP_ARG);
 	}
 } // alert_dismissal_busy_check
@@ -1516,11 +1500,8 @@ static void quip_alert_dismissal_actions(QUIP_ALERT_OBJ_TYPE *alertView, NSInteg
 	aip = [Alert_Info alertInfoFor:alertView];
 
 	if( IS_VALID_ALERT(aip) ){
-fprintf(stderr,"quip_alert_dismissal_actions: forgetting alert at 0x%lx\n",
-(long)alertView);
 		[aip forget];	// removes from list
 
-fprintf(stderr,"quip_alert_dismissal_actions calling alert_dismissal_busy_checks\n");
 		alert_dismissal_busy_checks(aip);
 	}
 #ifdef CAUTIOUS
@@ -1561,7 +1542,6 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_no_buttons(const char *type, const
 				message: STRINGOBJ(msg)
 				preferredStyle:UIAlertControllerStyleAlert];
 
-fprintf(stderr,"busy alert created at 0x%lx\n",(long)alert);
 #endif // !OLD
 
 	return alert;
@@ -1592,7 +1572,6 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_one_button(const char *type, const
 		{
 			// is the handler called before or after the alert
 			// is dismissed???
-fprintf(stderr,"UIAlertAction handler calling quip_alert_dismissal_actions 0x%lx after OK\n",(long)alert);
 				quip_alert_dismissal_actions(alert,0);
 			}];
 
@@ -1626,7 +1605,6 @@ static QUIP_ALERT_OBJ_TYPE *create_alert_with_two_buttons(const char *type, cons
 		style:UIAlertActionStyleDefault
 		handler:^(UIAlertAction * action) {
 			[alert dismissViewControllerAnimated:YES completion:nil];
-fprintf(stderr,"UIAlertAction handler calling confirmation_alert_dismissal_actions 0x%lx after Proceed\n",(long)alert);
 				confirmation_alert_dismissal_actions(alert,1);
 		}
 		];
@@ -1634,7 +1612,6 @@ fprintf(stderr,"UIAlertAction handler calling confirmation_alert_dismissal_actio
 		actionWithTitle:@"Cancel"
 		style:UIAlertActionStyleDefault
 		handler:^(UIAlertAction * action) {
-fprintf(stderr,"UIAlertAction handler calling confirmation_alert_dismissal_actions 0x%lx after Proceed\n",(long)alert);
 				confirmation_alert_dismissal_actions(alert,0);
 		}
 		];
@@ -1668,14 +1645,11 @@ static void present_generic_alert(QSP_ARG_DECL  const char *type, const char *ms
 	remember_normal_alert(alert);
 	fatal_alert_view= is_fatal ? alert : NULL;
 	show_alert(QSP_ARG  alert);
-fprintf(stderr,"generic_alert DONE\n");
 } // generic_alert
 
 static void generic_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
-fprintf(stderr,"generic alert \"%s\", BEGIN\n",msg);
 	if( busy_alert_p != NULL ) {
-fprintf(stderr,"generic alert \"%s\", need to suspend busy...\n",msg);
 		suspend__busy();
 		// relinquish control and come back later
 		defer_alert(type,msg);
@@ -1706,7 +1680,6 @@ void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 	alert = create_alert_with_two_buttons(title,question);
 	remember_confirmation_alert(alert);
 	show_alert(QSP_ARG  alert);
-fprintf(stderr,"get_confirmation DONE\n");
 } // get_confirmation
 
 /* Like an alert, but we don't stop execution - but wait, we have to,
@@ -1717,11 +1690,9 @@ void notify_busy(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	UIViewController *vc;
 
-fprintf(stderr,"notify_busy \"%s %s\" BEGIN\n",type,msg);
 	if( busy_alert_p != NULL ){
 		// we have to dismiss the busy indicator
 		// to print a warning pop-up!?
-fprintf(stderr,"OOPS - notify_busy called twice!?\n");
 		return;
 	}
 
@@ -1738,15 +1709,12 @@ fprintf(stderr,"OOPS - notify_busy called twice!?\n");
 	remember_busy_alert(alert);
 	show_alert(QSP_ARG  alert);
 	busy_alert_p=alert;	// remember for later
-fprintf(stderr,"notify_busy DONE\n");
 } // notify_busy
 
 int check_deferred_alert(SINGLE_QSP_ARG_DECL)
 {
 	if( deferred_alert.type == NULL ) return 0;
 
-fprintf(stderr,"check_deferred_alert calling generic_alert \"%s %s\"\n",
-deferred_alert.type,deferred_alert.msg);
 	generic_alert(QSP_ARG  deferred_alert.type,deferred_alert.msg);
 
 	// We release these strings, but are we sure that the system is
@@ -1758,14 +1726,12 @@ deferred_alert.type,deferred_alert.msg);
 static void dismiss_busy_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 #ifdef OLD
-fprintf(stderr,"end_busy will call dismissWithClickedButtonIndex\n");
 
 	[a dismissWithClickedButtonIndex:0 animated:YES];
 #else // ! OLD
 	[root_view_controller dismissViewControllerAnimated:YES completion:^(void)
 		{
 			dispatch_after(0, dispatch_get_main_queue(), ^{
-fprintf(stderr,"end_busy completion block running\n");
 				if( ! check_deferred_alert() ){
 					busy_dismissal_checks(a);
 				}
@@ -1785,7 +1751,6 @@ void end_busy(int final)
 {
 	QUIP_ALERT_OBJ_TYPE *a;
 
-fprintf(stderr,"end_busy BEGIN (final = %d)\n",final);
 	if( busy_alert_p == NULL ){
 		NWARN("end_busy:  no busy indicator!?");
 		return;
@@ -1809,7 +1774,6 @@ fprintf(stderr,"end_busy BEGIN (final = %d)\n",final);
 	}
 
 	dismiss_busy_alert(a);
-fprintf(stderr,"end_busy DONE\n");
 } // end_busy
 
 void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
@@ -1836,7 +1800,6 @@ void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *alertView)
 	aip = [Alert_Info alertInfoFor:alertView];
 	if( aip.type == QUIP_ALERT_BUSY ){
 		// we used to pass aip.qlevel here, is that needed??
-fprintf(stderr,"quip_alert_shown calling resume_quip\n");
 		resume_quip(DEFAULT_QSP_ARG);
 	}
 }
