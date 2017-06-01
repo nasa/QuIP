@@ -74,6 +74,9 @@
 #ifdef BUILD_FOR_IOS
 -(void) addDefaultBG
 {
+fprintf(stderr,"addDefaultBG calling make_bg_image, w = %f, h = %f\n",
+_size.width,_size.height);
+
 	bgImageView = make_bg_image(_size);
 	[self addSubview: bgImageView];
 }

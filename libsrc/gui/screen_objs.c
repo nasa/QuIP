@@ -1385,8 +1385,7 @@ COMMAND_FUNC( do_set_active )
 void del_so(QSP_ARG_DECL  Screen_Obj *sop)
 {
 	del_scrnobj(QSP_ARG  sop);	// delete from database...
-	/* BUG? are there nameless objects? */
-	if( SOB_NAME(sop) != NULL ) rls_str(SOB_NAME(sop));
+
 	if( SOB_ACTION(sop) != NULL ) rls_str(SOB_ACTION(sop));
 	if( SOB_SELECTOR(sop) != NULL ) rls_str(SOB_SELECTOR(sop));
 }

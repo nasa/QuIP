@@ -483,7 +483,7 @@ ITEM_DEL_PROT(Data_Obj,dobj)
 
 /* remove from the dictionary... */
 #define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
-#define ADD_OBJ_ITEM(dp)		/* add to the dictionary...  BUG LOOKS LIKE A NO-OP??? */
+#define ADD_OBJ_ITEM(dp)		add_item(QSP_ARG  dobj_itp, dp)
 
 // areas.c
 

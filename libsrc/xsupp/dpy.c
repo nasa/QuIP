@@ -74,7 +74,6 @@ static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 		NWARN(ERROR_STRING);
 		/* remove the object */
 		del_disp_obj(QSP_ARG  dop);
-		rls_str((char *)DO_NAME(dop));
 		return(-1);
 	}
 	return(0);
@@ -435,7 +434,6 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 		/* Bug - XCloseDisplay?? */
 		/* need to destroy object here */
 		del_disp_obj(QSP_ARG  dop);
-		rls_str((char *)DO_NAME(dop));
 		return(NO_DISP_OBJ);
 	}
 	set_display(dop);

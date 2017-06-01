@@ -224,8 +224,7 @@ void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 
 	if( VW_LABEL(vp) != VW_NAME(vp) )
 		rls_str((char *)VW_LABEL(vp));
-	del_vwr(QSP_ARG  vp);
-	rls_str((char *)VW_NAME(vp));
+	del_vwr(QSP_ARG  vp);	// releases the name
 	select_viewer(QSP_ARG  NO_VIEWER);
 }
 
@@ -385,7 +384,6 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 		rls_vw_lists(vp);
 #endif /* BUILD_FOR_OBJC */
 		del_vwr(QSP_ARG  vp);
-		rls_str((char *)VW_NAME(vp));
 		return(NO_VIEWER);
 	}
 

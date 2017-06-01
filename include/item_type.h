@@ -483,6 +483,7 @@ void del_##stem(QSP_ARG_DECL  type *ip)				\
 
 extern ITEM_INIT_PROT(Item_Type,ittyp)
 extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip );
+extern int remove_from_item_free_list(QSP_ARG_DECL  Item_Type *itp, void *ip);
 //extern Item *check_context(Item_Context *icp, const char *name);
 extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 extern List *alpha_sort(QSP_ARG_DECL  List *lp);

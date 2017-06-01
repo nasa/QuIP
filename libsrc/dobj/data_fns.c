@@ -85,15 +85,13 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 		return(-1);
 	}
 	/* BUG?  where is the object's node? */
-	//del_item(QSP_ARG  dobj_itp,dp);
-	DELETE_OBJ_ITEM(dp);
 
-	rls_str((char *)OBJ_NAME(dp));	/* release old name (obj_rename) */
+	DELETE_OBJ_ITEM(dp);	// remove from database, add to free list
 	SET_OBJ_NAME(dp,savestr(newname));
 
 	/* now add this to the database */
 	/* We might have a memory leak, with the item node? */
-	//add_item(QSP_ARG  dobj_itp,dp,NO_NODE);
+	assert( remove_from_item_free_list(QSP_ARG  dobj_itp, dp) == 0 );
 	ADD_OBJ_ITEM(dp);
 
 	return(0);

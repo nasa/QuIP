@@ -129,10 +129,6 @@ static Data_Obj * temp_replica(QSP_ARG_DECL  Data_Obj *dp)
 static int release_tmpobj_resources(Data_Obj *dp, Data_Obj *parent_dp)
 {
 	/* a used data_obj should have its name set */
-//#ifdef CAUTIOUS
-//	if( OBJ_NAME(dp) == NULL )
-//		NERROR1("CAUTIOUS:  release_tmpobj_resources:  obj has null name!?");
-//#endif /* CAUTIOUS */
 	assert( OBJ_NAME(dp) != NULL );
 
 	if( OBJ_CHILDREN(dp) != NO_LIST ){
@@ -180,27 +176,36 @@ static void add_tmpobjs(List *lp, int n)
 	}
 }
 
-Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
+static void insure_tmpobj_free_list(void)
 {
-	Data_Obj *new_dp;
-	Node *np,*first_np;
-
 	if( free_tmpobj_lp == NO_LIST ){
 		free_tmpobj_lp = new_list();
 		add_tmpobjs(free_tmpobj_lp,N_TMP_DP);
 	}
+}
 
-	if( eltcount(free_tmpobj_lp) > 0 ){
-		np = remHead(free_tmpobj_lp);
+static Data_Obj *check_tmpobj_free_list(void)
+{
+	Node *np;
 
-		if( used_tmpobj_lp == NO_LIST )
-			used_tmpobj_lp = new_list();
-		addHead(used_tmpobj_lp,np);
+	insure_tmpobj_free_list();
 
-		return((Data_Obj *)NODE_DATA(np));
-	}
+	if( eltcount(free_tmpobj_lp) == 0 ) return NULL;
 
-	/* They are all in use, we have to release a free one... */
+	np = remHead(free_tmpobj_lp);
+
+	if( used_tmpobj_lp == NO_LIST )
+		used_tmpobj_lp = new_list();
+	addHead(used_tmpobj_lp,np);
+
+	return((Data_Obj *)NODE_DATA(np));
+}
+
+static Data_Obj *recycle_used_tmpobj(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Node *np,*first_np;
+	Data_Obj *new_dp;
+
 	np = remTail(used_tmpobj_lp);
 	first_np = np;
 	new_dp = (Data_Obj *)NODE_DATA(np);
@@ -217,6 +222,17 @@ Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
 	/* put this one at the head of the used list... */
 	addHead(used_tmpobj_lp,np);
 	return(new_dp);
+}
+
+Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Obj *new_dp;
+
+	new_dp = check_tmpobj_free_list();
+	if( new_dp != NULL ) return new_dp;
+
+	/* They are all in use, we have to release a used one... */
+	return recycle_used_tmpobj(QSP_ARG  dp);
 }
 
 
@@ -605,13 +621,6 @@ void release_tmp_obj(Data_Obj *dp)
 	Node *np;
 
 	np = remData(used_tmpobj_lp,dp);
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  delete_tmp_obj:  %s not found",OBJ_NAME(dp));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//		return; // NOTREACHED - silence analyzer
-//	}
-//#endif /* CAUTIOUS */
 	assert( np != NO_NODE );
 
 	release_tmpobj_resources(dp,NO_OBJ);

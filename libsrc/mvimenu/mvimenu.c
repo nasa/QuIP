@@ -631,7 +631,6 @@ void delete_movie(QSP_ARG_DECL  Movie *mvip)
 	if( mvip == NO_MOVIE ) return;
 
 	del_mvi(QSP_ARG  mvip);	/* remove from item database */
-	rls_str((char *)MOVIE_NAME(mvip));
 }
 
 static COMMAND_FUNC( do_set_nrefresh )

@@ -1053,7 +1053,6 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	}
 
 	del_rv_inode(QSP_ARG  inp);	/* remove from database */
-	rls_str(RV_NAME(inp));
 } /* end rls_inode */
 
 /* This is a bit tricky, because rv files can be created in isolation,
@@ -1479,7 +1478,6 @@ errorB:
 	givspace(&rv_st_freelist,strlen(name)+1,RV_NAME_IDX(inp));
 errorA:
 	del_rv_inode(QSP_ARG  inp);		/* remove from database */
-	rls_str(RV_NAME(inp));
 	return(NO_INODE);
 } /* end rv_newfile */
 

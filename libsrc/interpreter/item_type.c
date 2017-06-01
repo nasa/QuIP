@@ -385,6 +385,78 @@ int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip )
 	return 0;
 }
 
+static int insure_item_name_available(QSP_ARG_DECL  Item_Type *itp, const char *name)
+{
+	Item *ip;
+
+	/* We will allow name conflicts if they are not in the same context */
+
+	/* Only check for conflicts in the current context */
+	//ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
+
+	// When we start a new thread, the current context may be null!?
+
+	ip = container_find_match(CTX_CONTAINER(CURRENT_CONTEXT(itp)), name );
+
+	if( ip != NO_ITEM ){
+		sprintf(ERROR_STRING,
+	"%s name \"%s\" is already in use in context %s",
+			IT_NAME(itp),name,CTX_NAME(CURRENT_CONTEXT(itp)));
+		WARN(ERROR_STRING);
+		return -1;
+	}
+	return 0;
+}
+
+static inline int get_n_per_page(size_t size)
+{
+	int n_per_page;
+
+#define FOUR_K	4096
+
+	n_per_page = FOUR_K / size;	/* BUG use PAGESIZE */
+
+	if( n_per_page <= 0 ){
+		/* cast size to u_long because size_t is u_long on IA64 and
+		 * u_int on IA32!?
+		 */
+		// If the item is bigger than a page, just get one
+		n_per_page=1;
+	}
+	return n_per_page;
+}
+
+static void alloc_more_items(Item_Type *itp, size_t size)
+{
+	int n_per_page;
+	char *nip;
+
+	n_per_page = get_n_per_page(size);	// make a field of itp?
+#ifdef QUIP_DEBUG
+if( debug & item_debug ){
+sprintf(DEFAULT_ERROR_STRING,"malloc'ing %d more %s items",n_per_page,IT_NAME(itp));
+NADVISE(DEFAULT_ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+	/* get a pages worth of items */
+	nip = (char*)  malloc( n_per_page * size );
+	total_from_malloc += n_per_page*size;
+
+	if( nip == NULL ){
+		sprintf(DEFAULT_ERROR_STRING,
+	"new_item:  out of memory while getting a new page of %s's",
+			IT_NAME(itp));
+		NERROR1(DEFAULT_ERROR_STRING);
+	}
+
+	while(n_per_page--){
+		Node *np;
+
+		np = mk_node(nip);
+		addTail(IT_FREE_LIST(itp),np);
+		nip += size;
+	}
+}
 /*
  * Return a ptr to a new item.  Reuse a previously freed item
  * if one exists, otherwise allocate some new memory.
@@ -408,71 +480,21 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 
 	LOCK_ITEM_TYPE(itp)
 
-	/* We will allow name conflicts if they are not in the same context */
-
-	/* Only check for conflicts in the current context */
-	//ip = fetch_name(name,CTX_DICT(CURRENT_CONTEXT(itp)));
-
-	// When we start a new thread, the current context may be null!?
-
-	ip = container_find_match(CTX_CONTAINER(CURRENT_CONTEXT(itp)),
-							name );
-
-	if( ip != NO_ITEM ){
+	if( insure_item_name_available(QSP_ARG  itp, name) < 0 ){
 		UNLOCK_ITEM_TYPE(itp);
-		sprintf(ERROR_STRING,
-	"%s name \"%s\" is already in use in context %s",
-			IT_NAME(itp),name,CTX_NAME(CURRENT_CONTEXT(itp)));
-		WARN(ERROR_STRING);
-		return(NO_ITEM);
+		return NO_ITEM;
 	}
 
 	// Try to get a structure from the free list
 	// If the free list is empty, then allocate a page's worth
 
-	if( QLIST_HEAD(IT_FREE_LIST(itp)) == NO_NODE ){
-		int n_per_page;
-		char *nip;
-
-#define FOUR_K	4096
-
-		n_per_page = FOUR_K / size;	/* BUG use PAGESIZE */
-
-		if( n_per_page <= 0 ){
-			/* cast size to u_long because size_t is u_long on IA64 and
-			 * u_int on IA32!?
-			 */
-			// If the item is bigger than a page, just get one
-			n_per_page=1;
-		}
-
-#ifdef QUIP_DEBUG
-if( debug & item_debug ){
-sprintf(ERROR_STRING,"malloc'ing %d more %s items",n_per_page,IT_NAME(itp));
-NADVISE(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-		/* get a pages worth of items */
-		nip = (char*)  malloc( n_per_page * size );
-		//nip = (char*)  getbuf( n_per_page * size );
-		total_from_malloc += n_per_page*size;
-
-		if( nip == NULL ){
-			sprintf(ERROR_STRING,
-		"new_item:  out of memory while getting a new page of %s's",
-				IT_NAME(itp));
-			NERROR1(ERROR_STRING);
-		}
-
-		while(n_per_page--){
-			np = mk_node(nip);
-			addTail(IT_FREE_LIST(itp),np);
-			nip += size;
-		}
-	}
+	if( QLIST_HEAD(IT_FREE_LIST(itp)) == NO_NODE )
+		alloc_more_items(itp,size);
 
 	np = remHead(IT_FREE_LIST(itp));
+	assert(np!=NULL);
 	ip = (Item *) NODE_DATA(np);
+	assert(ip!=NULL);
 	rls_node(np);
 
 	SET_ITEM_NAME( ip, savestr(name) );
@@ -490,6 +512,18 @@ NADVISE(ERROR_STRING);
 
 	return(ip);
 } // end new_item
+
+int remove_from_item_free_list(QSP_ARG_DECL  Item_Type *itp, void *ip)
+{
+	Node *np;
+
+	LOCK_ITEM_TYPE(itp)
+	np = remData(IT_FREE_LIST(itp),ip);
+	UNLOCK_ITEM_TYPE(itp)
+
+	if( np == NULL ) return -1;
+	return 0;
+}
 
 /* Create a new context with the given name.
  * It needs to be push'ed in order to make it be
@@ -742,13 +776,9 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 		}
 	}
 
-	//delete_dictionary(CTX_DICT(icp));
 	delete_container(CTX_CONTAINER(icp));
 
-	/* zap_hash_tbl(icp->ic_htp); */
-
-	del_ctx(QSP_ARG  icp);	// why shouldn't rls_item free the name?  CHECK BUG?
-	rls_str((char *)CTX_NAME(icp));
+	del_ctx(QSP_ARG  icp);
 
 	/* BUG? - perhaps we should make sure
 	 * the context is not also pushed deeper down,
@@ -1305,6 +1335,27 @@ void del_item(QSP_ARG_DECL  Item_Type *itp,void* ip)
 	UNLOCK_ITEM_TYPE(itp)
 }
 
+static int remove_item_from_context(QSP_ARG_DECL  Item_Context *icp, Item *ip)
+{
+	Item *tmp_ip;
+
+	tmp_ip = container_find_match( CTX_CONTAINER(icp), ITEM_NAME((Item *)ip) );
+	if( tmp_ip == ip ){	/* found it */
+		if( remove_name_from_container(QSP_ARG  CTX_CONTAINER(icp),
+					ITEM_NAME((Item *)ip) ) < 0 ){
+			sprintf(ERROR_STRING,
+	"zombie_item:  unable to remove item %s from context %s",
+				ITEM_NAME(ip),CTX_NAME(icp));
+			WARN(ERROR_STRING);
+		}
+		/* BUG make the context needy... */
+		/* does this do it? */
+		INC_CTX_ITEM_SERIAL(icp);
+		return 0;
+	}
+	return -1;
+}
+
 /* Remove an item from the item database, but do not return it to the
  * item free list.  This function was introduced to allow image objects
  * to be deleted after they have been displayed in viewers.  The
@@ -1325,9 +1376,6 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 {
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	check_item_type( itp );
-//#endif /* CAUTIOUS */
 	assert( itp != NULL );
 
 	/* Find the context that contains the item, then remove it.
@@ -1335,30 +1383,14 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
 	while(np!=NO_NODE){
-		Item *tmp_ip;
 		Item_Context *icp;
 
 		icp = (Item_Context*) NODE_DATA(np);
-		tmp_ip = container_find_match( CTX_CONTAINER(icp),
-					ITEM_NAME((Item *)ip) );
-		if( tmp_ip == ip ){	/* found it */
-			if(
-			/*remove_name(ip,CTX_DICT(icp) ) */
-				remove_name_from_container(QSP_ARG  CTX_CONTAINER(icp), ITEM_NAME((Item *)ip) )
-						< 0 ){
-				sprintf(ERROR_STRING,
-		"zombie_item:  unable to remove %s item %s from context %s",
-					IT_NAME(itp),ITEM_NAME(ip),CTX_NAME(icp));
-				WARN(ERROR_STRING);
-				return;
-			}
-			/* BUG make the context needy... */
-			/* does this do it? */
-			INC_CTX_ITEM_SERIAL(icp);
-			np=NO_NODE; /* or return? */
-		} else
-			np=NODE_NEXT(np);
+		if( remove_item_from_context(QSP_ARG  icp,ip) == 0 ) return;
+		np=NODE_NEXT(np);
 	}
+	// should never get here?
+	ERROR1("zombie_item:  unable to find item!?");
 	// Is this point ever reached?
 } // zombie_item
 

@@ -583,7 +583,6 @@ void del_class(QSP_ARG_DECL  Trial_Class *tcp)
 	if( CLASS_CMD(tcp) != NULL ) rls_str(CLASS_CMD(tcp));
 
 	del_trial_class(QSP_ARG  tcp);
-	rls_str( CLASS_NAME(tcp) );
 }
 
 Trial_Class *new_class(SINGLE_QSP_ARG_DECL)

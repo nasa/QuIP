@@ -47,7 +47,6 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 	rls_list(CHAIN_LIST(cp) );
 
 	del_vec_chain(QSP_ARG  CHAIN_NAME(cp) );
-	rls_str((char *)CHAIN_NAME(cp) );
 }
 #endif /* NOT_USED */
 

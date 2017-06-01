@@ -51,7 +51,6 @@ void rls_macro(QSP_ARG_DECL  Macro *mp)
 	// free the stored text (body)
 	rls_str(MACRO_TEXT(mp));
 
-	rls_str(MACRO_NAME(mp));
 	del_macro(QSP_ARG  mp);
 }
 
