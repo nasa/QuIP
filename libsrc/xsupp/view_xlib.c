@@ -535,11 +535,13 @@ static int make_generic_window(QSP_ARG_DECL  Viewer *vp, int width, int height, 
 {
 	Window scrW;
 	XGCValues values;
+	const char *label;
 
 	window_sys_init(SINGLE_QSP_ARG);
 
 	event_mask |= DEFAULT_EVENT_MASK;
-	scrW=creat_window(vp->vw_label,width,height,event_mask);
+	label = VW_LABEL(vp) == NULL ? VW_NAME(vp) : VW_LABEL(vp);
+	scrW=creat_window(label,width,height,event_mask);
 
 	vp->vw_xwin = scrW;
 	vp->vw_dop = curr_dop();
@@ -1271,21 +1273,21 @@ void relabel_viewer(Viewer *vp,const char *s)
 	XTextProperty xtp;
 #endif /* OLD_LABEL */
 
-	if( (vp->vw_label != NULL) && (vp->vw_label != vp->vw_name) ){
-		rls_str((char *)vp->vw_label);
+	if( VW_LABEL(vp) != NULL  ){
+		rls_str((char *)VW_LABEL(vp));
 	}
-	vp->vw_label = savestr(s);
+	SET_VW_LABEL(vp, savestr(s));
 
 #ifdef OLD_LABEL
 	XGetWMName(DO_DISPLAY(dop),vp->vw_xwin,&xtp);
 
-	xtp.value=(u_char *)vp->vw_label;
+	xtp.value=(u_char *)VW_LABEL(vp);
 	xtp.nitems=strlen(s);
 
 	XSetWMName(DO_DISPLAY(dop),vp->vw_xwin,&xtp);
 #endif /* OLD_LABEL */
 
-	XStoreName(VW_DPY(vp),vp->vw_xwin,vp->vw_label);
+	XStoreName(VW_DPY(vp),vp->vw_xwin,VW_LABEL(vp));
 }
 
 void set_font(Viewer *vp,XFont *xfp)

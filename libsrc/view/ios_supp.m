@@ -1060,12 +1060,12 @@ int make_mousescape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 
 void relabel_viewer(Viewer *vp,const char *s)
 {
-
+fprintf(stderr,"relabel_viewer not implemented for iOS\n");
 }
 
 void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 {
-
+fprintf(stderr,"redraw_viewer not implemented for iOS\n");
 }
 
 int event_loop(SINGLE_QSP_ARG_DECL)

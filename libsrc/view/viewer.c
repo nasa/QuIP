@@ -222,8 +222,9 @@ void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 
 #endif /* ! BUILD_FOR_OBJC */
 
-	if( VW_LABEL(vp) != VW_NAME(vp) )
+	if( VW_LABEL(vp) != NULL )
 		rls_str((char *)VW_LABEL(vp));
+
 	del_vwr(QSP_ARG  vp);	// releases the name
 	select_viewer(QSP_ARG  NO_VIEWER);
 }
@@ -301,7 +302,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 		siz_done=1;
 	}
 
-	SET_VW_LABEL(vp, VW_NAME(vp));		/* default label */
+	SET_VW_LABEL(vp, NULL);		/* use name if null */
 	SET_VW_TIME(vp, (time_t) 0 );
 
 	SET_VW_WIDTH(vp,dx);

@@ -809,6 +809,7 @@ ipad_pro_9_7:
 			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
+fprintf(stderr,"getDevTypeForSize: dev size is %g (w) x %g (h)\n",dev_size.width,dev_size.height);  
 }
 
 int is_portrait(void)
@@ -899,14 +900,16 @@ static const char *get_display_height(SINGLE_QSP_ARG_DECL)
 	int h;
 	static char hstr[16];
 
-#ifdef BUILD_FOR_IOS
-	if( is_portrait() )
-		h=(int)globalAppDelegate.dev_size.height;
-	else
-		h=(int)globalAppDelegate.dev_size.width;
-#else // ! BUILD_FOR_IOS
+//#ifdef BUILD_FOR_IOS
+//	if( is_portrait() )
+//		h=(int)globalAppDelegate.dev_size.height;
+//	else
+//		h=(int)globalAppDelegate.dev_size.width;
+//#else // ! BUILD_FOR_IOS
+//	h=(int)globalAppDelegate.dev_size.height;
+//#endif // ! BUILD_FOR_IOS
+
 	h=(int)globalAppDelegate.dev_size.height;
-#endif // ! BUILD_FOR_IOS
 
 	sprintf(hstr,"%d",h);
 	return hstr;
@@ -919,19 +922,20 @@ static const char *get_display_width(SINGLE_QSP_ARG_DECL)
 	int w;
 	static char wstr[16];
 
-/*
-fprintf(stderr,"get_display_width:  globalAppDelegate.dev_size = 0x%lx\n",(long)&(globalAppDelegate.dev_size));
-*/
-#ifdef BUILD_FOR_IOS
-	if( is_portrait() )
-		w=(int)globalAppDelegate.dev_size.width;
-	else
-		w=(int)globalAppDelegate.dev_size.height;
-#else // ! BUILD_FOR_IOS
-	w=(int)globalAppDelegate.dev_size.width;
-#endif // ! BUILD_FOR_IOS
+fprintf(stderr,"get_display_width:  globalAppDelegate.dev_size = %f (w) x %f (h)\n",
+globalAppDelegate.dev_size.width,globalAppDelegate.dev_size.height);
+//#ifdef BUILD_FOR_IOS
+//	if( is_portrait() )
+//		w=(int)globalAppDelegate.dev_size.width;
+//	else
+//		w=(int)globalAppDelegate.dev_size.height;
+//#else // ! BUILD_FOR_IOS
+//	w=(int)globalAppDelegate.dev_size.width;
+//#endif // ! BUILD_FOR_IOS
 
 //fprintf(stderr,"get_display_width:  w = %d, is_portrait = %d\n",w,is_portrait());
+
+	w=(int)globalAppDelegate.dev_size.width;
 
 	sprintf(wstr,"%d",w);
 	return wstr;
@@ -1061,6 +1065,7 @@ static void init_ios_device(void)
 
 	// This returns the same thing regardless of the device
 	// orientation.  The dimensions correspond to portrait mode.
+	// BUT WHY SHOULD THAT BE???
 	init_dynamic_var(DEFAULT_QSP_ARG  "DISPLAY_WIDTH",get_display_width);
 	init_dynamic_var(DEFAULT_QSP_ARG  "DISPLAY_HEIGHT",get_display_height);
 	init_dynamic_var(DEFAULT_QSP_ARG  "DEVICE_ASPECT",get_device_aspect);

@@ -209,7 +209,8 @@ Erase_Plot
 #advise "Init_New_Plotter:  '$1'"
 # This causes trouble if we allow spaces in the plotter name
 Get_Param_Vec_Name $1
-Vector $param_vec_name $n_plotter_params 1 float
+If !obj_exists('$param_vec_name')
+  "Vector $param_vec_name $n_plotter_params 1 float"
 data ascii
   input_fmt ' '
 	read $param_vec_name -
@@ -218,13 +219,10 @@ data ascii
 	0
 	nrows('$1')-1
 	0 0 0 0
-#	$black
-#	$white
 	$plot_foreground
 	$plot_background
 	$grid_color
 	$label_color
-#	$pen_color
 
 	quit quit
 .
