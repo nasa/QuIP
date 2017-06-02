@@ -157,7 +157,7 @@ if( debug ) advise("saving sequence history");
 	hd->seq_history = s;
 
 	/* get sequence description */
-	s2=savestr("");
+	s2=save_possibly_empty_str("");
 	while(1) {
 		if( (s=gtline(fd)) == NULL ) return( fh_err(hd,"no seq desc") );
 		if( (!strcmp(s,".\n")) || (!strcmp(s,".\r")) ){

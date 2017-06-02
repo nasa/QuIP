@@ -465,9 +465,10 @@ Define Plot_Space 4 xmin ymin xmax ymax
 Tell_If "Plot_Space ($the_plotter) $1 $2 $3 $4"
 If !$margins_set "advise 'Plot_Space:  no margins set, using 0' Zero_Margins"
 If !$minmax_set
-  Then "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
-  Else "advise 'Plot_Space NOT calling Set_Plot_Minmax...'"
-#advise "Plot_Space '$the_plotter' $1 $2 $3 $4"
+#  Then "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+#  Else "advise 'Plot_Space NOT calling Set_Plot_Minmax...'"
+  "Set_Plot_Minmax $1 $2 $3 $4"	# can't do this here if called from Plot_Data_Range
+
 view
   plot $the_plotter
     space $1 $2 $3 $4
@@ -646,7 +647,7 @@ Unit_Font
 # end Plot_Data_Range
 
 Define Set_Plot_Minmax 4 xmin ymin xmax ymax
-advise "Set_Plot_Minmax $1 $2 $3 $4"
+#advise "Set_Plot_Minmax $1 $2 $3 $4"
 Assign plot_xmin $1
 Assign plot_ymin $2
 Assign plot_xmax $3

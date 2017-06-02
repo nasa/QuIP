@@ -165,7 +165,6 @@ noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\
 							\
 			_vl2_utils.c			\
-			linear.c			\
 			vfft.c
 
 

@@ -23,7 +23,6 @@ void delport(QSP_ARG_DECL  Port *mpp)
 	}
 #endif /* CAUTIOUS */
 	del_item(QSP_ARG  port_itp,mpp);
-	rls_str((char *)mpp->mp_name);
 }
 
 void portinfo(QSP_ARG_DECL  Port *mpp)

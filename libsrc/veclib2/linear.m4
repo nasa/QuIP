@@ -61,15 +61,10 @@ static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(Data_Obj *dpto, Data_Obj *dpf
 
 /* there should be a better routine for long lists of short elts. */
 
-#ifdef FVDOT
+#ifdef HAVE_FVDOT
 //forwar declaration of typed rvdot
 static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS);
-
-static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS)
-{
-	NWARN("Sorry, rvdot not implemented yet!?");
-}
-#endif // FVDOT
+#endif // HAVE_FVDOT
 
 
 //static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
@@ -170,14 +165,11 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 				SET_OBJ_DATA_PTR(sub_dst_dp,multiply_indexed_data(dpto,dst_indices));
 				SET_OBJ_DATA_PTR(xf_row_dp,multiply_indexed_data(xform_dp,xf_indices));
 				//vdot(oap);
-#ifdef FVDOT
+#ifdef HAVE_FVDOT
 				HOST_TYPED_CALL_NAME(rvdot,type_code)(FVDOT,oap2);
-#else // ! FVDOT
-				NWARN("Sorry, FVDOT not defined!?");
-#endif // ! FVDOT
-				// BUG we'd like to call a typed functon here,
-				// but it hasn't been declared yet!?
-				//h_vl2_vdot(FVDOT,oap2);
+#else // ! HAVE_FVDOT
+				NWARN("rxform_list:  Sorry, FVDOT not defined!?");
+#endif // ! HAVE_FVDOT
 			} // comps of dpto
 		} // cols of dpto
 	} // rows of dpto

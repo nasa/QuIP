@@ -1836,7 +1836,7 @@ void delseq(QSP_ARG_DECL  Seq *sp)
 	if( sp->seq_refcnt <= 0 ){
 		if( sp->seq_name != NULL ){
 			del_mviseq(QSP_ARG  sp);
-			rls_str((char *)sp->seq_name);
+			// return to item free list
 		} else {
 			givbuf(sp);
 		}

@@ -51,9 +51,8 @@ void close_pipe(QSP_ARG_DECL  Pipe *pp)
 		sprintf(ERROR_STRING,"Error closing pipe \"%s\"!?",pp->p_name);
 		WARN(ERROR_STRING);
 	}
-	del_pipe(QSP_ARG  pp);
-	rls_str(pp->p_name);
 	rls_str(pp->p_cmd);
+	del_pipe(QSP_ARG  pp);
 }
 
 void sendto_pipe(QSP_ARG_DECL  Pipe *pp,const char* text)

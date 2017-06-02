@@ -47,7 +47,6 @@ void delete_opt_params(SINGLE_QSP_ARG_DECL)
 		opp = (Opt_Param *)(np->n_data);
 		next=np->n_next;
 		del_opt_param(QSP_ARG  opp);
-		rls_str(opp->op_name);
 		np=next;
 	}
 }

@@ -696,7 +696,6 @@ static void close_serial_device(SINGLE_QSP_ARG_DECL)
 		WARN(ERROR_STRING);
 	}
 	del_serial_port(QSP_ARG  default_spp);
-	rls_str(default_spp->sp_name);
 	default_spp = NO_SERIAL_PORT;
 }
 
