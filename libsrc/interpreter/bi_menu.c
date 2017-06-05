@@ -291,23 +291,6 @@ static COMMAND_FUNC( do_set_max_warnings )
 	SET_QS_MAX_WARNINGS(THIS_QSP,n);
 }
 
-#ifdef FOOBAR
-static char ma_pmpt[LLEN];
-
-static const char *macro_arg_prompt( int i )
-{
-	const char *suffix;
-
-	if( i == 1 ) suffix="st";
-	else if( i == 2 ) suffix="nd";
-	else if( i == 3 ) suffix="rd";
-	else suffix="th";
-
-	sprintf(ma_pmpt,"prompt for %d%s macro argument",i,suffix);
-	return ma_pmpt;
-}
-#endif /* FOOBAR */
-
 static COMMAND_FUNC( do_def_mac )
 {
 	const char *name;
@@ -477,23 +460,6 @@ static COMMAND_FUNC( do_set_var )
 // but what about 32bit (iOS)?
 
 static const char *def_gfmt_str="%.7g";
-
-#ifdef FOOBAR
-// Get this from <inttypes.h>
-#ifdef LONG_64_BIT
-static const char *def_xfmt_str="0x%lx";
-static const char *def_ofmt_str="0%lo";
-static const char *def_dfmt_str="%ld";
-#else // ! LONG_64_BIT
-#ifdef LONG_32_BIT
-static const char *def_xfmt_str="0x%llx";
-static const char *def_ofmt_str="0%llo";
-static const char *def_dfmt_str="%lld";
-#else // ! LONG_32_BIT
-#error "Unhandled size of long!?"
-#endif // ! LONG_32_BIT
-#endif // ! LONG_64_BIT
-#endif // FOOBAR
 
 static void init_default_formats(SINGLE_QSP_ARG_DECL)
 {

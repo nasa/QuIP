@@ -103,7 +103,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
-	ep = new_enumerator(CTX_CONTAINER(icp));
+	ep = (CTX_CONTAINER(icp)->cnt_typ_p->new_enumerator)(CTX_CONTAINER(icp));
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){
@@ -114,8 +114,10 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 		 * list when they are deleted, we have to get the next
 		 * node BEFORE deletion!!!
 		 */
-		hcp = (Hist_Choice *) enumerator_item(ep);
-		ep = advance_enumerator(ep);
+		//hcp = (Hist_Choice *) enumerator_item(ep);
+		hcp = (Hist_Choice *) ep->e_typ_p->current_enum_item(ep);
+		//ep = advance_enumerator(ep);
+		ep = ep->e_typ_p->advance_enum(ep);
 		found=0;
 
 		/*
@@ -460,24 +462,8 @@ static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
 	Container *cnt_p;
 
 	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
-	return (*(cnt_p->advance_func))(fmi_p,direction);
+	return (*(cnt_p->cnt_typ_p->advance_frag_match))(fmi_p,direction);
 }
-
-#ifdef FOOBAR
-	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
-
-	switch( fmi_p->type ){
-		case LIST_CONTAINER:
-			break;
-		case RB_TREE_CONTAINER:
-			return advance_tree_match(fmi_p,direction);
-			break;
-		default:			// not needed, but quiets compiler
-			NERROR1("cyc_item_match:  bad type!?");
-			break;
-	}
-	return NULL;
-#endif // FOOBAR
 
 static const char * current_frag_match( Frag_Match_Info * fmi_p )
 {
@@ -485,25 +471,7 @@ static const char * current_frag_match( Frag_Match_Info * fmi_p )
 	Container *cnt_p;
 
 	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
-	ip = (*(cnt_p->current_item_func))(fmi_p);
-
-#ifdef FOOBAR
-	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
-
-	switch( fmi_p->type ){
-		case LIST_CONTAINER:
-			ip = fmi_p->fmi_u.li.curr_np->n_data;
-			break;
-		case RB_TREE_CONTAINER:
-			ip = fmi_p->fmi_u.rbti.curr_n_p->data;
-			break;
-		default:			// not needed, but quiets compiler
-			ip=NULL;	// quiet compiler
-			NERROR1("current_frag_match:  bad type!?");
-			return NULL;	// quiet compiler
-			break;
-	}
-#endif // FOOBAR
+	ip = (*(cnt_p->cnt_typ_p->current_frag_match_item))(fmi_p);
 	return ip->item_name;
 }
 
@@ -512,23 +480,7 @@ static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 	Container *cnt_p;
 
 	cnt_p = FMI_CONTAINER(fmi_p);
-	(*(cnt_p->reset_frag_match_func))(fmi_p,direction);
-
-#ifdef FOOBAR
-	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
-
-	switch( fmi_p->type ){
-		case LIST_CONTAINER:
-			reset_item_list(fmi_p,direction);
-			break;
-		case RB_TREE_CONTAINER:
-			reset_tree_match(fmi_p,direction);
-			break;
-		default:			// not needed, but quiets compiler
-			NERROR1("reset_frag_match:  bad type!?");
-			break;
-	}
-#endif // FOOBAR
+	(*(cnt_p->cnt_typ_p->reset_frag_match))(fmi_p,direction);
 }
 
 // We can have matches in different contexts on the context stack.  We keep a list that has matches

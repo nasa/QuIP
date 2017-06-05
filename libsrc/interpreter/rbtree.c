@@ -714,7 +714,7 @@ long rb_node_count(qrb_tree *tree_p)
 	return count;
 }
 
-void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep)
+void advance_rb_tree_enumerator(RB_Tree_Enumerator *rbtep)
 {
 	if( rbtep->node_p == NULL ) return;
 	rbtep->node_p = rb_successor_node(rbtep->node_p);
@@ -736,12 +736,12 @@ void release_rb_tree(qrb_tree *tree_p)
 	givbuf(tree_p);
 }
 
-void rls_rbtree_enumerator(RB_Tree_Enumerator *ep)
+void rls_rb_tree_enumerator(RB_Tree_Enumerator *ep)
 {
 	givbuf(ep);	// keep a pool for efficiency?  Maybe the tree should have an enumerator as part of it?
 }
 
-RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tree_p)
+RB_Tree_Enumerator *new_rb_tree_enumerator(qrb_tree *tree_p)
 {
 	RB_Tree_Enumerator *rbtep;
 
@@ -755,7 +755,7 @@ RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tree_p)
 	return rbtep;
 }
 
-Item *rbtree_enumerator_item(RB_Tree_Enumerator *rbtep)
+Item *rb_tree_enumerator_item(RB_Tree_Enumerator *rbtep)
 {
 	if( rbtep->node_p == NULL ) return NULL;
 	return rbtep->node_p->data;
@@ -790,7 +790,7 @@ static void add_rb_node_to_list(qrb_node *rbn_p, qrb_tree *tree_p)
 	addTail( RB_TREE_ITEM_LIST(tree_p), np );
 }
 
-static void make_rbtree_list(qrb_tree *tree_p)
+static void make_rb_tree_list(qrb_tree *tree_p)
 {
 	assert( RB_TREE_ITEM_LIST(tree_p) == NULL );
 
@@ -799,14 +799,14 @@ static void make_rbtree_list(qrb_tree *tree_p)
 	MARK_RB_TREE_CURRENT(tree_p);
 }
 
-List *rbtree_list(qrb_tree *tree_p)
+List *rb_tree_list(qrb_tree *tree_p)
 {
 	if( RB_TREE_ITEM_LIST(tree_p) == NULL ){
-		make_rbtree_list(tree_p);	// allocates and populates a new list
+		make_rb_tree_list(tree_p);	// allocates and populates a new list
 	} else {
 		if( ! RB_TREE_LIST_IS_CURRENT(tree_p) ){
 			zap_list( RB_TREE_ITEM_LIST(tree_p) );
-			make_rbtree_list(tree_p);	// allocates and populates a new list
+			make_rb_tree_list(tree_p);	// allocates and populates a new list
 		}
 	}
 	return RB_TREE_ITEM_LIST(tree_p);

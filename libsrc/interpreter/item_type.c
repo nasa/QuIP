@@ -776,7 +776,8 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 		}
 	}
 
-	delete_container(CTX_CONTAINER(icp));
+	//delete_container(CTX_CONTAINER(icp));
+	(*(CTX_CONTAINER(icp)->cnt_typ_p->delete))(CTX_CONTAINER(icp));
 
 	del_ctx(QSP_ARG  icp);
 
@@ -1426,7 +1427,8 @@ static void dump_item_context(QSP_ARG_DECL  Item_Context *icp)
 	sprintf(MSG_STR,"\tContext \"%s\"",CTX_NAME(icp));
 	prt_msg(MSG_STR);
 
-	dump_container_info(QSP_ARG  CTX_CONTAINER(icp));
+	//dump_container_info(QSP_ARG  CTX_CONTAINER(icp));
+	(*(CTX_CONTAINER(icp)->cnt_typ_p->dump_info))(QSP_ARG  CTX_CONTAINER(icp));
 
 	list_item_context(QSP_ARG  icp);
 }
