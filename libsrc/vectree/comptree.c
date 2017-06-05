@@ -738,22 +738,10 @@ static void _typecast_child(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Precision 
 {
 	Vec_Expr_Node *new_enp;
 
-//sprintf(ERROR_STRING,"typecast_child:  %s  %d  %s",
-//node_desc(enp), index, PREC_NAME(prec_p));
-//advise(ERROR_STRING);
-
 	/* A few vector operators allow mixed mode ops */
 	if( VN_CODE(enp) == T_TIMES ){
 		if( COMPLEX_PRECISION(PREC_CODE(prec_p)) && ! COMPLEX_PRECISION(VN_CHILD_PREC(enp,index)) ){
-/*
-advise("mixed mode case");
-*/
 				if( VN_CHILD_PREC(enp,index)== PREC_MACH_CODE(prec_p) ){
-/*
-sprintf(ERROR_STRING,"child %s precision  %s matches machine precision %s",
-node_desc(VN_CHILD(enp,index)),PREC_NAME(VN_CHILD_PREC_PTR(enp,index)),PREC_MACH_NAME(prec_p));
-advise(ERROR_STRING);
-*/
 					return;
 				}
 /*
@@ -766,16 +754,6 @@ else advise("mixed mode machine precs do not match, casting");
 
 		case T_VV_B_CONDASS:
 		case T_SS_B_CONDASS:
-//#ifdef CAUTIOUS
-//			if( index == 0 ){
-//				sprintf(ERROR_STRING,
-//		"typecast child %s:  should not typecast bitmap child",
-//					node_desc(enp));
-//				WARN(ERROR_STRING);
-//				DUMP_TREE(enp);
-//				return;
-//			}
-//#endif /* CAUTIOUS */
 			assert( index != 0 );
 			break;
 
