@@ -27,7 +27,7 @@ When should we sync line numbers?
 
 */
 
-//#define QUIP_DEBUG_LINENO
+#define QUIP_DEBUG_LINENO
 
 #define SYNC_LINENO									\
 	{										\
@@ -47,9 +47,11 @@ fprintf(stderr,"increment_lines_read: %s\n",#whence);				\
 
 #define DEBUG_LINENO(whence)					\
 assert(THIS_QSP!=NULL);\
+if( QLEVEL >=0 ){								\
 assert(CURR_QRY(THIS_QSP)!=NULL);\
 	fprintf(stderr,"%s:  Line %d (%d lines read)\n",	\
-		#whence,QRY_LINENO(CURR_QRY(THIS_QSP)),QRY_LINES_READ(CURR_QRY(THIS_QSP)));
+		#whence,QRY_LINENO(CURR_QRY(THIS_QSP)),QRY_LINES_READ(CURR_QRY(THIS_QSP)));	\
+}
 
 #else // ! QUIP_DEBUG_LINENO
 
@@ -302,6 +304,7 @@ static void eatup_space_for_lookahead(SINGLE_QSP_ARG_DECL)
 
 	/* the buffer may contain multiple lines */
 	while( *str == '#' ){
+fprintf(stderr,"eatup_space_for_lookahead:  comment delimiter seen\n");
 		discard_line_content(QSP_ARG  &str);
 		skip_white_space(QSP_ARG  &str);
 	}
@@ -389,16 +392,16 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #1\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #1\n",stop_level,QLEVEL);
 		return 0;	// nothing to interpret
 	}
 #endif /* BUILD_FOR_OBJC */
 
-fprintf(stderr,"lookahead_til %d:  qlevel = %d  BEGIN\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d  BEGIN\n",stop_level,QLEVEL);
 	CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 
 	if( IS_HALTING(THIS_QSP) ){
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 0 #2\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 0 #2\n",stop_level,QLEVEL);
 		return 0;
 	}
 
@@ -423,7 +426,7 @@ fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 0 #2\n",stop_l
 
 		/* do look-ahead */
 
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, top of while loop\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, top of while loop\n",stop_level,QLEVEL);
 		qp= CURR_QRY(THIS_QSP);
 		_level=QLEVEL;
 
@@ -442,7 +445,7 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
 		if( QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, HAS_TEXT returning 1 #3\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, HAS_TEXT returning 1 #3\n",stop_level,QLEVEL);
 			return 1;
 		}
 		while( (QLEVEL == _level) && (QRY_HAS_TEXT(qp) == 0) ){
@@ -456,7 +459,7 @@ DEBUG_LINENO(lookahead_til after nextline)
 			// halting bit can be set if we run out of input on a secondary thread
 			// (primary thread will exit)
 			if( IS_HALTING(THIS_QSP) ) {
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 1 #4\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 1 #4\n",stop_level,QLEVEL);
 				return 0;
 			}
 
@@ -466,17 +469,20 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
 			}
 		}
 	}
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, after while loop\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, after while loop\n",stop_level,QLEVEL);
+
+	/*
 	if( QLEVEL >= 0 ){
 fprintf(stderr,"flags & lookahead_enabled = %d\n", (QS_FLAGS(THIS_QSP) & QS_LOOKAHEAD_ENABLED));
 fprintf(stderr,"!is_interactive = %d\n",(!IS_INTERACTIVE( CURR_QRY(THIS_QSP) ) ));
 fprintf(stderr,"!is_socket = %d\n", ( ( QRY_FLAGS( CURR_QRY(THIS_QSP) ) & Q_SOCKET ) == 0 ));
 fprintf(stderr,"!is_saving(prev) = %d\n",( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) ));
 	}
+	*/
 	
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #5\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #5\n",stop_level,QLEVEL);
 		return 0;	// done with startup file?
 	}
 #endif /* BUILD_FOR_OBJC */
@@ -489,7 +495,7 @@ fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #5\n",stop_level,QLE
 		SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 	}
 
-fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #6\n",stop_level,QLEVEL);
+//fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #6\n",stop_level,QLEVEL);
 	return 0;
 
 } // end lookahead_til
@@ -3112,13 +3118,13 @@ COMMAND_FUNC( close_loop )
 	 * How would we know???
 	 */
 
-fprintf(stderr,"close_loop level = %d BEGIN\n",QLEVEL);
+//fprintf(stderr,"close_loop level = %d BEGIN\n",QLEVEL);
 	loop_qp=pop_file(SINGLE_QSP_ARG);	// are we sure we should do this?
 
-fprintf(stderr,"close_loop level = %d after popping\n",QLEVEL);
+//fprintf(stderr,"close_loop level = %d after popping\n",QLEVEL);
 	qp=(CURR_QRY(THIS_QSP));
 
-fprintf(stderr,"close_loop clearing Q_SAVING\n");
+//fprintf(stderr,"close_loop clearing Q_SAVING\n");
 	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
 
 	if( QRY_COUNT(qp) == FORELOOP ){

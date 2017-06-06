@@ -53,10 +53,10 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NO_LIST );
 
-fprintf(stderr,"perform_callbacks:  qlevel = %d BEGIN\n",QLEVEL);
+//fprintf(stderr,"perform_callbacks:  qlevel = %d BEGIN\n",QLEVEL);
 	reset_return_strings(SINGLE_QSP_ARG);
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
-fprintf(stderr,"perform_callbacks:  qlevel = %d DONE\n",QLEVEL);
+//fprintf(stderr,"perform_callbacks:  qlevel = %d DONE\n",QLEVEL);
 }
 
 void qs_do_cmd( Query_Stack *qsp )
@@ -68,14 +68,8 @@ void qs_do_cmd( Query_Stack *qsp )
 //advise("qs_do_cmd BEGIN");
 //qdump(qsp);
 
-fprintf(stderr,"qs_do_cmd (level = %d) BEGIN\n",QS_LEVEL(qsp));
+//fprintf(stderr,"qs_do_cmd (level = %d) BEGIN\n",QS_LEVEL(qsp));
 	mp = TOP_OF_STACK( QS_MENU_STACK(qsp) );
-//#ifdef CAUTIOUS
-//	if( mp == NULL ) {
-//		ERROR1("CAUTIOUS:  qs_do_cmd:  No menu pushed!?");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( mp != NULL );
 
 #ifdef HAVE_HISTORY
@@ -105,7 +99,7 @@ fprintf(stderr,"qs_do_cmd (level = %d) BEGIN\n",QS_LEVEL(qsp));
 //fprintf(stderr,"qs_do_cmd:  null or empty command\n");
 		return;
 	}
-fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
+//fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
 	/* Now find the command */
 //	cp = (Command *) fetch_name(cmd, mp->mn_dict);
 	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);
@@ -147,7 +141,7 @@ fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
 		perform_callbacks(SINGLE_QSP_ARG);
 	}
 	// test IS_HALTING(qsp) here???
-fprintf(stderr,"qs_do_cmd (level = %d) DONE\n",QS_LEVEL(qsp));
+//fprintf(stderr,"qs_do_cmd (level = %d) DONE\n",QS_LEVEL(qsp));
 }
 
 
