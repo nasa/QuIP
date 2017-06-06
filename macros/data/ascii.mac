@@ -5,7 +5,9 @@ Start_File ascii.mac
 
 Define Get_String 2 varname string_obj
 advise "Get_String $1 $2 BEGIN"
+If var_exists('$1') 'Print $1'
 data ascii get_string $2 $1 quit quit
+Print $1
 advise "Get_String $1 $2 DONE"
 .
 

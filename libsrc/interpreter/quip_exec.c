@@ -53,9 +53,10 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NO_LIST );
 
+fprintf(stderr,"perform_callbacks:  qlevel = %d BEGIN\n",QLEVEL);
 	reset_return_strings(SINGLE_QSP_ARG);
-fprintf(stderr,"perform_callbacks:  qlevel = %d\n",QLEVEL);
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
+fprintf(stderr,"perform_callbacks:  qlevel = %d DONE\n",QLEVEL);
 }
 
 void qs_do_cmd( Query_Stack *qsp )
@@ -67,6 +68,7 @@ void qs_do_cmd( Query_Stack *qsp )
 //advise("qs_do_cmd BEGIN");
 //qdump(qsp);
 
+fprintf(stderr,"qs_do_cmd (level = %d) BEGIN\n",QS_LEVEL(qsp));
 	mp = TOP_OF_STACK( QS_MENU_STACK(qsp) );
 //#ifdef CAUTIOUS
 //	if( mp == NULL ) {
@@ -103,7 +105,7 @@ void qs_do_cmd( Query_Stack *qsp )
 //fprintf(stderr,"qs_do_cmd:  null or empty command\n");
 		return;
 	}
-//fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
+fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
 	/* Now find the command */
 //	cp = (Command *) fetch_name(cmd, mp->mn_dict);
 	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);
@@ -145,6 +147,7 @@ void qs_do_cmd( Query_Stack *qsp )
 		perform_callbacks(SINGLE_QSP_ARG);
 	}
 	// test IS_HALTING(qsp) here???
+fprintf(stderr,"qs_do_cmd (level = %d) DONE\n",QS_LEVEL(qsp));
 }
 
 
@@ -365,23 +368,19 @@ void resume_quip(SINGLE_QSP_ARG_DECL)
 
 void exec_at_level(QSP_ARG_DECL  int level)
 {
-//#ifdef CAUTIOUS
-//	if( level < 0 ){
-//		fprintf(stderr,
-//	"CAUTIOUS:  exec_at_level:  bad level %d!?\n",level);
-//		abort();
-//	}
-//#endif // CAUTIOUS
-
 	assert( level >= 0 );
+fprintf(stderr,"exec_at_level %d BEGIN!\n",level);
 
 	// We thought a lookahead here might help, but it didn't, probably
 	// because lookahead does not skip comments?
 
 	//lookahead(SINGLE_QSP_ARG);	// in case an empty macro was pushed?
 	while( QLEVEL >= level ){
+fprintf(stderr,"exec_at_level %d calling qs_do_cmd\n",level);
 		qs_do_cmd(THIS_QSP);
+fprintf(stderr,"exec_at_level %d back from qs_do_cmd\n",level);
 		if( IS_HALTING(THIS_QSP) ){
+fprintf(stderr,"exec_at_level:  HALTING!\n");
 			return;
 		}
 
@@ -391,7 +390,9 @@ void exec_at_level(QSP_ARG_DECL  int level)
 		 */
 
 		lookahead(SINGLE_QSP_ARG);
+fprintf(stderr,"exec_at_level %d after lookahead qlevel = %d\n",level,QLEVEL);
 	}
+fprintf(stderr,"exec_at_level %d DONE!\n",level);
 
 	// BUG?  what happens if we halt execution when an alert is delivered?
 }

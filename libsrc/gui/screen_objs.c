@@ -758,7 +758,7 @@ COMMAND_FUNC( mk_edit_box )
 	sop = GET_PARTS("edit box");
 	s = NAMEOF("default value");
 	if( sop == NO_SCREEN_OBJ ) return;
-	SET_SOB_CONTENT(sop, savestr(s));	// overloads action?
+	SET_SOB_CONTENT(sop, save_possibly_empty_str(s));	// overloads action?
 	SET_SOB_TYPE(sop, SOT_EDIT_BOX);
 	add_to_panel(curr_panel,sop);
 	/* put this after addition to panel list, because setting initial value causes a callback */

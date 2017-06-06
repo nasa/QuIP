@@ -222,7 +222,6 @@ struct query_stack {
 #define SET_QS_MSG_FILE(qsp,fp)		(qsp)->qs_msg_fp = fp
 
 #define QS_HAS_SOMETHING(qsp)		(QLEVEL>=0 && QRY_HAS_TEXT(CURR_QRY(qsp)))
-#define QS_DO_CMD(qsp)			qs_do_cmd(qsp)
 #define QS_LINES_READ(qsp)		QRY_LINES_READ(CURR_QRY(qsp))
 
 #define QS_MENU_STACK(qsp)		(qsp)->qs_menu_stack

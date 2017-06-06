@@ -286,7 +286,8 @@ else if( $flavor == ezjet ) then
   # of the system, and want to have a shorter start-up file.
   set  load_questionnaires=1
   if( $load_questionnaires ) then
-    foreach qfile ( demog cis morn_eve ess Samn-Perelli countermeasures commute_time flying expectation weighted_tlx rest_tlx tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
+    #foreach qfile ( demog cis morn_eve ess Samn-Perelli countermeasures commute_time flying expectation weighted_tlx rest_tlx tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
+    foreach qfile ( cis morn_eve ess Samn-Perelli countermeasures commute_time flying expectation weighted_tlx rest_tlx tlx PVT_Distraction workload wl2 sleep_diary_morn sleep_diary_eve sleep_diary_nap sectornum )
       echo "# FILE ezjet/$qfile.scr BEGIN" >> $outfile
       cat ../$extra_macro_dir/ezjet/$qfile.scr >> $outfile
       #cp ../../macros/ezjet/$qfile.scr ~/txt_files/$qfile.txt

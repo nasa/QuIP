@@ -183,7 +183,7 @@ static COMMAND_FUNC( do_pipe_obj )
 	pp->p_fp = NULL;
 }
 
-static COMMAND_FUNC( do_wrt_str )
+static COMMAND_FUNC( do_set_var_from_obj )
 {
 	Data_Obj *dp;
 	const char *s;
@@ -197,7 +197,7 @@ static COMMAND_FUNC( do_wrt_str )
 	if( dp == NO_OBJ ) return;
 
 	if( ! IS_STRING(dp) ){
-		sprintf(ERROR_STRING,"do_read_str:  object %s (%s) does not have string precision",
+		sprintf(ERROR_STRING,"do_set_var_from_obj:  object %s (%s) does not have string precision",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
@@ -208,7 +208,7 @@ static COMMAND_FUNC( do_wrt_str )
 	DELETE_IF_COPY(dp)
 }
 
-static COMMAND_FUNC( do_read_str )
+static COMMAND_FUNC( do_set_obj_from_var )
 {
 	Data_Obj *dp;
 	const char *s;
@@ -218,14 +218,14 @@ static COMMAND_FUNC( do_read_str )
 
 	if( dp == NO_OBJ ) return;
 
-	INSIST_RAM_OBJ(dp,"read_string")
+	INSIST_RAM_OBJ(dp,"set_string")
 
 #ifdef QUIP_DEBUG
 //if( debug ) dptrace(dp);
 #endif /* QUIP_DEBUG */
 
 	if( ! IS_STRING(dp) ){
-		sprintf(ERROR_STRING,"do_read_str:  object %s (%s) does not have string precision",
+		sprintf(ERROR_STRING,"do_set_obj_from_var:  object %s (%s) does not have string precision",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
@@ -448,8 +448,8 @@ MENU_BEGIN(ascii)
 ADD_CMD( display,	do_disp_obj,	display data	)
 ADD_CMD( read,		do_read_obj,	read vector data from ascii file	)
 ADD_CMD( pipe_read,	do_pipe_obj,	read vector data from named pipe	)
-ADD_CMD( set_string,	do_read_str,	read vector data from a string	)
-ADD_CMD( get_string,	do_wrt_str,	set a script variable to the value of a stored string	)
+ADD_CMD( set_string,	do_set_obj_from_var,	read vector data from a string	)
+ADD_CMD( get_string,	do_set_var_from_obj,	set a script variable to the value of a stored string	)
 ADD_CMD( write,		do_wrt_obj,	write vector data to ascii file	)
 ADD_CMD( append,	do_append,	append vector data to ascii file	)
 ADD_CMD( exact,		do_exact,	enable/disable warnings for file/vector length mismatch	)

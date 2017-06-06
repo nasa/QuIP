@@ -743,6 +743,7 @@ static COMMAND_FUNC( do_get_align )
 	set_dp_alignment(a);
 }
 
+#ifdef REDUNDANT
 static COMMAND_FUNC( do_stringify )
 {
 	Data_Obj *dp;
@@ -789,6 +790,7 @@ static COMMAND_FUNC( do_import_string )
 	/* BUG check for contiguity */
 	strcpy((char *)OBJ_DATA_PTR(dp),s);
 }
+#endif // REDUNDANT
 
 static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
@@ -864,8 +866,10 @@ ADD_CMD( areas,		do_area,	data area submenu	)
 ADD_CMD( contexts,	do_context,	data context submenu	)
 ADD_CMD( ascii,		asciimenu,	read and write ascii data	)
 ADD_CMD( operate,	buf_ops,	simple operations on buffers	)
+#ifdef REDUNDANT
 ADD_CMD( stringify,	do_stringify,	set variable from a string object	)
 ADD_CMD( import_string,	do_import_string,	set data object from string	)
+#endif // REDUNDANT
 ADD_CMD( unlock_temp_objs,	do_unlock_all_tmp_objs,	unlock temp objs (when callbacks inhibited)	)
 
 MENU_END(data)

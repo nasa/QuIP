@@ -71,11 +71,17 @@ static void exec_qs_cmds( void *_qsp )
 {
 	Query_Stack *qsp=(Query_Stack *)_qsp;
 
+fprintf(stderr,"exec_qs_cmds BEGIN, level = %d\n",QS_LEVEL(qsp));
 	while( lookahead_til(QSP_ARG  0) ){
 		while( QS_HAS_SOMETHING(qsp) && ! IS_HALTING(qsp) ){
-			QS_DO_CMD(qsp);
+fprintf(stderr,"exec_qs_cmds calling qs_do_cmd, level = %d\n",QS_LEVEL(qsp));
+			qs_do_cmd(qsp);
+fprintf(stderr,"exec_qs_cmds back from qs_do_cmd, level = %d\n",QS_LEVEL(qsp));
 		}
+fprintf(stderr,"exec_qs_cmds QS_HAS_SOMETHING = %d, IS_HALTING = %d\n\n",
+QS_HAS_SOMETHING(qsp),IS_HALTING(qsp));
 	}
+fprintf(stderr,"exec_qs_cmds DONE, level = %d\n",QS_LEVEL(qsp));
 }
 
 void exec_this_level(SINGLE_QSP_ARG_DECL)
@@ -93,6 +99,7 @@ void exec_quip(SINGLE_QSP_ARG_DECL)
 {
 #ifdef USE_QS_QUEUE
 
+fprintf(stderr,"exec_quip BEGIN, USE_QS_QUEUE is set\n");
 	// This is iOS only!
 
 	//dispatch_async_f(QS_QUEUE(THIS_QSP),qsp,exec_qs_cmds);
@@ -102,10 +109,13 @@ void exec_quip(SINGLE_QSP_ARG_DECL)
 	} else {
 		dispatch_async_f(QS_QUEUE(THIS_QSP),THIS_QSP,exec_qs_cmds);
 	}
+fprintf(stderr,"exec_quip DONE, USE_QS_QUEUE is set\n");
 
 #else /* ! USE_QS_QUEUE */
 
+fprintf(stderr,"exec_quip BEGIN, USE_QS_QUEUE is NOT set\n");
 	exec_qs_cmds(THIS_QSP);
+fprintf(stderr,"exec_quip DONE, USE_QS_QUEUE is NOT set\n");
 
 #endif /* ! USE_QS_QUEUE */
 }

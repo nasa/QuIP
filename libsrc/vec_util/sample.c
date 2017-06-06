@@ -144,15 +144,22 @@ OBJ_NAME(image_dp),OBJ_NAME(coord_dp),OBJ_NAME(intens_dp));
     //y=0;
 
 	i=OBJ_N_TYPE_ELTS(coord_dp)/2;
-fprintf(stderr,"will render %d samples\n",i);
 	while(i--){			/* foreach destination coordinate pair */
 		x = *coord++;
 		y = *coord++;
-fprintf(stderr,"will render to %g %g\n",x,y);
 
+		if( isnan(x) || isnan(y) ){
+			sprintf(ERROR_STRING,
+	"render_samples2:  nan value passed in coordinate list %s",
+				OBJ_NAME(coord_dp));
+			ERROR1(ERROR_STRING);
+			// IOS_RETURN?
+		}
+			
 		if ( (x > (float)(width  - 1)) || (x < 0) ||
 		     (y > (float)(height - 1)) || (y < 0) )
 		  {
+//fprintf(stderr,"coordinate %g %g is out of range\n",x,y);
 			intens += OBJ_COMPS(image_dp);	/* same as intens_dp */
 			continue;
 		  }

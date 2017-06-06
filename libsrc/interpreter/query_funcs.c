@@ -389,13 +389,18 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #1\n",stop_level,QLEVEL);
 		return 0;	// nothing to interpret
 	}
 #endif /* BUILD_FOR_OBJC */
 
+fprintf(stderr,"lookahead_til %d:  qlevel = %d  BEGIN\n",stop_level,QLEVEL);
 	CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 
-	if( IS_HALTING(THIS_QSP) ) return 0;
+	if( IS_HALTING(THIS_QSP) ){
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 0 #2\n",stop_level,QLEVEL);
+		return 0;
+	}
 
 	// Not used???
 	//QS_FORMER_LEVEL( THIS_QSP ) = QS_LEVEL( THIS_QSP );
@@ -408,7 +413,9 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 		&& ( ( QRY_FLAGS( CURR_QRY(THIS_QSP) ) & Q_SOCKET ) == 0 )
 		/* inhibit lookahead if we are saving (don't eatup spaces) */
 		/* BUT the saving flag is set one level down... */
-		&& ( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) )
+
+		/* Better to check for saving in eatup_space? */
+		/*&& ( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) )*/
 
 	){
 		Query *qp;
@@ -416,6 +423,7 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 
 		/* do look-ahead */
 
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, top of while loop\n",stop_level,QLEVEL);
 		qp= CURR_QRY(THIS_QSP);
 		_level=QLEVEL;
 
@@ -434,6 +442,7 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
 		if( QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, HAS_TEXT returning 1 #3\n",stop_level,QLEVEL);
 			return 1;
 		}
 		while( (QLEVEL == _level) && (QRY_HAS_TEXT(qp) == 0) ){
@@ -446,7 +455,10 @@ DEBUG_LINENO(lookahead_til after nextline)
 
 			// halting bit can be set if we run out of input on a secondary thread
 			// (primary thread will exit)
-			if( IS_HALTING(THIS_QSP) ) return 0;
+			if( IS_HALTING(THIS_QSP) ) {
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 1 #4\n",stop_level,QLEVEL);
+				return 0;
+			}
 
 			if( QLEVEL == _level && QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
 DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
@@ -454,8 +466,17 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
 			}
 		}
 	}
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, after while loop\n",stop_level,QLEVEL);
+	if( QLEVEL >= 0 ){
+fprintf(stderr,"flags & lookahead_enabled = %d\n", (QS_FLAGS(THIS_QSP) & QS_LOOKAHEAD_ENABLED));
+fprintf(stderr,"!is_interactive = %d\n",(!IS_INTERACTIVE( CURR_QRY(THIS_QSP) ) ));
+fprintf(stderr,"!is_socket = %d\n", ( ( QRY_FLAGS( CURR_QRY(THIS_QSP) ) & Q_SOCKET ) == 0 ));
+fprintf(stderr,"!is_saving(prev) = %d\n",( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) ));
+	}
+	
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #5\n",stop_level,QLEVEL);
 		return 0;	// done with startup file?
 	}
 #endif /* BUILD_FOR_OBJC */
@@ -468,6 +489,7 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
 		SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 	}
 
+fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #6\n",stop_level,QLEVEL);
 	return 0;
 
 } // end lookahead_til
@@ -2860,11 +2882,14 @@ void open_loop(QSP_ARG_DECL int n)
 
 	qp=(CURR_QRY(THIS_QSP));
 
+fprintf(stderr,"open_loop qlevel = %d BEGIN\n",QLEVEL);
 	dup_input(SINGLE_QSP_ARG);
 
 	SET_QRY_COUNT(qp,n);
 	insure_query_text_buf(qp);
+fprintf(stderr,"open_loop setting Q_SAVING\n");
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
+fprintf(stderr,"open_loop qlevel = %d DONE\n",QLEVEL);
 }
 
 void fore_loop(QSP_ARG_DECL Foreach_Loop *frp)
@@ -3087,10 +3112,13 @@ COMMAND_FUNC( close_loop )
 	 * How would we know???
 	 */
 
+fprintf(stderr,"close_loop level = %d BEGIN\n",QLEVEL);
 	loop_qp=pop_file(SINGLE_QSP_ARG);	// are we sure we should do this?
 
+fprintf(stderr,"close_loop level = %d after popping\n",QLEVEL);
 	qp=(CURR_QRY(THIS_QSP));
 
+fprintf(stderr,"close_loop clearing Q_SAVING\n");
 	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
 
 	if( QRY_COUNT(qp) == FORELOOP ){
@@ -3170,12 +3198,6 @@ void _whileloop(QSP_ARG_DECL  int value)
 	 * but first we need to make sure that a loop is open!
 	 */
 
-//#ifdef CAUTIOUS
-//	if( QLEVEL < 0 ){
-//		ERROR1("CAUTIOUS:  negative qlevel in While");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( QLEVEL >= 0 );
 
 	if( QLEVEL == 0 || QRY_COUNT(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)) == 0 ){
@@ -3183,14 +3205,11 @@ void _whileloop(QSP_ARG_DECL  int value)
 		return;
 	}
 
-/*
-sprintf(ERROR_STRING,"while clearing save flag at level %d", qlevel-1);
-advise(ERROR_STRING);
-*/
-
-
+fprintf(stderr,"while_loop level = %d BEGIN\n",QLEVEL);
 	pop_file(SINGLE_QSP_ARG);
+fprintf(stderr,"while_loop level = %d after popping\n",QLEVEL);
 	qp=(CURR_QRY(THIS_QSP));
+fprintf(stderr,"while_loop level = %d clearing Q_SAVING\n",QLEVEL);
 	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
 
 	if( ! value ){

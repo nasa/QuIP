@@ -542,9 +542,9 @@ void * getbuf(size_t size)
 	 *
 	 * Fixed one problem with VN_DECL_OBJ, but other problems appear to remain...
 	 */
-	p=malloc(size);
+//	p=malloc(size);
 
-//	p=calloc(size,1);
+	p=calloc(size,1);
 
 //#endif // ! CAUTIOUS
 

@@ -1,5 +1,8 @@
 # macros for plotting a sphere
 
+# LatLong is obvious enough - but what is LongLong?
+# azimuth & elevation?
+
 Start_File sph.mac
 
 Define Make_Sphere 0
@@ -115,6 +118,9 @@ VVMul $1{2} $1{2} s2ctmp
 Delete_Image s2ctmp
 .
 
+# Get x y coords of points on a sphere, specified by longitude (azimuth)
+# and elevation (like longitude lines radiating from left and right poles)
+
 # consider the case "x" is 0 ...
 # ca1 = 1    sa1 = 0
 # c21 = 1    s21 = 0
@@ -125,15 +131,15 @@ Tell_If "LongLong2Cart $1 $2"
 Dup_Complex ll2c $2
 VSMul ll2c{0} $2{0} atan(1)/45
 VSMul ll2c{1} $2{1} atan(1)/45
-Image ca1 "nrows('$2')" "ncols('$2')" 1 float
-Image ca2 "nrows('$2')" "ncols('$2')" 1 float
-Image sa1 "nrows('$2')" "ncols('$2')" 1 float
-Image sa2 "nrows('$2')" "ncols('$2')" 1 float
+Image ca1 nrows('$2') ncols('$2') 1 float
+Image ca2 nrows('$2') ncols('$2') 1 float
+Image sa1 nrows('$2') ncols('$2') 1 float
+Image sa2 nrows('$2') ncols('$2') 1 float
 # temporary squared terms
-Image c21 "nrows('$2')" "ncols('$2')" 1 float
-Image c22 "nrows('$2')" "ncols('$2')" 1 float
-Image s21 "nrows('$2')" "ncols('$2')" 1 float
-Image s22 "nrows('$2')" "ncols('$2')" 1 float
+Image c21 nrows('$2') ncols('$2') 1 float
+Image c22 nrows('$2') ncols('$2') 1 float
+Image s21 nrows('$2') ncols('$2') 1 float
+Image s22 nrows('$2') ncols('$2') 1 float
 VCos ca1 ll2c{0}		# x = cos azimuth (long)
 VSin sa1 ll2c{0}		# z = sin azimuth (long)
 VCos ca2 ll2c{1}
@@ -144,16 +150,20 @@ VVMul c22 ca2 ca2
 VVMul s21 sa1 sa1
 VVMul s22 sa2 sa2
 # make sure the order is right here...
-VVDiv c21 c21 s21
-VVDiv c22 c22 s22
+#VVDiv c21 c21 s21	#
+#VVDiv c22 c22 s22	#
+VVDiv c21 s21 c21	#
+VVDiv c22 s22 c22	#
 VVAdd c21 c21 c22
 VSAdd c21 c21 1
 VSDiv c21 c21 1		# reciprocal
 VSqrt $1{2} c21		# now this is z
 VVMul $1{0} $1{2} sa1
-VVDiv $1{0} ca1 $1{0}	# x = x ca1 / sa1
+#VVDiv $1{0} ca1 $1{0}	# x = x ca1 / sa1
+VVDiv $1{0} $1{0} ca1	# x = x ca1 / sa1
 VVMul $1{1} $1{2} sa2
-VVDiv $1{1} ca2 $1{1}	# x = x ca1 / sa1
+#VVDiv $1{1} ca2 $1{1}	# x = x ca1 / sa1
+VVDiv $1{1} $1{1} ca2	# x = x ca1 / sa1
 Delete_Image ca1
 Delete_Image ca2
 Delete_Image sa1
