@@ -3632,8 +3632,12 @@ int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 
 void add_cmd_callback(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 {
-	if( QS_CALLBACK_LIST(THIS_QSP) == NO_LIST )
+	if( QS_CALLBACK_LIST(THIS_QSP) == NO_LIST ){
 		SET_QS_CALLBACK_LIST(THIS_QSP, new_list() );
+fprintf(stderr,"add_cmd_callback:  initialized callback list to 0x%lx\n",
+(long)QS_CALLBACK_LIST(THIS_QSP));
+	}
+
 	add_func_to_list(QS_CALLBACK_LIST(THIS_QSP), func);
 
 	// Make sure the flag is set

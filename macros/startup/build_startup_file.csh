@@ -42,6 +42,7 @@ set encfile=$out_stem.enc
 set extra_macro_dir=../../quip-extra/macros	# relative to ../macros
 
 cat < /dev/null > $outfile
+echo verbose yes >> $outfile	# for debugging
 
 echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
 #echo 'advise "RESOURCE_DIR = $RESOURCE_DIR"' >> $outfile

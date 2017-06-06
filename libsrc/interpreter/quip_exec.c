@@ -51,15 +51,10 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 
 static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
-//#ifdef CAUTIOUS
-//	if( QS_CALLBACK_LIST(THIS_QSP) == NO_LIST ){
-//		WARN("CAUTIOUS:  perform_callbacks:  null event func list!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NO_LIST );
 
 	reset_return_strings(SINGLE_QSP_ARG);
+fprintf(stderr,"perform_callbacks:  qlevel = %d\n",QLEVEL);
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
 }
 
