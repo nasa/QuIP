@@ -430,7 +430,7 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 		/* BUT the saving flag is set one level down... */
 
 		/* Better to check for saving in eatup_space? */
-		/*&& ( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) )*/
+		&& ( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) )
 
 	){
 		Query *qp;
@@ -778,6 +778,7 @@ advise(ERROR_STRING);
 	// read the macro args...
 	if( QLEVEL < 0 ) return NULL;
 
+//fprintf(stderr,"next_query_word will return \"%s\"\n",buf);
 	return(buf);
 } /* end next_query_word() */
 

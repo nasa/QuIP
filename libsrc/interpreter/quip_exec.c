@@ -312,6 +312,7 @@ void finish_swallowing(SINGLE_QSP_ARG_DECL)
 void chew_text(QSP_ARG_DECL  const char *text, const char *filename )
 {
 	if( text == NULL ) return;
+fprintf(stderr,"chew_text \"%s\" BEGIN\n",text);
 	if( IS_CHEWING(THIS_QSP) ){
 		store_mouthful(QSP_ARG  text, filename );
 	} else {
@@ -363,18 +364,18 @@ void resume_quip(SINGLE_QSP_ARG_DECL)
 void exec_at_level(QSP_ARG_DECL  int level)
 {
 	assert( level >= 0 );
-fprintf(stderr,"exec_at_level %d BEGIN!\n",level);
+//fprintf(stderr,"exec_at_level %d BEGIN!\n",level);
 
 	// We thought a lookahead here might help, but it didn't, probably
 	// because lookahead does not skip comments?
 
 	//lookahead(SINGLE_QSP_ARG);	// in case an empty macro was pushed?
 	while( QLEVEL >= level ){
-fprintf(stderr,"exec_at_level %d calling qs_do_cmd\n",level);
+//fprintf(stderr,"exec_at_level %d calling qs_do_cmd\n",level);
 		qs_do_cmd(THIS_QSP);
-fprintf(stderr,"exec_at_level %d back from qs_do_cmd\n",level);
+//fprintf(stderr,"exec_at_level %d back from qs_do_cmd\n",level);
 		if( IS_HALTING(THIS_QSP) ){
-fprintf(stderr,"exec_at_level:  HALTING!\n");
+//fprintf(stderr,"exec_at_level:  HALTING!\n");
 			return;
 		}
 
@@ -384,9 +385,9 @@ fprintf(stderr,"exec_at_level:  HALTING!\n");
 		 */
 
 		lookahead(SINGLE_QSP_ARG);
-fprintf(stderr,"exec_at_level %d after lookahead qlevel = %d\n",level,QLEVEL);
+//fprintf(stderr,"exec_at_level %d after lookahead qlevel = %d\n",level,QLEVEL);
 	}
-fprintf(stderr,"exec_at_level %d DONE!\n",level);
+//fprintf(stderr,"exec_at_level %d DONE!\n",level);
 
 	// BUG?  what happens if we halt execution when an alert is delivered?
 }

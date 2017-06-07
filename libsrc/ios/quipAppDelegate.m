@@ -550,25 +550,7 @@ static void updateMultipleChoices(Screen_Obj *sop)
 
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
 	} else if( SOB_TYPE(sop) == SOT_PICKER ){
-//#ifdef CAUTIOUS
-//		if( component < 0 || component >= SOB_N_CYLINDERS(sop) ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  titleForRow (PickerView):  unexpected component index %ld!?",(long)component);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return;
-//		}
-
 		assert( component >= 0 && component < SOB_N_CYLINDERS(sop));
-
-//		if( row < 0 || row >= SOB_N_SELECTORS_AT_IDX(sop,component) ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  titleForRow (PickerView):  unexpected row index %ld for component %ld!?",
-//				(long)row,(long)component);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return;
-//		}
-//#endif /* CAUTIOUS */
-
 		assert(row>=0&&row<SOB_N_SELECTORS_AT_IDX(sop,component));
 
 		char choice_idx[16];
@@ -1621,7 +1603,7 @@ static bool read_quip_file(const char *pathname)
 		// Because scripts often redirect
 		// to other files in the same directory,
 		// it might make sense to set the directory here?
-        chdir_to_file(pathname);
+        	chdir_to_file(pathname);
 
 		redir(DEFAULT_QSP_ARG  fp, pathname );
 		exec_quip(SGL_DEFAULT_QSP_ARG);	// read_quip_file

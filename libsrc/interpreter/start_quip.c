@@ -71,6 +71,7 @@ static void exec_qs_cmds( void *_qsp )
 {
 	Query_Stack *qsp=(Query_Stack *)_qsp;
 
+#ifdef OLD
 fprintf(stderr,"exec_qs_cmds BEGIN, level = %d\n",QS_LEVEL(qsp));
 	while( lookahead_til(QSP_ARG  0) ){
 		while( QS_HAS_SOMETHING(qsp) && ! IS_HALTING(qsp) ){
@@ -82,6 +83,13 @@ fprintf(stderr,"exec_qs_cmds QS_HAS_SOMETHING = %d, IS_HALTING = %d\n\n",
 QS_HAS_SOMETHING(qsp),IS_HALTING(qsp));
 	}
 fprintf(stderr,"exec_qs_cmds DONE, level = %d\n",QS_LEVEL(qsp));
+#else // ! OLD
+
+	while( QLEVEL >= 0 && ! IS_HALTING(qsp) ){
+		qs_do_cmd(qsp);
+	}
+
+#endif // ! OLD
 }
 
 void exec_this_level(SINGLE_QSP_ARG_DECL)

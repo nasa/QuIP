@@ -401,27 +401,24 @@ String_Buf *decrypt_text( const char *text )
 {
 	uint8_t *data;
 	size_t buf_size,n_bytes,n_decrypted;
-	String_Buf *out_sbp;
+	String_Buf *out_sbp=NULL;
 		
 	buf_size=1+(size_t)ceil(strlen(text)/2);
 	data = getbuf(buf_size);
 	n_bytes = convert_lines_from_hex(data,text);
-	if( n_bytes <= 0 ) goto cleanup1;
+	if( n_bytes > 0 ) {
+		out_sbp = new_stringbuf();
+		if( n_bytes > out_sbp->sb_size )
+			enlarge_buffer(out_sbp,n_bytes);
 
-	out_sbp = new_stringbuf();
-	if( n_bytes > out_sbp->sb_size )
-		enlarge_buffer(out_sbp,n_bytes);
-
-	n_decrypted=decrypt_char_buf(data,n_bytes,out_sbp->sb_buf,n_bytes);
-	if( n_decrypted <= 0 ) goto cleanup2;
-
-	return out_sbp;
-
-cleanup2:
-	rls_stringbuf(out_sbp);
-cleanup1:
+		n_decrypted=decrypt_char_buf(data,n_bytes,out_sbp->sb_buf,n_bytes);
+		if( n_decrypted <= 0 ){
+			rls_stringbuf(out_sbp);
+			out_sbp = NULL;
+		}
+	}
 	givbuf(data);
-	return NULL;
+	return out_sbp;
 }
 
 char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
@@ -661,6 +658,9 @@ COMMAND_FUNC( do_read_encrypted_file )
 	exec_quip(SINGLE_QSP_ARG);
 
 	// Now we should be done with the file contents
+	// BUG?  can we be sure that we didn't halt because of an alert???
+	// should we check status of HALTING???
+
 	rls_str(outbuf);
 }
 
