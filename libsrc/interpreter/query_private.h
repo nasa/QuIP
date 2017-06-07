@@ -24,6 +24,9 @@ struct query {
 	int			q_count;
 	FILE *			q_fp;
 	FILE *			q_dup_fp;
+#ifdef HAVE_POPEN
+	Pipe *			q_pipe_p;
+#endif // HAVE_POPEN
 	String_Buf *		q_text_buf;
 	const char *		q_filename;
 	int			q_n_lines_read;	// may be advanced by lookahead
@@ -80,6 +83,13 @@ struct query {
 	if( QRY_FILENAME(qp) != NULL ) rls_str(QRY_FILENAME(qp));	\
 	(qp)->q_filename = savestr(s);					\
 	}
+
+#ifdef HAVE_POPEN
+#define QRY_PIPE(qp)			(qp)->q_pipe_p
+#define SET_QRY_PIPE(qp,v)		(qp)->q_pipe_p = v
+#else // ! HAVE_POPEN
+#define SET_QRY_PIPE(qp,v)
+#endif // ! HAVE_POPEN
 
 #define QRY_DUPFILE(qp)			(qp)->q_dup_fp
 #define SET_QRY_DUPFILE(qp,fp)		(qp)->q_dup_fp = fp
