@@ -858,6 +858,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 	if( np == NO_NODE ){
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
+fprintf(stderr,"item_of(%s,%s)  QS_SERIAL = %d\n",IT_NAME(itp),name);
 		assert(QS_SERIAL!=0);
 		// get the bottom of the stack from the root qsp, and push it...
 		np = QLIST_TAIL( FIRST_CONTEXT_STACK(itp) );

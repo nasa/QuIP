@@ -93,49 +93,70 @@ struct mouthful {
 #define FIRST_QUERY_SERIAL 0
 
 struct query_stack {
-	Item		qs_item;
-//	String_Buf *	qs_retstr[N_RETSTRS];
-//	int		qs_which_retstr;
-	List *		qs_retstr_lp;
-	String_Buf *	qs_varbuf[MAX_VAR_BUFS];
+	Item		qs_item;	// name of this query_stack
+	int		qs_serial;
+
+	// interpreter vars
+	int		qs_flags;	// where are the flag bits declared???
+//	List *		qs_retstr_lp;	// how does this relate to qs_result?
+	String_Buf *	qs_varbuf[MAX_VAR_BUFS];	// why fixed size array?
+	String_Buf *	qs_result;	// used in var expansion
 	int		qs_which_var_buf;
+	Stack *		qs_query_stack;
+	int		_qs_level;	// used for lookahead
+	int		qs_ascii_level;
+	int		qs_chew_level;
+	String_Buf *	qs_av_sbp;			// what is this?
+	String_Buf *	qs_scratch;
+	List *		qs_chew_list;		// text for deferred execution
+#define CHEW_LIST	QS_CHEW_LIST(THIS_QSP)
+	List *		qs_callback_lp;		// per-cmd callback functions
+	List *		qs_event_lp;
+	Variable *	qs_tmpvar;		// what is this for?
+
+	// stuff for word scanning
+	int		qs_word_scan_flags;
+	int		qs_start_quote;		/* holds the value
+						 * of the starting quote char,
+				 		 * if in a quote,
+						 * otherwise 0
+						 */
+	int		qs_n_quotations;	/* to handle things like:
+						 * "a b c"X"x y z"
+						 * where we don't want to
+						 * strip the outer pair...
+						 */
+	String_Buf *	qs_ret_sbp;
+	char *		qs_ret_str;			// avoids passing a lot of stuff...
+	char *		qs_ret_ptr;
+
+	// menu stuff
 	Menu *		qs_builtin_menu;
 	Menu *		qs_help_menu;
 	String_Buf *	qs_prompt_sbp;
 	Stack *		qs_menu_stack;
-	Stack *		qs_query_stack;
 
+	int		qs_fmt_code;
 	Stack *		qs_var_fmt_stack;
 	char *		qs_number_fmt_string;
 	char		qs_gfmt_str[8];
 	char		qs_xfmt_str[8];
 	char		qs_ofmt_str[8];
 	char		qs_dfmt_str[8];
-	String_Buf *	qs_av_sbp;
+
+	// for formatted ascii input to data objects
+	struct dobj_ascii_info *	qs_dai_p;
 
 	int		qs_max_warnings;
 	int		qs_n_warnings;
 	int		qs_num_warnings;
-	int		qs_flags;	// where are the flag bits declared???
-	int		_qs_level;	// used for lookahead
-	int		qs_chew_level;
-	int		qs_ascii_level;
-	int		qs_fmt_code;
-	int		qs_serial;
 	FILE *		qs_error_fp;
 	FILE *		qs_msg_fp;
 	// BUG - we should phase these out in favor of string_buf's...
 	char 		qs_error_string[LLEN];
 	char 		qs_msg_str[LLEN];
 	const char *	qs_expected_warning;
-//	char **		qs_expr_strs;
-	String_Buf *	qs_result;
-	String_Buf *	qs_scratch;
-	List *		qs_chew_list;
-#define CHEW_LIST	QS_CHEW_LIST(THIS_QSP)
-	List *		qs_callback_lp;
-	List *		qs_event_lp;
-	Variable *	qs_tmpvar;
+
 #ifdef THREAD_SAFE_QUERY
 #ifdef HAVE_PTHREADS
 	pthread_t	qs_thr;
@@ -145,7 +166,6 @@ struct query_stack {
 	Vector_Parser_Data *	qs_vector_parser_data;
 	Scalar_Parser_Data *	qs_scalar_parser_data;
 
-	struct dobj_ascii_info *	qs_dai_p;
 	Item_Type *	qs_picking_item_itp;
 
 #ifdef BUILD_FOR_IOS
@@ -305,10 +325,26 @@ struct query_stack {
 #define PREV_QRY(qsp)			((Query *)NODE_DATA(nth_elt((qsp)->qs_query_stack,1)))
 #define FIRST_MENU(qsp)			((Menu *)BOTTOM_OF_STACK((qsp)->qs_menu_stack))
 #define FIRST_QRY(qsp)			((Query *)BOTTOM_OF_STACK((qsp)->qs_query_stack))
-#define QS_RETSTR_IDX(qsp)		(qsp)->qs_which_retstr
-#define SET_QS_RETSTR_IDX(qsp,n)	(qsp)->qs_which_retstr=n
-#define QS_RETSTR_AT_IDX(qsp,idx)	(qsp)->qs_retstr[idx]
-#define SET_QS_RETSTR_AT_IDX(qsp,idx,sbp)	(qsp)->qs_retstr[idx] = sbp
+
+#ifdef FOOBAR
+//#define QS_RETSTR_IDX(qsp)		(qsp)->qs_which_retstr
+//#define SET_QS_RETSTR_IDX(qsp,n)	(qsp)->qs_which_retstr=n
+//#define QS_RETSTR_AT_IDX(qsp,idx)	(qsp)->qs_retstr[idx]
+//#define SET_QS_RETSTR_AT_IDX(qsp,idx,sbp)	(qsp)->qs_retstr[idx] = sbp
+#endif // FOOBAR
+
+#define QS_RET_STR(qsp)			(qsp)->qs_ret_str
+#define QS_RET_STRBUF(qsp)		(qsp)->qs_ret_sbp
+#define QS_RET_PTR(qsp)			(qsp)->qs_ret_ptr
+#define SET_QS_RET_STR(qsp,v)		(qsp)->qs_ret_str = v
+#define SET_QS_RET_PTR(qsp,v)		(qsp)->qs_ret_ptr = v
+#define SET_QS_RET_STRBUF(qsp,v)	(qsp)->qs_ret_sbp = v
+
+#define QS_LINE_PTR(qsp)		QRY_LINE_PTR(CURR_QRY(qsp))
+#define SET_QS_LINE_PTR(qsp,v)		QRY_LINE_PTR(CURR_QRY(qsp)) = v
+
+#define ADD_TO_RESULT(c)		*(QS_RET_PTR(THIS_QSP)++) = (c)
+
 //#define QS_WHICH_ESTR(qsp)		(qsp)->qs_which_estr
 //#define SET_QS_WHICH_ESTR(qsp,idx)	(qsp)->qs_which_estr= idx
 
@@ -322,6 +358,10 @@ struct query_stack {
 #define SET_QS_CURR_STRING(qsp,s)	(qsp)->_qs_curr_string=s
 //#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
 //#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
+
+#define QS_WORD_SCAN_FLAGS(qsp)		(qsp)->qs_word_scan_flags
+#define QS_START_QUOTE(qsp)		(qsp)->qs_start_quote
+#define QS_N_QUOTATIONS(qsp)		(qsp)->qs_n_quotations
 
 #define QS_MAX_WARNINGS(qsp)		(qsp)->qs_max_warnings
 #define QS_N_WARNINGS(qsp)		(qsp)->qs_n_warnings

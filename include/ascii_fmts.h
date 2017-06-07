@@ -47,6 +47,7 @@ typedef enum {
 	N_PRINT_FORMATS		/* must be last */
 } Number_Fmt;
 
+// Is this all for ascii input?
 
 typedef struct dobj_ascii_info {
 	int			dai_padflag;

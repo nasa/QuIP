@@ -45,9 +45,7 @@ static List *cur_list;
 static char *get_hist_ctx_name(const char *prompt);
 
 /* local prototypes */
-static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp);
 static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char *string);
-static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char **choices);
 
 // need macro to make these all static
 ITEM_INTERFACE_CONTAINER(choice,LIST_CONTAINER)
@@ -93,6 +91,16 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 	return(icp);
 }
 
+static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
+{
+	PUSH_ITEM_CONTEXT(choice_itp,icp);
+	/* BUG? this will search all contexts...
+	 * BUT - we expect to find it in the first one!?
+	 */
+	del_item(QSP_ARG  choice_itp,hcp);
+	pop_item_context(QSP_ARG  choice_itp);
+}
+
 /* Scan a history list, removing any choices which are not in the new list */
 
 static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choices)
@@ -104,6 +112,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
 	ep = (CTX_CONTAINER(icp)->cnt_typ_p->new_enumerator)(CTX_CONTAINER(icp));
+fprintf(stderr,"new enumerator for context %s at 0x%lx\n",CTX_NAME(icp),(long)ep);
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){
@@ -116,8 +125,8 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 		 */
 		//hcp = (Hist_Choice *) enumerator_item(ep);
 		hcp = (Hist_Choice *) ep->e_typ_p->current_enum_item(ep);
-		//ep = advance_enumerator(ep);
 		ep = ep->e_typ_p->advance_enum(ep);
+
 		found=0;
 
 		/*
@@ -174,16 +183,6 @@ advise(ERROR_STRING);
 	}
 }
 
-static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
-{
-	PUSH_ITEM_CONTEXT(choice_itp,icp);
-	/* BUG? this will search all contexts...
-	 * BUT - we expect to find it in the first one!?
-	 */
-	del_item(QSP_ARG  choice_itp,hcp);
-	pop_item_context(QSP_ARG  choice_itp);
-}
-
 void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove selection from list, return next */
 {
 	Item_Context *icp;
@@ -218,23 +217,29 @@ void new_defs(QSP_ARG_DECL  const char* prompt)
 	clr_defs_if(QSP_ARG  icp,0,(const char **)NULL);
 }
 
-static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char* string)
+static inline void boost_choice(QSP_ARG_DECL  Hist_Choice *hcp, List *lp)
 {
 	Node *np;
+
+#ifdef QUIP_DEBUG
+if( debug & hist_debug ){
+sprintf(ERROR_STRING,"boost_choice:  increasing priority for choice \"%s\"",ITEM_NAME((Item *)hcp));
+advise(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+		/* we should boost the priority of an existing choice! */
+		np = nodeOf(lp,hcp);
+		assert( np != NO_NODE );
+
+		np->n_pri++;
+		p_sort(lp);
+}
+
+static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char* string)
+{
 	Hist_Choice *hcp;
 	List *lp;
 
-//fprintf(stderr,"add_word_to_history_list BEGIN\n");
-
-//#ifdef CAUTIOUS
-//	if( string[0]==0 ) {		/* don't add empty string */
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS: add_word_to_history_list:  not adding empty string to context %s",
-//			CTX_NAME(icp));
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( string[0] != 0 );		/* don't add empty string */
 
 //fprintf(stderr,"add_word_to_history_list, adding \"%s\" to context %s\n",string,CTX_NAME(icp));
@@ -253,27 +258,7 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 //fprintf(stderr,"add_word_to_history_list, container list has %d elements\n",eltcount(lp));
 
 	if( hcp != NO_CHOICE ){
-
-//fprintf(stderr,"found choice %s\n",ITEM_NAME((Item *)hcp));
-
-#ifdef QUIP_DEBUG
-if( debug & hist_debug ){
-sprintf(ERROR_STRING,"add_word_to_history_list:  increasing priority for choice \"%s\"",string);
-advise(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-		/* we should boost the priority of an existing choice! */
-		np = nodeOf(lp,hcp);
-//#ifdef CAUTIOUS
-//		if( np==NO_NODE ){
-//	WARN("CAUTIOUS:  add_word_to_history_list can't find node of existing choice");
-//			return;
-//		}
-//#endif	/* CAUTIOUS */
-		assert( np != NO_NODE );
-
-		np->n_pri++;
-		p_sort(lp);
+		boost_choice(QSP_ARG  hcp,lp);
 		pop_item_context(QSP_ARG  choice_itp);
 //fprintf(stderr,"add_word_to_history_list, returning after increasing node priority\n");
 		return;
@@ -284,12 +269,6 @@ advise(ERROR_STRING);
 	hcp=new_choice(QSP_ARG  string);	// do we save this somewhere???
 	pop_item_context(QSP_ARG  choice_itp);
 
-//#ifdef CAUTIOUS
-//	if( hcp==NO_CHOICE ){
-//		ERROR1("CAUTIOUS: error creating menu choice");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( hcp != NO_CHOICE );
 //fprintf(stderr,"add_word_to_history_list, returning after creating new choice\n");
 }
