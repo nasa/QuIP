@@ -71,18 +71,10 @@ fprintf(stderr,"No genwin found associated with view controller 0x%lx\n",
 
 	icp = GW_CONTEXT(gwp);
 
-	if( icp != NULL ){
-		if( [Screen_Obj contextStackDepth] > 1 )
-			pop_scrnobj_context();
-		push_scrnobj_context(GW_CONTEXT(gwp));
-	}
-#ifdef CAUTIOUS
-	  else {
-		sprintf(DEFAULT_ERROR_STRING,
-		"Genwin '%s' has no item context!?\n",GW_NAME(gwp));
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-#endif // CAUTIOUS
+	assert( icp != NULL );
+	if( [Screen_Obj contextStackDepth] > 1 )
+		pop_scrnobj_context();
+	push_scrnobj_context(GW_CONTEXT(gwp));
 }
 
 /***************** end UINavigationControllerDelegate methods ********/

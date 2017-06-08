@@ -88,11 +88,7 @@ void add_to_panel(Panel_Obj *po, Screen_Obj *sop)
 #ifdef BUILD_FOR_MACOS
 	NSView *cp = SOB_CONTROL(sop);
 
-#ifdef CAUTIOUS
-	if( [GW_WINDOW(PO_GW(po)) contentView] == nil ){
-		fprintf(stderr,"CAUTIOUS:  add_to_panel:  window contentView is null!?\n");
-	}
-#endif // CAUTIOUS
+	assert( [GW_WINDOW(PO_GW(po)) contentView] != nil );
 
 	[[GW_WINDOW(PO_GW(po)) contentView] addSubview : cp ];
 #endif // BUILD_FOR_MACOS

@@ -64,12 +64,9 @@ static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform
 			break;
 #endif // HAVE_CUDA
 
-//#ifdef CAUTIOUS
 		default:
-//			ERROR1("CAUTIOUS:  init_platform:  Unexpected platform type code!?");
 			assert( AERROR("Unexpected platform type code!?") );
 			break;
-//#endif // CAUTIOUS
 	}
 
 }
@@ -119,14 +116,6 @@ void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
 #endif /* FOOBAR */
 	siz = OBJ_N_TYPE_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
 
-//#ifdef CAUTIOUS
-//	if( PF_MEM_UPLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpto))) == NULL ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  gen_obj_dnload:  Platform %s has a null upload function!?",
-//			PLATFORM_NAME(OBJ_PLATFORM(dpto)));
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
 	assert( PF_MEM_UPLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpto))) != NULL );
 
 	( * PF_MEM_UPLOAD_FN(OBJ_PLATFORM(dpto)) )
@@ -162,14 +151,6 @@ void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 //siz,OBJ_N_MACH_ELTS(dpto),PREC_NAME(OBJ_MACH_PREC_PTR(dpto)) );
 
 
-//#ifdef CAUTIOUS
-//	if( PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpfr))) == NULL ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  gen_obj_dnload:  Platform %s has a null download function!?",
-//			PLATFORM_NAME(OBJ_PLATFORM(dpfr)));
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
 	assert( PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpfr))) != NULL );
 
 	( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dpfr)) )

@@ -61,17 +61,6 @@ extern void cu2_free_tmp(void *a, const char *whence);
 
 #define ERROR_CASE(code,string)	case code: msg = string; break;
 
-#ifdef CAUTIOUS
-#define INSURE_CURR_ODP(whence)					\
-	if( curr_pdp == NULL ){					\
-		sprintf(ERROR_STRING,"CAUTIOUS:  %s:  curr_pdp is null!?",#whence);	\
-		WARN(ERROR_STRING);				\
-	}
-#else // ! CAUTIOUS
-#define INSURE_CURR_ODP(whence)
-#endif // ! CAUTIOUS
-
-
 /* cl_device_type - bitfield
  *
  * CL_DEVICE_TYPE_DEFAULT
@@ -284,11 +273,7 @@ void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
 	}
 
 	pdp = AREA_PFDEV(OBJ_AREA(dp));
-
-#ifdef CAUTIOUS
-	if( pdp == NULL )
-		NERROR1("CAUTIOUS:  null cuda device ptr in data area!?");
-#endif /* CAUTIOUS */
+	assert( pdp != NULL );
 
 	if( curr_pdp != pdp ){
 sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%lx  pdp = 0x%lx",

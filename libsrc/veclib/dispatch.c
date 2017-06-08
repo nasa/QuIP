@@ -491,13 +491,6 @@ static int multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
 			i_dim = (-2);	// show that we found something...
 		}
 	}
-//#ifdef CAUTIOUS
-//	if( i_dim == -1 ){
-//NWARN("CAUTIOUS:  could't find a dimension to subdivide for multi-proc!?");
-//show_obj_args(QSP_ARG  oap);
-//	}
-//#endif /* CAUTIOUS */
-
 	assert( i_dim != (-1) );
 
 	if( VF_CODE(vfp) == FVRAMP1D ){
@@ -605,23 +598,7 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 	}
 #endif	/* N_PROCESSORS > 1 */
 
-//#ifdef CAUTIOUS
-//	if( /* OA_ARGSPREC(oap) < 0 || */ OA_ARGSPREC(oap) >= N_ARGSET_PRECISIONS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  vec_dispatch:  bad argset precision %d",OA_ARGSPREC(oap));
-//		ERROR1(ERROR_STRING);
-//	}
-
 	assert( OA_ARGSPREC(oap) < N_ARGSET_PRECISIONS );
-
-#ifdef CAUTIOUS
-	if( PF_FUNC_TBL(cpp) == NULL ){
-		sprintf(ERROR_STRING,
-"CAUTIOUS:  platform_dispatch:  vfa_tbl has not been set for platform %s!?",
-			PLATFORM_NAME(cpp));
-		WARN(ERROR_STRING);
-	}
-#endif // CAUTIOUS
-
 	assert( PF_FUNC_TBL(cpp) != NULL );
 
 #ifdef CAUTIOUS

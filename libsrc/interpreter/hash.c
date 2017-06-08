@@ -310,14 +310,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 		/* we assume that the name is the first field */
 
 		s = *((char **)entry[key]);
-//#ifdef CAUTIOUS
-//		if( s == NULL ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  item with null name string, ip = 0x%lx!?", (u_long)entry[key]);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return(NULL);
-//		}
-//#endif /* CAUTIOUS */
 		assert( s != NULL );
 
 		if( !strcmp(s,name) ) return(entry[key]);

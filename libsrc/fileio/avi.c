@@ -696,9 +696,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 		if( skewed_index < (long)HDR_P->avch_seek_tbl[i].seek_result ){
 			/* Found the first seek that goes past our goal */
 			i--;
-//#ifdef CAUTIOUS
-//			if( i < 0 ) NERROR1("CAUTIOUS:  bad avi seek table");
-//#endif /* CAUTIOUS */
 			assert( i >= 0 );
 
 			seek_target = HDR_P->avch_seek_tbl[i].seek_target;
@@ -708,9 +705,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 	}
 	if( seek_target < 0 ){	/* not found yet */
 		i--;
-//#ifdef CAUTIOUS
-//		if( i < 0 ) NERROR1("CAUTIOUS:  bad avi seek table");
-//#endif /* CAUTIOUS */
 		assert( i >= 0 );
 
 		seek_target = HDR_P->avch_seek_tbl[i].seek_target;
@@ -719,9 +713,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 		if( seek_result == (-1) ){
 			/* the last table entry can be an illegal seek */
 			i--;
-//#ifdef CAUTIOUS
-//			if( i < 0 ) NERROR1("CAUTIOUS:  bad avi seek table");
-//#endif /* CAUTIOUS */
 			assert( i >= 0 );
 
 			seek_target = HDR_P->avch_seek_tbl[i].seek_target;
@@ -769,15 +760,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 
 	n_skip_frames = n - ifp->if_nfrms;
 
-//#ifdef CAUTIOUS
-//	if( n_skip_frames < 0 ){
-//		sprintf(ERROR_STRING,"n = %d, n_frms = %d",
-//			n,ifp->if_nfrms);
-//		advise(ERROR_STRING);
-//		WARN("CAUTIOUS:  avi_seek:  n_skip_frames < 0 !?");
-//		n_skip_frames=0;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_skip_frames >= 0 );
 
 	while( n_skip_frames > 0 ){

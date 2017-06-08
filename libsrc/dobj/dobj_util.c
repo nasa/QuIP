@@ -65,33 +65,18 @@ void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 static void release_data(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( OBJ_DATA_PTR(dp) != (unsigned char *)NULL ){
-//#ifdef CAUTIOUS
-//		if( PF_FREE_FN( OBJ_PLATFORM(dp) ) == NULL ){
-//			sprintf(ERROR_STRING,
-//"CAUTIOUS:  release_data:  platform %s (object %s) has a null free function!?",
-//				PLATFORM_NAME(OBJ_PLATFORM(dp)),OBJ_NAME(dp));
-//			ERROR1(ERROR_STRING);
-//			IOS_RETURN;
-//		}
-//#endif // CAUTIOUS
 		assert( PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
 
 		(* PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) )(QSP_ARG  dp);
 	}
 
-//#ifdef CAUTIOUS
 	  else {
-//	  	sprintf(ERROR_STRING,
-//"CAUTIOUS:  release_data:  Object %s owns data but has a null data pointer!?",
-//			OBJ_NAME(dp) );
-//		WARN(ERROR_STRING);
 //		assert( AERROR("Object owns data but has a null data ptr!?") );
 
 		// This is normally an error, but this case can occur if we
 		// are deleting an partially created object that had some other
 		// initialization error...
 	}
-//#endif /* CAUTIOUS */
 
 }	// release_data
 
@@ -106,34 +91,6 @@ void disown_child( QSP_ARG_DECL  Data_Obj *dp )
 
 	np=remData(OBJ_CHILDREN( OBJ_PARENT(dp) ),dp);
 	assert( np != NULL );
-
-#ifdef FOOBAR
-//#ifdef CAUTIOUS
-	if( np==NULL ){
-		NWARN("CAUTIOUS:  disown_child:  couldn't find child node");
-		if( OBJ_PARENT(dp) == NULL ){
-			ERROR1("object has no parent!?");
-			IOS_RETURN
-		}
-		if( OBJ_CHILDREN( OBJ_PARENT(dp) ) == NULL ){
-			ERROR1("parent object has no children!?");
-			IOS_RETURN
-		} else {
-			sprintf(ERROR_STRING,"Children of %s:",OBJ_NAME( OBJ_PARENT(dp) ) );
-			advise(ERROR_STRING);
-			np=QLIST_HEAD( OBJ_CHILDREN( OBJ_PARENT(dp) ) );
-			while(np!=NULL){
-				sprintf(ERROR_STRING,"\t0x%lx",
-					((int_for_addr)NODE_DATA(np) ));
-				advise(ERROR_STRING);
-				np=NODE_NEXT(np);
-			}
-		}
-		ERROR1("giving up");
-		IOS_RETURN
-	} else
-//#endif /* CAUTIOUS */
-#endif // FOOBAR
 
 	rls_node(np);
 
@@ -369,12 +326,9 @@ static void set_minmaxdim(Shape_Info *shpp,uint32_t shape_flag)
 			SET_SHP_MAXDIM(shpp, 3);
 		else if( shape_flag == DT_HYPER_SEQ )
 			SET_SHP_MAXDIM(shpp, 4);
-//#ifdef CAUTIOUS
 		else {
-			//NWARN("CAUTIOUS:  set_minmaxdim:  unexpected type flag!?");
 			assert( AERROR("set_minmaxdim:  unexpected type flag!?") );
 		}
-//#endif /* CAUTIOUS */
 	}
 
 	/* set mindim */
@@ -448,23 +402,9 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 
 	CLEAR_SHP_FLAG_BITS(shpp,SHAPE_DIM_MASK);
 
-#ifdef CAUTIOUS
 	for(i=0;i<N_DIMENSIONS;i++){
 		assert( SHP_TYPE_DIM(shpp,i) > 0 );
-//		if( SHP_TYPE_DIM(shpp,i) <= 0 ){
-//			if( dp != NULL && OBJ_NAME(dp) != NULL )
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  set_shape_flags:  Object \"%s\", zero dimension[%d] = %d",
-//				OBJ_NAME(dp),i,SHP_TYPE_DIM(shpp,i));
-//			else
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  set_shape_flags:  zero dimension[%d] = %d",
-//				i,SHP_TYPE_DIM(shpp,i));
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return(-1);
-//		}
 	}
-#endif /* CAUTIOUS */
 
 	/* BUG?  here we set the shape type based
 	 * on dimension length, which makes it impossible
@@ -675,13 +615,6 @@ void gen_xpose(Data_Obj *dp,int dim1,int dim2)
 {
 	dimension_t	tmp_dim;
 	incr_t		tmp_inc;
-//#ifdef CAUTIOUS
-//	if( dim1 < 0 || dim1 >= N_DIMENSIONS ||
-//	    dim2 < 0 || dim2 >= N_DIMENSIONS ){
-//		NWARN("CAUTIOUS:  gen_xpose:  bad dimension index");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 
 	assert( dim1 >= 0 && dim1 < N_DIMENSIONS );
 	assert( dim2 >= 0 && dim2 < N_DIMENSIONS );
@@ -761,12 +694,9 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 	switch(index){
 		case 0: d = offsets[1]; break;
 		case 1: d = offsets[2]; break;
-//#ifdef CAUTIOUS
 		default:
-//			ERROR1("CAUTIOUS:  get_dobj_posn:  bad index!?");
 			assert( AERROR("get_dobj_posn:  bad index!?") );
 			break;
-//#endif // CAUTIOUS
 	}
 	return(d);
 }

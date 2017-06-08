@@ -84,12 +84,6 @@ FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode)
 	int i;
 #endif /* HAVE_STAT */
 
-//#ifdef CAUTIOUS
-//	if( filename[0]==0 ){
-//		WARN("try_open:  null file name");
-//		return(NULL);
-//	}
-//#endif /* CAUTIOUS */
 	assert( filename[0] != 0 );
 
 	/* fopen() will fail if the file has another owner,

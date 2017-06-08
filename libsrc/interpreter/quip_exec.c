@@ -20,14 +20,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 	assert( mp != NULL );
 
 //fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
-	//lp = dictionary_list( MENU_DICT(mp) );
 	lp = container_list( MENU_CONTAINER(mp) );
-//#ifdef CAUTIOUS
-//	if( lp == NULL ){
-//		WARN("CAUTIOUS:  stash_menu_commands:  no dictionary list!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( lp != NULL );
 
 	np = QLIST_HEAD(lp);
@@ -191,12 +184,6 @@ static void store_mouthful(QSP_ARG_DECL  const char *text,
 	np = mk_node( (void *) mfp );
 	if( CHEW_LIST == NULL ){
 		CHEW_LIST = new_list();
-//#ifdef CAUTIOUS
-//		if( CHEW_LIST==NULL ){
-//			ERROR1("CAUTIOUS:  couldn't make chew list");
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( CHEW_LIST != NULL );
 	}
 	addTail(CHEW_LIST,np);

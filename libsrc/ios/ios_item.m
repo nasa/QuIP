@@ -253,24 +253,13 @@ static IOS_Item_Type *ios_item_type_itp=NULL;
 	IOS_Item_Context *icp;
 	IOS_Item *ip=NULL;
 
-	// Are these errors all CAUTIOUS only???
-/*
-//fprintf(stderr,"%s check \"%s\" BEGIN\n",
-//self.name.UTF8String,s.UTF8String);
-//fflush(stderr);
-*/
+	assert( contextStack != NULL );
 
-	if( contextStack == NULL ) NERROR1("check:  context stack is NULL!?\n");
 	IOS_List *lp=contextStack.list;
-	if( lp == NULL ) NERROR1("context stack list is NULL!?");
+	assert( lp != NULL );
+
 	IOS_Node *np=lp.head;
-	if( np == NULL ) {
-		sprintf(DEFAULT_ERROR_STRING,
-	"(IOS_Item_Type %s) check %s:  first context node is NULL!?",
-		self.name.UTF8String,
-		s.UTF8String);
-		NERROR1(DEFAULT_ERROR_STRING);
-	}
+	assert( np != NULL );
 
 	while(np!=NULL){
 		icp=IOS_NODE_DATA(np);
@@ -383,16 +372,13 @@ static IOS_Item_Type *ios_item_type_itp=NULL;
 -(id) initWithName : (NSString *) s	// IOS_Item_Type
 {
 	self=[super init];
+
 #ifdef CAUTIOUS
 	IOS_Item_Type *itp;
 	itp = (IOS_Item_Type *)[ios_item_type_itp check : s ];
-	if( itp != NULL ){
-		sprintf(DEFAULT_ERROR_STRING,"IOS_Item_Type initWithName:  trying to init existing item type %s!?",s.UTF8String);
-		NADVISE(DEFAULT_ERROR_STRING);
-        [ios_item_type_itp list:tell_errfile(SGL_DEFAULT_QSP_ARG)];
-		abort();
-	}
+	assert( itp == NULL );
 #endif /* CAUTIOUS */
+
 	IOS_Item_Context *default_context=[[IOS_Item_Context alloc] initWithName:[s stringByAppendingString:@".default"] ];
 	contextStack = [[IOS_Stack alloc] init];
 	[ contextStack push : default_context ];

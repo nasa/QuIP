@@ -35,13 +35,6 @@ int is_evenly_spaced(Data_Obj *dp)
 	i=OBJ_MINDIM(dp)-1;
 	while(spacing==0){
 		i++;
-//#ifdef CAUTIOUS
-//		if( i >= N_DIMENSIONS ){
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  is_evenly_spaced %s:  spacing is 0!?",
-//				OBJ_NAME(dp));
-//			NERROR1(DEFAULT_ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
 		assert( i < N_DIMENSIONS );
 		spacing = OBJ_TYPE_INC(dp,i);
 	}
@@ -69,8 +62,6 @@ int is_evenly_spaced(Data_Obj *dp)
 	SET_SHP_EQSP_INC(OBJ_SHAPE(dp),spacing);
 	return 1;
 }
-
-/* Why is this function CAUTIOUS? */
 
 int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 {

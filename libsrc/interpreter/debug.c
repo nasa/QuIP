@@ -115,12 +115,6 @@ static void init_dbm(SINGLE_QSP_ARG_DECL)
 	AUTO_MODULE(  AUTO_MODULE_ITEMS,	ITEM_DEBUG_MASK		)
 	AUTO_MODULE(  AUTO_MODULE_CONTEXTS,	CTX_DEBUG_MASK		)
 
-//#ifdef CAUTIOUS
-//	if( n_debug_modules != N_AUTO_DEBUG_MODULES ){
-//		NERROR1("CAUTIOUS:  bad number of automatic debug modules");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_debug_modules == N_AUTO_DEBUG_MODULES );
 	// what about ios return?  will abort do it right away?
 #endif /* QUIP_DEBUG */

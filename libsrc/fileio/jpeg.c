@@ -1260,14 +1260,6 @@ write_LML_file_header(Image_File *ifp)
 
 static void init_jpeg_hdr(Image_File *ifp)
 {
-//#ifdef CAUTIOUS
-//	if( FT_CODE(IF_TYPE(ifp)) != IFT_JPEG && FT_CODE(IF_TYPE(ifp)) != IFT_LML ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  init_jpeg_hdr:  file %s should be type jpeg or lml!?",
-//			ifp->if_name);
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( FT_CODE(IF_TYPE(ifp)) == IFT_JPEG || FT_CODE(IF_TYPE(ifp)) == IFT_LML );
 
 	HDR_P(ifp)->jpeg_comps = 0;

@@ -638,7 +638,7 @@ extern int	get_string_width(Viewer *vp, const char *s);
 int event_loop(SINGLE_QSP_ARG_DECL);
 extern void embed_draggable(Data_Obj *dp,Draggable *dgp);
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);
-extern void	set_viewer_display(Viewer *vp);
+extern void	set_viewer_display(QSP_ARG_DECL  Viewer *vp);
 extern void	cmap_setup(Viewer *);
 extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);
 

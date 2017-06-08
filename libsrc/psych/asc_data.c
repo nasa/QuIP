@@ -160,12 +160,6 @@ static int read_class_summary(QSP_ARG_DECL  FILE *fp)
 		return(-1);
 	}
 	tcp=index_class(QSP_ARG  index);
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS ){
-//		WARN("CAUTIOUS:  missing class");
-//		return(-1);
-//	}
-//#endif
 	assert( tcp != NO_CLASS );
 
 	dtp = CLASS_DATA_TBL(tcp);

@@ -261,12 +261,6 @@ const char *get_date_string(SINGLE_QSP_ARG_DECL)
 #endif // ! HAVE_CTIME_R
 #endif // ! HAVE_GMTIME_R
 
-//#ifdef CAUTIOUS
-//	if( strlen(s) >= DATE_STRING_LEN ){
-//		fprintf(stderr,"CAUTIOUS:  get_data_string:  buffer too small!?\n");
-//		abort();
-//	}
-//#endif // CAUTIOUS
 	assert( strlen(s) < DATE_STRING_LEN );
 
 	/* erase trailing newline... */

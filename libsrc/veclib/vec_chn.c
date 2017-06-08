@@ -26,11 +26,6 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 {
 	Node *np;
 
-//	/* CAUTIOUS lp should never be null */
-//#ifdef CAUTIOUS
-//	if( CHAIN_LIST(cp)  == NULL ) ERROR1("CAUTIOUS:  _del_chain:  null list!?");
-//#endif /* CAUTIOUS */
-
 	assert( CHAIN_LIST(cp) != NULL );
 	while( (np=remTail(CHAIN_LIST(cp) )) != NULL ){
 		Vec_Chn_Blk *vcb_p;
@@ -90,16 +85,6 @@ void add_link(void (*func)(LINK_FUNC_ARG_DECLS), LINK_FUNC_ARG_DECLS)
 {
 	Vec_Chn_Blk *vcb_p;
 	Node *np;
-
-//#ifdef CAUTIOUS
-//	if( ! is_chaining ){
-//		NWARN("CAUTIOUS:  add_link:  need to start a chain before adding links");
-//		return;
-//	}
-//	if( curr_cp == NULL ){
-//		NERROR1("CAUTIOUS:  is_chaining is true, but curr_cp is NULL!?");
-//	}
-//#endif /* CAUTIOUS */
 
 	assert( is_chaining );
 	assert( curr_cp != NULL );

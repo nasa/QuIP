@@ -1154,12 +1154,6 @@ subroutine	: data_type new_func_decl stat_block
 			/* BUG make sure that precision matches prototype decl */
 			Subrt *srp;
 			srp=subrt_of(QSP_ARG  VN_STRING($2));
-//#ifdef CAUTIOUS
-//			if( srp == NULL ) {
-//				NODE_ERROR($2);
-//				ERROR1("CAUTIOUS:  missing subrt!?");
-//			}
-//#endif /* CAUTIOUS */
 			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,$3);
@@ -2649,13 +2643,6 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 
 	i=whkeyword(vt_native_func_tbl,CURR_STRING);
 	if( i!=(-1) ){
-//#ifdef CAUTIOUS
-//if( i != vt_native_func_tbl[i].kw_code ){
-//sprintf(ERROR_STRING,"CAUTIOUS:  OOPS vt_native_func_tbl[%d].kw_code = %d (expected %d)",i,vt_native_func_tbl[i].kw_code,i);
-//ERROR1(ERROR_STRING);
-//}
-//#endif /* CAUTIOUS */
-
 		// this assertion says that the table is in the correct order,
 		// either by initialization or sorting...
 		assert( i == vt_native_func_tbl[i].kw_code );
@@ -2681,12 +2668,9 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 			case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
 			case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 			case TS_FUNCTYP:	return(TS_FUNC);	break;
-//#ifdef CAUTIOUS
 			default:
-//				NERROR1("CAUTIOUS:  name_token:  bad function type!?");
 				assert( AERROR("name_token:  bad function type!?") );
 				break;
-//#endif /* CAUTIOUS */
 		}
 	}
 
@@ -2736,12 +2720,9 @@ WARN(ERROR_STRING);
 			yylvp->idp = idp;
 			return(LABELNAME);
 		}
-//#ifdef CAUTIOUS
 		else {
-//			WARN("CAUTIOUS:  unhandled identifier type!?");
 			assert( AERROR("unhandled identifier type!?") );
 		}
-//#endif /* CAUTIOUS */
 
 	} else {
 		yylvp->e_string=CURR_STRING;

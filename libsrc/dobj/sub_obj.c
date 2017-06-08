@@ -87,15 +87,8 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 	/* make sure that all the sizes are valid */
 
 	for(i=0;i<N_DIMENSIONS;i++){
-		if( DIMENSION(dsp,i) <= 0 ){
-			sprintf(ERROR_STRING,
-	"CAUTIOUS:  check_inset:  subobject %s dimension %d (%ld) must be positive!?",
-				name,i,(long)DIMENSION(dsp,i));
-			WARN(ERROR_STRING);
-			retval=(-1);
-		}
+		assert( DIMENSION(dsp,i) > 0 );
 	}
-	if( retval < 0 ) return retval;
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		index_t extreme_index;
@@ -381,19 +374,6 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 		SET_OBJ_MACH_INC(dp,i,OBJ_MACH_INC(parent,i));
 	}
 	SET_OBJ_ROW_INC(dp,OBJ_ROW_INC(dp) * 2);
-
-	// setup_dp_with_shape called from init_dp...
-	//dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
-
-//#ifdef CAUTIOUS
-//	if( dp==NULL ){
-//		WARN("CAUTIOUS:  mk_ilace error");
-//		return(dp);
-//	}
-//#endif /* CAUTIOUS */
-
-	// don't need this any more if we're not calling setup_dp
-	//assert( dp != NULL );
 
 	/* BUG?  even parity gets us the first set of lines, but by convention
 	 * in video terminology line numbering starts with 1, and the first set
@@ -750,9 +730,6 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			child_mach_inc = OBJ_MACH_INC(parent,i);
 			i++;
 		}
-//#ifdef CAUTIOUS
-//		if( child_mach_inc == 0 ) ERROR1("CAUTIOUS:  make_equivalence:  could not determine child_mach_inc!?");
-//#endif /* CAUTIOUS */
 		assert( child_mach_inc != 0 );
 
 		/* Is this correct in all cases?  If multiple parent elements make up one child

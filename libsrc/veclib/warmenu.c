@@ -65,12 +65,9 @@ static COMMAND_FUNC( do_convert )
 		case PREC_UIN:	code = FVCONV2UIN; break;
 		case PREC_UDI:	code = FVCONV2UDI; break;
 		case PREC_ULI:	code = FVCONV2ULI; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  do_convert:  unhandled machine precision!?");
 			assert( AERROR("do_convert:  unhandled machine precision!?") );
 			return;
-//#endif // CAUTIOUS
 	}
 
 	perf_vfunc(QSP_ARG  code,&oa1);

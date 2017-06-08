@@ -329,12 +329,7 @@ static Platform_Device * create_ocl_device(QSP_ARG_DECL  cl_device_id dev_id, Co
 
 	// initialize all the fields?
 
-#ifdef CAUTIOUS
-	if( pdp == NULL ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  init_ocl_device:  Error creating cuda device struct for %s!?",name_p);
-		WARN(ERROR_STRING);
-	}
-#endif /* CAUTIOUS */
+	assert( pdp != NULL );
 
 	if( pdp != NULL ){
 		SET_PFDEV_PLATFORM(pdp,cpp);
@@ -430,10 +425,8 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 		if( cgl_ctx != NULL){
 			// This means that we have an OpenGL window available...
 			share_group = CGLGetShareGroup(cgl_ctx);
-			if( share_group != NULL )
-				props[1] = (cl_context_properties) share_group;
-			else
-				ERROR1("CAUTIOUS:  init_ocl_device:  CGL context found, but null share group!?");
+			assert( share_group != NULL );
+			props[1] = (cl_context_properties) share_group;
 		} else {
 			// If we let this go, it sometimes causes a seg fault
 			// when we try to set the GL window afterwards!?
@@ -695,25 +688,11 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 //OBJ_OFFSET(OBJ_PARENT(dp)));
 
 	if( IS_COMPLEX(dp) ){
-#ifdef CAUTIOUS
-		if( offset & 1 ){
-			sprintf(ERROR_STRING,
-	"CAUTIOUS:  ocl_offset_data:  odd element offset (%d) requested for complex object %s!?",
-				offset,OBJ_NAME(dp));
-			ERROR1(ERROR_STRING);
-		}
-#endif // CAUTIOUS
+		assert( (offset & 1) == 0 );
 		offset /= 2;
 //fprintf(stderr,"Adjusted offset (%d) for complex object %s\n",offset,OBJ_NAME(dp));
 	} else if( IS_QUAT(dp) ){
-#ifdef CAUTIOUS
-		if( (offset & 3) != 0 ){
-			sprintf(ERROR_STRING,
-"CAUTIOUS:  ocl_offset_data:  element offset (%d) not a multiple of 4 for quaternion object %s!?",
-				offset,OBJ_NAME(dp));
-			ERROR1(ERROR_STRING);
-		}
-#endif // CAUTIOUS
+		assert( (offset & 3) == 0 );
 		offset /= 4;
 	}
 
@@ -728,11 +707,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 	int extra_offset;
 
 	parent_buf = find_parent_buf(QSP_ARG  OBJ_PARENT(dp),&extra_offset);
-
-#ifdef CAUTIOUS
-	if( parent_buf == NULL )
-		ERROR1("CAUTIOUS: ocl_offset_data:  no parent buffer!?");
-#endif // CAUTIOUS
+	assert( parent_buf != NULL );
 
 	reg.origin = (offset+extra_offset) * ELEMENT_SIZE(dp);
 

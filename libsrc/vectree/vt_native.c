@@ -48,13 +48,9 @@ float eval_vt_native_flt(Vec_Expr_Node *enp)
 void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 {
 	switch(VN_INTVAL(enp)){
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  eval_vt_native_assignment (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("eval_vt_native_assignment:  unhandled keyword!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -176,10 +172,6 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			status = system(s);
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
 			vp=assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
-//#ifdef CAUTIOUS
-//			if( vp == NULL )
-//NWARN("CAUTIOUS:  eval_vt_native_work (system):  assign_reserved_var(\"exit_status\",...) failed!?");
-//#endif // CAUTIOUS
 			assert( vp != NULL );
 				
 			}
@@ -369,15 +361,6 @@ advise("evaluating choldc...");
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"xform_list")
 			/* left child is an arglist */
-//#ifdef CAUTIOUS
-//			if( VN_CODE(VN_CHILD(enp,0)) != T_ARGLIST ){
-//				NODE_ERROR(enp);
-//				sprintf(ERROR_STRING,
-//	"CAUTIOUS:  NATIVE_XFORM_LIST arglist left child should be T_ARGLIST");
-//				NWARN(ERROR_STRING);
-//				return;
-//			}
-//#endif /* CAUTIOUS */
 			assert( VN_CODE(VN_CHILD(enp,0)) == T_ARGLIST );
 				
 			dst_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),0));
@@ -409,13 +392,9 @@ advise("evaluating choldc...");
 void update_vt_native_shape(Vec_Expr_Node *enp)
 {
 	switch(VN_INTVAL(enp)){
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  update_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("update_native_shape:  unhandled keyword!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -443,19 +422,12 @@ void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#endif // USE_NUMREC
 //#endif /* HAVE_NUMREC */
 			/* no shape, do nothing */
-//#ifdef CAUTIOUS
-//			verify_null_shape(QSP_ARG  enp);
-//#endif /* CAUTIOUS */
 			assert( VN_SHAPE(enp) == NULL );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  prelim_vt_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(ERROR_STRING);
 			assert( AERROR("prelim_vt_native_shape:  unhandled native func!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 

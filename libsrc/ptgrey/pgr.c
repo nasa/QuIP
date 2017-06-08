@@ -203,11 +203,6 @@ void get_camera_features( PGR_Cam *pgcp )
 	}
 
 	/* Now can the table and build the linked list */
-#ifdef FOOBAR
-#ifdef CAUTIOUS
-	if( pgcp->pc_feat_lp != NULL ) NERROR1("CAUTIOUS:  get_camera_features:  bad list ptr!?");
-#endif /* CAUTIOUS */
-#endif /* FOOBAR */
 	/* We may call this again after we have diddled the controls... */
 	/* releasing and rebuilding the list is wasteful, but should work... */
 	if( pgcp->pc_feat_lp != NULL ){
@@ -223,10 +218,7 @@ void get_camera_features( PGR_Cam *pgcp )
 
 		f = &pgcp->pc_features.feature[i];
 
-#ifdef CAUTIOUS
-		if( f->id < DC1394_FEATURE_MIN || f->id > DC1394_FEATURE_MAX )
-			NERROR1("CAUTIOUS:  bad feature id code");
-#endif /* CAUTIOUS */
+		assert( f->id >= DC1394_FEATURE_MIN && f->id <= DC1394_FEATURE_MAX );
 
 		if(f->available){
 			np = mk_node(f);
@@ -264,7 +256,7 @@ int list_camera_features(QSP_ARG_DECL  PGR_Cam *pgcp )
 {
 	Node *np;
 
-	if( pgcp->pc_feat_lp == NULL ) NERROR1("CAUTIOUS:  list_camera_features:  bad list");
+	assert( pgcp->pc_feat_lp != NULL );
 
 	np = QLIST_HEAD(pgcp->pc_feat_lp);
 	while(np!=NULL){
@@ -322,15 +314,7 @@ void report_feature_info(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_t id )
 			np = np->n_next;
 	}
 
-#ifdef CAUTIOUS
-	if( f == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  report_feature_info:  couldn't find %s",
-			/*dc1394_feature_desc[id - DC1394_FEATURE_MIN]*/
-			dc1394_feature_get_string(id) );
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert( f != NULL );
 
 	name=/*dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
 		dc1394_feature_get_string(f->id);
@@ -525,12 +509,7 @@ int list_video_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	for( i = 0; i< video_modes.num; i++ ){
 		s=name_for_video_mode(video_modes.modes[i]);
-#ifdef CAUTIOUS
-		if( s == NULL ){
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  No name for video mode %d!?",video_modes.modes[i]);
-			s = DEFAULT_ERROR_STRING;
-		}
-#endif /* CAUTIOUS */
+		assert( s != NULL );
 		prt_msg_frag("\t");
 		prt_msg(s);
 	}
@@ -903,12 +882,7 @@ int list_framerates(QSP_ARG_DECL  PGR_Cam *pgcp)
 
 	for(i=0;i<framerates.num; i++){
 		s=name_for_framerate(framerates.framerates[i]);
-#ifdef CAUTIOUS
-		if( s == NULL ){
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  No name for framerate%d!?",framerates.framerates[i]);
-			s = DEFAULT_ERROR_STRING;
-		}
-#endif /* CAUTIOUS */
+		assert( s != NULL );
 		prt_msg_frag("\t");
 		prt_msg(s);
 	}
@@ -972,10 +946,7 @@ static int set_default_video_mode(PGR_Cam *pgcp)
 		}
 	}
 
-#ifdef CAUTIOUS
-	if( video_mode == BAD_VIDEO_MODE )
-		NERROR1("CAUTIOUS:  set_default_video_mode:  unable to find an 8-bit video mode!?");
-#endif /* CAUTIOUS */
+	assert( video_mode != BAD_VIDEO_MODE );
 
 #ifdef FOOBAR
 	// double check that we found a video mode  that is MONO8
@@ -1083,11 +1054,7 @@ void pop_camera_context(SINGLE_QSP_ARG_DECL)
 	// pop old context...
 	Item_Context *icp;
 	icp=pop_dobj_context(SINGLE_QSP_ARG);
-#ifdef CAUTIOUS
-	if( icp == NULL ){
-		ERROR1("CAUTIOUS:  pop_camera_context popped a null dobj context!?");
-	}
-#endif // CAUTIOUS
+	assert( icp != NULL );
 }
 
 void push_camera_context(QSP_ARG_DECL  PGR_Cam *pgcp)
@@ -1221,13 +1188,7 @@ advise(ERROR_STRING);
 	ERROR1("init_buffer_objects:  error in dc1394_capture_dequeue!?" );
 		}
 		snprintf(fname,TMPSIZE,"_frame%d",framep->id);
-#ifdef CAUTIOUS
-		if( i != framep->id ){
-			sprintf(ERROR_STRING,
-	"init_buffer_objects:  frame id = %d, expected %d!?",framep->id,i);
-			WARN(ERROR_STRING);
-		}
-#endif // CAUTIOUS
+		assert( i == framep->id );
 		dp = make_1394frame_obj(QSP_ARG  framep);
 		if( dc1394_capture_enqueue(pgcp->pc_cam_p,framep)
 				!= DC1394_SUCCESS ){
@@ -1460,15 +1421,7 @@ Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
 		return(NULL);
 	}
 
-#ifdef CAUTIOUS
-	if( OBJ_DATA_PTR(dp) != framep->image ){
-		sprintf(DEFAULT_ERROR_STRING,
-	"grab_firewire_frame:  image data at 0x%lx, but expected 0x%lx!?",
-			(long)framep->image,(long)OBJ_DATA_PTR(dp));
-		NWARN(DEFAULT_ERROR_STRING);
-		SET_OBJ_DATA_PTR(dp, framep->image);
-	}
-#endif // CAUTIOUS
+	assert( OBJ_DATA_PTR(dp) == framep->image );
 
 	/* in the other case, the pointer is likely to be unchanged,
 	 * but we don't assume...
@@ -1502,13 +1455,8 @@ void release_oldest_frame(PGR_Cam *pgcp)
 
 	np = remTail(pgcp->pc_in_use_lp);
 
-#ifdef CAUTIOUS
 	// This is CAUTIOUS because of the pc_n_avail test above...
-	if( np == NULL ){
-		NWARN("release_oldest_frame:  no frames are currently dequeued");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( np != NULL );
 
 	framep = (dc1394video_frame_t *) np->n_data;
 

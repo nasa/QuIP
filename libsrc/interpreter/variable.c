@@ -184,16 +184,6 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 	Variable *vp;
 
 	vp=VAR_OF(name);
-//#ifdef CAUTIOUS
-//	if( vp != NULL ){
-//		sprintf(ERROR_STRING,
-//		"CAUTIOUS:  init_dynamic_var:  variable %s already exists!?",
-//			VAR_NAME(vp));
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
 	assert( vp == NULL );
 
 	vp = new_var_(QSP_ARG  name);

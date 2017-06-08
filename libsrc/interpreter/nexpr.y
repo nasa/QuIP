@@ -665,28 +665,16 @@ const char *eval_scalexp_string(QSP_ARG_DECL  Scalar_Expr_Node *enp)
 
 		case N_LITSTR:
 			tsp = enp->sen_tsp;
-//#ifdef CAUTIOUS
-//			if( tsp->ts_prec_code != PREC_STR ){
-//				NWARN("CAUTIOUS:  eval_scalexp_string:  typed scalar does not have string precision!?");
-//				return "foobar";
-//			}
-//#endif // CAUTIOUS
 			assert( tsp->ts_prec_code == PREC_STR );
 
 			return (char *) tsp->ts_value.u_vp;
 			break;
-//#ifdef CAUTIOUS
 		case N_STRING:
 			return EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			break;
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  eval_scalexp_string:  unhandled node code %d!?",enp->sen_code);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			dump_etree(DEFAULT_QSP_ARG  enp);
 			assert( 0 );
 			break;
-//#endif // CAUTIOUS
 	}
 	return "foobar";
 }
@@ -708,12 +696,9 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				return(NULL);
 			}
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			NWARN("unexpected case in eval_tsbl_expr");
 			assert( AERROR("unexpected case in eval_tsbl_expr") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(ip);
 }
@@ -1052,14 +1037,9 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			dp=(*csub_func)( QSP_ARG  dp2, index );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(dp);
 } // end eval_dobj_expr
@@ -1109,14 +1089,9 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -1192,14 +1167,9 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			break;
 #endif // FOOBAR
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -1536,12 +1506,6 @@ dump_enode(QSP_ARG  enp);
 
 		if( val_func_p == NULL )
 			val_func_p = function_of(QSP_ARG  "value");
-//#ifdef CAUTIOUS
-//		if( val_func_p == NULL ){
-//			ERROR1("CAUTIOUS:  couldn't find object value function!?");
-//			IOS_RETURN_VAL(NULL);
-//		}
-//#endif /* CAUTIOUS */
 		assert( val_func_p != NULL );
 
 		/* This seems buggy - there should be a value function
@@ -1771,17 +1735,9 @@ dump_enode(QSP_ARG  enp);
 //		break;
 //#endif /* FOOBAR */
 
-//#ifdef CAUTIOUS
 	default:		// eval_expr
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS:  %s - %s:  unhandled node code case %d!?",
-//			WHENCE2(eval_expr),
-//			enp->sen_code);
-//		NWARN(ERROR_STRING);
-//		SET_RESULT_ZERO
 		assert(0);
 		break;
-//#endif /* CAUTIOUS */
 
 	}
 
@@ -2104,12 +2060,9 @@ static int token_for_func_type(int type)
 		case TS_FUNCTYP:	return(TS_FUNC);	break;
 		case ILACE_FUNCTYP:	return(IL_FUNC);	break;
 		case POSN_FUNCTYP:	return(POSN_FUNC);	break;
-//#ifdef CAUTIOUS
 		default:
-//			NERROR1("CAUTIOUS:  token_for_func_type:  bad type!?");
 			assert( AERROR("token_for_func_type:  bad type!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(-1);
 }

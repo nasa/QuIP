@@ -292,13 +292,7 @@ static NSString *kCellIdentifier = @"MyIdentifier";
 -(void) qtvcDoneButtonPressed
 {
 	done_button_pushed=1;
-#ifdef CAUTIOUS
-	if( done_action == NULL ){
-		NWARN("qtvcDoneButtonPushed:  no action!?");
-		return;
-	}
-#endif // CAUTIOUS
-    
+	assert( done_action != NULL );
 	chew_text(DEFAULT_QSP_ARG  done_action.UTF8String, "(done button)" );
 }
 

@@ -144,11 +144,6 @@ void dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t n,float
 		for(j=0;j<cols;j++)
 			destptr[j*OBJ_PXL_INC(dpto)] = image[j];
 		destptr += OBJ_ROW_INC(dpto);
-
-		if( verbose ){
-			sprintf(msg_str,"line %d done",i);
-			prt_msg(msg_str);
-		}
 	}
 }
 

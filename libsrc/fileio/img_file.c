@@ -700,18 +700,6 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 		// open routines...  So we do - nothing?
 	}
 
-#ifdef FOOBAR
-//#ifdef CAUTIOUS
-	  else {
-//	  	sprintf(ERROR_STRING,
-//"CAUTIOUS:  img_file_creat:  file type %s doesn't specify i/o type?",
-//			FT_NAME(ftp));
-//	  	ERROR1(ERROR_STRING);
-		assert( AERROR("img_file_creat:  file type %s doesn't specify i/o type?") );
-	}
-//#endif // CAUTIOUS
-#endif // FOOBAR
-
 dun:
 	if( had_error ){
 		if( IS_READABLE(ifp) ){
@@ -855,11 +843,8 @@ void if_info(QSP_ARG_DECL  Image_File *ifp)
 			INFO_ARGS(ifp->if_nfrms));
 		prt_msg(msg_str);
 	}
-//#ifdef CAUTIOUS
 	else
-//		prt_msg("Wacky RW mode!?");
 		assert( AERROR("Wacky RW mode!?") );
-//#endif // CAUTIOUS
 
 	/* print format-specific info, if any */
 	(*FT_INFO_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
@@ -989,22 +974,9 @@ static void init_suffix( QSP_ARG_DECL  const char *name, filetype_code code )
 	Filetype *ftp;
 
 	ftp = filetype_for_code(QSP_ARG  code);
-//#ifdef CAUTIOUS
-//	if( ftp == NULL ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  init_suffix:  No filetype found for suffix \"%s\"!?",name);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( ftp != NULL );
 
 	sfx_p = new_suffix(QSP_ARG  name);
-//#ifdef CAUTIOUS
-//	if( sfx_p == NULL ) {
-//		ERROR1("CAUTIOUS:  init_suffix:  Error creating filetype suffix!?");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( sfx_p != NULL );
 
 	/* Now file the filetype struct with this code... */
@@ -1128,11 +1100,7 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 
 	ftp = infer_filetype_from_name(QSP_ARG  name);
 	if( ftp == NULL ){
-//#ifdef CAUTIOUS
-//		if( curr_ftp == NULL ) ERROR1("CAUTIOUS:  read_image_file:  default filetype is not set!?");
-//#endif /* CAUTIOUS */
 		assert( curr_ftp != NULL );
-
 		ftp=curr_ftp;	/* use default if can't figure it out */
 	} else if( verbose && ftp!=curr_ftp ){
 		sprintf(ERROR_STRING,"Inferring filetype %s from filename %s, overriding default %s",
@@ -1167,11 +1135,7 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 
 	ftp = infer_filetype_from_name(QSP_ARG  filename);
 	if( ftp == NULL ) {	/* use default if can't figure it out */
-//#ifdef CAUTIOUS
-//		if( curr_ftp == NULL ) ERROR1("CAUTIOUS:  write_image_file:  default filetype is not set!?");
-//#endif /* CAUTIOUS */
 		assert( curr_ftp != NULL );
-
 		ftp=curr_ftp;	/* use default if can't figure it out */
 	} else if( ftp != curr_ftp ){
 		sprintf(ERROR_STRING,"Inferring filetype %s from filename %s, overriding default %s",
@@ -1261,13 +1225,9 @@ advise(ERROR_STRING);
 	else if( *rw == 'w' )
 		ifp = write_image_file(QSP_ARG  filename,4096);
 
-//#ifdef CAUTIOUS
 	else {
-//		WARN("CAUTIOUS:  bad r/w string passed to open_image_file");
-//		ifp = NULL;
 		assert( AERROR("bad r/w string passed to open_image_file") );
 	}
-//#endif /* CAUTIOUS */
 
 	return(ifp);
 }

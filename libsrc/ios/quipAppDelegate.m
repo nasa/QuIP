@@ -187,12 +187,8 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	Screen_Obj *sop=find_any_scrnobj(tableView);
 	CHECK_SCRNOBJ_INT(sop,tableView,numberOfSectionsInTableView,1);
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER ){
-		return 1;
-	} else {
-		NWARN("CAUTIOUS:  numberOfSectionsIntableView:  bad screen object!?");
-		return 0;
-	}
+	assert( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER );
+	return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)component
@@ -202,24 +198,11 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER){
 		// now access stored information in the object
-#ifdef CAUTIOUS
-		if( component != 0 ) {
-			sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  numberOfRowsInSection (TableView):  component (%ld) should be 0 for a chooser!?",
-				(long)component);
-			NWARN(DEFAULT_ERROR_STRING);
-			return 0;
-		}
-#endif // CAUTIOUS
+		assert( component == 0 );
 		return SOB_N_SELECTORS(sop);
-	} else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  numberOfRowsInSection:  Bad screen object type!?");
-		NWARN(DEFAULT_ERROR_STRING);
-		return 0;
 	}
-//#else // ! CAUTIOUS
+	assert(0);
 	return 0;	// shouldn't happen
-//#endif // ! CAUTIOUS
 }
 
 - (UITableViewCell *) tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -230,12 +213,8 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	CHECK_SCRNOBJ_INT(sop,tableView,cellForRowAtIndexPath,1);
 
 	int r = (int) indexPath.row;
-#ifdef CAUTIOUS
-	if( r < 0 || r >= SOB_N_SELECTORS(sop) ){
-		NWARN("CAUTIOUS:  cellForRowAtIndexPath (TableView):  index out of range!?");
-		return 0;
-	}
-#endif /* CAUTIOUS */
+	assert( r >= 0 && r < SOB_N_SELECTORS(sop) );
+
 	const char **strings = SOB_SELECTORS(sop);
 
 	c = [tableView dequeueReusableCellWithIdentifier: kCellIdentifier ];
@@ -290,16 +269,9 @@ static int path_iterate(Screen_Obj *sop, void (*func)() )
 
 void clear_all_selections(Screen_Obj *sop)
 {
-	//int n;
+	assert( IS_CHOOSER(sop) );	// chooser or mlt_chooser
 
-	if( IS_CHOOSER(sop) ){	// chooser or mlt_chooser
-		/*n =*/ path_iterate(sop,clear_selection);
-	}
-#ifdef CAUTIOUS
-	  else {
-		NWARN("CAUTIOUS:  clear_all_selections:  bad widget type!?");
-	}
-#endif // CAUTIOUS
+	path_iterate(sop,clear_selection);
 }
 
 String_Buf *choice_sbp=NULL;
@@ -378,38 +350,20 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	CHECK_SCRNOBJ_VOID(sop,tableView,didSelectRowAtIndexPath,1);
 
 	int section = (int) indexPath.section;
-	if( section != 0 ){
-		NWARN("CAUTIOUS:  didSelectRowAtIndexPath:  unexpected section!?");
-		return;
-	}
+	assert( section == 0 );
+
 	int row = (int) indexPath.row;	// assume just one section
 
-#ifdef CAUTIOUS
-	if( sop == NULL ){
-		NWARN("CAUTIOUS:  didSelectRow (TableView):  couldn't find screen object!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( sop != NULL );
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER){
-#ifdef CAUTIOUS
-		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
-			NWARN("CAUTIOUS:  didSelectRow (TableView):  unexpected row index!?");
-			return;
-		}
-#endif /* CAUTIOUS */
-		if (SOB_TYPE(sop) == SOT_CHOOSER) {
-			assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
-		} else { //SOB_TYPE(sop) == SOT_MLT_CHOOSER
-			updateMultipleChoices(sop);
-		}
+	assert( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER);
+	assert( row >= 0 && row < SOB_N_SELECTORS(sop) );
+
+	if (SOB_TYPE(sop) == SOT_CHOOSER) {
+		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
+	} else { //SOB_TYPE(sop) == SOT_MLT_CHOOSER
+		updateMultipleChoices(sop);
 	}
-#ifdef CAUTIOUS
-  else {
-	NWARN("CAUTIOUS:  tableView didSelectRow: unexpected widget type!?");
-	return;
-	}
-#endif /* CAUTIOUS */
 
 	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(table selection event)");
 } // end didSelectRowAtIndexPath
@@ -422,14 +376,13 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	Screen_Obj *sop=find_any_scrnobj(pickerView);
 	CHECK_SCRNOBJ_INT(sop,pickerView,numberOfComponentsInPickerView,1);
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER)
-		return 1;
-	else if( SOB_TYPE(sop) == SOT_PICKER )
+	assert( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER ||
+		SOB_TYPE(sop) == SOT_PICKER );
+
+	if( SOB_TYPE(sop) == SOT_PICKER )
 		return SOB_N_CYLINDERS(sop);
-	else {
-		NWARN("CAUTIOUS:  numberOfComponentsInPickerView:  bad screen object!?");
-		return 0;
-	}
+
+	return 1;		// default
 }
 
 - (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
@@ -439,39 +392,14 @@ static void updateMultipleChoices(Screen_Obj *sop)
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER || SOB_TYPE(sop) == SOT_MLT_CHOOSER){
 		// now access stored information in the object
-#ifdef CAUTIOUS
-		if( component != 0 ) {
-			sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  numberOfRowsInComponent (PickerView):  component (%ld) should be 0 for a chooser!?",
-				(long)component);
-			NWARN(DEFAULT_ERROR_STRING);
-			return 0;
-		}
-#endif // CAUTIOUS
+		assert( component == 0 );
 		return SOB_N_SELECTORS(sop);
-	} else if( SOB_TYPE(sop) == SOT_PICKER ){
-#ifdef CAUTIOUS
-		if( component < 0 || component > (SOB_N_CYLINDERS(sop)-1) ) {
-			sprintf(DEFAULT_ERROR_STRING,
-"CAUTIOUS:  numberOfRowsInComponent (PickerView):  component (%ld) out of range for picker %s!?",
-				(long)component,SOB_NAME(sop));
-			NWARN(DEFAULT_ERROR_STRING);
-			return 0;
-		}
-
-#endif // CAUTIOUS
-		int n= SOB_N_SELECTORS_AT_IDX(sop,component);
-		return n;
 	}
-#ifdef CAUTIOUS
-	else {
-		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  numberOfRowsInComponent:  Bad screen object type!?");
-		NWARN(DEFAULT_ERROR_STRING);
-		return 0;
-	}
-#else // ! CAUTIOUS
-	return 0;	// shouldn't happen
-#endif // ! CAUTIOUS
+	
+	assert( SOB_TYPE(sop) == SOT_PICKER );
+	assert( component >= 0 && component < SOB_N_CYLINDERS(sop) ) ;
+	int n= SOB_N_SELECTORS_AT_IDX(sop,component);
+	return n;
 }
 
 // A "picker" is iOS for what we have called a "chooser"
@@ -482,49 +410,23 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	CHECK_SCRNOBJ_STR(sop,pickerView,titleForRow,1);
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER ){
-#ifdef CAUTIOUS
-		if( component != 0 ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected chooser component index %ld!?",
-				(long)component);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected chooser row index %ld!?",(long)row);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-#endif /* CAUTIOUS */
+		assert( component == 0 );
+		assert( row >= 0 && row < SOB_N_SELECTORS(sop) );
 		return STRINGOBJ( SOB_SELECTORS(sop)[row] );
-	} else if( SOB_TYPE(sop) == SOT_PICKER ){
-		// Make sure component and row are OK
-#ifdef CAUTIOUS
-		if( component < 0 || component >= SOB_N_CYLINDERS(sop) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected picker component index %ld!?",(long)row);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-		if( row < 0 || row >= SOB_N_SELECTORS_AT_IDX(sop, component) ){
-			sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  titleForRow (PickerView):  unexpected picker row index %ld!?",(long)row);
-			NWARN(DEFAULT_ERROR_STRING);
-			return @"???";
-		}
-#endif /* CAUTIOUS */
-		//const char *s=SOB_SELECTOR_AT_IDX(sop, component,row);
-		const char ***tbl;
-		tbl = SOB_SELECTOR_TBL(sop);
-		const char **list;
-		list = tbl[component];
-		const char *s;
-		s=list[row];
-		return STRINGOBJ( s );
-
 	}
-	return @"???";
+	
+	assert( SOB_TYPE(sop) == SOT_PICKER );
+
+	// Make sure component and row are OK
+	assert( component >= 0 && component < SOB_N_CYLINDERS(sop) );
+	assert( row >= 0 && row < SOB_N_SELECTORS_AT_IDX(sop, component) );
+	const char ***tbl;
+	tbl = SOB_SELECTOR_TBL(sop);
+	const char **list;
+	list = tbl[component];
+	const char *s;
+	s=list[row];
+	return STRINGOBJ( s );
 }
 
 - (void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
@@ -533,23 +435,12 @@ static void updateMultipleChoices(Screen_Obj *sop)
 	CHECK_SCRNOBJ_VOID(sop,pickerView,didSelectRow,1);
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER ){
-//#ifdef CAUTIOUS
-//		if( component != 0 ){
-//			NWARN("CAUTIOUS:  titleForRow (PickerView):  unexpected component index!?");
-//			return;
-//		}
 		assert( component == 0 );
-
-//		if( row < 0 || row >= SOB_N_SELECTORS(sop) ){
-//			NWARN("CAUTIOUS:  titleForRow (PickerView):  unexpected row index!?");
-//			return;
-//		}
-//#endif /* CAUTIOUS */
-
 		assert( row>=0 && row < SOB_N_SELECTORS(sop) );
 
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTORS(sop)[row] );
-	} else if( SOB_TYPE(sop) == SOT_PICKER ){
+	} else {
+		assert( SOB_TYPE(sop) == SOT_PICKER );
 		assert( component >= 0 && component < SOB_N_CYLINDERS(sop));
 		assert(row>=0&&row<SOB_N_SELECTORS_AT_IDX(sop,component));
 
@@ -561,11 +452,6 @@ static void updateMultipleChoices(Screen_Obj *sop)
 		assign_var(DEFAULT_QSP_ARG "choice_index", choice_idx );
 		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,(int)component,(int)row) );
 	}
-#ifdef CAUTIOUS
-	  else {
-		  assert( ! "Unexpected widget type!?" );
-	}
-#endif /* CAUTIOUS */
 	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(row selection event)");
 } // end didSelectRow
 
@@ -598,17 +484,10 @@ static void updateMultipleChoices(Screen_Obj *sop)
 
 		// BUG need to set variable here...
 		assign_var(DEFAULT_QSP_ARG  "input_text",new_content);
-	} else if( SOB_TYPE(sop) == SOT_TEXT || SOB_TYPE(sop) == SOT_TEXT_BOX ){
+	} else {
+		assert( SOB_TYPE(sop) == SOT_TEXT || SOB_TYPE(sop) == SOT_TEXT_BOX );
 fprintf(stderr,"non-editable text box changed!?\n");
 	}
-#ifdef CAUTIOUS
-	  else {
-		sprintf(DEFAULT_ERROR_STRING,
-	"CAUTIOUS:  Unexpected screen object %s generated textViewDidChange callback!?",
-			SOB_NAME(sop));
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-#endif /* CAUTIOUS */
 
 	if( new_content != NULL )
 		SET_SOB_CONTENT(sop, new_content );
@@ -670,12 +549,7 @@ event_done:
 			i=SOB_N_SELECTORS(sop);	// break out
 		}
 	}
-#ifdef CAUTIOUS
-	if( choice_idx < 0 ){
-		NWARN("CAUTIOUS:  genericChooserAction:  bad choice!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( choice_idx >= 0 );
 
 	const char *s=SOB_SELECTORS(sop)[choice_idx];
 	assign_var(DEFAULT_QSP_ARG "choice", s );
@@ -1247,12 +1121,7 @@ static double accel[3]={0,0,0};
 	// How do we know which qsp to wake?
 	IOS_Node *np;
 
-#ifdef CAUTIOUS
-	if( wakeup_lp == NULL ){
-		NWARN("CAUTIOUS:  quip_wakeup:  null wakeup list!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( wakeup_lp != NULL );
 
 	np = IOS_LIST_HEAD(wakeup_lp);
 	while( np != NULL ){

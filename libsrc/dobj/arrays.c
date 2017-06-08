@@ -425,15 +425,9 @@ void make_array_name( QSP_ARG_DECL  char *target_str, int buflen, Data_Obj *dp, 
 		right_delim = '}';
 		nstars = which_dim - OBJ_MINDIM(dp);
 	}
-//#ifdef CAUTIOUS
 	else {
-//		WARN("CAUTIOUS:  unrecognized subscript type");
-//		left_delim  = '{';
-//		right_delim = '}';
-//		nstars = which_dim - OBJ_MINDIM(dp);
 		assert( AERROR("Bad subscript type!?") );
 	}
-//#endif /* CAUTIOUS */
 
 	/* now make the name */
 	strcpy(target_str,OBJ_NAME(dp));

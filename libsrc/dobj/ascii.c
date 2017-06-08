@@ -792,13 +792,11 @@ static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_pt
 			}
 			break;
 
-//#ifdef CAUTIOUS
 		case PREC_INVALID:
 		case N_MACHINE_PRECS:	/* just to silence compiler */
 		case PREC_NONE:		/* should have been handled above */
 			assert( AERROR("Unexpected case in switch!?") );
 			break;
-//#endif /* CAUTIOUS */
 
 	}
 }
@@ -860,14 +858,10 @@ advise(ERROR_STRING);
 			WARN(ERROR_STRING);
 			return(-1);
 			break;
-//#ifdef CAUTIOUS
 		case PREC_INVALID:
 		case N_MACHINE_PRECS:	/* have this case here to silence compiler */
-//			ERROR1("bad case in get_next");
 			assert( AERROR("bad case in get_next"));
 			break;
-		/* default: ERROR1("CAUTIOUS:  get_next, bad machine precision"); break; */
-//#endif /* CAUTIOUS */
 	}
 
 	set_one_value(QSP_ARG  dp, datap, num_ptr);
@@ -961,12 +955,9 @@ void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision
 	mp = (mach_prec)(MP_BITS(PREC_CODE(prec_p)));
 	switch( mp ){
 
-//#ifdef CAUTIOUS
 		case PREC_NONE:
-//			NERROR1("CAUTIOUS:  format_scalar_value:  null precision!?");
 			assert( AERROR("format_scalar_value:  null precision!?") );
 			break;
-//#endif /* CAUTIOUS */
 
 #ifdef USE_LONG_DOUBLE
 		case PREC_LP: ddata=(* ((long double *)data) ); goto pntflt;
@@ -996,14 +987,10 @@ pntlng:
 			sprintf(buf,ifmtstr,l);
 			break;
 
-//#ifdef CAUTIOUS
 		case PREC_INVALID:
 		case N_MACHINE_PRECS:	/* silence compiler */
-//			NERROR1("CAUTIOUS:  format_scalar_value:  bad machine precision");
 			assert( AERROR("format_scalar_value:  bad machine precision") );
 			break;
-		/* default: ERROR1("CAUTIOUS:  format_scalar_value:  unknown prec"); break; */
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -1031,9 +1018,7 @@ Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
 				case COMPLEX_ARGS:	code=PREC_CPX; break;
 				case QMIXED_ARGS:
 				case QUATERNION_ARGS:	code=PREC_QUAT; break;
-				// BUG mixed args depend on WHICH source arg!
 				default:
-					//NERROR1("CAUTIOUS:  bad argset type in src_prec_for_argset_prec()");
 					assert( AERROR("bad argset type in src_prec_for_argset_prec()") );
 					break;
 			}
@@ -1045,9 +1030,7 @@ Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
 				case COMPLEX_ARGS:	code=PREC_DBLCPX; break;
 				case QMIXED_ARGS:
 				case QUATERNION_ARGS:	code=PREC_DBLQUAT; break;
-				// BUG mixed args depend on WHICH source arg!
 				default:
-					//NERROR1("CAUTIOUS:  bad argset type in src_prec_for_argset_prec()");
 					assert( AERROR("bad argset type in src_prec_for_argset_prec()") );
 					break;
 			}
@@ -1061,7 +1044,6 @@ Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
 		case INDI_ARGS:	code=PREC_IN; break;
 		case SPDP_ARGS:	code=PREC_SP; break;
 		default:
-//			NERROR1("CAUTIOUS:  bad argset prec in src_prec_for_argset_prec()");
 			assert( AERROR("bad argset prec in src_prec_for_argset_prec()") );
 			break;
 	}
@@ -1502,11 +1484,8 @@ void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
 			ifmtstr= (padflag ? "0x%-10lx" : "0x%lx"); break;
 		case FMT_OCTAL:
 			ifmtstr= (padflag ? "0%-10lo"  : "0%lo") ; break;
-//#ifdef CAUTIOUS
 		default:
-//			ERROR1("CAUTIOUS:  unrecognized format code");
 			assert( AERROR("unrecognized format code") );
-//#endif /* CAUTIOUS */
 	}
 }
 

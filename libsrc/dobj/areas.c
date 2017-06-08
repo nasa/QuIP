@@ -58,11 +58,6 @@ void pop_data_area(void)
 {
 	Data_Area *ap;
 
-//#ifdef CAUTIOUS
-//	if( data_area_stack_p == NULL )
-//		NERROR1("CAUTIOUS:  pop_data_area:  Data area stack never created!?");
-//#endif // CAUTIOUS
-
 	assert( data_area_stack_p != NULL );
 
 	ap = (Data_Area *) pop_item(data_area_stack_p);
@@ -157,9 +152,6 @@ new_area( QSP_ARG_DECL  const char *s, uint32_t siz, int n )
 	// our own implementation of getbuf never returns a failure
 	// code; but we sometimes compile with getbuf #define'd to be malloc
 	assert( buf != NULL );
-//#ifdef CAUTIOUS
-//	if( buf==((u_char *)NULL) ) NERROR1("no mem for data area");
-//#endif /* CAUTIOUS */
 
 	ap=area_init(QSP_ARG  s,buf,siz,n,DA_RAM);
 	if( ap==NULL ) givbuf((char *)buf);
@@ -200,14 +192,9 @@ void data_area_info(QSP_ARG_DECL  Data_Area *ap )
 			break;
 #endif /* defined DA_CUDA_CONSTANT */
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  data_area_info %s:  Bad data area type flag 0x%x (flags = 0x%x)",
-//				ap->da_name,ap->da_flags & DA_TYPE_MASK, ap->da_flags);
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("Bad data area type!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 

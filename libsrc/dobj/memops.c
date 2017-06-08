@@ -25,6 +25,8 @@
 
 int max_vectorizable;
 
+// We probably can eliminate this!  BUG?
+
 void getmean( QSP_ARG_DECL  Data_Obj *dp )
 {
 	u_long i;
@@ -262,15 +264,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 		COPY_IT( double )
 	}
 
-//#ifdef CAUTIOUS
 	else {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  fast_copy:  unsupported precision %s",
-//			OBJ_MACH_PREC_NAME(dp_to) );
-//		NWARN(DEFAULT_ERROR_STRING);
 		assert( AERROR("Unsupported precision in fast_copy!?") );
 	}
-//#endif /* CAUTIOUS */
-
 }
 
 

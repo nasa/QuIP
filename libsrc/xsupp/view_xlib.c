@@ -399,10 +399,6 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 		return(win);   /* leave immediately if couldn't create */
 	}
 
-//#ifdef CAUTIOUS
-//	if( dop == NULL )
-//		ERROR1("CAUTIOUS:  CreateGLWindow, no current display!?");
-//#endif /* CAUTIOUS */
 	assert( dop != NULL );
 
 	SET_DO_CURRW(dop, win);
@@ -509,20 +505,15 @@ static Window creat_window(const char *name,int w,int h,long event_mask)
 	return(scrW);
 } /* end creat_window */
 
-void set_viewer_display(Viewer *vp)
+void set_viewer_display(QSP_ARG_DECL  Viewer *vp)
 {
 	Disp_Obj *dop;
 
 	dop=curr_dop();
-//#ifdef CAUTIOUS
-//	if( dop == NULL )
-//		NERROR1("CAUTIOUS:  set_viewer_display:  no current display object");
-//#endif /* CAUTIOUS */
-	//assert( dop != NULL );
 
 	// dop can be null if user doesn't own the X display!
 	if( dop == NULL ){
-		NWARN("CAUTIOUS:  set_viewer_display:  no current display object");
+		WARN("set_viewer_display:  no current display object");
 		return;
 	}
 
@@ -1024,12 +1015,9 @@ dop_info(DEFAULT_QSP_ARG  dop);
 					case CENTER_TEXT:
 						center_text(vp);
 						break;
-//#ifdef CAUTIOUS
 					default:
-//		NWARN("CAUTIOUS:  refresh_drawing:  Bad text justification mode!?");
 		assert( ! "refresh_drawing:  Bad text justification mode!?");
 						break;
-//#endif // CAUTIOUS
 				}
 				break;
 			case DRAW_OP_ARC:
@@ -1893,12 +1881,6 @@ static int shm_bpp=0;
 #ifdef NOT_USED
 void refresh_shm_window(Viewer *vp)
 {
-//#ifdef CAUTIOUS
-//	if( ! have_shmimage ) {
-//		NWARN("refresh_shm_window:  shmimage has not been created!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( have_shmimage );
 
 	/* Draw screen onto display */
@@ -1967,12 +1949,6 @@ void update_shm_viewer(Viewer *vp,char *src,int pinc,int cinc,int dx,int dy,int 
 	char *dest;
 	int x,y;
 
-//#ifdef CAUTIOUS
-//	if( ! have_shmimage ){
-//		NWARN("update_shm_viewer:  no shmimage!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( have_shmimage );
 
 	/* copy the data into the shared memory object */

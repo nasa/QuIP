@@ -150,14 +150,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	 */
 	name_p = available_pfdev_name(QSP_ARG  name,dev_name,cpp,MAX_CUDA_DEVICES);	// reuse name as scratch string
 	pdp = new_pfdev(QSP_ARG  name_p);
-
-#ifdef CAUTIOUS
-	if( pdp == NULL ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  init_cu2_device:  Error creating cuda device struct for %s!?",name_p);
-		WARN(ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert( pdp != NULL );
 
 	/* Remember this name in case the default is not found */
 	if( first_cuda_dev_name == NULL )
@@ -557,13 +550,7 @@ void cu2_init_platform(SINGLE_QSP_ARG_DECL)
 	Compute_Platform *cpp;
 
 	cpp = creat_platform(QSP_ARG  "CUDA", PLATFORM_CUDA );
-
-	//init_platform(QSP_ARG  cpp, PLATFORM_CUDA);
-
-#ifdef CAUTIOUS
-	if( cpp == NULL )
-ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
-#endif // CAUTIOUS
+	assert( cpp != NULL );
 
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	if( init_cu2_devices(QSP_ARG  cpp) < 0 ){

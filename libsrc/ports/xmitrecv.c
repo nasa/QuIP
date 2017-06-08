@@ -95,12 +95,7 @@ int check_port_data(QSP_ARG_DECL  Port *mpp, uint32_t microseconds)
 	}
 	if( v == 0 ) return 0;
 
-#ifdef CAUTIOUS
-	if( !FD_ISSET(mpp->mp_sock,&rd_fds) ){
-		WARN("CAUTIOUS:  check_for_data:  shouldn't happen");
-		return(-1);
-	}
-#endif // CAUTIOUS
+	assert( FD_ISSET(mpp->mp_sock,&rd_fds) );
 	return 1;
 
 #else // ! HAVE_SELECT
@@ -383,12 +378,7 @@ long recv_enc_text(QSP_ARG_DECL  Port *mpp, Packet *pkp)
 
 	pkp->pk_user_data = dbuf + ENCRYPTION_PREFIX_LEN + N_SALT_CHARS;
 	n_decrypted -= (ENCRYPTION_PREFIX_LEN + N_SALT_CHARS);
-#ifdef CAUTIOUS
-	if( n_decrypted <= 0 ){
-		WARN("CAUTIOUS:  recv_enc_text:  n_decrypted <= 0 after subtracting prefix length!?");
-		n_decrypted= -1;
-	}
-#endif // CAUTIOUS
+	assert( n_decrypted > 0 );
 
 cleanup:
 	givbuf(pkp->pk_data);
@@ -765,9 +755,7 @@ eof_encountered:
 		 */
 		return(0);
 	}
-#ifdef CAUTIOUS
-if( n2 == 0 ) WARN("CAUTIOUS:  read_port() returning 0 normally!?");
-#endif /* CAUTIOUS */
+	assert( n2 != 0 );
 	return(n2);
 }
 

@@ -317,10 +317,6 @@ static int index_of_mode(QSP_ARG_DECL  int mode )
 
 	for(i=0;i<N_CAPTURE_MODES;i++)
 		if( meteor_mode[i] == mode ) return(i);
-//#ifdef CAUTIOUS
-//	sprintf(ERROR_STRING,"CAUTIOUS:  Mode %d does not appear in meteor capture mode table!?",mode);
-//	WARN(ERROR_STRING);
-//#endif /* CAUTIOUS */
 	assert( ! "mode missing from table" );
 	return(-1);
 }
@@ -571,12 +567,7 @@ void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 	RV_Inode *inp;
 
 	inp = get_rv_inode(QSP_ARG  ifp->if_name);
-//#ifdef CAUTIOUS
-//	if( inp == NULL ){
-//		sprintf(ERROR_STRING,"CAUTIOUS: finish_recording:  missing rv inode %s",ifp->if_name);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif
+	assert(inp!=NULL);
 
 	close_image_file(QSP_ARG  ifp);		/* close write file	*/
 	update_movie_database(QSP_ARG  inp);
@@ -696,12 +687,6 @@ advise("faking hardware");
 	/* Now write the frames to disk */
 
 	/* This does not properly handle timestamps, so call out an error */
-//#ifdef CAUTIOUS
-//	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  mem_record:  output file %s is not a raw volume file!?",ifp->if_name);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( FT_CODE(IF_TYPE(ifp)) == IFT_RV );
 
 	inp = (RV_Inode *)ifp->if_hdr_p;

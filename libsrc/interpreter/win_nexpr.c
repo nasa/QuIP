@@ -2304,14 +2304,9 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			dp=(*csub_func)( QSP_ARG  dp2, index );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert( ! "unexpected case in eval_dobj_expr" );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(dp);
 }
@@ -2330,12 +2325,9 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				return(NULL);
 			}
 			break;
-//#ifdef CAUTIOUS
 		default:
-			//NWARN("unexpected case in eval_tsbl_expr");
 			assert( ! "unexpected case in eval_tsbl_expr");
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(ip);
 }
@@ -2381,14 +2373,9 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			index = (index_t)EVAL_EXPR(enp->sen_child[1]);
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-//			NWARN(ERROR_STRING);
 			assert( ! "unexpected case in eval_szbl_expr" );
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -2753,10 +2740,6 @@ dump_enode(QSP_ARG  enp);
 
 		if( val_func_p == NULL )
 			val_func_p = function_of(QSP_ARG  "value");
-//#ifdef CAUTIOUS
-//		if( val_func_p == NULL )
-//			ERROR1("CAUTIOUS:  couldn't find object value function!?");
-//#endif /* CAUTIOUS */
 		assert( val_func_p != NULL );
 
 		dval = (*val_func_p->fn_u.dobj_func)( QSP_ARG  dp ); }
@@ -2932,17 +2915,9 @@ ADVISE("case N_SLCT_CHAR");
 		break;
 #endif /* FOOBAR */
 
-//#ifdef CAUTIOUS
 	default:
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS:  %s - %s:  unhandled node code case %d!?",
-//			WHENCE2(eval_expr),
-//			enp->sen_code);
-//		NWARN(ERROR_STRING);
-//		dval=0.0;	// quiet compiler
 		assert( ! "unhandled node code" );
 		break;
-//#endif /* CAUTIOUS */
 
 	}
 
@@ -3202,13 +3177,9 @@ static int token_for_func_type(int type)
 		case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 		case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
 		case TS_FUNCTYP:	return(TS_FUNC);	break;
-//#ifdef CAUTIOUS
 		default:
-//			NERROR1("CAUTIOUS:  token_for_func_type:  bad type!?");
 			assert( ! "token_for_func_type:  bad type!?");
-
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(-1);
 }
@@ -3386,9 +3357,6 @@ static void rls_tree( Scalar_Expr_Node *enp )
 
 	if( free_enp_lp == NULL ){
 		free_enp_lp = new_list();
-//#ifdef CAUTIOUS
-//		if( free_enp_lp == NULL ) NERROR1("CAUTIOUS:  rls_tree:  error creating free enp list");
-//#endif /* CAUTIOUS */
 		assert( free_enp_lp != NULL );
 	}
 	np = mk_node(enp);

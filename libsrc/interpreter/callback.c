@@ -19,16 +19,6 @@ static void relinquish_to_ios(SINGLE_QSP_ARG_DECL)
 	// We set a timer based on the display refresh to wake up
 	// the interpreter...
 
-//#ifdef CAUTIOUS
-//	if( IS_HALTING(THIS_QSP) ){
-//		// The fact that this warning statement was commented out
-//		// suggests that the code traverses this path routinely???
-//
-//		//WARN("CAUTIOUS:  relinquish_to_ios:  already halting!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
-
 	// If this assertion fails, that means that we've
 	// already called this?
 	assert( ! IS_HALTING( THIS_QSP ) );

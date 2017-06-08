@@ -816,6 +816,7 @@ NVCC=ls	# to prevent a syntax error later, if use_cuda is no
 if test "x${use_cuda}" = xyes; then
   AC_ARG_VAR([NVCC], [nvcc compiler to use])
   AC_PATH_PROG([NVCC], [nvcc], [no])
+echo NVCC = $NVCC
   if test "x$NVCC" != "xno"; then
     AC_MSG_CHECKING([whether nvcc works])
     cat>nvcc_test.cu<<EOF
@@ -853,7 +854,8 @@ EOF
       fi
     fi
 
-    rm -f nvcc_test.cu a.out
+# commented out for testing
+#    rm -f nvcc_test.cu a.out
 
     AC_MSG_RESULT([$working_nvcc])
   fi

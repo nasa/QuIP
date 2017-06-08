@@ -135,14 +135,6 @@ Node *remData( List *lp, void* data )	/** remove node pointing to data */
 	if( np==NULL )
 		return(NULL);
 	stat=remNode( lp, np );
-
-//#ifdef CAUTIOUS
-//	if( stat == NULL ){
-//		NWARN("CAUTIOUS:  remData:  remNode failed");
-//		return(NULL);
-//	}
-//#endif /* CAUTIOUS */
-
 	assert( stat != NULL );
 
 	return(np);

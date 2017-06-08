@@ -173,13 +173,6 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	cudaError_t e;
 	int i;
 
-//#ifdef CAUTIOUS
-//	if( OBJ_AREA(dp)->da_flags != DA_CUDA_HOST ){
-//		sprintf(ERROR_STRING,
-//"CAUTIOUS:  make_device_alaias:  object %s is not host-mapped!?",OBJ_NAME(dp));
-//		NERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( OBJ_AREA(dp)->da_flags == DA_CUDA_HOST ){
 
 	/* Find the pseudo-area for the device mapping */
@@ -599,15 +592,6 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 		SET_SHP_N_MACH_ELTS(shpp,2);
 	} else if( QUAT_PRECISION(PREC_CODE(prec_p)) ){
 //advise("quaternion precision...");
-
-//#ifdef CAUTIOUS
-//		if( DIMENSION(dsp,0) != 1 ){
-//			sprintf(ERROR_STRING,
-//"CAUTIOUS:  set_shape_dimensions:  Sorry, multiple (%d) components not allowed for quaternion",
-//				DIMENSION(dsp,0));
-//			WARN(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
 		assert( DIMENSION(dsp,0) == 1 );
 		SET_DIMENSION(dsp,0,1);
 		SET_SHP_N_MACH_ELTS(shpp,4);

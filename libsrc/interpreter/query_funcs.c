@@ -1198,23 +1198,11 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	if( sb_buffer(RESULT) == NULL ){
-//#ifdef CAUTIOUS
-//		if( SB_SIZE(RESULT) != 0 ){
-//			ERROR1("CAUTIOUS:  result = NULL but size != 0 !?!?");
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( SB_SIZE(RESULT) == 0 );
 
 		enlarge_buffer(RESULT,LLEN);
 	}
 	if( sb_buffer(SCRATCHBUF) == NULL ){
-//#ifdef CAUTIOUS
-//		if( SB_SIZE(SCRATCHBUF) != 0 ){
-//			ERROR1("CAUTIOUS:  result = NULL but size != 0 !?!?");
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( SB_SIZE(SCRATCHBUF) == 0 );
 		enlarge_buffer(SCRATCHBUF,LLEN);
 	}
@@ -2474,12 +2462,6 @@ void end_dupline(SINGLE_QSP_ARG_DECL)
 
 	fp = QRY_DUPFILE(CURR_QRY(THIS_QSP));
 
-//#ifdef CAUTIOUS
-//	if( ! IS_DUPING ){
-//		WARN("CAUTIOUS:  NOT duping!?");
-//		return;
-//	}
-//#endif
 	assert( IS_DUPING );
 
 	fputs("\r",fp);
@@ -2533,12 +2515,6 @@ void dup_word(QSP_ARG_DECL  const char *s)
 
 	fp = QRY_DUPFILE(CURR_QRY(THIS_QSP));
 
-//#ifdef CAUTIOUS
-//	if( ! IS_DUPING ){
-//		WARN("CAUTIOUS:  NOT duping!?");
-//		return;
-//	}
-//#endif
 	assert( IS_DUPING );
 
 	if( ! FIRST_WORD_ON_LINE )
@@ -3662,12 +3638,6 @@ static void add_func_to_list(List *lp,void (*func)(SINGLE_QSP_ARG_DECL) )
 #ifdef CAUTIOUS
 	np = QLIST_HEAD(lp);
 	while(np!=NULL){
-//		if( func == ((void (*)())NODE_DATA(np)) ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//				"CAUTIOUS:  add_func_to_list:  function already on list!?");
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return;
-//		}
 		assert( func != ((void (*)())NODE_DATA(np)) );
 		np = NODE_NEXT(np);
 	}

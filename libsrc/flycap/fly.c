@@ -1112,12 +1112,10 @@ advise(ERROR_STRING);
 				advise("No framerates available for format7.");
 			}
 			  else {
-//		WARN("CAUTIOUS:  get_framerate_choices:  video mode is format7, but framerate is not!?");
 				assert(0);
 			}
 		}
 		  else {
-//	WARN("CAUTIOUS:  get_framerate_choices:  video mode is not format7, but no framerates found!?");
 			assert(0);
 		}
 		return;
@@ -1741,7 +1739,6 @@ static void get_fmt7_modes(QSP_ARG_DECL  PGR_Cam *pgcp)
 			largest = i;
 		}
 	}
-	// CAUTIOUS?
 	if( (largest+1) != pgcp->pc_n_fmt7_modes ){
 		sprintf(ERROR_STRING,
 	"Unexpected number of format7 modes!?  (largest index = %d, n_modes = %d)",
@@ -2193,7 +2190,6 @@ static void init_one_frame(QSP_ARG_DECL  PGR_Cam *pgcp, int index )
 //fprintf(stderr,"init_one_frame %d:  %s, data at 0x%lx\n",index,OBJ_NAME(dp),(long)OBJ_DATA_PTR(dp));
 //		}
 	} else {
-		// CAUTIOUS??
 		sprintf(ERROR_STRING,"init_one_frame:  object %s already exists!?",
 			fname);
 		WARN(ERROR_STRING);

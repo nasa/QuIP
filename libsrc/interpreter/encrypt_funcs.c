@@ -269,12 +269,6 @@ static const char *decrypt_string(const char *input_string)
 	n=decrypt_char_buf(buf,buflen,asciibuf,buflen);
 	givbuf(buf);
 
-//#ifdef CAUTIOUS
-//	if( n > buflen ){
-//		NWARN("CAUTIOUS:  too many decrypted chars!?");
-//		return NULL;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n <= buflen );
 
 	if( n <= 0 ){
@@ -305,13 +299,6 @@ static void encrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 	// which are multiples of the blocksize.)
 
 	n_in = (long) fp_content_size(QSP_ARG  fp_in);
-
-//#ifdef CAUTIOUS
-//	if( n_in < 0 ){
-//		NWARN("CAUTIOUS:  encrypt_file:  couldn't determine input file size!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
@@ -369,12 +356,6 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 			line_end = line_start+strlen(line_start);
 		}
 		n_to_copy = line_end - line_start;
-//#ifdef CAUTIOUS
-//		if( n_to_copy <= 0 ){
-//			NWARN("CAUTIOUS:  convert_lines_from_hex:  empty line!?");
-//			return -1;
-//		}
-//#endif /* CAUTIOUS */
 		assert( n_to_copy > 0 );
 
 		if( n_to_copy >= MAX_LINE_SIZE ){
@@ -440,13 +421,6 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	// them
 
 	n_in = (long) fp_content_size(QSP_ARG  fp_in);
-
-//#ifdef CAUTIOUS
-//	if( n_in < 0 ){
-//		NWARN("CAUTIOUS:  decrypt_file_contents:  couldn't determine input file size!?");
-//		return NULL;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){

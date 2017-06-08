@@ -124,14 +124,6 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 			else if( rsp == NO ) rsp = YES;
 		}
 		*/
-//#ifdef CAUTIOUS
-//		if( stcp == NULL ){
-//			ERROR1("CAUTIOUS:  stcp is null, but expt is forced choice!?");
-//#ifdef BUILD_FOR_IOS
-//			return REDO;
-//#endif // BUILD_FOR_IOS
-//		}
-//#endif /* CAUTIOUS */
 		assert( stcp != NULL );
         
         // analyzer complains coin is a garbage value??? BUG?

@@ -34,16 +34,6 @@
 
 #define ERROR_CASE(code,string)	case code: msg = string; break;
 
-#ifdef CAUTIOUS
-#define INSURE_CURR_ODP(whence)					\
-	if( curr_pdp == NULL ){					\
-		sprintf(ERROR_STRING,"CAUTIOUS:  %s:  curr_pdp is null!?",#whence);	\
-		WARN(ERROR_STRING);				\
-	}
-#else // ! CAUTIOUS
-#define INSURE_CURR_ODP(whence)
-#endif // ! CAUTIOUS
-
 void report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence)
 {
 	char *msg;
@@ -380,6 +370,7 @@ static void display_dev_param(QSP_ARG_DECL  OCL_Dev_Param_Spec *psp,
 	"CAUTIOUS:  display_dev_param:  unexpected parameter type (%d)!?",
 				PS_TYPE(psp));
 			WARN(ERROR_STRING);
+			assert(0);
 			break;
 	}
 }
@@ -655,7 +646,7 @@ static void PF_FUNC_NAME(sync)(SINGLE_QSP_ARG_DECL)
 {
 	cl_int status;
 
-	INSURE_CURR_ODP(ocl_sync);
+	assert( curr_pdp != NULL );
 
 	if( OCLDEV_QUEUE(curr_pdp) == NULL ){
 		WARN("ocl_sync:  no command queue!?");

@@ -245,11 +245,7 @@ void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )
 	}
 
 	pdp = AREA_PFDEV(OBJ_AREA(dp));
-
-#ifdef CAUTIOUS
-	if( pdp == NULL )
-		NERROR1("CAUTIOUS:  null cuda device ptr in data area!?");
-#endif /* CAUTIOUS */
+	assert( pdp != NULL );
 
 	if( curr_pdp != pdp ){
 sprintf(DEFAULT_ERROR_STRING,"insure_cu2_device:  curr_pdp = 0x%lx  pdp = 0x%lx",

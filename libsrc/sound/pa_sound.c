@@ -112,10 +112,7 @@ static int play_dp_callback( const void *inputBuffer, void *outputBuffer,
 	int finished;
 	//(void) inputBuffer; /* Prevent unused variable warnings. */
 
-#ifdef CAUTIOUS
-	if( sdp->src_frames_to_go < 0 )
-		error1(DEFAULT_QSP_ARG  "CAUTIOUS:  play_dp_callback:  source frames_to_go less than zero!?");
-#endif // CAUTIOUS
+	assert( sdp->src_frames_to_go >= 0 );
 	
 	if( sdp->src_frames_to_go < frames_per_buffer ) {
 		frames_to_copy = sdp->src_frames_to_go;
@@ -289,25 +286,19 @@ void audio_init(QSP_ARG_DECL  int mode)
 		/* should we reset the interface??? */
 	}
 
-	if(mode == AUDIO_RECORD)
-	{
+	if(mode == AUDIO_RECORD) {
 		/* what do we need to do here??? */
 		WARN("audio_init:  don't know how to record!?");
 
 	} else if( mode == AUDIO_PLAY ) {
 		/* open the device for playback */
 		portaudio_playback_init(SINGLE_QSP_ARG);
-	} else if( mode == AUDIO_UNINITED ){	/* de-initialize */
+	} else {
+		assert( mode == AUDIO_UNINITED );
+		/* de-initialize */
 		audio_state = mode;
 		return;
 	}
-#ifdef CAUTIOUS
-	else {
-		WARN("unexpected audio mode requested!?");
-	}
-#endif	/* CAUTIOUS */
-
-
 
 	channels = nchannels;
 

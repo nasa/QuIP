@@ -33,12 +33,6 @@ void vgat_init()
 {
 	static int warned=0;
 
-//#ifdef CAUTIOUS
-//	if( vgat_fd >= 0 ){
-//		NWARN("CAUTIOUS:  vgat_init:  /dev/vgat is already open!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( vgat_fd < 0 );
 
 	vgat_fd=open("/dev/vgat",O_RDONLY);

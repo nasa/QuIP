@@ -208,7 +208,6 @@ static void setup_heap(Heap *hp, u_long total, u_long chunksize)
 	// BUG better to use is_power_of_two() in the assertion
 	// so is meaningful...
 	assert( chunksize == 0 );
-//	if( chunksize != 0 ) NERROR1("CAUTIOUS:  setup_heap:  chunksize is not a power of 2");
 #endif /* CAUTIOUS */
 
 	freeinit(&hp->heap_fl,MAX_HEAP_CHUNKS,(u_long)total);
@@ -309,10 +308,6 @@ void * bigbuf(u_long size)
 	u_long s;
 	void *cp;
 
-//#ifdef CAUTIOUS
-//	if( size == 0 )
-//		NERROR1("CAUTIOUS:  getbuf:  0 bytes requested!?");
-//#endif /* CAUTIOUS */
 	assert( size != 0 );
 
 	if( !heap_ready ) heap_init();
@@ -426,15 +421,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	this_size = *ip;
 	/* zero the size so we can detect a repeated free'ing */
 	*ip = 0;
-//#ifdef CAUTIOUS
-//	if( this_size == 0 ) {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  givbuf attempting to free a zero-length (unallocated or freed?) segment");
-//		NWARN(DEFAULT_ERROR_STRING);
-//		abort();
-//	}
-//#endif /* CAUTIOUS */
 	assert( this_size != 0 );
-
 
 	if( this_size >= BIG_HEAP_THRESH ){
 		index = caddr - big_heap.heap_base;
@@ -446,15 +433,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-//#ifdef CAUTIOUS
-//		if( index >= big_heap.heap_total ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"Big heap block with size %ld has index %ld (0x%lx) !?",
-//				this_size,index,index);
-//			NADVISE(DEFAULT_ERROR_STRING);
-//			NERROR1("CAUTIOUS:  wrong (big) heap!?");
-//		}
-//#endif /* CAUTIOUS */
 		assert( index < big_heap.heap_total );
 
 		if( givspace(&big_heap.heap_fl,this_size,index) < 0 ){
@@ -469,15 +447,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	} else {
 		index = caddr - small_heap.heap_base;
-//#ifdef CAUTIOUS
-//		if( index >= small_heap.heap_total ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"givbuf:  Small heap block at addr 0x%lx with size %ld has index %ld (0x%lx) !?",
-//				(u_long)caddr,this_size,index,index);
-//			NADVISE(DEFAULT_ERROR_STRING);
-//			NERROR1("CAUTIOUS:  wrong (small) heap!?");
-//		}
-//#endif /* CAUTIOUS */
 		assert( index < small_heap.heap_total );
 
 #ifdef QUIP_DEBUG
@@ -542,11 +511,10 @@ void * getbuf(size_t size)
 	 *
 	 * Fixed one problem with VN_DECL_OBJ, but other problems appear to remain...
 	 */
+
 //	p=malloc(size);
 
 	p=calloc(size,1);
-
-//#endif // ! CAUTIOUS
 
 	if( p == NULL ){
 		NWARN("Out of memory!?");

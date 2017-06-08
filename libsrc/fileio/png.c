@@ -1181,12 +1181,6 @@ FIO_CLOSE_FUNC( pngfio )		// iOS version
 
 FIO_RD_FUNC( pngfio )		// iOS version
 {
-//#ifdef CAUTIOUS
-//	if( png_ifp == NULL ){
-//		WARN("CAUTIOUS:  pngfio_rd:  png_ifp is NULL!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( png_ifp != NULL );
 
 	if( ifp != png_ifp ){
@@ -1202,12 +1196,6 @@ FIO_RD_FUNC( pngfio )		// iOS version
 
 	// Now we want to copy the data...
 	// We have a CGImage!
-//#ifdef CAUTIOUS
-//	if( png_uip.CGImage == NULL ){
-//		WARN("CAUTIOUS:  pngfio_rd:  null CGImage!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
 	assert( png_uip.CGImage != NULL );
 
 	CGDataProviderRef provider = CGImageGetDataProvider(png_uip.CGImage);

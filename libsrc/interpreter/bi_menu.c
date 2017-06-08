@@ -466,10 +466,6 @@ static const char *def_gfmt_str="%.7g";
 
 static void init_default_formats(SINGLE_QSP_ARG_DECL)
 {
-//#ifdef CAUTIOUS
-//	if( QS_NUMBER_FMT(THIS_QSP) != NULL )
-//NWARN("CAUTIOUS:  init_default_formats:  format string already initialized!?");
-//#endif
 	assert( QS_NUMBER_FMT(THIS_QSP) == NULL );
 
 	SET_QS_GFORMAT(THIS_QSP, def_gfmt_str );
@@ -595,16 +591,6 @@ exit(1);
 #endif /* ! HAVE_FLOOR */
 #endif /* ! HAVE_ROUND */
 			} else {	// integer format, integer scalar
-//#ifdef CAUTIOUS
-//				if( SCALAR_MACH_PREC_CODE(tsp) != PREC_LI ){
-//					sprintf(ERROR_STRING,
-//				"CAUTIOUS:  assign_var:  expected typed scalar to be double or long long!? (code = %d 0x%x)",
-//					SCALAR_PREC_CODE(tsp),
-//					SCALAR_PREC_CODE(tsp)
-//					);
-//					WARN(ERROR_STRING);
-//				}
-//#endif // CAUTIOUS
 				assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
 				sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
 			}
@@ -694,16 +680,7 @@ static const char **var_fmt_list=NULL;
 
 static void init_fmt_choices(SINGLE_QSP_ARG_DECL)
 {
-//#ifdef CAUTIOUS
-//	int i;
-//#endif /* CAUTIOUS */
-
 	var_fmt_list = (const char **) getbuf( N_PRINT_FORMATS * sizeof(char *) );
-
-//#ifdef CAUTIOUS
-//	/* Set to known value */
-//	for(i=0;i<N_PRINT_FORMATS;i++) var_fmt_list[i]=NULL;
-//#endif /* CAUTIOUS */
 
 	var_fmt_list[ FMT_DECIMAL ] = "decimal";
 	var_fmt_list[ FMT_HEX ] = "hex";
@@ -713,18 +690,6 @@ static void init_fmt_choices(SINGLE_QSP_ARG_DECL)
 	var_fmt_list[ FMT_POSTSCRIPT ] = "postscript";
 
 	assert( N_PRINT_FORMATS == 6 );
-
-//#ifdef CAUTIOUS
-//	/* Now make sure we have initialized all */
-//	for(i=0;i<N_PRINT_FORMATS;i++){
-////		if( var_fmt_list[i] == NULL ){
-////			sprintf(ERROR_STRING,"CAUTIOUS:  init_fmt_choices:  no initialization for format %d!?",i);
-////			ERROR1(ERROR_STRING);
-////		}
-//		assert( var_fmt_list[i] != NULL );
-//	}
-//#endif /* CAUTIOUS */
-
 }
 
 static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
@@ -743,13 +708,9 @@ static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
 WARN("set_fmt:  not sure what to do with FMT_POSTSCRIPT - using decimal.");
 			SET_QS_NUMBER_FMT(THIS_QSP,QS_DFORMAT(THIS_QSP));
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  set_fmt:  unexpected format code %d!?",i);
-//			WARN(ERROR_STRING);
 			assert( AERROR("set_fmt:  unexpected format code!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -1169,14 +1130,6 @@ static COMMAND_FUNC( do_get_filenames )
 		char *dst;
 
 		di_p = readdir(dir_p);
-//#ifdef CAUTIOUS
-//		if( di_p == NULL ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  get_filenames:  unexpected null dir entry!?");
-//			WARN(ERROR_STRING);
-//			goto finish;
-//		}
-//#endif // CAUTIOUS
 		// Can readdir ever fail here?
 		assert( di_p != NULL );
 
@@ -1561,13 +1514,10 @@ static COMMAND_FUNC( do_timezone )
 		case 1:
 			SET_QS_FLAG_BITS(THIS_QSP,QS_TIME_FMT_UTC);
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  do_timezone:  bad timezone choice!?");
 			assert( AERROR("do_timezone:  bad timezone !?") );
 
 			break;
-//#endif // CAUTIOUS
 	}
 }
 

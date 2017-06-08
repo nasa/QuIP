@@ -330,7 +330,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	 */
 #ifdef HAVE_X11
 	window_sys_init(SINGLE_QSP_ARG);/* make sure that the_dop is not NULL */
-	set_viewer_display(vp);		/* sets vw_dop... */
+	set_viewer_display(QSP_ARG  vp);		/* sets vw_dop... */
 	cmap_setup(vp);		/* refers to vw_dop, but that's not set until later? */
 
 	install_default_lintbl(QSP_ARG  VW_DPYABLE(vp) );

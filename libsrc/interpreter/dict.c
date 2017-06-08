@@ -69,15 +69,6 @@ List *_dictionary_list(QSP_ARG_DECL  Dictionary *dict_p)
 	 * inserted or removed item(s) since the creation of the hash tbl.
 	 */
 
-//#ifdef CAUTIOUS
-//	if( ! IS_HASHING(dict_p) ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  dictionary_list:  dictionary %s needs a new list but is not hashing!?",
-//			DICT_NAME(dict_p));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
 	assert( IS_HASHING(dict_p) );
 
 	/* trash the old list */

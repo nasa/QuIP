@@ -1,6 +1,8 @@
 #include "quip_config.h"
 
 #include <stdio.h>
+#include <math.h>
+
 #include "vec_util.h"
 #include "debug.h"
 #include "quip_prot.h"

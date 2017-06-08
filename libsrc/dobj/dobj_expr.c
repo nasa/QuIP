@@ -73,14 +73,12 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			}
 			szp = (Item *) (*enp->sen_func_p->fn_u.dobjv_str_arg_func)( QSP_ARG  s );
 			break;
-//#ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING,
 		"unexpected case in eval_szbl_expr %d",enp->sen_code);
 			WARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -185,14 +183,12 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			dp = (*enp->sen_func_p->fn_u.dobjv_str_arg_func)( QSP_ARG  s );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING,
 		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
 			WARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(dp);
 } // end eval_dobj_expr

@@ -17,16 +17,6 @@
 
 #define ERROR_CASE(code,string)	case code: msg = string; break;
 
-#ifdef CAUTIOUS
-#define INSURE_CURR_ODP(whence)					\
-	if( curr_odp == NULL ){					\
-		sprintf(ERROR_STRING,"CAUTIOUS:  %s:  curr_odp is null!?",#whence);	\
-		WARN(ERROR_STRING);				\
-	}
-#else // ! CAUTIOUS
-#define INSURE_CURR_ODP(whence)
-#endif // ! CAUTIOUS
-
 void PF_FUNC_NAME(init)(SINGLE_QSP_ARG_DECL)
 {
 	// anything to do?

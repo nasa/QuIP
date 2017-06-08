@@ -59,10 +59,10 @@ void HOST_CALL_NAME(ift2d)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
 
 	SET_OA_DEST(oap,dstdp);
 	SET_OA_SRC1(oap,srcdp);
-	SET_OA_SRC2(oap,NO_OBJ);
-	SET_OA_SRC3(oap,NO_OBJ);
-	SET_OA_SCLR1(oap,NO_OBJ);
-	SET_OA_SCLR2(oap,NO_OBJ);
+	SET_OA_SRC2(oap,NULL);
+	SET_OA_SRC3(oap,NULL);
+	SET_OA_SCLR1(oap,NULL);
+	SET_OA_SCLR2(oap,NULL);
 
 	if( IS_COMPLEX( dstdp ) ){
 		FFT_SWITCH( fft2d, INV_FFT )
@@ -81,10 +81,10 @@ void HOST_CALL_NAME(iftrows)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
 
 	SET_OA_DEST(oap,dstdp);
 	SET_OA_SRC1(oap,srcdp);
-	SET_OA_SRC2(oap,NO_OBJ);
-	SET_OA_SRC3(oap,NO_OBJ);
-	SET_OA_SCLR1(oap,NO_OBJ);
-	SET_OA_SCLR2(oap,NO_OBJ);
+	SET_OA_SRC2(oap,NULL);
+	SET_OA_SRC3(oap,NULL);
+	SET_OA_SCLR1(oap,NULL);
+	SET_OA_SCLR2(oap,NULL);
 
 	if( IS_COMPLEX( dstdp ) ){
 		FFT_SWITCH( iftrows, INV_FFT )

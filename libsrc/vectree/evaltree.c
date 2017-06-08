@@ -3250,11 +3250,10 @@ DUMP_TREE(enp);
 			EVAL_DECL_STAT(prec_p,VN_CHILD(enp,0),decl_flags);
 			/* the next node is an expression */
 			dp = get_id_obj(QSP_ARG  VN_STRING(VN_CHILD(enp,0)),enp);
+			assert(dp!=NULL);
+// Can this be legitimately NULL?
 // BUG this is not CAUTIOUS because this can happen if you try to create
 // an existing object that has not been exported.
-// But then the message should not contain the string CAUTIOUS, and this should not
-// be un-indented!?
-if( dp==NULL ) ERROR1("CAUTIOUS:  eval_decl_stat:  Null object to initialize!?");
 
 			/* What if the rhs is unknown size - then we have to resolve now! */
 			if( UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
@@ -3427,12 +3426,6 @@ advise(ERROR_STRING);
 			/* call by reference */
 			if( type != ID_STRING )
 				type = ID_POINTER;
-//#ifdef CAUTIOUS
-//			if( type == ID_STRING && PREC_CODE(prec_p) != PREC_CHAR ){
-//				NODE_ERROR(enp);
-//				WARN("CAUTIOUS:  string object does not have string prec!?");
-//			}
-//#endif /* CAUTIOUS */
 			if( type == ID_STRING ){
 				// what about PREC_STR???
 				assert( PREC_CODE(prec_p) == PREC_CHAR );
@@ -6138,22 +6131,6 @@ DUMP_TREE(enp);
 	return(s);
 }
 
-//#ifdef FOOBAR
-//void intr_evaluation(int arg)
-//{
-//	/* use setjmp/longjmp to get back to the interpreter */
-//	if( eval_enp != NULL )
-//		NODE_ERROR(eval_enp);
-//#ifdef CAUTIOUS
-//	else NWARN("CAUTIOUS:  no current eval_enp!?");
-//#endif /* CAUTIOUS */
-//
-//	advise("execution halted by SIGINTR");
-//	interrupted=1;
-//	sleep(2);
-//	/* signal(SIGINT,intr_evaluation); */
-//}
-//#endif /* FOOBAR */
 
 /* for matlab support */
 

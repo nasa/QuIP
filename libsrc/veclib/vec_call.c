@@ -54,14 +54,9 @@ static const char *name_for_type(Data_Obj *dp)
 	if( IS_REAL(dp) ) return("real");
 	else if( IS_COMPLEX(dp) ) return("complex");
 	else if( IS_QUAT(dp) ) return("quaternion");
-//#ifdef CAUTIOUS
 	else {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  name_for_type:  type of object %s is unknown",OBJ_NAME(dp) );
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return("unknown");
 		assert( AERROR("name_for_type:  unexpected type code!?") );
 	}
-//#endif /* CAUTIOUS */
 }
 
 /* The "type" is real, complex, quaternion, or mixed...
@@ -106,13 +101,11 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 					goto type_mismatch23;
 				}
 			}
-//#ifdef CAUTIOUS
 			// Why was this CAUTIOUS when other goto's to type_mismatch13 are not???
 			  else {
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-//#endif /* CAUTIOUS */
 		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_REAL( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, REAL_ARGS);
@@ -210,13 +203,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	if( VF_FLAGS(vfp) & CPX_2_REAL ){
 		// For inverse fourier transform, the destination can be real
 		// but does not have to be!
-//#ifdef CAUTIOUS
-//		// quiet compiler
-//		if( OA_SRC1(oap) == NULL ){
-//			WARN("chktyp:  CAUITOUS:  get_scal:  Unexpected null source operand!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
@@ -251,13 +237,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			WARN("chktyp:  destination must be complex for fft");
 			return -1;
 		}
-//#ifdef CAUTIOUS
-//		// quiet analyzer
-//		if( OA_SRC1(oap) == NULL ){
-//			WARN("chktyp:  CAUTIOUS:  Unexpected null src1 with fft!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		if( IS_COMPLEX( OA_SRC1(oap) ) )
@@ -272,13 +251,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	}
 
 	if( VF_CODE(vfp) == FVIFT ){
-//#ifdef CAUTIOUS
-//		// quiet analyzer
-//		if( OA_SRC1(oap) == NULL ){
-//			WARN("chktyp:  CAUTIOUS:  Unexpected null src1 with fft!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		/* destination vector can be real or complex */
@@ -408,12 +380,6 @@ ADVISE(ERROR_STRING);
 		}
 		// Mixed-arg fuctions have to have two sources, but the analyzer
 		// doesn't know that...
-//#ifdef CAUTIOUS
-//		if( OA_SRC2(oap) == NULL ){
-//			WARN("CAUTIOUS:  Null src2 with mixed-arg function!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC2(oap) != NULL );
 
 		if( ! IS_REAL(OA_SRC2(oap) ) ){
@@ -795,22 +761,9 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 				return -1;
 			}
 		}
-//#ifdef CAUTIOUS
-//		  else if( ! IS_CONVERSION(vfp) && VF_CODE(vfp) != FVMOV ){
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  chksiz %s:  obj args bitmap is non-null, but function has no bitmap flag!?",
-//				VF_NAME(vfp) );
-//			ERROR1(ERROR_STRING);
-//		}
 		else {
 			assert( IS_CONVERSION(vfp) || VF_CODE(vfp) == FVMOV );
 		}
-//		if( status != 0 ){
-//			sprintf(ERROR_STRING,"CAUTIOUS:  chksiz %s:  old_cksiz returned status=%d!?",VF_NAME(vfp) ,status);
-//			NWARN(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
-
 		assert( status == 0 );
 
 	}
@@ -850,12 +803,6 @@ ADVISE(ERROR_STRING);
 		ADVISE(ERROR_STRING);
 		return -1;
 	}
-//#ifdef CAUTIOUS
-//	if( status != 0 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  chksiz %s:  cksiz returned status=%d!?",VF_NAME(vfp) ,status);
-//		NWARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( status == 0 );
 
 	if( OA_SRC2(oap) == NULL ) return 0;
@@ -875,13 +822,6 @@ ADVISE(ERROR_STRING);
 		return -1;
 	}
 
-//#ifdef CAUTIOUS
-//	if( status != 0 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  chksiz %s:  cksiz returned status=%d!?",VF_NAME(vfp) ,status);
-//		NWARN(ERROR_STRING);
-//		return -1;
-//	}
-//#endif /* CAUTIOUS */
 	assert( status == 0 );
 
 	/* BUG what about bitmaps?? */

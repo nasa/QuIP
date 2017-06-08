@@ -599,19 +599,7 @@ static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 	vcmdp->vcmd_vcdp = vcdp;
 
 	// Make sure that MAX_PACKET_LEN is OK
-#ifdef CAUTIOUS
-	if( strlen(vcdp->vcd_pkt) >= MAX_PACKET_LEN ){
-		sprintf(ERROR_STRING,
-			"CAUTIOUS:  Command %s has a packet length of %d,",
-			vcdp->vcd_cmd,(int)strlen(vcdp->vcd_pkt));
-		WARN(ERROR_STRING);
-		sprintf(ERROR_STRING,"but MAX_PACKET_LEN is set to %d!?",
-			MAX_PACKET_LEN);
-		advise(ERROR_STRING);
-		ERROR1("Please recompile program with corrected value.");
-	}
-#endif /* CAUTIOUS */
-
+	assert( strlen(vcdp->vcd_pkt) < MAX_PACKET_LEN );
 } /* end init_visca_cmd() */
 
 /* Call init_visca_inq with a pointer into the inquiry table.
@@ -625,18 +613,7 @@ static void init_visca_inq( QSP_ARG_DECL  Visca_Inq_Def *vidp )
 	vip = new_visca_inq(QSP_ARG  vidp->vid_inq);
 	assert( vip != NULL );
 	vip->vi_vidp = vidp;
-#ifdef CAUTIOUS
-	if( strlen(vidp->vid_pkt) >= MAX_PACKET_LEN ){
-		sprintf(ERROR_STRING,
-			"CAUTIOUS:  Command %s has a packet length of %d,",
-			vidp->vid_inq,(int)strlen(vidp->vid_pkt));
-		WARN(ERROR_STRING);
-		sprintf(ERROR_STRING,"but MAX_PACKET_LEN is set to %d!?",
-			MAX_PACKET_LEN);
-		advise(ERROR_STRING);
-		ERROR1("Please recompile program with corrected value.");
-	}
-#endif /* CAUTIOUS */
+	assert( strlen(vidp->vid_pkt) < MAX_PACKET_LEN );
 }
 
 /* Scan the table of command defns.
@@ -703,14 +680,8 @@ static int get_cmd_ack(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp)
 
 	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,ack_buf,LLEN,n);
 
-#ifdef CAUTIOUS
 	/* Until we put the timeout in, we know we must have something if we are here... */
-
-	if( n==0 ){
-		WARN("CAUTIOUS:  get_cmd_ack:  no ack chars!?");
-		return(-1);
-	}
-#endif /* CAUTIOUS */
+	assert( n!=0 );
 
 	reply_addr = 0x80 + (vcam_p->vcam_index << 4);
 
@@ -794,13 +765,8 @@ static void get_cmd_completion( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *
 
 	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,comp_buf,LLEN,n);
 
-#ifdef CAUTIOUS
 	/* this check may not be cautious if we put in a timeout... */
-	if( n==0 ){
-		WARN("CAUTIOUS:  get_cmd_completion:  no ack chars!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert(n!=0);
 
 	reply_addr = 0x80 + (vcam_p->vcam_index << 4);
 
@@ -2468,12 +2434,7 @@ static COMMAND_FUNC( do_visca_cmd )
 		return;
 	}
 
-#ifdef CAUTIOUS
-	if( the_vcam_p->vcam_param_p == NULL ){
-		WARN("CAUTIOUS:  Camera type is specified, but parameters are missing!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert( the_vcam_p->vcam_param_p != NULL );
 	
 	if( verify_cmd(the_vcam_p,vcdp) < 0 ) {
 		sprintf(ERROR_STRING, "%s %s not implemented by %s",
@@ -2759,9 +2720,7 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 	/* Now ask the camera what is its type */
 	/* INFO_INQ is the first entry... */
 	i=table_index_for_inq(QSP_ARG  vid_common_tbl,INFO_INQ);
-#ifdef CAUTIOUS
-	if( i < 0 ) ERROR1("Couldn't file INFO_INQ!?");
-#endif // CAUTIOUS
+	assert( i >= 0 );
 
 	strcpy((char *)pkt,(const char *)vid_common_tbl[i].vid_pkt);
 	exec_visca_inquiry(QSP_ARG  vcam_p, &vid_common_tbl[i],pkt);
@@ -2781,9 +2740,7 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 			// they do not have a switch on the back panel.
 			// FLIP_MODE_INQ is at index 1
 			i=table_index_for_inq(QSP_ARG  vid_evi70_tbl,FLIP_MODE_INQ);
-#ifdef CAUTIOUS
-			if( i < 0 ) ERROR1("Couldn't file FLIP_MODE_INQ!?");
-#endif // CAUTIOUS
+			assert( i >= 0 );
 
 			strcpy((char *)pkt,(const char *)vid_evi70_tbl[i].vid_pkt);
 			exec_visca_inquiry(QSP_ARG  vcam_p, &vid_evi70_tbl[i],pkt);
@@ -2884,13 +2841,8 @@ static void vport_info(QSP_ARG_DECL  Visca_Port *vport_p)
 {
 	Node *np;
 
-#ifdef CAUTIOUS
-	if( vport_p->vp_cam_lp == NULL || eltcount(vport_p->vp_cam_lp)==0 ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  vport_info:  null cam list");
-		WARN(ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert( vport_p->vp_cam_lp != NULL );
+	assert( eltcount(vport_p->vp_cam_lp) != 0 );
 
 	np=QLIST_HEAD(vport_p->vp_cam_lp);
 	while(np!=NULL){

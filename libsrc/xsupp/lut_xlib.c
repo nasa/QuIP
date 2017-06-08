@@ -17,7 +17,7 @@
 #include "viewer.h"
 #include "debug.h"
 
-static Window curr_window=NULL;
+static Window curr_window=((Window)0);
 static int n_to_protect = NC_SYSTEM;
 int simulating_luts=0;
 

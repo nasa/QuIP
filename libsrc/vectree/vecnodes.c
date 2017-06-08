@@ -217,11 +217,6 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 }
 
 #define VERIFY_N_CHILDREN(code,n)							\
-	/*if( tnt_tbl[code].tnt_nchildren != n ){						\
-		sprintf(DEFAULT_ERROR_STRING,"%s node expects %d children, assigned %d!?",	\
-		tnt_tbl[code].tnt_name,tnt_tbl[code].tnt_nchildren,n);			\
-		NERROR1(DEFAULT_ERROR_STRING);							\
-	}*/											\
 	assert( tnt_tbl[code].tnt_nchildren == n );
 
 
@@ -229,9 +224,7 @@ Vec_Expr_Node *node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_
 {
 	Vec_Expr_Node *enp;
 
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,3);
-//#endif /* CAUTIOUS */
 
 	enp=NOTHER_NODE(code);
 	nother_child(enp,lchld,0);
@@ -247,9 +240,7 @@ Vec_Expr_Node *node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_
 {
 	Vec_Expr_Node *enp;
 
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,2);
-//#endif /* CAUTIOUS */
 
 	enp=NOTHER_NODE(code);
 	nother_child(enp,lchld,0);
@@ -263,9 +254,7 @@ Vec_Expr_Node *node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 {
 	Vec_Expr_Node *enp;
 
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,1);
-//#endif /* CAUTIOUS */
 
 	enp=NOTHER_NODE(code);
 	nother_child(enp,lchld,0);
@@ -276,9 +265,7 @@ Vec_Expr_Node *node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 
 Vec_Expr_Node *node0(QSP_ARG_DECL  Tree_Code code)
 {
-//#ifdef CAUTIOUS
 	VERIFY_N_CHILDREN(code,0);
-//#endif /* CAUTIOUS */
 
 	return( NOTHER_NODE(code) );
 }
@@ -419,14 +406,6 @@ void rls_vectree(Vec_Expr_Node *enp)
 // BUG?  we could use the expected number of children based on node code...
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( VN_CHILD(enp,i) != NULL ){
-//#ifdef CAUTIOUS
-//			if( VN_PARENT(VN_CHILD(enp,i)) != enp ){
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  rls_vectree:  %s child %d does not point to parent!?",
-//					node_desc(enp),i);
-//				NWARN(DEFAULT_ERROR_STRING);
-//			}
-//#endif // CAUTIOUS
 			assert( VN_PARENT(VN_CHILD(enp,i)) == enp );
 			rls_vectree(VN_CHILD(enp,i));
 		}
@@ -474,12 +453,6 @@ void rls_vectree(Vec_Expr_Node *enp)
 
 		case N_NODE_DATA_TYPES:
 			/* just here to suppress a compiler warning */
-//#ifdef CAUTIOUS
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  init_expr_node:  %s has bad data type code %d",
-//				node_desc(enp),VN_DATA_TYPE(enp) );
-//			NERROR1(DEFAULT_ERROR_STRING);
-//#endif /* CAUTIOUS */
 			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
 		/*
@@ -604,14 +577,6 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 }
 
 #ifdef CAUTIOUS
-//static int not_printable(const char *s)
-//{
-//	while( *s ){
-//		if( ! isprint(*s) ) return(1);
-//		s++;
-//	}
-//	return(0);
-//}
 
 static int string_is_printable(const char *s)
 {
@@ -631,12 +596,6 @@ void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		return;
 	}
 
-//#ifdef CAUTIOUS
-//	if( not_printable(SR_STRING(VN_INFILE(enp))) ){
-//		dump_node(QSP_ARG  enp);
-//		NERROR1("node infile not printable!?");
-//	}
-//#endif /* CAUTIOUS */
 	assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
 
 	sprintf(DEFAULT_ERROR_STRING,"File %s, line %d:",SR_STRING(VN_INFILE(enp)),VN_LINENO(enp));

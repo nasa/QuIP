@@ -1152,25 +1152,13 @@ Screen_Obj *find_scrnobj(UIView *cp)
 	IOS_Item_Context *icp;
 
 	icp = top_scrnobj_context();
-
-#ifdef CAUTIOUS
-	if( icp == NULL ){
-		NWARN("CAUTIOUS:  find_scrnobj:  null top context!?");
-		return NULL;
-	}
-#endif // CAUTIOUS
+	assert( icp != NULL );
 
 //fprintf(stderr,"find_scrnobj:  searching context %s for control 0x%lx\n",
 //IOS_CTX_NAME(icp),(u_long)cp);
 
 	IOS_List *lp = [icp getListOfItems];
-
-#ifdef CAUTIOUS
-	if( lp == NULL ){
-		NWARN("CAUTIOUS:  find_scrnobj:  null context list!?");
-		return NULL;
-	}
-#endif // CAUTIOUS
+	assert( lp != NULL );
 
 	IOS_Node *np;
 	np=IOS_LIST_HEAD(lp);
@@ -1757,13 +1745,7 @@ void end_busy(int final)
 	// it seems that we are getting a callback...
 
 	if( final ){
-#ifdef CAUTIOUS
-		if( final_ending_busy_p != NULL ){
-			fprintf(stderr,
-		"CAUTIOUS: end_busy:  final_ending_busy_p (0x%lx) is not null!?\n",(long)final_ending_busy_p);
-		}
-#endif // CAUTIOUS
-
+		assert( final_ending_busy_p == NULL );
 		final_ending_busy_p = a;
 	}
 
@@ -1831,11 +1813,9 @@ void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 
 static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
-	if( alert_lp == NULL ){
-		NWARN("CAUTIOUS:  node_for_alert:  no alert list!?");
-		return NULL;
-	}
 	IOS_Node *np;
+
+	assert( alert_lp != NULL );
 	np=IOS_LIST_HEAD(alert_lp);
 	while(np!=NULL){
 		Alert_Info *ai;
@@ -1845,6 +1825,7 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 		np = IOS_NODE_NEXT(np);
 	}
 	NWARN("CAUTIOUS:  node_for_alert:  alert not found!?");
+	// assert!
 	return NULL;
 }
 
@@ -1877,21 +1858,14 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 	IOS_Node *np;
 	np = node_for_alert(self.the_alert_p);
-#ifdef CAUTIOUS
-	if( np == NULL ){
-		return;
-	}
-#endif // CAUTIOUS
+	assert( np != NULL );
 
 	np = ios_remNode(alert_lp,np);
 
-	if( np == NULL )
-		NWARN("CAUTIOUS:  forget (Alert_Info):  Error removing alert node from list!?");
-	else {
-		np.data = NULL;		// ARC garbage collection
-					// will clean Alert_Info
-					// is this necessary?
-	}
+	assert( np != NULL );
+	np.data = NULL;		// ARC garbage collection
+				// will clean Alert_Info
+				// is this necessary?
 	rls_ios_node(np);
 }
 

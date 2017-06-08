@@ -410,14 +410,6 @@ COMMAND_FUNC( do_list_features )
 
 #ifdef CAUTIOUS
 	for(i=0;i<N_SW_FEATURES;i++){
-//		if( swf_tbl[i].swf_state != ABSENT &&
-//			swf_tbl[i].swf_state != PRESENT ){
-//
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  need to test state of feature %d (%s)",i,
-//				swf_tbl[i].swf_desc);
-//			ERROR1(ERROR_STRING);
-//		}
 		assert( swf_tbl[i].swf_state == ABSENT || swf_tbl[i].swf_state == PRESENT );
 	}
 #endif /* CAUTIOUS */

@@ -1154,12 +1154,7 @@ Screen_Obj *find_scrnobj(SOB_CTL_TYPE *cp)
 {
 	IOS_List *lp = [Screen_Obj getListOfAllItems];
 
-#ifdef CAUTIOUS
-	if( lp == NULL ){
-		NWARN("CAUTIOUS:  find_scrnobj:  null item list!?");
-		return NULL;
-	}
-#endif // CAUTIOUS
+	assert( lp != NULL );
 
 	IOS_Node *np;
 	np=IOS_LIST_HEAD(lp);
@@ -1555,13 +1550,7 @@ void end_busy(int final)
 	// it seems that we are getting a callback...
 
 	if( final ){
-#ifdef CAUTIOUS
-		if( ending_busy_p != NULL ){
-			fprintf(stderr,
-			"CAUTIOUS: end_busy:  ending_busy_p is not null!?");
-		}
-#endif // CAUTIOUS
-
+		assert( ending_busy_p == NULL );
 		ending_busy_p = a;
 	}
 
@@ -1711,11 +1700,9 @@ void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 
 static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
-	if( alert_lp == NULL ){
-		NWARN("CAUTIOUS:  node_for_alert:  no alert list!?");
-		return NULL;
-	}
 	IOS_Node *np;
+
+	assert( alert_lp != NULL );
 	np=IOS_LIST_HEAD(alert_lp);
 	while(np!=NULL){
 		Alert_Info *ai;
@@ -1757,21 +1744,14 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 	IOS_Node *np;
 	np = node_for_alert(ALERT_INFO_OBJ(self));
-#ifdef CAUTIOUS
-	if( np == NULL ){
-		return;
-	}
-#endif // CAUTIOUS
+	assert( np != NULL );
 	
 	np = ios_remNode(alert_lp,np);
 
-	if( np == NULL )
-		NWARN("CAUTIOUS:  forget (Alert_Info):  Error removing alert node from list!?");
-	else {
-		np.data = NULL;		// ARC garbage collection
-					// will clean Alert_Info
-					// is this necessary?
-	}
+	assert( np != NULL );
+	np.data = NULL;		// ARC garbage collection
+				// will clean Alert_Info
+				// is this necessary?
 	rls_ios_node(np);
 }
 

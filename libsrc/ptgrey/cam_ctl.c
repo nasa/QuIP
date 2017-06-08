@@ -183,12 +183,7 @@ int is_auto_capable( dc1394feature_info_t *feat_p )
 	dc1394feature_modes_t *mp;
 	int i;
 
-#ifdef CAUTIOUS
-	if( feat_p == NULL ){
-		NWARN("CAUTIOUS:  is_auto_capable:  null feature pointer!?");
-		return 0;
-	}
-#endif // CAUTIOUS
+	assert( feat_p != NULL );
 
 	mp = &(feat_p->modes);
 

@@ -73,12 +73,7 @@ static void init_formats(Camera *cam)
 		AVCaptureDeviceFormat *cdf;
 		CMVideoDimensions vdims;
 		cdf = [fmt_list objectAtIndex:i];
-#ifdef CAUTIOUS
-		if( cdf == NULL ){
-			NERROR1("CAUTIOUS:  init_formats:  null format!?");
-			return;
-		}
-#endif // CAUTIOUS
+		assert( cdf != NULL );
 
 		if( [ cdf.mediaType compare:AVMediaTypeVideo ] == NSOrderedSame ){ 
 			int w, h;
@@ -121,12 +116,7 @@ static void init_camera_subsystem(SINGLE_QSP_ARG_DECL)
 		AVCaptureDevice *avcd;
 
 		avcd = [cam_list objectAtIndex:i];
-#ifdef CAUTIOUS
-		if( avcd == NULL ) {
-			WARN("CAUTIOUS:  init_camera_subsystem:  Null list element!?");
-			return;
-		}
-#endif /* CAUTIOUS */
+		assert( avcd != NULL );
 
 		cam = new_camera(QSP_ARG  avcd.localizedName.UTF8String );
 		if( cam == NULL ){

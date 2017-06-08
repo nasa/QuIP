@@ -98,15 +98,9 @@ static void try_collapse(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case FVSSUB:  scalar_code = T_MINUS; vs_code = FVSADD; break;
 		case FVSMUL:  scalar_code = T_TIMES; vs_code = FVSMUL; break;
 		case FVSDIV:  scalar_code = T_DIVIDE;vs_code = FVSMUL; break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  try_collapse:  unhandled function code %d",
-//				VN_VFUNC_CODE(tmp_enp));
-//			WARN(ERROR_STRING);
-//			return;
 			assert( AERROR("try_collapse:  unhandled function code") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 
 	SET_VN_CHILD(tmp_enp,0, VN_CHILD(enp,1) );
@@ -199,14 +193,6 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * check and see it the operands are both
 			 * literals, if so, evaluate and replace.
 			 */
-//#ifdef CAUTIOUS
-//			// These should have two children, but
-//			// the analyzer doesn't know that...
-//			if( VN_CHILD(enp,0) == NULL || VN_CHILD(enp,1) == NULL ){
-//				WARN("CAUTIOUS:  unexpected null child!?");
-//				return;
-//			}
-//#endif // CAUTIOUS
 			assert( VN_CHILD(enp,0) != NULL && VN_CHILD(enp,1) != NULL );
 
 			 if( IS_LITERAL(VN_CHILD(enp,0)) &&
@@ -241,12 +227,6 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 		case T_VS_FUNC:
-//#ifdef CAUTIOUS
-//			if( VN_CHILD(enp,0) == NULL ){
-//				WARN("CAUTIOUS:  unexpected null left child!?");
-//				return;
-//			}
-//#endif // CAUTIOUS
 			assert( VN_CHILD(enp,0) != NULL );
 
 			if( VN_CODE(VN_CHILD(enp,0)) == T_VS_FUNC &&

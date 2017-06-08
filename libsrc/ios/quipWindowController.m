@@ -46,17 +46,9 @@
 {
 	Screen_Obj *sop;
 	sop = find_scrnobj(obj);
-	if( sop != NULL ){
-		//fprintf(stderr,"Found %s\n",SOB_NAME(sop));
-		chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(button)" );
-	}
-#ifdef CAUTIOUS
-	  else {
-		sprintf(DEFAULT_ERROR_STRING,
-			"CAUTIOUS:  Couldn't find screen obj!?\n");
-		NWARN(DEFAULT_ERROR_STRING);
-	}
-#endif // CAUTIOUS
+	assert( sop != NULL );
+	//fprintf(stderr,"Found %s\n",SOB_NAME(sop));
+	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(button)" );
 }
 
 -(void) windowChooserAction: (id) obj

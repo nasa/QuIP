@@ -66,13 +66,6 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 
 	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
 
-//dp2=dobj_of(QSP_ARG  OBJ_NAME(dp));
-//if( dp2 == NULL ){
-//sprintf(ERROR_STRING,"CAUTIOUS:  obj_rename:  object %s has already been removed from the database",
-//OBJ_NAME(dp));
-//WARN(ERROR_STRING);
-//}
-
 	// We expect that the passed object is in the namespace.
 	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NULL );
 
@@ -210,13 +203,6 @@ Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
-//#ifdef CAUTIOUS
-//	if( svp == NULL ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  assign_scalar:  passed null scalar ptr");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( svp != NULL );
 
 #ifdef HAVE_ANY_GPU
@@ -302,14 +288,10 @@ double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p
 			WARN("cast_from_scalar_value:  can't cast multi-component types to double");
 			retval =0;
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  cast_from_scalar_value:  unrecognized precision");
-//			retval =0;
 			assert( AERROR("cast_from_scalar_value:  unrecognized precision") );
 
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(retval);
 }
@@ -343,58 +325,35 @@ void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,dou
 		case PREC_DBLCPX:
 			WARN("cast_to_scalar_value:  can't cast to multi-component types from double");
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  cast_to_scalar_value:  unrecognized precision");
 			assert( AERROR("cast_to_scalar_value:  unrecognized precision") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
 void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
-//#ifdef CAUTIOUS
-//	if( index < 0 || index > 1 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  cast_to_cpx_scalar:  index (%d) out of range.",index);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index <= 1 );
 
 	switch( PREC_CODE(prec_p) & MACH_PREC_MASK ){
 		case PREC_SP: svp->u_fc[index] = (float) val; break;
 		case PREC_DP: svp->u_dc[index] = val; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  cast_to_cpx_scalar:  unexpected machine precision");
 			assert( AERROR("cast_to_cpx_scalar:  unexpected machine precision") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
 void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
-//#ifdef CAUTIOUS
-//	if( index < 0 || index > 3 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  cast_to_cpx_scalar:  index (%d) out of range.",index);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index <= 3 );
 
 	switch( PREC_CODE(prec_p) & MACH_PREC_MASK ){
 		case PREC_SP: svp->u_fq[index] = (float) val; break;
 		case PREC_DP: svp->u_dq[index] = val; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  cast_to_quat_scalar:  unexpected machine precision");
 			assert( AERROR("cast_to_quat_scalar:  unexpected machine precision") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 

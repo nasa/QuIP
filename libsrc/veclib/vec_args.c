@@ -499,14 +499,9 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			p1="result value for test true";
 			p2="result value for test false";
 		}
-//#ifdef CAUTIOUS
 		else {
-//			WARN("CAUTIOUS:  unhandled case in get_scalar_args");
-//			p1=p2="dummy value";
-//			retval=(-1);
 			assert( AERROR("unhandled case in get_scalar_args") );
 		}
-//#endif /* CAUTIOUS */
 		SET_OA_SVAL(oap,0, get_sval(prec_p) );
 		SET_OA_SVAL(oap,1, get_sval(prec_p) );
 		if( retval == 0 ){
@@ -727,16 +722,9 @@ int prompt_scalar_value(QSP_ARG_DECL  Data_Obj *dp, const char *pmpt, prec_t pre
 		*((u_short *)OBJ_DATA_PTR( dp )) = svalue;
 	}
 
-//#ifdef CAUTIOUS
 	else {
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  prompt_scalar_value:  unsupported precision \"%s\" (0x%x)",
-//			NAME_FOR_PREC_CODE(prec),prec);
-//		WARN(ERROR_STRING);
-//		return(-1);
 		assert( AERROR("prompt_scalar_value:  unsupported precision!?") );
 	}
-//#endif /* CAUTIOUS */
 	return(0);
 }
 #endif /* FOOBAR */

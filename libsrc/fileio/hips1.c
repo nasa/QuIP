@@ -166,12 +166,6 @@ NWARN("HIPS1 extension does not support non-float multicomponent pixels");
 			size=8;
 			break;
 		case PREC_SP:
-//#ifdef CAUTIOUS
-//			if( OBJ_COMPS(dp)==0 ){
-//				NWARN("CAUTIOUS:  Zero tdim!?");
-//				return(-1);
-//			}
-//#endif /* CAUTIOUS */
 			assert( OBJ_COMPS(dp) != 0 );
 
 			if( OBJ_COMPS(dp) == 1 ){

@@ -411,10 +411,6 @@ int assoc_pids(pid1,pid2)
 	mc1.mc_pid[0]=pid1;
 	mc1.mc_pid[1]=pid2;
 
-//#ifdef CAUTIOUS
-//	if( fbfd == (-1) )
-//		error1("CAUTIOUS:  assoc_pids:  himemfb is not open");
-//#endif /* CAUTIOUS */
 	assert( fbfd != (-1) );
 
 	if( ioctl(fbfd,HM_ADDPID,&mc1) < 0 ){
@@ -436,10 +432,6 @@ int unassoc_pids(pid1,pid2)
 	mc1.mc_pid[0]=pid1;
 	mc1.mc_pid[1]=pid2;
 
-//#ifdef CAUTIOUS
-//	if( fbfd == (-1) )
-//		error1("CAUTIOUS:  unassoc_pids:  himemfb is not open");
-//#endif /* CAUTIOUS */
 	assert( fbfd != (-1) );
 
 	if( ioctl(fbfd,HM_SUBPID,&mc1) < 0 ){

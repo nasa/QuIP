@@ -93,7 +93,6 @@ longlist(QSP_ARG  dp);
 		else if( IS_QUAT(dp) ) /* BUG case for QUAT too? */
 			OA_ARGSTYPE(oap) = QUATERNION_ARGS;
 		else
-			//ERROR1("CAUTIOUS:  insure_ram_obj:  bad argset type!?");
 			assert( AERROR("insure_ram_obj:  bad argset type!?") );
 
 //fprintf(stderr,"insure_ram_obj:  moving remote data to a contiguous object\n");  
@@ -363,12 +362,6 @@ static void init_print_fmt_names(void)
 {
 	int i;
 
-//#ifdef CAUTIOUS
-//	if( fmt_names_inited ){
-//NWARN("CAUTIOUS:  unnecessary call to init_print_fmt_names!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( ! fmt_names_inited );
 
 	/* BUG should insure that all formats are inited */
@@ -392,14 +385,9 @@ static void init_print_fmt_names(void)
 			case FMT_UDECIMAL:
 				print_fmt_name[i] = "unsigned_decimal";
 				break;
-//#ifdef CAUTIOUS
 			default:
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  Oops, no initialization for print format %d!?",i);
-//				NERROR1(DEFAULT_ERROR_STRING);
 				assert( AERROR("Missing format initialization!?") );
 				break;
-//#endif /* CAUTIOUS */
 		}
 	}
 	fmt_names_inited=1;

@@ -199,10 +199,6 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 			chew_text(QSP_ARG correct_feedback_string,
 				FEEDBACK_FILENAME);
 		}
-//#ifdef CAUTIOUS
-//		else if( incorrect_feedback_string == NULL )
-//			ERROR1("CAUTIOUS: save_response: correct_feedback_string is set, but incorrect_feedback string is not!?");
-//#endif /* CAUTIOUS */
 		else if( rsp != REDO && rsp != ABORT ){
 			chew_text(QSP_ARG incorrect_feedback_string,
 				FEEDBACK_FILENAME);

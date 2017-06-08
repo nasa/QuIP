@@ -387,12 +387,7 @@ static int vfa_cmp(const void *vfp1,const void *vfp2)
 
 int check_vfa_tbl_size(QSP_ARG_DECL  Vec_Func_Array vfa_tbl[], int size)
 {
-	if( size != N_VEC_FUNCS ){
-sprintf(ERROR_STRING,"CAUTIOUS:  %d inititialized vfa_tbl entries, expected %d!?",
-			size,N_VEC_FUNCS);
-		WARN(ERROR_STRING);
-		return -1;
-	}
+	assert( size == N_VEC_FUNCS );
 	return 0;
 }
 
@@ -478,15 +473,6 @@ VF_CODE(&vec_func_tbl[i]), VF_NAME(&vec_func_tbl[ VF_CODE(&vec_func_tbl[i]) ])
 );
 ADVISE(ERROR_STRING);
 }
-
-//		if( VF_CODE(&vec_func_tbl[i]) != i ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  vl_init:  Vec_Func table entry %d (%s) has code %d (%s)!?",
-//		i, VF_NAME(&vec_func_tbl[i]),
-//		VF_CODE(&vec_func_tbl[i]),
-//		VF_NAME(&vec_func_tbl[ VF_CODE(&vec_func_tbl[i]) ]) );
-//			ERROR1(ERROR_STRING);
-//		}
 
 		assert( VF_CODE(&vec_func_tbl[i]) == i );
 	}

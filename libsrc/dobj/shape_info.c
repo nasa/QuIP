@@ -91,10 +91,6 @@ Precision *const_precision(Precision *prec_p)
 
 Precision *complex_precision(Precision *prec_p)
 {
-//#ifdef CAUTIOUS
-//	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) )
-//		NERROR1("CAUTIOUS:  complex_precision:  pass a complex precision!?");
-//#endif /* CAUTIOUS */
 	assert( ! COMPLEX_PRECISION(PREC_CODE(prec_p)) );
 
 	return PREC_FOR_CODE( PREC_CODE(prec_p) | DT_COMPLEX );

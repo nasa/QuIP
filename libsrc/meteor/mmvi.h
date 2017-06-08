@@ -11,15 +11,6 @@ extern int rt_is_on;
 #define YIELD_PROC(time)	usleep(time);
 #endif /* ALLOW_RT_SCHED */
 
-//#ifdef CAUTIOUS
-//#define INSURE_MM(s)	if(_mm==NULL) {								\
-//				sprintf(ERROR_STRING,"CAUTIOUS: %s:  _mm not initialized",(s));	\
-//				ERROR1(ERROR_STRING);						\
-//			}
-//#else
-//#define INSURE_MM(s)
-//#endif
-
 /* global vars */
 extern int displaying_color;
 

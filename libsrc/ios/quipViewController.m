@@ -77,13 +77,7 @@
 -(void) qvcDoneButtonPressed
 {
 	done_button_pushed=1;
-#ifdef CAUTIOUS
-	if( qvc_done_action == NULL ){
-		NWARN("qvcDoneButtonPushed:  no action!?");
-		return;
-	}
-#endif // CAUTIOUS
-
+	assert( qvc_done_action != NULL );
 	chew_text(DEFAULT_QSP_ARG  qvc_done_action, "(done button)" );
 }
 
