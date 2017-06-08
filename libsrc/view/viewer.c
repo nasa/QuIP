@@ -191,8 +191,8 @@ void release_image(QSP_ARG_DECL  Data_Obj *dp)
 void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	zap_viewer(vp);		/* window sys specific, no calls to givbuf... */
-	rls_list_nodes(vp->vw_image_list);
 #ifndef BUILD_FOR_OBJC
+	rls_list_nodes(vp->vw_image_list);	// necessary???
 	rls_vw_lists(vp);	/* release list heads */
 #endif /* BUILD_FOR_OBJC */
 

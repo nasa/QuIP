@@ -53,7 +53,7 @@ static int add_text_input( /* quipAppDelegate *adp , */ Panel_Obj *po, const cha
 	Screen_Obj *sop;
 
 	sop = simple_object(DEFAULT_QSP_ARG  name);
-	if( sop == NO_SCREEN_OBJ ) NERROR1("Failed to create console input line");
+	assert( sop != NULL );
 	SET_SOB_ACTION(sop, "InterpretString" );
 	SET_SOB_CONTENT(sop, "Enter command" );
 	SET_SOB_TYPE(sop, SOT_TEXT);
@@ -204,7 +204,7 @@ static int add_text_output( /* quipAppDelegate *adp , */ Panel_Obj *po )
 	Screen_Obj *sop;
 
 	sop = simple_object(DEFAULT_QSP_ARG  CONSOLE_DISPLAY_NAME );
-	if( sop == NO_SCREEN_OBJ ) NERROR1("Failed to create console display");
+	assert( sop != NULL );
 	SET_SOB_ACTION(sop, "" );	// action string is initial text to display
 	//SET_SOB_CONTENT(sop, "" );
 	SET_SOB_TYPE(sop, SOT_TEXT_BOX);

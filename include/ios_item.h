@@ -150,15 +150,15 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	IOS_Item *ip;						\
 								\
-	if( stem##_itp == NO_IOS_ITEM_TYPE ){			\
+	if( stem##_itp == NULL ){				\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	}							\
 	ip = stem##_of(QSP_ARG  name);				\
-	if( ip != NO_IOS_ITEM ){				\
+	if( ip != NULL ){					\
 		sprintf(ERROR_STRING,"new_%s:  \"%s\" already exists!?", \
 			#stem,name);				\
 		WARN(ERROR_STRING);				\
-		return((type *)NO_IOS_ITEM);			\
+		return((type *)NULL);				\
 	}							\
 	type *stem##_p=[[type alloc] initWithName:		\
 			STRINGOBJ(name) ];			\
@@ -211,7 +211,7 @@ type *get_##stem(QSP_ARG_DECL  const char *name)		\
 								\
 type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 {								\
-	if( stem##_itp == NO_IOS_ITEM_TYPE )			\
+	if( stem##_itp == NULL )				\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	return (type *)pick_ios_item(QSP_ARG  stem##_itp, pmpt);	\
 }
@@ -220,7 +220,7 @@ type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 								\
 void list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 {								\
-	if( stem##_itp == NO_IOS_ITEM_TYPE )			\
+	if( stem##_itp == NULL )				\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	[stem##_itp list:fp];					\
 }

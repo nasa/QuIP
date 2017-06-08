@@ -81,8 +81,8 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	}
 	if( IS_DRAGSCAPE(vp) ){
 		//zap_image_list(vp);
-		rls_list_nodes(vp->vw_image_list);
 #ifndef BUILD_FOR_IOS
+		rls_list_nodes(vp->vw_image_list);
 		add_image(vp,dp,0,0);
 #endif // BUILD_FOR_IOS
 	} else {
