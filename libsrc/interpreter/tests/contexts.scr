@@ -17,7 +17,7 @@ os
     new_thread thr1 Test_Thread
     quit
   quit
-Pause
+Pause_If
 
 platforms select $DEFAULT_PLATFORM $DEFAULT_GPU quit
 
@@ -35,6 +35,6 @@ os
     quit
   quit
 
-Pause
+Pause_If
 exit
 

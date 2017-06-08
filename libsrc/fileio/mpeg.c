@@ -54,7 +54,7 @@ static int mpeg_to_dp(Data_Obj *dp,Mpeg_Hdr *mpeg_hp)
 	dp->dt_sinc = dp->dt_finc*dp->dt_frames;
 
 	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	dp->dt_children = NULL;
 
 	dp->dt_ap = ram_area;		/* the default */
 	dp->dt_data = NULL;

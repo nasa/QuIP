@@ -139,7 +139,7 @@ void write_exp_data(QSP_ARG_DECL  FILE *fp)	/* replaces routine formerly in stai
 	fputs(summline,fp);
 
 	lp = class_list(SINGLE_QSP_ARG);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		tcp=(Trial_Class *)np->n_data;
 		write_class_data(tcp,fp);

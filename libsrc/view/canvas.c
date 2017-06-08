@@ -80,7 +80,8 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		return;
 	}
 	if( IS_DRAGSCAPE(vp) ){
-		zap_image_list(vp);
+		//zap_image_list(vp);
+		rls_list_nodes(vp->vw_image_list);
 #ifndef BUILD_FOR_IOS
 		add_image(vp,dp,0,0);
 #endif // BUILD_FOR_IOS
@@ -113,7 +114,7 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 	lp = VW_IMAGE_LIST(vp);
 
 #ifdef CAUTIOUS
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		ERROR1("CAUTIOUS:  bring_image_to_front:  no image list!?");
 	}
 	if( QLIST_HEAD( lp ) == NO_NODE ){

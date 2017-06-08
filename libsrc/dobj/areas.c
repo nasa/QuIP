@@ -258,7 +258,7 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 	if( data_area_itp == NO_ITEM_TYPE ) init_data_areas(SINGLE_QSP_ARG);
 
 	lp=dobj_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
 	n=eltcount(lp);
 	if( n == 0 ){
@@ -275,7 +275,7 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 		return;	// NOTREACHED - silence static analyzer
 	}
 	
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
 	while( np != NO_NODE ){
 		dp = (Data_Obj *) np->n_data;

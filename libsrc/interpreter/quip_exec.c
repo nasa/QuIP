@@ -4,7 +4,7 @@
 #include "history.h"
 #include "query_prot.h"
 
-static List *mf_list=NO_LIST;
+static List *mf_list=NULL;
 
 #ifndef MAC
 #ifdef HAVE_HISTORY
@@ -29,12 +29,12 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 	//lp = dictionary_list( MENU_DICT(mp) );
 	lp = container_list( MENU_CONTAINER(mp) );
 //#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
+//	if( lp == NULL ){
 //		WARN("CAUTIOUS:  stash_menu_commands:  no dictionary list!?");
 //		return;
 //	}
 //#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	np = QLIST_HEAD(lp);
 	while( np != NO_NODE ){
@@ -51,7 +51,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 
 static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
-	assert( QS_CALLBACK_LIST(THIS_QSP) != NO_LIST );
+	assert( QS_CALLBACK_LIST(THIS_QSP) != NULL );
 
 //fprintf(stderr,"perform_callbacks:  qlevel = %d BEGIN\n",QLEVEL);
 	reset_return_strings(SINGLE_QSP_ARG);
@@ -156,7 +156,7 @@ void rls_mouthful(Mouthful *mfp)
 	 * the strings when we retrieve it from the free list.
 	 */
 
-	if( mf_list == NO_LIST ){
+	if( mf_list == NULL ){
 		mf_list=new_list();
 	}
 	np = mk_node(mfp);
@@ -170,7 +170,7 @@ void rls_mouthful(Mouthful *mfp)
 Mouthful *new_mouthful(const char *text, const char *filename)
 {
 	Mouthful *mfp;
-	if( mf_list != NO_LIST ){
+	if( mf_list != NULL ){
 		Node *np;
 
 		np=remHead(mf_list);
@@ -202,15 +202,15 @@ static void store_mouthful(QSP_ARG_DECL  const char *text,
 	mfp = new_mouthful(text,filename);
 
 	np = mk_node( (void *) mfp );
-	if( CHEW_LIST == NO_LIST ){
+	if( CHEW_LIST == NULL ){
 		CHEW_LIST = new_list();
 //#ifdef CAUTIOUS
-//		if( CHEW_LIST==NO_LIST ){
+//		if( CHEW_LIST==NULL ){
 //			ERROR1("CAUTIOUS:  couldn't make chew list");
 //			IOS_RETURN
 //		}
 //#endif /* CAUTIOUS */
-		assert( CHEW_LIST != NO_LIST );
+		assert( CHEW_LIST != NULL );
 	}
 	addTail(CHEW_LIST,np);
 }
@@ -276,7 +276,7 @@ void digest(QSP_ARG_DECL  const char *text, const char *filename)
 
 static void chew_stored(SINGLE_QSP_ARG_DECL)
 {
-	if( CHEW_LIST != NO_LIST ){
+	if( CHEW_LIST != NULL ){
 		Node *np;
 		Mouthful *mfp;
 

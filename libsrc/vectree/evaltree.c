@@ -50,7 +50,7 @@ static void delete_local_objs(SINGLE_QSP_ARG_DECL);
 static Dimension_Set *scalar_dsp=NULL;
 
 /* BUG use of this global list make this not thread-safe - should be an element of parser_data! ... */
-static List *local_obj_lp=NO_LIST;
+static List *local_obj_lp=NULL;
 
 // Not sure what these are used for ???  BUG not thread-safe!?
 static Item_Context *hidden_context[MAX_HIDDEN_CONTEXTS];
@@ -6978,7 +6978,7 @@ make_local_dobj(QSP_ARG_DECL  Dimension_Set *dsp,Precision *prec_p)
 	assert(dp!=NULL);
 
 	/* remember this for later deletion... */
-	if( local_obj_lp == NO_LIST )
+	if( local_obj_lp == NULL )
 		local_obj_lp = new_list();
 
 	/* We can't just store dp, because it could become a dangling pointer if someone
@@ -7001,7 +7001,7 @@ static void delete_local_objs(SINGLE_QSP_ARG_DECL)
 	Data_Obj *dp;
 	const char *s;
 
-	if( local_obj_lp == NO_LIST ) return;
+	if( local_obj_lp == NULL ) return;
 
 	//np=QLIST_HEAD(local_obj_lp);
 	np = remHead(local_obj_lp);

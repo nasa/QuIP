@@ -1,0 +1,15 @@
+
+advise "\n\nis_digit.scr BEGIN"
+
+#advise "Set e1 isdigit(string_obj('012')[0])"
+Set e1 isdigit(string_obj('012')[0])
+Assign x $e1
+echo "$e1 = $x"
+
+#advise "Set e2 isdigit(string_obj('abc')[0])"
+Set e2 isdigit(string_obj('abc')[0])
+Assign x $e2
+echo "$e2 = $x"
+
+advise "\n\nt.scr DONE"
+

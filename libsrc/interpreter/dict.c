@@ -213,7 +213,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 int insert_name(Item* ip, Node* np, Dictionary* dict_p)
 {
-	if( DICT_LIST(dict_p) == NO_LIST )
+	if( DICT_LIST(dict_p) == NULL )
 		SET_DICT_LIST(dict_p,new_list());
 
 	if( IS_HASHING(dict_p) ){
@@ -250,7 +250,7 @@ void _cat_dict_items(QSP_ARG_DECL  List *lp, Dictionary* dict_p)
 	List *nslp;
 
 	nslp = dictionary_list(dict_p);
-	if( nslp == NO_LIST ) return;
+	if( nslp == NULL ) return;
 
 	np=QLIST_HEAD(nslp);
 	while(np!=NO_NODE){
@@ -320,7 +320,7 @@ Dictionary *new_dictionary(void)
 
 	dict_p->dict_name = NULL;
 	dict_p->dict_htp = NULL;
-	dict_p->dict_lp = NO_LIST;
+	dict_p->dict_lp = NULL;
 	dict_p->dict_flags = 0;
 	dict_p->dict_fetches = 0;
 	dict_p->dict_ncmps = 0;

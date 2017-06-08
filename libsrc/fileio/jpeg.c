@@ -707,7 +707,7 @@ int jpeg_to_dp(Data_Obj *dp,Jpeg_Hdr *jpeg_hp)
 	SET_OBJ_SEQ_INC(dp,OBJ_FRM_INC(dp)*OBJ_FRAMES(dp));
 
 	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, NULL);

@@ -34,7 +34,7 @@ static COMMAND_FUNC( do_list_all_pfdevs )
 	Node *np;
 
 	lp = platform_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) {
+	if( lp == NULL ) {
 		return;
 	}
 
@@ -143,7 +143,7 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 		push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
 
 		pfd_lp = pfdev_list(SINGLE_QSP_ARG);
-		if( pfd_lp == NO_LIST ) return NULL;
+		if( pfd_lp == NULL ) return NULL;
 		//pfd_np = QLIST_HEAD(pfd_lp);
 		pfd_np = QLIST_TAIL(pfd_lp);
 		while( pfd_np != NO_NODE ){

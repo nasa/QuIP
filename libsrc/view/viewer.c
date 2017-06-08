@@ -145,22 +145,10 @@ static void rls_vw_lists(Viewer *vp)
 {
 	rls_list(vp->vw_image_list);
 	rls_list(vp->vw_draglist);
-	if( vp->vw_drawlist != NO_LIST )
+	if( vp->vw_drawlist != NULL )
 		rls_list(vp->vw_drawlist);
 }
 
-void zap_image_list(Viewer *vp)
-{
-	Node *np,*np2;
-
-	np = vp->vw_image_list->l_head;
-	while(np!=NO_NODE){
-		np2=np->n_next;
-		rls_node(np);
-		np=np2;
-	}
-	vp->vw_image_list->l_head=vp->vw_image_list->l_tail=NO_NODE;
-}
 #endif /* ! BUILD_FOR_OBJC */
 
 // We would like to be able to select a drawable (pixmap or viewer)
@@ -203,7 +191,7 @@ void release_image(QSP_ARG_DECL  Data_Obj *dp)
 void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	zap_viewer(vp);		/* window sys specific, no calls to givbuf... */
-	zap_image_list(vp);	/* release nodes of image_list */
+	rls_list_nodes(vp->vw_image_list);
 #ifndef BUILD_FOR_OBJC
 	rls_vw_lists(vp);	/* release list heads */
 #endif /* BUILD_FOR_OBJC */
@@ -316,7 +304,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	/* should adopt a consistent policy re initializing these lists!? */
 	SET_VW_IMAGE_LIST(vp, new_list());
 	SET_VW_DRAG_LIST(vp, new_list());
-	SET_VW_DRAW_LIST(vp, NO_IOS_LIST);		/* BUG should be in view_xlib.c */
+	SET_VW_DRAW_LIST(vp, NULL);		/* BUG should be in view_xlib.c */
 
 #ifdef HAVE_X11
 	vp->vw_ip = (XImage *) NULL;
@@ -422,7 +410,7 @@ IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL)
 	IOS_List *lp;
 
 	lp=ios_item_list(QSP_ARG  vwr_itp);
-	if( lp==NO_IOS_LIST ) return(NO_IOS_NODE);
+	if( lp==NULL ) return(NO_IOS_NODE);
 	else return(IOS_LIST_HEAD(lp));
 }
 

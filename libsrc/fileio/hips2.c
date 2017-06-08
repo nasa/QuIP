@@ -73,7 +73,7 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp));
 
 	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	dp->dt_children = NULL;
 
 	// BUG fix ram_area
 	//dp->dt_ap = ram_area;		/* the default */

@@ -70,6 +70,8 @@ static COMMAND_FUNC( do_items ) { PUSH_MENU(items); }
 
 //////////////////////////////////////
 
+// This whole submenu is really just for testing.
+
 #include "rbtree.h"
 
 static qrb_tree *the_tree_p=NULL;
@@ -162,7 +164,7 @@ static COMMAND_FUNC( do_find_mac )
 	s=NAMEOF("macro name fragment");
 
 	lp=find_items(QSP_ARG  macro_itp, s);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
 	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 
@@ -175,15 +177,15 @@ static COMMAND_FUNC( do_find_mac )
 
 static List *search_macros(QSP_ARG_DECL  const char *frag)
 {
-	List *lp, *newlp=NO_LIST;
+	List *lp, *newlp=NULL;
 	Node *np, *newnp;
 	Macro *mp;
 	const char *mbuf;
 	char *lc_frag;
 
-	if( macro_itp == NO_ITEM_TYPE ) return(NO_LIST);
+	if( macro_itp == NO_ITEM_TYPE ) return NULL;
 	lp=item_list(QSP_ARG  macro_itp);
-	if( lp == NO_LIST ) return(lp);
+	if( lp == NULL ) return lp;
 
 	np=QLIST_HEAD(lp);
 	lc_frag = getbuf( strlen(frag) + 1 );
@@ -195,7 +197,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 			/* make the match case insensitive */
 			decap((char *)mbuf,mbuf);
 			if( strstr(mbuf,lc_frag) != NULL ){
-				if( newlp == NO_LIST )
+				if( newlp == NULL )
 					newlp=new_list();
 				newnp=mk_node(mp);
 				addTail(newlp,newnp);
@@ -205,7 +207,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 		np=NODE_NEXT(np);
 	}
 	givbuf(lc_frag);
-	return(newlp);
+	return newlp;
 }
 
 static COMMAND_FUNC( do_search_macs )
@@ -215,7 +217,7 @@ static COMMAND_FUNC( do_search_macs )
 
 	s=NAMEOF("macro fragment");
 	lp=search_macros(QSP_ARG  s);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
 	prt_msg(msg_str);
@@ -253,7 +255,7 @@ no_macros:
 		return;
 	}
 	lp=item_list(QSP_ARG  macro_itp);
-	if( lp == NO_LIST ) goto no_macros;
+	if( lp == NULL ) goto no_macros;
 
 	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
@@ -310,19 +312,13 @@ static COMMAND_FUNC( do_def_mac )
 		ERROR1(ERROR_STRING);
 	}
 
-
-	if( n > 0 ){
-		ma_tbl = read_macro_arg_table(QSP_ARG  n);
-	} else {
-		ma_tbl = NULL;
-	}
-
+	ma_tbl = setup_macro_args(QSP_ARG  n);
 	// We want to store the line number of the file where the macro
 	// is declared...  We can read it now from the query stream...
 	//lineno = QRY_LINES_READ(CURR_QRY(THIS_QSP));
 	lineno = current_line_number(SINGLE_QSP_ARG);
 
-	sbp = rdmtext(SINGLE_QSP_ARG);
+	sbp = read_macro_body(SINGLE_QSP_ARG);
 
 	// Now make sure this macro doesn't already exist
 	mp = macro_of(QSP_ARG  name);
@@ -424,8 +420,10 @@ static COMMAND_FUNC( do_redir )
 
 static COMMAND_FUNC( do_warn )
 {
+	const char *s;
+	s = NAMEOF("warning message");
 	//[THIS_QSP warn : [THIS_QSP nameOf : @"warning message" ] ];
-	WARN( NAMEOF("warning message") );
+	WARN( s );
 }
 
 static COMMAND_FUNC( do_expect_warning )
@@ -434,6 +432,11 @@ static COMMAND_FUNC( do_expect_warning )
 
 	s=NAMEOF("Beginning of warning message");
 	expect_warning(QSP_ARG  s);
+}
+
+static COMMAND_FUNC( do_check_expected_warning )
+{
+	check_expected_warning(SINGLE_QSP_ARG);
 }
 
 /******************** variables menu ***********************/
@@ -1638,6 +1641,7 @@ ADD_CMD( while,		do_while,	conditionally close a loop	)
 ADD_CMD( variables,	do_var_menu,	variables submenu	)
 ADD_CMD( macros,	do_mac_menu,	macros submenu		)
 ADD_CMD( expect_warning,	do_expect_warning,	specify expected warning	)
+ADD_CMD( check_expected_warning,	do_check_expected_warning,	check for expected warning	)
 ADD_CMD( warn,		do_warn,	print a warning message	)
 ADD_CMD( <,		do_redir,	read commands from a file	)
 ADD_CMD( >,		do_copy_cmd,	copy commands to a transcript file	)

@@ -39,7 +39,7 @@ int bmp_to_dp(Data_Obj *dp, BMP_Header *hd_p)
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp));
 
 	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	/* dp->dt_data = hd_p->image; */

@@ -66,6 +66,7 @@ libinterpreter_a_SOURCES =		\
 noinst_HEADERS =			\
 					\
 		strbuf.h		\
+		list_private.h		\
 		query_private.h		\
 		query_prot.h
 

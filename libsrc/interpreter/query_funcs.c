@@ -338,7 +338,7 @@ static void eatup_space_for_lookahead(SINGLE_QSP_ARG_DECL)
 
 
 /*
- * Try to read the next word.  Called from next_query_word() and rdmtext().
+ * Try to read the next word.  Called from next_query_word() and read_macro_body().
  *
  * Try to read the next word, after we have already got one
  * that is ready to interpret.  The reason for this is so that
@@ -570,6 +570,9 @@ static void debug_macro_arg(QSP_ARG_DECL  Macro *mp, const char **args, int i)
 
 #endif /* ! QUIP_DEBUG */
 
+
+// read the macro args for a macro expansion
+
 static const char **read_macro_args(QSP_ARG_DECL  Macro *mp)
 {
 	const char **args;
@@ -656,40 +659,14 @@ advise(ERROR_STRING);
 }
 
 /*
- * Check word in buf for macro.
- *
- * If the buffer contains a macro name, read the macro arguments,
+ * read the macro arguments, if appropriate,
  * and then push the text of the macro onto the input.
  */
 
-static int expand_macro_if(QSP_ARG_DECL  const char *buf)
+static inline int expand_macro(QSP_ARG_DECL  Macro *mp)
 {
-	Macro *mp;
 	const char **args;
 
-	/* Return if we've disabled macro expansion */
-	if( !(QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS) ) return(0);
-
-//if( verbose ){
-//sprintf(ERROR_STRING,"expand_macro_if %s checking \"%s\"",THIS_QSP->qs_name,buf);
-//advise(ERROR_STRING);
-//}
-	/* Does the buffer contain a macro name?  If not, return */
-	mp=macro_of(QSP_ARG  buf);
-	if( mp==NO_MACRO ) return(0);
-
-#ifdef QUIP_DEBUG
-if( debug & qldebug ){
-sprintf(ERROR_STRING,"expand_macro_if expanding %s",buf);
-advise(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-
-	if( check_macro_recursion(QSP_ARG  mp) < 0 )
-		return 0;
-
-
-	/* All systems go - now read the arguments */
 	if( MACRO_N_ARGS(mp) > 0 ){
 		args = read_macro_args(QSP_ARG  mp);
 		if( args == NULL ) return 0;
@@ -704,6 +681,29 @@ advise(ERROR_STRING);
 		push_macro(QSP_ARG  mp,args);
 
 	return(1);
+}
+
+/*
+ * Check word in buf for macro.
+ *
+ * If the buffer contains a macro name, then expand it.
+ */
+
+static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
+{
+	Macro *mp;
+
+	/* Return if we've disabled macro expansion */
+	if( !(QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS) ) return(0);
+
+	/* Does the buffer contain a macro name?  If not, return */
+	mp=macro_of(QSP_ARG  buf);
+	if( mp==NO_MACRO ) return(0);
+
+	if( check_macro_recursion(QSP_ARG  mp) < 0 )
+		return 0;
+
+	return expand_macro(QSP_ARG  mp);
 }
 
 /*
@@ -782,6 +782,9 @@ advise(ERROR_STRING);
 	return(buf);
 } /* end next_query_word() */
 
+
+// Get more input, and enlarge the return buffer if necessary.
+
 static inline void replenish_buffer(SINGLE_QSP_ARG_DECL)
 {
 	const char *input_ptr;
@@ -789,36 +792,26 @@ static inline void replenish_buffer(SINGLE_QSP_ARG_DECL)
 	int n_have;
 
 	n_have = (int) ((QS_RET_PTR(THIS_QSP))-QS_RET_STR(THIS_QSP));	/* cast for pc */
-	ADD_TO_RESULT(0);	// make sure a well-formed C string
 
 	input_ptr=qline(QSP_ARG  "");
 	assert(input_ptr!=NULL);
 	n_need = strlen(QS_RET_STR(THIS_QSP))+strlen(input_ptr)+16;
 
 	if( sb_size( QS_RET_STRBUF(THIS_QSP) ) < n_need ){
+		ADD_TO_RESULT(0)	// make sure a well-formed C string
 		enlarge_buffer(QS_RET_STRBUF(THIS_QSP),n_need);
 		SET_QS_RET_STR(THIS_QSP,sb_buffer(QS_RET_STRBUF(THIS_QSP)));
 		SET_QS_RET_PTR(THIS_QSP,QS_RET_STR(THIS_QSP)+n_have);
 	}
 	// Does qline update the input line ptr?  it should!
-
-}	// end escape_newline
+}	// end replenish_buffer
 
 static void escape_newline(SINGLE_QSP_ARG_DECL)
 {
-	Query *qp;
-	/* an escaped newline */
-	/* read the next line */
-
-	qp = CURR_QRY(THIS_QSP);
-
-	// advance line counter after an escaped newline
 	INCREMENT_LINES_READ(escape_newline)
 	if( * QS_LINE_PTR(THIS_QSP) == 0 ){	/* end of line */
 		replenish_buffer(SINGLE_QSP_ARG);
 	}
-	// We need to continue after reading an escaped newline
-	// if we are in a quote!?
 }
 
 static inline int scan_another_char(SINGLE_QSP_ARG_DECL)
@@ -866,16 +859,16 @@ static inline int get_octal_escape( QSP_ARG_DECL  int c)
 static void after_backslash(QSP_ARG_DECL  int c)
 {
 	if( c == 't' ){
-		ADD_TO_RESULT('\t');
+		ADD_TO_RESULT('\t')
 	} else if( c == 'r' ){
-		ADD_TO_RESULT('\r');
+		ADD_TO_RESULT('\r')
 	} else if( c == 'n' ){
-		ADD_TO_RESULT('\n');
+		ADD_TO_RESULT('\n')
 	} else if( c == 'b' ){
-		ADD_TO_RESULT('\b');
+		ADD_TO_RESULT('\b')
 	} else if( c == '$' ){
-		ADD_TO_RESULT('\\');
-		ADD_TO_RESULT('$');
+		ADD_TO_RESULT('\\')
+		ADD_TO_RESULT('$')
 	} else if( c == '\n' || c=='\r' ){
 		escape_newline(SINGLE_QSP_ARG);
 		// BUG should eat another char if \n\r or \r\n
@@ -884,11 +877,11 @@ static void after_backslash(QSP_ARG_DECL  int c)
 
 		val = get_octal_escape(QSP_ARG  c);
 		if( val > 0 )
-			ADD_TO_RESULT(val);
+			ADD_TO_RESULT(val)
 		else
-			ADD_TO_RESULT('?');
+			ADD_TO_RESULT('?')
 	} else {
-		ADD_TO_RESULT(c);	/* backslash before normal char */
+		ADD_TO_RESULT(c)	/* backslash before normal char */
 	}
 }	// end after_backslash
 
@@ -901,59 +894,48 @@ static void after_backslash(QSP_ARG_DECL  int c)
 #define RW_INCOMMENT	16	// comment delimiter seen
 #define RW_SAVING	32	// buffering text for loop
 #define RW_NWSEEN	64	// non-whitespace seen
-#define RW_NEWLINE	128	// set when a newline is encountered
-#define RW_ALLDONE	256	// newline seen and not escaped
+#define RW_ALLDONE	128	// newline seen and not escaped
 
 
-static void save_normal_char(QSP_ARG_DECL  int c)
+static inline void add_quote_string_char(QSP_ARG_DECL  int c)
+{
+	ADD_TO_RESULT(c)
+	if( IS_PRIMARY_INPUT(CURR_QRY(THIS_QSP)) ){
+		if( c == '\n' && !(word_scan_flags & RW_HAVBACK) ){
+//fprintf(stderr,"save_normal_char:  newline encountered while in quoted string!?\n");
+			SET_WORD_SCAN_FLAG_BITS(RW_ALLDONE);
+		}
+	}
+}
+
+static inline void handle_white_space(QSP_ARG_DECL  int c)
+{
+	if( c == '\n' ){
+		INCREMENT_LINES_READ(save_normal_char)
+	}
+	if( word_scan_flags & RW_NWSEEN ){
+		// We've already seen non-whitespace, so we're done!
+		SET_WORD_SCAN_FLAG_BITS(RW_ALLDONE);
+	}
+}
+
+static inline void save_normal_char(QSP_ARG_DECL  int c)
 {
 	if( word_scan_flags & RW_INQUOTE ){
-		ADD_TO_RESULT(c);
-		if( IS_PRIMARY_INPUT(CURR_QRY(THIS_QSP)) ){
-			if( c == '\n' && !(word_scan_flags & RW_HAVBACK) ){
-//fprintf(stderr,"save_normal_char:  newline encountered while in quoted string!?\n");
-				SET_WORD_SCAN_FLAG_BITS(RW_ALLDONE);
-			}
-		}
-	} else {		// not in quote
-		if( c == '#' ){		// comment delimiter
-			SET_WORD_SCAN_FLAG_BITS(RW_INCOMMENT);
-		} else if( isspace(c) ){
-			if( word_scan_flags & RW_NWSEEN ){
-				if( c == '\n' ){
-					// Set the flag, but don't increment the line
-					// counter until the word is interpreted...
-					// BUT instead of doing that,
-					// what about just leaving the newline
-					// there to be seen next time???
-					// PROBLEM:  we've already saved
-					// the newline!?  Should we un-save?
-//fprintf(stderr,"save_normal_char:  newline (non-white seen)\n");
-//					s--;	// leave the newline
-//					if( word_scan_flags & RW_SAVING ){
-//						unsavechar(QSP_ARG  '\n');
-//					}
-					INCREMENT_LINES_READ(save_normal_char)
-				}
-				SET_WORD_SCAN_FLAG_BITS(RW_ALLDONE);
-			} else {
-				/* This is a space, but we haven't
-				 * seen any non-spaces yet.
-				 * Don't copy to output buffer.
-				 * This is like eatup_space_for_lookahead,
-				 * but without side effects...
-				 */
-				if( c == '\n' ){
-//advise("process_normal:  leading newline white space");
-//fprintf(stderr,"save_normal_char:  newline char seen (NO non-white seen)\n");
-					SET_WORD_SCAN_FLAG_BITS(RW_NEWLINE);
-				}
-			}
-		} else {		/* a good character */
-			ADD_TO_RESULT(c);
-			SET_WORD_SCAN_FLAG_BITS(RW_NWSEEN);
-		}
-	} // end not in quote
+		add_quote_string_char(QSP_ARG  c);
+		return;
+	}
+	// not in quote
+	if( c == '#' ){		// comment delimiter
+		SET_WORD_SCAN_FLAG_BITS(RW_INCOMMENT);
+		return;
+	}
+	if( isspace(c) ){
+		handle_white_space(QSP_ARG  c);
+	} else {		/* a good character */
+		ADD_TO_RESULT(c)
+		SET_WORD_SCAN_FLAG_BITS(RW_NWSEEN);
+	}
 } // save_normal_char
 
 /* process_normal - process a char not preceded by a backslash
@@ -1488,7 +1470,6 @@ static inline void process_this_character(QSP_ARG_DECL  int c )
 		check_quote_stuff(QSP_ARG  c);
 
 	if( word_scan_flags & RW_HAVBACK ){		/* char follows backslash */
-//fprintf(stderr,"process_this_character:  processing char (0%o) after backslash\n",c);
 		after_backslash(QSP_ARG  c);
 		CLEAR_WORD_SCAN_FLAG_BITS(RW_HAVBACK);
 		return;
@@ -1505,16 +1486,6 @@ static inline void process_this_character(QSP_ARG_DECL  int c )
 		save_normal_char(QSP_ARG  c);
 		// Should we set this if we are in a comment?
 //		SET_WORD_SCAN_FLAG_BITS(RW_HAVSOME);
-	}
-
-	if( word_scan_flags & RW_NEWLINE ){
-		// advance line counter if we process a newline
-		INCREMENT_LINES_READ(process_this_character)
-#ifdef QUIP_DEBUG_LINENO
-sprintf(ERROR_STRING,"process_this_character advanced line number to %d",QRY_LINES_READ(CURR_QRY(THIS_QSP)));
-advise(ERROR_STRING);
-#endif /* QUIP_DEBUG_LINENO */
-		CLEAR_WORD_SCAN_FLAG_BITS(RW_NEWLINE);
 	}
 } // process_this_character
 
@@ -1739,13 +1710,6 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 			return NULL;
 		}
 	}
-/*
-if( buf!=NULL ){
-fprintf(stderr,"next_word_from_level will return \"%s\"\n",buf);
-} else {
-fprintf(stderr,"next_word_from_level will return NULL\n");
-}
-*/
 
 	return(buf);
 } // end next_word_from_level
@@ -2139,44 +2103,29 @@ int intractive(SINGLE_QSP_ARG_DECL)
 }
 
 
-/* scan_remainder
+/* scan_line_remainder
  *
- * scan from qp_lbptr to the end of the buffer.
- * We expect only one newline (at the end), and nothing
- * except white space before a comment delimiter.
- *
- * The above comment applies to the old case where
- * we never read a macro definition from a buffered file.
- * Now, we expect only white space or a comment
- * before the FIRST newline.
+ * scan from qp_lbptr to the end of the line.
+ * We expect only white space before a comment delimiter.
  */
 
-static int scan_remainder(QSP_ARG_DECL  const char *location )
+static inline int scan_line_remainder(QSP_ARG_DECL  const char *location )
 {
 	int c;
 	int comment_seen=0;
-	int warned=0;
-	//const char *s = *sptr;
-	const char *s = QRY_LINE_PTR(CURR_QRY(THIS_QSP));
+	int status=0;
+	const char *s = QS_LINE_PTR(THIS_QSP);
 
 	while( (c=(*s++)) && c != '\n' ){
-		if( !isspace(c) ){
+		if( ! isspace(c) ){
 			if( c == '#' )
 				comment_seen=1;
-			else if( ! comment_seen ){
-				if( ! warned ){
-					sprintf(ERROR_STRING,
-			"scan_remainder:  Extra text encountered after %s",
-						location);
-					WARN(ERROR_STRING);
-					warned= -1;
-abort();
-				}
-			}
+			else if( ! comment_seen )
+				status= -1;
 		}
 	}
-	QRY_LINE_PTR(CURR_QRY(THIS_QSP)) = s;
-	return warned;
+	QS_LINE_PTR(THIS_QSP) = s;
+	return status;
 }
 
 // No recursive calls.  Therefore it
@@ -2254,7 +2203,7 @@ static int get_next_macro_line(QSP_ARG_DECL  String_Buf *mac_sbp)
 {
 	const char *s;
 
-	s=extract_line_for_macro(SINGLE_QSP_ARG);		// rdmtext
+	s=extract_line_for_macro(SINGLE_QSP_ARG);		// read_macro_body
 	if( s == NULL ) return -1;
 
 	if( *s == '.' )
@@ -2265,7 +2214,7 @@ static int get_next_macro_line(QSP_ARG_DECL  String_Buf *mac_sbp)
 	return 1;
 }
 
-String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
+String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL)
 {
 	const char *instructions="Enter text of macro; terminate with line beginning with '.'";
 	Query *qp;
@@ -2296,7 +2245,7 @@ String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 
 	while( (status=get_next_macro_line(QSP_ARG  mac_sbp)) == 1 )
 		;
-//fprintf(stderr,"rdmtext:  will return buffer with \"%s\"\n",sb_buffer(mac_sbp));
+//fprintf(stderr,"read_macro_body:  will return buffer with \"%s\"\n",sb_buffer(mac_sbp));
 
 	if( status != 0 )
 		WARN("bad macro definition");
@@ -2304,7 +2253,7 @@ String_Buf * rdmtext(SINGLE_QSP_ARG_DECL)
 	// BUG?  We might return NULL so that we can print an error message with
 	// the macro name...
 	return(mac_sbp);
-} /* end rdmtext */
+} /* end read_macro_body */
 
 static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const char *s)
 {
@@ -2330,6 +2279,8 @@ static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const
 	}
 	return NAMEOF(pstr);
 }
+
+// Read the macro args for a new macro definition
 
 static Macro_Arg * read_macro_arg(QSP_ARG_DECL int i)
 {
@@ -2366,7 +2317,7 @@ void rls_macro_arg( Macro_Arg * map )
 	givbuf(map);
 }
 
-Macro_Arg ** read_macro_arg_table(QSP_ARG_DECL  int n)
+static inline Macro_Arg ** read_macro_arg_table(QSP_ARG_DECL  int n)
 {
 	Macro_Arg **ma_tbl;
 	int i;
@@ -2379,10 +2330,28 @@ Macro_Arg ** read_macro_arg_table(QSP_ARG_DECL  int n)
 	// At this point, there should be no more text on the line,
 	// except possibly a comment...
 
+
+	return ma_tbl;
+}
+
+static inline void check_macro_def_line(SINGLE_QSP_ARG_DECL)
+{
 	if( QRY_LINENO(CURR_QRY(THIS_QSP)) == QRY_LINES_READ(CURR_QRY(THIS_QSP)) ){
-		if( scan_remainder(QSP_ARG  "macro declaration") < 0 )
+		if( scan_line_remainder(QSP_ARG  "macro declaration") < 0 )
 			WARN("extra text after macro args!?");
 	}
+}
+
+Macro_Arg **setup_macro_args(QSP_ARG_DECL  int n)
+{
+	Macro_Arg **ma_tbl;
+
+	if( n > 0 ){
+		ma_tbl = read_macro_arg_table(QSP_ARG  n);
+	} else {
+		ma_tbl = NULL;
+	}
+	check_macro_def_line(SINGLE_QSP_ARG);
 
 	return ma_tbl;
 }
@@ -2657,6 +2626,7 @@ static void init_parser_data(Query_Stack *qsp)
 	SET_QS_SPD_IN_PEXPR(qsp,0);
 	SET_QS_SPD_ORIGINAL_STRING(qsp,NULL);
 	SET_QS_SPD_ESTRINGS_INITED(qsp,0);
+	SET_QS_SPD_FREE_EXPR_NODE_LIST(qsp,NULL);
 	// set spd_expr_string's to NULL ???
 	//SET_QS_SPD_YYSTRPTR(qsp,NULL);
 }
@@ -2713,8 +2683,8 @@ void init_query_stack(Query_Stack *qsp)
 
 	init_parser_data(qsp);
 
-	SET_QS_CHEW_LIST(qsp, NO_LIST);
-	SET_QS_CALLBACK_LIST(qsp, NO_LIST);
+	SET_QS_CHEW_LIST(qsp, NULL);
+	SET_QS_CALLBACK_LIST(qsp, NULL);
 
 	SET_QS_VAR_FMT_STACK(qsp,NO_STACK);
 	SET_QS_NUMBER_FMT(qsp,NULL);
@@ -3710,7 +3680,7 @@ static void add_func_to_list(List *lp,void (*func)(SINGLE_QSP_ARG_DECL) )
 
 void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )	/** set event processing function */
 {
-	if( QS_EVENT_LIST(THIS_QSP) == NO_LIST ){
+	if( QS_EVENT_LIST(THIS_QSP) == NULL ){
 		SET_QS_EVENT_LIST(THIS_QSP, new_list() );
 	}
 	add_func_to_list(QS_EVENT_LIST(THIS_QSP),func);
@@ -3730,7 +3700,7 @@ int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 
 void add_cmd_callback(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 {
-	if( QS_CALLBACK_LIST(THIS_QSP) == NO_LIST ){
+	if( QS_CALLBACK_LIST(THIS_QSP) == NULL ){
 		SET_QS_CALLBACK_LIST(THIS_QSP, new_list() );
 //fprintf(stderr,"add_cmd_callback:  initialized callback list to 0x%lx\n",
 //(long)QS_CALLBACK_LIST(THIS_QSP));

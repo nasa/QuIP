@@ -493,7 +493,7 @@ List *seqs_referring(QSP_ARG_DECL  void *data)
 	Node *np;
 
 	lp=item_list(QSP_ARG  mviseq_itp);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	lp=new_list();
 	while( np != NO_NODE ){

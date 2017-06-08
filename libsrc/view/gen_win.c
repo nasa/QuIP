@@ -209,7 +209,7 @@ Gen_Win *find_genwin_for_vc(QUIP_VIEW_CONTROLLER_TYPE *vc)
 	IOS_Node *np;
 
 	lp = genwin_list();
-	if( lp == NO_IOS_LIST ) return NULL;
+	if( lp == NULL ) return NULL;
 	np = IOS_LIST_HEAD(lp);
 	while( np != NO_IOS_NODE ){
 		Gen_Win *gwp;

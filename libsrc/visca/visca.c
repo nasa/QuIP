@@ -1592,7 +1592,7 @@ static void *camera_request_server(void *arg)
 		GET_CAMERA_LOCK(vcam_p,SERVER_LOCK)
 
 		/* Now process a command if there is one... */ 
-		np = vcam_p->vcam_cmd_lp->l_head;
+		np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
 		while( np != NO_NODE ){
 			Visca_Queued_Cmd *vqcp;
 
@@ -2538,7 +2538,7 @@ static void cleanup_queue(Visca_Cam *vcam_p)
 {
 	Node *np;
 
-	np = vcam_p->vcam_cmd_lp->l_head;
+	np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
 	while( np != NO_NODE ){
 		Visca_Queued_Cmd *vqcp;
 
@@ -2552,7 +2552,7 @@ static void cleanup_queue(Visca_Cam *vcam_p)
 			givbuf(vqcp->vqc_vcdp);
 			givbuf(vqcp);
 			rls_node(np);
-			np = vcam_p->vcam_cmd_lp->l_head;
+			np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
 		} else {
 			/* the head of the queue has not finished executing yet */
 			return;
@@ -2570,7 +2570,7 @@ static void queue_visca_command( Visca_Queued_Cmd *vqcp )
 {
 	Node *np;
 
-	if( the_vcam_p->vcam_cmd_lp == NO_LIST )
+	if( the_vcam_p->vcam_cmd_lp == NULL )
 		init_camera_queue(the_vcam_p);
 
 	/* Before we add this request, see if there are any commands at the head of the queue
@@ -2596,7 +2596,7 @@ static void queue_visca_inquiry( Visca_Inq_Def *vidp )
 	/* inquiries don't use the list, but we use the existence of the list
 	 * as a flag to determine when to start the server thread.
 	 */
-	if( the_vcam_p->vcam_cmd_lp == NO_LIST )
+	if( the_vcam_p->vcam_cmd_lp == NULL )
 		init_camera_queue(the_vcam_p);
 
 	q_vidp = getbuf(sizeof(Visca_Inq_Def));
@@ -2765,7 +2765,7 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 	vcam_p->vcam_param_p = NO_VISCA_PARAMS;
 
 #ifdef VISCA_THREADS
-	vcam_p->vcam_cmd_lp = NO_LIST;		/* this is the queue if in async mode... */
+	vcam_p->vcam_cmd_lp = NULL;		/* this is the queue if in async mode... */
 	vcam_p->vcam_vidp = NULL;
 #endif /* VISCA_THREADS */
 
@@ -2898,14 +2898,14 @@ static void vport_info(QSP_ARG_DECL  Visca_Port *vport_p)
 	Node *np;
 
 #ifdef CAUTIOUS
-	if( vport_p->vp_cam_lp == NO_LIST || eltcount(vport_p->vp_cam_lp)==0 ){
+	if( vport_p->vp_cam_lp == NULL || eltcount(vport_p->vp_cam_lp)==0 ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  vport_info:  null cam list");
 		WARN(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
 
-	np=vport_p->vp_cam_lp->l_head;
+	np=QLIST_HEAD(vport_p->vp_cam_lp);
 	while(np!=NO_NODE){
 		Visca_Cam *vcam_p;
 
@@ -2926,11 +2926,11 @@ static COMMAND_FUNC( network_status )
 		return;
 	}
 	lp=item_list(QSP_ARG  vport_itp);
-	if( lp == NO_LIST || eltcount(lp)==0 ){
+	if( lp == NULL || eltcount(lp)==0 ){
 		WARN("No visca ports open");
 		return;
 	}
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		vport_p = (Visca_Port *)np->n_data;
 		vport_info(QSP_ARG  vport_p);
@@ -3062,22 +3062,18 @@ static COMMAND_FUNC(do_get_n_cam)
 		return;
 	}
 	lp=item_list(QSP_ARG  vport_itp);
-	if( lp == NO_LIST || (n=eltcount(lp))==0 ){
+	if( lp == NULL || (n=eltcount(lp))==0 ){
 		WARN("do_get_n_port:  No visca ports open");
 		n=0;
 	}
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		vport_p = (Visca_Port *)np->n_data;
+		assert( vport_p->vp_cam_lp != NULL );
 
-#ifdef CAUTIOUS
-		if( vport_p->vp_cam_lp == NO_LIST || (n=eltcount(vport_p->vp_cam_lp))==0 ){
-			sprintf(ERROR_STRING,"CAUTIOUS:  vport_info:  null cam list");
-			WARN(ERROR_STRING);
-			n=0;
-		}
-#endif /* CAUTIOUS */
+		n = eltcount(vport_p->vp_cam_lp);
+		assert( n != 0 );
 
 		ntot += n;
 
@@ -3149,7 +3145,7 @@ static void default_camera(SINGLE_QSP_ARG_DECL)
 			vport_p->vp_name);
 		WARN(ERROR_STRING);
 	} else {
-		the_vcam_p = (Visca_Cam *)vport_p->vp_cam_lp->l_head->n_data;
+		the_vcam_p = (Visca_Cam *)QLIST_HEAD(vport_p->vp_cam_lp)->n_data;
 	}
 }
 #endif // HAVE_VISCA

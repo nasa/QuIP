@@ -760,13 +760,13 @@ void get_camera_features( PGR_Cam *pgcp )
 	/* Now can the table and build the linked list */
 #ifdef FUBAR
 //#ifdef CAUTIOUS
-//	if( pgcp->pc_feat_lp != NO_LIST ) NERROR1("CAUTIOUS:  get_camera_features:  bad list ptr!?");
+//	if( pgcp->pc_feat_lp != NULL ) NERROR1("CAUTIOUS:  get_camera_features:  bad list ptr!?");
 //#endif /* CAUTIOUS */
-	assert( pgcp->pc_feat_lp == NO_LIST );
+	assert( pgcp->pc_feat_lp == NULL );
 #endif /* FUBAR */
 	/* We may call this again after we have diddled the controls... */
 	/* releasing and rebuilding the list is wasteful, but should work... */
-	if( pgcp->pc_feat_lp != NO_LIST ){
+	if( pgcp->pc_feat_lp != NULL ){
 		while( (np=remHead(pgcp->pc_feat_lp)) != NO_NODE )
 			rls_node(np);
 	} else {
@@ -791,10 +791,10 @@ int list_camera_features(QSP_ARG_DECL  PGR_Cam *pgcp )
 {
 	Node *np;
 
-//	if( pgcp->pc_feat_lp == NO_LIST ) NERROR1("CAUTIOUS:  list_camera_features:  bad list");
-	assert( pgcp->pc_feat_lp != NO_LIST );
+//	if( pgcp->pc_feat_lp == NULL ) NERROR1("CAUTIOUS:  list_camera_features:  bad list");
+	assert( pgcp->pc_feat_lp != NULL );
 
-	np = pgcp->pc_feat_lp->l_head;
+	np = QLIST_HEAD(pgcp->pc_feat_lp);
 	while(np!=NO_NODE){
 		dc1394feature_info_t * f;
 		f= (dc1394feature_info_t *) np->n_data;
@@ -816,7 +816,7 @@ int get_feature_choices( PGR_Cam *pgcp, const char ***chp )
 	sptr = (const char **) getbuf( n * sizeof(char *) );
 	*chp = sptr;
 
-	np=pgcp->pc_feat_lp->l_head;
+	np=QLIST_HEAD(pgcp->pc_feat_lp);
 	while(np!=NO_NODE){
 		dc1394feature_info_t *f;
 		f= (dc1394feature_info_t *) np->n_data;
@@ -836,7 +836,7 @@ void report_feature_info(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_t id )
 	const char *name;
 	char nbuf[32];
 
-	np = pgcp->pc_feat_lp->l_head;
+	np = QLIST_HEAD(pgcp->pc_feat_lp);
 	f=NULL;
 	while( np != NO_NODE ){
 		f= (dc1394feature_info_t *) np->n_data;
@@ -1006,7 +1006,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	int i, n;
 
 	lp = pgc_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		WARN("No cameras!?");
 		return 0;
 	}
@@ -1914,8 +1914,8 @@ static PGR_Cam *setup_my_camera( QSP_ARG_DECL
 		return NULL;
 	}
 
-	pgcp->pc_feat_lp=NO_LIST;
-	pgcp->pc_in_use_lp=NO_LIST;
+	pgcp->pc_feat_lp=NULL;
+	pgcp->pc_in_use_lp=NULL;
 	pgcp->pc_flags = 0;		/* assume no B-mode unless we are told otherwise... */
 	pgcp->pc_base = NULL;
 

@@ -52,9 +52,9 @@ static debug_flag_t expr_debug=0;
 #define IS_LEGAL_NAME_CHAR(c)	( isalnum( c ) || IS_LEGAL_NAME_PUNCT(c) )
 
 
-// BUG all these static globals are not thread-safe!?
-
-static List *free_enp_lp=NO_LIST;
+// This has to be a global, because the nodes are allocated in a context
+// without a qsp...
+static List *free_enp_lp=NULL;
 
 // BUG - probably 4 is not enough now that these are being used
 // to store strings for the whole tree...
@@ -63,9 +63,9 @@ static Scalar_Expr_Node *alloc_expr_node(void);
 
 
 
-#define YYSTRPTR 	(THIS_QSP->qs_scalar_parser_data->spd_yystrptr)
-#define YY_ORIGINAL	(THIS_QSP)->qs_scalar_parser_data->spd_original_string
-#define EDEPTH 		(THIS_QSP)->qs_scalar_parser_data->spd_edepth
+#define YYSTRPTR 	QS_SPD_YYSTRPTR(THIS_QSP)
+#define YY_ORIGINAL	QS_SPD_ORIGINAL_STRING(THIS_QSP)
+#define EDEPTH 		QS_SPD_EDEPTH(THIS_QSP)
 #define WHICH_EXPR_STR	(THIS_QSP)->qs_scalar_parser_data->spd_which_str
 #define IN_PEXPR	(THIS_QSP)->qs_scalar_parser_data->spd_in_pexpr
 #define EXPR_STRING	(THIS_QSP)->qs_scalar_parser_data->spd_expr_string
@@ -88,19 +88,13 @@ static Typed_Scalar ts_dbl_one={
 static Typed_Scalar ts_dbl_minus_one={
 	{ -1.0 }, PREC_DP, TS_STATIC };
 
-//static int n_function_classes=0;
-//#define MAX_FUNCTION_CLASSES	10
-//static Function_Class func_class[MAX_FUNCTION_CLASSES];
-
 #define LLERROR(s)	llerror(s)
 
 /* what yylval can be */
 
 typedef union {
-//	double			dval;		/* actual value */
 	int			fundex;		/* function index */
 	Quip_Function *		func_p;
-//	char *			e_string;
 	Scalar_Expr_Node *	enp;
 	Typed_Scalar *		tsp;
 } YYSTYPE;
@@ -109,16 +103,14 @@ typedef union {
 
 
 
-#ifdef THREAD_SAFE_QUERY
-
-//#error THREAD_SAFE_QUERY is defined
-//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stack * */
-
-/* For yyerror */
 #define YY_(msg)	msg
 
-//#define YYLEX_PARAM SINGLE_QSP_ARG
-//static int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
+// With parser data stored in the query stack, we are thread-safe!
+
+#ifdef FOOBAR
+#ifdef THREAD_SAFE_QUERY
+
+/* For yyerror */
 
 
 #ifdef HAVE_PTHREADS
@@ -142,16 +134,16 @@ static int enode_flags=0;
 		status = pthread_mutex_lock(&enode_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(QSP_ARG  status,"LOCK_ENODES");\
-		enode_flags |= LIST_LOCKED;			\
+		enode_flags |= LIST_LOCKED_FLAG_BITS;			\
 	}
 
 #define UNLOCK_ENODES						\
 								\
-	if( enode_flags & LIST_LOCKED )				\
+	if( enode_flags & LIST_LOCKED_FLAG_BITS )		\
 	{							\
 		int status;					\
 								\
-		enode_flags &= ~LIST_LOCKED;			\
+		enode_flags &= ~LIST_LOCKED_FLAG_BITS;		\
 		status = pthread_mutex_unlock(&enode_mutex);	\
 		if( status != 0 )				\
 			report_mutex_error(QSP_ARG  status,"UNLOCK_ENODES");\
@@ -167,9 +159,9 @@ static int enode_flags=0;
 
 #define LOCK_ENODES
 #define UNLOCK_ENODES
-//static int yylex(YYSTYPE *yylvp);		// undef THREAD_SAFE_QUERY
 
 #endif /* ! THREAD_SAFE_QUERY */
+#endif // FOOBAR
 
 // For the time being a single signature, regardless of THREAD_SAFE_QUERY
 static int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
@@ -300,7 +292,7 @@ static char *get_expr_stringbuf( QSP_ARG_DECL   int index, long min_len )
 %token <func_p> MATH2_FUNC
 %token <func_p> INT1_FUNC
 %token <func_p> DATA_FUNC
-%token <func_p> DOBJV_FUNC
+%token <func_p> DOBJV_STR_ARG_FUNC
 %token <func_p> SIZE_FUNC
 %token <func_p> TS_FUNC
 %token <func_p> IL_FUNC
@@ -419,9 +411,13 @@ data_object	: /* E_STRING {			// the name of an object
 			$$=NODE1(N_OBJNAME,$1);
 			}
  
-		 | DOBJV_FUNC '(' data_object ')' {
-		 	// Not really a data_obj here, but strings get reduced to data_obj...
-			$$=NODE1(N_DOBJVFUNC,$3);
+		 /* The data_object-valued function with a string arg:
+		  * string_obj("a string")
+		  * This construct allows us to index strings and test char values.
+		  */
+
+		 | DOBJV_STR_ARG_FUNC '(' e_string ')' {
+			$$=NODE1(N_DOBJV_STR_ARG_FUNC,$3);
 			$$->sen_func_p=$1;
 		  	}
 		| data_object '[' expression ']' {
@@ -586,7 +582,7 @@ static Scalar_Expr_Node *alloc_expr_node(void)
 	Scalar_Expr_Node *enp;
 	int i;
 
-	if( free_enp_lp != NO_LIST && QLIST_HEAD(free_enp_lp) != NO_NODE ){
+	if( free_enp_lp != NULL && QLIST_HEAD(free_enp_lp) != NO_NODE ){
 		Node *np;
 		np=remHead(free_enp_lp);
 		enp = (Scalar_Expr_Node *)NODE_DATA(np);
@@ -2104,7 +2100,7 @@ static int token_for_func_type(int type)
 		case CHAR_FUNCTYP:	return(CHAR_FUNC);	break;
 		case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 		case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
-		case DOBJV_FUNCTYP:	return(DOBJV_FUNC);	break;
+		case DOBJV_STR_ARG_FUNCTYP:	return(DOBJV_STR_ARG_FUNC);	break;
 		case TS_FUNCTYP:	return(TS_FUNC);	break;
 		case ILACE_FUNCTYP:	return(IL_FUNC);	break;
 		case POSN_FUNCTYP:	return(POSN_FUNC);	break;
@@ -2168,14 +2164,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			while( IS_LEGAL_NAME_CHAR(*YYSTRPTR[EDEPTH]) ){
 				*s++ = (*YYSTRPTR[EDEPTH]++);
 				n++;
-//#ifdef CAUTIOUS
-//				if( n >= EXPR_STRING[WHICH_EXPR_STR]->sb_size ){
-//					LLERROR("string buffer overflow #1");
-//					s--;
-//					n--;
-//				}
-//#endif // CAUTIOUS
-				assert(n< sb_size(EXPR_STRING[WHICH_EXPR_STR]));
+				assert( n < sb_size(EXPR_STRING[WHICH_EXPR_STR]) );
 			}
 			*s=0;
 
@@ -2282,16 +2271,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 						n++;
 					}
 					c = *YYSTRPTR[EDEPTH];
-//#ifdef CAUTIOUS
-//					if( n >= EXPR_STRING[WHICH_EXPR_STR]->sb_size ){
-//						LLERROR("CAUTIOUS:  string buffer overflow #2");
-//						s--;
-//						*s = 0;
-//						//LLERROR(_strbuf[WHICH_EXPR_STR]);
-//						n--;
-//					}
-//#endif // CAUTIOUS
-					assert(n<sb_size(EXPR_STRING[WHICH_EXPR_STR]));
+					assert( n < sb_size(EXPR_STRING[WHICH_EXPR_STR]) );
 				}
 				*s=0;
 				if( *YYSTRPTR[EDEPTH] == qchar ){
@@ -2306,30 +2286,14 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 					= sb_buffer(EXPR_STRING[WHICH_EXPR_STR]);
 
 				ADVANCE_EXPR_STR
-#ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
-//ADVISE("yylex:  quoted E_STRING");
-//}
-#endif /* QUIP_DEBUG */
 				return(E_QSTRING);	/* quoted string */
 			}
-#ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
-//ADVISE("yylex:  punct char");
-//}
-#endif /* QUIP_DEBUG */
-
-			return(c);
+			return(c);	// punctuation char
 		} else {
 			LLERROR("yylex error");
 			return(0);
 		}
 	}
-#ifdef QUIP_DEBUG
-//if( debug & expr_debug ){
-//ADVISE("yylex:  0 (EDEPTH<0)");
-//}
-#endif /* QUIP_DEBUG */
 
 	return(0);
 }
@@ -2351,12 +2315,9 @@ static void rls_tree( Scalar_Expr_Node *enp )
 		rls_str(enp->sen_string2);
 		*/
 
-	if( free_enp_lp == NO_LIST ){
+	if( free_enp_lp == NULL ){
 		free_enp_lp = new_list();
-//#ifdef CAUTIOUS
-//		if( free_enp_lp == NO_LIST ) NERROR1("CAUTIOUS:  rls_tree:  error creating free enp list");
-//#endif /* CAUTIOUS */
-		assert( free_enp_lp != NO_LIST );
+		assert( free_enp_lp != NULL );
 	}
 	np = mk_node(enp);
 	addHead(free_enp_lp,np);
@@ -2504,11 +2465,11 @@ ADVISE(ERROR_STRING);
 	}
 #endif /* SUN */
 
-	LOCK_ENODES
+	//LOCK_ENODES
 
 	rls_tree(FINAL_EXPR_NODE_P);
 
-	UNLOCK_ENODES
+	//UNLOCK_ENODES
 
 //fprintf(stderr,"pexpr clearing IN_PEXPR (#2) in thread %d\n",QS_SERIAL);
 	IN_PEXPR=0;

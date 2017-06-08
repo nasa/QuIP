@@ -1,9 +1,14 @@
 #!/bin/csh
+# run this from the source directory
 
-foreach script ( location.scr )
-  coq < $script >& coq_out
-  quip < $script >& quip_out
+foreach script ( tests/*.scr )
+  echo ' '
+  echo Running test script $script
+  echo ' '
+  quip < $script
 
-  diff coq_out quip_out
+  echo ' '
+#  echo Type ^D to proceed
+#  set x=$<
 end
 

@@ -210,7 +210,7 @@ static COMMAND_FUNC( show_stamps )
 
 	if( sc_list == NULL ) return;
 
-	np = sc_list->l_head;
+	np = QLIST_HEAD(sc_list);
 	while(np!=NO_NODE){
 		scp=(Stamped_Char *)np->n_data;
 		show_one(QSP_ARG  scp,DEFAULT_MAX_PER_LINE);

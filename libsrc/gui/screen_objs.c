@@ -92,7 +92,7 @@ void show_panel_children(Panel_Obj *po)
 	Node *np;
 	Screen_Obj *sop;
 
-	np=PO_CHILDREN(po)->l_head;
+	np=QLIST_HEAD(PO_CHILDREN(po));
 	while(np!=NO_NODE){
 		sop=(Screen_Obj *)np->n_data;
 		if( sop != NULL ){
@@ -170,7 +170,7 @@ Screen_Obj *simple_object(QSP_ARG_DECL  const char *name)
 	SET_SOB_SELECTOR(sop,NULL);
 	SET_SOB_PANEL(sop, curr_panel);
 	SET_SOB_PARENT(sop, NO_SCREEN_OBJ);
-	SET_SOB_CHILDREN(sop, NO_IOS_LIST);
+	SET_SOB_CHILDREN(sop, NULL);
 #ifdef HAVE_MOTIF
 	SET_SOB_FRAME(sop, NULL);
 #endif /* HAVE_MOTIF */
@@ -1280,7 +1280,7 @@ COMMAND_FUNC(do_clear_choices)
 	// Exit silently if the widget does not exist...
 
 	lp = PO_CHILDREN(curr_panel);
-	if( lp == NO_IOS_LIST ) return;
+	if( lp == NULL ) return;
 	np=IOS_LIST_HEAD(lp);
 	while( np != NO_IOS_NODE ){
 		sop = (Screen_Obj *) IOS_NODE_DATA(np);
@@ -1404,12 +1404,12 @@ COMMAND_FUNC( clear_screen )
 
 	lp=item_list(QSP_ARG  scrnobj_itp);
 #ifdef CAUTIOUS
-	if( lp==NO_LIST ){
+	if( lp==NULL ){
 		WARN("CAUTIOUS:  no list!?");
 		return;
 	}
 #endif /* CAUTIOUS */
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		sop = (Screen_Obj *)np->n_data;
 		if( WIDGET_PANEL(sop) == po )
@@ -1554,8 +1554,8 @@ void mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp)
 	Item *ip;
 
 	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return;
-	np=lp->l_head;
+	if( lp == NULL ) return;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		ip=(Item *)np->n_data;
 		if( n < MAX_STRINGS )
@@ -2012,8 +2012,8 @@ Node *first_panel_node(SINGLE_QSP_ARG_DECL)
 	List *lp;
 
 	lp=item_list(QSP_ARG  panel_obj_itp);
-	if( lp==NO_LIST ) return(NO_NODE);
-	else return(lp->l_head);
+	if( lp==NULL ) return(NO_NODE);
+	else return(QLIST_HEAD(lp));
 }
 #endif /* NOT_YET */
 
@@ -2023,7 +2023,7 @@ Screen_Obj *find_object_at(Panel_Obj *po,int x,int y)
 	Node *np;
 	Screen_Obj *sop;
 
-	np=PO_CHILDREN(po)->l_head;
+	np=QLIST_HEAD(PO_CHILDREN(po));
 	while(np!=NO_NODE){
 		sop=(Screen_Obj *)np->n_data;
 		if(	   x >= SOB_X(sop)

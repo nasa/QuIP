@@ -24,13 +24,7 @@ Precision *prec_for_code(prec_t prec)
 	Precision *prec_p;
 
 	lp = prec_list(SGL_DEFAULT_QSP_ARG);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ) {
-//		NERROR1("CAUTIOUS:  prec_for_code:  Empty list of precisions!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	np = QLIST_HEAD(lp);
 
@@ -42,10 +36,6 @@ Precision *prec_for_code(prec_t prec)
 	}
 	// shouldn't happen!
 
-//#ifdef CAUTIOUS
-//	sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  prec_for_code:  missing precision %"PREC_FMT_D" (0x%x)!?",prec,prec);
-//	NERROR1(DEFAULT_ERROR_STRING);
-//#endif /* CAUTIOUS */
 	assert( AERROR("Missing precision code in list of precisions!?") );
 
 	return NO_PRECISION;
@@ -410,7 +400,7 @@ static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(MSG_STR,"\tdata offset:  0x%x", OBJ_OFFSET(dp));
 		prt_msg(MSG_STR);
 	}
-	if( OBJ_CHILDREN(dp) != NO_LIST &&
+	if( OBJ_CHILDREN(dp) != NULL &&
 		QLIST_HEAD( OBJ_CHILDREN(dp) ) != NO_NODE ){
 
 		Node *np;
@@ -576,7 +566,7 @@ void info_area(QSP_ARG_DECL  Data_Area *ap)
 	Data_Obj *dp;
 
 	lp=dobj_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
 	while( np != NO_NODE ){
 		dp = (Data_Obj *)NODE_DATA(np);
@@ -592,7 +582,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 	Node *np;
 
 	lp=data_area_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
 	while( np != NO_NODE ){
 		info_area( QSP_ARG  (Data_Area *) NODE_DATA(np) );

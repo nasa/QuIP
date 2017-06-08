@@ -51,13 +51,13 @@ static void new_cstepit_scr_funk()
 	}
 
 	lp=opt_param_list();
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		NWARN("No optimization parameters to vary!?");
 		err=0.0;
 		new_setfobj((double)err);
 		return;
 	}
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NO_NODE && i < n_prms ){
@@ -103,7 +103,7 @@ void new_evaluate_error_c()
 	new_getvals(x,n_prms);		/* get the parameter estimates */
 
 	lp=opt_param_list();
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
 	while(np!=NO_NODE && i < n_prms ){
 		Opt_Param *opp;
@@ -142,13 +142,13 @@ static void new_init_cstepit_params()
 	int nfmax;		/* max. # function calls */
 
 	lp = opt_param_list();
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	n_prms=eltcount(lp);
 	n=new_reset_n_params(n_prms);
 	if( n != n_prms ) n_prms = n;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
 	while( np!= NO_NODE && i < n_prms ){
 		opp = (Opt_Param *)(np->n_data);

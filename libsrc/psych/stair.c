@@ -84,7 +84,7 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 	if( lp==NULL ) return;
 
 	/* Don't we have a routine to delete all staircases? */
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		stcp = (Staircase *)np->n_data;
 		np=np->n_next;		/* must do this before freeing item! */
@@ -281,12 +281,6 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	char str[64];
 	Staircase *stcp;
 
-//#ifdef CAUTIOUS
-//	if( sc < 0 ){
-//		WARN("CAUTIOUS:  negative class specification");
-//		return(-1);
-//	}
-//#endif /* CAUTIOUS */
 	assert( tcp != NULL );
 
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
@@ -405,7 +399,7 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	n = eltcount(lp);
 	stcp = stair_tbl = (Staircase **)getbuf( n * sizeof(stcp) );
 	order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*order) );
-	np = lp->l_head;
+	np = QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		*stcp++ = (Staircase *)np->n_data;
 		np = np->n_next;
@@ -537,7 +531,7 @@ advise("deleting all staircases");
 	lp=stair_list(SINGLE_QSP_ARG);
 	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		stcp = (Staircase *) np->n_data;
 		del_stair(QSP_ARG  stcp);
@@ -554,15 +548,9 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 	List *lp;
 
 	lp=item_list(QSP_ARG  trial_class_itp);
-//#ifdef CAUTIOUS
-//	if( lp == NULL ){
-//		WARN("CAUTIOUS:  index_class:  no classes defined");
-//		return(NO_CLASS);
-//	}
-//#endif /* CAUTIOUS */
 	assert( lp != NULL );
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		tcp=(Trial_Class *)np->n_data;
 		if( CLASS_INDEX(tcp) == index ) return(tcp);
@@ -594,10 +582,6 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	if( trial_class_itp == NO_ITEM_TYPE )
 		init_trial_classs(SINGLE_QSP_ARG);
 
-//#ifdef CAUTIOUS
-//	if( trial_class_itp == NO_ITEM_TYPE )
-//		ERROR1("CAUTIOUS:  error creating class item type");
-//#endif /* CAUTIOUS */
 	assert( trial_class_itp != NO_ITEM_TYPE );
 
 	lp=item_list(QSP_ARG  trial_class_itp);
@@ -635,13 +619,6 @@ Trial_Class *class_for( QSP_ARG_DECL  int class_index )
 
 	tcp = new_trial_class(QSP_ARG  newname);
 
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  new_class:  error creating %s!?",newname);
-//		ERROR1(ERROR_STRING);
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
 	assert( tcp != NO_CLASS );
 
 	/* Now do the initial setup for the class structure */

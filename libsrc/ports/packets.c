@@ -265,7 +265,7 @@ static Port_Data_Type *port_data_type_for_code(QSP_ARG_DECL  Packet_Type code)
 	Port_Data_Type *pdtp;
 
 	lp = pdt_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return NULL;
+	if( lp == NULL ) return NULL;
 	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		pdtp=(Port_Data_Type *)NODE_DATA(np);

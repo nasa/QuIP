@@ -22,7 +22,7 @@ ITEM_PICK_FUNC(Query_Stack,query_stack)
 
 #define IS_LEGAL_VARNAME_CHAR(c)	(isalnum(c) || c=='_')
 
-//static List *qstack_free_list=NO_LIST;
+//static List *qstack_free_list=NULL;
 
 static void push_prompt(QSP_ARG_DECL  const char *pmpt);
 static void pop_prompt(SINGLE_QSP_ARG_DECL);
@@ -80,7 +80,7 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 	int i=0;
 
 	lp = QS_MENU_STACK(THIS_QSP);
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		WARN("show_menu_stack:  no menu stack!?");
 		return;
 	}

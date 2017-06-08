@@ -60,7 +60,7 @@ static void init_simplex()
 		return;
 	}
 	n = eltcount(lp);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NULL){
@@ -96,12 +96,12 @@ static float amoeba_scr_funk(float *p)
 #endif // THREAD_SAFE_QUERY
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp==NO_LIST ) {
+	if( lp==NULL ) {
 		NWARN("no parameters!?");
 		return(0.0);
 	}
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NO_NODE){
@@ -134,7 +134,7 @@ static float amoeba_c_funk(float *p)
 	Node *np;
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NO_NODE){

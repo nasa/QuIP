@@ -64,7 +64,7 @@ static void dump_ios_node(IOS_Node *np)
 
 static void dump_ios_list(IOS_List *lp)
 {
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		fprintf(stderr,"dump_ios_list:  list is NULL!\n");
 		return;
 	}
@@ -96,7 +96,7 @@ void add_items_to_ios_class(IOS_Item_Class *icp,IOS_Item_Type * itp,void* data,
 	ios_addTail(IOS_CL_LIST(icp),np);
 
 	/* now make the item type point to this class too */
-	if( IOS_IT_CLASS_LIST(itp) == NO_IOS_LIST )
+	if( IOS_IT_CLASS_LIST(itp) == NULL )
 		SET_IOS_IT_CLASS_LIST(itp, new_ios_list());
 	np = mk_ios_node(icp);
 	ios_addTail(IOS_IT_CLASS_LIST(itp),np);

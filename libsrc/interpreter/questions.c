@@ -281,7 +281,7 @@ void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 	// We should set a flag in the itp...
 
 	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 	init_hist_from_item_list(QSP_ARG  prompt,lp);
 }
 #endif /* HAVE_HISTORY */

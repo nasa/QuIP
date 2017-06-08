@@ -34,7 +34,7 @@
 			}*/							\
 			vp = NO_VERTEX;
 
-List *free_pts_lp=NO_LIST;
+List *free_pts_lp=NULL;
 
 Vertex vertex_tbl[MAX_VERTICES];
 int n_pts_used=0;
@@ -109,7 +109,7 @@ static void release_vertex(Vertex *vp)
 //sprintf(DEFAULT_ERROR_STRING,"\t\tFreeing vertex at 0x%lx",(int_for_addr)vp);
 //NADVISE(DEFAULT_ERROR_STRING);
 	np = mk_node(vp);
-	if( free_pts_lp == NO_LIST )
+	if( free_pts_lp == NULL )
 		free_pts_lp = new_list();
 	addTail(free_pts_lp,np);
 
@@ -145,8 +145,8 @@ static Vertex *find_free_vertex()
 	Node *np;
 	Vertex *vp;
 
-	if( free_pts_lp == NO_LIST ) return(NO_VERTEX);
-	if( free_pts_lp->l_head == NO_NODE ) return(NO_VERTEX);
+	if( free_pts_lp == NULL ) return(NO_VERTEX);
+	if( QLIST_HEAD(free_pts_lp) == NO_NODE ) return(NO_VERTEX);
 	np = remHead(free_pts_lp);
 	vp = (Vertex *)np->n_data;
 	rls_node(np);
@@ -309,7 +309,7 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 	 * But this is not implemented yet.
 	 */
 
-	if( tile_lp == NO_LIST )
+	if( tile_lp == NULL )
 		mtp->mt_tp->t_flags |= BOUNDARY_FLAGS_MASK;
 	else {
 		/* the new master tile is a boundary unless it is flanked on all 4 sides.
@@ -318,7 +318,7 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 		 */
 		Node *np;
 
-		np = tile_lp->l_head;
+		np = QLIST_HEAD(tile_lp);
 /*
 sprintf(DEFAULT_ERROR_STRING,"searching for neighbors of tile %s",mtp->mt_tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
@@ -340,10 +340,10 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef FOOBAR
 /* show all the tiles for debugging */
-if( tile_lp!=NO_LIST){
+if( tile_lp!=NULL){
 Node *np;
 Master_Tile *mtp;
-np = tile_lp->l_head;
+np = QLIST_HEAD(tile_lp);
 while(np!= NO_NODE){
 mtp=np->n_data;
 show_tile(QSP_ARG  mtp->mt_tp,"");

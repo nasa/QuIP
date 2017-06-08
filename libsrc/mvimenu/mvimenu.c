@@ -260,7 +260,7 @@ static const char *get_movie_name(SINGLE_QSP_ARG_DECL)
 	if( intractive(SINGLE_QSP_ARG) ){
 		List *lp;
 		lp = movie_list(SINGLE_QSP_ARG);
-		if( lp != NO_LIST )
+		if( lp != NULL )
 			init_hist_from_item_list(QSP_ARG  MOVIENAME_PMPT,lp);
 	}
 #endif // HISTORY
@@ -608,7 +608,7 @@ void close_movie(QSP_ARG_DECL  Movie *mvip)
 		List *lp;
 
 		lp=seqs_referring(QSP_ARG  mvip);
-		np=lp->l_head;
+		np=QLIST_HEAD(lp);
 		while(np!=NO_NODE){
 			seqp=(Seq *)np->n_data;
 			/* BUG? does this delete sequences which depend on seqp? */

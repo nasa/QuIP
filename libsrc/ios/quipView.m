@@ -212,11 +212,11 @@ _size.width,_size.height);
 
 static QUIP_IMAGE_TYPE * CreateDefaultBG(int pixelsWide, int pixelsHigh)
 {
-	static IOS_List *lp=NO_IOS_LIST;
+	static IOS_List *lp=NULL;
 	IOS_Node *np;
 	QUIP_IMAGE_TYPE *ip;
 
-	if( lp != NO_IOS_LIST ){
+	if( lp != NULL ){
 		// Check the list for images of the correct size
 		np=IOS_LIST_HEAD(lp);
 		while( np != NO_IOS_NODE ){
@@ -310,7 +310,7 @@ static QUIP_IMAGE_TYPE * CreateDefaultBG(int pixelsWide, int pixelsHigh)
 #endif // BUILD_FOR_IOS
 	
 	np = mk_ios_node(ip);
-	if( lp == NO_IOS_LIST ) lp = new_ios_list();
+	if( lp == NULL ) lp = new_ios_list();
 	ios_addTail(lp,np);
 
 //fprintf(stderr,"CreateDefaultBG:  created %d x %d image (0x%lx)\n",

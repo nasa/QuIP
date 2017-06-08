@@ -7,7 +7,7 @@
 #include "tile.h"
 #include "data_obj.h"
 
-List *tile_lp=NO_LIST;
+List *tile_lp=NULL;
 
 #ifdef QUIP_DEBUG
 #include "debug.h"
@@ -18,12 +18,12 @@ u_long debug_tiles=0;
 
 #define TILE_ITERATE( statement )					\
 									\
-	if ( tile_lp == NO_LIST ){					\
+	if ( tile_lp == NULL ){						\
 		NWARN("no tiles");					\
 		return;							\
 	}								\
 									\
-	np = tile_lp->l_head;						\
+	np = QLIST_HEAD(tile_lp);					\
 	while(np!=NO_NODE){						\
 		statement;						\
 		np = np->n_next;					\
@@ -58,10 +58,10 @@ static COMMAND_FUNC( do_add )
 	/* the dem_name is just the quad name, so we use it for the texture name too... */
 	mtp->mt_tex_name = savestr( mtp->mt_dem_name );
 
-	if( tile_lp == NO_LIST )
+	if( tile_lp == NULL )
 		tile_lp = new_list();
 #ifdef CAUTIOUS
-	if( tile_lp == NO_LIST )
+	if( tile_lp == NULL )
 		ERROR1("CAUTIOUS:  error creating tile list");
 #endif /* CAUTIOUS */
 	np = mk_node(mtp);

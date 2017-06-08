@@ -33,8 +33,8 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 
 	SET_SR_ARG_DECLS(srp, args);
 	SET_SR_BODY(srp, body);
-	SET_SR_RET_LIST(srp, NO_LIST);
-	SET_SR_CALL_LIST(srp, NO_LIST);
+	SET_SR_RET_LIST(srp, NULL);
+	SET_SR_CALL_LIST(srp, NULL);
 	SET_SR_PREC_PTR(srp, prec_p);
 	/* We used to give void subrt's a null shape ptr... */
 	SET_SR_SHAPE(srp, ALLOC_SHAPE );
@@ -146,7 +146,7 @@ COMMAND_FUNC( do_subrt_info )
 	sprintf(msg_str,"\t%d arguments",SR_N_ARGS(srp));
 	prt_msg(msg_str);
 
-	if( SR_RET_LIST(srp) != NO_LIST ){
+	if( SR_RET_LIST(srp) != NULL ){
 		sprintf(msg_str,"%d unknown return shape nodes:",eltcount(SR_RET_LIST(srp)));
 		prt_msg(msg_str);
 		np=QLIST_HEAD(SR_RET_LIST(srp));
@@ -159,7 +159,7 @@ COMMAND_FUNC( do_subrt_info )
 			np=NODE_NEXT(np);
 		}
 	}
-	if( SR_CALL_LIST(srp) != NO_LIST ){
+	if( SR_CALL_LIST(srp) != NULL ){
 		sprintf(msg_str,"%d unknown callfunc shape nodes:",eltcount(SR_CALL_LIST(srp)));
 		prt_msg(msg_str);
 		np=QLIST_HEAD(SR_CALL_LIST(srp));
@@ -227,7 +227,7 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
 
 //sprintf(ERROR_STRING,"get_subrt_id %s BEGIN",name);
 //advise(ERROR_STRING);
-	if( SUBRT_CTX_STACK == NO_LIST ){
+	if( SUBRT_CTX_STACK == NULL ){
 		SUBRT_CTX_STACK = new_list();
 	}
 	s=savestr(name);
@@ -372,13 +372,6 @@ advise(ERROR_STRING);
 	delete_item_context_with_callback(QSP_ARG  icp, clear_decl_obj);
 
 	np = remTail(SUBRT_CTX_STACK);
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  delete_subrt_ctx:  can't pop name from context stack!?");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( np != NO_NODE );
 
 	givbuf(NODE_DATA(np));	/* string stored w/ savestr */
@@ -403,29 +396,11 @@ static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *
 	static char ctxname[LLEN];
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( SUBRT_CTX_STACK==NO_LIST ){
-//		NWARN("CAUTIOUS:  get_subrt_ctx_name:  stack is uninitialized!?");
-//		return("");
-//	}
-//	if( QLIST_TAIL(SUBRT_CTX_STACK) == NO_NODE ){
-//		NWARN("CAUTIOUS:  get_subrt_ctx_name:  stack empty!?");
-//		return("");
-//	}
-//#endif /* CAUTIOUS */
-	assert( SUBRT_CTX_STACK != NO_LIST );
+	assert( SUBRT_CTX_STACK != NULL );
 	assert( QLIST_TAIL(SUBRT_CTX_STACK) != NO_NODE );
 
 	np = QLIST_TAIL(SUBRT_CTX_STACK);
 
-//#ifdef CAUTIOUS
-//	if( strcmp(name,(char *)NODE_DATA(np)) ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  get_subrt_ctx_name:  name \"%s\" does not match top of stack \"%s\"",
-//			name,(char *)NODE_DATA(np));
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return("");
-//	}
-//#endif /* CAUTIOUS */
 	assert( ! strcmp(name,(char *)NODE_DATA(np)) );
 
 	/* BUG possible string overflow */
@@ -450,27 +425,11 @@ advise(ERROR_STRING);
 */
 }
 #endif /* QUIP_DEBUG */
+
 //sprintf(ERROR_STRING,"Searching for context %s",ctxname);
 //advise(ERROR_STRING);
 	icp = ctx_of(QSP_ARG  ctxname);
-//#ifdef CAUTIOUS
-//	if( icp == NO_ITEM_CONTEXT ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  pop_subrt_ctx couldn't find %s context %s",IT_NAME(itp),ctxname);
-//		WARN(ERROR_STRING);
-//		return(icp);
-//	}
 	assert( icp != NO_ITEM_CONTEXT );
-
-//	if( icp != CURRENT_CONTEXT(itp) ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  pop_subrt_ctx:  Subroutine context %s does not match current %s context %s!?",
-//			CTX_NAME(icp),IT_NAME(itp),CTX_NAME(CURRENT_CONTEXT(itp)));
-//		WARN(ERROR_STRING);
-//		show_context_stack(QSP_ARG  itp);
-//		return(NO_ITEM_CONTEXT);
-//	}
-//#endif /* CAUTIOUS */
 	assert( icp == CURRENT_CONTEXT(itp) );
 
 	pop_item_context(QSP_ARG  itp);
@@ -520,9 +479,8 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 
 	if( subrt_itp == NO_ITEM_TYPE ) return NO_VEXPR_NODE;
 
-	//lp=list_of_subrts(SINGLE_QSP_ARG);
 	lp=subrt_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST )
+	if( lp == NULL )
 		return NO_VEXPR_NODE;
 
 	np=QLIST_HEAD(lp);

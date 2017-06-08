@@ -157,7 +157,7 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	Panel_Obj *po;
 
 	lp=panel_obj_list(SINGLE_QSP_ARG);
-	if( lp == NO_IOS_LIST ) return(NO_PANEL_OBJ);
+	if( lp == NULL ) return(NO_PANEL_OBJ);
 	np=IOS_LIST_HEAD(lp);
 	while( np!=NO_IOS_NODE ){
 		po = (Panel_Obj *)IOS_NODE_DATA(np);
@@ -246,7 +246,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 	IOS_Node *np;
 
 	lp = PO_CHILDREN(po);
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		WARN("activate_panel:  null widget list!?");
 		return;
 	}
@@ -1207,7 +1207,7 @@ Screen_Obj *find_any_scrnobj(UIView *cp)
 
 	// Does this return all objects, or just current context stack?
 	lp = all_scrnobjs(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_IOS_LIST ) return NULL;
+	if( lp == NULL ) return NULL;
 
 	np=IOS_LIST_HEAD(lp);
 	while(np!=NO_IOS_NODE){
@@ -1786,7 +1786,7 @@ void fatal_alert(QSP_ARG_DECL  const char *msg)
 	generic_alert(QSP_ARG  FATAL_ERROR_TYPE_STR,msg);
 }
 
-static IOS_List *alert_lp=NO_IOS_LIST;
+static IOS_List *alert_lp=NULL;
 
 // need to call this after the alert has been displayed...
 // This used to be a callback, but now with UIAlertController we don't have
@@ -1837,7 +1837,7 @@ void hide_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno)
 
 static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
-	if( alert_lp == NO_IOS_LIST ){
+	if( alert_lp == NULL ){
 		NWARN("CAUTIOUS:  node_for_alert:  no alert list!?");
 		return NO_IOS_NODE;
 	}
@@ -1864,7 +1864,7 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 
 +(void) rememberAlert:(QUIP_ALERT_OBJ_TYPE *)a withType:(Quip_Alert_Type)t
 {
-	if( alert_lp == NO_IOS_LIST )
+	if( alert_lp == NULL )
 		alert_lp = new_ios_list();
 
 	Alert_Info *ai=[[Alert_Info alloc] init];

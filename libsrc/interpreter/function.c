@@ -665,7 +665,6 @@ static double _msecfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
 static double _usecfunc(QSP_ARG_DECL  Item *ip, dimension_t frame )
 { return( get_timestamp(QSP_ARG  ip,2,frame) ); }
 
-
 static double signfunc(double x)
 { if( x > 0 ) return(1.0); else if( x < 0 ) return(-1.0); else return(0.0); }
 
@@ -809,7 +808,6 @@ DECLARE_POSITION_FUNCTION(	y_position,	_y_func,	1	)
 DECLARE_TS_FUNCTION(	seconds,	_secfunc	)
 DECLARE_TS_FUNCTION(	milliseconds,	_msecfunc	)
 DECLARE_TS_FUNCTION(	microseconds,	_usecfunc	)
-
 }
 
 

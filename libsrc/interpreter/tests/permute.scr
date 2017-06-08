@@ -37,7 +37,7 @@ VMov pts2 pts
 Permute_Points pts
 Display pts
 
-Pause
+Pause_If
 
 exit
 

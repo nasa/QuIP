@@ -44,15 +44,16 @@ typedef struct vector_parser_data {
 #define MAX_E_STRINGS	64
 
 typedef struct scalar_parser_data {
-	const char *	spd_yystrptr[MAXEDEPTH];
-	const char *	spd_original_string;
-	int		spd_edepth;	// init to -1
-	int		spd_which_str;	// init to 0
-	int		spd_in_pexpr;	// init to 0
-	int		spd_estrings_inited;	// init to 0
-	String_Buf *	spd_expr_string[MAX_E_STRINGS];
-	Typed_Scalar	spd_string_scalar[MAX_E_STRINGS];
-	Scalar_Expr_Node * spd_final_expr_node_p;
+	const char *		spd_yystrptr[MAXEDEPTH];
+	const char *		spd_original_string;
+	int			spd_edepth;	// init to -1
+	int			spd_which_str;	// init to 0
+	int			spd_in_pexpr;	// init to 0
+	int			spd_estrings_inited;	// init to 0
+	String_Buf *		spd_expr_string[MAX_E_STRINGS];
+	Typed_Scalar		spd_string_scalar[MAX_E_STRINGS];
+	Scalar_Expr_Node *	spd_final_expr_node_p;
+	List *			spd_free_enp_lp;
 } Scalar_Parser_Data;
 
 #define QS_SPD_YYSTRPTR(qsp)	(qsp)->qs_scalar_parser_data->spd_yystrptr
@@ -61,6 +62,7 @@ typedef struct scalar_parser_data {
 #define QS_SPD_WHICH_STR(qsp)	(qsp)->qs_scalar_parser_data->spd_which_str
 #define QS_SPD_IN_PEXPR(qsp)	(qsp)->qs_scalar_parser_data->spd_in_pexpr
 #define QS_SPD_ESTRINGS_INITED(qsp)	(qsp)->qs_scalar_parser_data->spd_estrings_inited
+#define QS_SPD_FREE_EXPR_NODE_LIST(qsp)	(qsp)->qs_scalar_parser_data->spd_free_enp_lp
 
 #define SET_QS_SPD_YYSTRPTR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_yystrptr = val
 #define SET_QS_SPD_ORIGINAL_STRING(qsp,val)	(qsp)->qs_scalar_parser_data->spd_original_string = val
@@ -68,6 +70,7 @@ typedef struct scalar_parser_data {
 #define SET_QS_SPD_WHICH_STR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_which_str = val
 #define SET_QS_SPD_IN_PEXPR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_in_pexpr = val
 #define SET_QS_SPD_ESTRINGS_INITED(qsp,val)	(qsp)->qs_scalar_parser_data->spd_estrings_inited = val
+#define SET_QS_SPD_FREE_EXPR_NODE_LIST(qsp,val)	(qsp)->qs_scalar_parser_data->spd_free_enp_lp = val
 
 // This struct is used to push text frags around...
 
@@ -343,7 +346,7 @@ struct query_stack {
 #define QS_LINE_PTR(qsp)		QRY_LINE_PTR(CURR_QRY(qsp))
 #define SET_QS_LINE_PTR(qsp,v)		QRY_LINE_PTR(CURR_QRY(qsp)) = v
 
-#define ADD_TO_RESULT(c)		*(QS_RET_PTR(THIS_QSP)++) = (c)
+#define ADD_TO_RESULT(c)		*(QS_RET_PTR(THIS_QSP)++) = (c);
 
 //#define QS_WHICH_ESTR(qsp)		(qsp)->qs_which_estr
 //#define SET_QS_WHICH_ESTR(qsp,idx)	(qsp)->qs_which_estr= idx

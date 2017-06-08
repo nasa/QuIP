@@ -726,9 +726,9 @@ int event_loop(SINGLE_QSP_ARG_DECL)
 	int stat;
 
 	lp = displays_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return(-1);
+	if( lp == NULL ) return(-1);
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		dop = (Disp_Obj *)np->n_data;
 		stat=check_one_display(QSP_ARG  dop);
@@ -746,9 +746,9 @@ void discard_events(SINGLE_QSP_ARG_DECL)
 	Disp_Obj *dop;
 
 	lp = displays_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		dop = (Disp_Obj *)np->n_data;
 		flush_one_display(dop);
@@ -779,7 +779,7 @@ Draggable *in_draggable( Viewer *vp, int x,int y )
 	WORD_TYPE *base;
 	int words_per_row, wordno, bit;
 
-	np=vp->vw_draglist->l_head;
+	np=QLIST_HEAD(vp->vw_draglist);
 	while(np!=NO_NODE){
 		dgp=(Draggable *)np->n_data;
 		/* compute coords rel. the draggable object */

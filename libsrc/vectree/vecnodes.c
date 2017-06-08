@@ -79,7 +79,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	if( CURR_INFILE != NULL ){
 		INC_SR_COUNT(CURR_INFILE);
 	}
-	SET_VN_RESOLVERS(enp, NO_LIST);
+	SET_VN_RESOLVERS(enp, NULL);
 
 	switch( VN_DATA_TYPE(enp) ){
 		case ND_DECL:
@@ -87,7 +87,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			SET_VN_DECL_NAME(enp, NULL);
 			SET_VN_DECL_CTX(enp, NO_ITEM_CONTEXT);
 			SET_VN_DECL_PREC(enp, NO_PRECISION );
-			SET_VN_DECL_REFS(enp, NO_LIST);
+			SET_VN_DECL_REFS(enp, NULL);
 			SET_VN_DECL_FLAGS(enp, 0);
 			SET_VN_DECL_OBJ(enp, NO_OBJ);
 			break;
@@ -104,7 +104,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			SET_VN_SUBRT(enp, NULL);
 			break;
 		case ND_CALLF:
-			SET_VN_UK_ARGS(enp, NO_LIST);
+			SET_VN_UK_ARGS(enp, NULL);
 			SET_VN_CALL_SUBRT(enp, NULL);
 			break;
 		case ND_STRING:
@@ -134,21 +134,9 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_UNUSED:
 		case N_NODE_DATA_TYPES:
 			/* just here to suppress a compiler warning */
-//#ifdef CAUTIOUS
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  init_expr_node:  %s has bad data type code %d",
-//				node_desc(enp),VN_DATA_TYPE(enp));
-//			NERROR1(DEFAULT_ERROR_STRING);
-//#endif /* CAUTIOUS */
 			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
 	}
-
-	/*
-	SET_VN_REF_LIST(enp, NO_LIST);
-	SET_VN_UK_ARGS(enp, NO_LIST);
-	*/
-
 }
 
 static const char *data_type_names[N_NODE_DATA_TYPES];

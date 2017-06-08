@@ -288,7 +288,7 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 
 	// BUG?  this code could be simplified if new_item called bzero on the struct...
 	SET_OBJ_PARENT(dp,NO_OBJ);
-	SET_OBJ_CHILDREN(dp,NO_LIST);
+	SET_OBJ_CHILDREN(dp,NULL);
 	/* We make sure that these pointers are set so that
 	 * we can know when not to free them... */
 	SET_OBJ_DECLFILE(dp,NULL);

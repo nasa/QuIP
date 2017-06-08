@@ -1002,7 +1002,7 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	/* we should have already removed all the child inodes */
 	if( IS_DIRECTORY(inp) ){
 		dellist(inp->rvi_lp);
-		inp->rvi_lp = NO_LIST;
+		inp->rvi_lp = NULL;
 	}
 
 	/* free the space used by the disk image copy.
@@ -1091,7 +1091,7 @@ static int rm_inode(QSP_ARG_DECL  RV_Inode *inp, int check_permissions)
 	if( IS_DIRECTORY(inp) ){
 		Node *np;
 		rv_pushd(QSP_ARG  RV_NAME(inp));
-		while( status == 0 && (np=inp->rvi_lp->l_head) != NO_NODE ){
+		while( status == 0 && (np=QLIST_HEAD(inp->rvi_lp)) != NO_NODE ){
 			status = rm_inode(QSP_ARG  (RV_Inode *)np->n_data,check_permissions);
 		}
 		rv_popd(SINGLE_QSP_ARG);
@@ -1233,7 +1233,7 @@ static void sync_dir_data(QSP_ARG_DECL  RV_Inode *inp)
 //#endif /* CAUTIOUS */
 	assert( eltcount(inp->rvi_lp) <= (BLOCK_SIZE*rv_sbp->rv_ndisks)/sizeof(short) );
 
-	np=inp->rvi_lp->l_head;
+	np=QLIST_HEAD(inp->rvi_lp);
 	sp=(short *)data_blocks;
 	while(np!=NO_NODE){
 		RV_Inode *inp2;
@@ -1270,7 +1270,7 @@ static RV_Inode *search_directory(RV_Inode *inp, int index)
 {
 	Node *np;
 
-	np=inp->rvi_lp->l_head;
+	np=QLIST_HEAD(inp->rvi_lp);
 	while(np!=NO_NODE){
 		inp=(RV_Inode *)np->n_data;
 		if( RV_INODE_IDX(inp) == index ) return(inp);
@@ -2108,9 +2108,9 @@ void rv_ls_cwd(SINGLE_QSP_ARG_DECL)
 	CHECK_VOLUME("rv_ls_cwd")
 
 	lp=rv_sbp->rv_cwd->rvi_lp;
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		rv_ls_inode(QSP_ARG   (RV_Inode *)np->n_data );
 		np = np->n_next;
@@ -2128,9 +2128,9 @@ void rv_rm_cwd(SINGLE_QSP_ARG_DECL)
 	CHECK_VOLUME("rv_rm_cwd")
 
 	lp=rv_sbp->rv_cwd->rvi_lp;
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		RV_Inode *inp;
 		inp = (RV_Inode *)np->n_data ;
@@ -2143,7 +2143,7 @@ advise(ERROR_STRING);
 		if( rv_rmfile(QSP_ARG  RV_NAME(inp)) < 0 )
 			return;
 
-		np=lp->l_head;
+		np=QLIST_HEAD(lp);
 	}
 }
 
@@ -2161,7 +2161,7 @@ static void descend_directory( QSP_ARG_DECL  RV_Inode *inp, void (*func)(QSP_ARG
 //#endif /* CAUTIOUS */
 	assert( IS_DIRECTORY(inp) );
 
-	np=inp->rvi_lp->l_head;
+	np=QLIST_HEAD(inp->rvi_lp);
 	while( np != NO_NODE ){
 		child_inp = (RV_Inode *)np->n_data;
 		if( IS_DIRECTORY(child_inp) && strcmp(RV_NAME(child_inp),".")
@@ -2214,9 +2214,9 @@ static void traverse_list( QSP_ARG_DECL  List *lp, void (*func)(QSP_ARG_DECL  RV
 {
 	Node *np;
 
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE ){
 		(*func)(QSP_ARG  (RV_Inode *)np->n_data);
 		np=np->n_next;
@@ -2439,7 +2439,7 @@ static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
 	if( rv_sbp->rv_cwd != NO_INODE ){	/* not root directory */
 		Node *np;
 		/* make sure that this directory does not exist already */
-		np = rv_sbp->rv_cwd->rvi_lp->l_head;
+		np = QLIST_HEAD(rv_sbp->rv_cwd->rvi_lp);
 		while( np != NO_NODE ){
 			inp=(RV_Inode *)np->n_data;
 			if( !strcmp(dirname,RV_NAME(inp)) ){

@@ -115,7 +115,7 @@ void disown_child( QSP_ARG_DECL  Data_Obj *dp )
 			ERROR1("object has no parent!?");
 			IOS_RETURN
 		}
-		if( OBJ_CHILDREN( OBJ_PARENT(dp) ) == NO_LIST ){
+		if( OBJ_CHILDREN( OBJ_PARENT(dp) ) == NULL ){
 			ERROR1("parent object has no children!?");
 			IOS_RETURN
 		} else {
@@ -139,7 +139,7 @@ void disown_child( QSP_ARG_DECL  Data_Obj *dp )
 
 	if( eltcount(OBJ_CHILDREN( OBJ_PARENT(dp) )) == 0 ){
 		rls_list(OBJ_CHILDREN( OBJ_PARENT(dp) ));	/* free list */
-		OBJ_CHILDREN( OBJ_PARENT(dp) ) = NO_LIST;
+		OBJ_CHILDREN( OBJ_PARENT(dp) ) = NULL;
 	}
 }
 
@@ -154,7 +154,7 @@ static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 	 * List elements are de-allocated by delvec()
 	 */
 
-	while( OBJ_CHILDREN( dp ) != NO_LIST ){
+	while( OBJ_CHILDREN( dp ) != NULL ){
 		np=QLIST_HEAD( OBJ_CHILDREN( dp ) );
 		delvec( QSP_ARG  (Data_Obj *) NODE_DATA(np) );
 	}
@@ -259,7 +259,7 @@ advise(ERROR_STRING);
 		delete_id(QSP_ARG  (Item *)idp);
 	}
 
-	if( OBJ_CHILDREN( dp ) != NO_LIST ){
+	if( OBJ_CHILDREN( dp ) != NULL ){
 		del_subs(QSP_ARG  dp);
 	}
 	if( OBJ_PARENT(dp) != NO_OBJ ){
@@ -898,8 +898,8 @@ static void propagate_down(Data_Obj *dp,uint32_t flagbit)
 {
 	Node *np;
 
-	if( dp->dt_children != NO_LIST ){
-		np=dp->dt_children->l_head;
+	if( dp->dt_children != NULL ){
+		np=QLIST_HEAD(dp->dt_children);
 		while(np!=NO_NODE){
 			Data_Obj *child_dp;
 			child_dp = (Data_Obj *)np->n_data;

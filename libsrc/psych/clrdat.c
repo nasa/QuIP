@@ -16,7 +16,7 @@ void clrdat(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
 	lp=class_list(SINGLE_QSP_ARG);
 	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		tcp = (Trial_Class *) np->n_data;
 		dtp = CLASS_DATA_TBL(tcp);

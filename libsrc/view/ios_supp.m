@@ -132,7 +132,7 @@ typedef struct pt_arg {
 
 #ifdef CAUTIOUS
 #define ADD_DRAW_OP(vp,do_p)					\
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ){			\
+	if( VW_DRAW_LIST(vp) == NULL ){			\
 		SET_VW_DRAW_LIST(vp,new_ios_list());		\
 	}							\
 	if( ios_eltcount(VW_DRAW_LIST(vp)) > MAX_DRAWLIST_LEN ){\
@@ -149,7 +149,7 @@ typedef struct pt_arg {
 #else /* ! CAUTIOUS */
 
 #define ADD_DRAW_OP(vp,do_p)					\
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ){			\
+	if( VW_DRAW_LIST(vp) == NULL ){			\
 		SET_VW_DRAW_LIST(vp,new_ios_list());		\
 	}							\
 	IOS_Node *np = mk_ios_node(do_p);			\
@@ -565,7 +565,7 @@ int exec_drawlist(Viewer *vp)
 		init_text_font(vp);
 	//}
 
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ) {
+	if( VW_DRAW_LIST(vp) == NULL ) {
 		fprintf(stderr,"exec_drawlist %s:  null draw list!?\n",VW_NAME(vp));
 		return 0;
 	}
@@ -841,7 +841,7 @@ void _xp_erase(Viewer *vp)
 	// and then wait until it has been redrawn, and THEN release
 	// the list...  Or we could have a non-drawing scan of the list first?
 
-//	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ) return;
+//	if( VW_DRAW_LIST(vp) == NULL ) return;
 //	fprintf(stderr,"_xp_erase %s:  releasing nodes\n",VW_NAME(vp));
 //	rls_nodes_from_ios_list(VW_DRAW_LIST(vp));
 

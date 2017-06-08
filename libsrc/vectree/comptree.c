@@ -2075,10 +2075,10 @@ static void remember_node(List **lpp,Vec_Expr_Node *enp)
 	 * However, we have more than one list on which we remember nodes...
 	 */
 
-	if( *lpp == NO_LIST )
+	if( *lpp == NULL )
 		*lpp = new_list();
 
-	assert( *lpp != NO_LIST );
+	assert( *lpp != NULL );
 
 	lp = *lpp;
 
@@ -2103,7 +2103,7 @@ static void link_one_uk_arg(Vec_Expr_Node *call_enp, Vec_Expr_Node *arg_enp)
 {
 	Node *np;
 
-	if( VN_UK_ARGS(call_enp) == NO_LIST )
+	if( VN_UK_ARGS(call_enp) == NULL )
 		SET_VN_UK_ARGS(call_enp, NEW_LIST );
 
 	np = mk_node(arg_enp);
@@ -2844,7 +2844,7 @@ static void note_uk_objref(QSP_ARG_DECL  Vec_Expr_Node *decl_enp, Vec_Expr_Node 
 
 	ASSERT_NODE_DATA_TYPE( decl_enp, ND_DECL )
 
-	if( VN_DECL_REFS(decl_enp) == NO_LIST )
+	if( VN_DECL_REFS(decl_enp) == NULL )
 		SET_VN_DECL_REFS(decl_enp, NEW_LIST );
 
 	np=mk_node(enp);
@@ -6269,9 +6269,9 @@ void link_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
 	Node *np;
 
-	if( VN_RESOLVERS(enp1) == NO_LIST )
+	if( VN_RESOLVERS(enp1) == NULL )
 		SET_VN_RESOLVERS(enp1, NEW_LIST );
-	if( VN_RESOLVERS(enp2) == NO_LIST )
+	if( VN_RESOLVERS(enp2) == NULL )
 		SET_VN_RESOLVERS(enp2, NEW_LIST );
 
 //#ifdef CAUTIOUS

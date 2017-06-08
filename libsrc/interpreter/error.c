@@ -625,7 +625,18 @@ void expect_warning(QSP_ARG_DECL  const char *msg)
 	}
 	SET_QS_EXPECTED_WARNING(THIS_QSP,savestr(msg));
 }
-	
+
+// Call this to confirm that a warning has been issued as expected
+
+void check_expected_warning(SINGLE_QSP_ARG_DECL)
+{
+	if( QS_EXPECTED_WARNING(THIS_QSP) != NULL ){
+		sprintf(ERROR_STRING,"Expected warning beginning with \"%s\" never issued!?",
+			QS_EXPECTED_WARNING(THIS_QSP));
+		WARN(ERROR_STRING);
+	}
+}
+
 static int is_expected(QSP_ARG_DECL  const char *warning_msg)
 {
 	int retval=0;

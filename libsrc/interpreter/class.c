@@ -42,7 +42,7 @@ void add_items_to_class(Item_Class *icp,Item_Type * itp,void* data,
 	addTail(icp->icl_lp,np);
 
 	/* now make the item type point to this class too */
-	if( IT_CLASS_LIST(itp) == NO_LIST )
+	if( IT_CLASS_LIST(itp) == NULL )
 		SET_IT_CLASS_LIST(itp, new_list());
 	np = mk_node(icp);
 	addTail(IT_CLASS_LIST(itp),np);
@@ -57,7 +57,7 @@ Member_Info *check_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Node *np;
 	Member_Info *mip;
 
-	np = icp->icl_lp->l_head;
+	np = QLIST_HEAD(icp->icl_lp);
 	while(np!=NO_NODE){
 		Item *ip;
 
@@ -98,7 +98,7 @@ Item * check_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Item *ip;
 	Member_Info *mip;
 
-	np = icp->icl_lp->l_head;
+	np = QLIST_HEAD(icp->icl_lp);
 	while(np!=NO_NODE){
 		mip = (Member_Info*) np->n_data;
 

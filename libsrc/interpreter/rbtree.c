@@ -6,6 +6,7 @@
 #include "quip_prot.h"
 #include "rbtree.h"
 #include "getbuf.h"
+#include "list.h"
 #include "item_type.h"
 
 // just for debugging

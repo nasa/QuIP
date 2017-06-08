@@ -50,7 +50,7 @@ FIO_FT_TO_DP_FUNC(ppm,Ppm_Header)
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
 	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, hd_p->img_data);
@@ -316,7 +316,7 @@ int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
 	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, hd_p->img_data);

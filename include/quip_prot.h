@@ -124,30 +124,6 @@ extern COMMAND_FUNC( do_ser_menu );
 // history.c
 extern int history_flag;
 
-// list.c
-extern void report_node_data(SINGLE_QSP_ARG_DECL);
-extern count_t eltcount( List * lp );
-#define NEW_LIST		new_list()
-extern List *new_list(void);
-extern void zap_list(List *lp);
-extern Node *mk_node( void * ip );
-extern Node *remHead(List *lp);
-extern Node *remTail(List *lp);
-extern Node * remNode(List *lp, Node *np);
-extern Node *remData(List *lp, void * data);
-extern void rls_list(List *lp);
-extern void rls_nodes_from_list(List *lp);
-extern void addTail(List *lp, Node *np);
-extern void addHead( List *lp, Node* np );
-extern void dellist(List *lp);
-extern Node *nodeOf( List *lp, void * ip );
-extern Node * list_find_named_item(List *lp, const char *name);
-
-extern void p_sort(List *lp);
-extern Node *nth_elt(List *lp, count_t k);
-extern Node *nth_elt_from_tail(List *lp, count_t k);
-
-
 // bi_menu.c
 extern void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) );
 extern void init_aux_menus(Query_Stack *qsp);
@@ -276,6 +252,7 @@ extern char *qpfgets(QSP_ARG_DECL  void *buf, int size, void *fp);
 extern void input_on_stdin(void);
 extern void script_warn(QSP_ARG_DECL  const char *);
 extern void expect_warning(QSP_ARG_DECL  const char *);
+extern void check_expected_warning(SINGLE_QSP_ARG_DECL);
 #ifdef BUILD_FOR_IOS
 extern void q_error1(QSP_ARG_DECL  const char *);
 #else // ! BUILD_FOR_IOS
@@ -289,8 +266,8 @@ extern void qdump( SINGLE_QSP_ARG_DECL );
 extern FILE *tfile(SINGLE_QSP_ARG_DECL);
 extern int intractive(SINGLE_QSP_ARG_DECL);
 extern void set_args(QSP_ARG_DECL  int ac,char** av);
-extern String_Buf * rdmtext(SINGLE_QSP_ARG_DECL);
-extern Macro_Arg ** read_macro_arg_table(QSP_ARG_DECL int n);
+extern String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL);
+extern Macro_Arg ** setup_macro_args(QSP_ARG_DECL int n);
 extern Macro_Arg ** create_generic_macro_args(int n);
 extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL

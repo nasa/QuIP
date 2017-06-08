@@ -133,9 +133,9 @@ void parent_relationship( Data_Obj *parent, Data_Obj *child )
 	/* the child is always a new object, so we're not
 	 * losing anything here
 	 */
-	SET_OBJ_CHILDREN(child, NO_LIST);
+	SET_OBJ_CHILDREN(child, NULL);
 
-	if( OBJ_CHILDREN(parent) == NO_LIST )
+	if( OBJ_CHILDREN(parent) == NULL )
 		SET_OBJ_CHILDREN(parent,new_list());
 
 	addHead(OBJ_CHILDREN(parent),mk_node(child));
@@ -433,7 +433,7 @@ static void relocate_children(QSP_ARG_DECL  Data_Obj *dp )
 		child = (Data_Obj *)NODE_DATA(np);
 		( * PF_UPDATE_OFFSET_FN(OBJ_PLATFORM(dp)) ) (QSP_ARG  child );
 
-		if( OBJ_CHILDREN(child) != NO_LIST )
+		if( OBJ_CHILDREN(child) != NULL )
 			relocate_children(QSP_ARG  child);
 		np = NODE_NEXT(np);
 	}
@@ -472,7 +472,7 @@ int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 	 * Need to recompute the data pointers of any children
 	 */
 
-	if( OBJ_CHILDREN(dp) != NO_LIST )
+	if( OBJ_CHILDREN(dp) != NULL )
 		relocate_children(QSP_ARG  dp);
 
 	return(0);
@@ -1000,7 +1000,7 @@ void propagate_flag_to_children(Data_Obj *dp, uint32_t flags_to_set )
 	Data_Obj *child;
 	Node *np;
 
-	if( OBJ_CHILDREN(dp) == NO_LIST ) return;
+	if( OBJ_CHILDREN(dp) == NULL ) return;
 
 	np = QLIST_HEAD( OBJ_CHILDREN(dp) );
 	while( np != NO_NODE ){
@@ -1008,7 +1008,7 @@ void propagate_flag_to_children(Data_Obj *dp, uint32_t flags_to_set )
 
 		SET_OBJ_FLAG_BITS(child,flags_to_set);
 
-		if( OBJ_CHILDREN(dp) != NO_LIST ) propagate_flag_to_children(child,flags_to_set);
+		if( OBJ_CHILDREN(dp) != NULL ) propagate_flag_to_children(child,flags_to_set);
 
 		np = NODE_NEXT(np);
 	}

@@ -206,7 +206,7 @@ static int get_ios_item_names( QSP_ARG_DECL  Data_Obj *str_dp, IOS_Item_Type *it
 	int i, n;
 
 	lp = ios_item_list(QSP_ARG  itp);
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		WARN("get_item_names:  No item list!?");
 		return 0;
 	}

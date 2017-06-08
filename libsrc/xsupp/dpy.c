@@ -40,7 +40,7 @@ void set_display( Disp_Obj *dop )
 
 List *displays_list(SINGLE_QSP_ARG_DECL)
 {
-	if( disp_obj_itp == NO_ITEM_TYPE ) return(NO_LIST);
+	if( disp_obj_itp == NO_ITEM_TYPE ) return(NULL);
 	return( item_list(QSP_ARG  disp_obj_itp) );
 }
 

@@ -25,7 +25,7 @@ IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 	[self setName: new_name];
 	dict = [NSMutableDictionary dictionary];
 	flags=0;
-	ic_lp=NO_IOS_LIST;
+	ic_lp=NULL;
 	return self;
 }
 
@@ -148,7 +148,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	IOS_List *lp;
 
 	lp=contextStack.list;
-	if( lp == NO_IOS_LIST ) return;
+	if( lp == NULL ) return;
 	IOS_Node *np;
 	np = IOS_LIST_HEAD(lp);
 	while( np != NO_IOS_NODE ){
@@ -193,7 +193,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 
 	if( contextStack == NULL ) NERROR1("delItem:  context stack is NULL!?\n");
 	IOS_List *lp=contextStack.list;
-	if( lp == NO_IOS_LIST ) NERROR1("delItem:  context stack list is NULL!?");
+	if( lp == NULL ) NERROR1("delItem:  context stack list is NULL!?");
 	IOS_Node *np=lp.head;
 	if( np == NO_IOS_NODE ) {
 		NERROR1("delItem:  first context node is NULL!?");
@@ -262,7 +262,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 
 	if( contextStack == NULL ) NERROR1("check:  context stack is NULL!?\n");
 	IOS_List *lp=contextStack.list;
-	if( lp == NO_IOS_LIST ) NERROR1("context stack list is NULL!?");
+	if( lp == NULL ) NERROR1("context stack list is NULL!?");
 	IOS_Node *np=lp.head;
 	if( np == NO_IOS_NODE ) {
 		sprintf(DEFAULT_ERROR_STRING,
@@ -433,7 +433,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	[icp setName: @"IOS_Item_Type.default"];
 	[icp setDict:[NSMutableDictionary dictionary]];
 	[icp setFlags:0];
-	[icp setIc_lp:NO_IOS_LIST];
+	[icp setIc_lp:NULL];
 	
 	[ios_item_type_itp.contextStack push: icp];
 	

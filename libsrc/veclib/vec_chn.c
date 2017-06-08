@@ -28,10 +28,10 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 
 //	/* CAUTIOUS lp should never be null */
 //#ifdef CAUTIOUS
-//	if( CHAIN_LIST(cp)  == NO_LIST ) ERROR1("CAUTIOUS:  _del_chain:  null list!?");
+//	if( CHAIN_LIST(cp)  == NULL ) ERROR1("CAUTIOUS:  _del_chain:  null list!?");
 //#endif /* CAUTIOUS */
 
-	assert( CHAIN_LIST(cp) != NO_LIST );
+	assert( CHAIN_LIST(cp) != NULL );
 	while( (np=remTail(CHAIN_LIST(cp) )) != NO_NODE ){
 		Vec_Chn_Blk *vcb_p;
 		/* BUG could release to pool */
@@ -55,25 +55,11 @@ void exec_chain(Chain *cp)
 	Vec_Chn_Blk *vcb_p;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( CHAIN_LIST(cp)  == NO_LIST ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  exec_chain:  chain %s is empty!?",CHAIN_NAME(cp) );
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
-	assert( CHAIN_LIST(cp) != NO_LIST );
+	assert( CHAIN_LIST(cp) != NULL );
 
 	np = QLIST_HEAD( CHAIN_LIST(cp) );
 	while( np != NO_NODE ){
 		vcb_p = (Vec_Chn_Blk *)NODE_DATA(np);
-//#ifdef CAUTIOUS
-//		if(  CHAIN_FUNC(vcb_p) == NULL ) {
-//			NERROR1("CAUTIOUS:  exec_chain:  chain block has null function ptr!?");
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( CHAIN_FUNC(vcb_p) != NULL );
 
 		(* CHAIN_FUNC(vcb_p))( CHAIN_ARGS(vcb_p) );

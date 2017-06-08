@@ -36,20 +36,21 @@ inline int macro_lineno(Macro *mp)
 
 void rls_macro(QSP_ARG_DECL  Macro *mp)
 {
-	Macro_Arg **ma_tbl;
-	int i;
+	rls_str(MACRO_FILENAME(mp));	// first release the resources
+	rls_str(MACRO_TEXT(mp));	// free the stored text (body)
 
-	// first release the resources
-	rls_str( MACRO_FILENAME(mp) );
 
-	ma_tbl = MACRO_ARG_TBL(mp);
-	for(i=0;i<MACRO_N_ARGS(mp);i++){
-		rls_macro_arg(ma_tbl[i]);
+	if( MACRO_N_ARGS(mp) > 0 ){
+		Macro_Arg **ma_tbl;
+		int i;
+		assert(MACRO_ARG_TBL(mp)!=NULL);
+		ma_tbl = MACRO_ARG_TBL(mp);
+		for(i=0;i<MACRO_N_ARGS(mp);i++)
+			rls_macro_arg(ma_tbl[i]);
+		givbuf(ma_tbl);
+	} else {
+		assert(MACRO_ARG_TBL(mp)==NULL);
 	}
-	givbuf(ma_tbl);
-
-	// free the stored text (body)
-	rls_str(MACRO_TEXT(mp));
 
 	del_macro(QSP_ARG  mp);
 }

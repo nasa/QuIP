@@ -92,9 +92,7 @@ extern int rb_delete_item(qrb_tree*, Item *ip);
 extern qrb_node* rb_find(qrb_tree*, const char * key );
 extern void rb_substring_find(Frag_Match_Info * fmi_p, qrb_tree*, const char * frag );
 extern void rb_traverse( qrb_node *np, void (*func)(qrb_node *,qrb_tree *), qrb_tree *tree_p );
-#ifdef RB_TREE_DEBUG
 extern void rb_check(qrb_tree *);
-#endif //  RB_TREE_DEBUG
 extern qrb_node * rb_successor_node( qrb_node *n_p );
 extern qrb_node * rb_predecessor_node( qrb_node *n_p );
 

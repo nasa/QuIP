@@ -272,15 +272,9 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 	Trial_Class *tcp;
 
 	lp=class_list(SINGLE_QSP_ARG);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  no conditions in make_staircases()");
-//		return;
-//	}
-//#endif
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		tcp=(Trial_Class *)np->n_data;
 		np=np->n_next;
@@ -430,9 +424,9 @@ COMMAND_FUNC( do_delete_all_classes )
 	Trial_Class *tcp;
 
 	lp=class_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		tcp=(Trial_Class *)np->n_data;
 		next = np->n_next;	/* del_class messes with the nodes... */

@@ -1304,7 +1304,7 @@ static COMMAND_FUNC( do_list_devs )
 		return;
 	}
 	lp = item_list(QSP_ARG  video_dev_itp);
-	np = lp->l_head;
+	np = QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		vdp = (Video_Device *)np->n_data;
 		report_status(QSP_ARG  vdp);

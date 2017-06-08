@@ -25,8 +25,8 @@
 /* 0 for C style indexing, 1 for fortran, matlab */
 static index_t base_index=0;
 
-static List *free_tmpobj_lp=NO_LIST;
-static List *used_tmpobj_lp=NO_LIST;
+static List *free_tmpobj_lp=NULL;
+static List *used_tmpobj_lp=NULL;
 
 void init_tmp_dps(SINGLE_QSP_ARG_DECL)
 {
@@ -40,7 +40,7 @@ void list_temp_dps(QSP_ARG_DECL  FILE *fp)
 	Node *np;
 	int n, nl, nc, nr;
 
-	if( used_tmpobj_lp == NO_LIST ){
+	if( used_tmpobj_lp == NULL ){
 		advise("no temp objects");
 		return;
 	}
@@ -50,7 +50,7 @@ void list_temp_dps(QSP_ARG_DECL  FILE *fp)
 		Data_Obj *dp;
 		dp=(Data_Obj *)NODE_DATA(np);
 		if( DOBJ_IS_LOCKED(dp) ) nl++;
-		if( OBJ_CHILDREN(dp) != NO_LIST ) nc++;
+		if( OBJ_CHILDREN(dp) != NULL ) nc++;
 		if( OBJ_REFCOUNT(dp) > 0 ) nr++;
 		n++;
 		np=NODE_NEXT(np);
@@ -131,7 +131,7 @@ static int release_tmpobj_resources(Data_Obj *dp, Data_Obj *parent_dp)
 	/* a used data_obj should have its name set */
 	assert( OBJ_NAME(dp) != NULL );
 
-	if( OBJ_CHILDREN(dp) != NO_LIST ){
+	if( OBJ_CHILDREN(dp) != NULL ){
 		return(-1);	/* failure */
 	}
 	if( dp == parent_dp ){
@@ -178,7 +178,7 @@ static void add_tmpobjs(List *lp, int n)
 
 static void insure_tmpobj_free_list(void)
 {
-	if( free_tmpobj_lp == NO_LIST ){
+	if( free_tmpobj_lp == NULL ){
 		free_tmpobj_lp = new_list();
 		add_tmpobjs(free_tmpobj_lp,N_TMP_DP);
 	}
@@ -194,7 +194,7 @@ static Data_Obj *check_tmpobj_free_list(void)
 
 	np = remHead(free_tmpobj_lp);
 
-	if( used_tmpobj_lp == NO_LIST )
+	if( used_tmpobj_lp == NULL )
 		used_tmpobj_lp = new_list();
 	addHead(used_tmpobj_lp,np);
 
@@ -320,7 +320,7 @@ void unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL)
 {
 	Node *np;
 	Data_Obj *dp;
-	if( used_tmpobj_lp == NO_LIST ){
+	if( used_tmpobj_lp == NULL ){
 		return;
 	}
 
@@ -341,7 +341,7 @@ void unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL)
 
 void unlock_children(Data_Obj *dp)
 {
-	if( OBJ_CHILDREN(dp) != NO_LIST ){
+	if( OBJ_CHILDREN(dp) != NULL ){
 		Node *np;
 
 		np = QLIST_HEAD( OBJ_CHILDREN(dp) );
@@ -450,7 +450,7 @@ static Node *existing_tmpobj_node(const char *name)
 	Node *np;
 	Data_Obj *dp;
 
-	if( used_tmpobj_lp == NO_LIST ) return(NO_NODE);
+	if( used_tmpobj_lp == NULL ) return(NO_NODE);
 	np=QLIST_HEAD(used_tmpobj_lp);
 	while(np!=NO_NODE){
 		dp = (Data_Obj *)NODE_DATA(np);

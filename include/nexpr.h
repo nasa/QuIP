@@ -57,7 +57,7 @@ typedef enum {
 	N_POSNFUNC,			/* 45 */
 	N_STRING,			/* 46 */
 	N_STRV2FUNC,			/* 47 */
-	N_DOBJVFUNC,			/* 48 */
+	N_DOBJV_STR_ARG_FUNC,		/* 48 */
 	/* N_SLCT_CHAR */		/* 49 */	/* obsolete? */
 } Scalar_Expr_Node_Code;
 

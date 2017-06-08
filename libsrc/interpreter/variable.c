@@ -340,7 +340,7 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	lp=item_list(QSP_ARG  var__itp);
 	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	lc_frag = getbuf(strlen(frag)+1);
 	decap(lc_frag,frag);
 	while(np!=NO_NODE){

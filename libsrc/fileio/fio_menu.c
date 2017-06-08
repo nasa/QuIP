@@ -141,9 +141,9 @@ static COMMAND_FUNC( do_close_all_hips )
 	Node *np;
 
 	lp = image_file_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		ifp=(Image_File *)np->n_data;
 		np=np->n_next;

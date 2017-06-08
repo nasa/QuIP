@@ -104,21 +104,21 @@ static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj)
 	/* otherwise check all panels */
 
 	lp=panel_obj_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST )
+	if( lp==NULL )
 {
 WARN("no panel list");
  return(NO_SCREEN_OBJ);
 }
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	while( np != NO_NODE ){
 		po=(Panel_Obj *)np->n_data;
 #ifdef QUIP_DEBUG
 //if( debug ) fprintf(stderr,"Searching panel %s\n",PO_NAME(po));
 #endif
 		lp2=po->po_children;
-		if( lp2 == NO_LIST )
+		if( lp2 == NULL )
 			WARN("null child list for panel!?");
-		np2=lp2->l_head;
+		np2=QLIST_HEAD(lp2);
 		while(np2!=NO_NODE ){
 			Screen_Obj *sop;
 			sop = (Screen_Obj *)np2->n_data;
@@ -172,8 +172,8 @@ Panel_Obj *find_panel(QSP_ARG_DECL  Widget obj)
 	Panel_Obj *po;
 
 	lp=panel_obj_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return(NO_PANEL_OBJ);
-	np=lp->l_head;
+	if( lp == NULL ) return(NO_PANEL_OBJ);
+	np=QLIST_HEAD(lp);
 	while( np!=NO_NODE ){
 		po = (Panel_Obj *)np->n_data;
 		if( ((Widget)po->po_panel_obj) == obj ){
@@ -1307,7 +1307,7 @@ void show_panel(QSP_ARG_DECL  Panel_Obj *po)
 		 * reset the positions of all the screen objects...
 		 */
 		lp=po->po_children;
-		np=lp->l_head;
+		np=QLIST_HEAD(lp);
 		while(np!=NO_NODE){
 			sop=np->n_data;
 			if( sop != NULL ){
@@ -1477,7 +1477,7 @@ void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 	XtManageChild(sop->so_obj);
 
 #ifdef CAUTIOUS
-	if( sop->so_children != NO_LIST ){
+	if( sop->so_children != NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  Chooser %s already has a child list!?",SOB_NAME(sop));
 		ERROR1(ERROR_STRING);
 	}
@@ -1553,7 +1553,7 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 	XtManageChild(sop->so_obj);
 
 #ifdef CAUTIOUS
-	if( sop->so_children != NO_LIST ){
+	if( sop->so_children != NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  Picker %s already has a child list!?",SOB_NAME(sop));
 		ERROR1(ERROR_STRING);
 	}

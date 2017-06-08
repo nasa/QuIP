@@ -175,7 +175,7 @@ IOS_Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 
 void init_nav_panel(Nav_Panel *nav_p)
 {
-	nav_p.groups = NO_IOS_LIST;
+	nav_p.groups = NULL;
 
 	quipTableViewController *c= [[quipTableViewController alloc]
 		initWithSize:globalAppDelegate.dev_size
@@ -224,7 +224,7 @@ Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *nav_p, const char *name)
 	nav_g.itm_icp = create_navitm_context(QSP_ARG  tmp_name);
 	nav_g.ng_panel = nav_p;
 
-	if( nav_p.groups == NO_IOS_LIST )
+	if( nav_p.groups == NULL )
 		nav_p.groups = new_ios_list();
 
 	IOS_Node *np;

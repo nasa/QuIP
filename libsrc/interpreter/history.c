@@ -525,13 +525,7 @@ void init_hist_from_list(QSP_ARG_DECL  const char *prompt,List* lp)
 	Node *np;
 	Item_Context *icp;
 
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 #ifdef QUIP_DEBUG
 	if( hist_debug == 0 )
@@ -562,14 +556,7 @@ void init_hist_from_item_list(QSP_ARG_DECL  const char *prompt,List *lp)
 {
 	char s[LLEN];
 
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
-
+	assert( lp != NULL );
 	sprintf(s,PROMPT_FORMAT,prompt);
 	init_hist_from_list(QSP_ARG  s,lp);
 }
@@ -617,7 +604,7 @@ advise("making new hist list for class");
 	while(np!=NO_NODE){
 		mip=(Member_Info *) NODE_DATA(np);
 		lp = item_list(QSP_ARG  mip->mi_itp);
-		if( lp != NO_LIST )
+		if( lp != NULL )
 			init_hist_from_list(QSP_ARG  s,lp);
 		np=NODE_NEXT(np);
 	}

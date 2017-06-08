@@ -112,7 +112,7 @@ void set_direct_io(int flag)
 
 List *image_file_list(SINGLE_QSP_ARG_DECL)
 {
-	if( img_file_itp==NO_ITEM_TYPE ) return(NO_LIST);
+	if( img_file_itp==NO_ITEM_TYPE ) return(NULL);
 
 	return( item_list(QSP_ARG  img_file_itp) );
 }
@@ -466,7 +466,7 @@ void setup_dummy(Image_File *ifp)
 	SET_OBJ_NAME(ifp->if_dp, ifp->if_name);
 	ifp->if_dp->dt_ap = NO_AREA;
 	ifp->if_dp->dt_parent = NO_OBJ;
-	ifp->if_dp->dt_children = NO_LIST;
+	ifp->if_dp->dt_children = NULL;
 	SET_OBJ_DATA_PTR(ifp->if_dp, NULL);
 	SET_OBJ_FLAGS(ifp->if_dp, 0);
 

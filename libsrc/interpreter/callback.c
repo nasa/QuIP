@@ -77,7 +77,7 @@ void call_event_funcs(SINGLE_QSP_ARG_DECL)
 	}
 #endif // BUILD_FOR_IOS
 
-	if( QS_EVENT_LIST(THIS_QSP) == NO_LIST )
+	if( QS_EVENT_LIST(THIS_QSP) == NULL )
 		return;
 
 	call_funcs_from_list(QSP_ARG  QS_EVENT_LIST(THIS_QSP) );

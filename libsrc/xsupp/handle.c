@@ -26,8 +26,8 @@ static u_long n_handles=0;
 // without locking!
 
 static pointer ptr_tbl[MAX_POINTERS];
-static List *free_hdl_list=NO_LIST;
-static List *used_hdl_list=NO_LIST;
+static List *free_hdl_list=NULL;
+static List *used_hdl_list=NULL;
 
 static void hdl_init()
 {
@@ -69,7 +69,7 @@ Handle new_hdl(u_long size)
 	Node *np;
 	pointer *pp;
 
-	if( free_hdl_list==NO_LIST )
+	if( free_hdl_list==NULL )
 		hdl_init();
 
 	np=remHead(free_hdl_list);

@@ -395,7 +395,8 @@ static void rb_tree_dump_info(QSP_ARG_DECL Container *cnt_p)
 static void *list_current_enum_item(Enumerator *ep)
 {
 	assert( ep->e_p.lep != NULL );
-	return NODE_DATA(ep->e_p.lep->np);
+	//return NODE_DATA(ep->e_p.lep->np);
+	return list_enumerator_item(ep->e_p.lep);
 }
 
 static void *rb_tree_current_enum_item(Enumerator *ep)

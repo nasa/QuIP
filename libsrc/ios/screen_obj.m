@@ -101,7 +101,7 @@ void show_ctx_stack(void)
 	IOS_Item_Context *icp;
 	IOS_List *lp;
 	lp = scrnobj_itp.contextStack.list;
-	if( lp == NO_IOS_LIST ){
+	if( lp == NULL ){
 		NWARN("show_ctx_stack:  null list!?");
 		return;
 	}

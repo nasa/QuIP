@@ -176,7 +176,7 @@ static void init_itp(QSP_ARG_DECL  Item_Type *itp, int container_type)
 
 	SET_IT_FREE_LIST(itp, new_list() );
 
-	SET_IT_CLASS_LIST(itp, NO_LIST);	// this was commented out - why?
+	SET_IT_CLASS_LIST(itp, NULL);	// this was commented out - why?
 	SET_IT_DEL_METHOD(itp, no_del_method);
 	SET_IT_CONTAINER_TYPE(itp,container_type);	// init_itp
 
@@ -620,7 +620,7 @@ void show_context_stack(Item_Type *itp)
 	Item_Context *icp;
 	Node *np;
 
-	if( CONTEXT_LIST(itp)==NO_LIST ){
+	if( CONTEXT_LIST(itp)==NULL ){
 none:
 		sprintf(ERROR_STRING,"No contexts in existence for %s items",IT_NAME(itp));
 		NADVISE(ERROR_STRING);
@@ -765,7 +765,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 		/* Don't use remHead to get the node, del_item()
 		 * will remove it for us, and put it on the free list.
 		 */
-		while( lp!=NO_LIST && (np=QLIST_HEAD(lp))!=NO_NODE ){
+		while( lp!=NULL && (np=QLIST_HEAD(lp))!=NO_NODE ){
 			Item *ip;
 			ip = (Item*) NODE_DATA(np);
 			if( func != NULL ) (*func)(ip);
@@ -858,7 +858,6 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 	if( np == NO_NODE ){
 		Item_Context *icp;
 		// This occurs when we have a brand new thread...
-fprintf(stderr,"item_of(%s,%s)  QS_SERIAL = %d\n",IT_NAME(itp),name);
 		assert(QS_SERIAL!=0);
 		// get the bottom of the stack from the root qsp, and push it...
 		np = QLIST_TAIL( FIRST_CONTEXT_STACK(itp) );
@@ -959,9 +958,9 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 
 	/* First check and see if any of the contexts have been updated */
 
-	assert(CONTEXT_LIST(itp)!=NO_LIST);
+	assert(CONTEXT_LIST(itp)!=NULL);
 
-	/*if( CONTEXT_LIST(itp) != NO_LIST )*/
+	/*if( CONTEXT_LIST(itp) != NULL )*/
 	{
 		Node *context_np;
 		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
@@ -987,7 +986,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 		rls_node(np);
 
 	/* now make up the new list, by concatenating the context lists */
-	if( CONTEXT_LIST(itp) != NO_LIST ){
+	if( CONTEXT_LIST(itp) != NULL ){
 		Node *context_np;
 		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
 		while(context_np!=NO_NODE){
@@ -1016,13 +1015,7 @@ List *alpha_sort(QSP_ARG_DECL  List *lp)
 	int i;
 
 
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  null list passed to alpha_sort");
-//		return(NO_LIST);
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	n2sort=eltcount(lp);
 
@@ -1125,15 +1118,15 @@ void decap(char* sto,const char* sfr)
 
 List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
 {
-	List *lp, *newlp=NO_LIST;
+	List *lp, *newlp=NULL;
 	Node *np, *newnp;
 	Item *ip;
 	char lc_frag[LLEN];
 
 	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return(lp);
+	if( lp == NULL ) return(lp);
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	decap(lc_frag,frag);
 	while(np!=NO_NODE){
 		char str1[LLEN];
@@ -1142,7 +1135,7 @@ List *find_items(QSP_ARG_DECL  Item_Type *itp,const char* frag)
 		decap(str1,ip->item_name);
 		// strstr will match anywhere in the string!
 		if( strstr(str1,lc_frag) != NULL ){
-			if( newlp == NO_LIST )
+			if( newlp == NULL )
 				newlp=new_list();
 			newnp=mk_node(ip);
 			addTail(newlp,newnp);
@@ -1161,7 +1154,7 @@ void sort_item_list(QSP_ARG_DECL  Item_Type *itp)
 	List *lp;
 
 	lp=item_list(QSP_ARG  itp);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	p_sort(lp);
 }
@@ -1180,17 +1173,11 @@ void print_list_of_items(QSP_ARG_DECL  List *lp, FILE *fp)
 
 	/* allocate an array of pointers for sorting */
 
-	if(lp==NO_LIST) return;
+	if(lp==NULL) return;
 	if( (n_total=eltcount(lp)) == 0 ) return;
 
 	lp=alpha_sort(QSP_ARG  lp);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  no items to print");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	/* If we are printing to the terminal, then
 	 * we want as few lines as possible, but if we're
@@ -1476,7 +1463,7 @@ void dump_items(SINGLE_QSP_ARG_DECL)
 	Item_Type *itp;
 
 	lp = item_list(QSP_ARG  ittyp_itp);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 	np=QLIST_HEAD(lp);
 	while(np!=NO_NODE){
 		itp=(Item_Type *) NODE_DATA(np);

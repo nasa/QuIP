@@ -90,7 +90,7 @@ void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 	dai_p->dai_ascii_separator = NORMAL_SEPARATOR;
 	dai_p->dai_ffmtstr = NOPAD_FLT_FMT_STR;
 	dai_p->dai_ifmtstr = NOPAD_INT_FMT_STR;
-	dai_p->dai_fmt_lp = NO_LIST;
+	dai_p->dai_fmt_lp = NULL;
 }
 
 static void show_input_format(SINGLE_QSP_ARG_DECL)

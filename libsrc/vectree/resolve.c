@@ -315,7 +315,7 @@ static List *get_uk_list(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	find_uk_nodes(QSP_ARG  enp,lp);
 	if( eltcount(lp) == 0 ){
 		dellist(lp);
-		return(NO_LIST);
+		return(NULL);
 	}
 	return(lp);
 }
@@ -491,7 +491,7 @@ DUMP_SUBRT(srp);
 #endif /* QUIP_DEBUG */
 
 	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
-	if( lp != NO_LIST ){
+	if( lp != NULL ){
 		RESOLVE_UK_NODES(lp);
 
 #ifdef QUIP_DEBUG
@@ -867,7 +867,7 @@ ADVISE(ERROR_STRING);
 	 * Does vv_func need to be another special case?
 	 */
 //advise("resolve_tree:  ready to resolve!");
-	if( VN_RESOLVERS(enp) == NO_LIST ){
+	if( VN_RESOLVERS(enp) == NULL ){
 		/* We don't set the shapes of T_SUBVEC nodes if the range
 		 * expressions contain variables (which will be set at runtime).
 		 */
@@ -943,7 +943,7 @@ ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 				/*resolved_enp=*/EFFECT_RESOLUTION(enp,enp2);
-				if(VN_RESOLVERS(enp) != NO_LIST ){
+				if(VN_RESOLVERS(enp) != NULL ){
 					/* careful - we dont want a recursive call, we may
 					 * have gotten here from resolve_uk_nodes!
 					 */
@@ -1107,7 +1107,7 @@ DUMP_SUBRT(srp);
 	 */
 
 	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 #ifdef QUIP_DEBUG
 /*
 if( debug & resolve_debug ){

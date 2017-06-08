@@ -188,8 +188,8 @@ static COMMAND_FUNC( do_set_var_from_obj )
 	Data_Obj *dp;
 	const char *s;
 
-	dp=PICK_OBJ("");
 	s=NAMEOF("variable");
+	dp=PICK_OBJ("");
 
 	if( dp == NO_OBJ ) return;
 

@@ -77,7 +77,7 @@ static float frprmn_scr_funk(float *p)
 		return(0.0);
 	}
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NO_NODE){
@@ -110,7 +110,7 @@ static float frprmn_c_funk(float *p)
 	Node *np;
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NO_NODE){
@@ -142,7 +142,7 @@ static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 	n_prms = eltcount( lp=opt_param_list(SGL_DEFAULT_QSP_ARG) );
 
 	/* init the values */
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
 	while(np!=NO_NODE){
 		opp = (Opt_Param *)np->n_data;

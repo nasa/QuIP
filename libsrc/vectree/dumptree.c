@@ -306,7 +306,7 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		DESCRIBE_SHAPE(VN_SHAPE(enp));
 	}
 
-	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NO_LIST ){
+	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NULL ){
 		Node *np; Vec_Expr_Node *enp2;
 		prt_msg("\tResolvers:");
 		np=QLIST_HEAD(VN_RESOLVERS(enp));

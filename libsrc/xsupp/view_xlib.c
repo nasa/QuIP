@@ -68,7 +68,7 @@ u_long xdebug=0;
 
 /* draw-op stuff, local to this file */
 
-static List *unused_dop_list=NO_LIST;
+static List *unused_dop_list=NULL;
 // BUG not thread-safe...
 static XFont *current_xfp=NO_XFONT;
 
@@ -973,13 +973,13 @@ static void refresh_drawing(Viewer *vp)
 	Draw_Op *dop;
 	//Handle hdl;
 
-	if( vp->vw_drawlist == NO_LIST ){
+	if( vp->vw_drawlist == NULL ){
 		return;
 	}
 
 	from_memory =1;
 
-	np=vp->vw_drawlist->l_head;
+	np=QLIST_HEAD(vp->vw_drawlist);
 	while(np!=NO_NODE){
 		//hdl = (void **) np->n_data;
 		//dop = (Draw_Op *) *hdl;
@@ -1334,32 +1334,17 @@ static void remember_drawing(Viewer *vp,Draw_Op_Code op,Draw_Op_Args *doap)
 	Draw_Op *dop;
 	//Handle hdl;
 
-//#ifdef CAUTIOUS
-//	if( ! REMEMBER_GFX ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//			"CAUTIOUS:  remember_drawing called from_memory=%d, remember_gfx=%d",
-//			from_memory,remember_gfx);
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( REMEMBER_GFX );
 
-	if( vp->vw_drawlist == NO_LIST ){
+	if( vp->vw_drawlist == NULL ){
 		vp->vw_drawlist = new_list();
 	}
 
-	if( unused_dop_list != NO_LIST &&
+	if( unused_dop_list != NULL &&
 		(np=remHead(unused_dop_list)) != NO_NODE ){
 
-		//hdl = (void **) np->n_data;
 		dop = (Draw_Op *) np->n_data;
 	} else {
-		/*
-		hdl = new_hdl(sizeof(*dop));
-		if( hdl == NO_HANDLE )
-			NERROR1("couldn't allocate drawing op");
-		np = mk_node(hdl);
-		*/
 		dop = getbuf(sizeof(*dop));
 		np = mk_node(dop);
 	}
@@ -1473,9 +1458,9 @@ static void free_drawlist(Viewer *vp)
 {
 	Node *np;
 
-	if( vp->vw_drawlist==NO_LIST ) return;
+	if( vp->vw_drawlist==NULL ) return;
 
-	if( unused_dop_list == NO_LIST )
+	if( unused_dop_list == NULL )
 		unused_dop_list = new_list();
 
 	while( (np=remHead(vp->vw_drawlist)) != NO_NODE ){
@@ -1511,8 +1496,8 @@ void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	Node *np;
 
-	if( vp->vw_drawlist == NO_LIST ) return;
-	np=vp->vw_drawlist->l_head;
+	if( vp->vw_drawlist == NULL ) return;
+	np=QLIST_HEAD(vp->vw_drawlist);
 	/*
 	 * The plotting space is in terms of the window size
 	 */
@@ -1864,7 +1849,7 @@ void update_image(Viewer *vp)
 	Window_Image *wip;
 	Draggable *dgp;
 
-	np=vp->vw_image_list->l_head;
+	np=QLIST_HEAD(vp->vw_image_list);
 	if( vp->vw_dp == NO_OBJ ){
 	/*
 		sprintf(ERROR_STRING,
@@ -1879,7 +1864,7 @@ void update_image(Viewer *vp)
 			vp->vw_frameno);
 		np=np->n_next;
 	}
-	np=vp->vw_draglist->l_head;
+	np=QLIST_HEAD(vp->vw_draglist);
 	while(np!=NO_NODE){
 		dgp=(Draggable *)np->n_data;
 		embed_draggable(vp->vw_dp,dgp);
@@ -2156,16 +2141,7 @@ void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
 	Node *np;
 	Window_Image *wip;
 
-//#ifdef CAUTIOUS
-//	if( VW_IMAGE_LIST(vp) == NO_LIST ){
-//		ERROR1("CAUTIOUS:  cycle_viewer_images:  no image list!?");
-//	}
-	assert( VW_IMAGE_LIST(vp) != NO_LIST );
-
-//	if( QLIST_HEAD( VW_IMAGE_LIST(vp) ) == NO_NODE ){
-//		ERROR1("CAUTIOUS:  cycle_viewer_images:  image list is empty!?");
-//	}
-//#endif /* CAUTIOUS */
+	assert( VW_IMAGE_LIST(vp) != NULL );
 	assert( QLIST_HEAD( VW_IMAGE_LIST(vp) ) != NO_NODE );
 
 	np = remHead( VW_IMAGE_LIST(vp) );
