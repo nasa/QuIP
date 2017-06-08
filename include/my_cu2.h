@@ -104,7 +104,6 @@ extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
 #define MAX_CUDA_GLOBAL_OBJECTS	2048
 #define MAX_CUDA_MAPPED_OBJECTS	128
 
-#define NO_CUDA_DEVICE ((Cuda_Device *)NULL)
 #define cudev_name	cudev_item.item_name
 
 #define CONST_MEM_SIZE	0x8000	/* 32k bytes */

@@ -119,7 +119,7 @@ COMMAND_FUNC( do_cu2_dev_info  )
 	Platform_Device *pdp;
 
 	pdp = PICK_PFDEV((char *)"device");
-	if( pdp == NO_PFDEV ) return;
+	if( pdp == NULL ) return;
 
 	//print_cudev_info_short(QSP_ARG  pdp);
 	WARN("do_cudev_info not implemented!?");
@@ -141,7 +141,7 @@ void cu2_init_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	// address set to NULL says use custom allocator - see dobj/makedobj.c
 
 	ap = area_init(QSP_ARG  dname,NULL,0, MAX_CUDA_GLOBAL_OBJECTS,DA_CUDA_GLOBAL);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_dev_memory:  error creating global data area %s",dname);
 		WARN(ERROR_STRING);
@@ -176,7 +176,7 @@ void cu2_init_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	strcat(cname,"_host");
 	ap = area_init(QSP_ARG  cname,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 								DA_CUDA_HOST);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_dev_memory:  error creating host data area %s",cname);
 		ERROR1(ERROR_STRING);
@@ -198,7 +198,7 @@ void cu2_init_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	strcat(cname,"_host_mapped");
 	ap = area_init(QSP_ARG  cname,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 							DA_CUDA_HOST_MAPPED);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_dev_memory:  error creating host-mapped data area %s",cname);
 		ERROR1(ERROR_STRING);

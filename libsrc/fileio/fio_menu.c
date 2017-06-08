@@ -55,7 +55,7 @@ static COMMAND_FUNC( do_set_filetype )
 
 	ftp = pick_file_type(QSP_ARG  "file format");
 
-	if( ftp != NO_FILETYPE )
+	if( ftp != NULL )
 		set_filetype(QSP_ARG  ftp);
 }
 
@@ -76,13 +76,13 @@ static COMMAND_FUNC( do_read_image_file )	/** open file for reading */
 	}
 
 	ifp = img_file_of(QSP_ARG  s);
-	if( ifp != NO_IMAGE_FILE ){
+	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"do_read_image_file:  file %s is already open",ifp->if_name);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	if(  read_image_file(QSP_ARG  s) == NO_IMAGE_FILE )
+	if(  read_image_file(QSP_ARG  s) == NULL )
 		WARN("error reading image file");
 }
 
@@ -101,13 +101,13 @@ static COMMAND_FUNC( do_write_image_file )
 	}
 
 	ifp = img_file_of(QSP_ARG  s);
-	if( ifp != NO_IMAGE_FILE ){
+	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"do_write_image_file:  file %s is already open",ifp->if_name);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	if( write_image_file(QSP_ARG  s,n) == NO_IMAGE_FILE )
+	if( write_image_file(QSP_ARG  s,n) == NULL )
 		WARN("error writing image file");
 }
 
@@ -130,7 +130,7 @@ static COMMAND_FUNC( rd_obj )
 	dp=PICK_OBJ( "name of image data object" );
 	ifp=PICK_IMG_FILE("");
 	if( dp == NULL ) return;
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 	read_object(QSP_ARG  dp, ifp);
 }
 
@@ -175,7 +175,7 @@ static COMMAND_FUNC( do_if_info )
 	Image_File *ifp;
 
 	ifp = PICK_IMG_FILE("");
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 	if_info(QSP_ARG  ifp);
 }
 
@@ -209,7 +209,7 @@ static COMMAND_FUNC( do_seek_frm )
 	ifp = PICK_IMG_FILE("");
 	n = (dimension_t)HOW_MANY("frame index");
 
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 	image_file_seek(QSP_ARG  ifp,n);
 }
@@ -237,7 +237,7 @@ static COMMAND_FUNC( do_delete_imgfile )
 	Image_File *ifp;
 
 	ifp = PICK_IMG_FILE("");
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
 		sprintf(ERROR_STRING,
@@ -258,7 +258,7 @@ static COMMAND_FUNC( do_set_autoclose )
 	ifp = PICK_IMG_FILE("");
 	yn = ASKIF("close automatically after reading last frame");
 
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 	if( !yn ) ifp->if_flags |= NO_AUTO_CLOSE;
 	else ifp->if_flags &= ~NO_AUTO_CLOSE;

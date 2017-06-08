@@ -16,8 +16,6 @@ typedef struct hist_choice {
 } Hist_Choice ;
 
 #define hc_text	hc_item.item_name
-#define NO_CHOICE	((Hist_Choice *) NULL)
-
 
 #define MAX_MENU_RSPS	64		/* this is too many for most */
 					/* might be nice to have dynamic

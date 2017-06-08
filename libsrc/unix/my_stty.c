@@ -247,7 +247,7 @@ static Termio_Option *search_to_tbl(Termio_Option *tbl,const char* name)
 			return(tbl);
 		tbl++;
 	}
-	return(NO_TERM_OPT);
+	return(NULL);
 }
 
 
@@ -255,13 +255,13 @@ static Termio_Option *find_tty_flag( const char *flagname )
 {
 	Termio_Option *top;
 	top = search_to_tbl(lf_opts,flagname);
-	if( top != NO_TERM_OPT ) return top;
+	if( top != NULL ) return top;
 	top = search_to_tbl(cf_opts,flagname);
-	if( top != NO_TERM_OPT ) return top;
+	if( top != NULL ) return top;
 	top = search_to_tbl(if_opts,flagname);
-	if( top != NO_TERM_OPT ) return top;
+	if( top != NULL ) return top;
 	top = search_to_tbl(of_opts,flagname);
-	if( top != NO_TERM_OPT ) return top;
+	if( top != NULL ) return top;
 
 	return top;
 }
@@ -271,7 +271,7 @@ static int get_flag_value( QSP_ARG_DECL   const char *flagname )
 	Termio_Option *top;
 
 	top = find_tty_flag(flagname);
-	if( top == NO_TERM_OPT ){
+	if( top == NULL ){
 		return ASKIF("dummy flag value");
 	} else {
 		return ASKIF(top->to_enastr);
@@ -304,24 +304,24 @@ void set_tty_flag(const char *flagname,int fd,int value)
 	tcflag_t *flag_ptr;
 
 	top = search_to_tbl(lf_opts,flagname);
-	if( top != NO_TERM_OPT ) flag_ptr = (&tiobuf.c_lflag);
+	if( top != NULL ) flag_ptr = (&tiobuf.c_lflag);
 
-	if( top == NO_TERM_OPT ){
+	if( top == NULL ){
 		top = search_to_tbl(cf_opts,flagname);
-		if( top != NO_TERM_OPT ) flag_ptr = (&tiobuf.c_cflag);
+		if( top != NULL ) flag_ptr = (&tiobuf.c_cflag);
 	}
 
-	if( top == NO_TERM_OPT ){
+	if( top == NULL ){
 		top = search_to_tbl(if_opts,flagname);
-		if( top != NO_TERM_OPT ) flag_ptr = (&tiobuf.c_iflag);
+		if( top != NULL ) flag_ptr = (&tiobuf.c_iflag);
 	}
 
-	if( top == NO_TERM_OPT ){
+	if( top == NULL ){
 		top = search_to_tbl(of_opts,flagname);
-		if( top != NO_TERM_OPT ) flag_ptr = (&tiobuf.c_oflag);
+		if( top != NULL ) flag_ptr = (&tiobuf.c_oflag);
 	}
 
-	if( top == NO_TERM_OPT ){
+	if( top == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"Unrecognized flag %s",flagname);
 		NWARN(DEFAULT_ERROR_STRING);
 		return;

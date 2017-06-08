@@ -11,9 +11,6 @@ typedef struct serial_port {
 	u_char		sp_rawbuf[RAWBUF_SIZE];
 } Serial_Port;
 
-#define NO_SERIAL_PORT ((Serial_Port *)NULL)
-
-
 /* serial.c */
 extern int open_serial_device(QSP_ARG_DECL  const char *);
 extern void send_serial(QSP_ARG_DECL  int fd,const u_char *buf,int n);

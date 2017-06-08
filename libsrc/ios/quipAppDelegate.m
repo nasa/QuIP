@@ -1255,7 +1255,7 @@ static double accel[3]={0,0,0};
 #endif // CAUTIOUS
 
 	np = IOS_LIST_HEAD(wakeup_lp);
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		Query_Stack *qsp;
 		qsp = (__bridge Query_Stack *) IOS_NODE_DATA(np);
 		resume_quip(qsp);

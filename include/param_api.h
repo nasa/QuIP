@@ -32,8 +32,6 @@ typedef struct param {
 #define NULL_UPARAM	(const char *)NULL,			\
 			(const char *)NULL,0L,(void *)NULL
 
-#define NO_PARAM	((Param *)NULL)
-
 #define NO_PTYPE	NULL
 
 /* codes for the type */

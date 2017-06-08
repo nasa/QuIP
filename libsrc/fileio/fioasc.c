@@ -18,7 +18,7 @@ FIO_OPEN_FUNC( ascii )
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_ASC));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	if( IS_READABLE(ifp) ){
 		SET_OBJ_COMPS(ifp->if_dp, 0);

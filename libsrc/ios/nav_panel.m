@@ -5,7 +5,7 @@
 #include "nav_panel.h"
 #include "ios_gui.h"
 
-static IOS_Item_Type *nav_panel_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *nav_panel_itp=NULL;
 
 @implementation Nav_Panel
 
@@ -26,7 +26,7 @@ static IOS_Item_Type *nav_panel_itp=NO_IOS_ITEM_TYPE;
 
 @end
 
-static IOS_Item_Type *nav_group_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *nav_group_itp=NULL;
 
 @implementation Nav_Group
 
@@ -84,7 +84,7 @@ static IOS_Item_Type *nav_group_itp=NO_IOS_ITEM_TYPE;
 
 @end		// Nav_Group
 
-static IOS_Item_Type *nav_item_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *nav_item_itp=NULL;
 
 @implementation Nav_Item
 
@@ -139,7 +139,7 @@ void push_navgrp_context(QSP_ARG_DECL  IOS_Item_Context *icp)
 
 IOS_Item_Context *create_navgrp_context(QSP_ARG_DECL  const char *name)
 {
-	if( nav_group_itp == NO_IOS_ITEM_TYPE )
+	if( nav_group_itp == NULL )
 		init_nav_groups(SINGLE_QSP_ARG);
 	
 	return create_ios_item_context(QSP_ARG  nav_group_itp, name );
@@ -163,7 +163,7 @@ void push_navitm_context(QSP_ARG_DECL  IOS_Item_Context *icp)
 
 IOS_Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 {
-	if( nav_item_itp == NO_IOS_ITEM_TYPE )
+	if( nav_item_itp == NULL )
 		init_nav_items(SINGLE_QSP_ARG);
 	
 	// the context might already exist, if it's not destroyed
@@ -194,7 +194,7 @@ void init_nav_panel(Nav_Panel *nav_p)
 	// we make this be a panel also so that we can use it generally...
 
 	Panel_Obj *po = panel_obj_of(DEFAULT_QSP_ARG  nav_p.name.UTF8String );
-	if( po == NO_PANEL_OBJ ){
+	if( po == NULL ){
 		po = new_panel(DEFAULT_QSP_ARG  nav_p.name.UTF8String, 
 			(int)globalAppDelegate.dev_size.width,
 			(int)globalAppDelegate.dev_size.height );
@@ -215,9 +215,9 @@ Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *nav_p, const char *name)
 
 	nav_g = new_nav_group(QSP_ARG  name);
 
-	if( nav_g == NO_NAV_GROUP ) return nav_g;
+	if( nav_g == NULL ) return nav_g;
 
-	if( nav_item_itp == NO_IOS_ITEM_TYPE )
+	if( nav_item_itp == NULL )
 		[Nav_Item initClass];
 	
 	sprintf(tmp_name,"%s.%s",nav_p.name.UTF8String,name);
@@ -239,17 +239,17 @@ Nav_Panel *create_nav_panel( QSP_ARG_DECL  const char *name)
 {
 	Nav_Panel *nav_p;
 	nav_p = new_nav_panel(QSP_ARG  name);
-	if( nav_p == NO_NAV_PANEL ) return nav_p;
+	if( nav_p == NULL ) return nav_p;
 
 	// Initialize the structure
 	init_nav_panel(nav_p);
 
-	if( nav_item_itp == NO_IOS_ITEM_TYPE )
+	if( nav_item_itp == NULL )
 		[Nav_Item initClass];
 	// this context is now part of the group...
     //nav_p.itm_icp = create_ios_item_context(QSP_ARG  nav_item_itp, name);
 
-	if( nav_group_itp == NO_IOS_ITEM_TYPE )
+	if( nav_group_itp == NULL )
 		[Nav_Group initClass];
 	nav_p.grp_icp = create_ios_item_context(QSP_ARG  nav_group_itp, name);
 	
@@ -287,7 +287,7 @@ void remove_nav_group( QSP_ARG_DECL  Nav_Group *nav_g )
 	nav_p = nav_g.ng_panel;
 	np = ios_remData( nav_p.groups, nav_g );
 #ifdef CAUTIOUS
-	if( np == NO_IOS_NODE ){
+	if( np == NULL ){
 		WARN("CAUTIOUS:  remove_nav_group:  group not found in panel group list!?");
 		return;
 	}

@@ -1,5 +1,6 @@
 
-#ifndef NO_OPENCV_IMAGE
+#ifndef _OPENCV_GLUE_H_
+#define _OPENCV_GLUE_H_
 
 #include "quip_config.h"
 
@@ -87,13 +88,6 @@ typedef struct opencv_cascade {
 
 #define ocv_name	ocv_item.item_name
 
-#define NO_OPENCV_IMAGE		((OpenCV_Image *)NULL)
-#define NO_OPENCV_MEM		((OpenCV_MemStorage *)NULL)
-#define NO_OPENCV_SCANNER	((OpenCV_Scanner *)NULL)
-#define NO_OPENCV_SEQ		((OpenCV_Seq *)NULL)
-#define NO_CASCADE		((OpenCV_Cascade *)NULL)
-
-
 /* opencv_glue.c */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Image,ocvi)
 #define PICK_OCVI(p)	pick_ocvi(QSP_ARG  p)
@@ -125,6 +119,6 @@ ITEM_INTERFACE_PROTOTYPES(OpenCV_Cascade,ocv_ccasc)
 #define PICK_CASCADE(p)	pick_ocv_ccasc(QSP_ARG  p)
 
 
-#endif /* undef NO_OPENCV_IMAGE */
+#endif // ! _OPENCV_GLUE_H_
 
 

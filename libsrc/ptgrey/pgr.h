@@ -83,9 +83,6 @@ typedef struct named_trigger_mode {
 #endif
 } Named_Trigger_Mode;
 
-#define NO_PGR_FRAME		((PGR_Frame *)NULL)
-
-
 
 /* pgr.c */
 #ifdef HAVE_LIBDC1394

@@ -7,7 +7,7 @@
 #include "item_obj.h"
 
 #ifdef FOOBAR
-#define INIT_LIST(lp)		{ lp->l_head=NO_NODE; lp->l_tail=NO_NODE; }
+#define INIT_LIST(lp)		{ lp->l_head=NULL; lp->l_tail=NULL; }
 #define ALLOC_LIST		((List *)getbuf(sizeof(List)))
 
 #ifdef THREAD_SAFE_QUERY
@@ -63,8 +63,6 @@ fprintf(stderr,"list at 0x%lx is locked, flags = 0x%x\n",(long)lp,lp->l_flags);\
 
 #endif /* ! THREAD_SAFE_QUERY */
 
-#define NO_LIST		((List *)NULL)
-
 /* sys/queue.h defines LIST_HEAD also!? */
 #define QLIST_HEAD(lp)	lp->l_head
 //#define LIST_HEAD(lp)	lp->l_head
@@ -72,7 +70,7 @@ fprintf(stderr,"list at 0x%lx is locked, flags = 0x%x\n",(long)lp,lp->l_flags);\
 #define SET_QLIST_HEAD(lp,np)	lp->l_head = np
 #define SET_QLIST_TAIL(lp,np)	lp->l_tail = np
 
-#define IS_EMPTY(lp)	(QLIST_HEAD(lp)==NO_NODE)
+#define IS_EMPTY(lp)	(QLIST_HEAD(lp)==NULL)
 
 #endif // FOOBAR
 

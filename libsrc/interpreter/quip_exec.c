@@ -17,13 +17,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 	List *lp;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( mp == NO_MENU ){
-//		WARN("CAUTIOUS:  stash_menu_commands:  no menu!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( mp != NO_MENU );
+	assert( mp != NULL );
 
 //fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
 	//lp = dictionary_list( MENU_DICT(mp) );
@@ -94,25 +88,18 @@ void qs_do_cmd( Query_Stack *qsp )
 
 	cmd = nameof2(QSP_ARG  QS_PROMPT_STR(qsp));
 
-//if( QLEVEL < 0 )
 	if( cmd == NULL || strlen(cmd) == 0 ){
-//fprintf(stderr,"qs_do_cmd:  null or empty command\n");
 		return;
 	}
-//fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
-	/* Now find the command */
-//	cp = (Command *) fetch_name(cmd, mp->mn_dict);
 	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);
 
-	if( cp == NO_COMMAND )
-//		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_builtin_menu->mn_dict);
+	if( cp == NULL )
 		cp = (Command *) container_find_match( MENU_CONTAINER(THIS_QSP->qs_builtin_menu), cmd );
 
-	if( cp == NO_COMMAND )
-//		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_help_menu->mn_dict);
+	if( cp == NULL )
 		cp = (Command *) container_find_match( MENU_CONTAINER(THIS_QSP->qs_help_menu), cmd );
 
-	if( cp == NO_COMMAND ){
+	if( cp == NULL ){
 
 #ifdef HAVE_HISTORY
 		/* make sure that a bad command doesn't get saved */

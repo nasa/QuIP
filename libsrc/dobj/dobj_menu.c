@@ -60,9 +60,9 @@ static COMMAND_FUNC( do_select_area )
 	Data_Area *ap;
 
 	ap = PICK_DATA_AREA("");
-	if( ap != NO_AREA )
+	if( ap != NULL )
 		curr_ap=ap;
-	else if( curr_ap != NO_AREA ){
+	else if( curr_ap != NULL ){
 		sprintf(ERROR_STRING,"Unable to change data area, current area remains %s.",
 			AREA_NAME(curr_ap));
 		advise(ERROR_STRING);
@@ -74,7 +74,7 @@ static COMMAND_FUNC( show_area )
 	Data_Area *ap;
 
 	ap = PICK_DATA_AREA("");
-	if( ap == NO_AREA ) return;
+	if( ap == NULL ) return;
 
 	show_area_space(QSP_ARG  ap);
 }
@@ -84,7 +84,7 @@ static COMMAND_FUNC( do_area_info )
 	Data_Area *ap;
 
 	ap = PICK_DATA_AREA("");
-	if( ap == NO_AREA ) return;
+	if( ap == NULL ) return;
 
 	data_area_info(QSP_ARG  ap);
 }
@@ -108,13 +108,7 @@ static COMMAND_FUNC( do_get_area )
 
 	s=NAMEOF("script variable for area name");
 
-//#ifdef CAUTIOUS
-//	if( curr_ap == NO_AREA ){
-//		WARN("CAUTIOUS:  do_get_area:  No current data area!?");
-//		return;
-//	}
-//#endif // CAUTIOUS
-	assert( curr_ap != NO_AREA );
+	assert( curr_ap != NULL );
 
 	assign_var(QSP_ARG  s, AREA_NAME(curr_ap));
 }
@@ -154,7 +148,7 @@ static COMMAND_FUNC( do_push_context )
 	NEW_ITEM_CONTEXT(icp);
 	//icp = [[Item_Context alloc] initWithName : [[NSString alloc] initWithUTF8String : s] ];
 	SET_CTX_NAME(icp,savestr(s));
-	//if( icp == NO_ITEM_CONTEXT ) return;
+	//if( icp == NULL ) return;
 
 	//PUSH_ITEM_CONTEXT(dobj_itp,icp);
 	//[DataObj pushContext : icp];
@@ -181,7 +175,7 @@ static COMMAND_FUNC( do_context )
 
 Precision * get_precision(SINGLE_QSP_ARG_DECL)
 {
-	if( prec_itp == NO_ITEM_TYPE )
+	if( prec_itp == NULL )
 		init_precisions(SINGLE_QSP_ARG);
 
 	return (Precision *) pick_item(QSP_ARG  prec_itp, "data precision" );
@@ -193,7 +187,7 @@ static void finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp, uint32_
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
-	if( prec_p == NO_PRECISION ) return;
+	if( prec_p == NULL ) return;
 
 	if( COLOR_PRECISION(PREC_CODE(prec_p)) ){
 		if( DIMENSION(dsp,0) != 1 ){
@@ -560,7 +554,7 @@ static COMMAND_FUNC( equivalence )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( dp==NULL ) return;
-	if( prec_p == NO_PRECISION ) return;
+	if( prec_p == NULL ) return;
 
 	CHECK_POSITIVE(ns,"sequences","equivalence",s)
 	CHECK_POSITIVE(nf,"frames","equivalence",s)
@@ -704,7 +698,7 @@ static Data_Obj *get_obj_or_file(QSP_ARG_DECL const char *name)
 
 #ifndef PC
 	ifp = img_file_of(QSP_ARG  name);
-	if( ifp!=NO_IMAGE_FILE ) return(ifp->if_dp);
+	if( ifp!=NULL ) return(ifp->if_dp);
 
 	sprintf(ERROR_STRING,"No object or open file \"%s\"",name);
 	WARN(ERROR_STRING);

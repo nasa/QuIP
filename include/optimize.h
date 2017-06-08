@@ -1,5 +1,6 @@
 
-#ifndef NO_OPT_PARAM
+#ifndef _OPTIMIZE_H_
+#define _OPTIMIZE_H_
 
 #include "quip_prot.h"
 #include "item_obj.h"
@@ -18,8 +19,6 @@ typedef struct opt_param {
 	float	mindel;		/* minimum delta */
 } Opt_Param;
 
-#define NO_OPT_PARAM	((Opt_Param *)NULL)
-
 typedef struct opt_pkg {
 	Item	pkg_item;
 #define pkg_name	pkg_item.item_name
@@ -28,8 +27,6 @@ typedef struct opt_pkg {
 	void (*pkg_c_func)(QSP_ARG_DECL  float (*f)(SINGLE_QSP_ARG_DECL));
 	void (*pkg_halt_func)(void);
 } Opt_Pkg;
-
-#define NO_OPT_PKG	((Opt_Pkg *)NULL)
 
 extern Opt_Pkg *curr_opt_pkg;
 
@@ -101,4 +98,5 @@ extern void run_stepit_c( QSP_ARG_DECL  float (*func)(SINGLE_QSP_ARG_DECL) );
 
 
 
-#endif /* undef NO_OPT_PARAM */
+#endif // ! _OPTIMIZE_H_
+

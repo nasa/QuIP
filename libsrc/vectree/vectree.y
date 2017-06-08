@@ -466,7 +466,7 @@ objref		: OBJNAME
 			Undef_Sym *usp;
 
 			usp=undef_of(QSP_ARG  $1);
-			if( usp == NO_UNDEF ){
+			if( usp == NULL ){
 				/* BUG?  are contexts handled correctly??? */
 				sprintf(YY_ERR_STR,"Undefined symbol %s",$1);
 				yyerror(qsp,  YY_ERR_STR);
@@ -517,7 +517,7 @@ expression	: FIX_SIZE '(' expression ')'
 			}
 		/*
 		| pointer {
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			sprintf(YY_ERR_STR,"Need to dereference pointer \"%s\"",VN_STRING($1));
 			yyerror(THIS_QSP,  YY_ERR_STR);
 			}
@@ -672,7 +672,7 @@ expression	: FIX_SIZE '(' expression ')'
 		| SUM '(' pointer ')' {
 			sprintf(YY_ERR_STR,"need to dereference pointer %s",VN_STRING($3));
 			yyerror(THIS_QSP,  YY_ERR_STR);
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 
 		| SUM '(' expr_list ')' {
@@ -842,7 +842,7 @@ func_arg	: expression
 			}
 		|
 			{
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 		;
 
@@ -1017,7 +1017,7 @@ statline	: simple_stat ';'
 			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		| error ';'
-			{ $$ = NO_VEXPR_NODE; }
+			{ $$ = NULL; }
 		;
 
 /* a stat_list is something that can appear within curly braces */
@@ -1063,16 +1063,16 @@ stat_block	: '{' stat_list '}'
 			}
 		| '{' '}'		/* empty block */
 			{
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 		| '{' error '}'
 			{
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 		| '{' stat_list END
 			{
 			yyerror(THIS_QSP,  (char *)"missing '}'");
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 		;
 
@@ -1083,7 +1083,7 @@ new_func_decl	: NEWNAME '(' arg_decl_list ')'
 			 * the declarations get interpreted a second time when we compile the nodes -
 			 * at least, for prototype declarations!?  Not a problem for regular declarations?
 			 */
-			if( $3 != NO_VEXPR_NODE )
+			if( $3 != NULL )
 				EVAL_DECL_TREE($3);
 			$$ = NODE1(T_PROTO,$3);
 			SET_VN_STRING($$, savestr($1));
@@ -1117,7 +1117,7 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 			 * the body...
 			 */
 
-			if( $3 != NO_VEXPR_NODE )
+			if( $3 != NULL )
 				EVAL_DECL_TREE($3);
 
 			$$=NODE1(T_PROTO,$3);
@@ -1173,7 +1173,7 @@ subroutine	: data_type new_func_decl stat_block
 
 arg_decl_list	:		/* nuthin */
 			{
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 		| arg_decl
 			{
@@ -1188,7 +1188,7 @@ arg_decl_list	:		/* nuthin */
 prog_elt	: subroutine
 		| decl_statement
 			{
-			if( $$ != NO_VEXPR_NODE ) {
+			if( $$ != NULL ) {
 				// decl_stats are always evaluated,
 				// to create the objects for compilation...
 				SET_VN_FLAG_BITS($$,NODE_FINISHED);
@@ -1196,7 +1196,7 @@ prog_elt	: subroutine
 			}
 		| statline
 			{
-			if( $$ != NO_VEXPR_NODE ) {
+			if( $$ != NULL ) {
 				EVAL_IMMEDIATE($$);
 				// We don't release here,
 				// because these nodes get passed up
@@ -1206,7 +1206,7 @@ prog_elt	: subroutine
 			}
 		| blk_stat
 			{
-			if( $$ != NO_VEXPR_NODE ) {
+			if( $$ != NULL ) {
 				EVAL_IMMEDIATE($$);
 				SET_VN_FLAG_BITS($$,NODE_FINISHED);
 			}
@@ -1235,7 +1235,7 @@ program		: prog_elt END
 			}
 		| error END
 			{
-			$$ = NO_VEXPR_NODE;
+			$$ = NULL;
 			SET_TOP_NODE($$);
 			}
 		;
@@ -1279,11 +1279,11 @@ exit_stat	: EXIT { $$=NODE0(T_EXIT); }
 
 return_stat	: RETURN
 			{
-			$$=NODE1(T_RETURN,NO_VEXPR_NODE);
+			$$=NODE1(T_RETURN,NULL);
 			}
 		| RETURN '(' ')'
 			{
-			$$=NODE1(T_RETURN,NO_VEXPR_NODE);
+			$$=NODE1(T_RETURN,NULL);
 			}
 		/*
 		| RETURN '(' expression ')'
@@ -1318,7 +1318,7 @@ script_stat	:	SCRIPTFUNC '(' print_list ')'
 			}
 		| SCRIPTFUNC '(' ')'
 			{
-			$$=NODE1(T_SCRIPT,NO_VEXPR_NODE);
+			$$=NODE1(T_SCRIPT,NULL);
 			SET_VN_SUBRT($$, $1);
 			}
 		;
@@ -1328,7 +1328,7 @@ str_ptr_arg	: str_ptr
 			{
 			sprintf(YY_ERR_STR,"undefined string pointer \"%s\"",$1);
 			yyerror(THIS_QSP,  YY_ERR_STR);
-			$$=NO_VEXPR_NODE;
+			$$=NULL;
 			}
 		;
 
@@ -1470,37 +1470,37 @@ decl_item	: decl_identifier {
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '{' '}' {
-			$$ = NODE1(T_CSCAL_DECL,NO_VEXPR_NODE);
+			$$ = NODE1(T_CSCAL_DECL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']'
 			{
-			$$ = NODE1(T_VEC_DECL,NO_VEXPR_NODE);
+			$$ = NODE1(T_VEC_DECL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '{' '}'
 			{
-			$$ = NODE2(T_CVEC_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			$$ = NODE2(T_CVEC_DECL,NULL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']'
 			{
-			$$ = NODE2(T_IMG_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			$$ = NODE2(T_IMG_DECL,NULL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']' '{' '}'
 			{
-			$$ = NODE3(T_CIMG_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			$$ = NODE3(T_CIMG_DECL,NULL,NULL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']'
 			{
-			$$ = NODE3(T_SEQ_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			$$ = NODE3(T_SEQ_DECL,NULL,NULL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']' '{' '}'
 			{
-			$$ = NODE3(T_CSEQ_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			$$ = NODE3(T_CSEQ_DECL,NULL,NULL,NULL);
 			SET_VN_DECL_NAME($$,savestr($1));
 			}
 		| '*' decl_identifier
@@ -1699,7 +1699,7 @@ switch_statement	: SWITCH '(' expression ')' '{' switch_cases '}'
 
 
 if_statement	: IF '(' expression ')' loop_stuff
-			{ $$ = NODE3(T_IFTHEN,$3,$5,NO_VEXPR_NODE); }
+			{ $$ = NODE3(T_IFTHEN,$3,$5,NULL); }
 		| IF '(' expression ')' loop_stuff ELSE loop_stuff
 			{ $$ = NODE3(T_IFTHEN,$3,$5,$7); }
 		;
@@ -2708,7 +2708,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	}
 
 	idp = ID_OF( CURR_STRING );
-	if( idp != NO_IDENTIFIER ){
+	if( idp != NULL ){
 		if( IS_STRING_ID(idp) ){
 			yylvp->idp = idp;
 			return(STRNAME);
@@ -2779,14 +2779,14 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	SET_TOP_NODE(NULL);
 
 	// we only use the last node for a commented out error dump?
-	LAST_NODE=NO_VEXPR_NODE;
+	LAST_NODE=NULL;
 
 	/* The best way to do this would be to pass qsp to yyparse, but since this
 	 * routine is generated automatically by bison, we would have to hand-edit
 	 * vectree.c each time we run bison...
 	 */
 	stat=yyparse(THIS_QSP);
-	if( TOP_NODE != NO_VEXPR_NODE )	/* successful parsing */
+	if( TOP_NODE != NULL )	/* successful parsing */
 		{
 		if( dumpit ) {
 			print_shape_key(SINGLE_QSP_ARG);
@@ -2851,7 +2851,7 @@ fprintf(stderr,"yyerror BEGIN\n");
 	*/
 
 	/*
-	if( LAST_NODE != NO_VEXPR_NODE ){
+	if( LAST_NODE != NULL ){
 		DUMP_TREE(LAST_NODE);
 	}
 	*/

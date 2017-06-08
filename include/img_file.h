@@ -93,8 +93,6 @@ typedef struct filetype {
 #define SET_FT_INFO_FUNC(ftp,f)		(ftp)->info_func = f
 
 
-#define NO_FILETYPE	((Filetype *)NULL)
-
 ITEM_INIT_PROT(Filetype,file_type)
 ITEM_NEW_PROT(Filetype,file_type)
 ITEM_CHECK_PROT(Filetype,file_type)
@@ -137,8 +135,6 @@ typedef struct image_file {
 #ifdef HAVE_TIFF
 #define if_tiff	if_file_u.u_tiff
 #endif /* HAVE_TIFF */
-
-#define NO_IMAGE_FILE		((Image_File*) NULL )
 
 ITEM_INIT_PROT(Image_File,img_file)
 ITEM_NEW_PROT(Image_File,img_file)

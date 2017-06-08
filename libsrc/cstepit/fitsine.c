@@ -51,7 +51,7 @@ COMMAND_FUNC( do_fix_prm )
 	opp = PICK_OPT_PARAM("");
 	value=HOW_MUCH("value");
 
-	if( opp==NO_OPT_PARAM ) return;
+	if( opp==NULL ) return;
 
 	opp->ans = value;
 

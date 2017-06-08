@@ -22,8 +22,6 @@ typedef struct pointer {
 
 #define NEW_POINTER		((Pointer *)getbuf(sizeof(Pointer)))
 
-#define NO_POINTER	((Pointer *)NULL)
-
 /* pointer flags */
 #define POINTER_SET	1
 

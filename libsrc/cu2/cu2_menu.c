@@ -542,7 +542,7 @@ static PF_COMMAND_FUNC( select_device )
 	Platform_Device *pdp;
 
 	pdp = PICK_PFDEV((char *)"device");
-	if( pdp == NO_PFDEV ) return;
+	if( pdp == NULL ) return;
 
 	curr_pdp = pdp;
 }

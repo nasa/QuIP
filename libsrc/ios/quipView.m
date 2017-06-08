@@ -219,7 +219,7 @@ static QUIP_IMAGE_TYPE * CreateDefaultBG(int pixelsWide, int pixelsHigh)
 	if( lp != NULL ){
 		// Check the list for images of the correct size
 		np=IOS_LIST_HEAD(lp);
-		while( np != NO_IOS_NODE ){
+		while( np != NULL ){
 			ip = (QUIP_IMAGE_TYPE *) IOS_NODE_DATA(np);
 			// How do we get the dimensions?
 			if( ip.size.width== pixelsWide &&

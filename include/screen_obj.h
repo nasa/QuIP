@@ -321,9 +321,6 @@ struct screen_obj {
 
 #define WIDGET_PANEL(sop) ((Panel_Obj *)SOB_PARENT(sop))
 
-#define NO_SCREEN_OBJ	((Screen_Obj *)NULL)
-#define NO_SOB_PTR	((Screen_Obj **)NULL)
-
 #define OBJECT_TYPE_MASK	15
 
 //#define WIDGET_INDEX(sop)	(WIDGET_CODE(sop)-1)

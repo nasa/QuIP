@@ -28,7 +28,7 @@
 #include "cam_params.h"	/* has the defines for the parameters */
 
 #define INQ_RESULT_NAME	"inquiry_result"
-static Visca_Cam *the_vcam_p=NO_CAMERA;
+static Visca_Cam *the_vcam_p=NULL;
 #define vparam_p	the_vcam_p->vcam_param_p
 
 #define HEX_DIGIT_TO_ASCII(dst,val)	hex_digit_to_ascii(QSP_ARG  dst, val)
@@ -573,18 +573,11 @@ static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 	Visca_Command *vcmdp;
 
 	vcsp = cmd_set_of(QSP_ARG  vcdp->vcd_set);
-	if( vcsp == NO_CMD_SET ){
+	if( vcsp == NULL ){
 		vcsp = new_cmd_set(QSP_ARG  vcdp->vcd_set);
-#ifdef CAUTIOUS
-		if( vcsp == NO_CMD_SET ){
-			sprintf(ERROR_STRING,
-				"Couldn't create command set item %s",
-					vcdp->vcd_set);
-			ERROR1(ERROR_STRING);
-		}
-#endif /* CAUTIOUS */
+		assert( vcsp != NULL );
 		vcsp->vcs_icp = create_visca_cmd_context(QSP_ARG  vcdp->vcd_set);
-		if( vcsp->vcs_icp == NO_ITEM_CONTEXT ){
+		if( vcsp->vcs_icp == NULL ){
 			sprintf(ERROR_STRING,
 				"Couldn't create item context %s",
 				vcdp->vcd_set);
@@ -595,7 +588,7 @@ static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 	push_visca_cmd_context(QSP_ARG  vcsp->vcs_icp);
 
 	vcmdp = new_visca_cmd(QSP_ARG  vcdp->vcd_cmd);
-	if( vcmdp == NO_VISCA_CMD ){
+	if( vcmdp == NULL ){
 		sprintf(ERROR_STRING,"Couldn't create visca cmd %s",
 			vcdp->vcd_cmd);
 		ERROR1(ERROR_STRING);
@@ -630,13 +623,7 @@ static void init_visca_inq( QSP_ARG_DECL  Visca_Inq_Def *vidp )
 	Visca_Inquiry *vip;
 
 	vip = new_visca_inq(QSP_ARG  vidp->vid_inq);
-#ifdef CAUTIOUS
-	if( vip == NO_VISCA_INQ ){
-		sprintf(ERROR_STRING,"Couldn't create inquiry item for \"%s\"",
-			vidp->vid_inq);
-		ERROR1(ERROR_STRING);
-	}
-#endif /* CAUTIOUS */
+	assert( vip != NULL );
 	vip->vi_vidp = vidp;
 #ifdef CAUTIOUS
 	if( strlen(vidp->vid_pkt) >= MAX_PACKET_LEN ){
@@ -2443,7 +2430,7 @@ static COMMAND_FUNC( do_visca_cmd )
 	u_char pkt[MAX_PACKET_LEN];
 
 	vcsp = PICK_CMD_SET("command group");
-	if( vcsp == NO_CMD_SET ){
+	if( vcsp == NULL ){
 		/* We eat a dummy word here to avoid a second error if there
 		 * is a typo in the command group name.
 		 */
@@ -2463,13 +2450,13 @@ static COMMAND_FUNC( do_visca_cmd )
 
 	POP_VISCA_CMD_CONTEXT;
 
-	if( vcmd_p == NO_VISCA_CMD ) return;
+	if( vcmd_p == NULL ) return;
 
 //advise("do_visca_cmd");
 	vcdp = vcmd_p->vcmd_vcdp;
 
 	/* first make sure that we have a camera selected! */
-	if( the_vcam_p == NO_CAMERA ){
+	if( the_vcam_p == NULL ){
 		WARN("No camera selected");
 		advise("Please select a camera before issuing commands");
 		return;
@@ -2648,13 +2635,13 @@ static COMMAND_FUNC( do_visca_inq )
 	u_char pkt[MAX_PACKET_LEN];
 	
 	vip = PICK_VISCA_INQ("inquiry");
-	if( vip == NO_VISCA_INQ ){
+	if( vip == NULL ){
 		return;
 	}
 	
 	vidp = vip->vi_vidp;
 	
-	if( the_vcam_p == NO_CAMERA ) {
+	if( the_vcam_p == NULL ) {
 		ASSIGN_VAR(INQ_RESULT_NAME,"no_camera");
 		return;
 	}
@@ -2728,9 +2715,9 @@ static COMMAND_FUNC( select_cam )
 	Visca_Cam *vcam_p;
 
 	vcam_p=PICK_VCAM("");
-	if( vcam_p == NO_CAMERA ) return;
+	if( vcam_p == NULL ) return;
 
-	if( vcam_p->vcam_param_p == NO_VISCA_PARAMS ){
+	if( vcam_p->vcam_param_p == NULL ){
 		sprintf(ERROR_STRING,"Oops, the type of camera %s needs to be specified",
 			vcam_p->vcam_name);
 		WARN(ERROR_STRING);
@@ -2755,14 +2742,14 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 
 	sprintf(str,"cam%d",++n_vcams);
 	vcam_p = new_vcam(QSP_ARG  str);
-	if( vcam_p == NO_CAMERA ) return;
+	if( vcam_p == NULL ) return;
 
 	np = mk_node(vcam_p);
 	addTail(vport_p->vp_cam_lp,np);
 	vcam_p->vcam_vport_p = vport_p;
 	vcam_p->vcam_index = ++vport_p->vp_n_cams;	/* indices start at 1 - ? */
 	vcam_p->vcam_type = N_CAM_TYPES;
-	vcam_p->vcam_param_p = NO_VISCA_PARAMS;
+	vcam_p->vcam_param_p = NULL;
 
 #ifdef VISCA_THREADS
 	vcam_p->vcam_cmd_lp = NULL;		/* this is the queue if in async mode... */
@@ -2921,7 +2908,7 @@ static COMMAND_FUNC( network_status )
 	Node *np;
 	Visca_Port *vport_p;
 
-	if( vport_itp == NO_ITEM_TYPE ){
+	if( vport_itp == NULL ){
 		WARN("network_status:  null vport_itp!?");
 		return;
 	}
@@ -2943,7 +2930,7 @@ static COMMAND_FUNC( do_vport_info )
 	Visca_Port *vport_p;
 
 	vport_p=PICK_VPORT("");
-	if( vport_p == NO_VISCA_PORT ) return;
+	if( vport_p == NULL ) return;
 
 	vport_info(QSP_ARG  vport_p);
 }
@@ -2956,14 +2943,14 @@ static Visca_Port *open_port(QSP_ARG_DECL  const char *name)
 	int fd;
 
 	fd = open_serial_device(QSP_ARG  name);
-	if( fd < 0 ) return(NO_VISCA_PORT);
+	if( fd < 0 ) return(NULL);
 
 	/* Set the baud rate here in case somebody changed it by mistake */
 	/* Perhaps should set all the flags too! */
 	set_baud(fd,B9600);
 
 	vport_p = new_vport(QSP_ARG  name);
-	if( vport_p == NO_VISCA_PORT ){
+	if( vport_p == NULL ){
 		close(fd);			/* BUG? ignore return status? */
 		return(vport_p);
 	}
@@ -3018,7 +3005,7 @@ static COMMAND_FUNC( do_vcam_info )
 	Visca_Cam *vcam_p;
 
 	vcam_p=PICK_VCAM("");
-	if( vcam_p == NO_CAMERA ) return;
+	if( vcam_p == NULL ) return;
 
 	vcam_info(QSP_ARG  vcam_p);
 }
@@ -3031,7 +3018,7 @@ static COMMAND_FUNC( do_get_cam_type )
 	vcam_p=PICK_VCAM("");
 	s = NAMEOF("variable name");
 
-	if( vcam_p == NO_CAMERA ){
+	if( vcam_p == NULL ){
 		ASSIGN_VAR(s,"no_camera");
 		return;
 	}
@@ -3057,7 +3044,7 @@ static COMMAND_FUNC(do_get_n_cam)
 
 	s=NAMEOF("variable name");
 
-	if( vport_itp == NO_ITEM_TYPE ){
+	if( vport_itp == NULL ){
 		WARN("do_get_n_cam:  null vport_itp!?");
 		return;
 	}
@@ -3135,7 +3122,7 @@ static void default_camera(SINGLE_QSP_ARG_DECL)
 	}
 
 	vport_p = open_port(QSP_ARG  DEFAULT_PORT_NAME);
-	if( vport_p == NO_VISCA_PORT ){
+	if( vport_p == NULL ){
 		WARN(ERROR_STRING);
 		sprintf(ERROR_STRING,"Unable to open default visca device %s",DEFAULT_PORT_NAME);
 		return;
@@ -3153,7 +3140,7 @@ static void default_camera(SINGLE_QSP_ARG_DECL)
 COMMAND_FUNC( do_visca_menu )
 {
 #ifdef HAVE_VISCA
-	if( the_vcam_p == NO_CAMERA ){
+	if( the_vcam_p == NULL ){
 		load_visca_cmds(SINGLE_QSP_ARG);
 		default_camera(SINGLE_QSP_ARG);
 	}

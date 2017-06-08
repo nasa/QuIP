@@ -117,7 +117,7 @@ static float amoeba_scr_funk(float *p)
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=var__of(QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
+	if( vp == NULL ) {
 		NWARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);

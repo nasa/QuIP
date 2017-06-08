@@ -5,7 +5,7 @@
 #include "xsupp.h"
 #include "debug.h"
 
-static Disp_Obj *current_dop=NO_DISP_OBJ;
+static Disp_Obj *current_dop=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 
@@ -40,7 +40,7 @@ void set_display( Disp_Obj *dop )
 
 List *displays_list(SINGLE_QSP_ARG_DECL)
 {
-	if( disp_obj_itp == NO_ITEM_TYPE ) return(NULL);
+	if( disp_obj_itp == NULL ) return(NULL);
 	return( item_list(QSP_ARG  disp_obj_itp) );
 }
 
@@ -419,22 +419,22 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 	static int siz_done=0;
 
 	dop = new_disp_obj(QSP_ARG  name);
-	if( dop == NO_DISP_OBJ ){
+	if( dop == NULL ){
 		sprintf(ERROR_STRING, "Couldn't create object for display %s",
 					name);
 		NWARN(ERROR_STRING);
-		return(NO_DISP_OBJ);
+		return(NULL);
 	}
 
 	if( dop_open(QSP_ARG  dop) < 0 ){
-		return(NO_DISP_OBJ);
+		return(NULL);
 	}
 
 	if( dop_setup(QSP_ARG  dop,desired_depth) < 0 ){
 		/* Bug - XCloseDisplay?? */
 		/* need to destroy object here */
 		del_disp_obj(QSP_ARG  dop);
-		return(NO_DISP_OBJ);
+		return(NULL);
 	}
 	set_display(dop);
 
@@ -475,7 +475,7 @@ static Disp_Obj *check_possible_depth(QSP_ARG_DECL  int d, const char *dname)
 	Disp_Obj *dop;
 
 	dop = open_display(QSP_ARG  dname,d);
-	if( dop != NO_DISP_OBJ && verbose ){
+	if( dop != NULL && verbose ){
 		sprintf(ERROR_STRING,
 			"Using depth %d on display %s",
 			d,dname);
@@ -512,7 +512,7 @@ static Disp_Obj * default_x_display(SINGLE_QSP_ARG_DECL)
 
 	/* these two lines added so this can be called more than once */
 	dop = disp_obj_of(QSP_ARG  dname);
-	if( dop != NO_DISP_OBJ ) return(dop);
+	if( dop != NULL ) return(dop);
 
 	dop = check_for_desired_depth(SINGLE_QSP_ARG);
 	if( dop != NULL ) return dop;
@@ -740,9 +740,9 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 
 	window_sys_inited=1;
 
-	if( current_dop == NO_DISP_OBJ ){
+	if( current_dop == NULL ){
 		current_dop = default_x_display(SINGLE_QSP_ARG);
-		if( current_dop == NO_DISP_OBJ ){
+		if( current_dop == NULL ){
 			NWARN("Couldn't open default display!?");
 			return;
 		}
@@ -768,10 +768,10 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 
 int display_depth(SINGLE_QSP_ARG_DECL)
 {
-	if( current_dop == NO_DISP_OBJ )
+	if( current_dop == NULL )
 		current_dop = default_x_display(SINGLE_QSP_ARG);
 
-	if( current_dop == NO_DISP_OBJ )
+	if( current_dop == NULL )
 		return(0);
 
 	return( DO_DEPTH(current_dop) );

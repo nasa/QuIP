@@ -26,8 +26,8 @@ static IOS_List *ios_node_free_list=NULL;
 	}
 
 	[np setData : data];
-	[np setNext : NO_IOS_NODE ];
-	[np setPrev : NO_IOS_NODE ];
+	[np setNext : NULL ];
+	[np setPrev : NULL ];
 
 	return np;
 }
@@ -47,11 +47,11 @@ IOS_Node *ios_nodeOf( IOS_List *lp, id d )
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		if( IOS_NODE_DATA(np) == d ) return(np);
 		np = IOS_NODE_NEXT(np);
 	}
-	return NO_IOS_NODE;
+	return NULL;
 }
 
 void rls_ios_node(IOS_Node *np)

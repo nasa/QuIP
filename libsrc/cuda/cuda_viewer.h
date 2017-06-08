@@ -51,8 +51,6 @@ typedef struct cuda_viewer {
 #define cv_cols		cv_vp->vw_width
 #define cv_rows		cv_vp->vw_height
 
-#define NO_CUDA_VWR		((Cuda_Viewer *)NULL)
-
 #define OFFSET(i) ((char *)NULL + (i))
 
 #include "data_obj.h"

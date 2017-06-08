@@ -41,10 +41,6 @@ static NSAlert *hidden_busy_p=NULL;
 static NSAlert *ending_busy_p=NULL;
 
 
-//static Panel_Obj *last_panel=NO_PANEL_OBJ;
-//static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj);
-
-
 #define PIXELS_PER_CHAR 9	// BUG should depend on font, may not be fixed-width!?
 #define EXTRA_WIDTH	20	// pad for string length...
 
@@ -71,7 +67,7 @@ Screen_Obj *find_any_scrnobj(NSView *cp)
 	if( lp == NULL ) return NULL;
 
 	np=IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		sop = (Screen_Obj *)IOS_NODE_DATA(np);
 //fprintf(stderr,"find_any_scrnobj 0x%lx:  %s, ctrl = 0x%lx\n",
 //(u_long)cp,SOB_NAME(sop),(u_long) SOB_CONTROL(sop));
@@ -101,16 +97,16 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	Panel_Obj *po;
 
 	lp=panel_obj_list(SINGLE_QSP_ARG);
-	if( lp == NULL ) return(NO_PANEL_OBJ);
+	if( lp == NULL ) return(NULL);
 	np=IOS_LIST_HEAD(lp);
-	while( np!=NO_IOS_NODE ){
+	while( np!=NULL ){
 		po = (Panel_Obj *)IOS_NODE_DATA(np);
 		if( PO_QV(po) == qv ){
 			return(po);
 		}
 		np=IOS_NODE_NEXT(np);
 	}
-	return(NO_PANEL_OBJ);
+	return(NULL);
 }
 #endif // FOOBAR
 
@@ -138,7 +134,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int w,int h)
 	// check and see if there already is a viewer
 	// with this name
 	Gen_Win *gwp = genwin_of(QSP_ARG  PO_NAME(po) );
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 		gwp = make_genwin(QSP_ARG  PO_NAME(po),w,h);
 	}
 	SET_PO_GW(po,gwp);
@@ -200,7 +196,7 @@ void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno)
 
 	// It would be better to have a single subview that is the parent
 	// view for all the controls...
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop;
 
 		sop = IOS_NODE_DATA(np);
@@ -1131,7 +1127,7 @@ static void dump_scrnobj_list(IOS_List *lp)
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop;
 		sop = (Screen_Obj *)IOS_NODE_DATA(np);
 		fprintf(stderr,"\t%s\n",SOB_NAME(sop));
@@ -1167,7 +1163,7 @@ Screen_Obj *find_scrnobj(SOB_CTL_TYPE *cp)
 
 	IOS_Node *np;
 	np=IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Screen_Obj *sop = (Screen_Obj *)IOS_NODE_DATA(np);
 
 		if( SOB_CONTROL(sop) == cp )
@@ -1717,11 +1713,11 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 {
 	if( alert_lp == NULL ){
 		NWARN("CAUTIOUS:  node_for_alert:  no alert list!?");
-		return NO_IOS_NODE;
+		return NULL;
 	}
 	IOS_Node *np;
 	np=IOS_LIST_HEAD(alert_lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Alert_Info *ai;
 		ai = (Alert_Info *) IOS_NODE_DATA(np);
 		if( ALERT_INFO_OBJ(ai) == a )
@@ -1729,14 +1725,14 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 		np = IOS_NODE_NEXT(np);
 	}
 	NWARN("CAUTIOUS:  node_for_alert:  alert not found!?");
-	return NO_IOS_NODE;
+	return NULL;
 }
 
 +(Alert_Info *) alertInfoFor: (QUIP_ALERT_OBJ_TYPE *)a
 {
 	IOS_Node *np;
 	np = node_for_alert(a);
-	if(np==NO_IOS_NODE) return NULL;
+	if(np==NULL) return NULL;
 	return (Alert_Info *) IOS_NODE_DATA(np);
 }
 
@@ -1762,14 +1758,14 @@ static IOS_Node *node_for_alert(QUIP_ALERT_OBJ_TYPE *a)
 	IOS_Node *np;
 	np = node_for_alert(ALERT_INFO_OBJ(self));
 #ifdef CAUTIOUS
-	if( np == NO_IOS_NODE ){
+	if( np == NULL ){
 		return;
 	}
 #endif // CAUTIOUS
 	
 	np = ios_remNode(alert_lp,np);
 
-	if( np == NO_IOS_NODE )
+	if( np == NULL )
 		NWARN("CAUTIOUS:  forget (Alert_Info):  Error removing alert node from list!?");
 	else {
 		np.data = NULL;		// ARC garbage collection

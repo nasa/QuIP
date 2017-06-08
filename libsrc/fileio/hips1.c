@@ -109,7 +109,7 @@ if( debug & debug_fileio ) advise("opening hips1 image file");
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
 	/* img_file_creat creates dummy if_dp only if readable */
 
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_fileio ) advise("allocating hips1 header");
@@ -125,7 +125,7 @@ if( debug & debug_fileio ) advise("allocating hips1 header");
 				ifp->if_hdr_p=NULL;
 			}
 			hips1_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		hips1_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	} else {

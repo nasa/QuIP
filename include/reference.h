@@ -39,8 +39,6 @@ typedef struct reference {
 
 #define NEW_REFERENCE		((Reference *)getbuf(sizeof(Reference)))
 
-#define NO_REFERENCE	((Reference *)NULL)
-
 #define IS_OBJECT_REF(refp)			(REF_TYPE(refp) == OBJ_REFERENCE)
 #define IS_STRING_REF(refp)			(REF_TYPE(refp) == STR_REFERENCE)
 

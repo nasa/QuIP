@@ -36,7 +36,7 @@ void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp)
 	}
 
 	dgp = new_dragg(QSP_ARG  name);
-	if( dgp == NO_DRAGG ) return;
+	if( dgp == NULL ) return;
 
 	dgp->dg_width = (int) OBJ_COLS(dp);
 	dgp->dg_height = (int) OBJ_ROWS(dp);

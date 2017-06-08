@@ -180,7 +180,7 @@ static debug_flag_t expr_debug=1;
 // moved to query.h
 #define MAXEDEPTH	20
 
-static List *free_enp_lp=NO_LIST;
+static List *free_enp_lp=NULL;
 
 #define MAX_E_STRINGS	4
 
@@ -2193,7 +2193,7 @@ static Scalar_Expr_Node *alloc_expr_node(void)
 	Scalar_Expr_Node *enp;
 	int i;
 
-	if( free_enp_lp != NO_LIST && QLIST_HEAD(free_enp_lp) != NULL ){
+	if( free_enp_lp != NULL && QLIST_HEAD(free_enp_lp) != NULL ){
 		Node *np;
 		np=remHead(free_enp_lp);
 		enp = (Scalar_Expr_Node *)NODE_DATA(np);
@@ -2655,7 +2655,7 @@ static double eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	long ival,ival2,ival3;
 	u_long uval2,uval3;
 	u_long frm;
-	static Function *val_func_p=NO_FUNCTION;
+	static Function *val_func_p=NULL;
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
@@ -2751,13 +2751,13 @@ dump_enode(QSP_ARG  enp);
 		 * But this is good enough for now...
 		 */
 
-		if( val_func_p == NO_FUNCTION )
+		if( val_func_p == NULL )
 			val_func_p = function_of(QSP_ARG  "value");
 //#ifdef CAUTIOUS
-//		if( val_func_p == NO_FUNCTION )
+//		if( val_func_p == NULL )
 //			ERROR1("CAUTIOUS:  couldn't find object value function!?");
 //#endif /* CAUTIOUS */
-		assert( val_func_p != NO_FUNCTION );
+		assert( val_func_p != NULL );
 
 		dval = (*val_func_p->fn_u.dobj_func)( QSP_ARG  dp ); }
 
@@ -3375,21 +3375,21 @@ static void rls_tree( Scalar_Expr_Node *enp )
 {
 	Node *np;
 
-	if( enp->sen_child[0] != NO_EXPR_NODE )
+	if( enp->sen_child[0] != NULL )
 		rls_tree(enp->sen_child[0]);
-	if( enp->sen_child[1] != NO_EXPR_NODE )
+	if( enp->sen_child[1] != NULL )
 		rls_tree(enp->sen_child[1]);
 	if( enp->sen_string != NULL )
 		rls_str(enp->sen_string);
 	if( enp->sen_string2 != NULL )
 		rls_str(enp->sen_string2);
 
-	if( free_enp_lp == NO_LIST ){
+	if( free_enp_lp == NULL ){
 		free_enp_lp = new_list();
 //#ifdef CAUTIOUS
-//		if( free_enp_lp == NO_LIST ) NERROR1("CAUTIOUS:  rls_tree:  error creating free enp list");
+//		if( free_enp_lp == NULL ) NERROR1("CAUTIOUS:  rls_tree:  error creating free enp list");
 //#endif /* CAUTIOUS */
-		assert( free_enp_lp != NO_LIST );
+		assert( free_enp_lp != NULL );
 	}
 	np = mk_node(enp);
 	addHead(free_enp_lp,np);
@@ -3533,8 +3533,8 @@ int yyerror(char *s)
 	 * large number...  causes all sorts of problems!
 	 */
 cleanup:
-	//FINAL_EXPR_NODE_P=NO_EXPR_NODE;
-	final_expr_node_p = NO_EXPR_NODE;
+	//FINAL_EXPR_NODE_P=NULL;
+	final_expr_node_p = NULL;
 	/* BUG need to release nodes here... */
 	return(0);
 }

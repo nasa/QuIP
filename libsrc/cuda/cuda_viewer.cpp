@@ -94,7 +94,7 @@ static void propagate_down(Data_Obj *dp,uint32_t flagbit)
 {
 	Node *np;
 
-	if( dp->dt_children != NO_LIST ){
+	if( dp->dt_children != NULL ){
 		np=dp->dt_children->l_head;
 		while(np!=NULL){
 			Data_Obj *child_dp;
@@ -415,7 +415,7 @@ static Cuda_Viewer * new_cuda_viewer(QSP_ARG_DECL  Viewer *vp)
 	}
 
 	cvp = new_cuda_vwr(QSP_ARG  vp->vw_name);
-	if( cvp == NO_CUDA_VWR ) return(cvp);
+	if( cvp == NULL ) return(cvp);
 
 	cvp->cv_vp = vp;
 	init_cuda_viewer(cvp);
@@ -429,7 +429,7 @@ COMMAND_FUNC( do_new_cuda_vwr )
 
 
 	vp = PICK_VWR("name of existing viewer to use with CUDA");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	if( ! READY_FOR_GLX(vp) ) {
 		sprintf(ERROR_STRING,"Existing viewer %s must be initialized for GL before using with CUDA!?",VW_NAME(vp) );
@@ -471,7 +471,7 @@ COMMAND_FUNC( do_load_cuda_vwr )
 	cvp = PICK_CUDA_VWR("CUDA viewer");
 	dp = PICK_OBJ("GL buffer object");
 
-	if( cvp == NO_CUDA_VWR || dp == NULL ) return;
+	if( cvp == NULL || dp == NULL ) return;
 
 	if( image_mapping_checks(QSP_ARG  cvp, dp ) < 0 ){
 		WARN("Image mapping checks failed!?");
@@ -495,7 +495,7 @@ COMMAND_FUNC( do_map_cuda_vwr )
 	img_dp = PICK_OBJ("GL buffer object");
 	coord_dp = PICK_OBJ("corner coordinate object");
 
-	if( cvp == NO_CUDA_VWR || img_dp == NULL || coord_dp == NULL ){
+	if( cvp == NULL || img_dp == NULL || coord_dp == NULL ){
 fprintf(stderr,"do_map_cuda_vwr aborting...\n");
 		return;
 	}
@@ -536,7 +536,7 @@ COMMAND_FUNC( do_new_gl_buffer )
 
 	/* what should the depth be??? default to 1 for now... */
 
-	if( pdp == NO_PFDEV ) return;
+	if( pdp == NULL ) return;
 
 	/* Make sure this name isn't already in use... */
 	dp = dobj_of(QSP_ARG  s);

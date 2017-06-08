@@ -27,7 +27,7 @@
 #include <OpenGL/glu.h>
 #endif // BUILD_FOR_MACOS
 
-static Viewer *gl_vp=NO_VIEWER;
+static Viewer *gl_vp=NULL;
 
 //static GLXContext the_ctx;
 //static GLXContext first_ctx=NULL;
@@ -43,7 +43,7 @@ static Renderer_Info *curr_renderer_info_p=NULL;
 
 void swap_buffers(void)
 {
-	if( gl_vp == NO_VIEWER ){
+	if( gl_vp == NULL ){
 		NWARN("swap_buffers:  no viewer selected");
 		return;
 	}
@@ -104,7 +104,7 @@ void wait_video_sync(int n)
 
 #endif /* ! HAVE_VIDEOSYNCSGI */
 
-	if( gl_vp == NO_VIEWER ){
+	if( gl_vp == NULL ){
 		NWARN("wait_video_sync:  no viewer selected");
 		return;
 	}
@@ -309,7 +309,7 @@ COMMAND_FUNC( do_render_to )
 	Viewer *vp;
 
 	vp = PICK_VWR("");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	select_gl_viewer(QSP_ARG  vp);
 }

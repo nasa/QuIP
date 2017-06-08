@@ -17,8 +17,6 @@ typedef struct dictionary {
 	int			dict_ncmps;	/* number of strcmps w/ list search */
 } Dictionary;
 
-#define NO_DICTIONARY	((Dictionary *)NULL)
-
 /* flag bits */
 
 #define NS_LIST_IS_CURRENT	1

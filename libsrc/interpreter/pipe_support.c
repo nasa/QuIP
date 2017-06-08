@@ -31,7 +31,7 @@ void creat_pipe(QSP_ARG_DECL  const char *name, const char* command, const char*
 	}
 
 	pp = new_pipe(QSP_ARG  name);
-	if( pp == NO_PIPE ) return;
+	if( pp == NULL ) return;
 
 	pp->p_cmd = savestr(command);
 	pp->p_flgs = flg;

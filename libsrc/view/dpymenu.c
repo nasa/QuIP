@@ -23,7 +23,7 @@ static COMMAND_FUNC( do_new_do )
 
 	s=NAMEOF("display");
 #ifdef HAVE_X11
-	if( open_display(QSP_ARG  s,8) == NO_DISP_OBJ ){
+	if( open_display(QSP_ARG  s,8) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -38,7 +38,7 @@ static COMMAND_FUNC( do_open_do )
 	s=NAMEOF("display");
 	d=HOW_MANY("desired bit depth");
 #ifdef HAVE_X11
-	if( open_display(QSP_ARG  s,d) == NO_DISP_OBJ ){
+	if( open_display(QSP_ARG  s,d) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -50,7 +50,7 @@ static COMMAND_FUNC( set_do )
 	Disp_Obj *dop;
 
 	dop = PICK_DISP_OBJ("");
-	if( dop == NO_DISP_OBJ ) return;
+	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	set_display(dop);
 #endif /* HAVE_X11 */
@@ -64,13 +64,10 @@ static COMMAND_FUNC( do_tell_dpy )
 	s=NAMEOF("name of variable in which to deposit name of current display");
 
 	dop = curr_dop();
-
-#ifdef CAUTIOUS
-	if( dop == NO_DISP_OBJ ){
-		WARN("CAUTIOUS:  do_tell_dpy:  no current display!?");
+	if( dop == NULL ){
+		WARN("do_tell_dpy:  no current display!?");
 		return;
 	}
-#endif /* CAUTIOUS */
 
 	ASSIGN_VAR(s,DO_NAME(dop));
 }
@@ -80,7 +77,7 @@ static COMMAND_FUNC( do_info_do )
 	Disp_Obj *dop;
 
 	dop= PICK_DISP_OBJ("");
-	if( dop == NO_DISP_OBJ ) return;
+	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	info_do(dop);
 #endif /* HAVE_X11 */
@@ -91,7 +88,7 @@ static COMMAND_FUNC( do_show_visuals )
 	Disp_Obj *dop;
 
 	dop= PICK_DISP_OBJ("");
-	if( dop == NO_DISP_OBJ ) return;
+	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	show_visuals(QSP_ARG  dop);
 #endif /* HAVE_X11 */

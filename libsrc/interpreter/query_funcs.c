@@ -522,7 +522,7 @@ static const char *read_ith_macro_arg(QSP_ARG_DECL  Macro *mp, int i)
 	if( MA_ITP(map) != NULL ){
 		Item *ip;
 		ip = pick_item(QSP_ARG  MA_ITP(map), MA_PROMPT(map) );
-		if( ip != NO_ITEM )
+		if( ip != NULL )
 			s=ITEM_NAME(ip);
 		else
 			s="xyzzy"; /* BUG? put what the user actually entered? */
@@ -698,7 +698,7 @@ static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
 
 	/* Does the buffer contain a macro name?  If not, return */
 	mp=macro_of(QSP_ARG  buf);
-	if( mp==NO_MACRO ) return(0);
+	if( mp==NULL ) return(0);
 
 	if( check_macro_recursion(QSP_ARG  mp) < 0 )
 		return 0;
@@ -2686,7 +2686,7 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_CHEW_LIST(qsp, NULL);
 	SET_QS_CALLBACK_LIST(qsp, NULL);
 
-	SET_QS_VAR_FMT_STACK(qsp,NO_STACK);
+	SET_QS_VAR_FMT_STACK(qsp,NULL);
 	SET_QS_NUMBER_FMT(qsp,NULL);
 
 	SET_QS_EXPECTED_WARNING(qsp,NULL);
@@ -2742,7 +2742,7 @@ char *qpfgets( QSP_ARG_DECL void *buf, int size, void *fp )
 	SET_QRY_DUPFILE(qp,NULL);					\
 	SET_QRY_PIPE(qp,NULL);						\
 	/*SET_QRY_TEXT_BUF(qp,NULL);*/					\
-	SET_QRY_MACRO(qp,NO_MACRO);					\
+	SET_QRY_MACRO(qp,NULL);					\
 	if( QRY_BUFFER(qp) == NULL ){					\
 		SET_QRY_BUFFER(qp,new_stringbuf());			\
 	}
@@ -2833,7 +2833,7 @@ void redir(QSP_ARG_DECL FILE *fp, const char *filename)
 
 static void share_macro_args(QSP_ARG_DECL Query *qpto,Query *qpfr)
 {
-	if( QRY_MACRO(qpfr) == NO_MACRO ){
+	if( QRY_MACRO(qpfr) == NULL ){
 		return;
 	}
 
@@ -3366,7 +3366,7 @@ static void show_query_level(QSP_ARG_DECL int i)
 		"\tCount = %d",QRY_COUNT(qp) );
 	advise(ERROR_STRING);
 
-	if( QRY_MACRO(qp) != NO_MACRO ){
+	if( QRY_MACRO(qp) != NULL ){
 		sprintf(ERROR_STRING,
 			"\tIn macro \"%s\"",MACRO_NAME(QRY_MACRO(qp)));
 		advise(ERROR_STRING);
@@ -3425,7 +3425,7 @@ void set_qflags(QSP_ARG_DECL int flag)
 /**		stuff to do with the control terminal	**/
 /**/
 
-#define NO_TTY ((FILE *)(-44))
+#define NO_TTY ((FILE *)(-44))	// why not NULL???
 
 /*
  * Return a descriptor for the control tty
@@ -3462,7 +3462,7 @@ FILE *tfile(SINGLE_QSP_ARG_DECL)
 #endif // ! BUILD_FOR_OBJC
 
 /*
- * Return a pointer to the named variable or NO_VARIABLE.
+ * Return a pointer to the named variable or NULL.
  * Works for macro args, i.e. $1 $2, by using a query_stack variable
  * tmpvar.
  *
@@ -3479,7 +3479,7 @@ Variable *var_of(QSP_ARG_DECL const char *name)
 	const char *s;
 
 	vp = var__of(QSP_ARG  name);
-	if( vp != NO_VARIABLE ) return(vp);
+	if( vp != NULL ) return(vp);
 
 	/* if not set, try to import from env */
 	s = getenv(name);
@@ -3495,7 +3495,7 @@ Variable *var_of(QSP_ARG_DECL const char *name)
 	i=0;
 	s=name;
 	while( *s ){
-		if( !isdigit(*s) ) return(NO_VARIABLE);
+		if( !isdigit(*s) ) return(NULL);
 		i*=10;
 		i+=(*s)-'0';
 		s++;
@@ -3504,7 +3504,7 @@ Variable *var_of(QSP_ARG_DECL const char *name)
 	i--;	/* variables start at 1, indices at 0 */
 
 	/* first see if we're in a macro! */
-	if( QRY_MACRO(CURR_QRY(THIS_QSP)) != NO_MACRO ){
+	if( QRY_MACRO(CURR_QRY(THIS_QSP)) != NULL ){
 		/*
 		 * range checking is done in getmarg(),
 		 * which returns NULL if out of range.
@@ -3515,7 +3515,7 @@ Variable *var_of(QSP_ARG_DECL const char *name)
 		const char *v;
 		//Variable *vp;
 		v = getmarg(QSP_ARG  i);
-		if( v == NULL ) return(NO_VARIABLE);
+		if( v == NULL ) return(NULL);
 
 #ifdef QUIP_DEBUG
 if( debug & qldebug ){
@@ -3539,7 +3539,7 @@ advise(ERROR_STRING);
 		// Now we need a temporary variable;
 		// We don't want to put this in the database,
 		// because we could have a $1 at every level...
-		if( (vp=QS_TMPVAR(THIS_QSP)) == NO_VARIABLE ){
+		if( (vp=QS_TMPVAR(THIS_QSP)) == NULL ){
 			NEW_VARIABLE(vp)
 			SET_QS_TMPVAR(THIS_QSP, vp );
 		}
@@ -3560,7 +3560,7 @@ advise(ERROR_STRING);
 "variable index %d too high; only %d command line arguments\n",
 			i+1,n_cmd_args);
 			WARN(ERROR_STRING);
-			return(NO_VARIABLE);
+			return(NULL);
 		} else {
 			char varname[32];
 			sprintf(varname,"argv%d",i+1);
@@ -3570,7 +3570,7 @@ advise(ERROR_STRING);
 	}
 	/* this suppresses a lint error message about no return val... */
 	/* NOTREACHED */
-	/* return(NO_VARIABLE); */
+	/* return(NULL); */
 } /* end var_of */
 
 #ifdef HAVE_ROUND
@@ -3963,7 +3963,7 @@ static void tell_macro_location(QSP_ARG_DECL  const char *location_string, int n
 	// don't use get_macro, because it prints a warning,
 	// causing infinite regress!?
 	mp = macro_of(QSP_ARG  mname);
-	assert( mp != NO_MACRO );
+	assert( mp != NULL );
 
 	filename = MACRO_FILENAME(mp);
 	ADJUST_PATH(filename);

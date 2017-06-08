@@ -117,7 +117,7 @@ if( debug ) advise("opening image file");
 #endif /* DEBUG */
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_BMP));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	/* img_file_creat creates dummy if_dp only if readable */
 
@@ -138,7 +138,7 @@ if( debug ) advise("allocating hips header");
 		if (read8BitValue(ifp) != 66 || read8BitValue(ifp) != 77){
 			sprintf(ERROR_STRING,"bmp_open %s:  bad magic number",ifp->if_name);
 			WARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 
 		/*l=*/  read32BitValue(ifp);
@@ -152,7 +152,7 @@ if( debug ) advise("allocating hips header");
 			sprintf(ERROR_STRING,"bmp_open %s:  bad info header size (%d)",
 				ifp->if_name,HDR_P(ifp)->bmp_info_size);
 			WARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 
 		HDR_P(ifp)->bmp_cols = read32BitValue(ifp);
@@ -163,7 +163,7 @@ if( debug ) advise("allocating hips header");
 			sprintf(ERROR_STRING,"bmp_open %s: expected word after height to be 1!?",
 				ifp->if_name);
 			WARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 
 		HDR_P(ifp)->bmp_bit_count = read16BitValue(ifp);
@@ -172,7 +172,7 @@ if( debug ) advise("allocating hips header");
 			sprintf(ERROR_STRING,"bmp_open %s: bad bit count (%d)!?",
 				ifp->if_name,HDR_P(ifp)->bmp_bit_count);
 			WARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 
 		HDR_P(ifp)->bmp_compression = (CompressionType)read32BitValue(ifp);
@@ -183,7 +183,7 @@ if( debug ) advise("allocating hips header");
 			sprintf(ERROR_STRING,"bmp_open %s: bad compression code (%d)!?",
 				ifp->if_name,HDR_P(ifp)->bmp_compression);
 			WARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 
 		/* what are these five values??? */

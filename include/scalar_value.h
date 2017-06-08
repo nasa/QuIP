@@ -33,8 +33,6 @@ typedef union {
 	void *		u_vp;	// for string type
 } Scalar_Value;
 
-#define NO_SCALAR_VALUE	((Scalar_Value *)NULL)
-
 #define SVAL_FLOAT(svp)		(svp)->u_f
 #define SVAL_STD(svp)		(svp)->std_scalar
 #define SVAL_STD_CPX(svp)	(svp)->std_cpx_scalar

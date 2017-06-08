@@ -69,7 +69,6 @@ struct precision {
 	struct precision *	prec_mach_p;	// NULL for machine precisions
 } ;
 
-#define NO_PRECISION	((Precision *)NULL)
 #define prec_name	prec_item.item_name
 
 
@@ -184,8 +183,6 @@ struct shape_info {
 	Bitmap_GPU_Info *	si_bitmap_gpu_info_g;	// address in device memory
 #endif // HAVE_ANY_GPU
 } ;
-
-#define NO_SHAPE ((Shape_Info *) NULL)
 
 /* Shape macros */
 

@@ -171,7 +171,7 @@ typedef struct per_proc_info {
 #define READY_TO_GO(pip)	( (pip)->ppi_flags & DW_READY_TO_GO )
 #define EXITING(pip)		( (pip)->ppi_flags & DW_EXITING )
 
-static Viewer *meteor_vp[MAX_VIEWERS]={NO_VIEWER,NO_VIEWER,NO_VIEWER};
+static Viewer *meteor_vp[MAX_VIEWERS]={NULL,NULL,NULL};
 static int meteor_increment=4;
 
 static Proc_Info ppi[MAX_DISKS];
@@ -466,7 +466,7 @@ RSTATUS(DR_EXIT);
 
 #define MAKE_METEOR_VIEWER( index )					\
 									\
-	if( meteor_vp[index] != NO_VIEWER ){				\
+	if( meteor_vp[index] != NULL ){				\
 		sprintf(ERROR_STRING,					\
 		"init_meteor_viewer:  meteor viewer %d (%s) already exists",index,meteor_vp[index]->vw_name);		\
 		WARN(ERROR_STRING);					\
@@ -475,7 +475,7 @@ RSTATUS(DR_EXIT);
 									\
 	sprintf(name,"meteor_viewer%d",index);				\
 	meteor_vp[index] = viewer_init(QSP_ARG  name,width,height,0);	\
-	if( meteor_vp[index] == NO_VIEWER ) return;			\
+	if( meteor_vp[index] == NULL ) return;			\
 	posn_viewer(meteor_vp[index],sx[index]*width,sy[index]*height);	\
 	/* set_n_protect(0); */						\
 	/* BUG: replace with make_grayscale(0, pow(depth, 2)) ?? */	\

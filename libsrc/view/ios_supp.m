@@ -574,7 +574,7 @@ int exec_drawlist(Viewer *vp)
 //	fprintf(stderr,"exec_drawlist %s:  drawlist has %d elements\n",
 //			VW_NAME(vp),ios_eltcount(VW_DRAW_LIST(vp)) );
 
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Draw_Op *do_p;
 		do_p = (Draw_Op *) IOS_NODE_DATA(np);
 //		fprintf(stderr,"exec_drawlist %s:  calling exec_drawop\n",VW_NAME(vp));
@@ -610,7 +610,7 @@ int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 
 	// Do we already have a Gen_Win (from a panel)?
 	Gen_Win *gwp=genwin_of( QSP_ARG  VW_NAME(vp) );
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 //fprintf(stderr,"make_viewer calling make_genwin %s\n",VW_NAME(vp));
 		gwp=make_genwin(QSP_ARG  VW_NAME(vp), width, height );
 	}
@@ -633,7 +633,7 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 
 #ifdef FOOBAR
 	Panel_Obj *po=panel_obj_of(QSP_ARG  VW_NAME(vp));
-	if( po != NO_PANEL_OBJ ){
+	if( po != NULL ){
 		show_panel(QSP_ARG  po);
 	} else {
 		quipView *qv = VW_QV(vp);

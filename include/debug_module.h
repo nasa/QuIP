@@ -13,8 +13,6 @@ struct debug_module {
 
 #define db_name	db_item.item_name
 
-#define NO_DEBUG_MODULE	((Debug_Module *)NULL)
-
 /* Debug_Module */
 #define DEBUG_NAME(dbmp)		(dbmp)->db_name
 #define DEBUG_MASK(dbmp)		(dbmp)->db_mask

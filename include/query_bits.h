@@ -180,8 +180,6 @@ struct my_pipe {
 	int		p_flgs;
 } ;
 
-#define NO_PIPE ((Pipe *) NULL)
-
 /* flag values */
 #define READ_PIPE	1
 #define WRITE_PIPE	2

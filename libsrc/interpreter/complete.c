@@ -94,8 +94,6 @@ static int hint_pushed=0;
 #define CYC_CHAR	14		/* ^N next	*/
 
 
-#define NO_TERMCAP	((char *)0)
-
 typedef struct completion_data {
 	const char *	selection_string;
 	u_int		n_so_far;
@@ -438,17 +436,17 @@ static void init_tty_chars(SINGLE_QSP_ARG_DECL)
 
 	tptr=tbuf;
 	so=tgetstr("so",&tptr);
-	if( so==NO_TERMCAP ){
+	if( so==NULL ){
 		WARN("no standout string in termcap");
 		so="";
 	}
 	se=tgetstr("se",&tptr);
-	if( se==NO_TERMCAP ){
+	if( se==NULL ){
 		WARN("no standend string in termcap");
 		se="";
 	}
 	ce=tgetstr("ce",&tptr);
-	if( ce==NO_TERMCAP ){
+	if( ce==NULL ){
 		WARN("no clear-to-eol string in termcap");
 		ce="";
 	}

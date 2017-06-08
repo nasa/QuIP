@@ -20,8 +20,6 @@
 
 //#include "dict.h"
 
-#define NO_ITEM	((Item *) NULL)
-
 struct qrb_node;
 struct item_context;
 
@@ -103,10 +101,6 @@ struct item_context {
 } ;
 
 #define CTX_IS_NEEDY(icp)	( (icp)->ic_list_serial != (icp)->ic_item_serial )
-
-//#define NO_NAMESPACE		NULL
-
-#define NO_ITEM_CONTEXT		((Item_Context *)NULL)
 
 /* Item_Context */
 #define CTX_NAME(icp)			(icp)->ic_item.item_name
@@ -211,11 +205,6 @@ typedef struct item_type_context_info {
 #define ITCI_LIST_SERIAL(itci_p)		(itci_p)->itci_list_serial
 #define SET_ITCI_LIST_SERIAL(itci_p,c)		(itci_p)->itci_list_serial = c
 
-/*
-#define INSURE_ITCI(itp)				\
-							\
-	if( ITCI_CSTK(THIS_ITCI(itp)) == NULL ) init_itci(itp,QS_SERIAL);
-	*/
 
 struct item_type {
 	Item		it_item;
@@ -256,9 +245,6 @@ struct item_type {
 // scoping of variables to subroutines.  To allow multiple instances
 // to run in parallel, this has to be a per-thread flag...
 //#define RESTRICTED	8	// what does restricted mean???
-
-
-#define NO_ITEM_TYPE		((Item_Type *)NULL)
 
 
 // BUG for thread-safe operation, this flag needs to be per-context stack!
@@ -355,8 +341,6 @@ struct item_class {
 	int		icl_flags;
 } ;
 
-#define NO_ITEM_CLASS	((Item_Class *)NULL)
-
 /* Item_Class */
 #define CL_NAME(icp)			(icp)->icl_item.item_name
 #define SET_CL_FLAG_BITS(iclp,f)	(iclp)->icl_flags |= f
@@ -372,8 +356,6 @@ struct member_info {
 
 #define MBR_DATA(mp)	(mp)->mi_data
 
-#define NO_MEMBER_INFO	((Member_Info *)NULL)
-
 #define ITEM_INTERFACE_CONTAINER(stem,type)
 
 #define ITEM_INTERFACE_DECLARATIONS(type,stem,container_type)	IIF_DECLS(type,stem,,container_type)
@@ -383,7 +365,7 @@ struct member_info {
 
 #define IIF_DECLS(type,stem,storage,container_type)		\
 								\
-static Item_Type *stem##_itp=NO_ITEM_TYPE;			\
+static Item_Type *stem##_itp=NULL;			\
 storage ITEM_INIT_FUNC(type,stem,container_type)		\
 storage ITEM_NEW_FUNC(type,stem)				\
 storage ITEM_CHECK_FUNC(type,stem)				\
@@ -408,7 +390,7 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 		WARN("Can't create " #stem " item with null name!?");	\
 		return NULL;					\
 	}							\
-	if( stem##_itp == NO_ITEM_TYPE )			\
+	if( stem##_itp == NULL )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 								\
 	stem##_p = (type *) new_item(QSP_ARG  stem##_itp, name, \
@@ -433,7 +415,7 @@ void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 								\
 type *stem##_of(QSP_ARG_DECL  const char *name)			\
 {								\
-	if( stem##_itp == NO_ITEM_TYPE )			\
+	if( stem##_itp == NULL )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	return (type *)item_of(QSP_ARG  stem##_itp, name );	\
 }
@@ -442,7 +424,7 @@ type *stem##_of(QSP_ARG_DECL  const char *name)			\
 								\
 type *get_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
-	if( stem##_itp == NO_ITEM_TYPE )			\
+	if( stem##_itp == NULL )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	return (type *)get_item(QSP_ARG  stem##_itp, name );	\
 }
@@ -451,7 +433,7 @@ type *get_##stem(QSP_ARG_DECL  const char *name)		\
 								\
 type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 {								\
-	if( stem##_itp == NO_ITEM_TYPE )			\
+	if( stem##_itp == NULL )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	return (type *)pick_item(QSP_ARG  stem##_itp, pmpt );	\
 }
@@ -460,7 +442,7 @@ type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 								\
 void list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 {								\
-	if( stem##_itp == NO_ITEM_TYPE )			\
+	if( stem##_itp == NULL )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	list_items(QSP_ARG  stem##_itp, fp );			\
 }
@@ -469,7 +451,7 @@ void list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 								\
 List * stem##_list(SINGLE_QSP_ARG_DECL)				\
 {								\
-	if( stem##_itp == NO_ITEM_TYPE )			\
+	if( stem##_itp == NULL )			\
 		init_##stem##s(SINGLE_QSP_ARG);			\
 	return item_list(QSP_ARG  stem##_itp);			\
 }

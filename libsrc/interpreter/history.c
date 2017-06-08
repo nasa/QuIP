@@ -73,19 +73,13 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 	Item_Context *icp;
 	char *ctxname;
 
-	if( choice_itp == NO_ITEM_TYPE ) init_choices(SINGLE_QSP_ARG);
+	if( choice_itp == NULL ) init_choices(SINGLE_QSP_ARG);
 
 	ctxname = get_hist_ctx_name(prompt);
 	icp = ctx_of(QSP_ARG  ctxname);
-	if( icp == NO_ITEM_CONTEXT ){
+	if( icp == NULL ){
 		icp = create_item_context(QSP_ARG  choice_itp,prompt);
-//#ifdef CAUTIOUS
-//		if( icp == NO_ITEM_CONTEXT ){
-//			ERROR1("CAUTIOUS:  error creating history context");
-//			IOS_RETURN_VAL(NULL)
-//		}
-//#endif /* CAUTIOUS */
-		assert( icp != NO_ITEM_CONTEXT );
+		assert( icp != NULL );
 	}
 
 	return(icp);
@@ -201,7 +195,7 @@ fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	hcp = (Hist_Choice *) choice_of(QSP_ARG  choice);
 	pop_item_context(QSP_ARG  choice_itp);
 
-	if( hcp == NO_CHOICE ){
+	if( hcp == NULL ){
 		return;
 	}
 
@@ -257,7 +251,7 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 	lp = container_list(CTX_CONTAINER(icp));
 //fprintf(stderr,"add_word_to_history_list, container list has %d elements\n",eltcount(lp));
 
-	if( hcp != NO_CHOICE ){
+	if( hcp != NULL ){
 		boost_choice(QSP_ARG  hcp,lp);
 		pop_item_context(QSP_ARG  choice_itp);
 //fprintf(stderr,"add_word_to_history_list, returning after increasing node priority\n");
@@ -269,7 +263,7 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 	hcp=new_choice(QSP_ARG  string);	// do we save this somewhere???
 	pop_item_context(QSP_ARG  choice_itp);
 
-	assert( hcp != NO_CHOICE );
+	assert( hcp != NULL );
 //fprintf(stderr,"add_word_to_history_list, returning after creating new choice\n");
 }
 
@@ -573,7 +567,7 @@ void init_hist_from_class(QSP_ARG_DECL  const char* prompt,Item_Class *iclp)
 
 	icp = find_hist(QSP_ARG  s);
 
-	if( icp != NO_ITEM_CONTEXT ){
+	if( icp != NULL ){
 		if( (iclp->icl_flags&NEED_CLASS_CHOICES)==0 ){
 
 #ifdef QUIP_DEBUG

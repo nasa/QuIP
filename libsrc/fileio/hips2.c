@@ -107,7 +107,7 @@ FIO_OPEN_FUNC(hips2)
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS2));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = (Hips2_Header *)getbuf( sizeof(Hips2_Header) );
 
@@ -126,7 +126,7 @@ FIO_OPEN_FUNC(hips2)
 		if( rd_hips2_hdr( ifp->if_fp, (Hips2_Header *)ifp->if_hdr_p,
 			ifp->if_name ) != HIPS_OK ){
 			hips2_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		if( hips2_to_dp(ifp->if_dp,ifp->if_hdr_p) < 0 )
 			NWARN("error converting hips2 header");

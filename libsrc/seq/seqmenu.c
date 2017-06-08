@@ -14,7 +14,7 @@ static COMMAND_FUNC( do_show_seq )
 	Seq *sp;
 
 	sp = PICK_SEQ("");
-	if( sp == NO_SEQ ) return;
+	if( sp == NULL ) return;
 
 	init_show_seq(sp);
 	evalseq(sp);
@@ -30,7 +30,7 @@ static COMMAND_FUNC( do_def_seq )
 	strcpy(nmbuf,s);
 	s=NAMEOF("sequence (quote if includes spaces)");
 
-	if( defseq(QSP_ARG  nmbuf,s) == NO_SEQ )
+	if( defseq(QSP_ARG  nmbuf,s) == NULL )
 		WARN("couldn't create new sequence");
 }
 
@@ -43,7 +43,7 @@ static COMMAND_FUNC( do_redef_seq )
 	sp = PICK_SEQ("");
 	s=NAMEOF("sequence (quote if includes spaces)");
 
-	if( sp == NO_SEQ ){
+	if( sp == NULL ){
 		WARN("sequence did not already exist, can't redefine");
 		return;
 	}
@@ -51,7 +51,7 @@ static COMMAND_FUNC( do_redef_seq )
 	strcpy(nmbuf,sp->seq_name);
 	delseq(QSP_ARG  sp);
 
-	if( (sp=defseq(QSP_ARG  nmbuf,s)) == NO_SEQ )
+	if( (sp=defseq(QSP_ARG  nmbuf,s)) == NULL )
 		WARN("couldn't create new sequence");
 }
 
@@ -60,7 +60,7 @@ static COMMAND_FUNC( do_prt_seq )
 	Seq *seqptr;
 
 	seqptr=PICK_SEQ("");
-	if( seqptr != NO_SEQ ) pseq(QSP_ARG  seqptr);
+	if( seqptr != NULL ) pseq(QSP_ARG  seqptr);
 }
 
 static COMMAND_FUNC( do_del_seq )
@@ -68,7 +68,7 @@ static COMMAND_FUNC( do_del_seq )
 	Seq *seqptr;
 
 	seqptr=PICK_SEQ("");
-	if( seqptr != NO_SEQ ) delseq(QSP_ARG  seqptr);
+	if( seqptr != NULL ) delseq(QSP_ARG  seqptr);
 }
 
 static COMMAND_FUNC( do_list_Seqs ){ list_mviseqs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }

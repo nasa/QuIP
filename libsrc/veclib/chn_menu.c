@@ -14,7 +14,7 @@ static COMMAND_FUNC( do_chain_info )
 	Chain *cp;
 
 	cp=PICK_CHAIN( "chain buffer" );
-	if( cp==NO_CHAIN ) return;
+	if( cp==NULL ) return;
 	chain_info(QSP_ARG  cp);
 }
 
@@ -25,7 +25,7 @@ static COMMAND_FUNC( do_start_chain )
 
 	s=NAMEOF("new chain");
 	cp=vec_chain_of( QSP_ARG   s );
-	if( cp != NO_CHAIN ){
+	if( cp != NULL ){
 		WARN("chain name already in use");
 		return;
 	}
@@ -43,7 +43,7 @@ static COMMAND_FUNC( do_exec_chain )
 	Chain *cp;
 
 	cp=PICK_CHAIN( "name of chain buffer" );
-	if( cp==NO_CHAIN ) return;
+	if( cp==NULL ) return;
 	exec_chain(cp);
 }
 

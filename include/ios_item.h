@@ -17,8 +17,6 @@
 
 @end
 
-#define NO_IOS_ITEM	((IOS_Item *) NULL)
-
 #define IOS_ITEM_NAME(ip)	ip.name.UTF8String
 #define IOS_ITEM_TYPE_NAME(itp)		IOS_ITEM_NAME(itp)
 
@@ -33,8 +31,6 @@
 -(IOS_Item *) check : (NSString *) name;
 -(int) list_items : (FILE *) fp;
 @end
-
-#define NO_IOS_ITEM_CONTEXT		((IOS_Item_Context *)NULL)
 
 @interface IOS_Item_Type : IOS_Item
 
@@ -75,8 +71,6 @@
 +(void) initClass;
 
 @end
-
-#define NO_IOS_ITEM_TYPE	((IOS_Item_Type *)NULL)
 
 #define IOS_IT_NAME(itp)	(itp).name.UTF8String
 #define IOS_IT_CLASS_LIST(itp)	(itp).it_class_lp
@@ -268,8 +262,6 @@ IOS_ITEM_DEL_PROT(IOS_Item_Context,ios_ctx)
 
 @end
 
-#define NO_IOS_ITEM_CLASS	((IOS_Item_Class *)NULL)
-
 // flag bits
 // these are the same as regular classes...
 #define NEED_CLASS_CHOICES	1
@@ -288,9 +280,6 @@ IOS_ITEM_DEL_PROT(IOS_Item_Context,ios_ctx)
 @property void *			member_data;	// this is used a table of size functions, for example
 @property IOS_Item *		(*member_lookup)(QSP_ARG_DECL  const char *);
 @end
-
-
-#define NO_IOS_MEMBER_INFO	((IOS_Member_Info *)NULL)
 
 #define IOS_MBR_ITP(mip)	(mip).member_itp
 #define IOS_MBR_DATA(mip)	(mip).member_data

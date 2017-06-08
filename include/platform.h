@@ -130,8 +130,6 @@ extern int cu2_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_ob
 #endif // HAVE_CUDA
 */
 
-#define NO_PLATFORM	((Compute_Platform *)NULL)
-
 ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
 #define PICK_PLATFORM(pmpt)		pick_platform(QSP_ARG  pmpt)
@@ -330,8 +328,6 @@ struct platform_device {
 #endif // HAVE_ANY_GPU
 } ;
 
-#define NO_PFDEV	((Platform_Device *)NULL)
-
 #define PFDEV_CUDA_INFO(pdp)		((pdp)->pd_dev_info.u_cdi_p)
 #define SET_PFDEV_CUDA_INFO(pdp,v)	((pdp)->pd_dev_info.u_cdi_p) = v
 
@@ -392,7 +388,6 @@ struct cuda_stream_info {
 
 #define STREAM_NAME(psp)	(psp)->ps_item.item_name
 
-#define NO_STREAM ((Platform_Stream *)NULL)
 #define PICK_STREAM(s)	pick_stream(QSP_ARG s)
 #define GET_STREAM(p)	get_stream(QSP_ARG  p)
 

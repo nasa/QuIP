@@ -38,7 +38,7 @@ Precision *prec_for_code(prec_t prec)
 
 	assert( AERROR("Missing precision code in list of precisions!?") );
 
-	return NO_PRECISION;
+	return NULL;
 }
 
 void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
@@ -166,7 +166,7 @@ void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 {
 	char string[128];
 
-	if( OBJ_AREA(dp) == NO_AREA )
+	if( OBJ_AREA(dp) == NULL )
 		sprintf(string,"(no data area):%s", OBJ_NAME(dp) );
 	else
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );

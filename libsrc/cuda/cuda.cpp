@@ -30,7 +30,7 @@
 // global var
 int max_threads_per_block;
 
-Cuda_Device *curr_cdp=NO_CUDA_DEVICE;
+Cuda_Device *curr_cdp=NULL;
 
 Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
@@ -380,7 +380,7 @@ COMMAND_FUNC( do_cudev_info )
 	Cuda_Device *cdp;
 
 	cdp = PICK_CUDEV((char *)"device");
-	if( cdp == NO_CUDA_DEVICE ) return;
+	if( cdp == NULL ) return;
 
 #ifdef HAVE_CUDA
 	print_cudev_info(QSP_ARG  cdp);
@@ -420,11 +420,7 @@ void insure_cuda_device( Data_Obj *dp )
 	}
 
 	cdp = (Cuda_Device *) AREA_CUDA_DEV(OBJ_AREA(dp));
-
-#ifdef CAUTIOUS
-	if( cdp == NO_CUDA_DEVICE )
-		NERROR1("CAUTIOUS:  null cuda device ptr in data area!?");
-#endif /* CAUTIOUS */
+	assert( cdp != NULL );
 
 	if( curr_cdp != cdp ){
 sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%lx  cdp = 0x%lx",

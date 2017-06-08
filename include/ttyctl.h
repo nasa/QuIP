@@ -18,8 +18,6 @@ typedef struct termio_option {
 	const char *	to_disstr;
 } Termio_Option;
 
-#define NO_TERM_OPT	((Termio_Option *) NULL )
-
 /* prototypes from termio.c */
 
 extern void set_ndata(int fd,int n);

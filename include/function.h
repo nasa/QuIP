@@ -88,8 +88,6 @@ struct quip_function {
 #define FUNC_VS_CODE2(f)		((f)->fn_vs_code2)
 #define SET_FUNC_VS_CODE2(f,c)		(f)->fn_vs_code2 = c
 
-#define NO_FUNCTION		((Quip_Function *)NULL)
-
 #define FN_NAME(funcp)		(funcp)->fn_name
 
 /* support for size functions */
@@ -142,25 +140,20 @@ ITEM_CHECK_PROT(Quip_Function,function)
 
 
 #define DECLARE_FUNCTION(name,func,code1,code2,code3,type,member,dim_index)	\
-									\
-									\
-{									\
-	Quip_Function *func_p;						\
-									\
-	func_p = new_function(QSP_ARG  #name);				\
-	if( func_p == NO_FUNCTION ){					\
-		sprintf(ERROR_STRING,					\
-	"error creating function \"%s\"!?",#name);			\
-		WARN(ERROR_STRING);					\
-	} else {							\
-		func_p->fn_type = type;					\
-		func_p->fn_u.member = func;				\
-		func_p->fn_vv_code = code1;				\
-		func_p->fn_vs_code = code2;				\
-		func_p->fn_vs_code2 = code3;				\
-		func_p->fn_serial = func_serial++;			\
-		func_p->fn_dim_index = dim_index;			\
-	}								\
+										\
+										\
+{										\
+	Quip_Function *func_p;							\
+										\
+	func_p = new_function(QSP_ARG  #name);					\
+	assert(func_p!=NULL);							\
+	func_p->fn_type = type;							\
+	func_p->fn_u.member = func;						\
+	func_p->fn_vv_code = code1;						\
+	func_p->fn_vs_code = code2;						\
+	func_p->fn_vs_code2 = code3;						\
+	func_p->fn_serial = func_serial++;					\
+	func_p->fn_dim_index = dim_index;					\
 }
 
 

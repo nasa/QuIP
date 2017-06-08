@@ -59,7 +59,7 @@ static const char * available_pfdev_name(QSP_ARG_DECL  const char *name,char *sc
 	s=name;
 	while(n<=max_devices){
 		pdp = pfdev_of(QSP_ARG  s);
-		if( pdp == NO_PFDEV ) return(s);
+		if( pdp == NULL ) return(s);
 
 		// This name is in use
 		n++;
@@ -152,7 +152,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	pdp = new_pfdev(QSP_ARG  name_p);
 
 #ifdef CAUTIOUS
-	if( pdp == NO_PFDEV ){
+	if( pdp == NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  init_cu2_device:  Error creating cuda device struct for %s!?",name_p);
 		WARN(ERROR_STRING);
 		return;
@@ -194,7 +194,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	sprintf(area_name,"%s.%s",PLATFORM_NAME(cpp),name_p);
 	ap = pf_area_init(QSP_ARG  area_name,NULL,0,
 			MAX_CUDA_GLOBAL_OBJECTS,DA_CUDA_GLOBAL,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating global data area %s",area_name);
 		WARN(ERROR_STRING);
@@ -226,7 +226,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	sprintf(area_name,"%s.%s_host",PLATFORM_NAME(cpp),name_p);
 	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 								DA_CUDA_HOST,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating host data area %s",area_name);
 		ERROR1(ERROR_STRING);
@@ -250,7 +250,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	sprintf(area_name,"%s.%s_host_mapped",PLATFORM_NAME(cpp),name_p);
 	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 							DA_CUDA_HOST_MAPPED,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating host-mapped data area %s",area_name);
 		ERROR1(ERROR_STRING);
@@ -571,7 +571,7 @@ ERROR1("CAUTIOUS:  cu2_init_platform:  Couldn't create Cuda2 platform!?");
 		 */
 		inited = -1;
 	}
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
+	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
 		ERROR1("cu2_init_platform:  Failed to pop platform device context!?");
 
 	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_VEC_FUNCS);

@@ -186,7 +186,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	sprintf(name,"%s_mapped",OBJ_AREA(dp)->da_name);
 	//ap = data_area_of(QSP_ARG  name);
 	ap = get_data_area(QSP_ARG  name);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		WARN("Failed to find mapped data area");
 		return;
 	}
@@ -353,8 +353,8 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 {
 	Data_Obj *dp;
 
-	if( curr_ap == NO_AREA ){
-		if( ram_area_p == NO_AREA ) dataobj_init(SINGLE_QSP_ARG);
+	if( curr_ap == NULL ){
+		if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
 		curr_ap = ram_area_p;
 	}
 

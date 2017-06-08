@@ -14,13 +14,10 @@ ITEM_INTERFACE_DECLARATIONS(Opt_Pkg,opt_pkg,0)
 
 void insure_opt_pkg(SINGLE_QSP_ARG_DECL)
 {
-	if( curr_opt_pkg == NO_OPT_PKG ){
+	if( curr_opt_pkg == NULL ){
 		init_all_opt_pkgs(SINGLE_QSP_ARG);
 		curr_opt_pkg=get_opt_pkg(QSP_ARG  /* DEFAULT_OPT_PKG */ "cstepit" );
-#ifdef CAUTIOUS
-		if( curr_opt_pkg==NO_OPT_PKG )
-			ERROR1("CAUTIOUS:  no default optimization package");
-#endif /* CAUTIOUS */
+		assert( curr_opt_pkg != NULL );
 		if( verbose ){
 			sprintf(ERROR_STRING,
 				"Using default optimization package \"%s\"",
@@ -39,15 +36,7 @@ static void init_one_pkg( QSP_ARG_DECL
 	Opt_Pkg *pkp;
 
 	pkp = new_opt_pkg(QSP_ARG  name);
-
-#ifdef CAUTIOUS
-	if( pkp==NO_OPT_PKG ){
-		sprintf(ERROR_STRING,
-	"CAUTIOUS:  error creating optimization package %s",name);
-		NWARN(ERROR_STRING);
-        return;
-	}
-#endif /* CAUTIOUS */
+	assert( pkp != NULL );
 
 	pkp->pkg_scr_func	= scr_func;
 	pkp->pkg_c_func		= c_func;

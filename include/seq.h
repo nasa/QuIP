@@ -11,13 +11,9 @@ char VersionId_inc_seq[] = QUIP_VERSION_STRING;
 
 #include "seq_api.h"
 
-#define NO_SEQ	((Seq *) NULL)
-
 #define SEQFREE		(-7)
 #define SEQ_MOVIE	(-2)
 #define SUPSEQ		(-4)
-
-#define NO_SEQ_MODULE	((Seq_Module *)NULL)
 
 /* prototypes */
 

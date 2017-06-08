@@ -1341,7 +1341,7 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 	Typed_Scalar *tsp, *tsp2, *tsp3;
 
 	dimension_t frm;
-	static Quip_Function *val_func_p=NO_FUNCTION;
+	static Quip_Function *val_func_p=NULL;
 
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
@@ -1534,15 +1534,15 @@ dump_enode(QSP_ARG  enp);
 		 * But this is good enough for now...
 		 */
 
-		if( val_func_p == NO_FUNCTION )
+		if( val_func_p == NULL )
 			val_func_p = function_of(QSP_ARG  "value");
 //#ifdef CAUTIOUS
-//		if( val_func_p == NO_FUNCTION ){
+//		if( val_func_p == NULL ){
 //			ERROR1("CAUTIOUS:  couldn't find object value function!?");
 //			IOS_RETURN_VAL(NULL);
 //		}
 //#endif /* CAUTIOUS */
-		assert( val_func_p != NO_FUNCTION );
+		assert( val_func_p != NULL );
 
 		/* This seems buggy - there should be a value function
 		 * that returns a typed scalar!?
@@ -2304,9 +2304,9 @@ static void rls_tree( Scalar_Expr_Node *enp )
 {
 	Node *np;
 
-	if( enp->sen_child[0] != NO_EXPR_NODE )
+	if( enp->sen_child[0] != NULL )
 		rls_tree(enp->sen_child[0]);
-	if( enp->sen_child[1] != NO_EXPR_NODE )
+	if( enp->sen_child[1] != NULL )
 		rls_tree(enp->sen_child[1]);
 	/*
 	if( enp->sen_string != NULL )
@@ -2508,7 +2508,7 @@ int yyerror(Query_Stack *qsp, char *s)
 	 * large number...  causes all sorts of problems!
 	 */
 cleanup:
-	FINAL_EXPR_NODE_P=NO_EXPR_NODE;
+	FINAL_EXPR_NODE_P=NULL;
 	/* BUG need to release nodes here... */
 	return(0);
 }

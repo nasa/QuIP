@@ -22,14 +22,14 @@
 
 // BUG static globals are not thread-safe!
 
-static Viewer *plot_vp=NO_VIEWER;
+static Viewer *plot_vp=NULL;
 static int _currx=0, _curry=0;		/* current posn, in screen (pixel) units */
 /* static float _screenx, _screeny;
 static float _x0,_y0,delx,dely; */
 
 static void remember_space(Viewer *vp,float _x0,float _y0,float delx,float dely)
 {
-	if( vp == NO_VIEWER ){
+	if( vp == NULL ){
 		return;
 	}
 
@@ -97,7 +97,7 @@ void xp_circle(float radius)
 {
 	float cx,cy;
 
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	/* current posn is remembered in screen units */
 	cx=_currx; cy=_curry;
@@ -115,7 +115,7 @@ void xp_fill_polygon(int num_points,
 	int i;
 	float fx,fy;
 
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	/* BUG should scale the points */
 	xp = (int *) getbuf( num_points * sizeof(int) );
@@ -140,7 +140,7 @@ void xp_ffill_arc(float cx,float cy,float x1,float y1,float x2,float y2)
 	int xl,yu,w,h,a1,a2;
 	int start,delta;
 
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	_cx=cx; _cy=cy; scale_fxy(plot_vp,&_cx,&_cy);
 	_x1=x1; _y1=y1; scale_fxy(plot_vp,&_x1,&_y1);
@@ -187,7 +187,7 @@ void xp_farc(float cx,float cy,float x1,float y1,float x2,float y2)
 	int xl,yu,w,h,a1,a2;
 	int start,delta;
 
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	_cx=cx; _cy=cy; scale_fxy(plot_vp,&_cx,&_cy);
 	_x1=x1; _y1=y1; scale_fxy(plot_vp,&_x1,&_y1);
@@ -253,7 +253,7 @@ void xp_fmove(float x,float y)
 {
 	float fx,fy;
 
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	fx=x; fy=y;
 	scale_fxy(plot_vp,&fx,&fy);
@@ -265,7 +265,7 @@ void xp_fmove(float x,float y)
 
 void xp_move(int x,int y)
 {
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	scalexy(plot_vp,&x,&y);
 	_currx=x;
@@ -278,7 +278,7 @@ void xp_fcont(float x,float y)
 	int ix,iy;
 	float fx,fy;
 
-	if( plot_vp == NO_VIEWER ){
+	if( plot_vp == NULL ){
 		return;
 	}
 
@@ -307,7 +307,7 @@ void xp_fpoint(float x,float y)
 
 void xp_cont(int x,int y)
 {
-	if( plot_vp == NO_VIEWER ) return;
+	if( plot_vp == NULL ) return;
 
 	scalexy(plot_vp,&x,&y);
 	_xp_line(plot_vp,_currx,_curry,x,y);
@@ -342,7 +342,7 @@ void xp_text(const char *s)
 {
 	float delta;
 
-	if( plot_vp != NO_VIEWER ){
+	if( plot_vp != NULL ){
 		_xp_text(plot_vp,_currx,_curry+PLOT_TEXT_OFFSET,s);
 	}
 
@@ -364,7 +364,7 @@ void xp_setup(QSP_ARG_DECL  Viewer *vp)
 
 	plot_vp = vp;
 
-	if( plot_vp != NO_VIEWER ){
+	if( plot_vp != NULL ){
 		/* this is just a default... */
 		if( VW_XDEL(vp) != 0.0 ){	/* params already set */
 			xp_fspace(VW_XMIN(vp),VW_YMIN(vp),
@@ -377,7 +377,7 @@ void xp_setup(QSP_ARG_DECL  Viewer *vp)
 
 void xp_bgselect(u_long color)
 {
-	if( plot_vp == NO_VIEWER ) {
+	if( plot_vp == NULL ) {
 		return;
 	}
 
@@ -386,7 +386,7 @@ void xp_bgselect(u_long color)
 
 void xp_select(u_long color)
 {
-	if( plot_vp == NO_VIEWER ) {
+	if( plot_vp == NULL ) {
 		return;
 	}
 
@@ -395,7 +395,7 @@ void xp_select(u_long color)
 
 void xp_erase(void)
 {
-	if( plot_vp != NO_VIEWER ){
+	if( plot_vp != NULL ){
 		_xp_erase(plot_vp);
 	}
 }
@@ -403,7 +403,7 @@ void xp_erase(void)
 #ifdef BUILD_FOR_IOS
 void xp_update(void)
 {
-	if( plot_vp != NO_VIEWER ){
+	if( plot_vp != NULL ){
 		_xp_update(plot_vp);
 	}
 }

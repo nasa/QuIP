@@ -10,9 +10,6 @@ struct node {
 	int		n_pri;
 } ;
 
-
-#define NO_NODE 	((Node *)NULL)
-
 extern void rls_node(Node *np);
 extern void init_node(Node *np,void* dp);
 //extern Node *nodeOf( struct list *lp, void * ip );

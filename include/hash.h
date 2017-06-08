@@ -34,8 +34,6 @@ struct hash_tbl {
 	List *		ht_item_list;
 } ;
 
-//#define NO_HASH_TBL		((Hash_Tbl *) NULL)
-
 // Hash table flags
 #define HT_WARNED		1
 #define HT_CHEKED		2

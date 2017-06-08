@@ -20,7 +20,7 @@ static ITEM_NEW_FUNC(Port_Data_Type,pdt)
 static ITEM_PICK_FUNC(Port_Data_Type,pdt)
 static ITEM_ENUM_FUNC(Port_Data_Type,pdt)
 
-Packet *last_packet=NO_PACKET;
+Packet *last_packet=NULL;
 
 #ifdef FOOBAR
 static const char *null_recv(QSP_ARG_DECL  Port *mpp)
@@ -90,7 +90,7 @@ COMMAND_FUNC( do_set_text_var )
 	mpp = PICK_PORT("");
 	s=NAMEOF("variable name for storage of next text");
 
-	if( mpp == NO_PORT ) return;
+	if( mpp == NULL ) return;
 
 	set_port_text_var(QSP_ARG  mpp,s);
 }
@@ -115,7 +115,7 @@ COMMAND_FUNC( do_set_port_output_file )
 	mpp = PICK_PORT("");
 	s=NAMEOF("local filename for next received file");
 
-	if( mpp == NO_PORT ) return;
+	if( mpp == NULL ) return;
 
 	set_port_output_file(QSP_ARG  mpp,s);
 }
@@ -130,7 +130,7 @@ COMMAND_FUNC( do_port_xmit )
 	pdtp=pick_pdt(QSP_ARG  "");
 	mpp = PICK_PORT("");
 
-	if( pdtp==NULL || mpp==NO_PORT ) goto oops;
+	if( pdtp==NULL || mpp==NULL ) goto oops;
 
 	vp=(*(pdtp->data_func))(QSP_ARG  pdtp->pdt_prompt);
 
@@ -141,7 +141,7 @@ COMMAND_FUNC( do_port_xmit )
 		goto oops;
 	}
 
-	if( vp == NULL || mpp == NO_PORT ){
+	if( vp == NULL || mpp == NULL ){
 oops:
 		/* eat a word to avoid a syntax error */
 		/*vp = (void *)*/ NAMEOF("something");
@@ -303,7 +303,7 @@ top:
 		// when an upload client closes.
 		//log_message("Missing magic number, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	if( code != PORT_MAGIC_NUMBER ){
@@ -311,7 +311,7 @@ top:
 			code);
 		log_message(MSG_STR);
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	SET_PORT_FLAG_BITS(mpp,PORT_RECEIVING_PACKET);
@@ -320,7 +320,7 @@ top:
 	if( code == -1L ){
 		log_message("Missing packet code, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	pdtp = port_data_type_for_code(QSP_ARG  code);
@@ -335,7 +335,7 @@ top:
 			"Unrecognized packet code (0x%x), resetting port",code);
 		log_message(MSG_STR);
 		if( reset_port(QSP_ARG  mpp) ) goto top;
-		else return(NO_PACKET);
+		else return(NULL);
 	}
 
 	// error msg printed from port_data_type_for_code...
@@ -350,8 +350,8 @@ top:
 		log_message("Bad packet data, resetting port");
 		if( reset_port(QSP_ARG  mpp) ) goto top;
 		else {
-//advise("recv_data:  reset failed, returning NO_PACKET");
-			return(NO_PACKET);
+//advise("recv_data:  reset failed, returning NULL");
+			return(NULL);
 		}
 	}
 
@@ -413,7 +413,7 @@ COMMAND_FUNC( do_port_recv )
 	// take what we get?
 	pdtp = pick_pdt(QSP_ARG "");
 
-	if( mpp==NO_PORT || pdtp==NULL ) return;
+	if( mpp==NULL || pdtp==NULL ) return;
 
 	if( ! IS_CONNECTED(mpp) ){
 		sprintf(ERROR_STRING,"do_port_recv:  Port %s is not connected",
@@ -432,7 +432,7 @@ COMMAND_FUNC( do_port_recv )
 
 	do {
 		pkp=recv_data(QSP_ARG  mpp);
-		if( pkp == NO_PACKET ){
+		if( pkp == NULL ){
 			return;
 		}
 		if( pkp->pk_pdt != pdtp ){

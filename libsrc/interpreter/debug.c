@@ -64,14 +64,7 @@ static Debug_Module * add_auto_module(QSP_ARG_DECL  const char *name, debug_flag
 	//auto_dbm_tbl[n_debug_modules].db_name = (char *) name;
 
 	dmp = new_debug(QSP_ARG  name);
-
-//#ifdef CAUTIOUS
-//	if( dmp == NO_DEBUG_MODULE ){
-//		ERROR1("CAUTIOUS:  add_auto_module:  Error creating debug module!?");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( dmp != NO_DEBUG_MODULE );
+	assert( dmp != NULL );
 
 	SET_DEBUG_MASK(dmp, mask );
 	SET_DEBUG_FLAGS(dmp, DEBUG_SET);	// default
@@ -173,7 +166,7 @@ debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name)
 	Debug_Module *dmp;
 
 	dmp = new_debug(QSP_ARG  name);
-	if( dmp == NO_DEBUG_MODULE ) return 0;
+	if( dmp == NULL ) return 0;
 
 	if( n_debug_modules < 0 ) init_dbm(SINGLE_QSP_ARG);
 

@@ -18,14 +18,14 @@
 #include "shape_info.h"
 #include "debug.h"
 
-Data_Area *curr_ap=NO_AREA, *ram_area_p=NO_AREA;
+Data_Area *curr_ap=NULL, *ram_area_p=NULL;
 
 static int n_areas=0;
 
 ITEM_INTERFACE_DECLARATIONS(Data_Area,data_area,0)
 
 // BUG not thread-safe...
-static Stack *data_area_stack_p=NO_STACK;
+static Stack *data_area_stack_p=NULL;
 
 // set_data_area needs to replace the top of the stack, so we can restore it if something
 // else is pushed and popped...
@@ -38,7 +38,7 @@ void set_data_area(Data_Area *ap)
 
 void push_data_area(Data_Area *ap)
 {
-	if( data_area_stack_p == NO_STACK )
+	if( data_area_stack_p == NULL )
 		data_area_stack_p = new_stack();
 
 	/* We used to check for stack to big here, mainly because
@@ -59,17 +59,17 @@ void pop_data_area(void)
 	Data_Area *ap;
 
 //#ifdef CAUTIOUS
-//	if( data_area_stack_p == NO_STACK )
+//	if( data_area_stack_p == NULL )
 //		NERROR1("CAUTIOUS:  pop_data_area:  Data area stack never created!?");
 //#endif // CAUTIOUS
 
-	assert( data_area_stack_p != NO_STACK );
+	assert( data_area_stack_p != NULL );
 
 	ap = (Data_Area *) pop_item(data_area_stack_p);
 
 	// This used to be an error, but it is OK to push and pop a data
 	// area before any area has been set...
-	// assert( ap != NO_AREA );
+	// assert( ap != NULL );
 
 //fprintf(stderr,"pop_data_area:  popped %s\n",AREA_NAME(ap));
 	curr_ap = ap;	// pop_data_area
@@ -78,13 +78,13 @@ void pop_data_area(void)
 void a_init(void)
 {
 	if( n_areas==0 ){
-		curr_ap=NO_AREA;
+		curr_ap=NULL;
 	}
 }
 
 Data_Area *default_data_area(SINGLE_QSP_ARG_DECL)
 {
-	if( curr_ap == NO_AREA ) dataobj_init(SINGLE_QSP_ARG);
+	if( curr_ap == NULL ) dataobj_init(SINGLE_QSP_ARG);
 	return(curr_ap);
 }
 
@@ -98,11 +98,11 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_c
 	a_init();
 
 	ap = new_data_area(QSP_ARG  name);
-	if( ap == NO_AREA ) return(ap);
+	if( ap == NULL ) return(ap);
 	//ap = [[DataArea alloc] initWithName : name ];
 
 	if( buffer == NULL ){
-		ap->da_ma_p = NO_MEMORY_AREA;
+		ap->da_ma_p = NULL;
 	} else {
 		ap->da_ma_p =
 			(Memory_Area *) getbuf(sizeof(Memory_Area));
@@ -120,7 +120,7 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_c
 
 	ap->da_dp=NULL;
 	// Should we have the platform device first???
-	ap->da_pdp=NO_PFDEV;
+	ap->da_pdp=NULL;
 
 	/* curr_ap=ap; */	// area_init
 
@@ -139,7 +139,7 @@ name,PFDEV_NAME(pdp));
 advise(ERROR_STRING);
 */
 	ap = area_init(QSP_ARG  name, buffer, siz, n_chunks, flags );
-	if( ap == NO_AREA ) return ap;
+	if( ap == NULL ) return ap;
 
 	SET_AREA_PFDEV( ap , pdp );
 
@@ -162,7 +162,7 @@ new_area( QSP_ARG_DECL  const char *s, uint32_t siz, int n )
 //#endif /* CAUTIOUS */
 
 	ap=area_init(QSP_ARG  s,buf,siz,n,DA_RAM);
-	if( ap==NO_AREA ) givbuf((char *)buf);
+	if( ap==NULL ) givbuf((char *)buf);
 
 	return(ap);
 }
@@ -255,7 +255,7 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 	Data_Obj *dp;
 	int n,i;
 
-	if( data_area_itp == NO_ITEM_TYPE ) init_data_areas(SINGLE_QSP_ARG);
+	if( data_area_itp == NULL ) init_data_areas(SINGLE_QSP_ARG);
 
 	lp=dobj_list(SINGLE_QSP_ARG);
 	if( lp==NULL ) return;

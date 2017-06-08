@@ -122,7 +122,7 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 	}
 
 	mpp=new_port(QSP_ARG  name);
-	if( mpp==NO_PORT ){
+	if( mpp==NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,"open_server_port %s %d failed to create port struct",
 				name,port_no);
@@ -183,7 +183,7 @@ fprintf(stderr,"Setting socket options...\n");
 
 	mpp->mp_flags = 0;
 	mpp->mp_flags |= PORT_SERVER;	// makes it keep trying!
-	mpp->mp_pp = NO_PORT;
+	mpp->mp_pp = NULL;
 	mpp->mp_text_var_name=NULL;
 	mpp->mp_output_filename=NULL;
 	mpp->mp_auth_string=NULL;

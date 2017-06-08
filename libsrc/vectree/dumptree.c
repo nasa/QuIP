@@ -109,7 +109,7 @@ static void prt_node(Vec_Expr_Node *enp,char *buf)
 {
 	int key;
 
-	if( VN_SHAPE(enp) == NO_SHAPE ) key='_';
+	if( VN_SHAPE(enp) == NULL ) key='_';
 	else if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ) key='?';
 	else if ( OWNS_SHAPE(enp) ) key='*';
 	else key='@';
@@ -127,7 +127,7 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 	const char *s;
 
-	if( enp==NO_VEXPR_NODE ) return;
+	if( enp==NULL ) return;
 
 	/* print the node "name", and a code that tells about shape knowledge */
 
@@ -143,7 +143,7 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 
 	if( SHOWING_COST ){
-		if( VN_SHAPE(enp) != NO_SHAPE ){
+		if( VN_SHAPE(enp) != NULL ){
 			sprintf(msg_str,"\t%d", SHP_N_MACH_ELTS(VN_SHAPE(enp)));
 		}
 
@@ -173,8 +173,8 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			Identifier *idp;
 			/* We don't use get_set_ptr() here because we don't want an error msg... */
 			idp = ID_OF(VN_STRING(enp));
-			if( idp != NO_IDENTIFIER && IS_POINTER(idp) && POINTER_IS_SET(idp) ){
-				if( PTR_REF(ID_PTR(idp)) == NO_REFERENCE ){
+			if( idp != NULL && IS_POINTER(idp) && POINTER_IS_SET(idp) ){
+				if( PTR_REF(ID_PTR(idp)) == NULL ){
 					/* how could this ever happen??? */
 					prt_msg_frag("->???");
 				} else {
@@ -280,19 +280,19 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	/* Now print the addresses of the child nodes */
 
-	if( VN_CHILD(enp,0)!=NO_VEXPR_NODE){
+	if( VN_CHILD(enp,0)!=NULL){
 		sprintf(msg_str,"\t\tn%d",VN_SERIAL(VN_CHILD(enp,0)));
 		prt_msg_frag(msg_str);
 	}
 	for(i=1;i<MAX_CHILDREN(enp);i++){
-		if( VN_CHILD(enp,i)!=NO_VEXPR_NODE){
+		if( VN_CHILD(enp,i)!=NULL){
 			sprintf(msg_str,", n%d",VN_SERIAL(VN_CHILD(enp,i)));
 			prt_msg_frag(msg_str);
 		}
 	}
 	prt_msg("");
 
-	if( SHOWING_SHAPES && VN_SHAPE(enp) != NO_SHAPE ){
+	if( SHOWING_SHAPES && VN_SHAPE(enp) != NULL ){
 		prt_msg_frag("\t");
 		if( OWNS_SHAPE(enp) ){
 			sprintf(msg_str,"* 0x%lx  ",(u_long)VN_SHAPE(enp));
@@ -326,7 +326,7 @@ static void _dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	_dump_node(QSP_ARG  enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
-		if( VN_CHILD(enp,i)!=NO_VEXPR_NODE){
+		if( VN_CHILD(enp,i)!=NULL){
 			_DUMP_TREE(VN_CHILD(enp,i));
 		}
 	}

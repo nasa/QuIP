@@ -136,7 +136,7 @@ Hash_Tbl *ht_init(const char *name)
 	register Hash_Tbl *htp;
 
 	htp= (Hash_Tbl*) getbuf( sizeof(*htp) );
-	//if( htp == NO_HASH_TBL ) mem_err("ht_init");
+	//if( htp == NULL ) mem_err("ht_init");
 	if( htp == NULL ) {
 		NERROR1("ht_init memory allocation failure");
 		IOS_RETURN_VAL(NULL)
@@ -525,7 +525,7 @@ List *ht_list(Hash_Tbl *htp)
 		Item *ip;
 
 		ip = (Item*) entry[i];
-		if( ip != NO_ITEM ){
+		if( ip != NULL ){
 			Node *np;
 			np=mk_node(ip);
 			addTail(lp,np);

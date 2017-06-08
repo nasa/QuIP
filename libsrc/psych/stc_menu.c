@@ -18,13 +18,7 @@ void general_mod(QSP_ARG_DECL int t_class)
 
 	s=NAMEOF("stimulus command string");
 	tcp = index_class(QSP_ARG  t_class);
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS ) {
-//		ERROR1("CAUTIOUS:  general_mod, missing class");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( tcp != NO_CLASS );
+	assert( tcp != NULL );
 
 	if( CLASS_CMD(tcp) != NULL )
 		givbuf((void *) CLASS_CMD(tcp) );
@@ -94,15 +88,7 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	sprintf(stim_str,"%d",CLASS_INDEX(tcp));
 	ASSIGN_VAR("class",stim_str);
 
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS ) {
-//		ERROR1("CAUTIOUS:  missing class");
-//#ifdef BUILD_FOR_IOS
-//		return REDO;
-//#endif // BUILD_FOR_IOS
-//	}
-//#endif // CAUTIOUS
-	assert( tcp != NO_CLASS );
+	assert( tcp != NULL );
 
 	//sprintf(msg_str,"Text \"%s\"",(char *)(tcp->cl_data));
 	//PUSH_INPUT_FILE(msg_str);
@@ -110,7 +96,7 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	//interpret_text_fragment(QSP_ARG tcp->cl_data);		/* use chew_text??? */
 	chew_text(QSP_ARG CLASS_CMD(tcp), "(stimulus text)");
 	vp=VAR_OF("response_string");
-	if( vp != NO_VARIABLE )
+	if( vp != NULL )
 		rsp=response(QSP_ARG  VAR_VALUE(vp));
 	else {
 		static int warned=0;
@@ -125,7 +111,7 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	if( is_fc ){
 		/* stimulus routine may have changed value of coin */
 		vp=VAR_OF("coin");
-		if( vp == NO_VARIABLE )
+		if( vp == NULL )
 			WARN("variable \"coin\" not set!!!");
 		else {
 			if( sscanf(VAR_VALUE(vp),"%d",&coin) != 1 )

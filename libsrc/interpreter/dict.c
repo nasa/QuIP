@@ -177,7 +177,7 @@ NWARN(DEFAULT_ERROR_STRING);
 		ip = (Item*) fetch_hash(name,DICT_HT(dict_p));
 #ifdef QUIP_DEBUG
 if( (debug & debug_dictionary) ){
-if( ip!=NO_ITEM ){
+if( ip!=NULL ){
 sprintf(DEFAULT_ERROR_STRING,"fetch_name:  fetch hash found %s when looking for %s",
 ITEM_NAME(ip),name);
 NADVISE(DEFAULT_ERROR_STRING);
@@ -208,7 +208,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 			DICT_N_COMPS(dict_p) + 1 );
 		np = NODE_NEXT(np);
 	}
-	return(NO_ITEM);
+	return(NULL);
 } // end fetch_name
 
 int insert_name(Item* ip, Node* np, Dictionary* dict_p)

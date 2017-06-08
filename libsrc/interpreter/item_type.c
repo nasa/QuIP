@@ -69,7 +69,7 @@ static List *_item_list(QSP_ARG_DECL  Item_Type *itp);
 #define IT_LIST(itp)	_item_list(QSP_ARG  itp)
 
 #define ITEM_TYPE_STRING	"Item_Type"
-Item_Type * ittyp_itp=NO_ITEM_TYPE;
+Item_Type * ittyp_itp=NULL;
 
 /*static*/ ITEM_INIT_FUNC(Item_Type,ittyp,0)
 static ITEM_NEW_FUNC(Item_Type,ittyp)
@@ -78,7 +78,7 @@ ITEM_LIST_FUNC(Item_Type,ittyp)
 // move to questions.c
 //ITEM_PICK_FUNC(Item_Type,ittyp)
 
-static Item_Type *ctx_itp=NO_ITEM_TYPE;
+static Item_Type *ctx_itp=NULL;
 
 #define CTX_IT_NAME	"Context"
 #define DEF_CTX_NAME	"default"
@@ -88,7 +88,7 @@ ITEM_CHECK_FUNC(Item_Context,ctx)
 static ITEM_NEW_FUNC(Item_Context,ctx)
 static ITEM_DEL_FUNC(Item_Context,ctx)
 
-#define CHECK_ITEM_INDEX( itp )	if( ( itp ) == NO_ITEM_TYPE ){		\
+#define CHECK_ITEM_INDEX( itp )	if( ( itp ) == NULL ){		\
 					WARN("Null item type");		\
 					return;				\
 				}
@@ -308,14 +308,14 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_typ
 {
 	Item_Type * itp;
 
-	if( ittyp_itp != NO_ITEM_TYPE ){
+	if( ittyp_itp != NULL ){
 		Item *ip;
 		ip = item_of(QSP_ARG  ittyp_itp,atypename);
-		if( ip != NO_ITEM ){
+		if( ip != NULL ){
 			sprintf(ERROR_STRING,
 			"Item type name \"%s\" is already in use\n",atypename);
 			WARN(ERROR_STRING);
-			return(NO_ITEM_TYPE);
+			return(NULL);
 		}
 	}
 	/* else we are initializing the item type Item_Type */
@@ -324,9 +324,9 @@ Item_Type * new_item_type(QSP_ARG_DECL  const char *atypename, int container_typ
 		container_type = DEFAULT_CONTAINER_TYPE;
 
 	itp=init_item_type(QSP_ARG  atypename, container_type);
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
-	if( ittyp_itp==NO_ITEM_TYPE ){
+	if( ittyp_itp==NULL ){
 		ittyp_itp = itp;
 	}
 
@@ -375,7 +375,7 @@ static int insure_item_name_available(QSP_ARG_DECL  Item_Type *itp, const char *
 
 	ip = container_find_match(CTX_CONTAINER(CURRENT_CONTEXT(itp)), name );
 
-	if( ip != NO_ITEM ){
+	if( ip != NULL ){
 		sprintf(ERROR_STRING,
 	"%s name \"%s\" is already in use in context %s",
 			IT_NAME(itp),name,CTX_NAME(CURRENT_CONTEXT(itp)));
@@ -459,7 +459,7 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 
 	if( insure_item_name_available(QSP_ARG  itp, name) < 0 ){
 		UNLOCK_ITEM_TYPE(itp);
-		return NO_ITEM;
+		return NULL;
 	}
 
 	// Try to get a structure from the free list
@@ -548,7 +548,7 @@ Item_Context * create_item_context( QSP_ARG_DECL  Item_Type *itp, const char* na
 	 * context, we have the special case above...
 	 */
 
-	if( ctx_itp == NO_ITEM_TYPE )
+	if( ctx_itp == NULL )
 		ctx_itp = new_item_type(QSP_ARG  CTX_IT_NAME, DEFAULT_CONTAINER_TYPE);
 
 #ifdef QUIP_DEBUG
@@ -567,7 +567,7 @@ advise(ERROR_STRING);
 	// and a single dot as a prefix...
 //	SET_IT_CTX_IT(itp,ctx_itp);
 
-	if( icp == NO_ITEM_CONTEXT ){
+	if( icp == NULL ){
 		return(icp);
 	}
 
@@ -627,7 +627,7 @@ void push_item_context( QSP_ARG_DECL   Item_Type *itp, Item_Context *icp )
 	 * matches itp.
 	 */
 
-	assert( icp != NO_ITEM_CONTEXT );
+	assert( icp != NULL );
 
 #ifdef QUIP_DEBUG
 if( debug & debug_contexts ){
@@ -664,7 +664,7 @@ Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 		sprintf(ERROR_STRING,
 			"Item type %s has no context to pop",IT_NAME(itp));
 		WARN(ERROR_STRING);
-		return(NO_ITEM_CONTEXT);
+		return(NULL);
 	}
 	rls_node(np);
 
@@ -810,7 +810,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 	assert( itp != NULL );
 
-	if( *name == 0 ) return(NO_ITEM);
+	if( *name == 0 ) return(NULL);
 
 	assert( CONTEXT_LIST(itp) != NULL );
 
@@ -845,7 +845,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		icp= (Item_Context*) NODE_DATA(np);
 		assert(icp!=NULL);
 		ip = container_find_match(CTX_CONTAINER(icp),name);
-		if( ip!=NO_ITEM ){
+		if( ip!=NULL ){
 			return(ip);
 		}
 		if( IS_RESTRICTED(itp) ){
@@ -856,14 +856,14 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 			//CTX_RSTRCT_FLAG(itp)=0;
 
-			return(NO_ITEM);
+			return(NULL);
 		}
 		np=NODE_NEXT(np);
 	}
 
 	/* not found in any context, including default */
 
-	return(NO_ITEM);
+	return(NULL);
 } // item_of
 
 /*
@@ -879,7 +879,7 @@ Item *get_item( QSP_ARG_DECL  Item_Type *itp, const char* name )
 	Item *ip;
 
 	ip=item_of(QSP_ARG  itp,name);
-	if( ip==NO_ITEM ){
+	if( ip==NULL ){
 		assert( itp != NULL );
 
 		sprintf(ERROR_STRING,"no %s \"%s\"",
@@ -913,7 +913,7 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 {
 	Node *np;
 
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
 	/* First check and see if any of the contexts have been updated */
 

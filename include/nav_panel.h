@@ -45,8 +45,6 @@ IOS_ITEM_LIST_PROT(Nav_Panel,nav_panel)
 #define NAV_PANEL_OF(s)		nav_panel_of(QSP_ARG  s)
 #define PICK_NAV_PANEL(pmpt)	pick_nav_panel(QSP_ARG  pmpt)
 
-#define NO_NAV_PANEL	((Nav_Panel *) NULL)
-
 #define NAVP_GRP_CONTEXT(nav_p)		(nav_p).grp_icp
 #define NAVP_ITM_CONTEXT(nav_p)		(nav_p).itm_icp
 
@@ -80,7 +78,6 @@ IOS_ITEM_LIST_PROT(Nav_Group,nav_group)
 #define PICK_NAV_GROUP(pmpt)	pick_nav_group(QSP_ARG  pmpt)
 
 // ios macros
-#define NO_NAV_GROUP	((Nav_Group *) NULL)
 #define NAVGRP_ITEM_CONTEXT(nav_g)	(nav_g).itm_icp
 #define NAVGRP_NAME(nav_g)		(nav_g).name.UTF8String
 
@@ -111,8 +108,6 @@ IOS_ITEM_LIST_PROT(Nav_Item,nav_item)
 #define GET_NAV_ITEM(s)	get_nav_item(QSP_ARG  s)
 #define PICK_NAV_ITEM(pmpt)	pick_nav_item(QSP_ARG  pmpt)
 
-#define NO_NAV_ITEM	((Nav_Item *) NULL)
-
 extern void set_supported_orientations(UIInterfaceOrientationMask m);
 extern void set_autorotation_allowed(BOOL yesno);
 
@@ -132,8 +127,6 @@ typedef struct nav_panel {
 
 #define np_name		np_genwin.gw_name
 
-
-#define NO_NAV_PANEL	((Nav_Panel *)NULL)
 
 ITEM_INTERFACE_PROTOTYPES(Nav_Panel,nav_panel)
 
@@ -156,7 +149,6 @@ typedef struct nav_group {
 } Nav_Group;
 
 // UNIX macros
-#define NO_NAV_GROUP	((Nav_Group *)NULL)
 
 #define NAVGRP_NAME(nav_g)		(nav_g)->ng_item.item_name
 
@@ -181,8 +173,6 @@ typedef struct nav_item {
 	Screen_Obj *	ni_sop;
 	Panel_Obj *	ni_panel_p;
 } Nav_Item;
-
-#define NO_NAV_ITEM	((Nav_Item *)NULL)
 
 ITEM_INTERFACE_PROTOTYPES(Nav_Item,nav_item)
 

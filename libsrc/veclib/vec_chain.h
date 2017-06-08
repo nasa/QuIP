@@ -18,8 +18,6 @@ typedef struct vec_chn_blk {
 } Vec_Chn_Blk;
 
 
-#define NO_VEC_CHN_BLK		((Vec_Chn_Blk *)NULL)
-
 #define CHAIN_FUNC(vcbp)	vcbp->vcb_func
 #define CHAIN_ARGS(vcbp)	vcbp->vcb_vf_code, vcbp->vcb_args
 
@@ -39,8 +37,6 @@ typedef struct chain {
 	List	*ch_op_lp;
 } Chain;
 
-
-#define NO_CHAIN	((Chain *)NULL)
 
 #define CH_MAGIC	0x5798
 #define MAX_CHAIN_LEN	1024

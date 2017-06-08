@@ -3,7 +3,7 @@
 #include "quip_prot.h"
 #include "dobj_prot.h"
 
-Item_Type *prec_itp=NO_ITEM_TYPE;
+Item_Type *prec_itp=NULL;
 
 #define INIT_VOID_PREC(name,type,code)			\
 	INIT_GENERIC_PREC(name,type,code)		\
@@ -28,12 +28,7 @@ static Precision *new_prec(QSP_ARG_DECL  const char *name)
 	Precision *prec_p;
 
 	prec_p = (Precision *) new_item(QSP_ARG  prec_itp, name, sizeof(Precision) );
-	// BUG make sure name is not already in use
-
-//#ifdef CAUTIOUS
-//	if( prec_p == NO_PRECISION) ERROR1("CAUTIOUS:  new_prec:  Error creating precision!?");
-//#endif /* CAUTIOUS */
-	assert( prec_p != NO_PRECISION );
+	assert( prec_p != NULL );
 
 	return(prec_p);
 }
@@ -81,7 +76,7 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 
 List *prec_list(SINGLE_QSP_ARG_DECL)
 {
-	if( prec_itp == NO_ITEM_TYPE ){
+	if( prec_itp == NULL ){
 		init_precisions(SINGLE_QSP_ARG);
 	}
 
@@ -91,7 +86,7 @@ List *prec_list(SINGLE_QSP_ARG_DECL)
 Precision *const_precision(Precision *prec_p)
 {
 	NERROR1("Sorry, const_precision not implemented yet.");
-	return NO_PRECISION;
+	return NULL;
 }
 
 Precision *complex_precision(Precision *prec_p)

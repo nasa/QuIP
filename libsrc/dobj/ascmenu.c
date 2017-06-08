@@ -166,7 +166,7 @@ static COMMAND_FUNC( do_pipe_obj )
 	pp=PICK_PIPE("readable pipe");
 
 	if( dp == NULL ) return;
-	if( pp == NO_PIPE ) return;
+	if( pp == NULL ) return;
 
 	// reading is tricker for non-ram, because
 	// we must create the copy, then read into

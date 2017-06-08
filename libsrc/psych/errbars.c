@@ -38,13 +38,7 @@ static float u_confidence(SINGLE_QSP_ARG_DECL)	/* return sq. deviation from .975
 	sum = 0.0;
 
 	opp=get_opt_param(QSP_ARG  TP_NAME);
-//#ifdef CAUTIOUS
-//	if( opp==NO_OPT_PARAM ){
-//		ERROR1("CAUTIOUS:  missing prob param");
-//		IOS_RETURN_VAL(0)
-//	}
-//#endif /* CAUTIOUS */
-	assert( opp != NO_OPT_PARAM );
+	assert( opp != NULL );
 
 	t_p = opp->ans;
 
@@ -87,13 +81,7 @@ static float l_confidence(SINGLE_QSP_ARG_DECL)
 	sum = 0.0;
 
 	opp=get_opt_param(QSP_ARG  TP_NAME);
-//#ifdef CAUTIOUS
-//	if( opp==NO_OPT_PARAM ){
-//		ERROR1("CAUTIOUS:  missing prob param");
-//		IOS_RETURN_VAL(0)
-//	}
-//#endif /* CAUTIOUS */
-	assert( opp != NO_OPT_PARAM );
+	assert( opp != NULL );
 
 	t_p = opp->ans;
 
@@ -151,7 +139,7 @@ void pnt_bars(QSP_ARG_DECL  FILE *fp, Trial_Class *tcp)
         Data_Tbl *dtp;
 	float upper_bar, lower_bar;
 
-	if( tcp == NO_CLASS ) return;
+	if( tcp == NULL ) return;
 
 	dtp=CLASS_DATA_TBL(tcp);
 	for(j=0;j<_nvals;j++){

@@ -55,7 +55,7 @@
 @end
 
 
-static IOS_Item_Type *panel_obj_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *panel_obj_itp=NULL;
 
 // Don't use the macro for the init func, so that we can
 // also call the size function thingy...

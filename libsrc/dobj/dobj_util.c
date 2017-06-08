@@ -41,7 +41,7 @@ Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
 	 */
 
 	/* We might accidentally call this before dataobj_init()... */
-	if( dobj_itp == NO_ITEM_TYPE ) dataobj_init(SINGLE_QSP_ARG);
+	if( dobj_itp == NULL ) dataobj_init(SINGLE_QSP_ARG);
 
 	if( intractive(SINGLE_QSP_ARG) ) init_item_hist(QSP_ARG  dobj_itp,pmpt);
 #endif /* HAVE_HISTORY */
@@ -255,7 +255,7 @@ advise(ERROR_STRING);
 		Identifier *idp;
 
 		idp = ID_OF(OBJ_NAME(dp));
-		assert( idp != NO_IDENTIFIER );
+		assert( idp != NULL );
 		delete_id(QSP_ARG  (Item *)idp);
 	}
 

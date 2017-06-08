@@ -27,8 +27,6 @@ typedef struct memory_area {
 	uint32_t		ma_memfree;
 } Memory_Area;
 
-#define NO_MEMORY_AREA ((Memory_Area *)NULL)
-
 typedef struct data_area {
 	Item			da_item;
 	Memory_Area *		da_ma_p;
@@ -137,9 +135,6 @@ extern debug_flag_t debug_data;
 
 #define MAX_AREAS	4
 
-#define NO_AREA	((Data_Area *) NULL )
-
-
 // this may be pointed to by dt_unaligned_ptr...
 struct gl_info;
 
@@ -166,9 +161,6 @@ struct data_obj {
 	const char *		dt_declfile;
 	int			dt_refcount;
 };
-
-#define NO_OBJ		((Data_Obj *)NULL)
-
 
 #define OWNS_DATA(dp)		((OBJ_FLAGS(dp) & DT_NO_DATA)==0)
 

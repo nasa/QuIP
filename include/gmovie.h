@@ -48,8 +48,6 @@ typedef struct movie {
 #define SET_MOVIE_HEIGHT(mvip,h)	SET_SHP_ROWS(MOVIE_SHAPE(mvip),h)
 #define SET_MOVIE_FRAMES(mvip,n)	SET_SHP_FRAMES(MOVIE_SHAPE(mvip),n)
 
-#define NO_MOVIE	((Movie *)NULL)
-
 /* flag bits */
 #define MVI_PLAYABLE		1
 #define MVI_ASSEMBLING		2
@@ -103,10 +101,6 @@ typedef struct mvi_module {
 
 
 } Movie_Module;
-
-
-#define NO_MOVIE_MODULE	((Movie_Module *)NULL)
-
 
 
 /* global vars */

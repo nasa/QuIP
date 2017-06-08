@@ -124,7 +124,7 @@ static void cstepit_scr_funk(void)
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=var__of(DEFAULT_QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
+	if( vp == NULL ) {
 		NWARN(DEFAULT_ERROR_STRING);
 		sprintf(DEFAULT_ERROR_STRING,
 	"variable \"error\" not set by script fragment \"%s\"!?",

@@ -67,8 +67,5 @@
 
 #define SET_QI_VW(qip,vp)	SET_QV_VW(QI_QV(qip),vp)
 
-#define NO_QI	((quipImages *)NULL)
-
-
 #endif /* ! _QUIPIMAGES_H_ */
 

@@ -10,7 +10,7 @@ void x_sync_off()
 	Disp_Obj *dop;
 
 	dop = curr_dop();
-	if( dop == NO_DISP_OBJ ) return;
+	if( dop == NULL ) return;
 
 	XSynchronize(DO_DISPLAY(dop),False);
 }
@@ -21,7 +21,7 @@ void x_sync_on()
 	Disp_Obj *dop;
 
 	dop = curr_dop();
-	if( dop == NO_DISP_OBJ ) return;
+	if( dop == NULL ) return;
 
 	XSynchronize(DO_DISPLAY(dop),True);
 }

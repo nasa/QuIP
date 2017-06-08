@@ -151,7 +151,7 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_MATH2_FN:
 		case T_MATH2_VFN:
 		case T_MATH2_VSFN:
-			if( VN_SHAPE(enp) != NO_SHAPE ){
+			if( VN_SHAPE(enp) != NULL ){
 				SET_VN_N_MATH( enp, VN_N_MATH(VN_CHILD(enp,0))
 					+ VN_N_MATH(VN_CHILD(enp,1))
 					+ SHP_N_MACH_ELTS( VN_SHAPE(enp) ) );
@@ -171,8 +171,8 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* a stat_list can have null children if
 			 * the statements had parse errors
 			 */
-			if( VN_CHILD(enp,0) == NO_VEXPR_NODE ){
-				if( VN_CHILD(enp,1) == NO_VEXPR_NODE ){
+			if( VN_CHILD(enp,0) == NULL ){
+				if( VN_CHILD(enp,1) == NULL ){
 					SET_VN_FLOPS( enp, 0 );
 					SET_VN_N_MATH( enp, 0 );
 				} else {
@@ -181,7 +181,7 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 					SET_VN_N_MATH( enp,
 						VN_N_MATH(VN_CHILD(enp,1)) );
 				}
-			} else if( VN_CHILD(enp,1) == NO_VEXPR_NODE ){
+			} else if( VN_CHILD(enp,1) == NULL ){
 					SET_VN_FLOPS( enp,
 						VN_FLOPS(VN_CHILD(enp,0)) );
 					SET_VN_N_MATH( enp,
@@ -287,10 +287,10 @@ void cost_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
-	if( enp == NO_VEXPR_NODE ) return;
+	if( enp == NULL ) return;
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE )
+		if( VN_CHILD(enp,i) != NULL )
 			cost_tree(QSP_ARG  VN_CHILD(enp,i));
 	}
 

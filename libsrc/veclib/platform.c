@@ -11,7 +11,7 @@ ITEM_INTERFACE_DECLARATIONS( Compute_Platform, platform, 0 )
 
 Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name)
 {
-	if( pfdev_itp == NO_ITEM_TYPE )
+	if( pfdev_itp == NULL )
 		init_pfdevs(SINGLE_QSP_ARG);
 
 	return create_item_context(QSP_ARG  pfdev_itp, name );
@@ -80,19 +80,10 @@ Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t
 	Item_Context *icp;
 
 	cpp = new_platform(QSP_ARG  name);
-//	if( cpp == NULL ){
-//		sprintf(ERROR_STRING,
-//"CAUTIOUS:  creat_platform:  error creating platform %s!?",name);
-//		ERROR1(ERROR_STRING);
-//	}
 	assert( cpp != NULL );
 
 	icp = create_pfdev_context(QSP_ARG  name );
-//#ifdef CAUTIOUS
-//	if( icp == NO_ITEM_CONTEXT )
-//		ERROR1("CAUTIOUS:  creat_platform:  Failed to create platform device context!?");
-//#endif // CAUTIOUS
-	assert( icp != NO_ITEM_CONTEXT );
+	assert( icp != NULL );
 
 	SET_PF_CONTEXT(cpp,icp);
 

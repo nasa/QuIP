@@ -231,7 +231,7 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 
 	/* use item type name as the prompt */
 
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
 	if( ! IS_COMPLETING(THIS_QSP) ){
 		s = NAMEOF(prompt);
@@ -269,13 +269,7 @@ void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 {
 	List *lp;
 
-//#ifdef CAUTIOUS
-//	if( itp == NO_ITEM_TYPE ){
-//		WARN("CAUTIOUS:  init_item_hist passed negative index");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( itp != NO_ITEM_TYPE );
+	assert( itp != NULL );
 
 	// Don't do this if the number of choices is too large...
 	// We should set a flag in the itp...

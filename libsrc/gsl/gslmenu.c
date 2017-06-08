@@ -21,7 +21,7 @@ static COMMAND_FUNC( do_gsl_svd )
 	w_dp=PICK_OBJ( "vector for singular values" );
 	v_dp=PICK_OBJ( "output v matrix" );
 
-	if( a_dp == NO_OBJ || w_dp == NO_OBJ || v_dp == NO_OBJ )
+	if( a_dp == NULL || w_dp == NULL || v_dp == NULL )
 		return;
 
 	gsl_svd(QSP_ARG  a_dp,w_dp,v_dp);
@@ -37,8 +37,8 @@ static COMMAND_FUNC( do_gsl_solve )
 	v_dp = PICK_OBJ("V matrix");
 	b_dp = PICK_OBJ("Vector of input data");
 
-	if( u_dp == NO_OBJ || w_dp == NO_OBJ || v_dp == NO_OBJ ||
-		x_dp == NO_OBJ || b_dp == NO_OBJ )
+	if( u_dp == NULL || w_dp == NULL || v_dp == NULL ||
+		x_dp == NULL || b_dp == NULL )
 		return;
 
 	gsl_solve(QSP_ARG  x_dp,u_dp,w_dp,v_dp,b_dp);

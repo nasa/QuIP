@@ -74,9 +74,6 @@ struct scalar_expr_node {
 	Typed_Scalar *		sen_tsp;
 };
 
-#define NO_EXPR_NODE ((Scalar_Expr_Node *)NULL)
-
-
 /* globals */
 
 //extern double parse_number(QSP_ARG_DECL  const char **);

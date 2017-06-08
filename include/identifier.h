@@ -49,8 +49,6 @@ typedef struct identifier {
 #define POP_ID_CONTEXT			POP_ITEM_CONTEXT(id_itp)
 
 
-#define NO_IDENTIFIER	((Identifier *)NULL)
-
 #ifdef FOOBAR
 #define id_fpp		id_u.u_fpp
 #define id_ptrp		id_u.u_ptrp

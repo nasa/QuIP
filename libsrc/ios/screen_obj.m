@@ -7,7 +7,7 @@
 #include "ios_gui.h"
 
 static quipAppDelegate *scrnobjAppDelegate=NULL;
-static IOS_Item_Type *scrnobj_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *scrnobj_itp=NULL;
 
 @implementation Screen_Obj
 
@@ -107,7 +107,7 @@ void show_ctx_stack(void)
 	}
 	IOS_Node *np;
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		icp = (IOS_Item_Context *)IOS_NODE_DATA(np);
 		fprintf(stderr,"\t%s\n",icp.name.UTF8String);
 		np = IOS_NODE_NEXT(np);
@@ -139,7 +139,7 @@ IOS_Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
 {
 	static int sizable_added=0;
 
-	if( scrnobj_itp == NO_IOS_ITEM_TYPE ){
+	if( scrnobj_itp == NULL ){
 		init_scrnobjs(SINGLE_QSP_ARG);
 	}
 

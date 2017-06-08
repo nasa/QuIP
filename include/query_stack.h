@@ -222,9 +222,6 @@ struct query_stack {
 #define ALLOC_QS_SCALAR_PARSER_DATA(qsp)	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)))
 
 
-#define NO_QUERY_STACK ((Query_Stack *)NULL)
-
-
 // this indexing of the list is probably backwards!?
 #define QS_QRY_STACK(qsp)		(qsp)->qs_query_stack
 #define SET_QS_QRY_STACK(qsp,stkp)	(qsp)->qs_query_stack = stkp

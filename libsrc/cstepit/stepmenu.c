@@ -43,7 +43,7 @@ static COMMAND_FUNC( set_params )
 		mndl=(float)HOW_MUCH("minimum increment");
 
 		opp = new_opt_param(QSP_ARG  s);
-		if( opp != NO_OPT_PARAM ){
+		if( opp != NULL ){
 			opp->ans = a;
 			opp->minv = mnv;
 			opp->maxv = mxv;
@@ -82,7 +82,7 @@ static COMMAND_FUNC( select_package )
 	insure_opt_pkg(SINGLE_QSP_ARG);
 
 	pkp=PICK_OPT_PKG("");
-	if( pkp!=NO_OPT_PKG )
+	if( pkp!=NULL )
 
 	curr_opt_pkg = pkp;
 }
@@ -107,7 +107,7 @@ static COMMAND_FUNC( do_opt_param_info )
 	Opt_Param *opp;
 
 	opp = PICK_OPT_PARAM("");
-	if( opp == NO_OPT_PARAM ) return;
+	if( opp == NULL ) return;
 	opt_param_info(QSP_ARG  opp);
 }
 

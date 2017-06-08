@@ -20,7 +20,6 @@
 -(void) addListOfItems:(IOS_List *)lp;
 //-(IOS_Node *) remTail;
 
-#define NO_IOS_LIST		((IOS_List *)NULL)
 @end
 
 #define IOS_LIST_HEAD(lp)		(lp).head

@@ -134,7 +134,7 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 	// Why have statically-allocated structures?
 	while(n<=MAX_OCL_DEVICES){
 		pdp = pfdev_of(QSP_ARG  s);
-		if( pdp == NO_PFDEV ) return(s);
+		if( pdp == NULL ) return(s);
 
 		// This name is in use
 		n++;
@@ -172,7 +172,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	// address set to NULL says use custom allocator - see dobj/makedobj.c
 
 	ap = pf_area_init(QSP_ARG  area_name,NULL,0, MAX_OCL_GLOBAL_OBJECTS,DA_OCL_GLOBAL,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating global data area %s",area_name);
 		WARN(ERROR_STRING);
@@ -205,7 +205,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 
 	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
 							DA_OCL_HOST,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating host data area %s",area_name);
 		ERROR1(ERROR_STRING);
@@ -230,7 +230,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 
 	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
 						DA_OCL_HOST_MAPPED,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating host-mapped data area %s",area_name);
 		ERROR1(ERROR_STRING);
@@ -330,13 +330,13 @@ static Platform_Device * create_ocl_device(QSP_ARG_DECL  cl_device_id dev_id, Co
 	// initialize all the fields?
 
 #ifdef CAUTIOUS
-	if( pdp == NO_PFDEV ){
+	if( pdp == NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  init_ocl_device:  Error creating cuda device struct for %s!?",name_p);
 		WARN(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
-	if( pdp != NO_PFDEV ){
+	if( pdp != NULL ){
 		SET_PFDEV_PLATFORM(pdp,cpp);
 		// allocate the memory for the platform-specific data
 		SET_PFDEV_ODI(pdp,getbuf(sizeof(*PFDEV_ODI(pdp))));
@@ -946,7 +946,7 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 	//push_item_context(QSP_ARG  pfdev_itp, icp );
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	init_ocl_devices(QSP_ARG  cpp);
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
+	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
 		ERROR1("init_ocl_platform:  Failed to pop platform device context!?");
 }
 

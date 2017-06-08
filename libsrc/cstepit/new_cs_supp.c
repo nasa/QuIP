@@ -45,7 +45,7 @@ static void new_cstepit_scr_funk()
 
 	new_getvals(ans,n_prms);
 
-	if( opt_func_string==NO_STR ){
+	if( opt_func_string==NULL ){
 		NWARN("No optimization string defined");
 		return;
 	}
@@ -73,7 +73,7 @@ static void new_cstepit_scr_funk()
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 
 	vp=var__of("error");
-	if( vp == NO_VAR ) {
+	if( vp == NULL ) {
 		NWARN(error_string);
 		sprintf(error_string,
 	"variable \"error\" not set by script fragment \"%s\"!?",

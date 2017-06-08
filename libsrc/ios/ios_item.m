@@ -57,7 +57,7 @@ IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		IOS_Item *ip;
 		ip = IOS_NODE_DATA(np);
 		fprintf(fp,"\t%s\n",ip.name.UTF8String);
@@ -131,7 +131,7 @@ IOS_ITEM_NEW_PROT(IOS_Item_Context,ios_ctx)
 @synthesize it_all_lp;
 @synthesize it_class_lp;
 
-static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *ios_item_type_itp=NULL;
 
 -(void) push : (IOS_Item_Context *) icp	// IOS_Item_Type
 {
@@ -151,7 +151,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	if( lp == NULL ) return;
 	IOS_Node *np;
 	np = IOS_LIST_HEAD(lp);
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		IOS_Item_Context *icp;
 		icp = (IOS_Item_Context *) IOS_NODE_DATA(np);
 		// BUG - need to show the context here???
@@ -195,20 +195,20 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	IOS_List *lp=contextStack.list;
 	if( lp == NULL ) NERROR1("delItem:  context stack list is NULL!?");
 	IOS_Node *np=lp.head;
-	if( np == NO_IOS_NODE ) {
+	if( np == NULL ) {
 		NERROR1("delItem:  first context node is NULL!?");
 	}
 
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		icp=IOS_NODE_DATA(np);
-		if( [icp check : ip.name] != NO_IOS_ITEM ){
+		if( [icp check : ip.name] != NULL ){
 			// delete item from this context...
 			[icp delItem:ip];
 			return ip;
 		}
 		np=np.next;
 	}
-	return NO_IOS_ITEM;
+	return NULL;
 }
 
 // This function only lists the items in the current top context!?
@@ -251,7 +251,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 -(IOS_Item *) check: (NSString *) s		/* IOS_Item_Type */
 {
 	IOS_Item_Context *icp;
-	IOS_Item *ip=NO_IOS_ITEM;
+	IOS_Item *ip=NULL;
 
 	// Are these errors all CAUTIOUS only???
 /*
@@ -264,7 +264,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	IOS_List *lp=contextStack.list;
 	if( lp == NULL ) NERROR1("context stack list is NULL!?");
 	IOS_Node *np=lp.head;
-	if( np == NO_IOS_NODE ) {
+	if( np == NULL ) {
 		sprintf(DEFAULT_ERROR_STRING,
 	"(IOS_Item_Type %s) check %s:  first context node is NULL!?",
 		self.name.UTF8String,
@@ -272,15 +272,15 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 		NERROR1(DEFAULT_ERROR_STRING);
 	}
 
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		icp=IOS_NODE_DATA(np);
 		ip=[icp check : s];
-		if( ip != NO_IOS_ITEM ){
+		if( ip != NULL ){
 			return ip;
 		}
 		np=np.next;
 	}
-	return NO_IOS_ITEM;
+	return NULL;
 }
 
 -(IOS_Item_Context *) topContext
@@ -302,7 +302,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	it_all_lp = new_ios_list();
 
 	IOS_Node *np = IOS_LIST_HEAD(it_contexts);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		IOS_Item_Context *icp =
 			(IOS_Item_Context *)IOS_NODE_DATA(np);
 		[it_all_lp addListOfItems : [icp getListOfItems] ];
@@ -324,7 +324,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 	it_lp = new_ios_list();
 
 	IOS_Node *np = IOS_LIST_HEAD(contextStack.list);
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		IOS_Item_Context *icp =
 			(IOS_Item_Context *)IOS_NODE_DATA(np);
 		[it_lp addListOfItems : [icp getListOfItems] ];
@@ -343,7 +343,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 {
 	NSString *str=STRINGOBJ( nameof(QSP_ARG  prompt.UTF8String) );
 	IOS_Item *ip=[self check : str];
-	if( ip != NO_IOS_ITEM ) return ip;
+	if( ip != NULL ) return ip;
 
 	// Now print a useful message
 	NSString *msg=[[NSString alloc] initWithFormat : @"No %@ named \"%@\" in existence.",self.name,str];
@@ -360,7 +360,7 @@ static IOS_Item_Type *ios_item_type_itp=NO_IOS_ITEM_TYPE;
 {
 	IOS_Item *ip;
 	ip = [self check : name];
-	if( ip == NO_IOS_ITEM ){
+	if( ip == NULL ){
 		NSString *msg=[[NSString alloc] initWithFormat :
 	@"No %@ \"%@\"",self.name,name ];
 		NWARN(msg.UTF8String);
@@ -494,7 +494,7 @@ IOS_Item_Context * create_ios_item_context( QSP_ARG_DECL  IOS_Item_Type *itp, co
 	 * context, we have the special case above...
 	 */
 
-	if( ios_ctx_itp == NO_IOS_ITEM_TYPE )
+	if( ios_ctx_itp == NULL )
 		[IOS_Item_Context initClass];
 
 #ifdef QUIP_DEBUG
@@ -507,17 +507,7 @@ advise(ERROR_STRING);
 
 	icp = new_ios_ctx(QSP_ARG  cname);
 
-#ifdef FOOBAR
-	// I don't see why each item type has to carry around ios_ctx_itp???
-
-	/* If it_context_itp was null, make sure it has the right value now */
-	// This is the item type for ALL the contexts of all item types, not just
-	// for this item type...  The context names typically have the item name
-	// and a single dot as a prefix...
-	SET_IT_CTX_IT(itp,ios_ctx_itp);
-#endif /* FOOBAR */
-
-	if( icp == NO_IOS_ITEM_CONTEXT ){
+	if( icp == NULL ){
 		printf("OOPS couldn't create new item context!?\n");
 		return(icp);
 	}
@@ -526,15 +516,6 @@ advise(ERROR_STRING);
 	SET_IOS_CTX_FLAGS(icp,0);
 
 	[itp addToContextList:icp];
-
-#ifdef CAUTIOUS
-/*	if( IOS_CTX_NAMESP(icp) == NO_NAMESPACE ){
-		sprintf(ERROR_STRING,
-	"CAUTIOUS:  error creating namespace %s",IOS_CTX_NAME(icp));
-		NERROR1(ERROR_STRING);
-	}*/
-#endif /* CAUTIOUS */
-
 	return(icp);
 }
 
@@ -594,7 +575,7 @@ void push_ios_item_context(QSP_ARG_DECL  IOS_Item_Type *itp, IOS_Item_Context *i
 
 void del_ios_item(QSP_ARG_DECL  IOS_Item_Type *itp, IOS_Item *ip)
 {
-	if( [itp delItem:ip] == NO_IOS_ITEM ){
+	if( [itp delItem:ip] == NULL ){
 		sprintf(ERROR_STRING,"del_ios_item:  error deleting %s named %s",
 			IOS_IT_NAME(itp),IOS_ITEM_NAME(ip));
 		WARN(ERROR_STRING);

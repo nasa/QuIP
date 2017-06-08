@@ -53,15 +53,14 @@ static SCRAMBLE_TYPE *order=NULL;	/* permutation buffer */
 
 static int nstairs=0;
 
-#define NO_STAIR_PTR	((Staircase **)NULL)
-static Staircase **stair_tbl=NO_STAIR_PTR;
+static Staircase **stair_tbl=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Trial_Class,trial_class,0)
 ITEM_INTERFACE_DECLARATIONS(Staircase,stc,0)
 
 static List *stair_list(SINGLE_QSP_ARG_DECL)
 {
-	if( stc_itp==NO_ITEM_TYPE ) return(NULL);
+	if( stc_itp==NULL ) return(NULL);
 	return(item_list(QSP_ARG  stc_itp) );
 }
 
@@ -285,7 +284,7 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
 	stcp = new_stc(QSP_ARG  str);
-	if( stcp == NO_STAIR )
+	if( stcp == NULL )
 		return(-1);
 	stcp->stc_tcp = tcp;
 	stcp->stc_index = CLASS_N_STAIRS(tcp);
@@ -387,10 +386,10 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	Staircase **stcp;
 	int n;
 
-	if( stc_itp == NO_ITEM_TYPE )
+	if( stc_itp == NULL )
 		init_stcs(SINGLE_QSP_ARG);
 
-	if( stair_tbl != NO_STAIR_PTR )
+	if( stair_tbl != NULL )
 		givbuf(stair_tbl);
 	if( order != NULL )
 		givbuf(order);
@@ -524,7 +523,7 @@ COMMAND_FUNC( del_all_stairs )
 	Node *np;
 	Staircase *stcp;
 
-	if( stc_itp == NO_ITEM_TYPE ) return;	/* nothing to do */
+	if( stc_itp == NULL ) return;	/* nothing to do */
 
 advise("deleting all staircases");
 
@@ -560,7 +559,7 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 		"index_class:  no class with index %d",index);
 	WARN(ERROR_STRING);
 
-	return(NO_CLASS);
+	return(NULL);
 }
 
 void del_class(QSP_ARG_DECL  Trial_Class *tcp)
@@ -579,10 +578,10 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	List *lp;
 	int n;
 
-	if( trial_class_itp == NO_ITEM_TYPE )
+	if( trial_class_itp == NULL )
 		init_trial_classs(SINGLE_QSP_ARG);
 
-	assert( trial_class_itp != NO_ITEM_TYPE );
+	assert( trial_class_itp != NULL );
 
 	lp=item_list(QSP_ARG  trial_class_itp);
 	if( lp == NULL ) n=0;
@@ -614,12 +613,12 @@ Trial_Class *class_for( QSP_ARG_DECL  int class_index )
 
 	sprintf(newname,"class%d",class_index);
 	tcp = trial_class_of(QSP_ARG  newname);
-	if( tcp != NO_CLASS )
+	if( tcp != NULL )
 		return(tcp);
 
 	tcp = new_trial_class(QSP_ARG  newname);
 
-	assert( tcp != NO_CLASS );
+	assert( tcp != NULL );
 
 	/* Now do the initial setup for the class structure */
 
@@ -647,7 +646,7 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 
 List *class_list(SINGLE_QSP_ARG_DECL)
 {
-	if( trial_class_itp == NO_ITEM_TYPE ) return(NULL);
+	if( trial_class_itp == NULL ) return(NULL);
 	return( item_list(QSP_ARG  trial_class_itp) );
 }
 

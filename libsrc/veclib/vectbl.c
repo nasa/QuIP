@@ -11,7 +11,7 @@
 #include "nvf.h"
 #include "rn.h"		/* set_random_seed */
 
-static Item_Type *vec_func_itp=NO_ITEM_TYPE;
+static Item_Type *vec_func_itp=NULL;
 static ITEM_INIT_PROT(Vector_Function, vec_func)
 
 static ITEM_INIT_FUNC(Vector_Function, vec_func, 0)

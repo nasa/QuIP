@@ -55,8 +55,8 @@ static void collapse_literal(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	/* BUG this is where we should free these nodes;
 	 * after this point, we have no way to find them!?
 	 */
-	SET_VN_CHILD(enp,0,NO_VEXPR_NODE );
-	SET_VN_CHILD(enp,1,NO_VEXPR_NODE );
+	SET_VN_CHILD(enp,0,NULL );
+	SET_VN_CHILD(enp,1,NULL );
 }
 
 /* This function handles collapses of vsmul and vsadd:
@@ -152,12 +152,12 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	int i;
 
-	if( enp == NO_VEXPR_NODE ) return;
+	if( enp == NULL ) return;
 
 	/* BUG need to set & destroy the context! */
 
 	for(i=0;i<3;i++){
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE )
+		if( VN_CHILD(enp,i) != NULL )
 			OPTIMIZE_TREE(VN_CHILD(enp,i));
 	}
 

@@ -91,7 +91,7 @@ int open_client_port(QSP_ARG_DECL  const char *name,const char *hostname,int por
 fresh_start:
 
 	mpp=new_port(QSP_ARG  name);
-	if( mpp==NO_PORT ){
+	if( mpp==NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,"open_client_port %s %s %d failed to create port struct",
 				name,hostname,port_no);
@@ -131,7 +131,7 @@ advise("port struct created...");
 	mpp->mp_flags = 0;
 	mpp->mp_o_sock = (-1);
 	mpp->mp_flags |= PORT_CLIENT;
-	mpp->mp_pp = NO_PORT;
+	mpp->mp_pp = NULL;
 	// sleeptime used to be signed, but not now.
 	//mpp->mp_sleeptime=(-1);
 	mpp->mp_sleeptime=0;

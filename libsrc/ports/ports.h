@@ -70,8 +70,6 @@ struct my_port {
 	const char *		mp_auth_string;
 };
 
-#define NO_PORT ((struct my_port *)NULL)
-
 /* trial and error showd that 140*64 bytes was largest X by 64 image */
 #define MAX_PORT_BYTES	9000
 
@@ -100,8 +98,6 @@ struct d_packet {
 	void *		pk_extra;	// point to a dp?
 };
 
-#define NO_PACKET	((Packet *) NULL)
-
 #define MIN_MP_SLEEPTIME	10		/* 10 microseconds */
 #define MAX_MP_SLEEPTIME	1000000		/* 1 second */
 
@@ -112,8 +108,6 @@ extern ITEM_CHECK_PROT(Port_Data_Type,pdt)
 #ifdef HAVE_ENCRYPTION
 #include "my_encryption.h"
 #endif /* HAVE_ENCRYPTION */
-
-#define NO_PORT ((struct my_port *)NULL)
 
 #ifdef QUIP_DEBUG
 extern debug_flag_t debug_ports;
