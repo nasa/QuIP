@@ -19,7 +19,7 @@ COMMAND_FUNC( do_make_cursor )
 	x=HOW_MANY("x coordinate of hot spot");
 	y=HOW_MANY("y coordinate of hot spot");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG should verify that dp is the right kind of image here */
 
@@ -35,7 +35,7 @@ COMMAND_FUNC( do_assign_cursor )
 	vp = PICK_VWR("");
 	vcp = PICK_CURSOR( "cursor" );
 
-	if( vp == NO_VIEWER || vcp==NO_CURSOR ) return;
+	if( vp == NULL || vcp==NULL ) return;
 	assign_cursor(vp,vcp);
 }
 
@@ -45,7 +45,7 @@ COMMAND_FUNC( do_root_cursor )
 
 	vcp = PICK_CURSOR( "cursor" );
 
-	if( vcp==NO_CURSOR ) return;
+	if( vcp==NULL ) return;
 
 	root_cursor(vcp);
 }

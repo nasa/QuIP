@@ -27,7 +27,7 @@ static dimension_t raw_dim[N_DIMENSIONS]={1,0,0,0,1};
 #define	raw_seqs	raw_dim[4]
 
 // BUG - not thread safe!?
-static Precision* raw_prec_p=NO_PRECISION;
+static Precision* raw_prec_p=NULL;
 
 /* BUG doesn't write multiple sequences */
 
@@ -240,7 +240,7 @@ advise(ERROR_STRING);
 FIO_WT_FUNC( raw )
 {
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);
 		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
@@ -286,7 +286,7 @@ int raw_to_dp( Data_Obj *dp, void *vp )
 	if( raw_rows <= 0 || raw_cols <= 0 )
 		NWARN("size of raw image file not specified!?");
 		
-	if( raw_prec_p == NO_PRECISION ){
+	if( raw_prec_p == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"Pixel precision for raw file %s not specified!?",
 			ifp->if_name);
@@ -344,7 +344,7 @@ FIO_OPEN_FUNC( raw )
 
 	/* img_file_creat creates dummy if_dp only if readable */
 
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	if( rw == FILE_READ ){
 		raw_to_dp(ifp->if_dp,ifp);

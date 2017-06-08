@@ -382,7 +382,7 @@ static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
 //advise(ERROR_STRING);
 	inp = get_rv_inode(QSP_ARG  ifp->if_name);
 #ifdef CAUTIOUS
-	if( inp == NO_INODE ){
+	if( inp == NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS: v4l2_finish_recording:  missing rv inode %s",ifp->if_name);
 		ERROR1(ERROR_STRING);
 	}
@@ -463,7 +463,7 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 	SET_SHP_FRAMES(shpp, n_frames);
 	SET_SHP_SEQS(shpp, 1);
 	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(PREC_UBY) );
-	set_shape_flags(shpp,NO_OBJ,AUTO_SHAPE);
+	set_shape_flags(shpp,NULL,AUTO_SHAPE);
 
 	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
 
@@ -537,7 +537,7 @@ if( really_writing ){
 #endif
 
 #ifdef CAUTIOUS
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		WARN("CAUTIOUS:  v4l2_stream_record:  ifp is NULL!?");
 		return;
 	}
@@ -635,11 +635,11 @@ COMMAND_FUNC( do_stream_record )
 	/* BUG should make sure that all are distinct */
 
 	for(i=0;i<nc;i++)
-		if( vd_tbl[i] == NO_VIDEO_DEVICE ) return;
+		if( vd_tbl[i] == NULL ) return;
 
 	ifp = img_file_of(QSP_ARG  name);
 
-	if( ifp != NO_IMAGE_FILE ){
+	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
 		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
@@ -654,7 +654,7 @@ COMMAND_FUNC( do_stream_record )
 	 * we could know them, however, because at this point the geometry is set.
 	 */
 
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		sprintf(ERROR_STRING,"Error creating movie file %s",name);
 		WARN(ERROR_STRING);
 		return;

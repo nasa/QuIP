@@ -26,7 +26,7 @@ int insist_real=0, insist_cpx=0, insist_quat=0;
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_DEST(oap, PICK_OBJ( "destination vector" ) );
-	if( OA_DEST(oap) ==NO_OBJ )
+	if( OA_DEST(oap) ==NULL )
 		return(-1);
 	return(0);
 }
@@ -34,7 +34,7 @@ static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC1(oap,PICK_OBJ( "first source vector" ) );
-	if( OA_SRC1(oap)==NO_OBJ )
+	if( OA_SRC1(oap)==NULL )
 		return(-1);
 	return(0);
 }
@@ -42,7 +42,7 @@ static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC2(oap,PICK_OBJ( "second source vector" ));
-	if( OA_SRC2(oap)==NO_OBJ )
+	if( OA_SRC2(oap)==NULL )
 		return(-1);
 	return(0);
 }
@@ -50,7 +50,7 @@ static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC3(oap,PICK_OBJ( "third source vector" ));
-	if( OA_SRC3(oap)==NO_OBJ )
+	if( OA_SRC3(oap)==NULL )
 		return(-1);
 	return(0);
 }
@@ -59,7 +59,7 @@ static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 static int get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC4(oap,PICK_OBJ( "fourth source vector" ));
-	if( OA_SRC4(oap)==NO_OBJ )
+	if( OA_SRC4(oap)==NULL )
 		return(-1);
 	return(0);
 }
@@ -116,7 +116,7 @@ static void extract_vec_params(Data_Vector *dvp, Data_Obj *dp)
 	int need_inc;
 	int start_dim;
 
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		SET_DV_VEC(dvp, NULL);
 		SET_DV_INC(dvp, 0);
 		SET_DV_COUNT(dvp, 0);
@@ -190,7 +190,7 @@ void show_vf(Vector_Function *vfp)
 static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_SBM( oap, PICK_OBJ( "source bitmap object" ) );
-	if( OA_SBM(oap) ==NO_OBJ ) return(-1);
+	if( OA_SBM(oap) ==NULL ) return(-1);
 	if( OBJ_PREC( OA_SBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
 			"get_src_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
@@ -205,7 +205,7 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_DBM( oap, PICK_OBJ( "destination bitmap object" ) );
-	if( OA_DBM(oap) ==NO_OBJ ) return(-1);
+	if( OA_DBM(oap) ==NULL ) return(-1);
 	if( OBJ_PREC( OA_DBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
 			"get_dst_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
@@ -266,19 +266,19 @@ static Data_Obj * get_return_scalar(QSP_ARG_DECL const char *pmpt,Precision *pre
 
 	/* which data area does PICK_OBJ use??? */
 	dp=PICK_OBJ( pmpt );
-	if( dp==NO_OBJ ) return(NO_OBJ);
+	if( dp==NULL ) return(NULL);
 	if( !IS_SCALAR(dp) ){
 		sprintf(ERROR_STRING,
 			"get_return_scalar:  %s is not a scalar",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	if( OBJ_PREC_PTR( dp) != prec_p ){
 		sprintf(ERROR_STRING,
 			"get_return_scalar:  %s scalar %s should have precision %s",
 			OBJ_PREC_NAME(dp),OBJ_NAME(dp),PREC_NAME(prec_p));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
@@ -302,13 +302,13 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	Data_Area *ap;
 
-	if( OA_DEST(oap) != NO_OBJ ){
+	if( OA_DEST(oap) != NULL ){
 		push_data_area(ap=OA_DEST(oap) ->dt_ap);
 	} else {
 		int i;
-		ap=NO_AREA;	// quiet compiler
+		ap=NULL;	// quiet compiler
 		for(i=0;i<MAX_N_ARGS;i++){
-			if( OA_SRC_OBJ(oap,i) != NO_OBJ ){
+			if( OA_SRC_OBJ(oap,i) != NULL ){
 				push_data_area(ap=OA_SRC_OBJ(oap,i)->dt_ap);
 				i=MAX_N_ARGS+5;	// force exit & flag found
 			}
@@ -368,7 +368,7 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 #ifdef FOOBAR
 #define SET_PREC							\
 									\
-	if( OA_DEST(oap) !=NO_OBJ ) prec_p=OBJ_PREC_PTR( OA_DEST(oap) );\
+	if( OA_DEST(oap) !=NULL ) prec_p=OBJ_PREC_PTR( OA_DEST(oap) );\
 	else prec_p=prec_for_code(PREC_SP);
 #endif // FOOBAR
 
@@ -401,7 +401,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 	// suppress compiler warning by checking return value
 	// This never should happen...
-	if( ap == NO_AREA ) WARN("bad return value from set_arg_data_area");
+	if( ap == NULL ) WARN("bad return value from set_arg_data_area");
 
 #endif /* HAVE_ANY_GPU */
 
@@ -456,7 +456,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 				// We used to print the name of the
 				// destination obj here, but in case
 				// it could be null...
-				if( OA_DEST(oap) != NO_OBJ )
+				if( OA_DEST(oap) != NULL )
 					sprintf(ERROR_STRING,
 "get_scalar_args:  function %s does not permit operations with complex targets (%s)",
 		VF_NAME(vfp),OBJ_NAME(OA_DEST(oap) ));
@@ -517,14 +517,14 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 	else if( VF_FLAGS(vfp) & SRC_SCALAR1 ){
 		if( VF_FLAGS(vfp) == VS_TEST ){	/* vsm_lt etc. */
-			if( OA_SRC1(oap) ==NO_OBJ ){
+			if( OA_SRC1(oap) ==NULL ){
 				goto get_dummy;
 			}
 			SET_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
 			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value") );
-		} else if( OA_DEST(oap) == NO_OBJ ){	/* error condition */
+		} else if( OA_DEST(oap) == NULL ){	/* error condition */
 			/*double d;
 			d=*/HOW_MUCH("dummy value");
 			retval=(-1);
@@ -568,14 +568,14 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value") );
 		}
-		if( OA_SVAL(oap,0) == NO_SCALAR_VALUE ){
+		if( OA_SVAL(oap,0) == NULL ){
 			retval=(-1);
 		}
 	}
 
 	if( VF_FLAGS(vfp) & TWO_SCALAR_RESULTS ){
 		Data_Obj *_dp1, *_dp2;
-		if( OA_SRC1(oap) == NO_OBJ ){
+		if( OA_SRC1(oap) == NULL ){
 			sprintf(ERROR_STRING,
 	"get_scalar_args (%s):  no argument to use for precision prototype!?",
 				VF_NAME(vfp));
@@ -588,7 +588,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			_dp2 = get_return_scalar(QSP_ARG
 				"name of scalar for # of occurrences",
 				prec_for_code(PREC_DI));
-			if( _dp1 == NO_OBJ || _dp2 == NO_OBJ )
+			if( _dp1 == NULL || _dp2 == NULL )
 				retval=(-1);
 			SET_OA_SCLR1(oap,_dp1);
 			SET_OA_SCLR2(oap,_dp2);
@@ -643,7 +643,7 @@ static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 	// Now, for vmov and bitmaps, the destination bitmap
 	// is the same oap member as the normal dest, but a source
 	// bitmap is expected to be src5, not src1...
-	if( VF_CODE(vfp) == FVMOV && OA_SRC1(oap) != NO_OBJ ){
+	if( VF_CODE(vfp) == FVMOV && OA_SRC1(oap) != NULL ){
 		if( IS_BITMAP(OA_SRC1(oap)) ){
 //fprintf(stderr,"Copying src1 to sbm...\n");
 			SET_OA_SBM(oap,OA_SRC1(oap) );
@@ -659,7 +659,7 @@ static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 #ifdef PROBABLY_NOT_NEEDED
 		/* Here we point the scalar value to the object data - why? */
 		for(i=0;i<MAX_RETSCAL_ARGS;i++){
-			if( OA_SCLR_OBJ(oap,i) != NO_OBJ )
+			if( OA_SCLR_OBJ(oap,i) != NULL )
 				SET_OA_SVAL(oap,i, (Scalar_Value *)OBJ_DATA_PTR( OA_SCLR_OBJ(oap,i) ) );
 		}
 #endif /* PROBABLY_NOT_NEEDED */
@@ -750,7 +750,7 @@ int prompt_scalar_value(QSP_ARG_DECL  Data_Obj *dp, const char *pmpt, prec_t pre
 
 static int check_one_obj_loc( Data_Obj *dp )
 {
-	if( dp == NO_OBJ ) return(0);
+	if( dp == NULL ) return(0);
 	if( OBJ_IS_RAM(dp) ) return(OARGS_RAM);
 	return(OARGS_GPU);
 }
@@ -772,7 +772,7 @@ static int check_one_obj_loc( Data_Obj *dp )
 
 static int check_obj_device(Data_Obj *dp, Vec_Obj_Args *oap)
 {
-	if( dp == NO_OBJ ) return 0;	// not an error
+	if( dp == NULL ) return 0;	// not an error
 	if( OA_PFDEV(oap) == NULL ){
 		SET_OA_PFDEV(oap,OBJ_PFDEV(dp));
 if( OA_PFDEV(oap) == NULL ) NWARN("Null platform device!?");
@@ -824,7 +824,7 @@ int check_obj_devices( Vec_Obj_Args *oap )
 
 static int non_ram_obj(Data_Obj *dp)
 {
-	if( dp == NO_OBJ || OBJ_IS_RAM( dp ) ) return 0;
+	if( dp == NULL || OBJ_IS_RAM( dp ) ) return 0;
 	return 1;
 }
 
@@ -846,7 +846,7 @@ int are_ram_args( Vec_Obj_Args *oap )
 
 static void report_obj_device(QSP_ARG_DECL  Data_Obj *dp)
 {
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	sprintf(ERROR_STRING,"\t%s:\t%s",OBJ_NAME(dp),PFDEV_NAME( OBJ_PFDEV(dp) ) );
 	advise(ERROR_STRING);
 }
@@ -879,7 +879,7 @@ void do_vfunc( QSP_ARG_DECL  Vector_Function *vfp )
 		return;
 	}
 
-if( OA_DEST(oap) == NO_OBJ ){
+if( OA_DEST(oap) == NULL ){
 /* BUG?  is this really an error?  The bitmap destination might be here... */
 sprintf(ERROR_STRING,"%s:  Null destination!?!?", VF_NAME(vfp));
 WARN(ERROR_STRING);
@@ -895,7 +895,7 @@ WARN(ERROR_STRING);
 	 * allocated memory...  (is getbuf/malloc thread-safe?)
 	 */
 	for(i=0;i<MAX_SRCSCAL_ARGS;i++){
-		if( OA_SVAL(oap,i) != NO_SCALAR_VALUE )
+		if( OA_SVAL(oap,i) != NULL )
 			rls_sval( OA_SVAL(oap,i) );	// free scalars allocated by get_sval()
 	}
 }
@@ -921,8 +921,8 @@ void setvarg3(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *src1,Data_Obj *src2)
 	SET_OA_DEST(oap,dstv);
 	SET_OA_SRC2(oap,src2);
 	SET_OA_SRC1(oap,src1);
-	SET_OA_SRC3(oap,NO_OBJ);
-	SET_OA_SRC4(oap,NO_OBJ);
+	SET_OA_SRC3(oap,NULL);
+	SET_OA_SRC4(oap,NULL);
 	set_obj_arg_flags(oap);
 }
 
@@ -933,7 +933,7 @@ void setvarg4(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *src1,Data_Obj *src2,Dat
 	SET_OA_SRC1(oap,src1);
 	SET_OA_SRC2(oap,src2);
 	SET_OA_SRC3(oap,src3);
-	SET_OA_SRC4(oap,NO_OBJ);
+	SET_OA_SRC4(oap,NULL);
 	set_obj_arg_flags(oap);
 }
 

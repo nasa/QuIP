@@ -48,7 +48,7 @@ static COMMAND_FUNC( select_type )
 	itp = get_item_type(QSP_ARG  s);
 	*/
 	itp = (Item_Type *) pick_item(QSP_ARG  ittyp_itp, "item type name");
-	if( itp != NO_ITEM_TYPE )
+	if( itp != NULL )
 		curr_itp = itp;
 }
 
@@ -183,14 +183,14 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 	const char *mbuf;
 	char *lc_frag;
 
-	if( macro_itp == NO_ITEM_TYPE ) return NULL;
+	if( macro_itp == NULL ) return NULL;
 	lp=item_list(QSP_ARG  macro_itp);
 	if( lp == NULL ) return lp;
 
 	np=QLIST_HEAD(lp);
 	lc_frag = getbuf( strlen(frag) + 1 );
 	decap(lc_frag,frag);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		mp = (Macro*) NODE_DATA(np);
 		if( MACRO_TEXT(mp) != NULL ){	/* NULL if no macro text... */
 			mbuf = getbuf( strlen(MACRO_TEXT(mp))+1 );
@@ -249,7 +249,7 @@ static COMMAND_FUNC( do_dump_invoked )
 	Node *np;
 	Macro *mp;
 
-	if( macro_itp == NO_ITEM_TYPE ){
+	if( macro_itp == NULL ){
 no_macros:
 		WARN("do_dump_invoked:  no macros!?");
 		return;
@@ -258,7 +258,7 @@ no_macros:
 	if( lp == NULL ) goto no_macros;
 
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		mp = (Macro *) NODE_DATA(np);
 		if( macro_is_invoked(mp) ){
 			dump_macro(QSP_ARG  mp);
@@ -450,7 +450,7 @@ static COMMAND_FUNC( do_set_var )
 	value=NAMEOF("variable value");
 
 	vp = var_of(QSP_ARG  name);
-	if( vp != NO_VARIABLE && IS_RESERVED_VAR(vp) ){
+	if( vp != NULL && IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"Sorry, variable \"%s\" is reserved.",name);
 		WARN(ERROR_STRING);
 		return;
@@ -1014,7 +1014,7 @@ static COMMAND_FUNC( do_debug )
 	Debug_Module *dmp;
 
 	dmp = pick_debug(QSP_ARG  "");
-	if( dmp != NO_DEBUG_MODULE )
+	if( dmp != NULL )
 		set_debug(QSP_ARG  dmp);
 }
 
@@ -1120,7 +1120,7 @@ static COMMAND_FUNC( do_get_filenames )
 	dir = NAMEOF("directory");
 
 	dp = dobj_of(QSP_ARG  objname);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,
 	"get_filenames:  object %s already exists!?",OBJ_NAME(dp));
 		advise(ERROR_STRING);
@@ -1162,7 +1162,7 @@ static COMMAND_FUNC( do_get_filenames )
 	SET_DIMENSION(&ds1,0,maxlen);
 
 	dp = make_dobj(QSP_ARG  objname, &ds1,PREC_FOR_CODE(PREC_STR));
-	if( dp == NO_OBJ ) goto finish;
+	if( dp == NULL ) goto finish;
 
 	rewinddir(dir_p);
 	for(i=0;i<n;i++){

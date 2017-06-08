@@ -53,7 +53,7 @@ static int mpeg_to_dp(Data_Obj *dp,Mpeg_Hdr *mpeg_hp)
 	dp->dt_finc = dp->dt_rinc*dp->dt_rows;
 	dp->dt_sinc = dp->dt_finc*dp->dt_frames;
 
-	dp->dt_parent = NO_OBJ;
+	dp->dt_parent = NULL;
 	dp->dt_children = NULL;
 
 	dp->dt_ap = ram_area;		/* the default */
@@ -203,7 +203,7 @@ printf("mpeg_open: IN\n");
 #endif /* QUIP_DEBUG */
 	
 	ifp = IMG_FILE_CREAT(name,rw,IFT_MPEG);
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->hdr = (Mpeg_Hdr *)getbuf( sizeof(Mpeg_Hdr) );
 
@@ -403,7 +403,7 @@ int mpeg_wt(Data_Obj *dp,Image_File *ifp)
 {
 	ImVfb *wt_img=NULL;
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		/* set header params if necessary? */
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);

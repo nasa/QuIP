@@ -145,7 +145,7 @@ COMMAND_FUNC( fitsine )
 	}
 
 	dp=PICK_OBJ( "signal vector" );
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	sprintf(msg_str, "Attempting to fit %s by varying",OBJ_NAME(dp));
 	prt_msg_frag(msg_str);

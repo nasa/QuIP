@@ -28,7 +28,7 @@ Precision *prec_for_code(prec_t prec)
 
 	np = QLIST_HEAD(lp);
 
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		prec_p = (Precision *) NODE_DATA(np);
 		if( prec_p->prec_code == prec )
 			return( prec_p );
@@ -43,27 +43,14 @@ Precision *prec_for_code(prec_t prec)
 
 void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
-#ifdef CAUTIOUS
-	if( SHP_PREC_PTR(shpp) == NULL ){
-		WARN("CAUTIOUS:  describe_shape:  null shape prec ptr!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( SHP_PREC_PTR(shpp) != NULL );
 	
 	if( SHP_PREC(shpp) == PREC_VOID ){
 		prt_msg("void (no shape)");
 		return;
 	}
-#ifdef CAUTIOUS
-	if( SHP_TYPE_DIMS(shpp) == NULL ){
-		WARN("CAUTIOUS:  describe_shape:  null type dims!?");
-		return;
-	}
-	if( SHP_MACH_DIMS(shpp) == NULL ){
-		WARN("CAUTIOUS:  describe_shape:  null mach dims!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( SHP_TYPE_DIMS(shpp) != NULL );
+	assert( SHP_MACH_DIMS(shpp) != NULL );
 
 	if( HYPER_SEQ_SHAPE(shpp) )
 		sprintf(MSG_STR,"hyperseq, %3u sequences          ",
@@ -87,42 +74,17 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 		sprintf(MSG_STR,"shape unknown at this time       ");
 	else if( VOID_SHAPE(shpp) )
 		sprintf(MSG_STR,"void shape                            ");
-//#ifdef CAUTIOUS
 	else {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  describe_shape:  unrecognized object type flag 0x%llx",
-//			(long long unsigned int) SHP_FLAGS(shpp));
-//		WARN(DEFAULT_ERROR_STRING);
-//		sprintf(MSG_STR,"                                 ");
 		assert( AERROR("describe_shape:  bad object type flag!?") );
 	}
-//#endif /* CAUTIOUS */
 	prt_msg_frag(MSG_STR);
 
 	if( BITMAP_PRECISION(SHP_PREC(shpp)) ){
-//#ifdef CAUTIOUS
-//		if( (SHP_PREC(shpp) & MACH_PREC_MASK) != BITMAP_MACH_PREC ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  describe_shape:  prec = 0x%"PREC_FMT_X", BIT pseudo precision is set, but machine precision is not %s!?",
-//				SHP_PREC(shpp),PREC_NAME(PREC_FOR_CODE(BITMAP_MACH_PREC)) );
-//			NERROR1(DEFAULT_ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( (SHP_PREC(shpp) & MACH_PREC_MASK) == BITMAP_MACH_PREC );
 		
 		prt_msg("     bit");
 		return;
 	} else if( STRING_PRECISION(SHP_PREC(shpp)) || CHAR_PRECISION(SHP_PREC(shpp)) ){
-//#ifdef CAUTIOUS
-//		if( (SHP_PREC(shpp) & MACH_PREC_MASK) != PREC_BY ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//		"CAUTIOUS:  describe_shape:  prec = 0x%"PREC_FMT_X", STRING or CHAR  pseudo precision is set, but machine precision is not byte!?",
-//				SHP_PREC(shpp));
-//			NERROR1(DEFAULT_ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
-
 		assert( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_BY );
 
 		if( STRING_PRECISION(SHP_PREC(shpp)) )
@@ -139,27 +101,17 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 			sprintf(MSG_STR,", complex");
 		else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
 			sprintf(MSG_STR,", dblcpx");
-#ifdef CAUTIOUS
 		else {
-//			sprintf(MSG_STR,", unknown_precision_cpx");
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  describe_shape:  unexpected complex machine precision (%s)!?",PREC_NAME(SHP_MACH_PREC_PTR(shpp)));
-//			WARN(ERROR_STRING);
 			assert( AERROR("Unexpected complex machine precision!?") );
 		}
-#endif /* CAUTIOUS */
 	} else if( QUAT_PRECISION(SHP_PREC(shpp)) ){
 		if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_SP )
 			sprintf(MSG_STR,", quaternion");
 		else if( (SHP_PREC(shpp) & MACH_PREC_MASK) == PREC_DP )
 			sprintf(MSG_STR,", dblquat");
-#ifdef CAUTIOUS
 		else {
-//			sprintf(MSG_STR,", unknown_precision_quaternion");
-//			WARN("CAUTIOUS:  describe_shape:  unexpected quaternion machine precision!?");
 			assert( AERROR("unexpected quaternion machine precision!?") );
 		}
-#endif /* CAUTIOUS */
 	} else {
 		sprintf(MSG_STR,", real");
 	}
@@ -296,18 +248,7 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 
 	flags = OBJ_FLAGS(dp);
 	for(i=0;i<N_DP_FLAGS;i++){
-
-//#ifdef CAUTIOUS
-//		if( flagtbl[i].flagmask == 0 ){
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  list_dp_flags:  flagtbl[%d].flagmask = 0!?",i);
-//			WARN(DEFAULT_ERROR_STRING);
-//			sprintf(DEFAULT_ERROR_STRING,"make sure flagtbl has %d initialization entries in dplist.c",N_DP_FLAGS);
-//			NERROR1(DEFAULT_ERROR_STRING);
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
 		assert( flagtbl[i].flagmask != 0 );
-
 		if( flags & flagtbl[i].flagmask ){
 			sprintf(MSG_STR,"\t\t%s (0x%llx)",flagtbl[i].flagname,
 				(long long unsigned int)flagtbl[i].flagmask);
@@ -317,13 +258,6 @@ static void list_dp_flags(QSP_ARG_DECL  Data_Obj *dp)
 		}
 	}
 	fflush(stdout);
-
-//#ifdef CAUTIOUS
-//	if( flags ){	/* any bits still set */
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  list_dp_flags:  unhandled flag bit(s) 0x%llx!?",(long long unsigned int)flags);
-//		WARN(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( flags == 0 );
 }
 
@@ -392,7 +326,7 @@ static void list_sizes(QSP_ARG_DECL  Data_Obj *dp)
 
 static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 {
-	if( OBJ_PARENT(dp) != NO_OBJ ){
+	if( OBJ_PARENT(dp) != NULL ){
 		sprintf(MSG_STR,"\tparent data object:  %s",
 			OBJ_NAME(OBJ_PARENT( dp) ));
 		prt_msg(MSG_STR);
@@ -401,7 +335,7 @@ static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 		prt_msg(MSG_STR);
 	}
 	if( OBJ_CHILDREN(dp) != NULL &&
-		QLIST_HEAD( OBJ_CHILDREN(dp) ) != NO_NODE ){
+		QLIST_HEAD( OBJ_CHILDREN(dp) ) != NULL ){
 
 		Node *np;
 		Data_Obj *dp2;
@@ -409,7 +343,7 @@ static void list_relatives(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(MSG_STR,"\tsubobjects:");
 		prt_msg(MSG_STR);
 		np = QLIST_HEAD( OBJ_CHILDREN(dp) );
-		while( np != NO_NODE ){
+		while( np != NULL ){
 			dp2=(Data_Obj *) NODE_DATA(np);
 			sprintf(MSG_STR,"\t\t%s",OBJ_NAME(dp2));
 			prt_msg(MSG_STR);
@@ -455,7 +389,7 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	 * of the parent instead.
 	 */
 
-	if( OBJ_PARENT(dp) != NO_OBJ ){
+	if( OBJ_PARENT(dp) != NULL ){
 		list_context(QSP_ARG  OBJ_PARENT( dp) );
 		return;
 	}
@@ -465,15 +399,9 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	 */
 	//np=QLIST_HEAD( CONTEXT_LIST(dobj_itp) );
 	np=QLIST_HEAD( DOBJ_CONTEXT_LIST );
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		NERROR1("CAUTIOUS:  list_context:  no data object context");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
+	assert( np != NULL );
 
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		icp=(Item_Context *)NODE_DATA(np);
 		/* can we search this context only? */
 /*
@@ -568,7 +496,7 @@ void info_area(QSP_ARG_DECL  Data_Area *ap)
 	lp=dobj_list(SINGLE_QSP_ARG);
 	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		dp = (Data_Obj *)NODE_DATA(np);
 		if( OBJ_AREA(dp) == ap )
 			list_dobj(QSP_ARG   dp );
@@ -584,7 +512,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 	lp=data_area_list(SINGLE_QSP_ARG);
 	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		info_area( QSP_ARG  (Data_Area *) NODE_DATA(np) );
 		np=NODE_NEXT(np);
 	}

@@ -229,7 +229,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 		/* we should boost the priority of an existing choice! */
 		np = nodeOf(lp,hcp);
-		assert( np != NO_NODE );
+		assert( np != NULL );
 
 		np->n_pri++;
 		p_sort(lp);
@@ -323,7 +323,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	np=QLIST_HEAD(lp);
 
-	while(np!=NO_NODE) {
+	while(np!=NULL) {
 		Hist_Choice *hcp;
 
 		/* priority sorted!? */
@@ -346,11 +346,11 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 										\
 	if( direction == CYC_FORWARD ){						\
 		np=NODE_NEXT(np);							\
-		if( np == NO_NODE )	/* at end of list */			\
+		if( np == NULL )	/* at end of list */			\
 			np=QLIST_HEAD(cur_list);					\
 	} else {								\
 		np=NODE_PREV(np);							\
-		if( np == NO_NODE )						\
+		if( np == NULL )						\
 			np=QLIST_TAIL(cur_list);					\
 	}
 
@@ -360,7 +360,7 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	Hist_Choice *hcp;
 
 	first=np=cur_node;
-	if( np == NO_NODE ) return("");
+	if( np == NULL ) return("");
 
 	NEXT_NODE
 
@@ -542,7 +542,7 @@ advise(ERROR_STRING);
 	icp=find_hist(QSP_ARG  prompt);
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Item *ip;
 		ip=(Item *) NODE_DATA(np);
 		add_word_to_history_list(QSP_ARG  icp,ITEM_NAME(ip));
@@ -601,7 +601,7 @@ advise("making new hist list for class");
 #endif /* QUIP_DEBUG */
 
 	np=QLIST_HEAD(iclp->icl_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		mip=(Member_Info *) NODE_DATA(np);
 		lp = item_list(QSP_ARG  mip->mi_itp);
 		if( lp != NULL )

@@ -49,10 +49,10 @@ static float p2c_mat[3][3]={
 
 static float c2p_mat[3][3];
 
-static Data_Obj *o2p_dp=NO_OBJ;
-static Data_Obj *p2o_dp=NO_OBJ;
-static Data_Obj *c2p_dp=NO_OBJ;
-static Data_Obj *p2c_dp=NO_OBJ;
+static Data_Obj *o2p_dp=NULL;
+static Data_Obj *p2o_dp=NULL;
+static Data_Obj *c2p_dp=NULL;
+static Data_Obj *p2c_dp=NULL;
 
 int know_white=0;
 int know_lumscal=0;
@@ -76,11 +76,11 @@ static int init_matrices(SINGLE_QSP_ARG_DECL)
 	float *ptr;
 	int i,j;
 
-	if( c2p_dp == NO_OBJ ){
+	if( c2p_dp == NULL ){
 		NWARN("init_matrices: need to specify object for c2p_mat");
 		return(-1);
 	}
-	if( p2c_dp == NO_OBJ ){
+	if( p2c_dp == NULL ){
 		NWARN("init_matrices: need to specify object for p2c_mat");
 		return(-1);
 	}

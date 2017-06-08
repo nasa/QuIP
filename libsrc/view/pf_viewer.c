@@ -167,7 +167,7 @@ static Platform_Viewer * new_pf_viewer(QSP_ARG_DECL  Viewer *vp)
 	}
 
 	pvp = new_pf_vwr(QSP_ARG  VW_NAME(vp));
-	if( pvp == NO_PF_VWR ) return(pvp);
+	if( pvp == NULL ) return(pvp);
 
 #ifndef BUILD_FOR_OBJC
 	pvp->pv_vp = vp;
@@ -184,7 +184,7 @@ COMMAND_FUNC( do_new_pf_vwr )
 
 
 	vp = PICK_VWR("name of existing viewer to use with Cuda/OpenCL");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	if( ! READY_FOR_GLX(vp) ) {
 		sprintf(ERROR_STRING,"do_new_pf_vwr:  Existing viewer %s must be initialized for GL before using!?",VW_NAME(vp) );
@@ -211,7 +211,7 @@ COMMAND_FUNC( do_load_pf_vwr )
 	pvp = PICK_PF_VWR("platform viewer");
 	dp = PICK_OBJ("GL buffer object");
 
-	if( pvp == NO_PF_VWR || dp == NO_OBJ ) return;
+	if( pvp == NULL || dp == NULL ) return;
 
 #ifdef HAVE_OPENGL
 //fprintf(stderr,"do_load_pf_vwr:  calling select_gl_viewer %s\n",

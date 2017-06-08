@@ -105,13 +105,13 @@ void disown_child( QSP_ARG_DECL  Data_Obj *dp )
 	Node *np;
 
 	np=remData(OBJ_CHILDREN( OBJ_PARENT(dp) ),dp);
-	assert( np != NO_NODE );
+	assert( np != NULL );
 
 #ifdef FOOBAR
 //#ifdef CAUTIOUS
-	if( np==NO_NODE ){
+	if( np==NULL ){
 		NWARN("CAUTIOUS:  disown_child:  couldn't find child node");
-		if( OBJ_PARENT(dp) == NO_OBJ ){
+		if( OBJ_PARENT(dp) == NULL ){
 			ERROR1("object has no parent!?");
 			IOS_RETURN
 		}
@@ -122,7 +122,7 @@ void disown_child( QSP_ARG_DECL  Data_Obj *dp )
 			sprintf(ERROR_STRING,"Children of %s:",OBJ_NAME( OBJ_PARENT(dp) ) );
 			advise(ERROR_STRING);
 			np=QLIST_HEAD( OBJ_CHILDREN( OBJ_PARENT(dp) ) );
-			while(np!=NO_NODE){
+			while(np!=NULL){
 				sprintf(ERROR_STRING,"\t0x%lx",
 					((int_for_addr)NODE_DATA(np) ));
 				advise(ERROR_STRING);
@@ -262,7 +262,7 @@ advise(ERROR_STRING);
 	if( OBJ_CHILDREN( dp ) != NULL ){
 		del_subs(QSP_ARG  dp);
 	}
-	if( OBJ_PARENT(dp) != NO_OBJ ){
+	if( OBJ_PARENT(dp) != NULL ){
 		disown_child(QSP_ARG  dp);
 	}
 
@@ -452,7 +452,7 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 	for(i=0;i<N_DIMENSIONS;i++){
 		assert( SHP_TYPE_DIM(shpp,i) > 0 );
 //		if( SHP_TYPE_DIM(shpp,i) <= 0 ){
-//			if( dp != NO_OBJ && OBJ_NAME(dp) != NULL )
+//			if( dp != NULL && OBJ_NAME(dp) != NULL )
 //				sprintf(DEFAULT_ERROR_STRING,
 //	"CAUTIOUS:  set_shape_flags:  Object \"%s\", zero dimension[%d] = %d",
 //				OBJ_NAME(dp),i,SHP_TYPE_DIM(shpp,i));
@@ -707,30 +707,14 @@ double get_dobj_il_flg(QSP_ARG_DECL  Data_Obj *dp)
 
 const char *get_dobj_prec_name(QSP_ARG_DECL  Data_Obj *dp)
 {
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ){
-//		ERROR1("CAUTIOUS:  null dp in get_dobj_prec_name()");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 
 	return OBJ_PREC_NAME(dp);
 }
 
 double get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
 {
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ){
-//		ERROR1("CAUTIOUS:  null dp in get_dobj_size()");
-//		IOS_RETURN_VAL(-1)
-//	}
-//	if( index < 0 || index > N_DIMENSIONS ){
-//		ERROR1("CAUTIOUS:  dimension index out of range");
-//		IOS_RETURN_VAL(-1)
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 	assert( index >= 0 && index < N_DIMENSIONS );
 
 	return( (double) OBJ_TYPE_DIM(dp,index) );
@@ -749,9 +733,9 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 
 	dp = (Data_Obj *)ip;
 
-	if( dp == NO_OBJ ) return 0.0;
+	if( dp == NULL ) return 0.0;
 	parent = OBJ_PARENT(dp);
-	if( parent == NO_OBJ ) return 0.0;
+	if( parent == NULL ) return 0.0;
 
 	// The position is relative to the parent
 	//
@@ -883,7 +867,7 @@ void xfer_dobj_flag(Data_Obj *dpto, Data_Obj *dpfr, uint32_t flagbit)
 
 static void propagate_up(Data_Obj *dp,uint32_t flagbit)
 {
-	if( dp->dt_parent != NO_OBJ ){
+	if( dp->dt_parent != NULL ){
 		xfer_dobj_flag(dp->dt_parent,dp,flagbit);
 		propagate_up(dp->dt_parent,flagbit);
 		// Do we need to propagate down from parent,
@@ -900,7 +884,7 @@ static void propagate_down(Data_Obj *dp,uint32_t flagbit)
 
 	if( dp->dt_children != NULL ){
 		np=QLIST_HEAD(dp->dt_children);
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			Data_Obj *child_dp;
 			child_dp = (Data_Obj *)np->n_data;
 			xfer_dobj_flag(child_dp,dp,flagbit);

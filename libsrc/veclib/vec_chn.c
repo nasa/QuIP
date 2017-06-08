@@ -14,7 +14,7 @@
 int is_chaining=0;
 static Chain *curr_cp=NULL;
 
-static Item_Type *vec_chain_itp=NO_ITEM_TYPE;
+static Item_Type *vec_chain_itp=NULL;
 static ITEM_INIT_FUNC(Chain,vec_chain,0)
 ITEM_CHECK_FUNC(Chain,vec_chain)
 ITEM_LIST_FUNC(Chain,vec_chain)
@@ -32,7 +32,7 @@ static void _del_chain(QSP_ARG_DECL  Chain *cp)
 //#endif /* CAUTIOUS */
 
 	assert( CHAIN_LIST(cp) != NULL );
-	while( (np=remTail(CHAIN_LIST(cp) )) != NO_NODE ){
+	while( (np=remTail(CHAIN_LIST(cp) )) != NULL ){
 		Vec_Chn_Blk *vcb_p;
 		/* BUG could release to pool */
 		vcb_p=NODE_DATA(np);
@@ -58,7 +58,7 @@ void exec_chain(Chain *cp)
 	assert( CHAIN_LIST(cp) != NULL );
 
 	np = QLIST_HEAD( CHAIN_LIST(cp) );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		vcb_p = (Vec_Chn_Blk *)NODE_DATA(np);
 		assert( CHAIN_FUNC(vcb_p) != NULL );
 
@@ -151,7 +151,7 @@ int chain_breaks(const char *routine_name)
 
 #define SCHECK(dp)				\
 						\
-	if( dp != NO_OBJ ){			\
+	if( dp != NULL ){			\
 		if( ! IS_STATIC(dp) ){		\
 			sprintf(DEFAULT_ERROR_STRING,	\
 "Object %s must be static for use in chain %s.",\

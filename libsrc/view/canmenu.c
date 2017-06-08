@@ -19,7 +19,7 @@ static int viewer_name_in_use(QSP_ARG_DECL const char *s)
 	Viewer *vp;
 
 	vp = VWR_OF(s);
-	if( vp != NO_VIEWER){
+	if( vp != NULL){
 		sprintf(ERROR_STRING,"viewer name \"%s\" in use",s);
 		WARN(ERROR_STRING);
 		return(1);
@@ -38,14 +38,14 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 	strcpy(name,s);
 	dx=(int)HOW_MANY("width");
 	dy=(int)HOW_MANY("height");
-	if( viewer_name_in_use(QSP_ARG name) ) return NO_VIEWER;
+	if( viewer_name_in_use(QSP_ARG name) ) return NULL;
 	if( dx <= 0 || dy <= 0 ){
 		WARN("viewer sizes must be positive");
-		return NO_VIEWER;
+		return NULL;
 	}
 	vp = viewer_init(QSP_ARG  name,dx,dy,viewer_type);
 
-	if( vp == NO_VIEWER ) return NO_VIEWER;
+	if( vp == NULL ) return NULL;
 #ifdef HAVE_X11
 	default_cmap(QSP_ARG  VW_DPYABLE(vp) );
 #endif /* HAVE_X11 */
@@ -62,13 +62,13 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 
 COMMAND_FUNC( mk_viewer )
 {
-	if( mk_new_viewer(QSP_ARG 0) == NO_VIEWER )
+	if( mk_new_viewer(QSP_ARG 0) == NULL )
 		WARN("Error creating viewer!?");
 }
 
 COMMAND_FUNC( mk_pixmap )
 {
-	if( mk_new_viewer(QSP_ARG VIEW_PIXMAP) == NO_VIEWER )
+	if( mk_new_viewer(QSP_ARG VIEW_PIXMAP) == NULL )
 		WARN("Error creating pixmap!?");
 }
 
@@ -76,7 +76,7 @@ COMMAND_FUNC( mk_plotter )
 {
 	Viewer *vp;
 
-	if( (vp=mk_new_viewer(QSP_ARG VIEW_PLOTTER)) == NO_VIEWER )
+	if( (vp=mk_new_viewer(QSP_ARG VIEW_PLOTTER)) == NULL )
 		WARN("Error creating plotter!?");
 #ifdef BUILD_FOR_IOS
 	else
@@ -91,13 +91,13 @@ COMMAND_FUNC( mk_2d_adjuster )
 
 	vp=mk_new_viewer(QSP_ARG VIEW_ADJUSTER);
 	s=NAMEOF("action text");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 	SET_VW_TEXT(vp, savestr(s) );
 }
 
 COMMAND_FUNC( mk_gl_window )
 {
-	if( mk_new_viewer(QSP_ARG VIEW_GL) == NO_VIEWER )
+	if( mk_new_viewer(QSP_ARG VIEW_GL) == NULL )
 		WARN("Error creating gl_window!?");
 }
 
@@ -114,7 +114,7 @@ COMMAND_FUNC( mk_button_arena )
 	b1=savestr(NAMEOF("left button text"));
 	b2=savestr(NAMEOF("middle button text"));
 	b3=savestr(NAMEOF("right button text"));
-	if( vp == NO_VIEWER ){
+	if( vp == NULL ){
 		rls_str(b1);
 		rls_str(b2);
 		rls_str(b3);
@@ -144,7 +144,7 @@ COMMAND_FUNC( reset_button_funcs )
 	b3=savestr(NAMEOF("right button text"));
 
 advise("NOTE:  reset_button_funcs:  actions command is deprecated, use event_action instead");
-	if( vp == NO_VIEWER ){
+	if( vp == NULL ){
 		rls_str(b1);
 		rls_str(b2);
 		rls_str(b3);
@@ -170,8 +170,8 @@ COMMAND_FUNC( do_set_event_action )
 	cep = PICK_CANVAS_EVENT("event type");
 	action_text = NAMEOF("action text");
 
-	if( vp == NO_VIEWER ) return;
-	if( cep == NO_CANVAS_EVENT ) return;
+	if( vp == NULL ) return;
+	if( cep == NULL ) return;
     
 	set_action_for_event(vp,cep,action_text);
 }
@@ -183,7 +183,7 @@ COMMAND_FUNC( mk_mousescape )
 
 	vp=mk_new_viewer(QSP_ARG VIEW_MOUSESCAPE);
 	s=NAMEOF("action text");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 	SET_VW_TEXT(vp, savestr(s));
 }
 
@@ -195,7 +195,7 @@ COMMAND_FUNC( reset_window_text )
 	vp=PICK_VWR("");
 	s=NAMEOF("window action text");
 
-	if( vp == NO_VIEWER) return;
+	if( vp == NULL) return;
 	if( VW_TEXT(vp) != NULL ) rls_str((char *)VW_TEXT(vp));
 
 	SET_VW_TEXT(vp, savestr(s) );
@@ -203,7 +203,7 @@ COMMAND_FUNC( reset_window_text )
 
 COMMAND_FUNC( mk_dragscape )
 {
-	if( mk_new_viewer(QSP_ARG VIEW_DRAGSCAPE) == NO_VIEWER )
+	if( mk_new_viewer(QSP_ARG VIEW_DRAGSCAPE) == NULL )
 		WARN("Error creating dragscape!?");
 }
 
@@ -212,7 +212,7 @@ COMMAND_FUNC( do_redraw )
 	Viewer *vp;
 
 	vp=PICK_VWR("");
-	if( vp == NO_VIEWER) return;
+	if( vp == NULL) return;
 
 	INSURE_X11_SERVER
 	redraw_viewer(QSP_ARG  vp);
@@ -230,7 +230,7 @@ COMMAND_FUNC( do_embed_image )
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
-	if( vp == NO_VIEWER || dp == NO_OBJ ){
+	if( vp == NULL || dp == NULL ){
 		WARN("can't embed image");
 		return;
 	}
@@ -268,7 +268,7 @@ COMMAND_FUNC( do_unembed_image )
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
-	if( vp == NO_VIEWER || dp == NO_OBJ ){
+	if( vp == NULL || dp == NULL ){
 		WARN("can't unembed image");
 		return;
 	}
@@ -287,7 +287,7 @@ COMMAND_FUNC( do_load_viewer )
 	vp = PICK_VWR("");
 	dp = PICK_OBJ("image");
 
-	if( vp == NO_VIEWER || dp == NO_OBJ ) return;
+	if( vp == NULL || dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"load_viewer");
 

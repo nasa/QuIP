@@ -208,14 +208,14 @@ static COMMAND_FUNC( do_dumpdraw )
 	 */
 
 	GET_VIEWER("do_dumpdraw")
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	dump_drawlist(QSP_ARG  vp);
 }
 
 static int bad_plot_vec2(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,const char *funcname)
 {
-	if( dp==NO_OBJ ) return 1;
+	if( dp==NULL ) return 1;
 
 	if( OBJ_PREC(dp) != PREC_SP && OBJ_PREC(dp) != PREC_DP ){
 		sprintf(ERROR_STRING,
@@ -236,7 +236,7 @@ static int bad_plot_vec2(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,
 
 static int bad_plot_vec(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,const char *funcname)
 {
-	if( dp==NO_OBJ ) return 1;
+	if( dp==NULL ) return 1;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
 		sprintf(ERROR_STRING,
@@ -319,8 +319,8 @@ static COMMAND_FUNC( do_cyplot )
 	dp=PICK_OBJ("data vector");
 	cdp=PICK_OBJ("color vector");
 
-	if( dp==NO_OBJ ) return;
-	if( cdp==NO_OBJ ) return;
+	if( dp==NULL ) return;
+	if( cdp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"cyplot")
 	INSIST_RAM_OBJ(cdp,"cyplot")
@@ -391,7 +391,7 @@ static COMMAND_FUNC( do_xyplot )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("data vector");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"xyplot")
 
@@ -427,7 +427,7 @@ static COMMAND_FUNC( do_xyzplot )
 	int pen_state=UP;
 
 	dp=PICK_OBJ("data vector");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"xyzplot")
 
@@ -553,7 +553,7 @@ COMMAND_FUNC( do_xp_menu )
 
 	INSURE_X11_SERVER
 	GET_VIEWER("xp_menu")
-	if( vp != NO_VIEWER )
+	if( vp != NULL )
 		xp_setup(QSP_ARG  vp);
 
 	PUSH_MENU(xplot);

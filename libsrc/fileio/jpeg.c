@@ -94,7 +94,7 @@ static const char * const cdjpeg_message_table[] = {
 
 static int32_t file_offset=0;
 static char mrkstr[128];
-static Image_File *jpeg_ifp=NO_IMAGE_FILE;
+static Image_File *jpeg_ifp=NULL;
 
 /* code borrowed from jcmarker.c */
 
@@ -706,7 +706,7 @@ int jpeg_to_dp(Data_Obj *dp,Jpeg_Hdr *jpeg_hp)
 	SET_OBJ_FRM_INC(dp,OBJ_ROW_INC(dp)*OBJ_ROWS(dp));
 	SET_OBJ_SEQ_INC(dp,OBJ_FRM_INC(dp)*OBJ_FRAMES(dp));
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_PARENT(dp, NULL);
 	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
@@ -1340,7 +1340,7 @@ static Image_File *finish_jpeg_open(QSP_ARG_DECL  Image_File *ifp)
 
 		if( rd_jpeg_hdr( ifp ) < 0 ){
 			jpeg_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		jpeg_to_dp(ifp->if_dp,ifp->if_hdr_p);
 
@@ -1393,7 +1393,7 @@ FIO_OPEN_FUNC( jpeg )
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_JPEG));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	return( finish_jpeg_open(QSP_ARG  ifp) );
 }
@@ -1403,7 +1403,7 @@ FIO_OPEN_FUNC( lml )
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_LML));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	return( finish_jpeg_open(QSP_ARG  ifp) );
 }
@@ -1625,7 +1625,7 @@ FIO_WT_FUNC( jpeg )
 	cinfop->input_components = OBJ_COMPS(dp);	/* BUG make sure 3 or 1 */
 	cinfop->num_components = OBJ_COMPS(dp);	/* BUG make sure 3 or 1 */
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		if( OBJ_COMPS(dp) == 1 ){
 			cinfop->in_color_space = JCS_GRAYSCALE;
 		} else if( OBJ_COMPS(dp) == 3 ){

@@ -46,10 +46,10 @@ if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 	sprintf(tname,"%s%s",DNAME_PREFIX,OBJ_NAME(dp));
 	tmp_dp = dup_obj(QSP_ARG  dp, tname);
 	givbuf(tname);
-	if( tmp_dp == NO_OBJ ){
+	if( tmp_dp == NULL ){
 		// This can happen if the object is subscripted,
 		// as the bracket characters are illegal in names
-		return NO_OBJ;
+		return NULL;
 	}
 
 	curr_ap = save_ap;
@@ -83,7 +83,7 @@ longlist(QSP_ARG  dp);
 		setvarg2(oap,c_dp,dp);
 		if( IS_BITMAP(dp) ){
 			SET_OA_SBM(oap,dp);
-			SET_OA_SRC1(oap,NO_OBJ);
+			SET_OA_SRC1(oap,NULL);
 		}
 
 		if( IS_REAL(dp) ) /* BUG case for QUAT too? */
@@ -105,7 +105,7 @@ longlist(QSP_ARG  dp);
 
 	gen_obj_dnload(QSP_ARG  tmp_dp, dp);
 
-	if( c_dp != NO_OBJ )
+	if( c_dp != NULL )
 		delvec(QSP_ARG  c_dp);
 
 	// BUG - when to delete?
@@ -132,7 +132,7 @@ static COMMAND_FUNC( do_read_obj )
 	dp=PICK_OBJ("");
 	s=NAMEOF("input file");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 #ifdef QUIP_DEBUG
 //if( debug ) dptrace(dp);
@@ -165,7 +165,7 @@ static COMMAND_FUNC( do_pipe_obj )
 	dp=PICK_OBJ("");
 	pp=PICK_PIPE("readable pipe");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	if( pp == NO_PIPE ) return;
 
 	// reading is tricker for non-ram, because
@@ -191,10 +191,10 @@ static COMMAND_FUNC( do_set_var_from_obj )
 	s=NAMEOF("variable");
 	dp=PICK_OBJ("");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( ! IS_STRING(dp) ){
 		sprintf(ERROR_STRING,"do_set_var_from_obj:  object %s (%s) does not have string precision",
@@ -216,7 +216,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	dp=PICK_OBJ("");
 	s=NAMEOF("string");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"set_string")
 
@@ -254,14 +254,14 @@ static COMMAND_FUNC( do_disp_obj )
 	FILE *fp;
 
 	dp=PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	// We used to insist that the object be in RAM,
 	// but we make life easier by automatically creating
 	// a temporary object...
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	fp = tell_msgfile(SINGLE_QSP_ARG);
 	if( fp == stdout ){
@@ -293,7 +293,7 @@ static COMMAND_FUNC( do_wrt_obj )
 	dp=PICK_OBJ("");
 	filename = NAMEOF("output file");
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	if( strcmp(filename,"-") && strcmp(filename,"stdout") ){
 		// BUG? we don't check append flag here,
@@ -318,7 +318,7 @@ static COMMAND_FUNC( do_wrt_obj )
 		}
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	pntvec(QSP_ARG  dp,fp);
 	if( fp != stdout && QS_MSG_FILE(THIS_QSP)!=NULL && fp != QS_MSG_FILE(THIS_QSP) ) {
@@ -338,7 +338,7 @@ static COMMAND_FUNC( do_append )
 	FILE *fp;
 
 	dp=PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	if( IS_IMAGE(dp) || IS_SEQUENCE(dp) )
 		if( !CONFIRM(
@@ -348,7 +348,7 @@ static COMMAND_FUNC( do_append )
 	if( !fp ) return;
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	pntvec(QSP_ARG  dp,fp);
 	fclose(fp);

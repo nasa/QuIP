@@ -144,7 +144,7 @@ COMMAND_FUNC( do_gpu_obj_dnload )
 	dpto = PICK_OBJ("destination RAM object");
 	dpfr = PICK_OBJ("source GPU object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	gpu_obj_dnload(QSP_ARG  dpto,dpfr);
 }
@@ -156,7 +156,7 @@ COMMAND_FUNC( do_gpu_obj_upload )
 	dpto = PICK_OBJ("destination GPU object");
 	dpfr = PICK_OBJ("source RAM object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	gpu_obj_upload(QSP_ARG  dpto,dpfr);
 }
@@ -171,7 +171,7 @@ COMMAND_FUNC( do_gpu_fwdfft )
 	dst_dp = PICK_OBJ("destination object");
 	src1_dp = PICK_OBJ("source object");
 
-	if( dst_dp == NO_OBJ || src1_dp == NO_OBJ) return;
+	if( dst_dp == NULL || src1_dp == NULL) return;
 
 	CHECK_GPU_OBJ(dst_dp);
 	CHECK_GPU_OBJ(src1_dp);

@@ -118,7 +118,7 @@ static COMMAND_FUNC( do_getmap )
 	Data_Obj *dp;
 
 	dp = (Data_Obj *) (*pick_func)("data object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	getmap( dp );
 }
 
@@ -127,7 +127,7 @@ static COMMAND_FUNC( do_setmap )
 	Data_Obj *dp;
 
 	dp = (Data_Obj *) (*pick_func)("data object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	setmap( QSP_ARG   dp );
 }
 
@@ -227,7 +227,7 @@ COMMAND_FUNC( do_lut_menu )
 	s=NAMEOF("name of viewer or panel");
 	gwp = find_genwin(QSP_ARG  s);
 
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 		/* find_genwin() has already printed an error msg? */
 		sprintf(ERROR_STRING,"No viewer or panel named \"%s\"!?",s);
 		WARN(ERROR_STRING);
@@ -236,7 +236,7 @@ COMMAND_FUNC( do_lut_menu )
 		Dpyable *dpyp;
 
 		dpyp = genwin_display(QSP_ARG  gwp);
-		if( dpyp != NO_DISPLAY ){
+		if( dpyp != NULL ){
 			current_dpyp = dpyp;
 		}
 #endif /* HAVE_X11 */

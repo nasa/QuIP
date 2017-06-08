@@ -41,23 +41,23 @@ static dimension_t _npixels=NO_PIXELS;
 static int cspread_inited=0;
 
 /* user-supplied images */
-static Data_Obj *deslum_dp=NO_OBJ;		/* desired luminance image */
-static Data_Obj *desrg_dp=NO_OBJ;		/* desired red-green image */
-static Data_Obj *desby_dp=NO_OBJ;		/* desired blue-yellow image */
-static Data_Obj *halftone_dp=NO_OBJ;		/* output composite halftone */
-static Data_Obj *lum_filt_dp=NO_OBJ;
-static Data_Obj *rg_filt_dp=NO_OBJ;
-static Data_Obj *by_filt_dp=NO_OBJ;
+static Data_Obj *deslum_dp=NULL;		/* desired luminance image */
+static Data_Obj *desrg_dp=NULL;		/* desired red-green image */
+static Data_Obj *desby_dp=NULL;		/* desired blue-yellow image */
+static Data_Obj *halftone_dp=NULL;		/* output composite halftone */
+static Data_Obj *lum_filt_dp=NULL;
+static Data_Obj *rg_filt_dp=NULL;
+static Data_Obj *by_filt_dp=NULL;
 static Data_Obj *rgb2opp_mat;			/* rgb to opponent matrix */
 
 /* program private */
-static Data_Obj *lum_ferr_dp=NO_OBJ;		/* filtered error images */
-static Data_Obj *rg_ferr_dp=NO_OBJ;
-static Data_Obj *by_ferr_dp=NO_OBJ;
+static Data_Obj *lum_ferr_dp=NULL;		/* filtered error images */
+static Data_Obj *rg_ferr_dp=NULL;
+static Data_Obj *by_ferr_dp=NULL;
 
-static Data_Obj *lum_err_dp=NO_OBJ;		/* error images */
-static Data_Obj *rg_err_dp=NO_OBJ;
-static Data_Obj *by_err_dp=NO_OBJ;
+static Data_Obj *lum_err_dp=NULL;		/* error images */
+static Data_Obj *rg_err_dp=NULL;
+static Data_Obj *by_err_dp=NULL;
 
 /* local prototypes */
 static int setup_clr_requantize(SINGLE_QSP_ARG_DECL);
@@ -170,7 +170,7 @@ static void act_init(SINGLE_QSP_ARG_DECL)
 sprintf(ERROR_STRING,"BEGIN act_init, matrix = %s",OBJ_NAME(rgb2opp_mat));
 advise(ERROR_STRING);
 */
-	if( rgb2opp_mat == NO_OBJ ){
+	if( rgb2opp_mat == NULL ){
 		NWARN("transformation matrix not defined");
 		return;
 	}
@@ -311,16 +311,16 @@ static int setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 	long tvec;
 	Precision *prec_p;
 
-	if( halftone_dp == NO_OBJ ){
+	if( halftone_dp == NULL ){
 		NWARN("output image not specified");
 		return(ERROR_RETURN);
 	}
-	if( deslum_dp == NO_OBJ || desrg_dp == NO_OBJ || desby_dp == NO_OBJ ){
+	if( deslum_dp == NULL || desrg_dp == NULL || desby_dp == NULL ){
 		NWARN("input images not specified");
 		return(ERROR_RETURN);
 	}
 
-	if( lum_filt_dp == NO_OBJ ){
+	if( lum_filt_dp == NULL ){
 		NWARN("filters not specified");
 		return(ERROR_RETURN);
 	}
@@ -340,7 +340,7 @@ static int setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 
 	_npixels = OBJ_ROWS(halftone_dp) * OBJ_COLS(halftone_dp);
 
-	if( lum_err_dp != NO_OBJ ){
+	if( lum_err_dp != NULL ){
 		delvec(QSP_ARG  lum_err_dp);
 		delvec(QSP_ARG  rg_err_dp);
 		delvec(QSP_ARG  by_err_dp);
@@ -356,7 +356,7 @@ static int setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
 	by_ferr_dp = mk_img(QSP_ARG  "by_ferror",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
-	if( lum_ferr_dp == NO_OBJ || rg_ferr_dp == NO_OBJ || by_ferr_dp == NO_OBJ ){
+	if( lum_ferr_dp == NULL || rg_ferr_dp == NULL || by_ferr_dp == NULL ){
 		NWARN("couldn't create filtered error images");
 		return(ERROR_RETURN);
 	}
@@ -367,7 +367,7 @@ static int setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
 	by_err_dp = mk_img(QSP_ARG  "by_error",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
-	if( lum_err_dp == NO_OBJ || rg_err_dp == NO_OBJ || by_err_dp == NO_OBJ ){
+	if( lum_err_dp == NULL || rg_err_dp == NULL || by_err_dp == NULL ){
 		NWARN("couldn't create error images");
 		return(ERROR_RETURN);
 	}
@@ -398,7 +398,7 @@ COMMAND_FUNC( init_clr_requant )
 
 	/* initialize error images */
 
-	if( halftone_dp == NO_OBJ ){
+	if( halftone_dp == NULL ){
 		NWARN("init_clr_requant:  no halftone image specified");
 		return;
 	}

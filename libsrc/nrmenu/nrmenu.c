@@ -23,7 +23,7 @@ static COMMAND_FUNC( do_choldc )
 	a_dp=PICK_OBJ( "input/output matrix" );
 	p_dp=PICK_OBJ( "elements diagonal matrix" );
 
-	if ( a_dp == NO_OBJ || p_dp == NO_OBJ )
+	if ( a_dp == NULL || p_dp == NULL )
 		return;
 
 	printf("nrmenu:nrmenu.c:pickobj %f\n", *((float *)OBJ_DATA_PTR(a_dp)));
@@ -40,7 +40,7 @@ static COMMAND_FUNC( do_svd )
 	w_dp=PICK_OBJ( "vector for singular values" );
 	v_dp=PICK_OBJ( "output v matrix" );
 
-	if( a_dp == NO_OBJ || w_dp == NO_OBJ || v_dp == NO_OBJ )
+	if( a_dp == NULL || w_dp == NULL || v_dp == NULL )
 		return;
 
 	dp_svd(a_dp,w_dp,v_dp);
@@ -57,8 +57,8 @@ static COMMAND_FUNC( do_svbksb )
 	v_dp=PICK_OBJ( "V matrix" );
 	b_dp=PICK_OBJ( "data vector" );
 
-	if( u_dp == NO_OBJ || w_dp == NO_OBJ || v_dp == NO_OBJ ||
-		x_dp == NO_OBJ || b_dp == NO_OBJ )
+	if( u_dp == NULL || w_dp == NULL || v_dp == NULL ||
+		x_dp == NULL || b_dp == NULL )
 		return;
 
 	dp_svbksb(x_dp,u_dp,w_dp,v_dp,b_dp);
@@ -73,7 +73,7 @@ static COMMAND_FUNC( do_jacobi )
 	d_dp = PICK_OBJ("destination vector for eigenvalues");
 	a_dp = PICK_OBJ("input matrix");
 
-	if( v_dp == NO_OBJ || d_dp == NO_OBJ || a_dp == NO_OBJ ) return;
+	if( v_dp == NULL || d_dp == NULL || a_dp == NULL ) return;
 
 	dp_jacobi(QSP_ARG  v_dp,d_dp,a_dp,&nrot);
 
@@ -88,7 +88,7 @@ static COMMAND_FUNC( do_eigsrt )
 	v_dp = PICK_OBJ("matrix of eigenvectors from Jacobi");
 	d_dp = PICK_OBJ("vector of eigenvalues from Jacobi");
 
-	if( v_dp == NO_OBJ || d_dp == NO_OBJ ) return;
+	if( v_dp == NULL || d_dp == NULL ) return;
 
 	dp_eigsrt(QSP_ARG  v_dp,d_dp);
 }
@@ -142,7 +142,7 @@ static COMMAND_FUNC( do_zroots )
 	r_dp=PICK_OBJ( "complex destination vector for roots" );
 	a_dp=PICK_OBJ( "polynomial coefficient vector" );
 
-	if( r_dp == NO_OBJ || a_dp == NO_OBJ ) return;
+	if( r_dp == NULL || a_dp == NULL ) return;
 
 	dp_zroots(r_dp,a_dp,polish_roots);
 }

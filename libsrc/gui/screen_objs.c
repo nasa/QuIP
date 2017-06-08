@@ -93,7 +93,7 @@ void show_panel_children(Panel_Obj *po)
 	Screen_Obj *sop;
 
 	np=QLIST_HEAD(PO_CHILDREN(po));
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		sop=(Screen_Obj *)np->n_data;
 		if( sop != NULL ){
 			sprintf(DEFAULT_ERROR_STRING,"\t%s",SOB_NAME(sop));
@@ -1410,7 +1410,7 @@ COMMAND_FUNC( clear_screen )
 	}
 #endif /* CAUTIOUS */
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		sop = (Screen_Obj *)np->n_data;
 		if( WIDGET_PANEL(sop) == po )
 			del_so(QSP_ARG  sop);
@@ -1556,7 +1556,7 @@ void mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp)
 	lp=item_list(QSP_ARG  itp);
 	if( lp == NULL ) return;
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		ip=(Item *)np->n_data;
 		if( n < MAX_STRINGS )
 			string_arr[n]=ip->item_name;
@@ -2012,7 +2012,7 @@ Node *first_panel_node(SINGLE_QSP_ARG_DECL)
 	List *lp;
 
 	lp=item_list(QSP_ARG  panel_obj_itp);
-	if( lp==NULL ) return(NO_NODE);
+	if( lp==NULL ) return(NULL);
 	else return(QLIST_HEAD(lp));
 }
 #endif /* NOT_YET */
@@ -2024,7 +2024,7 @@ Screen_Obj *find_object_at(Panel_Obj *po,int x,int y)
 	Screen_Obj *sop;
 
 	np=QLIST_HEAD(PO_CHILDREN(po));
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		sop=(Screen_Obj *)np->n_data;
 		if(	   x >= SOB_X(sop)
 			&& x <  (int) (SOB_X(sop)+SOB_DX(sop))

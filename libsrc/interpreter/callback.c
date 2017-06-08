@@ -50,16 +50,9 @@ void call_funcs_from_list(QSP_ARG_DECL  List *lp )
 	void (*func)(SINGLE_QSP_ARG_DECL);
 
 	np=QLIST_HEAD(lp);
+	assert( np != NULL );
 
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		WARN("CAUTIOUS:  call_funcs_from_list:  list is empty!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
-
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		func = (void (*)(SINGLE_QSP_ARG_DECL)) NODE_DATA(np);
 		(*func)(SINGLE_QSP_ARG);
 		np = NODE_NEXT(np);

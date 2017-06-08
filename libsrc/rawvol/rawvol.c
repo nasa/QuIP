@@ -76,8 +76,8 @@ ITEM_INTERFACE_DECLARATIONS(RV_Inode,rv_inode,0)
 #define ROOT_DIR_NAME	"/"
 
 static int n_extra_bytes=0;
-static RV_Inode *rv_in_tbl=NO_INODE;
-static RV_Super *rv_sbp=NO_SUPER;	// only one at a time?
+static RV_Inode *rv_in_tbl=NULL;
+static RV_Super *rv_sbp=NULL;	// only one at a time?
 static int use_osync=0;			// synchronous writes by default
 
 /* We use this flag, so that the first time we create the volume,
@@ -106,7 +106,7 @@ static char *rv_stp;		/* string table pointer */
 
 #define CHECK_VOLUME(s)							\
 									\
-	if( rv_sbp == NO_SUPER ){					\
+	if( rv_sbp == NULL ){					\
 		sprintf(ERROR_STRING,"%s:  no raw volume open",s);	\
 		WARN(ERROR_STRING);					\
 		return;							\
@@ -186,7 +186,7 @@ static void copy_rv_inode(RV_Inode *dst_inp, RV_Inode *src_inp)
 
 int rv_is_open(void)
 {
-	if( rv_sbp == NO_SUPER )
+	if( rv_sbp == NULL )
 		return 0;
 	else
 		return 1;
@@ -303,7 +303,7 @@ int insure_default_rv(SINGLE_QSP_ARG_DECL)
 	if (!rawvol_debug)
 		rawvol_debug =  add_debug_module(QSP_ARG  "rawvol");
 
-	if( rv_sbp != NO_SUPER ){
+	if( rv_sbp != NULL ){
 		sprintf(ERROR_STRING,"insure_default_rv:  raw volume already open");
 		WARN(ERROR_STRING);
 		return(-1);
@@ -337,13 +337,6 @@ static void remove_path_component(void)
 	char *s;
 
 	s = &rv_pathname[ strlen(rv_pathname)-1 ];	/* pt to last char */
-//#ifdef CAUTIOUS
-//	if( *s == '/' ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  remove_path_component:  nothing to remove (path=%s)",rv_pathname);
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( *s != '/' );
 
 	while( *s != '/' )
@@ -362,12 +355,12 @@ static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 
 	sprintf(ctxname,"RV_Inode.%s",rv_pathname);
 	icp = ctx_of(QSP_ARG  ctxname);
-	if( icp == NO_ITEM_CONTEXT ){
-		if( rv_inode_itp == NO_ITEM_TYPE )
+	if( icp == NULL ){
+		if( rv_inode_itp == NULL )
 			rv_inode_itp = new_item_type(QSP_ARG  "RV_Inode", DEFAULT_CONTAINER_TYPE);
 
 		icp = create_item_context(QSP_ARG  rv_inode_itp,rv_pathname);
-		if( icp == NO_ITEM_CONTEXT ){
+		if( icp == NULL ){
 			sprintf(ERROR_STRING,"error creating rv context %s",rv_pathname);
 			WARN(ERROR_STRING);
 			return;
@@ -422,14 +415,6 @@ static void scan_directory(QSP_ARG_DECL  RV_Inode *dk_inp,
 	short *sp;
 	int not_root_dir;
 
-//#ifdef CAUTIOUS
-//	if( RV_NAME_IDX(dk_inp) < 0 || RV_NAME_IDX(dk_inp) >= total_string_bytes ){
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS:  scan_directory:  illegal string index %d (0x%x) in inode",
-//			RV_NAME_IDX(dk_inp),RV_NAME_IDX(dk_inp));
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( RV_NAME_IDX(dk_inp) >= 0 && RV_NAME_IDX(dk_inp) < total_string_bytes );
 
 	not_root_dir = strcmp( rv_stp+RV_NAME_IDX(dk_inp), ROOT_DIR_NAME );
@@ -488,24 +473,7 @@ static void scan_inode(QSP_ARG_DECL  RV_Inode *dk_inp)
 	RV_Inode *inp;
 	int i;
 
-//#ifdef CAUTIOUS
-//	if( ! RV_INUSE(dk_inp) ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  scan_inode:  inode not in use!?");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( RV_INUSE(dk_inp) );
-
-//#ifdef CAUTIOUS
-//	if( RV_SCANNED(dk_inp) ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  Inode for raw volume file \"%s\" already scanned!?",
-//			rv_stp+RV_NAME_IDX(dk_inp));
-//		ERROR1(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( ! RV_SCANNED(dk_inp) );
 
 	/* allocate this inode block */
@@ -514,16 +482,6 @@ static void scan_inode(QSP_ARG_DECL  RV_Inode *dk_inp)
 	RV_INODE_IDX(dk_inp) = dk_inp-rv_in_tbl;
 
 	/* allocate the string */
-//#ifdef CAUTIOUS
-//	if( RV_NAME_IDX(dk_inp) < 0
-//		|| RV_NAME_IDX(dk_inp) >= (long)(rv_sbp->rv_nsb*BLOCK_SIZE) ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  disk inode string index %d (0x%x) is out of range for volume with %d string blocks",
-//				RV_NAME_IDX(dk_inp),
-//				RV_NAME_IDX(dk_inp),
-//				rv_sbp->rv_nsb);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( RV_NAME_IDX(dk_inp) >= 0 && RV_NAME_IDX(dk_inp) < (long)(rv_sbp->rv_nsb*BLOCK_SIZE) );
 
 	len = strlen( rv_stp+RV_NAME_IDX(dk_inp) )  + 1;
@@ -562,7 +520,7 @@ advise(ERROR_STRING);
 
 //fprintf(stderr,"creating new heap rv_inode '%s'\n",rv_stp+RV_NAME_IDX(dk_inp));
 	inp = new_rv_inode(QSP_ARG  rv_stp+RV_NAME_IDX(dk_inp));
-	if( inp == NO_INODE ){
+	if( inp == NULL ){
 		sprintf(ERROR_STRING,
 			"Couldn't create working copy of raw volume file %s",
 			rv_stp+RV_NAME_IDX(dk_inp));
@@ -605,11 +563,11 @@ advise(ERROR_STRING);
 		COPY_INCS( SHP_TYPE_INCS( RV_MOVIE_SHAPE(inp) ), &RV_MOVIE_INCS(inp));
 		COPY_INCS( SHP_MACH_INCS( RV_MOVIE_SHAPE(inp) ), &RV_MOVIE_INCS(inp));
 		// set the flags
-		set_shape_flags(RV_MOVIE_SHAPE(inp),NO_OBJ,AUTO_SHAPE);
+		set_shape_flags(RV_MOVIE_SHAPE(inp),NULL,AUTO_SHAPE);
 
 		/* the image file might be open already if we are rescanning */
 		ifp = img_file_of(QSP_ARG  RV_NAME(inp));
-		if( ifp != NO_IMAGE_FILE ){
+		if( ifp != NULL ){
 			close_image_file(QSP_ARG  ifp);
 		}
 
@@ -649,13 +607,7 @@ static void link_directory(QSP_ARG_DECL  RV_Inode *dk_inp)
 		Node *np;
 		inp2 = rv_in_tbl[*sp].rvi_inp; /* look up an inode from its on-disk index */
 
-//#ifdef CAUTIOUS
-//		if( inp2 == NO_INODE ){
-//			sprintf(ERROR_STRING,"CAUTIOUS:  link_directory:  missing inode %d",*sp);
-//			ERROR1(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
-		assert( inp2 != NO_INODE );
+		assert( inp2 != NULL );
 
 		np = mk_node(inp2);
 		addTail(dk_inp->rvi_inp->rvi_lp,np);
@@ -684,7 +636,7 @@ void read_rv_super(QSP_ARG_DECL  const char *vol_name)
 	RV_Inode *inp;
 	char *s_ptr;
 
-	if( rv_sbp != NO_SUPER ){
+	if( rv_sbp != NULL ){
 		/* check and see if this one is already open! */
 		for(i=0;i<rv_sbp->rv_ndisks;i++){
 			if( !strcmp(rv_sbp->rv_diskname[i],vol_name) ){
@@ -914,16 +866,12 @@ advise(ERROR_STRING);
 	if( ! in_mkfs ){
 		scan_directory(QSP_ARG  &rv_in_tbl[0],scan_inode);		/* this will recursively descend all the directories */
 		scan_directory(QSP_ARG  &rv_in_tbl[0],link_directory);
-		RV_PARENT(rv_in_tbl[0].rvi_inp) = NO_INODE;
+		RV_PARENT(rv_in_tbl[0].rvi_inp) = NULL;
 
 		if( rv_sbp->rv_magic == RV_MAGIC2 ){
 			RV_Inode *inp;
 			inp=rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
-//#ifdef CAUTIOUS
-//			if( inp==NO_INODE )
-//				ERROR1("CAUTIOUS:  no root directory");
-//#endif /* CAUTIOUS */
-			assert( inp != NO_INODE );
+			assert( inp != NULL );
 
 			rv_sbp->rv_cwd = inp;
 			set_pathname_context(SINGLE_QSP_ARG);
@@ -942,7 +890,7 @@ errorB:
 	mem_release(rv_sbp);
 
 errorA:
-	rv_sbp = NO_SUPER;
+	rv_sbp = NULL;
 	close(fd_arr[0]);
 } /* end read_rv_super */
 
@@ -991,12 +939,6 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	int i;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( !RV_SCANNED(inp) ){
-//		WARN("CAUTIOUS:  can't sync an unscanned inode!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( RV_SCANNED(inp) );
 
 	/* we should have already removed all the child inodes */
@@ -1036,18 +978,11 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 		givspace(&rv_data_freelist,RV_N_BLOCKS(inp),RV_ADDR(inp));
 	}
 
-	if( RV_PARENT(inp) != NO_INODE ){
+	if( RV_PARENT(inp) != NULL ){
 //fprintf(stderr,"rls_inode calling remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
 		np=remData(RV_PARENT(inp)->rvi_lp,inp);
 //fprintf(stderr,"rls_inode back from remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
-//#ifdef CAUTIOUS
-//		if( np==NO_NODE ){
-//			sprintf(ERROR_STRING,"CAUTIOUS:  error removing inode %s from list of parent %s",
-//				RV_NAME(inp),RV_NAME(RV_PARENT(inp)));
-//			ERROR1(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
-		assert( np != NO_NODE );
+		assert( np != NULL );
 
 		rls_node(np);
 	}
@@ -1084,14 +1019,14 @@ static int rm_inode(QSP_ARG_DECL  RV_Inode *inp, int check_permissions)
 		 */
 
 		ifp = img_file_of(QSP_ARG  RV_NAME(inp));
-		if( ifp != NO_IMAGE_FILE )
+		if( ifp != NULL )
 			GENERIC_IMGFILE_CLOSE(ifp);
 	}
 
 	if( IS_DIRECTORY(inp) ){
 		Node *np;
 		rv_pushd(QSP_ARG  RV_NAME(inp));
-		while( status == 0 && (np=QLIST_HEAD(inp->rvi_lp)) != NO_NODE ){
+		while( status == 0 && (np=QLIST_HEAD(inp->rvi_lp)) != NULL ){
 			status = rm_inode(QSP_ARG  (RV_Inode *)np->n_data,check_permissions);
 		}
 		rv_popd(SINGLE_QSP_ARG);
@@ -1109,7 +1044,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 	int i;
 	RV_Inode *inp;
 
-	if( rv_sbp == NO_SUPER ){
+	if( rv_sbp == NULL ){
 		WARN("rv_close:  no raw volume open");
 		return;
 	}
@@ -1120,10 +1055,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 	if( rv_cd(QSP_ARG  ROOT_DIR_NAME) < 0 ) WARN("unable to cd /");
 	inp=get_rv_inode(QSP_ARG  ROOT_DIR_NAME);
 
-//#ifdef CAUTIOUS
-//	if( inp == NO_INODE ) ERROR1("CAUTIOUS:  missing root inode");
-//#endif /* CAUTIOUS */
-	assert( inp != NO_INODE );
+	assert( inp != NULL );
 
 	/* why rm_inode when all we really want to do is clear the memory? */
 	/* rv_sync above flushes to disk */
@@ -1147,7 +1079,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 
 	/* do this here to fix bug? */
 	mem_release(rv_sbp);
-	rv_sbp = NO_SUPER;
+	rv_sbp = NULL;
 
 	while( eltcount( CONTEXT_LIST(rv_inode_itp) ) > 1 )
 		pop_item_context(QSP_ARG  rv_inode_itp);
@@ -1224,18 +1156,11 @@ static void sync_dir_data(QSP_ARG_DECL  RV_Inode *inp)
 
 	/* now do we find the context? */
 
-//#ifdef CAUTIOUS
-//	/* BUG we need to to this check somewhere else! */
-//	if( eltcount(inp->rvi_lp) > (BLOCK_SIZE*rv_sbp->rv_ndisks)/sizeof(short) ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  RV directory %s has too many entries!?",RV_NAME(inp));
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( eltcount(inp->rvi_lp) <= (BLOCK_SIZE*rv_sbp->rv_ndisks)/sizeof(short) );
 
 	np=QLIST_HEAD(inp->rvi_lp);
 	sp=(short *)data_blocks;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		RV_Inode *inp2;
 		inp2 = (RV_Inode *)np->n_data;
 		*sp++ = (short) inp2->rvi_ini;	/* remember the inode number of this child */
@@ -1271,17 +1196,17 @@ static RV_Inode *search_directory(RV_Inode *inp, int index)
 	Node *np;
 
 	np=QLIST_HEAD(inp->rvi_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		inp=(RV_Inode *)np->n_data;
 		if( RV_INODE_IDX(inp) == index ) return(inp);
 		if( IS_DIRECTORY(inp) ){
 			inp=search_directory(inp,index);
-			if( inp != NO_INODE && RV_INODE_IDX(inp) == index )
+			if( inp != NULL && RV_INODE_IDX(inp) == index )
 				return(inp);
 		}
 		np=np->n_next;
 	}
-	return(NO_INODE);
+	return(NULL);
 }
 #endif /* UNUSED */
 
@@ -1375,17 +1300,17 @@ RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,uint32_t size)
 	RV_Inode *inp;
 	int i;
 
-	if( rv_sbp == NO_SUPER ){
+	if( rv_sbp == NULL ){
 		sprintf(ERROR_STRING,
 			"no raw volume open, can't create new file %s",name);
 		WARN(ERROR_STRING);
-		return(NO_INODE);
+		return(NULL);
 	}
 
 	/* make sure name is unique */
 
 	inp = new_rv_inode(QSP_ARG  name);			/* get a struct from the heap */
-	if( inp == NO_INODE ) return(inp);
+	if( inp == NULL ) return(inp);
 
 	/* get space in the disk image for the name */
 
@@ -1449,14 +1374,14 @@ advise(ERROR_STRING);
 
 	/* we add this file to the current directory - UNLESS we are creating the root dir */
 	/* BUT we also have to worry about the . entry in the root directory... */
-	if( (!in_mkfs) && rv_sbp->rv_cwd!=NO_INODE ){
+	if( (!in_mkfs) && rv_sbp->rv_cwd!=NULL ){
 		Node *np;
 		np = mk_node(inp);
 //fprintf(stderr,"rv_newfile adding inode to directory list 0x%lx...\n",(long)rv_sbp->rv_cwd->rvi_lp);
 		addTail(rv_sbp->rv_cwd->rvi_lp,np);
 		RV_PARENT(inp) = rv_sbp->rv_cwd;
 	} else {
-		RV_PARENT(inp) = NO_INODE;
+		RV_PARENT(inp) = NULL;
 	}
 
 	SET_RV_MOVIE_SHAPE(inp,ALLOC_SHAPE);
@@ -1478,7 +1403,7 @@ errorB:
 	givspace(&rv_st_freelist,strlen(name)+1,RV_NAME_IDX(inp));
 errorA:
 	del_rv_inode(QSP_ARG  inp);		/* remove from database */
-	return(NO_INODE);
+	return(NULL);
 } /* end rv_newfile */
 
 void xfer_frame_info(uint32_t *lp,int index,RV_Inode *inp)
@@ -1486,14 +1411,6 @@ void xfer_frame_info(uint32_t *lp,int index,RV_Inode *inp)
 	uint32_t *src;
 	int n;
 
-//#ifdef CAUTIOUS
-//	if( inp->rvi_fi[index].fi_nsaved <= 0 ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//			"CAUTIOUS:  rv file %s has no saved frames index %d",
-//			RV_NAME(inp),index);
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( inp->rvi_fi[index].fi_nsaved > 0 );
 
 	src = (uint32_t *)( rv_stp + ALIGN(inp->rvi_fi[index].fi_savei) );
@@ -1509,12 +1426,6 @@ int remember_frame_info(RV_Inode *inp,int index,USHORT_ARG n,uint32_t *frames)
 	uint32_t len;
 	long i_addr;
 
-//#ifdef CAUTIOUS
-//	if( index<0 || index>=N_RV_FRAMEINFOS ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  error index %d out of range",index);
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index < N_RV_FRAMEINFOS );
 
 	/* find space for the frames in the string table */
@@ -1585,12 +1496,6 @@ static void deny_root_access( int index )
 {
 	int i;
 
-//#ifdef CAUTIOUS
-//	if( rv_sbp->rv_n_super_users <= 0 ){
-//		NWARN("CAUTIOUS:  deny_root_access:  no root users!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( rv_sbp->rv_n_super_users > 0 );
 
 	/* shift valid id's down to fill space vacated by denied id */
@@ -1645,13 +1550,6 @@ static void show_root_users(SINGLE_QSP_ARG_DECL)
 		prt_msg("\nNo users with root privileges");
 		return;
 	}
-//#ifdef CAUTIOUS
-//	if( rv_sbp->rv_n_super_users < 0 || rv_sbp->rv_n_super_users > MAX_RV_SUPER_USERS ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  Corrupt rv_n_super_users %d",
-//			rv_sbp->rv_n_super_users);
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	// CHECK BUG? - changed <= to < in test below...
 	assert( rv_sbp->rv_n_super_users >= 0 && rv_sbp->rv_n_super_users < MAX_RV_SUPER_USERS );
 
@@ -1678,7 +1576,7 @@ int grant_root_access(QSP_ARG_DECL  const char *user_name)
 	long l_uid;
 	int i;
 
-	if( rv_sbp == NO_SUPER ){
+	if( rv_sbp == NULL ){
 		WARN("grant_root_access:  no raw volume open");
 		sprintf(ERROR_STRING,"Unable to grant rawvol root access to user %s",user_name);
 		advise(ERROR_STRING);
@@ -1748,7 +1646,7 @@ static int rv_step_dir(QSP_ARG_DECL  const char *dirname)
 	RV_Inode *inp;
 
 	if( !strcmp(dirname,"..") ){
-		if( RV_PARENT(rv_sbp->rv_cwd) == NO_INODE ){
+		if( RV_PARENT(rv_sbp->rv_cwd) == NULL ){
 			WARN("Current directory has no parent, can't cd ..");
 			return(-1);
 		} else {
@@ -1761,7 +1659,7 @@ static int rv_step_dir(QSP_ARG_DECL  const char *dirname)
 	} else if( !strcmp(dirname,".") ) return(0);	/* a noop */
 
 	inp = rv_inode_of(QSP_ARG  dirname);
-	if( inp==NO_INODE ){
+	if( inp==NULL ){
 		sprintf(ERROR_STRING,"RV directory \"%s\" does not exist",dirname);
 		WARN(ERROR_STRING);
 		return(-1);
@@ -1800,7 +1698,7 @@ int rv_rmfile(QSP_ARG_DECL  const char *name)
 				WARN(ERROR_STRING);
 			}
 			inp = get_rv_inode(QSP_ARG  s);
-			if( inp==NO_INODE ) return(-1);
+			if( inp==NULL ) return(-1);
 			status=rm_inode(QSP_ARG  inp,1);
 		} else {
 			if( !pushed ){
@@ -1823,7 +1721,7 @@ void rv_lsfile(QSP_ARG_DECL  const char *name)
 	RV_Inode *inp;
 
 	inp = rv_inode_of(QSP_ARG  name);
-	if( inp==NO_INODE ) return;
+	if( inp==NULL ) return;
 
 	rv_ls_inode(QSP_ARG  inp);
 }
@@ -2037,7 +1935,7 @@ void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32
 	sbp->rv_ndb = nb;
 	//sbp->rv_flags = 0;
 	sbp->rv_n_super_users = 0;
-	sbp->rv_cwd = NO_INODE;
+	sbp->rv_cwd = NULL;
 
 	if( flush_super(QSP_ARG  sbp) < 0 ) goto errorB;
 
@@ -2111,7 +2009,7 @@ void rv_ls_cwd(SINGLE_QSP_ARG_DECL)
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		rv_ls_inode(QSP_ARG   (RV_Inode *)np->n_data );
 		np = np->n_next;
 	}
@@ -2131,7 +2029,7 @@ void rv_rm_cwd(SINGLE_QSP_ARG_DECL)
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		RV_Inode *inp;
 		inp = (RV_Inode *)np->n_data ;
 #ifdef DEBUG
@@ -2152,17 +2050,10 @@ static void descend_directory( QSP_ARG_DECL  RV_Inode *inp, void (*func)(QSP_ARG
 	Node *np;
 	RV_Inode *child_inp;
 
-//#ifdef CAUTIOUS
-//	if( !IS_DIRECTORY(inp) ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  descend_directory:  inode %s is not a directory!?",RV_NAME(inp));
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( IS_DIRECTORY(inp) );
 
 	np=QLIST_HEAD(inp->rvi_lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		child_inp = (RV_Inode *)np->n_data;
 		if( IS_DIRECTORY(child_inp) && strcmp(RV_NAME(child_inp),".")
 			&& strcmp(RV_NAME(child_inp),"..") ){
@@ -2192,11 +2083,7 @@ void traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
 //fflush(stderr);
 
 	inp = rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
-//#ifdef CAUTIOUS
-//	if( inp == NO_INODE )
-//		ERROR1("CAUTIOUS:  traverse_rv_inodes:  root inode is missing!?");
-//#endif /* CAUTIOUS */
-	assert( inp != NO_INODE );
+	assert( inp != NULL );
 
 	rv_pushd(QSP_ARG  ROOT_DIR_NAME);
 	descend_directory(QSP_ARG  inp,func);
@@ -2217,7 +2104,7 @@ static void traverse_list( QSP_ARG_DECL  List *lp, void (*func)(QSP_ARG_DECL  RV
 	if( lp == NULL ) return;
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE ){
+	while(np!=NULL ){
 		(*func)(QSP_ARG  (RV_Inode *)np->n_data);
 		np=np->n_next;
 	}
@@ -2394,14 +2281,14 @@ int creat_rv_file(QSP_ARG_DECL  const char *filename,uint32_t size,int *fd_arr)
 	RV_Inode *inp;
 
 	inp = rv_inode_of(QSP_ARG  filename);
-	if( inp != NO_INODE ){
+	if( inp != NULL ){
 		sprintf(ERROR_STRING,"Deleting old version of file %s",filename);
 		advise(ERROR_STRING);
 		rv_rmfile(QSP_ARG  filename);
 	}
 
 	inp = rv_newfile(QSP_ARG  filename,size);
-	if( inp == NO_INODE ) return(-1);
+	if( inp == NULL ) return(-1);
 
 	/* now queue up the file descriptors */
 
@@ -2422,7 +2309,7 @@ static void make_link(QSP_ARG_DECL  const char *name,RV_Inode *inp)
 	RV_Inode *new_inp;
 
 	new_inp = rv_newfile(QSP_ARG  name,0);
-	if( new_inp != NO_INODE ){
+	if( new_inp != NULL ){
 		SET_RV_FLAG_BITS(new_inp, RVI_LINK);
 		rv_in_tbl[RV_INODE_IDX(new_inp)].rvi_flags = RV_FLAGS(new_inp);
 		new_inp->rvi_u.u_li.li_inp = inp;
@@ -2436,11 +2323,11 @@ static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
 
 	CHECK_VOLUME("rv_mksubdir")
 
-	if( rv_sbp->rv_cwd != NO_INODE ){	/* not root directory */
+	if( rv_sbp->rv_cwd != NULL ){	/* not root directory */
 		Node *np;
 		/* make sure that this directory does not exist already */
 		np = QLIST_HEAD(rv_sbp->rv_cwd->rvi_lp);
-		while( np != NO_NODE ){
+		while( np != NULL ){
 			inp=(RV_Inode *)np->n_data;
 			if( !strcmp(dirname,RV_NAME(inp)) ){
 				sprintf(ERROR_STRING,
@@ -2452,7 +2339,7 @@ static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
 		}
 	}
 	inp = rv_newfile(QSP_ARG  dirname,1);
-	if( inp == NO_INODE ){
+	if( inp == NULL ){
 		sprintf(ERROR_STRING,"error creating rawvol subdirectory %s",dirname);
 		WARN(ERROR_STRING);
 		return;
@@ -2461,14 +2348,14 @@ static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
 	rv_in_tbl[RV_INODE_IDX(inp)].rvi_mode |= DIRECTORY_BIT;	/* make the change to the disk image too */
 	inp->rvi_lp = new_list();
 
-	if( rv_sbp->rv_cwd == NO_INODE ){
+	if( rv_sbp->rv_cwd == NULL ){
 		rv_sbp->rv_cwd = inp;
 	}
 
 	rv_pushd(QSP_ARG  dirname);
 
 	make_link(QSP_ARG  ".",inp);
-	if( RV_PARENT(inp) != NO_INODE ){
+	if( RV_PARENT(inp) != NULL ){
 		make_link(QSP_ARG  "..",RV_PARENT(inp));
 	}
 
@@ -2542,14 +2429,6 @@ int rv_frame_seek(QSP_ARG_DECL  RV_Inode *inp,uint32_t frame_index)
 	int i;
 	uint32_t n_pix_bytes;
 
-//#ifdef CAUTIOUS
-//	if( frame_index >= SHP_FRAMES(RV_MOVIE_SHAPE(inp)) ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  rv_frame_seek:  requested frame index %d too big for file %s (0-%d)",
-//				frame_index,RV_NAME(inp),SHP_FRAMES(RV_MOVIE_SHAPE(inp))-1);
-//		WARN(ERROR_STRING);
-//		return(-1);
-//	}
-//#endif /* CAUTIOUS */
 	assert( frame_index < SHP_FRAMES(RV_MOVIE_SHAPE(inp)) );
 
 	/* BUG we need a set of utility routines to do these calcs... */
@@ -2622,11 +2501,11 @@ int rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
 	RV_Inode *inp;
 
 	inp = get_rv_inode(QSP_ARG  filename);
-	if( inp == NO_INODE ) return(-1);
+	if( inp == NULL ) return(-1);
 
 	COPY_SHAPE(RV_MOVIE_SHAPE(inp), shpp);
 
-	set_shape_flags(RV_MOVIE_SHAPE(inp),NO_OBJ,AUTO_SHAPE);
+	set_shape_flags(RV_MOVIE_SHAPE(inp),NULL,AUTO_SHAPE);
 
 	// also update the area that will be written to disk...
 	COPY_DIMS( &RV_MOVIE_DIMS(inp), SHP_TYPE_DIMS( RV_MOVIE_SHAPE(inp) ) );
@@ -2718,7 +2597,7 @@ int rv_realloc(QSP_ARG_DECL  const char *name,uint32_t size)
 	RV_Inode *inp;
 
 	inp = rv_inode_of(QSP_ARG  name);
-	if( inp == NO_INODE ){
+	if( inp == NULL ){
 		sprintf(ERROR_STRING,"rv_realloc:  no file %s",name);
 		WARN(ERROR_STRING);
 		return(-1);
@@ -2825,11 +2704,7 @@ void rv_pwd(SINGLE_QSP_ARG_DECL)
 {
 	CHECK_VOLUME("rv_pwd")
 
-//#ifdef CAUTIOUS
-//	if( rv_sbp->rv_cwd == NO_INODE )
-//		NERROR1("CAUTIOUS:  no rv cwd!?");
-//#endif /* CAUTIOUS */
-	assert( rv_sbp->rv_cwd != NO_INODE );
+	assert( rv_sbp->rv_cwd != NULL );
 
 	sprintf(msg_str,"current working directory is %s",rv_pathname );
 	prt_msg(msg_str);
@@ -2862,10 +2737,6 @@ int legal_rv_filename(const char *name)
 
 int32_t n_rv_disks(void)
 {
-//#ifdef CAUTIOUS
-//	if( rv_sbp == NULL )
-//		error1(DEFAULT_QSP_ARG  "CAUTIOUS:  n_rv_disks:  no RV superblock!?");
-//#endif // CAUTIOUS
 	assert( rv_sbp != NULL );
 
 	return rv_sbp->rv_ndisks;

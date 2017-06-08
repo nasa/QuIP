@@ -273,7 +273,7 @@ void setmap(QSP_ARG_DECL  Data_Obj *dp)
 	short i,r,g,b;
 	char str[256];
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
 		NWARN("setmap(): precision must be float");
@@ -319,7 +319,7 @@ void getmap(Data_Obj *dp)
 	short i;
 	char str[256];
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
 		NWARN("getmap(): precision must be float");
@@ -371,7 +371,7 @@ void print_cm(QSP_ARG_DECL  u_int from, u_int to)
 void select_cmap_display(Dpyable *dpyp)
 {
 #ifdef CAUTIOUS
-	if( dpyp == NO_DISPLAY ){
+	if( dpyp == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  select_cmap_display:  null display!?");
 		NWARN(DEFAULT_ERROR_STRING);
 		return;
@@ -401,7 +401,7 @@ int color_index_out_of_range(QSP_ARG_DECL  unsigned int index)
 #ifdef HAVE_X11
 	// This condition can happen if the window name has a space!?
 	// BUG we should replace with underscore...
-	if(  DPA_CMAP_OBJ(current_dpyp) == NO_OBJ )
+	if(  DPA_CMAP_OBJ(current_dpyp) == NULL )
 		return 1;
 
 	if( /* index < 0 || */	// index is unsigned...
@@ -424,7 +424,7 @@ void set_colormap(Data_Obj *dp)
 
 #ifdef HAVE_X11
 #ifdef CAUTIOUS
-	if( current_dpyp == NO_DISPLAY )
+	if( current_dpyp == NULL )
 		NERROR1("CAUTIOUS:  set_colormap:  no current window");
 	else
 #endif /* CAUTIOUS */

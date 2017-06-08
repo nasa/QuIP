@@ -37,16 +37,16 @@ static double the_sos=NO_VALUE;
 static dimension_t _npixels=NO_PIXELS;
 
 /* user-supplied images */
-static Data_Obj *_gdp=NO_OBJ;		/* input grayscale image */
-static Data_Obj *_hdp=NO_OBJ;		/* output halftone */
-static Data_Obj *_fdp=NO_OBJ;		/* filter */
+static Data_Obj *_gdp=NULL;		/* input grayscale image */
+static Data_Obj *_hdp=NULL;		/* output halftone */
+static Data_Obj *_fdp=NULL;		/* filter */
 static float *_gptr;
 static float *_hptr;
 
 /* program-private images */
-static Data_Obj *_edp=NO_OBJ;		/* error image */
-static Data_Obj *_fedp=NO_OBJ;		/* doubly filtered error */
-static Data_Obj *_ffdp=NO_OBJ;		/* double filter */
+static Data_Obj *_edp=NULL;		/* error image */
+static Data_Obj *_fedp=NULL;		/* doubly filtered error */
+static Data_Obj *_ffdp=NULL;		/* double filter */
 static float *_eptr;
 static float *_feptr;
 /* static float *_ffptr; */
@@ -75,15 +75,15 @@ static void check_posn(incr_t *posn, Data_Obj *dp)
 
 int setup_requantize3d(SINGLE_QSP_ARG_DECL)
 {
-	if( _hdp == NO_OBJ ){
+	if( _hdp == NULL ){
 		NWARN("output movie not specified");
 		return(-1);
 	}
-	if( _gdp == NO_OBJ ){
+	if( _gdp == NULL ){
 		NWARN("input movie not specified");
 		return(-1);
 	}
-	if( _fdp == NO_OBJ ){
+	if( _fdp == NULL ){
 		NWARN("filter not specified");
 		return(-1);
 	}
@@ -103,21 +103,21 @@ int setup_requantize3d(SINGLE_QSP_ARG_DECL)
 
 	_npixels = (dimension_t)(OBJ_FRAMES(_hdp) * OBJ_ROWS(_hdp) * OBJ_COLS(_hdp));
 
-	if( _edp != NO_OBJ )
+	if( _edp != NULL )
 		delvec(QSP_ARG  _edp);
 	_edp = make_obj(QSP_ARG  "HT_error",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
-	if( _edp == NO_OBJ ){
+	if( _edp == NULL ){
 		NWARN("couldn't create error image");
 		return(-1);
 	}
 	_eptr = (float *) OBJ_DATA_PTR(_edp);
 
-	if( _fedp != NO_OBJ )
+	if( _fedp != NULL )
 		delvec(QSP_ARG  _fedp);
 	_fedp = make_obj(QSP_ARG  "HT_ferror",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
-	if( _fedp == NO_OBJ ){
+	if( _fedp == NULL ){
 		NWARN("couldn't create filtered error image");
 		return(-1);
 	}
@@ -167,13 +167,13 @@ void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp)
 	incr_t offset;
 	float *fptr,val;
 
-	if( _ffdp != NO_OBJ )
+	if( _ffdp != NULL )
 		delvec(QSP_ARG  _ffdp);
 
 	_ffdp = make_obj(QSP_ARG   "double_filter",OBJ_FRAMES(fdp)*2-1,
 		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));
 
-	if( _ffdp == NO_OBJ ){
+	if( _ffdp == NULL ){
 		NWARN("couldn't create double filter image");
 		return;
 	}

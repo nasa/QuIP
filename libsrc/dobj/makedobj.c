@@ -140,7 +140,7 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 
 	/* set_shape_flags is where mindim gets set */
 	if( set_shape_flags( OBJ_SHAPE(dp), dp, type_flag) < 0 )
-		return(NO_OBJ);
+		return(NULL);
 
 	/* check_contiguity used to be called from set_obj_flags,
 	 * but Shape_Info structs don't have increments, so we
@@ -195,7 +195,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	sprintf(name,"dev_%s",OBJ_NAME(dp));
 
 	new_dp = new_dobj(QSP_ARG  name);
-	if( new_dp==NO_OBJ )
+	if( new_dp==NULL )
 		NERROR1("make_device_alias:  error creating alias object");
 
 	// Need to allocate dimensions and increments...
@@ -209,7 +209,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 		SET_OBJ_TYPE_INC(new_dp,i,OBJ_TYPE_INC(dp,i));
 	}
 	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,OBJ_PREC_PTR(dp),type_flag);
-	if( new_dp==NO_OBJ )
+	if( new_dp==NULL )
 		NERROR1("make_device_alias:  failure in setup_dp");
 
 	SET_OBJ_AREA(new_dp, ap);
@@ -278,7 +278,7 @@ static void fix_bitmap_increments(Data_Obj *dp)
 static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 			Dimension_Set *dsp,Precision * prec_p,uint32_t type_flag)
 {
-	if( dp == NO_OBJ )	/* name already used */
+	if( dp == NULL )	/* name already used */
 		return(dp);
 
 	/* these four fields are initialized for sub_obj's in
@@ -287,7 +287,7 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	SET_OBJ_AREA(dp, curr_ap);
 
 	// BUG?  this code could be simplified if new_item called bzero on the struct...
-	SET_OBJ_PARENT(dp,NO_OBJ);
+	SET_OBJ_PARENT(dp,NULL);
 	SET_OBJ_CHILDREN(dp,NULL);
 	/* We make sure that these pointers are set so that
 	 * we can know when not to free them... */
@@ -308,22 +308,22 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	 * regard to a nonexistent object:  i.e. ncols(i1)
 	 * where i1 has not been created.  The expression
 	 * then returns 0 (or -1... this has changed over
-	 * various revisions...), and setup_dp returns NO_OBJ
+	 * various revisions...), and setup_dp returns NULL
 	 */
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,prec_p) < 0 ){
 		WARN("init_dp_with_shape:  error setting dimensions");
-		return(NO_OBJ);
+		return(NULL);
 		/* BUG might want to clean up */
 	}
 
 	make_contiguous(dp);
 
-	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NO_OBJ ){
+	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NULL ){
 		/* set this flag so delvec doesn't free nonexistent mem */
 		SET_OBJ_FLAG_BITS(dp,DT_NO_DATA);
 		delvec(QSP_ARG  dp);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 #ifdef HAVE_ANY_GPU
@@ -344,7 +344,7 @@ Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec
  *
  *  This routine creates a new header structure and initializes it.
  *
- *  Returns a pointer to the new header structure, or NO_OBJ if the name is
+ *  Returns a pointer to the new header structure, or NULL if the name is
  *  already in use, or if the name contains illegal characters.
  */
 
@@ -362,16 +362,16 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 	if( !is_valid_dname(QSP_ARG  name) ){
 		sprintf(ERROR_STRING,"invalid data object name \"%s\"",name);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	/* Check if we are using contexts...
 	 */
 	dp = new_dobj(QSP_ARG  name);
 
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		dp = dobj_of(QSP_ARG  name);
-		if( dp != NO_OBJ ){
+		if( dp != NULL ){
 
 	// BUG the declfile is ok for the expression
 	// language, but for classic scripts, we get told
@@ -389,12 +389,12 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 				//current_input_stack(SINGLE_QSP_ARG)
 			advise(ERROR_STRING);
 		}
-		return(NO_OBJ);
+		return(NULL);
 	}
 
-	if( init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NO_OBJ ){
+	if( init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
 		delvec(QSP_ARG   dp );
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	return(dp);
@@ -409,7 +409,7 @@ Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision 
  * Create a new data object.  This routine calls _make_dp() to create a new
  * header structure and then allocates space for the data.
  * Returns a pointer to the newly created header.  Prints a warning and
- * returns NO_OBJ if the name is already in use, or if space cannot be allocated
+ * returns NULL if the name is already in use, or if space cannot be allocated
  * in the data area,.
  */
 
@@ -421,7 +421,7 @@ make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 	dimension_t size;
 
 	dp = _make_dp_with_shape(QSP_ARG  name,dsp,prec_p,type_flag);
-	if( dp == NO_OBJ ) return(dp);
+	if( dp == NULL ) return(dp);
 
 	// area should be set here
 
@@ -505,7 +505,7 @@ advise(ERROR_STRING);
 			SET_OBJ_DATA_PTR(dp,NULL);
 			SET_OBJ_UNALIGNED_PTR(dp,NULL);
 			delvec(QSP_ARG  dp);
-			return(NO_OBJ);
+			return(NULL);
 		}
 	}
 #ifdef HAVE_CUDA

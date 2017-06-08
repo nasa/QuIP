@@ -310,7 +310,7 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		Node *np; Vec_Expr_Node *enp2;
 		prt_msg("\tResolvers:");
 		np=QLIST_HEAD(VN_RESOLVERS(enp));
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			enp2=(Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\t\t%s",node_desc(enp2));
 			prt_msg(msg_str);

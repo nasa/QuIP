@@ -58,7 +58,7 @@ Member_Info *check_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Member_Info *mip;
 
 	np = QLIST_HEAD(icp->icl_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Item *ip;
 
 		mip = (Member_Info*) np->n_data;
@@ -99,7 +99,7 @@ Item * check_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Member_Info *mip;
 
 	np = QLIST_HEAD(icp->icl_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		mip = (Member_Info*) np->n_data;
 
 		if( mip->mi_lookup != NULL )

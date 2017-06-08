@@ -69,9 +69,9 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 
 	for(i=0;i<MAX_NODE_CHILDREN;i++)
-		SET_VN_CHILD(enp,i,NO_VEXPR_NODE);
-	SET_VN_PARENT(enp,NO_VEXPR_NODE);
-	SET_VN_SHAPE(enp, NO_SHAPE);
+		SET_VN_CHILD(enp,i,NULL);
+	SET_VN_PARENT(enp,NULL);
+	SET_VN_SHAPE(enp, NULL);
 	SET_VN_FLAGS(enp, 0);
 	SET_VN_SERIAL(enp, node_serial++);
 	SET_VN_LINENO(enp, PARSER_LINENO);	/* BUG need to point to filename also */
@@ -85,11 +85,11 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_DECL:
 //fprintf(stderr,"initializing ND_DECL data for node at 0x%lx, code = %d\n",(long)enp,VN_CODE(enp));
 			SET_VN_DECL_NAME(enp, NULL);
-			SET_VN_DECL_CTX(enp, NO_ITEM_CONTEXT);
-			SET_VN_DECL_PREC(enp, NO_PRECISION );
+			SET_VN_DECL_CTX(enp, NULL);
+			SET_VN_DECL_PREC(enp, NULL );
 			SET_VN_DECL_REFS(enp, NULL);
 			SET_VN_DECL_FLAGS(enp, 0);
-			SET_VN_DECL_OBJ(enp, NO_OBJ);
+			SET_VN_DECL_OBJ(enp, NULL);
 			break;
 		case ND_LIST:
 			SET_VN_N_ELTS(enp, 0);
@@ -111,7 +111,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			SET_VN_STRING(enp, NULL);
 			break;
 		case ND_CAST:
-			SET_VN_CAST_PREC_PTR(enp, NO_PRECISION );
+			SET_VN_CAST_PREC_PTR(enp, NULL );
 			break;
 		case ND_VFUNC:
 			SET_VN_VFUNC_CODE(enp, N_VEC_FUNCS);	/* illegal value? */
@@ -120,11 +120,11 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			SET_VN_FUNC_PTR(enp, NULL);
 			break;
 		case ND_SIZE_CHANGE:
-			SET_VN_SIZCH_SHAPE(enp, NO_SHAPE);
+			SET_VN_SIZCH_SHAPE(enp, NULL);
 			break;
 		case ND_BMAP:
 			SET_VN_BM_CODE(enp, N_VEC_FUNCS);		/* illegal value */
-			SET_VN_BM_SHAPE(enp, NO_SHAPE);
+			SET_VN_BM_SHAPE(enp, NULL);
 			break;
 
 		case ND_NONE:
@@ -190,14 +190,14 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 {
 	SET_VN_CHILD(enp,index, child);
-	if( child != NO_VEXPR_NODE ){
+	if( child != NULL ){
 //#ifdef CAUTIOUS
 		/* The strict tree structure is violated by plus-eq, do-while, etc */
 		/* what does that comment mean??? */
 		/* Perhaps something about how the nodes are created? */
 
 		/*
-//		if( VN_PARENT(child) != NO_VEXPR_NODE ){
+//		if( VN_PARENT(child) != NULL ){
 //			sprintf(ERROR_STRING,
 //				"CAUTIOUS:  nother_child:  node n%d (%s) has parent n%d (%s), rival n%d (%s)!?",
 //				child->en_serial,
@@ -209,7 +209,7 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 //				);
 //			WARN(ERROR_STRING);
 //		}
-		assert( VN_PARENT(child) == NO_VEXPR_NODE );
+		assert( VN_PARENT(child) == NULL );
 		*/
 //#endif /* CAUTIOUS */
 		SET_VN_PARENT(child, enp);
@@ -373,7 +373,7 @@ Vec_Expr_Node *dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	new_enp = DUP_NODE(enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++)
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE ){
+		if( VN_CHILD(enp,i) != NULL ){
 			Vec_Expr_Node *new_child;
 			new_child = DUP_TREE(VN_CHILD(enp,i));
 			SET_VN_CHILD(new_enp,i, new_child);
@@ -418,7 +418,7 @@ void rls_vectree(Vec_Expr_Node *enp)
 
 // BUG?  we could use the expected number of children based on node code...
 	for(i=0;i<MAX_CHILDREN(enp);i++)
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE ){
+		if( VN_CHILD(enp,i) != NULL ){
 //#ifdef CAUTIOUS
 //			if( VN_PARENT(VN_CHILD(enp,i)) != enp ){
 //				sprintf(DEFAULT_ERROR_STRING,
@@ -443,13 +443,13 @@ void rls_vectree(Vec_Expr_Node *enp)
 		case ND_DECL:
 // we used to dump here, but children have already been freed!
  //           fprintf(stderr,"VN_DECL_OBJ(0x%lx) = 0x%lx\n",(long)enp,(long)VN_DECL_OBJ(enp));
-//if( VN_DECL_OBJ(enp) != NO_OBJ )
+//if( VN_DECL_OBJ(enp) != NULL )
 //longlist(DEFAULT_QSP_ARG  VN_DECL_OBJ(enp) );
 //else
 //fprintf(stderr,"VN_DECL_OBJ is NULL...\n");
 //DEBUG_IT_3(enp,checking)
 			// Does this get initialized?
-			if( VN_DECL_OBJ(enp) != NO_OBJ )
+			if( VN_DECL_OBJ(enp) != NULL )
 				SET_OBJ_EXTRA(VN_DECL_OBJ(enp),NULL);
 			break;
 		case ND_LIST:
@@ -465,7 +465,7 @@ void rls_vectree(Vec_Expr_Node *enp)
 			break;
 
 		case ND_BMAP:
-			if( VN_BM_SHAPE(enp) != NO_SHAPE )
+			if( VN_BM_SHAPE(enp) != NULL )
 				RELEASE_SHAPE_PTR( VN_BM_SHAPE(enp) );
 			break;
 		case ND_NONE:
@@ -587,7 +587,7 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 
 	np=QLIST_HEAD(CONTEXT_LIST(itp));
 
-	if( np==NO_NODE ) {
+	if( np==NULL ) {
 		WARN("context list is empty");
 		return;
 	}
@@ -595,7 +595,7 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	sprintf(ERROR_STRING,"%s (%s)",CTX_NAME(icp),CTX_NAME(CURRENT_CONTEXT(itp)));
 	advise(ERROR_STRING);
 	np=NODE_NEXT(np);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		icp=(Item_Context *)NODE_DATA(np);
 		sprintf(ERROR_STRING,"%s",CTX_NAME(icp));
 		advise(ERROR_STRING);

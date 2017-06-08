@@ -1577,7 +1577,7 @@ static void *camera_request_server(void *arg)
 	int did_something;
 
 	vcam_p = arg;
-	np = NO_NODE;
+	np = NULL;
 	while(1) {	
 		did_something=0;
 		/* Process inquiries first */
@@ -1593,7 +1593,7 @@ static void *camera_request_server(void *arg)
 
 		/* Now process a command if there is one... */ 
 		np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
-		while( np != NO_NODE ){
+		while( np != NULL ){
 			Visca_Queued_Cmd *vqcp;
 
 			vqcp = np->n_data;
@@ -1602,10 +1602,10 @@ static void *camera_request_server(void *arg)
 				RLS_CAMERA_LOCK(vcam_p)
 				exec_visca_command(vcam_p,vqcp->vqc_vcdp,pkt);
 				vqcp->vqc_finished=1;
-				np = NO_NODE;
+				np = NULL;
 				did_something=1;
 			}
-			if( np != NO_NODE )
+			if( np != NULL )
 				np = np->n_next;
 		}
 		if( vcam_p->vcam_qlock == SERVER_LOCK ){
@@ -2539,7 +2539,7 @@ static void cleanup_queue(Visca_Cam *vcam_p)
 	Node *np;
 
 	np = QLIST_HEAD(vcam_p->vcam_cmd_lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		Visca_Queued_Cmd *vqcp;
 
 		vqcp = np->n_data;
@@ -2906,7 +2906,7 @@ static void vport_info(QSP_ARG_DECL  Visca_Port *vport_p)
 #endif /* CAUTIOUS */
 
 	np=QLIST_HEAD(vport_p->vp_cam_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Visca_Cam *vcam_p;
 
 		vcam_p = (Visca_Cam *)np->n_data;
@@ -2931,7 +2931,7 @@ static COMMAND_FUNC( network_status )
 		return;
 	}
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		vport_p = (Visca_Port *)np->n_data;
 		vport_info(QSP_ARG  vport_p);
 		np=np->n_next;
@@ -3068,7 +3068,7 @@ static COMMAND_FUNC(do_get_n_cam)
 	}
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		vport_p = (Visca_Port *)np->n_data;
 		assert( vport_p->vp_cam_lp != NULL );
 

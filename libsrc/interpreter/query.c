@@ -19,7 +19,7 @@ Query *new_query(void)
 	if( query_free_list == NULL )
 		query_free_list = new_list();
 
-	if( QLIST_HEAD(query_free_list) != NO_NODE ){
+	if( QLIST_HEAD(query_free_list) != NULL ){
 		Node *np;
 		np = remHead(query_free_list);
 		qp = (Query *)NODE_DATA(np);

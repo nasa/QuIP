@@ -140,7 +140,7 @@ static COMMAND_FUNC( do_recsound )
 	*/
 
 	dp = PICK_OBJ("sound object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	ra.ra_dp = dp;
 #ifdef THREAD_SAFE_QUERY
 	ra.ra_qsp = qsp;
@@ -174,7 +174,7 @@ static COMMAND_FUNC( do_playsound )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("sound object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	play_sound(QSP_ARG  dp);
 }
@@ -207,7 +207,7 @@ static COMMAND_FUNC( do_set_alert )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("warning sound");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	use_audio_warning(QSP_ARG  dp);
 }
@@ -235,7 +235,7 @@ static COMMAND_FUNC( do_sound_info )
 	char *s;
 
 	dp=PICK_OBJ("sound object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"sound_info:  object %s has %s precision, expect %s for sounds",

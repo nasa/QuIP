@@ -334,7 +334,7 @@ static COMMAND_FUNC( do_get_cams )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( get_camera_names( QSP_ARG  dp ) < 0 )
 		WARN("Error getting camera names!?");
@@ -347,7 +347,7 @@ static COMMAND_FUNC( do_get_video_modes )
 	char s[8];
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	CHECK_CAM
 
@@ -364,7 +364,7 @@ static COMMAND_FUNC( do_get_framerates )
 	char s[8];
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	CHECK_CAM
 
@@ -672,7 +672,7 @@ static COMMAND_FUNC( do_set_bufs )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("sequence object to use for capture");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	CHECK_CAM
 #ifdef HAVE_LIBFLYCAP

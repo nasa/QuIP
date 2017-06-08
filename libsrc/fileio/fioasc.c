@@ -41,7 +41,7 @@ FIO_CLOSE_FUNC( ascii )
 
 FIO_WT_FUNC( ascii )
 {
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);

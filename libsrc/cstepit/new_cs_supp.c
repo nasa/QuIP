@@ -60,7 +60,7 @@ static void new_cstepit_scr_funk()
 	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)( np->n_data);
@@ -105,7 +105,7 @@ void new_evaluate_error_c()
 	lp=opt_param_list();
 	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)(np->n_data);
@@ -150,7 +150,7 @@ static void new_init_cstepit_params()
 
 	np=QLIST_HEAD(lp);
 	i=0;
-	while( np!= NO_NODE && i < n_prms ){
+	while( np!= NULL && i < n_prms ){
 		opp = (Opt_Param *)(np->n_data);
 
 		xmin[i]=opp->minv;

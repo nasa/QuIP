@@ -110,7 +110,7 @@ WARN("no panel list");
  return(NO_SCREEN_OBJ);
 }
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		po=(Panel_Obj *)np->n_data;
 #ifdef QUIP_DEBUG
 //if( debug ) fprintf(stderr,"Searching panel %s\n",PO_NAME(po));
@@ -119,7 +119,7 @@ WARN("no panel list");
 		if( lp2 == NULL )
 			WARN("null child list for panel!?");
 		np2=QLIST_HEAD(lp2);
-		while(np2!=NO_NODE ){
+		while(np2!=NULL ){
 			Screen_Obj *sop;
 			sop = (Screen_Obj *)np2->n_data;
 			if( sop->so_obj == obj ){
@@ -174,7 +174,7 @@ Panel_Obj *find_panel(QSP_ARG_DECL  Widget obj)
 	lp=panel_obj_list(SINGLE_QSP_ARG);
 	if( lp == NULL ) return(NO_PANEL_OBJ);
 	np=QLIST_HEAD(lp);
-	while( np!=NO_NODE ){
+	while( np!=NULL ){
 		po = (Panel_Obj *)np->n_data;
 		if( ((Widget)po->po_panel_obj) == obj ){
 			return(po);
@@ -1308,7 +1308,7 @@ void show_panel(QSP_ARG_DECL  Panel_Obj *po)
 		 */
 		lp=po->po_children;
 		np=QLIST_HEAD(lp);
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			sop=np->n_data;
 			if( sop != NULL ){
 				reposition(sop);
@@ -1614,7 +1614,7 @@ void set_choice(Screen_Obj *sop,int i)
 	if( SOB_CHILDREN(sop) == NULL ) return;	// if no motif
 
 	np=QLIST_HEAD(SOB_CHILDREN(sop));
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		bsop = (Screen_Obj *)NODE_DATA(np);
 		if( n == i )
 			set_toggle_state(bsop,1);
@@ -1955,7 +1955,7 @@ static void show_panel_stack(const char *s)
 
 	fprintf(stderr,"Panel stack:\n");
 	np = STACK_TOP_NODE(nav_stack);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		gwp = NODE_DATA(np);
 		//assert( GW_TYPE(NAVP_GW(np_p)) == GW_NAV_PANEL );
 		switch( GW_TYPE(gwp) ){

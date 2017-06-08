@@ -73,7 +73,7 @@
 debug_flag_t debug_fileio=0;
 #endif /* QUIP_DEBUG */
 
-static Filetype *curr_ftp=NO_FILETYPE;	// BUG set to default (was HIPS1)
+static Filetype *curr_ftp=NULL;	// BUG set to default (was HIPS1)
 static int no_clobber=1;		// BUG not thread-safe!?
 
 static const char *iofile_directory=NULL;
@@ -97,7 +97,7 @@ static Timestamp_Functions if_tsf={
 };
 #endif /* HAVE_GETTIMEOFDAY */
 
-static Item_Type *file_type_itp=NO_ITEM_TYPE;
+static Item_Type *file_type_itp=NULL;
 ITEM_INIT_FUNC(Filetype,file_type,0)
 ITEM_NEW_FUNC(Filetype,file_type)
 ITEM_CHECK_FUNC(Filetype,file_type)
@@ -112,7 +112,7 @@ void set_direct_io(int flag)
 
 List *image_file_list(SINGLE_QSP_ARG_DECL)
 {
-	if( img_file_itp==NO_ITEM_TYPE ) return(NULL);
+	if( img_file_itp==NULL ) return(NULL);
 
 	return( item_list(QSP_ARG  img_file_itp) );
 }
@@ -165,7 +165,7 @@ static FIO_UNCONV_FUNC(null)
 { return(-1); }
 
 static FIO_RD_FUNC( null ) {}
-static FIO_OPEN_FUNC( null ) { return(NO_IMAGE_FILE); }
+static FIO_OPEN_FUNC( null ) { return(NULL); }
 static FIO_CLOSE_FUNC( null ) {}
 
 static FIO_SEEK_FUNC(null)
@@ -266,14 +266,7 @@ static double get_if_size(QSP_ARG_DECL  Item *ip,int index)
 	Image_File *ifp;
 
 	ifp = (Image_File *)ip;
-//#ifdef CAUTIOUS
-//	if( ifp->if_dp == NO_OBJ ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  image file %s (type %s) has no associated data object!?",
-//				ifp->if_name,FT_NAME(IF_TYPE(ifp)));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( ifp->if_dp != NO_OBJ );
+	assert( ifp->if_dp != NULL );
 
 	return( get_dobj_size(QSP_ARG  ifp->if_dp,index) );
 }
@@ -283,14 +276,8 @@ static const char * get_if_prec_name(QSP_ARG_DECL  Item *ip)
 	Image_File *ifp;
 
 	ifp = (Image_File *)ip;
-//#ifdef CAUTIOUS
-//	if( ifp->if_dp == NO_OBJ ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  image file %s (type %s) has no associated data object!?",
-//				ifp->if_name,FT_NAME(IF_TYPE(ifp)));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( ifp->if_dp != NO_OBJ );
+	assert( ifp != NULL );
+	assert( ifp->if_dp != NULL );
 
 	return( get_dobj_prec_name(QSP_ARG  ifp->if_dp) );
 }
@@ -305,14 +292,7 @@ static double get_if_il_flg(QSP_ARG_DECL  Item *ip)
 	Image_File *ifp;
 
 	ifp = (Image_File *)ip;
-//#ifdef CAUTIOUS
-//	if( ifp->if_dp == NO_OBJ ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  get_if_il_flg:  image file %s (type %s) has no associated data object!?",
-//				ifp->if_name,FT_NAME(IF_TYPE(ifp)));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( ifp->if_dp != NO_OBJ );
+	assert( ifp->if_dp != NULL );
 
 	return( get_dobj_il_flg(QSP_ARG  ifp->if_dp) );
 }
@@ -330,17 +310,12 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 
 	if( inited ) return;
 
-//#ifdef CAUTIOUS
-//	/* We don't use a table any more */
-//	//ft_tbl_check(SINGLE_QSP_ARG);
-//#endif /* CAUTIOUS */
-
 #ifdef QUIP_DEBUG
 	debug_fileio = add_debug_module(QSP_ARG  "fileio");
 #endif /* QUIP_DEBUG */
 
 	/* This may have already been called - e.g. mmvi */
-	if( img_file_itp == NO_ITEM_TYPE )
+	if( img_file_itp == NULL )
 		//img_file_init(SINGLE_QSP_ARG);
 		init_img_files(SINGLE_QSP_ARG);
 
@@ -379,7 +354,7 @@ void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 	// of permissions mismatch...
 	// We need to check BEFORE we get here...
 
-	if( ifp->if_dp != NO_OBJ ){
+	if( ifp->if_dp != NULL ){
 		/* Do we know that the other resources are already freed? */
 		/* If we are reading from a file, then this is a dummy object
 		 * and should be freed... but what about writing???
@@ -446,17 +421,8 @@ static void rls_temp_dobj(Data_Obj *dp)
 
 void setup_dummy(Image_File *ifp)
 {
-
-//#ifdef CAUTIOUS
-//	if( ifp->if_dp != NO_OBJ ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  image file %s has already been set up with object %s",
-//			ifp->if_name,OBJ_NAME(ifp->if_dp));
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( ifp->if_dp == NO_OBJ );
+	assert(ifp!=NULL);
+	assert( ifp->if_dp == NULL );
 
 	/* these are not in the database... */
 
@@ -464,8 +430,8 @@ void setup_dummy(Image_File *ifp)
 	// BUG?  do we need to lock this object?
 
 	SET_OBJ_NAME(ifp->if_dp, ifp->if_name);
-	ifp->if_dp->dt_ap = NO_AREA;
-	ifp->if_dp->dt_parent = NO_OBJ;
+	ifp->if_dp->dt_ap = NULL;
+	ifp->if_dp->dt_parent = NULL;
 	ifp->if_dp->dt_children = NULL;
 	SET_OBJ_DATA_PTR(ifp->if_dp, NULL);
 	SET_OBJ_FLAGS(ifp->if_dp, 0);
@@ -693,16 +659,16 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 		sprintf(ERROR_STRING,"Sorry, don't know how to read %s files",
 			FT_NAME(ftp));
 		NWARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	} else if( rw == FILE_WRITE && CANNOT_WRITE(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, don't know how to write %s files",
 			FT_NAME(ftp));
 		NWARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	ifp = new_img_file(QSP_ARG  name);
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_flags = (short) rw;
 	ifp->if_nfrms = 0;
@@ -710,7 +676,7 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 	ifp->if_pathname = ifp->if_name;	/* default */
 	update_pathname(ifp);
 
-	ifp->if_dp = NO_OBJ;
+	ifp->if_dp = NULL;
 
 	// what is the "dummy" used for, and when do we release it?
 	if( IS_READABLE(ifp) ) setup_dummy(ifp);
@@ -756,7 +722,7 @@ dun:
 		/* BUG? should also rls_str(name) here???
 		 * Or does del_item release the naem???
 		 */
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	return(ifp);
@@ -764,7 +730,7 @@ dun:
 
 int same_size(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
-	if( ifp->if_dp == NO_OBJ ){
+	if( ifp->if_dp == NULL ){
 		sprintf(ERROR_STRING,"No size/prec info about image file %s",
 			ifp->if_name);
 		WARN(ERROR_STRING);
@@ -797,7 +763,7 @@ int same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	int retval=1;
 
-	if( ifp->if_dp == NO_OBJ ){
+	if( ifp->if_dp == NULL ){
 		sprintf(ERROR_STRING,"No size/prec info about image file %s",
 			ifp->if_name);
 		WARN(ERROR_STRING);
@@ -855,7 +821,7 @@ void if_info(QSP_ARG_DECL  Image_File *ifp)
 	prt_msg(msg_str);
 	sprintf(msg_str,"\t%s format (%d)",FT_NAME(IF_TYPE(ifp)),FT_CODE(IF_TYPE(ifp)) );
 	prt_msg(msg_str);
-	if( ifp->if_dp != NO_OBJ ){
+	if( ifp->if_dp != NULL ){
 		sprintf(msg_str,"\t%s pixels",PREC_NAME(OBJ_PREC_PTR(ifp->if_dp)));
 		prt_msg(msg_str);
 		if( OBJ_SEQS(ifp->if_dp) > 1 ){
@@ -929,7 +895,7 @@ void dump_image_file(QSP_ARG_DECL  const char *filename,Filetype *ftp,void *data
 	SET_OBJ_PREC_PTR(dp,prec_p);
 
 	ifp=(*FT_OPEN_FUNC(ftp))(QSP_ARG  filename,FILE_WRITE);
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		rls_temp_dobj(dp);
 		return;
 	}
@@ -950,7 +916,7 @@ void *load_image_file(char *name,filetype_code input_file_type,filetype_code des
 	void *new_hdp;
 
 	ifp=open_image_file(name,"r");
-	if( ifp == NO_IMAGE_FILE ) return(NULL);
+	if( ifp == NULL ) return(NULL);
 
 	/*
 	dp = make_dobj(name,ifp->if_dp->dt_type_dim,OBJ_PREC(ifp->if_dp));
@@ -961,7 +927,7 @@ void *load_image_file(char *name,filetype_code input_file_type,filetype_code des
 	dp = make_dobj(localname(),
 		ifp->if_dp->dt_type_dim,OBJ_PREC(ifp->if_dp));
 
-	if( dp == NO_OBJ ) return(NULL);
+	if( dp == NULL ) return(NULL);
 
 	/* read the data */
 	(*FT_READ_FUNC(ftp))(dp,ifp,0,0,0);
@@ -986,14 +952,12 @@ void set_filetype(QSP_ARG_DECL  Filetype *ftp)
 	curr_ftp=ftp;
 }
 
-static Item_Type *suffix_itp=NO_ITEM_TYPE;
+static Item_Type *suffix_itp=NULL;
 
 typedef struct known_suffix {
 	const char *	sfx_name;
 	Filetype *	sfx_ftp;
 } Known_Suffix;
-
-#define NO_SUFFIX		((Known_Suffix *)NULL)
 
 static ITEM_INIT_FUNC(Known_Suffix,suffix,0)
 static ITEM_NEW_FUNC(Known_Suffix,suffix)
@@ -1007,7 +971,7 @@ Filetype *filetype_for_code(QSP_ARG_DECL  filetype_code code)
 
 	lp = file_type_list(SINGLE_QSP_ARG);
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		ftp = (Filetype *) NODE_DATA(np);
 		if( FT_CODE(ftp) == code ) return ftp;
 		np = NODE_NEXT(np);
@@ -1016,7 +980,7 @@ Filetype *filetype_for_code(QSP_ARG_DECL  filetype_code code)
 	sprintf(ERROR_STRING,"filetype_for_code:  no filetype defined for code %d!?",code);
 	WARN(ERROR_STRING);
 
-	return NO_FILETYPE;
+	return NULL;
 }
 
 static void init_suffix( QSP_ARG_DECL  const char *name, filetype_code code )
@@ -1026,22 +990,22 @@ static void init_suffix( QSP_ARG_DECL  const char *name, filetype_code code )
 
 	ftp = filetype_for_code(QSP_ARG  code);
 //#ifdef CAUTIOUS
-//	if( ftp == NO_FILETYPE ){
+//	if( ftp == NULL ){
 //		sprintf(ERROR_STRING,"CAUTIOUS:  init_suffix:  No filetype found for suffix \"%s\"!?",name);
 //		WARN(ERROR_STRING);
 //		return;
 //	}
 //#endif /* CAUTIOUS */
-	assert( ftp != NO_FILETYPE );
+	assert( ftp != NULL );
 
 	sfx_p = new_suffix(QSP_ARG  name);
 //#ifdef CAUTIOUS
-//	if( sfx_p == NO_SUFFIX ) {
+//	if( sfx_p == NULL ) {
 //		ERROR1("CAUTIOUS:  init_suffix:  Error creating filetype suffix!?");
 //		IOS_RETURN
 //	}
 //#endif /* CAUTIOUS */
-	assert( sfx_p != NO_SUFFIX );
+	assert( sfx_p != NULL );
 
 	/* Now file the filetype struct with this code... */
 	sfx_p->sfx_ftp = ftp;
@@ -1137,10 +1101,10 @@ static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name)
 		if( *s == '.' ) suffix = s+1;
 		s++;
 	}
-	if( suffix == NULL || *suffix == 0 ) return(NO_FILETYPE);
+	if( suffix == NULL || *suffix == 0 ) return(NULL);
 
 	sfx_p = suffix_of(QSP_ARG  suffix);
-	if( sfx_p == NO_SUFFIX ){
+	if( sfx_p == NULL ){
 		// Print an advisory
 		sprintf(ERROR_STRING,"File suffix \"%s\" is not known!?",
 			suffix);
@@ -1148,7 +1112,7 @@ static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name)
 		sprintf(ERROR_STRING,"Using current file type %s",
 			FT_NAME(curr_ftp) );
 		advise(ERROR_STRING);
-		return(NO_FILETYPE);
+		return(NULL);
 	}
 	return( sfx_p->sfx_ftp );
 }
@@ -1163,11 +1127,11 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 	Filetype * ftp;
 
 	ftp = infer_filetype_from_name(QSP_ARG  name);
-	if( ftp == NO_FILETYPE ){
+	if( ftp == NULL ){
 //#ifdef CAUTIOUS
-//		if( curr_ftp == NO_FILETYPE ) ERROR1("CAUTIOUS:  read_image_file:  default filetype is not set!?");
+//		if( curr_ftp == NULL ) ERROR1("CAUTIOUS:  read_image_file:  default filetype is not set!?");
 //#endif /* CAUTIOUS */
-		assert( curr_ftp != NO_FILETYPE );
+		assert( curr_ftp != NULL );
 
 		ftp=curr_ftp;	/* use default if can't figure it out */
 	} else if( verbose && ftp!=curr_ftp ){
@@ -1180,13 +1144,13 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 		sprintf(ERROR_STRING,"Sorry, can't read files of type %s",
 			FT_NAME(ftp));
 		NWARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	/* pathname hasn't been set yet... */
 	ifp=(*ftp->op_func)( QSP_ARG  name, FILE_READ );
 
-	if( ifp == NO_IMAGE_FILE ) {
+	if( ifp == NULL ) {
 		sprintf(ERROR_STRING,
 			"error reading %s file \"%s\"",FT_NAME(ftp),name);
 		NWARN(ERROR_STRING);
@@ -1202,11 +1166,11 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 	Filetype * ftp;
 
 	ftp = infer_filetype_from_name(QSP_ARG  filename);
-	if( ftp == NO_FILETYPE ) {	/* use default if can't figure it out */
+	if( ftp == NULL ) {	/* use default if can't figure it out */
 //#ifdef CAUTIOUS
-//		if( curr_ftp == NO_FILETYPE ) ERROR1("CAUTIOUS:  write_image_file:  default filetype is not set!?");
+//		if( curr_ftp == NULL ) ERROR1("CAUTIOUS:  write_image_file:  default filetype is not set!?");
 //#endif /* CAUTIOUS */
-		assert( curr_ftp != NO_FILETYPE );
+		assert( curr_ftp != NULL );
 
 		ftp=curr_ftp;	/* use default if can't figure it out */
 	} else if( ftp != curr_ftp ){
@@ -1220,11 +1184,11 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 		sprintf(ERROR_STRING,"Sorry, can't write files of type %s",
 			FT_NAME(ftp));
 		NWARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	ifp = (*FT_OPEN_FUNC(ftp))( QSP_ARG  filename, FILE_WRITE ) ;
-	if( ifp != NO_IMAGE_FILE )
+	if( ifp != NULL )
 		ifp->if_frms_to_wt = n;
 
 	return(ifp);
@@ -1234,8 +1198,8 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 
 void read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
-	if( dp == NO_OBJ ) return;
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( dp == NULL ) return;
+	if( ifp == NULL ) return;
 
 	if( !IS_READABLE(ifp) ){
 		sprintf(ERROR_STRING,"File %s is not readable",ifp->if_name);
@@ -1267,7 +1231,7 @@ void read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 
 void close_image_file(QSP_ARG_DECL  Image_File *ifp)
 {
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 	(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
 }
 
@@ -1300,7 +1264,7 @@ advise(ERROR_STRING);
 //#ifdef CAUTIOUS
 	else {
 //		WARN("CAUTIOUS:  bad r/w string passed to open_image_file");
-//		ifp = NO_IMAGE_FILE;
+//		ifp = NULL;
 		assert( AERROR("bad r/w string passed to open_image_file") );
 	}
 //#endif /* CAUTIOUS */
@@ -1313,8 +1277,8 @@ advise(ERROR_STRING);
 void write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
 {
 	/* take filetype from image file */
-	if( dp == NO_OBJ ) return;
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( dp == NULL ) return;
+	if( ifp == NULL ) return;
 
 	if( ! IS_WRITABLE(ifp) ){
 		sprintf(ERROR_STRING,"File %s is not writable",ifp->if_name);
@@ -1448,7 +1412,7 @@ double iof_exists(QSP_ARG_DECL  const char *s)
 	Image_File *ifp;
 
 	ifp=img_file_of(QSP_ARG  s);
-	if( ifp==NO_IMAGE_FILE ) return(0.0);
+	if( ifp==NULL ) return(0.0);
 	else return(1.0);
 }
 

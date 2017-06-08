@@ -70,7 +70,7 @@ u_long xdebug=0;
 
 static List *unused_dop_list=NULL;
 // BUG not thread-safe...
-static XFont *current_xfp=NO_XFONT;
+static XFont *current_xfp=NULL;
 
 static int display_to_mapped=0;		/* flag - if set, then wait for windows to be mapped before displaying */
 
@@ -144,8 +144,6 @@ typedef struct draw_op {
 #define do_filled	do_doa.doa_filled
 #define do_text_mode	do_doa.doa_text_mode
 
-#define NO_DRAW_OP	((Draw_Op *) NULL)
-
 #define WINDOW_BORDER_WIDTH	2
 
 static Bool WaitForNotify(Display *dpy, XEvent *ep, XPointer arg)
@@ -202,8 +200,8 @@ static Window CreateWindow(const char *name,const char *geom,u_int  w,u_int  h)
 	dop = curr_dop();
 
 	// dop can be null if user does not own display!?
-	//assert( dop != NO_DISP_OBJ );
-	if( dop == NO_DISP_OBJ ){
+	//assert( dop != NULL );
+	if( dop == NULL ){
 		NWARN("CreateWindow:  no current display!?");
 		return (Window) 0;
 	}
@@ -362,7 +360,7 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 	XGCValues		gcvals;
 	Disp_Obj *dop;
 
-	if( (dop=curr_dop()) == NO_DISPOBJ ) return(NULL);
+	if( (dop=curr_dop()) == NULL ) return(NULL);
 
 	/* note that only x,y are gotten from geom spec.  w,h are fixed */
 	x = y = 1;
@@ -402,10 +400,10 @@ static Window CreateGLWindow(char *name,char *geom,u_int w,u_int h)
 	}
 
 //#ifdef CAUTIOUS
-//	if( dop == NO_DISP_OBJ )
+//	if( dop == NULL )
 //		ERROR1("CAUTIOUS:  CreateGLWindow, no current display!?");
 //#endif /* CAUTIOUS */
-	assert( dop != NO_DISP_OBJ );
+	assert( dop != NULL );
 
 	SET_DO_CURRW(dop, win);
 
@@ -517,13 +515,13 @@ void set_viewer_display(Viewer *vp)
 
 	dop=curr_dop();
 //#ifdef CAUTIOUS
-//	if( dop == NO_DISP_OBJ )
+//	if( dop == NULL )
 //		NERROR1("CAUTIOUS:  set_viewer_display:  no current display object");
 //#endif /* CAUTIOUS */
-	//assert( dop != NO_DISP_OBJ );
+	//assert( dop != NULL );
 
 	// dop can be null if user doesn't own the X display!
-	if( dop == NO_DISP_OBJ ){
+	if( dop == NULL ){
 		NWARN("CAUTIOUS:  set_viewer_display:  no current display object");
 		return;
 	}
@@ -664,7 +662,7 @@ static int x_image_for(Viewer *vp,Data_Obj *dp)
 	 * if the size is appropriate.
 	 */
 
-	if( vp->vw_ip != NO_X_IMAGE ){		/* has XImage? */
+	if( vp->vw_ip != NULL ){		/* has XImage? */
 		if (vp->vw_ip->width == (int)OBJ_COLS(dp) &&
 			vp->vw_ip->height == (int)OBJ_ROWS(dp) )
 
@@ -727,7 +725,7 @@ static void copy_components(QSP_ARG_DECL  int n, Data_Obj *dst_dp, int dstart, i
 				Data_Obj *src_dp, int sstart, int sinc )
 {
 	int i,j;
-	Data_Obj *dpto=NO_OBJ,*dpfr=NO_OBJ;
+	Data_Obj *dpto=NULL,*dpfr=NULL;
 
 	i=dstart;
 	j=sstart;
@@ -980,7 +978,7 @@ static void refresh_drawing(Viewer *vp)
 	from_memory =1;
 
 	np=QLIST_HEAD(vp->vw_drawlist);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		//hdl = (void **) np->n_data;
 		//dop = (Draw_Op *) *hdl;
 		dop = (Draw_Op *) np->n_data;
@@ -1010,7 +1008,7 @@ dop_info(DEFAULT_QSP_ARG  dop);
 				_xp_linewidth(vp,dop->do_lw);
 				break;
 			case DRAW_OP_TEXT:
-				if( dop->do_xfp != NO_XFONT ){
+				if( dop->do_xfp != NULL ){
 					set_font(vp,dop->do_xfp);
 				}
 				_xp_text(vp,cx,cy,dop->do_str);
@@ -1085,7 +1083,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 		return;
 	}
 
-	if( vp->vw_ip2 != NO_X_IMAGE ){
+	if( vp->vw_ip2 != NULL ){
 		/* this data is always allocated by Xlib
 		 * so we don't need to check...
 		 */
@@ -1131,7 +1129,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	vp->vw_ip2=XGetImage(VW_DPY(vp), vp->vw_xwin,
 		x, y, OBJ_COLS(dp), OBJ_ROWS(dp), plane_mask, ZPixmap );
 
-	if( vp->vw_ip2 == NO_X_IMAGE ){
+	if( vp->vw_ip2 == NULL ){
 		NWARN("error getting X image");
 		return;
 	}
@@ -1188,7 +1186,7 @@ static void refresh_image(QSP_ARG_DECL  Viewer *vp)
 	if( ! is_mapped(vp) )
 		return;
 
-	if( vp->vw_dp != NO_OBJ )
+	if( vp->vw_dp != NULL )
 		embed_image(QSP_ARG  vp,vp->vw_dp,0,0);
 }
 
@@ -1302,7 +1300,7 @@ int get_string_width(Viewer *vp, const char *s)
 	int n;
 
 	/* We use current_xfp for now, but really we should query the font from the viewer... */
-	if( current_xfp == NO_XFONT ){
+	if( current_xfp == NULL ){
 		NWARN("get_string_width:  need to specify a font before calling this function...");
 		return(-1);
 	}
@@ -1341,7 +1339,7 @@ static void remember_drawing(Viewer *vp,Draw_Op_Code op,Draw_Op_Args *doap)
 	}
 
 	if( unused_dop_list != NULL &&
-		(np=remHead(unused_dop_list)) != NO_NODE ){
+		(np=remHead(unused_dop_list)) != NULL ){
 
 		dop = (Draw_Op *) np->n_data;
 	} else {
@@ -1360,7 +1358,7 @@ static void remember_text_mode(Viewer *vp,Text_Mode m)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER && !quick ){
+	if( vp != NULL && !quick ){
 		doa.doa_text_mode = m;;
 		remember_drawing(vp,DRAW_OP_TEXT_MODE,&doa);
 	}
@@ -1375,7 +1373,7 @@ static void remember_move(Viewer *vp,int x,int y)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER && !quick ){
+	if( vp != NULL && !quick ){
 		doa.doa_x = x;
 		doa.doa_y = y;
 		remember_drawing(vp,DRAW_OP_MOVE,&doa);
@@ -1386,7 +1384,7 @@ static void remember_cont(Viewer *vp,int x,int y)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER && !quick ){
+	if( vp != NULL && !quick ){
 		doa.doa_x = x;
 		doa.doa_y = y;
 		remember_drawing(vp,DRAW_OP_CONT,&doa);
@@ -1397,7 +1395,7 @@ static void remember_linewidth(Viewer *vp, int w)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER && !quick ){
+	if( vp != NULL && !quick ){
 		doa.doa_lw = w;
 		remember_drawing(vp,DRAW_OP_LINEWIDTH,&doa);
 	}
@@ -1407,7 +1405,7 @@ static void remember_text(Viewer *vp,const char *s)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER && !quick ){
+	if( vp != NULL && !quick ){
 		doa.doa_str = savestr(s);
 		doa.doa_xfp = current_xfp;
 		remember_drawing(vp,DRAW_OP_TEXT,&doa);
@@ -1418,7 +1416,7 @@ static void remember_arc(Viewer *vp,int xl,int yu,int w,int h,int a1,int a2,int 
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER && !quick ){
+	if( vp != NULL && !quick ){
 		doa.doa_xl = xl;
 		doa.doa_yu = yu;
 		doa.doa_w = w;
@@ -1434,7 +1432,7 @@ static void remember_fg(Viewer *vp,u_long color)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER ){
+	if( vp != NULL ){
 		if( !quick ){
 			doa.doa_color = color;
 			remember_drawing(vp,DRAW_OP_FOREGROUND,&doa);
@@ -1446,7 +1444,7 @@ static void remember_bg(Viewer *vp,u_long color)
 {
 	Draw_Op_Args doa;
 
-	if( vp != NO_VIEWER ){
+	if( vp != NULL ){
 		if( !quick ){
 			doa.doa_color = color;
 			remember_drawing(vp,DRAW_OP_BACKGROUND,&doa);
@@ -1463,7 +1461,7 @@ static void free_drawlist(Viewer *vp)
 	if( unused_dop_list == NULL )
 		unused_dop_list = new_list();
 
-	while( (np=remHead(vp->vw_drawlist)) != NO_NODE ){
+	while( (np=remHead(vp->vw_drawlist)) != NULL ){
 		//Handle hdl;
 		Draw_Op *dop;
 
@@ -1483,7 +1481,7 @@ static void free_drawlist(Viewer *vp)
 
 static void forget_drawing(Viewer *vp)
 {
-	if( vp != NO_VIEWER && !quick )
+	if( vp != NULL && !quick )
 		free_drawlist(vp);
 }
 
@@ -1504,7 +1502,7 @@ void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 	sprintf(msg_str,"space 0 0 %d %d",vp->vw_width-1,vp->vw_height-1);
 	prt_msg(msg_str);
 
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		//Handle hdl;
 		Draw_Op *dop;
 
@@ -1579,7 +1577,7 @@ void _xp_text(Viewer *vp,int x,int y,const char *s)
 
 	orig_x = x;
 	if( text_mode != LEFT_JUSTIFY ){
-		if( current_xfp == NO_XFONT ){
+		if( current_xfp == NULL ){
 			NWARN("_xp_text:  no font specified, can't center text");
 		} else {
 			XTextExtents(current_xfp->xf_fsp,s,strlen(s),
@@ -1850,7 +1848,7 @@ void update_image(Viewer *vp)
 	Draggable *dgp;
 
 	np=QLIST_HEAD(vp->vw_image_list);
-	if( vp->vw_dp == NO_OBJ ){
+	if( vp->vw_dp == NULL ){
 	/*
 		sprintf(ERROR_STRING,
 	"update_image:  no associated data object for viewer %s",vp->vw_name);
@@ -1858,14 +1856,14 @@ void update_image(Viewer *vp)
 	*/
 		return;
 	}
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		wip=(Window_Image *)np->n_data;
 		insert_image(vp->vw_dp,wip->wi_dp,wip->wi_x,wip->wi_y,
 			vp->vw_frameno);
 		np=np->n_next;
 	}
 	np=QLIST_HEAD(vp->vw_draglist);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		dgp=(Draggable *)np->n_data;
 		embed_draggable(vp->vw_dp,dgp);
 		np=np->n_next;
@@ -2142,7 +2140,7 @@ void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
 	Window_Image *wip;
 
 	assert( VW_IMAGE_LIST(vp) != NULL );
-	assert( QLIST_HEAD( VW_IMAGE_LIST(vp) ) != NO_NODE );
+	assert( QLIST_HEAD( VW_IMAGE_LIST(vp) ) != NULL );
 
 	np = remHead( VW_IMAGE_LIST(vp) );
 	addTail( VW_IMAGE_LIST(vp), np );

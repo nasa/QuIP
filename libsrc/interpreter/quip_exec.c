@@ -37,7 +37,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 	assert( lp != NULL );
 
 	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		Command *cp;
 		cp = (Command *)NODE_DATA(np);
 		// should we use the menu prompt or the full prompt?
@@ -174,7 +174,7 @@ Mouthful *new_mouthful(const char *text, const char *filename)
 		Node *np;
 
 		np=remHead(mf_list);
-		if( np != NO_NODE ){
+		if( np != NULL ){
 			mfp= (Mouthful *)NODE_DATA(np);
 			if( mfp->text != NULL ){
 				rls_str(mfp->text);
@@ -280,7 +280,7 @@ static void chew_stored(SINGLE_QSP_ARG_DECL)
 		Node *np;
 		Mouthful *mfp;
 
-		while( (np=remHead(CHEW_LIST)) != NO_NODE ){
+		while( (np=remHead(CHEW_LIST)) != NULL ){
 			mfp = (Mouthful *) NODE_DATA(np);
 			swallow( QSP_ARG  mfp->text, mfp->filename );
 			// BUG - we might not be done with the text released!?

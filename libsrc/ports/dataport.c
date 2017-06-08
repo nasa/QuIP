@@ -224,7 +224,7 @@ long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data obj
 
 
 #ifdef NOT_YET
-	if( ram_area == NO_AREA )
+	if( ram_area == NULL )
 		ERROR1("ram data area not initialized");
 	if( curr_ap != ram_area )
 		ERROR1("current data area not ram area!?");
@@ -289,7 +289,7 @@ advise(ERROR_STRING);
 
 	old_obj=dobj_of(QSP_ARG  namebuf);
 
-	if( old_obj != NO_OBJ && ( OBJ_ROWS(old_obj)   != DS_ROWS(&_type_dims)   ||
+	if( old_obj != NULL && ( OBJ_ROWS(old_obj)   != DS_ROWS(&_type_dims)   ||
 		   		   OBJ_COLS(old_obj)   != DS_COLS(&_type_dims)   ||
 		   		   OBJ_FRAMES(old_obj) != DS_FRAMES(&_type_dims) ||
 		   		   OBJ_COMPS(old_obj)  != DS_COMPS(&_type_dims)  ||
@@ -299,10 +299,10 @@ advise(ERROR_STRING);
 			OBJ_NAME(old_obj));
 		WARN(ERROR_STRING);
 		delvec(QSP_ARG  old_obj);
-		old_obj = NO_OBJ;
+		old_obj = NULL;
 	}
 
-	if( old_obj == NO_OBJ ){
+	if( old_obj == NULL ){
 		/* BUG? set curr_ap to ram_area? */
 		if( data_len > 0 )
 			new_dp=make_dobj(QSP_ARG  namebuf,&_type_dims,
@@ -313,7 +313,7 @@ advise(ERROR_STRING);
 			SET_OBJ_DATA_PTR(new_dp,NULL);
 		}
 
-		if( new_dp==NO_OBJ ){
+		if( new_dp==NULL ){
 			sprintf(ERROR_STRING,
 				"recv_obj:  couldn't create object \"%s\"",
 				namebuf);

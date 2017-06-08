@@ -17,8 +17,7 @@
 #include "viewer.h"
 #include "debug.h"
 
-#define NO_WINDOW ((Window)NULL)
-static Window curr_window=NO_WINDOW;
+static Window curr_window=NULL;
 static int n_to_protect = NC_SYSTEM;
 int simulating_luts=0;
 
@@ -82,7 +81,7 @@ u_long simulate_lut_mapping(Viewer *vp, u_long color)
 	int r,g,b;
 
 	/* need to get the color map for this viewer */
-	if( VW_CMAP_OBJ(vp) == NO_OBJ ){
+	if( VW_CMAP_OBJ(vp) == NULL ){
 NWARN("simulate_lut_mapping:  no colormap!?");
 		return(color);
 	}
@@ -137,18 +136,9 @@ void x_init_lb_data( Lutbuf *lbp )
 {
 	Disp_Obj *dop;
 
-//#ifdef CAUTIOUS
-//	if( lbp->lb_dp != NO_OBJ ){
-//		sprintf(ERROR_STRING,
-//	"lutbuffer \"%s\":  data already initialized (%s)",
-//			lbp->lb_name,OBJ_NAME(lbp->lb_dp));
-//		NWARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( lbp->lb_dp == NO_OBJ );
+	assert( lbp->lb_dp == NULL );
 
-	if( (dop=curr_dop()) == NO_DISP_OBJ )
+	if( (dop=curr_dop()) == NULL )
 		return;
 
 	if( DO_DEPTH(dop) != 8 ){
@@ -171,7 +161,7 @@ void x_init_lb_data( Lutbuf *lbp )
 sprintf(ERROR_STRING,"testing colormap %s",cmap_name);
 advise(ERROR_STRING);
 		dp=obj_of(cmap_name);
-		if( dp == NO_OBJ ){
+		if( dp == NULL ){
 			lbp->lb_dp = new_colormap(cmap_name);
 		} else {
 			sprintf(ERROR_STRING,"x_init_lb_data:  colormap object %s already exists",OBJ_NAME(dp));
@@ -214,7 +204,7 @@ void x_assign_lutbuf(Lutbuf *lbp,Data_Obj *cm_dp)
 	}
 #endif /* FOOBAR */
 
-	if( lbp == NO_LUTBUF ){
+	if( lbp == NULL ){
 		if( !warned_once ){
 			NWARN("assign_lutbuf(): lbp = NULL");
 			warned_once++;
@@ -223,25 +213,13 @@ void x_assign_lutbuf(Lutbuf *lbp,Data_Obj *cm_dp)
 	}
 
 	if( simulating_luts ){
-//#ifdef CAUTIOUS
-//		if( lbp->lb_dp == NO_OBJ ){
-//			NWARN("lutbuffer data NOT initialized (simulated)");
-//			init_lb_data(lbp);
-//		}
-//#endif /* CAUTIOUS */
-		assert( lbp->lb_dp != NO_OBJ );
+		assert( lbp->lb_dp != NULL );
 
 sprintf(ERROR_STRING,"x_assign_lutbuf:  copying data from %s to %s",OBJ_NAME(cm_dp),lbp->OBJ_NAME(lb_dp));
 advise(ERROR_STRING);
 		dp_copy(lbp->lb_dp,cm_dp);
 	} else {
-//#ifdef CAUTIOUS
-//		if( lbp->lb_xldp == NO_XLIBDATA ){
-//			NWARN("lutbuffer data NOT initialized (xlib)");
-//			init_lb_data(lbp);
-//		}
-//#endif /* CAUTIOUS */
-		assert( lbp->lb_xldp != NO_XLIBDATA );
+		assert( lbp->lb_xldp != NULL );
 
 		set_xl_cmap(lbp->lb_xldp,cm_dp);
 		curr_xldp = lbp->lb_xldp;
@@ -251,7 +229,7 @@ advise(ERROR_STRING);
 void x_set_n_protect(int n)
 {
 	n_to_protect = n;
-	if( curr_xldp != NO_XLIBDATA )
+	if( curr_xldp != NULL )
 		curr_xldp->xld_protected_colors = n;
 }
 
@@ -266,25 +244,15 @@ void x_read_lutbuf(Data_Obj *cm_dp,Lutbuf *lbp)
 	u_long j;
 	XlibData *xldp;
 	int start;
-//#ifdef CAUTIOUS
-//	static int warned=0;
-//
-//	warned=0;
-//#endif /* CAUTIOUS */
 
 	if( luts_disabled ) return;
 
-	if( lbp == NO_LUTBUF ){
+	if( lbp == NULL ){
 		NWARN("read_lutbuf():  lbp = NULL");
 		return;
 	}
 	if( simulating_luts ){
-//#ifdef CAUTIOUS
-//		if( lbp->lb_dp == NO_OBJ ){
-//			error1("CAUTIOUS:  missing object in lutbuf");
-//		}
-//#endif /* CAUTIOUS */
-		assert( lbp->lb_dp != NO_OBJ );
+		assert( lbp->lb_dp != NULL );
 
 sprintf(ERROR_STRING,"x_read_lutbuf:  copying data from %s to %s",OBJ_NAME(lbp->lb_dp),OBJ_NAME(cm_dp));
 advise(ERROR_STRING);
@@ -293,14 +261,7 @@ advise(ERROR_STRING);
 	}
 
 	xldp = lbp->lb_xldp;
-//#ifdef CAUTIOUS
-//	if( xldp==NO_XLIBDATA ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  x_read_lutbuf:  missing xlib data");
-//		NWARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( xldp != NO_XLIBDATA );
+	assert( xldp != NULL );
 
 	curr_xldp = xldp;
 
@@ -308,33 +269,12 @@ advise(ERROR_STRING);
 	else start=xldp->xld_protected_colors;
 
 	for(j=start;j<N_COLORS;j++){
-//#ifdef CAUTIOUS
-//		u_long index;
-//
-//		index = xldp->xld_xctbl[j].pixel;
-//		if( index != j ){
-//			if( !warned ){
-//	sprintf(ERROR_STRING,"x_read_lutbuf  CAUTIOUS:  unexpected pixel index[%ld] = %ld",
-//				j,index);
-//				NWARN(ERROR_STRING);
-//				warned=1;
-//			} else {
-//				warned++;
-//			}
-//		}
-//#endif /* CAUTIOUS */
 		assert( xldp->xld_xctbl[j].pixel == j );
 
 		CM_DATA(cm_dp,0,j) = xldp->xld_xctbl[j].red >> 8 ;
 		CM_DATA(cm_dp,1,j) = xldp->xld_xctbl[j].green >> 8 ;
 		CM_DATA(cm_dp,2,j) = xldp->xld_xctbl[j].blue >> 8 ;
 	}
-//#ifdef CAUTIOUS
-//	if( warned > 2 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  %d total errors detected",warned);
-//		NWARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 }
 
 void x_show_lb_value( Lutbuf *lbp; int index )
@@ -347,12 +287,7 @@ void x_show_lb_value( Lutbuf *lbp; int index )
 	}
 
 	if( simulating_luts ){
-//#ifdef CAUTIOUS
-//		if( lbp->lb_dp == NO_OBJ ){
-//			error1("CAUTIOUS:  x_show_lb_value:  no lb_dp");
-//		}
-//#endif /* CAUTIOUS */
-		assert( lbp->lb_dp != NO_OBJ );
+		assert( lbp->lb_dp != NULL );
 
 		r=CM_DATA(lbp->lb_dp,0,index);
 		g=CM_DATA(lbp->lb_dp,1,index);
@@ -361,12 +296,7 @@ void x_show_lb_value( Lutbuf *lbp; int index )
 		XlibData *xldp;
 
 		xldp = lbp->lb_xldp;
-//#ifdef CAUTIOUS
-//		if( xldp == NO_XLIBDATA ){
-//			error1("CAUTIOUS:  x_show_lb_value:  no xlib data");
-//		}
-//#endif /* CAUTIOUS */
-		assert( xldp != NO_XLIBDATA );
+		assert( xldp != NULL );
 
 		curr_xldp = xldp;
 		r=xldp->xld_xctbl[index].red>>8;
@@ -438,7 +368,7 @@ if( debug & xdebug ) NADVISE("back from XSetWindowColormap");
 
 void x_dump_lut(Dpyable *dpyp)
 {
-	if( DPA_CMAP_OBJ(dpyp)==NO_OBJ ) return;
+	if( DPA_CMAP_OBJ(dpyp)==NULL ) return;
 
 	if( simulating_luts ) return;
 

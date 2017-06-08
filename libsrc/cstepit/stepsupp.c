@@ -40,7 +40,7 @@ void delete_opt_params(SINGLE_QSP_ARG_DECL)
 	lp = opt_param_list(SINGLE_QSP_ARG);
 	if( lp == NULL ) return;
 	np=QLIST_HEAD(lp);
-	while( np!= NO_NODE ){
+	while( np!= NULL ){
 		Opt_Param *opp;
 		Node *next;
 

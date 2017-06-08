@@ -18,12 +18,12 @@ static COMMAND_FUNC( do_list_pfdevs )
 	Compute_Platform *cpp;
 
 	cpp = PICK_PLATFORM("");
-	if( cpp == NO_PLATFORM ) return;
+	if( cpp == NULL ) return;
 
 	// should we list devices for a single platform?
 	//push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	list_item_context(QSP_ARG  PF_CONTEXT(cpp));
-	//if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
+	//if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
 	//	ERROR1("do_list_pfdevs:  Failed to pop platform device context!?");
 }
 
@@ -39,7 +39,7 @@ static COMMAND_FUNC( do_list_all_pfdevs )
 	}
 
 	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		cpp = (Compute_Platform *) NODE_DATA(np);
 		sprintf(msg_str,"%s platform:",PLATFORM_NAME(cpp));
 		prt_msg(msg_str);
@@ -65,7 +65,7 @@ static Platform_Device *pick_platform_device(SINGLE_QSP_ARG_DECL)
 
 	cpp = PICK_PLATFORM("");
 
-	if( cpp == NO_PLATFORM ){
+	if( cpp == NULL ){
 		const char *s;
 		s=NAMEOF("dummy word");
 		// Now use it just to suppress a compiler warning...
@@ -96,7 +96,7 @@ static COMMAND_FUNC( do_obj_dnload )
 	dpto = PICK_OBJ("destination RAM object");
 	dpfr = PICK_OBJ("source GPU object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	//ocl_obj_dnload(QSP_ARG  dpto,dpfr);
 	gen_obj_dnload(QSP_ARG  dpto, dpfr);
@@ -109,7 +109,7 @@ static COMMAND_FUNC( do_obj_upload )
 	dpto = PICK_OBJ("destination GPU object");
 	dpfr = PICK_OBJ("source RAM object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	//ocl_obj_upload(QSP_ARG  dpto,dpfr);
 	gen_obj_upload(QSP_ARG  dpto,dpfr);
@@ -137,7 +137,7 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 
 	cp_lp = platform_list(SINGLE_QSP_ARG);
 	cp_np = QLIST_HEAD(cp_lp);
-	while( cp_np != NO_NODE ){
+	while( cp_np != NULL ){
 		cpp = NODE_DATA(cp_np);
 		// We need to push a context before we can get a list of devices...
 		push_pfdev_context( QSP_ARG  PF_CONTEXT(cpp) );
@@ -146,7 +146,7 @@ static Platform_Device *find_pfdev( QSP_ARG_DECL  platform_type typ )
 		if( pfd_lp == NULL ) return NULL;
 		//pfd_np = QLIST_HEAD(pfd_lp);
 		pfd_np = QLIST_TAIL(pfd_lp);
-		while( pfd_np != NO_NODE ){
+		while( pfd_np != NULL ){
 			pdp = (Platform_Device *) NODE_DATA(pfd_np);
 			if( PF_TYPE( PFDEV_PLATFORM(pdp) ) == typ ){
 				// Some computers have multiple devices,
@@ -232,7 +232,7 @@ static COMMAND_FUNC( do_pf_info )
 	Compute_Platform *cdp;
 
 	cdp = PICK_PLATFORM("");
-	if( cdp == NO_PLATFORM ) return;
+	if( cdp == NULL ) return;
 
 	sprintf(MSG_STR,"Platform name:  %s",PLATFORM_NAME(cdp));
 	prt_msg(MSG_STR);

@@ -211,7 +211,7 @@ void get_camera_features( PGR_Cam *pgcp )
 	/* We may call this again after we have diddled the controls... */
 	/* releasing and rebuilding the list is wasteful, but should work... */
 	if( pgcp->pc_feat_lp != NULL ){
-		while( (np=remHead(pgcp->pc_feat_lp)) != NO_NODE )
+		while( (np=remHead(pgcp->pc_feat_lp)) != NULL )
 			rls_node(np);
 	} else {
 		pgcp->pc_feat_lp = new_list();
@@ -267,7 +267,7 @@ int list_camera_features(QSP_ARG_DECL  PGR_Cam *pgcp )
 	if( pgcp->pc_feat_lp == NULL ) NERROR1("CAUTIOUS:  list_camera_features:  bad list");
 
 	np = QLIST_HEAD(pgcp->pc_feat_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		dc1394feature_info_t * f;
 		f= (dc1394feature_info_t *) np->n_data;
 		list_camera_feature(QSP_ARG  f);
@@ -289,7 +289,7 @@ int get_feature_choices( PGR_Cam *pgcp, const char ***chp )
 	*chp = sptr;
 
 	np=QLIST_HEAD(pgcp->pc_feat_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		dc1394feature_info_t *f;
 		f= (dc1394feature_info_t *) np->n_data;
 		*sptr = /*(char *)dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
@@ -310,15 +310,15 @@ void report_feature_info(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_t id )
 
 	np = QLIST_HEAD(pgcp->pc_feat_lp);
 	f=NULL;
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		f= (dc1394feature_info_t *) np->n_data;
 
 		if( f->id == id )
-			np=NO_NODE;
+			np=NULL;
 		else
 			f=NULL;
 
-		if( np != NO_NODE )
+		if( np != NULL )
 			np = np->n_next;
 	}
 
@@ -600,7 +600,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 		
 	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		char *dst;
 		pgcp = (PGR_Cam *) NODE_DATA(np);
 		dst = OBJ_DATA_PTR(str_dp);
@@ -614,7 +614,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 		}
 		i++;
 		if( i>=n )
-			np=NO_NODE;
+			np=NULL;
 		else
 			np = NODE_NEXT(np);
 	}
@@ -1084,7 +1084,7 @@ void pop_camera_context(SINGLE_QSP_ARG_DECL)
 	Item_Context *icp;
 	icp=pop_dobj_context(SINGLE_QSP_ARG);
 #ifdef CAUTIOUS
-	if( icp == NO_ITEM_CONTEXT ){
+	if( icp == NULL ){
 		ERROR1("CAUTIOUS:  pop_camera_context popped a null dobj context!?");
 	}
 #endif // CAUTIOUS
@@ -1330,7 +1330,7 @@ int start_firewire_transmission(QSP_ARG_DECL  PGR_Cam * pgcp, int _ring_buffer_s
 
 	// Now make sure that we have the frame objects...
 	dp = dobj_of(QSP_ARG  "_frame1");
-	if( dp == NO_OBJ ) init_buffer_objects(QSP_ARG  pgcp);
+	if( dp == NULL ) init_buffer_objects(QSP_ARG  pgcp);
 
 	return(0);
 }
@@ -1401,7 +1401,7 @@ Data_Obj * grab_newest_firewire_frame( QSP_ARG_DECL  PGR_Cam * pgcp )
 			} else {		// No frames yet...
 				// We don't want to call the WAIT version here, because
 				// we might have multiple cameras...
-				return NO_OBJ;
+				return NULL;
 			}
 		} else {	// We have a new frame
 			if( prev_framep != NULL ){	// already have one?
@@ -1455,7 +1455,7 @@ Data_Obj * grab_firewire_frame(QSP_ARG_DECL  PGR_Cam * pgcp )
 	//sprintf(fname,"_frame%d",framep->id);
 	snprintf(fname,TMPSIZE,"_frame%d",framep->id);
 	dp = get_obj(QSP_ARG  fname);
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		NWARN("grab_firewire_frame:  unable to create frame object");
 		return(NULL);
 	}
@@ -1504,7 +1504,7 @@ void release_oldest_frame(PGR_Cam *pgcp)
 
 #ifdef CAUTIOUS
 	// This is CAUTIOUS because of the pc_n_avail test above...
-	if( np == NO_NODE ){
+	if( np == NULL ){
 		NWARN("release_oldest_frame:  no frames are currently dequeued");
 		return;
 	}

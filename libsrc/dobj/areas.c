@@ -118,7 +118,7 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_c
 
 	ap->da_flags = flags;
 
-	ap->da_dp=NO_OBJ;
+	ap->da_dp=NULL;
 	// Should we have the platform device first???
 	ap->da_pdp=NO_PFDEV;
 
@@ -277,7 +277,7 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 	
 	np=QLIST_HEAD(lp);
 	i=0;
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		dp = (Data_Obj *) np->n_data;
 		if( OBJ_AREA(dp) == ap ){
 			dp_list[i] = dp;
@@ -311,17 +311,7 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
 	char name[MAX_NAME_LEN];
 
-//#ifdef CAUTIOUS
-//	if( AREA_SCALAR_OBJ(ap) != NO_OBJ ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  init_scratch_scalar:  area %s already initialized!?",
-//			AREA_NAME(ap) );
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
-	assert( AREA_SCALAR_OBJ(ap) == NO_OBJ );
+	assert( AREA_SCALAR_OBJ(ap) == NULL );
 
 	if( strlen(AREA_NAME(ap))+strlen(".scratch_scalar")+1 > MAX_NAME_LEN )
 		ERROR1("init_scratch_scalar:  need to increase MAX_NAME_LEN!?");
@@ -340,7 +330,7 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 
 Data_Obj *area_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
-	if( AREA_SCALAR_OBJ(ap) == NO_OBJ )
+	if( AREA_SCALAR_OBJ(ap) == NULL )
 		init_scratch_scalar(QSP_ARG  ap);
 	return AREA_SCALAR_OBJ(ap);
 }

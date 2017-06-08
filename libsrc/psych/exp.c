@@ -275,7 +275,7 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		np=np->n_next;
 
@@ -427,7 +427,7 @@ COMMAND_FUNC( do_delete_all_classes )
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		next = np->n_next;	/* del_class messes with the nodes... */
 		del_class(QSP_ARG  tcp);

@@ -225,7 +225,7 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 
 	dp = dobj_of(QSP_ARG  name);
 
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Can't create new data vector %s, name is in use already",
 			name);
 		WARN(ERROR_STRING);
@@ -235,7 +235,7 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 
 	dp = mk_vec(QSP_ARG  name,size,2,PREC_FOR_CODE(PREC_SP));
 
-	if( dp == NO_OBJ ) {
+	if( dp == NULL ) {
 		WARN("unable to create spectra data vector");
 		return -1;
 	}
@@ -471,7 +471,7 @@ static COMMAND_FUNC( do_save_spec )
 	strcpy(name, NAMEOF("name of spec vector to save") );
 
 	dp = dobj_of(QSP_ARG  name);
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		sprintf(ERROR_STRING,"%s does not exist", name);
 		WARN(ERROR_STRING);
 		return;

@@ -380,7 +380,7 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 
 	if( index<0 || index>= num_meteor_frames ){
 		WARN("frame index out of range");
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	dimset.ds_dimension[0] = meteor_bytes_per_pixel;
@@ -391,7 +391,7 @@ Data_Obj *make_frame_object(QSP_ARG_DECL  const char* name,int index)
 
 	dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
 
-	if( dp != NO_OBJ )
+	if( dp != NULL )
 		SET_OBJ_DATA_PTR(dp, mmbuf+meteor_off.frame_offset[index] );
 
 	return(dp);
@@ -531,7 +531,7 @@ static COMMAND_FUNC( do_record )
 
 	ifp = img_file_of(QSP_ARG  name);
 
-	if( ifp != NO_IMAGE_FILE ){
+	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"Clobbering existing image file %s",name);
 		advise(ERROR_STRING);
 		image_file_clobber(1);	/* not necessary !? */
@@ -546,7 +546,7 @@ static COMMAND_FUNC( do_record )
 	 * we could know them, however, because at this point the geometry is set.
 	 */
 
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		sprintf(ERROR_STRING,"Error creating movie file %s",name);
 		WARN(ERROR_STRING);
 		return;
@@ -572,7 +572,7 @@ void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 
 	inp = get_rv_inode(QSP_ARG  ifp->if_name);
 //#ifdef CAUTIOUS
-//	if( inp == NO_INODE ){
+//	if( inp == NULL ){
 //		sprintf(ERROR_STRING,"CAUTIOUS: finish_recording:  missing rv inode %s",ifp->if_name);
 //		ERROR1(ERROR_STRING);
 //	}
@@ -584,7 +584,7 @@ void finish_recording(QSP_ARG_DECL  Image_File *ifp)
 }
 
 int recording_in_process = 0;
-Image_File *record_ifp=NO_IMAGE_FILE;
+Image_File *record_ifp=NULL;
 
 void meteor_record_clip(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 {
@@ -675,7 +675,7 @@ advise("faking hardware");
 
 	meteor_stop_capture(SINGLE_QSP_ARG);
 
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 	meteor_get_geometry(&gp);
 
@@ -688,7 +688,7 @@ advise("faking hardware");
 	if( !meteor_field_mode )
 		SET_SHP_FLAG_BITS(OBJ_SHAPE(dp),DT_INTERLACED);
 
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		WARN("mem_record:  error creating tmp dp");
 		return;
 	}
@@ -761,7 +761,7 @@ static COMMAND_FUNC( do_playback )
 	Image_File *ifp;
 
 	ifp = PICK_IMG_FILE("");
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
 #ifdef HAVE_X11_EXT
 	play_meteor_movie(QSP_ARG  ifp);
@@ -899,7 +899,7 @@ static COMMAND_FUNC( do_get_fifo_errors )
 
 
 	dp = PICK_OBJ("vector for error frame indices");
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,0);	/* see /usr/src/matrox/meteor.c */
 }
@@ -910,7 +910,7 @@ static COMMAND_FUNC( do_get_fifodma_errors )
 
 
 	dp = PICK_OBJ("vector for error frame indices");
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,2);	/* see /usr/src/matrox/meteor.c */
 }
@@ -921,7 +921,7 @@ static COMMAND_FUNC( do_get_dma_errors )
 
 
 	dp = PICK_OBJ("vector for error frame indices");
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	get_err_fields(QSP_ARG  dp,1);	/* see /usr/src/matrox/meteor.c */
 }
@@ -934,7 +934,7 @@ static COMMAND_FUNC( do_get_drops )
 
 	dp = PICK_OBJ("vector for drop frame indices");
 
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 
 	if( OBJ_MACH_PREC(dp) != PREC_UDI ){
 		sprintf(ERROR_STRING,

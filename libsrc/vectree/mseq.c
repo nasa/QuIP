@@ -78,7 +78,7 @@ static COMMAND_FUNC( do_packed_mseq )
 	t = (int) HOW_MANY("tap bit index");
 	start_val = HOW_MANY("start value");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check object here */
 
@@ -107,7 +107,7 @@ static COMMAND_FUNC( do_mseq )
 	t = (int) HOW_MANY("tap bit index");
 	start_val = HOW_MANY("start value");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check object here */
 
@@ -143,7 +143,7 @@ static COMMAND_FUNC( do_pack )
 	total_bits = (1<<reg_len)-1;
 	//nwords = (int) floor((total_bits+31)/32);
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ) return;
+	if( dst_dp == NULL || src_dp == NULL ) return;
 	src = (u_long *)OBJ_DATA_PTR(src_dp);
 	dst = (u_long *)OBJ_DATA_PTR(dst_dp);
 

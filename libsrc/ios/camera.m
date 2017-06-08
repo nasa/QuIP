@@ -221,7 +221,7 @@ static int get_ios_item_names( QSP_ARG_DECL  Data_Obj *str_dp, IOS_Item_Type *it
 		
 	np=IOS_LIST_HEAD(lp);
 	i=0;
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		char *dst;
 		ip = (IOS_Item *) IOS_NODE_DATA(np);
 		dst = OBJ_DATA_PTR(str_dp);
@@ -235,7 +235,7 @@ static int get_ios_item_names( QSP_ARG_DECL  Data_Obj *str_dp, IOS_Item_Type *it
 		}
 		i++;
 		if( i>=n )
-			np=NO_IOS_NODE;
+			np=NULL;
 		else
 			np = IOS_NODE_NEXT(np);
 	}
@@ -254,7 +254,7 @@ static COMMAND_FUNC( do_get_cams )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( get_camera_names( QSP_ARG  dp ) < 0 )
 		WARN("Error getting camera names!?");
@@ -265,7 +265,7 @@ static COMMAND_FUNC( do_mon_cam )
 	Viewer *vp;
 
 	vp = PICK_VWR("");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	monitor_av_session(vp);
 }
@@ -305,7 +305,7 @@ static COMMAND_FUNC( do_grab_cam )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("target image object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	grab_next_frame(dp);
 }

@@ -2961,7 +2961,7 @@ void zap_fore(Foreach_Loop *frp)
 {
 	Node *np;
 
-	while( (np=remTail(FL_LIST(frp))) != NO_NODE ){
+	while( (np=remTail(FL_LIST(frp))) != NULL ){
 		rls_str((const char *)NODE_DATA(np));
 		rls_node(np);
 	}
@@ -3172,7 +3172,7 @@ COMMAND_FUNC( close_loop )
 
 	if( QRY_COUNT(qp) == FORELOOP ){
 		FL_NODE(QRY_FORLOOP(qp)) = NODE_NEXT(FL_NODE(QRY_FORLOOP(qp)));
-		if( FL_NODE(QRY_FORLOOP(qp)) == NO_NODE ){
+		if( FL_NODE(QRY_FORLOOP(qp)) == NULL ){
 			zap_fore(QRY_FORLOOP(qp));	// this releases the foreach struct also
 			SET_QRY_FORLOOP(qp,NULL);
 			goto lup_dun;
@@ -3661,7 +3661,7 @@ static void add_func_to_list(List *lp,void (*func)(SINGLE_QSP_ARG_DECL) )
 	 */
 #ifdef CAUTIOUS
 	np = QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 //		if( func == ((void (*)())NODE_DATA(np)) ){
 //			sprintf(DEFAULT_ERROR_STRING,
 //				"CAUTIOUS:  add_func_to_list:  function already on list!?");
@@ -3690,7 +3690,7 @@ int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 {
 	Node *np;
 	np = remData(QS_EVENT_LIST(THIS_QSP),(void *)func);
-	if( np != NO_NODE ){
+	if( np != NULL ){
 		rls_node(np);
 		return(0);
 	} else {

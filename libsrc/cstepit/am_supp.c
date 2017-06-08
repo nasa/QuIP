@@ -104,7 +104,7 @@ static float amoeba_scr_funk(float *p)
 	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Opt_Param *opp;
 
 		opp=(Opt_Param *)np->n_data;
@@ -137,7 +137,7 @@ static float amoeba_c_funk(float *p)
 	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		opp=(Opt_Param *)np->n_data;
 		opp->ans=p[i+1];
 		np=np->n_next;

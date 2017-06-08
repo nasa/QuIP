@@ -89,7 +89,7 @@ int png_to_dp( Data_Obj *dp, Png_Hdr *hdr_p )	// unix version
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp)*OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp)*OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_PARENT(dp, NULL);
 	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
@@ -462,7 +462,7 @@ FIO_OPEN_FUNC( pngfio )		// unix version
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Png_Hdr) );
 	/* zero the contents */
@@ -473,7 +473,7 @@ FIO_OPEN_FUNC( pngfio )		// unix version
 	if( IS_READABLE(ifp) ) {
 //fprintf(stderr,"checking header info, reading png file...\n");
 		if(get_hdr_info(QSP_ARG  ifp) < 0)
-			return(NO_IMAGE_FILE);
+			return(NULL);
 
 	} else {
 		/* We've only opened a file for writing, the header info
@@ -711,7 +711,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 #endif // HAVE_ANY_GPU
 
 //fprintf(stderr,"pngfio write func BEGIN\n");
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		/* what should be here? */
 	} else {
 		advise("png_wt:  obj exists");
@@ -1124,7 +1124,7 @@ static void png_to_dp(Data_Obj *dp, UIImage *img)	// iOS version
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp)*OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp)*OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_PARENT(dp, NULL);
 	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
@@ -1141,7 +1141,7 @@ FIO_OPEN_FUNC( pngfio )		// iOS version
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	// if it's readable, then we would read the header so we can
 	// answer queries about it...

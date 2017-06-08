@@ -343,7 +343,7 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	np=QLIST_HEAD(lp);
 	lc_frag = getbuf(strlen(frag)+1);
 	decap(lc_frag,frag);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		vp = (Variable *) NODE_DATA(np);
 		if( str1 == NULL ){
 			str1_size = (int) strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;

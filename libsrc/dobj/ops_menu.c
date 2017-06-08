@@ -31,7 +31,7 @@ static COMMAND_FUNC( do_equate )
 
 	dp=PICK_OBJ("");
 	v=HOW_MUCH("value");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	dp_equate(QSP_ARG  dp,v);
 }
@@ -42,7 +42,7 @@ static COMMAND_FUNC( do_cpybuf )
 
 	dp_to=PICK_OBJ("destination data object");
 	dp_fr=PICK_OBJ("source data object");
-	if( dp_to==NO_OBJ || dp_fr==NO_OBJ ) return;
+	if( dp_to==NULL || dp_fr==NULL ) return;
 
 	dp_copy(QSP_ARG  dp_to,dp_fr);
 }
@@ -55,7 +55,7 @@ static COMMAND_FUNC( do_rnd )
 	dp=PICK_OBJ("byte buffer" );
 	imin=(int)HOW_MANY("minimum random value");
 	imax=(int)HOW_MANY("maximum random value");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	i_rnd(QSP_ARG  dp,imin,imax);
 }
 
@@ -76,7 +76,7 @@ static COMMAND_FUNC( do_uni )
 	/* need to seed this generator... */
 
 	dp=PICK_OBJ("float data object");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	dp_uni(QSP_ARG  dp);
 }
 

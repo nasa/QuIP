@@ -285,7 +285,7 @@ int read_next_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
 {
 	char *s;
 
-	if(dp == NO_OBJ) return(-1);
+	if(dp == NULL) return(-1);
 
 	if( !polh_continuous )
 		start_continuous_mode();
@@ -337,7 +337,7 @@ int read_single_polh_dp(QSP_ARG_DECL  Data_Obj *dp)
 	//int n_want_bytes;
 	char *s;
 
-	if(dp == NO_OBJ) return(-1);
+	if(dp == NULL) return(-1);
 
 #ifdef FOOBAR
 	/* Set the polhemus device to non-continuous mode. */
@@ -393,7 +393,7 @@ int good_polh_vector(QSP_ARG_DECL  Data_Obj *dp)
 
 	/* The polhemus can output floats, but we'll assume it's all short here... */
 
-	if( dp == NO_OBJ ) return(0);
+	if( dp == NULL ) return(0);
 
 	if( OBJ_PREC(dp) != PREC_IN && OBJ_PREC(dp) != PREC_UIN ) {
 		sprintf(DEFAULT_ERROR_STRING, "Object %s has %s precision, should be %s or %s for polhemus data",

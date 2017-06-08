@@ -151,7 +151,7 @@ Knox_Device *curr_kdp=NULL;
 // should be static?
 //ITEM_INTERFACE_PROTOTYPES_STATIC(Knox_Device,knox_dev)
 //ITEM_INTERFACE_DECLARATIONS_STATIC(Knox_Device,knox_dev)
-static Item_Type * knox_dev_itp=NO_ITEM_TYPE;
+static Item_Type * knox_dev_itp=NULL;
 static ITEM_INIT_FUNC(Knox_Device,knox_dev,0)
 static ITEM_NEW_FUNC(Knox_Device,knox_dev)
 static ITEM_CHECK_FUNC(Knox_Device,knox_dev)
@@ -635,7 +635,7 @@ static COMMAND_FUNC( do_fetch_map )
 
 	dp = PICK_OBJ("object for routing results");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( OBJ_COLS(dp) != 8 ){
 		sprintf(ERROR_STRING,

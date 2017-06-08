@@ -81,7 +81,7 @@ List *_dictionary_list(QSP_ARG_DECL  Dictionary *dict_p)
 	assert( IS_HASHING(dict_p) );
 
 	/* trash the old list */
-	while( (np=remHead(DICT_LIST(dict_p))) != NO_NODE )
+	while( (np=remHead(DICT_LIST(dict_p))) != NULL )
 		rls_node(np);
 	rls_list(DICT_LIST(dict_p));
 
@@ -95,7 +95,7 @@ void delete_dictionary(Dictionary *dict_p)
 	Node *np;
 
 	/* delete the list */
-	while( (np=remHead(DICT_LIST(dict_p))) != NO_NODE )
+	while( (np=remHead(DICT_LIST(dict_p))) != NULL )
 		rls_node(np);
 	rls_list(DICT_LIST(dict_p));
 
@@ -147,7 +147,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG */
 			/* initialize the hash table from the list */
 			np=QLIST_HEAD(DICT_LIST(dict_p));
-			while(np!=NO_NODE){
+			while(np!=NULL){
 				Item *ip;
 				ip=(Item*) NODE_DATA(np);
 
@@ -197,7 +197,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		DICT_N_FETCHES(dict_p) + 1 );
 
 	np=QLIST_HEAD(DICT_LIST(dict_p));
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Item *ip;
 
 		ip = (Item*) NODE_DATA(np);
@@ -220,14 +220,14 @@ int insert_name(Item* ip, Node* np, Dictionary* dict_p)
 		int stat;
 
 		stat=insert_hash(ip,DICT_HT(dict_p));
-		if( np!=NO_NODE )
+		if( np!=NULL )
 			addTail(DICT_LIST(dict_p),np);
 		else {
 			CLEAR_DICT_FLAG_BITS(dict_p, NS_LIST_IS_CURRENT);
 		}
 		return(stat);
 	} else {
-		if( np == NO_NODE )
+		if( np == NULL )
 			np=mk_node(ip);
 
 		/* BUG?  for commands, we want the first items to be at the head
@@ -253,7 +253,7 @@ void _cat_dict_items(QSP_ARG_DECL  List *lp, Dictionary* dict_p)
 	if( nslp == NULL ) return;
 
 	np=QLIST_HEAD(nslp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		new_np=mk_node(NODE_DATA(np));
 		addTail(lp,new_np);
 		np=NODE_NEXT(np);
@@ -282,13 +282,13 @@ int remove_name(Item *ip,Dictionary *dict_p)
 		 * efficient for the item to carry around it's own np...
 		 */
 		np=remData(DICT_LIST(dict_p),ip);
-		if( np!=NO_NODE ) rls_node(np);
+		if( np!=NULL ) rls_node(np);
 		/* CLEAR_DICT_FLAG_BITS(dict_p, NS_LIST_IS_CURRENT); */
 		return(stat);
 	}
 
 	np=remData(DICT_LIST(dict_p),ip);
-	if( np==NO_NODE ) return(-1);
+	if( np==NULL ) return(-1);
 	rls_node(np);
 
 	return(0);

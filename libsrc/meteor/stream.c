@@ -373,13 +373,6 @@ static int n_ready_bufs;
 
 void thread_write_enable(QSP_ARG_DECL  int index, int flag)
 {
-//#ifdef CAUTIOUS
-//	if( index < 0 || index >= MAX_DISKS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  thread_write_enable:  index %d out of range",index);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index < MAX_DISKS );
 	
 	thread_write_enabled[index]=flag;
@@ -563,15 +556,6 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 
 	clear_buffers(SINGLE_QSP_ARG);	/* not really necessary */
 
-//#ifdef CAUTIOUS
-//	if( _mm->frame_size != meteor_bytes_per_pixel*meteor_columns*meteor_rows ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  _mm->frame_size = 0x%x, but bpp (%d) * cols (%d) * rows (%d) = 0x%x !?",
-//			n_to_write,meteor_bytes_per_pixel,meteor_columns,meteor_rows,
-//			meteor_bytes_per_pixel*meteor_columns*meteor_rows);
-//		WARN(ERROR_STRING);
-//		meteor_status(SINGLE_QSP_ARG);
-//	}
-//#endif /* CAUTIOUS */
 	assert( _mm->frame_size == meteor_bytes_per_pixel*meteor_columns*meteor_rows );
 
 	/* allow space for the timestamp, if we are recording timestamps... */
@@ -581,13 +565,6 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	n_to_write = blocks_per_frame * BLOCK_SIZE;
 
 	n_to_write /= N_FRAGMENTS;
-//#ifdef CAUTIOUS
-//	if( (n_to_write % BLOCK_SIZE) != 0 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  N_FRAGMENTS (%d) does not divide blocks_per_frame (%d) evenly",
-//			N_FRAGMENTS,blocks_per_frame);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( (n_to_write % BLOCK_SIZE) == 0 );
 
 
@@ -607,14 +584,6 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	inp = (RV_Inode *)ifp->if_hdr_p;
 	ndisks = queue_rv_file(QSP_ARG  inp,fd_arr);
 
-//#ifdef CAUTIOUS
-//	if( ndisks < 1 ){
-//		sprintf(ERROR_STRING,
-//			"Bad number (%d) of raw volume disks",ndisks);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( ndisks > 0 );
 
 	if( num_meteor_frames < (2*ndisks) ){
@@ -648,7 +617,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	SET_SHP_FRAMES(shpp,n_frames);
 	SET_SHP_SEQS(shpp, 1);
 	SET_SHP_PREC_PTR(shpp,PREC_FOR_CODE(PREC_UBY) );
-	//set_shape_flags(&shape,NO_OBJ);
+	//set_shape_flags(&shape,NULL);
 	if( !meteor_field_mode )
 		SET_SHP_FLAG_BITS(shpp,DT_INTERLACED);
 
@@ -721,13 +690,6 @@ show_tmrs(SINGLE_QSP_ARG);
 	/* BUG make sure this thread is still running! */
 
 #ifdef FOOBAR
-//#ifdef CAUTIOUS
-//	/* Sometimes execution can reach this point before the grab thread
-//	 * has executed... BUG
-//	 */
-//	if( grabber_pid == 0 )
-//		ERROR1("CAUTIOUS:  meteor_wait_record:  no grabber thread");
-//#endif /* CAUTIOUS */
 	assert( grabber_pid != 0 );
 
 	if( unassoc_pids(master_pid,grabber_pid) < 0 )
@@ -1183,13 +1145,8 @@ if( verbose ) advise("main thread stopping capture");
 
 		stream_ifp->if_nfrms = n_frames;
 #ifdef FOO
-		assert( stream_ifp->if_dp != NO_OBJ );
-//#ifdef CAUTIOUS
-//		if( stream_ifp->if_dp == NO_OBJ )
-//			WARN("CAUTIOUS:  stream_ifp has NULL if_dp!?");
-//		else
-//#endif /* CAUTIOUS */
-			stream_ifp->if_dp->dt_frames = n_frames;
+		assert( stream_ifp->if_dp != NULL );
+		stream_ifp->if_dp->dt_frames = n_frames;
 #endif /* FOO */
 
 	}
@@ -1203,13 +1160,7 @@ if( verbose ) advise("main thread stopping capture");
 
 	recording_in_process = 0;
 
-//#ifdef CAUTIOUS
-//	if( stream_ifp == NO_IMAGE_FILE ){
-//		WARN("CAUTIOUS:  video_reader:  stream_ifp is NULL!?");
-//		return(NULL);
-//	}
-//#endif /* CAUTIOUS */
-	assert( stream_ifp != NO_IMAGE_FILE );
+	assert( stream_ifp != NULL );
 
 	finish_recording( QSP_ARG  stream_ifp );
 

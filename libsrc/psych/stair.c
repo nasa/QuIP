@@ -85,7 +85,7 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 
 	/* Don't we have a routine to delete all staircases? */
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		stcp = (Staircase *)np->n_data;
 		np=np->n_next;		/* must do this before freeing item! */
 		del_stc(QSP_ARG  stcp);
@@ -400,7 +400,7 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	stcp = stair_tbl = (Staircase **)getbuf( n * sizeof(stcp) );
 	order = (SCRAMBLE_TYPE *) getbuf( n * sizeof(*order) );
 	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		*stcp++ = (Staircase *)np->n_data;
 		np = np->n_next;
 	}
@@ -532,7 +532,7 @@ advise("deleting all staircases");
 	if( lp == NULL ) return;
 
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		stcp = (Staircase *) np->n_data;
 		del_stair(QSP_ARG  stcp);
 		np=np->n_next;
@@ -551,7 +551,7 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		if( CLASS_INDEX(tcp) == index ) return(tcp);
 		np=np->n_next;

@@ -83,7 +83,7 @@ static void float_sort_svd_eigenvectors(Data_Obj *u_dp, Data_Obj *w_dp, Data_Obj
 	n = OBJ_COLS(w_dp);
 
 	index_dp = mkvec("svd_tmp_indices",n,1,PREC_UDI);
-	if( index_dp == NO_OBJ ){
+	if( index_dp == NULL ){
 		NWARN("Unable to create index object for sorting SVD eigenvalues");
 		return;
 	}

@@ -80,7 +80,7 @@ static float frprmn_scr_funk(float *p)
 	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Opt_Param *opp;
 
 		opp=(Opt_Param *)np->n_data;
@@ -113,7 +113,7 @@ static float frprmn_c_funk(float *p)
 	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		opp=(Opt_Param *)np->n_data;
 		opp->ans=p[i+1];
 		np=np->n_next;
@@ -144,7 +144,7 @@ static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 	/* init the values */
 	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		opp = (Opt_Param *)np->n_data;
 		p[i] = opp->ans;
 		np=np->n_next;

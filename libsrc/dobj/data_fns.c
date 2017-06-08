@@ -67,17 +67,17 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
 
 //dp2=dobj_of(QSP_ARG  OBJ_NAME(dp));
-//if( dp2 == NO_OBJ ){
+//if( dp2 == NULL ){
 //sprintf(ERROR_STRING,"CAUTIOUS:  obj_rename:  object %s has already been removed from the database",
 //OBJ_NAME(dp));
 //WARN(ERROR_STRING);
 //}
 
 	// We expect that the passed object is in the namespace.
-	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NO_OBJ );
+	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NULL );
 
 	dp2=dobj_of(QSP_ARG  newname);
-	if( dp2 != NO_OBJ ){
+	if( dp2 != NULL ){
 		sprintf(ERROR_STRING,
 			"name \"%s\" is already in use in area \"%s\"",
 			newname,AREA_NAME( OBJ_AREA(dp) ) );
@@ -140,10 +140,10 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	INIT_DIMSET_PTR(dsp)
 
 	dp = dobj_of(QSP_ARG  name);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"make_obj_list:  object %s already exists!?",name);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	SET_DIMENSION(dsp,0,1);
@@ -151,7 +151,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	if( DIMENSION(dsp,1) < 1 ){
 		sprintf(ERROR_STRING,"make_obj_list %s:  object list has no elements!?",name);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	SET_DIMENSION(dsp,2,1);
@@ -174,7 +174,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	dp_tbl=(Data_Obj **)OBJ_DATA_PTR(dp);
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		*dp_tbl = (Data_Obj *) NODE_DATA(np);
 		if( UNKNOWN_SHAPE( OBJ_SHAPE(*dp_tbl) ) )
 			uk_leaf++;
@@ -453,7 +453,7 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 	Data_Obj *dp;
 
 	dp=make_obj(QSP_ARG  name,1,1,1,2,prec_for_code(PREC_SP));
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		*((float *)OBJ_DATA_PTR(dp)) = (float)rval;
 		*( ((float *)OBJ_DATA_PTR(dp)) + 1 ) = (float)ival;
 		SET_OBJ_FLAG_BITS(dp,DT_COMPLEX);
@@ -485,7 +485,7 @@ dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
@@ -501,7 +501,7 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));

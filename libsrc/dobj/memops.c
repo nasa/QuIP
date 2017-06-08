@@ -32,7 +32,7 @@ void getmean( QSP_ARG_DECL  Data_Obj *dp )
 	double sum, sos, f;
 	float max,min;
 
-	if( dp== NO_OBJ ) return;
+	if( dp== NULL ) return;
 	if( OBJ_PREC(dp) != PREC_SP && OBJ_PREC(dp) != PREC_IN ){
 		NWARN("sorry, only float or short objects");
 		return;
@@ -159,7 +159,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 void dp_equate( QSP_ARG_DECL  Data_Obj *dp, double v )
 {
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	equate_value=v;
 
@@ -312,7 +312,7 @@ static void fast_rand( Data_Obj *dp )
 
 void i_rnd( QSP_ARG_DECL  Data_Obj *dp, int imin, int imax )
 {
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
 		sprintf(ERROR_STRING,"i_rnd:  object %s (%s) should have %s or %s precision",
 				OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_BY),NAME_FOR_PREC_CODE(PREC_UBY));
@@ -358,7 +358,7 @@ void dp_uni( QSP_ARG_DECL  Data_Obj *dp )
 {
 	/* need to seed this generator... */
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
 		NWARN("Uniform random numbers require FLOAT precision");
@@ -530,13 +530,7 @@ void check_vectorization(Data_Obj *dp)		/** sets global max_vectorizable */
 	int max_v;
 	int i,j;
 
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ){
-//		NWARN("CAUTIOUS:  check_vectorization called with NULL arg!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 
 	max_v = N_DIMENSIONS-1;	/* default:  vectorize over everything */
 

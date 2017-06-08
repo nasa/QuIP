@@ -496,7 +496,7 @@ List *seqs_referring(QSP_ARG_DECL  void *data)
 	np=QLIST_HEAD(lp);
 
 	lp=new_list();
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		if( contains((Seq *)np->n_data,data) )
 			addTail(lp,mk_node(np->n_data));
 		np=np->n_next;

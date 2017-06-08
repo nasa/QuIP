@@ -161,7 +161,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * OBJ_ROWS(dp));
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * OBJ_FRAMES(dp));
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_PARENT(dp, NULL);
 	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
@@ -180,7 +180,7 @@ FIO_OPEN_FUNC( tiff )
 	char *modestr;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_TIFF));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	if( IS_READABLE(ifp) )	modestr="r";
 	else			modestr="w";
@@ -191,7 +191,7 @@ FIO_OPEN_FUNC( tiff )
 		NWARN(ERROR_STRING);
 		DEL_IMG_FILE(ifp);
 		// call rls_str here???  BUG?
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 
@@ -324,7 +324,7 @@ FIO_WT_FUNC( tiff )
 	dimension_t row;
 	char *datap;
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);

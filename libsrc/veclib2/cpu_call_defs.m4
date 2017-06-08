@@ -200,7 +200,7 @@ define(`CHECK_MATCH',`
 define(`OBJ_ARG_CHK_DBM',`
 
 	ANNOUNCE_FUNCTION
-	if( bitmap_dst_dp == NO_OBJ ){
+	if( bitmap_dst_dp == NULL ){
 NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");
 		return;
 	}
@@ -210,7 +210,7 @@ define(`OBJ_ARG_CHK_DBM_',`OBJ_ARG_CHK_DBM')
 
 define(`OBJ_ARG_CHK_SBM',`
 
-	if( bitmap_src_dp == NO_OBJ ){
+	if( bitmap_src_dp == NULL ){
 		NWARN("Null bitmap source object!?");
 		return;
 	}
@@ -228,7 +228,7 @@ define(`OBJ_ARG_CHK_1',`
 dnl	OBJ_ARG_CHK(dp,string)
 define(`OBJ_ARG_CHK',`
 
-	if( $1==NO_OBJ ){
+	if( $1==NULL ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"CAUTIOUS:  Null %s object!?",$2);
 		NERROR1(DEFAULT_ERROR_STRING);

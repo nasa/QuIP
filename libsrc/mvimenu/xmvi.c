@@ -19,7 +19,7 @@ static int x_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 	if( pathname == NULL ) return(-1);
 
 	ifp = open_image_file(QSP_ARG  pathname,"w");
-	if( ifp == NO_IMAGE_FILE )
+	if( ifp == NULL )
 		return(-1);
 
 	SET_MOVIE_DATA(mvip, ifp);
@@ -76,14 +76,14 @@ static void x_open_movie(QSP_ARG_DECL  const char *filename)
 
 	pathname = movie_pathname(filename);
 	ifp=open_image_file(QSP_ARG  pathname,"r");
-	if( ifp == NO_IMAGE_FILE ) return;
+	if( ifp == NULL ) return;
 
-	if( ram_area_p == NO_AREA ) dataobj_init(SINGLE_QSP_ARG);
+	if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
 
 	dp = make_dobj(QSP_ARG  filename, OBJ_TYPE_DIMS(ifp->if_dp),
 			OBJ_PREC_PTR(ifp->if_dp));
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	read_object_from_file(QSP_ARG  dp,ifp);
 	/* should close file automatically!? */
@@ -92,7 +92,7 @@ static void x_open_movie(QSP_ARG_DECL  const char *filename)
 	/* make the movie object */
 
 	mvip = create_movie(QSP_ARG  filename);
-	if( mvip == NO_MOVIE ){
+	if( mvip == NULL ){
 		/* BUG free dobj here */
 		return;
 	}
@@ -114,9 +114,9 @@ static void x_play_movie(QSP_ARG_DECL  Movie *mvip)
 	vp = vwr_of(QSP_ARG  MOVIE_VIEWER_NAME);
 
 mk_win:
-	if( vp == NO_VIEWER ){
+	if( vp == NULL ){
 		vp = viewer_init(QSP_ARG  MOVIE_VIEWER_NAME,OBJ_COLS(dp),OBJ_ROWS(dp),0);
-		if( vp == NO_VIEWER ){
+		if( vp == NULL ){
 			WARN("couldn't create viewer");
 			return;
 		}
@@ -131,7 +131,7 @@ mk_win:
 				OBJ_NAME(dp));
 			advise(ERROR_STRING);
 			delete_viewer(QSP_ARG  vp);
-			vp=NO_VIEWER;
+			vp=NULL;
 			goto mk_win;
 		}
 	}

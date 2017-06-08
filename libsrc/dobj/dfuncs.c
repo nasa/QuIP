@@ -14,7 +14,7 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 	dp = dobj_of(QSP_ARG  name);
-	if( dp==NO_OBJ ) return(0.0);
+	if( dp==NULL ) return(0.0);
 	return(1.0);
 }
 
@@ -43,7 +43,7 @@ double comp_func( Data_Obj *dp, index_t index )
 	double d;
 	mach_prec mp;
 
-	if( dp==NO_OBJ ) return(0.0);
+	if( dp==NULL ) return(0.0);
 
 #ifdef FOOBAR
 #ifdef HAVE_CUDA
@@ -122,7 +122,7 @@ double comp_func( Data_Obj *dp, index_t index )
 
 double val_func(QSP_ARG_DECL  Data_Obj *dp )
 {
-	if( dp==NO_OBJ ) return(0.0);
+	if( dp==NULL ) return(0.0);
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,"val_func:  %s is not a scalar",
 			OBJ_NAME(dp));
@@ -140,7 +140,7 @@ double val_func(QSP_ARG_DECL  Data_Obj *dp )
 
 static double re_func(QSP_ARG_DECL  Data_Obj *dp )
 {
-	if( dp==NO_OBJ ) return(0.0);
+	if( dp==NULL ) return(0.0);
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"re_func:  %s is not a scalar",OBJ_NAME(dp));
@@ -161,7 +161,7 @@ static double re_func(QSP_ARG_DECL  Data_Obj *dp )
 
 static double im_func(QSP_ARG_DECL  Data_Obj *dp )
 {
-	if( dp==NO_OBJ ) return(0.0);
+	if( dp==NULL ) return(0.0);
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"im_func:  %s is not a scalar",OBJ_NAME(dp));

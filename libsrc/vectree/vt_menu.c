@@ -101,7 +101,7 @@ static COMMAND_FUNC( do_dump_tree )
 
 	n= (int) HOW_MANY("node serial number");
 	enp = find_node_by_number(QSP_ARG  n);
-	if( enp == NO_VEXPR_NODE ) return;
+	if( enp == NULL ) return;
 
 	DUMP_TREE(enp);
 }
@@ -112,10 +112,10 @@ static COMMAND_FUNC( do_unexport )
 	Identifier *idp;
 
 	dp = PICK_OBJ("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	idp = ID_OF(OBJ_NAME(dp));
-	if( idp == NO_IDENTIFIER ){
+	if( idp == NULL ){
 		sprintf(ERROR_STRING,"do_unexport:  object %s has not been exported",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
@@ -129,7 +129,7 @@ static COMMAND_FUNC( do_unexport )
 
 static Data_Obj *base_object( Data_Obj *dp )
 {
-	while( OBJ_PARENT(dp) != NO_OBJ && !strncmp(OBJ_NAME(OBJ_PARENT(dp)),OBJ_NAME(dp),
+	while( OBJ_PARENT(dp) != NULL && !strncmp(OBJ_NAME(OBJ_PARENT(dp)),OBJ_NAME(dp),
 							strlen(OBJ_NAME(OBJ_PARENT(dp))) ) )
 		dp = OBJ_PARENT(dp);
 	return dp;
@@ -141,7 +141,7 @@ static COMMAND_FUNC( do_export )
 	Identifier *idp;
 
 	dp = PICK_OBJ("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	// If this is a subscripted object, export the parent
 	//
@@ -168,19 +168,13 @@ static COMMAND_FUNC( do_export )
 	SET_OBJ_EXTRA(dp,NULL);
 
 	idp = ID_OF(OBJ_NAME(dp));
-	if( idp != NO_IDENTIFIER ){
+	if( idp != NULL ){
 		sprintf(ERROR_STRING,"do_export:  identifier %s already exists!?",ID_NAME(idp));
 		WARN(ERROR_STRING);
 		return;
 	}
 	idp = make_named_reference(QSP_ARG  OBJ_NAME(dp));
-//#ifdef CAUTIOUS
-//	if( idp == NO_IDENTIFIER ){
-//		ERROR1("CAUTIOUS:  do_export:  unable to create named reference");
-//		IOS_RETURN
-//	}
-//#endif
-	assert( idp != NO_IDENTIFIER );
+	assert( idp != NULL );
 
 	SET_REF_OBJ(ID_REF(idp), dp);
 	SET_OBJ_FLAG_BITS(dp, DT_EXPORTED);
@@ -203,7 +197,7 @@ static COMMAND_FUNC( do_node_info )
 
 	n= (int) HOW_MANY("node serial number");
 	enp = find_node_by_number(QSP_ARG  n);
-	if( enp == NO_VEXPR_NODE ) return;
+	if( enp == NULL ) return;
 
 	node_info(QSP_ARG  enp);
 }
@@ -241,15 +235,15 @@ static double id_exists(QSP_ARG_DECL  const char *name)
 	Identifier *ip;
 
 	ip=ID_OF(name);
-	if( ip==NO_IDENTIFIER ){
+	if( ip==NULL ){
 		// We didn't find it, but it might be a subscripted object
 		Data_Obj *dp;
 
 		dp=hunt_obj( QSP_ARG  name);
-		if( dp != NO_OBJ ){
+		if( dp != NULL ){
 			dp = base_object(dp);
 			ip=ID_OF(OBJ_NAME(dp));
-			if( ip==NO_IDENTIFIER )
+			if( ip==NULL )
 				return 0.0;
 			else return 1.0;
 		}

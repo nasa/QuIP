@@ -129,7 +129,7 @@ static COMMAND_FUNC( rd_obj )
 
 	dp=PICK_OBJ( "name of image data object" );
 	ifp=PICK_IMG_FILE("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	if( ifp == NO_IMAGE_FILE ) return;
 	read_object(QSP_ARG  dp, ifp);
 }
@@ -144,7 +144,7 @@ static COMMAND_FUNC( do_close_all_hips )
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		ifp=(Image_File *)np->n_data;
 		np=np->n_next;
 		close_image_file(QSP_ARG  ifp);

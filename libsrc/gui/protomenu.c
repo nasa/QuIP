@@ -33,7 +33,7 @@ static COMMAND_FUNC( do_panel_cmap )
 	po = PICK_PANEL("");
 	cm_dp = PICK_OBJ("colormap object");
 
-	if( po == NO_PANEL_OBJ || cm_dp == NO_OBJ )
+	if( po == NULL || cm_dp == NULL )
 		return;
 	panel_cmap(po,cm_dp);
 }
@@ -136,7 +136,7 @@ static COMMAND_FUNC(do_accept_edits)
 	Screen_Obj *sop;
 
 	sop=PICK_SCRNOBJ("edit box");
-	if( sop == NO_SCREEN_OBJ ) return;
+	if( sop == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	dismiss_keyboard(sop);
@@ -150,7 +150,7 @@ static COMMAND_FUNC( do_del_widget )
 	Screen_Obj *sop;
 
 	sop=PICK_SCRNOBJ("widget name");
-	if( sop == NO_SCREEN_OBJ ) return;
+	if( sop == NULL ) return;
 
 	delete_widget(QSP_ARG sop);
 }
@@ -159,7 +159,7 @@ static COMMAND_FUNC( do_scrnobj_info )
 	Screen_Obj *sop;
 
 	sop=PICK_SCRNOBJ("widget name");
-	if( sop == NO_SCREEN_OBJ ) return;
+	if( sop == NULL ) return;
 
 	switch(SOB_TYPE(sop)){
 		case SOT_CHOOSER:
@@ -268,7 +268,7 @@ static COMMAND_FUNC(do_scroll)
 	po=PICK_PANEL( "" );
 	yn = ASKIF("allow scrolling for panel");
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	if( yn )
@@ -289,7 +289,7 @@ static COMMAND_FUNC( do_check_first )
 
 	po=PICK_PANEL( "" );
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	check_first(po);
@@ -302,7 +302,7 @@ static COMMAND_FUNC( do_activate )
 
 	po=PICK_PANEL( "" );
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	activate_panel(QSP_ARG  po,1);
@@ -315,7 +315,7 @@ static COMMAND_FUNC( do_deactivate )
 
 	po=PICK_PANEL( "" );
 
-	if( po == NO_PANEL_OBJ ) return;
+	if( po == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 	activate_panel(QSP_ARG  po,0);
@@ -395,8 +395,8 @@ static COMMAND_FUNC( do_sel_panel )
 }
 #endif /* HAVE_MOTIF */
 
-static Nav_Panel *curr_nav_p=NO_NAV_PANEL;
-static Nav_Group *curr_nav_g=NO_NAV_GROUP;
+static Nav_Panel *curr_nav_p=NULL;
+static Nav_Group *curr_nav_g=NULL;
 
 static COMMAND_FUNC( do_new_nav_group )
 {
@@ -407,12 +407,12 @@ static COMMAND_FUNC( do_new_nav_group )
 
 	nav_g = create_nav_group(QSP_ARG  curr_nav_p, s);
 
-	if( nav_g == NO_NAV_GROUP ) return;
+	if( nav_g == NULL ) return;
 
 	// push the group context here...
 	// and pop the old one if there is one.
 
-	if( curr_nav_g != NO_NAV_GROUP ){
+	if( curr_nav_g != NULL ){
 		IOS_Item_Context *icp;
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
 		assert(icp!=NULL);
@@ -431,7 +431,7 @@ static COMMAND_FUNC( do_new_nav_group )
 	// Here the action text is not the action, it is the message.
 	// The message can be different from the name.
 	sop = simple_object(QSP_ARG  s);
-	if( sop == NO_SCREEN_OBJ ) return;
+	if( sop == NULL ) return;
 	SET_SOB_ACTION(sop, savestr(s));
 
 	SET_SOB_TYPE(sop, SOT_LABEL);
@@ -464,9 +464,9 @@ static COMMAND_FUNC( do_set_nav_group )
 
 	nav_g = PICK_NAV_GROUP("existing navigation group");
 
-	if( nav_g == NO_NAV_GROUP ) return;
+	if( nav_g == NULL ) return;
 
-	if( curr_nav_g != NO_NAV_GROUP ){
+	if( curr_nav_g != NULL ){
 		IOS_Item_Context *icp;
 		icp=pop_navitm_context(SINGLE_QSP_ARG);
 		assert(icp!=NULL);
@@ -489,13 +489,13 @@ static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 	e=NAMEOF("short explanatory text for item");
 	a=NAMEOF("navigation item action text");
 
-	if( curr_nav_g == NO_NAV_GROUP ){
+	if( curr_nav_g == NULL ){
 		WARN("do_table_item:  no group declared!?");
 		return;
 	}
 
 	nav_i = new_nav_item(QSP_ARG  s);
-	if( nav_i == NO_NAV_ITEM ) return;
+	if( nav_i == NULL ) return;
 
 #ifdef BUILD_FOR_OBJC
 	nav_i.explanation = [[NSString alloc] initWithUTF8String:e];
@@ -518,7 +518,7 @@ static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 	sprintf(str,"%s  -  %s",s,e);
 
 	bo = simple_object(QSP_ARG  str);
-	if( bo == NO_SCREEN_OBJ ) return;
+	if( bo == NULL ) return;
 
 	SET_SOB_ACTION(bo, savestr(a));
 
@@ -556,7 +556,7 @@ static COMMAND_FUNC( do_set_desc )
 	nav_i=pick_nav_item( QSP_ARG  "item name" );
 	s = NAMEOF("description string");
 
-	if( curr_nav_g == NO_NAV_GROUP ){
+	if( curr_nav_g == NULL ){
 		WARN("do_set_desc:  no group selected");
 		return;
 	}
@@ -609,7 +609,7 @@ static COMMAND_FUNC( do_set_done )
 	s=NAMEOF("action for done button");
 
 #ifdef BUILD_FOR_IOS
-	if( curr_nav_p != NO_NAV_PANEL ){
+	if( curr_nav_p != NULL ){
 		[curr_nav_p setDoneAction:s];
 	} else {
 		WARN("done_button:  current nav panel!?");
@@ -697,7 +697,7 @@ static COMMAND_FUNC( do_nav_menu )
 	curr_nav_p = PICK_NAV_PANEL("navigation panel");
 
 	// Need to push the item context for the panel!
-	if( curr_nav_p == NO_NAV_PANEL ) return;
+	if( curr_nav_p == NULL ) return;
 
 #ifndef BUILD_FOR_OBJC
 	pnl_p = NAVP_PANEL(curr_nav_p);
@@ -717,7 +717,7 @@ static COMMAND_FUNC( do_nav_menu )
 	// Setting the group to nothing makes sense for creation,
 	// but what about deletion?
 	// What does this comment mean?
-	curr_nav_g = NO_NAV_GROUP;
+	curr_nav_g = NULL;
 
 	PUSH_MENU(navigation);
 } // do_nav_menu
@@ -730,7 +730,7 @@ static COMMAND_FUNC( do_push_nav )
 
 	// Are nav panels really regular panels???
 	//po = PICK_PANEL("");
-	//if( po == NO_PANEL_OBJ ) return;
+	//if( po == NULL ) return;
 
 	s = NAMEOF("name of panel or viewer");
 	gwp = find_genwin(QSP_ARG  s);

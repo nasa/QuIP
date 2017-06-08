@@ -230,7 +230,7 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
 	tmp_dst_dp = make_dobj(DEFAULT_QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
 
-	if( sub_dst_dp == NO_OBJ || sub_src_dp == NO_OBJ || tmp_dst_dp == NO_OBJ ){
+	if( sub_dst_dp == NULL || sub_src_dp == NULL || tmp_dst_dp == NULL ){
 		NWARN("error creating temporary object for vec_xform");
 		return;
 	}
@@ -341,7 +341,7 @@ static void HOST_TYPED_CALL_NAME(homog_xform,type_code)(QSP_ARG_DECL  Data_Obj *
 
 	tmp_obj=make_obj(QSP_ARG  "_tmptmp",1,OBJ_ROWS(dpto),OBJ_COLS(dpto),
 		1,prec_for_code(REQUIRED_DST_PREC));
-	if( tmp_obj == NO_OBJ ){
+	if( tmp_obj == NULL ){
 		NWARN("homog_xform:  couldn't create temporary data object");
 		return;
 	}

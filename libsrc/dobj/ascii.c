@@ -82,7 +82,7 @@ static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 void init_dobj_ascii_info(QSP_ARG_DECL  Dobj_Ascii_Info *dai_p)
 {
 	dai_p->dai_padflag = 0;
-	dai_p->dai_ascii_data_dp = NO_OBJ;
+	dai_p->dai_ascii_data_dp = NULL;
 	dai_p->dai_ascii_warned = 0;
 	dai_p->dai_dobj_max_per_line = DEFAULT_MAX_PER_LINE;
 	dai_p->dai_min_field_width = DEFAULT_MIN_FIELD_WIDTH;
@@ -618,7 +618,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 #ifdef HAVE_ANY_GPU
 int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 {
-	static Data_Obj *warned_dp=NO_OBJ;
+	static Data_Obj *warned_dp=NULL;
 
 	if( ! OBJ_IS_RAM(dp) ){
 		if( dp != warned_dp ){
@@ -640,7 +640,7 @@ static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_pt
 {
 	mach_prec mp;
 	long l;
-	static Data_Obj *warned_dp=NO_OBJ;
+	static Data_Obj *warned_dp=NULL;
 
 #ifdef FOOBAR
 #ifdef HAVE_CUDA

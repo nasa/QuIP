@@ -24,7 +24,7 @@ u_long debug_tiles=0;
 	}								\
 									\
 	np = QLIST_HEAD(tile_lp);					\
-	while(np!=NO_NODE){						\
+	while(np!=NULL){						\
 		statement;						\
 		np = np->n_next;					\
 	}
@@ -100,7 +100,7 @@ static COMMAND_FUNC( do_xform_tiles )
 	Node *np;
 
 	dp = PICK_OBJ("transformation matrix");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* We call tile_check_subdiv to determine the subdivisions */
 	TILE_ITERATE( tile_check_subdiv( THIS_TILE,dp) )

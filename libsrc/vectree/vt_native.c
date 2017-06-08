@@ -60,7 +60,7 @@ void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 
 #define CHECK_ARGLIST(enp,name)							\
 										\
-	if( enp == NO_VEXPR_NODE ){						\
+	if( enp == NULL ){						\
 		NWARN(ERROR_STRING);						\
 		sprintf(ERROR_STRING,"missing arg list for native function %s",name);	\
 		return;								\
@@ -95,9 +95,9 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
-			if( dst_dp == NO_OBJ || src_dp == NO_OBJ ){
+			if( dst_dp == NULL || src_dp == NULL ){
 				NODE_ERROR(enp);
 				NWARN("problem with cumsum args");
 				break;
@@ -120,12 +120,12 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			coord_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			coord_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
-			if( dst_dp == NO_OBJ || coord_dp == NO_OBJ || src_dp == NO_OBJ ){
+			if( dst_dp == NULL || coord_dp == NULL || src_dp == NULL ){
 				NODE_ERROR(enp);
 				NWARN("problem with render args");
 				break;
@@ -151,7 +151,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			/* BUG I use convert() here because I am lazy */
 			/* should just use vmov... */
@@ -203,7 +203,7 @@ advise("evaluating choldc...");
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
 			diag_dp = EVAL_OBJ_REF(arg_enp);
 
-			if ( inmat_dp == NO_OBJ || diag_dp == NO_OBJ )
+			if ( inmat_dp == NULL || diag_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -239,7 +239,7 @@ advise("evaluating choldc...");
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
 			vmat_dp = EVAL_OBJ_REF(arg_enp);
 
-			if( ev_dp == NO_OBJ || umat_dp == NO_OBJ || vmat_dp == NO_OBJ )
+			if( ev_dp == NULL || umat_dp == NULL || vmat_dp == NULL )
 				return;
 				
 			/*
@@ -279,8 +279,8 @@ advise("evaluating choldc...");
 			umat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 			x_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 
-			if( x_dp == NO_OBJ || umat_dp == NO_OBJ || ev_dp == NO_OBJ ||
-				vmat_dp == NO_OBJ || b_dp == NO_OBJ )
+			if( x_dp == NULL || umat_dp == NULL || ev_dp == NULL ||
+				vmat_dp == NULL || b_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -314,7 +314,7 @@ advise("evaluating choldc...");
 			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 
-			if( a_dp == NO_OBJ || d_dp == NO_OBJ || v_dp == NO_OBJ )
+			if( a_dp == NULL || d_dp == NULL || v_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -345,7 +345,7 @@ advise("evaluating choldc...");
 			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 
-			if( d_dp == NO_OBJ || v_dp == NO_OBJ )
+			if( d_dp == NULL || v_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -384,7 +384,7 @@ advise("evaluating choldc...");
 			src_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),1));
 			mat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 
-			if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mat_dp == NO_OBJ )
+			if( dst_dp == NULL || src_dp == NULL || mat_dp == NULL )
 				return;
 
 			// OLD
@@ -446,7 +446,7 @@ void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#ifdef CAUTIOUS
 //			verify_null_shape(QSP_ARG  enp);
 //#endif /* CAUTIOUS */
-			assert( VN_SHAPE(enp) == NO_SHAPE );
+			assert( VN_SHAPE(enp) == NULL );
 			break;
 
 //#ifdef CAUTIOUS

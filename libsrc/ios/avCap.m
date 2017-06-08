@@ -59,7 +59,7 @@ fprintf(stderr,"captureOutput BEGIN\n");
 		return;
 #endif // BUILD_FOR_IOS
 			}
-	if( grab_dp != NO_OBJ ){
+	if( grab_dp != NULL ){
 		if( pixelBuffer == NULL )
 			pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
 		// How do we dereference a CVImageBufferRef???

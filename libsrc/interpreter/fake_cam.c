@@ -36,7 +36,7 @@ static COMMAND_FUNC( do_get_cams )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	WARN("do_get_cams:  not implemented!?");
 }
@@ -46,7 +46,7 @@ static COMMAND_FUNC( do_mon_cam )
 	Viewer *vp;
 
 	vp = PICK_VWR("");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	WARN("do_mon_cam:  not implemented!?");
 }
@@ -92,7 +92,7 @@ static COMMAND_FUNC( do_grab_cam )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("target image object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	WARN("do_grab_cam:  not implemented!?");
 }

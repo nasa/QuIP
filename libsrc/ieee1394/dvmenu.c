@@ -294,14 +294,14 @@ void queue_push_back( List *lp, void *obj )
 void *queue_front(List *lp)
 {
 	if( lp == NULL ) return NULL;
-	if( QLIST_HEAD(lp) == NO_NODE ) return NULL;
+	if( QLIST_HEAD(lp) == NULL ) return NULL;
 	return( QLIST_HEAD(lp)->n_data );
 }
 
 void queue_pop_front ( List *lp )
 {
 	if( lp == NULL ) return;
-	if( QLIST_HEAD(lp) == NO_NODE ) return;
+	if( QLIST_HEAD(lp) == NULL ) return;
 	remHead(lp);
 }
 
@@ -454,8 +454,8 @@ static COMMAND_FUNC( do_dv_extract )
 	dp=PICK_OBJ("destination data object");
 	n=HOW_MANY("index of stored frame");
 	np = nth_elt(grab_lp,n);
-	if( dp == NO_OBJ ) return;
-	if( np == NO_NODE ) return;
+	if( dp == NULL ) return;
+	if( np == NULL ) return;
 	frmp = (Frame *)np->n_data;
 	// BUG check the size, type, contiguity here
 //sprintf(ERROR_STRING,"do_dv_extract:  frame %d, frmp = 0x%lx",n,(u_long)frmp);

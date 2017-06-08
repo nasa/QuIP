@@ -31,17 +31,17 @@ static int chk_uk(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
 	int i;
 
-	if( OA_DEST(oap)  != NO_OBJ && UNKNOWN_OBJ_SHAPE(OA_DEST(oap)) ){
+	if( OA_DEST(oap)  != NULL && UNKNOWN_OBJ_SHAPE(OA_DEST(oap)) ){
 		shape_error(QSP_ARG  vfp,OA_DEST(oap) );
 		return -1;
 	}
 	for(i=0;i<MAX_N_ARGS;i++){
-		if( OA_SRC_OBJ(oap,i) != NO_OBJ && UNKNOWN_OBJ_SHAPE( OA_SRC_OBJ(oap,i) ) ){
+		if( OA_SRC_OBJ(oap,i) != NULL && UNKNOWN_OBJ_SHAPE( OA_SRC_OBJ(oap,i) ) ){
 			shape_error(QSP_ARG  vfp,OA_SRC_OBJ(oap,i));
 			return -1;
 		}
 	}
-	if( OA_SBM(oap) != NO_OBJ && UNKNOWN_OBJ_SHAPE(OA_SBM(oap)) ){
+	if( OA_SBM(oap) != NULL && UNKNOWN_OBJ_SHAPE(OA_SBM(oap)) ){
 		shape_error(QSP_ARG  vfp,OA_SBM(oap) );
 		return -1;
 	}
@@ -75,7 +75,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	/* Set the type based on the destination vector */
 	/* destv is highest numbered arg */
 	if( IS_REAL(OA_DEST(oap) ) ){
-		if( OA_SRC2(oap)  != NO_OBJ ){	/* two source operands */
+		if( OA_SRC2(oap)  != NULL ){	/* two source operands */
 			if( IS_REAL( OA_SRC1(oap) ) ){
 				if( IS_REAL(OA_SRC2(oap) ) ){
 					SET_OA_ARGSTYPE(oap, REAL_ARGS);
@@ -113,7 +113,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				goto type_mismatch13;
 			}
 //#endif /* CAUTIOUS */
-		} else if(  OA_SRC1(oap)  != NO_OBJ ){	/* one source operand */
+		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_REAL( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, REAL_ARGS);
 			} else if( IS_COMPLEX( OA_SRC1(oap) ) ){
@@ -128,7 +128,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			SET_OA_ARGSTYPE(oap, REAL_ARGS);
 		}
 	} else if( IS_COMPLEX(OA_DEST(oap) ) ){
-		if( OA_SRC2(oap)  != NO_OBJ ){	/* two source operands */
+		if( OA_SRC2(oap)  != NULL ){	/* two source operands */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				if( IS_COMPLEX( OA_SRC2(oap) ) ){
 					SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
@@ -150,7 +150,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NO_OBJ ){	/* one source operand */
+		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
@@ -163,7 +163,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 		}
 	} else if( IS_QUAT(OA_DEST(oap) ) ){
-		if( OA_SRC2(oap)  != NO_OBJ ){	/* two source operands */
+		if( OA_SRC2(oap)  != NULL ){	/* two source operands */
 			if( IS_QUAT( OA_SRC1(oap) ) ){
 				if( IS_QUAT( OA_SRC2(oap) ) ){
 					SET_OA_ARGSTYPE(oap, QUATERNION_ARGS);
@@ -185,7 +185,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NO_OBJ ){	/* one source operand */
+		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_QUAT( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, QUATERNION_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
@@ -570,16 +570,16 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 	}												\
 	n_srcs++;
 
-	if(  OA_SRC1(oap) != NO_OBJ ){
+	if(  OA_SRC1(oap) != NULL ){
 		srcp1=OBJ_MACH_PREC( OA_SRC1(oap) );
 		CHECK_SOURCE_PREC(srcp1,OA_SRC1(oap))
-		if( OA_SRC2(oap)  != NO_OBJ ){
+		if( OA_SRC2(oap)  != NULL ){
 			srcp2=OBJ_MACH_PREC(OA_SRC2(oap) );
 			CHECK_SOURCE_PREC(srcp2,OA_SRC2(oap))
-			if( OA_SRC3(oap) != NO_OBJ ){
+			if( OA_SRC3(oap) != NULL ){
 				srcp3=OBJ_MACH_PREC( OA_SRC3(oap) );
 				CHECK_SOURCE_PREC(srcp3,OA_SRC3(oap))
-				if( OA_SRC4(oap) != NO_OBJ ){
+				if( OA_SRC4(oap) != NULL ){
 					srcp4=OBJ_MACH_PREC( OA_SRC4(oap) );
 					CHECK_SOURCE_PREC(srcp4,OA_SRC4(oap))
 				}
@@ -776,7 +776,7 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 	 * has, like a projection loop...
 	 */
 
-	if( OA_SBM(oap) != NO_OBJ ){
+	if( OA_SBM(oap) != NULL ){
 		if( VF_FLAGS(vfp) & BITMAP_SRC ){	// redundant?
 			/* We used to require that the bitmap size matched the destination,
 			 * but that is not necessary...
@@ -815,7 +815,7 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 
 	}
 
-	if(  OA_SRC1(oap)  == NO_OBJ ){
+	if(  OA_SRC1(oap)  == NULL ){
 		/* nothing to check!? */
 		return 0;
 	}
@@ -858,7 +858,7 @@ ADVISE(ERROR_STRING);
 //#endif /* CAUTIOUS */
 	assert( status == 0 );
 
-	if( OA_SRC2(oap) == NO_OBJ ) return 0;
+	if( OA_SRC2(oap) == NULL ) return 0;
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg2 %s (%s)",
@@ -893,14 +893,7 @@ ADVISE(ERROR_STRING);
 
 static int chkargs( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
-//#ifdef CAUTIOUS
-//	if( OA_DEST(oap)  == NO_OBJ && VF_FLAGS(vfp) & BITMAP_DST ){
-////		OA_DEST(oap)  = OA_BMAP(oap) ;
-//		ERROR1("CAUTIOUS:  chkargs:  OA_DEST is null, expected a bitmap!?");
-//	}
-//#endif // CAUTIOUS
-
-	assert( OA_DEST(oap) != NO_OBJ || (VF_FLAGS(vfp) & BITMAP_DST)==0 );
+	assert( OA_DEST(oap) != NULL || (VF_FLAGS(vfp) & BITMAP_DST)==0 );
 
 	if( chk_uk(QSP_ARG  vfp,oap) == (-1) ) return -1;
 	if( chktyp(QSP_ARG  vfp,oap) == (-1) ) return -1;
@@ -989,7 +982,7 @@ static int make_arg_evenly_spaced(Vec_Obj_Args *oap,int index)
 
 	arg_dp = OA_SRC_OBJ(oap,index) ;
 
-	if( arg_dp == NO_OBJ ) return 0;
+	if( arg_dp == NULL ) return 0;
 	if( IS_EVENLY_SPACED(arg_dp) ) return 0;
 
 	/* If the object is subscripted, the brackets will break the name */
@@ -1040,9 +1033,9 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	 *
 	 * One answer is bitmap result functions...
 	 */
-	if(  OA_SRC1(oap)  != NO_OBJ ){
+	if(  OA_SRC1(oap)  != NULL ){
 		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
-	} else if( OA_DEST(oap)  != NO_OBJ ){
+	} else if( OA_DEST(oap)  != NULL ){
 		SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
 	} else {
 		sprintf(ERROR_STRING,"call_vfunc %s:",VF_NAME(vfp) );

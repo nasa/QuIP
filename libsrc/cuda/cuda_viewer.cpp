@@ -84,7 +84,7 @@ static ITEM_PICK_FUNC(Cuda_Viewer,cuda_vwr)
 
 static void propagate_up(Data_Obj *dp,uint32_t flagbit)
 {
-	if( dp->dt_parent != NO_OBJ ){
+	if( dp->dt_parent != NULL ){
 		xfer_cuda_flag(dp->dt_parent,dp,flagbit);
 		propagate_up(dp->dt_parent,flagbit);
 	}
@@ -96,7 +96,7 @@ static void propagate_down(Data_Obj *dp,uint32_t flagbit)
 
 	if( dp->dt_children != NO_LIST ){
 		np=dp->dt_children->l_head;
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			Data_Obj *child_dp;
 			child_dp = (Data_Obj *)np->n_data;
 			xfer_cuda_flag(child_dp,dp,flagbit);
@@ -471,7 +471,7 @@ COMMAND_FUNC( do_load_cuda_vwr )
 	cvp = PICK_CUDA_VWR("CUDA viewer");
 	dp = PICK_OBJ("GL buffer object");
 
-	if( cvp == NO_CUDA_VWR || dp == NO_OBJ ) return;
+	if( cvp == NO_CUDA_VWR || dp == NULL ) return;
 
 	if( image_mapping_checks(QSP_ARG  cvp, dp ) < 0 ){
 		WARN("Image mapping checks failed!?");
@@ -495,7 +495,7 @@ COMMAND_FUNC( do_map_cuda_vwr )
 	img_dp = PICK_OBJ("GL buffer object");
 	coord_dp = PICK_OBJ("corner coordinate object");
 
-	if( cvp == NO_CUDA_VWR || img_dp == NO_OBJ || coord_dp == NO_OBJ ){
+	if( cvp == NO_CUDA_VWR || img_dp == NULL || coord_dp == NULL ){
 fprintf(stderr,"do_map_cuda_vwr aborting...\n");
 		return;
 	}
@@ -540,7 +540,7 @@ COMMAND_FUNC( do_new_gl_buffer )
 
 	/* Make sure this name isn't already in use... */
 	dp = dobj_of(QSP_ARG  s);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
 		NWARN(ERROR_STRING);
 		return;
@@ -559,7 +559,7 @@ COMMAND_FUNC( do_new_gl_buffer )
 	ds.ds_dimension[3]=1;
 	ds.ds_dimension[4]=1;
 	dp = _make_dp(QSP_ARG  s,&ds,PREC_FOR_CODE(PREC_UBY));
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		sprintf(ERROR_STRING,
 			"Error creating data_obj header for %s",s);
 		ERROR1(ERROR_STRING);

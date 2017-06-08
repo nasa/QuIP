@@ -29,7 +29,7 @@ FIO_CLOSE_FUNC( hips1 )
 {
 	/* see if we need to edit the header */
 	if( IS_WRITABLE(ifp)
-		&& ifp->if_dp != NO_OBJ	/* may be closing 'cause of error */
+		&& ifp->if_dp != NULL	/* may be closing 'cause of error */
 		&& ifp->if_nfrms != ifp->if_frms_to_wt ){
 		if( ifp->if_nfrms <= 0 ){
 			sprintf(ERROR_STRING, "file %s nframes=%d!?",
@@ -261,7 +261,7 @@ static int set_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from ima
 
 FIO_WT_FUNC(hips1)
 {
-	if( ifp->if_dp == NO_OBJ ){
+	if( ifp->if_dp == NULL ){
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp , dp );
 		/* reset nframes */

@@ -356,7 +356,7 @@ static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 
 #define CHECK_MORPH_ARGS(whence)					\
 									\
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mask_dp == NO_OBJ )	\
+	if( dst_dp == NULL || src_dp == NULL || mask_dp == NULL )	\
 		return;							\
 									\
 	if( !good_for_morph(QSP_ARG  dst_dp,src_dp,mask_dp,whence) )		\
@@ -365,7 +365,7 @@ static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 
 #define CHECK_FILTER_ARGS(whence)					\
 									\
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mask_dp == NO_OBJ )	\
+	if( dst_dp == NULL || src_dp == NULL || mask_dp == NULL )	\
 		return;							\
 									\
 	if( !good_for_filter(QSP_ARG  dst_dp,src_dp,mask_dp,whence) )		\
@@ -520,7 +520,7 @@ COMMAND_FUNC( do_npp_malloc )
 	ds.ds_dimension[4] = 1;
 
 	dp = _make_dp(QSP_ARG  s,&ds,prec_p);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* Now call the allocator */
 	if( ds.ds_dimension[0] == 1 ){
@@ -704,7 +704,7 @@ COMMAND_FUNC( do_npp_sum_scratch )
 	Data_Obj *src_dp;
 
 	src_dp = PICK_OBJ("source object");
-	if( src_dp == NO_OBJ ) return;
+	if( src_dp == NULL ) return;
 
 	// BUG make sure correct type...
 	// BUG make sure contiguous...
@@ -724,7 +724,7 @@ COMMAND_FUNC( do_npp_sum )
 	dst_dp = PICK_OBJ("destination object");
 	src_dp = PICK_OBJ("source object");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ )
+	if( dst_dp == NULL || src_dp == NULL )
 		return;
 
 #ifdef HAVE_LIBNPP
@@ -762,7 +762,7 @@ COMMAND_FUNC( do_nppi_vmul )
 	src1_dp = PICK_OBJ("first source object");
 	src2_dp = PICK_OBJ("second source object");
 
-	if( dst_dp == NO_OBJ || src1_dp == NO_OBJ || src2_dp == NO_OBJ )
+	if( dst_dp == NULL || src1_dp == NULL || src2_dp == NULL )
 		return;
 
 	// BUG make sure sizes match
@@ -791,7 +791,7 @@ COMMAND_FUNC( do_npps_vmul )
 	dst_dp = PICK_OBJ("destination/source object");
 	src_dp = PICK_OBJ("source object");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ )
+	if( dst_dp == NULL || src_dp == NULL )
 		return;
 
 	// BUG make sure sizes match

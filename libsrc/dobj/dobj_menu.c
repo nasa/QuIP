@@ -94,7 +94,7 @@ static COMMAND_FUNC( do_match_area )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	curr_ap=OBJ_AREA(dp);
 }
@@ -204,7 +204,7 @@ static void finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp, uint32_
 		prec_p = get_prec(QSP_ARG  "float");
 	}
 
-	if( make_dobj_with_shape(QSP_ARG  s,dsp,prec_p,type_flag) == NO_OBJ ) {
+	if( make_dobj_with_shape(QSP_ARG  s,dsp,prec_p,type_flag) == NULL ) {
 		sprintf(ERROR_STRING,"couldn't create data object \"%s\"", s);
 		WARN(ERROR_STRING);
 	}
@@ -295,13 +295,13 @@ static COMMAND_FUNC( new_obj_list )
 		Data_Obj *dp;
 
 		dp = PICK_OBJ("");
-		if( dp != NO_OBJ ){
+		if( dp != NULL ){
 			np=mk_node(dp);
 			addTail(lp,np);
 		}
 	}
 
-	if( make_obj_list(QSP_ARG  s,lp) == NO_OBJ ){
+	if( make_obj_list(QSP_ARG  s,lp) == NULL ){
 		sprintf(ERROR_STRING,"error making object list %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -362,7 +362,7 @@ static COMMAND_FUNC( do_delvec )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	delvec(QSP_ARG  dp);
 }
 
@@ -371,7 +371,7 @@ static COMMAND_FUNC( do_dobj_info )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	LONGLIST(dp);
 }
@@ -396,13 +396,13 @@ static COMMAND_FUNC( mksubimg )
 	xos=(incr_t)HOW_MANY("x offset");
 	yos=(incr_t)HOW_MANY("y offset");
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	CHECK_POSITIVE(rows,"rows","mksubimg",s)
 	CHECK_POSITIVE(cols,"columns","mksubimg",s)
 
 	newdp=mk_subimg(QSP_ARG  dp,xos,yos,s,(dimension_t)rows,(dimension_t)cols);
-	if( newdp == NO_OBJ )
+	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
@@ -428,11 +428,11 @@ static COMMAND_FUNC( mksubsequence )
 	offsets[3]=(index_t)HOW_MANY("t offset");
 	offsets[4]=0;
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	SET_DIMENSION(dsp,0,OBJ_COMPS(dp));
 
 	newdp=mk_subseq(QSP_ARG  s,dp,offsets,dsp);
-	if( newdp == NO_OBJ )
+	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
@@ -454,12 +454,12 @@ static COMMAND_FUNC( mksubvector )
 	xos=(index_t)HOW_MANY("offset");
 	yos=0;
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	CHECK_POSITIVE(cols,"elements","mksubvector",s)
 
 	newdp=mk_subimg(QSP_ARG  dp,xos,yos,s,rows,cols);
-	if( newdp == NO_OBJ )
+	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
@@ -486,10 +486,10 @@ static COMMAND_FUNC( mksubscalar )
 	offsets[3]=0;
 	offsets[4]=0;
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	newdp=mk_subseq(QSP_ARG  s,dp,offsets,dsp);
-	if( newdp == NO_OBJ )
+	if( newdp == NULL )
 		WARN("couldn't create subscalar");
 }
 
@@ -502,13 +502,13 @@ static COMMAND_FUNC( do_ilace )
 	s=NAMEOF("name for subimage");
 
 	dp=get_img( QSP_ARG  NAMEOF("name of parent image") );
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	parity=WHICH_ONE("parity of selected lines",2,parlist);
 	if( parity < 0 ) return;
 
 	newdp=mk_ilace(QSP_ARG  dp,s,parity);
-	if( newdp == NO_OBJ )
+	if( newdp == NULL )
 		WARN("couldn't create interlaced subimage");
 }
 
@@ -522,7 +522,7 @@ static COMMAND_FUNC( mkcast )
 	s=NAMEOF("name for cast");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	cols=(dimension_t)HOW_MANY("number of columns");
 	rows=(dimension_t)HOW_MANY("number of rows");
@@ -535,7 +535,7 @@ static COMMAND_FUNC( mkcast )
 	CHECK_POSITIVE(tdim,"type dimension","mkcast",s)
 
 	newdp=nmk_subimg(QSP_ARG  dp,xos,yos,s,rows,cols,tdim);
-	if( newdp == NO_OBJ )
+	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
@@ -559,7 +559,7 @@ static COMMAND_FUNC( equivalence )
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	if( prec_p == NO_PRECISION ) return;
 
 	CHECK_POSITIVE(ns,"sequences","equivalence",s)
@@ -595,7 +595,7 @@ advise("component dim 3 for color");
 		//SET_DIMENSION(dsp,0,3);
 	}
 
-	if( make_equivalence(QSP_ARG  s,dp,dsp,prec_p) == NO_OBJ )
+	if( make_equivalence(QSP_ARG  s,dp,dsp,prec_p) == NULL )
 		WARN("error making equivalence");
 }
 
@@ -621,7 +621,7 @@ static COMMAND_FUNC( mk_subsample )
 	 * to determine what to prompt for!?
 	 */
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		/* BUG? should we prompt for all dimensions? */
@@ -650,7 +650,7 @@ static COMMAND_FUNC( mk_subsample )
 		}
 	}
 
-	if( make_subsamp(QSP_ARG  s,dp,dsp,offsets,incrs) == NO_OBJ )
+	if( make_subsamp(QSP_ARG  s,dp,dsp,offsets,incrs) == NULL )
 		WARN("error making subsamp object");
 }
 
@@ -663,8 +663,8 @@ static COMMAND_FUNC( relocate )
 	x=(index_t)HOW_MANY("x offset");
 	y=(index_t)HOW_MANY("y offset");
 	t=(index_t)HOW_MANY("t offset");
-	if( dp==NO_OBJ ) return;
-	if( OBJ_PARENT(dp) == NO_OBJ ){
+	if( dp==NULL ) return;
+	if( OBJ_PARENT(dp) == NULL ){
 		sprintf(ERROR_STRING,
 	"relocate:  object \"%s\" is not a subimage",
 			OBJ_NAME(dp));
@@ -683,7 +683,7 @@ static COMMAND_FUNC( do_gen_xpose )
 	d1=(int)HOW_MANY("dimension index #1");
 	d2=(int)HOW_MANY("dimension index #2");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	gen_xpose(dp,d1,d2);
 }
@@ -700,7 +700,7 @@ static Data_Obj *get_obj_or_file(QSP_ARG_DECL const char *name)
 
 	/* use hunt_obj() in order to pick up indexed strings */
 	dp = hunt_obj(QSP_ARG  name);
-	if( dp != NO_OBJ ) return(dp);
+	if( dp != NULL ) return(dp);
 
 #ifndef PC
 	ifp = img_file_of(QSP_ARG  name);
@@ -726,7 +726,7 @@ static COMMAND_FUNC( do_tellprec )
 	//dp = get_obj_or_file( QSP_ARG NAMEOF("data object or open image file") );
 	dp = get_obj( QSP_ARG NAMEOF("data object") );
 	s = NAMEOF("variable name");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG should write this in a way that doesn't depend
 	 * on the hard-coded constants...
@@ -752,7 +752,7 @@ static COMMAND_FUNC( do_stringify )
 	s = NAMEOF("name of variable to hold string value");
 	dp = PICK_OBJ("");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if(  !STRING_PRECISION(OBJ_PREC(dp)) ){
 		sprintf(ERROR_STRING,"do_stringify:  Sorry, %s does not have string precision",OBJ_NAME(dp));
@@ -770,7 +770,7 @@ static COMMAND_FUNC( do_import_string )
 	dp=PICK_OBJ("");
 	s=NAMEOF("string");
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	if(  !STRING_PRECISION(OBJ_PREC(dp)) ){
 		sprintf(ERROR_STRING,
@@ -801,7 +801,7 @@ static COMMAND_FUNC( do_protect )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	if( IS_STATIC(dp) ){
 		sprintf(ERROR_STRING,"do_protect:  Object %s is already static!?",OBJ_NAME(dp));
 		WARN(ERROR_STRING);

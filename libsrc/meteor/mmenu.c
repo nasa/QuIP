@@ -464,7 +464,7 @@ static COMMAND_FUNC( do_setup_blur )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("impulse response");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	setup_blur(QSP_ARG  dp);
 }
@@ -524,13 +524,13 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 	}
 
 	mvip = create_movie(QSP_ARG  inp->rvi_name);
-	if( mvip == NO_MOVIE ){
+	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
 			"error creating movie %s",inp->rvi_name);
 		WARN(ERROR_STRING);
 	} else {
 		ifp = img_file_of(QSP_ARG  inp->rvi_name);
-		if( ifp == NO_IMAGE_FILE ){
+		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
 	"image file struct for rv file %s does not exist!?",inp->rvi_name);
 			WARN(ERROR_STRING);

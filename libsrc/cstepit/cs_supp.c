@@ -42,7 +42,7 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 
 	np=QLIST_HEAD(lp);
 	i=0;
-	while( np!= NO_NODE && i < n_prms ){
+	while( np!= NULL && i < n_prms ){
 		opp = (Opt_Param *)(np->n_data);
 
 		xmin[i]=opp->minv;
@@ -98,7 +98,7 @@ static void cstepit_scr_funk(void)
 	 * we want to get them into named variables...
 	 */
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)( np->n_data);
@@ -154,7 +154,7 @@ static void evaluate_error_c(void)
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
 	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)(np->n_data);

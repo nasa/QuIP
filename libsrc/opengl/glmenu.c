@@ -793,7 +793,7 @@ static COMMAND_FUNC( do_tex_image )
 	Data_Obj *dp = PICK_OBJ("image");
 	//im_dim = HOW_MUCH("pixel dimension");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	set_texture_image(QSP_ARG  dp);
 }
@@ -1063,7 +1063,7 @@ static COMMAND_FUNC( do_sv_mv_mat )
 
 	const char *matrix = NAMEOF("matrix type");
 	dp=PICK_OBJ("matrix object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
 
@@ -1083,7 +1083,7 @@ static COMMAND_FUNC( do_ld_mat )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("matrix object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
 
@@ -1096,7 +1096,7 @@ static COMMAND_FUNC( do_mul_mat )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("matrix object");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
 
@@ -1561,10 +1561,10 @@ static COMMAND_FUNC( do_new_gl_buffer )
 
 	s = NAMEOF("name for GL buffer object");
 	cdp = PICK_PLATFORM("platform");
-	if( cdp != NO_PLATFORM )
+	if( cdp != NULL )
 		push_pfdev_context(QSP_ARG  PF_CONTEXT(cdp) );
 	pdp = PICK_PFDEV("device");
-	if( cdp != NO_PLATFORM )
+	if( cdp != NULL )
 		pop_pfdev_context(SINGLE_QSP_ARG);
 
 	w = (int)HOW_MANY("width");
@@ -1573,11 +1573,11 @@ static COMMAND_FUNC( do_new_gl_buffer )
 
 	/* what should the depth be??? default to 1 for now... */
 
-	if( pdp == NO_PFDEV ) return;
+	if( pdp == NULL ) return;
 
 	/* Make sure this name isn't already in use... */
 	dp = dobj_of(QSP_ARG  s);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
 		NWARN(ERROR_STRING);
 		return;
@@ -1595,7 +1595,7 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	ds.ds_dimension[3]=1;
 	ds.ds_dimension[4]=1;
 	dp = _make_dp(QSP_ARG  s,&ds,PREC_FOR_CODE(PREC_UBY));
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		sprintf(ERROR_STRING,
 			"Error creating data_obj header for %s",s);
 		ERROR1(ERROR_STRING);

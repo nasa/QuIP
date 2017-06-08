@@ -72,7 +72,7 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp));
 
-	dp->dt_parent = NO_OBJ;
+	dp->dt_parent = NULL;
 	dp->dt_children = NULL;
 
 	// BUG fix ram_area
@@ -141,7 +141,7 @@ FIO_CLOSE_FUNC( hips2 )
 {
 	/* see if we need to edit the header */
 	if( IS_WRITABLE(ifp)
-		&& ifp->if_dp != NO_OBJ	/* may be closing 'cause of error */
+		&& ifp->if_dp != NULL	/* may be closing 'cause of error */
 		&& ifp->if_nfrms != ifp->if_frms_to_wt ){
 		if( ifp->if_nfrms <= 0 ){
 			sprintf(ERROR_STRING, "file %s nframes=%d!?",
@@ -286,7 +286,7 @@ FIO_WT_FUNC( hips2 )
 		dp = &dobj;
 	}
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);

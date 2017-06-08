@@ -86,7 +86,7 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 	}
 	np = QLIST_HEAD(lp);
 	prt_msg("Menu stack:");
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		mp = (Menu *) NODE_DATA(np);
 		sprintf(MSG_STR,"\tmenu %d: %s",i++,MENU_PROMPT(mp));
 		prt_msg(MSG_STR);

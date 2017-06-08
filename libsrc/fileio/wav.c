@@ -57,7 +57,7 @@ int wav_to_dp(Data_Obj *dp,Wav_Header *hd_p)
 	SET_OBJ_FRM_INC(dp, 1);
 	SET_OBJ_SEQ_INC(dp, 1);
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
+	SET_OBJ_PARENT(dp, NULL);
 	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
@@ -108,7 +108,7 @@ FIO_OPEN_FUNC( wav )
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_WAV));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Wav_Header) );
 
@@ -127,14 +127,14 @@ FIO_OPEN_FUNC( wav )
 				ifp->if_name);
 			WARN(ERROR_STRING);
 			wav_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		if( ! valid_wav_header(ifp->if_hdr_p) ){
 			sprintf(ERROR_STRING,"File %s does not appear to be a wav file",
 				ifp->if_name);
 			WARN(ERROR_STRING);
 			wav_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		wav_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	} else {	/* writable */
@@ -213,7 +213,7 @@ FIO_WT_FUNC( wav )
 	/* We shouldn't need to do this, but it is easier to put these
 	 * lines in than to modify wt_raw_data()...
 	 */
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);

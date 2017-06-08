@@ -582,7 +582,7 @@ static Scalar_Expr_Node *alloc_expr_node(void)
 	Scalar_Expr_Node *enp;
 	int i;
 
-	if( free_enp_lp != NULL && QLIST_HEAD(free_enp_lp) != NO_NODE ){
+	if( free_enp_lp != NULL && QLIST_HEAD(free_enp_lp) != NULL ){
 		Node *np;
 		np=remHead(free_enp_lp);
 		enp = (Scalar_Expr_Node *)NODE_DATA(np);

@@ -73,15 +73,7 @@ void xmit_img_file(QSP_ARG_DECL  Port *mpp,Image_File *ifp,int flag)	/** send a 
 
 	/* now send the associated data_obj header... */
 
-//#ifdef CAUTIOUS
-//	if( ifp->if_dp == NO_OBJ ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  xmit_file:  file %s has no associated data object!?",
-//			ifp->if_name);
-//		WARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
-	assert( ifp->if_dp != NO_OBJ );
+	assert( ifp->if_dp != NULL );
 
 	xmit_obj(QSP_ARG  mpp,ifp->if_dp,0);
 }
@@ -162,7 +154,7 @@ advise(ERROR_STRING);
 	new_ifp->if_nfrms = imgf.if_nfrms;
 	new_ifp->if_ftp = filetype_for_code(QSP_ARG  IFT_NETWORK);
 	new_ifp->if_flags = imgf.if_flags;
-	new_ifp->if_dp = NO_OBJ;	/* BUG should receive? */
+	new_ifp->if_dp = NULL;	/* BUG should receive? */
 	new_ifp->if_pathname = new_ifp->if_name;
 
 	code = get_port_int32(QSP_ARG  mpp);

@@ -73,14 +73,14 @@ Handle new_hdl(u_long size)
 		hdl_init();
 
 	np=remHead(free_hdl_list);
-	if( np == NO_NODE ){
+	if( np == NULL ){
 		if( verbose ){
 			sprintf(DEFAULT_MSG_STR,"%ld more handles",n_handles);
 			NADVISE(DEFAULT_MSG_STR);
 		}
 		more_handles(n_handles);	/* double the size */
 		np=remHead(free_hdl_list);
-		if( np == NO_NODE ){
+		if( np == NULL ){
 			NWARN("no more handles");
 			return(NO_HANDLE);
 		}
@@ -98,7 +98,7 @@ void rls_hdl(Handle hdl)
 	Node *np;
 
 	np = remData(used_hdl_list,hdl);
-	if( np == NO_NODE ){
+	if( np == NULL ){
 		NWARN("node for handle not found");
 		return;
 	}
