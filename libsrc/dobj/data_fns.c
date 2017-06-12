@@ -203,6 +203,8 @@ Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
+	Precision *prec_p;
+
 	assert( svp != NULL );
 
 #ifdef HAVE_ANY_GPU
@@ -215,134 +217,33 @@ void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 	}
 #endif // HAVE_ANY_GPU
 
-	switch( OBJ_PREC(dp) ){
-		case PREC_BY:  *((char     *)OBJ_DATA_PTR(dp)) = svp->u_b ; break;
-		case PREC_IN:  *((short    *)OBJ_DATA_PTR(dp)) = svp->u_s ; break;
-		case PREC_DI:  *((int32_t  *)OBJ_DATA_PTR(dp)) = svp->u_l ; break;
-		case PREC_LI:  *((int64_t  *)OBJ_DATA_PTR(dp)) = svp->u_ll; break;
-		case PREC_CHAR:
-		case PREC_UBY: *((u_char   *)OBJ_DATA_PTR(dp)) = svp->u_ub; break;
-		case PREC_UIN: *((u_short  *)OBJ_DATA_PTR(dp)) = svp->u_us; break;
-		case PREC_UDI: *((uint32_t *)OBJ_DATA_PTR(dp)) = svp->u_ul; break;
-		case PREC_ULI: *((uint64_t *)OBJ_DATA_PTR(dp)) = svp->u_ull; break;
-
-		case PREC_SP: *((float  *)OBJ_DATA_PTR(dp)) = svp->u_f ; break;
-		case PREC_DP: *((double *)OBJ_DATA_PTR(dp)) = svp->u_d; break;
-
-		case PREC_CPX:
-			*( (float  *)OBJ_DATA_PTR(dp)  ) = svp->u_fc[0];
-			*(((float *)OBJ_DATA_PTR(dp))+1) = svp->u_fc[1];
-			break;
-
-		case PREC_QUAT:
-			*( (float  *)OBJ_DATA_PTR(dp)  ) = svp->u_fq[0];
-			*(((float *)OBJ_DATA_PTR(dp))+1) = svp->u_fq[1];
-			*(((float *)OBJ_DATA_PTR(dp))+2) = svp->u_fq[2];
-			*(((float *)OBJ_DATA_PTR(dp))+3) = svp->u_fq[3];
-			break;
-
-		case PREC_DBLCPX:
-			*( (double *)OBJ_DATA_PTR(dp)   ) = svp->u_dc[0];
-			*(((double *)OBJ_DATA_PTR(dp))+1) = svp->u_dc[1];
-			break;
-			break;
-		case PREC_BIT:
-			if( svp->u_l )
-				*( (u_long *)OBJ_DATA_PTR(dp) ) |= 1 << OBJ_BIT0(dp) ;
-			else
-				*( (u_long *)OBJ_DATA_PTR(dp) ) &= ~( 1 << OBJ_BIT0(dp) );
-			break;
-
-		default:
-			sprintf(ERROR_STRING,
-		"assign_scalar:  unsupported scalar precision %s",OBJ_PREC_NAME(dp));
-			NERROR1(ERROR_STRING);
-			break;
+	prec_p = OBJ_PREC_PTR(dp);
+	if( (*(prec_p->assign_scalar_func))(dp,svp) < 0 ){
+		sprintf(ERROR_STRING,
+			"Unable to set scalar value for object %s!?",
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		return;
 	}
 	SET_OBJ_FLAG_BITS(dp,DT_ASSIGNED);
 }
 
 double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p)
 {
-	double retval;
-
-	switch( PREC_CODE(prec_p) ){
-		case PREC_BY:  retval = svp->u_b; break;
-		case PREC_IN:  retval = svp->u_s; break;
-		case PREC_DI:  retval = svp->u_l; break;
-		case PREC_STR:
-		case PREC_CHAR:
-		case PREC_UBY: retval = svp->u_ub; break;
-		case PREC_UIN: retval = svp->u_us; break;
-		case PREC_UDI: retval = svp->u_ul; break;
-		case PREC_SP: retval = svp->u_f; break;
-		case PREC_DP: retval = svp->u_d; break;
-		case PREC_BIT:
-			if( svp->u_l )  retval =1;
-			else		retval =0;
-			break;
-
-		case PREC_CPX:
-		case PREC_QUAT:
-		case PREC_DBLCPX:
-			WARN("cast_from_scalar_value:  can't cast multi-component types to double");
-			retval =0;
-			break;
-		default:
-			assert( AERROR("cast_from_scalar_value:  unrecognized precision") );
-
-			break;
-	}
-	return(retval);
+	return (*(prec_p->cast_to_double_func))(svp);
 }
 
 void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
-	switch( PREC_CODE(prec_p) ){
-		case PREC_BY:  svp->u_b = (char) val; break;
-		case PREC_IN:  svp->u_s = (short) val; break;
-		case PREC_DI:  svp->u_l = (int32_t)val; break;
-		case PREC_LI:  svp->u_ll = (int64_t)val; break;
-		case PREC_CHAR:
-		case PREC_UBY: svp->u_ub = (u_char) val; break;
-		case PREC_UIN: svp->u_us = (u_short) val; break;
-		case PREC_UDI: svp->u_ul = (uint32_t) val; break;
-		case PREC_ULI: svp->u_ull = (uint64_t) val; break;
-		case PREC_SP: svp->u_f = (float) val; break;
-		case PREC_DP: svp->u_d = val; break;
-#ifdef USE_LONG_DOUBLE
-		case PREC_LP: svp->u_ld = val; break;
-#endif // USE_LONG_DOUBLE
-		case PREC_BIT:
-			if( val != 0 )
-				svp->u_l =  1;
-			else
-				svp->u_l =  0;
-			break;
-
-		case PREC_CPX:
-		case PREC_QUAT:
-		case PREC_DBLCPX:
-			WARN("cast_to_scalar_value:  can't cast to multi-component types from double");
-			break;
-		default:
-			assert( AERROR("cast_to_scalar_value:  unrecognized precision") );
-			break;
-	}
+	(*(prec_p->cast_from_double_func))(svp,val);
 }
 
 void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 1 );
-
-	switch( PREC_CODE(prec_p) & MACH_PREC_MASK ){
-		case PREC_SP: svp->u_fc[index] = (float) val; break;
-		case PREC_DP: svp->u_dc[index] = val; break;
-		default:
-			assert( AERROR("cast_to_cpx_scalar:  unexpected machine precision") );
-			break;
-	}
+	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
+
 
 void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {

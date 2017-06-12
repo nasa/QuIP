@@ -12,6 +12,8 @@ typedef int QUIP_BOOL;
 /* BUT conflicts with X11 !? */
 #define Quip_String	const char
 
+union scalar_value; typedef union scalar_value Scalar_Value;
+
 #define FWD_TYPEDEF(struct_name,typedef_name)			\
 struct struct_name; typedef struct struct_name typedef_name;
 

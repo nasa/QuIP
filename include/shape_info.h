@@ -67,6 +67,14 @@ struct precision {
 	prec_t			prec_code;
 	int			prec_size;	// type size in bytes
 	struct precision *	prec_mach_p;	// NULL for machine precisions
+
+	// methods
+	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+	double			(*cast_to_double_func)(Scalar_Value *svp);
+	void			(*cast_from_double_func)
+					(Scalar_Value *,double val);
+	void			(*cast_indexed_type_from_double_func)
+					(Scalar_Value *,int idx,double val);
 } ;
 
 #define prec_name	prec_item.item_name
@@ -92,6 +100,19 @@ struct precision {
 #define NAME_FOR_PREC_CODE(p)		PREC_NAME(PREC_FOR_CODE(p))
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
 
+#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_func
+#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_func = v
+
+#define PREC_CAST_TO_DOUBLE_FUNC(prec_p)	(prec_p)->cast_to_double_func
+#define SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_to_double_func = v
+#define PREC_CAST_FROM_DOUBLE_FUNC(prec_p)	(prec_p)->cast_from_double_func
+#define SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_from_double_func = v
+
+#define PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p)	(prec_p)->cast_indexed_type_from_double_func
+#define SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_indexed_type_from_double_func = v
+
+
+//#ifdef HAVE_ANY_GPU
 //#ifdef HAVE_ANY_GPU
 
 // We use this struct to count the number of words in a bitmap, which is used
