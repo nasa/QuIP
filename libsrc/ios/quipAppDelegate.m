@@ -665,7 +665,6 @@ ipad_pro_9_7:
 			NWARN(DEFAULT_ERROR_STRING);
 			break;
 	}
-fprintf(stderr,"getDevTypeForSize: dev size is %g (w) x %g (h)\n",dev_size.width,dev_size.height);  
 }
 
 int is_portrait(void)
@@ -943,9 +942,7 @@ static void init_ios_device(void)
 	// we can't call this thread synchronously, and then
 	// have it call us back synchronously, or we will hang...
 
-fprintf(stderr,"didFinishLaunchingWithOptions calling exec_quip...\n");
 	exec_quip(SGL_DEFAULT_QSP_ARG);		// didFinishLaunching
-fprintf(stderr,"back from exec_quip, application:  didFinishLaunchingWithOptions:\n");
 
 	// this might return before doing all the commands if
 	// there is an alert...

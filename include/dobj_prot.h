@@ -121,6 +121,7 @@ extern void		cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_
 /*extern const char *	string_for_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p); */
 extern void		cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern void		cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
+extern void		cast_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
 extern Data_Obj *	mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
 extern Data_Obj *	mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
@@ -229,7 +230,6 @@ extern int dp_equal_dims(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index1,in
 
 /* dfuncs.c  support for pexpr */
 extern double obj_exists(QSP_ARG_DECL  const char *);
-extern double comp_func(Data_Obj *,index_t);
 extern double val_func(QSP_ARG_DECL  Data_Obj *);
 
 extern double row_func(Data_Obj *);

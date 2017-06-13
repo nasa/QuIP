@@ -467,6 +467,8 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 	SET_SOB_CONTROL(sop,l);
 }
 
+// works for choosers AND pickers?
+
 void reload_chooser(Screen_Obj *sop)
 {
 	UITableView *t=(UITableView *)SOB_CONTROL(sop);

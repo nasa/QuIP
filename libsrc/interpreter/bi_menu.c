@@ -476,60 +476,11 @@ static void init_default_formats(SINGLE_QSP_ARG_DECL)
 	SET_QS_NUMBER_FMT( THIS_QSP, QS_DFORMAT(THIS_QSP) );
 }
 
-#define CHECK_FMT_STRINGS					\
-	if( QS_NUMBER_FMT(THIS_QSP) == NULL )			\
-		init_default_formats(SINGLE_QSP_ARG);
+#ifdef SOLVE_FOR_MAX_ROUNDABLE
 
-static COMMAND_FUNC( do_assign_var )
-{
-	Quip_String *namestr, *estr;
-	//double d;
-	Typed_Scalar *tsp;
-	namestr=NAMEOF("variable name" );
-	estr=NAMEOF("expression" );
-    
-	CHECK_FMT_STRINGS
-
-	tsp=pexpr(QSP_ARG  estr);
-	if( tsp == NULL ) return;
-
-	// Make sure we have a free string buffer
-	if( QS_AV_STRINGBUF(THIS_QSP) == NULL ){
-		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );
-		enlarge_buffer(QS_AV_STRINGBUF(THIS_QSP),LLEN);
-	}
-
-// what is AV_STRINGBUF???  special for assign_var?  why?
-#define DEST	sb_buffer(QS_AV_STRINGBUF(THIS_QSP))
-
-	// See if the expression is a string expression
-	if( tsp->ts_prec_code == PREC_STR ){
-		// It is a string...
-		assert( tsp->ts_value.u_vp != NULL );
-		copy_string(QS_AV_STRINGBUF(THIS_QSP),(char *)tsp->ts_value.u_vp);
-	} else {
-    
-		// If the format is hex, decimal, or octal...
-		if( QS_NUMBER_FMT(THIS_QSP) == QS_XFORMAT(THIS_QSP) ||
-				QS_NUMBER_FMT(THIS_QSP) == QS_DFORMAT(THIS_QSP) ||
-				QS_NUMBER_FMT(THIS_QSP) == QS_OFORMAT(THIS_QSP) 
-				){
-			if( SCALAR_MACH_PREC_CODE(tsp) == PREC_DP ){
-				/* We used to cast the value to integer if
-				 * the format string is an integer format -
-				 * But now we don't do this if the number has
-				 * a fractional part...
-				 */
-				double d;
-				d=tsp->ts_value.u_d;
-
-				// We used to convert to integer if the number
-				// was equal to the rounded version...  but that
-				// fails for very big numbers...
-				//
 // enable this just for system calibration
 //#define SOLVE_FOR_MAX_ROUNDABLE
-#ifdef SOLVE_FOR_MAX_ROUNDABLE
+static void solve_for_max_roundable(void)
 {
 	double d,e;
 	d=32000;
@@ -557,6 +508,40 @@ exit(1);
 }
 #endif // SOLVE_FOR_MAX_ROUNDABLE
 
+static inline void ensure_assign_var_stringbuf(SINGLE_QSP_ARG_DECL)
+{
+	// Make sure we have a free string buffer
+	if( QS_AV_STRINGBUF(THIS_QSP) == NULL ){
+		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );
+		enlarge_buffer(QS_AV_STRINGBUF(THIS_QSP),LLEN);
+	}
+}
+
+static inline void assign_var_stringbuf_from_string(QSP_ARG_DECL  Typed_Scalar *tsp)
+{
+	// It is a string...
+	assert( tsp->ts_value.u_vp != NULL );
+	copy_string(QS_AV_STRINGBUF(THIS_QSP),(char *)tsp->ts_value.u_vp);
+}
+
+#define DEST	sb_buffer(QS_AV_STRINGBUF(THIS_QSP))
+
+static inline void assign_integer_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
+{
+	/* We used to cast the value to integer if
+	 * the format string is an integer format -
+	 * But now we don't do this if the number has
+	 * a fractional part...
+	 */
+	double d;
+	d=tsp->ts_value.u_d;
+
+	// We used to convert to integer if the number
+	// was equal to the rounded version...  but that
+	// fails for very big numbers...
+
+	// can call solve_for_max_roundable here?
+
 // Problems on iOS, but running the solve code above suggests
 // that 1e+14 is OK??
 
@@ -564,42 +549,82 @@ exit(1);
 
 #ifdef HAVE_ROUND
 
-				if( fabs(d) < MAX_ROUNDABLE_DOUBLE && d == round(d) ){
-					/* Why cast to unsigned?  What if signed??? */
-					/* We want to cast to unsigned to get the largest integer? */
-					// does the sign of the cast really matter?
-					if( d > 0 )
-						sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(uint64_t)d);
-					else
-						sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(int64_t)d);
-				} else {
-					sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
-				}
+	if( fabs(d) < MAX_ROUNDABLE_DOUBLE && d == round(d) ){
+		/* Why cast to unsigned?  What if signed??? */
+		/* We want to cast to unsigned to get the largest integer? */
+		// does the sign of the cast really matter?
+		if( d > 0 )
+			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(uint64_t)d);
+		else
+			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(int64_t)d);
+	} else {
+		sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
+	}
 
 #else /* ! HAVE_ROUND */
 
 #ifdef HAVE_FLOOR
-				if( d != floor(d) )
-					sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
-				else {
-					//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
-					sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
-				}
+	if( d != floor(d) )
+		sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
+	else {
+		//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
+		sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
+	}
 #else /* ! HAVE_FLOOR */
-				//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
-				sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
+	//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
+	sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
 #endif /* ! HAVE_FLOOR */
 #endif /* ! HAVE_ROUND */
-			} else {	// integer format, integer scalar
-				assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
-				sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
-			}
-		} else	{
-			// Not integer format
-			double d;
-			d=double_for_scalar(tsp);
-			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),d);
+}
+
+#define SCALAR_IS_DOUBLE(tsp)		( SCALAR_MACH_PREC_CODE(tsp) == PREC_DP )
+
+
+#define IS_INTEGER_FMT( f )		( (f) == QS_XFORMAT(THIS_QSP) ||	\
+					  (f) == QS_DFORMAT(THIS_QSP) ||	\
+					  (f) == QS_OFORMAT(THIS_QSP) )
+
+static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *tsp)
+{
+	// If the format is hex, decimal, or octal...
+	if( IS_INTEGER_FMT(QS_NUMBER_FMT(THIS_QSP)) ){
+		if( SCALAR_IS_DOUBLE(tsp) ){
+			assign_integer_from_double(QSP_ARG  tsp);
+		} else {	// integer format, integer scalar
+			assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
+			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
 		}
+	} else	{
+		// Not integer format, print decimal places
+		double d;
+		d=double_for_scalar(tsp);
+		sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),d);
+	}
+}
+
+#define CHECK_FMT_STRINGS					\
+	if( QS_NUMBER_FMT(THIS_QSP) == NULL )			\
+		init_default_formats(SINGLE_QSP_ARG);
+
+static COMMAND_FUNC( do_assign_var )
+{
+	Quip_String *namestr, *estr;
+	Typed_Scalar *tsp;
+	namestr=NAMEOF("variable name" );
+	estr=NAMEOF("expression" );
+    
+	CHECK_FMT_STRINGS
+
+	tsp=pexpr(QSP_ARG  estr);
+	if( tsp == NULL ) return;
+
+	ensure_assign_var_stringbuf(SINGLE_QSP_ARG);
+
+	// See if the expression is a string expression
+	if( tsp->ts_prec_code == PREC_STR ){
+		assign_var_stringbuf_from_string(QSP_ARG  tsp);
+	} else {
+		assign_var_stringbuf_from_number(QSP_ARG  tsp);
 	}
 
 	RELEASE_SCALAR(tsp);

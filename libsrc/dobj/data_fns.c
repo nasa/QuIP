@@ -248,64 +248,31 @@ void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *p
 void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 3 );
+	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
+}
 
-	switch( PREC_CODE(prec_p) & MACH_PREC_MASK ){
-		case PREC_SP: svp->u_fq[index] = (float) val; break;
-		case PREC_DP: svp->u_dq[index] = val; break;
-		default:
-			assert( AERROR("cast_to_quat_scalar:  unexpected machine precision") );
-			break;
-	}
+void cast_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+{
+	assert( index >= 0 && index <= 2 );
+	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
 void extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 {
+	Precision *prec_p;
+
 	if( ! OBJ_IS_RAM(dp) ){
 		// BUG may not be cuda, use platform-specific function!
-advise("extract_scalar_value:  calling platform-specific memory download func");
 		( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dp)) )
 			(QSP_ARG  &svp->u_d, OBJ_DATA_PTR(dp),
 				PREC_SIZE(OBJ_PREC_PTR(dp)), OBJ_PFDEV(dp) );
-advise("extract_scalar_value:  back from platform-specific memory download func");
 		return;
 	}
 
-	switch( OBJ_PREC(dp) ){
-		case PREC_BY:  svp->u_b  = *((char     *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_IN:  svp->u_s  = *((short    *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_DI:  svp->u_l  = *((int32_t     *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_STR:
-		case PREC_UBY: svp->u_ub = *((u_char   *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_UIN: svp->u_us = *((u_short  *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_UDI: svp->u_ul = *((uint32_t   *)OBJ_DATA_PTR(dp)) ; break;
-
-		case PREC_SP: svp->u_f = *((float  *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_DP: svp->u_d = *((double *)OBJ_DATA_PTR(dp)) ; break;
-
-		case PREC_CPX:
-			svp->u_fc[0] = *( (float  *)OBJ_DATA_PTR(dp)  ) ;
-			svp->u_fc[1] = *(((float *)OBJ_DATA_PTR(dp))+1) ;
-			break;
-
-		case PREC_QUAT:
-			svp->u_fq[0] = *( (float  *)OBJ_DATA_PTR(dp)  ) ;
-			svp->u_fq[1] = *(((float *)OBJ_DATA_PTR(dp))+1) ;
-			svp->u_fq[2] = *(((float *)OBJ_DATA_PTR(dp))+2) ;
-			svp->u_fq[3] = *(((float *)OBJ_DATA_PTR(dp))+3) ;
-			break;
-
-		case PREC_DBLCPX:
-			svp->u_dc[0] = *( (double *)OBJ_DATA_PTR(dp)   ) ;
-			svp->u_dc[1] = *(((double *)OBJ_DATA_PTR(dp))+1) ;
-			break;
-			break;
-		default:
-			sprintf(DEFAULT_ERROR_STRING,
-		"extract_scalar_value:  unsupported scalar precision %s",OBJ_PREC_NAME(dp));
-			NERROR1(DEFAULT_ERROR_STRING);
-			break;
-	}
+	prec_p = OBJ_PREC_PTR(dp);
+	(*(prec_p->extract_scalar_func))(svp,OBJ_DATA_PTR(dp));
 }
+
 
 Data_Obj *
 mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)

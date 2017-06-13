@@ -133,7 +133,6 @@ typedef enum {
 #define SOB_SELECTORS(sop)	sop.selectors
 #define SOB_N_SELECTORS(sop)	sop.val
 #define SOB_N_SELECTORS_AT_IDX(sop,idx)	(((sop).countTbl)[idx])
-//#define SOB_N_SELECTORS_AT_IDX(sop,idx)	3
 #define SOB_FLAGS(sop)		sop.flags
 #define SOB_NAME(sop)		sop.name.UTF8String
 #define SOB_MIN(sop)		sop.min

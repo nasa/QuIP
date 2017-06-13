@@ -18,30 +18,12 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 	return(1.0);
 }
 
-#define FETCH_BIT								\
-										\
-				bitnum_t bitnum;				\
-				bitmap_word bit,*lp;				\
-				bitnum = OBJ_BIT0(dp);				\
-				lp = (bitmap_word *)OBJ_DATA_PTR(dp);		\
-				lp += index/BITS_PER_BITMAP_WORD;		\
-				bitnum += index % BITS_PER_BITMAP_WORD;		\
-				if( bitnum >= BITS_PER_BITMAP_WORD ){		\
-					bitnum -= BITS_PER_BITMAP_WORD;		\
-					lp++;					\
-				}						\
-				bit = 1 << bitnum;				\
-				if( *lp & bit )					\
-					d = 1.0;				\
-				else						\
-					d = 0.0;
 
 /* return a given component of the pointed-to pixel */
 
-double comp_func( Data_Obj *dp, index_t index )
+static inline double comp_func( Data_Obj *dp, index_t index )
 {
-	double d;
-	mach_prec mp;
+	Precision *prec_p;
 
 	if( dp==NULL ) return(0.0);
 
@@ -66,58 +48,10 @@ double comp_func( Data_Obj *dp, index_t index )
 			index,OBJ_NAME(dp));
 		NWARN(DEFAULT_ERROR_STRING);
 	}
-	mp = OBJ_MACH_PREC(dp);
-	switch( mp ){
-		case PREC_SP:
-			d = (* (((float *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_DP:
-			d = (* (((double *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_IN:
-			d = (* (((short *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_DI:
-			d = (* (((int32_t *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_LI:
-			d = (* (((int64_t *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_BY:
-			d = (* (((char *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_UIN:
-			d = (* (((u_short *)OBJ_DATA_PTR(dp))+index) );
-			break;
-		case PREC_UDI:
-			if( IS_BITMAP(dp) ){
-				FETCH_BIT
-			} else {
-				d = (* (((uint32_t *)OBJ_DATA_PTR(dp))+index) );
-			}
-			break;
-		case PREC_ULI:
-			if( IS_BITMAP(dp) ){
-				FETCH_BIT
-			} else {
-				d = (* (((uint64_t *)OBJ_DATA_PTR(dp))+index) );
-			}
-			break;
-		case PREC_UBY:
-			d = (* (((u_char *)OBJ_DATA_PTR(dp))+index) );
-			break;
-#ifdef CAUTIOUS
-		case PREC_NONE:
-		case N_MACHINE_PRECS:
-		default:
-			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  comp_func:  object %s has invalid machine precision %d",
-				OBJ_NAME(dp),mp);
-			NERROR1(DEFAULT_ERROR_STRING);
-			d = 0.0;	// quiet compiler
-			break;
-#endif /* CAUTIOUS */
-	}
-	return(d);
+	prec_p = OBJ_MACH_PREC_PTR(dp);
+	assert(prec_p!=NULL);
+
+	return (*(prec_p->indexed_data_func))(dp,index);
 } // end comp_func
 
 double val_func(QSP_ARG_DECL  Data_Obj *dp )

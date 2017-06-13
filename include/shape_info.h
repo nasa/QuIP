@@ -69,7 +69,11 @@ struct precision {
 	struct precision *	prec_mach_p;	// NULL for machine precisions
 
 	// methods
+	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
+	double			(*indexed_data_func)(Data_Obj *dp, int index);
+	int			(*is_numeric_func)(void);
 	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
 	double			(*cast_to_double_func)(Scalar_Value *svp);
 	void			(*cast_from_double_func)
 					(Scalar_Value *,double val);
@@ -100,8 +104,20 @@ struct precision {
 #define NAME_FOR_PREC_CODE(p)		PREC_NAME(PREC_FOR_CODE(p))
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
 
+#define PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p)	(prec_p)->set_value_from_input_func
+#define SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,v)	(prec_p)->set_value_from_input_func = v
+
+#define PREC_INDEXED_DATA_FUNC(prec_p)	(prec_p)->indexed_data_func
+#define SET_PREC_INDEXED_DATA_FUNC(prec_p,v)	(prec_p)->indexed_data_func = v
+
+#define PREC_IS_NUMERIC_FUNC(prec_p)	(prec_p)->is_numeric_func
+#define SET_PREC_IS_NUMERIC_FUNC(prec_p,v)	(prec_p)->is_numeric_func = v
+
 #define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_func
 #define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_func = v
+
+#define PREC_EXTRACT_SCALAR_FUNC(prec_p)	(prec_p)->extract_scalar_func
+#define SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,v)	(prec_p)->extract_scalar_func = v
 
 #define PREC_CAST_TO_DOUBLE_FUNC(prec_p)	(prec_p)->cast_to_double_func
 #define SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_to_double_func = v

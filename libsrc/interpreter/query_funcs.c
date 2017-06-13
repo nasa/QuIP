@@ -315,7 +315,6 @@ static void eatup_space_for_lookahead(SINGLE_QSP_ARG_DECL)
 
 	/* the buffer may contain multiple lines */
 	while( *str == '#' ){
-//fprintf(stderr,"eatup_space_for_lookahead:  comment delimiter seen\n");
 		discard_line_content(QSP_ARG  &str);
 		skip_white_space(QSP_ARG  &str);
 	}
@@ -324,7 +323,6 @@ static void eatup_space_for_lookahead(SINGLE_QSP_ARG_DECL)
 		CLEAR_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
 
 	if( QRY_HAS_TEXT(qp) ){
-//fprintf(stderr,"eatup_space_for_lookahead:  resetting line ptr\n");
 		SET_QRY_LINE_PTR(qp,str);
 	}
 
@@ -404,16 +402,13 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #1\n",stop_level,QLEVEL);
 		return 0;	// nothing to interpret
 	}
 #endif /* BUILD_FOR_OBJC */
 
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d  BEGIN\n",stop_level,QLEVEL);
 	CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 
 	if( IS_HALTING(THIS_QSP) ){
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 0 #2\n",stop_level,QLEVEL);
 		return 0;
 	}
 
@@ -438,7 +433,6 @@ int lookahead_til(QSP_ARG_DECL  int stop_level)
 
 		/* do look-ahead */
 
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, top of while loop\n",stop_level,QLEVEL);
 		qp= CURR_QRY(THIS_QSP);
 		_level=QLEVEL;
 
@@ -457,7 +451,6 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 			eatup_space_for_lookahead(SINGLE_QSP_ARG);
 		}
 		if( QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, HAS_TEXT returning 1 #3\n",stop_level,QLEVEL);
 			return 1;
 		}
 		while( (QLEVEL == _level) && (QRY_HAS_TEXT(qp) == 0) ){
@@ -471,7 +464,6 @@ DEBUG_LINENO(lookahead_til after nextline)
 			// halting bit can be set if we run out of input on a secondary thread
 			// (primary thread will exit)
 			if( IS_HALTING(THIS_QSP) ) {
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, HALTING returning 1 #4\n",stop_level,QLEVEL);
 				return 0;
 			}
 
@@ -481,33 +473,20 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #2)
 			}
 		}
 	}
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, after while loop\n",stop_level,QLEVEL);
 
-	/*
-	if( QLEVEL >= 0 ){
-fprintf(stderr,"flags & lookahead_enabled = %d\n", (QS_FLAGS(THIS_QSP) & QS_LOOKAHEAD_ENABLED));
-fprintf(stderr,"!is_interactive = %d\n",(!IS_INTERACTIVE( CURR_QRY(THIS_QSP) ) ));
-fprintf(stderr,"!is_socket = %d\n", ( ( QRY_FLAGS( CURR_QRY(THIS_QSP) ) & Q_SOCKET ) == 0 ));
-fprintf(stderr,"!is_saving(prev) = %d\n",( ! ( QLEVEL>0 && QRY_IS_SAVING( PREV_QRY(THIS_QSP) ) ) ));
-	}
-	*/
-	
 #ifdef BUILD_FOR_OBJC
 	if( QLEVEL < 0 ){
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #5\n",stop_level,QLEVEL);
 		return 0;	// done with startup file?
 	}
 #endif /* BUILD_FOR_OBJC */
 	
 	assert(QLEVEL>=0);
 
-//fprintf(stderr,"lookahead_til finished, qlevel = %d\n",QLEVEL);
 	if( QLEVEL != initial_level ){
 		assert(CURR_QRY(THIS_QSP) != NULL);
 		SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_LOOKAHEAD_ADVANCED_LINE);
 	}
 
-//fprintf(stderr,"lookahead_til %d:  qlevel = %d, returning 0 #6\n",stop_level,QLEVEL);
 	return 0;
 
 } // end lookahead_til
@@ -760,7 +739,6 @@ advise(ERROR_STRING);
 
 #ifdef HAVE_HISTORY
 		if( IS_INTERACTIVE(CURR_QRY(THIS_QSP)) && *buf && IS_TRACKING_HISTORY(THIS_QSP) ){
-//fprintf(stderr,"adding response '%s' to history list for prompt '%s'\n",buf,pline);
 			add_def(QSP_ARG  pline,buf);
 		}
 #endif /* HAVE_HISTORY */
@@ -778,7 +756,6 @@ advise(ERROR_STRING);
 	// read the macro args...
 	if( QLEVEL < 0 ) return NULL;
 
-//fprintf(stderr,"next_query_word will return \"%s\"\n",buf);
 	return(buf);
 } /* end next_query_word() */
 
@@ -902,7 +879,6 @@ static inline void add_quote_string_char(QSP_ARG_DECL  int c)
 	ADD_TO_RESULT(c)
 	if( IS_PRIMARY_INPUT(CURR_QRY(THIS_QSP)) ){
 		if( c == '\n' && !(word_scan_flags & RW_HAVBACK) ){
-//fprintf(stderr,"save_normal_char:  newline encountered while in quoted string!?\n");
 			SET_WORD_SCAN_FLAG_BITS(RW_ALLDONE);
 		}
 	}
@@ -1032,7 +1008,6 @@ static inline void sync_lbptrs(SINGLE_QSP_ARG_DECL)
 
 	ql=QLEVEL;
 
-//fprintf(stderr,"sync_lbptrs\n");
 	while( ql != 0 && (QRY_FLAGS(QRY_AT_LEVEL(THIS_QSP,ql-1)) & Q_SAVING) ){
 		ql--;
 		SET_QRY_LINE_PTR(QRY_AT_LEVEL(THIS_QSP,ql),
@@ -1181,21 +1156,6 @@ static void var_expand(QSP_ARG_DECL  String_Buf *sbp)
 	u_int n_to_copy;
 	char *start;
 	int backslash_previous;
-
-#ifdef QUIP_DEBUG
-if( debug&qldebug ){
-if( strlen(sb_buffer(sbp)) < LLEN-80 ){
-sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  var_expand \"%s\" BEGIN",
-WHENCE_L(var_expand),
-sb_buffer(sbp));
-} else {
-sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  var_expand (%ld chars) BEGIN",
-WHENCE_L(var_expand),
-(long)strlen(sb_buffer(sbp)));
-}
-advise(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
 
 	if( sb_buffer(RESULT) == NULL ){
 		assert( SB_SIZE(RESULT) == 0 );
@@ -1461,7 +1421,6 @@ static inline void process_this_character(QSP_ARG_DECL  int c )
 		after_backslash(QSP_ARG  c);
 		CLEAR_WORD_SCAN_FLAG_BITS(RW_HAVBACK);
 		return;
-//fprintf(stderr,"process_this_character:  after after_backslash input is \"%s\"\n", input_ptr);
 	}
 	
 	/* If this char is a backslash, don't save, but
@@ -1562,7 +1521,6 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 	String_Buf *sbp;
 
 	assert(QS_LINE_PTR(THIS_QSP)!=NULL);
-//fprintf(stderr,"next_word_from_input_line:  level = %d  line_ptr = 0x%lx\n",QLEVEL,(long)QS_LINE_PTR(THIS_QSP));
 	if( * QS_LINE_PTR(THIS_QSP) == 0 )
 		return NULL;	// input exhausted
 
@@ -1584,12 +1542,10 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 	SET_QS_RET_PTR(THIS_QSP,sb_buffer(sbp));
 
 
-//fprintf(stderr,"next_word_from_input_line:  scanning \"%s\"\n",s);
 // should we skip initial spaces?
 
 	transfer_input_characters(SINGLE_QSP_ARG);
 
-//fprintf(stderr,"next_word_from_input_line:  remaining to scan:  \"%s\"\n",s);
 
 	/* If we are here, our input pointer should be pointing at a null
 	 * byte OR a whitespace character...
@@ -1627,11 +1583,8 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 		return(NULL);
 
 	// The level should not be popped???
-//fprintf(stderr,"checking level %d line ptr at 0x%lx for more stuff:  \"%s\"\n",QLEVEL,
-//(long)QS_LINE_PTR(THIS_QSP), QS_LINE_PTR(THIS_QSP));
 	if( * QS_LINE_PTR(THIS_QSP) == 0 ){
 		// hope this doesn't mess up line numbering...
-//fprintf(stderr,"setting line ptr to NULL\n");
 		SET_QS_LINE_PTR(THIS_QSP,NULL);
 		CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_HAS_SOMETHING);
 		// Should we clear the HAVE_SOMETHING flag???
@@ -1660,7 +1613,6 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 	if( ! (word_scan_flags & RW_NOVAREXP) )
 		var_expand(QSP_ARG  sbp);
 
-//fprintf(stderr,"next_word_from_input_line returning \"%s\"\n",sb_buffer(sbp));
 	return(sb_buffer(sbp));
 } // end next_word_from_input_line
 
@@ -1674,7 +1626,6 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	assert( ! IS_HALTING(THIS_QSP) );
 
 	qp=(CURR_QRY(THIS_QSP));
-//fprintf(stderr,"next_word_from_level  level = %d   has_text = %d\n",QLEVEL,QRY_HAS_TEXT(CURR_QRY(THIS_QSP)));
 	if( !QRY_HAS_TEXT(qp) )	/* need to read more input */
 	{
 		buf=qline(QSP_ARG  pline );
@@ -1692,7 +1643,6 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	if( QRY_HAS_TEXT(qp) ){
 		/* next_word_from_input_line() returns non-NULL if successful */
 		SYNC_LINENO
-//fprintf(stderr,"next_word_from_level calling next_word_from_input_line\n");
 		if( (buf=next_word_from_input_line(SINGLE_QSP_ARG)) == NULL ){
 			CLEAR_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
 			return NULL;
@@ -1852,7 +1802,6 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 	}
 
 	SET_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
-//fprintf(stderr,"setting line ptr to user response at 0x%lx\n",(long)s);
 	SET_QRY_LINE_PTR(qp,s);
 
 	return(s);
@@ -2024,7 +1973,6 @@ const char * nextline(QSP_ARG_DECL  const char *pline)
 		if( s != NULL ) return s;
 		//SET_QRY_HAS_TEXT(qp,1);	// why is this commented out???
 		SET_QRY_FLAG_BITS(qp,Q_HAS_SOMETHING);
-//fprintf(stderr,"nextline:  setting line ptr to 0x%lx\n",(long)sb_buffer(sbp));
 		SET_QRY_LINE_PTR(qp,sb_buffer(sbp));
 		return(sb_buffer(sbp));
 	}
@@ -2164,7 +2112,6 @@ static const char *extract_line_for_macro(SINGLE_QSP_ARG_DECL)
 	if( *from == '\n' )
 		from++;		// advance, but don't copy...
 
-//fprintf(stderr,"extract_line_for_macro setting line ptr\n");
 	SET_QRY_LINE_PTR(CURR_QRY(THIS_QSP),from);
 	if( *from == 0 ){	// out of text?
 		CLEAR_QRY_FLAG_BITS(CURR_QRY(THIS_QSP),Q_HAS_SOMETHING);
@@ -2233,7 +2180,6 @@ String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL)
 
 	while( (status=get_next_macro_line(QSP_ARG  mac_sbp)) == 1 )
 		;
-//fprintf(stderr,"read_macro_body:  will return buffer with \"%s\"\n",sb_buffer(mac_sbp));
 
 	if( status != 0 )
 		WARN("bad macro definition");
@@ -2863,7 +2809,6 @@ advise(ERROR_STRING);
 		(QRY_FLAGS(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)))
 			/* & Q_NON_INPUT_MASK */ );
 
-//fprintf(stderr,"dup_input setting line ptr\n");
 	SET_QRY_LINE_PTR( CURR_QRY(THIS_QSP),QRY_LINE_PTR(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)));
 	SET_QRY_LINES_READ( CURR_QRY(THIS_QSP),QRY_LINES_READ(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)));
 
@@ -2905,14 +2850,11 @@ void open_loop(QSP_ARG_DECL int n)
 
 	qp=(CURR_QRY(THIS_QSP));
 
-//fprintf(stderr,"open_loop qlevel = %d BEGIN\n",QLEVEL);
 	dup_input(SINGLE_QSP_ARG);
 
 	SET_QRY_COUNT(qp,n);
 	insure_query_text_buf(qp);
-//fprintf(stderr,"open_loop setting Q_SAVING\n");
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
-//fprintf(stderr,"open_loop qlevel = %d DONE\n",QLEVEL);
 }
 
 void fore_loop(QSP_ARG_DECL Foreach_Loop *frp)
@@ -3015,9 +2957,6 @@ Query * pop_file(SINGLE_QSP_ARG_DECL)
 
 	QLEVEL--;
 
-//fprintf(stderr,"pop_file:  new level is %d\n",QLEVEL);
-//qdump(qsp);
-
 	return(qp);	// we may want to access the flags of the old thing...
 			// But where do we release resources?
 
@@ -3080,7 +3019,6 @@ void push_text(QSP_ARG_DECL const char *text, const char *filename)
 
 	redir(QSP_ARG  (FILE *)NULL, filename );
 	qp=(CURR_QRY(THIS_QSP));
-//fprintf(stderr,"push_text setting line ptr\n");
 	SET_QRY_LINE_PTR(qp,text);
 	SET_QRY_FLAG_BITS(qp,(Q_HAS_SOMETHING | Q_BUFFERED_TEXT));
 
@@ -3097,8 +3035,6 @@ void push_text(QSP_ARG_DECL const char *text, const char *filename)
 
 	SET_QRY_READFUNC(qp,poptext);
 
-//fprintf(stderr,"push_text:  level = %d\n",QLEVEL);
-//qdump(THIS_QSP);
 }
 
 /* fullpush(text)		just like push_text, but also passes up macro args */
@@ -3137,13 +3073,10 @@ COMMAND_FUNC( close_loop )
 	 * How would we know???
 	 */
 
-//fprintf(stderr,"close_loop level = %d BEGIN\n",QLEVEL);
 	loop_qp=pop_file(SINGLE_QSP_ARG);	// are we sure we should do this?
 
-//fprintf(stderr,"close_loop level = %d after popping\n",QLEVEL);
 	qp=(CURR_QRY(THIS_QSP));
 
-//fprintf(stderr,"close_loop clearing Q_SAVING\n");
 	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
 
 	if( QRY_COUNT(qp) == FORELOOP ){
@@ -3207,8 +3140,8 @@ lup_dun:
 
 
 
-/* in an older version, the non-ansii arg decl was enclosed in #ifndef __C2MAN__ ...
- * not sure why, perhaps c2man wasn't interpreting typedefs.h properly...
+/* "while" can be used instead of "end",
+ * but first we need to make sure that a loop is open!
  */
 
 void _whileloop(QSP_ARG_DECL  int value)
@@ -3217,12 +3150,6 @@ void _whileloop(QSP_ARG_DECL  int value)
 	Query *qp;
 	const char *errmsg="Can't close with While, no loop open";
 
-
-
-	/* While can be used instead of Close,
-	 * but first we need to make sure that a loop is open!
-	 */
-
 	assert( QLEVEL >= 0 );
 
 	if( QLEVEL == 0 || QRY_COUNT(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)) == 0 ){
@@ -3230,34 +3157,16 @@ void _whileloop(QSP_ARG_DECL  int value)
 		return;
 	}
 
-//fprintf(stderr,"while_loop level = %d BEGIN\n",QLEVEL);
 	pop_file(SINGLE_QSP_ARG);
-//fprintf(stderr,"while_loop level = %d after popping\n",QLEVEL);
 	qp=(CURR_QRY(THIS_QSP));
-//fprintf(stderr,"while_loop level = %d clearing Q_SAVING\n",QLEVEL);
 	CLEAR_QRY_FLAG_BITS(qp,Q_SAVING);
 
 	if( ! value ){
-/*
-sprintf(ERROR_STRING,"releasing while loop text buffer at level %d",
-qp-&query[0]);
-advise(ERROR_STRING);
-*/
 		clear_query_text(qp);
-
-		/*
-		 * Return the count to the default state;
-		 * Otherwise lookahead will be inhibited after this...
-		 *
-		 * This revealed a bug when a repeat loop followed a do loop
-		 */
-		SET_QRY_COUNT(qp, 0);
+		SET_QRY_COUNT(qp, 0);	// do loop sets count to -1
 	} else {
-		const char *s;
-		//push_input_file( QSP_ARG CURRENT_FILENAME );
-		s = CURRENT_FILENAME ;
-		assert(QRY_TEXT_BUF(qp)!=NULL);
-		fullpush(QSP_ARG  sb_buffer(QRY_TEXT_BUF(qp)), s );
+		assert( QRY_TEXT_BUF(qp) != NULL );
+		fullpush(QSP_ARG  sb_buffer(QRY_TEXT_BUF(qp)), CURRENT_FILENAME );
 	}
 }
 
@@ -3672,8 +3581,6 @@ void add_cmd_callback(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 {
 	if( QS_CALLBACK_LIST(THIS_QSP) == NULL ){
 		SET_QS_CALLBACK_LIST(THIS_QSP, new_list() );
-//fprintf(stderr,"add_cmd_callback:  initialized callback list to 0x%lx\n",
-//(long)QS_CALLBACK_LIST(THIS_QSP));
 	}
 
 	add_func_to_list(QS_CALLBACK_LIST(THIS_QSP), func);

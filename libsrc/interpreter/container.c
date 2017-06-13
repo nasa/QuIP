@@ -487,7 +487,6 @@ static Enumerator *list_new_enumerator(Container *cnt_p)
 	ep = new_enumerator(cnt_p);
 	ep->e_typ_p = list_enumerator_type();
 	ep->e_p.lep = new_list_enumerator(cnt_p->cnt_lp);
-//fprintf(stderr,"list_new_enumerator:  lep = 0x%lx\n",(long)ep->e_p.lep);
 	return ep;
 }
 
@@ -498,7 +497,6 @@ static Enumerator *hash_tbl_new_enumerator(Container *cnt_p)
 	ep = new_enumerator(cnt_p);
 	ep->e_typ_p = hash_tbl_enumerator_type();
 	ep->e_p.vp = new_hash_tbl_enumerator(cnt_p->cnt_htp);
-//fprintf(stderr,"hash_tbl_new_enumerator:  vp = 0x%lx\n",(long)ep->e_p.vp);
 	return ep;
 }
 
@@ -509,7 +507,6 @@ static Enumerator *rb_tree_new_enumerator(Container *cnt_p)
 	ep = new_enumerator(cnt_p);
 	ep->e_typ_p = rb_tree_enumerator_type();
 	ep->e_p.vp = new_rb_tree_enumerator(cnt_p->cnt_tree_p);
-//fprintf(stderr,"rb_tree_new_enumerator:  vp = 0x%lx\n",(long)ep->e_p.vp);
 	return ep;
 }
 

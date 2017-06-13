@@ -666,9 +666,11 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 
 	dp = (Data_Obj *)ip;
 
+	// should this be an assertion?
 	if( dp == NULL ) return 0.0;
 	parent = OBJ_PARENT(dp);
 	if( parent == NULL ) return 0.0;
+
 
 	// The position is relative to the parent
 	//
@@ -688,16 +690,10 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 			pix_offset -= offsets[i] * OBJ_MACH_INC(parent,i);
 		}
 	}
-//fprintf(stderr,"get_dobj_posn:  offsets = %d %d %d %d %d\n",
-//offsets[0],offsets[1],offsets[2],offsets[3],offsets[4]);
 
-	switch(index){
-		case 0: d = offsets[1]; break;
-		case 1: d = offsets[2]; break;
-		default:
-			assert( AERROR("get_dobj_posn:  bad index!?") );
-			break;
-	}
+	assert( index >= 0 && index <= 1 );
+	d = offsets[index+1];
+
 	return(d);
 }
 

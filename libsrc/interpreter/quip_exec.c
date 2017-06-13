@@ -19,7 +19,6 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 
 	assert( mp != NULL );
 
-//fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
 	lp = container_list( MENU_CONTAINER(mp) );
 	assert( lp != NULL );
 
@@ -40,10 +39,8 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NULL );
 
-//fprintf(stderr,"perform_callbacks:  qlevel = %d BEGIN\n",QLEVEL);
 	reset_return_strings(SINGLE_QSP_ARG);
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
-//fprintf(stderr,"perform_callbacks:  qlevel = %d DONE\n",QLEVEL);
 }
 
 void qs_do_cmd( Query_Stack *qsp )
@@ -55,7 +52,6 @@ void qs_do_cmd( Query_Stack *qsp )
 //advise("qs_do_cmd BEGIN");
 //qdump(qsp);
 
-//fprintf(stderr,"qs_do_cmd (level = %d) BEGIN\n",QS_LEVEL(qsp));
 	mp = TOP_OF_STACK( QS_MENU_STACK(qsp) );
 	assert( mp != NULL );
 
@@ -121,7 +117,6 @@ void qs_do_cmd( Query_Stack *qsp )
 		perform_callbacks(SINGLE_QSP_ARG);
 	}
 	// test IS_HALTING(qsp) here???
-//fprintf(stderr,"qs_do_cmd (level = %d) DONE\n",QS_LEVEL(qsp));
 }
 
 
@@ -286,7 +281,6 @@ void finish_swallowing(SINGLE_QSP_ARG_DECL)
 void chew_text(QSP_ARG_DECL  const char *text, const char *filename )
 {
 	if( text == NULL ) return;
-fprintf(stderr,"chew_text \"%s\" BEGIN\n",text);
 	if( IS_CHEWING(THIS_QSP) ){
 		store_mouthful(QSP_ARG  text, filename );
 	} else {
@@ -338,18 +332,14 @@ void resume_quip(SINGLE_QSP_ARG_DECL)
 void exec_at_level(QSP_ARG_DECL  int level)
 {
 	assert( level >= 0 );
-//fprintf(stderr,"exec_at_level %d BEGIN!\n",level);
 
 	// We thought a lookahead here might help, but it didn't, probably
 	// because lookahead does not skip comments?
 
 	//lookahead(SINGLE_QSP_ARG);	// in case an empty macro was pushed?
 	while( QLEVEL >= level ){
-//fprintf(stderr,"exec_at_level %d calling qs_do_cmd\n",level);
 		qs_do_cmd(THIS_QSP);
-//fprintf(stderr,"exec_at_level %d back from qs_do_cmd\n",level);
 		if( IS_HALTING(THIS_QSP) ){
-//fprintf(stderr,"exec_at_level:  HALTING!\n");
 			return;
 		}
 
@@ -359,9 +349,7 @@ void exec_at_level(QSP_ARG_DECL  int level)
 		 */
 
 		lookahead(SINGLE_QSP_ARG);
-//fprintf(stderr,"exec_at_level %d after lookahead qlevel = %d\n",level,QLEVEL);
 	}
-//fprintf(stderr,"exec_at_level %d DONE!\n",level);
 
 	// BUG?  what happens if we halt execution when an alert is delivered?
 }

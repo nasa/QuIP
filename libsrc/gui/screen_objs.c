@@ -1403,12 +1403,8 @@ COMMAND_FUNC( clear_screen )
 	if( po==NULL ) return;
 
 	lp=item_list(QSP_ARG  scrnobj_itp);
-#ifdef CAUTIOUS
-	if( lp==NULL ){
-		WARN("CAUTIOUS:  no list!?");
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert( lp != NULL );
+
 	np=QLIST_HEAD(lp);
 	while( np != NULL ){
 		sop = (Screen_Obj *)np->n_data;
@@ -1602,12 +1598,6 @@ COMMAND_FUNC( do_file_scroller )
 		if( n < MAX_STRINGS )
 			string_arr[n]=savestr(word);
 		n++;
-#ifdef QUIP_DEBUG
-if( debug ){
-sprintf(ERROR_STRING,"choice %d %s\n",n,string_arr[n-1]);
-WARN(ERROR_STRING);
-}
-#endif
 	}
 	fclose(fp);
 	set_scroller_list(sop,string_arr,n);
@@ -1752,78 +1742,212 @@ COMMAND_FUNC( do_picker )
 	make_picker(QSP_ARG  sop);
 	add_to_panel(curr_panel,sop);
 
-#ifdef FOOBAR
-#ifdef BUILD_FOR_IOS
-	// an ios "picker" has a fixed size
-#define PICKER_HEIGHT	220
-	INC_PO_CURR_Y(curr_panel, PICKER_HEIGHT + GAP_HEIGHT );
-
-#else /* ! BUILD_FOR_IOS */
-	// for motif, a chooser is a set of radio buttons
-	INC_PO_CURR_Y(curr_panel, CHOOSER_HEIGHT + GAP_HEIGHT +
-		CHOOSER_ITEM_HEIGHT* SOB_N_SELECTORS(sop) );
-
-#endif /* ! BUILD_FOR_IOS */
-#endif // FOOBAR
-
 	INC_PO_CURR_Y( curr_panel, SOB_HEIGHT(sop) + GAP_HEIGHT );
 }
 
 #ifdef BUILD_FOR_IOS
+
+static const char **new_selector_table_less_one(Screen_Obj *sop, const char *s)
+{
+	const char **new_string_arr;
+	int i,j,n;
+
+	n = SOB_N_SELECTORS(sop) - 1;
+
+	if( n > 0 )
+		new_string_arr = getbuf( n * sizeof(char *) );
+	else
+		return NULL;
+
+	// First copy the addresses of the old non-matching strings
+	j=0;
+	for(i=0;i<SOB_N_SELECTORS(sop);i++){
+		if( strcmp(SOB_SELECTORS(sop)[i],s) ){
+			if( j < n )
+				new_string_arr[j] = SOB_SELECTORS(sop)[i];
+			j++;
+		}
+	}
+
+	// Complain if match not found
+	if( j == SOB_N_SELECTORS(sop) ){
+		sprintf(ERROR_STRING,
+	"del_choice:  string \"%s\" is not a choice for chooser \"%s\"",
+			s,SOB_NAME(sop));
+		WARN(ERROR_STRING);
+		givbuf(new_string_arr);
+		return NULL;
+	}
+
+	assert( j == n );	// deleted item should only appear once
+
+	return new_string_arr;
+}
+
+static const char *find_string_in_table( const char **tbl, int n, const char *s )
+{
+	int i;
+
+	for(i=0;i<n;i++)
+		if( !strcmp(tbl[i],s) ) return tbl[i];
+	return NULL;
+}
+
+static inline int insist_choice_not_present(const char **tbl, int n, const char *s, const char *name, const char *whence)
+{
+	if( find_string_in_table(tbl,n,s) != NULL ){
+		sprintf(ERROR_STRING,"%s:  choice \"%s\" is already present in chooser/picker \"%s\"!?\n",
+			whence,s,name);
+		WARN(ERROR_STRING);
+		return -1;
+	}
+	return 0;
+}
+
+static inline int insist_choice_present(const char **tbl, int n, const char *s, const char *name, const char *whence)
+{
+	if( find_string_in_table(tbl,n,s) == NULL ){
+		sprintf(ERROR_STRING,"%s:  choice \"%s\" is not present in chooser/picker \"%s\"!?\n",
+			whence,s,name);
+		WARN(ERROR_STRING);
+		return -1;
+	}
+	return 0;
+}
+
+static inline void add_choice_to_chooser(QSP_ARG_DECL  Screen_Obj *sop, const char *s)
+{
+	int i, n;
+	const char **new_string_arr;
+	
+	assert( SOB_N_SELECTORS(sop) >= 0 );
+
+	// first make sure that this choice is not already present...
+	if( insist_choice_not_present(SOB_SELECTORS(sop),SOB_N_SELECTORS(sop),s,SOB_NAME(sop),"add_choice_to_chooser") < 0 )
+		return;
+
+	n = SOB_N_SELECTORS(sop) + 1;
+	new_string_arr = getbuf( n * sizeof(char *) );
+
+	i=0;
+	if( SOB_N_SELECTORS(sop) > 0 ){
+		assert( SOB_SELECTORS(sop) != NULL );
+		for(;i<SOB_N_SELECTORS(sop);i++)
+			new_string_arr[i] = SOB_SELECTORS(sop)[i];
+		givbuf(SOB_SELECTORS(sop));	// release old string table
+	} else {
+		assert( SOB_SELECTORS(sop) == NULL );
+	}
+		
+	new_string_arr[i] = savestr(s);
+	SET_SOB_N_SELECTORS(sop,n);
+	SET_SOB_SELECTORS(sop,new_string_arr);
+}
+
+static inline int insist_one_component(QSP_ARG_DECL  Screen_Obj *sop, const char *whence)
+{
+	if( SOB_N_CYLINDERS(sop) != 1 ){
+		sprintf(ERROR_STRING,
+			"%s:  picker %s has more than one component (%d)",
+			whence,SOB_NAME(sop),SOB_N_CYLINDERS(sop));
+		WARN(ERROR_STRING);
+		return -1;
+	}
+	return 0;
+}
+
+// If there is more than one component, we will need to have
+// another command that takes the argument...
 
 static void add_choice_to_picker(QSP_ARG_DECL  Screen_Obj *sop, const char *s)
 {
 	const char **new_selectors;
 	int i, n;
 
-	// If it's a picker, we should only have one component;
-	// If there is more than one component, we will need to have
-	// another command that takes the argument...
-	if( SOB_N_CYLINDERS(sop) != 1 ){
-		sprintf(ERROR_STRING,
-	"add_choice:  picker %s has more than one component (%d)",
-			SOB_NAME(sop),SOB_N_CYLINDERS(sop));
-		WARN(ERROR_STRING);
-		return;
-	}
+	assert( SOB_TYPE(sop) == SOT_PICKER );
+	if( insist_one_component(QSP_ARG  sop, "add_choice_to_picker") < 0 ) return;
 
-	// first make sure that this choice is not already present...
-	for(i=0;i<SOB_N_SELECTORS_AT_IDX(sop,0);i++)
-		if( !strcmp(SOB_SELECTOR_AT_IDX(sop,0,i),s) ) return;
+	if( insist_choice_not_present(SOB_SELECTORS_AT_IDX(sop,0),SOB_N_SELECTORS_AT_IDX(sop,0),s,
+			SOB_NAME(sop),"add_choice_to_picker") < 0 )
+		return;
 
 	n = 1 + SOB_N_SELECTORS_AT_IDX( sop, 0 );
 	new_selectors = (const char **)getbuf( n * sizeof(char **) );
-	for(i=0;i<SOB_N_SELECTORS_AT_IDX(sop,0);i++){
-		new_selectors[i] = SOB_SELECTOR_AT_IDX(sop,0,i);
-	}
-	new_selectors[i] = savestr(s);
-	if( SOB_SELECTORS_AT_IDX(sop,0) != NULL )
+
+	i=0;
+	if( SOB_N_SELECTORS_AT_IDX(sop,0) > 0 ){
+		assert( SOB_SELECTORS_AT_IDX(sop,0) != NULL );
+		for(;i<SOB_N_SELECTORS_AT_IDX(sop,0);i++)
+			new_selectors[i] = SOB_SELECTOR_AT_IDX(sop,0,i);
 		givbuf(SOB_SELECTORS_AT_IDX(sop,0));
+	} else {
+		assert( SOB_SELECTORS_AT_IDX(sop,0) == NULL );
+	}
+
+	new_selectors[i] = savestr(s);
 	SET_SOB_N_SELECTORS_AT_IDX( sop, 0, n );
 	SET_SOB_SELECTORS_AT_IDX(sop, 0, new_selectors );
 }
 
-static void add_choice_to_chooser(QSP_ARG_DECL  Screen_Obj *sop, const char *s)
+static inline void delete_choice_from_chooser(QSP_ARG_DECL  Screen_Obj *sop, const char *s)
 {
-	int i, n;
 	const char **new_string_arr;
-	
-	// first make sure that this choice is not already present...
-	for(i=0;i<SOB_N_SELECTORS(sop);i++)
-		if( !strcmp(SOB_SELECTORS(sop)[i],s) ) return;
 
-	n = SOB_N_SELECTORS(sop) + 1;
-	new_string_arr = getbuf( n * sizeof(char *) );
-	for(i=0;i<SOB_N_SELECTORS(sop);i++){
-		new_string_arr[i] = SOB_SELECTORS(sop)[i];
-	}
-	new_string_arr[i] = savestr(s);
-	if( SOB_SELECTORS(sop) != NULL )
-		givbuf(SOB_SELECTORS(sop));	// release old string table
-	SET_SOB_N_SELECTORS(sop,n);
+	assert( SOB_TYPE(sop) == SOT_CHOOSER );
+
+	// first make sure that this choice is already present...
+	if( insist_choice_present(SOB_SELECTORS(sop),SOB_N_SELECTORS(sop),s,SOB_NAME(sop),"delete_choice_from_chooser") < 0 )
+		return;
+
+	new_string_arr = new_selector_table_less_one(sop,s);
+	// can return NULL if table empty or item not found
+
+	if( new_string_arr == NULL ) return;
+
+	givbuf(SOB_SELECTORS(sop));	// release old string table
+	SET_SOB_N_SELECTORS(sop,SOB_N_SELECTORS(sop)-1);
 	SET_SOB_SELECTORS(sop,new_string_arr);
+	reload_chooser(sop);
 }
-#endif /* BUILD_FOR_IOS */
+
+static inline void delete_choice_from_picker(QSP_ARG_DECL  Screen_Obj *sop, const char *s)
+{
+	const char **new_string_arr;
+
+	assert( SOB_TYPE(sop) == SOT_PICKER );
+	if( insist_one_component(QSP_ARG  sop, "add_choice_to_picker") < 0 ) return;
+
+	if( insist_choice_present(SOB_SELECTORS(sop),SOB_N_SELECTORS(sop),s,SOB_NAME(sop),"delete_choice_from_picker") < 0 )
+		return;
+
+	new_string_arr = new_selector_table_less_one(sop,s);
+	// can return NULL if table empty or item not found
+
+	if( new_string_arr == NULL ) return;
+
+	givbuf(SOB_SELECTORS_AT_IDX(sop,0));	// release old string table
+	SET_SOB_N_SELECTORS_AT_IDX(sop,0,SOB_N_SELECTORS(sop)-1);
+	SET_SOB_SELECTORS_AT_IDX(sop,0,new_string_arr);
+	reload_chooser(sop);
+}
+
+#endif // BUILD_FOR_IOS
+
+static inline Screen_Obj *pick_chooser_or_picker(SINGLE_QSP_ARG_DECL)
+{
+	Screen_Obj *sop;
+
+	sop = PICK_SCRNOBJ("name of chooser or picker");
+	if( sop == NULL ) return NULL;
+
+	if( SOB_TYPE(sop) == SOT_CHOOSER ) return sop;
+	if( SOB_TYPE(sop) == SOT_PICKER ) return sop;
+
+	sprintf(ERROR_STRING,"Object %s is not a chooser or picker!?",SOB_NAME(sop));
+	WARN(ERROR_STRING);
+
+	return NULL;
+}
 
 /* In motif, a chooser is implemented with radio buttons, but in iOS it is a "cylinder"
  * that can accommodate a large number of entries without taking up any extra
@@ -1835,8 +1959,10 @@ COMMAND_FUNC( do_add_choice )
 	Screen_Obj *sop;
 	const char *s;
 
-	sop = PICK_SCRNOBJ("chooser");
+	sop = pick_chooser_or_picker(SINGLE_QSP_ARG);
 	s = NAMEOF("choice string");
+
+	if( sop == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
 
@@ -1845,19 +1971,13 @@ COMMAND_FUNC( do_add_choice )
 	// copy the old choices and then
 	// get the new one.
 
-	if( sop == NULL ) return;
-
 	// Make sure it's the right kind
 	// BUG this should work for "scrollers" too!
-	if( SOB_TYPE(sop) != SOT_CHOOSER && SOB_TYPE(sop) != SOT_PICKER ){
-		sprintf(ERROR_STRING,"add_choice:  object %s is not a chooser or a picker!?",SOB_NAME(sop));
-		WARN(ERROR_STRING);
-		return;
-	}
 
 	if( SOB_TYPE(sop) == SOT_PICKER ){
 		add_choice_to_picker(QSP_ARG  sop, s);
 	} else {
+		assert( SOB_TYPE(sop) == SOT_CHOOSER );
 		add_choice_to_chooser(QSP_ARG  sop, s);
 	}
 	reload_chooser(sop);
@@ -1878,68 +1998,19 @@ COMMAND_FUNC( do_del_choice )
 	Screen_Obj *sop;
 	const char *s;
 
-	sop = PICK_SCRNOBJ("chooser");
+	sop = pick_chooser_or_picker(SINGLE_QSP_ARG);
 	s = NAMEOF("choice string");
-
-#ifdef BUILD_FOR_IOS
-
-	// decrease the number of choices,
-	// allocate a new string array,
-	// copy the old choices (less one);
-	// if we don't find a match during the
-	// copy process, it is an error.
-
-	const char **new_string_arr;
-	int i,n;
 
 	if( sop == NULL ) return;
 
-	// Make sure it's the right kind
-	// BUG this should work for "scrollers" too!
-	// BUG need to implement for pickers too...
-	if( SOB_TYPE(sop) != SOT_CHOOSER ){
-		sprintf(ERROR_STRING,"del_choice:  object %s is not a chooser!?",SOB_NAME(sop));
-		WARN(ERROR_STRING);
-		return;
+#ifdef BUILD_FOR_IOS
+
+	if( SOB_TYPE(sop) == SOT_CHOOSER )
+		delete_choice_from_chooser(QSP_ARG  sop,s);
+	else {
+		assert( SOB_TYPE(sop) == SOT_PICKER );
+		delete_choice_from_picker(QSP_ARG  sop,s);
 	}
-
-	n = SOB_N_SELECTORS(sop) - 1;
-sprintf(ERROR_STRING,"do_add_choice:  allocating %d strings",n);
-advise(ERROR_STRING);
-	if( n > 0 )
-		new_string_arr = getbuf( n * sizeof(char *) );
-	else
-		new_string_arr = NULL;
-
-	// First copy the old strings
-	int j=0;
-	for(i=0;i<SOB_N_SELECTORS(sop);i++){
-		if( strcmp(SOB_SELECTORS(sop)[i],s) ){
-			if( j < n )
-				new_string_arr[j] = SOB_SELECTORS(sop)[i];
-			j++;
-		}
-	}
-
-	if( j == SOB_N_SELECTORS(sop) ){
-		// Didn't find anything to delete
-		sprintf(ERROR_STRING,
-	"del_choice:  string \"%s\" is not a choice for chooser \"%s\"",
-			s,SOB_NAME(sop));
-		WARN(ERROR_STRING);
-		givbuf(new_string_arr);
-		return;
-	}
-
-#ifdef CAUTIOUS
-	if( j != n ) ERROR1("CAUTIOUS:  del_choice:  unexpected number of choices!?");
-#endif /* CAUTIOUS */
-
-	givbuf(SOB_SELECTORS(sop));	// release old string table
-	SET_SOB_N_SELECTORS(sop,n);
-	SET_SOB_SELECTORS(sop,new_string_arr);
-
-	reload_chooser(sop);
 
 #else /* ! BUILD_FOR_IOS */
 
@@ -1950,8 +2021,8 @@ advise(ERROR_STRING);
 
 
 #endif /* ! BUILD_FOR_IOS */
-
 }
+
 
 #ifdef BUILD_FOR_IOS
 #define RELOAD_PICKER reload_picker(sop);

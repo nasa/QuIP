@@ -321,8 +321,6 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 	fr=s;
 	to=printable_str;
 
-//fprintf(stderr,"show_unprintable:  string len is %d, printable_len is %d\n",
-//strlen(s),PRINTABLE_LEN);
 	if( strlen(s) >= PRINTABLE_LEN ){
 		sprintf(DEFAULT_ERROR_STRING,
 	"show_unprintable:  input string length (%ld) is greater than buffer size (%d)!?",
@@ -444,47 +442,6 @@ int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL))
 	exit_func_tbl[n_exit_funcs++] = func;
 	return(0);
 }
-
-#ifdef FOOBAR
-
-// This didn't work, or didn't do any good...
-static void call_mcleanup(void)
-{
-	void (*f)(void);
-	unsigned long l;
-	FILE *fp;
-	char s[LLEN];
-	char *sp;
-
-	// On mac, gmon.out isn't getting written...
-	// We want to call _mcleanup ourselves, it appears in nm output,
-	// but with only local linkage
-
-	fp = popen("nm /usr/local/bin/coq | grep __mcleanup","r");
-	if( !fp ){
-		fprintf(stderr,"Error opening pipe\n");
-		return;
-	}
-	if( fgets(s,LLEN,fp) != s ){
-		fprintf(stderr,"Error getting pipe output\n");
-		return;
-	}
-fprintf(stderr,"read \"%s\"\n",s);
-	sp=s;
-	while( *sp && *sp != ' ' ) sp++;
-	*sp = 0;
-fprintf(stderr,"after truncation, \"%s\"\n",s);
-	if( sscanf(s,"%lx",&l) != 1 ){
-		fprintf(stderr,"sscanf error\n");
-		return;
-	}
-fprintf(stderr,"converted to 0x%lx\n",l);
-	f = (void (*)(void)) l;
-fprintf(stderr,"calling mcleanup?\n");
-	(*f)();
-fprintf(stderr,"back from mcleanup?\n");
-}
-#endif // FOOBAR
 
 /*
  * Call user exit functions, then exit

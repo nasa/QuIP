@@ -42,7 +42,7 @@ set encfile=$out_stem.enc
 set extra_macro_dir=../../quip-extra/macros	# relative to ../macros
 
 cat < /dev/null > $outfile
-echo verbose yes >> $outfile	# for debugging
+#echo verbose yes >> $outfile	# for debugging
 
 echo "If var_exists(startup_file_read) 'exit_file'" >> $outfile
 #echo 'advise "RESOURCE_DIR = $RESOURCE_DIR"' >> $outfile
@@ -126,16 +126,6 @@ if( $flavor == demo ) then
   # these files were added to make the old demos work:
   #set subdir=$extra_macro_dir/demo
   set subdir=demo
-  #cat ../../macros/demo/login.mac >> $outfile
-  #cat ../../macros/demo/gui_demo.mac >> $outfile
-  #cat ../../macros/demo/graph.mac >> $outfile
-  #cat ../../macros/demo/accel.mac >> $outfile
-  #cat ../../macros/demo/draw.mac >> $outfile
-  #cat ../../macros/demo/anim.mac >> $outfile
-  #cat ../../macros/demo/paint.mac >> $outfile
-  #cat ../../macros/demo/console.mac >> $outfile
-  #cat ../../macros/demo/view_test.mac >> $outfile
-  #cat ../../macros/demo/fio.mac >> $outfile
   set file_list=( login gui_demo graph accel draw anim paint console view_test fio )
   source add_files.csh
 
@@ -174,13 +164,8 @@ else if( $flavor == pvt ) then
   source add_file.csh pvt/pvt_main.scr
 else if( $flavor == csf ) then
   set subdir=$extra_macro_dir/demo
-  #set file_list=( login gui_demo graph )
   set file_list=( login gui_demo )
   source add_files.csh
-
-  #cat ../../macros/demo/login.mac >> $outfile
-  #cat ../../macros/demo/gui_demo.mac >> $outfile
-  #cat ../../macros/demo/graph.mac >> $outfile
 
   set subdir=$extra_macro_dir/csf
   set file_list=( csf calib arrows csf_cam sync_files csf_admin csf_util psych )

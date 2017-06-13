@@ -23,7 +23,7 @@ struct input_format_type {
 	Input_Format_Type_Code	type_code;
 	void (*display_format)(QSP_ARG_DECL  struct input_format_spec *);
 	void (*release)(struct input_format_spec *);
-	void (*consume)(QSP_ARG_DECL  prec_t c);
+	void (*consume)(QSP_ARG_DECL  Precision *prec_p);
 	int (*read_long)(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p);
 	int (*read_double)(QSP_ARG_DECL  double *result, const char *pmpt, Input_Format_Spec *fmt_p);
 	int (*read_string)(QSP_ARG_DECL  const char **result, const char *pmpt, Input_Format_Spec *fmt_p);

@@ -15,6 +15,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "ascii_fmts.h"
+#include "dobj_private.h"
 #include "query_stack.h"	// like to eliminate this dependency...
 
 static void init_format_type_tbl(void);
@@ -297,42 +298,6 @@ static void literal_format_release(Input_Format_Spec *fmt_p)
 static void default_format_release(Input_Format_Spec *fmt_p)
 { /* nop */ }
 
-static void advance_format(SINGLE_QSP_ARG_DECL)
-{
-	assert(HAS_FORMAT_LIST);
-	if( CURRENT_FORMAT_NODE == NULL )
-		CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
-	else {
-		CURRENT_FORMAT_NODE = NODE_NEXT(CURRENT_FORMAT_NODE);
-		if( CURRENT_FORMAT_NODE == NULL )
-			CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
-	}
-	assert(CURRENT_FORMAT_NODE!=NULL);
-}
-
-/*
- * get the next number (int or float format),
- * skipping strings and literals
- *
- * 
- */
-
-static long next_input_int_with_format(QSP_ARG_DECL   const char *pmpt)
-{
-	long l=0;
-	int done=0;
-
-	do {
-		assert(INPUT_FORMAT_LIST != NULL);
-		assert(CURRENT_FORMAT_NODE != NULL);
-		assert(CURRENT_FORMAT != NULL);
-		done = CURRENT_FORMAT->fmt_type->read_long(QSP_ARG  &l, pmpt, CURRENT_FORMAT);
-		advance_format(SINGLE_QSP_ARG);
-	} while(!done);
-
-	return(l);
-}
-
 static int float_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, Input_Format_Spec *fmt_p)
 {
 	if( !ascii_warned ){
@@ -353,7 +318,7 @@ static int int_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, In
 	return 1;
 }
 
-static void consume_format_line(QSP_ARG_DECL  prec_t c)
+static void consume_format_line(QSP_ARG_DECL  Precision *prec_p)
 {
 	Input_Format_Spec *fmt_p;
 
@@ -363,33 +328,14 @@ static void consume_format_line(QSP_ARG_DECL  prec_t c)
 			return;
 		}
 		fmt_p = CURRENT_FORMAT;
-		fmt_p->fmt_type->consume(QSP_ARG  c);
+		fmt_p->fmt_type->consume(QSP_ARG  prec_p);
 		lookahead_til(QSP_ARG  ASCII_LEVEL-1);
 	} while( CURRENT_FORMAT_NODE != FIRST_INPUT_FORMAT_NODE );
 }
 
-static int is_numeric_prec( prec_t c )
+static int is_numeric_prec( Precision *prec_p )
 {
-	switch( c & PSEUDO_PREC_MASK ){
-		case PP_NORM:
-		case PP_COLOR:
-		case PP_CPX:
-		case PP_QUAT:
-		case PP_BIT:
-			return 1;
-
-		case PP_MIXED:
-		case PP_VOID:
-		case PP_STRING:
-		case PP_ANY:
-		case PP_LIST:
-		case PP_CHAR:
-			return 0;
-
-		default:
-			NWARN("is_numeric_prec:  unexpected pseudoprecision!?");
-			assert(1==0);
-	}
+	return (*(prec_p->is_numeric_func))();
 }
 
 static void consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
@@ -406,12 +352,67 @@ static void consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
 
 #define RESET_INPUT_FORMAT_FIELD	CURRENT_FORMAT_NODE = QLIST_HEAD(INPUT_FORMAT_LIST);
 
+static void advance_format(SINGLE_QSP_ARG_DECL)
+{
+	assert(HAS_FORMAT_LIST);
+	if( CURRENT_FORMAT_NODE == NULL )
+		CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
+	else {
+		CURRENT_FORMAT_NODE = NODE_NEXT(CURRENT_FORMAT_NODE);
+		if( CURRENT_FORMAT_NODE == NULL )
+			CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
+	}
+	assert(CURRENT_FORMAT_NODE!=NULL);
+}
+
+/*
+ * get the next number (int or float format),
+ * skipping strings and literals
+ *
+ * 
+ */
+
+long next_input_int_with_format(QSP_ARG_DECL   const char *pmpt)
+{
+	long l=0;
+	int done=0;
+
+	do {
+		assert(INPUT_FORMAT_LIST != NULL);
+		assert(CURRENT_FORMAT_NODE != NULL);
+		assert(CURRENT_FORMAT != NULL);
+		done = CURRENT_FORMAT->fmt_type->read_long(QSP_ARG  &l, pmpt, CURRENT_FORMAT);
+		advance_format(SINGLE_QSP_ARG);
+	} while(!done);
+
+	return(l);
+}
+
+/*
+ * Read input fields until a number is encountered
+ */
+
+double next_input_flt_with_format(QSP_ARG_DECL  const char *pmpt)
+{
+	int done=0;
+	double d=0.0;
+
+	do {
+		assert(CURRENT_FORMAT_NODE != NULL);
+		assert(CURRENT_FORMAT != NULL);
+		done = CURRENT_FORMAT->fmt_type->read_double(QSP_ARG  &d, pmpt, CURRENT_FORMAT);
+		advance_format(SINGLE_QSP_ARG);
+	} while(!done);
+
+	return(d);
+}
+
 // The "consume" methods read and discard a field, UNLESS the precision code
 // is appropriate for that format.
 
-static void int_format_consume(QSP_ARG_DECL  prec_t c)
+static void int_format_consume(QSP_ARG_DECL  Precision *prec_p)
 {
-	if( is_numeric_prec(c) ){
+	if( is_numeric_prec(prec_p) ){
 		RESET_INPUT_FORMAT_FIELD
 		return;
 	} else {
@@ -421,9 +422,9 @@ static void int_format_consume(QSP_ARG_DECL  prec_t c)
 	}
 }
 
-static void float_format_consume(QSP_ARG_DECL  prec_t c)
+static void float_format_consume(QSP_ARG_DECL  Precision *prec_p)
 {
-	if( is_numeric_prec(c) ){
+	if( is_numeric_prec(prec_p) ){
 		RESET_INPUT_FORMAT_FIELD
 		return;
 	} else {
@@ -433,9 +434,9 @@ static void float_format_consume(QSP_ARG_DECL  prec_t c)
 	}
 }
 
-static void string_format_consume(QSP_ARG_DECL  prec_t c)
+static void string_format_consume(QSP_ARG_DECL  Precision *prec_p)
 {
-	if( c == PREC_STR ){
+	if( PREC_CODE(prec_p) == PREC_STR ){
 		RESET_INPUT_FORMAT_FIELD
 		return;
 	} else {
@@ -445,7 +446,7 @@ static void string_format_consume(QSP_ARG_DECL  prec_t c)
 	}
 }
 
-static void literal_format_consume(QSP_ARG_DECL  prec_t c)
+static void literal_format_consume(QSP_ARG_DECL  Precision *prec_p)
 {
 	consume_literal_string(QSP_ARG  CURRENT_FORMAT);
 	advance_format(SINGLE_QSP_ARG);
@@ -491,25 +492,6 @@ static int literal_format_read_double(QSP_ARG_DECL  double *result, const char *
 {
 	consume_literal_string(QSP_ARG  fmt_p);
 	return 0;
-}
-
-/*
- * Read input fields until a number is encountered
- */
-
-static double next_input_flt_with_format(QSP_ARG_DECL  const char *pmpt)
-{
-	int done=0;
-	double d=0.0;
-
-	do {
-		assert(CURRENT_FORMAT_NODE != NULL);
-		assert(CURRENT_FORMAT != NULL);
-		done = CURRENT_FORMAT->fmt_type->read_double(QSP_ARG  &d, pmpt, CURRENT_FORMAT);
-		advance_format(SINGLE_QSP_ARG);
-	} while(!done);
-
-	return(d);
 }
 
 static const char * next_input_str(QSP_ARG_DECL  const char *pmpt)
@@ -634,7 +616,10 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 }
 #endif // HAVE_ANY_GPU
 
+#ifdef FOOBAR
+
 #define DEREF(ptr,type)	 (*((type *)ptr))
+
 
 static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_ptr)
 {
@@ -800,17 +785,11 @@ static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_pt
 
 	}
 }
+#endif // FOOBAR
 
 static int get_next(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 {
-	/* init these to eliminate optimizer warnings */
-#ifdef USE_LONG_DOUBLE
-	long
-#endif // USE_LONG_DOUBLE
-	double d_number=0.0;
-	long l=0L;
-	mach_prec mp;
-	void *num_ptr;
+	Precision *prec_p;
 
 	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
 
@@ -826,7 +805,10 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	mp = OBJ_MACH_PREC(dp);
+	prec_p = OBJ_MACH_PREC_PTR(dp);
+	(*(prec_p->set_value_from_input_func))(QSP_ARG  datap);
+
+#ifdef FOOBAR
 	num_ptr = NULL;
 	switch( mp ){
 #ifdef USE_LONG_DOUBLE
@@ -865,6 +847,8 @@ advise(ERROR_STRING);
 	}
 
 	set_one_value(QSP_ARG  dp, datap, num_ptr);
+#endif // FOOBAR
+
 	dobj_n_gotten++;
 
 	/* now lookahead to pop the file if it is empty */
@@ -1462,7 +1446,7 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 	// that could trigger a "too many values" warning...
 	if( HAS_FORMAT_LIST ){
 		if( CURRENT_FORMAT_NODE != FIRST_INPUT_FORMAT_NODE ){
-			consume_format_line(QSP_ARG  OBJ_PREC(dp));
+			consume_format_line(QSP_ARG  OBJ_PREC_PTR(dp));
 		}
 	}
 
