@@ -394,8 +394,8 @@ static void rb_tree_dump_info(QSP_ARG_DECL Container *cnt_p)
 
 static void *list_current_enum_item(Enumerator *ep)
 {
-	assert( ep->e_p.lep != NULL );
-	//return NODE_DATA(ep->e_p.lep->np);
+	//assert( ep->e_p.lep != NULL );
+	// enumerator can be null if the list is empty!
 	return list_enumerator_item(ep->e_p.lep);
 }
 
@@ -480,35 +480,69 @@ static Enumerator *new_enumerator(Container *cnt_p)
 	return ep;
 }
 
+#define DECLARE_NEW_ENUM_FUNC(container_type,enumerator_type,member)		\
+										\
+static Enumerator * container_type##_new_enumerator(Container *cnt_p)		\
+{										\
+	Enumerator *ep;								\
+	enumerator_type *vp;							\
+										\
+	vp = new_##container_type##_enumerator(cnt_p->member);			\
+	if( vp == NULL ) return NULL;						\
+										\
+	ep = new_enumerator(cnt_p);						\
+	ep->e_typ_p = container_type##_enumerator_type();			\
+	ep->e_p.vp = vp;							\
+	return ep;								\
+}
+
+DECLARE_NEW_ENUM_FUNC(list,List_Enumerator,cnt_lp)
+DECLARE_NEW_ENUM_FUNC(hash_tbl,Hash_Tbl_Enumerator,cnt_htp)
+DECLARE_NEW_ENUM_FUNC(rb_tree,RB_Tree_Enumerator,cnt_tree_p)
+
+#ifdef FOOBAR
 static Enumerator *list_new_enumerator(Container *cnt_p)
 {
 	Enumerator *ep;
+	List_Enumerator *lep;
+
+	lep = new_list_enumerator(cnt_p->cnt_lp);
+	if( lep == NULL ) return NULL;
 
 	ep = new_enumerator(cnt_p);
 	ep->e_typ_p = list_enumerator_type();
-	ep->e_p.lep = new_list_enumerator(cnt_p->cnt_lp);
+	ep->e_p.lep = lep;
 	return ep;
 }
 
 static Enumerator *hash_tbl_new_enumerator(Container *cnt_p)
 {
 	Enumerator *ep;
+	Hash_Tbl_Enumerator *htep;
+
+	htep = new_hash_tbl_enumerator(cnt_p->cnt_htp);
+	if( htep == NULL ) return NULL;
 
 	ep = new_enumerator(cnt_p);
 	ep->e_typ_p = hash_tbl_enumerator_type();
-	ep->e_p.vp = new_hash_tbl_enumerator(cnt_p->cnt_htp);
+	ep->e_p.vp = htep;
 	return ep;
 }
 
 static Enumerator *rb_tree_new_enumerator(Container *cnt_p)
 {
 	Enumerator *ep;
+	RB_Tree_Enumerator *rbtep;
+
+	rbtep = new_rb_tree_enumerator(cnt_p->cnt_tree_p);
+	if( rbtep == NULL ) return NULL;
 
 	ep = new_enumerator(cnt_p);
 	ep->e_typ_p = rb_tree_enumerator_type();
-	ep->e_p.vp = new_rb_tree_enumerator(cnt_p->cnt_tree_p);
+	ep->e_p.vp = rbtep;
 	return ep;
 }
+#endif // FOOBAR
 
 static Item *rb_tree_frag_item(Frag_Match_Info *fmi_p)
 {

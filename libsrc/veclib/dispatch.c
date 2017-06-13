@@ -112,13 +112,6 @@ COMMAND_FUNC( set_use_sse )
 			WARN("This CPU does not support the SSE extensions");
 			return;
 		}
-#ifdef FOOBAR
-		/* We are on the 2.6 kernel now, there's no going back! */
-		if( ! os_supports_mmx() ){
-			WARN("OS version must be at least 2.4 for SSE extensions");
-			return;
-		}
-#endif /* FOOBAR */
 		use_sse_extensions = 1;
 	} else	use_sse_extensions = 0;
 

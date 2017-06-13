@@ -106,7 +106,6 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
 	ep = (CTX_CONTAINER(icp)->cnt_typ_p->new_enumerator)(CTX_CONTAINER(icp));
-fprintf(stderr,"new enumerator for context %s at 0x%lx\n",CTX_NAME(icp),(long)ep);
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){
@@ -182,7 +181,6 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
-fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */

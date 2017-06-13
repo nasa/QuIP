@@ -343,9 +343,10 @@ ifdef(`USE_SSE',`
 dnl	SP_SSE_SWITCH(func)
 define(`SP_SSE_SWITCH',`
 
-	if( use_sse_extensions )
+	if( use_sse_extensions ){
+fprintf(stderr,"calling simd function $1\n");
 		simd_obj_r#"$1"(HOST_CALL_ARGS);
-	else
+	} else
 		HOST_TYPED_CALL_NAME_REAL($1,sp)(HOST_CALL_ARGS);
 ')
 
