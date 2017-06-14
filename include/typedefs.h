@@ -32,6 +32,9 @@ typedef unsigned char uint8_t;
 
 typedef unsigned int count_t;
 
+#ifdef USE_SSE
+typedef int v4sf __attribute__ ((vector_size(sizeof(float)*4))); // vector of four single floats
+#endif // USE_SSE
 
 #endif /* ! TYPEDEFS_H */
 

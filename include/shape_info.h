@@ -61,12 +61,14 @@ struct increment_set {
 #define INCREMENT(isp,idx)		isp->is_increment[idx]
 #define SET_INCREMENT(isp,idx,v)	isp->is_increment[idx]=v
 
+struct vfunc_tbl;	// fwd declaration
 
 struct precision {
 	Item			prec_item;
 	prec_t			prec_code;
 	int			prec_size;	// type size in bytes
 	struct precision *	prec_mach_p;	// NULL for machine precisions
+	struct vfunc_tbl *	prec_vf_tbl;
 
 	// methods
 	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
@@ -103,6 +105,9 @@ struct precision {
 
 #define NAME_FOR_PREC_CODE(p)		PREC_NAME(PREC_FOR_CODE(p))
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
+
+#define PREC_VFUNC_TBL(prec_p)		(prec_p)->prec_vf_tbl
+#define SET_PREC_VFUNC_TBL(prec_p,v)	(prec_p)->prec_vf_tbl = v
 
 #define PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p)	(prec_p)->set_value_from_input_func
 #define SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,v)	(prec_p)->set_value_from_input_func = v

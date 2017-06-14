@@ -98,6 +98,12 @@ static void HOST_FAST_CALL_NAME($1)( LINK_FUNC_ARG_DECLS )
 {	CPU_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);	}
 ')
 
+dnl dnl	GENERIC_HOST_FAST_CALL_SSE(name,bitmap,typ,scalars,vectors)
+dnl define(`GENERIC_HOST_FAST_CALL_SSE',`
+dnl static void HOST_FAST_CALL_NAME($1)( LINK_FUNC_ARG_DECLS )
+dnl {	CPU_FAST_CALL_NAME($1)(LINK_FUNC_ARGS);	}
+dnl ')
+
 dnl	GENERIC_HOST_EQSP_CONV(name,bitmap,typ,type)
 define(`GENERIC_HOST_EQSP_CONV',`
 static void HOST_EQSP_CALL_NAME($1) ( LINK_FUNC_ARG_DECLS )

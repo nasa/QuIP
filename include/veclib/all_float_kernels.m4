@@ -15,7 +15,9 @@ my_include(`veclib/flen_defs.m4')
 my_include(`veclib/gen_float_calls.m4')
 ',`')
 
+// all_float_kernels.m4 including eqsp_defs.m4
 my_include(`veclib/eqsp_defs.m4')
+// all_float_kernels.m4 back from eqsp_defs.m4
 suppress_no
 // all_float_kernels.m4:  CALLING gen_float_calls.m4 with eqsp defs
 my_include(`veclib/gen_float_calls.m4')

@@ -57,6 +57,10 @@ define(`DECL_BASIC_INDICES_DBM',`			\
 ')
 
 
+my_include(`veclib/null_simd_funcs.m4')
+
+// eqsp_defs.m4 back from null_simd_funcs.m4 ...
+
 ifdef(`BUILD_FOR_CUDA',`
 
 define(`GENERIC_GPU_FUNC_CALL',`
@@ -95,6 +99,8 @@ define(`_VEC_FUNC_2V_CONV',`
 _GENERIC_EQSP_CONV_FUNC($1,$2)
 ')
 
+define(`GENERIC_FUNC_DECLS_SSE',`GENERIC_FUNC_DECLS($1,$2,$3,$4,$5,$6,$7)')
+
 define(`GENERIC_FUNC_DECLS',`
 GENERIC_EF_DECL($1,$2,$3,$4,$5,$6,$7)
 ')
@@ -102,4 +108,6 @@ GENERIC_EF_DECL($1,$2,$3,$4,$5,$6,$7)
 define(`_VEC_FUNC_1V_3SCAL',`')	dnl   No eqsp vramp2d
 
 ') dnl endif // ! BUILD_FOR_CUDA
+
+// end of eqsp_defs.m4
 

@@ -132,6 +132,14 @@ GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
 /* generic_func_decls /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  DONE */
 ')
 
+define(`GENERIC_FUNC_DECLS_SSE',`
+/* generic_func_decls_sse /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  BEGIN */
+/* generic_func_decls_sse calling generic_ff_decl_sse */
+GENERIC_FF_DECL_SSE($1,$2,$3,$4,$5,$6,$7)
+/* generic_func_decls_sse back from generic_ff_decl_sse */
+/* generic_func_decls_sse /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  DONE */
+')
+
 define(`_VEC_FUNC_1V_3SCAL',`')	dnl   No fast vramp2d
 
 dnl	Do we need separate GPU definitions?

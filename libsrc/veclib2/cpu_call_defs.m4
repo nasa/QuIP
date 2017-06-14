@@ -2029,6 +2029,10 @@ dnl	FAST_BODY(bitmap,typ,vectors,extra)
 define(`FAST_BODY',`_FAST_BODY($1$2$3$4)')
 define(`_FAST_BODY',FAST_BODY_$1)
 
+dnl	FAST_BODY_WITH_SSE(bitmap,typ,vectors,extra)
+define(`FAST_BODY_WITH_SSE',`_FAST_BODY_WITH_SSE($1$2$3$4)')
+define(`_FAST_BODY_WITH_SSE',FAST_BODY_WITH_SSE_$1)
+
 dnl	SLOW_BODY(bitmap,typ,vectors,extra)
 define(`SLOW_BODY',`_SLOW_BODY($1$2$3$4)')
 define(`_SLOW_BODY',SLOW_BODY_$1)
@@ -2051,10 +2055,20 @@ define(`GENERIC_FF_DECL',`
 
 /* generic_ff_decl /$1/ BEGIN */
 	FF_DECL($1)( LINK_FUNC_ARG_DECLS )
-dnl	FAST_BODY_##bitmap##typ##vectors##extra( name, statement )
 	FAST_BODY($3,$4,$6,$7)($1,$2)
 /* generic_ff_decl /$1/ DONE */
 ')
+
+
+dnl	GENERIC_FF_DECL_SSE(name, statement,bitmap,typ,scalars,vectors,extra)
+define(`GENERIC_FF_DECL_SSE',`
+
+/* generic_ff_decl /$1/ BEGIN */
+	FF_DECL($1)( LINK_FUNC_ARG_DECLS )
+	FAST_BODY_WITH_SSE($3,$4,$6,$7)($1,$2)
+/* generic_ff_decl /$1/ DONE */
+')
+
 
 dnl	GENERIC_EF_DECL(name, statement,bitmap,typ,scalars,vectors,extra)
 define(`GENERIC_EF_DECL',`
@@ -2071,18 +2085,6 @@ define(`GENERIC_SF_DECL',`
 dnl	SLOW_BODY_##bitmap##typ##vectors##extra( name, statement )
 	SLOW_BODY($3,$4,$6,$7)($1,$2)
 ')
-
-
-dnl	This worked before, but now we process fast, eqsp, and slow in batches...
-dnl	so this needs to be defined in fast_defs, eqsp_defs, slow_defs...
-
-dnl	GENERIC_FUNC_DECLS(name,statement,bitmap,typ,scalars,vectors,extra)
-dnl	define(`GENERIC_FUNC_DECLS',`
-dnl	GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
-dnl	GENERIC_EF_DECL($1,$2,$3,$4,$5,$6,$7)
-dnl	GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
-dnl	')
-
 
 dnl	MOV_FUNC_DECLS(name,statement,bitmap,typ,scalars,vectors)
 define(`MOV_FUNC_DECLS',`
@@ -2544,6 +2546,78 @@ dnl		FAST_ADVANCE_##typ##suffix
 }
 ')
 
+define(`CAN_USE_SSE',`_CAN_USE_SSE_$1$2')
+
+dnl need to be on a 128 bit (16 byte) boundary
+dnl
+dnl Really, all that should be required is that all operands have the SAME
+dnl alignment - we could handle initial misaligned words like we do extra ones
+dnl at the end...
+
+define(`IS_SSE_ALIGNED',`( (((long)$1) & 0xf) == 0 )')
+
+define(`_CAN_USE_SSE_3',`( use_sse_extensions && IS_SSE_ALIGNED(dst_ptr) && IS_SSE_ALIGNED(s1_ptr) && IS_SSE_ALIGNED(s2_ptr) )');
+
+dnl	SIMPLE_FAST_BODY(name, statement,typ,suffix,extra,debugit)
+define(`SIMPLE_FAST_BODY_WITH_SSE',`
+
+{
+	/* simple_fast_body typ = /$3/  suffix = /$4/ */
+	dnl FAST_DECLS_##typ##suffix
+	dnl FAST_INIT_##typ##suffix
+	dnl EXTRA_DECLS_##extra
+	FAST_DECLS($3,$4)
+	FAST_INIT($3,$4)
+	EXTRA_DECLS($5)
+	if( CAN_USE_SSE($3,$4) ){
+		dimension_t n4;
+
+		n4 = fl_ctr / 4;
+		SIMD_NAME($1)((simd_type *)dst_ptr,(simd_type *)s1_ptr,(simd_type *)s2_ptr,n4);
+
+		fl_ctr %= 4;
+		if( fl_ctr > 0 ){
+			n4 *= 4;
+			dst_ptr += n4;
+			s1_ptr += n4;
+			s2_ptr += n4;
+			while( fl_ctr -- ){
+				dst = $2 ;
+				dst_ptr++;
+				s1_ptr++;
+				s2_ptr++;
+			}
+		}
+	} else {
+		while(fl_ctr-- > 0){
+			$6
+			$2 ;
+			FAST_ADVANCE($3,$4)
+		}
+	}
+}
+')
+
+dnl	SIMD_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
+define(`SIMD_FUNC_DECLS',`
+SIMD_FUNC_DECL_3($1,$2)
+')
+
+dnl	simd_func_decl_3 may defined to null except for fast_defs
+
+define(`_SIMD_FUNC_DECL_3',`
+
+static void SIMD_NAME($1)(simd_type * dst_ptr, simd_type *s1_ptr, simd_type *s2_ptr, dimension_t n )
+{
+	while(n--){
+		$2 ;
+		dst_ptr++;
+		s1_ptr++;
+		s2_ptr++;
+	}
+}
+')
+
 
 dnl	Not used???
 dnl	dnl	FAST_BODY_CONV_2(name, statement,dsttyp,srctyp)
@@ -2564,6 +2638,8 @@ dnl	}
 dnl	')
 
 /* There ought to be a more compact way to do all of this? */
+
+define(`FAST_BODY_WITH_SSE_3',`SIMPLE_FAST_BODY_WITH_SSE($1,$2,`',3,`',`')')
 
 dnl	FAST_BODY_2(name, statement)
 define(`FAST_BODY_2',`SIMPLE_FAST_BODY($1,$2,`',2,`',`')')
@@ -2756,11 +2832,26 @@ GENERIC_SLOW_BODY( $1, *dst_ptr = ($2)(*s1_ptr),`DECLARE_BASES_CONV_2($2)',`INIT
 
 dnl	OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
 dnl define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
+
 define(`OBJ_METHOD',`
 /* obj_method /$1/ BEGIN */
 GENERIC_FUNC_DECLS($1,$2,$3,$4,$5,$6,$7)
 /* obj_method /$1/ DONE */
 ')
+
+define(`OBJ_METHOD_SSE',`
+/* obj_method_sse /$1/ BEGIN */
+GENERIC_FUNC_DECLS_SSE($1,$2,$3,$4,$5,$6,$7)
+/* obj_method_sse /$1/ DONE */
+')
+
+dnl	SIMD_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
+define(`SIMD_METHOD',`
+/* simd_method /$1/ BEGIN */
+SIMD_FUNC_DECLS($1,dst = $2,$3,$4,$5,$6,$7)
+/* simd_method /$1/ DONE */
+')
+
 
 
 
@@ -2774,6 +2865,11 @@ dnl	_VEC_FUNC_2V_SCAL( name, statement )
 define(`_VEC_FUNC_2V_SCAL',`OBJ_METHOD($1,$2,`',`',_1S,2,`')')
 
 define(`_VEC_FUNC_3V',`OBJ_METHOD($1,$2,`',`',`',3,`')')
+
+define(`_VEC_FUNC_3V_SSE',`
+SIMD_METHOD($1,dst = $2,`',`',`',3,`')
+OBJ_METHOD_SSE($1,dst = (dest_type)($2),`',`',`',3,`')
+')
 
 
 dnl  These are the kernels...

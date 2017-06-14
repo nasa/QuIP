@@ -186,6 +186,8 @@ define(`_VEC_FUNC_2V_CONV',`
 ')
 
 
+define(`GENERIC_FUNC_DECLS_SSE',`GENERIC_FUNC_DECLS($1,$2,$3,$4,$5,$6,$7)')
+
 define(`GENERIC_FUNC_DECLS',`
 GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
 ')
