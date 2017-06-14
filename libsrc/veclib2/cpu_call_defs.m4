@@ -2031,7 +2031,9 @@ define(`_FAST_BODY',FAST_BODY_$1)
 
 dnl	FAST_BODY_WITH_SSE(bitmap,typ,vectors,extra)
 define(`FAST_BODY_WITH_SSE',`_FAST_BODY_WITH_SSE($1$2$3$4)')
-define(`_FAST_BODY_WITH_SSE',FAST_BODY_WITH_SSE_$1)
+
+dnl	define this or not based on type...
+dnl define(`_FAST_BODY_WITH_SSE',FAST_BODY_WITH_SSE_$1)
 
 dnl	SLOW_BODY(bitmap,typ,vectors,extra)
 define(`SLOW_BODY',`_SLOW_BODY($1$2$3$4)')
@@ -2570,24 +2572,7 @@ define(`SIMPLE_FAST_BODY_WITH_SSE',`
 	FAST_INIT($3,$4)
 	EXTRA_DECLS($5)
 	if( CAN_USE_SSE($3,$4) ){
-		dimension_t n4;
-
-		n4 = fl_ctr / 4;
-		SIMD_NAME($1)((simd_type *)dst_ptr,(simd_type *)s1_ptr,(simd_type *)s2_ptr,n4);
-
-		fl_ctr %= 4;
-		if( fl_ctr > 0 ){
-			n4 *= 4;
-			dst_ptr += n4;
-			s1_ptr += n4;
-			s2_ptr += n4;
-			while( fl_ctr -- ){
-				dst = $2 ;
-				dst_ptr++;
-				s1_ptr++;
-				s2_ptr++;
-			}
-		}
+		SIMD_NAME($1)(dst_ptr,s1_ptr,s2_ptr,fl_ctr);
 	} else {
 		while(fl_ctr-- > 0){
 			$6
@@ -2605,9 +2590,14 @@ SIMD_FUNC_DECL_3($1,$2)
 
 dnl	simd_func_decl_3 may defined to null except for fast_defs
 
+dnl	let the compiler do the optimization?
+
 define(`_SIMD_FUNC_DECL_3',`
 
-static void SIMD_NAME($1)(simd_type * dst_ptr, simd_type *s1_ptr, simd_type *s2_ptr, dimension_t n )
+static void SIMD_NAME($1)(dest_type * dst_ptr __attribute__ ((aligned (16))),
+				std_type *s1_ptr __attribute__ ((aligned (16))),
+				std_type *s2_ptr __attribute__ ((aligned (16))),
+				dimension_t n )
 {
 	while(n--){
 		$2 ;

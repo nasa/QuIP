@@ -102,7 +102,7 @@ define(`HOST_TYPED_CALL_NAME_MIXED',`_XXX_TYPED_CALL_NAME(h,`m'$1,$2)')
 define(`HOST_TYPED_CALL_NAME_QUAT',`_XXX_TYPED_CALL_NAME(h,`q'$1,$2)')
 define(`HOST_TYPED_CALL_NAME_QMIXD',`_XXX_TYPED_CALL_NAME(h,`p'$1,$2)')
 
-define(`SIMD_NAME',`pf_str`_simd_'$1')
+define(`SIMD_NAME',`pf_str`_simd_'type_code`_'$1')
 
 define(`HOST_NAME_WITH_SUFFIX',``h_'pf_str`_'type_code`_'$1$2')
 define(`HOST_SETUP_NAME',`HOST_TYPED_CALL_NAME(SETUP_NAME($1))')

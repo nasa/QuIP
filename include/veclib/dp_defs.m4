@@ -29,5 +29,5 @@ define(`cuda_real_ift_func',`cufftExecZ2D')
 define(`cuda_cpx_fft_type',`cufftDoubleComplex')
 define(`cuda_real_fft_type',`cufftDoubleReal')
 
-my_include(`veclib/null_simd_funcs.m4')
+my_include(`veclib/sp_simd_funcs.m4')
 
