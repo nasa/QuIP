@@ -1,9 +1,5 @@
 /* ocl_port.m4 BEGIN */
 
-dnl	DO we need these??
-dnl	#undef USE_SSE
-dnl	#define BUILD_FOR_GPU
-
 include(`../../include/veclib/gen_port.m4')
 
 suppress_if

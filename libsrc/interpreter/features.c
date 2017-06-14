@@ -346,13 +346,6 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef USE_SSE
-	FEATURE_PRESENT(SWF_SSE);
-#else
-	FEATURE_ABSENT(SWF_SSE);
-#endif
-
-
 #ifdef SUBMENU
 	FEATURE_PRESENT(SWF_SUBMENU);
 #else

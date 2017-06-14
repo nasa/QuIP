@@ -22,8 +22,6 @@ extern int setup_slow_len(	/* DIM3 *len_p, */ /* use vap */
 extern COMMAND_FUNC(do_comp_menu);
 extern COMMAND_FUNC( do_vl_menu );
 
-extern int use_sse_extensions;
-
 extern void setvarg1(Vec_Obj_Args *oap, Data_Obj *dp);
 extern void setvarg2(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *srcv);
 extern void setvarg3(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *src1,Data_Obj *src2);

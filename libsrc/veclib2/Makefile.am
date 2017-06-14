@@ -140,8 +140,6 @@ INC_M4FILES=							\
 			$(INCDIR)/slow_len.m4			\
 			$(INCDIR)/slow_vars.m4			\
 			$(INCDIR)/sp_defs.m4			\
-			$(INCDIR)/sp_simd_funcs.m4		\
-			$(INCDIR)/null_simd_funcs.m4		\
 			$(INCDIR)/sp_func_defs.m4		\
 			$(INCDIR)/spdp_defs.m4			\
 			$(INCDIR)/uby_defs.m4			\

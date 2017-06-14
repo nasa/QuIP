@@ -98,31 +98,6 @@ static void mpnadvise(int index, const char *msg)
 
 #endif /* N_PROCESSORS > 1 */
 
-COMMAND_FUNC( set_use_sse )
-{
-#ifdef USE_SSE
-	int yn;
-    
-	yn = ASKIF("Use SSE extensions");
-    
-	if( yn ){
-		/* make sure that processor and OS are ok */
-		if( ! cpu_supports_sse() ){
-			// Do we need SSE or SSE2??? BUG?
-			WARN("This CPU does not support the SSE extensions");
-			return;
-		}
-		use_sse_extensions = 1;
-	} else	use_sse_extensions = 0;
-
-	sprintf(ERROR_STRING,"use_sse_extensions = %d",use_sse_extensions);
-	NADVISE(ERROR_STRING);
-#else /* ! USE_SSE */
-	ASKIF("Use SSE extensions (ineffective)");
-	WARN("No support for SSE extensions; recompile with USE_SSE defined.");
-#endif /* ! USE_SSE */
-}
-
 COMMAND_FUNC( set_n_processors )
 {
 	int n;

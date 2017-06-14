@@ -21,7 +21,6 @@ define(`_VEC_FUNC_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,_3S,1,)')
 
 // 3 args
 define(`_VEC_FUNC_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,,,3,) ')
-define(`_VEC_FUNC_3V_SSE',`GENERIC_GPU_FUNC_CALL($1, dst = (dest_type)( $2 ),,,,3,) ')
 define(`_VEC_FUNC_CPX_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,CPX_,,3,) ')
 define(`_VEC_FUNC_QUAT_3V',`GENERIC_GPU_FUNC_CALL($1,$2,,QUAT_,,3,) ')
 dnl	this is only used by ramp1d

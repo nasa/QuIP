@@ -13,10 +13,10 @@ my_include(`veclib/real_args.m4')
 /* all_vec.m4  `type_code =' type_code */
 _VEC_FUNC_2V_PROJ( rvsum, dst = (dest_type)  0, dst += (dest_type)  src1, psrc1 + psrc2)
 
-_VEC_FUNC_3V_SSE( rvmul, src1 * src2 )
-_VEC_FUNC_3V_SSE( rvadd, src1 + src2 )
-_VEC_FUNC_3V_SSE( rvsub, src1 - src2 )
-_VEC_FUNC_3V_SSE( rvdiv, src1 / src2 )
+_VEC_FUNC_3V( rvmul, dst = (dest_type) (src1 * src2) )
+_VEC_FUNC_3V( rvadd, dst = (dest_type) (src1 + src2) )
+_VEC_FUNC_3V( rvsub, dst = (dest_type) (src1 - src2) )
+_VEC_FUNC_3V( rvdiv, dst = (dest_type) (src1 / src2) )
 
 _VEC_FUNC_2V( rvsqr, dst = (dest_type)(src1 * src1) )
 

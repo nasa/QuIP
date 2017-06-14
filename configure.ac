@@ -63,16 +63,6 @@ AC_ARG_ENABLE([thread-safe-query],
 	[ thread_safe_query=${enableval}], [thread_safe_query=no])
 
 
-# This flag causes escape to custom assembler code - not tested with
-# optimizer, probably better to get the compiler to do this?
-
-# disable sse extensions by default (although compiler may use them?)
-
-AC_ARG_ENABLE([sse-extensions],
-	[AS_HELP_STRING([--enable-sse-extensions],
-		[enable use of SSE extensions@<:@default: yes@:>@])],
-	[ use_sse=${enableval}], [use_sse=no])
-
 # disable multiprocessing by default
 
 AC_ARG_ENABLE([n-processors],
@@ -307,7 +297,6 @@ if test "x${minimal_build}" = xyes; then
 	# their defaults, we might print a warning?
 	async_exec=no
 	thread_safe_query=no
-	use_sse=no
 	n_processors=1
 	use_rawvol=no
 	use_v4l2=no
@@ -2001,10 +1990,6 @@ fi
 
 if test "x${thread_safe_query}" = xyes; then
   AC_DEFINE([THREAD_SAFE_QUERY], 1, [thread-safe query features enabled])
-fi
-
-if test "x${use_sse}" = xyes; then
-  AC_DEFINE([USE_SSE], 1, [use of SSE* extensions enabled])
 fi
 
 if test "x${n_processors}" != xno; then

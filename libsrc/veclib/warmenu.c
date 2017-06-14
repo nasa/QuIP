@@ -2120,15 +2120,6 @@ static COMMAND_FUNC( do_report_status )
 	else
 		prt_msg("Parsing but not executing all vector computations");
 
-#ifdef USE_SSE
-	if( use_sse_extensions )
-		prt_msg("Using SSE extensions when possible");
-	else
-		prt_msg("Not using SSE extensions");
-#else /* ! USE_SSE */
-	prt_msg("No SSE support (compile with USE_SSE defined)");
-#endif /* ! USE_SSE */
-
 	sprintf(msg_str,"Using %d processor%s (%d max on this machine)",
 			n_processors,n_processors==1?"":"s",N_PROCESSORS);
 	prt_msg(msg_str);
@@ -2141,7 +2132,6 @@ MENU_BEGIN(control)
 
 ADD_CMD( perform,	do_set_perf,		set/clear execute flag )
 ADD_CMD( n_processors,	set_n_processors,	set number of processors to use )
-ADD_CMD( use_sse,	set_use_sse,		enable/disable use of Pentium SSE extensions )
 ADD_CMD( status,	do_report_status,	report current computation modes )
 #ifdef FOOBAR
 ADD_CMD( cpuinfo,	get_cpu_info,		report cpu info )

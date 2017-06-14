@@ -1,7 +1,6 @@
 /* sp_defs.m4 BEGIN */
 define(`absfunc',`fabsf($1)')
 define(`std_type',`float')
-define(`simd_type',`v4sf')
 define(`std_cpx',`SP_Complex')
 define(`std_quat',`SP_Quaternion')
 define(`dest_type',`float')
@@ -31,6 +30,4 @@ define(`cuda_real_fft_func',`cufftExecR2C')
 define(`cuda_real_ift_func',`cufftExecC2R')
 define(`cuda_cpx_fft_type',`cufftComplex')
 define(`cuda_real_fft_type',`cufftReal')
-
-my_include(`veclib/sp_simd_funcs.m4')
 
