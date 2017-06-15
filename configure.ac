@@ -663,6 +663,7 @@ fi
 
 # must come before compiler stuff
 # This allows us to use GNU stuff, e.g. O_DIRECT...
+
 echo calling ac_gnu_source
 AC_GNU_SOURCE
 echo DONE calling ac_gnu_source
