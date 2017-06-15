@@ -48,19 +48,15 @@ float eval_vt_native_flt(Vec_Expr_Node *enp)
 void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 {
 	switch(VN_INTVAL(enp)){
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  eval_vt_native_assignment (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("eval_vt_native_assignment:  unhandled keyword!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
 #define CHECK_ARGLIST(enp,name)							\
 										\
-	if( enp == NO_VEXPR_NODE ){						\
+	if( enp == NULL ){						\
 		NWARN(ERROR_STRING);						\
 		sprintf(ERROR_STRING,"missing arg list for native function %s",name);	\
 		return;								\
@@ -95,9 +91,9 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
-			if( dst_dp == NO_OBJ || src_dp == NO_OBJ ){
+			if( dst_dp == NULL || src_dp == NULL ){
 				NODE_ERROR(enp);
 				NWARN("problem with cumsum args");
 				break;
@@ -120,12 +116,12 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			coord_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			coord_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
-			if( dst_dp == NO_OBJ || coord_dp == NO_OBJ || src_dp == NO_OBJ ){
+			if( dst_dp == NULL || coord_dp == NULL || src_dp == NULL ){
 				NODE_ERROR(enp);
 				NWARN("problem with render args");
 				break;
@@ -151,7 +147,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NO_OBJ);
+			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			/* BUG I use convert() here because I am lazy */
 			/* should just use vmov... */
@@ -176,10 +172,6 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			status = system(s);
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
 			vp=assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
-//#ifdef CAUTIOUS
-//			if( vp == NULL )
-//NWARN("CAUTIOUS:  eval_vt_native_work (system):  assign_reserved_var(\"exit_status\",...) failed!?");
-//#endif // CAUTIOUS
 			assert( vp != NULL );
 				
 			}
@@ -203,7 +195,7 @@ advise("evaluating choldc...");
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
 			diag_dp = EVAL_OBJ_REF(arg_enp);
 
-			if ( inmat_dp == NO_OBJ || diag_dp == NO_OBJ )
+			if ( inmat_dp == NULL || diag_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -239,7 +231,7 @@ advise("evaluating choldc...");
 			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
 			vmat_dp = EVAL_OBJ_REF(arg_enp);
 
-			if( ev_dp == NO_OBJ || umat_dp == NO_OBJ || vmat_dp == NO_OBJ )
+			if( ev_dp == NULL || umat_dp == NULL || vmat_dp == NULL )
 				return;
 				
 			/*
@@ -279,8 +271,8 @@ advise("evaluating choldc...");
 			umat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 			x_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 
-			if( x_dp == NO_OBJ || umat_dp == NO_OBJ || ev_dp == NO_OBJ ||
-				vmat_dp == NO_OBJ || b_dp == NO_OBJ )
+			if( x_dp == NULL || umat_dp == NULL || ev_dp == NULL ||
+				vmat_dp == NULL || b_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -314,7 +306,7 @@ advise("evaluating choldc...");
 			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 
-			if( a_dp == NO_OBJ || d_dp == NO_OBJ || v_dp == NO_OBJ )
+			if( a_dp == NULL || d_dp == NULL || v_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -345,7 +337,7 @@ advise("evaluating choldc...");
 			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 
-			if( d_dp == NO_OBJ || v_dp == NO_OBJ )
+			if( d_dp == NULL || v_dp == NULL )
 				return;
 
 #ifdef HAVE_NUMREC
@@ -369,22 +361,13 @@ advise("evaluating choldc...");
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"xform_list")
 			/* left child is an arglist */
-//#ifdef CAUTIOUS
-//			if( VN_CODE(VN_CHILD(enp,0)) != T_ARGLIST ){
-//				NODE_ERROR(enp);
-//				sprintf(ERROR_STRING,
-//	"CAUTIOUS:  NATIVE_XFORM_LIST arglist left child should be T_ARGLIST");
-//				NWARN(ERROR_STRING);
-//				return;
-//			}
-//#endif /* CAUTIOUS */
 			assert( VN_CODE(VN_CHILD(enp,0)) == T_ARGLIST );
 				
 			dst_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),0));
 			src_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),1));
 			mat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
 
-			if( dst_dp == NO_OBJ || src_dp == NO_OBJ || mat_dp == NO_OBJ )
+			if( dst_dp == NULL || src_dp == NULL || mat_dp == NULL )
 				return;
 
 			// OLD
@@ -409,13 +392,9 @@ advise("evaluating choldc...");
 void update_vt_native_shape(Vec_Expr_Node *enp)
 {
 	switch(VN_INTVAL(enp)){
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  update_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("update_native_shape:  unhandled keyword!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -443,19 +422,12 @@ void prelim_vt_native_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 //#endif // USE_NUMREC
 //#endif /* HAVE_NUMREC */
 			/* no shape, do nothing */
-//#ifdef CAUTIOUS
-//			verify_null_shape(QSP_ARG  enp);
-//#endif /* CAUTIOUS */
-			assert( VN_SHAPE(enp) == NO_SHAPE );
+			assert( VN_SHAPE(enp) == NULL );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  prelim_vt_native_shape (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-//			NWARN(ERROR_STRING);
 			assert( AERROR("prelim_vt_native_shape:  unhandled native func!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 

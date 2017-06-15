@@ -92,9 +92,7 @@ extern int rb_delete_item(qrb_tree*, Item *ip);
 extern qrb_node* rb_find(qrb_tree*, const char * key );
 extern void rb_substring_find(Frag_Match_Info * fmi_p, qrb_tree*, const char * frag );
 extern void rb_traverse( qrb_node *np, void (*func)(qrb_node *,qrb_tree *), qrb_tree *tree_p );
-#ifdef RB_TREE_DEBUG
 extern void rb_check(qrb_tree *);
-#endif //  RB_TREE_DEBUG
 extern qrb_node * rb_successor_node( qrb_node *n_p );
 extern qrb_node * rb_predecessor_node( qrb_node *n_p );
 
@@ -113,14 +111,14 @@ typedef struct {
 	qrb_node *	node_p;
 } RB_Tree_Enumerator;
 
-extern RB_Tree_Enumerator *new_rbtree_enumerator(qrb_tree *tp);
-extern void advance_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
-extern void rls_rbtree_enumerator(RB_Tree_Enumerator *rbtep);
-extern Item * rbtree_enumerator_item(RB_Tree_Enumerator *rbtep);
+extern RB_Tree_Enumerator *new_rb_tree_enumerator(qrb_tree *tp);
+extern void advance_rb_tree_enumerator(RB_Tree_Enumerator *rbtep);
+extern void rls_rb_tree_enumerator(RB_Tree_Enumerator *rbtep);
+extern Item * rb_tree_enumerator_item(RB_Tree_Enumerator *rbtep);
 extern long rb_node_count(qrb_tree *tree_p);
 extern void release_rb_tree(qrb_tree *tree_p);
 
-extern List *rbtree_list(qrb_tree *tree_p);
+extern List *rb_tree_list(qrb_tree *tree_p);
 
 #endif // ! _RBTREE_H_
 

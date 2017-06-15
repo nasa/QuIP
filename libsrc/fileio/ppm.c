@@ -49,8 +49,8 @@ FIO_FT_TO_DP_FUNC(ppm,Ppm_Header)
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_PARENT(dp, NULL);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, hd_p->img_data);
@@ -144,7 +144,7 @@ FIO_OPEN_FUNC( ppm )
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Ppm_Header) );
 
@@ -152,7 +152,7 @@ FIO_OPEN_FUNC( ppm )
 		if( rd_ppm_hdr( ifp->if_fp, (Ppm_Header *)ifp->if_hdr_p,
 			ifp->if_name ) < 0 ){
 			ppm_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		ppm_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	}
@@ -245,7 +245,7 @@ FIO_WT_FUNC( ppm )	/** output next frame */
 {
 	/* PPM wants color images interleaved */
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time check, always true for ppm */
+	if( ifp->if_dp == NULL ){	/* first time check, always true for ppm */
 		setup_dummy(ifp);	/* create if_dp */
 		copy_dimensions(ifp->if_dp, dp);
 		if( set_ppm_hdr(QSP_ARG  ifp) < 0 ) return(-1);
@@ -315,8 +315,8 @@ int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_PARENT(dp, NULL);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, hd_p->img_data);
@@ -369,7 +369,7 @@ FIO_OPEN_FUNC( dis )
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = (Dis_Header *)getbuf( sizeof(Dis_Header) );
 
@@ -377,7 +377,7 @@ FIO_OPEN_FUNC( dis )
 		if( rd_dis_hdr( ifp->if_fp, ifp->if_hdr_p,
 			ifp->if_name ) < 0 ){
 			dis_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		dis_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	}
@@ -453,7 +453,7 @@ FIO_WT_FUNC( dis )
 {
 	/* PPM wants color images interleaved */
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time check, always true for ppm */
+	if( ifp->if_dp == NULL ){	/* first time check, always true for ppm */
 		setup_dummy(ifp);	/* create if_dp */
 		copy_dimensions(ifp->if_dp, dp);
 		if( set_dis_hdr(QSP_ARG  ifp) < 0 ) return(-1);

@@ -121,7 +121,7 @@ static COMMAND_FUNC( do_rm )
 	RV_Inode *inp;
 
 	inp = PICK_RV_INODE("");
-	if( inp==NO_INODE ) return;
+	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
 	rv_rmfile(QSP_ARG  inp->rvi_name);
 #else // ! HAVE_RAWVOL
@@ -136,7 +136,7 @@ static COMMAND_FUNC( do_chmod )
 
 	inp = PICK_RV_INODE("");
 	mode = HOW_MANY("integer mode code");
-	if( inp==NO_INODE ) return;
+	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
 	rv_chmod(QSP_ARG  inp,mode);
 #else // ! HAVE_RAWVOL
@@ -149,7 +149,7 @@ static COMMAND_FUNC( do_ls_one )
 	RV_Inode *inp;
 
 	inp = PICK_RV_INODE("");
-	if( inp==NO_INODE ) return;
+	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
 	rv_ls_inode(QSP_ARG  inp);
 #else // ! HAVE_RAWVOL
@@ -300,7 +300,7 @@ static COMMAND_FUNC( do_rv_info )
 	RV_Inode *inp;
 
 	inp = PICK_RV_INODE("filename");
-	if( inp == NO_INODE ) return;
+	if( inp == NULL ) return;
 
 #ifdef HAVE_RAWVOL
 	rv_info(QSP_ARG  inp);
@@ -328,7 +328,7 @@ static COMMAND_FUNC( do_err_frms )
 	inp = PICK_RV_INODE("filename");
 	i = WHICH_ONE("error type",N_ERROR_TYPES,error_type_list);
 
-	if( inp==NO_INODE || i < 0 ) return;
+	if( inp==NULL || i < 0 ) return;
 
 	if( inp->rvi_fi[i].fi_nsaved <= 0 ){
 		/*if( verbose ){ */
@@ -340,7 +340,7 @@ static COMMAND_FUNC( do_err_frms )
 	}
 
 	dp = dobj_of(QSP_ARG  s);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		/* object already exists */
 		if( verbose ){
 			sprintf(ERROR_STRING,
@@ -351,7 +351,7 @@ static COMMAND_FUNC( do_err_frms )
 	}
 
 	dp = mk_vec(QSP_ARG  s,inp->rvi_fi[i].fi_nsaved,1,PREC_FOR_CODE(PREC_DI));
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		sprintf(ERROR_STRING,"do_err_frms:  unable to create data vector %s",s);
 		WARN(ERROR_STRING);
 		return;

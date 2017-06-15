@@ -39,7 +39,7 @@ static COMMAND_FUNC( do_convert )
 	dst= PICK_OBJ( "destination" );
 	src= PICK_OBJ( "source" );
 
-	if( dst==NO_OBJ || src == NO_OBJ ) return;
+	if( dst==NULL || src == NULL ) return;
 
 	//convert(QSP_ARG  dst,src);
 	//h_vl2_convert(QSP_ARG  dst,src);
@@ -65,12 +65,9 @@ static COMMAND_FUNC( do_convert )
 		case PREC_UIN:	code = FVCONV2UIN; break;
 		case PREC_UDI:	code = FVCONV2UDI; break;
 		case PREC_ULI:	code = FVCONV2ULI; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  do_convert:  unhandled machine precision!?");
 			assert( AERROR("do_convert:  unhandled machine precision!?") );
 			return;
-//#endif // CAUTIOUS
 	}
 
 	perf_vfunc(QSP_ARG  code,&oa1);
@@ -92,7 +89,7 @@ COMMAND_FUNC( dowheel )
 	dp=PICK_OBJ( "target float image" );
 	n=HOW_MANY("number of spokes");
 	arg=HOW_MUCH("spoke phase");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	mkwheel(dp,n,arg);
 }
@@ -102,7 +99,7 @@ COMMAND_FUNC( doaxle )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ( "target float image" );
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	make_axle(dp);
 }
@@ -123,8 +120,8 @@ static COMMAND_FUNC( getDimSum )
 	float* src_data;
 	float* dst_data;
 
-	if ((dp_dst = PICK_OBJ( "destination object" )) == NO_OBJ) return;
-	if ((dp_src = PICK_OBJ( "source object" )) == NO_OBJ) return;
+	if ((dp_dst = PICK_OBJ( "destination object" )) == NULL) return;
+	if ((dp_src = PICK_OBJ( "source object" )) == NULL) return;
 
 	if (OBJ_PREC(dp_dst) != PREC_SP || OBJ_PREC(dp_src) != PREC_SP) {
 		sprintf(ERROR_STRING,"Object types must be float");
@@ -187,8 +184,8 @@ static COMMAND_FUNC( dofind )
 	float* dst_data;
 	int thres;
 
-	if ((dp_dst = PICK_OBJ( "destination object" )) == NO_OBJ) return;
-	if ((dp_src = PICK_OBJ( "source object" )) == NO_OBJ) return;
+	if ((dp_dst = PICK_OBJ( "destination object" )) == NULL) return;
+	if ((dp_src = PICK_OBJ( "source object" )) == NULL) return;
 
 	if (OBJ_PREC(dp_dst) != PREC_SP || OBJ_PREC(dp_src) != PREC_SP) {
 		sprintf(ERROR_STRING,"Object types must be float");
@@ -520,7 +517,7 @@ static COMMAND_FUNC( do_accumulate )
 	dp_to=PICK_OBJ( "destination vector" );
 	dp_fr=PICK_OBJ( "source vector" );
 
-	if( dp_to==NO_OBJ || dp_fr==NO_OBJ ) return;
+	if( dp_to==NULL || dp_fr==NULL ) return;
 
 	war_accumulate(dp_to,dp_fr);
 }
@@ -532,7 +529,7 @@ static COMMAND_FUNC( do_project )
 	dp_to=PICK_OBJ( "destination vector" );
 	dp_fr=PICK_OBJ( "source image" );
 
-	if( dp_to==NO_OBJ || dp_fr==NO_OBJ ) return;
+	if( dp_to==NULL || dp_fr==NULL ) return;
 
 	war_project(dp_to,dp_fr);
 }
@@ -546,7 +543,7 @@ static COMMAND_FUNC( do_cumsum )
 	dp_to=PICK_OBJ( "destination vector" );
 	dp_fr=PICK_OBJ( "source vector" );
 
-	if( dp_to==NO_OBJ || dp_fr==NO_OBJ ) return;
+	if( dp_to==NULL || dp_fr==NULL ) return;
 
 	war_cumsum(QSP_ARG  dp_to,dp_fr);
 }
@@ -557,7 +554,7 @@ static COMMAND_FUNC( do_reduce )
 
 	dp2=PICK_OBJ( "destination image" );
 	dp=PICK_OBJ( "source image" );
-	if( dp2==NO_OBJ || dp == NO_OBJ ) return;
+	if( dp2==NULL || dp == NULL ) return;
 	reduce(QSP_ARG  dp2,dp);
 }
 
@@ -567,7 +564,7 @@ static COMMAND_FUNC( do_enlarge )
 
 	dp2=PICK_OBJ( "destination image" );
 	dp=PICK_OBJ( "source image" );
-	if( dp2==NO_OBJ || dp == NO_OBJ ) return;
+	if( dp2==NULL || dp == NULL ) return;
 	enlarge(QSP_ARG  dp2,dp);
 }
 
@@ -577,7 +574,7 @@ static COMMAND_FUNC( do_fwdfft )
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	//h_vl2_fft2d(VFCODE_ARG  dp,dp);
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
@@ -589,7 +586,7 @@ static COMMAND_FUNC( do_fwdrowfft )
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	//h_vl2_fftrows(VFCODE_ARG  dp,dp);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
@@ -601,7 +598,7 @@ static COMMAND_FUNC( do_invfft )
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	//h_vl2_ift2d(VFCODE_ARG  dp,dp);
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 }
@@ -612,7 +609,7 @@ static COMMAND_FUNC( do_invrowfft )
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	//h_vl2_iftrows(VFCODE_ARG  dp,dp);
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 }
@@ -624,7 +621,7 @@ static COMMAND_FUNC( do_invrfft )
 
 	targ = PICK_OBJ("real target");
 	src = PICK_OBJ("complex source");
-	if( targ == NO_OBJ || src == NO_OBJ ) return;
+	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_ift2d(VFCODE_ARG  targ,src);
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
@@ -637,7 +634,7 @@ static COMMAND_FUNC( do_invrowrfft )
 
 	targ = PICK_OBJ("real target");
 	src = PICK_OBJ("complex source");
-	if( targ == NO_OBJ || src == NO_OBJ ) return;
+	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_iftrows(VFCODE_ARG  targ,src);
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
@@ -654,7 +651,7 @@ static COMMAND_FUNC( do_fwdrfft )
 
 	targ = PICK_OBJ("complex target");
 	src = PICK_OBJ("real source");
-	if( targ == NO_OBJ || src == NO_OBJ ) return;
+	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_fft2d(VFCODE_ARG  targ,src);
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
@@ -667,7 +664,7 @@ static COMMAND_FUNC( do_fwdrowrfft )
 
 	targ = PICK_OBJ("complex target");
 	src = PICK_OBJ("real source");
-	if( targ == NO_OBJ || src == NO_OBJ ) return;
+	if( targ == NULL || src == NULL ) return;
 
 	//h_vl2_fftrows(VFCODE_ARG  targ,src);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
@@ -717,7 +714,7 @@ static COMMAND_FUNC( do_set_input )
 	Data_Obj *gdp;
 
 	gdp = PICK_OBJ( "source image" );
-	if( gdp == NO_OBJ ) return;
+	if( gdp == NULL ) return;
 	set_grayscale(gdp);
 }
 
@@ -727,7 +724,7 @@ static COMMAND_FUNC( do_set_output )
 	Data_Obj *hdp;
 
 	hdp = PICK_OBJ( "output image" );
-	if( hdp == NO_OBJ ) return;
+	if( hdp == NULL ) return;
 	set_halftone(hdp);
 }
 
@@ -736,7 +733,7 @@ static COMMAND_FUNC( do_set_filter )
 	Data_Obj *fdp;
 
 	fdp = PICK_OBJ( "filter image" );
-	if( fdp == NO_OBJ ) return;
+	if( fdp == NULL ) return;
 	set_filter(fdp);
 }
 
@@ -759,7 +756,7 @@ static COMMAND_FUNC( do_qt_dither )
 	dpto = PICK_OBJ( "target image" );
 	dpfr = PICK_OBJ( "source image" );
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	qt_dither(dpto,dpfr);
 }
@@ -810,7 +807,7 @@ static COMMAND_FUNC( do_set_input )
 	rgdp = PICK_OBJ( "red-green image" );
 	bydp = PICK_OBJ( "blue-yellow image" );
 
-	if( lumdp==NO_OBJ || rgdp==NO_OBJ || bydp==NO_OBJ ) return;
+	if( lumdp==NULL || rgdp==NULL || bydp==NULL ) return;
 
 	set_rgb_input(lumdp,rgdp,bydp);
 }
@@ -820,7 +817,7 @@ static COMMAND_FUNC( do_set_output )
 	Data_Obj *hdp;
 
 	hdp = PICK_OBJ( "byte image for composite halftone" );
-	if( hdp==NO_OBJ ) return;
+	if( hdp==NULL ) return;
 	set_rgb_output(hdp);
 }
 
@@ -832,7 +829,7 @@ static COMMAND_FUNC( do_set_filter )
 	gdp = PICK_OBJ( "green filter image" );
 	bdp = PICK_OBJ( "blue filter image" );
 
-	if( rdp==NO_OBJ || gdp==NO_OBJ || bdp==NO_OBJ ) return;
+	if( rdp==NULL || gdp==NULL || bdp==NULL ) return;
 
 	set_rgb_filter(rdp,gdp,bdp);
 }
@@ -862,7 +859,7 @@ static COMMAND_FUNC( do_setxform )
 	Data_Obj *matrix;
 
 	matrix = PICK_OBJ( "transformation matrix" );
-	if( matrix == NO_OBJ ) return;
+	if( matrix == NULL ) return;
 	set_xform(matrix);
 }
 
@@ -899,7 +896,7 @@ static COMMAND_FUNC( do_scale )
 	dp=PICK_OBJ( "float image" );
 	mn=HOW_MUCH("desired min value");
 	mx=HOW_MUCH("desired max value");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	scale(QSP_ARG  dp,mn,mx);
 }
@@ -911,7 +908,7 @@ static COMMAND_FUNC( do_dither )
 
 	dp=PICK_OBJ( "float image" );
 	size=(int)HOW_MANY("size of dither matrix");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 	odither(QSP_ARG  dp,size);
 }
 
@@ -926,9 +923,9 @@ static COMMAND_FUNC( do_2dramp )
 
 	oargs.oa_dp[0]=oargs.oa_dest = PICK_OBJ("target image");
 	oargs.oa_dp[1]=
-	oargs.oa_dp[2]=NO_OBJ;
+	oargs.oa_dp[2]=NULL;
 
-	if( oargs.oa_dest==NO_OBJ ) return;
+	if( oargs.oa_dest==NULL ) return;
 	s=HOW_MUCH("start value");
 	dx=HOW_MUCH("x ramp increment");
 	dy=HOW_MUCH("y ramp increment");
@@ -967,7 +964,7 @@ static COMMAND_FUNC( do_wrap )
 
 	dpto=PICK_OBJ("destination image");
 	dpfr=PICK_OBJ("source image");
-	if( dpto==NO_OBJ || dpfr==NO_OBJ ) return;
+	if( dpto==NULL || dpfr==NULL ) return;
 	wrap(QSP_ARG  dpto,dpfr);
 }
 
@@ -977,7 +974,7 @@ static COMMAND_FUNC( do_wrap3d )
 
 	dpto=PICK_OBJ("destination image");
 	dpfr=PICK_OBJ("source image");
-	if( dpto==NO_OBJ || dpfr==NO_OBJ ) return;
+	if( dpto==NULL || dpfr==NULL ) return;
 #ifdef FOOBAR
 	wrap3d(QSP_ARG  dpto,dpfr);
 #else
@@ -994,7 +991,7 @@ static COMMAND_FUNC( do_scroll )
 	dpfr=PICK_OBJ("source image");
 	dx=(int)HOW_MANY("x displacement");
 	dy=(int)HOW_MANY("y displacement");
-	if( dpto==NO_OBJ || dpfr==NO_OBJ ) return;
+	if( dpto==NULL || dpfr==NULL ) return;
 	dp_scroll(QSP_ARG  dpto,dpfr,dx,dy);
 }
 
@@ -1005,7 +1002,7 @@ static COMMAND_FUNC( doodd )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ( "name of image" );
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	mkodd(dp);
 }
 
@@ -1014,7 +1011,7 @@ static COMMAND_FUNC( doeven )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ( "name of image" );
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	mkeven(dp);
 }
 
@@ -1027,7 +1024,7 @@ static COMMAND_FUNC( dolutmap )
 	dst=PICK_OBJ( "destination image" );
 	src=PICK_OBJ( "source byte image" );
 	map=PICK_OBJ( "lut vector" );
-	if( dst==NO_OBJ || src==NO_OBJ || map==NO_OBJ )
+	if( dst==NULL || src==NULL || map==NULL )
 		return;
 	if( lutmap(QSP_ARG  dst,src,map) == (-1) )
 		WARN("mapping failed");
@@ -1052,7 +1049,7 @@ static COMMAND_FUNC( do_fsdither )
 	for(i=0;i<n;i++)
 		lvl[i] = (float)HOW_MUCH("level value");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ )
+	if( dpto == NULL || dpfr == NULL )
 		return;
 	dp_halftone(QSP_ARG  dpto,dpfr,n,lvl);
 }
@@ -1078,7 +1075,7 @@ static COMMAND_FUNC( do_udither )		/* uniform quantization */
 		lvl[i] /= (n-1);
 	}
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ )
+	if( dpto == NULL || dpfr == NULL )
 		return;
 	dp_halftone(QSP_ARG  dpto,dpfr,n,lvl);
 }
@@ -1090,7 +1087,7 @@ static COMMAND_FUNC( do_resample )
 	dpto=PICK_OBJ( "target float image" );
 	dpfr=PICK_OBJ( "source float image" );
 	dpwarp=PICK_OBJ( "complex control image" );
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || dpwarp==NO_OBJ )
+	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
 	resample(QSP_ARG  dpto,dpfr,dpwarp);
@@ -1103,7 +1100,7 @@ static COMMAND_FUNC( do_bilinear )
 	dpto=PICK_OBJ( "target float image" );
 	dpfr=PICK_OBJ( "source float image" );
 	dpwarp=PICK_OBJ( "complex control image" );
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || dpwarp==NO_OBJ )
+	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
 	bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp);
@@ -1116,7 +1113,7 @@ static COMMAND_FUNC( do_new_bilinear )
 	dpto=PICK_OBJ( "target float image" );
 	dpfr=PICK_OBJ( "source float image" );
 	dpwarp=PICK_OBJ( "complex control image" );
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || dpwarp==NO_OBJ )
+	if( dpto==NULL || dpfr==NULL || dpwarp==NULL )
 		return;
 
 	new_bilinear_warp(QSP_ARG  dpto,dpfr,dpwarp);
@@ -1130,7 +1127,7 @@ static COMMAND_FUNC( do_iconv )
 	dpfr = PICK_OBJ( "source image" );
 	dpfilt = PICK_OBJ( "filter image" );
 
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || dpfilt==NO_OBJ )
+	if( dpto==NULL || dpfr==NULL || dpfilt==NULL )
 		return;
 
 	convolve(QSP_ARG  dpto,dpfr,dpfilt);
@@ -1145,7 +1142,7 @@ static COMMAND_FUNC( do_iconv3d )
 	dpfr = PICK_OBJ( "source image" );
 	dpfilt = PICK_OBJ( "filter image" );
 
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || dpfilt==NO_OBJ )
+	if( dpto==NULL || dpfr==NULL || dpfilt==NULL )
 		return;
 
 	convolve3d(QSP_ARG  dpto,dpfr,dpfilt);
@@ -1162,7 +1159,7 @@ static COMMAND_FUNC( do_histo )
 	minbin = HOW_MUCH("minimum bin center");
 	bw = HOW_MUCH("bin width");
 
-	if( hdp == NO_OBJ || dp == NO_OBJ ) return;
+	if( hdp == NULL || dp == NULL ) return;
 
 	compute_histo(QSP_ARG  hdp,dp,bw,minbin);
 }
@@ -1174,7 +1171,7 @@ static COMMAND_FUNC( do_integral )
 	dst = PICK_OBJ( "destination image" );
 	src = PICK_OBJ( "source image" );
 
-	if( dst == NO_OBJ || src == NO_OBJ ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	cum_sum(QSP_ARG  dst,src);
 }
@@ -1190,7 +1187,7 @@ static COMMAND_FUNC( do_hough )
 	x0 = (float) HOW_MUCH("x origin");
 	y0 = (float) HOW_MUCH("y origin");
 
-	if( dst == NO_OBJ || src == NO_OBJ ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	hough(QSP_ARG  dst,src,thresh,x0,y0);
 }
@@ -1204,7 +1201,7 @@ static COMMAND_FUNC( do_local_max )
 	coord_dp = PICK_OBJ("destination vector for coordinates");
 	src = PICK_OBJ("source image");
 
-	if( val_dp != NO_OBJ && coord_dp != NO_OBJ && src != NO_OBJ )
+	if( val_dp != NULL && coord_dp != NULL && src != NULL )
 		n = local_maxima(QSP_ARG  val_dp,coord_dp,src);
 	else
 		n = 0;
@@ -1224,13 +1221,13 @@ static COMMAND_FUNC( do_mhisto )
 
 	hdp = PICK_OBJ( "target histogram data object" );
 	dp = PICK_OBJ( "source data object" );
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	for(i=0;i<OBJ_COMPS(dp);i++){
 		minbin[i] = (float) HOW_MUCH("minimum bin center");
 		bw[i] = (float) HOW_MUCH("bin width");
 	}
 
-	if( hdp == NO_OBJ || dp == NO_OBJ ) return;
+	if( hdp == NULL || dp == NULL ) return;
 
 	multivariate_histo(QSP_ARG  hdp,dp,bw,minbin);
 }
@@ -1250,7 +1247,7 @@ static COMMAND_FUNC( do_fill )
 	val=HOW_MUCH("value");
 	tol=HOW_MUCH("tolerance");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	if( tol < 0 ){
 		WARN("tolerance must be non-negative");
 		return;
@@ -1269,7 +1266,7 @@ static COMMAND_FUNC( do_quads )
 
 	dst=PICK_OBJ( "destination 4-tuple list" );
 	src=PICK_OBJ( "source image" );
-	if( dst == NO_OBJ || src == NO_OBJ ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	make_all_quads(QSP_ARG  dst,src);
 }
@@ -1280,7 +1277,7 @@ static COMMAND_FUNC( do_ext_paths )
 
 	dst=PICK_OBJ( "destination matrix" );
 	src=PICK_OBJ( "source matrix" );
-	if( dst == NO_OBJ || src == NO_OBJ ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	extend_shortest_paths(QSP_ARG  dst,src);
 }
@@ -1294,7 +1291,7 @@ static COMMAND_FUNC( do_vstitch )
 	to=PICK_OBJ( "target float vector" );
 	fr=PICK_OBJ( "source float vector" );
 	co=PICK_OBJ( "control float vector" );
-	if( to==NO_OBJ || fr==NO_OBJ || co==NO_OBJ ) return;
+	if( to==NULL || fr==NULL || co==NULL ) return;
 	n=vstitch(QSP_ARG  to,fr,co);
 	if( verbose ){
 		sprintf(ERROR_STRING,"%d elements copied",n);
@@ -1312,7 +1309,7 @@ static COMMAND_FUNC( do_vinterp )
 	to=PICK_OBJ( "target float vector" );
 	fr=PICK_OBJ( "source float vector" );
 	co=PICK_OBJ( "control float vector" );
-	if( to==NO_OBJ || fr==NO_OBJ || co==NO_OBJ ) return;
+	if( to==NULL || fr==NULL || co==NULL ) return;
 	vinterp(QSP_ARG  to,fr,co);
 }
 
@@ -1322,7 +1319,7 @@ static COMMAND_FUNC( do_median )
 
 	to=PICK_OBJ("target");
 	fr=PICK_OBJ("source");
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 	median(QSP_ARG  to,fr);
 }
 
@@ -1332,7 +1329,7 @@ static COMMAND_FUNC( do_median_clip )
 
 	to=PICK_OBJ("target");
 	fr=PICK_OBJ("source");
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 	median_clip(QSP_ARG  to,fr);
 }
 
@@ -1345,7 +1342,7 @@ static COMMAND_FUNC( do_median_1D )
 	fr=PICK_OBJ("source");
 	rad = (int) HOW_MANY("radius");
 
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 
 	median_1D(QSP_ARG  to,fr,rad);
 }
@@ -1355,7 +1352,7 @@ static COMMAND_FUNC( do_krast )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("coord list");
-	if( dp != NO_OBJ )
+	if( dp != NULL )
 		mk_krast(QSP_ARG  dp);
 }
 
@@ -1389,7 +1386,7 @@ static COMMAND_FUNC( do_sort )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	sort_data(QSP_ARG  dp);
 }
@@ -1400,7 +1397,7 @@ static COMMAND_FUNC( do_sort_indices )
 
 	dp1=PICK_OBJ("array of indices");
 	dp2=PICK_OBJ("data array");
-	if( dp1 == NO_OBJ || dp2 == NO_OBJ ) return;
+	if( dp1 == NULL || dp2 == NULL ) return;
 	sort_indices(QSP_ARG  dp1,dp2);
 }
 
@@ -1409,7 +1406,7 @@ static COMMAND_FUNC( do_scramble )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	dp_scramble(QSP_ARG  dp);
 }
@@ -1421,7 +1418,7 @@ COMMAND_FUNC( do_yuv2rgb )
 	dst_dp = PICK_OBJ("destination rgb image");
 	src_dp = PICK_OBJ("source yuv image");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ) return;
+	if( dst_dp == NULL || src_dp == NULL ) return;
 
 	yuv422_to_rgb24(QSP_ARG   dst_dp, src_dp );
 }
@@ -1433,7 +1430,7 @@ static COMMAND_FUNC( do_yuv2gray )
 	dst_dp = PICK_OBJ("destination grayscale image");
 	src_dp = PICK_OBJ("source yuv image");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ) return;
+	if( dst_dp == NULL || src_dp == NULL ) return;
 
 	yuv422_to_gray(QSP_ARG   dst_dp, src_dp );
 }
@@ -1560,7 +1557,7 @@ static COMMAND_FUNC( do_closing )
 	fr=PICK_OBJ("source");
 	size=(int)HOW_MANY("size of the closing");
 
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 
 	if( size <= 0 ){
 		WARN("size for closing operator must be positive");
@@ -1579,7 +1576,7 @@ static COMMAND_FUNC( do_opening )   /* Should choose the size of the opening */
 	fr=PICK_OBJ("source");
 	size=(int)HOW_MANY("size of the opening");
 
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 
 	if( size <= 0 ){
 		WARN("size for opening operator must be positive");
@@ -1595,7 +1592,7 @@ static COMMAND_FUNC( do_dilate )
 
 	to=PICK_OBJ("target");
 	fr=PICK_OBJ("source");
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 
 	dilate(QSP_ARG  to,fr);
 }
@@ -1606,7 +1603,7 @@ static COMMAND_FUNC( do_erode )
 
 	to=PICK_OBJ("target");
 	fr=PICK_OBJ("source");
-	if( to==NO_OBJ || fr==NO_OBJ ) return;
+	if( to==NULL || fr==NULL ) return;
 
 	erode(QSP_ARG  to,fr);
 }
@@ -1618,7 +1615,7 @@ static COMMAND_FUNC( gen_morph )
 	to=PICK_OBJ("target");
 	fr=PICK_OBJ("source");
 	tbl=PICK_OBJ("function look-up table");
-	if( to==NO_OBJ || fr==NO_OBJ || tbl == NO_OBJ ) return;
+	if( to==NULL || fr==NULL || tbl == NULL ) return;
 
 	morph_process(QSP_ARG  to,fr,tbl);
 }
@@ -1654,7 +1651,7 @@ static COMMAND_FUNC( do_radavg )
 	c_dp = PICK_OBJ( "data vector for counts" );
 	i_dp = PICK_OBJ( "source image" );
 
-	if( m_dp == NO_OBJ || v_dp == NO_OBJ || c_dp == NO_OBJ || i_dp == NO_OBJ )
+	if( m_dp == NULL || v_dp == NULL || c_dp == NULL || i_dp == NULL )
 		return;
 
 	rad_avg(QSP_ARG  m_dp,v_dp,c_dp,i_dp);
@@ -1669,7 +1666,7 @@ static COMMAND_FUNC( do_oriavg )
 	c_dp = PICK_OBJ( "data vector for counts" );
 	i_dp = PICK_OBJ( "source image" );
 
-	if( m_dp == NO_OBJ || v_dp == NO_OBJ || c_dp == NO_OBJ || i_dp == NO_OBJ )
+	if( m_dp == NULL || v_dp == NULL || c_dp == NULL || i_dp == NULL )
 		return;
 
 	ori_avg(QSP_ARG  m_dp,v_dp,c_dp,i_dp);
@@ -1683,7 +1680,7 @@ static COMMAND_FUNC( do_dct )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	compute_dct(QSP_ARG  dp,FWD_DCT);
 }
@@ -1693,7 +1690,7 @@ static COMMAND_FUNC( do_idct )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	compute_dct(QSP_ARG  dp,INV_DCT);
 }
@@ -1703,7 +1700,7 @@ static COMMAND_FUNC( do_odct )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	compute_dct(QSP_ARG  dp,OLD_DCT);
 }
@@ -1865,7 +1862,7 @@ static COMMAND_FUNC( do_xpose )
 
 	dpto=PICK_OBJ( "target image" );
 	dpfr=PICK_OBJ( "source image" );
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 	transpose(QSP_ARG  dpto,dpfr);
 
 	//TEMP_UNIMP(transpose)
@@ -1876,7 +1873,7 @@ static COMMAND_FUNC( do_ginvert )
 	Data_Obj *dp;
 
 	dp=PICK_OBJ( "target matrix" );
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	/* BUG? is complete error checking done here??? */
 
@@ -1908,7 +1905,7 @@ static COMMAND_FUNC(do_inner)
 	v1=PICK_OBJ( "first operand" );
 	v2=PICK_OBJ( "second operand" );
 
-	if( target==NO_OBJ || v1==NO_OBJ || v2==NO_OBJ )
+	if( target==NULL || v1==NULL || v2==NULL )
 		return;
 
 	inner(QSP_ARG  target,v1,v2);
@@ -1921,7 +1918,7 @@ static COMMAND_FUNC( do_invert )
 	double det;
 
 	dp=PICK_OBJ( "matrix" );
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	det=dt_invert(QSP_ARG  dp);
 	if( det == 0.0 ) WARN("ZERO DETERMINANT!!!");
 	else if( verbose ) {
@@ -1939,7 +1936,7 @@ static COMMAND_FUNC( do_corr_mtrx )
 	dpto = PICK_OBJ("target corrlation matrix");
 	dpfr = PICK_OBJ("source vector array");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	corr_matrix(dpto,dpfr);
 }
@@ -1953,7 +1950,7 @@ static COMMAND_FUNC( do_determinant )
 	scal_dp = PICK_OBJ("scalar for determinant");
 	dp = PICK_OBJ("matrix");
 
-	if( scal_dp == NO_OBJ || dp==NO_OBJ ) return;
+	if( scal_dp == NULL || dp==NULL ) return;
 
 	//d = determinant(dp);
 	TEMP_UNIMP(determinant) d=0.0;
@@ -1977,7 +1974,7 @@ static COMMAND_FUNC(do_xform_list )
 	dpfr=PICK_OBJ( "source data object" );
 	xform=PICK_OBJ( "transformation matrix" );
 
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || xform==NO_OBJ ) return;
+	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
 	clear_obj_args(&oa1);
 	SET_OA_DEST(&oa1,dpto);
@@ -1998,7 +1995,7 @@ static COMMAND_FUNC( do_vec_xform )
 	dpfr=PICK_OBJ( "source data object" );
 	xform=PICK_OBJ( "transformation matrix" );
 
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || xform==NO_OBJ ) return;
+	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
 	//vec_xform(QSP_ARG  dpto,dpfr,xform);
 	TEMP_UNIMP(vec_xform)
@@ -2012,7 +2009,7 @@ static COMMAND_FUNC( do_homog_xform )
 	dpfr=PICK_OBJ( "source data object" );
 	xform=PICK_OBJ( "transformation matrix" );
 
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || xform==NO_OBJ ) return;
+	if( dpto==NULL || dpfr==NULL || xform==NULL ) return;
 
 	//homog_xform(QSP_ARG  dpto,dpfr,xform);
 	TEMP_UNIMP(homog_xform)
@@ -2123,15 +2120,6 @@ static COMMAND_FUNC( do_report_status )
 	else
 		prt_msg("Parsing but not executing all vector computations");
 
-#ifdef USE_SSE
-	if( use_sse_extensions )
-		prt_msg("Using SSE extensions when possible");
-	else
-		prt_msg("Not using SSE extensions");
-#else /* ! USE_SSE */
-	prt_msg("No SSE support (compile with USE_SSE defined)");
-#endif /* ! USE_SSE */
-
 	sprintf(msg_str,"Using %d processor%s (%d max on this machine)",
 			n_processors,n_processors==1?"":"s",N_PROCESSORS);
 	prt_msg(msg_str);
@@ -2144,7 +2132,6 @@ MENU_BEGIN(control)
 
 ADD_CMD( perform,	do_set_perf,		set/clear execute flag )
 ADD_CMD( n_processors,	set_n_processors,	set number of processors to use )
-ADD_CMD( use_sse,	set_use_sse,		enable/disable use of Pentium SSE extensions )
 ADD_CMD( status,	do_report_status,	report current computation modes )
 #ifdef FOOBAR
 ADD_CMD( cpuinfo,	get_cpu_info,		report cpu info )

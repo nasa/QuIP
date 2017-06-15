@@ -65,7 +65,9 @@ libinterpreter_a_SOURCES =		\
 
 noinst_HEADERS =			\
 					\
-		chewtext.h		\
+		strbuf.h		\
+		list_private.h		\
+		query_private.h		\
 		query_prot.h
 
 win_nexpr.c:	nexpr.c

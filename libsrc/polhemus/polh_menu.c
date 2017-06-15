@@ -23,7 +23,7 @@ typedef enum { CM, INCHES } Units;
 /* set to centimeters intially because the system is in centimeters upon startup */
 static Units unit = CM;		
 
-static Data_Obj *tmp_pt_dp=NO_OBJ;
+static Data_Obj *tmp_pt_dp=NULL;
 
 
 /* This defines the number of numbers in a reading...  The polhemus can report more or fewer
@@ -35,10 +35,10 @@ static Data_Obj *tmp_pt_dp=NO_OBJ;
 /* Make a temporary dp to hold the current point... */
 #define INSURE_TMP_PT										\
 												\
-	if( tmp_pt_dp == NO_OBJ ){								\
+	if( tmp_pt_dp == NULL ){								\
 		/* BUG?  should we get the precision based on the current format? */		\
 		tmp_pt_dp = mk_vec(QSP_ARG  "tmp_polhemus_pt",1,POLHEMUS_READING_COUNT,prec_for_code(PREC_SP));		\
-		if( tmp_pt_dp == NO_OBJ ) NERROR1("error creating temporary polhemus point");	\
+		if( tmp_pt_dp == NULL ) NERROR1("error creating temporary polhemus point");	\
 	}
 
 Output_Datum od_tbl[N_OUTPUT_TYPES]={
@@ -323,7 +323,7 @@ static COMMAND_FUNC( do_next_read )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("data object for single polhemus record");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( read_next_polh_dp(QSP_ARG  dp) < 0 ) {
 		WARN("do_single_read: error reading single polhemus data point");
@@ -336,7 +336,7 @@ static COMMAND_FUNC( do_cont_read )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("data object for continuous polhemus data acquisition");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( read_cont_polh_dp(dp) < 0 ) {
 		WARN("do_single_read: error reading polhemus continuously");
@@ -468,7 +468,7 @@ static COMMAND_FUNC( do_mk_vector )
 	n = (uint32_t) HOW_MANY("number of records");
 
 	dp = dobj_of(QSP_ARG  name);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Can't create new polhemus data vector %s, name is in use already",
 			name);
 		WARN(ERROR_STRING);
@@ -514,7 +514,7 @@ static COMMAND_FUNC( do_mk_vector )
 	dp = make_dobj(QSP_ARG  name,&ds1,prec_for_code(PREC_IN));
 	//dp = make_dobj(name,&ds1,PREC_SP);
 
-	if( dp == NO_OBJ )
+	if( dp == NULL )
 		WARN("unable to create polhemus data vector");
 }
 

@@ -98,38 +98,6 @@ static void mpnadvise(int index, const char *msg)
 
 #endif /* N_PROCESSORS > 1 */
 
-COMMAND_FUNC( set_use_sse )
-{
-#ifdef USE_SSE
-	int yn;
-    
-	yn = ASKIF("Use SSE extensions");
-    
-	if( yn ){
-		/* make sure that processor and OS are ok */
-		if( ! cpu_supports_sse() ){
-			// Do we need SSE or SSE2??? BUG?
-			WARN("This CPU does not support the SSE extensions");
-			return;
-		}
-#ifdef FOOBAR
-		/* We are on the 2.6 kernel now, there's no going back! */
-		if( ! os_supports_mmx() ){
-			WARN("OS version must be at least 2.4 for SSE extensions");
-			return;
-		}
-#endif /* FOOBAR */
-		use_sse_extensions = 1;
-	} else	use_sse_extensions = 0;
-
-	sprintf(ERROR_STRING,"use_sse_extensions = %d",use_sse_extensions);
-	NADVISE(ERROR_STRING);
-#else /* ! USE_SSE */
-	ASKIF("Use SSE extensions (ineffective)");
-	WARN("No support for SSE extensions; recompile with USE_SSE defined.");
-#endif /* ! USE_SSE */
-}
-
 COMMAND_FUNC( set_n_processors )
 {
 	int n;
@@ -182,7 +150,7 @@ static void *data_processor(void *argp)
 	while(1){
 		/* wait for something to do */
 //advised=0;
-		while( pip->pi_oap == NO_VEC_OBJ_ARGS ){
+		while( pip->pi_oap == NULL ){
 //if( ! advised ){
 //advised=1;
 //mpnadvise(myindex,"waiting for work");
@@ -225,7 +193,7 @@ private_show_obj_args(QSP_ARG  mystring,pip->pi_oap,_advise);
 //(int_for_addr)pip,(int_for_addr)pip->pi_oap);
 //mpnadvise(myindex,mystring);
 		/* indicate work finished */
-		pip->pi_oap = NO_VEC_OBJ_ARGS;
+		pip->pi_oap = NULL;
 
 	}
 	return(NULL);	/* NOTREACHED */
@@ -243,7 +211,7 @@ static void start_dataproc_threads(SINGLE_QSP_ARG_DECL)
 	for(i=n_threads_started;i<(n_processors-1);i++){
 sprintf(DEFAULT_ERROR_STRING,"creating new data processing thread %d",i);
 NADVISE(DEFAULT_ERROR_STRING);
-		pi[i].pi_oap = NO_VEC_OBJ_ARGS;
+		pi[i].pi_oap = NULL;
 		pi[i].pi_func = NULL;
 		pi[i].pi_vf_code = (-1);	// BUG need to set this?
 		pi[i].pi_level = (-1);
@@ -273,7 +241,7 @@ static void wait_for_threads(void)
 /*
 advise("waiting for data processing thread");
 */
-			if( pi[i].pi_oap != NO_VEC_OBJ_ARGS ){
+			if( pi[i].pi_oap != NULL ){
 //if( v_oap[i] != pi[i].pi_oap ){
 //sprintf(DEFAULT_ERROR_STRING,"waiting for thread %d, oap = 0x%lx",i,(int_for_addr)pi[i].pi_oap);
 //advise(DEFAULT_ERROR_STRING);
@@ -317,11 +285,11 @@ static void init_tmp_obj_names(void)
 	for(i_proc=0;i_proc<N_PROCESSORS;i_proc++){
 		sprintf(name,"_tmp_pdst_%d",i_proc);
 		tmp_obj_name[0][i_proc] = savestr(name);
-		tmp_obj[0][i_proc]=NO_OBJ;
+		tmp_obj[0][i_proc]=NULL;
 		for(i_src=0;i_src<MAX_SRC_OBJECTS;i_src++){
 			sprintf(name,"_tmp_psrc%d_%d",i_src+1,i_proc);
 			tmp_obj_name[i_src+1][i_proc] = savestr(name);
-			tmp_obj[i_src+1][i_proc]=NO_OBJ;
+			tmp_obj[i_src+1][i_proc]=NULL;
 		}
 	}
 	tmp_obj_names_inited=1;
@@ -360,9 +328,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 	for(i=0;i<n_processors;i++){
 		int j;
 		for(j=0;j<(MAX_SRC_OBJECTS+1);j++){
-			if( tmp_obj[j][i] != NO_OBJ ){
+			if( tmp_obj[j][i] != NULL ){
 				delvec(QSP_ARG  tmp_obj[j][i]);
-				tmp_obj[j][i] = NO_OBJ;
+				tmp_obj[j][i] = NULL;
 			}
 		}
 	}
@@ -480,10 +448,10 @@ static int multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
 		// and the number of processors is much larger?
 		if( OBJ_TYPE_DIM(oap->oa_dest,i_dim) != 1 ){
 			FIXIT(OA_DEST(&oa_tbl[i]),OA_DEST(oap),0)
-			if( OA_SRC1(oap) != NO_OBJ &&
+			if( OA_SRC1(oap) != NULL &&
 					OBJ_TYPE_DIM(OA_SRC1(oap),i_dim) > 1 )
 				FIXIT(OA_SRC1(&oa_tbl[i]),OA_SRC1(oap),1)
-			if( OA_SRC2(oap) != NO_OBJ &&
+			if( OA_SRC2(oap) != NULL &&
 					OBJ_TYPE_DIM(OA_SRC2(oap),i_dim) > 1 )
 				FIXIT(OA_SRC2(&oa_tbl[i]),OA_SRC2(oap),2)
 			/* BUG more than 2 source args? */
@@ -491,13 +459,6 @@ static int multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
 			i_dim = (-2);	// show that we found something...
 		}
 	}
-//#ifdef CAUTIOUS
-//	if( i_dim == -1 ){
-//NWARN("CAUTIOUS:  could't find a dimension to subdivide for multi-proc!?");
-//show_obj_args(QSP_ARG  oap);
-//	}
-//#endif /* CAUTIOUS */
-
 	assert( i_dim != (-1) );
 
 	if( VF_CODE(vfp) == FVRAMP1D ){
@@ -524,7 +485,7 @@ NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
 			va[i].arg_scalar1 = &private_scalar[i];
 			*/
 			/* BUG need to fix ramp args */
-			oa_tbl[i].oa_sdp[0] = /* Need more objects */ NO_OBJ;
+			oa_tbl[i].oa_sdp[0] = /* Need more objects */ NULL;
 		}
 	} else if( VF_CODE(vfp) == FVRAMP2D ){
 		WARN("NEED TO FIX CODE FOR MULTIPROC RAMP2D");
@@ -605,23 +566,7 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 	}
 #endif	/* N_PROCESSORS > 1 */
 
-//#ifdef CAUTIOUS
-//	if( /* OA_ARGSPREC(oap) < 0 || */ OA_ARGSPREC(oap) >= N_ARGSET_PRECISIONS ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  vec_dispatch:  bad argset precision %d",OA_ARGSPREC(oap));
-//		ERROR1(ERROR_STRING);
-//	}
-
 	assert( OA_ARGSPREC(oap) < N_ARGSET_PRECISIONS );
-
-#ifdef CAUTIOUS
-	if( PF_FUNC_TBL(cpp) == NULL ){
-		sprintf(ERROR_STRING,
-"CAUTIOUS:  platform_dispatch:  vfa_tbl has not been set for platform %s!?",
-			PLATFORM_NAME(cpp));
-		WARN(ERROR_STRING);
-	}
-#endif // CAUTIOUS
-
 	assert( PF_FUNC_TBL(cpp) != NULL );
 
 #ifdef CAUTIOUS
@@ -660,7 +605,7 @@ fprintf(stderr,"Calling function at 0x%lx\n",
 #endif // MAX_DEBUG
 
 	// Do it!
-fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
+//fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
 	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(VF_CODE(vfp),oap);
 	return 0;
 
@@ -671,7 +616,7 @@ fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME
 
 #define CHECK_OBJ_PLATFORM(dp)					\
 								\
-	if( dp != NO_OBJ ){					\
+	if( dp != NULL ){					\
 		if( pdp == NULL ){				\
 			pdp = OBJ_PFDEV(dp);			\
 		} else {					\
@@ -718,8 +663,8 @@ void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 	int code;
 	Vec_Obj_Args oa1,*oap=&oa1;
 
-	assert( dst_dp != NO_OBJ );
-	assert( src_dp != NO_OBJ );
+	assert( dst_dp != NULL );
+	assert( src_dp != NULL );
 
 	switch( OBJ_MACH_PREC(dst_dp) ){
 		case PREC_BY: code=FVCONV2BY; break;

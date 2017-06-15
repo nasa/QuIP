@@ -55,7 +55,7 @@
 @end
 
 
-static IOS_Item_Type *panel_obj_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *panel_obj_itp=NULL;
 
 // Don't use the macro for the init func, so that we can
 // also call the size function thingy...
@@ -88,11 +88,7 @@ void add_to_panel(Panel_Obj *po, Screen_Obj *sop)
 #ifdef BUILD_FOR_MACOS
 	NSView *cp = SOB_CONTROL(sop);
 
-#ifdef CAUTIOUS
-	if( [GW_WINDOW(PO_GW(po)) contentView] == nil ){
-		fprintf(stderr,"CAUTIOUS:  add_to_panel:  window contentView is null!?\n");
-	}
-#endif // CAUTIOUS
+	assert( [GW_WINDOW(PO_GW(po)) contentView] != nil );
 
 	[[GW_WINDOW(PO_GW(po)) contentView] addSubview : cp ];
 #endif // BUILD_FOR_MACOS

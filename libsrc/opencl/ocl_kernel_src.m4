@@ -104,7 +104,7 @@ dnl	define(`_VEC_FUNC_DBM_2SBM',`')	dnl	BUG - need to implement!
 dnl	define(`_VEC_FUNC_DBM_1SBM',`')	dnl	BUG - need to implement!
 dnl	define(`_VEC_FUNC_DBM_1SBM_1S',`')	dnl	BUG - need to implement!
 
-define(`_VEC_FUNC_SLOW_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,3S_,1,)')
+define(`_VEC_FUNC_SLOW_1V_3SCAL',`SLOW_GPU_FUNC_CALL($1,$4,,,_3S,1,)')
 
 // for vsum:   psrc1 + psrc2
 // ocl_kernel_src.m4:  for vmaxv:  psrc1 > psrc2 ? psrc1 : psrc2

@@ -67,7 +67,7 @@ Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var
 	Variable *vp;
 
 	vp = new_var_(QSP_ARG  var_name);
-	SET_VAR_VALUE(vp,savestr(var_val));
+	SET_VAR_VALUE(vp,save_possibly_empty_str(var_val));
 	SET_VAR_FLAGS(vp,VAR_RESERVED);
 	return vp;
 }
@@ -89,7 +89,7 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 
 	val_str=getenv(name);
 	if( val_str != NULL ) {
-		SET_VAR_VALUE(vp, savestr(val_str) );
+		SET_VAR_VALUE(vp, save_possibly_empty_str(val_str) );
 		SET_VAR_FLAGS(vp, VAR_RESERVED );
 		if( creat_flags != VAR_RESERVED ){
 			sprintf(ERROR_STRING,
@@ -130,7 +130,7 @@ Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
@@ -163,7 +163,7 @@ abort();
 	if( VAR_VALUE(vp) != NULL ){
 		rls_str(VAR_VALUE(vp));
 	}
-	SET_VAR_VALUE(vp, savestr(var_val) );
+	SET_VAR_VALUE(vp, save_possibly_empty_str(var_val) );
 	return vp;
 }
 
@@ -184,16 +184,6 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 	Variable *vp;
 
 	vp=VAR_OF(name);
-//#ifdef CAUTIOUS
-//	if( vp != NULL ){
-//		sprintf(ERROR_STRING,
-//		"CAUTIOUS:  init_dynamic_var:  variable %s already exists!?",
-//			VAR_NAME(vp));
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
 	assert( vp == NULL );
 
 	vp = new_var_(QSP_ARG  name);
@@ -340,10 +330,10 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	lp=item_list(QSP_ARG  var__itp);
 	if( lp == NULL ) return;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	lc_frag = getbuf(strlen(frag)+1);
 	decap(lc_frag,frag);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		vp = (Variable *) NODE_DATA(np);
 		if( str1 == NULL ){
 			str1_size = (int) strlen(VAR_VALUE(vp)) + 1 + N_EXTRA_CHARS ;
@@ -422,7 +412,7 @@ void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 		}
 	} while(*start);
 
-	assign_var(QSP_ARG  VAR_NAME(vp), SB_BUF(sbp) );
+	assign_var(QSP_ARG  VAR_NAME(vp), sb_buffer(sbp) );
 	rls_stringbuf(sbp);
 }
 

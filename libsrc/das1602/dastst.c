@@ -285,7 +285,7 @@ static COMMAND_FUNC( read_adc )
 
 	dp = PICK_OBJ("data vector");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 #ifdef HAVE_DAS1602
 	if( ! VALID_ADC_PREC(dp) ){
@@ -797,7 +797,7 @@ static COMMAND_FUNC( write_dac )
 
 	CONFIRM_DAC
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 	if( ! VALID_ADC_PREC(dp) ){
 		sprintf(ERROR_STRING,
 		"Object %s has precision %s, should be %s or %s",
@@ -1090,7 +1090,7 @@ static COMMAND_FUNC( write_dio )
 	dp = PICK_OBJ("");
 
 	if( i < 0 ) return;
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
@@ -1136,7 +1136,7 @@ static COMMAND_FUNC( read_dio )
 	i=get_dio_channel(SINGLE_QSP_ARG);
 	dp = PICK_OBJ("");
 
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 	if( i < 0 ) return;
 
 #ifdef HAVE_DAS1602
@@ -1238,7 +1238,7 @@ static COMMAND_FUNC( read_nvram )
 
 	dp = PICK_OBJ("");
 
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
@@ -1281,7 +1281,7 @@ static COMMAND_FUNC( write_nvram )		/* sq */
 
 	dp = PICK_OBJ("");
 
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
@@ -1328,7 +1328,7 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
 	dp = PICK_OBJ("");
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 
@@ -1389,7 +1389,7 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
 	dp = PICK_OBJ("");
-	if(dp==NO_OBJ) return;
+	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
 

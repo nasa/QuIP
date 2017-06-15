@@ -12,7 +12,7 @@ ITEM_INTERFACE_DECLARATIONS(Opt_Param,opt_param,0)
 
 const char *opt_func_string=NULL;
 
-Opt_Pkg *curr_opt_pkg=NO_OPT_PKG;
+Opt_Pkg *curr_opt_pkg=NULL;
 
 void opt_param_info(QSP_ARG_DECL  Opt_Param *opp)
 {
@@ -39,15 +39,14 @@ void delete_opt_params(SINGLE_QSP_ARG_DECL)
 
 	lp = opt_param_list(SINGLE_QSP_ARG);
 	if( lp == NULL ) return;
-	np=lp->l_head;
-	while( np!= NO_NODE ){
+	np=QLIST_HEAD(lp);
+	while( np!= NULL ){
 		Opt_Param *opp;
 		Node *next;
 
 		opp = (Opt_Param *)(np->n_data);
 		next=np->n_next;
 		del_opt_param(QSP_ARG  opp);
-		rls_str(opp->op_name);
 		np=next;
 	}
 }
@@ -57,7 +56,7 @@ Opt_Param * add_opt_param(QSP_ARG_DECL  Opt_Param *opp)
 	Opt_Param *new_opp;
 
 	new_opp = new_opt_param(QSP_ARG  opp->op_name);
-	if( new_opp != NO_OPT_PARAM ){
+	if( new_opp != NULL ){
 		new_opp->ans = opp->ans;
 		new_opp->maxv = opp->maxv;
 		new_opp->minv = opp->minv;
@@ -78,7 +77,7 @@ float get_opt_param_value(QSP_ARG_DECL  const char *name)
 	Opt_Param *opp;
 
 	opp=get_opt_param(QSP_ARG  name);
-	if( opp==NO_OPT_PARAM ){
+	if( opp==NULL ){
 		sprintf(ERROR_STRING,"No optimization parameter \"%s\"",name);
 		NWARN(ERROR_STRING);
 		return(-1.0);

@@ -99,13 +99,13 @@
 #include "node.h"
 #include "function.h"
 /* #include "warproto.h" */
-#include "query.h"
 #include "quip_prot.h"
 #include "veclib/vec_func.h"
 #include "warn.h"
 #include "query_stack.h"	// BUG?
 
 #include "vectree.h"
+#include "subrt.h"
 
 /* for definition of function codes */
 #include "veclib/vecgen.h"
@@ -971,22 +971,22 @@ static const yytype_uint16 yyrline[] =
      940,   941,   947,   953,   959,   965,   971,   977,   983,   989,
     1002,  1004,  1005,  1006,  1014,  1019,  1025,  1026,  1027,  1038,
     1051,  1056,  1060,  1064,  1068,  1072,  1079,  1093,  1129,  1140,
-    1152,  1175,  1178,  1182,  1188,  1189,  1197,  1207,  1216,  1218,
-    1220,  1227,  1236,  1243,  1247,  1248,  1249,  1250,  1251,  1252,
-    1253,  1254,  1255,  1256,  1257,  1258,  1259,  1260,  1261,  1262,
-    1263,  1264,  1265,  1269,  1271,  1275,  1276,  1277,  1280,  1284,
-    1294,  1298,  1302,  1308,  1310,  1314,  1319,  1326,  1327,  1335,
-    1339,  1348,  1362,  1369,  1374,  1382,  1389,  1394,  1395,  1396,
-    1397,  1400,  1401,  1403,  1405,  1407,  1414,  1425,  1429,  1433,
-    1439,  1443,  1447,  1451,  1458,  1462,  1466,  1472,  1476,  1481,
-    1486,  1491,  1496,  1501,  1506,  1511,  1519,  1566,  1567,  1570,
-    1572,  1583,  1593,  1594,  1601,  1612,  1622,  1635,  1636,  1639,
-    1646,  1653,  1664,  1669,  1676,  1680,  1681,  1685,  1687,  1691,
-    1692,  1696,  1701,  1703,  1719,  1720,  1721,  1722,  1723,  1724,
-    1725,  1726,  1727,  1728,  1729,  1730,  1731,  1732,  1733,  1734,
-    1739,  1751,  1753,  1762,  1767,  1772,  1773,  1783,  1784,  1790,
-    1791,  1798,  1799,  1803,  1804,  1807,  1808,  1812,  1813,  1817,
-    1825,  1832,  1837,  1838,  1839,  1840,  1841,  1842
+    1152,  1169,  1172,  1176,  1182,  1183,  1191,  1201,  1210,  1212,
+    1214,  1221,  1230,  1237,  1241,  1242,  1243,  1244,  1245,  1246,
+    1247,  1248,  1249,  1250,  1251,  1252,  1253,  1254,  1255,  1256,
+    1257,  1258,  1259,  1263,  1265,  1269,  1270,  1271,  1274,  1278,
+    1288,  1292,  1296,  1302,  1304,  1308,  1313,  1320,  1321,  1329,
+    1333,  1342,  1356,  1363,  1368,  1376,  1383,  1388,  1389,  1390,
+    1391,  1394,  1395,  1397,  1399,  1401,  1408,  1419,  1423,  1427,
+    1433,  1437,  1441,  1445,  1452,  1456,  1460,  1466,  1470,  1475,
+    1480,  1485,  1490,  1495,  1500,  1505,  1513,  1560,  1561,  1564,
+    1566,  1577,  1587,  1588,  1595,  1606,  1616,  1629,  1630,  1633,
+    1640,  1647,  1658,  1663,  1670,  1674,  1675,  1679,  1681,  1685,
+    1686,  1690,  1695,  1697,  1713,  1714,  1715,  1716,  1717,  1718,
+    1719,  1720,  1721,  1722,  1723,  1724,  1725,  1726,  1727,  1728,
+    1733,  1745,  1747,  1756,  1761,  1766,  1767,  1777,  1778,  1784,
+    1785,  1792,  1793,  1797,  1798,  1801,  1802,  1806,  1807,  1811,
+    1819,  1826,  1831,  1832,  1833,  1834,  1835,  1836
 };
 #endif
 
@@ -3308,7 +3308,7 @@ yyreduce:
 			Undef_Sym *usp;
 
 			usp=undef_of(QSP_ARG  (yyvsp[(1) - (1)].e_string));
-			if( usp == NO_UNDEF ){
+			if( usp == NULL ){
 				/* BUG?  are contexts handled correctly??? */
 				sprintf(YY_ERR_STR,"Undefined symbol %s",(yyvsp[(1) - (1)].e_string));
 				yyerror(qsp,  YY_ERR_STR);
@@ -3772,7 +3772,7 @@ yyreduce:
     {
 			sprintf(YY_ERR_STR,"need to dereference pointer %s",VN_STRING((yyvsp[(3) - (4)].enp)));
 			yyerror(THIS_QSP,  YY_ERR_STR);
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
@@ -4101,7 +4101,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 844 "vectree.y"
     {
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
@@ -4392,7 +4392,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 1020 "vectree.y"
-    { (yyval.enp) = NO_VEXPR_NODE; }
+    { (yyval.enp) = NULL; }
     break;
 
   case 138:
@@ -4452,7 +4452,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1065 "vectree.y"
     {
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
@@ -4461,7 +4461,7 @@ yyreduce:
 /* Line 1455 of yacc.c  */
 #line 1069 "vectree.y"
     {
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
@@ -4471,7 +4471,7 @@ yyreduce:
 #line 1073 "vectree.y"
     {
 			yyerror(THIS_QSP,  (char *)"missing '}'");
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
@@ -4485,7 +4485,7 @@ yyreduce:
 			 * the declarations get interpreted a second time when we compile the nodes -
 			 * at least, for prototype declarations!?  Not a problem for regular declarations?
 			 */
-			if( (yyvsp[(3) - (4)].enp) != NO_VEXPR_NODE )
+			if( (yyvsp[(3) - (4)].enp) != NULL )
 				EVAL_DECL_TREE((yyvsp[(3) - (4)].enp));
 			(yyval.enp) = NODE1(T_PROTO,(yyvsp[(3) - (4)].enp));
 			SET_VN_STRING((yyval.enp), savestr((yyvsp[(1) - (4)].e_string)));
@@ -4522,7 +4522,7 @@ yyreduce:
 			 * the body...
 			 */
 
-			if( (yyvsp[(3) - (4)].enp) != NO_VEXPR_NODE )
+			if( (yyvsp[(3) - (4)].enp) != NULL )
 				EVAL_DECL_TREE((yyvsp[(3) - (4)].enp));
 
 			(yyval.enp)=NODE1(T_PROTO,(yyvsp[(3) - (4)].enp));
@@ -4572,13 +4572,7 @@ yyreduce:
 			/* BUG make sure that precision matches prototype decl */
 			Subrt *srp;
 			srp=subrt_of(QSP_ARG  VN_STRING((yyvsp[(2) - (3)].enp)));
-//#ifdef CAUTIOUS
-//			if( srp == NO_SUBRT ) {
-//				NODE_ERROR($2);
-//				ERROR1("CAUTIOUS:  missing subrt!?");
-//			}
-//#endif /* CAUTIOUS */
-			assert( srp != NO_SUBRT );
+			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,(yyvsp[(3) - (3)].enp));
 			(yyval.enp)=NODE0(T_SUBRT);
@@ -4591,16 +4585,16 @@ yyreduce:
   case 151:
 
 /* Line 1455 of yacc.c  */
-#line 1175 "vectree.y"
+#line 1169 "vectree.y"
     {
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
   case 152:
 
 /* Line 1455 of yacc.c  */
-#line 1179 "vectree.y"
+#line 1173 "vectree.y"
     {
 			(yyval.enp)=(yyvsp[(1) - (1)].enp);
 			}
@@ -4609,7 +4603,7 @@ yyreduce:
   case 153:
 
 /* Line 1455 of yacc.c  */
-#line 1183 "vectree.y"
+#line 1177 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_DECL_STAT_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
 			}
@@ -4618,9 +4612,9 @@ yyreduce:
   case 155:
 
 /* Line 1455 of yacc.c  */
-#line 1190 "vectree.y"
+#line 1184 "vectree.y"
     {
-			if( (yyval.enp) != NO_VEXPR_NODE ) {
+			if( (yyval.enp) != NULL ) {
 				// decl_stats are always evaluated,
 				// to create the objects for compilation...
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
@@ -4631,9 +4625,9 @@ yyreduce:
   case 156:
 
 /* Line 1455 of yacc.c  */
-#line 1198 "vectree.y"
+#line 1192 "vectree.y"
     {
-			if( (yyval.enp) != NO_VEXPR_NODE ) {
+			if( (yyval.enp) != NULL ) {
 				EVAL_IMMEDIATE((yyval.enp));
 				// We don't release here,
 				// because these nodes get passed up
@@ -4646,9 +4640,9 @@ yyreduce:
   case 157:
 
 /* Line 1455 of yacc.c  */
-#line 1208 "vectree.y"
+#line 1202 "vectree.y"
     {
-			if( (yyval.enp) != NO_VEXPR_NODE ) {
+			if( (yyval.enp) != NULL ) {
 				EVAL_IMMEDIATE((yyval.enp));
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
 			}
@@ -4658,21 +4652,21 @@ yyreduce:
   case 158:
 
 /* Line 1455 of yacc.c  */
-#line 1217 "vectree.y"
+#line 1211 "vectree.y"
     { SET_TOP_NODE((yyvsp[(1) - (2)].enp));  }
     break;
 
   case 159:
 
 /* Line 1455 of yacc.c  */
-#line 1219 "vectree.y"
+#line 1213 "vectree.y"
     { SET_TOP_NODE((yyvsp[(1) - (1)].enp)); }
     break;
 
   case 160:
 
 /* Line 1455 of yacc.c  */
-#line 1220 "vectree.y"
+#line 1214 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(2) - (3)].enp));
 			if( (yyvsp[(1) - (3)].enp) != NULL && NODE_IS_FINISHED((yyvsp[(1) - (3)].enp)) &&
@@ -4685,7 +4679,7 @@ yyreduce:
   case 161:
 
 /* Line 1455 of yacc.c  */
-#line 1227 "vectree.y"
+#line 1221 "vectree.y"
     {
 			// We don't need to make lists of statements
 			// already executed!?
@@ -4700,9 +4694,9 @@ yyreduce:
   case 162:
 
 /* Line 1455 of yacc.c  */
-#line 1237 "vectree.y"
+#line 1231 "vectree.y"
     {
-			(yyval.enp) = NO_VEXPR_NODE;
+			(yyval.enp) = NULL;
 			SET_TOP_NODE((yyval.enp));
 			}
     break;
@@ -4710,193 +4704,193 @@ yyreduce:
   case 164:
 
 /* Line 1455 of yacc.c  */
-#line 1247 "vectree.y"
+#line 1241 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_BY);	}
     break;
 
   case 165:
 
 /* Line 1455 of yacc.c  */
-#line 1248 "vectree.y"
+#line 1242 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_CHAR);	}
     break;
 
   case 166:
 
 /* Line 1455 of yacc.c  */
-#line 1249 "vectree.y"
+#line 1243 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_STR);	}
     break;
 
   case 167:
 
 /* Line 1455 of yacc.c  */
-#line 1250 "vectree.y"
+#line 1244 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_SP);	}
     break;
 
   case 168:
 
 /* Line 1455 of yacc.c  */
-#line 1251 "vectree.y"
+#line 1245 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DP);	}
     break;
 
   case 169:
 
 /* Line 1455 of yacc.c  */
-#line 1252 "vectree.y"
+#line 1246 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_CPX);	}
     break;
 
   case 170:
 
 /* Line 1455 of yacc.c  */
-#line 1253 "vectree.y"
+#line 1247 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DBLCPX);	}
     break;
 
   case 171:
 
 /* Line 1455 of yacc.c  */
-#line 1254 "vectree.y"
+#line 1248 "vectree.y"
     { (yyval.prec_p)	= PREC_FOR_CODE(PREC_QUAT);	}
     break;
 
   case 172:
 
 /* Line 1455 of yacc.c  */
-#line 1255 "vectree.y"
+#line 1249 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DBLQUAT);	}
     break;
 
   case 173:
 
 /* Line 1455 of yacc.c  */
-#line 1256 "vectree.y"
+#line 1250 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_IN);	}
     break;
 
   case 174:
 
 /* Line 1455 of yacc.c  */
-#line 1257 "vectree.y"
+#line 1251 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DI);	}
     break;
 
   case 175:
 
 /* Line 1455 of yacc.c  */
-#line 1258 "vectree.y"
+#line 1252 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_LI);	}
     break;
 
   case 176:
 
 /* Line 1455 of yacc.c  */
-#line 1259 "vectree.y"
+#line 1253 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_UBY);	}
     break;
 
   case 177:
 
 /* Line 1455 of yacc.c  */
-#line 1260 "vectree.y"
+#line 1254 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_UIN);	}
     break;
 
   case 178:
 
 /* Line 1455 of yacc.c  */
-#line 1261 "vectree.y"
+#line 1255 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_UDI);	}
     break;
 
   case 179:
 
 /* Line 1455 of yacc.c  */
-#line 1262 "vectree.y"
+#line 1256 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_ULI);	}
     break;
 
   case 180:
 
 /* Line 1455 of yacc.c  */
-#line 1263 "vectree.y"
+#line 1257 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_BIT);	}
     break;
 
   case 181:
 
 /* Line 1455 of yacc.c  */
-#line 1264 "vectree.y"
+#line 1258 "vectree.y"
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_COLOR);	}
     break;
 
   case 182:
 
 /* Line 1455 of yacc.c  */
-#line 1265 "vectree.y"
+#line 1259 "vectree.y"
     { (yyval.prec_p)	= PREC_FOR_CODE(PREC_VOID);	}
     break;
 
   case 183:
 
 /* Line 1455 of yacc.c  */
-#line 1270 "vectree.y"
+#line 1264 "vectree.y"
     { (yyval.enp)=NODE1(T_INFO,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 184:
 
 /* Line 1455 of yacc.c  */
-#line 1272 "vectree.y"
+#line 1266 "vectree.y"
     { (yyval.enp)=NODE1(T_DISPLAY,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 185:
 
 /* Line 1455 of yacc.c  */
-#line 1275 "vectree.y"
+#line 1269 "vectree.y"
     { (yyval.enp)=NODE0(T_EXIT); }
     break;
 
   case 186:
 
 /* Line 1455 of yacc.c  */
-#line 1276 "vectree.y"
+#line 1270 "vectree.y"
     { (yyval.enp)=NODE0(T_EXIT); }
     break;
 
   case 187:
 
 /* Line 1455 of yacc.c  */
-#line 1277 "vectree.y"
+#line 1271 "vectree.y"
     { (yyval.enp)=NODE1(T_EXIT,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 188:
 
 /* Line 1455 of yacc.c  */
-#line 1281 "vectree.y"
+#line 1275 "vectree.y"
     {
-			(yyval.enp)=NODE1(T_RETURN,NO_VEXPR_NODE);
+			(yyval.enp)=NODE1(T_RETURN,NULL);
 			}
     break;
 
   case 189:
 
 /* Line 1455 of yacc.c  */
-#line 1285 "vectree.y"
+#line 1279 "vectree.y"
     {
-			(yyval.enp)=NODE1(T_RETURN,NO_VEXPR_NODE);
+			(yyval.enp)=NODE1(T_RETURN,NULL);
 			}
     break;
 
   case 190:
 
 /* Line 1455 of yacc.c  */
-#line 1295 "vectree.y"
+#line 1289 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_RETURN,(yyvsp[(2) - (2)].enp));
 			}
@@ -4905,7 +4899,7 @@ yyreduce:
   case 191:
 
 /* Line 1455 of yacc.c  */
-#line 1299 "vectree.y"
+#line 1293 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_RETURN,(yyvsp[(3) - (4)].enp));
 			}
@@ -4914,7 +4908,7 @@ yyreduce:
   case 192:
 
 /* Line 1455 of yacc.c  */
-#line 1303 "vectree.y"
+#line 1297 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_RETURN,(yyvsp[(2) - (2)].enp));
 			}
@@ -4923,21 +4917,21 @@ yyreduce:
   case 193:
 
 /* Line 1455 of yacc.c  */
-#line 1309 "vectree.y"
+#line 1303 "vectree.y"
     { (yyval.enp)=NODE2(T_SAVE,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp)); }
     break;
 
   case 194:
 
 /* Line 1455 of yacc.c  */
-#line 1311 "vectree.y"
+#line 1305 "vectree.y"
     { (yyval.enp)=NODE1(T_FILETYPE,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 195:
 
 /* Line 1455 of yacc.c  */
-#line 1315 "vectree.y"
+#line 1309 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_SCRIPT,(yyvsp[(3) - (4)].enp));
 			SET_VN_SUBRT((yyval.enp), (yyvsp[(1) - (4)].srp));
@@ -4947,9 +4941,9 @@ yyreduce:
   case 196:
 
 /* Line 1455 of yacc.c  */
-#line 1320 "vectree.y"
+#line 1314 "vectree.y"
     {
-			(yyval.enp)=NODE1(T_SCRIPT,NO_VEXPR_NODE);
+			(yyval.enp)=NODE1(T_SCRIPT,NULL);
 			SET_VN_SUBRT((yyval.enp), (yyvsp[(1) - (3)].srp));
 			}
     break;
@@ -4957,18 +4951,18 @@ yyreduce:
   case 198:
 
 /* Line 1455 of yacc.c  */
-#line 1328 "vectree.y"
+#line 1322 "vectree.y"
     {
 			sprintf(YY_ERR_STR,"undefined string pointer \"%s\"",(yyvsp[(1) - (1)].e_string));
 			yyerror(THIS_QSP,  YY_ERR_STR);
-			(yyval.enp)=NO_VEXPR_NODE;
+			(yyval.enp)=NULL;
 			}
     break;
 
   case 199:
 
 /* Line 1455 of yacc.c  */
-#line 1336 "vectree.y"
+#line 1330 "vectree.y"
     {
 			(yyval.enp) = NODE2(T_STRCPY,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
 			}
@@ -4977,7 +4971,7 @@ yyreduce:
   case 200:
 
 /* Line 1455 of yacc.c  */
-#line 1340 "vectree.y"
+#line 1334 "vectree.y"
     {
 			(yyval.enp) = NODE2(T_STRCAT,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
 			}
@@ -4986,7 +4980,7 @@ yyreduce:
   case 201:
 
 /* Line 1455 of yacc.c  */
-#line 1349 "vectree.y"
+#line 1343 "vectree.y"
     {
 			(yyval.enp) = NODE1(T_CALL_NATIVE,(yyvsp[(3) - (4)].enp));
 			SET_VN_INTVAL((yyval.enp), (yyvsp[(1) - (4)].intval));
@@ -4996,7 +4990,7 @@ yyreduce:
   case 202:
 
 /* Line 1455 of yacc.c  */
-#line 1363 "vectree.y"
+#line 1357 "vectree.y"
     {
 			Vec_Expr_Node *enp,*enp2;
 			enp=NODE2(T_EXPR_LIST,(yyvsp[(5) - (12)].enp),(yyvsp[(7) - (12)].enp));
@@ -5008,7 +5002,7 @@ yyreduce:
   case 203:
 
 /* Line 1455 of yacc.c  */
-#line 1370 "vectree.y"
+#line 1364 "vectree.y"
     {
 			(yyval.enp) = NODE0(T_CLR_OPT_PARAMS);
 			}
@@ -5017,7 +5011,7 @@ yyreduce:
   case 204:
 
 /* Line 1455 of yacc.c  */
-#line 1375 "vectree.y"
+#line 1369 "vectree.y"
     {
 			Vec_Expr_Node *enp1,*enp2,*enp3;
 			enp1=NODE2(T_EXPR_LIST,(yyvsp[(3) - (14)].enp),(yyvsp[(5) - (14)].enp));
@@ -5030,7 +5024,7 @@ yyreduce:
   case 205:
 
 /* Line 1455 of yacc.c  */
-#line 1383 "vectree.y"
+#line 1377 "vectree.y"
     {
 			(yyval.enp) = NODE0(T_OPTIMIZE);
 			SET_VN_SUBRT((yyval.enp), (yyvsp[(3) - (4)].srp));
@@ -5040,63 +5034,63 @@ yyreduce:
   case 206:
 
 /* Line 1455 of yacc.c  */
-#line 1390 "vectree.y"
+#line 1384 "vectree.y"
     { (yyval.enp)=NODE1(T_OUTPUT_FILE,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 207:
 
 /* Line 1455 of yacc.c  */
-#line 1394 "vectree.y"
+#line 1388 "vectree.y"
     { (yyval.enp)=NODE1(T_EXP_PRINT,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 208:
 
 /* Line 1455 of yacc.c  */
-#line 1395 "vectree.y"
+#line 1389 "vectree.y"
     { (yyval.enp)=NODE1(T_EXP_PRINT,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 209:
 
 /* Line 1455 of yacc.c  */
-#line 1396 "vectree.y"
+#line 1390 "vectree.y"
     { (yyval.enp)=NODE1(T_ADVISE,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 210:
 
 /* Line 1455 of yacc.c  */
-#line 1397 "vectree.y"
+#line 1391 "vectree.y"
     { (yyval.enp)=NODE1(T_WARN,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 212:
 
 /* Line 1455 of yacc.c  */
-#line 1402 "vectree.y"
+#line 1396 "vectree.y"
     { (yyval.e_string) = OBJ_NAME((yyvsp[(1) - (1)].dp)); }
     break;
 
   case 213:
 
 /* Line 1455 of yacc.c  */
-#line 1404 "vectree.y"
+#line 1398 "vectree.y"
     { (yyval.e_string) = ID_NAME((yyvsp[(1) - (1)].idp)); }
     break;
 
   case 214:
 
 /* Line 1455 of yacc.c  */
-#line 1406 "vectree.y"
+#line 1400 "vectree.y"
     { (yyval.e_string) = ID_NAME((yyvsp[(1) - (1)].idp)); }
     break;
 
   case 215:
 
 /* Line 1455 of yacc.c  */
-#line 1408 "vectree.y"
+#line 1402 "vectree.y"
     {
 			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
 			(yyval.e_string)="<illegal_keyword_use>";
@@ -5106,7 +5100,7 @@ yyreduce:
   case 216:
 
 /* Line 1455 of yacc.c  */
-#line 1414 "vectree.y"
+#line 1408 "vectree.y"
     {
 			(yyval.enp) = NODE0(T_SCAL_DECL);
 			// WHY VN_STRING and not VN_DECL_NAME???
@@ -5117,7 +5111,7 @@ yyreduce:
   case 217:
 
 /* Line 1455 of yacc.c  */
-#line 1426 "vectree.y"
+#line 1420 "vectree.y"
     {
 			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(1) - (1)].enp)));
 			}
@@ -5126,7 +5120,7 @@ yyreduce:
   case 218:
 
 /* Line 1455 of yacc.c  */
-#line 1430 "vectree.y"
+#line 1424 "vectree.y"
     {
 			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(1) - (1)].enp)));
 			}
@@ -5135,7 +5129,7 @@ yyreduce:
   case 219:
 
 /* Line 1455 of yacc.c  */
-#line 1434 "vectree.y"
+#line 1428 "vectree.y"
     {
 			/* function pointer */
 			(yyval.enp) = NODE1(T_FUNCPTR_DECL,(yyvsp[(6) - (7)].enp));
@@ -5146,7 +5140,7 @@ yyreduce:
   case 220:
 
 /* Line 1455 of yacc.c  */
-#line 1439 "vectree.y"
+#line 1433 "vectree.y"
     {
 			(yyval.enp) = NODE1(T_CSCAL_DECL,(yyvsp[(3) - (4)].enp));
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (4)].e_string)));
@@ -5156,7 +5150,7 @@ yyreduce:
   case 221:
 
 /* Line 1455 of yacc.c  */
-#line 1443 "vectree.y"
+#line 1437 "vectree.y"
     {
 			(yyval.enp) = NODE1(T_VEC_DECL,(yyvsp[(3) - (4)].enp));
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (4)].e_string)));
@@ -5166,7 +5160,7 @@ yyreduce:
   case 222:
 
 /* Line 1455 of yacc.c  */
-#line 1447 "vectree.y"
+#line 1441 "vectree.y"
     {
 			(yyval.enp) = NODE2(T_CVEC_DECL,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp));
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
@@ -5176,7 +5170,7 @@ yyreduce:
   case 223:
 
 /* Line 1455 of yacc.c  */
-#line 1451 "vectree.y"
+#line 1445 "vectree.y"
     {
 			// The type is stored at the parent node...
 			// Since we "compile" the nodes depth first,
@@ -5189,7 +5183,7 @@ yyreduce:
   case 224:
 
 /* Line 1455 of yacc.c  */
-#line 1458 "vectree.y"
+#line 1452 "vectree.y"
     {
 			(yyval.enp)=NODE3(T_CIMG_DECL,(yyvsp[(3) - (10)].enp),(yyvsp[(6) - (10)].enp),(yyvsp[(9) - (10)].enp));
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (10)].e_string)));
@@ -5199,7 +5193,7 @@ yyreduce:
   case 225:
 
 /* Line 1455 of yacc.c  */
-#line 1462 "vectree.y"
+#line 1456 "vectree.y"
     {
 			(yyval.enp)=NODE3(T_SEQ_DECL,(yyvsp[(3) - (10)].enp),(yyvsp[(6) - (10)].enp),(yyvsp[(9) - (10)].enp));
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (10)].e_string)));
@@ -5209,7 +5203,7 @@ yyreduce:
   case 226:
 
 /* Line 1455 of yacc.c  */
-#line 1466 "vectree.y"
+#line 1460 "vectree.y"
     {
 			Vec_Expr_Node *enp;
 			enp = NODE2(T_EXPR_LIST,(yyvsp[(9) - (13)].enp),(yyvsp[(12) - (13)].enp));
@@ -5221,9 +5215,9 @@ yyreduce:
   case 227:
 
 /* Line 1455 of yacc.c  */
-#line 1472 "vectree.y"
+#line 1466 "vectree.y"
     {
-			(yyval.enp) = NODE1(T_CSCAL_DECL,NO_VEXPR_NODE);
+			(yyval.enp) = NODE1(T_CSCAL_DECL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (3)].e_string)));
 			}
     break;
@@ -5231,9 +5225,9 @@ yyreduce:
   case 228:
 
 /* Line 1455 of yacc.c  */
-#line 1477 "vectree.y"
+#line 1471 "vectree.y"
     {
-			(yyval.enp) = NODE1(T_VEC_DECL,NO_VEXPR_NODE);
+			(yyval.enp) = NODE1(T_VEC_DECL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (3)].e_string)));
 			}
     break;
@@ -5241,9 +5235,9 @@ yyreduce:
   case 229:
 
 /* Line 1455 of yacc.c  */
-#line 1482 "vectree.y"
+#line 1476 "vectree.y"
     {
-			(yyval.enp) = NODE2(T_CVEC_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			(yyval.enp) = NODE2(T_CVEC_DECL,NULL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (5)].e_string)));
 			}
     break;
@@ -5251,9 +5245,9 @@ yyreduce:
   case 230:
 
 /* Line 1455 of yacc.c  */
-#line 1487 "vectree.y"
+#line 1481 "vectree.y"
     {
-			(yyval.enp) = NODE2(T_IMG_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			(yyval.enp) = NODE2(T_IMG_DECL,NULL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (5)].e_string)));
 			}
     break;
@@ -5261,9 +5255,9 @@ yyreduce:
   case 231:
 
 /* Line 1455 of yacc.c  */
-#line 1492 "vectree.y"
+#line 1486 "vectree.y"
     {
-			(yyval.enp) = NODE3(T_CIMG_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			(yyval.enp) = NODE3(T_CIMG_DECL,NULL,NULL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
 			}
     break;
@@ -5271,9 +5265,9 @@ yyreduce:
   case 232:
 
 /* Line 1455 of yacc.c  */
-#line 1497 "vectree.y"
+#line 1491 "vectree.y"
     {
-			(yyval.enp) = NODE3(T_SEQ_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			(yyval.enp) = NODE3(T_SEQ_DECL,NULL,NULL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
 			}
     break;
@@ -5281,9 +5275,9 @@ yyreduce:
   case 233:
 
 /* Line 1455 of yacc.c  */
-#line 1502 "vectree.y"
+#line 1496 "vectree.y"
     {
-			(yyval.enp) = NODE3(T_CSEQ_DECL,NO_VEXPR_NODE,NO_VEXPR_NODE,NO_VEXPR_NODE);
+			(yyval.enp) = NODE3(T_CSEQ_DECL,NULL,NULL,NULL);
 			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (9)].e_string)));
 			}
     break;
@@ -5291,7 +5285,7 @@ yyreduce:
   case 234:
 
 /* Line 1455 of yacc.c  */
-#line 1507 "vectree.y"
+#line 1501 "vectree.y"
     {
 			(yyval.enp)=NODE0(T_PTR_DECL);
 			SET_VN_DECL_NAME((yyval.enp), savestr((yyvsp[(2) - (2)].e_string)));
@@ -5301,7 +5295,7 @@ yyreduce:
   case 235:
 
 /* Line 1455 of yacc.c  */
-#line 1512 "vectree.y"
+#line 1506 "vectree.y"
     {
 			(yyval.enp)=NODE0(T_BADNAME);
 			SET_VN_STRING((yyval.enp), savestr( FUNC_NAME( (yyvsp[(1) - (1)].func_p) )) );
@@ -5314,7 +5308,7 @@ yyreduce:
   case 236:
 
 /* Line 1455 of yacc.c  */
-#line 1520 "vectree.y"
+#line 1514 "vectree.y"
     {
 			(yyval.enp)=NODE0(T_BADNAME);
 			SET_VN_STRING((yyval.enp), savestr( FUNC_NAME((yyvsp[(1) - (1)].func_p)) ) );
@@ -5327,7 +5321,7 @@ yyreduce:
   case 238:
 
 /* Line 1455 of yacc.c  */
-#line 1567 "vectree.y"
+#line 1561 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_DECL_INIT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
 			}
@@ -5336,7 +5330,7 @@ yyreduce:
   case 239:
 
 /* Line 1455 of yacc.c  */
-#line 1570 "vectree.y"
+#line 1564 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_DECL_ITEM_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
     break;
@@ -5344,7 +5338,7 @@ yyreduce:
   case 240:
 
 /* Line 1455 of yacc.c  */
-#line 1572 "vectree.y"
+#line 1566 "vectree.y"
     {
 			Vec_Expr_Node *enp;
 			enp=NODE2(T_DECL_INIT,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
@@ -5354,7 +5348,7 @@ yyreduce:
   case 241:
 
 /* Line 1455 of yacc.c  */
-#line 1583 "vectree.y"
+#line 1577 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_DECL_STAT,(yyvsp[(2) - (2)].enp));
 /*
@@ -5368,7 +5362,7 @@ yyreduce:
   case 243:
 
 /* Line 1455 of yacc.c  */
-#line 1595 "vectree.y"
+#line 1589 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_DECL_STAT_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp));
 			}
@@ -5377,7 +5371,7 @@ yyreduce:
   case 244:
 
 /* Line 1455 of yacc.c  */
-#line 1601 "vectree.y"
+#line 1595 "vectree.y"
     {
 			(yyval.enp) = NODE1(T_DECL_STAT,(yyvsp[(2) - (3)].enp));
 /*
@@ -5394,7 +5388,7 @@ yyreduce:
   case 245:
 
 /* Line 1455 of yacc.c  */
-#line 1612 "vectree.y"
+#line 1606 "vectree.y"
     {
 			(yyval.enp) = NODE1(T_EXTERN_DECL,(yyvsp[(3) - (4)].enp));
 /*
@@ -5410,7 +5404,7 @@ yyreduce:
   case 246:
 
 /* Line 1455 of yacc.c  */
-#line 1622 "vectree.y"
+#line 1616 "vectree.y"
     {
 			(yyval.enp) = NODE1(T_DECL_STAT,(yyvsp[(3) - (4)].enp));
 /*
@@ -5427,7 +5421,7 @@ yyreduce:
   case 249:
 
 /* Line 1455 of yacc.c  */
-#line 1640 "vectree.y"
+#line 1634 "vectree.y"
     {
 				if( (yyvsp[(5) - (5)].enp) != NULL )
 					(yyval.enp) = NODE2(T_WHILE,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
@@ -5439,7 +5433,7 @@ yyreduce:
   case 250:
 
 /* Line 1455 of yacc.c  */
-#line 1647 "vectree.y"
+#line 1641 "vectree.y"
     {
 				if( (yyvsp[(5) - (5)].enp) != NULL )
 					(yyval.enp) = NODE2(T_UNTIL,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
@@ -5451,7 +5445,7 @@ yyreduce:
   case 251:
 
 /* Line 1455 of yacc.c  */
-#line 1654 "vectree.y"
+#line 1648 "vectree.y"
     {
 			Vec_Expr_Node *loop_enp;
 
@@ -5467,7 +5461,7 @@ yyreduce:
   case 252:
 
 /* Line 1455 of yacc.c  */
-#line 1665 "vectree.y"
+#line 1659 "vectree.y"
     {
 			/* we want to preserve a strict tree structure */
 			(yyval.enp) = NODE2(T_DO_WHILE,(yyvsp[(2) - (7)].enp),(yyvsp[(5) - (7)].enp));
@@ -5477,7 +5471,7 @@ yyreduce:
   case 253:
 
 /* Line 1455 of yacc.c  */
-#line 1670 "vectree.y"
+#line 1664 "vectree.y"
     {
 			/* we want to preserve a strict tree structure */
 			(yyval.enp) = NODE2(T_DO_UNTIL,(yyvsp[(2) - (7)].enp),(yyvsp[(5) - (7)].enp));
@@ -5487,84 +5481,84 @@ yyreduce:
   case 254:
 
 /* Line 1455 of yacc.c  */
-#line 1677 "vectree.y"
+#line 1671 "vectree.y"
     { (yyval.enp) = NODE2(T_CASE_STAT,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp)); }
     break;
 
   case 256:
 
 /* Line 1455 of yacc.c  */
-#line 1682 "vectree.y"
+#line 1676 "vectree.y"
     { (yyval.enp) = NODE2(T_CASE_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp)); }
     break;
 
   case 257:
 
 /* Line 1455 of yacc.c  */
-#line 1686 "vectree.y"
+#line 1680 "vectree.y"
     { (yyval.enp) = NODE1(T_CASE,(yyvsp[(2) - (3)].enp)); }
     break;
 
   case 258:
 
 /* Line 1455 of yacc.c  */
-#line 1688 "vectree.y"
+#line 1682 "vectree.y"
     { (yyval.enp) = NODE0(T_DEFAULT); }
     break;
 
   case 260:
 
 /* Line 1455 of yacc.c  */
-#line 1693 "vectree.y"
+#line 1687 "vectree.y"
     { (yyval.enp) = NODE2(T_SWITCH_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp)); }
     break;
 
   case 261:
 
 /* Line 1455 of yacc.c  */
-#line 1697 "vectree.y"
+#line 1691 "vectree.y"
     { (yyval.enp)=NODE2(T_SWITCH,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp)); }
     break;
 
   case 262:
 
 /* Line 1455 of yacc.c  */
-#line 1702 "vectree.y"
-    { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp),NO_VEXPR_NODE); }
+#line 1696 "vectree.y"
+    { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp),NULL); }
     break;
 
   case 263:
 
 /* Line 1455 of yacc.c  */
-#line 1704 "vectree.y"
+#line 1698 "vectree.y"
     { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[(3) - (7)].enp),(yyvsp[(5) - (7)].enp),(yyvsp[(7) - (7)].enp)); }
     break;
 
   case 264:
 
 /* Line 1455 of yacc.c  */
-#line 1719 "vectree.y"
+#line 1713 "vectree.y"
     { (yyval.enp) = NULL; }
     break;
 
   case 277:
 
 /* Line 1455 of yacc.c  */
-#line 1732 "vectree.y"
+#line 1726 "vectree.y"
     { (yyval.enp)=NODE0(T_BREAK); }
     break;
 
   case 278:
 
 /* Line 1455 of yacc.c  */
-#line 1733 "vectree.y"
+#line 1727 "vectree.y"
     { (yyval.enp)=NODE0(T_CONTINUE); }
     break;
 
   case 279:
 
 /* Line 1455 of yacc.c  */
-#line 1735 "vectree.y"
+#line 1729 "vectree.y"
     {
 			(yyval.enp) = NODE0(T_GO_BACK);
 			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[(2) - (2)].idp))));
@@ -5574,7 +5568,7 @@ yyreduce:
   case 280:
 
 /* Line 1455 of yacc.c  */
-#line 1740 "vectree.y"
+#line 1734 "vectree.y"
     {
 			(yyval.enp) = NODE0(T_GO_FWD);
 			SET_VN_STRING((yyval.enp), savestr((yyvsp[(2) - (2)].e_string)));
@@ -5584,21 +5578,21 @@ yyreduce:
   case 281:
 
 /* Line 1455 of yacc.c  */
-#line 1752 "vectree.y"
+#line 1746 "vectree.y"
     { (yyval.enp) = (yyvsp[(1) - (1)].enp); }
     break;
 
   case 282:
 
 /* Line 1455 of yacc.c  */
-#line 1754 "vectree.y"
+#line 1748 "vectree.y"
     { (yyval.enp) = (yyvsp[(1) - (1)].enp); }
     break;
 
   case 283:
 
 /* Line 1455 of yacc.c  */
-#line 1762 "vectree.y"
+#line 1756 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_COMP_OBJ,(yyvsp[(2) - (3)].enp));
 			}
@@ -5607,7 +5601,7 @@ yyreduce:
   case 284:
 
 /* Line 1455 of yacc.c  */
-#line 1767 "vectree.y"
+#line 1761 "vectree.y"
     {
 			(yyval.enp)=NODE1(T_LIST_OBJ,(yyvsp[(2) - (3)].enp));
 			}
@@ -5616,7 +5610,7 @@ yyreduce:
   case 286:
 
 /* Line 1455 of yacc.c  */
-#line 1774 "vectree.y"
+#line 1768 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_COMP_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
 			}
@@ -5625,7 +5619,7 @@ yyreduce:
   case 288:
 
 /* Line 1455 of yacc.c  */
-#line 1785 "vectree.y"
+#line 1779 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_ROW_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
 			}
@@ -5634,7 +5628,7 @@ yyreduce:
   case 290:
 
 /* Line 1455 of yacc.c  */
-#line 1792 "vectree.y"
+#line 1786 "vectree.y"
     {
 			(yyval.enp)=NODE2(T_EXPR_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
 			}
@@ -5643,28 +5637,28 @@ yyreduce:
   case 292:
 
 /* Line 1455 of yacc.c  */
-#line 1800 "vectree.y"
+#line 1794 "vectree.y"
     { (yyval.enp)=NODE2(T_PRINT_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
     break;
 
   case 296:
 
 /* Line 1455 of yacc.c  */
-#line 1809 "vectree.y"
+#line 1803 "vectree.y"
     { (yyval.enp)=NODE2(T_MIXED_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
     break;
 
   case 298:
 
 /* Line 1455 of yacc.c  */
-#line 1814 "vectree.y"
+#line 1808 "vectree.y"
     { (yyval.enp)=NODE2(T_STRING_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
     break;
 
   case 299:
 
 /* Line 1455 of yacc.c  */
-#line 1818 "vectree.y"
+#line 1812 "vectree.y"
     {
 			const char *s;
 			s=savestr((yyvsp[(1) - (1)].e_string));
@@ -5677,28 +5671,28 @@ yyreduce:
   case 300:
 
 /* Line 1455 of yacc.c  */
-#line 1826 "vectree.y"
+#line 1820 "vectree.y"
     { (yyval.enp) = NODE1(T_NAME_FUNC,(yyvsp[(3) - (4)].enp)); }
     break;
 
   case 306:
 
 /* Line 1455 of yacc.c  */
-#line 1841 "vectree.y"
+#line 1835 "vectree.y"
     { (yyval.enp) = (yyvsp[(2) - (3)].enp); }
     break;
 
   case 307:
 
 /* Line 1455 of yacc.c  */
-#line 1842 "vectree.y"
+#line 1836 "vectree.y"
     { (yyval.enp) = (yyvsp[(2) - (3)].enp); }
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 5702 "vectree.c"
+#line 5696 "vectree.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -5910,7 +5904,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 1890 "vectree.y"
+#line 1884 "vectree.y"
 
 
 /* table of keywords */
@@ -6227,6 +6221,7 @@ nexttok:
 
 	if( *YY_CP == 0 ){	/* nothing in the buffer? */
 		int ql;
+		int l;
 
 		/* BUG since qword doesn't tell us about line breaks,
 		 * it is hard to know when to zero the line buffer.
@@ -6274,25 +6269,15 @@ nexttok:
 		 */
 		strcpy(yy_word_buf,NAMEOF("statement"));
 		YY_CP=yy_word_buf;
-/*
-sprintf(ERROR_STRING,"read word \"%s\", lineno is now %d, qlevel = %d",
-YY_CP,query[ql].q_lineno,qlevel);
-advise(ERROR_STRING);
-*/
 
 		/* BUG?  lookahead advances lineno?? */
 		/* BUG no line numbers in macros? */
 		// Should we compare lineno or rdlineno???
-		if( QRY_LINENO(QRY_AT_LEVEL(THIS_QSP,ql)) != LASTLINENO ){
-/*
-sprintf(ERROR_STRING,"line number changed from %d to %d, saving line \"%s\"",
-LASTLINENO,query[ql].q_lineno,YY_INPUT_LINE);
-advise(ERROR_STRING);
-*/
+		if( (l=current_line_number(SINGLE_QSP_ARG)) != LASTLINENO ){
 			strcpy(YY_LAST_LINE,YY_INPUT_LINE);
 			YY_INPUT_LINE[0]=0;
-			SET_PARSER_LINENO( QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) ) );
-			SET_LASTLINENO( QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) ) );
+			SET_PARSER_LINENO( l );
+			SET_LASTLINENO( l );
 		}
 
 		if( (strlen(YY_INPUT_LINE) + strlen(YY_CP) + 2) >= YY_LLEN ){
@@ -6682,13 +6667,6 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 
 	i=whkeyword(vt_native_func_tbl,CURR_STRING);
 	if( i!=(-1) ){
-//#ifdef CAUTIOUS
-//if( i != vt_native_func_tbl[i].kw_code ){
-//sprintf(ERROR_STRING,"CAUTIOUS:  OOPS vt_native_func_tbl[%d].kw_code = %d (expected %d)",i,vt_native_func_tbl[i].kw_code,i);
-//ERROR1(ERROR_STRING);
-//}
-//#endif /* CAUTIOUS */
-
 		// this assertion says that the table is in the correct order,
 		// either by initialization or sorting...
 		assert( i == vt_native_func_tbl[i].kw_code );
@@ -6714,12 +6692,9 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 			case DOBJ_FUNCTYP:	return(DATA_FUNC);	break;
 			case SIZE_FUNCTYP:	return(SIZE_FUNC);	break;
 			case TS_FUNCTYP:	return(TS_FUNC);	break;
-//#ifdef CAUTIOUS
 			default:
-//				NERROR1("CAUTIOUS:  name_token:  bad function type!?");
 				assert( AERROR("name_token:  bad function type!?") );
 				break;
-//#endif /* CAUTIOUS */
 		}
 	}
 
@@ -6729,7 +6704,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	 */
 	
 	srp = subrt_of(QSP_ARG  CURR_STRING);
-	if( srp != NO_SUBRT ){
+	if( srp != NULL ){
 		yylvp->srp = srp;
 		if( IS_SCRIPT(srp) )
 			return(SCRIPTFUNC);
@@ -6741,7 +6716,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	}
 
 	idp = ID_OF( CURR_STRING );
-	if( idp != NO_IDENTIFIER ){
+	if( idp != NULL ){
 		if( IS_STRING_ID(idp) ){
 			yylvp->idp = idp;
 			return(STRNAME);
@@ -6769,12 +6744,9 @@ WARN(ERROR_STRING);
 			yylvp->idp = idp;
 			return(LABELNAME);
 		}
-//#ifdef CAUTIOUS
 		else {
-//			WARN("CAUTIOUS:  unhandled identifier type!?");
 			assert( AERROR("unhandled identifier type!?") );
 		}
-//#endif /* CAUTIOUS */
 
 	} else {
 		yylvp->e_string=CURR_STRING;
@@ -6812,14 +6784,14 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	SET_TOP_NODE(NULL);
 
 	// we only use the last node for a commented out error dump?
-	LAST_NODE=NO_VEXPR_NODE;
+	LAST_NODE=NULL;
 
 	/* The best way to do this would be to pass qsp to yyparse, but since this
 	 * routine is generated automatically by bison, we would have to hand-edit
 	 * vectree.c each time we run bison...
 	 */
 	stat=yyparse(THIS_QSP);
-	if( TOP_NODE != NO_VEXPR_NODE )	/* successful parsing */
+	if( TOP_NODE != NULL )	/* successful parsing */
 		{
 		if( dumpit ) {
 			print_shape_key(SINGLE_QSP_ARG);
@@ -6859,7 +6831,7 @@ fprintf(stderr,"yyerror BEGIN\n");
 	filename=CURRENT_FILENAME;
 	ql = QLEVEL;
 	//n = THIS_QSP->qs_query[ql].q_lineno;
-	n = QRY_LINENO( QRY_AT_LEVEL(THIS_QSP,ql) );
+	n = current_line_number(SINGLE_QSP_ARG);
 
 	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
 	NWARN(yyerror_str);
@@ -6884,7 +6856,7 @@ fprintf(stderr,"yyerror BEGIN\n");
 	*/
 
 	/*
-	if( LAST_NODE != NO_VEXPR_NODE ){
+	if( LAST_NODE != NULL ){
 		DUMP_TREE(LAST_NODE);
 	}
 	*/

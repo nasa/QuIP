@@ -37,6 +37,7 @@ int force_avi_info_load;		/* see comment in matio.c */
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 
 // BUG this defn is duplicated from avi.c
@@ -98,7 +99,6 @@ static FILE * remove_avi_info_if_stale(const char *info_name,FILE *info_fp,const
 		}
 #else
 #error "sizeof(long) not properly set by configure!?"
-//		NERROR1("CAUTIOUS:  sizeof(long) not properly set by configure!?");
 		assert( ! "sizeof(long) not properly set by configure!?");
 #endif
 	}

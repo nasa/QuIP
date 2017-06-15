@@ -1,0 +1,54 @@
+Set w 64
+Set h 5
+
+Set a 11
+Set b 555
+
+Define VVM_Test1 1 suffix
+Image input1_$1 $h $w 1 float
+Image input2_$1 $h $w 1 float
+Image a_$1 $h $w 1 float
+Image b_$1 $h $w 1 float
+Image bitmap_$1 $h $w 1 bit
+
+VSet a_$1 $a
+VSet b_$1 $b
+
+Ramp2D input1_$1 0 1 10
+advise 'Ramp image 1'
+#Display input1_$1
+
+Ramp2D input2_$1 20 -1 4
+advise 'Ramp image 2'
+#Display input2_$1
+
+VSet bitmap_$1 0
+#advise 'initial bitmap (zeroed)'
+#Display bitmap_$1
+veclib
+#  execute vsm_le bitmap_$1 input_$1 13
+  advise 'vvm_gt'
+  execute vvm_gt bitmap_$1 input1_$1 input2_$1
+  quit
+Display bitmap_$1
+.
+
+Define Test_Slct 1 suffix
+veclib
+  execute vvv_slct bitmap_$1 input1_$1 a_$1 b_$1
+  quit
+#Display input1_$1
+.
+
+VVM_Test1 h
+Pause
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  quit
+
+VVM_Test1 g
+Pause
+
+exit
+

@@ -31,7 +31,7 @@ typedef enum {
 	POSN_FUNCTYP,	// 12	1 positionable arg
 	ILACE_FUNCTYP,	// 13	1 interlaceable arg
 	STRV2_FUNCTYP,	// 14	string-valued function, two string args
-	DOBJV_FUNCTYP,	// 15	data_obj-valued function, one string arg
+	DOBJV_STR_ARG_FUNCTYP,	// 15	data_obj-valued function, one string arg
 	N_FUNC_TYPES	// must be last
 } Function_Type;
 
@@ -50,7 +50,7 @@ typedef union {
  	double	      (*str2_func)(const char *,const char *);
  	double	      (*str3_func)(const char *,const char *,int);
  	double	      (*dobj_func)(QSP_ARG_DECL  Data_Obj *);
- 	Data_Obj *    (*dobjv_func)(QSP_ARG_DECL  const char *);
+ 	Data_Obj *    (*dobjv_str_arg_func)(QSP_ARG_DECL  const char *);
 	int           (*char_func)(char);
 	double        (*il_func)(QSP_ARG_DECL  Item *);
 	double        (*posn_func)(QSP_ARG_DECL  Item *);
@@ -87,8 +87,6 @@ struct quip_function {
 #define SET_FUNC_VS_CODE(f,c)		(f)->fn_vs_code = c
 #define FUNC_VS_CODE2(f)		((f)->fn_vs_code2)
 #define SET_FUNC_VS_CODE2(f,c)		(f)->fn_vs_code2 = c
-
-#define NO_FUNCTION		((Quip_Function *)NULL)
 
 #define FN_NAME(funcp)		(funcp)->fn_name
 
@@ -142,25 +140,20 @@ ITEM_CHECK_PROT(Quip_Function,function)
 
 
 #define DECLARE_FUNCTION(name,func,code1,code2,code3,type,member,dim_index)	\
-									\
-									\
-{									\
-	Quip_Function *func_p;						\
-									\
-	func_p = new_function(QSP_ARG  #name);				\
-	if( func_p == NO_FUNCTION ){					\
-		sprintf(ERROR_STRING,					\
-	"error creating function \"%s\"!?",#name);			\
-		WARN(ERROR_STRING);					\
-	} else {							\
-		func_p->fn_type = type;					\
-		func_p->fn_u.member = func;				\
-		func_p->fn_vv_code = code1;				\
-		func_p->fn_vs_code = code2;				\
-		func_p->fn_vs_code2 = code3;				\
-		func_p->fn_serial = func_serial++;			\
-		func_p->fn_dim_index = dim_index;			\
-	}								\
+										\
+										\
+{										\
+	Quip_Function *func_p;							\
+										\
+	func_p = new_function(QSP_ARG  #name);					\
+	assert(func_p!=NULL);							\
+	func_p->fn_type = type;							\
+	func_p->fn_u.member = func;						\
+	func_p->fn_vv_code = code1;						\
+	func_p->fn_vs_code = code2;						\
+	func_p->fn_vs_code2 = code3;						\
+	func_p->fn_serial = func_serial++;					\
+	func_p->fn_dim_index = dim_index;					\
 }
 
 
@@ -203,8 +196,8 @@ ITEM_CHECK_PROT(Quip_Function,function)
 #define DECLARE_DOBJ_FUNCTION( name, func )	\
 	DECLARE_SCALAR_FUNCTION(name,func,DOBJ_FUNCTYP,dobj_func,-1)
 
-#define DECLARE_DOBJV_FUNCTION( name, func )	\
-	DECLARE_SCALAR_FUNCTION(name,func,DOBJV_FUNCTYP,dobjv_func,-1)
+#define DECLARE_DOBJV_STR_ARG_FUNCTION( name, func )	\
+	DECLARE_SCALAR_FUNCTION(name,func,DOBJV_STR_ARG_FUNCTYP,dobjv_str_arg_func,-1)
 
 #define DECLARE_TS_FUNCTION( name, func )	\
 	DECLARE_SCALAR_FUNCTION(name,func,TS_FUNCTYP,ts_func,-1)

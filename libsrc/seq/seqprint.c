@@ -27,7 +27,7 @@ void pframe(QSP_ARG_DECL   Seq *seqptr)
 
 void pfull(QSP_ARG_DECL   Seq *seqptr )
 {
-	if( seqptr->seq_first == NO_SEQ && seqptr->seq_next==NO_SEQ )	/* frame */
+	if( seqptr->seq_first == NULL && seqptr->seq_next==NULL )	/* frame */
 		pframe(QSP_ARG  seqptr);
 	else {						/* concatentation */
 		if( seqptr->seq_count == -1 ){	/* reversal */
@@ -41,7 +41,7 @@ void pfull(QSP_ARG_DECL   Seq *seqptr )
 			prt_msg_frag(msg_str);
 		}
 		pone(QSP_ARG  seqptr->seq_first);
-		if( seqptr->seq_next != NO_SEQ ){
+		if( seqptr->seq_next != NULL ){
 			prt_msg_frag(" + ");
 			pone(QSP_ARG  seqptr->seq_next);
 		}
@@ -52,14 +52,14 @@ void pfull(QSP_ARG_DECL   Seq *seqptr )
 
 void pone(QSP_ARG_DECL   Seq *seqptr )
 {
-	if( seqptr==NO_SEQ ){ /* end of the chain */
+	if( seqptr==NULL ){ /* end of the chain */
 		/* warn("pone:  null sequence"); */
 		return;
 	}
 	if( seqptr->seq_name!=NULL ){	/* frames don't have seqnames ... */
 		sprintf(msg_str,"%s",seqptr->seq_name);
 		prt_msg_frag(msg_str);
-	} else if( seqptr->seq_first == NO_SEQ && seqptr->seq_next==NO_SEQ ) /* frame */
+	} else if( seqptr->seq_first == NULL && seqptr->seq_next==NULL ) /* frame */
 		pframe(QSP_ARG  seqptr);
 	else {						/* concatentation */
 		if( seqptr->seq_count == -1 ){
@@ -73,7 +73,7 @@ void pone(QSP_ARG_DECL   Seq *seqptr )
 			prt_msg_frag(msg_str);
 		}
 		pone(QSP_ARG  seqptr->seq_first);
-		if( seqptr->seq_next != NO_SEQ ){
+		if( seqptr->seq_next != NULL ){
 			prt_msg_frag(" + ");
 			pone(QSP_ARG  seqptr->seq_next);
 		}

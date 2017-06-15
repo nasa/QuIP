@@ -56,6 +56,7 @@ my_include(`veclib/fast_eqsp_defs.m4')
 define(`DECLARE_DBM_INDEX',`GPU_INDEX_TYPE dbmi;')
 define(`DECLARE_KERN_ARGS_DBM',`KERNEL_ARG_QUALIFIER bitmap_word *dbm')
 define(`SET_INDICES_1SRC',`index2 = dbmi;')
+define(`SET_INDICES_2SRCS',`SET_INDICES_1SRC index3 = index2;')
 
 dnl	// vmaxg etc - require contiguous, fast only
 dnl	BUG?  true for gpu only???
@@ -124,11 +125,7 @@ dnl	_VEC_FUNC_2V_CONV( name , dest_type )
 define(`_VEC_FUNC_2V_CONV',`_GENERIC_FAST_CONV_FUNC($1,$2)')
 
 define(`GENERIC_FUNC_DECLS',`
-/* generic_func_decls /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  BEGIN */
-/* generic_func_decls calling generic_ff_decl */
 GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
-/* generic_func_decls back from generic_ff_decl */
-/* generic_func_decls /$1/ /$2/ /$3/ /$4/ /$5/ /$6/ /$7/  DONE */
 ')
 
 define(`_VEC_FUNC_1V_3SCAL',`')	dnl   No fast vramp2d

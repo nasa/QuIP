@@ -15,8 +15,6 @@ typedef struct sfont {
 	XFontStruct *	xf_fsp;
 } XFont;
 
-#define NO_XFONT	((XFont *)NULL)
-
 /* vbl.c */
 extern void vbl_wait(void);
 

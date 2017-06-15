@@ -3,8 +3,6 @@
 
 #define SERIAL_H
 
-#include "query.h"
-
 #define RAWBUF_SIZE	2048
 
 typedef struct serial_port {
@@ -12,9 +10,6 @@ typedef struct serial_port {
 	int		sp_fd;
 	u_char		sp_rawbuf[RAWBUF_SIZE];
 } Serial_Port;
-
-#define NO_SERIAL_PORT ((Serial_Port *)NULL)
-
 
 /* serial.c */
 extern int open_serial_device(QSP_ARG_DECL  const char *);

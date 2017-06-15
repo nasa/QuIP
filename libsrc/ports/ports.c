@@ -17,13 +17,12 @@ ITEM_INTERFACE_DECLARATIONS(Port,port,0)
 void delport(QSP_ARG_DECL  Port *mpp)
 {
 #ifdef CAUTIOUS
-	if( mpp==NO_PORT ) {
+	if( mpp==NULL ) {
 		ERROR1("delport passed NULL");
 		return; // NOTREACHED - silence analyzer
 	}
 #endif /* CAUTIOUS */
 	del_item(QSP_ARG  port_itp,mpp);
-	rls_str((char *)mpp->mp_name);
 }
 
 void portinfo(QSP_ARG_DECL  Port *mpp)

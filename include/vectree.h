@@ -1,20 +1,13 @@
-
-#ifdef INC_VERSION
-char VersionId_inc_vectree[] = QUIP_VERSION_STRING;
-#endif /* INC_VERSION */
-
-
-#ifndef NO_VEXPR_NODE
+#ifndef _VECTREE_H_
+#define _VECTREE_H_
 
 #include "data_obj.h"
 //#include "strbuf.h"
-#include "query.h"
 #include "veclib/vecgen.h"
 #include "vec_expr_node.h"
-#include "subrt.h"
+//#include "subrt.h"
 #include "identifier.h"
 #include "pointer.h"
-#include "strbuf.h"
 #include "ctx_pair.h"
 
 typedef struct keyword {
@@ -29,8 +22,6 @@ extern Keyword ml_native_func_tbl[];
 
 #define EXPECT_PTR_SET	1
 #define UNSET_PTR_OK	0
-
-#define NO_UNDEF	((Undef_Sym *)NULL)
 
 #include "treecode.h"
 
@@ -84,13 +75,11 @@ extern Vec_Expr_Node *last_node;
 #endif // FOOBAR
 
 
-#define NODE_PREC(enp)		( VN_SHAPE(enp) == NO_SHAPE ? PREC_VOID : VN_PREC(enp) )
+#define NODE_PREC(enp)		( VN_SHAPE(enp) == NULL ? PREC_VOID : VN_PREC(enp) )
 
 #define COMPLEX_NODE(enp)	( VN_PREC(enp) == PREC_CPX || VN_PREC(enp) == PREC_DBLCPX )
 
-#define NO_VEXPR_NODE	((Vec_Expr_Node *)NULL)
-
-#define NULL_CHILD( enp , index )		( VN_CHILD(enp,index) == NO_VEXPR_NODE )
+#define NULL_CHILD( enp , index )		( VN_CHILD(enp,index) == NULL )
 
 #define IS_LITERAL(enp)		(VN_CODE(enp)==T_LIT_DBL||VN_CODE(enp)==T_LIT_INT)
 
@@ -132,10 +121,10 @@ extern Vec_Expr_Node *last_node;
 #define RESOLVED_AT_CALLTIME(enp)	( VN_FLAGS(( enp )) & NODE_NEEDS_CALLTIME_RES )
 
 #define IS_VECTOR_SHAPE(shpp)	( UNKNOWN_SHAPE(shpp) || (SHP_N_TYPE_ELTS(shpp) > 1) )
-#define IS_VECTOR_NODE(enp)	( VN_SHAPE(enp)==NO_SHAPE || IS_VECTOR_SHAPE(VN_SHAPE(enp)))
-#define NODE_SHAPE_KNOWN(enp)	( VN_SHAPE(enp) != NO_SHAPE && (!UNKNOWN_SHAPE(VN_SHAPE(enp))))
+#define IS_VECTOR_NODE(enp)	( VN_SHAPE(enp)==NULL || IS_VECTOR_SHAPE(VN_SHAPE(enp)))
+#define NODE_SHAPE_KNOWN(enp)	( VN_SHAPE(enp) != NULL && (!UNKNOWN_SHAPE(VN_SHAPE(enp))))
 
-#define UNKNOWN_SOMETHING(enp)	( ( VN_SHAPE(enp) !=NO_SHAPE && UNKNOWN_SHAPE(VN_SHAPE(enp)) ) || HAS_UNKNOWN_LEAF(enp) )
+#define UNKNOWN_SOMETHING(enp)	( ( VN_SHAPE(enp) !=NULL && UNKNOWN_SHAPE(VN_SHAPE(enp)) ) || HAS_UNKNOWN_LEAF(enp) )
 
 typedef struct run_info {
 	Context_Pair *	ri_prev_cpp;
@@ -144,17 +133,11 @@ typedef struct run_info {
 	Subrt *		ri_old_srp;
 } Run_Info;
 
-#define NO_RUN_INFO ((Run_Info *)NULL)
-
-
 /* We might be cautious and have a flag that says ptr or ref? */
 
 typedef struct funcptr {
 	Subrt *		fp_srp;
 } Function_Ptr;
-
-#define NO_FUNC_PTR	((Function_Ptr *)NULL)
-
 
 
 /* globals */
@@ -444,5 +427,5 @@ extern void vt_init(SINGLE_QSP_ARG_DECL);
 extern const char *node_data_type_desc(Node_Data_Type t);
 
 
-#endif /* ! NO_VEXPR_NODE */
+#endif // ! _VECTREE_H_
 

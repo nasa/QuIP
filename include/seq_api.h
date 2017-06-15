@@ -30,10 +30,6 @@ typedef struct seq_module {
 	void	(*ref_func)(void *);	/* note reference to a leaf */
 } Seq_Module;
 
-#define NO_SEQ_MODULE	((Seq_Module *)NULL)
-
-
-
 
 /* Public data */
 

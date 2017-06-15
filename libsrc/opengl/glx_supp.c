@@ -27,7 +27,7 @@
 #include <OpenGL/glu.h>
 #endif // BUILD_FOR_MACOS
 
-static Viewer *gl_vp=NO_VIEWER;
+static Viewer *gl_vp=NULL;
 
 //static GLXContext the_ctx;
 //static GLXContext first_ctx=NULL;
@@ -43,7 +43,7 @@ static Renderer_Info *curr_renderer_info_p=NULL;
 
 void swap_buffers(void)
 {
-	if( gl_vp == NO_VIEWER ){
+	if( gl_vp == NULL ){
 		NWARN("swap_buffers:  no viewer selected");
 		return;
 	}
@@ -104,7 +104,7 @@ void wait_video_sync(int n)
 
 #endif /* ! HAVE_VIDEOSYNCSGI */
 
-	if( gl_vp == NO_VIEWER ){
+	if( gl_vp == NULL ){
 		NWARN("wait_video_sync:  no viewer selected");
 		return;
 	}
@@ -298,28 +298,9 @@ static void init_glx_context(QSP_ARG_DECL Viewer *vp)
 			vp->vw_name,(int_for_addr)VW_OGL_CTX(vp));
 				advise(DEFAULT_ERROR_STRING);
 			}
-
-#ifdef FOOBAR
-			/* now see if there is a z buffer? */
-			/* Why? */
-
-			{
-			int val;
-
-			if( glXGetConfig(VW_DPY(vp),vis_info_p,
-				GLX_DEPTH_SIZE,&val) == 0 ){
-
-				sprintf(DEFAULT_ERROR_STRING,
-			"init_glx_context:  DEPTH_SIZE value is %d",val);
-				advise(DEFAULT_ERROR_STRING);
-			} else {
-				NWARN("glXGetConfig error");
-			}
-			}
-#endif /* FOOBAR */
-
 		}
 	}
+	XFree(vis_info_p);
 }
 #endif // ! BUILD_FOR_OBJC
 
@@ -328,7 +309,7 @@ COMMAND_FUNC( do_render_to )
 	Viewer *vp;
 
 	vp = PICK_VWR("");
-	if( vp == NO_VIEWER ) return;
+	if( vp == NULL ) return;
 
 	select_gl_viewer(QSP_ARG  vp);
 }

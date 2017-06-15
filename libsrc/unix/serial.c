@@ -49,7 +49,6 @@
 #ifdef NOT_SURE
 #include "stamps.h"
 #include "debug.h"
-#include "query.h"		/* ttys_are_interactive */
 #include "submenus.h"
 #endif /* NOT_SURE */
 
@@ -58,11 +57,11 @@
 #include "my_stty.h"
 #endif /* TTY_CTL */
 
-static Serial_Port *default_spp=NO_SERIAL_PORT;
+static Serial_Port *default_spp=NULL;
 
 #define CHECK_DEFAULT_SERIAL_PORT(rname,return_flag)					\
 											\
-	if( default_spp == NO_SERIAL_PORT ){						\
+	if( default_spp == NULL ){						\
 		sprintf(ERROR_STRING,"%s:  no default serial port selected",rname);	\
 		WARN(ERROR_STRING);							\
 		if( return_flag ) return;						\
@@ -70,7 +69,7 @@ static Serial_Port *default_spp=NO_SERIAL_PORT;
 
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC(Serial_Port,serial_port)
-static Item_Type *serial_port_itp=NO_ITEM_TYPE;
+static Item_Type *serial_port_itp=NULL;
 static ITEM_INIT_FUNC(Serial_Port,serial_port,0)
 static ITEM_NEW_FUNC(Serial_Port,serial_port)
 static ITEM_CHECK_FUNC(Serial_Port,serial_port)
@@ -94,7 +93,7 @@ int open_serial_device(QSP_ARG_DECL  const char * s)
 	Serial_Port *spp;
 
 	spp=serial_port_of(QSP_ARG  s);
-	if( spp != NO_SERIAL_PORT ){
+	if( spp != NULL ){
 		sprintf(ERROR_STRING,"Serial port %s is already open",s);
 		WARN(ERROR_STRING);
 		return(spp->sp_fd);
@@ -127,7 +126,7 @@ fprintf(stderr,"%s opened...\n",s);
 
 
 	spp = new_serial_port(QSP_ARG  s);
-	if( spp == NO_SERIAL_PORT ){
+	if( spp == NULL ){
 		sprintf(ERROR_STRING,"Unable to create serial port structure for %s",s);
 		ERROR1(ERROR_STRING);
 		return -1;	// NOTREACHED - silence static analyzer
@@ -659,7 +658,7 @@ static COMMAND_FUNC( do_tty_redir )
 	s = NAMEOF("serial port for input redirection");
 
 	spp = serial_port_of(QSP_ARG  s);
-	if( spp != NO_SERIAL_PORT ) {
+	if( spp != NULL ) {
 		sprintf(ERROR_STRING,"Serial port %s is already open, close before calling redir",spp->sp_name);
 		WARN(ERROR_STRING);
 		return;
@@ -697,8 +696,7 @@ static void close_serial_device(SINGLE_QSP_ARG_DECL)
 		WARN(ERROR_STRING);
 	}
 	del_serial_port(QSP_ARG  default_spp);
-	rls_str(default_spp->sp_name);
-	default_spp = NO_SERIAL_PORT;
+	default_spp = NULL;
 }
 
 static COMMAND_FUNC( do_serial_info )
@@ -717,7 +715,7 @@ static COMMAND_FUNC( do_select_serial )
 	Serial_Port *spp;
 
 	spp = PICK_SERIAL_PORT("default port for serial operations"); 
-	if( spp == NO_SERIAL_PORT ) return;
+	if( spp == NULL ) return;
 
 	default_spp = spp;
 }
@@ -735,7 +733,7 @@ static COMMAND_FUNC( do_connect )
 
 	spp1 = PICK_SERIAL_PORT("first port"); 
 	spp2 = PICK_SERIAL_PORT("second port"); 
-	if( spp1 == NO_SERIAL_PORT || spp2 == NO_SERIAL_PORT ){
+	if( spp1 == NULL || spp2 == NULL ){
 		return;
 	}
 	if( spp1 == spp2 ){
@@ -791,7 +789,7 @@ static COMMAND_FUNC( do_tty_term )
 #endif // TTY_CTL
 
 	spp = PICK_SERIAL_PORT("");
-	if( spp == NO_SERIAL_PORT ) return;
+	if( spp == NULL ) return;
 
 #ifdef TTY_CTL
 
@@ -926,7 +924,6 @@ COMMAND_FUNC( do_ser_menu )
 
 #include <string.h>
 
-#include "query.h"
 #include "filerd.h"
 #include "debug.h"
 

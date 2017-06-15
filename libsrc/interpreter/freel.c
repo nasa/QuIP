@@ -184,22 +184,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	 * the beginning of the following one
 	 */
 
-//#ifdef CAUTIOUS
-//	/* error #1 */
-//	if(frp != list->fl_blockp && (frp-1)->blkno + (frp-1)->size > a ){
-//showmap(list);
-//		NWARN("CAUTIOUS:  givspace:  freeing unallocated memory!? (error #1)");
-//		abort();
-//	}
 	assert(frp == list->fl_blockp || (frp-1)->blkno + (frp-1)->size <= a );
-
-//	/* error #2 */
-//	if( a+size > frp->blkno ){
-//showmap(list);
-//		NWARN("CAUTIOUS:  givspace:  freeing unallocated memory!? (error #2)");
-//		abort();
-//	}
-//#endif
 	assert( a+size <= frp->blkno );
 
 	/* if not head of list and new area right after frp-1 */
@@ -311,13 +296,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 	 * the beginning of the following one
 	 */
 
-//#ifdef CAUTIOUS
-//	/* error #1 */
-//	if(frp != list->fl_blockp && (frp-1)->blkno + (frp-1)->size > a ){
-//		NWARN("CAUTIOUS:  addspace:  freeing unallocated memory!? (error #1)");
-//		abort();
-//	}
-//#endif
 	assert(frp == list->fl_blockp || (frp-1)->blkno + (frp-1)->size <= a );
 
 	/* if not head of list and new area right after frp-1 */

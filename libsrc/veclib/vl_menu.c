@@ -12,7 +12,7 @@ static COMMAND_FUNC( do_vf_exec )
 
 	vfp = PICK_VEC_FUNC("");
 
-	if( vfp == NO_VEC_FUNC ) return;
+	if( vfp == NULL ) return;
 
 	do_vfunc(QSP_ARG  vfp);
 }
@@ -68,7 +68,7 @@ static COMMAND_FUNC( do_vf_info )
 	Vector_Function *vfp;
 
 	vfp=PICK_VEC_FUNC("");
-	if( vfp==NO_VEC_FUNC ) return;
+	if( vfp==NULL ) return;
 	vf_info(QSP_ARG  vfp);
 }
 

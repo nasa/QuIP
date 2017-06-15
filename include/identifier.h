@@ -49,8 +49,6 @@ typedef struct identifier {
 #define POP_ID_CONTEXT			POP_ITEM_CONTEXT(id_itp)
 
 
-#define NO_IDENTIFIER	((Identifier *)NULL)
-
 #ifdef FOOBAR
 #define id_fpp		id_u.u_fpp
 #define id_ptrp		id_u.u_ptrp
@@ -68,7 +66,7 @@ typedef struct identifier {
 #define IS_FUNCPTR(idp)		(ID_TYPE(idp) == ID_FUNCPTR)
 #define IS_LABEL(idp)		(ID_TYPE(idp) == ID_LABEL)
 
-#define STRING_IS_SET(idp)	(REF_SBUF(ID_REF(idp))->sb_buf != NULL)
+#define STRING_IS_SET(idp)	(sb_buffer(REF_SBUF(ID_REF(idp))) != NULL)
 #define POINTER_IS_SET(idp)	(PTR_FLAGS(ID_PTR(idp)) & POINTER_SET)
 
 

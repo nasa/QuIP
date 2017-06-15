@@ -78,12 +78,9 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 	float *interp_dest;
 	int32_t start_index=(-1);
 
-#ifdef CAUTIOUS
-	if( target==NO_OBJ || source==NO_OBJ || control==NO_OBJ ){
-		NWARN("CAUTIOUS:  vinterp passed null arg");
-		return;
-	}
-#endif
+	assert( target != NULL );
+	assert( source != NULL );
+	assert( control != NULL );
 
 	INSIST_RAM_OBJ(target,vinterp)
 	INSIST_RAM_OBJ(source,vinterp)

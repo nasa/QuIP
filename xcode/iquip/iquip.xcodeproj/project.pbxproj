@@ -1459,7 +1459,7 @@
 		7C3904BE17F64818005163CD /* serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = serial.c; sourceTree = "<group>"; };
 		7C3904C017F64894005163CD /* stamps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stamps.c; sourceTree = "<group>"; };
 		7C3904C217F64901005163CD /* my_stty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = my_stty.c; sourceTree = "<group>"; };
-		7C4332AD1D4D43FC0033687C /* CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7C4332AD1D4D43FC0033687C /* TEST_CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TEST_CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4332AE1D4D43FC0033687C /* CSF-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF-Info.plist"; sourceTree = "<absolute>"; };
 		7C4332AF1D4D47D40033687C /* csf_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = csf_startup.enc; path = macros/startup/csf_startup.enc; sourceTree = "<group>"; };
 		7C4333D41D4D49450033687C /* EZJet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZJet.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1625,7 +1625,7 @@
 			isa = PBXGroup;
 			children = (
 				7106ECFD16004437006BF850 /* iQuIP.app */,
-				7C4332AD1D4D43FC0033687C /* CSF.app */,
+				7C4332AD1D4D43FC0033687C /* TEST_CSF.app */,
 				7C4333D41D4D49450033687C /* EZJet.app */,
 				7C4D6EA11D5111A400D34AC4 /* AFalert.app */,
 			);
@@ -2199,7 +2199,7 @@
 			);
 			name = CSF;
 			productName = coq;
-			productReference = 7C4332AD1D4D43FC0033687C /* CSF.app */;
+			productReference = 7C4332AD1D4D43FC0033687C /* TEST_CSF.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7C4332B21D4D49450033687C /* EZJet */ = {
@@ -3487,11 +3487,12 @@
 				HEADER_SEARCH_PATHS = (
 					../../include,
 					../../../numrec/include,
+					../vectree,
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "c59484db-1a64-4ce8-a58c-3c3d8afbf262";
+				PROVISIONING_PROFILE = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -3532,7 +3533,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = iQuIP;
-				PROVISIONING_PROFILE = "fae188a4-a26c-4b0c-ac96-82aa32758a52";
+				PROVISIONING_PROFILE = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -3544,8 +3545,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -3575,8 +3576,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
@@ -3589,7 +3590,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = iQuIP;
 				PROVISIONING_PROFILE = "eb64a60e-9be9-4d66-9242-a8407b736397";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "eb64a60e-9be9-4d66-9242-a8407b736397";
+				"PROVISIONING_PROFILE[sdk=*]" = "eb64a60e-9be9-4d66-9242-a8407b736397";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3602,8 +3603,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;
@@ -3617,9 +3618,9 @@
 					"-DUSE_NUMREC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "c59484db-1a64-4ce8-a58c-3c3d8afbf262";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "c59484db-1a64-4ce8-a58c-3c3d8afbf262";
+				PRODUCT_NAME = TEST_CSF;
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3632,8 +3633,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;
@@ -3652,9 +3653,9 @@
 					"-DUSE_NUMREC",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "fae188a4-a26c-4b0c-ac96-82aa32758a52";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "fae188a4-a26c-4b0c-ac96-82aa32758a52";
+				PRODUCT_NAME = TEST_CSF;
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3680,8 +3681,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "648f0a41-37dc-4cb6-8ee8-d03e1e2bba06";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3708,8 +3709,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "555349ac-7fb9-41e7-94dc-13ceb82aeb30";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "555349ac-7fb9-41e7-94dc-13ceb82aeb30";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3736,7 +3737,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "88008492-0e05-4817-8199-0a8ee47def25";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;
@@ -3764,7 +3765,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "dccefd98-8ce7-4186-b39d-3ea78f32810e";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = /usr/local/include;

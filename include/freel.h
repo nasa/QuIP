@@ -16,10 +16,6 @@ struct freelist {
 	FreeBlk *	fl_blockp;
 } ;
 
-#define NO_FREELIST	((FreeList *) NULL)
-#define NO_FREEBLK	((FreeBlk *) NULL )
-
-
 extern void freeinit(FreeList *list,count_t n_elts,u_long ntotal);
 extern long getspace(FreeList *list,u_long s);
 extern int givspace(FreeList *list,u_long size,u_long addr);

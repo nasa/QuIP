@@ -65,22 +65,20 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
-		case N_DOBJVFUNC:	// eval_szbl_expr
+		case N_DOBJV_STR_ARG_FUNC:	// eval_szbl_expr
 			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
 			if( s == NULL ){
 				WARN("Error evaluating arg for object-valued function!?");
 				return NULL;
 			}
-			szp = (Item *) (*enp->sen_func_p->fn_u.dobjv_func)( QSP_ARG  s );
+			szp = (Item *) (*enp->sen_func_p->fn_u.dobjv_str_arg_func)( QSP_ARG  s );
 			break;
-//#ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING,
 		"unexpected case in eval_szbl_expr %d",enp->sen_code);
 			WARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(szp);
 }
@@ -176,23 +174,21 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			RELEASE_SCALAR(tsp)
 			dp=(*csub_func)( QSP_ARG  dp2, index );
 			break;
-		case N_DOBJVFUNC:	// eval_szbl_expr
+		case N_DOBJV_STR_ARG_FUNC:	// eval_szbl_expr
 			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
 			if( s == NULL ){
 				WARN("Error evaluating arg for object-valued function!?");
 				return NULL;
 			}
-			dp = (*enp->sen_func_p->fn_u.dobjv_func)( QSP_ARG  s );
+			dp = (*enp->sen_func_p->fn_u.dobjv_str_arg_func)( QSP_ARG  s );
 			break;
 
-//#ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING,
 		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
 			WARN(ERROR_STRING);
 			assert(0);
 			break;
-//#endif /* CAUTIOUS */
 	}
 	return(dp);
 } // end eval_dobj_expr

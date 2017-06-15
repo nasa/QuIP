@@ -12,6 +12,8 @@ typedef int QUIP_BOOL;
 /* BUT conflicts with X11 !? */
 #define Quip_String	const char
 
+union scalar_value; typedef union scalar_value Scalar_Value;
+
 #define FWD_TYPEDEF(struct_name,typedef_name)			\
 struct struct_name; typedef struct struct_name typedef_name;
 
@@ -19,10 +21,12 @@ FWD_TYPEDEF(query,Query)
 FWD_TYPEDEF(query_stack,Query_Stack)
 FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
+FWD_TYPEDEF(subrt,Subrt)
 
 FWD_TYPEDEF(mouthful,Mouthful)
 FWD_TYPEDEF(my_pipe,Pipe)
 FWD_TYPEDEF(list,List)
+FWD_TYPEDEF(list_enumerator,List_Enumerator)
 FWD_TYPEDEF(item_type,Item_Type)
 FWD_TYPEDEF(item_context,Item_Context)
 FWD_TYPEDEF(menu,Menu)
@@ -37,6 +41,9 @@ FWD_TYPEDEF(variable,Variable)
 FWD_TYPEDEF(debug_module,Debug_Module)
 FWD_TYPEDEF(freelist,FreeList)
 FWD_TYPEDEF(container,Container)
+FWD_TYPEDEF(container_type,Container_Type)
+FWD_TYPEDEF(enumerator,Enumerator)
+FWD_TYPEDEF(enumerator_type,Enumerator_Type)
 FWD_TYPEDEF(data_obj,Data_Obj)
 FWD_TYPEDEF(vec_expr_node,Vec_Expr_Node)
 FWD_TYPEDEF(input_format_spec,Input_Format_Spec)

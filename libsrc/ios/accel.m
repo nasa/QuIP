@@ -30,18 +30,9 @@ static CMMotionManager *mgr=NULL;
 static int accelerometer_started=0;
 
 
-#ifdef CAUTIOUS
-
-#define INSURE_MOTION_MGR										\
+#define INSURE_MOTION_MGR						\
 if( mgr == NULL ) mgr = [[CMMotionManager alloc] init];			\
-if( mgr == NULL ) ERROR1("CAUTIOUS:  set_accelerometer_interval:  Failed to create motion manager!?");
-
-#else // ! CAUTIOUS
-
-#define INSURE_MOTION_MGR										\
-if( mgr == NULL ) mgr = [[CMMotionManager alloc] init];
-
-#endif // ! CAUTIOUS
+assert( mgr != NULL );
 
 static COMMAND_FUNC( set_accelerometer_interval )
 {
@@ -94,12 +85,7 @@ static COMMAND_FUNC( do_read_accel )
 		do_start(SINGLE_QSP_ARG);	// bad name for this function!?
 
 	d = mgr.accelerometerData;
-#ifdef CAUTIOUS
-	if( d == NULL ){
-		WARN("CAUTIOUS:  do_read_accel:  null data!?");
-		return;
-	}
-#endif // CAUTIOUS
+	assert( d != NULL );
 
 	// check this too?
 

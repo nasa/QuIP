@@ -144,12 +144,6 @@ static int present_stim(QSP_ARG_DECL Trial_Class *tcp,int v,Staircase *stcp)
 
 	if( insure_exp_is_ready(SINGLE_QSP_ARG) == -1 ) return(-1);
 
-//#ifdef CAUTIOUS
-//	if( v<0 || v>=_nvals ){
-//		WARN("CAUTIOUS:  level out of range");
-//		return(-1);
-//	}
-//#endif
 	assert( v >= 0 && v < _nvals );
 
 	rsp=(*stmrt)(QSP_ARG tcp,v,stcp);
@@ -184,17 +178,6 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 	save_response(QSP_ARG  rsp,&st1);
 }
 
-//#ifdef CAUTIOUS
-//static int is_invalid_response( int r )
-//{
-//	if( r == REDO ) return 0;
-//	else if( r == ABORT ) return 0;
-//	else if( r == YES ) return 0;
-//	else if( r == NO ) return 0;
-//	else return 1;
-//}
-//#endif // CAUTIOUS
-
 #define IS_VALID_RESPONSE(r)	r == REDO || r == ABORT || r == YES || r == NO
 
 static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
@@ -209,10 +192,6 @@ static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 	if( tcp == NULL ) return;
 
 	r=present_stim(QSP_ARG tcp,v,NULL);
-//#ifdef CAUTIOUS
-//	if( is_invalid_response(r) )
-//		ERROR1("CAUTIOUS:  invalid response code returned by present_stim!?");
-//#endif // CAUTIOUS
 	assert( IS_VALID_RESPONSE(r) );
 }
 
@@ -231,12 +210,6 @@ static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 
 	get_response_from_keyboard=0;
 	r=present_stim(QSP_ARG tcp,v,NULL);
-//#ifdef CAUTIOUS
-//	if( is_invalid_response(r) ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  invalid response code %d!?",r);
-//		ERROR1(ERROR_STRING);
-//	}
-//#endif // CAUTIOUS
 	assert( IS_VALID_RESPONSE(r) );
 
 	get_response_from_keyboard=1;
@@ -272,16 +245,10 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 	Trial_Class *tcp;
 
 	lp=class_list(SINGLE_QSP_ARG);
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  no conditions in make_staircases()");
-//		return;
-//	}
-//#endif
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
-	np=lp->l_head;
-	while(np!=NO_NODE){
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		np=np->n_next;
 
@@ -430,10 +397,10 @@ COMMAND_FUNC( do_delete_all_classes )
 	Trial_Class *tcp;
 
 	lp=class_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
-	np=lp->l_head;
-	while(np!=NO_NODE){
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
 		tcp=(Trial_Class *)np->n_data;
 		next = np->n_next;	/* del_class messes with the nodes... */
 		del_class(QSP_ARG  tcp);
@@ -503,13 +470,7 @@ static COMMAND_FUNC( do_creat_stc )
 
 	tcp = class_for(QSP_ARG  c);
 
-//#ifdef CAUTIOUS
-//	if( tcp == NO_CLASS )
-//		ERROR1("CAUTIOUS:  do_creat_stc:  error creating stimulus class");
-//#endif /* CAUTIOUS */
 	assert( tcp != NO_CLASS );
-
-	
 }
 
 /* This is an alternative menu for when we want to use a staircase to set levels, but
@@ -689,11 +650,8 @@ int response(QSP_ARG_DECL  const char *s)
 		case NO_INDEX:		return(NO); break;
 		case REDO_INDEX:	return(REDO); break;
 		case ABORT_INDEX:	Abort=1; return(REDO); break;
-//#ifdef CAUTIOUS
 		default:
-//			ERROR1("CAUTIOUS:  response:  crazy response value");
 			assert( AERROR("response:  crazy response value") );
-//#endif /* CAUTIOUS */
 	}
 	/* should never be reached */
 	return(ABORT);

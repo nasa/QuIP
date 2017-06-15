@@ -66,18 +66,11 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 
 	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
 
-//dp2=dobj_of(QSP_ARG  OBJ_NAME(dp));
-//if( dp2 == NO_OBJ ){
-//sprintf(ERROR_STRING,"CAUTIOUS:  obj_rename:  object %s has already been removed from the database",
-//OBJ_NAME(dp));
-//WARN(ERROR_STRING);
-//}
-
 	// We expect that the passed object is in the namespace.
-	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NO_OBJ );
+	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NULL );
 
 	dp2=dobj_of(QSP_ARG  newname);
-	if( dp2 != NO_OBJ ){
+	if( dp2 != NULL ){
 		sprintf(ERROR_STRING,
 			"name \"%s\" is already in use in area \"%s\"",
 			newname,AREA_NAME( OBJ_AREA(dp) ) );
@@ -85,15 +78,13 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 		return(-1);
 	}
 	/* BUG?  where is the object's node? */
-	//del_item(QSP_ARG  dobj_itp,dp);
-	DELETE_OBJ_ITEM(dp);
 
-	rls_str((char *)OBJ_NAME(dp));	/* release old name (obj_rename) */
+	DELETE_OBJ_ITEM(dp);	// remove from database, add to free list
 	SET_OBJ_NAME(dp,savestr(newname));
 
 	/* now add this to the database */
 	/* We might have a memory leak, with the item node? */
-	//add_item(QSP_ARG  dobj_itp,dp,NO_NODE);
+	assert( remove_from_item_free_list(QSP_ARG  dobj_itp, dp) == 0 );
 	ADD_OBJ_ITEM(dp);
 
 	return(0);
@@ -142,10 +133,10 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	INIT_DIMSET_PTR(dsp)
 
 	dp = dobj_of(QSP_ARG  name);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,"make_obj_list:  object %s already exists!?",name);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	SET_DIMENSION(dsp,0,1);
@@ -153,7 +144,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	if( DIMENSION(dsp,1) < 1 ){
 		sprintf(ERROR_STRING,"make_obj_list %s:  object list has no elements!?",name);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	SET_DIMENSION(dsp,2,1);
@@ -176,7 +167,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	dp_tbl=(Data_Obj **)OBJ_DATA_PTR(dp);
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		*dp_tbl = (Data_Obj *) NODE_DATA(np);
 		if( UNKNOWN_SHAPE( OBJ_SHAPE(*dp_tbl) ) )
 			uk_leaf++;
@@ -212,13 +203,8 @@ Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
-//#ifdef CAUTIOUS
-//	if( svp == NULL ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  assign_scalar:  passed null scalar ptr");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
+	Precision *prec_p;
+
 	assert( svp != NULL );
 
 #ifdef HAVE_ANY_GPU
@@ -231,223 +217,62 @@ void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 	}
 #endif // HAVE_ANY_GPU
 
-	switch( OBJ_PREC(dp) ){
-		case PREC_BY:  *((char     *)OBJ_DATA_PTR(dp)) = svp->u_b ; break;
-		case PREC_IN:  *((short    *)OBJ_DATA_PTR(dp)) = svp->u_s ; break;
-		case PREC_DI:  *((int32_t  *)OBJ_DATA_PTR(dp)) = svp->u_l ; break;
-		case PREC_LI:  *((int64_t  *)OBJ_DATA_PTR(dp)) = svp->u_ll; break;
-		case PREC_CHAR:
-		case PREC_UBY: *((u_char   *)OBJ_DATA_PTR(dp)) = svp->u_ub; break;
-		case PREC_UIN: *((u_short  *)OBJ_DATA_PTR(dp)) = svp->u_us; break;
-		case PREC_UDI: *((uint32_t *)OBJ_DATA_PTR(dp)) = svp->u_ul; break;
-		case PREC_ULI: *((uint64_t *)OBJ_DATA_PTR(dp)) = svp->u_ull; break;
-
-		case PREC_SP: *((float  *)OBJ_DATA_PTR(dp)) = svp->u_f ; break;
-		case PREC_DP: *((double *)OBJ_DATA_PTR(dp)) = svp->u_d; break;
-
-		case PREC_CPX:
-			*( (float  *)OBJ_DATA_PTR(dp)  ) = svp->u_fc[0];
-			*(((float *)OBJ_DATA_PTR(dp))+1) = svp->u_fc[1];
-			break;
-
-		case PREC_QUAT:
-			*( (float  *)OBJ_DATA_PTR(dp)  ) = svp->u_fq[0];
-			*(((float *)OBJ_DATA_PTR(dp))+1) = svp->u_fq[1];
-			*(((float *)OBJ_DATA_PTR(dp))+2) = svp->u_fq[2];
-			*(((float *)OBJ_DATA_PTR(dp))+3) = svp->u_fq[3];
-			break;
-
-		case PREC_DBLCPX:
-			*( (double *)OBJ_DATA_PTR(dp)   ) = svp->u_dc[0];
-			*(((double *)OBJ_DATA_PTR(dp))+1) = svp->u_dc[1];
-			break;
-			break;
-		case PREC_BIT:
-			if( svp->u_l )
-				*( (u_long *)OBJ_DATA_PTR(dp) ) |= 1 << OBJ_BIT0(dp) ;
-			else
-				*( (u_long *)OBJ_DATA_PTR(dp) ) &= ~( 1 << OBJ_BIT0(dp) );
-			break;
-
-		default:
-			sprintf(ERROR_STRING,
-		"assign_scalar:  unsupported scalar precision %s",OBJ_PREC_NAME(dp));
-			NERROR1(ERROR_STRING);
-			break;
+	prec_p = OBJ_PREC_PTR(dp);
+	if( (*(prec_p->assign_scalar_func))(dp,svp) < 0 ){
+		sprintf(ERROR_STRING,
+			"Unable to set scalar value for object %s!?",
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		return;
 	}
 	SET_OBJ_FLAG_BITS(dp,DT_ASSIGNED);
 }
 
 double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p)
 {
-	double retval;
-
-	switch( PREC_CODE(prec_p) ){
-		case PREC_BY:  retval = svp->u_b; break;
-		case PREC_IN:  retval = svp->u_s; break;
-		case PREC_DI:  retval = svp->u_l; break;
-		case PREC_STR:
-		case PREC_CHAR:
-		case PREC_UBY: retval = svp->u_ub; break;
-		case PREC_UIN: retval = svp->u_us; break;
-		case PREC_UDI: retval = svp->u_ul; break;
-		case PREC_SP: retval = svp->u_f; break;
-		case PREC_DP: retval = svp->u_d; break;
-		case PREC_BIT:
-			if( svp->u_l )  retval =1;
-			else		retval =0;
-			break;
-
-		case PREC_CPX:
-		case PREC_QUAT:
-		case PREC_DBLCPX:
-			WARN("cast_from_scalar_value:  can't cast multi-component types to double");
-			retval =0;
-			break;
-//#ifdef CAUTIOUS
-		default:
-//			WARN("CAUTIOUS:  cast_from_scalar_value:  unrecognized precision");
-//			retval =0;
-			assert( AERROR("cast_from_scalar_value:  unrecognized precision") );
-
-			break;
-//#endif /* CAUTIOUS */
-	}
-	return(retval);
+	return (*(prec_p->cast_to_double_func))(svp);
 }
 
 void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
-	switch( PREC_CODE(prec_p) ){
-		case PREC_BY:  svp->u_b = (char) val; break;
-		case PREC_IN:  svp->u_s = (short) val; break;
-		case PREC_DI:  svp->u_l = (int32_t)val; break;
-		case PREC_LI:  svp->u_ll = (int64_t)val; break;
-		case PREC_CHAR:
-		case PREC_UBY: svp->u_ub = (u_char) val; break;
-		case PREC_UIN: svp->u_us = (u_short) val; break;
-		case PREC_UDI: svp->u_ul = (uint32_t) val; break;
-		case PREC_ULI: svp->u_ull = (uint64_t) val; break;
-		case PREC_SP: svp->u_f = (float) val; break;
-		case PREC_DP: svp->u_d = val; break;
-#ifdef USE_LONG_DOUBLE
-		case PREC_LP: svp->u_ld = val; break;
-#endif // USE_LONG_DOUBLE
-		case PREC_BIT:
-			if( val != 0 )
-				svp->u_l =  1;
-			else
-				svp->u_l =  0;
-			break;
-
-		case PREC_CPX:
-		case PREC_QUAT:
-		case PREC_DBLCPX:
-			WARN("cast_to_scalar_value:  can't cast to multi-component types from double");
-			break;
-//#ifdef CAUTIOUS
-		default:
-//			WARN("CAUTIOUS:  cast_to_scalar_value:  unrecognized precision");
-			assert( AERROR("cast_to_scalar_value:  unrecognized precision") );
-			break;
-//#endif /* CAUTIOUS */
-	}
+	(*(prec_p->cast_from_double_func))(svp,val);
 }
 
 void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
-//#ifdef CAUTIOUS
-//	if( index < 0 || index > 1 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  cast_to_cpx_scalar:  index (%d) out of range.",index);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index <= 1 );
-
-	switch( PREC_CODE(prec_p) & MACH_PREC_MASK ){
-		case PREC_SP: svp->u_fc[index] = (float) val; break;
-		case PREC_DP: svp->u_dc[index] = val; break;
-//#ifdef CAUTIOUS
-		default:
-//			WARN("CAUTIOUS:  cast_to_cpx_scalar:  unexpected machine precision");
-			assert( AERROR("cast_to_cpx_scalar:  unexpected machine precision") );
-			break;
-//#endif /* CAUTIOUS */
-	}
+	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
+
 
 void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
-//#ifdef CAUTIOUS
-//	if( index < 0 || index > 3 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  cast_to_cpx_scalar:  index (%d) out of range.",index);
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( index >= 0 && index <= 3 );
+	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
+}
 
-	switch( PREC_CODE(prec_p) & MACH_PREC_MASK ){
-		case PREC_SP: svp->u_fq[index] = (float) val; break;
-		case PREC_DP: svp->u_dq[index] = val; break;
-//#ifdef CAUTIOUS
-		default:
-//			WARN("CAUTIOUS:  cast_to_quat_scalar:  unexpected machine precision");
-			assert( AERROR("cast_to_quat_scalar:  unexpected machine precision") );
-			break;
-//#endif /* CAUTIOUS */
-	}
+void cast_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+{
+	assert( index >= 0 && index <= 2 );
+	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
 void extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 {
+	Precision *prec_p;
+
 	if( ! OBJ_IS_RAM(dp) ){
 		// BUG may not be cuda, use platform-specific function!
-advise("extract_scalar_value:  calling platform-specific memory download func");
 		( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dp)) )
 			(QSP_ARG  &svp->u_d, OBJ_DATA_PTR(dp),
 				PREC_SIZE(OBJ_PREC_PTR(dp)), OBJ_PFDEV(dp) );
-advise("extract_scalar_value:  back from platform-specific memory download func");
 		return;
 	}
 
-	switch( OBJ_PREC(dp) ){
-		case PREC_BY:  svp->u_b  = *((char     *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_IN:  svp->u_s  = *((short    *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_DI:  svp->u_l  = *((int32_t     *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_STR:
-		case PREC_UBY: svp->u_ub = *((u_char   *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_UIN: svp->u_us = *((u_short  *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_UDI: svp->u_ul = *((uint32_t   *)OBJ_DATA_PTR(dp)) ; break;
-
-		case PREC_SP: svp->u_f = *((float  *)OBJ_DATA_PTR(dp)) ; break;
-		case PREC_DP: svp->u_d = *((double *)OBJ_DATA_PTR(dp)) ; break;
-
-		case PREC_CPX:
-			svp->u_fc[0] = *( (float  *)OBJ_DATA_PTR(dp)  ) ;
-			svp->u_fc[1] = *(((float *)OBJ_DATA_PTR(dp))+1) ;
-			break;
-
-		case PREC_QUAT:
-			svp->u_fq[0] = *( (float  *)OBJ_DATA_PTR(dp)  ) ;
-			svp->u_fq[1] = *(((float *)OBJ_DATA_PTR(dp))+1) ;
-			svp->u_fq[2] = *(((float *)OBJ_DATA_PTR(dp))+2) ;
-			svp->u_fq[3] = *(((float *)OBJ_DATA_PTR(dp))+3) ;
-			break;
-
-		case PREC_DBLCPX:
-			svp->u_dc[0] = *( (double *)OBJ_DATA_PTR(dp)   ) ;
-			svp->u_dc[1] = *(((double *)OBJ_DATA_PTR(dp))+1) ;
-			break;
-			break;
-		default:
-			sprintf(DEFAULT_ERROR_STRING,
-		"extract_scalar_value:  unsupported scalar precision %s",OBJ_PREC_NAME(dp));
-			NERROR1(DEFAULT_ERROR_STRING);
-			break;
-	}
+	prec_p = OBJ_PREC_PTR(dp);
+	(*(prec_p->extract_scalar_func))(svp,OBJ_DATA_PTR(dp));
 }
+
 
 Data_Obj *
 mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
@@ -455,7 +280,7 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 	Data_Obj *dp;
 
 	dp=make_obj(QSP_ARG  name,1,1,1,2,prec_for_code(PREC_SP));
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		*((float *)OBJ_DATA_PTR(dp)) = (float)rval;
 		*( ((float *)OBJ_DATA_PTR(dp)) + 1 ) = (float)ival;
 		SET_OBJ_FLAG_BITS(dp,DT_COMPLEX);
@@ -487,7 +312,7 @@ dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
@@ -503,7 +328,7 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));

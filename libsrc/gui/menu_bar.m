@@ -40,7 +40,7 @@ static Menu_Bar_Item *find_menu_bar_item(NSObject *id)
 	lp = all_ios_items(DEFAULT_QSP_ARG  menu_bar_item_itp);
 	IOS_Node *np;
 	np = IOS_LIST_HEAD(lp);
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		Menu_Bar_Item *mbi_p;
 		mbi_p = IOS_NODE_DATA(np);
 		if( mbi_p.menu_item == id )

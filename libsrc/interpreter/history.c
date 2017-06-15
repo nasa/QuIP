@@ -22,7 +22,6 @@
 //#include "getbuf.h"
 //#include "savestr.h"
 //#include "substr.h"
-//#include "query.h"
 
 int history_flag=1;
 
@@ -46,9 +45,7 @@ static List *cur_list;
 static char *get_hist_ctx_name(const char *prompt);
 
 /* local prototypes */
-static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp);
 static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char *string);
-static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char **choices);
 
 // need macro to make these all static
 ITEM_INTERFACE_CONTAINER(choice,LIST_CONTAINER)
@@ -76,22 +73,26 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 	Item_Context *icp;
 	char *ctxname;
 
-	if( choice_itp == NO_ITEM_TYPE ) init_choices(SINGLE_QSP_ARG);
+	if( choice_itp == NULL ) init_choices(SINGLE_QSP_ARG);
 
 	ctxname = get_hist_ctx_name(prompt);
 	icp = ctx_of(QSP_ARG  ctxname);
-	if( icp == NO_ITEM_CONTEXT ){
+	if( icp == NULL ){
 		icp = create_item_context(QSP_ARG  choice_itp,prompt);
-//#ifdef CAUTIOUS
-//		if( icp == NO_ITEM_CONTEXT ){
-//			ERROR1("CAUTIOUS:  error creating history context");
-//			IOS_RETURN_VAL(NULL)
-//		}
-//#endif /* CAUTIOUS */
-		assert( icp != NO_ITEM_CONTEXT );
+		assert( icp != NULL );
 	}
 
 	return(icp);
+}
+
+static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
+{
+	PUSH_ITEM_CONTEXT(choice_itp,icp);
+	/* BUG? this will search all contexts...
+	 * BUT - we expect to find it in the first one!?
+	 */
+	del_item(QSP_ARG  choice_itp,hcp);
+	pop_item_context(QSP_ARG  choice_itp);
 }
 
 /* Scan a history list, removing any choices which are not in the new list */
@@ -104,7 +105,7 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 
 	//lp = dictionary_list(CTX_DICT(icp));
 	//np=QLIST_HEAD(lp);
-	ep = new_enumerator(CTX_CONTAINER(icp));
+	ep = (CTX_CONTAINER(icp)->cnt_typ_p->new_enumerator)(CTX_CONTAINER(icp));
 	if( ep == NULL ) return;
 
 	while(ep!=NULL){
@@ -115,8 +116,10 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 		 * list when they are deleted, we have to get the next
 		 * node BEFORE deletion!!!
 		 */
-		hcp = (Hist_Choice *) enumerator_item(ep);
-		ep = advance_enumerator(ep);
+		//hcp = (Hist_Choice *) enumerator_item(ep);
+		hcp = (Hist_Choice *) ep->e_typ_p->current_enum_item(ep);
+		ep = ep->e_typ_p->advance_enum(ep);
+
 		found=0;
 
 		/*
@@ -173,23 +176,11 @@ advise(ERROR_STRING);
 	}
 }
 
-static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
-{
-	PUSH_ITEM_CONTEXT(choice_itp,icp);
-	/* BUG? this will search all contexts...
-	 * BUT - we expect to find it in the first one!?
-	 */
-	del_item(QSP_ARG  choice_itp,hcp);
-	rls_str((char *)hcp->hc_text);	/* BUG? saved w/ savestr??? */
-	pop_item_context(QSP_ARG  choice_itp);
-}
-
 void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove selection from list, return next */
 {
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
-//fprintf(stderr,"rem_def '%s' '%s'\n",prompt,choice);
 	icp = find_hist(QSP_ARG  prompt);
 
 	/* We don't appear to use icp ??? */
@@ -202,7 +193,7 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	hcp = (Hist_Choice *) choice_of(QSP_ARG  choice);
 	pop_item_context(QSP_ARG  choice_itp);
 
-	if( hcp == NO_CHOICE ){
+	if( hcp == NULL ){
 		return;
 	}
 
@@ -218,23 +209,29 @@ void new_defs(QSP_ARG_DECL  const char* prompt)
 	clr_defs_if(QSP_ARG  icp,0,(const char **)NULL);
 }
 
-static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char* string)
+static inline void boost_choice(QSP_ARG_DECL  Hist_Choice *hcp, List *lp)
 {
 	Node *np;
+
+#ifdef QUIP_DEBUG
+if( debug & hist_debug ){
+sprintf(ERROR_STRING,"boost_choice:  increasing priority for choice \"%s\"",ITEM_NAME((Item *)hcp));
+advise(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+		/* we should boost the priority of an existing choice! */
+		np = nodeOf(lp,hcp);
+		assert( np != NULL );
+
+		np->n_pri++;
+		p_sort(lp);
+}
+
+static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char* string)
+{
 	Hist_Choice *hcp;
 	List *lp;
 
-//fprintf(stderr,"add_word_to_history_list BEGIN\n");
-
-//#ifdef CAUTIOUS
-//	if( string[0]==0 ) {		/* don't add empty string */
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS: add_word_to_history_list:  not adding empty string to context %s",
-//			CTX_NAME(icp));
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( string[0] != 0 );		/* don't add empty string */
 
 //fprintf(stderr,"add_word_to_history_list, adding \"%s\" to context %s\n",string,CTX_NAME(icp));
@@ -252,28 +249,8 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 	lp = container_list(CTX_CONTAINER(icp));
 //fprintf(stderr,"add_word_to_history_list, container list has %d elements\n",eltcount(lp));
 
-	if( hcp != NO_CHOICE ){
-
-//fprintf(stderr,"found choice %s\n",ITEM_NAME((Item *)hcp));
-
-#ifdef QUIP_DEBUG
-if( debug & hist_debug ){
-sprintf(ERROR_STRING,"add_word_to_history_list:  increasing priority for choice \"%s\"",string);
-advise(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-		/* we should boost the priority of an existing choice! */
-		np = nodeOf(lp,hcp);
-//#ifdef CAUTIOUS
-//		if( np==NO_NODE ){
-//	WARN("CAUTIOUS:  add_word_to_history_list can't find node of existing choice");
-//			return;
-//		}
-//#endif	/* CAUTIOUS */
-		assert( np != NO_NODE );
-
-		np->n_pri++;
-		p_sort(lp);
+	if( hcp != NULL ){
+		boost_choice(QSP_ARG  hcp,lp);
 		pop_item_context(QSP_ARG  choice_itp);
 //fprintf(stderr,"add_word_to_history_list, returning after increasing node priority\n");
 		return;
@@ -284,13 +261,7 @@ advise(ERROR_STRING);
 	hcp=new_choice(QSP_ARG  string);	// do we save this somewhere???
 	pop_item_context(QSP_ARG  choice_itp);
 
-//#ifdef CAUTIOUS
-//	if( hcp==NO_CHOICE ){
-//		ERROR1("CAUTIOUS: error creating menu choice");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( hcp != NO_CHOICE );
+	assert( hcp != NULL );
 //fprintf(stderr,"add_word_to_history_list, returning after creating new choice\n");
 }
 
@@ -338,22 +309,18 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	if( *prompt == 0 ) return("");	/* e.g. hand entry of macros */
 
-//fprintf(stderr,"get_match %s (so_far = %s) BEGIN\n",prompt,so_far);
 	icp=find_hist(QSP_ARG  prompt);
 
-//	lp = dictionary_list(CTX_DICT(icp));
 	lp = container_list(CTX_CONTAINER(icp));
 
 	np=QLIST_HEAD(lp);
-//fprintf(stderr,"get_match:  list has %d elements\n",eltcount(lp));
 
-	while(np!=NO_NODE) {
+	while(np!=NULL) {
 		Hist_Choice *hcp;
 
 		/* priority sorted!? */
 
 		hcp=(Hist_Choice *) NODE_DATA(np);
-//fprintf(stderr,"comparing %s to %s\n",so_far,hcp->hc_text);
 		if( is_a_substring( so_far, hcp->hc_text ) ){
 			cur_node=np;
 			cur_list=lp;
@@ -371,11 +338,11 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 										\
 	if( direction == CYC_FORWARD ){						\
 		np=NODE_NEXT(np);							\
-		if( np == NO_NODE )	/* at end of list */			\
+		if( np == NULL )	/* at end of list */			\
 			np=QLIST_HEAD(cur_list);					\
 	} else {								\
 		np=NODE_PREV(np);							\
-		if( np == NO_NODE )						\
+		if( np == NULL )						\
 			np=QLIST_TAIL(cur_list);					\
 	}
 
@@ -385,7 +352,7 @@ static const char *cyc_list_match(QSP_ARG_DECL  const char *so_far, int directio
 	Hist_Choice *hcp;
 
 	first=np=cur_node;
-	if( np == NO_NODE ) return("");
+	if( np == NULL ) return("");
 
 	NEXT_NODE
 
@@ -433,67 +400,6 @@ static const char * cyc_tree_match(Frag_Match_Info *fmi_p, int direction )
 }
 #endif // NOT_USED_YET
 
-static void reset_tree_match( Frag_Match_Info *fmi_p, int direction )
-{
-	if( direction == CYC_FORWARD )
-		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
-	else
-		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
-}
-
-
-static const char * advance_tree_match(Frag_Match_Info *fmi_p, int direction )
-{
-	Item *ip;
-
-	// there may be no items!?
-	assert( fmi_p != NULL );
-
-	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.last_n_p )
-			return NULL;
-		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_successor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
-		}
-	} else {
-		if( fmi_p->fmi_u.rbti.curr_n_p == fmi_p->fmi_u.rbti.first_n_p )
-			return NULL;
-		else {
-			fmi_p->fmi_u.rbti.curr_n_p = rb_predecessor_node( fmi_p->fmi_u.rbti.curr_n_p );
-			assert( fmi_p->fmi_u.rbti.curr_n_p != NULL );
-		}
-	}
-	ip = fmi_p->fmi_u.rbti.curr_n_p->data;
-	return ip->item_name;
-}
-
-static const char *advance_item_list( Frag_Match_Info *fmi_p, int direction )
-{
-	Item *ip;
-
-	assert( fmi_p != NULL );
-
-	if( direction == CYC_FORWARD ){
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.last_np )
-			return NULL;
-		else {
-			fmi_p->fmi_u.li.curr_np = NODE_NEXT(fmi_p->fmi_u.li.curr_np);
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
-		}
-	} else {
-		if( fmi_p->fmi_u.li.curr_np == fmi_p->fmi_u.li.first_np )
-			return NULL;
-		else {
-			fmi_p->fmi_u.li.curr_np = NODE_PREV( fmi_p->fmi_u.li.curr_np );
-			assert( fmi_p->fmi_u.li.curr_np != NULL );
-		}
-	}
-	ip = fmi_p->fmi_u.li.curr_np->n_data;
-	return ip->item_name;
-}
-
-
 #ifdef NOT_USED_YET
 
 static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
@@ -522,69 +428,30 @@ static const char *cyc_item_list( Frag_Match_Info *fmi_p, int direction )
 }
 #endif // NOT_USED_YET
 
-static void reset_item_list( Frag_Match_Info *fmi_p, int direction )
-{
-	if( direction == CYC_FORWARD )
-		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
-	else
-		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
-}
-
 static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
 {
-	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
+	Container *cnt_p;
 
-	switch( fmi_p->type ){
-		case LIST_CONTAINER:
-			return advance_item_list(fmi_p,direction);
-			break;
-		case RB_TREE_CONTAINER:
-			return advance_tree_match(fmi_p,direction);
-			break;
-		default:			// not needed, but quiets compiler
-			NERROR1("cyc_item_match:  bad type!?");
-			break;
-	}
-	return NULL;
+	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
+	return (*(cnt_p->cnt_typ_p->advance_frag_match))(fmi_p,direction);
 }
 
 static const char * current_frag_match( Frag_Match_Info * fmi_p )
 {
 	Item *ip;
+	Container *cnt_p;
 
-	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
-
-	switch( fmi_p->type ){
-		case LIST_CONTAINER:
-			ip = fmi_p->fmi_u.li.curr_np->n_data;
-			break;
-		case RB_TREE_CONTAINER:
-			ip = fmi_p->fmi_u.rbti.curr_n_p->data;
-			break;
-		default:			// not needed, but quiets compiler
-			ip=NULL;	// quiet compiler
-			NERROR1("current_frag_match:  bad type!?");
-			return NULL;	// quiet compiler
-			break;
-	}
+	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));
+	ip = (*(cnt_p->cnt_typ_p->current_frag_match_item))(fmi_p);
 	return ip->item_name;
 }
 
 static void reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 {
-	assert( fmi_p->type == LIST_CONTAINER || fmi_p->type == RB_TREE_CONTAINER );
+	Container *cnt_p;
 
-	switch( fmi_p->type ){
-		case LIST_CONTAINER:
-			reset_item_list(fmi_p,direction);
-			break;
-		case RB_TREE_CONTAINER:
-			reset_tree_match(fmi_p,direction);
-			break;
-		default:			// not needed, but quiets compiler
-			NERROR1("reset_frag_match:  bad type!?");
-			break;
-	}
+	cnt_p = FMI_CONTAINER(fmi_p);
+	(*(cnt_p->cnt_typ_p->reset_frag_match))(fmi_p,direction);
 }
 
 // We can have matches in different contexts on the context stack.  We keep a list that has matches
@@ -650,13 +517,7 @@ void init_hist_from_list(QSP_ARG_DECL  const char *prompt,List* lp)
 	Node *np;
 	Item_Context *icp;
 
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 #ifdef QUIP_DEBUG
 	if( hist_debug == 0 )
@@ -673,7 +534,7 @@ advise(ERROR_STRING);
 	icp=find_hist(QSP_ARG  prompt);
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Item *ip;
 		ip=(Item *) NODE_DATA(np);
 		add_word_to_history_list(QSP_ARG  icp,ITEM_NAME(ip));
@@ -687,14 +548,7 @@ void init_hist_from_item_list(QSP_ARG_DECL  const char *prompt,List *lp)
 {
 	char s[LLEN];
 
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		ERROR1("CAUTIOUS:  init_hist_from_list passed null list");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
-
+	assert( lp != NULL );
 	sprintf(s,PROMPT_FORMAT,prompt);
 	init_hist_from_list(QSP_ARG  s,lp);
 }
@@ -711,7 +565,7 @@ void init_hist_from_class(QSP_ARG_DECL  const char* prompt,Item_Class *iclp)
 
 	icp = find_hist(QSP_ARG  s);
 
-	if( icp != NO_ITEM_CONTEXT ){
+	if( icp != NULL ){
 		if( (iclp->icl_flags&NEED_CLASS_CHOICES)==0 ){
 
 #ifdef QUIP_DEBUG
@@ -739,10 +593,10 @@ advise("making new hist list for class");
 #endif /* QUIP_DEBUG */
 
 	np=QLIST_HEAD(iclp->icl_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		mip=(Member_Info *) NODE_DATA(np);
 		lp = item_list(QSP_ARG  mip->mi_itp);
-		if( lp != NO_LIST )
+		if( lp != NULL )
 			init_hist_from_list(QSP_ARG  s,lp);
 		np=NODE_NEXT(np);
 	}

@@ -30,8 +30,5 @@
 
 #define SET_CANVAS_VW(cp,vp)	SET_QV_VW(CANVAS_QV(cp),vp)
 
-#define NO_CANVAS	((quipCanvas *)NULL)
-
-
 #endif /* ! _QUIPCANVAS_H_ */
 

@@ -19,7 +19,7 @@ define(`_VEC_FUNC_2V_CONV',	GENERIC_HOST_TYPED_CONV($1,,,$2))
 
 
 // 5 args
-define(`_VEC_FUNC_5V',	GENERIC_HOST_TYPED_CALL($1,,,,5))
+define(`_VEC_FUNC_5V',		GENERIC_HOST_TYPED_CALL($1,,,,5))
 define(`_VEC_FUNC_4V_SCAL',	GENERIC_HOST_TYPED_CALL($1,,,_1S,4))
 define(`_VEC_FUNC_3V_2SCAL',	GENERIC_HOST_TYPED_CALL($1,,,_2S,3))
 define(`_VEC_FUNC_2V_3SCAL',	GENERIC_HOST_TYPED_CALL($1,,,_3S,2))
@@ -29,16 +29,16 @@ define(`_VEC_FUNC_1V_3SCAL',	SLOW_HOST_CALL($1,,,_3S,1))
 
 // 3 args
 define(`_VEC_FUNC_3V',		GENERIC_HOST_TYPED_CALL($1,,,,3))
-define(`_VEC_FUNC_CPX_3V',		GENERIC_HOST_TYPED_CALL($1,,CPX_,,3))
-define(`_VEC_FUNC_QUAT_3V',		GENERIC_HOST_TYPED_CALL($1,,QUAT_,,3))
+define(`_VEC_FUNC_CPX_3V',	GENERIC_HOST_TYPED_CALL($1,,CPX_,,3))
+define(`_VEC_FUNC_QUAT_3V',	GENERIC_HOST_TYPED_CALL($1,,QUAT_,,3))
 define(`_VEC_FUNC_1V_2SCAL',	GENERIC_HOST_TYPED_CALL($1,,,_2S,1))
-define(`_VEC_FUNC_2V_SCAL',		GENERIC_HOST_TYPED_CALL($1,,,_1S,2))
+define(`_VEC_FUNC_2V_SCAL',	GENERIC_HOST_TYPED_CALL($1,,,_1S,2))
 
-define(`_VEC_FUNC_VVSLCT',		GENERIC_HOST_TYPED_CALL($1,SBM_,,,3))
-define(`_VEC_FUNC_VSSLCT',		GENERIC_HOST_TYPED_CALL($1,SBM_,,_1S,2))
-define(`_VEC_FUNC_SSSLCT',		GENERIC_HOST_TYPED_CALL($1,SBM_,,_2S,1))
+define(`_VEC_FUNC_VVSLCT',	GENERIC_HOST_TYPED_CALL($1,SBM_,,,3))
+define(`_VEC_FUNC_VSSLCT',	GENERIC_HOST_TYPED_CALL($1,SBM_,,_1S,2))
+define(`_VEC_FUNC_SSSLCT',	GENERIC_HOST_TYPED_CALL($1,SBM_,,_2S,1))
 
-define(`_VEC_FUNC_SBM_1',		GENERIC_HOST_TYPED_CALL($1,SBM_,,,1) )
+define(`_VEC_FUNC_SBM_1',	GENERIC_HOST_TYPED_CALL($1,SBM_,,,1) )
 
 define(`_VEC_FUNC_1V',		GENERIC_HOST_TYPED_CALL($1,,,,1))
 define(`_VEC_FUNC_2V',`GENERIC_HOST_TYPED_CALL($1,,,,2)')
@@ -146,7 +146,6 @@ GENERIC_HOST_FAST_SWITCH($1,$2,$3,$4,$5)
 ')
 
 
-
 define(`CHAIN_CHECK',`
 
 	if( is_chaining ){
@@ -200,6 +199,8 @@ define(`REPORT_SWITCH',`sprintf(DEFAULT_ERROR_STRING,"Calling %s version of %s",
 define(`REPORT_SWITCH',`')
 ')
 
+dnl	GENERIC_HOST_FAST_SWITCH(name,bitmaps,rctype,scalars,vectors)
+
 define(`GENERIC_HOST_FAST_SWITCH',`
 
 /* generic_host_fast_switch /$1/ /$2/ /$3/ /$4/ /$5/ */
@@ -235,4 +236,5 @@ REPORT_SWITCH($1,slow)
 	}
 }
 ')
+
 

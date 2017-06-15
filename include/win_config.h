@@ -630,9 +630,6 @@
 /* use internal memory manager */
 /* #undef USE_GETBUF */
 
-/* use of SSE* extensions enabled */
-//#define USE_SSE 1
-
 /* Version number of package */
 #define VERSION "0.4"
 

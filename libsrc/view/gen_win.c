@@ -10,11 +10,11 @@ IOS_Item_Type *itp_4;
 #include "nav_panel.h"
 IOS_Item_Type *itp_5;
 
-static IOS_Item_Class *gw_iclp=NO_IOS_ITEM_CLASS;
+static IOS_Item_Class *gw_iclp=NULL;
 
 #ifdef BUILD_FOR_OBJC
 
-static IOS_Item_Type *genwin_itp=NO_IOS_ITEM_TYPE;
+static IOS_Item_Type *genwin_itp=NULL;
 
 static double get_genwin_size(QSP_ARG_DECL  IOS_Item *ip, int index)
 {
@@ -192,11 +192,11 @@ Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 	// This might have been called either for viewer creation, or
 	// panel creation...  make sure the other one is created also.
 	Panel_Obj *po = panel_obj_of(QSP_ARG  GW_NAME(gwp));
-	if( po == NO_PANEL_OBJ ){
+	if( po == NULL ){
 		/* po = */ new_panel(QSP_ARG  GW_NAME(gwp), GW_WIDTH(gwp), GW_HEIGHT(gwp) );
 	}
 	Viewer *vp = vwr_of(QSP_ARG  GW_NAME(gwp));
-	if( vp == NO_VIEWER ){
+	if( vp == NULL ){
 		/* vp = */ viewer_init(QSP_ARG  GW_NAME(gwp), GW_WIDTH(gwp), GW_HEIGHT(gwp), VIEW_BUTTON_ARENA);
 	}
 
@@ -209,9 +209,9 @@ Gen_Win *find_genwin_for_vc(QUIP_VIEW_CONTROLLER_TYPE *vc)
 	IOS_Node *np;
 
 	lp = genwin_list();
-	if( lp == NO_IOS_LIST ) return NULL;
+	if( lp == NULL ) return NULL;
 	np = IOS_LIST_HEAD(lp);
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		Gen_Win *gwp;
 		gwp = (Gen_Win *) IOS_NODE_DATA(np);
 #ifdef BUILD_FOR_IOS
@@ -237,14 +237,14 @@ Gen_Win *find_genwin_for_vc(QUIP_VIEW_CONTROLLER_TYPE *vc)
 
 #define INSURE_GENWIN					\
 							\
-	if( gw_iclp == NO_IOS_ITEM_CLASS )		\
+	if( gw_iclp == NULL )		\
 		init_genwin_class(SINGLE_QSP_ARG);
 
 
 static void init_genwin_class(SINGLE_QSP_ARG_DECL)
 {
 #ifdef CAUTIOUS
-	if( gw_iclp != NO_IOS_ITEM_CLASS ){
+	if( gw_iclp != NULL ){
 		WARN("CAUTIOUS:  redundant call to init_genwin_class");
 		return;
 	}
@@ -282,7 +282,7 @@ static Viewer *genwin_viewer(QSP_ARG_DECL  Gen_Win *gwp)
 	Viewer *vp;
 	IOS_Member_Info *mip;
 
-	if( gwp == NO_GENWIN ) return(NO_VIEWER);
+	if( gwp == NULL ) return(NULL);
 
 	INSURE_GENWIN
 
@@ -304,7 +304,7 @@ static Panel_Obj *genwin_panel(QSP_ARG_DECL  Gen_Win *gwp)
 	Panel_Obj *po;
 	IOS_Member_Info *mip;
 
-	if( gwp == NULL ) return(NO_PANEL_OBJ);
+	if( gwp == NULL ) return(NULL);
 
 	INSURE_GENWIN
 
@@ -324,20 +324,20 @@ Dpyable *genwin_display(QSP_ARG_DECL  Gen_Win *gwp)
 	Viewer *vp;
 
 	vp = genwin_viewer(QSP_ARG  gwp);
-	if( vp != NO_VIEWER ){
+	if( vp != NULL ){
 		return( VW_DPYABLE(vp) );
 	} else {
 #ifdef HAVE_MOTIF
 		Panel_Obj *po;
 
 		po = genwin_panel(QSP_ARG  gwp);
-		if( po != NO_PANEL_OBJ ){
+		if( po != NULL ){
 			return( PO_DPYABLE(po) );
 		}
 #endif /* HAVE_MOTIF */
 	}
 #endif /* HAVE_X11 */
-	return NO_DISPLAY;
+	return NULL;
 }
 
 
@@ -357,7 +357,7 @@ static
 
 	mip = get_ios_member_info(QSP_ARG  gw_iclp,GW_NAME(gwp));
 #ifdef CAUTIOUS
-	if( mip == NO_IOS_MEMBER_INFO ){
+	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  position_genwin %s %d %d, missing member info #2",
 			GW_NAME(gwp),x,y);
@@ -403,14 +403,14 @@ static void show_genwin(QSP_ARG_DECL  IOS_Item *ip)
 	Genwin_Functions *gwfp;
 	IOS_Member_Info *mip;
 
-	if( ip == NO_IOS_ITEM ) return;
+	if( ip == NULL ) return;
 
 	INSURE_GENWIN
 
 	mip = get_ios_member_info(QSP_ARG  gw_iclp,IOS_ITEM_NAME(ip));
 
 #ifdef CAUTIOUS
-	if( mip == NO_IOS_MEMBER_INFO ){
+	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  show_genwin %s, missing member info #2",
 			IOS_ITEM_NAME(ip));
@@ -431,14 +431,14 @@ static void unshow_genwin(QSP_ARG_DECL  IOS_Item *ip)
 	Genwin_Functions *gwfp;
 	IOS_Member_Info *mip;
 
-	if( ip == NO_IOS_ITEM ) return;
+	if( ip == NULL ) return;
 
 	INSURE_GENWIN
 
 	mip = get_ios_member_info(QSP_ARG  gw_iclp,IOS_ITEM_NAME(ip));
 
 #ifdef CAUTIOUS
-	if( mip == NO_IOS_MEMBER_INFO ){
+	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  position_genwin %s, missing member info #2",
 			IOS_ITEM_NAME(ip));
@@ -516,7 +516,7 @@ static void delete_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 	mip = get_ios_member_info(QSP_ARG  gw_iclp,GW_NAME(gwp));
 
 #ifdef CAUTIOUS
-	if( mip == NO_IOS_MEMBER_INFO ){
+	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  position_genwin %s, missing member info #2",
 			GW_NAME(gwp));

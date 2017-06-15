@@ -106,14 +106,14 @@ typedef struct compute_platform {
 
 #ifdef HAVE_OPENCL
 		OCL_Platform_Data *	u_opd_p;
-#define PF_ODP(pfp)		(pfp)->cp_data.u_opd_p
+#define PF_ODP(pfp)		(pfp)->cp_u.u_opd_p
 #endif // HAVE_OPENCL
 
 #ifdef HAVE_CUDA
 		/*Cuda_Platform_Data*/int	u_cpd;
 #endif // HAVE_CUDA
 
-	} cp_data;	// platform-specific
+	} cp_u;	// platform-specific
 #endif // HAVE_ANY_GPU
 
 } Compute_Platform;
@@ -129,8 +129,6 @@ extern int ocl_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_ob
 extern int cu2_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_obj_args *oap);
 #endif // HAVE_CUDA
 */
-
-#define NO_PLATFORM	((Compute_Platform *)NULL)
 
 ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
@@ -224,15 +222,25 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_FUNC_TBL(cpp,v)	(cpp)->cp_vfa_tbl = v
 
 #define PF_TYPE(cpp)	(cpp)->cp_type
-#define PF_DATA(cpp)	(cpp)->cp_data
+#define PF_DATA(cpp)	(cpp)->cp_u
 #define SET_PF_TYPE(cpp,v)	(cpp)->cp_type = v
 // Not a pointer!
-//#define SET_PF_DATA(cpp,v)	(cpp)->cp_data = v
+//#define SET_PF_DATA(cpp,v)	(cpp)->cp_u = v
 #define IS_CPU_PLATFORM(cpp)	(PF_TYPE(cpp)==PLATFORM_CPU)
 
 #define PF_OPD(cpp)	PF_DATA(cpp).u_opd_p
-#define PF_OPD_ID(cpp)	PF_OPD(cpp)->opd_id
-#define SET_PF_OPD_ID(cpp,v)	PF_OPD(cpp)->opd_id = v
+
+#define OCLPF_ID(cpp)			OPD_ID(PF_OPD(cpp))
+#define OCLPF_PROFILE(cpp)		OPD_PROFILE(PF_ODP(cpp))
+#define OCLPF_VERSION(cpp)		OPD_VERSION(PF_ODP(cpp))
+#define OCLPF_VENDOR(cpp)		OPD_VENDOR(PF_ODP(cpp))
+#define OCLPF_EXTENSIONS(cpp)		OPD_EXTENSIONS(PF_ODP(cpp))
+
+#define SET_OCLPF_ID(cpp,v)		SET_OPD_ID(PF_OPD(cpp),v)
+#define SET_OCLPF_PROFILE(cpp,v)	SET_OPD_PROFILE(PF_ODP(cpp),v)
+#define SET_OCLPF_VERSION(cpp,v)	SET_OPD_VERSION(PF_ODP(cpp),v)
+#define SET_OCLPF_VENDOR(cpp,v)		SET_OPD_VENDOR(PF_ODP(cpp),v)
+#define SET_OCLPF_EXTENSIONS(cpp,v)	SET_OPD_EXTENSIONS(PF_ODP(cpp),v)
 
 struct cuda_dev_info;
 typedef struct cuda_dev_info Cuda_Dev_Info;
@@ -279,6 +287,25 @@ struct cuda_dev_info {
 #ifdef HAVE_OPENCL
 typedef struct ocl_dev_info  OCL_Dev_Info;
 
+#define PFDEV_ODI(pdp)		(pdp)->pd_dev_info.u_odi_p
+#define SET_PFDEV_ODI(pdp,v)	(pdp)->pd_dev_info.u_odi_p = v
+
+#define PFDEV_OCL_DEV_ID(pdp)			ODI_DEV_ID( PFDEV_ODI(pdp) )
+#define SET_PFDEV_OCL_DEV_ID(pdp,v)		ODI_DEV_ID( PFDEV_ODI(pdp) ) = v
+
+#define OCLDEV_DEV_ID(pdp)		ODI_DEV_ID( PFDEV_ODI(pdp) )
+#define OCLDEV_CTX(pdp)			ODI_CTX( PFDEV_ODI(pdp) )
+#define OCLDEV_QUEUE(pdp)		ODI_QUEUE( PFDEV_ODI(pdp) )
+#define OCLDEV_IDX(pdp)			ODI_IDX( PFDEV_ODI(pdp) )
+#define OCLDEV_EXTENSIONS(pdp)		ODI_EXTENSIONS(PFDEV_ODI(pdp))
+
+#define SET_OCLDEV_DEV_ID(pdp,v)	SET_ODI_DEV_ID( PFDEV_ODI(pdp),v)
+#define SET_OCLDEV_CTX(pdp,v)		SET_ODI_CTX( PFDEV_ODI(pdp),v)
+#define SET_OCLDEV_QUEUE(pdp,v)		SET_ODI_QUEUE( PFDEV_ODI(pdp),v)
+#define SET_OCLDEV_IDX(pdp,v)		SET_ODI_IDX( PFDEV_ODI(pdp),v)
+#define SET_OCLDEV_EXTENSIONS(pdp,v)	SET_ODI_EXTENSIONS(PFDEV_ODI(pdp),v)
+
+
 #endif // HAVE_OPENCL
 
 struct platform_device {
@@ -301,10 +328,11 @@ struct platform_device {
 #endif // HAVE_ANY_GPU
 } ;
 
-#define NO_PFDEV	((Platform_Device *)NULL)
-
 #define PFDEV_CUDA_INFO(pdp)		((pdp)->pd_dev_info.u_cdi_p)
 #define SET_PFDEV_CUDA_INFO(pdp,v)	((pdp)->pd_dev_info.u_cdi_p) = v
+
+#define PFDEV_OCL_DEV_INFO(pdp)		((pdp)->pd_dev_info.u_odi_p)
+#define SET_PFDEV_OCL_DEV_INFO(pdp,v)	((pdp)->pd_dev_info.u_odi_p) = v
 
 #define PFDEV_NAME(pdp)			(pdp)->pd_item.item_name
 
@@ -360,7 +388,6 @@ struct cuda_stream_info {
 
 #define STREAM_NAME(psp)	(psp)->ps_item.item_name
 
-#define NO_STREAM ((Platform_Stream *)NULL)
 #define PICK_STREAM(s)	pick_stream(QSP_ARG s)
 #define GET_STREAM(p)	get_stream(QSP_ARG  p)
 

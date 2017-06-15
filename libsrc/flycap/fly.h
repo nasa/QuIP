@@ -1,6 +1,5 @@
 #include "quip_config.h"
 
-#include "query.h"
 #include "data_obj.h"
 #include "fio_api.h"
 
@@ -161,9 +160,6 @@ typedef struct named_trigger_mode {
 	//dc1394trigger_mode_t	ntm_mode;
 #endif
 } Named_Trigger_Mode;
-
-#define NO_PGR_FRAME		((PGR_Frame *)NULL)
-
 
 // jbm made these limits up...
 // We should do something sensible here, but it is difficult

@@ -9,7 +9,6 @@ typedef struct my_cu2_stream {
 //	cudaStream_t	os_stream;
 } My_Cuda_Stream;
 
-#define NO_CUDA_STREAM ((My_Cuda_Stream *)NULL)
 #define PICK_CUDA_STREAM(s)	pick_cu2_stream(QSP_ARG s)
 
 
@@ -34,10 +33,7 @@ static void init_first_cu2_stream(SINGLE_QSP_ARG_DECL)
 	My_Cuda_Stream *csp;
 
 	csp=new_cu2_stream(QSP_ARG  "default");
-
-#ifdef CAUTIOUS
-	if( csp == NO_CUDA_STREAM ) ERROR1("CAUTIOUS:  failed to create default stream object");
-#endif /* CAUTIOUS */
+	assert( csp != NULL );
 
 	//csp->cs_stream = (cudaStream_t) 0;
 	have_first_cu2_stream=1;
@@ -53,7 +49,7 @@ static PF_COMMAND_FUNC( new_stream )
 
 	s=NAMEOF("name for stream");
 	csp = new_cu2_stream(QSP_ARG  s);
-	if( csp == NO_CUDA_STREAM ) return;
+	if( csp == NULL ) return;
 
 	/*
 	e = cudaStreamCreate(&csp->cs_stream);
@@ -74,7 +70,7 @@ static PF_COMMAND_FUNC( stream_info )
 	My_Cuda_Stream *csp;
 	
 	csp = GET_CUDA_STREAM("");
-	if( csp == NO_CUDA_STREAM ) return;
+	if( csp == NULL ) return;
 
 	prt_msg("No information...");
 }
@@ -87,7 +83,7 @@ static PF_COMMAND_FUNC( sync_stream )
 	if( ! have_first_cu2_stream ) init_first_cu2_stream(SINGLE_QSP_ARG);
 
 	csp = PICK_CUDA_STREAM("stream");
-	if( csp == NO_CUDA_STREAM ) return;
+	if( csp == NULL ) return;
 
 /*
 	e = cudaStreamSynchronize(csp->cs_stream);

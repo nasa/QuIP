@@ -36,10 +36,12 @@ typedef enum {
 @interface Alert_Info : NSObject
 
 #ifdef BUILD_FOR_IOS
-@property (retain) UIAlertView *	view;
-+(void) rememberAlert:(UIAlertView *)a withType:(Quip_Alert_Type)t;
-+(Alert_Info *) alertInfoFor:(UIAlertView *)a;
-#define ALERT_INFO_OBJ(aip)		(aip).view
+@property (retain) QUIP_ALERT_OBJ_TYPE *	the_alert_p;
+
++(void) rememberAlert:(QUIP_ALERT_OBJ_TYPE *)a withType:(Quip_Alert_Type)t;
++(Alert_Info *) alertInfoFor:(QUIP_ALERT_OBJ_TYPE *)a;
+
+#define ALERT_INFO_OBJ(aip)		(aip).the_alert_p
 #endif // BUILD_FOR_IOS
 
 #ifdef BUILD_FOR_MACOS
@@ -64,13 +66,10 @@ typedef enum {
 extern void dismiss_quip_alert(QUIP_ALERT_OBJ_TYPE *av,NSInteger buttonIndex);
 extern void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *av);
 
-//extern void resume_quip(SINGLE_QSP_ARG_DECL);
-extern void check_deferred_alert(SINGLE_QSP_ARG_DECL);
-
-
 /* ios.m */
 extern void simple_alert(QSP_ARG_DECL  const char *type, const char *msg);
 extern void fatal_alert(QSP_ARG_DECL  const char *msg);
+extern int check_deferred_alert(SINGLE_QSP_ARG_DECL);
 
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);	// a nop
 extern void give_notice(const char **msg_array);

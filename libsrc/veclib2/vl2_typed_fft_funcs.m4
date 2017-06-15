@@ -501,8 +501,8 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	dst_inc = FFT_DINC(fap);
 	src_inc = FFT_SINC(fap);
 	len=FFT_LEN(fap);		/* length of the real destination */
-fprintf(stderr,"dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n",
-(long)dest,dst_inc,(long)src,src_inc,len);
+/*fprintf(stderr,"dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n",
+(long)dest,dst_inc,(long)src,src_inc,len);*/
 
 	if( len != last_real_len ){
 		init_sinfact (len);

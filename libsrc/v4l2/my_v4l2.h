@@ -6,7 +6,6 @@
 #include "fio_api.h"
 
 #include "my_video_dev.h"
-#include "query.h"
 
 #ifdef RECORD_TIMESTAMPS
 #define TIMESTAMP_SIZE	sizeof(struct timeval)

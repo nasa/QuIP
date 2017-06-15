@@ -20,7 +20,7 @@ int add_image( Viewer *vp, Data_Obj *dp, int x, int y )
 
 	/* Don't add the image if it is already on the list... */
 	np = QLIST_HEAD( VW_IMAGE_LIST(vp) );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		wip = NODE_DATA(np);
 		if( wip->wi_dp == dp ) {
 			return 0;
@@ -80,13 +80,14 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		return;
 	}
 	if( IS_DRAGSCAPE(vp) ){
-		zap_image_list(vp);
+		//zap_image_list(vp);
 #ifndef BUILD_FOR_IOS
+		rls_list_nodes(vp->vw_image_list);
 		add_image(vp,dp,0,0);
 #endif // BUILD_FOR_IOS
 	} else {
 		/* If we are holding an image, release it */
-		if( VW_OBJ(vp) != NO_OBJ )
+		if( VW_OBJ(vp) != NULL )
 			release_image(QSP_ARG  VW_OBJ(vp));
 		SET_VW_OBJ(vp,dp);
 		/* make sure this image doesn't get deleted out from under us */
@@ -112,14 +113,8 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 
 	lp = VW_IMAGE_LIST(vp);
 
-#ifdef CAUTIOUS
-	if( lp == NO_LIST ){
-		ERROR1("CAUTIOUS:  bring_image_to_front:  no image list!?");
-	}
-	if( QLIST_HEAD( lp ) == NO_NODE ){
-		ERROR1("CAUTIOUS:  bring_image_to_front:  image list is empty!?");
-	}
-#endif /* CAUTIOUS */
+	assert(lp!=NULL);
+	assert(QLIST_HEAD(lp)!=NULL);
 
 	n_possible = eltcount(lp);
 	while( n_tried < n_possible ){

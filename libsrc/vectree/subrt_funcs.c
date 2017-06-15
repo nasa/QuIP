@@ -6,6 +6,7 @@
 
 #include "quip_prot.h"
 #include "vectree.h"
+#include "subrt.h"
 #include "query_stack.h"	// BUG
 
 
@@ -15,7 +16,7 @@
 
 void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 {
-	if( SR_BODY(srp) != NO_VEXPR_NODE ){
+	if( SR_BODY(srp) != NULL ){
 		NODE_ERROR(body);
 		NWARN("subroutine body is not null!?");
 	}
@@ -28,12 +29,12 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	Subrt *srp;
 
 	srp=new_subrt(QSP_ARG  name);
-	if( srp==NO_SUBRT ) return(NO_SUBRT);
+	if( srp==NULL ) return(NULL);
 
 	SET_SR_ARG_DECLS(srp, args);
 	SET_SR_BODY(srp, body);
-	SET_SR_RET_LIST(srp, NO_LIST);
-	SET_SR_CALL_LIST(srp, NO_LIST);
+	SET_SR_RET_LIST(srp, NULL);
+	SET_SR_CALL_LIST(srp, NULL);
 	SET_SR_PREC_PTR(srp, prec_p);
 	/* We used to give void subrt's a null shape ptr... */
 	SET_SR_SHAPE(srp, ALLOC_SHAPE );
@@ -42,7 +43,7 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 		CLEAR_SHP_FLAG_BITS(SR_SHAPE(srp), DT_UNKNOWN_SHAPE);
 	}
 	SET_SR_FLAGS(srp, 0);
-	SET_SR_CALL_VN(srp, NO_VEXPR_NODE);
+	SET_SR_CALL_VN(srp, NULL);
 	return(srp);
 }
 
@@ -52,11 +53,11 @@ COMMAND_FUNC( do_run_subrt )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
-	SET_SR_ARG_VALS(srp,NO_VEXPR_NODE);
+	SET_SR_ARG_VALS(srp,NULL);
 
-	RUN_SUBRT(srp,NO_VEXPR_NODE,NO_OBJ);
+	RUN_SUBRT(srp,NULL,NULL);
 }
 
 COMMAND_FUNC( do_dump_subrt )
@@ -65,7 +66,7 @@ COMMAND_FUNC( do_dump_subrt )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 	DUMP_SUBRT(srp);
 }
 
@@ -78,14 +79,14 @@ void dump_subrt(QSP_ARG_DECL Subrt *srp)
 		return;
 	}
 
-	if( SR_ARG_DECLS(srp) != NO_VEXPR_NODE ){
+	if( SR_ARG_DECLS(srp) != NULL ){
 		sprintf(msg_str,"Subrt %s arg declarations:\n",SR_NAME(srp));
 		prt_msg(msg_str);
 		print_dump_legend(SINGLE_QSP_ARG);
 		DUMP_TREE(SR_ARG_DECLS(srp));
 	}
 
-	if( SR_BODY(srp) != NO_VEXPR_NODE ){
+	if( SR_BODY(srp) != NULL ){
 		sprintf(msg_str,"Subrt %s body:\n",SR_NAME(srp));
 		prt_msg(msg_str);
 		print_dump_legend(SINGLE_QSP_ARG);
@@ -99,7 +100,7 @@ COMMAND_FUNC( do_opt_subrt )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	OPTIMIZE_SUBRT(srp);
 }
@@ -110,7 +111,7 @@ COMMAND_FUNC( do_tell_cost )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	tell_cost(QSP_ARG  srp);
 }
@@ -123,7 +124,7 @@ COMMAND_FUNC( do_subrt_info )
 
 	srp=PICK_SUBRT("");
 
-	if( srp==NO_SUBRT ) return;
+	if( srp==NULL ) return;
 
 	if( IS_SCRIPT(srp) ){
 		sprintf(msg_str,"\nScript subroutine %s, %d arguments:\n",SR_NAME(srp),SR_N_ARGS(srp));
@@ -138,18 +139,18 @@ COMMAND_FUNC( do_subrt_info )
 
 	enp = SR_BODY(srp);
 
-	if( VN_SHAPE(enp) != NO_SHAPE ){
+	if( VN_SHAPE(enp) != NULL ){
 		DESCRIBE_SHAPE(VN_SHAPE(enp));
 	} else prt_msg("shape not determinable");
 
 	sprintf(msg_str,"\t%d arguments",SR_N_ARGS(srp));
 	prt_msg(msg_str);
 
-	if( SR_RET_LIST(srp) != NO_LIST ){
+	if( SR_RET_LIST(srp) != NULL ){
 		sprintf(msg_str,"%d unknown return shape nodes:",eltcount(SR_RET_LIST(srp)));
 		prt_msg(msg_str);
 		np=QLIST_HEAD(SR_RET_LIST(srp));
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			Vec_Expr_Node *ret_enp;
 			ret_enp = (Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\tn%d:",VN_SERIAL(ret_enp));
@@ -158,11 +159,11 @@ COMMAND_FUNC( do_subrt_info )
 			np=NODE_NEXT(np);
 		}
 	}
-	if( SR_CALL_LIST(srp) != NO_LIST ){
+	if( SR_CALL_LIST(srp) != NULL ){
 		sprintf(msg_str,"%d unknown callfunc shape nodes:",eltcount(SR_CALL_LIST(srp)));
 		prt_msg(msg_str);
 		np=QLIST_HEAD(SR_CALL_LIST(srp));
-		while(np!=NO_NODE){
+		while(np!=NULL){
 			Vec_Expr_Node *c_enp;
 			c_enp = (Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\tn%d:",VN_SERIAL(c_enp));
@@ -184,14 +185,14 @@ Subrt *create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *
 {
 	Subrt *srp;
 
-	srp = remember_subrt(QSP_ARG  PREC_FOR_CODE(PREC_VOID),name,NO_VEXPR_NODE,NO_VEXPR_NODE);
-	if( srp == NO_SUBRT ) return(srp);
+	srp = remember_subrt(QSP_ARG  PREC_FOR_CODE(PREC_VOID),name,NULL,NULL);
+	if( srp == NULL ) return srp;
 
 	SET_SR_FLAG_BITS(srp, SR_SCRIPT);
 	SET_SR_N_ARGS(srp, nargs);
 
-	SET_SR_BODY(srp, (Vec_Expr_Node *) savestr(text));
-	return(srp);
+	SET_SR_TEXT(srp, savestr(text));
+	return srp;
 }
 
 static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
@@ -201,7 +202,7 @@ static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
 
 	ctxname[0]=0;
 	np=QLIST_HEAD(SUBRT_CTX_STACK);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		/* BUG check for string overflow */
 		if( strlen(ctxname) > 0 ) strcat(ctxname,".");
 		strcat(ctxname,(char *)NODE_DATA(np));
@@ -226,7 +227,7 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
 
 //sprintf(ERROR_STRING,"get_subrt_id %s BEGIN",name);
 //advise(ERROR_STRING);
-	if( SUBRT_CTX_STACK == NO_LIST ){
+	if( SUBRT_CTX_STACK == NULL ){
 		SUBRT_CTX_STACK = new_list();
 	}
 	s=savestr(name);
@@ -275,6 +276,12 @@ advise(ERROR_STRING);
 	PUSH_DOBJ_CONTEXT(icp);
 }
 
+static void rls_reference(Reference *refp)
+{
+	rls_stringbuf( REF_SBUF(refp) );
+	givbuf(refp);
+}
+
 // We may not need to do any of this on objC ???
 //
 // really a memory release function...
@@ -292,10 +299,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			givbuf(ID_REF(idp));
 			break;
 		case ID_STRING:
-			if( REF_SBUF(ID_REF(idp))->sb_buf != NULL )
-				givbuf(REF_SBUF(ID_REF(idp))->sb_buf);
-			givbuf(REF_SBUF(ID_REF(idp)));
-			givbuf(ID_REF(idp));
+			rls_reference(ID_REF(idp));
 			break;
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));
@@ -311,9 +315,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			NWARN(ERROR_STRING);
 			break;
 	}
-	//del_item(QSP_ARG  id_itp, idp );
-	del_id(QSP_ARG  idp );
-	rls_str((char *)ID_NAME(idp));
+	del_id(QSP_ARG  idp );	// releases name for us
 }
 
 // This function is called when we delete an object declared in a subroutine...
@@ -370,14 +372,7 @@ advise(ERROR_STRING);
 	delete_item_context_with_callback(QSP_ARG  icp, clear_decl_obj);
 
 	np = remTail(SUBRT_CTX_STACK);
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  delete_subrt_ctx:  can't pop name from context stack!?");
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
+	assert( np != NULL );
 
 	givbuf(NODE_DATA(np));	/* string stored w/ savestr */
 	rls_node(np);
@@ -401,29 +396,11 @@ static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *
 	static char ctxname[LLEN];
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( SUBRT_CTX_STACK==NO_LIST ){
-//		NWARN("CAUTIOUS:  get_subrt_ctx_name:  stack is uninitialized!?");
-//		return("");
-//	}
-//	if( QLIST_TAIL(SUBRT_CTX_STACK) == NO_NODE ){
-//		NWARN("CAUTIOUS:  get_subrt_ctx_name:  stack empty!?");
-//		return("");
-//	}
-//#endif /* CAUTIOUS */
-	assert( SUBRT_CTX_STACK != NO_LIST );
-	assert( QLIST_TAIL(SUBRT_CTX_STACK) != NO_NODE );
+	assert( SUBRT_CTX_STACK != NULL );
+	assert( QLIST_TAIL(SUBRT_CTX_STACK) != NULL );
 
 	np = QLIST_TAIL(SUBRT_CTX_STACK);
 
-//#ifdef CAUTIOUS
-//	if( strcmp(name,(char *)NODE_DATA(np)) ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  get_subrt_ctx_name:  name \"%s\" does not match top of stack \"%s\"",
-//			name,(char *)NODE_DATA(np));
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return("");
-//	}
-//#endif /* CAUTIOUS */
 	assert( ! strcmp(name,(char *)NODE_DATA(np)) );
 
 	/* BUG possible string overflow */
@@ -448,27 +425,11 @@ advise(ERROR_STRING);
 */
 }
 #endif /* QUIP_DEBUG */
+
 //sprintf(ERROR_STRING,"Searching for context %s",ctxname);
 //advise(ERROR_STRING);
 	icp = ctx_of(QSP_ARG  ctxname);
-//#ifdef CAUTIOUS
-//	if( icp == NO_ITEM_CONTEXT ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  pop_subrt_ctx couldn't find %s context %s",IT_NAME(itp),ctxname);
-//		WARN(ERROR_STRING);
-//		return(icp);
-//	}
-	assert( icp != NO_ITEM_CONTEXT );
-
-//	if( icp != CURRENT_CONTEXT(itp) ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  pop_subrt_ctx:  Subroutine context %s does not match current %s context %s!?",
-//			CTX_NAME(icp),IT_NAME(itp),CTX_NAME(CURRENT_CONTEXT(itp)));
-//		WARN(ERROR_STRING);
-//		show_context_stack(QSP_ARG  itp);
-//		return(NO_ITEM_CONTEXT);
-//	}
-//#endif /* CAUTIOUS */
+	assert( icp != NULL );
 	assert( icp == CURRENT_CONTEXT(itp) );
 
 	pop_item_context(QSP_ARG  itp);
@@ -482,19 +443,19 @@ static Vec_Expr_Node *find_numbered_node_in_tree(Vec_Expr_Node *root_enp,int n)
 	Vec_Expr_Node *enp;
 	int i;
 
-	if( root_enp==NO_VEXPR_NODE ) return(NO_VEXPR_NODE);
+	if( root_enp==NULL ) return(NULL);
 
 	if( VN_SERIAL(root_enp) == n ) return(root_enp);
 
-	if( VN_CODE(root_enp) == T_SCRIPT ) return(NO_VEXPR_NODE);
+	if( VN_CODE(root_enp) == T_SCRIPT ) return(NULL);
 
 	for(i=0;i<MAX_CHILDREN(root_enp);i++){
-		if( VN_CHILD(root_enp,i) != NO_VEXPR_NODE ){
+		if( VN_CHILD(root_enp,i) != NULL ){
 			enp = find_numbered_node_in_tree(VN_CHILD(root_enp,i),n);
-			if( enp!= NO_VEXPR_NODE ) return(enp);
+			if( enp!= NULL ) return(enp);
 		}
 	}
-	return(NO_VEXPR_NODE);
+	return(NULL);
 }
 
 static Vec_Expr_Node *find_numbered_node_in_subrt(Subrt *srp,int n)
@@ -503,11 +464,11 @@ static Vec_Expr_Node *find_numbered_node_in_subrt(Subrt *srp,int n)
 
 	if( ! IS_SCRIPT(srp) ){
 		enp=find_numbered_node_in_tree(SR_BODY(srp),n);
-		if( enp != NO_VEXPR_NODE ) return(enp);
+		if( enp != NULL ) return enp;
 	}
 
 	enp=find_numbered_node_in_tree(SR_ARG_DECLS(srp),n);
-	return(enp);
+	return enp;
 }
 
 Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
@@ -516,23 +477,22 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 	Subrt *srp;
 	Node *np;
 
-	if( subrt_itp == NO_ITEM_TYPE ) return(NO_VEXPR_NODE);
+	if( subrt_itp == NULL ) return NULL;
 
-	//lp=list_of_subrts(SINGLE_QSP_ARG);
 	lp=subrt_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST )
-		return(NO_VEXPR_NODE);
+	if( lp == NULL )
+		return NULL;
 
 	np=QLIST_HEAD(lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Vec_Expr_Node *enp;
 
 		srp=(Subrt *)NODE_DATA(np);
 		enp=find_numbered_node_in_subrt(srp,n);
-		if( enp!=NO_VEXPR_NODE ) return(enp);
+		if( enp!=NULL ) return(enp);
 		np=NODE_NEXT(np);
 	}
-	return(NO_VEXPR_NODE);
+	return(NULL);
 }
 
 

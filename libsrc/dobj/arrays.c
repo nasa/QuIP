@@ -25,8 +25,8 @@
 /* 0 for C style indexing, 1 for fortran, matlab */
 static index_t base_index=0;
 
-static List *free_tmpobj_lp=NO_LIST;
-static List *used_tmpobj_lp=NO_LIST;
+static List *free_tmpobj_lp=NULL;
+static List *used_tmpobj_lp=NULL;
 
 void init_tmp_dps(SINGLE_QSP_ARG_DECL)
 {
@@ -40,17 +40,17 @@ void list_temp_dps(QSP_ARG_DECL  FILE *fp)
 	Node *np;
 	int n, nl, nc, nr;
 
-	if( used_tmpobj_lp == NO_LIST ){
+	if( used_tmpobj_lp == NULL ){
 		advise("no temp objects");
 		return;
 	}
 	np=QLIST_HEAD(used_tmpobj_lp);
 	n=nl=nc=nr=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Data_Obj *dp;
 		dp=(Data_Obj *)NODE_DATA(np);
 		if( DOBJ_IS_LOCKED(dp) ) nl++;
-		if( OBJ_CHILDREN(dp) != NO_LIST ) nc++;
+		if( OBJ_CHILDREN(dp) != NULL ) nc++;
 		if( OBJ_REFCOUNT(dp) > 0 ) nr++;
 		n++;
 		np=NODE_NEXT(np);
@@ -129,13 +129,9 @@ static Data_Obj * temp_replica(QSP_ARG_DECL  Data_Obj *dp)
 static int release_tmpobj_resources(Data_Obj *dp, Data_Obj *parent_dp)
 {
 	/* a used data_obj should have its name set */
-//#ifdef CAUTIOUS
-//	if( OBJ_NAME(dp) == NULL )
-//		NERROR1("CAUTIOUS:  release_tmpobj_resources:  obj has null name!?");
-//#endif /* CAUTIOUS */
 	assert( OBJ_NAME(dp) != NULL );
 
-	if( OBJ_CHILDREN(dp) != NO_LIST ){
+	if( OBJ_CHILDREN(dp) != NULL ){
 		return(-1);	/* failure */
 	}
 	if( dp == parent_dp ){
@@ -180,27 +176,36 @@ static void add_tmpobjs(List *lp, int n)
 	}
 }
 
-Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
+static void insure_tmpobj_free_list(void)
 {
-	Data_Obj *new_dp;
-	Node *np,*first_np;
-
-	if( free_tmpobj_lp == NO_LIST ){
+	if( free_tmpobj_lp == NULL ){
 		free_tmpobj_lp = new_list();
 		add_tmpobjs(free_tmpobj_lp,N_TMP_DP);
 	}
+}
 
-	if( eltcount(free_tmpobj_lp) > 0 ){
-		np = remHead(free_tmpobj_lp);
+static Data_Obj *check_tmpobj_free_list(void)
+{
+	Node *np;
 
-		if( used_tmpobj_lp == NO_LIST )
-			used_tmpobj_lp = new_list();
-		addHead(used_tmpobj_lp,np);
+	insure_tmpobj_free_list();
 
-		return((Data_Obj *)NODE_DATA(np));
-	}
+	if( eltcount(free_tmpobj_lp) == 0 ) return NULL;
 
-	/* They are all in use, we have to release a free one... */
+	np = remHead(free_tmpobj_lp);
+
+	if( used_tmpobj_lp == NULL )
+		used_tmpobj_lp = new_list();
+	addHead(used_tmpobj_lp,np);
+
+	return((Data_Obj *)NODE_DATA(np));
+}
+
+static Data_Obj *recycle_used_tmpobj(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Node *np,*first_np;
+	Data_Obj *new_dp;
+
 	np = remTail(used_tmpobj_lp);
 	first_np = np;
 	new_dp = (Data_Obj *)NODE_DATA(np);
@@ -217,6 +222,17 @@ Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
 	/* put this one at the head of the used list... */
 	addHead(used_tmpobj_lp,np);
 	return(new_dp);
+}
+
+Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Obj *new_dp;
+
+	new_dp = check_tmpobj_free_list();
+	if( new_dp != NULL ) return new_dp;
+
+	/* They are all in use, we have to release a used one... */
+	return recycle_used_tmpobj(QSP_ARG  dp);
 }
 
 
@@ -304,12 +320,12 @@ void unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL)
 {
 	Node *np;
 	Data_Obj *dp;
-	if( used_tmpobj_lp == NO_LIST ){
+	if( used_tmpobj_lp == NULL ){
 		return;
 	}
 
 	np = QLIST_HEAD(used_tmpobj_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		dp=(Data_Obj *)NODE_DATA(np);
 		if( OBJ_FLAGS(dp) & DT_VOLATILE ){
 			CLEAR_OBJ_FLAG_BITS(dp, DT_LOCKED);
@@ -325,11 +341,11 @@ void unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL)
 
 void unlock_children(Data_Obj *dp)
 {
-	if( OBJ_CHILDREN(dp) != NO_LIST ){
+	if( OBJ_CHILDREN(dp) != NULL ){
 		Node *np;
 
 		np = QLIST_HEAD( OBJ_CHILDREN(dp) );
-		while( np != NO_NODE ){
+		while( np != NULL ){
 			Data_Obj *child_dp;
 
 			child_dp = (Data_Obj *) NODE_DATA(np);
@@ -409,15 +425,9 @@ void make_array_name( QSP_ARG_DECL  char *target_str, int buflen, Data_Obj *dp, 
 		right_delim = '}';
 		nstars = which_dim - OBJ_MINDIM(dp);
 	}
-//#ifdef CAUTIOUS
 	else {
-//		WARN("CAUTIOUS:  unrecognized subscript type");
-//		left_delim  = '{';
-//		right_delim = '}';
-//		nstars = which_dim - OBJ_MINDIM(dp);
 		assert( AERROR("Bad subscript type!?") );
 	}
-//#endif /* CAUTIOUS */
 
 	/* now make the name */
 	strcpy(target_str,OBJ_NAME(dp));
@@ -434,9 +444,9 @@ static Node *existing_tmpobj_node(const char *name)
 	Node *np;
 	Data_Obj *dp;
 
-	if( used_tmpobj_lp == NO_LIST ) return(NO_NODE);
+	if( used_tmpobj_lp == NULL ) return(NULL);
 	np=QLIST_HEAD(used_tmpobj_lp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		dp = (Data_Obj *)NODE_DATA(np);
 		if( OBJ_NAME(dp)==NULL ) {
 			NERROR1("existing_tmpobj_node:  null object!?");
@@ -446,23 +456,23 @@ static Node *existing_tmpobj_node(const char *name)
 			return(np);
 		np=NODE_NEXT(np);
 	}
-	return(NO_NODE);
+	return(NULL);
 }
 
 #define MAX_OBJ_NAME_LEN	128
 
 Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t index, int subscr_type )
 {
-	Data_Obj *newdp=NO_OBJ;
+	Data_Obj *newdp=NULL;
 	Node *np;
 	char name_with_subscript[MAX_OBJ_NAME_LEN];	/* BUG how long can this be really? */
 	int i;
 
-	if( dp==NO_OBJ ) return(dp);
+	if( dp==NULL ) return(dp);
 
 	if( which_dim < 0 || which_dim >= N_DIMENSIONS ){
 		WARN("gen_subscript:  dimension index out of range");
-		return(NO_OBJ);
+		return(NULL);
 	}
 	/* We used to disallow subscripting dimensions with only one element,
 	 * but we use mindim and maxdim to keep track of that...
@@ -475,7 +485,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 			dimension_name[which_dim],index,
 			base_index,OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	/* We test against mach_dim so that we can subscript complex and color
@@ -490,7 +500,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 				dimension_name[which_dim],index,
 				OBJ_MACH_DIM(dp,which_dim)+base_index-1,OBJ_NAME(dp));
 			WARN(ERROR_STRING);
-			return(NO_OBJ);
+			return(NULL);
 		}
 	} else {	/* bitmap */
 		if( index-base_index >= OBJ_TYPE_DIM(dp,which_dim) ){
@@ -499,7 +509,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 				dimension_name[which_dim],index,
 				OBJ_MACH_DIM(dp,which_dim)+base_index-1,OBJ_NAME(dp));
 			WARN(ERROR_STRING);
-			return(NO_OBJ);
+			return(NULL);
 		}
 	}
 
@@ -510,7 +520,7 @@ Data_Obj *gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t inde
 	/* maybe we would be better off with a linked list?? */
 
 	np = existing_tmpobj_node(name_with_subscript);
-	if( np != NO_NODE ){
+	if( np != NULL ){
 		/* before returning, move this node up the the head of the list.
 		 *
 		 * The point is to keep the list priority sorted, where
@@ -605,16 +615,9 @@ void release_tmp_obj(Data_Obj *dp)
 	Node *np;
 
 	np = remData(used_tmpobj_lp,dp);
-//#ifdef CAUTIOUS
-//	if( np == NO_NODE ){
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  delete_tmp_obj:  %s not found",OBJ_NAME(dp));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//		return; // NOTREACHED - silence analyzer
-//	}
-//#endif /* CAUTIOUS */
-	assert( np != NO_NODE );
+	assert( np != NULL );
 
-	release_tmpobj_resources(dp,NO_OBJ);
+	release_tmpobj_resources(dp,NULL);
 	addHead(free_tmpobj_lp,np);
 }
 
@@ -651,10 +654,10 @@ if( debug & debug_data ){
 
 Data_Obj *reduce_from_end( QSP_ARG_DECL  Data_Obj *dp, index_t index, int subscr_type )
 {
-	Data_Obj *newdp=NO_OBJ;
+	Data_Obj *newdp=NULL;
 	int dim;
 
-	if( dp==NO_OBJ ) return(dp);
+	if( dp==NULL ) return(dp);
 
 	assert( subscr_type == SQUARE || subscr_type == CURLY );
 

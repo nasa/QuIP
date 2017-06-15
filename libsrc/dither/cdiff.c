@@ -207,7 +207,7 @@ void ctoneit(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
 sprintf(ERROR_STRING,"BEGIN ctoneit, dst = %s",OBJ_NAME(dst_dp));
 advise(ERROR_STRING);
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ){
+	if( dst_dp == NULL || src_dp == NULL ){
 		NWARN("ctoneit:  missing object");
 		return;
 	}

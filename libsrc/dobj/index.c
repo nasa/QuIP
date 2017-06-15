@@ -34,7 +34,7 @@ Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str )
 	int maxd, mind;
 	int is_star;
 
-	if( dp == NO_OBJ ) return(dp);
+	if( dp == NULL ) return(dp);
 
 	cp=index_str;
 	while( *cp && isspace(*cp) ) cp++;
@@ -47,7 +47,7 @@ next_index:
 	if( *cp != '[' && *cp != '{' ){
 		sprintf(DEFAULT_ERROR_STRING,"bad index delimiter \"%s\"",index_str);
 		NWARN(DEFAULT_ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	left_delim = *cp;
 	right_delim = left_delim+2;	/* takes '[' -> ']' and '{' -> '}' */
@@ -74,7 +74,7 @@ next_index:
 	if( *cp != right_delim ){
 		sprintf(DEFAULT_ERROR_STRING,"missing index delimiter '%c'",right_delim);
 		NWARN(DEFAULT_ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	cp++;
 	str[i]=0;

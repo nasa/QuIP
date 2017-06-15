@@ -29,7 +29,7 @@ FIO_CLOSE_FUNC( hips1 )
 {
 	/* see if we need to edit the header */
 	if( IS_WRITABLE(ifp)
-		&& ifp->if_dp != NO_OBJ	/* may be closing 'cause of error */
+		&& ifp->if_dp != NULL	/* may be closing 'cause of error */
 		&& ifp->if_nfrms != ifp->if_frms_to_wt ){
 		if( ifp->if_nfrms <= 0 ){
 			sprintf(ERROR_STRING, "file %s nframes=%d!?",
@@ -109,7 +109,7 @@ if( debug & debug_fileio ) advise("opening hips1 image file");
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
 	/* img_file_creat creates dummy if_dp only if readable */
 
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 #ifdef QUIP_DEBUG
 if( debug & debug_fileio ) advise("allocating hips1 header");
@@ -125,7 +125,7 @@ if( debug & debug_fileio ) advise("allocating hips1 header");
 				ifp->if_hdr_p=NULL;
 			}
 			hips1_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		hips1_to_dp(ifp->if_dp,ifp->if_hdr_p);
 	} else {
@@ -166,12 +166,6 @@ NWARN("HIPS1 extension does not support non-float multicomponent pixels");
 			size=8;
 			break;
 		case PREC_SP:
-//#ifdef CAUTIOUS
-//			if( OBJ_COMPS(dp)==0 ){
-//				NWARN("CAUTIOUS:  Zero tdim!?");
-//				return(-1);
-//			}
-//#endif /* CAUTIOUS */
 			assert( OBJ_COMPS(dp) != 0 );
 
 			if( OBJ_COMPS(dp) == 1 ){
@@ -261,7 +255,7 @@ static int set_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from ima
 
 FIO_WT_FUNC(hips1)
 {
-	if( ifp->if_dp == NO_OBJ ){
+	if( ifp->if_dp == NULL ){
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp , dp );
 		/* reset nframes */

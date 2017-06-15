@@ -61,15 +61,10 @@ static int HOST_TYPED_CALL_NAME(arg_chk,type_code)(Data_Obj *dpto, Data_Obj *dpf
 
 /* there should be a better routine for long lists of short elts. */
 
-#ifdef FVDOT
+#ifdef HAVE_FVDOT
 //forwar declaration of typed rvdot
 static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS);
-
-static void HOST_TYPED_CALL_NAME(rvdot,type_code)(HOST_CALL_ARG_DECLS)
-{
-	NWARN("Sorry, rvdot not implemented yet!?");
-}
-#endif // FVDOT
+#endif // HAVE_FVDOT
 
 
 //static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
@@ -170,14 +165,11 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 				SET_OBJ_DATA_PTR(sub_dst_dp,multiply_indexed_data(dpto,dst_indices));
 				SET_OBJ_DATA_PTR(xf_row_dp,multiply_indexed_data(xform_dp,xf_indices));
 				//vdot(oap);
-#ifdef FVDOT
+#ifdef HAVE_FVDOT
 				HOST_TYPED_CALL_NAME(rvdot,type_code)(FVDOT,oap2);
-#else // ! FVDOT
-				NWARN("Sorry, FVDOT not defined!?");
-#endif // ! FVDOT
-				// BUG we'd like to call a typed functon here,
-				// but it hasn't been declared yet!?
-				//h_vl2_vdot(FVDOT,oap2);
+#else // ! HAVE_FVDOT
+				NWARN("rxform_list:  Sorry, FVDOT not defined!?");
+#endif // ! HAVE_FVDOT
 			} // comps of dpto
 		} // cols of dpto
 	} // rows of dpto
@@ -238,7 +230,7 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
 	tmp_dst_dp = make_dobj(DEFAULT_QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
 
-	if( sub_dst_dp == NO_OBJ || sub_src_dp == NO_OBJ || tmp_dst_dp == NO_OBJ ){
+	if( sub_dst_dp == NULL || sub_src_dp == NULL || tmp_dst_dp == NULL ){
 		NWARN("error creating temporary object for vec_xform");
 		return;
 	}
@@ -349,7 +341,7 @@ static void HOST_TYPED_CALL_NAME(homog_xform,type_code)(QSP_ARG_DECL  Data_Obj *
 
 	tmp_obj=make_obj(QSP_ARG  "_tmptmp",1,OBJ_ROWS(dpto),OBJ_COLS(dpto),
 		1,prec_for_code(REQUIRED_DST_PREC));
-	if( tmp_obj == NO_OBJ ){
+	if( tmp_obj == NULL ){
 		NWARN("homog_xform:  couldn't create temporary data object");
 		return;
 	}

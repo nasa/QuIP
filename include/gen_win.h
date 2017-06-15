@@ -187,7 +187,6 @@ extern UIViewController *current_view_controller;
 extern void add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp, Genwin_Functions *gwfp,
 	IOS_Item *(*lookup)(QSP_ARG_DECL  const char *));
 extern Gen_Win *find_genwin(QSP_ARG_DECL  const char *);
-#define NO_GENWIN	((Gen_Win *) NULL)
 
 extern COMMAND_FUNC( do_genwin_menu );
 

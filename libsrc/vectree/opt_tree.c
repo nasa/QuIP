@@ -7,6 +7,8 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "vectree.h"
+#include "subrt.h"
+#include "debug.h"	// AERROR
 
 /* for definition of function codes */
 #include "veclib_api.h"
@@ -53,8 +55,8 @@ static void collapse_literal(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	/* BUG this is where we should free these nodes;
 	 * after this point, we have no way to find them!?
 	 */
-	SET_VN_CHILD(enp,0,NO_VEXPR_NODE );
-	SET_VN_CHILD(enp,1,NO_VEXPR_NODE );
+	SET_VN_CHILD(enp,0,NULL );
+	SET_VN_CHILD(enp,1,NULL );
 }
 
 /* This function handles collapses of vsmul and vsadd:
@@ -96,15 +98,9 @@ static void try_collapse(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case FVSSUB:  scalar_code = T_MINUS; vs_code = FVSADD; break;
 		case FVSMUL:  scalar_code = T_TIMES; vs_code = FVSMUL; break;
 		case FVSDIV:  scalar_code = T_DIVIDE;vs_code = FVSMUL; break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  try_collapse:  unhandled function code %d",
-//				VN_VFUNC_CODE(tmp_enp));
-//			WARN(ERROR_STRING);
-//			return;
 			assert( AERROR("try_collapse:  unhandled function code") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 
 	SET_VN_CHILD(tmp_enp,0, VN_CHILD(enp,1) );
@@ -150,12 +146,12 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	int i;
 
-	if( enp == NO_VEXPR_NODE ) return;
+	if( enp == NULL ) return;
 
 	/* BUG need to set & destroy the context! */
 
 	for(i=0;i<3;i++){
-		if( VN_CHILD(enp,i) != NO_VEXPR_NODE )
+		if( VN_CHILD(enp,i) != NULL )
 			OPTIMIZE_TREE(VN_CHILD(enp,i));
 	}
 
@@ -197,14 +193,6 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * check and see it the operands are both
 			 * literals, if so, evaluate and replace.
 			 */
-//#ifdef CAUTIOUS
-//			// These should have two children, but
-//			// the analyzer doesn't know that...
-//			if( VN_CHILD(enp,0) == NULL || VN_CHILD(enp,1) == NULL ){
-//				WARN("CAUTIOUS:  unexpected null child!?");
-//				return;
-//			}
-//#endif // CAUTIOUS
 			assert( VN_CHILD(enp,0) != NULL && VN_CHILD(enp,1) != NULL );
 
 			 if( IS_LITERAL(VN_CHILD(enp,0)) &&
@@ -239,12 +227,6 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 		case T_VS_FUNC:
-//#ifdef CAUTIOUS
-//			if( VN_CHILD(enp,0) == NULL ){
-//				WARN("CAUTIOUS:  unexpected null left child!?");
-//				return;
-//			}
-//#endif // CAUTIOUS
 			assert( VN_CHILD(enp,0) != NULL );
 
 			if( VN_CODE(VN_CHILD(enp,0)) == T_VS_FUNC &&

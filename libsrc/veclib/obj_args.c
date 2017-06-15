@@ -22,20 +22,20 @@ void private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, voi
 {
 	int i;
 
-	if( OA_DEST(oap) != NO_OBJ ){
+	if( OA_DEST(oap) != NULL ){
 		sprintf(buf,"Destination object: %s",OBJ_NAME( OA_DEST(oap) ) );
 		(*report_func)(DEFAULT_QSP_ARG  buf);
 longlist(QSP_ARG  OA_DEST(oap) );
 	}
 	for(i=0;i<MAX_N_ARGS; i++){
-		if( OA_SRC_OBJ(oap,i) != NO_OBJ ){
+		if( OA_SRC_OBJ(oap,i) != NULL ){
 			sprintf(buf,"Source object %d:  %s",i+1,OBJ_NAME( OA_SRC_OBJ(oap,i) ) );
 			(*report_func)(DEFAULT_QSP_ARG  buf);
 longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
 		}
 	}
 	for(i=0;i<MAX_RETSCAL_ARGS; i++){
-		if( OA_SCLR_OBJ(oap,i) != NO_OBJ ){
+		if( OA_SCLR_OBJ(oap,i) != NULL ){
 			sprintf(buf,"Scalar object %d:  %s",i+1,OBJ_NAME( OA_SCLR_OBJ(oap,i) ) );
 			(*report_func)(DEFAULT_QSP_ARG  buf);
 		}

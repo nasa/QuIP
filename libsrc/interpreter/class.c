@@ -4,7 +4,7 @@
 
 #include "data_obj.h"	/* hunt_obj() */
 
-static Item_Type * icl_itp=NO_ITEM_TYPE;
+static Item_Type * icl_itp=NULL;
 
 static ITEM_INIT_PROT(Item_Class,icl)
 static ITEM_NEW_PROT(Item_Class,icl)
@@ -18,7 +18,7 @@ Item_Class * new_item_class(QSP_ARG_DECL  const char *name)
 	Item_Class *icp;
 
 	icp = new_icl(QSP_ARG  name);
-	if( icp == NO_ITEM_CLASS )
+	if( icp == NULL )
 		return(icp);
 
 	icp->icl_lp = new_list();
@@ -42,7 +42,7 @@ void add_items_to_class(Item_Class *icp,Item_Type * itp,void* data,
 	addTail(icp->icl_lp,np);
 
 	/* now make the item type point to this class too */
-	if( IT_CLASS_LIST(itp) == NO_LIST )
+	if( IT_CLASS_LIST(itp) == NULL )
 		SET_IT_CLASS_LIST(itp, new_list());
 	np = mk_node(icp);
 	addTail(IT_CLASS_LIST(itp),np);
@@ -57,8 +57,8 @@ Member_Info *check_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Node *np;
 	Member_Info *mip;
 
-	np = icp->icl_lp->l_head;
-	while(np!=NO_NODE){
+	np = QLIST_HEAD(icp->icl_lp);
+	while(np!=NULL){
 		Item *ip;
 
 		mip = (Member_Info*) np->n_data;
@@ -69,20 +69,20 @@ Member_Info *check_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 			ip = item_of(QSP_ARG  mip->mi_itp,name);
 		}
 
-		if( ip != NO_ITEM ){
+		if( ip != NULL ){
 			return(mip);
 		}
 
 		np = np->n_next;
 	}
-	return(NO_MEMBER_INFO);
+	return(NULL);
 }
 
 Member_Info *get_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 {
 	Member_Info *mip;
 	mip = check_member_info(QSP_ARG  icp, name);
-	if( mip == NO_MEMBER_INFO ){
+	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 	"No member %s in item class %s",name,CL_NAME(icp));
 		WARN(ERROR_STRING);
@@ -98,8 +98,8 @@ Item * check_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Item *ip;
 	Member_Info *mip;
 
-	np = icp->icl_lp->l_head;
-	while(np!=NO_NODE){
+	np = QLIST_HEAD(icp->icl_lp);
+	while(np!=NULL){
 		mip = (Member_Info*) np->n_data;
 
 		if( mip->mi_lookup != NULL )
@@ -107,10 +107,10 @@ Item * check_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
 		else
 			ip = item_of(QSP_ARG  mip->mi_itp,name);
 
-		if( ip != NO_ITEM ) return(ip);
+		if( ip != NULL ) return(ip);
 		np=np->n_next;
 	}
-	return(NO_ITEM);
+	return(NULL);
 }
 
 Item * get_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
@@ -118,7 +118,7 @@ Item * get_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	Item *ip;
 
 	ip = check_member(QSP_ARG  icp, name );
-	if( ip == NO_ITEM ){
+	if( ip == NULL ){
 		sprintf(ERROR_STRING,"No member %s found in %s class",
 			name,CL_NAME(icp));
 		WARN(ERROR_STRING);

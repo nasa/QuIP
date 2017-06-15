@@ -1789,7 +1789,7 @@ If ($current_sample<($data_start_index+$n_plot_samples*0.15)&&$data_start_index>
 
 Define Cleanup_Name 2 var_name string
 Vector _cn_string strlen('$2')+1 1 string
-data import_string _cn_string "$2" quit
+Set_String _cn_string "$2"
 expressions
   export _cn_string
   read -
@@ -1799,7 +1799,7 @@ expressions
     _cn_string = _cn_string == '[' ? '_' : _cn_string;
     end
   quit
-data stringify $1 _cn_string quit
+Get_String $1 _cn_string
 Delete_Image _cn_string
 advise "Cleanup_Name $$1 <- $2"
 .

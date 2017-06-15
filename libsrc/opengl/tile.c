@@ -12,6 +12,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "debug.h"
 #include "tile.h"
 #include "gl_util.h"
 #include "data_obj.h"
@@ -31,9 +32,9 @@
 			/* if( vp->v_nref == 0 ){					\
 				release_vertex(vp);				\
 			}*/							\
-			vp = NO_VERTEX;
+			vp = NULL;
 
-List *free_pts_lp=NO_LIST;
+List *free_pts_lp=NULL;
 
 Vertex vertex_tbl[MAX_VERTICES];
 int n_pts_used=0;
@@ -108,7 +109,7 @@ static void release_vertex(Vertex *vp)
 //sprintf(DEFAULT_ERROR_STRING,"\t\tFreeing vertex at 0x%lx",(int_for_addr)vp);
 //NADVISE(DEFAULT_ERROR_STRING);
 	np = mk_node(vp);
-	if( free_pts_lp == NO_LIST )
+	if( free_pts_lp == NULL )
 		free_pts_lp = new_list();
 	addTail(free_pts_lp,np);
 
@@ -144,8 +145,8 @@ static Vertex *find_free_vertex()
 	Node *np;
 	Vertex *vp;
 
-	if( free_pts_lp == NO_LIST ) return(NO_VERTEX);
-	if( free_pts_lp->l_head == NO_NODE ) return(NO_VERTEX);
+	if( free_pts_lp == NULL ) return(NULL);
+	if( QLIST_HEAD(free_pts_lp) == NULL ) return(NULL);
 	np = remHead(free_pts_lp);
 	vp = (Vertex *)np->n_data;
 	rls_node(np);
@@ -168,7 +169,7 @@ Vertex *new_vertex( float x, float y )
 	}
 
 	vp = find_free_vertex();
-	if( vp==NO_VERTEX ){
+	if( vp==NULL ){
 		vp = &vertex_tbl[n_pts_used++];
 sprintf(DEFAULT_ERROR_STRING,"new_vertex %d at %g %g",n_pts_used,x,y);
 NADVISE(DEFAULT_ERROR_STRING);
@@ -189,9 +190,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define VERIFY_NEIGHBOR_IS_NULL(new_tp,new_dir,old_tp,old_dir)						\
 													\
-		if( new_tp->t_n[new_dir] != NO_TILE )							\
+		if( new_tp->t_n[new_dir] != NULL )							\
 			NERROR1("CAUTIOUS:  check_if_neighbors:  new tile neighbor is not null!?");	\
-		if( old_tp->t_n[old_dir] != NO_TILE ){							\
+		if( old_tp->t_n[old_dir] != NULL ){							\
 show_tile(QSP_ARG  old_tp,"");\
 			sprintf(DEFAULT_ERROR_STRING,								\
 	"CAUTIOUS:  check_if_neighbors:  existing tile %s, %s neighbor is %s (expected null)!?",	\
@@ -211,7 +212,7 @@ show_tile(QSP_ARG  old_tp,"");\
 													\
 		tp->t_flags &= ~BOUNDARY_FLAGS_MASK;							\
 		for(i=0;i<4;i++){									\
-			if( tp->t_n[i] == NO_TILE )							\
+			if( tp->t_n[i] == NULL )							\
 				tp->t_flags |= TILE_BOUNDARY_FLAG(i);					\
 		}											\
 	}
@@ -228,7 +229,7 @@ show_tile(QSP_ARG  old_tp,"");\
 			} else {							\
 				release_vertex(vp);					\
 			}								\
-			vp = NO_VERTEX;
+			vp = NULL;
 
 #define TEST_IF_NEIGHBORS(new_tp,new_dir,new_corner1,new_corner2,old_tp,old_dir,old_corner1,old_corner2) \
 													\
@@ -289,7 +290,7 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 	int i;
 
 	mtp = (Master_Tile *)getbuf(sizeof(*mtp));
-	mtp->mt_tp=new_tile(NO_TILE,nw,ne,se,sw,-1);
+	mtp->mt_tp=new_tile(NULL,nw,ne,se,sw,-1);
 
 	/* the vertices have no elevation set yet...
 	 * But we can't do anything now because the DEM's haven't been read.
@@ -299,16 +300,16 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 	mtp->mt_dem_name = NULL;
 	mtp->mt_tex_name = NULL;
 	for(i=0;i<MAX_DEM_LEVELS;i++)
-		mtp->mt_dem_dp[i] = NO_OBJ;
+		mtp->mt_dem_dp[i] = NULL;
 	for(i=0;i<MAX_TEX_LEVELS;i++)
-		mtp->mt_tex_dp[i] = NO_OBJ;
+		mtp->mt_tex_dp[i] = NULL;
 
 	/* now determine whether or not this tile is a boundary tile */
 	/* When two master tiles abut, we would really like for them to share vertices.
 	 * But this is not implemented yet.
 	 */
 
-	if( tile_lp == NO_LIST )
+	if( tile_lp == NULL )
 		mtp->mt_tp->t_flags |= BOUNDARY_FLAGS_MASK;
 	else {
 		/* the new master tile is a boundary unless it is flanked on all 4 sides.
@@ -317,12 +318,12 @@ Master_Tile * new_master_tile(Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw)
 		 */
 		Node *np;
 
-		np = tile_lp->l_head;
+		np = QLIST_HEAD(tile_lp);
 /*
 sprintf(DEFAULT_ERROR_STRING,"searching for neighbors of tile %s",mtp->mt_tp->t_name);
 NADVISE(DEFAULT_ERROR_STRING);
 */
-		while(np!= NO_NODE){
+		while(np!= NULL){
 			Master_Tile *mtp2;
 
 			mtp2 = (Master_Tile *)np->n_data;
@@ -339,11 +340,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #ifdef FOOBAR
 /* show all the tiles for debugging */
-if( tile_lp!=NO_LIST){
+if( tile_lp!=NULL){
 Node *np;
 Master_Tile *mtp;
-np = tile_lp->l_head;
-while(np!= NO_NODE){
+np = QLIST_HEAD(tile_lp);
+while(np!= NULL){
 mtp=np->n_data;
 show_tile(QSP_ARG  mtp->mt_tp,"");
 np = np->n_next;
@@ -379,7 +380,7 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 
 
 #ifdef CAUTIOUS
-	if( tp == NO_TILE ) NERROR1("CAUTIOUS:  new_tile:  couldn't allocate new tile");
+	if( tp == NULL ) NERROR1("CAUTIOUS:  new_tile:  couldn't allocate new tile");
 #endif /* CAUTIOUS */
 
 	nw->v_nref ++;
@@ -394,22 +395,22 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 	tp->t_v[SE] = se;
 	tp->t_v[SW] = sw;
 
-	tp->t_q[0] = NO_TILE;
-	tp->t_q[1] = NO_TILE;
-	tp->t_q[2] = NO_TILE;
-	tp->t_q[3] = NO_TILE;
+	tp->t_q[0] = NULL;
+	tp->t_q[1] = NULL;
+	tp->t_q[2] = NULL;
+	tp->t_q[3] = NULL;
 
 #ifdef TRACK_NEIGHBORS
-	tp->t_n[0] = NO_TILE;
-	tp->t_n[1] = NO_TILE;
-	tp->t_n[2] = NO_TILE;
-	tp->t_n[3] = NO_TILE;
+	tp->t_n[0] = NULL;
+	tp->t_n[1] = NULL;
+	tp->t_n[2] = NULL;
+	tp->t_n[3] = NULL;
 #endif /* TRACK_NEIGHBORS */
 
 	tp->t_flags = 0;
 
 	tp->t_parent = parent;
-	if( parent == NO_TILE ){
+	if( parent == NULL ){
 		tp->t_level=0;
 		tp->t_max=0;
 		tp->t_mtp = NULL;
@@ -419,7 +420,7 @@ Tile * new_tile(Tile *parent, Vertex *nw, Vertex *ne, Vertex *se, Vertex *sw,int
 		tp->t_mtp = parent->t_mtp;
 	}
 
-	if( parent == NO_TILE ){
+	if( parent == NULL ){
 		tp->t_ix = tp->t_iy = 0;
 	} else {
 		/* ix, iy give the coords within the master tile.
@@ -463,7 +464,7 @@ return;
 }
 	if( tp->t_max < level ){
 		tp->t_max = level;
-		if( tp->t_parent != NO_TILE )
+		if( tp->t_parent != NULL )
 			set_max_level(tp->t_parent,level, count+1 );
 	}
 }
@@ -495,7 +496,7 @@ NADVISE(DEFAULT_ERROR_STRING);\
 
 #define CHECK_NEIGHBOR_EDGE( neighbor, n_quadrant, nq_corner, corner1, corner2 )		\
 												\
-	if( tp->t_n[neighbor] != NO_TILE && IS_SUBDIVIDED(tp->t_n[neighbor]) ){			\
+	if( tp->t_n[neighbor] != NULL && IS_SUBDIVIDED(tp->t_n[neighbor]) ){			\
 		/* neighboring tile has already been subdivided, reuse the vertex */		\
 		e_ptp[neighbor] = tp->t_n[neighbor]->t_q[n_quadrant]->t_v[nq_corner];		\
 	} else {										\
@@ -763,7 +764,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	NADVISE(DEFAULT_ERROR_STRING);\
 	sprintf(DEFAULT_ERROR_STRING,"\tsubquad[%d] = 0x%lx",subq,(int_for_addr)tp->t_q[subq]);\
 	NADVISE(DEFAULT_ERROR_STRING);\
-	if( tp->t_n[dir]!= NO_TILE ){\
+	if( tp->t_n[dir]!= NULL ){\
 		sprintf(DEFAULT_ERROR_STRING,"\tneighbor[%d]->quadrant[%d] = 0x%lx",dir,cousin_q,\
 			(int_for_addr)tp->t_n[dir]->t_q[cousin_q]);\
 		NADVISE(DEFAULT_ERROR_STRING);\
@@ -775,7 +776,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 #define FIND_COUSIN(subq,dir,cousin_q)							\
 											\
-	if( tp->t_n[dir] != NO_TILE && tp->t_n[dir]->t_q[cousin_q] != NO_TILE ){	\
+	if( tp->t_n[dir] != NULL && tp->t_n[dir]->t_q[cousin_q] != NULL ){	\
 		/* link the new quadrant to its cousin */				\
 		tp->t_q[subq]->t_n[dir] = tp->t_n[dir]->t_q[cousin_q];			\
 		/* link the existing cousin to the new quadrant */			\
@@ -834,11 +835,11 @@ Tile *add_neighbor(Tile *tp, Cardinal_Direction dir)
 	Tile *new_tp;
 
 #ifdef TRACK_NEIGHBORS
-	if( tp->t_n[dir] != NO_TILE ){
+	if( tp->t_n[dir] != NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"tile already has a neighbor to the %s",
 			dir_name[dir]);
 		NWARN(DEFAULT_ERROR_STRING);
-		return(NO_TILE);
+		return(NULL);
 	}
 #endif /* TRACK_NEIGHBORS */
 
@@ -846,22 +847,22 @@ Tile *add_neighbor(Tile *tp, Cardinal_Direction dir)
 		case NORTH:
 			ptp1 = EXTEND_EDGE(NW,SW);
 			ptp2 = EXTEND_EDGE(NE,SE);
-			new_tp = new_tile( NO_TILE, ptp1, ptp2, tp->t_v[NE], tp->t_v[NW] );
+			new_tp = new_tile( NULL, ptp1, ptp2, tp->t_v[NE], tp->t_v[NW] );
 			break;
 		case SOUTH:
 			ptp1 = EXTEND_EDGE(SW,NW);
 			ptp2 = EXTEND_EDGE(SE,NE);
-			new_tp = new_tile( NO_TILE, tp->t_v[SW], tp->t_v[SE], ptp2, ptp1 );
+			new_tp = new_tile( NULL, tp->t_v[SW], tp->t_v[SE], ptp2, ptp1 );
 			break;
 		case WEST:
 			ptp1 = EXTEND_EDGE(NW,NE);
 			ptp2 = EXTEND_EDGE(SW,SE);
-			new_tp = new_tile( NO_TILE, ptp1, tp->t_v[NW], tp->t_v[SW], ptp2 );
+			new_tp = new_tile( NULL, ptp1, tp->t_v[NW], tp->t_v[SW], ptp2 );
 			break;
 		case EAST:
 			ptp1 = EXTEND_EDGE(NE,NW);
 			ptp2 = EXTEND_EDGE(SE,SW);
-			new_tp = new_tile( NO_TILE, tp->t_v[NE], ptp1, ptp2, tp->t_v[SE] );
+			new_tp = new_tile( NULL, tp->t_v[NE], ptp1, ptp2, tp->t_v[SE] );
 			break;
 	}
 	return(new_tp);
@@ -913,7 +914,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		prt_msg(msg_str);
 	}
 
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		for(i=0;i<4;i++){
 			sprintf(msg_str,"%s%s quadrant:",prefix,quad_name[i]);
 			prt_msg(msg_str);
@@ -923,7 +924,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	}
 #ifdef TRACK_NEIGHBORS
 	for(i=0;i<4;i++){
-		if( tp->t_n[i] != NO_TILE ){
+		if( tp->t_n[i] != NULL ){
 			sprintf(msg_str,"%s%s neighbor",prefix,dir_name[i]);
 			prt_msg(msg_str);
 
@@ -1157,11 +1158,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 		tex_dp = tp->t_mtp->mt_tex_dp[3];		/* which index? */
 
 #ifdef CAUTIOUS
-		if( dem_dp == NO_OBJ ){
+		if( dem_dp == NULL ){
 			NWARN("null dem object!?");
 			return;
 		}
-		if( texturing && tex_dp == NO_OBJ ){
+		if( texturing && tex_dp == NULL ){
 			NWARN("null texture object!?");
 			return;
 		}
@@ -1229,7 +1230,7 @@ static void elevate_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	dx=x2-x1;
 	dy=y2-y1;
 	/* NW, NE, SE, SW */
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		elevate_tile(tp->t_q[NW],mtp,x1     ,y1     ,x1+dx/2,y1+dy/2);
 		elevate_tile(tp->t_q[NE],mtp,x1+dx/2,y1     ,x2     ,y1+dy/2);
 		elevate_tile(tp->t_q[SE],mtp,x1+dx/2,y1+dy/2,x2     ,y2     );
@@ -1241,7 +1242,7 @@ static void elevate_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	else
 		dem_dp = mtp->mt_dem_dp[tp->t_level];
 
-	if( dem_dp == NO_OBJ ){
+	if( dem_dp == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"elevate_tile:  missing object at level %d",tp->t_level);
 		NWARN(DEFAULT_ERROR_STRING);
 	}
@@ -1283,7 +1284,7 @@ static void texture_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	dx=x2-x1;
 	dy=y2-y1;
 	/* NW, NE, SE, SW */
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		texture_tile(tp->t_q[NW],mtp,x1     ,y1     ,x1+dx/2,y1+dy/2);
 		texture_tile(tp->t_q[NE],mtp,x1+dx/2,y1     ,x2     ,y1+dy/2);
 		texture_tile(tp->t_q[SE],mtp,x1+dx/2,y1+dy/2,x2     ,y2     );
@@ -1295,7 +1296,7 @@ static void texture_tile(Tile *tp,Master_Tile *mtp,float x1, float y1, float x2,
 	else
 		tex_dp = mtp->mt_tex_dp[tp->t_level];
 
-	if( tex_dp == NO_OBJ ){
+	if( tex_dp == NULL ){
 		sprintf(DEFAULT_ERROR_STRING,"texture_tile:  missing object at level %d",tp->t_level);
 		NWARN(DEFAULT_ERROR_STRING);
 	}
@@ -1310,7 +1311,7 @@ void clear_tile_elevations(Tile *tp)
 	for(i=0;i<4;i++){
 		tp->t_v[i]->v_z = 0;
 	}
-	if( tp->t_q[NW] != NO_TILE ){
+	if( tp->t_q[NW] != NULL ){
 		clear_tile_elevations(tp->t_q[NW]);
 		clear_tile_elevations(tp->t_q[NE]);
 		clear_tile_elevations(tp->t_q[SE]);
@@ -1334,7 +1335,7 @@ sprintf(ERROR_STRING,"elevating master tile %s",mtp->mt_tp->t_name);
 NADVISE(ERROR_STRING);
 */
 	for(i=0;i<MAX_DEM_LEVELS;i++){
-		if( mtp->mt_dem_dp[i] == NO_OBJ ){
+		if( mtp->mt_dem_dp[i] == NULL ){
 			char filename[256];
 			char name[256];
 			Image_File *ifp;
@@ -1366,7 +1367,7 @@ advise(ERROR_STRING);
 sprintf(ERROR_STRING,"DEM filename = %s",filename);
 advise(ERROR_STRING);
 			ifp = read_image_file( QSP_ARG  filename );
-			if( ifp == NO_IMAGE_FILE )
+			if( ifp == NULL )
 				ERROR1("error reading elevation data");
 /*
 sprintf(ERROR_STRING,"\tlevel %d, size is %ld x %ld",i,OBJ_ROWS(ifp->if_dp),OBJ_COLS(ifp->if_dp));
@@ -1412,7 +1413,7 @@ advise(DEFAULT_ERROR_STRING);
 
 /* level 0 is 4k x 4k, too big makes the computer thrash... */
 	for(i=3;i<MAX_TEX_LEVELS;i++){
-		if( mtp->mt_tex_dp[i] == NO_OBJ ){
+		if( mtp->mt_tex_dp[i] == NULL ){
 			char filename[256];
 			char name[256];
 			Image_File *ifp;
@@ -1435,7 +1436,7 @@ advise("not resetting texture directory...");
 
 			sprintf(filename,"%s.%d.jpg",mtp->mt_tex_name,i/*+1*/);
 			ifp = read_image_file( QSP_ARG  filename );
-			if( ifp == NO_IMAGE_FILE )
+			if( ifp == NULL )
 				NERROR1("unable to read texture file");
 
 /*
@@ -1696,7 +1697,7 @@ static void free_subtile(Tile *tp)		/* garbage collection */
 	int i;
 
 	for(i=0;i<4;i++){
-		if( tp->t_q[i] != NO_TILE )
+		if( tp->t_q[i] != NULL )
 			free_subtile(tp->t_q[i]);
 	}
 
@@ -1722,9 +1723,9 @@ void undivide_tile(Tile *tp)		/* garbage collection */
 	int i;
 
 	for(i=0;i<4;i++){
-		if( tp->t_q[i] != NO_TILE ){
+		if( tp->t_q[i] != NULL ){
 			free_subtile(tp->t_q[i]);
-			tp->t_q[i] = NO_TILE;
+			tp->t_q[i] = NULL;
 			tp->t_max = tp->t_level;
 		}
 	}

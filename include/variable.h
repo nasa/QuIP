@@ -25,8 +25,6 @@ struct variable {
 #define IS_SIMPLE_VAR(vp)	((vp)->var_flags & VAR_SIMPLE)
 #define IS_RESERVED_VAR(vp)	((vp)->var_flags & VAR_RESERVED)
 
-#define NO_VARIABLE 	((Variable *)NULL)
-
 /* Variable */
 #define VAR_NAME(vp)		vp->var_item.item_name
 #define VAR_VALUE(vp)		vp->var_u.u_value

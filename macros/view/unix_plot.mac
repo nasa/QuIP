@@ -229,7 +229,7 @@ Set iso_rev 8859
 Set unit_font "-adobe-times-bold-r-normal--14-140-75-75-p-77-iso${iso_rev}-1"
 #Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
 Set legend_font "-adobe-times-bold-r-normal--24-240-75-75-p-132-iso${iso_rev}-1"
-Print legend_font
+#Print legend_font
 Validate_Fonts
 If $fonts_present exit_macro
 

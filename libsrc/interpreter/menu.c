@@ -17,7 +17,7 @@ void list_menu(QSP_ARG_DECL  Menu *mp)
 
 	lp = MENU_LIST(mp);
 	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		Command *cp;
 		cp = (Command *) NODE_DATA(np);
 		list_command(QSP_ARG  cp);

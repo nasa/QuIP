@@ -55,7 +55,7 @@ static COMMAND_FUNC( do_ocv_smooth )
 	src = PICK_OCVI("source image");
 	blur_size = HOW_MANY("blur size in pixels");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	/* BUG?  need to verify order of args... */
 	cvSmooth( src->ocv_image, dst->ocv_image, CV_BLUR, blur_size, blur_size, 0, 0 );
@@ -70,7 +70,7 @@ static COMMAND_FUNC( do_convert_color )
 	src = PICK_OCVI("source image");
 	s = NAMEOF("OpenCV conversion code");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	int code;
 	if (strcmp(s, "CV_RGB2GRAY") == 0) {
@@ -97,7 +97,7 @@ static COMMAND_FUNC( do_ocv_not )
 	dst = PICK_OCVI("destination image");
 	src = PICK_OCVI("source image");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	cvNot( src->ocv_image, dst->ocv_image );
 }
@@ -112,7 +112,7 @@ static COMMAND_FUNC( do_ocv_erode )
 	src = PICK_OCVI("source image");
 	iterations = HOW_MANY("number of iterations");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	// Perform an erosion for the given number of iterations.
 	cvErode(src->ocv_image, dst->ocv_image, NULL, iterations);
@@ -128,7 +128,7 @@ static COMMAND_FUNC( do_ocv_dilate )
 	src = PICK_OCVI("source image");
 	iterations = HOW_MANY("number of iterations");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	// Perform an erosion for the given number of iterations.
 	cvDilate(src->ocv_image, dst->ocv_image, NULL, iterations);
@@ -146,7 +146,7 @@ static COMMAND_FUNC( do_ocv_binary_threshold )
 	threshold = HOW_MANY("threshold above which will be on");
 	max_value = HOW_MANY("on value");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 	cvThreshold(src->ocv_image, dst->ocv_image, threshold, max_value, CV_THRESH_BINARY);
 }
 
@@ -161,7 +161,7 @@ static COMMAND_FUNC( do_ocv_canny )
 	edge_thresh = HOW_MANY("edge threshold");
 	edge_thresh2 = HOW_MANY("edge threshold 2");
 
-	if( dst == NO_OPENCV_IMAGE || src == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL || src == NULL ) return;
 
 	// Run the edge detector on grayscale.
 	// The optional aperture_size parameter has been omitted.
@@ -174,7 +174,7 @@ static COMMAND_FUNC( do_ocv_zero )
 
 	dst = PICK_OCVI("destination image");
 
-	if( dst == NO_OPENCV_IMAGE ) return;
+	if( dst == NULL ) return;
 
 	cvZero( dst->ocv_image );
 }
@@ -241,7 +241,7 @@ static COMMAND_FUNC( do_seq_is_null )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		ASSIGN_VAR("seq_is_null", "1");
 	} else {
@@ -271,7 +271,7 @@ static COMMAND_FUNC( do_save_img )
 
 	ocvi_p=PICK_OCVI("openCV image");
 	filename=NAMEOF("file name");
-	if( ocvi_p == NO_OPENCV_IMAGE ) return;
+	if( ocvi_p == NULL ) return;
 
 	save_ocv_image(ocvi_p, filename);
 }
@@ -285,9 +285,9 @@ static COMMAND_FUNC( do_find_contours )
 	ocv_scanner_p=PICK_OCV_SCANNER("scanner");
 	ocvi_p=PICK_OCVI("binary image");
 	/* ocv_mem_p=PICK_OCV_MEM("memory storage"); */
-	if( ocv_scanner_p == NO_OPENCV_SCANNER ) return;
-	if( ocvi_p == NO_OPENCV_IMAGE ) return;
-	/* if( ocv_mem_p == NO_OPENCV_MEM ) return; */
+	if( ocv_scanner_p == NULL ) return;
+	if( ocvi_p == NULL ) return;
+	/* if( ocv_mem_p == NULL ) return; */
 	ocv_scanner_p->ocv_scanner = cvStartFindContours(ocvi_p->ocv_image,
 			ocv_scanner_p->ocv_mem, sizeof(CvContour), CV_RETR_EXTERNAL,
 			CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
@@ -304,8 +304,8 @@ static COMMAND_FUNC( do_find_next_contour )
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
 	/*success=PICK_OBJ("success flag");*/
 
-	if( ocv_scanner_p == NO_OPENCV_SCANNER ) return;
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	if( ocv_scanner_p == NULL ) return;
+	if( ocv_seq_p == NULL ) return;
 
 	if ((ocv_seq_p->ocv_seq = cvFindNextContour(ocv_scanner_p->ocv_scanner)) != NULL) {
 		ASSIGN_VAR("contour_success", "1");
@@ -318,7 +318,7 @@ static COMMAND_FUNC( do_aspect_ratio )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		sprintf(ERROR_STRING, "do_aspect_ratio: sequence is NULL.\n");
 		//WARN(ERROR_STRING);
@@ -337,7 +337,7 @@ static COMMAND_FUNC( do_ocv_area )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		sprintf(ERROR_STRING, "do_ocv_area: sequence is NULL.\n");
 		WARN(ERROR_STRING);
@@ -361,7 +361,7 @@ static COMMAND_FUNC( do_centroid )
 {
 	OpenCV_Seq *ocv_seq_p;
 	ocv_seq_p=PICK_OCV_SEQ("sequence");
-	if( ocv_seq_p == NO_OPENCV_SEQ ) return;
+	if( ocv_seq_p == NULL ) return;
 	if( ocv_seq_p->ocv_seq == NULL ) {
 		sprintf(ERROR_STRING, "do_centroid: sequence is NULL.\n");
 		//WARN(ERROR_STRING);
@@ -393,7 +393,7 @@ static COMMAND_FUNC( do_image_info )
 {
 	OpenCV_Image *ocvi_p;
 	ocvi_p=PICK_OCVI("openCV image");
-	if( ocvi_p == NO_OPENCV_IMAGE ) return;
+	if( ocvi_p == NULL ) return;
 
 	sprintf(ERROR_STRING,"Image Info for \"%s\":",ocvi_p->ocv_name);
 	prt_msg(ERROR_STRING);
@@ -433,7 +433,7 @@ static COMMAND_FUNC( do_import_img )
 
 	/* Possibly do some tests here */
 
-	if( (ocvi_p = creat_ocvi_from_dp(QSP_ARG  dp) ) == NO_OPENCV_IMAGE ){
+	if( (ocvi_p = creat_ocvi_from_dp(QSP_ARG  dp) ) == NULL ){
 		sprintf(ERROR_STRING,"Error creating OpenCV image from QuIP image %s",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
 	}
@@ -449,14 +449,14 @@ static COMMAND_FUNC( do_new_cascade )
 	cascade_name = NAMEOF("classifier specification file");
 
 	casc_p = ocv_ccasc_of(QSP_ARG  s);
-	if( casc_p != NO_CASCADE ){
+	if( casc_p != NULL ){
 		sprintf(ERROR_STRING,"Classifier cascade %s already exists!?",s);
 		WARN(ERROR_STRING);
 		return;
 	}
 
 	casc_p = new_ocv_ccasc(QSP_ARG  s);
-	if( casc_p == NO_CASCADE ){
+	if( casc_p == NULL ){
 		sprintf(ERROR_STRING,"Error creating classifier cascade %s",s);
 		WARN(ERROR_STRING);
 		return;
@@ -608,7 +608,7 @@ static COMMAND_FUNC( do_find_face )
 	casc_p = PICK_CASCADE("classifier cascade");
 	frame_number = HOW_MANY("frame number");
 
-	if( src == NO_OPENCV_IMAGE || casc_p == NO_CASCADE ) return;
+	if( src == NULL || casc_p == NULL ) return;
 
 	if( storage == NULL )
 		storage = cvCreateMemStorage(0); // what is the arg here?

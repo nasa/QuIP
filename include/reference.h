@@ -2,7 +2,6 @@
 #define _REFERENCE_H_
 
 #include "vec_expr_node.h"
-#include "strbuf.h"
 
 typedef enum {
 	OBJ_REFERENCE,
@@ -39,8 +38,6 @@ typedef struct reference {
 #define SET_REF_DECL_VN(refp,enp)	(refp)->ref_decl_enp = enp
 
 #define NEW_REFERENCE		((Reference *)getbuf(sizeof(Reference)))
-
-#define NO_REFERENCE	((Reference *)NULL)
 
 #define IS_OBJECT_REF(refp)			(REF_TYPE(refp) == OBJ_REFERENCE)
 #define IS_STRING_REF(refp)			(REF_TYPE(refp) == STR_REFERENCE)

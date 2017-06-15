@@ -339,12 +339,9 @@ static COMMAND_FUNC( do_meteor_set_oformat )
 		case 2:  fmt=METEOR_GEO_YUV_PLANAR; break;
 		case 3:  fmt=METEOR_GEO_YUV_PACKED; break;
 		case 4:  fmt=METEOR_GEO_YUV_422; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("wacky output format!?");
 			assert( ! "wacky output format" );
 			return;
-//#endif /* CAUTIOUS */
 	}
 
 	curr_ofmt = fmt;

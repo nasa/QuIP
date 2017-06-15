@@ -1,7 +1,7 @@
 #ifndef _SCALAR_VALUE_H_
 #define _SCALAR_VALUE_H_
 
-typedef union {
+union scalar_value {
 	double		u_d;	// this is first to be the default initializer
 	long double	u_ld;
 	char		u_b;
@@ -13,6 +13,8 @@ typedef union {
 	uint32_t	u_ul;
 	uint64_t	u_ull;
 	float		u_f;
+	float		u_color_comp[3];
+	SP_Color	u_color;
 	/* Do we need both of these??? */
 	float		u_fc[2];
 	SP_Complex	u_spc;
@@ -31,9 +33,7 @@ typedef union {
 
 	bitmap_word	u_bit;	/* should be boolean type... */
 	void *		u_vp;	// for string type
-} Scalar_Value;
-
-#define NO_SCALAR_VALUE	((Scalar_Value *)NULL)
+};
 
 #define SVAL_FLOAT(svp)		(svp)->u_f
 #define SVAL_STD(svp)		(svp)->std_scalar

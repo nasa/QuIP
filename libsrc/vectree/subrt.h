@@ -2,11 +2,16 @@
 #include "item_type.h"
 #include "vec_expr_node.h"
 
-typedef struct subrt {
+struct subrt {
 	Item		sr_item;
 	Vec_Expr_Node *	sr_arg_decls;
 	Vec_Expr_Node *	sr_arg_vals;
-	Vec_Expr_Node *	sr_body;
+	union {
+		Vec_Expr_Node *	u_body;
+		const char *	u_text;
+	} sr_u;
+#define sr_body sr_u.u_body
+#define sr_text sr_u.u_text
 	int		sr_n_args;
 	Shape_Info *	sr_shpp;
 	Shape_Info *	sr_dest_shpp;
@@ -15,7 +20,7 @@ typedef struct subrt {
 	Precision *	sr_prec_p;
 	int		sr_flags;
 	Vec_Expr_Node *	sr_call_enp;
-} Subrt;
+};
 
 /* Subrt */
 
@@ -30,7 +35,9 @@ typedef struct subrt {
 #define SR_SHAPE(srp)			(srp)->sr_shpp
 #define SET_SR_SHAPE(srp,shpp)		(srp)->sr_shpp = shpp
 #define SR_BODY(srp)			(srp)->sr_body
+#define SR_TEXT(srp)			(srp)->sr_text
 #define SET_SR_BODY(srp,enp)		(srp)->sr_body = enp
+#define SET_SR_TEXT(srp,s)		(srp)->sr_text = s
 #define SR_ARG_DECLS(srp)		(srp)->sr_arg_decls
 #define SR_FLAGS(srp)			(srp)->sr_flags
 #define SET_SR_FLAG_BITS(srp,b)		(srp)->sr_flags |= b
@@ -65,8 +72,6 @@ typedef struct subrt {
 #define IS_SCRIPT(srp)		( SR_FLAGS(srp) & SR_SCRIPT )
 #define IS_REFFUNC(srp)		( SR_FLAGS(srp) & SR_REFFUNC )
 #define IS_COMPILED(srp)	( SR_FLAGS(srp) & SR_COMPILED )
-
-#define NO_SUBRT	((Subrt *)NULL)
 
 ITEM_INIT_PROT(Subrt,subrt)
 ITEM_CHECK_PROT(Subrt,subrt)

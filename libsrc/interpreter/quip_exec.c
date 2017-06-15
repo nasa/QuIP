@@ -4,7 +4,7 @@
 #include "history.h"
 #include "query_prot.h"
 
-static List *mf_list=NO_LIST;
+static List *mf_list=NULL;
 
 #ifndef MAC
 #ifdef HAVE_HISTORY
@@ -17,27 +17,13 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 	List *lp;
 	Node *np;
 
-//#ifdef CAUTIOUS
-//	if( mp == NO_MENU ){
-//		WARN("CAUTIOUS:  stash_menu_commands:  no menu!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( mp != NO_MENU );
+	assert( mp != NULL );
 
-//fprintf(stderr,"stashing commands for menu %s\n",mp->mn_prompt);
-	//lp = dictionary_list( MENU_DICT(mp) );
 	lp = container_list( MENU_CONTAINER(mp) );
-//#ifdef CAUTIOUS
-//	if( lp == NO_LIST ){
-//		WARN("CAUTIOUS:  stash_menu_commands:  no dictionary list!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( lp != NO_LIST );
+	assert( lp != NULL );
 
 	np = QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		Command *cp;
 		cp = (Command *)NODE_DATA(np);
 		// should we use the menu prompt or the full prompt?
@@ -51,14 +37,9 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 
 static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
-//#ifdef CAUTIOUS
-//	if( QS_CALLBACK_LIST(THIS_QSP) == NO_LIST ){
-//		WARN("CAUTIOUS:  perform_callbacks:  null event func list!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( QS_CALLBACK_LIST(THIS_QSP) != NO_LIST );
+	assert( QS_CALLBACK_LIST(THIS_QSP) != NULL );
 
+	reset_return_strings(SINGLE_QSP_ARG);
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
 }
 
@@ -72,12 +53,6 @@ void qs_do_cmd( Query_Stack *qsp )
 //qdump(qsp);
 
 	mp = TOP_OF_STACK( QS_MENU_STACK(qsp) );
-//#ifdef CAUTIOUS
-//	if( mp == NULL ) {
-//		ERROR1("CAUTIOUS:  qs_do_cmd:  No menu pushed!?");
-//		IOS_RETURN
-//	}
-//#endif /* CAUTIOUS */
 	assert( mp != NULL );
 
 #ifdef HAVE_HISTORY
@@ -97,29 +72,23 @@ void qs_do_cmd( Query_Stack *qsp )
 #endif /* HAVE_HISTORY */
 
 
-	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
+	//SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
+	reset_return_strings(SINGLE_QSP_ARG);
 
 	cmd = nameof2(QSP_ARG  QS_PROMPT_STR(qsp));
 
-//if( QLEVEL < 0 )
 	if( cmd == NULL || strlen(cmd) == 0 ){
-//fprintf(stderr,"qs_do_cmd:  null or empty command\n");
 		return;
 	}
-//fprintf(stderr,"qs_do_cmd:  cmd = 0x%lx \"%s\"\n",(long)cmd,cmd);
-	/* Now find the command */
-//	cp = (Command *) fetch_name(cmd, mp->mn_dict);
 	cp = (Command *) container_find_match(MENU_CONTAINER(mp),cmd);
 
-	if( cp == NO_COMMAND )
-//		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_builtin_menu->mn_dict);
+	if( cp == NULL )
 		cp = (Command *) container_find_match( MENU_CONTAINER(THIS_QSP->qs_builtin_menu), cmd );
 
-	if( cp == NO_COMMAND )
-//		cp = (Command *) fetch_name(cmd, THIS_QSP->qs_help_menu->mn_dict);
+	if( cp == NULL )
 		cp = (Command *) container_find_match( MENU_CONTAINER(THIS_QSP->qs_help_menu), cmd );
 
-	if( cp == NO_COMMAND ){
+	if( cp == NULL ){
 
 #ifdef HAVE_HISTORY
 		/* make sure that a bad command doesn't get saved */
@@ -162,7 +131,7 @@ void rls_mouthful(Mouthful *mfp)
 	 * the strings when we retrieve it from the free list.
 	 */
 
-	if( mf_list == NO_LIST ){
+	if( mf_list == NULL ){
 		mf_list=new_list();
 	}
 	np = mk_node(mfp);
@@ -176,11 +145,11 @@ void rls_mouthful(Mouthful *mfp)
 Mouthful *new_mouthful(const char *text, const char *filename)
 {
 	Mouthful *mfp;
-	if( mf_list != NO_LIST ){
+	if( mf_list != NULL ){
 		Node *np;
 
 		np=remHead(mf_list);
-		if( np != NO_NODE ){
+		if( np != NULL ){
 			mfp= (Mouthful *)NODE_DATA(np);
 			if( mfp->text != NULL ){
 				rls_str(mfp->text);
@@ -208,15 +177,9 @@ static void store_mouthful(QSP_ARG_DECL  const char *text,
 	mfp = new_mouthful(text,filename);
 
 	np = mk_node( (void *) mfp );
-	if( CHEW_LIST == NO_LIST ){
+	if( CHEW_LIST == NULL ){
 		CHEW_LIST = new_list();
-//#ifdef CAUTIOUS
-//		if( CHEW_LIST==NO_LIST ){
-//			ERROR1("CAUTIOUS:  couldn't make chew list");
-//			IOS_RETURN
-//		}
-//#endif /* CAUTIOUS */
-		assert( CHEW_LIST != NO_LIST );
+		assert( CHEW_LIST != NULL );
 	}
 	addTail(CHEW_LIST,np);
 }
@@ -282,11 +245,11 @@ void digest(QSP_ARG_DECL  const char *text, const char *filename)
 
 static void chew_stored(SINGLE_QSP_ARG_DECL)
 {
-	if( CHEW_LIST != NO_LIST ){
+	if( CHEW_LIST != NULL ){
 		Node *np;
 		Mouthful *mfp;
 
-		while( (np=remHead(CHEW_LIST)) != NO_NODE ){
+		while( (np=remHead(CHEW_LIST)) != NULL ){
 			mfp = (Mouthful *) NODE_DATA(np);
 			swallow( QSP_ARG  mfp->text, mfp->filename );
 			// BUG - we might not be done with the text released!?
@@ -368,14 +331,6 @@ void resume_quip(SINGLE_QSP_ARG_DECL)
 
 void exec_at_level(QSP_ARG_DECL  int level)
 {
-//#ifdef CAUTIOUS
-//	if( level < 0 ){
-//		fprintf(stderr,
-//	"CAUTIOUS:  exec_at_level:  bad level %d!?\n",level);
-//		abort();
-//	}
-//#endif // CAUTIOUS
-
 	assert( level >= 0 );
 
 	// We thought a lookahead here might help, but it didn't, probably

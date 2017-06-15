@@ -30,7 +30,7 @@ list_dobjs(SINGLE_QSP_ARG);
 #endif /* QUIP_DEBUG */
 
 	dp=dobj_of(QSP_ARG  name);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		return(dp);
 	}
 
@@ -46,7 +46,7 @@ list_dobjs(SINGLE_QSP_ARG);
 	*cp=0;
 
 	dp = dobj_of(QSP_ARG  stem);
-	if( dp == NO_OBJ ) return(dp);
+	if( dp == NULL ) return(dp);
 
 	return( index_data(QSP_ARG  dp,s) );
 }
@@ -56,7 +56,7 @@ Data_Obj *get_obj(QSP_ARG_DECL  const char *name)
 	Data_Obj *dp;
 
 	dp = hunt_obj(QSP_ARG  name);
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		sprintf(ERROR_STRING,"No data object \"%s\"",name);
 		WARN(ERROR_STRING);
 	}
@@ -68,11 +68,11 @@ Data_Obj *get_vec(QSP_ARG_DECL  const char *s)
 	Data_Obj *dp;
 
 	dp=get_obj(QSP_ARG  s);
-	if( dp==NO_OBJ ) return(dp);
+	if( dp==NULL ) return(dp);
 	if( !(OBJ_FLAGS(dp) & DT_VECTOR) ){
 		sprintf(ERROR_STRING,"object \"%s\" is not a vector",s);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	return(dp);
 }
@@ -83,11 +83,11 @@ img_of(QSP_ARG_DECL  const char *s)				/**/
 	Data_Obj *dp;
 
 	dp=get_obj(QSP_ARG  s);
-	if( dp==NO_OBJ ) return(dp);
+	if( dp==NULL ) return(dp);
 	if( !(OBJ_FLAGS(dp) & DT_IMAGE) ){
 		sprintf(ERROR_STRING,"object \"%s\" is not an image",s);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	return(dp);
 }
@@ -97,11 +97,11 @@ Data_Obj *get_seq(QSP_ARG_DECL  const char *s)
 	Data_Obj *dp;
 
 	dp=get_obj(QSP_ARG  s);
-	if( dp==NO_OBJ ) return(dp);
+	if( dp==NULL ) return(dp);
 	if( !(OBJ_FLAGS(dp) & DT_SEQUENCE) ){
 		sprintf(ERROR_STRING,"object \"%s\" is not an sequence",s);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	return(dp);
 }
@@ -111,11 +111,11 @@ Data_Obj * get_img( QSP_ARG_DECL  const char *s )
 	Data_Obj *dp;
 
 	dp=get_obj(QSP_ARG  s);
-	if( dp==NO_OBJ ) return(dp);
+	if( dp==NULL ) return(dp);
 	if( !IS_IMAGE(dp) ){
 		sprintf(ERROR_STRING,"data object %s is not an image",s);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 	return(dp);
 }

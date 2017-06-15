@@ -1,5 +1,6 @@
 
-#ifndef NO_DISPLAY_LIST
+#ifndef _DL_H_
+#define _DL_H_
 
 #include "quip_prot.h"
 
@@ -7,8 +8,6 @@ typedef struct display_list {
 	char *		dl_name;
 	int		dl_serial;
 } Display_List;
-
-#define NO_DISPLAY_LIST		((Display_List *)NULL)
 
 ITEM_INTERFACE_PROTOTYPES(Display_List,dl)
 
@@ -29,5 +28,5 @@ extern void delete_dl(QSP_ARG_DECL  Display_List *dlp);
 
 extern double display_list_exists(QSP_ARG_DECL  const char *name);
 
-#endif /* undef NO_DISPLAY_LIST */
+#endif // ! _DL_H_
 

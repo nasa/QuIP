@@ -29,8 +29,5 @@ struct item {
 
 #define ITEM_TYPE(ip)		CTX_IT(ITEM_CTX(ip))
 
-#define NO_ITEM	((Item *) NULL)
-
-
 #endif /* ! _ITEM_OBJ_H_ */
 

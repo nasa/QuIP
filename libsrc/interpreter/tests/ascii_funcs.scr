@@ -1,4 +1,5 @@
 
+expect_warning YYERROR
 Assign c2 tolower(0x42)
 Print c2
 
@@ -9,7 +10,7 @@ Print s2
 Assign s3 toupper('$s1')
 Print s3
 
-Pause
+Pause_If
 
 Set w "'a'"
 Print w
@@ -24,5 +25,5 @@ Print y
 Assign z "'\\\\\'a\\\\\''"
 Print y
 
-Pause
+Pause_If
 

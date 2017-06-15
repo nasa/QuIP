@@ -1,30 +1,39 @@
-warn "This is the first line of mdef.scr"
-warn "This is file line 2, before defining M1"
+expect_warning This
+warn "This is the second line of mdef.scr"
+expect_warning This
+warn "This is file line 4, before defining M1"
 
 Define M1 0
-warn 'This is line 1 of M1 (file line 5)'
+expect_warning This
+warn 'This is line 2 of M1 (file line 8)'
 .
 
 
 Define M2 0		# M2 has a comment
-warn "This is line 1 of M2 (file line 10)"
+expect_warning This
+warn "This is line 2 of M2 (file line 14)"
 .
 
 Define M3 0		# M3 has a comment
-warn "This is line 1 of M3 (file line 14)"
+expect_warning This
+warn "This is line 2 of M3 (file line 19)"
 .
 
 advise 'Will define M4...'
 
+expect_warning extra
 Define M4 0 extra junk on line
 advise 'This is M4'
 .
+check_expected_warning
 
 advise 'Will define M5...'
 
+expect_warning Macro
 Define M5 0
 advise 'This is M5'
 . extra stuff on last line
+check_expected_warning
 
 advise 'Will call M1,M2,M3...'
 

@@ -4,7 +4,7 @@
 Start_File ascii.mac
 
 Define Get_String 2 varname string_obj
-data ascii get_string $2 $1 quit quit
+data ascii get_string $1 $2 quit quit
 .
 
 Define Set_String 2 string_obj string

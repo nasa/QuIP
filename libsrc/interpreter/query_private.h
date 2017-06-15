@@ -1,7 +1,7 @@
-#ifndef _QUERY_H_
-#define _QUERY_H_
 
-//#include "fragment.h"
+#ifndef _QUERY_PRIVATE_H_
+#define _QUERY_PRIVATE_H_
+
 #include "list.h"
 #include "macro.h"
 #include "query_bits.h"
@@ -13,6 +13,7 @@
 
 struct query {
 	char *			(*q_readfunc)(QSP_ARG_DECL  void *buf, int size, void *stream);
+	String_Buf *		q_buffer;
 	int			q_idx;
 	char *			q_databuf;	// was NSString - do we need?
 	// BUG - we'd like to be able to grow this table dynamically...
@@ -23,15 +24,15 @@ struct query {
 	int			q_count;
 	FILE *			q_fp;
 	FILE *			q_dup_fp;
-	char *			q_text;
-	int			q_txtsiz;
-	int			q_txtfree;
+#ifdef HAVE_POPEN
+	Pipe *			q_pipe_p;
+#endif // HAVE_POPEN
+	String_Buf *		q_text_buf;
 	const char *		q_filename;
-	int			q_rdlineno;
+	int			q_n_lines_read;	// may be advanced by lookahead
 	int			q_lineno;
 	uint32_t		q_flags;
 	const char *		q_lbptr;
-	char *			q_buffer;
 	const char **		q_args;
 	Macro *			q_mp;
 	Foreach_Loop *		q_forloop;
@@ -83,6 +84,13 @@ struct query {
 	(qp)->q_filename = savestr(s);					\
 	}
 
+#ifdef HAVE_POPEN
+#define QRY_PIPE(qp)			(qp)->q_pipe_p
+#define SET_QRY_PIPE(qp,v)		(qp)->q_pipe_p = v
+#else // ! HAVE_POPEN
+#define SET_QRY_PIPE(qp,v)
+#endif // ! HAVE_POPEN
+
 #define QRY_DUPFILE(qp)			(qp)->q_dup_fp
 #define SET_QRY_DUPFILE(qp,fp)		(qp)->q_dup_fp = fp
 #define QRY_LINE_PTR(qp)		(qp)->q_lbptr
@@ -95,23 +103,14 @@ struct query {
 #define SET_QRY_LINENO(qp,n)		(qp)->q_lineno = n
 #define QRY_LBPTR(qp)			(qp)->q_lbptr
 #define SET_QRY_LBPTR(qp,p)		(qp)->q_lbptr = p
-#define QRY_TEXT(qp)			(qp)->q_text
-#define SET_QRY_TEXT(qp,s)		(qp)->q_text = s
-#define CLEAR_QRY_TEXT(qp)		*(QRY_TEXT(qp)) = 0
-#define QRY_TXTFREE(qp)			(qp)->q_txtfree
-#define SET_QRY_TXTFREE(qp,n)		(qp)->q_txtfree = n
-#define QRY_TXTSIZE(qp)			(qp)->q_txtsiz
-#define SET_QRY_TXTSIZE(qp,n)		(qp)->q_txtsiz = n
-#define QRY_RDLINENO(qp)		(qp)->q_rdlineno
-#define SET_QRY_RDLINENO(qp,n)		(qp)->q_rdlineno = n
+#define QRY_TEXT_BUF(qp)		(qp)->q_text_buf
+#define SET_QRY_TEXT_BUF(qp,sbp)	(qp)->q_text_buf = sbp
+#define QRY_LINES_READ(qp)		(qp)->q_n_lines_read
+#define SET_QRY_LINES_READ(qp,n)	(qp)->q_n_lines_read = n
+
+#define INCREMENT_QRY_LINES_READ(qp)	SET_QRY_LINES_READ(qp,1+QRY_LINES_READ(qp))
 
 #define QRY_IS_SOCKET(qp)		(QRY_FLAGS(qp) & Q_SOCKET)
 
 
-/* external API */
-/* BUG?  are these really external??? */
-
-extern Query *new_query(void);
-extern void rls_query(Query *);
-
-#endif /* ! _QUERY_H_ */
+#endif /* ! _QUERY_PRIVATE_H_ */

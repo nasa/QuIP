@@ -1,0 +1,27 @@
+advise 'BEGIN line 1'
+advise 'BEGIN line 2'
+# 3
+expect_warning Line
+warn "Line 5"
+
+
+echo 'Line 8'
+# 6
+expect_warning Line
+warn "Line 11"
+expect_warning Line
+warn "Line 13"
+expect_warning Line
+warn \
+"Line 15 or 16 ???"
+# 11
+repeat 3	# 12
+  expect_warning Line
+  warn "Line 20"
+  expect_warning Line
+  warn "Line 22"
+  end		# 15
+expect_warning Line
+warn "Line 25"
+exit
+

@@ -630,9 +630,6 @@
 /* #undef USE_GETBUF */
 //#define USE_GETBUF 1
 
-/* use of SSE* extensions enabled */
-//#define USE_SSE 1
-
 /* Version number of package */
 #define VERSION "0.4"
 

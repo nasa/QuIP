@@ -200,7 +200,7 @@ define(`CHECK_MATCH',`
 define(`OBJ_ARG_CHK_DBM',`
 
 	ANNOUNCE_FUNCTION
-	if( bitmap_dst_dp == NO_OBJ ){
+	if( bitmap_dst_dp == NULL ){
 NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");
 		return;
 	}
@@ -210,7 +210,7 @@ define(`OBJ_ARG_CHK_DBM_',`OBJ_ARG_CHK_DBM')
 
 define(`OBJ_ARG_CHK_SBM',`
 
-	if( bitmap_src_dp == NO_OBJ ){
+	if( bitmap_src_dp == NULL ){
 		NWARN("Null bitmap source object!?");
 		return;
 	}
@@ -228,7 +228,7 @@ define(`OBJ_ARG_CHK_1',`
 dnl	OBJ_ARG_CHK(dp,string)
 define(`OBJ_ARG_CHK',`
 
-	if( $1==NO_OBJ ){
+	if( $1==NULL ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"CAUTIOUS:  Null %s object!?",$2);
 		NERROR1(DEFAULT_ERROR_STRING);
@@ -2051,10 +2051,10 @@ define(`GENERIC_FF_DECL',`
 
 /* generic_ff_decl /$1/ BEGIN */
 	FF_DECL($1)( LINK_FUNC_ARG_DECLS )
-dnl	FAST_BODY_##bitmap##typ##vectors##extra( name, statement )
 	FAST_BODY($3,$4,$6,$7)($1,$2)
 /* generic_ff_decl /$1/ DONE */
 ')
+
 
 dnl	GENERIC_EF_DECL(name, statement,bitmap,typ,scalars,vectors,extra)
 define(`GENERIC_EF_DECL',`
@@ -2071,18 +2071,6 @@ define(`GENERIC_SF_DECL',`
 dnl	SLOW_BODY_##bitmap##typ##vectors##extra( name, statement )
 	SLOW_BODY($3,$4,$6,$7)($1,$2)
 ')
-
-
-dnl	This worked before, but now we process fast, eqsp, and slow in batches...
-dnl	so this needs to be defined in fast_defs, eqsp_defs, slow_defs...
-
-dnl	GENERIC_FUNC_DECLS(name,statement,bitmap,typ,scalars,vectors,extra)
-dnl	define(`GENERIC_FUNC_DECLS',`
-dnl	GENERIC_FF_DECL($1,$2,$3,$4,$5,$6,$7)
-dnl	GENERIC_EF_DECL($1,$2,$3,$4,$5,$6,$7)
-dnl	GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
-dnl	')
-
 
 dnl	MOV_FUNC_DECLS(name,statement,bitmap,typ,scalars,vectors)
 define(`MOV_FUNC_DECLS',`
@@ -2520,9 +2508,7 @@ define(`EQSP_INIT_SBM_QUAT_3',`EQSP_INIT_SBM EQSP_INIT_QUAT_3')
 
 dnl
 
-/* The fast body is pretty simple...  Should we try to unroll loops
- * to take advantage of SSE?  How do we help the compiler to do this?
- */
+dnl	gcc will use SSE instructions with -O2 !
 
 dnl	SIMPLE_FAST_BODY(name, statement,typ,suffix,extra,debugit)
 define(`SIMPLE_FAST_BODY',`
@@ -2544,24 +2530,6 @@ dnl		FAST_ADVANCE_##typ##suffix
 }
 ')
 
-
-dnl	Not used???
-dnl	dnl	FAST_BODY_CONV_2(name, statement,dsttyp,srctyp)
-dnl	define(`FAST_BODY_CONV_2',`
-dnl	
-dnl	{
-dnl		$3 *dst_ptr;
-dnl		$4 *s1_ptr;
-dnl		dimension_t fl_ctr;
-dnl		dst_ptr = ($3 *)VA_DEST_PTR(vap);
-dnl		s1_ptr = ($4 *)VA_SRC_PTR(vap,0);
-dnl		fl_ctr = VA_LENGTH(vap);
-dnl		while(fl_ctr-- > 0){
-dnl			$2 ;
-dnl			FAST_ADVANCE_2
-dnl		}
-dnl	}
-dnl	')
 
 /* There ought to be a more compact way to do all of this? */
 
@@ -2756,13 +2724,12 @@ GENERIC_SLOW_BODY( $1, *dst_ptr = ($2)(*s1_ptr),`DECLARE_BASES_CONV_2($2)',`INIT
 
 dnl	OBJ_METHOD(name,statement,bitmap,typ,scalars,vectors,extra)
 dnl define(`_VEC_FUNC_2V_MIXED',`OBJ_METHOD($1,$2,`',RC_,`',2,`')')
+
 define(`OBJ_METHOD',`
 /* obj_method /$1/ BEGIN */
 GENERIC_FUNC_DECLS($1,$2,$3,$4,$5,$6,$7)
 /* obj_method /$1/ DONE */
 ')
-
-
 
 dnl	OBJ_MOV_METHOD(name,statement,bitmap,typ,scalars,vectors)
 define(`OBJ_MOV_METHOD',`

@@ -258,7 +258,7 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 	}
 
 	block_dp=mk_subimg(QSP_ARG  dp,0,0,"dct_block",DCT_SIZE,DCT_SIZE);
-	if( block_dp == NO_OBJ )
+	if( block_dp == NULL )
 		WARN("couldn't create subimage for DCT block");
 
 	nx = OBJ_COLS(dp)/DCT_SIZE;
@@ -291,7 +291,7 @@ static void init_mat(SINGLE_QSP_ARG_DECL)
 	if( mat_inited ) return;
 
 	mat_dp = mk_img(QSP_ARG  "dct_mat",DCT_SIZE,DCT_SIZE,1,PREC_FOR_CODE(PREC_SP));
-	if( mat_dp == NO_OBJ ) return;
+	if( mat_dp == NULL ) return;
 
 	pi = 4 * atan(1.0);
 

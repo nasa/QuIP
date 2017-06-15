@@ -210,7 +210,7 @@ FIO_OPEN_FUNC( avi )
 	long numBytes;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_AVI));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	/* img_file_creat updates if_pathname if a directory has been specified */
 
@@ -242,7 +242,7 @@ FIO_OPEN_FUNC( avi )
 				NULL) != 0 ){
 		sprintf(ERROR_STRING,"libavformat error opening file %s",ifp->if_pathname);
 		WARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 #else /* OLD_VERSION */
@@ -250,7 +250,7 @@ FIO_OPEN_FUNC( avi )
 	if( av_open_input_file(&HDR_P->avch_format_ctx_p,ifp->if_pathname,NULL,0,NULL) != 0 ){
 		sprintf(ERROR_STRING,"libavcodec error opening file %s",ifp->if_pathname);
 		WARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 
@@ -263,7 +263,7 @@ FIO_OPEN_FUNC( avi )
 #endif // ! OLD
 		sprintf(ERROR_STRING,"Couldn't find stream info for file %s",name);
 		WARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 //dump_format(HDR_P->avch_format_ctx_p,0,name,0);
 
@@ -289,7 +289,7 @@ FIO_OPEN_FUNC( avi )
 	}
 	if(HDR_P->avch_video_stream_index==-1){
 		WARN("no video stream");
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 	// Get a pointer to the codec context for the video stream
 	HDR_P->avch_codec_ctx_p = HDR_P->avch_video_stream_p->codec;
@@ -303,7 +303,7 @@ FIO_OPEN_FUNC( avi )
 	HDR_P->avch_codec_p=avcodec_find_decoder(HDR_P->avch_codec_ctx_p->codec_id);
 	if(HDR_P->avch_codec_p==NULL) {
 		WARN("Unsupported codec!?");
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 	// Open codec
 #ifdef OLD
@@ -312,21 +312,21 @@ FIO_OPEN_FUNC( avi )
 	if(avcodec_open2(HDR_P->avch_codec_ctx_p, HDR_P->avch_codec_p, NULL)<0){
 #endif // ! OLD
 		WARN("couldn't open codec");
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	// Allocate video frame
 	HDR_P->avch_frame_p=avcodec_alloc_frame();
 	if(HDR_P->avch_frame_p==NULL){
 		WARN("couldn't allocate first frame");
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	// Allocate an AVFrame structure
 	HDR_P->avch_rgb_frame_p=avcodec_alloc_frame();
 	if(HDR_P->avch_rgb_frame_p==NULL){
 		WARN("couldn't allocate another frame");
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	// Determine required buffer size and allocate buffer
@@ -696,9 +696,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 		if( skewed_index < (long)HDR_P->avch_seek_tbl[i].seek_result ){
 			/* Found the first seek that goes past our goal */
 			i--;
-//#ifdef CAUTIOUS
-//			if( i < 0 ) NERROR1("CAUTIOUS:  bad avi seek table");
-//#endif /* CAUTIOUS */
 			assert( i >= 0 );
 
 			seek_target = HDR_P->avch_seek_tbl[i].seek_target;
@@ -708,9 +705,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 	}
 	if( seek_target < 0 ){	/* not found yet */
 		i--;
-//#ifdef CAUTIOUS
-//		if( i < 0 ) NERROR1("CAUTIOUS:  bad avi seek table");
-//#endif /* CAUTIOUS */
 		assert( i >= 0 );
 
 		seek_target = HDR_P->avch_seek_tbl[i].seek_target;
@@ -719,9 +713,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 		if( seek_result == (-1) ){
 			/* the last table entry can be an illegal seek */
 			i--;
-//#ifdef CAUTIOUS
-//			if( i < 0 ) NERROR1("CAUTIOUS:  bad avi seek table");
-//#endif /* CAUTIOUS */
 			assert( i >= 0 );
 
 			seek_target = HDR_P->avch_seek_tbl[i].seek_target;
@@ -769,15 +760,6 @@ int avi_seek_frame( QSP_ARG_DECL  Image_File *ifp, uint32_t n )
 
 	n_skip_frames = n - ifp->if_nfrms;
 
-//#ifdef CAUTIOUS
-//	if( n_skip_frames < 0 ){
-//		sprintf(ERROR_STRING,"n = %d, n_frms = %d",
-//			n,ifp->if_nfrms);
-//		advise(ERROR_STRING);
-//		WARN("CAUTIOUS:  avi_seek:  n_skip_frames < 0 !?");
-//		n_skip_frames=0;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_skip_frames >= 0 );
 
 	while( n_skip_frames > 0 ){

@@ -21,6 +21,7 @@
 //static cl_kernel	kernel = NULL;		//kernel function
 //	cl_int i;
 
+#ifdef FOOBAR
 
 //#define DEFAULT_OCL_DEV_VAR	"DEFAULT_OCL_DEVICE"
 #define OCL_STATUS_CHECK(stat,whence)				\
@@ -29,18 +30,9 @@
 		report_ocl_error(QSP_ARG  stat, #whence );	\
 		return;						\
 	}
+#endif // FOOBAR
 
 #define ERROR_CASE(code,string)	case code: msg = string; break;
-
-#ifdef CAUTIOUS
-#define INSURE_CURR_ODP(whence)					\
-	if( curr_pdp == NULL ){					\
-		sprintf(ERROR_STRING,"CAUTIOUS:  %s:  curr_pdp is null!?",#whence);	\
-		WARN(ERROR_STRING);				\
-	}
-#else // ! CAUTIOUS
-#define INSURE_CURR_ODP(whence)
-#endif // ! CAUTIOUS
 
 void report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence)
 {
@@ -378,6 +370,7 @@ static void display_dev_param(QSP_ARG_DECL  OCL_Dev_Param_Spec *psp,
 	"CAUTIOUS:  display_dev_param:  unexpected parameter type (%d)!?",
 				PS_TYPE(psp));
 			WARN(ERROR_STRING);
+			assert(0);
 			break;
 	}
 }
@@ -412,6 +405,7 @@ void shutdown_opencl_platform(void)
 	// Need to iterate over all devices...
 }
 
+#ifdef NOT_USED
 /* This utility routine could useful beyond opencl... */
 
 static const char *load_file(QSP_ARG_DECL  const char *pathname, size_t *len)
@@ -451,6 +445,7 @@ done:
 	*len=siz;
 	return buf;
 }
+#endif // NOT_USED
 
 /* This utility routine could useful beyond opencl... */
 
@@ -459,13 +454,14 @@ done:
 cl_program ocl_create_program( const char *buf, Platform_Device *pdp )
 {
 	cl_program program;	//cl_program is a program executable
-	size_t len;
+	//size_t len;		// NULL len array indicates null-terminated strings
 	cl_int status;
 
-	len = strlen(buf);		// count trailing null?
+	//len = strlen(buf);		// don't count trailing null
+
 	// BUG?  should we check that device is OCL device?
 	program = clCreateProgramWithSource(OCLDEV_CTX(pdp), 1,
-		(const char **)&buf, (const size_t *)&len, &status);
+		(const char **)&buf, /*(const size_t *)&len*/ NULL, &status);
 
 	if( status != CL_SUCCESS ){
 		report_ocl_error(DEFAULT_QSP_ARG  status,
@@ -575,7 +571,7 @@ cl_kernel ocl_make_kernel(const char *ksrc,const char *kernel_name,Platform_Devi
 	return kernel;
 }
 
-cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
+cl_kernel ocl_create_kernel(cl_program program,
 			const char *name, Platform_Device *pdp )
 {
 	cl_kernel kernel;
@@ -614,7 +610,8 @@ cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 	return kernel;
 }
 
-cl_kernel create_kernel(QSP_ARG_DECL  const char * name, const char *pathname)
+#ifdef NOT_USED
+cl_kernel create_kernel_from_file(QSP_ARG_DECL  const char * name, const char *pathname)
 {
 	const char *buf;
 	size_t len;
@@ -642,13 +639,14 @@ cl_kernel create_kernel(QSP_ARG_DECL  const char * name, const char *pathname)
 
 	return kern;
 }
+#endif // NOT_USED
 
 #ifdef NOT_USED
 static void PF_FUNC_NAME(sync)(SINGLE_QSP_ARG_DECL)
 {
 	cl_int status;
 
-	INSURE_CURR_ODP(ocl_sync);
+	assert( curr_pdp != NULL );
 
 	if( OCLDEV_QUEUE(curr_pdp) == NULL ){
 		WARN("ocl_sync:  no command queue!?");

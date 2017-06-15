@@ -72,12 +72,9 @@ static COMMAND_FUNC( do_set_colorspace )
 	switch(n){
 		case 0: cparams1.colorspace = JCS_YCbCr; break;
 		case 1: cparams1.colorspace = JCS_GRAYSCALE; break;
-//#ifdef CAUTIOUS
 		default:
-//			ERROR1("CAUTIOUS:  do_set_colorspace");
 			assert( ! "do_set_colorspace:  bad colorspace code");
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 

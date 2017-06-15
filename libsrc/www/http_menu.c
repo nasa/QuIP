@@ -3,38 +3,41 @@
 #include "quip_prot.h"
 #include "server.h"
 #include "my_encryption.h"
-#include "strbuf.h"
 #include "quip_menu.h"
 
 static COMMAND_FUNC( do_read_file_from_server )
 {
 	const char *url;
-	String_Buf *file_contents;
+	String_Buf *file_content_sbp;
 
 	url=NAMEOF("remote file name or URL");
 
-	file_contents = get_url_contents(QSP_ARG  url);
+	file_content_sbp = get_url_contents(QSP_ARG  url);
 
-	if( file_contents == NULL ) return;
+	if( file_content_sbp == NULL ) return;
 
 	// Before we push the file contents,
 	// check the filename to see if it is an encrypted file...
 
 	if( has_encryption_suffix(url) ){
 		String_Buf *sbp;
-		sbp = decrypt_text(file_contents->sb_buf);
+		sbp = decrypt_text(sb_buffer(file_content_sbp));
+		rls_stringbuf(file_content_sbp);
 		if( sbp == NULL ){
 			WARN("error decrypting URL text");
 			return;
 		}
-		file_contents = sbp;
+		file_content_sbp = sbp;
 	}
 
-	PUSH_TEXT( file_contents->sb_buf, url );
+	PUSH_TEXT( sb_buffer(file_content_sbp), url );
 
 	exec_quip(SINGLE_QSP_ARG);				// interpret the commands!
 
-	// BUG free the memory here!
+	// free the memory here!
+	// BUG?  make sure not HALTING?
+	rls_stringbuf(file_content_sbp);
+
 	return;
 }
 

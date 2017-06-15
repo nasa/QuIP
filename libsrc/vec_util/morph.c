@@ -403,7 +403,7 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 
 /* flood fill stuff using graphics gems routine */
 
-static Data_Obj *fill_dp=NO_OBJ;
+static Data_Obj *fill_dp=NULL;
 
 int pixelread(int x,int y)
 {
@@ -479,7 +479,7 @@ void ifl(QSP_ARG_DECL  Data_Obj *dp,dimension_t x,dimension_t y,double color,dou
 {
 
 #ifdef CAUTIOUS
-	if( dp == NO_OBJ ){
+	if( dp == NULL ){
 		WARN("CAUTIOUS:  ifl:  null fill object passed");
 		return;
 	}

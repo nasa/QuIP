@@ -26,8 +26,8 @@ static u_long n_handles=0;
 // without locking!
 
 static pointer ptr_tbl[MAX_POINTERS];
-static List *free_hdl_list=NO_LIST;
-static List *used_hdl_list=NO_LIST;
+static List *free_hdl_list=NULL;
+static List *used_hdl_list=NULL;
 
 static void hdl_init()
 {
@@ -69,18 +69,18 @@ Handle new_hdl(u_long size)
 	Node *np;
 	pointer *pp;
 
-	if( free_hdl_list==NO_LIST )
+	if( free_hdl_list==NULL )
 		hdl_init();
 
 	np=remHead(free_hdl_list);
-	if( np == NO_NODE ){
+	if( np == NULL ){
 		if( verbose ){
 			sprintf(DEFAULT_MSG_STR,"%ld more handles",n_handles);
 			NADVISE(DEFAULT_MSG_STR);
 		}
 		more_handles(n_handles);	/* double the size */
 		np=remHead(free_hdl_list);
-		if( np == NO_NODE ){
+		if( np == NULL ){
 			NWARN("no more handles");
 			return(NO_HANDLE);
 		}
@@ -98,7 +98,7 @@ void rls_hdl(Handle hdl)
 	Node *np;
 
 	np = remData(used_hdl_list,hdl);
-	if( np == NO_NODE ){
+	if( np == NULL ){
 		NWARN("node for handle not found");
 		return;
 	}

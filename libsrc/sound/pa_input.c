@@ -54,7 +54,7 @@ static int wait_usecs=1;
 static int newest=(-1), oldest=(-1);
 
 static int halting=0;
-static Data_Obj *audio_stream_dp=NO_OBJ;
+static Data_Obj *audio_stream_dp=NULL;
 static int audio_stream_fd=(-1);
 static int timestamp_stream_fd=(-1);
 static struct timeval tv_tbl[N_BUFFERS];
@@ -69,13 +69,11 @@ typedef struct {
 	Query_Stack *	ara_qsp;
 } Audio_Reader_Args;
 
-#define NO_SOUND_DEVICE ((Sound_Device *)NULL)
-
-static Sound_Device *the_sdp=NO_SOUND_DEVICE;
+static Sound_Device *the_sdp=NULL;
 #define DEFAULT_SOUND_DEVICE		"default"	/* capture device */
 
 //ITEM_INTERFACE_DECLARATIONS_STATIC( Sound_Device, snddev )
-static Item_Type *snddev_itp=NO_ITEM_TYPE;
+static Item_Type *snddev_itp=NULL;
 static ITEM_INIT_FUNC(Sound_Device,snddev,0)
 static ITEM_CHECK_FUNC(Sound_Device,snddev)
 static ITEM_NEW_FUNC(Sound_Device,snddev)
@@ -208,9 +206,9 @@ void record_sound(QSP_ARG_DECL  Data_Obj *dp)
 {
 	CHECK_AUDIO(AUDIO_RECORD);
 
-	if( the_sdp == NO_SOUND_DEVICE ){
+	if( the_sdp == NULL ){
 		the_sdp = init_sound_device(QSP_ARG  DEFAULT_SOUND_DEVICE);
-		if( the_sdp == NO_SOUND_DEVICE ) return;
+		if( the_sdp == NULL ) return;
 	}
 	_record_sound(QSP_ARG  dp,the_sdp);
 }
@@ -282,24 +280,24 @@ static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
 	Sound_Device *sdp;
 
 	sdp = snddev_of(QSP_ARG  devname);
-	if( sdp != NO_SOUND_DEVICE ){
+	if( sdp != NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  device %s is already initialized",devname);
 		WARN(ERROR_STRING);
 		return(sdp);
 	}
 
 	sdp = new_snddev(QSP_ARG  devname);
-	if( sdp == NO_SOUND_DEVICE ){
+	if( sdp == NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  unable to create struct for device %s",devname);
 		WARN(ERROR_STRING);
-		return(NO_SOUND_DEVICE);
+		return(NULL);
 	}
 
 	if( init_sound_hardware(QSP_ARG  sdp) < 0 ){
 		sprintf(ERROR_STRING,"init_sound_device:  Unable to initialize sound hardware for device %s",sdp->sd_name);
 		WARN(ERROR_STRING);
 		/* BUG cleanup here */
-		return(NO_SOUND_DEVICE);
+		return(NULL);
 	}
 
 	return(sdp);
@@ -471,7 +469,7 @@ static int stream_record_init(SINGLE_QSP_ARG_DECL)
 		return(-1);
 	}
 
-	if( init_stream_obj(SINGLE_QSP_ARG) == NO_OBJ ){
+	if( init_stream_obj(SINGLE_QSP_ARG) == NULL ){
 		WARN("stream_record_init:  error creating audio stream object");
 		return(-1);
 	}
@@ -487,9 +485,9 @@ void record_stream(QSP_ARG_DECL  int sound_fd, int timestamp_fd)
 	audio_stream_fd = sound_fd;
 	timestamp_stream_fd = timestamp_fd;
 
-	if( the_sdp == NO_SOUND_DEVICE ){
+	if( the_sdp == NULL ){
 		the_sdp = init_sound_device(QSP_ARG  DEFAULT_SOUND_DEVICE);
-		if( the_sdp == NO_SOUND_DEVICE ) return;
+		if( the_sdp == NULL ) return;
 	}
 
 	if( setup_record(QSP_ARG  the_sdp) < 0 ) return;

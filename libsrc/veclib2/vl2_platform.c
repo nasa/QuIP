@@ -77,7 +77,7 @@ static void init_vl2_pfdevs(QSP_ARG_DECL  Compute_Platform *cpp)
 	SET_PFDEV_MAX_DIMS(pdp,DEFAULT_PFDEV_MAX_DIMS);
 
 	// set the data area for the device?
-	if( ram_area_p == NO_AREA ){
+	if( ram_area_p == NULL ){
 		ram_area_p = pf_area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM,pdp);
 	}
 
@@ -106,7 +106,7 @@ void vl2_init_platform(SINGLE_QSP_ARG_DECL)
 
 	init_vl2_pfdevs(QSP_ARG  cpp);
 
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
+	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
 		ERROR1("init_ocl_platform:  Failed to pop platform device context!?");
 
 	check_vl2_vfa_tbl(SINGLE_QSP_ARG);

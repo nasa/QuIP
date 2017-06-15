@@ -31,17 +31,17 @@ static int chk_uk(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
 	int i;
 
-	if( OA_DEST(oap)  != NO_OBJ && UNKNOWN_OBJ_SHAPE(OA_DEST(oap)) ){
+	if( OA_DEST(oap)  != NULL && UNKNOWN_OBJ_SHAPE(OA_DEST(oap)) ){
 		shape_error(QSP_ARG  vfp,OA_DEST(oap) );
 		return -1;
 	}
 	for(i=0;i<MAX_N_ARGS;i++){
-		if( OA_SRC_OBJ(oap,i) != NO_OBJ && UNKNOWN_OBJ_SHAPE( OA_SRC_OBJ(oap,i) ) ){
+		if( OA_SRC_OBJ(oap,i) != NULL && UNKNOWN_OBJ_SHAPE( OA_SRC_OBJ(oap,i) ) ){
 			shape_error(QSP_ARG  vfp,OA_SRC_OBJ(oap,i));
 			return -1;
 		}
 	}
-	if( OA_SBM(oap) != NO_OBJ && UNKNOWN_OBJ_SHAPE(OA_SBM(oap)) ){
+	if( OA_SBM(oap) != NULL && UNKNOWN_OBJ_SHAPE(OA_SBM(oap)) ){
 		shape_error(QSP_ARG  vfp,OA_SBM(oap) );
 		return -1;
 	}
@@ -54,14 +54,9 @@ static const char *name_for_type(Data_Obj *dp)
 	if( IS_REAL(dp) ) return("real");
 	else if( IS_COMPLEX(dp) ) return("complex");
 	else if( IS_QUAT(dp) ) return("quaternion");
-//#ifdef CAUTIOUS
 	else {
-//		sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  name_for_type:  type of object %s is unknown",OBJ_NAME(dp) );
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return("unknown");
 		assert( AERROR("name_for_type:  unexpected type code!?") );
 	}
-//#endif /* CAUTIOUS */
 }
 
 /* The "type" is real, complex, quaternion, or mixed...
@@ -75,7 +70,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	/* Set the type based on the destination vector */
 	/* destv is highest numbered arg */
 	if( IS_REAL(OA_DEST(oap) ) ){
-		if( OA_SRC2(oap)  != NO_OBJ ){	/* two source operands */
+		if( OA_SRC2(oap)  != NULL ){	/* two source operands */
 			if( IS_REAL( OA_SRC1(oap) ) ){
 				if( IS_REAL(OA_SRC2(oap) ) ){
 					SET_OA_ARGSTYPE(oap, REAL_ARGS);
@@ -106,14 +101,12 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 					goto type_mismatch23;
 				}
 			}
-//#ifdef CAUTIOUS
 			// Why was this CAUTIOUS when other goto's to type_mismatch13 are not???
 			  else {
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-//#endif /* CAUTIOUS */
-		} else if(  OA_SRC1(oap)  != NO_OBJ ){	/* one source operand */
+		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_REAL( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, REAL_ARGS);
 			} else if( IS_COMPLEX( OA_SRC1(oap) ) ){
@@ -128,7 +121,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			SET_OA_ARGSTYPE(oap, REAL_ARGS);
 		}
 	} else if( IS_COMPLEX(OA_DEST(oap) ) ){
-		if( OA_SRC2(oap)  != NO_OBJ ){	/* two source operands */
+		if( OA_SRC2(oap)  != NULL ){	/* two source operands */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				if( IS_COMPLEX( OA_SRC2(oap) ) ){
 					SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
@@ -150,7 +143,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NO_OBJ ){	/* one source operand */
+		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
@@ -163,7 +156,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 		}
 	} else if( IS_QUAT(OA_DEST(oap) ) ){
-		if( OA_SRC2(oap)  != NO_OBJ ){	/* two source operands */
+		if( OA_SRC2(oap)  != NULL ){	/* two source operands */
 			if( IS_QUAT( OA_SRC1(oap) ) ){
 				if( IS_QUAT( OA_SRC2(oap) ) ){
 					SET_OA_ARGSTYPE(oap, QUATERNION_ARGS);
@@ -185,7 +178,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NO_OBJ ){	/* one source operand */
+		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
 			if( IS_QUAT( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, QUATERNION_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
@@ -210,13 +203,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	if( VF_FLAGS(vfp) & CPX_2_REAL ){
 		// For inverse fourier transform, the destination can be real
 		// but does not have to be!
-//#ifdef CAUTIOUS
-//		// quiet compiler
-//		if( OA_SRC1(oap) == NULL ){
-//			WARN("chktyp:  CAUITOUS:  get_scal:  Unexpected null source operand!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
@@ -251,13 +237,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			WARN("chktyp:  destination must be complex for fft");
 			return -1;
 		}
-//#ifdef CAUTIOUS
-//		// quiet analyzer
-//		if( OA_SRC1(oap) == NULL ){
-//			WARN("chktyp:  CAUTIOUS:  Unexpected null src1 with fft!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		if( IS_COMPLEX( OA_SRC1(oap) ) )
@@ -272,13 +251,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 	}
 
 	if( VF_CODE(vfp) == FVIFT ){
-//#ifdef CAUTIOUS
-//		// quiet analyzer
-//		if( OA_SRC1(oap) == NULL ){
-//			WARN("chktyp:  CAUTIOUS:  Unexpected null src1 with fft!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC1(oap) != NULL );
 
 		/* destination vector can be real or complex */
@@ -408,12 +380,6 @@ ADVISE(ERROR_STRING);
 		}
 		// Mixed-arg fuctions have to have two sources, but the analyzer
 		// doesn't know that...
-//#ifdef CAUTIOUS
-//		if( OA_SRC2(oap) == NULL ){
-//			WARN("CAUTIOUS:  Null src2 with mixed-arg function!?");
-//			return -1;
-//		}
-//#endif // CAUTIOUS
 		assert( OA_SRC2(oap) != NULL );
 
 		if( ! IS_REAL(OA_SRC2(oap) ) ){
@@ -570,16 +536,16 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 	}												\
 	n_srcs++;
 
-	if(  OA_SRC1(oap) != NO_OBJ ){
+	if(  OA_SRC1(oap) != NULL ){
 		srcp1=OBJ_MACH_PREC( OA_SRC1(oap) );
 		CHECK_SOURCE_PREC(srcp1,OA_SRC1(oap))
-		if( OA_SRC2(oap)  != NO_OBJ ){
+		if( OA_SRC2(oap)  != NULL ){
 			srcp2=OBJ_MACH_PREC(OA_SRC2(oap) );
 			CHECK_SOURCE_PREC(srcp2,OA_SRC2(oap))
-			if( OA_SRC3(oap) != NO_OBJ ){
+			if( OA_SRC3(oap) != NULL ){
 				srcp3=OBJ_MACH_PREC( OA_SRC3(oap) );
 				CHECK_SOURCE_PREC(srcp3,OA_SRC3(oap))
-				if( OA_SRC4(oap) != NO_OBJ ){
+				if( OA_SRC4(oap) != NULL ){
 					srcp4=OBJ_MACH_PREC( OA_SRC4(oap) );
 					CHECK_SOURCE_PREC(srcp4,OA_SRC4(oap))
 				}
@@ -776,7 +742,7 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 	 * has, like a projection loop...
 	 */
 
-	if( OA_SBM(oap) != NO_OBJ ){
+	if( OA_SBM(oap) != NULL ){
 		if( VF_FLAGS(vfp) & BITMAP_SRC ){	// redundant?
 			/* We used to require that the bitmap size matched the destination,
 			 * but that is not necessary...
@@ -795,27 +761,14 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 				return -1;
 			}
 		}
-//#ifdef CAUTIOUS
-//		  else if( ! IS_CONVERSION(vfp) && VF_CODE(vfp) != FVMOV ){
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  chksiz %s:  obj args bitmap is non-null, but function has no bitmap flag!?",
-//				VF_NAME(vfp) );
-//			ERROR1(ERROR_STRING);
-//		}
 		else {
 			assert( IS_CONVERSION(vfp) || VF_CODE(vfp) == FVMOV );
 		}
-//		if( status != 0 ){
-//			sprintf(ERROR_STRING,"CAUTIOUS:  chksiz %s:  old_cksiz returned status=%d!?",VF_NAME(vfp) ,status);
-//			NWARN(ERROR_STRING);
-//		}
-//#endif /* CAUTIOUS */
-
 		assert( status == 0 );
 
 	}
 
-	if(  OA_SRC1(oap)  == NO_OBJ ){
+	if(  OA_SRC1(oap)  == NULL ){
 		/* nothing to check!? */
 		return 0;
 	}
@@ -850,15 +803,9 @@ ADVISE(ERROR_STRING);
 		ADVISE(ERROR_STRING);
 		return -1;
 	}
-//#ifdef CAUTIOUS
-//	if( status != 0 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  chksiz %s:  cksiz returned status=%d!?",VF_NAME(vfp) ,status);
-//		NWARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( status == 0 );
 
-	if( OA_SRC2(oap) == NO_OBJ ) return 0;
+	if( OA_SRC2(oap) == NULL ) return 0;
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg2 %s (%s)",
@@ -875,13 +822,6 @@ ADVISE(ERROR_STRING);
 		return -1;
 	}
 
-//#ifdef CAUTIOUS
-//	if( status != 0 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  chksiz %s:  cksiz returned status=%d!?",VF_NAME(vfp) ,status);
-//		NWARN(ERROR_STRING);
-//		return -1;
-//	}
-//#endif /* CAUTIOUS */
 	assert( status == 0 );
 
 	/* BUG what about bitmaps?? */
@@ -893,14 +833,7 @@ ADVISE(ERROR_STRING);
 
 static int chkargs( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 {
-//#ifdef CAUTIOUS
-//	if( OA_DEST(oap)  == NO_OBJ && VF_FLAGS(vfp) & BITMAP_DST ){
-////		OA_DEST(oap)  = OA_BMAP(oap) ;
-//		ERROR1("CAUTIOUS:  chkargs:  OA_DEST is null, expected a bitmap!?");
-//	}
-//#endif // CAUTIOUS
-
-	assert( OA_DEST(oap) != NO_OBJ || (VF_FLAGS(vfp) & BITMAP_DST)==0 );
+	assert( OA_DEST(oap) != NULL || (VF_FLAGS(vfp) & BITMAP_DST)==0 );
 
 	if( chk_uk(QSP_ARG  vfp,oap) == (-1) ) return -1;
 	if( chktyp(QSP_ARG  vfp,oap) == (-1) ) return -1;
@@ -989,7 +922,7 @@ static int make_arg_evenly_spaced(Vec_Obj_Args *oap,int index)
 
 	arg_dp = OA_SRC_OBJ(oap,index) ;
 
-	if( arg_dp == NO_OBJ ) return 0;
+	if( arg_dp == NULL ) return 0;
 	if( IS_EVENLY_SPACED(arg_dp) ) return 0;
 
 	/* If the object is subscripted, the brackets will break the name */
@@ -1040,9 +973,9 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	 *
 	 * One answer is bitmap result functions...
 	 */
-	if(  OA_SRC1(oap)  != NO_OBJ ){
+	if(  OA_SRC1(oap)  != NULL ){
 		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
-	} else if( OA_DEST(oap)  != NO_OBJ ){
+	} else if( OA_DEST(oap)  != NULL ){
 		SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
 	} else {
 		sprintf(ERROR_STRING,"call_vfunc %s:",VF_NAME(vfp) );
@@ -1076,7 +1009,6 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 //fprintf(stderr,"call_vfunc:  oap = 0x%lx  vfp = 0x%lx\n", (long)oap,(long)vfp );
 //fprintf(stderr,"call_vfunc:  func at 0x%lx\n",(long)OA_DISPATCH_FUNC(oap));
 	//return (* OA_DISPATCH_FUNC( oap ) )(QSP_ARG  vfp,oap);
-fprintf(stderr,"call_vfunc calling platform_dispatch %s\n",VF_NAME(vfp));
 	retval = platform_dispatch( QSP_ARG  PFDEV_PLATFORM(OA_PFDEV(oap)), vfp,oap);
 	return retval;
 } // call_vfunc

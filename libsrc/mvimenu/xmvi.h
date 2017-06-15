@@ -1,7 +1,6 @@
 
 #include "gmovie.h"
 #include "data_obj.h"
-#include "query.h"
 
 /* xmvi.c */
 

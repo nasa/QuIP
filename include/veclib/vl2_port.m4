@@ -5,8 +5,6 @@ include(`../../include/veclib/gen_port.m4')
 suppress_if
 
 define(`QUATERNION_SUPPORT',`')
-dnl #undef USE_SSE
-dnl #undef BUILD_FOR_GPU
 
 // PORT put things here...
 // PORT - This is something that is different between cuda and opencl!

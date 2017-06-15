@@ -1,6 +1,7 @@
 
 
-#ifndef NO_STRINGBUF
+#ifndef _STRBUF_H_
+#define _STRBUF_H_
 
 #include "quip_fwd.h"
 //#include "typedefs.h"
@@ -13,8 +14,6 @@ struct string_buf {
 } ;
 
 
-#define NO_STRINGBUF ((String_Buf *)NULL)
-
 /* String_Buf */
 /* For now this is not an object... */
 //#define SB_BUF(sbp)		sbp->sb_buf
@@ -23,5 +22,5 @@ struct string_buf {
 #define SET_SB_SIZE(sbp,n)	sbp->sb_size = n
 
 
-#endif /* ! NO_STRINGBUF */
+#endif /* ! _STRBUF_H_ */
 

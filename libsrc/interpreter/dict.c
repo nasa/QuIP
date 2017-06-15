@@ -69,19 +69,10 @@ List *_dictionary_list(QSP_ARG_DECL  Dictionary *dict_p)
 	 * inserted or removed item(s) since the creation of the hash tbl.
 	 */
 
-//#ifdef CAUTIOUS
-//	if( ! IS_HASHING(dict_p) ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  dictionary_list:  dictionary %s needs a new list but is not hashing!?",
-//			DICT_NAME(dict_p));
-//		NERROR1(DEFAULT_ERROR_STRING);
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
 	assert( IS_HASHING(dict_p) );
 
 	/* trash the old list */
-	while( (np=remHead(DICT_LIST(dict_p))) != NO_NODE )
+	while( (np=remHead(DICT_LIST(dict_p))) != NULL )
 		rls_node(np);
 	rls_list(DICT_LIST(dict_p));
 
@@ -95,7 +86,7 @@ void delete_dictionary(Dictionary *dict_p)
 	Node *np;
 
 	/* delete the list */
-	while( (np=remHead(DICT_LIST(dict_p))) != NO_NODE )
+	while( (np=remHead(DICT_LIST(dict_p))) != NULL )
 		rls_node(np);
 	rls_list(DICT_LIST(dict_p));
 
@@ -147,7 +138,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 #endif /* QUIP_DEBUG */
 			/* initialize the hash table from the list */
 			np=QLIST_HEAD(DICT_LIST(dict_p));
-			while(np!=NO_NODE){
+			while(np!=NULL){
 				Item *ip;
 				ip=(Item*) NODE_DATA(np);
 
@@ -177,7 +168,7 @@ NWARN(DEFAULT_ERROR_STRING);
 		ip = (Item*) fetch_hash(name,DICT_HT(dict_p));
 #ifdef QUIP_DEBUG
 if( (debug & debug_dictionary) ){
-if( ip!=NO_ITEM ){
+if( ip!=NULL ){
 sprintf(DEFAULT_ERROR_STRING,"fetch_name:  fetch hash found %s when looking for %s",
 ITEM_NAME(ip),name);
 NADVISE(DEFAULT_ERROR_STRING);
@@ -197,7 +188,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		DICT_N_FETCHES(dict_p) + 1 );
 
 	np=QLIST_HEAD(DICT_LIST(dict_p));
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Item *ip;
 
 		ip = (Item*) NODE_DATA(np);
@@ -208,26 +199,26 @@ NADVISE(DEFAULT_ERROR_STRING);
 			DICT_N_COMPS(dict_p) + 1 );
 		np = NODE_NEXT(np);
 	}
-	return(NO_ITEM);
+	return(NULL);
 } // end fetch_name
 
 int insert_name(Item* ip, Node* np, Dictionary* dict_p)
 {
-	if( DICT_LIST(dict_p) == NO_LIST )
+	if( DICT_LIST(dict_p) == NULL )
 		SET_DICT_LIST(dict_p,new_list());
 
 	if( IS_HASHING(dict_p) ){
 		int stat;
 
 		stat=insert_hash(ip,DICT_HT(dict_p));
-		if( np!=NO_NODE )
+		if( np!=NULL )
 			addTail(DICT_LIST(dict_p),np);
 		else {
 			CLEAR_DICT_FLAG_BITS(dict_p, NS_LIST_IS_CURRENT);
 		}
 		return(stat);
 	} else {
-		if( np == NO_NODE )
+		if( np == NULL )
 			np=mk_node(ip);
 
 		/* BUG?  for commands, we want the first items to be at the head
@@ -250,10 +241,10 @@ void _cat_dict_items(QSP_ARG_DECL  List *lp, Dictionary* dict_p)
 	List *nslp;
 
 	nslp = dictionary_list(dict_p);
-	if( nslp == NO_LIST ) return;
+	if( nslp == NULL ) return;
 
 	np=QLIST_HEAD(nslp);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		new_np=mk_node(NODE_DATA(np));
 		addTail(lp,new_np);
 		np=NODE_NEXT(np);
@@ -282,13 +273,13 @@ int remove_name(Item *ip,Dictionary *dict_p)
 		 * efficient for the item to carry around it's own np...
 		 */
 		np=remData(DICT_LIST(dict_p),ip);
-		if( np!=NO_NODE ) rls_node(np);
+		if( np!=NULL ) rls_node(np);
 		/* CLEAR_DICT_FLAG_BITS(dict_p, NS_LIST_IS_CURRENT); */
 		return(stat);
 	}
 
 	np=remData(DICT_LIST(dict_p),ip);
-	if( np==NO_NODE ) return(-1);
+	if( np==NULL ) return(-1);
 	rls_node(np);
 
 	return(0);
@@ -320,7 +311,7 @@ Dictionary *new_dictionary(void)
 
 	dict_p->dict_name = NULL;
 	dict_p->dict_htp = NULL;
-	dict_p->dict_lp = NO_LIST;
+	dict_p->dict_lp = NULL;
 	dict_p->dict_flags = 0;
 	dict_p->dict_fetches = 0;
 	dict_p->dict_ncmps = 0;

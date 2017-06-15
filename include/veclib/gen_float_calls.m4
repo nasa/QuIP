@@ -8,6 +8,7 @@ dnl	// These are the float funcs that can mix sp and dp
 my_include(`veclib/gen_mixed_float_calls.m4')
 
 dnl	// These are the float funcs where all operands must be either sp or dp, not mixed
+dnl	only vset & vmov ???
 my_include(`veclib/all_same_prec_vec.m4')
 
 dnl fft_funcs are not implemented in a platform-independent way!?

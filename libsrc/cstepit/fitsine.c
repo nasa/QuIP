@@ -12,7 +12,6 @@
 #include "data_obj.h"
 #include "getbuf.h"
 #include "debug.h"
-#include "query.h"
 #include "optimize.h"
 
 /* these stay in fixed order */
@@ -52,7 +51,7 @@ COMMAND_FUNC( do_fix_prm )
 	opp = PICK_OPT_PARAM("");
 	value=HOW_MUCH("value");
 
-	if( opp==NO_OPT_PARAM ) return;
+	if( opp==NULL ) return;
 
 	opp->ans = value;
 
@@ -146,7 +145,7 @@ COMMAND_FUNC( fitsine )
 	}
 
 	dp=PICK_OBJ( "signal vector" );
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	sprintf(msg_str, "Attempting to fit %s by varying",OBJ_NAME(dp));
 	prt_msg_frag(msg_str);

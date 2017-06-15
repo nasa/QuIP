@@ -24,9 +24,8 @@ typedef enum {
 
 	SWF_CURL,
 	SWF_SOUND,
-	SWF_MPLAYER,
-	SWF_XINE,
-	SWF_SSE,
+//	SWF_MPLAYER,	// doesn't seem to be used anywhere???
+//	SWF_XINE,
 	SWF_NUMREC,
 	SWF_CUDA,
 	SWF_OPENCL,
@@ -79,9 +78,8 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 
 { UNKNOWN, SWF_CURL,		"www i/o (w/ libcurl)"		},
 { UNKNOWN, SWF_SOUND,		"sound (portaudio/ALSA)"	},
-{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
-{ UNKNOWN, SWF_XINE,		"Xine"				},
-{ UNKNOWN, SWF_SSE,		"SSE processor acceleration"	},
+//{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
+//{ UNKNOWN, SWF_XINE,		"Xine"				},
 { UNKNOWN, SWF_NUMREC,		"Numerical Recipes library"	},
 { UNKNOWN, SWF_CUDA,		"nVidia CUDA"			},
 { UNKNOWN, SWF_OPENCL,		"OpenCL acceleration"		},
@@ -182,11 +180,12 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_MPLAYER
-	FEATURE_PRESENT(SWF_MPLAYER);
-#else
-	FEATURE_ABSENT(SWF_MPLAYER);
-#endif
+// HAVE_MPLAYER is not ever defined in configure.ac???
+//#ifdef HAVE_MPLAYER
+//	FEATURE_PRESENT(SWF_MPLAYER);
+//#else
+//	FEATURE_ABSENT(SWF_MPLAYER);
+//#endif
 
 // HAVE_NUMREC can be set by autoconf based on whether numerical recipes is present
 // on the system.  But USE_NUMREC is set by the user to indicate whether it should be used...
@@ -251,11 +250,11 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef HAVE_XINE
-	FEATURE_PRESENT(SWF_XINE);
-#else
-	FEATURE_ABSENT(SWF_XINE);
-#endif
+//#ifdef HAVE_XINE
+//	FEATURE_PRESENT(SWF_XINE);
+//#else
+//	FEATURE_ABSENT(SWF_XINE);
+//#endif
 
 
 #ifdef HAVE_X11
@@ -345,13 +344,6 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 #endif
 
 
-#ifdef USE_SSE
-	FEATURE_PRESENT(SWF_SSE);
-#else
-	FEATURE_ABSENT(SWF_SSE);
-#endif
-
-
 #ifdef SUBMENU
 	FEATURE_PRESENT(SWF_SUBMENU);
 #else
@@ -409,14 +401,6 @@ COMMAND_FUNC( do_list_features )
 
 #ifdef CAUTIOUS
 	for(i=0;i<N_SW_FEATURES;i++){
-//		if( swf_tbl[i].swf_state != ABSENT &&
-//			swf_tbl[i].swf_state != PRESENT ){
-//
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  need to test state of feature %d (%s)",i,
-//				swf_tbl[i].swf_desc);
-//			ERROR1(ERROR_STRING);
-//		}
 		assert( swf_tbl[i].swf_state == ABSENT || swf_tbl[i].swf_state == PRESENT );
 	}
 #endif /* CAUTIOUS */

@@ -111,7 +111,6 @@ noinst_HEADERS =					\
 			fast_eqsp_defs.m4			\
 			slow_defs.m4			\
 			fast_test.m4			\
-			gen_entries.m4			\
 			host_fft_funcs.m4			\
 							\
 			asc_classes.c			\

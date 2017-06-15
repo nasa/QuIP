@@ -59,24 +59,12 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 	/* compute the likelihood for this guess */
 
 	opp=get_opt_param(QSP_ARG  ALPHA_NAME);
-//#ifdef CAUTIOUS
-//	if( opp==NO_OPT_PARAM ){
-//		ERROR1("CAUTIOUS:  missing alpha param");
-//		IOS_RETURN_VAL(0)
-//	}
-//#endif
-	assert( opp != NO_OPT_PARAM );
+	assert( opp != NULL );
 
 	t_alpha = opp->ans;
 
 	opp=get_opt_param(QSP_ARG  BETA_NAME);
-//#ifdef CAUTIOUS
-//	if( opp==NO_OPT_PARAM ){
-//		ERROR1("CAUTIOUS:  missing beta param");
-//		IOS_RETURN_VAL(0)
-//	}
-//#endif
-	assert( opp != NO_OPT_PARAM );
+	assert( opp != NULL );
 
 	t_beta = opp->ans;
 
@@ -158,24 +146,12 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 	optimize(QSP_ARG  w_likelihood);
 
 	alpha_opp=get_opt_param(QSP_ARG  ALPHA_NAME);
-//#ifdef CAUTIOUS
-//	if( alpha_opp==NO_OPT_PARAM ){
-//		ERROR1("CAUTIOUS:  missing alpha param");
-//		IOS_RETURN
-//	}
-//#endif
-	assert( alpha_opp != NO_OPT_PARAM );
+	assert( alpha_opp != NULL );
 
 	alpha = alpha_opp->ans;
 
 	beta_opp=get_opt_param(QSP_ARG  BETA_NAME);
-//#ifdef CAUTIOUS
-//	if( beta_opp==NO_OPT_PARAM ){
-//		ERROR1("CAUTIOUS:  missing beta param");
-//		IOS_RETURN
-//	}
-//#endif
-	assert( beta_opp != NO_OPT_PARAM );
+	assert( beta_opp != NULL );
 
 	beta = beta_opp->ans;
 

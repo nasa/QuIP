@@ -53,6 +53,7 @@ define(`SET_INDEX',`							\
 
 dnl this is for bitmaps with info...
 define(`SET_INDICES_1SRC',`index2.d5_dim[0] = tbl_idx; /* BUG need to initialize index2! */')
+define(`SET_INDICES_2SRCS',`SET_INDICES_1SRC index3 = index2;')
 
 
 dnl	// Slow versions of these not implemented for GPU yet...
@@ -81,13 +82,10 @@ define(`WORDS_PER_SEQ',`(words_per_row * szarr.d5_dim[2] * szarr.d5_dim[3])')
 
 define(`SET_INDICES_DBM_1S_',`SET_BASIC_INDICES_DBM')
 
+dnl	Backslashes required for openCL (source strings)?
+
 define(`SET_INDICES_DBM',`				\
 	SET_BASIC_INDICES_DBM				\
-dnl	dbm_bit_idx.d5_dim[0] = dbm_info_p->word_tbl[tbl_idx].first_indices[0];				\
-dnl	dbm_bit_idx.d5_dim[1] = dbm_info_p->word_tbl[tbl_idx].first_indices[1];				\
-dnl	dbm_bit_idx.d5_dim[2] = dbm_info_p->word_tbl[tbl_idx].first_indices[2];				\
-dnl	dbm_bit_idx.d5_dim[3] = dbm_info_p->word_tbl[tbl_idx].first_indices[3];				\
-dnl	dbm_bit_idx.d5_dim[4] = dbm_info_p->word_tbl[tbl_idx].first_indices[4];				\
 ')
 
 define(`SET_BASIC_INDICES_DBM',`				\
@@ -157,13 +155,6 @@ define(`_VEC_FUNC_2V_CONV',`
 	_GENERIC_SLEN_CONV_FUNC($1,$2)
 ')
 
-dnl test it
-dnl // slow_defs.m4 testing vec_func_2v_conv
-dnl #ifdef FOOBAR
-dnl // testing!
-dnl _VEC_FUNC_2V_CONV(testconv,char)
-dnl #endif // FOOBAR
-
 ',` dnl else // ! BUILD_FOR_CUDA
 
 // Why is it that only CUDA needs the len versions???
@@ -184,9 +175,8 @@ define(`_VEC_FUNC_2V_CONV',`
 	_GENERIC_SLOW_CONV_FUNC($1,$2)
 ')
 
-
 define(`GENERIC_FUNC_DECLS',`
-GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
+	GENERIC_SF_DECL($1,$2,$3,$4,$5,$6,$7)
 ')
 
 ') dnl endif // ! BUILD_FOR_CUDA

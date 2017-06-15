@@ -42,25 +42,24 @@
 //#include "dataprot.h"
 #include "xsupp.h"
 //#include "img_file.h"
-#include "query.h"
 #include "my_fb.h"
 #include "view_cmds.h"
 
 ITEM_INTERFACE_DECLARATIONS(FB_Info,fbi,0)
 
-static FB_Info *curr_fbip=NO_FBI;
+static FB_Info *curr_fbip=NULL;
 
 #define DEFAULT_FB_DEVICE	"/dev/fb0"
 
 #define INSURE_FB(subrt_name)						\
 									\
-	if( curr_fbip == NO_FBI ){					\
+	if( curr_fbip == NULL ){					\
 		sprintf(ERROR_STRING,					\
 		"%s:  no frame buffer open, trying %s",subrt_name,	\
 			DEFAULT_FB_DEVICE);				\
 		WARN(ERROR_STRING);					\
 		fb_open(QSP_ARG DEFAULT_FB_DEVICE);			\
-		if( curr_fbip == NO_FBI ){				\
+		if( curr_fbip == NULL ){				\
 			sprintf(ERROR_STRING,				\
 			"unable to open default frame buffer %s",	\
 				DEFAULT_FB_DEVICE);			\
@@ -83,7 +82,7 @@ static void fb_open(QSP_ARG_DECL const char *fb_name)
 	long nbytes;
 
 	fbip = new_fbi(QSP_ARG  fb_name);
-	if( fbip == NO_FBI ) return;
+	if( fbip == NULL ) return;
 
 	fbip->fbi_fd = open(fb_name,O_RDWR);
 	if( fbip->fbi_fd < 0 ){
@@ -113,7 +112,7 @@ static void fb_open(QSP_ARG_DECL const char *fb_name)
 	SET_DS_SEQS(&dimset, 1 );
 
 	fbip->fbi_dp = _make_dp(QSP_ARG  fb_name,&dimset,PREC_FOR_CODE(PREC_UBY));
-	if( fbip->fbi_dp == NO_OBJ ){
+	if( fbip->fbi_dp == NULL ){
 		sprintf(ERROR_STRING,"Unable to create data object structure for %s",fb_name);
 		WARN(ERROR_STRING);
 		close(fbip->fbi_fd);
@@ -149,7 +148,7 @@ static COMMAND_FUNC( do_open_fb_dev )
 	s=NAMEOF("frame buffer device");
 
 	/* See if requested frame buffer is the current frame buffer */
-	if( curr_fbip != NO_FBI && !strcmp(s,curr_fbip->fbi_name) ){
+	if( curr_fbip != NULL && !strcmp(s,curr_fbip->fbi_name) ){
 		sprintf(ERROR_STRING,"Frame buffer device %s is already the current frame buffer.",s);
 		advise(ERROR_STRING);
 		return;
@@ -157,7 +156,7 @@ static COMMAND_FUNC( do_open_fb_dev )
 
 	/* See if requested frame buffer is already open*/
 	fbip = fbi_of(QSP_ARG  s);
-	if( fbip != NO_FBI ){
+	if( fbip != NULL ){
 		curr_fbip = fbip;
 		sprintf(ERROR_STRING,"Frame buffer device %s is already open, making current.",s);
 		advise(ERROR_STRING);
@@ -167,11 +166,11 @@ static COMMAND_FUNC( do_open_fb_dev )
 	save_fbip = curr_fbip;		/* save */
 	fb_open(QSP_ARG s);
 
-	if( curr_fbip == NO_FBI ){
+	if( curr_fbip == NULL ){
 		sprintf(ERROR_STRING,"unable to open frame buffer device %s",s);
 		WARN(ERROR_STRING);
 		curr_fbip = save_fbip;	/* un-save */
-		if( curr_fbip != NO_FBI ){
+		if( curr_fbip != NULL ){
 			sprintf(ERROR_STRING,"Reverting to previous frame buffer device %s",curr_fbip->fbi_name);
 			advise(ERROR_STRING);
 		}
@@ -183,7 +182,7 @@ static COMMAND_FUNC( do_select_fb_dev )
 	FB_Info *fbip;
 
 	fbip = PICK_FBI("frame buffer device");
-	if( fbip == NO_FBI ) return;
+	if( fbip == NULL ) return;
 
 	curr_fbip = fbip;
 }
@@ -258,7 +257,7 @@ static COMMAND_FUNC( do_save_fb )
 	x=(int)HOW_MANY("x origin");
 	y=(int)HOW_MANY("y origin");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"save_fb")
 
@@ -274,7 +273,7 @@ static COMMAND_FUNC( do_load_fb )
 	x=(int)HOW_MANY("x origin");
 	y=(int)HOW_MANY("y origin");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"load_fb")
 
@@ -675,7 +674,7 @@ static COMMAND_FUNC( do_set_cmap )
 	red_dp = PICK_OBJ("color map RED data object");
 	green_dp = PICK_OBJ("color map GREEN data object");
 	blue_dp = PICK_OBJ("color map BLUE data object");
-	if( red_dp == NO_OBJ || green_dp == NO_OBJ || blue_dp == NO_OBJ ) return;
+	if( red_dp == NULL || green_dp == NULL || blue_dp == NULL ) return;
 
 	INSIST_RAM_OBJ(red_dp,"set_cmap")
 	INSIST_RAM_OBJ(green_dp,"set_cmap")

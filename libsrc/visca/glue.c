@@ -12,7 +12,7 @@ ITEM_INTERFACE_DECLARATIONS(Visca_Inquiry,visca_inq,0)
 
 Item_Context *create_visca_cmd_context(QSP_ARG_DECL  const char *name)
 {
-	if( visca_cmd_itp == NO_ITEM_TYPE )
+	if( visca_cmd_itp == NULL )
 		init_visca_cmds(SINGLE_QSP_ARG);
 
 	return create_item_context(QSP_ARG  visca_cmd_itp, name);

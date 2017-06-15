@@ -40,7 +40,7 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 	extremum = clipval;
 
 	index_p=mk_scalar("___index",PREC_DI);
-	if( index_p == NO_OBJ ) return(-1.0);
+	if( index_p == NULL ) return(-1.0);
 
 	while( extremum == clipval ){
 		/* substitute newval for clipval */

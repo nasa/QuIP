@@ -26,7 +26,7 @@
 	IOS_Node *np;
 
 	np = [list remHead];
-	if( np == NO_IOS_NODE ) return NULL;
+	if( np == NULL ) return NULL;
 
 	return np.data;
 }

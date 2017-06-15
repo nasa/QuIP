@@ -115,7 +115,7 @@ sunras_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_SUNRAS));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hd = getbuf( sizeof(struct rasterfile) );
 
@@ -149,7 +149,7 @@ sunras_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 	return(ifp);
 stoppit:
 	sunras_close(QSP_ARG  ifp);
-	return(NO_IMAGE_FILE);
+	return(NULL);
 }
 
 int sunras_unconv(void *hd_pp,Data_Obj *dp)

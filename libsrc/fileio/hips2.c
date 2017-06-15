@@ -72,8 +72,8 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 	SET_OBJ_FRM_INC(dp, OBJ_ROW_INC(dp) * (incr_t)OBJ_ROWS(dp) );
 	SET_OBJ_SEQ_INC(dp, OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp));
 
-	dp->dt_parent = NO_OBJ;
-	dp->dt_children = NO_LIST;
+	dp->dt_parent = NULL;
+	dp->dt_children = NULL;
 
 	// BUG fix ram_area
 	//dp->dt_ap = ram_area;		/* the default */
@@ -107,7 +107,7 @@ FIO_OPEN_FUNC(hips2)
 	Image_File *ifp;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS2));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = (Hips2_Header *)getbuf( sizeof(Hips2_Header) );
 
@@ -126,7 +126,7 @@ FIO_OPEN_FUNC(hips2)
 		if( rd_hips2_hdr( ifp->if_fp, (Hips2_Header *)ifp->if_hdr_p,
 			ifp->if_name ) != HIPS_OK ){
 			hips2_close(QSP_ARG  ifp);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 		if( hips2_to_dp(ifp->if_dp,ifp->if_hdr_p) < 0 )
 			NWARN("error converting hips2 header");
@@ -141,7 +141,7 @@ FIO_CLOSE_FUNC( hips2 )
 {
 	/* see if we need to edit the header */
 	if( IS_WRITABLE(ifp)
-		&& ifp->if_dp != NO_OBJ	/* may be closing 'cause of error */
+		&& ifp->if_dp != NULL	/* may be closing 'cause of error */
 		&& ifp->if_nfrms != ifp->if_frms_to_wt ){
 		if( ifp->if_nfrms <= 0 ){
 			sprintf(ERROR_STRING, "file %s nframes=%d!?",
@@ -286,7 +286,7 @@ FIO_WT_FUNC( hips2 )
 		dp = &dobj;
 	}
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);

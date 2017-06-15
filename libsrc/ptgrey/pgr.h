@@ -4,7 +4,6 @@
 #include <dc1394/dc1394.h>
 #endif
 
-#include "query.h"
 #include "data_obj.h"
 
 typedef struct pgr_cam {
@@ -83,9 +82,6 @@ typedef struct named_trigger_mode {
 	dc1394trigger_mode_t	ntm_mode;
 #endif
 } Named_Trigger_Mode;
-
-#define NO_PGR_FRAME		((PGR_Frame *)NULL)
-
 
 
 /* pgr.c */

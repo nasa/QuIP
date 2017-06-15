@@ -30,7 +30,7 @@
 // global var
 int max_threads_per_block;
 
-Cuda_Device *curr_cdp=NO_CUDA_DEVICE;
+Cuda_Device *curr_cdp=NULL;
 
 Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
 
@@ -144,7 +144,7 @@ COMMAND_FUNC( do_gpu_obj_dnload )
 	dpto = PICK_OBJ("destination RAM object");
 	dpfr = PICK_OBJ("source GPU object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	gpu_obj_dnload(QSP_ARG  dpto,dpfr);
 }
@@ -156,7 +156,7 @@ COMMAND_FUNC( do_gpu_obj_upload )
 	dpto = PICK_OBJ("destination GPU object");
 	dpfr = PICK_OBJ("source RAM object");
 
-	if( dpto == NO_OBJ || dpfr == NO_OBJ ) return;
+	if( dpto == NULL || dpfr == NULL ) return;
 
 	gpu_obj_upload(QSP_ARG  dpto,dpfr);
 }
@@ -171,7 +171,7 @@ COMMAND_FUNC( do_gpu_fwdfft )
 	dst_dp = PICK_OBJ("destination object");
 	src1_dp = PICK_OBJ("source object");
 
-	if( dst_dp == NO_OBJ || src1_dp == NO_OBJ) return;
+	if( dst_dp == NULL || src1_dp == NULL) return;
 
 	CHECK_GPU_OBJ(dst_dp);
 	CHECK_GPU_OBJ(src1_dp);
@@ -380,7 +380,7 @@ COMMAND_FUNC( do_cudev_info )
 	Cuda_Device *cdp;
 
 	cdp = PICK_CUDEV((char *)"device");
-	if( cdp == NO_CUDA_DEVICE ) return;
+	if( cdp == NULL ) return;
 
 #ifdef HAVE_CUDA
 	print_cudev_info(QSP_ARG  cdp);
@@ -420,11 +420,7 @@ void insure_cuda_device( Data_Obj *dp )
 	}
 
 	cdp = (Cuda_Device *) AREA_CUDA_DEV(OBJ_AREA(dp));
-
-#ifdef CAUTIOUS
-	if( cdp == NO_CUDA_DEVICE )
-		NERROR1("CAUTIOUS:  null cuda device ptr in data area!?");
-#endif /* CAUTIOUS */
+	assert( cdp != NULL );
 
 	if( curr_cdp != cdp ){
 sprintf(DEFAULT_ERROR_STRING,"insure_cuda_device:  curr_cdp = 0x%lx  cdp = 0x%lx",

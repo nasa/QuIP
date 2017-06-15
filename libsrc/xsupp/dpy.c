@@ -5,7 +5,7 @@
 #include "xsupp.h"
 #include "debug.h"
 
-static Disp_Obj *current_dop=NO_DISP_OBJ;
+static Disp_Obj *current_dop=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 
@@ -21,7 +21,9 @@ ITEM_INTERFACE_DECLARATIONS(Disp_Obj,disp_obj,0)
 #endif
 
 static int window_sys_inited=0;
+
 // BUG static vars not thread-safe...
+// Also, should be one per display...
 static XVisualInfo *	visualList = NULL;
 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -38,7 +40,7 @@ void set_display( Disp_Obj *dop )
 
 List *displays_list(SINGLE_QSP_ARG_DECL)
 {
-	if( disp_obj_itp == NO_ITEM_TYPE ) return(NO_LIST);
+	if( disp_obj_itp == NULL ) return(NULL);
 	return( item_list(QSP_ARG  disp_obj_itp) );
 }
 
@@ -72,7 +74,6 @@ static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 		NWARN(ERROR_STRING);
 		/* remove the object */
 		del_disp_obj(QSP_ARG  dop);
-		rls_str((char *)DO_NAME(dop));
 		return(-1);
 	}
 	return(0);
@@ -191,13 +192,17 @@ static Visual *GetSpecifiedVisual( Disp_Obj * dop, int depth )
 #ifdef HAVE_OPENGL
 
 	XVisualInfo *vi_p;
+	Visual *vis_p;
 	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, depth, GLX_DOUBLEBUFFER, None };
 	vi_p = glXChooseVisual(DO_DISPLAY(dop),0,att);
 	if( vi_p == NULL ){
 		NERROR1("glXChooseVisual failed!?");
 	}
 //fprintf(stderr,"glXChooseVisual returned visual %p\n",(void *)vi_p->visualid);
-	return vi_p->visual;
+	vis_p = vi_p->visual;
+	XFree(vi_p);
+
+	return vis_p; 
 
 #else // ! HAVE_OPENGL
 
@@ -355,6 +360,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	/* remember the depth of this visual - do we still need to do this? */
 	vinfo.visualid = XVisualIDFromVisual(DO_VISUAL(dop));
 	list = XGetVisualInfo(DO_DISPLAY(dop),VisualIDMask,&vinfo,&n);
+
 	if( n != 1 ){
 		NWARN("more than one visual with specified ID!?");
 		//SET_DO_DEPTH(dop, 8);	// why was this 8???
@@ -413,23 +419,22 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 	static int siz_done=0;
 
 	dop = new_disp_obj(QSP_ARG  name);
-	if( dop == NO_DISP_OBJ ){
+	if( dop == NULL ){
 		sprintf(ERROR_STRING, "Couldn't create object for display %s",
 					name);
 		NWARN(ERROR_STRING);
-		return(NO_DISP_OBJ);
+		return(NULL);
 	}
 
 	if( dop_open(QSP_ARG  dop) < 0 ){
-		return(NO_DISP_OBJ);
+		return(NULL);
 	}
 
 	if( dop_setup(QSP_ARG  dop,desired_depth) < 0 ){
 		/* Bug - XCloseDisplay?? */
 		/* need to destroy object here */
 		del_disp_obj(QSP_ARG  dop);
-		rls_str((char *)DO_NAME(dop));
-		return(NO_DISP_OBJ);
+		return(NULL);
 	}
 	set_display(dop);
 
@@ -441,67 +446,81 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 	return(dop);
 }
 
+static Disp_Obj *check_for_desired_depth(SINGLE_QSP_ARG_DECL)
+{
+	const char *s;
+	Disp_Obj *dop;
+	int desired_depth;
+	const char *dname;
+
+	s=getenv("DESIRED_DEPTH");
+	if( s == NULL ) return NULL;
+
+	desired_depth=atoi(s);
+
+	dop = open_display(QSP_ARG  dname,desired_depth);
+	if( dop == NULL ){
+		sprintf(ERROR_STRING,"Unable to open display %s with $DESIRED_DEPTH (%d)",
+			dname,desired_depth);
+		NWARN(ERROR_STRING);
+	}
+	return(dop);
+}
+
 #define MAX_DISPLAY_DEPTHS	4
 static int possible_depths[MAX_DISPLAY_DEPTHS]={24,8,16,15};
+
+static Disp_Obj *check_possible_depth(QSP_ARG_DECL  int d, const char *dname)
+{
+	Disp_Obj *dop;
+
+	dop = open_display(QSP_ARG  dname,d);
+	if( dop != NULL && verbose ){
+		sprintf(ERROR_STRING,
+			"Using depth %d on display %s",
+			d,dname);
+		advise(ERROR_STRING);
+	}
+	return(dop);
+}
+
+static Disp_Obj *check_possible_depths(QSP_ARG_DECL  const char *dname)
+{
+	Disp_Obj *dop;
+	int i;
+
+	for(i=0;i<MAX_DISPLAY_DEPTHS;i++){
+		dop=check_possible_depth(QSP_ARG  possible_depths[i], dname);
+		if( dop != NULL ) return dop;
+
+		if( verbose ){
+			sprintf(ERROR_STRING,
+				"Couldn't get %d bit visual on device %s",
+				possible_depths[i],dname);
+			advise(ERROR_STRING);
+		}
+	}
+	return NULL;
+}
 
 static Disp_Obj * default_x_display(SINGLE_QSP_ARG_DECL)
 {
 	const char *dname;
 	Disp_Obj *dop;
-	int which_depth;
-	char *s;
 
 	dname = check_display(SINGLE_QSP_ARG);
 
 	/* these two lines added so this can be called more than once */
 	dop = disp_obj_of(QSP_ARG  dname);
-	if( dop != NO_DISP_OBJ ) return(dop);
+	if( dop != NULL ) return(dop);
 
-	s=getenv("DESIRED_DEPTH");
-	if( s != NULL ){
-		int desired_depth;
+	dop = check_for_desired_depth(SINGLE_QSP_ARG);
+	if( dop != NULL ) return dop;
 
-		desired_depth=atoi(s);
-
-sprintf(ERROR_STRING,"Desired depth %d obtained from environment",desired_depth);
-advise(ERROR_STRING);
-		dop = open_display(QSP_ARG  dname,desired_depth);
-		if( dop != NO_DISP_OBJ ) return(dop);
-
-		sprintf(ERROR_STRING,"Unable to open display %s with $DESIRED_DEPTH (%d)",
-			dname,desired_depth);
-		NWARN(ERROR_STRING);
-	}
-			
-
-	for(which_depth=0;which_depth<MAX_DISPLAY_DEPTHS;which_depth++){
-		dop = open_display(QSP_ARG  dname,possible_depths[which_depth]);
-		if( dop != NO_DISP_OBJ ){
-			if( verbose ){
-				sprintf(ERROR_STRING,
-					"Using depth %d on display %s",
-					possible_depths[which_depth],dname);
-				advise(ERROR_STRING);
-			}
-			return(dop);
-		} else {
-			if( verbose && which_depth<(MAX_DISPLAY_DEPTHS-1) ){
-				sprintf(ERROR_STRING,
-			"Couldn't get %d bit visual on device %s, trying %d",
-					possible_depths[which_depth],dname,
-					possible_depths[which_depth+1]);
-				advise(ERROR_STRING);
-			}
-		}
-	}
-	if( verbose ){
-		sprintf(ERROR_STRING,
-	"Couldn't get %d bit visual on device %s, giving up",
-			possible_depths[MAX_DISPLAY_DEPTHS-1],dname);
-		advise(ERROR_STRING);
-	}
-	return(dop);
-} /* end default_x_display */
+	dop = check_possible_depths(QSP_ARG  dname);
+	return dop;
+}
+/* end default_x_display */
 
 static char *x_request_name[128];
 
@@ -721,9 +740,9 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 
 	window_sys_inited=1;
 
-	if( current_dop == NO_DISP_OBJ ){
+	if( current_dop == NULL ){
 		current_dop = default_x_display(SINGLE_QSP_ARG);
-		if( current_dop == NO_DISP_OBJ ){
+		if( current_dop == NULL ){
 			NWARN("Couldn't open default display!?");
 			return;
 		}
@@ -749,10 +768,10 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 
 int display_depth(SINGLE_QSP_ARG_DECL)
 {
-	if( current_dop == NO_DISP_OBJ )
+	if( current_dop == NULL )
 		current_dop = default_x_display(SINGLE_QSP_ARG);
 
-	if( current_dop == NO_DISP_OBJ )
+	if( current_dop == NULL )
 		return(0);
 
 	return( DO_DEPTH(current_dop) );

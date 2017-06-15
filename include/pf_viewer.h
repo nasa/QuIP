@@ -63,11 +63,9 @@ typedef struct platform_viewer {
 
 #endif // BUILD_FOR_OBJC
 
-#define NO_PF_VWR		((Platform_Viewer *)NULL)
 #define OFFSET(i) ((char *)NULL + (i))	// what is this used for???
 
 
-#include "query.h"
 #include "data_obj.h"
 
 extern COMMAND_FUNC( do_new_pf_vwr );

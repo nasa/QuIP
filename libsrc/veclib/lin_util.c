@@ -93,13 +93,7 @@ static int is_good_for_inner(Data_Obj *dp,const char *func_name)
 {
 	int retval=1;
 
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ){
-//		NWARN("CAUTIOUS:  is_good_for_inner passed null object pointer!?");
-//		return(0);
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 
 	if( OBJ_COMPS(dp) > 1 ){
 		sprintf(DEFAULT_ERROR_STRING,"%s:  object %s has %d components (should be 1)",
@@ -248,7 +242,7 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 
 int xform_chk(Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 {
-	if( dpto==NO_OBJ || dpfr==NO_OBJ || xform==NO_OBJ )
+	if( dpto==NULL || dpfr==NULL || xform==NULL )
 		return(-1);
 
 	if( !IS_IMAGE(xform) ){
@@ -422,12 +416,12 @@ void newmtrx(QSP_ARG_DECL  const char *s,int dim)
 		return;
 	}
 	mp=dobj_of(QSP_ARG  s);
-	if( mp!=(NO_OBJ) ){
+	if( mp!=(NULL) ){
 		WARN("name in use already");
 		return;
 	}
 	mp=make_obj(QSP_ARG  s,1,dim,dim,1,prec_for_code(PREC_SP));
-	if( mp == NO_OBJ ){
+	if( mp == NULL ){
 		WARN("couldn't create new matrix");
 		return;
 	}

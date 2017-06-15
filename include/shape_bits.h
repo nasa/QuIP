@@ -154,6 +154,9 @@ typedef enum {
 
 
 #if __WORDSIZE == 64
+
+#define BITMAP_WORD_IS_64_BITS
+
 #define BITMAP_DATA_TYPE		uint64_t
 #define BITMAP_MACH_PREC		PREC_ULI
 #define bitmap_scalar			u_ull
@@ -177,7 +180,28 @@ typedef enum {
 
 #endif
 
-typedef BITMAP_DATA_TYPE bitmap_word;
+typedef BITMAP_DATA_TYPE bitmap_word;		// BUG?  do we really need both a macro AND a typedef???
+
+// We should get these from a system include file???
+#define MAX_BYTE	0x7f
+#define MIN_BYTE	(-(MAX_BYTE/*+1*/))
+#define MAX_SHORT	0x7fff
+#define MIN_SHORT	(-(MAX_SHORT/*+1*/))
+#define MAX_INT32	0x7fffffff
+#define MIN_INT32	(-(MAX_INT32/*+1*/))
+#define MAX_INT64	0x7fffffffffffffff
+#define MIN_INT64	(-(MAX_INT64/*+1*/))
+
+
+#define MAX_UBYTE	0xff
+#define MIN_UBYTE	0
+#define MAX_USHORT	0xffff
+#define MIN_USHORT	0
+#define MAX_UINT32	0xffffffff
+#define MIN_UINT32	0
+#define MAX_UINT64	0xffffffffffffffff
+#define MIN_UINT64	0
+
 
 // bitnum_t is used to hold the starting bit number of a subobject within a larger object.
 // Thus the maximum conceivable value is the word size in bits (32 or 64) times the largest possible

@@ -14,7 +14,7 @@ Assign y y_position(v)
 advise "position(v) = $x, $y"
 
 advise 'Will move the window programmatically...'
-Pause
+Pause_If
 
 Posn_Window v 200 300
 Assign x x_position(v)
@@ -22,19 +22,19 @@ Assign y y_position(v)
 advise "position(v) = $x, $y"
 
 advise 'Move the window by hand...'
-Pause
+Pause_If
 
 Assign x x_position(v)
 Assign y y_position(v)
 advise "position(v) = $x, $y"
 
-Pause
+Pause_If
 
 view
-  unshow v show v Pause
-#  unshow v show v Pause
-#  unshow v show v Pause
-#  unshow v show v Pause
+  unshow v show v Pause_If
+#  unshow v show v Pause_If
+#  unshow v show v Pause_If
+#  unshow v show v Pause_If
   quit
 
 Image b 200 200 4 u_byte

@@ -33,11 +33,11 @@ ocl_veclib_expanded.c:	ocl_veclib.m4 $(LOCAL_M4FILES) $(INC_M4FILES)
 
 libocl_a_SOURCES =			\
 			ocl_streams.c	\
+			ocl.c		\
 			ocl_menu.c	\
 			ocl_rand.c	\
 			ocl_utils.c	\
-			ocl_veclib.c	\
-			ocl.c
+			ocl_veclib.c
 
 $(srcdir)/ocl_veclib.c:	ocl_veclib_expanded.c
 	touch $(srcdir)/ocl_veclib.c

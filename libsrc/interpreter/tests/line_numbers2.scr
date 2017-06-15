@@ -1,0 +1,32 @@
+advise 't.scr BEGIN'
+
+Define CkPt 1 msg
+expect_warning CkPt
+warn "CkPt $1"
+.
+
+CkPt 'line 8, first macro defn read'
+
+Define Macro_With_Loop 0
+CkPt 'macro line 1'
+Set itr 1
+repeat 2
+
+  echo Hi
+  # line 16
+  CkPt "macro line 7, iteration $itr"
+  Increment itr
+  end
+CkPt 'macro line 10'
+.
+
+CkPt 'line 23'
+Macro_With_Loop
+CkPt 'line 25'
+
+macros
+  show Macro_With_Loop
+  quit
+
+exit
+

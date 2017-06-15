@@ -269,12 +269,6 @@ static const char *decrypt_string(const char *input_string)
 	n=decrypt_char_buf(buf,buflen,asciibuf,buflen);
 	givbuf(buf);
 
-//#ifdef CAUTIOUS
-//	if( n > buflen ){
-//		NWARN("CAUTIOUS:  too many decrypted chars!?");
-//		return NULL;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n <= buflen );
 
 	if( n <= 0 ){
@@ -305,13 +299,6 @@ static void encrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 	// which are multiples of the blocksize.)
 
 	n_in = (long) fp_content_size(QSP_ARG  fp_in);
-
-//#ifdef CAUTIOUS
-//	if( n_in < 0 ){
-//		NWARN("CAUTIOUS:  encrypt_file:  couldn't determine input file size!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
@@ -369,12 +356,6 @@ static long convert_lines_from_hex(uint8_t *data, const char *text)
 			line_end = line_start+strlen(line_start);
 		}
 		n_to_copy = line_end - line_start;
-//#ifdef CAUTIOUS
-//		if( n_to_copy <= 0 ){
-//			NWARN("CAUTIOUS:  convert_lines_from_hex:  empty line!?");
-//			return -1;
-//		}
-//#endif /* CAUTIOUS */
 		assert( n_to_copy > 0 );
 
 		if( n_to_copy >= MAX_LINE_SIZE ){
@@ -401,27 +382,24 @@ String_Buf *decrypt_text( const char *text )
 {
 	uint8_t *data;
 	size_t buf_size,n_bytes,n_decrypted;
-	String_Buf *out_sbp;
+	String_Buf *out_sbp=NULL;
 		
 	buf_size=1+(size_t)ceil(strlen(text)/2);
 	data = getbuf(buf_size);
 	n_bytes = convert_lines_from_hex(data,text);
-	if( n_bytes <= 0 ) goto cleanup1;
+	if( n_bytes > 0 ) {
+		out_sbp = new_stringbuf();
+		if( n_bytes > out_sbp->sb_size )
+			enlarge_buffer(out_sbp,n_bytes);
 
-	out_sbp = new_stringbuf();
-	if( n_bytes > out_sbp->sb_size )
-		enlarge_buffer(out_sbp,n_bytes);
-
-	n_decrypted=decrypt_char_buf(data,n_bytes,out_sbp->sb_buf,n_bytes);
-	if( n_decrypted <= 0 ) goto cleanup2;
-
-	return out_sbp;
-
-cleanup2:
-	rls_stringbuf(out_sbp);
-cleanup1:
+		n_decrypted=decrypt_char_buf(data,n_bytes,out_sbp->sb_buf,n_bytes);
+		if( n_decrypted <= 0 ){
+			rls_stringbuf(out_sbp);
+			out_sbp = NULL;
+		}
+	}
 	givbuf(data);
-	return NULL;
+	return out_sbp;
 }
 
 char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
@@ -443,13 +421,6 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	// them
 
 	n_in = (long) fp_content_size(QSP_ARG  fp_in);
-
-//#ifdef CAUTIOUS
-//	if( n_in < 0 ){
-//		NWARN("CAUTIOUS:  decrypt_file_contents:  couldn't determine input file size!?");
-//		return NULL;
-//	}
-//#endif /* CAUTIOUS */
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
@@ -661,6 +632,9 @@ COMMAND_FUNC( do_read_encrypted_file )
 	exec_quip(SINGLE_QSP_ARG);
 
 	// Now we should be done with the file contents
+	// BUG?  can we be sure that we didn't halt because of an alert???
+	// should we check status of HALTING???
+
 	rls_str(outbuf);
 }
 

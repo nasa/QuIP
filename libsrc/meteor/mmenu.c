@@ -170,12 +170,9 @@ static COMMAND_FUNC( do_meteor_set_input )
 		case 4:  meteor_set_input(METEOR_INPUT_DEV1); break;
 		case 5:  meteor_set_input(METEOR_INPUT_DEV2); break;
 		case 6:  meteor_set_input(METEOR_INPUT_DEV3); break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("bad meteor input");
 			assert( ! "bad meteor input" );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -204,14 +201,9 @@ static COMMAND_FUNC( do_meteor_get_input )
 		case METEOR_INPUT_DEV1:  i=4; break;
 		case METEOR_INPUT_DEV2:  i=5; break;
 		case METEOR_INPUT_DEV3:  i=6; break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,
-//		"CAUTIOUS:  invalid meteor input code %d (0x%x)", w,w);
-//			WARN(ERROR_STRING);
 			assert( ! "invalid meteor input" );
 			return;
-//#endif /* CAUTIOUS */
 	}
 
 	sprintf(msg_str,"Meteor input is %s",input_names[i]);
@@ -257,12 +249,9 @@ static COMMAND_FUNC( do_meteor_set_iformat )
 		case 1:  meteor_set_iformat(METEOR_FMT_PAL); break;
 		case 2:  meteor_set_iformat(METEOR_FMT_SECAM); break;
 		case 3:  meteor_set_iformat(METEOR_FMT_AUTOMODE); break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("bad format selection");
 			assert( ! "bad format selection");
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -279,12 +268,9 @@ static COMMAND_FUNC( do_meteor_get_iformat )
 		case METEOR_FMT_PAL:  i=1; break;
 		case METEOR_FMT_SECAM:  i=2; break;
 		case METEOR_FMT_AUTOMODE:  i=3; break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  unrecognized format code");
 			assert( ! "unrecognized format code");
 			break;
-//#endif /* CAUTIOUS */
 	}
 	if( i < 0 ) return;
 
@@ -464,7 +450,7 @@ static COMMAND_FUNC( do_setup_blur )
 	Data_Obj *dp;
 
 	dp = PICK_OBJ("impulse response");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	setup_blur(QSP_ARG  dp);
 }
@@ -524,13 +510,13 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 	}
 
 	mvip = create_movie(QSP_ARG  inp->rvi_name);
-	if( mvip == NO_MOVIE ){
+	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
 			"error creating movie %s",inp->rvi_name);
 		WARN(ERROR_STRING);
 	} else {
 		ifp = img_file_of(QSP_ARG  inp->rvi_name);
-		if( ifp == NO_IMAGE_FILE ){
+		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
 	"image file struct for rv file %s does not exist!?",inp->rvi_name);
 			WARN(ERROR_STRING);

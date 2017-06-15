@@ -41,7 +41,7 @@ Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
 	 */
 
 	/* We might accidentally call this before dataobj_init()... */
-	if( dobj_itp == NO_ITEM_TYPE ) dataobj_init(SINGLE_QSP_ARG);
+	if( dobj_itp == NULL ) dataobj_init(SINGLE_QSP_ARG);
 
 	if( intractive(SINGLE_QSP_ARG) ) init_item_hist(QSP_ARG  dobj_itp,pmpt);
 #endif /* HAVE_HISTORY */
@@ -65,33 +65,18 @@ void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 static void release_data(QSP_ARG_DECL  Data_Obj *dp )
 {
 	if( OBJ_DATA_PTR(dp) != (unsigned char *)NULL ){
-//#ifdef CAUTIOUS
-//		if( PF_FREE_FN( OBJ_PLATFORM(dp) ) == NULL ){
-//			sprintf(ERROR_STRING,
-//"CAUTIOUS:  release_data:  platform %s (object %s) has a null free function!?",
-//				PLATFORM_NAME(OBJ_PLATFORM(dp)),OBJ_NAME(dp));
-//			ERROR1(ERROR_STRING);
-//			IOS_RETURN;
-//		}
-//#endif // CAUTIOUS
 		assert( PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) != NULL );
 
 		(* PF_OBJ_FREE_FN( OBJ_PLATFORM(dp) ) )(QSP_ARG  dp);
 	}
 
-//#ifdef CAUTIOUS
 	  else {
-//	  	sprintf(ERROR_STRING,
-//"CAUTIOUS:  release_data:  Object %s owns data but has a null data pointer!?",
-//			OBJ_NAME(dp) );
-//		WARN(ERROR_STRING);
 //		assert( AERROR("Object owns data but has a null data ptr!?") );
 
 		// This is normally an error, but this case can occur if we
 		// are deleting an partially created object that had some other
 		// initialization error...
 	}
-//#endif /* CAUTIOUS */
 
 }	// release_data
 
@@ -105,41 +90,13 @@ void disown_child( QSP_ARG_DECL  Data_Obj *dp )
 	Node *np;
 
 	np=remData(OBJ_CHILDREN( OBJ_PARENT(dp) ),dp);
-	assert( np != NO_NODE );
-
-#ifdef FOOBAR
-//#ifdef CAUTIOUS
-	if( np==NO_NODE ){
-		NWARN("CAUTIOUS:  disown_child:  couldn't find child node");
-		if( OBJ_PARENT(dp) == NO_OBJ ){
-			ERROR1("object has no parent!?");
-			IOS_RETURN
-		}
-		if( OBJ_CHILDREN( OBJ_PARENT(dp) ) == NO_LIST ){
-			ERROR1("parent object has no children!?");
-			IOS_RETURN
-		} else {
-			sprintf(ERROR_STRING,"Children of %s:",OBJ_NAME( OBJ_PARENT(dp) ) );
-			advise(ERROR_STRING);
-			np=QLIST_HEAD( OBJ_CHILDREN( OBJ_PARENT(dp) ) );
-			while(np!=NO_NODE){
-				sprintf(ERROR_STRING,"\t0x%lx",
-					((int_for_addr)NODE_DATA(np) ));
-				advise(ERROR_STRING);
-				np=NODE_NEXT(np);
-			}
-		}
-		ERROR1("giving up");
-		IOS_RETURN
-	} else
-//#endif /* CAUTIOUS */
-#endif // FOOBAR
+	assert( np != NULL );
 
 	rls_node(np);
 
 	if( eltcount(OBJ_CHILDREN( OBJ_PARENT(dp) )) == 0 ){
 		rls_list(OBJ_CHILDREN( OBJ_PARENT(dp) ));	/* free list */
-		OBJ_CHILDREN( OBJ_PARENT(dp) ) = NO_LIST;
+		OBJ_CHILDREN( OBJ_PARENT(dp) ) = NULL;
 	}
 }
 
@@ -154,7 +111,7 @@ static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 	 * List elements are de-allocated by delvec()
 	 */
 
-	while( OBJ_CHILDREN( dp ) != NO_LIST ){
+	while( OBJ_CHILDREN( dp ) != NULL ){
 		np=QLIST_HEAD( OBJ_CHILDREN( dp ) );
 		delvec( QSP_ARG  (Data_Obj *) NODE_DATA(np) );
 	}
@@ -206,6 +163,9 @@ fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
 void delvec(QSP_ARG_DECL  Data_Obj *dp)
 {
 
+	assert(dp!=NULL);
+	assert(OBJ_NAME(dp)!=NULL);
+
 #ifdef ZOMBIE_SUPPORT
 	// This should go back in eventually!
 	if( OBJ_FLAGS(dp) & DT_STATIC && OWNS_DATA(dp) ){
@@ -252,22 +212,14 @@ advise(ERROR_STRING);
 		Identifier *idp;
 
 		idp = ID_OF(OBJ_NAME(dp));
-//#ifdef CAUTIOUS
-//		if( idp == NO_IDENTIFIER ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  delvec:  No associated identifier found for exported object %s!?",
-//				OBJ_NAME(dp));
-//			ERROR1(ERROR_STRING);
-//		}
-//#endif // CAUTIOUS
-		assert( idp != NO_IDENTIFIER );
+		assert( idp != NULL );
 		delete_id(QSP_ARG  (Item *)idp);
 	}
 
-	if( OBJ_CHILDREN( dp ) != NO_LIST ){
+	if( OBJ_CHILDREN( dp ) != NULL ){
 		del_subs(QSP_ARG  dp);
 	}
-	if( OBJ_PARENT(dp) != NO_OBJ ){
+	if( OBJ_PARENT(dp) != NULL ){
 		disown_child(QSP_ARG  dp);
 	}
 
@@ -335,10 +287,8 @@ advise(ERROR_STRING);
 
 #endif /* ! ZOMBIE_SUPPORT */
 
-	// when we call this, bad things seem to happen, even
-	// though it seems to be a leak!?
-	rls_str( (char *) OBJ_NAME(dp) );		/* unsave stored name */
-	SET_OBJ_NAME(dp,NULL);
+	// used to release the name here
+	// and set to null, but that is done in del_item
 }
 
 
@@ -376,12 +326,9 @@ static void set_minmaxdim(Shape_Info *shpp,uint32_t shape_flag)
 			SET_SHP_MAXDIM(shpp, 3);
 		else if( shape_flag == DT_HYPER_SEQ )
 			SET_SHP_MAXDIM(shpp, 4);
-//#ifdef CAUTIOUS
 		else {
-			//NWARN("CAUTIOUS:  set_minmaxdim:  unexpected type flag!?");
 			assert( AERROR("set_minmaxdim:  unexpected type flag!?") );
 		}
-//#endif /* CAUTIOUS */
 	}
 
 	/* set mindim */
@@ -455,23 +402,9 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 
 	CLEAR_SHP_FLAG_BITS(shpp,SHAPE_DIM_MASK);
 
-#ifdef CAUTIOUS
 	for(i=0;i<N_DIMENSIONS;i++){
 		assert( SHP_TYPE_DIM(shpp,i) > 0 );
-//		if( SHP_TYPE_DIM(shpp,i) <= 0 ){
-//			if( dp != NO_OBJ && OBJ_NAME(dp) != NULL )
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  set_shape_flags:  Object \"%s\", zero dimension[%d] = %d",
-//				OBJ_NAME(dp),i,SHP_TYPE_DIM(shpp,i));
-//			else
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  set_shape_flags:  zero dimension[%d] = %d",
-//				i,SHP_TYPE_DIM(shpp,i));
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return(-1);
-//		}
 	}
-#endif /* CAUTIOUS */
 
 	/* BUG?  here we set the shape type based
 	 * on dimension length, which makes it impossible
@@ -682,13 +615,6 @@ void gen_xpose(Data_Obj *dp,int dim1,int dim2)
 {
 	dimension_t	tmp_dim;
 	incr_t		tmp_inc;
-//#ifdef CAUTIOUS
-//	if( dim1 < 0 || dim1 >= N_DIMENSIONS ||
-//	    dim2 < 0 || dim2 >= N_DIMENSIONS ){
-//		NWARN("CAUTIOUS:  gen_xpose:  bad dimension index");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 
 	assert( dim1 >= 0 && dim1 < N_DIMENSIONS );
 	assert( dim2 >= 0 && dim2 < N_DIMENSIONS );
@@ -714,30 +640,14 @@ double get_dobj_il_flg(QSP_ARG_DECL  Data_Obj *dp)
 
 const char *get_dobj_prec_name(QSP_ARG_DECL  Data_Obj *dp)
 {
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ){
-//		ERROR1("CAUTIOUS:  null dp in get_dobj_prec_name()");
-//		IOS_RETURN_VAL(NULL)
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 
 	return OBJ_PREC_NAME(dp);
 }
 
 double get_dobj_size(QSP_ARG_DECL  Data_Obj *dp,int index)
 {
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ){
-//		ERROR1("CAUTIOUS:  null dp in get_dobj_size()");
-//		IOS_RETURN_VAL(-1)
-//	}
-//	if( index < 0 || index > N_DIMENSIONS ){
-//		ERROR1("CAUTIOUS:  dimension index out of range");
-//		IOS_RETURN_VAL(-1)
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 	assert( index >= 0 && index < N_DIMENSIONS );
 
 	return( (double) OBJ_TYPE_DIM(dp,index) );
@@ -756,9 +666,11 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 
 	dp = (Data_Obj *)ip;
 
-	if( dp == NO_OBJ ) return 0.0;
+	// should this be an assertion?
+	if( dp == NULL ) return 0.0;
 	parent = OBJ_PARENT(dp);
-	if( parent == NO_OBJ ) return 0.0;
+	if( parent == NULL ) return 0.0;
+
 
 	// The position is relative to the parent
 	//
@@ -778,19 +690,10 @@ static double get_dobj_posn(QSP_ARG_DECL  Item *ip, int index )
 			pix_offset -= offsets[i] * OBJ_MACH_INC(parent,i);
 		}
 	}
-//fprintf(stderr,"get_dobj_posn:  offsets = %d %d %d %d %d\n",
-//offsets[0],offsets[1],offsets[2],offsets[3],offsets[4]);
 
-	switch(index){
-		case 0: d = offsets[1]; break;
-		case 1: d = offsets[2]; break;
-//#ifdef CAUTIOUS
-		default:
-//			ERROR1("CAUTIOUS:  get_dobj_posn:  bad index!?");
-			assert( AERROR("get_dobj_posn:  bad index!?") );
-			break;
-//#endif // CAUTIOUS
-	}
+	assert( index >= 0 && index <= 1 );
+	d = offsets[index+1];
+
 	return(d);
 }
 
@@ -890,7 +793,7 @@ void xfer_dobj_flag(Data_Obj *dpto, Data_Obj *dpfr, uint32_t flagbit)
 
 static void propagate_up(Data_Obj *dp,uint32_t flagbit)
 {
-	if( dp->dt_parent != NO_OBJ ){
+	if( dp->dt_parent != NULL ){
 		xfer_dobj_flag(dp->dt_parent,dp,flagbit);
 		propagate_up(dp->dt_parent,flagbit);
 		// Do we need to propagate down from parent,
@@ -905,9 +808,9 @@ static void propagate_down(Data_Obj *dp,uint32_t flagbit)
 {
 	Node *np;
 
-	if( dp->dt_children != NO_LIST ){
-		np=dp->dt_children->l_head;
-		while(np!=NO_NODE){
+	if( dp->dt_children != NULL ){
+		np=QLIST_HEAD(dp->dt_children);
+		while(np!=NULL){
 			Data_Obj *child_dp;
 			child_dp = (Data_Obj *)np->n_data;
 			xfer_dobj_flag(child_dp,dp,flagbit);

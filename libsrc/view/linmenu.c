@@ -55,7 +55,7 @@ static COMMAND_FUNC( do_new_lintbl )
 
 	s=NAMEOF("name for new linearization table");
 	lt_dp = new_lintbl(QSP_ARG  s);
-	if( lt_dp == NO_OBJ ) return;
+	if( lt_dp == NULL ) return;
 
 	CHECK_DPYP("do_new_lintbl")
 #ifdef HAVE_X11
@@ -69,7 +69,7 @@ static COMMAND_FUNC( do_sel_lintbl )
 	Data_Obj *lt_dp;
 
 	lt_dp = PICK_OBJ("name of linearization table");
-	if( lt_dp == NO_OBJ ) return;
+	if( lt_dp == NULL ) return;
 
 	CHECK_DPYP("do_sel_lintbl")
 #ifdef HAVE_X11

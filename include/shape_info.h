@@ -61,15 +61,28 @@ struct increment_set {
 #define INCREMENT(isp,idx)		isp->is_increment[idx]
 #define SET_INCREMENT(isp,idx,v)	isp->is_increment[idx]=v
 
+struct vfunc_tbl;	// fwd declaration
 
 struct precision {
 	Item			prec_item;
 	prec_t			prec_code;
 	int			prec_size;	// type size in bytes
 	struct precision *	prec_mach_p;	// NULL for machine precisions
+	struct vfunc_tbl *	prec_vf_tbl;
+
+	// methods
+	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
+	double			(*indexed_data_func)(Data_Obj *dp, int index);
+	int			(*is_numeric_func)(void);
+	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
+	double			(*cast_to_double_func)(Scalar_Value *svp);
+	void			(*cast_from_double_func)
+					(Scalar_Value *,double val);
+	void			(*cast_indexed_type_from_double_func)
+					(Scalar_Value *,int idx,double val);
 } ;
 
-#define NO_PRECISION	((Precision *)NULL)
 #define prec_name	prec_item.item_name
 
 
@@ -93,6 +106,34 @@ struct precision {
 #define NAME_FOR_PREC_CODE(p)		PREC_NAME(PREC_FOR_CODE(p))
 #define SIZE_FOR_PREC_CODE(p)		PREC_SIZE(PREC_FOR_CODE(p))
 
+#define PREC_VFUNC_TBL(prec_p)		(prec_p)->prec_vf_tbl
+#define SET_PREC_VFUNC_TBL(prec_p,v)	(prec_p)->prec_vf_tbl = v
+
+#define PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p)	(prec_p)->set_value_from_input_func
+#define SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,v)	(prec_p)->set_value_from_input_func = v
+
+#define PREC_INDEXED_DATA_FUNC(prec_p)	(prec_p)->indexed_data_func
+#define SET_PREC_INDEXED_DATA_FUNC(prec_p,v)	(prec_p)->indexed_data_func = v
+
+#define PREC_IS_NUMERIC_FUNC(prec_p)	(prec_p)->is_numeric_func
+#define SET_PREC_IS_NUMERIC_FUNC(prec_p,v)	(prec_p)->is_numeric_func = v
+
+#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_func
+#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_func = v
+
+#define PREC_EXTRACT_SCALAR_FUNC(prec_p)	(prec_p)->extract_scalar_func
+#define SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,v)	(prec_p)->extract_scalar_func = v
+
+#define PREC_CAST_TO_DOUBLE_FUNC(prec_p)	(prec_p)->cast_to_double_func
+#define SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_to_double_func = v
+#define PREC_CAST_FROM_DOUBLE_FUNC(prec_p)	(prec_p)->cast_from_double_func
+#define SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_from_double_func = v
+
+#define PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p)	(prec_p)->cast_indexed_type_from_double_func
+#define SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,v)	(prec_p)->cast_indexed_type_from_double_func = v
+
+
+//#ifdef HAVE_ANY_GPU
 //#ifdef HAVE_ANY_GPU
 
 // We use this struct to count the number of words in a bitmap, which is used
@@ -184,8 +225,6 @@ struct shape_info {
 	Bitmap_GPU_Info *	si_bitmap_gpu_info_g;	// address in device memory
 #endif // HAVE_ANY_GPU
 } ;
-
-#define NO_SHAPE ((Shape_Info *) NULL)
 
 /* Shape macros */
 

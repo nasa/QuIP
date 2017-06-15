@@ -22,15 +22,15 @@
 
 // BUG for this module to be thread-safe, this static
 // variable has to be part of the Query_Stack...
-static Viewer *draw_vp=NO_VIEWER;
+static Viewer *draw_vp=NULL;
 
-#define DRAW_CHECK(s)	if( draw_vp == NO_VIEWER ){			\
+#define DRAW_CHECK(s)	if( draw_vp == NULL ){			\
 	sprintf(ERROR_STRING,"%s:  no drawing viewer selected!?",#s);	\
 				WARN(ERROR_STRING);			\
 				return;					\
 			}
 #define XFORMING_COORDS(vp)					\
-	( ( vp ) != NO_VIEWER && VW_FLAGS(vp) & VIEW_XFORM_COORDS )
+	( ( vp ) != NULL && VW_FLAGS(vp) & VIEW_XFORM_COORDS )
 
 /* a menu of stuff to draw into windows */
 /* the window-dependent stuff ought to go into xsupp, but for now
@@ -107,7 +107,7 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 
 	id = XLoadFont(VW_DPY(draw_vp),fontname);
 	xfp = new_xfont(QSP_ARG  fontname);
-	if( xfp != NO_XFONT ){
+	if( xfp != NULL ){
 		xfp->xf_id = id;
 		xfp->xf_fsp = XQueryFont(VW_DPY(draw_vp),id);
 		// If we ever delete this thing, we have to free
@@ -165,10 +165,10 @@ static COMMAND_FUNC( do_set_font )
 
 #ifdef HAVE_X11
 	xfp = XFONT_OF(s);
-	if( xfp == NO_XFONT ){
+	if( xfp == NULL ){
 		load_font(QSP_ARG  s);
 		xfp = XFONT_OF(s);
-		if( xfp == NO_XFONT ){
+		if( xfp == NULL ){
 			WARN("Unable to load font!?");
 			return;
 		}

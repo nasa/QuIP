@@ -192,7 +192,7 @@ static COMMAND_FUNC( do_difcrs )
 	Jnnz = HOW_MANY("number of non-zero Jacobian entries");
 	splm_i1._cmd = NAMEOF("script to evaluate parameters");
 
-	if( param_dp == NO_OBJ || true_dp == NO_OBJ || trial_dp == NO_OBJ || jac_dp == NO_OBJ )
+	if( param_dp == NULL || true_dp == NULL || trial_dp == NULL || jac_dp == NULL )
 		return;
 
 fprintf(stderr,"do_difcrs:  app data at 0x%lx\n",

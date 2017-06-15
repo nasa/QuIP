@@ -20,7 +20,7 @@ COMMAND_FUNC( do_make_dragg )
 	bm=PICK_OBJ( "mask bitmap" );
 	dp=PICK_OBJ( "image" );
 
-	if( bm == NO_OBJ || dp == NO_OBJ ) return;
+	if( bm == NULL || dp == NULL ) return;
 
 	INSIST_RAM_OBJ(bm,"make_dragg")
 	INSIST_RAM_OBJ(dp,"make_dragg")
@@ -40,7 +40,7 @@ COMMAND_FUNC( do_embed_draggable )
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
-	if( dgp == NO_DRAGG || vp == NO_VIEWER ) return;
+	if( dgp == NULL || vp == NULL ) return;
 
 	dgp->dg_x=x;
 	dgp->dg_y=y;

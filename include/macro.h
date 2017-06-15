@@ -50,8 +50,6 @@ struct macro {
 #define SET_MACRO_FLAG_BITS(mp,f)	(mp)->m_flags |= f
 #define CLEAR_MACRO_FLAG_BITS(mp,f)	(mp)->m_flags &= ~(f)
 
-#define NO_MACRO ((Macro *)NULL)
-
 // flag bits
 #define ALLOW_RECURSION		1
 #define MACRO_INVOKED		2	// keep track of what has been used
@@ -60,6 +58,8 @@ struct macro {
 							\
 	( (MACRO_FLAGS( mp ) & ALLOW_RECURSION) == 0 )
 
+// BUG? - should be per-qsp???
+#define IS_INVOKED(mp)		(MACRO_FLAGS(mp) & MACRO_INVOKED)
 
 #endif /* ! _MACRO_H_ */
 

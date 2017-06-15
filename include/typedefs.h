@@ -32,6 +32,5 @@ typedef unsigned char uint8_t;
 
 typedef unsigned int count_t;
 
-
 #endif /* ! TYPEDEFS_H */
 

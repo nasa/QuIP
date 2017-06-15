@@ -176,9 +176,6 @@ typedef struct screen_obj Screen_Obj;
 #endif /* ! BUILD_FOR_OBJC */
 
 
-#define NO_PANEL_OBJ	((Panel_Obj *) NULL)
-
-
 #define CLEAR_PANEL_FLAG_BITS(po,bits)	SET_GW_FLAGS(PO_GW(po),GW_FLAGS(PO_GW(po)) & ~(bits) )
 #define SET_PANEL_FLAG_BITS(po,bits)	SET_GW_FLAGS(PO_GW(po),GW_FLAGS(PO_GW(po)) | (bits) )
 

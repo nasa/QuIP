@@ -48,7 +48,7 @@ static COMMAND_FUNC( select_type )
 	itp = get_item_type(QSP_ARG  s);
 	*/
 	itp = (Item_Type *) pick_item(QSP_ARG  ittyp_itp, "item type name");
-	if( itp != NO_ITEM_TYPE )
+	if( itp != NULL )
 		curr_itp = itp;
 }
 
@@ -69,6 +69,8 @@ MENU_END(items)
 static COMMAND_FUNC( do_items ) { PUSH_MENU(items); }
 
 //////////////////////////////////////
+
+// This whole submenu is really just for testing.
 
 #include "rbtree.h"
 
@@ -149,15 +151,6 @@ static COMMAND_FUNC( do_rbtree_test )
 	PUSH_MENU(rbt);
 }
 
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_pop_file )
-{
-	//pop_file(SINGLE_QSP_ARG);
-	ERROR1("Command 'PopFile' is deprecated - replace with exit_macro or exit_file");
-}
-#endif // FOOBAR
-
 static COMMAND_FUNC( do_list_macs )
 {
 	list_items(QSP_ARG  macro_itp, tell_msgfile(SINGLE_QSP_ARG));
@@ -171,7 +164,7 @@ static COMMAND_FUNC( do_find_mac )
 	s=NAMEOF("macro name fragment");
 
 	lp=find_items(QSP_ARG  macro_itp, s);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
 	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
 
@@ -184,27 +177,27 @@ static COMMAND_FUNC( do_find_mac )
 
 static List *search_macros(QSP_ARG_DECL  const char *frag)
 {
-	List *lp, *newlp=NO_LIST;
+	List *lp, *newlp=NULL;
 	Node *np, *newnp;
 	Macro *mp;
 	const char *mbuf;
 	char *lc_frag;
 
-	if( macro_itp == NO_ITEM_TYPE ) return(NO_LIST);
+	if( macro_itp == NULL ) return NULL;
 	lp=item_list(QSP_ARG  macro_itp);
-	if( lp == NO_LIST ) return(lp);
+	if( lp == NULL ) return lp;
 
 	np=QLIST_HEAD(lp);
 	lc_frag = getbuf( strlen(frag) + 1 );
 	decap(lc_frag,frag);
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		mp = (Macro*) NODE_DATA(np);
 		if( MACRO_TEXT(mp) != NULL ){	/* NULL if no macro text... */
 			mbuf = getbuf( strlen(MACRO_TEXT(mp))+1 );
 			/* make the match case insensitive */
 			decap((char *)mbuf,mbuf);
 			if( strstr(mbuf,lc_frag) != NULL ){
-				if( newlp == NO_LIST )
+				if( newlp == NULL )
 					newlp=new_list();
 				newnp=mk_node(mp);
 				addTail(newlp,newnp);
@@ -214,7 +207,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 		np=NODE_NEXT(np);
 	}
 	givbuf(lc_frag);
-	return(newlp);
+	return newlp;
 }
 
 static COMMAND_FUNC( do_search_macs )
@@ -224,7 +217,7 @@ static COMMAND_FUNC( do_search_macs )
 
 	s=NAMEOF("macro fragment");
 	lp=search_macros(QSP_ARG  s);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
 	prt_msg(msg_str);
@@ -256,18 +249,18 @@ static COMMAND_FUNC( do_dump_invoked )
 	Node *np;
 	Macro *mp;
 
-	if( macro_itp == NO_ITEM_TYPE ){
+	if( macro_itp == NULL ){
 no_macros:
 		WARN("do_dump_invoked:  no macros!?");
 		return;
 	}
 	lp=item_list(QSP_ARG  macro_itp);
-	if( lp == NO_LIST ) goto no_macros;
+	if( lp == NULL ) goto no_macros;
 
 	np=QLIST_HEAD(lp);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		mp = (Macro *) NODE_DATA(np);
-		if( MACRO_FLAGS(mp) & MACRO_INVOKED ){
+		if( macro_is_invoked(mp) ){
 			dump_macro(QSP_ARG  mp);
 		}
 		np = NODE_NEXT(np);
@@ -289,7 +282,7 @@ static COMMAND_FUNC( do_allow_macro_recursion )
 	
 	mp=PICK_MACRO("");
 	if( mp == NULL ) return;
-	mp->m_flags |= ALLOW_RECURSION;
+	allow_recursion_for_macro(mp);
 }
 
 static COMMAND_FUNC( do_set_max_warnings )
@@ -300,29 +293,11 @@ static COMMAND_FUNC( do_set_max_warnings )
 	SET_QS_MAX_WARNINGS(THIS_QSP,n);
 }
 
-#ifdef FOOBAR
-static char ma_pmpt[LLEN];
-
-static const char *macro_arg_prompt( int i )
-{
-	const char *suffix;
-
-	if( i == 1 ) suffix="st";
-	else if( i == 2 ) suffix="nd";
-	else if( i == 3 ) suffix="rd";
-	else suffix="th";
-
-	sprintf(ma_pmpt,"prompt for %d%s macro argument",i,suffix);
-	return ma_pmpt;
-}
-#endif /* FOOBAR */
-
 static COMMAND_FUNC( do_def_mac )
 {
 	const char *name;
 	Macro *mp;
 	Macro_Arg **ma_tbl;
-	int i;
 	int n;
 	String_Buf *sbp;
 	int lineno;
@@ -330,27 +305,20 @@ static COMMAND_FUNC( do_def_mac )
 	name=NAMEOF("macro name");
 	n=(int)HOW_MANY("number of arguments");
 
-	// subtract 2 for name and n...
-	if( n > (N_QRY_RETSTRS-2) ){
+	if( check_adequate_return_strings(QSP_ARG  n+2) < 0 ){
 		sprintf(ERROR_STRING,
-"define:  %d arguments requested for macro %s exceeds system limit of %d!?\nRebuild application with increased value of N_QRY_RETSTRS.",
-			n,name,N_QRY_RETSTRS-2);
+"define:  %d arguments requested for macro %s exceeds system limit!?\nRebuild application with increased value of N_QRY_RETSTRS.",
+			n-2,name);
 		ERROR1(ERROR_STRING);
 	}
 
-	if( n > 0 ){
-		ma_tbl = getbuf(n*sizeof(Macro_Arg));
-		for(i=0;i<n;i++)
-			ma_tbl[i] = read_macro_arg(QSP_ARG  i);
-	} else {
-		ma_tbl = NULL;
-	}
-
+	ma_tbl = setup_macro_args(QSP_ARG  n);
 	// We want to store the line number of the file where the macro
 	// is declared...  We can read it now from the query stream...
-	lineno = QRY_RDLINENO(CURR_QRY(THIS_QSP));
+	//lineno = QRY_LINES_READ(CURR_QRY(THIS_QSP));
+	lineno = current_line_number(SINGLE_QSP_ARG);
 
-	sbp = rdmtext(SINGLE_QSP_ARG);
+	sbp = read_macro_body(SINGLE_QSP_ARG);
 
 	// Now make sure this macro doesn't already exist
 	mp = macro_of(QSP_ARG  name);
@@ -359,21 +327,10 @@ static COMMAND_FUNC( do_def_mac )
 		WARN(ERROR_STRING);
 		// Report where the macro was declared...
 		sprintf(ERROR_STRING,"Macro \"%s\" defined in file %s, line %d",
-			name,MACRO_FILENAME(mp),MACRO_LINENO(mp) );
+			name,macro_filename(mp),macro_lineno(mp) );
 		advise(ERROR_STRING);
 	} else {
-		mp = new_macro(QSP_ARG  name);
-		SET_MACRO_N_ARGS(mp,n);
-		SET_MACRO_FLAGS(mp,0);
-		SET_MACRO_ARG_TBL(mp,ma_tbl);
-		SET_MACRO_TEXT(mp,savestr(sbp->sb_buf));
-		// Can we access the filename here, or do we
-		// need to do it earlier because of lookahead?
-		// We have to save it, because qry_filename may
-		// be released later...
-		SET_MACRO_FILENAME( mp,
-			savestr(QRY_FILENAME(CURR_QRY(THIS_QSP))) );
-		SET_MACRO_LINENO( mp, lineno );
+		mp=create_macro(QSP_ARG  name,n,ma_tbl,sbp,lineno);
 	}
 
 	rls_stringbuf(sbp);
@@ -386,27 +343,12 @@ static COMMAND_FUNC( do_def_mac )
 static COMMAND_FUNC( do_del_mac )
 {
 	Macro *mp;
-	Macro_Arg **ma_tbl;
-	int i;
 
 	mp = PICK_MACRO("");
 
 	if( mp == NULL ) return;
 
-	// first release the resources
-	rls_str( MACRO_FILENAME(mp) );
-
-	ma_tbl = MACRO_ARG_TBL(mp);
-	for(i=0;i<MACRO_N_ARGS(mp);i++){
-		rls_macro_arg(ma_tbl[i]);
-	}
-	givbuf(ma_tbl);
-
-	// free the stored text (body)
-	rls_str(MACRO_TEXT(mp));
-
-	rls_str(MACRO_NAME(mp));
-	del_macro(QSP_ARG  mp);
+	rls_macro(QSP_ARG  mp);
 }
 
 static COMMAND_FUNC( do_if )
@@ -478,8 +420,23 @@ static COMMAND_FUNC( do_redir )
 
 static COMMAND_FUNC( do_warn )
 {
+	const char *s;
+	s = NAMEOF("warning message");
 	//[THIS_QSP warn : [THIS_QSP nameOf : @"warning message" ] ];
-	WARN( NAMEOF("warning message") );
+	WARN( s );
+}
+
+static COMMAND_FUNC( do_expect_warning )
+{
+	const char *s;
+
+	s=NAMEOF("Beginning of warning message");
+	expect_warning(QSP_ARG  s);
+}
+
+static COMMAND_FUNC( do_check_expected_warning )
+{
+	check_expected_warning(SINGLE_QSP_ARG);
 }
 
 /******************** variables menu ***********************/
@@ -493,7 +450,7 @@ static COMMAND_FUNC( do_set_var )
 	value=NAMEOF("variable value");
 
 	vp = var_of(QSP_ARG  name);
-	if( vp != NO_VARIABLE && IS_RESERVED_VAR(vp) ){
+	if( vp != NULL && IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"Sorry, variable \"%s\" is reserved.",name);
 		WARN(ERROR_STRING);
 		return;
@@ -507,29 +464,8 @@ static COMMAND_FUNC( do_set_var )
 
 static const char *def_gfmt_str="%.7g";
 
-#ifdef FOOBAR
-// Get this from <inttypes.h>
-#ifdef LONG_64_BIT
-static const char *def_xfmt_str="0x%lx";
-static const char *def_ofmt_str="0%lo";
-static const char *def_dfmt_str="%ld";
-#else // ! LONG_64_BIT
-#ifdef LONG_32_BIT
-static const char *def_xfmt_str="0x%llx";
-static const char *def_ofmt_str="0%llo";
-static const char *def_dfmt_str="%lld";
-#else // ! LONG_32_BIT
-#error "Unhandled size of long!?"
-#endif // ! LONG_32_BIT
-#endif // ! LONG_64_BIT
-#endif // FOOBAR
-
 static void init_default_formats(SINGLE_QSP_ARG_DECL)
 {
-//#ifdef CAUTIOUS
-//	if( QS_NUMBER_FMT(THIS_QSP) != NULL )
-//NWARN("CAUTIOUS:  init_default_formats:  format string already initialized!?");
-//#endif
 	assert( QS_NUMBER_FMT(THIS_QSP) == NULL );
 
 	SET_QS_GFORMAT(THIS_QSP, def_gfmt_str );
@@ -540,60 +476,11 @@ static void init_default_formats(SINGLE_QSP_ARG_DECL)
 	SET_QS_NUMBER_FMT( THIS_QSP, QS_DFORMAT(THIS_QSP) );
 }
 
-#define CHECK_FMT_STRINGS					\
-	if( QS_NUMBER_FMT(THIS_QSP) == NULL )			\
-		init_default_formats(SINGLE_QSP_ARG);
+#ifdef SOLVE_FOR_MAX_ROUNDABLE
 
-static COMMAND_FUNC( do_assign_var )
-{
-	Quip_String *namestr, *estr;
-	//double d;
-	Typed_Scalar *tsp;
-	namestr=NAMEOF("variable name" );
-	estr=NAMEOF("expression" );
-    
-	CHECK_FMT_STRINGS
-
-	tsp=pexpr(QSP_ARG  estr);
-	if( tsp == NULL ) return;
-
-	// Make sure we have a free string buffer
-	if( QS_AV_STRINGBUF(THIS_QSP) == NO_STRINGBUF ){
-		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );
-		enlarge_buffer(QS_AV_STRINGBUF(THIS_QSP),LLEN);
-	}
-
-// what is AV_STRINGBUF???  special for assign_var?  why?
-#define DEST	SB_BUF(QS_AV_STRINGBUF(THIS_QSP))
-
-	// See if the expression is a string expression
-	if( tsp->ts_prec_code == PREC_STR ){
-		// It is a string...
-		assert( tsp->ts_value.u_vp != NULL );
-		copy_string(QS_AV_STRINGBUF(THIS_QSP),(char *)tsp->ts_value.u_vp);
-	} else {
-    
-		// If the format is hex, decimal, or octal...
-		if( QS_NUMBER_FMT(THIS_QSP) == QS_XFORMAT(THIS_QSP) ||
-				QS_NUMBER_FMT(THIS_QSP) == QS_DFORMAT(THIS_QSP) ||
-				QS_NUMBER_FMT(THIS_QSP) == QS_OFORMAT(THIS_QSP) 
-				){
-			if( SCALAR_MACH_PREC_CODE(tsp) == PREC_DP ){
-				/* We used to cast the value to integer if
-				 * the format string is an integer format -
-				 * But now we don't do this if the number has
-				 * a fractional part...
-				 */
-				double d;
-				d=tsp->ts_value.u_d;
-
-				// We used to convert to integer if the number
-				// was equal to the rounded version...  but that
-				// fails for very big numbers...
-				//
 // enable this just for system calibration
 //#define SOLVE_FOR_MAX_ROUNDABLE
-#ifdef SOLVE_FOR_MAX_ROUNDABLE
+static void solve_for_max_roundable(void)
 {
 	double d,e;
 	d=32000;
@@ -621,6 +508,40 @@ exit(1);
 }
 #endif // SOLVE_FOR_MAX_ROUNDABLE
 
+static inline void ensure_assign_var_stringbuf(SINGLE_QSP_ARG_DECL)
+{
+	// Make sure we have a free string buffer
+	if( QS_AV_STRINGBUF(THIS_QSP) == NULL ){
+		SET_QS_AV_STRINGBUF( THIS_QSP, new_stringbuf() );
+		enlarge_buffer(QS_AV_STRINGBUF(THIS_QSP),LLEN);
+	}
+}
+
+static inline void assign_var_stringbuf_from_string(QSP_ARG_DECL  Typed_Scalar *tsp)
+{
+	// It is a string...
+	assert( tsp->ts_value.u_vp != NULL );
+	copy_string(QS_AV_STRINGBUF(THIS_QSP),(char *)tsp->ts_value.u_vp);
+}
+
+#define DEST	sb_buffer(QS_AV_STRINGBUF(THIS_QSP))
+
+static inline void assign_integer_from_double(QSP_ARG_DECL  Typed_Scalar *tsp)
+{
+	/* We used to cast the value to integer if
+	 * the format string is an integer format -
+	 * But now we don't do this if the number has
+	 * a fractional part...
+	 */
+	double d;
+	d=tsp->ts_value.u_d;
+
+	// We used to convert to integer if the number
+	// was equal to the rounded version...  but that
+	// fails for very big numbers...
+
+	// can call solve_for_max_roundable here?
+
 // Problems on iOS, but running the solve code above suggests
 // that 1e+14 is OK??
 
@@ -628,52 +549,82 @@ exit(1);
 
 #ifdef HAVE_ROUND
 
-				if( fabs(d) < MAX_ROUNDABLE_DOUBLE && d == round(d) ){
-					/* Why cast to unsigned?  What if signed??? */
-					/* We want to cast to unsigned to get the largest integer? */
-					// does the sign of the cast really matter?
-					if( d > 0 )
-						sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(uint64_t)d);
-					else
-						sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(int64_t)d);
-				} else {
-					sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
-				}
+	if( fabs(d) < MAX_ROUNDABLE_DOUBLE && d == round(d) ){
+		/* Why cast to unsigned?  What if signed??? */
+		/* We want to cast to unsigned to get the largest integer? */
+		// does the sign of the cast really matter?
+		if( d > 0 )
+			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(uint64_t)d);
+		else
+			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(int64_t)d);
+	} else {
+		sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
+	}
 
 #else /* ! HAVE_ROUND */
 
 #ifdef HAVE_FLOOR
-				if( d != floor(d) )
-					sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
-				else {
-					//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
-					sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
-				}
+	if( d != floor(d) )
+		sprintf(DEST,QS_GFORMAT(THIS_QSP),d);
+	else {
+		//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
+		sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
+	}
 #else /* ! HAVE_FLOOR */
-				//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
-				sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
+	//sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(unsigned long)d);
+	sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),(long)d);
 #endif /* ! HAVE_FLOOR */
 #endif /* ! HAVE_ROUND */
-			} else {	// integer format, integer scalar
-//#ifdef CAUTIOUS
-//				if( SCALAR_MACH_PREC_CODE(tsp) != PREC_LI ){
-//					sprintf(ERROR_STRING,
-//				"CAUTIOUS:  assign_var:  expected typed scalar to be double or long long!? (code = %d 0x%x)",
-//					SCALAR_PREC_CODE(tsp),
-//					SCALAR_PREC_CODE(tsp)
-//					);
-//					WARN(ERROR_STRING);
-//				}
-//#endif // CAUTIOUS
-				assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
-				sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
-			}
-		} else	{
-			// Not integer format
-			double d;
-			d=double_for_scalar(tsp);
-			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),d);
+}
+
+#define SCALAR_IS_DOUBLE(tsp)		( SCALAR_MACH_PREC_CODE(tsp) == PREC_DP )
+
+
+#define IS_INTEGER_FMT( f )		( (f) == QS_XFORMAT(THIS_QSP) ||	\
+					  (f) == QS_DFORMAT(THIS_QSP) ||	\
+					  (f) == QS_OFORMAT(THIS_QSP) )
+
+static inline void assign_var_stringbuf_from_number(QSP_ARG_DECL  Typed_Scalar *tsp)
+{
+	// If the format is hex, decimal, or octal...
+	if( IS_INTEGER_FMT(QS_NUMBER_FMT(THIS_QSP)) ){
+		if( SCALAR_IS_DOUBLE(tsp) ){
+			assign_integer_from_double(QSP_ARG  tsp);
+		} else {	// integer format, integer scalar
+			assert( SCALAR_MACH_PREC_CODE(tsp) == PREC_LI );
+			sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),tsp->ts_value.u_ll);
 		}
+	} else	{
+		// Not integer format, print decimal places
+		double d;
+		d=double_for_scalar(tsp);
+		sprintf(DEST,QS_NUMBER_FMT(THIS_QSP),d);
+	}
+}
+
+#define CHECK_FMT_STRINGS					\
+	if( QS_NUMBER_FMT(THIS_QSP) == NULL )			\
+		init_default_formats(SINGLE_QSP_ARG);
+
+static COMMAND_FUNC( do_assign_var )
+{
+	Quip_String *namestr, *estr;
+	Typed_Scalar *tsp;
+	namestr=NAMEOF("variable name" );
+	estr=NAMEOF("expression" );
+    
+	CHECK_FMT_STRINGS
+
+	tsp=pexpr(QSP_ARG  estr);
+	if( tsp == NULL ) return;
+
+	ensure_assign_var_stringbuf(SINGLE_QSP_ARG);
+
+	// See if the expression is a string expression
+	if( tsp->ts_prec_code == PREC_STR ){
+		assign_var_stringbuf_from_string(QSP_ARG  tsp);
+	} else {
+		assign_var_stringbuf_from_number(QSP_ARG  tsp);
 	}
 
 	RELEASE_SCALAR(tsp);
@@ -754,16 +705,7 @@ static const char **var_fmt_list=NULL;
 
 static void init_fmt_choices(SINGLE_QSP_ARG_DECL)
 {
-//#ifdef CAUTIOUS
-//	int i;
-//#endif /* CAUTIOUS */
-
 	var_fmt_list = (const char **) getbuf( N_PRINT_FORMATS * sizeof(char *) );
-
-//#ifdef CAUTIOUS
-//	/* Set to known value */
-//	for(i=0;i<N_PRINT_FORMATS;i++) var_fmt_list[i]=NULL;
-//#endif /* CAUTIOUS */
 
 	var_fmt_list[ FMT_DECIMAL ] = "decimal";
 	var_fmt_list[ FMT_HEX ] = "hex";
@@ -773,18 +715,6 @@ static void init_fmt_choices(SINGLE_QSP_ARG_DECL)
 	var_fmt_list[ FMT_POSTSCRIPT ] = "postscript";
 
 	assert( N_PRINT_FORMATS == 6 );
-
-//#ifdef CAUTIOUS
-//	/* Now make sure we have initialized all */
-//	for(i=0;i<N_PRINT_FORMATS;i++){
-////		if( var_fmt_list[i] == NULL ){
-////			sprintf(ERROR_STRING,"CAUTIOUS:  init_fmt_choices:  no initialization for format %d!?",i);
-////			ERROR1(ERROR_STRING);
-////		}
-//		assert( var_fmt_list[i] != NULL );
-//	}
-//#endif /* CAUTIOUS */
-
 }
 
 static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
@@ -803,13 +733,9 @@ static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
 WARN("set_fmt:  not sure what to do with FMT_POSTSCRIPT - using decimal.");
 			SET_QS_NUMBER_FMT(THIS_QSP,QS_DFORMAT(THIS_QSP));
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(ERROR_STRING,"CAUTIOUS:  set_fmt:  unexpected format code %d!?",i);
-//			WARN(ERROR_STRING);
 			assert( AERROR("set_fmt:  unexpected format code!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -1074,7 +1000,7 @@ static COMMAND_FUNC( do_debug )
 	Debug_Module *dmp;
 
 	dmp = pick_debug(QSP_ARG  "");
-	if( dmp != NO_DEBUG_MODULE )
+	if( dmp != NULL )
 		set_debug(QSP_ARG  dmp);
 }
 
@@ -1105,67 +1031,12 @@ static COMMAND_FUNC(do_nop)
 
 static COMMAND_FUNC( do_exit_file )
 {
-	int i,done_level;
-	i=QLEVEL;
-	done_level=(-1);	// pointless initialization to quiet compiler
-	while( i >= 0 ){
-		if( QRY_READFUNC(QRY_AT_LEVEL(THIS_QSP,i)) == ((READFUNC_CAST) FGETS) ){
-			done_level=i;
-			i = -1;
-		}
-		i--;
-	}
-	if( done_level < 0 ){
-		WARN("exit_file:  no file to exit!?");
-		return;
-	}
-	i=QLEVEL;
-	while(i>=done_level){
-		pop_file(SINGLE_QSP_ARG);
-		i--;
-	}
+	exit_current_file(SINGLE_QSP_ARG);
 }
 
 static COMMAND_FUNC( do_exit_macro )
 {
-	int i,done_level;
-	Macro *mp;
-
-//advise("do_exit_macro BEGIN");
-//qdump(SINGLE_QSP_ARG);
-
-	done_level=(-1);	// pointless initialization to quiet compiler
-	i=QLEVEL;
-	mp = NULL;
-	while( i >= 0 ){
-		if( mp != NULL ){
-			if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != mp ){
-				done_level=i;
-				i = -1;
-			}
-			// We need another test here to see if we are
-			// in a different invocation of a recursive macro!?
-		} else if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i)) != NULL ){
-			/* There is a macro to pop... */
-			mp = QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i));
-		}
-		i--;
-	}
-	if( mp == NULL ){
-		WARN("exit_macro:  no macro to exit!?");
-		return;
-	}
-//#ifdef CAUTIOUS
-//	if( done_level == -1 )
-//		WARN("CAUTIOUS:  do_exit_macro:  done_level not set!?");
-//#endif /* CAUTIOUS */
-	assert( done_level != (-1) );
-
-	i=QLEVEL;
-	while(i>done_level){
-		pop_file(SINGLE_QSP_ARG);
-		i--;
-	}
+	exit_current_macro(SINGLE_QSP_ARG);
 }
 
 // We used to call assign_var here, but now verbose is a "dynamic" var
@@ -1235,7 +1106,7 @@ static COMMAND_FUNC( do_get_filenames )
 	dir = NAMEOF("directory");
 
 	dp = dobj_of(QSP_ARG  objname);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		sprintf(ERROR_STRING,
 	"get_filenames:  object %s already exists!?",OBJ_NAME(dp));
 		advise(ERROR_STRING);
@@ -1277,21 +1148,13 @@ static COMMAND_FUNC( do_get_filenames )
 	SET_DIMENSION(&ds1,0,maxlen);
 
 	dp = make_dobj(QSP_ARG  objname, &ds1,PREC_FOR_CODE(PREC_STR));
-	if( dp == NO_OBJ ) goto finish;
+	if( dp == NULL ) goto finish;
 
 	rewinddir(dir_p);
 	for(i=0;i<n;i++){
 		char *dst;
 
 		di_p = readdir(dir_p);
-//#ifdef CAUTIOUS
-//		if( di_p == NULL ){
-//			sprintf(ERROR_STRING,
-//	"CAUTIOUS:  get_filenames:  unexpected null dir entry!?");
-//			WARN(ERROR_STRING);
-//			goto finish;
-//		}
-//#endif // CAUTIOUS
 		// Can readdir ever fail here?
 		assert( di_p != NULL );
 
@@ -1676,13 +1539,10 @@ static COMMAND_FUNC( do_timezone )
 		case 1:
 			SET_QS_FLAG_BITS(THIS_QSP,QS_TIME_FMT_UTC);
 			break;
-//#ifdef CAUTIOUS
 		default:
-//			WARN("CAUTIOUS:  do_timezone:  bad timezone choice!?");
 			assert( AERROR("do_timezone:  bad timezone !?") );
 
 			break;
-//#endif // CAUTIOUS
 	}
 }
 
@@ -1755,6 +1615,8 @@ ADD_CMD( do,		do_do_loop,	open a loop		)
 ADD_CMD( while,		do_while,	conditionally close a loop	)
 ADD_CMD( variables,	do_var_menu,	variables submenu	)
 ADD_CMD( macros,	do_mac_menu,	macros submenu		)
+ADD_CMD( expect_warning,	do_expect_warning,	specify expected warning	)
+ADD_CMD( check_expected_warning,	do_check_expected_warning,	check for expected warning	)
 ADD_CMD( warn,		do_warn,	print a warning message	)
 ADD_CMD( <,		do_redir,	read commands from a file	)
 ADD_CMD( >,		do_copy_cmd,	copy commands to a transcript file	)

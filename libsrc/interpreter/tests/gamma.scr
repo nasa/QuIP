@@ -19,7 +19,7 @@ Display y
 compute trig lngamma y x quit quit
 Display y
 
-Pause
+Pause_If
 
 exit
 

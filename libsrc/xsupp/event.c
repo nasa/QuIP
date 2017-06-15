@@ -22,8 +22,8 @@
 #endif
 
 static int button_number, last_button;
-static Draggable *carried=NO_DRAGG;
-static Data_Obj *drag_image=NO_OBJ;
+static Draggable *carried=NULL;
+static Data_Obj *drag_image=NULL;
 static XImage *drag_xim;
 static XImage *bg_xim;
 
@@ -34,7 +34,7 @@ static /* int */ void flush_one_display( Disp_Obj *dop )
 	XEvent event;
 	long mask;
 
-	if( dop == NO_DISP_OBJ ) return; // return(-1);
+	if( dop == NULL ) return; // return(-1);
 
 	/* This mask should match check_one_display */
 
@@ -67,16 +67,7 @@ static /* int */ void flush_one_display( Disp_Obj *dop )
 
 static void drag_to( int x, int y, Viewer *vp )
 {
-//#ifdef CAUTIOUS
-//	if( vp->vw_dp == NO_OBJ ){
-//		sprintf(DEFAULT_ERROR_STRING,
-//			"CAUTIOUS:  drag_to:  null data object for viewer %s",
-//			vp->vw_name);
-//		NWARN(DEFAULT_ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( vp->vw_dp != NO_OBJ );
+	assert( vp->vw_dp != NULL );
 
 	/* erase at old location */
 
@@ -117,10 +108,10 @@ static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 	/* BUG should factor where the object was picked up, rx ry */
 
 	addTail(vp->vw_draglist,carried->dg_np);
-	carried=NO_DRAGG;
+	carried=NULL;
 
 	delvec(QSP_ARG  drag_image);
-	drag_image = NO_OBJ;
+	drag_image = NULL;
 
 	drag_xim->data = (char *)NULL;	/* to avoid freeing the data */
 	XDestroyImage(drag_xim);
@@ -131,16 +122,7 @@ static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 
 static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 {
-//#ifdef CAUTIOUS
-//	if( vp->vw_dp == NO_OBJ ){
-//		sprintf(ERROR_STRING,
-//			"CAUTIOUS:  pickup:  null data object for viewer %s",
-//			vp->vw_name);
-//		NWARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( vp->vw_dp != NO_OBJ );
+	assert( vp->vw_dp != NULL );
 
 	carried=dgp;
 
@@ -151,11 +133,7 @@ static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 	update_image(vp);
 
 	/* make the rendering image */
-//#ifdef CAUTIOUS
-//	if( drag_image != NO_OBJ )
-//		ERROR1("extra drag image!?");
-//#endif /* CAUTIOUS */
-	assert( drag_image == NO_OBJ );
+	assert( drag_image == NULL );
 
 	drag_image = mk_img(QSP_ARG  "drag_image",dgp->dg_height,
 		dgp->dg_width,vp->vw_depth/8,PREC_FOR_CODE(PREC_BY));
@@ -223,7 +201,7 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 		case Expose:
 			win = event->xexpose.window;
 
-			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
 				NWARN("can't find viewing window for expose event");
 				return 0;
 			}
@@ -267,7 +245,7 @@ advise(ERROR_STRING);
 		case ButtonRelease:
 		case ButtonPress:
 			win = event->xbutton.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
 		NWARN("can't find viewing window for button event");
 				return 0;
 			}
@@ -295,25 +273,18 @@ advise(ERROR_STRING);
 						ce_code = CE_LEFT_BUTTON_DOWN;
 						break;
 					case 2:
-						ASSIGN_VAR("middle_button_down","1");
+						ASSIGN_VAR("middle_button_down","2");
 						ASSIGN_VAR("middle_button_up","0");
 						ce_code = CE_MIDDLE_BUTTON_DOWN;
 						break;
 					case 3:
-						ASSIGN_VAR("right_button_down","1");
+						ASSIGN_VAR("right_button_down","4");
 						ASSIGN_VAR("right_button_up","0");
 						ce_code = CE_RIGHT_BUTTON_DOWN;
 						break;
-//#ifdef CAUTIOUS
 					default:
-//						sprintf(DEFAULT_ERROR_STRING,
-//							"button press, number = %d",button_number);
-//						NADVISE(DEFAULT_ERROR_STRING);
-//						NWARN("CAUTIOUS:  HandleEvent:  bad button code!?");
-						// BUG give a value to ce_code
 						assert( ! "bad button code in HandleEvent" );
 						break;
-//#endif /* CAUTIOUS */
 				}
 			} else {	// ButtonRelease
 				switch(button_number){
@@ -332,24 +303,17 @@ advise(ERROR_STRING);
 						break;
 					case 2:
 						ASSIGN_VAR("middle_button_down","0");
-						ASSIGN_VAR("middle_button_up","1");
+						ASSIGN_VAR("middle_button_up","2");
 						ce_code = CE_MIDDLE_BUTTON_UP;
 						break;
 					case 3:
 						ASSIGN_VAR("right_button_down","0");
-						ASSIGN_VAR("right_button_up","1");
+						ASSIGN_VAR("right_button_up","4");
 						ce_code = CE_RIGHT_BUTTON_UP;
 						break;
-//#ifdef CAUTIOUS
 					default:
-//						sprintf(DEFAULT_ERROR_STRING,
-//							"button release, number = %d",button_number);
-//						NADVISE(DEFAULT_ERROR_STRING);
-//						NWARN("CAUTIOUS:  HandleEvent:  bad button code!?");
-						// BUG give a value to ce_code
 						assert( ! "bad button release code in HandleEvent" );
 						break;
-//#endif /* CAUTIOUS */
 				}
 			}
 
@@ -378,7 +342,7 @@ advise(ERROR_STRING);
 			ASSIGN_VAR("view_ypos",string);
 
 			win = event->xbutton.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
 				NWARN("can't find viewing window for button event");
 				return 0;
 			}
@@ -389,11 +353,6 @@ advise(ERROR_STRING);
 			// scheme instead of the old button scheme...
 
 			if( IS_BUTTON_ARENA(vp) || IS_MOUSESCAPE(vp) || IS_PLOTTER(vp) ){
-//#ifdef CAUTIOUS
-//				if( ce_code == CE_INVALID_CODE ){	// never true?
-//					NADVISE("CAUTIOUS:  HandleEvent:  Invalid canvas event code!?!?");
-//				}
-//#endif /* CAUTIOUS */
 				assert( ce_code != CE_INVALID_CODE );	// always true?
 
 				if( VW_EVENT_TBL(vp) != NULL ){
@@ -431,7 +390,7 @@ advise(ERROR_STRING);
 				int t;
 
 				t = event->xbutton.type;
-				if( t == ButtonRelease && carried != NO_DRAGG ){
+				if( t == ButtonRelease && carried != NULL ){
 					x=event->xbutton.x;
 					y=event->xbutton.y;
 					put_down(QSP_ARG  x,y,vp);
@@ -444,7 +403,7 @@ advise(ERROR_STRING);
 					/* see if inside any draggables */
 
 					if( (dgp=in_draggable(vp,x,y))
-						!= NO_DRAGG ){
+						!= NULL ){
 						pickup(QSP_ARG  dgp,vp);
 					}
 				}
@@ -453,7 +412,7 @@ advise(ERROR_STRING);
 
 		case MapNotify:
 			win = event->xmapping.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
 				NWARN("can't find viewing window for map event");
 				return 0;
 			}
@@ -470,7 +429,7 @@ advise(ERROR_STRING);
 
 		case MotionNotify:
 			win = event->xmotion.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
 		NWARN("can't find viewing window for motion event");
 				return 0;
 			}
@@ -483,7 +442,7 @@ advise(ERROR_STRING);
 			}
 
 			if( IS_DRAGSCAPE(vp) ){
-				if( carried != NO_DRAGG ){
+				if( carried != NULL ){
 					x = event->xmotion.x;
 					y = event->xmotion.y;
 					drag_to(x,y,vp);
@@ -549,7 +508,7 @@ advise(ERROR_STRING);
 			//NADVISE("ConfigureNotify event!");
 			win = event->xconfigure.window;
 
-			if( (vp=find_viewer(QSP_ARG  win)) == NO_VIEWER ){
+			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
 				// Apparently we receive this event after we delete a window
 		//NWARN("can't find viewer for configure event");
 				return 0;
@@ -691,7 +650,7 @@ static int check_one_display( QSP_ARG_DECL  Disp_Obj *dop )
 	long mask;
 	int retval,done;
 
-	if( dop == NO_DISP_OBJ ) return(-1);
+	if( dop == NULL ) return(-1);
 
 	/* this is not really a loop yet! */
 
@@ -731,10 +690,10 @@ int event_loop(SINGLE_QSP_ARG_DECL)
 	int stat;
 
 	lp = displays_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return(-1);
+	if( lp == NULL ) return(-1);
 
-	np=lp->l_head;
-	while( np != NO_NODE ){
+	np=QLIST_HEAD(lp);
+	while( np != NULL ){
 		dop = (Disp_Obj *)np->n_data;
 		stat=check_one_display(QSP_ARG  dop);
 		if( stat != NOTHING_HAPPENED ) return(stat);
@@ -751,10 +710,10 @@ void discard_events(SINGLE_QSP_ARG_DECL)
 	Disp_Obj *dop;
 
 	lp = displays_list(SINGLE_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
-	np=lp->l_head;
-	while( np != NO_NODE ){
+	np=QLIST_HEAD(lp);
+	while( np != NULL ){
 		dop = (Disp_Obj *)np->n_data;
 		flush_one_display(dop);
 		np = np->n_next;
@@ -767,12 +726,12 @@ Viewer *find_viewer( QSP_ARG_DECL  Window win )
 	Viewer *vp;
 
 	np=first_viewer_node(SINGLE_QSP_ARG);
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		vp=(Viewer *) np->n_data;
 		if( vp->vw_xwin == win ) return(vp);
 		np=np->n_next;
 	}
-	return(NO_VIEWER);
+	return(NULL);
 }
 
 
@@ -784,8 +743,8 @@ Draggable *in_draggable( Viewer *vp, int x,int y )
 	WORD_TYPE *base;
 	int words_per_row, wordno, bit;
 
-	np=vp->vw_draglist->l_head;
-	while(np!=NO_NODE){
+	np=QLIST_HEAD(vp->vw_draglist);
+	while(np!=NULL){
 		dgp=(Draggable *)np->n_data;
 		/* compute coords rel. the draggable object */
 		rx=x-dgp->dg_x;
@@ -808,7 +767,7 @@ Draggable *in_draggable( Viewer *vp, int x,int y )
 
 		np=np->n_next;
 	}
-	return(NO_DRAGG);
+	return(NULL);
 }
 
 #ifdef THREAD_SAFE_QUERY

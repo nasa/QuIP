@@ -19,6 +19,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"		// LLEN
 #include "serbuf.h"
 #include "serial.h"
 

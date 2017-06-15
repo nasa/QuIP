@@ -136,8 +136,6 @@ typedef struct rv_inode {
 #define DIRECTORY_BIT			040000
 #define IS_DIRECTORY(inp)		((inp)->rvi_mode&DIRECTORY_BIT)
 
-#define NO_INODE ((RV_Inode *)NULL)
-
 /* inode flags */
 #define RVI_INUSE	1
 #define RVI_SCANNED	2

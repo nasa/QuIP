@@ -9,14 +9,14 @@
 
 //#include "uio.h"
 #include "data_obj.h"
-#include "query.h"
 #include "function.h"
 #include "debug.h"
+#include "query_bits.h"	// Q_SOCKET
 
 /* this function gets called instead of fgets ... */
 
 // BUG should be per qsp, not a global!  Not thread safe!
-//static Port *the_port=NO_PORT;	// why global???
+//static Port *the_port=NULL;	// why global???
 // This variable is global so that port_read can have the same args
 // as fread, but the fp arg is not used, so we could put a port ptr there???
 
@@ -27,7 +27,7 @@ static double port_exists(QSP_ARG_DECL  const char *name)
 	Port *mpp;
 
 	mpp = port_of(QSP_ARG  name);
-	if( mpp==NO_PORT ) return(0.0);
+	if( mpp==NULL ) return(0.0);
 	return(1.0);
 }
 
@@ -89,7 +89,7 @@ static COMMAND_FUNC( do_reset_socket )
 	Port *mpp;
 
 	mpp = PICK_PORT("");
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 	reset_port(QSP_ARG  mpp );
 }
 
@@ -98,7 +98,7 @@ static COMMAND_FUNC( do_close_socket )
 	Port *mpp;
 
 	mpp = PICK_PORT("");
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 	mpp->mp_flags &= ~PORT_SERVER;	// force closure
 	reset_port(QSP_ARG  mpp );
 }
@@ -108,7 +108,7 @@ static COMMAND_FUNC( do_connect_port )
 	Port *mpp;
 
 	mpp = PICK_PORT("");
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 
 	if( (mpp->mp_flags & PORT_SERVER) == 0 ){
 		sprintf(ERROR_STRING,"lstnport:  port %s is not a server port!?",
@@ -125,7 +125,7 @@ static COMMAND_FUNC( do_portinfo )
 	Port *mpp;
 
 	mpp = PICK_PORT("");
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 
 	portinfo(QSP_ARG  mpp);
 }
@@ -135,7 +135,7 @@ static COMMAND_FUNC( do_getopts )
 	Port *mpp;
 
 	mpp = PICK_PORT("");
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 
 #ifdef HAVE_SOCKET
 	show_sockopts(QSP_ARG  mpp);
@@ -167,7 +167,7 @@ top:
 //fprintf(stderr,"port_read:  waiting for data...\n");
 	dont_proc_text=1;
 	pkp=recv_data(QSP_ARG  the_port);
-	if( pkp == NO_PACKET ) {
+	if( pkp == NULL ) {
 //fprintf(stderr,"port_read:  no more data...\n");
 		// when we run out of data, clear the redir flag
 		// so a client can close the port and not create
@@ -302,7 +302,7 @@ static COMMAND_FUNC( do_set_secure )
 	mpp = PICK_PORT("");
 	s = NAMEOF("authentication string");
 
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 
 	mpp->mp_flags |= PORT_SECURE;
 	mpp->mp_flags &= ~PORT_AUTHENTICATED;
@@ -322,7 +322,7 @@ static COMMAND_FUNC( do_port_redir )
 	static char str[128];
 
 	mpp = PICK_PORT("");
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 
 	if( ! IS_CONNECTED(mpp) ){
 		sprintf(ERROR_STRING,
@@ -352,7 +352,7 @@ static COMMAND_FUNC(do_set_sleeptime)
 	mpp = PICK_PORT("");
 	n=(sleep_time_t)HOW_MANY("microseconds to sleep when waiting (server)");
 
-	if( mpp==NO_PORT ) return;
+	if( mpp==NULL ) return;
 
 	mpp->mp_sleeptime = n;
 }
@@ -389,7 +389,7 @@ static COMMAND_FUNC(do_send_obj)
 	mpp = PICK_PORT("");
 	dp = PICK_OBJ("data vector");
 
-	if( mpp == NO_PORT || dp == NO_OBJ ) return;
+	if( mpp == NULL || dp == NULL ) return;
 
 	s = OBJ_N_MACH_ELTS(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
 	if( write_port(QSP_ARG  mpp,OBJ_DATA_PTR(dp), s ) != s ){
@@ -505,7 +505,7 @@ static COMMAND_FUNC( do_port_check )
 
 	mpp = PICK_PORT("");
 
-	if( mpp == NO_PORT ) return;
+	if( mpp == NULL ) return;
 
 	v=check_port_data(QSP_ARG  mpp, 0);
 	if( v == 1 )

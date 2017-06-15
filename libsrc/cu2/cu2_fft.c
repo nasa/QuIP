@@ -2,6 +2,7 @@
 #ifdef HAVE_CUDA
 #define BUILD_FOR_CUDA
 #endif // HAVE_CUDA
+
 #include "cuda_supp.h"
 #include "my_cu2.h"
 #include "quip_prot.h"

@@ -61,8 +61,6 @@ typedef struct display_object {
 #define dispobj_fg	dispobj_gc->values.foreground
 #define dispobj_bg	dispobj_gc->values.background
 
-#define NO_DISP_OBJ	((Disp_Obj *) NULL)
-
 ITEM_INTERFACE_PROTOTYPES(Disp_Obj,disp_obj)
 
 #define PICK_DISP_OBJ(p)	pick_disp_obj(QSP_ARG  p)

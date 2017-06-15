@@ -13,7 +13,7 @@
 	int i=index;
 
 	while(i--){
-		if( np == NO_IOS_NODE ) return np;
+		if( np == NULL ) return np;
 		np = np.next;
 	}
 	return np;
@@ -22,9 +22,9 @@
 -(void) addHead : (IOS_Node *) np
 {
 	[ np setNext : head ];
-	[ np setPrev : NO_IOS_NODE ];
+	[ np setPrev : NULL ];
 
-	if( head != NO_IOS_NODE ){
+	if( head != NULL ){
 		[ head setPrev : np ];
 	} else {
 		// list was empty, so set the tail too
@@ -37,9 +37,9 @@
 -(void) addTail : (IOS_Node *) np
 {
 	[ np setPrev : tail ];
-	[ np setNext : NO_IOS_NODE ];
+	[ np setNext : NULL ];
 
-	if( tail != NO_IOS_NODE ){
+	if( tail != NULL ){
 		[ tail setNext : np ];
 	} else {
 		// list was empty, so set the head too
@@ -53,8 +53,8 @@
 {
 	self=[super init];
 
-	head = NO_IOS_NODE;
-	tail = NO_IOS_NODE;
+	head = NULL;
+	tail = NULL;
 	return self;
 }
 
@@ -64,7 +64,7 @@
 	IOS_Node *np;
 
 	np = head;
-	while( np != NO_IOS_NODE ){
+	while( np != NULL ){
 		l++;
 		np = np.next;
 	}
@@ -76,14 +76,14 @@
 	IOS_Node *np;
 	IOS_Node *next;
 
-	if( head == NO_IOS_NODE ) return(head);
+	if( head == NULL ) return(head);
 
 	next = head.next;
 
-	if( next != NO_IOS_NODE ){
-		[next setPrev : NO_IOS_NODE ];
+	if( next != NULL ){
+		[next setPrev : NULL ];
 	} else {
-        tail = NO_IOS_NODE;
+        tail = NULL;
     }
 
 	np = head;
@@ -97,15 +97,15 @@
 	IOS_Node *np;
 	IOS_Node *prev;
 
-	if( tail == NO_IOS_NODE ) return(tail);
+	if( tail == NULL ) return(tail);
 
 	prev = head.prev;
 
 
-	if( prev != NO_IOS_NODE ){
-		[prev setNext : NO_IOS_NODE ];
+	if( prev != NULL ){
+		[prev setNext : NULL ];
 	} else {
-        head=NO_IOS_NODE;
+        head=NULL;
     }
 
 	np = tail;
@@ -118,7 +118,7 @@
     IOS_Node *np;
     
     np = IOS_LIST_HEAD(lp);
-    while(np!=NO_IOS_NODE){
+    while(np!=NULL){
         IOS_Node *new_np = mk_ios_node( IOS_NODE_DATA(np) );
         [self addTail : new_np];
         np=IOS_NODE_NEXT(np);
@@ -140,7 +140,7 @@ int ios_eltcount(IOS_List *lp)
 
 	n=0;
 	np=lp.head;
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		n++;
 		np=np.next;
 	}
@@ -167,15 +167,15 @@ IOS_Node * ios_remNode(IOS_List *lp, IOS_Node *np)
 	IOS_Node *scan_np;
 
 	scan_np=lp.head;
-	while( scan_np != NO_IOS_NODE ){
+	while( scan_np != NULL ){
 		if( scan_np == np ){
 			if( scan_np == lp.head )
 				[lp setHead : scan_np.next];
 			if( scan_np == lp.tail )
 				[lp setTail : scan_np.prev];
-			if( scan_np.prev != NO_IOS_NODE )
+			if( scan_np.prev != NULL )
 				[scan_np.prev setNext : scan_np.next];
-			if( scan_np.next != NO_IOS_NODE )
+			if( scan_np.next != NULL )
 				[scan_np.next setPrev : scan_np.prev];
 			return scan_np;
 		}
@@ -189,15 +189,15 @@ IOS_Node *ios_remData(IOS_List *lp, id data)
 	IOS_Node *np;
 
 	np=lp.head;
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		if( np.data == data ){
 			if( np == lp.head )
 				[lp setHead : np.next];
 			if( np == lp.tail )
 				[lp setTail : np.prev];
-			if( np.prev != NO_IOS_NODE )
+			if( np.prev != NULL )
 				[np.prev setNext : np.next];
-			if( np.next != NO_IOS_NODE )
+			if( np.next != NULL )
 				[np.next setPrev : np.prev];
 			return np;
 		}
@@ -211,7 +211,7 @@ void rls_nodes_from_ios_list(IOS_List *lp)
 	IOS_Node *np;
     
 	LOCK_IOS_LIST(lp)
-	while( IOS_LIST_HEAD(lp) != NO_IOS_NODE ) {
+	while( IOS_LIST_HEAD(lp) != NULL ) {
 		np=ios_remHead(lp);
 		// We can let the system handle the releasing...
 		// But we null out the data pointer just in case...
@@ -244,7 +244,7 @@ IOS_Node *ios_nth_elt(IOS_List *lp, int index)
 	IOS_Node *np;
 
 	np = IOS_LIST_HEAD(lp);
-	while(np!=NO_IOS_NODE && index-- )
+	while(np!=NULL && index-- )
 		np=IOS_NODE_NEXT(np);
 
 	if( index != (-1) ){

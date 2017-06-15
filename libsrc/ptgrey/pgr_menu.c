@@ -3,6 +3,7 @@
 #include "quip_prot.h"
 #include "pgr.h"
 #include "data_obj.h"
+#include "query_bits.h"	// LLEN - BUG
 
 static PGR_Cam *the_cam_p=NULL;
 
@@ -681,7 +682,7 @@ static COMMAND_FUNC( do_get_cams )
 	int n;
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	n = get_camera_names( QSP_ARG  dp );
 }
@@ -693,7 +694,7 @@ static COMMAND_FUNC( do_get_video_modes )
 	char s[8];
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	CHECK_CAM
 
@@ -710,7 +711,7 @@ static COMMAND_FUNC( do_get_framerates )
 	char s[8];
 
 	dp = PICK_OBJ("string table");
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	CHECK_CAM
 

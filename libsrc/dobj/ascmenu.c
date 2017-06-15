@@ -46,10 +46,10 @@ if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 	sprintf(tname,"%s%s",DNAME_PREFIX,OBJ_NAME(dp));
 	tmp_dp = dup_obj(QSP_ARG  dp, tname);
 	givbuf(tname);
-	if( tmp_dp == NO_OBJ ){
+	if( tmp_dp == NULL ){
 		// This can happen if the object is subscripted,
 		// as the bracket characters are illegal in names
-		return NO_OBJ;
+		return NULL;
 	}
 
 	curr_ap = save_ap;
@@ -83,7 +83,7 @@ longlist(QSP_ARG  dp);
 		setvarg2(oap,c_dp,dp);
 		if( IS_BITMAP(dp) ){
 			SET_OA_SBM(oap,dp);
-			SET_OA_SRC1(oap,NO_OBJ);
+			SET_OA_SRC1(oap,NULL);
 		}
 
 		if( IS_REAL(dp) ) /* BUG case for QUAT too? */
@@ -93,7 +93,6 @@ longlist(QSP_ARG  dp);
 		else if( IS_QUAT(dp) ) /* BUG case for QUAT too? */
 			OA_ARGSTYPE(oap) = QUATERNION_ARGS;
 		else
-			//ERROR1("CAUTIOUS:  insure_ram_obj:  bad argset type!?");
 			assert( AERROR("insure_ram_obj:  bad argset type!?") );
 
 //fprintf(stderr,"insure_ram_obj:  moving remote data to a contiguous object\n");  
@@ -105,7 +104,7 @@ longlist(QSP_ARG  dp);
 
 	gen_obj_dnload(QSP_ARG  tmp_dp, dp);
 
-	if( c_dp != NO_OBJ )
+	if( c_dp != NULL )
 		delvec(QSP_ARG  c_dp);
 
 	// BUG - when to delete?
@@ -132,7 +131,7 @@ static COMMAND_FUNC( do_read_obj )
 	dp=PICK_OBJ("");
 	s=NAMEOF("input file");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 #ifdef QUIP_DEBUG
 //if( debug ) dptrace(dp);
@@ -165,8 +164,8 @@ static COMMAND_FUNC( do_pipe_obj )
 	dp=PICK_OBJ("");
 	pp=PICK_PIPE("readable pipe");
 
-	if( dp == NO_OBJ ) return;
-	if( pp == NO_PIPE ) return;
+	if( dp == NULL ) return;
+	if( pp == NULL ) return;
 
 	// reading is tricker for non-ram, because
 	// we must create the copy, then read into
@@ -183,21 +182,21 @@ static COMMAND_FUNC( do_pipe_obj )
 	pp->p_fp = NULL;
 }
 
-static COMMAND_FUNC( do_wrt_str )
+static COMMAND_FUNC( do_set_var_from_obj )
 {
 	Data_Obj *dp;
 	const char *s;
 
-	dp=PICK_OBJ("");
 	s=NAMEOF("variable");
+	dp=PICK_OBJ("");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	if( ! IS_STRING(dp) ){
-		sprintf(ERROR_STRING,"do_read_str:  object %s (%s) does not have string precision",
+		sprintf(ERROR_STRING,"do_set_var_from_obj:  object %s (%s) does not have string precision",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
@@ -208,7 +207,7 @@ static COMMAND_FUNC( do_wrt_str )
 	DELETE_IF_COPY(dp)
 }
 
-static COMMAND_FUNC( do_read_str )
+static COMMAND_FUNC( do_set_obj_from_var )
 {
 	Data_Obj *dp;
 	const char *s;
@@ -216,16 +215,16 @@ static COMMAND_FUNC( do_read_str )
 	dp=PICK_OBJ("");
 	s=NAMEOF("string");
 
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
-	INSIST_RAM_OBJ(dp,"read_string")
+	INSIST_RAM_OBJ(dp,"set_string")
 
 #ifdef QUIP_DEBUG
 //if( debug ) dptrace(dp);
 #endif /* QUIP_DEBUG */
 
 	if( ! IS_STRING(dp) ){
-		sprintf(ERROR_STRING,"do_read_str:  object %s (%s) does not have string precision",
+		sprintf(ERROR_STRING,"do_set_obj_from_var:  object %s (%s) does not have string precision",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
 		WARN(ERROR_STRING);
 		return;
@@ -254,14 +253,14 @@ static COMMAND_FUNC( do_disp_obj )
 	FILE *fp;
 
 	dp=PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	// We used to insist that the object be in RAM,
 	// but we make life easier by automatically creating
 	// a temporary object...
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	fp = tell_msgfile(SINGLE_QSP_ARG);
 	if( fp == stdout ){
@@ -293,7 +292,7 @@ static COMMAND_FUNC( do_wrt_obj )
 	dp=PICK_OBJ("");
 	filename = NAMEOF("output file");
 
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	if( strcmp(filename,"-") && strcmp(filename,"stdout") ){
 		// BUG? we don't check append flag here,
@@ -318,7 +317,7 @@ static COMMAND_FUNC( do_wrt_obj )
 		}
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	pntvec(QSP_ARG  dp,fp);
 	if( fp != stdout && QS_MSG_FILE(THIS_QSP)!=NULL && fp != QS_MSG_FILE(THIS_QSP) ) {
@@ -338,7 +337,7 @@ static COMMAND_FUNC( do_append )
 	FILE *fp;
 
 	dp=PICK_OBJ("");
-	if( dp==NO_OBJ ) return;
+	if( dp==NULL ) return;
 
 	if( IS_IMAGE(dp) || IS_SEQUENCE(dp) )
 		if( !CONFIRM(
@@ -348,7 +347,7 @@ static COMMAND_FUNC( do_append )
 	if( !fp ) return;
 
 	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NO_OBJ ) return;
+	if( dp == NULL ) return;
 
 	pntvec(QSP_ARG  dp,fp);
 	fclose(fp);
@@ -363,12 +362,6 @@ static void init_print_fmt_names(void)
 {
 	int i;
 
-//#ifdef CAUTIOUS
-//	if( fmt_names_inited ){
-//NWARN("CAUTIOUS:  unnecessary call to init_print_fmt_names!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
 	assert( ! fmt_names_inited );
 
 	/* BUG should insure that all formats are inited */
@@ -392,14 +385,9 @@ static void init_print_fmt_names(void)
 			case FMT_UDECIMAL:
 				print_fmt_name[i] = "unsigned_decimal";
 				break;
-//#ifdef CAUTIOUS
 			default:
-//				sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  Oops, no initialization for print format %d!?",i);
-//				NERROR1(DEFAULT_ERROR_STRING);
 				assert( AERROR("Missing format initialization!?") );
 				break;
-//#endif /* CAUTIOUS */
 		}
 	}
 	fmt_names_inited=1;
@@ -448,8 +436,8 @@ MENU_BEGIN(ascii)
 ADD_CMD( display,	do_disp_obj,	display data	)
 ADD_CMD( read,		do_read_obj,	read vector data from ascii file	)
 ADD_CMD( pipe_read,	do_pipe_obj,	read vector data from named pipe	)
-ADD_CMD( set_string,	do_read_str,	read vector data from a string	)
-ADD_CMD( get_string,	do_wrt_str,	set a script variable to the value of a stored string	)
+ADD_CMD( set_string,	do_set_obj_from_var,	read vector data from a string	)
+ADD_CMD( get_string,	do_set_var_from_obj,	set a script variable to the value of a stored string	)
 ADD_CMD( write,		do_wrt_obj,	write vector data to ascii file	)
 ADD_CMD( append,	do_append,	append vector data to ascii file	)
 ADD_CMD( exact,		do_exact,	enable/disable warnings for file/vector length mismatch	)

@@ -132,7 +132,7 @@ typedef struct pt_arg {
 
 #ifdef CAUTIOUS
 #define ADD_DRAW_OP(vp,do_p)					\
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ){			\
+	if( VW_DRAW_LIST(vp) == NULL ){			\
 		SET_VW_DRAW_LIST(vp,new_ios_list());		\
 	}							\
 	if( ios_eltcount(VW_DRAW_LIST(vp)) > MAX_DRAWLIST_LEN ){\
@@ -149,7 +149,7 @@ typedef struct pt_arg {
 #else /* ! CAUTIOUS */
 
 #define ADD_DRAW_OP(vp,do_p)					\
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ){			\
+	if( VW_DRAW_LIST(vp) == NULL ){			\
 		SET_VW_DRAW_LIST(vp,new_ios_list());		\
 	}							\
 	IOS_Node *np = mk_ios_node(do_p);			\
@@ -565,7 +565,7 @@ int exec_drawlist(Viewer *vp)
 		init_text_font(vp);
 	//}
 
-	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ) {
+	if( VW_DRAW_LIST(vp) == NULL ) {
 		fprintf(stderr,"exec_drawlist %s:  null draw list!?\n",VW_NAME(vp));
 		return 0;
 	}
@@ -574,7 +574,7 @@ int exec_drawlist(Viewer *vp)
 //	fprintf(stderr,"exec_drawlist %s:  drawlist has %d elements\n",
 //			VW_NAME(vp),ios_eltcount(VW_DRAW_LIST(vp)) );
 
-	while(np!=NO_IOS_NODE){
+	while(np!=NULL){
 		Draw_Op *do_p;
 		do_p = (Draw_Op *) IOS_NODE_DATA(np);
 //		fprintf(stderr,"exec_drawlist %s:  calling exec_drawop\n",VW_NAME(vp));
@@ -610,7 +610,7 @@ int make_viewer(QSP_ARG_DECL  Viewer *vp,int width,int height)
 
 	// Do we already have a Gen_Win (from a panel)?
 	Gen_Win *gwp=genwin_of( QSP_ARG  VW_NAME(vp) );
-	if( gwp == NO_GENWIN ){
+	if( gwp == NULL ){
 //fprintf(stderr,"make_viewer calling make_genwin %s\n",VW_NAME(vp));
 		gwp=make_genwin(QSP_ARG  VW_NAME(vp), width, height );
 	}
@@ -633,7 +633,7 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 
 #ifdef FOOBAR
 	Panel_Obj *po=panel_obj_of(QSP_ARG  VW_NAME(vp));
-	if( po != NO_PANEL_OBJ ){
+	if( po != NULL ){
 		show_panel(QSP_ARG  po);
 	} else {
 		quipView *qv = VW_QV(vp);
@@ -841,7 +841,7 @@ void _xp_erase(Viewer *vp)
 	// and then wait until it has been redrawn, and THEN release
 	// the list...  Or we could have a non-drawing scan of the list first?
 
-//	if( VW_DRAW_LIST(vp) == NO_IOS_LIST ) return;
+//	if( VW_DRAW_LIST(vp) == NULL ) return;
 //	fprintf(stderr,"_xp_erase %s:  releasing nodes\n",VW_NAME(vp));
 //	rls_nodes_from_ios_list(VW_DRAW_LIST(vp));
 
@@ -1060,12 +1060,12 @@ int make_mousescape(QSP_ARG_DECL  Viewer *vp,int w,int h)
 
 void relabel_viewer(Viewer *vp,const char *s)
 {
-
+fprintf(stderr,"relabel_viewer not implemented for iOS\n");
 }
 
 void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 {
-
+fprintf(stderr,"redraw_viewer not implemented for iOS\n");
 }
 
 int event_loop(SINGLE_QSP_ARG_DECL)

@@ -29,7 +29,7 @@ void meteor_record(QSP_ARG_DECL  uint32_t n_fields,Movie *mvip)
 	 * If not, then we can go in and set the number of frames now!
 	 */
 
-	if( ifp == NO_IMAGE_FILE ){
+	if( ifp == NULL ){
 		WARN("Image file has not been opened");
 		return;
 	}
@@ -191,7 +191,7 @@ advise("meteor_setup_movie");
 
 	ifp = write_image_file(QSP_ARG  MOVIE_NAME(mvip),n_frames);
 
-	if( ifp == NO_IMAGE_FILE ) return(-1);
+	if( ifp == NULL ) return(-1);
 
 	mvip->mvi_data = ifp;
 
@@ -268,14 +268,7 @@ advise(ERROR_STRING);
 	 */
 
 	delete_movie(QSP_ARG  mvip);
-
-//#ifdef CAUTIOUS
-//	if( inp == NO_INODE ){
-//		WARN("CAUTIOUS:  meteor_end_assemble:  missing rv inode!?");
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-	assert( inp != NO_INODE );
+	assert( inp != NULL );
 
 	update_movie_database(QSP_ARG  inp);
 }

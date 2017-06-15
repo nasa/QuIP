@@ -43,7 +43,7 @@
 #include "my_v4l2.h"
 
 
-Video_Device *curr_vdp=NO_VIDEO_DEVICE;
+Video_Device *curr_vdp=NULL;
 
 ITEM_INTERFACE_DECLARATIONS(Video_Device,video_dev,0)
 
@@ -397,7 +397,7 @@ advise(ERROR_STRING);
 		dimset.ds_dimension[4]=1;
 		dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
 #ifdef CAUTIOUS
-		if( dp == NO_OBJ ) ERROR1("CAUTIOUS:  error creating data_obj for video buffer");
+		if( dp == NULL ) ERROR1("CAUTIOUS:  error creating data_obj for video buffer");
 #endif /* CAUTIOUS */
 		SET_OBJ_DATA_PTR(dp, vdp->vd_buf_tbl[i_buffer].mb_start );
 
@@ -754,7 +754,7 @@ static COMMAND_FUNC( do_select )
 	Video_Device *vdp;
 
 	vdp = PICK_VIDEO_DEV("");
-	if( vdp == NO_VIDEO_DEVICE ) return;
+	if( vdp == NULL ) return;
 
 	curr_vdp = vdp;
 }
@@ -800,7 +800,7 @@ static COMMAND_FUNC( do_yuv2gray )
 	dst_dp = PICK_OBJ("destination GRAY image");
 	src_dp = PICK_OBJ("source YUYV image");
 
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ )
+	if( dst_dp == NULL || src_dp == NULL )
 		return;
 
 	/* BUG Here we need to check sizes, etc */
@@ -1257,7 +1257,7 @@ static COMMAND_FUNC( do_downsample )
 
 	dst_dp = PICK_OBJ("destination object");
 	src_dp = PICK_OBJ("source object");
-	if( dst_dp == NO_OBJ || src_dp == NO_OBJ ) return;
+	if( dst_dp == NULL || src_dp == NULL ) return;
 	fast_downsample(dst_dp,src_dp);
 }
 
@@ -1299,13 +1299,13 @@ static COMMAND_FUNC( do_list_devs )
 	Node *np;
 	Video_Device *vdp;
 
-	if( video_dev_itp == NO_ITEM_TYPE ){
+	if( video_dev_itp == NULL ){
 		advise("do_list_devs:  no video devices have been opened.");
 		return;
 	}
 	lp = item_list(QSP_ARG  video_dev_itp);
-	np = lp->l_head;
-	while( np != NO_NODE ){
+	np = QLIST_HEAD(lp);
+	while( np != NULL ){
 		vdp = (Video_Device *)np->n_data;
 		report_status(QSP_ARG  vdp);
 		np=np->n_next;

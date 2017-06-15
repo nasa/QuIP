@@ -16,6 +16,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "item_type.h"
+#include "query_bits.h"	// LLEN - BUG, get rid of this!
 #include "seq.h"
 #include "getbuf.h"
 
@@ -102,8 +104,8 @@ static void init_seq_struct(Seq *sp)
 {
 	sp->seq_flags=SEQFREE;
 	sp->seq_refcnt=0;
-	sp->seq_first=NO_SEQ;
-	sp->seq_next=NO_SEQ;
+	sp->seq_first=NULL;
+	sp->seq_next=NULL;
 	sp->seq_count=0;
 }
 
@@ -113,7 +115,7 @@ static Seq *unnamed_seq(void)	/* return an unused seq. struct */
 
 	sp = (Seq *)getbuf(sizeof(*sp));
 
-	if( sp == NO_SEQ )
+	if( sp == NULL )
 		NERROR1("no more memory for sequences");
 
 	sp->seq_name=NULL;
@@ -127,7 +129,7 @@ static Seq *joinseq(Seq *s1,Seq *s2)		/* pointer to concatenation */
 	register Seq *sp;
 
 	sp=unnamed_seq();
-	if( sp!= NO_SEQ ){
+	if( sp!= NULL ){
 		sp->seq_first=s1;
 		sp->seq_next=s2;
 		sp->seq_count=1;
@@ -146,7 +148,7 @@ static Seq *reptseq(int cnt,Seq *seqptr)	/* pointer to repetition */
 	register Seq *sp;
 
 	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
+	if( sp!=NULL ){
 		sp->seq_first=seqptr;
 		sp->seq_count=(short)cnt;
 		sp->seq_flags=SUPSEQ;
@@ -161,7 +163,7 @@ static Seq *revseq(Seq *seqptr)	/* pointer to reversal */
 	register Seq *sp;
 
 	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
+	if( sp!=NULL ){
 		sp->seq_first=seqptr;
 		sp->seq_count = -1;
 		sp->seq_flags=SUPSEQ;
@@ -176,7 +178,7 @@ static Seq *makfrm(int cnt,void *vp)	/* get a new link for this frame */
 	register Seq *sp;
 
 	sp=unnamed_seq();
-	if( sp!=NO_SEQ ){
+	if( sp!=NULL ){
 		sp->seq_count=(short)cnt;
 		sp->seq_data=vp;
 		sp->seq_flags = SEQ_MOVIE;
@@ -270,7 +272,7 @@ void show_sequence(QSP_ARG_DECL  const char *s)
 	Seq *sp;
 
 	sp = get_mviseq(QSP_ARG  s);
-	if( sp==NO_SEQ ) return;
+	if( sp==NULL ) return;
 
 	if( init_show_seq(sp) < 0 ) return;
 	evalseq(sp);
@@ -324,7 +326,7 @@ int yylex( YYSTYPE *yylval_p, /*SINGLE_QSP_ARG_DECL*/ Query_Stack *qsp )
 		if( !strcmp(wrdbuf,"reverse") ) return(REVERSE);
 
 		yylval_p->yysp = mviseq_of( QSP_ARG  wrdbuf );
-		if( yylval_p->yysp != NO_SEQ ) return( SEQNAME );
+		if( yylval_p->yysp != NULL ) return( SEQNAME );
 
 		/* not a sequence, try a pattern name */
 
@@ -350,7 +352,7 @@ static Seq *seqparse(QSP_ARG_DECL  const char *strbuf)		/* compile sequence in s
 		sprintf(ERROR_STRING,
 			"Error parsing sequence definition \"%s\"", strbuf);
 		WARN(ERROR_STRING);
-		return(NO_SEQ);
+		return(NULL);
 	}
 }
 
@@ -366,7 +368,7 @@ static Seq *new_seq(QSP_ARG_DECL  const char *name)
 	Seq *sp;
 
 	sp=new_mviseq(QSP_ARG  name);	/* get a new item */
-	if( sp == NO_SEQ ) return(sp);
+	if( sp == NULL ) return(sp);
 
 	init_seq_struct(sp);
 	return(sp);
@@ -377,12 +379,12 @@ Seq *defseq(QSP_ARG_DECL  const char *name,const char *seqstr)	/** define new se
 	Seq *sp, *tmp_sp;
 
 	sp=new_seq(QSP_ARG  name);
-	if( sp==NO_SEQ ) return(sp);
+	if( sp==NULL ) return(sp);
 
 	tmp_sp=seqparse(QSP_ARG  seqstr);
-	if( tmp_sp == NO_SEQ ){
+	if( tmp_sp == NULL ){
 		delseq(QSP_ARG  sp);
-		return(NO_SEQ);
+		return(NULL);
 	}
 
 	sp->seq_first  = tmp_sp->seq_first;
@@ -400,12 +402,12 @@ Seq *defseq(QSP_ARG_DECL  const char *name,const char *seqstr)	/** define new se
 void delseq(QSP_ARG_DECL  Seq *sp)
 {
 	sp->seq_refcnt--;
-	if( sp->seq_first != NO_SEQ ) delseq(QSP_ARG  sp->seq_first);
-	if( sp->seq_next != NO_SEQ ) delseq(QSP_ARG  sp->seq_next);
+	if( sp->seq_first != NULL ) delseq(QSP_ARG  sp->seq_first);
+	if( sp->seq_next != NULL ) delseq(QSP_ARG  sp->seq_next);
 	if( sp->seq_refcnt <= 0 ){
 		if( sp->seq_name != NULL ){
 			del_mviseq(QSP_ARG  sp);
-			rls_str((char *)sp->seq_name);
+			// return to item free list
 		} else {
 			givbuf(sp);
 		}
@@ -416,7 +418,7 @@ void evalseq(Seq *seqptr)		/* recursive procedure to compile a subsequence */
 {
 	int cnt;
 
-	if( seqptr == NO_SEQ ) return;
+	if( seqptr == NULL ) return;
 
 	cnt=seqptr->seq_count;
 	if( cnt < 0 ){
@@ -438,7 +440,7 @@ void reverse_eval(Seq *seqptr)	/* recursive procedure to reverse a sequence */
 {
 	int cnt;
 
-	if( seqptr == NO_SEQ ) return;
+	if( seqptr == NULL ) return;
 
 	cnt=seqptr->seq_count;
 	if( cnt < 0 ){
@@ -474,10 +476,10 @@ static int contains(Seq *seqp,void *data)
 			return(0);
 	}
 
-	if( seqp->seq_first != NO_SEQ && contains(seqp->seq_first,data) )
+	if( seqp->seq_first != NULL && contains(seqp->seq_first,data) )
 		return(1);
 
-	if( seqp->seq_next != NO_SEQ && contains(seqp->seq_next,data) )
+	if( seqp->seq_next != NULL && contains(seqp->seq_next,data) )
 		return(1);
 
 	return(0);
@@ -491,10 +493,10 @@ List *seqs_referring(QSP_ARG_DECL  void *data)
 	Node *np;
 
 	lp=item_list(QSP_ARG  mviseq_itp);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	lp=new_list();
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		if( contains((Seq *)np->n_data,data) )
 			addTail(lp,mk_node(np->n_data));
 		np=np->n_next;

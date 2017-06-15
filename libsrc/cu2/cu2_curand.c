@@ -16,8 +16,6 @@
 
 #ifdef HAVE_LIBCURAND
 
-#define NO_GENERATOR	((curandGenerator_t)NULL)
-
 static void init_curand_generator(Platform_Device *pdp)
 {
 	curandStatus_t s;
@@ -40,7 +38,7 @@ static void init_curand_generator(Platform_Device *pdp)
 
 
 /* Does the lib support double? */
-/* static curandGenerator_t d_gen=NO_GENERATOR; */
+/* static curandGenerator_t d_gen=NULL; */
 
 void h_cu2_sp_vuni(HOST_CALL_ARG_DECLS)
 {
@@ -50,7 +48,7 @@ void h_cu2_sp_vuni(HOST_CALL_ARG_DECLS)
 //fprintf(stderr,"h_cu2_sp_vuni BEGIN\n");
 	dp = OA_DEST(oap);
 	// BUG?  validate that it's a cuda object?
-	if( PFDEV_CUDA_RNGEN( OBJ_PFDEV(dp) ) == NO_GENERATOR ){
+	if( PFDEV_CUDA_RNGEN( OBJ_PFDEV(dp) ) == NULL ){
 		init_curand_generator( OBJ_PFDEV(dp) );
 	}
 	if( is_contiguous(DEFAULT_QSP_ARG  dp) ){

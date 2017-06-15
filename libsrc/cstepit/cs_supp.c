@@ -34,15 +34,15 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	int nfmax;		/* max. # function calls */
 
 	lp = opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_LIST ) return;
+	if( lp == NULL ) return;
 
 	n_prms=eltcount(lp);
 	n=reset_n_params(n_prms);
 	if( n != n_prms ) n_prms = n;
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
-	while( np!= NO_NODE && i < n_prms ){
+	while( np!= NULL && i < n_prms ){
 		opp = (Opt_Param *)(np->n_data);
 
 		xmin[i]=opp->minv;
@@ -86,19 +86,19 @@ static void cstepit_scr_funk(void)
 	}
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp == NO_LIST ){
+	if( lp == NULL ){
 		NWARN("No optimization parameters to vary!?");
 		err=0.0;
 		setfobj((double)err);
 		return;
 	}
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	/* stepit has passed us params in the ans array -
 	 * we want to get them into named variables...
 	 */
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)( np->n_data);
@@ -124,7 +124,7 @@ static void cstepit_scr_funk(void)
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=var__of(DEFAULT_QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
+	if( vp == NULL ) {
 		NWARN(DEFAULT_ERROR_STRING);
 		sprintf(DEFAULT_ERROR_STRING,
 	"variable \"error\" not set by script fragment \"%s\"!?",
@@ -152,9 +152,9 @@ static void evaluate_error_c(void)
 	getvals(x,n_prms);		/* get the parameter estimates */
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
-	while(np!=NO_NODE && i < n_prms ){
+	while(np!=NULL && i < n_prms ){
 		Opt_Param *opp;
 
 		opp = (Opt_Param *)(np->n_data);

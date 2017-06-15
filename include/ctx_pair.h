@@ -14,5 +14,3 @@ typedef struct context_pair {
 
 #define INIT_CPAIR_PTR(cpp)		cpp=((Context_Pair *)getbuf(sizeof(Context_Pair)));
 
-#define NO_CONTEXT_PAIR	((Context_Pair *)NULL)
-

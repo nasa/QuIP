@@ -37,7 +37,7 @@ if( debug ) advise("opening image file");
 
 	/* img_file_creat creates dummy if_dp only if readable */
 
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 #ifdef QUIP_DEBUG
 if( debug ) advise("allocating hips header");
@@ -85,7 +85,7 @@ if( debug ) advise("allocating hips header");
 		WARN("Sorry, can't write VL files");
 dun:
 		vl_close(QSP_ARG  ifp);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 	return(ifp);
 }

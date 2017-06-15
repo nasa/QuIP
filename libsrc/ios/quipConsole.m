@@ -53,7 +53,7 @@ static int add_text_input( /* quipAppDelegate *adp , */ Panel_Obj *po, const cha
 	Screen_Obj *sop;
 
 	sop = simple_object(DEFAULT_QSP_ARG  name);
-	if( sop == NO_SCREEN_OBJ ) NERROR1("Failed to create console input line");
+	assert( sop != NULL );
 	SET_SOB_ACTION(sop, "InterpretString" );
 	SET_SOB_CONTENT(sop, "Enter command" );
 	SET_SOB_TYPE(sop, SOT_TEXT);
@@ -173,6 +173,7 @@ static const char *add_prefix_to_msg(const char *prefix,const char *msg)
 static void ios_warn(QSP_ARG_DECL  const char *msg)
 {
 	const char *wstr;
+fprintf(stderr,"ios_warn:  %s\n",msg);
 	wstr = add_prefix_to_msg(WARNING_PREFIX,msg);
 	ios_advise(wstr); // log to console or file, and possibly xcode console
 	simple_alert(QSP_ARG  "WARNING",msg);
@@ -203,7 +204,7 @@ static int add_text_output( /* quipAppDelegate *adp , */ Panel_Obj *po )
 	Screen_Obj *sop;
 
 	sop = simple_object(DEFAULT_QSP_ARG  CONSOLE_DISPLAY_NAME );
-	if( sop == NO_SCREEN_OBJ ) NERROR1("Failed to create console display");
+	assert( sop != NULL );
 	SET_SOB_ACTION(sop, "" );	// action string is initial text to display
 	//SET_SOB_CONTENT(sop, "" );
 	SET_SOB_TYPE(sop, SOT_TEXT_BOX);

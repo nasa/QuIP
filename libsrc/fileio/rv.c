@@ -68,8 +68,8 @@ static int rv_to_dp(Data_Obj *dp,RV_Inode *inp)
 	SET_OBJ_FRM_INC(dp,((incr_t)blks_per_frame) * BLOCK_SIZE );
 	SET_OBJ_SEQ_INC(dp,OBJ_FRM_INC(dp) * (incr_t)OBJ_FRAMES(dp) );
 
-	SET_OBJ_PARENT(dp, NO_OBJ);
-	SET_OBJ_CHILDREN(dp, NO_LIST);
+	SET_OBJ_PARENT(dp, NULL);
+	SET_OBJ_CHILDREN(dp, NULL);
 
 	SET_OBJ_AREA(dp, ram_area_p);		/* the default */
 	SET_OBJ_DATA_PTR(dp, NULL);
@@ -89,7 +89,7 @@ FIO_OPEN_FUNC( rvfio )
 	if( ! legal_rv_filename(name) ){
 		sprintf(ERROR_STRING,"rv_open:  \"%s\" is not a legal filename",name);
 		NWARN(ERROR_STRING);
-		return(NO_IMAGE_FILE);
+		return(NULL);
 	}
 
 	inp = rv_inode_of(QSP_ARG  name);
@@ -104,26 +104,26 @@ FIO_OPEN_FUNC( rvfio )
 		 */
 		size = (640*480*4)/BLOCK_SIZE;	/* 1200 blocks (1 frame) */
 
-		if( inp != NO_INODE ){
+		if( inp != NULL ){
 			/* overwrite of an existing file.
 			 * destroy the old one to make sure we get the size right.
 			 */
 			rv_rmfile(QSP_ARG  name);
 		}
 		_n_disks = creat_rv_file(QSP_ARG  name,size,rv_fd_arr);
-		if( _n_disks < 0 ) return(NO_IMAGE_FILE);
+		if( _n_disks < 0 ) return(NULL);
 		inp = rv_inode_of(QSP_ARG  name);
 	} else {			/* FILE_READ */
-		if( inp == NO_INODE ){
+		if( inp == NULL ){
 			sprintf(ERROR_STRING,"File %s does not exist, can't read",name);
 			NWARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 
 		/* check for file struct already existing */
 		ifp = img_file_of(QSP_ARG  name);
 		/* BUG make sure that it is type RV here! */
-		if( ifp != NO_IMAGE_FILE ){
+		if( ifp != NULL ){
 			if( ! IS_READABLE(ifp) ){
 				/*
 				sprintf(ERROR_STRING,"Setting READABLE flag on rv file %s",
@@ -145,12 +145,12 @@ FIO_OPEN_FUNC( rvfio )
 			/* NOTREACHED */
 			sprintf(ERROR_STRING,"File %s is not readable!?",ifp->if_name);
 			NWARN(ERROR_STRING);
-			return(NO_IMAGE_FILE);
+			return(NULL);
 		}
 	}
 
 	ifp = new_img_file(QSP_ARG  name);
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	ifp->if_flags = rw;
 	ifp->if_nfrms = 0;			/* number of frames written or read */
@@ -158,7 +158,7 @@ FIO_OPEN_FUNC( rvfio )
 	ifp->if_pathname = ifp->if_name;	/* default */
 	/* update_pathname(ifp); */
 
-	ifp->if_dp = NO_OBJ;
+	ifp->if_dp = NULL;
 	SET_IF_TYPE(ifp,FILETYPE_FOR_CODE(IFT_RV));
 
 	HDR_P_LVAL(ifp) = inp;
@@ -199,20 +199,14 @@ FIO_OPEN_FUNC( rvfio )
 			NWARN(ERROR_STRING);
 		}
 	} else {
-		ifp->if_dp = NO_OBJ;
+		ifp->if_dp = NULL;
 	}
 	return(ifp);
 }
 
 static int dp_to_rv(RV_Inode *inp,Data_Obj *dp)
 {
-//#ifdef CAUTIOUS
-//	if( dp == NO_OBJ ) {
-//		NWARN("CAUTIOUS:  dp_to_rv:  null dp");
-//		return(-1);
-//	}
-//#endif /* CAUTIOUS */
-	assert( dp != NO_OBJ );
+	assert( dp != NULL );
 
 	/* num_frame set when when write request given */
 
@@ -221,7 +215,7 @@ static int dp_to_rv(RV_Inode *inp,Data_Obj *dp)
 	COPY_SHAPE( RV_MOVIE_SHAPE(inp), OBJ_SHAPE(dp) );
 	// Should we copy to the on-disk rawvol things as well???
 
-	auto_shape_flags(RV_MOVIE_SHAPE(inp),NO_OBJ);
+	auto_shape_flags(RV_MOVIE_SHAPE(inp),NULL);
 
 	return(0);
 }
@@ -268,7 +262,7 @@ FIO_WT_FUNC( rvfio )
 
 	n_disks = n_rv_disks();
 
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 		u_long size;	/* file size in blocks */
 		RV_Inode *inp;
 
@@ -350,13 +344,6 @@ FIO_WT_FUNC( rvfio )
 		}
 	}
 
-//#ifdef CAUTIOUS
-//	if( OBJ_FRAMES(dp) != 1 ){
-//		sprintf(ERROR_STRING,"CAUTIOUS:  rvfio_wt:  object %s has %d frames, expected 1!?",
-//			OBJ_NAME(dp),OBJ_FRAMES(dp));
-//		NWARN(ERROR_STRING);
-//	}
-//#endif /* CAUTIOUS */
 	assert( OBJ_FRAMES(dp) == 1 );
 
 	ifp->if_nfrms ++;

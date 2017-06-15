@@ -87,15 +87,8 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 	/* make sure that all the sizes are valid */
 
 	for(i=0;i<N_DIMENSIONS;i++){
-		if( DIMENSION(dsp,i) <= 0 ){
-			sprintf(ERROR_STRING,
-	"CAUTIOUS:  check_inset:  subobject %s dimension %d (%ld) must be positive!?",
-				name,i,(long)DIMENSION(dsp,i));
-			WARN(ERROR_STRING);
-			retval=(-1);
-		}
+		assert( DIMENSION(dsp,i) > 0 );
 	}
-	if( retval < 0 ) return retval;
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		index_t extreme_index;
@@ -133,9 +126,9 @@ void parent_relationship( Data_Obj *parent, Data_Obj *child )
 	/* the child is always a new object, so we're not
 	 * losing anything here
 	 */
-	SET_OBJ_CHILDREN(child, NO_LIST);
+	SET_OBJ_CHILDREN(child, NULL);
 
-	if( OBJ_CHILDREN(parent) == NO_LIST )
+	if( OBJ_CHILDREN(parent) == NULL )
 		SET_OBJ_CHILDREN(parent,new_list());
 
 	addHead(OBJ_CHILDREN(parent),mk_node(child));
@@ -225,17 +218,17 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 	Data_Obj *dp;
 	index_t pix_offset;
 
-	if( check_posn(QSP_ARG  parent,offsets,dsp,name) < 0 ) return(NO_OBJ);
+	if( check_posn(QSP_ARG  parent,offsets,dsp,name) < 0 ) return(NULL);
 
 	dp = new_dobj(QSP_ARG  name);
-	if( dp==NO_OBJ ) return(NO_OBJ);
+	if( dp==NULL ) return(NULL);
 
 	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
 		// BUG?  do we need to free other resources?
 		del_dobj(QSP_ARG  dp);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	/* this must be called before setup_dp, because
@@ -247,7 +240,7 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 	pix_offset = get_pix_base_offset(offsets,parent);
 
 	dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
-	if( dp==NO_OBJ ){
+	if( dp==NULL ){
 		/* BUG? where does the cleanup happen? */
 		return(dp);
 	}
@@ -295,17 +288,17 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	//INIT_INCSET_PTR(new_type_isp)
 
 	if( check_inset(QSP_ARG  parent,offsets,dsp,incrs,name) < 0 )
-		return(NO_OBJ);
+		return(NULL);
 
 	dp = new_dobj(QSP_ARG  name);
-	if( dp==NO_OBJ )
-		return(NO_OBJ);
+	if( dp==NULL )
+		return(NULL);
 
 	// init_dp uses AUTO_SHAPE...
-	if( init_dp( QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent) ) == NO_OBJ ){
+	if( init_dp( QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent) ) == NULL ){
 		// BUG?  do we need to free other resources?
 		del_dobj(QSP_ARG  dp);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	/* this must be called before setup_dp, because
@@ -328,11 +321,11 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	// We might want to not use AUTO_SHAPE - for example, if we subsample
 	// a column vector that we want to treat as an image?
 	if( set_shape_flags( OBJ_SHAPE(dp), dp, AUTO_SHAPE) < 0 )
-		return(NO_OBJ);
+		return(NULL);
 
 	check_contiguity(dp);		// almost sure not contiguous if subsample!
 
-	if( dp==NO_OBJ )
+	if( dp==NULL )
 		return(dp);
 
 	/* pix_offset can be negative if the parent image is a
@@ -358,7 +351,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	index_t offset;
 
 	dp=new_dobj(QSP_ARG  name);
-	if( dp==NO_OBJ ) return(NO_OBJ);
+	if( dp==NULL ) return(NULL);
 
 	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
 
@@ -368,7 +361,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
 		// BUG?  do we need to free other resources?
 		del_dobj(QSP_ARG  dp);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	/* this must be called before setup_dp, because
@@ -381,19 +374,6 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 		SET_OBJ_MACH_INC(dp,i,OBJ_MACH_INC(parent,i));
 	}
 	SET_OBJ_ROW_INC(dp,OBJ_ROW_INC(dp) * 2);
-
-	// setup_dp_with_shape called from init_dp...
-	//dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
-
-//#ifdef CAUTIOUS
-//	if( dp==NO_OBJ ){
-//		WARN("CAUTIOUS:  mk_ilace error");
-//		return(dp);
-//	}
-//#endif /* CAUTIOUS */
-
-	// don't need this any more if we're not calling setup_dp
-	//assert( dp != NO_OBJ );
 
 	/* BUG?  even parity gets us the first set of lines, but by convention
 	 * in video terminology line numbering starts with 1, and the first set
@@ -429,11 +409,11 @@ static void relocate_children(QSP_ARG_DECL  Data_Obj *dp )
 	Data_Obj *child;
 
 	np=QLIST_HEAD( OBJ_CHILDREN(dp) );
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		child = (Data_Obj *)NODE_DATA(np);
 		( * PF_UPDATE_OFFSET_FN(OBJ_PLATFORM(dp)) ) (QSP_ARG  child );
 
-		if( OBJ_CHILDREN(child) != NO_LIST )
+		if( OBJ_CHILDREN(child) != NULL )
 			relocate_children(QSP_ARG  child);
 		np = NODE_NEXT(np);
 	}
@@ -447,7 +427,7 @@ int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 {
 	index_t os;
 
-	if( OBJ_PARENT(dp) == NO_OBJ ){
+	if( OBJ_PARENT(dp) == NULL ){
 		sprintf(ERROR_STRING,
 	"__relocate:  object \"%s\" is not a subimage",
 			OBJ_NAME(dp));
@@ -472,7 +452,7 @@ int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 	 * Need to recompute the data pointers of any children
 	 */
 
-	if( OBJ_CHILDREN(dp) != NO_LIST )
+	if( OBJ_CHILDREN(dp) != NULL )
 		relocate_children(QSP_ARG  dp);
 
 	return(0);
@@ -670,7 +650,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	"make_equivalence:  parent object %s n_contig = %d < %d, can't cast to %s",
 				OBJ_NAME(parent),n_contig,n_per_child,PREC_NAME(prec_p));
 			WARN(ERROR_STRING);
-			return(NO_OBJ);
+			return(NULL);
 		}
 	} else if( n_child_bytes_per_elt < n_parent_bytes_per_elt ) {
 		/* Case 2:  child element size is less than parent element size - casting down */
@@ -695,7 +675,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
 			name,total_child_bytes,OBJ_NAME(parent),total_parent_bytes);
 		WARN(ERROR_STRING);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	/* Now we need to see if we can come up with
@@ -750,9 +730,6 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			child_mach_inc = OBJ_MACH_INC(parent,i);
 			i++;
 		}
-//#ifdef CAUTIOUS
-//		if( child_mach_inc == 0 ) ERROR1("CAUTIOUS:  make_equivalence:  could not determine child_mach_inc!?");
-//#endif /* CAUTIOUS */
 		assert( child_mach_inc != 0 );
 
 		/* Is this correct in all cases?  If multiple parent elements make up one child
@@ -809,7 +786,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 			 */
 			if( child_dim >= N_DIMENSIONS ){
 				WARN("make_equivalence:  giving up!?");
-				return(NO_OBJ);
+				return(NULL);
 			}
 			/* increase the child dimension */
 			new_mach_inc[child_dim] = child_mach_inc;
@@ -842,7 +819,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 				sprintf(ERROR_STRING,"total_parent_bytes = %d   total_child_bytes = %d",
 					total_parent_bytes,total_child_bytes);
 				advise(ERROR_STRING);
-				return(NO_OBJ);
+				return(NULL);
 			}
 			/* When we bring in more parent elements
 			 * to fill in a child dimension, we have to insure that
@@ -873,7 +850,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 					prev_parent_mach_elts,total_parent_bytes,total_child_bytes);
 				advise(ERROR_STRING);
 
-				return(NO_OBJ);
+				return(NULL);
 			}
 
 		}
@@ -881,9 +858,9 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 
 	newdp=new_dobj(QSP_ARG  name);
 
-	if( newdp == NO_OBJ ){
+	if( newdp == NULL ){
 		WARN("couldn't create equivalence");
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	s = OBJ_NAME(newdp);	/* save, while we overwrite temporarily */
@@ -898,7 +875,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	if( set_obj_dimensions(QSP_ARG  newdp,dsp,prec_p) ){
 		// BUG?  do we need to free other resources?
 		del_dobj(QSP_ARG  newdp);
-		return(NO_OBJ);
+		return(NULL);
 	}
 
 	if( IS_CONTIGUOUS(parent) )
@@ -973,14 +950,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	parent_relationship(parent,newdp);
 
 	newdp=setup_dp(QSP_ARG  newdp,prec_p);
-
-//#ifdef CAUTIOUS
-//	if( newdp == NO_OBJ ){
-//		/* BUG do something??? */
-//		ERROR1("CAUTIOUS:  make_equivalence:  unable to setup equivalance object!?");
-//	}
-//#endif /* CAUTIOUS */
-	assert( newdp != NO_OBJ );
+	assert( newdp != NULL );
 
 
 	/* If the parent is a bitmap, but the equivalence is not, then
@@ -1000,15 +970,15 @@ void propagate_flag_to_children(Data_Obj *dp, uint32_t flags_to_set )
 	Data_Obj *child;
 	Node *np;
 
-	if( OBJ_CHILDREN(dp) == NO_LIST ) return;
+	if( OBJ_CHILDREN(dp) == NULL ) return;
 
 	np = QLIST_HEAD( OBJ_CHILDREN(dp) );
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		child = (Data_Obj *)NODE_DATA(np);
 
 		SET_OBJ_FLAG_BITS(child,flags_to_set);
 
-		if( OBJ_CHILDREN(dp) != NO_LIST ) propagate_flag_to_children(child,flags_to_set);
+		if( OBJ_CHILDREN(dp) != NULL ) propagate_flag_to_children(child,flags_to_set);
 
 		np = NODE_NEXT(np);
 	}

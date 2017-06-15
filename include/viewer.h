@@ -275,8 +275,6 @@ ITEM_INTERFACE_PROTOTYPES(Canvas_Event,canvas_event)
 #define WORD_TYPE	long
 #define WORDLEN		((sizeof(WORD_TYPE))<<3)
 
-#define NO_X_IMAGE	((XImage *)NULL)
-
 // From X11 XSetLineAttributes...
 
 typedef struct line_params {
@@ -442,9 +440,6 @@ extern Disp_Obj *the_dop;
 
 #endif /* ! BUILD_FOR_OBJC */
 
-#define NO_CANVAS_EVENT	((Canvas_Event *)NULL)
-#define NO_VIEWER	((Viewer *) NULL)
-
 #define PICK_CANVAS_EVENT(p)	pick_canvas_event(QSP_ARG  p)
 
 #define SET_VW_FLAG_BITS(vp,v)		SET_VW_FLAGS(vp, VW_FLAGS(vp) | v )
@@ -497,10 +492,6 @@ typedef struct draggable {
 		Node *		dg_np;
 } Draggable;
 
-#define NO_DRAGG	((Draggable *)NULL)
-
-
-
 typedef struct view_cursor {
 		char *		vc_name;
 #ifdef HAVE_X11
@@ -509,8 +500,6 @@ typedef struct view_cursor {
 		unsigned int	vc_xhot;
 		unsigned int	vc_yhot;
 } View_Cursor;
-
-#define NO_CURSOR	((View_Cursor *)NULL)
 
 #define PICK_CURSOR(pmpt)	pick_cursor(QSP_ARG  pmpt)
 
@@ -649,7 +638,7 @@ extern int	get_string_width(Viewer *vp, const char *s);
 int event_loop(SINGLE_QSP_ARG_DECL);
 extern void embed_draggable(Data_Obj *dp,Draggable *dgp);
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);
-extern void	set_viewer_display(Viewer *vp);
+extern void	set_viewer_display(QSP_ARG_DECL  Viewer *vp);
 extern void	cmap_setup(Viewer *);
 extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);
 

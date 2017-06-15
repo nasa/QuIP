@@ -133,7 +133,7 @@ int old_cksiz(QSP_ARG_DECL  int argtyp,Data_Obj *src_dp,Data_Obj *dst_dp)
 
 int check_bitmap(QSP_ARG_DECL  Data_Obj *bitmap,Data_Obj *dst_dp)
 {
-	if( bitmap==NO_OBJ ) {
+	if( bitmap==NULL ) {
 		ERROR1("no bitmap???");
 		IOS_RETURN_VAL(-1)
 	}

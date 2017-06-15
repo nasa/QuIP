@@ -4,14 +4,14 @@
 #include "viewer.h"
 #include "nexpr.h"
 
-static IOS_Item_Class *sizable_ios_icp=NO_IOS_ITEM_CLASS;
-static IOS_Item_Class *positionable_ios_icp=NO_IOS_ITEM_CLASS;
-static IOS_Item_Class *interlaceable_ios_icp=NO_IOS_ITEM_CLASS;
+static IOS_Item_Class *sizable_ios_icp=NULL;
+static IOS_Item_Class *positionable_ios_icp=NULL;
+static IOS_Item_Class *interlaceable_ios_icp=NULL;
 
 #define DECLARE_CLASS_INIT_FUNC(type_stem)					\
 static void init_ios_##type_stem##_class(SINGLE_QSP_ARG_DECL)			\
 {										\
-	if( type_stem##_ios_icp != NO_IOS_ITEM_CLASS ){				\
+	if( type_stem##_ios_icp != NULL ){				\
 		WARN("CAUTIOUS:  redundant call to ios class initializer!?");	\
 		return;								\
 	}									\
@@ -28,13 +28,13 @@ static func_str_type *get_ios_##type_stem##_functions(QSP_ARG_DECL  IOS_Item *ip
 {										\
 	IOS_Member_Info *mip;							\
 										\
-	if( type_stem##_ios_icp == NO_IOS_ITEM_CLASS )				\
+	if( type_stem##_ios_icp == NULL )				\
 		init_ios_##type_stem##_class(SINGLE_QSP_ARG);			\
 										\
 	mip = get_ios_member_info(QSP_ARG  type_stem##_ios_icp,			\
 							IOS_ITEM_NAME(ip));	\
 										\
-	if( mip == NO_IOS_MEMBER_INFO ){					\
+	if( mip == NULL ){					\
 		sprintf(ERROR_STRING,						\
 	"CAUTIOUS:  class get function %s, missing member info #2",		\
 			IOS_ITEM_NAME(ip));					\
@@ -125,7 +125,7 @@ const char * precision_string(QSP_ARG_DECL  IOS_Item *ip)
 void add_ios_##type_stem(QSP_ARG_DECL  IOS_Item_Type *itp,func_str_type *sfp,	\
 			IOS_Item *(*lookup)(QSP_ARG_DECL  const char *))	\
 {										\
-	if( type_stem##_ios_icp == NO_IOS_ITEM_CLASS )				\
+	if( type_stem##_ios_icp == NULL )				\
 		init_ios_##type_stem##_class(SINGLE_QSP_ARG);			\
 	add_items_to_ios_class(type_stem##_ios_icp,itp,sfp,lookup);		\
 }
@@ -135,7 +135,7 @@ DECLARE_CLASS_ADD_FUNC(positionable,IOS_Position_Functions)
 
 IOS_Item *find_ios_sizable(QSP_ARG_DECL  const char *name)
 {
-	if( sizable_ios_icp == NO_IOS_ITEM_CLASS )
+	if( sizable_ios_icp == NULL )
 		init_ios_sizable_class(SINGLE_QSP_ARG);
 	
 	return( get_ios_member(QSP_ARG  sizable_ios_icp,name) );
@@ -145,7 +145,7 @@ IOS_Item *find_ios_sizable(QSP_ARG_DECL  const char *name)
 										\
 IOS_Item *check_ios_##type_stem(QSP_ARG_DECL  const char *name)			\
 {										\
-	if( type_stem##_ios_icp == NO_IOS_ITEM_CLASS )				\
+	if( type_stem##_ios_icp == NULL )				\
 		init_ios_##type_stem##_class(SINGLE_QSP_ARG);			\
 	return( check_ios_member(QSP_ARG  type_stem##_ios_icp,name) );		\
 }
@@ -177,7 +177,7 @@ static IOS_Item *eval_ios_##type_stem(Scalar_Expr_Node *enp)			\
 			dump_etree(DEFAULT_QSP_ARG  enp);			\
 			break;							\
 	}									\
-	return NO_IOS_ITEM;							\
+	return NULL;							\
 }
 
 DECLARE_CLASS_EVAL_FUNC(sizable)
@@ -204,7 +204,7 @@ int check_ios_##type_stem##_func( double *retval, Quip_Function *funcp,		\
 	IOS_Item *ip;								\
 										\
 	ip = eval_ios_##type_stem(argp);					\
-	if( ip == NO_IOS_ITEM ){						\
+	if( ip == NULL ){						\
 		/* *retval = -1; */	/* don't really need to set anything */	\
 		return 0;							\
 	}									\
@@ -232,7 +232,7 @@ int check_ios_strv_func( const char **strptr, Function *funcp,
 	IOS_Item *ip;
 
 	ip = eval_ios_sizable(argp);
-	if( ip == NO_IOS_ITEM ){
+	if( ip == NULL ){
 		/* *retval = -1; */	/* don't really need to set anything */
 		return 0;
 	}
@@ -260,7 +260,7 @@ int check_ios_strv2_func( const char **strptr, Function *funcp,
 	IOS_Item *ip;
 
 	ip = eval_ios_sizable(argp);
-	if( ip == NO_IOS_ITEM ){
+	if( ip == NULL ){
 		/* *retval = -1; */	/* don't really need to set anything */
 		return 0;
 	}

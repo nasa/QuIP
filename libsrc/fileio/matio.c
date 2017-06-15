@@ -11,6 +11,7 @@
 #endif
 
 #include "quip_prot.h"
+#include "query_bits.h"	// LLEN - BUG
 #include "fio_prot.h"
 #include "img_file/matio_api.h"
 #include "data_obj.h"
@@ -47,36 +48,36 @@ static Precision * prec_of_matlab_object(matvar_t *matp)
 		case MAT_T_UINT64: return(PREC_FOR_CODE(PREC_ULI));
 		case MAT_T_MATRIX:
 			NWARN("prec_of_matlab_object:  Need to handle matlab matrix type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_COMPRESSED:
 			NWARN("prec_of_matlab_object:  Need to handle matlab compressed type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_STRING:
 			NWARN("prec_of_matlab_object:  Need to handle matlab string type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_CELL:
 			//NWARN("prec_of_matlab_object:  Need to handle matlab cell type!?");
 			sprintf(DEFAULT_ERROR_STRING,
 	"NOT handling matlab type CELL, variable %s",matp->name);
 			NADVISE(DEFAULT_ERROR_STRING);
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_STRUCT:
 			//NWARN("prec_of_matlab_object:  Need to handle matlab struct type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_ARRAY:
 			NWARN("prec_of_matlab_object:  Need to handle matlab array type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_FUNCTION:
 			NWARN("prec_of_matlab_object:  Need to handle matlab function type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_UNKNOWN:
 			NWARN("prec_of_matlab_object:  Need to handle matlab unknown type!?");
-			return(NO_PRECISION);
+			return(NULL);
 		case MAT_T_UTF8:
 		case MAT_T_UTF16:
 		case MAT_T_UTF32:
 			NWARN("Not sure what to do with matlab UTF data type!?");
-			return(NO_PRECISION);
+			return(NULL);
 
 		// Comment out the default case to get compiler warnings
 		// about un-handled cases...
@@ -85,10 +86,10 @@ static Precision * prec_of_matlab_object(matvar_t *matp)
 		"prec_of_matlab_object:  unexpected data_type %d (0x%x)!?",
 				matp->data_type,matp->data_type);
 			NADVISE(DEFAULT_ERROR_STRING);
-			return(NO_PRECISION);
+			return(NULL);
 	}
 	/* NOTREACHED */
-	return(NO_PRECISION);
+	return(NULL);
 }
 
 static int describe_matlab_object(QSP_ARG_DECL  matvar_t *matp)
@@ -221,7 +222,7 @@ static Data_Obj *make_obj_for_matvar(QSP_ARG_DECL  matvar_t * matvar, matvar_t *
 //fprintf(stderr,"total element count is %d\n",nelts);
 
 	dp = _make_dp(QSP_ARG  name,&ds,prec_p);
-	if( dp != NO_OBJ ){
+	if( dp != NULL ){
 		/* has the data already been read at this point? */
 		SET_OBJ_DATA_PTR(dp, matvar->data);
 	}
@@ -297,7 +298,7 @@ FIO_OPEN_FUNC( mat )
 	// Make sure the file exists here...
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_MATLAB));
-	if( ifp==NO_IMAGE_FILE ) return(ifp);
+	if( ifp==NULL ) return(ifp);
 
 	if( IS_READABLE(ifp) ){
 		mat_t *mat;
@@ -325,12 +326,12 @@ FIO_OPEN_FUNC( mat )
 			/* does ifp already own an object? */
 
 			prec_p = prec_of_matlab_object(matvar);
-			if( prec_p != NO_PRECISION ){
+			if( prec_p != NULL ){
 				dp = make_obj_for_matvar(QSP_ARG  matvar,
 								NULL,prec_p);
 				ifp->if_dp=dp;
 			} else {
-				ifp->if_dp=NO_OBJ;
+				ifp->if_dp=NULL;
 				if( matvar->data_type == MAT_T_STRUCT ){
 					handle_struct(QSP_ARG  matvar);
 				} else {
@@ -383,7 +384,7 @@ FIO_SETHDR_FUNC( mat )
 
 FIO_WT_FUNC( mat )
 {
-	if( ifp->if_dp == NO_OBJ ){	/* first time? */
+	if( ifp->if_dp == NULL ){	/* first time? */
 
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);

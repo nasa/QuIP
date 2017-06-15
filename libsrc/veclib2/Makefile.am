@@ -9,7 +9,7 @@ all:	libvl2.a
 clean-local:
 	rm -rf $(GENERATED_SRCS)
 
-GENERATED_SRCS=						\
+GENERATED_SRCS=							\
 			$(builddir)/vl2_veclib_expanded.c	\
 			$(builddir)/vl2_utils_expanded.c
 
@@ -17,6 +17,9 @@ GENERATED_SRCS=						\
 noinst_LIBRARIES = libvl2.a
 
 libvl2_a_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -Wall -Wmissing-prototypes
+
+libvl2_a_CXXFLAGS = -O3
+libvl2_a_CFLAGS = -O3
 
 # Now include fast_sp.c in vl2_veclib.c...
 #			fast_sp.c
@@ -102,7 +105,6 @@ INC_M4FILES=							\
 			$(INCDIR)/fft_funcs.m4			\
 			$(INCDIR)/flen_defs.m4			\
 			$(INCDIR)/flush_output.m4		\
-			$(INCDIR)/gen_entries.m4		\
 			$(INCDIR)/gen_bit_calls.m4		\
 			$(INCDIR)/gen_float_calls.m4		\
 			$(INCDIR)/gen_func_array.m4		\
@@ -165,7 +167,6 @@ noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\
 							\
 			_vl2_utils.c			\
-			linear.c			\
 			vfft.c
 
 

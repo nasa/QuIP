@@ -60,7 +60,7 @@ static void init_simplex()
 		return;
 	}
 	n = eltcount(lp);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
 	while(np!=NULL){
@@ -96,15 +96,15 @@ static float amoeba_scr_funk(float *p)
 #endif // THREAD_SAFE_QUERY
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	if( lp==NO_LIST ) {
+	if( lp==NULL ) {
 		NWARN("no parameters!?");
 		return(0.0);
 	}
 
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		Opt_Param *opp;
 
 		opp=(Opt_Param *)np->n_data;
@@ -117,7 +117,7 @@ static float amoeba_scr_funk(float *p)
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=var__of(QSP_ARG  "error");
-	if( vp == NO_VARIABLE ) {
+	if( vp == NULL ) {
 		NWARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);
@@ -134,10 +134,10 @@ static float amoeba_c_funk(float *p)
 	Node *np;
 
 	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 
 	i=0;
-	while(np!=NO_NODE){
+	while(np!=NULL){
 		opp=(Opt_Param *)np->n_data;
 		opp->ans=p[i+1];
 		np=np->n_next;

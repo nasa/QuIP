@@ -29,8 +29,6 @@ struct menu {
 
 } ;
 
-#define NO_MENU	((Menu *) NULL)
-
 #ifdef HAVE_HISTORY
 #define CLEAR_MENU_FLAGS(prompt)	prompt##_menu->mn_flags = 0;
 #else

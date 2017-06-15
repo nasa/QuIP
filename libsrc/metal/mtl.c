@@ -122,7 +122,7 @@ static const char * available_mtl_device_name(QSP_ARG_DECL  const char *name,cha
 	// Why have statically-allocated structures?
 	while(n<=MAX_OCL_DEVICES){
 		pdp = pfdev_of(QSP_ARG  s);
-		if( pdp == NO_PFDEV ) return(s);
+		if( pdp == NULL ) return(s);
 
 		// This name is in use
 		n++;
@@ -151,7 +151,7 @@ static void init_mtl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	// address set to NULL says use custom allocator - see dobj/makedobj.c
 
 	ap = pf_area_init(QSP_ARG  area_name,NULL,0, MAX_OCL_GLOBAL_OBJECTS,DA_OCL_GLOBAL,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_mtl_dev_memory:  error creating global data area %s",area_name);
 		WARN(ERROR_STRING);
@@ -184,7 +184,7 @@ static void init_mtl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 
 	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
 							DA_OCL_HOST,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_mtl_dev_memory:  error creating host data area %s",area_name);
 		ERROR1(ERROR_STRING);
@@ -209,7 +209,7 @@ static void init_mtl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 
 	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
 						DA_OCL_HOST_MAPPED,pdp);
-	if( ap == NO_AREA ){
+	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_mtl_dev_memory:  error creating host-mapped data area %s",area_name);
 		ERROR1(ERROR_STRING);
@@ -312,13 +312,7 @@ static void init_mtl_device(QSP_ARG_DECL  cl_device_id dev_id,
 
 	givbuf(name);
 
-#ifdef CAUTIOUS
-	if( pdp == NO_PFDEV ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  init_mtl_device:  Error creating cuda device struct for %s!?",name_p);
-		WARN(ERROR_STRING);
-		return;
-	}
-#endif /* CAUTIOUS */
+	assert( pdp != NULL );
 
 	/* Remember this name in case the default is not found */
 	if( first_mtl_dev_name == NULL )
@@ -374,10 +368,8 @@ static void init_mtl_device(QSP_ARG_DECL  cl_device_id dev_id,
 		if( cgl_ctx != NULL){
 			// This means that we have an OpenGL window available...
 			share_group = CGLGetShareGroup(cgl_ctx);
-			if( share_group != NULL )
-				props[1] = (cl_context_properties) share_group;
-			else
-				ERROR1("CAUTIOUS:  init_mtl_device:  CGL context found, but null share group!?");
+			assert( share_group != NULL );
+			props[1] = (cl_context_properties) share_group;
 		} else {
 			advise("OpenCL initialized without an OpenGL context.");
 		}
@@ -605,25 +597,11 @@ static void mtl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 //OBJ_OFFSET(OBJ_PARENT(dp)));
 
 	if( IS_COMPLEX(dp) ){
-#ifdef CAUTIOUS
-		if( offset & 1 ){
-			sprintf(ERROR_STRING,
-	"CAUTIOUS:  mtl_offset_data:  odd element offset (%d) requested for complex object %s!?",
-				offset,OBJ_NAME(dp));
-			ERROR1(ERROR_STRING);
-		}
-#endif // CAUTIOUS
+		assert( (offset & 1) == 0 );	// complex must have even alignment
 		offset /= 2;
 //fprintf(stderr,"Adjusted offset (%d) for complex object %s\n",offset,OBJ_NAME(dp));
 	} else if( IS_QUAT(dp) ){
-#ifdef CAUTIOUS
-		if( (offset & 3) != 0 ){
-			sprintf(ERROR_STRING,
-"CAUTIOUS:  mtl_offset_data:  element offset (%d) not a multiple of 4 for quaternion object %s!?",
-				offset,OBJ_NAME(dp));
-			ERROR1(ERROR_STRING);
-		}
-#endif // CAUTIOUS
+		assert( (offset & 3) == 0 );	// quaternion must have mod 4 alignment
 		offset /= 4;
 	}
 
@@ -638,11 +616,7 @@ static void mtl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 	int extra_offset;
 
 	parent_buf = find_parent_buf(QSP_ARG  OBJ_PARENT(dp),&extra_offset);
-
-#ifdef CAUTIOUS
-	if( parent_buf == NULL )
-		ERROR1("CAUTIOUS: mtl_offset_data:  no parent buffer!?");
-#endif // CAUTIOUS
+	assert( parent_buf != NULL );
 
 	reg.origin = (offset+extra_offset) * ELEMENT_SIZE(dp);
 
@@ -861,7 +835,7 @@ static void init_mtl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 	//push_item_context(QSP_ARG  pfdev_itp, icp );
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	init_mtl_devices(QSP_ARG  cpp);
-	if( pop_pfdev_context(SINGLE_QSP_ARG) == NO_ITEM_CONTEXT )
+	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
 		ERROR1("init_mtl_platform:  Failed to pop platform device context!?");
 }
 

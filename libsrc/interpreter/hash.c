@@ -8,6 +8,7 @@
 #include "quip_prot.h"
 #include "debug.h"
 #include "hash.h"
+#include "list.h"
 #include "getbuf.h"
 
 #ifdef QUIP_DEBUG
@@ -135,7 +136,7 @@ Hash_Tbl *ht_init(const char *name)
 	register Hash_Tbl *htp;
 
 	htp= (Hash_Tbl*) getbuf( sizeof(*htp) );
-	//if( htp == NO_HASH_TBL ) mem_err("ht_init");
+	//if( htp == NULL ) mem_err("ht_init");
 	if( htp == NULL ) {
 		NERROR1("ht_init memory allocation failure");
 		IOS_RETURN_VAL(NULL)
@@ -203,9 +204,7 @@ htp->ht_size);
 NADVISE(DEFAULT_ERROR_STRING);
 }
 
-//fprintf(stderr,"enlarging hash table at 0x%lx\n",(long)htp);
 		htp=enlarge_ht(htp);
-//fprintf(stderr,"enlarged hash table at 0x%lx\n",(long)htp);
 	}
 
 	/*
@@ -237,13 +236,11 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 	/* now we've found an empty slot */
 
-//fprintf(stderr,"insert_hash: setting entry at 0x%lx to 0x%lx\n", (long)&entry[key],(long)ptr);
 	entry[key] = ptr;
 	htp->ht_n_entries++;
 
 	MARK_DIRTY(htp);
 
-//fprintf(stderr,"insert_hash: table at 0x%lx now has %d entries\n", (long)htp,htp->ht_n_entries);
 	return(0);
 }
 
@@ -309,14 +306,6 @@ NADVISE(DEFAULT_ERROR_STRING);
 		/* we assume that the name is the first field */
 
 		s = *((char **)entry[key]);
-//#ifdef CAUTIOUS
-//		if( s == NULL ){
-//			sprintf(DEFAULT_ERROR_STRING,
-//	"CAUTIOUS:  item with null name string, ip = 0x%lx!?", (u_long)entry[key]);
-//			NWARN(DEFAULT_ERROR_STRING);
-//			return(NULL);
-//		}
-//#endif /* CAUTIOUS */
 		assert( s != NULL );
 
 		if( !strcmp(s,name) ) return(entry[key]);
@@ -524,7 +513,7 @@ List *ht_list(Hash_Tbl *htp)
 		Item *ip;
 
 		ip = (Item*) entry[i];
-		if( ip != NO_ITEM ){
+		if( ip != NULL ){
 			Node *np;
 			np=mk_node(ip);
 			addTail(lp,np);
@@ -571,16 +560,11 @@ Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp)
 
 	// advance to the first non-null entry
 	while( *(htep->current_entry) == NULL && htep->current_entry < htep->htp->ht_entries+htep->htp->ht_size ){
-//fprintf(stderr,"new_hash_tbl_enumerator:  * 0x%lx = 0x%lx\n", (long)htep->current_entry,(long)*htep->current_entry);
 		htep->current_entry ++;
 	}
 	if( htep->current_entry == htep->htp->ht_entries+htep->htp->ht_size ){
 		htep->current_entry = NULL;	// nothing there.
-//fprintf(stderr,"new_hash_tbl_enumerator:  table at 0x%lx is empty!?\n",(long)htp);
 	}
-//else
-//fprintf(stderr,"new_hash_tbl_enumerator:  first item is 0x%lx\n",(long)*(htep->current_entry));
-
 	return htep;
 }
 

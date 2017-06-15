@@ -25,7 +25,6 @@
 #endif
 
 #include "item_type.h"
-#include "query.h"
 #include "data_obj.h"
 
 struct my_port;

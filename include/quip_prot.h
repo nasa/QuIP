@@ -31,19 +31,18 @@ extern "C" {
 #include <stdio.h>
 #include "quip_fwd.h"	// forward definitions of structs and typedefs
 
-//#include "stdc_defs.h"	// BUG break this up
-//#include "query_stack.h"
-//#include "item_type.h"
-//#include "hash.h"
-//#include "function.h"
-//#include "debug.h"
-//#include "warn.h"
-//#include "fileck.h"
-//#include "item_prot.h"
-//#include "rn.h"
+// BUG - this really should be eliminated?
+#include "llen.h"
 
 // This used to be a macro - do we still need it?
 extern Query * query_at_level(QSP_ARG_DECL  int l);
+extern Query *new_query(void);
+extern void rls_query(Query *);
+extern int query_has_text(Query *);
+extern void exit_current_file(SINGLE_QSP_ARG_DECL);
+extern void exit_current_macro(SINGLE_QSP_ARG_DECL);
+extern void set_query_arg_at_index(Query *qp,int index,const char *s);
+
 extern int qs_level(SINGLE_QSP_ARG_DECL);
 extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);
 
@@ -56,6 +55,8 @@ extern void exec_at_level(QSP_ARG_DECL  int level);
 extern void finish_swallowing(SINGLE_QSP_ARG_DECL);
 extern void swallow(QSP_ARG_DECL const char *text, const char *filename);
 extern void chew_mouthful(Mouthful *mfp);
+extern int current_line_number(SINGLE_QSP_ARG_DECL);
+extern const char * current_filename(SINGLE_QSP_ARG_DECL);
 
 #ifdef BUILD_FOR_OBJC
 extern void ios_exit_program(void);
@@ -123,30 +124,6 @@ extern COMMAND_FUNC( do_ser_menu );
 // history.c
 extern int history_flag;
 
-// list.c
-extern void report_node_data(SINGLE_QSP_ARG_DECL);
-extern count_t eltcount( List * lp );
-#define NEW_LIST		new_list()
-extern List *new_list(void);
-extern void zap_list(List *lp);
-extern Node *mk_node( void * ip );
-extern Node *remHead(List *lp);
-extern Node *remTail(List *lp);
-extern Node * remNode(List *lp, Node *np);
-extern Node *remData(List *lp, void * data);
-extern void rls_list(List *lp);
-extern void rls_nodes_from_list(List *lp);
-extern void addTail(List *lp, Node *np);
-extern void addHead( List *lp, Node* np );
-extern void dellist(List *lp);
-extern Node *nodeOf( List *lp, void * ip );
-extern Node * list_find_named_item(List *lp, const char *name);
-
-extern void p_sort(List *lp);
-extern Node *nth_elt(List *lp, count_t k);
-extern Node *nth_elt_from_tail(List *lp, count_t k);
-
-
 // bi_menu.c
 extern void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) );
 extern void init_aux_menus(Query_Stack *qsp);
@@ -205,8 +182,7 @@ extern Input_Format_Spec *	qs_ascii_input_format(SINGLE_QSP_ARG_DECL);
 extern int			qs_serial_func(SINGLE_QSP_ARG_DECL);
 #define QS_SERIAL		qs_serial_func(SINGLE_QSP_ARG)
 
-extern const char *		qs_filename(SINGLE_QSP_ARG_DECL);
-#define CURRENT_FILENAME	qs_filename(SINGLE_QSP_ARG)
+#define CURRENT_FILENAME	current_filename(SINGLE_QSP_ARG)
 
 extern const char *		qs_curr_string(SINGLE_QSP_ARG_DECL);
 extern void			set_curr_string(QSP_ARG_DECL  const char *);
@@ -274,21 +250,26 @@ extern void		_dump_dict_info(QSP_ARG_DECL  Dictionary *dict_p);
 
 extern char *qpfgets(QSP_ARG_DECL  void *buf, int size, void *fp);
 extern void input_on_stdin(void);
-extern void q_warn(QSP_ARG_DECL  const char *);
+extern void script_warn(QSP_ARG_DECL  const char *);
+extern void expect_warning(QSP_ARG_DECL  const char *);
+extern void check_expected_warning(SINGLE_QSP_ARG_DECL);
 #ifdef BUILD_FOR_IOS
 extern void q_error1(QSP_ARG_DECL  const char *);
 #else // ! BUILD_FOR_IOS
 __attribute__ ((__noreturn__)) extern void q_error1(QSP_ARG_DECL  const char *);
 #endif // ! BUILD_FOR_IOS
 extern const char *savestr(const char *);
+extern const char *save_possibly_empty_str(const char *);
 extern void rls_str(const char *);
 extern COMMAND_FUNC( tog_pmpt );
 extern void qdump( SINGLE_QSP_ARG_DECL );
 extern FILE *tfile(SINGLE_QSP_ARG_DECL);
 extern int intractive(SINGLE_QSP_ARG_DECL);
 extern void set_args(QSP_ARG_DECL  int ac,char** av);
-extern String_Buf * rdmtext(SINGLE_QSP_ARG_DECL);
-extern Macro_Arg * read_macro_arg(QSP_ARG_DECL int i);
+extern String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL);
+extern Macro_Arg ** setup_macro_args(QSP_ARG_DECL int n);
+extern Macro_Arg ** create_generic_macro_args(int n);
+extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
 extern void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
@@ -296,6 +277,12 @@ extern int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
 //extern void resume_chewing(SINGLE_QSP_ARG_DECL);
 extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
+extern const char *query_filename(SINGLE_QSP_ARG_DECL);
+extern void set_query_filename(Query *, const char *);
+extern void set_query_macro(Query *,Macro *);
+extern void set_query_args(Query *,const char **);
+extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
+extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
 
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
@@ -433,6 +420,7 @@ extern Query * pop_file( SINGLE_QSP_ARG_DECL );
 
 extern void redir_with_flags( QSP_ARG_DECL  FILE *fp, const char *filename, uint32_t flags );
 extern void redir( QSP_ARG_DECL  FILE *fp, const char *filename );
+extern void redir_from_pipe( QSP_ARG_DECL  Pipe *pp, const char *cmd );
 
 extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
@@ -499,10 +487,12 @@ extern void cat_string(String_Buf *sbp,const char *str);
 extern void copy_string_n(String_Buf *sbp,const char *str,int n);
 extern void cat_string_n(String_Buf *sbp,const char *str, int n);
 extern char *sb_buffer(String_Buf *sbp);
-#define SB_BUF(sbp)	sb_buffer(sbp)
+extern void rls_sb_buffer(String_Buf *sbp);
+extern size_t sb_size(String_Buf *sbp);
+//#define SB_BUF(sbp)	sb_buffer(sbp)
 
-#define NEW_STRINGBUF		new_stringbuf()
 extern String_Buf *new_stringbuf(void);
+extern String_Buf *create_stringbuf(const char *s);
 extern void rls_stringbuf(String_Buf *);
 
 

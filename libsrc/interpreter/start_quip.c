@@ -2,6 +2,7 @@
 #include "quip_config.h"
 #include "query_prot.h"
 #include "query_stack.h"
+#include "query_private.h"
 //#include "data_obj.h"
 #include "veclib_api.h"
 #include "vt_api.h"
@@ -70,10 +71,8 @@ static void exec_qs_cmds( void *_qsp )
 {
 	Query_Stack *qsp=(Query_Stack *)_qsp;
 
-	while( lookahead_til(QSP_ARG  0) ){
-		while( QS_HAS_SOMETHING(qsp) && ! IS_HALTING(qsp) ){
-			QS_DO_CMD(qsp);
-		}
+	while( QLEVEL >= 0 && ! IS_HALTING(qsp) ){
+		qs_do_cmd(qsp);
 	}
 }
 
@@ -91,7 +90,6 @@ void exec_this_level(SINGLE_QSP_ARG_DECL)
 void exec_quip(SINGLE_QSP_ARG_DECL)
 {
 #ifdef USE_QS_QUEUE
-
 	// This is iOS only!
 
 	//dispatch_async_f(QS_QUEUE(THIS_QSP),qsp,exec_qs_cmds);

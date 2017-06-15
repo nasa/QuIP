@@ -16,8 +16,8 @@ extern void error1(QSP_ARG_DECL  const char *msg);
 __attribute__ ((__noreturn__)) extern void error1(QSP_ARG_DECL  const char *msg);
 #endif // ! BUILD_FOR_IOS
 
-#define WARN(msg)	q_warn(QSP_ARG msg)
-#define NWARN(msg)	q_warn(DEFAULT_QSP_ARG msg)
+#define WARN(msg)	script_warn(QSP_ARG msg)
+#define NWARN(msg)	script_warn(DEFAULT_QSP_ARG msg)
 
 // when we run this on the iOS simulator, the bell char prints
 // as a lower case A!?
@@ -28,6 +28,8 @@ __attribute__ ((__noreturn__)) extern void error1(QSP_ARG_DECL  const char *msg)
 #define WARNING_PREFIX	"WARNING:  "
 #define ERROR_PREFIX	"ERROR:  "
 #endif // ! BUILD_FOR_IOS
+
+#define EXPECTED_PREFIX	"Expected warning received:  "
 
 #define WARN_ONCE(s)					\
 							\

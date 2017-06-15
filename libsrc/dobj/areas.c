@@ -18,14 +18,14 @@
 #include "shape_info.h"
 #include "debug.h"
 
-Data_Area *curr_ap=NO_AREA, *ram_area_p=NO_AREA;
+Data_Area *curr_ap=NULL, *ram_area_p=NULL;
 
 static int n_areas=0;
 
 ITEM_INTERFACE_DECLARATIONS(Data_Area,data_area,0)
 
 // BUG not thread-safe...
-static Stack *data_area_stack_p=NO_STACK;
+static Stack *data_area_stack_p=NULL;
 
 // set_data_area needs to replace the top of the stack, so we can restore it if something
 // else is pushed and popped...
@@ -38,7 +38,7 @@ void set_data_area(Data_Area *ap)
 
 void push_data_area(Data_Area *ap)
 {
-	if( data_area_stack_p == NO_STACK )
+	if( data_area_stack_p == NULL )
 		data_area_stack_p = new_stack();
 
 	/* We used to check for stack to big here, mainly because
@@ -58,18 +58,13 @@ void pop_data_area(void)
 {
 	Data_Area *ap;
 
-//#ifdef CAUTIOUS
-//	if( data_area_stack_p == NO_STACK )
-//		NERROR1("CAUTIOUS:  pop_data_area:  Data area stack never created!?");
-//#endif // CAUTIOUS
-
-	assert( data_area_stack_p != NO_STACK );
+	assert( data_area_stack_p != NULL );
 
 	ap = (Data_Area *) pop_item(data_area_stack_p);
 
 	// This used to be an error, but it is OK to push and pop a data
 	// area before any area has been set...
-	// assert( ap != NO_AREA );
+	// assert( ap != NULL );
 
 //fprintf(stderr,"pop_data_area:  popped %s\n",AREA_NAME(ap));
 	curr_ap = ap;	// pop_data_area
@@ -78,13 +73,13 @@ void pop_data_area(void)
 void a_init(void)
 {
 	if( n_areas==0 ){
-		curr_ap=NO_AREA;
+		curr_ap=NULL;
 	}
 }
 
 Data_Area *default_data_area(SINGLE_QSP_ARG_DECL)
 {
-	if( curr_ap == NO_AREA ) dataobj_init(SINGLE_QSP_ARG);
+	if( curr_ap == NULL ) dataobj_init(SINGLE_QSP_ARG);
 	return(curr_ap);
 }
 
@@ -98,11 +93,11 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_c
 	a_init();
 
 	ap = new_data_area(QSP_ARG  name);
-	if( ap == NO_AREA ) return(ap);
+	if( ap == NULL ) return(ap);
 	//ap = [[DataArea alloc] initWithName : name ];
 
 	if( buffer == NULL ){
-		ap->da_ma_p = NO_MEMORY_AREA;
+		ap->da_ma_p = NULL;
 	} else {
 		ap->da_ma_p =
 			(Memory_Area *) getbuf(sizeof(Memory_Area));
@@ -118,9 +113,9 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_c
 
 	ap->da_flags = flags;
 
-	ap->da_dp=NO_OBJ;
+	ap->da_dp=NULL;
 	// Should we have the platform device first???
-	ap->da_pdp=NO_PFDEV;
+	ap->da_pdp=NULL;
 
 	/* curr_ap=ap; */	// area_init
 
@@ -139,7 +134,7 @@ name,PFDEV_NAME(pdp));
 advise(ERROR_STRING);
 */
 	ap = area_init(QSP_ARG  name, buffer, siz, n_chunks, flags );
-	if( ap == NO_AREA ) return ap;
+	if( ap == NULL ) return ap;
 
 	SET_AREA_PFDEV( ap , pdp );
 
@@ -157,12 +152,9 @@ new_area( QSP_ARG_DECL  const char *s, uint32_t siz, int n )
 	// our own implementation of getbuf never returns a failure
 	// code; but we sometimes compile with getbuf #define'd to be malloc
 	assert( buf != NULL );
-//#ifdef CAUTIOUS
-//	if( buf==((u_char *)NULL) ) NERROR1("no mem for data area");
-//#endif /* CAUTIOUS */
 
 	ap=area_init(QSP_ARG  s,buf,siz,n,DA_RAM);
-	if( ap==NO_AREA ) givbuf((char *)buf);
+	if( ap==NULL ) givbuf((char *)buf);
 
 	return(ap);
 }
@@ -200,14 +192,9 @@ void data_area_info(QSP_ARG_DECL  Data_Area *ap )
 			break;
 #endif /* defined DA_CUDA_CONSTANT */
 
-//#ifdef CAUTIOUS
 		default:
-//			sprintf(DEFAULT_ERROR_STRING,"CAUTIOUS:  data_area_info %s:  Bad data area type flag 0x%x (flags = 0x%x)",
-//				ap->da_name,ap->da_flags & DA_TYPE_MASK, ap->da_flags);
-//			NWARN(DEFAULT_ERROR_STRING);
 			assert( AERROR("Bad data area type!?") );
 			break;
-//#endif /* CAUTIOUS */
 	}
 }
 
@@ -255,10 +242,10 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 	Data_Obj *dp;
 	int n,i;
 
-	if( data_area_itp == NO_ITEM_TYPE ) init_data_areas(SINGLE_QSP_ARG);
+	if( data_area_itp == NULL ) init_data_areas(SINGLE_QSP_ARG);
 
 	lp=dobj_list(SINGLE_QSP_ARG);
-	if( lp==NO_LIST ) return;
+	if( lp==NULL ) return;
 
 	n=eltcount(lp);
 	if( n == 0 ){
@@ -275,9 +262,9 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 		return;	// NOTREACHED - silence static analyzer
 	}
 	
-	np=lp->l_head;
+	np=QLIST_HEAD(lp);
 	i=0;
-	while( np != NO_NODE ){
+	while( np != NULL ){
 		dp = (Data_Obj *) np->n_data;
 		if( OBJ_AREA(dp) == ap ){
 			dp_list[i] = dp;
@@ -311,17 +298,7 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
 	char name[MAX_NAME_LEN];
 
-//#ifdef CAUTIOUS
-//	if( AREA_SCALAR_OBJ(ap) != NO_OBJ ){
-//		sprintf(ERROR_STRING,
-//	"CAUTIOUS:  init_scratch_scalar:  area %s already initialized!?",
-//			AREA_NAME(ap) );
-//		WARN(ERROR_STRING);
-//		return;
-//	}
-//#endif /* CAUTIOUS */
-
-	assert( AREA_SCALAR_OBJ(ap) == NO_OBJ );
+	assert( AREA_SCALAR_OBJ(ap) == NULL );
 
 	if( strlen(AREA_NAME(ap))+strlen(".scratch_scalar")+1 > MAX_NAME_LEN )
 		ERROR1("init_scratch_scalar:  need to increase MAX_NAME_LEN!?");
@@ -340,7 +317,7 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 
 Data_Obj *area_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
-	if( AREA_SCALAR_OBJ(ap) == NO_OBJ )
+	if( AREA_SCALAR_OBJ(ap) == NULL )
 		init_scratch_scalar(QSP_ARG  ap);
 	return AREA_SCALAR_OBJ(ap);
 }
