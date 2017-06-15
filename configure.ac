@@ -415,6 +415,7 @@ echo Including $nv_sdk_inc_dir
 
   AC_CHECK_FILE([/usr/local/cuda/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/cuda/include"])
 
+  AC_CHECK_FILE([/usr/local/cuda-8.0],[have_cuda8="yes"],[have_cuda8="no"])
   AC_CHECK_FILE([/usr/local/cuda-7.0],[have_cuda7="yes"],[have_cuda7="no"])
 
   AC_CHECK_FILE([/usr/local/cuda-6.0],[have_cuda6="yes"],[have_cuda6="no"])
@@ -428,6 +429,30 @@ echo Including $nv_sdk_inc_dir
       AC_CHECK_FILE([/usr/local/cuda5],[have_cuda5="yes"],[have_cuda5="no"])
     fi
   fi
+
+  if test "x${have_cuda8}" = xyes; then
+echo CUDA 8.0 found...
+    PATH=$PATH:/usr/local/cuda-8.0/bin
+echo PATH = $PATH
+    export PATH
+    AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
+    if test "x${nv_sdk_dir}" = xno; then
+      have_nv_sdk=no
+    else	# sdk dir found
+      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
+      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
+      # Need the host architecture!
+      # for now assume x86_64...
+      AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],[nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],[nv_sdk_libdir="no"])
+      if test "x${nv_sdk_libdir}" = xno; then
+        have_nv_sdk=no
+      else
+#echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
+        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
+        have_nv_sdk=yes
+      fi
+    fi	# sdk dir found
+  else	# ! have_cuda8
 
   if test "x${have_cuda7}" = xyes; then
     PATH=$PATH:/usr/local/cuda-7.0/bin
@@ -447,7 +472,6 @@ echo Including $nv_sdk_inc_dir
       fi
     fi
   else	# ! have_cuda7
-
 
   if test "x${have_cuda6}" = xyes; then
     # not sure what to do?
@@ -572,6 +596,7 @@ echo Including $nv_sdk_inc_dir
     fi		# ! have_cuda5
   fi		# ! have_cuda6
   fi		# ! have_cuda7
+  fi		# ! have_cuda8
   fi		# ! cuda_on_mac
 else		# ! use_cuda
   have_cuda_sdk_libdir=no
@@ -620,7 +645,9 @@ fi
 
 # must come before compiler stuff
 # This allows us to use GNU stuff, e.g. O_DIRECT...
+echo calling ac_gnu_source
 AC_GNU_SOURCE
+echo DONE calling ac_gnu_source
 
 #################################################
 #

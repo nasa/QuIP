@@ -3159,6 +3159,9 @@ COMMAND_FUNC( do_visca_menu )
 		load_visca_cmds(SINGLE_QSP_ARG);
 		default_camera(SINGLE_QSP_ARG);
 	}
+#else
+	WARN("Program not compiled with VISCA support!?");
+	advise("Will parse commands only.");
 #endif // HAVE_VISCA
 
 	PUSH_MENU(visca);
