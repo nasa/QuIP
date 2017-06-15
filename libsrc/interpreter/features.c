@@ -26,7 +26,6 @@ typedef enum {
 	SWF_SOUND,
 //	SWF_MPLAYER,	// doesn't seem to be used anywhere???
 //	SWF_XINE,
-	SWF_SSE,
 	SWF_NUMREC,
 	SWF_CUDA,
 	SWF_OPENCL,
@@ -81,7 +80,6 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_SOUND,		"sound (portaudio/ALSA)"	},
 //{ UNKNOWN, SWF_MPLAYER,		"mplayer"			},
 //{ UNKNOWN, SWF_XINE,		"Xine"				},
-{ UNKNOWN, SWF_SSE,		"SSE processor acceleration"	},
 { UNKNOWN, SWF_NUMREC,		"Numerical Recipes library"	},
 { UNKNOWN, SWF_CUDA,		"nVidia CUDA"			},
 { UNKNOWN, SWF_OPENCL,		"OpenCL acceleration"		},
