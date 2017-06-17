@@ -106,13 +106,6 @@ typedef struct {
 	Query_Stack *	vr_qsp;		// needed for thread-safe-query
 } vr_args;
 
-#ifdef FOOBAR
-/* This was used to make sure that himemfb resources were freed, but
- * it didn't work, because pthreads creates another process that never
- * executes our code, but which perversely was the last to exit...
- */
-static pid_t grabber_pid=0;
-#endif /* FOOBAR */
 
 struct itimerval tmr1;
 

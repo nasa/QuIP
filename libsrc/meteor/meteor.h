@@ -40,14 +40,7 @@
 /* Uncomment if you want FIFO overflow and DMA address error messages. */
 /*#define SHOW_CAPT_ERRORS  */
 
-/* Frame buffer RAM source defines */
-/* Uncomment if you wish to use external RAM other than bigphusarea */
-#define METEOR_EXT_FRAME_BUF
-/* Uncomment if you wish to include bigphysarea code */
-/* jbm:  himemfb works so well, I removed the ifdef BIGPHYSAREA code... */
-/*#define METEOR_BIGPHYSAREA */
-
-#define METEOR_VERSION "2.2"
+#define METEOR_VERSION "3.0"
 
 #define METEOR_MAJOR 40
 

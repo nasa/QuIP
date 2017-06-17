@@ -66,13 +66,6 @@
 
 #endif
 
-#define HIMEM_FG
-/* define HIMEM_FG if want to write to RAM above high_memory */
-#ifdef HIMEM_FG
-# define DEF_HIMEM_DEVICE	"/dev/himemfb"
-# include "ioctl_himemfb.h"
-#endif
-
 #define	MAX_ALLOW_CONSEC_ERRORS	10
 #define	TRUE	1
 #define	FALSE	0
