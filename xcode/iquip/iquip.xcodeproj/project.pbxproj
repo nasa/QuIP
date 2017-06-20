@@ -1459,7 +1459,7 @@
 		7C3904BE17F64818005163CD /* serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = serial.c; sourceTree = "<group>"; };
 		7C3904C017F64894005163CD /* stamps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stamps.c; sourceTree = "<group>"; };
 		7C3904C217F64901005163CD /* my_stty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = my_stty.c; sourceTree = "<group>"; };
-		7C4332AD1D4D43FC0033687C /* TEST_CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TEST_CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7C4332AD1D4D43FC0033687C /* CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4332AE1D4D43FC0033687C /* CSF-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF-Info.plist"; sourceTree = "<absolute>"; };
 		7C4332AF1D4D47D40033687C /* csf_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = csf_startup.enc; path = macros/startup/csf_startup.enc; sourceTree = "<group>"; };
 		7C4333D41D4D49450033687C /* EZJet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZJet.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1625,7 +1625,7 @@
 			isa = PBXGroup;
 			children = (
 				7106ECFD16004437006BF850 /* iQuIP.app */,
-				7C4332AD1D4D43FC0033687C /* TEST_CSF.app */,
+				7C4332AD1D4D43FC0033687C /* CSF.app */,
 				7C4333D41D4D49450033687C /* EZJet.app */,
 				7C4D6EA11D5111A400D34AC4 /* AFalert.app */,
 			);
@@ -2199,7 +2199,7 @@
 			);
 			name = CSF;
 			productName = coq;
-			productReference = 7C4332AD1D4D43FC0033687C /* TEST_CSF.app */;
+			productReference = 7C4332AD1D4D43FC0033687C /* CSF.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7C4332B21D4D49450033687C /* EZJet */ = {
@@ -3617,8 +3617,8 @@
 					"-DSTARTUP_FILE=csf_startup",
 					"-DUSE_NUMREC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = TEST_CSF;
+				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
+				PRODUCT_NAME = CSF;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
@@ -3652,8 +3652,8 @@
 					"-DSTARTUP_FILE=csf_startup",
 					"-DUSE_NUMREC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = TEST_CSF;
+				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
+				PRODUCT_NAME = CSF;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
