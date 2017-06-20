@@ -129,7 +129,10 @@ typedef struct rv_inode {
 
 	// We only need the pad if using O_DIRECT...
 	// size above is 0xb0, we need a pad of 0x50 to round up to 256 bytes
-	char			pad_bytes[80];
+	//
+	// on 32bit machine, size is 144 bytes?
+#define N_RV_INODE_PAD_BYTES	112
+	char			pad_bytes[N_RV_INODE_PAD_BYTES];
 } RV_Inode;
 
 /* We use the mode bits from stat(2) */

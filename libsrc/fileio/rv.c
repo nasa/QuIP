@@ -319,9 +319,11 @@ FIO_WT_FUNC( rvfio )
 
 	bpi = (OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp) );
 	bpf = (bpi +  BLOCK_SIZE - 1) & ~(BLOCK_SIZE-1);
+fprintf(stderr,"bpi = %ld (0x%lx), bpf = %ld (0x%lx)\n",bpi,bpi,bpf,bpf);
 
 	disk_index = (int)(ifp->if_nfrms % n_disks);
 
+fprintf(stderr,"writing data from 0x%lx\n",(u_long)OBJ_DATA_PTR(dp));
 	if( (nw=write(rv_fd_arr[disk_index],OBJ_DATA_PTR(dp),bpi)) != bpi ){
 		if( nw < 0 ) tell_sys_error("write");
 		sprintf(ERROR_STRING,

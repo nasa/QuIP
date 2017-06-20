@@ -1135,7 +1135,8 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 
 	ftp = infer_filetype_from_name(QSP_ARG  filename);
 	if( ftp == NULL ) {	/* use default if can't figure it out */
-		assert( curr_ftp != NULL );
+		if( curr_ftp == NULL ) image_file_init(SINGLE_QSP_ARG);
+		//assert( curr_ftp != NULL );
 		ftp=curr_ftp;	/* use default if can't figure it out */
 	} else if( ftp != curr_ftp ){
 		sprintf(ERROR_STRING,"Inferring filetype %s from filename %s, overriding default %s",

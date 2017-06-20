@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _METEOR_H
-#define _METEOR_H
+#ifndef _METEOR_H_
+#define _METEOR_H_
 
 #include "ioctl_meteor.h"
 
@@ -243,8 +243,9 @@ talk_i2c(mtr,  PCF8574_CTRL_I2C_ADDR_W, data, data), \
    uint32_t	dma_add_o[3];
    uint32_t	dma_str_e[3];
    uint32_t	dma_str_o[3];
-   struct meteor_fbuf	fbuf;	/* used to describe extern RAM if used as fb */ 
+   //struct meteor_fbuf	fbuf;	/* used to describe extern RAM if used as fb */ 
    uint32_t	frame_offset[MAX_NUM_FRAMES];
  };
 
-#endif
+#endif // ! _METEOR_H_
+

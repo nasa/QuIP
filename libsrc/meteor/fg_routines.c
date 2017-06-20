@@ -60,15 +60,13 @@ static int meteor_is_mapped=0, fbdev_is_mapped=0;
  * example arguments:
  *	video_source: SOURCE_NTSC, SOURCE_SVIDEO
  *	video_format: MERGE_FIELDS, SEPARATE_FIELDS
- *	ram_location: DISPLAY_RAM, BIGPHYS_RAM, HIMEM_RAM
+ *	ram_location: DISPLAY_RAM, BIGPHYS_RAM, KERNEL_RAM
  */
 
 int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 {
 	const char *		MeteorDev = DEF_METEOR_DEVICE;
 	u_char *		framebuf;
-	u_char *		phys_fb_addr;
-	u_int			hm_size;
 	int			numcols = DEF_NUM_COLS;
 	int			numrows = DEF_NUM_ROWS;
 	int			framesize;
@@ -76,7 +74,6 @@ int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 	uint32_t		iformat = METEOR_FMT_NTSC;
 	struct meteor_counts	err_cnts;
 	struct meteor_geomet	geo;
-	struct meteor_fbuf	vid;
 
 advise("fg_open BEGIN");
 
@@ -100,13 +97,11 @@ advise("fg_open BEGIN");
 	dmaerrcnts = 0;
 	err_cnts.fifo_errors = 0;
 	err_cnts.dma_errors = 0;
-	err_cnts.frames_captured = 0;
+	err_cnts.n_frames_captured = 0;
 	err_cnts.even_fields_captured = 0;
 	err_cnts.odd_fields_captured = 0;
-//sprintf(ERROR_STRING,"fg_open:  sizeof(struct meteor_counts) = 0x%lx",sizeof(struct meteor_counts));
-//advise(ERROR_STRING);
-//sprintf(ERROR_STRING,"fg_open:  METEORSCOUNT = 0x%lx",METEORSCOUNT);
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"fg_open:  ioctl METEORSCOUNT (0x%x)",METEORSCOUNT);
+advise(ERROR_STRING);
 	if (ioctl(meteor_fd, (int)(METEORSCOUNT), &err_cnts) < 0) {
 		perror("fg_open:  ioctl(METEORSCOUNT)");
 		fg_close();
@@ -118,12 +113,16 @@ advise("fg_open BEGIN");
 	if( (numcols % 8) != 0 )
 		numcols = numcols & 0x3f8;
 
+sprintf(ERROR_STRING,"fg_open:  ioctl METEORSINPUT");
+advise(ERROR_STRING);
 	if (ioctl(meteor_fd, METEORSINPUT, &video_source) < 0) {
 		perror("ioctl(METEORSINPUT)");
 		fg_close();
 		return( -1 );
 	}
 
+sprintf(ERROR_STRING,"fg_open:  ioctl METEORSFMT");
+advise(ERROR_STRING);
 	if (ioctl(meteor_fd, METEORSFMT, &iformat) < 0) {
 		perror("ioctl(METEORSFMT)");
 		fg_close();
@@ -152,7 +151,7 @@ advise("fg_open BEGIN");
 			break;
 	}
 
-advise("progress...");
+fprintf(stderr,"progress, switching on ram_location %d...",ram_location);
 	switch( ram_location ) {
 
 #ifdef DISPLAY_FG
@@ -223,6 +222,19 @@ printf("framebuf %x, vid.addr %x\n",framebuf, vid.addr);
 			*/
 
 #endif
+
+		case KERNEL_RAM: {
+fprintf(stderr,"calling ioctl METEORSETGEO for kernel ram...\n");
+			if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
+				perror("ioctl(METEORSETGEO)");
+				fg_close();
+				return( -1 );
+			}
+			// Need to map frames individually!
+fprintf(stderr,"fg_open not yet mapping kernel ram!?\n");
+
+			break;
+		}
 
 		case BIGPHYS_RAM: {
 

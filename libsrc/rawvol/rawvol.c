@@ -64,6 +64,7 @@
 #include "rawvol.h"
 #include "llseek.h"
 #include "fio_api.h"
+#include "debug.h"
 
 ITEM_INTERFACE_DECLARATIONS(RV_Inode,rv_inode,0)
 
@@ -311,7 +312,7 @@ int insure_default_rv(SINGLE_QSP_ARG_DECL)
 	/* we used to have per-system defaults, now we assume there
 	 * is a symlink /dev/rawvol
 	 */
-	default_name = "/dev/rawvol";
+	default_name = "/dev/rawvol-disk1";
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"%s:  using default raw volume %s",
@@ -391,9 +392,9 @@ static void read_rv_data(RV_Inode *inp,char *data,uint32_t size)
 	i=0;
 	while( size ){
 		if( (n=read(rv_sbp->rv_fd[i],data,BLOCK_SIZE)) != BLOCK_SIZE ){
-			perror("read");
+			perror("read (read_rv_data)");
 			sprintf(DEFAULT_ERROR_STRING,
-				"Tried to read data at 0x%lx",(long)data);
+				"read_rv_data:  Tried to read data at 0x%lx",(long)data);
 			NADVISE(DEFAULT_ERROR_STRING);
 			NWARN("error in read_rv_data");
 		}
@@ -616,6 +617,19 @@ static void link_directory(QSP_ARG_DECL  RV_Inode *dk_inp)
 	}
 }
 
+static void check_inode_size()
+{
+	int s;
+
+	s = sizeof(RV_Inode);
+	if( (BLOCK_SIZE % s) != 0 ){
+		fprintf(stderr,"Need to adjust RV_Inode padding:\n");
+		fprintf(stderr,"RV_Inode size = %d:\n",s);
+		fprintf(stderr,"BLOCK_SIZE size = %d:\n",BLOCK_SIZE);
+		abort();
+	}
+}
+
 /* This is the routine which opens a new volume.
  * Now we just read the info from the 1st disk,
  * it would be nice to have it duplicated on all 4...
@@ -805,6 +819,8 @@ advise(ERROR_STRING);
 }
 
 #ifdef O_DIRECT
+	check_inode_size();
+
 	{
 	int err_val;
 	void *ptr;
@@ -815,6 +831,7 @@ advise(ERROR_STRING);
 	}
 	rv_in_tbl = ptr;
 	}
+fprintf(stderr,"aligned inode table at 0x%lx\n",(long)rv_in_tbl);
 
 #else // ! O_DIRECT
 	rv_in_tbl=(RV_Inode *)mem_get(rv_sbp->rv_ndisks*inode_bytes_per_disk);
@@ -823,16 +840,18 @@ advise(ERROR_STRING);
 		WARN("failed to allocate inode buffer");
 		goto errorC;
 	}
+fprintf(stderr,"unaligned inode table at 0x%lx\n",(long)rv_in_tbl);
 
 #endif // ! O_DIRECT
 
 	inp=rv_in_tbl;
 
 	for(i=0;i<rv_sbp->rv_ndisks;i++){
+fprintf(stderr,"reading %d inode bytes at 0x%lx\n",inode_bytes_per_disk,(long)inp);
 		/* inodes directly follow strings, so we don't have to seek */
 		if( read(fd_arr[i],inp,inode_bytes_per_disk) != (int)inode_bytes_per_disk ){
-			perror("read");
-			sprintf(ERROR_STRING,"Tried to read 0x%x bytes at 0x%lx",
+			perror("read (read_rv_super 1)");
+			sprintf(ERROR_STRING,"read_rv_super:  Tried to read 0x%x bytes at 0x%lx",
 				inode_bytes_per_disk,(long)inp);
 			advise(ERROR_STRING);
 			sprintf(ERROR_STRING,"error reading inode blocks, disk %d",i);
@@ -1531,7 +1550,7 @@ static int flush_super(QSP_ARG_DECL  RV_Super *sbp)
 		} else {
 			perror("write");
 			sprintf(ERROR_STRING,
-"Tried to write %ld (0x%lx) bytes at 0x%lx",block_size,block_size,(long)sbp);
+"Tried to write %d (0x%x) bytes at 0x%lx",block_size,block_size,(long)sbp);
 			advise(ERROR_STRING);
 		}
 		WARN("error writing superblock");
@@ -2685,7 +2704,7 @@ void dump_block(QSP_ARG_DECL  int i,uint32_t block)
 		return;
 	}
 	if( read(rv_sbp->rv_fd[i],blockbuf,BLOCK_SIZE) != BLOCK_SIZE ){
-		perror("read");
+		perror("read (dump_block)");
 		NWARN("error reading block");
 		return;
 	}
