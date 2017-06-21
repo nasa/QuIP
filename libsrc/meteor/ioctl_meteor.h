@@ -43,8 +43,12 @@
 
 
 #ifndef __KERNEL__
+#ifdef HAVE_LINUX_IOCTL_H
 #include <linux/ioctl.h>
+#endif // HAVE_LINUX_IOCTL_H
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif // HAVE_STDINT_H
 #endif /* ! __KERNEL__ */
 
 struct meteor_capframe {
