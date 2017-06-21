@@ -112,6 +112,7 @@ DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,"integer data",next_input_int_with_format,MIN_BYTE,MAX_BYTE)
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,"integer data",next_input_int_with_format,MIN_SHORT,MAX_SHORT)
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(int32,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
+// This one generates warnings when building for iOS?
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(int64,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
 
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,"integer data",next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
