@@ -3,15 +3,28 @@ To list remote repositories:
 
 git remote -v
 
+________________________________________
+
 How to control which remote is used?
 
+git pull origin master
+git [push|pull] repo branch
+
+_______________________________________
+
 add a remote:
+
 git remote add nasa http://github.com/nasa/QuIP.git
 
 ____________________
 
 How to revert to an earlier commit?
 
+git log
+git checkout [revision].
+
+("revision" should be full hash - don't forget the final period,
+so that changes are applied to the whole tree)
 ____________________
 List all remotes:
 
