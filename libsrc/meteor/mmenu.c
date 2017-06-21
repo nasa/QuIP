@@ -212,7 +212,7 @@ static COMMAND_FUNC( do_meteor_get_input )
 
 static void setup_meteor_device(SINGLE_QSP_ARG_DECL)
 {
-	if ( fg_open(QSP_ARG  SOURCE_NTSC, METEOR_GEO_RGB24, HIMEM_RAM) < 0) {
+	if ( fg_open(QSP_ARG  SOURCE_NTSC, METEOR_GEO_RGB24, KERNEL_RAM) < 0) {
 		perror("fg_open()");
 		exit(-1);
 	}
@@ -287,15 +287,6 @@ static void meteor_install_handler()
 }
 #endif
 
-
-#ifdef FOOBAR
-static void meteor_check_frame()
-{
-	/* see what's in there in case driver stops signalling */
-
-	gotframe(12);
-}
-#endif
 
 static COMMAND_FUNC( kill_sig )
 {

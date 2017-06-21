@@ -13,6 +13,7 @@
 #include "mmenu.h"
 #include "viewer.h"
 #include "rv_api.h"
+#include "debug.h"
 
 #ifdef QUIP_DEBUG
 int meteor_debug=0;

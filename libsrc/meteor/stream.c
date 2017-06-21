@@ -106,13 +106,6 @@ typedef struct {
 	Query_Stack *	vr_qsp;		// needed for thread-safe-query
 } vr_args;
 
-#ifdef FOOBAR
-/* This was used to make sure that himemfb resources were freed, but
- * it didn't work, because pthreads creates another process that never
- * executes our code, but which perversely was the last to exit...
- */
-static pid_t grabber_pid=0;
-#endif /* FOOBAR */
 
 struct itimerval tmr1;
 
@@ -146,6 +139,22 @@ static pthread_t dw_thr[MAX_DISKS];
 static pthread_t grab_thr;
 
 static int async_capture=0;
+
+static void *_frame_address[MAX_NUM_FRAMES];
+
+void *frame_address(int index)
+{
+	assert(index>=0 && index < MAX_NUM_FRAMES);
+fprintf(stderr,"_frame_address[%d] = 0x%lx\n",index,(long)_frame_address[index]);
+	return _frame_address[index];
+}
+
+void set_frame_address(int index, void *p)
+{
+	assert(index>=0 && index < MAX_NUM_FRAMES);
+	_frame_address[index] = p;
+}
+
 
 /* local prototypes */
 static void clear_buffers(SINGLE_QSP_ARG_DECL);
@@ -834,7 +843,7 @@ advise(ERROR_STRING);
 
 
 	/* remember the starting frame count */
-	starting_count = _mm->frames_captured;
+	starting_count = _mm->n_frames_captured;
 
 	n_so_far = 0;
 
@@ -1017,7 +1026,7 @@ if( verbose ) advise("main thread stopping capture");
 	meteor_stop_capture(SINGLE_QSP_ARG);
 
 	/* check the total number of dropped frames */
-	ending_count = _mm->frames_captured;
+	ending_count = _mm->n_frames_captured;
 
 	/* wait for disk writer threads to finish */
 
@@ -1261,7 +1270,10 @@ STATUS(DW_WAIT)
 			}
 		}
 
-		buf = mmbuf + meteor_off.frame_offset[next];
+		//buf = mmbuf + meteor_off.frame_offset[next];
+		buf = frame_address(next);
+		assert(buf!=NULL);
+
 //sprintf(ERROR_STRING,"disk_writer:  next %d   addr 0x%lx",next,(int_for_addr)buf);
 //advise(ERROR_STRING);
 
@@ -1350,7 +1362,7 @@ STATUS(DW_DONE)
 
 #ifdef RECORD_CAPTURE_COUNT
 		/* record # frames caputured while writing. */
-		pip->ppi_ccount[j]=_mm->frames_captured - starting_count;
+		pip->ppi_ccount[j]=_mm->n_frames_captured - starting_count;
 #endif	/* RECORD_CAPTURE_COUNT */
 /*
 if( verbose ){
@@ -1398,7 +1410,8 @@ static void clear_buffers(SINGLE_QSP_ARG_DECL)
 
 	npix = meteor_columns * meteor_rows ;
 	for(i=0;i<num_meteor_frames;i++){
-		p = (uint32_t *)(mmbuf + meteor_off.frame_offset[i]);
+		//p = (uint32_t *)(mmbuf + meteor_off.frame_offset[i]);
+		p = frame_address(i);
 		for(j=0;j<npix;j++){
 			*p++ = 0;
 		}

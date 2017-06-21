@@ -383,9 +383,9 @@ echo Found cuda software in $cuda_dir
       export PATH
       AC_CHECK_FILE([$cuda_dir/samples],[nv_sdk_dir="$cuda_dir/samples"],[nv_sdk_dir="no"])
 
-      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-echo Including $nv_sdk_inc_dir
-      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
+      nv_sdk_incdir="$nv_sdk_dir/common/inc"
+echo Including $nv_sdk_incdir
+      CPPFLAGS="$CPPFLAGS -I$nv_sdk_incdir"
 
       AC_CHECK_FILE([$cuda_dir/samples/common/lib/darwin],
 	  [nv_sdk_libdir="$cuda_dir/samples/common/lib/darwin"],
@@ -394,7 +394,7 @@ echo Including $nv_sdk_inc_dir
       if test "x${nv_sdk_libdir}" = xno; then
         have_nv_sdk=no
       else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 1
+echo Adding nvidia SDK libdir $nv_sdk_libdir - 1
         LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
         have_nv_sdk=yes
       fi
@@ -413,234 +413,28 @@ echo Including $nv_sdk_inc_dir
       if test "x${nv_sdk_dir}" = xno; then
         have_nv_sdk=no
       else	# sdk dir found
-        nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-        CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-        if test "x${nv_sdk_libdir}" = xno; then
+        AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],[nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],[nv_sdk_libdir="no"])
+        AC_CHECK_FILE([/usr/local/cuda/samples/common/inc],[nv_sdk_incdir="/usr/local/cuda/samples/common/inc"],[nv_sdk_incdir="no"])
+        if test "x${nv_sdk_incdir}" = xno; then
           have_nv_sdk=no
-        else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
-          LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-          have_nv_sdk=yes
+	else
+          CPPFLAGS="$CPPFLAGS -I$nv_sdk_incdir"
+          if test "x${nv_sdk_libdir}" = xno; then
+            have_nv_sdk=no
+          else
+echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
+            LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
+            have_nv_sdk=yes
+	  fi
         fi
       fi
     fi # have_cuda
   fi		# ! cuda_on_mac
 else		# ! use_cuda
-
-#  else	# ! have_cuda7
-#
-#
-#  if test "x${have_cuda6}" = xyes; then
-#    # not sure what to do?
-#    #echo Cuda 5 found...
-
-#  AC_CHECK_FILE([/usr/local/cuda-8.0],[have_cuda8="yes"],[have_cuda8="no"])
-#  AC_CHECK_FILE([/usr/local/cuda-7.0],[have_cuda7="yes"],[have_cuda7="no"])
-#
-#  AC_CHECK_FILE([/usr/local/cuda-6.0],[have_cuda6="yes"],[have_cuda6="no"])
-#  if test "x${have_cuda6}" = xno; then
-#    AC_CHECK_FILE([/usr/local/cuda6],[have_cuda6="yes"],[have_cuda6="no"])
-#  fi
-#
-#  if test "x${have_cuda6}" = xno; then
-#    AC_CHECK_FILE([/usr/local/cuda-5.0],[have_cuda5="yes"],[have_cuda5="no"])
-#    if test "x${have_cuda5}" = xno; then
-#      AC_CHECK_FILE([/usr/local/cuda5],[have_cuda5="yes"],[have_cuda5="no"])
-#    fi
-#  fi
-#<<<<<<< HEAD
-#  if test "x${have_cuda8}" = xyes; then
-#echo CUDA 8.0 found...
-#    PATH=$PATH:/usr/local/cuda-8.0/bin
-#echo PATH = $PATH
-#    export PATH
-#    AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
-#    if test "x${nv_sdk_dir}" = xno; then
-#      have_nv_sdk=no
-#    else	# sdk dir found
-#      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-#      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#      # Need the host architecture!
-#      # for now assume x86_64...
-#      AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],[nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],[nv_sdk_libdir="no"])
-#      if test "x${nv_sdk_libdir}" = xno; then
-#        have_nv_sdk=no
-#      else
-##echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
-#        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-#        have_nv_sdk=yes
-#      fi
-#    fi	# sdk dir found
-#  else	# ! have_cuda8
-#
-#  if test "x${have_cuda7}" = xyes; then
-#    PATH=$PATH:/usr/local/cuda-7.0/bin
-#    export PATH
-#    AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
-#    if test "x${nv_sdk_dir}" = xno; then
-#      have_nv_sdk=no
-#    else	# sdk dir found
-#      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-#      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#      if test "x${nv_sdk_libdir}" = xno; then
-#        have_nv_sdk=no
-#      else
-##echo Adding nvidia SDK libdir $nv_sdk_libdir - 2
-#        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-#        have_nv_sdk=yes
-#      fi
-#    fi
-#  else	# ! have_cuda7
-#
-#
-#  if test "x${have_cuda6}" = xyes; then
-#    # not sure what to do?
-#    #echo Cuda 5 found...
-#    PATH=$PATH:/usr/local/cuda6/bin
-#    export PATH
-#    AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
-#    if test "x${nv_sdk_dir}" = xno; then
-#      have_nv_sdk=no
-#    else	# sdk dir found
-#      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-#      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#  
-#     AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/darwin],
-#	  [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/darwin"],
-#          [nv_sdk_libdir="no"])
-#      if test "x${nv_sdk_libdir}" = xno; then
-#        AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],
-#        [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],
-#        [nv_sdk_libdir="no"])
-#      fi
-#      if test "x${nv_sdk_libdir}" = xno; then
-#        have_nv_sdk=no
-#      else
-##echo Adding nvidia SDK libdir $nv_sdk_libdir - 3
-#        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-#        have_nv_sdk=yes
-#      fi
-#    fi
-#
-#  else	# ! have_cuda6
-#
-#    if test "x${have_cuda5}" = xyes; then
-#      # not sure what to do?
-#      PATH=$PATH:/usr/local/cuda5/bin
-#      #export PATH
-#      #echo Cuda 5 found...
-#      AC_CHECK_FILE([/usr/local/cuda/samples],[nv_sdk_dir="/usr/local/cuda/samples"],[nv_sdk_dir="no"])
-#      if test "x${nv_sdk_dir}" = xno; then
-#        have_nv_sdk=no
-#      else
-#        nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-#	# which directories are needed by gcc vs. nvcc???  BUG?
-#        CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#  
-#        AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/darwin],
-#  	  [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/darwin"],
-#  	  [nv_sdk_libdir="no"])
-#        if test "x${nv_sdk_libdir}" = xno; then
-#  	  AC_CHECK_FILE([/usr/local/cuda/samples/common/lib/linux/x86_64],
-#  	    [nv_sdk_libdir="/usr/local/cuda/samples/common/lib/linux/x86_64"],
-#  	    [nv_sdk_libdir="no"])
-#        fi
-#        if test "x${nv_sdk_libdir}" = xno; then
-#          have_nv_sdk=no
-#        else
-##echo Adding nvidia SDK libdir $nv_sdk_libdir - 4
-#          LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-#          have_nv_sdk=yes
-#        fi
-#      fi
-#    else	# ! have_cuda5
-#      # cuda4...
-#      AC_CHECK_FILE([/usr/local/cuda/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="/usr/local/cuda/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
-##echo gpu_sdk_dir = $gpu_sdk_dir
-#  #    if test "x${gpu_sdk_dir}" = xno; then
-#  #      AC_CHECK_FILE([/usr/local/cuda/CUDAToolsSDK],[gpu_sdk_dir="/usr/local/cuda/CUDAToolsSDK"],[gpu_sdk_dir="no"])
-#  #    fi
-#      if test "x${gpu_sdk_dir}" = xno; then
-#        # BUG - jbm creating a symbolic link with an underscore replacing the space,
-#        # because the space screwed up some of the scripts later on...
-#        AC_CHECK_FILE([/Developer/GPU_Computing],[gpu_sdk_dir="/Developer/GPU_Computing"],[gpu_sdk_dir="no"])
-#      fi
-#      if test "x${gpu_sdk_dir}" = xno; then
-#        AC_CHECK_FILE([/usr/local/cuda/NVIDIA_CUDA_SDK],[cuda_sdk_dir="/usr/local/cuda/NVIDIA_CUDA_SDK"],[cuda_sdk_dir="no"])
-#      fi
-#  #      if test "x${cuda_sdk_dir}" = xno; then
-#  #        AC_CHECK_FILE([$HOME/NVIDIA_GPU_Computing_SDK],[gpu_sdk_dir="$HOME/NVIDIA_GPU_Computing_SDK"],[gpu_sdk_dir="no"])
-#  #      fi
-#  
-#      if test "x${gpu_sdk_dir}" = xno; then
-#        if test "x${cuda_sdk_dir}" = xno; then
-#          have_nv_sdk=no
-#        else
-#          nv_sdk_inc_dir="$cuda_sdk_dir/common/inc"
-#          CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#          NVCCFLAGS="-I$nv_sdk_inc_dir"
-#          AC_SUBST(NVCCFLAGS,["$NVCCFLAGS"])
-#          have_nv_sdk=yes
-#          AC_CHECK_FILE([$cuda_sdk_dir/common/lib/linux],
-#      			  [have_cuda_sdk_libdir=yes],
-#      			  [have_cuda_sdk_libdir=no])
-#          if test "x${have_cuda_sdk_libdir}" = xyes; then
-##echo Adding cuda SDK libdir $cuda_sdk_dir - 5
-#            LDFLAGS="$LDFLAGS -L$cuda_sdk_dir/common/lib/linux"
-#          fi
-#        fi
-#      else
-#        nv_sdk_inc_dir="$gpu_sdk_dir/C/common/inc"
-#        CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#        NVCCFLAGS="-I$nv_sdk_inc_dir"
-#        AC_SUBST(NVCCFLAGS,["$NVCCFLAGS"])
-#        have_nv_sdk=yes
-#        # BUG - when we found $gpu_sdk_dir, we should know enough to know whether
-#        # we are on a mac or not...
-#        AC_CHECK_FILE([$gpu_sdk_dir/shared/lib/linux],
-#      			  [have_cuda_sdk_libdir=yes],
-#      			  [have_cuda_sdk_libdir=no])
-#        if test "x${have_cuda_sdk_libdir}" = xyes; then
-##echo Adding cuda SDK libdir $gpu_sdk_dir - 6
-#          LDFLAGS="$LDFLAGS -L$gpu_sdk_dir/shared/lib/linux"
-#        else
-#          AC_CHECK_FILE([$gpu_sdk_dir/shared/lib/darwin],
-#      			  [have_cuda_sdk_libdir=yes],
-#      			  [have_cuda_sdk_libdir=no])
-#          if test "x${have_cuda_sdk_libdir}" = xyes; then
-##echo Adding cuda SDK libdir $gpu_sdk_dir - 7
-#            LDFLAGS="$LDFLAGS -L$gpu_sdk_dir/shared/lib/darwin"
-#          fi
-#        fi
-#      fi
-#    fi		# ! have_cuda5
-#  fi		# ! have_cuda6
-#  fi		# ! have_cuda7
-
   have_cuda_sdk_libdir=no
   have_nv_sdk=no
   nv_sdk_libdir=no
 fi
-
-## copied code from above, but this here for iMac 5.5 case...
-#    if test "x${nv_sdk_dir}" = xno; then
-#      have_nv_sdk=no
-#    else	# sdk dir found
-#echo nv_sdk_dir = $nv_sdk_dir
-#      nv_sdk_inc_dir="$nv_sdk_dir/common/inc"
-#      CPPFLAGS="$CPPFLAGS -I$nv_sdk_inc_dir"
-#      if test "x${nv_sdk_libdir}" = xno; then
-#        have_nv_sdk=no
-#      else
-#echo Adding nvidia SDK libdir $nv_sdk_libdir - 8
-#        LDFLAGS="$LDFLAGS -L$nv_sdk_libdir"
-#        have_nv_sdk=yes
-#      fi
-#    fi
-#
-## Check for odd lib directories
-#echo After nvidia checks, LDFLAGS = $LDFLAGS
-
 
 #################################################
 #						#
