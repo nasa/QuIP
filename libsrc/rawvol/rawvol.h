@@ -53,17 +53,16 @@ typedef struct rv_super {
 						/* the following are all per-disk: */
 						/* BUG only disk[0] is used */
 
-	uint32_t	rv_nib;			/* number of "inode" blocks */
-	uint32_t	rv_nsb;			/* number of "string" blocks */
-	uint64_t	rv_ndb;			/* number of data blocks */
+	uint32_t	rv_n_inode_blocks;			/* number of "inode" blocks */
+	uint32_t	rv_n_string_blocks;			/* number of "string" blocks */
+	uint64_t	rv_n_data_blocks;			/* number of data blocks */
 
 	//uint32_t	rv_flags;		// are the flags used???
 	int 		rv_fd[MAX_DISKS];
 	char		rv_diskname[MAX_DISKS][MAX_DISKNAME_LEN];
 	int		rv_n_super_users;
 	uid_t		rv_root_uid[MAX_RV_SUPER_USERS];
-	struct rv_inode *
-			rv_cwd;
+	struct rv_inode *	rv_cwd;
 } RV_Super;
 
 
