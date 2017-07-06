@@ -23,6 +23,7 @@ FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
 FWD_TYPEDEF(subrt,Subrt)
 
+FWD_TYPEDEF(rv_inode,RV_Inode)
 FWD_TYPEDEF(mouthful,Mouthful)
 FWD_TYPEDEF(my_pipe,Pipe)
 FWD_TYPEDEF(list,List)

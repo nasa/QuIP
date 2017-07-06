@@ -378,13 +378,12 @@ advise(ERROR_STRING);
 
 
 /* Set the flags in a shape_info struct based on the values
- * in the dimension array.  The object pointer dp may be null,
- * its only use is to provide a name when printing an error msg.
+ * in the dimension array.
  *
  * This routine determines the type (real/complex) from dt_prec...
  */
 
-int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
+int set_shape_flags(Shape_Info *shpp, uint32_t shape_flag)
 {
 	int i;
 
@@ -440,8 +439,6 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 			else	SET_SHP_FLAG_BITS(shpp, DT_SCALAR);
 		}
 	} else {
-//sprintf(ERROR_STRING,"setting shape flag bit to 0x%x",shape_flag);
-//advise(ERROR_STRING);
 		SET_SHP_FLAG_BITS(shpp,shape_flag);
 	}
 
@@ -472,9 +469,9 @@ int set_shape_flags(Shape_Info *shpp,Data_Obj *dp,uint32_t shape_flag)
 	return(0);
 } /* end set_shape_flags() */
 
-int auto_shape_flags(Shape_Info *shpp,Data_Obj *dp)
+int auto_shape_flags(Shape_Info *shpp)
 {
-	return set_shape_flags(shpp,dp,AUTO_SHAPE);
+	return set_shape_flags(shpp,AUTO_SHAPE);
 }
 
 /*
@@ -626,7 +623,7 @@ void gen_xpose(Data_Obj *dp,int dim1,int dim2)
 	EXCHANGE_INCS(OBJ_MACH_INCS(dp),dim1,dim2)
 
 	/* should this be CAUTIOUS??? */ 
-	if( set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE) < 0 )
+	if( auto_shape_flags(OBJ_SHAPE(dp)) < 0 )
 		NWARN("gen_xpose:  RATS!?");
 
 	check_contiguity(dp);

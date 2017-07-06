@@ -67,7 +67,7 @@ int wav_to_dp(Data_Obj *dp,Wav_Header *hd_p)
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
 }

@@ -457,7 +457,7 @@ Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *shpp1, Shape_Info *shpp2)
 	/* we assume the precisions match ...  is this correct?  BUG? */
 	// If the precisions are different, then it is up to the caller to change the precision...
 	SET_SHP_PREC_PTR(shpp, SHP_PREC_PTR(shpp1) );
-	auto_shape_flags(shpp,NULL);
+	auto_shape_flags(shpp);
 
 	return shpp;	/* BUG?  are we sure we can get away with a single static shape here??? */
 }
@@ -562,7 +562,7 @@ DESCRIBE_SHAPE(VN_SHAPE(enp2));
 		}
 		/* we assume the precisions match ...  is this correct?  BUG? */
 		SET_SHP_PREC_PTR(shpp, SHP_PREC_PTR(VN_SHAPE(enp1)) );
-		auto_shape_flags(shpp,NULL);
+		auto_shape_flags(shpp);
 		return(shpp);	/* BUG?  can we get away with a single static shape here??? */
 #endif // FOOBAR
 		shpp = make_outer_shape(QSP_ARG  VN_SHAPE(enp1), VN_SHAPE(enp2));
@@ -1214,7 +1214,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			}
 			SET_SHP_TYPE_DIM(VN_SHAPE(enp),i_dim, d);
 			CLEAR_SHP_FLAG_BITS(VN_SHAPE(enp),DT_UNKNOWN_SHAPE);	/* if we are here, all dimensions are non-zero */
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			}
 
 			break;
@@ -1282,7 +1282,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			} else {
 				SET_SHP_COLS(VN_SHAPE(enp), 1 + (i2 - i1) );
 			}
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			break;
 		/* matlab! */
 		case T_RET_LIST:		/* update_node_shape */
@@ -1302,7 +1302,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			SET_SHP_COLS(VN_SHAPE(enp),
 				SHP_COLS(VN_SHAPE(enp)) +1 );
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			break;
 
 		/* end matlab */
@@ -1368,7 +1368,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				 * of the target.
 				 */
 				SET_SHP_TYPE_DIM(VN_SHAPE(enp),0, SHP_TYPE_DIM(VN_CHILD_SHAPE(enp,0),0) );
-				auto_shape_flags(VN_SHAPE(enp),NULL);	/* DO we need this? */
+				auto_shape_flags(VN_SHAPE(enp));	/* DO we need this? */
 				break;
 			}
 			if( UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ) break;
@@ -1387,7 +1387,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 
 			REDUCE_MAXDIM(VN_SHAPE(enp))
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			/* BUG do range checking here */
 			break;
 
@@ -1412,7 +1412,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 
 			REDUCE_MINDIM(VN_SHAPE(enp))
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			/* BUG do range checking here */
 			break;
 
@@ -1435,7 +1435,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			i1                    = SHP_ROWS(tmp_shpp);
 			SET_SHP_ROWS(tmp_shpp, SHP_COLS(tmp_shpp) );
 			SET_SHP_COLS(tmp_shpp, i1);
-			auto_shape_flags(tmp_shpp,NULL);
+			auto_shape_flags(tmp_shpp);
 
 			copy_node_shape(enp,tmp_shpp);
 
@@ -1457,7 +1457,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/*UPDATE_MAXDIM_LEN*/UPDATE_RANGE_MAXDIM_LEN(VN_SHAPE(enp),len)
 
 			/* does auto_shape_flags set mindim/maxdim??? */
-			/* auto_shape_flags(VN_SHAPE(enp),NULL); */
+			/* auto_shape_flags(VN_SHAPE(enp)); */
 
 			break;
 
@@ -1474,7 +1474,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* BUG there is code missing here !? */
 			/*UPDATE_MINDIM_LEN*/UPDATE_RANGE_MINDIM_LEN(VN_SHAPE(enp),len)
 
-			/* auto_shape_flags(VN_SHAPE(enp),NULL); */
+			/* auto_shape_flags(VN_SHAPE(enp)); */
 
 			break;
 
@@ -1514,7 +1514,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 					SHP_COLS(tmp_shpp) * 2 );
 				SET_SHP_MACH_DIM(tmp_shpp,0, 1);
 				/* BUG?  set other things? */
-				auto_shape_flags(tmp_shpp,NULL);
+				auto_shape_flags(tmp_shpp);
 			}
 			copy_node_shape(enp,tmp_shpp);
 
@@ -1691,7 +1691,7 @@ no_file:
 				SHP_TYPE_DIM(VN_CHILD_SHAPE(enp,0),SHP_MAXDIM(tmp_shpp)+1)+1 );
 			// Do we need to set/use RANGE_MAXDIM???
 
-			auto_shape_flags(tmp_shpp,NULL);
+			auto_shape_flags(tmp_shpp);
 
 			copy_node_shape(enp,tmp_shpp);
 
@@ -1702,7 +1702,7 @@ no_file:
 //			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 //			SET_SHP_ROWS(VN_SHAPE(enp),
 //				SHP_ROWS(VN_SHAPE(enp))+1);
-//			auto_shape_flags(VN_SHAPE(enp),NULL);
+//			auto_shape_flags(VN_SHAPE(enp));
 //			break;
 
 
@@ -1898,7 +1898,7 @@ static Shape_Info *cpx_scalar_shape(prec_t prec)
 
 	SET_SHP_PREC_PTR(_cpx_scalar_shpp[prec], complex_precision(PREC_FOR_CODE(prec)) );
 
-	auto_shape_flags(_cpx_scalar_shpp[prec],NULL);
+	auto_shape_flags(_cpx_scalar_shpp[prec]);
 
 	return(_cpx_scalar_shpp[prec]);
 }
@@ -2118,7 +2118,7 @@ describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp2));
 	if( !dominance_table_inited ) init_dominance_table();
 	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE( dominance_tbl[ SHP_PREC(VN_SHAPE(enp1)) & MACH_PREC_MASK ]
 					[ SHP_PREC(VN_SHAPE(enp2)) & MACH_PREC_MASK ] ) );
-	auto_shape_flags(shpp,NULL);
+	auto_shape_flags(shpp);
 	return(shpp);
 }
 
@@ -3162,7 +3162,7 @@ static void _check_mating_bitmap(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node 
 			}
 		}
 		if( enlarged )
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 	}
 } /* check_mating_bitmap */
 
@@ -4656,7 +4656,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				SET_SHP_TYPE_DIM(VN_SHAPE(enp),2, SHP_TYPE_DIM(VN_SHAPE(enp),3) );
 				SET_SHP_TYPE_DIM(VN_SHAPE(enp),3, SHP_TYPE_DIM(VN_SHAPE(enp),4) );
 				SET_SHP_TYPE_DIM(VN_SHAPE(enp),4, 1);
-				auto_shape_flags(VN_SHAPE(enp),NULL);
+				auto_shape_flags(VN_SHAPE(enp));
 			}
 			/* probably a COMP_LIST node?  do nothing? */
 			break;
@@ -4800,7 +4800,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			i1                    = SHP_ROWS(tmp_shpp);
 			SET_SHP_ROWS(tmp_shpp, SHP_COLS(tmp_shpp) );
 			SET_SHP_COLS(tmp_shpp, i1);
-			auto_shape_flags(tmp_shpp,NULL);
+			auto_shape_flags(tmp_shpp);
 
 			copy_node_shape(enp,tmp_shpp);
 			CHECK_UK_CHILD(enp,0);
@@ -4865,7 +4865,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 					SHP_COLS(tmp_shpp) * 2 );
 				SET_SHP_MACH_DIM(tmp_shpp,0, 1);
 				/* BUG set more things?  n_elts?  mach_dim? */
-				auto_shape_flags(tmp_shpp,NULL);
+				auto_shape_flags(tmp_shpp);
 			}
 			copy_node_shape(enp,tmp_shpp);
 			RELEASE_SHAPE_PTR(tmp_shpp)
@@ -4919,7 +4919,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			// COPY_SHAPE copies everything - is that what we want?
 			COPY_SHAPE(tmp_shpp, VN_CHILD_SHAPE(enp,0) );
 			SET_SHP_COLS(tmp_shpp,SHP_COLS(VN_CHILD_SHAPE(enp,1)) );
-			auto_shape_flags(tmp_shpp,NULL);
+			auto_shape_flags(tmp_shpp);
 			copy_node_shape(enp,tmp_shpp);
 			RELEASE_SHAPE_PTR(tmp_shpp)
 			/* Shape is known so don't bother with this */
@@ -5116,7 +5116,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			SET_SHP_MACH_DIM(tmp_shpp,SHP_MAXDIM(tmp_shpp)+1,
 				SHP_MACH_DIM(VN_CHILD_SHAPE(enp,0),SHP_MAXDIM(tmp_shpp)+1) +1 );
 
-			auto_shape_flags(tmp_shpp,NULL);	/* auto_shape_flags sets maxdim?? */
+			auto_shape_flags(tmp_shpp);	/* auto_shape_flags sets maxdim?? */
 			MULTIPLY_DIMENSIONS( SHP_N_TYPE_ELTS(tmp_shpp),SHP_TYPE_DIMS(tmp_shpp) )
 			/* BUG?  n_mach_elts? */
 			copy_node_shape(enp,tmp_shpp);
@@ -5172,7 +5172,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			SET_SHP_TYPE_DIM(tmp_shpp,SHP_MINDIM(tmp_shpp),
 				SHP_TYPE_DIM(VN_CHILD_SHAPE(enp,0),SHP_MINDIM(tmp_shpp)) +1 );
 
-			auto_shape_flags(tmp_shpp,NULL);	/* auto_shape_flags sets maxdim?? */
+			auto_shape_flags(tmp_shpp);	/* auto_shape_flags sets maxdim?? */
 			MULTIPLY_DIMENSIONS( SHP_N_TYPE_ELTS(tmp_shpp),SHP_TYPE_DIMS(tmp_shpp) )
 			/* BUG?  n_mach_elts? */
 			copy_node_shape(enp,tmp_shpp);
@@ -5202,7 +5202,7 @@ advise(ERROR_STRING);
 			copy_node_shape(enp,scalar_shape(PREC_CHAR));
 			SET_SHP_TYPE_DIM(VN_SHAPE(enp),1, (dimension_t) strlen(VN_STRING(enp))+1 );
 			SET_SHP_N_TYPE_ELTS(VN_SHAPE(enp), (dimension_t) strlen(VN_STRING(enp))+1 );
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			break;
 
 		case T_SCALMAX:
@@ -5583,7 +5583,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 				n1=EVAL_INT_EXP(VN_CHILD(enp,0));
 				n2=EVAL_INT_EXP(VN_CHILD(enp,1));
 				SET_SHP_COLS(VN_SHAPE(enp), floor( n2 - n1 ) );
-				auto_shape_flags(VN_SHAPE(enp),NULL);
+				auto_shape_flags(VN_SHAPE(enp));
 			} else {
 				copy_node_shape(enp,uk_shape(PREC_DI));
 			}
@@ -5608,7 +5608,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			// 0:5:2	3 elements	6	3
 			SET_SHP_COLS(VN_SHAPE(enp), ceil( ((n2-n1+1)/(double)n3 ) ) );
 			/* NOT columns, could be any dimension... */
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			break;
 
 		case T_STRING_LIST:	/* prelim_node_shape */
@@ -5617,7 +5617,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			SET_SHP_COLS(VN_SHAPE(enp), SHP_COLS(VN_CHILD_SHAPE(enp,0))
 						+ SHP_COLS(VN_CHILD_SHAPE(enp,1))
 						- 1 );
-			auto_shape_flags(VN_SHAPE(enp),NULL);
+			auto_shape_flags(VN_SHAPE(enp));
 			break;
 			}
 
@@ -5873,7 +5873,7 @@ Shape_Info *calc_outer_shape(Vec_Expr_Node *enp1, Vec_Expr_Node *enp2)
 			SHP_N_TYPE_ELTS(shpp1) * SHP_TYPE_DIM(shpp1,i) );
 	}
 
-	auto_shape_flags(shpp1,NULL);
+	auto_shape_flags(shpp1);
 
 	return(shpp1);
 }
@@ -6433,7 +6433,7 @@ Shape_Info *scalar_shape(prec_t prec)
 
 	SET_SHP_PREC_PTR(_scalar_shpp[index], PREC_FOR_CODE(prec) );
 
-	auto_shape_flags(_scalar_shpp[index],NULL);
+	auto_shape_flags(_scalar_shpp[index]);
 
 	return(_scalar_shpp[index]);
 }
@@ -6486,7 +6486,7 @@ Shape_Info *uk_shape(prec_t prec)
 	for(i=0;i<N_DIMENSIONS;i++)
 		SET_SHP_TYPE_DIM(_uk_shpp[i_prec],i,0);
 
-	/* auto_shape_flags(_uk_shpp[i_prec],NULL); */
+	/* auto_shape_flags(_uk_shpp[i_prec]); */
 	SET_SHP_FLAGS(_uk_shpp[i_prec], DT_UNKNOWN_SHAPE);
 	SET_SHP_PREC_PTR(_uk_shpp[i_prec], PREC_FOR_CODE(prec));
 	/* Set BIT & COMPLEX flags if necessary */
@@ -6597,7 +6597,7 @@ DESCRIBE_SHAPE(shpp2);
 		/* BUG - should we set si_n_mach_elts etc? */
 		/* we assume the precisions match ...  is this correct?  BUG? */
 		SET_SHP_PREC_PTR(shpp, SHP_PREC_PTR(shpp1) );
-		auto_shape_flags(shpp,NULL);
+		auto_shape_flags(shpp);
 		return(shpp);	/* BUG?  can we get away with a single static shape here??? */
 	}
 

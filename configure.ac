@@ -555,6 +555,9 @@ fi
 # check for raw volume
 if test "x${use_rawvol}" = xyes; then
   AC_CHECK_FILE([/dev/rawvol],[have_rawvol=yes],[have_rawvol=no])
+  if test "x${have_rawvol}" = xno; then
+    AC_CHECK_FILE([/dev/rawvol-disk1],[have_rawvol=yes],[have_rawvol=no])
+  fi
 fi
 
 # check for knox video switcher
@@ -1332,6 +1335,7 @@ AC_HEADER_STDBOOL
 
 AC_CHECK_HEADERS([assert.h])
 AC_CHECK_HEADERS([ioctl.h])
+AC_CHECK_HEADERS([linux/ioctl.h])
 AC_CHECK_HEADERS([ctype.h])
 AC_CHECK_HEADERS([pwd.h])
 AC_CHECK_HEADERS([math.h])

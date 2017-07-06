@@ -85,7 +85,7 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 	if( hd_p->pixel_format == PFCOMPLEX )
 		SET_OBJ_FLAG_BITS(dp, DT_COMPLEX);
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
 }

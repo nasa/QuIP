@@ -316,7 +316,7 @@ extern int max_vectorizable;
 #define SET_OBJ_FRM_INC(dp,v)	SET_SHP_FRM_INC(OBJ_SHAPE(dp),v)
 #define SET_OBJ_SEQ_INC(dp,v)	SET_SHP_SEQ_INC(OBJ_SHAPE(dp),v)
 
-#define SET_OBJ_SHAPE_FLAGS(dp)	set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE)
+#define SET_OBJ_SHAPE_FLAGS(dp)	set_shape_flags(OBJ_SHAPE(dp),AUTO_SHAPE)
 
 #define SET_SHP_COMP_INC(shpp,v)	SET_INCREMENT(shpp->si_type_incs,0,v)
 #define SET_SHP_PXL_INC(shpp,v)		SET_INCREMENT(shpp->si_type_incs,1,v)

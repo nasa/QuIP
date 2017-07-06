@@ -323,6 +323,7 @@ static COMMAND_FUNC( do_err_frms )
 	const char *s;
 	RV_Inode *inp;
 	int i;
+	Frame_Info *fi_p;
 
 	s = NAMEOF("name for data vector");
 	inp = PICK_RV_INODE("filename");
@@ -330,7 +331,8 @@ static COMMAND_FUNC( do_err_frms )
 
 	if( inp==NULL || i < 0 ) return;
 
-	if( inp->rvi_fi[i].fi_nsaved <= 0 ){
+	fi_p = &(inp->rvi_frame_info[i]);
+	if( FRAME_INFO_N_SAVED(fi_p) <= 0 ){
 		/*if( verbose ){ */
 			sprintf(ERROR_STRING,
 	"rv file %s has no %s errors",inp->rvi_name,error_type_list[i]);
@@ -350,7 +352,7 @@ static COMMAND_FUNC( do_err_frms )
 		delvec(QSP_ARG  dp);
 	}
 
-	dp = mk_vec(QSP_ARG  s,inp->rvi_fi[i].fi_nsaved,1,PREC_FOR_CODE(PREC_DI));
+	dp = mk_vec(QSP_ARG  s,FRAME_INFO_N_SAVED(fi_p),1,PREC_FOR_CODE(PREC_DI));
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,"do_err_frms:  unable to create data vector %s",s);
 		WARN(ERROR_STRING);

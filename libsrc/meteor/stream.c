@@ -626,7 +626,7 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames)
 	SET_SHP_FRAMES(shpp,n_frames);
 	SET_SHP_SEQS(shpp, 1);
 	SET_SHP_PREC_PTR(shpp,PREC_FOR_CODE(PREC_UBY) );
-	//set_shape_flags(&shape,NULL);
+	// BUG?  call auto_shape_flags() ???
 	if( !meteor_field_mode )
 		SET_SHP_FLAG_BITS(shpp,DT_INTERLACED);
 
@@ -1146,7 +1146,8 @@ if( verbose ) advise("main thread stopping capture");
 
 		/* rv_truncate corrects the size, but doesn't know about nframes... */
 
-		SET_SHP_FRAMES( RV_MOVIE_SHAPE(inp), n_frames);
+		//SET_SHP_FRAMES( RV_MOVIE_SHAPE(inp), n_frames);
+		set_rv_n_frames(inp,n_frames);
 
 		/* Have to do it in stream_ifp->if_dp too, in order to get a correct
 		 * answer from the nframes() expression function...
