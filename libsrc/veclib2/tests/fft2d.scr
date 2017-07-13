@@ -1,0 +1,35 @@
+max_warnings 2
+Set size 8
+
+Set zoom 64
+Viewer v1 $zoom*$size $zoom*$size
+Viewer v2 $zoom*$size $zoom*$size
+Posn_Window v1 50 50
+Posn_Window v2 600 60
+
+Image f $size $size 1 float
+Image c $size $size 1 complex
+Image c2 $size $size 1 complex
+Xform_For xf f
+
+Ramp2D f 0 atan(1) 0
+VSin f f
+Disp_Image f v1
+Pause
+
+VSet c{1} 0
+VMov c{0} f
+
+Display f
+
+RFFT xf f
+Display xf
+Pause
+
+RInvFFT g xf
+Disp_Image g v2
+Pause
+
+FFT c
+Display c
+Pause
