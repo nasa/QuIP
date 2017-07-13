@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7C43318B1D4D43FC0033687C"
-               BuildableName = "TEST_CSF.app"
+               BuildableName = "CSF.app"
                BlueprintName = "CSF"
                ReferencedContainer = "container:iquip.xcodeproj">
             </BuildableReference>
@@ -33,7 +33,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7C43318B1D4D43FC0033687C"
-            BuildableName = "TEST_CSF.app"
+            BuildableName = "CSF.app"
             BlueprintName = "CSF"
             ReferencedContainer = "container:iquip.xcodeproj">
          </BuildableReference>
@@ -56,7 +56,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7C43318B1D4D43FC0033687C"
-            BuildableName = "TEST_CSF.app"
+            BuildableName = "CSF.app"
             BlueprintName = "CSF"
             ReferencedContainer = "container:iquip.xcodeproj">
          </BuildableReference>
@@ -75,7 +75,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7C43318B1D4D43FC0033687C"
-            BuildableName = "TEST_CSF.app"
+            BuildableName = "CSF.app"
             BlueprintName = "CSF"
             ReferencedContainer = "container:iquip.xcodeproj">
          </BuildableReference>

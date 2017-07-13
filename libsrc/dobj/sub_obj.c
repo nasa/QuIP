@@ -64,9 +64,10 @@ static int is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *su
 
 	if( /* index < 0 || */ index >= pd){
 		sprintf(ERROR_STRING,
-"%s offset %d for subobject \"%s\" falls outside of parent \"%s\"",
+"%s offset %d for subobject \"%s\" falls outside of parent \"%s\" (%s count = %d)",
 			dimension_name[which_dim],
-			index,sub_name,OBJ_NAME(parent));
+			index,sub_name,OBJ_NAME(parent),
+			dimension_name[which_dim],pd);
 		WARN(ERROR_STRING);
 		sprintf(ERROR_STRING,
 			"dim index %d:  parent size = %u",

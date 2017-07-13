@@ -325,7 +325,7 @@ static void cast_indexed_##stem##_from_double				\
 			(Scalar_Value *svp, int idx, double val)	\
 {									\
 	sprintf(DEFAULT_ERROR_STRING,					\
-		"Can't cast to %s with an index!?",#stem);		\
+		"cast_indexed_%s_from_double:  Can't cast to %s with an index (%d)!?",#stem,#stem,idx);		\
 	NWARN(DEFAULT_ERROR_STRING);					\
 }
 
@@ -341,9 +341,9 @@ DECLARE_INDEXED_DATA_FUNC(stem,type)
 DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
 DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)
 
-#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
+#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)		\
 									\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)				\
 DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)				\
 DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)			\
@@ -354,8 +354,8 @@ DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)
 #define DECLARE_CPX_SCALAR_FUNCS(stem,type,member)			\
 									\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
 DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\
@@ -366,8 +366,8 @@ DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,member)
 #define DECLARE_QUAT_SCALAR_FUNCS(stem,type,member)			\
 									\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
 DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\

@@ -539,14 +539,14 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source real scalar value") );
 		} else if( (IS_COMPLEX(OA_DEST(oap) ) && !ir) || ic ) {
-			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
-			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
+			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
+			SET_OA_SVAL(oap,0, get_sval(prec_p) );
 			cast_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value real part") );
 			cast_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value imaginary part") );
 		} else if( (IS_QUAT(OA_DEST(oap) ) && !ir) || iq ) {
-			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
+			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
 			SET_OA_SVAL(oap,0, get_sval( prec_p ));
 			cast_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value real part") );
@@ -557,6 +557,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			cast_to_quat_scalar(QSP_ARG  3,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value k part") );
 		} else {
+			// what precision is this?
 			/* use a single scalar for all components */
 			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
 			SET_OA_SVAL(oap,0, get_sval( prec_p ) );

@@ -238,6 +238,8 @@ void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,dou
 	(*(prec_p->cast_from_double_func))(svp,val);
 }
 
+// This function casts to a single component
+
 void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 1 );
@@ -270,7 +272,7 @@ void extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 	}
 
 	prec_p = OBJ_PREC_PTR(dp);
-	(*(prec_p->extract_scalar_func))(svp,OBJ_DATA_PTR(dp));
+	(*(prec_p->extract_scalar_func))(svp,dp);
 }
 
 
