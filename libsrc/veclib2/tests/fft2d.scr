@@ -8,14 +8,16 @@ Posn_Window v1 50 50
 Posn_Window v2 600 60
 
 Image f $size $size 1 float
+Image g $size $size 1 float
 Image c $size $size 1 complex
 Image c2 $size $size 1 complex
 Xform_For xf f
 
-Ramp2D f 0 atan(1) 0
-VSin f f
-Disp_Image f v1
-Pause
+Zoomed_Viewer_For v3 xf{0} $zoom
+Posn_Window v3 1150 50
+
+
+Define Try_Transforms 0
 
 VSet c{1} 0
 VMov c{0} f
@@ -24,12 +26,50 @@ Display f
 
 RFFT xf f
 Display xf
+advise 'Showing real transform...'
+Disp_Image xf{0} v3
+Pause
+
+Disp_Image xf{1} v3
 Pause
 
 RInvFFT g xf
+advise 'reconstructed image should be in the range -1 to 1'
+verbose yes
 Disp_Image g v2
+verbose no
 Pause
 
 FFT c
 Display c
+Disp_Image c{0} v1
+Disp_Image c{1} v2
+advise 'complex transform shown'
 Pause
+
+InvFFT c
+verbose yes
+Disp_Image c{0} v1
+Disp_Image c{1} v2
+verbose no
+advise 'inverse complex transform shown'
+Pause
+.
+
+# vertical grating
+Ramp2D f 0 atan(1) 0
+VSin f f
+Disp_Image f v1
+Pause
+
+Try_Transforms
+
+# horizontal grating
+Ramp2D f 0 0 atan(1)
+VSin f f
+Disp_Image f v1
+Pause
+
+Try_Transforms
+
+exit
