@@ -1340,7 +1340,6 @@ void stream_record(QSP_ARG_DECL  Image_File *ifp,int32_t n_frames_wanted,PGR_Cam
 	SET_SHP_FRAMES(shpp,n_frames_wanted);
 	SET_SHP_SEQS(shpp, 1);
 	SET_SHP_PREC_PTR(shpp,PREC_FOR_CODE(PREC_UBY) );
-	//set_shape_flags(&shape,NULL);
 	SET_SHP_FLAGS(shpp, DT_IMAGE );
 
 	rv_set_shape(QSP_ARG  ifp->if_name,shpp);

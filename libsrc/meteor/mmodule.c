@@ -150,7 +150,7 @@ int meteor_setup_movie(QSP_ARG_DECL  Movie *mvip,uint32_t n_fields)
 	struct meteor_geomet _geo;
 	uint32_t blocks_per_frame,n_frames;
 	int n_allocframes ;
-	int n_disks = rv_get_ndisks();
+	//int n_disks = rv_get_ndisks();
 
 	/* BUG shouldn't insist upon even field count in field mode */
 	if( n_fields % 2 ){
@@ -211,7 +211,7 @@ advise("meteor_setup_movie");
 
 	/* Make sure that the number of frames requested is an integral multiple of n_disks */
 
-	n_allocframes = FRAMES_TO_ALLOCATE( n_frames, n_disks );
+	n_allocframes = rv_frames_to_allocate( n_frames );
 
 	if( rv_realloc(QSP_ARG  MOVIE_NAME(mvip),n_allocframes*blocks_per_frame) < 0 ){
 		sprintf(ERROR_STRING,"meteor_setup_movie:  failed to allocate rawvol storage for %s",

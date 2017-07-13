@@ -139,7 +139,7 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 	SET_OBJ_BIT0(dp,0);
 
 	/* set_shape_flags is where mindim gets set */
-	if( set_shape_flags( OBJ_SHAPE(dp), dp, type_flag) < 0 )
+	if( set_shape_flags( OBJ_SHAPE(dp), type_flag) < 0 )
 		return(NULL);
 
 	/* check_contiguity used to be called from set_obj_flags,
@@ -679,6 +679,9 @@ comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 
 	return(dp2);
 } /* end comp_replicate */
+
+// BUG?
+// alloc_shape() doesn't set the prec ptr!?
 
 Shape_Info *alloc_shape(void)
 {

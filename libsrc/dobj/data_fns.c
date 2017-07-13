@@ -180,7 +180,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		SET_OBJ_PREC_PTR(dp, OBJ_PREC_PTR((*dp_tbl)) );
 	}
 
-	set_shape_flags( OBJ_SHAPE(dp),dp,AUTO_SHAPE);
+	auto_shape_flags( OBJ_SHAPE(dp) );
 
 	if( uk_leaf ){
 		CLEAR_OBJ_FLAG_BITS(dp,SHAPE_DIM_MASK);

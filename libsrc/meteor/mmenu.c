@@ -492,24 +492,24 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 	Movie *mvip;
 	Image_File *ifp;
 
-	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
+	if( ! is_rv_movie(inp) ){
 		if( verbose ){
-			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",inp->rvi_name);
+			sprintf(ERROR_STRING,"make_movie_from_inode:  rv inode %s is not a movie",rv_name(inp));
 			advise(ERROR_STRING);
 		}
 		return;
 	}
 
-	mvip = create_movie(QSP_ARG  inp->rvi_name);
+	mvip = create_movie(QSP_ARG  rv_name(inp));
 	if( mvip == NULL ){
 		sprintf(ERROR_STRING,
-			"error creating movie %s",inp->rvi_name);
+			"error creating movie %s",rv_name(inp));
 		WARN(ERROR_STRING);
 	} else {
-		ifp = img_file_of(QSP_ARG  inp->rvi_name);
+		ifp = img_file_of(QSP_ARG  rv_name(inp));
 		if( ifp == NULL ){
 			sprintf(ERROR_STRING,
-	"image file struct for rv file %s does not exist!?",inp->rvi_name);
+	"image file struct for rv file %s does not exist!?",rv_name(inp));
 			WARN(ERROR_STRING);
 		} else {
 			mvip->mvi_data = ifp;
@@ -527,9 +527,9 @@ void make_movie_from_inode(QSP_ARG_DECL  RV_Inode *inp)
 
 void update_movie_database(QSP_ARG_DECL  RV_Inode *inp)
 {
-	if( IS_DIRECTORY(inp) || IS_LINK(inp) ){
+	if( ! is_rv_movie(inp) ){
 		if( verbose ){
-			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",inp->rvi_name);
+			sprintf(ERROR_STRING,"update_movie_database:  rv inode %s is not a movie",rv_name(inp));
 			advise(ERROR_STRING);
 		}
 		return;

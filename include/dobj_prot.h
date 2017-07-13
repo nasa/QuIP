@@ -34,8 +34,8 @@ extern void		info_area(QSP_ARG_DECL  Data_Area *ap);
 extern void		info_all_dps(SINGLE_QSP_ARG_DECL);
 extern void		sizinit(void);
 extern void		make_complex(Shape_Info *shpp);
-extern int		set_shape_flags(Shape_Info *shpp,Data_Obj * dp,uint32_t type_flags);
-extern int		auto_shape_flags(Shape_Info *shpp,Data_Obj * dp);
+extern int		set_shape_flags(Shape_Info *shpp,uint32_t type_flags);
+extern int		auto_shape_flags(Shape_Info *shpp);
 extern void		show_space_used(QSP_ARG_DECL  Data_Obj * dp);
 extern void		dobj_iterate(Data_Obj * dp,void (*func)(Data_Obj * ,uint32_t));
 extern void		dpair_iterate(QSP_ARG_DECL  Data_Obj * dp,Data_Obj * dp2,

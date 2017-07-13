@@ -61,7 +61,7 @@ static int mpeg_to_dp(Data_Obj *dp,Mpeg_Hdr *mpeg_hp)
 	dp->dt_nelts = dp->dt_tdim * dp->dt_cols * dp->dt_rows
 			* dp->dt_frames * dp->dt_seqs;
 
-	auto_shape_flags(&dp->dt_shape,dp);
+	auto_shape_flags(&dp->dt_shape);
 
 	return(0);
 }

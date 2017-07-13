@@ -77,8 +77,12 @@ ITEM_INTERFACE_DECLARATIONS(RV_Inode,rv_inode,0)
 #define ROOT_DIR_NAME	"/"
 
 static int n_extra_bytes=0;
-static RV_Inode *rv_in_tbl=NULL;
-static RV_Super *rv_sbp=NULL;	// only one at a time?
+
+// These are copies of what is on the disk
+static RV_Inode *rv_inode_tbl=NULL;
+static char *rv_string_tbl=NULL;		/* string table pointer */
+
+static RV_Super *curr_rv_sbp=NULL;	// only one at a time?
 static int use_osync=0;			// synchronous writes by default
 
 /* We use this flag, so that the first time we create the volume,
@@ -95,7 +99,6 @@ static uint32_t total_string_bytes;
 
 static char rv_pathname[LLEN];
 
-static char *rv_stp;		/* string table pointer */
 
 #define MAX_STRING_CHUNKS	1024
 #define MAX_INODE_CHUNKS	1024
@@ -107,7 +110,7 @@ static char *rv_stp;		/* string table pointer */
 
 #define CHECK_VOLUME(s)							\
 									\
-	if( rv_sbp == NULL ){					\
+	if( curr_rv_sbp == NULL ){					\
 		sprintf(ERROR_STRING,"%s:  no raw volume open",s);	\
 		WARN(ERROR_STRING);					\
 		return;							\
@@ -119,7 +122,7 @@ FreeList rv_inode_freelist;
 FreeList rv_data_freelist;
 
 /* this macro transforms a requested size (in blocks) to blocks per disk */
-#define BLOCKS_PER_DISK(s)	(((s)+rv_sbp->rv_ndisks-1)/rv_sbp->rv_ndisks)
+#define BLOCKS_PER_DISK(s)	(((s)+curr_rv_sbp->rv_ndisks-1)/curr_rv_sbp->rv_ndisks)
 
 /* In the old days, only SGI could perform direct i/o,
  * and mem_get here was defined to memalign...
@@ -165,7 +168,7 @@ static void copy_rv_inode(RV_Inode *dst_inp, RV_Inode *src_inp)
 
 	// BUG?  we might clear the union to 0's just for safety...
 	if( IS_DIRECTORY(src_inp) ){
-		SET_RV_DIR_ENTRIES	( dst_inp, RV_DIR_ENTRIES	(src_inp));
+		SET_RV_CHILDREN		( dst_inp, RV_CHILDREN		(src_inp));
 		// Dir_Info has parent, but do we need?
 	} else if( IS_LINK(src_inp) ){
 		SET_RV_LINK_INODE_PTR	( dst_inp, RV_LINK_INODE_PTR	(src_inp));
@@ -187,7 +190,7 @@ static void copy_rv_inode(RV_Inode *dst_inp, RV_Inode *src_inp)
 
 int rv_is_open(void)
 {
-	if( rv_sbp == NULL )
+	if( curr_rv_sbp == NULL )
 		return 0;
 	else
 		return 1;
@@ -304,7 +307,7 @@ int insure_default_rv(SINGLE_QSP_ARG_DECL)
 	if (!rawvol_debug)
 		rawvol_debug =  add_debug_module(QSP_ARG  "rawvol");
 
-	if( rv_sbp != NULL ){
+	if( curr_rv_sbp != NULL ){
 		sprintf(ERROR_STRING,"insure_default_rv:  raw volume already open");
 		WARN(ERROR_STRING);
 		return(-1);
@@ -349,11 +352,18 @@ static void remove_path_component(void)
 		*s = 0;
 }
 
+static void pop_pathname_context(SINGLE_QSP_ARG_DECL)
+{
+//fprintf(stderr,"pop_pathname_context\n");
+	pop_item_context(QSP_ARG  rv_inode_itp);
+}
+
 static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 	char ctxname[LLEN];
 
+//fprintf(stderr,"set_pathname_context, rv_pathname = %s BEGIN\n",rv_pathname);
 	sprintf(ctxname,"RV_Inode.%s",rv_pathname);
 	icp = ctx_of(QSP_ARG  ctxname);
 	if( icp == NULL ){
@@ -367,7 +377,6 @@ static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 			return;
 		}
 	}
-//fprintf(stderr,"Pushing RV inode context %s\n",CTX_NAME(icp));
 	PUSH_ITEM_CONTEXT(rv_inode_itp,icp);
 }
 
@@ -377,21 +386,21 @@ static void read_rv_data(RV_Inode *inp,char *data,uint32_t size)
 	off64_t offset,retoff;
 	int n;
 
-	offset = (off64_t) RV_ADDR(inp) * (off64_t) rv_sbp->rv_blocksize;
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		retoff = my_lseek64(rv_sbp->rv_fd[i],offset,SEEK_SET);
+	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){
 			sprintf(DEFAULT_ERROR_STRING,"read_rv_data:  Error seeking on raw disk %d",i);
 			NWARN(DEFAULT_ERROR_STRING);
 			return;
 		}
 	}
-	if( size > (uint32_t)(BLOCK_SIZE*rv_sbp->rv_ndisks) ){
+	if( size > (uint32_t)(BLOCK_SIZE*curr_rv_sbp->rv_ndisks) ){
 		NERROR1("read_rv_data:  too much data");
 	}
 	i=0;
 	while( size ){
-		if( (n=read(rv_sbp->rv_fd[i],data,BLOCK_SIZE)) != BLOCK_SIZE ){
+		if( (n=read(curr_rv_sbp->rv_fd[i],data,BLOCK_SIZE)) != BLOCK_SIZE ){
 			perror("read (read_rv_data)");
 			sprintf(DEFAULT_ERROR_STRING,
 				"read_rv_data:  Tried to read data at 0x%lx",(long)data);
@@ -401,6 +410,26 @@ static void read_rv_data(RV_Inode *inp,char *data,uint32_t size)
 		data += BLOCK_SIZE;
 		size -= BLOCK_SIZE;
 	}
+}
+
+static void read_directory_contents(QSP_ARG_DECL  RV_Inode *dk_inp, void **buf_addr_p)
+{
+	// The directory contents are stored as short indices, one block
+	// per disk.  This limits the number of directory entries...
+
+#ifdef O_DIRECT
+	{
+	int err_val;
+
+	if( (err_val=posix_memalign(buf_addr_p,BLOCK_SIZE,BLOCK_SIZE*curr_rv_sbp->rv_ndisks)) != 0 ){
+	 	ERROR1("Error in posix_memalign!?");
+	}
+	}
+#else // ! O_DIRECT
+	*buf_addr_p = getbuf(BLOCK_SIZE*curr_rv_sbp->rv_ndisks);
+#endif // ! O_DIRECT
+
+	read_rv_data(dk_inp,*buf_addr_p,BLOCK_SIZE*curr_rv_sbp->rv_ndisks);
 }
 
 /* This is like descend_directory, but it works with the on-disk data
@@ -415,51 +444,115 @@ static void scan_directory(QSP_ARG_DECL  RV_Inode *dk_inp,
 	void *data_blocks;
 	short *sp;
 	int not_root_dir;
+	const char *s;
+int idx;
 
 	assert( RV_NAME_IDX(dk_inp) >= 0 && RV_NAME_IDX(dk_inp) < total_string_bytes );
+idx = dk_inp - rv_inode_tbl;
 
-	not_root_dir = strcmp( rv_stp+RV_NAME_IDX(dk_inp), ROOT_DIR_NAME );
+	s = rv_string_tbl+RV_NAME_IDX(dk_inp);
+
+//fprintf(stderr,"scan_directory:  inode at table location %d has index %d and name \"%s\"\n",idx,RV_INODE_IDX(dk_inp),s);
+	not_root_dir = strcmp( s, ROOT_DIR_NAME );
 
 	/* set the context */
 	if( not_root_dir ){
-		add_path_component(rv_stp+RV_NAME_IDX(dk_inp));
-		set_pathname_context(SINGLE_QSP_ARG);
+		add_path_component(rv_string_tbl+RV_NAME_IDX(dk_inp));
 	}
+	set_pathname_context(SINGLE_QSP_ARG);
 
-	// The directory contents are stored as short indices, one block
-	// per disk.  This limits the number of directory entries...
+	read_directory_contents(QSP_ARG  dk_inp,&data_blocks);
 
-#ifdef O_DIRECT
-	{
-	int err_val;
-
-	if( (err_val=posix_memalign(&data_blocks,BLOCK_SIZE,BLOCK_SIZE*rv_sbp->rv_ndisks)) != 0 ){
-	 	ERROR1("Error in posix_memalign!?");
-	}
-	}
-#else // ! O_DIRECT
-	data_blocks = getbuf(BLOCK_SIZE*rv_sbp->rv_ndisks);
-#endif // ! O_DIRECT
-
-	read_rv_data(dk_inp,data_blocks,BLOCK_SIZE*rv_sbp->rv_ndisks);
 	sp=(short *)data_blocks;
 	while( *sp > 0 ){
-		if( IS_DIRECTORY(&rv_in_tbl[*sp]) )
-			scan_directory(QSP_ARG  &rv_in_tbl[*sp],func);
+		if( IS_DIRECTORY(&rv_inode_tbl[*sp]) )
+			scan_directory(QSP_ARG  &rv_inode_tbl[*sp],func);
 		else
-			(*func)(QSP_ARG  &rv_in_tbl[*sp]);
+			(*func)(QSP_ARG  &rv_inode_tbl[*sp]);
 		sp++;
 	}
 	givbuf(data_blocks);
 
 	if( not_root_dir ){
-		pop_item_context(QSP_ARG  rv_inode_itp);
 		remove_path_component();
 	}
+	pop_pathname_context(SINGLE_QSP_ARG);
 
 	/* now call the thingy on this directory node */
 	(*func)(QSP_ARG  dk_inp);
 } // end scan_directory
+
+static void alloc_inode_slot(int idx)
+{
+	takespace(&rv_inode_freelist,idx,1);
+}
+
+static void rls_inode_slot(int idx)
+{
+	givspace(&rv_inode_freelist,1,idx);
+}
+
+static void alloc_name_slot(int idx)
+{
+	long len;
+
+	len = strlen(rv_string_tbl+idx) + 1;
+#ifdef STRING_DEBUG
+sprintf(ERROR_STRING,"reserving %d string bytes at offset %d",len,idx);
+advise(ERROR_STRING);
+#endif /* STRING_DEBUG */
+	takespace(&rv_st_freelist,idx,len);
+}
+
+static void rls_name_slot(int idx)
+{
+	long len;
+
+	len=strlen(rv_string_tbl+idx)+1;
+	givspace(&rv_st_freelist,len,idx);
+}
+
+static void alloc_data_blocks(int n_blocks, int addr)
+{
+	takespace(&rv_data_freelist,addr,n_blocks);
+}
+
+static void rls_data_blocks(int n_blocks, int addr)
+{
+	/* The length SHOULD be 1 for directories... */
+	if( n_blocks <= 0 ) return;
+
+//	if( IS_DIRECTORY(inp) ){
+//		sprintf(ERROR_STRING,"Releasing directory %s, size %d at 0x%x",
+//				RV_NAME(inp),RV_N_BLOCKS(inp),RV_ADDR(inp));
+//		advise(ERROR_STRING);
+//	}
+
+	givspace(&rv_data_freelist,n_blocks,addr);
+}
+
+static void alloc_frame_infos(RV_Inode *dk_inp)
+{
+	int i;
+
+	for(i=0;i<N_RV_FRAMEINFOS;i++){
+		Frame_Info *fi_p;
+		fi_p = &(dk_inp->rvi_frame_info[i]);
+		if( FRAME_INFO_N_SAVED(fi_p) > 0 ){
+			long len;
+			len = FRAME_INFO_N_SAVED( fi_p ) * sizeof(uint32_t);
+			/* round up to insure alignment */
+			len += LONG_ALIGN_SLOP;
+#ifdef STRING_DEBUG
+sprintf(ERROR_STRING,"reserving %d frame string bytes at offset %d",
+len,dk_inp->rvi_frame_info[i].fi_savei);
+advise(ERROR_STRING);
+#endif /* STRING_DEBUG */
+			// does this have to be word aligned???
+			takespace(&rv_st_freelist,FRAME_INFO_STR_IDX(fi_p),len);
+		}
+	}
+}
 
 /*
  * Scan the image of on-disk inodes, creating a working struct for each.
@@ -470,61 +563,58 @@ static void scan_directory(QSP_ARG_DECL  RV_Inode *dk_inp,
 
 static void scan_inode(QSP_ARG_DECL  RV_Inode *dk_inp)
 {
-	long len;
 	RV_Inode *inp;
-	int i;
+	const char *name;
 
 	assert( RV_INUSE(dk_inp) );
 	assert( ! RV_SCANNED(dk_inp) );
+	assert( RV_INODE_IDX(dk_inp) == dk_inp-rv_inode_tbl);
+	assert( RV_NAME_IDX(dk_inp) >= 0 && RV_NAME_IDX(dk_inp) < (long)(curr_rv_sbp->rv_n_string_blocks*BLOCK_SIZE) );
+
+	name = rv_string_tbl+RV_NAME_IDX(dk_inp);
 
 	/* allocate this inode block */
 
-	takespace(&rv_inode_freelist,RV_INODE_IDX(dk_inp),1);
-	RV_INODE_IDX(dk_inp) = dk_inp-rv_in_tbl;
+	alloc_inode_slot(RV_INODE_IDX(dk_inp));
+	//RV_INODE_IDX(dk_inp) = dk_inp-rv_inode_tbl;	// why?
+
+	// When we "scan" the inode, the string and data are already there, but we "allocate"
+	// to keep track of the fact that this space is already in use.
 
 	/* allocate the string */
-	assert( RV_NAME_IDX(dk_inp) >= 0 && RV_NAME_IDX(dk_inp) < (long)(rv_sbp->rv_nsb*BLOCK_SIZE) );
-
-	len = strlen( rv_stp+RV_NAME_IDX(dk_inp) )  + 1;
-#ifdef STRING_DEBUG
-sprintf(ERROR_STRING,"reserving %d string bytes at offset %d",
-len,RV_NAME_IDX(dk_inp));
-advise(ERROR_STRING);
-#endif /* STRING_DEBUG */
-	takespace(&rv_st_freelist,RV_NAME_IDX(dk_inp),len);
+	alloc_name_slot(RV_NAME_IDX(dk_inp));
 
 	// BUG?  these frame info's are only for movies???
 	/* allocate any error frames (also in the string table) */
-	for(i=0;i<N_RV_FRAMEINFOS;i++){
-		if( dk_inp->rvi_fi[i].fi_nsaved > 0 ){
-			len = dk_inp->rvi_fi[i].fi_nsaved * sizeof(uint32_t);
-			/* round up to insure alignment */
-			len += LONG_ALIGN_SLOP;
-#ifdef STRING_DEBUG
-sprintf(ERROR_STRING,"reserving %d frame string bytes at offset %d",
-len,dk_inp->rvi_fi[i].fi_savei);
-advise(ERROR_STRING);
-#endif /* STRING_DEBUG */
-			takespace(&rv_st_freelist,dk_inp->rvi_fi[i].fi_savei,len);
-		}
-	}
+	alloc_frame_infos(dk_inp);
 
 	/* now allocate the data blocks */
 	// Do links and directories have data blocks?
 	// I don't think so!
 
-	takespace(&rv_data_freelist,RV_ADDR(dk_inp),RV_N_BLOCKS(dk_inp));
+	alloc_data_blocks( RV_N_BLOCKS(dk_inp), RV_ADDR(dk_inp) );
 
-	SET_RV_FLAG_BITS(dk_inp, RVI_SCANNED);
+	SET_RV_FLAG_BITS(dk_inp, RVI_SCANNED);	// remember that we've scanned it...
 
 	/* now create a heap struct for this inode */
 
-//fprintf(stderr,"creating new heap rv_inode '%s'\n",rv_stp+RV_NAME_IDX(dk_inp));
-	inp = new_rv_inode(QSP_ARG  rv_stp+RV_NAME_IDX(dk_inp));
+	inp = new_rv_inode(QSP_ARG  name);
+
 	if( inp == NULL ){
+		// This can happen if we have a name collision - it should not be allowed
+		// to happen in the first place, but at the moment it HAS happened,
+		// so here we fix it by deleting the offending entry.
+		// del_ ??
+		rls_data_blocks(RV_N_BLOCKS(dk_inp),RV_ADDR(dk_inp));
+		rls_name_slot( RV_NAME_IDX(dk_inp) );
+		rls_inode_slot( RV_INODE_IDX(dk_inp) );
+		bzero( &rv_inode_tbl[RV_INODE_IDX(dk_inp)], sizeof( *rv_inode_tbl ) );
+
+		rv_sync(SINGLE_QSP_ARG);		/* flush data to disk */
+
 		sprintf(ERROR_STRING,
 			"Couldn't create working copy of raw volume file %s",
-			rv_stp+RV_NAME_IDX(dk_inp));
+			name);
 		WARN(ERROR_STRING);
 		return;		/* BUG? no cleanup done */
 	}
@@ -534,7 +624,7 @@ advise(ERROR_STRING);
 
 	copy_rv_inode(inp,dk_inp);
 
-	//SET_RV_SUPER_P(inp,rv_sbp);
+	//SET_RV_SUPER_P(inp,curr_rv_sbp);
 
 	/* We have to do this after we have copied the information from
 	 * the disk inode, and so the call to setup_rv_iofile used to be
@@ -544,7 +634,7 @@ advise(ERROR_STRING);
 	 * because the iofile ended up with the wrong # of frames...
 	 */
 	if( IS_DIRECTORY(inp) ){
-		inp->rvi_lp = new_list();
+		inp->rvi_children = new_list();
 	} else if( IS_LINK(inp) ){
 		/* advise("scan_inode:  not sure what to do about a link!?"); */
 	} else {
@@ -564,7 +654,7 @@ advise(ERROR_STRING);
 		COPY_INCS( SHP_TYPE_INCS( RV_MOVIE_SHAPE(inp) ), &RV_MOVIE_INCS(inp));
 		COPY_INCS( SHP_MACH_INCS( RV_MOVIE_SHAPE(inp) ), &RV_MOVIE_INCS(inp));
 		// set the flags
-		set_shape_flags(RV_MOVIE_SHAPE(inp),NULL,AUTO_SHAPE);
+		auto_shape_flags(RV_MOVIE_SHAPE(inp));
 
 		/* the image file might be open already if we are rescanning */
 		ifp = img_file_of(QSP_ARG  RV_NAME(inp));
@@ -593,25 +683,25 @@ static void link_directory(QSP_ARG_DECL  RV_Inode *dk_inp)
 	{
 	int err_val;
 
-	if( (err_val=posix_memalign(&data_blocks,BLOCK_SIZE,BLOCK_SIZE*rv_sbp->rv_ndisks)) != 0 ){
+	if( (err_val=posix_memalign(&data_blocks,BLOCK_SIZE,BLOCK_SIZE*curr_rv_sbp->rv_ndisks)) != 0 ){
 	 	ERROR1("Error in posix_memalign!?");
 	}
 	}
 #else // ! O_DIRECT
-	data_blocks = getbuf(BLOCK_SIZE*rv_sbp->rv_ndisks);
+	data_blocks = getbuf(BLOCK_SIZE*curr_rv_sbp->rv_ndisks);
 #endif // ! O_DIRECT
 
-	read_rv_data(dk_inp,data_blocks,BLOCK_SIZE*rv_sbp->rv_ndisks);
+	read_rv_data(dk_inp,data_blocks,BLOCK_SIZE*curr_rv_sbp->rv_ndisks);
 	sp=(short *)data_blocks;
 	while( *sp > 0 ){
 		RV_Inode *inp2;
 		Node *np;
-		inp2 = rv_in_tbl[*sp].rvi_inp; /* look up an inode from its on-disk index */
+		inp2 = rv_inode_tbl[*sp].rvi_inp; /* look up an inode from its on-disk index */
 
 		assert( inp2 != NULL );
 
 		np = mk_node(inp2);
-		addTail(dk_inp->rvi_inp->rvi_lp,np);
+		addTail(dk_inp->rvi_inp->rvi_children,np);
 		RV_PARENT(inp2) = dk_inp->rvi_inp;
 		sp++;
 	}
@@ -630,65 +720,38 @@ static void check_inode_size()
 	}
 }
 
-/* This is the routine which opens a new volume.
- * Now we just read the info from the 1st disk,
- * it would be nice to have it duplicated on all 4...
- *
- * This routine has been enhanced to automatically register
- * all files with the fileio module...
- */
-
-void read_rv_super(QSP_ARG_DECL  const char *vol_name)
+static int rv_already_open(QSP_ARG_DECL  const char *vol_name)
 {
-	uint32_t max_inodes;
-	off64_t offset,off_ret;
 	int i;
-	int fd_arr[MAX_DISKS];
-	blk_t siz_arr[MAX_DISKS];
-	const char *disknames[MAX_DISKS];
-	off64_t end_offset;
-	RV_Inode *inp;
-	char *s_ptr;
 
-	if( rv_sbp != NULL ){
+	if( curr_rv_sbp != NULL ){
 		/* check and see if this one is already open! */
-		for(i=0;i<rv_sbp->rv_ndisks;i++){
-			if( !strcmp(rv_sbp->rv_diskname[i],vol_name) ){
+		for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+			if( !strcmp(curr_rv_sbp->rv_diskname[i],vol_name) ){
 				sprintf(ERROR_STRING,
 		"read_rv_super:  Raw volume %s is already open",vol_name);
 				advise(ERROR_STRING);
-				return;
+				return 1;
 			}
 		}
+	}
+	return 0;
+}
 
+static void close_other_rv_if_open(SINGLE_QSP_ARG_DECL)
+{
+	if( curr_rv_sbp != NULL ){
 		sprintf(ERROR_STRING,
 			"Closing previously opened raw volume %s",
-			rv_sbp->rv_diskname[0]);
+			curr_rv_sbp->rv_diskname[0]);
 		advise(ERROR_STRING);
 
 		rv_close(SINGLE_QSP_ARG);		/* close and free mem */
 	}
+}
 
-	/* the volume name will be the name of any of the disks...
-	 * they all should have a superblock written.
-	 */
-
-//fprintf(stderr,"read_rv_super:  reading first disk, \"%s\"\n",vol_name);
-	if( open_disk_files(QSP_ARG  1,&vol_name,fd_arr,siz_arr) < 0 )
-		return;
-
-	end_offset = ((off64_t)siz_arr[0]) * BLOCK_SIZE;
-
-	offset = end_offset - BLOCK_SIZE;
-
-	off_ret = my_lseek64(fd_arr[0],offset,SEEK_SET);
-
-	if( BAD_OFFSET64(off_ret) ){
-		perror("read_rv_super:  my_lseek64");
-		WARN("read_rv_super:  Error #1 seeking to last volume block");
-//fprintf(stderr,"off_ret = 0x%lx\n",off_ret);
-		goto errorA;
-	}
+static int allocate_rv_superblock(QSP_ARG_DECL blk_t siz_arr[MAX_DISKS])
+{
 
 #ifdef O_DIRECT
 	{
@@ -697,66 +760,105 @@ void read_rv_super(QSP_ARG_DECL  const char *vol_name)
 
 	if( (err_val=posix_memalign(&ptr,block_size,block_size)) != 0 ){
 	 	WARN("Error in posix_memalign!?");
-		goto errorA;
+		return -1;
 	}
-	rv_sbp = ptr;
+	curr_rv_sbp = ptr;
 	}
 #else // ! O_DIRECT
-	rv_sbp = (RV_Super *)mem_get(block_size);
+	curr_rv_sbp = (RV_Super *)mem_get(block_size);
 
-	if( rv_sbp == NULL ){
-		WARN("read_rv_super:  Unable to allocate mem for superblock");
-		goto errorA;
+	if( curr_rv_sbp == NULL ){
+		WARN("allocate_rv_superblock:  Unable to allocate mem for superblock");
+		return -1;
 	}
 #endif // ! O_DIRECT
+	return 0;
+}
 
-	if( read(fd_arr[0],rv_sbp,block_size) != (int)block_size ){
+static int read_rv_superblock(QSP_ARG_DECL  const char *vol_name, int fd)
+{
+	if( read(fd,curr_rv_sbp,block_size) != (int)block_size ){
 		tell_sys_error("read");
-		WARN("read_rv_super:  error reading superblock");
-		goto errorB;
+		WARN("read_rv_superblock:  error reading superblock");
+		return -1;
 	}
 
-	if( rv_sbp->rv_magic != RV_MAGIC && rv_sbp->rv_magic != RV_MAGIC2 ){
+	if( curr_rv_sbp->rv_magic != RV_MAGIC && curr_rv_sbp->rv_magic != RV_MAGIC2 ){
 		sprintf(ERROR_STRING,
-			"read_rv_super:  Volume file %s is not a raw file system (bad magic number)!?",
+			"read_rv_superblock:  Volume file %s is not a raw file system (bad magic number)!?",
 			vol_name);
 		WARN(ERROR_STRING);
-		goto errorB;
+		return -1;
 	}
+	return 0;
+}
 
+static int seek_rv_superblock(QSP_ARG_DECL  int fd, blk_t siz_arr[MAX_DISKS])
+{
+	off64_t end_offset;
+	off64_t offset, off_ret;
+
+	end_offset = ((off64_t)siz_arr[0]) * BLOCK_SIZE;
+
+	offset = end_offset - BLOCK_SIZE;
+
+	off_ret = my_lseek64(fd,offset,SEEK_SET);
+
+	if( BAD_OFFSET64(off_ret) ){
+		perror("seek_rv_superblock:  my_lseek64");
+		WARN("seek_rv_superblock:  Error #1 seeking to last volume block");
+//fprintf(stderr,"off_ret = 0x%lx\n",off_ret);
+		return -1;
+	}
+	return 0;
+}
+
+static int open_rv_disks(QSP_ARG_DECL  int fd_arr[MAX_DISKS], blk_t siz_arr[MAX_DISKS])
+{
 	/* if the number of disks is more than 1, open the
 	 * rest of the devices.
 	 * For now, we assume that the disk which is already
 	 * open is the first one, but this is really a BUG.
 	 */
 
-	if( strcmp(vol_name,rv_sbp->rv_diskname[0]) ){
+#ifdef FOOBAR
+	if( strcmp(vol_name,curr_rv_sbp->rv_diskname[0]) ){
 		/* This is not an error if we are using a symlink /dev/rawvol */
 		/*
 		sprintf(ERROR_STRING,
-	"read_rv_super:  Volume %s is not the first disk (%s)",vol_name,
-			rv_sbp->rv_diskname[0]);
+	"open_rv_disks:  Volume %s is not the first disk (%s)",vol_name,
+			curr_rv_sbp->rv_diskname[0]);
 		WARN(ERROR_STRING);
 		*/
 	}
+#endif // FOOBAR
 
-	if( rv_sbp->rv_ndisks > 1 ){
-		for(i=1;i<rv_sbp->rv_ndisks;i++){
-//fprintf(stderr,"read_rv_super:  disk %d = \"%s\"\n",i,rv_sbp->rv_diskname[i]);
-			disknames[i] = rv_sbp->rv_diskname[i];
+	if( curr_rv_sbp->rv_ndisks > 1 ){
+		int i;
+		const char *disknames[MAX_DISKS];
+
+		for(i=1;i<curr_rv_sbp->rv_ndisks;i++){
+//fprintf(stderr,"open_rv_disks:  disk %d = \"%s\"\n",i,curr_rv_sbp->rv_diskname[i]);
+			disknames[i] = curr_rv_sbp->rv_diskname[i];
 		}
-		if( open_disk_files(QSP_ARG  rv_sbp->rv_ndisks-1,
+		if( open_disk_files(QSP_ARG  curr_rv_sbp->rv_ndisks-1,
 			&disknames[1],&fd_arr[1],&siz_arr[1]) < 0 ){
-			WARN("read_rv_super:  error opening disk files");
+			WARN("open_rv_disks:  error opening disk files");
+			return -1;
 		}
 	}
+	return 0;
+}
+
+static int allocate_rv_strings(SINGLE_QSP_ARG_DECL)
+{
 
 	/* allocate memory for the inodes and strings */
 
 	/* string table */
 
-	string_bytes_per_disk = block_size*rv_sbp->rv_nsb;
-	total_string_bytes = rv_sbp->rv_ndisks*string_bytes_per_disk;
+	string_bytes_per_disk = block_size*curr_rv_sbp->rv_n_string_blocks;
+	total_string_bytes = curr_rv_sbp->rv_ndisks*string_bytes_per_disk;
 
 #ifdef O_DIRECT
 	{
@@ -765,44 +867,57 @@ void read_rv_super(QSP_ARG_DECL  const char *vol_name)
 
 	if( (err_val=posix_memalign(&ptr,block_size,total_string_bytes)) != 0 ){
 	 	WARN("Error in posix_memalign!?");
-		goto errorB;
+		return -1;
 	}
-	rv_stp = ptr;
+	rv_string_tbl = ptr;
 	}
 
 #else // ! O_DIRECT
-	rv_stp = (char *)mem_get(total_string_bytes);
+	rv_string_tbl = (char *)mem_get(total_string_bytes);
 
-	if( rv_stp == NULL ){
-		WARN("read_rv_super:  failed to allocate string table");
-		goto errorB;
+	if( rv_string_tbl == NULL ){
+		WARN("allocate_rv_strings:  failed to allocate string table");
+		return -1;
 	}
 #endif // ! O_DIRECT
+	return 0;
+}
 
-	offset = BLOCK_SIZE*(off64_t)rv_sbp->rv_ndb;
+static int read_rv_strings(QSP_ARG_DECL  int fd_arr[MAX_DISKS])
+{
+	off64_t offset, off_ret;
+	char *s_ptr;
+	int i;
 
-	s_ptr = rv_stp;
+	offset = BLOCK_SIZE*(off64_t)curr_rv_sbp->rv_n_data_blocks;
 
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
+	s_ptr = rv_string_tbl;
+
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		off_ret = my_lseek64(fd_arr[i],offset,SEEK_SET);
 		if( BAD_OFFSET64(off_ret) ){
-			perror("read_rv_super:  my_lseek64");
-			sprintf(ERROR_STRING,"read_rv_super:  error seeking to string table, disk %d (%s)",i,rv_sbp->rv_diskname[i]);
+			perror("read_rv_strings:  my_lseek64");
+			sprintf(ERROR_STRING,"read_rv_strings:  error seeking to string table, disk %d (%s)",i,curr_rv_sbp->rv_diskname[i]);
 			WARN(ERROR_STRING);
-			goto errorC;
+			return -1;
 		}
 		if( read(fd_arr[i],s_ptr,string_bytes_per_disk) != (int)string_bytes_per_disk ){
-			perror("read_rv_super:  read");
+			perror("read_rv_strings:  read");
 			sprintf(ERROR_STRING,"Tried to read %d (0x%x) bytes at 0x%lx",
 				string_bytes_per_disk,string_bytes_per_disk,(long)s_ptr);
 			advise(ERROR_STRING);
-			sprintf(ERROR_STRING,"read_rv_super:  error reading string blocks, disk %d",i);
+			sprintf(ERROR_STRING,"read_rv_strings:  error reading string blocks, disk %d",i);
 			WARN(ERROR_STRING);
-			goto errorC;
+			return -1;
 		}
 		s_ptr += string_bytes_per_disk;
 	}
+	return 0;
+}
 
+static int allocate_inode_table(SINGLE_QSP_ARG_DECL)
+{
+	int i;
 
 if( verbose ){
 i=sizeof(RV_Inode);
@@ -810,7 +925,7 @@ sprintf(ERROR_STRING,"Inode size is %d bytes",i);
 advise(ERROR_STRING);
 }
 
-	inode_bytes_per_disk = block_size*rv_sbp->rv_nib;
+	inode_bytes_per_disk = block_size*curr_rv_sbp->rv_n_inode_blocks;
 	inodes_per_disk = floor(inode_bytes_per_disk/sizeof(RV_Inode));
 
 if( verbose ){
@@ -825,91 +940,154 @@ advise(ERROR_STRING);
 	int err_val;
 	void *ptr;
 
-	if( (err_val=posix_memalign(&ptr,block_size,rv_sbp->rv_ndisks*inode_bytes_per_disk)) != 0 ){
+	if( (err_val=posix_memalign(&ptr,block_size,curr_rv_sbp->rv_ndisks*inode_bytes_per_disk)) != 0 ){
 	 	WARN("Error in posix_memalign!?");
-		goto errorC;
+		return -1;
 	}
-	rv_in_tbl = ptr;
+	rv_inode_tbl = ptr;
 	}
-fprintf(stderr,"aligned inode table at 0x%lx\n",(long)rv_in_tbl);
 
 #else // ! O_DIRECT
-	rv_in_tbl=(RV_Inode *)mem_get(rv_sbp->rv_ndisks*inode_bytes_per_disk);
+	rv_inode_tbl=(RV_Inode *)mem_get(curr_rv_sbp->rv_ndisks*inode_bytes_per_disk);
 
-	if( rv_in_tbl==NULL ){
+	if( rv_inode_tbl==NULL ){
 		WARN("failed to allocate inode buffer");
-		goto errorC;
+		return -1;
 	}
-fprintf(stderr,"unaligned inode table at 0x%lx\n",(long)rv_in_tbl);
 
 #endif // ! O_DIRECT
+	return 0;
+}
 
-	inp=rv_in_tbl;
+static int read_inode_table(QSP_ARG_DECL  int fd_arr[MAX_DISKS])
+{
+	RV_Inode *inp;
+	int i;
 
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-fprintf(stderr,"reading %d inode bytes at 0x%lx\n",inode_bytes_per_disk,(long)inp);
+	inp=rv_inode_tbl;
+
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		/* inodes directly follow strings, so we don't have to seek */
 		if( read(fd_arr[i],inp,inode_bytes_per_disk) != (int)inode_bytes_per_disk ){
-			perror("read (read_rv_super 1)");
-			sprintf(ERROR_STRING,"read_rv_super:  Tried to read 0x%x bytes at 0x%lx",
+			perror("read (read_inode_table 1)");
+			sprintf(ERROR_STRING,"read_inode_table:  Tried to read 0x%x bytes at 0x%lx",
 				inode_bytes_per_disk,(long)inp);
 			advise(ERROR_STRING);
 			sprintf(ERROR_STRING,"error reading inode blocks, disk %d",i);
 			WARN(ERROR_STRING);
-			goto errorD;
+			return -1;
 		}
 		inp += inodes_per_disk;
+		curr_rv_sbp->rv_fd[i] = fd_arr[i];
 	}
+	return 0;
+}
+
+static void init_rv_freelists(void)
+{
+	uint32_t max_inodes;
 
 	/* initialize the freelists */
 
-	freeinit(&rv_st_freelist,MAX_STRING_CHUNKS,rv_sbp->rv_nsb*block_size);
+	freeinit(&rv_st_freelist,MAX_STRING_CHUNKS,curr_rv_sbp->rv_n_string_blocks*block_size);
 
-	inode_bytes_per_disk = (rv_sbp->rv_nib*block_size);
+	inode_bytes_per_disk = (curr_rv_sbp->rv_n_inode_blocks*block_size);
 	inodes_per_disk = inode_bytes_per_disk / sizeof(RV_Inode);
-	max_inodes = inodes_per_disk * rv_sbp->rv_ndisks;
+	max_inodes = inodes_per_disk * curr_rv_sbp->rv_ndisks;
 
 	freeinit(&rv_inode_freelist,MAX_INODE_CHUNKS,max_inodes);
 
 
 	/* strings and data are allocated in bytes, data in blocks */
-	freeinit(&rv_data_freelist,MAX_DATA_CHUNKS,rv_sbp->rv_ndb);
+	freeinit(&rv_data_freelist,MAX_DATA_CHUNKS,curr_rv_sbp->rv_n_data_blocks);
+}
 
-
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		rv_sbp->rv_fd[i] = fd_arr[i];
-	}
-
+static void scan_rv_file_system(SINGLE_QSP_ARG_DECL)
+{
 	strcpy(rv_pathname,ROOT_DIR_NAME);
 
 	if( ! in_mkfs ){
-		scan_directory(QSP_ARG  &rv_in_tbl[0],scan_inode);		/* this will recursively descend all the directories */
-		scan_directory(QSP_ARG  &rv_in_tbl[0],link_directory);
-		RV_PARENT(rv_in_tbl[0].rvi_inp) = NULL;
+		scan_directory(QSP_ARG  &rv_inode_tbl[0],scan_inode);		/* this will recursively descend all the directories */
+		scan_directory(QSP_ARG  &rv_inode_tbl[0],link_directory);
+		RV_PARENT(rv_inode_tbl[0].rvi_inp) = NULL;
 
-		if( rv_sbp->rv_magic == RV_MAGIC2 ){
+		if( curr_rv_sbp->rv_magic == RV_MAGIC2 ){
 			RV_Inode *inp;
 			inp=rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
 			assert( inp != NULL );
 
-			rv_sbp->rv_cwd = inp;
+			curr_rv_sbp->rv_cwd = inp;
 			set_pathname_context(SINGLE_QSP_ARG);
 		}
 	}
+}
+
+
+/* This is the routine which opens a new volume.
+ * Now we just read the info from the 1st disk,
+ * it would be nice to have it duplicated on all 4...
+ *
+ * This routine has been enhanced to automatically register
+ * all files with the fileio module...
+ */
+
+void read_rv_super(QSP_ARG_DECL  const char *vol_name)
+{
+	int fd_arr[MAX_DISKS];
+	blk_t siz_arr[MAX_DISKS];
+
+	if( rv_already_open(QSP_ARG  vol_name) )
+		return;
+	close_other_rv_if_open(SINGLE_QSP_ARG);
+
+	/* the volume name will be the name of any of the disks...
+	 * they all should have a superblock written.
+	 */
+
+	if( open_disk_files(QSP_ARG  1,&vol_name,fd_arr,siz_arr) < 0 )
+		return;
+
+	if( allocate_rv_superblock(QSP_ARG siz_arr) < 0 )
+		goto errorA;
+
+	if( seek_rv_superblock(QSP_ARG fd_arr[0], siz_arr) < 0 )
+		goto errorB;
+
+	if( read_rv_superblock(QSP_ARG  vol_name, fd_arr[0]) < 0 )
+		goto errorB;
+
+	if( open_rv_disks(QSP_ARG  fd_arr, siz_arr) < 0 )
+		goto errorB;
+
+	if( allocate_rv_strings(SINGLE_QSP_ARG) < 0 )
+		goto errorB;
+
+	if( read_rv_strings(QSP_ARG  fd_arr) < 0 )
+		goto errorC;
+
+	if( allocate_inode_table(SINGLE_QSP_ARG) < 0 )
+		goto errorC;
+
+	if( read_inode_table(QSP_ARG  fd_arr) < 0 )
+		goto errorD;
+
+	init_rv_freelists();
+
+	scan_rv_file_system(SINGLE_QSP_ARG);
 
 	return;
 
 	/* various stages of error cleanup */
 
 errorD:
-	mem_release(rv_in_tbl);
+	mem_release(rv_inode_tbl);
 errorC:
-	mem_release(rv_stp);
+	mem_release(rv_string_tbl);
 errorB:
-	mem_release(rv_sbp);
+	mem_release(curr_rv_sbp);
 
 errorA:
-	rv_sbp = NULL;
+	curr_rv_sbp = NULL;
 	close(fd_arr[0]);
 } /* end read_rv_super */
 
@@ -919,8 +1097,8 @@ static int has_root_access(uid_t uid)
 
 	if ( uid == 0) return 1;	/* really is root */
 
-	for(i=0;i<rv_sbp->rv_n_super_users;i++)
-		if( uid == rv_sbp->rv_root_uid[i] ) return 1;
+	for(i=0;i<curr_rv_sbp->rv_n_super_users;i++)
+		if( uid == curr_rv_sbp->rv_root_uid[i] ) return 1;
 
 	return 0;
 }
@@ -948,22 +1126,46 @@ int rv_access_allowed(QSP_ARG_DECL  RV_Inode *inp)
 	return(1);
 }
 
-/* Update the disk block image from the working heap struct, then convert the
- * disk image to the on-disk format.
- */
-
-static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk format */
+static void release_frame_infos( RV_Inode *inp )
 {
-	long len;
 	int i;
+	long len;
+
+	/* give away any error frames */
+	for(i=0;i<N_RV_FRAMEINFOS;i++){
+		Frame_Info *fi_p;
+		fi_p = &(inp->rvi_frame_info[i]);
+		if( FRAME_INFO_N_SAVED(fi_p) > 0 ){
+			len = FRAME_INFO_N_SAVED(fi_p) * sizeof(uint32_t);
+			/* round up to insure alignment */
+			len += LONG_ALIGN_SLOP;
+			givspace(&rv_st_freelist,len,FRAME_INFO_STR_IDX(fi_p));
+		}
+	}
+}
+
+static void remove_from_parent( RV_Inode *inp )
+{
 	Node *np;
 
-	assert( RV_SCANNED(inp) );
+	if( RV_PARENT(inp) == NULL ) return;
 
-	/* we should have already removed all the child inodes */
+	np=remData(RV_PARENT(inp)->rvi_children,inp);
+	assert( np != NULL );
+	rls_node(np);
+}
+
+// The last step in removing a file...
+//
+static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk format */
+{
+	// not true after mkfs???
+	//assert( RV_SCANNED(inp) );
+
 	if( IS_DIRECTORY(inp) ){
-		dellist(inp->rvi_lp);
-		inp->rvi_lp = NULL;
+		/* we should have already removed all the child inodes */
+		assert( RV_CHILDREN(inp) == NULL || eltcount(RV_CHILDREN(inp))==0 );
+		inp->rvi_children = NULL;
 	}
 
 	/* free the space used by the disk image copy.
@@ -972,39 +1174,11 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	 * so we can do a blind scan again later
 	 */
 
-	givspace(&rv_inode_freelist,1,RV_INODE_IDX(inp));
-
-	len=strlen(&rv_stp[RV_NAME_IDX(inp)])+1;
-	givspace(&rv_st_freelist,len,RV_NAME_IDX(inp));
-
-	/* give away any error frames */
-	for(i=0;i<N_RV_FRAMEINFOS;i++){
-		if( inp->rvi_fi[i].fi_nsaved > 0 ){
-			len = inp->rvi_fi[i].fi_nsaved * sizeof(uint32_t);
-			/* round up to insure alignment */
-			len += LONG_ALIGN_SLOP;
-			givspace(&rv_st_freelist,len,inp->rvi_fi[i].fi_savei);
-		}
-	}
-
-	/* The length SHOULD be 1 for directories... */
-	if( RV_N_BLOCKS(inp) > 0 ){
-		if( IS_DIRECTORY(inp) ){
-			sprintf(ERROR_STRING,"Releasing directory %s, size %d at 0x%x",
-					RV_NAME(inp),RV_N_BLOCKS(inp),RV_ADDR(inp));
-			advise(ERROR_STRING);
-		}
-		givspace(&rv_data_freelist,RV_N_BLOCKS(inp),RV_ADDR(inp));
-	}
-
-	if( RV_PARENT(inp) != NULL ){
-//fprintf(stderr,"rls_inode calling remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
-		np=remData(RV_PARENT(inp)->rvi_lp,inp);
-//fprintf(stderr,"rls_inode back from remData, lp = 0x%lx\n",(long)RV_PARENT(inp)->rvi_lp);
-		assert( np != NULL );
-
-		rls_node(np);
-	}
+	rls_inode_slot( RV_INODE_IDX(inp) );
+	rls_name_slot( RV_NAME_IDX(inp) );
+	release_frame_infos(inp);
+	rls_data_blocks(RV_N_BLOCKS(inp),RV_ADDR(inp));
+	remove_from_parent(inp);
 
 	del_rv_inode(QSP_ARG  inp);	/* remove from database */
 } /* end rls_inode */
@@ -1042,28 +1216,33 @@ static int rm_inode(QSP_ARG_DECL  RV_Inode *inp, int check_permissions)
 			GENERIC_IMGFILE_CLOSE(ifp);
 	}
 
+	// remove all of the children...
 	if( IS_DIRECTORY(inp) ){
 		Node *np;
 		rv_pushd(QSP_ARG  RV_NAME(inp));
-		while( status == 0 && (np=QLIST_HEAD(inp->rvi_lp)) != NULL ){
+		while( status == 0 && (np=QLIST_HEAD(inp->rvi_children)) != NULL ){
 			status = rm_inode(QSP_ARG  (RV_Inode *)np->n_data,check_permissions);
 		}
 		rv_popd(SINGLE_QSP_ARG);
 	}
 
 	if( status == 0 ){
-		CLEAR_RV_FLAG_BITS(inp, RVI_INUSE);
+		CLR_RV_FLAG_BITS(inp, RVI_INUSE);
 		rls_inode(QSP_ARG  inp);
 	}
+
+	// BUG? - don't we need to remove from parent's list???
+
 	return(status);
-}
+
+}	// rm_inode
 
 void rv_close(SINGLE_QSP_ARG_DECL)
 {
 	int i;
 	RV_Inode *inp;
 
-	if( rv_sbp == NULL ){
+	if( curr_rv_sbp == NULL ){
 		WARN("rv_close:  no raw volume open");
 		return;
 	}
@@ -1081,27 +1260,27 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 	if( rm_inode(QSP_ARG  inp,0) < 0 && verbose )
 		WARN("rv_close:  error removing inode.");
 
-	mem_release(rv_stp);
-	mem_release(rv_in_tbl);
-	/* BUG we are still using rv_sbp!? */
-	//mem_release(rv_sbp);
+	mem_release(rv_string_tbl);
+	mem_release(rv_inode_tbl);
+	/* BUG we are still using curr_rv_sbp!? */
+	//mem_release(curr_rv_sbp);
 
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		if( close(rv_sbp->rv_fd[i]) < 0 ){
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+		if( close(curr_rv_sbp->rv_fd[i]) < 0 ){
 			perror("close");
 			sprintf(ERROR_STRING,
 				"error closing raw volume disk %s",
-				rv_sbp->rv_diskname[i]);
+				curr_rv_sbp->rv_diskname[i]);
 			WARN(ERROR_STRING);
 		}
 	}
 
 	/* do this here to fix bug? */
-	mem_release(rv_sbp);
-	rv_sbp = NULL;
+	mem_release(curr_rv_sbp);
+	curr_rv_sbp = NULL;
 
 	while( eltcount( CONTEXT_LIST(rv_inode_itp) ) > 1 )
-		pop_item_context(QSP_ARG  rv_inode_itp);
+		pop_pathname_context(SINGLE_QSP_ARG);
 } // end rv_close
 
 /* enter a readable file into the fileio database */
@@ -1125,22 +1304,22 @@ static void write_rv_data(RV_Inode *inp,char *data,uint32_t size)
 	off64_t offset,retoff;
 	int n;
 
-	offset = (off64_t) RV_ADDR(inp) * (off64_t) rv_sbp->rv_blocksize;
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		retoff = my_lseek64(rv_sbp->rv_fd[i],offset,SEEK_SET);
+	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){
 			sprintf(DEFAULT_ERROR_STRING,"write_rv_data:  Error seeking on raw disk %d (%s)",i,
-					rv_sbp->rv_diskname[i]);
+					curr_rv_sbp->rv_diskname[i]);
 			NWARN(DEFAULT_ERROR_STRING);
 			return;
 		}
 	}
-	if( size > (uint32_t)(BLOCK_SIZE*rv_sbp->rv_ndisks) ){
+	if( size > (uint32_t)(BLOCK_SIZE*curr_rv_sbp->rv_ndisks) ){
 		NERROR1("write_rv_data:  too much data");
 	}
 	i=0;
 	while( size ){
-		if( (n=write(rv_sbp->rv_fd[i],data,BLOCK_SIZE)) != BLOCK_SIZE ){
+		if( (n=write(curr_rv_sbp->rv_fd[i],data,BLOCK_SIZE)) != BLOCK_SIZE ){
 			perror("write");
 			sprintf(DEFAULT_ERROR_STRING,
 				"Tried to write data at 0x%lx",(long)data);
@@ -1165,31 +1344,31 @@ static void sync_dir_data(QSP_ARG_DECL  RV_Inode *inp)
 	{
 	int err_val;
 
-	if( (err_val=posix_memalign(&data_blocks,BLOCK_SIZE,BLOCK_SIZE*rv_sbp->rv_ndisks)) != 0 ){
+	if( (err_val=posix_memalign(&data_blocks,BLOCK_SIZE,BLOCK_SIZE*curr_rv_sbp->rv_ndisks)) != 0 ){
 	 	ERROR1("Error in posix_memalign!?");
 	}
 	}
 #else // ! O_DIRECT
-	data_blocks = getbuf(BLOCK_SIZE*rv_sbp->rv_ndisks);	/* BUG assumes one block per disk */
+	data_blocks = getbuf(BLOCK_SIZE*curr_rv_sbp->rv_ndisks);	/* BUG assumes one block per disk */
 #endif // ! O_DIRECT
 
 	/* now do we find the context? */
 
-	assert( eltcount(inp->rvi_lp) <= (BLOCK_SIZE*rv_sbp->rv_ndisks)/sizeof(short) );
+	assert( eltcount(inp->rvi_children) <= (BLOCK_SIZE*curr_rv_sbp->rv_ndisks)/sizeof(short) );
 
-	np=QLIST_HEAD(inp->rvi_lp);
+	np=QLIST_HEAD(inp->rvi_children);
 	sp=(short *)data_blocks;
 	while(np!=NULL){
 		RV_Inode *inp2;
 		inp2 = (RV_Inode *)np->n_data;
-		*sp++ = (short) inp2->rvi_ini;	/* remember the inode number of this child */
+		*sp++ = (short) RV_INODE_IDX(inp2);	/* remember the inode number of this child */
 		np = np->n_next;
 	}
-	while( ( ((char*)sp) - ((char *)data_blocks) ) < BLOCK_SIZE*rv_sbp->rv_ndisks )
+	while( ( ((char*)sp) - ((char *)data_blocks) ) < BLOCK_SIZE*curr_rv_sbp->rv_ndisks )
 		*sp++ = 0;
 
 	/* Now we need to write out the block... */
-	write_rv_data(inp,data_blocks,BLOCK_SIZE*rv_sbp->rv_ndisks);
+	write_rv_data(inp,data_blocks,BLOCK_SIZE*curr_rv_sbp->rv_ndisks);
 	givbuf(data_blocks);
 }
 
@@ -1201,11 +1380,13 @@ static void sync_inode(QSP_ARG_DECL  RV_Inode *inp)
 
 	/* update the disk image copy */
 	// structure copy
-	//rv_in_tbl[RV_INODE_IDX(inp)] = *inp;
-	copy_rv_inode(&rv_in_tbl[RV_INODE_IDX(inp)],inp);
+	//rv_inode_tbl[RV_INODE_IDX(inp)] = *inp;
+	CLR_RV_FLAG_BITS(inp,RVI_SCANNED);
+	copy_rv_inode(&rv_inode_tbl[RV_INODE_IDX(inp)],inp);
 
 	/* do we need to do this? */
-	rv_in_tbl[RV_INODE_IDX(inp)].rvi_flags = RV_FLAGS(inp) & ~RVI_SCANNED;
+	//rv_inode_tbl[RV_INODE_IDX(inp)].rvi_flags = RV_FLAGS(inp) & ~RVI_SCANNED;
+	//CLR_RV_FLAG_BITS(&rv_inode_tbl[RV_INODE_IDX(inp)],RVI_SCANNED);
 }
 
 #ifdef UNUSED
@@ -1214,7 +1395,7 @@ static RV_Inode *search_directory(RV_Inode *inp, int index)
 {
 	Node *np;
 
-	np=QLIST_HEAD(inp->rvi_lp);
+	np=QLIST_HEAD(inp->rvi_children);
 	while(np!=NULL){
 		inp=(RV_Inode *)np->n_data;
 		if( RV_INODE_IDX(inp) == index ) return(inp);
@@ -1259,23 +1440,23 @@ void perform_write_test( QSP_ARG_DECL  int i_disk, int n_blocks, int n_reps )
 	long delta1,delta2;
 	double delta;
 
-	/* BUG?  make sure rv_sbp has valid value? */
+	/* BUG?  make sure curr_rv_sbp has valid value? */
 
 	n_xfer = n_blocks * BLOCK_SIZE;
 	buf = (char *)getbuf( n_xfer );	/* BUG?  check alignment? */
-	max_block = rv_sbp->rv_ndb - 1 ;
+	max_block = curr_rv_sbp->rv_n_data_blocks - 1 ;
 
-	if( i_disk < 0 || i_disk >= rv_sbp->rv_ndisks ){
+	if( i_disk < 0 || i_disk >= curr_rv_sbp->rv_ndisks ){
 		sprintf(DEFAULT_ERROR_STRING,"Disk index %d is out of range (0-%d)",
-			i_disk,rv_sbp->rv_ndisks-1);
+			i_disk,curr_rv_sbp->rv_ndisks-1);
 		NWARN(DEFAULT_ERROR_STRING);
 		return;
 	}
 
-	fd = rv_sbp->rv_fd[i_disk];
+	fd = curr_rv_sbp->rv_fd[i_disk];
 	i_blk = 0;
 	while( (i_blk+n_blocks-1) <= max_block ){
-		offset = (off64_t) i_blk * (off64_t) rv_sbp->rv_blocksize;
+		offset = (off64_t) i_blk * (off64_t) curr_rv_sbp->rv_blocksize;
 		if( perform_seek(fd,offset) < 0 ) return;
 		if( (n_actual=read(fd,buf,n_xfer)) != n_xfer ){
 			sprintf(DEFAULT_ERROR_STRING,
@@ -1319,7 +1500,7 @@ RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,uint32_t size)
 	RV_Inode *inp;
 	int i;
 
-	if( rv_sbp == NULL ){
+	if( curr_rv_sbp == NULL ){
 		sprintf(ERROR_STRING,
 			"no raw volume open, can't create new file %s",name);
 		WARN(ERROR_STRING);
@@ -1329,6 +1510,7 @@ RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,uint32_t size)
 	/* make sure name is unique */
 
 	inp = new_rv_inode(QSP_ARG  name);			/* get a struct from the heap */
+
 	if( inp == NULL ) return(inp);
 
 	/* get space in the disk image for the name */
@@ -1345,7 +1527,7 @@ sprintf(ERROR_STRING,"%d name bytes allocated at offset %d",strlen(name)+1,
 RV_NAME_IDX(inp));
 advise(ERROR_STRING);
 #endif /* STRING_DEBUG */
-	strcpy(rv_stp+RV_NAME_IDX(inp),name);
+	strcpy(rv_string_tbl+RV_NAME_IDX(inp),name);
 
 	/* get space in the disk image for the inode */
 
@@ -1382,28 +1564,33 @@ advise(ERROR_STRING);
 	inp->rvi_uid = getuid();		/* should we use real or effective? */
 	inp->rvi_gid = getgid();
 
-	//inp->rvi_sbp = rv_sbp;
+	//inp->rvi_sbp = curr_rv_sbp;
 	SET_RV_MOVIE_EXTRA(inp, n_extra_bytes);
 
-	for(i=0;i<N_RV_FRAMEINFOS;i++)
-		inp->rvi_fi[i].fi_nsaved = 0;
+	for(i=0;i<N_RV_FRAMEINFOS;i++){
+		Frame_Info *fi_p;
+		fi_p = &(inp->rvi_frame_info[i]);
+		SET_FRAME_INFO_N_SAVED(fi_p,0);
+	}
 
 	/* make the disk image match our working version */
-	rv_in_tbl[RV_INODE_IDX(inp)] = (*inp);
+	rv_inode_tbl[RV_INODE_IDX(inp)] = (*inp);
 
 	/* we add this file to the current directory - UNLESS we are creating the root dir */
 	/* BUT we also have to worry about the . entry in the root directory... */
-	if( (!in_mkfs) && rv_sbp->rv_cwd!=NULL ){
+	if( (!in_mkfs) && curr_rv_sbp->rv_cwd!=NULL ){
 		Node *np;
 		np = mk_node(inp);
-//fprintf(stderr,"rv_newfile adding inode to directory list 0x%lx...\n",(long)rv_sbp->rv_cwd->rvi_lp);
-		addTail(rv_sbp->rv_cwd->rvi_lp,np);
-		RV_PARENT(inp) = rv_sbp->rv_cwd;
+//fprintf(stderr,"rv_newfile adding inode to directory list 0x%lx...\n",(long)curr_rv_sbp->rv_cwd->rvi_children);
+		addTail(curr_rv_sbp->rv_cwd->rvi_children,np);
+		RV_PARENT(inp) = curr_rv_sbp->rv_cwd;
 	} else {
 		RV_PARENT(inp) = NULL;
 	}
 
 	SET_RV_MOVIE_SHAPE(inp,ALLOC_SHAPE);
+	SET_SHP_PREC_PTR( RV_MOVIE_SHAPE(inp), prec_for_code(PREC_UBY) );
+
 	// Need to put some values here?  RV_MOVIE_PREC
 	SET_RV_MOVIE_PREC_CODE(inp,PREC_UBY);
 	{
@@ -1412,7 +1599,13 @@ advise(ERROR_STRING);
 		// BUG set dimset[0] to number of bytes
 		COPY_DIMS( & RV_MOVIE_DIMS(inp), &dimset );
 		COPY_INCS( & RV_MOVIE_INCS(inp), &incset );
+
+		COPY_DIMS( SHP_MACH_DIMS(RV_MOVIE_SHAPE(inp)), &dimset );
+		COPY_DIMS( SHP_TYPE_DIMS(RV_MOVIE_SHAPE(inp)), &dimset );
+		COPY_INCS( SHP_MACH_INCS(RV_MOVIE_SHAPE(inp)), &incset );
+		COPY_INCS( SHP_TYPE_INCS(RV_MOVIE_SHAPE(inp)), &incset );
 	}
+	auto_shape_flags( RV_MOVIE_SHAPE(inp) );
 
 	return(inp);
 
@@ -1429,12 +1622,13 @@ void xfer_frame_info(uint32_t *lp,int index,RV_Inode *inp)
 {
 	uint32_t *src;
 	int n;
+	Frame_Info *fi_p = &(inp->rvi_frame_info[index]);
 
-	assert( inp->rvi_fi[index].fi_nsaved > 0 );
+	assert( FRAME_INFO_N_SAVED(fi_p) > 0 );
 
-	src = (uint32_t *)( rv_stp + ALIGN(inp->rvi_fi[index].fi_savei) );
+	src = (uint32_t *)( rv_string_tbl + ALIGN( FRAME_INFO_STR_IDX(fi_p)) );
 
-	n = inp->rvi_fi[index].fi_nsaved;
+	n = FRAME_INFO_N_SAVED(fi_p);
 	while(n--)
 		*lp++ = *src++;
 }
@@ -1444,6 +1638,7 @@ int remember_frame_info(RV_Inode *inp,int index,USHORT_ARG n,uint32_t *frames)
 	uint32_t *lp;
 	uint32_t len;
 	long i_addr;
+	Frame_Info *fi_p;
 
 	assert( index >= 0 && index < N_RV_FRAMEINFOS );
 
@@ -1468,17 +1663,17 @@ int remember_frame_info(RV_Inode *inp,int index,USHORT_ARG n,uint32_t *frames)
 		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
 	}
-	inp->rvi_fi[index].fi_savei = i_addr;
+	fi_p = &(inp->rvi_frame_info[index]);
+	SET_FRAME_INFO_STR_IDX(fi_p,i_addr);
+	SET_FRAME_INFO_N_SAVED(fi_p,n);
 
 #ifdef STRING_DEBUG
 sprintf(DEFAULT_ERROR_STRING,"allocated %d frame bytes at offset %d",
-len,inp->rvi_fi[index].fi_savei);
+len,FRAME_INFO_STR_IDX(fi_p));
 advise(DEFAULT_ERROR_STRING);
 #endif /* STRING_DEBUG */
 
-	inp->rvi_fi[index].fi_nsaved = n;
-
-	lp = (uint32_t *)( rv_stp + ALIGN(inp->rvi_fi[index].fi_savei) );
+	lp = (uint32_t *)( rv_string_tbl + ALIGN(FRAME_INFO_STR_IDX(fi_p)) );
 	while(n--)
 		*lp++ = *frames++;
 
@@ -1515,12 +1710,12 @@ static void deny_root_access( int index )
 {
 	int i;
 
-	assert( rv_sbp->rv_n_super_users > 0 );
+	assert( curr_rv_sbp->rv_n_super_users > 0 );
 
 	/* shift valid id's down to fill space vacated by denied id */
-	for(i=index;i<(rv_sbp->rv_n_super_users-1);i++)
-		rv_sbp->rv_root_uid[i] = rv_sbp->rv_root_uid[i+1];
-	rv_sbp->rv_n_super_users --;
+	for(i=index;i<(curr_rv_sbp->rv_n_super_users-1);i++)
+		curr_rv_sbp->rv_root_uid[i] = curr_rv_sbp->rv_root_uid[i+1];
+	curr_rv_sbp->rv_n_super_users --;
 }
 
 /* the super block is the very last block... */
@@ -1565,22 +1760,22 @@ static void show_root_users(SINGLE_QSP_ARG_DECL)
 	int i;
 	char *s;
 
-	if( rv_sbp->rv_n_super_users == 0 ){
+	if( curr_rv_sbp->rv_n_super_users == 0 ){
 		prt_msg("\nNo users with root privileges");
 		return;
 	}
 	// CHECK BUG? - changed <= to < in test below...
-	assert( rv_sbp->rv_n_super_users >= 0 && rv_sbp->rv_n_super_users < MAX_RV_SUPER_USERS );
+	assert( curr_rv_sbp->rv_n_super_users >= 0 && curr_rv_sbp->rv_n_super_users < MAX_RV_SUPER_USERS );
 
-	for(i=0;i<rv_sbp->rv_n_super_users;i++){
+	for(i=0;i<curr_rv_sbp->rv_n_super_users;i++){
 		if( i == 0 ) prt_msg("\nUsers with root privilege:");
-		s = name_from_uid( rv_sbp->rv_root_uid[i] );
+		s = name_from_uid( curr_rv_sbp->rv_root_uid[i] );
 		if( s == NULL ){
 			sprintf(DEFAULT_ERROR_STRING,"\t(uid %d, unable to locate user name!?)",
-				rv_sbp->rv_root_uid[i]);
+				curr_rv_sbp->rv_root_uid[i]);
 			NWARN(DEFAULT_ERROR_STRING);
 			deny_root_access(i);
-			flush_super(QSP_ARG  rv_sbp);
+			flush_super(QSP_ARG  curr_rv_sbp);
 			i--;
 		} else {
 			sprintf(msg_str,"\t%s",s);
@@ -1595,14 +1790,14 @@ int grant_root_access(QSP_ARG_DECL  const char *user_name)
 	long l_uid;
 	int i;
 
-	if( rv_sbp == NULL ){
+	if( curr_rv_sbp == NULL ){
 		WARN("grant_root_access:  no raw volume open");
 		sprintf(ERROR_STRING,"Unable to grant rawvol root access to user %s",user_name);
 		advise(ERROR_STRING);
 		return(-1);
 	}
 	/* make sure we have a slot available */
-	if( rv_sbp->rv_n_super_users >= MAX_RV_SUPER_USERS ){
+	if( curr_rv_sbp->rv_n_super_users >= MAX_RV_SUPER_USERS ){
 		sprintf(ERROR_STRING,"Current rawvol already has %d super users",
 			MAX_RV_SUPER_USERS);
 		WARN(ERROR_STRING);
@@ -1615,8 +1810,8 @@ int grant_root_access(QSP_ARG_DECL  const char *user_name)
 	uid = (uid_t) l_uid;
 
 	/* make sure that this user is not already on the list */
-	for(i=0;i<rv_sbp->rv_n_super_users;i++){
-		if( uid == rv_sbp->rv_root_uid[i] ){
+	for(i=0;i<curr_rv_sbp->rv_n_super_users;i++){
+		if( uid == curr_rv_sbp->rv_root_uid[i] ){
 			sprintf(ERROR_STRING,"User %s is already on the rawvol root access list!?",
 				user_name);
 			WARN(ERROR_STRING);
@@ -1626,8 +1821,8 @@ int grant_root_access(QSP_ARG_DECL  const char *user_name)
 
 	/* go ahead and add */
 
-	rv_sbp->rv_root_uid[ rv_sbp->rv_n_super_users ++ ] = uid;
-	flush_super(QSP_ARG  rv_sbp);
+	curr_rv_sbp->rv_root_uid[ curr_rv_sbp->rv_n_super_users ++ ] = uid;
+	flush_super(QSP_ARG  curr_rv_sbp);
 	return(0);
 } // grant_root_access
 
@@ -1665,32 +1860,35 @@ static int rv_step_dir(QSP_ARG_DECL  const char *dirname)
 	RV_Inode *inp;
 
 	if( !strcmp(dirname,"..") ){
-		if( RV_PARENT(rv_sbp->rv_cwd) == NULL ){
+		if( RV_PARENT(curr_rv_sbp->rv_cwd) == NULL ){
 			WARN("Current directory has no parent, can't cd ..");
 			return(-1);
 		} else {
-			rv_sbp->rv_cwd = RV_PARENT(rv_sbp->rv_cwd);
+			curr_rv_sbp->rv_cwd = RV_PARENT(curr_rv_sbp->rv_cwd);
 			remove_path_component();
-			pop_item_context(QSP_ARG  rv_inode_itp);
+			pop_pathname_context(SINGLE_QSP_ARG);
 			set_pathname_context(SINGLE_QSP_ARG);
 		}
 		return(0);
 	} else if( !strcmp(dirname,".") ) return(0);	/* a noop */
 
+	set_pathname_context(SINGLE_QSP_ARG);
 	inp = rv_inode_of(QSP_ARG  dirname);
+	pop_pathname_context(SINGLE_QSP_ARG);
+
 	if( inp==NULL ){
 		sprintf(ERROR_STRING,"RV directory \"%s\" does not exist",dirname);
 		WARN(ERROR_STRING);
 		return(-1);
 	}
-	rv_sbp->rv_cwd = inp;
+	curr_rv_sbp->rv_cwd = inp;
 	if( !strcmp(RV_NAME(inp),ROOT_DIR_NAME) )
 		strcpy(rv_pathname,RV_NAME(inp));
 	else
 		add_path_component(RV_NAME(inp));
 
 	if( eltcount( CONTEXT_LIST(rv_inode_itp) ) > 1 )
-		pop_item_context(QSP_ARG  rv_inode_itp);
+		pop_pathname_context(SINGLE_QSP_ARG);
 	else if( ! in_mkfs ){
 		sprintf(ERROR_STRING,"rv_mkdir:  no context to pop!?");
 		WARN(ERROR_STRING);
@@ -1769,12 +1967,14 @@ static void rv_ls_extra(QSP_ARG_DECL  RV_Inode *inp)
 	prt_msg(msg_str);
 
 	if( IS_REGULAR_FILE(inp) )
-		for(i=0;i<N_RV_FRAMEINFOS;i++)
-			if( inp->rvi_fi[i].fi_nsaved > 0 ){
-				sprintf(msg_str,"%d %s errors",inp->rvi_fi[i].fi_nsaved,
+		for(i=0;i<N_RV_FRAMEINFOS;i++){
+			Frame_Info *fi_p = &(inp->rvi_frame_info[i]);
+			if( FRAME_INFO_N_SAVED(fi_p) > 0 ){
+				sprintf(msg_str,"%d %s errors",FRAME_INFO_N_SAVED(fi_p),
 					error_name[i]);
 				prt_msg(msg_str);
 			}
+		}
 }
 
 void rv_info(QSP_ARG_DECL  RV_Inode *inp)
@@ -1858,13 +2058,13 @@ static int flush_inodes(RV_Super *sbp,RV_Inode *inp)
 	off64_t offset,off_ret;
 	int i;
 
-	offset = BLOCK_SIZE*(off64_t)( sbp->rv_nsb + sbp->rv_ndb );
+	offset = BLOCK_SIZE*(off64_t)( sbp->rv_n_string_blocks + sbp->rv_n_data_blocks );
 	for(i=0;i<sbp->rv_ndisks;i++){
 		off_ret = my_lseek64(sbp->rv_fd[i],offset,SEEK_SET);
 		if( BAD_OFFSET64(off_ret) ){
 			perror("flush_inodes:  my_lseek64");
 			sprintf(DEFAULT_ERROR_STRING,
-	"flush_inodes:  error #3 seeking to inode table, disk %d (%s)",i,rv_sbp->rv_diskname[i]);
+	"flush_inodes:  error #3 seeking to inode table, disk %d (%s)",i,curr_rv_sbp->rv_diskname[i]);
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
 		}
@@ -1886,37 +2086,27 @@ static int flush_inodes(RV_Super *sbp,RV_Inode *inp)
 	return(0);
 } // flush_inodes
 
-void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32_t nsb)
+static int get_n_data_blocks(blk_t siz_arr[MAX_DISKS], int ndisks, uint32_t nib, uint32_t nsb )
 {
-	int fd_arr[MAX_DISKS];
-	blk_t min_siz,siz_arr[MAX_DISKS];
-	long nb,n;
-	size_t block_size=BLOCK_SIZE;
-	RV_Inode *inp;
+	blk_t min_siz;
+	long nb;
 	int i;
-	RV_Super *sbp;
-
-	/*
-	if( geteuid() != 0 ){
-		WARN("Sorry, only root can mkfs");
-		return;
-	}
-	*/
-
-	if( open_disk_files(QSP_ARG  ndisks,disknames,fd_arr,siz_arr) < 0 )
-		return;
-
-	/* BUG should use the minimum # of blocks of all the disks... */
 
 	/* find minimum size */
+
 	min_siz = siz_arr[0];
 	for(i=1;i<ndisks;i++)
 		if( siz_arr[i] < min_siz ) min_siz = siz_arr[i];
 
-
 	nb = min_siz - 1;
 	nb -= nib;
 	nb -= nsb;
+	return nb;
+}
+
+static RV_Super *alloc_super_block(SINGLE_QSP_ARG_DECL)
+{
+	RV_Super *sbp;
 
 #ifdef O_DIRECT
 	{
@@ -1925,7 +2115,7 @@ void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32
 
 	if( (err_val=posix_memalign(&ptr,block_size,block_size)) != 0 ){
 	 	WARN("Error in posix_memalign!?");
-		goto errorA;
+		return NULL;
 	}
 	sbp = ptr;
 	}
@@ -1934,12 +2124,15 @@ void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32
 
 	if( sbp == NULL ){
 		WARN("Unable to allocate mem for superblock");
-		goto errorA;
 	}
 
 #endif // ! O_DIRECT
+	return sbp;
+}
 
-	/* initialize super-block */
+static void init_super_block(RV_Super *sbp, int ndisks, int fd_arr[MAX_DISKS], blk_t siz_arr[MAX_DISKS], const char **disknames, uint32_t nib, uint32_t nsb, uint32_t nb)
+{
+	int i;
 
 	sbp->rv_magic = RV_MAGIC2;
 	sbp->rv_ndisks = ndisks;
@@ -1949,48 +2142,84 @@ void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32
 		strcpy(sbp->rv_diskname[i],disknames[i]);
 		sbp->rv_fd[i] = fd_arr[i];
 	}
-	sbp->rv_nib = nib;
-	sbp->rv_nsb = nsb;
-	sbp->rv_ndb = nb;
+	sbp->rv_n_inode_blocks = nib;
+	sbp->rv_n_string_blocks = nsb;
+	sbp->rv_n_data_blocks = nb;
 	//sbp->rv_flags = 0;
 	sbp->rv_n_super_users = 0;
 	sbp->rv_cwd = NULL;
+}
 
-	if( flush_super(QSP_ARG  sbp) < 0 ) goto errorB;
-
+static int alloc_rv_inodes(QSP_ARG_DECL  RV_Super *sbp)
+{
 	/* allocate memory for the inodes */
 
-	inode_bytes_per_disk = block_size*sbp->rv_nib;
+	inode_bytes_per_disk = block_size*sbp->rv_n_inode_blocks;
 
 #ifdef O_DIRECT
 	{
 	int err_val;
 	void *ptr;
 
-	if( (err_val=posix_memalign(&ptr,block_size,ndisks*inode_bytes_per_disk)) != 0 ){
+	if( (err_val=posix_memalign(&ptr,block_size,sbp->rv_ndisks*inode_bytes_per_disk)) != 0 ){
 	 	WARN("Error in posix_memalign!?");
-		goto errorB;
+		return -1;
 	}
-	rv_in_tbl = ptr;
+	rv_inode_tbl = ptr;
 	}
 
 #else // ! O_DIRECT
-	rv_in_tbl=(RV_Inode *)mem_get(inode_bytes_per_disk * ndisks);
+	rv_inode_tbl=(RV_Inode *)mem_get(inode_bytes_per_disk * sbp->rv_ndisks);
 
-	if( rv_in_tbl==NULL ){
+	if( rv_inode_tbl==NULL ){
 		WARN("rv_mkfs:  failed to allocate inode buffer");
-		goto errorB;
+		return -1;
 	}
 #endif // ! O_DIRECT
 
-	inp=rv_in_tbl;
+	return 0;
+}
+
+static void clear_inode_table(int ndisks)
+{
+	RV_Inode *inp;
+	int n;
+
+	inp=rv_inode_tbl;
 	n = inode_bytes_per_disk * ndisks / sizeof(*inp);
 	while(n--){
 		RV_FLAGS(inp)=0;		/* clear RVI_INUSE */
 		inp++;
 	}
+}
 
-	if( flush_inodes(sbp,rv_in_tbl) < 0 )
+void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32_t nsb)
+{
+	int fd_arr[MAX_DISKS];
+	blk_t siz_arr[MAX_DISKS];
+	long nb;
+//	size_t block_size=BLOCK_SIZE;
+	RV_Super *sbp;
+
+	if( open_disk_files(QSP_ARG  ndisks,disknames,fd_arr,siz_arr) < 0 )
+		return;
+
+	nb = get_n_data_blocks(siz_arr,ndisks,nib,nsb);
+
+	sbp = alloc_super_block(SINGLE_QSP_ARG);
+	if( sbp == NULL ) goto errorA;
+
+	init_super_block(sbp,ndisks,fd_arr,siz_arr,disknames,nib,nsb,nb);
+
+	if( flush_super(QSP_ARG  sbp) < 0 ) goto errorB;
+
+	if( alloc_rv_inodes(QSP_ARG  sbp) < 0 )
+		goto errorB;
+
+	clear_inode_table(ndisks);
+
+
+	if( flush_inodes(sbp,rv_inode_tbl) < 0 )
 		goto errorC;
 
 	/* now we mount, make a root directory, then unmount... */
@@ -2008,14 +2237,14 @@ void rv_mkfs(QSP_ARG_DECL  int ndisks,const char **disknames,uint32_t nib,uint32
 	/* Really, we should just write the superblock last... */
 
 errorC:
-	mem_release(rv_in_tbl);
+	mem_release(rv_inode_tbl);
 errorB:
 	mem_release(sbp);
 errorA:
 	//close(fd_arr[0]);
 	// close ALL the drives...
 	close_disk_files(QSP_ARG  ndisks,fd_arr);
-}
+}	// end rv_mkfs
 
 void rv_ls_cwd(SINGLE_QSP_ARG_DECL)
 {
@@ -2024,7 +2253,7 @@ void rv_ls_cwd(SINGLE_QSP_ARG_DECL)
 
 	CHECK_VOLUME("rv_ls_cwd")
 
-	lp=rv_sbp->rv_cwd->rvi_lp;
+	lp=curr_rv_sbp->rv_cwd->rvi_children;
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
@@ -2044,7 +2273,7 @@ void rv_rm_cwd(SINGLE_QSP_ARG_DECL)
 
 	CHECK_VOLUME("rv_rm_cwd")
 
-	lp=rv_sbp->rv_cwd->rvi_lp;
+	lp=curr_rv_sbp->rv_cwd->rvi_children;
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
@@ -2071,7 +2300,7 @@ static void descend_directory( QSP_ARG_DECL  RV_Inode *inp, void (*func)(QSP_ARG
 
 	assert( IS_DIRECTORY(inp) );
 
-	np=QLIST_HEAD(inp->rvi_lp);
+	np=QLIST_HEAD(inp->rvi_children);
 	while( np != NULL ){
 		child_inp = (RV_Inode *)np->n_data;
 		if( IS_DIRECTORY(child_inp) && strcmp(RV_NAME(child_inp),".")
@@ -2091,17 +2320,10 @@ void traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
 {
 	RV_Inode *inp;
 
-//fprintf(stderr,"traverse_rv_inodes BEGIN:  QS_SERIAL = %d\n",QS_SERIAL);
-//fflush(stderr);
 	CHECK_VOLUME("traverse_rv_inodes")
 
-//fprintf(stderr,"traverse_rv_inodes:  listing rv_inodes...\n");
-//fflush(stderr);
-//list_items( QSP_ARG  rv_inode_itp );
-//fprintf(stderr,"traverse_rv_inodes:  DONE listing, looking up root '%s'...\n",ROOT_DIR_NAME);
-//fflush(stderr);
-
 	inp = rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
+if( inp == NULL ) fprintf(stderr,"traverse_rv_inodes:  failed to find root dir \"%s\"\n",ROOT_DIR_NAME);
 	assert( inp != NULL );
 
 	rv_pushd(QSP_ARG  ROOT_DIR_NAME);
@@ -2143,20 +2365,20 @@ static void sync_super(void)
 
 	/* flush strings */
 
-	offset = BLOCK_SIZE * (off64_t)rv_sbp->rv_ndb;
-	string_bytes_per_disk = block_size*rv_sbp->rv_nsb;
-	s_ptr = rv_stp;
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		off_ret = my_lseek64(rv_sbp->rv_fd[i],offset,SEEK_SET);
+	offset = BLOCK_SIZE * (off64_t)curr_rv_sbp->rv_n_data_blocks;
+	string_bytes_per_disk = block_size*curr_rv_sbp->rv_n_string_blocks;
+	s_ptr = rv_string_tbl;
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+		off_ret = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( BAD_OFFSET64(off_ret) ){
 			perror("sync_super:  my_lseek64");
 			sprintf(DEFAULT_ERROR_STRING,
 				"sync_super:  error seeking to string table, disk %d (%s)",i,
-					rv_sbp->rv_diskname[i]);
+					curr_rv_sbp->rv_diskname[i]);
 			NWARN(DEFAULT_ERROR_STRING);
 			return;
 		}
-		if( write(rv_sbp->rv_fd[i],s_ptr,string_bytes_per_disk)
+		if( write(curr_rv_sbp->rv_fd[i],s_ptr,string_bytes_per_disk)
 			!= (int) string_bytes_per_disk ){
 
 			perror("write");
@@ -2171,13 +2393,13 @@ static void sync_super(void)
 
 	/* flush inodes */
 
-	inode_bytes_per_disk = block_size*rv_sbp->rv_nib;
+	inode_bytes_per_disk = block_size*curr_rv_sbp->rv_n_inode_blocks;
 	inodes_per_disk = inode_bytes_per_disk / sizeof(RV_Inode);
 
-	inp = rv_in_tbl;
+	inp = rv_inode_tbl;
 
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		if( write(rv_sbp->rv_fd[i],inp,inode_bytes_per_disk)
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+		if( write(curr_rv_sbp->rv_fd[i],inp,inode_bytes_per_disk)
 			!= (int) inode_bytes_per_disk ){
 
 			perror("write");
@@ -2318,22 +2540,50 @@ int rv_cd(QSP_ARG_DECL  const char *dirname)
 {
 	char *s;
 
-	while( *dirname && (s=next_path_component(&dirname)) != NULL )
+	while( *dirname && (s=next_path_component(&dirname)) != NULL ){
 		if( rv_step_dir(QSP_ARG  s) < 0 ) return(-1);
+	}
 	return(0);
 }
 
 static void make_link(QSP_ARG_DECL  const char *name,RV_Inode *inp)
 {
-	RV_Inode *new_inp;
+	RV_Inode *new_inp, *tbl_inp;
 
 	new_inp = rv_newfile(QSP_ARG  name,0);
 	if( new_inp != NULL ){
 		SET_RV_FLAG_BITS(new_inp, RVI_LINK);
-		rv_in_tbl[RV_INODE_IDX(new_inp)].rvi_flags = RV_FLAGS(new_inp);
+		//rv_inode_tbl[RV_INODE_IDX(new_inp)].rvi_flags = RV_FLAGS(new_inp);
+
+		tbl_inp = &rv_inode_tbl[RV_INODE_IDX(new_inp)];
+		SET_RV_FLAGS( tbl_inp, RV_FLAGS(new_inp));
+
 		new_inp->rvi_u.u_li.li_inp = inp;
 		new_inp->rvi_u.u_li.li_ini = RV_INODE_IDX(inp);
 	}
+}
+
+static int subdir_exists(QSP_ARG_DECL  const char *dirname)
+{
+	Node *np;
+
+	if( curr_rv_sbp->rv_cwd == NULL ) return 0;
+
+	/* make sure that this directory does not exist already */
+	np = QLIST_HEAD(curr_rv_sbp->rv_cwd->rvi_children);
+	while( np != NULL ){
+		RV_Inode *inp;
+
+		inp=(RV_Inode *)np->n_data;
+		if( !strcmp(dirname,RV_NAME(inp)) ){
+			sprintf(ERROR_STRING,
+	"Subdirectory %s already exists in directory %s",dirname,RV_NAME(curr_rv_sbp->rv_cwd));
+			WARN(ERROR_STRING);
+			return 1;
+		}
+		np=np->n_next;
+	}
+	return 0;
 }
 
 static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
@@ -2342,33 +2592,21 @@ static void rv_mksubdir(QSP_ARG_DECL  const char *dirname)
 
 	CHECK_VOLUME("rv_mksubdir")
 
-	if( rv_sbp->rv_cwd != NULL ){	/* not root directory */
-		Node *np;
-		/* make sure that this directory does not exist already */
-		np = QLIST_HEAD(rv_sbp->rv_cwd->rvi_lp);
-		while( np != NULL ){
-			inp=(RV_Inode *)np->n_data;
-			if( !strcmp(dirname,RV_NAME(inp)) ){
-				sprintf(ERROR_STRING,
-	"Subdirectory %s already exists in directory %s",dirname,RV_NAME(rv_sbp->rv_cwd));
-				WARN(ERROR_STRING);
-				return;
-			}
-			np=np->n_next;
-		}
-	}
+	if( subdir_exists(QSP_ARG  dirname) ) return;
+
 	inp = rv_newfile(QSP_ARG  dirname,1);
 	if( inp == NULL ){
-		sprintf(ERROR_STRING,"error creating rawvol subdirectory %s",dirname);
+		sprintf(ERROR_STRING,"rv_mksubdir:  error creating rawvol subdirectory %s",dirname);
 		WARN(ERROR_STRING);
 		return;
 	}
-	RV_MODE(inp) |= DIRECTORY_BIT;			/* BUG use a symbolic constant here! */
-	rv_in_tbl[RV_INODE_IDX(inp)].rvi_mode |= DIRECTORY_BIT;	/* make the change to the disk image too */
-	inp->rvi_lp = new_list();
 
-	if( rv_sbp->rv_cwd == NULL ){
-		rv_sbp->rv_cwd = inp;
+	RV_MODE(inp) |= DIRECTORY_BIT;			/* BUG use a symbolic constant here! */
+	rv_inode_tbl[RV_INODE_IDX(inp)].rvi_mode |= DIRECTORY_BIT;	/* make the change to the disk image too */
+	inp->rvi_children = new_list();
+
+	if( curr_rv_sbp->rv_cwd == NULL ){
+		curr_rv_sbp->rv_cwd = inp;
 	}
 
 	rv_pushd(QSP_ARG  dirname);
@@ -2385,6 +2623,11 @@ void rv_mkdir(QSP_ARG_DECL  const char *dirname)
 {
 	char *s;
 	int pushed=0;
+
+	if( !strcmp(dirname,ROOT_DIR_NAME) ){
+		rv_mksubdir(QSP_ARG  dirname);
+		return;
+	}
 
 	while( *dirname && (s=next_path_component(&dirname)) != NULL ){
 		if( *dirname == 0 ){	/* last component? */
@@ -2417,19 +2660,19 @@ RV_NAME(inp),RV_ADDR(inp),RV_ADDR(inp));
 advise(ERROR_STRING);
 }
 
-	offset = (off64_t) RV_ADDR(inp) * (off64_t) rv_sbp->rv_blocksize;
-	retval=rv_sbp->rv_ndisks;
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
-		retoff = my_lseek64(rv_sbp->rv_fd[i],offset,SEEK_SET);
+	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
+	retval=curr_rv_sbp->rv_ndisks;
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
+		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){
 			/* BUG loff_t is not long long on 64 bit architecture!? */
 			sprintf(ERROR_STRING,
 		"queue_rv_file:  Error seeking on raw disk %d (%s), requested %lld but got %lld",
-				i,rv_sbp->rv_diskname[i],(long long)offset,(long long)retoff);
+				i,curr_rv_sbp->rv_diskname[i],(long long)offset,(long long)retoff);
 			WARN(ERROR_STRING);
 			retval=(-1);
 		}
-		fd_arr[i]=rv_sbp->rv_fd[i];
+		fd_arr[i]=curr_rv_sbp->rv_fd[i];
 if( debug & rawvol_debug ){
 sprintf(ERROR_STRING,"disk %d fd=%d seek to offset 0x%x / 0x%x",
 i,fd_arr[i],(uint32_t)(offset>>32),(uint32_t)(offset&0xffffffff) /* offset is 64 bits!? */);
@@ -2460,20 +2703,20 @@ int rv_frame_seek(QSP_ARG_DECL  RV_Inode *inp,uint32_t frame_index)
 			SHP_ROWS(RV_MOVIE_SHAPE(inp)) *
 			SHP_COMPS(RV_MOVIE_SHAPE(inp));
 
-	blks_per_frame = (n_pix_bytes + RV_MOVIE_EXTRA(inp) + rv_sbp->rv_blocksize - 1 ) /
-				rv_sbp->rv_blocksize;
+	blks_per_frame = (n_pix_bytes + RV_MOVIE_EXTRA(inp) + curr_rv_sbp->rv_blocksize - 1 ) /
+				curr_rv_sbp->rv_blocksize;
 
 #ifdef DEBUG
 if( debug & rawvol_debug ){
 sprintf(ERROR_STRING, "rv_frame_seek: file %s, frame %d, n_pix_bytes 0x%x, extra bytes = %d, blocksize = %d",
-		RV_NAME(inp), frame_index, n_pix_bytes, RV_MOVIE_EXTRA(inp), rv_sbp->rv_blocksize);
+		RV_NAME(inp), frame_index, n_pix_bytes, RV_MOVIE_EXTRA(inp), curr_rv_sbp->rv_blocksize);
 advise(ERROR_STRING);
 }
 #endif
 
-	disk_index = frame_index % rv_sbp->rv_ndisks;
+	disk_index = frame_index % curr_rv_sbp->rv_ndisks;
 
-	frame_index /= rv_sbp->rv_ndisks;	/* seek all disks to here */
+	frame_index /= curr_rv_sbp->rv_ndisks;	/* seek all disks to here */
 
 	offset = (off64_t) RV_ADDR(inp);
 	offset += blks_per_frame * frame_index;
@@ -2481,7 +2724,7 @@ advise(ERROR_STRING);
 
 	/* Don't seek all the disks - just the one containing the frame of interest! */
 #ifdef SEEK_ALL_DISKS
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 #else
 	i = disk_index;
 #endif /* ! SEEK_ALL_DISKS */
@@ -2489,9 +2732,9 @@ advise(ERROR_STRING);
 		os = offset;
 		if( i < disk_index ) os += blks_per_frame;
 
-		os *= (off64_t) rv_sbp->rv_blocksize;
+		os *= (off64_t) curr_rv_sbp->rv_blocksize;
 
-		retoff = my_lseek64(rv_sbp->rv_fd[i],os,SEEK_SET);
+		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],os,SEEK_SET);
 
 #ifdef DEBUG
 if( debug & rawvol_debug ){
@@ -2505,7 +2748,7 @@ advise(ERROR_STRING);
 		if( retoff != os ){
 			sprintf(ERROR_STRING,
 		"rv_frame_seek:  error seeking to file %s frame %d (disk %d, %s)",
-				RV_NAME(inp),frame_index,i,rv_sbp->rv_diskname[i]);
+				RV_NAME(inp),frame_index,i,curr_rv_sbp->rv_diskname[i]);
 			WARN(ERROR_STRING);
 			retval = -1;
 		}
@@ -2522,9 +2765,11 @@ int rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
 	inp = get_rv_inode(QSP_ARG  filename);
 	if( inp == NULL ) return(-1);
 
+	assert(RV_MOVIE_SHAPE(inp) != NULL);
+
 	COPY_SHAPE(RV_MOVIE_SHAPE(inp), shpp);
 
-	set_shape_flags(RV_MOVIE_SHAPE(inp),NULL,AUTO_SHAPE);
+	auto_shape_flags(RV_MOVIE_SHAPE(inp));
 
 	// also update the area that will be written to disk...
 	COPY_DIMS( &RV_MOVIE_DIMS(inp), SHP_TYPE_DIMS( RV_MOVIE_SHAPE(inp) ) );
@@ -2546,23 +2791,23 @@ void rawvol_info(SINGLE_QSP_ARG_DECL)
 
 	CHECK_VOLUME("rawvol_info")
 
-	sprintf(msg_str,"%d disks, block size = %d:",rv_sbp->rv_ndisks,BLOCK_SIZE);
+	sprintf(msg_str,"%d disks, block size = %d:",curr_rv_sbp->rv_ndisks,BLOCK_SIZE);
 	prt_msg(msg_str);
 	sprintf(msg_str,"\t%d (0x%x) inode blocks",
-		rv_sbp->rv_nib, rv_sbp->rv_nib);
+		curr_rv_sbp->rv_n_inode_blocks, curr_rv_sbp->rv_n_inode_blocks);
 	prt_msg(msg_str);
 	sprintf(msg_str,"\t%d (0x%x) string blocks",
-		rv_sbp->rv_nsb, rv_sbp->rv_nsb);
+		curr_rv_sbp->rv_n_string_blocks, curr_rv_sbp->rv_n_string_blocks);
 	prt_msg(msg_str);
 	sprintf(msg_str,"\t%ld (0x%lx) data blocks",
-		(u_long)rv_sbp->rv_ndb, (u_long)rv_sbp->rv_ndb);
+		(u_long)curr_rv_sbp->rv_n_data_blocks, (u_long)curr_rv_sbp->rv_n_data_blocks);
 	prt_msg(msg_str);
 
-	for(i=0;i<rv_sbp->rv_ndisks;i++){
+	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		sprintf(msg_str,"\t%s\t%ld (0x%lx) total blocks",
-			rv_sbp->rv_diskname[i],
-			(u_long)rv_sbp->rv_nblks[i],
-			(u_long)rv_sbp->rv_nblks[i]);
+			curr_rv_sbp->rv_diskname[i],
+			(u_long)curr_rv_sbp->rv_nblks[i],
+			(u_long)curr_rv_sbp->rv_nblks[i]);
 		prt_msg(msg_str);
 	}
 	prt_msg("string freelist:");
@@ -2582,7 +2827,7 @@ void rawvol_get_usage(SINGLE_QSP_ARG_DECL)
 
 	CHECK_VOLUME("rawvol_get_usage")
 
-	sprintf(msg_str,"%d disks, block size = %d:",rv_sbp->rv_ndisks,BLOCK_SIZE);
+	sprintf(msg_str,"%d disks, block size = %d:",curr_rv_sbp->rv_ndisks,BLOCK_SIZE);
 	/* ASH - the freelist represents free space on ONE DISK only!
 	 * (they should all have the same amount of free space per disk)
 	 * because allocation is done in units of blocks per disk.
@@ -2595,9 +2840,9 @@ void rawvol_get_usage(SINGLE_QSP_ARG_DECL)
 		freespace += fbp->size;
 		fbp++;
 	}
-	freespace *= rv_sbp->rv_ndisks;
+	freespace *= curr_rv_sbp->rv_ndisks;
 
-	total = rv_sbp->rv_ndisks * rv_sbp->rv_ndb;
+	total = curr_rv_sbp->rv_ndisks * curr_rv_sbp->rv_n_data_blocks;
 
 	percent = (100.0 * (float) freespace) / (float) total;
 	sprintf(msg_str,"%d free / %d total (%d %%free)", freespace, total, percent);
@@ -2696,14 +2941,14 @@ void dump_block(QSP_ARG_DECL  int i,uint32_t block)
 
 	offset = BLOCK_SIZE * ((off64_t)block);
 
-	/* if( my_lseek64(rv_sbp->rv_fd[i],offset,SEEK_SET) < 0 ) */
-	if( my_lseek64(rv_sbp->rv_fd[i],offset,SEEK_SET) & 0x80000000 )
+	/* if( my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET) < 0 ) */
+	if( my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET) & 0x80000000 )
 								{
 		perror("dump_block:  my_lseek64");
 		NWARN("dump_block:  error seeking");
 		return;
 	}
-	if( read(rv_sbp->rv_fd[i],blockbuf,BLOCK_SIZE) != BLOCK_SIZE ){
+	if( read(curr_rv_sbp->rv_fd[i],blockbuf,BLOCK_SIZE) != BLOCK_SIZE ){
 		perror("read (dump_block)");
 		NWARN("error reading block");
 		return;
@@ -2713,17 +2958,17 @@ void dump_block(QSP_ARG_DECL  int i,uint32_t block)
 
 int rv_get_ndisks(void)
 {
-	if(rv_sbp == NULL)
+	if(curr_rv_sbp == NULL)
 	return -1;
 	else
-		return rv_sbp->rv_ndisks;
+		return curr_rv_sbp->rv_ndisks;
 }
 
 void rv_pwd(SINGLE_QSP_ARG_DECL)
 {
 	CHECK_VOLUME("rv_pwd")
 
-	assert( rv_sbp->rv_cwd != NULL );
+	assert( curr_rv_sbp->rv_cwd != NULL );
 
 	sprintf(msg_str,"current working directory is %s",rv_pathname );
 	prt_msg(msg_str);
@@ -2756,10 +3001,45 @@ int legal_rv_filename(const char *name)
 
 int32_t n_rv_disks(void)
 {
-	assert( rv_sbp != NULL );
+	assert( curr_rv_sbp != NULL );
 
-	return rv_sbp->rv_ndisks;
+	return curr_rv_sbp->rv_ndisks;
 }
 
+RV_Inode *rv_inode_alloc(void)
+{
+	return (RV_Inode *) getbuf( sizeof(RV_Inode) );
+}
 
+int rv_movie_extra(RV_Inode *inp)
+{
+	return RV_MOVIE_EXTRA(inp);
+}
+
+Shape_Info *rv_movie_shape(RV_Inode *inp)
+{
+	return RV_MOVIE_SHAPE(inp);
+}
+
+int rv_frames_to_allocate( int n )
+{
+	assert( curr_rv_sbp != NULL );
+	return FRAMES_TO_ALLOCATE( n , curr_rv_sbp->rv_ndisks );
+}
+
+void set_rv_n_frames(RV_Inode *inp, int n)
+{
+	SET_SHP_FRAMES( RV_MOVIE_SHAPE(inp), n );
+}
+
+const char *rv_name(RV_Inode *inp)
+{
+	return RV_NAME(inp);
+}
+
+int is_rv_movie(RV_Inode *inp)
+{
+	if( IS_LINK(inp) || IS_DIRECTORY(inp) ) return 0;
+	return 1;
+}
 #endif // HAVE_RAWVOL

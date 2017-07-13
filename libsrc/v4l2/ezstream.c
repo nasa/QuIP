@@ -463,7 +463,7 @@ void v4l2_stream_record(QSP_ARG_DECL  Image_File *ifp,long n_frames,int n_camera
 	SET_SHP_FRAMES(shpp, n_frames);
 	SET_SHP_SEQS(shpp, 1);
 	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(PREC_UBY) );
-	set_shape_flags(shpp,NULL,AUTO_SHAPE);
+	auto_shape_flags(shpp);
 
 	rv_set_shape(QSP_ARG  ifp->if_name,shpp);
 

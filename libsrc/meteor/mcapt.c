@@ -522,7 +522,7 @@ static COMMAND_FUNC( do_record )
 		return;
 	}
 
-	n_blocks = FRAMES_TO_ALLOCATE(n_frames,rv_get_ndisks()) * get_blocks_per_frame();
+	n_blocks = rv_frames_to_allocate(n_frames) * get_blocks_per_frame();
 
 	/* n_blocks is the total number of blocks, not the number per disk(?) */
 
@@ -665,8 +665,8 @@ advise("faking hardware");
 	assert( FT_CODE(IF_TYPE(ifp)) == IFT_RV );
 
 	inp = (RV_Inode *)ifp->if_hdr_p;
-	if( RV_MOVIE_EXTRA(inp) != 0 ){
-		sprintf(ERROR_STRING,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,RV_MOVIE_EXTRA(inp));
+	if( rv_movie_extra(inp) != 0 ){
+		sprintf(ERROR_STRING,"File %s, rvi_extra_bytes = %d!?",ifp->if_name,rv_movie_extra(inp));
 		WARN(ERROR_STRING);
 		ERROR1("Sorry, can't record timestamps in memory recordings at present...");
 	}
