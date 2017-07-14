@@ -10,6 +10,7 @@
 #include "quip_prot.h"
 #include "nvf.h"
 #include "rn.h"		/* set_random_seed */
+#include "platform.h"
 
 static Item_Type *vec_func_itp=NULL;
 static ITEM_INIT_PROT(Vector_Function, vec_func)

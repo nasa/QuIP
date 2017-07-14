@@ -13,6 +13,7 @@
 #include "vec_util.h"
 #include "quip_menu.h"
 #include "veclib/vl2_veclib_prot.h"
+#include "platform.h"
 
 #define TEMP_UNIMP(func)			\
 						\
@@ -509,33 +510,6 @@ static COMMAND_FUNC( do_minmax )
 	PUSH_MENU(minmax);
 }
 
-#ifdef FOOBAR
-static COMMAND_FUNC( do_accumulate )
-{
-	Data_Obj *dp_to,*dp_fr;
-
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source vector" );
-
-	if( dp_to==NULL || dp_fr==NULL ) return;
-
-	war_accumulate(dp_to,dp_fr);
-}
-
-static COMMAND_FUNC( do_project )
-{
-	Data_Obj *dp_to,*dp_fr;
-
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source image" );
-
-	if( dp_to==NULL || dp_fr==NULL ) return;
-
-	war_project(dp_to,dp_fr);
-}
-#endif /* FOOBAR */
-
-
 static COMMAND_FUNC( do_cumsum )
 {
 	Data_Obj *dp_to,*dp_fr;
@@ -576,7 +550,6 @@ static COMMAND_FUNC( do_fwdfft )
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
 
-	//h_vl2_fft2d(VFCODE_ARG  dp,dp);
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 }
 
@@ -588,7 +561,6 @@ static COMMAND_FUNC( do_fwdrowfft )
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
 
-	//h_vl2_fftrows(VFCODE_ARG  dp,dp);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 }
 
@@ -599,7 +571,6 @@ static COMMAND_FUNC( do_invfft )
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
-	//h_vl2_ift2d(VFCODE_ARG  dp,dp);
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 }
 
@@ -610,7 +581,6 @@ static COMMAND_FUNC( do_invrowfft )
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
-	//h_vl2_iftrows(VFCODE_ARG  dp,dp);
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
 }
 

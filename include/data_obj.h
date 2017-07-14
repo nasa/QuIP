@@ -494,7 +494,7 @@ extern void propagate_flag(Data_Obj *dp,uint32_t flagbit);
 void init_dobj_expr_funcs(SINGLE_QSP_ARG_DECL);
 
 // Something in here breaks some old cuda code...
-#include "platform.h"
+//#include "platform.h"
 
 #endif /* ! _DATA_OBJ_H_ */
 

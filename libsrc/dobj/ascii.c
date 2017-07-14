@@ -17,6 +17,7 @@
 #include "ascii_fmts.h"
 #include "dobj_private.h"
 #include "query_stack.h"	// like to eliminate this dependency...
+#include "veclib/obj_args.h"	// argset_prec
 
 static void init_format_type_tbl(void);
 

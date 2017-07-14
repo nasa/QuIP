@@ -19,6 +19,7 @@
 #include "quip_prot.h"
 #include "my_vl2.h"
 #include "veclib/vl2_veclib_prot.h"
+#include "platform.h"
 
 // When is xxx_init_platform called?
 

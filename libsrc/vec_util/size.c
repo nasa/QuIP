@@ -9,6 +9,7 @@
 #include "vec_util.h"
 #include "veclib_api.h"
 #include "getbuf.h"
+#include "platform.h"
 
 /* Out new strategy for changing size is to make a subsampled image for destination and
  * source, based on the dimension values for each of the 5 dimensions.

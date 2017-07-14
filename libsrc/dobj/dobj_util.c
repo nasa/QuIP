@@ -19,6 +19,7 @@
 #include "nports_api.h"		// define_port_data_type
 #include "debug.h"
 #include "query_stack.h"	// like to eliminate this dependency BUG?
+#include "platform.h"	// like to eliminate this dependency BUG?
 
 // Originally zombies were introduced to be able to refresh
 // an X11 canvas displaying an image after the image had been

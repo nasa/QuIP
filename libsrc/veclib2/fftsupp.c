@@ -194,10 +194,12 @@ int real_fft_type(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char *f
 	if( OBJ_ROWS(real_dp) == OBJ_ROWS(cpx_dp) ){
 		if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 1, funcname ) ) return -1;
 		if( ! dim_is_power_of_two(QSP_ARG  real_dp, 2, funcname ) ) return -1;
+fprintf(stderr,"real_fft_type will return 1\n");
 		return 1;
 	} else if( OBJ_COLS(real_dp) == OBJ_COLS(cpx_dp) ){
 		if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 2, funcname ) ) return -1;
 		if( ! dim_is_power_of_two(QSP_ARG  real_dp, 1, funcname ) ) return -1;
+fprintf(stderr,"real_fft_type will return 2\n");
 		return 2;
 	} else {
 		sprintf(ERROR_STRING,
@@ -241,4 +243,14 @@ int cpx_fft_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
 
 	return TRUE;
 }
+
+void show_fft_args(FFT_Args *fap )
+{
+	fprintf(stderr,"FFT args at 0x%lx\n",(long)fap);
+	fprintf(stderr,"\tdest 0x%lx, inc = %d\n",(long)FFT_DST(fap),FFT_DINC(fap));
+	fprintf(stderr,"\tsrc  0x%lx, inc = %d\n",(long)FFT_SRC(fap),FFT_SINC(fap));
+	fprintf(stderr,"\tlen  %d, is_inverse = %d\n",FFT_LEN(fap),FFT_ISI(fap));
+	fflush(stderr);
+}
+
 

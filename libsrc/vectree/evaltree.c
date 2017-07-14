@@ -31,6 +31,7 @@
 #include "vt_native.h"
 #include "subrt.h"
 #include "query_stack.h"		// BUG?
+#include "platform.h"
 
 //#include "mlab.h"
 

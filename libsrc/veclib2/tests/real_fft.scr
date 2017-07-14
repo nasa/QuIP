@@ -1,0 +1,27 @@
+
+Vector xf 5 1 complex
+Vector f 8 1 float
+Assign twopi 8*atan(1)
+
+Ramp1D f 0 $twopi/ncols(f)
+VSin f f
+Display f
+RFFT xf f
+Display xf
+Pause
+
+
+data
+  ascii
+    read xf -
+    	1	0
+	0	0
+	0	0
+	0	0
+	0	0
+    quit
+  quit
+Display xf
+RInvFFT f xf
+Display f
+

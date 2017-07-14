@@ -72,12 +72,6 @@ define(`XFER_FFT_SINC',`
 	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
 		return;
 	}
-dnl	This code was probably a relic from when the increment was from mach_inc, not type_inc?
-dnl	Doesnt seem to be needed now.
-dnl	if( IS_COMPLEX($3) ){
-dnl		SET_FFT_SINC($2, FFT_SINC($2)/2);
-dnl fprintf(stderr,"xfer_fft_sinc:  complex src inc = %d\\n",FFT_SINC($2));
-dnl	}
 ')
 
 
@@ -98,29 +92,14 @@ define(`XFER_FFT_DINC',`
 ')
 
 
-dnl	#ifdef NOT_USED
-dnl	#define SET_FFT_INC( func, which_inc, dp )
-dnl
-dnl		if( IS_ROWVEC(dp) ){
-dnl			fa.which_inc = OBJ_PXL_INC( (dp) );
-dnl		} else if( IS_COLVEC(dp) ){
-dnl			fa.which_inc = OBJ_ROW_INC( (dp) );
-dnl		} else {
-dnl			NWARN(DEFAULT_ERROR_STRING);
-dnl			sprintf(DEFAULT_ERROR_STRING,
-dnl		"%s:  %s is neither a row nor a column!?",#func,OBJ_NAME(dp));
-dnl			return;
-dnl		}
-dnl		if( IS_COMPLEX(dp) )
-dnl			fa.which_inc /= 2;
-dnl	#endif // NOT_USED
-
 ifdef(`BUILDING_KERNELS',`
 // vl2_fft_funcs.m4 buiding_kernels is SET
 
+// twiddle factors are exp( i theta ), theta runs from 0 to pi, and we get pi to 2pi from symmetry
+
 static void init_twiddle (dimension_t len)
 {
-	double pi,theta;
+	double twopi,theta;
 	dimension_t i;
 
 	if( last_cpx_len > 0 ){
@@ -130,12 +109,12 @@ static void init_twiddle (dimension_t len)
 	twiddle = (std_cpx *)getbuf( sizeof(*twiddle) * (len/2) );
 
 
-	pi = 8.0*atan(1.0);	/* This is two pi!? */
+	twopi = 8.0*atan(1.0);
 
 	/* W -kn N , W N = exp ( -j twopi/N ) */
 
 	for(i=0;i<len/2;i++){
-		theta = pi*(double)(i)/(double)len;
+		theta = twopi*(double)(i)/(double)len;
 		twiddle[i].re = (std_type)cos(theta);
 		twiddle[i].im = (std_type)sin(theta);
 	}
@@ -174,7 +153,7 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	std_cpx temp,*wp;
 	std_cpx *source, *dest;
 	dimension_t m, mmax, istep;
-	incr_t inc1;
+	incr_t src_inc, dst_inc;
 	/* BUG we really don_t want to allocate and deallocate revdone each time... */
 	/* anyway, this is no good because getbuf/givbuf are not thread-safe!
 	 * I can_t see a way to do this without passing the thread index on the stack...
@@ -185,6 +164,8 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	//if( ! for_real ) return;
 
 dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
+fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
+show_fft_args(fap);
 	len = FFT_LEN(fap);
 
 	if( revdone==NULL ){
@@ -205,8 +186,9 @@ ifelse(MULTI_PROC_TEST,`1',`
 	}
 
 	dest=(std_cpx *)FFT_DST(fap);
-	source=(std_cpx *)FFT_DST(fap);
-	inc1 = FFT_DINC(fap);
+	dst_inc = FFT_DINC(fap);
+	source=(std_cpx *)FFT_SRC(fap);
+	src_inc = FFT_SINC(fap);
 	/* inc1 should be in units of complex */
 
 	if( len != bitrev_size ){
@@ -216,21 +198,28 @@ ifelse(MULTI_PROC_TEST,`1',`
 		bitrev_init(len);
 	}
 
+	/* Copy from source to destination, in bit-reversed order.
+	 * The use of the tmp storage during the exchanges ensures
+	 * this this works when source and destination are the same.
+	 */
+
 	/* init revdone */
 		
 	for(i=0;i<len;i++) revdone[i]=0;
 	for(i=0;i<len;i++){
-		dimension_t di, dj;
+		dimension_t di, dj, si, sj;
 		std_cpx tmp;
 
 		if( !revdone[i] ){
-			di = i * inc1;
-			dj = bitrev_data[i] * inc1;
+			di = i * dst_inc;
+			si = i * src_inc;
+			dj = bitrev_data[i] * dst_inc;
+			sj = bitrev_data[i] * src_inc;
 			if( di != dj ){
-				tmp.re = source[di].re;
-				tmp.im = source[di].im;
-				dest[di].re = source[dj].re;
-				dest[di].im = source[dj].im;
+				tmp.re = source[si].re;
+				tmp.im = source[si].im;
+				dest[di].re = source[sj].re;
+				dest[di].im = source[sj].im;
 				dest[dj].re = tmp.re;
 				dest[dj].im = tmp.im;
 			}
@@ -262,8 +251,8 @@ ifelse(MULTI_PROC_TEST,`1',`
 				dimension_t dj, di;
 
 				j = i+mmax;
-				dj = j * inc1;
-				di = i * inc1;
+				dj = j * dst_inc;
+				di = i * dst_inc;
 				temp.re = wp->re*dest[dj].re
 					- FFT_ISI(fap) * wp->im*dest[dj].im;
 				temp.im = wp->re*dest[dj].im
@@ -302,8 +291,10 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 
 dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvift) BEGIN\\n");
 	SET_FFT_DST(new_fap, FFT_DST(fap));
-	SET_FFT_LEN(new_fap, FFT_LEN(fap));
 	SET_FFT_DINC(new_fap, FFT_DINC(fap));
+	SET_FFT_SRC(new_fap, FFT_SRC(fap));
+	SET_FFT_SINC(new_fap, FFT_SINC(fap));
+	SET_FFT_LEN(new_fap, FFT_LEN(fap));
 	SET_FFT_ISI(new_fap, INV_FFT);
 
 	PF_FFT_CALL_NAME(cvfft)(new_fap);
@@ -328,6 +319,7 @@ static void init_sinfact (dimension_t n)
 	arginc = (std_type)(4 * atan(1.0) / n);
 	arg = 0.0;
 
+	// What about the 0th entries???
 	for(i=1;i<n;i++){
 		arg += arginc;
 		_isinfact[i] = 2 * (std_type)sin(arg);
@@ -344,28 +336,33 @@ static void init_sinfact (dimension_t n)
  * We transform the real source into the half-length
  * complex desination, and then do a regular in-place
  * complex DFT on that.
+ *
+ * For the forward fft, this macro is called AFTER the transform has
+ * been computed...
  */
 
-dnl	RECOMBINE(inc)
+// The TI documentation calls this the "split operation"
+
+dnl	RECOMBINE(src_bot,src_top,src_inc,dst_bot,dst_top,dst_inc)
 define(`RECOMBINE',`
 
 	for(i=1;i<len/4;i++){
 		std_type s1,s2,d1,d2;
 
-dnl		/*ctop--;
-dnl		cbot++;*/
-		ctop -= $1;
-		cbot += $1;
+		$1 += $3;
+		$2 -= $3;
+		$4 += $6;
+		$5 -= $6;
 
-		s1 = 0.5f * ( cbot->re + cbot->im );
-		s2 = 0.5f * ( ctop->re + ctop->im );
-		d1 = 0.5f * ( cbot->re - cbot->im );
-		d2 = 0.5f * ( ctop->re - ctop->im );
+		s1 = 0.5f * ( $1->re + $1->im );
+		s2 = 0.5f * ( $2->re + $2->im );
+		d1 = 0.5f * ( $1->re - $1->im );
+		d2 = 0.5f * ( $2->re - $2->im );
 
-		cbot->re = s1 + d2;
-		cbot->im = s1 - d2;
-		ctop->re = s2 + d1;
-		ctop->im = s2 - d1;
+		$4->re = s1 + d2;
+		$4->im = s1 - d2;
+		$5->re = s2 + d1;
+		$5->im = s2 - d1;
 	}
 ')
 
@@ -376,8 +373,99 @@ dnl		cbot++;*/
  *
  * This routine seems to assume that the data are contiguous...
  * Increments are not used, checked...
+ *
+ * The original implementation didnt use the twiddle factors, but did something
+ * like a split before and after the complex fft...
+ *
+ * The TI document uses a different algorithm that uses the twiddle factors,
+ * that looks simpler...
  */
 
+static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
+{
+	std_cpx *cptr, *cptr2;
+	std_type *rptr;
+	int i;
+	FFT_Args fa;
+	FFT_Args *_fap=(&fa);
+
+	// Copy the real data into the complex workspace
+
+	cptr = FFT_DST(fap);
+	rptr = FFT_SRC(fap);
+
+fprintf(stderr,"rvfft:  passed length is %d\\n",FFT_LEN(fap));
+
+	i = FFT_LEN(fap)/2;
+	while(i--){
+		cptr->re = *rptr;
+		rptr += FFT_SINC(fap);
+		cptr->im = *rptr;
+		rptr += FFT_SINC(fap);
+		cptr += FFT_DINC(fap);
+	}
+
+	// Perform the complex transform in-place
+
+	SET_FFT_DST(_fap, FFT_DST(fap) );
+	SET_FFT_DINC(_fap, FFT_DINC(fap) );
+	SET_FFT_SRC(_fap, FFT_DST(fap));
+	SET_FFT_SINC(_fap, FFT_DINC(fap));
+	SET_FFT_LEN(_fap, FFT_LEN(fap)/2 );
+	SET_FFT_ISI(_fap, FWD_FFT);
+
+	PF_FFT_CALL_NAME(cvfft)(_fap);
+
+	// Perform the "split" operation
+	//
+	// these ought to be the twiddle factors...
+	//
+	// ark = real part of A_k, A_k = - ( cos(k*pi/N) + i sin(k*pi/N) )
+	//                             = - ( twiddle_k )
+	//                         B_k =     sin(k*pi/N) + i cos(k*pi/N)
+	//                             = i twiddle_k*	(complex conjugate)
+
+	if( FFT_LEN(fap)/2 != last_cpx_len )
+		init_twiddle (FFT_LEN(fap)/2);
+
+	i = FFT_LEN(fap)/4;
+	cptr = FFT_DST(fap);
+	cptr2 = cptr + (FFT_LEN(fap)/2) * FFT_DINC(fap);
+
+	// Fix the extra value
+	*cptr2 = *cptr;
+
+	for(i=0;i<FFT_LEN(fap)/4;i++){
+		std_type r1,r2,i1,i2;
+		std_type ark, aik, brk, bik;
+
+		// This is a little inefficient, but we stay close to the TI doc...
+		ark = - twiddle[i].re;
+		aik = - twiddle[i].im;
+		brk =   twiddle[i].im;
+		bik =   twiddle[i].re;
+
+		r1 = cptr->re;
+		i1 = cptr->im;
+		r2 = cptr2->re;
+		i2 = cptr2->im;
+
+		cptr->re = r1 * ark - i1 * aik + r2 * brk + i2 * bik ; 
+		cptr->im = i1 * ark + r1 * aik + r2 * bik - i2 * brk ; 
+
+		// here k <- (N-k), so we have to conjugate A and B
+		cptr2->re = r1 * ark + i1 * aik + r2 * brk - i2 * bik ; 
+		cptr2->im = i1 * ark - r1 * aik - r2 * bik - i2 * brk ;
+
+		cptr += FFT_DINC(fap);
+		cptr2 -= FFT_DINC(fap);
+	}
+	// Need to do the last iteration just for one slot!
+
+	// Fix DC & Nyquist terms !!!
+}
+
+#ifdef FOOBAR
 static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
 	std_cpx *cbot, *ctop;
@@ -446,12 +534,16 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 
 	// Why are we copying the args?
 	// Because we can_t modify the input arg struct...
+
+	// Compute in-place on the destination array...
 	SET_FFT_DST(_fap, FFT_DST(fap) );
 	SET_FFT_DINC(_fap, FFT_DINC(fap) );
-	SET_FFT_SRC(_fap, NULL);
-	SET_FFT_SINC(_fap, 0);
+	SET_FFT_SRC(_fap, FFT_DST(fap));
+	SET_FFT_SINC(_fap, FFT_DINC(fap));
 	SET_FFT_LEN(_fap, FFT_LEN(fap)/2 );
 	SET_FFT_ISI(_fap, FWD_FFT);
+
+	// Compute the FFT
 	PF_FFT_CALL_NAME(cvfft)(_fap);
 
 	cbot = dest;
@@ -470,13 +562,16 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	cbot->re += cbot->im;
 	ctop->im = cbot->im = 0.0;
 
-	RECOMBINE(dst_inc)
-}
+	RECOMBINE(cbot,ctop,dst_inc,cbot,ctop,dst_inc)	// in-place
+} // rvfft
+#endif // FOOBAR
 
 /* One dimensional real inverse fft.
  *
  * This routine seems to be destructive to its source!? ...
- * Yes, because the first complex FFT is done in-place
+ * Yes, because the first complex FFT is done in-place.
+ * That is necessary because there is an extra column,
+ * so we would need to allocate scratch space to do it non-destructively.
  */
 
 static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
@@ -501,8 +596,9 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	dst_inc = FFT_DINC(fap);
 	src_inc = FFT_SINC(fap);
 	len=FFT_LEN(fap);		/* length of the real destination */
-/*fprintf(stderr,"dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n",
-(long)dest,dst_inc,(long)src,src_inc,len);*/
+
+fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n",
+(long)dest,dst_inc,(long)src,src_inc,len);
 
 	if( len != last_real_len ){
 		init_sinfact (len);
@@ -515,13 +611,12 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 
 	/* the imaginary dc & nyquist are zero */
 
-	cbot->im = cbot->re - ctop->re;
-	cbot->re += ctop->re;
+	cbot->im = cbot->re - ctop->re;	// imaginary dc
+	cbot->re += ctop->re;		// real dc
 	cbot->re *= 0.5;
 	cbot->im *= 0.5;
 
-	/* RECOMBINE reassigns cbot, ctop... */
-	RECOMBINE(src_inc)
+	RECOMBINE(cbot,ctop,src_inc,cbot,ctop,src_inc)	// in-place
 
 	/* remember value of B0 */
 	cbot = src;
@@ -536,11 +631,12 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 
 	SET_FFT_DST( _fap, FFT_SRC(fap) );
 	SET_FFT_DINC( _fap, FFT_SINC(fap) );
-	SET_FFT_SRC( _fap, NULL );
-	SET_FFT_SINC( _fap, 0 );
+	SET_FFT_SRC( _fap, FFT_SRC(fap) );
+	SET_FFT_SINC( _fap, FFT_SINC(fap) );
 	SET_FFT_LEN( _fap, FFT_LEN(fap)/2 );
 	SET_FFT_ISI( _fap, INV_FFT );
 
+	// compute in-place, overwriting the source...
 	PF_FFT_CALL_NAME(cvfft)(&fa);
 
 	/* now reconstruct the samples */
@@ -757,11 +853,13 @@ define(`COLUMN_LOOP',`
 	{
 		dimension_t i;
 
-		SET_FFT_SRC( fap, NULL );
+fprintf(stderr,"column_loop starting on object %s\\n",OBJ_NAME($1));
+		SET_FFT_SRC( fap, OBJ_DATA_PTR( $1 ) );
 		SET_FFT_DST( fap, OBJ_DATA_PTR( $1 ) );
 
 		for(i=0;i<OBJ_COLS( $1 );i++){
 			$2(fap);
+			SET_FFT_SRC( fap, ((std_cpx *)FFT_SRC(fap)) + OBJ_PXL_INC( $1 ) );
 			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_PXL_INC( $1 ) );
 		}
 	}
@@ -919,13 +1017,15 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 				std_type,std_cpx)
 	}
 
+fprintf(stderr,"rvfft2d_1:  row loop done\\n");
+
 	/* Now transform the columns */
 	/* BUG wrong if columns == 1 */
 	/* Then we should copy into the complex target... */
 
 	SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
-	//SET_FFT_DINC( fap, OBJ_ROW_INC( OA_DEST(oap) )/2 );
 	SET_FFT_DINC( fap, OBJ_ROW_INC( OA_DEST(oap) ) );
+	SET_FFT_SINC( fap, OBJ_ROW_INC( OA_DEST(oap) ) );
 
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){			/* more than 1 row? */
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
@@ -935,6 +1035,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME(cvfft) )
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
+fprintf(stderr,"rvfft2d_1:  starting column loop\\n");
 		COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
 }
@@ -1012,11 +1113,14 @@ static void HOST_TYPED_CALL_NAME_REAL(ift2d_1,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args *fap=(&fa);
 
 	SET_FFT_ISI( fap, 1 );
-	//SET_FFT_DINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) / 2 );
-	SET_FFT_DINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) );
 
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){			/* more than 1 row? */
-		/* Transform the columns */
+		SET_FFT_DST( fap, OBJ_DATA_PTR( OA_SRC1(oap) ) );
+		SET_FFT_DINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) );
+		SET_FFT_SRC( fap, OBJ_DATA_PTR( OA_SRC1(oap) ) );
+		SET_FFT_SINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) );
+		/* Transform the columns in-place */
+		// BUG if there is only one column, should not be in-place!?  FIXME
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 		if( n_processors > 1 ){
@@ -1064,11 +1168,11 @@ static void HOST_TYPED_CALL_NAME_REAL(ift2d_2,type_code)( HOST_CALL_ARG_DECLS )
 		/* Transform the rows */
 		SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
 ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
+// BUG should be ROW_LOOP???
 		if( n_processors > 1 ){
 			MULTIPROCESSOR_COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-		//COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 		ROW_LOOP_2(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 	}
 
@@ -1145,6 +1249,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int is_inv )
 {
 	dimension_t i;
+	incr_t src_row_inc;
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
@@ -1156,31 +1261,40 @@ static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int 
 	SET_FFT_ISI( fap, is_inv );
 
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){	/* more than one row */
-		SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
+		SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
+		SET_FFT_DINC( fap, OBJ_ROW_INC( OA_DEST(oap) ) );
+		SET_FFT_SRC( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
+		SET_FFT_SINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) );
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
-		//SET_FFT_DINC( fap, OBJ_ROW_INC( OA_SRC1(oap) )/2 );
-		SET_FFT_DINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) );
 
 		for (i = 0; i < OBJ_COLS( OA_SRC1(oap) ); ++i) {
 			PF_FFT_CALL_NAME(cvfft)(&fa);
-			/* ((std_type *)fa.dst_addr) += OBJ_PXL_INC( OA_SRC1(oap) ); */
-			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_PXL_INC( OA_SRC1(oap) ) );
+			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_PXL_INC( OA_DEST(oap) ) );
+			SET_FFT_SRC( fap, ((std_cpx *)FFT_SRC(fap)) + OBJ_PXL_INC( OA_SRC1(oap) ) );
 		}
+
+		// prepare for row transforms
+		SET_FFT_SRC( fap, (float *)OBJ_DATA_PTR( OA_DEST(oap) ) );
+		SET_FFT_SINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
+		src_row_inc = OBJ_ROW_INC( OA_DEST(oap) );
+	} else {
+		// row cannot be done in place
+		SET_FFT_SRC( fap, (float *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
+		SET_FFT_SINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );
+		src_row_inc = OBJ_ROW_INC( OA_SRC1(oap) );
 	}
 
 	/* transform the rows */
 
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){
-		SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
+		SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
+		SET_FFT_DINC( fap, OBJ_PXL_INC( OA_DEST(oap) ) );
 		SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
-		/* pixel inc used to be in machine units,
-		 * now it_s in type units!? */
-		//SET_FFT_DINC( fap, OBJ_PXL_INC( OA_SRC1(oap) )/2 );
-		SET_FFT_DINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );
 
 		for (i = 0; i < OBJ_ROWS( OA_SRC1(oap) ); ++i) {
 			PF_FFT_CALL_NAME(cvfft)(&fa);
-			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_ROW_INC( OA_SRC1(oap) ) );
+			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_ROW_INC( OA_DEST(oap) ) );
+			SET_FFT_SRC( fap, ((SP_Complex *)FFT_SRC(fap)) + src_row_inc );
 		}
 	}
 }

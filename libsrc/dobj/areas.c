@@ -17,6 +17,7 @@
 #include "data_obj.h"
 #include "shape_info.h"
 #include "debug.h"
+#include "platform.h"
 
 Data_Area *curr_ap=NULL, *ram_area_p=NULL;
 

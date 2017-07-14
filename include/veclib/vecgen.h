@@ -11,8 +11,10 @@ extern "C" {
 
 #include <stdio.h>
 #include "typedefs.h"
-//#include "data_obj.h"
-// Does this need to be a separate file?
+
+#define VFCODE_ARG		vf_code,
+#define VFCODE_ARG_DECL		const int vf_code,
+
 #include "veclib/obj_args.h"
 
 //typedef uint32_t	index_type;
@@ -364,10 +366,6 @@ extern debug_flag_t veclib_debug;
 
 struct vector_function;
 
-//#define VFPTR_ARG		vfp,
-//#define VFPTR_ARG_DECL		Vector_Function *vfp,
-#define VFCODE_ARG		vf_code,
-#define VFCODE_ARG_DECL		const int vf_code,
 #define HOST_CALL_ARGS		VFCODE_ARG  oap
 #define HOST_CALL_ARG_DECLS	VFCODE_ARG_DECL  /*const*/ Vec_Obj_Args *oap
 

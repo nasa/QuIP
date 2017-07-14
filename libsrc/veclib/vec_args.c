@@ -2,6 +2,7 @@
 #include "quip_config.h"
 #include "quip_prot.h"
 #include "veclib_prot.h"
+#include "platform.h"
 
 #include <stdio.h>
 
