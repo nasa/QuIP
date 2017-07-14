@@ -194,12 +194,10 @@ int real_fft_type(QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp,const char *f
 	if( OBJ_ROWS(real_dp) == OBJ_ROWS(cpx_dp) ){
 		if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 1, funcname ) ) return -1;
 		if( ! dim_is_power_of_two(QSP_ARG  real_dp, 2, funcname ) ) return -1;
-fprintf(stderr,"real_fft_type will return 1\n");
 		return 1;
 	} else if( OBJ_COLS(real_dp) == OBJ_COLS(cpx_dp) ){
 		if( ! good_xform_size( QSP_ARG  real_dp, cpx_dp, 2, funcname ) ) return -1;
 		if( ! dim_is_power_of_two(QSP_ARG  real_dp, 1, funcname ) ) return -1;
-fprintf(stderr,"real_fft_type will return 2\n");
 		return 2;
 	} else {
 		sprintf(ERROR_STRING,

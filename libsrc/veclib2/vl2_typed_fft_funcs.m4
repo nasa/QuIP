@@ -164,8 +164,8 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 	//if( ! for_real ) return;
 
 dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
-fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
-show_fft_args(fap);
+dnl fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
+dnl show_fft_args(fap);
 	len = FFT_LEN(fap);
 
 	if( revdone==NULL ){
@@ -343,26 +343,25 @@ static void init_sinfact (dimension_t n)
 
 // The TI documentation calls this the "split operation"
 
-dnl	RECOMBINE(src_bot,src_top,src_inc,dst_bot,dst_top,dst_inc)
+dnl	RECOMBINE(inc)
+
 define(`RECOMBINE',`
 
 	for(i=1;i<len/4;i++){
 		std_type s1,s2,d1,d2;
 
-		$1 += $3;
-		$2 -= $3;
-		$4 += $6;
-		$5 -= $6;
+		ctop -= $1;
+		cbot += $1;
 
-		s1 = 0.5f * ( $1->re + $1->im );
-		s2 = 0.5f * ( $2->re + $2->im );
-		d1 = 0.5f * ( $1->re - $1->im );
-		d2 = 0.5f * ( $2->re - $2->im );
+		s1 = 0.5f * ( cbot->re + cbot->im );
+		s2 = 0.5f * ( ctop->re + ctop->im );
+		d1 = 0.5f * ( cbot->re - cbot->im );
+		d2 = 0.5f * ( ctop->re - ctop->im );
 
-		$4->re = s1 + d2;
-		$4->im = s1 - d2;
-		$5->re = s2 + d1;
-		$5->im = s2 - d1;
+		cbot->re = s1 + d2;
+		cbot->im = s1 - d2;
+		ctop->re = s2 + d1;
+		ctop->im = s2 - d1;
 	}
 ')
 
@@ -381,6 +380,7 @@ define(`RECOMBINE',`
  * that looks simpler...
  */
 
+#ifdef FOOBAR
 static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
 	std_cpx *cptr, *cptr2;
@@ -394,7 +394,7 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	cptr = FFT_DST(fap);
 	rptr = FFT_SRC(fap);
 
-fprintf(stderr,"rvfft:  passed length is %d\\n",FFT_LEN(fap));
+dnl fprintf(stderr,"rvfft:  passed length is %d\\n",FFT_LEN(fap));
 
 	i = FFT_LEN(fap)/2;
 	while(i--){
@@ -464,8 +464,8 @@ fprintf(stderr,"rvfft:  passed length is %d\\n",FFT_LEN(fap));
 
 	// Fix DC & Nyquist terms !!!
 }
+#endif // FOOBAR
 
-#ifdef FOOBAR
 static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
 	std_cpx *cbot, *ctop;
@@ -562,9 +562,8 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	cbot->re += cbot->im;
 	ctop->im = cbot->im = 0.0;
 
-	RECOMBINE(cbot,ctop,dst_inc,cbot,ctop,dst_inc)	// in-place
+	RECOMBINE(dst_inc)	// in-place
 } // rvfft
-#endif // FOOBAR
 
 /* One dimensional real inverse fft.
  *
@@ -597,8 +596,8 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	src_inc = FFT_SINC(fap);
 	len=FFT_LEN(fap);		/* length of the real destination */
 
-fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n",
-(long)dest,dst_inc,(long)src,src_inc,len);
+dnl fprintf(stderr,"rvift:\\n\tdest = 0x%lx inc = %d\n\tsrc = 0x%lx inc = %d\n\tlen = %d\n",
+dnl (long)dest,dst_inc,(long)src,src_inc,len);
 
 	if( len != last_real_len ){
 		init_sinfact (len);
@@ -616,7 +615,7 @@ fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n
 	cbot->re *= 0.5;
 	cbot->im *= 0.5;
 
-	RECOMBINE(cbot,ctop,src_inc,cbot,ctop,src_inc)	// in-place
+	RECOMBINE(src_inc)	// in-place
 
 	/* remember value of B0 */
 	cbot = src;
@@ -636,8 +635,22 @@ fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n
 	SET_FFT_LEN( _fap, FFT_LEN(fap)/2 );
 	SET_FFT_ISI( _fap, INV_FFT );
 
+dnl fprintf(stderr,"rvift:  will call complex transform\\n");
+dnl cbot=src;
+dnl for(i=0;i<len/2;i++){
+dnl fprintf(stderr,"\\t%g\t%g\n",cbot->re,cbot->im);
+dnl cbot += FFT_SINC(fap);
+dnl }
+
 	// compute in-place, overwriting the source...
 	PF_FFT_CALL_NAME(cvfft)(&fa);
+dnl fprintf(stderr,"rvift:  after complex transform:\\n");
+dnl cbot=src;
+dnl for(i=0;i<len/2;i++){
+dnl fprintf(stderr,"\\t%g\t%g\n",cbot->re,cbot->im);
+dnl cbot += FFT_SINC(fap);
+dnl }
+
 
 	/* now reconstruct the samples */
 	/* BUG we fix destination increment, but assume src inc is 1!? */
@@ -647,6 +660,7 @@ fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n
 	ep = dest;
 	op = dest+dst_inc;
 
+dnl fprintf(stderr,"rvift:  len = %d, src_inc = %d, dst_inc = %d\\n",len,src_inc,dst_inc);
 	*ep = cbot->re;
 	*op = - cbot->im;
 	for(i=1;i<len/2;i++){
@@ -660,6 +674,14 @@ fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n
 		*ep = 0.5f * ( s1 + d1 );
 		*op = 0.5f * ( d1 - s1 );
 	}
+dnl fprintf(stderr,"rvift:  after reconstructing output:\\n");
+dnl ep=dest;
+dnl op=dest+dst_inc;
+dnl for(i=0;i<len/2;i++){
+dnl fprintf(stderr,"\\t%g\t%g\n",*ep,*op);
+dnl ep += 2*dst_inc;
+dnl op += 2*dst_inc;
+dnl }
 
 	/* now integrate the odd samples */
 
@@ -678,14 +700,42 @@ fprintf(stderr,"rvift:  dest = 0x%lx inc = %d\\nsrc = 0x%lx inc = %d\nlen = %d\n
 		total += *op;
 	}
 	/* the total should equal B0 */
-	diff = (std_type)(2 * ( B0 - total ) / len);
+
+	// Not sure what the above comment means...
+	// Because they are generally not equal - does this
+	// following operation make them equal?
+	//
+	// This code broke after the normalization
+	// was removed from the inverse transform
+	// (done for compatibility w/ other libs).
+	//
+	// WITH normalization:
+	//diff = (std_type)(2 * ( B0 - total ) / len);
+	// WITHOUT normalization:
+	total /= (len/2);
+	diff = (std_type)( B0 - total );
+	// B0 comes from the transform,
+	// while total comes from the output of the
+	// inverse transform;
+
+dnl fprintf(stderr,"rvift:  B0 = %g, total = %g, diff = %g\\n",B0,total,diff);
+
 	op = dest+dst_inc;
 	for(i=0;i<len/2;i++){
 		*op += diff;
 		op += 2*dst_inc;
 	}
 	/* done */
-}
+dnl fprintf(stderr,"rvift:  after integrating odd samples:\\n");
+dnl ep=dest;
+dnl op=dest+dst_inc;
+dnl for(i=0;i<len/2;i++){
+dnl fprintf(stderr,"\\t%g\t%g\n",*ep,*op);
+dnl ep += 2*dst_inc;
+dnl op += 2*dst_inc;
+dnl }
+
+}	// rvift
 
 ',` dnl else ! BUILDING_KERNELS
 
@@ -772,6 +822,8 @@ define(`ROW_LOOP',`
 
 	{
 		for (i = 0; i < OBJ_ROWS( $1 ); ++i) {
+dnl fprintf(stderr,"row_loop $2 i = %d\\n",i);
+dnl show_fft_args(fap);
 			$2(fap);
 			SET_FFT_SRC( fap, (($3 *)FFT_SRC(fap))
 					+ OBJ_ROW_INC( OA_SRC1(oap) ) );
@@ -853,7 +905,7 @@ define(`COLUMN_LOOP',`
 	{
 		dimension_t i;
 
-fprintf(stderr,"column_loop starting on object %s\\n",OBJ_NAME($1));
+dnl fprintf(stderr,"column_loop starting on object %s\\n",OBJ_NAME($1));
 		SET_FFT_SRC( fap, OBJ_DATA_PTR( $1 ) );
 		SET_FFT_DST( fap, OBJ_DATA_PTR( $1 ) );
 
@@ -1017,7 +1069,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 				std_type,std_cpx)
 	}
 
-fprintf(stderr,"rvfft2d_1:  row loop done\\n");
+dnl fprintf(stderr,"rvfft2d_1:  row loop done\\n");
 
 	/* Now transform the columns */
 	/* BUG wrong if columns == 1 */
@@ -1035,7 +1087,7 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME(cvfft) )
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-fprintf(stderr,"rvfft2d_1:  starting column loop\\n");
+dnl fprintf(stderr,"rvfft2d_1:  starting column loop\\n");
 		COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
 }
@@ -1129,6 +1181,10 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 ') dnl endif /* N_PROCESSORS > 1 */
 		COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 	}
+
+dnl fprintf(stderr,"ift2d:  after column xforms:\\n");
+dnl pntvec(DEFAULT_QSP_ARG  OA_SRC1(oap), stderr );
+dnl fflush(stderr);
 
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){		/* more than 1 column ? */
 		dimension_t i;

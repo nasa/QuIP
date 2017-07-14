@@ -1,0 +1,19 @@
+
+Set len 8
+
+Vector c1 $len 1 complex
+Vector c2 $len 1 complex
+
+VSet c1 0
+VSet c1[2]{0} 1
+
+Display c1
+FFT c1
+Display c1
+Pause
+
+Display c1
+InvFFT c1
+Display c1
+Pause
+

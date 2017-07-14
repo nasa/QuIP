@@ -28,24 +28,28 @@ VMov c{0} f
 
 RFFT xf f
 advise 'Showing real transform...'
+#verbose yes
 Disp_Image xf{0} v3
 Disp_Image xf{1} v4
+#verbose no
 Pause
 
 advise 'Computing real inverse from transform...'
 RInvFFT g xf
 advise 'reconstructed image should be in the range -1 to 1'
-verbose yes
+#verbose yes
 Disp_Image g v2
-verbose no
+#verbose no
 Pause
+
+exit_macro
 
 # Show the in-place transform
 advise 'Showing real transform after computation of inverse...'
-verbose yes
+#verbose yes
 Disp_Image xf{0} v3
 Disp_Image xf{1} v4
-verbose no
+#verbose no
 Pause
 
 
@@ -71,10 +75,10 @@ repeat ncols(xf)
   Increment i
   end
 advise "Column transforms computed"
-verbose yes
+#verbose yes
 Disp_Image xf{0} v3
 Disp_Image xf{1} v4
-verbose no
+#verbose no
 Pause
 
 # Now do inverse by hand
@@ -88,10 +92,10 @@ repeat ncols(xf)
   Increment i
   end
 advise "Column inverse transforms computed"
-verbose yes
+#verbose yes
 Disp_Image xf{0} v3
 Disp_Image xf{1} v4
-verbose no
+#verbose no
 Pause
 
 advise "Computing inverse transforms of rows..."
@@ -101,9 +105,9 @@ repeat nrows(xf)
   Increment i
   end
 advise "Row inverse transforms computed"
-verbose yes
+#verbose yes
 Disp_Image g v2
-verbose no
+#verbose no
 Pause
 
 
@@ -116,24 +120,33 @@ advise 'complex transform shown'
 Pause
 
 InvFFT c
-verbose yes
+#verbose yes
 Disp_Image c{0} v1
 Disp_Image c{1} v2
-verbose no
+#verbose no
 advise 'inverse complex transform shown'
 Pause
 .
 
-# horizontal grating
-Ramp2D f 0 0 atan(1)
-VSin f f
+# oblique grating
+Ramp2D f 0 atan(1) atan(1)
+VCos f f
 Disp_Image f v1
 Pause
 
 Try_Transforms
 
+# horizontal grating
+Ramp2D f 0 0 atan(1)
+VCos f f
+Disp_Image f v1
+Pause
+
+Try_Transforms
+
+
 # vertical grating
-Ramp2D f 0 atan(1) 0
+Ramp2D f 0 0 atan(1)
 VSin f f
 Disp_Image f v1
 Pause

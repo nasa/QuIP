@@ -10,6 +10,11 @@ RFFT xf f
 Display xf
 Pause
 
+Display xf
+RInvFFT f xf
+Display f
+Pause
+
 
 data
   ascii
@@ -21,7 +26,9 @@ data
 	0	0
     quit
   quit
+
 Display xf
 RInvFFT f xf
 Display f
+Pause
 
