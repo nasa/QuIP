@@ -7,6 +7,7 @@
 #include "my_cu2.h"
 #include "quip_prot.h"
 #include "veclib/cu2_veclib_prot.h"
+#include "platform.h"
 
 
 #ifdef HAVE_CUDA
@@ -17,6 +18,8 @@ const char* getCUFFTError(cufftResult status)
 	switch (status) {
 		case CUFFT_SUCCESS:
 			return "Success";
+		case CUFFT_NOT_SUPPORTED:
+			return "CuFFT not supported";
 		case CUFFT_INVALID_PLAN:
 			return "Invalid Plan";
 		case CUFFT_ALLOC_FAILED:
@@ -124,10 +127,10 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 #endif // ! HAVE_CUDA
 }
 
-void h_cu2_fft2d( HOST_CALL_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fft2d not implemented!?"); }
-void h_cu2_ift2d( HOST_CALL_ARG_DECLS ) { NERROR1("Sorry, h_cu2_ift2d not implemented!?"); }
-void h_cu2_fftrows( HOST_CALL_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fftrows not implemented!?"); }
-void h_cu2_iftrows( HOST_CALL_ARG_DECLS ) { NERROR1("Sorry, h_cu2_iftrows not implemented!?"); }
+void h_cu2_fft2d( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fft2d not implemented!?"); }
+void h_cu2_ift2d( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_ift2d not implemented!?"); }
+void h_cu2_fftrows( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fftrows not implemented!?"); }
+void h_cu2_iftrows( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_iftrows not implemented!?"); }
 
 
 

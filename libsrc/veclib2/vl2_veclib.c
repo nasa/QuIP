@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>	// drand48
 #include "quip_prot.h"
 #include "function.h"
 #include "rn.h"

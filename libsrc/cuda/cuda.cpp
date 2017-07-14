@@ -482,6 +482,8 @@ const char* getCUFFTError(cufftResult status)
 	switch (status) {
 		case CUFFT_SUCCESS:
 			return "Success";
+		case CUFFT_NOT_SUPPORTED:
+			return "CuFFT not supported";
 		case CUFFT_INVALID_PLAN:
 			return "Invalid Plan";
 		case CUFFT_ALLOC_FAILED:

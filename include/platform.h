@@ -86,10 +86,13 @@ typedef struct compute_platform {
 	void (*cp_devinfo_func)(QSP_ARG_DECL  struct platform_device *pdp);
 	void (*cp_info_func)(QSP_ARG_DECL  struct compute_platform *pdp);
 
-	void (*cp_fft2d_func)(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-	void (*cp_ift2d_func)(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-	void (*cp_fftrows_func)(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
-	void (*cp_iftrows_func)(VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
+#define FFT_FUNC_ARG_DECLS					\
+	VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp
+
+	void (*cp_fft2d_func)( FFT_FUNC_ARG_DECLS );
+	void (*cp_ift2d_func)( FFT_FUNC_ARG_DECLS );
+	void (*cp_fftrows_func)( FFT_FUNC_ARG_DECLS );
+	void (*cp_iftrows_func)( FFT_FUNC_ARG_DECLS );
 
 	struct vec_func_array *	cp_vfa_tbl;
 

@@ -101,7 +101,7 @@ NVCC_SOURCES =						\
 
 
 # more dependencies here, but what are they?  BUG
-$(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c
+$(srcdir)/cu2_funcs.cu:	m4_cu2_veclib.c ../../include/platform.h ../../include/my_cu2.h
 		touch $(srcdir)/cu2_funcs.cu
 
 # cu2_host_untyped_call_defs.h
@@ -124,7 +124,7 @@ LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fill.m4			\
 			$(srcdir)/cu2_centroid.m4		\
 			$(srcdir)/cu2_centroid_defs.m4		\
-			$(srcdir)/cu2_yuv2rgb.m4			\
+			$(srcdir)/cu2_yuv2rgb.m4		\
 			$(srcdir)/cu2_veclib.m4 
 
 
@@ -182,6 +182,7 @@ INC_M4FILES=							\
 			$(M4_INCDIR)/li_defs.m4			\
 			$(M4_INCDIR)/math_funcs.m4		\
 			$(M4_INCDIR)/new_conv.m4		\
+			$(M4_INCDIR)/cu2_func_prot.m4		\
 			$(M4_INCDIR)/cu2_port.m4		\
 			$(M4_INCDIR)/cu2_veclib_prot.m4		\
 			$(M4_INCDIR)/quat_args.m4		\
