@@ -334,26 +334,6 @@ CREAT_VEC_FUNC( visspace,	FVISSPACE,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( visblank,	FVISBLANK,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( viscntrl,	FVISCNTRL,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 
-#ifdef NOT_YET
-CREAT_VEC_FUNC( vcsadd,		FVCSADD,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcssub,		FVCSSUB,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcsmul,		FVCSMUL,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcsdiv,		FVCSDIV,	VS_BINARY,	M_ALL,	CM	)
-CREAT_VEC_FUNC( vcsdiv2,	FVCSDIV2,	VS_BINARY,	M_ALL,	CM	)
-#endif
-/*
-CREAT_VEC_FUNC( vqsadd,		FVQSADD,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqssub,		FVQSSUB,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqsmul,		FVQSMUL,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqsdiv,		FVQSDIV,	VS_BINARY,	M_ALL,	QP	)
-CREAT_VEC_FUNC( vqsdiv2,	FVQSDIV2,	VS_BINARY,	M_ALL,	QP	)
-*/
-
-#ifdef NOT_YET
-CREAT_VEC_FUNC( vd2sp,		FVD2SP,		V_UNARY,	no_func, 0,	0	)
-CREAT_VEC_FUNC( vsp2d,		FVSP2D,		V_UNARY,	no_func, 0,	0	)
-#endif
-
 END_VFUNC_DECLS
 
 
@@ -478,6 +458,8 @@ ADVISE(ERROR_STRING);
 		assert( VF_CODE(&vec_func_tbl[i]) == i );
 	}
 #endif /* CAUTIOUS */
+
+	init_argset_objects(SINGLE_QSP_ARG);
 
 	// Initialize the platforms
 	//init_all_platforms(SINGLE_QSP_ARG);

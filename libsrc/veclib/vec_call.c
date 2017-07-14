@@ -499,7 +499,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			SET_OA_ARGSTYPE(oap, R_BIT_ARGS);
 */
 			/* R_BIT_ARGS was a functype - not an argset type??? */
-			SET_OA_ARGSPREC(oap, BIT_ARGS);
+			SET_OA_ARGSPREC_CODE(oap, BIT_ARGS);
 		} else if( IS_BITMAP( OA_SRC1(oap) ) ){
 			/* this is necessary because bitmaps handled with kludgy hacks */
 			SET_OA_SBM(oap,OA_SRC1(oap) );
@@ -565,7 +565,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		/* we used to use dst_prec here, but that
 		 * is only the machine precision!?
 		 */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
 
@@ -631,7 +631,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			return -1;
 		}
 		assert( OA_SRC1(oap) != NULL );
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
 		/* If the destination is long, don't worry about
 		 * a match with the arg...
 		 */
@@ -654,7 +654,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 				goto next1;
 		}
 		/* Can't use dst_prec here because might be bitmap */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
 next1:
@@ -675,7 +675,7 @@ next1:
 			return -1;
 		}
 		/* use the precision from the source */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
 		// BUG?  functype gets set at the bottom of this function, so how can we return?
 		// Do we also set it elsewhere???
 		return 0;
@@ -690,28 +690,28 @@ next1:
 	switch( dst_prec ){
 		case PREC_IN:
 			if( srcp1==PREC_UBY ){
-				SET_OA_ARGSPREC(oap, BYIN_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, BYIN_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_UBY);
 			break;
 		case PREC_DP:
 			if( srcp1==PREC_SP ){
-				SET_OA_ARGSPREC(oap, SPDP_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, SPDP_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_SP);
 			break;
 		case PREC_DI:
 			if( srcp1==PREC_UIN ){
-				SET_OA_ARGSPREC(oap, INDI_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, INDI_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_UIN);
 			break;
 		case PREC_BY:
 			if( srcp1==PREC_IN ){
-				SET_OA_ARGSPREC(oap, INBY_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, INBY_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_IN);
@@ -725,8 +725,8 @@ next1:
 			WARN(ERROR_STRING);
 			return -1;
 	}
-	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) )
+	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
+//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 } /* end chkprec() */
 
 static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check for argument size match */
@@ -975,9 +975,9 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	 * One answer is bitmap result functions...
 	 */
 	if(  OA_SRC1(oap)  != NULL ){
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
 	} else if( OA_DEST(oap)  != NULL ){
-		SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
 	} else {
 		sprintf(ERROR_STRING,"call_vfunc %s:",VF_NAME(vfp) );
 		ADVISE(ERROR_STRING);
@@ -997,8 +997,8 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	if( chkargs(QSP_ARG  vfp,oap) == (-1) ) return -1;	/* make set vslct_fake */
 
 	/* argstype has been set from within chkargs */
-	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) )
+	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
+//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 
 	/* We don't worry here about vectorization on CUDA... */
 

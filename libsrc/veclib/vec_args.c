@@ -12,22 +12,11 @@
 //#include "warn.h"
 //#include "getbuf.h"
 
-/* globals */
-int insist_real=0, insist_cpx=0, insist_quat=0;
-
-#define SCALAR_IMMEDIATE	1
-#define SCALAR_INDIRECT		2
-
-//static int scalar_mode=SCALAR_IMMEDIATE;
-
-#define SCAL1_NAME	"scal1_op"
-#define SCAL2_NAME	"scal2_op"
-
 
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_DEST(oap, PICK_OBJ( "destination vector" ) );
-	if( OA_DEST(oap) ==NULL )
+	if( OA_DEST(oap) == NULL )
 		return(-1);
 	return(0);
 }
@@ -35,7 +24,7 @@ static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC1(oap,PICK_OBJ( "first source vector" ) );
-	if( OA_SRC1(oap)==NULL )
+	if( OA_SRC1(oap) == NULL )
 		return(-1);
 	return(0);
 }
@@ -43,7 +32,7 @@ static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC2(oap,PICK_OBJ( "second source vector" ));
-	if( OA_SRC2(oap)==NULL )
+	if( OA_SRC2(oap) == NULL )
 		return(-1);
 	return(0);
 }
@@ -51,7 +40,7 @@ static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC3(oap,PICK_OBJ( "third source vector" ));
-	if( OA_SRC3(oap)==NULL )
+	if( OA_SRC3(oap) == NULL )
 		return(-1);
 	return(0);
 }
@@ -60,121 +49,10 @@ static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 static int get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
 	SET_OA_SRC4(oap,PICK_OBJ( "fourth source vector" ));
-	if( OA_SRC4(oap)==NULL )
+	if( OA_SRC4(oap) == NULL )
 		return(-1);
 	return(0);
 }
-
-#ifdef NOT_USED
-static void show_data_vector(QSP_ARG_DECL  Data_Vector *dvp)
-{
-	sprintf(msg_str,"data vec 0x%lx   inc %d   count %d   prec %s (%d)",
-		(int_for_addr)DV_VEC(dvp),DV_INC(dvp),DV_COUNT(dvp),
-		NAME_FOR_PREC_CODE(DV_PREC(dvp) ),
-		DV_PREC(dvp) );
-	prt_msg(msg_str);
-}
-#endif /* NOT_USED */
-
-/* Convert from data objects to warlib-style addresses and increments.
- * For non evenly-spaced objects, we just do the largest vectorizable
- * chunk, as previously determined and stored in max_vectorizable.
- * Note that this may have been constrained by some other object than the
- * one we are working on now.
- *
- *
- * Each data object has an array of dimensions and increments
- * For an evenly spaced object, the increment at a given level is
- * equal to the dimension increment product from the next lowest level.
- *
- * Now, we are operating on objects whose dimensions are assumed to match.
- * We would like to vectorize over as many dimensions as possible;
- * We use a variable max_vectorizable to record the max number of vectorizable
- * dimensions.
- *
- *
- * extract_vec_params() is used to set the warlib-style args from data object args.
- * This really shouldn't be necessary, it would be more efficient to simply have
- * a flag that says to take the data ptr and increment directly from the data object.
- * This might cause some problems w/ complex types, but in general it ought to work
- * fine.
- *
- * When we do need to have our own vector args is when we are not operating
- * on the entire object...  In this case, it is probably more efficient to
- * compute the offsets ourselves than to use one of the object indexing functions
- *
- * This routine does not assume that the whole object
- * is vectorizable, so it uses the global max_vectorizable to determine the length
- * (and increment) of the largest vectorizable chunk.
- */
-
-
-#ifdef NOT_USED
-static void extract_vec_params(Data_Vector *dvp, Data_Obj *dp)
-{
-	int i;
-	incr_t inc,n;
-	int need_inc;
-	int start_dim;
-
-	if( dp == NULL ){
-		SET_DV_VEC(dvp, NULL);
-		SET_DV_INC(dvp, 0);
-		SET_DV_COUNT(dvp, 0);
-		return;
-	}
-
-	/* find the increment and run length for the vectorizable chunks */
-	n=1;
-	need_inc=1;
-
-	if( IS_COMPLEX(dp) || IS_QUAT(dp) )
-		start_dim=1;
-	else
-		start_dim=0;
-
-	inc=(-4);	// pointless initialization to quiet compiler
-
-	for(i=start_dim;i<=max_vectorizable;i++){
-		n *= OBJ_TYPE_DIM(dp,i);
-		if( need_inc && (OBJ_TYPE_DIM(dp,i) > 1) ){
-			inc = OBJ_TYPE_INC(dp,i);
-			need_inc=0;
-		}
-	}
-	if( need_inc ) {
-		inc=1;
-		/* We used to think that if we got here, the object
-		 * must be a scalar; this is not true however:  one example
-		 * is a column vector taken from an image, or any object
-		 * with a single column combined with an object which constrains
-		 * max_vectorizable to 1 (such as a bitmap).
-		 */
-	}
-	if( IS_COMPLEX(dp) )
-		inc/=2;
-	else if( IS_QUAT(dp) )
-		inc/=4;
-
-	SET_DV_VEC(dvp, OBJ_DATA_PTR(dp) );
-	SET_DV_INC(dvp, inc);
-	SET_DV_COUNT(dvp, n);
-	SET_DV_PREC(dvp, OBJ_PREC(dp));	/* BUG? should be OBJ_MACH_PREC??? */
-	SET_DV_BIT0(dvp, OBJ_BIT0(dp) );
-	if( IS_BITMAP(dp) )
-		SET_DV_FLAG_BITS(dvp, DV_BITMAP);
-
-#ifdef QUIP_DEBUG
-if( debug & veclib_debug ){
-/* LONGLIST(dp); */
-sprintf(DEFAULT_ERROR_STRING,"extract_vec_params:  obj %s, prec %s, max_vect = %d,  n = %d, inc = %d",
-OBJ_NAME(dp),OBJ_PREC_NAME(dp),max_vectorizable,DV_COUNT(dvp),DV_INC(dvp));
-NADVISE(DEFAULT_ERROR_STRING);
-show_data_vector(DEFAULT_QSP_ARG  dvp);
-}
-#endif /* QUIP_DEBUG */
-}
-#endif /* NOT_USED */
 
 #ifdef NOT_YET
 void show_vf(Vector_Function *vfp)
@@ -191,7 +69,7 @@ void show_vf(Vector_Function *vfp)
 static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_SBM( oap, PICK_OBJ( "source bitmap object" ) );
-	if( OA_SBM(oap) ==NULL ) return(-1);
+	if( OA_SBM(oap) == NULL ) return(-1);
 	if( OBJ_PREC( OA_SBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
 			"get_src_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
@@ -206,7 +84,7 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
 	SET_OA_DBM( oap, PICK_OBJ( "destination bitmap object" ) );
-	if( OA_DBM(oap) ==NULL ) return(-1);
+	if( OA_DBM(oap) == NULL ) return(-1);
 	if( OBJ_PREC( OA_DBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
 			"get_dst_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
@@ -225,7 +103,7 @@ static List *free_sval_lp=NULL;
  */
 /* But we're not taking advantage of that here... */
 
-static Scalar_Value *get_sval(Precision * prec_p)
+static Scalar_Value *alloc_sval(Precision * prec_p)
 {
 	Scalar_Value *svp;
 
@@ -253,8 +131,8 @@ static void rls_sval(Scalar_Value *svp)
 
 	np = mk_node(svp);
 
-	assert(free_sval_lp!=NULL);
-	addHead(free_sval_lp,np);
+	assert( free_sval_lp != NULL );
+	addHead( free_sval_lp, np );
 }
 
 /*
@@ -267,7 +145,7 @@ static Data_Obj * get_return_scalar(QSP_ARG_DECL const char *pmpt,Precision *pre
 
 	/* which data area does PICK_OBJ use??? */
 	dp=PICK_OBJ( pmpt );
-	if( dp==NULL ) return(NULL);
+	if( dp == NULL ) return(NULL);
 	if( !IS_SCALAR(dp) ){
 		sprintf(ERROR_STRING,
 			"get_return_scalar:  %s is not a scalar",OBJ_NAME(dp));
@@ -307,7 +185,7 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 		push_data_area(ap=OA_DEST(oap) ->dt_ap);
 	} else {
 		int i;
-		ap=NULL;	// quiet compiler
+		ap = NULL;	// quiet compiler
 		for(i=0;i<MAX_N_ARGS;i++){
 			if( OA_SRC_OBJ(oap,i) != NULL ){
 				push_data_area(ap=OA_SRC_OBJ(oap,i)->dt_ap);
@@ -355,27 +233,26 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 #define SET_MACH_PREC_FROM_OBJ( prec_ptr, dp )				\
 									\
 	{								\
-		assert(dp!=NULL);					\
+		assert( dp != NULL );					\
 		prec_ptr = OBJ_MACH_PREC_PTR( dp );			\
 	}
 
 #define SET_PREC_FROM_OBJ( prec_ptr, dp )				\
 									\
 	{								\
-		assert(dp!=NULL);					\
+		assert( dp != NULL );					\
 		prec_ptr = OBJ_PREC_PTR( dp );				\
 	}
 
 #ifdef FOOBAR
 #define SET_PREC							\
 									\
-	if( OA_DEST(oap) !=NULL ) prec_p=OBJ_PREC_PTR( OA_DEST(oap) );\
+	if( OA_DEST(oap) != NULL ) prec_p=OBJ_PREC_PTR( OA_DEST(oap) );\
 	else prec_p=prec_for_code(PREC_SP);
 #endif // FOOBAR
 
 static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 {
-	int ir, ic, iq;
 	Precision * prec_p;
 	int retval=0;
 #ifdef HAVE_ANY_GPU
@@ -388,21 +265,14 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 	 * vector has the precision with higher type dimension.
 	 */
 
-	ir=insist_real;
-	ic=insist_cpx;
-	iq=insist_quat;
-
-	insist_real=0;
-	insist_cpx=0;
-	insist_quat=0;
-
 #ifdef HAVE_ANY_GPU
 
-	ap=set_arg_data_area(QSP_ARG  oap);
+	ap = set_arg_data_area(QSP_ARG  oap);
 
 	// suppress compiler warning by checking return value
 	// This never should happen...
-	if( ap == NULL ) WARN("bad return value from set_arg_data_area");
+	//if( ap == NULL ) WARN("bad return value from set_arg_data_area");
+	assert( ap != NULL );
 
 #endif /* HAVE_ANY_GPU */
 
@@ -429,9 +299,9 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		  else {
 			assert( AERROR("unexpected 3 scalar function!?") );
 		}
-		SET_OA_SVAL(oap,0, get_sval(prec_p) );
-		SET_OA_SVAL(oap,1, get_sval(prec_p) );
-		SET_OA_SVAL(oap,2, get_sval(prec_p) );
+		SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
+		SET_OA_SVAL(oap,1, alloc_sval(prec_p) );
+		SET_OA_SVAL(oap,2, alloc_sval(prec_p) );
 		// BUG - could have an array of prec_p's ???
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
 		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
@@ -477,7 +347,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 				sprintf(ERROR_STRING,
 	"get_scalar_args:  function %s does not permit operations with quaternion targets (%s)",
 					VF_NAME(vfp),
-					OA_DEST(oap)==NULL ?
+					OA_DEST(oap) == NULL ?
 					"(null destination)" :
 					OBJ_NAME(OA_DEST(oap) ));
 				WARN(ERROR_STRING);
@@ -503,8 +373,8 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		else {
 			assert( AERROR("unhandled case in get_scalar_args") );
 		}
-		SET_OA_SVAL(oap,0, get_sval(prec_p) );
-		SET_OA_SVAL(oap,1, get_sval(prec_p) );
+		SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
+		SET_OA_SVAL(oap,1, alloc_sval(prec_p) );
 		if( retval == 0 ){
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
@@ -513,20 +383,18 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 	else if( VF_FLAGS(vfp) & SRC_SCALAR1 ){
 		if( VF_FLAGS(vfp) == VS_TEST ){	/* vsm_lt etc. */
-			if( OA_SRC1(oap) ==NULL ){
+			if( OA_SRC1(oap) == NULL ){
 				goto get_dummy;
 			}
 			SET_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
-			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
+			SET_OA_SVAL(oap,0, alloc_sval( prec_p ) );
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value") );
 		} else if( OA_DEST(oap) == NULL ){	/* error condition */
 			/*double d;
 			d=*/HOW_MUCH("dummy value");
 			retval=(-1);
-		} else if( IS_REAL(OA_DEST(oap) ) || ir ){
-			if( ic ) WARN("Multiplication by a complex scalar with a real target");
-			if( iq ) WARN("Multiplication by a quaternion scalar with a real target");
+		} else if( IS_REAL(OA_DEST(oap) ) ){
 			/* BUG we can't use destination for precision
 			 * in the mixed precision ops...
 			 * Well we can, but it breaks vsatan2 with cuda...
@@ -536,19 +404,19 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			} else {
 				SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
 			}
-			SET_OA_SVAL(oap,0,get_sval( prec_p ) );
+			SET_OA_SVAL(oap,0,alloc_sval( prec_p ) );
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source real scalar value") );
-		} else if( (IS_COMPLEX(OA_DEST(oap) ) && !ir) || ic ) {
+		} else if( IS_COMPLEX(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
-			SET_OA_SVAL(oap,0, get_sval(prec_p) );
+			SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
 			cast_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value real part") );
 			cast_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value imaginary part") );
-		} else if( (IS_QUAT(OA_DEST(oap) ) && !ir) || iq ) {
+		} else if( IS_QUAT(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
-			SET_OA_SVAL(oap,0, get_sval( prec_p ));
+			SET_OA_SVAL(oap,0, alloc_sval( prec_p ));
 			cast_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value real part") );
 			cast_to_quat_scalar(QSP_ARG  1,OA_SVAL(oap,0),  prec_p,
@@ -561,7 +429,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			// what precision is this?
 			/* use a single scalar for all components */
 			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
-			SET_OA_SVAL(oap,0, get_sval( prec_p ) );
+			SET_OA_SVAL(oap,0, alloc_sval( prec_p ) );
 			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value") );
 		}
@@ -668,68 +536,6 @@ static int get_args(QSP_ARG_DECL  Vec_Obj_Args *oap,Vector_Function *vfp)
 
 	return(0);
 } /* end get_args */
-
-#ifdef FOOBAR
-void scalar_immediate()
-{
-	scalar_mode = SCALAR_IMMEDIATE;
-}
-
-void scalar_indirect()
-{
-	scalar_mode = SCALAR_INDIRECT;
-}
-
-int prompt_scalar_value(QSP_ARG_DECL  Data_Obj *dp, const char *pmpt, prec_t prec)
-{
-	if( prec==PREC_DI ){
-		int32_t lvalue;
-		lvalue=(int32_t)HOW_MANY(pmpt);
-		*((int32_t *)OBJ_DATA_PTR( dp )) = lvalue;
-	} else if( prec==PREC_UDI ){
-		uint32_t lvalue;
-		lvalue=(uint32_t) HOW_MANY(pmpt);
-		*((uint32_t *)OBJ_DATA_PTR( dp )) = lvalue;
-	} else if( prec==PREC_LI ){
-		int64_t lvalue;
-		lvalue=(int64_t)HOW_MANY(pmpt);
-		*((int64_t *)OBJ_DATA_PTR( dp ))=lvalue;
-	} else if( prec==PREC_ULI ){
-		uint64_t lvalue;
-		lvalue=(uint64_t)HOW_MANY(pmpt);
-		*((uint64_t *)OBJ_DATA_PTR( dp ))=lvalue;
-	} else if( prec==PREC_BY ){
-		char cvalue;
-		cvalue=(char)HOW_MANY(pmpt);
-		*((char *)OBJ_DATA_PTR( dp ))=cvalue;
-	} else if( prec==PREC_UBY ){
-		u_char cvalue;
-		cvalue=(u_char)HOW_MANY(pmpt);
-		*((u_char *)OBJ_DATA_PTR( dp ))=cvalue;
-	} else if( prec==PREC_DP ){
-		double value;
-		value=HOW_MUCH(pmpt);
-		*((double *)OBJ_DATA_PTR( dp ))=value;
-	} else if( prec==PREC_SP ){
-		float value;
-		value=(float)HOW_MUCH(pmpt);
-		*((float *)OBJ_DATA_PTR( dp ))=value;
-	} else if( prec==PREC_IN ){
-		short svalue;
-		svalue=(short)HOW_MANY(pmpt);
-		*((short *)OBJ_DATA_PTR( dp )) = svalue;
-	} else if( prec==PREC_UIN ){
-		u_short svalue;
-		svalue=(u_short)HOW_MANY(pmpt);
-		*((u_short *)OBJ_DATA_PTR( dp )) = svalue;
-	}
-
-	else {
-		assert( AERROR("prompt_scalar_value:  unsupported precision!?") );
-	}
-	return(0);
-}
-#endif /* FOOBAR */
 
 #ifdef FOOBAR
 /* We have a problem introduced by trying to use the Data_Obj framework for images in nVidia CUDA:
@@ -886,7 +692,7 @@ WARN(ERROR_STRING);
 	 */
 	for(i=0;i<MAX_SRCSCAL_ARGS;i++){
 		if( OA_SVAL(oap,i) != NULL )
-			rls_sval( OA_SVAL(oap,i) );	// free scalars allocated by get_sval()
+			rls_sval( OA_SVAL(oap,i) );	// free scalars allocated by alloc_sval()
 	}
 }
 
@@ -1331,7 +1137,7 @@ show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 	// so that it will be available for use by kernels
 
 	ptr = (*PF_MEM_ALLOC_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  OBJ_PFDEV(dp), BMI_STRUCT_SIZE(bmi_p), 0 );
-	assert(ptr!=NULL);
+	assert( ptr != NULL );
 	SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,ptr);
 
 	// now copy to device

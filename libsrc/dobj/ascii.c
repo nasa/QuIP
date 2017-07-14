@@ -987,11 +987,11 @@ char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
 	return buf;
 }
 
-Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
+Precision *src_prec_for_argset_prec(Argset_Prec * ap_p, argset_type at)
 {
 	int code=PREC_NONE;
 
-	switch(ap){
+	switch(ARGSPREC_CODE(ap_p)){
 		case BY_ARGS:	code=PREC_BY; break;
 		case IN_ARGS:	code=PREC_IN; break;
 		case DI_ARGS:	code=PREC_DI; break;

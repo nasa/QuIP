@@ -85,8 +85,8 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 
 	clear_obj_args(oap);
 	SET_OA_ARGSTYPE(oap, REAL_ARGS );	/* BUG? should we check type of input? */
-	SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC(dp)) );
-	SET_OA_FUNCTYPE(oap, FUNCTYPE_FOR(OA_ARGSPREC(oap),OA_ARGSTYPE(oap)) );
+	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC(dp)) );
+	SET_OA_FUNCTYPE(oap, FUNCTYPE_FOR(OA_ARGSPREC_CODE(oap),OA_ARGSTYPE(oap)) );
 	SET_OA_SRC_OBJ(oap,0,dp);
 	SET_OA_PFDEV(oap, OBJ_PFDEV(dp) );
 

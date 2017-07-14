@@ -42,21 +42,31 @@ typedef enum {
 	BIT_ARGS,	/* 14 */
 	N_ARGSET_PRECISIONS,/* 15 */
 	INVALID_ARGSET_PREC
-} argset_prec;	/* argsprec */
+} argset_prec_t;
+
+struct argset_prec {
+	Item		ap_item;
+	argset_prec_t	ap_code;
+};
+
+#define ARGSPREC_NAME(ap_p)	(ap_p)->ap_item.item_name
+#define ARGSPREC_CODE(ap_p)	(ap_p)->ap_code
+
+typedef struct argset_prec Argset_Prec;
 
 #define ARGPREC_UNSPECIFIED	(-1)
 
-#define FUNCTYPE_FOR( argsprec, arg_type )				\
-		( argsprec + (arg_type-1) * N_ARGSET_PRECISIONS )
+#define FUNCTYPE_FOR( args_prec, arg_type )				\
+		( args_prec + (arg_type-1) * N_ARGSET_PRECISIONS )
 
 #define TELL_FUNCTYPE(argsprec,arg_type)				\
 sprintf(ERROR_STRING,"functype = %d, argsprec = %d (%s), arg_type = %d (%s)",\
 ( argsprec + (arg_type-1) * N_ARGSET_PRECISIONS ), \
-argsprec, NAME_FOR_ARGSPREC(argsprec), \
+argsprec, NAME_FOR_ARGSPREC_CODE(argsprec), \
 arg_type, NAME_FOR_ARGTYPE(arg_type) );\
 advise(ERROR_STRING);
 
-#define NAME_FOR_ARGSPREC(i)	name_for_argsprec(i)
+#define NAME_FOR_ARGSPREC_CODE(i)	name_for_argsprec(i)
 
 typedef enum {
 	UNKNOWN_ARGS,
@@ -82,7 +92,7 @@ struct vec_obj_args {
 
 	int		oa_flags;
 	int		oa_functype;
-	argset_prec	oa_argsprec;
+	Argset_Prec *	oa_ap_p;
 	argset_type	oa_argstype;
 } ;
 
@@ -212,7 +222,7 @@ typedef struct vector_args {
 #endif // FOOBAR
 
 	argset_type	va_argstype;
-	argset_prec	va_argsprec;
+	Argset_Prec *	va_ap_p;
 	int		va_functype;
 	int		va_flags;
 	struct platform_device *	va_pfdev;
@@ -538,7 +548,8 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 /* Obj_Args */
 
 #define OA_ARGSTYPE(oap)		(oap)->oa_argstype
-#define OA_ARGSPREC(oap)		(oap)->oa_argsprec
+#define OA_ARGSPREC_PTR(oap)		(oap)->oa_ap_p
+#define OA_ARGSPREC_CODE(oap)		(oap)->oa_ap_p->ap_code
 #define OA_FUNCTYPE(oap)		(oap)->oa_functype
 #define OA_DEST(oap)			(oap)->oa_dest
 #define OA_DBM(oap)			OA_DEST(oap)
@@ -579,7 +590,9 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 #define OA_CPX_SVAL(oap,idx)		(oap)->oa_svp[idx]
 #define OA_QUAT_SVAL(oap,idx)		(oap)->oa_svp[idx]
 #define SET_OA_SVAL1(oap,val)		(oap)->oa_svp[0]=val
-#define SET_OA_ARGSPREC(oap,val)	(oap)->oa_argsprec=val
+//#define SET_OA_ARGSPREC(oap,val)	(oap)->oa_argsprec=val
+#define SET_OA_ARGSPREC_CODE(oap,val)	set_argset_prec(oap,val)
+#define SET_OA_ARGSPREC_PTR(oap,val)	(oap)->oa_ap_p = val
 #define SET_OA_ARGSTYPE(oap,val)	(oap)->oa_argstype=val
 #define SET_OA_FUNCTYPE(oap,val)	(oap)->oa_functype=val
 #define SET_OA_FLAGS(oap,v)		(oap)->oa_flags = v
@@ -588,7 +601,9 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 
 extern void clear_oargs(Vec_Obj_Args *oap);
 
-extern Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at);
+extern Precision *src_prec_for_argset_prec(Argset_Prec *ap_p,argset_type at);
+
+extern void set_argset_prec( Vec_Obj_Args *oap, argset_prec_t val );
 
 extern void init_bitmap_gpu_info(Data_Obj *dp);
 #ifdef JUST_FOR_DEBUGGING

@@ -25,7 +25,7 @@ static void nullobjf(HOST_CALL_ARG_DECLS)
 	sprintf(DEFAULT_ERROR_STRING,
 "CAUTIOUS:  function %s is not implemented for precision %s!?",
 		VF_NAME(&vec_func_tbl[vf_code]),
-		NAME_FOR_ARGSPREC(OA_ARGSPREC(oap)) );
+		ARGSPREC_NAME(OA_ARGSPREC_PTR(oap)) );
 	NWARN(DEFAULT_ERROR_STRING);
 	show_obj_args(DEFAULT_QSP_ARG  oap);
 	/* no more global this_vfp... */

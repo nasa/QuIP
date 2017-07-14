@@ -380,30 +380,16 @@ static COMMAND_FUNC( do_vv )
 	PUSH_MENU(vvector);
 }
 
-static COMMAND_FUNC( do_vsadd )		{	insist_real=1; DO_VCODE(FVSADD); }
-static COMMAND_FUNC( do_vssub )		{	insist_real=1; DO_VCODE(FVSSUB); }
-static COMMAND_FUNC( do_vsmul )		{	insist_real=1; DO_VCODE(FVSMUL); }
-static COMMAND_FUNC( do_vsdiv )		{	insist_real=1; DO_VCODE(FVSDIV); }
-static COMMAND_FUNC( do_vsdiv2 )		{	insist_real=1; DO_VCODE(FVSDIV2); }
+static COMMAND_FUNC( do_vsadd )		{	DO_VCODE(FVSADD); }
+static COMMAND_FUNC( do_vssub )		{	DO_VCODE(FVSSUB); }
+static COMMAND_FUNC( do_vsmul )		{	DO_VCODE(FVSMUL); }
+static COMMAND_FUNC( do_vsdiv )		{	DO_VCODE(FVSDIV); }
+static COMMAND_FUNC( do_vsdiv2 )	{	DO_VCODE(FVSDIV2); }
 
 /* static COMMAND_FUNC( do_vscml )	{	DO_VCODE(FVSCML); } */
 
 static COMMAND_FUNC( do_vsmod )		{	DO_VCODE(FVSMOD); }
-static COMMAND_FUNC( do_vsmod2 )		{	DO_VCODE(FVSMOD2); }
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_vcsadd )	{	insist_cpx=1;  DO_VCODE(FVCSADD); }
-static COMMAND_FUNC( do_vcssub )	{	insist_cpx=1;  DO_VCODE(FVCSSUB); }
-static COMMAND_FUNC( do_vcsmul )	{	insist_cpx=1;  DO_VCODE(FVCSMUL); }
-static COMMAND_FUNC( do_vcsdiv )	{	insist_cpx=1;  DO_VCODE(FVCSDIV); }
-static COMMAND_FUNC( do_vcsdiv2 )	{	insist_cpx=1;  DO_VCODE(FVCSDIV2); }
-
-static COMMAND_FUNC( do_vqsadd )	{	insist_quat=1;  DO_VCODE(FVQSADD); }
-static COMMAND_FUNC( do_vqssub )	{	insist_quat=1;  DO_VCODE(FVQSSUB); }
-static COMMAND_FUNC( do_vqsmul )	{	insist_quat=1;  DO_VCODE(FVQSMUL); }
-static COMMAND_FUNC( do_vqsdiv )	{	insist_quat=1;  DO_VCODE(FVQSDIV); }
-static COMMAND_FUNC( do_vqsdiv2 )	{	insist_quat=1;  DO_VCODE(FVQSDIV2); }
-#endif /* FOOBAR */
+static COMMAND_FUNC( do_vsmod2 )	{	DO_VCODE(FVSMOD2); }
 
 static COMMAND_FUNC( do_vspow )		{	DO_VCODE(FVSPOW); }
 static COMMAND_FUNC( do_vspow2 )	{	DO_VCODE(FVSPOW2); }
@@ -436,38 +422,7 @@ ADD_CMD( xor,	do_vsxor,	bitwise xor of scalar and vector	)
 MENU_END(svector)
 
 
-static COMMAND_FUNC( do_rvs ) { PUSH_MENU(svector); }
-
-#ifdef FOOBAR
-Command cvs_menu[]={
-{ "add",	do_vcsadd,	"add complex scalar to elements of a vector"	},
-{ "div",	do_vcsdiv,	"divide a complex scalar by the elements of a vector"},
-{ "div2",	do_vcsdiv2,	"divide elements of a vector by a complex scalar"},
-{ "mul",	do_vcsmul,	"multiply a vector by a complex scalar"	},
-/* { "conjmul",	do_vscml,	"multiply vector conj. by a complex scalar"},	*/
-{ "sub",	do_vcssub,	"subtract elements of a vector from a complex scalar"},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"				},
-#endif
-{ NULL_COMMAND								}
-};
-
-Command qvs_menu[]={
-{ "add",	do_vqsadd,	"add quaternion scalar to elements of a vector"	},
-{ "div",	do_vqsdiv,	"divide a quaternion scalar by the elements of a vector"},
-{ "div2",	do_vqsdiv2,	"divide elements of a vector by a quaternion scalar"},
-{ "mul",	do_vqsmul,	"multiply a vector by a quaternion scalar"	},
-/* { "conjmul",	do_vscml,	"multiply vector conj. by a quaternion scalar"},	*/
-{ "sub",	do_vqssub,	"subtract elements of a vector from a quaternion scalar"},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"				},
-#endif
-{ NULL_COMMAND								}
-};
-
-static COMMAND_FUNC( do_cvs ) { PUSH_MENU(cvs_menu); }
-static COMMAND_FUNC( do_qvs ) { PUSH_MENU(qvs_menu); }
-#endif	/* FOOBAR */
+static COMMAND_FUNC( do_vs ) { PUSH_MENU(svector); }
 
 /* These return a single scalar, and can be used as projection operators */
 static COMMAND_FUNC( domaxv ){	DO_VCODE(FVMAXV); }
@@ -2123,11 +2078,7 @@ ADD_CMD(	trig,		do_trig,	trigonometric operations	)
 ADD_CMD(	unary,		do_unary,	unary operations on data	)
 ADD_CMD(	logical,	do_logic,	logical operations on data	)
 ADD_CMD(	vvector,	do_vv,		vector-vector operations	)
-ADD_CMD(	svector,	do_rvs,		real_scalar-vector operations	)
-#ifdef FOOBAR
-ADD_CMD(	csvector,	do_cvs,		complex_scalar-vector operations	)
-ADD_CMD(	Qsvector,	do_qvs,		quaternion_scalar-vector operations	)
-#endif /* FOOBAR */
+ADD_CMD(	svector,	do_vs,		scalar-vector operations	)
 ADD_CMD(	minmax,		do_minmax,	minimum/maximum routines	)
 ADD_CMD(	compare,	docmp,		comparision routines	)
 ADD_CMD(	fft,		do_fft,		FFT submenu	)

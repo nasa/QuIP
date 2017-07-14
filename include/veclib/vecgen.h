@@ -32,7 +32,8 @@ typedef enum {
 	N_NUMBER_TYPES		/* must be last! */
 } number_type;
 
-extern const char *name_for_argsprec(argset_prec i);
+extern void init_argset_objects(SINGLE_QSP_ARG_DECL);
+extern const char *name_for_argsprec(argset_prec_t code);
 extern const char *name_for_argtype(argset_type i);
 
 #define	N_FUNCTION_TYPES	(N_ARGSET_PRECISIONS * N_ARGSET_TYPES)
@@ -41,7 +42,7 @@ extern const char *name_for_argtype(argset_type i);
 
 #define ARGSET_PREC( prec )						\
 									\
-	( (argset_prec)( PSEUDO_PREC_INDEX(prec) == PP_BIT?		\
+	( (argset_prec_t)( PSEUDO_PREC_INDEX(prec) == PP_BIT?		\
 					BIT_ARGS :			\
 					( ((prec)&MACH_PREC_MASK) - PREC_BY ) ))
 
