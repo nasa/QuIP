@@ -16,6 +16,7 @@
 #include "quip_prot.h"
 #include "query_prot.h"
 #include "query_stack.h"
+#include "macro.h"	// Need to make macro private file!
 #include "nexpr.h"
 #include "rn.h"	// set_seed
 
@@ -180,7 +181,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 	List *lp, *newlp=NULL;
 	Node *np, *newnp;
 	Macro *mp;
-	const char *mbuf;
+	char *mbuf;
 	char *lc_frag;
 
 	if( macro_itp == NULL ) return NULL;
@@ -195,7 +196,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 		if( MACRO_TEXT(mp) != NULL ){	/* NULL if no macro text... */
 			mbuf = getbuf( strlen(MACRO_TEXT(mp))+1 );
 			/* make the match case insensitive */
-			decap((char *)mbuf,mbuf);
+			decap(mbuf,MACRO_TEXT(mp));
 			if( strstr(mbuf,lc_frag) != NULL ){
 				if( newlp == NULL )
 					newlp=new_list();
