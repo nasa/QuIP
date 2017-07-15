@@ -4,7 +4,7 @@ Set len 8
 Vector c1 $len 1 complex
 Vector c2 $len 1 complex
 
-VSet c1 0
+VSetComplex c1 0 0
 VSet c1[2]{0} 1
 
 Display c1
@@ -15,5 +15,35 @@ Pause
 Display c1
 InvFFT c1
 Display c1
+Pause
+
+Vector f1 $len 1 float
+Xform_For xf f1
+VSet f1 0
+VSet f1[2] 1
+Display f1
+
+RFFT xf f1
+Display xf
+Pause
+
+Display xf
+RInvFFT f1 xf
+Display f1
+Pause
+
+VSetComplex c2 0 0
+Ramp1D c2{0} 0 8*atan(1)/$len
+VSin c2{0} c2{0}
+Display c2
+FFT c2
+Display c2
+Pause
+
+Ramp1D f1 0 8*atan(1)/$len
+VSin f1 f1
+Display f1
+RFFT xf f1
+Display xf
 Pause
 
