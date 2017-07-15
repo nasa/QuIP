@@ -40,8 +40,7 @@ typedef enum {
 	INDI_ARGS,	/* 12 */		/* uin args, int32 result */
 	SPDP_ARGS,	/* 13 */		/* sp args, dp result */
 	BIT_ARGS,	/* 14 */
-	N_ARGSET_PRECISIONS,/* 15 */
-	INVALID_ARGSET_PREC
+	N_ARGSET_PRECISIONS/* 15 */
 } argset_prec_t;
 
 struct argset_prec {

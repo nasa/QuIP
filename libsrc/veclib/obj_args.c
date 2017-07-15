@@ -61,7 +61,7 @@ longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
 	if(  /* OA_ARGSPREC_CODE(oap)  >= 0 && */  OA_ARGSPREC_CODE(oap)  < N_ARGSET_PRECISIONS ){
 		sprintf(buf,"\targsprec:  %s (%d)",type_strings[ OA_ARGSPREC_CODE(oap) ], OA_ARGSPREC_CODE(oap) );
 		(*report_func)(DEFAULT_QSP_ARG  buf);
-	} else if(  OA_ARGSPREC_CODE(oap)  == INVALID_ARGSET_PREC ){
+	} else if(  OA_ARGSPREC_PTR(oap)  == NULL ){
 		(*report_func)(DEFAULT_QSP_ARG  "\targsprec not set");
 	} else {
 		sprintf(buf,"\targsprec:  garbage value (%d)", OA_ARGSPREC_CODE(oap) );
@@ -161,7 +161,7 @@ void clear_obj_args(Vec_Obj_Args *oap)
 
 	// These fields have non-null initial values...
 
-	SET_OA_ARGSPREC_CODE(oap, INVALID_ARGSET_PREC );
+	SET_OA_ARGSPREC_PTR(oap, NULL );
 	SET_OA_ARGSTYPE(oap, INVALID_ARGSET_TYPE);
 
 	SET_OA_FUNCTYPE(oap, -1);
@@ -227,6 +227,7 @@ const char *name_for_argtype(argset_type t)
 
 void set_argset_prec( Vec_Obj_Args *oap, argset_prec_t code )
 {
+fprintf(stderr,"set_argset_prec  code = %d\n",code);
 	assert( code >= 0 && code < N_ARGSET_PRECISIONS );
 
 	SET_OA_ARGSPREC_PTR(oap,argset_prec_tbl[code]);
