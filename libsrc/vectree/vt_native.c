@@ -12,6 +12,7 @@
 #endif /* USE_NUMREC */
 #endif /* HAVE_NUMREC */
 #include "debug.h"		/* verbose */
+#include "platform.h"		/* dp_convert - should be declared elsewhere!? */
 
 #define EVAL_VT_NATIVE_WORK(enp)		eval_vt_native_work(QSP_ARG enp)
 

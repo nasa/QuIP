@@ -86,6 +86,9 @@ typedef struct compute_platform {
 	void (*cp_devinfo_func)(QSP_ARG_DECL  struct platform_device *pdp);
 	void (*cp_info_func)(QSP_ARG_DECL  struct compute_platform *pdp);
 
+#ifdef FOOBAR
+// BUG integrate with m4 macros???
+
 #define FFT_FUNC_ARG_DECLS					\
 	VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp
 
@@ -93,6 +96,7 @@ typedef struct compute_platform {
 	void (*cp_ift2d_func)( FFT_FUNC_ARG_DECLS );
 	void (*cp_fftrows_func)( FFT_FUNC_ARG_DECLS );
 	void (*cp_iftrows_func)( FFT_FUNC_ARG_DECLS );
+#endif // FOOBAR
 
 	struct vec_func_array *	cp_vfa_tbl;
 
@@ -194,13 +198,17 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 	SET_PF_MAPBUF_FN(	cpp,	stem##_map_buf		);	\
 	SET_PF_UNMAPBUF_FN(	cpp,	stem##_unmap_buf	);	\
 	SET_PF_DEVINFO_FN(	cpp,	stem##_dev_info		);	\
-	SET_PF_INFO_FN(		cpp,	stem##_info		);	\
+	SET_PF_INFO_FN(		cpp,	stem##_info		);
+
+#ifdef FOOBAR
 	/*SET_PF_DISPATCH_FN(	cpp,	stem##_dispatch		);*/	\
 									\
 	SET_PF_FFT2D_FN(	cpp,	h_##stem##_fft2d	);	\
 	SET_PF_IFT2D_FN(	cpp,	h_##stem##_ift2d	);	\
 	SET_PF_FFTROWS_FN(	cpp,	h_##stem##_fftrows	);	\
 	SET_PF_IFTROWS_FN(	cpp,	h_##stem##_iftrows	);	\
+
+#endif // FOOBAR
 
 
 #define PF_FUNC_TBL(cpp)		(cpp)->cp_vfa_tbl

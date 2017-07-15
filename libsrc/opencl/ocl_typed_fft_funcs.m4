@@ -24,8 +24,11 @@ static void HOST_TYPED_CALL_NAME(rfft2d,type_code)(HOST_CALL_ARG_DECLS)
 static void HOST_TYPED_CALL_NAME(rift2d,type_code)(HOST_CALL_ARG_DECLS)
 { NWARN("HOST_TYPED_CALL_NAME(rift2d,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(cfft2d,type_code)(HOST_CALL_ARG_DECLS, int is_inv)
+static void HOST_TYPED_CALL_NAME(cfft2d,type_code)(HOST_CALL_ARG_DECLS)
 { NWARN("HOST_TYPED_CALL_NAME(cfft2d,type_code) not implemented!?"); }
+
+static void HOST_TYPED_CALL_NAME(cift2d,type_code)(HOST_CALL_ARG_DECLS)
+{ NWARN("HOST_TYPED_CALL_NAME(cift2d,type_code) not implemented!?"); }
 
 static void HOST_TYPED_CALL_NAME(rfftrows,type_code)(HOST_CALL_ARG_DECLS)
 { NWARN("HOST_TYPED_CALL_NAME(rfftrows,type_code) not implemented!?"); }
@@ -33,8 +36,11 @@ static void HOST_TYPED_CALL_NAME(rfftrows,type_code)(HOST_CALL_ARG_DECLS)
 static void HOST_TYPED_CALL_NAME(riftrows,type_code)(HOST_CALL_ARG_DECLS)
 { NWARN("HOST_TYPED_CALL_NAME(riftrows,type_code) not implemented!?"); }
 
-static void HOST_TYPED_CALL_NAME(cfftrows,type_code)(HOST_CALL_ARG_DECLS, int is_inv)
+static void HOST_TYPED_CALL_NAME(cfftrows,type_code)(HOST_CALL_ARG_DECLS)
 { NWARN("HOST_TYPED_CALL_NAME(cfftrows,type_code) not implemented!?"); }
+
+static void HOST_TYPED_CALL_NAME(ciftrows,type_code)(HOST_CALL_ARG_DECLS)
+{ NWARN("HOST_TYPED_CALL_NAME(ciftrows,type_code) not implemented!?"); }
 
 ') dnl endif // ! BUILDING_KERNELS
 

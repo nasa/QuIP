@@ -643,7 +643,7 @@ dnl cbot += FFT_SINC(fap);
 dnl }
 
 	// compute in-place, overwriting the source...
-	PF_FFT_CALL_NAME(cvfft)(&fa);
+	PF_FFT_CALL_NAME(cvfft)(_fap);
 dnl fprintf(stderr,"rvift:  after complex transform:\\n");
 dnl cbot=src;
 dnl for(i=0;i<len/2;i++){
@@ -754,7 +754,7 @@ dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vfft,type_code) BEGIN\\n");
 	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
 	SET_FFT_ISI(fap,(-1) );
 
-	PF_FFT_CALL_NAME(cvfft)( &fa );
+	PF_FFT_CALL_NAME(cvfft)( fap );
 }
 
 static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
@@ -770,7 +770,7 @@ dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vift,type_code) BEGIN\\n");
 	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
 	SET_FFT_ISI(fap, (1) );
 
-	PF_FFT_CALL_NAME(cvift)( &fa );
+	PF_FFT_CALL_NAME(cvift)( fap );
 }
 
 
@@ -790,7 +790,7 @@ dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vfft,type_code) BEGIN\\n");
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_SRC1(oap) ) );
 	SET_FFT_ISI( fap, (-1) );
-	PF_FFT_CALL_NAME(rvfft)( &fa );
+	PF_FFT_CALL_NAME(rvfft)( fap );
 }
 
 static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
@@ -807,8 +807,8 @@ dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vift,type_code) BEGIN\\n");
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );
 	SET_FFT_ISI( fap, 1 );
-	//PF_FFT_CALL_NAME(rvfft)( &fa );
-	PF_FFT_CALL_NAME(rvift)( &fa );
+	//PF_FFT_CALL_NAME(rvfft)( fap );
+	PF_FFT_CALL_NAME(rvift)( fap );
 }
 
 /* Read 2-D fourier transform.
@@ -1302,19 +1302,12 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
  * No SMP version (yet).
  */
 
-static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int is_inv )
+static void HOST_TYPED_CALL_NAME_CPX(xft2d,type_code)( Vec_Obj_Args *oap, FFT_Args *fap )
 {
 	dimension_t i;
 	incr_t src_row_inc;
-	FFT_Args fa;
-	FFT_Args *fap=(&fa);
-
-	if( ! cpx_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)) ) )
-		return;
 
 	/* transform the columns */
-
-	SET_FFT_ISI( fap, is_inv );
 
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){	/* more than one row */
 		SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
@@ -1324,7 +1317,7 @@ static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int 
 		SET_FFT_LEN( fap, OBJ_ROWS( OA_SRC1(oap) ) );
 
 		for (i = 0; i < OBJ_COLS( OA_SRC1(oap) ); ++i) {
-			PF_FFT_CALL_NAME(cvfft)(&fa);
+			PF_FFT_CALL_NAME(cvfft)(fap);
 			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_PXL_INC( OA_DEST(oap) ) );
 			SET_FFT_SRC( fap, ((std_cpx *)FFT_SRC(fap)) + OBJ_PXL_INC( OA_SRC1(oap) ) );
 		}
@@ -1348,23 +1341,43 @@ static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS, int 
 		SET_FFT_LEN( fap, OBJ_COLS( OA_SRC1(oap) ) );
 
 		for (i = 0; i < OBJ_ROWS( OA_SRC1(oap) ); ++i) {
-			PF_FFT_CALL_NAME(cvfft)(&fa);
+			PF_FFT_CALL_NAME(cvfft)(fap);
 			SET_FFT_DST( fap, ((std_cpx *)FFT_DST(fap)) + OBJ_ROW_INC( OA_DEST(oap) ) );
 			SET_FFT_SRC( fap, ((SP_Complex *)FFT_SRC(fap)) + src_row_inc );
 		}
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS, int is_inv )
+static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS )
 {
-	dimension_t i;
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-	if( ! row_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)) ) )
+	if( ! cpx_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)) ) )
 		return;
 
-	SET_FFT_ISI( fap, is_inv );
+
+	SET_FFT_ISI( fap, 0 );
+	HOST_TYPED_CALL_NAME_CPX(xft2d,type_code)(oap,fap);
+}
+
+// Duplicates fft2d - but needed for consistency???
+
+static void HOST_TYPED_CALL_NAME_CPX(ift2d,type_code)( HOST_CALL_ARG_DECLS )
+{
+	FFT_Args fa;
+	FFT_Args *fap=(&fa);
+
+	if( ! cpx_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)) ) )
+		return;
+
+	SET_FFT_ISI( fap, 1 );
+	HOST_TYPED_CALL_NAME_CPX(xft2d,type_code)(oap,fap);
+}
+
+static void HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)( Vec_Obj_Args *oap, FFT_Args *fap )
+{
+	dimension_t i;
 
 	/* transform the rows */
 
@@ -1376,16 +1389,37 @@ static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS, in
 		SET_FFT_DINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );
 
 		for (i = 0; i < OBJ_ROWS( OA_SRC1(oap) ); ++i) {
-			PF_FFT_CALL_NAME(cvfft)(&fa);
+			PF_FFT_CALL_NAME(cvfft)(fap);
 			/* why not std_cpx??? */
 			SET_FFT_DST( fap, ((std_type *)FFT_DST(fap)) + OBJ_ROW_INC( OA_SRC1(oap) ) );
 		}
 	}
 }
 
-static void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)(HOST_CALL_ARG_DECLS, int is_inv)
+static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS )
 {
-	HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)(HOST_CALL_ARGS,1);
+	FFT_Args fa;
+	FFT_Args *fap=(&fa);
+
+	if( ! row_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)) ) )
+		return;
+
+	SET_FFT_ISI( fap, 0 );
+
+	HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)(oap,fap);
+}
+
+static void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)( HOST_CALL_ARG_DECLS )
+{
+	FFT_Args fa;
+	FFT_Args *fap=(&fa);
+
+	if( ! row_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)) ) )
+		return;
+
+	SET_FFT_ISI( fap, 1 );
+
+	HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)(oap,fap);
 }
 
 ') dnl endif ! BUILDING_KERNELS

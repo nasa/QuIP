@@ -6465,7 +6465,7 @@ static void eval_obj_assignment(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp)
 	Vec_Obj_Args oa1, *oap=&oa1;
 	//int i;
 	const char *s;
-	int vf_code=(-1);
+	//int vf_code=(-1);
 
 /*
 */
@@ -6780,12 +6780,14 @@ DUMP_TREE(enp);
 
 		case T_RDFT:						/* eval_obj_assignment */
 			dp1 = EVAL_OBJ_EXP(VN_CHILD(enp,0),NULL);
-			h_vl2_fft2d(VFCODE_ARG  dp,dp1);
+			//h_vl2_fft2d(VFCODE_ARG  dp,dp1);
+			ERROR1("eval_obj_assignment:  Sorry, don't know how to call fft2d!?"); 
 			break;
 
 		case T_RIDFT:						/* eval_obj_assignment */
 			dp1 = EVAL_OBJ_EXP(VN_CHILD(enp,0),NULL);
-			h_vl2_ift2d(VFCODE_ARG  dp,dp1);
+			//h_vl2_ift2d(VFCODE_ARG  dp,dp1);
+			ERROR1("eval_obj_assignment:  Sorry, don't know how to call ift2d!?"); 
 			break;
 
 		case T_REDUCE:						/* eval_obj_assignment */
@@ -7004,12 +7006,20 @@ advise(ERROR_STRING);
 			/* BUG need to handle real fft's;
 			 * for now, assume cpx to cpx
 			 */
+
+			/*
 			if( do_unfunc(QSP_ARG  dp,dp1,FVMOV) < 0 ){
 				NODE_ERROR(enp);
 				WARN("error moving data for fft");
 				break;
 			}
 			h_vl2_fft2d(VFCODE_ARG  dp,dp);
+			*/
+
+			clear_obj_args(oap);
+			setvarg2(oap,dp,dp1);
+			platform_dispatch_by_code(QSP_ARG  FVFFT2D, oap);
+
 			break;
 
 		case T_IDFT:
@@ -7017,12 +7027,18 @@ advise(ERROR_STRING);
 			/* BUG need to handle real fft's;
 			 * for now, assume cpx to cpx
 			 */
+			/*
 			if( do_unfunc(QSP_ARG  dp,dp1,FVMOV) < 0 ){
 				NODE_ERROR(enp);
 				WARN("error moving data for ifft");
 				break;
 			}
 			h_vl2_ift2d(VFCODE_ARG  dp,dp);
+			*/
+			clear_obj_args(oap);
+			setvarg2(oap,dp,dp1);
+			platform_dispatch_by_code(QSP_ARG  FVIFT2D, oap);
+
 			break;
 
 		case T_WRAP:		/* eval_obj_assignment */

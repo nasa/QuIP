@@ -499,6 +499,7 @@ static COMMAND_FUNC( do_enlarge )
 
 static COMMAND_FUNC( do_fwdfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
@@ -506,10 +507,13 @@ static COMMAND_FUNC( do_fwdfft )
 	if( dp == NULL ) return;
 
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVFFT2D);
 }
 
 static COMMAND_FUNC( do_fwdrowfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
@@ -517,27 +521,37 @@ static COMMAND_FUNC( do_fwdrowfft )
 	if( dp == NULL ) return;
 
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVFFTROWS);
 }
 
 static COMMAND_FUNC( do_invfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVIFT2D);
 }
 
 static COMMAND_FUNC( do_invrowfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVIFTROWS);
 }
+
+#ifdef FOOBAR
 
 static COMMAND_FUNC( do_invrfft )
 {
@@ -594,6 +608,7 @@ static COMMAND_FUNC( do_fwdrowrfft )
 	//h_vl2_fftrows(VFCODE_ARG  targ,src);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
 }
+#endif // FOOBAR
 
 #ifdef REQUANT_ACHROM
 
@@ -1640,14 +1655,22 @@ MENU_BEGIN(fft)
 ADD_CMD( newfft,	do_newfft,	test new chainable complex fft )
 #endif /* FOOBAR */
 
+ADD_CMD( fft,		do_fwdfft,	forward Fourier transform )
+ADD_CMD( invfft,	do_invfft,	inverse Fourier transform )
+ADD_CMD( row_fft,	do_fwdrowfft,	forward Fourier transform of rows only )
+ADD_CMD( row_invfft,	do_invrowfft,	inverse Fourier transform of rows only )
+
+#ifdef FOOBAR
 ADD_CMD( fft,		do_fwdfft,	forward complex Fourier transform )
-ADD_CMD( row_fft,	do_fwdrowfft,	forward complex Fourier transform of rows only )
-ADD_CMD( rfft,		do_fwdrfft,	forward Fourier transform w/ real input )
-ADD_CMD( row_rfft,	do_fwdrowrfft,	forward Fourier transform of rows only w/ real input )
-ADD_CMD( irfft,		do_invrfft,	inverse Fourier transform w/ real output )
-ADD_CMD( row_irfft,	do_invrowrfft,	inverse Fourier transform of rows only w/ real output )
 ADD_CMD( invfft,	do_invfft,	inverse complex Fourier transform )
+ADD_CMD( row_fft,	do_fwdrowfft,	forward complex Fourier transform of rows only )
 ADD_CMD( row_invfft,	do_invrowfft,	inverse complex Fourier transform of rows only )
+ADD_CMD( rfft,		do_fwdrfft,	forward Fourier transform w/ real input )
+ADD_CMD( irfft,		do_invrfft,	inverse Fourier transform w/ real output )
+ADD_CMD( row_rfft,	do_fwdrowrfft,	forward Fourier transform of rows only w/ real input )
+ADD_CMD( row_irfft,	do_invrowrfft,	inverse Fourier transform of rows only w/ real output )
+#endif // FOOBAR
+
 ADD_CMD( wrap,		do_wrap,	wrap DFT image )
 ADD_CMD( wrap3d,	do_wrap3d,	wrap 3-D DFT )
 ADD_CMD( scroll,	do_scroll,	scroll image )

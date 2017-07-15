@@ -193,6 +193,11 @@ typedef enum {
 	FVFFT,
 	FVIFT,
 
+	FVFFT2D,
+	FVIFT2D,
+	FVFFTROWS,
+	FVIFTROWS,
+
 	FVBND, /* comparison operators */
 	FVIBND,
 	FVCLIP,

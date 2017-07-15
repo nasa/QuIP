@@ -69,6 +69,7 @@ fprintf(stderr,"%s BEGIN, oap = 0x%lx\n",STRINGIFY(HOST_CALL_NAME($2)),(u_long)o
 	}
 ')
 
+ifdef(`FOOBAR',`
 void HOST_CALL_NAME(fft2d)( VFCODE_ARG_DECL  Data_Obj *_dst_dp, Data_Obj *src_dp )
 {
 	OCL_FFT_INIT
@@ -92,4 +93,6 @@ void HOST_CALL_NAME(iftrows)( VFCODE_ARG_DECL  Data_Obj *_dst_dp, Data_Obj *src_
 	OCL_FFT_INIT
 	RC_SWITCH(_dst_dp,iftrows,fftrows,0)
 }
+
+',`')	dnl endif FOOBAR
 

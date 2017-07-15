@@ -32,7 +32,7 @@ switch( OBJ_MACH_PREC($2) ){
 dnl	FFT_SWITCH( func, _is_inv )
 define(`FFT_SWITCH',`
 
-switch( OBJ_MACH_PREC(srcdp) ){
+switch( OBJ_MACH_PREC(OA_SRC1(oap)) ){
 	case PREC_SP:
 		HOST_TYPED_CALL_NAME_CPX($1,sp)(HOST_CALL_ARGS, $2);
 		break;
@@ -41,77 +41,61 @@ switch( OBJ_MACH_PREC(srcdp) ){
 		break;
 	default:	sprintf(DEFAULT_ERROR_STRING,
 "fft_switch (%s):  object %s has bad machine precision %s",
-"$1",OBJ_NAME(srcdp),OBJ_MACH_PREC_NAME(srcdp) );
+"$1",OBJ_NAME(OA_SRC1(oap)),OBJ_MACH_PREC_NAME(OA_SRC1(oap)) );
 		NWARN(DEFAULT_ERROR_STRING);
 		break;
 }
 ')
 
 dnl	These are the un-typed calls...
+dnl THESE NEXT TWO ARE NOT FFT FUNCS!?!?
 
 void HOST_CALL_NAME(xform_list)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( xform_list, OA_DEST(oap) ) }
 void HOST_CALL_NAME(vec_xform)(HOST_CALL_ARG_DECLS) { REAL_FLOAT_SWITCH( vec_xform, OA_DEST(oap) ) }
 
-void HOST_CALL_NAME(fft2d)( FFT_FUNC_ARG_DECLS )
-{
-	Vec_Obj_Args oa1, *oap=(&oa1);
+ifdef(`FOOBAR',`
 
-	setvarg2(oap,dstdp,srcdp);
-	SET_OA_PFDEV(oap,OBJ_PFDEV(dstdp));
-	if( IS_COMPLEX( srcdp ) ){
+void HOST_CALL_NAME(fft2d)( HOST_CALL_ARG_DECLS )
+{
+	//Vec_Obj_Args oa1, *oap=(&oa1);
+
+	setvarg2(oap,OA_DEST(oap),OA_SRC1(oap));
+	SET_OA_PFDEV(oap,OBJ_PFDEV(OA_DEST(oap)));
+	if( IS_COMPLEX( OA_SRC1(oap) ) ){
 		FFT_SWITCH( fft2d, FWD_FFT )
 	} else {
-		/* now we have two kinds of real fft... */
+		/* now we have two kinds of real fft, based on shape of the transform... */
 		/* FIXME */
-		REAL_FLOAT_SWITCH(fft2d,srcdp)
-		/*
-		DSWITCH2( "fft2d", HOST_TYPED_CALL_NAME_REAL(fft2d,sp),
-				HOST_TYPED_CALL_NAME_REAL(fft2d,dp) )
-				*/
+		REAL_FLOAT_SWITCH(fft2d,OA_SRC1(oap))
 	}
 }
 
-void HOST_CALL_NAME(fftrows)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
+void HOST_CALL_NAME(fftrows)( HOST_CALL_ARG_DECLS )
 {
-	Vec_Obj_Args oa1, *oap=(&oa1);
+	//Vec_Obj_Args oa1, *oap=(&oa1);
 
-	setvarg2(oap,dstdp,srcdp);
-	SET_OA_PFDEV(oap,OBJ_PFDEV(dstdp));
-	if( IS_COMPLEX( srcdp ) ){
+	setvarg2(oap,OA_DEST(oap),OA_SRC1(oap));
+	SET_OA_PFDEV(oap,OBJ_PFDEV(OA_DEST(oap)));
+	if( IS_COMPLEX( OA_SRC1(oap) ) ){
 		FFT_SWITCH( fftrows, FWD_FFT )
 	} else {
-		REAL_FLOAT_SWITCH(fftrows,srcdp)
-		/*
-		DSWITCH2( "fftrows", HOST_TYPED_CALL_NAME_REAL(fftrows,sp),
-				HOST_TYPED_CALL_NAME_REAL(fftrows,dp) )
-				*/
+		REAL_FLOAT_SWITCH(fftrows,OA_SRC1(oap))
 	}
 }
 
-void HOST_CALL_NAME(ift2d)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
+void HOST_CALL_NAME(ift2d)( HOST_CALL_ARG_DECLS )
 {
-	Vec_Obj_Args oa1, *oap=(&oa1);
-
-	SET_OA_DEST(oap,dstdp);
-	SET_OA_SRC1(oap,srcdp);
-	SET_OA_SRC2(oap,NULL);
-	SET_OA_SRC3(oap,NULL);
-	SET_OA_SCLR1(oap,NULL);
-	SET_OA_SCLR2(oap,NULL);
-
-	if( IS_COMPLEX( dstdp ) ){
+	if( IS_COMPLEX( OA_DEST(oap) ) ){
+		// For complex, inverse is passed in flag
 		FFT_SWITCH( fft2d, INV_FFT )
 	} else {
-		REAL_FLOAT_SWITCH(ift2d,srcdp)
-		/*
-		DSWITCH2( "ift2d", HOST_TYPED_CALL_NAME_REAL(ift2d,sp),
-				HOST_TYPED_CALL_NAME_REAL(ift2d,dp) )
-				*/
+		REAL_FLOAT_SWITCH(ift2d,OA_SRC1(oap))
 	}
 }
 
-void HOST_CALL_NAME(iftrows)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
+void HOST_CALL_NAME(iftrows)( HOST_CALL_ARG_DECLS )
 {
+	/*
 	Vec_Obj_Args oa1, *oap=(&oa1);
 
 	SET_OA_DEST(oap,dstdp);
@@ -120,17 +104,16 @@ void HOST_CALL_NAME(iftrows)(VFCODE_ARG_DECL  Data_Obj *dstdp,Data_Obj *srcdp)
 	SET_OA_SRC3(oap,NULL);
 	SET_OA_SCLR1(oap,NULL);
 	SET_OA_SCLR2(oap,NULL);
+	*/
 
-	if( IS_COMPLEX( dstdp ) ){
+	if( IS_COMPLEX( OA_DEST(oap) ) ){
 		FFT_SWITCH( iftrows, INV_FFT )
 	} else {
-		REAL_FLOAT_SWITCH(iftrows,srcdp)
-		/*
-		DSWITCH2( "iftrows", HOST_TYPED_CALL_NAME_REAL(iftrows,sp),
-				HOST_TYPED_CALL_NAME_REAL(iftrows,dp) )
-				*/
+		REAL_FLOAT_SWITCH(iftrows,OA_SRC1(oap))
 	}
 }
+
+',`')	dnl end ifdef FOOBAR
 
 ') dnl endif // ! BUILD_FOR_GPU
 
