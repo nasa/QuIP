@@ -227,7 +227,6 @@ const char *name_for_argtype(argset_type t)
 
 void set_argset_prec( Vec_Obj_Args *oap, argset_prec_t code )
 {
-fprintf(stderr,"set_argset_prec  code = %d\n",code);
 	assert( code >= 0 && code < N_ARGSET_PRECISIONS );
 
 	SET_OA_ARGSPREC_PTR(oap,argset_prec_tbl[code]);

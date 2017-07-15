@@ -60,6 +60,49 @@ static const char *name_for_type(Data_Obj *dp)
 	}
 }
 
+#define IS_FWD_FFT(vfp)		(VF_CODE(vfp)==FVFFT || \
+				 VF_CODE(vfp)==FVFFT2D || \
+				 VF_CODE(vfp)==FVFFTROWS )
+
+static int chktyp_fft(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
+{
+	assert( OA_SRC1(oap) != NULL );
+
+	if( IS_FWD_FFT(vfp) ){
+		/* source vector can be real or complex */
+		if( !IS_COMPLEX(OA_DEST(oap) ) ){
+			WARN("chktyp_fft:  destination must be complex for fft");
+			return -1;
+		}
+
+		if( IS_COMPLEX( OA_SRC1(oap) ) )
+			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
+		else if( IS_QUAT( OA_SRC1(oap) ) ){
+			WARN("chktyp:  Can't compute FFT of a quaternion input");
+			return -1;
+		} else
+			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+	} else {	// inverse fft
+		/* destination vector can be real or complex */
+		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
+			WARN("chktyp:  source must be complex for inverse fft");
+			return -1;
+		}
+		if( IS_COMPLEX(OA_DEST(oap) ) )
+			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
+		else if( IS_QUAT(OA_DEST(oap) ) ){
+			WARN("chktyp:  Can't compute inverse FFT to a quaternion target");
+			return -1;
+		} else
+			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+	}
+	return 0;
+}
+
+#define IS_FFT_FUNC(vfp)	(VF_CODE(vfp)==FVFFT || VF_CODE(vfp)==FVIFT || \
+				 VF_CODE(vfp)==FVFFT2D || VF_CODE(vfp)==FVIFT2D || \
+				 VF_CODE(vfp)==FVFFTROWS || VF_CODE(vfp)==FVIFTROWS )
+
 /* The "type" is real, complex, quaternion, or mixed...
  * independent of "precision" (byte/short/float etc)
  */
@@ -67,6 +110,10 @@ static const char *name_for_type(Data_Obj *dp)
 static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
 	SET_OA_ARGSTYPE(oap, UNKNOWN_ARGS);
+
+	if( IS_FFT_FUNC(vfp) ){
+		return chktyp_fft(QSP_ARG  vfp, oap);
+	}
 
 	/* Set the type based on the destination vector */
 	/* destv is highest numbered arg */
@@ -144,10 +191,13 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
+		} else if( OA_SRC1(oap) != NULL ){	/* one source operand */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
+				// This may be correct for vsadd, etc.
+				// but NOT for fft!?
+				if( vfp )
 				SET_OA_ARGSTYPE(oap, MIXED_ARGS);
 			} else {
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
@@ -232,43 +282,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		return 0;
 	}
 
-	if( VF_CODE(vfp) == FVFFT ){
-		/* source vector can be real or complex */
-		if( !IS_COMPLEX(OA_DEST(oap) ) ){
-			WARN("chktyp:  destination must be complex for fft");
-			return -1;
-		}
-		assert( OA_SRC1(oap) != NULL );
-
-		if( IS_COMPLEX( OA_SRC1(oap) ) )
-			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
-		else if( IS_QUAT( OA_SRC1(oap) ) ){
-			WARN("chktyp:  Can't compute FFT of a quaternion input");
-			return -1;
-		} else
-			SET_OA_ARGSTYPE(oap,REAL_ARGS);
-
-		return 0;
-	}
-
-	if( VF_CODE(vfp) == FVIFT ){
-		assert( OA_SRC1(oap) != NULL );
-
-		/* destination vector can be real or complex */
-		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
-			WARN("chktyp:  source must be complex for inverse fft");
-			return -1;
-		}
-		if( IS_COMPLEX(OA_DEST(oap) ) )
-			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
-		else if( IS_QUAT(OA_DEST(oap) ) ){
-			WARN("chktyp:  Can't compute inverse FFT to a quaternion target");
-			return -1;
-		} else
-			SET_OA_ARGSTYPE(oap,REAL_ARGS);
-
-		return 0;
-	}
 
 	/* now the type field has been set - make sure it's legal */
 	if( (VF_TYPEMASK(vfp) & VL_TYPE_MASK(OA_ARGSTYPE(oap) ) )==0 ){
@@ -332,36 +345,6 @@ ADVISE(ERROR_STRING);
 	 * and swap around accordingly!
 	 */
 	if( HAS_MIXED_ARGS(oap) ){
-#ifdef FOOBAR
-		if( USES_REAL_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_COMPLEX( OA_SRC2(oap) ) ){
-				WARN("destination vector must be complex when mixing types with vsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vsmul");
-				return -1;
-			}
-		} else if( USES_COMPLEX_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_COMPLEX( OA_SRC2(oap) ) ){
-				WARN("destination vector must be complex when mixing types with vcsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vcsmul");
-				return -1;
-			}
-		} else if( USES_QUAT_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_QUAT( OA_SRC2(oap) ) ){
-				WARN("destination vector must be quaternion when mixing types with vqsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vqsmul");
-				return -1;
-			}
-		}
-#endif /* FOOBAR */
 	
 		/*
 		show_obj_args(oap);
@@ -372,7 +355,7 @@ ADVISE(ERROR_STRING);
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
 			sprintf(ERROR_STRING,
-"first source vector (%s,%s) must be complex when mixing types with function %s",
+"chktyp:  first source vector (%s,%s) must be complex when mixing types with function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,
 				name_for_type( OA_SRC1(oap) ),
 				VF_NAME(vfp) );
