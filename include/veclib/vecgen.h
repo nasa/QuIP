@@ -20,8 +20,9 @@ extern "C" {
 //typedef uint32_t	index_type;
 typedef uint32_t	count_type;
 
-#define FWD_FFT		(-1)
-#define INV_FFT		1
+// Make these be m4 macros!!
+//#define FWD_FFT		(-1)
+//#define INV_FFT		1
 
 /* These aren't really types of numbers - the "mixed" types refer to operations... */
 typedef enum {

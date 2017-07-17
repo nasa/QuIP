@@ -31,6 +31,8 @@ define(`_sinfact',`TYPED_NAME(__sinfact)')
 define(`max_fft_len',`TYPED_NAME(_max_fft_len)')
 define(`init_sinfact',`TYPED_NAME(_init_sinfact)')
 
+define(`INV_FFT',`1')
+define(`FWD_FFT',`-1')
 
 define(`MAX_FFT_LEN',`4096L')
 
@@ -163,9 +165,6 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 
 	//if( ! for_real ) return;
 
-dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
-dnl fprintf(stderr,"PF_FFT_CALL_NAME(cvfft) BEGIN\\n");
-dnl show_fft_args(fap);
 	len = FFT_LEN(fap);
 
 	if( revdone==NULL ){
@@ -231,6 +230,10 @@ ifelse(MULTI_PROC_TEST,`1',`
 	/*	now compute the butterflies 	*/
 	/* this section is trashing some memory!? */
 
+	/* Note that this computation uses the inverse flag,
+	 * which MUST be 1 or -1 !!!
+	 */
+
 	mmax = 1;
 	while( mmax<len ){
 		istep = 2*mmax;
@@ -289,7 +292,6 @@ static void PF_FFT_CALL_NAME(cvift)( FFT_Args *fap )
 	FFT_Args fa;
 	FFT_Args *new_fap=(&fa);
 
-dnl	fprintf(stderr,"PF_FFT_CALL_NAME(cvift) BEGIN\\n");
 	SET_FFT_DST(new_fap, FFT_DST(fap));
 	SET_FFT_DINC(new_fap, FFT_DINC(fap));
 	SET_FFT_SRC(new_fap, FFT_SRC(fap));
@@ -373,98 +375,13 @@ define(`RECOMBINE',`
  * This routine seems to assume that the data are contiguous...
  * Increments are not used, checked...
  *
- * The original implementation didnt use the twiddle factors, but did something
+ * The original implementation (supposedly based on Elliott & Rao?)
+ * didnt use the twiddle factors, but did something
  * like a split before and after the complex fft...
  *
  * The TI document uses a different algorithm that uses the twiddle factors,
  * that looks simpler...
  */
-
-#ifdef FOOBAR
-static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
-{
-	std_cpx *cptr, *cptr2;
-	std_type *rptr;
-	int i;
-	FFT_Args fa;
-	FFT_Args *_fap=(&fa);
-
-	// Copy the real data into the complex workspace
-
-	cptr = FFT_DST(fap);
-	rptr = FFT_SRC(fap);
-
-dnl fprintf(stderr,"rvfft:  passed length is %d\\n",FFT_LEN(fap));
-
-	i = FFT_LEN(fap)/2;
-	while(i--){
-		cptr->re = *rptr;
-		rptr += FFT_SINC(fap);
-		cptr->im = *rptr;
-		rptr += FFT_SINC(fap);
-		cptr += FFT_DINC(fap);
-	}
-
-	// Perform the complex transform in-place
-
-	SET_FFT_DST(_fap, FFT_DST(fap) );
-	SET_FFT_DINC(_fap, FFT_DINC(fap) );
-	SET_FFT_SRC(_fap, FFT_DST(fap));
-	SET_FFT_SINC(_fap, FFT_DINC(fap));
-	SET_FFT_LEN(_fap, FFT_LEN(fap)/2 );
-	SET_FFT_ISI(_fap, FWD_FFT);
-
-	PF_FFT_CALL_NAME(cvfft)(_fap);
-
-	// Perform the "split" operation
-	//
-	// these ought to be the twiddle factors...
-	//
-	// ark = real part of A_k, A_k = - ( cos(k*pi/N) + i sin(k*pi/N) )
-	//                             = - ( twiddle_k )
-	//                         B_k =     sin(k*pi/N) + i cos(k*pi/N)
-	//                             = i twiddle_k*	(complex conjugate)
-
-	if( FFT_LEN(fap)/2 != last_cpx_len )
-		init_twiddle (FFT_LEN(fap)/2);
-
-	i = FFT_LEN(fap)/4;
-	cptr = FFT_DST(fap);
-	cptr2 = cptr + (FFT_LEN(fap)/2) * FFT_DINC(fap);
-
-	// Fix the extra value
-	*cptr2 = *cptr;
-
-	for(i=0;i<FFT_LEN(fap)/4;i++){
-		std_type r1,r2,i1,i2;
-		std_type ark, aik, brk, bik;
-
-		// This is a little inefficient, but we stay close to the TI doc...
-		ark = - twiddle[i].re;
-		aik = - twiddle[i].im;
-		brk =   twiddle[i].im;
-		bik =   twiddle[i].re;
-
-		r1 = cptr->re;
-		i1 = cptr->im;
-		r2 = cptr2->re;
-		i2 = cptr2->im;
-
-		cptr->re = r1 * ark - i1 * aik + r2 * brk + i2 * bik ; 
-		cptr->im = i1 * ark + r1 * aik + r2 * bik - i2 * brk ; 
-
-		// here k <- (N-k), so we have to conjugate A and B
-		cptr2->re = r1 * ark + i1 * aik + r2 * brk - i2 * bik ; 
-		cptr2->im = i1 * ark - r1 * aik - r2 * bik - i2 * brk ;
-
-		cptr += FFT_DINC(fap);
-		cptr2 -= FFT_DINC(fap);
-	}
-	// Need to do the last iteration just for one slot!
-
-	// Fix DC & Nyquist terms !!!
-}
-#endif // FOOBAR
 
 static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 {
@@ -496,14 +413,6 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 /* we assume that the destination has 1+len/2 complex entries */
 /* transform the input while copying into dest */
 
-	/* OLD COMMENT:  BUG - we are fixing this to work with source increments
-	 * different from 1, but we will defer non-1 destination
-	 * increments...
-	 *
-	 * NEW COMMENT:  In order to perform real transforms of columns, we
-	 * now have to implement destination increments...
-	 */
-
 	cbot = dest;
 	bottom = source;
 	top = source+src_inc*(len-1);
@@ -533,7 +442,7 @@ static void PF_FFT_CALL_NAME(rvfft)( const FFT_Args *fap)
 	}
 
 	// Why are we copying the args?
-	// Because we can_t modify the input arg struct...
+	// Because we can_t (or should not) modify the input arg struct...
 
 	// Compute in-place on the destination array...
 	SET_FFT_DST(_fap, FFT_DST(fap) );
@@ -596,9 +505,6 @@ static void PF_FFT_CALL_NAME(rvift)( FFT_Args *fap)
 	src_inc = FFT_SINC(fap);
 	len=FFT_LEN(fap);		/* length of the real destination */
 
-dnl fprintf(stderr,"rvift:\\n\tdest = 0x%lx inc = %d\n\tsrc = 0x%lx inc = %d\n\tlen = %d\n",
-dnl (long)dest,dst_inc,(long)src,src_inc,len);
-
 	if( len != last_real_len ){
 		init_sinfact (len);
 	}
@@ -635,22 +541,8 @@ dnl (long)dest,dst_inc,(long)src,src_inc,len);
 	SET_FFT_LEN( _fap, FFT_LEN(fap)/2 );
 	SET_FFT_ISI( _fap, INV_FFT );
 
-dnl fprintf(stderr,"rvift:  will call complex transform\\n");
-dnl cbot=src;
-dnl for(i=0;i<len/2;i++){
-dnl fprintf(stderr,"\\t%g\t%g\n",cbot->re,cbot->im);
-dnl cbot += FFT_SINC(fap);
-dnl }
-
 	// compute in-place, overwriting the source...
 	PF_FFT_CALL_NAME(cvfft)(_fap);
-dnl fprintf(stderr,"rvift:  after complex transform:\\n");
-dnl cbot=src;
-dnl for(i=0;i<len/2;i++){
-dnl fprintf(stderr,"\\t%g\t%g\n",cbot->re,cbot->im);
-dnl cbot += FFT_SINC(fap);
-dnl }
-
 
 	/* now reconstruct the samples */
 	/* BUG we fix destination increment, but assume src inc is 1!? */
@@ -660,7 +552,6 @@ dnl }
 	ep = dest;
 	op = dest+dst_inc;
 
-dnl fprintf(stderr,"rvift:  len = %d, src_inc = %d, dst_inc = %d\\n",len,src_inc,dst_inc);
 	*ep = cbot->re;
 	*op = - cbot->im;
 	for(i=1;i<len/2;i++){
@@ -674,14 +565,6 @@ dnl fprintf(stderr,"rvift:  len = %d, src_inc = %d, dst_inc = %d\\n",len,src_inc
 		*ep = 0.5f * ( s1 + d1 );
 		*op = 0.5f * ( d1 - s1 );
 	}
-dnl fprintf(stderr,"rvift:  after reconstructing output:\\n");
-dnl ep=dest;
-dnl op=dest+dst_inc;
-dnl for(i=0;i<len/2;i++){
-dnl fprintf(stderr,"\\t%g\t%g\n",*ep,*op);
-dnl ep += 2*dst_inc;
-dnl op += 2*dst_inc;
-dnl }
 
 	/* now integrate the odd samples */
 
@@ -718,23 +601,12 @@ dnl }
 	// while total comes from the output of the
 	// inverse transform;
 
-dnl fprintf(stderr,"rvift:  B0 = %g, total = %g, diff = %g\\n",B0,total,diff);
-
 	op = dest+dst_inc;
 	for(i=0;i<len/2;i++){
 		*op += diff;
 		op += 2*dst_inc;
 	}
 	/* done */
-dnl fprintf(stderr,"rvift:  after integrating odd samples:\\n");
-dnl ep=dest;
-dnl op=dest+dst_inc;
-dnl for(i=0;i<len/2;i++){
-dnl fprintf(stderr,"\\t%g\t%g\n",*ep,*op);
-dnl ep += 2*dst_inc;
-dnl op += 2*dst_inc;
-dnl }
-
 }	// rvift
 
 ',` dnl else ! BUILDING_KERNELS
@@ -746,13 +618,12 @@ static void HOST_TYPED_CALL_NAME_CPX(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vfft,type_code) BEGIN\\n");
 	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	XFER_FFT_DINC(cvfft,fap,OA_DEST(oap))
 	XFER_FFT_SINC(cvfft,fap,OA_SRC1(oap))
 	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
-	SET_FFT_ISI(fap,(-1) );
+	SET_FFT_ISI(fap,FWD_FFT);
 
 	PF_FFT_CALL_NAME(cvfft)( fap );
 }
@@ -762,13 +633,12 @@ static void HOST_TYPED_CALL_NAME_CPX(vift,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_CPX(vift,type_code) BEGIN\\n");
 	SET_FFT_DST(fap, (std_cpx *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 	SET_FFT_SRC(fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	XFER_FFT_DINC(cvift,fap,OA_DEST(oap))
 	XFER_FFT_SINC(cvift,fap,OA_SRC1(oap))
 	SET_FFT_LEN(fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );	/* complex */
-	SET_FFT_ISI(fap, (1) );
+	SET_FFT_ISI(fap, INV_FFT );
 
 	PF_FFT_CALL_NAME(cvift)( fap );
 }
@@ -779,7 +649,6 @@ static void HOST_TYPED_CALL_NAME_REAL(vfft,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap;
 
-dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vfft,type_code) BEGIN\\n");
 	fap = (&fa);
 
 	SET_FFT_SRC( fap, (std_type *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
@@ -789,7 +658,7 @@ dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vfft,type_code) BEGIN\\n");
 	XFER_FFT_DINC(rvfft,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_SRC1(oap) ) );
-	SET_FFT_ISI( fap, (-1) );
+	SET_FFT_ISI( fap, FWD_FFT );
 	PF_FFT_CALL_NAME(rvfft)( fap );
 }
 
@@ -798,7 +667,6 @@ static void HOST_TYPED_CALL_NAME_REAL(vift,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vift,type_code) BEGIN\\n");
 	SET_FFT_SRC( fap, (std_cpx *)OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_DST( fap, (std_type *)OBJ_DATA_PTR( OA_DEST(oap) ) );
 
@@ -806,7 +674,7 @@ dnl	fprintf(stderr,"HOST_TYPED_CALL_NAME_REAL(vift,type_code) BEGIN\\n");
 	XFER_FFT_DINC(rvift,fap,OA_DEST(oap))
 
 	SET_FFT_LEN( fap, OBJ_N_TYPE_ELTS( OA_DEST(oap) ) );
-	SET_FFT_ISI( fap, 1 );
+	SET_FFT_ISI( fap, INV_FFT );
 	//PF_FFT_CALL_NAME(rvfft)( fap );
 	PF_FFT_CALL_NAME(rvift)( fap );
 }
@@ -822,8 +690,6 @@ define(`ROW_LOOP',`
 
 	{
 		for (i = 0; i < OBJ_ROWS( $1 ); ++i) {
-dnl fprintf(stderr,"row_loop $2 i = %d\\n",i);
-dnl show_fft_args(fap);
 			$2(fap);
 			SET_FFT_SRC( fap, (($3 *)FFT_SRC(fap))
 					+ OBJ_ROW_INC( OA_SRC1(oap) ) );
@@ -1087,7 +953,6 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 			MULTIPROCESSOR_COLUMN_LOOP(OA_DEST(oap), PF_FFT_CALL_NAME(cvfft) )
 		} else
 ') dnl endif /* N_PROCESSORS > 1 */
-dnl fprintf(stderr,"rvfft2d_1:  starting column loop\\n");
 		COLUMN_LOOP(OA_DEST(oap),PF_FFT_CALL_NAME(cvfft))
 	}
 }
@@ -1164,7 +1029,7 @@ static void HOST_TYPED_CALL_NAME_REAL(ift2d_1,type_code)( HOST_CALL_ARG_DECLS )
 	FFT_Args fa;
 	FFT_Args *fap=(&fa);
 
-	SET_FFT_ISI( fap, 1 );
+	SET_FFT_ISI( fap, INV_FFT );
 
 	if( OBJ_ROWS( OA_SRC1(oap) ) > 1 ){			/* more than 1 row? */
 		SET_FFT_DST( fap, OBJ_DATA_PTR( OA_SRC1(oap) ) );
@@ -1181,10 +1046,6 @@ ifelse(MULTI_PROC_TEST,`1',` dnl #if N_PROCESSORS >= MIN_PARALLEL_PROCESSORS
 ') dnl endif /* N_PROCESSORS > 1 */
 		COLUMN_LOOP(OA_SRC1(oap),PF_FFT_CALL_NAME(cvift))
 	}
-
-dnl fprintf(stderr,"ift2d:  after column xforms:\\n");
-dnl pntvec(DEFAULT_QSP_ARG  OA_SRC1(oap), stderr );
-dnl fflush(stderr);
 
 	if( OBJ_COLS( OA_SRC1(oap) ) > 1 ){		/* more than 1 column ? */
 		dimension_t i;
@@ -1216,7 +1077,7 @@ static void HOST_TYPED_CALL_NAME_REAL(ift2d_2,type_code)( HOST_CALL_ARG_DECLS )
 
 	//if( real_fft_check(DEFAULT_QSP_ARG  OA_DEST(oap),OA_SRC1(oap),"rift2d") < 0 ) return;
 
-	SET_FFT_ISI( fap, 1 );
+	SET_FFT_ISI( fap, INV_FFT );
 	//SET_FFT_DINC( fap, OBJ_ROW_INC( OA_SRC1(oap) ) / 2 );
 	SET_FFT_DINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );
 
@@ -1279,7 +1140,7 @@ static void HOST_TYPED_CALL_NAME_REAL(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 
 	if( ! real_row_fft_ok(DEFAULT_QSP_ARG  OA_DEST(oap),OA_SRC1(oap),"r_rowift") ) return;
 
-	SET_FFT_ISI( fap, 1 );
+	SET_FFT_ISI( fap, INV_FFT );
 	SET_FFT_SRC( fap, OBJ_DATA_PTR( OA_SRC1(oap) ) );
 	SET_FFT_SINC( fap, OBJ_PXL_INC( OA_SRC1(oap) ) );		// used to be /2
 	SET_FFT_DST( fap, OBJ_DATA_PTR( OA_DEST(oap) ) );
@@ -1357,7 +1218,7 @@ static void HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)( HOST_CALL_ARG_DECLS )
 		return;
 
 
-	SET_FFT_ISI( fap, 0 );
+	SET_FFT_ISI( fap, FWD_FFT );
 	HOST_TYPED_CALL_NAME_CPX(xft2d,type_code)(oap,fap);
 }
 
@@ -1371,7 +1232,7 @@ static void HOST_TYPED_CALL_NAME_CPX(ift2d,type_code)( HOST_CALL_ARG_DECLS )
 	if( ! cpx_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fft2d,type_code)) ) )
 		return;
 
-	SET_FFT_ISI( fap, 1 );
+	SET_FFT_ISI( fap, INV_FFT );
 	HOST_TYPED_CALL_NAME_CPX(xft2d,type_code)(oap,fap);
 }
 
@@ -1404,7 +1265,7 @@ static void HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)( HOST_CALL_ARG_DECLS )
 	if( ! row_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)) ) )
 		return;
 
-	SET_FFT_ISI( fap, 0 );
+	SET_FFT_ISI( fap, FWD_FFT );
 
 	HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)(oap,fap);
 }
@@ -1417,7 +1278,7 @@ static void HOST_TYPED_CALL_NAME_CPX(iftrows,type_code)( HOST_CALL_ARG_DECLS )
 	if( ! row_fft_ok(DEFAULT_QSP_ARG  OA_SRC1(oap), STRINGIFY(HOST_TYPED_CALL_NAME_CPX(fftrows,type_code)) ) )
 		return;
 
-	SET_FFT_ISI( fap, 1 );
+	SET_FFT_ISI( fap, INV_FFT );
 
 	HOST_TYPED_CALL_NAME_CPX(xftrows,type_code)(oap,fap);
 }
