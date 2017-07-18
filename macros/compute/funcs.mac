@@ -101,11 +101,11 @@ compute svector mul $1 $2 $3 quit quit
 .
 
 Define VCSMul 4 target source real imag
-compute csvector mul $1 $2 $3 $4 quit quit
+compute svector mul $1 $2 $3 $4 quit quit
 .
 
 Define VCSDiv 4 target source real imag
-compute csvector div $1 $2 $3 $4 quit quit
+compute svector div $1 $2 $3 $4 quit quit
 .
 
 Define VSMulComplex 4 target source real imag
@@ -123,11 +123,11 @@ compute svector add $1 $2 $3 quit quit
 .
 
 Define VCSAdd 4 target source real imag
-compute csvector add $1 $2 $3 $4 quit quit
+compute svector add $1 $2 $3 $4 quit quit
 .
 
 Define VCSSub 4 target source real imag
-compute csvector sub $1 $2 $3 $4 quit quit
+compute svector sub $1 $2 $3 $4 quit quit
 .
 
 Define VQSAdd 6 target source re ii jj kk
