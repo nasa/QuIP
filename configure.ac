@@ -936,6 +936,7 @@ AC_SEARCH_LIBS([ctime_r],[c],[have_ctime_r=yes],[have_ctime_r=no])
 AC_SEARCH_LIBS([ctime],[c],[have_ctime=yes],[have_ctime=no])
 AC_SEARCH_LIBS([gmtime_r],[c],[have_gmtime_r=yes],[have_gmtime_r=no])
 AC_SEARCH_LIBS([localtime_r],[c],[have_localtime_r=yes],[have_localtime_r=no])
+AC_SEARCH_LIBS([posix_memalign],[c],[have_posix_memalign=yes],[have_posix_memalign=no])
 # BUG?  check for gmtime also?
 
 # optional libraries
@@ -1836,6 +1837,10 @@ fi
 
 if test "x${have_localtime_r}" = xyes; then
   AC_DEFINE([HAVE_LOCALTIME_R], 1, [localtime_r available for date formatting])
+fi
+
+if test "x${have_posix_memalign}" = xyes; then
+  AC_DEFINE([HAVE_POSIX_MEMALIGN], 1, [posix_memalign available])
 fi
 
 if test "x${async_exec}" = xyes; then

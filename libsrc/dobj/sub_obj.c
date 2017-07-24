@@ -99,11 +99,6 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 		if( ! is_inside(QSP_ARG  extreme_index,i,name,parent) )
 			retval=(-1);
 
-		/* This test is needed if indices are unsigned... */
-		if( incrs[i] < 0 && (-incrs[i]*(DIMENSION(dsp,i)-1)) > offsets[i] )
-			/* BUG print a warning here */
-			retval=(-1);
-
 		extreme_index = offsets[i]+incrs[i]*(DIMENSION(dsp,i)-1);
 		if( ! is_inside(QSP_ARG  extreme_index,i,name,parent) )
 			retval=(-1);
@@ -228,7 +223,7 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
-		// BUG?  do we need to free other resources?
+		rls_shape( OBJ_SHAPE(dp) );
 		del_dobj(QSP_ARG  dp);
 		return(NULL);
 	}
@@ -298,7 +293,6 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 
 	// init_dp uses AUTO_SHAPE...
 	if( init_dp( QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent) ) == NULL ){
-		// BUG?  do we need to free other resources?
 		del_dobj(QSP_ARG  dp);
 		return(NULL);
 	}
@@ -361,7 +355,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	SET_DIMENSION(dsp,2,DIMENSION(dsp,2) / 2);
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
-		// BUG?  do we need to free other resources?
+		rls_shape( OBJ_SHAPE(dp) );
 		del_dobj(QSP_ARG  dp);
 		return(NULL);
 	}
@@ -377,7 +371,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	}
 	SET_OBJ_ROW_INC(dp,OBJ_ROW_INC(dp) * 2);
 
-	/* BUG?  even parity gets us the first set of lines, but by convention
+	/* Even parity gets us the first set of lines, but by convention
 	 * in video terminology line numbering starts with 1, and the first set
 	 * of lines is referred to as the "odd" field.  So the scripts have to
 	 * reverse this, it is kind of ugly and would be nice to hide it.
@@ -385,13 +379,11 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	 */
 
 	if( parity & 1 )
-		offset = OBJ_ROW_INC(parent) /* * ELEMENT_SIZE(parent) */;
+		offset = OBJ_ROW_INC(parent);
 	else
 		offset = 0;
 
 	( * PF_OFFSET_DATA_FN(OBJ_PLATFORM(parent)) ) (QSP_ARG  dp, offset );
-
-	//SET_OBJ_OFFSET(dp,offset); // offset in bytes
 
 	return(dp);
 } // mk_ilace
@@ -537,10 +529,12 @@ static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_ds
 	}
 }
 
-/* Make an object of arbirary shape, which points to the data area
+/* make_equivalence
+ *
+ * Make an object of arbirary shape, which points to the data area
  * of an existing object.  It should not be necessary that the
- * parent object be contiguous as long as the dimensions of the
- * new object are such that it can be evenly spaced;
+ * parent object be contiguous as long as the dimensions
+ * and increments of the new object can be set appropriately.
  *
  * A common use is to cast between a long integer to 4 bytes,
  * and vice-versa.  For example, we can copy byte images faster
@@ -553,6 +547,9 @@ static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_ds
  *
  * Correct calculation of the increments has not yet been
  * implemented.  BUG
+ *
+ * It is not clear if the above comment is accurate and up-to-date;
+ * We need to develope a comprehensive test suite!
  *
  * Here is an outline of the general strategy:  if parent and child
  * are different types, we compute n_per_child and n_per_parent,
@@ -875,7 +872,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	SET_OBJ_OFFSET(newdp,0);
 
 	if( set_obj_dimensions(QSP_ARG  newdp,dsp,prec_p) ){
-		// BUG?  do we need to free other resources?
+		rls_shape( OBJ_SHAPE(newdp) );
 		del_dobj(QSP_ARG  newdp);
 		return(NULL);
 	}
