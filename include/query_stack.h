@@ -121,7 +121,7 @@ struct query_stack {
 	int		qs_word_scan_flags;
 	int		qs_start_quote;		/* holds the value
 						 * of the starting quote char,
-				 		 * if in a quote,
+						 * if in a quote,
 						 * otherwise 0
 						 */
 	int		qs_n_quotations;	/* to handle things like:
@@ -138,6 +138,8 @@ struct query_stack {
 	Menu *		qs_help_menu;
 	String_Buf *	qs_prompt_sbp;
 	Stack *		qs_menu_stack;
+
+	String_Buf *	qs_output_filename;
 
 	int		qs_fmt_code;
 	Stack *		qs_var_fmt_stack;
@@ -156,8 +158,8 @@ struct query_stack {
 	FILE *		qs_error_fp;
 	FILE *		qs_msg_fp;
 	// BUG - we should phase these out in favor of string_buf's...
-	char 		qs_error_string[LLEN];
-	char 		qs_msg_str[LLEN];
+	char		qs_error_string[LLEN];
+	char		qs_msg_str[LLEN];
 	const char *	qs_expected_warning;
 
 #ifdef THREAD_SAFE_QUERY
@@ -226,6 +228,62 @@ struct query_stack {
 #define QS_QRY_STACK(qsp)		(qsp)->qs_query_stack
 #define SET_QS_QRY_STACK(qsp,stkp)	(qsp)->qs_query_stack = stkp
 
+#define QS_OUTPUT_FILENAME(qsp)		((qsp)->qs_output_filename==NULL?NULL:sb_buffer((qsp)->qs_output_filename))
+
+#define SET_QS_OUTPUT_FILENAME(qsp,str)					\
+									\
+	{								\
+	if( (qsp)->qs_output_filename==NULL )				\
+		(qsp)->qs_output_filename = create_stringbuf(str);	\
+	else copy_string((qsp)->qs_output_filename,str);		\
+	}
+
+/* query_stack flags - flag bits */
+#define QS_INITED		1	// 0x001
+#define QS_EXPAND_MACS		2	// 0x002
+#define QS_HAD_INTR		4	// 0x004
+#define QS_INTERACTIVE_TTYS	8	// 0x008
+#define QS_FORMAT_PROMPT	16	// 0x010
+#define QS_FORCE_PROMPT		32	// 0x020
+#define QS_LOOKAHEAD_ENABLED	64	// 0x040
+#define QS_STILL_TRYING		128	// 0x080
+#define QS_STRIPPING_QUOTES	256	// 0x100
+#define QS_COMPLETING		512	// 0x200
+#define QS_BUILTINS_INITED	1024	// 0x400
+#define QS_HALTING		2048	// 0x800
+#define QS_HISTORY		4096	// 0x1000
+#define QS_CHEWING		8192	// 0x2000
+#define QS_PROCESSING_CALLBACKS	0x004000
+#define QS_SILENT		0x008000
+#define QS_SILENCE_CHECKED	0x010000
+#define QS_TIME_FMT_UTC		0x020000
+#define QS_HAS_PREV_LOG_MSG	0x040000
+#define QS_SUSPENDED		0x080000
+#define QS_APPENDING		0x100000
+
+#define HAS_PREV_LOG_MSG(qsp)	(QS_FLAGS(qsp) & QS_HAS_PREV_LOG_MSG)
+
+#define DISPLAYING_UTC(qsp)	(QS_FLAGS(qsp) & QS_TIME_FMT_UTC)
+
+#define IS_SILENT(qsp)		(QS_FLAGS(qsp) & QS_SILENT)
+#define SILENCE_CHECKED(qsp)	(QS_FLAGS(qsp) & QS_SILENCE_CHECKED)
+#define IS_COMPLETING(qsp)	(QS_FLAGS(qsp) & QS_COMPLETING)
+
+#define IS_CHEWING(qsp)		(QS_FLAGS(qsp) & QS_CHEWING)
+#define IS_HALTING(qsp)		(QS_FLAGS(qsp) & QS_HALTING)
+#define IS_PROCESSING_CALLBACKS(qsp)		(QS_FLAGS(qsp) & QS_PROCESSING_CALLBACKS)
+#define IS_TRACKING_HISTORY(qsp)	(QS_FLAGS(qsp) & QS_HISTORY)
+#define IS_EXITING(qsp)		(QS_FLAGS(qsp) & QS_EXITING)
+#define IS_STILL_TRYING(qsp)	(QS_FLAGS(qsp) & QS_STILL_TRYING)
+
+#define HAD_INTERRUPT(qsp)	(QS_FLAGS(qsp) & QS_HAD_INTR)
+
+//#define NEED_TO_SAVE(qp) ((qp) != (&THIS_QSP->qs_query[0]) && ((qp)-1)->q_saving )
+#define NEED_TO_SAVE(qp) ( (qp) != FIRST_QRY(THIS_QSP) && QRY_IS_SAVING(UNDER_QRY(qp)) )
+
+#define APPEND_FLAG		((QS_FLAGS(qsp)&QS_APPENDING)?1:0)
+#define SET_APPEND_FLAG(v)	{if(v) SET_QS_FLAG_BITS(qsp,QS_APPENDING); \
+				else CLEAR_QS_FLAG_BITS(qsp,QS_APPENDING);}
 
 // Query_Stack stuff
 
@@ -402,10 +460,10 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 #define SET_LASTLINENO(n)	THIS_QSP->qs_last_line_num =  n
 #define PARSER_LINENO		THIS_QSP->qs_parser_line_num
 #define SET_PARSER_LINENO(n)	THIS_QSP->qs_parser_line_num = n
-#define YY_LAST_LINE 		THIS_QSP->qs_yy_last_line
-#define YY_INPUT_LINE 		THIS_QSP->qs_yy_input_line
-#define SEMI_SEEN 		THIS_QSP->qs_semi_seen
-#define SET_SEMI_SEEN(v) 	THIS_QSP->qs_semi_seen = v
+#define YY_LAST_LINE		THIS_QSP->qs_yy_last_line
+#define YY_INPUT_LINE		THIS_QSP->qs_yy_input_line
+#define SEMI_SEEN		THIS_QSP->qs_semi_seen
+#define SET_SEMI_SEEN(v)	THIS_QSP->qs_semi_seen = v
 //#define VEXP_STR		((THIS_QSP->qs_estr)[THIS_QSP->qs_which_estr])
 //#define VEXP_STR		QS_EXPR_STRING(THIS_QSP)
 #define FINAL			THIS_QSP->qs_final

@@ -410,6 +410,7 @@ static COMMAND_FUNC( do_redir )
 
 	s = NAMEOF("name of file");
 	// BUG use NS function...
+	// what does that comment mean?  For mac version?
 	fp=fopen(s,"r");
 	if( fp == NULL ){
 		sprintf(ERROR_STRING,"Error opening file %s!?",s );
@@ -1311,21 +1312,19 @@ static COMMAND_FUNC( do_count_lines )
 // when we switch...
 static const char *open_mode_string[2]={"w","a"};
 
-// BUG this flag should be a QSP flag!
-static int append_flag=0;
 // This should also probably be per-qsp
-static const char *output_file_name=NULL;
+//static const char *output_file_name=NULL;
 
 static void set_output_file(QSP_ARG_DECL  const char *s)
 {
 	FILE *fp;
 
-	if( output_file_name==NULL ){	/* first time? */
+	if( QS_OUTPUT_FILENAME(qsp) == NULL ){	/* first time? */
 		if( (!strcmp(s,"-")) || (!strcmp(s,"stdout")) ){
 			/* stdout should be initially open */
 			return;
 		}
-	} else if( !strcmp(output_file_name,s) ){	/* same file? */
+	} else if( !strcmp( QS_OUTPUT_FILENAME(qsp),s) ){	/* same file? */
 /*
 sprintf(ERROR_STRING,"set_output_file %s, doing nothing",s);
 advise(ERROR_STRING);
@@ -1334,15 +1333,12 @@ advise(ERROR_STRING);
 	}
 	/* output_redir will close the current file... */
 
-	if( output_file_name != NULL )
-		rls_str(output_file_name);
-
-	output_file_name=savestr(s);
+	SET_QS_OUTPUT_FILENAME(THIS_QSP,s);
 
 	if( (!strcmp(s,"-")) || (!strcmp(s,"stdout")) )
 		fp=stdout;
 	else {
-		fp=TRYNICE(s,open_mode_string[append_flag]);
+		fp=TRYNICE(s,open_mode_string[ APPEND_FLAG ]);
 	}
 
 	if( !fp ) return;
@@ -1362,9 +1358,9 @@ static COMMAND_FUNC( do_output_redir )
 static COMMAND_FUNC( do_append )
 {
 	if( ASKIF("append output and error redirect files") )
-		append_flag=1;
+		SET_APPEND_FLAG(1)
 	else
-		append_flag=0;
+		SET_APPEND_FLAG(0)
 }
 
 static COMMAND_FUNC( do_error_redir )
@@ -1377,7 +1373,7 @@ static COMMAND_FUNC( do_error_redir )
 	if( (!strcmp(s,"-")) || (!strcmp(s,"stderr")) )
 		fp=stderr;
 	else {
-		fp=TRYNICE(s,open_mode_string[append_flag]);
+		fp=TRYNICE(s,open_mode_string[ APPEND_FLAG ]);
 	}
 
 	if( !fp ) return;

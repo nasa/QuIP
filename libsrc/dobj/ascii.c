@@ -44,12 +44,6 @@ static void init_format_type_tbl(void);
 #define NOPAD_INT_FMT_STR	"%ld"
 #define PS_INT_FMT_STR		"%x"
 
-/* all these variables should be per-thread...
- * Instead of adding them all to the Query_Stream struct, better to have them in a separate
- * data-module struct, that we allocate dynamically and point to from the query_stream...
- * FIXME
- */
-
 #define NORMAL_SEPARATOR	" "
 #define POSTSCRIPT_SEPARATOR	""
 
@@ -78,6 +72,7 @@ static void init_format_type_tbl(void);
 // BUG globals not thread-safe!?
 //static int n_format_fields, curr_fmt_i;
 // should have an input format list per qsp...
+// FIXME
 
 static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 
