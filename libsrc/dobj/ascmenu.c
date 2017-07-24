@@ -12,6 +12,7 @@
 #include "quip_prot.h"
 #include "getbuf.h"
 #include "veclib_api.h"	// BUG should integrate into data_obj.h...
+#include "platform.h"
 
 //#include "menuname.h"
 

@@ -242,3 +242,13 @@ int cpx_fft_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
 	return TRUE;
 }
 
+void show_fft_args(FFT_Args *fap )
+{
+	fprintf(stderr,"FFT args at 0x%lx\n",(long)fap);
+	fprintf(stderr,"\tdest 0x%lx, inc = %d\n",(long)FFT_DST(fap),FFT_DINC(fap));
+	fprintf(stderr,"\tsrc  0x%lx, inc = %d\n",(long)FFT_SRC(fap),FFT_SINC(fap));
+	fprintf(stderr,"\tlen  %d, is_inverse = %d\n",FFT_LEN(fap),FFT_ISI(fap));
+	fflush(stderr);
+}
+
+

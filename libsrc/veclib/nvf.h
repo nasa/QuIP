@@ -34,11 +34,8 @@ extern const char *argset_type_name[N_ARGSET_TYPES];
 extern const Vector_Function *this_vfp;		/* a global */
 extern int for_real;
 extern const char *type_strings[];		/* see obj_args.c */
-//extern Vec_Func_Array quip_vfa_tbl[N_VEC_FUNCS];
-//extern Vector_Function vec_func_tbl[N_VEC_FUNCS];
 extern dimension_t bitrev_size;
 extern dimension_t *bitrev_data;
-extern int insist_real, insist_cpx, insist_quat;
 extern int n_processors;
 
 

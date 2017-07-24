@@ -11,6 +11,7 @@
 #include "data_obj.h"
 #include "dobj_prot.h"
 #include "debug.h"
+#include "platform.h"
 
 // BUG prec_for_code should use table lookup instead of list search
 
@@ -75,6 +76,7 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	else if( VOID_SHAPE(shpp) )
 		sprintf(MSG_STR,"void shape                            ");
 	else {
+fprintf(stderr,"no categorization of shape at 0x%lx!?\n",(long)shpp);
 		assert( AERROR("describe_shape:  bad object type flag!?") );
 	}
 	prt_msg_frag(MSG_STR);

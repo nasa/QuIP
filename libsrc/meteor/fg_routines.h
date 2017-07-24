@@ -66,13 +66,6 @@
 
 #endif
 
-#define HIMEM_FG
-/* define HIMEM_FG if want to write to RAM above high_memory */
-#ifdef HIMEM_FG
-# define DEF_HIMEM_DEVICE	"/dev/himemfb"
-# include "ioctl_himemfb.h"
-#endif
-
 #define	MAX_ALLOW_CONSEC_ERRORS	10
 #define	TRUE	1
 #define	FALSE	0
@@ -93,7 +86,7 @@
 /* ram_location arguments for fg_open() */
 #define DISPLAY_RAM	0
 #define BIGPHYS_RAM	1
-#define HIMEM_RAM	2
+#define KERNEL_RAM	2
 
 /* values for fg_put_box() */
 #define FG_RED		0x00ff0000
@@ -109,7 +102,7 @@
  * example arguments:
  *      video_source: SOURCE_NTSC, SOURCE_SVIDEO
  *      video_format: MERGE_FIELDS, SEPARATE_FIELDS
- *      ram_location: DISPLAY_RAM, BIGPHYS_RAM, HIMEM_RAM
+ *      ram_location: DISPLAY_RAM, BIGPHYS_RAM, KERNEL_RAM
  */
 extern int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location);
 extern void fg_close(void);

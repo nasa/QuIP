@@ -4,6 +4,7 @@
 #include "quip_prot.h"
 #include "nvf.h"
 #include "debug.h"
+#include "platform.h"
 
 /* BUG - this is only correct when the order of words in this table corresponds
  * to the ordering of the corresponding constants.  Better to have a software initialization
@@ -59,6 +60,49 @@ static const char *name_for_type(Data_Obj *dp)
 	}
 }
 
+#define IS_FWD_FFT(vfp)		(VF_CODE(vfp)==FVFFT || \
+				 VF_CODE(vfp)==FVFFT2D || \
+				 VF_CODE(vfp)==FVFFTROWS )
+
+static int chktyp_fft(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
+{
+	assert( OA_SRC1(oap) != NULL );
+
+	if( IS_FWD_FFT(vfp) ){
+		/* source vector can be real or complex */
+		if( !IS_COMPLEX(OA_DEST(oap) ) ){
+			WARN("chktyp_fft:  destination must be complex for fft");
+			return -1;
+		}
+
+		if( IS_COMPLEX( OA_SRC1(oap) ) )
+			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
+		else if( IS_QUAT( OA_SRC1(oap) ) ){
+			WARN("chktyp:  Can't compute FFT of a quaternion input");
+			return -1;
+		} else
+			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+	} else {	// inverse fft
+		/* destination vector can be real or complex */
+		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
+			WARN("chktyp:  source must be complex for inverse fft");
+			return -1;
+		}
+		if( IS_COMPLEX(OA_DEST(oap) ) )
+			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
+		else if( IS_QUAT(OA_DEST(oap) ) ){
+			WARN("chktyp:  Can't compute inverse FFT to a quaternion target");
+			return -1;
+		} else
+			SET_OA_ARGSTYPE(oap,REAL_ARGS);
+	}
+	return 0;
+}
+
+#define IS_FFT_FUNC(vfp)	(VF_CODE(vfp)==FVFFT || VF_CODE(vfp)==FVIFT || \
+				 VF_CODE(vfp)==FVFFT2D || VF_CODE(vfp)==FVIFT2D || \
+				 VF_CODE(vfp)==FVFFTROWS || VF_CODE(vfp)==FVIFTROWS )
+
 /* The "type" is real, complex, quaternion, or mixed...
  * independent of "precision" (byte/short/float etc)
  */
@@ -66,6 +110,10 @@ static const char *name_for_type(Data_Obj *dp)
 static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 {
 	SET_OA_ARGSTYPE(oap, UNKNOWN_ARGS);
+
+	if( IS_FFT_FUNC(vfp) ){
+		return chktyp_fft(QSP_ARG  vfp, oap);
+	}
 
 	/* Set the type based on the destination vector */
 	/* destv is highest numbered arg */
@@ -143,10 +191,13 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
 				goto type_mismatch13;
 			}
-		} else if(  OA_SRC1(oap)  != NULL ){	/* one source operand */
+		} else if( OA_SRC1(oap) != NULL ){	/* one source operand */
 			if( IS_COMPLEX( OA_SRC1(oap) ) ){
 				SET_OA_ARGSTYPE(oap, COMPLEX_ARGS);
 			} else if( IS_REAL( OA_SRC1(oap) ) ){
+				// This may be correct for vsadd, etc.
+				// but NOT for fft!?
+				if( vfp )
 				SET_OA_ARGSTYPE(oap, MIXED_ARGS);
 			} else {
 				/* OA_SRC1 is not real or complex, must be a type mismatch */
@@ -231,43 +282,6 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		return 0;
 	}
 
-	if( VF_CODE(vfp) == FVFFT ){
-		/* source vector can be real or complex */
-		if( !IS_COMPLEX(OA_DEST(oap) ) ){
-			WARN("chktyp:  destination must be complex for fft");
-			return -1;
-		}
-		assert( OA_SRC1(oap) != NULL );
-
-		if( IS_COMPLEX( OA_SRC1(oap) ) )
-			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
-		else if( IS_QUAT( OA_SRC1(oap) ) ){
-			WARN("chktyp:  Can't compute FFT of a quaternion input");
-			return -1;
-		} else
-			SET_OA_ARGSTYPE(oap,REAL_ARGS);
-
-		return 0;
-	}
-
-	if( VF_CODE(vfp) == FVIFT ){
-		assert( OA_SRC1(oap) != NULL );
-
-		/* destination vector can be real or complex */
-		if( !IS_COMPLEX( OA_SRC1(oap) ) ){
-			WARN("chktyp:  source must be complex for inverse fft");
-			return -1;
-		}
-		if( IS_COMPLEX(OA_DEST(oap) ) )
-			SET_OA_ARGSTYPE(oap,COMPLEX_ARGS);
-		else if( IS_QUAT(OA_DEST(oap) ) ){
-			WARN("chktyp:  Can't compute inverse FFT to a quaternion target");
-			return -1;
-		} else
-			SET_OA_ARGSTYPE(oap,REAL_ARGS);
-
-		return 0;
-	}
 
 	/* now the type field has been set - make sure it's legal */
 	if( (VF_TYPEMASK(vfp) & VL_TYPE_MASK(OA_ARGSTYPE(oap) ) )==0 ){
@@ -331,36 +345,6 @@ ADVISE(ERROR_STRING);
 	 * and swap around accordingly!
 	 */
 	if( HAS_MIXED_ARGS(oap) ){
-#ifdef FOOBAR
-		if( USES_REAL_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_COMPLEX( OA_SRC2(oap) ) ){
-				WARN("destination vector must be complex when mixing types with vsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vsmul");
-				return -1;
-			}
-		} else if( USES_COMPLEX_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_COMPLEX( OA_SRC2(oap) ) ){
-				WARN("destination vector must be complex when mixing types with vcsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vcsmul");
-				return -1;
-			}
-		} else if( USES_QUAT_SCALAR(VF_CODE(vfp)) ){
-			if( ! IS_QUAT( OA_SRC2(oap) ) ){
-				WARN("destination vector must be quaternion when mixing types with vqsmul");
-				return -1;
-			}
-			if( ! IS_REAL( OA_SRC1(oap) ) ){
-				WARN("source vector must be real when mixing types with vqsmul");
-				return -1;
-			}
-		}
-#endif /* FOOBAR */
 	
 		/*
 		show_obj_args(oap);
@@ -371,7 +355,7 @@ ADVISE(ERROR_STRING);
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
 			sprintf(ERROR_STRING,
-"first source vector (%s,%s) must be complex when mixing types with function %s",
+"chktyp:  first source vector (%s,%s) must be complex when mixing types with function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,
 				name_for_type( OA_SRC1(oap) ),
 				VF_NAME(vfp) );
@@ -498,7 +482,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			SET_OA_ARGSTYPE(oap, R_BIT_ARGS);
 */
 			/* R_BIT_ARGS was a functype - not an argset type??? */
-			SET_OA_ARGSPREC(oap, BIT_ARGS);
+			SET_OA_ARGSPREC_CODE(oap, BIT_ARGS);
 		} else if( IS_BITMAP( OA_SRC1(oap) ) ){
 			/* this is necessary because bitmaps handled with kludgy hacks */
 			SET_OA_SBM(oap,OA_SRC1(oap) );
@@ -564,7 +548,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		/* we used to use dst_prec here, but that
 		 * is only the machine precision!?
 		 */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
 
@@ -630,7 +614,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			return -1;
 		}
 		assert( OA_SRC1(oap) != NULL );
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_SRC1(oap) ) ));
 		/* If the destination is long, don't worry about
 		 * a match with the arg...
 		 */
@@ -653,7 +637,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 				goto next1;
 		}
 		/* Can't use dst_prec here because might be bitmap */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(OBJ_PREC( OA_DEST(oap) ) ));
 		return 0;
 	}
 next1:
@@ -674,7 +658,7 @@ next1:
 			return -1;
 		}
 		/* use the precision from the source */
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
 		// BUG?  functype gets set at the bottom of this function, so how can we return?
 		// Do we also set it elsewhere???
 		return 0;
@@ -689,28 +673,28 @@ next1:
 	switch( dst_prec ){
 		case PREC_IN:
 			if( srcp1==PREC_UBY ){
-				SET_OA_ARGSPREC(oap, BYIN_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, BYIN_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_UBY);
 			break;
 		case PREC_DP:
 			if( srcp1==PREC_SP ){
-				SET_OA_ARGSPREC(oap, SPDP_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, SPDP_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_SP);
 			break;
 		case PREC_DI:
 			if( srcp1==PREC_UIN ){
-				SET_OA_ARGSPREC(oap, INDI_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, INDI_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_UIN);
 			break;
 		case PREC_BY:
 			if( srcp1==PREC_IN ){
-				SET_OA_ARGSPREC(oap, INBY_ARGS);
+				SET_OA_ARGSPREC_CODE(oap, INBY_ARGS);
 				return 0;
 			}
 			NEW_PREC_ERROR_MSG(PREC_IN);
@@ -724,8 +708,8 @@ next1:
 			WARN(ERROR_STRING);
 			return -1;
 	}
-	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) )
+	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
+//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 } /* end chkprec() */
 
 static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check for argument size match */
@@ -974,9 +958,9 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	 * One answer is bitmap result functions...
 	 */
 	if(  OA_SRC1(oap)  != NULL ){
-		SET_OA_ARGSPREC(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC1(oap) )  ));
 	} else if( OA_DEST(oap)  != NULL ){
-		SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
 	} else {
 		sprintf(ERROR_STRING,"call_vfunc %s:",VF_NAME(vfp) );
 		ADVISE(ERROR_STRING);
@@ -996,8 +980,8 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 	if( chkargs(QSP_ARG  vfp,oap) == (-1) ) return -1;	/* make set vslct_fake */
 
 	/* argstype has been set from within chkargs */
-	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) ) );
-//TELL_FUNCTYPE( OA_ARGSPREC(oap) ,OA_ARGSTYPE(oap) )
+	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
+//TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 
 	/* We don't worry here about vectorization on CUDA... */
 

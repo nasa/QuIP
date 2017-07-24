@@ -17,6 +17,7 @@
 #include "ascii_fmts.h"
 #include "dobj_private.h"
 #include "query_stack.h"	// like to eliminate this dependency...
+#include "veclib/obj_args.h"	// argset_prec
 
 static void init_format_type_tbl(void);
 
@@ -42,12 +43,6 @@ static void init_format_type_tbl(void);
 #define NOPAD_FLT_FMT_STR	"%g"
 #define NOPAD_INT_FMT_STR	"%ld"
 #define PS_INT_FMT_STR		"%x"
-
-/* all these variables should be per-thread...
- * Instead of adding them all to the Query_Stream struct, better to have them in a separate
- * data-module struct, that we allocate dynamically and point to from the query_stream...
- * FIXME
- */
 
 #define NORMAL_SEPARATOR	" "
 #define POSTSCRIPT_SEPARATOR	""
@@ -77,6 +72,7 @@ static void init_format_type_tbl(void);
 // BUG globals not thread-safe!?
 //static int n_format_fields, curr_fmt_i;
 // should have an input format list per qsp...
+// FIXME
 
 static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 
@@ -986,11 +982,11 @@ char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p )
 	return buf;
 }
 
-Precision *src_prec_for_argset_prec(argset_prec ap,argset_type at)
+Precision *src_prec_for_argset_prec(Argset_Prec * ap_p, argset_type at)
 {
 	int code=PREC_NONE;
 
-	switch(ap){
+	switch(ARGSPREC_CODE(ap_p)){
 		case BY_ARGS:	code=PREC_BY; break;
 		case IN_ARGS:	code=PREC_IN; break;
 		case DI_ARGS:	code=PREC_DI; break;

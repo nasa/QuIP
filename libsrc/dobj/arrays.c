@@ -6,6 +6,7 @@
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "debug.h"
+#include "platform.h"
 
 /* Sbscripted objects are implemented from a fixed-size pool of temporary
  * objects.  The thinking is that these will be used in an expression

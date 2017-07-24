@@ -26,6 +26,7 @@
 #include "data_obj.h"
 #include "rv_api.h"
 #include "img_file/rv.h"
+#include "llseek.h"
 
 static int _n_disks=1;
 
@@ -55,12 +56,12 @@ static int rv_to_dp(Data_Obj *dp,RV_Inode *inp)
 //longlist(dp);
 
 	// Does this do mach dims as well as type dims???
-	copy_shape( OBJ_SHAPE(dp), RV_MOVIE_SHAPE(inp) );
-	//COPY_SHAPE( OBJ_SHAPE(dp), RV_MOVIE_SHAPE(inp) );
+	copy_shape( OBJ_SHAPE(dp), rv_movie_shape(inp) );
+	//COPY_SHAPE( OBJ_SHAPE(dp), rv_movie_shape(inp) );
 
 	/* The increments should be ok, except for the frame increment... */
 
-	blks_per_frame = (((OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp) + RV_MOVIE_EXTRA( inp ))
+	blks_per_frame = (((OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp) + rv_movie_extra( inp ))
 				+ (BLOCK_SIZE-1)) & ~(BLOCK_SIZE-1))/ BLOCK_SIZE;
 	SET_OBJ_COMP_INC(dp,1);
 	SET_OBJ_PXL_INC(dp,(incr_t)OBJ_COMPS(dp) );
@@ -76,7 +77,7 @@ static int rv_to_dp(Data_Obj *dp,RV_Inode *inp)
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp) );
 
-	auto_shape_flags(OBJ_SHAPE(dp),dp);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
 }
@@ -212,10 +213,10 @@ static int dp_to_rv(RV_Inode *inp,Data_Obj *dp)
 
 	//inp->rvi_shape = (* OBJ_SHAPE(dp) );
 	// Has the shape been allocated???
-	COPY_SHAPE( RV_MOVIE_SHAPE(inp), OBJ_SHAPE(dp) );
+	COPY_SHAPE( rv_movie_shape(inp), OBJ_SHAPE(dp) );
 	// Should we copy to the on-disk rawvol things as well???
 
-	auto_shape_flags(RV_MOVIE_SHAPE(inp),NULL);
+	auto_shape_flags(rv_movie_shape(inp));
 
 	return(0);
 }
@@ -247,6 +248,7 @@ FIO_WT_FUNC( rvfio )
 	long nw;
 	int disk_index;
 	int n_disks;
+off64_t retoff;
 
 #ifdef O_DIRECT
 	// the object must be aligned!
@@ -273,7 +275,7 @@ FIO_WT_FUNC( rvfio )
 
 		SET_OBJ_FRAMES(ifp->if_dp,  ifp->if_frms_to_wt );
 		SET_OBJ_SEQS(ifp->if_dp, 1);
-		auto_shape_flags(OBJ_SHAPE(ifp->if_dp),ifp->if_dp);
+		auto_shape_flags(OBJ_SHAPE(ifp->if_dp));
 		rv_set_shape(QSP_ARG  ifp->if_name,OBJ_SHAPE(ifp->if_dp));
 
 		/* This used to be after the call to rv_realloc()...
@@ -289,14 +291,14 @@ FIO_WT_FUNC( rvfio )
 		/* When should this really be done??? */
 
 		size = OBJ_COMPS(ifp->if_dp) * OBJ_COLS(ifp->if_dp) * OBJ_ROWS(ifp->if_dp)
-			+ RV_MOVIE_EXTRA( inp );
+			+ rv_movie_extra( inp );
 
 		/* if the size is not an integral number of blocks, round up... */
 		size += (BLOCK_SIZE-1);
 		size /= BLOCK_SIZE;
 
 		/* where does OBJ_FRAMES(ifp->if_dp) get set??? */
-		f2a = FRAMES_TO_ALLOCATE(OBJ_FRAMES(ifp->if_dp),n_disks);
+		f2a = rv_frames_to_allocate(OBJ_FRAMES(ifp->if_dp));
 		size *= f2a;
 
 		if( rv_realloc(QSP_ARG  ifp->if_name,size) < 0 ){
@@ -317,11 +319,16 @@ FIO_WT_FUNC( rvfio )
 	/* BUG should store bytes per image in inp struct... */
 	/* BUG what about rvi_extra_bytes???... */
 
-	bpi = (OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp) );
-	bpf = (bpi +  BLOCK_SIZE - 1) & ~(BLOCK_SIZE-1);
+	bpi = (OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp) );	// bytes per image
+	bpf = (bpi +  BLOCK_SIZE - 1) & ~(BLOCK_SIZE-1);	// bytes per frame
+fprintf(stderr,"bpi = %ld (0x%lx), bpf = %ld (0x%lx)\n",bpi,bpi,bpf,bpf);
 
 	disk_index = (int)(ifp->if_nfrms % n_disks);
 
+retoff = my_lseek64(rv_fd_arr[disk_index],(off64_t) 0,SEEK_CUR);
+fprintf(stderr,"Current file position is 0x%lx\n",retoff);
+
+fprintf(stderr,"writing %d (0x%lx) bytes of data from 0x%lx\n",bpi,bpi,(u_long)OBJ_DATA_PTR(dp));
 	if( (nw=write(rv_fd_arr[disk_index],OBJ_DATA_PTR(dp),bpi)) != bpi ){
 		if( nw < 0 ) tell_sys_error("write");
 		sprintf(ERROR_STRING,
@@ -331,8 +338,16 @@ FIO_WT_FUNC( rvfio )
 		/* BUG? do something sensible here to clean up? */
 		return(-1);
 	}
+
 	/* write the pad bytes so we don't have to seek... */
+	/* BUT with O_DIRECT flag set, we have to write an integral number of blocks...
+	 * better to just seek!
+	 * Note that if this test is true then the frame size must not be an integral number
+	 * of blocks, so we are already in trouble!
+	 */
+
 	if( bpf > bpi ){
+fprintf(stderr,"writing %d pad bytes of data from 0x%lx\n",bpf-bpi,(u_long)OBJ_DATA_PTR(dp));
 		if( (nw=write(rv_fd_arr[disk_index],OBJ_DATA_PTR(dp),bpf-bpi)) != bpf-bpi ){
 			if( nw < 0 ) tell_sys_error("write");
 			sprintf(ERROR_STRING,
@@ -366,14 +381,14 @@ static struct timeval *rv_time_ptr(QSP_ARG_DECL  Image_File *ifp, index_t frame)
 
 	bpi = OBJ_COMPS(ifp->if_dp) * OBJ_COLS(ifp->if_dp) * OBJ_ROWS(ifp->if_dp) ;
 
-	if( RV_MOVIE_EXTRA( HDR_P(ifp) ) != sizeof(struct timeval) ){
+	if( rv_movie_extra( HDR_P(ifp) ) != sizeof(struct timeval) ){
 		/* sizeof is long in ia64? */
 		sprintf(DEFAULT_ERROR_STRING,"rv_time_ptr:  expected rvi_extra_bytes (%d) to equal sizeof(struct timeval) (%d) !?",
-				RV_MOVIE_EXTRA( HDR_P(ifp) ),(int)sizeof(struct timeval));
+				rv_movie_extra( HDR_P(ifp) ),(int)sizeof(struct timeval));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(NULL);
 	}
-	n_to_read = bpi + RV_MOVIE_EXTRA( HDR_P(ifp) );
+	n_to_read = bpi + rv_movie_extra( HDR_P(ifp) );
 
 	/* round up to block size */
 	n_to_read = (n_to_read + BLOCK_SIZE -1 ) & ( ~ (BLOCK_SIZE-1) );
@@ -464,7 +479,7 @@ int rvfio_unconv(void *hdr_pp,Data_Obj *dp)
 
 	/* allocate space for new header */
 
-	*in_pp = (RV_Inode *)getbuf( sizeof(RV_Inode) );
+	*in_pp = rv_inode_alloc();
 	if( *in_pp == NULL ) return(-1);
 
 	dp_to_rv(*in_pp,dp);

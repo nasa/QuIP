@@ -28,7 +28,6 @@
 #include "quip_prot.h"	/* ERROR_STRING */
 
 #ifdef HAVE_METEOR
-#include "memchunk.h"
 #include "ioctl_meteor.h"
 
 //#ifdef LINUX
@@ -61,15 +60,13 @@ static int meteor_is_mapped=0, fbdev_is_mapped=0;
  * example arguments:
  *	video_source: SOURCE_NTSC, SOURCE_SVIDEO
  *	video_format: MERGE_FIELDS, SEPARATE_FIELDS
- *	ram_location: DISPLAY_RAM, BIGPHYS_RAM, HIMEM_RAM
+ *	ram_location: DISPLAY_RAM, BIGPHYS_RAM, KERNEL_RAM
  */
 
 int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 {
 	const char *		MeteorDev = DEF_METEOR_DEVICE;
 	u_char *		framebuf;
-	u_char *		phys_fb_addr;
-	u_int			hm_size;
 	int			numcols = DEF_NUM_COLS;
 	int			numrows = DEF_NUM_ROWS;
 	int			framesize;
@@ -77,7 +74,6 @@ int fg_open(QSP_ARG_DECL  int video_source, int video_format, int ram_location)
 	uint32_t		iformat = METEOR_FMT_NTSC;
 	struct meteor_counts	err_cnts;
 	struct meteor_geomet	geo;
-	struct meteor_fbuf	vid;
 
 advise("fg_open BEGIN");
 
@@ -101,13 +97,11 @@ advise("fg_open BEGIN");
 	dmaerrcnts = 0;
 	err_cnts.fifo_errors = 0;
 	err_cnts.dma_errors = 0;
-	err_cnts.frames_captured = 0;
+	err_cnts.n_frames_captured = 0;
 	err_cnts.even_fields_captured = 0;
 	err_cnts.odd_fields_captured = 0;
-//sprintf(ERROR_STRING,"fg_open:  sizeof(struct meteor_counts) = 0x%lx",sizeof(struct meteor_counts));
-//advise(ERROR_STRING);
-//sprintf(ERROR_STRING,"fg_open:  METEORSCOUNT = 0x%lx",METEORSCOUNT);
-//advise(ERROR_STRING);
+sprintf(ERROR_STRING,"fg_open:  ioctl METEORSCOUNT (0x%x)",METEORSCOUNT);
+advise(ERROR_STRING);
 	if (ioctl(meteor_fd, (int)(METEORSCOUNT), &err_cnts) < 0) {
 		perror("fg_open:  ioctl(METEORSCOUNT)");
 		fg_close();
@@ -119,12 +113,16 @@ advise("fg_open BEGIN");
 	if( (numcols % 8) != 0 )
 		numcols = numcols & 0x3f8;
 
+sprintf(ERROR_STRING,"fg_open:  ioctl METEORSINPUT");
+advise(ERROR_STRING);
 	if (ioctl(meteor_fd, METEORSINPUT, &video_source) < 0) {
 		perror("ioctl(METEORSINPUT)");
 		fg_close();
 		return( -1 );
 	}
 
+sprintf(ERROR_STRING,"fg_open:  ioctl METEORSFMT");
+advise(ERROR_STRING);
 	if (ioctl(meteor_fd, METEORSFMT, &iformat) < 0) {
 		perror("ioctl(METEORSFMT)");
 		fg_close();
@@ -153,7 +151,7 @@ advise("fg_open BEGIN");
 			break;
 	}
 
-advise("progress...");
+fprintf(stderr,"progress, switching on ram_location %d...",ram_location);
 	switch( ram_location ) {
 
 #ifdef DISPLAY_FG
@@ -210,131 +208,7 @@ printf("framebuf %x, vid.addr %x\n",framebuf, vid.addr);
 #endif
 
 #ifdef HIMEM_FG
-		case HIMEM_RAM: {
-			Mem_Chunk mc1;
-
-advise("HIMEM_FG");
-			if( verbose )
-				advise("allocating frame buffer using himemfb device");
-
-			if ((fbfd = open(DEF_HIMEM_DEVICE, O_RDWR)) < 0) {
-				sprintf(ERROR_STRING,"open(%s)",DEF_HIMEM_DEVICE);
-				perror(ERROR_STRING);
-				fg_close();
-				return( -1 );
-			}
-
-			/* jbm:
-			 * The original code here used HM_GETADDR and HM_GETSIZE
-			 * to determine the address and size of the *entire*
-			 * himem area...  now we would like to use himemfb's
-			 * new allocator to take just a portion of the memory...
-			 * The purpose of this is to allow other frame grabber
-			 * drivers to share himem peacefully.
-			 *
-			 * We still need some guidance for how much memory to take...
-			 * We can still use GETSIZE to get the total amount of RAM,
-			 * and then query for the largest chunk - if these are equal,
-			 * then we know that noone else is using any of the memory,
-			 * and conversely if they are not equal then we know that
-			 * someone else is holding some of the memory.
-			 *
-			 * A basic problem is that the driver is handed all the memory,
-			 * and then frames are placed in response to SETGEO requests...
-			 * It would be better to know now what geometry we are going
-			 * to want to use, and make an appropriate request to himemfb.
-			 *
-			 * For 640x480, we can fit 3 frames into 4 MB... (approx 1.2 ea).
-			 * So for 16 frames, we need 22 MB...  for 32 we need 44 MB...
-			 * It is unlikely that we will ever want more than 48 MB.
-			 * We will make the default request for 64 MB (48 frames?).
-			 * It would be better to have several seconds worth...
-			 *
-			 * We reserve 64Mb, enough for 3 * 16 = 48 frames.
-			 *
-			 * the default number of frames is set in ../include/mmenu.h.
-			 */
-#define DEFAULT_HIMEM_REQ_SIZE	(128*1024*1024)
-
-			if (ioctl(fbfd, HM_GETADDR, &phys_fb_addr) < 0) {
-				perror("ioctl(HM_GETADDR)");
-				fg_close();
-				return( -1 );
-			}
-			if (ioctl(fbfd, HM_GETSIZE, &hm_size) < 0) {
-				perror("ioctl(HM_GETSIZE)");
-				fg_close();
-				return( -1 );
-			}
-
-			/* we now know the location and total size, check on availability */
-			mc1.mc_size = 0;	/* flag size req */
-			if( ioctl(fbfd, HM_REQCHUNK, &mc1) < 0 ){
-				perror("ioctl(HM_REQCHUNK)");
-				fg_close();
-				return(-1);
-			}
-			/* the size of the largest chunk should be returned in mc1.mc_size */
-			if( verbose ){
-sprintf(ERROR_STRING,"largest himemfb chunk is %d bytes",mc1.mc_size);
-advise(ERROR_STRING);
-			}
-
-			if( mc1.mc_size <= 0 ){
-				WARN("no memory for frame buffer!?");
-				fg_close();
-				return(-1);
-			}
-
-			if( mc1.mc_size > DEFAULT_HIMEM_REQ_SIZE ){
-				mc1.mc_size = DEFAULT_HIMEM_REQ_SIZE ;
-			}
-
-			if( verbose ){
-sprintf(ERROR_STRING,"requesting %d bytes from himemfb",mc1.mc_size);
-advise(ERROR_STRING);
-			}
-			mc1.mc_flags = AUTO_RELEASE;	/* release the chunk when himemfb is closed */
-
-			if( ioctl(fbfd, HM_REQCHUNK, &mc1) < 0 ){
-				perror("ioctl(HM_REQCHUNK)");
-				fg_close();
-				return(-1);
-			}
-
-			/* vid.addr = (uint32_t)phys_fb_addr; */
-			/* vid.ramsize = hm_size; */
-
-			vid.addr = (int_for_addr)mc1.mc_addr;
-			vid.ramsize = mc1.mc_size;
-
-			vid.width = 0;
-			if (ioctl(meteor_fd, METEORSVIDEO, &vid) < 0) {
-				perror("ioctl(METEORSVIDEO)");
-				fg_close();
-				return( -1 );
-			}
-
-			/* set geometry only after set video */
-			if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
-				perror("ioctl(METEORSETGEO)");
-				fg_close();
-				return( -1 );
-			}
-
-			framesize = geo.columns * geo.rows * bytesperpixel;
-
-			/* We can use either device as mmap source, but the himemfb
-			 * device always maps from the beginning, it doesn't know that
-			 * the meteor driver might have shifted the frame buffer up
-			 * because of the 4MB boundary problem...
-			 */
-
-/* can use either device as mmap source */
-/*			framebuf=(u_char *)mmap((caddr_t)0, framesize, PROT_READ,
-				MAP_FILE|MAP_PRIVATE, meteor_fd, (off_t)0);
-*/
-advise("calling mmap");
+			/*
 			framebuf = (u_char *) mmap( (caddr_t)0, (size_t)framesize,
 				PROT_READ|PROT_WRITE,
 				MAP_OPTIONS,
@@ -345,15 +219,22 @@ advise("calling mmap");
 				return( -1 );
 			}
 			fbdev_is_mapped=1;
+			*/
 
-			fgbuf.ram_location = ram_location;
-			fgbuf.ram_width = bytesperpixel * geo.columns;
-			fgbuf.ram_addr = framebuf;
-			fgbuf.ram_size = framesize;
+#endif
+
+		case KERNEL_RAM: {
+fprintf(stderr,"calling ioctl METEORSETGEO for kernel ram...\n");
+			if (ioctl(meteor_fd, METEORSETGEO, &geo) < 0) {
+				perror("ioctl(METEORSETGEO)");
+				fg_close();
+				return( -1 );
+			}
+			// Need to map frames individually!
+fprintf(stderr,"fg_open not yet mapping kernel ram!?\n");
 
 			break;
 		}
-#endif
 
 		case BIGPHYS_RAM: {
 

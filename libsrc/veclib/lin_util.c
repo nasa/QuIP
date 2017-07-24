@@ -3,6 +3,7 @@
 #include "nvf.h"
 #include "veclib_prot.h"
 #include "veclib/vl2_veclib_prot.h"
+#include "platform.h"
 
 
 static void vdot(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )

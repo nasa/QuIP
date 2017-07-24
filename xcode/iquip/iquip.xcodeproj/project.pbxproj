@@ -1459,7 +1459,7 @@
 		7C3904BE17F64818005163CD /* serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = serial.c; sourceTree = "<group>"; };
 		7C3904C017F64894005163CD /* stamps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stamps.c; sourceTree = "<group>"; };
 		7C3904C217F64901005163CD /* my_stty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = my_stty.c; sourceTree = "<group>"; };
-		7C4332AD1D4D43FC0033687C /* TEST_CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TEST_CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7C4332AD1D4D43FC0033687C /* CSF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CSF.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C4332AE1D4D43FC0033687C /* CSF-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF-Info.plist"; sourceTree = "<absolute>"; };
 		7C4332AF1D4D47D40033687C /* csf_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = csf_startup.enc; path = macros/startup/csf_startup.enc; sourceTree = "<group>"; };
 		7C4333D41D4D49450033687C /* EZJet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EZJet.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1625,7 +1625,7 @@
 			isa = PBXGroup;
 			children = (
 				7106ECFD16004437006BF850 /* iQuIP.app */,
-				7C4332AD1D4D43FC0033687C /* TEST_CSF.app */,
+				7C4332AD1D4D43FC0033687C /* CSF.app */,
 				7C4333D41D4D49450033687C /* EZJet.app */,
 				7C4D6EA11D5111A400D34AC4 /* AFalert.app */,
 			);
@@ -2199,7 +2199,7 @@
 			);
 			name = CSF;
 			productName = coq;
-			productReference = 7C4332AD1D4D43FC0033687C /* TEST_CSF.app */;
+			productReference = 7C4332AD1D4D43FC0033687C /* CSF.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7C4332B21D4D49450033687C /* EZJet */ = {
@@ -2244,7 +2244,7 @@
 		7106ECF416004437006BF850 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0700;
+				LastUpgradeCheck = 0830;
 				TargetAttributes = {
 					7106ECFC16004437006BF850 = {
 						DevelopmentTeam = 6NC2ML6K22;
@@ -3454,7 +3454,9 @@
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer: Jeffrey Mulligan (DUA4CS8273)";
@@ -3489,7 +3491,7 @@
 					../../../numrec/include,
 					../vectree,
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = iQuIP;
 				PROVISIONING_PROFILE = "";
@@ -3508,7 +3510,9 @@
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jeffrey Mulligan (6NC2ML6K22)";
@@ -3530,7 +3534,7 @@
 					../../../numrec/include,
 				);
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = iQuIP;
 				PROVISIONING_PROFILE = "";
@@ -3554,7 +3558,7 @@
 					../../../numrec/include,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",
@@ -3581,7 +3585,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",
@@ -3610,15 +3614,15 @@
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;
 				GCC_WARN_UNUSED_LABEL = YES;
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",
 					"-DSTARTUP_FILE=csf_startup",
 					"-DUSE_NUMREC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = TEST_CSF;
+				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
+				PRODUCT_NAME = CSF;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
@@ -3644,7 +3648,7 @@
 					../../../numrec/include,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = (
@@ -3652,8 +3656,8 @@
 					"-DSTARTUP_FILE=csf_startup",
 					"-DUSE_NUMREC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "NASA.${PRODUCT_NAME:rfc1034identifier}";
-				PRODUCT_NAME = TEST_CSF;
+				PRODUCT_BUNDLE_IDENTIFIER = NASA.CSF;
+				PRODUCT_NAME = CSF;
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				RUN_CLANG_STATIC_ANALYZER = NO;
@@ -3673,7 +3677,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",
@@ -3701,7 +3705,7 @@
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = ../../include;
 				INFOPLIST_FILE = "$(SRCROOT)/iQuIP/iQuIP-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",
@@ -3728,7 +3732,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				INFOPLIST_FILE = "AFalert-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",
@@ -3756,7 +3760,7 @@
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				"HEADER_SEARCH_PATHS[arch=*]" = ../../include;
 				INFOPLIST_FILE = "AFalert-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = "";
 				"OTHER_CFLAGS[arch=*]" = (
 					"-DBUILD_FOR_IOS",

@@ -46,7 +46,7 @@ int bmp_to_dp(Data_Obj *dp, BMP_Header *hd_p)
 	SET_OBJ_N_TYPE_ELTS(dp, OBJ_COMPS(dp) * OBJ_COLS(dp) * OBJ_ROWS(dp)
 			* OBJ_FRAMES(dp) * OBJ_SEQS(dp));
 
-	set_shape_flags(OBJ_SHAPE(dp),dp,AUTO_SHAPE);
+	auto_shape_flags(OBJ_SHAPE(dp));
 
 	return(0);
 }

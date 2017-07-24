@@ -566,7 +566,7 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 	}
 #endif	/* N_PROCESSORS > 1 */
 
-	assert( OA_ARGSPREC(oap) < N_ARGSET_PRECISIONS );
+	assert( OA_ARGSPREC_CODE(oap) < N_ARGSET_PRECISIONS );
 	assert( PF_FUNC_TBL(cpp) != NULL );
 
 #ifdef CAUTIOUS
@@ -587,7 +587,7 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 
 	/* not really a BUG, but this may be redundant... */
 	/* Where should this be done??? */
-	OA_FUNCTYPE(oap) = FUNCTYPE_FOR(OA_ARGSPREC(oap),OA_ARGSTYPE(oap));
+	OA_FUNCTYPE(oap) = FUNCTYPE_FOR(OA_ARGSPREC_CODE(oap),OA_ARGSTYPE(oap));
 
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
@@ -689,7 +689,7 @@ void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 	clear_obj_args(oap);
 	setvarg2(oap,dst_dp,src_dp);
 	// Need to set argset precision to match source, not destination...
-	SET_OA_ARGSPREC(oap, ARGSET_PREC( OBJ_PREC( src_dp ) ) );
+	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( src_dp ) ) );
 //fprintf(stderr,"dp_convert, dispatching conversion of %s to %s, func %s (code = %d)\n",
 //OBJ_NAME(dst_dp),OBJ_NAME(src_dp),
 //VF_NAME( &(vec_func_tbl[code]) ),

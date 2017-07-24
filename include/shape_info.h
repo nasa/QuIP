@@ -206,9 +206,9 @@ typedef struct bitmap_gpu_info {
 
 struct shape_info {
 	Dimension_Set *		si_mach_dims;
-	Dimension_Set *		si_type_dims;
+	Dimension_Set *		si_type_dims;	// what if these are the same???
 	Increment_Set *		si_mach_incs;
-	Increment_Set *		si_type_incs;
+	Increment_Set *		si_type_incs;	// what if these are the same???
 	Precision *		si_prec_p;
 	int32_t			si_maxdim;
 	int32_t			si_mindim;

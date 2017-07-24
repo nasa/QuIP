@@ -101,11 +101,11 @@ compute svector mul $1 $2 $3 quit quit
 .
 
 Define VCSMul 4 target source real imag
-compute csvector mul $1 $2 $3 $4 quit quit
+compute svector mul $1 $2 $3 $4 quit quit
 .
 
 Define VCSDiv 4 target source real imag
-compute csvector div $1 $2 $3 $4 quit quit
+compute svector div $1 $2 $3 $4 quit quit
 .
 
 Define VSMulComplex 4 target source real imag
@@ -123,11 +123,11 @@ compute svector add $1 $2 $3 quit quit
 .
 
 Define VCSAdd 4 target source real imag
-compute csvector add $1 $2 $3 $4 quit quit
+compute svector add $1 $2 $3 $4 quit quit
 .
 
 Define VCSSub 4 target source real imag
-compute csvector sub $1 $2 $3 $4 quit quit
+compute svector sub $1 $2 $3 $4 quit quit
 .
 
 Define VQSAdd 6 target source re ii jj kk
@@ -593,13 +593,19 @@ compute fft scroll $1 $2 $3 $4 quit quit
 .
 
 Define RInvFFT 2 image xform
-compute fft irfft $1 $2 quit quit
-VSMul $1 $1 1/(ncols('$1')*nrows('$1'))
+#compute fft irfft $1 $2 quit quit
+compute fft invfft $1 $2 quit quit
+VSMul $1 $1 2/(ncols('$1')*nrows('$1'))
 .
 
 Define InvFFT 1 image
-compute fft invfft $1 quit quit
-VSMul $1 $1 1/(ncols('$1')*nrows('$1'))
+advise "InvFFT $1 BEGIN"
+compute fft invfft $1 $1 quit quit
+advise "InvFFT transform computed"
+# assume complex target
+VSMul $1{0} $1{0} 1/(ncols('$1')*nrows('$1'))
+VSMul $1{1} $1{1} 1/(ncols('$1')*nrows('$1'))
+advise "InvFFT $1 DONE"
 .
 
 Define Wrap 2 target source
@@ -607,11 +613,12 @@ compute fft wrap $1 $2 quit quit
 .
 
 Define RFFT 2 xform image
-compute fft rfft $1 $2 quit quit
+#compute fft rfft $1 $2 quit quit
+compute fft fft $1 $2 quit quit
 .
 
 Define FFT 1 image
-compute fft fft $1 quit quit
+compute fft fft $1 $1 quit quit
 .
 
 Define FFT_Rows 1 image

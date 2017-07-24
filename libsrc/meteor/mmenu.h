@@ -34,7 +34,6 @@ extern int stamping;
 #define TIMESTAMP_SIZE	sizeof(struct timeval)
 #endif /* RECORD_TIMESTAMPS */
 
-extern struct meteor_frame_offset meteor_off;
 extern struct meteor_geomet my_geo;
 extern struct meteor_mem *_mm;
 extern int _hiwat, _lowat;
@@ -51,6 +50,10 @@ extern Image_File *record_ifp;
 /* mhw.c */
 extern void meteor_mmap(SINGLE_QSP_ARG_DECL);
 extern int checkChips(SINGLE_QSP_ARG_DECL);
+
+extern void *frame_address(int index);
+extern void set_frame_address(int index, void *p);
+extern void *map_mem_data(SINGLE_QSP_ARG_DECL);
 
 /* mcapt.c */
 

@@ -4,6 +4,7 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "platform.h"
 #ifdef HAVE_OPENCL
 #include "ocl_platform.h"
 #endif // HAVE_OPENCL
@@ -64,9 +65,10 @@ static int is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *su
 
 	if( /* index < 0 || */ index >= pd){
 		sprintf(ERROR_STRING,
-"%s offset %d for subobject \"%s\" falls outside of parent \"%s\"",
+"%s offset %d for subobject \"%s\" falls outside of parent \"%s\" (%s count = %d)",
 			dimension_name[which_dim],
-			index,sub_name,OBJ_NAME(parent));
+			index,sub_name,OBJ_NAME(parent),
+			dimension_name[which_dim],pd);
 		WARN(ERROR_STRING);
 		sprintf(ERROR_STRING,
 			"dim index %d:  parent size = %u",
@@ -320,7 +322,7 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 
 	// We might want to not use AUTO_SHAPE - for example, if we subsample
 	// a column vector that we want to treat as an image?
-	if( set_shape_flags( OBJ_SHAPE(dp), dp, AUTO_SHAPE) < 0 )
+	if( auto_shape_flags( OBJ_SHAPE(dp) ) < 0 )
 		return(NULL);
 
 	check_contiguity(dp);		// almost sure not contiguous if subsample!

@@ -12,6 +12,7 @@
 #include "veclib/vecgen.h"
 #include "veclib/cu2_veclib_prot.h"
 #include "veclib/obj_args.h"
+#include "platform.h"
 
 
 #ifdef HAVE_LIBCURAND

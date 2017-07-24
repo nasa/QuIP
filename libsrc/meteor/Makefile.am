@@ -23,9 +23,7 @@ noinst_HEADERS =		pupfind.h		\
 				curv_setup2.h		\
 				curv_setup3.h		\
 				fg_routines.h		\
-				ioctl_himemfb.h		\
 				ioctl_meteor.h		\
-				memchunk.h		\
 				meteor.h		\
 				mmenu.h			\
 				mmvi.h

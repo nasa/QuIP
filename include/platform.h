@@ -2,11 +2,9 @@
 #define _PLATFORM_H_
 
 #include "data_obj.h"	// but this file is included in data_obj...
+#include "veclib/vecgen.h"
 #include "veclib/obj_args.h"
 struct vector_function;
-//#include "veclib/vec_func.h"
-//struct vec_func_array;
-//struct vec_obj_args;
 
 #ifdef HAVE_OPENCL
 #define MAX_OPENCL_DEVICES	4
@@ -88,14 +86,17 @@ typedef struct compute_platform {
 	void (*cp_devinfo_func)(QSP_ARG_DECL  struct platform_device *pdp);
 	void (*cp_info_func)(QSP_ARG_DECL  struct compute_platform *pdp);
 
-	void (*cp_fft2d_func)();
-	void (*cp_ift2d_func)();
-	/*
-	void (*cp_fft2d_2_func)();
-	void (*cp_ift2d_2_func)();
-	*/
-	void (*cp_fftrows_func)();
-	void (*cp_iftrows_func)();
+#ifdef FOOBAR
+// BUG integrate with m4 macros???
+
+#define FFT_FUNC_ARG_DECLS					\
+	VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp
+
+	void (*cp_fft2d_func)( FFT_FUNC_ARG_DECLS );
+	void (*cp_ift2d_func)( FFT_FUNC_ARG_DECLS );
+	void (*cp_fftrows_func)( FFT_FUNC_ARG_DECLS );
+	void (*cp_iftrows_func)( FFT_FUNC_ARG_DECLS );
+#endif // FOOBAR
 
 	struct vec_func_array *	cp_vfa_tbl;
 
@@ -156,10 +157,6 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
 #define PF_FFT2D_FN(cpp)		(cpp)->cp_fft2d_func
 #define PF_IFT2D_FN(cpp)		(cpp)->cp_ift2d_func
-/*
-#define PF_FFT2D_2_FN(cpp)		(cpp)->cp_fft2d_2_func
-#define PF_IFT2D_2_FN(cpp)		(cpp)->cp_ift2d_2_func
-*/
 #define PF_FFTROWS_FN(cpp)		(cpp)->cp_fftrows_func
 #define PF_IFTROWS_FN(cpp)		(cpp)->cp_iftrows_func
 
@@ -176,8 +173,6 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_OBJ_FREE_FN(cpp,v)	(cpp)->cp_obj_free_func = v
 #define SET_PF_OFFSET_DATA_FN(cpp,v)	(cpp)->cp_offset_data_func = v
 #define SET_PF_UPDATE_OFFSET_FN(cpp,v)	(cpp)->cp_update_offset_func = v
-//#define SET_PF_DISPATCH_FN(cpp,v)	(cpp)->cp_dispatch_func = v
-//#define SET_PF_DISPATCH_TBL(cpp,v)	(cpp)->cp_dispatch_tbl = v
 #define SET_PF_MAPBUF_FN(cpp,v)		(cpp)->cp_mapbuf_func = v
 #define SET_PF_UNMAPBUF_FN(cpp,v)	(cpp)->cp_unmapbuf_func = v
 #define SET_PF_REGBUF_FN(cpp,v)		(cpp)->cp_regbuf_func = v
@@ -186,10 +181,6 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
 #define SET_PF_FFT2D_FN(cpp,v)		(cpp)->cp_fft2d_func = v
 #define SET_PF_IFT2D_FN(cpp,v)		(cpp)->cp_ift2d_func = v
-/*
-#define SET_PF_FFT2D_2_FN(cpp,v)	(cpp)->cp_fft2d_2_func = v
-#define SET_PF_IFT2D_2_FN(cpp,v)	(cpp)->cp_ift2d_2_func = v
-*/
 #define SET_PF_FFTROWS_FN(cpp,v)	(cpp)->cp_fftrows_func = v
 #define SET_PF_IFTROWS_FN(cpp,v)	(cpp)->cp_iftrows_func = v
 
@@ -207,15 +198,17 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 	SET_PF_MAPBUF_FN(	cpp,	stem##_map_buf		);	\
 	SET_PF_UNMAPBUF_FN(	cpp,	stem##_unmap_buf	);	\
 	SET_PF_DEVINFO_FN(	cpp,	stem##_dev_info		);	\
-	SET_PF_INFO_FN(		cpp,	stem##_info		);	\
+	SET_PF_INFO_FN(		cpp,	stem##_info		);
+
+#ifdef FOOBAR
 	/*SET_PF_DISPATCH_FN(	cpp,	stem##_dispatch		);*/	\
 									\
 	SET_PF_FFT2D_FN(	cpp,	h_##stem##_fft2d	);	\
 	SET_PF_IFT2D_FN(	cpp,	h_##stem##_ift2d	);	\
-	/*SET_PF_FFT2D_2_FN(	cpp,	h_##stem##_fft2d_2	);	\
-	SET_PF_IFT2D_2_FN(	cpp,	h_##stem##_ift2d_2	);*/	\
 	SET_PF_FFTROWS_FN(	cpp,	h_##stem##_fftrows	);	\
 	SET_PF_IFTROWS_FN(	cpp,	h_##stem##_iftrows	);	\
+
+#endif // FOOBAR
 
 
 #define PF_FUNC_TBL(cpp)		(cpp)->cp_vfa_tbl

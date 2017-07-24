@@ -61,6 +61,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)								\
 }
 
 // BUG need special case for bitmap!
+// Floating point values aren't signed...
 
 #define DECLARE_SET_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
 															\
@@ -74,19 +75,44 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)								\
 		val = next_input_func(QSP_ARG  prompt);									\
 															\
 	if( val < type_min || val > type_max ){										\
-		sprintf(ERROR_STRING,"Truncation error converting to %s",#stem);					\
+		sprintf(ERROR_STRING,"Truncation error converting %s to %s (%s)",#read_type,#stem,#type);		\
 		WARN(ERROR_STRING);											\
 	}														\
 															\
 	* ((type *)vp) = (type) val;											\
 }
 
-DECLARE_SET_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,"real data",next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
-DECLARE_SET_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
+#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+															\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)								\
+{															\
+	read_type val;													\
+															\
+	if( ! HAS_FORMAT_LIST )												\
+		val = query_func(QSP_ARG  prompt );									\
+	else														\
+		val = next_input_func(QSP_ARG  prompt);									\
+															\
+	if( val < (-type_max) || val > type_max ){									\
+		sprintf(ERROR_STRING,"Truncation error converting %s to %s (%s)",#read_type,#stem,#type);		\
+		WARN(ERROR_STRING);											\
+	}														\
+															\
+	if( (val < (type_min) && val > 0) || (val > (-type_min) && val < 0) ){						\
+		sprintf(ERROR_STRING,"Rounding error converting %s to %s (%s)",#read_type,#stem,#type);			\
+		WARN(ERROR_STRING);											\
+	}														\
+															\
+	* ((type *)vp) = (type) val;											\
+}
+
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,"real data",next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
 
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,"integer data",next_input_int_with_format,MIN_BYTE,MAX_BYTE)
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,"integer data",next_input_int_with_format,MIN_SHORT,MAX_SHORT)
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(int32,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
+// This one generates warnings when building for iOS?
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(int64,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
 
 DECLARE_SET_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,"integer data",next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
@@ -299,7 +325,7 @@ static void cast_indexed_##stem##_from_double				\
 			(Scalar_Value *svp, int idx, double val)	\
 {									\
 	sprintf(DEFAULT_ERROR_STRING,					\
-		"Can't cast to %s with an index!?",#stem);		\
+		"cast_indexed_%s_from_double:  Can't cast to %s with an index (%d)!?",#stem,#stem,idx);		\
 	NWARN(DEFAULT_ERROR_STRING);					\
 }
 
@@ -315,9 +341,9 @@ DECLARE_INDEXED_DATA_FUNC(stem,type)
 DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
 DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)
 
-#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)			\
+#define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)		\
 									\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)				\
 DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)				\
 DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)			\
@@ -328,8 +354,8 @@ DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)
 #define DECLARE_CPX_SCALAR_FUNCS(stem,type,member)			\
 									\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
 DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\
@@ -340,8 +366,8 @@ DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,member)
 #define DECLARE_QUAT_SCALAR_FUNCS(stem,type,member)			\
 									\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
 DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\

@@ -13,6 +13,7 @@
 #include "vec_util.h"
 #include "quip_menu.h"
 #include "veclib/vl2_veclib_prot.h"
+#include "platform.h"
 
 #define TEMP_UNIMP(func)			\
 						\
@@ -379,30 +380,16 @@ static COMMAND_FUNC( do_vv )
 	PUSH_MENU(vvector);
 }
 
-static COMMAND_FUNC( do_vsadd )		{	insist_real=1; DO_VCODE(FVSADD); }
-static COMMAND_FUNC( do_vssub )		{	insist_real=1; DO_VCODE(FVSSUB); }
-static COMMAND_FUNC( do_vsmul )		{	insist_real=1; DO_VCODE(FVSMUL); }
-static COMMAND_FUNC( do_vsdiv )		{	insist_real=1; DO_VCODE(FVSDIV); }
-static COMMAND_FUNC( do_vsdiv2 )		{	insist_real=1; DO_VCODE(FVSDIV2); }
+static COMMAND_FUNC( do_vsadd )		{	DO_VCODE(FVSADD); }
+static COMMAND_FUNC( do_vssub )		{	DO_VCODE(FVSSUB); }
+static COMMAND_FUNC( do_vsmul )		{	DO_VCODE(FVSMUL); }
+static COMMAND_FUNC( do_vsdiv )		{	DO_VCODE(FVSDIV); }
+static COMMAND_FUNC( do_vsdiv2 )	{	DO_VCODE(FVSDIV2); }
 
 /* static COMMAND_FUNC( do_vscml )	{	DO_VCODE(FVSCML); } */
 
 static COMMAND_FUNC( do_vsmod )		{	DO_VCODE(FVSMOD); }
-static COMMAND_FUNC( do_vsmod2 )		{	DO_VCODE(FVSMOD2); }
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_vcsadd )	{	insist_cpx=1;  DO_VCODE(FVCSADD); }
-static COMMAND_FUNC( do_vcssub )	{	insist_cpx=1;  DO_VCODE(FVCSSUB); }
-static COMMAND_FUNC( do_vcsmul )	{	insist_cpx=1;  DO_VCODE(FVCSMUL); }
-static COMMAND_FUNC( do_vcsdiv )	{	insist_cpx=1;  DO_VCODE(FVCSDIV); }
-static COMMAND_FUNC( do_vcsdiv2 )	{	insist_cpx=1;  DO_VCODE(FVCSDIV2); }
-
-static COMMAND_FUNC( do_vqsadd )	{	insist_quat=1;  DO_VCODE(FVQSADD); }
-static COMMAND_FUNC( do_vqssub )	{	insist_quat=1;  DO_VCODE(FVQSSUB); }
-static COMMAND_FUNC( do_vqsmul )	{	insist_quat=1;  DO_VCODE(FVQSMUL); }
-static COMMAND_FUNC( do_vqsdiv )	{	insist_quat=1;  DO_VCODE(FVQSDIV); }
-static COMMAND_FUNC( do_vqsdiv2 )	{	insist_quat=1;  DO_VCODE(FVQSDIV2); }
-#endif /* FOOBAR */
+static COMMAND_FUNC( do_vsmod2 )	{	DO_VCODE(FVSMOD2); }
 
 static COMMAND_FUNC( do_vspow )		{	DO_VCODE(FVSPOW); }
 static COMMAND_FUNC( do_vspow2 )	{	DO_VCODE(FVSPOW2); }
@@ -435,38 +422,7 @@ ADD_CMD( xor,	do_vsxor,	bitwise xor of scalar and vector	)
 MENU_END(svector)
 
 
-static COMMAND_FUNC( do_rvs ) { PUSH_MENU(svector); }
-
-#ifdef FOOBAR
-Command cvs_menu[]={
-{ "add",	do_vcsadd,	"add complex scalar to elements of a vector"	},
-{ "div",	do_vcsdiv,	"divide a complex scalar by the elements of a vector"},
-{ "div2",	do_vcsdiv2,	"divide elements of a vector by a complex scalar"},
-{ "mul",	do_vcsmul,	"multiply a vector by a complex scalar"	},
-/* { "conjmul",	do_vscml,	"multiply vector conj. by a complex scalar"},	*/
-{ "sub",	do_vcssub,	"subtract elements of a vector from a complex scalar"},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"				},
-#endif
-{ NULL_COMMAND								}
-};
-
-Command qvs_menu[]={
-{ "add",	do_vqsadd,	"add quaternion scalar to elements of a vector"	},
-{ "div",	do_vqsdiv,	"divide a quaternion scalar by the elements of a vector"},
-{ "div2",	do_vqsdiv2,	"divide elements of a vector by a quaternion scalar"},
-{ "mul",	do_vqsmul,	"multiply a vector by a quaternion scalar"	},
-/* { "conjmul",	do_vscml,	"multiply vector conj. by a quaternion scalar"},	*/
-{ "sub",	do_vqssub,	"subtract elements of a vector from a quaternion scalar"},
-#ifndef MAC
-{ "quit",	popcmd,		"exit submenu"				},
-#endif
-{ NULL_COMMAND								}
-};
-
-static COMMAND_FUNC( do_cvs ) { PUSH_MENU(cvs_menu); }
-static COMMAND_FUNC( do_qvs ) { PUSH_MENU(qvs_menu); }
-#endif	/* FOOBAR */
+static COMMAND_FUNC( do_vs ) { PUSH_MENU(svector); }
 
 /* These return a single scalar, and can be used as projection operators */
 static COMMAND_FUNC( domaxv ){	DO_VCODE(FVMAXV); }
@@ -509,33 +465,6 @@ static COMMAND_FUNC( do_minmax )
 	PUSH_MENU(minmax);
 }
 
-#ifdef FOOBAR
-static COMMAND_FUNC( do_accumulate )
-{
-	Data_Obj *dp_to,*dp_fr;
-
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source vector" );
-
-	if( dp_to==NULL || dp_fr==NULL ) return;
-
-	war_accumulate(dp_to,dp_fr);
-}
-
-static COMMAND_FUNC( do_project )
-{
-	Data_Obj *dp_to,*dp_fr;
-
-	dp_to=PICK_OBJ( "destination vector" );
-	dp_fr=PICK_OBJ( "source image" );
-
-	if( dp_to==NULL || dp_fr==NULL ) return;
-
-	war_project(dp_to,dp_fr);
-}
-#endif /* FOOBAR */
-
-
 static COMMAND_FUNC( do_cumsum )
 {
 	Data_Obj *dp_to,*dp_fr;
@@ -570,49 +499,59 @@ static COMMAND_FUNC( do_enlarge )
 
 static COMMAND_FUNC( do_fwdfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
 
-	//h_vl2_fft2d(VFCODE_ARG  dp,dp);
 	(*PF_FFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVFFT2D);
 }
 
 static COMMAND_FUNC( do_fwdrowfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
 
-	//h_vl2_fftrows(VFCODE_ARG  dp,dp);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVFFTROWS);
 }
 
 static COMMAND_FUNC( do_invfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
-	//h_vl2_ift2d(VFCODE_ARG  dp,dp);
 	(*PF_IFT2D_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVIFT2D);
 }
 
 static COMMAND_FUNC( do_invrowfft )
 {
+	/*
 	Data_Obj *dp;
 	int vf_code=(-1);
 
 	dp=PICK_OBJ("complex image");
 	if( dp == NULL ) return;
-	//h_vl2_iftrows(VFCODE_ARG  dp,dp);
 	(*PF_IFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp))))(VFCODE_ARG  dp,dp);
+	*/
+	DO_VCODE(FVIFTROWS);
 }
+
+#ifdef FOOBAR
 
 static COMMAND_FUNC( do_invrfft )
 {
@@ -669,6 +608,7 @@ static COMMAND_FUNC( do_fwdrowrfft )
 	//h_vl2_fftrows(VFCODE_ARG  targ,src);
 	(*PF_FFTROWS_FN(PFDEV_PLATFORM(OBJ_PFDEV(targ))))(VFCODE_ARG  targ,src);
 }
+#endif // FOOBAR
 
 #ifdef REQUANT_ACHROM
 
@@ -1715,14 +1655,22 @@ MENU_BEGIN(fft)
 ADD_CMD( newfft,	do_newfft,	test new chainable complex fft )
 #endif /* FOOBAR */
 
+ADD_CMD( fft,		do_fwdfft,	forward Fourier transform )
+ADD_CMD( invfft,	do_invfft,	inverse Fourier transform )
+ADD_CMD( row_fft,	do_fwdrowfft,	forward Fourier transform of rows only )
+ADD_CMD( row_invfft,	do_invrowfft,	inverse Fourier transform of rows only )
+
+#ifdef FOOBAR
 ADD_CMD( fft,		do_fwdfft,	forward complex Fourier transform )
-ADD_CMD( row_fft,	do_fwdrowfft,	forward complex Fourier transform of rows only )
-ADD_CMD( rfft,		do_fwdrfft,	forward Fourier transform w/ real input )
-ADD_CMD( row_rfft,	do_fwdrowrfft,	forward Fourier transform of rows only w/ real input )
-ADD_CMD( irfft,		do_invrfft,	inverse Fourier transform w/ real output )
-ADD_CMD( row_irfft,	do_invrowrfft,	inverse Fourier transform of rows only w/ real output )
 ADD_CMD( invfft,	do_invfft,	inverse complex Fourier transform )
+ADD_CMD( row_fft,	do_fwdrowfft,	forward complex Fourier transform of rows only )
 ADD_CMD( row_invfft,	do_invrowfft,	inverse complex Fourier transform of rows only )
+ADD_CMD( rfft,		do_fwdrfft,	forward Fourier transform w/ real input )
+ADD_CMD( irfft,		do_invrfft,	inverse Fourier transform w/ real output )
+ADD_CMD( row_rfft,	do_fwdrowrfft,	forward Fourier transform of rows only w/ real input )
+ADD_CMD( row_irfft,	do_invrowrfft,	inverse Fourier transform of rows only w/ real output )
+#endif // FOOBAR
+
 ADD_CMD( wrap,		do_wrap,	wrap DFT image )
 ADD_CMD( wrap3d,	do_wrap3d,	wrap 3-D DFT )
 ADD_CMD( scroll,	do_scroll,	scroll image )
@@ -2153,11 +2101,7 @@ ADD_CMD(	trig,		do_trig,	trigonometric operations	)
 ADD_CMD(	unary,		do_unary,	unary operations on data	)
 ADD_CMD(	logical,	do_logic,	logical operations on data	)
 ADD_CMD(	vvector,	do_vv,		vector-vector operations	)
-ADD_CMD(	svector,	do_rvs,		real_scalar-vector operations	)
-#ifdef FOOBAR
-ADD_CMD(	csvector,	do_cvs,		complex_scalar-vector operations	)
-ADD_CMD(	Qsvector,	do_qvs,		quaternion_scalar-vector operations	)
-#endif /* FOOBAR */
+ADD_CMD(	svector,	do_vs,		scalar-vector operations	)
 ADD_CMD(	minmax,		do_minmax,	minimum/maximum routines	)
 ADD_CMD(	compare,	docmp,		comparision routines	)
 ADD_CMD(	fft,		do_fft,		FFT submenu	)
