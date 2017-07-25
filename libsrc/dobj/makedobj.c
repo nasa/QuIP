@@ -22,6 +22,8 @@
 #include <stdlib.h>		/* memalign() */
 #endif
 
+#include <errno.h>		/* EINVAL etc. */
+
 #include "quip_prot.h"
 #include "data_obj.h"
 #include "debug.h"
@@ -41,15 +43,26 @@ void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int al
 {
 	void *ptr;
 
-	/* if getbuf is not aliased to malloc but instead uses getspace,
-	 * then this is not correct!?  BUG
-	 */
+#ifdef HAVE_POSIX_MEMALIGN
+	int status;
 
-	// BUG?  Why not use posix_memalign here?
-	// ans:  because we don't always compile to use
-	// malloc as our memory allocator.  Given the capabilities
-	// of new malloc_debug, however, it is not clear that
-	// there is still a need to support the old getbuf interface...
+	status = posix_memalign(&ptr,align,size);
+	if( status != 0 ){
+		switch(status){
+			case EINVAL:
+				WARN("cpu_mem_alloc:  bad alignment!?");
+				break;
+			case ENOMEM:
+				WARN("cpu_mem_alloc:  memory allocation failure!?");
+				break;
+			default:
+				WARN("cpu_mem_alloc:  unexpected error code from posix_memalign!?");
+				break;
+		}
+		return NULL;
+	}
+	return ptr;
+#else // ! HAVE_POSIX_MEMALIGN
 
 	/* malloc always aligns to an 8 byte boundary, but for SSE we need 16 */
 	if( align > 8 ){
@@ -61,6 +74,7 @@ void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int al
 		mem_err("no more RAM for data objects");
 	}
 	return ptr;
+#endif // ! HAVE_POSIX_MEMALIGN
 }
 
 // allocate memory for a new object in ram
@@ -73,6 +87,7 @@ int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
 	/* remember the original address of the data for freeing! */
 	SET_OBJ_UNALIGNED_PTR(dp,st);
 
+#ifndef HAVE_POSIX_MEMALIGN
 	if( align > 0 ){
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
@@ -82,6 +97,7 @@ advise(ERROR_STRING);
 #endif
 		st = (u_char *)((((u_long)st)+align-1) & ~(align-1));
 	}
+#endif // ! HAVE_POSIX_MEMALIGN
 
 	SET_OBJ_DATA_PTR(dp,st);
 

@@ -373,7 +373,7 @@ If $plotter_changing
   Recall_Plotter_Params
 # There are some parameters that are computed...
 #advise "Select_Plotter $1   right_margin = $right_margin"
-advise "Select_Plotter $1:  Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax"
+#advise "Select_Plotter $1:  Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax"
 Plot_Data_Range $plot_xmin $plot_ymin $plot_xmax $plot_ymax
 .
 

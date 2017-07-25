@@ -1521,10 +1521,6 @@ Delete_If $cropped_name
 Subvector $cropped_name $max_source $_use_n $_use_start
 .
 
-Define Delete_If 1 object
-If obj_exists('$1') "Delete_Object $1"
-.
-
 # We call Update_Trace to replot the data curve, without eraseing and redrawing
 # Useful for 2nd, 3rd traces on a plot...
 

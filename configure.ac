@@ -939,6 +939,7 @@ AC_SEARCH_LIBS([gmtime],[c],[have_gmtime=yes],[have_gmtime=no])
 AC_SEARCH_LIBS([asctime_r],[c],[have_asctime_r=yes],[have_asctime_r=no])
 AC_SEARCH_LIBS([asctime],[c],[have_asctime=yes],[have_asctime=no])
 AC_SEARCH_LIBS([localtime_r],[c],[have_localtime_r=yes],[have_localtime_r=no])
+AC_SEARCH_LIBS([posix_memalign],[c],[have_posix_memalign=yes],[have_posix_memalign=no])
 
 # optional libraries
 # -lX11		X
@@ -1850,6 +1851,10 @@ fi
 
 if test "x${have_localtime_r}" = xyes; then
   AC_DEFINE([HAVE_LOCALTIME_R], 1, [localtime_r available])
+fi
+
+if test "x${have_posix_memalign}" = xyes; then
+  AC_DEFINE([HAVE_POSIX_MEMALIGN], 1, [posix_memalign available])
 fi
 
 if test "x${async_exec}" = xyes; then

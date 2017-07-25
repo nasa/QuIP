@@ -55,7 +55,11 @@ Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
 
 void cpu_mem_free(QSP_ARG_DECL  void *ptr)
 {
+#ifdef HAVE_POSIX_MEMALIGN
+	givbuf(free);
+#else // ! HAVE_POSIX_MEMALIGN
 	givbuf(ptr);
+#endif // ! HAVE_POSIX_MEMALIGN
 }
 
 void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
