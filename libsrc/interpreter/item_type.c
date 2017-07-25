@@ -591,32 +591,6 @@ advise(ERROR_STRING);
 } // create_item_context
 
 
-#ifdef FOO
-void show_context_stack(Item_Type *itp)
-{
-	Item_Context *icp;
-	Node *np;
-
-	if( CONTEXT_LIST(itp)==NULL ){
-none:
-		sprintf(ERROR_STRING,"No contexts in existence for %s items",IT_NAME(itp));
-		NADVISE(ERROR_STRING);
-		return;
-	}
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
-	if( np == NULL ) goto none;
-
-	sprintf(ERROR_STRING,"%s contexts:",IT_NAME(itp));
-	NADVISE(ERROR_STRING);
-	while( np != NULL ){
-		icp = NODE_DATA(np);
-		sprintf(ERROR_STRING,"\t%s",CTX_NAME(icp));
-		NADVISE(ERROR_STRING);
-		np=NODE_NEXT(np);
-	}
-}
-#endif /* FOO */
-
 /* push an existing context onto the top of stack for this item class */
 
 void push_item_context( QSP_ARG_DECL   Item_Type *itp, Item_Context *icp )
@@ -638,9 +612,9 @@ NADVISE(ERROR_STRING);
 
 	np=mk_node(icp);
 
-	assert(CONTEXT_LIST(itp)!=NULL);
+	assert(LIST_OF_CONTEXTS(itp)!=NULL);
 
-	addHead(CONTEXT_LIST(itp),np);
+	addHead(LIST_OF_CONTEXTS(itp),np);
 
 	SET_CURRENT_CONTEXT(itp, icp);
 	INC_STACK_CHANGE_COUNT(itp);
@@ -659,7 +633,7 @@ Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 	/* don't remove the context from the list yet, it needs
 	 * to be there to find the objects in the context...
 	 */
-	np=remHead(CONTEXT_LIST(itp));
+	np=remHead(LIST_OF_CONTEXTS(itp));
 	if( np==NULL ){
 		sprintf(ERROR_STRING,
 			"Item type %s has no context to pop",IT_NAME(itp));
@@ -668,7 +642,7 @@ Item_Context * pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 	}
 	rls_node(np);
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 	// Normally this is not null, because we always have
 	// the default context, but currently secondary threads
 	// may not inherit the default!?
@@ -722,7 +696,7 @@ void delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (*
 	itp = (Item_Type *) CTX_IT(icp);
 	assert(itp!=NULL);
 
-	while( (np=remData(CONTEXT_LIST(itp),icp)) != NULL ){
+	while( (np=remData(LIST_OF_CONTEXTS(itp),icp)) != NULL ){
 		rls_node(np);
 	}
 
@@ -812,9 +786,9 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 
 	if( *name == 0 ) return(NULL);
 
-	assert( CONTEXT_LIST(itp) != NULL );
+	assert( LIST_OF_CONTEXTS(itp) != NULL );
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 
 #ifdef THREAD_SAFE_QUERY
 	if( np == NULL ){
@@ -822,7 +796,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		// This occurs when we have a brand new thread...
 		assert(QS_SERIAL!=0);
 		// get the bottom of the stack from the root qsp, and push it...
-		np = QLIST_TAIL( FIRST_CONTEXT_STACK(itp) );
+		np = QLIST_TAIL( FIRST_LIST_OF_CONTEXTS(itp) );
 		assert( np != NULL );
 		icp = NODE_DATA(np);
 		assert(icp!=NULL);
@@ -830,7 +804,7 @@ Item *item_of( QSP_ARG_DECL  Item_Type *itp, const char *name )
 		// BUG?  if a context can be pushed on two stacks, what happens when
 		// it is popped from one?  Will it be released?
 		push_item_context(QSP_ARG  itp, icp );
-		np=QLIST_HEAD(CONTEXT_LIST(itp));
+		np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 	}
 #endif // THREAD_SAFE_QUERY
 
@@ -917,12 +891,12 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 
 	/* First check and see if any of the contexts have been updated */
 
-	assert(CONTEXT_LIST(itp)!=NULL);
+	assert(LIST_OF_CONTEXTS(itp)!=NULL);
 
-	/*if( CONTEXT_LIST(itp) != NULL )*/
+	/*if( LIST_OF_CONTEXTS(itp) != NULL )*/
 	{
 		Node *context_np;
-		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
+		context_np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 		while(context_np!=NULL){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
@@ -945,9 +919,9 @@ List *item_list(QSP_ARG_DECL  Item_Type *itp)
 		rls_node(np);
 
 	/* now make up the new list, by concatenating the context lists */
-	if( CONTEXT_LIST(itp) != NULL ){
+	if( LIST_OF_CONTEXTS(itp) != NULL ){
 		Node *context_np;
-		context_np=QLIST_HEAD(CONTEXT_LIST(itp));
+		context_np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 		while(context_np!=NULL){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
@@ -1225,7 +1199,7 @@ void item_stats(QSP_ARG_DECL  Item_Type * itp)
 
 	assert( itp != NULL );
 
-	np = QLIST_HEAD(CONTEXT_LIST(itp));
+	np = QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 	while(np!=NULL){
 		Item_Context *icp;
 		icp=(Item_Context *) NODE_DATA(np);
@@ -1323,7 +1297,7 @@ void zombie_item(QSP_ARG_DECL  Item_Type *itp,Item* ip)
 	/* Find the context that contains the item, then remove it.
 	 */
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 	while(np!=NULL){
 		Item_Context *icp;
 
@@ -1391,7 +1365,7 @@ static void dump_item_type(QSP_ARG_DECL  Item_Type *itp)
 		"%s items",IT_NAME(itp));
 	prt_msg(MSG_STR);
 
-	np = QLIST_HEAD(CONTEXT_LIST(itp));
+	np = QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 	while( np != NULL ){
 		Item_Context *icp;
 
@@ -1601,7 +1575,7 @@ static void apply_to_context_stack(QSP_ARG_DECL  Item_Type *itp,
 {
 	Node *np;
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 	assert( np != NULL );
 
 	while(np!=NULL){
@@ -1760,7 +1734,7 @@ const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s )
 // These used to be accessed directly from the struct, but now we provide accessor functions
 // to insure proper initialization (necessary when multi-threading)
 
-List *context_list(QSP_ARG_DECL  Item_Type *itp)
+List *context_stack(QSP_ARG_DECL  Item_Type *itp)
 {
 	Item_Type_Context_Info *itci_p;
 
@@ -1790,7 +1764,7 @@ Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp)
 	// If it is null, then this is probably the first access
 	// from a new thread
 
-	lp = context_list(QSP_ARG  itp);
+	lp = context_stack(QSP_ARG  itp);
 	if( eltcount(lp) > 0 ){
 		Node *np;
 		np = QLIST_HEAD(lp);

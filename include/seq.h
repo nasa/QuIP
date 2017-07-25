@@ -25,6 +25,7 @@ ITEM_INTERFACE_PROTOTYPES(Seq,mviseq)
 extern void	load_seq_module(Seq_Module *smp);
 extern int	init_show_seq(Seq *);
 extern void	wait_show_seq(void);
+extern void	init_movie_sequences(SINGLE_QSP_ARG_DECL);
 
 //extern int	yylex(void);
 //extern int	yyerror(const char *s);

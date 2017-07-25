@@ -2599,7 +2599,7 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_SCRATCH(qsp,new_stringbuf());
 	SET_QS_RESULT(qsp,new_stringbuf());
 
-	SET_QS_PROMPT_SB(qsp,new_stringbuf());
+	SET_QS_CMD_PROMPT_SB(qsp,new_stringbuf());
 
 	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 

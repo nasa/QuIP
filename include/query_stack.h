@@ -136,7 +136,7 @@ struct query_stack {
 	// menu stuff
 	Menu *		qs_builtin_menu;
 	Menu *		qs_help_menu;
-	String_Buf *	qs_prompt_sbp;
+	String_Buf *	qs_cmd_prompt_sbp;
 	Stack *		qs_menu_stack;
 
 	int		qs_fmt_code;
@@ -169,6 +169,8 @@ struct query_stack {
 	Vector_Parser_Data *	qs_vector_parser_data;
 	Scalar_Parser_Data *	qs_scalar_parser_data;
 
+	int		qs_max_vectorizable;
+
 	Item_Type *	qs_picking_item_itp;
 
 #ifdef BUILD_FOR_IOS
@@ -193,6 +195,11 @@ struct query_stack {
 #endif // THREAD_SAFE_QUERY
 };
 
+#define MAX_VECTORIZABLE		QS_MAX_VECTORIZABLE(THIS_QSP)
+#define SET_MAX_VECTORIZABLE(v)		QS_MAX_VECTORIZABLE(THIS_QSP,v)
+
+#define QS_MAX_VECTORIZABLE(qsp)		(qsp)->qs_max_vectorizable
+#define SET_QS_MAX_VECTORIZABLE(qsp,v)		(qsp)->qs_max_vectorizable = v
 #define QS_PICKING_ITEM_ITP(qsp)		((qsp)->qs_picking_item_itp)
 #define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(qsp->qs_picking_item_itp) = itp
 
@@ -279,10 +286,10 @@ struct query_stack {
 #define QS_CHEW_LIST(qsp)		(qsp)->qs_chew_list
 #define SET_QS_CHEW_LIST(qsp,lp)	(qsp)->qs_chew_list =  lp
 
-#define QS_PROMPT_SB(qsp)		(qsp)->qs_prompt_sbp
-#define SET_QS_PROMPT_SB(qsp,sbp)	(qsp)->qs_prompt_sbp = sbp
-#define QS_PROMPT_STR(qsp)		sb_buffer((qsp)->qs_prompt_sbp)
-#define CLEAR_QS_PROMPT(qsp)		QS_PROMPT_STR(qsp)[0] = 0
+#define QS_CMD_PROMPT_SB(qsp)		(qsp)->qs_cmd_prompt_sbp
+#define SET_QS_CMD_PROMPT_SB(qsp,sbp)	(qsp)->qs_cmd_prompt_sbp = sbp
+#define QS_CMD_PROMPT_STR(qsp)		sb_buffer((qsp)->qs_cmd_prompt_sbp)
+#define CLEAR_QS_CMD_PROMPT(qsp)	QS_CMD_PROMPT_STR(qsp)[0] = 0
 
 #define QS_WHICH_VAR_BUF(qsp)		(qsp)->qs_which_var_buf
 #define SET_QS_WHICH_VAR_BUF(qsp,v)	(qsp)->qs_which_var_buf=v

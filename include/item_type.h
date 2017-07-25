@@ -146,29 +146,23 @@ struct item_context {
 // The main thing is the context stack
 
 typedef struct item_type_context_info {
-	Stack *			itci_context_stack;		// need to have one per thread
-	u_long			itci_stack_serial;		// increment this when the stack is changed (push/pop)
-	u_long			itci_item_serial;		// increment this when any context is changed
+	Stack *			itci_context_stack;	// need to have one per thread
+	u_long			itci_stack_serial;	// increment this when the stack is changed (push/pop)
+	u_long			itci_item_serial;	// increment this when any context is changed
 
 	int			itci_flags;
 
-	List *			itci_item_lp;			// list of all of the items -
-	u_long			itci_list_serial;		// update when list is updated
+	List *			itci_item_lp;		// list of all of the items -
+	u_long			itci_list_serial;	// update when list is updated
 
-	Item_Context *		itci_icp;			// current context
-	Match_Cycle *		itci_mc_p;			// why remember one???
-	struct item_context *	itci_mc_icp;			// match cycle database for this context stack
+	Item_Context *		itci_icp;		// current context
+	Match_Cycle *		itci_mc_p;		// why remember one???
+	struct item_context *	itci_mc_icp;		// match cycle database for this context stack
 } Item_Type_Context_Info;
 
 // Flag bits
 #define ITCI_CTX_RESTRICTED_FLAG		1
-//#define ITCI_LIST_IS_CURRENT			2
-//#define ITCI_NEEDS_LIST			2
-//#define NEEDS_NEW_CHOICES(itp)	(IT_FLAGS(itp) & NEED_CHOICES)
-//#define NEED_CHOICES	2
-//#define CTX_NEEDS_LIST	4
 
-//#define NEEDS_NEW_LIST(itp)	(ITCI_FLAGS(THIS_ITCI(itp)) & ITCI_NEEDS_LIST)
 #define NEEDS_NEW_LIST(itp)	(ITCI_LIST_SERIAL(THIS_ITCI(itp)) != ITCI_ITEM_SERIAL(THIS_ITCI(itp)))
 
 #define ITCI_ITEM_LIST(itci_p)			(itci_p)->itci_item_lp
@@ -313,12 +307,12 @@ extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
 #define THIS_ITCI(itp)			ITCI_AT_INDEX(itp,0)
 #endif // ! THREAD_SAFE_QUERY
 
-//#define CONTEXT_LIST(itp)		ITCI_CSTK( THIS_ITCI(itp) )	// this is the list of contexts,
-//									// not the list of items in a context
-#define CONTEXT_LIST(itp)		context_list(QSP_ARG  itp)
-#define SET_CONTEXT_LIST(itp,lp)	SET_ITCI_CSTK( THIS_ITCI(itp), lp )
+// this is the list of contexts,
+// not the list of items in a context
+#define LIST_OF_CONTEXTS(itp)		context_stack(QSP_ARG  itp)
+#define SET_LIST_OF_CONTEXTS(itp,lp)	SET_ITCI_CSTK( THIS_ITCI(itp), lp )
 
-#define FIRST_CONTEXT_STACK(itp)	ITCI_CSTK( ITCI_AT_INDEX(itp,0) )
+#define FIRST_LIST_OF_CONTEXTS(itp)	ITCI_CSTK( ITCI_AT_INDEX(itp,0) )
 
 #define IS_RESTRICTED(itp)		ITCI_CTX_RESTRICTED( THIS_ITCI(itp) )
 
@@ -469,7 +463,7 @@ extern int remove_from_item_free_list(QSP_ARG_DECL  Item_Type *itp, void *ip);
 //extern Item *check_context(Item_Context *icp, const char *name);
 extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
 extern List *alpha_sort(QSP_ARG_DECL  List *lp);
-extern List *context_list(QSP_ARG_DECL  Item_Type *itp);
+extern List *context_stack(QSP_ARG_DECL  Item_Type *itp);
 
 #endif /* ! _ITEM_TYPE_H_ */
 

@@ -3506,7 +3506,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 				NODE_ERROR(decl_enp);
 			}
 			sprintf(ERROR_STRING,"current context is %s",
-				CTX_NAME(((Item_Context *)NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)))));
+				CTX_NAME(((Item_Context *)NODE_DATA(QLIST_HEAD(LIST_OF_DOBJ_CONTEXTS)))));
 			advise(ERROR_STRING);
 		}
 		*/
@@ -3514,7 +3514,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 
 	/* remember the declaration identifier context */
 	// Could we use CURRENT_CONTEXT equivalently???
-	SET_VN_DECL_CTX(enp, (Item_Context *)NODE_DATA(QLIST_HEAD(ID_CONTEXT_LIST)) );
+	SET_VN_DECL_CTX(enp, (Item_Context *)NODE_DATA(QLIST_HEAD(LIST_OF_ID_CONTEXTS)) );
 
 //sprintf(ERROR_STRING,"eval_decl_stat:  creating id %s, type = %d",
 //VN_STRING(enp),type);
@@ -3534,7 +3534,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 //fprintf(stderr,"ID_REFERENCE:  idp = 0x%lx\n",(long)idp);
 //fprintf(stderr,"ID_NAME(idp) = 0x%lx\n",(long)ID_NAME(idp));
 //fprintf(stderr,"ID_NAME(idp) = %s\n",ID_NAME(idp));
-			SET_ID_DOBJ_CTX(idp , (Item_Context *)NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)) );
+			SET_ID_DOBJ_CTX(idp , (Item_Context *)NODE_DATA(QLIST_HEAD(LIST_OF_DOBJ_CONTEXTS)) );
 			SET_ID_REF(idp, NEW_REFERENCE );
 			SET_REF_ID(ID_REF(idp), idp );
 			SET_REF_DECL_VN(ID_REF(idp), enp );	/* BUG? */
@@ -4369,7 +4369,7 @@ advise(ERROR_STRING);
 		return;
 	}
 
-	if( ID_DOBJ_CTX(idp) != NODE_DATA(QLIST_HEAD(DOBJ_CONTEXT_LIST)) ){
+	if( ID_DOBJ_CTX(idp) != NODE_DATA(QLIST_HEAD(LIST_OF_DOBJ_CONTEXTS)) ){
 		context_pushed=1;
 		PUSH_DOBJ_CONTEXT(ID_DOBJ_CTX(idp));
 	} else context_pushed=0;

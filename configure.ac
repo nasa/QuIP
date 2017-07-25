@@ -935,8 +935,10 @@ AC_SEARCH_LIBS([stat],[c],[have_stat=yes],[have_stat=no])
 AC_SEARCH_LIBS([ctime_r],[c],[have_ctime_r=yes],[have_ctime_r=no])
 AC_SEARCH_LIBS([ctime],[c],[have_ctime=yes],[have_ctime=no])
 AC_SEARCH_LIBS([gmtime_r],[c],[have_gmtime_r=yes],[have_gmtime_r=no])
+AC_SEARCH_LIBS([gmtime],[c],[have_gmtime=yes],[have_gmtime=no])
+AC_SEARCH_LIBS([asctime_r],[c],[have_asctime_r=yes],[have_asctime_r=no])
+AC_SEARCH_LIBS([asctime],[c],[have_asctime=yes],[have_asctime=no])
 AC_SEARCH_LIBS([localtime_r],[c],[have_localtime_r=yes],[have_localtime_r=no])
-# BUG?  check for gmtime also?
 
 # optional libraries
 # -lX11		X
@@ -1831,11 +1833,23 @@ if test "x${have_ctime}" = xyes; then
 fi
 
 if test "x${have_gmtime_r}" = xyes; then
-  AC_DEFINE([HAVE_GMTIME_R], 1, [gmtime_r available for date formatting])
+  AC_DEFINE([HAVE_GMTIME_R], 1, [gmtime_r available for Grenwich Mean Time])
+fi
+
+if test "x${have_gmtime}" = xyes; then
+  AC_DEFINE([HAVE_GMTIME], 1, [gmtime available for Grenwich Mean Time])
+fi
+
+if test "x${have_asctime_r}" = xyes; then
+  AC_DEFINE([HAVE_ASCTIME_R], 1, [asctime_r available for date formatting])
+fi
+
+if test "x${have_asctime}" = xyes; then
+  AC_DEFINE([HAVE_ASCTIME], 1, [asctime available for date formatting])
 fi
 
 if test "x${have_localtime_r}" = xyes; then
-  AC_DEFINE([HAVE_LOCALTIME_R], 1, [localtime_r available for date formatting])
+  AC_DEFINE([HAVE_LOCALTIME_R], 1, [localtime_r available])
 fi
 
 if test "x${async_exec}" = xyes; then

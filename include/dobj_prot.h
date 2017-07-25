@@ -190,7 +190,7 @@ extern Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str 
 
 /* memops.c */
 extern int not_prec(QSP_ARG_DECL  Data_Obj *,prec_t);
-extern void check_vectorization(Data_Obj *dp);
+extern void check_vectorization(QSP_ARG_DECL  Data_Obj *dp);
 extern void dp1_vectorize(QSP_ARG_DECL  int,Data_Obj *,void (*func)(Data_Obj *) );
 extern void dp2_vectorize(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *,
 				void (*func)(Data_Obj *,Data_Obj *) );

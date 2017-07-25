@@ -14,10 +14,9 @@
 
 //#include "uio.h"
 
-#define N_DUMPER_BYTES	0x2000		/* 8k */
+#define TRASH_BUF_SIZE	0x2000		/* 8k */
 
-static char dumper[N_DUMPER_BYTES];	/* BUG need to check that 1024
-							is really max size */
+static char write_only_buffer[TRASH_BUF_SIZE];
 
 /* We used to read() in chunks - WHY???
  * The code had a bug, it counted pixels and assumed that the number of bytes
@@ -219,7 +218,7 @@ advise(ERROR_STRING);
 
 
 
-/* read an image which is too small or too big.
+/* read an image which is too small or too big for the target.
  * The offsets are offsets into the target data object.
  */
 
@@ -231,7 +230,7 @@ int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,ind
 	dimension_t x_dump, y_dump;	/* data to read and throw away */
 	dimension_t i;
 	char *p;
-	dimension_t size, dump_count, n_dumper_elements;
+	dimension_t size, n_elements_to_discard, n_trash_elements_per_buf;
 
 	size = PREC_SIZE(OBJ_PREC_PTR(dp));
 	size *= OBJ_COMPS(dp);
@@ -294,7 +293,7 @@ TELL_SHORT;
 	p=(char *)OBJ_DATA_PTR(dp) + t_offset;
 	p += y_offset * size * OBJ_COLS(dp);
 
-	n_dumper_elements = N_DUMPER_BYTES/(OBJ_COMPS(ifp->if_dp)*ELEMENT_SIZE(ifp->if_dp));
+	n_trash_elements_per_buf = TRASH_BUF_SIZE/(OBJ_COMPS(ifp->if_dp)*ELEMENT_SIZE(ifp->if_dp));
 
 	for(i=0;i<y_fill;i++){
 		p += (x_offset*size);
@@ -303,51 +302,49 @@ TELL_SHORT;
 				!= (size_t)x_fill )
 				return(-1);
 			/* now read the trash... */
-			dump_count = x_dump;
+			n_elements_to_discard = x_dump;
 			do {
-				dimension_t n;
-				if( dump_count > n_dumper_elements )
-					n = n_dumper_elements;
+				dimension_t n_to_read;
+				if( n_elements_to_discard > n_trash_elements_per_buf )
+					n_to_read = n_trash_elements_per_buf;
 				else
-					n = dump_count;
+					n_to_read = n_elements_to_discard;
 
-				if( fread(dumper,(size_t)size,(size_t)n,ifp->if_fp) != (size_t)n )
+				if( fread(write_only_buffer,(size_t)size,(size_t)n_to_read,ifp->if_fp) != (size_t)n_to_read )
 					return(-1);
 
-				dump_count -= n;
-			} while( dump_count > 0 );
+				n_elements_to_discard -= n_to_read;
+			} while( n_elements_to_discard > 0 );
 		} else {
 			/* BUG casting for pc */
 			if( read(ifp->if_fd,p,(u_int)(size*x_fill))
 				!= (int)(size*x_fill) )
 				return(-1);
 			/* now read the trash... */
-			dump_count = x_dump;
+			n_elements_to_discard = x_dump;
 			do {
-				dimension_t n;
-				if( dump_count > n_dumper_elements )
-					n = n_dumper_elements;
+				dimension_t n_to_read;
+				if( n_elements_to_discard > n_trash_elements_per_buf )
+					n_to_read = n_trash_elements_per_buf;
 				else
-					n = dump_count;
+					n_to_read = n_elements_to_discard;
 
-				if( read(ifp->if_fd,dumper,(u_int)(size*n)) != (int)(size*n) )
+				if( read(ifp->if_fd,write_only_buffer,(u_int)(size*n_to_read)) != (int)(size*n_to_read) )
 					return(-1);
-				dump_count -= n;
-			} while( dump_count > 0 );
+				n_elements_to_discard -= n_to_read;
+			} while( n_elements_to_discard > 0 );
 		}
 		p += ( (x_fill+x_skip) *size);
 	}
 	for(i=0;i<y_dump;i++)
-		/* BUG need to limit read size to dumper */
-		if( dx > n_dumper_elements )
-			NERROR1("There is a bug in fileio/read_raw.c - FIXME");
-
+		assert(dx > n_trash_elements_per_buf );
+		/* BUG need to limit read size to write_only_buffer */
 		if( USES_STDIO(ifp) ){
-			if( fread(dumper,(size_t)size,(size_t)dx,ifp->if_fp)
+			if( fread(write_only_buffer,(size_t)size,(size_t)dx,ifp->if_fp)
 				!= (size_t)dx )
 				return(-1);
 		} else {
-			if( read(ifp->if_fd,dumper,(u_int)(size*dx))
+			if( read(ifp->if_fd,write_only_buffer,(u_int)(size*dx))
 				!= (int)(size*dx) )
 				return(-1);
 		}

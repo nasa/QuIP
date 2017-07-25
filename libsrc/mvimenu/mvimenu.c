@@ -16,6 +16,7 @@
 #include "gmovie.h"
 #include "function.h"
 #include "xmvi.h"
+#include "seq.h"	// BUG - need to separate public & private
 
 //#ifdef BUILD_FOR_OBJC
 //#include "sizable.h"
@@ -30,7 +31,7 @@ int mvi_debug=(-1);
 #endif /* QUIP_DEBUG */
 
 static Seq_Module mvi_sm;
-static Item_Class *playable_icp=NULL;
+static Item_Class *playable_iclp=NULL;
 
 /* local prototypes */
 ITEM_INTERFACE_PROTOTYPES(Movie,mvi)
@@ -277,7 +278,7 @@ static COMMAND_FUNC( do_play_movie )
 
 	if( !movie_ok() ) return;
 
-	mip = get_member_info(QSP_ARG  playable_icp,s);
+	mip = get_member_info(QSP_ARG  playable_iclp,s);
 
 	/*
 	 * On some implementations (cosmo, sirius), the movies are
@@ -897,7 +898,7 @@ static double get_mvi_il_flg(QSP_ARG_DECL  Item *ip)
 
 void add_playable(Item_Type * itp,void *vp)
 {
-	add_items_to_class(playable_icp,itp,vp,NULL);
+	add_items_to_class(playable_iclp,itp,vp,NULL);
 }
 
 #define PLAYABLE_PMPT	"movie or sequence"
@@ -908,7 +909,7 @@ static const char *get_playable_name(SINGLE_QSP_ARG_DECL)
 
 #ifdef HISTORY
 	if( intractive(SINGLE_QSP_ARG) )
-		init_hist_from_class(QSP_ARG  PLAYABLE_PMPT,playable_icp);
+		init_hist_from_class(QSP_ARG  PLAYABLE_PMPT,playable_iclp);
 #endif // HISTORY
 
 	s=NAMEOF(PLAYABLE_PMPT);
@@ -934,21 +935,16 @@ static Movie *lookup_movie(QSP_ARG_DECL  const char *name)
 COMMAND_FUNC( do_movie_menu )
 {
 
-	if( playable_icp == NULL ){
+	if( playable_iclp == NULL ){
 		if( mvi_itp == NULL ) init_mvis(SINGLE_QSP_ARG);
 		add_sizable(QSP_ARG  mvi_itp,&mvi_sf,NULL);
 		add_interlaceable(QSP_ARG  mvi_itp,&mvi_if,NULL);
 
-		playable_icp = new_item_class(QSP_ARG  "playable");
+		playable_iclp = new_item_class(QSP_ARG  "playable");
 		add_playable(mvi_itp,NULL);
 
-		/* BUG need to figure out how to do this without the itp... */
-#ifdef FIXME
-		if( mviseq_itp == NULL )
-			init_mviseqs(SINGLE_QSP_ARG);
-		add_playable(mviseq_itp,NULL);
-#endif /* FIXME */
-
+		// add sequences to the playable class
+		init_movie_sequences(SINGLE_QSP_ARG);
 	}
 
 

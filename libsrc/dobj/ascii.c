@@ -69,10 +69,9 @@ static void init_format_type_tbl(void);
  *	5) %f, %g read w/ how_much()
  */
 
-// BUG globals not thread-safe!?
-//static int n_format_fields, curr_fmt_i;
-// should have an input format list per qsp...
-// FIXME
+
+// This global defines the format types used by all threads
+// and is not modified once initialized.
 
 static struct input_format_type input_format_type_tbl[N_INPUT_FORMAT_TYPES];
 
@@ -564,7 +563,6 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 	else
 		s = next_input_str(QSP_ARG  "string data");
 
-	/* FIXME should use strncpy() here */
 	t=datap;
 
 	// Old (deleted) code assumed strings were in image rows...
@@ -1481,56 +1479,32 @@ void set_max_per_line(QSP_ARG_DECL  int n )
 		dobj_max_per_line = n;
 }
 
+static void int_format_release(Input_Format_Spec *fmt_p) { default_format_release(fmt_p); }
+static void float_format_release(Input_Format_Spec *fmt_p) { default_format_release(fmt_p); }
+static void string_format_release(Input_Format_Spec *fmt_p) { default_format_release(fmt_p); }
+
+#define INIT_FORMAT_TYPE(code,fmt_name,stem)			\
+								\
+	{							\
+	struct input_format_type *ft_p;				\
+	assert( code >= 0 && code < N_INPUT_FORMAT_TYPES );	\
+	ft_p = &input_format_type_tbl[code];			\
+	ft_p->name = #fmt_name;					\
+	ft_p->type_code = code;					\
+	ft_p->display_format = display_##stem;			\
+	ft_p->release = stem##_release;				\
+	ft_p->consume = stem##_consume;				\
+	ft_p->read_long = stem##_read_long;			\
+	ft_p->read_double = stem##_read_double;			\
+	ft_p->read_string = stem##_read_string;			\
+	}
+
+
 static void init_format_type_tbl(void)
 {
-	struct input_format_type *ft_p;
-
-	ft_p = &input_format_type_tbl[IN_FMT_INT];
-
-	ft_p->name = "integer";
-	ft_p->type_code = IN_FMT_INT;
-	ft_p->display_format = display_int_format;
-	ft_p->release = default_format_release;
-	ft_p->consume = int_format_consume;
-	ft_p->read_long = int_format_read_long;
-	ft_p->read_double = int_format_read_double;
-	ft_p->read_string = int_format_read_string;
-
-
-	ft_p = &input_format_type_tbl[IN_FMT_FLT];
-
-	ft_p->name = "float";
-	ft_p->type_code = IN_FMT_FLT;
-	ft_p->display_format = display_float_format;
-	ft_p->release = default_format_release;
-	ft_p->consume = float_format_consume;
-	ft_p->read_long = float_format_read_long;
-	ft_p->read_double = float_format_read_double;
-	ft_p->read_string = float_format_read_string;
-
-
-	ft_p = &input_format_type_tbl[IN_FMT_STR];
-
-	ft_p->name = "string";		// should be variable_string?
-	ft_p->type_code = IN_FMT_STR;
-	ft_p->display_format = display_string_format;
-	ft_p->release = default_format_release;
-	ft_p->consume = string_format_consume;
-	ft_p->read_long = string_format_read_long;
-	ft_p->read_double = string_format_read_double;
-	ft_p->read_string = string_format_read_string;
-
-
-	ft_p = &input_format_type_tbl[IN_FMT_LIT];
-
-	ft_p->name = "literal";
-	ft_p->type_code = IN_FMT_LIT;
-	ft_p->display_format = display_literal_format;
-	ft_p->release = literal_format_release;
-	ft_p->consume = literal_format_consume;
-	ft_p->read_long = literal_format_read_long;
-	ft_p->read_double = literal_format_read_double;
-	ft_p->read_string = literal_format_read_string;
-
+	INIT_FORMAT_TYPE(IN_FMT_INT,integer,int_format)
+	INIT_FORMAT_TYPE(IN_FMT_FLT,float,float_format)
+	INIT_FORMAT_TYPE(IN_FMT_STR,string,string_format)
+	INIT_FORMAT_TYPE(IN_FMT_LIT,literal,literal_format)
 }
 

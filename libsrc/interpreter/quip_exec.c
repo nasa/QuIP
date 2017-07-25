@@ -27,7 +27,7 @@ static void stash_menu_commands(QSP_ARG_DECL  Menu *mp)
 		Command *cp;
 		cp = (Command *)NODE_DATA(np);
 		// should we use the menu prompt or the full prompt?
-		add_def(QSP_ARG  QS_PROMPT_STR(THIS_QSP),CMD_SELECTOR(cp));
+		add_def(QSP_ARG  QS_CMD_PROMPT_STR(THIS_QSP),CMD_SELECTOR(cp));
 		np = NODE_NEXT(np);
 	}
 }
@@ -75,7 +75,7 @@ void qs_do_cmd( Query_Stack *qsp )
 	//SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
 	reset_return_strings(SINGLE_QSP_ARG);
 
-	cmd = nameof2(QSP_ARG  QS_PROMPT_STR(qsp));
+	cmd = nameof2(QSP_ARG  QS_CMD_PROMPT_STR(qsp));
 
 	if( cmd == NULL || strlen(cmd) == 0 ){
 		return;
@@ -99,7 +99,7 @@ void qs_do_cmd( Query_Stack *qsp )
 				){
 
 
-			rem_def(QSP_ARG  QS_PROMPT_STR(qsp),cmd);	// erase from history list
+			rem_def(QSP_ARG  QS_CMD_PROMPT_STR(qsp),cmd);	// erase from history list
 		}
 #endif /* HAVE_HISTORY */
 

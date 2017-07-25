@@ -978,7 +978,7 @@ static COMMAND_FUNC( do_abort_prog )
 
 COMMAND_FUNC( do_show_prompt )
 {
-	sprintf(MSG_STR,"Current prompt is:  %s", QS_PROMPT_STR(THIS_QSP));
+	sprintf(MSG_STR,"Current prompt is:  %s", QS_CMD_PROMPT_STR(THIS_QSP));
 	prt_msg(MSG_STR);
 }
 

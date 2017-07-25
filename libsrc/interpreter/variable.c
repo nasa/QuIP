@@ -193,9 +193,9 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 
 static const char *my_getcwd(SINGLE_QSP_ARG_DECL)
 {
-	static char buf[MAXPATHLEN];	// BUG should be MAXPATHLEN?
-
 #ifdef HAVE_GETCWD
+	static char buf[MAXPATHLEN];
+
 	if( getcwd(buf,MAXPATHLEN) == NULL ){
 		tell_sys_error("getcwd");
 		return ".";
@@ -206,14 +206,26 @@ static const char *my_getcwd(SINGLE_QSP_ARG_DECL)
 #endif // ! HAVE_GETCWD
 }
 
-static const char *my_getpid(SINGLE_QSP_ARG_DECL)
+// on the mac, a pid is a 32 bit integer...
+// something in excess of 4,000,000,000,000
+// So 13 digits should be enough...
+
+#define MAX_PID_DIGITS	15
+
+static const char *get_pid_string(SINGLE_QSP_ARG_DECL)
 {
 #ifdef HAVE_GETPID
-	static char buf[16];	// BUG what is the largest pid?
+	static char buf[MAX_PID_DIGITS+1];
+	int n_needed;
+
 	pid_t pid;
 
 	pid = getpid();
-	sprintf(buf,"%d",pid);
+	n_needed=snprintf(buf,MAX_PID_DIGITS+1,"%d",pid);
+	if( n_needed > (MAX_PID_DIGITS+1) ){
+		WARN("get_pid_string:  Need to increase MAX_PID_DIGITS!?");
+	}
+
 	return buf;
 #else
 	return 0;
@@ -226,8 +238,10 @@ static const char *get_local_date(SINGLE_QSP_ARG_DECL)
 {
 	time_t timeval;
 	char *s;
-	// BUG - using a static string here means not thread-safe!?
-	static char buf[32];	// must be at least 26
+#ifdef HAVE_CTIME_R
+	// using a static string here means all threads share the same time
+	static char buf[32];	// must be at least 26 (why?)
+#endif // HAVE_CTIME_R
 
 	time(&timeval);
 
@@ -242,6 +256,7 @@ static const char *get_local_date(SINGLE_QSP_ARG_DECL)
 #endif // ! HAVE_CTIME_R
 
 	/* erase trailing newline... */
+	assert( s[ strlen(s)-1 ] == '\n' );
 	s[ strlen(s)-1 ] = '\0';
 
 	return s;
@@ -258,15 +273,22 @@ static const char *get_utc_date(SINGLE_QSP_ARG_DECL)
 
 #ifdef HAVE_GMTIME_R
 	tm_p = gmtime_r(&timeval,&tm1);
-	s = asctime_r(tm_p,buf);
 #else // ! HAVE_GMTIME_R
-#ifdef HAVE_CTIME
-	// BUG - this is not gmtime!!!
-	s=ctime(&timeval);
-#else // ! HAVE_CTIME
-#error NO time formatting function!?
-#endif // ! HAVE_CTIME
+#ifdef HAVE_GMTIME
+	tm_p = gmtime(&timeval);
+#else // ! HAVE_GMTIME
+#error NO gmtime_r or gmtime function!?
+#endif // ! HAVE_GMTIME
 #endif // ! HAVE_GMTIME_R
+
+#ifdef HAVE_ASCTIME_R
+	s = asctime_r(tm_p,buf);
+#else // ! HAVE_ASCTIME_R
+#ifdef HAVE_ASCTIME
+#else // ! HAVE_ASCTIME
+#error NO asctime_r or asctime function!?
+#endif // ! HAVE_ASCTIME
+#endif // ! HAVE_ASCTIME_R
 
 	/* erase trailing newline... */
 	s[ strlen(s)-1 ] = '\0';
@@ -300,7 +322,7 @@ void init_variables(SINGLE_QSP_ARG_DECL)
 	init_dynamic_var(QSP_ARG  "verbose",get_verbose);
 	init_dynamic_var(QSP_ARG  "cwd",my_getcwd);
 	// BUG pid shouldn't change, but might after a fork?
-	init_dynamic_var(QSP_ARG  "pid",my_getpid);
+	init_dynamic_var(QSP_ARG  "pid",get_pid_string);
 	init_dynamic_var(QSP_ARG  "local_date",get_local_date);
 	init_dynamic_var(QSP_ARG  "utc_date",get_utc_date);
 	ASSIGN_VAR("program_name",tell_progname());

@@ -280,8 +280,23 @@ advise(ERROR_STRING);
 	add_word_to_history_list(QSP_ARG  icp,string);
 }
 
+const char *format_prompt(QSP_ARG_DECL  const char *prompt)
+{
+	static char pline[LLEN];
+
+	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT )
+		sprintf(pline,PROMPT_FORMAT,prompt);
+	else
+		strcpy(pline,prompt);
+
+	return pline;
+}
+
 void rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
+	const char *formatted_prompt;
+
+	formatted_prompt = format_prompt(QSP_ARG  prompt);
 	char s[LLEN];
 
 	sprintf(s,PROMPT_FORMAT,prompt);

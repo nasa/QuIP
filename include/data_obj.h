@@ -230,8 +230,6 @@ struct data_obj {
 #define SQUARE	1
 #define CURLY	2
 
-extern int max_vectorizable;
-
 #include "dobj_prot.h"
 
 /* Data_Obj macros */
@@ -437,8 +435,8 @@ extern int max_vectorizable;
 
 #define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
 #define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
-#define DOBJ_CONTEXT_LIST		CONTEXT_LIST(dobj_itp)
-#define ID_CONTEXT_LIST			CONTEXT_LIST(id_itp)
+#define LIST_OF_DOBJ_CONTEXTS		LIST_OF_CONTEXTS(dobj_itp)
+#define LIST_OF_ID_CONTEXTS		LIST_OF_CONTEXTS(id_itp)
 
 /* BUG should go elsewhere */
 extern const char *dimension_name[];

@@ -373,8 +373,10 @@ static void list_device(QSP_ARG_DECL  Data_Obj *dp)
 // This was originally written to be a CAUTIOUS error,
 // but in fact this seems like the correct behavior.
 // The alternative would be for the objects to keep a pointer
-// to their context (BETTER SOLUTION, BUG, FIXME), but
+// to their context (BETTER SOLUTION, BUG), but
 // for now it's not worth the trouble.
+// Another solution would be to search ALL of the contexts, not
+// just those currently on the stack...
 
 static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 {
@@ -400,7 +402,7 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	 * not ALL the contexts!?
 	 */
 	//np=QLIST_HEAD( CONTEXT_LIST(dobj_itp) );
-	np=QLIST_HEAD( DOBJ_CONTEXT_LIST );
+	np=QLIST_HEAD( LIST_OF_DOBJ_CONTEXTS );
 	assert( np != NULL );
 
 	while(np!=NULL){

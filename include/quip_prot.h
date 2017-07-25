@@ -141,6 +141,7 @@ extern double how_much(QSP_ARG_DECL  const char *);
 #define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
 
 
+extern const char *format_prompt(QSP_ARG_DECL  const char *prompt);
 extern const char * nameof2(QSP_ARG_DECL  const char *prompt);
 extern int askif( QSP_ARG_DECL  const char *pmpt);
 #define ASKIF(p)		askif(QSP_ARG  p )
@@ -426,6 +427,9 @@ extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
 extern const char *current_input_file(SINGLE_QSP_ARG_DECL);
 
+extern int max_vectorizable(SINGLE_QSP_ARG_DECL);
+extern void set_max_vectorizable(QSP_ARG_DECL  int v);
+
 extern void push_text(QSP_ARG_DECL const char *text, const char *filename );
 extern void digest(QSP_ARG_DECL const char *text, const char *filename );
 #define PUSH_TEXT(t,f)	push_text(QSP_ARG  t,f)
@@ -464,6 +468,7 @@ ITEM_PICK_PROT(Variable,var_)
 #define VAR_OF(s)	var_of(QSP_ARG  s)
 extern Variable *var_of(QSP_ARG_DECL const char *name);
 #define PICK_VAR(s)	pick_var_(QSP_ARG  s)
+
 
 // hash.c
 extern void		zap_hash_tbl(Hash_Tbl *);

@@ -813,11 +813,6 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 		return;
 	}
 
-	/* The following section of code deals with the case where we pass a 24 bpp
-	 * image to hardware that wants 32 bpp to display 24 (long word aligned).
-	 * This is the case w/ SGI hardware and with Xaccel but is NOT
-	 * the case w/ XF86.  FIXME FIXED? by MRA 27 Feb 01
-	 */
 /*  dp should should be valid at this point so let get vp->vw_ip with x_image_for().
  *  If the function returns without error then we can use the viewer image pointer
  *  to determine 32 bpp for 24 bit color or 24bpp for 24 bit color
@@ -1906,19 +1901,12 @@ int shm_setup(Viewer *vp)
 					NULL,
 					shminfo,
 					vp->vw_width, vp->vw_height);
-/*	shm_bpp = vp->vw_depth/8; */
 
-
-	/* We can calculate this exaclty by dividing the bytes_per_line member
+	/* We can calculate bits per pixel by dividing the bytes_per_line member
 	 * by the image width.  This is necessary because some X servers (sgi, Xaccel)
 	 * use 32 bpp even when the depth is 24, but XF86 uses 24 bpp!?
 	 */
-	/* BUG?  some hardware seems to like it this way... FIXME */
 
-/*	if( shm_bpp == 3 )
- *		shm_bpp=4;
- */
-	/* OK, lets give it a shot! */
 	shm_bpp = shmimage->bytes_per_line / shmimage->width;
 
 	if ((shminfo->shmid = shmget(IPC_PRIVATE,  /*ftok(DevName, 'v'),*/

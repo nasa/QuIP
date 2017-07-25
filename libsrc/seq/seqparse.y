@@ -17,9 +17,8 @@
 
 #include "quip_prot.h"
 #include "item_type.h"
-#include "query_bits.h"	// LLEN - BUG, get rid of this!
 #include "seq.h"
-#include "getbuf.h"
+#include "gmovie.h"
 
 typedef union {
 	Seq *yysp;
@@ -244,6 +243,14 @@ movie		: NUMBER '*' MY_MOVIE_NAME
 %%
 
 ITEM_INTERFACE_DECLARATIONS( Seq, mviseq, 0 )
+
+// This function is called from mvimenu module
+void init_movie_sequences(SINGLE_QSP_ARG_DECL)
+{
+	if( mviseq_itp == NULL )
+		init_mviseqs(SINGLE_QSP_ARG);
+	add_playable(mviseq_itp,NULL);
+}
 
 void load_seq_module(Seq_Module *smp)
 {

@@ -23,7 +23,8 @@
 
 #define DEFAULT_WHENCE(s)		if( whence == NULL ) whence=s;
 
-int max_vectorizable;
+#define MAX_VECTORIZABLE	max_vectorizable(SINGLE_QSP_ARG)
+#define SET_MAX_VECTORIZABLE(v)	set_max_vectorizable(QSP_ARG  v)
 
 // We probably can eliminate this!  BUG?
 
@@ -165,8 +166,8 @@ void dp_equate( QSP_ARG_DECL  Data_Obj *dp, double v )
 
 	equate_value=v;
 
-	max_vectorizable=N_DIMENSIONS-1;     /* default: vectorize over all */
-	check_vectorization(dp);
+	SET_MAX_VECTORIZABLE(N_DIMENSIONS-1);     /* default: vectorize over all */
+	check_vectorization(QSP_ARG  dp);
 	dp1_vectorize(QSP_ARG  (int)(N_DIMENSIONS-1),dp,fast_equate);
 }
 
@@ -279,9 +280,9 @@ void dp_copy( QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr )
 	if( IS_CONTIGUOUS(dp_to) && IS_CONTIGUOUS(dp_fr) )
 		contig_copy(dp_to,dp_fr);
 	else {
-		max_vectorizable=N_DIMENSIONS-1;     /* default: vectorize over all */
-		check_vectorization(dp_to);
-		check_vectorization(dp_fr);
+		SET_MAX_VECTORIZABLE(N_DIMENSIONS-1);     /* default: vectorize over all */
+		check_vectorization(QSP_ARG  dp_to);
+		check_vectorization(QSP_ARG  dp_fr);
 		dp2_vectorize(QSP_ARG  N_DIMENSIONS-1,dp_to,dp_fr,fast_copy);
 	}
 }
@@ -321,8 +322,8 @@ void i_rnd( QSP_ARG_DECL  Data_Obj *dp, int imin, int imax )
 	_imax=imax;
 	_imin=imin;
 
-	max_vectorizable=N_DIMENSIONS-1;     /* default: vectorize over all */
-	check_vectorization(dp);
+	SET_MAX_VECTORIZABLE(N_DIMENSIONS-1);     /* default: vectorize over all */
+	check_vectorization(QSP_ARG  dp);
 	dp1_vectorize(QSP_ARG  N_DIMENSIONS-1,dp,fast_rand);
 }
 
@@ -364,8 +365,8 @@ void dp_uni( QSP_ARG_DECL  Data_Obj *dp )
 	rninit(SINGLE_QSP_ARG);	/* initialize random number generator */
 				/* BUG this assumes lib support compiled for drand48() */
 
-	max_vectorizable=N_DIMENSIONS-1;     /* default: vectorize over all */
-	check_vectorization(dp);
+	SET_MAX_VECTORIZABLE(N_DIMENSIONS-1);     /* default: vectorize over all */
+	check_vectorization(QSP_ARG  dp);
 	dp1_vectorize(QSP_ARG  N_DIMENSIONS-1,dp,fast_uni);
 }
 
@@ -520,8 +521,12 @@ int dp_same( QSP_ARG_DECL  Data_Obj *dp1, Data_Obj *dp2, const char *whence )
 /**********************/
 
 
-void check_vectorization(Data_Obj *dp)		/** sets global max_vectorizable */
-	/* NOT thread-safe - FIXME! */
+/* sets thread var qs_max_vectorizable
+ * What is this used for?  SIMD splitting?
+ * It appears to be used in dp1_vectorize (recursive function application).
+ */
+
+void check_vectorization(QSP_ARG_DECL  Data_Obj *dp)
 {
 	int max_v;
 	int i,j;
@@ -530,7 +535,7 @@ void check_vectorization(Data_Obj *dp)		/** sets global max_vectorizable */
 
 	max_v = N_DIMENSIONS-1;	/* default:  vectorize over everything */
 
-	for(i=/*start_dim*/0;i<(N_DIMENSIONS-1);i++){
+	for(i=0;i<(N_DIMENSIONS-1);i++){
 		if( OBJ_TYPE_DIM(dp,i) > 1 ){
 			/* find the next biggest dimension > 1 */
 			for(j=i+1;j<N_DIMENSIONS;j++){
@@ -550,22 +555,27 @@ void check_vectorization(Data_Obj *dp)		/** sets global max_vectorizable */
 		}
 	}
 
-	if( max_v < max_vectorizable )
-		max_vectorizable = max_v;
+	// Where is MAX_VECTORIZABLE initialized???  BUG?
+	if( max_v < MAX_VECTORIZABLE )
+		SET_MAX_VECTORIZABLE(max_v);
 
 	/* special case :  bitmaps for selection, if the row size is not a multiple
 	 * of 32, then we can't vectorize across rows...
 	 */
 
-	/* We need to do a special test for bitmaps, but the logic is different now that
-	 * we are not requiring an integral number of words per row.
-	 * FIXME
+	/* We need to do a special test for bitmap
 	 */
+
+	if( IS_BITMAP(dp) ){
+		sprintf(ERROR_STRING,"check_vectorization:  may be incorrect for bitmap object %s!?",
+			OBJ_NAME(dp));
+		advise(ERROR_STRING);
+	}
 
 #ifdef QUIP_DEBUG
 /*
 if( debug & debug_data ){
-sprintf(ERROR_STRING,"check_vectorization %s:  max_vectorizable = %d",OBJ_NAME(dp),max_vectorizable);
+sprintf(ERROR_STRING,"check_vectorization %s:  max_vectorizable = %d",OBJ_NAME(dp),MAX_VECTORIZABLE);
 advise(ERROR_STRING);
 }
 */
@@ -584,12 +594,12 @@ void dp2_vectorize(QSP_ARG_DECL  int level,Data_Obj *dpto,Data_Obj *dpfr,void (*
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(ERROR_STRING,"level = %d, max_v = %d",level,max_vectorizable);
+sprintf(ERROR_STRING,"level = %d, max_v = %d",level,MAX_VECTORIZABLE);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	if( level == max_vectorizable ){
+	if( level == MAX_VECTORIZABLE ){
 		(*dp_func)(dpto,dpfr);
 	} else if(OBJ_TYPE_DIM(dpto,level)==1){
 		dp2_vectorize(QSP_ARG  level-1,dpto,dpfr,dp_func);
@@ -601,7 +611,7 @@ advise(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
 sprintf(ERROR_STRING,"dp2_vec:  subscripting at level %d, n=%u (max_vec = %d)",
-level,OBJ_TYPE_DIM(dpto,level),max_vectorizable);
+level,OBJ_TYPE_DIM(dpto,level),MAX_VECTORIZABLE);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
@@ -624,18 +634,20 @@ advise(ERROR_STRING);
 	}
 }
 
+// dp1_vectorize applies a function to an object (if level == max_vectorizable),
+// or applies the function to an array of indexed subobjects (possibly recursively)...
 
 void dp1_vectorize(QSP_ARG_DECL  int level,Data_Obj *dp,void (*dp_func)(Data_Obj *))
 {
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(ERROR_STRING,"level = %d, max_v = %d",level,max_vectorizable);
+sprintf(ERROR_STRING,"level = %d, max_v = %d",level,MAX_VECTORIZABLE);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	if( level == max_vectorizable ){
+	if( level == MAX_VECTORIZABLE ){
 		(*dp_func)(dp);
 	} else if(OBJ_TYPE_DIM(dp,level)==1){
 		dp1_vectorize(QSP_ARG  level-1,dp,dp_func);
@@ -647,7 +659,7 @@ advise(ERROR_STRING);
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
 sprintf(ERROR_STRING,"dp1_vec:  subscripting at level %d, n=%u (max_vec = %d)",
-level,OBJ_TYPE_DIM(dp,level),max_vectorizable);
+level,OBJ_TYPE_DIM(dp,level),MAX_VECTORIZABLE);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */

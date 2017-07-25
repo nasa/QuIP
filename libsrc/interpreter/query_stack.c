@@ -112,9 +112,9 @@ static void push_prompt(QSP_ARG_DECL  const char *pmpt)
 	long n;
 	String_Buf *sbp;
 
-	sbp = QS_PROMPT_SB(THIS_QSP);
+	sbp = QS_CMD_PROMPT_SB(THIS_QSP);
 	if( sbp == NULL )
-		SET_QS_PROMPT_SB(THIS_QSP,(sbp=new_stringbuf()) );
+		SET_QS_CMD_PROMPT_SB(THIS_QSP,(sbp=new_stringbuf()) );
 
 	if( sb_size(sbp) == 0 ){
 		enlarge_buffer(sbp,strlen(pmpt)+4);
@@ -161,10 +161,10 @@ static void pop_prompt(SINGLE_QSP_ARG_DECL)
 	String_Buf *sbp;
 	long n;
 
-	sbp=QS_PROMPT_SB(THIS_QSP);
+	sbp=QS_CMD_PROMPT_SB(THIS_QSP);
 	n=strlen(sb_buffer(sbp));
 	n--;
-	while(n>=0 && QS_PROMPT_STR(THIS_QSP)[n] != '/' )
+	while(n>=0 && QS_CMD_PROMPT_STR(THIS_QSP)[n] != '/' )
 		n--;
 	if( sb_buffer(sbp)[n]=='/' ){
 		sb_buffer(sbp)[n]=0;
@@ -239,5 +239,15 @@ int qs_level(SINGLE_QSP_ARG_DECL)
 FILE *qs_msg_file(SINGLE_QSP_ARG_DECL)
 {
 	return QS_MSG_FILE(THIS_QSP);
+}
+
+int max_vectorizable(SINGLE_QSP_ARG_DECL)
+{
+	return QS_MAX_VECTORIZABLE(THIS_QSP);
+}
+
+void set_max_vectorizable(QSP_ARG_DECL  int v)
+{
+	SET_QS_MAX_VECTORIZABLE(THIS_QSP,v);
 }
 

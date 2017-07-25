@@ -520,7 +520,7 @@ void set_global_ctx(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
-	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(DOBJ_CONTEXT_LIST));
+	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(LIST_OF_DOBJ_CONTEXTS));
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"set_global_ctx:  pushing global context %s",CTX_NAME(icp));
@@ -529,7 +529,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	//PUSH_ITEM_CONTEXT(DOBJ_ITEM_TYPE,icp);
 	PUSH_DOBJ_CONTEXT(icp);
-	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(ID_CONTEXT_LIST));
+	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(LIST_OF_ID_CONTEXTS));
 	PUSH_ID_CONTEXT(icp);
 }
 
@@ -558,7 +558,7 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	sprintf(ERROR_STRING,"Context stack for item type %s",IT_NAME(itp));
 	advise(ERROR_STRING);
 
-	np=QLIST_HEAD(CONTEXT_LIST(itp));
+	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 
 	if( np==NULL ) {
 		WARN("context list is empty");
