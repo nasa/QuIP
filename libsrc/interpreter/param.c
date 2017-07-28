@@ -202,8 +202,8 @@ static COMMAND_FUNC( do_chng_one )
 		addTail(lp,np);
 
 		if( intractive(SINGLE_QSP_ARG) ){
-			char pline[LLEN];
-			make_prompt(QSP_ARG  pline,PNAME_PMPT);
+			const char *pline;
+			pline = format_prompt(QSP_ARG  PNAME_PMPT);
 			new_defs(QSP_ARG  pline);		/* is this needed? */
 			init_hist_from_item_list(QSP_ARG  PNAME_PMPT,lp);
 		}

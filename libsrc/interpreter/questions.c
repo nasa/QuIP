@@ -19,19 +19,14 @@ ITEM_PICK_FUNC(Macro,macro)
 long how_many(QSP_ARG_DECL  const char *prompt)
 {
 	const char *s;
-	char pline[LLEN];
+	const char *pline;
 	long n;
 	//double dn;
 	Typed_Scalar *tsp;
 
 	// Why does how_many all next_query_word, while how_much uses nameof???
 
-	// BUG? can prompt get too long?
-	assert( strlen(prompt) < LLEN );
-
-	if( prompt[0] != 0 ) sprintf(pline,PROMPT_FORMAT,prompt);
-	else pline[0]=0;
-
+	pline = format_prompt(QSP_ARG  prompt);
 	s=next_query_word(QSP_ARG  pline);
 
 	tsp=pexpr(QSP_ARG  s);
@@ -92,14 +87,10 @@ static const char *bool_choices[N_BOOL_CHOICES]={"no","yes","false","true"};
 
 int askif(QSP_ARG_DECL  const char *prompt)
 {
-	char pline[LLEN];
+	const char *pline;
 	int n;
 
-	// BUG? can prompt get too long?
-	assert( strlen(prompt) < (LLEN-10) );
-
-	if( prompt[0] != 0 ) sprintf(pline,"%s? (y/n) ",prompt);
-	else pline[0]=0;
+	pline = format_prompt(QSP_ARG  prompt);
 
 	do {
 		n = which_one2(QSP_ARG  pline,N_BOOL_CHOICES,bool_choices);
@@ -133,16 +124,12 @@ int confirm(QSP_ARG_DECL  const char *s)
  */
 
 const char * nameof(QSP_ARG_DECL  const char *prompt)
-		/* user prompt */
 {
-	char pline[LLEN];
+	const char *pline;
 	int v;
 	const char *buf;
 
-//	assert( strlen(prompt) < (LLEN-10) );
-//	make_prompt checks string length
-
-	make_prompt(QSP_ARG  pline,prompt);
+	pline = format_prompt(QSP_ARG  prompt);
 
 	/* turn macros off so we can enter macro names!? */
 
@@ -151,55 +138,6 @@ const char * nameof(QSP_ARG_DECL  const char *prompt)
 	buf=next_query_word(QSP_ARG  pline);
 	SET_QS_FLAG_BITS(THIS_QSP,v);		/* restore macro state */
 	return(buf);
-}
-
-/*
- * nameof2:  Get a string from the query file with macro expansion.
- *
- * Like nameof(), but macro expansion is enabled and the prompts
- * are not modified.  Used to get command words.
- *
- * The command prompt has the potential to grow too much!?
- *
- * BUG?  why not eliminate this and just use next_query_word???
- */
-
-const char * nameof2(QSP_ARG_DECL  const char *prompt)
-{
-	const char *buf;
-	buf=next_query_word(QSP_ARG  prompt);
-	return(buf);
-}
-
-/* Make prompt takes a query string (like "number of elements") and
- * prepends "Enter " and appends ":  ".
- * We can inhibit this by clearing the flag,
- * but in that case we reset the flag after use,
- * so that we can always assume the default behavior.
- */
-
-void make_prompt(QSP_ARG_DECL char buffer[LLEN],const char* s)
-{
-	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT ){
-		// BUG possible buffer overrun
-		if( strlen(s) + strlen(PROMPT_FORMAT) -2 >= LLEN ){
-			sprintf(ERROR_STRING,"make_prompt:  formatted prompt too long for buffer!?");
-			WARN(ERROR_STRING);
-			buffer[0]=0;
-		} else {
-			if(  s[0]  != 0 ) sprintf(buffer,PROMPT_FORMAT,s);
-			else  buffer[0]=0;
-		}
-	} else {
-		if( strlen(s) >= LLEN ){
-			sprintf(ERROR_STRING,"make_prompt:  prompt too long for buffer!?");
-			WARN(ERROR_STRING);
-			buffer[0]=0;
-		} else {
-			strcpy(buffer,s);	/* BUG possible overrun error */
-			SET_QS_FLAG_BITS(THIS_QSP, QS_FORMAT_PROMPT); /* this is a one-shot deal. */
-		}
-	}
 }
 
 static const char *insure_item_prompt(Item_Type *itp, const char *prompt)
@@ -211,8 +149,8 @@ static const char *insure_item_prompt(Item_Type *itp, const char *prompt)
 
 static void remove_from_history_list(QSP_ARG_DECL  const char *prompt, const char *s)
 {
-	char pline[LLEN];
-	make_prompt(QSP_ARG  pline,prompt);
+	const char *pline;
+	pline = format_prompt(QSP_ARG  prompt);
 	rem_def(QSP_ARG  pline,s);
 }
 

@@ -910,7 +910,7 @@ static COMMAND_FUNC( do_while )
 	whileloop(QSP_ARG  s);
 }
 
-static COMMAND_FUNC( do_fore_loop )
+static COMMAND_FUNC( do_foreach_loop )
 {
 	Foreach_Loop *frp;
 
@@ -946,7 +946,7 @@ static COMMAND_FUNC( do_fore_loop )
 				zap_fore(frp);
 			} else {
 				SET_FL_NODE(frp, QLIST_HEAD(FL_LIST(frp)) );
-				fore_loop(QSP_ARG  frp);
+				foreach_loop(QSP_ARG  frp);
 			}
 			return;
 		} else {
@@ -1607,7 +1607,7 @@ ADD_CMD( advise,	do_advise,	echo a word to stderr	)
 ADD_CMD( log_message,	do_log_message,	print a log message to stderr	)
 ADD_CMD( repeat,	do_repeat,	open an iterative loop	)
 ADD_CMD( end,		do_close_loop,	close a loop		)
-ADD_CMD( foreach,	do_fore_loop,	iterate over a set of words	)
+ADD_CMD( foreach,	do_foreach_loop,	iterate over a set of words	)
 ADD_CMD( do,		do_do_loop,	open a loop		)
 ADD_CMD( while,		do_while,	conditionally close a loop	)
 ADD_CMD( variables,	do_var_menu,	variables submenu	)

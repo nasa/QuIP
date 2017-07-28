@@ -49,13 +49,13 @@
 
 /* BUG?  Should we let this directory be set in configure? */
 #define QUIP_DEFAULT_DIR	"/usr/local/share/quip/macros/startup"
-//#define QUIP_DEFAULT_FMT	"/usr/local/share/%s/macros/startup"
 
 #define STARTUP_DIRNAME	"QUIPSTARTUPDIR"
 
 #include "debug.h"		/* verbose */
 
 #ifdef BUILD_FOR_CMD_LINE
+
 static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 {
 	char *home;
@@ -74,12 +74,10 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 	// we copy the file to the device...
 
 	// BUG possible buffer overrun
-	sprintf(filename,"%s/.%src",home,progname);
+	sprintf(filename,"%s/.%src",home,progname);	// e.g. .quiprc
 	fp=fopen(filename,"r");
 
 	if( fp!=NULL ) {
-//		int lvl;
-
 		if( verbose ){
 			sprintf(ERROR_STRING,
 	"Interpreting global startup file %s",filename);
@@ -158,8 +156,6 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 	if( fp!=NULL ) {
 		redir(QSP_ARG  fp, filename );
 		if( *dir ){
-//sprintf(ERROR_STRING,"Setting %s to %s",STARTUP_DIRNAME,dir);
-//advise(ERROR_STRING);
 			// We should only set the variable here if
 			// it doesn't already exist - vars defined
 			// in the environment are reserved!
@@ -204,18 +200,7 @@ static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in 
 
 static char *try_default(QSP_ARG_DECL  char *progname) /* look for dotfile in default system directory */
 {
-#ifdef FOOBAR
-	char default_dir_name[MAXPATHLEN];
-
-	// This test is conservative because we count the 2 chars in %s 
-	if( strlen(progname) + strlen(QUIP_DEFAULT_FMT) >= MAXPATHLEN ){
-		sprintf(ERROR_STRING,"try_default:  Program name '%s' is too long!?",progname);
-		ERROR1(ERROR_STRING);
-	}
-	sprintf(default_dir_name,QUIP_DEFAULT_FMT,progname);
-#endif // FOOBAR
-
-	return( try_directory(QSP_ARG  /*default_dir_name*/ QUIP_DEFAULT_DIR,progname) );
+	return( try_directory(QSP_ARG  QUIP_DEFAULT_DIR,progname) );
 }
 
 #endif // BUILD_FOR_OBJC
@@ -229,6 +214,8 @@ void rcfile( Query_Stack *qsp, char* progname )
 	set_progname(progname); 	/* this is for get_progfile */
 
 #ifndef BUILD_FOR_OBJC
+	// For unix, the user can put their own startup in:
+	// current directory, $STARTUP_DIRNAME, $HOME, and QUIP_DEFAULT_DIR (/usr/local/share/quip/macros/startup/)
 	strip_fullpath(&progname);	/* strip leading components */
 
 	s=try_cwd(QSP_ARG  progname);
@@ -237,14 +224,11 @@ void rcfile( Query_Stack *qsp, char* progname )
 	if( s == NULL ) s=try_default(QSP_ARG  progname);
 #endif /* ! BUILD_FOR_OBJC */
 
-	// We probably don't want to print this message if we are using the global startup...
-
-
 	/* Because these functions push the input but do not execute,
 	 * this one is interpreted first, because it is pushed last.
 	 * It would be better to execute right away, so that settings
 	 * such as verbose and QUIPSTARTUPDIR could be put there and
-	 * used here, but when this is executed no menus have been pushed...
+	 * used here, but, when this is executed, no menus have been pushed...
 	 * We could push the builtin menu?
 	 */
 	status = read_global_startup(QSP_ARG  progname);
@@ -253,6 +237,7 @@ void rcfile( Query_Stack *qsp, char* progname )
 		advise("No startup file found");
 	} else if( verbose ){
 		/* How would verbose ever be set here? Only by changing compilation default? */
+		// We may not want to print this message if we are using the global startup?
 		if( s != NULL ){
 			sprintf(ERROR_STRING,"Interpreting startup file %s",s);
 			advise(ERROR_STRING);

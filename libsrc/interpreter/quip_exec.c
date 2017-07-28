@@ -75,7 +75,7 @@ void qs_do_cmd( Query_Stack *qsp )
 	//SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
 	reset_return_strings(SINGLE_QSP_ARG);
 
-	cmd = nameof2(QSP_ARG  QS_CMD_PROMPT_STR(qsp));
+	cmd = next_query_word(QSP_ARG  QS_CMD_PROMPT_STR(qsp));
 
 	if( cmd == NULL || strlen(cmd) == 0 ){
 		return;

@@ -142,7 +142,6 @@ extern double how_much(QSP_ARG_DECL  const char *);
 
 
 extern const char *format_prompt(QSP_ARG_DECL  const char *prompt);
-extern const char * nameof2(QSP_ARG_DECL  const char *prompt);
 extern int askif( QSP_ARG_DECL  const char *pmpt);
 #define ASKIF(p)		askif(QSP_ARG  p )
 

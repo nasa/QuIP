@@ -280,14 +280,26 @@ advise(ERROR_STRING);
 	add_word_to_history_list(QSP_ARG  icp,string);
 }
 
+
+/* Make prompt takes a query string (like "number of elements") and
+ * prepends "Enter " and appends ":  ".
+ * We can inhibit this by clearing the flag.
+ *
+ * OLD COMMENT:
+ * but in that case we reset the flag after use,
+ * so that we can always assume the default behavior.
+ * - what does that mean?  should we reset the flag here???
+ */
+
 const char *format_prompt(QSP_ARG_DECL  const char *prompt)
 {
 	static char pline[LLEN];
 
 	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT )
 		sprintf(pline,PROMPT_FORMAT,prompt);
-	else
+	else {
 		strcpy(pline,prompt);
+	}
 
 	return pline;
 }
