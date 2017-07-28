@@ -24,11 +24,20 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL);
 
 
 
-#define INSIST_POSITIVE( var, var_string, subrt_name )						\
+#define INSIST_POSITIVE_DIM( var, dim_name, subrt_name )					\
 												\
 	if( var <= 0 ){										\
 		sprintf(ERROR_STRING,"%s %s:  number of %ss (%ld) must be positive",		\
-			subrt_name,obj_name,var_string,var);					\
+			subrt_name,obj_name,dim_name,var);					\
+		WARN(ERROR_STRING);								\
+		return;										\
+	}
+
+#define INSIST_POSITIVE_NUM( var, desc_str, subrt_name )					\
+												\
+	if( var <= 0 ){										\
+		sprintf(ERROR_STRING,"%s:  %s (%ld) must be positive",				\
+			subrt_name,desc_str,var);						\
 		WARN(ERROR_STRING);								\
 		return;										\
 	}
@@ -45,16 +54,18 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL);
 
 static COMMAND_FUNC( do_create_area )
 {
-	const char *s;
-	/* BUG check for negative input? */
-	u_int n;
-	dimension_t siz;
+	const char *area_name;
+	int n;
+	long siz;
 
-	s = NAMEOF("name for this area");
-	siz = (dimension_t)HOW_MANY("size of data area in bytes");
-	n = (u_int) HOW_MANY("maximum number of data objects for this area");
+	area_name = NAMEOF("name for this area");
+	siz = HOW_MANY("size of data area in bytes");
+	n = HOW_MANY("maximum number of data objects for this area");
 
-	curr_ap=new_area(QSP_ARG  s,siz,n);	// do_create_area
+	INSIST_POSITIVE_NUM(siz,"number of bytes","create_area");
+	INSIST_POSITIVE_NUM(n,"maximum number of objects","create_area");
+
+	curr_ap=new_area(QSP_ARG  area_name, (dimension_t) siz,(uint_t) n);	// do_create_area
 }
 
 static COMMAND_FUNC( do_select_area )
@@ -137,23 +148,16 @@ static COMMAND_FUNC( do_area )
 
 /* Create and push a new context */
 
+// Can we push an existing context from the menu?
+
 static COMMAND_FUNC( do_push_context )
 {
 	const char *s;
 	Item_Context *icp;
 
-	/* BUG should check dobj_itp? */
-
 	s=NAMEOF("name for new context");
-	//icp=create_item_context(QSP_ARG  dobj_itp,s);
-	//icp = [[Item_Context alloc] initWithName : [[NSString alloc] initWithUTF8String : s] ];
-	NEW_ITEM_CONTEXT(icp);
-	//icp = [[Item_Context alloc] initWithName : [[NSString alloc] initWithUTF8String : s] ];
+	NEW_ITEM_CONTEXT(icp);	// allocates memory and pts icp, but does not initalize?
 	SET_CTX_NAME(icp,savestr(s));
-	//if( icp == NULL ) return;
-
-	//PUSH_ITEM_CONTEXT(dobj_itp,icp);
-	//[DataObj pushContext : icp];
 	push_dobj_context(QSP_ARG  icp);
 }
 
@@ -220,7 +224,7 @@ static COMMAND_FUNC( new_hyperseq )
 
 	if( prec_p == NULL ) return;
 
-	INSIST_POSITIVE(ns,"sequence","new_hyperseq");
+	INSIST_POSITIVE_DIM(ns,"sequence","new_hyperseq");
 
 	SET_DIMENSION(dsp,4,ns);
 	SET_DIMENSION(dsp,3,nf);
@@ -248,10 +252,10 @@ static COMMAND_FUNC( new_seq )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
-	INSIST_POSITIVE(nf,"frame","new_seq");
-	INSIST_POSITIVE(nr,"row","new_seq");
-	INSIST_POSITIVE(nc,"column","new_seq");
-	INSIST_POSITIVE(ncomps,"component","new_seq");
+	INSIST_POSITIVE_DIM(nf,"frame","new_seq");
+	INSIST_POSITIVE_DIM(nr,"row","new_seq");
+	INSIST_POSITIVE_DIM(nc,"column","new_seq");
+	INSIST_POSITIVE_DIM(ncomps,"component","new_seq");
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,nf);
@@ -279,9 +283,9 @@ static COMMAND_FUNC( new_frame )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
-	INSIST_POSITIVE(nr,"row","new_frame");
-	INSIST_POSITIVE(nc,"column","new_frame");
-	INSIST_POSITIVE(ncomps,"component","new_frame");
+	INSIST_POSITIVE_DIM(nr,"row","new_frame");
+	INSIST_POSITIVE_DIM(nc,"column","new_frame");
+	INSIST_POSITIVE_DIM(ncomps,"component","new_frame");
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
@@ -310,11 +314,11 @@ static COMMAND_FUNC( new_gen_obj )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
-	INSIST_POSITIVE(ns,"sequence","new_gen_obj");
-	INSIST_POSITIVE(nf,"frame","new_gen_obj");
-	INSIST_POSITIVE(nr,"row","new_gen_obj");
-	INSIST_POSITIVE(nc,"column","new_gen_obj");
-	INSIST_POSITIVE(ncomps,"component","new_gen_obj");
+	INSIST_POSITIVE_DIM(ns,"sequence","new_gen_obj");
+	INSIST_POSITIVE_DIM(nf,"frame","new_gen_obj");
+	INSIST_POSITIVE_DIM(nr,"row","new_gen_obj");
+	INSIST_POSITIVE_DIM(nc,"column","new_gen_obj");
+	INSIST_POSITIVE_DIM(ncomps,"component","new_gen_obj");
 
 	SET_DIMENSION(dsp,4,ns);
 	SET_DIMENSION(dsp,3,nf);
@@ -375,8 +379,8 @@ static COMMAND_FUNC( new_row )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
-	INSIST_POSITIVE(nc,"element","new_col")
-	INSIST_POSITIVE(ncomps,"component","new_col")
+	INSIST_POSITIVE_DIM(nc,"element","new_col")
+	INSIST_POSITIVE_DIM(ncomps,"component","new_col")
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
@@ -402,8 +406,8 @@ static COMMAND_FUNC( new_col )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
-	INSIST_POSITIVE(nr,"element","new_col")
-	INSIST_POSITIVE(ncomps,"component","new_col")
+	INSIST_POSITIVE_DIM(nr,"element","new_col")
+	INSIST_POSITIVE_DIM(ncomps,"component","new_col")
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
@@ -428,7 +432,7 @@ static COMMAND_FUNC( new_scalar )
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( prec_p == NULL ) return;
-	INSIST_POSITIVE(ncomps,"component","new_scalar");
+	INSIST_POSITIVE_DIM(ncomps,"component","new_scalar");
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
@@ -458,9 +462,6 @@ static COMMAND_FUNC( do_dobj_info )
 	LONGLIST(dp);
 }
 
-/* BUG	deleteing an object should automatically cause the
-	deletion of all subobjects!! */
-
 static COMMAND_FUNC( mksubimg )
 {
 	const char *obj_name;
@@ -479,8 +480,8 @@ static COMMAND_FUNC( mksubimg )
 	yos=HOW_MANY("y offset");
 
 	if( dp==NULL ) return;
-	INSIST_POSITIVE(rows,"row","mksubimg")
-	INSIST_POSITIVE(cols,"column","mksubimg")
+	INSIST_POSITIVE_DIM(rows,"row","mksubimg")
+	INSIST_POSITIVE_DIM(cols,"column","mksubimg")
 
 	INSIST_NONNEGATIVE(xos,"x offset","mksubimg");
 	INSIST_NONNEGATIVE(yos,"y offset","mksubimg");
@@ -513,9 +514,9 @@ static COMMAND_FUNC( mksubsequence )
 
 	if( dp==NULL ) return;
 
-	INSIST_POSITIVE(nc,"column","mksubsequence");
-	INSIST_POSITIVE(nr,"row","mksubsequence");
-	INSIST_POSITIVE(nf,"frame","mksubsequence");
+	INSIST_POSITIVE_DIM(nc,"column","mksubsequence");
+	INSIST_POSITIVE_DIM(nr,"row","mksubsequence");
+	INSIST_POSITIVE_DIM(nf,"frame","mksubsequence");
 
 	INSIST_NONNEGATIVE(x_offset,"x offset","mksubsequence");
 	INSIST_NONNEGATIVE(y_offset,"y offset","mksubsequence");
@@ -559,7 +560,7 @@ static COMMAND_FUNC( mksubvector )
 
 	if( dp==NULL ) return;
 
-	INSIST_POSITIVE(cols,"element","mksubvector")
+	INSIST_POSITIVE_DIM(cols,"element","mksubvector")
 	INSIST_NONNEGATIVE(xos,"x offset","mksubvector")
 
 	newdp=mk_subimg(QSP_ARG  dp,(index_t)xos,yos,obj_name,rows,(dimension_t)cols);
@@ -584,7 +585,7 @@ static COMMAND_FUNC( mksubscalar )
 
 	if( dp==NULL ) return;
 
-	INSIST_POSITIVE(ncomps,"component","mksubscalar");
+	INSIST_POSITIVE_DIM(ncomps,"component","mksubscalar");
 	INSIST_NONNEGATIVE(comp_offset,"component offset","mksubscalar");
 
 	SET_DIMENSION(dsp,0,ncomps);
@@ -641,9 +642,9 @@ static COMMAND_FUNC( mkcast )
 	yos=HOW_MANY("y offset");
 	tdim=HOW_MANY("type dimension");
 
-	INSIST_POSITIVE(cols,"column","mkcast")
-	INSIST_POSITIVE(rows,"row","mkcast")
-	INSIST_POSITIVE(tdim,"component","mkcast")
+	INSIST_POSITIVE_DIM(cols,"column","mkcast")
+	INSIST_POSITIVE_DIM(rows,"row","mkcast")
+	INSIST_POSITIVE_DIM(tdim,"component","mkcast")
 
 	INSIST_NONNEGATIVE(xos,"x offset","mkcast")
 	INSIST_NONNEGATIVE(yos,"y offset","mkcast")
@@ -676,11 +677,11 @@ static COMMAND_FUNC( equivalence )
 	if( dp==NULL ) return;
 	if( prec_p == NULL ) return;
 
-	INSIST_POSITIVE(ns,"sequence","equivalence")
-	INSIST_POSITIVE(nf,"frame","equivalence")
-	INSIST_POSITIVE(nr,"row","equivalence")
-	INSIST_POSITIVE(nc,"column","equivalence")
-	INSIST_POSITIVE(nd,"component","equivalence")
+	INSIST_POSITIVE_DIM(ns,"sequence","equivalence")
+	INSIST_POSITIVE_DIM(nf,"frame","equivalence")
+	INSIST_POSITIVE_DIM(nr,"row","equivalence")
+	INSIST_POSITIVE_DIM(nc,"column","equivalence")
+	INSIST_POSITIVE_DIM(nd,"component","equivalence")
 
 	SET_DIMENSION(dsp,4,ns);
 	SET_DIMENSION(dsp,3,nf);
@@ -732,15 +733,17 @@ static COMMAND_FUNC( mk_subsample )
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
-	/* BUG?  We violate the rule of returning before getting
+	/* We violate the rule of returning before getting
 	 * all arguments, because the fields of dp are needed
-	 * to determine what to prompt for!?
+	 * to determine what to prompt for!
 	 */
 
 	if( dp==NULL ) return;
 
 	for(i=0;i<N_DIMENSIONS;i++){
-		/* BUG? should we prompt for all dimensions? */
+		/* BUG? should we prompt for all dimensions, instead of just those > 1 ?
+		 * If we did, then we could defer the return above...
+		 */
 		if( OBJ_TYPE_DIM(dp,i) > 1 ){
 			if( i < (N_DIMENSIONS-1) )
 				// BUG check length
@@ -762,7 +765,7 @@ static COMMAND_FUNC( mk_subsample )
 	}
 	for(i=0;i<N_DIMENSIONS;i++){
 		char offset_descr[LLEN];
-		INSIST_POSITIVE(size[i],dimension_name[i],"mk_subsample");
+		INSIST_POSITIVE_DIM(size[i],dimension_name[i],"mk_subsample");
 		sprintf(offset_descr,"%s offset",dimension_name[i]);
 		INSIST_NONNEGATIVE(l_offset[i],offset_descr,"mk_subsample");
 	}
@@ -853,15 +856,9 @@ static COMMAND_FUNC( do_tellprec )
 	Data_Obj *dp;
 	const char *s;
 
-	//dp = get_obj_or_file( QSP_ARG NAMEOF("data object or open image file") );
 	dp = get_obj( QSP_ARG NAMEOF("data object") );
 	s = NAMEOF("variable name");
 	if( dp == NULL ) return;
-
-	/* BUG should write this in a way that doesn't depend
-	 * on the hard-coded constants...
-	 */
-
 	ASSIGN_VAR(s,OBJ_PREC_NAME(dp));
 }
 
@@ -872,55 +869,6 @@ static COMMAND_FUNC( do_get_align )
 	a=(int)HOW_MANY("alignment (in bytes, negative to disable)");
 	set_dp_alignment(a);
 }
-
-#ifdef REDUNDANT
-static COMMAND_FUNC( do_stringify )
-{
-	Data_Obj *dp;
-	const char *s;
-
-	s = NAMEOF("name of variable to hold string value");
-	dp = PICK_OBJ("");
-
-	if( dp == NULL ) return;
-
-	if(  !STRING_PRECISION(OBJ_PREC(dp)) ){
-		sprintf(ERROR_STRING,"do_stringify:  Sorry, %s does not have string precision",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
-		return;
-	}
-	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(dp));
-}
-
-static COMMAND_FUNC( do_import_string )
-{
-	Data_Obj *dp;
-	const char *s;
-
-	dp=PICK_OBJ("");
-	s=NAMEOF("string");
-
-	if( dp==NULL ) return;
-
-	if(  !STRING_PRECISION(OBJ_PREC(dp)) ){
-		sprintf(ERROR_STRING,
-"do_import_string:  Sorry, object %s (%s) does not have string precision",
-			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
-		WARN(ERROR_STRING);
-		return;
-	}
-
-	if( strlen(s)+1 > OBJ_N_TYPE_ELTS(dp) ){
-		sprintf(ERROR_STRING,"do_import_string:  object %s (%d elements) is too small for string \"%s\" (length %ld)",
-			OBJ_NAME(dp),OBJ_N_TYPE_ELTS(dp),s,strlen(s));
-		WARN(ERROR_STRING);
-		return;
-	}
-
-	/* BUG check for contiguity */
-	strcpy((char *)OBJ_DATA_PTR(dp),s);
-}
-#endif // REDUNDANT
 
 static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
 static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
@@ -955,8 +903,6 @@ void dm_init(SINGLE_QSP_ARG_DECL)
 
 	dm_inited=1;
 }
-
-// BUG DataObj needs to have a fancier get to parse subscripts...
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(data_menu,s,f,h)
@@ -996,10 +942,6 @@ ADD_CMD( areas,		do_area,	data area submenu	)
 ADD_CMD( contexts,	do_context,	data context submenu	)
 ADD_CMD( ascii,		asciimenu,	read and write ascii data	)
 ADD_CMD( operate,	buf_ops,	simple operations on buffers	)
-#ifdef REDUNDANT
-ADD_CMD( stringify,	do_stringify,	set variable from a string object	)
-ADD_CMD( import_string,	do_import_string,	set data object from string	)
-#endif // REDUNDANT
 ADD_CMD( unlock_temp_objs,	do_unlock_all_tmp_objs,	unlock temp objs (when callbacks inhibited)	)
 
 MENU_END(data)
