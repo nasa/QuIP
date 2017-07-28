@@ -26,6 +26,7 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
 #include "debug.h"
 #include "platform.h"
 //#include "img_file.h"

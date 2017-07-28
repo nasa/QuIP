@@ -4,6 +4,7 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
 
 //#include "fio_api.h"
 
@@ -22,20 +23,21 @@ static COMMAND_FUNC( do_tellprec );
 Precision * get_precision(SINGLE_QSP_ARG_DECL);
 
 
-/* BUG - dimension_t is unsigned, because it naturally is, but then we
- * have a problem because how_many can return a negative number,
- * which gets converted to a big unsigned number.  Should we be able to
- * check for these bad values?  Should dimension_t just be signed?
- *
- * For now we leave dimension_t unsigned, but prompt for values using a signed long.
- * This means we can't enter the largest values, but that is better than having
- * the program blow up if we accidentally input a negative number...
- */
 
-#define CHECK_POSITIVE( var, var_string, subrt_name, obj_name )					\
+#define INSIST_POSITIVE( var, var_string, subrt_name )						\
+												\
+	if( var <= 0 ){										\
+		sprintf(ERROR_STRING,"%s %s:  number of %ss (%ld) must be positive",		\
+			subrt_name,obj_name,var_string,var);					\
+		WARN(ERROR_STRING);								\
+		return;										\
+	}
+
+
+#define INSIST_NONNEGATIVE( var, var_string, subrt_name )					\
 												\
 	if( var < 0 ){										\
-		sprintf(ERROR_STRING,"%s %s:  number of %s (%d) must be positive",		\
+		sprintf(ERROR_STRING,"%s %s:  %s (%ld) must be positive",			\
 			subrt_name,obj_name,var_string,var);					\
 		WARN(ERROR_STRING);								\
 		return;										\
@@ -181,25 +183,21 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL)
 	return (Precision *) pick_item(QSP_ARG  prec_itp, "data precision" );
 }
 
-static void finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp, uint32_t type_flag)
+static void finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, Precision *prec_p, uint32_t type_flag)
 {
-	Precision * prec_p;
-
-	prec_p = get_precision(SINGLE_QSP_ARG);
-
-	if( prec_p == NULL ) return;
+	assert(prec_p!=NULL);
 
 	if( COLOR_PRECISION(PREC_CODE(prec_p)) ){
 		if( DIMENSION(dsp,0) != 1 ){
-			sprintf(ERROR_STRING,"object %s, number of rgb triples per pixel should be 1",s);
+			sprintf(ERROR_STRING,"object %s, number of rgb triples per pixel should be 1",obj_name);
 			WARN(ERROR_STRING);
 		}
 		SET_DIMENSION(dsp,0,3);
 		prec_p = get_prec(QSP_ARG  "float");
 	}
 
-	if( make_dobj_with_shape(QSP_ARG  s,dsp,prec_p,type_flag) == NULL ) {
-		sprintf(ERROR_STRING,"couldn't create data object \"%s\"", s);
+	if( make_dobj_with_shape(QSP_ARG  obj_name,dsp,prec_p,type_flag) == NULL ) {
+		sprintf(ERROR_STRING,"couldn't create data object \"%s\"", obj_name);
 		WARN(ERROR_STRING);
 	}
 }
@@ -207,70 +205,130 @@ static void finish_obj(QSP_ARG_DECL   const char *s, Dimension_Set *dsp, uint32_
 static COMMAND_FUNC( new_hyperseq )
 {
 	Dimension_Set ds1, *dsp=(&ds1);
-	const char *s;
+	const char *obj_name;
+	long ns, nf, nr, nc, ncomps;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
 
-	SET_DIMENSION(dsp,4,HOW_MANY("number of sequences"));
-	SET_DIMENSION(dsp,3,HOW_MANY("number of frames"));
-	SET_DIMENSION(dsp,2,HOW_MANY("number of rows"));
-	SET_DIMENSION(dsp,1,HOW_MANY("number of columns"));
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	ns = HOW_MANY("number of sequences");
+	nf = HOW_MANY("number of frames");
+	nr = HOW_MANY("number of rows");
+	nc = HOW_MANY("number of columns");
+	ncomps = HOW_MANY("number of components");
+	prec_p = get_precision(SINGLE_QSP_ARG);
 
-	finish_obj(QSP_ARG  s,dsp,DT_HYPER_SEQ);
+	if( prec_p == NULL ) return;
+
+	INSIST_POSITIVE(ns,"sequence","new_hyperseq");
+
+	SET_DIMENSION(dsp,4,ns);
+	SET_DIMENSION(dsp,3,nf);
+	SET_DIMENSION(dsp,2,nr);
+	SET_DIMENSION(dsp,1,nc);
+	SET_DIMENSION(dsp,0,ncomps);
+
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_HYPER_SEQ);
 }
 
 static COMMAND_FUNC( new_seq )
 {
 	Dimension_Set ds1, *dsp=(&ds1);
-	const char *s;
+	long nf, nr, nc, ncomps;
+	const char *obj_name;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
+
+	nf = HOW_MANY("number of frames");
+	nr = HOW_MANY("number of rows");
+	nc = HOW_MANY("number of columns");
+	ncomps = HOW_MANY("number of components");
+
+	prec_p = get_precision(SINGLE_QSP_ARG);
+
+	if( prec_p == NULL ) return;
+	INSIST_POSITIVE(nf,"frame","new_seq");
+	INSIST_POSITIVE(nr,"row","new_seq");
+	INSIST_POSITIVE(nc,"column","new_seq");
+	INSIST_POSITIVE(ncomps,"component","new_seq");
 
 	SET_DIMENSION(dsp,4,1);
-	SET_DIMENSION(dsp,3,HOW_MANY("number of frames"));
-	SET_DIMENSION(dsp,2,HOW_MANY("number of rows"));
-	SET_DIMENSION(dsp,1,HOW_MANY("number of columns"));
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	SET_DIMENSION(dsp,3,nf);
+	SET_DIMENSION(dsp,2,nr);
+	SET_DIMENSION(dsp,1,nc);
+	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  s,dsp,DT_SEQUENCE);
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_SEQUENCE);
 }
 
 static COMMAND_FUNC( new_frame )
 {
 	Dimension_Set ds1;
 	Dimension_Set *dsp=(&ds1);
-	const char *s;
+	const char *obj_name;
+	long nr, nc, ncomps;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
+
+	nr = HOW_MANY("number of rows");
+	nc = HOW_MANY("number of columns");
+	ncomps = HOW_MANY("number of components");
+
+	prec_p = get_precision(SINGLE_QSP_ARG);
+
+	if( prec_p == NULL ) return;
+	INSIST_POSITIVE(nr,"row","new_frame");
+	INSIST_POSITIVE(nc,"column","new_frame");
+	INSIST_POSITIVE(ncomps,"component","new_frame");
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
-	SET_DIMENSION(dsp,2,HOW_MANY("number of rows"));
-	SET_DIMENSION(dsp,1,HOW_MANY("number of columns"));
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
-	finish_obj(QSP_ARG  s,dsp,DT_IMAGE);
+	SET_DIMENSION(dsp,2,nr);
+	SET_DIMENSION(dsp,1,nc);
+	SET_DIMENSION(dsp,0,ncomps);
+
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_IMAGE);
 }
 
 static COMMAND_FUNC( new_gen_obj )
 {
 	Dimension_Set ds1, *dsp=(&ds1);
-	const char *s;
+	const char *obj_name;
+	long ns, nf, nr, nc, ncomps;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
 
-	SET_DIMENSION(dsp,4,HOW_MANY("number of sequences"));
-	SET_DIMENSION(dsp,3,HOW_MANY("number of frames"));
-	SET_DIMENSION(dsp,2,HOW_MANY("number of rows"));
-	SET_DIMENSION(dsp,1,HOW_MANY("number of columns"));
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	ns = HOW_MANY("number of sequences");
+	nf = HOW_MANY("number of frames");
+	nr = HOW_MANY("number of rows");
+	nc = HOW_MANY("number of columns");
+	ncomps = HOW_MANY("number of components");
 
-	if( *s == 0 ){
+	prec_p = get_precision(SINGLE_QSP_ARG);
+
+	if( prec_p == NULL ) return;
+	INSIST_POSITIVE(ns,"sequence","new_gen_obj");
+	INSIST_POSITIVE(nf,"frame","new_gen_obj");
+	INSIST_POSITIVE(nr,"row","new_gen_obj");
+	INSIST_POSITIVE(nc,"column","new_gen_obj");
+	INSIST_POSITIVE(ncomps,"component","new_gen_obj");
+
+	SET_DIMENSION(dsp,4,ns);
+	SET_DIMENSION(dsp,3,nf);
+	SET_DIMENSION(dsp,2,nr);
+	SET_DIMENSION(dsp,1,nc);
+	SET_DIMENSION(dsp,0,ncomps);
+
+	if( *obj_name == 0 ){
 		WARN("new_gen_obj:  Null object name!?");
-		return;	// shouldn't happen, but can
+		return;	// shouldn't happen, but can - HOW???
+		// If it can, then should move this check to finish_obj???
 	}
 
-	finish_obj(QSP_ARG  s,dsp,AUTO_SHAPE);
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,AUTO_SHAPE);
 }
 
 #ifdef NOT_YET
@@ -296,7 +354,7 @@ static COMMAND_FUNC( new_obj_list )
 	}
 
 	if( make_obj_list(QSP_ARG  s,lp) == NULL ){
-		sprintf(ERROR_STRING,"error making object list %s",s);
+		sprintf(ERROR_STRING,"error making object list %s");
 		WARN(ERROR_STRING);
 	}
 }
@@ -305,50 +363,80 @@ static COMMAND_FUNC( new_obj_list )
 static COMMAND_FUNC( new_row )
 {
 	Dimension_Set ds1, *dsp=(&ds1);
-	const char *s;
+	const char *obj_name;
+	long nc, ncomps;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
+
+	nc = HOW_MANY("number of elements");
+	ncomps = HOW_MANY("number of components");
+
+	prec_p = get_precision(SINGLE_QSP_ARG);
+
+	if( prec_p == NULL ) return;
+	INSIST_POSITIVE(nc,"element","new_col")
+	INSIST_POSITIVE(ncomps,"component","new_col")
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,2,1);
-	SET_DIMENSION(dsp,1,HOW_MANY("number of elements"));
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	SET_DIMENSION(dsp,1,nc);
+	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  s,dsp,DT_ROWVEC);
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_ROWVEC);
 }
 
 static COMMAND_FUNC( new_col )
 {
 	Dimension_Set ds1, *dsp=(&ds1);
-	const char *s;
+	const char *obj_name;
+	long nr, ncomps;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
+
+	nr = HOW_MANY("number of elements");
+	ncomps = HOW_MANY("number of components");
+
+	prec_p = get_precision(SINGLE_QSP_ARG);
+
+	if( prec_p == NULL ) return;
+	INSIST_POSITIVE(nr,"element","new_col")
+	INSIST_POSITIVE(ncomps,"component","new_col")
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
-	SET_DIMENSION(dsp,2,HOW_MANY("number of elements"));
+	SET_DIMENSION(dsp,2,nr);
 	SET_DIMENSION(dsp,1,1);
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  s,dsp,DT_COLVEC);
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_COLVEC);
 }
 
 static COMMAND_FUNC( new_scalar )
 {
 	Dimension_Set ds1;
 	Dimension_Set *dsp=(&ds1);
-	const char *s;
+	const char *obj_name;
+	long ncomps;
+	Precision *prec_p;
 
-	s=NAMEOF("object name");
+	obj_name=NAMEOF("object name");
+
+	ncomps = HOW_MANY("number of components");
+	prec_p = get_precision(SINGLE_QSP_ARG);
+
+	if( prec_p == NULL ) return;
+	INSIST_POSITIVE(ncomps,"component","new_scalar");
 
 	SET_DIMENSION(dsp,4,1);
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,2,1);
 	SET_DIMENSION(dsp,1,1);
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  s,dsp,DT_SCALAR);
+	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_SCALAR);
 }
 
 static COMMAND_FUNC( do_delvec )
@@ -375,74 +463,95 @@ static COMMAND_FUNC( do_dobj_info )
 
 static COMMAND_FUNC( mksubimg )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp, *newdp;
-	incr_t rows, cols;
-	incr_t xos, yos;
+	long rows, cols;
+	long xos, yos;
 
-	s=NAMEOF("name for subimage");
+	obj_name=NAMEOF("name for subimage");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
-	cols=(incr_t)HOW_MANY("number of columns");
-	rows=(incr_t)HOW_MANY("number of rows");
+	cols=HOW_MANY("number of columns");
+	rows=HOW_MANY("number of rows");
 
-	xos=(incr_t)HOW_MANY("x offset");
-	yos=(incr_t)HOW_MANY("y offset");
+	xos=HOW_MANY("x offset");
+	yos=HOW_MANY("y offset");
 
 	if( dp==NULL ) return;
+	INSIST_POSITIVE(rows,"row","mksubimg")
+	INSIST_POSITIVE(cols,"column","mksubimg")
 
-	CHECK_POSITIVE(rows,"rows","mksubimg",s)
-	CHECK_POSITIVE(cols,"columns","mksubimg",s)
+	INSIST_NONNEGATIVE(xos,"x offset","mksubimg");
+	INSIST_NONNEGATIVE(yos,"y offset","mksubimg");
 
-	newdp=mk_subimg(QSP_ARG  dp,xos,yos,s,(dimension_t)rows,(dimension_t)cols);
+	newdp=mk_subimg(QSP_ARG  dp,xos,yos,obj_name,(dimension_t)rows,(dimension_t)cols);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
 static COMMAND_FUNC( mksubsequence )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp, *newdp;
 	index_t offsets[N_DIMENSIONS];
 	Dimension_Set ds1, *dsp=(&ds1);
+	long x_offset, y_offset, t_offset;
+	long nr,nc,nf;
 
-	s=NAMEOF("name for subsequence");
+	obj_name=NAMEOF("name for subsequence");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
-	SET_DIMENSION(dsp,1,HOW_MANY("number of columns"));
-	SET_DIMENSION(dsp,2,HOW_MANY("number of rows"));
-	SET_DIMENSION(dsp,3,HOW_MANY("number of frames"));
-	SET_DIMENSION(dsp,4,1);
+	nc = HOW_MANY("number of columns");
+	nr = HOW_MANY("number of rows");
+	nf = HOW_MANY("number of frames");
 
-	offsets[0]=0;
-	offsets[1]=(index_t)HOW_MANY("x offset");
-	offsets[2]=(index_t)HOW_MANY("y offset");
-	offsets[3]=(index_t)HOW_MANY("t offset");
-	offsets[4]=0;
+	x_offset=HOW_MANY("x offset");
+	y_offset=HOW_MANY("y offset");
+	t_offset=HOW_MANY("t offset");
 
 	if( dp==NULL ) return;
-	SET_DIMENSION(dsp,0,OBJ_COMPS(dp));
 
-	newdp=mk_subseq(QSP_ARG  s,dp,offsets,dsp);
+	INSIST_POSITIVE(nc,"column","mksubsequence");
+	INSIST_POSITIVE(nr,"row","mksubsequence");
+	INSIST_POSITIVE(nf,"frame","mksubsequence");
+
+	INSIST_NONNEGATIVE(x_offset,"x offset","mksubsequence");
+	INSIST_NONNEGATIVE(y_offset,"y offset","mksubsequence");
+	INSIST_NONNEGATIVE(t_offset,"t offset","mksubsequence");
+
+	offsets[0]=0;
+	offsets[1]=x_offset;
+	offsets[2]=y_offset;
+	offsets[3]=t_offset;
+	offsets[4]=0;
+
+	SET_DIMENSION(dsp,0,OBJ_COMPS(dp));
+	SET_DIMENSION(dsp,1,nc);
+	SET_DIMENSION(dsp,2,nr);
+	SET_DIMENSION(dsp,3,nf);
+	SET_DIMENSION(dsp,4,1);
+
+	newdp=mk_subseq(QSP_ARG  obj_name,dp,offsets,dsp);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
 static COMMAND_FUNC( mksubvector )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp, *newdp;
 	dimension_t rows;
-	dimension_t cols;
-	index_t xos, yos;
+	index_t yos;
+	long cols;
+	long xos;
 
-	s=NAMEOF("name for subvector");
+	obj_name=NAMEOF("name for subvector");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
-	cols=(dimension_t)HOW_MANY("number of elements");
+	cols=HOW_MANY("number of elements");
 	rows=1;
 
 	xos=(index_t)HOW_MANY("offset");
@@ -450,50 +559,58 @@ static COMMAND_FUNC( mksubvector )
 
 	if( dp==NULL ) return;
 
-	CHECK_POSITIVE(cols,"elements","mksubvector",s)
+	INSIST_POSITIVE(cols,"element","mksubvector")
+	INSIST_NONNEGATIVE(xos,"x offset","mksubvector")
 
-	newdp=mk_subimg(QSP_ARG  dp,xos,yos,s,rows,cols);
+	newdp=mk_subimg(QSP_ARG  dp,(index_t)xos,yos,obj_name,rows,(dimension_t)cols);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
 static COMMAND_FUNC( mksubscalar )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp, *newdp;
 	index_t offsets[N_DIMENSIONS];
 	Dimension_Set ds1, *dsp=(&ds1);
+	long ncomps, comp_offset;
 
-	s=NAMEOF("name for subscalar");
+	obj_name=NAMEOF("name for subscalar");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
-	SET_DIMENSION(dsp,0,HOW_MANY("number of components"));
+	ncomps = HOW_MANY("number of components");
+	comp_offset = HOW_MANY("component offset");
+
+	if( dp==NULL ) return;
+
+	INSIST_POSITIVE(ncomps,"component","mksubscalar");
+	INSIST_NONNEGATIVE(comp_offset,"component offset","mksubscalar");
+
+	SET_DIMENSION(dsp,0,ncomps);
 	SET_DIMENSION(dsp,1,1);
 	SET_DIMENSION(dsp,2,1);
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,4,1);
 
-	offsets[0]=(index_t)HOW_MANY("component offset");
+	offsets[0]=(index_t)comp_offset;
 	offsets[1]=0;
 	offsets[2]=0;
 	offsets[3]=0;
 	offsets[4]=0;
 
-	if( dp==NULL ) return;
-
-	newdp=mk_subseq(QSP_ARG  s,dp,offsets,dsp);
+	newdp=mk_subseq(QSP_ARG  obj_name,dp,offsets,dsp);
 	if( newdp == NULL )
 		WARN("couldn't create subscalar");
 }
 
 static COMMAND_FUNC( do_ilace )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp, *newdp;
 	int parity;
 
-	s=NAMEOF("name for subimage");
+	obj_name=NAMEOF("name for subimage");
 
 	dp=get_img( QSP_ARG  NAMEOF("name of parent image") );
 	if( dp==NULL ) return;
@@ -501,66 +618,69 @@ static COMMAND_FUNC( do_ilace )
 	parity=WHICH_ONE("parity of selected lines",2,parlist);
 	if( parity < 0 ) return;
 
-	newdp=mk_ilace(QSP_ARG  dp,s,parity);
+	newdp=mk_ilace(QSP_ARG  dp,obj_name,parity);
 	if( newdp == NULL )
 		WARN("couldn't create interlaced subimage");
 }
 
 static COMMAND_FUNC( mkcast )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp, *newdp;
-	dimension_t rows, cols, tdim;
-	index_t xos, yos;
+	long rows, cols, tdim;
+	long xos, yos;
 
-	s=NAMEOF("name for cast");
+	obj_name=NAMEOF("name for cast");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 	if( dp==NULL ) return;
 
-	cols=(dimension_t)HOW_MANY("number of columns");
-	rows=(dimension_t)HOW_MANY("number of rows");
-	xos=(index_t)HOW_MANY("x offset");
-	yos=(index_t)HOW_MANY("y offset");
-	tdim=(dimension_t)HOW_MANY("type dimension");
+	cols=HOW_MANY("number of columns");
+	rows=HOW_MANY("number of rows");
+	xos=HOW_MANY("x offset");
+	yos=HOW_MANY("y offset");
+	tdim=HOW_MANY("type dimension");
 
-	CHECK_POSITIVE(cols,"columns","mkcast",s)
-	CHECK_POSITIVE(rows,"rows","mkcast",s)
-	CHECK_POSITIVE(tdim,"type dimension","mkcast",s)
+	INSIST_POSITIVE(cols,"column","mkcast")
+	INSIST_POSITIVE(rows,"row","mkcast")
+	INSIST_POSITIVE(tdim,"component","mkcast")
 
-	newdp=nmk_subimg(QSP_ARG  dp,xos,yos,s,rows,cols,tdim);
+	INSIST_NONNEGATIVE(xos,"x offset","mkcast")
+	INSIST_NONNEGATIVE(yos,"y offset","mkcast")
+
+	newdp=nmk_subimg(QSP_ARG  dp,xos,yos,obj_name,rows,cols,tdim);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
 
 static COMMAND_FUNC( equivalence )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp;
 	Precision * prec_p;
 	Dimension_Set ds1, *dsp=(&ds1);
-	dimension_t ns,nf,nr,nc,nd;
+	long ns,nf,nr,nc,nd;
 
-	s=NAMEOF("name for equivalent image");
+	obj_name=NAMEOF("name for equivalent image");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
-	ns=(dimension_t)HOW_MANY("number of sequences");
-	nf=(dimension_t)HOW_MANY("number of frames");
-	nr=(dimension_t)HOW_MANY("number of rows");
-	nc=(dimension_t)HOW_MANY("number of columns");
-	nd=(dimension_t)HOW_MANY("number of components");
+	ns=HOW_MANY("number of sequences");
+	nf=HOW_MANY("number of frames");
+	nr=HOW_MANY("number of rows");
+	nc=HOW_MANY("number of columns");
+	nd=HOW_MANY("number of components");
 
 	prec_p = get_precision(SINGLE_QSP_ARG);
 
 	if( dp==NULL ) return;
 	if( prec_p == NULL ) return;
 
-	CHECK_POSITIVE(ns,"sequences","equivalence",s)
-	CHECK_POSITIVE(nf,"frames","equivalence",s)
-	CHECK_POSITIVE(nr,"rows","equivalence",s)
-	CHECK_POSITIVE(nc,"columns","equivalence",s)
-	CHECK_POSITIVE(nd,"components","equivalence",s)
+	INSIST_POSITIVE(ns,"sequence","equivalence")
+	INSIST_POSITIVE(nf,"frame","equivalence")
+	INSIST_POSITIVE(nr,"row","equivalence")
+	INSIST_POSITIVE(nc,"column","equivalence")
+	INSIST_POSITIVE(nd,"component","equivalence")
 
 	SET_DIMENSION(dsp,4,ns);
 	SET_DIMENSION(dsp,3,nf);
@@ -589,7 +709,7 @@ advise("component dim 3 for color");
 		//SET_DIMENSION(dsp,0,3);
 	}
 
-	if( make_equivalence(QSP_ARG  s,dp,dsp,prec_p) == NULL )
+	if( make_equivalence(QSP_ARG  obj_name,dp,dsp,prec_p) == NULL )
 		WARN("error making equivalence");
 }
 
@@ -597,16 +717,18 @@ advise("component dim 3 for color");
 
 static COMMAND_FUNC( mk_subsample )
 {
-	const char *s;
+	const char *obj_name;
 	Data_Obj *dp;
 
 	Dimension_Set ds1, *dsp=(&ds1);
 	index_t offsets[N_DIMENSIONS];
+	long l_offset[N_DIMENSIONS];
 	incr_t incrs[N_DIMENSIONS];
+	long size[N_DIMENSIONS];
 	char pmpt[MAX_PMPT_LEN];
 	int i;
 
-	s=NAMEOF("name for subsample object");
+	obj_name=NAMEOF("name for subsample object");
 
 	dp=PICK_OBJ(PARENT_PROMPT);
 
@@ -620,44 +742,58 @@ static COMMAND_FUNC( mk_subsample )
 	for(i=0;i<N_DIMENSIONS;i++){
 		/* BUG? should we prompt for all dimensions? */
 		if( OBJ_TYPE_DIM(dp,i) > 1 ){
-			long l;
-
 			if( i < (N_DIMENSIONS-1) )
-		// BUG check length
-		sprintf(pmpt,"number of %ss per %s",dimension_name[i],
-		dimension_name[i+1]);
+				// BUG check length
+				sprintf(pmpt,"number of %ss per %s",dimension_name[i], dimension_name[i+1]);
 			else
-		sprintf(pmpt,"number of %ss",dimension_name[i]);
+				sprintf(pmpt,"number of %ss",dimension_name[i]);
 
-			l=HOW_MANY(pmpt);
-			SET_DIMENSION(dsp,i,l);
+			size[i]=HOW_MANY(pmpt);
 
 			sprintf(pmpt,"%s offset",dimension_name[i]);
-			l=HOW_MANY(pmpt);
-			offsets[i] = (index_t) l;
+			l_offset[i] = HOW_MANY(pmpt);
 			sprintf(pmpt,"%s increment",dimension_name[i]);
-			incrs[i] =(incr_t)HOW_MANY(pmpt);
+			incrs[i] =(incr_t)HOW_MANY(pmpt);	// this can be negative...
 		} else {
-			SET_DIMENSION(dsp,i,1);
-			offsets[i]=0;
+			size[i] = 1;
+			l_offset[i]=0;
 			incrs[i]=1;
 		}
 	}
+	for(i=0;i<N_DIMENSIONS;i++){
+		char offset_descr[LLEN];
+		INSIST_POSITIVE(size[i],dimension_name[i],"mk_subsample");
+		sprintf(offset_descr,"%s offset",dimension_name[i]);
+		INSIST_NONNEGATIVE(l_offset[i],offset_descr,"mk_subsample");
+	}
+	for(i=0;i<N_DIMENSIONS;i++){
+		SET_DIMENSION(dsp,i,size[i]);
+		offsets[i] = (index_t) l_offset[i];
+	}
 
-	if( make_subsamp(QSP_ARG  s,dp,dsp,offsets,incrs) == NULL )
+	// make_subsamp checks the increments...
+
+	if( make_subsamp(QSP_ARG  obj_name,dp,dsp,offsets,incrs) == NULL )
 		WARN("error making subsamp object");
 }
 
 static COMMAND_FUNC( relocate )
 {
 	Data_Obj *dp;
-	index_t x,y,t;
+	long x,y,t;
+	const char *obj_name;
 
 	dp=PICK_OBJ("subimage");
-	x=(index_t)HOW_MANY("x offset");
-	y=(index_t)HOW_MANY("y offset");
-	t=(index_t)HOW_MANY("t offset");
+	x=HOW_MANY("x offset");
+	y=HOW_MANY("y offset");
+	t=HOW_MANY("t offset");
+
 	if( dp==NULL ) return;
+	obj_name = OBJ_NAME(dp);
+	INSIST_NONNEGATIVE(x,"x offset","relocate");
+	INSIST_NONNEGATIVE(y,"y offset","relocate");
+	INSIST_NONNEGATIVE(t,"t offset","relocate");
+
 	if( OBJ_PARENT(dp) == NULL ){
 		sprintf(ERROR_STRING,
 	"relocate:  object \"%s\" is not a subimage",
@@ -665,7 +801,7 @@ static COMMAND_FUNC( relocate )
 		WARN(ERROR_STRING);
 		return;
 	}
-	_relocate(QSP_ARG  dp,x,y,t);
+	_relocate(QSP_ARG  dp,(index_t)x,(index_t)y,(index_t)t);
 }
 
 static COMMAND_FUNC( do_gen_xpose )

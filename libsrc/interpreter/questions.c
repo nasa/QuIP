@@ -85,16 +85,19 @@ static const char *bool_choices[N_BOOL_CHOICES]={"no","yes","false","true"};
 #define YES	1
 #define NO	0
 
+#define ASKIF_FORMAT	"%s? (y/n) "
+
 int askif(QSP_ARG_DECL  const char *prompt)
 {
 	const char *pline;
 	int n;
 
-	pline = format_prompt(QSP_ARG  PROMPT_FORMAT2, prompt);
+	pline = format_prompt(QSP_ARG  ASKIF_FORMAT, prompt);
 
 	do {
-		// which_one2 doesn't format the prompt...
-		n = which_one2(QSP_ARG  pline,N_BOOL_CHOICES,bool_choices);
+		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
+		n = which_one(QSP_ARG  pline,N_BOOL_CHOICES,bool_choices);
+		enable_prompt_format(SINGLE_QSP_ARG);
 	} while( n < 0 && intractive( SINGLE_QSP_ARG ) );
 
 

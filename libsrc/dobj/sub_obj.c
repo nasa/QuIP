@@ -4,6 +4,7 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
 #include "platform.h"
 #ifdef HAVE_OPENCL
 #include "ocl_platform.h"

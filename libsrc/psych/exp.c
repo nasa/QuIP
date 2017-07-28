@@ -69,7 +69,7 @@ static int exp_flags=0;
 #define IS_DRIBBLING	(exp_flags & DRIBBLING)
 
 static char rsp_tbl[N_RESPONSES][64];
-static const char *rsp_list[N_RESPONSES];
+static const char *response_list[N_RESPONSES];
 static int rsp_inited=0;
 static int n_prel, n_data;
 
@@ -110,7 +110,7 @@ static void do_rspinit()
 	strcpy(rsp_tbl[NO_INDEX],RSP_NO);
 	strcpy(rsp_tbl[REDO_INDEX],RSP_REDO);
 	strcpy(rsp_tbl[ABORT_INDEX],RSP_ABORT);
-	for(i=0;i<N_RESPONSES;i++) rsp_list[i] = rsp_tbl[i];
+	for(i=0;i<N_RESPONSES;i++) response_list[i] = rsp_tbl[i];
 	rsp_inited=1;
 }
 
@@ -571,28 +571,28 @@ static COMMAND_FUNC( use_keyboard )
 
 static COMMAND_FUNC( setyesno )
 {
-	get_rsp_word(QSP_ARG  &rsp_list[YES_INDEX],RSP_YES);
-	get_rsp_word(QSP_ARG  &rsp_list[NO_INDEX],RSP_NO);
-	get_rsp_word(QSP_ARG  &rsp_list[REDO_INDEX],RSP_REDO);
+	get_rsp_word(QSP_ARG  &response_list[YES_INDEX],RSP_YES);
+	get_rsp_word(QSP_ARG  &response_list[NO_INDEX],RSP_NO);
+	get_rsp_word(QSP_ARG  &response_list[REDO_INDEX],RSP_REDO);
 
 	/* now check that everything is legal! */
 
-	if( is_a_substring(RSP_ABORT,rsp_list[YES_INDEX]) ||
-		is_a_substring(RSP_ABORT,rsp_list[NO_INDEX]) ||
-		is_a_substring(RSP_ABORT,rsp_list[REDO_INDEX]) ){
+	if( is_a_substring(RSP_ABORT,response_list[YES_INDEX]) ||
+		is_a_substring(RSP_ABORT,response_list[NO_INDEX]) ||
+		is_a_substring(RSP_ABORT,response_list[REDO_INDEX]) ){
 
 		WARN("conflict with abort response");
 		goto bad;
 	}
-	if( rsp_list[YES_INDEX][0] == rsp_list[NO_INDEX][0] ){
+	if( response_list[YES_INDEX][0] == response_list[NO_INDEX][0] ){
 		WARN("yes and no responses must differ in the 1st character");
 		goto bad;
 	}
-	if( rsp_list[YES_INDEX][0] == rsp_list[REDO_INDEX][0] ){
+	if( response_list[YES_INDEX][0] == response_list[REDO_INDEX][0] ){
 		WARN("yes and redo responses must differ in the 1st character");
 		goto bad;
 	}
-	if( rsp_list[NO_INDEX][0] == rsp_list[REDO_INDEX][0] ){
+	if( response_list[NO_INDEX][0] == response_list[REDO_INDEX][0] ){
 		WARN("no and redo responses must differ in the 1st character");
 		goto bad;
 	}
@@ -600,9 +600,9 @@ static COMMAND_FUNC( setyesno )
 	return;
 bad:
 	/* install default responses */
-	set_rsp_word(&rsp_list[YES_INDEX],RSP_YES,RSP_YES);
-	set_rsp_word(&rsp_list[NO_INDEX],RSP_NO,RSP_NO);
-	set_rsp_word(&rsp_list[REDO_INDEX],RSP_REDO,RSP_REDO);
+	set_rsp_word(&response_list[YES_INDEX],RSP_YES,RSP_YES);
+	set_rsp_word(&response_list[NO_INDEX],RSP_NO,RSP_NO);
+	set_rsp_word(&response_list[REDO_INDEX],RSP_REDO,RSP_REDO);
 	custom_keys=0;
 
 	return;
@@ -621,13 +621,34 @@ void get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
 	set_rsp_word(sptr,s,def_rsp);
 }
 
-int response(QSP_ARG_DECL  const char *s)
+
+static void init_responses(char *target_prompt_string,const char *question_string)
+{
+	if( custom_keys ){
+		sprintf(target_prompt_string,
+	"%s? [(%c)%s (yes), (%c)%s (no), (%c)%s (redo), (a)bort] : ",
+			question_string,
+			response_list[YES_INDEX][0],response_list[YES_INDEX]+1,
+			response_list[NO_INDEX][0],response_list[NO_INDEX]+1,
+			response_list[REDO_INDEX][0],response_list[REDO_INDEX]+1
+			);
+	} else {
+		sprintf(target_prompt_string,
+	"%s? [(%c)%s, (%c)%s, (%c)%s, (a)bort] : ",
+			question_string,
+			response_list[YES_INDEX][0],response_list[YES_INDEX]+1,
+			response_list[NO_INDEX][0],response_list[NO_INDEX]+1,
+			response_list[REDO_INDEX][0],response_list[REDO_INDEX]+1
+			);
+	}
+}
+
+int response(QSP_ARG_DECL  const char *question_string)
 {
 	int n;
-	char rpmtstr[128];
+	char rpmtstr[128];	// BUG? possible buffer overflow?
 
-	init_rps(rpmtstr,s);
-
+	init_responses(rpmtstr,question_string);
 
 	if( get_response_from_keyboard ){
 #ifndef BUILD_FOR_OBJC
@@ -639,7 +660,9 @@ int response(QSP_ARG_DECL  const char *s)
 
 
 	do {
-		n=WHICH_ONE2(rpmtstr,N_RESPONSES,rsp_list);
+		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
+		n=WHICH_ONE(rpmtstr,N_RESPONSES,response_list);
+		enable_prompt_format(SINGLE_QSP_ARG);
 	} while( n < 0 );
 
 	if( get_response_from_keyboard )
@@ -655,27 +678,5 @@ int response(QSP_ARG_DECL  const char *s)
 	}
 	/* should never be reached */
 	return(ABORT);
-}
-
-
-void init_rps(char *target,const char *s)
-{
-	if( custom_keys ){
-		sprintf(target,
-	"%s? [(%c)%s (yes), (%c)%s (no), (%c)%s (redo), (a)bort] : ",
-			s,
-			rsp_list[YES_INDEX][0],rsp_list[YES_INDEX]+1,
-			rsp_list[NO_INDEX][0],rsp_list[NO_INDEX]+1,
-			rsp_list[REDO_INDEX][0],rsp_list[REDO_INDEX]+1
-			);
-	} else {
-		sprintf(target,
-	"%s? [(%c)%s, (%c)%s, (%c)%s, (a)bort] : ",
-			s,
-			rsp_list[YES_INDEX][0],rsp_list[YES_INDEX]+1,
-			rsp_list[NO_INDEX][0],rsp_list[NO_INDEX]+1,
-			rsp_list[REDO_INDEX][0],rsp_list[REDO_INDEX]+1
-			);
-	}
 }
 

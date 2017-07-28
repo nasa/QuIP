@@ -4,6 +4,7 @@
 #include <string.h>
 #include "quip_prot.h"
 #include "data_obj.h"
+#include "dobj_private.h"
 #include "function.h"
 
 /* support for data functions in expr.y */

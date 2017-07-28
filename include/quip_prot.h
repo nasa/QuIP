@@ -142,14 +142,14 @@ extern double how_much(QSP_ARG_DECL  const char *);
 
 
 extern const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt);
+extern void inhibit_next_prompt_format(SINGLE_QSP_ARG_DECL);
+extern void enable_prompt_format(SINGLE_QSP_ARG_DECL);
 extern int askif( QSP_ARG_DECL  const char *pmpt);
 #define ASKIF(p)		askif(QSP_ARG  p )
 
 
 extern int which_one( QSP_ARG_DECL  const char *pmpt, int n, const char **choices );
-extern int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices);
 #define WHICH_ONE(p,n,ch)	which_one(QSP_ARG  p, n, ch )
-#define WHICH_ONE2(p,n,ch)	which_one2(QSP_ARG  p, n, ch )
 
 extern Query_Stack *new_qstk(QSP_ARG_DECL  const char *name);
 ITEM_INIT_PROT(Query_Stack,query_stack)

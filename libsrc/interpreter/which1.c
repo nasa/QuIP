@@ -24,7 +24,7 @@ static void check_preload(QSP_ARG_DECL  const char *prompt, int n, const char **
 
 // prompt should already be pre-loaded??
 
-static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
+int which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 {
 	int i;
 	int nmatches=0;
@@ -77,26 +77,4 @@ static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices
 
 	return(-1);
 }
-
-/* sometimes we would like to repetetively prompt the user
- * for a word from the list, and other times not!?
- */
-
-int which_one(QSP_ARG_DECL  const char *prompt,int n,const char** choices)
-{
-	return _one_of(QSP_ARG prompt,n,choices);
-}
-
-// which_one2 doesn't format the prompt...
-
-int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices)
-{
-	int i;
-
-	inhibit_next_prompt_format(SINGLE_QSP_ARG);
-	i = _one_of(QSP_ARG s,n,choices);
-	enable_prompt_format(SINGLE_QSP_ARG);
-	return i;
-}
-
 

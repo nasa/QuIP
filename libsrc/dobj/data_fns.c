@@ -7,6 +7,7 @@
 #include "data_obj.h"
 #include "debug.h"
 #include "platform.h"
+#include "dobj_private.h"
 
 //#include "img_file.h"
 

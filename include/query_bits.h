@@ -147,7 +147,6 @@ struct my_pipe {
 
 
 #define PROMPT_FORMAT	"Enter %s: "
-#define PROMPT_FORMAT2	"%s? (y/n) "
 
 #ifdef QUIP_DEBUG
 #include "debug.h"
