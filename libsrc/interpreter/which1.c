@@ -14,17 +14,15 @@
 #ifdef HAVE_HISTORY
 static void check_preload(QSP_ARG_DECL  const char *prompt, int n, const char **choices)
 {
-	const char *formatted_prompt;
-
 	if( ! IS_COMPLETING(THIS_QSP) ) return;
 	if( ! intractive(SINGLE_QSP_ARG) ) return;
 	if( *prompt == 0 ) return;
 
-	formatted_prompt = format_prompt(QSP_ARG  prompt);
-
-	preload_history_list(QSP_ARG  formatted_prompt,n,choices);
+	preload_history_list(QSP_ARG  prompt,n,choices);
 }
 #endif /* HAVE_HISTORY */
+
+// prompt should already be pre-loaded??
 
 static int _one_of(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 {
@@ -89,11 +87,16 @@ int which_one(QSP_ARG_DECL  const char *prompt,int n,const char** choices)
 	return _one_of(QSP_ARG prompt,n,choices);
 }
 
+// which_one2 doesn't format the prompt...
 
 int which_one2(QSP_ARG_DECL  const char* s,int n,const char** choices)
 {
+	int i;
+
 	inhibit_next_prompt_format(SINGLE_QSP_ARG);
-	return _one_of(QSP_ARG s,n,choices);
+	i = _one_of(QSP_ARG s,n,choices);
+	enable_prompt_format(SINGLE_QSP_ARG);
+	return i;
 }
 
 

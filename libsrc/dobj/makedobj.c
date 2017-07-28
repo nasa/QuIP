@@ -46,6 +46,7 @@ void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int al
 #ifdef HAVE_POSIX_MEMALIGN
 	int status;
 
+	if( align < sizeof(void *) ) align = sizeof(void *);
 	status = posix_memalign(&ptr,align,size);
 	if( status != 0 ){
 		switch(status){

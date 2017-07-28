@@ -2579,6 +2579,7 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_RESULT(qsp,new_stringbuf());
 
 	SET_QS_CMD_PROMPT_SB(qsp,new_stringbuf());
+	SET_QS_QRY_PROMPT_SB(qsp,new_stringbuf());
 
 	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 
@@ -3191,6 +3192,11 @@ void set_args(QSP_ARG_DECL  int ac,char** av)
 void inhibit_next_prompt_format(SINGLE_QSP_ARG_DECL)
 {
 	CLEAR_QS_FLAG_BITS(THIS_QSP, QS_FORMAT_PROMPT);
+}
+
+void enable_prompt_format(SINGLE_QSP_ARG_DECL)
+{
+	SET_QS_FLAG_BITS(THIS_QSP, QS_FORMAT_PROMPT);
 }
 
 static void show_query_level(QSP_ARG_DECL int i)

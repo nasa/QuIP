@@ -26,7 +26,7 @@ long how_many(QSP_ARG_DECL  const char *prompt)
 
 	// Why does how_many all next_query_word, while how_much uses nameof???
 
-	pline = format_prompt(QSP_ARG  prompt);
+	pline = format_prompt(QSP_ARG  PROMPT_FORMAT, prompt);
 	s=next_query_word(QSP_ARG  pline);
 
 	tsp=pexpr(QSP_ARG  s);
@@ -90,9 +90,10 @@ int askif(QSP_ARG_DECL  const char *prompt)
 	const char *pline;
 	int n;
 
-	pline = format_prompt(QSP_ARG  prompt);
+	pline = format_prompt(QSP_ARG  PROMPT_FORMAT2, prompt);
 
 	do {
+		// which_one2 doesn't format the prompt...
 		n = which_one2(QSP_ARG  pline,N_BOOL_CHOICES,bool_choices);
 	} while( n < 0 && intractive( SINGLE_QSP_ARG ) );
 
@@ -129,7 +130,7 @@ const char * nameof(QSP_ARG_DECL  const char *prompt)
 	int v;
 	const char *buf;
 
-	pline = format_prompt(QSP_ARG  prompt);
+	pline = format_prompt(QSP_ARG  PROMPT_FORMAT, prompt);
 
 	/* turn macros off so we can enter macro names!? */
 
@@ -150,7 +151,7 @@ static const char *insure_item_prompt(Item_Type *itp, const char *prompt)
 static void remove_from_history_list(QSP_ARG_DECL  const char *prompt, const char *s)
 {
 	const char *pline;
-	pline = format_prompt(QSP_ARG  prompt);
+	pline = format_prompt(QSP_ARG  PROMPT_FORMAT, prompt);
 	rem_def(QSP_ARG  pline,s);
 }
 

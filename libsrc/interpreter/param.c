@@ -203,7 +203,7 @@ static COMMAND_FUNC( do_chng_one )
 
 		if( intractive(SINGLE_QSP_ARG) ){
 			const char *pline;
-			pline = format_prompt(QSP_ARG  PNAME_PMPT);
+			pline = format_prompt(QSP_ARG  PROMPT_FORMAT, PNAME_PMPT);
 			new_defs(QSP_ARG  pline);		/* is this needed? */
 			init_hist_from_item_list(QSP_ARG  PNAME_PMPT,lp);
 		}

@@ -137,6 +137,7 @@ struct query_stack {
 	Menu *		qs_builtin_menu;
 	Menu *		qs_help_menu;
 	String_Buf *	qs_cmd_prompt_sbp;
+	String_Buf *	qs_qry_prompt_sbp;	// question prompt
 	Stack *		qs_menu_stack;
 
 	String_Buf *	qs_output_filename;
@@ -343,6 +344,10 @@ struct query_stack {
 #define SET_QS_TMPVAR(qsp,vp)		(qsp)->qs_tmpvar=vp
 #define QS_CHEW_LIST(qsp)		(qsp)->qs_chew_list
 #define SET_QS_CHEW_LIST(qsp,lp)	(qsp)->qs_chew_list =  lp
+
+#define QS_QRY_PROMPT_SB(qsp)		(qsp)->qs_qry_prompt_sbp
+#define SET_QS_QRY_PROMPT_SB(qsp,sbp)	(qsp)->qs_qry_prompt_sbp = sbp
+#define QS_QRY_PROMPT_STR(qsp)		sb_buffer((qsp)->qs_qry_prompt_sbp)
 
 #define QS_CMD_PROMPT_SB(qsp)		(qsp)->qs_cmd_prompt_sbp
 #define SET_QS_CMD_PROMPT_SB(qsp,sbp)	(qsp)->qs_cmd_prompt_sbp = sbp

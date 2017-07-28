@@ -38,6 +38,7 @@ extern FILE *tfile(SINGLE_QSP_ARG_DECL);
 extern void	set_progname(const char *program_name);
 extern Item *	new_item(QSP_ARG_DECL  Item_Type * item_type,const char *name,size_t size);
 extern void inhibit_next_prompt_format(SINGLE_QSP_ARG_DECL);
+extern void enable_prompt_format(SINGLE_QSP_ARG_DECL);
 extern void _whileloop(QSP_ARG_DECL  int value);
 extern void foreach_loop(QSP_ARG_DECL Foreach_Loop *frp);
 extern void zap_fore(Foreach_Loop *frp);

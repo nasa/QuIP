@@ -280,6 +280,14 @@ advise(ERROR_STRING);
 	add_word_to_history_list(QSP_ARG  icp,string);
 }
 
+static inline void insure_prompt_buf(QSP_ARG_DECL  const char *fmt, const char *pmpt)
+{
+	int n_need;
+
+	n_need = strlen(fmt) + strlen(pmpt);
+	if( n_need > sb_size(QS_QRY_PROMPT_SB(THIS_QSP)) )
+		enlarge_buffer(QS_QRY_PROMPT_SB(THIS_QSP),n_need+32);
+}
 
 /* Make prompt takes a query string (like "number of elements") and
  * prepends "Enter " and appends ":  ".
@@ -291,19 +299,27 @@ advise(ERROR_STRING);
  * - what does that mean?  should we reset the flag here???
  */
 
-const char *format_prompt(QSP_ARG_DECL  const char *prompt)
+const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
 {
-	static char pline[LLEN];
+	char *pline;
 
-	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT )
-		sprintf(pline,PROMPT_FORMAT,prompt);
-	else {
+	if( prompt == QS_QRY_PROMPT_STR(THIS_QSP) ){
+		return prompt;
+	}
+
+	insure_prompt_buf(QSP_ARG  fmt,prompt);
+	pline = sb_buffer(QS_QRY_PROMPT_SB(THIS_QSP));
+
+	if( QS_FLAGS(THIS_QSP) & QS_FORMAT_PROMPT ){
+		sprintf(pline,fmt,prompt);
+	} else {
 		strcpy(pline,prompt);
 	}
 
 	return pline;
 }
 
+#ifdef NOT_USED
 void rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
 	const char *formatted_prompt;
@@ -314,6 +330,7 @@ void rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 	sprintf(s,PROMPT_FORMAT,prompt);
 	rem_def(QSP_ARG  s,word);
 }
+#endif // NOT_USED
 
 void add_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
