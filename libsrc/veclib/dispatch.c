@@ -357,12 +357,12 @@ OBJ_NAME(dp), arg_index, i_dim,	\
 NADVISE(DEFAULT_ERROR_STRING);*/								\
 	COPY_DIMS(dsp,OBJ_TYPE_DIMS(dp));					\
 	/* special case the last chunk (later) in case of a remainder... */	\
-	SET_DIMENSION(dsp,i_dim, n_per_thread);				\
+	set_dimension(dsp,i_dim, n_per_thread);					\
 										\
 	for(i=0;i<n_processors;i++){						\
 		if( i==(n_processors-1) ){					\
 			/* take care of remainder... */				\
-			SET_DIMENSION(dsp,i_dim,				\
+			set_dimension(dsp,i_dim,				\
 	OBJ_TYPE_DIM(dp,i_dim) - n_per_thread * (n_processors-1) );		\
 		}								\
 /*sprintf(DEFAULT_ERROR_STRING,"thread %d:  offset = %ld, n = %ld",i,			\

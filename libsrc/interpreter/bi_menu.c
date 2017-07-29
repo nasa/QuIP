@@ -1092,6 +1092,7 @@ static COMMAND_FUNC( do_ls )
 
 // like do_ls, but stores filenames in a data object...
 // This is not needed on unix, where we can use popen with ls...
+// This should probably be moved to the dobj library???
 
 static COMMAND_FUNC( do_get_filenames )
 {
@@ -1143,11 +1144,11 @@ static COMMAND_FUNC( do_get_filenames )
 	if( n == 0 ) goto finish;
 
 	// now rewind and store the names
-	SET_DIMENSION(&ds1,4,1);
-	SET_DIMENSION(&ds1,3,1);
-	SET_DIMENSION(&ds1,2,1);
-	SET_DIMENSION(&ds1,1,n);
-	SET_DIMENSION(&ds1,0,maxlen);
+	set_dimension(&ds1,4,1);
+	set_dimension(&ds1,3,1);
+	set_dimension(&ds1,2,1);
+	set_dimension(&ds1,1,n);
+	set_dimension(&ds1,0,maxlen);
 
 	dp = make_dobj(QSP_ARG  objname, &ds1,PREC_FOR_CODE(PREC_STR));
 	if( dp == NULL ) goto finish;
@@ -1315,30 +1316,28 @@ static const char *open_mode_string[2]={"w","a"};
 // This should also probably be per-qsp
 //static const char *output_file_name=NULL;
 
-static void set_output_file(QSP_ARG_DECL  const char *s)
+static void set_output_file(QSP_ARG_DECL  const char *new_filename)
 {
 	FILE *fp;
+	const char *old_filename;
 
-	if( QS_OUTPUT_FILENAME(qsp) == NULL ){	/* first time? */
-		if( (!strcmp(s,"-")) || (!strcmp(s,"stdout")) ){
+	old_filename = QS_OUTPUT_FILENAME(qsp);
+	if( old_filename == NULL ){	/* first time? */
+		if( (!strcmp(new_filename,"-")) || (!strcmp(new_filename,"stdout")) ){
 			/* stdout should be initially open */
 			return;
 		}
-	} else if( !strcmp( QS_OUTPUT_FILENAME(qsp),s) ){	/* same file? */
-/*
-sprintf(ERROR_STRING,"set_output_file %s, doing nothing",s);
-advise(ERROR_STRING);
-*/
+	} else if( !strcmp( old_filename, new_filename ) ){	/* same file? */
 		return;
 	}
 	/* output_redir will close the current file... */
 
-	SET_QS_OUTPUT_FILENAME(THIS_QSP,s);
+	SET_QS_OUTPUT_FILENAME(THIS_QSP,new_filename);
 
-	if( (!strcmp(s,"-")) || (!strcmp(s,"stdout")) )
+	if( (!strcmp(new_filename,"-")) || (!strcmp(new_filename,"stdout")) )
 		fp=stdout;
 	else {
-		fp=TRYNICE(s,open_mode_string[ APPEND_FLAG ]);
+		fp=TRYNICE(new_filename,open_mode_string[ APPEND_FLAG ]);
 	}
 
 	if( !fp ) return;

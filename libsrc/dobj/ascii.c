@@ -781,7 +781,7 @@ static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_pt
 }
 #endif // FOOBAR
 
-static int get_next(QSP_ARG_DECL   Data_Obj *dp,void *datap)
+static int get_next_element(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 {
 	Precision *prec_p;
 
@@ -793,7 +793,7 @@ static int get_next(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 
 #ifdef QUIP_DEBUG
 if( debug & debug_data ){
-sprintf(ERROR_STRING,"get_next:  getting a %s value for address 0x%lx",
+sprintf(ERROR_STRING,"get_next_element:  getting a %s value for address 0x%lx",
 OBJ_MACH_PREC_NAME(dp),(u_long)datap);
 advise(ERROR_STRING);
 }
@@ -802,54 +802,40 @@ advise(ERROR_STRING);
 	prec_p = OBJ_MACH_PREC_PTR(dp);
 	(*(prec_p->set_value_from_input_func))(QSP_ARG  datap);
 
-#ifdef FOOBAR
-	num_ptr = NULL;
-	switch( mp ){
-#ifdef USE_LONG_DOUBLE
-		case PREC_LP:
-#endif // USE_LONG_DOUBLE
-		case PREC_DP:  case PREC_SP:
-			if( ! HAS_FORMAT_LIST )
-				d_number = HOW_MUCH("real data");
-			else
-				d_number = next_input_flt_with_format(QSP_ARG  "real data");
-			num_ptr = &d_number;
-			break;
-		case PREC_BY:
-		case PREC_IN:
-		case PREC_DI:
-		case PREC_LI:
-		case PREC_UBY:
-		case PREC_UIN:
-		case PREC_UDI:
-		case PREC_ULI:
-			if( ! HAS_FORMAT_LIST )
-				l=HOW_MANY("integer data");
-			else
-				l=next_input_int_with_format(QSP_ARG  "integer data");
-			num_ptr = &l;
-			break;
-		case PREC_NONE:
-			sprintf(ERROR_STRING,"get_next:  object %s has no data!?",OBJ_NAME( dp) );
-			WARN(ERROR_STRING);
-			return(-1);
-			break;
-		case PREC_INVALID:
-		case N_MACHINE_PRECS:	/* have this case here to silence compiler */
-			assert( AERROR("bad case in get_next"));
-			break;
-	}
-
-	set_one_value(QSP_ARG  dp, datap, num_ptr);
-#endif // FOOBAR
-
 	dobj_n_gotten++;
 
 	/* now lookahead to pop the file if it is empty */
 	lookahead_til(QSP_ARG  ASCII_LEVEL-1);
 
 	return(0);
-} /* end get_next() */
+} /* end get_next_element() */
+
+static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_bit )
+{
+	bitmap_word val;
+	bitmap_word bit;
+
+	if( ! HAS_FORMAT_LIST )
+		val = how_many(QSP_ARG  "bit value");
+	else
+		val = next_input_int_with_format(QSP_ARG  "bit value");
+
+	if( val < 0 || val > 1 ){
+		WARN("Truncation error converting bit");
+	}
+	bit = 1 << (i_bit % BITS_PER_BITMAP_WORD);
+
+	if( val == 0 )
+		*( wp + i_bit/BITS_PER_BITMAP_WORD ) &= ~bit;
+	else
+		*( wp + i_bit/BITS_PER_BITMAP_WORD ) |=  bit;
+}
+
+static int get_next_bit(QSP_ARG_DECL  Data_Obj *dp, bitnum_t bit0)
+{
+	bit_set_value_from_input(QSP_ARG  (bitmap_word *) OBJ_DATA_PTR(dp), bit0 );
+	return 0;
+}
 
 #ifdef BITMAP_FOOBAR
 static int64_t get_bit_from_bitmap(Data_Obj *dp, void *data)
@@ -1331,38 +1317,49 @@ static int get_strings(QSP_ARG_DECL  Data_Obj *dp,char *data,int dim)
 		offset *= OBJ_MACH_INC(dp,dim);
 		for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
 			status = get_strings(QSP_ARG  dp,data+i*offset,dim-1);
-			if( status < 0 ) return(status);
+			if( status < 0 ) return status;
 		}
 	}
-	return(status);
+	return status;
+}
+
+static int get_bits(QSP_ARG_DECL  Data_Obj *dp, int dim, int bit0 )
+{
+	dimension_t i;
+	long offset;
+
+	if( dim < 0 ){
+		return( get_next_bit(QSP_ARG  dp,bit0) );
+	}
+
+	offset = OBJ_TYPE_INC(dp,dim);
+	for(i=0;i<OBJ_TYPE_DIM(dp,dim);i++){
+		int status;
+		status = get_bits(QSP_ARG  dp,dim-1,bit0+i*offset);
+		if( status < 0 ) return status;
+	}
+	return 0;
 }
 
 static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 {
 	dimension_t i;
 	long offset;
+	int status=0;
+
+	assert( ! IS_BITMAP(dp) );
 
 	if( dim < 0 ){	/* get a component */
-		return( get_next(QSP_ARG  dp,data) );
-	} else {
-		int status=0;
-
-		offset = ELEMENT_SIZE( dp);
-		if( IS_BITMAP(dp) ){
-			offset *= OBJ_TYPE_INC(dp,dim);
-			for(i=0;i<OBJ_TYPE_DIM(dp,dim);i++){
-				status = get_sheets(QSP_ARG  dp,data+i*offset,dim-1);
-				if( status < 0 ) return(status);
-			}
-		} else {
-			offset *= OBJ_MACH_INC(dp,dim);
-			for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
-				status = get_sheets(QSP_ARG  dp,data+i*offset,dim-1);
-				if( status < 0 ) return(status);
-			}
-		}
-		return(status);
+		return( get_next_element(QSP_ARG  dp,data) );
 	}
+	
+	offset = ELEMENT_SIZE(dp);
+	offset *= OBJ_MACH_INC(dp,dim);
+	for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
+		status = get_sheets(QSP_ARG  dp,data+i*offset,dim-1);
+		if( status < 0 ) return status;
+	}
+	return status;
 }
 
 void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count)
@@ -1426,14 +1423,18 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 			sprintf(ERROR_STRING,"error reading strings for object %s",OBJ_NAME( dp) );
 			WARN(ERROR_STRING);
 		}
-	} else if( get_sheets(QSP_ARG  dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1) < 0 ){
-		/*
-		sprintf(ERROR_STRING,"error reading ascii data for object %s",OBJ_NAME( dp) );
-		WARN(ERROR_STRING);
-		*/
-		sprintf(ERROR_STRING,"expected %d elements for object %s",
-			OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) );
-		WARN(ERROR_STRING);
+	} else if( IS_BITMAP(dp) ){
+		if( get_bits(QSP_ARG  dp,N_DIMENSIONS-1,OBJ_BIT0(dp)) < 0){
+			sprintf(ERROR_STRING,"expected %d bits for bitmap object %s",
+				OBJ_N_TYPE_ELTS(dp),OBJ_NAME( dp) );
+			WARN(ERROR_STRING);
+		}
+	} else {	// normal object
+		if( get_sheets(QSP_ARG  dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1) < 0 ){
+			sprintf(ERROR_STRING,"expected %d elements for object %s",
+				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) );
+			WARN(ERROR_STRING);
+		}
 	}
 
 	// If we are reading formatted input, there may be some irrelavant fields

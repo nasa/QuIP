@@ -88,11 +88,11 @@ static void HOST_TYPED_CALL_NAME(rxform_list,type_code)(HOST_CALL_ARG_DECLS)
 	dpfr = OA_SRC1(oap);
 	xform_dp = OA_SRC2(oap);
 
-	SET_DIMENSION(row_dimset,0,1);
-	SET_DIMENSION(row_dimset,1,1);
-	SET_DIMENSION(row_dimset,2,1);
-	SET_DIMENSION(row_dimset,3,1);
-	SET_DIMENSION(row_dimset,4,1);
+	set_dimension(row_dimset,0,1);
+	set_dimension(row_dimset,1,1);
+	set_dimension(row_dimset,2,1);
+	set_dimension(row_dimset,3,1);
+	set_dimension(row_dimset,4,1);
 
 	if( xform_chk(dpto,dpfr,xform_dp) == -1 )
 		return;

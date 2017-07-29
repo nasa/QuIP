@@ -127,10 +127,12 @@ void g_cu2_vfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 #endif // ! HAVE_CUDA
 }
 
+#ifdef FOOBAR
 void h_cu2_fft2d( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fft2d not implemented!?"); }
 void h_cu2_ift2d( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_ift2d not implemented!?"); }
 void h_cu2_fftrows( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_fftrows not implemented!?"); }
 void h_cu2_iftrows( FFT_FUNC_ARG_DECLS ) { NERROR1("Sorry, h_cu2_iftrows not implemented!?"); }
+#endif // FOOBAR
 
 
 

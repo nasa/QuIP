@@ -55,7 +55,7 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL);
 static COMMAND_FUNC( do_create_area )
 {
 	const char *area_name;
-	int n;
+	long n;
 	long siz;
 
 	area_name = NAMEOF("name for this area");
@@ -65,7 +65,7 @@ static COMMAND_FUNC( do_create_area )
 	INSIST_POSITIVE_NUM(siz,"number of bytes","create_area");
 	INSIST_POSITIVE_NUM(n,"maximum number of objects","create_area");
 
-	curr_ap=new_area(QSP_ARG  area_name, (dimension_t) siz,(uint_t) n);	// do_create_area
+	curr_ap=new_area(QSP_ARG  area_name, (dimension_t) siz,(uint32_t) n);	// do_create_area
 }
 
 static COMMAND_FUNC( do_select_area )

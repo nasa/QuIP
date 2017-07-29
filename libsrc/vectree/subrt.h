@@ -1,3 +1,5 @@
+#ifndef _SUBRT_H_
+#define _SUBRT_H_
 
 #include "item_type.h"
 #include "vec_expr_node.h"
@@ -92,4 +94,8 @@ extern Item_Type *subrt_itp;
 extern void list_subrts(SINGLE_QSP_ARG_DECL);
 extern List * list_of_subrts(SINGLE_QSP_ARG_DECL);
 */
+
+#define SET_DIMENSION(dsp,idx,val)	set_dimension(dsp,idx,val)
+
+#endif // ! _SUBRT_H_
 
