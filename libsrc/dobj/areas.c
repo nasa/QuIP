@@ -153,6 +153,7 @@ new_area( QSP_ARG_DECL  const char *s, uint32_t siz, int n )
 	// our own implementation of getbuf never returns a failure
 	// code; but we sometimes compile with getbuf #define'd to be malloc
 	assert( buf != NULL );
+	assert( n > 0 );
 
 	ap=area_init(QSP_ARG  s,buf,siz,n,DA_RAM);
 	if( ap==NULL ) givbuf((char *)buf);

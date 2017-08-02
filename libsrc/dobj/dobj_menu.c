@@ -65,7 +65,7 @@ static COMMAND_FUNC( do_create_area )
 	INSIST_POSITIVE_NUM(siz,"number of bytes","create_area");
 	INSIST_POSITIVE_NUM(n,"maximum number of objects","create_area");
 
-	curr_ap=new_area(QSP_ARG  area_name, (dimension_t) siz,(uint_t) n);	// do_create_area
+	curr_ap=new_area(QSP_ARG  area_name, (dimension_t) siz,n);	// do_create_area
 }
 
 static COMMAND_FUNC( do_select_area )
