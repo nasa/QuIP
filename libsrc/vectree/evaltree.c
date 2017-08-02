@@ -23,9 +23,6 @@
 #include "veclib/vl2_veclib_prot.h"
 #include "vec_util.h"		/* dilate, erode */
 #include "../veclib/nvf.h"		/* show_obj_args, for debugging */
-//#include "fio_api.h"
-//#include "filetype.h"
-
 #include "fileck.h"
 #include "vectree.h"
 #include "vt_native.h"
@@ -46,6 +43,7 @@
 static void delete_local_objs(SINGLE_QSP_ARG_DECL);
 
 // BUG TOO MANY GLOBALS, NOT THREAD-SAFE!?
+// NEED TO ADD TO QS PARSER DATA STRUCT!!!
 
 // BUG not thread-safe!?
 static Dimension_Set *scalar_dsp=NULL;
@@ -87,7 +85,6 @@ debug_flag_t scope_debug=0;
 static void eval_obj_assignment(QSP_ARG_DECL Data_Obj *,Vec_Expr_Node *enp);
 static int eval_work_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp);
 static Data_Obj *create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
-
 
 #define MAP_SUBSCRIPTS(src_dp,index_dp,enp)		map_subscripts(QSP_ARG  src_dp,index_dp,enp)
 #define ASSIGN_OBJ_FROM_SCALAR(enp,dp,svp)		assign_obj_from_scalar(QSP_ARG  enp,dp,svp)

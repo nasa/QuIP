@@ -30,7 +30,7 @@ struct dimension_set {
 #define NEW_INCSET			((Increment_Set *)getbuf(sizeof(Increment_Set)))
 
 #define DIMENSION(dsp,idx)		(dsp)->ds_dimension[idx]
-//#define SET_DIMENSION(dsp,idx,v)	(dsp)->ds_dimension[idx]=(dimension_t)v
+#define SET_DIMENSION(dsp,idx,v)	(dsp)->ds_dimension[idx]=(dimension_t)v
 
 #define DIMENSION_NAME(idx)	dimension_name[idx]
 

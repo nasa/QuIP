@@ -87,7 +87,7 @@ Data_Area *default_data_area(SINGLE_QSP_ARG_DECL)
 // Now use pf_area_init please.
 
 static Data_Area *			/**/
-area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_chunks, uint32_t flags )
+area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, unsigned int n_chunks, uint32_t flags )
 {
 	Data_Area *ap;
 
@@ -129,11 +129,6 @@ pf_area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int 
 {
 	Data_Area *ap;
 
-/*
-sprintf(ERROR_STRING,"pf_area_init:  initializing area %s for device %s",
-name,PFDEV_NAME(pdp));
-advise(ERROR_STRING);
-*/
 	ap = area_init(QSP_ARG  name, buffer, siz, n_chunks, flags );
 	if( ap == NULL ) return ap;
 
@@ -143,7 +138,7 @@ advise(ERROR_STRING);
 }
 
 Data_Area *
-new_area( QSP_ARG_DECL  const char *s, uint32_t siz, int n )
+new_area( QSP_ARG_DECL  const char *s, uint32_t siz, unsigned int n )
 {
 	u_char *buf;
 	Data_Area *ap;

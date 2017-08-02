@@ -47,25 +47,25 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 	for(i=0;i<N_DIMENSIONS;i++){
 		if( OBJ_TYPE_DIM(dst_dp,i) > OBJ_TYPE_DIM(src_dp,i) ){
 			/* enlargement - subsample the destination */
-			SET_DIMENSION(enlargement_factor,i,
+			set_dimension(enlargement_factor,i,
 				floor( OBJ_TYPE_DIM(dst_dp,i) / OBJ_TYPE_DIM(src_dp,i) ) );
-			SET_DIMENSION(reduction_factor,i, 0);
+			set_dimension(reduction_factor,i, 0);
 
-			SET_DIMENSION(size_dsp,i, OBJ_TYPE_DIM(src_dp,i) );
-			SET_DIMENSION(n_dsp,i, DIMENSION(enlargement_factor,i) );
+			set_dimension(size_dsp,i, OBJ_TYPE_DIM(src_dp,i) );
+			set_dimension(n_dsp,i, DIMENSION(enlargement_factor,i) );
 			dst_incrs[i] = DIMENSION(n_dsp,i);
 			src_incrs[i] = 1;
 		} else {
 			/* reduction - subsample the source */
-			SET_DIMENSION(reduction_factor,i,
+			set_dimension(reduction_factor,i,
 				ceil( OBJ_TYPE_DIM(src_dp,i) / OBJ_TYPE_DIM(dst_dp,i) ) );
-			SET_DIMENSION(enlargement_factor,i, 0 );
+			set_dimension(enlargement_factor,i, 0 );
 
-			SET_DIMENSION(size_dsp,i, floor( OBJ_TYPE_DIM(src_dp,i) /
+			set_dimension(size_dsp,i, floor( OBJ_TYPE_DIM(src_dp,i) /
 				DIMENSION(reduction_factor,i) ) );
 			/* We don't need to do this multiple times, just pick one and do it */
-			/*SET_DIMENSION(n_dsp,i, DIMENSION(reduction_factor,i) ); */
-			SET_DIMENSION(n_dsp,i, 1);
+			/*set_dimension(n_dsp,i, DIMENSION(reduction_factor,i) ); */
+			set_dimension(n_dsp,i, 1);
 			src_incrs[i] = DIMENSION(reduction_factor,i);
 			dst_incrs[i] = 1;
 		}

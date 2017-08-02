@@ -147,6 +147,7 @@ extern Data_Obj * make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,Preci
 extern Data_Obj * setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision *);
 extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision * );
 extern Data_Obj * init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *,Precision *);
+extern void set_dimension(Dimension_Set *dsp, int idx, dimension_t value);
 
 // These can probably be local to module...
 
@@ -178,7 +179,7 @@ extern Data_Obj *	search_areas(const char *name);
 extern Data_Area *	pf_area_init(QSP_ARG_DECL  const char *name,u_char *buffer,uint32_t siz,int nobjs,uint32_t flags, struct platform_device *pdp);
 // now only use pf_area_init...
 //extern Data_Area *	area_init(QSP_ARG_DECL  const char *name,u_char *buffer,uint32_t siz,int nobjs,uint32_t flags);
-extern Data_Area *	new_area(QSP_ARG_DECL  const char *s,uint32_t siz,int n);
+extern Data_Area *	new_area(QSP_ARG_DECL  const char *s,uint32_t siz,uint32_t n);
 extern void		list_area(QSP_ARG_DECL  Data_Area *ap);
 extern void		data_area_info(QSP_ARG_DECL  Data_Area *ap);
 extern int		dp_addr_cmp(const void *dpp1,const void *dpp2);

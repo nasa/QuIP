@@ -4,10 +4,13 @@
 Set h 6
 Set w 5
 Image bm0 $h $w 1 bit
+#Image bm0 $h $w 1 byte
 Info bm0
 advise "creating equivalence..."
-# old, used to enforce integral words per row
-Equivalence e0 bm0 1 1 $h 1 1 uint64
+## old, used to enforce integral words per row
+#Equivalence e0 bm0 1 1 $h 1 1 uint64
+# new
+Equivalence e0 bm0 1 1 1 1 1 uint64
 Info e0
 advise 'reading small bitmap data...'
 data
@@ -23,8 +26,10 @@ data
   quit
 advise 'DONE reading small bitmap data...'
 Display bm0
+
 data ascii output_fmt hexadecimal quit quit
 Display e0
+exit
 
 Set h 16
 #Set w 36

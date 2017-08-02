@@ -311,6 +311,69 @@ Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision 
 	return _make_dp_with_shape(QSP_ARG  name,dsp,prec_p, AUTO_SHAPE);
 }
 
+
+// THIS NEEDS TO BE MOVED TO A CUDA LIBRARY!?
+#ifdef HAVE_CUDA
+#ifdef NOT_YET
+static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
+{
+	char name[LLEN];
+	Data_Obj *new_dp;
+	Data_Area *ap;
+	cudaError_t e;
+	int i;
+
+	assert( OBJ_AREA(dp)->da_flags == DA_CUDA_HOST );
+
+	/* Find the pseudo-area for the device mapping */
+	sprintf(name,"%s_mapped",OBJ_AREA(dp)->da_name);
+	//ap = data_area_of(QSP_ARG  name);
+	ap = get_data_area(QSP_ARG  name);
+	if( ap == NULL ){
+		WARN("Failed to find mapped data area");
+		return;
+	}
+
+	/* BUG check name length to make sure no buffer overrun */
+	sprintf(name,"dev_%s",OBJ_NAME(dp));
+
+	new_dp = new_dobj(QSP_ARG  name);
+	if( new_dp==NULL )
+		NERROR1("make_device_alias:  error creating alias object");
+
+	// Need to allocate dimensions and increments...
+	SET_OBJ_SHAPE(new_dp, ALLOC_SHAPE );
+
+	if( set_obj_dimensions(QSP_ARG  new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
+		NERROR1("make_device_alias:  error setting alias dimensions");
+	parent_relationship(dp,new_dp);
+	for(i=0;i<N_DIMENSIONS;i++){
+		SET_OBJ_MACH_INC(new_dp,i,OBJ_MACH_INC(dp,i));
+		SET_OBJ_TYPE_INC(new_dp,i,OBJ_TYPE_INC(dp,i));
+	}
+	new_dp = setup_dp_with_shape(QSP_ARG  new_dp,OBJ_PREC_PTR(dp),type_flag);
+	if( new_dp==NULL )
+		NERROR1("make_device_alias:  failure in setup_dp");
+
+	SET_OBJ_AREA(new_dp, ap);
+
+	/* Now the magic:  get the address on the device! */
+
+	e = cudaHostGetDevicePointer( &OBJ_DATA_PTR(new_dp), OBJ_DATA_PTR(dp), 0 );
+	if( e != cudaSuccess ){
+		describe_cuda_driver_error2("make_device_alias",
+					"cudaHostGetDevicePointer",e);
+		/* BUG should clean up and destroy object here... */
+	}
+}
+#else // ! NOT_YET
+static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
+{
+	ERROR1("make_device_alias:  not implemented, check makedobj.c!?");
+}
+#endif // ! NOT_YET
+#endif /* HAVE_CUDA */
+
 /*
  * Create a new data object.  This routine calls _make_dp() to create a new
  * header structure and then allocates space for the data.
@@ -598,4 +661,10 @@ void copy_shape(Shape_Info *dst_shpp, Shape_Info *src_shpp)
 	COPY_INCS( (SHP_MACH_INCS(dst_shpp)) , (SHP_MACH_INCS(src_shpp)) );
 }
 
+// setter function to call from external modules
+
+void set_dimension(Dimension_Set *dsp, int idx, dimension_t value)
+{
+	SET_DIMENSION(dsp,idx,value);
+}
 
