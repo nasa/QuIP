@@ -1321,7 +1321,7 @@ static void set_output_file(QSP_ARG_DECL  const char *new_filename)
 	FILE *fp;
 	const char *old_filename;
 
-	old_filename = QS_OUTPUT_FILENAME(qsp);
+	old_filename = QS_OUTPUT_FILENAME(THIS_QSP);
 	if( old_filename == NULL ){	/* first time? */
 		if( (!strcmp(new_filename,"-")) || (!strcmp(new_filename,"stdout")) ){
 			/* stdout should be initially open */

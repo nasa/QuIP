@@ -12,6 +12,8 @@
 #define HAVE_ENCRYPTION	1
 #define HAVE_SECRET_KEY	1
 
+#define HAVE_ASCTIME_R	1	// new for unix - present in iOS???
+
 /* real-time scheduler control enabled */
 /* #undef ALLOW_RT_SCHED */
 

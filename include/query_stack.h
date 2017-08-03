@@ -289,9 +289,9 @@ struct query_stack {
 //#define NEED_TO_SAVE(qp) ((qp) != (&THIS_QSP->qs_query[0]) && ((qp)-1)->q_saving )
 #define NEED_TO_SAVE(qp) ( (qp) != FIRST_QRY(THIS_QSP) && QRY_IS_SAVING(UNDER_QRY(qp)) )
 
-#define APPEND_FLAG		((QS_FLAGS(qsp)&QS_APPENDING)?1:0)
-#define SET_APPEND_FLAG(v)	{if(v) SET_QS_FLAG_BITS(qsp,QS_APPENDING); \
-				else CLEAR_QS_FLAG_BITS(qsp,QS_APPENDING);}
+#define APPEND_FLAG		((QS_FLAGS(THIS_QSP)&QS_APPENDING)?1:0)
+#define SET_APPEND_FLAG(v)	{if(v) SET_QS_FLAG_BITS(THIS_QSP,QS_APPENDING); \
+				else CLEAR_QS_FLAG_BITS(THIS_QSP,QS_APPENDING);}
 
 // Query_Stack stuff
 
