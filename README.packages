@@ -52,3 +52,22 @@ installed:
 	mesa-libGLU-devel
 
 
+##########################
+For Mac OSX, we are using fink...  the packages have slightly different names.
+
+To install fink itself, we have to install Java JDK, Xcode, command line tools...
+
+Then for a unix build we have to install a few more tools:
+
+autoconf2.6
+automake1.15
+libtool2
+
+After we can configure and build, we have to start installing more packages
+with fink:
+
+libgpg-error
+libgcrypt
+
+openmotif4
+
