@@ -141,7 +141,7 @@ Hash_Tbl *ht_init(const char *name)
 		NERROR1("ht_init memory allocation failure");
 		IOS_RETURN_VAL(NULL)
 	}
-	
+//fprintf(stderr,"ht_init:  name = 0x%lx  (\"%s\")\n",name,name==NULL?"<null>":name);
 	if( name != NULL )
 		htp->ht_name=savestr(name);
 	else
@@ -155,7 +155,8 @@ Hash_Tbl *ht_init(const char *name)
 void zap_hash_tbl(Hash_Tbl *htp)
 {
 	givbuf(htp->ht_entries);
-	rls_str(htp->ht_name);
+	if( htp->ht_name != NULL )
+		rls_str(htp->ht_name);
 	if( HT_ITEM_LIST(htp) != NULL )
 		zap_list( HT_ITEM_LIST(htp) );
 }

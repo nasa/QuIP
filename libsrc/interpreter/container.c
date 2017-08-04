@@ -737,23 +737,16 @@ static Container_Type *rb_tree_container_type(void)
 
 static void init_container(Container *cnt_p, container_type_code type)
 {
-	//cnt_p->primary_type = type;
 	cnt_p->name = NULL;
 
 	switch(type){
 		case LIST_CONTAINER:
-			//cnt_p->cnt_lp = NULL;
-			//INIT_CONTAINER_FUNCTIONS(list)
 			cnt_p->cnt_typ_p = list_container_type();
 			break;
 		case HASH_TBL_CONTAINER:
-			//cnt_p->cnt_htp = NULL;
-			//INIT_CONTAINER_FUNCTIONS(hash_tbl)
 			cnt_p->cnt_typ_p = hash_tbl_container_type();
 			break;
 		case RB_TREE_CONTAINER:
-			//cnt_p->cnt_tree_p = NULL;
-			//INIT_CONTAINER_FUNCTIONS(rb_tree)
 			cnt_p->cnt_typ_p = rb_tree_container_type();
 			break;
 		default:

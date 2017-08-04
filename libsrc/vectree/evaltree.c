@@ -1839,6 +1839,7 @@ LONGLIST(dp);
 		case T_RDFT:
 		case T_RIDFT:
 		case T_SUM:
+		case T_CALLFUNC:
 			goto handle_it;
 
 		default:			// eval_typecast
@@ -1855,14 +1856,19 @@ handle_it:
 					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
 					SHP_PREC_PTR(VN_SHAPE(VN_CHILD(enp,0))) );
 
+fprintf(stderr,"eval_typecast:  tmp_dp = 0x%lx   (%s)\n",
+(long)tmp_dp,OBJ_NAME(tmp_dp)==NULL?"<null>":OBJ_NAME(tmp_dp));
 			EVAL_OBJ_ASSIGNMENT(tmp_dp,VN_CHILD(enp,0));
+fprintf(stderr,"back from eval_obj_assignment...\n");
 
 			if( dst_dp == NULL ){
+fprintf(stderr,"making local destination object...\n");
 				dst_dp=make_local_dobj(QSP_ARG  
 					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
 					VN_PREC_PTR(enp));
 			}
 
+fprintf(stderr,"calling c_convert...\n");
 			if( c_convert(QSP_ARG  dst_dp,tmp_dp) < 0 ){
 				NODE_ERROR(enp);
 				WARN("error performing conversion");

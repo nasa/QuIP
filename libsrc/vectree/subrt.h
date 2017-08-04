@@ -90,12 +90,5 @@ ITEM_LIST_PROT(Subrt,subrt)
 
 extern Item_Type *subrt_itp;
 
-/*
-extern void list_subrts(SINGLE_QSP_ARG_DECL);
-extern List * list_of_subrts(SINGLE_QSP_ARG_DECL);
-*/
-
-#define SET_DIMENSION(dsp,idx,val)	set_dimension(dsp,idx,val)
-
 #endif // ! _SUBRT_H_
 

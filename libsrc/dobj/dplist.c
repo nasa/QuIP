@@ -378,7 +378,7 @@ static void list_device(QSP_ARG_DECL  Data_Obj *dp)
 // Another solution would be to search ALL of the contexts, not
 // just those currently on the stack...
 
-static void list_context(QSP_ARG_DECL  Data_Obj *dp)
+static void show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Item_Context *icp;
 	Node *np;
@@ -394,7 +394,7 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	 */
 
 	if( OBJ_PARENT(dp) != NULL ){
-		list_context(QSP_ARG  OBJ_PARENT( dp) );
+		show_dobj_context(QSP_ARG  OBJ_PARENT( dp) );
 		return;
 	}
 
@@ -408,11 +408,9 @@ static void list_context(QSP_ARG_DECL  Data_Obj *dp)
 	while(np!=NULL){
 		icp=(Item_Context *)NODE_DATA(np);
 		/* can we search this context only? */
-/*
 sprintf(ERROR_STRING,
 "Searching context %s for object %s",CTX_NAME(icp),OBJ_NAME(dp));
 advise(ERROR_STRING);
-*/
 		//ip=fetch_name(OBJ_NAME(dp),icp->ic_nsp);
 		//ip=FETCH_NAME_FROM_CONTEXT( OBJ_NAME(dp), icp );
 		ip=FETCH_OBJ_FROM_CONTEXT( dp, icp );
@@ -478,7 +476,7 @@ void longlist(QSP_ARG_DECL  Data_Obj *dp)
 {
 	list_dobj(QSP_ARG  dp);
 	list_device(QSP_ARG  dp);
-	list_context(QSP_ARG  dp);
+	show_dobj_context(QSP_ARG  dp);
 	list_sizes(QSP_ARG  dp);
 	list_data(QSP_ARG  dp);
 	list_relatives(QSP_ARG  dp);
