@@ -1705,42 +1705,45 @@ assign_row_from_dp:
 
 static int c_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp)
 {
-	//Vec_Obj_Args oa1, *oap=(&oa1);
 	Data_Obj *tmp_dp;
 
-	//clear_obj_args(oap);
 
-	if( IS_COMPLEX(dst_dp) && ! IS_COMPLEX(dp) ){
-		tmp_dp = C_SUBSCRIPT(dst_dp,0);
-		//setvarg2(oap,tmp_dp,dp);
-		dp_convert(QSP_ARG  tmp_dp,dp);
+	// BUG need to update for quaternion case!
+	if( IS_REAL(dst_dp) ){
+		if( IS_REAL(dp) ){
+			dp_convert(QSP_ARG  dst_dp,dp);
+		} else {
+			sprintf(ERROR_STRING,
+		"c_convert:  can't convert complex/quaternion object %s to real object %s",
+				OBJ_NAME(dp),OBJ_NAME(dst_dp));
+			WARN(ERROR_STRING);
+			return -1;
+		}
+	} else if( IS_COMPLEX(dst_dp) ){
+		if( IS_REAL(dp) ){
+			tmp_dp = C_SUBSCRIPT(dst_dp,0);
+			dp_convert(QSP_ARG  tmp_dp,dp);
+			// BUG should set imaginary part to 0!
+			tmp_dp = C_SUBSCRIPT(dst_dp,1);
+			return zero_dp(QSP_ARG  tmp_dp);
+		} else if( IS_COMPLEX(dp) ){
+			dp_convert(QSP_ARG  dst_dp,dp);
+		} else {
+			sprintf(ERROR_STRING,
+		"c_convert:  unhandled type combination, will not convert %s to %s",
+				OBJ_NAME(dp),OBJ_NAME(dst_dp));
+			WARN(ERROR_STRING);
+			return -1;
+		}
 	} else {
-		/* Can we put an error check on convert??? */
-		//setvarg2(oap,dst_dp,dp);
-		dp_convert(QSP_ARG  dst_dp,dp);
-	}
-
-#ifdef FOOBAR
-	if( OBJ_MACH_PREC(dst_dp) == PREC_SP ){
-		platform_dispatch_by_code(QSP_ARG FVCONV2SP, oap);
-	} else if( OBJ_MACH_PREC(dst_dp) == PREC_DP ){
-		platform_dispatch_by_code(QSP_ARG FVCONV2DP, oap);
-	}
-#ifdef CAUTIOUS
-	  else {
 		sprintf(ERROR_STRING,
-"CAUTIOUS:  c_convert:  complex destination (%s) has bad machine precision (%s)!?",
-			OBJ_NAME(dst_dp),NAME_FOR_PREC_CODE(OBJ_MACH_PREC(dst_dp)));
+		"c_convert:  unhandled destination type, will not convert %s to %s",
+			OBJ_NAME(dp),OBJ_NAME(dst_dp));
 		WARN(ERROR_STRING);
+		return -1;
 	}
-#endif // CAUTIOUS
-#endif // FOOBAR
 
-	if( IS_COMPLEX(dst_dp) && ! IS_COMPLEX(dp) ){
-		tmp_dp = C_SUBSCRIPT(dst_dp,1);
-		return( zero_dp(QSP_ARG  tmp_dp) );
-	}
-	return(0);
+	return 0;
 }
 
 /* We may need to treat this differently for eval_obj_exp and eval_obj_assignment...
@@ -1748,6 +1751,10 @@ static int c_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp)
  * Here we assume that the compilation process will have removed any
  * unnecessary typecasts, so we assume that dst_dp is needed, and if it is
  * null we will create it.
+ *
+ * But we have a problem deciding when to release the local objects!  For simple
+ * statements we have been calling delete_local_objs() at the top of eval_work_tree,
+ * but this is problematic when the expression involves a subroutine call...
  */
 
 static Data_Obj *eval_typecast(QSP_ARG_DECL Vec_Expr_Node *enp, Data_Obj *dst_dp)
@@ -1856,19 +1863,14 @@ handle_it:
 					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
 					SHP_PREC_PTR(VN_SHAPE(VN_CHILD(enp,0))) );
 
-fprintf(stderr,"eval_typecast:  tmp_dp = 0x%lx   (%s)\n",
-(long)tmp_dp,OBJ_NAME(tmp_dp)==NULL?"<null>":OBJ_NAME(tmp_dp));
 			EVAL_OBJ_ASSIGNMENT(tmp_dp,VN_CHILD(enp,0));
-fprintf(stderr,"back from eval_obj_assignment...\n");
 
 			if( dst_dp == NULL ){
-fprintf(stderr,"making local destination object...\n");
 				dst_dp=make_local_dobj(QSP_ARG  
 					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
 					VN_PREC_PTR(enp));
 			}
 
-fprintf(stderr,"calling c_convert...\n");
 			if( c_convert(QSP_ARG  dst_dp,tmp_dp) < 0 ){
 				NODE_ERROR(enp);
 				WARN("error performing conversion");
@@ -3031,7 +3033,13 @@ advise(ERROR_STRING);
 
 
 
+// This is the function called from the menu to run a single function...
 
+void run_subrt_immed(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)
+{
+	delete_local_objs(SINGLE_QSP_ARG);	// run_subrt_immed
+	RUN_SUBRT(srp,enp,dst_dp);
+}
 
 void run_subrt(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)
 {
@@ -3051,6 +3059,11 @@ void run_subrt(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)
 		 *
 		 * Uh, what is an "implied" return???
 		 */
+
+		// BUG - eval_work_tree calls delete_local_objs, but dst_dp
+		// here may be a local object!?
+		// We might test for dst_dp being local before making the call,
+		// but would that be sufficient???
 		EVAL_WORK_TREE(SR_BODY(srp),dst_dp);
 	} else {
 sprintf(ERROR_STRING,"run_subrt %s:  arg_stat = %d",SR_NAME(srp),rip->ri_arg_stat);
@@ -6298,6 +6311,9 @@ void eval_immediate(QSP_ARG_DECL Vec_Expr_Node *enp)
 		DUMP_TREE(enp);
 	}
 
+	// call delete_local_objs() here???
+	delete_local_objs(SINGLE_QSP_ARG);	// eval_immediate
+
 	/* We need to do some run-time resolution for this case:
 	 * float f[]=[1,2,3];
 	 *
@@ -6378,7 +6394,6 @@ static void delete_local_objs(SINGLE_QSP_ARG_DECL)
 
 	if( local_obj_lp == NULL ) return;
 
-fprintf(stderr,"delete_local_objs BEGIN\n");
 	//np=QLIST_HEAD(local_obj_lp);
 	np = remHead(local_obj_lp);
 	while(np!=NULL){
@@ -6387,11 +6402,9 @@ fprintf(stderr,"delete_local_objs BEGIN\n");
 
 		dp = DOBJ_OF(s);
 		if( dp != NULL ){
-fprintf(stderr,"delete_local_objs:  deleting object %s\n",OBJ_NAME(dp));
 			delvec(QSP_ARG  dp);
 		}
 		  else {
-fprintf(stderr,"delete_local_objs:  didn't find object %s!?\n",s);
 		}
 		rls_str(s);
 		rls_node(np);
@@ -7305,12 +7318,13 @@ DUMP_TREE(enp);
 }
 #endif /* QUIP_DEBUG */
 
-fprintf(stderr,"eval_work_tree (dst = %s) %s\n",
-dst_dp==NULL?"<null_obj>":OBJ_NAME(dst_dp),
-node_desc(enp));
-if( dst_dp != NULL ) {
-assert(OBJ_NAME(dst_dp)!=NULL);
-}
+#ifdef CAUTIOUS
+	if( dst_dp != NULL ) {
+		// this checks for a dangling pointer to a local object
+		// that might have been deleted...
+		assert(OBJ_NAME(dst_dp)!=NULL);
+	}
+#endif // CAUTIOUS
 
 	eval_enp = enp;
 	executing = 1;
@@ -7353,7 +7367,7 @@ DUMP_TREE(enp);
 	// at the root of a deep tree, and then call this multiple times...
 	// Maybe local objects should have a node associated with them???
 
-	delete_local_objs(SINGLE_QSP_ARG);	// eval_work_tree
+	//delete_local_objs(SINGLE_QSP_ARG);	// eval_work_tree
 
 	switch(VN_CODE(enp)){
 
@@ -7718,10 +7732,8 @@ advise(ERROR_STRING);
 			return(ret_val);
 
 		case T_STAT_LIST:				/* eval_work_tree */
-fprintf(stderr,"eval_work_tree T_STAT_LIST %s  evaluating left child %s\n",node_desc(enp),node_desc(VN_CHILD(enp,0)));
 			if( (ret_val=EVAL_WORK_TREE(VN_CHILD(enp,0),dst_dp)) ){
 				if( continuing || breaking ) return(ret_val);
-fprintf(stderr,"eval_work_tree T_STAT_LIST %s  evaluating right child %s\n",node_desc(enp),node_desc(VN_CHILD(enp,0)));
 				ret_val=EVAL_WORK_TREE(VN_CHILD(enp,1),dst_dp);
 			}
 			if( ret_val && going ){

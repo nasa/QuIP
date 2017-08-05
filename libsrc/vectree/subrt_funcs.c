@@ -57,7 +57,7 @@ COMMAND_FUNC( do_run_subrt )
 
 	SET_SR_ARG_VALS(srp,NULL);
 
-	RUN_SUBRT(srp,NULL,NULL);
+	RUN_SUBRT_IMMED(srp,NULL,NULL);
 }
 
 COMMAND_FUNC( do_dump_subrt )

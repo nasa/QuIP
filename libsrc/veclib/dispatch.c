@@ -693,10 +693,6 @@ void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 	setvarg2(oap,dst_dp,src_dp);
 	// Need to set argset precision to match source, not destination...
 	SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( src_dp ) ) );
-fprintf(stderr,"dp_convert, dispatching conversion of %s to %s, func %s (code = %d)\n",
-OBJ_NAME(dst_dp),OBJ_NAME(src_dp),
-VF_NAME( &(vec_func_tbl[code]) ),
-code);
 	platform_dispatch_by_code(QSP_ARG  code, oap );
 }
 
