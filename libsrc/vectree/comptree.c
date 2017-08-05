@@ -245,7 +245,7 @@ void point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 	}
 //sprintf(ERROR_STRING,"point_node_shape %s 0x%lx",node_desc(enp),(long)shpp);
 //advise(ERROR_STRING);
-//dump_tree(enp);
+//DUMP_TREE(enp);
 	SET_VN_SHAPE(enp, shpp);
 }
 
@@ -1319,11 +1319,14 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_SS_B_CONDASS:					/* update_node_shape */
 			/* child 0 is a bitmap...
 			 * the other children are scalars
+			 *
+			 * The shape should be the shape of the bitmap, but the type
+			 * should come from the scalars!
 			 */
 
 			if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-//fprintf(stderr,"calling xform_from_bitmap #5\n");
+fprintf(stderr,"update_node_shape:  calling xform_from_bitmap #5\n");
 				xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 			}
 			break;
@@ -3925,7 +3928,8 @@ DUMP_TREE(enp);
 				if( SCALAR_SHAPE(VN_SHAPE(enp)) ){
 					/* both sources (targets?) are scalars, but the bitmap is a vector */
 					copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-//fprintf(stderr,"calling xform_from_bitmap #1\n");
+fprintf(stderr,"compile_node:  calling xform_from_bitmap #1\n");
+DUMP_TREE(enp);
 //dump_shape(QSP_ARG  VN_SHAPE(enp));
 					xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 					SET_VN_CODE(enp, T_SS_B_CONDASS);
@@ -4442,7 +4446,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 //sprintf(ERROR_STRING,"prelim_node_shape %s BEGIN",node_desc(enp));
 //advise(ERROR_STRING);
-//dump_tree(enp);
+//DUMP_TREE(enp);
 
 	/* now all the child nodes have been scanned, process this one */
 
@@ -4469,7 +4473,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * BUG we'd like to determine the precision from the destination.
 			 */
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-//fprintf(stderr,"calling xform_from_bitmap #2\n");
+fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #2\n");
 			xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 			CHECK_UK_CHILD(enp,0);
 			break;
@@ -4486,7 +4490,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* If the shape is unknown, but we have the bitmap, then copy from it */
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-//fprintf(stderr,"calling xform_from_bitmap #3\n");
+fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #3\n");
 				xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 			}
 			/* might be an outer... */
@@ -4522,7 +4526,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-//fprintf(stderr,"calling xform_from_bitmap #4\n");
+fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #4\n");
 				xform_from_bitmap(VN_SHAPE(enp), VN_CHILD_PREC(enp,1));
 			}
 
@@ -5387,7 +5391,7 @@ DUMP_TREE(enp);
 		OTHER_SCALAR_MATHOP_CASES
 //sprintf(ERROR_STRING,"prelim_node_shape %s:  binop",node_desc(enp));
 //advise(ERROR_STRING);
-//dump_tree(enp);
+//DUMP_TREE(enp);
 			if( HAS_CONSTANT_VALUE(VN_CHILD(enp,0)) &&
 				HAS_CONSTANT_VALUE(VN_CHILD(enp,1)) )
 				SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
