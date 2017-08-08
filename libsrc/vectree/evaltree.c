@@ -7222,13 +7222,6 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	/* Set up dummy_mac so that the interpreter will
 	 * think we are in a macro...
 	 */
-	/*
-	INIT_MACRO_PTR(dummy_mp)
-	SET_MACRO_NAME(dummy_mp, SR_NAME(srp) );
-	SET_MACRO_N_ARGS(dummy_mp, SR_N_ARGS(srp) );
-	SET_MACRO_TEXT(dummy_mp, (char *) SR_BODY(srp) );
-	SET_MACRO_FLAGS(dummy_mp, 0 ); // disallow recursion
-	*/
 	ma_tbl = create_generic_macro_args(SR_N_ARGS(srp));
 	sbp = create_stringbuf(SR_TEXT(srp));
 	dummy_mp = create_macro(QSP_ARG  SR_NAME(srp), SR_N_ARGS(srp), ma_tbl, sbp,
@@ -7267,22 +7260,29 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	 * contexts.
 	 */
 
+fprintf(stderr,"setting script context\n");
 	set_script_context(SINGLE_QSP_ARG);
 
+fprintf(stderr,"pushing top menu\n");
 	push_top_menu(SINGLE_QSP_ARG);	/* make sure at root menu */
 	start_level = QLEVEL;
+fprintf(stderr,"enabling quote stripping\n");
 	enable_stripping_quotes(SINGLE_QSP_ARG);
 	while( QLEVEL >= start_level ){
 		// was do_cmd
+fprintf(stderr,"executing next script command\n");
 		qs_do_cmd(THIS_QSP);
 lookahead(SINGLE_QSP_ARG);
 	}
-	//popcmd(SINGLE_QSP_ARG);		/* go back */
+fprintf(stderr,"popping top menu\n");
 	do_pop_menu(SINGLE_QSP_ARG);		/* go back */
 
+fprintf(stderr,"unsetting script context\n");
 	unset_script_context(SINGLE_QSP_ARG);
 
+fprintf(stderr,"freeing dummy macro\n");
 	givbuf(dummy_mp);
+fprintf(stderr,"execute_script_node DONE\n");
 	return 0;
 }
 
