@@ -67,6 +67,7 @@ Delete_Image diftmp
 .
 
 Define Show_Image 2 'float image' 'viewer name'
+advise "Show_Image $1 $2 BEGIN"
 Dup_Float siftmp $1
 Convert siftmp $1	# was VMov
 Scale siftmp $si_min $si_max
