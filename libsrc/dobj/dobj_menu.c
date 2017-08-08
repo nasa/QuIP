@@ -486,7 +486,7 @@ static COMMAND_FUNC( mksubimg )
 	INSIST_NONNEGATIVE(xos,"x offset","mksubimg");
 	INSIST_NONNEGATIVE(yos,"y offset","mksubimg");
 
-	newdp=mk_subimg(QSP_ARG  dp,xos,yos,obj_name,(dimension_t)rows,(dimension_t)cols);
+	newdp=mk_subimg(QSP_ARG  dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
@@ -523,9 +523,9 @@ static COMMAND_FUNC( mksubsequence )
 	INSIST_NONNEGATIVE(t_offset,"t offset","mksubsequence");
 
 	offsets[0]=0;
-	offsets[1]=x_offset;
-	offsets[2]=y_offset;
-	offsets[3]=t_offset;
+	offsets[1]=(index_t)x_offset;
+	offsets[2]=(index_t)y_offset;
+	offsets[3]=(index_t)t_offset;
 	offsets[4]=0;
 
 	SET_DIMENSION(dsp,0,OBJ_COMPS(dp));
@@ -649,7 +649,7 @@ static COMMAND_FUNC( mkcast )
 	INSIST_NONNEGATIVE(xos,"x offset","mkcast")
 	INSIST_NONNEGATIVE(yos,"y offset","mkcast")
 
-	newdp=nmk_subimg(QSP_ARG  dp,xos,yos,obj_name,rows,cols,tdim);
+	newdp=nmk_subimg(QSP_ARG  dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols,(dimension_t)tdim);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }

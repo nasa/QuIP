@@ -284,7 +284,7 @@ static inline void insure_prompt_buf(QSP_ARG_DECL  const char *fmt, const char *
 {
 	int n_need;
 
-	n_need = strlen(fmt) + strlen(pmpt);
+	n_need = (int) (strlen(fmt) + strlen(pmpt));
 	if( n_need > sb_size(QS_QRY_PROMPT_SB(THIS_QSP)) )
 		enlarge_buffer(QS_QRY_PROMPT_SB(THIS_QSP),n_need+32);
 }

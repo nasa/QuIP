@@ -820,7 +820,7 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 	else
 		val = next_input_int_with_format(QSP_ARG  "bit value");
 
-	if( val < 0 || val > 1 ){
+	if( /* val < 0 || */ val > 1 ){     // bitmap_word is an unsigned type
 		WARN("Truncation error converting bit");
 	}
 	bit = 1 << (i_bit % BITS_PER_BITMAP_WORD);
@@ -1335,7 +1335,7 @@ static int get_bits(QSP_ARG_DECL  Data_Obj *dp, int dim, int bit0 )
 	offset = OBJ_TYPE_INC(dp,dim);
 	for(i=0;i<OBJ_TYPE_DIM(dp,dim);i++){
 		int status;
-		status = get_bits(QSP_ARG  dp,dim-1,bit0+i*offset);
+		status = get_bits(QSP_ARG  dp,dim-1,bit0+(int)(i*offset));
 		if( status < 0 ) return status;
 	}
 	return 0;
