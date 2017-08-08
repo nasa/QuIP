@@ -2326,11 +2326,15 @@ static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,i
 			if( IS_SCALAR(dp) ){
 				format_scalar_obj(QSP_ARG  buf,64,dp,OBJ_DATA_PTR(dp));
 				STORE_QUERY_ARG( savestr(buf) )
-				return(1);
+			} else {
+				STORE_QUERY_ARG( savestr(OBJ_NAME(VN_OBJ(enp))) )
 			}
-			/* else fall-thru */
+			return 1;
+			break;
+
 		case T_STRING:
 			/* add this string as one of the args */
+fprintf(stderr,"Storing arg '%s'\n",VN_STRING(enp));
 			STORE_QUERY_ARG( savestr(VN_STRING(enp)) )
 			return(1);
 
@@ -7241,6 +7245,7 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	/* BUG?  we have to make sure than we never try to assign more than sr_nargs args! */
 
+fprintf(stderr,"script func has %d args\n",SR_N_ARGS(srp));
 	n_args=SET_SCRIPT_ARGS(VN_CHILD(enp,0),0,qp,SR_N_ARGS(srp));
 	// IN the objC implementation, the args are held in the query object as a list,
 	// not an array.  This makes the recursive population a little tricker.
