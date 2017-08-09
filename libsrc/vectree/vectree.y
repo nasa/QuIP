@@ -2192,6 +2192,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 	int in_comment=0;
 nexttok:
 	if( END_SEEN ){
+fprintf(stderr,"yylex:  returning because end seen\n");
 		return(0);
 	}
 
@@ -2206,7 +2207,9 @@ nexttok:
 
 
 		lookahead_til(QSP_ARG  EXPR_LEVEL-1);
+fprintf(stderr,"yylex:  expr_level = %d, qlevel = %d\n",EXPR_LEVEL,QLEVEL);
 		if( EXPR_LEVEL > (ql=QLEVEL) ){
+fprintf(stderr,"yylex:  returning because qlevel is too small, expr_level = %d, qlevel = %d\n",EXPR_LEVEL,QLEVEL);
 			return(0);	/* EOF */
 		}
 
@@ -2400,6 +2403,7 @@ if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
 
 		tok=name_token(QSP_ARG yylvp);
 		if( tok == END ){
+fprintf(stderr,"yylex:  end token seen!\n");
 			END_SEEN=1;
 		}
 
@@ -2746,6 +2750,12 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 {
 	int stat;
 
+	// BUG  these variables all are part of the query_stack struct,
+	// but there is a problem because we can have recursion IF we
+	// have a script function, and call the parser from that script.
+	// A possible solution is to have a stack of these...
+	// FIXME
+
 	FINAL=0.0;
 	YY_INPUT_LINE[0]=0;		/* clear record of input string */
 	LASTLINENO=(-1);
@@ -2766,7 +2776,9 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	 * routine is generated automatically by bison, we would have to hand-edit
 	 * vectree.c each time we run bison...
 	 */
+fprintf(stderr,"parse_stuff calling yyparse...\n");
 	stat=yyparse(THIS_QSP);
+
 	if( TOP_NODE != NULL )	/* successful parsing */
 		{
 		if( dumpit ) {
@@ -2783,6 +2795,7 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 		advise(ERROR_STRING);
 	}
 
+fprintf(stderr,"parse_stuff back from yyparse\n");
 	/* yylex call qline - */
 
 	/* enable_lookahead(); */
@@ -2865,7 +2878,7 @@ int vecexp_ing=1;
 void expr_file(SINGLE_QSP_ARG_DECL)
 {
 	SET_EXPR_LEVEL(QLEVEL);	/* yylex checks this... */
-
+fprintf(stderr,"expr_file:  expr_level set to %d\n",QLEVEL);
 	parse_stuff(SINGLE_QSP_ARG);
 
 	/* We can break out of this loop

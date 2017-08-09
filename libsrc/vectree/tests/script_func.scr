@@ -1,0 +1,30 @@
+
+#max_warnings 2
+Set h 1024
+Set w 768
+
+Define Call_It 1 word
+advise "Call_It passed '$1'"
+.
+
+Define Call_2 1 word
+Call_It $1
+.
+
+expressions
+  script test_it 1 'advise "passed $1"'
+  script test_2 1 'Call_It $1'
+  script test_3 1 'Call_2 $1'
+  read -
+    u_byte b[$h][$w];
+    b=0;
+    test_it(b);
+    print("back from test script function.");
+    test_2(b);
+    print("back from second test script function.");
+    test_3(b);
+    print("back from second test script function.");
+    end
+
+  Pause
+  exit
