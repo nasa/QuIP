@@ -2316,6 +2316,8 @@ static int parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_a
 
 	eval_enp = enp;
 
+fprintf(stderr,"parse_script_args BEGIN  index = %d   max_args = %d\n",index,max_args);
+DUMP_TREE(enp);
 	switch(VN_CODE(enp)){
 		case T_DEREFERENCE:				/* set_script_args */
 			dp = EVAL_OBJ_REF(enp);
@@ -2354,7 +2356,7 @@ static int parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_a
 				format_scalar_obj(QSP_ARG  buf,64,dp,OBJ_DATA_PTR(dp));
 				store_script_arg( buf, index );
 			} else {
-				store_script_arg( OBJ_NAME(VN_OBJ(enp)), index );
+				store_script_arg( OBJ_NAME(dp), index );
 			}
 			return 1;
 			break;
