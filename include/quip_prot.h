@@ -42,6 +42,7 @@ extern int query_has_text(Query *);
 extern void exit_current_file(SINGLE_QSP_ARG_DECL);
 extern void exit_current_macro(SINGLE_QSP_ARG_DECL);
 extern void set_query_arg_at_index(Query *qp,int index,const char *s);
+extern void rls_macro(QSP_ARG_DECL  Macro *mp);
 
 extern int qs_level(SINGLE_QSP_ARG_DECL);
 extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);

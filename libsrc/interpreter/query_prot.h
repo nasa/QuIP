@@ -19,12 +19,12 @@ extern void call_funcs_from_list(QSP_ARG_DECL  List *lp );
 extern void show_macro(QSP_ARG_DECL  Macro *mp);
 extern void dump_macro(QSP_ARG_DECL  Macro *mp);
 extern void macro_info(QSP_ARG_DECL  Macro *mp);
-extern void rls_macro_arg(Macro_Arg *map);
 extern int macro_is_invoked(Macro *);
 extern void allow_recursion_for_macro(Macro *);
 extern void rls_macro(QSP_ARG_DECL  Macro *);
 extern const char * macro_filename(Macro *);
 extern int macro_lineno(Macro *);
+extern void rls_macro_arg(Macro_Arg *);
 
 
 extern const char * nextline(QSP_ARG_DECL const char *pline);
