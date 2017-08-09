@@ -1117,8 +1117,8 @@ void xform_from_bitmap(Shape_Info *shpp,prec_t prec)
 	/*shpp->si_rowpad=0; */
 	SET_SHP_PREC_PTR(shpp, PREC_FOR_CODE(prec) );
 	CLEAR_SHP_FLAG_BITS(shpp, DT_BIT);
-fprintf(stderr,"xform_from_bitmap:\n");
-describe_shape(DEFAULT_QSP_ARG  shpp);
+//fprintf(stderr,"xform_from_bitmap:\n");
+//describe_shape(DEFAULT_QSP_ARG  shpp);
 }
 
 /* setup_spcdom_shape - setup space domain shape (from freq. domain transform shape) */
