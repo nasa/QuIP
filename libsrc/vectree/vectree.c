@@ -1,14 +1,13 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
-/* Skeleton implementation for Bison's Yacc-like parsers in C
+/* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -47,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.3"
+#define YYBISON_VERSION "3.0.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -55,158 +52,301 @@
 /* Pure parsers.  */
 #define YYPURE 1
 
-/* Using locations.  */
-#define YYLSP_NEEDED 0
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 
 /* Substitute the variable and function names.  */
-#define yyparse vt_parse
-#define yylex   vt_lex
-#define yyerror vt_error
-#define yylval  vt_lval
-#define yychar  vt_char
-#define yydebug vt_debug
-#define yynerrs vt_nerrs
+#define yyparse         vt_parse
+#define yylex           vt_lex
+#define yyerror         vt_error
+#define yydebug         vt_debug
+#define yynerrs         vt_nerrs
 
 
-/* Tokens.  */
+/* Copy the first part of user declarations.  */
+#line 1 "vectree.y" /* yacc.c:339  */
+
+#include "quip_config.h"
+
+#include <stdio.h>
+#include <ctype.h>
+#include <math.h>
+#include <string.h>
+
+// The file yacc_hack redefines the symbols used by yacc so that two parsers
+// can play together...
+// NOW USE built-in %name-prefix=   - see below
+//#define YACC_HACK_PREFIX	vt
+//#include "yacc_hack.h"		// could be obviated by bison cmd line arg
+
+//#include "savestr.h"		/* not needed? BUG */
+#include "data_obj.h"
+#include "undef_sym.h"
+#include "debug.h"
+#include "getbuf.h"
+#include "node.h"
+#include "function.h"
+/* #include "warproto.h" */
+#include "quip_prot.h"
+#include "veclib/vec_func.h"
+#include "warn.h"
+#include "query_stack.h"	// BUG?
+
+#include "vectree.h"
+#include "subrt.h"
+
+/* for definition of function codes */
+#include "veclib/vecgen.h"
+
+#ifdef SGI
+#include <alloca.h>
+#endif
+
+#ifdef QUIP_DEBUG
+debug_flag_t parser_debug=0;
+#endif /* QUIP_DEBUG */
+
+#define YY_LLEN 1024
+
+//static char yy_word_buf[YY_LLEN]; // BUG global is not thread-safe!
+
+
+//#ifdef THREAD_SAFE_QUERY
+// old-style, now use %parse-param {}
+//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stack * */
+/* For yyerror */
+//#define YY_(msg)	QSP_ARG msg
+//#endif /* THREAD_SAFE_QUERY */
+
+void yyerror(Query_Stack *qsp,  char *);
+
+static int whkeyword(Keyword *table,const char *str);
+
+double parse_stuff(SINGLE_QSP_ARG_DECL);
+
+double nullfunc();
+double dummyfunc();
+double rn_number();
+double dstrcmp();
+
+/* We use a fixed number of static string buffers to hold string names.
+ * This works ok if we have a short program, or if we use the strings
+ * right away, but craps out for subroutine declarations, where we have
+ * to remember the subroutine name until the end of the body!
+ *
+ * Alternatively, we could save all strings, and then free when we're
+ * done parsing... or free when we're done with each one.
+ */
+
+struct position { int x,y; };
+
+typedef struct decl_info {
+	char *di_name;
+	int di_cols;
+	int di_rows;
+	int di_frms;
+} decl_info;
+
+
+/* what yylval can be */
+
+typedef union {
+	Vec_Expr_Node *enp;
+	//Vec_Func_Code fcode;	/* index to our tables here... */
+	int   fundex;		/* function index */
+	Quip_Function *func_p;
+	double dval;		/* actual value */
+	int intval;
+	Data_Obj *dp;
+	Identifier *idp;
+	Subrt *srp;
+	const char *e_string;
+	List *list;
+	Node *node;
+	void *v;
+	struct position posn;
+	Vec_Func_Code vfc;
+	Precision *prec_p;
+} YYSTYPE;
+
+static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp);
+
+#define YYSTYPE_IS_DECLARED			/* necessary on a 2.6 machine?? */
+
+int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
+
+#define YY_ERR_STR	ERROR_STRING
+
+
+#line 186 "vectree.c" /* yacc.c:339  */
+
+# ifndef YY_NULLPTR
+#  if defined __cplusplus && 201103L <= __cplusplus
+#   define YY_NULLPTR nullptr
+#  else
+#   define YY_NULLPTR 0
+#  endif
+# endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int vt_debug;
+#endif
+
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     TIMES_EQ = 258,
-     PLUS_EQ = 259,
-     PLUS_PLUS = 260,
-     MINUS_MINUS = 261,
-     MINUS_EQ = 262,
-     DIV_EQ = 263,
-     OR_EQ = 264,
-     AND_EQ = 265,
-     XOR_EQ = 266,
-     SHL_EQ = 267,
-     SHR_EQ = 268,
-     LOGOR = 269,
-     LOGXOR = 270,
-     LOGAND = 271,
-     NE = 272,
-     LOG_EQ = 273,
-     LE = 274,
-     GE = 275,
-     SHR = 276,
-     SHL = 277,
-     DOT = 278,
-     UNARY = 279,
-     NUMBER = 280,
-     INT_NUM = 281,
-     CHAR_CONST = 282,
-     MATH0_FUNC = 283,
-     MATH1_FUNC = 284,
-     MATH2_FUNC = 285,
-     INT1_FUNC = 286,
-     STR1_FUNC = 287,
-     STR2_FUNC = 288,
-     STR3_FUNC = 289,
-     STRV_FUNC = 290,
-     CHAR_FUNC = 291,
-     DATA_FUNC = 292,
-     SIZE_FUNC = 293,
-     TS_FUNC = 294,
-     BEGIN_COMMENT = 295,
-     END_COMMENT = 296,
-     WHILE = 297,
-     UNTIL = 298,
-     CONTINUE = 299,
-     SWITCH = 300,
-     CASE = 301,
-     DEFAULT = 302,
-     BREAK = 303,
-     GOTO = 304,
-     DO = 305,
-     FOR = 306,
-     STATIC = 307,
-     BYTE = 308,
-     CHAR = 309,
-     STRING = 310,
-     FLOAT = 311,
-     DOUBLE = 312,
-     SHORT = 313,
-     INT32 = 314,
-     INT64 = 315,
-     BIT = 316,
-     UBYTE = 317,
-     USHORT = 318,
-     UINT32 = 319,
-     UINT64 = 320,
-     COLOR = 321,
-     COMPLEX = 322,
-     DBLCPX = 323,
-     QUATERNION = 324,
-     DBLQUAT = 325,
-     STRCPY = 326,
-     NAME_FUNC = 327,
-     FILE_EXISTS = 328,
-     STRCAT = 329,
-     ECHO = 330,
-     ADVISE_FUNC = 331,
-     DISPLAY = 332,
-     F_WARN = 333,
-     PRINT = 334,
-     INFO = 335,
-     IF = 336,
-     ELSE = 337,
-     RETURN = 338,
-     EXIT = 339,
-     MINVAL = 340,
-     MAXVAL = 341,
-     WRAP = 342,
-     SCROLL = 343,
-     DILATE = 344,
-     FIX_SIZE = 345,
-     FILL = 346,
-     CLR_OPT_PARAMS = 347,
-     ADD_OPT_PARAM = 348,
-     OPTIMIZE = 349,
-     ERODE = 350,
-     ENLARGE = 351,
-     REDUCE = 352,
-     WARP = 353,
-     LOOKUP = 354,
-     EQUIVALENCE = 355,
-     TRANSPOSE = 356,
-     CONJ = 357,
-     MAX_TIMES = 358,
-     MAX_INDEX = 359,
-     MIN_INDEX = 360,
-     DFT = 361,
-     IDFT = 362,
-     RDFT = 363,
-     RIDFT = 364,
-     REAL_PART = 365,
-     IMAG_PART = 366,
-     RAMP = 367,
-     SUM = 368,
-     END = 369,
-     NEXT_TOKEN = 370,
-     NEWLINE = 371,
-     SET_OUTPUT_FILE = 372,
-     LOAD = 373,
-     SAVE = 374,
-     FILETYPE = 375,
-     OBJ_OF = 376,
-     FUNCNAME = 377,
-     REFFUNC = 378,
-     SCRIPTFUNC = 379,
-     OBJNAME = 380,
-     PTRNAME = 381,
-     STRNAME = 382,
-     LABELNAME = 383,
-     FUNCPTRNAME = 384,
-     LEX_STRING = 385,
-     NEWNAME = 386,
-     VOID_TYPE = 387,
-     EXTERN = 388,
-     NATIVE_FUNC_NAME = 389
-   };
+  enum yytokentype
+  {
+    TIMES_EQ = 258,
+    PLUS_EQ = 259,
+    PLUS_PLUS = 260,
+    MINUS_MINUS = 261,
+    MINUS_EQ = 262,
+    DIV_EQ = 263,
+    OR_EQ = 264,
+    AND_EQ = 265,
+    XOR_EQ = 266,
+    SHL_EQ = 267,
+    SHR_EQ = 268,
+    LOGOR = 269,
+    LOGXOR = 270,
+    LOGAND = 271,
+    LOG_EQ = 272,
+    NE = 273,
+    GE = 274,
+    LE = 275,
+    SHL = 276,
+    SHR = 277,
+    DOT = 278,
+    UNARY = 279,
+    NUMBER = 280,
+    INT_NUM = 281,
+    CHAR_CONST = 282,
+    MATH0_FUNC = 283,
+    MATH1_FUNC = 284,
+    MATH2_FUNC = 285,
+    INT1_FUNC = 286,
+    STR1_FUNC = 287,
+    STR2_FUNC = 288,
+    STR3_FUNC = 289,
+    STRV_FUNC = 290,
+    CHAR_FUNC = 291,
+    DATA_FUNC = 292,
+    SIZE_FUNC = 293,
+    TS_FUNC = 294,
+    BEGIN_COMMENT = 295,
+    END_COMMENT = 296,
+    WHILE = 297,
+    UNTIL = 298,
+    CONTINUE = 299,
+    SWITCH = 300,
+    CASE = 301,
+    DEFAULT = 302,
+    BREAK = 303,
+    GOTO = 304,
+    DO = 305,
+    FOR = 306,
+    STATIC = 307,
+    BYTE = 308,
+    CHAR = 309,
+    STRING = 310,
+    FLOAT = 311,
+    DOUBLE = 312,
+    SHORT = 313,
+    INT32 = 314,
+    INT64 = 315,
+    BIT = 316,
+    UBYTE = 317,
+    USHORT = 318,
+    UINT32 = 319,
+    UINT64 = 320,
+    COLOR = 321,
+    COMPLEX = 322,
+    DBLCPX = 323,
+    QUATERNION = 324,
+    DBLQUAT = 325,
+    STRCPY = 326,
+    NAME_FUNC = 327,
+    FILE_EXISTS = 328,
+    STRCAT = 329,
+    ECHO = 330,
+    ADVISE_FUNC = 331,
+    DISPLAY = 332,
+    F_WARN = 333,
+    PRINT = 334,
+    INFO = 335,
+    IF = 336,
+    ELSE = 337,
+    RETURN = 338,
+    EXIT = 339,
+    MINVAL = 340,
+    MAXVAL = 341,
+    WRAP = 342,
+    SCROLL = 343,
+    DILATE = 344,
+    FIX_SIZE = 345,
+    FILL = 346,
+    CLR_OPT_PARAMS = 347,
+    ADD_OPT_PARAM = 348,
+    OPTIMIZE = 349,
+    ERODE = 350,
+    ENLARGE = 351,
+    REDUCE = 352,
+    WARP = 353,
+    LOOKUP = 354,
+    EQUIVALENCE = 355,
+    TRANSPOSE = 356,
+    CONJ = 357,
+    MAX_TIMES = 358,
+    MAX_INDEX = 359,
+    MIN_INDEX = 360,
+    DFT = 361,
+    IDFT = 362,
+    RDFT = 363,
+    RIDFT = 364,
+    REAL_PART = 365,
+    IMAG_PART = 366,
+    RAMP = 367,
+    SUM = 368,
+    END = 369,
+    NEXT_TOKEN = 370,
+    NEWLINE = 371,
+    SET_OUTPUT_FILE = 372,
+    LOAD = 373,
+    SAVE = 374,
+    FILETYPE = 375,
+    OBJ_OF = 376,
+    FUNCNAME = 377,
+    REFFUNC = 378,
+    SCRIPTFUNC = 379,
+    OBJNAME = 380,
+    PTRNAME = 381,
+    STRNAME = 382,
+    LABELNAME = 383,
+    FUNCPTRNAME = 384,
+    LEX_STRING = 385,
+    NEWNAME = 386,
+    VOID_TYPE = 387,
+    EXTERN = 388,
+    NATIVE_FUNC_NAME = 389
+  };
 #endif
 /* Tokens.  */
 #define TIMES_EQ 258
@@ -223,12 +363,12 @@
 #define LOGOR 269
 #define LOGXOR 270
 #define LOGAND 271
-#define NE 272
-#define LOG_EQ 273
-#define LE 274
-#define GE 275
-#define SHR 276
-#define SHL 277
+#define LOG_EQ 272
+#define NE 273
+#define GE 274
+#define LE 275
+#define SHL 276
+#define SHR 277
 #define DOT 278
 #define UNARY 279
 #define NUMBER 280
@@ -342,168 +482,17 @@
 #define EXTERN 388
 #define NATIVE_FUNC_NAME 389
 
+/* Value type.  */
 
 
 
-/* Copy the first part of user declarations.  */
-#line 1 "vectree.y"
-
-#include "quip_config.h"
-
-#include <stdio.h>
-#include <ctype.h>
-#include <math.h>
-#include <string.h>
-
-// The file yacc_hack redefines the symbols used by yacc so that two parsers
-// can play together...
-// NOW USE built-in %name-prefix=   - see below
-//#define YACC_HACK_PREFIX	vt
-//#include "yacc_hack.h"		// could be obviated by bison cmd line arg
-
-//#include "savestr.h"		/* not needed? BUG */
-#include "data_obj.h"
-#include "undef_sym.h"
-#include "debug.h"
-#include "getbuf.h"
-#include "node.h"
-#include "function.h"
-/* #include "warproto.h" */
-#include "quip_prot.h"
-#include "veclib/vec_func.h"
-#include "warn.h"
-#include "query_stack.h"	// BUG?
-
-#include "vectree.h"
-#include "subrt.h"
-
-/* for definition of function codes */
-#include "veclib/vecgen.h"
-
-#ifdef SGI
-#include <alloca.h>
-#endif
-
-#ifdef QUIP_DEBUG
-debug_flag_t parser_debug=0;
-#endif /* QUIP_DEBUG */
-
-#define YY_LLEN 1024
-
-static char yy_word_buf[YY_LLEN]; // BUG global is not thread-safe!
-
-
-//#ifdef THREAD_SAFE_QUERY
-// old-style, now use %parse-param {}
-//#define YYPARSE_PARAM qsp	/* gets declared void * instead of Query_Stack * */
-/* For yyerror */
-//#define YY_(msg)	QSP_ARG msg
-//#endif /* THREAD_SAFE_QUERY */
-
-void yyerror(Query_Stack *qsp,  char *);
-
-static int whkeyword(Keyword *table,const char *str);
-
-double parse_stuff(SINGLE_QSP_ARG_DECL);
-
-double nullfunc();
-double dummyfunc();
-double rn_number();
-double dstrcmp();
-
-/* We use a fixed number of static string buffers to hold string names.
- * This works ok if we have a short program, or if we use the strings
- * right away, but craps out for subroutine declarations, where we have
- * to remember the subroutine name until the end of the body!
- *
- * Alternatively, we could save all strings, and then free when we're
- * done parsing... or free when we're done with each one.
- */
-
-struct position { int x,y; };
-
-typedef struct decl_info {
-	char *di_name;
-	int di_cols;
-	int di_rows;
-	int di_frms;
-} decl_info;
-
-
-/* what yylval can be */
-
-typedef union {
-	Vec_Expr_Node *enp;
-	//Vec_Func_Code fcode;	/* index to our tables here... */
-	int   fundex;		/* function index */
-	Quip_Function *func_p;
-	double dval;		/* actual value */
-	int intval;
-	Data_Obj *dp;
-	Identifier *idp;
-	Subrt *srp;
-	const char *e_string;
-	List *list;
-	Node *node;
-	void *v;
-	struct position posn;
-	Vec_Func_Code vfc;
-	Precision *prec_p;
-} YYSTYPE;
-
-static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp);
-
-#define YYSTYPE_IS_DECLARED			/* necessary on a 2.6 machine?? */
-
-//#ifdef THREAD_SAFE_QUERY
-//
-//int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
-//#define YYLEX_PARAM SINGLE_QSP_ARG
-//
-//#else
-//
-//int yylex(YYSTYPE *yylvp);
-//
-//#endif
-int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
-
-//#define YY_ERR_STR	QS_ERROR_STRING(((Query_Stack *)qsp))	// this macro casts qsp, unlike ERROR_STRING
-#define YY_ERR_STR	ERROR_STRING
-
-
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
-
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
-#endif
+int vt_parse (Query_Stack *qsp);
 
 
 
 /* Copy the second part of user declarations.  */
 
-
-/* Line 216 of yacc.c.  */
-#line 507 "vectree.c"
+#line 496 "vectree.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -517,11 +506,8 @@ typedef unsigned char yytype_uint8;
 
 #ifdef YYTYPE_INT8
 typedef YYTYPE_INT8 yytype_int8;
-#elif (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-typedef signed char yytype_int8;
 #else
-typedef short int yytype_int8;
+typedef signed char yytype_int8;
 #endif
 
 #ifdef YYTYPE_UINT16
@@ -541,8 +527,7 @@ typedef short int yytype_int16;
 #  define YYSIZE_T __SIZE_TYPE__
 # elif defined size_t
 #  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+# elif ! defined YYSIZE_T
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
@@ -556,38 +541,67 @@ typedef short int yytype_int16;
 # if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
-#   define YY_(msgid) dgettext ("bison-runtime", msgid)
+#   define YY_(Msgid) dgettext ("bison-runtime", Msgid)
 #  endif
 # endif
 # ifndef YY_
-#  define YY_(msgid) msgid
+#  define YY_(Msgid) Msgid
+# endif
+#endif
+
+#ifndef YY_ATTRIBUTE
+# if (defined __GNUC__                                               \
+      && (2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)))  \
+     || defined __SUNPRO_C && 0x5110 <= __SUNPRO_C
+#  define YY_ATTRIBUTE(Spec) __attribute__(Spec)
+# else
+#  define YY_ATTRIBUTE(Spec) /* empty */
+# endif
+#endif
+
+#ifndef YY_ATTRIBUTE_PURE
+# define YY_ATTRIBUTE_PURE   YY_ATTRIBUTE ((__pure__))
+#endif
+
+#ifndef YY_ATTRIBUTE_UNUSED
+# define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
+#endif
+
+#if !defined _Noreturn \
+     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
+# if defined _MSC_VER && 1200 <= _MSC_VER
+#  define _Noreturn __declspec (noreturn)
+# else
+#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
 # endif
 #endif
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(e) ((void) (e))
+# define YYUSE(E) ((void) (E))
 #else
-# define YYUSE(e) /* empty */
+# define YYUSE(E) /* empty */
 #endif
 
-/* Identity function, used to suppress warnings about constant conditions.  */
-#ifndef lint
-# define YYID(n) (n)
+#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+/* Suppress an incorrect diagnostic about yylval being uninitialized.  */
+# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
+    _Pragma ("GCC diagnostic push") \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")\
+    _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END \
+    _Pragma ("GCC diagnostic pop")
 #else
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-static int
-YYID (int i)
-#else
-static int
-YYID (i)
-    int i;
+# define YY_INITIAL_VALUE(Value) Value
 #endif
-{
-  return i;
-}
+#ifndef YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END
 #endif
+#ifndef YY_INITIAL_VALUE
+# define YY_INITIAL_VALUE(Value) /* Nothing. */
+#endif
+
 
 #if ! defined yyoverflow || YYERROR_VERBOSE
 
@@ -606,11 +620,11 @@ YYID (i)
 #    define alloca _alloca
 #   else
 #    define YYSTACK_ALLOC alloca
-#    if ! defined _ALLOCA_H && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#    if ! defined _ALLOCA_H && ! defined EXIT_SUCCESS
 #     include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#     ifndef _STDLIB_H
-#      define _STDLIB_H 1
+      /* Use EXIT_SUCCESS as a witness for stdlib.h.  */
+#     ifndef EXIT_SUCCESS
+#      define EXIT_SUCCESS 0
 #     endif
 #    endif
 #   endif
@@ -618,8 +632,8 @@ YYID (i)
 # endif
 
 # ifdef YYSTACK_ALLOC
-   /* Pacify GCC's `empty if-body' warning.  */
-#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (YYID (0))
+   /* Pacify GCC's 'empty if-body' warning.  */
+#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
 #  ifndef YYSTACK_ALLOC_MAXIMUM
     /* The OS might guarantee only one guard page at the bottom of the stack,
        and a page size can be as small as 4096 bytes.  So we cannot safely
@@ -633,25 +647,23 @@ YYID (i)
 #  ifndef YYSTACK_ALLOC_MAXIMUM
 #   define YYSTACK_ALLOC_MAXIMUM YYSIZE_MAXIMUM
 #  endif
-#  if (defined __cplusplus && ! defined _STDLIB_H \
+#  if (defined __cplusplus && ! defined EXIT_SUCCESS \
        && ! ((defined YYMALLOC || defined malloc) \
-	     && (defined YYFREE || defined free)))
+             && (defined YYFREE || defined free)))
 #   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#   ifndef _STDLIB_H
-#    define _STDLIB_H 1
+#   ifndef EXIT_SUCCESS
+#    define EXIT_SUCCESS 0
 #   endif
 #  endif
 #  ifndef YYMALLOC
 #   define YYMALLOC malloc
-#   if ! defined malloc && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#   if ! defined malloc && ! defined EXIT_SUCCESS
 void *malloc (YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 #  ifndef YYFREE
 #   define YYFREE free
-#   if ! defined free && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+#   if ! defined free && ! defined EXIT_SUCCESS
 void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
@@ -661,14 +673,14 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-	 || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -679,41 +691,45 @@ union yyalloc
      ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
-/* Copy COUNT objects from FROM to TO.  The source and destination do
-   not overlap.  */
-# ifndef YYCOPY
-#  if defined __GNUC__ && 1 < __GNUC__
-#   define YYCOPY(To, From, Count) \
-      __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
-#  else
-#   define YYCOPY(To, From, Count)		\
-      do					\
-	{					\
-	  YYSIZE_T yyi;				\
-	  for (yyi = 0; yyi < (Count); yyi++)	\
-	    (To)[yyi] = (From)[yyi];		\
-	}					\
-      while (YYID (0))
-#  endif
-# endif
+# define YYCOPY_NEEDED 1
 
 /* Relocate STACK from its old location to the new one.  The
    local variables YYSIZE and YYSTACKSIZE give the old and new number of
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
-    do									\
-      {									\
-	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
-	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
-	yyptr += yynewbytes / sizeof (*yyptr);				\
-      }									\
-    while (YYID (0))
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
+    do                                                                  \
+      {                                                                 \
+        YYSIZE_T yynewbytes;                                            \
+        YYCOPY (&yyptr->Stack_alloc, Stack, yysize);                    \
+        Stack = &yyptr->Stack_alloc;                                    \
+        yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / sizeof (*yyptr);                          \
+      }                                                                 \
+    while (0)
 
 #endif
+
+#if defined YYCOPY_NEEDED && YYCOPY_NEEDED
+/* Copy COUNT objects from SRC to DST.  The source and destination do
+   not overlap.  */
+# ifndef YYCOPY
+#  if defined __GNUC__ && 1 < __GNUC__
+#   define YYCOPY(Dst, Src, Count) \
+      __builtin_memcpy (Dst, Src, (Count) * sizeof (*(Src)))
+#  else
+#   define YYCOPY(Dst, Src, Count)              \
+      do                                        \
+        {                                       \
+          YYSIZE_T yyi;                         \
+          for (yyi = 0; yyi < (Count); yyi++)   \
+            (Dst)[yyi] = (Src)[yyi];            \
+        }                                       \
+      while (0)
+#  endif
+# endif
+#endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  227
@@ -726,17 +742,19 @@ union yyalloc
 #define YYNNTS  63
 /* YYNRULES -- Number of rules.  */
 #define YYNRULES  307
-/* YYNRULES -- Number of states.  */
+/* YYNSTATES -- Number of states.  */
 #define YYNSTATES  737
 
-/* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
+/* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
+   by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   389
 
-#define YYTRANSLATE(YYX)						\
+#define YYTRANSLATE(YYX)                                                \
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
-/* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
+/* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex, without out-of-bounds checking.  */
 static const yytype_uint8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -781,207 +799,44 @@ static const yytype_uint8 yytranslate[] =
 };
 
 #if YYDEBUG
-/* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
-   YYRHS.  */
-static const yytype_uint16 yyprhs[] =
-{
-       0,     0,     3,     5,     7,     9,    15,    17,    20,    25,
-      27,    32,    37,    42,    47,    54,    61,    66,    71,    76,
-      78,    83,    87,    91,    95,    99,   103,   107,   111,   115,
-     119,   123,   127,   130,   132,   136,   140,   144,   148,   152,
-     156,   160,   164,   168,   171,   175,   179,   183,   188,   195,
-     200,   204,   206,   212,   214,   216,   221,   226,   231,   236,
-     241,   246,   251,   256,   263,   270,   275,   280,   285,   288,
-     293,   298,   303,   308,   316,   321,   323,   325,   332,   339,
-     344,   349,   354,   359,   364,   366,   371,   380,   385,   390,
-     395,   400,   405,   414,   423,   425,   428,   430,   432,   434,
-     437,   438,   440,   444,   449,   457,   460,   462,   464,   473,
-     478,   481,   483,   485,   489,   493,   497,   501,   504,   507,
-     510,   513,   517,   521,   525,   529,   533,   537,   541,   545,
-     549,   552,   554,   556,   559,   562,   565,   567,   569,   572,
-     575,   579,   583,   588,   591,   595,   599,   604,   609,   613,
-     618,   622,   623,   625,   629,   631,   633,   635,   637,   640,
-     642,   646,   649,   652,   654,   656,   658,   660,   662,   664,
-     666,   668,   670,   672,   674,   676,   678,   680,   682,   684,
-     686,   688,   690,   692,   697,   702,   704,   708,   713,   715,
-     719,   722,   727,   730,   737,   742,   747,   751,   753,   755,
-     762,   769,   774,   787,   791,   806,   811,   816,   821,   826,
-     831,   836,   838,   840,   842,   844,   846,   848,   850,   852,
-     860,   865,   870,   878,   886,   897,   908,   922,   926,   930,
-     936,   942,   950,   958,   968,   971,   973,   975,   977,   981,
-     985,   991,   994,   996,   999,  1003,  1008,  1013,  1015,  1017,
-    1023,  1029,  1039,  1047,  1055,  1058,  1060,  1063,  1067,  1070,
-    1072,  1075,  1083,  1089,  1097,  1098,  1100,  1102,  1104,  1106,
-    1108,  1110,  1112,  1114,  1116,  1118,  1120,  1122,  1124,  1126,
-    1129,  1132,  1134,  1136,  1140,  1144,  1146,  1150,  1152,  1156,
-    1158,  1162,  1164,  1168,  1170,  1172,  1174,  1178,  1180,  1184,
-    1186,  1191,  1193,  1195,  1197,  1199,  1201,  1205
-};
-
-/* YYRHS -- A `-1'-separated list of the rules' RHS.  */
-static const yytype_int16 yyrhs[] =
-{
-     182,     0,    -1,   144,    -1,   147,    -1,   145,    -1,   164,
-      16,   164,    16,   164,    -1,   143,    -1,    33,   159,    -1,
-     139,   153,   217,   154,    -1,   149,    -1,   128,   153,   163,
-     154,    -1,   129,   153,   163,   154,    -1,   163,    37,   164,
-      38,    -1,   163,   155,   164,   156,    -1,   163,    37,   164,
-      16,   164,    38,    -1,   163,   155,   164,    16,   164,   156,
-      -1,   163,    37,   162,    38,    -1,   163,   155,   162,   156,
-      -1,   108,   153,   164,   154,    -1,   220,    -1,   153,   183,
-     154,   164,    -1,   153,   164,   154,    -1,   164,    31,   164,
-      -1,   164,    32,   164,    -1,   164,    33,   164,    -1,   164,
-      34,   164,    -1,   164,    35,   164,    -1,   164,    22,   164,
-      -1,   164,    20,   164,    -1,   164,    21,   164,    -1,   164,
-      30,   164,    -1,   164,    29,   164,    -1,    40,   164,    -1,
-      44,    -1,   164,    24,   164,    -1,   164,    25,   164,    -1,
-     164,    26,   164,    -1,   164,    28,   164,    -1,   164,    27,
-     164,    -1,   164,    23,   164,    -1,   164,    19,   164,    -1,
-     164,    17,   164,    -1,   164,    18,   164,    -1,    39,   164,
-      -1,   159,    23,   168,    -1,   159,    24,   168,    -1,    46,
-     153,   154,    -1,    47,   153,   164,   154,    -1,    48,   153,
-     164,    42,   164,   154,    -1,    49,   153,   164,   154,    -1,
-     164,    36,   164,    -1,    43,    -1,   164,    15,   164,    16,
-     164,    -1,    45,    -1,    55,    -1,    55,   153,   163,   154,
-      -1,    56,   153,   220,   154,    -1,    56,   153,   163,   154,
-      -1,    56,   153,   159,   154,    -1,   131,   153,   159,   154,
-      -1,   131,   153,   213,   154,    -1,    91,   153,   220,   154,
-      -1,    50,   153,   220,   154,    -1,    51,   153,   220,    42,
-     220,   154,    -1,    52,   153,   220,    42,   220,   154,    -1,
-      53,   153,   220,   154,    -1,    54,   153,   220,   154,    -1,
-     120,   153,   164,   154,    -1,    32,   164,    -1,   103,   153,
-     213,   154,    -1,   104,   153,   213,   154,    -1,   122,   153,
-     164,   154,    -1,   123,   153,   164,   154,    -1,   153,    33,
-     160,   154,   153,   166,   154,    -1,   140,   153,   166,   154,
-      -1,   209,    -1,   210,    -1,   116,   153,   164,    42,   164,
-     154,    -1,   117,   153,   164,    42,   164,   154,    -1,   119,
-     153,   164,   154,    -1,   124,   153,   164,   154,    -1,   125,
-     153,   164,   154,    -1,   126,   153,   164,   154,    -1,   127,
-     153,   164,   154,    -1,   173,    -1,   105,   153,   164,   154,
-      -1,   106,   153,   164,    42,   164,    42,   164,   154,    -1,
-     113,   153,   164,   154,    -1,   107,   153,   164,   154,    -1,
-     114,   153,   164,   154,    -1,   115,   153,   164,   154,    -1,
-     136,   153,   220,   154,    -1,   130,   153,   164,    42,   164,
-      42,   164,   154,    -1,   121,   153,   168,    42,   168,    42,
-     164,   154,    -1,   164,    -1,    22,   164,    -1,   169,    -1,
-     159,    -1,   170,    -1,    22,   159,    -1,    -1,   165,    -1,
-     166,    42,   165,    -1,   140,   153,   166,   154,    -1,   153,
-      33,   160,   154,   153,   166,   154,    -1,    22,   163,    -1,
-     170,    -1,   159,    -1,   118,   153,   163,    42,   213,    42,
-     184,   154,    -1,   141,   153,   166,   154,    -1,    22,   140,
-      -1,   171,    -1,   160,    -1,   159,     3,   168,    -1,   160,
-       3,   169,    -1,   161,     3,   214,    -1,   163,     3,   164,
-      -1,   163,     6,    -1,     6,   163,    -1,     7,   163,    -1,
-     163,     7,    -1,   163,     5,   164,    -1,   163,     4,   164,
-      -1,   163,     8,   164,    -1,   163,     9,   164,    -1,   163,
-      11,   164,    -1,   163,    10,   164,    -1,   163,    12,   164,
-      -1,   163,    13,   164,    -1,   163,    14,   164,    -1,   207,
-     157,    -1,   176,    -1,   205,    -1,   149,    16,    -1,   146,
-      16,    -1,     1,   157,    -1,   174,    -1,   208,    -1,   175,
-     174,    -1,   175,   208,    -1,   155,   175,   156,    -1,   155,
-     197,   156,    -1,   155,   197,   175,   156,    -1,   155,   156,
-      -1,   155,     1,   156,    -1,   155,   175,   132,    -1,   149,
-     153,   180,   154,    -1,   140,   153,   180,   154,    -1,   183,
-     177,   176,    -1,   183,    33,   177,   176,    -1,   183,   178,
-     176,    -1,    -1,   196,    -1,   180,    42,   196,    -1,   179,
-      -1,   198,    -1,   174,    -1,   208,    -1,   181,   132,    -1,
-     181,    -1,   182,   181,   132,    -1,   182,   181,    -1,     1,
-     132,    -1,   184,    -1,    71,    -1,    72,    -1,    73,    -1,
-      74,    -1,    75,    -1,    85,    -1,    86,    -1,    87,    -1,
-      88,    -1,    76,    -1,    77,    -1,    78,    -1,    80,    -1,
-      81,    -1,    82,    -1,    83,    -1,    79,    -1,    84,    -1,
-     150,    -1,    98,   153,   213,   154,    -1,    95,   153,   213,
-     154,    -1,   102,    -1,   102,   153,   154,    -1,   102,   153,
-     164,   154,    -1,   101,    -1,   101,   153,   154,    -1,   101,
-     164,    -1,   101,   153,   168,   154,    -1,   101,   168,    -1,
-     137,   153,   220,    42,   164,   154,    -1,   138,   153,   220,
-     154,    -1,   142,   153,   214,   154,    -1,   142,   153,   154,
-      -1,   161,    -1,   149,    -1,    89,   153,   190,    42,   219,
-     154,    -1,    92,   153,   190,    42,   219,   154,    -1,   152,
-     153,   166,   154,    -1,   109,   153,   168,    42,   164,    42,
-     164,    42,   164,    42,   164,   154,    -1,   110,   153,   154,
-      -1,   111,   153,   168,    42,   164,    42,   164,    42,   164,
-      42,   164,    42,   164,   154,    -1,   112,   153,   140,   154,
-      -1,   135,   153,   220,   154,    -1,    97,   153,   216,   154,
-      -1,    93,   153,   214,   154,    -1,    94,   153,   214,   154,
-      -1,    96,   153,   214,   154,    -1,   149,    -1,   143,    -1,
-     144,    -1,   145,    -1,   184,    -1,   193,    -1,   177,    -1,
-     178,    -1,   153,    33,   193,   154,   153,   180,   154,    -1,
-     193,   155,   164,   156,    -1,   193,    37,   164,    38,    -1,
-     193,    37,   164,    38,   155,   164,   156,    -1,   193,    37,
-     164,    38,    37,   164,    38,    -1,   193,    37,   164,    38,
-      37,   164,    38,   155,   164,   156,    -1,   193,    37,   164,
-      38,    37,   164,    38,    37,   164,    38,    -1,   193,    37,
-     164,    38,    37,   164,    38,    37,   164,    38,   155,   164,
-     156,    -1,   193,   155,   156,    -1,   193,    37,    38,    -1,
-     193,    37,    38,   155,   156,    -1,   193,    37,    38,    37,
-      38,    -1,   193,    37,    38,    37,    38,   155,   156,    -1,
-     193,    37,    38,    37,    38,    37,    38,    -1,   193,    37,
-      38,    37,    38,    37,    38,   155,   156,    -1,    33,   193,
-      -1,    55,    -1,    56,    -1,   194,    -1,   194,     3,   164,
-      -1,   195,    42,   194,    -1,   195,    42,   194,     3,   164,
-      -1,   183,   194,    -1,   198,    -1,   197,   198,    -1,   183,
-     195,   157,    -1,   151,   183,   195,   157,    -1,    70,   183,
-     195,   157,    -1,   174,    -1,   208,    -1,    60,   153,   164,
-     154,   199,    -1,    61,   153,   164,   154,   199,    -1,    69,
-     153,   207,   157,   164,   157,   207,   154,   199,    -1,    68,
-     199,    60,   153,   164,   154,   157,    -1,    68,   199,    61,
-     153,   164,   154,   157,    -1,   202,   175,    -1,   203,    -1,
-     202,   203,    -1,    64,   164,    16,    -1,    65,    16,    -1,
-     201,    -1,   204,   201,    -1,    63,   153,   164,   154,   155,
-     204,   156,    -1,    99,   153,   164,   154,   199,    -1,    99,
-     153,   164,   154,   199,   100,   199,    -1,    -1,   185,    -1,
-     192,    -1,   191,    -1,   188,    -1,   189,    -1,   187,    -1,
-     186,    -1,   173,    -1,   170,    -1,   171,    -1,   172,    -1,
-     167,    -1,    66,    -1,    62,    -1,    67,   146,    -1,    67,
-     149,    -1,   206,    -1,   200,    -1,   155,   211,   156,    -1,
-      37,   212,    38,    -1,   164,    -1,   211,    42,   164,    -1,
-     164,    -1,   212,    42,   164,    -1,   164,    -1,   213,    42,
-     164,    -1,   164,    -1,   214,    42,   164,    -1,   164,    -1,
-     159,    -1,   215,    -1,   216,    42,   215,    -1,   220,    -1,
-     217,    42,   220,    -1,   148,    -1,    90,   153,   163,   154,
-      -1,   164,    -1,   218,    -1,   161,    -1,   172,    -1,   163,
-      -1,   153,   172,   154,    -1,   153,   214,   154,    -1
-};
-
-/* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
+  /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   412,   412,   419,   426,   433,   439,   456,   460,   464,
-     479,   482,   485,   488,   491,   495,   503,   507,   514,   525,
-     526,   531,   533,   535,   537,   539,   541,   543,   545,   547,
-     549,   551,   553,   555,   559,   562,   565,   568,   571,   574,
-     577,   580,   583,   586,   589,   604,   608,   613,   618,   623,
-     629,   632,   636,   641,   645,   652,   657,   661,   665,   672,
-     678,   682,   686,   691,   697,   703,   710,   723,   729,   732,
-     736,   741,   743,   746,   750,   762,   765,   768,   772,   775,
-     780,   781,   782,   786,   790,   791,   794,   798,   801,   804,
-     808,   812,   814,   817,   824,   825,   834,   835,   836,   837,
-     844,   849,   850,   859,   870,   880,   882,   883,   884,   889,
-     903,   908,   909,   912,   917,   922,   934,   937,   938,   939,
-     940,   941,   947,   953,   959,   965,   971,   977,   983,   989,
-    1002,  1004,  1005,  1006,  1014,  1019,  1025,  1026,  1027,  1038,
-    1051,  1056,  1060,  1064,  1068,  1072,  1079,  1093,  1129,  1140,
-    1152,  1169,  1172,  1176,  1182,  1183,  1191,  1201,  1210,  1212,
-    1214,  1221,  1230,  1237,  1241,  1242,  1243,  1244,  1245,  1246,
-    1247,  1248,  1249,  1250,  1251,  1252,  1253,  1254,  1255,  1256,
-    1257,  1258,  1259,  1263,  1265,  1269,  1270,  1271,  1274,  1278,
-    1288,  1292,  1296,  1302,  1304,  1308,  1313,  1320,  1321,  1329,
-    1333,  1342,  1356,  1363,  1368,  1376,  1383,  1388,  1389,  1390,
-    1391,  1394,  1395,  1397,  1399,  1401,  1408,  1419,  1423,  1427,
-    1433,  1437,  1441,  1445,  1452,  1456,  1460,  1466,  1470,  1475,
-    1480,  1485,  1490,  1495,  1500,  1505,  1513,  1560,  1561,  1564,
-    1566,  1577,  1587,  1588,  1595,  1606,  1616,  1629,  1630,  1633,
-    1640,  1647,  1658,  1663,  1670,  1674,  1675,  1679,  1681,  1685,
-    1686,  1690,  1695,  1697,  1713,  1714,  1715,  1716,  1717,  1718,
-    1719,  1720,  1721,  1722,  1723,  1724,  1725,  1726,  1727,  1728,
-    1733,  1745,  1747,  1756,  1761,  1766,  1767,  1777,  1778,  1784,
-    1785,  1792,  1793,  1797,  1798,  1801,  1802,  1806,  1807,  1811,
-    1819,  1826,  1831,  1832,  1833,  1834,  1835,  1836
+       0,   401,   401,   408,   415,   422,   428,   445,   449,   453,
+     468,   471,   474,   477,   480,   484,   492,   496,   503,   514,
+     515,   520,   522,   524,   526,   528,   530,   532,   534,   536,
+     538,   540,   542,   544,   548,   551,   554,   557,   560,   563,
+     566,   569,   572,   575,   578,   593,   597,   602,   607,   612,
+     618,   621,   625,   630,   634,   641,   646,   650,   654,   661,
+     667,   671,   675,   680,   686,   692,   699,   712,   718,   721,
+     725,   730,   732,   735,   739,   751,   754,   757,   761,   764,
+     769,   770,   771,   775,   779,   780,   783,   787,   790,   793,
+     797,   801,   803,   806,   813,   814,   823,   824,   825,   826,
+     833,   838,   839,   848,   859,   869,   871,   872,   873,   878,
+     892,   897,   898,   901,   906,   911,   923,   926,   927,   928,
+     929,   930,   936,   942,   948,   954,   960,   966,   972,   978,
+     991,   993,   994,   995,  1003,  1008,  1014,  1015,  1016,  1027,
+    1040,  1045,  1049,  1053,  1057,  1061,  1068,  1082,  1118,  1129,
+    1141,  1158,  1161,  1165,  1171,  1172,  1180,  1190,  1199,  1201,
+    1203,  1210,  1219,  1226,  1230,  1231,  1232,  1233,  1234,  1235,
+    1236,  1237,  1238,  1239,  1240,  1241,  1242,  1243,  1244,  1245,
+    1246,  1247,  1248,  1252,  1254,  1258,  1259,  1260,  1263,  1267,
+    1277,  1281,  1285,  1291,  1293,  1297,  1302,  1309,  1310,  1318,
+    1322,  1331,  1345,  1352,  1357,  1365,  1372,  1377,  1378,  1379,
+    1380,  1383,  1384,  1386,  1388,  1390,  1397,  1408,  1412,  1416,
+    1422,  1426,  1430,  1434,  1441,  1445,  1449,  1455,  1459,  1464,
+    1469,  1474,  1479,  1484,  1489,  1494,  1502,  1549,  1550,  1553,
+    1555,  1566,  1576,  1577,  1584,  1595,  1605,  1618,  1619,  1622,
+    1629,  1636,  1647,  1652,  1659,  1663,  1664,  1668,  1670,  1674,
+    1675,  1679,  1684,  1686,  1702,  1703,  1704,  1705,  1706,  1707,
+    1708,  1709,  1710,  1711,  1712,  1713,  1714,  1715,  1716,  1717,
+    1722,  1734,  1736,  1745,  1750,  1755,  1756,  1766,  1767,  1773,
+    1774,  1781,  1782,  1786,  1787,  1790,  1791,  1795,  1796,  1800,
+    1808,  1815,  1820,  1821,  1822,  1823,  1824,  1825
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+#if YYDEBUG || YYERROR_VERBOSE || 0
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -989,8 +844,8 @@ static const char *const yytname[] =
   "$end", "error", "$undefined", "'='", "TIMES_EQ", "PLUS_EQ",
   "PLUS_PLUS", "MINUS_MINUS", "MINUS_EQ", "DIV_EQ", "OR_EQ", "AND_EQ",
   "XOR_EQ", "SHL_EQ", "SHR_EQ", "'?'", "':'", "LOGOR", "LOGXOR", "LOGAND",
-  "'|'", "'^'", "'&'", "NE", "LOG_EQ", "'<'", "'>'", "LE", "GE", "SHR",
-  "SHL", "'+'", "'-'", "'*'", "'/'", "'%'", "DOT", "'['", "']'", "'!'",
+  "'|'", "'^'", "'&'", "LOG_EQ", "NE", "'<'", "'>'", "GE", "LE", "SHL",
+  "SHR", "'+'", "'-'", "'*'", "'/'", "'%'", "DOT", "'['", "']'", "'!'",
   "'~'", "UNARY", "','", "NUMBER", "INT_NUM", "CHAR_CONST", "MATH0_FUNC",
   "MATH1_FUNC", "MATH2_FUNC", "INT1_FUNC", "STR1_FUNC", "STR2_FUNC",
   "STR3_FUNC", "STRV_FUNC", "CHAR_FUNC", "DATA_FUNC", "SIZE_FUNC",
@@ -1022,13 +877,13 @@ static const char *const yytname[] =
   "single_case", "switch_cases", "switch_statement", "if_statement",
   "simple_stat", "blk_stat", "comp_stack", "list_obj", "comp_list",
   "row_list", "expr_list", "print_list", "mixed_item", "mixed_list",
-  "string_list", "string", "printable", "string_arg", 0
+  "string_list", "string", "printable", "string_arg", YY_NULLPTR
 };
 #endif
 
 # ifdef YYPRINT
-/* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
-   token YYLEX-NUM.  */
+/* YYTOKNUM[NUM] -- (External) token number corresponding to the
+   (internal) symbol number NUM (which must be that of a token).  */
 static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,    61,   258,   259,   260,   261,   262,   263,
@@ -1050,174 +905,18 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-/* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const yytype_uint8 yyr1[] =
-{
-       0,   158,   159,   160,   161,   162,   163,   163,   163,   163,
-     163,   163,   163,   163,   163,   163,   163,   163,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
-     164,   164,   164,   164,   165,   165,   165,   165,   165,   165,
-     165,   166,   166,   167,   167,   168,   168,   168,   168,   168,
-     169,   169,   169,   170,   171,   172,   173,   173,   173,   173,
-     173,   173,   173,   173,   173,   173,   173,   173,   173,   173,
-     174,   174,   174,   174,   174,   174,   175,   175,   175,   175,
-     176,   176,   176,   176,   176,   176,   177,   178,   179,   179,
-     179,   180,   180,   180,   181,   181,   181,   181,   182,   182,
-     182,   182,   182,   183,   184,   184,   184,   184,   184,   184,
-     184,   184,   184,   184,   184,   184,   184,   184,   184,   184,
-     184,   184,   184,   185,   185,   186,   186,   186,   187,   187,
-     187,   187,   187,   188,   188,   189,   189,   190,   190,   191,
-     191,   191,   191,   191,   191,   191,   191,   192,   192,   192,
-     192,   193,   193,   193,   193,   193,   194,   194,   194,   194,
-     194,   194,   194,   194,   194,   194,   194,   194,   194,   194,
-     194,   194,   194,   194,   194,   194,   194,   195,   195,   195,
-     195,   196,   197,   197,   198,   198,   198,   199,   199,   200,
-     200,   200,   200,   200,   201,   202,   202,   203,   203,   204,
-     204,   205,   206,   206,   207,   207,   207,   207,   207,   207,
-     207,   207,   207,   207,   207,   207,   207,   207,   207,   207,
-     207,   208,   208,   209,   210,   211,   211,   212,   212,   213,
-     213,   214,   214,   215,   215,   216,   216,   217,   217,   218,
-     218,   219,   220,   220,   220,   220,   220,   220
-};
-
-/* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
-static const yytype_uint8 yyr2[] =
-{
-       0,     2,     1,     1,     1,     5,     1,     2,     4,     1,
-       4,     4,     4,     4,     6,     6,     4,     4,     4,     1,
-       4,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     2,     1,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     2,     3,     3,     3,     4,     6,     4,
-       3,     1,     5,     1,     1,     4,     4,     4,     4,     4,
-       4,     4,     4,     6,     6,     4,     4,     4,     2,     4,
-       4,     4,     4,     7,     4,     1,     1,     6,     6,     4,
-       4,     4,     4,     4,     1,     4,     8,     4,     4,     4,
-       4,     4,     8,     8,     1,     2,     1,     1,     1,     2,
-       0,     1,     3,     4,     7,     2,     1,     1,     8,     4,
-       2,     1,     1,     3,     3,     3,     3,     2,     2,     2,
-       2,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       2,     1,     1,     2,     2,     2,     1,     1,     2,     2,
-       3,     3,     4,     2,     3,     3,     4,     4,     3,     4,
-       3,     0,     1,     3,     1,     1,     1,     1,     2,     1,
-       3,     2,     2,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     4,     4,     1,     3,     4,     1,     3,
-       2,     4,     2,     6,     4,     4,     3,     1,     1,     6,
-       6,     4,    12,     3,    14,     4,     4,     4,     4,     4,
-       4,     1,     1,     1,     1,     1,     1,     1,     1,     7,
-       4,     4,     7,     7,    10,    10,    13,     3,     3,     5,
-       5,     7,     7,     9,     2,     1,     1,     1,     3,     3,
-       5,     2,     1,     2,     3,     4,     4,     1,     1,     5,
-       5,     9,     7,     7,     2,     1,     2,     3,     2,     1,
-       2,     7,     5,     7,     0,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     1,     2,
-       2,     1,     1,     3,     3,     1,     3,     1,     3,     1,
-       3,     1,     3,     1,     1,     1,     3,     1,     3,     1,
-       4,     1,     1,     1,     1,     1,     3,     3
-};
-
-/* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
-   STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
-   means the default is an error.  */
-static const yytype_uint16 yydefact[] =
-{
-       0,     0,     0,     0,     0,     0,     0,   278,     0,   277,
-       0,     0,     0,     0,   164,   165,   166,   167,   168,   173,
-     174,   175,   180,   176,   177,   178,   179,   181,   169,   170,
-     171,   172,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,   188,   185,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     6,     2,     4,     0,     3,
-       9,   182,     0,     0,     0,     0,     0,     0,     0,     0,
-     276,   273,   274,   275,   272,   156,   131,   154,   159,     0,
-       0,   163,   265,   271,   270,   268,   269,   267,   266,   155,
-     282,   132,   281,     0,   157,   162,   135,     9,   118,   119,
-       7,     0,     0,     0,   279,   280,     0,   247,     0,   248,
-     264,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    51,    33,    53,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,    54,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,   299,     0,
-       0,   107,   303,   305,   190,   192,   106,   304,    84,    75,
-      76,   302,    19,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   100,     0,   134,   133,     0,   100,
-       0,     0,   143,   136,     0,     0,     0,   242,   137,     0,
-       0,     0,     0,     0,     0,   117,   120,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   158,     1,   161,     0,
-     235,   236,     0,   212,   213,   214,   211,     0,   217,   218,
-     215,   216,   237,     0,   130,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,   217,   218,     0,   198,   197,     0,
-       0,   291,     0,     0,   289,     0,     0,   294,   293,   295,
-       0,     0,     0,   105,    68,   287,     0,    43,    32,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,   100,   100,     0,   189,
-     291,     0,   304,     0,     0,   285,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-     186,     0,   107,     0,   203,     0,     0,     0,     0,     0,
-     305,     0,     0,     0,     0,   297,     0,    97,   112,    94,
-     101,     0,    96,    98,   111,   196,     0,     0,     0,     0,
-     144,   145,   140,   138,   139,   141,     0,   243,   113,     0,
-     114,   115,   116,   122,   121,   123,   124,   126,   125,   127,
-     128,   129,     0,     0,     0,     0,   160,     0,   234,   151,
-     151,     0,   148,   150,     0,     0,     0,     0,   244,     0,
-       0,     0,     0,     0,     0,   211,   246,     0,     0,     0,
-     208,   209,     0,   184,   210,     0,   207,   183,     0,   284,
-       0,    46,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,    21,   191,   306,     0,   307,     0,
-     283,    44,    45,     0,    41,    42,    40,    28,    29,    27,
-      39,    34,    35,    36,    38,    37,    31,    30,    22,    23,
-      24,    25,    26,    50,   187,     0,     0,   205,    10,    11,
-     206,     0,   194,     0,     8,   110,    99,    95,   100,   103,
-     195,   245,   201,     0,   142,   110,    16,     0,    12,    17,
-       0,    13,   149,     0,     0,   152,     0,     0,   228,     0,
-     227,     0,   238,   239,   249,   250,     0,     0,     0,     0,
-     301,     0,     0,   292,   290,   296,   262,   288,    47,     0,
-      49,    62,     0,     0,    65,    66,    55,    58,    57,    56,
-     300,    61,    69,    70,    85,     0,    88,    18,    87,    89,
-      90,     0,     0,     0,    79,    67,     0,    71,    72,    80,
-      81,    82,    83,     0,    59,    60,    91,    74,   109,     0,
-      20,   286,     0,     0,     0,     0,   298,   102,   100,     0,
-       0,     0,   147,   241,   146,     0,     0,     0,   221,   220,
-       0,     0,     0,   259,     0,   255,     0,     0,     0,   264,
-     199,   200,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,   100,    52,     0,     0,   193,     0,     0,    14,
-      15,   153,   151,   230,   229,     0,     0,   240,     0,   258,
-       0,   256,   261,   260,   252,   253,     0,   263,    48,    63,
-      64,     0,    77,    78,     0,     0,     0,     0,     0,     0,
-     104,     5,     0,     0,     0,     0,     0,   257,     0,     0,
-       0,     0,     0,    73,     0,     0,   219,   232,   231,   223,
-     222,   251,    86,   108,    93,    92,     0,     0,     0,     0,
-       0,     0,     0,   233,     0,     0,     0,     0,   225,   224,
-     202,     0,     0,     0,     0,   204,   226
-};
-
-/* YYDEFGOTO[NTERM-NUM].  */
-static const yytype_int16 yydefgoto[] =
-{
-      -1,   246,    67,   172,   402,   173,   369,   370,   371,    70,
-     175,   372,    71,    72,   177,   178,   107,   204,    76,   254,
-     255,    77,   543,    78,    79,   544,    81,    82,    83,    84,
-      85,    86,   259,    87,    88,   241,   242,   243,   545,   206,
-      89,   108,    90,   633,   634,   635,   636,    91,    92,    93,
-     109,   179,   180,   326,   276,   265,   324,   269,   270,   364,
-     181,   561,   182
-};
-
-/* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
-   STATE-NUM.  */
 #define YYPACT_NINF -406
+
+#define yypact_value_is_default(Yystate) \
+  (!!((Yystate) == (-406)))
+
+#define YYTABLE_NINF -265
+
+#define yytable_value_is_error(Yytable_value) \
+  0
+
+  /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+     STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
     1477,   -89,   242,   242,  -104,   -96,   -90,  -406,   -84,  -406,
@@ -1296,7 +995,88 @@ static const yytype_int16 yypact[] =
     -406,  3034,  3034,  4159,  3403,  -406,  -406
 };
 
-/* YYPGOTO[NTERM-NUM].  */
+  /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+     Performed when YYTABLE does not specify something else to do.  Zero
+     means the default is an error.  */
+static const yytype_uint16 yydefact[] =
+{
+       0,     0,     0,     0,     0,     0,     0,   278,     0,   277,
+       0,     0,     0,     0,   164,   165,   166,   167,   168,   173,
+     174,   175,   180,   176,   177,   178,   179,   181,   169,   170,
+     171,   172,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,   188,   185,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     6,     2,     4,     0,     3,
+       9,   182,     0,     0,     0,     0,     0,     0,     0,     0,
+     276,   273,   274,   275,   272,   156,   131,   154,   159,     0,
+       0,   163,   265,   271,   270,   268,   269,   267,   266,   155,
+     282,   132,   281,     0,   157,   162,   135,     9,   118,   119,
+       7,     0,     0,     0,   279,   280,     0,   247,     0,   248,
+     264,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    51,    33,    53,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    54,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,   299,     0,
+       0,   107,   303,   305,   190,   192,   106,   304,    84,    75,
+      76,   302,    19,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   100,     0,   134,   133,     0,   100,
+       0,     0,   143,   136,     0,     0,     0,   242,   137,     0,
+       0,     0,     0,     0,     0,   117,   120,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   158,     1,   161,     0,
+     235,   236,     0,   212,   213,   214,   211,     0,   217,   218,
+     215,   216,   237,     0,   130,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   217,   218,     0,   198,   197,     0,
+       0,   291,     0,     0,   289,     0,     0,   294,   293,   295,
+       0,     0,     0,   105,    68,   287,     0,    43,    32,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,   100,   100,     0,   189,
+     291,     0,   304,     0,     0,   285,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+     186,     0,   107,     0,   203,     0,     0,     0,     0,     0,
+     305,     0,     0,     0,     0,   297,     0,    97,   112,    94,
+     101,     0,    96,    98,   111,   196,     0,     0,     0,     0,
+     144,   145,   140,   138,   139,   141,     0,   243,   113,     0,
+     114,   115,   116,   122,   121,   123,   124,   126,   125,   127,
+     128,   129,     0,     0,     0,     0,   160,     0,   234,   151,
+     151,     0,   148,   150,     0,     0,     0,     0,   244,     0,
+       0,     0,     0,     0,     0,   211,   246,     0,     0,     0,
+     208,   209,     0,   184,   210,     0,   207,   183,     0,   284,
+       0,    46,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,    21,   191,   306,     0,   307,     0,
+     283,    45,    44,     0,    41,    42,    40,    28,    29,    27,
+      34,    39,    35,    36,    37,    38,    30,    31,    22,    23,
+      24,    25,    26,    50,   187,     0,     0,   205,    10,    11,
+     206,     0,   194,     0,     8,   110,    99,    95,   100,   103,
+     195,   245,   201,     0,   142,   110,    16,     0,    12,    17,
+       0,    13,   149,     0,     0,   152,     0,     0,   228,     0,
+     227,     0,   238,   239,   249,   250,     0,     0,     0,     0,
+     301,     0,     0,   292,   290,   296,   262,   288,    47,     0,
+      49,    62,     0,     0,    65,    66,    55,    58,    57,    56,
+     300,    61,    69,    70,    85,     0,    88,    18,    87,    89,
+      90,     0,     0,     0,    79,    67,     0,    71,    72,    80,
+      81,    82,    83,     0,    59,    60,    91,    74,   109,     0,
+      20,   286,     0,     0,     0,     0,   298,   102,   100,     0,
+       0,     0,   147,   241,   146,     0,     0,     0,   221,   220,
+       0,     0,     0,   259,     0,   255,     0,     0,     0,   264,
+     199,   200,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,   100,    52,     0,     0,   193,     0,     0,    14,
+      15,   153,   151,   230,   229,     0,     0,   240,     0,   258,
+       0,   256,   261,   260,   252,   253,     0,   263,    48,    63,
+      64,     0,    77,    78,     0,     0,     0,     0,     0,     0,
+     104,     5,     0,     0,     0,     0,     0,   257,     0,     0,
+       0,     0,     0,    73,     0,     0,   219,   232,   231,   223,
+     222,   251,    86,   108,    93,    92,     0,     0,     0,     0,
+       0,     0,     0,   233,     0,     0,     0,     0,   225,   224,
+     202,     0,     0,     0,     0,   204,   226
+};
+
+  /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
     -406,     0,  -127,    21,   326,    47,   513,    11,  -196,  -406,
@@ -1308,11 +1088,21 @@ static const yytype_int16 yypgoto[] =
     -406,   138,   -41
 };
 
-/* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
-   positive, shift that token.  If negative, reduce the rule which
-   number is the opposite.  If zero, do what YYDEFACT says.
-   If YYTABLE_NINF, syntax error.  */
-#define YYTABLE_NINF -265
+  /* YYDEFGOTO[NTERM-NUM].  */
+static const yytype_int16 yydefgoto[] =
+{
+      -1,   246,    67,   172,   402,   173,   369,   370,   371,    70,
+     175,   372,    71,    72,   177,   178,   107,   204,    76,   254,
+     255,    77,   543,    78,    79,   544,    81,    82,    83,    84,
+      85,    86,   259,    87,    88,   241,   242,   243,   545,   206,
+      89,   108,    90,   633,   634,   635,   636,    91,    92,    93,
+     109,   179,   180,   326,   276,   265,   324,   269,   270,   364,
+     181,   561,   182
+};
+
+  /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+     positive, shift that token.  If negative, reduce the rule whose
+     number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
       66,   252,   271,   378,   100,   546,    75,   374,   386,    73,
@@ -2319,8 +2109,8 @@ static const yytype_int16 yycheck[] =
       30,    31,    32,    33,    34,    35,    36
 };
 
-/* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-   symbol of state STATE-NUM.  */
+  /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
+     symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
        0,     1,     6,     7,    33,    60,    61,    62,    63,    66,
@@ -2399,95 +2189,113 @@ static const yytype_uint8 yystos[] =
      154,    42,   155,   164,   164,   154,   156
 };
 
-#define yyerrok		(yyerrstatus = 0)
-#define yyclearin	(yychar = YYEMPTY)
-#define YYEMPTY		(-2)
-#define YYEOF		0
+  /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
+static const yytype_uint8 yyr1[] =
+{
+       0,   158,   159,   160,   161,   162,   163,   163,   163,   163,
+     163,   163,   163,   163,   163,   163,   163,   163,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   164,   164,   164,   164,   164,   164,
+     164,   164,   164,   164,   165,   165,   165,   165,   165,   165,
+     165,   166,   166,   167,   167,   168,   168,   168,   168,   168,
+     169,   169,   169,   170,   171,   172,   173,   173,   173,   173,
+     173,   173,   173,   173,   173,   173,   173,   173,   173,   173,
+     174,   174,   174,   174,   174,   174,   175,   175,   175,   175,
+     176,   176,   176,   176,   176,   176,   177,   178,   179,   179,
+     179,   180,   180,   180,   181,   181,   181,   181,   182,   182,
+     182,   182,   182,   183,   184,   184,   184,   184,   184,   184,
+     184,   184,   184,   184,   184,   184,   184,   184,   184,   184,
+     184,   184,   184,   185,   185,   186,   186,   186,   187,   187,
+     187,   187,   187,   188,   188,   189,   189,   190,   190,   191,
+     191,   191,   191,   191,   191,   191,   191,   192,   192,   192,
+     192,   193,   193,   193,   193,   193,   194,   194,   194,   194,
+     194,   194,   194,   194,   194,   194,   194,   194,   194,   194,
+     194,   194,   194,   194,   194,   194,   194,   195,   195,   195,
+     195,   196,   197,   197,   198,   198,   198,   199,   199,   200,
+     200,   200,   200,   200,   201,   202,   202,   203,   203,   204,
+     204,   205,   206,   206,   207,   207,   207,   207,   207,   207,
+     207,   207,   207,   207,   207,   207,   207,   207,   207,   207,
+     207,   208,   208,   209,   210,   211,   211,   212,   212,   213,
+     213,   214,   214,   215,   215,   216,   216,   217,   217,   218,
+     218,   219,   220,   220,   220,   220,   220,   220
+};
 
-#define YYACCEPT	goto yyacceptlab
-#define YYABORT		goto yyabortlab
-#define YYERROR		goto yyerrorlab
+  /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
+static const yytype_uint8 yyr2[] =
+{
+       0,     2,     1,     1,     1,     5,     1,     2,     4,     1,
+       4,     4,     4,     4,     6,     6,     4,     4,     4,     1,
+       4,     3,     3,     3,     3,     3,     3,     3,     3,     3,
+       3,     3,     2,     1,     3,     3,     3,     3,     3,     3,
+       3,     3,     3,     2,     3,     3,     3,     4,     6,     4,
+       3,     1,     5,     1,     1,     4,     4,     4,     4,     4,
+       4,     4,     4,     6,     6,     4,     4,     4,     2,     4,
+       4,     4,     4,     7,     4,     1,     1,     6,     6,     4,
+       4,     4,     4,     4,     1,     4,     8,     4,     4,     4,
+       4,     4,     8,     8,     1,     2,     1,     1,     1,     2,
+       0,     1,     3,     4,     7,     2,     1,     1,     8,     4,
+       2,     1,     1,     3,     3,     3,     3,     2,     2,     2,
+       2,     3,     3,     3,     3,     3,     3,     3,     3,     3,
+       2,     1,     1,     2,     2,     2,     1,     1,     2,     2,
+       3,     3,     4,     2,     3,     3,     4,     4,     3,     4,
+       3,     0,     1,     3,     1,     1,     1,     1,     2,     1,
+       3,     2,     2,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     4,     4,     1,     3,     4,     1,     3,
+       2,     4,     2,     6,     4,     4,     3,     1,     1,     6,
+       6,     4,    12,     3,    14,     4,     4,     4,     4,     4,
+       4,     1,     1,     1,     1,     1,     1,     1,     1,     7,
+       4,     4,     7,     7,    10,    10,    13,     3,     3,     5,
+       5,     7,     7,     9,     2,     1,     1,     1,     3,     3,
+       5,     2,     1,     2,     3,     4,     4,     1,     1,     5,
+       5,     9,     7,     7,     2,     1,     2,     3,     2,     1,
+       2,     7,     5,     7,     0,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     2,
+       2,     1,     1,     3,     3,     1,     3,     1,     3,     1,
+       3,     1,     3,     1,     1,     1,     3,     1,     3,     1,
+       4,     1,     1,     1,     1,     1,     3,     3
+};
 
 
-/* Like YYERROR except do call yyerror.  This remains here temporarily
-   to ease the transition to the new meaning of YYERROR, for GCC.
-   Once GCC version 2 has supplanted version 1, this can go.  */
+#define yyerrok         (yyerrstatus = 0)
+#define yyclearin       (yychar = YYEMPTY)
+#define YYEMPTY         (-2)
+#define YYEOF           0
 
-#define YYFAIL		goto yyerrlab
+#define YYACCEPT        goto yyacceptlab
+#define YYABORT         goto yyabortlab
+#define YYERROR         goto yyerrorlab
+
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)					\
-do								\
-  if (yychar == YYEMPTY && yylen == 1)				\
-    {								\
-      yychar = (Token);						\
-      yylval = (Value);						\
-      yytoken = YYTRANSLATE (yychar);				\
-      YYPOPSTACK (1);						\
-      goto yybackup;						\
-    }								\
-  else								\
-    {								\
+#define YYBACKUP(Token, Value)                                  \
+do                                                              \
+  if (yychar == YYEMPTY)                                        \
+    {                                                           \
+      yychar = (Token);                                         \
+      yylval = (Value);                                         \
+      YYPOPSTACK (yylen);                                       \
+      yystate = *yyssp;                                         \
+      goto yybackup;                                            \
+    }                                                           \
+  else                                                          \
+    {                                                           \
       yyerror (qsp, YY_("syntax error: cannot back up")); \
-      YYERROR;							\
-    }								\
-while (YYID (0))
+      YYERROR;                                                  \
+    }                                                           \
+while (0)
+
+/* Error token number */
+#define YYTERROR        1
+#define YYERRCODE       256
 
 
-#define YYTERROR	1
-#define YYERRCODE	256
-
-
-/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
-   If N is 0, then set CURRENT to the empty location which ends
-   the previous symbol: RHS[0] (always defined).  */
-
-#define YYRHSLOC(Rhs, K) ((Rhs)[K])
-#ifndef YYLLOC_DEFAULT
-# define YYLLOC_DEFAULT(Current, Rhs, N)				\
-    do									\
-      if (YYID (N))                                                    \
-	{								\
-	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
-	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
-	  (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
-	  (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
-	}								\
-      else								\
-	{								\
-	  (Current).first_line   = (Current).last_line   =		\
-	    YYRHSLOC (Rhs, 0).last_line;				\
-	  (Current).first_column = (Current).last_column =		\
-	    YYRHSLOC (Rhs, 0).last_column;				\
-	}								\
-    while (YYID (0))
-#endif
-
-
-/* YY_LOCATION_PRINT -- Print the location on the stream.
-   This macro was not mandated originally: define only if we know
-   we won't break user code: when these are the locations we know.  */
-
-#ifndef YY_LOCATION_PRINT
-# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
-#  define YY_LOCATION_PRINT(File, Loc)			\
-     fprintf (File, "%d.%d-%d.%d",			\
-	      (Loc).first_line, (Loc).first_column,	\
-	      (Loc).last_line,  (Loc).last_column)
-# else
-#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-# endif
-#endif
-
-
-/* YYLEX -- calling `yylex' with the right arguments.  */
-
-#ifdef YYLEX_PARAM
-# define YYLEX yylex (&yylval, YYLEX_PARAM)
-#else
-# define YYLEX yylex (&yylval, qsp)
-#endif
 
 /* Enable debugging if requested.  */
 #if YYDEBUG
@@ -2497,56 +2305,47 @@ while (YYID (0))
 #  define YYFPRINTF fprintf
 # endif
 
-# define YYDPRINTF(Args)			\
-do {						\
-  if (yydebug)					\
-    YYFPRINTF Args;				\
-} while (YYID (0))
+# define YYDPRINTF(Args)                        \
+do {                                            \
+  if (yydebug)                                  \
+    YYFPRINTF Args;                             \
+} while (0)
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)			  \
-do {									  \
-  if (yydebug)								  \
-    {									  \
-      YYFPRINTF (stderr, "%s ", Title);					  \
-      yy_symbol_print (stderr,						  \
-		  Type, Value, qsp); \
-      YYFPRINTF (stderr, "\n");						  \
-    }									  \
-} while (YYID (0))
+/* This macro is provided for backward compatibility. */
+#ifndef YY_LOCATION_PRINT
+# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+#endif
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+do {                                                                      \
+  if (yydebug)                                                            \
+    {                                                                     \
+      YYFPRINTF (stderr, "%s ", Title);                                   \
+      yy_symbol_print (stderr,                                            \
+                  Type, Value, qsp); \
+      YYFPRINTF (stderr, "\n");                                           \
+    }                                                                     \
+} while (0)
 
-/*ARGSUSED*/
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
+
+/*----------------------------------------.
+| Print this symbol's value on YYOUTPUT.  |
+`----------------------------------------*/
+
 static void
 yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, Query_Stack *qsp)
-#else
-static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, qsp)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE const * const yyvaluep;
-    Query_Stack *qsp;
-#endif
 {
+  FILE *yyo = yyoutput;
+  YYUSE (yyo);
+  YYUSE (qsp);
   if (!yyvaluep)
     return;
-  YYUSE (qsp);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# else
-  YYUSE (yyoutput);
 # endif
-  switch (yytype)
-    {
-      default:
-	break;
-    }
+  YYUSE (yytype);
 }
 
 
@@ -2554,23 +2353,11 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, qsp)
 | Print this symbol on YYOUTPUT.  |
 `--------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
 yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, Query_Stack *qsp)
-#else
-static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, qsp)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE const * const yyvaluep;
-    Query_Stack *qsp;
-#endif
 {
-  if (yytype < YYNTOKENS)
-    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
-  else
-    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
+  YYFPRINTF (yyoutput, "%s %s (",
+             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
   yy_symbol_value_print (yyoutput, yytype, yyvaluep, qsp);
   YYFPRINTF (yyoutput, ")");
@@ -2581,67 +2368,54 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, qsp)
 | TOP (included).                                                   |
 `------------------------------------------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
-#else
-static void
-yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
-#endif
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
-# define YY_STACK_PRINT(Bottom, Top)				\
-do {								\
-  if (yydebug)							\
-    yy_stack_print ((Bottom), (Top));				\
-} while (YYID (0))
+# define YY_STACK_PRINT(Bottom, Top)                            \
+do {                                                            \
+  if (yydebug)                                                  \
+    yy_stack_print ((Bottom), (Top));                           \
+} while (0)
 
 
 /*------------------------------------------------.
 | Report that the YYRULE is going to be reduced.  |
 `------------------------------------------------*/
 
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, Query_Stack *qsp)
-#else
-static void
-yy_reduce_print (yyvsp, yyrule, qsp)
-    YYSTYPE *yyvsp;
-    int yyrule;
-    Query_Stack *qsp;
-#endif
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, Query_Stack *qsp)
 {
+  unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
-  unsigned long int yylno = yyrline[yyrule];
   YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
-	     yyrule - 1, yylno);
+             yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      fprintf (stderr, "   $%d = ", yyi + 1);
-      yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
-		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       , qsp);
-      fprintf (stderr, "\n");
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      yy_symbol_print (stderr,
+                       yystos[yyssp[yyi + 1 - yynrhs]],
+                       &(yyvsp[(yyi + 1) - (yynrhs)])
+                                              , qsp);
+      YYFPRINTF (stderr, "\n");
     }
 }
 
-# define YY_REDUCE_PRINT(Rule)		\
-do {					\
-  if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule, qsp); \
-} while (YYID (0))
+# define YY_REDUCE_PRINT(Rule)          \
+do {                                    \
+  if (yydebug)                          \
+    yy_reduce_print (yyssp, yyvsp, Rule, qsp); \
+} while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
@@ -2655,7 +2429,7 @@ int yydebug;
 
 
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
-#ifndef	YYINITDEPTH
+#ifndef YYINITDEPTH
 # define YYINITDEPTH 200
 #endif
 
@@ -2670,7 +2444,6 @@ int yydebug;
 # define YYMAXDEPTH 10000
 #endif
 
-
 
 #if YYERROR_VERBOSE
 
@@ -2679,15 +2452,8 @@ int yydebug;
 #   define yystrlen strlen
 #  else
 /* Return the length of YYSTR.  */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static YYSIZE_T
 yystrlen (const char *yystr)
-#else
-static YYSIZE_T
-yystrlen (yystr)
-    const char *yystr;
-#endif
 {
   YYSIZE_T yylen;
   for (yylen = 0; yystr[yylen]; yylen++)
@@ -2703,16 +2469,8 @@ yystrlen (yystr)
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
    YYDEST.  */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static char *
 yystpcpy (char *yydest, const char *yysrc)
-#else
-static char *
-yystpcpy (yydest, yysrc)
-    char *yydest;
-    const char *yysrc;
-#endif
 {
   char *yyd = yydest;
   const char *yys = yysrc;
@@ -2742,27 +2500,27 @@ yytnamerr (char *yyres, const char *yystr)
       char const *yyp = yystr;
 
       for (;;)
-	switch (*++yyp)
-	  {
-	  case '\'':
-	  case ',':
-	    goto do_not_strip_quotes;
+        switch (*++yyp)
+          {
+          case '\'':
+          case ',':
+            goto do_not_strip_quotes;
 
-	  case '\\':
-	    if (*++yyp != '\\')
-	      goto do_not_strip_quotes;
-	    /* Fall through.  */
-	  default:
-	    if (yyres)
-	      yyres[yyn] = *yyp;
-	    yyn++;
-	    break;
+          case '\\':
+            if (*++yyp != '\\')
+              goto do_not_strip_quotes;
+            /* Fall through.  */
+          default:
+            if (yyres)
+              yyres[yyn] = *yyp;
+            yyn++;
+            break;
 
-	  case '"':
-	    if (yyres)
-	      yyres[yyn] = '\0';
-	    return yyn;
-	  }
+          case '"':
+            if (yyres)
+              yyres[yyn] = '\0';
+            return yyn;
+          }
     do_not_strip_quotes: ;
     }
 
@@ -2773,167 +2531,159 @@ yytnamerr (char *yyres, const char *yystr)
 }
 # endif
 
-/* Copy into YYRESULT an error message about the unexpected token
-   YYCHAR while in state YYSTATE.  Return the number of bytes copied,
-   including the terminating null byte.  If YYRESULT is null, do not
-   copy anything; just return the number of bytes that would be
-   copied.  As a special case, return 0 if an ordinary "syntax error"
-   message will do.  Return YYSIZE_MAXIMUM if overflow occurs during
-   size calculation.  */
-static YYSIZE_T
-yysyntax_error (char *yyresult, int yystate, int yychar)
+/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
+   about the unexpected token YYTOKEN for the state stack whose top is
+   YYSSP.
+
+   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
+   not large enough to hold the message.  In that case, also set
+   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
+   required number of bytes is too large to store.  */
+static int
+yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
+                yytype_int16 *yyssp, int yytoken)
 {
-  int yyn = yypact[yystate];
+  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
+  YYSIZE_T yysize = yysize0;
+  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
+  /* Internationalized format string. */
+  const char *yyformat = YY_NULLPTR;
+  /* Arguments of yyformat. */
+  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+  /* Number of reported tokens (one for the "unexpected", one per
+     "expected"). */
+  int yycount = 0;
 
-  if (! (YYPACT_NINF < yyn && yyn <= YYLAST))
-    return 0;
-  else
+  /* There are many possibilities here to consider:
+     - If this state is a consistent state with a default action, then
+       the only way this function was invoked is if the default action
+       is an error action.  In that case, don't check for expected
+       tokens because there are none.
+     - The only way there can be no lookahead present (in yychar) is if
+       this state is a consistent state with a default action.  Thus,
+       detecting the absence of a lookahead is sufficient to determine
+       that there is no unexpected or expected token to report.  In that
+       case, just report a simple "syntax error".
+     - Don't assume there isn't a lookahead just because this state is a
+       consistent state with a default action.  There might have been a
+       previous inconsistent state, consistent state with a non-default
+       action, or user semantic action that manipulated yychar.
+     - Of course, the expected token list depends on states to have
+       correct lookahead information, and it depends on the parser not
+       to perform extra reductions after fetching a lookahead from the
+       scanner and before detecting a syntax error.  Thus, state merging
+       (from LALR or IELR) and default reductions corrupt the expected
+       token list.  However, the list is correct for canonical LR with
+       one exception: it will still contain any token that will not be
+       accepted due to an error action in a later state.
+  */
+  if (yytoken != YYEMPTY)
     {
-      int yytype = YYTRANSLATE (yychar);
-      YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
-      YYSIZE_T yysize = yysize0;
-      YYSIZE_T yysize1;
-      int yysize_overflow = 0;
-      enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-      char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-      int yyx;
+      int yyn = yypact[*yyssp];
+      yyarg[yycount++] = yytname[yytoken];
+      if (!yypact_value_is_default (yyn))
+        {
+          /* Start YYX at -YYN if negative to avoid negative indexes in
+             YYCHECK.  In other words, skip the first -YYN actions for
+             this state because they are default actions.  */
+          int yyxbegin = yyn < 0 ? -yyn : 0;
+          /* Stay within bounds of both yycheck and yytname.  */
+          int yychecklim = YYLAST - yyn + 1;
+          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+          int yyx;
 
-# if 0
-      /* This is so xgettext sees the translatable formats that are
-	 constructed on the fly.  */
-      YY_("syntax error, unexpected %s");
-      YY_("syntax error, unexpected %s, expecting %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s or %s");
-      YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
-# endif
-      char *yyfmt;
-      char const *yyf;
-      static char const yyunexpected[] = "syntax error, unexpected %s";
-      static char const yyexpecting[] = ", expecting %s";
-      static char const yyor[] = " or %s";
-      char yyformat[sizeof yyunexpected
-		    + sizeof yyexpecting - 1
-		    + ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
-		       * (sizeof yyor - 1))];
-      char const *yyprefix = yyexpecting;
-
-      /* Start YYX at -YYN if negative to avoid negative indexes in
-	 YYCHECK.  */
-      int yyxbegin = yyn < 0 ? -yyn : 0;
-
-      /* Stay within bounds of both yycheck and yytname.  */
-      int yychecklim = YYLAST - yyn + 1;
-      int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-      int yycount = 1;
-
-      yyarg[0] = yytname[yytype];
-      yyfmt = yystpcpy (yyformat, yyunexpected);
-
-      for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-	if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-	  {
-	    if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-	      {
-		yycount = 1;
-		yysize = yysize0;
-		yyformat[sizeof yyunexpected - 1] = '\0';
-		break;
-	      }
-	    yyarg[yycount++] = yytname[yyx];
-	    yysize1 = yysize + yytnamerr (0, yytname[yyx]);
-	    yysize_overflow |= (yysize1 < yysize);
-	    yysize = yysize1;
-	    yyfmt = yystpcpy (yyfmt, yyprefix);
-	    yyprefix = yyor;
-	  }
-
-      yyf = YY_(yyformat);
-      yysize1 = yysize + yystrlen (yyf);
-      yysize_overflow |= (yysize1 < yysize);
-      yysize = yysize1;
-
-      if (yysize_overflow)
-	return YYSIZE_MAXIMUM;
-
-      if (yyresult)
-	{
-	  /* Avoid sprintf, as that infringes on the user's name space.
-	     Don't have undefined behavior even if the translation
-	     produced a string with the wrong number of "%s"s.  */
-	  char *yyp = yyresult;
-	  int yyi = 0;
-	  while ((*yyp = *yyf) != '\0')
-	    {
-	      if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
-		{
-		  yyp += yytnamerr (yyp, yyarg[yyi++]);
-		  yyf += 2;
-		}
-	      else
-		{
-		  yyp++;
-		  yyf++;
-		}
-	    }
-	}
-      return yysize;
+          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
+                && !yytable_value_is_error (yytable[yyx + yyn]))
+              {
+                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
+                  {
+                    yycount = 1;
+                    yysize = yysize0;
+                    break;
+                  }
+                yyarg[yycount++] = yytname[yyx];
+                {
+                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
+                  if (! (yysize <= yysize1
+                         && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+                    return 2;
+                  yysize = yysize1;
+                }
+              }
+        }
     }
+
+  switch (yycount)
+    {
+# define YYCASE_(N, S)                      \
+      case N:                               \
+        yyformat = S;                       \
+      break
+      YYCASE_(0, YY_("syntax error"));
+      YYCASE_(1, YY_("syntax error, unexpected %s"));
+      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
+      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
+      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
+      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
+# undef YYCASE_
+    }
+
+  {
+    YYSIZE_T yysize1 = yysize + yystrlen (yyformat);
+    if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+      return 2;
+    yysize = yysize1;
+  }
+
+  if (*yymsg_alloc < yysize)
+    {
+      *yymsg_alloc = 2 * yysize;
+      if (! (yysize <= *yymsg_alloc
+             && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
+        *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
+      return 1;
+    }
+
+  /* Avoid sprintf, as that infringes on the user's name space.
+     Don't have undefined behavior even if the translation
+     produced a string with the wrong number of "%s"s.  */
+  {
+    char *yyp = *yymsg;
+    int yyi = 0;
+    while ((*yyp = *yyformat) != '\0')
+      if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
+        {
+          yyp += yytnamerr (yyp, yyarg[yyi++]);
+          yyformat += 2;
+        }
+      else
+        {
+          yyp++;
+          yyformat++;
+        }
+  }
+  return 0;
 }
 #endif /* YYERROR_VERBOSE */
-
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-/*ARGSUSED*/
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 static void
 yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, Query_Stack *qsp)
-#else
-static void
-yydestruct (yymsg, yytype, yyvaluep, qsp)
-    const char *yymsg;
-    int yytype;
-    YYSTYPE *yyvaluep;
-    Query_Stack *qsp;
-#endif
 {
   YYUSE (yyvaluep);
   YYUSE (qsp);
-
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
-  switch (yytype)
-    {
-
-      default:
-	break;
-    }
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+  YYUSE (yytype);
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
-
-
-/* Prevent warnings from -Wmissing-prototypes.  */
-
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int yyparse (void *YYPARSE_PARAM);
-#else
-int yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int yyparse (Query_Stack *qsp);
-#else
-int yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
-
-
 
 
 
@@ -2942,44 +2692,53 @@ int yyparse ();
 | yyparse.  |
 `----------*/
 
-#ifdef YYPARSE_PARAM
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
-int
-yyparse (void *YYPARSE_PARAM)
-#else
-int
-yyparse (YYPARSE_PARAM)
-    void *YYPARSE_PARAM;
-#endif
-#else /* ! YYPARSE_PARAM */
-#if (defined __STDC__ || defined __C99__FUNC__ \
-     || defined __cplusplus || defined _MSC_VER)
 int
 yyparse (Query_Stack *qsp)
-#else
-int
-yyparse (qsp)
-    Query_Stack *qsp;
-#endif
-#endif
 {
-  /* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
-YYSTYPE yylval;
 
-/* Number of syntax errors so far.  */
-int yynerrs;
+/* The semantic value of the lookahead symbol.  */
+/* Default value used for initialization, for pacifying older GCCs
+   or non-GCC compilers.  */
+YY_INITIAL_VALUE (static YYSTYPE yyval_default;)
+YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
 
-  int yystate;
+    /* Number of syntax errors so far.  */
+    int yynerrs;
+
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       'yyss': related to states.
+       'yyvs': related to semantic values.
+
+       Refer to the stacks through separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
   int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
+  /* Lookahead token as an internal (translated) token number.  */
   int yytoken = 0;
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -2987,54 +2746,22 @@ int yynerrs;
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
-
-
-
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
+
+  yyssp = yyss = yyssa;
+  yyvsp = yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
-
-  /* Initialize stack pointers.
-     Waste one element of value and location stack
-     so that they stay on the same level as the state stack.
-     The wasted elements are never initialized.  */
-
-  yyssp = yyss;
-  yyvsp = yyvs;
-
+  yychar = YYEMPTY; /* Cause a token to be read.  */
   goto yysetstate;
 
 /*------------------------------------------------------------.
@@ -3055,25 +2782,23 @@ int yynerrs;
 
 #ifdef yyoverflow
       {
-	/* Give user a chance to reallocate the stack.  Use copies of
-	   these so that the &'s don't force the real ones into
-	   memory.  */
-	YYSTYPE *yyvs1 = yyvs;
-	yytype_int16 *yyss1 = yyss;
+        /* Give user a chance to reallocate the stack.  Use copies of
+           these so that the &'s don't force the real ones into
+           memory.  */
+        YYSTYPE *yyvs1 = yyvs;
+        yytype_int16 *yyss1 = yyss;
 
+        /* Each stack pointer address is followed by the size of the
+           data in use in that stack, in bytes.  This used to be a
+           conditional around just the two extra args, but that might
+           be undefined if yyoverflow is a macro.  */
+        yyoverflow (YY_("memory exhausted"),
+                    &yyss1, yysize * sizeof (*yyssp),
+                    &yyvs1, yysize * sizeof (*yyvsp),
+                    &yystacksize);
 
-	/* Each stack pointer address is followed by the size of the
-	   data in use in that stack, in bytes.  This used to be a
-	   conditional around just the two extra args, but that might
-	   be undefined if yyoverflow is a macro.  */
-	yyoverflow (YY_("memory exhausted"),
-		    &yyss1, yysize * sizeof (*yyssp),
-		    &yyvs1, yysize * sizeof (*yyvsp),
-
-		    &yystacksize);
-
-	yyss = yyss1;
-	yyvs = yyvs1;
+        yyss = yyss1;
+        yyvs = yyvs1;
       }
 #else /* no yyoverflow */
 # ifndef YYSTACK_RELOCATE
@@ -3081,23 +2806,22 @@ int yynerrs;
 # else
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-	goto yyexhaustedlab;
+        goto yyexhaustedlab;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
-	yystacksize = YYMAXDEPTH;
+        yystacksize = YYMAXDEPTH;
 
       {
-	yytype_int16 *yyss1 = yyss;
-	union yyalloc *yyptr =
-	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
-	if (! yyptr)
-	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+        yytype_int16 *yyss1 = yyss;
+        union yyalloc *yyptr =
+          (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
+        if (! yyptr)
+          goto yyexhaustedlab;
+        YYSTACK_RELOCATE (yyss_alloc, yyss);
+        YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
-	if (yyss1 != yyssa)
-	  YYSTACK_FREE (yyss1);
+        if (yyss1 != yyssa)
+          YYSTACK_FREE (yyss1);
       }
 # endif
 #endif /* no yyoverflow */
@@ -3105,15 +2829,17 @@ int yynerrs;
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-		  (unsigned long int) yystacksize));
+                  (unsigned long int) yystacksize));
 
       if (yyss + yystacksize - 1 <= yyssp)
-	YYABORT;
+        YYABORT;
     }
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+
+  if (yystate == YYFINAL)
+    YYACCEPT;
 
   goto yybackup;
 
@@ -3123,20 +2849,20 @@ int yynerrs;
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
-  if (yyn == YYPACT_NINF)
+  if (yypact_value_is_default (yyn))
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = YYLEX;
+      yychar = yylex (&yylval, qsp);
     }
 
   if (yychar <= YYEOF)
@@ -3158,29 +2884,27 @@ yybackup:
   yyn = yytable[yyn];
   if (yyn <= 0)
     {
-      if (yyn == 0 || yyn == YYTABLE_NINF)
-	goto yyerrlab;
+      if (yytable_value_is_error (yyn))
+        goto yyerrlab;
       yyn = -yyn;
       goto yyreduce;
     }
-
-  if (yyn == YYFINAL)
-    YYACCEPT;
 
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
+  /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
 
   yystate = yyn;
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 
   goto yynewstate;
 
@@ -3203,7 +2927,7 @@ yyreduce:
   yylen = yyr2[yyn];
 
   /* If YYLEN is nonzero, implement the default value of the action:
-     `$$ = $1'.
+     '$$ = $1'.
 
      Otherwise, the following line sets YYVAL to garbage.
      This behavior is undocumented and Bison
@@ -3217,42 +2941,46 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 413 "vectree.y"
+#line 402 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_POINTER);
-			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[(1) - (1)].idp))));
+			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[0].idp))));
 			}
+#line 2950 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 420 "vectree.y"
+#line 409 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_FUNCPTR);
-			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[(1) - (1)].idp))));
+			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[0].idp))));
 			}
+#line 2959 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 427 "vectree.y"
+#line 416 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_STR_PTR);
-			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[(1) - (1)].idp))));
+			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[0].idp))));
 			}
+#line 2968 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 434 "vectree.y"
+#line 423 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE3(T_RANGE,(yyvsp[(1) - (5)].enp),(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
+			(yyval.enp)=NODE3(T_RANGE,(yyvsp[-4].enp),(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 2976 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 440 "vectree.y"
+#line 429 "vectree.y" /* yacc.c:1646  */
     {
-			if( OBJ_FLAGS((yyvsp[(1) - (1)].dp)) & DT_STATIC ){
+			if( OBJ_FLAGS((yyvsp[0].dp)) & DT_STATIC ){
 				(yyval.enp)=NODE0(T_STATIC_OBJ);
-				SET_VN_OBJ((yyval.enp), (yyvsp[(1) - (1)].dp));
+				SET_VN_OBJ((yyval.enp), (yyvsp[0].dp));
 				// To be safe, we need to mark
 				// the object so that it can't be
 				// deleted while this reference
@@ -3261,989 +2989,1115 @@ yyreduce:
 			} else {
 				const char *s;
 				(yyval.enp)=NODE0(T_DYN_OBJ);
-				s=savestr(OBJ_NAME((yyvsp[(1) - (1)].dp)));
+				s=savestr(OBJ_NAME((yyvsp[0].dp)));
 				SET_VN_STRING((yyval.enp),s);
 			}
 			}
+#line 2997 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 457 "vectree.y"
+#line 446 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_DEREFERENCE,(yyvsp[(2) - (2)].enp));
+			(yyval.enp) = NODE1(T_DEREFERENCE,(yyvsp[0].enp));
 			}
+#line 3005 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 461 "vectree.y"
+#line 450 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_OBJ_LOOKUP,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_OBJ_LOOKUP,(yyvsp[-1].enp));
 			}
+#line 3013 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 465 "vectree.y"
+#line 454 "vectree.y" /* yacc.c:1646  */
     {
 			Undef_Sym *usp;
 
-			usp=undef_of(QSP_ARG  (yyvsp[(1) - (1)].e_string));
+			usp=undef_of(QSP_ARG  (yyvsp[0].e_string));
 			if( usp == NULL ){
 				/* BUG?  are contexts handled correctly??? */
-				sprintf(YY_ERR_STR,"Undefined symbol %s",(yyvsp[(1) - (1)].e_string));
+				sprintf(YY_ERR_STR,"Undefined symbol %s",(yyvsp[0].e_string));
 				yyerror(qsp,  YY_ERR_STR);
-				/*usp=*/new_undef(QSP_ARG  (yyvsp[(1) - (1)].e_string));
+				/*usp=*/new_undef(QSP_ARG  (yyvsp[0].e_string));
 			}
 			(yyval.enp)=NODE0(T_UNDEF);
-			SET_VN_STRING((yyval.enp), savestr((yyvsp[(1) - (1)].e_string)));
+			SET_VN_STRING((yyval.enp), savestr((yyvsp[0].e_string)));
 			CURDLE((yyval.enp))
 			}
+#line 3032 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 479 "vectree.y"
+#line 468 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_REAL_PART,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_REAL_PART,(yyvsp[-1].enp));
 			}
+#line 3040 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 482 "vectree.y"
+#line 471 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_IMAG_PART,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_IMAG_PART,(yyvsp[-1].enp));
 			}
+#line 3048 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 485 "vectree.y"
+#line 474 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_SQUARE_SUBSCR,(yyvsp[(1) - (4)].enp),(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE2(T_SQUARE_SUBSCR,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3056 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 488 "vectree.y"
+#line 477 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_CURLY_SUBSCR,(yyvsp[(1) - (4)].enp),(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE2(T_CURLY_SUBSCR,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3064 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 492 "vectree.y"
+#line 481 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE3(T_SUBVEC,(yyvsp[(1) - (6)].enp),(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
+			(yyval.enp)=NODE3(T_SUBVEC,(yyvsp[-5].enp),(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3072 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 496 "vectree.y"
+#line 485 "vectree.y" /* yacc.c:1646  */
     {
 			/* Why not use T_RANGE2 here?  The current version
 			 * is fine as-is, but don't get rid of T_RANGE2 because
 			 * mlab.y uses it...
 			 */
-			(yyval.enp)=NODE3(T_CSUBVEC,(yyvsp[(1) - (6)].enp),(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
+			(yyval.enp)=NODE3(T_CSUBVEC,(yyvsp[-5].enp),(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3084 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 504 "vectree.y"
+#line 493 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_SUBSAMP,(yyvsp[(1) - (4)].enp),(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE2(T_SUBSAMP,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3092 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 508 "vectree.y"
+#line 497 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_CSUBSAMP,(yyvsp[(1) - (4)].enp),(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE2(T_CSUBSAMP,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3100 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 515 "vectree.y"
+#line 504 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_FIX_SIZE,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_FIX_SIZE,(yyvsp[-1].enp));
 			}
+#line 3108 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 527 "vectree.y"
+#line 516 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_TYPECAST,(yyvsp[(4) - (4)].enp));
-			SET_VN_CAST_PREC_PTR((yyval.enp),(yyvsp[(2) - (4)].prec_p));
+			(yyval.enp) = NODE1(T_TYPECAST,(yyvsp[0].enp));
+			SET_VN_CAST_PREC_PTR((yyval.enp),(yyvsp[-2].prec_p));
 			}
+#line 3117 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 531 "vectree.y"
+#line 520 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = (yyvsp[(2) - (3)].enp); }
+			(yyval.enp) = (yyvsp[-1].enp); }
+#line 3124 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 533 "vectree.y"
+#line 522 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_PLUS,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_PLUS,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3131 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 535 "vectree.y"
+#line 524 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_MINUS,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_MINUS,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3138 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 537 "vectree.y"
+#line 526 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_TIMES,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_TIMES,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3145 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 539 "vectree.y"
+#line 528 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_DIVIDE,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_DIVIDE,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3152 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 541 "vectree.y"
+#line 530 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_MODULO,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_MODULO,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3159 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 543 "vectree.y"
+#line 532 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BITAND,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_BITAND,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3166 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 545 "vectree.y"
+#line 534 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BITOR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_BITOR,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3173 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 547 "vectree.y"
+#line 536 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BITXOR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_BITXOR,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3180 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 549 "vectree.y"
+#line 538 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BITLSHIFT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_BITLSHIFT,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3187 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 551 "vectree.y"
+#line 540 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BITRSHIFT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_BITRSHIFT,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 3194 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 553 "vectree.y"
+#line 542 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_BITCOMP,(yyvsp[(2) - (2)].enp)); }
+			(yyval.enp)=NODE1(T_BITCOMP,(yyvsp[0].enp)); }
+#line 3201 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 555 "vectree.y"
+#line 544 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_LIT_INT);
-			SET_VN_INTVAL((yyval.enp), (int) (yyvsp[(1) - (1)].dval));
+			SET_VN_INTVAL((yyval.enp), (int) (yyvsp[0].dval));
 			}
+#line 3210 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 559 "vectree.y"
+#line 548 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_EQ,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_EQ,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3218 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 562 "vectree.y"
+#line 551 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_BOOL_LT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp) = NODE2(T_BOOL_LT,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3226 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 565 "vectree.y"
+#line 554 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_GT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_GT,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3234 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 568 "vectree.y"
+#line 557 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_GE,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_GE,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3242 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 571 "vectree.y"
+#line 560 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_LE,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_LE,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3250 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 574 "vectree.y"
+#line 563 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_NE,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_NE,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3258 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 577 "vectree.y"
+#line 566 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_AND,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_AND,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3266 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 580 "vectree.y"
+#line 569 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_OR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_OR,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3274 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 583 "vectree.y"
+#line 572 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_XOR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_XOR,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3282 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 586 "vectree.y"
+#line 575 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_BOOL_NOT,(yyvsp[(2) - (2)].enp));
+			(yyval.enp)=NODE1(T_BOOL_NOT,(yyvsp[0].enp));
 			}
+#line 3290 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 589 "vectree.y"
+#line 578 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *enp;
-			enp=NODE2(T_BOOL_PTREQ,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			enp=NODE2(T_BOOL_PTREQ,(yyvsp[-2].enp),(yyvsp[0].enp));
 			(yyval.enp)=NODE1(T_BOOL_NOT,enp);
 			}
+#line 3300 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 604 "vectree.y"
+#line 593 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_BOOL_PTREQ,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_BOOL_PTREQ,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3308 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 609 "vectree.y"
+#line 598 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_MATH0_FN);
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (3)].func_p));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-2].func_p));
 			}
+#line 3317 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 614 "vectree.y"
+#line 603 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_MATH1_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_MATH1_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3326 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 619 "vectree.y"
+#line 608 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_MATH2_FN,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (6)].func_p));
+			(yyval.enp)=NODE2(T_MATH2_FN,(yyvsp[-3].enp),(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-5].func_p));
 			}
+#line 3335 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 624 "vectree.y"
+#line 613 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_INT1_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_INT1_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3344 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 629 "vectree.y"
+#line 618 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_INNER,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp) = NODE2(T_INNER,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3352 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 632 "vectree.y"
+#line 621 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_LIT_DBL);
-			SET_VN_DBLVAL((yyval.enp),(yyvsp[(1) - (1)].dval));
+			SET_VN_DBLVAL((yyval.enp),(yyvsp[0].dval));
 			}
+#line 3361 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 637 "vectree.y"
+#line 626 "vectree.y" /* yacc.c:1646  */
     {
 			/* We determine exactly which type later */
-			(yyval.enp) = NODE3(T_SS_S_CONDASS,(yyvsp[(1) - (5)].enp),(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
+			(yyval.enp) = NODE3(T_SS_S_CONDASS,(yyvsp[-4].enp),(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3370 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 641 "vectree.y"
+#line 630 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_LIT_INT);
-			SET_VN_INTVAL((yyval.enp), (int) (yyvsp[(1) - (1)].dval));
+			SET_VN_INTVAL((yyval.enp), (int) (yyvsp[0].dval));
 			}
+#line 3379 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 646 "vectree.y"
+#line 635 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_BADNAME);
 			NODE_ERROR((yyval.enp));
 			CURDLE((yyval.enp))
 			WARN("illegal use of data function");
 			}
+#line 3390 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 652 "vectree.y"
+#line 641 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_DATA_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_DATA_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3399 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 657 "vectree.y"
+#line 646 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_SIZE_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_SIZE_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3408 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 661 "vectree.y"
+#line 650 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_SIZE_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_SIZE_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3417 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 665 "vectree.y"
+#line 654 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_SIZE_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_SIZE_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			NODE_ERROR((yyval.enp));
 			advise("dereference pointer before passing to size function");
 			CURDLE((yyval.enp))
 			}
+#line 3429 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 672 "vectree.y"
+#line 661 "vectree.y" /* yacc.c:1646  */
     {
-			sprintf(YY_ERR_STR,"need to dereference pointer %s",VN_STRING((yyvsp[(3) - (4)].enp)));
+			sprintf(YY_ERR_STR,"need to dereference pointer %s",VN_STRING((yyvsp[-1].enp)));
 			yyerror(THIS_QSP,  YY_ERR_STR);
 			(yyval.enp)=NULL;
 			}
+#line 3439 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 678 "vectree.y"
+#line 667 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_SUM,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_SUM,(yyvsp[-1].enp));
 			}
+#line 3447 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 683 "vectree.y"
+#line 672 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_FILE_EXISTS,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_FILE_EXISTS,(yyvsp[-1].enp));
 			}
+#line 3455 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 687 "vectree.y"
+#line 676 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_STR1_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_STR1_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3464 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 692 "vectree.y"
+#line 681 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_STR2_FN,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (6)].func_p));
+			(yyval.enp)=NODE2(T_STR2_FN,(yyvsp[-3].enp),(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-5].func_p));
 			}
+#line 3473 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 698 "vectree.y"
+#line 687 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_STR2_FN,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (6)].func_p));
+			(yyval.enp)=NODE2(T_STR2_FN,(yyvsp[-3].enp),(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-5].func_p));
 			}
+#line 3482 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 704 "vectree.y"
+#line 693 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_STRV_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_STRV_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3491 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 711 "vectree.y"
+#line 700 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_CHAR_FN,(yyvsp[(3) - (4)].enp));
-			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[(1) - (4)].func_p));
+			(yyval.enp)=NODE1(T_CHAR_FN,(yyvsp[-1].enp));
+			SET_VN_FUNC_PTR((yyval.enp),(yyvsp[-3].func_p));
 			}
+#line 3500 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 724 "vectree.y"
+#line 713 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_CONJ,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_CONJ,(yyvsp[-1].enp));
 			}
+#line 3508 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 729 "vectree.y"
+#line 718 "vectree.y" /* yacc.c:1646  */
     {
-				(yyval.enp)=NODE1(T_UMINUS,(yyvsp[(2) - (2)].enp));
+				(yyval.enp)=NODE1(T_UMINUS,(yyvsp[0].enp));
 				}
+#line 3516 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 733 "vectree.y"
+#line 722 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_MINVAL,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_MINVAL,(yyvsp[-1].enp));
 			}
+#line 3524 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 737 "vectree.y"
+#line 726 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_MAXVAL,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_MAXVAL,(yyvsp[-1].enp));
 			}
+#line 3532 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 742 "vectree.y"
-    { (yyval.enp)=NODE1(T_MAX_INDEX,(yyvsp[(3) - (4)].enp)); }
+#line 731 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_MAX_INDEX,(yyvsp[-1].enp)); }
+#line 3538 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 744 "vectree.y"
-    { (yyval.enp)=NODE1(T_MIN_INDEX,(yyvsp[(3) - (4)].enp)); }
+#line 733 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_MIN_INDEX,(yyvsp[-1].enp)); }
+#line 3544 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 747 "vectree.y"
+#line 736 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_INDIR_CALL,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp));
+			(yyval.enp) = NODE2(T_INDIR_CALL,(yyvsp[-4].enp),(yyvsp[-1].enp));
 			}
+#line 3552 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 751 "vectree.y"
+#line 740 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_CALLFUNC,(yyvsp[(3) - (4)].enp));
-			SET_VN_CALL_SUBRT((yyval.enp), (yyvsp[(1) - (4)].srp));
+			(yyval.enp)=NODE1(T_CALLFUNC,(yyvsp[-1].enp));
+			SET_VN_CALL_SUBRT((yyval.enp), (yyvsp[-3].srp));
 			/* make sure this is not a void subroutine! */
-			if( SR_PREC_CODE((yyvsp[(1) - (4)].srp)) == PREC_VOID ){
+			if( SR_PREC_CODE((yyvsp[-3].srp)) == PREC_VOID ){
 				NODE_ERROR((yyval.enp));
-				sprintf(YY_ERR_STR,"void subroutine %s used in expression!?",SR_NAME((yyvsp[(1) - (4)].srp)));
+				sprintf(YY_ERR_STR,"void subroutine %s used in expression!?",SR_NAME((yyvsp[-3].srp)));
 				advise(YY_ERR_STR);
 				CURDLE((yyval.enp))
 			}
 			}
+#line 3568 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 762 "vectree.y"
+#line 751 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=(yyvsp[(1) - (1)].enp);
+			(yyval.enp)=(yyvsp[0].enp);
 			}
+#line 3576 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 765 "vectree.y"
+#line 754 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=(yyvsp[(1) - (1)].enp);
+			(yyval.enp)=(yyvsp[0].enp);
 			}
+#line 3584 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 768 "vectree.y"
+#line 757 "vectree.y" /* yacc.c:1646  */
     {
 			WARN("warp not implemented");
-			(yyval.enp)=(yyvsp[(3) - (6)].enp);
+			(yyval.enp)=(yyvsp[-3].enp);
 			}
+#line 3593 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 772 "vectree.y"
+#line 761 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_LOOKUP,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
+			(yyval.enp)=NODE2(T_LOOKUP,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3601 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 776 "vectree.y"
+#line 765 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_TRANSPOSE,(yyvsp[(3) - (4)].enp));
+			(yyval.enp) = NODE1(T_TRANSPOSE,(yyvsp[-1].enp));
 			SET_VN_SIZCH_SHAPE((yyval.enp), ALLOC_SHAPE );
 			}
+#line 3610 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 780 "vectree.y"
-    { (yyval.enp) = NODE1(T_DFT,(yyvsp[(3) - (4)].enp)); }
+#line 769 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_DFT,(yyvsp[-1].enp)); }
+#line 3616 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 781 "vectree.y"
-    { (yyval.enp) = NODE1(T_IDFT,(yyvsp[(3) - (4)].enp)); }
+#line 770 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_IDFT,(yyvsp[-1].enp)); }
+#line 3622 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 782 "vectree.y"
+#line 771 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_RDFT,(yyvsp[(3) - (4)].enp));
+			(yyval.enp) = NODE1(T_RDFT,(yyvsp[-1].enp));
 			SET_VN_SIZCH_SHAPE((yyval.enp), ALLOC_SHAPE );
 			}
+#line 3631 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 786 "vectree.y"
+#line 775 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_RIDFT,(yyvsp[(3) - (4)].enp));
+			(yyval.enp) = NODE1(T_RIDFT,(yyvsp[-1].enp));
 			SET_VN_SIZCH_SHAPE((yyval.enp), ALLOC_SHAPE );
 			}
+#line 3640 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 791 "vectree.y"
+#line 780 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_WRAP,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_WRAP,(yyvsp[-1].enp));
 			}
+#line 3648 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 794 "vectree.y"
+#line 783 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE3(T_SCROLL,(yyvsp[(3) - (8)].enp),(yyvsp[(5) - (8)].enp),(yyvsp[(7) - (8)].enp));
+			(yyval.enp)=NODE3(T_SCROLL,(yyvsp[-5].enp),(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3656 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 799 "vectree.y"
-    { (yyval.enp) = NODE1(T_ERODE,(yyvsp[(3) - (4)].enp)); }
+#line 788 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_ERODE,(yyvsp[-1].enp)); }
+#line 3662 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 802 "vectree.y"
-    { (yyval.enp) = NODE1(T_DILATE,(yyvsp[(3) - (4)].enp)); }
+#line 791 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_DILATE,(yyvsp[-1].enp)); }
+#line 3668 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 804 "vectree.y"
+#line 793 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_ENLARGE,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_ENLARGE,(yyvsp[-1].enp));
 			SET_VN_SIZCH_SHAPE((yyval.enp), ALLOC_SHAPE );
 			}
+#line 3677 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 808 "vectree.y"
+#line 797 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_REDUCE,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_REDUCE,(yyvsp[-1].enp));
 			SET_VN_SIZCH_SHAPE((yyval.enp), ALLOC_SHAPE );
 			}
+#line 3686 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 813 "vectree.y"
-    { (yyval.enp)=NODE1(T_LOAD,(yyvsp[(3) - (4)].enp)); }
+#line 802 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_LOAD,(yyvsp[-1].enp)); }
+#line 3692 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 814 "vectree.y"
+#line 803 "vectree.y" /* yacc.c:1646  */
     {
-				(yyval.enp)=NODE3(T_RAMP,(yyvsp[(3) - (8)].enp),(yyvsp[(5) - (8)].enp),(yyvsp[(7) - (8)].enp));
+				(yyval.enp)=NODE3(T_RAMP,(yyvsp[-5].enp),(yyvsp[-3].enp),(yyvsp[-1].enp));
 				}
+#line 3700 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 818 "vectree.y"
+#line 807 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE3(T_MAX_TIMES,(yyvsp[(3) - (8)].enp),(yyvsp[(5) - (8)].enp),(yyvsp[(7) - (8)].enp));
+			(yyval.enp) = NODE3(T_MAX_TIMES,(yyvsp[-5].enp),(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 3708 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 826 "vectree.y"
-    { (yyval.enp)=NODE1(T_REFERENCE,(yyvsp[(2) - (2)].enp)); }
+#line 815 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_REFERENCE,(yyvsp[0].enp)); }
+#line 3714 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 838 "vectree.y"
+#line 827 "vectree.y" /* yacc.c:1646  */
     {
-			sprintf(YY_ERR_STR,"shouldn't try to reference pointer variable %s",VN_STRING((yyvsp[(2) - (2)].enp)));
+			sprintf(YY_ERR_STR,"shouldn't try to reference pointer variable %s",VN_STRING((yyvsp[0].enp)));
 			yyerror(THIS_QSP,  YY_ERR_STR);
-			(yyval.enp)=(yyvsp[(2) - (2)].enp);
+			(yyval.enp)=(yyvsp[0].enp);
 			}
+#line 3724 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 844 "vectree.y"
+#line 833 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NULL;
 			}
+#line 3732 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 851 "vectree.y"
+#line 840 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_ARGLIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_ARGLIST,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3740 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 103:
-#line 860 "vectree.y"
+#line 849 "vectree.y" /* yacc.c:1646  */
     {
 			/* BUG check to see that this subrt is void! */
-			(yyval.enp)=NODE1(T_CALLFUNC,(yyvsp[(3) - (4)].enp));
-			SET_VN_CALL_SUBRT((yyval.enp), (yyvsp[(1) - (4)].srp));
-			if( SR_PREC_CODE((yyvsp[(1) - (4)].srp)) != PREC_VOID ){
+			(yyval.enp)=NODE1(T_CALLFUNC,(yyvsp[-1].enp));
+			SET_VN_CALL_SUBRT((yyval.enp), (yyvsp[-3].srp));
+			if( SR_PREC_CODE((yyvsp[-3].srp)) != PREC_VOID ){
 				NODE_ERROR((yyval.enp));
-				sprintf(YY_ERR_STR,"return value of function %s is ignored",SR_NAME((yyvsp[(1) - (4)].srp)));
+				sprintf(YY_ERR_STR,"return value of function %s is ignored",SR_NAME((yyvsp[-3].srp)));
 				advise(YY_ERR_STR);
 			}
 			}
+#line 3755 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 104:
-#line 871 "vectree.y"
+#line 860 "vectree.y" /* yacc.c:1646  */
     {
 			/* BUG check to see that the pointed to subrt is void -
 			 * OR should we check that on pointer assignment?
 			 */
-			(yyval.enp) = NODE2(T_INDIR_CALL,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp));
+			(yyval.enp) = NODE2(T_INDIR_CALL,(yyvsp[-4].enp),(yyvsp[-1].enp));
 			}
+#line 3766 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 105:
-#line 881 "vectree.y"
-    { (yyval.enp) = NODE1(T_REFERENCE,(yyvsp[(2) - (2)].enp)); }
+#line 870 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_REFERENCE,(yyvsp[0].enp)); }
+#line 3772 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 108:
-#line 885 "vectree.y"
+#line 874 "vectree.y" /* yacc.c:1646  */
     {
-				(yyval.enp)=NODE2(T_EQUIVALENCE,(yyvsp[(3) - (8)].enp),(yyvsp[(5) - (8)].enp));
-				SET_VN_DECL_PREC((yyval.enp), (yyvsp[(7) - (8)].prec_p));
+				(yyval.enp)=NODE2(T_EQUIVALENCE,(yyvsp[-5].enp),(yyvsp[-3].enp));
+				SET_VN_DECL_PREC((yyval.enp), (yyvsp[-1].prec_p));
 			}
+#line 3781 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 109:
-#line 890 "vectree.y"
+#line 879 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_CALLFUNC,(yyvsp[(3) - (4)].enp));
-			SET_VN_CALL_SUBRT((yyval.enp), (yyvsp[(1) - (4)].srp));
+			(yyval.enp)=NODE1(T_CALLFUNC,(yyvsp[-1].enp));
+			SET_VN_CALL_SUBRT((yyval.enp), (yyvsp[-3].srp));
 			/* make sure this is not a void subroutine! */
-			if( SR_PREC_CODE((yyvsp[(1) - (4)].srp)) == PREC_VOID ){
+			if( SR_PREC_CODE((yyvsp[-3].srp)) == PREC_VOID ){
 				NODE_ERROR((yyval.enp));
-				sprintf(YY_ERR_STR,"void subroutine %s used in pointer expression!?",SR_NAME((yyvsp[(1) - (4)].srp)));
+				sprintf(YY_ERR_STR,"void subroutine %s used in pointer expression!?",SR_NAME((yyvsp[-3].srp)));
 				advise(YY_ERR_STR);
 				CURDLE((yyval.enp))
 			}
 			}
+#line 3797 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 110:
-#line 904 "vectree.y"
+#line 893 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_FUNCREF);
-			SET_VN_SUBRT((yyval.enp), (yyvsp[(2) - (2)].srp));
+			SET_VN_SUBRT((yyval.enp), (yyvsp[0].srp));
 			}
+#line 3806 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 113:
-#line 912 "vectree.y"
+#line 901 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_SET_PTR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_SET_PTR,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3814 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 114:
-#line 917 "vectree.y"
+#line 906 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_SET_FUNCPTR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp) = NODE2(T_SET_FUNCPTR,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3822 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 115:
-#line 922 "vectree.y"
+#line 911 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_SET_STR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_SET_STR,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3830 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 116:
-#line 934 "vectree.y"
+#line 923 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_ASSIGN,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_ASSIGN,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 3838 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 117:
-#line 937 "vectree.y"
-    { (yyval.enp)=NODE1(T_POSTINC,(yyvsp[(1) - (2)].enp)); }
+#line 926 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_POSTINC,(yyvsp[-1].enp)); }
+#line 3844 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 118:
-#line 938 "vectree.y"
-    { (yyval.enp)=NODE1(T_PREINC,(yyvsp[(2) - (2)].enp)); }
+#line 927 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_PREINC,(yyvsp[0].enp)); }
+#line 3850 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 119:
-#line 939 "vectree.y"
-    { (yyval.enp)=NODE1(T_PREDEC,(yyvsp[(2) - (2)].enp)); }
+#line 928 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_PREDEC,(yyvsp[0].enp)); }
+#line 3856 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 120:
-#line 940 "vectree.y"
-    { (yyval.enp)=NODE1(T_POSTDEC,(yyvsp[(1) - (2)].enp)); }
+#line 929 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_POSTDEC,(yyvsp[-1].enp)); }
+#line 3862 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 121:
-#line 941 "vectree.y"
+#line 930 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_PLUS,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_PLUS,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3873 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 122:
-#line 947 "vectree.y"
+#line 936 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_TIMES,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_TIMES,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3884 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 123:
-#line 953 "vectree.y"
+#line 942 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_MINUS,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_MINUS,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3895 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 124:
-#line 959 "vectree.y"
+#line 948 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_DIVIDE,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_DIVIDE,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3906 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 125:
-#line 965 "vectree.y"
+#line 954 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_BITAND,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_BITAND,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3917 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 126:
-#line 971 "vectree.y"
+#line 960 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_BITOR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_BITOR,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3928 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 127:
-#line 977 "vectree.y"
+#line 966 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_BITXOR,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_BITXOR,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3939 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 128:
-#line 983 "vectree.y"
+#line 972 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_BITLSHIFT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_BITLSHIFT,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3950 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 129:
-#line 989 "vectree.y"
+#line 978 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *new_enp,*dup_enp;
-			new_enp=NODE2(T_BITRSHIFT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
-			dup_enp=DUP_TREE((yyvsp[(1) - (3)].enp));
+			new_enp=NODE2(T_BITRSHIFT,(yyvsp[-2].enp),(yyvsp[0].enp));
+			dup_enp=DUP_TREE((yyvsp[-2].enp));
 			(yyval.enp)=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
+#line 3961 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 130:
-#line 1003 "vectree.y"
-    { (yyval.enp) = (yyvsp[(1) - (2)].enp); }
+#line 992 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = (yyvsp[-1].enp); }
+#line 3967 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 133:
-#line 1007 "vectree.y"
+#line 996 "vectree.y" /* yacc.c:1646  */
     {
 			Identifier *idp;
 			(yyval.enp) = NODE0(T_LABEL);
-			idp = new_id(QSP_ARG  (yyvsp[(1) - (2)].e_string));
+			idp = new_id(QSP_ARG  (yyvsp[-1].e_string));
 			SET_ID_TYPE(idp, ID_LABEL);
 			SET_VN_STRING((yyval.enp), savestr(ID_NAME(idp)));
 			}
+#line 3979 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 134:
-#line 1015 "vectree.y"
+#line 1004 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_LABEL);
-			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[(1) - (2)].idp))));
+			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[-1].idp))));
 			}
+#line 3988 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 135:
-#line 1020 "vectree.y"
+#line 1009 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp) = NULL; }
+#line 3994 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 138:
-#line 1028 "vectree.y"
+#line 1017 "vectree.y" /* yacc.c:1646  */
     {
-			if( (yyvsp[(2) - (2)].enp) != NULL ){
-				if( (yyvsp[(1) - (2)].enp) != NULL )
-					(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp));
+			if( (yyvsp[0].enp) != NULL ){
+				if( (yyvsp[-1].enp) != NULL )
+					(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[-1].enp),(yyvsp[0].enp));
 				else
-					(yyval.enp) = (yyvsp[(2) - (2)].enp);
+					(yyval.enp) = (yyvsp[0].enp);
 			} else {
-				(yyval.enp)=(yyvsp[(1) - (2)].enp);
+				(yyval.enp)=(yyvsp[-1].enp);
 			}
 			}
+#line 4009 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 139:
-#line 1039 "vectree.y"
+#line 1028 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp));
+			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[-1].enp),(yyvsp[0].enp));
 			}
+#line 4017 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 140:
-#line 1052 "vectree.y"
+#line 1041 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=(yyvsp[(2) - (3)].enp);
+			(yyval.enp)=(yyvsp[-1].enp);
 			}
+#line 4025 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 141:
-#line 1057 "vectree.y"
+#line 1046 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=(yyvsp[(2) - (3)].enp);
+			(yyval.enp)=(yyvsp[-1].enp);
 			}
+#line 4033 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 142:
-#line 1061 "vectree.y"
+#line 1050 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[(2) - (4)].enp),(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[-2].enp),(yyvsp[-1].enp));
 			}
+#line 4041 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 143:
-#line 1065 "vectree.y"
+#line 1054 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NULL;
 			}
+#line 4049 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 144:
-#line 1069 "vectree.y"
+#line 1058 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NULL;
 			}
+#line 4057 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 145:
-#line 1073 "vectree.y"
+#line 1062 "vectree.y" /* yacc.c:1646  */
     {
 			yyerror(THIS_QSP,  (char *)"missing '}'");
 			(yyval.enp)=NULL;
 			}
+#line 4066 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 146:
-#line 1080 "vectree.y"
+#line 1069 "vectree.y" /* yacc.c:1646  */
     {
-			set_subrt_ctx(QSP_ARG  (yyvsp[(1) - (4)].e_string));		/* when do we unset??? */
+			set_subrt_ctx(QSP_ARG  (yyvsp[-3].e_string));		/* when do we unset??? */
 			/* We evaluate the declarations here so we can parse the body, but
 			 * the declarations get interpreted a second time when we compile the nodes -
 			 * at least, for prototype declarations!?  Not a problem for regular declarations?
 			 */
-			if( (yyvsp[(3) - (4)].enp) != NULL )
-				EVAL_DECL_TREE((yyvsp[(3) - (4)].enp));
-			(yyval.enp) = NODE1(T_PROTO,(yyvsp[(3) - (4)].enp));
-			SET_VN_STRING((yyval.enp), savestr((yyvsp[(1) - (4)].e_string)));
+			if( (yyvsp[-1].enp) != NULL )
+				EVAL_DECL_TREE((yyvsp[-1].enp));
+			(yyval.enp) = NODE1(T_PROTO,(yyvsp[-1].enp));
+			SET_VN_STRING((yyval.enp), savestr((yyvsp[-3].e_string)));
 			}
+#line 4082 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 147:
-#line 1094 "vectree.y"
+#line 1083 "vectree.y" /* yacc.c:1646  */
     {
-			if( SR_FLAGS((yyvsp[(1) - (4)].srp)) != SR_PROTOTYPE ){
-				sprintf(YY_ERR_STR,"Subroutine %s multiply defined!?",SR_NAME((yyvsp[(1) - (4)].srp)));
+			if( SR_FLAGS((yyvsp[-3].srp)) != SR_PROTOTYPE ){
+				sprintf(YY_ERR_STR,"Subroutine %s multiply defined!?",SR_NAME((yyvsp[-3].srp)));
 				yyerror(THIS_QSP,  YY_ERR_STR);
 				/* now what??? */
 			}
-			set_subrt_ctx(QSP_ARG  SR_NAME((yyvsp[(1) - (4)].srp)));		/* when do we unset??? */
+			set_subrt_ctx(QSP_ARG  SR_NAME((yyvsp[-3].srp)));		/* when do we unset??? */
 
 			/* compare the two arg decl trees
 			 * and issue a warning if they do not match.
 			 */
-			compare_arg_trees(QSP_ARG  (yyvsp[(3) - (4)].enp),SR_ARG_DECLS((yyvsp[(1) - (4)].srp)));
+			compare_arg_trees(QSP_ARG  (yyvsp[-1].enp),SR_ARG_DECLS((yyvsp[-3].srp)));
 
 			/* use the new ones */
-			SET_SR_ARG_DECLS((yyvsp[(1) - (4)].srp), (yyvsp[(3) - (4)].enp));
+			SET_SR_ARG_DECLS((yyvsp[-3].srp), (yyvsp[-1].enp));
 			/* BUG?? we might want to release the old tree... */
 
 			/* We also need to make sure that the type of the function matches
@@ -4255,83 +4109,90 @@ yyreduce:
 			 * the body...
 			 */
 
-			if( (yyvsp[(3) - (4)].enp) != NULL )
-				EVAL_DECL_TREE((yyvsp[(3) - (4)].enp));
+			if( (yyvsp[-1].enp) != NULL )
+				EVAL_DECL_TREE((yyvsp[-1].enp));
 
-			(yyval.enp)=NODE1(T_PROTO,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_PROTO,(yyvsp[-1].enp));
 			/* BUG why are we storing the name again?? */
-			SET_VN_STRING((yyval.enp), savestr(SR_NAME((yyvsp[(1) - (4)].srp))));
+			SET_VN_STRING((yyval.enp), savestr(SR_NAME((yyvsp[-3].srp))));
 			}
+#line 4120 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 148:
-#line 1130 "vectree.y"
+#line 1119 "vectree.y" /* yacc.c:1646  */
     {
 			Subrt *srp;
-			srp=remember_subrt(QSP_ARG  (yyvsp[(1) - (3)].prec_p),VN_STRING((yyvsp[(2) - (3)].enp)),VN_CHILD((yyvsp[(2) - (3)].enp),0),(yyvsp[(3) - (3)].enp));
-			SET_SR_PREC_PTR(srp, (yyvsp[(1) - (3)].prec_p));
+			srp=remember_subrt(QSP_ARG  (yyvsp[-2].prec_p),VN_STRING((yyvsp[-1].enp)),VN_CHILD((yyvsp[-1].enp),0),(yyvsp[0].enp));
+			SET_SR_PREC_PTR(srp, (yyvsp[-2].prec_p));
 			(yyval.enp)=NODE0(T_SUBRT);
 			SET_VN_SUBRT((yyval.enp),srp);
-			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(2) - (3)].enp)));	/* this deletes the objects... */
+			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[-1].enp)));	/* this deletes the objects... */
 			// But why is the context in existence here?
 			COMPILE_SUBRT(srp);
 			}
+#line 4135 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 149:
-#line 1141 "vectree.y"
+#line 1130 "vectree.y" /* yacc.c:1646  */
     {
 			Subrt *srp;
-			srp=remember_subrt(QSP_ARG  (yyvsp[(1) - (4)].prec_p),VN_STRING((yyvsp[(3) - (4)].enp)),VN_CHILD((yyvsp[(3) - (4)].enp),0),(yyvsp[(4) - (4)].enp));
-			SET_SR_PREC_PTR(srp, (yyvsp[(1) - (4)].prec_p));
+			srp=remember_subrt(QSP_ARG  (yyvsp[-3].prec_p),VN_STRING((yyvsp[-1].enp)),VN_CHILD((yyvsp[-1].enp),0),(yyvsp[0].enp));
+			SET_SR_PREC_PTR(srp, (yyvsp[-3].prec_p));
 			SET_SR_FLAG_BITS(srp, SR_REFFUNC);
 			/* set a flag to show returns ptr */
 			(yyval.enp)=NODE0(T_SUBRT);
 			SET_VN_SUBRT((yyval.enp),srp);
-			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(3) - (4)].enp)));	/* this deletes the objects... */
+			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[-1].enp)));	/* this deletes the objects... */
 			COMPILE_SUBRT(srp);
 			}
+#line 4151 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 150:
-#line 1153 "vectree.y"
+#line 1142 "vectree.y" /* yacc.c:1646  */
     {
 			/* BUG make sure that precision matches prototype decl */
 			Subrt *srp;
-			srp=subrt_of(QSP_ARG  VN_STRING((yyvsp[(2) - (3)].enp)));
+			srp=subrt_of(QSP_ARG  VN_STRING((yyvsp[-1].enp)));
 			assert( srp != NULL );
 
-			update_subrt(QSP_ARG  srp,(yyvsp[(3) - (3)].enp));
+			update_subrt(QSP_ARG  srp,(yyvsp[0].enp));
 			(yyval.enp)=NODE0(T_SUBRT);
 			SET_VN_SUBRT((yyval.enp),srp);
-			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(2) - (3)].enp)));
+			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[-1].enp)));
 			COMPILE_SUBRT(srp);
 			}
+#line 4168 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 151:
-#line 1169 "vectree.y"
+#line 1158 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NULL;
 			}
+#line 4176 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 152:
-#line 1173 "vectree.y"
+#line 1162 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=(yyvsp[(1) - (1)].enp);
+			(yyval.enp)=(yyvsp[0].enp);
 			}
+#line 4184 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 153:
-#line 1177 "vectree.y"
+#line 1166 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_DECL_STAT_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_DECL_STAT_LIST,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 4192 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 155:
-#line 1184 "vectree.y"
+#line 1173 "vectree.y" /* yacc.c:1646  */
     {
 			if( (yyval.enp) != NULL ) {
 				// decl_stats are always evaluated,
@@ -4339,10 +4200,11 @@ yyreduce:
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
 			}
 			}
+#line 4204 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 156:
-#line 1192 "vectree.y"
+#line 1181 "vectree.y" /* yacc.c:1646  */
     {
 			if( (yyval.enp) != NULL ) {
 				EVAL_IMMEDIATE((yyval.enp));
@@ -4352,831 +4214,959 @@ yyreduce:
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
 			}
 			}
+#line 4218 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 157:
-#line 1202 "vectree.y"
+#line 1191 "vectree.y" /* yacc.c:1646  */
     {
 			if( (yyval.enp) != NULL ) {
 				EVAL_IMMEDIATE((yyval.enp));
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
 			}
 			}
+#line 4229 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 158:
-#line 1211 "vectree.y"
-    { SET_TOP_NODE((yyvsp[(1) - (2)].enp));  }
+#line 1200 "vectree.y" /* yacc.c:1646  */
+    { SET_TOP_NODE((yyvsp[-1].enp));  }
+#line 4235 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 159:
-#line 1213 "vectree.y"
-    { SET_TOP_NODE((yyvsp[(1) - (1)].enp)); }
+#line 1202 "vectree.y" /* yacc.c:1646  */
+    { SET_TOP_NODE((yyvsp[0].enp)); }
+#line 4241 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 160:
-#line 1214 "vectree.y"
+#line 1203 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(2) - (3)].enp));
-			if( (yyvsp[(1) - (3)].enp) != NULL && NODE_IS_FINISHED((yyvsp[(1) - (3)].enp)) &&
-					(yyvsp[(2) - (3)].enp) != NULL && NODE_IS_FINISHED((yyvsp[(2) - (3)].enp)) )
+			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[-2].enp),(yyvsp[-1].enp));
+			if( (yyvsp[-2].enp) != NULL && NODE_IS_FINISHED((yyvsp[-2].enp)) &&
+					(yyvsp[-1].enp) != NULL && NODE_IS_FINISHED((yyvsp[-1].enp)) )
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
 			SET_TOP_NODE((yyval.enp));
 			}
+#line 4253 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 161:
-#line 1221 "vectree.y"
+#line 1210 "vectree.y" /* yacc.c:1646  */
     {
 			// We don't need to make lists of statements
 			// already executed!?
-			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp));
-			if( (yyvsp[(1) - (2)].enp) != NULL && NODE_IS_FINISHED((yyvsp[(1) - (2)].enp)) &&
-					(yyvsp[(2) - (2)].enp) != NULL && NODE_IS_FINISHED((yyvsp[(2) - (2)].enp)) )
+			(yyval.enp)=NODE2(T_STAT_LIST,(yyvsp[-1].enp),(yyvsp[0].enp));
+			if( (yyvsp[-1].enp) != NULL && NODE_IS_FINISHED((yyvsp[-1].enp)) &&
+					(yyvsp[0].enp) != NULL && NODE_IS_FINISHED((yyvsp[0].enp)) )
 				SET_VN_FLAG_BITS((yyval.enp),NODE_FINISHED);
 			SET_TOP_NODE((yyval.enp));
 			}
+#line 4267 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 162:
-#line 1231 "vectree.y"
+#line 1220 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NULL;
 			SET_TOP_NODE((yyval.enp));
 			}
+#line 4276 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 164:
-#line 1241 "vectree.y"
+#line 1230 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_BY);	}
+#line 4282 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 165:
-#line 1242 "vectree.y"
+#line 1231 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_CHAR);	}
+#line 4288 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 166:
-#line 1243 "vectree.y"
+#line 1232 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_STR);	}
+#line 4294 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 167:
-#line 1244 "vectree.y"
+#line 1233 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_SP);	}
+#line 4300 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 168:
-#line 1245 "vectree.y"
+#line 1234 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DP);	}
+#line 4306 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 169:
-#line 1246 "vectree.y"
+#line 1235 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_CPX);	}
+#line 4312 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 170:
-#line 1247 "vectree.y"
+#line 1236 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DBLCPX);	}
+#line 4318 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 171:
-#line 1248 "vectree.y"
+#line 1237 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)	= PREC_FOR_CODE(PREC_QUAT);	}
+#line 4324 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 172:
-#line 1249 "vectree.y"
+#line 1238 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DBLQUAT);	}
+#line 4330 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 173:
-#line 1250 "vectree.y"
+#line 1239 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_IN);	}
+#line 4336 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 174:
-#line 1251 "vectree.y"
+#line 1240 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_DI);	}
+#line 4342 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 175:
-#line 1252 "vectree.y"
+#line 1241 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_LI);	}
+#line 4348 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 176:
-#line 1253 "vectree.y"
+#line 1242 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_UBY);	}
+#line 4354 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 177:
-#line 1254 "vectree.y"
+#line 1243 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_UIN);	}
+#line 4360 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 178:
-#line 1255 "vectree.y"
+#line 1244 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_UDI);	}
+#line 4366 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 179:
-#line 1256 "vectree.y"
+#line 1245 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_ULI);	}
+#line 4372 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 180:
-#line 1257 "vectree.y"
+#line 1246 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_BIT);	}
+#line 4378 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 181:
-#line 1258 "vectree.y"
+#line 1247 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)		= PREC_FOR_CODE(PREC_COLOR);	}
+#line 4384 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 182:
-#line 1259 "vectree.y"
+#line 1248 "vectree.y" /* yacc.c:1646  */
     { (yyval.prec_p)	= PREC_FOR_CODE(PREC_VOID);	}
+#line 4390 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 183:
-#line 1264 "vectree.y"
-    { (yyval.enp)=NODE1(T_INFO,(yyvsp[(3) - (4)].enp)); }
+#line 1253 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_INFO,(yyvsp[-1].enp)); }
+#line 4396 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 184:
-#line 1266 "vectree.y"
-    { (yyval.enp)=NODE1(T_DISPLAY,(yyvsp[(3) - (4)].enp)); }
+#line 1255 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_DISPLAY,(yyvsp[-1].enp)); }
+#line 4402 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 185:
-#line 1269 "vectree.y"
+#line 1258 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp)=NODE0(T_EXIT); }
+#line 4408 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 186:
-#line 1270 "vectree.y"
+#line 1259 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp)=NODE0(T_EXIT); }
+#line 4414 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 187:
-#line 1271 "vectree.y"
-    { (yyval.enp)=NODE1(T_EXIT,(yyvsp[(3) - (4)].enp)); }
+#line 1260 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_EXIT,(yyvsp[-1].enp)); }
+#line 4420 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 188:
-#line 1275 "vectree.y"
+#line 1264 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE1(T_RETURN,NULL);
 			}
+#line 4428 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 189:
-#line 1279 "vectree.y"
+#line 1268 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE1(T_RETURN,NULL);
 			}
+#line 4436 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 190:
-#line 1289 "vectree.y"
+#line 1278 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_RETURN,(yyvsp[(2) - (2)].enp));
+			(yyval.enp)=NODE1(T_RETURN,(yyvsp[0].enp));
 			}
+#line 4444 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 191:
-#line 1293 "vectree.y"
+#line 1282 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_RETURN,(yyvsp[(3) - (4)].enp));
+			(yyval.enp)=NODE1(T_RETURN,(yyvsp[-1].enp));
 			}
+#line 4452 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 192:
-#line 1297 "vectree.y"
+#line 1286 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_RETURN,(yyvsp[(2) - (2)].enp));
+			(yyval.enp)=NODE1(T_RETURN,(yyvsp[0].enp));
 			}
+#line 4460 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 193:
-#line 1303 "vectree.y"
-    { (yyval.enp)=NODE2(T_SAVE,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp)); }
+#line 1292 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE2(T_SAVE,(yyvsp[-3].enp),(yyvsp[-1].enp)); }
+#line 4466 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 194:
-#line 1305 "vectree.y"
-    { (yyval.enp)=NODE1(T_FILETYPE,(yyvsp[(3) - (4)].enp)); }
+#line 1294 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_FILETYPE,(yyvsp[-1].enp)); }
+#line 4472 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 195:
-#line 1309 "vectree.y"
+#line 1298 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_SCRIPT,(yyvsp[(3) - (4)].enp));
-			SET_VN_SUBRT((yyval.enp), (yyvsp[(1) - (4)].srp));
+			(yyval.enp)=NODE1(T_SCRIPT,(yyvsp[-1].enp));
+			SET_VN_SUBRT((yyval.enp), (yyvsp[-3].srp));
 			}
+#line 4481 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 196:
-#line 1314 "vectree.y"
+#line 1303 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE1(T_SCRIPT,NULL);
-			SET_VN_SUBRT((yyval.enp), (yyvsp[(1) - (3)].srp));
+			SET_VN_SUBRT((yyval.enp), (yyvsp[-2].srp));
 			}
+#line 4490 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 198:
-#line 1322 "vectree.y"
+#line 1311 "vectree.y" /* yacc.c:1646  */
     {
-			sprintf(YY_ERR_STR,"undefined string pointer \"%s\"",(yyvsp[(1) - (1)].e_string));
+			sprintf(YY_ERR_STR,"undefined string pointer \"%s\"",(yyvsp[0].e_string));
 			yyerror(THIS_QSP,  YY_ERR_STR);
 			(yyval.enp)=NULL;
 			}
+#line 4500 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 199:
-#line 1330 "vectree.y"
+#line 1319 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_STRCPY,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
+			(yyval.enp) = NODE2(T_STRCPY,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 4508 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 200:
-#line 1334 "vectree.y"
+#line 1323 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_STRCAT,(yyvsp[(3) - (6)].enp),(yyvsp[(5) - (6)].enp));
+			(yyval.enp) = NODE2(T_STRCAT,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			}
+#line 4516 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 201:
-#line 1343 "vectree.y"
+#line 1332 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_CALL_NATIVE,(yyvsp[(3) - (4)].enp));
-			SET_VN_INTVAL((yyval.enp), (yyvsp[(1) - (4)].intval));
+			(yyval.enp) = NODE1(T_CALL_NATIVE,(yyvsp[-1].enp));
+			SET_VN_INTVAL((yyval.enp), (yyvsp[-3].intval));
 			}
+#line 4525 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 202:
-#line 1357 "vectree.y"
+#line 1346 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *enp,*enp2;
-			enp=NODE2(T_EXPR_LIST,(yyvsp[(5) - (12)].enp),(yyvsp[(7) - (12)].enp));
-			enp2=NODE2(T_EXPR_LIST,(yyvsp[(9) - (12)].enp),(yyvsp[(11) - (12)].enp));
-			(yyval.enp) = NODE3(T_FILL,(yyvsp[(3) - (12)].enp),enp,enp2);
+			enp=NODE2(T_EXPR_LIST,(yyvsp[-7].enp),(yyvsp[-5].enp));
+			enp2=NODE2(T_EXPR_LIST,(yyvsp[-3].enp),(yyvsp[-1].enp));
+			(yyval.enp) = NODE3(T_FILL,(yyvsp[-9].enp),enp,enp2);
 			}
+#line 4536 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 203:
-#line 1364 "vectree.y"
+#line 1353 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_CLR_OPT_PARAMS);
 			}
+#line 4544 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 204:
-#line 1369 "vectree.y"
+#line 1358 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *enp1,*enp2,*enp3;
-			enp1=NODE2(T_EXPR_LIST,(yyvsp[(3) - (14)].enp),(yyvsp[(5) - (14)].enp));
-			enp2=NODE2(T_EXPR_LIST,(yyvsp[(7) - (14)].enp),(yyvsp[(9) - (14)].enp));
-			enp3=NODE2(T_EXPR_LIST,(yyvsp[(11) - (14)].enp),(yyvsp[(13) - (14)].enp));
+			enp1=NODE2(T_EXPR_LIST,(yyvsp[-11].enp),(yyvsp[-9].enp));
+			enp2=NODE2(T_EXPR_LIST,(yyvsp[-7].enp),(yyvsp[-5].enp));
+			enp3=NODE2(T_EXPR_LIST,(yyvsp[-3].enp),(yyvsp[-1].enp));
 			(yyval.enp) = NODE3(T_ADD_OPT_PARAM,enp1,enp2,enp3);
 			}
+#line 4556 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 205:
-#line 1377 "vectree.y"
+#line 1366 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_OPTIMIZE);
-			SET_VN_SUBRT((yyval.enp), (yyvsp[(3) - (4)].srp));
+			SET_VN_SUBRT((yyval.enp), (yyvsp[-1].srp));
 			}
+#line 4565 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 206:
-#line 1384 "vectree.y"
-    { (yyval.enp)=NODE1(T_OUTPUT_FILE,(yyvsp[(3) - (4)].enp)); }
+#line 1373 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_OUTPUT_FILE,(yyvsp[-1].enp)); }
+#line 4571 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 207:
-#line 1388 "vectree.y"
-    { (yyval.enp)=NODE1(T_EXP_PRINT,(yyvsp[(3) - (4)].enp)); }
+#line 1377 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_EXP_PRINT,(yyvsp[-1].enp)); }
+#line 4577 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 208:
-#line 1389 "vectree.y"
-    { (yyval.enp)=NODE1(T_EXP_PRINT,(yyvsp[(3) - (4)].enp)); }
+#line 1378 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_EXP_PRINT,(yyvsp[-1].enp)); }
+#line 4583 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 209:
-#line 1390 "vectree.y"
-    { (yyval.enp)=NODE1(T_ADVISE,(yyvsp[(3) - (4)].enp)); }
+#line 1379 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_ADVISE,(yyvsp[-1].enp)); }
+#line 4589 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 210:
-#line 1391 "vectree.y"
-    { (yyval.enp)=NODE1(T_WARN,(yyvsp[(3) - (4)].enp)); }
+#line 1380 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE1(T_WARN,(yyvsp[-1].enp)); }
+#line 4595 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 212:
-#line 1396 "vectree.y"
-    { (yyval.e_string) = OBJ_NAME((yyvsp[(1) - (1)].dp)); }
+#line 1385 "vectree.y" /* yacc.c:1646  */
+    { (yyval.e_string) = OBJ_NAME((yyvsp[0].dp)); }
+#line 4601 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 213:
-#line 1398 "vectree.y"
-    { (yyval.e_string) = ID_NAME((yyvsp[(1) - (1)].idp)); }
+#line 1387 "vectree.y" /* yacc.c:1646  */
+    { (yyval.e_string) = ID_NAME((yyvsp[0].idp)); }
+#line 4607 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 214:
-#line 1400 "vectree.y"
-    { (yyval.e_string) = ID_NAME((yyvsp[(1) - (1)].idp)); }
+#line 1389 "vectree.y" /* yacc.c:1646  */
+    { (yyval.e_string) = ID_NAME((yyvsp[0].idp)); }
+#line 4613 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 215:
-#line 1402 "vectree.y"
+#line 1391 "vectree.y" /* yacc.c:1646  */
     {
 			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
 			(yyval.e_string)="<illegal_keyword_use>";
 			}
+#line 4622 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 216:
-#line 1408 "vectree.y"
+#line 1397 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_SCAL_DECL);
 			// WHY VN_STRING and not VN_DECL_NAME???
-			SET_VN_STRING((yyval.enp),savestr((yyvsp[(1) - (1)].e_string)));	/* bug need to save??? */
+			SET_VN_STRING((yyval.enp),savestr((yyvsp[0].e_string)));	/* bug need to save??? */
 			}
+#line 4632 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 217:
-#line 1420 "vectree.y"
+#line 1409 "vectree.y" /* yacc.c:1646  */
     {
-			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(1) - (1)].enp)));
+			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[0].enp)));
 			}
+#line 4640 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 218:
-#line 1424 "vectree.y"
+#line 1413 "vectree.y" /* yacc.c:1646  */
     {
-			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[(1) - (1)].enp)));
+			delete_subrt_ctx(QSP_ARG  VN_STRING((yyvsp[0].enp)));
 			}
+#line 4648 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 219:
-#line 1428 "vectree.y"
+#line 1417 "vectree.y" /* yacc.c:1646  */
     {
 			/* function pointer */
-			(yyval.enp) = NODE1(T_FUNCPTR_DECL,(yyvsp[(6) - (7)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(3) - (7)].e_string)));
+			(yyval.enp) = NODE1(T_FUNCPTR_DECL,(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-4].e_string)));
 			}
+#line 4658 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 220:
-#line 1433 "vectree.y"
+#line 1422 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_CSCAL_DECL,(yyvsp[(3) - (4)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (4)].e_string)));
+			(yyval.enp) = NODE1(T_CSCAL_DECL,(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-3].e_string)));
 			}
+#line 4667 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 221:
-#line 1437 "vectree.y"
+#line 1426 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_VEC_DECL,(yyvsp[(3) - (4)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (4)].e_string)));
+			(yyval.enp) = NODE1(T_VEC_DECL,(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-3].e_string)));
 			}
+#line 4676 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 222:
-#line 1441 "vectree.y"
+#line 1430 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE2(T_CVEC_DECL,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
+			(yyval.enp) = NODE2(T_CVEC_DECL,(yyvsp[-4].enp),(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-6].e_string)));
 			}
+#line 4685 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 223:
-#line 1445 "vectree.y"
+#line 1434 "vectree.y" /* yacc.c:1646  */
     {
 			// The type is stored at the parent node...
 			// Since we "compile" the nodes depth first,
 			// how does it get here?
-			(yyval.enp)=NODE2(T_IMG_DECL,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
+			(yyval.enp)=NODE2(T_IMG_DECL,(yyvsp[-4].enp),(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-6].e_string)));
 			}
+#line 4697 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 224:
-#line 1452 "vectree.y"
+#line 1441 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE3(T_CIMG_DECL,(yyvsp[(3) - (10)].enp),(yyvsp[(6) - (10)].enp),(yyvsp[(9) - (10)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (10)].e_string)));
+			(yyval.enp)=NODE3(T_CIMG_DECL,(yyvsp[-7].enp),(yyvsp[-4].enp),(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-9].e_string)));
 			}
+#line 4706 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 225:
-#line 1456 "vectree.y"
+#line 1445 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE3(T_SEQ_DECL,(yyvsp[(3) - (10)].enp),(yyvsp[(6) - (10)].enp),(yyvsp[(9) - (10)].enp));
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (10)].e_string)));
+			(yyval.enp)=NODE3(T_SEQ_DECL,(yyvsp[-7].enp),(yyvsp[-4].enp),(yyvsp[-1].enp));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-9].e_string)));
 			}
+#line 4715 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 226:
-#line 1460 "vectree.y"
+#line 1449 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *enp;
-			enp = NODE2(T_EXPR_LIST,(yyvsp[(9) - (13)].enp),(yyvsp[(12) - (13)].enp));
-			(yyval.enp)=NODE3(T_CSEQ_DECL,(yyvsp[(3) - (13)].enp),(yyvsp[(6) - (13)].enp),enp);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (13)].e_string)));
+			enp = NODE2(T_EXPR_LIST,(yyvsp[-4].enp),(yyvsp[-1].enp));
+			(yyval.enp)=NODE3(T_CSEQ_DECL,(yyvsp[-10].enp),(yyvsp[-7].enp),enp);
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-12].e_string)));
 			}
+#line 4726 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 227:
-#line 1466 "vectree.y"
+#line 1455 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE1(T_CSCAL_DECL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (3)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-2].e_string)));
 			}
+#line 4735 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 228:
-#line 1471 "vectree.y"
+#line 1460 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE1(T_VEC_DECL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (3)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-2].e_string)));
 			}
+#line 4744 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 229:
-#line 1476 "vectree.y"
+#line 1465 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE2(T_CVEC_DECL,NULL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (5)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-4].e_string)));
 			}
+#line 4753 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 230:
-#line 1481 "vectree.y"
+#line 1470 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE2(T_IMG_DECL,NULL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (5)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-4].e_string)));
 			}
+#line 4762 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 231:
-#line 1486 "vectree.y"
+#line 1475 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE3(T_CIMG_DECL,NULL,NULL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-6].e_string)));
 			}
+#line 4771 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 232:
-#line 1491 "vectree.y"
+#line 1480 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE3(T_SEQ_DECL,NULL,NULL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (7)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-6].e_string)));
 			}
+#line 4780 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 233:
-#line 1496 "vectree.y"
+#line 1485 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE3(T_CSEQ_DECL,NULL,NULL,NULL);
-			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[(1) - (9)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp),savestr((yyvsp[-8].e_string)));
 			}
+#line 4789 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 234:
-#line 1501 "vectree.y"
+#line 1490 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_PTR_DECL);
-			SET_VN_DECL_NAME((yyval.enp), savestr((yyvsp[(2) - (2)].e_string)));
+			SET_VN_DECL_NAME((yyval.enp), savestr((yyvsp[0].e_string)));
 			}
+#line 4798 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 235:
-#line 1506 "vectree.y"
+#line 1495 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_BADNAME);
-			SET_VN_STRING((yyval.enp), savestr( FUNC_NAME( (yyvsp[(1) - (1)].func_p) )) );
+			SET_VN_STRING((yyval.enp), savestr( FUNC_NAME( (yyvsp[0].func_p) )) );
 			CURDLE((yyval.enp))
 			NODE_ERROR((yyval.enp));
 			WARN("illegal data function name use");
 			}
+#line 4810 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 236:
-#line 1514 "vectree.y"
+#line 1503 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp)=NODE0(T_BADNAME);
-			SET_VN_STRING((yyval.enp), savestr( FUNC_NAME((yyvsp[(1) - (1)].func_p)) ) );
+			SET_VN_STRING((yyval.enp), savestr( FUNC_NAME((yyvsp[0].func_p)) ) );
 			CURDLE((yyval.enp))
 			NODE_ERROR((yyval.enp));
 			WARN("illegal size function name use");
 			}
+#line 4822 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 238:
-#line 1561 "vectree.y"
+#line 1550 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_DECL_INIT,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_DECL_INIT,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 4830 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 239:
-#line 1564 "vectree.y"
+#line 1553 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_DECL_ITEM_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+			(yyval.enp)=NODE2(T_DECL_ITEM_LIST,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 4837 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 240:
-#line 1566 "vectree.y"
+#line 1555 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *enp;
-			enp=NODE2(T_DECL_INIT,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
-			(yyval.enp)=NODE2(T_DECL_ITEM_LIST,(yyvsp[(1) - (5)].enp),enp); }
+			enp=NODE2(T_DECL_INIT,(yyvsp[-2].enp),(yyvsp[0].enp));
+			(yyval.enp)=NODE2(T_DECL_ITEM_LIST,(yyvsp[-4].enp),enp); }
+#line 4846 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 241:
-#line 1577 "vectree.y"
+#line 1566 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_DECL_STAT,(yyvsp[(2) - (2)].enp));
+			(yyval.enp)=NODE1(T_DECL_STAT,(yyvsp[0].enp));
 /*
 			if( PREC_RDONLY($1) )
 				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
 */
-			SET_VN_DECL_PREC((yyval.enp),(yyvsp[(1) - (2)].prec_p));
+			SET_VN_DECL_PREC((yyval.enp),(yyvsp[-1].prec_p));
 			}
+#line 4859 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 243:
-#line 1589 "vectree.y"
+#line 1578 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_DECL_STAT_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp));
+			(yyval.enp)=NODE2(T_DECL_STAT_LIST,(yyvsp[-1].enp),(yyvsp[0].enp));
 			}
+#line 4867 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 244:
-#line 1595 "vectree.y"
+#line 1584 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_DECL_STAT,(yyvsp[(2) - (3)].enp));
+			(yyval.enp) = NODE1(T_DECL_STAT,(yyvsp[-1].enp));
 /*
 			if( $1 & DT_RDONLY )
 				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
 */
-			SET_VN_DECL_PREC((yyval.enp),(yyvsp[(1) - (3)].prec_p));
+			SET_VN_DECL_PREC((yyval.enp),(yyvsp[-2].prec_p));
 			EVAL_IMMEDIATE((yyval.enp));
 			// don't release here because may be in subrt decl...
 			// But we need to release otherwise!?
 			}
+#line 4883 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 245:
-#line 1606 "vectree.y"
+#line 1595 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_EXTERN_DECL,(yyvsp[(3) - (4)].enp));
+			(yyval.enp) = NODE1(T_EXTERN_DECL,(yyvsp[-1].enp));
 /*
 			if( $2 & DT_RDONLY )
 				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
 */
-			SET_VN_DECL_PREC((yyval.enp),(yyvsp[(2) - (4)].prec_p));
+			SET_VN_DECL_PREC((yyval.enp),(yyvsp[-2].prec_p));
 			EVAL_IMMEDIATE((yyval.enp));
 			// don't release here because may be in subrt decl...
 			}
+#line 4898 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 246:
-#line 1616 "vectree.y"
+#line 1605 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp) = NODE1(T_DECL_STAT,(yyvsp[(3) - (4)].enp));
+			(yyval.enp) = NODE1(T_DECL_STAT,(yyvsp[-1].enp));
 /*
 			if( $2 & DT_RDONLY )
 				SET_VN_DECL_FLAGS($$, DECL_IS_CONST);
 */
 			SET_VN_DECL_FLAG_BITS((yyval.enp),DECL_IS_STATIC);
-			SET_VN_DECL_PREC((yyval.enp),(yyvsp[(2) - (4)].prec_p));
+			SET_VN_DECL_PREC((yyval.enp),(yyvsp[-2].prec_p));
 			EVAL_IMMEDIATE((yyval.enp));
 			// don't release here because may be in subrt decl...
 			}
+#line 4914 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 249:
-#line 1634 "vectree.y"
+#line 1623 "vectree.y" /* yacc.c:1646  */
     {
-				if( (yyvsp[(5) - (5)].enp) != NULL )
-					(yyval.enp) = NODE2(T_WHILE,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
+				if( (yyvsp[0].enp) != NULL )
+					(yyval.enp) = NODE2(T_WHILE,(yyvsp[-2].enp),(yyvsp[0].enp));
 				else
 					(yyval.enp) = NULL;
 			}
+#line 4925 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 250:
-#line 1641 "vectree.y"
+#line 1630 "vectree.y" /* yacc.c:1646  */
     {
-				if( (yyvsp[(5) - (5)].enp) != NULL )
-					(yyval.enp) = NODE2(T_UNTIL,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp));
+				if( (yyvsp[0].enp) != NULL )
+					(yyval.enp) = NODE2(T_UNTIL,(yyvsp[-2].enp),(yyvsp[0].enp));
 				else
 					(yyval.enp) = NULL;
 			}
+#line 4936 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 251:
-#line 1648 "vectree.y"
+#line 1637 "vectree.y" /* yacc.c:1646  */
     {
 			Vec_Expr_Node *loop_enp;
 
-			loop_enp=NODE3(T_FOR,(yyvsp[(5) - (9)].enp),(yyvsp[(9) - (9)].enp),(yyvsp[(7) - (9)].enp));
-			if( (yyvsp[(3) - (9)].enp) != NULL ){
-				(yyval.enp) = NODE2(T_STAT_LIST,(yyvsp[(3) - (9)].enp),loop_enp);
+			loop_enp=NODE3(T_FOR,(yyvsp[-4].enp),(yyvsp[0].enp),(yyvsp[-2].enp));
+			if( (yyvsp[-6].enp) != NULL ){
+				(yyval.enp) = NODE2(T_STAT_LIST,(yyvsp[-6].enp),loop_enp);
 			} else {
 				(yyval.enp) = loop_enp;
 			}
 			}
+#line 4951 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 252:
-#line 1659 "vectree.y"
+#line 1648 "vectree.y" /* yacc.c:1646  */
     {
 			/* we want to preserve a strict tree structure */
-			(yyval.enp) = NODE2(T_DO_WHILE,(yyvsp[(2) - (7)].enp),(yyvsp[(5) - (7)].enp));
+			(yyval.enp) = NODE2(T_DO_WHILE,(yyvsp[-5].enp),(yyvsp[-2].enp));
 			}
+#line 4960 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 253:
-#line 1664 "vectree.y"
+#line 1653 "vectree.y" /* yacc.c:1646  */
     {
 			/* we want to preserve a strict tree structure */
-			(yyval.enp) = NODE2(T_DO_UNTIL,(yyvsp[(2) - (7)].enp),(yyvsp[(5) - (7)].enp));
+			(yyval.enp) = NODE2(T_DO_UNTIL,(yyvsp[-5].enp),(yyvsp[-2].enp));
 			}
+#line 4969 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 254:
-#line 1671 "vectree.y"
-    { (yyval.enp) = NODE2(T_CASE_STAT,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp)); }
+#line 1660 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE2(T_CASE_STAT,(yyvsp[-1].enp),(yyvsp[0].enp)); }
+#line 4975 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 256:
-#line 1676 "vectree.y"
-    { (yyval.enp) = NODE2(T_CASE_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp)); }
+#line 1665 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE2(T_CASE_LIST,(yyvsp[-1].enp),(yyvsp[0].enp)); }
+#line 4981 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 257:
-#line 1680 "vectree.y"
-    { (yyval.enp) = NODE1(T_CASE,(yyvsp[(2) - (3)].enp)); }
+#line 1669 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_CASE,(yyvsp[-1].enp)); }
+#line 4987 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 258:
-#line 1682 "vectree.y"
+#line 1671 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp) = NODE0(T_DEFAULT); }
+#line 4993 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 260:
-#line 1687 "vectree.y"
-    { (yyval.enp) = NODE2(T_SWITCH_LIST,(yyvsp[(1) - (2)].enp),(yyvsp[(2) - (2)].enp)); }
+#line 1676 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE2(T_SWITCH_LIST,(yyvsp[-1].enp),(yyvsp[0].enp)); }
+#line 4999 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 261:
-#line 1691 "vectree.y"
-    { (yyval.enp)=NODE2(T_SWITCH,(yyvsp[(3) - (7)].enp),(yyvsp[(6) - (7)].enp)); }
+#line 1680 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE2(T_SWITCH,(yyvsp[-4].enp),(yyvsp[-1].enp)); }
+#line 5005 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 262:
-#line 1696 "vectree.y"
-    { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[(3) - (5)].enp),(yyvsp[(5) - (5)].enp),NULL); }
+#line 1685 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[-2].enp),(yyvsp[0].enp),NULL); }
+#line 5011 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 263:
-#line 1698 "vectree.y"
-    { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[(3) - (7)].enp),(yyvsp[(5) - (7)].enp),(yyvsp[(7) - (7)].enp)); }
+#line 1687 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE3(T_IFTHEN,(yyvsp[-4].enp),(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 5017 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 264:
-#line 1713 "vectree.y"
+#line 1702 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp) = NULL; }
+#line 5023 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 277:
-#line 1726 "vectree.y"
+#line 1715 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp)=NODE0(T_BREAK); }
+#line 5029 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 278:
-#line 1727 "vectree.y"
+#line 1716 "vectree.y" /* yacc.c:1646  */
     { (yyval.enp)=NODE0(T_CONTINUE); }
+#line 5035 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 279:
-#line 1729 "vectree.y"
+#line 1718 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_GO_BACK);
-			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[(2) - (2)].idp))));
+			SET_VN_STRING((yyval.enp), savestr(ID_NAME((yyvsp[0].idp))));
 			}
+#line 5044 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 280:
-#line 1734 "vectree.y"
+#line 1723 "vectree.y" /* yacc.c:1646  */
     {
 			(yyval.enp) = NODE0(T_GO_FWD);
-			SET_VN_STRING((yyval.enp), savestr((yyvsp[(2) - (2)].e_string)));
+			SET_VN_STRING((yyval.enp), savestr((yyvsp[0].e_string)));
 			}
+#line 5053 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 281:
-#line 1746 "vectree.y"
-    { (yyval.enp) = (yyvsp[(1) - (1)].enp); }
+#line 1735 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = (yyvsp[0].enp); }
+#line 5059 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 282:
-#line 1748 "vectree.y"
-    { (yyval.enp) = (yyvsp[(1) - (1)].enp); }
+#line 1737 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = (yyvsp[0].enp); }
+#line 5065 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 283:
-#line 1756 "vectree.y"
+#line 1745 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_COMP_OBJ,(yyvsp[(2) - (3)].enp));
+			(yyval.enp)=NODE1(T_COMP_OBJ,(yyvsp[-1].enp));
 			}
+#line 5073 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 284:
-#line 1761 "vectree.y"
+#line 1750 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE1(T_LIST_OBJ,(yyvsp[(2) - (3)].enp));
+			(yyval.enp)=NODE1(T_LIST_OBJ,(yyvsp[-1].enp));
 			}
+#line 5081 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 286:
-#line 1768 "vectree.y"
+#line 1757 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_COMP_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_COMP_LIST,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 5089 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 288:
-#line 1779 "vectree.y"
+#line 1768 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_ROW_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_ROW_LIST,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 5097 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 290:
-#line 1786 "vectree.y"
+#line 1775 "vectree.y" /* yacc.c:1646  */
     {
-			(yyval.enp)=NODE2(T_EXPR_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp));
+			(yyval.enp)=NODE2(T_EXPR_LIST,(yyvsp[-2].enp),(yyvsp[0].enp));
 			}
+#line 5105 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 292:
-#line 1794 "vectree.y"
-    { (yyval.enp)=NODE2(T_PRINT_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+#line 1783 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE2(T_PRINT_LIST,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 5111 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 296:
-#line 1803 "vectree.y"
-    { (yyval.enp)=NODE2(T_MIXED_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+#line 1792 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE2(T_MIXED_LIST,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 5117 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 298:
-#line 1808 "vectree.y"
-    { (yyval.enp)=NODE2(T_STRING_LIST,(yyvsp[(1) - (3)].enp),(yyvsp[(3) - (3)].enp)); }
+#line 1797 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp)=NODE2(T_STRING_LIST,(yyvsp[-2].enp),(yyvsp[0].enp)); }
+#line 5123 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 299:
-#line 1812 "vectree.y"
+#line 1801 "vectree.y" /* yacc.c:1646  */
     {
 			const char *s;
-			s=savestr((yyvsp[(1) - (1)].e_string));
+			s=savestr((yyvsp[0].e_string));
 			(yyval.enp)=NODE0(T_STRING);
 			SET_VN_STRING((yyval.enp), s);
 				/* BUG?  make sure to free if tree deleted */
 			}
+#line 5135 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 300:
-#line 1820 "vectree.y"
-    { (yyval.enp) = NODE1(T_NAME_FUNC,(yyvsp[(3) - (4)].enp)); }
+#line 1809 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = NODE1(T_NAME_FUNC,(yyvsp[-1].enp)); }
+#line 5141 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 306:
-#line 1835 "vectree.y"
-    { (yyval.enp) = (yyvsp[(2) - (3)].enp); }
+#line 1824 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = (yyvsp[-1].enp); }
+#line 5147 "vectree.c" /* yacc.c:1646  */
     break;
 
   case 307:
-#line 1836 "vectree.y"
-    { (yyval.enp) = (yyvsp[(2) - (3)].enp); }
+#line 1825 "vectree.y" /* yacc.c:1646  */
+    { (yyval.enp) = (yyvsp[-1].enp); }
+#line 5153 "vectree.c" /* yacc.c:1646  */
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 5178 "vectree.c"
+#line 5157 "vectree.c" /* yacc.c:1646  */
       default: break;
     }
+  /* User semantic actions sometimes alter yychar, and that requires
+     that yytoken be updated with the new translation.  We take the
+     approach of translating immediately before every use of yytoken.
+     One alternative is translating here after every semantic action,
+     but that translation would be missed if the semantic action invokes
+     YYABORT, YYACCEPT, or YYERROR immediately after altering yychar or
+     if it invokes YYBACKUP.  In the case of YYABORT or YYACCEPT, an
+     incorrect destructor might then be invoked immediately.  In the
+     case of YYERROR or YYBACKUP, subsequent parser actions might lead
+     to an incorrect destructor call or verbose syntax error message
+     before the lookahead is translated.  */
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
@@ -5185,8 +5175,7 @@ yyreduce:
 
   *++yyvsp = yyval;
 
-
-  /* Now `shift' the result of the reduction.  Determine what state
+  /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
      number reduced by.  */
 
@@ -5201,10 +5190,14 @@ yyreduce:
   goto yynewstate;
 
 
-/*------------------------------------.
-| yyerrlab -- here on detecting error |
-`------------------------------------*/
+/*--------------------------------------.
+| yyerrlab -- here on detecting error.  |
+`--------------------------------------*/
 yyerrlab:
+  /* Make sure we have latest lookahead translation.  See comments at
+     user semantic actions for why this is necessary.  */
+  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
+
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
@@ -5212,37 +5205,36 @@ yyerrlab:
 #if ! YYERROR_VERBOSE
       yyerror (qsp, YY_("syntax error"));
 #else
+# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
+                                        yyssp, yytoken)
       {
-	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
-	if (yymsg_alloc < yysize && yymsg_alloc < YYSTACK_ALLOC_MAXIMUM)
-	  {
-	    YYSIZE_T yyalloc = 2 * yysize;
-	    if (! (yysize <= yyalloc && yyalloc <= YYSTACK_ALLOC_MAXIMUM))
-	      yyalloc = YYSTACK_ALLOC_MAXIMUM;
-	    if (yymsg != yymsgbuf)
-	      YYSTACK_FREE (yymsg);
-	    yymsg = (char *) YYSTACK_ALLOC (yyalloc);
-	    if (yymsg)
-	      yymsg_alloc = yyalloc;
-	    else
-	      {
-		yymsg = yymsgbuf;
-		yymsg_alloc = sizeof yymsgbuf;
-	      }
-	  }
-
-	if (0 < yysize && yysize <= yymsg_alloc)
-	  {
-	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (qsp, yymsg);
-	  }
-	else
-	  {
-	    yyerror (qsp, YY_("syntax error"));
-	    if (yysize != 0)
-	      goto yyexhaustedlab;
-	  }
+        char const *yymsgp = YY_("syntax error");
+        int yysyntax_error_status;
+        yysyntax_error_status = YYSYNTAX_ERROR;
+        if (yysyntax_error_status == 0)
+          yymsgp = yymsg;
+        else if (yysyntax_error_status == 1)
+          {
+            if (yymsg != yymsgbuf)
+              YYSTACK_FREE (yymsg);
+            yymsg = (char *) YYSTACK_ALLOC (yymsg_alloc);
+            if (!yymsg)
+              {
+                yymsg = yymsgbuf;
+                yymsg_alloc = sizeof yymsgbuf;
+                yysyntax_error_status = 2;
+              }
+            else
+              {
+                yysyntax_error_status = YYSYNTAX_ERROR;
+                yymsgp = yymsg;
+              }
+          }
+        yyerror (qsp, yymsgp);
+        if (yysyntax_error_status == 2)
+          goto yyexhaustedlab;
       }
+# undef YYSYNTAX_ERROR
 #endif
     }
 
@@ -5250,24 +5242,24 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
-	 error, discard it.  */
+      /* If just tried and failed to reuse lookahead token after an
+         error, discard it.  */
 
       if (yychar <= YYEOF)
-	{
-	  /* Return failure if at end of input.  */
-	  if (yychar == YYEOF)
-	    YYABORT;
-	}
+        {
+          /* Return failure if at end of input.  */
+          if (yychar == YYEOF)
+            YYABORT;
+        }
       else
-	{
-	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, qsp);
-	  yychar = YYEMPTY;
-	}
+        {
+          yydestruct ("Error: discarding",
+                      yytoken, &yylval, qsp);
+          yychar = YYEMPTY;
+        }
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -5283,7 +5275,7 @@ yyerrorlab:
   if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
 
-  /* Do not reclaim the symbols of the rule which action triggered
+  /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
   yylen = 0;
@@ -5296,38 +5288,37 @@ yyerrorlab:
 | yyerrlab1 -- common code for both syntax error and YYERROR.  |
 `-------------------------------------------------------------*/
 yyerrlab1:
-  yyerrstatus = 3;	/* Each real token shifted decrements this.  */
+  yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
   for (;;)
     {
       yyn = yypact[yystate];
-      if (yyn != YYPACT_NINF)
-	{
-	  yyn += YYTERROR;
-	  if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
-	    {
-	      yyn = yytable[yyn];
-	      if (0 < yyn)
-		break;
-	    }
-	}
+      if (!yypact_value_is_default (yyn))
+        {
+          yyn += YYTERROR;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+            {
+              yyn = yytable[yyn];
+              if (0 < yyn)
+                break;
+            }
+        }
 
       /* Pop the current state because it cannot handle the error token.  */
       if (yyssp == yyss)
-	YYABORT;
+        YYABORT;
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, qsp);
+                  yystos[yystate], yyvsp, qsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 
 
   /* Shift the error token.  */
@@ -5351,7 +5342,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
+#if !defined yyoverflow || YYERROR_VERBOSE
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -5362,17 +5353,22 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
-     yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval, qsp);
-  /* Do not reclaim the symbols of the rule which action triggered
+  if (yychar != YYEMPTY)
+    {
+      /* Make sure we have latest lookahead translation.  See comments at
+         user semantic actions for why this is necessary.  */
+      yytoken = YYTRANSLATE (yychar);
+      yydestruct ("Cleanup: discarding lookahead",
+                  yytoken, &yylval, qsp);
+    }
+  /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
   YY_STACK_PRINT (yyss, yyssp);
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, qsp);
+                  yystos[*yyssp], yyvsp, qsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -5383,12 +5379,9 @@ yyreturn:
   if (yymsg != yymsgbuf)
     YYSTACK_FREE (yymsg);
 #endif
-  /* Make sure YYID is used.  */
-  return YYID (yyresult);
+  return yyresult;
 }
-
-
-#line 1884 "vectree.y"
+#line 1873 "vectree.y" /* yacc.c:1906  */
 
 
 /* table of keywords */
@@ -5642,65 +5635,83 @@ static int whkeyword(Keyword *table,const char *str)
 	return(-1);
 }
 
-// Ideally we would grow this table dynamically as needed!  BUG
-#define MAX_SAVED_PARSE_STRINGS	2048
-static int n_saved_parse_strings=0;
-const char *saved_parse_string[MAX_SAVED_PARSE_STRINGS];
-
-static const char *save_parse_string(char *s)
-{
-	const char *ss;
-
-	ss = savestr(s);
-
-	// remember s so we can free it later...
-	if( n_saved_parse_strings >= MAX_SAVED_PARSE_STRINGS ){
-		NERROR1("Need to increase MAX_SAVED_PARSE_STRINGS!?");
-	} else {
-		saved_parse_string[n_saved_parse_strings++] = ss;
-	}
-
-	return ss;
-}
-
-
 /* Read text up to a matching quote, and update the pointer */
 
 static const char *match_quote(QSP_ARG_DECL  const char **spp)
 {
-	char *s;
+	//char *s;
+	String_Buf *sbp;
 	int c;
 
-	s=VEXP_STR;
+	//s=VEXP_STR;
+	sbp=VEXP_STR;
+	copy_string(sbp,"");
 
 	while( (c=(**spp)) && c!='"' ){
-		*s++ = (char) c;
+		//*s++ = (char) c;
+		cat_string_n(sbp,*spp,1);
 		(*spp)++; /* YY_CP++; */
 	}
-	*s=0;
+	//*s=0;
 	if( c != '"' ) {
 		NWARN("missing quote");
 		sprintf(ERROR_STRING,"string \"%s\" stored",CURR_STRING);
 		advise(ERROR_STRING);
 	} else (*spp)++;			/* skip over closing quote */
 
-	s=(char *)save_parse_string(VEXP_STR);
-	SET_CURR_STRING(s);
+	//s=(char *)save_parse_string(VEXP_STR);
+	//SET_CURR_STRING(s);
+	SET_CURR_STRING( sb_buffer(sbp) );
 	return(CURR_STRING);
 } // match_quote
 
-//#ifdef THREAD_SAFE_QUERY
-//int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
-//#else /* ! THREAD_SAFE_QUERY */
-//int yylex(YYSTYPE *yylvp)			/* return the next token */
-//#endif /* ! THREAD_SAFE_QUERY */
+/* remember the name of the current input file if we don't already have one */
+
+// CURR_INFILE is part of the query stack struct...
+// while CURRENT_FILENAME is part of the query struct.
+// CURR_INFILE doesn't seem to be used by the interpreter - why
+// was it introduced???  Used here, but needs to be thread-safe,
+// so part of query_stack...
+//
+// Better would be to have a saved string with reference count.
+// 
+
+static void update_current_input_file(Query_Stack *qsp)
+{
+	if( CURR_INFILE == NULL ){
+		CURR_INFILE = save_stringref(CURRENT_FILENAME);
+	}
+
+	/* if the name now is different from the remembered name, change it! */
+	if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
+		/* This is a problem - we don't want to release the old string, because
+		 * existing nodes point to it.  We don't want them to have private copies,
+		 * either, because there would be too many.  We compromise here by not
+		 * releasing the old string, but not remembering it either.  Thus we may
+		 * end up with a few more copies later, if we have nested file inclusion...
+		 */
+		/* rls_str(CURR_INFILE); */
+		if( SR_COUNT(CURR_INFILE) == 0 )
+			rls_stringref(CURR_INFILE);
+		CURR_INFILE = save_stringref(CURRENT_FILENAME);
+	}
+}
+
+static void read_next_statement(SINGLE_QSP_ARG_DECL)
+{
+	/* we copy this now, because script functions may damage
+	 * the contents of nameof's buffer.
+	 */
+	copy_string(YY_WORD_BUF,NAMEOF("statement"));
+	YY_CP = sb_buffer(YY_WORD_BUF);
+}
+
 int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 {
 	register int c;
 	int in_comment=0;
 nexttok:
 	if( END_SEEN ){
-fprintf(stderr,"yylex:  returning because end seen\n");
 		return(0);
 	}
 
@@ -5715,71 +5726,30 @@ fprintf(stderr,"yylex:  returning because end seen\n");
 
 
 		lookahead_til(QSP_ARG  EXPR_LEVEL-1);
-fprintf(stderr,"yylex:  expr_level = %d, qlevel = %d\n",EXPR_LEVEL,QLEVEL);
 		if( EXPR_LEVEL > (ql=QLEVEL) ){
-fprintf(stderr,"yylex:  returning because qlevel is too small, expr_level = %d, qlevel = %d\n",EXPR_LEVEL,QLEVEL);
 			return(0);	/* EOF */
 		}
 
 		/* remember the name of the current input file if we don't already have one */
-		// CURR_INFILE is part of the query stack struct...
-		// while CURRENT_FILENAME is part of the query struct.
-		// CURR_INFILE doesn't seem to be used by the interpreter - why
-		// was it introduced???  Used here, but needs to be thread-safe,
-		// so part of query_stack...
-		//
-		// Better would be to have a saved string with reference count.
-		// 
-
-		if( CURR_INFILE == NULL ){
-			CURR_INFILE = save_stringref(CURRENT_FILENAME);
-		}
-
-		/* if the name now is different from the remembered name, change it! */
-		if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
-			/* This is a problem - we don't want to release the old string, because
-			 * existing nodes point to it.  We don't want them to have private copies,
-			 * either, because there would be too many.  We compromise here by not
-			 * releasing the old string, but not remembering it either.  Thus we may
-			 * end up with a few more copies later, if we have nested file inclusion...
-			 */
-			/* rls_str(CURR_INFILE); */
-			if( SR_COUNT(CURR_INFILE) == 0 )
-				rls_stringref(CURR_INFILE);
-			CURR_INFILE = save_stringref(CURRENT_FILENAME);
-		}
+		update_current_input_file(qsp);
 
 		/* why disable stripping quotes? */
 		disable_stripping_quotes(SINGLE_QSP_ARG);
-		/* we copy this now, because script functions may damage
-		 * the contents of nameof's buffer.
-		 */
-		strcpy(yy_word_buf,NAMEOF("statement"));
-		YY_CP=yy_word_buf;
+
+		read_next_statement(SINGLE_QSP_ARG);
 
 		/* BUG?  lookahead advances lineno?? */
 		/* BUG no line numbers in macros? */
 		// Should we compare lineno or rdlineno???
-		if( (l=current_line_number(SINGLE_QSP_ARG)) != LASTLINENO ){
-			strcpy(YY_LAST_LINE,YY_INPUT_LINE);
-			YY_INPUT_LINE[0]=0;
-			SET_PARSER_LINENO( l );
-			SET_LASTLINENO( l );
+		if( (l=current_line_number(SINGLE_QSP_ARG)) != LAST_LINE_NUM ){
+			copy_strbuf(YY_LAST_LINE,YY_INPUT_LINE);
+			copy_string(YY_INPUT_LINE,"");	// clear input
+			SET_PARSER_LINE_NUM( l );
+			SET_LAST_LINE_NUM( l );
 		}
 
-		if( (strlen(YY_INPUT_LINE) + strlen(YY_CP) + 2) >= YY_LLEN ){
-			WARN("yy_input line buffer overflow");
-			sprintf(ERROR_STRING,"%ld chars in input line:",(long)strlen(YY_INPUT_LINE));
-			advise(ERROR_STRING);
-			advise(YY_INPUT_LINE);
-			sprintf(ERROR_STRING,"%ld previously buffered chars:",(long)strlen(YY_CP));
-			advise(ERROR_STRING);
-			advise(YY_CP);
-			return(0);
-		}
-		strcat(YY_INPUT_LINE,YY_CP);
-		strcat(YY_INPUT_LINE," ");
-
+		cat_string(YY_INPUT_LINE,YY_CP);
+		cat_string(YY_INPUT_LINE," ");
 	}
 
 #ifdef QUIP_DEBUG
@@ -5911,7 +5881,6 @@ if( debug & parser_debug ){ advise("yylex returning CHAR_CONST"); }
 
 		tok=name_token(QSP_ARG yylvp);
 		if( tok == END ){
-fprintf(stderr,"yylex:  end token seen!\n");
 			END_SEEN=1;
 		}
 
@@ -6096,18 +6065,24 @@ if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning char '%c' (0x%
 
 static const char *read_word(QSP_ARG_DECL  const char **spp)
 {
-	char *s;
+	//char *s;
+	String_Buf *sbp;
 	int c;
 
-	s=VEXP_STR;
+	//s=VEXP_STR;
+	sbp = VEXP_STR;
+	copy_string(sbp,"");	// clear it
+				// does anyone expect this value to persist???  BUG?
 
 	while( islegal(c=(**spp)) || isdigit(c) ){
-		*s++ = (char) c;
+		//*s++ = (char) c;
+		cat_string_n(sbp,*spp,1);
 		(*spp)++; /* YY_CP++; */
 	}
-	*s=0;
+	//*s=0;
 
-	return(save_parse_string(VEXP_STR));
+	//return(save_parse_string(VEXP_STR));
+	return(sb_buffer(VEXP_STR));
 }
 
 /* this function should go in the lexical analyser... */
@@ -6139,7 +6114,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	s=read_word(QSP_ARG  &sptr);
 	SET_YY_CP(sptr);
 
-	SET_CURR_STRING(s);	// call savestr here?
+	SET_CURR_STRING(s);
 	/* if word was a macro arg, macro arg is now on input stack */
 	if( s == NULL ) return(NEXT_TOKEN);
 
@@ -6242,25 +6217,20 @@ WARN(ERROR_STRING);
 	}
 	/* NOTREACHED */
 	return(-1);
-}
-
-static void release_parse_strings(SINGLE_QSP_ARG_DECL)
-{
-	int i;
-
-	for(i=0;i<n_saved_parse_strings;i++){
-		givbuf((void *)(saved_parse_string[i]));
-	}
-	n_saved_parse_strings=0;
-}
+} // name_token
 
 double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 {
 	int stat;
+	double result;
+
+	//push_vector_parser_data(SINGLE_QSP_ARG);
 
 	FINAL=0.0;
-	YY_INPUT_LINE[0]=0;		/* clear record of input string */
-	LASTLINENO=(-1);
+	assert( YY_INPUT_LINE != NULL );
+	//YY_INPUT_LINE[0]=0;		/* clear record of input string */
+	copy_string(YY_INPUT_LINE,"");	// clear record of input
+	LAST_LINE_NUM=(-1);
 	YY_CP="";
 	SEMI_SEEN=0;
 	END_SEEN=0;
@@ -6278,7 +6248,6 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	 * routine is generated automatically by bison, we would have to hand-edit
 	 * vectree.c each time we run bison...
 	 */
-fprintf(stderr,"parse_stuff calling yyparse...\n");
 	stat=yyparse(THIS_QSP);
 
 	if( TOP_NODE != NULL )	/* successful parsing */
@@ -6297,17 +6266,9 @@ fprintf(stderr,"parse_stuff calling yyparse...\n");
 		advise(ERROR_STRING);
 	}
 
-fprintf(stderr,"parse_stuff back from yyparse\n");
-	/* yylex call qline - */
+	result = FINAL;
 
-	/* enable_lookahead(); */
-
-	// Here we need to free all of the strings we allocated during the
-	// parsing!
-
-	release_parse_strings(SINGLE_QSP_ARG);
-
-	return(FINAL);
+	return result;
 } // end parse_stuff
 
 void yyerror(Query_Stack *qsp,  char *s)
@@ -6318,7 +6279,6 @@ void yyerror(Query_Stack *qsp,  char *s)
 
 	/* get the filename and line number */
 
-fprintf(stderr,"yyerror BEGIN\n");
 	filename=CURRENT_FILENAME;
 	ql = QLEVEL;
 	//n = THIS_QSP->qs_query[ql].q_lineno;
@@ -6327,10 +6287,10 @@ fprintf(stderr,"yyerror BEGIN\n");
 	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
 	NWARN(yyerror_str);
 
-	sprintf(yyerror_str,"\t%s",YY_INPUT_LINE);
+	sprintf(yyerror_str,"\t%s",sb_buffer(YY_INPUT_LINE));
 	advise(yyerror_str);
 	/* print an arrow at the problem point... */
-	n=(int)(strlen(YY_INPUT_LINE)-strlen(YY_CP));
+	n=(int)(strlen(sb_buffer(YY_INPUT_LINE))-strlen(YY_CP));
 	n-=2;
 	if( n < 0 ) n=0;
 	strcpy(yyerror_str,"\t");
@@ -6379,8 +6339,9 @@ int vecexp_ing=1;
 
 void expr_file(SINGLE_QSP_ARG_DECL)
 {
+	push_vector_parser_data(SINGLE_QSP_ARG);
+
 	SET_EXPR_LEVEL(QLEVEL);	/* yylex checks this... */
-fprintf(stderr,"expr_file:  expr_level set to %d\n",QLEVEL);
 	parse_stuff(SINGLE_QSP_ARG);
 
 	/* We can break out of this loop
@@ -6390,6 +6351,7 @@ fprintf(stderr,"expr_file:  expr_level set to %d\n",QLEVEL);
 	 * In the latter case, we may need to pop a dup file
 	 * & do some housekeeping
 	 */
-}
 
+	pop_vector_parser_data(SINGLE_QSP_ARG);
+}
 

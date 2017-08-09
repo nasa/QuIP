@@ -191,12 +191,15 @@ Curl_Info *qs_curl_info(SINGLE_QSP_ARG_DECL)
 
 Vec_Expr_Node * qs_top_node( SINGLE_QSP_ARG_DECL  )
 {
-	return THIS_QSP->qs_top_enp;
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	//return THIS_QSP->qs_top_enp;
+	return VPD_TOP_ENP( QS_VECTOR_PARSER_DATA(THIS_QSP) );
 }
 
 void set_top_node( QSP_ARG_DECL  Vec_Expr_Node *enp )
 {
-	THIS_QSP->qs_top_enp = enp;
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	SET_VPD_TOP_ENP( QS_VECTOR_PARSER_DATA(THIS_QSP), enp );
 }
 
 int qs_serial_func(SINGLE_QSP_ARG_DECL)
@@ -211,17 +214,20 @@ String_Buf *qs_scratch_buffer(SINGLE_QSP_ARG_DECL)
 
 void set_curr_string(QSP_ARG_DECL  const char *s)
 {
-	SET_QS_CURR_STRING(THIS_QSP,s);
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	SET_VPD_CURR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP),s);
 }
 
 const char *qs_curr_string(SINGLE_QSP_ARG_DECL)
 {
-	return _QS_CURR_STRING(THIS_QSP);
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	return VPD_CURR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP) );
 }
 
-char *qs_expr_string(SINGLE_QSP_ARG_DECL)
+String_Buf *qs_expr_string(SINGLE_QSP_ARG_DECL)
 {
-	return THIS_QSP->_qs_expr_string;
+	assert( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL );
+	return VPD_EXPR_STRING( QS_VECTOR_PARSER_DATA(THIS_QSP) );
 }
 
 /*

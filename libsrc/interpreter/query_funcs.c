@@ -2508,29 +2508,90 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 	SET_QRY_READFUNC(CURR_QRY(THIS_QSP), rfunc);
 }
 
-static void init_parser_data(Query_Stack *qsp)
+static void init_vector_parser_data_stack(Query_Stack *qsp)
 {
-	ALLOC_QS_VECTOR_PARSER_DATA(qsp);
-	bzero(QS_VECTOR_PARSER_DATA(qsp),sizeof(*(QS_VECTOR_PARSER_DATA(qsp))));
-
-	// Now allocate the strings
-	SET_QS_YY_INPUT_LINE(qsp,getbuf(LLEN));
-	SET_QS_YY_LAST_LINE(qsp,getbuf(LLEN));
-	SET_QS_EXPR_STRING(qsp,getbuf(LLEN));
-	SET_QS_EDEPTH(qsp, -1);
-	SET_QS_CURR_STRING(qsp, qsp->_qs_expr_string );
-
-	ALLOC_QS_SCALAR_PARSER_DATA(qsp);
-	// initialize the fields
-	SET_QS_SPD_EDEPTH(qsp,-1);
-	SET_QS_SPD_WHICH_STR(qsp,0);
-	SET_QS_SPD_IN_PEXPR(qsp,0);
-	SET_QS_SPD_ORIGINAL_STRING(qsp,NULL);
-	SET_QS_SPD_ESTRINGS_INITED(qsp,0);
-	SET_QS_SPD_FREE_EXPR_NODE_LIST(qsp,NULL);
-	// set spd_expr_string's to NULL ???
-	//SET_QS_SPD_YYSTRPTR(qsp,NULL);
+	SET_QS_VECTOR_PARSER_DATA_STACK(qsp,new_list());
+	SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,new_list());
+	SET_QS_VECTOR_PARSER_DATA(qsp,NULL);
 }
+
+static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
+{
+	bzero(vpd_p,sizeof(*vpd_p));
+
+	// // Now allocate the strings
+	//SET_VPD_YY_INPUT_LINE(vpd_p,getbuf(LLEN));
+	//SET_VPD_YY_LAST_LINE(vpd_p,getbuf(LLEN));
+	//SET_VPD_EXPR_STRING(vpd_p,getbuf(LLEN));
+	SET_VPD_YY_INPUT_LINE(vpd_p,new_stringbuf());
+	SET_VPD_YY_LAST_LINE(vpd_p,new_stringbuf());
+	SET_VPD_EXPR_STRING(vpd_p,new_stringbuf());
+	SET_VPD_YY_WORD_BUF(vpd_p,new_stringbuf());
+	SET_VPD_EDEPTH(vpd_p, -1);
+	SET_VPD_CURR_STRING(vpd_p, sb_buffer(VPD_EXPR_STRING(vpd_p)) );
+}
+
+static void init_scalar_parser_data(Scalar_Parser_Data *spd_p)
+{
+	SET_SPD_EDEPTH(spd_p,-1);
+	SET_SPD_WHICH_STR(spd_p,0);
+	SET_SPD_IN_PEXPR(spd_p,0);
+	SET_SPD_ORIGINAL_STRING(spd_p,NULL);
+	SET_SPD_ESTRINGS_INITED(spd_p,0);
+	SET_SPD_FREE_EXPR_NODE_LIST(spd_p,NULL);
+	// set spd_expr_string's to NULL ???
+	//SET_QS_SPD_YYSTRPTR(spd_p,NULL);
+}
+
+static Vector_Parser_Data *find_free_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	Vector_Parser_Data *vpd_p;
+
+	if( QLIST_HEAD( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP) ) != NULL ){
+		Node *np;
+		np = remHead( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP) );
+		vpd_p = NODE_DATA(np);
+		rls_node(np);
+	} else {
+		vpd_p = getbuf( sizeof(*vpd_p) );
+	}
+	return vpd_p;
+}
+
+void push_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	Vector_Parser_Data *vpd_p;
+	Node *np;
+
+	vpd_p = find_free_vector_parser_data(SINGLE_QSP_ARG);
+	assert(vpd_p!=NULL);
+
+	init_vector_parser_data(vpd_p);
+
+	np = mk_node(vpd_p);
+	addHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP), np );
+	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
+}
+
+void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
+{
+	Vector_Parser_Data *vpd_p;
+	Node *np;
+
+	np = remHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
+	assert(np!=NULL);
+
+	addHead( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP), np );
+
+	np = QLIST_HEAD( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
+	if( np != NULL ){
+		vpd_p = NODE_DATA(np);
+	} else {
+		vpd_p = NULL;
+	}
+	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
+}
+
 
 // Initialize a Query_Stack
 
@@ -2583,7 +2644,11 @@ void init_query_stack(Query_Stack *qsp)
 
 	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 
-	init_parser_data(qsp);
+	//init_parser_data(qsp);
+	init_vector_parser_data_stack(qsp);
+
+	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)));
+	init_scalar_parser_data( QS_SCALAR_PARSER_DATA(qsp) );
 
 	SET_QS_CHEW_LIST(qsp, NULL);
 	SET_QS_CALLBACK_LIST(qsp, NULL);

@@ -97,7 +97,8 @@ Macro_Arg **create_generic_macro_args(int n)
 	Macro_Arg **ma_tbl;
 	int i;
 
-	assert(n>0&&n<32);	// 32 is somewhat arbitrary...
+	assert(n>=0&&n<32);	// 32 is somewhat arbitrary...
+	if( n == 0 ) return NULL;
 	ma_tbl = getbuf( n * sizeof(Macro_Arg *));
 	for(i=0;i<n;i++){
 		ma_tbl[i] = getbuf( sizeof(Macro_Arg) );

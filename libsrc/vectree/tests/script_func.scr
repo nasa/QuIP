@@ -11,20 +11,33 @@ Define Call_2 1 word
 Call_It $1
 .
 
+Define Problem_Macro 0
+expressions
+  read -
+    print("this may cause a problem...");
+    end
+  quit
+.
+
+
 expressions
   script test_it 1 'advise "passed $1"'
   script test_2 1 'Call_It $1'
   script test_3 1 'Call_2 $1'
+  script problem_func 0 'Problem_Macro'
+#  debug expressions
   read -
     u_byte b[$h][$w];
     b=0;
     test_it(b);
     print("back from test script function.");
-    test_2(b);
-    print("back from second test script function.");
-    test_3(b);
-    print("back from second test script function.");
+    problem_func();
+    print("back from problem function.");
+#    test_2(b);
+#    print("back from second test script function.");
+#    test_3(b);
+#    print("back from second test script function.");
     end
 
-  Pause
+#  Pause
   exit

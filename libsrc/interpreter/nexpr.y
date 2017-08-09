@@ -62,16 +62,17 @@ static List *free_enp_lp=NULL;
 static Scalar_Expr_Node *alloc_expr_node(void);
 
 
+#define THIS_SPD	QS_SCALAR_PARSER_DATA(THIS_QSP)
 
-#define YYSTRPTR 	QS_SPD_YYSTRPTR(THIS_QSP)
-#define YY_ORIGINAL	QS_SPD_ORIGINAL_STRING(THIS_QSP)
-#define EDEPTH 		QS_SPD_EDEPTH(THIS_QSP)
-#define WHICH_EXPR_STR	(THIS_QSP)->qs_scalar_parser_data->spd_which_str
-#define IN_PEXPR	(THIS_QSP)->qs_scalar_parser_data->spd_in_pexpr
-#define EXPR_STRING	(THIS_QSP)->qs_scalar_parser_data->spd_expr_string
-#define FINAL_EXPR_NODE_P	(THIS_QSP)->qs_scalar_parser_data->spd_final_expr_node_p
-#define STRING_SCALAR	(THIS_QSP)->qs_scalar_parser_data->spd_string_scalar
-#define ESTRINGS_INITED	(THIS_QSP)->qs_scalar_parser_data->spd_estrings_inited
+#define YYSTRPTR 	SPD_YYSTRPTR(THIS_SPD)
+#define YY_ORIGINAL	SPD_ORIGINAL_STRING(THIS_SPD)
+#define EDEPTH 		SPD_EDEPTH(THIS_SPD)
+#define WHICH_EXPR_STR	SPD_WHICH_STR(THIS_SPD)
+#define IN_PEXPR	SPD_IN_PEXPR(THIS_SPD)
+#define EXPR_STRING	SPD_EXPR_STRING(THIS_SPD)
+#define FINAL_EXPR_NODE_P	SPD_FINAL_EXPR_NODE_P(THIS_SPD)
+#define STRING_SCALAR	SPD_STRING_SCALAR(THIS_SPD)
+#define ESTRINGS_INITED	SPD_ESTRINGS_INITED(THIS_SPD)
 
 #define ADVANCE_EXPR_STR				\
 							\

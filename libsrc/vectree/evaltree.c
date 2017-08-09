@@ -7286,9 +7286,7 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	 */
 
 	sprintf(msg_str,"Script func %s",SR_NAME(srp));
-fprintf(stderr,"execute_script_node:  before pushing, qlevel = %d\n",QLEVEL);
 	push_text(QSP_ARG  (char *)SR_TEXT(srp), msg_str);
-fprintf(stderr,"execute_script_node:  after pushing, qlevel = %d\n",QLEVEL);
 
 	qp=CURR_QRY(THIS_QSP);
 
@@ -7309,15 +7307,12 @@ fprintf(stderr,"execute_script_node:  after pushing, qlevel = %d\n",QLEVEL);
 	push_top_menu(SINGLE_QSP_ARG);	/* make sure at root menu */
 	start_level = QLEVEL;
 	enable_stripping_quotes(SINGLE_QSP_ARG);
-fprintf(stderr,"execute_script_node:  start_level = %d\n",start_level);
 	while( QLEVEL >= start_level ){
 		// was do_cmd
 		qs_do_cmd(THIS_QSP);
-lookahead(SINGLE_QSP_ARG);
-fprintf(stderr,"execute_script_node:  after lookahead, qlevel = %d\n",QLEVEL);
+		lookahead(SINGLE_QSP_ARG);
 	}
 	do_pop_menu(SINGLE_QSP_ARG);		/* go back */
-fprintf(stderr,"execute_script_node:  DONE executing\n");
 
 	unset_script_context(SINGLE_QSP_ARG);
 
