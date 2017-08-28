@@ -299,8 +299,6 @@ typedef enum {
 
 #define IS_CONVERSION( vfp )	IS_NEW_CONVERSION(vfp)
 
-	/* Don't put any new codes below this line, reserved for warrior obsolete */
-
 	FVTRUNC,			/* would add after FVFLOOR, but that would mess up numbers in comments */
 	FVERFINV,			/* ditto... */
 
@@ -308,6 +306,8 @@ typedef enum {
 	FVLNGAMMA,
 
 	FVSSUB2,		/* should be moved up, but would mess up index comments */
+
+	FVLUTMAPB,		/* byte index lutmap */
 
 	N_VEC_FUNCS,		/* must be next-to-last! */
 	INVALID_VFC		/* must be last! */

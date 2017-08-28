@@ -482,6 +482,32 @@ void reload_picker(Screen_Obj *sop)
 	[p reloadAllComponents];
 }
 
+void get_choice(Screen_Obj *sop)
+{
+	if( IS_CHOOSER(sop) ){
+		NWARN("get_choice:  Sorry, not implemented yet for choosers...");
+	} else if( SOB_TYPE(sop) == SOT_PICKER ){
+		if( 0 == SOB_N_SELECTORS_AT_IDX(sop,0) ){
+			assign_var(DEFAULT_QSP_ARG "choice", "no_choices_available" );
+			return;
+		}
+
+		UIPickerView *p;
+		int idx;
+		p=(UIPickerView *)SOB_CONTROL(sop);
+		idx = [p selectedRowInComponent:0];
+fprintf(stderr,"get_choice:  idx = %d\n",idx);
+		assert( idx>=0 && idx < SOB_N_SELECTORS_AT_IDX(sop,0) );
+		assign_var(DEFAULT_QSP_ARG "choice", SOB_SELECTOR_AT_IDX(sop,0,idx) );
+		return;
+	} else {
+		sprintf(DEFAULT_ERROR_STRING,
+"get_choice:  object %s is neither a picker nor a chooser!?",SOB_NAME(sop));
+		NWARN(DEFAULT_ERROR_STRING);
+	}
+	assign_var(DEFAULT_QSP_ARG "choice", "oops" );
+}
+
 void set_choice(Screen_Obj *sop, int which)
 {
 	if( IS_CHOOSER(sop) ){
@@ -610,6 +636,9 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop )
 	// BUG?  set width and height of sop here?
 }
 
+// Originally, the action string is called when the Done key is entered,
+// which can be confusing...  it would be better to have a way to pull the text
+// from the widget, or call the action every time that a keystroke is typed...
 
 void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 {
@@ -634,7 +663,7 @@ void make_text_field(QSP_ARG_DECL  Screen_Obj *sop)
 	textField.clearButtonMode = UITextFieldViewModeWhileEditing;
 	textField.clearsOnBeginEditing = YES;
 	textField.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-	textField.delegate = globalAppDelegate;
+	textField.delegate = globalAppDelegate;	// what methods are delegated???
 
 	if( SOB_TYPE(sop) == SOT_PASSWORD )
 		textField.secureTextEntry = YES;

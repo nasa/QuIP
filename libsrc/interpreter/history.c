@@ -48,9 +48,9 @@ static char *get_hist_ctx_name(const char *prompt);
 static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char *string);
 
 // need macro to make these all static
-ITEM_INTERFACE_CONTAINER(choice,LIST_CONTAINER)
-ITEM_INTERFACE_PROTOTYPES(Hist_Choice,choice)
-ITEM_INTERFACE_DECLARATIONS(Hist_Choice,choice,LIST_CONTAINER)
+ITEM_INTERFACE_CONTAINER(hist_choice,LIST_CONTAINER)
+ITEM_INTERFACE_PROTOTYPES(Hist_Choice,hist_choice)
+ITEM_INTERFACE_DECLARATIONS(Hist_Choice,hist_choice,LIST_CONTAINER)
 
 /* This has to match what is up above!!! */
 #define HIST_CHOICE_STRING	"Hist_Choice"
@@ -73,12 +73,12 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 	Item_Context *icp;
 	char *ctxname;
 
-	if( choice_itp == NULL ) init_choices(SINGLE_QSP_ARG);
+	if( hist_choice_itp == NULL ) init_hist_choices(SINGLE_QSP_ARG);
 
 	ctxname = get_hist_ctx_name(prompt);
 	icp = ctx_of(QSP_ARG  ctxname);
 	if( icp == NULL ){
-		icp = create_item_context(QSP_ARG  choice_itp,prompt);
+		icp = create_item_context(QSP_ARG  hist_choice_itp,prompt);
 		assert( icp != NULL );
 	}
 
@@ -87,12 +87,12 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 
 static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
 {
-	PUSH_ITEM_CONTEXT(choice_itp,icp);
+	PUSH_ITEM_CONTEXT(hist_choice_itp,icp);
 	/* BUG? this will search all contexts...
 	 * BUT - we expect to find it in the first one!?
 	 */
-	del_item(QSP_ARG  choice_itp,hcp);
-	pop_item_context(QSP_ARG  choice_itp);
+	del_item(QSP_ARG  hist_choice_itp,hcp);
+	pop_item_context(QSP_ARG  hist_choice_itp);
 }
 
 /* Scan a history list, removing any choices which are not in the new list */
@@ -189,9 +189,9 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	 * but who cares???
 	 */
 
-	PUSH_ITEM_CONTEXT(choice_itp,icp);
-	hcp = (Hist_Choice *) choice_of(QSP_ARG  choice);
-	pop_item_context(QSP_ARG  choice_itp);
+	PUSH_ITEM_CONTEXT(hist_choice_itp,icp);
+	hcp = (Hist_Choice *) hist_choice_of(QSP_ARG  choice);
+	pop_item_context(QSP_ARG  hist_choice_itp);
 
 	if( hcp == NULL ){
 		return;
@@ -237,8 +237,8 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 //fprintf(stderr,"add_word_to_history_list, adding \"%s\" to context %s\n",string,CTX_NAME(icp));
 	/* first see if this string is already on the list */
 
-	PUSH_ITEM_CONTEXT(choice_itp,icp);
-	hcp = choice_of(QSP_ARG  string);
+	PUSH_ITEM_CONTEXT(hist_choice_itp,icp);
+	hcp = hist_choice_of(QSP_ARG  string);
 
 	/* this is outside of the conditional (even though it may
 	 * not be needed) in order to force item node creation,
@@ -251,15 +251,15 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 
 	if( hcp != NULL ){
 		boost_choice(QSP_ARG  hcp,lp);
-		pop_item_context(QSP_ARG  choice_itp);
+		pop_item_context(QSP_ARG  hist_choice_itp);
 //fprintf(stderr,"add_word_to_history_list, returning after increasing node priority\n");
 		return;
 	}
 
 	/* make a new choice */
 
-	hcp=new_choice(QSP_ARG  string);	// do we save this somewhere???
-	pop_item_context(QSP_ARG  choice_itp);
+	hcp=new_hist_choice(QSP_ARG  string);	// do we save this somewhere???
+	pop_item_context(QSP_ARG  hist_choice_itp);
 
 	assert( hcp != NULL );
 //fprintf(stderr,"add_word_to_history_list, returning after creating new choice\n");

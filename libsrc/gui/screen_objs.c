@@ -1264,6 +1264,20 @@ COMMAND_FUNC( do_set_choice )
 	set_choice(sop,i);
 }
 
+// Simulate the action of making a choice without the user making it.
+// This is useful to make the system reflect the current state after
+// an item has been selected for deletion.
+
+COMMAND_FUNC(do_get_choice)
+{
+	Screen_Obj *sop;
+
+	sop=PICK_SCRNOBJ("chooser");
+	if( sop == NULL ) return;
+
+	get_choice(QSP_ARG  sop);
+}
+
 // We search the child list of the panel to find choosers, pickers
 // This makes sure that nothing is selected, or for a picker
 // that the first line is selected.
@@ -1747,39 +1761,39 @@ COMMAND_FUNC( do_picker )
 
 #ifdef BUILD_FOR_IOS
 
-static const char **new_selector_table_less_one(Screen_Obj *sop, const char *s)
+static inline const char **new_selector_table_less_one(const char *choice_to_delete, const char **tbl, int old_n)
 {
 	const char **new_string_arr;
-	int i,j,n;
+	int i,j, new_n;
 
-	n = SOB_N_SELECTORS(sop) - 1;
+	new_n = old_n - 1;
 
-	if( n > 0 )
-		new_string_arr = getbuf( n * sizeof(char *) );
+	if( new_n > 0 )
+		new_string_arr = getbuf( new_n * sizeof(char *) );
 	else
 		return NULL;
 
 	// First copy the addresses of the old non-matching strings
 	j=0;
-	for(i=0;i<SOB_N_SELECTORS(sop);i++){
-		if( strcmp(SOB_SELECTORS(sop)[i],s) ){
-			if( j < n )
-				new_string_arr[j] = SOB_SELECTORS(sop)[i];
+	for(i=0;i<old_n;i++){
+		if( strcmp(tbl[i],choice_to_delete) ){
+			if( j < new_n )
+				new_string_arr[j] = tbl[i];
 			j++;
 		}
 	}
 
 	// Complain if match not found
-	if( j == SOB_N_SELECTORS(sop) ){
+	if( j == old_n ){
 		sprintf(ERROR_STRING,
-	"del_choice:  string \"%s\" is not a choice for chooser \"%s\"",
-			s,SOB_NAME(sop));
+	"new_selector_table_less_one:  string \"%s\" not found among %d choices",
+			choice_to_delete,old_n);
 		WARN(ERROR_STRING);
 		givbuf(new_string_arr);
 		return NULL;
 	}
 
-	assert( j == n );	// deleted item should only appear once
+	assert( j == new_n );	// deleted item should only appear once
 
 	return new_string_arr;
 }
@@ -1788,8 +1802,9 @@ static const char *find_string_in_table( const char **tbl, int n, const char *s 
 {
 	int i;
 
-	for(i=0;i<n;i++)
+	for(i=0;i<n;i++){
 		if( !strcmp(tbl[i],s) ) return tbl[i];
+	}
 	return NULL;
 }
 
@@ -1899,10 +1914,8 @@ static inline void delete_choice_from_chooser(QSP_ARG_DECL  Screen_Obj *sop, con
 	if( insist_choice_present(SOB_SELECTORS(sop),SOB_N_SELECTORS(sop),s,SOB_NAME(sop),"delete_choice_from_chooser") < 0 )
 		return;
 
-	new_string_arr = new_selector_table_less_one(sop,s);
+	new_string_arr = new_selector_table_less_one(s,SOB_SELECTORS(sop),SOB_N_SELECTORS(sop));
 	// can return NULL if table empty or item not found
-
-	if( new_string_arr == NULL ) return;
 
 	givbuf(SOB_SELECTORS(sop));	// release old string table
 	SET_SOB_N_SELECTORS(sop,SOB_N_SELECTORS(sop)-1);
@@ -1917,16 +1930,14 @@ static inline void delete_choice_from_picker(QSP_ARG_DECL  Screen_Obj *sop, cons
 	assert( SOB_TYPE(sop) == SOT_PICKER );
 	if( insist_one_component(QSP_ARG  sop, "add_choice_to_picker") < 0 ) return;
 
-	if( insist_choice_present(SOB_SELECTORS(sop),SOB_N_SELECTORS(sop),s,SOB_NAME(sop),"delete_choice_from_picker") < 0 )
+	if( insist_choice_present(SOB_SELECTORS_AT_IDX(sop,0),SOB_N_SELECTORS_AT_IDX(sop,0),s,SOB_NAME(sop),"delete_choice_from_picker") < 0 )
 		return;
 
-	new_string_arr = new_selector_table_less_one(sop,s);
+	new_string_arr = new_selector_table_less_one(s,SOB_SELECTORS_AT_IDX(sop,0),SOB_N_SELECTORS_AT_IDX(sop,0));
 	// can return NULL if table empty or item not found
 
-	if( new_string_arr == NULL ) return;
-
 	givbuf(SOB_SELECTORS_AT_IDX(sop,0));	// release old string table
-	SET_SOB_N_SELECTORS_AT_IDX(sop,0,SOB_N_SELECTORS(sop)-1);
+	SET_SOB_N_SELECTORS_AT_IDX(sop,0,SOB_N_SELECTORS_AT_IDX(sop,0)-1);
 	SET_SOB_SELECTORS_AT_IDX(sop,0,new_string_arr);
 	reload_chooser(sop);
 }
@@ -1993,6 +2004,9 @@ COMMAND_FUNC( do_add_choice )
 
 }
 
+// BUG for pickers, we might need to allow the user to specify the cylinder index.
+// Here we implicitly assume there is only one (with index = 0).
+
 COMMAND_FUNC( do_del_choice )
 {
 	Screen_Obj *sop;
@@ -2005,9 +2019,9 @@ COMMAND_FUNC( do_del_choice )
 
 #ifdef BUILD_FOR_IOS
 
-	if( SOB_TYPE(sop) == SOT_CHOOSER )
+	if( SOB_TYPE(sop) == SOT_CHOOSER ){
 		delete_choice_from_chooser(QSP_ARG  sop,s);
-	else {
+	} else {
 		assert( SOB_TYPE(sop) == SOT_PICKER );
 		delete_choice_from_picker(QSP_ARG  sop,s);
 	}

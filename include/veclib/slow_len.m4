@@ -35,6 +35,7 @@ define(`SETUP_SLOW_LEN_F',`if( setup_slow_len(vap,0,$1,$2,VA_PFDEV(vap)) < 0 ) r
 
 define(`SETUP_SLOW_LEN_1',`SETUP_SLOW_LEN_N(1)')
 define(`SETUP_SLOW_LEN_2',`SETUP_SLOW_LEN_N(2)')
+define(`SETUP_SLOW_LEN_LUTMAP_B',`SETUP_SLOW_LEN_2')
 define(`SETUP_SLOW_LEN_CONV',`SETUP_SLOW_LEN_N(2)')
 define(`SETUP_SLOW_LEN_3',`SETUP_SLOW_LEN_N(3)')
 define(`SETUP_SLOW_LEN_4',`SETUP_SLOW_LEN_N(4)')

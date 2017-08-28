@@ -508,16 +508,16 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		return -1;
 	}
 
-#define CHECK_SOURCE_PREC(p,dp)										\
-													\
-	if( ( VF_PRECMASK(vfp) & (1<<p)) == 0 ){							\
-		sprintf(ERROR_STRING,									\
-"chkprec:  source precision %s (obj %s) cannot be used with function %s",				\
-			NAME_FOR_PREC_CODE(p),OBJ_NAME( dp ) ,VF_NAME(vfp) );				\
-		WARN(ERROR_STRING);									\
-		show_legal_precisions( VF_PRECMASK(vfp));						\
-		return -1;										\
-	}												\
+#define CHECK_SOURCE_PREC(p,dp)								\
+											\
+	if( ( VF_PRECMASK(vfp) & (1<<p)) == 0 ){					\
+		sprintf(ERROR_STRING,							\
+"chkprec:  source precision %s (obj %s) cannot be used with function %s",		\
+			NAME_FOR_PREC_CODE(p),OBJ_NAME( dp ) ,VF_NAME(vfp) );		\
+		WARN(ERROR_STRING);							\
+		show_legal_precisions( VF_PRECMASK(vfp));				\
+		return -1;								\
+	}										\
 	n_srcs++;
 
 	if(  OA_SRC1(oap) != NULL ){
@@ -536,6 +536,14 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			}
 		}
 		// Can there be more than 4 sources???
+	}
+	if( VF_CODE(vfp) == FVLUTMAPB ){
+		if( srcp1 != PREC_UBY ){
+			sprintf(ERROR_STRING,"Source object %s must have %s precision for function %s",
+				OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),VF_NAME(vfp));
+			WARN(ERROR_STRING);
+			return -1;
+		}
 	}
 
 	/* Figure out what type of function to call based on the arguments... */
@@ -562,16 +570,20 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		OBJ_PREC_NAME( dp2 ) );							\
 	WARN(ERROR_STRING);
 
-#define CHECK_MATCHING_SOURCES(p1,p2,dp1,dp2)								\
-													\
-	if( srcp1 != srcp2 ) {										\
-		REPORT_MISMATCH_ERROR(dp1,dp2)								\
-		return -1;										\
+#define CHECK_MATCHING_SOURCES(p1,p2,dp1,dp2)						\
+											\
+	if( srcp1 != srcp2 ) {								\
+		REPORT_MISMATCH_ERROR(dp1,dp2)						\
+		return -1;								\
 	}
 
 	if( n_srcs >= 2 ){
 		/* First make sure that the two source operands match */
-		CHECK_MATCHING_SOURCES(srcp1,srcp2,OA_SRC1(oap),OA_SRC2(oap))
+		// BUT only if not a mapping func...
+		if( VF_CODE(vfp) != FVLUTMAPB ){
+			CHECK_MATCHING_SOURCES(srcp1,srcp2,OA_SRC1(oap),OA_SRC2(oap))
+		}
+
 		/* if the precision is long, make sure that
 		 * none (or all) are bitmaps
 		 */
@@ -646,6 +658,12 @@ next1:
 	 * Make sure it is one of the legal ones.
 	 * First we check the special cases (bitmaps, indices).
 	 */
+	if( VF_CODE(vfp) == FVLUTMAPB ){		/* */
+		/* use the precision from the map */
+		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC2(oap) )  ));
+		return 0;
+	}
+
 	if( VF_FLAGS(vfp) & BITMAP_DST ){		/* vcmp, vcmpm */
 		/* Is dest vector set too??? */
 		if( OBJ_PREC( OA_DEST(oap) )  != PREC_BIT ){
@@ -711,6 +729,24 @@ next1:
 	SET_OA_FUNCTYPE( oap, FUNCTYPE_FOR( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) ) );
 //TELL_FUNCTYPE( OA_ARGSPREC_CODE(oap) ,OA_ARGSTYPE(oap) )
 } /* end chkprec() */
+
+static int check_size_match(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp1, Data_Obj *dp2 )
+{
+	int status;
+
+	if( dp1 == NULL ) return 0;
+	if( dp2 == NULL ) return 0;
+
+	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), dp1 ,dp2 )) == (-1) ){
+		sprintf(ERROR_STRING,
+	"check_size_match:  Size mismatch between objects %s and %s, function %s",
+			OBJ_NAME( dp1 ) ,OBJ_NAME( dp2 ), VF_NAME(vfp) );
+		ADVISE(ERROR_STRING);	// why not warning???
+		return -1;
+	}
+	assert( status == 0 );
+	return 0;
+}
 
 static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check for argument size match */
 {
@@ -781,34 +817,40 @@ ADVISE(ERROR_STRING);
 	}
 #endif // FVDOT
 
-	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), OA_SRC1(oap) ,OA_DEST(oap) )) == (-1) ){
-		sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg1 (%s) and destination (%s), function %s",
-			OBJ_NAME( OA_SRC1(oap) ) ,OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);
+	if( check_size_match(QSP_ARG  vfp, OA_SRC1(oap), OA_DEST(oap) ) < 0 )
 		return -1;
-	}
-	assert( status == 0 );
 
-	if( OA_SRC2(oap) == NULL ) return 0;
-#ifdef QUIP_DEBUG
-if( debug & veclib_debug ){
-sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg2 %s (%s)",
-OBJ_NAME(OA_DEST(oap) ), AREA_NAME(OBJ_AREA(OA_DEST(oap))),
-OBJ_NAME(OA_SRC2(oap) ), AREA_NAME(OBJ_AREA(OA_SRC2(oap))) );
-ADVISE(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-
-	if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp),OA_SRC2(oap) ,OA_DEST(oap) )) == (-1) ){
-		sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg2 (%s) and destination (%s), function %s",
-			OBJ_NAME(OA_SRC2(oap) ) ,OBJ_NAME(OA_DEST(oap) ) ,VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);
-		return -1;
+	if( VF_CODE(vfp) == FVLUTMAPB ){
+		// second source should be a map w/ 256 entries
+		if( OBJ_N_MACH_ELTS(OA_SRC2(oap)) != 256 ){
+			sprintf(ERROR_STRING,"chksiz:  map object %s (%d) should have 256 elements!?",
+				OBJ_NAME(OA_SRC2(oap)),OBJ_N_MACH_ELTS(OA_SRC2(oap)));
+			WARN(ERROR_STRING);
+			return -1;
+		}
+		if( ! IS_CONTIGUOUS(OA_SRC2(oap)) ){
+			sprintf(ERROR_STRING,"chksiz:  map object %s must be contiguous!?",
+				OBJ_NAME(OA_SRC2(oap)));
+			WARN(ERROR_STRING);
+			return -1;
+		}
+	} else {
+		if( check_size_match(QSP_ARG  vfp, OA_SRC2(oap), OA_DEST(oap) ) < 0 )
+			return -1;
 	}
 
-	assert( status == 0 );
+	if( check_size_match(QSP_ARG  vfp, OA_SRC3(oap), OA_DEST(oap) ) < 0 )
+		return -1;
+
+	if( check_size_match(QSP_ARG  vfp, OA_SRC4(oap), OA_DEST(oap) ) < 0 )
+		return -1;
+
+	// SRC5 ???
+
+
 
 	/* BUG what about bitmaps?? */
+
 	return 0;
 } /* end chksiz() */
 

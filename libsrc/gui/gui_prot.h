@@ -7,6 +7,7 @@
 #include "gui_cmds.h"
 
 extern void set_choice(Screen_Obj *sop,int which);
+extern void get_choice(Screen_Obj *sop);
 extern void set_pick(Screen_Obj *sop, int cyl, int which );
 
 extern void enable_widget(QSP_ARG_DECL  Screen_Obj *sop, int yesno );

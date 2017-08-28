@@ -401,20 +401,18 @@ static void show_dobj_context(QSP_ARG_DECL  Data_Obj *dp)
 	/* BUG this is the list of the current context stack,
 	 * not ALL the contexts!?
 	 */
-	//np=QLIST_HEAD( CONTEXT_LIST(dobj_itp) );
 	np=QLIST_HEAD( LIST_OF_DOBJ_CONTEXTS );
 	assert( np != NULL );
 
 	while(np!=NULL){
 		icp=(Item_Context *)NODE_DATA(np);
 		/* can we search this context only? */
+/*
 sprintf(ERROR_STRING,
 "Searching context %s for object %s",CTX_NAME(icp),OBJ_NAME(dp));
 advise(ERROR_STRING);
-		//ip=fetch_name(OBJ_NAME(dp),icp->ic_nsp);
-		//ip=FETCH_NAME_FROM_CONTEXT( OBJ_NAME(dp), icp );
+*/
 		ip=FETCH_OBJ_FROM_CONTEXT( dp, icp );
-//		ip = container_find_match( CTX_CONTAINER(icp), OBJ_NAME(dp) );
 		if( ((Data_Obj *)ip) == dp ){	/* found it! */
 			cname=CTX_NAME(icp);
 			goto show_context;

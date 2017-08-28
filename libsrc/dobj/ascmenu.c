@@ -19,10 +19,28 @@
 // BUG should be per-thread variable...
 static int expect_exact_count=1;
 
+// This is meant to delete ram copies downloaded from other platforms, but also
+// hits array
+static inline void delete_if_copy(QSP_ARG_DECL  Data_Obj *dp)
+{
+	if( (OBJ_FLAGS(dp) & DT_VOLATILE) == 0 ) return;
+	if( OBJ_FLAGS(dp) & DT_TEMP ) return;
+	if( OBJ_CHILDREN(dp) != NULL ) return;
+	
+	// must be volatile, not temporary, and childless
+	delvec(QSP_ARG  dp);
+}
+
+#ifdef DONE_DEBUGGING
 #define DELETE_IF_COPY(dp)						\
 									\
 if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 	delvec(QSP_ARG  dp);
+#else // ! DONE_DEBUGGING
+
+#define DELETE_IF_COPY(dp)	delete_if_copy(QSP_ARG  dp);
+
+#endif // ! DONE_DEBUGGING
 
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "continguous_"
@@ -112,6 +130,7 @@ longlist(QSP_ARG  dp);
 	// We try using the VOLATILE flag.  This will work as long as
 	// the input object is not VOLATILE!?
 
+fprintf(stderr,"insure_ram_obj setting VOLATILE flag for object %s\n",OBJ_NAME(tmp_dp));
 	SET_OBJ_FLAG_BITS(tmp_dp, DT_VOLATILE ) ;
 
 	return tmp_dp;
@@ -205,16 +224,19 @@ static COMMAND_FUNC( do_set_var_from_obj )
 
 	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(dp));
 
+	// why delete???
 	DELETE_IF_COPY(dp)
 }
 
 static COMMAND_FUNC( do_set_obj_from_var )
 {
 	Data_Obj *dp;
-	const char *s;
+	const char *src_str;
+	char *dst_str;
+	dimension_t dst_size;
 
 	dp=PICK_OBJ("");
-	s=NAMEOF("string");
+	src_str=NAMEOF("string");
 
 	if( dp == NULL ) return;
 
@@ -231,12 +253,13 @@ static COMMAND_FUNC( do_set_obj_from_var )
 		return;
 	}
 
-	if( (strlen(s)+1) > OBJ_COMPS(dp) ){
+	dst_size = OBJ_COMPS(dp);
+
+	if( strlen(src_str) >= dst_size ){
 		sprintf(ERROR_STRING,
-	"Type dimension (%d) of string object %s is too small for string of length %d",
-			OBJ_COMPS(dp),OBJ_NAME(dp),(int)strlen(s));
+	"Truncating string of length %d to fit string object %s (%d)...",
+			(int)strlen(src_str), OBJ_NAME(dp), dst_size );
 		WARN(ERROR_STRING);
-		return;
 	}
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING,"Sorry, object %s must be contiguous for string reading",
@@ -245,7 +268,9 @@ static COMMAND_FUNC( do_set_obj_from_var )
 		return;
 	}
 
-	strcpy((char *)OBJ_DATA_PTR(dp),s);
+	dst_str = (char *) OBJ_DATA_PTR(dp);
+	strncpy(dst_str,src_str,dst_size-1);
+	dst_str[dst_size-1] = 0;	// guarantee string termination
 }
 
 static COMMAND_FUNC( do_disp_obj )

@@ -249,6 +249,12 @@ RALL_ARR(vcmp,FVCMP),
 RALL_ARR(vscmp,FVSCMP),
 RALL_ARR(vscmp2,FVSCMP2),
 
+dnl	Mapping complex and quaternions should be straightforward,
+dnl	but not immediately necessary...
+dnl
+dnl RCQALL_ARR(vlutmapb,FVLUTMAPB),
+RALL_ARR(vlutmapb,FVLUTMAPB),
+
 dnl	/* Type conversions
 dnl	 *
 dnl	 * For now, bitmaps are constrained to be a single unsigned type,
