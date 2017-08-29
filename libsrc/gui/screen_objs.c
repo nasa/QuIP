@@ -1264,7 +1264,8 @@ COMMAND_FUNC( do_set_choice )
 	set_choice(sop,i);
 }
 
-// Simulate the action of making a choice without the user making it.
+// Set script variable $choice to the current selection.
+// Simulates the action of making a choice without the user making it.
 // This is useful to make the system reflect the current state after
 // an item has been selected for deletion.
 
@@ -1275,7 +1276,11 @@ COMMAND_FUNC(do_get_choice)
 	sop=PICK_SCRNOBJ("chooser");
 	if( sop == NULL ) return;
 
-	get_choice(QSP_ARG  sop);
+#ifdef BUILD_FOR_IOS
+	get_choice(sop);
+#else // ! BUILD_FOR_IOS
+	WARN("do_get_choice:  not implemented for this platform!?");
+#endif // ! BUILD_FOR_IOS
 }
 
 // We search the child list of the panel to find choosers, pickers

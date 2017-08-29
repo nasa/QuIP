@@ -610,177 +610,6 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 }
 #endif // HAVE_ANY_GPU
 
-#ifdef FOOBAR
-
-#define DEREF(ptr,type)	 (*((type *)ptr))
-
-
-static void set_one_value(QSP_ARG_DECL  Data_Obj *dp, void *datap, void * num_ptr)
-{
-	mach_prec mp;
-	long l;
-	static Data_Obj *warned_dp=NULL;
-
-#ifdef FOOBAR
-#ifdef HAVE_CUDA
-	if( ! object_is_in_ram(QSP_ARG  dp,"set a value") ) return;
-#endif //HAVE_CUDA
-#endif // FOOBAR
-
-	mp = OBJ_MACH_PREC(dp);
-	switch( mp ){
-#ifdef USE_LONG_DOUBLE
-		case PREC_LP:
-			* ((long double *)datap) = DEREF(num_ptr,long double);
-			break;
-#endif // USE_LONG_DOUBLE
-		case PREC_DP:
-			* ((double *)datap) = DEREF(num_ptr,double);
-			break;
-		case PREC_SP:
-			* ((float *)datap) =(float) DEREF(num_ptr,double);
-			break;
-		case PREC_BY:
-			l = DEREF(num_ptr,long);
-			if( (l < -128 || l > 127) && warned_dp!=dp ){
-				sprintf(ERROR_STRING,
-			"data (0x%lx) out of range for byte conversion, object %s",
-			l,OBJ_NAME( dp) );
-				WARN(ERROR_STRING);
-				warned_dp=dp;
-			}
-			*(char *)datap = (char)(l);
-			break;
-		case PREC_UBY:
-			l = DEREF(num_ptr,long);
-			if( (l < 0 || l > 255) && warned_dp!=dp ){
-				sprintf(ERROR_STRING,
-			"data (0x%lx) out of range for unsigned byte conversion, object %s",
-			l,OBJ_NAME( dp) );
-				WARN(ERROR_STRING);
-				warned_dp=dp;
-			}
-			*(u_char *)datap = (u_char)(l);
-			break;
-
-/* these values are for two's complement!? */
-#define MIN_SIGNED_SHORT	-32768		/* 0x8000 */
-#define MAX_SIGNED_SHORT	0x7fff		/*  32767 */
-#define MIN_UNSIGNED_SHORT	0x0000
-#define MAX_UNSIGNED_SHORT	0xffff
-
-		case PREC_IN:
-			l = DEREF(num_ptr,long);
-			if( (l < MIN_SIGNED_SHORT || l > MAX_SIGNED_SHORT )
-					&& warned_dp!=dp ){
-
-				sprintf(ERROR_STRING,
-		"number %ld (0x%lx) won't fit in a signed short, object %s",
-					l,l,OBJ_NAME( dp) );
-				WARN(ERROR_STRING);
-				warned_dp=dp;
-			}
-			* ((short *)datap)=(short)l;
-			break;
-		case PREC_UIN:
-			l = DEREF(num_ptr,long);
-			if( (l < MIN_UNSIGNED_SHORT || l > MAX_UNSIGNED_SHORT )
-					&& warned_dp!=dp ){
-
-				sprintf(ERROR_STRING,
-		"number %ld (0x%lx) won't fit in an unsigned short, object %s",
-					l,l,OBJ_NAME( dp) );
-				WARN(ERROR_STRING);
-				warned_dp=dp;
-			}
-			* ((u_short *)datap)=(u_short)l;
-			break;
-		case PREC_DI:
-			l = DEREF(num_ptr,long);
-			* ((int32_t *)datap)=(int32_t)l;
-			break;
-		case PREC_UDI:
-			l = DEREF(num_ptr,long);
-			// BUG do range checks on 64 bit arch!
-			if( IS_BITMAP(dp) ){
-				long offset;
-				int bit;
-		/* BUG - here we are assuming that the bitmap word type is PREC_UDI,
-		 * so we are right shifting by 5 instead of LOG2_BITS_PER_BITMAP_WORD...
-		 * BUT we are using BITMAP_DATA_TYPE!?
-		 * CAUTIOUS check here???
-		 */
-		/* We have faked datap to get the bit offset */
-				offset = ((BITMAP_DATA_TYPE *)datap) -
-					((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp));
-				/* offset is in bits... */
-				datap = ((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp)) +
-					((OBJ_BIT0(dp) + offset)>>5);
-				bit = (OBJ_BIT0(dp)+offset)&BIT_NUMBER_MASK;
-				/* We used to have 1<<bit here, but that gave 0
-				 * for more than 32 bits.
-				 * Is that because the compiler treats the 1
-				 * as a 32 bit number?
-				 */
-				if( l==1 )
-					*((BITMAP_DATA_TYPE *)datap) |= NUMBERED_BIT(bit);
-
-				else if( l == 0 )
-					*((BITMAP_DATA_TYPE *)datap) &= ~NUMBERED_BIT(bit);
-				else {
-					sprintf(ERROR_STRING,
-				"Non-boolean value %ld specified for bitmap %s!?",
-						l,OBJ_NAME( dp) );
-					WARN(ERROR_STRING);
-				}
-			} else {
-				* ((uint32_t *)datap)=(uint32_t)l;
-			}
-			break;
-
-		case PREC_LI:
-			l = DEREF(num_ptr,long);
-			* ((int64_t *)datap)=(int64_t)l;
-			break;
-		case PREC_ULI:
-			l = DEREF(num_ptr,long);
-			if( IS_BITMAP(dp) ){
-				long offset;
-				int bit;
-				/* hard coded to 6 instead of LOG2_BITS_PER_BITMAP_WORD?
-				 * BUG?
-				 * See comment above...
-				 */
-				offset = ((BITMAP_DATA_TYPE *)datap) -
-						((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp));
-				datap = ((BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp)) +
-						((OBJ_BIT0(dp) + offset)>>6);
-				bit = (OBJ_BIT0(dp)+offset)&BIT_NUMBER_MASK;
-				if( l==1 )
-					*((BITMAP_DATA_TYPE *)datap) |= (1<<bit);
-				else if( l == 0 )
-					*((BITMAP_DATA_TYPE *)datap) &= ~(1<<bit);
-				else {
-					sprintf(ERROR_STRING,
-					"Non-boolean value %ld specified for bitmap %s!?",
-						l,OBJ_NAME( dp) );
-					WARN(ERROR_STRING);
-				}
-			} else {
-				* ((uint64_t *)datap)=(uint64_t)l;
-			}
-			break;
-
-		case PREC_INVALID:
-		case N_MACHINE_PRECS:	/* just to silence compiler */
-		case PREC_NONE:		/* should have been handled above */
-			assert( AERROR("Unexpected case in switch!?") );
-			break;
-
-	}
-}
-#endif // FOOBAR
-
 static int get_next_element(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 {
 	Precision *prec_p;
@@ -831,9 +660,10 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 		*( wp + i_bit/BITS_PER_BITMAP_WORD ) |=  bit;
 }
 
-static int get_next_bit(QSP_ARG_DECL  Data_Obj *dp, bitnum_t bit0)
+static int get_next_bit(QSP_ARG_DECL  void *ptr, bitnum_t bit0)
 {
-	bit_set_value_from_input(QSP_ARG  (bitmap_word *) OBJ_DATA_PTR(dp), bit0 );
+	if( ptr != NULL )
+		bit_set_value_from_input(QSP_ARG  (bitmap_word *) ptr, bit0 );
 	return 0;
 }
 
@@ -1231,12 +1061,6 @@ void pntvec(QSP_ARG_DECL  Data_Obj *dp,FILE *fp)			/**/
 	set_integer_print_fmt(QSP_ARG   THE_FMT_CODE);	/* handles integer formats */
 	set_pad_ffmt_str(SINGLE_QSP_ARG);
 
-#ifdef FOOBAR
-#ifdef HAVE_CUDA
-	if( ! object_is_in_ram(QSP_ARG  dp,"display") ) return;
-#endif //HAVE_CUDA
-#endif // FOOBAR
-
 	if( OBJ_MACH_PREC(dp) == PREC_SP ){
 		sp_pntvec(QSP_ARG  dp,fp);
 	} else if( OBJ_PREC(dp) == PREC_BIT )
@@ -1323,19 +1147,19 @@ static int get_strings(QSP_ARG_DECL  Data_Obj *dp,char *data,int dim)
 	return status;
 }
 
-static int get_bits(QSP_ARG_DECL  Data_Obj *dp, int dim, int bit0 )
+static int get_bits(QSP_ARG_DECL  Data_Obj *dp, void *ptr, int dim, int bit0 )
 {
 	dimension_t i;
 	long offset;
 
 	if( dim < 0 ){
-		return( get_next_bit(QSP_ARG  dp,bit0) );
+		return( get_next_bit(QSP_ARG  ptr,bit0) );
 	}
 
 	offset = OBJ_TYPE_INC(dp,dim);
 	for(i=0;i<OBJ_TYPE_DIM(dp,dim);i++){
 		int status;
-		status = get_bits(QSP_ARG  dp,dim-1,bit0+(int)(i*offset));
+		status = get_bits(QSP_ARG  dp,ptr,dim-1,bit0+(int)(i*offset));
 		if( status < 0 ) return status;
 	}
 	return 0;
@@ -1356,7 +1180,10 @@ static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 	offset = ELEMENT_SIZE(dp);
 	offset *= OBJ_MACH_INC(dp,dim);
 	for(i=0;i<OBJ_MACH_DIM(dp,dim);i++){
-		status = get_sheets(QSP_ARG  dp,data+i*offset,dim-1);
+		// if data is NULL, that means we aren't really writing...
+		status = get_sheets(QSP_ARG  dp,
+			data == NULL ? data : data+i*offset,
+			dim-1);
 		if( status < 0 ) return status;
 	}
 	return status;
@@ -1405,8 +1232,20 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 
 void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 {
+	void *data_ptr;
+
 	ASCII_LEVEL = QLEVEL;
 	dobj_n_gotten = 0;
+
+	if( ! OBJ_IS_RAM(dp) ){
+		sprintf(ERROR_STRING,
+	"read_obj:  object %s must be in RAM for assignment!?",
+			OBJ_NAME(dp));
+		WARN(ERROR_STRING);
+		data_ptr = NULL;
+	} else {
+		data_ptr = OBJ_DATA_PTR(dp);
+	}
 
 	if( HAS_FORMAT_LIST ){
 		CURRENT_FORMAT_NODE = FIRST_INPUT_FORMAT_NODE;
@@ -1419,18 +1258,18 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 	}
 
 	if( OBJ_PREC(dp) == PREC_CHAR || OBJ_PREC(dp) == PREC_STR ){
-		if( get_strings(QSP_ARG  dp,(char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1) < 0 ){
+		if( get_strings(QSP_ARG  dp,(char *)data_ptr,N_DIMENSIONS-1) < 0 ){
 			sprintf(ERROR_STRING,"error reading strings for object %s",OBJ_NAME( dp) );
 			WARN(ERROR_STRING);
 		}
 	} else if( IS_BITMAP(dp) ){
-		if( get_bits(QSP_ARG  dp,N_DIMENSIONS-1,OBJ_BIT0(dp)) < 0){
+		if( get_bits(QSP_ARG  dp,data_ptr,N_DIMENSIONS-1,OBJ_BIT0(dp)) < 0){
 			sprintf(ERROR_STRING,"expected %d bits for bitmap object %s",
 				OBJ_N_TYPE_ELTS(dp),OBJ_NAME( dp) );
 			WARN(ERROR_STRING);
 		}
 	} else {	// normal object
-		if( get_sheets(QSP_ARG  dp,(u_char *)OBJ_DATA_PTR(dp),N_DIMENSIONS-1) < 0 ){
+		if( get_sheets(QSP_ARG  dp,(u_char *)data_ptr,N_DIMENSIONS-1) < 0 ){
 			sprintf(ERROR_STRING,"expected %d elements for object %s",
 				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) );
 			WARN(ERROR_STRING);

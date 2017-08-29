@@ -42,15 +42,125 @@ if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 
 #endif // ! DONE_DEBUGGING
 
+
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "continguous_"
 
-/*static*/ Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp)
+static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
+	Data_Area *save_ap;
 	Data_Obj *tmp_dp;
 	char *tname;
+
+	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + 1 );
+	sprintf(tname,"%s%s",DNAME_PREFIX,OBJ_NAME(dp));
+
+	save_ap = curr_ap;
+	curr_ap = ram_area_p;
+	tmp_dp = dup_obj(QSP_ARG  dp, tname);
+	curr_ap = save_ap;
+
+	givbuf(tname);
+
+	return tmp_dp;
+}
+
+// for host-device tranfers, we need a contiguous object.
+
+static Data_Obj *create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
+{
 	Data_Area *save_ap;
-	Data_Obj *c_dp=NULL;
+	Data_Obj *contig_dp;
+	char *tname;
+
+	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(CNAME_PREFIX) + 1 );
+	sprintf(tname,"%s%s",CNAME_PREFIX,OBJ_NAME(dp));
+
+	save_ap = curr_ap;
+	curr_ap = OBJ_AREA( dp );
+	contig_dp = dup_obj(QSP_ARG  dp, tname );
+	curr_ap = save_ap;
+
+	givbuf(tname);
+
+	return contig_dp;
+}
+
+// Assume that the two objects are matched in shape
+
+static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
+{
+	Vec_Obj_Args oa1, *oap=&oa1;
+
+	setvarg2(oap,dst_dp,src_dp);
+	if( IS_BITMAP(src_dp) ){
+		SET_OA_SBM(oap,src_dp);
+		SET_OA_SRC1(oap,NULL);
+	}
+
+	if( IS_REAL(src_dp) ) /* BUG case for QUAT too? */
+		OA_ARGSTYPE(oap) = REAL_ARGS;
+	else if( IS_COMPLEX(src_dp) ) /* BUG case for QUAT too? */
+		OA_ARGSTYPE(oap) = COMPLEX_ARGS;
+	else if( IS_QUAT(src_dp) ) /* BUG case for QUAT too? */
+		OA_ARGSTYPE(oap) = QUATERNION_ARGS;
+	else
+		assert( AERROR("copy_platform_data:  bad argset type!?") );
+
+	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
+}
+
+static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
+{
+	if( IS_CONTIGUOUS(dp) ) return dp;
+	if( HAS_CONTIGUOUS_DATA(dp) ) return dp;
+
+advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
+longlist(QSP_ARG  dp);
+
+	return create_platform_copy(QSP_ARG   dp);
+}
+
+static Data_Obj *contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Obj *contig_dp;
+
+	contig_dp = contig_obj(QSP_ARG  dp);
+	if( contig_dp == dp ) return dp;
+	copy_platform_data(QSP_ARG  contig_dp, dp );
+	return contig_dp;
+}
+
+static void download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_dp)
+{
+	Data_Obj *contig_dp;
+
+	// We can't download if the source data is not contiguous...
+
+	contig_dp = contig_obj_with_data(QSP_ARG  pf_dp);
+
+	gen_obj_dnload(QSP_ARG  ram_dp, contig_dp);
+
+	if( contig_dp != pf_dp )
+		delvec(QSP_ARG  contig_dp);
+}
+
+
+// To write a platform object, we need to have a ram copy to stick the values in,
+// that we then transfer en-mass.  The copy must have the correct shape,
+// but doesn't need to contain the data, as we will be over-writing it anyway.
+
+Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp)
+{
+	if( OBJ_IS_RAM(dp) ) return dp;
+	return create_ram_copy(QSP_ARG  dp);
+}
+
+// To read a platform object, the copies need to have the data copied along!
+
+Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Obj *ram_dp;
 
 	if( OBJ_IS_RAM(dp) ) return dp;
 
@@ -58,82 +168,24 @@ if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 	// We create a copy in RAM, and download the data
 	// using the platform download function.
 
-	save_ap = curr_ap;
-	curr_ap = ram_area_p;
+	ram_dp = create_ram_copy(QSP_ARG  dp);
 
-	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + 1 );
-	sprintf(tname,"%s%s",DNAME_PREFIX,OBJ_NAME(dp));
-	tmp_dp = dup_obj(QSP_ARG  dp, tname);
-	givbuf(tname);
-	if( tmp_dp == NULL ){
+	if( ram_dp == NULL ){
 		// This can happen if the object is subscripted,
 		// as the bracket characters are illegal in names
 		return NULL;
 	}
 
-	curr_ap = save_ap;
-
-	// We can't download if the source data is not contiguous...
-	//
-	// OLD OBSOLETE COMMENT:
-	// We have a problem with bit precision, because the bits can
-	// be non-contiguous when the long words are - any time the number of columns
-	// is not evenly divided by the bits-per-word
-	//
-	// Now, bitmaps wrap bits around, not trying to align word and row boundaries
-
-	if( (! IS_CONTIGUOUS(dp)) && ! HAS_CONTIGUOUS_DATA(dp) ){
-		Vec_Obj_Args oa1, *oap=&oa1;
-
-advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
-longlist(QSP_ARG  dp);
-		save_ap = curr_ap;
-		curr_ap = OBJ_AREA( dp );
-
-		tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(CNAME_PREFIX) + 1 );
-		sprintf(tname,"%s%s",CNAME_PREFIX,OBJ_NAME(dp));
-		c_dp = dup_obj(QSP_ARG  dp, tname );
-		givbuf(tname);
-
-		curr_ap = save_ap;
-
-		// Now do the move...
-
-		setvarg2(oap,c_dp,dp);
-		if( IS_BITMAP(dp) ){
-			SET_OA_SBM(oap,dp);
-			SET_OA_SRC1(oap,NULL);
-		}
-
-		if( IS_REAL(dp) ) /* BUG case for QUAT too? */
-			OA_ARGSTYPE(oap) = REAL_ARGS;
-		else if( IS_COMPLEX(dp) ) /* BUG case for QUAT too? */
-			OA_ARGSTYPE(oap) = COMPLEX_ARGS;
-		else if( IS_QUAT(dp) ) /* BUG case for QUAT too? */
-			OA_ARGSTYPE(oap) = QUATERNION_ARGS;
-		else
-			assert( AERROR("insure_ram_obj:  bad argset type!?") );
-
-//fprintf(stderr,"insure_ram_obj:  moving remote data to a contiguous object\n");  
-		call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
-//fprintf(stderr,"insure_ram_obj:  DONE moving remote data to a contiguous object\n");  
-
-		dp = c_dp;
-	}
-
-	gen_obj_dnload(QSP_ARG  tmp_dp, dp);
-
-	if( c_dp != NULL )
-		delvec(QSP_ARG  c_dp);
+	download_platform_data(QSP_ARG  ram_dp, dp);
 
 	// BUG - when to delete?
 	// We try using the VOLATILE flag.  This will work as long as
 	// the input object is not VOLATILE!?
 
-fprintf(stderr,"insure_ram_obj setting VOLATILE flag for object %s\n",OBJ_NAME(tmp_dp));
-	SET_OBJ_FLAG_BITS(tmp_dp, DT_VOLATILE ) ;
+fprintf(stderr,"insure_ram_obj setting VOLATILE flag for object %s\n",OBJ_NAME(ram_dp));
+	SET_OBJ_FLAG_BITS(ram_dp, DT_VOLATILE ) ;
 
-	return tmp_dp;
+	return ram_dp;
 }
 
 
@@ -212,7 +264,7 @@ static COMMAND_FUNC( do_set_var_from_obj )
 
 	if( dp == NULL ) return;
 
-	dp = insure_ram_obj(QSP_ARG  dp);
+	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
 	if( dp == NULL ) return;
 
 	if( ! IS_STRING(dp) ){
@@ -285,7 +337,7 @@ static COMMAND_FUNC( do_disp_obj )
 	// but we make life easier by automatically creating
 	// a temporary object...
 
-	dp = insure_ram_obj(QSP_ARG  dp);
+	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
 	if( dp == NULL ) return;
 
 	fp = tell_msgfile(SINGLE_QSP_ARG);
@@ -342,7 +394,7 @@ static COMMAND_FUNC( do_wrt_obj )
 			return;
 		}
 
-	dp = insure_ram_obj(QSP_ARG  dp);
+	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
 	if( dp == NULL ) return;
 
 	pntvec(QSP_ARG  dp,fp);
@@ -372,7 +424,7 @@ static COMMAND_FUNC( do_append )
 	fp=TRYNICE( NAMEOF("output file"), "a" );
 	if( !fp ) return;
 
-	dp = insure_ram_obj(QSP_ARG  dp);
+	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
 	if( dp == NULL ) return;
 
 	pntvec(QSP_ARG  dp,fp);
