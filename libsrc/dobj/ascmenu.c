@@ -19,48 +19,44 @@
 // BUG should be per-thread variable...
 static int expect_exact_count=1;
 
-// This is meant to delete ram copies downloaded from other platforms, but also
-// hits array
-static inline void delete_if_copy(QSP_ARG_DECL  Data_Obj *dp)
+static inline void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
-	if( (OBJ_FLAGS(dp) & DT_VOLATILE) == 0 ) return;
-	if( OBJ_FLAGS(dp) & DT_TEMP ) return;
-	if( OBJ_CHILDREN(dp) != NULL ) return;
-	
-	// must be volatile, not temporary, and childless
-	delvec(QSP_ARG  dp);
+	if( ram_dp == dp ) return;
+	delvec(QSP_ARG  ram_dp);
 }
-
-#ifdef DONE_DEBUGGING
-#define DELETE_IF_COPY(dp)						\
-									\
-if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
-	delvec(QSP_ARG  dp);
-#else // ! DONE_DEBUGGING
-
-#define DELETE_IF_COPY(dp)	delete_if_copy(QSP_ARG  dp);
-
-#endif // ! DONE_DEBUGGING
-
 
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "continguous_"
+#define INDEX_SUFFIX "_subscripted"
+
+#define IS_SUBSCRIPT_DELIMITER(c)	( (c)=='[' || (c)=='{' )
 
 static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
 	Data_Area *save_ap;
 	Data_Obj *tmp_dp;
-	char *tname;
+	char *tmp_name, *dst;
+	const char *src;
 
-	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + 1 );
-	sprintf(tname,"%s%s",DNAME_PREFIX,OBJ_NAME(dp));
+	tmp_name = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + strlen(INDEX_SUFFIX) + 1 );
+
+	strcpy(tmp_name,DNAME_PREFIX);
+	src=OBJ_NAME(dp);
+	dst=tmp_name+strlen(DNAME_PREFIX);
+	while( *src && ! IS_SUBSCRIPT_DELIMITER(*src) ){
+		*dst++ = *src++;
+	}
+	*dst = 0;
+	if( IS_SUBSCRIPT_DELIMITER(*src) ){
+		strcat(tmp_name,INDEX_SUFFIX);
+	}
 
 	save_ap = curr_ap;
 	curr_ap = ram_area_p;
-	tmp_dp = dup_obj(QSP_ARG  dp, tname);
+	tmp_dp = dup_obj(QSP_ARG  dp, tmp_name);
 	curr_ap = save_ap;
 
-	givbuf(tname);
+	givbuf(tmp_name);
 
 	return tmp_dp;
 }
@@ -138,11 +134,29 @@ static void download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_
 	// We can't download if the source data is not contiguous...
 
 	contig_dp = contig_obj_with_data(QSP_ARG  pf_dp);
+	assert( IS_CONTIGUOUS(ram_dp) );
 
 	gen_obj_dnload(QSP_ARG  ram_dp, contig_dp);
 
 	if( contig_dp != pf_dp )
 		delvec(QSP_ARG  contig_dp);
+}
+
+static void upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp)
+{
+	Data_Obj *contig_dp;
+
+	// We can't upload if the destination data is not contiguous...
+	assert( IS_CONTIGUOUS(ram_dp) );
+
+	contig_dp = contig_obj(QSP_ARG  pf_dp);
+
+	gen_obj_upload(QSP_ARG  contig_dp, ram_dp );
+
+	if( contig_dp != pf_dp ){
+		copy_platform_data(QSP_ARG  pf_dp,contig_dp);
+		delvec(QSP_ARG  contig_dp);
+	}
 }
 
 
@@ -178,16 +192,16 @@ Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 
 	download_platform_data(QSP_ARG  ram_dp, dp);
 
-	// BUG - when to delete?
-	// We try using the VOLATILE flag.  This will work as long as
-	// the input object is not VOLATILE!?
-
-fprintf(stderr,"insure_ram_obj setting VOLATILE flag for object %s\n",OBJ_NAME(ram_dp));
-	SET_OBJ_FLAG_BITS(ram_dp, DT_VOLATILE ) ;
-
 	return ram_dp;
 }
 
+static void release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
+{
+	if( ram_dp == dp ) return;	// nothing to do
+
+	upload_platform_data(QSP_ARG  dp,ram_dp);
+	delvec(QSP_ARG  ram_dp);
+}
 
 /*
  * BUG do_read_obj will not work correctly for subimages
@@ -196,7 +210,7 @@ fprintf(stderr,"insure_ram_obj setting VOLATILE flag for object %s\n",OBJ_NAME(r
 
 static COMMAND_FUNC( do_read_obj )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	FILE *fp;
 	const char *s;
 
@@ -213,23 +227,26 @@ static COMMAND_FUNC( do_read_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	INSIST_RAM_OBJ(dp,"do_read_obj")
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert(ram_dp!=NULL);
 
 	if( strcmp(s,"-") && strcmp(s,"stdin") ){
 		fp=TRY_OPEN( s, "r" );
 		if( !fp ) return;
 
-		read_ascii_data(QSP_ARG  dp,fp,s,expect_exact_count);
+		read_ascii_data(QSP_ARG  ram_dp,fp,s,expect_exact_count);
 	} else {
 		/* read from stdin, no problem... */
 
-		read_obj(QSP_ARG  dp);
+		read_obj(QSP_ARG  ram_dp);
 	}
+
+	release_ram_obj_for_writing(QSP_ARG  ram_dp,dp);
 }
 
 static COMMAND_FUNC( do_pipe_obj )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	Pipe *pp;
 	char cmdbuf[LLEN];
 
@@ -243,28 +260,28 @@ static COMMAND_FUNC( do_pipe_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	INSIST_RAM_OBJ(dp,"pipe_read_obj")
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert(ram_dp!=NULL);
 
 	sprintf(cmdbuf,"Pipe:  %s",pp->p_cmd);
-	read_ascii_data(QSP_ARG  dp,pp->p_fp,cmdbuf,expect_exact_count);
+	read_ascii_data(QSP_ARG  ram_dp,pp->p_fp,cmdbuf,expect_exact_count);
 	/* If there was just enough data, then the pipe
 	 * will have been closed already... */
 
 	/* BUG we should check qlevel to make sure that the pipe was popped... */
 	pp->p_fp = NULL;
+
+	release_ram_obj_for_writing(QSP_ARG  ram_dp,dp);
 }
 
 static COMMAND_FUNC( do_set_var_from_obj )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	const char *s;
 
 	s=NAMEOF("variable");
 	dp=PICK_OBJ("");
 
-	if( dp == NULL ) return;
-
-	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
 	if( dp == NULL ) return;
 
 	if( ! IS_STRING(dp) ){
@@ -274,15 +291,17 @@ static COMMAND_FUNC( do_set_var_from_obj )
 		return;
 	}
 
-	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(dp));
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert( ram_dp != NULL );
 
-	// why delete???
-	DELETE_IF_COPY(dp)
+	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(ram_dp));
+
+	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
 }
 
 static COMMAND_FUNC( do_set_obj_from_var )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	const char *src_str;
 	char *dst_str;
 	dimension_t dst_size;
@@ -291,8 +310,6 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	src_str=NAMEOF("string");
 
 	if( dp == NULL ) return;
-
-	INSIST_RAM_OBJ(dp,"set_string")
 
 #ifdef QUIP_DEBUG
 //if( debug ) dptrace(dp);
@@ -313,21 +330,28 @@ static COMMAND_FUNC( do_set_obj_from_var )
 			(int)strlen(src_str), OBJ_NAME(dp), dst_size );
 		WARN(ERROR_STRING);
 	}
-	if( ! IS_CONTIGUOUS(dp) ){
+
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert(ram_dp!=NULL);
+
+	if( ! IS_CONTIGUOUS(ram_dp) ){
 		sprintf(ERROR_STRING,"Sorry, object %s must be contiguous for string reading",
-			OBJ_NAME(dp));
+			OBJ_NAME(ram_dp));
 		WARN(ERROR_STRING);
+		assert(ram_dp==dp);
 		return;
 	}
 
-	dst_str = (char *) OBJ_DATA_PTR(dp);
+	dst_str = (char *) OBJ_DATA_PTR(ram_dp);
 	strncpy(dst_str,src_str,dst_size-1);
 	dst_str[dst_size-1] = 0;	// guarantee string termination
+
+	release_ram_obj_for_writing(QSP_ARG  ram_dp,dp);
 }
 
 static COMMAND_FUNC( do_disp_obj )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	FILE *fp;
 
 	dp=PICK_OBJ("");
@@ -337,21 +361,21 @@ static COMMAND_FUNC( do_disp_obj )
 	// but we make life easier by automatically creating
 	// a temporary object...
 
-	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	if( dp == NULL ) return;
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert( ram_dp != NULL );
 
 	fp = tell_msgfile(SINGLE_QSP_ARG);
 	if( fp == stdout ){
-		if( IS_IMAGE(dp) || IS_SEQUENCE(dp) )
+		if( IS_IMAGE(ram_dp) || IS_SEQUENCE(ram_dp) )
 			if( !CONFIRM(
 		"are you sure you want to display an image/sequence in ascii") )
 				return;
-		list_dobj(QSP_ARG  dp);
+		list_dobj(QSP_ARG  ram_dp);
 	}
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(QSP_ARG  ram_dp,fp);
 	fflush(fp);
 
-	DELETE_IF_COPY(dp)
+	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
 }
 
 /* BUG wrvecd will not work correctly for subimages */
@@ -362,7 +386,7 @@ static COMMAND_FUNC( do_disp_obj )
 
 static COMMAND_FUNC( do_wrt_obj )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	FILE *fp;
 	/* BUG what if pathname is longer than 256??? */
 	const char *filename;
@@ -394,10 +418,10 @@ static COMMAND_FUNC( do_wrt_obj )
 			return;
 		}
 
-	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	if( dp == NULL ) return;
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert( ram_dp != NULL );
 
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(QSP_ARG  ram_dp,fp);
 	if( fp != stdout && QS_MSG_FILE(THIS_QSP)!=NULL && fp != QS_MSG_FILE(THIS_QSP) ) {
 		if( verbose ){
 			sprintf(MSG_STR,"closing file %s",filename);
@@ -406,12 +430,12 @@ static COMMAND_FUNC( do_wrt_obj )
 		fclose(fp);
 	}
 
-	DELETE_IF_COPY(dp)
+	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
 }
 
 static COMMAND_FUNC( do_append )
 {
-	Data_Obj *dp;
+	Data_Obj *dp, *ram_dp;
 	FILE *fp;
 
 	dp=PICK_OBJ("");
@@ -424,13 +448,13 @@ static COMMAND_FUNC( do_append )
 	fp=TRYNICE( NAMEOF("output file"), "a" );
 	if( !fp ) return;
 
-	dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	if( dp == NULL ) return;
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	assert( ram_dp != NULL );
 
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(QSP_ARG  ram_dp,fp);
 	fclose(fp);
 
-	DELETE_IF_COPY(dp)
+	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
 }
 
 static const char *print_fmt_name[N_PRINT_FORMATS];
