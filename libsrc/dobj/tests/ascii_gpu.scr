@@ -1,0 +1,24 @@
+# Make sure this is done correctly...
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  show
+  quit
+
+Vector v 4 1 float
+
+Ramp1D v 0 10
+Display v
+Pause
+
+data
+  ascii
+    read v -
+      1 2 3 4
+    quit
+  quit
+Display v
+Pause
+
+exit
+
