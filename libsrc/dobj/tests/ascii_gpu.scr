@@ -7,16 +7,20 @@ platforms
 
 Vector v 4 1 float
 
+advise "Initializing data with ramp (0,10,20,30)"
 Ramp1D v 0 10
+advise "Displaying..."
 Display v
 Pause
 
+advise "Initializing data with ascii input (1,2,3,4)"
 data
   ascii
     read v -
       1 2 3 4
     quit
   quit
+advise "Displaying..."
 Display v
 Pause
 
