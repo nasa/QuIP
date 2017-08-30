@@ -19,7 +19,7 @@
 // BUG should be per-thread variable...
 static int expect_exact_count=1;
 
-static inline void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
+/*static inline*/ void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
 	if( ram_dp == dp ) return;
 	delvec(QSP_ARG  ram_dp);
@@ -190,6 +190,7 @@ Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 		return NULL;
 	}
 
+fprintf(stderr,"downloading platform data...\n");
 	download_platform_data(QSP_ARG  ram_dp, dp);
 
 	return ram_dp;

@@ -100,6 +100,7 @@ void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp)
 void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
 {
 	size_t siz;
+	index_t offset;
 
 	CHECK_NOT_RAM("gen_obj_upload","destination",dpto)
 	CHECK_RAM("gen_obj_upload","source",dpfr)
@@ -108,23 +109,20 @@ void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr)
 	CHECK_SAME_SIZE(dpto,dpfr,"gen_obj_upload")
 	CHECK_SAME_PREC(dpto,dpfr,"gen_obj_upload")
 
-#ifdef FOOBAR
-	if( IS_BITMAP(dpto) )
-		siz = BITMAP_WORD_COUNT(dpto) * PREC_SIZE( PREC_FOR_CODE(BITMAP_MACH_PREC) );
-	else
-		siz = OBJ_N_MACH_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
-#endif /* FOOBAR */
-	siz = OBJ_N_TYPE_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
+	//siz = OBJ_N_TYPE_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
+	siz = OBJ_N_MACH_ELTS(dpto) * PREC_SIZE( OBJ_MACH_PREC_PTR(dpto) );
 
 	assert( PF_MEM_UPLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpto))) != NULL );
 
+	offset = OBJ_OFFSET(dpto) * PREC_SIZE( OBJ_PREC_PTR(dpto) );
 	( * PF_MEM_UPLOAD_FN(OBJ_PLATFORM(dpto)) )
-		(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz, OBJ_PFDEV(dpto) );
+		(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz, offset, OBJ_PFDEV(dpto) );
 }
 
 void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 {
 	size_t siz;
+	index_t offset;
 
 	CHECK_RAM("gen_obj_dnload","destination",dpto)
 	// Really need to check that this object has the right platform?
@@ -153,7 +151,8 @@ void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 
 	assert( PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dpfr))) != NULL );
 
+	offset = OBJ_OFFSET(dpfr) * PREC_SIZE( OBJ_PREC_PTR(dpfr) );
 	( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dpfr)) )
-		(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz, OBJ_PFDEV(dpfr) );
+		(QSP_ARG  OBJ_DATA_PTR(dpto), OBJ_DATA_PTR(dpfr), siz, offset, OBJ_PFDEV(dpfr) );
 }
 

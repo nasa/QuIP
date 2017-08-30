@@ -211,9 +211,13 @@ void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 
 #ifdef HAVE_ANY_GPU
 	if( ! OBJ_IS_RAM(dp) ){
+		index_t offset;
+
+		offset = OBJ_OFFSET(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
 		// BUG may not be cuda, use platform-specific function!
 		(*(PF_MEM_UPLOAD_FN(PFDEV_PLATFORM(OBJ_PFDEV(dp)))))
 			(QSP_ARG  OBJ_DATA_PTR(dp), &svp->u_d, PREC_SIZE(OBJ_PREC_PTR(dp)),
+				offset,
 				OBJ_PFDEV(dp) );
 		return;
 	}
@@ -266,10 +270,13 @@ void extract_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Data_Obj *dp)
 	Precision *prec_p;
 
 	if( ! OBJ_IS_RAM(dp) ){
+		index_t offset;
+
+		offset = OBJ_OFFSET(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
 		// BUG may not be cuda, use platform-specific function!
 		( * PF_MEM_DNLOAD_FN(OBJ_PLATFORM(dp)) )
 			(QSP_ARG  &svp->u_d, OBJ_DATA_PTR(dp),
-				PREC_SIZE(OBJ_PREC_PTR(dp)), OBJ_PFDEV(dp) );
+				PREC_SIZE(OBJ_PREC_PTR(dp)), offset, OBJ_PFDEV(dp) );
 		return;
 	}
 

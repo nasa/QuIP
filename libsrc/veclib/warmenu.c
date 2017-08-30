@@ -958,6 +958,8 @@ static COMMAND_FUNC( doeven )
 #endif /* NOT_YET */
 
 static COMMAND_FUNC( dolutmap )
+{ DO_VCODE(FVLUTMAPB); }
+#ifdef FOOBAR
 {
 	Data_Obj *dst, *src, *map;
 
@@ -969,6 +971,7 @@ static COMMAND_FUNC( dolutmap )
 	if( lutmap(QSP_ARG  dst,src,map) == (-1) )
 		WARN("mapping failed");
 }
+#endif // FOOBAR
 
 #define MAX_FS_LEVELS	128
 

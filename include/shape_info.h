@@ -71,11 +71,20 @@ struct precision {
 	struct vfunc_tbl *	prec_vf_tbl;
 
 	// methods
+
+	// read script input with appropriate function, and assign scalar
 	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
+
 	double			(*indexed_data_func)(Data_Obj *dp, int index);
+
 	int			(*is_numeric_func)(void);
+
+	// assign a scalar data object from a scalar value constant
 	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+
+	// extract a value from a scalar data object
 	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
+
 	double			(*cast_to_double_func)(Scalar_Value *svp);
 	void			(*cast_from_double_func)
 					(Scalar_Value *,double val);

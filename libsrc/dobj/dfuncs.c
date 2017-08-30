@@ -25,18 +25,11 @@ double obj_exists(QSP_ARG_DECL  const char *name)
 static inline double comp_func( Data_Obj *dp, index_t index )
 {
 	Precision *prec_p;
+	double d;
+	Data_Obj *ram_dp;
 
 	if( dp==NULL ) return(0.0);
 
-#ifdef FOOBAR
-#ifdef HAVE_CUDA
-	if( ! object_is_in_ram(DEFAULT_QSP_ARG  dp,
-		"use value functions on CUDA object") ){
-		return(0.0);
-	}
-#endif /* HAVE_CUDA */
-#endif // FOOBAR
-			
 	if( !IS_SCALAR(dp) ){
 		sprintf(DEFAULT_ERROR_STRING,"comp_func:  %s is not a scalar",
 			OBJ_NAME(dp));
@@ -52,7 +45,25 @@ static inline double comp_func( Data_Obj *dp, index_t index )
 	prec_p = OBJ_MACH_PREC_PTR(dp);
 	assert(prec_p!=NULL);
 
-	return (*(prec_p->indexed_data_func))(dp,index);
+#ifdef HAVE_ANY_GPU
+	ram_dp = insure_ram_obj_for_reading(DEFAULT_QSP_ARG dp);
+	assert(ram_dp!=NULL);
+	//if( ! object_is_in_ram(DEFAULT_QSP_ARG  dp,
+	//	"use value functions on GPU object") ){
+	//	return(0.0);
+	//}
+fprintf(stderr,"comp_func:  obj = %s   ram_obj = %s\n",OBJ_NAME(dp),OBJ_NAME(ram_dp));
+#else /* ! HAVE_ANY_GPU */
+	ram_dp = dp;
+#endif /* ! HAVE_ANY_GPU */
+			
+	d = (*(prec_p->indexed_data_func))(ram_dp,index);
+
+#ifdef HAVE_ANY_GPU
+	release_ram_obj_for_reading(DEFAULT_QSP_ARG  ram_dp,dp);
+#endif /* ! HAVE_ANY_GPU */
+
+	return d;
 } // end comp_func
 
 double val_func(QSP_ARG_DECL  Data_Obj *dp )

@@ -264,6 +264,7 @@ extern void verdata(SINGLE_QSP_ARG_DECL);
 
 /* ascmenu.c */
 extern Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp);
+extern void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp);
 extern Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp);
 
 /* ascii.c */
