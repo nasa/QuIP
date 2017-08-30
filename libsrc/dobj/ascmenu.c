@@ -190,7 +190,6 @@ Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
 		return NULL;
 	}
 
-fprintf(stderr,"downloading platform data...\n");
 	download_platform_data(QSP_ARG  ram_dp, dp);
 
 	return ram_dp;
@@ -228,7 +227,7 @@ static COMMAND_FUNC( do_read_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
+	ram_dp = insure_ram_obj_for_writing(QSP_ARG  dp);	// writing into the object
 	assert(ram_dp!=NULL);
 
 	if( strcmp(s,"-") && strcmp(s,"stdin") ){

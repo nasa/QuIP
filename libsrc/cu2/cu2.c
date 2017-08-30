@@ -346,8 +346,10 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 #ifdef OLD_CUDA4
 	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) );
 #else // ! OLD_CUDA4
-fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   siz = %ld\n",
-(long)dst,(long)src,siz);
+
+//fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   siz = %ld\n",
+//(long)dst,(long)src,siz);
+
 	error = cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) ;
 	if( error != cudaSuccess ){
 		// BUG report cuda error
