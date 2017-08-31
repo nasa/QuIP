@@ -715,6 +715,9 @@ AM_CONDITIONAL([HAVE_NVCC], [test "x$working_nvcc" = "xyes"])
 # with permissions 400 - this causes the test program to
 # return 0 devices!?
 
+# On mac OSX 10.12 (Sierra), we don't seem to have the /dev/nvidia files,
+# but everything seems to work OK...
+
 have_nvidia0=no
 if test "x$working_nvcc" == xyes; then
   AC_MSG_CHECKING([for /dev/nvidia0])
@@ -730,7 +733,12 @@ if test "x$working_nvcc" == xyes; then
       AC_MSG_RESULT([present but is not readable])
     fi
   else
-   AC_MSG_RESULT([not present])
+    AC_MSG_RESULT([not present])
+    # Don't need the dev file on Mac OSX ?
+    if test "x$os_is_darwin" == xyes; then
+      AC_MSG_NOTICE([Assuming CUDA will work without /dev/nvidia0 on Mac OSX])
+      have_nvidia0=yes
+    fi
   fi
 fi
 have_nvidiactl=no
@@ -748,10 +756,15 @@ if test "x$have_nvidia0" == xyes; then
       AC_MSG_RESULT([present but is not readable])
     fi
   else
-   AC_MSG_RESULT([not present])
+    AC_MSG_RESULT([not present])
+    if test "x$os_is_darwin" == xyes; then
+      AC_MSG_NOTICE([Assuming CUDA will work without /dev/nvidiactl on Mac OSX])
+      have_nvidiactl=yes
+    fi
   fi
 fi
 have_cuda_device=no
+
 if test "x$working_nvcc" == xyes; then
   if test "x$have_nvidiactl" == xyes; then
     AC_MSG_CHECKING([for CUDA-capable device])

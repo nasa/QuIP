@@ -336,7 +336,7 @@ static void (*cu2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default
 static void cu2_update_offset(QSP_ARG_DECL  Data_Obj *dp)
 { WARN("cu2_update_offset not implemented!?"); }
 
-static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 #ifdef HAVE_CUDA
 
@@ -367,8 +367,11 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 }
 
 // We treat the device as a server, so "upload" transfers from host to device
+//
+// For cuda, we ignore the offset argument, because it is already added into ptr.
+// (The offset arg was added for OpenCL, where the memory "pointer" is not really the address)
 
-static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 #ifdef HAVE_CUDA
 	cudaError_t error;
