@@ -1,3 +1,4 @@
+
 #ifndef _OBJ_ARGS_H_
 #define _OBJ_ARGS_H_
 
@@ -520,6 +521,7 @@ extern /*bitnum_t*/ dimension_t bitmap_obj_word_count( Data_Obj *dp );
 // BUT we need to keep them here until veclib2 is ported also...
 #define SET_VA_SCALAR_VAL_STD(vap,idx,v)	*((std_type *)(vap)->va_sval[idx]) = v
 #define VA_SCALAR_VAL_STD(vap,idx)	(*((std_type *)((vap)->va_sval[idx])))
+#define VA_SCALAR_VAL_USHORT(vap,idx)	(*((u_short *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_STDCPX(vap,idx)	(*((std_cpx *)((vap)->va_sval[idx])))
 #define VA_SCALAR_VAL_STDQUAT(vap,idx)	(*((std_quat *)((vap)->va_sval[idx])))
 
