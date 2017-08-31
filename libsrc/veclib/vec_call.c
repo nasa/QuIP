@@ -537,14 +537,23 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		}
 		// Can there be more than 4 sources???
 	}
-	if( VF_CODE(vfp) == FVLUTMAPB ){
-		if( srcp1 != PREC_UBY ){
-			sprintf(ERROR_STRING,"Source object %s must have %s precision for function %s",
-				OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),VF_NAME(vfp));
-			WARN(ERROR_STRING);
-			return -1;
-		}
+#define IS_LUTMAP_FUNC(vfp) ( VF_CODE(vfp) == FVLUTMAPB || VF_CODE(vfp) == FVLUTMAPS )
+
+#define CHECK_MAP_INDEX_PREC(func_code,prec_code)					\
+											\
+	if( VF_CODE(vfp) == func_code ){						\
+		if( srcp1 != prec_code ){						\
+			sprintf(ERROR_STRING,						\
+	"Source object %s (%s) must have %s precision for function %s",			\
+				OBJ_NAME(OA_SRC1(oap)),NAME_FOR_PREC_CODE(srcp1),	\
+				NAME_FOR_PREC_CODE(prec_code),VF_NAME(vfp));		\
+			WARN(ERROR_STRING);						\
+			return -1;							\
+		}									\
 	}
+
+	CHECK_MAP_INDEX_PREC(FVLUTMAPB,PREC_UBY)
+	CHECK_MAP_INDEX_PREC(FVLUTMAPS,PREC_UIN)
 
 	/* Figure out what type of function to call based on the arguments... */
 
@@ -560,7 +569,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		return 0;
 	}
 
-#define REPORT_MISMATCH_ERROR(dp1,dp2)							\
+#define REPORT_SOURCE_MISMATCH_ERROR(dp1,dp2)							\
 											\
 	sprintf(ERROR_STRING,								\
 "chkprec:  %s operands %s (%s) and %s (%s) should have the same precision",		\
@@ -570,17 +579,36 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		OBJ_PREC_NAME( dp2 ) );							\
 	WARN(ERROR_STRING);
 
+#define REPORT_OBJECT_MISMATCH_ERROR(dp1,dp2)							\
+											\
+	sprintf(ERROR_STRING,								\
+"chkprec:  %s: objects %s (%s) and %s (%s) should have the same precision",		\
+		VF_NAME(vfp) ,OBJ_NAME( dp1 ) ,						\
+		OBJ_PREC_NAME( dp1 ),							\
+		OBJ_NAME( dp2 ) ,							\
+		OBJ_PREC_NAME( dp2 ) );							\
+	WARN(ERROR_STRING);
+
 #define CHECK_MATCHING_SOURCES(p1,p2,dp1,dp2)						\
 											\
-	if( srcp1 != srcp2 ) {								\
-		REPORT_MISMATCH_ERROR(dp1,dp2)						\
+	if( p1 != p2 ) {								\
+		REPORT_SOURCE_MISMATCH_ERROR(dp1,dp2)						\
+		return -1;								\
+	}
+
+#define CHECK_MATCHING_PRECISIONS(p1,p2,dp1,dp2)						\
+											\
+	if( p1 != p2 ) {								\
+		REPORT_OBJECT_MISMATCH_ERROR(dp1,dp2)						\
 		return -1;								\
 	}
 
 	if( n_srcs >= 2 ){
 		/* First make sure that the two source operands match */
 		// BUT only if not a mapping func...
-		if( VF_CODE(vfp) != FVLUTMAPB ){
+		if( IS_LUTMAP_FUNC(vfp) ){
+			CHECK_MATCHING_PRECISIONS(dst_prec,srcp2,OA_DEST(oap),OA_SRC2(oap))
+		} else {
 			CHECK_MATCHING_SOURCES(srcp1,srcp2,OA_SRC1(oap),OA_SRC2(oap))
 		}
 
@@ -590,7 +618,7 @@ ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
 		if( srcp1 == BITMAP_MACH_PREC ){
 			if( (IS_BITMAP( OA_SRC1(oap) ) && ! IS_BITMAP(OA_SRC2(oap) )) ||
 			    ( ! IS_BITMAP( OA_SRC1(oap) ) && IS_BITMAP(OA_SRC2(oap) )) ){
-				REPORT_MISMATCH_ERROR(OA_SRC1(oap),OA_SRC2(oap))
+				REPORT_SOURCE_MISMATCH_ERROR(OA_SRC1(oap),OA_SRC2(oap))
 				return -1;
 			}
 		}
@@ -658,7 +686,7 @@ next1:
 	 * Make sure it is one of the legal ones.
 	 * First we check the special cases (bitmaps, indices).
 	 */
-	if( VF_CODE(vfp) == FVLUTMAPB ){		/* */
+	if( IS_LUTMAP_FUNC(vfp) ){		/* */
 		/* use the precision from the map */
 		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC(  OBJ_PREC( OA_SRC2(oap) )  ));
 		return 0;
@@ -820,13 +848,17 @@ ADVISE(ERROR_STRING);
 	if( check_size_match(QSP_ARG  vfp, OA_SRC1(oap), OA_DEST(oap) ) < 0 )
 		return -1;
 
-	if( VF_CODE(vfp) == FVLUTMAPB ){
+	if( IS_LUTMAP_FUNC(vfp) ){
 		// second source should be a map w/ 256 entries
-		if( OBJ_N_MACH_ELTS(OA_SRC2(oap)) != 256 ){
-			sprintf(ERROR_STRING,"chksiz:  map object %s (%d) should have 256 elements!?",
-				OBJ_NAME(OA_SRC2(oap)),OBJ_N_MACH_ELTS(OA_SRC2(oap)));
-			WARN(ERROR_STRING);
-			return -1;
+		// For FVLUTMAPS, we pass the table size as a scalar arg.
+		if( VF_CODE(vfp) == FVLUTMAPB ){
+			if( OBJ_N_MACH_ELTS(OA_SRC2(oap)) != 256 ){
+				sprintf(ERROR_STRING,
+			"chksiz:  byte-indexed map object %s (%d) should have 256 elements!?",
+			OBJ_NAME(OA_SRC2(oap)),OBJ_N_MACH_ELTS(OA_SRC2(oap)));
+				WARN(ERROR_STRING);
+				return -1;
+			}
 		}
 		if( ! IS_CONTIGUOUS(OA_SRC2(oap)) ){
 			sprintf(ERROR_STRING,"chksiz:  map object %s must be contiguous!?",

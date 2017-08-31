@@ -232,4 +232,5 @@ _VEC_FUNC_SSSLCT( rvss_slct, dst = (dest_type) ( srcbit ? scalar1_val : scalar2_
 dnl	Will need this if we add complex & quat...
 dnl _VEC_FUNC_LUTMAP_B( rvlutmapb, dst = (dest_type) map[ src1 ] )
 _VEC_FUNC_LUTMAP_B( vlutmapb, dst = (dest_type) map[ src1 ] )
+_VEC_FUNC_LUTMAP_S( vlutmaps, if( src1 < map_size ) dst = (dest_type) map[ src1 ] )
 

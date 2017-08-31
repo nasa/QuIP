@@ -308,6 +308,7 @@ typedef enum {
 	FVSSUB2,		/* should be moved up, but would mess up index comments */
 
 	FVLUTMAPB,		/* byte index lutmap */
+	FVLUTMAPS,		/* short index lutmap */
 
 	N_VEC_FUNCS,		/* must be next-to-last! */
 	INVALID_VFC		/* must be last! */

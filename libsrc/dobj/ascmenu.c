@@ -19,17 +19,45 @@
 // BUG should be per-thread variable...
 static int expect_exact_count=1;
 
-/*static inline*/ void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
-{
-	if( ram_dp == dp ) return;
-	delvec(QSP_ARG  ram_dp);
-}
+#ifndef HAVE_ANY_GPU
+
+#define DECL_RAM_DATA_OBJ
+#define ram_dp	dp
+#define INSURE_OK_FOR_READING(dp)
+#define INSURE_OK_FOR_WRITING(dp)
+#define RELEASE_RAM_OBJ_FOR_READING_IF(dp)
+#define RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
+
+#else // ! HAVE_ANY_GPU
+
+#define DECL_RAM_DATA_OBJ	Data_Obj *ram_dp;
+
+#define INSURE_OK_FOR_READING(dp)					\
+									\
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);		\
+	assert( ram_dp != NULL );
+
+#define INSURE_OK_FOR_WRITING(dp)					\
+	ram_dp = insure_ram_obj_for_writing(QSP_ARG  dp);		\
+	assert(ram_dp!=NULL);
+
+#define RELEASE_RAM_OBJ_FOR_READING_IF(dp)				\
+	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+
+#define RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)				\
+	release_ram_obj_for_writing(QSP_ARG  ram_dp, dp);
 
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "continguous_"
 #define INDEX_SUFFIX "_subscripted"
 
 #define IS_SUBSCRIPT_DELIMITER(c)	( (c)=='[' || (c)=='{' )
+
+void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
+{
+	if( ram_dp == dp ) return;
+	delvec(QSP_ARG  ram_dp);
+}
 
 static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
 {
@@ -202,6 +230,7 @@ static void release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj
 	upload_platform_data(QSP_ARG  dp,ram_dp);
 	delvec(QSP_ARG  ram_dp);
 }
+#endif /* ! HAVE_ANY_GPU */
 
 /*
  * BUG do_read_obj will not work correctly for subimages
@@ -210,7 +239,8 @@ static void release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj
 
 static COMMAND_FUNC( do_read_obj )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 	const char *s;
 
@@ -227,8 +257,7 @@ static COMMAND_FUNC( do_read_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	ram_dp = insure_ram_obj_for_writing(QSP_ARG  dp);	// writing into the object
-	assert(ram_dp!=NULL);
+	INSURE_OK_FOR_WRITING(dp)
 
 	if( strcmp(s,"-") && strcmp(s,"stdin") ){
 		fp=TRY_OPEN( s, "r" );
@@ -241,12 +270,13 @@ static COMMAND_FUNC( do_read_obj )
 		read_obj(QSP_ARG  ram_dp);
 	}
 
-	release_ram_obj_for_writing(QSP_ARG  ram_dp,dp);
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
 static COMMAND_FUNC( do_pipe_obj )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	Pipe *pp;
 	char cmdbuf[LLEN];
 
@@ -260,8 +290,7 @@ static COMMAND_FUNC( do_pipe_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	assert(ram_dp!=NULL);
+	INSURE_OK_FOR_WRITING(dp)
 
 	sprintf(cmdbuf,"Pipe:  %s",pp->p_cmd);
 	read_ascii_data(QSP_ARG  ram_dp,pp->p_fp,cmdbuf,expect_exact_count);
@@ -271,12 +300,13 @@ static COMMAND_FUNC( do_pipe_obj )
 	/* BUG we should check qlevel to make sure that the pipe was popped... */
 	pp->p_fp = NULL;
 
-	release_ram_obj_for_writing(QSP_ARG  ram_dp,dp);
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
 static COMMAND_FUNC( do_set_var_from_obj )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	const char *s;
 
 	s=NAMEOF("variable");
@@ -291,17 +321,17 @@ static COMMAND_FUNC( do_set_var_from_obj )
 		return;
 	}
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	assert( ram_dp != NULL );
+	INSURE_OK_FOR_READING(dp)
 
 	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(ram_dp));
 
-	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 static COMMAND_FUNC( do_set_obj_from_var )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	const char *src_str;
 	char *dst_str;
 	dimension_t dst_size;
@@ -331,8 +361,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 		WARN(ERROR_STRING);
 	}
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	assert(ram_dp!=NULL);
+	INSURE_OK_FOR_WRITING(dp)
 
 	if( ! IS_CONTIGUOUS(ram_dp) ){
 		sprintf(ERROR_STRING,"Sorry, object %s must be contiguous for string reading",
@@ -346,12 +375,13 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	strncpy(dst_str,src_str,dst_size-1);
 	dst_str[dst_size-1] = 0;	// guarantee string termination
 
-	release_ram_obj_for_writing(QSP_ARG  ram_dp,dp);
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
 static COMMAND_FUNC( do_disp_obj )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 
 	dp=PICK_OBJ("");
@@ -361,8 +391,7 @@ static COMMAND_FUNC( do_disp_obj )
 	// but we make life easier by automatically creating
 	// a temporary object...
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	assert( ram_dp != NULL );
+	INSURE_OK_FOR_READING(dp)
 
 	fp = tell_msgfile(SINGLE_QSP_ARG);
 	if( fp == stdout ){
@@ -375,7 +404,7 @@ static COMMAND_FUNC( do_disp_obj )
 	pntvec(QSP_ARG  ram_dp,fp);
 	fflush(fp);
 
-	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 /* BUG wrvecd will not work correctly for subimages */
@@ -386,7 +415,8 @@ static COMMAND_FUNC( do_disp_obj )
 
 static COMMAND_FUNC( do_wrt_obj )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 	/* BUG what if pathname is longer than 256??? */
 	const char *filename;
@@ -418,8 +448,7 @@ static COMMAND_FUNC( do_wrt_obj )
 			return;
 		}
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	assert( ram_dp != NULL );
+	INSURE_OK_FOR_READING(dp)
 
 	pntvec(QSP_ARG  ram_dp,fp);
 	if( fp != stdout && QS_MSG_FILE(THIS_QSP)!=NULL && fp != QS_MSG_FILE(THIS_QSP) ) {
@@ -430,12 +459,13 @@ static COMMAND_FUNC( do_wrt_obj )
 		fclose(fp);
 	}
 
-	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 static COMMAND_FUNC( do_append )
 {
-	Data_Obj *dp, *ram_dp;
+	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 
 	dp=PICK_OBJ("");
@@ -448,13 +478,12 @@ static COMMAND_FUNC( do_append )
 	fp=TRYNICE( NAMEOF("output file"), "a" );
 	if( !fp ) return;
 
-	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);
-	assert( ram_dp != NULL );
+	INSURE_OK_FOR_READING(dp)
 
 	pntvec(QSP_ARG  ram_dp,fp);
 	fclose(fp);
 
-	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 static const char *print_fmt_name[N_PRINT_FORMATS];

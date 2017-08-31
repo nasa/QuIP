@@ -48,11 +48,6 @@ static inline double comp_func( Data_Obj *dp, index_t index )
 #ifdef HAVE_ANY_GPU
 	ram_dp = insure_ram_obj_for_reading(DEFAULT_QSP_ARG dp);
 	assert(ram_dp!=NULL);
-	//if( ! object_is_in_ram(DEFAULT_QSP_ARG  dp,
-	//	"use value functions on GPU object") ){
-	//	return(0.0);
-	//}
-fprintf(stderr,"comp_func:  obj = %s   ram_obj = %s\n",OBJ_NAME(dp),OBJ_NAME(ram_dp));
 #else /* ! HAVE_ANY_GPU */
 	ram_dp = dp;
 #endif /* ! HAVE_ANY_GPU */

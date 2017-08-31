@@ -147,8 +147,11 @@ define(`CPU_SLEN_CALL_NAME',`_XXX_SLEN_CALL_NAME(c,$1)')
 
 dnl	SET_VA_SCALAR_VAL_STD(vap,idx,v)
 define(`SET_VA_SCALAR_VAL_STD',`*((std_type *)($1)->va_sval[$2]) = $3')
+define(`SET_VA_SCALAR_VAL_DIM',`*((dimension_t *)(($1)->va_sval[$2])) = $3')
+
 dnl	VA_SCALAR_VAL_STD(vap,idx)
 define(`VA_SCALAR_VAL_STD',`(*((std_type *)(($1)->va_sval[$2])))')
+define(`VA_SCALAR_VAL_DIM',`(*((dimension_t *)(($1)->va_sval[$2])))')
 dnl	VA_SCALAR_VAL_STDCPX(vap,idx)
 define(`VA_SCALAR_VAL_STDCPX',`(*((std_cpx *)(($1)->va_sval[$2])))')
 dnl	VA_SCALAR_VAL_STDQUAT(vap,idx)

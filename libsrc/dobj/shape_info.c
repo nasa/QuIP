@@ -69,8 +69,6 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 {												\
 	read_type val;										\
 												\
-fprintf(stderr,"%s_set_value_from_input:  BEGIN\n",#stem);\
-fflush(stderr);\
 	if( ! HAS_FORMAT_LIST )									\
 		val = query_func(QSP_ARG  prompt );						\
 	else											\
@@ -83,7 +81,6 @@ fflush(stderr);\
 		WARN(ERROR_STRING);								\
 	}											\
 												\
-fprintf(stderr,"%s_set_value_from_input:  vp = 0x%lx\n",#stem,(long)vp);\
 	if( vp != NULL )									\
 		* ((type *)vp) = (type) val;							\
 }

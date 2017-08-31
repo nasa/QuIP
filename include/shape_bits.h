@@ -432,7 +432,7 @@ typedef int32_t prec_t;
 
 #define N_DIMENSIONS	5	/* color, x, y, t, hyper_t */
 
-typedef uint32_t dimension_t;
+typedef uint32_t dimension_t;	// If this is changed, must also change opencl/ocl_kern_call_defs.m4!
 typedef uint32_t index_t;
 typedef int32_t incr_t;
 

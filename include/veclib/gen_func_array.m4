@@ -254,6 +254,7 @@ dnl	but not immediately necessary...
 dnl
 dnl RCQALL_ARR(vlutmapb,FVLUTMAPB),
 RALL_ARR(vlutmapb,FVLUTMAPB),
+RALL_ARR(vlutmaps,FVLUTMAPS),
 
 dnl	/* Type conversions
 dnl	 *

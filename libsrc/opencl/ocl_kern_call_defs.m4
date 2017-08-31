@@ -13,9 +13,11 @@
 define(`KERNEL_FUNC_PRELUDE',`					\
 								\
 typedef unsigned char u_char;					\
+typedef unsigned short u_short;					\
 typedef unsigned long uint64_t;					\
-typedef long int64_t;						\
 typedef unsigned int uint32_t;					\
+typedef long int64_t;						\
+typedef uint32_t dimension_t;					\
 typedef int int32_t;						\
 typedef int index_type;						\
 /*typedef struct { int x; int y; int z; } dim3 ;*/		\
