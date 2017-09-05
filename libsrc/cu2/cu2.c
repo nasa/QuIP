@@ -480,8 +480,11 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	 * are not readable...  So we check that first.
 	 */
 
+	// This file doesn't seem to be present on Mac OSX!?
+	/*
 	if( check_file_access(QSP_ARG  "/dev/nvidiactl") < 0 )
 		return -1;
+		*/
 
 	cudaGetDeviceCount(&n_devs);
 
@@ -501,6 +504,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	for(i=0;i<n_devs;i++){
 		char s[32];
 
+#ifdef GENERATES_ERROR_ON_MAC
 		sprintf(s,"/dev/nvidia%d",i);
 		if( check_file_access(QSP_ARG  s) < 0 ){
 			// BUG do we need to unwind some things
@@ -511,6 +515,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 			// is also likely to be missing, trapped above...
 			return -1;
 		}
+#endif // GENERATES_ERROR_ON_MAC
 
 		init_cu2_device(QSP_ARG  i, cpp);
 	}
