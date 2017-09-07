@@ -110,9 +110,11 @@ int avi_to_dp(Data_Obj *dp,AVCodec_Hdr *hd_p)
 	if(hd_p->avch_video_stream_p->time_base.den && hd_p->avch_video_stream_p->time_base.num)
 		print_fps(1/av_q2d(hd_p->avch_video_stream_p->time_base), "tbn");
 
+#ifdef THIS_IS_DEPRECATED
 	/* This is the field rate 59.94 */
 	if(hd_p->avch_video_stream_p->codec->time_base.den && hd_p->avch_video_stream_p->codec->time_base.num)
 		print_fps(1/av_q2d(hd_p->avch_video_stream_p->codec->time_base), "tbc");
+#endif // THIS_IS_DEPRECATED
 
 
 sprintf(DEFAULT_ERROR_STRING,"duration = %ld, AV_TIME_BASE = %d, fps? = %g, time base = %g",
@@ -183,18 +185,26 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
+#ifdef NOT_YET
 /* These are called whenever we allocate a frame
  * buffer. We use this to store the global_pts in
  * a frame at the time it is allocated.
  */
+
+// The API has changed - need to fix this if we want to be able to cache
+// frame time stamps...
+
 static int our_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
+	int ret = avcodec_default_get_buffer(c, pic);
+#ifdef OLD_DEPRECATED
 	int ret = avcodec_default_get_buffer(c, pic);
 	uint64_t *pts = (uint64_t *) av_malloc(sizeof(uint64_t));
 	*pts = global_video_pkt_pts;
 	pic->opaque = pts;
 
 	return ret;
+#endif // OLD_DEPRECATED
 }
 
 static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
@@ -202,6 +212,7 @@ static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 	if(pic) av_freep(&pic->opaque);
 	avcodec_default_release_buffer(c, pic);
 }
+#endif // NOT_YET
 
 FIO_OPEN_FUNC( avi )
 {
@@ -225,8 +236,6 @@ FIO_OPEN_FUNC( avi )
 		lib_avcodec_inited=1;
 	}
 
-#if LIBAVFORMAT_VERSION_INT >=	AV_VERSION_INT(53,4,0)
-
 	/* This code uses the new API but has not been tested */
 /*
 	int avformat_open_input(
@@ -245,22 +254,11 @@ FIO_OPEN_FUNC( avi )
 		return(NULL);
 	}
 
-#else /* OLD_VERSION */
-
-	if( av_open_input_file(&HDR_P->avch_format_ctx_p,ifp->if_pathname,NULL,0,NULL) != 0 ){
-		sprintf(ERROR_STRING,"libavcodec error opening file %s",ifp->if_pathname);
-		WARN(ERROR_STRING);
-		return(NULL);
-	}
-
-
-#endif
-
-#ifdef OLD
-	if( av_find_stream_info(HDR_P->avch_format_ctx_p)<0 ){
-#else // ! OLD
+//#ifdef OLD
+//	if( av_find_stream_info(HDR_P->avch_format_ctx_p)<0 ){
+//#else // ! OLD
 	if( avformat_find_stream_info(HDR_P->avch_format_ctx_p,NULL)<0 ){
-#endif // ! OLD
+//#endif // ! OLD
 		sprintf(ERROR_STRING,"Couldn't find stream info for file %s",name);
 		WARN(ERROR_STRING);
 		return(NULL);
@@ -270,11 +268,7 @@ FIO_OPEN_FUNC( avi )
 	HDR_P->avch_video_stream_index=(-1);
 	for(i=0;i<(int)HDR_P->avch_format_ctx_p->nb_streams;i++){
 
-#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(51,9,0)
 #define EXPECTED_VIDEO_TYPE	AVMEDIA_TYPE_VIDEO
-#else
-#define EXPECTED_VIDEO_TYPE	CODEC_TYPE_VIDEO
-#endif
 
 		if(
 	HDR_P->avch_format_ctx_p->streams[i]->codec->codec_type ==
@@ -294,9 +288,11 @@ FIO_OPEN_FUNC( avi )
 	// Get a pointer to the codec context for the video stream
 	HDR_P->avch_codec_ctx_p = HDR_P->avch_video_stream_p->codec;
 
+#ifdef FOOBAR
 	/* use custom buffer functions to allow us to cache time stamps... */
 	HDR_P->avch_codec_ctx_p->get_buffer = our_get_buffer;
 	HDR_P->avch_codec_ctx_p->release_buffer = our_release_buffer;
+#endif // FOOBAR
 
 
 	// Find the decoder for the video stream
@@ -306,11 +302,7 @@ FIO_OPEN_FUNC( avi )
 		return(NULL);
 	}
 	// Open codec
-#ifdef OLD
-	if(avcodec_open(HDR_P->avch_codec_ctx_p, HDR_P->avch_codec_p)<0){
-#else // ! OLD
 	if(avcodec_open2(HDR_P->avch_codec_ctx_p, HDR_P->avch_codec_p, NULL)<0){
-#endif // ! OLD
 		WARN("couldn't open codec");
 		return(NULL);
 	}

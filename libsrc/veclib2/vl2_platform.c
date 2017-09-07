@@ -23,8 +23,8 @@
 
 // When is xxx_init_platform called?
 
-static void (*vl2_mem_upload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, struct platform_device *pdp )=NULL;
-static void (*vl2_mem_dnload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, struct platform_device *pdp ) = NULL;
+static void (*vl2_mem_upload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp )=NULL;
+static void (*vl2_mem_dnload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp ) = NULL;
 static int (*vl2_obj_alloc)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align) = cpu_obj_alloc;
 static void (*vl2_obj_free)(QSP_ARG_DECL  Data_Obj *dp) = cpu_obj_free;
 static void * (*vl2_mem_alloc)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align) = cpu_mem_alloc;

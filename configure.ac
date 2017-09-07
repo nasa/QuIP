@@ -446,8 +446,9 @@ fi
 # we had a version mismatch problem with libpng (which seems
 # to exist in /opt/X11...).
 
-AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-2.4/include"])
+# use homebrew instead of fink?
+#AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-2.4/include"])
 
 # Check for odd include directories
 if test "x${use_x11}" = xyes; then
@@ -490,12 +491,12 @@ fi
 #
 ##################################################
 
-AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
-# fink puts this stuff here...
-# We should probably not use both!?
-AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
-# We haven't ported to the newer library yet, so we prefer the old one
+#AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
+## fink puts this stuff here...
+## We should probably not use both!?
+#AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
+## We haven't ported to the newer library yet, so we prefer the old one
 
 if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
   AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
@@ -508,7 +509,7 @@ AC_CHECK_FILE([/usr/lib64],[LDFLAGS="$LDFLAGS -L/usr/lib64"])
 AC_CHECK_FILE([/usr/local/lib],[LDFLAGS="$LDFLAGS -L/usr/local/lib"])
 AC_CHECK_FILE([/usr/local/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/include"])
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
 
 # ffmpeg headers may be installed under /usr/include OR /usr/include/ffmpeg...
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
