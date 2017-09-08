@@ -1154,7 +1154,7 @@ if test "x${use_opencv}" = xyes; then
   AC_SEARCH_LIBS([cvSetZero],[opencv_core cxcore],[have_opencvcore=yes],[have_opencvcore=no])
   AC_SEARCH_LIBS([cvContourArea],[opencv_imgproc cv],[have_opencvimgproc=yes],[have_opencvimgproc=no])
   AC_SEARCH_LIBS([cvHaarDetectObjects],[opencv_objdetect],[have_opencvobjdetect=yes],[have_opencvobjdetect=no])
-  AC_SEARCH_LIBS([cvSaveImage],[opencv_highgui highgui],[have_opencvhighgui=yes],[have_opencvhighgui=no])
+  AC_SEARCH_LIBS([cvSaveImage],[opencv_highgui highgui opencv_imgcodecs],[have_opencvhighgui=yes],[have_opencvhighgui=no])
 fi
 
 #
