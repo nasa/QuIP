@@ -26,9 +26,11 @@ int force_avi_load;		/* see comment in matio.c */
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #include "libswscale/swscale.h"
+#include "libavutil/imgutils.h"
 }
 #else
 #include "libswscale/swscale.h"
+#include "libavutil/imgutils.h"
 #endif
 
 static int lib_avcodec_inited=0;	/* our flag */
@@ -219,6 +221,8 @@ FIO_OPEN_FUNC( avi )
 	Image_File *ifp;
 	int i;
 	long numBytes;
+	uint8_t *dst_array[4];
+	int line_sizes[4];
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_AVI));
 	if( ifp==NULL ) return(ifp);
@@ -265,6 +269,7 @@ FIO_OPEN_FUNC( avi )
 	}
 //dump_format(HDR_P->avch_format_ctx_p,0,name,0);
 
+#ifdef NOT_YET
 	HDR_P->avch_video_stream_index=(-1);
 	for(i=0;i<(int)HDR_P->avch_format_ctx_p->nb_streams;i++){
 
@@ -281,12 +286,17 @@ FIO_OPEN_FUNC( avi )
 			break;
 		}
 	}
+#endif // NOT_YET
+
 	if(HDR_P->avch_video_stream_index==-1){
 		WARN("no video stream");
 		return(NULL);
 	}
+
+#ifdef NOT_YET
 	// Get a pointer to the codec context for the video stream
 	HDR_P->avch_codec_ctx_p = HDR_P->avch_video_stream_p->codec;
+#endif // NOT_YET
 
 #ifdef FOOBAR
 	/* use custom buffer functions to allow us to cache time stamps... */
@@ -308,29 +318,50 @@ FIO_OPEN_FUNC( avi )
 	}
 
 	// Allocate video frame
-	HDR_P->avch_frame_p=avcodec_alloc_frame();
+//	HDR_P->avch_frame_p=avcodec_alloc_frame();
+	HDR_P->avch_frame_p=av_frame_alloc();
 	if(HDR_P->avch_frame_p==NULL){
 		WARN("couldn't allocate first frame");
 		return(NULL);
 	}
 
 	// Allocate an AVFrame structure
-	HDR_P->avch_rgb_frame_p=avcodec_alloc_frame();
+//	HDR_P->avch_rgb_frame_p=avcodec_alloc_frame();
+	HDR_P->avch_rgb_frame_p=av_frame_alloc();
 	if(HDR_P->avch_rgb_frame_p==NULL){
 		WARN("couldn't allocate another frame");
 		return(NULL);
 	}
 
 	// Determine required buffer size and allocate buffer
-	numBytes=avpicture_get_size(PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
-			HDR_P->avch_codec_ctx_p->height);
+//	numBytes=avpicture_get_size(PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
+//			HDR_P->avch_codec_ctx_p->height);
+	numBytes=av_image_get_buffer_size(AV_PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
+			HDR_P->avch_codec_ctx_p->height,1);
 	HDR_P->avch_buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
 
 	// Assign appropriate parts of buffer to image planes in HDR_P->avch_rgb_frame_p
 	// Note that HDR_P->avch_rgb_frame_p is an AVFrame, but AVFrame is a superset
 	// of AVPicture
-	avpicture_fill((AVPicture *)HDR_P->avch_rgb_frame_p, HDR_P->avch_buffer, PIX_FMT_RGB24,
-				HDR_P->avch_codec_ctx_p->width, HDR_P->avch_codec_ctx_p->height);
+
+//	avpicture_fill((AVPicture *)HDR_P->avch_rgb_frame_p, HDR_P->avch_buffer, PIX_FMT_RGB24,
+//				HDR_P->avch_codec_ctx_p->width, HDR_P->avch_codec_ctx_p->height);
+
+	dst_array[0] = (uint8_t *)HDR_P->avch_rgb_frame_p;
+	line_sizes[0] = HDR_P->avch_codec_ctx_p->width;
+	for(i=1;i<4;i++){
+		dst_array[0] = NULL;
+		line_sizes[0] = 0;
+	}
+
+	av_image_fill_arrays(	dst_array,
+				line_sizes,
+				HDR_P->avch_buffer,
+				AV_PIX_FMT_RGB24,
+				HDR_P->avch_codec_ctx_p->width,
+				HDR_P->avch_codec_ctx_p->height,
+				1		// align
+				);
 
 
 	HDR_P->avch_duration = HDR_P->avch_format_ctx_p->duration / AV_TIME_BASE;	/* seconds */
@@ -455,7 +486,7 @@ static void convert_video_frame(Image_File *ifp)
 //advise(ERROR_STRING);
 		HDR_P->avch_img_convert_ctx_p = sws_getContext(w, h,
 				HDR_P->avch_codec_ctx_p->pix_fmt,
-				w, h, /*PIX_FMT_RGB24*/ PIX_FMT_BGR24, SWS_BICUBIC,
+				w, h, /*PIX_FMT_RGB24*/ AV_PIX_FMT_BGR24, SWS_BICUBIC,
 				NULL, NULL, NULL);
 		if(HDR_P->avch_img_convert_ctx_p == NULL) {
 			NWARN("Cannot initialize the conversion context!");
@@ -511,37 +542,13 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 		// Is this a packet from the video stream?
 		if(HDR_P->avch_packet.stream_index==HDR_P->avch_video_stream_index) {
 
-			// Decode video frame
-			// at which version did avcodec_decode_video
-			// get changed to avcodec_decode_video2 ???
-			//
-			// The newer version isn't guaranteed to decode
-			// a whole frame, we need to check when a frame
-			// has been completed???  BUG???
+			// in the new API, we send a packet then read frames.
+			if( avcodec_send_packet( HDR_P->avch_codec_ctx_p,
+				&HDR_P->avch_packet)<0) {
+				NWARN("avcodec_send_packet failed!?");
+				return -1;
+			}
 
-#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(51,9,0)
-
-/*
-int avcodec_decode_video2(	AVCodecContext *avctx,
-				AVFrame *picture,
-				int *got_picture_ptr,
-				AVPacket *avpkt);
-*/
-
-	avcodec_decode_video2(	HDR_P->avch_codec_ctx_p,
-				HDR_P->avch_frame_p,
-				&HDR_P->avch_frame_finished,
-				&HDR_P->avch_packet
-				);
-
-#else
-			avcodec_decode_video(HDR_P->avch_codec_ctx_p,
-						HDR_P->avch_frame_p,
-						&HDR_P->avch_frame_finished,
-						HDR_P->avch_packet.data,
-						HDR_P->avch_packet.size);
-
-#endif
 			/* decoding time stamp (dts) should be equal to pts thanks
 			 * to ffmpeg...
 			 */

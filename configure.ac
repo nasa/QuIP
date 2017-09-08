@@ -498,9 +498,9 @@ fi
 #AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
 ## We haven't ported to the newer library yet, so we prefer the old one
 
-if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
-  AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
-fi
+#if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
+#  AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
+#fi
 
 # this is for Ubuntu...
 AC_CHECK_FILE([/usr/lib/x86_64-linux-gnu],[LDFLAGS="$LDFLAGS -L/usr/lib/x86_64-linux-gnu"])
