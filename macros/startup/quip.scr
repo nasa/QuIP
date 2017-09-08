@@ -23,7 +23,5 @@ If !var_exists(QUIPSTARTUPDIR)
 compute control n_processors 1 quit quit
 max_warnings 200
 
-echo HALLOOO!
-
 Stop_File quip.scr
 
