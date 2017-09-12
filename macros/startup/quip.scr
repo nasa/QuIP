@@ -8,12 +8,9 @@ If !var_exists(QUIP)
 If strcmp('$QUIP','quip')
   "warn 'Program invoked as quip, but QUIP = $QUIP'"
 
-variables
-  set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup
-  quit
+If !var_exists(QUIPSTARTUPDIR)
+  "variables set QUIPSTARTUPDIR /usr/local/share/$QUIP/macros/startup quit"
 
-#echo "QUIPSTARTUPDIR = $QUIPSTARTUPDIR"
-#view debug xsupp quit
 
 < $QUIPSTARTUPDIR/generic.scr
 < $QUIPSTARTUPDIR/gendata.scr
