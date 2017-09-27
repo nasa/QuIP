@@ -237,6 +237,7 @@ extern void run_subrt_immed(QSP_ARG_DECL  Subrt *srp,Vec_Expr_Node *,Data_Obj *d
 #define RUN_SUBRT_IMMED(srp,enp,dst_dp)		run_subrt_immed(QSP_ARG srp,enp,dst_dp)
 extern COMMAND_FUNC( do_dump_subrt );
 extern COMMAND_FUNC( do_opt_subrt );
+extern COMMAND_FUNC( do_fuse_kernel );
 extern COMMAND_FUNC( do_subrt_info );
 
 extern void expr_init(void);

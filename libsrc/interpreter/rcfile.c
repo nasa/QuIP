@@ -65,7 +65,7 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("read_global_startup:  no HOME in environment");
+		WARN("read_traditional_startup:  no HOME in environment");
 		return -1;
 	}
 

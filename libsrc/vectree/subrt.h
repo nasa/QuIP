@@ -91,6 +91,7 @@ ITEM_LIST_PROT(Subrt,subrt)
 extern Item_Type *subrt_itp;
 
 extern String_Buf *fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp);
 
 #endif // ! _SUBRT_H_
 

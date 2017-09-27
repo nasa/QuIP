@@ -99,10 +99,19 @@ COMMAND_FUNC( do_opt_subrt )
 	Subrt *srp;
 
 	srp=PICK_SUBRT("");
-
 	if( srp==NULL ) return;
 
 	OPTIMIZE_SUBRT(srp);
+}
+
+COMMAND_FUNC( do_fuse_kernel )
+{
+	Subrt *srp;
+
+	srp=PICK_SUBRT("");
+	if( srp==NULL ) return;
+
+	fuse_subrt(QSP_ARG  srp);
 }
 
 COMMAND_FUNC( do_tell_cost )

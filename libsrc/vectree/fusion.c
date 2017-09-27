@@ -27,15 +27,11 @@ dump_tree(QSP_ARG  enp);
 	}
 }
 
-static String_Buf *fuse_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
+String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 {
 	String_Buf *sbp;
-	Subrt *srp;
 	Vec_Expr_Node *arg_decl_enp;
 
-	assert(VN_CODE(enp)==T_SUBRT);
-	//srp = runnable_subrt(QSP_ARG  enp);
-	srp = VN_SUBRT(enp);
 	assert( ! IS_SCRIPT(srp) );
 
 	// The subrt args determine the kernel args...
@@ -49,9 +45,16 @@ static String_Buf *fuse_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 String_Buf *fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
+	Subrt *srp;
+
 	switch(VN_CODE(enp)){
 		case T_SUBRT:
-			return fuse_subrt(QSP_ARG  enp);
+			srp = VN_SUBRT(enp);
+			if( IS_SCRIPT(srp) ){
+				WARN("Sorry, can't fuse script subroutines");
+				return NULL;
+			}
+			return fuse_subrt(QSP_ARG  srp);
 			break;
 		default:
 			MISSING_CASE(enp,"fuse_kernel");
