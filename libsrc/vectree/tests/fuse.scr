@@ -6,8 +6,9 @@ void testk(float *dest, float *src1, float *src2, float kkk)
 {
 	float k2;
 
-	k2=kkk;
-	*dest = *src1 + k2 * *src2;
+#	k2=kkk;
+#	*dest = *src1 + k2 * *src2;
+	*dest = *src1 + kkk * (*src2+2);
 }
 
 end
