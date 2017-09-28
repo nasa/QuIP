@@ -29,7 +29,7 @@ typedef struct vector_parser_data {
 	int		vpd_parser_line_num;
 	String_Buf *	vpd_yy_last_line;
 	String_Buf *	vpd_yy_input_line;
-	String_Buf *	vpd_expr_string;
+	String_Buf *	vpd_expr_string;	// for reading the next word?
 	String_Buf *	vpd_yy_word_buf;
 	int		vpd_semi_seen;		// boolean flag...
 	int		vpd_end_seen;		// boolean flag?
@@ -472,14 +472,6 @@ struct query_stack {
 
 #define SET_QS_EDEPTH(qsp,d)		(qsp)->qs_edepth=d
 #define QS_EDEPTH(qsp)			(qsp)->qs_edepth
-//#define QS_ESTRING(qsp)			((qsp)->qs_estr)[QS_WHICH_ESTR(qsp)]
-//#define SET_QS_ESTR_ARRAY(qsp,str_p)	(qsp)->qs_estr = str_p
-//#define QS_ESTRING(qsp)			(qsp)->qs_expr_string
-//#define SET_QS_ESTRING(qsp,s)		(qsp)->qs_expr_string = s
-//#define _QS_CURR_STRING(qsp)		(qsp)->_qs_curr_string
-//#define SET_QS_CURR_STRING(qsp,s)	(qsp)->_qs_curr_string=s
-//#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
-//#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
 
 #define QS_WORD_SCAN_FLAGS(qsp)		(qsp)->qs_word_scan_flags
 #define QS_START_QUOTE(qsp)		(qsp)->qs_start_quote

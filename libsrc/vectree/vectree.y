@@ -462,7 +462,8 @@ objref		: OBJNAME
 				/*usp=*/new_undef(QSP_ARG  $1);
 			}
 			$$=NODE0(T_UNDEF);
-			SET_VN_STRING($$, savestr($1));
+			//SET_VN_STRING($$, savestr($1));
+			SET_VN_STRING($$, $1);
 			CURDLE($$)
 			}
 		| REAL_PART '(' objref ')' {
@@ -998,7 +999,8 @@ statline	: simple_stat ';'
 			$$ = NODE0(T_LABEL);
 			idp = new_id(QSP_ARG  $1);
 			SET_ID_TYPE(idp, ID_LABEL);
-			SET_VN_STRING($$, savestr(ID_NAME(idp)));
+			//SET_VN_STRING($$, savestr(ID_NAME(idp)));
+			SET_VN_STRING($$, $1);
 			}
 		| LABELNAME ':'
 			{
@@ -1075,7 +1077,8 @@ new_func_decl	: NEWNAME '(' arg_decl_list ')'
 			if( $3 != NULL )
 				EVAL_DECL_TREE($3);
 			$$ = NODE1(T_PROTO,$3);
-			SET_VN_STRING($$, savestr($1));
+			//SET_VN_STRING($$, savestr($1));
+			SET_VN_STRING($$, $1);
 			}
 		;
 
@@ -1312,6 +1315,7 @@ str_ptr_arg	: str_ptr
 			sprintf(YY_ERR_STR,"undefined string pointer \"%s\"",$1);
 			yyerror(THIS_QSP,  YY_ERR_STR);
 			$$=NULL;
+			rls_str($1);
 			}
 		;
 
@@ -1382,15 +1386,15 @@ print_stat	: PRINT '(' mixed_list ')' { $$=NODE1(T_EXP_PRINT,$3); }
 
 decl_identifier	: NEWNAME
 		| OBJNAME
-			{ $$ = OBJ_NAME($1); }
+			{ $$ = savestr(OBJ_NAME($1)); }
 		| PTRNAME
-			{ $$ = ID_NAME($1); }
+			{ $$ = savestr(ID_NAME($1)); }
 		| STRNAME
-			{ $$ = ID_NAME($1); }
+			{ $$ = savestr(ID_NAME($1)); }
 		|	precision
 			{
 			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
-			$$="<illegal_keyword_use>";
+			$$=savestr("<illegal_keyword_use>");
 			}
 		;
 
@@ -1402,7 +1406,8 @@ decl_item	: decl_identifier {
 		/*
 		| decl_identifier '(' arg_decl_list ')' {
 			$$ = NODE1(T_PROTO,$3);
-			SET_VN_STRING($$, savestr($1));
+			//SET_VN_STRING($$, savestr($1));
+			SET_VN_STRING($$, $1);
 			}
 		*/
 		| new_func_decl
@@ -1417,79 +1422,95 @@ decl_item	: decl_identifier {
 			{
 			/* function pointer */
 			$$ = NODE1(T_FUNCPTR_DECL,$6);
-			SET_VN_DECL_NAME($$,savestr($3));
+			//SET_VN_DECL_NAME($$,savestr($3));
+			SET_VN_DECL_NAME($$,$3);
 			}
 		| decl_identifier '{' expression '}' {
 			$$ = NODE1(T_CSCAL_DECL,$3);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' {
 			$$ = NODE1(T_VEC_DECL,$3);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '{' expression '}' {
 			$$ = NODE2(T_CVEC_DECL,$3,$6);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' {
 			// The type is stored at the parent node...
 			// Since we "compile" the nodes depth first,
 			// how does it get here?
 			$$=NODE2(T_IMG_DECL,$3,$6);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '{' expression '}' {
 			$$=NODE3(T_CIMG_DECL,$3,$6,$9);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '[' expression ']' {
 			$$=NODE3(T_SEQ_DECL,$3,$6,$9);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '[' expression ']' '{' expression '}' {
 			Vec_Expr_Node *enp;
 			enp = NODE2(T_EXPR_LIST,$9,$12);
 			$$=NODE3(T_CSEQ_DECL,$3,$6,enp);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '{' '}' {
 			$$ = NODE1(T_CSCAL_DECL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']'
 			{
 			$$ = NODE1(T_VEC_DECL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '{' '}'
 			{
 			$$ = NODE2(T_CVEC_DECL,NULL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']'
 			{
 			$$ = NODE2(T_IMG_DECL,NULL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']' '{' '}'
 			{
 			$$ = NODE3(T_CIMG_DECL,NULL,NULL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']'
 			{
 			$$ = NODE3(T_SEQ_DECL,NULL,NULL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']' '{' '}'
 			{
 			$$ = NODE3(T_CSEQ_DECL,NULL,NULL,NULL);
-			SET_VN_DECL_NAME($$,savestr($1));
+			//SET_VN_DECL_NAME($$,savestr($1));
+			SET_VN_DECL_NAME($$,$1);
 			}
 		| '*' decl_identifier
 			{
 			$$=NODE0(T_PTR_DECL);
-			SET_VN_DECL_NAME($$, savestr($2));
+			//SET_VN_DECL_NAME($$, savestr($2));
+			SET_VN_DECL_NAME($$, $2);
 			}
 		| DATA_FUNC
 			{
@@ -2127,11 +2148,9 @@ static int whkeyword(Keyword *table,const char *str)
 
 static const char *match_quote(QSP_ARG_DECL  const char **spp)
 {
-	//char *s;
 	String_Buf *sbp;
 	int c;
 
-	//s=VEXP_STR;
 	sbp=VEXP_STR;
 	copy_string(sbp,"");
 
@@ -2140,15 +2159,12 @@ static const char *match_quote(QSP_ARG_DECL  const char **spp)
 		cat_string_n(sbp,*spp,1);
 		(*spp)++; /* YY_CP++; */
 	}
-	//*s=0;
 	if( c != '"' ) {
 		NWARN("missing quote");
 		sprintf(ERROR_STRING,"string \"%s\" stored",CURR_STRING);
 		advise(ERROR_STRING);
 	} else (*spp)++;			/* skip over closing quote */
 
-	//s=(char *)save_parse_string(VEXP_STR);
-	//SET_CURR_STRING(s);
 	SET_CURR_STRING( sb_buffer(sbp) );
 	return(CURR_STRING);
 } // match_quote
@@ -2557,18 +2573,16 @@ static const char *read_word(QSP_ARG_DECL  const char **spp)
 	String_Buf *sbp;
 	int c;
 
-	//s=VEXP_STR;
 	sbp = VEXP_STR;
 	copy_string(sbp,"");	// clear it
 				// does anyone expect this value to persist???  BUG?
 
 	while( islegal(c=(**spp)) || isdigit(c) ){
-		//*s++ = (char) c;
 		cat_string_n(sbp,*spp,1);
 		(*spp)++; /* YY_CP++; */
 	}
-	//*s=0;
 
+	// BUG?  do we need to allocate a new buffer?
 	//return(save_parse_string(VEXP_STR));
 	return(sb_buffer(VEXP_STR));
 }
@@ -2700,7 +2714,8 @@ WARN(ERROR_STRING);
 		}
 
 	} else {
-		yylvp->e_string=CURR_STRING;
+		// BUG?  where might we free this string???
+		yylvp->e_string=savestr(CURR_STRING);
 		return(NEWNAME);
 	}
 	/* NOTREACHED */
