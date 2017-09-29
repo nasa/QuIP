@@ -3,7 +3,6 @@ aclocal.m4
 autom4te.cache
 config.h.in*
 configure
-.deps
 Makefile
 config.h
 config.log
