@@ -474,7 +474,9 @@ static COMMAND_FUNC( do_new_cascade )
 
 #define false 0
 #define true 1
-//#define bool int
+
+// When do we need this definition?
+#define bool int
 
 static CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img, CvMemStorage* storage, CvHaarClassifierCascade* cascade, int frame_number)
 {
