@@ -219,10 +219,7 @@ static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 FIO_OPEN_FUNC( avi )
 {
 	Image_File *ifp;
-	int i;
 	long numBytes;
-	uint8_t *dst_array[4];
-	int line_sizes[4];
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_AVI));
 	if( ifp==NULL ) return(ifp);
@@ -318,34 +315,49 @@ FIO_OPEN_FUNC( avi )
 	}
 
 	// Allocate video frame
-//	HDR_P->avch_frame_p=avcodec_alloc_frame();
+	// Not sure what is the correct value for this version switch, but the newer version
+	// on mac (installed by brew) is 57, while on CentOS 6 we have 53...
+#if LIBAVCODEC_VERSION_MAJOR > 53
 	HDR_P->avch_frame_p=av_frame_alloc();
+#else
+	HDR_P->avch_frame_p=avcodec_alloc_frame();
+#endif
+
 	if(HDR_P->avch_frame_p==NULL){
 		WARN("couldn't allocate first frame");
 		return(NULL);
 	}
 
 	// Allocate an AVFrame structure
-//	HDR_P->avch_rgb_frame_p=avcodec_alloc_frame();
+#if LIBAVCODEC_VERSION_MAJOR > 53
 	HDR_P->avch_rgb_frame_p=av_frame_alloc();
+#else
+	HDR_P->avch_rgb_frame_p=avcodec_alloc_frame();
+#endif
 	if(HDR_P->avch_rgb_frame_p==NULL){
 		WARN("couldn't allocate another frame");
 		return(NULL);
 	}
 
 	// Determine required buffer size and allocate buffer
-//	numBytes=avpicture_get_size(PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
-//			HDR_P->avch_codec_ctx_p->height);
+#if LIBAVCODEC_VERSION_MAJOR > 53
 	numBytes=av_image_get_buffer_size(AV_PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
 			HDR_P->avch_codec_ctx_p->height,1);
+#else
+	numBytes=avpicture_get_size(PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
+			HDR_P->avch_codec_ctx_p->height);
+#endif
 	HDR_P->avch_buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
 
 	// Assign appropriate parts of buffer to image planes in HDR_P->avch_rgb_frame_p
 	// Note that HDR_P->avch_rgb_frame_p is an AVFrame, but AVFrame is a superset
 	// of AVPicture
 
-//	avpicture_fill((AVPicture *)HDR_P->avch_rgb_frame_p, HDR_P->avch_buffer, PIX_FMT_RGB24,
-//				HDR_P->avch_codec_ctx_p->width, HDR_P->avch_codec_ctx_p->height);
+#if LIBAVCODEC_VERSION_MAJOR > 53
+	{
+	uint8_t *dst_array[4];
+	int line_sizes[4];
+	int i;
 
 	dst_array[0] = (uint8_t *)HDR_P->avch_rgb_frame_p;
 	line_sizes[0] = HDR_P->avch_codec_ctx_p->width;
@@ -362,6 +374,11 @@ FIO_OPEN_FUNC( avi )
 				HDR_P->avch_codec_ctx_p->height,
 				1		// align
 				);
+	}
+#else
+	avpicture_fill((AVPicture *)HDR_P->avch_rgb_frame_p, HDR_P->avch_buffer, PIX_FMT_RGB24,
+				HDR_P->avch_codec_ctx_p->width, HDR_P->avch_codec_ctx_p->height);
+#endif
 
 
 	HDR_P->avch_duration = HDR_P->avch_format_ctx_p->duration / AV_TIME_BASE;	/* seconds */
@@ -484,9 +501,14 @@ static void convert_video_frame(Image_File *ifp)
 //HDR_P->avch_codec_ctx_p->pix_fmt,
 //HDR_P->avch_codec_ctx_p->pix_fmt );
 //advise(ERROR_STRING);
+#if LIBAVCODEC_VERSION_MAJOR > 53
+#define MY_PIX_FMT	AV_PIX_FMT_BGR24
+#else
+#define MY_PIX_FMT	PIX_FMT_RGB24
+#endif
 		HDR_P->avch_img_convert_ctx_p = sws_getContext(w, h,
 				HDR_P->avch_codec_ctx_p->pix_fmt,
-				w, h, /*PIX_FMT_RGB24*/ AV_PIX_FMT_BGR24, SWS_BICUBIC,
+				w, h, MY_PIX_FMT, SWS_BICUBIC,
 				NULL, NULL, NULL);
 		if(HDR_P->avch_img_convert_ctx_p == NULL) {
 			NWARN("Cannot initialize the conversion context!");
@@ -542,12 +564,33 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 		// Is this a packet from the video stream?
 		if(HDR_P->avch_packet.stream_index==HDR_P->avch_video_stream_index) {
 
+#if LIBAVCODEC_VERSION_MAJOR > 53
 			// in the new API, we send a packet then read frames.
 			if( avcodec_send_packet( HDR_P->avch_codec_ctx_p,
 				&HDR_P->avch_packet)<0) {
 				NWARN("avcodec_send_packet failed!?");
 				return -1;
 			}
+#else
+
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(51,9,0)
+
+	avcodec_decode_video2(	HDR_P->avch_codec_ctx_p,
+				HDR_P->avch_frame_p,
+				&HDR_P->avch_frame_finished,
+				&HDR_P->avch_packet
+				);
+
+#else
+			avcodec_decode_video(HDR_P->avch_codec_ctx_p,
+						HDR_P->avch_frame_p,
+						&HDR_P->avch_frame_finished,
+						HDR_P->avch_packet.data,
+						HDR_P->avch_packet.size);
+
+#endif
+
+#endif
 
 			/* decoding time stamp (dts) should be equal to pts thanks
 			 * to ffmpeg...
