@@ -482,7 +482,7 @@ static const char * advance_frag_match( Frag_Match_Info * fmi_p, int direction )
 
 static const char * current_frag_match( Frag_Match_Info * fmi_p )
 {
-	Item *ip;
+	const Item *ip;
 	Container *cnt_p;
 
 	cnt_p = CTX_CONTAINER(FMI_CTX(fmi_p));

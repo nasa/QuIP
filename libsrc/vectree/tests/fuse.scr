@@ -1,19 +1,28 @@
 
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  quit
+
 expressions
   read -
 
 void testk(float *dest, float *src1, float *src2, float kkk)
 {
 	float k2;
+	int ix;
 
-#	k2=kkk;
-#	*dest = *src1 + k2 * *src2;
-	*dest = *src1 + kkk * (*src2+2);
+	k2=atan2(kkk,1);
+	ix = round(kkk) << 2;
+#	*dest = k2 + *src1 + kkk * (*src2+2);
+
+	*dest = *src1 > 5 ? *src2 : 66 ;
 }
 
 end
 
-  #dump testk
+  dump testk
   fuse testk
-  Pause
+  quit
+exit
+
 

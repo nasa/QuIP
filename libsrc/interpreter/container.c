@@ -162,7 +162,7 @@ static void search_list_for_fragment(List *lp, Frag_Match_Info *fmi_p, const cha
 	fmi_p->fmi_u.li.last_np = NULL;
 
 	while( np != NULL ){
-		Item *ip;
+		const Item *ip;
 		int compVal;
 
 		ip = NODE_DATA(np);
@@ -571,17 +571,17 @@ Item *current_frag_item( Frag_Match_Info *fmi_p )
 	return (*(cnt_p->cnt_typ_p->frag_item))(fmi_p);
 }
 
-static Item *list_current_frag_match_item(Frag_Match_Info *fmi_p)
+static const Item *list_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
 	return fmi_p->fmi_u.li.curr_np->n_data;
 }
 
-static Item *rb_tree_current_frag_match_item(Frag_Match_Info *fmi_p)
+static const Item *rb_tree_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
 	return fmi_p->fmi_u.rbti.curr_n_p->data;
 }
 
-static Item *hash_tbl_current_frag_match_item(Frag_Match_Info *fmi_p)
+static const Item *hash_tbl_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
 	assert( "hash_tbl_current_frag_match_item should never be called" == NULL );
 	return NULL;
@@ -610,7 +610,7 @@ static void hash_tbl_reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 
 static const char *list_advance_frag_match( Frag_Match_Info * fmi_p, int direction )
 {
-	Item *ip;
+	const Item *ip;
 
 	assert( fmi_p != NULL );
 

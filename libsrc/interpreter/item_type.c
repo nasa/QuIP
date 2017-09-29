@@ -364,7 +364,7 @@ int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip )
 
 static int insure_item_name_available(QSP_ARG_DECL  Item_Type *itp, const char *name)
 {
-	Item *ip;
+	const Item *ip;
 
 	/* We will allow name conflicts if they are not in the same context */
 

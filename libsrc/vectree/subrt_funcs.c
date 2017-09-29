@@ -44,6 +44,12 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	}
 	SET_SR_FLAGS(srp, 0);
 	SET_SR_CALL_VN(srp, NULL);
+
+#ifdef HAVE_ANY_GPU
+	SET_SR_GPU_INFO_PTR(srp,NULL);
+	SET_SR_GPU_TYPE(srp,GPU_NONE);
+#endif // HAVE_ANY_GPU
+
 	return(srp);
 }
 
@@ -55,8 +61,9 @@ COMMAND_FUNC( do_run_subrt )
 
 	if( srp==NULL ) return;
 
-	SET_SR_ARG_VALS(srp,NULL);
+	// What do we do if there is a fused kernel for this subrt???
 
+	SET_SR_ARG_VALS(srp,NULL);
 	RUN_SUBRT_IMMED(srp,NULL,NULL);
 }
 
