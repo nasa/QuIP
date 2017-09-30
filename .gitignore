@@ -23,4 +23,5 @@ output
 *.a
 errors
 a.out
+.deps
 
