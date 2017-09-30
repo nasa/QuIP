@@ -6,3 +6,5 @@ vectree.c
 Makefile
 Makefile.in
 t.scr
+.deps
+
