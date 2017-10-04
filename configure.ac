@@ -811,20 +811,24 @@ EOF
   # but rpath may be a Mac-ism, and not work on linux?
   # -rpath is not recognized on linux, try -R...
 
+    # On a new CentOS installation, can't execute the program in /tmp!?
+    #tmp_dir = /tmp
+    tmp_dir=.		# BUG - build_dir???
+
     if test "x${host_vendor}" = xapple; then
-      if $CC -o /tmp/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
+      if $CC -o $tmp_dir/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
       then
-        comp_cap=`/tmp/gpu_test`
-        #rm -f /tmp/gpu_test
+        comp_cap=`$tmp_dir/gpu_test`
+        rm -f $tmp_dir/gpu_test
       else
         comp_cap=0.0
       fi
     else
       # Not apple
-      if $CC $CPPFLAGS $LDFLAGS -o /tmp/gpu_test gpu_check.c -lcudart # 2> /dev/null
+      if $CC $CPPFLAGS $LDFLAGS -o $tmp_dir/gpu_test gpu_check.c -lcudart # 2> /dev/null
       then
-        comp_cap=`/tmp/gpu_test`
-        #rm -f /tmp/gpu_test
+        comp_cap=`$tmp_dir/gpu_test`
+        rm -f $tmp_dir/gpu_test
       else
         comp_cap=0.0
       fi
@@ -871,6 +875,13 @@ EOF
     if test "x${comp_cap}" = x3.0; then
       AC_DEFINE([CUDA_COMP_CAP],30,[CUDA Compute Capability 3.0])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_30'])
+      arch_set=yes
+      have_cuda_device=yes
+    fi
+    # BUG - fill in the missing cases for cards we don't own!
+    if test "x${comp_cap}" = x6.1; then
+      AC_DEFINE([CUDA_COMP_CAP],61,[CUDA Compute Capability 6.1])
+      AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_61'])
       arch_set=yes
       have_cuda_device=yes
     fi
