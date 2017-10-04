@@ -1,0 +1,28 @@
+
+
+#platforms
+#  select $DEFAULT_PLATFORM $DEFAULT_GPU
+#  quit
+
+expressions
+  read -
+
+void testk()
+{
+	float k2;
+	short ix;
+
+	ix = round(1.3) << 2;
+	print("round(1.3)<<2 = ",ix);
+}
+
+end
+
+  dump testk
+  advise running...
+  run testk
+  Pause
+  quit
+exit
+
+

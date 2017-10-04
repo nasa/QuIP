@@ -9,7 +9,8 @@ expressions
 void testk(float *dest, float *src1, float *src2, float kkk)
 {
 	float k2;
-	int ix;
+#	int ix;	# genreates int32?
+	short ix;
 
 	k2=atan2(kkk,1);
 	ix = round(kkk) << 2;

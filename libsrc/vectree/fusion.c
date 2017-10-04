@@ -267,6 +267,7 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			break;
 		case T_DECL_STAT:
 			emit_indentation(QSP_ARG  sbp);
+			// problem with int32?
 			cat_string(sbp,PREC_NAME(VN_DECL_PREC(enp)));
 			cat_string(sbp," ");
 			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
@@ -335,16 +336,16 @@ static void emit_kern_body(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
 	cat_string(sbp,"}\n");
 }
 
-static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
+static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Subrt *srp)
 {
 	Vec_Expr_Node *arg_decl_enp;
 
 	// Make up a name for the kernel
 
 	// BUG need to take out the platform-dependent bits...
-	cat_string(sbp,"__kernel void ocl_fast_");
-
-	cat_string(sbp,SR_NAME(srp));
+	cat_string(sbp,"__kernel ");	// BUG platform-dependent
+	cat_string(sbp,"void ");
+	cat_string(sbp,kname);
 	cat_string(sbp,"(");
 
 	arg_decl_enp = SR_ARG_DECLS(srp);
@@ -353,13 +354,14 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
 	cat_string(sbp,")\n");
 }
 
-static void make_platform_kernel(QSP_ARG_DECL  String_Buf *sbp)
+static void make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
 {
 	void *kp;
 
 	assert( curr_pdp != NULL );
 advise("calling platform-specific kernel creation function...");
-	kp = (*(PF_KRNL_FN( PFDEV_PLATFORM(curr_pdp) ) ));
+	kp = (*(PF_KRNL_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+		(QSP_ARG  src, name, curr_pdp );
 	if( kp == NULL ){ 
 		NERROR1("kernel creation failure!?");
 	}
@@ -367,24 +369,36 @@ advise("calling platform-specific kernel creation function...");
 	// where to store?
 }
 
+static void make_kernel_name(String_Buf *sbp, Subrt *srp, const char *speed)
+{
+	cat_string(sbp,PF_PREFIX_STR(PFDEV_PLATFORM(curr_pdp)));
+	cat_string(sbp,"_");
+	cat_string(sbp,speed);
+	cat_string(sbp,"_");
+	cat_string(sbp,SR_NAME(srp));
+}
+
 // Should we assume the current platform?
 
-String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp)
+void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 {
 	String_Buf *sbp;
+	String_Buf *kname;
 
 	assert( ! IS_SCRIPT(srp) );
 
 	if( curr_pdp == NULL ){
 		WARN("fuse_subrt:  no platform selected!?");
-		return NULL;
+		return;
 	}
 
 	// The subrt args determine the kernel args...
 	sbp = new_stringbuf();
 	assert(sbp!=NULL);
 
-	emit_kern_decl(QSP_ARG  sbp, srp );
+	kname = new_stringbuf();
+	make_kernel_name(kname, srp,"fast");
+	emit_kern_decl(QSP_ARG  sbp, sb_buffer(kname), srp );
 	indices_inited=0;
 	emit_kern_body(QSP_ARG  sbp, srp );
 	rls_global_var_list();
@@ -392,31 +406,28 @@ String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
 
 	// BUG OpenCL specific code!?!?
-	make_platform_kernel(QSP_ARG  sbp);
+	make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
 
-	return sbp;
+	// BUG release stringbufs here!
 }
 
-String_Buf *fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Subrt *srp;
-	String_Buf *sbp;
 
 	switch(VN_CODE(enp)){
 		case T_SUBRT:
 			srp = VN_SUBRT(enp);
 			if( IS_SCRIPT(srp) ){
 				WARN("Sorry, can't fuse script subroutines");
-				return NULL;
+			} else {
+				fuse_subrt(QSP_ARG  srp);
 			}
-			sbp = fuse_subrt(QSP_ARG  srp);
 			break;
 		default:
 			MISSING_CASE(enp,"fuse_kernel");
-			return NULL;
 			break;
 	}
-	return sbp;
 }
 
 

@@ -3,24 +3,14 @@
 
 #include "item_type.h"
 #include "vec_expr_node.h"
-
-#ifdef HAVE_ANY_GPU
+#include "platform.h"
 
 #ifdef HAVE_OPENCL
-//typedef struct opencl_kernel_info {
-//	cl_kernel	kernel[MAX_OPENCL_DEVICES];
-//} OpenCL_Kernel_Info;
 
 struct opencl_kernel_info;
 typedef struct opencl_kernel_info OpenCL_Kernel_Info;
 
 #endif // HAVE_OPENCL
-
-typedef enum {
-	GPU_NONE,
-	GPU_OPENCL,
-	GPU_CUDA
-} GPU_Platform_Type;
 
 typedef union {
 #ifdef HAVE_OPENCL
@@ -29,12 +19,10 @@ typedef union {
 	void *any_kernel_info_p;
 } Kernel_Info_Ptr;
 
-typedef struct gpu_kernel_info {
-	GPU_Platform_Type type;
+typedef struct kernel_info {
+	platform_type type;
 	Kernel_Info_Ptr info_ptr;
-} GPU_Kernel_Info;
-
-#endif // HAVE_ANY_GPU
+} Kernel_Info;
 
 struct subrt {
 	Item		sr_item;
@@ -55,10 +43,8 @@ struct subrt {
 	int		sr_flags;
 	Vec_Expr_Node *	sr_call_enp;
 
-#ifdef HAVE_ANY_GPU
 	// stuff for kernel fusion
-	GPU_Kernel_Info	sr_gpu_info;
-#endif // HAVE_ANY_GPU
+	Kernel_Info *	sr_kernel_info_p[N_PLATFORM_TYPES];
 };
 
 /* Subrt */
@@ -97,12 +83,9 @@ struct subrt {
 #define SET_SR_PREC_PTR(srp,p)		(srp)->sr_prec_p = p
 
 /*#define SET_SR_CALL_ENP(srp,enp)	[srp setCall_enp : enp] */
-#ifdef HAVE_ANY_GPU
-#define SR_GPU_TYPE(srp)		(srp)->sr_gpu_info.type
-#define SET_SR_GPU_TYPE(srp,t)		(srp)->sr_gpu_info.type = t
-#define SR_GPU_INFO_PTR(srp)		(srp)->sr_gpu_info.info_ptr._kernel_info_p
-#define SET_SR_GPU_INFO_PTR(srp,p)	(srp)->sr_gpu_info.info_ptr.any_kernel_info_p = p
-#endif // HAVE_ANY_GPU
+
+#define SR_KERNEL_INFO_PTR(srp,idx)	(srp)->sr_kernel_info_p[idx]
+#define SET_SR_KERNEL_INFO_PTR(srp,idx,p)	(srp)->sr_kernel_info_p[idx] = p
 
 	
 
@@ -134,8 +117,8 @@ ITEM_LIST_PROT(Subrt,subrt)
 
 extern Item_Type *subrt_itp;
 
-extern String_Buf *fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
-extern String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp);
+extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
 
 #endif // ! _SUBRT_H_
 

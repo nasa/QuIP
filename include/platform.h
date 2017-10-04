@@ -53,6 +53,7 @@ typedef struct dispatch_function {
 
 typedef struct compute_platform {
 	Item		cp_item;
+	const char *	cp_prefix_str;
 	platform_type	cp_type;
 	Item_Context *	cp_icp;	// context for devices
 
@@ -119,6 +120,9 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define PICK_PLATFORM(pmpt)		pick_platform(QSP_ARG  pmpt)
 
 #define PLATFORM_NAME(cpp)		(cpp)->cp_item.item_name
+
+#define PF_PREFIX_STR(cpp)		(cpp)->cp_prefix_str
+#define SET_PF_PREFIX_STR(cpp,s)	(cpp)->cp_prefix_str = s
 
 #define PF_CONTEXT(cpp)			(cpp)->cp_icp
 

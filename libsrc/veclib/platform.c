@@ -51,9 +51,11 @@ static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform
 
 	switch(t){
 		case PLATFORM_CPU:
+			SET_PF_PREFIX_STR(cpp,"cpu");
 			break;
 #ifdef HAVE_OPENCL
 		case PLATFORM_OPENCL:
+			SET_PF_PREFIX_STR(cpp,"ocl");
 			// allocate the memory structures
 			PF_OPD(cpp) = getbuf(sizeof(*PF_OPD(cpp)));
 			break;
@@ -61,6 +63,7 @@ static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform
 
 #ifdef HAVE_CUDA
 		case PLATFORM_CUDA:
+			SET_PF_PREFIX_STR(cpp,"cu2");
 			break;
 #endif // HAVE_CUDA
 

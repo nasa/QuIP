@@ -27,6 +27,7 @@ void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Expr_Node *args,Vec_Expr_Node *body)
 {
 	Subrt *srp;
+	int i;
 
 	srp=new_subrt(QSP_ARG  name);
 	if( srp==NULL ) return(NULL);
@@ -45,10 +46,8 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	SET_SR_FLAGS(srp, 0);
 	SET_SR_CALL_VN(srp, NULL);
 
-#ifdef HAVE_ANY_GPU
-	SET_SR_GPU_INFO_PTR(srp,NULL);
-	SET_SR_GPU_TYPE(srp,GPU_NONE);
-#endif // HAVE_ANY_GPU
+	for(i=0;i<N_PLATFORM_TYPES;i++)
+		SET_SR_KERNEL_INFO_PTR(srp,i,NULL);
 
 	return(srp);
 }
