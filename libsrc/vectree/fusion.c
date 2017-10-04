@@ -358,6 +358,7 @@ static void make_platform_kernel(QSP_ARG_DECL  String_Buf *sbp)
 	void *kp;
 
 	assert( curr_pdp != NULL );
+advise("calling platform-specific kernel creation function...");
 	kp = (*(PF_KRNL_FN( PFDEV_PLATFORM(curr_pdp) ) ));
 	if( kp == NULL ){ 
 		NERROR1("kernel creation failure!?");
