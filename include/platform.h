@@ -55,10 +55,6 @@ typedef struct compute_platform {
 	Item		cp_item;
 	platform_type	cp_type;
 	Item_Context *	cp_icp;	// context for devices
-//	Dispatch_Function *	cp_dispatch_tbl;
-//#define PLATFORM_DISPATCH_TBL(cpp)	(cpp)->cp_dispatch_tbl
-//#define PLATFORM_DISPATCH_FUNC(cpp,i)	(cpp)->cp_dispatch_tbl[i].df_func
-//#define SET_PLATFORM_DISPATCH_TBL(cpp,v)	(cpp)->cp_dispatch_tbl = v
 
 	// These are only relevant for GPUs...
 
@@ -68,12 +64,6 @@ typedef struct compute_platform {
 	// dnload:  device-to-host
 	void (*cp_mem_dnload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp );
 
-	/*
-	void (*cp_obj_upload_func)(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
-	void (*cp_obj_dnload_func)(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
-	*/
-
-	/*int (*cp_dispatch_func)(QSP_ARG_DECL  struct dispatch_function *dfp, struct vec_obj_args *oap);*/
 	void * (*cp_mem_alloc_func)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align);
 	int (*cp_obj_alloc_func)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align);
 	void (*cp_mem_free_func)(QSP_ARG_DECL  void *ptr);
@@ -86,23 +76,16 @@ typedef struct compute_platform {
 	void (*cp_devinfo_func)(QSP_ARG_DECL  struct platform_device *pdp);
 	void (*cp_info_func)(QSP_ARG_DECL  struct compute_platform *pdp);
 
-#ifdef FOOBAR
-// BUG integrate with m4 macros???
-
-#define FFT_FUNC_ARG_DECLS					\
-	VFCODE_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp
-
-	void (*cp_fft2d_func)( FFT_FUNC_ARG_DECLS );
-	void (*cp_ift2d_func)( FFT_FUNC_ARG_DECLS );
-	void (*cp_fftrows_func)( FFT_FUNC_ARG_DECLS );
-	void (*cp_iftrows_func)( FFT_FUNC_ARG_DECLS );
-#endif // FOOBAR
-
 	struct vec_func_array *	cp_vfa_tbl;
+
+	// most useful for GPUs, but could compile kernels for CPU also???
+	void * (*cp_make_kernel_func)(QSP_ARG_DECL  const char *src, const char *name, struct platform_device *pdp);
+
+#ifdef HAVE_ANY_GPU
 
 	// This doesn't really need to be a union, as there is no
 	// cuda platform-specific data?
-#ifdef HAVE_ANY_GPU
+
 	union {
 
 #ifdef HAVE_OPENCL
@@ -154,6 +137,7 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define PF_REGBUF_FN(cpp)		(cpp)->cp_regbuf_func
 #define PF_DEVINFO_FN(cpp)		(cpp)->cp_devinfo_func
 #define PF_INFO_FN(cpp)			(cpp)->cp_info_func
+#define PF_KRNL_FN(cpp)			(cpp)->cp_make_kernel_func
 
 #define PF_FFT2D_FN(cpp)		(cpp)->cp_fft2d_func
 #define PF_IFT2D_FN(cpp)		(cpp)->cp_ift2d_func
@@ -178,11 +162,14 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_REGBUF_FN(cpp,v)		(cpp)->cp_regbuf_func = v
 #define SET_PF_DEVINFO_FN(cpp,v)	(cpp)->cp_devinfo_func = v
 #define SET_PF_INFO_FN(cpp,v)		(cpp)->cp_info_func = v
+#define SET_PF_KRNL_FN(cpp,v)		(cpp)->cp_make_kernel_func = v
 
+#ifdef FOOBAR
 #define SET_PF_FFT2D_FN(cpp,v)		(cpp)->cp_fft2d_func = v
 #define SET_PF_IFT2D_FN(cpp,v)		(cpp)->cp_ift2d_func = v
 #define SET_PF_FFTROWS_FN(cpp,v)	(cpp)->cp_fftrows_func = v
 #define SET_PF_IFTROWS_FN(cpp,v)	(cpp)->cp_iftrows_func = v
+#endif // FOOBAR
 
 #define SET_PLATFORM_FUNCTIONS(cpp,stem)				\
 									\
@@ -198,18 +185,8 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 	SET_PF_MAPBUF_FN(	cpp,	stem##_map_buf		);	\
 	SET_PF_UNMAPBUF_FN(	cpp,	stem##_unmap_buf	);	\
 	SET_PF_DEVINFO_FN(	cpp,	stem##_dev_info		);	\
-	SET_PF_INFO_FN(		cpp,	stem##_info		);
-
-#ifdef FOOBAR
-	/*SET_PF_DISPATCH_FN(	cpp,	stem##_dispatch		);*/	\
-									\
-	SET_PF_FFT2D_FN(	cpp,	h_##stem##_fft2d	);	\
-	SET_PF_IFT2D_FN(	cpp,	h_##stem##_ift2d	);	\
-	SET_PF_FFTROWS_FN(	cpp,	h_##stem##_fftrows	);	\
-	SET_PF_IFTROWS_FN(	cpp,	h_##stem##_iftrows	);	\
-
-#endif // FOOBAR
-
+	SET_PF_INFO_FN(		cpp,	stem##_info		);	\
+	SET_PF_KRNL_FN(		cpp,	stem##_make_kernel	);
 
 #define PF_FUNC_TBL(cpp)		(cpp)->cp_vfa_tbl
 #define SET_PF_FUNC_TBL(cpp,v)	(cpp)->cp_vfa_tbl = v

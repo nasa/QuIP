@@ -353,6 +353,19 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
 	cat_string(sbp,")\n");
 }
 
+static void make_platform_kernel(QSP_ARG_DECL  String_Buf *sbp)
+{
+	void *kp;
+
+	assert( curr_pdp != NULL );
+	kp = (*(PF_KRNL_FN( PFDEV_PLATFORM(curr_pdp) ) ));
+	if( kp == NULL ){ 
+		NERROR1("kernel creation failure!?");
+	}
+
+	// where to store?
+}
+
 // Should we assume the current platform?
 
 String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp)
@@ -376,6 +389,10 @@ String_Buf *fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	rls_global_var_list();
 
 	fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
+
+	// BUG OpenCL specific code!?!?
+	make_platform_kernel(QSP_ARG  sbp);
+
 	return sbp;
 }
 

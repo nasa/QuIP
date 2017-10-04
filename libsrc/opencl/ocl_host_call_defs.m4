@@ -109,7 +109,7 @@ define(`DECLARE_OCL_VARS',`
 
 define(`DECLARE_OCL_COMMON_VARS',`
 
-	static cl_program program = NULL;
+	/*static cl_program program = NULL;*/
 	cl_int status;
 	DECLARE_OCL_EVENT
 	int ki_idx=0;
@@ -152,8 +152,10 @@ define(`_CHECK_KERNEL',`
 	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));
 dnl fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 	if( $1[pd_idx] == NULL ){	/* one-time initialization */
+		cl_kernel *kern_p;
 		ksrc = KERN_SOURCE_NAME($2,$3);
 dnl fprintf(stderr,"_check_kernel $2:  creating kernel\n");
+		/*
 		program = ocl_create_program(ksrc,VA_PFDEV(vap));
 		if( program == NULL ) 
 			NERROR1("program creation failure!?");
@@ -164,6 +166,11 @@ dnl fprintf(stderr,"_check_kernel $2:  creating kernel\n");
 			NADVISE(ksrc);
 			NERROR1("kernel creation failure!?");
 		}
+		*/
+		kern_p = ocl_make_kernel(DEFAULT_QSP_ARG  ksrc, "$4", VA_PFDEV(vap));
+		if( kern_p == NULL )
+			NERROR1("kernel creation failure!?");
+		$1[pd_idx] = (*kern_p);
 	}
 ')
 

@@ -54,6 +54,12 @@ static int vl2_map_buf(QSP_ARG_DECL Data_Obj *dp){ return 0; }
 static int vl2_unmap_buf(QSP_ARG_DECL Data_Obj *dp){ return 0; }
 static int vl2_register_buf(QSP_ARG_DECL Data_Obj *dp){ return 0; }
 
+static void *vl2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
+{
+	WARN("Sorry, no kernel compilation for CPU yet!?");
+	return NULL;
+}
+
 static void vl2_dev_info(QSP_ARG_DECL  Platform_Device *pdp)
 {
 	sprintf(MSG_STR,"%s:",PFDEV_NAME(pdp));

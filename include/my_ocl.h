@@ -54,7 +54,7 @@ extern cl_program ocl_create_program(const char *buf, Platform_Device *pdp );
 //extern cl_kernel ocl_create_kernel(cl_program program,
 extern cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 			const char *name, Platform_Device *pdp );
-extern cl_kernel ocl_make_kernel( const char *src, const char *name, Platform_Device *pdp );
+extern /* cl_kernel */ void * ocl_make_kernel( QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp );
 
 
 extern void h_ocl_set_seed(int seed);

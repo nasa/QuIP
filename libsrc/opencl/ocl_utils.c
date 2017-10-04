@@ -551,25 +551,23 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 	}
 }
 
-// this routine seems to only be used for the random number generator???
-
-cl_kernel ocl_make_kernel(const char *ksrc,const char *kernel_name,Platform_Device *pdp)
+/*cl_kernel*/ void *ocl_make_kernel(QSP_ARG_DECL  const char *ksrc,const char *kernel_name,Platform_Device *pdp)
 {
 	cl_program program;
-	cl_kernel kernel;
+	static cl_kernel kernel;
 
 	program = ocl_create_program(ksrc,pdp);
 	if( program == NULL )
-		NERROR1("program creation failure!?");
+		ERROR1("program creation failure!?");
 
 	kernel = ocl_create_kernel(program, kernel_name, pdp);
 	if( kernel == NULL ){
-		NADVISE("Source code of failed program:");
-		NADVISE(ksrc);
-		NERROR1("kernel creation failure!?");
+		ADVISE("Source code of failed program:");
+		ADVISE(ksrc);
+		ERROR1("kernel creation failure!?");
 	}
 
-	return kernel;
+	return & kernel;
 }
 
 cl_kernel ocl_create_kernel(cl_program program,
