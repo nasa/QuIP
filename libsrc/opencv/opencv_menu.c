@@ -474,7 +474,9 @@ static COMMAND_FUNC( do_new_cascade )
 
 #define false 0
 #define true 1
-//#define bool int
+#ifndef bool
+#define bool int
+#endif // undef bool
 
 static CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img, CvMemStorage* storage, CvHaarClassifierCascade* cascade, int frame_number)
 {

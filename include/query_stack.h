@@ -275,15 +275,6 @@ struct query_stack {
 #define	SET_VPD_CURR_INFILE(vpd_p,v)		(vpd_p)->vpd_curr_infile = v
 #define SET_VPD_SUBRT_CTX_STACK(vpd_p,v)	(vpd_p)->vpd_subroutine_context_stack = v
 
-
-//#define ALLOC_QS_VECTOR_PARSER_DATA(qsp)	SET_QS_VECTOR_PARSER_DATA(qsp,getbuf(sizeof(Vector_Parser_Data)))
-//
-//#define INSURE_QS_VECTOR_PARSER_DATA(qsp)	if( QS_VECTOR_PARSER_DATA(qsp)==NULL )		\
-//						ALLOC_QS_VECTOR_PARSER_DATA(qsp);
-
-//#define ALLOC_QS_SCALAR_PARSER_DATA(qsp)	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)))
-
-
 // this indexing of the list is probably backwards!?
 #define QS_QRY_STACK(qsp)		(qsp)->qs_query_stack
 #define SET_QS_QRY_STACK(qsp,stkp)	(qsp)->qs_query_stack = stkp
