@@ -471,6 +471,11 @@ static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 	prt_msg("Sorry, Cuda-specific platform info not implemented yet!?");
 }
 
+static void * cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
+{
+	WARN("Sorry, cu2_make_kernel not implemented!?");
+	return NULL;
+}
 
 static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 {
@@ -502,9 +507,9 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
+#ifdef GENERATES_ERROR_ON_MAC
 		char s[32];
 
-#ifdef GENERATES_ERROR_ON_MAC
 		sprintf(s,"/dev/nvidia%d",i);
 		if( check_file_access(QSP_ARG  s) < 0 ){
 			// BUG do we need to unwind some things
