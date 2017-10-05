@@ -28,8 +28,9 @@
 
 off64_t my_lseek64(int fd,off64_t offset,int whence)
 {
-	off_t r;
+	off64_t r;
 	r=lseek64(fd,offset,whence);
+fprintf(stderr,"my_lseek64 %d:  requested 0x%llx, returning 0x%llx\n",fd,(long long) offset,(long long) r);
 	/*
 	if( r < 0 )
 		return (off64_t) r;	// is off_t unsigned?
@@ -60,6 +61,7 @@ off64_t my_lseek64(int fd,off64_t offset,int whence)
 		perror("llseek");
 		return(-1);
 	}
+fprintf(stderr,"llseek %d, requested 0x%llx, returning 0x%llx\n",fd,offset,result);
 
 	return(result);
 }

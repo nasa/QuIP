@@ -1304,7 +1304,7 @@ static void write_rv_data(RV_Inode *inp,char *data,uint32_t size)
 	off64_t offset,retoff;
 	int n;
 
-	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
+	offset = ((off64_t) RV_ADDR(inp)) * ((off64_t) curr_rv_sbp->rv_blocksize);
 	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){
@@ -1415,6 +1415,7 @@ static RV_Inode *search_directory(RV_Inode *inp, int index)
 static int perform_seek( int fd, off64_t offset )
 {
 	off64_t retoff;
+fprintf(stderr,"perform_seek 0x%llx\n",offset);
 	retoff = my_lseek64(fd,offset,SEEK_SET);
 	if( retoff != offset ){
 		sprintf(DEFAULT_ERROR_STRING,"perform_write_test:  Error seeking on raw disk");
@@ -2647,6 +2648,8 @@ void rv_mkdir(QSP_ARG_DECL  const char *dirname)
 	if( pushed ) rv_popd(SINGLE_QSP_ARG);
 }
 
+// This seeks to the proper positions...
+
 int queue_rv_file(QSP_ARG_DECL  RV_Inode *inp,int *fd_arr)
 {
 	int i;
@@ -2662,13 +2665,14 @@ advise(ERROR_STRING);
 
 	offset = (off64_t) RV_ADDR(inp) * (off64_t) curr_rv_sbp->rv_blocksize;
 	retval=curr_rv_sbp->rv_ndisks;
+fprintf(stderr,"queue_rv_file:  offset = %lld (0x%llx)\n",offset,offset);
 	for(i=0;i<curr_rv_sbp->rv_ndisks;i++){
 		retoff = my_lseek64(curr_rv_sbp->rv_fd[i],offset,SEEK_SET);
 		if( retoff != offset ){
 			/* BUG loff_t is not long long on 64 bit architecture!? */
 			sprintf(ERROR_STRING,
-		"queue_rv_file:  Error seeking on raw disk %d (%s), requested %lld but got %lld",
-				i,curr_rv_sbp->rv_diskname[i],(long long)offset,(long long)retoff);
+		"queue_rv_file:  Error seeking on raw disk %d (%s), requested %lld (0x%llx) but got %lld (0x%llx)",
+				i,curr_rv_sbp->rv_diskname[i],(long long)offset,(long long) offset,(long long)retoff,(long long)retoff);
 			WARN(ERROR_STRING);
 			retval=(-1);
 		}
