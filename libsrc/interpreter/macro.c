@@ -64,10 +64,11 @@ Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, 
 	SET_MACRO_FLAGS(mp,0);
 	SET_MACRO_ARG_TBL(mp,ma_tbl);
 	assert(sbp!=NULL);
-	if( *sb_buffer(sbp) != 0 )
+	if( *sb_buffer(sbp) != 0 ){
 		SET_MACRO_TEXT(mp,savestr(sb_buffer(sbp)));
-	else
+	} else {
 		SET_MACRO_TEXT(mp,NULL);
+	}
 
 	// Can we access the filename here, or do we
 	// need to do it earlier because of lookahead?
@@ -96,7 +97,8 @@ Macro_Arg **create_generic_macro_args(int n)
 	Macro_Arg **ma_tbl;
 	int i;
 
-	assert(n>0&&n<32);	// 32 is somewhat arbitrary...
+	assert(n>=0&&n<32);	// 32 is somewhat arbitrary...
+	if( n == 0 ) return NULL;
 	ma_tbl = getbuf( n * sizeof(Macro_Arg *));
 	for(i=0;i<n;i++){
 		ma_tbl[i] = getbuf( sizeof(Macro_Arg) );

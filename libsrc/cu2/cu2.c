@@ -336,7 +336,7 @@ static void (*cu2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default
 static void cu2_update_offset(QSP_ARG_DECL  Data_Obj *dp)
 { WARN("cu2_update_offset not implemented!?"); }
 
-static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 #ifdef HAVE_CUDA
 
@@ -346,8 +346,10 @@ static void cu2_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 #ifdef OLD_CUDA4
 	cutilSafeCall( cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) );
 #else // ! OLD_CUDA4
-fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   siz = %ld\n",
-(long)dst,(long)src,siz);
+
+//fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   siz = %ld\n",
+//(long)dst,(long)src,siz);
+
 	error = cudaMemcpy(dst, src, siz, cudaMemcpyDeviceToHost) ;
 	if( error != cudaSuccess ){
 		// BUG report cuda error
@@ -365,8 +367,11 @@ fprintf(stderr,"cu2_mem_dnload:  dst = 0x%lx   src = 0x%lx   siz = %ld\n",
 }
 
 // We treat the device as a server, so "upload" transfers from host to device
+//
+// For cuda, we ignore the offset argument, because it is already added into ptr.
+// (The offset arg was added for OpenCL, where the memory "pointer" is not really the address)
 
-static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void cu2_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 #ifdef HAVE_CUDA
 	cudaError_t error;
@@ -475,8 +480,11 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	 * are not readable...  So we check that first.
 	 */
 
+	// This file doesn't seem to be present on Mac OSX!?
+	/*
 	if( check_file_access(QSP_ARG  "/dev/nvidiactl") < 0 )
 		return -1;
+		*/
 
 	cudaGetDeviceCount(&n_devs);
 
@@ -496,6 +504,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	for(i=0;i<n_devs;i++){
 		char s[32];
 
+#ifdef GENERATES_ERROR_ON_MAC
 		sprintf(s,"/dev/nvidia%d",i);
 		if( check_file_access(QSP_ARG  s) < 0 ){
 			// BUG do we need to unwind some things
@@ -506,6 +515,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 			// is also likely to be missing, trapped above...
 			return -1;
 		}
+#endif // GENERATES_ERROR_ON_MAC
 
 		init_cu2_device(QSP_ARG  i, cpp);
 	}

@@ -19,20 +19,190 @@
 // BUG should be per-thread variable...
 static int expect_exact_count=1;
 
-#define DELETE_IF_COPY(dp)						\
+#ifndef HAVE_ANY_GPU
+
+#define DECL_RAM_DATA_OBJ
+#define ram_dp	dp
+#define INSURE_OK_FOR_READING(dp)
+#define INSURE_OK_FOR_WRITING(dp)
+#define RELEASE_RAM_OBJ_FOR_READING_IF(dp)
+#define RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
+
+#else // ! HAVE_ANY_GPU
+
+#define DECL_RAM_DATA_OBJ	Data_Obj *ram_dp;
+
+#define INSURE_OK_FOR_READING(dp)					\
 									\
-if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
-	delvec(QSP_ARG  dp);
+	ram_dp = insure_ram_obj_for_reading(QSP_ARG  dp);		\
+	assert( ram_dp != NULL );
+
+#define INSURE_OK_FOR_WRITING(dp)					\
+	ram_dp = insure_ram_obj_for_writing(QSP_ARG  dp);		\
+	assert(ram_dp!=NULL);
+
+#define RELEASE_RAM_OBJ_FOR_READING_IF(dp)				\
+	release_ram_obj_for_reading(QSP_ARG  ram_dp, dp);
+
+#define RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)				\
+	release_ram_obj_for_writing(QSP_ARG  ram_dp, dp);
 
 #define DNAME_PREFIX "downloaded_"
 #define CNAME_PREFIX "continguous_"
+#define INDEX_SUFFIX "_subscripted"
 
-/*static*/ Data_Obj *insure_ram_obj(QSP_ARG_DECL  Data_Obj *dp)
+#define IS_SUBSCRIPT_DELIMITER(c)	( (c)=='[' || (c)=='{' )
+
+void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
-	Data_Obj *tmp_dp;
-	char *tname;
+	if( ram_dp == dp ) return;
+	delvec(QSP_ARG  ram_dp);
+}
+
+static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
+{
 	Data_Area *save_ap;
-	Data_Obj *c_dp=NULL;
+	Data_Obj *tmp_dp;
+	char *tmp_name, *dst;
+	const char *src;
+
+	tmp_name = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + strlen(INDEX_SUFFIX) + 1 );
+
+	strcpy(tmp_name,DNAME_PREFIX);
+	src=OBJ_NAME(dp);
+	dst=tmp_name+strlen(DNAME_PREFIX);
+	while( *src && ! IS_SUBSCRIPT_DELIMITER(*src) ){
+		*dst++ = *src++;
+	}
+	*dst = 0;
+	if( IS_SUBSCRIPT_DELIMITER(*src) ){
+		strcat(tmp_name,INDEX_SUFFIX);
+	}
+
+	save_ap = curr_ap;
+	curr_ap = ram_area_p;
+	tmp_dp = dup_obj(QSP_ARG  dp, tmp_name);
+	curr_ap = save_ap;
+
+	givbuf(tmp_name);
+
+	return tmp_dp;
+}
+
+// for host-device tranfers, we need a contiguous object.
+
+static Data_Obj *create_platform_copy(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Area *save_ap;
+	Data_Obj *contig_dp;
+	char *tname;
+
+	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(CNAME_PREFIX) + 1 );
+	sprintf(tname,"%s%s",CNAME_PREFIX,OBJ_NAME(dp));
+
+	save_ap = curr_ap;
+	curr_ap = OBJ_AREA( dp );
+	contig_dp = dup_obj(QSP_ARG  dp, tname );
+	curr_ap = save_ap;
+
+	givbuf(tname);
+
+	return contig_dp;
+}
+
+// Assume that the two objects are matched in shape
+
+static void copy_platform_data(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp)
+{
+	Vec_Obj_Args oa1, *oap=&oa1;
+
+	setvarg2(oap,dst_dp,src_dp);
+	if( IS_BITMAP(src_dp) ){
+		SET_OA_SBM(oap,src_dp);
+		SET_OA_SRC1(oap,NULL);
+	}
+
+	if( IS_REAL(src_dp) ) /* BUG case for QUAT too? */
+		OA_ARGSTYPE(oap) = REAL_ARGS;
+	else if( IS_COMPLEX(src_dp) ) /* BUG case for QUAT too? */
+		OA_ARGSTYPE(oap) = COMPLEX_ARGS;
+	else if( IS_QUAT(src_dp) ) /* BUG case for QUAT too? */
+		OA_ARGSTYPE(oap) = QUATERNION_ARGS;
+	else
+		assert( AERROR("copy_platform_data:  bad argset type!?") );
+
+	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
+}
+
+static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
+{
+	if( IS_CONTIGUOUS(dp) ) return dp;
+	if( HAS_CONTIGUOUS_DATA(dp) ) return dp;
+
+advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
+longlist(QSP_ARG  dp);
+
+	return create_platform_copy(QSP_ARG   dp);
+}
+
+static Data_Obj *contig_obj_with_data(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Obj *contig_dp;
+
+	contig_dp = contig_obj(QSP_ARG  dp);
+	if( contig_dp == dp ) return dp;
+	copy_platform_data(QSP_ARG  contig_dp, dp );
+	return contig_dp;
+}
+
+static void download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_dp)
+{
+	Data_Obj *contig_dp;
+
+	// We can't download if the source data is not contiguous...
+
+	contig_dp = contig_obj_with_data(QSP_ARG  pf_dp);
+	assert( IS_CONTIGUOUS(ram_dp) );
+
+	gen_obj_dnload(QSP_ARG  ram_dp, contig_dp);
+
+	if( contig_dp != pf_dp )
+		delvec(QSP_ARG  contig_dp);
+}
+
+static void upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp)
+{
+	Data_Obj *contig_dp;
+
+	// We can't upload if the destination data is not contiguous...
+	assert( IS_CONTIGUOUS(ram_dp) );
+
+	contig_dp = contig_obj(QSP_ARG  pf_dp);
+
+	gen_obj_upload(QSP_ARG  contig_dp, ram_dp );
+
+	if( contig_dp != pf_dp ){
+		copy_platform_data(QSP_ARG  pf_dp,contig_dp);
+		delvec(QSP_ARG  contig_dp);
+	}
+}
+
+
+// To write a platform object, we need to have a ram copy to stick the values in,
+// that we then transfer en-mass.  The copy must have the correct shape,
+// but doesn't need to contain the data, as we will be over-writing it anyway.
+
+Data_Obj *insure_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *dp)
+{
+	if( OBJ_IS_RAM(dp) ) return dp;
+	return create_ram_copy(QSP_ARG  dp);
+}
+
+// To read a platform object, the copies need to have the data copied along!
+
+Data_Obj *insure_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *dp)
+{
+	Data_Obj *ram_dp;
 
 	if( OBJ_IS_RAM(dp) ) return dp;
 
@@ -40,83 +210,27 @@ if( (OBJ_FLAGS(dp) & DT_VOLATILE) && (OBJ_FLAGS(dp) & DT_TEMP) == 0 )	\
 	// We create a copy in RAM, and download the data
 	// using the platform download function.
 
-	save_ap = curr_ap;
-	curr_ap = ram_area_p;
+	ram_dp = create_ram_copy(QSP_ARG  dp);
 
-	tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(DNAME_PREFIX) + 1 );
-	sprintf(tname,"%s%s",DNAME_PREFIX,OBJ_NAME(dp));
-	tmp_dp = dup_obj(QSP_ARG  dp, tname);
-	givbuf(tname);
-	if( tmp_dp == NULL ){
+	if( ram_dp == NULL ){
 		// This can happen if the object is subscripted,
 		// as the bracket characters are illegal in names
 		return NULL;
 	}
 
-	curr_ap = save_ap;
+	download_platform_data(QSP_ARG  ram_dp, dp);
 
-	// We can't download if the source data is not contiguous...
-	//
-	// OLD OBSOLETE COMMENT:
-	// We have a problem with bit precision, because the bits can
-	// be non-contiguous when the long words are - any time the number of columns
-	// is not evenly divided by the bits-per-word
-	//
-	// Now, bitmaps wrap bits around, not trying to align word and row boundaries
-
-	if( (! IS_CONTIGUOUS(dp)) && ! HAS_CONTIGUOUS_DATA(dp) ){
-		Vec_Obj_Args oa1, *oap=&oa1;
-
-advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
-longlist(QSP_ARG  dp);
-		save_ap = curr_ap;
-		curr_ap = OBJ_AREA( dp );
-
-		tname = getbuf( strlen(OBJ_NAME(dp)) + strlen(CNAME_PREFIX) + 1 );
-		sprintf(tname,"%s%s",CNAME_PREFIX,OBJ_NAME(dp));
-		c_dp = dup_obj(QSP_ARG  dp, tname );
-		givbuf(tname);
-
-		curr_ap = save_ap;
-
-		// Now do the move...
-
-		setvarg2(oap,c_dp,dp);
-		if( IS_BITMAP(dp) ){
-			SET_OA_SBM(oap,dp);
-			SET_OA_SRC1(oap,NULL);
-		}
-
-		if( IS_REAL(dp) ) /* BUG case for QUAT too? */
-			OA_ARGSTYPE(oap) = REAL_ARGS;
-		else if( IS_COMPLEX(dp) ) /* BUG case for QUAT too? */
-			OA_ARGSTYPE(oap) = COMPLEX_ARGS;
-		else if( IS_QUAT(dp) ) /* BUG case for QUAT too? */
-			OA_ARGSTYPE(oap) = QUATERNION_ARGS;
-		else
-			assert( AERROR("insure_ram_obj:  bad argset type!?") );
-
-//fprintf(stderr,"insure_ram_obj:  moving remote data to a contiguous object\n");  
-		call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );
-//fprintf(stderr,"insure_ram_obj:  DONE moving remote data to a contiguous object\n");  
-
-		dp = c_dp;
-	}
-
-	gen_obj_dnload(QSP_ARG  tmp_dp, dp);
-
-	if( c_dp != NULL )
-		delvec(QSP_ARG  c_dp);
-
-	// BUG - when to delete?
-	// We try using the VOLATILE flag.  This will work as long as
-	// the input object is not VOLATILE!?
-
-	SET_OBJ_FLAG_BITS(tmp_dp, DT_VOLATILE ) ;
-
-	return tmp_dp;
+	return ram_dp;
 }
 
+static void release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
+{
+	if( ram_dp == dp ) return;	// nothing to do
+
+	upload_platform_data(QSP_ARG  dp,ram_dp);
+	delvec(QSP_ARG  ram_dp);
+}
+#endif /* ! HAVE_ANY_GPU */
 
 /*
  * BUG do_read_obj will not work correctly for subimages
@@ -126,6 +240,7 @@ longlist(QSP_ARG  dp);
 static COMMAND_FUNC( do_read_obj )
 {
 	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 	const char *s;
 
@@ -142,23 +257,26 @@ static COMMAND_FUNC( do_read_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	INSIST_RAM_OBJ(dp,"do_read_obj")
+	INSURE_OK_FOR_WRITING(dp)
 
 	if( strcmp(s,"-") && strcmp(s,"stdin") ){
 		fp=TRY_OPEN( s, "r" );
 		if( !fp ) return;
 
-		read_ascii_data(QSP_ARG  dp,fp,s,expect_exact_count);
+		read_ascii_data(QSP_ARG  ram_dp,fp,s,expect_exact_count);
 	} else {
 		/* read from stdin, no problem... */
 
-		read_obj(QSP_ARG  dp);
+		read_obj(QSP_ARG  ram_dp);
 	}
+
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
 static COMMAND_FUNC( do_pipe_obj )
 {
 	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	Pipe *pp;
 	char cmdbuf[LLEN];
 
@@ -172,28 +290,28 @@ static COMMAND_FUNC( do_pipe_obj )
 	// we must create the copy, then read into
 	// the copy, then xfer to the device...
 
-	INSIST_RAM_OBJ(dp,"pipe_read_obj")
+	INSURE_OK_FOR_WRITING(dp)
 
 	sprintf(cmdbuf,"Pipe:  %s",pp->p_cmd);
-	read_ascii_data(QSP_ARG  dp,pp->p_fp,cmdbuf,expect_exact_count);
+	read_ascii_data(QSP_ARG  ram_dp,pp->p_fp,cmdbuf,expect_exact_count);
 	/* If there was just enough data, then the pipe
 	 * will have been closed already... */
 
 	/* BUG we should check qlevel to make sure that the pipe was popped... */
 	pp->p_fp = NULL;
+
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
 static COMMAND_FUNC( do_set_var_from_obj )
 {
 	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	const char *s;
 
 	s=NAMEOF("variable");
 	dp=PICK_OBJ("");
 
-	if( dp == NULL ) return;
-
-	dp = insure_ram_obj(QSP_ARG  dp);
 	if( dp == NULL ) return;
 
 	if( ! IS_STRING(dp) ){
@@ -203,22 +321,25 @@ static COMMAND_FUNC( do_set_var_from_obj )
 		return;
 	}
 
-	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(dp));
+	INSURE_OK_FOR_READING(dp)
 
-	DELETE_IF_COPY(dp)
+	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(ram_dp));
+
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 static COMMAND_FUNC( do_set_obj_from_var )
 {
 	Data_Obj *dp;
-	const char *s;
+	DECL_RAM_DATA_OBJ
+	const char *src_str;
+	char *dst_str;
+	dimension_t dst_size;
 
 	dp=PICK_OBJ("");
-	s=NAMEOF("string");
+	src_str=NAMEOF("string");
 
 	if( dp == NULL ) return;
-
-	INSIST_RAM_OBJ(dp,"set_string")
 
 #ifdef QUIP_DEBUG
 //if( debug ) dptrace(dp);
@@ -231,26 +352,36 @@ static COMMAND_FUNC( do_set_obj_from_var )
 		return;
 	}
 
-	if( (strlen(s)+1) > OBJ_COMPS(dp) ){
+	dst_size = OBJ_COMPS(dp);
+
+	if( strlen(src_str) >= dst_size ){
 		sprintf(ERROR_STRING,
-	"Type dimension (%d) of string object %s is too small for string of length %d",
-			OBJ_COMPS(dp),OBJ_NAME(dp),(int)strlen(s));
+	"Truncating string of length %d to fit string object %s (%d)...",
+			(int)strlen(src_str), OBJ_NAME(dp), dst_size );
 		WARN(ERROR_STRING);
-		return;
 	}
-	if( ! IS_CONTIGUOUS(dp) ){
+
+	INSURE_OK_FOR_WRITING(dp)
+
+	if( ! IS_CONTIGUOUS(ram_dp) ){
 		sprintf(ERROR_STRING,"Sorry, object %s must be contiguous for string reading",
-			OBJ_NAME(dp));
+			OBJ_NAME(ram_dp));
 		WARN(ERROR_STRING);
+		assert(ram_dp==dp);
 		return;
 	}
 
-	strcpy((char *)OBJ_DATA_PTR(dp),s);
+	dst_str = (char *) OBJ_DATA_PTR(ram_dp);
+	strncpy(dst_str,src_str,dst_size-1);
+	dst_str[dst_size-1] = 0;	// guarantee string termination
+
+	RELEASE_RAM_OBJ_FOR_WRITING_IF(dp)
 }
 
 static COMMAND_FUNC( do_disp_obj )
 {
 	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 
 	dp=PICK_OBJ("");
@@ -260,21 +391,20 @@ static COMMAND_FUNC( do_disp_obj )
 	// but we make life easier by automatically creating
 	// a temporary object...
 
-	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NULL ) return;
+	INSURE_OK_FOR_READING(dp)
 
 	fp = tell_msgfile(SINGLE_QSP_ARG);
 	if( fp == stdout ){
-		if( IS_IMAGE(dp) || IS_SEQUENCE(dp) )
+		if( IS_IMAGE(ram_dp) || IS_SEQUENCE(ram_dp) )
 			if( !CONFIRM(
 		"are you sure you want to display an image/sequence in ascii") )
 				return;
-		list_dobj(QSP_ARG  dp);
+		list_dobj(QSP_ARG  ram_dp);
 	}
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(QSP_ARG  ram_dp,fp);
 	fflush(fp);
 
-	DELETE_IF_COPY(dp)
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 /* BUG wrvecd will not work correctly for subimages */
@@ -286,6 +416,7 @@ static COMMAND_FUNC( do_disp_obj )
 static COMMAND_FUNC( do_wrt_obj )
 {
 	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 	/* BUG what if pathname is longer than 256??? */
 	const char *filename;
@@ -317,10 +448,9 @@ static COMMAND_FUNC( do_wrt_obj )
 			return;
 		}
 
-	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NULL ) return;
+	INSURE_OK_FOR_READING(dp)
 
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(QSP_ARG  ram_dp,fp);
 	if( fp != stdout && QS_MSG_FILE(THIS_QSP)!=NULL && fp != QS_MSG_FILE(THIS_QSP) ) {
 		if( verbose ){
 			sprintf(MSG_STR,"closing file %s",filename);
@@ -329,12 +459,13 @@ static COMMAND_FUNC( do_wrt_obj )
 		fclose(fp);
 	}
 
-	DELETE_IF_COPY(dp)
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 static COMMAND_FUNC( do_append )
 {
 	Data_Obj *dp;
+	DECL_RAM_DATA_OBJ
 	FILE *fp;
 
 	dp=PICK_OBJ("");
@@ -347,13 +478,12 @@ static COMMAND_FUNC( do_append )
 	fp=TRYNICE( NAMEOF("output file"), "a" );
 	if( !fp ) return;
 
-	dp = insure_ram_obj(QSP_ARG  dp);
-	if( dp == NULL ) return;
+	INSURE_OK_FOR_READING(dp)
 
-	pntvec(QSP_ARG  dp,fp);
+	pntvec(QSP_ARG  ram_dp,fp);
 	fclose(fp);
 
-	DELETE_IF_COPY(dp)
+	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
 
 static const char *print_fmt_name[N_PRINT_FORMATS];

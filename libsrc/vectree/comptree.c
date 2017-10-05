@@ -1326,7 +1326,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 			if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-fprintf(stderr,"update_node_shape:  calling xform_from_bitmap #5\n");
+//fprintf(stderr,"update_node_shape:  calling xform_from_bitmap #5\n");
 				xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 			}
 			break;
@@ -3928,8 +3928,8 @@ DUMP_TREE(enp);
 				if( SCALAR_SHAPE(VN_SHAPE(enp)) ){
 					/* both sources (targets?) are scalars, but the bitmap is a vector */
 					copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-fprintf(stderr,"compile_node:  calling xform_from_bitmap #1\n");
-DUMP_TREE(enp);
+//fprintf(stderr,"compile_node:  calling xform_from_bitmap #1\n");
+//DUMP_TREE(enp);
 //dump_shape(QSP_ARG  VN_SHAPE(enp));
 					xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 					SET_VN_CODE(enp, T_SS_B_CONDASS);
@@ -4473,7 +4473,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * BUG we'd like to determine the precision from the destination.
 			 */
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #2\n");
+//fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #2\n");
 			xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 			CHECK_UK_CHILD(enp,0);
 			break;
@@ -4490,7 +4490,7 @@ fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #2\n");
 			/* If the shape is unknown, but we have the bitmap, then copy from it */
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #3\n");
+//fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #3\n");
 				xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 			}
 			/* might be an outer... */
@@ -4526,7 +4526,7 @@ fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #3\n");
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #4\n");
+//fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #4\n");
 				xform_from_bitmap(VN_SHAPE(enp), VN_CHILD_PREC(enp,1));
 			}
 

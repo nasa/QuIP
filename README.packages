@@ -71,3 +71,11 @@ libgcrypt
 
 openmotif4
 
+libmatio2 (or libmatio)
+libjpeg9
+libtiff5
+opencv3.2-dev
+portaudio2
+libavcodec57-3.0-dev
+gsl
+

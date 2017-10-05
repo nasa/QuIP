@@ -43,6 +43,8 @@ define(`FAST_TEST_2SRCS',`( FAST_TEST_1SRC && N_IS_CONTIGUOUS(SRC2_DP) && dp_sam
 define(`EQSP_TEST_2SRCS',`( EQSP_TEST_1SRC && IS_EVENLY_SPACED(SRC2_DP) && dp_same_size_query(SRC1_DP,SRC2_DP) )')
 
 define(`FAST_TEST_CONV',`FAST_TEST_2')
+define(`FAST_TEST_LUTMAP_B',`FAST_TEST_2')
+define(`FAST_TEST_LUTMAP_S',`FAST_TEST_2')
 
 define(`FAST_TEST_2',`( FAST_TEST_1 && FAST_TEST_1SRC && dp_same_size_query(SRC1_DP,dst_dp) )')
 
@@ -61,6 +63,8 @@ define(`EQSP_TEST_QR_2',`EQSP_TEST_CR_2')
 define(`EQSP_TEST_CONV',`EQSP_TEST_2')
 
 define(`EQSP_TEST_2',`( EQSP_TEST_1 && EQSP_TEST_1SRC && dp_same_size_query(SRC1_DP,dst_dp) )')
+define(`EQSP_TEST_LUTMAP_B',`EQSP_TEST_2')
+define(`EQSP_TEST_LUTMAP_S',`EQSP_TEST_2')
 
 define(`EQSP_TEST_RC_2',`( EQSP_TEST_1 && EQSP_TEST_1SRC && dp_same_size_query(dst_dp,SRC1_DP) )')
 

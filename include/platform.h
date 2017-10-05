@@ -63,10 +63,10 @@ typedef struct compute_platform {
 	// These are only relevant for GPUs...
 
 	// upload:  host-to-device
-	void (*cp_mem_upload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, struct platform_device *pdp );
+	void (*cp_mem_upload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp );
 
 	// dnload:  device-to-host
-	void (*cp_mem_dnload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, struct platform_device *pdp );
+	void (*cp_mem_dnload_func)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp );
 
 	/*
 	void (*cp_obj_upload_func)(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);

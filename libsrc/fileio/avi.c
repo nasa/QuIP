@@ -26,9 +26,11 @@ int force_avi_load;		/* see comment in matio.c */
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #include "libswscale/swscale.h"
+#include "libavutil/imgutils.h"
 }
 #else
 #include "libswscale/swscale.h"
+#include "libavutil/imgutils.h"
 #endif
 
 static int lib_avcodec_inited=0;	/* our flag */
@@ -110,9 +112,11 @@ int avi_to_dp(Data_Obj *dp,AVCodec_Hdr *hd_p)
 	if(hd_p->avch_video_stream_p->time_base.den && hd_p->avch_video_stream_p->time_base.num)
 		print_fps(1/av_q2d(hd_p->avch_video_stream_p->time_base), "tbn");
 
+#ifdef THIS_IS_DEPRECATED
 	/* This is the field rate 59.94 */
 	if(hd_p->avch_video_stream_p->codec->time_base.den && hd_p->avch_video_stream_p->codec->time_base.num)
 		print_fps(1/av_q2d(hd_p->avch_video_stream_p->codec->time_base), "tbc");
+#endif // THIS_IS_DEPRECATED
 
 
 sprintf(DEFAULT_ERROR_STRING,"duration = %ld, AV_TIME_BASE = %d, fps? = %g, time base = %g",
@@ -183,18 +187,26 @@ NADVISE(DEFAULT_ERROR_STRING);
 
 uint64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 
+#ifdef NOT_YET
 /* These are called whenever we allocate a frame
  * buffer. We use this to store the global_pts in
  * a frame at the time it is allocated.
  */
+
+// The API has changed - need to fix this if we want to be able to cache
+// frame time stamps...
+
 static int our_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
+	int ret = avcodec_default_get_buffer(c, pic);
+#ifdef OLD_DEPRECATED
 	int ret = avcodec_default_get_buffer(c, pic);
 	uint64_t *pts = (uint64_t *) av_malloc(sizeof(uint64_t));
 	*pts = global_video_pkt_pts;
 	pic->opaque = pts;
 
 	return ret;
+#endif // OLD_DEPRECATED
 }
 
 static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
@@ -202,11 +214,11 @@ static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 	if(pic) av_freep(&pic->opaque);
 	avcodec_default_release_buffer(c, pic);
 }
+#endif // NOT_YET
 
 FIO_OPEN_FUNC( avi )
 {
 	Image_File *ifp;
-	int i;
 	long numBytes;
 
 	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_AVI));
@@ -224,8 +236,6 @@ FIO_OPEN_FUNC( avi )
 		av_register_all();
 		lib_avcodec_inited=1;
 	}
-
-#if LIBAVFORMAT_VERSION_INT >=	AV_VERSION_INT(53,4,0)
 
 	/* This code uses the new API but has not been tested */
 /*
@@ -245,36 +255,22 @@ FIO_OPEN_FUNC( avi )
 		return(NULL);
 	}
 
-#else /* OLD_VERSION */
-
-	if( av_open_input_file(&HDR_P->avch_format_ctx_p,ifp->if_pathname,NULL,0,NULL) != 0 ){
-		sprintf(ERROR_STRING,"libavcodec error opening file %s",ifp->if_pathname);
-		WARN(ERROR_STRING);
-		return(NULL);
-	}
-
-
-#endif
-
-#ifdef OLD
-	if( av_find_stream_info(HDR_P->avch_format_ctx_p)<0 ){
-#else // ! OLD
+//#ifdef OLD
+//	if( av_find_stream_info(HDR_P->avch_format_ctx_p)<0 ){
+//#else // ! OLD
 	if( avformat_find_stream_info(HDR_P->avch_format_ctx_p,NULL)<0 ){
-#endif // ! OLD
+//#endif // ! OLD
 		sprintf(ERROR_STRING,"Couldn't find stream info for file %s",name);
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
 //dump_format(HDR_P->avch_format_ctx_p,0,name,0);
 
+#ifdef NOT_YET
 	HDR_P->avch_video_stream_index=(-1);
 	for(i=0;i<(int)HDR_P->avch_format_ctx_p->nb_streams;i++){
 
-#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(51,9,0)
 #define EXPECTED_VIDEO_TYPE	AVMEDIA_TYPE_VIDEO
-#else
-#define EXPECTED_VIDEO_TYPE	CODEC_TYPE_VIDEO
-#endif
 
 		if(
 	HDR_P->avch_format_ctx_p->streams[i]->codec->codec_type ==
@@ -287,16 +283,23 @@ FIO_OPEN_FUNC( avi )
 			break;
 		}
 	}
+#endif // NOT_YET
+
 	if(HDR_P->avch_video_stream_index==-1){
 		WARN("no video stream");
 		return(NULL);
 	}
+
+#ifdef NOT_YET
 	// Get a pointer to the codec context for the video stream
 	HDR_P->avch_codec_ctx_p = HDR_P->avch_video_stream_p->codec;
+#endif // NOT_YET
 
+#ifdef FOOBAR
 	/* use custom buffer functions to allow us to cache time stamps... */
 	HDR_P->avch_codec_ctx_p->get_buffer = our_get_buffer;
 	HDR_P->avch_codec_ctx_p->release_buffer = our_release_buffer;
+#endif // FOOBAR
 
 
 	// Find the decoder for the video stream
@@ -306,39 +309,76 @@ FIO_OPEN_FUNC( avi )
 		return(NULL);
 	}
 	// Open codec
-#ifdef OLD
-	if(avcodec_open(HDR_P->avch_codec_ctx_p, HDR_P->avch_codec_p)<0){
-#else // ! OLD
 	if(avcodec_open2(HDR_P->avch_codec_ctx_p, HDR_P->avch_codec_p, NULL)<0){
-#endif // ! OLD
 		WARN("couldn't open codec");
 		return(NULL);
 	}
 
 	// Allocate video frame
+	// Not sure what is the correct value for this version switch, but the newer version
+	// on mac (installed by brew) is 57, while on CentOS 6 we have 53...
+#if LIBAVCODEC_VERSION_MAJOR > 53
+	HDR_P->avch_frame_p=av_frame_alloc();
+#else
 	HDR_P->avch_frame_p=avcodec_alloc_frame();
+#endif
+
 	if(HDR_P->avch_frame_p==NULL){
 		WARN("couldn't allocate first frame");
 		return(NULL);
 	}
 
 	// Allocate an AVFrame structure
+#if LIBAVCODEC_VERSION_MAJOR > 53
+	HDR_P->avch_rgb_frame_p=av_frame_alloc();
+#else
 	HDR_P->avch_rgb_frame_p=avcodec_alloc_frame();
+#endif
 	if(HDR_P->avch_rgb_frame_p==NULL){
 		WARN("couldn't allocate another frame");
 		return(NULL);
 	}
 
 	// Determine required buffer size and allocate buffer
+#if LIBAVCODEC_VERSION_MAJOR > 53
+	numBytes=av_image_get_buffer_size(AV_PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
+			HDR_P->avch_codec_ctx_p->height,1);
+#else
 	numBytes=avpicture_get_size(PIX_FMT_RGB24, HDR_P->avch_codec_ctx_p->width,
 			HDR_P->avch_codec_ctx_p->height);
+#endif
 	HDR_P->avch_buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
 
 	// Assign appropriate parts of buffer to image planes in HDR_P->avch_rgb_frame_p
 	// Note that HDR_P->avch_rgb_frame_p is an AVFrame, but AVFrame is a superset
 	// of AVPicture
+
+#if LIBAVCODEC_VERSION_MAJOR > 53
+	{
+	uint8_t *dst_array[4];
+	int line_sizes[4];
+	int i;
+
+	dst_array[0] = (uint8_t *)HDR_P->avch_rgb_frame_p;
+	line_sizes[0] = HDR_P->avch_codec_ctx_p->width;
+	for(i=1;i<4;i++){
+		dst_array[0] = NULL;
+		line_sizes[0] = 0;
+	}
+
+	av_image_fill_arrays(	dst_array,
+				line_sizes,
+				HDR_P->avch_buffer,
+				AV_PIX_FMT_RGB24,
+				HDR_P->avch_codec_ctx_p->width,
+				HDR_P->avch_codec_ctx_p->height,
+				1		// align
+				);
+	}
+#else
 	avpicture_fill((AVPicture *)HDR_P->avch_rgb_frame_p, HDR_P->avch_buffer, PIX_FMT_RGB24,
 				HDR_P->avch_codec_ctx_p->width, HDR_P->avch_codec_ctx_p->height);
+#endif
 
 
 	HDR_P->avch_duration = HDR_P->avch_format_ctx_p->duration / AV_TIME_BASE;	/* seconds */
@@ -461,9 +501,14 @@ static void convert_video_frame(Image_File *ifp)
 //HDR_P->avch_codec_ctx_p->pix_fmt,
 //HDR_P->avch_codec_ctx_p->pix_fmt );
 //advise(ERROR_STRING);
+#if LIBAVCODEC_VERSION_MAJOR > 53
+#define MY_PIX_FMT	AV_PIX_FMT_BGR24
+#else
+#define MY_PIX_FMT	PIX_FMT_RGB24
+#endif
 		HDR_P->avch_img_convert_ctx_p = sws_getContext(w, h,
 				HDR_P->avch_codec_ctx_p->pix_fmt,
-				w, h, /*PIX_FMT_RGB24*/ PIX_FMT_BGR24, SWS_BICUBIC,
+				w, h, MY_PIX_FMT, SWS_BICUBIC,
 				NULL, NULL, NULL);
 		if(HDR_P->avch_img_convert_ctx_p == NULL) {
 			NWARN("Cannot initialize the conversion context!");
@@ -519,22 +564,16 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 		// Is this a packet from the video stream?
 		if(HDR_P->avch_packet.stream_index==HDR_P->avch_video_stream_index) {
 
-			// Decode video frame
-			// at which version did avcodec_decode_video
-			// get changed to avcodec_decode_video2 ???
-			//
-			// The newer version isn't guaranteed to decode
-			// a whole frame, we need to check when a frame
-			// has been completed???  BUG???
+#if LIBAVCODEC_VERSION_MAJOR > 53
+			// in the new API, we send a packet then read frames.
+			if( avcodec_send_packet( HDR_P->avch_codec_ctx_p,
+				&HDR_P->avch_packet)<0) {
+				NWARN("avcodec_send_packet failed!?");
+				return -1;
+			}
+#else
 
 #if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(51,9,0)
-
-/*
-int avcodec_decode_video2(	AVCodecContext *avctx,
-				AVFrame *picture,
-				int *got_picture_ptr,
-				AVPacket *avpkt);
-*/
 
 	avcodec_decode_video2(	HDR_P->avch_codec_ctx_p,
 				HDR_P->avch_frame_p,
@@ -550,6 +589,9 @@ int avcodec_decode_video2(	AVCodecContext *avctx,
 						HDR_P->avch_packet.size);
 
 #endif
+
+#endif
+
 			/* decoding time stamp (dts) should be equal to pts thanks
 			 * to ffmpeg...
 			 */

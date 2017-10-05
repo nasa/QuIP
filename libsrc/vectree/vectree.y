@@ -41,7 +41,7 @@ debug_flag_t parser_debug=0;
 
 #define YY_LLEN 1024
 
-static char yy_word_buf[YY_LLEN]; // BUG global is not thread-safe!
+//static char yy_word_buf[YY_LLEN]; // BUG global is not thread-safe!
 
 
 //#ifdef THREAD_SAFE_QUERY
@@ -106,19 +106,8 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp);
 
 #define YYSTYPE_IS_DECLARED			/* necessary on a 2.6 machine?? */
 
-//#ifdef THREAD_SAFE_QUERY
-//
-//int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
-//#define YYLEX_PARAM SINGLE_QSP_ARG
-//
-//#else
-//
-//int yylex(YYSTYPE *yylvp);
-//
-//#endif
 int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
-//#define YY_ERR_STR	QS_ERROR_STRING(((Query_Stack *)qsp))	// this macro casts qsp, unlike ERROR_STRING
 #define YY_ERR_STR	ERROR_STRING
 
 %}
@@ -2134,58 +2123,77 @@ static int whkeyword(Keyword *table,const char *str)
 	return(-1);
 }
 
-// Ideally we would grow this table dynamically as needed!  BUG
-#define MAX_SAVED_PARSE_STRINGS	2048
-static int n_saved_parse_strings=0;
-const char *saved_parse_string[MAX_SAVED_PARSE_STRINGS];
-
-static const char *save_parse_string(char *s)
-{
-	const char *ss;
-
-	ss = savestr(s);
-
-	// remember s so we can free it later...
-	if( n_saved_parse_strings >= MAX_SAVED_PARSE_STRINGS ){
-		NERROR1("Need to increase MAX_SAVED_PARSE_STRINGS!?");
-	} else {
-		saved_parse_string[n_saved_parse_strings++] = ss;
-	}
-
-	return ss;
-}
-
-
 /* Read text up to a matching quote, and update the pointer */
 
 static const char *match_quote(QSP_ARG_DECL  const char **spp)
 {
-	char *s;
+	//char *s;
+	String_Buf *sbp;
 	int c;
 
-	s=VEXP_STR;
+	//s=VEXP_STR;
+	sbp=VEXP_STR;
+	copy_string(sbp,"");
 
 	while( (c=(**spp)) && c!='"' ){
-		*s++ = (char) c;
+		//*s++ = (char) c;
+		cat_string_n(sbp,*spp,1);
 		(*spp)++; /* YY_CP++; */
 	}
-	*s=0;
+	//*s=0;
 	if( c != '"' ) {
 		NWARN("missing quote");
 		sprintf(ERROR_STRING,"string \"%s\" stored",CURR_STRING);
 		advise(ERROR_STRING);
 	} else (*spp)++;			/* skip over closing quote */
 
-	s=(char *)save_parse_string(VEXP_STR);
-	SET_CURR_STRING(s);
+	//s=(char *)save_parse_string(VEXP_STR);
+	//SET_CURR_STRING(s);
+	SET_CURR_STRING( sb_buffer(sbp) );
 	return(CURR_STRING);
 } // match_quote
 
-//#ifdef THREAD_SAFE_QUERY
-//int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
-//#else /* ! THREAD_SAFE_QUERY */
-//int yylex(YYSTYPE *yylvp)			/* return the next token */
-//#endif /* ! THREAD_SAFE_QUERY */
+/* remember the name of the current input file if we don't already have one */
+
+// CURR_INFILE is part of the query stack struct...
+// while CURRENT_FILENAME is part of the query struct.
+// CURR_INFILE doesn't seem to be used by the interpreter - why
+// was it introduced???  Used here, but needs to be thread-safe,
+// so part of query_stack...
+//
+// Better would be to have a saved string with reference count.
+// 
+
+static void update_current_input_file(Query_Stack *qsp)
+{
+	if( CURR_INFILE == NULL ){
+		CURR_INFILE = save_stringref(CURRENT_FILENAME);
+	}
+
+	/* if the name now is different from the remembered name, change it! */
+	if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
+		/* This is a problem - we don't want to release the old string, because
+		 * existing nodes point to it.  We don't want them to have private copies,
+		 * either, because there would be too many.  We compromise here by not
+		 * releasing the old string, but not remembering it either.  Thus we may
+		 * end up with a few more copies later, if we have nested file inclusion...
+		 */
+		/* rls_str(CURR_INFILE); */
+		if( SR_COUNT(CURR_INFILE) == 0 )
+			rls_stringref(CURR_INFILE);
+		CURR_INFILE = save_stringref(CURRENT_FILENAME);
+	}
+}
+
+static void read_next_statement(SINGLE_QSP_ARG_DECL)
+{
+	/* we copy this now, because script functions may damage
+	 * the contents of nameof's buffer.
+	 */
+	copy_string(YY_WORD_BUF,NAMEOF("statement"));
+	YY_CP = sb_buffer(YY_WORD_BUF);
+}
+
 int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 {
 	register int c;
@@ -2211,64 +2219,25 @@ nexttok:
 		}
 
 		/* remember the name of the current input file if we don't already have one */
-		// CURR_INFILE is part of the query stack struct...
-		// while CURRENT_FILENAME is part of the query struct.
-		// CURR_INFILE doesn't seem to be used by the interpreter - why
-		// was it introduced???  Used here, but needs to be thread-safe,
-		// so part of query_stack...
-		//
-		// Better would be to have a saved string with reference count.
-		// 
-
-		if( CURR_INFILE == NULL ){
-			CURR_INFILE = save_stringref(CURRENT_FILENAME);
-		}
-
-		/* if the name now is different from the remembered name, change it! */
-		if( strcmp(CURRENT_FILENAME,SR_STRING(CURR_INFILE)) ){
-			/* This is a problem - we don't want to release the old string, because
-			 * existing nodes point to it.  We don't want them to have private copies,
-			 * either, because there would be too many.  We compromise here by not
-			 * releasing the old string, but not remembering it either.  Thus we may
-			 * end up with a few more copies later, if we have nested file inclusion...
-			 */
-			/* rls_str(CURR_INFILE); */
-			if( SR_COUNT(CURR_INFILE) == 0 )
-				rls_stringref(CURR_INFILE);
-			CURR_INFILE = save_stringref(CURRENT_FILENAME);
-		}
+		update_current_input_file(qsp);
 
 		/* why disable stripping quotes? */
 		disable_stripping_quotes(SINGLE_QSP_ARG);
-		/* we copy this now, because script functions may damage
-		 * the contents of nameof's buffer.
-		 */
-		strcpy(yy_word_buf,NAMEOF("statement"));
-		YY_CP=yy_word_buf;
+
+		read_next_statement(SINGLE_QSP_ARG);
 
 		/* BUG?  lookahead advances lineno?? */
 		/* BUG no line numbers in macros? */
 		// Should we compare lineno or rdlineno???
-		if( (l=current_line_number(SINGLE_QSP_ARG)) != LASTLINENO ){
-			strcpy(YY_LAST_LINE,YY_INPUT_LINE);
-			YY_INPUT_LINE[0]=0;
-			SET_PARSER_LINENO( l );
-			SET_LASTLINENO( l );
+		if( (l=current_line_number(SINGLE_QSP_ARG)) != LAST_LINE_NUM ){
+			copy_strbuf(YY_LAST_LINE,YY_INPUT_LINE);
+			copy_string(YY_INPUT_LINE,"");	// clear input
+			SET_PARSER_LINE_NUM( l );
+			SET_LAST_LINE_NUM( l );
 		}
 
-		if( (strlen(YY_INPUT_LINE) + strlen(YY_CP) + 2) >= YY_LLEN ){
-			WARN("yy_input line buffer overflow");
-			sprintf(ERROR_STRING,"%ld chars in input line:",(long)strlen(YY_INPUT_LINE));
-			advise(ERROR_STRING);
-			advise(YY_INPUT_LINE);
-			sprintf(ERROR_STRING,"%ld previously buffered chars:",(long)strlen(YY_CP));
-			advise(ERROR_STRING);
-			advise(YY_CP);
-			return(0);
-		}
-		strcat(YY_INPUT_LINE,YY_CP);
-		strcat(YY_INPUT_LINE," ");
-
+		cat_string(YY_INPUT_LINE,YY_CP);
+		cat_string(YY_INPUT_LINE," ");
 	}
 
 #ifdef QUIP_DEBUG
@@ -2584,18 +2553,24 @@ if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning char '%c' (0x%
 
 static const char *read_word(QSP_ARG_DECL  const char **spp)
 {
-	char *s;
+	//char *s;
+	String_Buf *sbp;
 	int c;
 
-	s=VEXP_STR;
+	//s=VEXP_STR;
+	sbp = VEXP_STR;
+	copy_string(sbp,"");	// clear it
+				// does anyone expect this value to persist???  BUG?
 
 	while( islegal(c=(**spp)) || isdigit(c) ){
-		*s++ = (char) c;
+		//*s++ = (char) c;
+		cat_string_n(sbp,*spp,1);
 		(*spp)++; /* YY_CP++; */
 	}
-	*s=0;
+	//*s=0;
 
-	return(save_parse_string(VEXP_STR));
+	//return(save_parse_string(VEXP_STR));
+	return(sb_buffer(VEXP_STR));
 }
 
 /* this function should go in the lexical analyser... */
@@ -2627,7 +2602,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	s=read_word(QSP_ARG  &sptr);
 	SET_YY_CP(sptr);
 
-	SET_CURR_STRING(s);	// call savestr here?
+	SET_CURR_STRING(s);
 	/* if word was a macro arg, macro arg is now on input stack */
 	if( s == NULL ) return(NEXT_TOKEN);
 
@@ -2730,25 +2705,20 @@ WARN(ERROR_STRING);
 	}
 	/* NOTREACHED */
 	return(-1);
-}
-
-static void release_parse_strings(SINGLE_QSP_ARG_DECL)
-{
-	int i;
-
-	for(i=0;i<n_saved_parse_strings;i++){
-		givbuf((void *)(saved_parse_string[i]));
-	}
-	n_saved_parse_strings=0;
-}
+} // name_token
 
 double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 {
 	int stat;
+	double result;
+
+	//push_vector_parser_data(SINGLE_QSP_ARG);
 
 	FINAL=0.0;
-	YY_INPUT_LINE[0]=0;		/* clear record of input string */
-	LASTLINENO=(-1);
+	assert( YY_INPUT_LINE != NULL );
+	//YY_INPUT_LINE[0]=0;		/* clear record of input string */
+	copy_string(YY_INPUT_LINE,"");	// clear record of input
+	LAST_LINE_NUM=(-1);
 	YY_CP="";
 	SEMI_SEEN=0;
 	END_SEEN=0;
@@ -2767,6 +2737,7 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 	 * vectree.c each time we run bison...
 	 */
 	stat=yyparse(THIS_QSP);
+
 	if( TOP_NODE != NULL )	/* successful parsing */
 		{
 		if( dumpit ) {
@@ -2783,16 +2754,9 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 		advise(ERROR_STRING);
 	}
 
-	/* yylex call qline - */
+	result = FINAL;
 
-	/* enable_lookahead(); */
-
-	// Here we need to free all of the strings we allocated during the
-	// parsing!
-
-	release_parse_strings(SINGLE_QSP_ARG);
-
-	return(FINAL);
+	return result;
 } // end parse_stuff
 
 void yyerror(Query_Stack *qsp,  char *s)
@@ -2803,7 +2767,6 @@ void yyerror(Query_Stack *qsp,  char *s)
 
 	/* get the filename and line number */
 
-fprintf(stderr,"yyerror BEGIN\n");
 	filename=CURRENT_FILENAME;
 	ql = QLEVEL;
 	//n = THIS_QSP->qs_query[ql].q_lineno;
@@ -2812,10 +2775,10 @@ fprintf(stderr,"yyerror BEGIN\n");
 	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
 	NWARN(yyerror_str);
 
-	sprintf(yyerror_str,"\t%s",YY_INPUT_LINE);
+	sprintf(yyerror_str,"\t%s",sb_buffer(YY_INPUT_LINE));
 	advise(yyerror_str);
 	/* print an arrow at the problem point... */
-	n=(int)(strlen(YY_INPUT_LINE)-strlen(YY_CP));
+	n=(int)(strlen(sb_buffer(YY_INPUT_LINE))-strlen(YY_CP));
 	n-=2;
 	if( n < 0 ) n=0;
 	strcpy(yyerror_str,"\t");
@@ -2864,8 +2827,9 @@ int vecexp_ing=1;
 
 void expr_file(SINGLE_QSP_ARG_DECL)
 {
-	SET_EXPR_LEVEL(QLEVEL);	/* yylex checks this... */
+	push_vector_parser_data(SINGLE_QSP_ARG);
 
+	SET_EXPR_LEVEL(QLEVEL);	/* yylex checks this... */
 	parse_stuff(SINGLE_QSP_ARG);
 
 	/* We can break out of this loop
@@ -2875,5 +2839,7 @@ void expr_file(SINGLE_QSP_ARG_DECL)
 	 * In the latter case, we may need to pop a dup file
 	 * & do some housekeeping
 	 */
+
+	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 

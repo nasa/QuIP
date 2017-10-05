@@ -132,6 +132,13 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	// What should we do???
 }
 
+static void perform_text_action(NSString *s, Screen_Obj *sop)
+{
+	assign_var(DEFAULT_QSP_ARG  "input_string",s.UTF8String);
+	/* now interpret the action */
+	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(text field event)");
+}
+
 // Where does this get called from?  how do we know which qsp to use???
 // This gets called when the user types 'DONE' on the pop-up keyboard...
 // This routine should handle the result.  In the case of the console,
@@ -144,15 +151,42 @@ static NSString *kCellIdentifier = @"MyIdentifier2";
 	CHECK_SCRNOBJ_BOOL(sop,textField,textFieldShouldReturn,1);
 
 	NSString *s= textField.text;
-	assign_var(DEFAULT_QSP_ARG  "input_string",s.UTF8String);
-
-	/* now interpret the action */
-	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), "(text field event)");
+	perform_text_action(s,sop);
 
 	[textField resignFirstResponder];
 
 	return YES;
 }
+
+- (BOOL) textField: (UITextField *) textField shouldChangeCharactersInRange: (NSRange) range
+			replacementString: (NSString *) string
+{
+	Screen_Obj *sop = find_any_scrnobj((UIControl *)textField);
+	CHECK_SCRNOBJ_BOOL(sop,textField,shouldChangeCharactersInRange,1);
+
+	NSString *s = textField.text;
+//fprintf(stderr,"shouldChangeCharactersInRange:  old text is \"%s\"\nreplacement:  \"%s\"\nrange:  %d at %d\n\n",
+//s.UTF8String,string.UTF8String,(int)range.length,(int)range.location);
+
+	// For straighforward typing with no backspaces, the location should
+	// be the length of the existing string.
+	// When adding characters, length is 0, and when deleting length is 1.
+	// On the keyboard, we can use the arrow keys to move around, if we insert
+	// in the middle we get a length of 0 and a position where the insertion starts.
+	// So the final string should be:
+	// 1) existing characters up to position
+	// 2) new string chars
+	// 3) any old characters after position+len
+
+	NSString *result = [s stringByReplacingCharactersInRange:range withString:string];
+//fprintf(stderr,"result = \"%s\"\n",result.UTF8String);
+
+	perform_text_action(result,sop);
+
+	return YES;
+}
+
+// Is there a delegate method for changing (editing) the content?
 
 -(void) selectionDidChange:(id<UITextInput>)textInput
 {

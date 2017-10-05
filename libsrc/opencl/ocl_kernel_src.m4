@@ -9,6 +9,7 @@ define(`QUOTE_IT',QUOTE_CHAR$1QUOTE_CHAR)
 
 dnl all these quotes because type_code is not defined until later...
 dnl type_code not expanded???
+dnl	KERN_SOURCE_NAME( func_name, speed_string )
 define(`KERN_SOURCE_NAME',`/* kern_source_name $1 $2 */ `kernel_source_'pf_str`_'$2`_'type_code`_'$1')
 
 dnl	_GENERIC_FAST_CONV_FUNC(name,dest_type)

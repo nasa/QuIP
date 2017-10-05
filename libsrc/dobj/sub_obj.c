@@ -243,6 +243,11 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 		return(dp);
 	}
 
+	// Clear the volatile flag if set...
+	// This is necessary because volatile objects are deleted in ascii_menu.c,
+	// to deal with platform copies - probably better to introduce a new flag.
+	CLEAR_OBJ_FLAG_BITS(dp,DT_VOLATILE);
+
 	// In openCL, the "data_ptr" is actually a pointer to the memory buffer,
 	// object, not the address of the data itself.  (This appears to be a private
 	// structure, so we don't have access to the innards.)

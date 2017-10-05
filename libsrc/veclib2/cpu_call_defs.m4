@@ -304,6 +304,8 @@ define(`FAST_ADVANCE_2',`FAST_ADVANCE_1 FAST_ADVANCE_SRC1')
 define(`FAST_ADVANCE_3',`FAST_ADVANCE_2 FAST_ADVANCE_SRC2')
 define(`FAST_ADVANCE_4',`FAST_ADVANCE_3 FAST_ADVANCE_SRC3')
 define(`FAST_ADVANCE_5',`FAST_ADVANCE_4 FAST_ADVANCE_SRC4')
+define(`FAST_ADVANCE_LUTMAP_B',`FAST_ADVANCE_2')
+define(`FAST_ADVANCE_LUTMAP_S',`FAST_ADVANCE_2')
 
 define(`FAST_ADVANCE_CPX_2',`FAST_ADVANCE_CPX_1 FAST_ADVANCE_CPX_SRC1')
 define(`FAST_ADVANCE_CPX_3',`FAST_ADVANCE_CPX_2 FAST_ADVANCE_CPX_SRC2')
@@ -372,6 +374,8 @@ define(`EQSP_ADVANCE_2',`EQSP_ADVANCE_1 EQSP_ADVANCE_SRC1')
 define(`EQSP_ADVANCE_3',`EQSP_ADVANCE_2 EQSP_ADVANCE_SRC2')
 define(`EQSP_ADVANCE_4',`EQSP_ADVANCE_3 EQSP_ADVANCE_SRC3')
 define(`EQSP_ADVANCE_5',`EQSP_ADVANCE_4 EQSP_ADVANCE_SRC4')
+define(`EQSP_ADVANCE_LUTMAP_B',`EQSP_ADVANCE_2')
+define(`EQSP_ADVANCE_LUTMAP_S',`EQSP_ADVANCE_2')
 
 define(`EQSP_ADVANCE_CPX_2',`EQSP_ADVANCE_CPX_1 EQSP_ADVANCE_CPX_SRC1')
 define(`EQSP_ADVANCE_CPX_3',`EQSP_ADVANCE_CPX_2 EQSP_ADVANCE_CPX_SRC2')
@@ -414,6 +418,7 @@ define(`EXTRA_DECLS_T2',`dest_cpx tmpc;')
 define(`EXTRA_DECLS_T3',`dest_cpx tmpc; dest_type tmp_denom;')
 define(`EXTRA_DECLS_T4',`dest_quat tmpq;')
 define(`EXTRA_DECLS_T5',`dest_quat tmpq; dest_type tmp_denom;')
+dnl define(`EXTRA_DECLS_LUTMAP_B',`')
 
 /* Stuff for projection loops */
 
@@ -519,6 +524,8 @@ define(`INC_BASES_DBM',`INC_BASE($1,dbm_base,dbminc)')
 define(`INC_BASES_DBM_',`INC_BASES_DBM($1)')
 
 define(`INC_BASES_2',`INC_BASES_1($1) INC_BASES_SRC1($1)')
+define(`INC_BASES_LUTMAP_B',`INC_BASES_2($1)')
+define(`INC_BASES_LUTMAP_S',`INC_BASES_2($1)')
 define(`INC_BASES_3',`/* inc_bases_3 /$1/ */ INC_BASES_2($1) INC_BASES_SRC2($1)')
 define(`INC_BASES_4',`INC_BASES_3($1) INC_BASES_SRC3($1)')
 define(`INC_BASES_5',`INC_BASES_4($1) INC_BASES_SRC4($1)')
@@ -671,6 +678,8 @@ define(`INIT_PTRS_2',`INIT_PTRS_1 INIT_PTRS_SRC1')
 define(`INIT_PTRS_3',`INIT_PTRS_2 INIT_PTRS_SRC2')
 define(`INIT_PTRS_4',`INIT_PTRS_3 INIT_PTRS_SRC3')
 define(`INIT_PTRS_5',`INIT_PTRS_4 INIT_PTRS_SRC4')
+define(`INIT_PTRS_LUTMAP_B',`INIT_PTRS_2')
+define(`INIT_PTRS_LUTMAP_S',`INIT_PTRS_2')
 
 define(`INIT_PTRS_CPX_2',`INIT_PTRS_CPX_1 INIT_PTRS_CPX_SRC1')
 define(`INIT_PTRS_CPX_3',`INIT_PTRS_CPX_2 INIT_PTRS_CPX_SRC2')
@@ -741,6 +750,8 @@ dnl	define(`INC_PTRS_SBM_QUAT_3',`INC_PTRS_QUAT_3 INC_PTRS_SBM
 
 define(`INC_PTRS_1',`dst_ptr += IDX_INC(dinc,0);')
 define(`INC_PTRS_2',`INC_PTRS_1 INC_PTRS_SRC1')
+define(`INC_PTRS_LUTMAP_B',`INC_PTRS_2')
+define(`INC_PTRS_LUTMAP_S',`INC_PTRS_2')
 define(`INC_PTRS_3',`INC_PTRS_2 INC_PTRS_SRC2')
 define(`INC_PTRS_4',`INC_PTRS_3 INC_PTRS_SRC3')
 define(`INC_PTRS_5',`INC_PTRS_4 INC_PTRS_SRC4')
@@ -801,6 +812,8 @@ dnl	INIT_BASES_CONV_1(type)
 define(`INIT_BASES_CONV_1',`dst_base[3]=($1 *)VA_DEST_PTR(vap);')
 define(`INIT_BASES_1',`dst_base[3]=(dest_type *)VA_DEST_PTR(vap);')
 define(`INIT_BASES_SRC1',`s1_base[3]=(std_type *)VA_SRC_PTR(vap,0);')
+define(`INIT_BASES_BSRC1',`s1_base[3]=(u_char *)VA_SRC_PTR(vap,0);')
+define(`INIT_BASES_SSRC1',`s1_base[3]=(u_short *)VA_SRC_PTR(vap,0);')
 define(`INIT_BASES_SRC2',`s2_base[3]=(std_type *)VA_SRC_PTR(vap,1);')
 define(`INIT_BASES_SRC3',`s3_base[3]=(std_type *)VA_SRC_PTR(vap,2);')
 define(`INIT_BASES_SRC4',`s4_base[3]=(std_type *)VA_SRC_PTR(vap,3);')
@@ -828,6 +841,8 @@ dnl	INIT_BASES_CONV_2(type)
 define(`INIT_BASES_CONV_2',`INIT_BASES_CONV_1($1) INIT_BASES_SRC1')
 
 define(`INIT_BASES_2',`INIT_BASES_1 INIT_BASES_SRC1')
+define(`INIT_BASES_LUTMAP_B',`INIT_BASES_1 INIT_BASES_BSRC1 FAST_INIT_MAP_B')
+define(`INIT_BASES_LUTMAP_S',`INIT_BASES_1 INIT_BASES_SSRC1 FAST_INIT_MAP_S')
 
 define(`INIT_BASES_3',`INIT_BASES_2 INIT_BASES_SRC2')
 define(`INIT_BASES_4',`INIT_BASES_3 INIT_BASES_SRC3')
@@ -933,6 +948,8 @@ define(`COPY_BASES_2',`COPY_BASES_1($1) COPY_BASES_SRC1($1)')
 define(`COPY_BASES_3',`COPY_BASES_2($1) COPY_BASES_SRC2($1)')
 define(`COPY_BASES_4',`COPY_BASES_3($1) COPY_BASES_SRC3($1)')
 define(`COPY_BASES_5',`COPY_BASES_4($1) COPY_BASES_SRC4($1)')
+define(`COPY_BASES_LUTMAP_B',`COPY_BASES_2($1)')
+define(`COPY_BASES_LUTMAP_S',`COPY_BASES_2($1)')
 
 define(`COPY_BASES_CPX_2',`COPY_BASES_CPX_1($1) COPY_BASES_CPX_SRC1($1)')
 define(`COPY_BASES_CPX_3',`COPY_BASES_CPX_2($1) COPY_BASES_CPX_SRC2($1)')
@@ -1107,6 +1124,22 @@ define(`DECLARE_BASES_2',`
 	DECLARE_VBASE_SRC1
 ')
 
+define(`DECLARE_MAP_PTR',`
+	std_type *map;
+')
+
+define(`DECLARE_BASES_LUTMAP_B',`
+	DECLARE_BASES_1
+	DECLARE_VBASE_BSRC1
+	DECLARE_MAP_PTR
+')
+
+define(`DECLARE_BASES_LUTMAP_S',`
+	DECLARE_BASES_1
+	DECLARE_VBASE_SSRC1
+	DECLARE_MAP_PTR
+')
+
 define(`DECLARE_BASES_IDX_2',`
 	DECLARE_BASES_IDX_1
 	DECLARE_VBASE_SRC1
@@ -1133,6 +1166,8 @@ define(`DECLARE_XXX_SRC1_VBASE',`DECLARE_VBASE($1,s1)')
 define(`DECLARE_XXX_SRC2_VBASE',`DECLARE_VBASE($1,s2)')
 
 define(`DECLARE_VBASE_SRC1',`DECLARE_VBASE(std_type,s1)')
+define(`DECLARE_VBASE_BSRC1',`DECLARE_VBASE(u_char,s1)')
+define(`DECLARE_VBASE_SSRC1',`DECLARE_VBASE(u_short,s1)')
 define(`DECLARE_VBASE_CPX_SRC1',`DECLARE_VBASE(std_cpx,cs1)')
 define(`DECLARE_VBASE_QUAT_SRC1',`DECLARE_VBASE(std_quat,qs1)')
 define(`DECLARE_VBASE_SRC2',`DECLARE_VBASE(std_type,s2)')
@@ -1580,6 +1615,8 @@ define(`EQSP_BODY_QUAT_5',`SIMPLE_EQSP_BODY($1,$2,QUAT_,5,`',`')')
 define(`EQSP_BODY_QQR_3',`SIMPLE_EQSP_BODY($1,$2,QQR_,3,`',`')')
 define(`EQSP_BODY_QR_2',`SIMPLE_EQSP_BODY($1,$2,QR_,2,`',`')')
 define(`EQSP_BODY_RQ_2',`SIMPLE_EQSP_BODY($1,$2,RQ_,2,`',`')')
+define(`EQSP_BODY_LUTMAP_B',`SIMPLE_EQSP_BODY($1,$2,`',LUTMAP_B,`',`')')
+define(`EQSP_BODY_LUTMAP_S',`SIMPLE_EQSP_BODY($1,$2,`',LUTMAP_S,`',`')')
 
 
 dnl  slow bodies
@@ -1587,6 +1624,8 @@ dnl  slow bodies
 define(`SLOW_BODY_1',`SIMPLE_SLOW_BODY($1,$2,`',1,`')')
 define(`SLOW_BODY_2',`SIMPLE_SLOW_BODY($1,$2,`',2,`')')
 define(`SLOW_BODY_3',`SIMPLE_SLOW_BODY($1,$2,`',3,`')')
+define(`SLOW_BODY_LUTMAP_B',`SIMPLE_SLOW_BODY($1,$2,`',LUTMAP_B,`')')
+define(`SLOW_BODY_LUTMAP_S',`SIMPLE_SLOW_BODY($1,$2,`',LUTMAP_S,`')')
 define(`SLOW_BODY_CPX_1',`SIMPLE_XXX_SLOW_BODY($1,$2,`',CPX_,1,`',`')')
 define(`SLOW_BODY_CPX_2',`SIMPLE_XXX_SLOW_BODY($1,$2,`',CPX_,2,`',`')')
 define(`SLOW_BODY_CPX_2_T2',`SIMPLE_XXX_SLOW_BODY($1,$2,`',CPX_,2,T2,`')')
@@ -2180,14 +2219,20 @@ define(`_FAST_DECLS',FAST_DECLS_$1)
 
 define(`FAST_DECLS_1',`dest_type *dst_ptr; dimension_t fl_ctr;')
 define(`FAST_DECLS_SRC1',`std_type *s1_ptr;')
+define(`FAST_DECLS_BSRC1',`u_char *s1_ptr;')
+define(`FAST_DECLS_SSRC1',`u_short *s1_ptr;')
 define(`FAST_DECLS_SRC2',`std_type *s2_ptr;')
 define(`FAST_DECLS_SRC3',`std_type *s3_ptr;')
 define(`FAST_DECLS_SRC4',`std_type *s4_ptr;')
+define(`FAST_DECLS_MAP_B',`DECLARE_MAP_PTR')
+define(`FAST_DECLS_MAP_S',`DECLARE_MAP_PTR')
 define(`FAST_DECLS_2SRCS',`FAST_DECLS_SRC1 FAST_DECLS_SRC2')
 define(`FAST_DECLS_2',`FAST_DECLS_1 FAST_DECLS_SRC1')
 define(`FAST_DECLS_3',`FAST_DECLS_2 FAST_DECLS_SRC2')
 define(`FAST_DECLS_4',`FAST_DECLS_3 FAST_DECLS_SRC3')
 define(`FAST_DECLS_5',`FAST_DECLS_4 FAST_DECLS_SRC4')
+define(`FAST_DECLS_LUTMAP_B',`FAST_DECLS_1 FAST_DECLS_BSRC1 FAST_DECLS_MAP_B')
+define(`FAST_DECLS_LUTMAP_S',`FAST_DECLS_1 FAST_DECLS_SSRC1 FAST_DECLS_MAP_S')
 define(`FAST_DECLS_SBM',`int sbm_bit_idx; bitmap_word *sbm_ptr;')
 define(`FAST_DECLS_SBM1',`int sbm1_bit_idx; bitmap_word *sbm1_ptr;')
 define(`FAST_DECLS_SBM2',`int sbm2_bit_idx; bitmap_word *sbm2_ptr;')
@@ -2243,11 +2288,17 @@ define(`_EQSP_DECLS',EQSP_DECLS_$1)
 
 define(`EQSP_DECLS_1',`dest_type *dst_ptr; dimension_t fl_ctr;')
 define(`EQSP_DECLS_SRC1',`std_type *s1_ptr;')
+define(`EQSP_DECLS_BSRC1',`u_char *s1_ptr;')
+define(`EQSP_DECLS_SSRC1',`u_short *s1_ptr;')
 define(`EQSP_DECLS_SRC2',`std_type *s2_ptr;')
 define(`EQSP_DECLS_SRC3',`std_type *s3_ptr;')
 define(`EQSP_DECLS_SRC4',`std_type *s4_ptr;')
+define(`EQSP_DECLS_MAP_B',`FAST_DECLS_MAP_B')
+define(`EQSP_DECLS_MAP_S',`FAST_DECLS_MAP_S')
 define(`EQSP_DECLS_2SRCS',`EQSP_DECLS_SRC1 EQSP_DECLS_SRC2')
 define(`EQSP_DECLS_2',`EQSP_DECLS_1 EQSP_DECLS_SRC1')
+define(`EQSP_DECLS_LUTMAP_B',`EQSP_DECLS_1 EQSP_DECLS_BSRC1 EQSP_DECLS_MAP_B')
+define(`EQSP_DECLS_LUTMAP_S',`EQSP_DECLS_1 EQSP_DECLS_SSRC1 EQSP_DECLS_MAP_S')
 define(`EQSP_DECLS_3',`EQSP_DECLS_2 EQSP_DECLS_SRC2')
 define(`EQSP_DECLS_4',`EQSP_DECLS_3 EQSP_DECLS_SRC3')
 define(`EQSP_DECLS_5',`EQSP_DECLS_4 EQSP_DECLS_SRC4')
@@ -2317,7 +2368,13 @@ dnl define(`FAST_INIT_COUNT_CPX	fl_ctr = VA_LENGTH(vap);
 dnl define(`FAST_INIT_COUNT_QUAT	fl_ctr = VA_LENGTH(vap);
 dnl */
 
+define(`INIT_MAP_PTR',`map = (std_type *)VA_SRC_PTR(vap,1);')
+
 define(`FAST_INIT_SRC1',`s1_ptr = (std_type *)VA_SRC_PTR(vap,0);')
+define(`FAST_INIT_BSRC1',`s1_ptr = (u_char *)VA_SRC_PTR(vap,0);')
+define(`FAST_INIT_SSRC1',`s1_ptr = (u_short *)VA_SRC_PTR(vap,0);')
+define(`FAST_INIT_MAP_B',`INIT_MAP_PTR')
+define(`FAST_INIT_MAP_S',`INIT_MAP_PTR')
 define(`FAST_INIT_SRC2',`s2_ptr = (std_type *)VA_SRC_PTR(vap,1);')
 define(`FAST_INIT_SRC3',`s3_ptr = (std_type *)VA_SRC_PTR(vap,2);')
 define(`FAST_INIT_SRC4',`s4_ptr = (std_type *)VA_SRC_PTR(vap,3);')
@@ -2326,6 +2383,8 @@ define(`FAST_INIT_3',`FAST_INIT_2	FAST_INIT_SRC2')
 define(`FAST_INIT_4',`FAST_INIT_3	FAST_INIT_SRC3')
 define(`FAST_INIT_5',`FAST_INIT_4	FAST_INIT_SRC4')
 define(`FAST_INIT_2SRCS',`FAST_INIT_SRC1	FAST_INIT_SRC2')
+define(`FAST_INIT_LUTMAP_B',`FAST_INIT_1	FAST_INIT_BSRC1	FAST_INIT_MAP_B')
+define(`FAST_INIT_LUTMAP_S',`FAST_INIT_1	FAST_INIT_SSRC1	FAST_INIT_MAP_S')
 
 
 define(`FAST_INIT_CPX_1',`
@@ -2422,7 +2481,11 @@ dnl define(`EQSP_INIT_COUNT_QUAT	fl_ctr = VA_LENGTH(vap);
 dnl */
 
 define(`EQSP_INIT_SRC1',`s1_ptr = (std_type *)VA_SRC_PTR(vap,0);')
+define(`EQSP_INIT_BSRC1',`s1_ptr = (u_char *)VA_SRC_PTR(vap,0);')
+define(`EQSP_INIT_SSRC1',`s1_ptr = (u_short *)VA_SRC_PTR(vap,0);')
 define(`EQSP_INIT_SRC2',`s2_ptr = (std_type *)VA_SRC_PTR(vap,1);')
+define(`EQSP_INIT_MAP_B',`map = (std_type *)VA_SRC_PTR(vap,1);')
+define(`EQSP_INIT_MAP_S',`map = (std_type *)VA_SRC_PTR(vap,1);')
 define(`EQSP_INIT_SRC3',`s3_ptr = (std_type *)VA_SRC_PTR(vap,2);')
 define(`EQSP_INIT_SRC4',`s4_ptr = (std_type *)VA_SRC_PTR(vap,3);')
 define(`EQSP_INIT_2',`EQSP_INIT_1	EQSP_INIT_SRC1')
@@ -2430,6 +2493,8 @@ define(`EQSP_INIT_3',`EQSP_INIT_2	EQSP_INIT_SRC2')
 define(`EQSP_INIT_4',`EQSP_INIT_3	EQSP_INIT_SRC3')
 define(`EQSP_INIT_5',`EQSP_INIT_4	EQSP_INIT_SRC4')
 define(`EQSP_INIT_2SRCS',`EQSP_INIT_SRC1	EQSP_INIT_SRC2')
+define(`EQSP_INIT_LUTMAP_B',`EQSP_INIT_1	EQSP_INIT_BSRC1	EQSP_INIT_MAP_B')
+define(`EQSP_INIT_LUTMAP_S',`EQSP_INIT_1	EQSP_INIT_SSRC1	EQSP_INIT_MAP_S')
 
 
 define(`EQSP_INIT_CPX_1',`
@@ -2515,9 +2580,6 @@ define(`SIMPLE_FAST_BODY',`
 
 {
 	/* simple_fast_body typ = /$3/  suffix = /$4/ */
-	dnl FAST_DECLS_##typ##suffix
-	dnl FAST_INIT_##typ##suffix
-	dnl EXTRA_DECLS_##extra
 	FAST_DECLS($3,$4)
 	FAST_INIT($3,$4)
 	EXTRA_DECLS($5)
@@ -2538,6 +2600,8 @@ define(`FAST_BODY_2',`SIMPLE_FAST_BODY($1,$2,`',2,`',`')')
 define(`FAST_BODY_3',`SIMPLE_FAST_BODY($1,$2,`',3,`',`')')
 define(`FAST_BODY_4',`SIMPLE_FAST_BODY($1,$2,`',4,`',`')')
 define(`FAST_BODY_5',`SIMPLE_FAST_BODY($1,$2,`',5,`',`')')
+define(`FAST_BODY_LUTMAP_B',`SIMPLE_FAST_BODY($1,$2,`',LUTMAP_B,`',`')')
+define(`FAST_BODY_LUTMAP_S',`SIMPLE_FAST_BODY($1,$2,`',LUTMAP_S,`',`')')
 define(`FAST_BODY_SBM_1',`SIMPLE_FAST_BODY($1,$2,`',SBM_1,`',`')')
 define(`FAST_BODY_SBM_2',`SIMPLE_FAST_BODY($1,$2,`',SBM_2,`',`')')
 define(`FAST_BODY_SBM_3',`SIMPLE_FAST_BODY($1,$2,`',SBM_3,`',`')')
@@ -3031,8 +3095,12 @@ define(`_VEC_FUNC_DBM_1S',`OBJ_METHOD($1,$2,DBM_,`',_1S,`',`')')
 dnl	_VEC_FUNC_VSMAP( name, op )
 define(`_VEC_FUNC_VSMAP',`OBJ_METHOD($1,`SET_DBM_BIT(src1 $2 scalar1_val)',DBM_,`',_1S,1SRC,`')')
 
+dnl define(`_VEC_FUNC_3V_2SCAL',`OBJ_METHOD($1,$2,`',`',_2S,3,`')')
+define(`_VEC_FUNC_LUTMAP_B',`OBJ_METHOD($1,$2,`',`',`',LUTMAP_B,`')')
+define(`_VEC_FUNC_LUTMAP_S',`OBJ_METHOD($1,$2,`',`',`',LUTMAP_S,`')')
 
 define(`scalar1_val',`VA_SCALAR_VAL_STD(vap,0)')
+define(`map_size',`VA_SCALAR_VAL_DIM(vap,0)')
 define(`scalar2_val',`VA_SCALAR_VAL_STD(vap,1)')
 define(`scalar3_val',`VA_SCALAR_VAL_STD(vap,2)')
 define(`cscalar1_val',`VA_SCALAR_VAL_STDCPX(vap,0)')

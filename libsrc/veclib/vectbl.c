@@ -339,6 +339,9 @@ CREAT_VEC_FUNC( visspace,	FVISSPACE,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( visblank,	FVISBLANK,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 CREAT_VEC_FUNC( viscntrl,	FVISCNTRL,	V_UNARY,	M_AI,	REAL_ARG_MASK	)
 
+CREAT_VEC_FUNC( vlutmapb,	FVLUTMAPB,	VV_BINARY,	M_ALL,	REAL_ARG_MASK	)
+CREAT_VEC_FUNC( vlutmaps,	FVLUTMAPS,	VV_BINARY,	M_ALL,	REAL_ARG_MASK	)
+
 END_VFUNC_DECLS
 
 
@@ -387,7 +390,9 @@ void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 
 //	assert( size == N_VEC_FUNCS );
 	if( size != N_VEC_FUNCS ){
-		WARN("size not equal to N_VEC_FUNCS!?");
+		sprintf(ERROR_STRING,"check_vfa_tbl:  size (%d) not equal to N_VEC_FUNCS (%d)!?",
+			size,N_VEC_FUNCS);
+		WARN(ERROR_STRING);
 	}
 
 	qsort(vfa_tbl,size,sizeof(Vec_Func_Array),vfa_cmp);

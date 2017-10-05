@@ -230,6 +230,7 @@ ADD_CMD( del_choice,		do_del_choice,		delete a selection from a chooser )
 ADD_CMD( set_picks,		do_set_picks,		reset the choices in a picker )
 
 ADD_CMD( set_choice,		do_set_choice,		set state of chooser )
+ADD_CMD( get_choice,		do_get_choice,		get state of chooser )
 ADD_CMD( clear_choices,		do_clear_choices,	clear all choices )
 ADD_CMD( range,			set_new_range,		reset slider range )
 ADD_CMD( slide_pos,		set_new_pos,		set slider position )

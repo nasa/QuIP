@@ -103,7 +103,7 @@ enum data_area_type {
 		return;					\
 	}
 
-#ifdef HAVE_CUDA
+#ifdef HAVE_ANY_GPU
 
 #define RAM_OBJ_ERROR_MSG(dp,whence)			\
 		sprintf(ERROR_STRING,			\
@@ -123,10 +123,10 @@ enum data_area_type {
 		return retval;				\
 	}
 
-#else // ! HAVE_CUDA
+#else // ! HAVE_ANY_GPU
 #define INSIST_RAM_OBJ(dp,whence)		// nop
 #define VINSIST_RAM_OBJ(dp,whence,retval)	// nop
-#endif // ! HAVE_CUDA
+#endif // ! HAVE_ANY_GPU
 		
 
 extern Data_Area *def_area_p, *ram_area_p;

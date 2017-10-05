@@ -14,6 +14,7 @@ dnl	 * No difference.  Eliminating the flag checks after each kernel
 dnl	 * launch reduces the time (for 100 iterations) from 11 msec to 7 msec!
 dnl	 * This could probably be speeded up quite a bit if the control
 dnl	 * logic could be run on the device instead of on the host...
+dnl	 * [should be possible with sync-threads!]
 dnl	 *
 dnl	 * But can we launch a thread array from a device function?
 dnl	 * Or should we launch the whole grid and have one special thread

@@ -5,6 +5,7 @@
 #include "quip_prot.h"
 #include "opencv_glue.h"
 #include "data_obj.h"
+#include <math.h>	// fabs
 
 // local prototypes
 static COMMAND_FUNC( do_ocv_smooth );
@@ -473,6 +474,8 @@ static COMMAND_FUNC( do_new_cascade )
 
 #define false 0
 #define true 1
+
+// When do we need this definition?
 #define bool int
 
 static CvPoint2D32f* FindFace(QSP_ARG_DECL  IplImage* img, CvMemStorage* storage, CvHaarClassifierCascade* cascade, int frame_number)

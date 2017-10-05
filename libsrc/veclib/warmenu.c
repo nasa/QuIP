@@ -957,7 +957,13 @@ static COMMAND_FUNC( doeven )
 
 #endif /* NOT_YET */
 
-static COMMAND_FUNC( dolutmap )
+static COMMAND_FUNC( do_lutmap_b )
+{ DO_VCODE(FVLUTMAPB); }
+
+static COMMAND_FUNC( do_lutmap_s )
+{ DO_VCODE(FVLUTMAPS); }
+
+#ifdef FOOBAR
 {
 	Data_Obj *dst, *src, *map;
 
@@ -969,6 +975,7 @@ static COMMAND_FUNC( dolutmap )
 	if( lutmap(QSP_ARG  dst,src,map) == (-1) )
 		WARN("mapping failed");
 }
+#endif // FOOBAR
 
 #define MAX_FS_LEVELS	128
 
@@ -1394,7 +1401,8 @@ ADD_CMD( dither,		do_dither,	initialize ordered dither matrix	)
 ADD_CMD( median,		do_median,	apply median filter to image	)
 ADD_CMD( median_clip,	do_median_clip,	apply median filter to bright pixels	)
 ADD_CMD( median_1D,	do_median_1D,	apply median filter to vector	)
-ADD_CMD( map,		dolutmap,	map through a lookup table	)
+ADD_CMD( map,		do_lutmap_b,	map through a byte-indexed lookup table	)
+ADD_CMD( map_s,		do_lutmap_s,	map through a short-indexed lookup table	)
 ADD_CMD( resample,	do_resample,	warp image using control image	)
 ADD_CMD( bilinear,	do_bilinear,	warp image w/ bilinear inter.	)
 ADD_CMD( new_bilinear,	do_new_bilinear,warp image w/ bilinear inter.	)

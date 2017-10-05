@@ -42,9 +42,13 @@ extern int query_has_text(Query *);
 extern void exit_current_file(SINGLE_QSP_ARG_DECL);
 extern void exit_current_macro(SINGLE_QSP_ARG_DECL);
 extern void set_query_arg_at_index(Query *qp,int index,const char *s);
+extern void rls_macro(QSP_ARG_DECL  Macro *mp);
 
 extern int qs_level(SINGLE_QSP_ARG_DECL);
 extern FILE * qs_msg_file(SINGLE_QSP_ARG_DECL);
+
+extern void push_vector_parser_data(SINGLE_QSP_ARG_DECL);
+extern void pop_vector_parser_data(SINGLE_QSP_ARG_DECL);
 
 // quip_main.c
 extern void push_quip_menu(Query_Stack *qsp);
@@ -195,7 +199,7 @@ extern void			set_top_node(QSP_ARG_DECL  Vec_Expr_Node *);
 #define SET_TOP_NODE(enp)	set_top_node(QSP_ARG  enp)
 
 #define VEXP_STR		QS_EXPR_STRING
-extern char *			qs_expr_string(SINGLE_QSP_ARG_DECL);
+extern String_Buf *		qs_expr_string(SINGLE_QSP_ARG_DECL);
 #define QS_EXPR_STRING		qs_expr_string(SINGLE_QSP_ARG)
 
 //#define	ascii_input_fmt		THIS_QSP->qs_dai_p->dai_input_fmt

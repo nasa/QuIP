@@ -66,7 +66,7 @@ static void prohibit_opengl(void)
 
 // We treat the device as a server, so "upload" transfers from host to device
 
-static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 	cl_int status;
 
@@ -81,7 +81,7 @@ static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 	status = clEnqueueWriteBuffer(OCLDEV_QUEUE(pdp),
 			dst,		// device mem address (cl_mem)
 			CL_TRUE,	// blocking write
-			0,		// offset
+			offset,		// offset
 			siz,
 			src,		// host mem address
 			0,		// num events in wait list
@@ -93,7 +93,7 @@ static void ocl_mem_upload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 	}
 }
 
-static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platform_Device *pdp )
+static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, Platform_Device *pdp )
 {
 	cl_int status;
 
@@ -108,7 +108,7 @@ static void ocl_mem_dnload(QSP_ARG_DECL  void *dst, void *src, size_t siz, Platf
 	status = clEnqueueReadBuffer( OCLDEV_QUEUE(pdp),
 			src,		// cl_mem
 			CL_TRUE,	// blocking_read
-			0,		// offset
+			/* 0 */ offset,	// offset
 			siz,
 			dst,
 			0,		// num_events_in_wait_list
@@ -970,7 +970,7 @@ void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len )
 
 	fprintf(stderr,"show_gpu_vector:  src = 0x%lx\n",(long)ptr);
 	// now do the memory transfer
-	(*PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  buf, ptr, siz, pdp );
+	(*PF_MEM_DNLOAD_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  buf, ptr, siz, 0, pdp );
 	for(i=0;i<len;i++){
 		fprintf(stderr,"%d\t%g\n",i,buf[i]);
 	}

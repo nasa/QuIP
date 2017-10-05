@@ -2262,6 +2262,7 @@ keep_looking:
 /* Traverse a string list tree, setting the query args starting
  * at index.  Returns the number of leaves.
  *
+ * We use a static array to hold the string pointers while we are parsing the tree.
  * When this was first written, the query args were a fixed-sized
  * table q_arg;  But now they are a dynamically allocated array
  * of variable size, renamed q_args.  Normally these are allocated
@@ -2269,30 +2270,54 @@ keep_looking:
  * stack.  Here we are pushing a script function on the query stack.
  */
 
-#define STORE_QUERY_ARG( s )						\
-{									\
-	if( index < max_args ){						\
-		/*SET_QRY_ARG_AT_IDX(qp,index,s);*/			\
-		set_query_arg_at_index(qp,index,s);			\
-	} else {								\
-		sprintf(ERROR_STRING,"set_script_args:  can't assign arg %d (max %d)",\
-			index+1,max_args);				\
-		WARN(ERROR_STRING);					\
-	}								\
+#define MAX_SCRIPT_ARGS	12
+static const char *script_arg_tbl[MAX_SCRIPT_ARGS];	// BUG - not thread-safe!
+static int n_stored_script_args=0;
+
+static void store_script_arg( const char *s, int idx )
+{
+	assert(idx>=0 && idx < MAX_SCRIPT_ARGS);
+	assert(n_stored_script_args==idx);
+
+	script_arg_tbl[idx] = savestr(s);
+	n_stored_script_args++;
 }
 
-static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,int max_args)
+static void pass_script_args(Query *qp)
 {
-	int n1,n2;
-	double dval;
-	const char *s;
+	int i;
+
+	for(i=0;i<n_stored_script_args;i++){
+		set_query_arg_at_index(qp,i,script_arg_tbl[i]);
+	}
+}
+
+static void clear_script_args(void)
+{
+	bzero(script_arg_tbl,MAX_SCRIPT_ARGS*sizeof(char *));
+	n_stored_script_args = 0;
+}
+
+static void rls_script_args(void)
+{
+	int i;
+
+	for(i=0;i<n_stored_script_args;i++){
+		rls_str(script_arg_tbl[i]);
+	}
+	clear_script_args();
+}
+
+static int parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_args)
+{
 	Data_Obj *dp;
-	char buf[64];
 
 	if( enp==NULL ) return(0);
 
 	eval_enp = enp;
 
+fprintf(stderr,"parse_script_args BEGIN  index = %d   max_args = %d\n",index,max_args);
+DUMP_TREE(enp);
 	switch(VN_CODE(enp)){
 		case T_DEREFERENCE:				/* set_script_args */
 			dp = EVAL_OBJ_REF(enp);
@@ -2301,13 +2326,16 @@ static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,i
 				WARN("missing script arg object");
 				return(0);
 			} else {
-				STORE_QUERY_ARG(OBJ_NAME(dp));
+				store_script_arg(OBJ_NAME(dp),index);
 				return(1);
 			}
 
 		case T_STR_PTR:
+			{
+			const char *s;
 			s=EVAL_STRING(enp);
-			STORE_QUERY_ARG(s)
+			store_script_arg(s,index);
+			}
 			return(1);
 
 		case T_POINTER:
@@ -2324,22 +2352,29 @@ static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,i
 			/* maybe we could check the node shape instead of looking up the object? */
 			dp=EVAL_OBJ_REF(enp);
 			if( IS_SCALAR(dp) ){
+				char buf[64];
 				format_scalar_obj(QSP_ARG  buf,64,dp,OBJ_DATA_PTR(dp));
-				STORE_QUERY_ARG( savestr(buf) )
-				return(1);
+				store_script_arg( buf, index );
+			} else {
+				store_script_arg( OBJ_NAME(dp), index );
 			}
-			/* else fall-thru */
+			return 1;
+			break;
+
 		case T_STRING:
 			/* add this string as one of the args */
-			STORE_QUERY_ARG( savestr(VN_STRING(enp)) )
+			store_script_arg( VN_STRING(enp), index );
 			return(1);
 
 		case T_PRINT_LIST:
 		case T_STRING_LIST:
 		case T_MIXED_LIST:
-			n1=SET_SCRIPT_ARGS(VN_CHILD(enp,0),index,qp,max_args);
-			n2=SET_SCRIPT_ARGS(VN_CHILD(enp,1),index+n1,qp,max_args);
+			{
+			int n1,n2;
+			n1=parse_script_args(QSP_ARG  VN_CHILD(enp,0),index,max_args);
+			n2=parse_script_args(QSP_ARG  VN_CHILD(enp,1),index+n1,max_args);
 			return(n1+n2);
+			}
 
 		/* BUG there are more cases that need to go here
 		 * in order to handle generic expressions
@@ -2347,13 +2382,16 @@ static int set_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Query *qp,i
 
 		case T_LIT_INT: case T_LIT_DBL:			/* set_script_args */
 		case T_PLUS: case T_MINUS: case T_TIMES: case T_DIVIDE:
+			{
+			double dval;
 			dval=EVAL_FLT_EXP(enp);
 			sprintf(msg_str,"%g",dval);
-			STORE_QUERY_ARG( savestr(msg_str) )
+			}
+			store_script_arg( msg_str, index );
 			return(1);
 
 		default:
-			assert( AERROR("missing case in set_script_args") );
+			assert( AERROR("missing case in parse_script_args") );
 			break;
 	}
 	return(0);
@@ -7218,17 +7256,28 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	srp = VN_SUBRT(enp);
 	assert( IS_SCRIPT(srp) );
+	assert(SR_N_ARGS(srp)<=MAX_SCRIPT_ARGS);
+	assert(n_stored_script_args==0);	// BUG will fail if recursion
+						// also not thread-safe!?  BUG
+
+	n_args=parse_script_args(QSP_ARG  VN_CHILD(enp,0),0,SR_N_ARGS(srp));
+	if( n_args < 0 ) return -1;
+
+	// IN the objC implementation, the args are held in the query object as a list,
+	// not an array.  This makes the recursive population a little tricker.
+	// If we traverse the tree correctly, we may be able to simply add to the list
+	if( n_args != SR_N_ARGS(srp) ){
+		sprintf(ERROR_STRING,
+	"Script subrt %s should have %d args, passed %d",
+			SR_NAME(srp),SR_N_ARGS(srp),n_args);
+		WARN(ERROR_STRING);
+		rls_script_args();
+		return -1;
+	}
 
 	/* Set up dummy_mac so that the interpreter will
 	 * think we are in a macro...
 	 */
-	/*
-	INIT_MACRO_PTR(dummy_mp)
-	SET_MACRO_NAME(dummy_mp, SR_NAME(srp) );
-	SET_MACRO_N_ARGS(dummy_mp, SR_N_ARGS(srp) );
-	SET_MACRO_TEXT(dummy_mp, (char *) SR_BODY(srp) );
-	SET_MACRO_FLAGS(dummy_mp, 0 ); // disallow recursion
-	*/
 	ma_tbl = create_generic_macro_args(SR_N_ARGS(srp));
 	sbp = create_stringbuf(SR_TEXT(srp));
 	dummy_mp = create_macro(QSP_ARG  SR_NAME(srp), SR_N_ARGS(srp), ma_tbl, sbp,
@@ -7244,23 +7293,11 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	qp=CURR_QRY(THIS_QSP);
 
 	set_query_macro(qp, dummy_mp);
+	// when are these freed???  BUG?  memory leak?
 	set_query_args(qp, (const char **)getbuf( SR_N_ARGS(srp) * sizeof(char *) ) );
 
-	/* BUG?  we have to make sure than we never try to assign more than sr_nargs args! */
+	pass_script_args(qp);
 
-	n_args=SET_SCRIPT_ARGS(VN_CHILD(enp,0),0,qp,SR_N_ARGS(srp));
-	// IN the objC implementation, the args are held in the query object as a list,
-	// not an array.  This makes the recursive population a little tricker.
-	// If we traverse the tree correctly, we may be able to simply add to the list
-	if( n_args != SR_N_ARGS(srp) ){
-		sprintf(ERROR_STRING,
-	"Script subrt %s should have %d args, passed %d",
-			SR_NAME(srp),SR_N_ARGS(srp),n_args);
-		WARN(ERROR_STRING);
-		/* BUG? poptext? */
-		givbuf(dummy_mp);
-		return -1;
-	}
 	/* If we pass object names to script functions by
 	 * dereferencing pointers, we may end up with invisible objects
 	 * whose contexts have been popped; here we restore those
@@ -7275,14 +7312,18 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	while( QLEVEL >= start_level ){
 		// was do_cmd
 		qs_do_cmd(THIS_QSP);
-lookahead(SINGLE_QSP_ARG);
+		lookahead(SINGLE_QSP_ARG);
 	}
-	//popcmd(SINGLE_QSP_ARG);		/* go back */
 	do_pop_menu(SINGLE_QSP_ARG);		/* go back */
 
 	unset_script_context(SINGLE_QSP_ARG);
 
-	givbuf(dummy_mp);
+	rls_macro(QSP_ARG  dummy_mp);
+	// We don't need to call rls_script_args, because
+	// when the macro is exited the args are released.
+	// But we do need to zero n_stored_script_args!
+	clear_script_args();
+
 	return 0;
 }
 

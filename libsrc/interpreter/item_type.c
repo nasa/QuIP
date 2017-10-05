@@ -465,8 +465,9 @@ Item *new_item( QSP_ARG_DECL  Item_Type *itp, const char* name, size_t size )
 	// Try to get a structure from the free list
 	// If the free list is empty, then allocate a page's worth
 
-	if( QLIST_HEAD(IT_FREE_LIST(itp)) == NULL )
+	if( QLIST_HEAD(IT_FREE_LIST(itp)) == NULL ){
 		alloc_more_items(itp,size);
+	}
 
 	np = remHead(IT_FREE_LIST(itp));
 	assert(np!=NULL);

@@ -1141,7 +1141,8 @@ show_bitmap_gpu_info(DEFAULT_QSP_ARG  BITMAP_OBJ_GPU_INFO_HOST_PTR(dp) );
 	SET_BITMAP_OBJ_GPU_INFO_DEV_PTR(dp,ptr);
 
 	// now copy to device
-	(*PF_MEM_UPLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG  ptr, bmi_p, BMI_STRUCT_SIZE(bmi_p), OBJ_PFDEV(dp) );
+	(*PF_MEM_UPLOAD_FN( OBJ_PLATFORM(dp) ))(DEFAULT_QSP_ARG
+		ptr, bmi_p, BMI_STRUCT_SIZE(bmi_p), 0, OBJ_PFDEV(dp) );
 
 #ifdef JUST_FOR_DEBUGGING
 verify_gpu_bitmap_info(dp);

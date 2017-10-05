@@ -33,6 +33,8 @@
 #ifdef HAVE_OPENCV2_HIGHGUI_HIGHGUI_C_H
 #include <opencv2/highgui/highgui_c.h>
 #endif
+// In more recent version cvSaveImage is here, not highgui:
+#include <opencv2/imgcodecs/imgcodecs_c.h>
 #endif
 
 #ifndef CV_MAJOR_VERSION

@@ -6,6 +6,8 @@
 
 /* Compile with:
 gcc -I /usr/local/cuda/include -L/usr/local/cuda/lib comp_cap.c -lcudart
+OR
+gcc -I /usr/local/cuda/include -L/usr/local/cuda/lib64 comp_cap.c -lcudart
 */
 
 #include <stdio.h>

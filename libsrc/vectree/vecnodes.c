@@ -74,10 +74,15 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	SET_VN_SHAPE(enp, NULL);
 	SET_VN_FLAGS(enp, 0);
 	SET_VN_SERIAL(enp, node_serial++);
-	SET_VN_LINENO(enp, PARSER_LINENO);	/* BUG need to point to filename also */
-	SET_VN_INFILE(enp, CURR_INFILE);
-	if( CURR_INFILE != NULL ){
-		INC_SR_COUNT(CURR_INFILE);
+	if( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL ){
+		SET_VN_LINENO(enp, PARSER_LINE_NUM);	/* BUG need to point to filename also */
+		SET_VN_INFILE(enp, CURR_INFILE);
+		if( CURR_INFILE != NULL ){
+			INC_SR_COUNT(CURR_INFILE);
+		}
+	} else {
+		SET_VN_LINENO(enp, 0);
+		SET_VN_INFILE(enp, NULL);
 	}
 	SET_VN_RESOLVERS(enp, NULL);
 

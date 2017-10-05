@@ -446,8 +446,9 @@ fi
 # we had a version mismatch problem with libpng (which seems
 # to exist in /opt/X11...).
 
-AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-2.4/include"])
+# use homebrew instead of fink?
+#AC_CHECK_FILE([/sw/include],[CPPFLAGS="$CPPFLAGS -I/sw/include"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-2.4/include"])
 
 # Check for odd include directories
 if test "x${use_x11}" = xyes; then
@@ -490,16 +491,16 @@ fi
 #
 ##################################################
 
-AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
-# fink puts this stuff here...
-# We should probably not use both!?
-AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
-# We haven't ported to the newer library yet, so we prefer the old one
+#AC_CHECK_FILE([/sw/lib],[LDFLAGS="$LDFLAGS -L/sw/lib"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-2.4/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.4/lib"])
+## fink puts this stuff here...
+## We should probably not use both!?
+#AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-1.2/lib"])
+## We haven't ported to the newer library yet, so we prefer the old one
 
-if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
-  AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
-fi
+#if test "x${ac_cv_file__sw_lib_ffmpeg_1_2_lib}" = xno; then
+#  AC_CHECK_FILE([/sw/lib/ffmpeg-2.0/lib],[LDFLAGS="$LDFLAGS -L/sw/lib/ffmpeg-2.0/lib"])
+#fi
 
 # this is for Ubuntu...
 AC_CHECK_FILE([/usr/lib/x86_64-linux-gnu],[LDFLAGS="$LDFLAGS -L/usr/lib/x86_64-linux-gnu"])
@@ -508,7 +509,7 @@ AC_CHECK_FILE([/usr/lib64],[LDFLAGS="$LDFLAGS -L/usr/lib64"])
 AC_CHECK_FILE([/usr/local/lib],[LDFLAGS="$LDFLAGS -L/usr/local/lib"])
 AC_CHECK_FILE([/usr/local/include],[CPPFLAGS="$CPPFLAGS -I/usr/local/include"])
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
-AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
+#AC_CHECK_FILE([/sw/lib/ffmpeg-1.2/include],[CPPFLAGS="$CPPFLAGS -I/sw/lib/ffmpeg-1.2/include"])
 
 # ffmpeg headers may be installed under /usr/include OR /usr/include/ffmpeg...
 AC_CHECK_FILE([/usr/include/ffmpeg],[CPPFLAGS="$CPPFLAGS -I/usr/include/ffmpeg"])
@@ -715,6 +716,9 @@ AM_CONDITIONAL([HAVE_NVCC], [test "x$working_nvcc" = "xyes"])
 # with permissions 400 - this causes the test program to
 # return 0 devices!?
 
+# On mac OSX 10.12 (Sierra), we don't seem to have the /dev/nvidia files,
+# but everything seems to work OK...
+
 have_nvidia0=no
 if test "x$working_nvcc" == xyes; then
   AC_MSG_CHECKING([for /dev/nvidia0])
@@ -730,7 +734,12 @@ if test "x$working_nvcc" == xyes; then
       AC_MSG_RESULT([present but is not readable])
     fi
   else
-   AC_MSG_RESULT([not present])
+    AC_MSG_RESULT([not present])
+    # Don't need the dev file on Mac OSX ?
+    if test "x$os_is_darwin" == xyes; then
+      AC_MSG_NOTICE([Assuming CUDA will work without /dev/nvidia0 on Mac OSX])
+      have_nvidia0=yes
+    fi
   fi
 fi
 have_nvidiactl=no
@@ -748,10 +757,15 @@ if test "x$have_nvidia0" == xyes; then
       AC_MSG_RESULT([present but is not readable])
     fi
   else
-   AC_MSG_RESULT([not present])
+    AC_MSG_RESULT([not present])
+    if test "x$os_is_darwin" == xyes; then
+      AC_MSG_NOTICE([Assuming CUDA will work without /dev/nvidiactl on Mac OSX])
+      have_nvidiactl=yes
+    fi
   fi
 fi
 have_cuda_device=no
+
 if test "x$working_nvcc" == xyes; then
   if test "x$have_nvidiactl" == xyes; then
     AC_MSG_CHECKING([for CUDA-capable device])
@@ -797,20 +811,24 @@ EOF
   # but rpath may be a Mac-ism, and not work on linux?
   # -rpath is not recognized on linux, try -R...
 
+    # On a new CentOS installation, can't execute the program in /tmp!?
+    #tmp_dir = /tmp
+    tmp_dir=.		# BUG - build_dir???
+
     if test "x${host_vendor}" = xapple; then
-      if $CC -o /tmp/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
+      if $CC -o $tmp_dir/gpu_test $CPPFLAGS $LDFLAGS -rpath /usr/local/cuda/lib gpu_check.c -lcudart # 2> /dev/null
       then
-        comp_cap=`/tmp/gpu_test`
-        #rm -f /tmp/gpu_test
+        comp_cap=`$tmp_dir/gpu_test`
+        rm -f $tmp_dir/gpu_test
       else
         comp_cap=0.0
       fi
     else
       # Not apple
-      if $CC $CPPFLAGS $LDFLAGS -o /tmp/gpu_test gpu_check.c -lcudart # 2> /dev/null
+      if $CC $CPPFLAGS $LDFLAGS -o $tmp_dir/gpu_test gpu_check.c -lcudart # 2> /dev/null
       then
-        comp_cap=`/tmp/gpu_test`
-        #rm -f /tmp/gpu_test
+        comp_cap=`$tmp_dir/gpu_test`
+        rm -f $tmp_dir/gpu_test
       else
         comp_cap=0.0
       fi
@@ -857,6 +875,13 @@ EOF
     if test "x${comp_cap}" = x3.0; then
       AC_DEFINE([CUDA_COMP_CAP],30,[CUDA Compute Capability 3.0])
       AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_30'])
+      arch_set=yes
+      have_cuda_device=yes
+    fi
+    # BUG - fill in the missing cases for cards we don't own!
+    if test "x${comp_cap}" = x6.1; then
+      AC_DEFINE([CUDA_COMP_CAP],61,[CUDA Compute Capability 6.1])
+      AC_SUBST(NVCC_ARCH_FLAGS,['-arch sm_61'])
       arch_set=yes
       have_cuda_device=yes
     fi
@@ -1140,7 +1165,7 @@ if test "x${use_opencv}" = xyes; then
   AC_SEARCH_LIBS([cvSetZero],[opencv_core cxcore],[have_opencvcore=yes],[have_opencvcore=no])
   AC_SEARCH_LIBS([cvContourArea],[opencv_imgproc cv],[have_opencvimgproc=yes],[have_opencvimgproc=no])
   AC_SEARCH_LIBS([cvHaarDetectObjects],[opencv_objdetect],[have_opencvobjdetect=yes],[have_opencvobjdetect=no])
-  AC_SEARCH_LIBS([cvSaveImage],[opencv_highgui highgui],[have_opencvhighgui=yes],[have_opencvhighgui=no])
+  AC_SEARCH_LIBS([cvSaveImage],[opencv_highgui highgui opencv_imgcodecs],[have_opencvhighgui=yes],[have_opencvhighgui=no])
 fi
 
 #

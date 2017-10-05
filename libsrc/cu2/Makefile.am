@@ -7,6 +7,8 @@ all:	libcu2.a
 
 M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 
+#			new_fill_expanded.c
+
 GENERATED_SRCS=						\
 			cu2_utils_expanded.c		\
 			cu2_veclib_expanded.c		\
@@ -26,6 +28,9 @@ cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
 
+#new_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+#	m4 $(M4OPTS) < $(srcdir)/new_fill.m4 > $(builddir)/new_fill_expanded.c
+
 cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_yuv2rgb.m4 > $(builddir)/cu2_yuv2rgb_expanded.c
 
@@ -43,6 +48,9 @@ $(srcdir)/cu2_yuv2rgb.cu:	$(builddir)/cu2_yuv2rgb_expanded.c
 $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 	touch $(srcdir)/cu2_fill.cu
 
+#$(srcdir)/new_fill.cu:	$(builddir)/new_fill_expanded.c
+#	touch $(srcdir)/new_fill.cu
+
 $(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
 	touch $(srcdir)/cu2_utils.cu
 
@@ -54,6 +62,9 @@ cu2_yuv2rgb.o:	$(srcdir)/cu2_yuv2rgb.cu
 
 cu2_fill.o:	$(srcdir)/cu2_fill.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
+
+#new_fill.o:	$(srcdir)/new_fill.cu
+#	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
 cu2_utils.o:	$(srcdir)/cu2_utils.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
@@ -93,6 +104,8 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_s
 #clean-local:
 #	-rm -rf cu2_veclib_expanded.c cu2_veclib_stripped.c
 
+#				new_fill.cu
+
 NVCC_SOURCES =						\
 				cu2_funcs.cu		\
 				cu2_fill.cu		\
@@ -111,6 +124,8 @@ $(srcdir)/m4_cu2_veclib.c:	cu2_veclib_expanded.c
 
 #			cu2_kern_args.m4
 #			cu2_kernel_src.m4
+
+#			$(srcdir)/new_fill.m4
 
 LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fft_funcs.m4		\
@@ -235,6 +250,8 @@ INC_M4FILES=							\
 #			cu2_host_call_defs.h
 #			cu2_host_untyped_call_defs.h
 #			cu2_typtbl.h
+
+#			new_fill.cu
 
 noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\
