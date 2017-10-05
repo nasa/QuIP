@@ -5,6 +5,7 @@
 #  quit
 
 expressions
+  show_shp yes
   read -
 
 void testk()

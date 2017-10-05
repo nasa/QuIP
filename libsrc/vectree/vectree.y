@@ -2722,16 +2722,10 @@ WARN(ERROR_STRING);
 	return(-1);
 } // name_token
 
-double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
+static void init_parser(SINGLE_QSP_ARG_DECL)
 {
-	int stat;
-	double result;
-
-	//push_vector_parser_data(SINGLE_QSP_ARG);
-
 	FINAL=0.0;
 	assert( YY_INPUT_LINE != NULL );
-	//YY_INPUT_LINE[0]=0;		/* clear record of input string */
 	copy_string(YY_INPUT_LINE,"");	// clear record of input
 	LAST_LINE_NUM=(-1);
 	YY_CP="";
@@ -2746,11 +2740,15 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 
 	// we only use the last node for a commented out error dump?
 	LAST_NODE=NULL;
+}
 
-	/* The best way to do this would be to pass qsp to yyparse, but since this
-	 * routine is generated automatically by bison, we would have to hand-edit
-	 * vectree.c each time we run bison...
-	 */
+double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
+{
+	int stat;
+	double result;
+
+	init_parser(SINGLE_QSP_ARG);
+
 	stat=yyparse(THIS_QSP);
 
 	if( TOP_NODE != NULL )	/* successful parsing */
@@ -2839,6 +2837,13 @@ double dstrcmp(char *s1,char *s2)
 #endif /* STANDALONE */
 
 int vecexp_ing=1;
+
+// Methinks the pushing and popping of vector parser data may
+// have been introduced to support nested calls to the parser,
+// which arose when calling a script subroutine that invokes
+// the parser on an expression from within the script subroutine...
+// A problem has been revealed however when we try to reference
+// subroutines outside of the parser, because THIS_VPD is null!?
 
 void expr_file(SINGLE_QSP_ARG_DECL)
 {
