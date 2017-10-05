@@ -2510,7 +2510,6 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 
 static void init_vector_parser_data_stack(Query_Stack *qsp)
 {
-advise("init_vector_parser_data_stack setting VECTOR_PARSER_DATA to NULL!?");
 	SET_QS_VECTOR_PARSER_DATA_STACK(qsp,new_list());
 	SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,new_list());
 	SET_QS_VECTOR_PARSER_DATA(qsp,NULL);
@@ -2521,9 +2520,6 @@ static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
 	bzero(vpd_p,sizeof(*vpd_p));
 
 	// // Now allocate the strings
-	//SET_VPD_YY_INPUT_LINE(vpd_p,getbuf(LLEN));
-	//SET_VPD_YY_LAST_LINE(vpd_p,getbuf(LLEN));
-	//SET_VPD_EXPR_STRING(vpd_p,getbuf(LLEN));
 	SET_VPD_YY_INPUT_LINE(vpd_p,new_stringbuf());
 	SET_VPD_YY_LAST_LINE(vpd_p,new_stringbuf());
 	SET_VPD_EXPR_STRING(vpd_p,new_stringbuf());
@@ -2541,7 +2537,6 @@ static void init_scalar_parser_data(Scalar_Parser_Data *spd_p)
 	SET_SPD_ESTRINGS_INITED(spd_p,0);
 	SET_SPD_FREE_EXPR_NODE_LIST(spd_p,NULL);
 	// set spd_expr_string's to NULL ???
-	//SET_QS_SPD_YYSTRPTR(spd_p,NULL);
 }
 
 static Vector_Parser_Data *find_free_vector_parser_data(SINGLE_QSP_ARG_DECL)
@@ -2571,7 +2566,6 @@ void push_vector_parser_data(SINGLE_QSP_ARG_DECL)
 
 	np = mk_node(vpd_p);
 	addHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP), np );
-advise("push_vector_parser_data setting THIS_VPD");
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
 }
 
@@ -2591,8 +2585,6 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	} else {
 		vpd_p = NULL;
 	}
-sprintf(ERROR_STRING,"pop_vector_parser_data restoring THIS_VPD to 0x%lx",(long)vpd_p);
-advise(ERROR_STRING);
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
 }
 
@@ -2648,7 +2640,6 @@ void init_query_stack(Query_Stack *qsp)
 
 	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 
-	//init_parser_data(qsp);
 	init_vector_parser_data_stack(qsp);
 
 	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)));

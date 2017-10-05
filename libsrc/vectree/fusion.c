@@ -223,6 +223,13 @@ static void emit_bool_op(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 {
 	switch( VN_CODE(enp) ){
+		case T_TYPECAST:
+			cat_string(sbp, "(");
+			cat_string(sbp, PREC_NAME(VN_CAST_PREC_PTR(enp)));
+			cat_string(sbp, ")(");
+			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			cat_string(sbp, ")");
+			break;
 		case T_VS_VS_CONDASS:
 		//ALL_CONDASS_CASES
 			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,2));

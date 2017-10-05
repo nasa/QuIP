@@ -465,6 +465,8 @@ typedef enum {
 		case T_SQUARE_SUBSCR:				\
 		case T_CURLY_SUBSCR:
 
+// Why "scal" ???
+
 #define ALL_SCALINT_BINOP_CASES					\
 								\
 		case T_MODULO:					\
