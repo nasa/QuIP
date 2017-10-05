@@ -664,7 +664,6 @@ static void insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Pr
 	SET_VN_CHILD(enp,index, new_enp);
 	SET_VN_PARENT(new_enp, enp);
 
-fprintf(stderr,"insert_typecast_node:  new precision is %s\n",PREC_NAME(prec_p));
 	SET_VN_CAST_PREC_PTR(new_enp, prec_p);
 
 	prelim_node_shape(new_enp);
@@ -689,7 +688,6 @@ else advise("mixed mode machine precs do not match, casting");
 		}
 	}
 
-fprintf(stderr,"typecast_child checking %s\n",node_desc(VN_CHILD(enp,index)));
 	switch(VN_CODE(VN_CHILD(enp,index))){	/* typecast_child */
 
 		case T_VV_B_CONDASS:
@@ -872,23 +870,17 @@ static void check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
 {
 	// assert node is the correct type?
 
-fprintf(stderr,"check_int_binop %s BEGIN\n",node_desc(enp));
 	/* these are operators where we want to cast to int */
 	if( FLOATING_PREC(VN_CHILD_PREC(enp,i1)) ){
-fprintf(stderr,"check_int_binop %s - first child is float\n",node_desc(enp));
 		if( INTEGER_PREC(VN_CHILD_PREC(enp,i2)) ){
-fprintf(stderr,"check_int_binop %s - second child is int, typecasting first child only\n",node_desc(enp));
 			typecast_child(enp,i1,VN_CHILD_PREC_PTR(enp,i2));
 		} else {
-fprintf(stderr,"check_int_binop %s - second child is float, typecasting both children\n",node_desc(enp));
 			typecast_child(enp,i1,PREC_FOR_CODE(PREC_DI));
 			typecast_child(enp,i2,PREC_FOR_CODE(PREC_DI));
 		}
 	} else if( FLOATING_PREC(VN_CHILD_PREC(enp,i2)) ){
-fprintf(stderr,"check_int_binop %s - second child is float, typecasting second child\n",node_desc(enp));
 		typecast_child(enp,i2,VN_CHILD_PREC_PTR(enp,i1));
 	} else {
-fprintf(stderr,"check_int_binop %s - both children are integers\n",node_desc(enp));
 		/* Both are integer, use promotion */
 		promote_child(enp,i1,i2);
 	}
@@ -3877,7 +3869,6 @@ excise_uminus:
 		OTHER_SCALAR_MATHOP_CASES		/* compile_node */
 		/* why not integer math? */
 
-fprintf(stderr,"compile_node %s\n",node_desc(enp));
 			/* first check for a special case: */
 			if( VN_CODE(enp) == T_PLUS && VN_CHILD_PREC(enp,0) == PREC_CHAR &&
 				VN_CHILD_PREC(enp,1) == PREC_CHAR ){
@@ -3892,7 +3883,6 @@ fprintf(stderr,"compile_node %s\n",node_desc(enp));
 			 */
 
 			/* Now get_mating_shapes handles outer shapes too */
-fprintf(stderr,"compile_node %s calling get_mating_shapes\n",node_desc(enp));
 			if( get_mating_shapes(enp,0,1) == NULL ) {
 				CURDLE(enp)
 				break;
