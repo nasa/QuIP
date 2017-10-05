@@ -3076,7 +3076,9 @@ advise(ERROR_STRING);
 void run_subrt_immed(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)
 {
 	delete_local_objs(SINGLE_QSP_ARG);	// run_subrt_immed
+	push_vector_parser_data(SINGLE_QSP_ARG);
 	RUN_SUBRT(srp,enp,dst_dp);
+	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
 void run_subrt(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)

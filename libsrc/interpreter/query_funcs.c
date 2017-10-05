@@ -2510,6 +2510,7 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 
 static void init_vector_parser_data_stack(Query_Stack *qsp)
 {
+advise("init_vector_parser_data_stack setting VECTOR_PARSER_DATA to NULL!?");
 	SET_QS_VECTOR_PARSER_DATA_STACK(qsp,new_list());
 	SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,new_list());
 	SET_QS_VECTOR_PARSER_DATA(qsp,NULL);
@@ -2570,6 +2571,7 @@ void push_vector_parser_data(SINGLE_QSP_ARG_DECL)
 
 	np = mk_node(vpd_p);
 	addHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP), np );
+advise("push_vector_parser_data setting THIS_VPD");
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
 }
 
@@ -2589,6 +2591,8 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	} else {
 		vpd_p = NULL;
 	}
+sprintf(ERROR_STRING,"pop_vector_parser_data restoring THIS_VPD to 0x%lx",(long)vpd_p);
+advise(ERROR_STRING);
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);
 }
 
