@@ -250,7 +250,6 @@ struct query_stack {
 #define QS_PICKING_ITEM_ITP(qsp)		((qsp)->qs_picking_item_itp)
 #define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(qsp->qs_picking_item_itp) = itp
 
-
 // this indexing of the list is probably backwards!?
 #define QS_QRY_STACK(qsp)		(qsp)->qs_query_stack
 #define SET_QS_QRY_STACK(qsp,stkp)	(qsp)->qs_query_stack = stkp
