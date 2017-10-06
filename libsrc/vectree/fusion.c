@@ -6,6 +6,7 @@
 #include "vectree.h"
 #include "platform.h"
 #include "subrt.h"
+#include <string.h>
 
 // BUG - use of these global vars not thread-safe,
 // but let's just get it working first...
@@ -137,7 +138,13 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			assert( VN_CHILD(enp,0) != NULL );
 
 			if( VN_CODE(VN_CHILD(enp,0)) == T_PTR_DECL ){
-				cat_string(sbp,"__global ");	// BUG - platform dependent!
+				const char *s;
+
+				s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+					(QSP_ARG  PKS_ARG_QUALIFIER );
+				cat_string(sbp,s);
+				if( strlen(s) > 0 )
+					cat_string(sbp," ");
 				add_to_global_var_list(VN_STRING(VN_CHILD(enp,0)));
 			}
 

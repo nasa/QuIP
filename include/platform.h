@@ -44,6 +44,7 @@ enum {
 
 typedef enum {
 	PKS_KERNEL_QUALIFIER,
+	PKS_ARG_QUALIFIER,
 	N_PLATFORM_KERNEL_STRINGS
 } Platform_Kernel_String_ID;
 

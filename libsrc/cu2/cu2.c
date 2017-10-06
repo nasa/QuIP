@@ -472,6 +472,25 @@ static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 	prt_msg("Sorry, Cuda-specific platform info not implemented yet!?");
 }
 
+static const char *cu2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID which )
+{
+	const char *s;
+
+	switch(which){
+		case PKS_KERNEL_QUALIFIER:
+			s="__global__";
+			break;
+		case PKS_ARG_QUALIFIER:
+			s="";
+			break;
+		case N_PLATFORM_KERNEL_STRINGS:
+			ERROR1("invalid platform kernel string ID");
+			s=NULL;
+			break;
+	}
+	return s;
+}
+
 static void * cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
 {
 	nvrtcProgram prog;
