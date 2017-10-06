@@ -198,6 +198,7 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 	SET_PF_UNMAPBUF_FN(	cpp,	stem##_unmap_buf	);	\
 	SET_PF_DEVINFO_FN(	cpp,	stem##_dev_info		);	\
 	SET_PF_INFO_FN(		cpp,	stem##_info		);	\
+	SET_PF_STRING_FN(	cpp,	stem##_string	);		\
 	SET_PF_KRNL_FN(		cpp,	stem##_make_kernel	);
 
 #define PF_FUNC_TBL(cpp)		(cpp)->cp_vfa_tbl
