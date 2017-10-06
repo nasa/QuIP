@@ -351,7 +351,7 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Sub
 	// Make up a name for the kernel
 
 	s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
-			(QSP_ARG  PFS_KERNEL_QUALIFIER );
+			(QSP_ARG  PKS_KERNEL_QUALIFIER );
 	cat_string(sbp,s);	/*"__kernel " (ocl) or "global" (cuda) */
 	cat_string(sbp,"void ");
 	cat_string(sbp,kname);
