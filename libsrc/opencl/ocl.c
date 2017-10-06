@@ -866,7 +866,11 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 		case PKS_KERNEL_QUALIFIER:
 			s="__kernel";
 			break;
+		case PKS_ARG_QUALIFIER:
+			s="__global";
+			break;
 		case N_PLATFORM_KERNEL_STRINGS:
+		default:
 			ERROR1("invalid platform string ID");
 			s=NULL;
 			break;
