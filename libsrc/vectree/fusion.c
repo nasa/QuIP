@@ -346,11 +346,13 @@ static void emit_kern_body(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
 static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Subrt *srp)
 {
 	Vec_Expr_Node *arg_decl_enp;
+	const char *s;
 
 	// Make up a name for the kernel
 
-	// BUG need to take out the platform-dependent bits...
-	cat_string(sbp,"__kernel ");	// BUG platform-dependent
+	s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+			(QSP_ARG  PFS_KERNEL_QUALIFIER );
+	cat_string(sbp,s);	/*"__kernel " (ocl) or "global" (cuda) */
 	cat_string(sbp,"void ");
 	cat_string(sbp,kname);
 	cat_string(sbp,"(");

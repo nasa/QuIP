@@ -1277,7 +1277,11 @@ fi
 
 if test "x${use_cuda}" = xyes; then
   # cuda libraries
+
   AC_SEARCH_LIBS([cudaUnbindTexture],[cudart],[have_libcudart=yes],[have_libcudart=no])
+
+  AC_SEARCH_LIBS([nvrtcGetPTX],[nvrtc],[have_libnvrtc=yes],[have_libnvrtc=no])
+
   # If we have the cudart lib, then we can determine the compute
   # capability of the device.
 
@@ -1988,6 +1992,9 @@ if test "x${use_cuda}" = xyes; then
 	    AC_DEFINE([HAVE_LIBNPP], 1, [CUDA GPU operations with libnpp enabled])
           fi
         fi
+	if test "x${have_libnvrtc}" = xyes ; then
+	  AC_DEFINE([HAVE_LIBNVRTC], 1, [CUDA runtime compilation enabled])
+	fi
       else
         AC_MSG_WARN([
 -------------------------------------------------

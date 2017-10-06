@@ -474,8 +474,33 @@ static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 
 static void * cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
 {
-	WARN("Sorry, cu2_make_kernel not implemented!?");
-	return NULL;
+	nvrtcProgram prog;
+	const char *opts[]={"",""};	// put options here
+	size_t logSize;
+	size_t ptxSize;
+	char *log, *ptx;
+
+	nvrtcCreateProgram(&prog,src,name,0,	// numHeaders
+		NULL,	// headers
+		NULL	// includeNames
+		);
+	nvrtcCompileProgram(prog,0,opts);
+
+	nvrtcGetProgramLogSize(prog,&logSize);
+fprintf(stderr,"log size is %ld\n",logSize);
+	log = getbuf(logSize);
+	nvrtcGetProgramLog(prog,log);
+fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
+
+	nvrtcGetPTXSize(prog,&ptxSize);
+fprintf(stderr,"log size is %ld\n",logSize);
+	ptx = getbuf(logSize);
+	nvrtcGetPTX(prog,ptx);
+fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
+
+	nvrtcDestroyProgram(&prog);
+
+	return ptx;
 }
 
 static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
