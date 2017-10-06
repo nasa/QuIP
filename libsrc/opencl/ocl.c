@@ -858,6 +858,47 @@ static int ocl_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 #endif // ! HAVE_OPENGL
 }
 
+static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID which )
+{
+	const char *s;
+
+	switch(which){
+		case PKS_KERNEL_QUALIFIER:
+			s="__kernel";
+			break;
+		case PKS_ARG_QUALIFIER:
+			s="__global";
+			break;
+		case N_PLATFORM_KERNEL_STRINGS:
+		default:
+			ERROR1("invalid platform string ID");
+			s=NULL;
+			break;
+	}
+	return s;
+}
+
+// Can't be static because used by ocl_rand
+
+/*cl_kernel*/ void *ocl_make_kernel(QSP_ARG_DECL  const char *ksrc,const char *kernel_name,Platform_Device *pdp)
+{
+	cl_program program;
+	static cl_kernel kernel;
+
+	program = ocl_create_program(ksrc,pdp);
+	if( program == NULL )
+		ERROR1("program creation failure!?");
+
+	kernel = ocl_create_kernel(program, kernel_name, pdp);
+	if( kernel == NULL ){
+		ADVISE("Source code of failed program:");
+		ADVISE(ksrc);
+		ERROR1("kernel creation failure!?");
+	}
+
+	return & kernel;
+}
+
 /* possible values for code:
  * CL_PLATFORM_PROFILE
  * CL_PLATFORM_VERSION

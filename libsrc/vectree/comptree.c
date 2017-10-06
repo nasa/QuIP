@@ -655,6 +655,20 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 } /* update_assign_shape */
 
+static void insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Precision *prec_p)
+{
+	Vec_Expr_Node *new_enp;
+
+	new_enp = NODE1(T_TYPECAST,VN_CHILD(enp,index));
+
+	SET_VN_CHILD(enp,index, new_enp);
+	SET_VN_PARENT(new_enp, enp);
+
+	SET_VN_CAST_PREC_PTR(new_enp, prec_p);
+
+	prelim_node_shape(new_enp);
+} /* insert_typecast_node */
+
 /* When do we call typecast_child?
  *
  * When we want to insert a typecast node between the given node and one of its children.
@@ -662,8 +676,6 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 static void _typecast_child(QSP_ARG_DECL Vec_Expr_Node *enp,int index,Precision * prec_p)
 {
-	Vec_Expr_Node *new_enp;
-
 	/* A few vector operators allow mixed mode ops */
 	if( VN_CODE(enp) == T_TIMES ){
 		if( COMPLEX_PRECISION(PREC_CODE(prec_p)) && ! COMPLEX_PRECISION(VN_CHILD_PREC(enp,index)) ){
@@ -692,12 +704,18 @@ else advise("mixed mode machine precs do not match, casting");
 		ALL_SCALAR_FUNCTION_CASES
 		case T_LIT_INT:
 		case T_LIT_DBL:
-			/* Don't bother to typecast scalars...  whoever needs them will
+			/* OLD:
+			 * Don't bother to typecast scalars...  whoever needs them will
 			 * do the right thing?
 			 * BUT if we are casting to bit?
+
+//			if( PREC_CODE(prec_p) != PREC_BIT )
+//				return;
+			 *
+			 * NEW:
+			 * we need to typecast scalars in order for kernel fusion to know what to do!
 			 */
-			if( PREC_CODE(prec_p) != PREC_BIT )
-				return;
+
 			break;
 
 		case T_END:			/* matlab */
@@ -755,10 +773,6 @@ else advise("mixed mode machine precs do not match, casting");
 		case T_STRING:
 		case T_RANGE2:
 		MOST_OBJREF_CASES
-		/*
-		ALL_VECTOR_SCALAR_CASES
-		ALL_VECTOR_VECTOR_CASES
-		*/
 		case T_VV_FUNC:			/* typecast_child */
 		case T_VS_FUNC:			/* typecast_child */
 		case T_INNER:
@@ -782,14 +796,7 @@ DESCRIBE_SHAPE(VN_SHAPE(VN_CHILD(enp,index)));
 }
 #endif /* QUIP_DEBUG */
 
-	new_enp = NODE1(T_TYPECAST,VN_CHILD(enp,index));
-
-	SET_VN_CHILD(enp,index, new_enp);
-	SET_VN_PARENT(new_enp, enp);
-
-	SET_VN_CAST_PREC_PTR(new_enp, prec_p);
-
-	prelim_node_shape(new_enp);
+	insert_typecast_node(QSP_ARG  enp,index,prec_p);
 } /* typecast_child */
 
 /* Return the dominant precision (the other will be promoted to it... */
@@ -857,6 +864,28 @@ static void _promote_child(QSP_ARG_DECL   Vec_Expr_Node *enp, int i1, int i2)
 	typecast_child(enp,i,VN_CHILD_PREC_PTR(enp,d));
 }
 
+// helper function for check_typecast
+
+static void check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
+{
+	// assert node is the correct type?
+
+	/* these are operators where we want to cast to int */
+	if( FLOATING_PREC(VN_CHILD_PREC(enp,i1)) ){
+		if( INTEGER_PREC(VN_CHILD_PREC(enp,i2)) ){
+			typecast_child(enp,i1,VN_CHILD_PREC_PTR(enp,i2));
+		} else {
+			typecast_child(enp,i1,PREC_FOR_CODE(PREC_DI));
+			typecast_child(enp,i2,PREC_FOR_CODE(PREC_DI));
+		}
+	} else if( FLOATING_PREC(VN_CHILD_PREC(enp,i2)) ){
+		typecast_child(enp,i2,VN_CHILD_PREC_PTR(enp,i1));
+	} else {
+		/* Both are integer, use promotion */
+		promote_child(enp,i1,i2);
+	}
+}
+
 /* check_typecast
  *
  * We check the precisions of the specified children.
@@ -895,7 +924,17 @@ DUMP_TREE(enp);
 }
 #endif /* QUIP_DEBUG */
 
-	if( VN_CHILD_PREC(enp,i1) == VN_CHILD_PREC(enp,i2) ) return;
+	if( VN_CHILD_PREC(enp,i1) == VN_CHILD_PREC(enp,i2) ){
+		// the operands match each other, but do they match the parent?
+		switch(VN_CODE(enp)){
+			ALL_SCALINT_BINOP_CASES		/* check_typecast */
+				check_int_binop(QSP_ARG  enp,i1,i2);
+				break;
+			default:
+				break;
+		}
+		return;
+	}
 
 	/* Here we know the two children have different types... */
 	switch(VN_CODE(enp)){
@@ -931,20 +970,7 @@ DUMP_TREE(enp);
 		ALL_SCALINT_BINOP_CASES		/* check_typecast */
 			/* modulo, bitwise operators and shifts... */
 integer_only_cases:
-			/* these are operators where we want to cast to int */
-			if( FLOATING_PREC(VN_CHILD_PREC(enp,i1)) ){
-				if( INTEGER_PREC(VN_CHILD_PREC(enp,i2)) ){
-					typecast_child(enp,i1,VN_CHILD_PREC_PTR(enp,i2));
-				} else {
-					typecast_child(enp,i1,PREC_FOR_CODE(PREC_DI));
-					typecast_child(enp,i2,PREC_FOR_CODE(PREC_DI));
-				}
-			} else if( FLOATING_PREC(VN_CHILD_PREC(enp,i2)) ){
-				typecast_child(enp,i2,VN_CHILD_PREC_PTR(enp,i1));
-			} else {
-				/* Both are integer, use promotion */
-				promote_child(enp,i1,i2);
-			}
+			check_int_binop(QSP_ARG  enp,i1,i2);
 			return;
 
 
@@ -1138,10 +1164,6 @@ advise("check_mating_shapes:  no mating shapes");
 
 static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1, int i2)
 {
-//sprintf(ERROR_STRING,"get_mating_shapes:  %s %d %d",
-//node_desc(enp),i1,i2);
-//advise(ERROR_STRING);
-
 	check_typecast(enp,i1,i2);
 	return( check_mating_shapes(QSP_ARG  enp,i1,i2) );
 }
@@ -1677,11 +1699,6 @@ no_file:
 			 * Actually, now arg lists are T_EXPR_LIST?
 			 */
 
-			/*
-			if( get_mating_shapes(enp,0,1) == NULL )
-				break;
-			*/
-
 			if(VN_CHILD_SHAPE(enp,0)==NULL || VN_CHILD_SHAPE(enp,1)==NULL)
 				break;
 
@@ -1784,10 +1801,6 @@ no_file:
 			/* Used to do nothing here, but need to update after changing T_MAXVAL
 			 * to T_VV_FUNC...
 			 */
-
-#ifdef FOOBAR
-			assert( VN_SHAPE(enp) != NULL );
-#endif /* FOOBAR */
 
 			/* this is redundant most of the time... */
 			if( get_mating_shapes(enp,0,1) == NULL )

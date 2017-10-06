@@ -6,6 +6,7 @@
 #include "vectree.h"
 #include "platform.h"
 #include "subrt.h"
+#include <string.h>
 
 // BUG - use of these global vars not thread-safe,
 // but let's just get it working first...
@@ -137,7 +138,13 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			assert( VN_CHILD(enp,0) != NULL );
 
 			if( VN_CODE(VN_CHILD(enp,0)) == T_PTR_DECL ){
-				cat_string(sbp,"__global ");	// BUG - platform dependent!
+				const char *s;
+
+				s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+					(QSP_ARG  PKS_ARG_QUALIFIER );
+				cat_string(sbp,s);
+				if( strlen(s) > 0 )
+					cat_string(sbp," ");
 				add_to_global_var_list(VN_STRING(VN_CHILD(enp,0)));
 			}
 
@@ -223,6 +230,13 @@ static void emit_bool_op(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 {
 	switch( VN_CODE(enp) ){
+		case T_TYPECAST:
+			cat_string(sbp, "(");
+			cat_string(sbp, PREC_NAME(VN_CAST_PREC_PTR(enp)));
+			cat_string(sbp, ")(");
+			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,0));
+			cat_string(sbp, ")");
+			break;
 		case T_VS_VS_CONDASS:
 		//ALL_CONDASS_CASES
 			emit_kern_body_node(QSP_ARG  sbp, VN_CHILD(enp,2));
@@ -339,11 +353,15 @@ static void emit_kern_body(QSP_ARG_DECL  String_Buf *sbp, Subrt *srp)
 static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Subrt *srp)
 {
 	Vec_Expr_Node *arg_decl_enp;
+	const char *s;
 
 	// Make up a name for the kernel
 
-	// BUG need to take out the platform-dependent bits...
-	cat_string(sbp,"__kernel ");	// BUG platform-dependent
+	s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+			(QSP_ARG  PKS_KERNEL_QUALIFIER );
+	cat_string(sbp,s);	/*"__kernel " (ocl) or "global" (cuda) */
+	if( strlen(s) > 0 )
+		cat_string(sbp," ");
 	cat_string(sbp,"void ");
 	cat_string(sbp,kname);
 	cat_string(sbp,"(");

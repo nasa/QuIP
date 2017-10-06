@@ -551,24 +551,6 @@ static void report_build_info(QSP_ARG_DECL  cl_program prog, Platform_Device *pd
 	}
 }
 
-/*cl_kernel*/ void *ocl_make_kernel(QSP_ARG_DECL  const char *ksrc,const char *kernel_name,Platform_Device *pdp)
-{
-	cl_program program;
-	static cl_kernel kernel;
-
-	program = ocl_create_program(ksrc,pdp);
-	if( program == NULL )
-		ERROR1("program creation failure!?");
-
-	kernel = ocl_create_kernel(program, kernel_name, pdp);
-	if( kernel == NULL ){
-		ADVISE("Source code of failed program:");
-		ADVISE(ksrc);
-		ERROR1("kernel creation failure!?");
-	}
-
-	return & kernel;
-}
 
 cl_kernel ocl_create_kernel(cl_program program,
 			const char *name, Platform_Device *pdp )

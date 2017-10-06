@@ -115,14 +115,14 @@ DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",
 
 DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,"integer data",next_input_int_with_format,MIN_BYTE,MAX_BYTE)
 DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,"integer data",next_input_int_with_format,MIN_SHORT,MAX_SHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int32,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
 // This one generates warnings when building for iOS?
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int64,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
 
 DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,"integer data",next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
 DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,"integer data",next_input_int_with_format,MIN_USHORT,MAX_USHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(uint32,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT32,MAX_UINT32)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(uint64,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT64,MAX_UINT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT32,MAX_UINT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT64,MAX_UINT64)
 
 /////////////////////////////////
 
@@ -431,19 +431,19 @@ DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(bit)
 // The machine precisions
 DECLARE_REAL_SCALAR_FUNCS(byte,char,u_b)
 DECLARE_REAL_SCALAR_FUNCS(short,short,u_s)
-DECLARE_REAL_SCALAR_FUNCS(int32,int32_t,u_l)
-DECLARE_REAL_SCALAR_FUNCS(int64,int64_t,u_ll)
+DECLARE_REAL_SCALAR_FUNCS(int,int32_t,u_l)
+DECLARE_REAL_SCALAR_FUNCS(long,int64_t,u_ll)
 DECLARE_REAL_SCALAR_FUNCS(u_byte,u_char,u_ub)
 DECLARE_REAL_SCALAR_FUNCS(u_short,u_short,u_us)
 DECLARE_REAL_SCALAR_FUNCS(float,float,u_f)
 DECLARE_REAL_SCALAR_FUNCS(double,double,u_d)
 
 #ifdef BITMAP_WORD_IS_64_BITS
-DECLARE_REAL_SCALAR_FUNCS(uint32,uint32_t,u_ul)
-DECLARE_BITMAP_REAL_SCALAR_FUNCS(uint64,uint64_t,u_ull)
+DECLARE_REAL_SCALAR_FUNCS(u_int,uint32_t,u_ul)
+DECLARE_BITMAP_REAL_SCALAR_FUNCS(u_long,uint64_t,u_ull)
 #else // ! BITMAP_WORD_IS_64_BITS
-DECLARE_BITMAP_REAL_SCALAR_FUNCS(uint32,uint32_t,u_ul)
-DECLARE_REAL_SCALAR_FUNCS(uint64,uint64_t,u_ull)
+DECLARE_BITMAP_REAL_SCALAR_FUNCS(u_int,uint32_t,u_ul)
+DECLARE_REAL_SCALAR_FUNCS(u_long,uint64_t,u_ull)
 #endif // ! BITMAP_WORD_IS_64_BITS
 
 DECLARE_ALMOST_REAL_SCALAR_FUNCS(char,char,u_b)
@@ -490,10 +490,10 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 	INIT_PREC(u_byte,u_char,PREC_UBY)
 	INIT_PREC(short,short,PREC_IN)
 	INIT_PREC(u_short,u_short,PREC_UIN)
-	INIT_PREC(int32,int32_t,PREC_DI)
-	INIT_PREC(uint32,uint32_t,PREC_UDI)
-	INIT_PREC(int64,int64_t,PREC_LI)
-	INIT_PREC(uint64,uint64_t,PREC_ULI)
+	INIT_PREC(int,int32_t,PREC_DI)
+	INIT_PREC(u_int,uint32_t,PREC_UDI)
+	INIT_PREC(long,int64_t,PREC_LI)
+	INIT_PREC(u_long,uint64_t,PREC_ULI)
 	INIT_PREC(float,float,PREC_SP)
 	INIT_PREC(double,double,PREC_DP)
 

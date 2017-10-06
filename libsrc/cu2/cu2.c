@@ -24,6 +24,7 @@
 #include "my_cu2.h"	// query_cuda_device()
 #include "cuda_supp.h"
 #include <cuda_gl_interop.h>
+#include <nvrtc.h>	// run-time compilation
 #include "gl_info.h"
 
 #ifdef HAVE_CUDA
@@ -471,6 +472,55 @@ static void cu2_info(QSP_ARG_DECL  Compute_Platform *cdp)
 	prt_msg("Sorry, Cuda-specific platform info not implemented yet!?");
 }
 
+static const char *cu2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID which )
+{
+	const char *s;
+
+	switch(which){
+		case PKS_KERNEL_QUALIFIER:
+			s="__global__";
+			break;
+		case PKS_ARG_QUALIFIER:
+			s="";
+			break;
+		case N_PLATFORM_KERNEL_STRINGS:
+			ERROR1("invalid platform kernel string ID");
+			s=NULL;
+			break;
+	}
+	return s;
+}
+
+static void * cu2_make_kernel(QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp)
+{
+	nvrtcProgram prog;
+	const char *opts[]={"",""};	// put options here
+	size_t logSize;
+	size_t ptxSize;
+	char *log, *ptx;
+
+	nvrtcCreateProgram(&prog,src,name,0,	// numHeaders
+		NULL,	// headers
+		NULL	// includeNames
+		);
+	nvrtcCompileProgram(prog,0,opts);
+
+	nvrtcGetProgramLogSize(prog,&logSize);
+fprintf(stderr,"log size is %ld\n",logSize);
+	log = getbuf(logSize);
+	nvrtcGetProgramLog(prog,log);
+fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
+
+	nvrtcGetPTXSize(prog,&ptxSize);
+fprintf(stderr,"log size is %ld\n",logSize);
+	ptx = getbuf(logSize);
+	nvrtcGetPTX(prog,ptx);
+fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
+
+	nvrtcDestroyProgram(&prog);
+
+	return ptx;
+}
 
 static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 {
@@ -502,9 +552,9 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	/* may be null */
 
 	for(i=0;i<n_devs;i++){
+#ifdef GENERATES_ERROR_ON_MAC
 		char s[32];
 
-#ifdef GENERATES_ERROR_ON_MAC
 		sprintf(s,"/dev/nvidia%d",i);
 		if( check_file_access(QSP_ARG  s) < 0 ){
 			// BUG do we need to unwind some things

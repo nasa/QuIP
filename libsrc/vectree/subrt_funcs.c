@@ -223,12 +223,12 @@ static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
 		strcat(ctxname,(char *)NODE_DATA(np));
 		np=NODE_NEXT(np);
 	}
-//sprintf(ERROR_STRING,"name_from_stack:  ctxname = \"%s\"",ctxname);
-//advise(ERROR_STRING);
 	return(ctxname);
 }
 
-/* The original scheme of naming the context Subr.subrtname
+/* get_surt_id - get a unique name for the subroutine context
+ *
+ * The original scheme of naming the context Subr.subrtname
  * is no good, because it can't handle multiple instances,
  * as occur with recursion or multi-threading.
  * We might handle recursion by having a current subroutine
@@ -240,14 +240,13 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
 	Node *np;
 	const char *s;
 
-//sprintf(ERROR_STRING,"get_subrt_id %s BEGIN",name);
-//advise(ERROR_STRING);
+	assert(THIS_VPD != NULL);
+
 	if( SUBRT_CTX_STACK == NULL ){
 		SUBRT_CTX_STACK = new_list();
 	}
 	s=savestr(name);
 	np=mk_node((void *)s);
-//fprintf(stderr,"Adding context '%s' at 0x%lx to stack\n",s,(long)s);
 	addTail(SUBRT_CTX_STACK,np);
 
 	return(name_from_stack(SINGLE_QSP_ARG));
@@ -263,6 +262,9 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
  * is first read in; 2nd, at the beginning of scan_subrt;
  * 3rd, at the beginning of run_subrt().
  *
+ * This pushing and popping of dobj contexts seems likely to fail
+ * in a multi-threaded environment unless the context stacks
+ * are per-qsp!?  But they are!  (see ITCI - item type context info)
  */
 
 void set_subrt_ctx(QSP_ARG_DECL  const char *name)
@@ -271,19 +273,6 @@ void set_subrt_ctx(QSP_ARG_DECL  const char *name)
 	Item_Context *icp;	/* data_obj, identifier context */
 
 	ctxname = get_subrt_id(QSP_ARG  name);
-//sprintf(ERROR_STRING,"set_subrt_ctx, context name is %s",ctxname);
-//advise(ERROR_STRING);
-#ifdef QUIP_DEBUG
-if( debug & scope_debug ){
-/*
-sprintf(ERROR_STRING,"set_subrt_ctx:  pushing context %s for ojects and identifiers",
-ctxname);
-advise(ERROR_STRING);
-*/
-}
-#endif /* QUIP_DEBUG */
-
-//fprintf(stderr,"set_subrt_ctx, name = %s at 0x%lx\n",ctxname,(long)ctxname);
 	icp=create_id_context(QSP_ARG  ctxname);
 	PUSH_ID_CONTEXT(icp);
 
