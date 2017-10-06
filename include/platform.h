@@ -43,9 +43,9 @@ enum {
 };
 
 typedef enum {
-	PFS_KERNEL_QUALIFIER,
-	N_PLATFORM_STRINGS
-} Platform_String_ID;
+	PKS_KERNEL_QUALIFIER,
+	N_PLATFORM_KERNEL_STRINGS
+} Platform_Kernel_String_ID;
 
 // platform or API?
 
@@ -86,7 +86,7 @@ typedef struct compute_platform {
 
 	// most useful for GPUs, but could compile kernels for CPU also???
 	void * (*cp_make_kernel_func)(QSP_ARG_DECL  const char *src, const char *name, struct platform_device *pdp);
-	const char * (*cp_string_func)(QSP_ARG_DECL  Platform_String_ID which_str );
+	const char * (*cp_kernel_string_func)(QSP_ARG_DECL  Platform_Kernel_String_ID which_str );
 
 #ifdef HAVE_ANY_GPU
 
@@ -148,7 +148,7 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define PF_DEVINFO_FN(cpp)		(cpp)->cp_devinfo_func
 #define PF_INFO_FN(cpp)			(cpp)->cp_info_func
 #define PF_KRNL_FN(cpp)			(cpp)->cp_make_kernel_func
-#define PF_STRING_FN(cpp)		(cpp)->cp_string_func
+#define PF_STRING_FN(cpp)		(cpp)->cp_kernel_string_func
 
 #define PF_FFT2D_FN(cpp)		(cpp)->cp_fft2d_func
 #define PF_IFT2D_FN(cpp)		(cpp)->cp_ift2d_func
@@ -174,7 +174,7 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_DEVINFO_FN(cpp,v)	(cpp)->cp_devinfo_func = v
 #define SET_PF_INFO_FN(cpp,v)		(cpp)->cp_info_func = v
 #define SET_PF_KRNL_FN(cpp,v)		(cpp)->cp_make_kernel_func = v
-#define SET_PF_STRING_FN(cpp,v)		(cpp)->cp_string_func = v
+#define SET_PF_STRING_FN(cpp,v)		(cpp)->cp_kernel_string_func = v
 
 #ifdef FOOBAR
 #define SET_PF_FFT2D_FN(cpp,v)		(cpp)->cp_fft2d_func = v
@@ -198,7 +198,7 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 	SET_PF_UNMAPBUF_FN(	cpp,	stem##_unmap_buf	);	\
 	SET_PF_DEVINFO_FN(	cpp,	stem##_dev_info		);	\
 	SET_PF_INFO_FN(		cpp,	stem##_info		);	\
-	SET_PF_STRING_FN(	cpp,	stem##_string	);		\
+	SET_PF_STRING_FN(	cpp,	stem##_kernel_string	);		\
 	SET_PF_KRNL_FN(		cpp,	stem##_make_kernel	);
 
 #define PF_FUNC_TBL(cpp)		(cpp)->cp_vfa_tbl
