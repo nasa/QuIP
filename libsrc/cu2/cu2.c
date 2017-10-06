@@ -24,6 +24,7 @@
 #include "my_cu2.h"	// query_cuda_device()
 #include "cuda_supp.h"
 #include <cuda_gl_interop.h>
+#include <nvrtc.h>	// run-time compilation
 #include "gl_info.h"
 
 #ifdef HAVE_CUDA

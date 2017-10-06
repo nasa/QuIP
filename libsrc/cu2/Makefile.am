@@ -7,29 +7,29 @@ all:	libcu2.a
 
 M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 
-GENERATED_SRCS=						\
-			cu2_utils_expanded.c		\
-			cu2_veclib_expanded.c		\
-			cu2_fill_expanded.c		\
-			cu2_yuv2rgb_expanded.c		\
-			cu2_centroid_expanded.c
+GENERATED_SRCS=								\
+			$(builddir)/cu2_utils_expanded.c		\
+			$(builddir)/cu2_veclib_expanded.c		\
+			$(builddir)/cu2_fill_expanded.c			\
+			$(builddir)/cu2_yuv2rgb_expanded.c		\
+			$(builddir)/cu2_centroid_expanded.c
 
 clean-local:
 	rm -rf $(GENERATED_SRCS)
 
-cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
+$(builddir)/cu2_utils_expanded.c:	$(LOCAL_M4FILES) $(srcdir)/_cu2_utils.c
 	m4 $(M4OPTS) < $(srcdir)/cu2_utils.m4 > $(builddir)/cu2_utils_expanded.c
 
-cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) $(srcdir)/cu2_veclib.m4 | sed -e 's/	*\\//' > $(builddir)/cu2_veclib_expanded.c
 
-cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
 
-cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_yuv2rgb.m4 > $(builddir)/cu2_yuv2rgb_expanded.c
 
-cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+$(builddir)/cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_centroid.m4 > $(builddir)/cu2_centroid_expanded.c
 
 
@@ -43,8 +43,10 @@ $(srcdir)/cu2_yuv2rgb.cu:	$(builddir)/cu2_yuv2rgb_expanded.c
 $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 	touch $(srcdir)/cu2_fill.cu
 
-$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
-	touch $(srcdir)/cu2_utils.cu
+#$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
+#	touch $(srcdir)/cu2_utils.cu
+$(srcdir)/cu2_utils.c:	$(builddir)/cu2_utils_expanded.c
+	touch $(srcdir)/cu2_utils.c
 
 
 # Why does the generic rule not work?
@@ -55,8 +57,8 @@ cu2_yuv2rgb.o:	$(srcdir)/cu2_yuv2rgb.cu
 cu2_fill.o:	$(srcdir)/cu2_fill.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
-cu2_utils.o:	$(srcdir)/cu2_utils.cu
-	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
+#cu2_utils.o:	$(srcdir)/cu2_utils.cu
+#	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
 cu2_centroid.o:	$(srcdir)/cu2_centroid.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
