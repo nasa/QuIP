@@ -120,5 +120,12 @@ extern Item_Type *subrt_itp;
 extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
 
+#ifdef MAX_DEBUG
+extern void dump_resolvers(Vec_Expr_Node *enp);
+#define DUMP_RESOLVERS(n)	dump_resolvers(n)
+#else // ! MAX_DEBUG
+#define DUMP_RESOLVERS(n)
+#endif // ! MAX_DEBUG
+
 #endif // ! _SUBRT_H_
 

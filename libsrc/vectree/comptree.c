@@ -3340,7 +3340,7 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
 
 /* For the old condass funcs, the first child is the bitmap and the next two
  * are the sources.  But for the new types, the first two are the sources,
- * and the second two are the tests.
+ * and the second two are the tests.  (should that be test sources?)
  *
  * If we get here, we know that the condition is a simple numerical test.
  * So we should be able to substitute one of the new fast conditional
@@ -3348,27 +3348,87 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
  *
  * The source args have already been fixed, so that the scalar is the second child
  * if it exists, with the test inverted if necessary.
+ *
+ * Original:
+ *                           enp
+ *                        /   |   \
+ *               bool_test   src1  src2
+ *              /      |
+ *           tsrc1   tsrc2
+ *
+ * Fixed:
+ *                            enp
+ *                    /     /     \     \
+ *                  src1  src2  tsrc1  tsrc2
+ *
+ * The bool_test node is released, so if it is on any resolver list then that has to be fixed!
  */
 
-#define FIX_CHILDREN					\
+
+#define FIX_CONDASS_CHILDREN(idx1,idx2)			\
 							\
 	SET_VN_CHILD(enp,0, VN_CHILD(enp,1));		\
 	SET_VN_CHILD(enp,1, VN_CHILD(enp,2));		\
-	SET_VN_CHILD(enp,2, VN_CHILD(test_enp,0));	\
+	SET_VN_CHILD(enp,2, VN_CHILD(test_enp,idx1));	\
 	SET_VN_PARENT(VN_CHILD(enp,2),enp);		\
-	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,1));	\
-	SET_VN_PARENT(VN_CHILD(enp,3),enp);
-
-/* swap the order of the test args */
-
-#define FIX_CHILDREN_2					\
-							\
-	SET_VN_CHILD(enp,0, VN_CHILD(enp,1));		\
-	SET_VN_CHILD(enp,1, VN_CHILD(enp,2));		\
-	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,0));	\
+	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,idx2));	\
 	SET_VN_PARENT(VN_CHILD(enp,3),enp);		\
-	SET_VN_CHILD(enp,2, VN_CHILD(test_enp,1));	\
-	SET_VN_PARENT(VN_CHILD(enp,2),enp);
+	fix_resolver_references(QSP_ARG  test_enp);
+
+#define FIX_CONDASS_CHILDREN_1		FIX_CONDASS_CHILDREN(0,1)
+#define FIX_CONDASS_CHILDREN_2		FIX_CONDASS_CHILDREN(1,0)
+
+
+static void remove_resolver(QSP_ARG_DECL  Vec_Expr_Node *enp, Vec_Expr_Node *enp_to_remove)
+{
+	Node *np;
+	List *lp;
+
+	assert(VN_RESOLVERS(enp)!=NULL);
+
+	np = remData(VN_RESOLVERS(enp),enp_to_remove);
+	assert(np!=NULL);
+
+//fprintf(stderr,"remove_resolver %s from %s\n",node_desc(enp_to_remove),node_desc(enp));
+
+	lp = VN_RESOLVERS(enp_to_remove);
+	assert(lp!=NULL);
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
+		Vec_Expr_Node *resolver_enp;
+
+		resolver_enp = NODE_DATA(np);
+		if( resolver_enp != enp ){
+//fprintf(stderr,"remove_resolver linking %s and %s\n",node_desc(enp),node_desc(resolver_enp));
+			link_uk_nodes(QSP_ARG  enp,resolver_enp);
+		}
+		np = NODE_NEXT(np);
+	}
+}
+
+// fix_resolver_references - we call this when we are going to release a node.
+// Resolver links are reciprocal, so any resolvers of this node will point back to it.
+// We need to remove these references, but we need to replace them with links to the other
+// resolver nodes.
+
+static void fix_resolver_references(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	List *lp;
+	Node *np;
+
+	lp=VN_RESOLVERS(enp);
+	if( lp == NULL || (np=QLIST_HEAD(lp)) == NULL ) return;
+
+	while(np!=NULL){
+		Vec_Expr_Node *enp_to_fix;
+		enp_to_fix = NODE_DATA(np);
+//fprintf(stderr,"fix_resolver_references:  removing reference to %s from node %s\n",
+//node_desc(enp),node_desc(enp_to_fix));
+		remove_resolver(QSP_ARG  enp_to_fix,enp);
+		np = NODE_NEXT(np);
+	}
+}
+
 
 #define CHECK_SHAPES(checkpoint_number,comparison_index)			\
 										\
@@ -3394,19 +3454,23 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
 // This would have been done in compile_node, but because the test
 // was a bitmap the child nodes weren't checked...
 
+// BUG:  we release nodes here, but we can get into trouble if those nodes
+// are on another node's resolver list!?
+
 static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *test_enp;
 	test_enp=VN_CHILD(enp,0);
 
-	if( VN_CODE(enp) == T_VV_B_CONDASS ){	/* both sources vectors? */
+	if( VN_CODE(enp) == T_VV_B_CONDASS ){	/* both sources vectors */
+		// now test the shapes of the test sources...
 		if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,0)) ){
 			if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
 				// both test sources vectors
 				SET_VN_CODE(enp, T_VV_VV_CONDASS);
 				// This "fix" overwrites the reference to child 0
 				// Does it exist, and should we release it?
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vv_vv_test_code(VN_CODE(test_enp)));
 				// check to insure typecase if needed
 				CHECK_SHAPES(1,2)
@@ -3414,14 +3478,14 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			} else {
 				// only first test source vector
 				SET_VN_CODE(enp, T_VV_VS_CONDASS);
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vv_vs_test_code(VN_CODE(test_enp)));
 				CHECK_SHAPES(3,2)
 				RELEASE_BOOL(test_enp)
 			}
 		} else if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
 			// only second test source is a vector
-			FIX_CHILDREN_2
+			FIX_CONDASS_CHILDREN_2
 			SET_VN_BM_CODE(enp, vv_vv_test_code(VN_CODE(test_enp)));
 			/* invert sense of test */
 			invert_vec4_condass(enp);
@@ -3436,19 +3500,19 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,0)) ){
 			if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
 				SET_VN_CODE(enp, T_VS_VV_CONDASS);
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vs_vv_test_code(VN_CODE(test_enp)));
 				CHECK_SHAPES(7,2)
 				RELEASE_BOOL(test_enp)
 			} else {
 				SET_VN_CODE(enp, T_VS_VS_CONDASS);
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vs_vs_test_code(VN_CODE(test_enp)));
 				CHECK_SHAPES(9,2)
 				RELEASE_BOOL(test_enp)
 			}
 		} else if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
-			FIX_CHILDREN_2
+			FIX_CONDASS_CHILDREN_2
 			SET_VN_BM_CODE(enp, vs_vv_test_code(VN_CODE(test_enp)));
 			invert_vec4_condass(enp);
 			CHECK_SHAPES(11,2)
@@ -5765,15 +5829,11 @@ static void link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *e
 
 	if( VN_RESOLVERS(enp2) == NULL ){
 		SET_VN_RESOLVERS(enp2, NEW_LIST );
-fprintf(stderr,"link_node_to_node:  resolver list for %s created at 0x%lx\n",node_desc(enp2),(long)VN_RESOLVERS(enp2));
 	}
 
 	assert( nodeOf(VN_RESOLVERS(enp2),enp1) == NULL );
 
-fprintf(stderr,"linking UK nodes %s to %s\n",node_desc(enp1),node_desc(enp2));
 	np = mk_node(enp1);
-fprintf(stderr,"link_node_to_node:  adding new list node at 0x%lx (for enp1 0x%lx) to list at 0x%lx (for enp 0x%lx)\n",
-(long)np,(long)enp1,(long)VN_RESOLVERS(enp2),(long)enp2);
 	addTail(VN_RESOLVERS(enp2),np);
 }
 

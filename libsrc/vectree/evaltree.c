@@ -634,9 +634,6 @@ static double sample_weight[32];	/* 32 = 2 ^ N_DIMENSIONS */
 									\
 	ns=1;								\
 	for(i=0;i<N_DIMENSIONS;i++){					\
-/*sprintf(ERROR_STRING,"GET_MAP_W:  i = %d     ui = %d   li = %d    w = %f",\
-i,upper_index[i],lower_index[i],weights[i]);\
-advise(ERROR_STRING);*/\
 		if( (short)i >= OBJ_MINDIM(map_source_dp) && 		\
 			(short)i <= OBJ_MAXDIM(map_source_dp) ){	\
 		/* We double the number of pts to interpolate here */	\
@@ -655,11 +652,6 @@ advise(ERROR_STRING);*/\
 			ns *= 2;					\
 		}							\
 	}								\
-/*for(i=0;i<ns;i++){\
-sprintf(ERROR_STRING,"%d, %d     i = %d   sample_offset[i] = %d   sample_weight[i] = %g",\
-i_dst,i_index,i,sample_offset[i],sample_weight[i]);\
-advise(ERROR_STRING);\
-}*/\
 }
 
 
@@ -1152,11 +1144,6 @@ static int assign_ptr_arg(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *val
 
 	/* we want this object to be equivalenced to the calling obj */
 
-/*
-sprintf(ERROR_STRING,"assign_ptr_arg %s %s:  calling pop_subrt_pair",node_desc(arg_enp),node_desc(val_enp));
-advise(ERROR_STRING);
-*/
-
 	POP_SUBRT_CPAIR(curr_cpp,SR_NAME(curr_srp));
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
@@ -1167,13 +1154,6 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	if( prev_cpp != NULL ){
-/*
-sprintf(ERROR_STRING,"assign_ptr_arg %s %s:  restoring previous context",node_desc(arg_enp),node_desc(val_enp));
-advise(ERROR_STRING);
-*/
-
-		//PUSH_ITEM_CONTEXT(id_itp,CP_ID_CTX(prev_cpp));
-		//PUSH_ITEM_CONTEXT(dobj_itp,CP_OBJ_CTX(prev_cpp));
 		PUSH_CPAIR(prev_cpp);
 
 #ifdef QUIP_DEBUG
@@ -1188,12 +1168,6 @@ advise(ERROR_STRING);
 	src_idp = GET_ARG_PTR(val_enp);		/* what if the val_enp is a string?? */
 
 	if( prev_cpp != NULL ){
-/*
-sprintf(ERROR_STRING,"assign_ptr_arg %s %s:  popping previous context",node_desc(arg_enp),node_desc(val_enp));
-advise(ERROR_STRING);
-*/
-		//pop_item_context(QSP_ARG  id_itp);
-		//pop_item_context(QSP_ARG  dobj_itp);
 		POP_ID_CONTEXT;
 		POP_DOBJ_CONTEXT;
 #ifdef QUIP_DEBUG
@@ -1205,12 +1179,6 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	}
 
-/*
-sprintf(ERROR_STRING,"assign_ptr_arg %s %s:  pushing current context",node_desc(arg_enp),node_desc(val_enp));
-advise(ERROR_STRING);
-*/
-	//PUSH_ITEM_CONTEXT(id_itp,CP_ID_CTX(curr_cpp));
-	//PUSH_ITEM_CONTEXT(dobj_itp,CP_OBJ_CTX(curr_cpp));
 	PUSH_CPAIR(curr_cpp);
 
 #ifdef QUIP_DEBUG
@@ -1761,13 +1729,6 @@ static Data_Obj *eval_typecast(QSP_ARG_DECL Vec_Expr_Node *enp, Data_Obj *dst_dp
 {
 	Data_Obj *dp, *tmp_dp;
 
-/*
-if( dst_dp != NULL ){
-sprintf(ERROR_STRING,"eval_typecast:  dst_dp %s at 0x%lx",OBJ_NAME(dst_dp),(u_long)dst_dp);
-advise(ERROR_STRING);
-}
-*/
-
 	assert( VN_SHAPE(VN_CHILD(enp,0)) != NULL );
 
 	// Can we assert that this is not null???
@@ -1821,11 +1782,6 @@ advise(ERROR_STRING);
 						SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
 						VN_PREC_PTR(enp));
 				}
-/*
-advise("eval_typecast calling convert");
-LONGLIST(dst_dp);
-LONGLIST(dp);
-*/
 				if( c_convert(QSP_ARG  dst_dp,dp) < 0 ){
 					NODE_ERROR(enp);
 					WARN("Error performing conversion");
@@ -2815,10 +2771,6 @@ static void run_reffunc(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Identifier 
 	executing=1;
 	/* Run-time resolution of unknown shapes */
 
-/*
-sprintf(ERROR_STRING,"run_reffunc %s:  calling setup_call",SR_NAME(srp));
-advise(ERROR_STRING);
-*/
 	rip = SETUP_CALL(srp,NULL);
 	if( rip == NULL ){
 sprintf(ERROR_STRING,"run_reffunc %s:  no return info!?",SR_NAME(srp));
@@ -2977,25 +2929,9 @@ Run_Info * setup_call(QSP_ARG_DECL Subrt *srp,Data_Obj *dst_dp)
 	 * We call calltime resolve to resolve arg shapes and return shapes if we can.
 	 * What is the expected context for early_calltime_resolve???
 	 */
-/*
-if( dst_dp != NULL ){
-sprintf(ERROR_STRING,"setup_call %s:  calling early_calltime_resolve, dst_dp = %s",SR_NAME(srp),OBJ_NAME(dst_dp));
-advise(ERROR_STRING);
-describe_shape(OBJ_SHAPE(dst_dp));
-} else {
-sprintf(ERROR_STRING,"setup_call %s:  calling early_calltime_resolve, dst_dp = NULL",SR_NAME(srp));
-advise(ERROR_STRING);
-}
-*/
 
-advise("setup_call calling early_calltime_resolve");
 	EARLY_CALLTIME_RESOLVE(srp,dst_dp);
-advise("setup_call back from early_calltime_resolve");
 
-/*
-advise("setup_call:  after early_calltime_resolve:");
-DUMP_TREE(SR_BODY(srp));
-*/
 	/* BUG We'd like to pop the context of any calling subrts here, but it is tricky:
 	 * We need to have the old context so we can find the arg values...  but we want
 	 * to pop the context when we evaluate the arg decls to avoid warnings
@@ -3006,14 +2942,8 @@ DUMP_TREE(SR_BODY(srp));
 	rip = new_rip();
 	rip->ri_srp = srp;
 
-/*
-sprintf(ERROR_STRING,"setup_call %s:  calling pop_previous #1 (context)",SR_NAME(srp));
-advise(ERROR_STRING);
-*/
-advise("setup_call calling check_arg_shapes");
 	if( CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),SR_ARG_VALS(srp),srp) < 0 )
 		goto call_err;
-advise("setup_call back from check_arg_shapes");
 
 	/* declare the arg variables */
 
@@ -3036,10 +2966,6 @@ call_err:
 fprintf(stderr,"call_err!\n");
 	/* now we're back , restore the context of the caller , if any */
 	if( rip->ri_prev_cpp != NULL ){
-/*
-sprintf(ERROR_STRING,"setup_call %s:  restoring previous context",SR_NAME(srp));
-advise(ERROR_STRING);
-*/
 		RESTORE_PREVIOUS(rip->ri_prev_cpp);
 	}
 	return(NULL);
@@ -3055,18 +2981,10 @@ void wrapup_context(QSP_ARG_DECL  Run_Info *rip)
 
 	curr_srp = rip->ri_old_srp;
 
-/*
-sprintf(ERROR_STRING,"wrapup_context %s:  calling delete_subrt_ctx",SR_NAME(rip->ri_srp));
-advise(ERROR_STRING);
-*/
 	/* get rid of the context, restore the context of the caller , if any */
 
 	delete_subrt_ctx(QSP_ARG  SR_NAME(rip->ri_srp));
 	if( rip->ri_prev_cpp != NULL ){
-/*
-sprintf(ERROR_STRING,"wrapup_context %s:  restoring previous context",SR_NAME(rip->ri_srp));
-advise(ERROR_STRING);
-*/
 		RESTORE_PREVIOUS(rip->ri_prev_cpp);
 	}
 }
@@ -3088,17 +3006,14 @@ void run_subrt(QSP_ARG_DECL Subrt *srp, /* Vec_Expr_Node *enp, */ Data_Obj *dst_
 {
 	Run_Info *rip;
 
-fprintf(stderr,"run_subrt BEGIN\n");
 	executing=1;
 
 	rip = SETUP_CALL(srp,dst_dp);
-fprintf(stderr,"run_subrt back from setup_call\n");
 	if( rip == NULL ){
 		return;
 	}
 
 	if( rip->ri_arg_stat >= 0 ){
-fprintf(stderr,"run_subrt calling eval_decl_tree\n");
 		EVAL_DECL_TREE(SR_BODY(srp));
 		/* eval_work_tree returns 0 if a return statement was executed,
 		 * but not if there is an implied return.
@@ -3116,7 +3031,6 @@ sprintf(ERROR_STRING,"run_subrt %s:  arg_stat = %d",SR_NAME(srp),rip->ri_arg_sta
 WARN(ERROR_STRING);
 	}
 
-fprintf(stderr,"run_subrt calling wrapup_call\n");
 	wrapup_call(QSP_ARG  rip);
 }
 
@@ -3263,14 +3177,6 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 	for(i=0;i<N_DIMENSIONS;i++)
 		SET_DIMENSION(dsp,i,1 );
 
-/*
-sprintf(ERROR_STRING,"eval_decl_stat %s:",node_desc(enp));
-advise(ERROR_STRING);
-if( VN_SHAPE(enp) != NULL ) describe_shape( VN_SHAPE(enp));
-else prt_msg("\t(no shape)");
-DUMP_TREE(enp);
-*/
-
 	switch(VN_CODE(enp)){
 		case T_PROTO:
 			{
@@ -3326,7 +3232,6 @@ DUMP_TREE(enp);
 					NODE_ERROR(enp);
 					WARN("LHS and RHS are both unknown shape!?");
 				} else {
-advise("attempting resolution");
 					RESOLVE_TREE(enp,NULL);
 					DUMP_TREE(enp);
 				}
@@ -3405,11 +3310,6 @@ advise("attempting resolution");
 				if( ! IS_RESOLVED(enp) ){
 					setup_unknown_shape(QSP_ARG  enp,dsp);
 				} else {
-/*
-sprintf(ERROR_STRING,"resolved, nr = %d  nc = %d",SHP_TYPE_DIM(VN_SHAPE(enp),2),
-SHP_TYPE_DIM(VN_SHAPE(enp),1));
-advise(ERROR_STRING);
-*/
 					/* BUG?  type_dimset or mach_dimset? */
 					COPY_DIMS(dsp, SHP_TYPE_DIMS(VN_SHAPE(enp)));
 				}
@@ -4663,8 +4563,6 @@ static Data_Obj *eval_subscript1(QSP_ARG_DECL Data_Obj *dp, Vec_Expr_Node *enp)
 
 	/* index = EVAL_INT_EXP(VN_CHILD(enp,1)); */
 	index = (index_t) EVAL_FLT_EXP(enp);
-sprintf(ERROR_STRING,"eval_subscript1:  index is %d",index);
-advise(ERROR_STRING);
 
 	/* d_subscript fails if the index is too large,
 	 * but in matlab we want to automagically make the array larger
@@ -4766,13 +4664,6 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 		WARN("assign_obj_from_list:  LHS has unknown shape!?");
 	}
 
-/*
-sprintf(ERROR_STRING,"assign_obj_from_list  dp = %s, enp = %s, index = %d",
-OBJ_NAME(dp),node_desc(enp),index);
-advise(ERROR_STRING);
-LONGLIST(dp);
-DUMP_TREE(enp);
-*/
 	switch(VN_CODE(enp)){
 		case T_TYPECAST:			/* assign_obj_from_list */
 			/* do we need to do anything??? BUG? */
@@ -4963,11 +4854,6 @@ DUMP_TREE(enp);
 			ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,0),0);
 			//SET_OBJ_FLAG_BITS(dp, DT_ASSIGNED);
 			note_assignment(dp);
-/*
-advise("eval_obj_ref returning:");
-LONGLIST(dp);
-pntvec(QSP_ARG  dp, tell_msgfile() );
-*/
 			return(dp);
 			break;
 
@@ -5396,10 +5282,6 @@ double eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 	eval_enp = enp;
 
-/*
-sprintf(ERROR_STRING,"eval_flt_exp, code is %d",VN_CODE(enp));
-advise(ERROR_STRING);
-*/
 	switch(VN_CODE(enp)){
 		case T_MINVAL:
 			dp2=EVAL_OBJ_EXP(VN_CHILD(enp,0),NULL);
@@ -7242,12 +7124,6 @@ dump_tree(QSP_ARG  enp);	// expression error
 			MISSING_CASE(enp,"eval_obj_assignment");
 			break;
 	}
-/*
-sprintf(ERROR_STRING,"eval_obj_assignment %s DONE!",OBJ_NAME(dst_dp));
-advise(ERROR_STRING);
-LONGLIST(dst_dp);
-*/
-
 
 	note_assignment(dst_dp);
 }		/* end eval_obj_assignment() */
@@ -7395,14 +7271,7 @@ sprintf(ERROR_STRING,"eval_work_tree:  attemping to runtime resolution of %s",no
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		/*
-		resolve_one_uk_node(enp);
-		*/
 		RESOLVE_TREE(enp,NULL);
-/*
-advise("eval_work_tree after runtime resolution:");
-DUMP_TREE(enp);
-*/
 	}
 
 	/* Where should we put this? */

@@ -408,7 +408,6 @@ static void resolve_uk_nodes(QSP_ARG_DECL  List *lp)
 		Vec_Expr_Node *enp;
 
 		enp=(Vec_Expr_Node *)NODE_DATA(np);
-fprintf(stderr,"resolve_uk_nodes checking %s\n",node_desc(enp));
 		if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -419,10 +418,7 @@ ADVISE(ERROR_STRING);
 			/*
 			resolve_one_uk_node(enp);
 			*/
-fprintf(stderr,"resolve_uk_nodes calling resolve_tree %s\n",node_desc(enp));
-dump_tree(QSP_ARG  enp);
 			RESOLVE_TREE(enp,NULL);
-fprintf(stderr,"resolve_uk_nodes back from resolve_tree %s\n",node_desc(enp));
 		}
 
 		/* If we remove nodes from the list as they are resolved,
@@ -549,6 +545,37 @@ DESCRIBE_SHAPE(VN_SHAPE(enp));
 			find_known_return(QSP_ARG  VN_CHILD(enp,i),srp);
 } /* find_known_return */
 
+#ifdef MAX_DEBUG
+
+static void show_resolver_list(const char *prefix, Vec_Expr_Node *enp)
+{
+	List *lp;
+	Node *np;
+
+	lp = VN_RESOLVERS(enp);
+	if( lp == NULL || (np=QLIST_HEAD(lp)) == NULL ){
+		fprintf(stderr,"%s%s has no resolvers.\n",prefix,node_desc(enp));
+		return;
+	}
+
+	fprintf(stderr,"%s%s (0x%lx) has %d resolvers:\n",prefix,node_desc(enp),(long)enp,eltcount(lp));
+	while(np!=NULL){
+		enp = NODE_DATA(np);
+		fprintf(stderr,"%s\t%s (np = 0x%lx, enp = 0x%lx)\n",prefix,node_desc(enp),(long)np,(long)enp);
+		if( strlen(prefix) < 3 ){
+			char p[12];
+			sprintf(p,"\t%s",prefix);
+			show_resolver_list(p,enp);
+		}
+		np = NODE_NEXT(np);
+	}
+}
+
+void dump_resolvers(Vec_Expr_Node *enp)
+{
+	show_resolver_list("",enp);
+}
+#endif // MAX_DEBUG
 
 /* resolve_tree
  *
@@ -565,7 +592,7 @@ DESCRIBE_SHAPE(VN_SHAPE(enp));
 void resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence)
 {
 	Node *np;
-	Vec_Expr_Node *enp2;
+	Vec_Expr_Node *resolver_enp;
 	Identifier *idp;
 	Subrt *srp;
 	Run_Info *rip;
@@ -604,7 +631,6 @@ DUMP_TREE(enp);
 	 */
 //advise("ready to check special cases");
 //dump_tree(enp);
-fprintf(stderr,"resolve_tree:  checking special cases %s\n",node_desc(enp));
 	switch(VN_CODE(enp)){
 		case T_SUBVEC:
 		case T_CSUBVEC:
@@ -643,16 +669,13 @@ fprintf(stderr,"resolve_tree:  checking special cases %s\n",node_desc(enp));
 			break;
 
 		case T_POINTER:
-fprintf(stderr,"resolve_tree %s:  special cast T_POINTER\n",node_desc(enp));
 			idp = EVAL_PTR_REF(enp,EXPECT_PTR_SET);
 			if( idp == NULL ){
-fprintf(stderr,"resolve_tree %s:  ptr ref evaluates to NULL\n",node_desc(enp));
 				break;	/* probably not set */
 			}
 			assert( IS_POINTER(idp) );
 
 			if( ! POINTER_IS_SET(idp) ){
-fprintf(stderr,"resolve_tree %s:  ptr is not set\n",node_desc(enp));
 				break;
 			}
 
@@ -663,7 +686,6 @@ fprintf(stderr,"resolve_tree %s:  ptr is not set\n",node_desc(enp));
 					node_desc(enp),ID_NAME(idp));
 				WARN(ERROR_STRING);
 				*/
-fprintf(stderr,"resolve_tree %s:  ptr %s has null ref arg\n",node_desc(enp),ID_NAME(idp));
 				break;
 			}
 			assert( REF_OBJ(PTR_REF(ID_PTR(idp))) != NULL );
@@ -831,12 +853,10 @@ ADVISE(ERROR_STRING);
 	 * Does vv_func need to be another special case?
 	 */
 //advise("resolve_tree:  ready to resolve!");
-fprintf(stderr,"resolve_tree %s:  ready to resolve\n",node_desc(enp));
 	if( VN_RESOLVERS(enp) == NULL ){
 		/* We don't set the shapes of T_SUBVEC nodes if the range
 		 * expressions contain variables (which will be set at runtime).
 		 */
-fprintf(stderr,"resolve_tree %s:  no resolvers\n",node_desc(enp));
 		UPDATE_TREE_SHAPE(enp);
 
 
@@ -860,7 +880,6 @@ DUMP_TREE(enp);
 		return;
 	}
 
-fprintf(stderr,"resolve_tree:  resolver list for %s at 0x%lx\n",node_desc(enp),(long)VN_RESOLVERS(enp));
 	np=QLIST_HEAD(VN_RESOLVERS(enp));
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -869,60 +888,51 @@ node_desc(enp),eltcount(VN_RESOLVERS(enp)));
 ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-fprintf(stderr,"resolve_tree:  entering loop, np = 0x%lx\n",(long)np);
 	while(np!=NULL){
-fprintf(stderr,"resolve_tree:  top of loop, np = 0x%lx\n",(long)np);
-		enp2 = (Vec_Expr_Node *)NODE_DATA(np);
-fprintf(stderr,"resolve_tree:  top of loop, enp = 0x%lx\n",(long)enp2);
+		resolver_enp = (Vec_Expr_Node *)NODE_DATA(np);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_tree:  %s is a resolver node for %s",
-node_desc(enp2),node_desc(enp));
+node_desc(resolver_enp),node_desc(enp));
 ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-		assert( enp2 != NULL );
+		assert( resolver_enp != NULL );
 
-		if( enp2 != whence ){
-fprintf(stderr,"trying...\n");
+		if( resolver_enp != whence ){
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"resolve_tree %s:  trying %s",node_desc(enp),node_desc(enp2));
+sprintf(ERROR_STRING,"resolve_tree %s:  trying %s",node_desc(enp),node_desc(resolver_enp));
 ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-			if( VN_SHAPE(enp2) == NULL ||	/* could be a void callfunc node */
-				UNKNOWN_SHAPE(VN_SHAPE(enp2)) ){
+			if( VN_SHAPE(resolver_enp) == NULL ||	/* could be a void callfunc node */
+				UNKNOWN_SHAPE(VN_SHAPE(resolver_enp)) ){
 
-fprintf(stderr,"resolve_tree:  calling resolve_tree\n");
-				RESOLVE_TREE(enp2,enp);
-fprintf(stderr,"resolve_tree:  back from recursive call to resolve_tree\n");
+				RESOLVE_TREE(resolver_enp,enp);	// should this be enp or whence?
 			}
 			
-			/* The above call to resolve_tree could have resolved enp2 */
-			if( VN_SHAPE(enp2)!=NULL && ! UNKNOWN_SHAPE(VN_SHAPE(enp2)) ){
+			/* The above call to resolve_tree could have resolved resolver_enp */
+			if( VN_SHAPE(resolver_enp)!=NULL && ! UNKNOWN_SHAPE(VN_SHAPE(resolver_enp)) ){
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"resolve_tree %s:  effecting resolution using %s",node_desc(enp),node_desc(enp2));
+sprintf(ERROR_STRING,"resolve_tree %s:  effecting resolution using %s",node_desc(enp),node_desc(resolver_enp));
 ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-				/*resolved_enp=*/EFFECT_RESOLUTION(enp,enp2);
+				/*resolved_enp=*/EFFECT_RESOLUTION(enp,resolver_enp);
 				if(VN_RESOLVERS(enp) != NULL ){
 					/* careful - we dont want a recursive call, we may
 					 * have gotten here from resolve_uk_nodes!
 					 */
-fprintf(stderr,"resolve_tree:  calling resolve_uk_nodes\n");
 					RESOLVE_UK_NODES(VN_RESOLVERS(enp));
 				}
 				return;
 			}
 		}
-fprintf(stderr,"Will set np (now 0x%lx) to next node 0x%lx\n",(long)np,(long)NODE_NEXT(np));
 		np=NODE_NEXT(np);
 	}
-fprintf(stderr,"resolve_tree:  DONE\n");
 } /* end resolve_tree() */
 
 
@@ -961,7 +971,6 @@ ADVISE(ERROR_STRING);
 	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	if( argval_tree != NULL ){
-fprintf(stderr,"early_calltime_resolve checking argval_tree\n");
 		stat = CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),argval_tree,srp);
 		if( stat < 0 ) {
 sprintf(ERROR_STRING,"resolve_subrt %s:  argument error",SR_NAME(srp));
@@ -969,7 +978,6 @@ WARN(ERROR_STRING);
 			goto givup;
 		}
 	}
-fprintf(stderr,"early_calltime_resolve DONE checking argval_tree\n");
 
 	/* set the context */
 /*
@@ -981,12 +989,8 @@ DUMP_SUBRT(srp);
 	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 	/* declare the arg variables */
-fprintf(stderr,"early_calltime_resolve declaring arg vars\n");
 	EVAL_DECL_TREE(SR_ARG_DECLS(srp));	/* resolve_subrt() */
-fprintf(stderr,"early_calltime_resolve DONE declaring arg vars\n");
-fprintf(stderr,"early_calltime_resolve declaring body vars\n");
 	EVAL_DECL_TREE(SR_BODY(srp));		/* resolve_subrt() */
-fprintf(stderr,"early_calltime_resolve DONE declaring body vars\n");
 	if( SR_PREC_CODE(srp) != PREC_VOID ){
 		if( ret_shpp != NULL && ! UNKNOWN_SHAPE(ret_shpp) ){
 			SET_SR_SHAPE(srp, ret_shpp);
@@ -995,15 +999,12 @@ fprintf(stderr,"early_calltime_resolve DONE declaring body vars\n");
 		}
 	}
 	/* assert( SR_SHAPE(srp) == NULL ); */
-fprintf(stderr,"early_calltime_resolve DONE with declarations\n");
 
 	/* we need to assign the arg vals for any ptr arguments! */
 
 	SET_SR_DEST_SHAPE(srp, ret_shpp);
 
-fprintf(stderr,"early_calltime_resolve calling resolve_uk_nodes\n");
 	RESOLVE_UK_NODES(uk_list);
-fprintf(stderr,"early_calltime_resolve back from resolve_uk_nodes\n");
 
 	/* now try for the args */
 	/* resolve_uk_args( */
@@ -1017,7 +1018,6 @@ ADVISE(ERROR_STRING);
 	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 givup:
-fprintf(stderr,"early_calltime_resolve: givup\n");
 
 /*
 sprintf(ERROR_STRING,"resolve_subrt %s clearing SCANNING flag",SR_NAME(srp));
@@ -1041,7 +1041,6 @@ ADVISE(ERROR_STRING);
 	 */
 
 	if( argval_tree != NULL ){
-fprintf(stderr,"early_calltime_resolve calling resolve_argval_shapes\n");
 		RESOLVE_ARGVAL_SHAPES(argval_tree,SR_ARG_DECLS(srp),srp);
 	}
 
@@ -1226,9 +1225,6 @@ static void resolve_obj_id(QSP_ARG_DECL  Identifier *idp, Shape_Info *shpp)
 	Data_Obj *dp;
 /* char remember_name[LLEN]; */
 
-fprintf(stderr,"resolve_obj_id:  BEGIN, idp = 0x%lx, shpp = 0x%lx\n",(long)idp,(long)shpp);
-fflush(stderr);
-fprintf(stderr,"resolve_obj_id:  have id %s\n",ID_NAME(idp));
 	assert( shpp != NULL );
     
 	INIT_SHAPE_PTR(tmp_shpp)

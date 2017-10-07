@@ -500,25 +500,21 @@ tnt_tbl[VN_CODE(enp)].tnt_name);
 		case T_SEQ_DECL:
 		case T_CSEQ_DECL:
 		case T_PTR_DECL:
-//DEBUG_IT_3(enp,releasing decl name)
-//fprintf(stderr,"node at 0x%lx has decl name at 0x%lx\n",(long)enp,(long)VN_DECL_NAME(enp));
 			rls_str(VN_DECL_NAME(enp));
-//DEBUG_IT_3(enp,done releasing decl name)
 			break;
 
 		default:
 			// do nothing?
 			break;
 	}
+
 	if( OWNS_SHAPE(enp) ){
-//DEBUG_IT_3(enp,releasing shape)
-//fprintf(stderr,"rls_vectree releasing shape for %s node 0x%lx\n",node_desc(enp),(long)enp);
 		rls_shape(VN_SHAPE(enp));
-//DEBUG_IT_3(enp,done releasing shape)
 	}
-//DEBUG_IT_3(enp,releasing node itself)
+
+	// Maybe better to have a free list of nodes?
+
 	givbuf(enp);
-//DEBUG_IT_3(enp,done releasing node itself)
 }
 
 void set_global_ctx(SINGLE_QSP_ARG_DECL)
