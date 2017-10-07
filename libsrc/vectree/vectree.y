@@ -2177,7 +2177,9 @@ static const char *match_quote(QSP_ARG_DECL  const char **spp)
 // was it introduced???  Used here, but needs to be thread-safe,
 // so part of query_stack...
 //
-// Better would be to have a saved string with reference count.
+// It is a String_Ref, a saved string with reference count.
+// CURR_INFILE gets saved in nodes that are created while the file
+// is being read, so that appropriate error messages can be printed.
 // 
 
 static void update_current_input_file(Query_Stack *qsp)

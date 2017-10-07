@@ -231,10 +231,10 @@ extern void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body );
 extern COMMAND_FUNC( do_run_subrt );
 extern void exec_subrt(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *dst_dp);
 #define EXEC_SUBRT(enp,dp)		exec_subrt(QSP_ARG enp,dp)
-extern void run_subrt(QSP_ARG_DECL  Subrt *srp,Vec_Expr_Node *,Data_Obj *dst_dp);
-#define RUN_SUBRT(srp,enp,dst_dp)		run_subrt(QSP_ARG srp,enp,dst_dp)
-extern void run_subrt_immed(QSP_ARG_DECL  Subrt *srp,Vec_Expr_Node *,Data_Obj *dst_dp);
-#define RUN_SUBRT_IMMED(srp,enp,dst_dp)		run_subrt_immed(QSP_ARG srp,enp,dst_dp)
+extern void run_subrt(QSP_ARG_DECL  Subrt *srp,Data_Obj *dst_dp);
+#define RUN_SUBRT(srp,dst_dp)		run_subrt(QSP_ARG srp,dst_dp)
+extern void run_subrt_immed(QSP_ARG_DECL  Subrt *srp,Data_Obj *dst_dp);
+#define RUN_SUBRT_IMMED(srp,dst_dp)		run_subrt_immed(QSP_ARG srp,dst_dp)
 extern COMMAND_FUNC( do_dump_subrt );
 extern COMMAND_FUNC( do_opt_subrt );
 extern COMMAND_FUNC( do_fuse_kernel );

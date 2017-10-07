@@ -581,19 +581,6 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	}
 }
 
-#ifdef CAUTIOUS
-
-static int string_is_printable(const char *s)
-{
-	while( *s ){
-		if( ! isprint(*s) ) return(0);
-		s++;
-	}
-	return(1);
-}
-
-#endif /* CAUTIOUS */
-
 void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	/* infile may be null if we are reading stdin??? */
@@ -601,6 +588,7 @@ void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		return;
 	}
 
+fprintf(stderr,"node_error %s\n",node_desc(enp));
 	assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
 
 	sprintf(DEFAULT_ERROR_STRING,"File %s, line %d:",SR_STRING(VN_INFILE(enp)),VN_LINENO(enp));

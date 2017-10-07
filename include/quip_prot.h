@@ -321,6 +321,7 @@ extern void set_error_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_advise_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_prt_msg_frag_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_max_warnings(QSP_ARG_DECL  int n);
+extern int string_is_printable(const char *s);
 extern char *show_printable(QSP_ARG_DECL  const char* s);
 extern void error_redir(QSP_ARG_DECL  FILE *fp);
 extern void output_redir(QSP_ARG_DECL  FILE *fp);

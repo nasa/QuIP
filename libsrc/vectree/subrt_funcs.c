@@ -63,7 +63,7 @@ COMMAND_FUNC( do_run_subrt )
 	// What do we do if there is a fused kernel for this subrt???
 
 	SET_SR_ARG_VALS(srp,NULL);
-	RUN_SUBRT_IMMED(srp,NULL,NULL);
+	RUN_SUBRT_IMMED(srp,NULL);
 }
 
 COMMAND_FUNC( do_dump_subrt )
@@ -187,6 +187,20 @@ COMMAND_FUNC( do_subrt_info )
 			np=NODE_NEXT(np);
 		}
 	}
+
+	// Display the file and line number where declared...
+	if( VN_INFILE(enp) == NULL ){
+		WARN("subroutine has no associated input file!?");
+	} else {
+		assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
+		sprintf(msg_str,"Subroutine %s declared at line %d, file %s",
+			SR_NAME(srp),
+			VN_LINENO(enp),
+			SR_STRING(VN_INFILE(enp))
+			);
+		prt_msg(msg_str);
+	}
+
 
 	/*
 	sprintf(msg_str,"\t%ld flops, %ld math calls",

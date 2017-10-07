@@ -2081,7 +2081,7 @@ void exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 	srp = runnable_subrt(QSP_ARG  enp);
 
 	if( srp != NULL ){
-		RUN_SUBRT(srp,enp,dst_dp);
+		RUN_SUBRT(srp,/*enp,*/dst_dp);
 	} else {
 		sprintf(ERROR_STRING,"subroutine is not runnable!?");
 		WARN(ERROR_STRING);
@@ -2987,9 +2987,10 @@ sprintf(ERROR_STRING,"setup_call %s:  calling early_calltime_resolve, dst_dp = N
 advise(ERROR_STRING);
 }
 */
-/* advise("setup_call calling early_calltime_resolve"); */
+
+advise("setup_call calling early_calltime_resolve");
 	EARLY_CALLTIME_RESOLVE(srp,dst_dp);
-/* advise("setup_call back from early_calltime_resolve"); */
+advise("setup_call back from early_calltime_resolve");
 
 /*
 advise("setup_call:  after early_calltime_resolve:");
@@ -3009,9 +3010,10 @@ DUMP_TREE(SR_BODY(srp));
 sprintf(ERROR_STRING,"setup_call %s:  calling pop_previous #1 (context)",SR_NAME(srp));
 advise(ERROR_STRING);
 */
-/* advise("setup_call calling check_arg_shapes"); */
+advise("setup_call calling check_arg_shapes");
 	if( CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),SR_ARG_VALS(srp),srp) < 0 )
 		goto call_err;
+advise("setup_call back from check_arg_shapes");
 
 	/* declare the arg variables */
 
@@ -3031,6 +3033,7 @@ advise(ERROR_STRING);
 
 call_err:
 
+fprintf(stderr,"call_err!\n");
 	/* now we're back , restore the context of the caller , if any */
 	if( rip->ri_prev_cpp != NULL ){
 /*
@@ -3073,26 +3076,29 @@ advise(ERROR_STRING);
 
 // This is the function called from the menu to run a single function...
 
-void run_subrt_immed(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)
+void run_subrt_immed(QSP_ARG_DECL Subrt *srp, /* Vec_Expr_Node *enp, */ Data_Obj *dst_dp)
 {
 	delete_local_objs(SINGLE_QSP_ARG);	// run_subrt_immed
 	push_vector_parser_data(SINGLE_QSP_ARG);
-	RUN_SUBRT(srp,enp,dst_dp);
+	RUN_SUBRT(srp,/*enp,*/dst_dp);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
-void run_subrt(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Data_Obj *dst_dp)
+void run_subrt(QSP_ARG_DECL Subrt *srp, /* Vec_Expr_Node *enp, */ Data_Obj *dst_dp)
 {
 	Run_Info *rip;
 
+fprintf(stderr,"run_subrt BEGIN\n");
 	executing=1;
 
 	rip = SETUP_CALL(srp,dst_dp);
+fprintf(stderr,"run_subrt back from setup_call\n");
 	if( rip == NULL ){
 		return;
 	}
 
 	if( rip->ri_arg_stat >= 0 ){
+fprintf(stderr,"run_subrt calling eval_decl_tree\n");
 		EVAL_DECL_TREE(SR_BODY(srp));
 		/* eval_work_tree returns 0 if a return statement was executed,
 		 * but not if there is an implied return.
@@ -3110,6 +3116,7 @@ sprintf(ERROR_STRING,"run_subrt %s:  arg_stat = %d",SR_NAME(srp),rip->ri_arg_sta
 WARN(ERROR_STRING);
 	}
 
+fprintf(stderr,"run_subrt calling wrapup_call\n");
 	wrapup_call(QSP_ARG  rip);
 }
 

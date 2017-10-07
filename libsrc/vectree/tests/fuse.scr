@@ -23,6 +23,12 @@ end
 
   dump testk
   fuse testk
+  info testk
+  debug resolver
+  advise "Running testk..."
+  run testk
+  advise "DONE running testk..."
+
   quit
 exit
 

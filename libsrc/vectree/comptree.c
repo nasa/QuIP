@@ -5757,24 +5757,32 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 	}
 } /* end prelim_node_shape */
 
+// link_node_to_node - add the first node to the resolver list of the second
+
+static void link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
+{
+	Node *np;
+
+	if( VN_RESOLVERS(enp2) == NULL ){
+		SET_VN_RESOLVERS(enp2, NEW_LIST );
+fprintf(stderr,"link_node_to_node:  resolver list for %s created at 0x%lx\n",node_desc(enp2),(long)VN_RESOLVERS(enp2));
+	}
+
+	assert( nodeOf(VN_RESOLVERS(enp2),enp1) == NULL );
+
+fprintf(stderr,"linking UK nodes %s to %s\n",node_desc(enp1),node_desc(enp2));
+	np = mk_node(enp1);
+fprintf(stderr,"link_node_to_node:  adding new list node at 0x%lx (for enp1 0x%lx) to list at 0x%lx (for enp 0x%lx)\n",
+(long)np,(long)enp1,(long)VN_RESOLVERS(enp2),(long)enp2);
+	addTail(VN_RESOLVERS(enp2),np);
+}
+
 /* We have two nodes which can resolve each other - remember this! */
 
 void link_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
-	Node *np;
-
-	if( VN_RESOLVERS(enp1) == NULL )
-		SET_VN_RESOLVERS(enp1, NEW_LIST );
-	if( VN_RESOLVERS(enp2) == NULL )
-		SET_VN_RESOLVERS(enp2, NEW_LIST );
-
-	assert( nodeOf(VN_RESOLVERS(enp1),enp2) == NULL );
-
-	np = mk_node(enp1);
-	addTail(VN_RESOLVERS(enp2),np);
-
-	np = mk_node(enp2);
-	addTail(VN_RESOLVERS(enp1),np);
+	link_node_to_node(QSP_ARG  enp1, enp2);
+	link_node_to_node(QSP_ARG  enp2, enp1);
 }
 
 
