@@ -110,7 +110,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 		case ND_CALLF:
 			SET_VN_UK_ARGS(enp, NULL);
-			SET_VN_CALL_SUBRT(enp, NULL);
+			SET_VN_SUBRT_CALL(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);
@@ -184,8 +184,9 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 
 	enp=alloc_node();
 	SET_VN_CODE(enp,code);
+	SET_LAST_NODE(NULL);
 	init_expr_node(QSP_ARG  enp);
-	LAST_NODE=enp;
+	SET_LAST_NODE(enp);
 	return(enp);
 }
 
@@ -584,7 +585,6 @@ void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		return;
 	}
 
-fprintf(stderr,"node_error %s\n",node_desc(enp));
 	assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
 
 	sprintf(DEFAULT_ERROR_STRING,"File %s, line %d:",SR_STRING(VN_INFILE(enp)),VN_LINENO(enp));

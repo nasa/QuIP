@@ -55,6 +55,7 @@ static List *local_obj_lp=NULL;
 static Item_Context *hidden_context[MAX_HIDDEN_CONTEXTS];
 static int n_hidden_contexts=0;
 
+// BUG these global vars are not thread safe!!!
 Subrt *curr_srp=NULL;
 int scanning_args=0;
 static Vec_Expr_Node *iteration_enp = NULL;
@@ -105,7 +106,7 @@ static Data_Obj *create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
 #define EVAL_REF_TREE(enp,dst_idp)		eval_ref_tree(QSP_ARG  enp,dst_idp)
 #define RUN_REFFUNC(srp,enp,dst_idp)		run_reffunc(QSP_ARG  srp,enp,dst_idp)
 #define EVAL_SCALAR(svp,enp,prec)		eval_scalar(QSP_ARG  svp,enp,prec)
-#define ASSIGN_SUBRT_ARGS(arg_enp,val_enp,srp,cpp)	assign_subrt_args(QSP_ARG  arg_enp,val_enp,srp,cpp)
+#define ASSIGN_SUBRT_ARGS(scp,arg_enp,val_enp,cpp)	assign_subrt_args(QSP_ARG  scp,arg_enp,val_enp,cpp)
 #define ASSIGN_PTR_ARG(arg_enp,val_enp,curr_cpp,prev_cpp)	assign_ptr_arg(QSP_ARG  arg_enp,val_enp,curr_cpp,prev_cpp)
 #define ASSIGN_OBJ_FROM_LIST(dp,enp,offset)	assign_obj_from_list(QSP_ARG  dp,enp,offset)
 #define EVAL_PRINT_STAT(enp)			eval_print_stat(QSP_ARG  enp)
@@ -1851,12 +1852,15 @@ handle_it:
  * going through the motions is to do pointer assignments (to get shape information).
  */
 
-static int assign_subrt_args(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp,Subrt *srp,Context_Pair *prev_cpp)
+static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp, Context_Pair *prev_cpp)
 {
 	int stat;
 	Data_Obj *dp;
 	Context_Pair *_curr_cpp;
 	Function_Ptr *fpp;
+	Subrt *srp;
+
+	srp = SC_SUBRT(scp);
 
 	INIT_CPAIR_PTR(_curr_cpp);
 
@@ -1865,19 +1869,16 @@ static int assign_subrt_args(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *
 	switch(VN_CODE(arg_enp)){
 		case T_DECL_STAT:
 			/* en_decl_prec is the type (float,short,etc) */
-			stat=ASSIGN_SUBRT_ARGS(VN_CHILD(arg_enp,0),
-						val_enp,srp,prev_cpp);
+			stat=ASSIGN_SUBRT_ARGS(scp,VN_CHILD(arg_enp,0),val_enp,prev_cpp);
 			return(stat);
 
 		case T_DECL_STAT_LIST:
 			/* descend the arg tree */
 			/* VN_CODE(val_enp) should be T_ARGLIST */
-			stat=ASSIGN_SUBRT_ARGS(VN_CHILD(arg_enp,0),
-				VN_CHILD(val_enp,0),srp,prev_cpp);
+			stat=ASSIGN_SUBRT_ARGS(scp,VN_CHILD(arg_enp,0),VN_CHILD(val_enp,0),prev_cpp);
 			if( stat < 0 ) return(stat);
 
-			stat=ASSIGN_SUBRT_ARGS(VN_CHILD(arg_enp,1),
-				VN_CHILD(val_enp,1),srp,prev_cpp);
+			stat=ASSIGN_SUBRT_ARGS(scp,VN_CHILD(arg_enp,1),VN_CHILD(val_enp,1),prev_cpp);
 			return(stat);
 
 		case T_FUNCPTR_DECL:		/* assign_subrt_args */
@@ -1997,27 +1998,34 @@ advise(ERROR_STRING);
 	return(-1);
 } /* end assign_subrt_args() */
 
-Subrt *runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
+// BUG?  here we store the arg vals and the call node in the subroutine struct itself.
+// Better to have a call struct so we can support multi-threading...
+
+Subrt_Call *runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
+	Subrt_Call sc, *scp;
 	Subrt *srp;
 
 	switch(VN_CODE(enp)){
 		case T_CALLFUNC:
-			srp=VN_CALL_SUBRT(enp);
-			SET_SR_ARG_VALS(srp, VN_CHILD(enp,0) );
+			scp=VN_SUBRT_CALL(enp);
+			SET_SC_ARG_VALS(scp, VN_CHILD(enp,0) );
+			srp = SC_SUBRT(scp);
 			break;
 		case T_INDIR_CALL:
 			srp = eval_funcref(QSP_ARG  VN_CHILD(enp,0));
 			assert( srp!=NULL );
 
-			SET_SR_ARG_VALS(srp, VN_CHILD(enp,1) );
+			SET_SC_ARG_VALS(&sc, VN_CHILD(enp,1) );
+			SET_SC_CALL_VN(&sc, enp); /* what is this used for??? */
+			SET_SC_SUBRT(&sc,srp);
+			scp = (&sc);
 			break;
 		default:
 			MISSING_CASE(enp,"runnable_subrt");
 			return(NULL);
 	}
 
-	SET_SR_CALL_VN(srp, enp); /* what is this used for??? */
 
 	if( SR_BODY(srp) == NULL ){
 		NODE_ERROR(enp);
@@ -2025,19 +2033,26 @@ Subrt *runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
-	return(srp);
+
+	// We don't allocate the dynamic object until we know there are no errors
+	if( scp == (&sc) ){
+		scp = getbuf(sizeof(*scp));
+		*scp = sc;
+	}
+
+	return(scp);
 }
 
 /* exec_subrt is usually called on a T_CALLFUNC or T_INDIR_CALL node */
 
 void exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 {
-	Subrt *srp;
+	Subrt_Call *scp;
 
-	srp = runnable_subrt(QSP_ARG  enp);
+	scp = runnable_subrt(QSP_ARG  enp);
 
-	if( srp != NULL ){
-		RUN_SUBRT(srp,/*enp,*/dst_dp);
+	if( scp != NULL ){
+		RUN_SUBRT(scp,dst_dp);
 	} else {
 		sprintf(ERROR_STRING,"subroutine is not runnable!?");
 		WARN(ERROR_STRING);
@@ -2764,23 +2779,23 @@ static void wrapup_call(QSP_ARG_DECL  Run_Info *rip)
 	wrapup_context(QSP_ARG  rip);
 }
 
-static void run_reffunc(QSP_ARG_DECL Subrt *srp, Vec_Expr_Node *enp, Identifier *dst_idp)
+static void run_reffunc(QSP_ARG_DECL Subrt_Call *scp, Vec_Expr_Node *enp, Identifier *dst_idp)
 {
 	Run_Info *rip;
 
 	executing=1;
 	/* Run-time resolution of unknown shapes */
 
-	rip = SETUP_CALL(srp,NULL);
+	rip = SETUP_CALL(scp,NULL);
 	if( rip == NULL ){
-sprintf(ERROR_STRING,"run_reffunc %s:  no return info!?",SR_NAME(srp));
+sprintf(ERROR_STRING,"run_reffunc %s:  no return info!?",SR_NAME(SC_SUBRT(scp)));
 WARN(ERROR_STRING);
 		return;
 	}
 
 	if( rip->ri_arg_stat >= 0 ){
-		EVAL_DECL_TREE(SR_BODY(srp));
-		EVAL_REF_TREE(SR_BODY(srp),dst_idp);
+		EVAL_DECL_TREE(SR_BODY(SC_SUBRT(scp)));
+		EVAL_REF_TREE(SR_BODY(SC_SUBRT(scp)),dst_idp);
 	}
 
 	wrapup_call(QSP_ARG  rip);
@@ -2794,12 +2809,12 @@ static Identifier * exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Identifier *idp;
 	char name[LLEN];
-	Subrt *srp;
+	Subrt_Call *scp;
 
-	srp = runnable_subrt(QSP_ARG  enp);
-	if( srp==NULL ) return(NULL);
+	scp = runnable_subrt(QSP_ARG  enp);
+	if( scp==NULL ) return(NULL);
 
-	sprintf(name,"ref.%s",SR_NAME(srp));
+	sprintf(name,"ref.%s",SR_NAME(SC_SUBRT(scp)));
 
 	idp = make_named_reference(QSP_ARG  name);
 	/* BUG set ptr_type?? */
@@ -2809,8 +2824,8 @@ static Identifier * exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
 	/* need to check stuff */
 
 
-	if( srp != NULL )
-		RUN_REFFUNC(srp,enp,idp);
+	if( scp != NULL )
+		RUN_REFFUNC(scp,enp,idp);
 
 	return(idp);
 }
@@ -2921,16 +2936,19 @@ static Run_Info *new_rip()
  *	returns a run_info struct
  */
 
-Run_Info * setup_call(QSP_ARG_DECL Subrt *srp,Data_Obj *dst_dp)
+Run_Info * setup_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 {
 	Run_Info *rip;
+	Subrt *srp;
+
+	srp = SC_SUBRT(scp);
 
 	/*
 	 * We call calltime resolve to resolve arg shapes and return shapes if we can.
 	 * What is the expected context for early_calltime_resolve???
 	 */
 
-	EARLY_CALLTIME_RESOLVE(srp,dst_dp);
+	EARLY_CALLTIME_RESOLVE(scp,dst_dp);
 
 	/* BUG We'd like to pop the context of any calling subrts here, but it is tricky:
 	 * We need to have the old context so we can find the arg values...  but we want
@@ -2942,7 +2960,7 @@ Run_Info * setup_call(QSP_ARG_DECL Subrt *srp,Data_Obj *dst_dp)
 	rip = new_rip();
 	rip->ri_srp = srp;
 
-	if( CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),SR_ARG_VALS(srp),srp) < 0 )
+	if( CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),SC_ARG_VALS(scp),scp) < 0 )
 		goto call_err;
 
 	/* declare the arg variables */
@@ -2956,8 +2974,7 @@ Run_Info * setup_call(QSP_ARG_DECL Subrt *srp,Data_Obj *dst_dp)
 	rip->ri_old_srp = curr_srp;
 	curr_srp = srp;
 
-/* advise("setup_call calling assign_subrt_args"); */
-	rip->ri_arg_stat = ASSIGN_SUBRT_ARGS(SR_ARG_DECLS(srp),SR_ARG_VALS(srp),srp,rip->ri_prev_cpp);
+	rip->ri_arg_stat = ASSIGN_SUBRT_ARGS(scp,SR_ARG_DECLS(SC_SUBRT(scp)),SC_ARG_VALS(scp),rip->ri_prev_cpp);
 
 	return(rip);
 
@@ -2969,7 +2986,7 @@ fprintf(stderr,"call_err!\n");
 		RESTORE_PREVIOUS(rip->ri_prev_cpp);
 	}
 	return(NULL);
-}
+} // setup_call
 
 /* wrapup_context
  *
@@ -2993,26 +3010,30 @@ void wrapup_context(QSP_ARG_DECL  Run_Info *rip)
 
 
 // This is the function called from the menu to run a single function...
+// We need to push the parser data BEFORE calling this so that we can
+// get the args...
 
-void run_subrt_immed(QSP_ARG_DECL Subrt *srp, /* Vec_Expr_Node *enp, */ Data_Obj *dst_dp)
+void run_subrt_immed(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	delete_local_objs(SINGLE_QSP_ARG);	// run_subrt_immed
-	push_vector_parser_data(SINGLE_QSP_ARG);
-	RUN_SUBRT(srp,/*enp,*/dst_dp);
-	pop_vector_parser_data(SINGLE_QSP_ARG);
+//	push_vector_parser_data(SINGLE_QSP_ARG);
+	RUN_SUBRT(scp,dst_dp);
+//	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
-void run_subrt(QSP_ARG_DECL Subrt *srp, /* Vec_Expr_Node *enp, */ Data_Obj *dst_dp)
+void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	Run_Info *rip;
+	Subrt *srp;
 
 	executing=1;
 
-	rip = SETUP_CALL(srp,dst_dp);
+	rip = SETUP_CALL(scp,dst_dp);
 	if( rip == NULL ){
 		return;
 	}
 
+	srp = SC_SUBRT(scp);
 	if( rip->ri_arg_stat >= 0 ){
 		EVAL_DECL_TREE(SR_BODY(srp));
 		/* eval_work_tree returns 0 if a return statement was executed,
@@ -3814,7 +3835,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 	double dval1,dval2;
 	Data_Obj *dp;
 	Scalar_Value *svp,sval;
-	Subrt *srp;
+	Subrt_Call *scp;
 
 	eval_enp = enp;
 
@@ -3872,7 +3893,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* This could get called if we use a function inside a dimesion bracket... */
 			if( ! executing ) return(0);
 
-			srp=VN_CALL_SUBRT(enp);
+			scp=VN_SUBRT_CALL(enp);
 			/* BUG SHould check and see if the return type is int... */
 
 			/* BUG at least make sure that it's not void... */
@@ -3886,7 +3907,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				SET_DIMENSION(scalar_dsp,3,1);
 				SET_DIMENSION(scalar_dsp,4,1);
 			}
-			dp=make_local_dobj(QSP_ARG  scalar_dsp,SR_PREC_PTR(srp));
+			dp=make_local_dobj(QSP_ARG  scalar_dsp,SR_PREC_PTR(SC_SUBRT(scp)));
 			EXEC_SUBRT(enp,dp);
 			/* get the scalar value */
 			lval = get_long_scalar_value(dp);
@@ -5269,7 +5290,7 @@ double eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 	double dval2;
 	index_t index;
 	Scalar_Value *svp;
-	Subrt *srp;
+	Subrt_Call *scp;
 	//Dimension_Set dimset={{1,1,1,1,1}};
 	Dimension_Set ds1, *dsp=(&ds1);
 	Vec_Obj_Args oa1, *oap=&oa1;
@@ -5306,13 +5327,13 @@ return(0.0);
 			/* This could get called if we use a function inside a dimesion bracket... */
 			if( ! executing ) return(0);
 
-			srp=VN_CALL_SUBRT(enp);
+			scp=VN_SUBRT_CALL(enp);
 			/* BUG SHould check and see if the return type is double... */
 
 			/* BUG at least make sure that it's not void... */
 
 			/* make a scalar object to hold the return value... */
-			dp=make_local_dobj(QSP_ARG  dsp,SR_PREC_PTR(srp));
+			dp=make_local_dobj(QSP_ARG  dsp,SR_PREC_PTR(SC_SUBRT(scp)));
 			EXEC_SUBRT(enp,dp);
 			/* get the scalar value */
 			dval = get_dbl_scalar_value(dp);
@@ -7380,13 +7401,14 @@ advise(ERROR_STRING);
 			EVAL_DISPLAY_STAT(VN_CHILD(enp,0));
 			break;
 
-		case T_SET_FUNCPTR:
+		case T_SET_FUNCPTR:	/* eval_work_tree */
 			if( going ) return(1);
 			srp = eval_funcref(QSP_ARG  VN_CHILD(enp,1));
 			fpp = eval_funcptr(QSP_ARG  VN_CHILD(enp,0));
 			/* BUG check for valid return values */
 			fpp->fp_srp = srp;
-			point_node_shape(QSP_ARG  enp,SR_SHAPE(srp));
+			// The function may not have a shape until called!?
+			//point_node_shape(QSP_ARG  enp,SC_SHAPE(scp));
 			break;
 
 		case T_SET_STR:		/* eval_work_tree */

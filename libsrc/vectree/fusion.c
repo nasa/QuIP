@@ -145,7 +145,7 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 				cat_string(sbp,s);
 				if( strlen(s) > 0 )
 					cat_string(sbp," ");
-				add_to_global_var_list(VN_STRING(VN_CHILD(enp,0)));
+				add_to_global_var_list(VN_DECL_NAME(VN_CHILD(enp,0)));
 			}
 
 			cat_string(sbp,PREC_NAME(VN_DECL_PREC(enp)));
@@ -154,15 +154,15 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			break;
 		case T_PTR_DECL:
 			cat_string(sbp,"*");
-			cat_string(sbp,VN_STRING(enp));
+			cat_string(sbp,VN_DECL_NAME(enp));
 
 			// For opencl, need an offset arg
 			cat_string(sbp,", int ");
-			cat_string(sbp,VN_STRING(enp));
+			cat_string(sbp,VN_DECL_NAME(enp));
 			cat_string(sbp,"_offset");
 			break;
 		case T_SCAL_DECL:
-			cat_string(sbp,VN_STRING(enp));
+			cat_string(sbp,VN_DECL_NAME(enp));
 			break;
 		default:
 			MISSING_CASE(enp,"emit_kern_arg_decl");

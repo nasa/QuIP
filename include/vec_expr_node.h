@@ -26,8 +26,9 @@ typedef struct subrt_node_data {
 	struct subrt *	srp;
 } Subrt_Node_Data;
 
+
 typedef struct callf_node_data {
-	struct subrt *	srp;
+	struct subrt_call *	scp;
 	List *		uk_args_lp;
 } Callf_Node_Data;
 
@@ -177,7 +178,7 @@ struct vec_expr_node {
 #define VN_DECL_PREC_CODE(enp)	PREC_CODE(VN_DECL_PREC(enp))
 
 #define VN_OBJ(enp)		((enp)->ven_data).dobj_data.dp
-#define VN_CALL_SUBRT(enp)	((enp)->ven_data).call_data.srp
+#define VN_SUBRT_CALL(enp)	((enp)->ven_data).call_data.scp
 #define VN_SUBRT(enp)		((enp)->ven_data).subrt_data.srp
 
 #define VN_STRING(enp)		((enp)->ven_data).string_data.string
@@ -204,7 +205,7 @@ struct vec_expr_node {
 #define SET_VN_INTVAL(enp,v)		SET_VN_DATA(enp,int_data.intval,v)
 #define SET_VN_DBLVAL(enp,d)		SET_VN_DATA(enp,dbl_data.dblval,d)
 #define SET_VN_OBJ(enp,_dp)		SET_VN_DATA(enp,dobj_data.dp, _dp)
-#define SET_VN_CALL_SUBRT(enp,_srp)	SET_VN_DATA(enp,call_data.srp,_srp)
+#define SET_VN_SUBRT_CALL(enp,_scp)	SET_VN_DATA(enp,call_data.scp,_scp)
 #define SET_VN_SUBRT(enp,_srp)		SET_VN_DATA(enp,subrt_data.srp,_srp)
 
 #define SET_VN_DECL_NAME(enp,s)		SET_VN_DATA(enp,decl_data.decl_name,s)

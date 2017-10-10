@@ -37,14 +37,15 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	SET_SR_RET_LIST(srp, NULL);
 	SET_SR_CALL_LIST(srp, NULL);
 	SET_SR_PREC_PTR(srp, prec_p);
-	/* We used to give void subrt's a null shape ptr... */
-	SET_SR_SHAPE(srp, ALLOC_SHAPE );
-	COPY_SHAPE(SR_SHAPE(srp), uk_shape(PREC_CODE(prec_p)));
-	if( PREC_CODE(prec_p) == PREC_VOID ){
-		CLEAR_SHP_FLAG_BITS(SR_SHAPE(srp), DT_UNKNOWN_SHAPE);
-	}
+	// Now only subroutine calls have a shape...
+//	/* We used to give void subrt's a null shape ptr... */
+//	SET_SR_SHAPE(srp, ALLOC_SHAPE );
+//	COPY_SHAPE(SR_SHAPE(srp), uk_shape(PREC_CODE(prec_p)));
+//	if( PREC_CODE(prec_p) == PREC_VOID ){
+//		CLEAR_SHP_FLAG_BITS(SR_SHAPE(srp), DT_UNKNOWN_SHAPE);
+//	}
 	SET_SR_FLAGS(srp, 0);
-	SET_SR_CALL_VN(srp, NULL);
+//	SET_SR_CALL_VN(srp, NULL);
 
 	for(i=0;i<N_PLATFORM_TYPES;i++)
 		SET_SR_KERNEL_INFO_PTR(srp,i,NULL);
@@ -52,9 +53,111 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	return(srp);
 }
 
+static Vec_Expr_Node *get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char *prompt)
+{
+	Scalar_Value sv;
+	Vec_Expr_Node *enp;
+
+	(*(prec_p->set_value_from_input_func))(QSP_ARG  &sv, prompt);
+
+	switch( PREC_CODE(prec_p) ){
+		case PREC_SP:
+		case PREC_DP:
+			enp = NODE0(T_LIT_DBL);
+			SET_VN_DBLVAL(enp,(*(prec_p->cast_to_double_func))(&sv));
+			break;
+		case PREC_BY: case PREC_IN: case PREC_DI: case PREC_LI:
+		case PREC_UBY: case PREC_UIN: case PREC_UDI: case PREC_ULI:
+			enp = NODE0(T_LIT_INT);
+			// BUG should cast to long not int???
+			SET_VN_INTVAL(enp,(int) (*(prec_p->cast_to_double_func))(&sv));
+			break;
+		default:
+			fprintf(stderr,"get_scalar_arg:  unhandled precision %s!?",PREC_NAME(prec_p));
+			enp = NULL;
+			break;
+	}
+	return enp;
+}
+
+static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *prec_p)
+{
+	const char *s;
+	Data_Obj *dp;
+
+	Vec_Expr_Node *ret_enp=NULL;
+	switch(VN_CODE(enp)){
+		case T_PTR_DECL:
+			sprintf(msg_str,"object for %s * %s",
+				PREC_NAME(prec_p),
+				VN_DECL_NAME(enp)
+				);
+			s = NAMEOF(msg_str);
+			dp = get_obj(QSP_ARG  s);
+			if( dp != NULL ){
+				Vec_Expr_Node *obj_enp;
+				obj_enp=NODE0(T_STATIC_OBJ);
+				SET_VN_OBJ(obj_enp, dp);
+				POINT_NODE_SHAPE(obj_enp,OBJ_SHAPE(dp));
+				ret_enp = NODE1(T_REFERENCE,obj_enp);
+				POINT_NODE_SHAPE(ret_enp,OBJ_SHAPE(dp));
+			}
+			break;
+		case T_SCAL_DECL:
+			sprintf(msg_str,"%s scalar for %s",
+				PREC_NAME(prec_p),
+				VN_DECL_NAME(enp)
+				);
+			ret_enp = get_scalar_arg(QSP_ARG  prec_p, msg_str);
+			POINT_NODE_SHAPE(ret_enp,scalar_shape(PREC_CODE(prec_p)));
+			break;
+		default:
+			fprintf(stderr,"get_one_arg:  unhandled case %s\n",node_desc(enp));
+			break;
+	}
+	return ret_enp;
+}
+
+static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	Vec_Expr_Node *return_enp=NULL;
+	Vec_Expr_Node *enp1, *enp2;
+
+	switch(VN_CODE(enp)){
+		case T_DECL_STAT:
+			assert( VN_CHILD(enp,0) != NULL );
+			return_enp = get_one_arg(QSP_ARG  VN_CHILD(enp,0), VN_DECL_PREC(enp));
+			break;
+		case T_DECL_STAT_LIST:
+			enp1 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,0));
+			enp2 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,1));
+			// BUG release good node if only one bad
+			if( enp1 != NULL && enp2 != NULL ){
+				return_enp = NODE2(T_ARGLIST,enp1,enp2);
+			}
+			break;
+			
+		default:
+			sprintf(ERROR_STRING,"get_subrt_arg_tree:  unhandled case %s",node_desc(enp));
+			WARN(ERROR_STRING);
+			break;
+	}
+	return return_enp;
+}
+
+static Vec_Expr_Node * get_subrt_args(QSP_ARG_DECL  Subrt *srp)
+{
+	Vec_Expr_Node *enp;
+
+	enp = get_subrt_arg_tree(QSP_ARG  SR_ARG_DECLS(srp));
+	return enp;
+}
+
 COMMAND_FUNC( do_run_subrt )
 {
 	Subrt *srp;
+	Subrt_Call sc;
+	Vec_Expr_Node *enp;
 
 	srp=PICK_SUBRT("");
 
@@ -62,8 +165,17 @@ COMMAND_FUNC( do_run_subrt )
 
 	// What do we do if there is a fused kernel for this subrt???
 
-	SET_SR_ARG_VALS(srp,NULL);
-	RUN_SUBRT_IMMED(srp,NULL);
+	push_vector_parser_data(SINGLE_QSP_ARG);
+	enp = get_subrt_args(QSP_ARG  srp);
+
+	SET_SC_SUBRT(&sc,srp);
+	SET_SC_ARG_VALS(&sc,enp);
+	SET_SC_DEST_SHAPE(&sc,NULL);
+	SET_SC_SHAPE(&sc,NULL);
+	SET_SC_CALL_VN(&sc,NULL);
+
+	RUN_SUBRT_IMMED(&sc,NULL);
+	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
 COMMAND_FUNC( do_dump_subrt )
@@ -513,4 +625,17 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 	return(NULL);
 }
 
+Subrt_Call *make_call_instance(Subrt *srp)
+{
+	Subrt_Call *scp;
+
+	scp = getbuf(sizeof(*scp));
+
+	SET_SC_SUBRT(scp,srp);
+	SET_SC_ARG_VALS(scp,NULL);
+	SET_SC_CALL_VN(scp,NULL);
+	SET_SC_SHAPE(scp,NULL);
+	SET_SC_DEST_SHAPE(scp,NULL);
+	return scp;
+}
 

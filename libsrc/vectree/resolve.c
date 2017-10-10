@@ -440,10 +440,6 @@ void late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
 
 	assert( curr_srp == srp );
 
-/*
-sprintf(ERROR_STRING,"late_calltime_resolve %s setting SCANNING flag",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
 	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 	save_res = resolution_flags;
 	resolution_flags = NODE_NEEDS_CALLTIME_RES;
@@ -482,32 +478,23 @@ DUMP_SUBRT(srp);
 		dellist(lp);
 	}
 
-/*
-sprintf(ERROR_STRING,"late_calltime_resolve %s clearing SCANNING flag",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
 	CLEAR_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	resolution_flags = save_res;
 }
 
-static void find_known_return(QSP_ARG_DECL  Vec_Expr_Node *enp,Subrt *srp)
+static void find_known_return(QSP_ARG_DECL  Vec_Expr_Node *enp,Subrt_Call *scp)
 {
 	int i;
 
-	if( enp == NULL ) enp=SR_BODY(srp);
+	if( enp == NULL ) enp=SR_BODY(SC_SUBRT(scp));
 
 	switch(VN_CODE(enp)){
 		case T_RETURN:
 			assert( VN_SHAPE(enp) != NULL );
 
 			if( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
-/*
-sprintf(ERROR_STRING,"find_known_return: setting subrt %s shape from %s",SR_NAME(srp),node_desc(enp));
-ADVISE(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(enp));
-*/
-				SET_SR_SHAPE(srp, VN_SHAPE(enp));
+				SET_SC_SHAPE(scp, VN_SHAPE(enp));
 			}
 			return;
 
@@ -517,8 +504,8 @@ DESCRIBE_SHAPE(VN_SHAPE(enp));
 
 		case T_IFTHEN:
 			/* child 0 is the test,and can't have a return statement */
-			if( ! NULL_CHILD(enp,1) ) find_known_return(QSP_ARG  VN_CHILD(enp,1),srp);
-			if( ! NULL_CHILD(enp,2) ) find_known_return(QSP_ARG  VN_CHILD(enp,2),srp);
+			if( ! NULL_CHILD(enp,1) ) find_known_return(QSP_ARG  VN_CHILD(enp,1),scp);
+			if( ! NULL_CHILD(enp,2) ) find_known_return(QSP_ARG  VN_CHILD(enp,2),scp);
 			return;
 
 		/* for all of these cases, we know there will not be a
@@ -542,7 +529,7 @@ DESCRIBE_SHAPE(VN_SHAPE(enp));
 	}
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( ! NULL_CHILD(enp,i) )
-			find_known_return(QSP_ARG  VN_CHILD(enp,i),srp);
+			find_known_return(QSP_ARG  VN_CHILD(enp,i),scp);
 } /* find_known_return */
 
 #ifdef MAX_DEBUG
@@ -594,7 +581,7 @@ void resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence)
 	Node *np;
 	Vec_Expr_Node *resolver_enp;
 	Identifier *idp;
-	Subrt *srp;
+	Subrt_Call *scp;
 	Run_Info *rip;
 
 #ifdef QUIP_DEBUG
@@ -721,19 +708,19 @@ ADVISE(ERROR_STRING);
 }
 */
 
-			srp = runnable_subrt(QSP_ARG  enp);
+			scp = runnable_subrt(QSP_ARG  enp);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"resolve_tree %s:  before setup_call %s:",node_desc(enp),SR_NAME(srp));
+sprintf(ERROR_STRING,"resolve_tree %s:  before setup_call %s:",node_desc(enp),SR_NAME(SC_SUBRT(scp)));
 ADVISE(ERROR_STRING);
 DUMP_TREE(enp);
 }
 #endif /* QUIP_DEBUG */
 			/* BUG how can we get dst_dp?? */
-			rip = SETUP_CALL(srp,NULL);
+			rip = SETUP_CALL(scp,NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"resolve_tree %s:  after setup_call %s:",node_desc(enp),SR_NAME(srp));
+sprintf(ERROR_STRING,"resolve_tree %s:  after setup_call %s:",node_desc(enp),SR_NAME(SC_SUBRT(scp)));
 ADVISE(ERROR_STRING);
 DUMP_TREE(enp);
 }
@@ -743,56 +730,43 @@ DUMP_TREE(enp);
 			}
 
 			if( rip->ri_arg_stat >= 0 ){ 
-				EVAL_DECL_TREE(SR_BODY(srp));
-				LATE_CALLTIME_RESOLVE(srp,NULL);
+				EVAL_DECL_TREE(SR_BODY(SC_SUBRT(scp)));
+				LATE_CALLTIME_RESOLVE(SC_SUBRT(scp),NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 ADVISE("resolve_tree:  after late_calltime_resolve:");
-DUMP_TREE(SR_BODY(srp));
+DUMP_TREE(SR_BODY(SC_SUBRT(scp)));
 }
 #endif /* QUIP_DEBUG */
 			}
 
 			wrapup_context(QSP_ARG  rip);
 
-			find_known_return(QSP_ARG  NULL,srp);
+			find_known_return(QSP_ARG  NULL,scp);
 
 			/* now maybe we have a return shape??? */
-			if( SR_SHAPE(srp) != NULL && ! UNKNOWN_SHAPE(SR_SHAPE(srp)) ){
-/*
-sprintf(ERROR_STRING,"resolve_tree %s:  setting shape from %s return shape",
-node_desc(enp),SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
-				copy_node_shape(enp,SR_SHAPE(srp));
+			if( SC_SHAPE(scp) != NULL && ! UNKNOWN_SHAPE(SC_SHAPE(scp)) ){
+				copy_node_shape(enp,SC_SHAPE(scp));
 			}
 
 			break;
 
-		case T_RETURN:
+		case T_RETURN:			/* resolve_tree */
 			/* For a return node, we look up the subroutine and
 			 * see if the return shape is known.
+			 *
+			 * Now that we have introduced the subrt_call struct, the return
+			 * node only makes sense in relation to a call???
 			 */
+			/*
 			if( SR_DEST_SHAPE(VN_SUBRT(enp)) != NULL && SHP_PREC(SR_DEST_SHAPE(VN_SUBRT(enp))) != PREC_VOID ){
 				if( ! UNKNOWN_SHAPE(SR_DEST_SHAPE(VN_SUBRT(enp))) ){
-					/* We know the return destination shape! */
+					// We know the return destination shape!
 					point_node_shape(QSP_ARG  enp,SR_DEST_SHAPE(VN_SUBRT(enp)));
 				}
-/*
-else {
-sprintf(ERROR_STRING,"resolve_tree %s:  subrt %s return shape unknown",
-node_desc(enp),SR_NAME(VN_SUBRT(enp)));
-ADVISE(ERROR_STRING);
-}
-*/
 			}
-/*
-else {
-sprintf(ERROR_STRING,"resolve_tree %s:  subrt %s return shape nonexistent",
-node_desc(enp),SR_NAME(VN_SUBRT(enp)));
-ADVISE(ERROR_STRING);
-}
-*/
+			*/
+			// BUG not testing return shape!?
 
 			break;
 
@@ -941,37 +915,25 @@ ADVISE(ERROR_STRING);
  * What is the context assumed to be?
  */
 
-void resolve_subrt(QSP_ARG_DECL  Subrt *srp,List *uk_list, Vec_Expr_Node *argval_tree,Shape_Info *ret_shpp)
+void resolve_subrt(QSP_ARG_DECL  Subrt_Call *scp,List *uk_list, Shape_Info *ret_shpp)
 {
-	Subrt *save_srp;
+	Subrt *srp, *save_srp;
+	Vec_Expr_Node *argval_tree;
 	int stat;
 	Context_Pair *prev_cpp;
 
-/*
-if( ret_shpp != NULL ){
-sprintf(ERROR_STRING,"resolve_subrt %s:  return shape known:",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-DESCRIBE_SHAPE(ret_shpp);
-}
-*/
+	srp = SC_SUBRT(scp);
+	argval_tree = SC_ARG_VALS(scp);
 
-/*
-sprintf(ERROR_STRING,"resolve_subrt %s:  calling pop_previous",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
 	prev_cpp = POP_PREVIOUS();
 
 	save_srp = curr_srp;
 	curr_srp = srp;
 
-/*
-sprintf(ERROR_STRING,"resolve_subrt %s setting SCANNING flag",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
 	SET_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	if( argval_tree != NULL ){
-		stat = CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),argval_tree,srp);
+		stat = CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),argval_tree,scp);
 		if( stat < 0 ) {
 sprintf(ERROR_STRING,"resolve_subrt %s:  argument error",SR_NAME(srp));
 WARN(ERROR_STRING);
@@ -980,11 +942,6 @@ WARN(ERROR_STRING);
 	}
 
 	/* set the context */
-/*
-sprintf(ERROR_STRING,"resolve_subrt %s:  done w/ check_arg_shapes",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-DUMP_SUBRT(srp);
-*/
 
 	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
@@ -993,36 +950,28 @@ DUMP_SUBRT(srp);
 	EVAL_DECL_TREE(SR_BODY(srp));		/* resolve_subrt() */
 	if( SR_PREC_CODE(srp) != PREC_VOID ){
 		if( ret_shpp != NULL && ! UNKNOWN_SHAPE(ret_shpp) ){
-			SET_SR_SHAPE(srp, ret_shpp);
+			SET_SC_SHAPE(scp, ret_shpp);
 		} else {
-			SET_SR_SHAPE(srp, uk_shape(SR_PREC_CODE(srp)));
+			SET_SC_SHAPE(scp, uk_shape(SR_PREC_CODE(srp)));
 		}
 	}
-	/* assert( SR_SHAPE(srp) == NULL ); */
 
 	/* we need to assign the arg vals for any ptr arguments! */
 
-	SET_SR_DEST_SHAPE(srp, ret_shpp);
+	// I Don't understand why we set this and the set it back to NULL???
+	SET_SC_DEST_SHAPE(scp, ret_shpp);
 
 	RESOLVE_UK_NODES(uk_list);
 
 	/* now try for the args */
 	/* resolve_uk_args( */
 
-	SET_SR_DEST_SHAPE(srp, NULL);
+	SET_SC_DEST_SHAPE(scp, NULL);
 
-/*
-sprintf(ERROR_STRING,"resolve_subrt %s:  deleting subrt context",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
 	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 givup:
 
-/*
-sprintf(ERROR_STRING,"resolve_subrt %s clearing SCANNING flag",SR_NAME(srp));
-ADVISE(ERROR_STRING);
-*/
 	CLEAR_SR_FLAG_BITS(srp, SR_SCANNING);
 
 	curr_srp = save_srp;
@@ -1054,7 +1003,7 @@ ADVISE(ERROR_STRING);
  * Well, now we have the later version - why do we need the early one???
  */
 
-void early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
+void early_calltime_resolve(QSP_ARG_DECL  Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	List *lp;
 	int save_exec;
@@ -1062,9 +1011,9 @@ void early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"Begin early_calltime_resolve %s",SR_NAME(srp));
+sprintf(ERROR_STRING,"Begin early_calltime_resolve %s",SR_NAME(SC_SUBRT(scp)));
 ADVISE(ERROR_STRING);
-DUMP_SUBRT(srp);
+DUMP_SUBRT(SC_SUBRT(scp));
 }
 #endif /* QUIP_DEBUG */
 
@@ -1077,14 +1026,14 @@ DUMP_SUBRT(srp);
 	 * that need to be resolved...  Then we attempt to resolve each one.
 	 */
 
-	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
+	lp = get_uk_list(QSP_ARG  SR_BODY(SC_SUBRT(scp)));
 	if( lp == NULL ){
 #ifdef QUIP_DEBUG
 /*
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"early_calltime_resolve %s:  no UK nodes, returning",SR_NAME(srp));
+sprintf(ERROR_STRING,"early_calltime_resolve %s:  no UK nodes, returning",SR_NAME(SC_SUBRT(scp)));
 ADVISE(ERROR_STRING);
-DUMP_TREE(SR_BODY(srp));
+DUMP_TREE(SR_BODY(SC_SUBRT(scp)));
 }
 */
 #endif /* QUIP_DEBUG */
@@ -1102,15 +1051,15 @@ DUMP_TREE(SR_BODY(srp));
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"early_calltime_resolve calling resolve_subrt %s, flags = 0x%x, saved flags = 0x%x",
-SR_NAME(srp),resolution_flags, save_res);
+SR_NAME(SC_SUBRT(scp)),resolution_flags, save_res);
 ADVISE(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
 	if( dst_dp == NULL )
-		RESOLVE_SUBRT(srp,lp,SR_ARG_VALS(srp),NULL);
+		RESOLVE_SUBRT(scp,lp,NULL);
 	else
-		RESOLVE_SUBRT(srp,lp,SR_ARG_VALS(srp),OBJ_SHAPE(dst_dp));
+		RESOLVE_SUBRT(scp,lp,OBJ_SHAPE(dst_dp));
 
 	executing = save_exec;
 
@@ -1126,9 +1075,9 @@ ADVISE(ERROR_STRING);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"early_calltime_resolve %s DONE",SR_NAME(srp));
+sprintf(ERROR_STRING,"early_calltime_resolve %s DONE",SR_NAME(SC_SUBRT(scp)));
 ADVISE(ERROR_STRING);
-DUMP_SUBRT(srp);
+DUMP_SUBRT(SC_SUBRT(scp));
 }
 #endif /* QUIP_DEBUG */
 
@@ -1615,12 +1564,19 @@ WARN(ERROR_STRING);
 			}
 			return(uk_enp);
 
+		case T_VV_VV_CONDASS:
+		case T_VS_VV_CONDASS:
+		case T_SS_VV_CONDASS:
+		case T_VV_VS_CONDASS:
+		case T_VS_VS_CONDASS:
+		case T_SS_VS_CONDASS:
+		case T_VV_SS_CONDASS:
+		case T_VS_SS_CONDASS:
+
 		case T_SS_B_CONDASS:
 			/* The known child is the bitmap */
-			copy_node_shape(uk_enp,shpp);
-			return(uk_enp);
-
 		case T_VS_B_CONDASS:
+		case T_VV_B_CONDASS:
 			/* The known child may be the bitmap, but hopefully the
 			 * correct shape was determined above.
 			 */
@@ -1674,6 +1630,18 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 			xform_to_bitmap(VN_SHAPE(uk_enp));
 			return(uk_enp);
 
+		case T_VV_VV_CONDASS:
+		case T_VS_VV_CONDASS:
+		case T_SS_VV_CONDASS:
+		case T_VV_VS_CONDASS:
+		case T_VS_VS_CONDASS:
+		case T_SS_VS_CONDASS:
+		case T_VV_SS_CONDASS:
+		case T_VS_SS_CONDASS:
+			copy_node_shape(uk_enp,shpp);
+			return(uk_enp);
+			break;
+
 		case T_SS_B_CONDASS:	/* resolve_parent, branch shape is known */
 		case T_VS_B_CONDASS:	/* resolve_parent, branch shape is known */
 		case T_VV_B_CONDASS:	/* resolve_parent, branch shape is known */
@@ -1682,6 +1650,7 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 			if( BITMAP_SHAPE(shpp) )
 				xform_from_bitmap(VN_SHAPE(uk_enp),prec);
 			return(uk_enp);
+			break;
 
 		case T_VS_FUNC:
 		ALL_UNARY_CASES
@@ -1692,6 +1661,7 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 		case T_TYPECAST:
 		case T_RETURN:
 			return( RESOLVE_NODE(uk_enp,shpp) );
+			break;
 
 		case T_VV_FUNC:
 		/* Now with outer ops being handled by vv_func, we need to know
@@ -1714,6 +1684,7 @@ static Vec_Expr_Node *resolve_parent(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_I
 		default:
 			MISSING_CASE(uk_enp,"resolve_parent");
 			return( RESOLVE_NODE(uk_enp,shpp) );
+			break;
 	}
 	return(NULL);
 } /* resolve_parent */
@@ -2231,14 +2202,14 @@ static int arg_sizes_known(Vec_Expr_Node *enp)
  * subroutine.
  */
 
-int check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp,Subrt *srp)
+int check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp,Subrt_Call *scp)
 {
 	int stat;
 
 	if( arg_enp == NULL ) return(0);
 	else if( val_enp == NULL ){
 		/* BUG we want to report this error at the line number of the callfunc node */
-		sprintf(ERROR_STRING,"Subroutine %s requires arguments",SR_NAME(srp));
+		sprintf(ERROR_STRING,"check_arg_shapes:  Subroutine %s requires arguments",SR_NAME(SC_SUBRT(scp)));
 		WARN(ERROR_STRING);
 		return(-1);
 	}
@@ -2246,19 +2217,16 @@ int check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp
 	switch(VN_CODE(arg_enp)){
 		case  T_DECL_STAT:
 			/* en_intval is the type (float,short,etc) */
-			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,0),
-						val_enp,srp);
+			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,0), val_enp,scp);
 			return(stat);
 
 		case T_DECL_STAT_LIST:
 			/* val_enp should be T_ARGLIST */
 			assert( VN_CODE(val_enp) == T_ARGLIST );
 
-			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,0),
-				VN_CHILD(val_enp,0),srp);
+			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,0), VN_CHILD(val_enp,0),scp);
 			if( stat < 0 ) return(stat);
-			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,1),
-				VN_CHILD(val_enp,1),srp);
+			stat=CHECK_ARG_SHAPES(VN_CHILD(arg_enp,1), VN_CHILD(val_enp,1),scp);
 			return(stat);
 
 		case T_PTR_DECL:		/* check_arg_shapes */
@@ -2313,9 +2281,9 @@ ADVISE(ERROR_STRING);
 			} else {	/* everything is known */
 				if( !shapes_match(VN_SHAPE(arg_enp),
 							VN_SHAPE(val_enp)) ){
-					NODE_ERROR(SR_CALL_VN(srp));
+					NODE_ERROR(SC_CALL_VN(scp));
 					sprintf(ERROR_STRING,
-	"subrt %s:  argument shape mismatch",SR_NAME(srp));
+	"subrt %s:  argument shape mismatch",SR_NAME(SC_SUBRT(scp)));
 					WARN(ERROR_STRING);
 ADVISE("argument prototype shape:");
 DESCRIBE_SHAPE(VN_SHAPE(arg_enp));

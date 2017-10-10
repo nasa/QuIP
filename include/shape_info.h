@@ -73,7 +73,7 @@ struct precision {
 	// methods
 
 	// read script input with appropriate function, and assign scalar
-	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
+	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr, const char *prompt);
 
 	double			(*indexed_data_func)(Data_Obj *dp, int index);
 

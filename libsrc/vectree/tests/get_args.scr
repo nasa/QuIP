@@ -1,8 +1,4 @@
 
-platforms
-  select $DEFAULT_PLATFORM $DEFAULT_GPU
-  quit
-
 expressions
   read -
 
@@ -14,30 +10,20 @@ c=ramp(10,1,0);
 
 void testk(float *dest, float *src1, float *src2, float kkk)
 {
-	float k2;
-#	int ix;	# genreates int32?
-	short ix;
-
-	k2=atan2(kkk,1);
-	ix = round(kkk) << 2;
-#	*dest = k2 + *src1 + kkk * (*src2+2);
-
+	display(*src1,*src2);
+	print(*dest," = ",*src1," > 5 ? ",*src2," : 66 ;");
 	*dest = *src1 > 5 ? *src2 : 66 ;
+	display(*dest);
 }
 
 end
 
-  dump testk
-  fuse testk
+#  dump testk
   info testk
-#  debug resolver
-  advise "Running testk..."
+  advise "Ready to run testk..."
   run testk a b c 5.1
   advise "DONE running testk..."
-
   quit
-Display a
-
 exit
 
 

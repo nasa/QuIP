@@ -1174,7 +1174,7 @@ static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1,
 static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Shape_Info *tmp_shpp;
-	Subrt *srp;
+	Subrt_Call *scp;
 	dimension_t i1,i2,len ;
 #ifdef NOT_YET
 	Image_File *ifp;
@@ -1645,6 +1645,9 @@ no_file:
 			 * to the main subroutine body...
 			 */
 
+			// BUG - the shape is associated with the subroutine call,
+			// not the subroutine itself!?!?
+			/*
 			srp = curr_srp;
 
 			if( UNKNOWN_SHAPE(SR_SHAPE(srp)) &&
@@ -1653,7 +1656,7 @@ no_file:
 				SET_SR_SHAPE(srp, VN_SHAPE(enp) );
 
 			} else if( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
-				/* does the shape of this return match? */
+				// does the shape of this return match?
 				if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
 
 
@@ -1661,29 +1664,30 @@ no_file:
 					WARN("mismatched return shapes");
 				}
 			}
+			*/
 
 			break;
 
 		case T_CALLFUNC:			/* update_node_shape */
 
-			srp=VN_SUBRT(enp);
-			SET_SR_CALL_VN(srp, enp);
+			scp=VN_SUBRT_CALL(enp);
+			SET_SC_CALL_VN(scp, enp);
 
 			/* Why do we do this here??? */
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
 				WARN(ERROR_STRING);
 				CURDLE(enp)
 				break;
 			}
 
-			if( SR_SHAPE(srp) != NULL ){
-				copy_node_shape(enp,SR_SHAPE(srp));
+			if( SC_SHAPE(scp) != NULL ){
+				copy_node_shape(enp,SC_SHAPE(scp));
 			}
 			break;
 
@@ -4513,7 +4517,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 	Shape_Info *tmp_shpp;
-	Subrt *srp;
+	Subrt_Call *scp;
 	Vec_Expr_Node *decl_enp;
 	dimension_t i1;
 	const char *s;
@@ -5081,17 +5085,22 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * to the main subroutine body...
 			 */
 
+			// BUG - shape belongs to the call, not the subroutine itself...
+			// Although it is possible that a subroutine COULD have a fixed shape...
+			/*
 			srp = curr_srp;
 
 			if( VN_SHAPE(enp) != NULL && ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				if( UNKNOWN_SHAPE(SR_SHAPE(srp)) ){
 					SET_SR_SHAPE(srp, VN_SHAPE(enp) );
 				} else if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
-					/* does the shape of this return match? */
+					// does the shape of this return match?
 					NODE_ERROR(enp);
 					WARN("mismatched return shapes");
 				}
 			}
+			*/
+
 			CHECK_UK_CHILD(enp,0);
 
 			break;		/* end T_RETURN case */
@@ -5107,8 +5116,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_CALLFUNC:			/* prelim_node_shape */
 
-			srp=VN_SUBRT(enp);
-			SET_SR_CALL_VN(srp, enp);
+			scp=VN_SUBRT_CALL(enp);
+			SET_SC_CALL_VN(scp, enp);
 
 			/* We probably need a separate list! */
 			/* link any unknown shape args to the callfunc node */
@@ -5116,7 +5125,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				link_uk_args(QSP_ARG  enp,VN_CHILD(enp,0));
 
 			/* void subrt's never need to have a shape */
-			if( SR_PREC_CODE(srp) == PREC_VOID ){
+			if( SR_PREC_CODE(SC_SUBRT(scp)) == PREC_VOID ){
 				SET_VN_SHAPE(enp, NULL);
 				return;
 			}
@@ -5132,10 +5141,10 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
 				WARN(ERROR_STRING);
 				CURDLE(enp)
@@ -5144,7 +5153,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 
-			copy_node_shape(enp,SR_SHAPE(srp));
+			//copy_node_shape(enp,SR_SHAPE(srp));
+			POINT_NODE_SHAPE(enp,SC_SHAPE(scp));
 			break;
 
 		case T_ROW_LIST:				/* prelim_node_shape */
@@ -5637,7 +5647,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			break;
 
 		case T_FUNCREF:
-			POINT_NODE_SHAPE(enp,SR_SHAPE(VN_SUBRT(enp)));
+			POINT_NODE_SHAPE(enp,uk_shape(SR_PREC_CODE(VN_SUBRT(enp))));
 			break;
 
 		case T_SET_FUNCPTR:		/* prelim_node_shape */

@@ -231,10 +231,10 @@ extern void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body );
 extern COMMAND_FUNC( do_run_subrt );
 extern void exec_subrt(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *dst_dp);
 #define EXEC_SUBRT(enp,dp)		exec_subrt(QSP_ARG enp,dp)
-extern void run_subrt(QSP_ARG_DECL  Subrt *srp,Data_Obj *dst_dp);
-#define RUN_SUBRT(srp,dst_dp)		run_subrt(QSP_ARG srp,dst_dp)
-extern void run_subrt_immed(QSP_ARG_DECL  Subrt *srp,Data_Obj *dst_dp);
-#define RUN_SUBRT_IMMED(srp,dst_dp)		run_subrt_immed(QSP_ARG srp,dst_dp)
+extern void run_subrt(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
+#define RUN_SUBRT(scp,dst_dp)		run_subrt(QSP_ARG scp,dst_dp)
+extern void run_subrt_immed(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
+#define RUN_SUBRT_IMMED(scp,dst_dp)		run_subrt_immed(QSP_ARG scp,dst_dp)
 extern COMMAND_FUNC( do_dump_subrt );
 extern COMMAND_FUNC( do_opt_subrt );
 extern COMMAND_FUNC( do_fuse_kernel );
@@ -348,8 +348,8 @@ extern void	resolve_runtime_shapes(Vec_Expr_Node *);
 extern void	resolve_from_rhs(Vec_Expr_Node *);
 extern void	report_uk_shapes(Subrt *);
 extern int	check_uk_shapes(Subrt *srp);
-extern int	check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg,Vec_Expr_Node *valp,Subrt *srp);
-#define CHECK_ARG_SHAPES(arg,valp,srp)		check_arg_shapes(QSP_ARG arg,valp,srp)
+extern int	check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg,Vec_Expr_Node *valp,Subrt_Call *scp);
+#define CHECK_ARG_SHAPES(arg,valp,scp)		check_arg_shapes(QSP_ARG arg,valp,scp)
 
 
 extern void		check_resolution(Subrt *srp);
@@ -357,9 +357,8 @@ extern void		point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *,Shape_Info *);
 #define POINT_NODE_SHAPE( enp , sip )	point_node_shape(QSP_ARG  enp , sip )
 extern int		decl_count(QSP_ARG_DECL  Vec_Expr_Node *);
 extern int		arg_count(Vec_Expr_Node *);
-extern void		resolve_subrt(QSP_ARG_DECL  Subrt *,List *uk_list,Vec_Expr_Node *val_enp,
-						Shape_Info *ret_shpp);
-#define RESOLVE_SUBRT(srp,uk_list,val_enp,ret_shpp)	resolve_subrt(QSP_ARG srp,uk_list,val_enp,ret_shpp)
+extern void		resolve_subrt(QSP_ARG_DECL  Subrt_Call *,List *uk_list, Shape_Info *ret_shpp);
+#define RESOLVE_SUBRT(srp,uk_list,ret_shpp)	resolve_subrt(QSP_ARG srp,uk_list,ret_shpp)
 
 
 /* resolve.c */
@@ -372,8 +371,8 @@ extern void		resolve_tree(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node *whence
 #define RESOLVE_TREE(enp,whence)		resolve_tree(QSP_ARG enp,whence)
 extern void		late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp);
 #define LATE_CALLTIME_RESOLVE(srp,dst_dp)	late_calltime_resolve(QSP_ARG srp,dst_dp)
-extern void		early_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp);
-#define EARLY_CALLTIME_RESOLVE(srp,dst_dp)	early_calltime_resolve(QSP_ARG srp,dst_dp)
+extern void		early_calltime_resolve(QSP_ARG_DECL  Subrt_Call *scp, Data_Obj *dst_dp);
+#define EARLY_CALLTIME_RESOLVE(scp,dst_dp)	early_calltime_resolve(QSP_ARG scp,dst_dp)
 
 /* ml_supp.c */
 void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index);
@@ -387,9 +386,9 @@ extern Data_Obj *	mlab_reshape(QSP_ARG_DECL  Data_Obj *,Shape_Info *,const char 
 extern void		eval_immediate(QSP_ARG_DECL  Vec_Expr_Node *enp);
 #define EVAL_IMMEDIATE(enp)		eval_immediate(QSP_ARG enp)
 extern void		wrapup_context(QSP_ARG_DECL  Run_Info *rip);
-extern Run_Info *	setup_call(QSP_ARG_DECL  Subrt *srp,Data_Obj *dst_dp);
-#define SETUP_CALL(srp,dst_dp)	setup_call(QSP_ARG srp,dst_dp)
-extern Subrt *		runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp);
+extern Run_Info *	setup_call(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
+#define SETUP_CALL(scp,dst_dp)	setup_call(QSP_ARG scp,dst_dp)
+extern Subrt_Call *		runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern Identifier *	make_named_reference(QSP_ARG_DECL  const char *name);
 extern Identifier *	get_set_ptr(QSP_ARG_DECL Vec_Expr_Node *);
 #define GET_SET_PTR(enp)		get_set_ptr(QSP_ARG enp)

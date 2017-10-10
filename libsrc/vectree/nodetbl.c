@@ -31,7 +31,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_PTR_DECL,	"ptr_decl",		0,	CP_SHP,	ND_DECL	},
 
 {	T_ARGLIST,	"arglist",		2,	NO_SHP,	ND_LIST	},
-{	T_CALLFUNC,	"callfunc",		1,	CP_SHP,	ND_CALLF	},
+{	T_CALLFUNC,	"callfunc",		1,	PT_SHP,	ND_CALLF	},
 {	T_CALL_NATIVE,	"call_native",		1,	CP_SHP,	ND_CALLF	},
 {	T_RETURN,	"return",		1,	PT_SHP,	ND_NONE	},
 {	T_EXIT,		"exit",			1,	NO_SHP,	ND_NONE	},
