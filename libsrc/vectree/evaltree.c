@@ -3029,7 +3029,7 @@ static Platform_Device *pfdev_for_call(Subrt_Call *scp)
 		return NULL;
 	}
 
-fprintf(stderr,"Call is targeted for platform device %s\n",PFDEV_NAME( VN_PFDEV( SC_ARG_VALS(scp) ) ) );
+//fprintf(stderr,"Call is targeted for platform device %s\n",PFDEV_NAME( VN_PFDEV( SC_ARG_VALS(scp) ) ) );
 	return VN_PFDEV( SC_ARG_VALS(scp) );
 }
 
@@ -3052,10 +3052,9 @@ void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 	if( pdp == NULL ){
 		fprintf(stderr,"run_subrt:  can't determine platform for subroutine call!?\n");
 	} else {
-		void *kp;
+		void * kp;
 		if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
-			//run_fused_kernel(QSP_ARG  scp,kp,pdp);
-fprintf(stderr,"run_subrt:  NOT running fused kernel!?");
+			run_fused_kernel(QSP_ARG  scp,kp,pdp);
 			return;
 		}
 	}

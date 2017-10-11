@@ -8,12 +8,8 @@ expressions
 
 float a[4],b[4],c[4];
 
-print("initializing a...");
-info(a);
 a=ramp(0,1,0);
-print("initializing b...");
 b=ramp(0,10,0);
-print("initializing c...");
 c=ramp(10,1,0);
 
 print("declaring testk...");
@@ -32,17 +28,24 @@ void testk(float *dest, float *src1, float *src2, float kkk)
 }
 
 end
+  quit
 
-  dump testk
+VSet a -5
+advise "Running standard kernel..."
+expressions run testk a b c 5.1 quit
+Display a
+
+advise "Running fused kernel..."
+VSet a -5
+expressions
   fuse testk
-  info testk
+#  info testk
 #  debug resolver
-  advise "Running testk..."
   run testk a b c 5.1
-  advise "DONE running testk..."
-
   quit
 Display a
+
+  quit
 
 exit
 

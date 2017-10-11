@@ -109,6 +109,16 @@ static void *vl2_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device
 	return NULL;
 }
 
+static void vl2_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platform_Device *pdp)
+{
+	WARN("Sorry, vl2_run_kernel not implemented!?");
+}
+
+static void vl2_set_kernel_arg(QSP_ARG_DECL  void *kp, int *idx_p, void *vp, Kernel_Arg_Type arg_type)
+{
+	WARN("Sorry, vl2_set_kernel_vector_arg not implemented!?");
+}
+
 void vl2_init_platform(SINGLE_QSP_ARG_DECL)
 {
 	Compute_Platform *cpp;

@@ -884,7 +884,6 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 {
 	cl_program program;
 	static cl_kernel kernel;	// is this really a pointer???
-fprintf(stderr,"sizeof(cl_kernel) = %ld\n",sizeof(cl_kernel));
 
 	program = ocl_create_program(ksrc,pdp);
 	if( program == NULL )
@@ -909,28 +908,70 @@ static void ocl_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Pla
 	if( (*kip_p).ocl_kernel_info_p == NULL ){
 		kip.ocl_kernel_info_p = getbuf( sizeof(OpenCL_Kernel_Info) );
 		*kip_p = kip;
-fprintf(stderr,"ocl_store_kernel:  allocated kernel info at 0x%lx\n",(long)kip.ocl_kernel_info_p);
 	} else {
 		kip = (*kip_p);
-fprintf(stderr,"ocl_store_kernel:  using previously allocated kernel info at 0x%lx\n",(long)kip.ocl_kernel_info_p);
 	}
 
 	idx = PFDEV_SERIAL(pdp);
 	assert( idx >=0 && idx < MAX_OPENCL_DEVICES );
-fprintf(stderr,"stored kernel 0x%lx\n",(long)kp);
 	SET_OCL_KI_KERNEL( kip, idx, kp ); 
+}
+
+static void ocl_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p, void *vp, Kernel_Arg_Type arg_type)
+{
+	cl_int status;
+	cl_kernel kernel;
+
+	kernel = kp;
+
+	switch( arg_type ){
+		case KERNEL_ARG_VECTOR:
+			status = clSetKernelArg(kernel,*idx_p, sizeof(void *), vp );
+			if( status != CL_SUCCESS )
+				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (vector arg)" );
+			break;
+		case KERNEL_ARG_DBL:
+			status = clSetKernelArg(kernel,*idx_p, sizeof(double), vp );
+			if( status != CL_SUCCESS )
+				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (double arg)" );
+			break;
+		case KERNEL_ARG_INT:
+			status = clSetKernelArg(kernel,*idx_p, sizeof(int), vp );
+			if( status != CL_SUCCESS )
+				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (int arg)" );
+			break;
+		default:
+			WARN("ocl_set_kernel_arg:  BAD ARG TYPE CODE!?");
+			break;
+	}
+
+	(*idx_p)++;
+}
+
+static void ocl_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platform_Device *pdp)
+{
+	cl_kernel kernel;
+	int karg_idx=0;
+
+	kernel = kp;
+
+	set_fused_kernel_args(QSP_ARG  kernel, &karg_idx, arg_enp, PFDEV_PLATFORM(pdp));
+  
+  	fprintf(stderr,"ocl_run_kernel - incomplete!?\n");
 }
 
 static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
 {
 	int idx;
-	void *kp;
+	cl_kernel kp;
 
 	idx = PFDEV_SERIAL(pdp);
 	assert( idx >=0 && idx < MAX_OPENCL_DEVICES );
-	assert(kip.any_kernel_info_p != NULL);
+
+	if(kip.any_kernel_info_p == NULL)	// No stored kernel info?
+		return NULL;
+
 	kp = OCL_KI_KERNEL( kip, idx ); 
-fprintf(stderr,"returning fetched kernel 0x%lx\n",(long)kp);
 	return kp;
 }
 
@@ -969,7 +1010,6 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 	size_t ret_size;
 
 	GET_PLATFORM_STRING(CL_PLATFORM_NAME)
-
 	cpp = creat_platform(QSP_ARG  platform_str, PLATFORM_OPENCL);
 	givbuf(platform_str);
 

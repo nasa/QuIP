@@ -66,6 +66,13 @@ typedef struct dispatch_function {
 	void		(*df_func)(const int,const Vec_Obj_Args *);
 } Dispatch_Function;
 
+typedef enum {
+	KERNEL_ARG_VECTOR,
+	KERNEL_ARG_DBL,
+	KERNEL_ARG_INT,
+	N_KERNEL_ARG_TYPES
+} Kernel_Arg_Type;
+
 typedef struct compute_platform {
 	Item		cp_item;
 	const char *	cp_prefix_str;
@@ -98,7 +105,11 @@ typedef struct compute_platform {
 	void * (*cp_make_kernel_func)(QSP_ARG_DECL  const char *src, const char *name, struct platform_device *pdp);
 	const char * (*cp_kernel_string_func)(QSP_ARG_DECL  Platform_Kernel_String_ID which_str );
 	void (*cp_store_kernel_func)(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, struct platform_device *pdp);
+	// The fetch function returns the platform-specific kernel pointer for the device,
+	// while the Kernel_Info_Ptr points to a struct with kernels for all platform devices for the platform
 	void * (*cp_fetch_kernel_func)(QSP_ARG_DECL  Kernel_Info_Ptr kip, struct platform_device *pdp);
+	void (*cp_run_kernel_func)(QSP_ARG_DECL  void * kp, Vec_Expr_Node *arg_enp, struct platform_device *pdp);
+	void (*cp_set_kernel_arg_func)(QSP_ARG_DECL  void *kp, int *idx_p, void *vp, Kernel_Arg_Type arg_type );
 
 #ifdef HAVE_ANY_GPU
 
@@ -163,6 +174,8 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define PF_KERNEL_STRING_FN(cpp)	(cpp)->cp_kernel_string_func
 #define PF_STORE_KERNEL_FN(cpp)		(cpp)->cp_store_kernel_func
 #define PF_FETCH_KERNEL_FN(cpp)		(cpp)->cp_fetch_kernel_func
+#define PF_RUN_KERNEL_FN(cpp)		(cpp)->cp_run_kernel_func
+#define PF_SET_KERNEL_ARG_FN(cpp)	(cpp)->cp_set_kernel_arg_func
 
 #define PF_FFT2D_FN(cpp)		(cpp)->cp_fft2d_func
 #define PF_IFT2D_FN(cpp)		(cpp)->cp_ift2d_func
@@ -191,6 +204,8 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_KERNEL_STRING_FN(cpp,v)		(cpp)->cp_kernel_string_func = v
 #define SET_PF_STORE_KERNEL_FN(cpp,v)		(cpp)->cp_store_kernel_func = v
 #define SET_PF_FETCH_KERNEL_FN(cpp,v)		(cpp)->cp_fetch_kernel_func = v
+#define SET_PF_RUN_KERNEL_FN(cpp,v)		(cpp)->cp_run_kernel_func = v
+#define SET_PF_SET_KERNEL_ARG_FN(cpp,v)	(cpp)->cp_set_kernel_arg_func = v
 
 #ifdef FOOBAR
 #define SET_PF_FFT2D_FN(cpp,v)		(cpp)->cp_fft2d_func = v
@@ -199,25 +214,29 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_IFTROWS_FN(cpp,v)	(cpp)->cp_iftrows_func = v
 #endif // FOOBAR
 
-#define SET_PLATFORM_FUNCTIONS(cpp,stem)				\
-									\
-	SET_PF_MEM_UPLOAD_FN(	cpp,	stem##_mem_upload	);	\
-	SET_PF_MEM_DNLOAD_FN(	cpp,	stem##_mem_dnload	);	\
-	SET_PF_MEM_ALLOC_FN(	cpp,	stem##_mem_alloc	);	\
-	SET_PF_OBJ_ALLOC_FN(	cpp,	stem##_obj_alloc	);	\
-	SET_PF_MEM_FREE_FN(	cpp,	stem##_mem_free		);	\
-	SET_PF_OBJ_FREE_FN(	cpp,	stem##_obj_free		);	\
-	SET_PF_OFFSET_DATA_FN(	cpp,	stem##_offset_data	);	\
-	SET_PF_UPDATE_OFFSET_FN(cpp,	stem##_update_offset	);	\
-	SET_PF_REGBUF_FN(	cpp,	stem##_register_buf	);	\
-	SET_PF_MAPBUF_FN(	cpp,	stem##_map_buf		);	\
-	SET_PF_UNMAPBUF_FN(	cpp,	stem##_unmap_buf	);	\
-	SET_PF_DEVINFO_FN(	cpp,	stem##_dev_info		);	\
-	SET_PF_INFO_FN(		cpp,	stem##_info		);	\
-	SET_PF_KERNEL_STRING_FN(	cpp,	stem##_kernel_string	);		\
-	SET_PF_MAKE_KERNEL_FN(		cpp,	stem##_make_kernel	);		\
+#define SET_PLATFORM_FUNCTIONS(cpp,stem)					\
+										\
+	SET_PF_MEM_UPLOAD_FN(		cpp,	stem##_mem_upload	);	\
+	SET_PF_MEM_DNLOAD_FN(		cpp,	stem##_mem_dnload	);	\
+	SET_PF_MEM_ALLOC_FN(		cpp,	stem##_mem_alloc	);	\
+	SET_PF_OBJ_ALLOC_FN(		cpp,	stem##_obj_alloc	);	\
+	SET_PF_MEM_FREE_FN(		cpp,	stem##_mem_free		);	\
+	SET_PF_OBJ_FREE_FN(		cpp,	stem##_obj_free		);	\
+	SET_PF_OFFSET_DATA_FN(		cpp,	stem##_offset_data	);	\
+	SET_PF_UPDATE_OFFSET_FN(	cpp,	stem##_update_offset	);	\
+	SET_PF_REGBUF_FN(		cpp,	stem##_register_buf	);	\
+	SET_PF_MAPBUF_FN(		cpp,	stem##_map_buf		);	\
+	SET_PF_UNMAPBUF_FN(		cpp,	stem##_unmap_buf	);	\
+	SET_PF_DEVINFO_FN(		cpp,	stem##_dev_info		);	\
+	SET_PF_INFO_FN(			cpp,	stem##_info		);	\
+	SET_PF_KERNEL_STRING_FN(	cpp,	stem##_kernel_string	);	\
+	SET_PF_MAKE_KERNEL_FN(		cpp,	stem##_make_kernel	);	\
 	SET_PF_STORE_KERNEL_FN(		cpp,	stem##_store_kernel	);	\
-	SET_PF_FETCH_KERNEL_FN(		cpp,	stem##_fetch_kernel	);
+	SET_PF_FETCH_KERNEL_FN(		cpp,	stem##_fetch_kernel	);	\
+	SET_PF_RUN_KERNEL_FN(		cpp,	stem##_run_kernel	);	\
+	SET_PF_SET_KERNEL_ARG_FN(	cpp,	stem##_set_kernel_arg	);	\
+	/* end of function initializations */
+
 
 #define PF_FUNC_TBL(cpp)		(cpp)->cp_vfa_tbl
 #define SET_PF_FUNC_TBL(cpp,v)	(cpp)->cp_vfa_tbl = v
@@ -429,5 +448,7 @@ extern void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 
 // currently in ocl.c but should be moved - BUG
 extern void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len);
+
+extern void set_fused_kernel_args(QSP_ARG_DECL  void *kernel, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp);
 
 #endif // _PLATFORM_H_

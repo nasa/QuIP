@@ -109,7 +109,8 @@ typedef struct subrt_call {
 extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
 extern Subrt_Call *make_call_instance(Subrt *srp);
-extern void *find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
+extern void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
+extern void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp);
 
 #ifdef MAX_DEBUG
 extern void dump_resolvers(Vec_Expr_Node *enp);

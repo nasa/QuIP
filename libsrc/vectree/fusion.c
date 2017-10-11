@@ -377,7 +377,6 @@ static void * make_platform_kernel(QSP_ARG_DECL  const char *src, const char *na
 	void *kp;
 
 	assert( curr_pdp != NULL );
-advise("calling platform-specific kernel creation function...");
 	kp = (*(PF_MAKE_KERNEL_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 		(QSP_ARG  src, name, curr_pdp );
 	if( kp == NULL ){ 
@@ -392,6 +391,12 @@ void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
 
 	kip = SR_KERNEL_INFO_PTR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
 	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip, pdp );
+}
+
+void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp)
+{
+	(*(PF_RUN_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kp, SC_ARG_VALS(scp), pdp);
+	//fprintf(stderr,"Sorry, run_fused_kernel not implemented yet...\n");
 }
 
 static void store_platform_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
@@ -436,7 +441,8 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	emit_kern_body(QSP_ARG  sbp, srp );
 	rls_global_var_list();
 
-	fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
+	if( verbose )
+		fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
 
 	// BUG OpenCL specific code!?!?
 	kp = make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
@@ -465,4 +471,36 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
+void set_fused_kernel_args(QSP_ARG_DECL  void *kp, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp)
+{
+	Data_Obj *dp;
+
+	switch( VN_CODE(enp) ){
+		case T_ARGLIST:
+			set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,0),cpp);
+			set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,1),cpp);
+			break;
+
+		case T_REFERENCE:
+			enp = VN_CHILD(enp,0);
+			assert(enp!=NULL);
+			assert(VN_CODE(enp)==T_STATIC_OBJ);
+			dp = VN_OBJ(enp);
+			assert(dp!=NULL);
+
+			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &OBJ_DATA_PTR(dp), KERNEL_ARG_VECTOR );
+
+		case T_LIT_DBL:
+			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &VN_DBLVAL(enp), KERNEL_ARG_DBL );
+			break;
+
+		case T_LIT_INT:
+			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &VN_INTVAL(enp), KERNEL_ARG_INT );
+			break;
+
+		default:
+			sprintf(ERROR_STRING,"set_fused_kernel_args:  unhandled case %s !?",node_desc(enp));
+			ERROR1(ERROR_STRING);
+	}
+}
 
