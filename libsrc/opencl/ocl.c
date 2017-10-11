@@ -883,7 +883,8 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 /*cl_kernel*/ void *ocl_make_kernel(QSP_ARG_DECL  const char *ksrc,const char *kernel_name,Platform_Device *pdp)
 {
 	cl_program program;
-	static cl_kernel kernel;
+	static cl_kernel kernel;	// is this really a pointer???
+fprintf(stderr,"sizeof(cl_kernel) = %ld\n",sizeof(cl_kernel));
 
 	program = ocl_create_program(ksrc,pdp);
 	if( program == NULL )
@@ -895,19 +896,42 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 		ADVISE(ksrc);
 		ERROR1("kernel creation failure!?");
 	}
+	assert( sizeof(cl_kernel) == sizeof(void *) );
 
-	return & kernel;
+	return (void *) kernel;
 }
 
-static void ocl_store_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
+static void ocl_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Platform_Device *pdp)
 {
-	WARN("Sorry, ocl_store_kernel not implemented!?");
+	Kernel_Info_Ptr kip;
+	int idx;
+
+	if( (*kip_p).ocl_kernel_info_p == NULL ){
+		kip.ocl_kernel_info_p = getbuf( sizeof(OpenCL_Kernel_Info) );
+		*kip_p = kip;
+fprintf(stderr,"ocl_store_kernel:  allocated kernel info at 0x%lx\n",(long)kip.ocl_kernel_info_p);
+	} else {
+		kip = (*kip_p);
+fprintf(stderr,"ocl_store_kernel:  using previously allocated kernel info at 0x%lx\n",(long)kip.ocl_kernel_info_p);
+	}
+
+	idx = PFDEV_SERIAL(pdp);
+	assert( idx >=0 && idx < MAX_OPENCL_DEVICES );
+fprintf(stderr,"stored kernel 0x%lx\n",(long)kp);
+	SET_OCL_KI_KERNEL( kip, idx, kp ); 
 }
 
-static void * ocl_fetch_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp)
+static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
 {
-	WARN("Sorry, ocl_fetch_kernel not implemented!?");
-	return NULL;
+	int idx;
+	void *kp;
+
+	idx = PFDEV_SERIAL(pdp);
+	assert( idx >=0 && idx < MAX_OPENCL_DEVICES );
+	assert(kip.any_kernel_info_p != NULL);
+	kp = OCL_KI_KERNEL( kip, idx ); 
+fprintf(stderr,"returning fetched kernel 0x%lx\n",(long)kp);
+	return kp;
 }
 
 /* possible values for code:

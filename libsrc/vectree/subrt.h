@@ -5,20 +5,6 @@
 #include "vec_expr_node.h"
 #include "platform.h"
 
-#ifdef HAVE_OPENCL
-
-struct opencl_kernel_info;
-typedef struct opencl_kernel_info OpenCL_Kernel_Info;
-
-#endif // HAVE_OPENCL
-
-typedef union {
-#ifdef HAVE_OPENCL
-	OpenCL_Kernel_Info *ocl_kernel_info_p;
-#endif // HAVE_OPENCL
-	void *any_kernel_info_p;
-} Kernel_Info_Ptr;
-
 struct subrt {
 	Item		sr_item;
 	Vec_Expr_Node *	sr_arg_decls;
@@ -67,7 +53,8 @@ struct subrt {
 
 /*#define SET_SR_CALL_ENP(srp,enp)	[srp setCall_enp : enp] */
 
-#define SR_KERNEL_INFO_PTR(srp,idx)	(srp)->sr_kernel_info_p[idx].any_kernel_info_p
+#define SR_KERNEL_INFO_PTR(srp,idx)		(srp)->sr_kernel_info_p[idx]
+#define SR_KERNEL_INFO_PTR_ADDR(srp,idx)	(&((srp)->sr_kernel_info_p[idx]))
 #define SET_SR_KERNEL_INFO_PTR(srp,idx,p)	(srp)->sr_kernel_info_p[idx].any_kernel_info_p = p
 
 	

@@ -6,13 +6,24 @@
 #include "veclib/obj_args.h"
 struct vector_function;
 
-#define MAX_DEVICES_PER_PLATFORM	4	// somewhat arbitrary...
+//#define MAX_DEVICES_PER_PLATFORM	4	// somewhat arbitrary...
 
 #ifdef HAVE_OPENCL
 #ifdef BUILD_FOR_OPENCL
 #include "ocl_platform.h"
 #endif // BUILD_FOR_OPENCL
 #endif // HAVE_OPENCL
+
+
+struct opencl_kernel_info;
+typedef struct opencl_kernel_info OpenCL_Kernel_Info;
+
+typedef union {
+#ifdef HAVE_OPENCL
+	OpenCL_Kernel_Info *ocl_kernel_info_p;
+#endif // HAVE_OPENCL
+	void *any_kernel_info_p;
+} Kernel_Info_Ptr;
 
 
 
@@ -86,8 +97,8 @@ typedef struct compute_platform {
 	// most useful for GPUs, but could compile kernels for CPU also???
 	void * (*cp_make_kernel_func)(QSP_ARG_DECL  const char *src, const char *name, struct platform_device *pdp);
 	const char * (*cp_kernel_string_func)(QSP_ARG_DECL  Platform_Kernel_String_ID which_str );
-	void (*cp_store_kernel_func)(QSP_ARG_DECL  Subrt *srp, void *kp, struct platform_device *pdp);
-	void * (*cp_fetch_kernel_func)(QSP_ARG_DECL  Subrt *srp, struct platform_device *pdp);
+	void (*cp_store_kernel_func)(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, struct platform_device *pdp);
+	void * (*cp_fetch_kernel_func)(QSP_ARG_DECL  Kernel_Info_Ptr kip, struct platform_device *pdp);
 
 #ifdef HAVE_ANY_GPU
 
@@ -318,6 +329,9 @@ struct platform_device {
 	} pd_dev_info;
 #endif // HAVE_ANY_GPU
 } ;
+
+#define PFDEV_SERIAL(pdp)		(pdp)->pd_idx
+#define SET_PFDEV_SERIAL(pdp,v)		(pdp)->pd_idx = v
 
 #define PFDEV_CUDA_INFO(pdp)		((pdp)->pd_dev_info.u_cdi_p)
 #define SET_PFDEV_CUDA_INFO(pdp,v)	((pdp)->pd_dev_info.u_cdi_p) = v

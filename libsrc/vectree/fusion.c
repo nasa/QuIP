@@ -388,12 +388,17 @@ advise("calling platform-specific kernel creation function...");
 
 void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
 {
-	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  srp, pdp );
+	Kernel_Info_Ptr kip;
+
+	kip = SR_KERNEL_INFO_PTR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
+	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip, pdp );
 }
 
 static void store_platform_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
 {
-	(*(PF_STORE_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  srp, kp, pdp );
+	Kernel_Info_Ptr *kip_p;
+	kip_p = SR_KERNEL_INFO_PTR_ADDR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
+	(*(PF_STORE_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip_p, kp, pdp );
 }
 
 static void make_kernel_name(String_Buf *sbp, Subrt *srp, const char *speed)

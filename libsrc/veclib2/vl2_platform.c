@@ -98,12 +98,12 @@ static void init_vl2_pfdevs(QSP_ARG_DECL  Compute_Platform *cpp)
 	SET_AREA_PFDEV( ram_area_p, pdp );
 }
 
-static void vl2_store_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
+static void vl2_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Platform_Device *pdp)
 {
 	WARN("Sorry, vl2_store_kernel not implemented!?");
 }
 
-static void *vl2_fetch_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp)
+static void *vl2_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
 {
 	WARN("Sorry, vl2_fetch_kernel not implemented!?");
 	return NULL;
