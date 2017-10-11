@@ -899,6 +899,17 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 	return & kernel;
 }
 
+static void ocl_store_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
+{
+	WARN("Sorry, ocl_store_kernel not implemented!?");
+}
+
+static void * ocl_fetch_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp)
+{
+	WARN("Sorry, ocl_fetch_kernel not implemented!?");
+	return NULL;
+}
+
 /* possible values for code:
  * CL_PLATFORM_PROFILE
  * CL_PLATFORM_VERSION

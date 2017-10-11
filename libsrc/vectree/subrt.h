@@ -19,11 +19,6 @@ typedef union {
 	void *any_kernel_info_p;
 } Kernel_Info_Ptr;
 
-typedef struct kernel_info {
-	platform_type type;
-	Kernel_Info_Ptr info_ptr;
-} Kernel_Info;
-
 struct subrt {
 	Item		sr_item;
 	Vec_Expr_Node *	sr_arg_decls;
@@ -40,7 +35,7 @@ struct subrt {
 	int		sr_flags;
 
 	// stuff for kernel fusion
-	Kernel_Info *	sr_kernel_info_p[N_PLATFORM_TYPES];
+	Kernel_Info_Ptr	sr_kernel_info_p[N_PLATFORM_TYPES];
 };
 
 /* Subrt */
@@ -72,8 +67,8 @@ struct subrt {
 
 /*#define SET_SR_CALL_ENP(srp,enp)	[srp setCall_enp : enp] */
 
-#define SR_KERNEL_INFO_PTR(srp,idx)	(srp)->sr_kernel_info_p[idx]
-#define SET_SR_KERNEL_INFO_PTR(srp,idx,p)	(srp)->sr_kernel_info_p[idx] = p
+#define SR_KERNEL_INFO_PTR(srp,idx)	(srp)->sr_kernel_info_p[idx].any_kernel_info_p
+#define SET_SR_KERNEL_INFO_PTR(srp,idx,p)	(srp)->sr_kernel_info_p[idx].any_kernel_info_p = p
 
 	
 
@@ -127,6 +122,7 @@ typedef struct subrt_call {
 extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
 extern Subrt_Call *make_call_instance(Subrt *srp);
+extern void *find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
 
 #ifdef MAX_DEBUG
 extern void dump_resolvers(Vec_Expr_Node *enp);

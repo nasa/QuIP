@@ -121,11 +121,16 @@ struct vec_expr_node {
 	uint32_t			ven_flops;
 	uint32_t			ven_nmath;
 	Node_Data			ven_data;
+#ifdef HAVE_ANY_GPU
+	Platform_Device *		ven_pdp;
+#endif // HAVE_ANY_GPU
 } ;
 
 #define INIT_ENODE_PTR(enp)		enp=((Vec_Expr_Node *)getbuf(sizeof(Vec_Expr_Node)));
 
 /* VecExprNode */
+#define VN_PFDEV(enp)		(enp)->ven_pdp
+#define SET_VN_PFDEV(enp,pdp)	(enp)->ven_pdp = pdp
 #define VN_FLOPS(enp)		(enp)->ven_flops
 #define SET_VN_FLOPS(enp,n)	(enp)->ven_flops = n
 #define VN_INFILE(enp)		(enp)->ven_infile

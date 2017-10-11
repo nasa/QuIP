@@ -99,8 +99,10 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 				obj_enp=NODE0(T_STATIC_OBJ);
 				SET_VN_OBJ(obj_enp, dp);
 				POINT_NODE_SHAPE(obj_enp,OBJ_SHAPE(dp));
+				SET_VN_PFDEV(obj_enp,OBJ_PFDEV(dp));
 				ret_enp = NODE1(T_REFERENCE,obj_enp);
 				POINT_NODE_SHAPE(ret_enp,OBJ_SHAPE(dp));
+				SET_VN_PFDEV(ret_enp,OBJ_PFDEV(dp));
 			}
 			break;
 		case T_SCAL_DECL:
@@ -116,6 +118,36 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 			break;
 	}
 	return ret_enp;
+}
+
+static void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	Platform_Device *pdp=NULL;
+	Vec_Expr_Node *defining_enp;
+	int curdled=0;
+	int i;
+
+	for(i=0;i<MAX_NODE_CHILDREN;i++){	// BUG - node should record number of children...
+		if( VN_CHILD(enp,i) == NULL ){
+			i = MAX_NODE_CHILDREN;	// terminate loop
+			continue;
+		} else if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL ){
+			// no need for recursive call
+//			update_pfdev_from_children(QSP_ARG  VN_CHILD(enp,i) );
+			if( pdp == NULL ){
+				pdp = VN_PFDEV( VN_CHILD(enp,i) );
+				defining_enp = VN_CHILD(enp,i);
+			} else if( pdp != VN_PFDEV( VN_CHILD(enp,i) ) ){
+				sprintf(ERROR_STRING,"Platform mismatch:  %s (%s) and %s (%s)!?",
+					node_desc(defining_enp),PFDEV_NAME(pdp),
+					node_desc(VN_CHILD(enp,i)), PFDEV_NAME(VN_PFDEV(VN_CHILD(enp,i))) );
+				WARN(ERROR_STRING);
+				curdled=1;
+			}
+		}
+	}
+	if( curdled || pdp==NULL ) return;
+	SET_VN_PFDEV(enp,pdp);
 }
 
 static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
@@ -134,6 +166,7 @@ static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			// BUG release good node if only one bad
 			if( enp1 != NULL && enp2 != NULL ){
 				return_enp = NODE2(T_ARGLIST,enp1,enp2);
+				update_pfdev_from_children(QSP_ARG  return_enp);
 			}
 			break;
 			

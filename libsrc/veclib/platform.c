@@ -46,6 +46,12 @@ static void init_platform_defaults(QSP_ARG_DECL  Compute_Platform *cpp, platform
 	SET_PF_MAPBUF_FN(cpp,NULL);
 	SET_PF_UNMAPBUF_FN(cpp,NULL);
 	SET_PF_REGBUF_FN(cpp,NULL);
+	SET_PF_DEVINFO_FN(cpp,NULL);
+	SET_PF_INFO_FN(cpp,NULL);
+	SET_PF_MAKE_KERNEL_FN(cpp,NULL);
+	SET_PF_KERNEL_STRING_FN(cpp,NULL);
+	SET_PF_STORE_KERNEL_FN(cpp,NULL);
+	SET_PF_FETCH_KERNEL_FN(cpp,NULL);
 
 	SET_PF_FUNC_TBL(cpp,NULL);
 

@@ -16,6 +16,8 @@
 
 #define BUILD_FOR_OPENCL
 
+#define MAX_OPENCL_DEVICES	4
+
 #define index_type	int32_t	// for vmaxi etc
 #define INDEX_PREC	PREC_DI	// for vmaxi etc
 

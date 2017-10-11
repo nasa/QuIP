@@ -72,6 +72,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		SET_VN_CHILD(enp,i,NULL);
 	SET_VN_PARENT(enp,NULL);
 	SET_VN_SHAPE(enp, NULL);
+	SET_VN_PFDEV(enp, NULL);
 	SET_VN_FLAGS(enp, 0);
 	SET_VN_SERIAL(enp, node_serial++);
 	if( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL ){

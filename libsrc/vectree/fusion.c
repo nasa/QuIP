@@ -140,7 +140,7 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			if( VN_CODE(VN_CHILD(enp,0)) == T_PTR_DECL ){
 				const char *s;
 
-				s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+				s = (*(PF_KERNEL_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 					(QSP_ARG  PKS_ARG_QUALIFIER );
 				cat_string(sbp,s);
 				if( strlen(s) > 0 )
@@ -357,7 +357,7 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Sub
 
 	// Make up a name for the kernel
 
-	s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+	s = (*(PF_KERNEL_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 			(QSP_ARG  PKS_KERNEL_QUALIFIER );
 	cat_string(sbp,s);	/*"__kernel " (ocl) or "global" (cuda) */
 	if( strlen(s) > 0 )
@@ -372,19 +372,28 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Sub
 	cat_string(sbp,")\n");
 }
 
-static void make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
+static void * make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
 {
 	void *kp;
 
 	assert( curr_pdp != NULL );
 advise("calling platform-specific kernel creation function...");
-	kp = (*(PF_KRNL_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+	kp = (*(PF_MAKE_KERNEL_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 		(QSP_ARG  src, name, curr_pdp );
 	if( kp == NULL ){ 
 		NERROR1("kernel creation failure!?");
 	}
+	return kp;
+}
 
-	// where to store?
+void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
+{
+	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  srp, pdp );
+}
+
+static void store_platform_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
+{
+	(*(PF_STORE_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  srp, kp, pdp );
 }
 
 static void make_kernel_name(String_Buf *sbp, Subrt *srp, const char *speed)
@@ -402,6 +411,7 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 {
 	String_Buf *sbp;
 	String_Buf *kname;
+	void *kp;
 
 	assert( ! IS_SCRIPT(srp) );
 
@@ -424,9 +434,11 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
 
 	// BUG OpenCL specific code!?!?
-	make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
+	kp = make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
 
 	// BUG release stringbufs here!
+
+	store_platform_kernel(QSP_ARG  srp,kp,curr_pdp);
 }
 
 void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)

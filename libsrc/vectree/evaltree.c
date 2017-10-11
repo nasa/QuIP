@@ -3021,16 +3021,43 @@ void run_subrt_immed(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 //	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
+static Platform_Device *pfdev_for_call(Subrt_Call *scp)
+{
+	// Normally, we determine this from the arg tree...
+	if( VN_PFDEV( SC_ARG_VALS(scp) ) == NULL ){
+		fprintf(stderr,"Arg values do not have platform set!?\n");
+		return NULL;
+	}
+
+fprintf(stderr,"Call is targeted for platform device %s\n",PFDEV_NAME( VN_PFDEV( SC_ARG_VALS(scp) ) ) );
+	return VN_PFDEV( SC_ARG_VALS(scp) );
+}
+
 void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	Run_Info *rip;
 	Subrt *srp;
+	Platform_Device *pdp;
 
 	executing=1;
 
 	rip = SETUP_CALL(scp,dst_dp);
 	if( rip == NULL ){
 		return;
+	}
+
+	// Has this subroutine been "fused" (compiled)?
+	// Need to determine the platform...
+	pdp = pfdev_for_call(scp);
+	if( pdp == NULL ){
+		fprintf(stderr,"run_subrt:  can't determine platform for subroutine call!?\n");
+	} else {
+		void *kp;
+		if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
+			//run_fused_kernel(QSP_ARG  scp,kp,pdp);
+fprintf(stderr,"run_subrt:  NOT running fused kernel!?");
+			return;
+		}
 	}
 
 	srp = SC_SUBRT(scp);
