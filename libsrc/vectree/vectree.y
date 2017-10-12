@@ -544,6 +544,7 @@ expression	: FIX_SIZE '(' expression ')'
 			$$=NODE1(T_BITCOMP,$2); }
 		| INT_NUM {
 			$$ = NODE0(T_LIT_INT);
+			// BUG - we cast to int, but this could be a long???
 			SET_VN_INTVAL($$, (int) $1);
 			}
 		| expression LOG_EQ expression {
@@ -740,7 +741,7 @@ expression	: FIX_SIZE '(' expression ')'
 		| FUNCNAME '(' func_args ')'
 			{
 			$$=NODE1(T_CALLFUNC,$3);
-			SET_VN_CALL_SUBRT($$, $1);
+			SET_VN_SUBRT_CALL($$, make_call_instance($1));
 			/* make sure this is not a void subroutine! */
 			if( SR_PREC_CODE($1) == PREC_VOID ){
 				NODE_ERROR($$);
@@ -850,7 +851,7 @@ void_call	: FUNCNAME '(' func_args ')'
 			{
 			/* BUG check to see that this subrt is void! */
 			$$=NODE1(T_CALLFUNC,$3);
-			SET_VN_CALL_SUBRT($$, $1);
+			SET_VN_SUBRT_CALL($$, make_call_instance($1));
 			if( SR_PREC_CODE($1) != PREC_VOID ){
 				NODE_ERROR($$);
 				sprintf(YY_ERR_STR,"return value of function %s is ignored",SR_NAME($1));
@@ -879,7 +880,7 @@ ref_arg		: '&' objref %prec UNARY
 		| REFFUNC '(' func_args ')'
 			{
 			$$=NODE1(T_CALLFUNC,$3);
-			SET_VN_CALL_SUBRT($$, $1);
+			SET_VN_SUBRT_CALL($$, make_call_instance($1));
 			/* make sure this is not a void subroutine! */
 			if( SR_PREC_CODE($1) == PREC_VOID ){
 				NODE_ERROR($$);
@@ -1077,7 +1078,6 @@ new_func_decl	: NEWNAME '(' arg_decl_list ')'
 			if( $3 != NULL )
 				EVAL_DECL_TREE($3);
 			$$ = NODE1(T_PROTO,$3);
-			//SET_VN_STRING($$, savestr($1));
 			SET_VN_STRING($$, $1);
 			}
 		;
@@ -1114,6 +1114,7 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 
 			$$=NODE1(T_PROTO,$3);
 			/* BUG why are we storing the name again?? */
+			// So the proto node can own its own data???
 			SET_VN_STRING($$, savestr(SR_NAME($1)));
 			}
 		;
@@ -1384,7 +1385,7 @@ print_stat	: PRINT '(' mixed_list ')' { $$=NODE1(T_EXP_PRINT,$3); }
 		| F_WARN '(' print_list ')' { $$=NODE1(T_WARN,$3); }
 		;
 
-decl_identifier	: NEWNAME
+decl_identifier	: NEWNAME	/* saved */
 		| OBJNAME
 			{ $$ = savestr(OBJ_NAME($1)); }
 		| PTRNAME
@@ -1400,13 +1401,11 @@ decl_identifier	: NEWNAME
 
 decl_item	: decl_identifier {
 			$$ = NODE0(T_SCAL_DECL);
-			// WHY VN_STRING and not VN_DECL_NAME???
-			SET_VN_STRING($$,savestr($1));	/* bug need to save??? */
+			SET_VN_DECL_NAME($$,$1);	/* decl_identifier already saved */
 			}
 		/*
 		| decl_identifier '(' arg_decl_list ')' {
 			$$ = NODE1(T_PROTO,$3);
-			//SET_VN_STRING($$, savestr($1));
 			SET_VN_STRING($$, $1);
 			}
 		*/
@@ -1422,22 +1421,19 @@ decl_item	: decl_identifier {
 			{
 			/* function pointer */
 			$$ = NODE1(T_FUNCPTR_DECL,$6);
-			//SET_VN_DECL_NAME($$,savestr($3));
+			// No need to save the decl_name, decl_identifiers already saved.
 			SET_VN_DECL_NAME($$,$3);
 			}
 		| decl_identifier '{' expression '}' {
 			$$ = NODE1(T_CSCAL_DECL,$3);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' {
 			$$ = NODE1(T_VEC_DECL,$3);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '{' expression '}' {
 			$$ = NODE2(T_CVEC_DECL,$3,$6);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' {
@@ -1445,71 +1441,59 @@ decl_item	: decl_identifier {
 			// Since we "compile" the nodes depth first,
 			// how does it get here?
 			$$=NODE2(T_IMG_DECL,$3,$6);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '{' expression '}' {
 			$$=NODE3(T_CIMG_DECL,$3,$6,$9);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '[' expression ']' {
 			$$=NODE3(T_SEQ_DECL,$3,$6,$9);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' expression ']' '[' expression ']' '[' expression ']' '{' expression '}' {
 			Vec_Expr_Node *enp;
 			enp = NODE2(T_EXPR_LIST,$9,$12);
 			$$=NODE3(T_CSEQ_DECL,$3,$6,enp);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '{' '}' {
 			$$ = NODE1(T_CSCAL_DECL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']'
 			{
 			$$ = NODE1(T_VEC_DECL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '{' '}'
 			{
 			$$ = NODE2(T_CVEC_DECL,NULL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']'
 			{
 			$$ = NODE2(T_IMG_DECL,NULL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']' '{' '}'
 			{
 			$$ = NODE3(T_CIMG_DECL,NULL,NULL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']'
 			{
 			$$ = NODE3(T_SEQ_DECL,NULL,NULL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| decl_identifier '[' ']' '[' ']' '[' ']' '{' '}'
 			{
 			$$ = NODE3(T_CSEQ_DECL,NULL,NULL,NULL);
-			//SET_VN_DECL_NAME($$,savestr($1));
 			SET_VN_DECL_NAME($$,$1);
 			}
 		| '*' decl_identifier
 			{
 			$$=NODE0(T_PTR_DECL);
-			//SET_VN_DECL_NAME($$, savestr($2));
 			SET_VN_DECL_NAME($$, $2);
 			}
 		| DATA_FUNC
@@ -2177,7 +2161,9 @@ static const char *match_quote(QSP_ARG_DECL  const char **spp)
 // was it introduced???  Used here, but needs to be thread-safe,
 // so part of query_stack...
 //
-// Better would be to have a saved string with reference count.
+// It is a String_Ref, a saved string with reference count.
+// CURR_INFILE gets saved in nodes that are created while the file
+// is being read, so that appropriate error messages can be printed.
 // 
 
 static void update_current_input_file(Query_Stack *qsp)
@@ -2739,7 +2725,7 @@ static void init_parser(SINGLE_QSP_ARG_DECL)
 	SET_TOP_NODE(NULL);
 
 	// we only use the last node for a commented out error dump?
-	LAST_NODE=NULL;
+	SET_LAST_NODE(NULL);
 }
 
 double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
@@ -2805,12 +2791,6 @@ void yyerror(Query_Stack *qsp,  char *s)
 		sprintf(yyerror_str,"\"%s\" left in the buffer",YY_CP);
 		NADVISE(yyerror_str);
 	} else NADVISE("no buffered text");
-	*/
-
-	/*
-	if( LAST_NODE != NULL ){
-		DUMP_TREE(LAST_NODE);
-	}
 	*/
 
 	FINAL=(-1);

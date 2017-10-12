@@ -98,6 +98,27 @@ static void init_vl2_pfdevs(QSP_ARG_DECL  Compute_Platform *cpp)
 	SET_AREA_PFDEV( ram_area_p, pdp );
 }
 
+static void vl2_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Platform_Device *pdp)
+{
+	WARN("Sorry, vl2_store_kernel not implemented!?");
+}
+
+static void *vl2_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
+{
+	WARN("Sorry, vl2_fetch_kernel not implemented!?");
+	return NULL;
+}
+
+static void vl2_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platform_Device *pdp)
+{
+	WARN("Sorry, vl2_run_kernel not implemented!?");
+}
+
+static void vl2_set_kernel_arg(QSP_ARG_DECL  void *kp, int *idx_p, void *vp, Kernel_Arg_Type arg_type)
+{
+	WARN("Sorry, vl2_set_kernel_vector_arg not implemented!?");
+}
+
 void vl2_init_platform(SINGLE_QSP_ARG_DECL)
 {
 	Compute_Platform *cpp;

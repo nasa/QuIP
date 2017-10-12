@@ -72,6 +72,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		SET_VN_CHILD(enp,i,NULL);
 	SET_VN_PARENT(enp,NULL);
 	SET_VN_SHAPE(enp, NULL);
+	SET_VN_PFDEV(enp, NULL);
 	SET_VN_FLAGS(enp, 0);
 	SET_VN_SERIAL(enp, node_serial++);
 	if( QS_VECTOR_PARSER_DATA(THIS_QSP) != NULL ){
@@ -110,7 +111,7 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 		case ND_CALLF:
 			SET_VN_UK_ARGS(enp, NULL);
-			SET_VN_CALL_SUBRT(enp, NULL);
+			SET_VN_SUBRT_CALL(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);
@@ -184,8 +185,9 @@ static Vec_Expr_Node *nother_node(QSP_ARG_DECL  Tree_Code code)
 
 	enp=alloc_node();
 	SET_VN_CODE(enp,code);
+	SET_LAST_NODE(NULL);
 	init_expr_node(QSP_ARG  enp);
-	LAST_NODE=enp;
+	SET_LAST_NODE(enp);
 	return(enp);
 }
 
@@ -500,25 +502,21 @@ tnt_tbl[VN_CODE(enp)].tnt_name);
 		case T_SEQ_DECL:
 		case T_CSEQ_DECL:
 		case T_PTR_DECL:
-//DEBUG_IT_3(enp,releasing decl name)
-//fprintf(stderr,"node at 0x%lx has decl name at 0x%lx\n",(long)enp,(long)VN_DECL_NAME(enp));
 			rls_str(VN_DECL_NAME(enp));
-//DEBUG_IT_3(enp,done releasing decl name)
 			break;
 
 		default:
 			// do nothing?
 			break;
 	}
+
 	if( OWNS_SHAPE(enp) ){
-//DEBUG_IT_3(enp,releasing shape)
-//fprintf(stderr,"rls_vectree releasing shape for %s node 0x%lx\n",node_desc(enp),(long)enp);
 		rls_shape(VN_SHAPE(enp));
-//DEBUG_IT_3(enp,done releasing shape)
 	}
-//DEBUG_IT_3(enp,releasing node itself)
+
+	// Maybe better to have a free list of nodes?
+
 	givbuf(enp);
-//DEBUG_IT_3(enp,done releasing node itself)
 }
 
 void set_global_ctx(SINGLE_QSP_ARG_DECL)
@@ -580,19 +578,6 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 		np=NODE_NEXT(np);
 	}
 }
-
-#ifdef CAUTIOUS
-
-static int string_is_printable(const char *s)
-{
-	while( *s ){
-		if( ! isprint(*s) ) return(0);
-		s++;
-	}
-	return(1);
-}
-
-#endif /* CAUTIOUS */
 
 void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {

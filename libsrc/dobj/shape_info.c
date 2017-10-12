@@ -55,7 +55,7 @@ Precision *get_prec(QSP_ARG_DECL  const char *name)
 
 #define DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)						\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 assert( AERROR(#stem"_set_value_from_input should never be called, not a machine precision!?") );\
 }
@@ -63,9 +63,9 @@ assert( AERROR(#stem"_set_value_from_input should never be called, not a machine
 // BUG need special case for bitmap!
 // Floating point values aren't signed...
 
-#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
@@ -85,9 +85,9 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 		* ((type *)vp) = (type) val;							\
 }
 
-#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
@@ -110,19 +110,19 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 		* ((type *)vp) = (type) val;							\
 }
 
-DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,"real data",next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
-DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,"integer data",next_input_int_with_format,MIN_BYTE,MAX_BYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,"integer data",next_input_int_with_format,MIN_SHORT,MAX_SHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,next_input_int_with_format,MIN_BYTE,MAX_BYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,next_input_int_with_format,MIN_SHORT,MAX_SHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,next_input_int_with_format,MIN_INT32,MAX_INT32)
 // This one generates warnings when building for iOS?
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,next_input_int_with_format,MIN_INT64,MAX_INT64)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,"integer data",next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,"integer data",next_input_int_with_format,MIN_USHORT,MAX_USHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT32,MAX_UINT32)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT64,MAX_UINT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,next_input_int_with_format,MIN_USHORT,MAX_USHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,next_input_int_with_format,MIN_UINT32,MAX_UINT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,next_input_int_with_format,MIN_UINT64,MAX_UINT64)
 
 /////////////////////////////////
 

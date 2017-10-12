@@ -359,6 +359,14 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 	return(printable_str);
 }
 
+int string_is_printable(const char *s)
+{
+	while( *s ){
+		if( ! isprint(*s) ) return(0);
+		s++;
+	}
+	return(1);
+}
 	
 char *show_printable(QSP_ARG_DECL  const char* s)
 {

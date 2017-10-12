@@ -1174,7 +1174,7 @@ static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1,
 static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Shape_Info *tmp_shpp;
-	Subrt *srp;
+	Subrt_Call *scp;
 	dimension_t i1,i2,len ;
 #ifdef NOT_YET
 	Image_File *ifp;
@@ -1645,6 +1645,9 @@ no_file:
 			 * to the main subroutine body...
 			 */
 
+			// BUG - the shape is associated with the subroutine call,
+			// not the subroutine itself!?!?
+			/*
 			srp = curr_srp;
 
 			if( UNKNOWN_SHAPE(SR_SHAPE(srp)) &&
@@ -1653,7 +1656,7 @@ no_file:
 				SET_SR_SHAPE(srp, VN_SHAPE(enp) );
 
 			} else if( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
-				/* does the shape of this return match? */
+				// does the shape of this return match?
 				if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
 
 
@@ -1661,29 +1664,30 @@ no_file:
 					WARN("mismatched return shapes");
 				}
 			}
+			*/
 
 			break;
 
 		case T_CALLFUNC:			/* update_node_shape */
 
-			srp=VN_SUBRT(enp);
-			SET_SR_CALL_VN(srp, enp);
+			scp=VN_SUBRT_CALL(enp);
+			SET_SC_CALL_VN(scp, enp);
 
 			/* Why do we do this here??? */
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
 				WARN(ERROR_STRING);
 				CURDLE(enp)
 				break;
 			}
 
-			if( SR_SHAPE(srp) != NULL ){
-				copy_node_shape(enp,SR_SHAPE(srp));
+			if( SC_SHAPE(scp) != NULL ){
+				copy_node_shape(enp,SC_SHAPE(scp));
 			}
 			break;
 
@@ -3340,7 +3344,7 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
 
 /* For the old condass funcs, the first child is the bitmap and the next two
  * are the sources.  But for the new types, the first two are the sources,
- * and the second two are the tests.
+ * and the second two are the tests.  (should that be test sources?)
  *
  * If we get here, we know that the condition is a simple numerical test.
  * So we should be able to substitute one of the new fast conditional
@@ -3348,27 +3352,87 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
  *
  * The source args have already been fixed, so that the scalar is the second child
  * if it exists, with the test inverted if necessary.
+ *
+ * Original:
+ *                           enp
+ *                        /   |   \
+ *               bool_test   src1  src2
+ *              /      |
+ *           tsrc1   tsrc2
+ *
+ * Fixed:
+ *                            enp
+ *                    /     /     \     \
+ *                  src1  src2  tsrc1  tsrc2
+ *
+ * The bool_test node is released, so if it is on any resolver list then that has to be fixed!
  */
 
-#define FIX_CHILDREN					\
+
+#define FIX_CONDASS_CHILDREN(idx1,idx2)			\
 							\
 	SET_VN_CHILD(enp,0, VN_CHILD(enp,1));		\
 	SET_VN_CHILD(enp,1, VN_CHILD(enp,2));		\
-	SET_VN_CHILD(enp,2, VN_CHILD(test_enp,0));	\
+	SET_VN_CHILD(enp,2, VN_CHILD(test_enp,idx1));	\
 	SET_VN_PARENT(VN_CHILD(enp,2),enp);		\
-	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,1));	\
-	SET_VN_PARENT(VN_CHILD(enp,3),enp);
-
-/* swap the order of the test args */
-
-#define FIX_CHILDREN_2					\
-							\
-	SET_VN_CHILD(enp,0, VN_CHILD(enp,1));		\
-	SET_VN_CHILD(enp,1, VN_CHILD(enp,2));		\
-	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,0));	\
+	SET_VN_CHILD(enp,3, VN_CHILD(test_enp,idx2));	\
 	SET_VN_PARENT(VN_CHILD(enp,3),enp);		\
-	SET_VN_CHILD(enp,2, VN_CHILD(test_enp,1));	\
-	SET_VN_PARENT(VN_CHILD(enp,2),enp);
+	fix_resolver_references(QSP_ARG  test_enp);
+
+#define FIX_CONDASS_CHILDREN_1		FIX_CONDASS_CHILDREN(0,1)
+#define FIX_CONDASS_CHILDREN_2		FIX_CONDASS_CHILDREN(1,0)
+
+
+static void remove_resolver(QSP_ARG_DECL  Vec_Expr_Node *enp, Vec_Expr_Node *enp_to_remove)
+{
+	Node *np;
+	List *lp;
+
+	assert(VN_RESOLVERS(enp)!=NULL);
+
+	np = remData(VN_RESOLVERS(enp),enp_to_remove);
+	assert(np!=NULL);
+
+//fprintf(stderr,"remove_resolver %s from %s\n",node_desc(enp_to_remove),node_desc(enp));
+
+	lp = VN_RESOLVERS(enp_to_remove);
+	assert(lp!=NULL);
+	np=QLIST_HEAD(lp);
+	while(np!=NULL){
+		Vec_Expr_Node *resolver_enp;
+
+		resolver_enp = NODE_DATA(np);
+		if( resolver_enp != enp ){
+//fprintf(stderr,"remove_resolver linking %s and %s\n",node_desc(enp),node_desc(resolver_enp));
+			link_uk_nodes(QSP_ARG  enp,resolver_enp);
+		}
+		np = NODE_NEXT(np);
+	}
+}
+
+// fix_resolver_references - we call this when we are going to release a node.
+// Resolver links are reciprocal, so any resolvers of this node will point back to it.
+// We need to remove these references, but we need to replace them with links to the other
+// resolver nodes.
+
+static void fix_resolver_references(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	List *lp;
+	Node *np;
+
+	lp=VN_RESOLVERS(enp);
+	if( lp == NULL || (np=QLIST_HEAD(lp)) == NULL ) return;
+
+	while(np!=NULL){
+		Vec_Expr_Node *enp_to_fix;
+		enp_to_fix = NODE_DATA(np);
+//fprintf(stderr,"fix_resolver_references:  removing reference to %s from node %s\n",
+//node_desc(enp),node_desc(enp_to_fix));
+		remove_resolver(QSP_ARG  enp_to_fix,enp);
+		np = NODE_NEXT(np);
+	}
+}
+
 
 #define CHECK_SHAPES(checkpoint_number,comparison_index)			\
 										\
@@ -3394,19 +3458,23 @@ static Vec_Func_Code vs_vs_test_code(Tree_Code bool_code)
 // This would have been done in compile_node, but because the test
 // was a bitmap the child nodes weren't checked...
 
+// BUG:  we release nodes here, but we can get into trouble if those nodes
+// are on another node's resolver list!?
+
 static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *test_enp;
 	test_enp=VN_CHILD(enp,0);
 
-	if( VN_CODE(enp) == T_VV_B_CONDASS ){	/* both sources vectors? */
+	if( VN_CODE(enp) == T_VV_B_CONDASS ){	/* both sources vectors */
+		// now test the shapes of the test sources...
 		if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,0)) ){
 			if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
 				// both test sources vectors
 				SET_VN_CODE(enp, T_VV_VV_CONDASS);
 				// This "fix" overwrites the reference to child 0
 				// Does it exist, and should we release it?
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vv_vv_test_code(VN_CODE(test_enp)));
 				// check to insure typecase if needed
 				CHECK_SHAPES(1,2)
@@ -3414,14 +3482,14 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			} else {
 				// only first test source vector
 				SET_VN_CODE(enp, T_VV_VS_CONDASS);
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vv_vs_test_code(VN_CODE(test_enp)));
 				CHECK_SHAPES(3,2)
 				RELEASE_BOOL(test_enp)
 			}
 		} else if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
 			// only second test source is a vector
-			FIX_CHILDREN_2
+			FIX_CONDASS_CHILDREN_2
 			SET_VN_BM_CODE(enp, vv_vv_test_code(VN_CODE(test_enp)));
 			/* invert sense of test */
 			invert_vec4_condass(enp);
@@ -3436,19 +3504,19 @@ static void _check_xx_xx_condass_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,0)) ){
 			if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
 				SET_VN_CODE(enp, T_VS_VV_CONDASS);
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vs_vv_test_code(VN_CODE(test_enp)));
 				CHECK_SHAPES(7,2)
 				RELEASE_BOOL(test_enp)
 			} else {
 				SET_VN_CODE(enp, T_VS_VS_CONDASS);
-				FIX_CHILDREN
+				FIX_CONDASS_CHILDREN_1
 				SET_VN_BM_CODE(enp, vs_vs_test_code(VN_CODE(test_enp)));
 				CHECK_SHAPES(9,2)
 				RELEASE_BOOL(test_enp)
 			}
 		} else if( IS_VECTOR_SHAPE(VN_CHILD_SHAPE(test_enp,1)) ){
-			FIX_CHILDREN_2
+			FIX_CONDASS_CHILDREN_2
 			SET_VN_BM_CODE(enp, vs_vv_test_code(VN_CODE(test_enp)));
 			invert_vec4_condass(enp);
 			CHECK_SHAPES(11,2)
@@ -4449,7 +4517,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 	Shape_Info *tmp_shpp;
-	Subrt *srp;
+	Subrt_Call *scp;
 	Vec_Expr_Node *decl_enp;
 	dimension_t i1;
 	const char *s;
@@ -5017,17 +5085,22 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * to the main subroutine body...
 			 */
 
+			// BUG - shape belongs to the call, not the subroutine itself...
+			// Although it is possible that a subroutine COULD have a fixed shape...
+			/*
 			srp = curr_srp;
 
 			if( VN_SHAPE(enp) != NULL && ! UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				if( UNKNOWN_SHAPE(SR_SHAPE(srp)) ){
 					SET_SR_SHAPE(srp, VN_SHAPE(enp) );
 				} else if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
-					/* does the shape of this return match? */
+					// does the shape of this return match?
 					NODE_ERROR(enp);
 					WARN("mismatched return shapes");
 				}
 			}
+			*/
+
 			CHECK_UK_CHILD(enp,0);
 
 			break;		/* end T_RETURN case */
@@ -5043,8 +5116,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_CALLFUNC:			/* prelim_node_shape */
 
-			srp=VN_SUBRT(enp);
-			SET_SR_CALL_VN(srp, enp);
+			scp=VN_SUBRT_CALL(enp);
+			SET_SC_CALL_VN(scp, enp);
 
 			/* We probably need a separate list! */
 			/* link any unknown shape args to the callfunc node */
@@ -5052,7 +5125,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				link_uk_args(QSP_ARG  enp,VN_CHILD(enp,0));
 
 			/* void subrt's never need to have a shape */
-			if( SR_PREC_CODE(srp) == PREC_VOID ){
+			if( SR_PREC_CODE(SC_SUBRT(scp)) == PREC_VOID ){
 				SET_VN_SHAPE(enp, NULL);
 				return;
 			}
@@ -5068,10 +5141,10 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
 				WARN(ERROR_STRING);
 				CURDLE(enp)
@@ -5080,7 +5153,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 
-			copy_node_shape(enp,SR_SHAPE(srp));
+			//copy_node_shape(enp,SR_SHAPE(srp));
+			POINT_NODE_SHAPE(enp,SC_SHAPE(scp));
 			break;
 
 		case T_ROW_LIST:				/* prelim_node_shape */
@@ -5573,7 +5647,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			break;
 
 		case T_FUNCREF:
-			POINT_NODE_SHAPE(enp,SR_SHAPE(VN_SUBRT(enp)));
+			POINT_NODE_SHAPE(enp,uk_shape(SR_PREC_CODE(VN_SUBRT(enp))));
 			break;
 
 		case T_SET_FUNCPTR:		/* prelim_node_shape */
@@ -5757,24 +5831,28 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 	}
 } /* end prelim_node_shape */
 
+// link_node_to_node - add the first node to the resolver list of the second
+
+static void link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
+{
+	Node *np;
+
+	if( VN_RESOLVERS(enp2) == NULL ){
+		SET_VN_RESOLVERS(enp2, NEW_LIST );
+	}
+
+	assert( nodeOf(VN_RESOLVERS(enp2),enp1) == NULL );
+
+	np = mk_node(enp1);
+	addTail(VN_RESOLVERS(enp2),np);
+}
+
 /* We have two nodes which can resolve each other - remember this! */
 
 void link_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
-	Node *np;
-
-	if( VN_RESOLVERS(enp1) == NULL )
-		SET_VN_RESOLVERS(enp1, NEW_LIST );
-	if( VN_RESOLVERS(enp2) == NULL )
-		SET_VN_RESOLVERS(enp2, NEW_LIST );
-
-	assert( nodeOf(VN_RESOLVERS(enp1),enp2) == NULL );
-
-	np = mk_node(enp1);
-	addTail(VN_RESOLVERS(enp2),np);
-
-	np = mk_node(enp2);
-	addTail(VN_RESOLVERS(enp1),np);
+	link_node_to_node(QSP_ARG  enp1, enp2);
+	link_node_to_node(QSP_ARG  enp2, enp1);
 }
 
 
