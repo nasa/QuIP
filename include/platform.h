@@ -449,6 +449,6 @@ extern void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp);
 // currently in ocl.c but should be moved - BUG
 extern void show_gpu_vector(QSP_ARG_DECL  Platform_Device *pdp, void *ptr, int len);
 
-extern void set_fused_kernel_args(QSP_ARG_DECL  void *kernel, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp);
+extern long set_fused_kernel_args(QSP_ARG_DECL  void *kernel, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp);
 
 #endif // _PLATFORM_H_

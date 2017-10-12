@@ -471,14 +471,20 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
-void set_fused_kernel_args(QSP_ARG_DECL  void *kp, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp)
+// returns number of elements to process
+// BUG - this is good for fast kernels, but for slow kernels we need the shapes too!?
+
+long set_fused_kernel_args(QSP_ARG_DECL  void *kp, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp)
 {
 	Data_Obj *dp;
+	long l1, l2, ret_val;
 
 	switch( VN_CODE(enp) ){
 		case T_ARGLIST:
-			set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,0),cpp);
-			set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,1),cpp);
+			l1=set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,0),cpp);
+			l2=set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,1),cpp);
+			ret_val = l1 > l2 ? l1 : l2;	// max
+//fprintf(stderr,"set_fused_kernel_args will return %ld (max of %ld and %ld)\n",ret_val,l1,l2);
 			break;
 
 		case T_REFERENCE:
@@ -487,20 +493,27 @@ void set_fused_kernel_args(QSP_ARG_DECL  void *kp, int *idx_p, Vec_Expr_Node *en
 			assert(VN_CODE(enp)==T_STATIC_OBJ);
 			dp = VN_OBJ(enp);
 			assert(dp!=NULL);
+			ret_val = OBJ_N_MACH_ELTS(dp);
 
 			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &OBJ_DATA_PTR(dp), KERNEL_ARG_VECTOR );
+			break;
 
 		case T_LIT_DBL:
+			ret_val = 1;
 			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &VN_DBLVAL(enp), KERNEL_ARG_DBL );
 			break;
 
 		case T_LIT_INT:
+			ret_val = 1;
 			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &VN_INTVAL(enp), KERNEL_ARG_INT );
 			break;
 
 		default:
+			ret_val = -1;
 			sprintf(ERROR_STRING,"set_fused_kernel_args:  unhandled case %s !?",node_desc(enp));
 			ERROR1(ERROR_STRING);
 	}
+//fprintf(stderr,"set_fused_kernel_args will return %ld\n",ret_val);
+	return ret_val;
 }
 

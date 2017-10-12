@@ -921,21 +921,33 @@ static void ocl_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p
 {
 	cl_int status;
 	cl_kernel kernel;
+	int offset;	// BUG?  is this the same size used by the opencl compiler???
 
 	kernel = kp;
 
 	switch( arg_type ){
 		case KERNEL_ARG_VECTOR:
+//fprintf(stderr,"Setting kernel arg %d with vector at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(void *), vp );
 			if( status != CL_SUCCESS )
 				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (vector arg)" );
+			// Vector args always have an offset parameter in OpenCL
+			// BUG - for now we assume 0 - how do we pass???
+			(*idx_p)++;
+			offset=0;
+//fprintf(stderr,"Setting kernel arg %d with int at 0x%lx\n",*idx_p,(long)vp);
+			status = clSetKernelArg(kernel,*idx_p, sizeof(int), &offset );
+			if( status != CL_SUCCESS )
+				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (int arg)" );
 			break;
 		case KERNEL_ARG_DBL:
+//fprintf(stderr,"Setting kernel arg %d with double at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(double), vp );
 			if( status != CL_SUCCESS )
 				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (double arg)" );
 			break;
 		case KERNEL_ARG_INT:
+//fprintf(stderr,"Setting kernel arg %d with int at 0x%lx\n",*idx_p,(long)vp);
 			status = clSetKernelArg(kernel,*idx_p, sizeof(int), vp );
 			if( status != CL_SUCCESS )
 				report_ocl_error(DEFAULT_QSP_ARG  status, "clSetKernelArg (int arg)" );
@@ -951,13 +963,30 @@ static void ocl_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p
 static void ocl_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platform_Device *pdp)
 {
 	cl_kernel kernel;
+	cl_int status;
+	cl_event event;
 	int karg_idx=0;
+	size_t global_work_size[3] = {1, 1, 1};
 
 	kernel = kp;
 
-	set_fused_kernel_args(QSP_ARG  kernel, &karg_idx, arg_enp, PFDEV_PLATFORM(pdp));
+	global_work_size[0] = set_fused_kernel_args(QSP_ARG  kernel, &karg_idx, arg_enp, PFDEV_PLATFORM(pdp));
   
-  	fprintf(stderr,"ocl_run_kernel - incomplete!?\n");
+ //fprintf(stderr,"ocl_run_kernel:  global work size = %ld\n",global_work_size[0]);
+	status = clEnqueueNDRangeKernel(
+		OCLDEV_QUEUE( pdp ),
+		kernel,
+		1,	/* work_dim, 1-3 */
+		NULL,
+		global_work_size,
+		/*local_work_size*/ NULL,
+		0,	/* num_events_in_wait_list */
+		NULL,	/* event_wait_list */
+		&event	/* event */
+		);
+	if( status != CL_SUCCESS )
+		report_ocl_error(DEFAULT_QSP_ARG  status, "clEnqueueNDRangeKernel" );
+	clWaitForEvents(1,&event);
 }
 
 static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
