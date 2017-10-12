@@ -484,6 +484,10 @@ static const char *cu2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 			s="";
 			break;
 		case N_PLATFORM_KERNEL_STRINGS:
+			ERROR1("unexpected platform kernel string ID");
+			s=NULL;
+			break;
+		default:
 			ERROR1("invalid platform kernel string ID");
 			s=NULL;
 			break;
