@@ -231,7 +231,7 @@ void show_id(QSP_ARG_DECL  Identifier *idp)
 	sprintf(msg_str,"Identifier %s at 0x%lx:  ",ID_NAME(idp), (int_for_addr)idp);
 	prt_msg_frag(msg_str);
 	switch(ID_TYPE(idp)){
-		case ID_REFERENCE:  prt_msg("reference"); break;
+		case ID_OBJ_REF:  prt_msg("reference"); break;
 		case ID_POINTER:  prt_msg("pointer"); break;
 		case ID_STRING:  prt_msg("string"); break;
 		default:
@@ -1072,7 +1072,7 @@ static Data_Obj *get_id_obj(QSP_ARG_DECL  const char *name, Vec_Expr_Node *enp)
 	idp = /* GET_ID */ ID_OF(name);
 
 	assert( idp != NULL );
-	assert( IS_REFERENCE(idp) );
+	assert( IS_OBJ_REF(idp) );
 	assert( ! strcmp(ID_NAME(idp),OBJ_NAME(REF_OBJ(ID_REF(idp)))) );
 
 	{
@@ -1203,7 +1203,7 @@ advise(ERROR_STRING);
 
 	switch(ID_TYPE(idp)){
 		case ID_POINTER:
-			if( IS_REFERENCE(src_idp) ){
+			if( IS_OBJ_REF(src_idp) ){
 				assign_pointer(ID_PTR(idp), ID_REF(src_idp) );
 				/* propagate_shape? */
 				return(0);
@@ -1921,6 +1921,9 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 
 
 		case T_SCAL_DECL:		/* assign_subrt_args */
+			ERROR1("Oops - need to implement scalar value case in assign_subrt_args!");
+			break;
+
 		case T_VEC_DECL:
 		case T_IMG_DECL:
 		case T_SEQ_DECL:
@@ -2070,7 +2073,7 @@ Identifier *make_named_reference(QSP_ARG_DECL  const char *name)
 //sprintf(ERROR_STRING,"make_named_reference:  creating id %s",name);
 //advise(ERROR_STRING);
 	idp = new_id(QSP_ARG  name);
-	SET_ID_TYPE(idp, ID_REFERENCE);
+	SET_ID_TYPE(idp, ID_OBJ_REF);
 	SET_ID_REF(idp, NEW_REFERENCE );
 	SET_REF_OBJ(ID_REF(idp), NULL );
 	SET_REF_ID(ID_REF(idp), idp );
@@ -2749,7 +2752,7 @@ static void eval_ref_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Identifier *dst_idp)
 		case T_RETURN:	/* return a pointer */
 			idp = EVAL_PTR_REF(VN_CHILD(enp,0),1);
 			assert( idp != NULL );
-			assert( IS_REFERENCE(idp) );
+			assert( IS_OBJ_REF(idp) );
 
 			/* now copy over the identifier data */
 			SET_PTR_REF(ID_PTR(dst_idp), ID_REF(idp));
@@ -2968,6 +2971,11 @@ Run_Info * setup_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 	/* First, pop the context of the previous subroutine and push the new one */
 	rip->ri_prev_cpp = POP_PREVIOUS();	/* what does pop_previous() do??? */
 	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
+
+	// We need to be sure that we use the correct platform when we
+	// declare any objects that we need here...
+	// Scalar objects are created for scalar arguments, that is a lot of overhead!?
+	// Maybe we should allow id's to be scalars???
 
 	EVAL_DECL_TREE(SR_ARG_DECLS(srp));
 
@@ -3216,7 +3224,7 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 	if( PREC_CODE(prec_p) == PREC_STR ){
 		type = ID_STRING;
 	} else {
-		type = ID_REFERENCE;
+		type = ID_OBJ_REF;	// default - refers to an object
 	}
 
 	eval_enp = enp;
@@ -3295,9 +3303,11 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 			}
 		case T_SCAL_DECL:
 			SET_VN_DECL_PREC(enp, prec_p);
-
+			type = ID_SCALAR;
 			break;
+
 		case T_CSCAL_DECL:					/* eval_decl_stat */
+			// If this is a complex scalar, why allow unknown shapes???
 			SET_VN_DECL_PREC(enp, prec_p);
 
 			/* eg float x{3} */
@@ -3315,6 +3325,7 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 				}
 			}
 			break;
+
 		case T_VEC_DECL:			/* eval_decl_stat */
 			SET_VN_DECL_PREC(enp, prec_p);
 
@@ -3539,9 +3550,14 @@ show_context_stack(QSP_ARG  dobj_itp);
 	assert( idp != NULL );
 
 	switch( type ){
+		case ID_SCALAR:
+			SET_ID_SVAL_PTR( idp, getbuf(sizeof(Scalar_Value)) );
+			copy_node_shape(enp,scalar_shape(PREC_CODE(prec_p)));
+			break;
 
-		case ID_REFERENCE:
-//fprintf(stderr,"ID_REFERENCE:  idp = 0x%lx\n",(long)idp);
+		case ID_OBJ_REF:
+			// Here we create on object...
+//fprintf(stderr,"ID_OBJ_REF:  idp = 0x%lx\n",(long)idp);
 //fprintf(stderr,"ID_NAME(idp) = 0x%lx\n",(long)ID_NAME(idp));
 //fprintf(stderr,"ID_NAME(idp) = %s\n",ID_NAME(idp));
 			SET_ID_DOBJ_CTX(idp , (Item_Context *)NODE_DATA(QLIST_HEAD(LIST_OF_DOBJ_CONTEXTS)) );
@@ -4367,7 +4383,7 @@ advise(ERROR_STRING);
 	//pop_item_context(QSP_ARG  id_itp);
 
 	assert( idp != NULL );
-	assert( IS_REFERENCE(idp) );
+	assert( IS_OBJ_REF(idp) );
 
 	dp=REF_OBJ(ID_REF(idp));
 	assert( dp != NULL );
@@ -4442,7 +4458,7 @@ static Identifier *eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
 find_obj:
 			idp = ID_OF(s);
 			assert( idp != NULL );
-			assert( IS_REFERENCE(idp) );
+			assert( IS_OBJ_REF(idp) );
 
 			return(idp);
 
@@ -5606,6 +5622,9 @@ obj_flt_exp:
 				WARN(ERROR_STRING);
 			}
 			svp=(Scalar_Value *)OBJ_DATA_PTR(dp);
+fprintf(stderr,"eval_flt_exp:  scalar data for object %s at 0x%lx\n",OBJ_NAME(dp),(long)svp);
+longlist(QSP_ARG  dp);
+fprintf(stderr,"eval_flt_exp:  float value at 0x%lx = %g\n",(long)svp,svp->u_f);
 			if( svp == NULL ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,"object %s has null data ptr!?",OBJ_NAME(dp));
@@ -6206,7 +6225,7 @@ Data_Obj *mlab_reshape(QSP_ARG_DECL  Data_Obj *dp, Shape_Info *shpp, const char 
 
 	idp = GET_ID(name);
 	assert( idp != NULL );
-	assert( ID_TYPE(idp) == ID_REFERENCE );
+	assert( ID_TYPE(idp) == ID_OBJ_REF );
 
 	SET_REF_OBJ(ID_REF(idp), dp_new );
 	/* and update the shape! */
@@ -7464,7 +7483,7 @@ advise(ERROR_STRING);
 			if( IS_POINTER(idp2) ){
 				SET_PTR_REF(ID_PTR(idp), PTR_REF(ID_PTR(idp2)));
 				SET_PTR_FLAG_BITS(ID_PTR(idp), POINTER_SET);
-			} else if( IS_REFERENCE(idp2) ){
+			} else if( IS_OBJ_REF(idp2) ){
 				assign_pointer(ID_PTR(idp),ID_REF(idp2));
 				/* can we do some runtime shape resolution here?? */
 				/* We mark the node as unknown to force propagate_shape to do something

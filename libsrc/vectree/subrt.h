@@ -87,13 +87,13 @@ ITEM_LIST_PROT(Subrt,subrt)
 
 extern Item_Type *subrt_itp;
 
-typedef struct subrt_call {
+struct subrt_call {
 	struct subrt *	sc_srp;
 	Vec_Expr_Node *	sc_arg_vals;
 	Vec_Expr_Node *	sc_call_enp;
 	Shape_Info *	sc_shpp;
 	Shape_Info *	sc_dest_shpp;
-} Subrt_Call;
+} ;
 
 #define SC_SUBRT(scp)			(scp)->sc_srp
 #define SET_SC_SUBRT(scp,srp)		(scp)->sc_srp = srp

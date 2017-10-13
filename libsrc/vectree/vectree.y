@@ -300,6 +300,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %token <idp> PTRNAME
 %token <idp> STRNAME
 %token <idp> LABELNAME
+%token <idp> SCALARNAME
 %token <idp> FUNCPTRNAME
 
 %token <e_string> LEX_STRING
@@ -441,6 +442,11 @@ objref		: OBJNAME
 				s=savestr(OBJ_NAME($1));
 				SET_VN_STRING($$,s);
 			}
+			}
+		| SCALARNAME
+			{
+			$$=NODE0(T_SCALAR_VAR);
+			SET_VN_ID($$, $1);
 			}
 		| '*' pointer %prec UNARY
 			{
@@ -1391,6 +1397,8 @@ decl_identifier	: NEWNAME	/* saved */
 		| PTRNAME
 			{ $$ = savestr(ID_NAME($1)); }
 		| STRNAME
+			{ $$ = savestr(ID_NAME($1)); }
+		| SCALARNAME
 			{ $$ = savestr(ID_NAME($1)); }
 		|	precision
 			{
@@ -2677,7 +2685,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 		} else if( IS_FUNCPTR(idp) ){
 			yylvp->idp=idp;
 			return(FUNCPTRNAME);
-		} else if( IS_REFERENCE(idp) ){
+		} else if( IS_OBJ_REF(idp) ){
 			/* the identifier refers to a real object? */
 			//yylvp->idp = idp;
 			/* can we dereference it now?
@@ -2691,6 +2699,9 @@ WARN(ERROR_STRING);
 				yylvp->dp = (Data_Obj *)REF_SBUF(ID_REF(idp));
 			}
 			return(OBJNAME);
+		} else if( IS_SCALAR_ID(idp) ){
+			yylvp->idp = idp;
+			return(SCALARNAME);
 		} else if( IS_LABEL(idp) ){
 			yylvp->idp = idp;
 			return(LABELNAME);

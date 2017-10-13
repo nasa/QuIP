@@ -244,6 +244,8 @@ typedef enum {
 	T_CHAR_FN,
 	T_CHAR_VFN,
 
+	T_SCALAR_VAR,
+
 	N_TREE_CODES				/* this has to be last */
 } Tree_Code;
 

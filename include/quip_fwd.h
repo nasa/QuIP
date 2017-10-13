@@ -23,6 +23,8 @@ FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
 FWD_TYPEDEF(subrt,Subrt)
 FWD_TYPEDEF(subrt_call,Subrt_Call)
+FWD_TYPEDEF(identifier,Identifier)
+FWD_TYPEDEF(cuda_kernel_info,CUDA_Kernel_Info)
 
 FWD_TYPEDEF(rv_inode,RV_Inode)
 FWD_TYPEDEF(mouthful,Mouthful)

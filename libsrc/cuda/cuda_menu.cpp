@@ -24,72 +24,19 @@
 #include <cuda_runtime_api.h>
 #include <curand.h>
 
-
-#ifdef FOOBAR
-// BUG - why include this twice???
-#ifdef HAVE_OPENGL
-#ifdef HAVE_GLUT
-#include "cuda_viewer.h"
-#endif /* HAVE_GLUT */
-#endif /* HAVE_OPENGL */
-#endif // FOOBAR
-
 #endif // HAVE_CUDA
 
+extern "C" {
 #include "quip_prot.h"	// can this come after cuda includes?
+}
 
 #include "cuda_api.h"
 #include "my_cuda.h"
 #include "cuda_supp.h"
 
-#ifdef FOOBAR
-// BUG - why include this twice???
-#ifdef HAVE_CUDA
-#ifdef HAVE_OPENGL
-#ifdef HAVE_GLUT
-#include "cuda_viewer.h"
-#endif /* HAVE_GLUT */
-#endif /* HAVE_OPENGL */
-#endif // HAVE_CUDA
-#endif // FOOBAR
-
-// includes, project
-//#include <cutil_inline.h>
-
-// includes, kernels
-//#include <myproject_kernel.cu>
-
 ////////////////////////////////////////////////////////////////////////////////
 // declaration, forward
 void runTest( int argc, char** argv);
-
-//static int gl_argc;
-//static char ** gl_argv;
-
-/*
-static COMMAND_FUNC( test_cuda )
-{
-	runTest( gl_argc, gl_argv );
-}
-
-static COMMAND_FUNC( exit_cuda )
-{
-	//advise("exit_cuda calling cutilExit");
-	//cutilExit(gl_argc, gl_argv);
-	nice_exit(0);
-}
-*/
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_test_blas )
-{
-#ifdef HAVE_CUDA
-	if( test_cublas() != EXIT_SUCCESS )
-		NWARN("BLAS test failed");
-#endif
-}
-#endif /* FOOBAR */
-
 
 //COMMAND TABLE FOR CUDA NPP LIBRARY
 #undef ADD_CMD
@@ -326,20 +273,6 @@ extern "C" {
 
 //#include "veclib/cu2_menu_prot.h"	// cu2_init_platform()
 extern void cu2_init_platform(SINGLE_QSP_ARG_DECL);	// BUG include file conflicts with old macros...
-
-#ifdef FOOBAR
-void init_cuda_devices(SINGLE_QSP_ARG_DECL)
-{
-#ifdef HAVE_CUDA
-#ifdef FOOBAR
-	_init_cuda_devices(SINGLE_QSP_ARG);
-#endif // FOOBAR
-	cu2_init_platform(SINGLE_QSP_ARG);
-#else // ! HAVE_CUDA
-	WARN("init_cuda_devices:  no CUDA support in this build!?");
-#endif // ! HAVE_CUDA
-}
-#endif // FOOBAR
 
 COMMAND_FUNC( do_cuda_menu )
 {

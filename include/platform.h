@@ -6,14 +6,13 @@
 #include "veclib/obj_args.h"
 struct vector_function;
 
-//#define MAX_DEVICES_PER_PLATFORM	4	// somewhat arbitrary...
+#define MAX_DEVICES_PER_PLATFORM	4	// somewhat arbitrary...
 
 #ifdef HAVE_OPENCL
 #ifdef BUILD_FOR_OPENCL
 #include "ocl_platform.h"
 #endif // BUILD_FOR_OPENCL
 #endif // HAVE_OPENCL
-
 
 struct opencl_kernel_info;
 typedef struct opencl_kernel_info OpenCL_Kernel_Info;
@@ -22,6 +21,9 @@ typedef union {
 #ifdef HAVE_OPENCL
 	OpenCL_Kernel_Info *ocl_kernel_info_p;
 #endif // HAVE_OPENCL
+#ifdef HAVE_CUDA
+	CUDA_Kernel_Info *cuda_kernel_info_p;
+#endif // HAVE_CUDA
 	void *any_kernel_info_p;
 } Kernel_Info_Ptr;
 
@@ -299,7 +301,6 @@ struct cuda_dev_info {
 
 #define PFDEV_CUDA_MAX_THREADS_PER_BLOCK(pdp)		CUDA_MAX_THREADS_PER_BLOCK( PFDEV_CUDA_INFO(pdp) )
 
-#define MAX_CUDA_DEVICES	2		// for now, in the vision lab.
 
 #endif // BUILD_FOR_CUDA
 #endif // HAVE_CUDA
@@ -432,7 +433,13 @@ extern void vl2_init_platform(SINGLE_QSP_ARG_DECL);
 extern void ocl_init_platform(SINGLE_QSP_ARG_DECL);
 #endif // HAVE_OPENCL
 #ifdef HAVE_CUDA
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 extern void cu2_init_platform(SINGLE_QSP_ARG_DECL);
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif // HAVE_CUDA
 
 extern Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name);

@@ -105,7 +105,8 @@ static void vl2_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Pla
 
 static void *vl2_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
 {
-	WARN("Sorry, vl2_fetch_kernel not implemented!?");
+	//WARN("Sorry, vl2_fetch_kernel not implemented!?");
+	// Nothing to fetch until we can compile and store kernels
 	return NULL;
 }
 

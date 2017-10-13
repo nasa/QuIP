@@ -4401,6 +4401,7 @@ DUMP_TREE(enp);
 		case T_CSUBSAMP:
 		case T_LIT_INT:
 		case T_LIT_DBL:
+		case T_SCALAR_VAR:
 		case T_SET_FUNCPTR:
 		case T_CURLY_SUBSCR:	/* compile_node */
 		case T_SQUARE_SUBSCR:		/* compile_node */
@@ -5623,6 +5624,10 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 			break;
+		case T_SCALAR_VAR:
+			// BUG should have precision based on the declaration - where to find?
+			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DP));
+			break;
 		case T_LIT_DBL:			/* prelim_node_shape */
 			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DP));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
@@ -6761,6 +6766,8 @@ const char *get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 			return(VN_STRING(enp));
 		case T_STATIC_OBJ:
 			return(OBJ_NAME(VN_OBJ(enp)));
+		case T_SCALAR_VAR:
+			return(ID_NAME(VN_ID(enp)));
 		case T_SUBVEC:
 		case T_CSUBVEC:
 		case T_REAL_PART:

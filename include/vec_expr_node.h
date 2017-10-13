@@ -36,6 +36,10 @@ typedef struct string_node_data {
 	const char *	string;
 } String_Node_Data;
 
+typedef struct scalar_var_node_data {
+	Identifier *	idp;
+} Scalar_Var_Node_Data;
+
 typedef struct cast_node_data {
 	Precision *	prec_p;
 } Cast_Node_Data;
@@ -77,6 +81,7 @@ typedef struct decl_node_data {
 typedef union {
 	List_Node_Data		list_data;
 	String_Node_Data	string_data;
+	Scalar_Var_Node_Data	scalar_var_data;
 	Cast_Node_Data		cast_data;
 	Vec_Func_Node_Data	vf_data;
 	Sizechng_Node_Data	sizch_data;
@@ -104,7 +109,8 @@ typedef enum {
 	ND_CALLF,		/* 11 */
 	ND_BMAP,		/* 12 */
 	ND_FUNC,		/* 13   this doesn't appear in the union!?  BUG??? */
-	N_NODE_DATA_TYPES	/* 14 */
+	ND_SCALAR_VAR,		/* 14 */
+	N_NODE_DATA_TYPES	/* 15 */
 } Node_Data_Type;
 
 struct vec_expr_node {
@@ -183,6 +189,7 @@ struct vec_expr_node {
 #define VN_DECL_PREC_CODE(enp)	PREC_CODE(VN_DECL_PREC(enp))
 
 #define VN_OBJ(enp)		((enp)->ven_data).dobj_data.dp
+#define VN_ID(enp)		((enp)->ven_data).scalar_var_data.idp
 #define VN_SUBRT_CALL(enp)	((enp)->ven_data).call_data.scp
 #define VN_SUBRT(enp)		((enp)->ven_data).subrt_data.srp
 
@@ -210,6 +217,7 @@ struct vec_expr_node {
 #define SET_VN_INTVAL(enp,v)		SET_VN_DATA(enp,int_data.intval,v)
 #define SET_VN_DBLVAL(enp,d)		SET_VN_DATA(enp,dbl_data.dblval,d)
 #define SET_VN_OBJ(enp,_dp)		SET_VN_DATA(enp,dobj_data.dp, _dp)
+#define SET_VN_ID(enp,_idp)		SET_VN_DATA(enp,scalar_var_data.idp,_idp)
 #define SET_VN_SUBRT_CALL(enp,_scp)	SET_VN_DATA(enp,call_data.scp,_scp)
 #define SET_VN_SUBRT(enp,_srp)		SET_VN_DATA(enp,subrt_data.srp,_srp)
 

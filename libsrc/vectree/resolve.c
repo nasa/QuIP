@@ -1195,7 +1195,7 @@ ADVISE(ERROR_STRING);
 		return;
 	}
 
-	assert( ID_TYPE(idp) == ID_REFERENCE );
+	assert( ID_TYPE(idp) == ID_OBJ_REF );
 
 	decl_enp = REF_DECL_VN(ID_REF(idp));
 	dp = REF_OBJ(ID_REF(idp));
@@ -1386,7 +1386,7 @@ dump_tree(QSP_ARG  uk_enp);
 fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_enp));
 			idp = GET_ID(VN_STRING(uk_enp));
 			assert( idp != NULL );
-			assert( IS_REFERENCE(idp) );
+			assert( IS_OBJ_REF(idp) );
 
 			dp = REF_OBJ(ID_REF(idp));
 			assert( dp != NULL );

@@ -22,6 +22,7 @@
 #include "veclib/cu2_veclib_prot.h"
 //#include "veclib/platform_funcs.h"
 #include "my_cu2.h"	// query_cuda_device()
+#include "my_cuda.h"	// MAX_CUDA_DEVICES - merge w/ my_cu2.h ???
 #include "cuda_supp.h"
 #include <cuda_gl_interop.h>
 #include <nvrtc.h>	// run-time compilation
@@ -525,6 +526,63 @@ fprintf(stderr,"Compilation Log for %s:\n\n%s\n\n",name,log);
 
 	return ptx;
 }
+
+static void cu2_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Platform_Device *pdp)
+{
+	Kernel_Info_Ptr kip;
+	int idx;
+
+	if( (*kip_p).cuda_kernel_info_p == NULL ){
+		kip.cuda_kernel_info_p = getbuf( sizeof(CUDA_Kernel_Info) );
+		*kip_p = kip;
+	} else {
+		kip = (*kip_p);
+	}
+
+	idx = PFDEV_SERIAL(pdp);
+	assert( idx >=0 && idx < MAX_CUDA_DEVICES );
+	SET_CUDA_KI_KERNEL( kip, idx, kp ); 
+}
+
+static void * cu2_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Device *pdp)
+{
+	int idx;
+	char * kp;
+
+	idx = PFDEV_SERIAL(pdp);
+	assert( idx >=0 && idx < MAX_CUDA_DEVICES );
+
+	if(kip.any_kernel_info_p == NULL)	// No stored kernel info?
+		return NULL;
+
+	kp = CUDA_KI_KERNEL( kip, idx ); 
+	return kp;
+}
+
+static void cu2_run_kernel(QSP_ARG_DECL  void *kp, Vec_Expr_Node *arg_enp, Platform_Device *pdp)
+{
+	WARN("sorry, cu2_run_kernel not implemented!?");
+}
+
+static void cu2_set_kernel_arg(QSP_ARG_DECL  /*cl_kernel*/ void * kp, int *idx_p, void *vp, Kernel_Arg_Type arg_type)
+{
+	switch( arg_type ){
+		case KERNEL_ARG_VECTOR:
+//fprintf(stderr,"Setting kernel arg %d with vector at 0x%lx\n",*idx_p,(long)vp);
+			break;
+		case KERNEL_ARG_DBL:
+//fprintf(stderr,"Setting kernel arg %d with double at 0x%lx\n",*idx_p,(long)vp);
+			break;
+		case KERNEL_ARG_INT:
+//fprintf(stderr,"Setting kernel arg %d with int at 0x%lx\n",*idx_p,(long)vp);
+			break;
+		default:
+			WARN("cu2_set_kernel_arg:  BAD ARG TYPE CODE!?");
+			break;
+	}
+	(*idx_p)++;
+}
+
 
 static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 {

@@ -456,13 +456,16 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 	idp = (Identifier *)ip;
 
 	switch(ID_TYPE(idp)){
-		case ID_REFERENCE:
+		case ID_OBJ_REF:
 			/* We used to call delvec(ID_REF(idp)->ref_dp)... */
 			/* We don't do this, because this case occurs in an export/unexport cycle */
 			givbuf(ID_REF(idp));
 			break;
 		case ID_STRING:
 			rls_reference(ID_REF(idp));
+			break;
+		case ID_SCALAR:
+			givbuf(ID_SVAL_PTR(idp));
 			break;
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));

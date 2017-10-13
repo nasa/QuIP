@@ -26,9 +26,12 @@
 #undef HAVE_LIBNPP	// we may hand-edit out HAVE_CUDA on a system that has it?
 #endif // HAVE_CUDA
 
+extern "C" {
 #include "quip_prot.h"
-#include "my_cuda.h"
 #include "data_obj.h"
+}
+
+#include "my_cuda.h"
 #include "cuda_supp.h"
 
 #ifndef HAVE_LIBNPP

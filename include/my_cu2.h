@@ -1,3 +1,5 @@
+#ifndef _MY_CU2_H_
+#define _MY_CU2_H_
 
 #ifdef _WIN32
 //#define USE_DLL_LINKING
@@ -14,6 +16,7 @@
 #define BUILD_FOR_CUDA
 
 #include <cuda.h>
+#include "platform.h"	// MAX_DEVICES_PER_PLATFORM
 
 #if CUDA_VERSION >= 5000
 // CUDA 5
@@ -83,7 +86,12 @@ extern void insure_cuda_device( Data_Obj *dp );
 }
 #endif // __cplusplus
 
+struct cuda_kernel_info {
+	char *	cki_ptx[MAX_DEVICES_PER_PLATFORM];
+};
 
+#define CUDA_KI_KERNEL(kip,idx)		((kip).cuda_kernel_info_p)->cki_ptx[idx]
+#define SET_CUDA_KI_KERNEL(kip,idx,v)	((kip).cuda_kernel_info_p)->cki_ptx[idx] = v
 
 #define MAX_CUDA_GLOBAL_OBJECTS	2048
 #define MAX_CUDA_MAPPED_OBJECTS	128
@@ -131,3 +139,4 @@ extern void cu2_mem_free(QSP_ARG_DECL  Data_Obj *dp );
 #endif // FOOBAR
 
 
+#endif // ! _MY_CU2_H_

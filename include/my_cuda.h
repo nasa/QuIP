@@ -1,3 +1,6 @@
+#ifndef _MY_CUDA_H_
+#define _MY_CUDA_H_
+
 #ifdef _WIN32
 //#define USE_DLL_LINKING
 #endif
@@ -11,6 +14,14 @@
 #ifdef HAVE_CUDA
 
 #include <cuda.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+#include "platform.h"
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #ifndef CUDA_ERROR_CHECK
 #if CUDA_VERSION >= 6000
@@ -26,16 +37,6 @@
 //#include "cuda_port.h"	// BUILD_FOR_GPU, BUILD_FOR_CUDA
 #define BUILD_FOR_GPU
 #define BUILD_FOR_CUDA
-
-#ifdef FOOBAR
-#if CUDA_VERSION >= 5000
-#include <helper_cuda.h>
-#else
-#include <cutil.h>
-#include <cutil_inline.h>
-#endif
-#endif // FOOBAR
-
 
 #ifdef HAVE_CURAND_H
 #include <curand.h>
@@ -72,7 +73,7 @@ typedef struct cuda_device {
 
 extern Cuda_Device *curr_cdp;
 
-#define MAX_CUDA_DEVICES	2		// for now, in the vision lab.
+#define MAX_CUDA_DEVICES	MAX_DEVICES_PER_PLATFORM		// for now, in the vision lab.
 
 #ifdef CUDA_CONSTANT_AREA_INDEX
 #define N_CUDA_DEVICE_AREAS	4	/* global, host, host_mapped, const */
@@ -85,12 +86,6 @@ enum {
 	CUDA_HOST_AREA_INDEX,
 	CUDA_HOST_MAPPED_AREA_INDEX,
 };
-
-//extern Data_Area *cuda_data_area[MAX_CUDA_DEVICES][N_CUDA_DEVICE_AREAS];
-
-#ifdef FOOBAR
-extern bitmap_word *gpu_bit_val_array;	/* BUG should have one per device */
-#endif /* FOOBAR */
 
 // These define's aren't too critical, they set the size of the
 // initial namespace hashtable (? confirm)
@@ -178,4 +173,5 @@ extern COMMAND_FUNC( query_cuda_devices );
 extern int test_cublas(void);
 
 
+#endif // ! _MY_CUDA_H_
 
