@@ -1837,7 +1837,6 @@ advise(ERROR_STRING);
 					break;
 				}
 				if( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
-fprintf(stderr,"pointing node shape to object shape at 0x%lx\n",(long)OBJ_SHAPE(dp));
 					POINT_NODE_SHAPE(enp,OBJ_SHAPE(dp));
 				}
 			} else {
@@ -2334,6 +2333,7 @@ static int _count_name_refs(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *lhs_nam
 		case T_FUNCPTR:
 		case T_POINTER:
 		case T_STR_PTR:
+		case T_SCALAR_VAR:
 		case T_DYN_OBJ:		// _count_name_refs
 			if( strcmp(VN_STRING(enp),lhs_name) ){
 				SET_VN_LHS_REFS(enp,0);
@@ -5625,8 +5625,14 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 			break;
 		case T_SCALAR_VAR:
-			// BUG should have precision based on the declaration - where to find?
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DP));
+			{
+			Identifier *idp;
+			assert(VN_STRING(enp)!=NULL);
+			idp=get_id(QSP_ARG  VN_STRING(enp));
+			assert(idp!=NULL);
+			assert(ID_SHAPE(idp)!=NULL);
+			POINT_NODE_SHAPE(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
+			}
 			break;
 		case T_LIT_DBL:			/* prelim_node_shape */
 			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DP));
@@ -6763,11 +6769,10 @@ const char *get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_POINTER:
 		case T_STR_PTR:
 		case T_DYN_OBJ:
+		case T_SCALAR_VAR:
 			return(VN_STRING(enp));
 		case T_STATIC_OBJ:
 			return(OBJ_NAME(VN_OBJ(enp)));
-		case T_SCALAR_VAR:
-			return(ID_NAME(VN_ID(enp)));
 		case T_SUBVEC:
 		case T_CSUBVEC:
 		case T_REAL_PART:

@@ -1,6 +1,8 @@
 max_warnings 2
 
 expressions
+#  debug typecast
+#  show_shp yes
   read -
 
 float h_a[4],h_b[4],h_c[4];

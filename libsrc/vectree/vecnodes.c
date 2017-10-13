@@ -88,9 +88,6 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	SET_VN_RESOLVERS(enp, NULL);
 
 	switch( VN_DATA_TYPE(enp) ){
-		case ND_SCALAR_VAR:
-			SET_VN_ID(enp,NULL);
-			break;
 		case ND_DECL:
 //fprintf(stderr,"initializing ND_DECL data for node at 0x%lx, code = %d\n",(long)enp,VN_CODE(enp));
 			SET_VN_DECL_NAME(enp, NULL);
@@ -429,13 +426,6 @@ void rls_vectree(Vec_Expr_Node *enp)
 	}
 
 	switch( VN_DATA_TYPE(enp) ){
-		case ND_SCALAR_VAR:
-			assert(VN_ID(enp)!=NULL);
-			givbuf(ID_SVAL_PTR(VN_ID(enp)));
-			del_id(DEFAULT_QSP_ARG  VN_ID(enp));
-			// just to be cautious:
-			SET_VN_ID(enp,NULL);
-			break;
 		case ND_DECL:
 // we used to dump here, but children have already been freed!
  //           fprintf(stderr,"VN_DECL_OBJ(0x%lx) = 0x%lx\n",(long)enp,(long)VN_DECL_OBJ(enp));

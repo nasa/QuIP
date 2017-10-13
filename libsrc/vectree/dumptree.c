@@ -188,6 +188,9 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	} else if( code == T_STATIC_OBJ ){
 		sprintf(msg_str,"\t%s",OBJ_NAME(VN_OBJ(enp)));
 		prt_msg_frag(msg_str);
+	} else if( code == T_SCALAR_VAR ){
+		sprintf(msg_str,"\t%s",VN_STRING(enp));
+		prt_msg_frag(msg_str);
 	} else if ( code == T_FUNCREF ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);

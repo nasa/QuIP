@@ -317,13 +317,11 @@ typedef struct ocl_dev_info  OCL_Dev_Info;
 #define OCLDEV_DEV_ID(pdp)		ODI_DEV_ID( PFDEV_ODI(pdp) )
 #define OCLDEV_CTX(pdp)			ODI_CTX( PFDEV_ODI(pdp) )
 #define OCLDEV_QUEUE(pdp)		ODI_QUEUE( PFDEV_ODI(pdp) )
-#define OCLDEV_IDX(pdp)			ODI_IDX( PFDEV_ODI(pdp) )
 #define OCLDEV_EXTENSIONS(pdp)		ODI_EXTENSIONS(PFDEV_ODI(pdp))
 
 #define SET_OCLDEV_DEV_ID(pdp,v)	SET_ODI_DEV_ID( PFDEV_ODI(pdp),v)
 #define SET_OCLDEV_CTX(pdp,v)		SET_ODI_CTX( PFDEV_ODI(pdp),v)
 #define SET_OCLDEV_QUEUE(pdp,v)		SET_ODI_QUEUE( PFDEV_ODI(pdp),v)
-#define SET_OCLDEV_IDX(pdp,v)		SET_ODI_IDX( PFDEV_ODI(pdp),v)
 #define SET_OCLDEV_EXTENSIONS(pdp,v)	SET_ODI_EXTENSIONS(PFDEV_ODI(pdp),v)
 
 

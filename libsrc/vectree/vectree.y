@@ -431,8 +431,7 @@ subsamp_spec	:	expression ':' expression ':' expression
 scalref		: SCALARNAME
 			{
 			$$=NODE0(T_SCALAR_VAR);
-			SET_VN_ID($$, $1);
-fprintf(stderr,"yyparse:  SCALARNAME %s seen, creating scalar_var node\n",ID_NAME($1));
+			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		;
 
@@ -561,8 +560,7 @@ expression	: FIX_SIZE '(' expression ')'
 		| SCALARNAME
 			{
 			$$=NODE0(T_SCALAR_VAR);
-			SET_VN_ID($$, $1);
-fprintf(stderr,"yyparse:  SCALARNAME %s seen, creating scalar_var node\n",ID_NAME($1));
+			SET_VN_STRING($$, savestr(ID_NAME($1)));
 			}
 		| expression LOG_EQ expression {
 			$$=NODE2(T_BOOL_EQ,$1,$3);
@@ -1414,7 +1412,8 @@ decl_identifier	: NEWNAME	/* saved */
 		| STRNAME
 			{ $$ = savestr(ID_NAME($1)); }
 		| SCALARNAME
-			{ $$ = savestr(ID_NAME($1)); }
+			{
+			$$ = savestr(ID_NAME($1)); }
 		|	precision
 			{
 			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
@@ -2711,7 +2710,6 @@ WARN(ERROR_STRING);
 			return(OBJNAME);
 		} else if( IS_SCALAR_ID(idp) ){
 			yylvp->idp = idp;
-fprintf(stderr,"yylex saw scalar identifier %s\n",ID_NAME(idp));
 			return(SCALARNAME);
 		} else if( IS_LABEL(idp) ){
 			yylvp->idp = idp;

@@ -149,7 +149,7 @@ dnl _CHECK_KERNEL(k,name,ktyp,kname)
 
 define(`_CHECK_KERNEL',`
 	/* _check_kernel $1 $2 $3 $4 */
-	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));
+	pd_idx = PFDEV_SERIAL(VA_PFDEV(vap));
 dnl fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 	if( $1[pd_idx] == NULL ){	/* one-time initialization */
 		cl_kernel kernel;

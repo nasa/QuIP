@@ -3594,7 +3594,8 @@ show_context_stack(QSP_ARG  dobj_itp);
 
 			if( REF_OBJ(ID_REF(idp)) == NULL ){
 				// Need to clean up!
-				del_id(QSP_ARG  idp);
+fprintf(stderr,"eval_decl_stat:  deleting identifier %s\n",ID_NAME(idp));
+				delete_id(QSP_ARG  (Item *)idp);
 
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,
@@ -5346,6 +5347,7 @@ static double scalar_to_double(Scalar_Value *svp,Precision *prec_p)
 double eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp,*dp2;
+	Identifier *idp;
 	double dval;
 	double dval2;
 	index_t index;
@@ -5364,6 +5366,12 @@ double eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 	eval_enp = enp;
 
 	switch(VN_CODE(enp)){
+		case T_SCALAR_VAR:
+			idp = get_id(QSP_ARG  VN_STRING(enp));
+			assert(idp!=NULL);
+			dval = cast_from_scalar_value(QSP_ARG  ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
+			break;
+			
 		case T_MINVAL:
 			dp2=EVAL_OBJ_EXP(VN_CHILD(enp,0),NULL);
 			if( dp2 == NULL ){
@@ -7356,13 +7364,12 @@ DUMP_TREE(enp);
 	// if the LHS is a scalar var, we need to do something different...
 	if( VN_CODE(VN_CHILD(enp,0)) == T_SCALAR_VAR ){
 		Identifier *idp;
-		idp = VN_ID(VN_CHILD(enp,0));
+		idp = get_id(QSP_ARG  VN_STRING(VN_CHILD(enp,0)));
+		assert(idp!=NULL);
 		assign_scalar_id(QSP_ARG  idp, VN_CHILD(enp,1));
 		return;
 	}
 
-fprintf(stderr,"will call eval_obj_ref to get LHS...\n");
-dump_tree(QSP_ARG  enp);
 	dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
 	if( dp == NULL ){
 		NODE_ERROR(enp);

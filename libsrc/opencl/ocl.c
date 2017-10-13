@@ -404,7 +404,8 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 			MAX_OPENCL_DEVICES);
 		ERROR1(ERROR_STRING);
 	}
-	SET_OCLDEV_IDX(pdp,n_ocl_devs++);
+fprintf(stderr,"Setting %s device index to %d\n",PFDEV_NAME(pdp),n_ocl_devs);
+	SET_PFDEV_SERIAL(pdp,n_ocl_devs++);
 
 	SET_PFDEV_MAX_DIMS(pdp,DEFAULT_PFDEV_MAX_DIMS);
 
@@ -995,6 +996,7 @@ static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Devic
 	cl_kernel kp;
 
 	idx = PFDEV_SERIAL(pdp);
+fprintf(stderr,"ocl_fetch_kernel:  idx = %d (0x%x)\n",idx,idx);
 	assert( idx >=0 && idx < MAX_OPENCL_DEVICES );
 
 	if(kip.any_kernel_info_p == NULL)	// No stored kernel info?

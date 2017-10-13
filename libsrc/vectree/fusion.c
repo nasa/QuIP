@@ -287,8 +287,8 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
 			cat_string(sbp,";\n");
 			break;
-		case T_DYN_OBJ:
-			// assume this is a var holding a scalar!?
+		case T_DYN_OBJ: // assume this is a var holding a scalar!?
+		case T_SCALAR_VAR:
 			cat_string(sbp,VN_STRING(enp));
 			break;
 
