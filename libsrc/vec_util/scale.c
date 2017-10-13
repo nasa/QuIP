@@ -136,13 +136,13 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	// stick with the tried and true...
 
 	SET_OA_SVAL(oap,0,&scratch_scalar_val);
-	cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
+	cast_dbl_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),rf);
 	OA_DEST(oap) = dp;
 	perf_vfunc(QSP_ARG  FVSMUL, oap);
 
 	offset = desmin - omn*rf;
 	if( offset != 0 ){
-		cast_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
+		cast_dbl_to_scalar_value(QSP_ARG  &scratch_scalar_val,OBJ_PREC_PTR(dp),offset);
 		perf_vfunc(QSP_ARG  FVSADD, oap);
 	}
 }

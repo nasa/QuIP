@@ -127,7 +127,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 				NWARN("problem with render args");
 				break;
 			}
-			if( FLOATING_PREC(OBJ_PREC(coord_dp)) )
+			if( IS_FLOATING_PREC_CODE(OBJ_PREC(coord_dp)) )
 				render_samples2(QSP_ARG  dst_dp,coord_dp,src_dp);
 			else
 				render_samples(QSP_ARG  dst_dp,coord_dp,src_dp);

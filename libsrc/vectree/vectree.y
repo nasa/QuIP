@@ -354,6 +354,8 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %type <enp> info_stat
 
 %type <enp> objref
+%type <enp> scalref
+%type <enp> lvalue
 %type <enp> pointer
 %type <enp> func_ptr
 %type <enp> str_ptr
@@ -426,6 +428,14 @@ subsamp_spec	:	expression ':' expression ':' expression
 			}
 		;
 
+scalref		: SCALARNAME
+			{
+			$$=NODE0(T_SCALAR_VAR);
+			SET_VN_ID($$, $1);
+fprintf(stderr,"yyparse:  SCALARNAME %s seen, creating scalar_var node\n",ID_NAME($1));
+			}
+		;
+
 objref		: OBJNAME
 			{
 			if( OBJ_FLAGS($1) & DT_STATIC ){
@@ -442,11 +452,6 @@ objref		: OBJNAME
 				s=savestr(OBJ_NAME($1));
 				SET_VN_STRING($$,s);
 			}
-			}
-		| SCALARNAME
-			{
-			$$=NODE0(T_SCALAR_VAR);
-			SET_VN_ID($$, $1);
 			}
 		| '*' pointer %prec UNARY
 			{
@@ -552,6 +557,12 @@ expression	: FIX_SIZE '(' expression ')'
 			$$ = NODE0(T_LIT_INT);
 			// BUG - we cast to int, but this could be a long???
 			SET_VN_INTVAL($$, (int) $1);
+			}
+		| SCALARNAME
+			{
+			$$=NODE0(T_SCALAR_VAR);
+			SET_VN_ID($$, $1);
+fprintf(stderr,"yyparse:  SCALARNAME %s seen, creating scalar_var node\n",ID_NAME($1));
 			}
 		| expression LOG_EQ expression {
 			$$=NODE2(T_BOOL_EQ,$1,$3);
@@ -928,62 +939,66 @@ str_assgn	: str_ptr '=' print_list {
  * so that we can give a more helpful error msg than YYERROR!?
  */
 
-assignment	: objref '=' expression {
+lvalue		: objref
+		| scalref
+		;
+
+assignment	: lvalue '=' expression {
 			$$=NODE2(T_ASSIGN,$1,$3);
 			}
-		| objref PLUS_PLUS { $$=NODE1(T_POSTINC,$1); }
-		| PLUS_PLUS objref { $$=NODE1(T_PREINC,$2); }
-		| MINUS_MINUS objref { $$=NODE1(T_PREDEC,$2); }
-		| objref MINUS_MINUS { $$=NODE1(T_POSTDEC,$1); }
-		| objref PLUS_EQ expression {
+		| lvalue PLUS_PLUS { $$=NODE1(T_POSTINC,$1); }
+		| PLUS_PLUS lvalue { $$=NODE1(T_PREINC,$2); }
+		| MINUS_MINUS lvalue { $$=NODE1(T_PREDEC,$2); }
+		| lvalue MINUS_MINUS { $$=NODE1(T_POSTDEC,$1); }
+		| lvalue PLUS_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_PLUS,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref TIMES_EQ expression {
+		| lvalue TIMES_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_TIMES,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref MINUS_EQ expression {
+		| lvalue MINUS_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_MINUS,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref DIV_EQ expression {
+		| lvalue DIV_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_DIVIDE,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref AND_EQ expression {
+		| lvalue AND_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_BITAND,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref OR_EQ expression {
+		| lvalue OR_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_BITOR,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref XOR_EQ expression {
+		| lvalue XOR_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_BITXOR,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref SHL_EQ expression {
+		| lvalue SHL_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_BITLSHIFT,$1,$3);
 			dup_enp=DUP_TREE($1);
 			$$=NODE2(T_ASSIGN,dup_enp,new_enp);
 			}
-		| objref SHR_EQ expression {
+		| lvalue SHR_EQ expression {
 			Vec_Expr_Node *new_enp,*dup_enp;
 			new_enp=NODE2(T_BITRSHIFT,$1,$3);
 			dup_enp=DUP_TREE($1);
@@ -1410,13 +1425,8 @@ decl_identifier	: NEWNAME	/* saved */
 decl_item	: decl_identifier {
 			$$ = NODE0(T_SCAL_DECL);
 			SET_VN_DECL_NAME($$,$1);	/* decl_identifier already saved */
+			// At some point, we need to set the precision!?
 			}
-		/*
-		| decl_identifier '(' arg_decl_list ')' {
-			$$ = NODE1(T_PROTO,$3);
-			SET_VN_STRING($$, $1);
-			}
-		*/
 		| new_func_decl
 			{
 			delete_subrt_ctx(QSP_ARG  VN_STRING($1));
@@ -2701,6 +2711,7 @@ WARN(ERROR_STRING);
 			return(OBJNAME);
 		} else if( IS_SCALAR_ID(idp) ){
 			yylvp->idp = idp;
+fprintf(stderr,"yylex saw scalar identifier %s\n",ID_NAME(idp));
 			return(SCALARNAME);
 		} else if( IS_LABEL(idp) ){
 			yylvp->idp = idp;

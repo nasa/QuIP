@@ -203,7 +203,7 @@ Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 // Doesn't support CUDA???
 
-void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
+void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
 	Precision *prec_p;
 
@@ -224,7 +224,7 @@ void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 #endif // HAVE_ANY_GPU
 
 	prec_p = OBJ_PREC_PTR(dp);
-	if( (*(prec_p->assign_scalar_func))(dp,svp) < 0 ){
+	if( (*(prec_p->assign_scalar_obj_func))(dp,svp) < 0 ){
 		sprintf(ERROR_STRING,
 			"Unable to set scalar value for object %s!?",
 			OBJ_NAME(dp));
@@ -239,27 +239,27 @@ double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p
 	return (*(prec_p->cast_to_double_func))(svp);
 }
 
-void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
 	(*(prec_p->cast_from_double_func))(svp,val);
 }
 
 // This function casts to a single component
 
-void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 1 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
 
-void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 3 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
-void cast_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 2 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);

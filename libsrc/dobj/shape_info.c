@@ -24,7 +24,7 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,name##_set_value_from_input);	\
 	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
 	SET_PREC_IS_NUMERIC_FUNC(prec_p,name##_is_numeric);	\
-	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar);	\
+	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar_obj);	\
 	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,name##_extract_scalar);	\
 	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,cast_##name##_to_double);	\
 	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,cast_##name##_from_double);	\
@@ -188,7 +188,7 @@ static int stem##_is_numeric(void)		\
 
 #define DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*((type *)OBJ_DATA_PTR(dp)) = svp->member ;					\
 	return 0;							\
@@ -196,7 +196,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -205,7 +205,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -216,7 +216,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))   ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -226,7 +226,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_BAD_ASSIGN_SCALAR_FUNC(stem)				\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	return -1;							\
 }
@@ -392,7 +392,7 @@ DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)
 
 ////////////////////////////////
 
-static int bit_assign_scalar(Data_Obj *dp,Scalar_Value *svp)
+static int bit_assign_scalar_obj(Data_Obj *dp,Scalar_Value *svp)
 {
 	if( svp->bitmap_scalar )
 		*( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) |= 1 << OBJ_BIT0(dp) ;

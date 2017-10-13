@@ -871,14 +871,14 @@ static void check_int_binop(QSP_ARG_DECL  Vec_Expr_Node *enp, int i1, int i2)
 	// assert node is the correct type?
 
 	/* these are operators where we want to cast to int */
-	if( FLOATING_PREC(VN_CHILD_PREC(enp,i1)) ){
+	if( IS_FLOATING_PREC_CODE(VN_CHILD_PREC(enp,i1)) ){
 		if( INTEGER_PREC(VN_CHILD_PREC(enp,i2)) ){
 			typecast_child(enp,i1,VN_CHILD_PREC_PTR(enp,i2));
 		} else {
 			typecast_child(enp,i1,PREC_FOR_CODE(PREC_DI));
 			typecast_child(enp,i2,PREC_FOR_CODE(PREC_DI));
 		}
-	} else if( FLOATING_PREC(VN_CHILD_PREC(enp,i2)) ){
+	} else if( IS_FLOATING_PREC_CODE(VN_CHILD_PREC(enp,i2)) ){
 		typecast_child(enp,i2,VN_CHILD_PREC_PTR(enp,i1));
 	} else {
 		/* Both are integer, use promotion */
@@ -1880,7 +1880,7 @@ fprintf(stderr,"pointing node shape to object shape at 0x%lx\n",(long)OBJ_SHAPE(
 		 * where x is a variable...
 		 * But for now, we will do nothing and see what happens.
 		 */
-		case T_SCAL_DECL:
+		case T_SCAL_DECL:		// update_node_shape
 		case T_IMG_DECL:
 
 			break;
@@ -2942,7 +2942,7 @@ static void _check_bitmap_arg(QSP_ARG_DECL Vec_Expr_Node *enp,int index)
 		case T_VS_FUNC:
 			//VERIFY_DATA_TYPE(enp,ND_FUNC,"check_bitmap_arg")
 			ASSERT_NODE_DATA_TYPE( enp, ND_FUNC )
-			if( FLOATING_PREC(VN_CHILD_PREC(enp,index)) ){
+			if( IS_FLOATING_PREC_CODE(VN_CHILD_PREC(enp,index)) ){
 				enp2 = NODE0(T_LIT_INT);
 				SET_VN_INTVAL(enp2, 0);
 			} else {
@@ -4073,7 +4073,7 @@ DUMP_TREE(enp);
 			}
 
 			if( (! SCALAR_SHAPE(VN_CHILD_SHAPE(enp,0)) ) &&
-				! FLOATING_PREC(SHP_PREC(VN_CHILD_SHAPE(enp,0))) ){
+				! IS_FLOATING_PREC_CODE(SHP_PREC(VN_CHILD_SHAPE(enp,0))) ){
 				typecast_child(enp,0,PREC_FOR_CODE(PREC_SP));
 			}
 
@@ -4107,7 +4107,7 @@ DUMP_TREE(enp);
 			 */
 
 			if( (! SCALAR_SHAPE(VN_CHILD_SHAPE(enp,0)) ) &&
-				! FLOATING_PREC(SHP_PREC(VN_CHILD_SHAPE(enp,0))) ){
+				! IS_FLOATING_PREC_CODE(SHP_PREC(VN_CHILD_SHAPE(enp,0))) ){
 				typecast_child(enp,0,PREC_FOR_CODE(PREC_SP));
 			}
 
@@ -4186,13 +4186,13 @@ DUMP_TREE(enp);
 			/* do we really want to cast if unknown??? */
 
 			if( (! SCALAR_SHAPE(VN_CHILD_SHAPE(enp,0)) ) &&
-				! FLOATING_PREC(SHP_PREC(VN_CHILD_SHAPE(enp,0))) ){
+				! IS_FLOATING_PREC_CODE(SHP_PREC(VN_CHILD_SHAPE(enp,0))) ){
 
 				typecast_child(enp,0,PREC_FOR_CODE(PREC_SP));
 			}
 
 			if( (! SCALAR_SHAPE(VN_CHILD_SHAPE(enp,1)) ) &&
-				! FLOATING_PREC(SHP_PREC(VN_CHILD_SHAPE(enp,1))) ){
+				! IS_FLOATING_PREC_CODE(SHP_PREC(VN_CHILD_SHAPE(enp,1))) ){
 
 				typecast_child(enp,1,PREC_FOR_CODE(PREC_SP));
 			}

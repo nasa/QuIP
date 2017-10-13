@@ -102,7 +102,7 @@ static Data_Obj *create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
 #define ASSIGN_ELEMENT(dp,ri,ci,enp)		assign_element(QSP_ARG  dp,ri,ci,enp)
 #define MLAB_LHS(dp,enp)			mlab_lhs(QSP_ARG  dp,enp)
 #define MLAB_TARGET(dp,enp)			mlab_target(QSP_ARG  dp,enp)
-#define EVAL_OBJ_ID(enp)		eval_obj_id(QSP_ARG  enp)
+#define EVAL_OBJ_ID(enp)			eval_obj_id(QSP_ARG  enp)
 #define EVAL_REF_TREE(enp,dst_idp)		eval_ref_tree(QSP_ARG  enp,dst_idp)
 #define RUN_REFFUNC(srp,enp,dst_idp)		run_reffunc(QSP_ARG  srp,enp,dst_idp)
 #define EVAL_SCALAR(svp,enp,prec)		eval_scalar(QSP_ARG  svp,enp,prec)
@@ -148,6 +148,13 @@ static const char * eval_native_string(Vec_Expr_Node *enp)
 	return( (*native_string_func)(enp) );
 }
 #endif // NOT_USED
+
+static void assign_scalar_id(QSP_ARG_DECL  Identifier *idp, Vec_Expr_Node *val_enp)
+{
+	double d;
+	d = eval_flt_exp(QSP_ARG  val_enp);
+	cast_dbl_to_scalar_value(QSP_ARG  ID_SVAL_PTR(idp),ID_PREC_PTR(idp),d);
+}
 
 static void eval_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
@@ -405,12 +412,12 @@ static Data_Obj *dp_const(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value * svp)
 	const_dp=check_global_scalar(QSP_ARG  "const_scalar",dp,const_dp);
 
 	if( OBJ_PREC(const_dp) == PREC_BIT ){
-		/* assign_scalar will only change 1 bit */
+		/* assign_scalar_obj will only change 1 bit */
 		*((bitmap_word *) OBJ_DATA_PTR(const_dp)) = 0;
 	}
 
 	/* now assign the value */
-	assign_scalar(QSP_ARG  const_dp,svp);
+	assign_scalar_obj(QSP_ARG  const_dp,svp);
 
 	SET_OA_SRC1(oap,const_dp);
 	SET_OA_SVAL(oap,0, (Scalar_Value *)OBJ_DATA_PTR(const_dp));
@@ -439,8 +446,8 @@ int zero_dp(QSP_ARG_DECL  Data_Obj *dp)
 			assert( AERROR("zero_dp:  unhandled precision") );
 			break;
 	}
-	if( dp_const(QSP_ARG  dp,&sval) == NULL ) return(-1);
-	return(0);
+	if( dp_const(QSP_ARG  dp,&sval) == NULL ) return -1;
+	return 0;
 }
 
 static int assign_obj_from_scalar(QSP_ARG_DECL  Vec_Expr_Node *enp,Data_Obj *dp,Scalar_Value *svp)
@@ -449,9 +456,9 @@ static int assign_obj_from_scalar(QSP_ARG_DECL  Vec_Expr_Node *enp,Data_Obj *dp,
 		NODE_ERROR(enp);
 		sprintf(ERROR_STRING,"Error assigning object %s from scalar value",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
-		return(-1);
+		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 void missing_case(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *func_name)
@@ -905,7 +912,7 @@ static int do_vsfunc(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Scalar_Value *s
 #ifdef FOOBAR
 	scal_dp = check_global_scalar(QSP_ARG  "vsfunc_scalar",dpfr,scal_dp);
 
-	assign_scalar(QSP_ARG  scal_dp,svp);
+	assign_scalar_obj(QSP_ARG  scal_dp,svp);
 	setvarg2(oap,dpto,dpfr);
 	//SET_OA_SRC1(oap, scal_dp);
 	SET_OA_SVAL(oap,0, (Scalar_Value *)OBJ_DATA_PTR(scal_dp));
@@ -1192,11 +1199,11 @@ advise(ERROR_STRING);
 
 	if( src_idp == NULL ){
 		WARN("Missing source object!?");
-		return(-1);
+		return -1;
 	}
 
 	idp = GET_ID(VN_STRING(arg_enp));
-	if( idp==NULL ) return(-1);
+	if( idp==NULL ) return -1;
 
 
 	/* assign_ptr_arg */
@@ -1206,42 +1213,42 @@ advise(ERROR_STRING);
 			if( IS_OBJ_REF(src_idp) ){
 				assign_pointer(ID_PTR(idp), ID_REF(src_idp) );
 				/* propagate_shape? */
-				return(0);
+				return 0;
 			} else if( IS_POINTER(src_idp) ){
 				assign_pointer(ID_PTR(idp), PTR_REF(ID_PTR(src_idp)) );
 				/* propagate_shape? */
-				return(0);
+				return 0;
 			} else if( IS_STRING_ID(src_idp) ){
 				assign_pointer(ID_PTR(idp),ID_REF(src_idp));
-				return(0);
+				return 0;
 			} else {
 				NODE_ERROR(val_enp);
 				sprintf(ERROR_STRING,"argval %s is not a reference or a pointer!?",
 					ID_NAME(src_idp));
 				WARN(ERROR_STRING);
-				return(-1);
+				return -1;
 			}
 			/* NOTREACHED */
-			return(-1);
+			return -1;
 		case ID_STRING:
 			if( ! IS_STRING_ID(src_idp) ){
 				NODE_ERROR(val_enp);
 				sprintf(ERROR_STRING,"argval %s is not a string!?",
 					ID_NAME(idp));
 				WARN(ERROR_STRING);
-				return(-1);
+				return -1;
 			}
 			assert( sb_buffer(REF_SBUF(ID_REF(src_idp))) != NULL );
 
 			copy_string(REF_SBUF(ID_REF(idp)),sb_buffer(REF_SBUF(ID_REF(src_idp))));
 			/* BUG need to set string set flag */
-			return(0);
+			return 0;
 		default:
 			WARN("unhandled case in assign_ptr_args");
-			return(-1);
+			return -1;
 	}
 	/* NOTREACHED */
-	return(-1);
+	return -1;
 } /* assign_ptr_arg */
 
 static void constant_bitmap(Data_Obj *dp,u_long lval)
@@ -1591,9 +1598,9 @@ static void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,do
 	Vec_Obj_Args oa1;
 	Scalar_Value sv1, sv2, sv3;
 
-	cast_to_scalar_value(QSP_ARG  &sv1,OBJ_PREC_PTR(dst_dp),(double)start);
-	cast_to_scalar_value(QSP_ARG  &sv2,OBJ_PREC_PTR(dst_dp),(double)dx);
-	cast_to_scalar_value(QSP_ARG  &sv3,OBJ_PREC_PTR(dst_dp),(double)dy);
+	cast_dbl_to_scalar_value(QSP_ARG  &sv1,OBJ_PREC_PTR(dst_dp),(double)start);
+	cast_dbl_to_scalar_value(QSP_ARG  &sv2,OBJ_PREC_PTR(dst_dp),(double)dx);
+	cast_dbl_to_scalar_value(QSP_ARG  &sv3,OBJ_PREC_PTR(dst_dp),(double)dy);
 
 	clear_obj_args(&oa1);
 	//SET_OA_SRC_OBJ(&oa1,0, dst_dp);			// why set this???
@@ -1864,7 +1871,7 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 
 	INIT_CPAIR_PTR(_curr_cpp);
 
-	if( arg_enp==NULL ) return(0);
+	if( arg_enp==NULL ) return 0;
 
 	switch(VN_CODE(arg_enp)){
 		case T_DECL_STAT:
@@ -1905,23 +1912,33 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 
 			if( srp == NULL ) {
 				WARN("assign_subrt_args:  error evaluating function ref");
-				return(-1);
+				return -1;
 			}
 
 			if( fpp == NULL ){
 				WARN("assign_subrt_args:  missing function pointer");
-				return(-1);
+				return -1;
 			}
 
 			fpp->fp_srp = srp;
-			return(0);
+			return 0;
 
 		case T_PTR_DECL:		/* assign_subrt_args */
 			return( ASSIGN_PTR_ARG(arg_enp,val_enp,_curr_cpp,prev_cpp) );
 
 
 		case T_SCAL_DECL:		/* assign_subrt_args */
-			ERROR1("Oops - need to implement scalar value case in assign_subrt_args!");
+			//ERROR1("Oops - need to implement scalar value case in assign_subrt_args!");
+			{
+			Identifier *idp;
+			// 
+			idp = get_id(QSP_ARG  VN_STRING(arg_enp));
+			assert(idp!=NULL);
+			assert(ID_SHAPE(idp)!=NULL);
+			assert(ID_PREC_PTR(idp)!=NULL);
+			assign_scalar_id(QSP_ARG  idp, val_enp);
+			}
+			return 0;
 			break;
 
 		case T_VEC_DECL:
@@ -1936,7 +1953,7 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 
 			if( IS_SCANNING(srp) ){
 				/* break; */
-				return(0);
+				return 0;
 			}
 
 			dp = get_id_obj(QSP_ARG  VN_STRING(arg_enp),arg_enp);
@@ -1944,7 +1961,7 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 			if( dp == NULL ){
 sprintf(ERROR_STRING,"assign_subrt_args:  missing object %s",VN_STRING(arg_enp));
 WARN(ERROR_STRING);
-				return(-1);
+				return -1;
 			}
 
 			assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) );
@@ -1990,7 +2007,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 			PUSH_CPAIR(_curr_cpp);
 
-			return(0);
+			return 0;
 
 		default:
 			MISSING_CASE(arg_enp,"assign_subrt_args");
@@ -1998,7 +2015,7 @@ advise(ERROR_STRING);
 
 	}
 	WARN("assign_subrt_args:  shouldn't reach this point");
-	return(-1);
+	return -1;
 } /* end assign_subrt_args() */
 
 // BUG?  here we store the arg vals and the call node in the subroutine struct itself.
@@ -2286,7 +2303,7 @@ static int parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_a
 {
 	Data_Obj *dp;
 
-	if( enp==NULL ) return(0);
+	if( enp==NULL ) return 0;
 
 	eval_enp = enp;
 
@@ -2298,7 +2315,7 @@ DUMP_TREE(enp);
 			if( dp==NULL ){
 				NODE_ERROR(enp);
 				WARN("missing script arg object");
-				return(0);
+				return 0;
 			} else {
 				store_script_arg(OBJ_NAME(dp),index);
 				return(1);
@@ -2368,7 +2385,7 @@ DUMP_TREE(enp);
 			assert( AERROR("missing case in parse_script_args") );
 			break;
 	}
-	return(0);
+	return 0;
 } /* end set_script_args */
 
 /*
@@ -3553,6 +3570,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 		case ID_SCALAR:
 			SET_ID_SVAL_PTR( idp, getbuf(sizeof(Scalar_Value)) );
 			copy_node_shape(enp,scalar_shape(PREC_CODE(prec_p)));
+			SET_ID_SHAPE(idp,VN_SHAPE(enp));
 			break;
 
 		case ID_OBJ_REF:
@@ -3695,7 +3713,7 @@ int eval_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 	if( enp==NULL || IS_CURDLED(enp) ) return(ret_val);
 
 	eval_enp = enp;
-	if( interrupted ) return(0);
+	if( interrupted ) return 0;
 
 #ifdef FOOBAR
 	/*
@@ -3769,7 +3787,7 @@ static int get_filetype_index(const char *name)
 		sprintf(DEFAULT_ERROR_STRING,"\t%s", ft_tbl[i].ft_name);
 		advise(DEFAULT_ERROR_STRING);
 	}
-	return(-1);
+	return -1;
 }
 #endif /* NOT_YET */
 
@@ -3888,14 +3906,14 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			if( dp == NULL ){
 				NODE_ERROR(enp);
 				WARN("unable to evaluate vector-scalar expression");
-				return(0);
+				return 0;
 			}
 			if( !IS_SCALAR(dp) ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,
 	"eval_int_exp T_VS_FUNC:  object %s is not a scalar!?",OBJ_NAME(dp));
 				WARN(ERROR_STRING);
-				return(0);
+				return 0;
 			}
 			return( get_long_scalar_value(dp) );
 			break;
@@ -3905,7 +3923,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			if( lval == 0 ){
 				NODE_ERROR(enp);
 				WARN("divide by zero!?");
-				return(0);
+				return 0;
 			}
 			return(1/lval);
 			
@@ -3923,7 +3941,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				case PREC_SP:   return( (long) ((float)    dval1 ) );
 				case PREC_DP:   return( (long)             dval1   );
 				case PREC_BIT:
-					if( dval1 == 0.0 ) return(0);
+					if( dval1 == 0.0 ) return 0;
 					else return(1);
 
 				default:
@@ -3933,7 +3951,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_CALLFUNC:			/* eval_int_exp */
 			/* This could get called if we use a function inside a dimesion bracket... */
-			if( ! executing ) return(0);
+			if( ! executing ) return 0;
 
 			scp=VN_SUBRT_CALL(enp);
 			/* BUG SHould check and see if the return type is int... */
@@ -3967,7 +3985,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			if( REF_OBJ(ID_REF(idp1)) == REF_OBJ(ID_REF(idp2)) )
 				return(1);
 			else
-				return(0);
+				return 0;
 			}
 
 		case T_POSTINC:
@@ -3997,11 +4015,11 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			lval = EVAL_INT_EXP(VN_CHILD(enp,1));
 			int_to_scalar(&sval,lval,OBJ_PREC_PTR(dp));
 			if( ASSIGN_OBJ_FROM_SCALAR(enp,dp,&sval) < 0 )
-				return(0);
+				return 0;
 			return(lval);
 
 		case T_UNDEF:
-			return(0);
+			return 0;
 
 		case T_FILE_EXISTS:
 			{
@@ -4010,7 +4028,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				if( s != NULL )
 					return(file_exists(QSP_ARG  s));
 				else
-					return(0);
+					return 0;
 			}
 			break;
 
@@ -4031,7 +4049,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 	"eval_int_exp:  Object %s is not a scalar!?",OBJ_NAME(dp));
 				WARN(ERROR_STRING);
 				LONGLIST(dp);
-				return(0);
+				return 0;
 			}
 			/* has the object been set? */
 			if( ! HAS_ALL_VALUES(dp) ){
@@ -4039,7 +4057,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 					unset_object_warning(QSP_ARG  enp,dp);
 				}
 				
-				return(0);			/* we don't print the warning unless we know
+				return 0;			/* we don't print the warning unless we know
 								 * that we aren't doing pre-evaluation...
 								 */
 			}
@@ -4072,7 +4090,7 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			lval=EVAL_INT_EXP(VN_CHILD(enp,0));
 			lval2=EVAL_INT_EXP(VN_CHILD(enp,1));
 			if( lval || lval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_AND:
 			// Originally, we used short-circuit
@@ -4086,48 +4104,48 @@ long eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			lval=EVAL_INT_EXP(VN_CHILD(enp,0));
 			lval2=EVAL_INT_EXP(VN_CHILD(enp,1));
 			if( lval && lval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_NOT:
 			lval=EVAL_INT_EXP(VN_CHILD(enp,0));
 			if( ! lval ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_GT:			/* eval_int_exp */
 			dval1=EVAL_FLT_EXP(VN_CHILD(enp,0));
 			dval2=EVAL_FLT_EXP(VN_CHILD(enp,1));
 			if( dval1 > dval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_LT:			/* eval_int_exp */
 			dval1=EVAL_FLT_EXP(VN_CHILD(enp,0));
 			dval2=EVAL_FLT_EXP(VN_CHILD(enp,1));
 			if( dval1 < dval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_GE:
 			dval1=EVAL_FLT_EXP(VN_CHILD(enp,0));
 			dval2=EVAL_FLT_EXP(VN_CHILD(enp,1));
 			if( dval1 >= dval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_LE:
 			dval1=EVAL_FLT_EXP(VN_CHILD(enp,0));
 			dval2=EVAL_FLT_EXP(VN_CHILD(enp,1));
 			if( dval1 <= dval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_NE:
 			dval1=EVAL_FLT_EXP(VN_CHILD(enp,0));
 			dval2=EVAL_FLT_EXP(VN_CHILD(enp,1));
 			if( dval1 != dval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_BOOL_EQ:
 			dval1=EVAL_FLT_EXP(VN_CHILD(enp,0));
 			dval2=EVAL_FLT_EXP(VN_CHILD(enp,1));
 			if( dval1 == dval2 ) return(1);
-			else return(0);
+			else return 0;
 			break;
 		case T_PLUS:
 			lval=EVAL_INT_EXP(VN_CHILD(enp,0));
@@ -4258,21 +4276,21 @@ static int compare_arg_decls(Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 	int i;
 
 	if( enp1 == NULL ) {
-		if( enp2 == NULL ) return(0);
-		else return(-1);
-	} else if( enp2 == NULL ) return(-1);
+		if( enp2 == NULL ) return 0;
+		else return -1;
+	} else if( enp2 == NULL ) return -1;
 
-	if( VN_CODE(enp1) != VN_CODE(enp2) ) return(-1);
+	if( VN_CODE(enp1) != VN_CODE(enp2) ) return -1;
 
 	if( VN_CODE(enp1) == T_DECL_STAT ){
-		if( VN_DECL_PREC(enp1) != VN_DECL_PREC(enp2) ) return(-1);
+		if( VN_DECL_PREC(enp1) != VN_DECL_PREC(enp2) ) return -1;
 	}
 
 	for(i=0;i<MAX_CHILDREN(enp1);i++){
 		if( compare_arg_decls(VN_CHILD(enp1,i),VN_CHILD(enp2,i)) < 0 )
-			return(-1);
+			return -1;
 	}
-	return(0);
+	return 0;
 }
 
 void compare_arg_trees(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
@@ -4301,7 +4319,7 @@ static int bad_reeval_shape(Vec_Expr_Node *enp)
 		NWARN(DEFAULT_ERROR_STRING);
 		return(1);
 	}
-	return(0);
+	return 0;
 }
 
 /* We call reeval_decl_stat when we think we know the sizes of all unknown
@@ -4814,7 +4832,7 @@ assign_literal:
 				WARN(ERROR_STRING);
 				return(1);
 			}
-			assign_scalar(QSP_ARG  dp,&sval);
+			assign_scalar_obj(QSP_ARG  dp,&sval);
 			return(1);
 			break;
 
@@ -4839,7 +4857,7 @@ assign_literal:
 				sprintf(ERROR_STRING,
 			"assign_obj_from_list:  error evaluating RHS");
 				WARN(ERROR_STRING);
-				return(0);
+				return 0;
 			}
 			/* do we need to make sure they are the same size??? */
 			//setvarg2(oap,dp,src_dp);
@@ -4852,7 +4870,7 @@ assign_literal:
 			break;
 	}
 WARN("assign_obj_from_list returning 0!?");
-	return(0);
+	return 0;
 }
 
 Data_Obj *eval_obj_ref(QSP_ARG_DECL Vec_Expr_Node *enp)
@@ -5367,7 +5385,7 @@ return(0.0);
 
 		case T_CALLFUNC:			/* eval_flt_exp */
 			/* This could get called if we use a function inside a dimesion bracket... */
-			if( ! executing ) return(0);
+			if( ! executing ) return 0;
 
 			scp=VN_SUBRT_CALL(enp);
 			/* BUG SHould check and see if the return type is double... */
@@ -5622,9 +5640,6 @@ obj_flt_exp:
 				WARN(ERROR_STRING);
 			}
 			svp=(Scalar_Value *)OBJ_DATA_PTR(dp);
-fprintf(stderr,"eval_flt_exp:  scalar data for object %s at 0x%lx\n",OBJ_NAME(dp),(long)svp);
-longlist(QSP_ARG  dp);
-fprintf(stderr,"eval_flt_exp:  float value at 0x%lx = %g\n",(long)svp,svp->u_f);
 			if( svp == NULL ){
 				NODE_ERROR(enp);
 				sprintf(ERROR_STRING,"object %s has null data ptr!?",OBJ_NAME(dp));
@@ -7278,6 +7293,105 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return 0;
 }
 
+static void eval_assignment(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	Data_Obj *dp;
+
+	/* we check runtime resolution here ...
+	 * In preliminary shape analysis, we leave the assign
+	 * node UK if either node is; but calltime resolution
+	 * proceeds incrementally, we might get the assign node
+	 * or even lower?)
+	 */
+
+	if( mode_is_matlab ){
+		if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) )
+			UPDATE_TREE_SHAPE(VN_CHILD(enp,0));
+		if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) )
+			UPDATE_TREE_SHAPE(VN_CHILD(enp,1));
+		if( UNKNOWN_SHAPE(VN_SHAPE(enp)) &&
+				! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
+			RESOLVE_TREE(enp,NULL);
+		}
+	}
+
+	if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
+#ifdef QUIP_DEBUG
+if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"eval_assignment:  last ditch attempt at runtime resolution of LHS %s",node_desc(VN_CHILD(enp,0)));
+advise(ERROR_STRING);
+DUMP_TREE(enp);
+}
+#endif /* QUIP_DEBUG */
+		/*
+		resolve_one_uk_node(VN_CHILD(enp,0));
+		*/
+		RESOLVE_TREE(VN_CHILD(enp,0),NULL);
+
+#ifdef QUIP_DEBUG
+if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"eval_assignment:  after last ditch attempt at runtime resolution of LHS %s:",node_desc(VN_CHILD(enp,0)));
+advise(ERROR_STRING);
+DUMP_TREE(enp);
+}
+#endif /* QUIP_DEBUG */
+	}
+	if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
+#ifdef QUIP_DEBUG
+if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"eval_assignment:  last ditch attempt at runtime resolution of RHS %s",node_desc(VN_CHILD(enp,1)));
+advise(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+		RESOLVE_TREE(VN_CHILD(enp,1),NULL);
+#ifdef QUIP_DEBUG
+if( debug & resolve_debug ){
+sprintf(ERROR_STRING,"eval_assignment:  after last ditch attempt at runtime resolution of RHS %s:",node_desc(VN_CHILD(enp,1)));
+advise(ERROR_STRING);
+DUMP_TREE(enp);
+}
+#endif /* QUIP_DEBUG */
+	}
+
+	// if the LHS is a scalar var, we need to do something different...
+	if( VN_CODE(VN_CHILD(enp,0)) == T_SCALAR_VAR ){
+		Identifier *idp;
+		idp = VN_ID(VN_CHILD(enp,0));
+		assign_scalar_id(QSP_ARG  idp, VN_CHILD(enp,1));
+		return;
+	}
+
+fprintf(stderr,"will call eval_obj_ref to get LHS...\n");
+dump_tree(QSP_ARG  enp);
+	dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+	if( dp == NULL ){
+		NODE_ERROR(enp);
+		WARN("eval_assignment:  Invalid LHS");
+		return;
+	}
+
+	if( mode_is_matlab ){
+		dp=MLAB_LHS(dp,enp);
+		assert( dp != NULL );
+
+		EVAL_OBJ_ASSIGNMENT(dp,VN_CHILD(enp,1));
+		return;
+	}
+
+#ifdef QUIP_DEBUG
+if( debug & eval_debug ){
+sprintf(ERROR_STRING,"eval_assignment:  calling eval_obj_assignment for target %s",OBJ_NAME(dp));
+advise(ERROR_STRING);
+}
+#endif /* QUIP_DEBUG */
+
+	if( VN_CODE(enp) == T_DIM_ASSIGN )
+		EVAL_DIM_ASSIGNMENT(dp,VN_CHILD(enp,1));
+	else {
+		EVAL_OBJ_ASSIGNMENT(dp,VN_CHILD(enp,1));
+	}
+}
+
 /* We return a 1 if we should keep working.
  * We return 0 if we encounter a return statement within a subroutine.
  *
@@ -7320,7 +7434,7 @@ DUMP_TREE(enp);
 
 	eval_enp = enp;
 	executing = 1;
-	if( interrupted ) return(0);
+	if( interrupted ) return 0;
 
 	/* We need to do runtime resolution, but we don't want to descend entire
 	 * statment trees here...  The top node may have an unknown leaf up until the
@@ -7535,11 +7649,11 @@ advise(ERROR_STRING);
 				if( going || intval ){
 					/* execute the body */
 					ret_val=EVAL_TREE(VN_CHILD(enp,1),NULL);
-					if( ret_val == 0 ) return(0);
+					if( ret_val == 0 ) return 0;
 					continuing=0;
 					if( going ) return(ret_val);
 					ret_val=EVAL_TREE(VN_CHILD(enp,2),NULL);
-					if( ret_val == 0 ) return(0);
+					if( ret_val == 0 ) return 0;
 					if( going ) return(ret_val);
 				}
 				if( interrupted ) break;
@@ -7602,7 +7716,7 @@ try_again:
 			intval=0;	// quiet compiler
 			do {
 				ret_val=EVAL_TREE(VN_CHILD(enp,0),NULL);
-				if( ret_val == 0 ) return(0);
+				if( ret_val == 0 ) return 0;
 				continuing = 0;
 				if( ! going ) intval = (int) EVAL_INT_EXP(VN_CHILD(enp,1));
 			} while( (!going) && !intval);
@@ -7612,7 +7726,7 @@ try_again:
 			intval=0;	// quiet compiler
 			do {
 				ret_val=EVAL_TREE(VN_CHILD(enp,0),NULL);
-				if( ret_val == 0 ) return(0);
+				if( ret_val == 0 ) return 0;
 				continuing = 0;
 				if( ! going ) intval = (int) EVAL_INT_EXP(VN_CHILD(enp,1));
 			} while( (!going) && intval);
@@ -7628,7 +7742,7 @@ try_again:
 					/* execute the body */
 					ret_val=EVAL_TREE(VN_CHILD(enp,1),NULL);
 					if( ret_val == 0 )
-						return(0);
+						return 0;
 					continuing=0;
 				}
 				if( interrupted ) break;
@@ -7646,7 +7760,7 @@ try_again:
 					/* execute the body */
 					ret_val=EVAL_TREE(VN_CHILD(enp,1),NULL);
 					if( ret_val == 0 )
-						return(0);
+						return 0;
 					continuing=0;
 				}
 				if( interrupted ) break;
@@ -7686,7 +7800,7 @@ describe_shape(VN_SHAPE(VN_CHILD(enp,0)));
 					sprintf(ERROR_STRING,
 		"Couldn't open image file %s",VN_STRING(enp));
 					WARN(ERROR_STRING);
-					return(0);
+					return 0;
 				}
 			}
 		/* BUG we'd like to allow an arbitrary expression here!? */
@@ -7700,7 +7814,7 @@ describe_shape(VN_SHAPE(VN_CHILD(enp,0)));
 			if( going ) return(1);
 			/* BUG? scan tree should maybe fetch this? */
 			intval = get_filetype_index(VN_STRING(enp));
-			if( intval < 0 ) return(0);
+			if( intval < 0 ) return 0;
 			set_filetype(QSP_ARG  (filetype_code)intval);
 			break;
 #endif /* NOT_YET */
@@ -7800,7 +7914,7 @@ advise(ERROR_STRING);
 			/* If we are returning from a subroutine before the end,
 			 * we have to pop it now...
 			 */
-			return(0);
+			return 0;
 
 		case T_EXP_PRINT:		/* eval_work_tree */
 			if( going ) return(1);
@@ -7833,91 +7947,8 @@ advise(ERROR_STRING);
 		case T_DIM_ASSIGN:	/* eval_work_tree */
 		case T_ASSIGN:		/* eval_work_tree */
 			if( going ) return(1);
-			/* we check runtime resolution here ...
-			 * In preliminary shape analysis, we leave the assign
-			 * node UK if either node is; but calltime resolution
-			 * proceeds incrementally, we might get the assign node
-			 * or even lower?)
-			 */
 
-			if( mode_is_matlab ){
-				if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) )
-					UPDATE_TREE_SHAPE(VN_CHILD(enp,0));
-				if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) )
-					UPDATE_TREE_SHAPE(VN_CHILD(enp,1));
-				if( UNKNOWN_SHAPE(VN_SHAPE(enp)) &&
-						! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
-					RESOLVE_TREE(enp,NULL);
-				}
-			}
-
-			if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
-#ifdef QUIP_DEBUG
-if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"eval_work_tree ASSIGN:  last ditch attempt at runtime resolution of LHS %s",node_desc(VN_CHILD(enp,0)));
-advise(ERROR_STRING);
-DUMP_TREE(enp);
-}
-#endif /* QUIP_DEBUG */
-				/*
-				resolve_one_uk_node(VN_CHILD(enp,0));
-				*/
-				RESOLVE_TREE(VN_CHILD(enp,0),NULL);
-
-#ifdef QUIP_DEBUG
-if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"eval_work_tree ASSIGN:  after last ditch attempt at runtime resolution of LHS %s:",node_desc(VN_CHILD(enp,0)));
-advise(ERROR_STRING);
-DUMP_TREE(enp);
-}
-#endif /* QUIP_DEBUG */
-			}
-			if( UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
-#ifdef QUIP_DEBUG
-if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"eval_work_tree ASSIGN:  last ditch attempt at runtime resolution of RHS %s",node_desc(VN_CHILD(enp,1)));
-advise(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-				/*
-				resolve_one_uk_node(VN_CHILD(enp,1));
-				*/
-				RESOLVE_TREE(VN_CHILD(enp,1),NULL);
-#ifdef QUIP_DEBUG
-if( debug & resolve_debug ){
-sprintf(ERROR_STRING,"eval_work_tree ASSIGN:  after last ditch attempt at runtime resolution of RHS %s:",node_desc(VN_CHILD(enp,1)));
-advise(ERROR_STRING);
-DUMP_TREE(enp);
-}
-#endif /* QUIP_DEBUG */
-			}
-
-			dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
-			if( dp == NULL ){
-				NODE_ERROR(enp);
-				WARN("Invalid LHS");
-				break;
-			}
-
-			if( mode_is_matlab ){
-				dp=MLAB_LHS(dp,enp);
-				assert( dp != NULL );
-
-				EVAL_OBJ_ASSIGNMENT(dp,VN_CHILD(enp,1));
-				break;
-			}
-
-#ifdef QUIP_DEBUG
-if( debug & eval_debug ){
-sprintf(ERROR_STRING,"eval_work_tree:  calling eval_obj_assignment for target %s",OBJ_NAME(dp));
-advise(ERROR_STRING);
-}
-#endif /* QUIP_DEBUG */
-
-			if( VN_CODE(enp) == T_DIM_ASSIGN )
-				EVAL_DIM_ASSIGNMENT(dp,VN_CHILD(enp,1));
-			else
-				EVAL_OBJ_ASSIGNMENT(dp,VN_CHILD(enp,1));
+			eval_assignment(QSP_ARG  enp);
 			break;
 
 		case T_PREINC:		/* eval_work_tree */

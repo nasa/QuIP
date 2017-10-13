@@ -51,15 +51,8 @@ struct identifier {
 #define PUSH_ID_CONTEXT(icp)		PUSH_ITEM_CONTEXT(id_itp,icp)
 #define POP_ID_CONTEXT			POP_ITEM_CONTEXT(id_itp)
 
-
-#ifdef FOOBAR
-#define id_fpp		id_u.u_fpp
-#define id_ptrp		id_u.u_ptrp
-/* #define id_dp		id_u.u_dp */
-/*#define id_sbp		id_u.u_sbp */
-#define id_refp		id_u.u_refp
-#endif /* FOOBAR */
-
+#define ID_PREC_PTR(idp)		SHP_PREC_PTR(ID_SHAPE(idp))
+#define ID_PREC_CODE(idp)		PREC_CODE(ID_PREC_PTR(idp))
 
 #define IS_STRING_ID(idp)	(ID_TYPE(idp) == ID_STRING)
 #define IS_POINTER(idp)		(ID_TYPE(idp) == ID_POINTER)

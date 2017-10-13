@@ -80,7 +80,7 @@ struct precision {
 	int			(*is_numeric_func)(void);
 
 	// assign a scalar data object from a scalar value constant
-	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+	int			(*assign_scalar_obj_func)(Data_Obj *dp, Scalar_Value *svp);
 
 	// extract a value from a scalar data object
 	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
@@ -127,8 +127,8 @@ struct precision {
 #define PREC_IS_NUMERIC_FUNC(prec_p)	(prec_p)->is_numeric_func
 #define SET_PREC_IS_NUMERIC_FUNC(prec_p,v)	(prec_p)->is_numeric_func = v
 
-#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_func
-#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_func = v
+#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_obj_func
+#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_obj_func = v
 
 #define PREC_EXTRACT_SCALAR_FUNC(prec_p)	(prec_p)->extract_scalar_func
 #define SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,v)	(prec_p)->extract_scalar_func = v

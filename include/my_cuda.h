@@ -11,10 +11,6 @@
 //using namespace dyn;
 //#else
 
-#ifdef HAVE_CUDA
-
-#include <cuda.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -22,6 +18,10 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+#ifdef HAVE_CUDA
+
+#include <cuda.h>
 
 #ifndef CUDA_ERROR_CHECK
 #if CUDA_VERSION >= 6000
