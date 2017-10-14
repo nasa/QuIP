@@ -996,7 +996,6 @@ static void * ocl_fetch_kernel(QSP_ARG_DECL  Kernel_Info_Ptr kip, Platform_Devic
 	cl_kernel kp;
 
 	idx = PFDEV_SERIAL(pdp);
-fprintf(stderr,"ocl_fetch_kernel:  idx = %d (0x%x)\n",idx,idx);
 	assert( idx >=0 && idx < MAX_OPENCL_DEVICES );
 
 	if(kip.any_kernel_info_p == NULL)	// No stored kernel info?

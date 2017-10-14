@@ -34,8 +34,17 @@
 
 #define MAX_HIDDEN_CONTEXTS	32
 
-#define PUSH_CPAIR(cpp)		PUSH_ID_CONTEXT(CP_ID_CTX(cpp));	\
-				PUSH_DOBJ_CONTEXT(CP_OBJ_CTX(cpp))
+//#define PUSH_CPAIR(cpp)		PUSH_ID_CONTEXT(CP_ID_CTX(cpp));	\
+//				PUSH_DOBJ_CONTEXT(CP_OBJ_CTX(cpp))
+
+#define PUSH_CPAIR(cpp)		push_cpair(QSP_ARG  cpp)
+
+static inline void push_cpair(QSP_ARG_DECL  Context_Pair *cpp)
+{
+//fprintf(stderr,"push_cpair:  pushing %s\n",CTX_NAME(CP_OBJ_CTX(cpp)));
+	PUSH_ID_CONTEXT(CP_ID_CTX(cpp));
+	PUSH_DOBJ_CONTEXT(CP_OBJ_CTX(cpp));
+}
 
 #define POP_CPAIR		POP_ID_CONTEXT;				\
 				POP_DOBJ_CONTEXT
@@ -1152,7 +1161,7 @@ static int assign_ptr_arg(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *val
 
 	/* we want this object to be equivalenced to the calling obj */
 
-	POP_SUBRT_CPAIR(curr_cpp,SR_NAME(curr_srp));
+	pop_subrt_cpair(QSP_ARG  curr_cpp,SR_NAME(curr_srp));
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"assign_ptr_arg:  current contexts %s, %s popped",CTX_NAME(CP_ID_CTX(curr_cpp)),
@@ -1891,7 +1900,7 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 		case T_FUNCPTR_DECL:		/* assign_subrt_args */
 			/* we evaluate the argument */
 
-			POP_SUBRT_CPAIR(_curr_cpp,SR_NAME(curr_srp));
+			pop_subrt_cpair(QSP_ARG  _curr_cpp,SR_NAME(curr_srp));
 
 			if( prev_cpp != NULL ){
 				PUSH_CPAIR(prev_cpp);
@@ -1973,7 +1982,7 @@ WARN(ERROR_STRING);
 			 * the outer ones for the assignment value!
 			 */
 
-			POP_SUBRT_CPAIR(_curr_cpp,SR_NAME(curr_srp));
+			pop_subrt_cpair(QSP_ARG  _curr_cpp,SR_NAME(curr_srp));
 
 			if( prev_cpp != NULL ){
 
@@ -2072,7 +2081,7 @@ void exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 	scp = runnable_subrt(QSP_ARG  enp);
 
 	if( scp != NULL ){
-		RUN_SUBRT(scp,dst_dp);
+		run_subrt(QSP_ARG  scp,dst_dp);
 	} else {
 		sprintf(ERROR_STRING,"subroutine is not runnable!?");
 		WARN(ERROR_STRING);
@@ -2806,7 +2815,7 @@ static void run_reffunc(QSP_ARG_DECL Subrt_Call *scp, Vec_Expr_Node *enp, Identi
 	executing=1;
 	/* Run-time resolution of unknown shapes */
 
-	rip = SETUP_CALL(scp,NULL);
+	rip = setup_subrt_call(QSP_ARG  scp,NULL);
 	if( rip == NULL ){
 sprintf(ERROR_STRING,"run_reffunc %s:  no return info!?",SR_NAME(SC_SUBRT(scp)));
 WARN(ERROR_STRING);
@@ -2899,7 +2908,7 @@ sprintf(ERROR_STRING,"pop_previous %s:  calling pop_subrt_cpair (context)",SR_NA
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		POP_SUBRT_CPAIR(cpp,SR_NAME(curr_srp));
+		pop_subrt_cpair(QSP_ARG  cpp,SR_NAME(curr_srp));
 		/* we remember this context so we can use it if we call a script func */
 		push_hidden_context(cpp);
 #ifdef QUIP_DEBUG
@@ -2945,7 +2954,7 @@ static Run_Info *new_rip()
 	return(rip);
 }
 
-/* setup_call
+/* setup_subrt_call
  *
  * does the following things:
  *	calls early_calltime_resolve
@@ -2956,7 +2965,7 @@ static Run_Info *new_rip()
  *	returns a run_info struct
  */
 
-Run_Info * setup_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
+Run_Info * setup_subrt_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 {
 	Run_Info *rip;
 	Subrt *srp;
@@ -2986,7 +2995,7 @@ Run_Info * setup_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 	/* declare the arg variables */
 
 	/* First, pop the context of the previous subroutine and push the new one */
-	rip->ri_prev_cpp = POP_PREVIOUS();	/* what does pop_previous() do??? */
+	rip->ri_prev_cpp = pop_previous(SINGLE_QSP_ARG);	/* what does pop_previous() do??? */
 	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 	// We need to be sure that we use the correct platform when we
@@ -3011,7 +3020,7 @@ fprintf(stderr,"call_err!\n");
 		RESTORE_PREVIOUS(rip->ri_prev_cpp);
 	}
 	return(NULL);
-} // setup_call
+} // setup_subrt_call
 
 /* wrapup_context
  *
@@ -3041,9 +3050,7 @@ void wrapup_context(QSP_ARG_DECL  Run_Info *rip)
 void run_subrt_immed(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	delete_local_objs(SINGLE_QSP_ARG);	// run_subrt_immed
-//	push_vector_parser_data(SINGLE_QSP_ARG);
-	RUN_SUBRT(scp,dst_dp);
-//	pop_vector_parser_data(SINGLE_QSP_ARG);
+	run_subrt(QSP_ARG  scp,dst_dp);
 }
 
 static Platform_Device *pfdev_for_call(Subrt_Call *scp)
@@ -3066,7 +3073,7 @@ void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 
 	executing=1;
 
-	rip = SETUP_CALL(scp,dst_dp);
+	rip = setup_subrt_call(QSP_ARG  scp,dst_dp);
 	if( rip == NULL ){
 		return;
 	}

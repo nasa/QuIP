@@ -717,7 +717,7 @@ DUMP_TREE(enp);
 }
 #endif /* QUIP_DEBUG */
 			/* BUG how can we get dst_dp?? */
-			rip = SETUP_CALL(scp,NULL);
+			rip = setup_subrt_call(QSP_ARG  scp,NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_tree %s:  after setup_call %s:",node_desc(enp),SR_NAME(SC_SUBRT(scp)));
@@ -925,7 +925,7 @@ void resolve_subrt(QSP_ARG_DECL  Subrt_Call *scp,List *uk_list, Shape_Info *ret_
 	srp = SC_SUBRT(scp);
 	argval_tree = SC_ARG_VALS(scp);
 
-	prev_cpp = POP_PREVIOUS();
+	prev_cpp = pop_previous(SINGLE_QSP_ARG);
 
 	save_srp = curr_srp;
 	curr_srp = srp;

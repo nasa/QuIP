@@ -2508,6 +2508,9 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 	SET_QRY_READFUNC(CURR_QRY(THIS_QSP), rfunc);
 }
 
+// We have a stack of parser environments, and a free list to keep them around
+// when they are popped...
+
 static void init_vector_parser_data_stack(Query_Stack *qsp)
 {
 	SET_QS_VECTOR_PARSER_DATA_STACK(qsp,new_list());
@@ -2526,6 +2529,16 @@ static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
 	SET_VPD_YY_WORD_BUF(vpd_p,new_stringbuf());
 	SET_VPD_EDEPTH(vpd_p, -1);
 	SET_VPD_CURR_STRING(vpd_p, sb_buffer(VPD_EXPR_STRING(vpd_p)) );
+	SET_VPD_SUBRT_CTX_STACK(vpd_p,new_list());
+}
+
+static void rls_vector_parser_data(Vector_Parser_Data *vpd_p)
+{
+	rls_stringbuf(VPD_YY_INPUT_LINE(vpd_p));
+	rls_stringbuf(VPD_YY_LAST_LINE(vpd_p));
+	rls_stringbuf(VPD_EXPR_STRING(vpd_p));
+	rls_stringbuf(VPD_YY_WORD_BUF(vpd_p));
+	rls_list(VPD_SUBRT_CTX_STACK(vpd_p));
 }
 
 static void init_scalar_parser_data(Scalar_Parser_Data *spd_p)
@@ -2562,6 +2575,7 @@ void push_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	vpd_p = find_free_vector_parser_data(SINGLE_QSP_ARG);
 	assert(vpd_p!=NULL);
 
+fprintf(stderr,"push_vector_parser_data:  initializing new parser environment\n");
 	init_vector_parser_data(vpd_p);
 
 	np = mk_node(vpd_p);
@@ -2577,12 +2591,17 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	np = remHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
 	assert(np!=NULL);
 
+	vpd_p = NODE_DATA(np);
+	rls_vector_parser_data(vpd_p);	// prevent leaks!
+
 	addHead( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP), np );
 
 	np = QLIST_HEAD( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
 	if( np != NULL ){
+fprintf(stderr,"pop_vector_parser_data:  restoring old parser environment\n");
 		vpd_p = NODE_DATA(np);
 	} else {
+fprintf(stderr,"pop_vector_parser_data:  No parser environment\n");
 		vpd_p = NULL;
 	}
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);

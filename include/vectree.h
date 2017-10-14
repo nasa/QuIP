@@ -209,7 +209,6 @@ extern void init_ml_native_kw_tbl(void);
 
 extern void delete_id(QSP_ARG_DECL  Item *);
 extern void pop_subrt_cpair(QSP_ARG_DECL  Context_Pair *cpp,const char *name);
-#define POP_SUBRT_CPAIR(cpp,name)	pop_subrt_cpair(QSP_ARG  cpp, name)
 extern void dump_subrt(QSP_ARG_DECL  Subrt *);
 #define DUMP_SUBRT(srp)		dump_subrt(QSP_ARG  srp)
 extern Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int);
@@ -219,11 +218,8 @@ extern Item_Context *	pop_subrt_ctx(QSP_ARG_DECL  const char *,Item_Type *);
 #define POP_SUBRT_DOBJ_CTX(s)		pop_subrt_ctx(QSP_ARG  s, dobj_itp)
 
 
-//ITEM_INTERFACE_PROTOTYPES(Identifier,id)
 #define ID_OF(s)		id_of(QSP_ARG s)
 #define GET_ID(s)		get_id(QSP_ARG s)
-//ITEM_INTERFACE_PROTOTYPES(Subrt,subrt)
-//ITEM_INTERFACE_PROTOTYPES(Undef_Sym,undef)
 #define UNDEF_OF(s)		undef_of(QSP_ARG  s)
 
 extern Subrt *remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *,Vec_Expr_Node *,Vec_Expr_Node *);
@@ -232,9 +228,7 @@ extern COMMAND_FUNC( do_run_subrt );
 extern void exec_subrt(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *dst_dp);
 #define EXEC_SUBRT(enp,dp)		exec_subrt(QSP_ARG enp,dp)
 extern void run_subrt(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
-#define RUN_SUBRT(scp,dst_dp)		run_subrt(QSP_ARG scp,dst_dp)
 extern void run_subrt_immed(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
-#define RUN_SUBRT_IMMED(scp,dst_dp)		run_subrt_immed(QSP_ARG scp,dst_dp)
 extern COMMAND_FUNC( do_dump_subrt );
 extern COMMAND_FUNC( do_opt_subrt );
 extern COMMAND_FUNC( do_fuse_kernel );
@@ -386,8 +380,7 @@ extern Data_Obj *	mlab_reshape(QSP_ARG_DECL  Data_Obj *,Shape_Info *,const char 
 extern void		eval_immediate(QSP_ARG_DECL  Vec_Expr_Node *enp);
 #define EVAL_IMMEDIATE(enp)		eval_immediate(QSP_ARG enp)
 extern void		wrapup_context(QSP_ARG_DECL  Run_Info *rip);
-extern Run_Info *	setup_call(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
-#define SETUP_CALL(scp,dst_dp)	setup_call(QSP_ARG scp,dst_dp)
+extern Run_Info *	setup_subrt_call(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
 extern Subrt_Call *		runnable_subrt(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern Identifier *	make_named_reference(QSP_ARG_DECL  const char *name);
 extern Identifier *	get_set_ptr(QSP_ARG_DECL Vec_Expr_Node *);
@@ -397,7 +390,6 @@ extern Data_Obj *	eval_obj_ref(QSP_ARG_DECL  Vec_Expr_Node *);
 extern Data_Obj *	eval_obj_exp(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *);
 #define EVAL_OBJ_EXP(enp,dp)		eval_obj_exp(QSP_ARG enp,dp)
 extern Context_Pair *	pop_previous(SINGLE_QSP_ARG_DECL);
-#define POP_PREVIOUS()	pop_previous(SINGLE_QSP_ARG)	
 extern void		restore_previous(QSP_ARG_DECL  Context_Pair *);
 #define RESTORE_PREVIOUS(cpp)	restore_previous(QSP_ARG cpp)
 extern Identifier *	eval_ptr_ref(QSP_ARG_DECL  Vec_Expr_Node *enp,int expect_ptr_set);

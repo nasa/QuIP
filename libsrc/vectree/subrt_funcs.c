@@ -198,7 +198,9 @@ COMMAND_FUNC( do_run_subrt )
 
 	// What do we do if there is a fused kernel for this subrt???
 
+fprintf(stderr,"do_run_subrt calling push_vector_parser_data\n");
 	push_vector_parser_data(SINGLE_QSP_ARG);
+fprintf(stderr,"do_run_subrt calling get_subrt_args\n");
 	enp = get_subrt_args(QSP_ARG  srp);
 
 	SET_SC_SUBRT(&sc,srp);
@@ -207,7 +209,8 @@ COMMAND_FUNC( do_run_subrt )
 	SET_SC_SHAPE(&sc,NULL);
 	SET_SC_CALL_VN(&sc,NULL);
 
-	RUN_SUBRT_IMMED(&sc,NULL);
+fprintf(stderr,"do_run_subrt calling run_subrt_immed\n");
+	run_subrt_immed(QSP_ARG  &sc,NULL);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
@@ -369,7 +372,20 @@ Subrt *create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *
 	return srp;
 }
 
-static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
+static void insure_subrt_ctx_stack(SINGLE_QSP_ARG_DECL)
+{
+	assert(THIS_VPD!=NULL);
+	if( SUBRT_CTX_STACK == NULL ){
+		SET_SUBRT_CTX_STACK(new_list());
+fprintf(stderr,"Subroutine context stack initialized to 0x%lx\n",(long)SUBRT_CTX_STACK);
+		// BUG?  freed?
+	}
+}
+
+// Make up a unique string by concatenating all the strings in the context stack
+// BUG should use String_Bufs to avoid buffer overflow!?
+
+static const char *name_for_ctx_stack(SINGLE_QSP_ARG_DECL)
 {
 	static char ctxname[LLEN];
 	Node *np;
@@ -401,14 +417,12 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
 
 	assert(THIS_VPD != NULL);
 
-	if( SUBRT_CTX_STACK == NULL ){
-		SUBRT_CTX_STACK = new_list();
-	}
+	insure_subrt_ctx_stack(SINGLE_QSP_ARG);
 	s=savestr(name);
 	np=mk_node((void *)s);
 	addTail(SUBRT_CTX_STACK,np);
 
-	return(name_from_stack(SINGLE_QSP_ARG));
+	return(name_for_ctx_stack(SINGLE_QSP_ARG));
 }
 
 /* set_subrt_ctx - set subroutine context
@@ -556,13 +570,17 @@ advise(ERROR_STRING);
 	SET_CP_OBJ_CTX(cpp,POP_SUBRT_DOBJ_CTX(name));
 }
 
+// Get the name of the current context for a given item_type
+
 static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *itp)
 {
 	/* having this static makes it not thread-safe!? BUG */
 	static char ctxname[LLEN];
 	Node *np;
 
+fprintf(stderr,"get_subrt_ctx_name %s:  subrt_ctx_stack = 0x%lx\n",name,(long)SUBRT_CTX_STACK);
 	assert( SUBRT_CTX_STACK != NULL );
+
 	assert( QLIST_TAIL(SUBRT_CTX_STACK) != NULL );
 
 	np = QLIST_TAIL(SUBRT_CTX_STACK);
@@ -570,7 +588,7 @@ static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *
 	assert( ! strcmp(name,(char *)NODE_DATA(np)) );
 
 	/* BUG possible string overflow */
-	sprintf(ctxname,"%s.%s",IT_NAME(itp), name_from_stack(SINGLE_QSP_ARG) );
+	sprintf(ctxname,"%s.%s",IT_NAME(itp), name_for_ctx_stack(SINGLE_QSP_ARG) );
 
 	return( ctxname );
 }
@@ -583,14 +601,6 @@ Item_Context * pop_subrt_ctx(QSP_ARG_DECL  const char *name,Item_Type *itp)
 	Item_Context *icp;
 
 	ctxname = get_subrt_ctx_name(QSP_ARG  name,itp);
-#ifdef QUIP_DEBUG
-if( debug & scope_debug ){
-/*
-sprintf(ERROR_STRING,"pop_subrt_ctx:  popping subroutine context %s for %s items",ctxname,IT_NAME(itp));
-advise(ERROR_STRING);
-*/
-}
-#endif /* QUIP_DEBUG */
 
 //sprintf(ERROR_STRING,"Searching for context %s",ctxname);
 //advise(ERROR_STRING);
@@ -598,6 +608,7 @@ advise(ERROR_STRING);
 	assert( icp != NULL );
 	assert( icp == CURRENT_CONTEXT(itp) );
 
+//fprintf(stderr,"popping %s from %s\n",CTX_NAME(icp),ITEM_TYPE_NAME(itp));
 	pop_item_context(QSP_ARG  itp);
 
 	return(icp);

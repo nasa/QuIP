@@ -1,6 +1,7 @@
 max_warnings 2
 
 expressions
+#  debug scope
 #  debug typecast
 #  show_shp yes
   read -
@@ -43,6 +44,7 @@ end
   #Pause
   quit
 
+Define Run3 0
 VSet h_a -5
 advise "Running subroutine on host..."
 expressions run testk h_a h_b h_c 5.1 quit
@@ -58,13 +60,14 @@ advise "Running fused kernel..."
 VSet a -5
 expressions
   fuse testk
-#  info testk
-#  debug resolver
   run testk a b c 5.1
   quit
 Display a
+.
 
-  quit
+Run3
+Run3
+Run3
 
 exit
 
