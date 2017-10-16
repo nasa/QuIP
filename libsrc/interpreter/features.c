@@ -38,6 +38,7 @@ typedef enum {
 	SWF_GCRYPT,
 	SWF_FLYCAP,
 	SWF_DC1394,
+	SWF_DAS1602,
 	SWF_V4L2,
 
 	SWF_KNOX,	// Knox video 8x8 switcher
@@ -92,6 +93,7 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 { UNKNOWN, SWF_GCRYPT,		"encryption w/ libgcrypt"	},
 { UNKNOWN, SWF_FLYCAP,		"firewire cameras w/ libflycap"	},
 { UNKNOWN, SWF_DC1394,		"firewire cameras w/ libdc1394"	},
+{ UNKNOWN, SWF_DAS1602,		"analog I/O w/ Measurement Computing DAS1602"	},
 { UNKNOWN, SWF_V4L2,		"video-for-Linux II"		},
 { UNKNOWN, SWF_KNOX,		"Knox Video 8x8 switcher"	},
 { UNKNOWN, SWF_VISCA,		"Sony VISCA camera control protocol"	}
@@ -306,6 +308,13 @@ static void get_feature_states(SINGLE_QSP_ARG_DECL)
 	FEATURE_PRESENT(SWF_DC1394);
 #else
 	FEATURE_ABSENT(SWF_DC1394);
+#endif
+
+
+#ifdef HAVE_DAS1602
+	FEATURE_PRESENT(SWF_DAS1602);
+#else
+	FEATURE_ABSENT(SWF_DAS1602);
 #endif
 
 
