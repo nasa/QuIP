@@ -346,18 +346,21 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 		return;
 	}
 #endif // HAVE_GETUID
-	
+
+
+    WARN("Sorry, system command is temporarily unavailable!?");
+#ifdef FOOBAR
 	// On IOS, there is no stdout, so we don't see any output!?
 	stat=system(s);
 	
 	if( stat == -1 )
 		tell_sys_error("system");
-
 	else if( verbose ){
 		sprintf(ERROR_STRING,"Exit status %d",stat);
 		advise(ERROR_STRING);
 	}
-	
+#endif // FOOBAR
+
 	sprintf(msg_str,"%d",stat);
 	assign_reserved_var(QSP_ARG  "exit_status",msg_str);
 }

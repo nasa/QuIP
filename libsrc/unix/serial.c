@@ -665,7 +665,8 @@ static COMMAND_FUNC( do_tty_redir )
 	}
 
 	/* BUG should confirm that file exists and is a tty */
-
+    WARN("tty_redir:  NOT setting line to cooked mode!?");
+#ifdef FOOBAR
 	// Why do we put in cooked mode???
 	// Why do we use system instead of our own stty facility?
 	// Maybe this was written before the internal stty utilities existed?
@@ -673,7 +674,8 @@ static COMMAND_FUNC( do_tty_redir )
 	status=system(cmd_str);
 	if( status < 0 )
 		WARN("Failed to reset serial line!?");
-
+#endif // FOOBAR
+    
 	/* ttys_are_interactive=0; */		/* assume a machine is connected */
 	SET_QS_FLAG_BITS(THIS_QSP,QS_INTERACTIVE_TTYS);
 

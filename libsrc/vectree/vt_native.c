@@ -170,7 +170,11 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Variable *vp;
 
 			s=EVAL_STRING(VN_CHILD(enp,0));
+#ifdef FOOBAR
 			status = system(s);
+#endif // FOOBAR
+                WARN("Sorry, system() is temporarily unavailable!?");
+                
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
 			vp=assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
 			assert( vp != NULL );
