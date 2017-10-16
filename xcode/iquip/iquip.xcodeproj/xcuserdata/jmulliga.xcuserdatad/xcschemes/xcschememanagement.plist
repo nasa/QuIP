@@ -9,6 +9,11 @@
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
+		<key>CSF copy.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
 		<key>CSF.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -43,6 +48,11 @@
 			<true/>
 		</dict>
 		<key>7C4D6D7E1D5111A400D34AC4</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7CB670971F9484C5001FFADF</key>
 		<dict>
 			<key>primary</key>
 			<true/>
