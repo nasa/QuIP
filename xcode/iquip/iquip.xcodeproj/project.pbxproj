@@ -1439,7 +1439,6 @@
 		7CB671BC1F9484C5001FFADF /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7106ED0316004437006BF850 /* Foundation.framework */; };
 		7CB671BD1F9484C5001FFADF /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7106ED0516004437006BF850 /* CoreGraphics.framework */; };
 		7CB671BF1F9484C5001FFADF /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647917D4FBE700446D65 /* Default@2x.png */; };
-		7CB671C01F9484C5001FFADF /* csf_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7C4332AF1D4D47D40033687C /* csf_startup.enc */; };
 		7CB671C11F9484C5001FFADF /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647817D4FBE700446D65 /* Default.png */; };
 		7CB671C21F9484C5001FFADF /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7C6B33C71953AC0C00967093 /* InfoPlist.strings */; };
 		7CB671C31F9484C5001FFADF /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 711F11841637B6D50069EF13 /* Icon@2x.png */; };
@@ -1450,6 +1449,7 @@
 		7CB671C81F9484C5001FFADF /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 711F11891637B6D50069EF13 /* Icon-72@2x.png */; };
 		7CB671C91F9484C5001FFADF /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 711F118A1637B6D50069EF13 /* Icon-72.png */; };
 		7CB671CA1F9484C5001FFADF /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647617D4F67B00446D65 /* Default-568h@2x.png */; };
+		7CB671D31F9501E6001FFADF /* symm_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7CB671D11F9501DC001FFADF /* symm_startup.enc */; };
 		7CB8D5D91B6198B90080809C /* string_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB8D5D81B6198B90080809C /* string_ref.c */; };
 		7CE5FDFD1A60750B0029C7AE /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CE5FDFC1A60750B0029C7AE /* avCap.m */; };
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
@@ -1817,6 +1817,7 @@
 		7CB4501E1D650EB500B6783F /* f1dim.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = f1dim.c; sourceTree = "<group>"; };
 		7CB671CF1F9484C5001FFADF /* Symmetry.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Symmetry.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CB671D01F9484C5001FFADF /* CSF copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "CSF copy-Info.plist"; path = "/Users/jmulliga/working/quip/xcode/iquip/CSF copy-Info.plist"; sourceTree = "<absolute>"; };
+		7CB671D11F9501DC001FFADF /* symm_startup.enc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = symm_startup.enc; path = macros/startup/symm_startup.enc; sourceTree = "<group>"; };
 		7CB8D5D81B6198B90080809C /* string_ref.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = string_ref.c; sourceTree = "<group>"; };
 		7CE5FDFC1A60750B0029C7AE /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
@@ -2380,6 +2381,7 @@
 		71A9C6CC161750F5002F7DFC /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				7CB671D11F9501DC001FFADF /* symm_startup.enc */,
 				7C4D6EA31D51140C00D34AC4 /* afalert_startup.enc */,
 				7C4333D51D4D4A1F0033687C /* ezjet_startup.enc */,
 				7C4332AF1D4D47D40033687C /* csf_startup.enc */,
@@ -2713,7 +2715,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7CB671BF1F9484C5001FFADF /* Default@2x.png in Resources */,
-				7CB671C01F9484C5001FFADF /* csf_startup.enc in Resources */,
+				7CB671D31F9501E6001FFADF /* symm_startup.enc in Resources */,
 				7CB671C11F9484C5001FFADF /* Default.png in Resources */,
 				7CB671C21F9484C5001FFADF /* InfoPlist.strings in Resources */,
 				7CB671C31F9484C5001FFADF /* Icon@2x.png in Resources */,
