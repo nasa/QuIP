@@ -3070,6 +3070,7 @@ void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 	Run_Info *rip;
 	Subrt *srp;
 	Platform_Device *pdp;
+	void * kp;
 
 	executing=1;
 
@@ -3081,33 +3082,29 @@ void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 	// Has this subroutine been "fused" (compiled)?
 	// Need to determine the platform...
 	pdp = pfdev_for_call(scp);
-	if( pdp == NULL ){
-		fprintf(stderr,"run_subrt:  can't determine platform for subroutine call!?\n");
-	} else {
-		void * kp;
-		if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
-			run_fused_kernel(QSP_ARG  scp,kp,pdp);
-			return;
-		}
-	}
+	assert(pdp!=NULL);
 
-	srp = SC_SUBRT(scp);
-	if( rip->ri_arg_stat >= 0 ){
-		EVAL_DECL_TREE(SR_BODY(srp));
-		/* eval_work_tree returns 0 if a return statement was executed,
-		 * but not if there is an implied return.
-		 *
-		 * Uh, what is an "implied" return???
-		 */
-
-		// BUG - eval_work_tree calls delete_local_objs, but dst_dp
-		// here may be a local object!?
-		// We might test for dst_dp being local before making the call,
-		// but would that be sufficient???
-		EVAL_WORK_TREE(SR_BODY(srp),dst_dp);
+	if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
+		run_fused_kernel(QSP_ARG  scp,kp,pdp);
 	} else {
+		srp = SC_SUBRT(scp);
+		if( rip->ri_arg_stat >= 0 ){
+			EVAL_DECL_TREE(SR_BODY(srp));
+			/* eval_work_tree returns 0 if a return statement was executed,
+			 * but not if there is an implied return.
+			 *
+			 * Uh, what is an "implied" return???
+			 */
+
+			// BUG - eval_work_tree calls delete_local_objs, but dst_dp
+			// here may be a local object!?
+			// We might test for dst_dp being local before making the call,
+			// but would that be sufficient???
+			EVAL_WORK_TREE(SR_BODY(srp),dst_dp);
+		} else {
 sprintf(ERROR_STRING,"run_subrt %s:  arg_stat = %d",SR_NAME(srp),rip->ri_arg_stat);
 WARN(ERROR_STRING);
+		}
 	}
 
 	wrapup_call(QSP_ARG  rip);

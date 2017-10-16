@@ -198,9 +198,7 @@ COMMAND_FUNC( do_run_subrt )
 
 	// What do we do if there is a fused kernel for this subrt???
 
-fprintf(stderr,"do_run_subrt calling push_vector_parser_data\n");
 	push_vector_parser_data(SINGLE_QSP_ARG);
-fprintf(stderr,"do_run_subrt calling get_subrt_args\n");
 	enp = get_subrt_args(QSP_ARG  srp);
 
 	SET_SC_SUBRT(&sc,srp);
@@ -209,7 +207,6 @@ fprintf(stderr,"do_run_subrt calling get_subrt_args\n");
 	SET_SC_SHAPE(&sc,NULL);
 	SET_SC_CALL_VN(&sc,NULL);
 
-fprintf(stderr,"do_run_subrt calling run_subrt_immed\n");
 	run_subrt_immed(QSP_ARG  &sc,NULL);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
@@ -377,7 +374,6 @@ static void insure_subrt_ctx_stack(SINGLE_QSP_ARG_DECL)
 	assert(THIS_VPD!=NULL);
 	if( SUBRT_CTX_STACK == NULL ){
 		SET_SUBRT_CTX_STACK(new_list());
-fprintf(stderr,"Subroutine context stack initialized to 0x%lx\n",(long)SUBRT_CTX_STACK);
 		// BUG?  freed?
 	}
 }
@@ -578,7 +574,6 @@ static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *
 	static char ctxname[LLEN];
 	Node *np;
 
-fprintf(stderr,"get_subrt_ctx_name %s:  subrt_ctx_stack = 0x%lx\n",name,(long)SUBRT_CTX_STACK);
 	assert( SUBRT_CTX_STACK != NULL );
 
 	assert( QLIST_TAIL(SUBRT_CTX_STACK) != NULL );

@@ -2575,7 +2575,6 @@ void push_vector_parser_data(SINGLE_QSP_ARG_DECL)
 	vpd_p = find_free_vector_parser_data(SINGLE_QSP_ARG);
 	assert(vpd_p!=NULL);
 
-fprintf(stderr,"push_vector_parser_data:  initializing new parser environment\n");
 	init_vector_parser_data(vpd_p);
 
 	np = mk_node(vpd_p);
@@ -2598,10 +2597,8 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 
 	np = QLIST_HEAD( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
 	if( np != NULL ){
-fprintf(stderr,"pop_vector_parser_data:  restoring old parser environment\n");
 		vpd_p = NODE_DATA(np);
 	} else {
-fprintf(stderr,"pop_vector_parser_data:  No parser environment\n");
 		vpd_p = NULL;
 	}
 	SET_QS_VECTOR_PARSER_DATA(THIS_QSP,vpd_p);

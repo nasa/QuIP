@@ -45,25 +45,36 @@ end
   quit
 
 Define Run3 0
+Run_On_Host
+Run_On_GPU
+Fuse_Kernel
+Run_On_GPU
+.
+
+Define Run_On_Host 0
 VSet h_a -5
 advise "Running subroutine on host..."
 expressions run testk h_a h_b h_c 5.1 quit
 Display h_a
+.
 
-
+Define Run_On_GPU 0
 VSet a -5
-advise "Running standard kernel..."
+advise "Running on GPU..."
 expressions run testk a b c 5.1 quit
 Display a
+.
 
-advise "Running fused kernel..."
-VSet a -5
+Define Fuse_Kernel 0
+advise "Fusing kernel..."
 expressions
   fuse testk
-  run testk a b c 5.1
   quit
-Display a
 .
+
+Run_On_Host
+Run_On_Host
+Pause
 
 Run3
 Run3
