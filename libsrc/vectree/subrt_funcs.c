@@ -164,12 +164,15 @@ fprintf(stderr,"update_pfdev_from_children %s no child %d\n",node_desc(enp),i);
 				// recursive call
 				update_pfdev_from_children(QSP_ARG  VN_CHILD(enp,i) );
 			}
-			// If the device is still null then it is probably a constant
-			// that works on any device...
-			if( pdp == NULL ){
+			if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL && pdp == NULL ){
 				pdp = VN_PFDEV( VN_CHILD(enp,i) );
 				defining_enp = VN_CHILD(enp,i);
-			} else if( pdp != VN_PFDEV( VN_CHILD(enp,i) ) ){
+			}
+
+			// If the device is still null then it is probably a constant
+			// that works on any device...
+			if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL &&
+					pdp != VN_PFDEV( VN_CHILD(enp,i) ) ){
 				sprintf(ERROR_STRING,"Platform mismatch:  %s (%s) and %s (%s)!?",
 					node_desc(defining_enp),PFDEV_NAME(pdp),
 					node_desc(VN_CHILD(enp,i)), PFDEV_NAME(VN_PFDEV(VN_CHILD(enp,i))) );
