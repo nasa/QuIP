@@ -64,7 +64,7 @@ void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 	}									\
 	if( VN_CODE(enp) != T_ARGLIST ){					\
 		sprintf(ERROR_STRING,"Oops, missing arglist for native function %s!?",name);	\
-		DUMP_TREE(enp);							\
+		dump_tree(enp);							\
 		return;								\
 	}
 
@@ -83,19 +83,19 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp,*src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("cumsum function requires 2 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
 			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			if( dst_dp == NULL || src_dp == NULL ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("problem with cumsum args");
 				break;
 			}
@@ -108,22 +108,22 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp,*coord_dp,*src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("render function requires 3 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
 			coord_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
+			arg_enp = nth_arg(VN_CHILD(enp,0),2);
 			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			if( dst_dp == NULL || coord_dp == NULL || src_dp == NULL ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("problem with render args");
 				break;
 			}
@@ -139,15 +139,15 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp, *src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("invert function requires 2 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
 			dst_dp = EVAL_OBJ_REF(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
 			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
 
 			/* BUG I use convert() here because I am lazy */
@@ -184,16 +184,16 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 advise("evaluating choldc...");
 			if( arg_count(VN_CHILD(enp,0)) != 2) {
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("choldc requires 2 args");
 				return;
 			}
 
 			/* first arg is the input matrix, second arg is for the diagonal elements... */
-			arg_enp  = NTH_ARG(VN_CHILD(enp,0),0);
+			arg_enp  = nth_arg(VN_CHILD(enp,0),0);
 			inmat_dp = EVAL_OBJ_REF(arg_enp);
 		
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
 			diag_dp = EVAL_OBJ_REF(arg_enp);
 
 			if ( inmat_dp == NULL || diag_dp == NULL )
@@ -218,18 +218,18 @@ advise("evaluating choldc...");
 			Data_Obj *umat_dp, *vmat_dp, *ev_dp;
 			/* We need to get three args... */
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("svdcmp requires 3 args");
 				return;
 			}
 			/* v matrix on the second branch */
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
 			umat_dp = EVAL_OBJ_REF(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
 			ev_dp = EVAL_OBJ_REF(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
+			arg_enp = nth_arg(VN_CHILD(enp,0),2);
 			vmat_dp = EVAL_OBJ_REF(arg_enp);
 
 			if( ev_dp == NULL || umat_dp == NULL || vmat_dp == NULL )

@@ -71,14 +71,20 @@ ITEM_NEW_PROT(Identifier,id)
 ITEM_CHECK_PROT(Identifier,id)
 ITEM_GET_PROT(Identifier,id)
 ITEM_INIT_PROT(Identifier,id)
+extern void _del_id(QSP_ARG_DECL  Identifier *idp);
+
+#define new_id(name)	_new_id(QSP_ARG  name)
+#define id_of(name)	_id_of(QSP_ARG  name)
+#define get_id(name)	_get_id(QSP_ARG  name)
+#define init_ids()	_init_ids(SINGLE_QSP_ARG)
+#define del_id(idp)	_del_id(QSP_ARG  idp)
 
 
-extern void del_id(QSP_ARG_DECL  Identifier *idp);
+extern Item_Context *_create_id_context(QSP_ARG_DECL  const char *);
+extern void _restrict_id_context(QSP_ARG_DECL  int flag);
 
-extern Item_Context *create_id_context(QSP_ARG_DECL  const char *);
-extern void restrict_id_context(QSP_ARG_DECL  int flag);
-
-#define RESTRICT_ID_CONTEXT(flag)	restrict_id_context(QSP_ARG  flag)
+#define create_id_context(s)	_create_id_context(QSP_ARG  s)
+#define restrict_id_context(f)	_restrict_id_context(QSP_ARG  f)
 
 #endif /* ! _IDENTIFIER_H_ */
 

@@ -101,7 +101,7 @@ static SW_Feature swf_tbl[N_SW_FEATURES]={
 #ifdef CAUTIOUS
 #define CHECKIT(code)						\
 	if( swf_tbl[code].swf_code != code )			\
-		ERROR1("CAUTIOUS:  Software feature table corruption!?");
+		error1("CAUTIOUS:  Software feature table corruption!?");
 #else
 #define CHECKIT(code)
 #endif

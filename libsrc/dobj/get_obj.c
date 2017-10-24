@@ -29,7 +29,7 @@ list_dobjs(SINGLE_QSP_ARG);
 */
 #endif /* QUIP_DEBUG */
 
-	dp=dobj_of(QSP_ARG  name);
+	dp=dobj_of(name);
 	if( dp != NULL ){
 		return(dp);
 	}
@@ -45,7 +45,7 @@ list_dobjs(SINGLE_QSP_ARG);
 		*cp++ = *s++;
 	*cp=0;
 
-	dp = dobj_of(QSP_ARG  stem);
+	dp = dobj_of(stem);
 	if( dp == NULL ) return(dp);
 
 	return( index_data(QSP_ARG  dp,s) );

@@ -218,14 +218,14 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 
 	if( check_posn(QSP_ARG  parent,offsets,dsp,name) < 0 ) return(NULL);
 
-	dp = new_dobj(QSP_ARG  name);
+	dp = new_dobj(name);
 	if( dp==NULL ) return(NULL);
 
 	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
 		rls_shape( OBJ_SHAPE(dp) );
-		del_dobj(QSP_ARG  dp);
+		del_dobj(dp);
 		return(NULL);
 	}
 
@@ -293,13 +293,13 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	if( check_inset(QSP_ARG  parent,offsets,dsp,incrs,name) < 0 )
 		return(NULL);
 
-	dp = new_dobj(QSP_ARG  name);
+	dp = new_dobj(name);
 	if( dp==NULL )
 		return(NULL);
 
 	// init_dp uses AUTO_SHAPE...
 	if( init_dp( QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent) ) == NULL ){
-		del_dobj(QSP_ARG  dp);
+		del_dobj(dp);
 		return(NULL);
 	}
 
@@ -352,7 +352,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	int i;
 	index_t offset;
 
-	dp=new_dobj(QSP_ARG  name);
+	dp=new_dobj(name);
 	if( dp==NULL ) return(NULL);
 
 	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
@@ -362,7 +362,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 
 	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
 		rls_shape( OBJ_SHAPE(dp) );
-		del_dobj(QSP_ARG  dp);
+		del_dobj(dp);
 		return(NULL);
 	}
 
@@ -861,7 +861,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 		}
 	}
 
-	newdp=new_dobj(QSP_ARG  name);
+	newdp=new_dobj(name);
 
 	if( newdp == NULL ){
 		WARN("couldn't create equivalence");
@@ -879,7 +879,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 
 	if( set_obj_dimensions(QSP_ARG  newdp,dsp,prec_p) ){
 		rls_shape( OBJ_SHAPE(newdp) );
-		del_dobj(QSP_ARG  newdp);
+		del_dobj(newdp);
 		return(NULL);
 	}
 

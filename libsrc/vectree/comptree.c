@@ -78,7 +78,6 @@ static Vec_Expr_Node * _compile_node(QSP_ARG_DECL   Vec_Expr_Node *enp);
 #define one_matlab_subscript(obj_enp,subscr_enp)	_one_matlab_subscript(QSP_ARG   obj_enp,subscr_enp)
 #define compile_matlab_subscript(obj_enp,subscr_enp)	_compile_matlab_subscript(QSP_ARG  obj_enp,subscr_enp)
 
-#define update_node_shape(enp)		_update_node_shape(QSP_ARG  enp)
 #define prelim_node_shape(enp)		_prelim_node_shape(QSP_ARG enp)
 #define compile_node(enpp)		_compile_node(QSP_ARG   enpp);
 #define check_minmax_code(enp)		_check_minmax_code(QSP_ARG  enp)
@@ -229,12 +228,12 @@ void discard_node_shape(Vec_Expr_Node *enp)
  * The node should NOT already own it's own shape info...
  */
 
-void point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
+void _point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 {
 	assert( NODE_SHOULD_PT_TO_SHAPE(enp) );
 
 	if( OWNS_SHAPE(enp) ){
-		NODE_ERROR(enp);
+		node_error(enp);
 		sprintf(ERROR_STRING,
 	"point_node_shape:  %s node n%d already owns shape info!?",NNAME(enp),VN_SERIAL(enp));
 		WARN(ERROR_STRING);
@@ -245,7 +244,7 @@ void point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 	}
 //sprintf(ERROR_STRING,"point_node_shape %s 0x%lx",node_desc(enp),(long)shpp);
 //advise(ERROR_STRING);
-//DUMP_TREE(enp);
+//dump_tree(enp);
 	SET_VN_SHAPE(enp, shpp);
 }
 
@@ -287,7 +286,7 @@ node_desc(enp),node_desc(VN_CHILD(enp,index)));
 advise(DEFAULT_ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		LINK_UK_NODES(enp,VN_CHILD(enp,index));
+		link_uk_nodes(enp,VN_CHILD(enp,index));
 	}
 }
 
@@ -402,7 +401,7 @@ static int get_subvec_indices(QSP_ARG_DECL Vec_Expr_Node *enp, dimension_t *i1p,
 	}
 
 	if( *i1p > *i2p ){
-		NODE_ERROR(enp);
+		node_error(enp);
 		sprintf(ERROR_STRING,"first range index (%d) should be less than or equal to second range index (%d)",
 		*i1p,*i2p);
 		WARN(ERROR_STRING);
@@ -570,17 +569,17 @@ DESCRIBE_SHAPE(VN_SHAPE(enp2));
 	}
 
 mismatch:
-	NODE_ERROR(enp);
+	node_error(enp);
 	NWARN("shapes_mate:  Operands have incompatible shapes");
 	advise(node_desc(enp));
 	/*
 	dump_shape(VN_SHAPE(enp1));
 	dump_shape(VN_SHAPE(enp2));
-	DUMP_TREE(enp);
+	dump_tree(enp);
 	*/
 #ifdef QUIP_DEBUG
 if( debug ){
-//DUMP_TREE(enp);
+//dump_tree(enp);
 
 // flag word is now a 64 bit long long...
 sprintf(DEFAULT_ERROR_STRING,"flgs1 = 0x%llx     flgs2 = 0x%llx",
@@ -620,13 +619,13 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		 */
 
 		if( ! shapes_mate(VN_CHILD(enp,0),VN_CHILD(enp,1),enp) ){
-			NODE_ERROR(enp);
+			node_error(enp);
 			WARN("update_assign_shape:  assignment shapes do not mate");
 			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
 			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
 			CURDLE(enp)
 		} else {
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 		}
 		return;
 	}
@@ -642,16 +641,16 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		 * everyone's lists...
 		 */
 
-		POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+		point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 		return;
 	}
 
 	/* Now we know that only one of the two shapes is unknown */
 
 	if( UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
-		POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+		point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 	} else {
-		POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,1));
+		point_node_shape(enp,VN_CHILD_SHAPE(enp,1));
 	}
 } /* update_assign_shape */
 
@@ -659,7 +658,7 @@ static void insert_typecast_node(QSP_ARG_DECL  Vec_Expr_Node *enp, int index, Pr
 {
 	Vec_Expr_Node *new_enp;
 
-	new_enp = NODE1(T_TYPECAST,VN_CHILD(enp,index));
+	new_enp = node1(T_TYPECAST,VN_CHILD(enp,index));
 
 	SET_VN_CHILD(enp,index, new_enp);
 	SET_VN_PARENT(new_enp, enp);
@@ -920,7 +919,7 @@ static void _check_typecast(QSP_ARG_DECL  Vec_Expr_Node *enp,int i1, int i2)
 if( debug & cast_debug ){
 sprintf(ERROR_STRING,"check_typecast: %d %d",i1,i2);
 advise(ERROR_STRING);
-DUMP_TREE(enp);
+dump_tree(enp);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1142,7 +1141,7 @@ advise("check_mating_shapes:  no mating shapes");
 //sprintf(ERROR_STRING,"check_mating_shapes %s:  pointing to shape:",node_desc(enp));
 //advise(ERROR_STRING);
 //DESCRIBE_SHAPE(shpp);
-			POINT_NODE_SHAPE(enp,shpp);
+			point_node_shape(enp,shpp);
 			break;
 
 		ALL_CONDASS_CASES				/* check_mating_shapes */
@@ -1171,7 +1170,7 @@ static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1,
 /* Set the shape of this node based on its children.
  */
 
-static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Shape_Info *tmp_shpp;
 	Subrt_Call *scp;
@@ -1222,7 +1221,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			} while( i_dim < N_DIMENSIONS && VN_CODE(lenp) == T_EXPR_LIST );
 
 			if( i_dim >= N_DIMENSIONS ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				WARN("too many dimension specifiers");
 				CURDLE(enp)
 				break;
@@ -1316,7 +1315,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 
 		case T_SUBSCRIPT1:	/* update_node_shape */
-			ERROR1("update_node_shape T_SUBSCRIPT1:  should have been compiled to another code!?");
+			error1("update_node_shape T_SUBSCRIPT1:  should have been compiled to another code!?");
 			break;
 
 		case T_ROW:						/* update_node_shape */
@@ -1330,7 +1329,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		/* end matlab */
 
 		case T_FIX_SIZE:
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			break;
 
 		/* Do-nothing cases */
@@ -1550,7 +1549,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( VN_CHILD_SHAPE(enp,0) == NULL )
 				break;		/* an error */
 
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 
 			break;
 
@@ -1579,7 +1578,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( ifp == NULL ){
 				ifp = read_image_file(QSP_ARG  str);
 				if( ifp==NULL ){
-					NODE_ERROR(enp);
+					node_error(enp);
 					sprintf(ERROR_STRING,
 	"update_node_shape READ/LOAD:  Couldn't open image file %s",str);
 					WARN(ERROR_STRING);
@@ -1606,7 +1605,7 @@ static void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 no_file:
 			/* BUG we don't know the prec if we have no file!? */
-			POINT_NODE_SHAPE(enp,uk_shape(PREC_SP));
+			point_node_shape(enp,uk_shape(PREC_SP));
 
 
 			break;
@@ -1626,7 +1625,7 @@ no_file:
 				/* leave the shape pointer null */
 				/* BUG? do we need to do this? */
 
-				POINT_NODE_SHAPE(enp,void_shape());
+				point_node_shape(enp,void_shape());
 				break;
 			} else if( IS_CURDLED(VN_CHILD(enp,0)) ){
 				/* an error expr */
@@ -1634,7 +1633,7 @@ no_file:
 				discard_node_shape(enp);
 				break;
 			} else {
-				POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+				point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 				assert( VN_SHAPE(enp) != NULL );
 			}
 
@@ -1660,7 +1659,7 @@ no_file:
 				if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
 
 
-					NODE_ERROR(enp);
+					node_error(enp);
 					WARN("mismatched return shapes");
 				}
 			}
@@ -1677,7 +1676,7 @@ no_file:
 
 			/* make sure the number of aruments is correct */
 			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				sprintf(ERROR_STRING,
 	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
@@ -1739,50 +1738,50 @@ no_file:
 				CURDLE(enp)
 				break;		/* an error */
 			}
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			break;
 
 		case T_MATH0_VFN:				/* update_node_shape */
 			/* BUG?  prec SP or DP?? */
-			POINT_NODE_SHAPE(enp,uk_shape(PREC_DP));
+			point_node_shape(enp,uk_shape(PREC_DP));
 			break;
 
 		case T_MATH2_VFN:				/* update_node_shape */
 		case T_MATH1_VFN:				/* update_node_shape */
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			break;
 
 		case T_INT1_VFN:				/* update_node_shape */
 			// source is floating pt, but result is integer...
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			break;
 
 		ALL_SCALINT_BINOP_CASES
 			assert( VN_CHILD_SHAPE(enp,0) != NULL );
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			break;
 
 		case T_INT1_FN:				/* update_node_shape */
 			assert( VN_CHILD_SHAPE(enp,0) != NULL );
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_IN));
+			point_node_shape(enp,scalar_shape(PREC_IN));
 			break;
 
 		case T_MATH1_FN:					/* update_node_shape */
 			assert( VN_CHILD_SHAPE(enp,0) != NULL );
 
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_SP));
+			point_node_shape(enp,scalar_shape(PREC_SP));
 			break;
 
 		case T_MATH0_FN:		/* update_node_shape */
 		case T_MATH2_FN:		/* update_node_shape */
 			/* always has a scalar shape */
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_SP));
+			point_node_shape(enp,scalar_shape(PREC_SP));
 			break;
 
 		case T_MATH2_VSFN:		/* update_node_shape */
 			assert( VN_CHILD(enp,0) != NULL );
 			assert( VN_CHILD(enp,1) != NULL );
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0)); /* BUG DP? math2_fn */
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0)); /* BUG DP? math2_fn */
 			break;
 
 		/* These are a bunch of codes we don't need to scan,
@@ -1810,7 +1809,7 @@ no_file:
 			if( get_mating_shapes(enp,0,1) == NULL )
 {
 WARN("update_node_shape (vv/vs func):  no mating shapes!?");
-DUMP_TREE(enp);
+dump_tree(enp);
 				return;
 }
 
@@ -1837,7 +1836,7 @@ advise(ERROR_STRING);
 					break;
 				}
 				if( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) ){
-					POINT_NODE_SHAPE(enp,OBJ_SHAPE(dp));
+					point_node_shape(enp,OBJ_SHAPE(dp));
 				}
 			} else {
 //advise("update_node_shape OBJECT, doing nothing");
@@ -1974,7 +1973,7 @@ static void link_one_uk_arg(Vec_Expr_Node *call_enp, Vec_Expr_Node *arg_enp)
 	np = mk_node(arg_enp);
 	addTail(VN_UK_ARGS(call_enp),np);
 	/*
-	LINK_UK_NODES(call_enp,arg_enp);
+	link_uk_nodes(call_enp,arg_enp);
 	*/
 }
 
@@ -2164,9 +2163,9 @@ static void compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		/* but we really only want to do this if the LHS is an object??? */
 		/* && VN_CODE(VN_CHILD(enp,0)) == T_DYN_OBJ ) */
 
-		POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,1));
+		point_node_shape(enp,VN_CHILD_SHAPE(enp,1));
 		if( UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,1)) )
-			LINK_UK_NODES(enp,VN_CHILD(enp,1));
+			link_uk_nodes(enp,VN_CHILD(enp,1));
 		return;
 	}
 #endif /* SUPPORT_MATLAB_MODE */
@@ -2189,13 +2188,13 @@ static void compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( (shpp=shapes_mate(VN_CHILD(enp,0),VN_CHILD(enp,1),enp)) == NULL ){
 			if( (shpp=compatible_shape(VN_CHILD(enp,0),VN_CHILD(enp,1),enp)) == NULL ){
 				/* Here we might want to allow assignment of a row to an image... */
-				NODE_ERROR(enp);
+				node_error(enp);
 				WARN("compute_assign_shape:  assignment shapes do not mate");
 				advise(node_desc(VN_CHILD(enp,0)));
 				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
 				advise(node_desc(VN_CHILD(enp,1)));
 				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
-DUMP_TREE(enp);
+dump_tree(enp);
 				CURDLE(enp)
 			} else {
 				/* Now we know that we are doing something odd,
@@ -2207,7 +2206,7 @@ DUMP_TREE(enp);
 			}
 		}
 
-		POINT_NODE_SHAPE(enp,shpp);
+		point_node_shape(enp,shpp);
 		return;
 	}
 
@@ -2233,7 +2232,7 @@ DUMP_TREE(enp);
 		 * Therefore we call uk_shape
 		 */
 
-		POINT_NODE_SHAPE(enp, uk_shape(SHP_PREC(VN_CHILD_SHAPE(enp,0))) );
+		point_node_shape(enp, uk_shape(SHP_PREC(VN_CHILD_SHAPE(enp,0))) );
 
 		/* remember_uk_assignment(enp); */
 #ifdef QUIP_DEBUG
@@ -2246,8 +2245,8 @@ node_desc(enp),node_desc(VN_CHILD(enp,1)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		LINK_UK_NODES(enp,VN_CHILD(enp,0));
-		LINK_UK_NODES(enp,VN_CHILD(enp,1));
+		link_uk_nodes(enp,VN_CHILD(enp,0));
+		link_uk_nodes(enp,VN_CHILD(enp,1));
 		return;
 	}
 
@@ -2262,10 +2261,10 @@ advise(ERROR_STRING);
 	/* We do the redundant test anyway... */
 
 	if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){		/* LHS shape known */
-		LINK_UK_NODES(enp,VN_CHILD(enp,1));
+		link_uk_nodes(enp,VN_CHILD(enp,1));
 		/* we could resolve here and now? */
 
-		POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+		point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 
 		return;
 	}
@@ -2275,11 +2274,11 @@ advise(ERROR_STRING);
 //node_desc(enp));
 //advise(ERROR_STRING);
 		if( !SCALAR_SHAPE(VN_CHILD_SHAPE(enp,1)) )
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,1));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,1));
 		else
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 
-		LINK_UK_NODES(enp,VN_CHILD(enp,0));
+		link_uk_nodes(enp,VN_CHILD(enp,0));
 
 		return;
 	}
@@ -2525,7 +2524,7 @@ static void _count_lhs_refs(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 	/* find the name of the lhs object */
 
-	lhs_name = GET_LHS_NAME(VN_CHILD(enp,0));
+	lhs_name = get_lhs_name(VN_CHILD(enp,0));
 
 	/* we may get a null name if we have a variable string ( obj_of(ptr) )... */
 	if( lhs_name == NULL ){
@@ -2647,7 +2646,7 @@ static void set_bool_vecop_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		tmp_enp = VN_CHILD(enp,0);
 		SET_VN_CHILD(enp,0, VN_CHILD(enp,1));
 		SET_VN_CHILD(enp,1, tmp_enp);
-//DUMP_TREE(enp);
+//dump_tree(enp);
 		commute_bool_test(QSP_ARG  enp);
 
 		set_vs_bool_code(QSP_ARG  enp);
@@ -2806,18 +2805,18 @@ static Vec_Expr_Node *_one_matlab_subscript(QSP_ARG_DECL   Vec_Expr_Node *obj_en
 		case T_INDEX_SPEC:		/* one_matlab_subscript */
 		case T_RANGE2:			/* one_matlab_subscript */
 			/* subtract 1 from the starting index */
-			minus_one_enp = NODE0(T_LIT_INT);
+			minus_one_enp = node0(T_LIT_INT);
 			SET_VN_INTVAL(minus_one_enp, -1);
 			prelim_node_shape(minus_one_enp);
-			enp1=NODE2(T_PLUS,VN_CHILD(subscr_enp,0),minus_one_enp);
+			enp1=node2(T_PLUS,VN_CHILD(subscr_enp,0),minus_one_enp);
 			enp1=compile_node(enp1); /* needed?? */
 			prelim_node_shape(enp1);
 
 			/* subtract one from the final index */
-			minus_one_enp = NODE0(T_LIT_INT);
+			minus_one_enp = node0(T_LIT_INT);
 			SET_VN_INTVAL(minus_one_enp, -1);
 			prelim_node_shape(minus_one_enp);
-			enp2=NODE2(T_PLUS,VN_CHILD(subscr_enp,1),minus_one_enp);
+			enp2=node2(T_PLUS,VN_CHILD(subscr_enp,1),minus_one_enp);
 			enp2=compile_node(enp2); /* needed? */
 			prelim_node_shape(enp2);
 
@@ -2832,12 +2831,12 @@ static Vec_Expr_Node *_one_matlab_subscript(QSP_ARG_DECL   Vec_Expr_Node *obj_en
 		case T_DYN_OBJ:	// _one_matlab_subscript
 		ALL_UNMIXED_SCALAR_BINOP_CASES
 			/*
-			minus_one_enp = NODE0(T_LIT_INT);
+			minus_one_enp = node0(T_LIT_INT);
 			SET_VN_INTVAL(minus_one_enp, -1);
-			enp1=NODE2(T_PLUS,subscr_enp,minus_one_enp);
-			new_enp = NODE2(T_SQUARE_SUBSCR,obj_enp,enp1);
+			enp1=node2(T_PLUS,subscr_enp,minus_one_enp);
+			new_enp = node2(T_SQUARE_SUBSCR,obj_enp,enp1);
 			*/
-			new_enp = NODE2(T_SQUARE_SUBSCR,obj_enp,subscr_enp);
+			new_enp = node2(T_SQUARE_SUBSCR,obj_enp,subscr_enp);
 			new_enp = compile_node(new_enp);
 			prelim_node_shape(new_enp);
 			/* BUG we should clean up the discarded nodes */
@@ -2899,7 +2898,7 @@ static Vec_Expr_Node *_compile_matlab_subscript(QSP_ARG_DECL   Vec_Expr_Node *ob
 			return(new_enp);
 		default:
 			MISSING_CASE(subscr_enp,"compile_matlab_subscript");
-			DUMP_TREE(subscr_enp);
+			dump_tree(subscr_enp);
 			break;
 	}
 	return(NULL);
@@ -2943,15 +2942,15 @@ static void _check_bitmap_arg(QSP_ARG_DECL Vec_Expr_Node *enp,int index)
 			//VERIFY_DATA_TYPE(enp,ND_FUNC,"check_bitmap_arg")
 			ASSERT_NODE_DATA_TYPE( enp, ND_FUNC )
 			if( IS_FLOATING_PREC_CODE(VN_CHILD_PREC(enp,index)) ){
-				enp2 = NODE0(T_LIT_INT);
+				enp2 = node0(T_LIT_INT);
 				SET_VN_INTVAL(enp2, 0);
 			} else {
-				enp2 = NODE0(T_LIT_DBL);
+				enp2 = node0(T_LIT_DBL);
 				SET_VN_DBLVAL(enp2, 0.0);
 			}
 			prelim_node_shape(enp2);
 
-			enp3 = NODE2(T_BOOL_NE,VN_CHILD(enp,index),enp2);
+			enp3 = node2(T_BOOL_NE,VN_CHILD(enp,index),enp2);
 			SET_VN_BM_CODE(enp3, FVSMNE);
 			prelim_node_shape(enp3);
 
@@ -3000,8 +2999,8 @@ static void invert_op(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Func_Code wc,Tree_Cod
 	/* this just suppresses a warning in node1() */
 	SET_VN_PARENT(VN_CHILD(enp,1), NULL);
 
-	new_enp = NODE1(new_tc,VN_CHILD(enp,1));
-	POINT_NODE_SHAPE(new_enp,VN_CHILD_SHAPE(enp,1));
+	new_enp = node1(new_tc,VN_CHILD(enp,1));
+	point_node_shape(new_enp,VN_CHILD_SHAPE(enp,1));
 
 	SET_VN_CHILD(enp,1, new_enp);
 }
@@ -3171,7 +3170,7 @@ static void _check_mating_bitmap(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node 
 					SET_SHP_TYPE_DIM(VN_SHAPE(enp),i, SHP_TYPE_DIM(VN_SHAPE(bm_enp),i) );
 					enlarged = 1;
 				} else if( SHP_TYPE_DIM(VN_SHAPE(enp),i) != SHP_TYPE_DIM(VN_SHAPE(bm_enp),i) ){
-					NODE_ERROR(enp);
+					node_error(enp);
 					sprintf(DEFAULT_ERROR_STRING,
 	"check_mating_bitmap:  Bitmap %s does not have shape to match %s!?",
 						node_desc(bm_enp),node_desc(enp));
@@ -3220,7 +3219,7 @@ static void invert_bool_test(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* Need to insert an inversion node */
 
 			parent = VN_PARENT(enp);		/* save this, gets reset in node1() */
-			new_enp=NODE1(T_BOOL_NOT,enp);
+			new_enp=node1(T_BOOL_NOT,enp);
 			/* can we assume this is the first child? */
 			assert( VN_CHILD(VN_PARENT(enp),0) == enp );
 
@@ -3404,7 +3403,7 @@ static void remove_resolver(QSP_ARG_DECL  Vec_Expr_Node *enp, Vec_Expr_Node *enp
 		resolver_enp = NODE_DATA(np);
 		if( resolver_enp != enp ){
 //fprintf(stderr,"remove_resolver linking %s and %s\n",node_desc(enp),node_desc(resolver_enp));
-			link_uk_nodes(QSP_ARG  enp,resolver_enp);
+			link_uk_nodes(enp,resolver_enp);	// remove_resolver
 		}
 		np = NODE_NEXT(np);
 	}
@@ -3744,7 +3743,7 @@ WARN(ERROR_STRING);
 		 * own it...
 		 */
 		discard_node_shape(enp);
-		POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+		point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 	}
 
 } /* end check_minmax_code */
@@ -3819,7 +3818,7 @@ static Vec_Expr_Node * _compile_node(QSP_ARG_DECL   Vec_Expr_Node *enp)
 					if( VN_CHILD(VN_PARENT(enp),i) == enp )
 						SET_VN_CHILD(VN_PARENT(enp),i, new_enp);
 			}
-			/* COMPILE_TREE(new_enp); */
+			/* compile_tree(new_enp); */
 			enp=new_enp;
 
 			break;
@@ -3837,7 +3836,7 @@ static Vec_Expr_Node * _compile_node(QSP_ARG_DECL   Vec_Expr_Node *enp)
 			if( get_mating_shapes(enp,0,1) == NULL )
 {
 WARN("compile_node (binary boolop):  no mating shapes!?");
-DUMP_TREE(enp);
+dump_tree(enp);
 }
 
 			if( ! SCALAR_SHAPE(VN_CHILD_SHAPE(enp,0)) )
@@ -3964,7 +3963,7 @@ excise_uminus:
 /*
 sprintf(ERROR_STRING,"compile_node binop:  %s",node_desc(enp));
 advise(ERROR_STRING);
-DUMP_TREE(enp);
+dump_tree(enp);
 */
 			break;
 
@@ -4010,7 +4009,7 @@ DUMP_TREE(enp);
 					/* both sources (targets?) are scalars, but the bitmap is a vector */
 					copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 //fprintf(stderr,"compile_node:  calling xform_from_bitmap #1\n");
-//DUMP_TREE(enp);
+//dump_tree(enp);
 //dump_shape(QSP_ARG  VN_SHAPE(enp));
 					xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
 					SET_VN_CODE(enp, T_SS_B_CONDASS);
@@ -4251,14 +4250,14 @@ DUMP_TREE(enp);
 
 		case T_RETURN:				/* compile_node */
 			if( curr_srp == NULL ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				advise("return statement occurs outside of subroutine");
 				CURDLE(enp)
 				break;
 			}
 			if( SR_PREC_CODE(curr_srp) == PREC_VOID ){
 				if( VN_CHILD(enp,0) != NULL ){
-					NODE_ERROR(enp);
+					node_error(enp);
 					sprintf(ERROR_STRING,
 						"void subroutine %s can't return an expression",
 						SR_NAME(curr_srp));
@@ -4267,7 +4266,7 @@ DUMP_TREE(enp);
 				}
 			} else {
 				if( VN_CHILD(enp,0) == NULL ){
-					NODE_ERROR(enp);
+					node_error(enp);
 					sprintf(ERROR_STRING,
 						"subroutine %s returns without an expression",
 						SR_NAME(curr_srp));
@@ -4322,7 +4321,7 @@ DUMP_TREE(enp);
 			assert( VN_CHILD_SHAPE(enp,1) != NULL );
 
 //fprintf(stderr,"compile_node T_ASSIGN\n");
-//DUMP_TREE(enp);
+//dump_tree(enp);
 			if( (!SCALAR_SHAPE(VN_CHILD_SHAPE(enp,1))) &&
 				/* next line added for matlab */
 				VN_CHILD_SHAPE(enp,0) != NULL &&
@@ -4340,7 +4339,7 @@ advise(ERROR_STRING);
 */
 #ifdef QUIP_DEBUG
 if( debug & cast_debug ){
-DUMP_TREE(enp);
+dump_tree(enp);
 }
 #endif /* QUIP_DEBUG */
 				typecast_child(enp,1,VN_CHILD_PREC_PTR(enp,0));
@@ -4469,7 +4468,7 @@ DUMP_TREE(enp);
 
 		default:		/* compile_node */
 			MISSING_CASE(enp,"compile_node");
-			DUMP_TREE(enp);
+			dump_tree(enp);
 			break;
 	}
 
@@ -4528,14 +4527,14 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 //sprintf(ERROR_STRING,"prelim_node_shape %s BEGIN",node_desc(enp));
 //advise(ERROR_STRING);
-//DUMP_TREE(enp);
+//dump_tree(enp);
 
 	/* now all the child nodes have been scanned, process this one */
 
 	switch(VN_CODE(enp)){
 		/* matlab */
 		case T_SSCANF:
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DP));
+			point_node_shape(enp,scalar_shape(PREC_DP));
 			break;
 
 		/* T_ROWIST merged with T_ROW_LIST - ?? */
@@ -4546,7 +4545,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_I:
 			/* Do we need to set the complex bit??? */
-			POINT_NODE_SHAPE(enp,cpx_scalar_shape(PREC_DP));
+			point_node_shape(enp,cpx_scalar_shape(PREC_DP));
 			break;
 
 		case T_SS_B_CONDASS:				/* prelim_node_shape */
@@ -4578,11 +4577,11 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* might be an outer... */
 //sprintf(ERROR_STRING,"prelim_node_shape %s",node_desc(enp));
 //advise(ERROR_STRING);
-//DUMP_TREE(enp);
+//dump_tree(enp);
 
 //sprintf(ERROR_STRING,"prelim_node_shape %s DONE",node_desc(enp));
 //advise(ERROR_STRING);
-//DUMP_TREE(enp);
+//dump_tree(enp);
 
 #endif /* CONDASS_FOOBAR */
 			break;
@@ -4683,11 +4682,11 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			break;
 
 		case T_UNDEF:
-			POINT_NODE_SHAPE(enp,uk_shape(PREC_SP));
+			point_node_shape(enp,uk_shape(PREC_SP));
 			break;
 
 		case T_MAX_TIMES:			/* prelim_node_shape */
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
+			point_node_shape(enp,scalar_shape(PREC_DI));
 			break;
 
 		case T_REDUCE:
@@ -4704,7 +4703,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 #endif // FOOBAR
 			// We need to determine the enlargement factor
 			// during resolution...
-			/*POINT_NODE_SHAPE*/ copy_node_shape(enp,
+			/*point_node_shape*/ copy_node_shape(enp,
 				uk_shape(PREC_CODE(VN_PREC_PTR(VN_CHILD(enp,0)))));
 			break;
 
@@ -4784,7 +4783,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			}
 			copy_node_shape(enp,tmp_shpp);
 			if( UNKNOWN_SHAPE(tmp_shpp) )
-				LINK_UK_NODES(enp,VN_CHILD(enp,0));
+				link_uk_nodes(enp,VN_CHILD(enp,0));
 
 			RELEASE_SHAPE_PTR(tmp_shpp)
 			break;
@@ -4807,7 +4806,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			 * link these...
 			 */
 			if( UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
-				LINK_UK_NODES(enp,VN_CHILD(enp,0));
+				link_uk_nodes(enp,VN_CHILD(enp,0));
 			}
 
 			update_node_shape(enp);
@@ -4899,7 +4898,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				return;		/* an error */
 
 			/* This is the complex DFT */
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			CHECK_UK_CHILD(enp,0);
 			break;
 
@@ -4964,7 +4963,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 		ALL_UNARY_CASES				/* prelim_node_shape */
 			assert( VN_CHILD_SHAPE(enp,0) != NULL );
 
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			CHECK_UK_CHILD(enp,0);
 
 			break;
@@ -4976,7 +4975,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			copy_node_shape(enp, uk_shape(SHP_PREC(VN_CHILD_SHAPE(enp,0))) );
 
 			/*
-			POINT_NODE_SHAPE(enp,scalar_shape(SHP_PREC(VN_CHILD_SHAPE(enp,0))));
+			point_node_shape(enp,scalar_shape(SHP_PREC(VN_CHILD_SHAPE(enp,0))));
 			*/
 			/* Before we introduced generalized projection, sum was a scalar,
 			 * but now it takes its shape from the LHS!?
@@ -5021,17 +5020,17 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* This returns a number,
 			 * so we make it have a scalar shape
 			 */
-			 POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
+			 point_node_shape(enp,scalar_shape(PREC_DI));
 			 break;
 
 		case T_STRV_FN:
-			POINT_NODE_SHAPE(enp, VN_CHILD_SHAPE(enp,0) );
+			point_node_shape(enp, VN_CHILD_SHAPE(enp,0) );
 			break;
 
 		case T_CHAR_FN:
 		case T_CHAR_VFN:
 			// BUG output is a bitmap, not a string!?
-			POINT_NODE_SHAPE(enp, VN_CHILD_SHAPE(enp,0) );
+			point_node_shape(enp, VN_CHILD_SHAPE(enp,0) );
 			break;
 
 
@@ -5043,7 +5042,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_LOAD:		/* prelim_node_shape */
 			/* We must assign the shape to unkown before calling update node shape.  */
-			POINT_NODE_SHAPE(enp,uk_shape(PREC_SP));
+			point_node_shape(enp,uk_shape(PREC_SP));
 			update_node_shape(enp);
 			break;
 
@@ -5075,7 +5074,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				discard_node_shape(enp);
 				return;
 			} else {
-				POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+				point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 				assert( VN_SHAPE(enp) != NULL );
 			}
 
@@ -5096,7 +5095,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 					SET_SR_SHAPE(srp, VN_SHAPE(enp) );
 				} else if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
 					// does the shape of this return match?
-					NODE_ERROR(enp);
+					node_error(enp);
 					WARN("mismatched return shapes");
 				}
 			}
@@ -5143,7 +5142,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			/* make sure the number of aruments is correct */
 			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				sprintf(ERROR_STRING,
 	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
@@ -5155,7 +5154,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 			//copy_node_shape(enp,SR_SHAPE(srp));
-			POINT_NODE_SHAPE(enp,SC_SHAPE(scp));
+			point_node_shape(enp,SC_SHAPE(scp));
 			break;
 
 		case T_ROW_LIST:				/* prelim_node_shape */
@@ -5278,16 +5277,16 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 		 */
 		case T_DEREFERENCE:	/* prelim_node_shape */
 			assert( VN_CHILD_SHAPE(enp,0) != NULL );
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
-NODE_ERROR(enp);
+node_error(enp);
 sprintf(ERROR_STRING,"prelim_node_shape calling link_uk_nodes for %s and child %s",
 node_desc(enp),node_desc(VN_CHILD(enp,0)));
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-			LINK_UK_NODES(enp,VN_CHILD(enp,0));
+			link_uk_nodes(enp,VN_CHILD(enp,0));
 			break;
 
 		case T_STRING:			/* prelim_node_shape */
@@ -5303,7 +5302,7 @@ advise(ERROR_STRING);
 
 		case T_MAX_INDEX:
 		case T_MIN_INDEX:
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
+			point_node_shape(enp,scalar_shape(PREC_DI));
 			break;
 
 		case T_RAMP:			/* prelim_node_shape */
@@ -5311,7 +5310,7 @@ advise(ERROR_STRING);
 			 * assigned to or combined with.
 			 */
 			/* BUG we'd like to know the precision! */
-			POINT_NODE_SHAPE(enp, uk_shape(PREC_SP) );	/* BUG ramp */
+			point_node_shape(enp, uk_shape(PREC_SP) );	/* BUG ramp */
 
 			break;
 
@@ -5321,7 +5320,7 @@ advise(ERROR_STRING);
 
 			if( VN_CHILD_SHAPE(enp,0) == NULL )
 				return;		/* an error */
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			CHECK_UK_CHILD(enp,0);
 
 			break;
@@ -5335,7 +5334,7 @@ advise(ERROR_STRING);
 
 			assert( SCALAR_SHAPE(VN_CHILD_SHAPE(enp,0)) );
 
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			CHECK_UK_CHILD(enp,0);
 
 			break;
@@ -5353,7 +5352,7 @@ advise(ERROR_STRING);
 			if( HAS_CONSTANT_VALUE(VN_CHILD(enp,0)) )
 				SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			if( VN_SHAPE(enp) != NULL )
 				CHECK_UK_CHILD(enp,0);
 			break;
@@ -5384,19 +5383,19 @@ advise(ERROR_STRING);
 /*
 sprintf(ERROR_STRING,"prelim_node_shape %s: begin ",node_desc(enp));
 advise(ERROR_STRING);
-DUMP_TREE(enp);
+dump_tree(enp);
 */
 			update_node_shape(enp);
 /*
 sprintf(ERROR_STRING,"prelim_node_shape %s: after update_node_shape ",node_desc(enp));
 advise(ERROR_STRING);
-DUMP_TREE(enp);
+dump_tree(enp);
 */
 			check_binop_links(enp);
 /*
 sprintf(ERROR_STRING,"prelim_node_shape %s: done ",node_desc(enp));
 advise(ERROR_STRING);
-DUMP_TREE(enp);
+dump_tree(enp);
 */
 			break;
 
@@ -5431,8 +5430,8 @@ fprintf(stderr,"prelim_node_shape T_ASSIGN:  curdled child!?\n");
 			break;
 
 		case T_REFERENCE:	/* prelim_node_shape */
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
-			LINK_UK_NODES(enp,VN_CHILD(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
+			link_uk_nodes(enp,VN_CHILD(enp,0));
 			break;
 
 
@@ -5454,7 +5453,7 @@ fprintf(stderr,"prelim_node_shape T_ASSIGN:  curdled child!?\n");
 			if( get_mating_shapes(enp,0,1) == NULL )
 {
 WARN("prelim_node_shape (boolop):  no mating shapes!?");
-DUMP_TREE(enp);
+dump_tree(enp);
 				return;
 }
 			if( ! SCALAR_SHAPE(VN_SHAPE(enp)) )
@@ -5479,7 +5478,7 @@ DUMP_TREE(enp);
 		OTHER_SCALAR_MATHOP_CASES
 //sprintf(ERROR_STRING,"prelim_node_shape %s:  binop",node_desc(enp));
 //advise(ERROR_STRING);
-//DUMP_TREE(enp);
+//dump_tree(enp);
 			if( HAS_CONSTANT_VALUE(VN_CHILD(enp,0)) &&
 				HAS_CONSTANT_VALUE(VN_CHILD(enp,1)) )
 				SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
@@ -5498,7 +5497,7 @@ DUMP_TREE(enp);
 
 		case T_OBJ_LOOKUP:	/* prelim_node_shape */
 			if( ! executing ){
-				POINT_NODE_SHAPE(enp,uk_shape(PREC_SP));
+				point_node_shape(enp,uk_shape(PREC_SP));
 				break;
 			}
 
@@ -5524,17 +5523,17 @@ handle_obj:
 				Identifier *idp;
 
 				if( dp == NULL ){
-					POINT_NODE_SHAPE(enp,uk_shape(PREC_DP));
+					point_node_shape(enp,uk_shape(PREC_DP));
 					return;	/* not an error */
 				}
 
 				idp = ID_OF(VN_STRING(enp));
 				if( idp == NULL ){
-					POINT_NODE_SHAPE(enp,uk_shape(PREC_DP));
+					point_node_shape(enp,uk_shape(PREC_DP));
 					return;	/* not an error */
 				}
 
-				POINT_NODE_SHAPE(enp,ID_SHAPE(idp));
+				point_node_shape(enp,ID_SHAPE(idp));
 				return;
 			}
 
@@ -5586,7 +5585,7 @@ VN_STRING(enp),node_desc(enp));
 WARN(ERROR_STRING);
 				}
 #endif // FOOBAR
-				POINT_NODE_SHAPE(enp,OBJ_SHAPE(dp));
+				point_node_shape(enp,OBJ_SHAPE(dp));
 			} else {
 /*
 sprintf(ERROR_STRING,"prelim_node_shape %s:  pointing to %s",node_desc(enp),node_desc(decl_enp));
@@ -5595,7 +5594,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 */
 				assert( VN_SHAPE(decl_enp) != NULL );
 
-				POINT_NODE_SHAPE(enp,VN_SHAPE(decl_enp));
+				point_node_shape(enp,VN_SHAPE(decl_enp));
 			}
 			/* we link all references to the declaration node, that way
 			 * when we resolve the object we can get to all the other occurrences.
@@ -5615,13 +5614,13 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			assert( PTR_DECL_VN(ID_PTR(idp)) != NULL );
 			assert( VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))) != NULL );
 
-			POINT_NODE_SHAPE(enp,VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))));
+			point_node_shape(enp,VN_SHAPE(PTR_DECL_VN(ID_PTR(idp))));
 			break;
 			}
 
 		case T_END:			/* prelim_node_shape (matlab) */
 		case T_LIT_INT:
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
+			point_node_shape(enp,scalar_shape(PREC_DI));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 			break;
 		case T_SCALAR_VAR:
@@ -5631,34 +5630,34 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			idp=get_id(QSP_ARG  VN_STRING(enp));
 			assert(idp!=NULL);
 			assert(ID_SHAPE(idp)!=NULL);
-			POINT_NODE_SHAPE(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
+			point_node_shape(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
 			}
 			break;
 		case T_LIT_DBL:			/* prelim_node_shape */
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DP));
+			point_node_shape(enp,scalar_shape(PREC_DP));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 			break;
 		case T_FILE_EXISTS:
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_IN));
+			point_node_shape(enp,scalar_shape(PREC_IN));
 			break;
 
 		case T_FIX_SIZE:		/* prelim_node_shape */
-			LINK_UK_NODES(enp,VN_CHILD(enp,0));
-			POINT_NODE_SHAPE(enp,uk_shape(VN_CHILD_PREC(enp,0)));
+			link_uk_nodes(enp,VN_CHILD(enp,0));
+			point_node_shape(enp,uk_shape(VN_CHILD_PREC(enp,0)));
 			break;
 
 		/* with badname, we really want to do nothing!? */
 		case T_BADNAME:		/* prelim_node_shape */
 		case T_INDIR_CALL:	/* can't determine the shape until runtime */
-			POINT_NODE_SHAPE(enp,uk_shape(PREC_SP));
+			point_node_shape(enp,uk_shape(PREC_SP));
 			break;
 
 		case T_BOOL_PTREQ:	/* prelim_node_shape */
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
+			point_node_shape(enp,scalar_shape(PREC_DI));
 			break;
 
 		case T_FUNCREF:
-			POINT_NODE_SHAPE(enp,uk_shape(SR_PREC_CODE(VN_SUBRT(enp))));
+			point_node_shape(enp,uk_shape(SR_PREC_CODE(VN_SUBRT(enp))));
 			break;
 
 		case T_SET_FUNCPTR:		/* prelim_node_shape */
@@ -5668,14 +5667,14 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			break;
 
 		ALL_INCDEC_CASES
-			POINT_NODE_SHAPE(enp,VN_CHILD_SHAPE(enp,0));
+			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			break;
 
 		/* matlab */
 		case T_FIRST_INDEX:
 		case T_LAST_INDEX:
 		case T_STRUCT:
-			POINT_NODE_SHAPE(enp,scalar_shape(PREC_DI));
+			point_node_shape(enp,scalar_shape(PREC_DI));
 			break;
 		/* end matlab */
 
@@ -5724,8 +5723,8 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			}
 
 		case T_RET_LIST:		/* prelim_node_shape */
-			LINK_UK_NODES(enp,VN_CHILD(enp,0));
-			LINK_UK_NODES(enp,VN_CHILD(enp,1));
+			link_uk_nodes(enp,VN_CHILD(enp,0));
+			link_uk_nodes(enp,VN_CHILD(enp,1));
 			/* when we have a list of matrices, who knows what we'll do...
 			 * but for now, we assume it's a row of scalars!
 			 */
@@ -5827,8 +5826,8 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 				if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,1)) ){
 					copy_node_shape(VN_CHILD(enp,0),VN_CHILD_SHAPE(enp,1));
 				} else {
-					LINK_UK_NODES(enp,VN_CHILD(enp,1));
-					LINK_UK_NODES(VN_CHILD(enp,0),VN_CHILD(enp,1));
+					link_uk_nodes(enp,VN_CHILD(enp,1));
+					link_uk_nodes(VN_CHILD(enp,0),VN_CHILD(enp,1));
 				}
 			}
 
@@ -5860,7 +5859,7 @@ static void link_node_to_node(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *e
 
 /* We have two nodes which can resolve each other - remember this! */
 
-void link_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
+void _link_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node *enp2)
 {
 	link_node_to_node(QSP_ARG  enp1, enp2);
 	link_node_to_node(QSP_ARG  enp2, enp1);
@@ -5895,7 +5894,7 @@ int decl_count(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 		default:
 			MISSING_CASE(enp,"decl_count");
-			DUMP_TREE(enp);
+			dump_tree(enp);
 			break;
 	}
 	return(1);
@@ -5923,7 +5922,7 @@ static int final_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			case T_SET_PTR:
 			case T_CALLFUNC:			/* final_return */
 				/* Why call node_error here??? */
-				/* NODE_ERROR(enp); */
+				/* node_error(enp); */
 				return(0);
 
 			/* BUG probably need other loops here ? */
@@ -6188,7 +6187,7 @@ static Vec_Expr_Node * balance_list(Vec_Expr_Node *enp, Tree_Code list_code )
  * the repetitive things...
  */
 
-void compile_subrt(QSP_ARG_DECL Subrt *srp)
+void _compile_subrt(QSP_ARG_DECL Subrt *srp)
 {
 	Subrt *save_srp;
 
@@ -6200,7 +6199,7 @@ advise(ERROR_STRING);
 	assert( ! IS_COMPILED(srp) );
 
 //fprintf(stderr,"compile_subrt BEGIN\n");
-//DUMP_TREE(SR_BODY(srp));
+//dump_tree(SR_BODY(srp));
 
 	SET_SR_FLAG_BITS(srp, SR_COMPILED);
 
@@ -6233,16 +6232,16 @@ advise(ERROR_STRING);
 /*
 sprintf(ERROR_STRING,"compile_subrt %s, before balance_list",SR_NAME(srp));
 advise(ERROR_STRING);
-DUMP_TREE(SR_BODY(srp));
+dump_tree(SR_BODY(srp));
 */
 	SR_BODY(srp) = balance_list(SR_BODY(srp),T_STAT_LIST);
 /*
 sprintf(ERROR_STRING,"compile_subrt %s, after balance_list",SR_NAME(srp));
 advise(ERROR_STRING);
-DUMP_TREE(SR_BODY(srp));
+dump_tree(SR_BODY(srp));
 */
 
-	COMPILE_TREE(SR_BODY(srp));
+	compile_tree(SR_BODY(srp));
 
 	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
@@ -6265,7 +6264,7 @@ advise(ERROR_STRING);
  * it will evaluate declaration statements.
  */
 
-void compile_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
+void _compile_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	int i;
 	Vec_Expr_Node *cenp;
@@ -6284,13 +6283,13 @@ void compile_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 	 */
 
 	if( VN_CODE(enp) == T_DECL_STAT || VN_CODE(enp) == T_EXTERN_DECL ){
-		EVAL_TREE(enp,NULL);
+		eval_tree(enp,NULL);
 		return;		/* BUG what if we don't return? */
 	}
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i) != NULL )
-			COMPILE_TREE(VN_CHILD(enp,i));
+			compile_tree(VN_CHILD(enp,i));
 	}
 
 	/* now all the child nodes have been scanned, process this one */
@@ -6305,7 +6304,7 @@ void compile_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
  * (why not??)
  */
 
-Vec_Expr_Node * compile_prog(QSP_ARG_DECL   Vec_Expr_Node *enp)
+Vec_Expr_Node * _compile_prog(QSP_ARG_DECL   Vec_Expr_Node *enp)
 {
 	int i;
 	//Vec_Expr_Node *orig_enp;
@@ -6334,7 +6333,7 @@ Vec_Expr_Node * compile_prog(QSP_ARG_DECL   Vec_Expr_Node *enp)
 			// which could be overwritten.
 			// Now we use the return value instead...
 			Vec_Expr_Node *cenp;
-			cenp = COMPILE_PROG(VN_CHILD(enp,i));
+			cenp = compile_prog(VN_CHILD(enp,i));
 			if( cenp != VN_CHILD(enp,i) )
 				SET_VN_CHILD(enp,i,cenp);
 		}
@@ -6369,7 +6368,7 @@ static Vec_Expr_Node * fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	lhs_enp = VN_CHILD(enp,0);
 	if( VN_CODE(lhs_enp) != T_SQUARE_SUBSCR ){
-		NODE_ERROR(enp);
+		node_error(enp);
 		NWARN("fix_render_code:  only know how to fix SQUARE_SUBSCR lhs - sorry!");
 		return(NULL);
 	}
@@ -6383,11 +6382,11 @@ static Vec_Expr_Node * fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	 */
 
 	/* We have to build an arglist - grows to left!... */
-	a1_enp = NODE1(T_REFERENCE,VN_CHILD(lhs_enp,0));
-	l1_enp = NODE2(T_ARGLIST,a1_enp,VN_CHILD(lhs_enp,1));
-	l2_enp = NODE2(T_ARGLIST,l1_enp,VN_CHILD(enp,1));
+	a1_enp = node1(T_REFERENCE,VN_CHILD(lhs_enp,0));
+	l1_enp = node2(T_ARGLIST,a1_enp,VN_CHILD(lhs_enp,1));
+	l2_enp = node2(T_ARGLIST,l1_enp,VN_CHILD(enp,1));
 
-	new_enp = NODE1(T_CALL_NATIVE,l2_enp);
+	new_enp = node1(T_CALL_NATIVE,l2_enp);
 	SET_VN_INTVAL(new_enp, NATIVE_RENDER);
 	return(new_enp);
 } /* end fix_render_code */
@@ -6446,7 +6445,7 @@ void init_fixed_nodes(SINGLE_QSP_ARG_DECL)
 
 	init_expr_node(QSP_ARG  minus_one_enp);
 	SET_VN_DBLVAL(minus_one_enp, -1.0);
-	POINT_NODE_SHAPE(minus_one_enp, scalar_shape(PREC_DP) );
+	point_node_shape(minus_one_enp, scalar_shape(PREC_DP) );
 
 	for(i=0;i<N_NAMED_PRECS;i++){
 		_uk_shpp[i]=NULL;
@@ -6718,13 +6717,13 @@ int arg_count(Vec_Expr_Node *enp)
 	return(leaf_count(enp,T_ARGLIST));
 }
 
-Vec_Expr_Node *nth_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, int n)
+Vec_Expr_Node *_nth_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, int n)
 {
 	int l;
 
 	if( VN_CODE(enp) != T_ARGLIST ){
 		if( n == 0 ) return(enp);
-		NODE_ERROR(enp);
+		node_error(enp);
 		sprintf(DEFAULT_ERROR_STRING,"nth_arg:  %s is not an arg_list node, but arg %d requested",
 			node_desc(enp),n);
 		NWARN(DEFAULT_ERROR_STRING);
@@ -6732,7 +6731,7 @@ Vec_Expr_Node *nth_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, int n)
 	}
 
 	if( n >= (l=leaf_count(enp,T_ARGLIST)) ){
-		NODE_ERROR(enp);
+		node_error(enp);
 		sprintf(DEFAULT_ERROR_STRING,"nth_arg:  %s has %d leaves, but arg %d requested",
 			node_desc(enp),l,n);
 		NWARN(DEFAULT_ERROR_STRING);
@@ -6740,15 +6739,15 @@ Vec_Expr_Node *nth_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, int n)
 	}
 
 	if( n < (l=leaf_count(VN_CHILD(enp,0),T_ARGLIST)) ){
-		return( nth_arg(QSP_ARG  VN_CHILD(enp,0),n) );
+		return( nth_arg(VN_CHILD(enp,0),n) );
 	} else {
-		return( nth_arg(QSP_ARG  VN_CHILD(enp,1),n-l) );
+		return( nth_arg(VN_CHILD(enp,1),n-l) );
 	}
 	/* NOTREACHED */
 	return(NULL);
 }
 
-void update_tree_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _update_tree_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -6756,14 +6755,14 @@ void update_tree_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( VN_CHILD(enp,i) != NULL ){
-			UPDATE_TREE_SHAPE(VN_CHILD(enp,i));
+			update_tree_shape(VN_CHILD(enp,i));
 		}
 
 	update_node_shape(enp);
 }
 
 
-const char *get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
+const char *_get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	switch(VN_CODE(enp)){
 		case T_POINTER:
@@ -6784,7 +6783,7 @@ const char *get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_SUBSCRIPT1:	/* matlab */
 
 		case T_RET_LIST:	/* BUG there is more than one name!? */
-			return( GET_LHS_NAME(VN_CHILD(enp,0)) );
+			return( get_lhs_name(VN_CHILD(enp,0)) );
 
 		case T_OBJ_LOOKUP:
 			return( EVAL_STRING(VN_CHILD(enp,0)) );
@@ -6796,12 +6795,6 @@ const char *get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 			break;
 	}
 	return(NULL);
-}
-
-
-void shapify(QSP_ARG_DECL Vec_Expr_Node *enp)
-{
-	update_node_shape(enp);
 }
 
 #ifdef MAX_DEBUG

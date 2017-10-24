@@ -453,11 +453,18 @@ void describe_shape(QSP_ARG_DECL  Shape_Info *shpp);
 
 extern Item_Context *create_dobj_context(QSP_ARG_DECL  const char *);
 
-extern Data_Obj *pick_dobj(QSP_ARG_DECL  const char *pmpt);
-extern Data_Area *pick_data_area(QSP_ARG_DECL  const char *pmpt);
-extern void push_dobj_context(QSP_ARG_DECL  Item_Context *icp);
-extern Item_Context * pop_dobj_context(SINGLE_QSP_ARG_DECL);
-extern Item_Context * current_dobj_context(SINGLE_QSP_ARG_DECL);
+extern Data_Obj *_pick_dobj(QSP_ARG_DECL  const char *pmpt);
+extern Data_Area *_pick_data_area(QSP_ARG_DECL  const char *pmpt);
+extern void _push_dobj_context(QSP_ARG_DECL  Item_Context *icp);
+extern Item_Context * _pop_dobj_context(SINGLE_QSP_ARG_DECL);
+extern Item_Context * _current_dobj_context(SINGLE_QSP_ARG_DECL);
+
+#define pick_dobj(pmpt)	_pick_dobj(QSP_ARG  pmpt)
+#define pick_data_area(p)	_pick_data_area(QSP_ARG  p)
+#define push_dobj_context(icp)	_push_dobj_context(QSP_ARG  icp)
+#define pop_dobj_context()	_pop_dobj_context(SINGLE_QSP_ARG)
+#define current_dobj_context()	_current_dobj_context(SINGLE_QSP_ARG)
+
 extern void init_asc_menu(void);
 extern void init_ops_menu(void);
 //extern int siztbl[];
@@ -471,14 +478,26 @@ ITEM_CHECK_PROT(Data_Obj,dobj)
 ITEM_NEW_PROT(Data_Obj,dobj)
 ITEM_DEL_PROT(Data_Obj,dobj)
 
+#define init_dobjs()	_init_dobjs(SINGLE_QSP_ARG)
+#define list_dobjs(fp)	_list_dobjs(QSP_ARG  fp)
+#define dobj_of(name)	_dobj_of(QSP_ARG  name)
+#define new_dobj(name)	_new_dobj(QSP_ARG  name)
+#define del_dobj(name)	_del_dobj(QSP_ARG  name)
+
+
 /* remove from the dictionary... */
-#define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
-#define ADD_OBJ_ITEM(dp)		add_item(QSP_ARG  dobj_itp, dp)
+//#define DELETE_OBJ_ITEM(dp)		del_dobj(QSP_ARG  dp)
+#define ADD_OBJ_ITEM(dp)		add_item(dobj_itp, dp)
 
 // areas.c
 
 ITEM_INTERFACE_PROTOTYPES(Data_Area,data_area)
-#define PICK_DATA_AREA(p)	pick_data_area(QSP_ARG  p)
+
+#define init_data_areas()	_init_data_areas(SINGLE_QSP_ARG)
+#define new_data_area(name)	_new_data_area(QSP_ARG  name)
+#define pick_data_area(p)	_pick_data_area(QSP_ARG  p)
+#define data_area_list()	_data_area_list(SINGLE_QSP_ARG)
+#define list_data_areas(fp)	_list_data_areas(QSP_ARG  fp)
 
 
 // sub_obj.c

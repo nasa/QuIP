@@ -89,7 +89,7 @@ static void pparam(QSP_ARG_DECL  Param* p,FILE* fp)	/** print parameter pted to 
 	else {
 		sprintf(ERROR_STRING,"parameter type:  0x%x",p->p_type);
 		WARN(ERROR_STRING);
-		ERROR1(badpstr);
+		error1(badpstr);
 	}
 }
 
@@ -106,7 +106,7 @@ static void getparm(QSP_ARG_DECL  Param *p)
 	else if( IS_STRING_PARAM(p) )
 		strcpy( p->u.strp, NAMEOF(p->p_comment) );
 
-	else ERROR1(badpstr);
+	else error1(badpstr);
 }
 
 static void getarrp(QSP_ARG_DECL  Param *p)
@@ -204,8 +204,8 @@ static COMMAND_FUNC( do_chng_one )
 		if( intractive(SINGLE_QSP_ARG) ){
 			const char *pline;
 			pline = format_prompt(QSP_ARG  PROMPT_FORMAT, PNAME_PMPT);
-			new_defs(QSP_ARG  pline);		/* is this needed? */
-			init_hist_from_item_list(QSP_ARG  PNAME_PMPT,lp);
+			new_defs(pline);		/* is this needed? */
+			init_hist_from_item_list(PNAME_PMPT,lp);
 		}
 
 		dellist(lp);

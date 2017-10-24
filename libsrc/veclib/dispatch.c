@@ -218,7 +218,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		pi[i].pi_index = i;
 		// should each thread have its own qsp?
 		sprintf(thread_name,"compute_thread_%d",i);
-		pi[i].pi_qsp = new_query_stack(QSP_ARG  thread_name);
+		pi[i].pi_qsp = new_query_stack(thread_name);
 		pthread_create(&dp_thr[i],&attr1,data_processor,&pi[i]);
 	}
 	n_threads_started=i;
@@ -329,7 +329,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 		int j;
 		for(j=0;j<(MAX_SRC_OBJECTS+1);j++){
 			if( tmp_obj[j][i] != NULL ){
-				delvec(QSP_ARG  tmp_obj[j][i]);
+				delvec(tmp_obj[j][i]);
 				tmp_obj[j][i] = NULL;
 			}
 		}
@@ -504,7 +504,7 @@ NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
 	if( debug & veclib_debug ) {
 		sprintf(ERROR_STRING,"\n\nvec_dispatch %s, using %d processors\n",
 			VF_NAME(vfp),n_processors);
-		ADVISE(DEFAULT_ERROR_STRING);
+		advise(DEFAULT_ERROR_STRING);
 	}
 #endif /* QUIP_DEBUG */
 

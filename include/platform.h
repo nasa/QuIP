@@ -148,7 +148,11 @@ extern int cu2_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_ob
 
 ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
-#define PICK_PLATFORM(pmpt)		pick_platform(QSP_ARG  pmpt)
+#define pick_platform(pmpt)		_pick_platform(QSP_ARG  pmpt)
+#define new_platform(name)		_new_platform(QSP_ARG  name)
+#define del_platform(name)		_del_platform(QSP_ARG  name)
+#define list_platforms(fp)		_list_platforms(QSP_ARG  fp)
+#define platform_list()			_platform_list(SINGLE_QSP_ARG)
 
 #define PLATFORM_NAME(cpp)		(cpp)->cp_item.item_name
 
@@ -371,7 +375,11 @@ struct platform_device {
 
 
 ITEM_INTERFACE_PROTOTYPES( Platform_Device, pfdev )
-#define PICK_PFDEV(pmpt)	pick_pfdev(QSP_ARG  pmpt)
+
+#define pick_pfdev(pmpt)	_pick_pfdev(QSP_ARG  pmpt)
+#define new_pfdev(name)		_new_pfdev(QSP_ARG  name)
+#define init_pfdevs()		_init_pfdevs(SINGLE_QSP_ARG)
+#define pfdev_list()		_pfdev_list(SINGLE_QSP_ARG)
 
 extern Platform_Device *curr_pdp;
 

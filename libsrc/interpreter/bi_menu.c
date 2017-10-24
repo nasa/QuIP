@@ -36,7 +36,7 @@ static Item_Type *curr_itp=NULL;
 
 static COMMAND_FUNC( list_types )
 {
-	list_items(QSP_ARG  ittyp_itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(ittyp_itp, tell_msgfile());
 }
 
 static COMMAND_FUNC( select_type )
@@ -48,14 +48,14 @@ static COMMAND_FUNC( select_type )
 	s=NAMEOF("item type name");
 	itp = get_item_type(QSP_ARG  s);
 	*/
-	itp = (Item_Type *) pick_item(QSP_ARG  ittyp_itp, "item type name");
+	itp = (Item_Type *) pick_item(ittyp_itp, "item type name");
 	if( itp != NULL )
 		curr_itp = itp;
 }
 
 static COMMAND_FUNC( do_list_items )
 {
-	list_items(QSP_ARG  curr_itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(curr_itp, tell_msgfile());
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(items_menu,s,f,h)
@@ -154,7 +154,7 @@ static COMMAND_FUNC( do_rbtree_test )
 
 static COMMAND_FUNC( do_list_macs )
 {
-	list_items(QSP_ARG  macro_itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(macro_itp, tell_msgfile());
 }
 
 static COMMAND_FUNC( do_find_mac )
@@ -164,10 +164,10 @@ static COMMAND_FUNC( do_find_mac )
 
 	s=NAMEOF("macro name fragment");
 
-	lp=find_items(QSP_ARG  macro_itp, s);
+	lp=find_items(macro_itp, s);
 	if( lp==NULL ) return;
 
-	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
+	print_list_of_items(lp, tell_msgfile());
 
 	// Need to release the list!
 	dellist(lp);	// releases nodes and list struct but not data
@@ -185,7 +185,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 	char *lc_frag;
 
 	if( macro_itp == NULL ) return NULL;
-	lp=item_list(QSP_ARG  macro_itp);
+	lp=item_list(macro_itp);
 	if( lp == NULL ) return lp;
 
 	np=QLIST_HEAD(lp);
@@ -223,14 +223,14 @@ static COMMAND_FUNC( do_search_macs )
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
 	prt_msg(msg_str);
 
-	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
+	print_list_of_items(lp, tell_msgfile());
 }
 
 static COMMAND_FUNC( do_show_mac )
 {
 	Macro *mp;
 
-	mp=PICK_MACRO("macro name");
+	mp=pick_macro("macro name");
 	if( mp!= NULL )
 		show_macro(QSP_ARG  mp);
 }
@@ -239,7 +239,7 @@ static COMMAND_FUNC( do_dump_mac )
 {
 	Macro *mp;
 
-	mp=PICK_MACRO("macro name");
+	mp=pick_macro("macro name");
 	if( mp!= NULL )
 		dump_macro(QSP_ARG  mp);
 }
@@ -255,7 +255,7 @@ no_macros:
 		WARN("do_dump_invoked:  no macros!?");
 		return;
 	}
-	lp=item_list(QSP_ARG  macro_itp);
+	lp=item_list(macro_itp);
 	if( lp == NULL ) goto no_macros;
 
 	np=QLIST_HEAD(lp);
@@ -272,7 +272,7 @@ static COMMAND_FUNC( do_info_mac )
 {
 	Macro *mp;
 
-	mp=PICK_MACRO("macro name");
+	mp=pick_macro("macro name");
 	if( mp!= NULL )
 		macro_info(QSP_ARG  mp);
 }
@@ -281,7 +281,7 @@ static COMMAND_FUNC( do_allow_macro_recursion )
 {
 	Macro *mp;
 	
-	mp=PICK_MACRO("");
+	mp=pick_macro("");
 	if( mp == NULL ) return;
 	allow_recursion_for_macro(mp);
 }
@@ -310,7 +310,7 @@ static COMMAND_FUNC( do_def_mac )
 		sprintf(ERROR_STRING,
 "define:  %d arguments requested for macro %s exceeds system limit!?\nRebuild application with increased value of N_QRY_RETSTRS.",
 			n-2,name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	ma_tbl = setup_macro_args(QSP_ARG  n);
@@ -322,7 +322,7 @@ static COMMAND_FUNC( do_def_mac )
 	sbp = read_macro_body(SINGLE_QSP_ARG);
 
 	// Now make sure this macro doesn't already exist
-	mp = macro_of(QSP_ARG  name);
+	mp = macro_of(name);
 	if( mp != NULL ){
 		sprintf(ERROR_STRING,"Macro \"%s\" already exists!?",name);
 		WARN(ERROR_STRING);
@@ -345,7 +345,7 @@ static COMMAND_FUNC( do_del_mac )
 {
 	Macro *mp;
 
-	mp = PICK_MACRO("");
+	mp = pick_macro("");
 
 	if( mp == NULL ) return;
 
@@ -451,14 +451,14 @@ static COMMAND_FUNC( do_set_var )
 	name=NAMEOF("variable name");
 	value=NAMEOF("variable value");
 
-	vp = var_of(QSP_ARG  name);
+	vp = var_of(name);
 	if( vp != NULL && IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"Sorry, variable \"%s\" is reserved.",name);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	assign_var(QSP_ARG  name,value);
+	assign_var(name,value);
 }
 
 // on 64 bit architecture, long is 64 bits,
@@ -631,35 +631,35 @@ static COMMAND_FUNC( do_assign_var )
 
 	RELEASE_SCALAR(tsp);
 
-	assign_var(QSP_ARG  namestr, DEST );
+	assign_var(namestr, DEST );
 }
 
 static COMMAND_FUNC( do_show_var )
 {
 	Variable *vp;
     
-	vp = PICK_VAR("");
+	vp = pick_var("");
 	if( vp == NULL ) return;
 
-	show_var(QSP_ARG  vp);
+	show_var(vp);
 }
 
 static COMMAND_FUNC( do_del_var )
 {
 	Variable *vp;
     
-	vp = PICK_VAR("");
+	vp = pick_var("");
 	if( vp == NULL ) return;
 
 	// remove from history list?
 
-	del_var_(QSP_ARG  vp);
+	del_var_(vp);
 }
 
 static COMMAND_FUNC( do_list_vars )
 {
 	//[Variable list];
-	list_vars(SINGLE_QSP_ARG);
+	list_vars();
 }
 
 static COMMAND_FUNC( do_replace_var )
@@ -667,13 +667,13 @@ static COMMAND_FUNC( do_replace_var )
 	Variable *vp;
 	const char *find, *replace;
 
-	vp = PICK_VAR("");
+	vp = pick_var("");
 	find = NAMEOF("substring to replace");
 	replace = NAMEOF("replacement text");
 
 	if( vp == NULL ) return;
 
-	replace_var_string(QSP_ARG  vp,find,replace);
+	replace_var_string(vp,find,replace);
 }
 
 #define MIN_SIG_DIGITS	4
@@ -806,7 +806,7 @@ static COMMAND_FUNC( do_despace )
 	if( *src )
 		WARN("despace:  input string too long, truncating.");
 
-	ASSIGN_VAR(vn,buf);
+	assign_var(vn,buf);
 }
 
 static COMMAND_FUNC( do_find_vars )
@@ -968,7 +968,7 @@ static COMMAND_FUNC( do_error_exit )
 	const char *s;
 
 	s=NAMEOF("error message");
-	ERROR1(s);
+	error1(s);
 }
 
 static COMMAND_FUNC( do_abort_prog )
@@ -987,7 +987,7 @@ static COMMAND_FUNC( do_advise )
 {
 	Quip_String *s;
 	s=NAMEOF("word to echo");
-	ADVISE(s);
+	advise(s);
 }
 
 static COMMAND_FUNC( do_log_message )
@@ -1001,9 +1001,9 @@ static COMMAND_FUNC( do_debug )
 {
 	Debug_Module *dmp;
 
-	dmp = pick_debug(QSP_ARG  "");
+	dmp = pick_debug("");
 	if( dmp != NULL )
-		set_debug(QSP_ARG  dmp);
+		set_debug(dmp);
 }
 
 static COMMAND_FUNC( do_echo )
@@ -1205,7 +1205,7 @@ static COMMAND_FUNC( do_pwd )
 	}
 
 	// cwd is now a dynamic variable!?
-	//ASSIGN_VAR("cwd",savestr(buf));
+	//assign_var("cwd",savestr(buf));
 	prt_msg(buf);
 }
 
@@ -1302,7 +1302,7 @@ static COMMAND_FUNC( do_count_lines )
 
 	// we co-opt error_string as an available buffer...
 	sprintf(ERROR_STRING,"%d",n);
-	ASSIGN_VAR(vn,ERROR_STRING);
+	assign_var(vn,ERROR_STRING);
 }
 
 // For now use these in unix for ios emulation...
@@ -1544,7 +1544,7 @@ static COMMAND_FUNC( do_timezone )
 
 #ifdef QUIP_DEBUG
 
-static COMMAND_FUNC( do_dump_items ){ dump_items(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_dump_items ){ dump_items(); }
 
 static COMMAND_FUNC( do_qtell )
 {
@@ -1587,7 +1587,7 @@ static COMMAND_FUNC( do_pmpttext )
 	redir(QSP_ARG  tfile(SINGLE_QSP_ARG), "-" );
 	t=savestr( NAMEOF(p) );
 	pop_file(SINGLE_QSP_ARG);
-	ASSIGN_VAR(s,t);
+	assign_var(s,t);
 	rls_str(t);
 #else // BUILD_FOR_OBJC
 	WARN("Sorry, pmpttext (bi_menu.c) not yet implemented!?");

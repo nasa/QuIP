@@ -12,19 +12,19 @@ ITEM_INTERFACE_DECLARATIONS( Compute_Platform, platform, 0 )
 Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name)
 {
 	if( pfdev_itp == NULL )
-		init_pfdevs(SINGLE_QSP_ARG);
+		init_pfdevs();
 
-	return create_item_context(QSP_ARG  pfdev_itp, name );
+	return create_item_context(pfdev_itp, name );
 }
 
 void push_pfdev_context(QSP_ARG_DECL  Item_Context *icp )
 {
-	push_item_context(QSP_ARG  pfdev_itp, icp );
+	push_item_context(pfdev_itp, icp );
 }
 
 Item_Context *pop_pfdev_context(SINGLE_QSP_ARG_DECL)
 {
-	return pop_item_context(QSP_ARG  pfdev_itp);
+	return pop_item_context(pfdev_itp);
 }
 
 
@@ -85,7 +85,7 @@ Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t
 	Compute_Platform *cpp;
 	Item_Context *icp;
 
-	cpp = new_platform(QSP_ARG  name);
+	cpp = new_platform(name);
 	assert( cpp != NULL );
 
 	icp = create_pfdev_context(QSP_ARG  name );
@@ -102,7 +102,7 @@ Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t
 void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp)
 {
 	// BUG memory leak of we don't also delete the icp...
-	del_platform(QSP_ARG  cpp);
+	del_platform(cpp);
 }
 
 

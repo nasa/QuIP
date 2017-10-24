@@ -151,11 +151,11 @@ static const char *insure_item_prompt(Item_Type *itp, const char *prompt)
 	return prompt;
 }
 
-static void remove_from_history_list(QSP_ARG_DECL  const char *prompt, const char *s)
+static void _remove_from_history_list(QSP_ARG_DECL  const char *prompt, const char *s)
 {
 	const char *pline;
 	pline = format_prompt(QSP_ARG  PROMPT_FORMAT, prompt);
-	rem_def(QSP_ARG  pline,s);
+	rem_def(pline,s);
 }
 
 
@@ -166,7 +166,7 @@ static void remove_from_history_list(QSP_ARG_DECL  const char *prompt, const cha
  * (Here large means 100,000 items or more - but how few items can cause the problem?
  */
 
-Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
+Item *_pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 {
 	Item *ip;
 	const char *s;
@@ -177,7 +177,7 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 
 	if( ! IS_COMPLETING(THIS_QSP) ){
 		s = NAMEOF(prompt);
-		return get_item(QSP_ARG  itp, s);
+		return get_item(itp, s);
 	}
 
 	prompt = insure_item_prompt(itp,prompt);
@@ -188,12 +188,12 @@ Item *pick_item(QSP_ARG_DECL  Item_Type *itp,const char *prompt)
 	s=NAMEOF(prompt);
 	SET_QS_PICKING_ITEM_ITP(THIS_QSP,NULL);
 
-	ip=item_of(QSP_ARG  itp,s);	// report_invalid_pick will complain, so don't need to here
+	ip=item_of(itp,s);	// report_invalid_pick will complain, so don't need to here
 
 	if( ip == NULL ){
-		remove_from_history_list(QSP_ARG  prompt, s);
+		_remove_from_history_list(QSP_ARG  prompt, s);
 		// list the valid items
-		report_invalid_pick(QSP_ARG  itp, s);
+		report_invalid_pick(itp, s);
 	}
 
 	return(ip);
@@ -216,9 +216,9 @@ void init_item_hist( QSP_ARG_DECL  Item_Type *itp, const char* prompt )
 	// Don't do this if the number of choices is too large...
 	// We should set a flag in the itp...
 
-	lp=item_list(QSP_ARG  itp);
+	lp=item_list(itp);
 	if( lp == NULL ) return;
-	init_hist_from_item_list(QSP_ARG  prompt,lp);
+	init_hist_from_item_list(prompt,lp);
 }
 #endif /* HAVE_HISTORY */
 

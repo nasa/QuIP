@@ -15,7 +15,7 @@
 
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
-	SET_OA_DEST(oap, PICK_OBJ( "destination vector" ) );
+	SET_OA_DEST(oap, pick_obj( "destination vector" ) );
 	if( OA_DEST(oap) == NULL )
 		return(-1);
 	return(0);
@@ -23,7 +23,7 @@ static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 
 static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC1(oap,PICK_OBJ( "first source vector" ) );
+	SET_OA_SRC1(oap,pick_obj( "first source vector" ) );
 	if( OA_SRC1(oap) == NULL )
 		return(-1);
 	return(0);
@@ -31,7 +31,7 @@ static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC2(oap,PICK_OBJ( "second source vector" ));
+	SET_OA_SRC2(oap,pick_obj( "second source vector" ));
 	if( OA_SRC2(oap) == NULL )
 		return(-1);
 	return(0);
@@ -39,7 +39,7 @@ static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC3(oap,PICK_OBJ( "third source vector" ));
+	SET_OA_SRC3(oap,pick_obj( "third source vector" ));
 	if( OA_SRC3(oap) == NULL )
 		return(-1);
 	return(0);
@@ -48,7 +48,7 @@ static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 static int get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC4(oap,PICK_OBJ( "fourth source vector" ));
+	SET_OA_SRC4(oap,pick_obj( "fourth source vector" ));
 	if( OA_SRC4(oap) == NULL )
 		return(-1);
 	return(0);
@@ -68,7 +68,7 @@ void show_vf(Vector_Function *vfp)
 
 static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
-	SET_OA_SBM( oap, PICK_OBJ( "source bitmap object" ) );
+	SET_OA_SBM( oap, pick_obj( "source bitmap object" ) );
 	if( OA_SBM(oap) == NULL ) return(-1);
 	if( OBJ_PREC( OA_SBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
@@ -83,7 +83,7 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 
 static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
-	SET_OA_DBM( oap, PICK_OBJ( "destination bitmap object" ) );
+	SET_OA_DBM( oap, pick_obj( "destination bitmap object" ) );
 	if( OA_DBM(oap) == NULL ) return(-1);
 	if( OBJ_PREC( OA_DBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
@@ -143,8 +143,8 @@ static Data_Obj * get_return_scalar(QSP_ARG_DECL const char *pmpt,Precision *pre
 {
 	Data_Obj *dp;
 
-	/* which data area does PICK_OBJ use??? */
-	dp=PICK_OBJ( pmpt );
+	/* which data area does pick_obj use??? */
+	dp=pick_obj( pmpt );
 	if( dp == NULL ) return(NULL);
 	if( !IS_SCALAR(dp) ){
 		sprintf(ERROR_STRING,

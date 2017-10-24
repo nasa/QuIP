@@ -164,7 +164,7 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	*/
 }
 
-void list_dobj(QSP_ARG_DECL  Data_Obj *dp)
+void _list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 {
 	char string[128];
 
@@ -470,9 +470,9 @@ static void list_increments(QSP_ARG_DECL  Data_Obj *dp)
 }
 #endif /* QUIP_DEBUG */
 
-void longlist(QSP_ARG_DECL  Data_Obj *dp)
+void _longlist(QSP_ARG_DECL  Data_Obj *dp)
 {
-	list_dobj(QSP_ARG  dp);
+	list_dobj(dp);
 	list_device(QSP_ARG  dp);
 	show_dobj_context(QSP_ARG  dp);
 	list_sizes(QSP_ARG  dp);
@@ -493,13 +493,13 @@ void info_area(QSP_ARG_DECL  Data_Area *ap)
 	Node *np;
 	Data_Obj *dp;
 
-	lp=dobj_list(SINGLE_QSP_ARG);
+	lp=dobj_list();
 	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
 	while( np != NULL ){
 		dp = (Data_Obj *)NODE_DATA(np);
 		if( OBJ_AREA(dp) == ap )
-			list_dobj(QSP_ARG   dp );
+			list_dobj(dp);
 		np=NODE_NEXT(np);
 	}
 }
@@ -509,7 +509,7 @@ void info_all_dps(SINGLE_QSP_ARG_DECL)
 	List *lp;
 	Node *np;
 
-	lp=data_area_list(SINGLE_QSP_ARG);
+	lp=data_area_list();
 	if( lp==NULL ) return;
 	np=QLIST_HEAD( lp );
 	while( np != NULL ){

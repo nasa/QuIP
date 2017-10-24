@@ -18,7 +18,7 @@ static void check_preload(QSP_ARG_DECL  const char *prompt, int n, const char **
 	if( ! intractive(SINGLE_QSP_ARG) ) return;
 	if( *prompt == 0 ) return;
 
-	preload_history_list(QSP_ARG  prompt,n,choices);
+	preload_history_list(prompt,n,choices);
 }
 #endif /* HAVE_HISTORY */
 
@@ -72,7 +72,7 @@ int which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 		advise(ERROR_STRING);
 	}
 #ifdef HAVE_HISTORY
-	if( intractive(SINGLE_QSP_ARG) ) rem_def(QSP_ARG  prompt,user_response) ;
+	if( intractive(SINGLE_QSP_ARG) ) rem_def(prompt,user_response) ;
 #endif /* HAVE_HISTORY */
 
 	return(-1);

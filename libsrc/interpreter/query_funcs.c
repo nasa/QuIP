@@ -493,7 +493,7 @@ static const char *read_ith_macro_arg(QSP_ARG_DECL  Macro *mp, int i)
 
 	if( MA_ITP(map) != NULL ){
 		Item *ip;
-		ip = pick_item(QSP_ARG  MA_ITP(map), MA_PROMPT(map) );
+		ip = pick_item(MA_ITP(map), MA_PROMPT(map) );
 		if( ip != NULL )
 			s=ITEM_NAME(ip);
 		else
@@ -666,7 +666,7 @@ static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
 	if( !(QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS) ) return(0);
 
 	/* Does the buffer contain a macro name?  If not, return */
-	mp=macro_of(QSP_ARG  buf);
+	mp=macro_of(buf);
 	if( mp==NULL ) return(0);
 
 	if( check_macro_recursion(QSP_ARG  mp) < 0 )
@@ -729,7 +729,7 @@ advise(ERROR_STRING);
 
 #ifdef HAVE_HISTORY
 		if( IS_INTERACTIVE(CURR_QRY(THIS_QSP)) && *buf && IS_TRACKING_HISTORY(THIS_QSP) ){
-			add_def(QSP_ARG  pline,buf);
+			add_def(pline,buf);
 		}
 #endif /* HAVE_HISTORY */
 
@@ -2190,7 +2190,7 @@ static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const
 	strcpy(item_type_name,s+1);
 	item_type_name[n-2]=0;	/* kill closing bracket */
 
-	map->ma_itp = get_item_type(QSP_ARG  item_type_name);
+	map->ma_itp = get_item_type(item_type_name);
 	if( map->ma_itp == NULL ){
 		WARN("Unable to process macro argument item type specification.");
 		return s;
@@ -2339,7 +2339,7 @@ Query_Stack *new_qstk(QSP_ARG_DECL  const char *name)
 #endif /* THREAD_SAFE_QUERY */
 
 	// We used to use a custom routine here - are there problems using the template??
-	new_qsp = new_query_stack(QSP_ARG  name);
+	new_qsp = new_query_stack(name);
 
 	if( qsp_to_free != NULL ){
 		//DEFAULT_QSP = qsp_to_free;	// why?  appears to do nothing?
@@ -2919,7 +2919,7 @@ void foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 
 #define FORELOOP	(-2)
 
-	ASSIGN_VAR(FL_VARNAME(frp),(const char *)NODE_DATA(QLIST_HEAD(FL_LIST(frp))));
+	assign_var(FL_VARNAME(frp),(const char *)NODE_DATA(QLIST_HEAD(FL_LIST(frp))));
 
 	SET_QRY_COUNT(qp, FORELOOP);		/* BUG should be some unique code */
 	SET_QRY_FORLOOP(qp, frp);
@@ -3138,7 +3138,7 @@ COMMAND_FUNC( close_loop )
 			SET_QRY_FORLOOP(qp,NULL);
 			goto lup_dun;
 		}
-		ASSIGN_VAR(FL_VARNAME(QRY_FORLOOP(qp)),
+		assign_var(FL_VARNAME(QRY_FORLOOP(qp)),
 			(const char *)FL_WORD(QRY_FORLOOP(qp)) );
 
 	} else if( QRY_COUNT(qp) < 0 ){		/* do/while loop */
@@ -3413,20 +3413,20 @@ FILE *tfile(SINGLE_QSP_ARG_DECL)
  * which function used to be called simple_var_of?  var__of ?
  */
 
-Variable *var_of(QSP_ARG_DECL const char *name)
+Variable *_var_of(QSP_ARG_DECL const char *name)
 		/* variable name */
 {
 	int i;
 	Variable *vp;
 	const char *s;
 
-	vp = var__of(QSP_ARG  name);
+	vp = var__of(name);
 	if( vp != NULL ) return(vp);
 
 	/* if not set, try to import from env */
 	s = getenv(name);
 	if( s != NULL ){
-		vp = new_var_(QSP_ARG  name);
+		vp = new_var_(name);
 		SET_VAR_VALUE(vp,savestr(s));
 		SET_VAR_FLAGS(vp,VAR_RESERVED);
 		return(vp);
@@ -3506,7 +3506,7 @@ advise(ERROR_STRING);
 		} else {
 			char varname[32];
 			sprintf(varname,"argv%d",i+1);
-			vp = var__of(QSP_ARG  varname);
+			vp = var__of(varname);
 			return(vp);
 		}
 	}
@@ -3896,7 +3896,7 @@ static void tell_macro_location(QSP_ARG_DECL  const char *location_string, int n
 	mname = location_string+strlen(MACRO_LOCATION_PREFIX);
 	// don't use get_macro, because it prints a warning,
 	// causing infinite regress!?
-	mp = macro_of(QSP_ARG  mname);
+	mp = macro_of(mname);
 	assert( mp != NULL );
 
 	filename = MACRO_FILENAME(mp);

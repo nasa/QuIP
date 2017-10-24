@@ -50,6 +50,11 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char 
 // need macro to make these all static
 ITEM_INTERFACE_CONTAINER(hist_choice,LIST_CONTAINER)
 ITEM_INTERFACE_PROTOTYPES(Hist_Choice,hist_choice)
+
+#define init_hist_choices()	_init_hist_choices(SINGLE_QSP_ARG)
+#define new_hist_choice(name)	_new_hist_choice(QSP_ARG  name)
+#define hist_choice_of(name)	_hist_choice_of(QSP_ARG  name)
+
 ITEM_INTERFACE_DECLARATIONS(Hist_Choice,hist_choice,LIST_CONTAINER)
 
 /* This has to match what is up above!!! */
@@ -68,17 +73,17 @@ static char *get_hist_ctx_name(const char* prompt)
  * Return the history context for this prompt, creating if necessary.
  */
 
-Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
+Item_Context *_find_hist(QSP_ARG_DECL  const char *prompt)
 {
 	Item_Context *icp;
 	char *ctxname;
 
-	if( hist_choice_itp == NULL ) init_hist_choices(SINGLE_QSP_ARG);
+	if( hist_choice_itp == NULL ) init_hist_choices();
 
 	ctxname = get_hist_ctx_name(prompt);
-	icp = ctx_of(QSP_ARG  ctxname);
+	icp = ctx_of(ctxname);
 	if( icp == NULL ){
-		icp = create_item_context(QSP_ARG  hist_choice_itp,prompt);
+		icp = create_item_context(hist_choice_itp,prompt);
 		assert( icp != NULL );
 	}
 
@@ -87,12 +92,12 @@ Item_Context *find_hist(QSP_ARG_DECL  const char *prompt)
 
 static void rem_hcp(QSP_ARG_DECL  Item_Context *icp,Hist_Choice *hcp)
 {
-	PUSH_ITEM_CONTEXT(hist_choice_itp,icp);
+	push_item_context(hist_choice_itp,icp);
 	/* BUG? this will search all contexts...
 	 * BUT - we expect to find it in the first one!?
 	 */
-	del_item(QSP_ARG  hist_choice_itp,hcp);
-	pop_item_context(QSP_ARG  hist_choice_itp);
+	del_item(hist_choice_itp,hcp);
+	pop_item_context(hist_choice_itp);
 }
 
 /* Scan a history list, removing any choices which are not in the new list */
@@ -135,12 +140,12 @@ static void clr_defs_if(QSP_ARG_DECL  Item_Context *icp,int n,const char** choic
 	}
 }
 
-void preload_history_list(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choices)
+void _preload_history_list(QSP_ARG_DECL  const char* prompt,unsigned int n,const char** choices)
 {
 	Item_Context *icp;
 	unsigned int i;
 
-	icp = find_hist(QSP_ARG  prompt);
+	icp = find_hist(prompt);
 
 	/* remove any history list choices not on the current list */
 
@@ -176,12 +181,12 @@ advise(ERROR_STRING);
 	}
 }
 
-void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove selection from list, return next */
+void _rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove selection from list, return next */
 {
 	Item_Context *icp;
 	Hist_Choice *hcp;
 
-	icp = find_hist(QSP_ARG  prompt);
+	icp = find_hist(prompt);
 
 	/* We don't appear to use icp ??? */
 
@@ -189,9 +194,9 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	 * but who cares???
 	 */
 
-	PUSH_ITEM_CONTEXT(hist_choice_itp,icp);
-	hcp = (Hist_Choice *) hist_choice_of(QSP_ARG  choice);
-	pop_item_context(QSP_ARG  hist_choice_itp);
+	push_item_context(hist_choice_itp,icp);
+	hcp = (Hist_Choice *) hist_choice_of(choice);
+	pop_item_context(hist_choice_itp);
 
 	if( hcp == NULL ){
 		return;
@@ -200,11 +205,11 @@ void rem_def(QSP_ARG_DECL  const char *prompt,const char* choice)	/** remove sel
 	rem_hcp(QSP_ARG  icp,hcp);
 }
 
-void new_defs(QSP_ARG_DECL  const char* prompt)
+void _new_defs(QSP_ARG_DECL  const char* prompt)
 {
 	Item_Context *icp;
 
-	icp = find_hist(QSP_ARG  prompt);
+	icp = find_hist(prompt);
 
 	clr_defs_if(QSP_ARG  icp,0,(const char **)NULL);
 }
@@ -237,8 +242,8 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 //fprintf(stderr,"add_word_to_history_list, adding \"%s\" to context %s\n",string,CTX_NAME(icp));
 	/* first see if this string is already on the list */
 
-	PUSH_ITEM_CONTEXT(hist_choice_itp,icp);
-	hcp = hist_choice_of(QSP_ARG  string);
+	push_item_context(hist_choice_itp,icp);
+	hcp = hist_choice_of(string);
 
 	/* this is outside of the conditional (even though it may
 	 * not be needed) in order to force item node creation,
@@ -251,21 +256,21 @@ static void add_word_to_history_list(QSP_ARG_DECL  Item_Context *icp,const char*
 
 	if( hcp != NULL ){
 		boost_choice(QSP_ARG  hcp,lp);
-		pop_item_context(QSP_ARG  hist_choice_itp);
+		pop_item_context(hist_choice_itp);
 //fprintf(stderr,"add_word_to_history_list, returning after increasing node priority\n");
 		return;
 	}
 
 	/* make a new choice */
 
-	hcp=new_hist_choice(QSP_ARG  string);	// do we save this somewhere???
-	pop_item_context(QSP_ARG  hist_choice_itp);
+	hcp=new_hist_choice(string);	// do we save this somewhere???
+	pop_item_context(hist_choice_itp);
 
 	assert( hcp != NULL );
 //fprintf(stderr,"add_word_to_history_list, returning after creating new choice\n");
 }
 
-void add_def( QSP_ARG_DECL  const char *prompt, const char *string )
+void _add_def( QSP_ARG_DECL  const char *prompt, const char *string )
 {
 	Item_Context *icp;
 
@@ -276,7 +281,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	icp=find_hist(QSP_ARG  prompt);
+	icp=find_hist(prompt);
 	add_word_to_history_list(QSP_ARG  icp,string);
 }
 
@@ -320,7 +325,7 @@ const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
 }
 
 #ifdef NOT_USED
-void rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
+void _rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
 	const char *formatted_prompt;
 
@@ -332,17 +337,17 @@ void rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 }
 #endif // NOT_USED
 
-void add_phist(QSP_ARG_DECL  const char *prompt,const char* word)
+void _add_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
 	char s[LLEN];
 
 	sprintf(s,PROMPT_FORMAT,prompt);
-	add_def(QSP_ARG  s,word);
+	add_def(s,word);
 }
 
 /* find a match to a partial response */
 
-const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
+const char *_get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 {
 	Item_Context *icp;
 	List *lp;
@@ -353,7 +358,7 @@ const char *get_match( QSP_ARG_DECL  const char *prompt, const char* so_far )
 
 	if( *prompt == 0 ) return("");	/* e.g. hand entry of macros */
 
-	icp=find_hist(QSP_ARG  prompt);
+	icp=find_hist(prompt);
 
 	lp = container_list(CTX_CONTAINER(icp));
 
@@ -545,7 +550,7 @@ static const char * cyc_item_match(QSP_ARG_DECL  const char *so_far, int directi
 
 
 	// find out what kind of container...
-const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
+const char *_cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
 {
 	if( QS_PICKING_ITEM_ITP(THIS_QSP) != NULL ){
 		return cyc_item_match(QSP_ARG  so_far, direction );
@@ -555,7 +560,7 @@ const char *cyc_match(QSP_ARG_DECL  const char *so_far, int direction )
 
 /* this was introduced to simplify the initialization of cmd menus */
 
-void init_hist_from_list(QSP_ARG_DECL  const char *prompt,List* lp)
+void _init_hist_from_list(QSP_ARG_DECL  const char *prompt,List* lp)
 
 {
 	Node *np;
@@ -575,7 +580,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	icp=find_hist(QSP_ARG  prompt);
+	icp=find_hist(prompt);
 
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
@@ -588,16 +593,16 @@ advise(ERROR_STRING);
 
 /* Add a list of words to a history list */
 
-void init_hist_from_item_list(QSP_ARG_DECL  const char *prompt,List *lp)
+void _init_hist_from_item_list(QSP_ARG_DECL  const char *prompt,List *lp)
 {
 	char s[LLEN];
 
 	assert( lp != NULL );
 	sprintf(s,PROMPT_FORMAT,prompt);
-	init_hist_from_list(QSP_ARG  s,lp);
+	init_hist_from_list(s,lp);
 }
 
-void init_hist_from_class(QSP_ARG_DECL  const char* prompt,Item_Class *iclp)
+void _init_hist_from_class(QSP_ARG_DECL  const char* prompt,Item_Class *iclp)
 {
 	Node *np;
 	List *lp;
@@ -607,7 +612,7 @@ void init_hist_from_class(QSP_ARG_DECL  const char* prompt,Item_Class *iclp)
 
 	sprintf(s,PROMPT_FORMAT,prompt);
 
-	icp = find_hist(QSP_ARG  s);
+	icp = find_hist(s);
 
 	if( icp != NULL ){
 		if( (iclp->icl_flags&NEED_CLASS_CHOICES)==0 ){
@@ -639,9 +644,9 @@ advise("making new hist list for class");
 	np=QLIST_HEAD(iclp->icl_lp);
 	while(np!=NULL){
 		mip=(Member_Info *) NODE_DATA(np);
-		lp = item_list(QSP_ARG  mip->mi_itp);
+		lp = item_list(mip->mi_itp);
 		if( lp != NULL )
-			init_hist_from_list(QSP_ARG  s,lp);
+			init_hist_from_list(s,lp);
 		np=NODE_NEXT(np);
 	}
 	iclp->icl_flags &= ~NEED_CLASS_CHOICES;

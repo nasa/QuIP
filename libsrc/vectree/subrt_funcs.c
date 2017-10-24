@@ -17,7 +17,7 @@
 void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 {
 	if( SR_BODY(srp) != NULL ){
-		NODE_ERROR(body);
+		node_error(body);
 		NWARN("subroutine body is not null!?");
 	}
 
@@ -63,12 +63,12 @@ static Vec_Expr_Node *get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char
 	switch( PREC_CODE(prec_p) ){
 		case PREC_SP:
 		case PREC_DP:
-			enp = NODE0(T_LIT_DBL);
+			enp = node0(T_LIT_DBL);
 			SET_VN_DBLVAL(enp,(*(prec_p->cast_to_double_func))(&sv));
 			break;
 		case PREC_BY: case PREC_IN: case PREC_DI: case PREC_LI:
 		case PREC_UBY: case PREC_UIN: case PREC_UDI: case PREC_ULI:
-			enp = NODE0(T_LIT_INT);
+			enp = node0(T_LIT_INT);
 			// BUG should cast to long not int???
 			SET_VN_INTVAL(enp,(int) (*(prec_p->cast_to_double_func))(&sv));
 			break;
@@ -96,12 +96,12 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 			dp = get_obj(QSP_ARG  s);
 			if( dp != NULL ){
 				Vec_Expr_Node *obj_enp;
-				obj_enp=NODE0(T_STATIC_OBJ);
+				obj_enp=node0(T_STATIC_OBJ);
 				SET_VN_OBJ(obj_enp, dp);
-				POINT_NODE_SHAPE(obj_enp,OBJ_SHAPE(dp));
+				point_node_shape(obj_enp,OBJ_SHAPE(dp));
 				SET_VN_PFDEV(obj_enp,OBJ_PFDEV(dp));
-				ret_enp = NODE1(T_REFERENCE,obj_enp);
-				POINT_NODE_SHAPE(ret_enp,OBJ_SHAPE(dp));
+				ret_enp = node1(T_REFERENCE,obj_enp);
+				point_node_shape(ret_enp,OBJ_SHAPE(dp));
 				SET_VN_PFDEV(ret_enp,OBJ_PFDEV(dp));
 			}
 			break;
@@ -111,7 +111,7 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 				VN_DECL_NAME(enp)
 				);
 			ret_enp = get_scalar_arg(QSP_ARG  prec_p, msg_str);
-			POINT_NODE_SHAPE(ret_enp,scalar_shape(PREC_CODE(prec_p)));
+			point_node_shape(ret_enp,scalar_shape(PREC_CODE(prec_p)));
 			break;
 		default:
 			fprintf(stderr,"get_one_arg:  unhandled case %s\n",node_desc(enp));
@@ -152,7 +152,7 @@ void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int i;
 
 fprintf(stderr,"update_pfdev_from_children %s BEGIN\n",node_desc(enp));
-dump_tree(QSP_ARG  enp);
+dump_tree(enp);
 	for(i=0;i<MAX_NODE_CHILDREN;i++){	// BUG - node should record number of children...
 fprintf(stderr,"update_pfdev_from_children %s checking child %d\n",node_desc(enp),i);
 		if( VN_CHILD(enp,i) == NULL ){
@@ -212,7 +212,7 @@ static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			enp2 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,1));
 			// BUG release good node if only one bad
 			if( enp1 != NULL && enp2 != NULL ){
-				return_enp = NODE2(T_ARGLIST,enp1,enp2);
+				return_enp = node2(T_ARGLIST,enp1,enp2);
 				update_pfdev_from_children(QSP_ARG  return_enp);
 			}
 			break;
@@ -265,10 +265,10 @@ COMMAND_FUNC( do_dump_subrt )
 	srp=PICK_SUBRT("");
 
 	if( srp==NULL ) return;
-	DUMP_SUBRT(srp);
+	dump_subrt(srp);
 }
 
-void dump_subrt(QSP_ARG_DECL Subrt *srp)
+void _dump_subrt(QSP_ARG_DECL Subrt *srp)
 {
 	if( IS_SCRIPT(srp) ){
 		sprintf(msg_str,"Script subrt %s:",SR_NAME(srp));
@@ -281,14 +281,14 @@ void dump_subrt(QSP_ARG_DECL Subrt *srp)
 		sprintf(msg_str,"Subrt %s arg declarations:\n",SR_NAME(srp));
 		prt_msg(msg_str);
 		print_dump_legend(SINGLE_QSP_ARG);
-		DUMP_TREE(SR_ARG_DECLS(srp));
+		dump_tree(SR_ARG_DECLS(srp));
 	}
 
 	if( SR_BODY(srp) != NULL ){
 		sprintf(msg_str,"Subrt %s body:\n",SR_NAME(srp));
 		prt_msg(msg_str);
 		print_dump_legend(SINGLE_QSP_ARG);
-		DUMP_TREE(SR_BODY(srp));
+		dump_tree(SR_BODY(srp));
 	}
 }
 
@@ -362,7 +362,7 @@ COMMAND_FUNC( do_subrt_info )
 			ret_enp = (Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\tn%d:",VN_SERIAL(ret_enp));
 			prt_msg(msg_str);
-			DUMP_TREE(ret_enp);
+			dump_tree(ret_enp);
 			np=NODE_NEXT(np);
 		}
 	}
@@ -375,7 +375,7 @@ COMMAND_FUNC( do_subrt_info )
 			c_enp = (Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\tn%d:",VN_SERIAL(c_enp));
 			prt_msg(msg_str);
-			DUMP_TREE(c_enp);
+			dump_tree(c_enp);
 			np=NODE_NEXT(np);
 		}
 	}

@@ -160,9 +160,9 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 			// it doesn't already exist - vars defined
 			// in the environment are reserved!
 			Variable *vp;
-			vp = VAR_OF(STARTUP_DIRNAME);
+			vp = var_of(STARTUP_DIRNAME);
 			if( vp == NULL ){
-				assign_var(QSP_ARG  STARTUP_DIRNAME,dir);
+				assign_var(STARTUP_DIRNAME,dir);
 			}
 		}
 		return(filename);

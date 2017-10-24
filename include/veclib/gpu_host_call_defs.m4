@@ -753,14 +753,14 @@ dnl	assert(disp_dp!=NULL);
 dnl	fprintf(stderr,"displaying intermediate result:\n");
 dnl	pntvec(DEFAULT_QSP_ARG  disp_dp,stderr);
 dnl	fflush(stderr);
-dnl	delvec(DEFAULT_QSP_ARG  disp_dp);
+dnl	_delvec(DEFAULT_QSP_ARG  disp_dp);
 
 	*prod_oap = *oap;
 	SET_OA_SRC1(prod_oap,prod_dp);
 	SET_OA_SRC2(prod_oap,NULL);
 	HOST_TYPED_CALL_NAME($5,type_code)(FVSUM,prod_oap);
 
-	delvec(DEFAULT_QSP_ARG  prod_dp);
+	_delvec(DEFAULT_QSP_ARG  prod_dp);
 
 dnl		CHECK_MM($1)
 dnl	

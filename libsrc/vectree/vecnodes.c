@@ -227,7 +227,7 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 	assert( tnt_tbl[code].tnt_nchildren == n );
 
 
-Vec_Expr_Node *node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld,Vec_Expr_Node *chld3)
+Vec_Expr_Node *_node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld,Vec_Expr_Node *chld3)
 {
 	Vec_Expr_Node *enp;
 
@@ -243,7 +243,7 @@ Vec_Expr_Node *node3(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_
 
 
 
-Vec_Expr_Node *node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld)
+Vec_Expr_Node *_node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_Node *rchld)
 {
 	Vec_Expr_Node *enp;
 
@@ -257,7 +257,7 @@ Vec_Expr_Node *node2(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld,Vec_Expr_
 }
 
 
-Vec_Expr_Node *node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
+Vec_Expr_Node *_node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 {
 	Vec_Expr_Node *enp;
 
@@ -270,7 +270,7 @@ Vec_Expr_Node *node1(QSP_ARG_DECL  Tree_Code code,Vec_Expr_Node *lchld)
 }
 
 
-Vec_Expr_Node *node0(QSP_ARG_DECL  Tree_Code code)
+Vec_Expr_Node *_node0(QSP_ARG_DECL  Tree_Code code)
 {
 	VERIFY_N_CHILDREN(code,0);
 
@@ -359,7 +359,7 @@ static Vec_Expr_Node *dup_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return(new_enp);
 }
 
-Vec_Expr_Node *dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+Vec_Expr_Node *_dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Vec_Expr_Node *new_enp;
 	int i;
@@ -369,7 +369,7 @@ Vec_Expr_Node *dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	for(i=0;i<MAX_CHILDREN(enp);i++)
 		if( VN_CHILD(enp,i) != NULL ){
 			Vec_Expr_Node *new_child;
-			new_child = DUP_TREE(VN_CHILD(enp,i));
+			new_child = dup_tree(VN_CHILD(enp,i));
 			SET_VN_CHILD(new_enp,i, new_child);
 			SET_VN_PARENT(new_child, new_enp);
 		}
@@ -579,7 +579,7 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	}
 }
 
-void node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _node_error(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	/* infile may be null if we are reading stdin??? */
 	if( VN_INFILE(enp) == NULL ){

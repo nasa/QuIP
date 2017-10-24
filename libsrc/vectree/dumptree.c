@@ -26,8 +26,6 @@
 static Keyword *curr_native_func_tbl=vt_native_func_tbl;
 #endif /* NOT_YET */
 
-#define _DUMP_TREE(enp)		_dump_tree(QSP_ARG  enp)
-#define _DUMP_NODE(enp)		_dump_node(QSP_ARG  enp)
 
 
 /* Dump flags */
@@ -121,7 +119,7 @@ static void prt_node(Vec_Expr_Node *enp,char *buf)
 		);
 }
 
-static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Tree_Code code;
 	int i;
@@ -130,8 +128,6 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	if( enp==NULL ) return;
 
 	/* print the node "name", and a code that tells about shape knowledge */
-
-//DEBUG_IT_3(enp,_dump_node)
 
 // Temporarily print to stderr instead of stdout for debugging...
 	prt_node(enp,msg_str);
@@ -227,12 +223,12 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		prt_msg_frag(msg_str);
 	} else if( code==T_ADVISE ){
 		/* BUG need to elim yylex_qsp */
-		s=eval_string(QSP_ARG  VN_CHILD(enp,0));
+		s=eval_string(VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\"%s\"",s);
 		prt_msg_frag(msg_str);
 	} else if( code==T_WARN ){
 		/* BUG need to elim yylex_qsp */
-		s=eval_string(QSP_ARG  VN_CHILD(enp,0));
+		s=eval_string(VN_CHILD(enp,0));
 		sprintf(msg_str,"\t\"%s\"",s);
 		prt_msg_frag(msg_str);
 	} else if( code==T_STRING ){
@@ -322,39 +318,39 @@ static void _dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 }
 
-static void _dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static void _dump_subtree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
-	_dump_node(QSP_ARG  enp);
+	_dump_node_with_shape(QSP_ARG  enp);
 
 	for(i=0;i<MAX_CHILDREN(enp);i++){
 		if( VN_CHILD(enp,i)!=NULL){
-			_DUMP_TREE(VN_CHILD(enp,i));
+			_dump_subtree(QSP_ARG  VN_CHILD(enp,i));
 		}
 	}
 }
 
 
-void dump_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _dump_tree_with_key(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( dump_flags & SHOW_KEY ){
 		print_shape_key(SINGLE_QSP_ARG);
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
-	_DUMP_TREE(enp);
+	_dump_subtree(QSP_ARG  enp);
 	dumping=0;
 }
 
-void dump_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
+void _dump_node_with_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( dump_flags & SHOW_KEY ){
 		print_shape_key(SINGLE_QSP_ARG);
 		dump_flags &= ~SHOW_KEY;	/* clear flag bit */
 	}
 	dumping=1;
-	_DUMP_NODE(enp);
+	_dump_node_basic(QSP_ARG  enp);
 	dumping=0;
 }
 

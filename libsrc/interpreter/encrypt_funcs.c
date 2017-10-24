@@ -298,7 +298,7 @@ static void encrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 	// coder.  (Although we are probably OK if we process chunks
 	// which are multiples of the blocksize.)
 
-	n_in = (long) fp_content_size(QSP_ARG  fp_in);
+	n_in = (long) fp_content_size(fp_in);
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
@@ -420,7 +420,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	// about, but for now we don't worry about
 	// them
 
-	n_in = (long) fp_content_size(QSP_ARG  fp_in);
+	n_in = (long) fp_content_size(fp_in);
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
@@ -530,7 +530,7 @@ COMMAND_FUNC( do_encrypt_string )
 	e = encrypt_string(s);
 
 	if( e != NULL ){
-		ASSIGN_VAR(vn,e);
+		assign_var(vn,e);
 		rls_str(e);
 	} else
 		WARN("Encryption failed.");
@@ -548,7 +548,7 @@ COMMAND_FUNC( do_decrypt_string )
 	d = decrypt_string(s);
 
 	if( d != NULL ){
-		ASSIGN_VAR(vn,d);
+		assign_var(vn,d);
 		rls_str(d);
 	} else
 		WARN("Decryption failed.");

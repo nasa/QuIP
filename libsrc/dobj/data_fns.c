@@ -69,9 +69,9 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
 
 	// We expect that the passed object is in the namespace.
-	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NULL );
+	assert( dobj_of(OBJ_NAME(dp)) != NULL );
 
-	dp2=dobj_of(QSP_ARG  newname);
+	dp2=dobj_of(newname);
 	if( dp2 != NULL ){
 		sprintf(ERROR_STRING,
 			"name \"%s\" is already in use in area \"%s\"",
@@ -81,12 +81,12 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 	}
 	/* BUG?  where is the object's node? */
 
-	DELETE_OBJ_ITEM(dp);	// remove from database, add to free list
+	del_dobj(dp);	// remove from database, add to free list
 	SET_OBJ_NAME(dp,savestr(newname));
 
 	/* now add this to the database */
 	/* We might have a memory leak, with the item node? */
-	assert( remove_from_item_free_list(QSP_ARG  dobj_itp, dp) == 0 );
+	assert( remove_from_item_free_list(dobj_itp, dp) == 0 );
 	ADD_OBJ_ITEM(dp);
 
 	return(0);
@@ -134,7 +134,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 
 	INIT_DIMSET_PTR(dsp)
 
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"make_obj_list:  object %s already exists!?",name);
 		WARN(ERROR_STRING);
@@ -159,7 +159,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		prec_p=prec_for_code(PREC_LI);
 	else {
 		prec_p=NULL;	// error1 doesn't return, but silence compiler.
-		ERROR1("Unexpected pointer size!?");
+		error1("Unexpected pointer size!?");
 	}
 
 	dp = make_dobj(QSP_ARG  name,dsp,prec_p);	/* specify prec_long because sizeof(long) == sizeof(dp) */

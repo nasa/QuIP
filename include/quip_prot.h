@@ -95,7 +95,13 @@ extern COMMAND_FUNC( do_timex_menu );
 extern COMMAND_FUNC( do_pipe_menu );
 extern void close_pipe(QSP_ARG_DECL  Pipe *pp);
 ITEM_INTERFACE_PROTOTYPES( Pipe, pipe )
-#define PICK_PIPE(pmpt)		pick_pipe(QSP_ARG  pmpt)
+
+#define pick_pipe(pmpt)		_pick_pipe(QSP_ARG  pmpt)
+#define init_pipes()		_init_pipes(SINGLE_QSP_ARG)
+#define pipe_of(name)		_pipe_of(QSP_ARG  name)
+#define new_pipe(name)		_new_pipe(QSP_ARG  name)
+#define del_pipe(name)		_del_pipe(QSP_ARG  name)
+
 #endif /* HAVE_POPEN */
 
 
@@ -160,6 +166,11 @@ ITEM_INIT_PROT(Query_Stack,query_stack)
 ITEM_LIST_PROT(Query_Stack,query_stack)
 ITEM_NEW_PROT(Query_Stack,query_stack)
 ITEM_PICK_PROT(Query_Stack,query_stack)
+
+#define init_query_stacks()	_init_query_stacks(SINGLE_QSP_ARG)
+#define query_stack_list()	_query_stack_list(SINGLE_QSP_ARG)
+#define new_query_stack(name)	_new_query_stack(QSP_ARG  name)
+#define pick_query_stack(p)	_pick_query_stack(QSP_ARG  p)
 
 extern Mouthful *new_mouthful(const char * text, const char *filename);
 
@@ -302,13 +313,17 @@ extern void show_menu_stack(SINGLE_QSP_ARG_DECL);
 extern Item_Type *ittyp_itp;
 extern Item_Type *macro_itp;
 
-extern FILE *tell_msgfile(SINGLE_QSP_ARG_DECL);
-extern FILE *tell_errfile(SINGLE_QSP_ARG_DECL);
+extern FILE *_tell_msgfile(SINGLE_QSP_ARG_DECL);
+extern FILE *_tell_errfile(SINGLE_QSP_ARG_DECL);
+
+#define tell_errfile()	_tell_errfile(SINGLE_QSP_ARG)
+#define tell_msgfile()	_tell_msgfile(SINGLE_QSP_ARG)
 
 extern Quip_Function *function_of(QSP_ARG_DECL  const char *name);
-extern void list_vars(SINGLE_QSP_ARG_DECL);
-extern Variable *get_var(QSP_ARG_DECL  const char *name);
-#define GET_VAR(s)	get_var(QSP_ARG  s);
+extern void _list_vars(SINGLE_QSP_ARG_DECL);
+extern Variable *_get_var(QSP_ARG_DECL  const char *name);
+#define list_vars()	_list_vars(SINGLE_QSP_ARG);
+#define get_var(s)	_get_var(QSP_ARG  s);
 
 
 // error.c
@@ -334,13 +349,22 @@ extern const char *get_date_string(SINGLE_QSP_ARG_DECL);
 // debug.c
 extern void debug_module(QSP_ARG_DECL  const char *s);
 extern debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name);
-extern void set_debug(QSP_ARG_DECL  Debug_Module *dbmp);
+extern void _set_debug(QSP_ARG_DECL  Debug_Module *dbmp);
+
 ITEM_INIT_PROT(Debug_Module,debug)
 ITEM_NEW_PROT(Debug_Module,debug)
 ITEM_CHECK_PROT(Debug_Module,debug)
 ITEM_GET_PROT(Debug_Module,debug)
 ITEM_PICK_PROT(Debug_Module,debug)
 ITEM_LIST_PROT(Debug_Module,debug)
+
+#define set_debug(dbmp)	_set_debug(QSP_ARG  dbmp)
+#define init_debugs()	_init_debugs(SINGLE_QSP_ARG)
+#define new_debug(name)	_new_debug(QSP_ARG  name)
+#define debug_of(name)	_debug_of(QSP_ARG  name)
+#define get_debug(name)	_get_debug(QSP_ARG  name)
+#define pick_debug(prompt)	_pick_debug(QSP_ARG  prompt)
+#define list_debugs(fp)	_list_debugs(QSP_ARG  fp)
 
 
 // rcfile.c
@@ -409,7 +433,12 @@ ITEM_NEW_PROT(Macro,macro)
 ITEM_CHECK_PROT(Macro,macro)
 ITEM_PICK_PROT(Macro,macro)
 ITEM_DEL_PROT(Macro,macro)
-#define PICK_MACRO(pmpt)	pick_macro(QSP_ARG  pmpt)
+
+#define init_macros()		_init_macros(SINGLE_QSP_ARG)
+#define new_macro(name)		_new_macro(QSP_ARG  name)
+#define macro_of(name)		_macro_of(QSP_ARG  name)
+#define pick_macro(pmpt)	_pick_macro(QSP_ARG  pmpt)
+#define del_macro(name)		_del_macro(QSP_ARG  name)
 
 
 // from query_stack.h
@@ -464,14 +493,14 @@ extern void list_builtin_menu(SINGLE_QSP_ARG_DECL);
 // variable.c
 extern void init_variables(SINGLE_QSP_ARG_DECL);
 extern void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val );
-extern Variable *assign_var(QSP_ARG_DECL  const char *name, const char *value);
-extern Variable *assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
-#define ASSIGN_VAR( s1 , s2 )	assign_var(QSP_ARG  s1 , s2 )
-#define ASSIGN_RESERVED_VAR( s1 , s2 )	assign_reserved_var(QSP_ARG  s1 , s2 )
+extern Variable *_assign_var(QSP_ARG_DECL  const char *name, const char *value);
+extern Variable *_assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
+#define assign_var( s1 , s2 )	_assign_var(QSP_ARG  s1 , s2 )
+#define assign_reserved_var( s1 , s2 )	_assign_reserved_var(QSP_ARG  s1 , s2 )
 ITEM_PICK_PROT(Variable,var_)
-#define VAR_OF(s)	var_of(QSP_ARG  s)
-extern Variable *var_of(QSP_ARG_DECL const char *name);
-#define PICK_VAR(s)	pick_var_(QSP_ARG  s)
+#define var_of(s)	_var_of(QSP_ARG  s)
+extern Variable *_var_of(QSP_ARG_DECL const char *name);
+#define pick_var(s)	_pick_var_(QSP_ARG  s)
 
 
 // hash.c
@@ -530,12 +559,12 @@ extern COMMAND_FUNC(do_show_prompt);
 extern void report_mutex_error(QSP_ARG_DECL  int status, const char *whence);
 #endif // THREAD_SAFE_QUERY
 
-extern Data_Obj *	pick_obj(QSP_ARG_DECL const char *pmpt);
-#define PICK_OBJ(pmpt)		pick_obj(QSP_ARG   pmpt)
+extern Data_Obj *	_pick_obj(QSP_ARG_DECL const char *pmpt);
+#define pick_obj(pmpt)		_pick_obj(QSP_ARG   pmpt)
 
-#define VWR_OF( s )	vwr_of(QSP_ARG  s )
-#define GET_VWR( s )	get_vwr(QSP_ARG  s )
-#define PICK_VWR( s )	pick_vwr(QSP_ARG  s )
+#define vwr_of( s )	_vwr_of(QSP_ARG  s )
+#define get_vwr( s )	_get_vwr(QSP_ARG  s )
+#define pick_vwr( s )	_pick_vwr(QSP_ARG  s )
 
 // BUG this should be per-qsp
 extern int quip_verbose;

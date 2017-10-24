@@ -103,7 +103,7 @@ static COMMAND_FUNC( do_dump_tree )
 	enp = find_node_by_number(QSP_ARG  n);
 	if( enp == NULL ) return;
 
-	DUMP_TREE(enp);
+	dump_tree(enp);
 }
 
 static COMMAND_FUNC( do_unexport )
@@ -186,7 +186,7 @@ static void node_info(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	save_flags = dump_flags;
 	dump_flags = SHOW_ALL;
-	DUMP_NODE(enp);
+	_dump_node_with_shape(QSP_ARG  enp);
 	dump_flags = save_flags;
 }
 
