@@ -1,10 +1,13 @@
 max_warnings 2
+#debug getbuf
 
 expressions
 #  debug scope
 #  debug typecast
-#  show_shp yes
+  debug resolver
+  show_shp yes
   read -
+
 
 float h_a[4],h_b[4],h_c[4];
 end
@@ -39,46 +42,61 @@ void testk(float *dest, float *src1, float *src2, float kkk)
 	*dest = *src1 > 5 ? *src2 : 66 ;
 }
 
+void test2( float *dest, float *src1, float *src2, float kkk)
+{
+	*dest = *src1 > kkk ? *src2 : log(*src1) ;
+}
+
 end
   #dump testk
   #Pause
   quit
 
-Define Run3 0
-Run_On_Host
-Run_On_GPU
-Fuse_Kernel
-Run_On_GPU
+Define Run3 1 subrt_name
+Run_On_Host $1
+Run_On_GPU $1
 .
 
-Define Run_On_Host 0
+Define Run_On_Host 1 subrt_name
 VSet h_a -5
-advise "Running subroutine on host..."
-expressions run testk h_a h_b h_c 5.1 quit
+advise "\n\nRunning subroutine $1 on host...\n\n"
+expressions run $1 h_a h_b h_c 5.1 quit
 Display h_a
 .
 
-Define Run_On_GPU 0
+Define Run_On_GPU 1 subrt_name
 VSet a -5
-advise "Running on GPU..."
-expressions run testk a b c 5.1 quit
+advise "\n\nRunning subroutine $1 on GPU...\n\n"
+expressions run $1 a b c 5.1 quit
 Display a
 .
 
-Define Fuse_Kernel 0
-advise "Fusing kernel..."
+Define Fuse_Kernel 1 subrt_name
+#advise "NOT Fusing kernel $1..."
+advise "Fusing kernel $1..."
 expressions
-  fuse testk
+  fuse $1
   quit
 .
 
-Run_On_Host
-Run_On_Host
-Pause
+#Pause
+Set n_repetitions 1
 
-Run3
-Run3
-Run3
+Define Test_Subrt 1 subrt_name
+advise "Test_Subrt $1 BEGIN"
+Run_On_Host $1
+Run_On_Host $1
+Set ctr 1
+repeat $n_repetitions
+  advise "ITERATION $ctr"
+  Run3 $1
+#  If $ctr==1 "Fuse_Kernel $1"
+  Increment ctr
+  end
+.
+
+Test_Subrt test2
+Test_Subrt testk
 
 exit
 

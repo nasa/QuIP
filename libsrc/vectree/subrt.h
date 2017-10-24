@@ -65,7 +65,8 @@ struct subrt {
 #define SR_PROTOTYPE	4
 #define SR_REFFUNC	8
 #define SR_COMPILED	16
-#define SR_FUSED	32	// for at least one platform device...
+// we had a FUSED flag, but makes no sense because can be fused independently
+// for different platorms & devices...
 
 #define IS_SCANNING(srp)	( SR_FLAGS(srp) & SR_SCANNING )
 #define IS_SCRIPT(srp)		( SR_FLAGS(srp) & SR_SCRIPT )
@@ -111,6 +112,7 @@ extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
 extern Subrt_Call *make_call_instance(Subrt *srp);
 extern void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
 extern void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp);
+extern void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp);
 
 #ifdef MAX_DEBUG
 extern void dump_resolvers(Vec_Expr_Node *enp);

@@ -120,20 +120,52 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 	return ret_enp;
 }
 
-static void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
+{
+	Platform_Device *pdp=NULL;
+
+	switch( VN_CODE(enp) ){
+		case T_STATIC_OBJ:
+			assert(VN_OBJ(enp)!=NULL);
+			pdp = OBJ_PFDEV( VN_OBJ(enp) );
+			break;
+		// no-ops
+		case T_LIT_DBL:
+		case T_LIT_INT:
+		case T_ARGLIST:
+		case T_REFERENCE:
+			break;
+		default:
+			sprintf(DEFAULT_ERROR_STRING,"Missing case for %s in pfdev_for_node!?",
+				node_desc(enp));
+			NWARN(DEFAULT_ERROR_STRING);
+			break;
+	}
+	return pdp;
+}
+
+void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Platform_Device *pdp=NULL;
 	Vec_Expr_Node *defining_enp;
 	int curdled=0;
 	int i;
 
+fprintf(stderr,"update_pfdev_from_children %s BEGIN\n",node_desc(enp));
+dump_tree(QSP_ARG  enp);
 	for(i=0;i<MAX_NODE_CHILDREN;i++){	// BUG - node should record number of children...
+fprintf(stderr,"update_pfdev_from_children %s checking child %d\n",node_desc(enp),i);
 		if( VN_CHILD(enp,i) == NULL ){
+fprintf(stderr,"update_pfdev_from_children %s no child %d\n",node_desc(enp),i);
 			i = MAX_NODE_CHILDREN;	// terminate loop
 			continue;
-		} else if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL ){
-			// no need for recursive call
-//			update_pfdev_from_children(QSP_ARG  VN_CHILD(enp,i) );
+		} else {
+			if( VN_PFDEV( VN_CHILD(enp,i) ) == NULL ){
+				// recursive call
+				update_pfdev_from_children(QSP_ARG  VN_CHILD(enp,i) );
+			}
+			// If the device is still null then it is probably a constant
+			// that works on any device...
 			if( pdp == NULL ){
 				pdp = VN_PFDEV( VN_CHILD(enp,i) );
 				defining_enp = VN_CHILD(enp,i);
@@ -146,9 +178,21 @@ static void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			}
 		}
 	}
-	if( curdled || pdp==NULL ) return;
+	// Now handle special cases
+	if( pdp == NULL ){
+		pdp = pfdev_for_node(enp);
+	}
+
+	// Some nodes have no children, and constant nodes have no associated device???
+	if( curdled /* || pdp==NULL */ ){
+fprintf(stderr,"update_pfdev_from_children %s FAILED:  curdled = %d   pdp = 0x%lx\n",
+node_desc(enp),curdled,(long)(pdp));
+		return;
+	}
+fprintf(stderr,"update_pfdev_from_children %s:  setting to %s\n",node_desc(enp),
+pdp==NULL?"(null)":PFDEV_NAME(pdp));
 	SET_VN_PFDEV(enp,pdp);
-}
+} // update_pfdev_from_children
 
 static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {

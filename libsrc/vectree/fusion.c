@@ -430,6 +430,14 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 		return;
 	}
 
+	// Make sure that this one hasn't already been fused...
+	kp = find_fused_kernel(QSP_ARG  srp, curr_pdp);
+	if( kp != NULL ){
+		sprintf(ERROR_STRING,"fuse_subrt:  Subroutine %s has already been fused!?",SR_NAME(srp));
+		WARN(ERROR_STRING);
+		return;
+	}
+
 	// The subrt args determine the kernel args...
 	sbp = new_stringbuf();
 	assert(sbp!=NULL);

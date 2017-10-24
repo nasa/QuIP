@@ -2977,7 +2977,7 @@ Run_Info * setup_subrt_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 	 * What is the expected context for early_calltime_resolve???
 	 */
 
-	EARLY_CALLTIME_RESOLVE(scp,dst_dp);
+	early_calltime_resolve(QSP_ARG  scp,dst_dp);
 
 	/* BUG We'd like to pop the context of any calling subrts here, but it is tricky:
 	 * We need to have the old context so we can find the arg values...  but we want
@@ -3053,9 +3053,13 @@ void run_subrt_immed(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 	run_subrt(QSP_ARG  scp,dst_dp);
 }
 
-static Platform_Device *pfdev_for_call(Subrt_Call *scp)
+static Platform_Device *pfdev_for_call(QSP_ARG_DECL  Subrt_Call *scp)
 {
 	// Normally, we determine this from the arg tree...
+	if( VN_PFDEV( SC_ARG_VALS(scp) ) == NULL ){
+		// try to figure it out
+		update_pfdev_from_children(QSP_ARG  SC_ARG_VALS(scp));
+	}
 	if( VN_PFDEV( SC_ARG_VALS(scp) ) == NULL ){
 		fprintf(stderr,"Arg values do not have platform set!?\n");
 		return NULL;
@@ -3081,7 +3085,7 @@ void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 
 	// Has this subroutine been "fused" (compiled)?
 	// Need to determine the platform...
-	pdp = pfdev_for_call(scp);
+	pdp = pfdev_for_call(QSP_ARG  scp);
 	assert(pdp!=NULL);
 
 	if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
@@ -3308,7 +3312,7 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 					NODE_ERROR(enp);
 					WARN("LHS and RHS are both unknown shape!?");
 				} else {
-					RESOLVE_TREE(enp,NULL);
+					resolve_tree(QSP_ARG  enp,NULL);
 					DUMP_TREE(enp);
 				}
 			}
@@ -4894,7 +4898,7 @@ Data_Obj *eval_obj_ref(QSP_ARG_DECL Vec_Expr_Node *enp)
 	switch(VN_CODE(enp)){
 		case T_EQUIVALENCE:		/* eval_obj_ref() */
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
-				RESOLVE_TREE(enp,NULL);
+				resolve_tree(QSP_ARG  enp,NULL);
 			}
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				NODE_ERROR(enp);
@@ -4986,7 +4990,7 @@ DUMP_TREE(enp);
 				/*
 				resolve_one_uk_node(VN_CHILD(enp,0));
 				*/
-				RESOLVE_TREE(VN_CHILD(enp,0),NULL);
+				resolve_tree(QSP_ARG  VN_CHILD(enp,0),NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"eval_obj_ref:  after last ditch attempt at runtime resolution of %s",node_desc(VN_CHILD(enp,0)));
@@ -5957,6 +5961,9 @@ Data_Obj *eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 				 * the shape at this node!
 				 */
 				assert( VN_SHAPE(enp) != NULL );
+if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
+dump_tree(QSP_ARG  enp);
+}
 				assert( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) );
 
 				dst_dp=make_local_dobj(QSP_ARG   SHP_TYPE_DIMS(VN_SHAPE(enp)),
@@ -7323,7 +7330,7 @@ static void eval_assignment(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			UPDATE_TREE_SHAPE(VN_CHILD(enp,1));
 		if( UNKNOWN_SHAPE(VN_SHAPE(enp)) &&
 				! UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
-			RESOLVE_TREE(enp,NULL);
+			resolve_tree(QSP_ARG  enp,NULL);
 		}
 	}
 
@@ -7338,7 +7345,7 @@ DUMP_TREE(enp);
 		/*
 		resolve_one_uk_node(VN_CHILD(enp,0));
 		*/
-		RESOLVE_TREE(VN_CHILD(enp,0),NULL);
+		resolve_tree(QSP_ARG  VN_CHILD(enp,0),NULL);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
@@ -7355,7 +7362,7 @@ sprintf(ERROR_STRING,"eval_assignment:  last ditch attempt at runtime resolution
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		RESOLVE_TREE(VN_CHILD(enp,1),NULL);
+		resolve_tree(QSP_ARG  VN_CHILD(enp,1),NULL);
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"eval_assignment:  after last ditch attempt at runtime resolution of RHS %s:",node_desc(VN_CHILD(enp,1)));
@@ -7462,7 +7469,7 @@ sprintf(ERROR_STRING,"eval_work_tree:  attemping to runtime resolution of %s",no
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		RESOLVE_TREE(enp,NULL);
+		resolve_tree(QSP_ARG  enp,NULL);
 	}
 
 	/* Where should we put this? */
@@ -7616,7 +7623,7 @@ advise(ERROR_STRING);
 				 */
 				copy_node_shape( PTR_DECL_VN(ID_PTR(idp)),uk_shape(VN_PREC(VN_CHILD(enp,0))));
 				if( !UNKNOWN_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) )
-					RESOLVE_POINTER(VN_CHILD(enp,0),VN_SHAPE(VN_CHILD(enp,1)));
+					resolve_pointer(QSP_ARG  VN_CHILD(enp,0),VN_SHAPE(VN_CHILD(enp,1)));
 			}
 			  else {
 				assert( AERROR("eval_work_tree:  rhs is neither ptr nor reference") );

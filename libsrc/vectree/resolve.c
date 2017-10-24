@@ -1029,13 +1029,11 @@ DUMP_SUBRT(SC_SUBRT(scp));
 	lp = get_uk_list(QSP_ARG  SR_BODY(SC_SUBRT(scp)));
 	if( lp == NULL ){
 #ifdef QUIP_DEBUG
-/*
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"early_calltime_resolve %s:  no UK nodes, returning",SR_NAME(SC_SUBRT(scp)));
 ADVISE(ERROR_STRING);
 DUMP_TREE(SR_BODY(SC_SUBRT(scp)));
 }
-*/
 #endif /* QUIP_DEBUG */
 		return;
 	}
