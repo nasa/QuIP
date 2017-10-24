@@ -24,7 +24,7 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,name##_set_value_from_input);	\
 	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
 	SET_PREC_IS_NUMERIC_FUNC(prec_p,name##_is_numeric);	\
-	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar);	\
+	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar_obj);	\
 	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,name##_extract_scalar);	\
 	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,cast_##name##_to_double);	\
 	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,cast_##name##_from_double);	\
@@ -55,7 +55,7 @@ Precision *get_prec(QSP_ARG_DECL  const char *name)
 
 #define DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)						\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 assert( AERROR(#stem"_set_value_from_input should never be called, not a machine precision!?") );\
 }
@@ -63,9 +63,9 @@ assert( AERROR(#stem"_set_value_from_input should never be called, not a machine
 // BUG need special case for bitmap!
 // Floating point values aren't signed...
 
-#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
@@ -76,18 +76,21 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 												\
 	if( val < type_min || val > type_max ){							\
 		sprintf(ERROR_STRING,								\
-			"Truncation error converting %s to %s (%s)",				\
-			#read_type,#stem,#type);						\
+			"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",	\
+			#stem,#read_type,#stem,#type);						\
 		WARN(ERROR_STRING);								\
+		sprintf(ERROR_STRING,"val = %ld, type_min = %ld, type_max = %ld",		\
+			(long)val,(long)type_min,(long)type_max);				\
+		advise(ERROR_STRING);								\
 	}											\
 												\
 	if( vp != NULL )									\
 		* ((type *)vp) = (type) val;							\
 }
 
-#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
@@ -97,7 +100,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
 	if( val < (-type_max) || val > type_max ){						\
-		sprintf(ERROR_STRING,"Truncation error converting %s to %s (%s)",#read_type,#stem,#type);		\
+		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#stem,#read_type,#stem,#type);		\
 		WARN(ERROR_STRING);								\
 	}											\
 												\
@@ -110,19 +113,19 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 		* ((type *)vp) = (type) val;							\
 }
 
-DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,"real data",next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
-DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,"integer data",next_input_int_with_format,MIN_BYTE,MAX_BYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,"integer data",next_input_int_with_format,MIN_SHORT,MAX_SHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int32,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,next_input_int_with_format,MIN_BYTE,MAX_BYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,next_input_int_with_format,MIN_SHORT,MAX_SHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,next_input_int_with_format,MIN_INT32,MAX_INT32)
 // This one generates warnings when building for iOS?
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int64,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,next_input_int_with_format,MIN_INT64,MAX_INT64)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,"integer data",next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,"integer data",next_input_int_with_format,MIN_USHORT,MAX_USHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(uint32,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT32,MAX_UINT32)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(uint64,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT64,MAX_UINT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,next_input_int_with_format,MIN_USHORT,MAX_USHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,next_input_int_with_format,MIN_UINT32,MAX_UINT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,next_input_int_with_format,MIN_UINT64,MAX_UINT64)
 
 /////////////////////////////////
 
@@ -188,7 +191,7 @@ static int stem##_is_numeric(void)		\
 
 #define DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*((type *)OBJ_DATA_PTR(dp)) = svp->member ;					\
 	return 0;							\
@@ -196,7 +199,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -205,7 +208,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -216,7 +219,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))   ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -226,7 +229,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_BAD_ASSIGN_SCALAR_FUNC(stem)				\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	return -1;							\
 }
@@ -392,7 +395,7 @@ DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)
 
 ////////////////////////////////
 
-static int bit_assign_scalar(Data_Obj *dp,Scalar_Value *svp)
+static int bit_assign_scalar_obj(Data_Obj *dp,Scalar_Value *svp)
 {
 	if( svp->bitmap_scalar )
 		*( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) |= 1 << OBJ_BIT0(dp) ;
@@ -431,19 +434,19 @@ DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(bit)
 // The machine precisions
 DECLARE_REAL_SCALAR_FUNCS(byte,char,u_b)
 DECLARE_REAL_SCALAR_FUNCS(short,short,u_s)
-DECLARE_REAL_SCALAR_FUNCS(int32,int32_t,u_l)
-DECLARE_REAL_SCALAR_FUNCS(int64,int64_t,u_ll)
+DECLARE_REAL_SCALAR_FUNCS(int,int32_t,u_l)
+DECLARE_REAL_SCALAR_FUNCS(long,int64_t,u_ll)
 DECLARE_REAL_SCALAR_FUNCS(u_byte,u_char,u_ub)
 DECLARE_REAL_SCALAR_FUNCS(u_short,u_short,u_us)
 DECLARE_REAL_SCALAR_FUNCS(float,float,u_f)
 DECLARE_REAL_SCALAR_FUNCS(double,double,u_d)
 
 #ifdef BITMAP_WORD_IS_64_BITS
-DECLARE_REAL_SCALAR_FUNCS(uint32,uint32_t,u_ul)
-DECLARE_BITMAP_REAL_SCALAR_FUNCS(uint64,uint64_t,u_ull)
+DECLARE_REAL_SCALAR_FUNCS(u_int,uint32_t,u_ul)
+DECLARE_BITMAP_REAL_SCALAR_FUNCS(u_long,uint64_t,u_ull)
 #else // ! BITMAP_WORD_IS_64_BITS
-DECLARE_BITMAP_REAL_SCALAR_FUNCS(uint32,uint32_t,u_ul)
-DECLARE_REAL_SCALAR_FUNCS(uint64,uint64_t,u_ull)
+DECLARE_BITMAP_REAL_SCALAR_FUNCS(u_int,uint32_t,u_ul)
+DECLARE_REAL_SCALAR_FUNCS(u_long,uint64_t,u_ull)
 #endif // ! BITMAP_WORD_IS_64_BITS
 
 DECLARE_ALMOST_REAL_SCALAR_FUNCS(char,char,u_b)
@@ -490,10 +493,10 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 	INIT_PREC(u_byte,u_char,PREC_UBY)
 	INIT_PREC(short,short,PREC_IN)
 	INIT_PREC(u_short,u_short,PREC_UIN)
-	INIT_PREC(int32,int32_t,PREC_DI)
-	INIT_PREC(uint32,uint32_t,PREC_UDI)
-	INIT_PREC(int64,int64_t,PREC_LI)
-	INIT_PREC(uint64,uint64_t,PREC_ULI)
+	INIT_PREC(int,int32_t,PREC_DI)
+	INIT_PREC(u_int,uint32_t,PREC_UDI)
+	INIT_PREC(long,int64_t,PREC_LI)
+	INIT_PREC(u_long,uint64_t,PREC_ULI)
 	INIT_PREC(float,float,PREC_SP)
 	INIT_PREC(double,double,PREC_DP)
 
