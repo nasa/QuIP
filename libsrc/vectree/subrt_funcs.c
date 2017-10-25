@@ -151,12 +151,8 @@ void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	int curdled=0;
 	int i;
 
-fprintf(stderr,"update_pfdev_from_children %s BEGIN\n",node_desc(enp));
-dump_tree(enp);
 	for(i=0;i<MAX_NODE_CHILDREN;i++){	// BUG - node should record number of children...
-fprintf(stderr,"update_pfdev_from_children %s checking child %d\n",node_desc(enp),i);
 		if( VN_CHILD(enp,i) == NULL ){
-fprintf(stderr,"update_pfdev_from_children %s no child %d\n",node_desc(enp),i);
 			i = MAX_NODE_CHILDREN;	// terminate loop
 			continue;
 		} else {
@@ -188,12 +184,8 @@ fprintf(stderr,"update_pfdev_from_children %s no child %d\n",node_desc(enp),i);
 
 	// Some nodes have no children, and constant nodes have no associated device???
 	if( curdled /* || pdp==NULL */ ){
-fprintf(stderr,"update_pfdev_from_children %s FAILED:  curdled = %d   pdp = 0x%lx\n",
-node_desc(enp),curdled,(long)(pdp));
 		return;
 	}
-fprintf(stderr,"update_pfdev_from_children %s:  setting to %s\n",node_desc(enp),
-pdp==NULL?"(null)":PFDEV_NAME(pdp));
 	SET_VN_PFDEV(enp,pdp);
 } // update_pfdev_from_children
 
@@ -254,7 +246,7 @@ COMMAND_FUNC( do_run_subrt )
 	SET_SC_SHAPE(&sc,NULL);
 	SET_SC_CALL_VN(&sc,NULL);
 
-	run_subrt_immed(QSP_ARG  &sc,NULL);
+	run_subrt_immed(&sc,NULL);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 

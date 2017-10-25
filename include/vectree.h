@@ -225,8 +225,11 @@ extern void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body );
 extern COMMAND_FUNC( do_run_subrt );
 extern void _exec_subrt(QSP_ARG_DECL  Vec_Expr_Node *,Data_Obj *dst_dp);
 #define exec_subrt(enp,dp)		_exec_subrt(QSP_ARG enp,dp)
-extern void run_subrt(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
-extern void run_subrt_immed(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
+extern void _run_subrt(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
+extern void _run_subrt_immed(QSP_ARG_DECL  Subrt_Call *scp,Data_Obj *dst_dp);
+#define run_subrt(scp,dp)	_run_subrt(QSP_ARG  scp,dp)
+#define run_subrt_immed(scp,dp)	_run_subrt_immed(QSP_ARG  scp,dp)
+
 extern COMMAND_FUNC( do_dump_subrt );
 extern COMMAND_FUNC( do_opt_subrt );
 extern COMMAND_FUNC( do_fuse_kernel );
@@ -373,7 +376,7 @@ void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index);
 /* evaltree.c */
 
 extern void		note_assignment(Data_Obj *dp);
-extern Data_Obj *	make_local_dobj(QSP_ARG_DECL  Dimension_Set *,Precision *prec_p);
+extern Data_Obj *	_make_local_dobj(QSP_ARG_DECL  Dimension_Set *,Precision *prec_p, Platform_Device *pdp);
 extern int		zero_dp(QSP_ARG_DECL  Data_Obj *);
 extern Data_Obj *	mlab_reshape(QSP_ARG_DECL  Data_Obj *,Shape_Info *,const char *);
 extern void		_eval_immediate(QSP_ARG_DECL  Vec_Expr_Node *enp);
@@ -395,6 +398,7 @@ extern long		_eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *);
 extern double		_eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *);
 extern void		_eval_decl_tree(QSP_ARG_DECL  Vec_Expr_Node *);
 
+#define make_local_dobj(dsp,prec_p,pdp)	_make_local_dobj(QSP_ARG  dsp,prec_p,pdp)
 #define reeval_decl_stat(prec,enp,decl_flags)		_reeval_decl_stat(QSP_ARG  prec,enp,decl_flags)
 #define eval_immediate(enp)		_eval_immediate(QSP_ARG enp)
 #define get_set_ptr(enp)		_get_set_ptr(QSP_ARG enp)

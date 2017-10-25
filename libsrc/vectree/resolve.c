@@ -393,17 +393,8 @@ dump_tree(SR_BODY(srp));
 static void resolve_uk_nodes(QSP_ARG_DECL  List *lp)
 {
 	Node *np;
-int i=0;
 
 	assert(lp!=NULL);
-fprintf(stderr,"resolve_uk_nodes:  BEGIN list has %d elements\n",eltcount(lp));
-np=QLIST_HEAD(lp);
-while(np!=NULL){
-Vec_Expr_Node *enp;
-enp=(Vec_Expr_Node *)NODE_DATA(np);
-fprintf(stderr,"\t%d  %s\n",i++,node_desc(enp));
-np=NODE_NEXT(np);
-}
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
 		Vec_Expr_Node *enp;
@@ -1232,24 +1223,7 @@ DESCRIBE_SHAPE(shpp);
 	 * context.  We need to reinstate the context before reevaluating the declaration.
 	 * We do this by saving the identifier context in the declaration node.
 	 */
-/*
-strcpy(remember_name,OBJ_NAME(dp));
-sprintf(ERROR_STRING,"resolve_obj_id %s, old dp = 0x%lx",OBJ_NAME(dp),(u_long)dp);
-advise(ERROR_STRING);
-longlist(dp);
-*/
 	reeval_decl_stat(OBJ_PREC_PTR(dp),decl_enp,VN_DECL_FLAGS(decl_enp));
-/*
-dp = REF_OBJ(ID_REF(idp));
-dp=dobj_of(remember_name);
-if( dp == NULL ) {
-sprintf(ERROR_STRING,"resolve_obj_id:  missing object %s!?",remember_name);
-ERROR1(ERROR_STRING);
-}
-sprintf(ERROR_STRING,"resolve_obj_id %s, new dp = 0x%lx",OBJ_NAME(dp),(u_long)dp);
-advise(ERROR_STRING);
-longlist(dp);
-*/
 
 }
 

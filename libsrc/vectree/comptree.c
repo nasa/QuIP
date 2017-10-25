@@ -4588,6 +4588,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VV_S_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
+			// here the first child is a scalar expression?
+			// integer used for truth...
 			check_uk_child(enp,1);
 			check_uk_child(enp,2);
 			break;
@@ -4637,8 +4639,9 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_VS_VV_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
 			check_uk_child(enp,0);
-			check_uk_child(enp,1);
+			// index 1 is the scalar
 			check_uk_child(enp,2);
+			check_uk_child(enp,3);
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				/* BUG we copy the shape from one of the vector condition
@@ -4657,8 +4660,9 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 		case T_VV_VS_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
 			check_uk_child(enp,0);
+			check_uk_child(enp,1);
 			check_uk_child(enp,2);
-			check_uk_child(enp,3);
+			//check_uk_child(enp,3);	// the scalar???
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){

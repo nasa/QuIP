@@ -42,7 +42,7 @@ Framebuffer *create_framebuffer(QSP_ARG_DECL  const char *name, int width, int h
 	Framebuffer *fbp;
 	GLenum status;
 
-	fbp = new_glfb(QSP_ARG  name);
+	fbp = new_glfb(name);
 	if( fbp == NULL ) return NULL;
 
 	fbp->fb_width = width;

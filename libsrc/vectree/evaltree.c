@@ -862,7 +862,7 @@ static Data_Obj *map_subscripts(QSP_ARG_DECL  Data_Obj *src_dp, Data_Obj *index_
 	for(i=1;i<N_DIMENSIONS;i++)
 		SET_DIMENSION(dsp,i, OBJ_TYPE_DIM(index_dp,i) );	/* BUG need to do something better */
 
-	dst_dp=make_local_dobj(QSP_ARG  dsp,OBJ_PREC_PTR(src_dp));
+	dst_dp=make_local_dobj(dsp,OBJ_PREC_PTR(src_dp),OBJ_PFDEV(src_dp));
 
 	if( dst_dp == NULL )
 		return(dst_dp);
@@ -1338,7 +1338,7 @@ static void _eval_scalar(QSP_ARG_DECL Scalar_Value *svp, Vec_Expr_Node *enp, Pre
 	}
 }
 
-static Data_Obj *create_bitmap( QSP_ARG_DECL  Dimension_Set *src_dsp )
+static Data_Obj *create_bitmap( QSP_ARG_DECL  Dimension_Set *src_dsp, Platform_Device *pdp )
 {
 	Dimension_Set ds1, *dsp=(&ds1);
 	Data_Obj *bmdp;
@@ -1356,7 +1356,7 @@ static Data_Obj *create_bitmap( QSP_ARG_DECL  Dimension_Set *src_dsp )
 	 * Perhaps this is ok, it just wastes memory...
 	 */
 
-	bmdp = make_local_dobj(QSP_ARG  dsp,prec_for_code(PREC_BIT));
+	bmdp = make_local_dobj(dsp,prec_for_code(PREC_BIT), pdp);
 // This seems to be leaked!?
 	return(bmdp);
 }
@@ -1367,7 +1367,7 @@ static Data_Obj *dup_bitmap(QSP_ARG_DECL  Data_Obj *dp)
 
 	assert( ! UNKNOWN_SHAPE(OBJ_SHAPE(dp)) );
 
-	new_dp = create_bitmap(QSP_ARG  OBJ_TYPE_DIMS(dp) ) ;
+	new_dp = create_bitmap(QSP_ARG  OBJ_TYPE_DIMS(dp), OBJ_PFDEV(dp) ) ;
 	return new_dp;
 }
 
@@ -1419,7 +1419,7 @@ static Data_Obj *dup_bitmap2(QSP_ARG_DECL  Data_Obj *dp1, Data_Obj *dp2)
 	shpp = product_shape(OBJ_SHAPE(dp1),OBJ_SHAPE(dp2));
 	if( shpp == NULL ) return(NULL);
 
-	dp = create_bitmap(QSP_ARG  SHP_TYPE_DIMS(shpp) );
+	dp = create_bitmap(QSP_ARG  SHP_TYPE_DIMS(shpp), OBJ_PFDEV(dp1) );
 	return dp;
 }
 
@@ -1494,9 +1494,6 @@ static Data_Obj *_eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
 //fprintf(stderr,"eval_bitmap bool_and case 2  back from first recursive call to eval_bitmap...\n");
 				bm_dp2 = eval_bitmap(NULL,VN_CHILD(enp,1));
-//fprintf(stderr,"eval_bitmap bool_and case 2  back from second recursive call to eval_bitmap...\n");
-//longlist(QSP_ARG bm_dp1);
-//longlist(QSP_ARG bm_dp2);
 				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVAND) < 0 ){
 					node_error(enp);
 					WARN("Error evaluating bitmap");
@@ -1795,9 +1792,10 @@ static Data_Obj *_eval_typecast(QSP_ARG_DECL Vec_Expr_Node *enp, Data_Obj *dst_d
 			dp=eval_obj_exp(VN_CHILD(enp,0),NULL);
 			if( dp != NULL ){
 				if( dst_dp == NULL ){
-					dst_dp=make_local_dobj(QSP_ARG  
+					dst_dp=make_local_dobj(
 						SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
-						VN_PREC_PTR(enp));
+						VN_PREC_PTR(enp),
+						OBJ_PFDEV(dp));
 				}
 				if( c_convert(QSP_ARG  dst_dp,dp) < 0 ){
 					node_error(enp);
@@ -1832,16 +1830,15 @@ handle_it:
 			 * to a different precision
 			 */
 
-			tmp_dp=make_local_dobj(QSP_ARG  
-					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
-					SHP_PREC_PTR(VN_SHAPE(VN_CHILD(enp,0))) );
+			tmp_dp=make_local_dobj( SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
+					SHP_PREC_PTR(VN_SHAPE(VN_CHILD(enp,0))),
+					NULL );
 
 			eval_obj_assignment(tmp_dp,VN_CHILD(enp,0));
 
 			if( dst_dp == NULL ){
-				dst_dp=make_local_dobj(QSP_ARG  
-					SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
-					VN_PREC_PTR(enp));
+				dst_dp=make_local_dobj( SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
+					VN_PREC_PTR(enp), NULL );
 			}
 
 			if( c_convert(QSP_ARG  dst_dp,tmp_dp) < 0 ){
@@ -2081,7 +2078,7 @@ void _exec_subrt(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 	scp = runnable_subrt(QSP_ARG  enp);
 
 	if( scp != NULL ){
-		run_subrt(QSP_ARG  scp,dst_dp);
+		run_subrt(scp,dst_dp);
 	} else {
 		sprintf(ERROR_STRING,"subroutine is not runnable!?");
 		WARN(ERROR_STRING);
@@ -2315,8 +2312,6 @@ static int _parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_
 
 	eval_enp = enp;
 
-fprintf(stderr,"parse_script_args BEGIN  index = %d   max_args = %d\n",index,max_args);
-dump_tree(enp);
 	switch(VN_CODE(enp)){
 		case T_DEREFERENCE:				/* parse_script_args */
 			dp = eval_obj_ref(enp);
@@ -2627,6 +2622,14 @@ static void _eval_print_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 	eval_enp = enp;
 
 	switch(VN_CODE(enp)){
+		case T_SCALAR_VAR:			/* eval_print_stat */
+			idp = get_id(VN_STRING(enp));
+			assert(idp!=NULL);
+			if( IS_FLOATING_PREC_CODE(PREC_CODE(ID_PREC_PTR(idp))) )
+				goto print_float;
+			else
+				goto print_integer;
+			break;
 		case T_CALLFUNC:			/* eval_print_stat */
 			if( ! SCALAR_SHAPE(VN_SHAPE(enp)) ){
 				prt_msg("");
@@ -3013,7 +3016,6 @@ Run_Info * setup_subrt_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 
 call_err:
 
-fprintf(stderr,"call_err!\n");
 	/* now we're back , restore the context of the caller , if any */
 	if( rip->ri_prev_cpp != NULL ){
 		restore_previous(rip->ri_prev_cpp);
@@ -3046,10 +3048,10 @@ void wrapup_context(QSP_ARG_DECL  Run_Info *rip)
 // We need to push the parser data BEFORE calling this so that we can
 // get the args...
 
-void run_subrt_immed(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
+void _run_subrt_immed(QSP_ARG_DECL  Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	delete_local_objs(SINGLE_QSP_ARG);	// run_subrt_immed
-	run_subrt(QSP_ARG  scp,dst_dp);
+	run_subrt(scp,dst_dp);
 }
 
 static Platform_Device *pfdev_for_call(QSP_ARG_DECL  Subrt_Call *scp)
@@ -3068,7 +3070,7 @@ static Platform_Device *pfdev_for_call(QSP_ARG_DECL  Subrt_Call *scp)
 	return VN_PFDEV( SC_ARG_VALS(scp) );
 }
 
-void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
+void _run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	Run_Info *rip;
 	Subrt *srp;
@@ -3086,6 +3088,7 @@ void run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 	// Need to determine the platform...
 	pdp = pfdev_for_call(QSP_ARG  scp);
 	assert(pdp!=NULL);
+	push_pfdev(pdp);
 
 	if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
 		run_fused_kernel(QSP_ARG  scp,kp,pdp);
@@ -3111,6 +3114,7 @@ WARN(ERROR_STRING);
 	}
 
 	wrapup_call(QSP_ARG  rip);
+	pop_pfdev();
 }
 
 /* A utility routine used when a declaration item has null
@@ -3975,7 +3979,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				SET_DIMENSION(scalar_dsp,3,1);
 				SET_DIMENSION(scalar_dsp,4,1);
 			}
-			dp=make_local_dobj(QSP_ARG  scalar_dsp,SR_PREC_PTR(SC_SUBRT(scp)));
+			dp=make_local_dobj(scalar_dsp,SR_PREC_PTR(SC_SUBRT(scp)),NULL);
 			exec_subrt(enp,dp);
 			/* get the scalar value */
 			lval = get_long_scalar_value(dp);
@@ -4056,7 +4060,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,
 	"eval_int_exp:  Object %s is not a scalar!?",OBJ_NAME(dp));
 				WARN(ERROR_STRING);
-				longlist(dp);
+				longlist(dp);	// after an error message
 				return 0;
 			}
 			/* has the object been set? */
@@ -4494,7 +4498,7 @@ find_obj:
 				Dimension_Set ds1, *dsp=(&ds1);
 
 				STRING_DIMENSION(dsp,(dimension_t)strlen(VN_STRING(enp))+1);
-				dp=make_local_dobj(QSP_ARG  dsp,prec_for_code(PREC_STR));
+				dp=make_local_dobj(dsp,prec_for_code(PREC_STR),NULL);
 				if( dp == NULL ){
 					WARN("unable to make temporary object");
 					return(NULL);
@@ -4939,7 +4943,7 @@ dump_tree(enp);
 			 * This is rather inefficient, but we don't expect to do it often
 			 * or for large objects.
 			 */
-			dp=make_local_dobj(QSP_ARG   SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))), VN_PREC_PTR(enp));
+			dp=make_local_dobj(SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))), VN_PREC_PTR(enp),NULL);
 			assign_obj_from_list(dp,VN_CHILD(enp,0),0);
 			//SET_OBJ_FLAG_BITS(dp, DT_ASSIGNED);
 			note_assignment(dp);
@@ -5381,13 +5385,13 @@ double _eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			
 		case T_MINVAL:
 			dp2=eval_obj_exp(VN_CHILD(enp,0),NULL);
-			if( dp2 == NULL ){
+if( dp2 == NULL ){
 node_error(VN_CHILD(enp,0));
 WARN("error evaluating arg to min");
 return(0.0);
 }
 			/* make a scalar object to hold the answer */
-			dp=make_local_dobj(QSP_ARG  dsp,OBJ_PREC_PTR(dp2));
+			dp=make_local_dobj(dsp,OBJ_PREC_PTR(dp2),OBJ_PFDEV(dp2));
 			clear_obj_args(oap);
 			setvarg2(oap,dp,dp2);
 			//vminv(oap);
@@ -5408,7 +5412,7 @@ return(0.0);
 			/* BUG at least make sure that it's not void... */
 
 			/* make a scalar object to hold the return value... */
-			dp=make_local_dobj(QSP_ARG  dsp,SR_PREC_PTR(SC_SUBRT(scp)));
+			dp=make_local_dobj(dsp,SR_PREC_PTR(SC_SUBRT(scp)),NULL);
 			exec_subrt(enp,dp);
 			/* get the scalar value */
 			dval = get_dbl_scalar_value(dp);
@@ -5783,9 +5787,10 @@ obj_flt_exp:
 #define INSURE_DESTINATION						\
 									\
 			if( dst_dp == NULL ){				\
-				dst_dp=make_local_dobj(QSP_ARG 		\
+				dst_dp=make_local_dobj(			\
 					SHP_TYPE_DIMS(VN_SHAPE(enp)),	\
-					SHP_PREC_PTR(VN_SHAPE(enp)));		\
+					SHP_PREC_PTR(VN_SHAPE(enp)),	\
+					NULL);		\
 			}
 
 
@@ -5857,9 +5862,10 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 
 			/* BUG? do we need to make sure that dp is not dst_dp? */
 			if( dst_dp == NULL ){
-				dst_dp=make_local_dobj(QSP_ARG  
+				dst_dp=make_local_dobj(
 					SHP_TYPE_DIMS(VN_SHAPE(enp)),
-					SHP_PREC_PTR(VN_SHAPE(enp)));
+					SHP_PREC_PTR(VN_SHAPE(enp)),
+					OBJ_PFDEV(dp));
 			}
 			wrap(QSP_ARG  dst_dp,dp);
 			return(dst_dp);
@@ -5965,8 +5971,9 @@ dump_tree(enp);
 }
 				assert( ! UNKNOWN_SHAPE(VN_SHAPE(enp)) );
 
-				dst_dp=make_local_dobj(QSP_ARG   SHP_TYPE_DIMS(VN_SHAPE(enp)),
-							SHP_PREC_PTR(VN_SHAPE(enp)));
+				dst_dp=make_local_dobj(SHP_TYPE_DIMS(VN_SHAPE(enp)),
+							SHP_PREC_PTR(VN_SHAPE(enp)),
+							NULL);
 				assert( dst_dp != NULL );
 
 				eval_obj_assignment(dst_dp,enp);
@@ -6139,7 +6146,8 @@ dump_tree(enp);
 			if( s == NULL ) return(NULL);
 			// Where do we get the destination string?
 			// We need a temp object!?
-			dp=make_local_dobj(QSP_ARG   SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))), VN_PREC_PTR(enp));
+			dp=make_local_dobj(SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))),
+				VN_PREC_PTR(enp), NULL);
 			(*FUNC_STRV_FUNC(VN_FUNC_PTR(enp)))(OBJ_DATA_PTR(dp),s);
 			return s;
 #endif // FOOBAR
@@ -6383,14 +6391,18 @@ dump_tree(enp);
 
 
 Data_Obj *
-make_local_dobj(QSP_ARG_DECL  Dimension_Set *dsp,Precision *prec_p)
+_make_local_dobj(QSP_ARG_DECL  Dimension_Set *dsp,Precision *prec_p, Platform_Device *pdp)
 {
 	Data_Obj *dp;
 	Node *np;
 	const char *s;
 
 	s=localname();	// localname() uses savestr, so we have to free or else there will be a leak
+
+	if( pdp != NULL ) push_pfdev(pdp);
 	dp=make_dobj(QSP_ARG  s,dsp,prec_p);
+	if( pdp != NULL ) pop_pfdev();
+
 	rls_str(s);
 
 	//if( dp == NULL ) return(dp);	// does this ever happen?
@@ -6922,7 +6934,7 @@ dump_tree(enp);
 				// done below
 				//note_assignment(dst_dp);
 			} else {
-				dp1=make_local_dobj(QSP_ARG  
+				dp1=make_local_dobj(
 					OBJ_SHAPE(dst_dp).si_type_dimset,
 					OBJ_PREC_PTR(ifp->if_dp));
 				read_object_from_file(QSP_ARG  dp1,ifp);

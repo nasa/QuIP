@@ -383,7 +383,9 @@ ITEM_INTERFACE_PROTOTYPES( Platform_Device, pfdev )
 #define pfdev_list()		_pfdev_list(SINGLE_QSP_ARG)
 #define list_pfdevs(fp)		_list_pfdevs(QSP_ARG  fp)
 
+// BUG these should be per-thread
 extern Platform_Device *curr_pdp;
+extern List *pdp_stack;
 
 extern void list_pf_devs(QSP_ARG_DECL  platform_type t);
 
@@ -426,10 +428,12 @@ struct cuda_stream_info {
 
 ITEM_INTERFACE_PROTOTYPES( Platform_Stream , stream )
 
-extern void select_pfdev(QSP_ARG_DECL  Platform_Device *pdp);
+extern void _select_pfdev(QSP_ARG_DECL  Platform_Device *pdp);
 extern void insure_obj_pfdev(QSP_ARG_DECL  Data_Obj *dp, Platform_Device *pdp);
 extern void gen_obj_upload(QSP_ARG_DECL  Data_Obj *dpto, Data_Obj *dpfr);
 extern void gen_obj_dnload(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
+
+#define select_pfdev(pdp)	_select_pfdev(QSP_ARG  pdp)
 
 extern Compute_Platform *creat_platform(QSP_ARG_DECL  const char *name, platform_type t);
 extern void delete_platform(QSP_ARG_DECL  Compute_Platform *cpp);
@@ -449,6 +453,12 @@ extern void cu2_init_platform(SINGLE_QSP_ARG_DECL);
 }
 #endif // __cplusplus
 #endif // HAVE_CUDA
+
+extern void _push_pfdev(QSP_ARG_DECL  Platform_Device *pdp);
+extern Platform_Device * _pop_pfdev(SINGLE_QSP_ARG_DECL);
+
+#define push_pfdev(pdp)	_push_pfdev(QSP_ARG  pdp)
+#define pop_pfdev()	_pop_pfdev(SINGLE_QSP_ARG)
 
 extern Item_Context *create_pfdev_context(QSP_ARG_DECL  const char *name);
 extern void push_pfdev_context(QSP_ARG_DECL  Item_Context *icp);

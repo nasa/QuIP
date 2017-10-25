@@ -4,12 +4,15 @@ max_warnings 2
 expressions
 #  debug scope
 #  debug typecast
-  debug resolver
+#  debug resolver
   show_shp yes
   read -
 
 
 float h_a[4],h_b[4],h_c[4];
+h_a=ramp(0,1,0);
+h_b=ramp(0,10,0);
+h_c=ramp(10,1,0);
 end
   quit
 
@@ -44,6 +47,8 @@ void testk(float *dest, float *src1, float *src2, float kkk)
 
 void test2( float *dest, float *src1, float *src2, float kkk)
 {
+	display(*src1);
+	print("kkk = ",kkk);
 	*dest = *src1 > kkk ? *src2 : log(*src1) ;
 }
 

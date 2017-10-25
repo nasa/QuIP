@@ -6,7 +6,9 @@
 #include "ocl_platform.h"
 
 
+// BUG not thread-safe / add to query_stack!
 Platform_Device *curr_pdp=NULL;
+List *pdp_stack=NULL;
 
 static COMMAND_FUNC( do_list_pfs )
 {
@@ -50,7 +52,7 @@ static COMMAND_FUNC( do_list_all_pfdevs )
 	}
 }
 
-void select_pfdev( QSP_ARG_DECL  Platform_Device *pdp )
+void _select_pfdev( QSP_ARG_DECL  Platform_Device *pdp )
 {
 	curr_pdp = pdp;	// select_pfdev
 
@@ -58,7 +60,44 @@ void select_pfdev( QSP_ARG_DECL  Platform_Device *pdp )
 	set_data_area( PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX) );
 }
 
-static Platform_Device *pick_platform_device(SINGLE_QSP_ARG_DECL)
+void _push_pfdev( QSP_ARG_DECL  Platform_Device *pdp )
+{
+
+	if( curr_pdp != NULL ){
+		Node *np;
+
+		np = mk_node(pdp);
+		if( pdp_stack == NULL )
+			pdp_stack = new_list();
+		addHead(pdp_stack,np);
+	}
+	select_pfdev(pdp);
+}
+
+Platform_Device * _pop_pfdev(SINGLE_QSP_ARG_DECL)
+{
+	Node *np;
+	Platform_Device *pdp;
+
+	if( curr_pdp == NULL ){
+		WARN("pop_pfdev:  nothing to pop (no current device)!?");
+		return NULL;
+	}
+	curr_pdp = NULL;
+	if( pdp_stack == NULL ) return NULL;
+	if( QLIST_HEAD(pdp_stack) == NULL ) return NULL;
+
+	np = remHead(pdp_stack);
+	pdp = NODE_DATA(np);
+	rls_node(np);
+	select_pfdev(pdp);
+	return pdp;
+}
+
+
+#define pick_platform_device()	_pick_platform_device(SINGLE_QSP_ARG)
+
+static Platform_Device *_pick_platform_device(SINGLE_QSP_ARG_DECL)
 {
 	Platform_Device *pdp;
 	Compute_Platform *cpp;
@@ -84,9 +123,9 @@ static COMMAND_FUNC( do_select_pfdev )
 {
 	Platform_Device *pdp;
 
-	pdp = pick_platform_device(SINGLE_QSP_ARG);
+	pdp = pick_platform_device();
 	if( pdp == NULL ) return;
-	select_pfdev(QSP_ARG  pdp);
+	select_pfdev(pdp);
 }
 
 static COMMAND_FUNC( do_obj_dnload )
@@ -194,7 +233,7 @@ static COMMAND_FUNC(do_set_dev_type)
 	sprintf(ERROR_STRING,"Using %s device %s.",dev_type_names[i],PFDEV_NAME(pdp));
 	advise(ERROR_STRING);
 
-	select_pfdev(QSP_ARG  pdp);
+	select_pfdev(pdp);
 }
 
 // We call this if the user has not set DEFAULT_PLATFORM and DEFAULT_GPU in the enviroment...
@@ -221,7 +260,7 @@ static COMMAND_FUNC( do_pfdev_info )
 {
 	Platform_Device *pdp;
 
-	pdp = pick_platform_device(SINGLE_QSP_ARG);
+	pdp = pick_platform_device();
 	if( pdp == NULL ) return;
 
 	(* PF_DEVINFO_FN(PFDEV_PLATFORM(pdp)))(QSP_ARG  pdp);
@@ -240,6 +279,24 @@ static COMMAND_FUNC( do_pf_info )
 	(* PF_INFO_FN(cdp))(QSP_ARG  cdp);
 }
 
+static COMMAND_FUNC(do_push_pfdev)
+{
+	Platform_Device *pdp;
+
+	pdp = pick_platform_device();
+	if( pdp == NULL ) return;
+
+	push_pfdev( curr_pdp );
+}
+
+static COMMAND_FUNC(do_pop_pfdev)
+{
+	Platform_Device *pdp;
+
+	pdp = pop_pfdev();
+	if( pdp == NULL ) WARN("nothing popped!?");
+}
+
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(platform_menu,s,f,h)
 
@@ -252,6 +309,8 @@ ADD_CMD( list_devices,	do_list_pfdevs,		list devices for one platform )
 ADD_CMD( list_all,	do_list_all_pfdevs,	list all devices from all platforms )
 ADD_CMD( device_info,	do_pfdev_info,		print device information )
 ADD_CMD( select,	do_select_pfdev,	select platform/device )
+ADD_CMD( push_device,	do_push_pfdev,		select platform/device while remembering previous )
+ADD_CMD( pop_device,	do_pop_pfdev,		restore previous device )
 ADD_CMD( device_type,	do_set_dev_type,	use device of specified type )
 ADD_CMD( show,		do_show_pfdev,		show current default platform )
 ADD_CMD( upload,	do_obj_upload,		upload a data object to a device )
