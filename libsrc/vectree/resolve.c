@@ -1238,7 +1238,7 @@ sprintf(ERROR_STRING,"resolve_obj_id %s, old dp = 0x%lx",OBJ_NAME(dp),(u_long)dp
 advise(ERROR_STRING);
 longlist(dp);
 */
-	reeval_decl_stat(QSP_ARG  OBJ_PREC_PTR(dp),decl_enp,VN_DECL_FLAGS(decl_enp));
+	reeval_decl_stat(OBJ_PREC_PTR(dp),decl_enp,VN_DECL_FLAGS(decl_enp));
 /*
 dp = REF_OBJ(ID_REF(idp));
 dp=dobj_of(remember_name);

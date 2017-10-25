@@ -273,9 +273,9 @@ static int is_variable(Vec_Expr_Node *enp)
 
 /* This is a special case of check_uk_links */
 
-#define CHECK_UK_CHILD(enp,index)	check_uk_child(QSP_ARG  enp,index)
+#define check_uk_child(enp,index)	_check_uk_child(QSP_ARG  enp,index)
 
-static void check_uk_child(QSP_ARG_DECL  Vec_Expr_Node *enp,int index)
+static void _check_uk_child(QSP_ARG_DECL  Vec_Expr_Node *enp,int index)
 {
 	if( ( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! SCALAR_SHAPE(VN_CHILD_SHAPE(enp,index)) )
 			|| UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,index)) ){
@@ -2073,8 +2073,8 @@ static void remember_callfunc_node(Subrt *srp,Vec_Expr_Node *enp)
 
 static void _check_binop_links(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
-	CHECK_UK_CHILD(enp,0);
-	CHECK_UK_CHILD(enp,1);
+	check_uk_child(enp,0);
+	check_uk_child(enp,1);
 }
 
 static void scalarize(Shape_Info *shpp)
@@ -4556,7 +4556,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 //fprintf(stderr,"prelim_node_shape:  calling xform_from_bitmap #2\n");
 			xform_from_bitmap(VN_SHAPE(enp),VN_CHILD_PREC(enp,1));
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 			break;
 
 		case T_VS_B_CONDASS:				/* prelim_node_shape */
@@ -4566,8 +4566,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 #ifdef CONDASS_FOOBAR
 			/* copy the shape from the first (vector) node */
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,1));
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,1);
+			check_uk_child(enp,0);
+			check_uk_child(enp,1);
 			/* If the shape is unknown, but we have the bitmap, then copy from it */
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
@@ -4588,12 +4588,12 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VV_S_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
-			CHECK_UK_CHILD(enp,1);
-			CHECK_UK_CHILD(enp,2);
+			check_uk_child(enp,1);
+			check_uk_child(enp,2);
 			break;
 
 		case T_VS_S_CONDASS:				/* prelim_node_shape */
-			CHECK_UK_CHILD(enp,1);
+			check_uk_child(enp,1);
 			break;
 
 		case T_SS_S_CONDASS:				/* prelim_node_shape */
@@ -4601,9 +4601,9 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VV_B_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,1);
-			CHECK_UK_CHILD(enp,2);
+			check_uk_child(enp,0);
+			check_uk_child(enp,1);
+			check_uk_child(enp,2);
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) && ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
 				copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
@@ -4615,10 +4615,10 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VV_VV_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,1);
-			CHECK_UK_CHILD(enp,2);
-			CHECK_UK_CHILD(enp,3);
+			check_uk_child(enp,0);
+			check_uk_child(enp,1);
+			check_uk_child(enp,2);
+			check_uk_child(enp,3);
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				/* BUG we copy the shape from one of the vector condition
@@ -4636,9 +4636,9 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VS_VV_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,1);
-			CHECK_UK_CHILD(enp,2);
+			check_uk_child(enp,0);
+			check_uk_child(enp,1);
+			check_uk_child(enp,2);
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				/* BUG we copy the shape from one of the vector condition
@@ -4656,9 +4656,9 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VV_VS_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,2);
-			CHECK_UK_CHILD(enp,3);
+			check_uk_child(enp,0);
+			check_uk_child(enp,2);
+			check_uk_child(enp,3);
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
@@ -4670,8 +4670,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_VS_VS_CONDASS:				/* prelim_node_shape */
 			/* shape should already be assigned by get_mating_shapes */
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,2);
+			check_uk_child(enp,0);
+			check_uk_child(enp,2);
 
 			if( UNKNOWN_SHAPE(VN_SHAPE(enp)) ){
 				if( ! UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) ){
@@ -4699,7 +4699,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				SHP_COLS(VN_SHAPE(enp)) * 2);
 			SET_SHP_ROWS(VN_SHAPE(enp),
 				SHP_ROWS(VN_SHAPE(enp)) *2 );
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 #endif // FOOBAR
 			// We need to determine the enlargement factor
 			// during resolution...
@@ -4714,7 +4714,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				SHP_COLS(VN_SHAPE(enp)) / 2 );
 			SET_SHP_ROWS(VN_SHAPE(enp),
 				SHP_ROWS(VN_SHAPE(enp)) / 2 );
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 			break;
 #endif //FOOBAR
 
@@ -4888,7 +4888,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			auto_shape_flags(tmp_shpp);
 
 			copy_node_shape(enp,tmp_shpp);
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 			RELEASE_SHAPE_PTR(tmp_shpp)
 
 			break;
@@ -4899,7 +4899,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			/* This is the complex DFT */
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 			break;
 
 		case T_RDFT:		/* prelim_node_shape */
@@ -4925,7 +4925,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			}
 			copy_node_shape(enp,tmp_shpp);
 			RELEASE_SHAPE_PTR(tmp_shpp)
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 
 
 			break;
@@ -4954,7 +4954,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			}
 			copy_node_shape(enp,tmp_shpp);
 			RELEASE_SHAPE_PTR(tmp_shpp)
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 
 			break;
 
@@ -4964,7 +4964,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			assert( VN_CHILD_SHAPE(enp,0) != NULL );
 
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 
 			break;
 
@@ -4994,8 +4994,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			if( UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,0)) || UNKNOWN_SHAPE(VN_CHILD_SHAPE(enp,1)) ){
 				copy_node_shape(enp, uk_shape(SHP_PREC(VN_CHILD_SHAPE(enp,0))) );
-				CHECK_UK_CHILD(enp,0);
-				CHECK_UK_CHILD(enp,1);
+				check_uk_child(enp,0);
+				check_uk_child(enp,1);
 				return;
 			}
 
@@ -5009,8 +5009,8 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			RELEASE_SHAPE_PTR(tmp_shpp)
 			/* Shape is known so don't bother with this */
 			/*
-			CHECK_UK_CHILD(enp,0);
-			CHECK_UK_CHILD(enp,1);
+			check_uk_child(enp,0);
+			check_uk_child(enp,1);
 			*/
 			break;
 
@@ -5101,7 +5101,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 			}
 			*/
 
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 
 			break;		/* end T_RETURN case */
 
@@ -5321,7 +5321,7 @@ advise(ERROR_STRING);
 			if( VN_CHILD_SHAPE(enp,0) == NULL )
 				return;		/* an error */
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 
 			break;
 
@@ -5335,7 +5335,7 @@ advise(ERROR_STRING);
 			assert( SCALAR_SHAPE(VN_CHILD_SHAPE(enp,0)) );
 
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 
 			break;
 
@@ -5344,7 +5344,7 @@ advise(ERROR_STRING);
 				SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 			break;
 
 		case T_BITCOMP:
@@ -5354,7 +5354,7 @@ advise(ERROR_STRING);
 
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			if( VN_SHAPE(enp) != NULL )
-				CHECK_UK_CHILD(enp,0);
+				check_uk_child(enp,0);
 			break;
 
 		case T_MATH0_VFN:	/* prelim_node_shape */
@@ -5370,7 +5370,7 @@ advise(ERROR_STRING);
 				SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 
 			update_node_shape(enp);
-			CHECK_UK_CHILD(enp,0);
+			check_uk_child(enp,0);
 			break;
 
 		case T_MATH2_FN:			/* prelim_node_shape */

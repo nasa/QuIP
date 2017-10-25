@@ -94,42 +94,42 @@ debug_flag_t scope_debug=0;
 /* local prototypes needed because of recursion... */
 static void _eval_obj_assignment(QSP_ARG_DECL Data_Obj *,Vec_Expr_Node *enp);
 static int _eval_work_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp);
-static Data_Obj *create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
+static Data_Obj *_create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
 
 #define MAP_SUBSCRIPTS(src_dp,index_dp,enp)		map_subscripts(QSP_ARG  src_dp,index_dp,enp)
-#define ASSIGN_OBJ_FROM_SCALAR(enp,dp,svp)		assign_obj_from_scalar(QSP_ARG  enp,dp,svp)
-#define EVAL_MIXED_LIST(enp)			eval_mixed_list(QSP_ARG  enp)
-#define EVAL_TYPECAST(enp,dst_dp)		eval_typecast(QSP_ARG  enp,dst_dp)
-#define EVAL_BITMAP(dst_dp,enp)		eval_bitmap(QSP_ARG  dst_dp,enp)
-#define EVAL_SUBSCRIPT1(dp,enp)		eval_subscript1(QSP_ARG  dp,enp)
-#define EXEC_REFFUNC(enp)	exec_reffunc(QSP_ARG  enp)
-#define FIND_CASE(enp,lval)	find_case(QSP_ARG  enp,lval)
+#define assign_obj_from_scalar(enp,dp,svp)		_assign_obj_from_scalar(QSP_ARG  enp,dp,svp)
+#define eval_mixed_list(enp)			_eval_mixed_list(QSP_ARG  enp)
+#define eval_typecast(enp,dst_dp)		_eval_typecast(QSP_ARG  enp,dst_dp)
+#define eval_bitmap(dst_dp,enp)		_eval_bitmap(QSP_ARG  dst_dp,enp)
+#define eval_subscript1(dp,enp)		_eval_subscript1(QSP_ARG  dp,enp)
+#define exec_reffunc(enp)	_exec_reffunc(QSP_ARG  enp)
+#define find_case(enp,lval)	_find_case(QSP_ARG  enp,lval)
 #define eval_work_tree(enp,dst_dp)		_eval_work_tree(QSP_ARG  enp,dst_dp)
-#define CREATE_LIST_LHS(enp)			create_list_lhs(QSP_ARG  enp)
+#define create_list_lhs(enp)			_create_list_lhs(QSP_ARG  enp)
 #define CREATE_MATRIX(enp,shpp)			create_matrix(QSP_ARG  enp,shpp)
 #define ASSIGN_ROW(dp,index,enp)		assign_row(QSP_ARG  dp,index,enp)
 #define ASSIGN_ELEMENT(dp,ri,ci,enp)		assign_element(QSP_ARG  dp,ri,ci,enp)
 #define MLAB_LHS(dp,enp)			mlab_lhs(QSP_ARG  dp,enp)
 #define MLAB_TARGET(dp,enp)			mlab_target(QSP_ARG  dp,enp)
-#define EVAL_OBJ_ID(enp)			eval_obj_id(QSP_ARG  enp)
-#define EVAL_REF_TREE(enp,dst_idp)		eval_ref_tree(QSP_ARG  enp,dst_idp)
+#define eval_obj_id(enp)			_eval_obj_id(QSP_ARG  enp)
+#define eval_ref_tree(enp,dst_idp)		_eval_ref_tree(QSP_ARG  enp,dst_idp)
 #define RUN_REFFUNC(srp,enp,dst_idp)		run_reffunc(QSP_ARG  srp,enp,dst_idp)
-#define EVAL_SCALAR(svp,enp,prec)		eval_scalar(QSP_ARG  svp,enp,prec)
-#define ASSIGN_SUBRT_ARGS(scp,arg_enp,val_enp,cpp)	assign_subrt_args(QSP_ARG  scp,arg_enp,val_enp,cpp)
-#define ASSIGN_PTR_ARG(arg_enp,val_enp,curr_cpp,prev_cpp)	assign_ptr_arg(QSP_ARG  arg_enp,val_enp,curr_cpp,prev_cpp)
-#define ASSIGN_OBJ_FROM_LIST(dp,enp,offset)	assign_obj_from_list(QSP_ARG  dp,enp,offset)
-#define EVAL_PRINT_STAT(enp)			eval_print_stat(QSP_ARG  enp)
+#define eval_scalar(svp,enp,prec)		_eval_scalar(QSP_ARG  svp,enp,prec)
+#define assign_subrt_args(scp,arg_enp,val_enp,cpp)	_assign_subrt_args(QSP_ARG  scp,arg_enp,val_enp,cpp)
+#define assign_ptr_arg(arg_enp,val_enp,curr_cpp,prev_cpp)	_assign_ptr_arg(QSP_ARG  arg_enp,val_enp,curr_cpp,prev_cpp)
+#define assign_obj_from_list(dp,enp,offset)	_assign_obj_from_list(QSP_ARG  dp,enp,offset)
+#define eval_print_stat(enp)			_eval_print_stat(QSP_ARG  enp)
 #define eval_obj_assignment(dp,enp)		_eval_obj_assignment(QSP_ARG  dp,enp)
-#define EVAL_DIM_ASSIGNMENT(dp,enp)		eval_dim_assignment(QSP_ARG  dp,enp)
-#define EVAL_DECL_STAT(prec,enp,decl_flags)		eval_decl_stat(QSP_ARG  prec,enp,decl_flags)
-#define EVAL_EXTERN_DECL(prec_p,enp,decl_flags)		eval_extern_decl(QSP_ARG  prec_p,enp,decl_flags)
+#define eval_dim_assignment(dp,enp)		_eval_dim_assignment(QSP_ARG  dp,enp)
+#define eval_decl_stat(prec,enp,decl_flags)		_eval_decl_stat(QSP_ARG  prec,enp,decl_flags)
+#define eval_extern_decl(prec_p,enp,decl_flags)		_eval_extern_decl(QSP_ARG  prec_p,enp,decl_flags)
 #define D_SUBSCRIPT(dp,index)		d_subscript(QSP_ARG  dp , index )
 #define C_SUBSCRIPT(dp,index)		c_subscript(QSP_ARG  dp , index )
 
-#define GET_ARG_PTR(enp)	get_arg_ptr(QSP_ARG  enp)
-#define SET_SCRIPT_ARGS(enp,index,qp,max_args)		set_script_args(QSP_ARG  enp,index,qp,max_args)
-#define EVAL_INFO_STAT(enp)		eval_info_stat(QSP_ARG  enp)
-#define EVAL_DISPLAY_STAT(enp)		eval_display_stat(QSP_ARG  enp)
+#define get_arg_ptr(enp)	_get_arg_ptr(QSP_ARG  enp)
+#define parse_script_args(enp,index,max_args)		_parse_script_args(QSP_ARG  enp,index,max_args)
+#define eval_info_stat(enp)		_eval_info_stat(QSP_ARG  enp)
+#define eval_display_stat(enp)		_eval_display_stat(QSP_ARG  enp)
 #define GET_2_OPERANDS(enp,dpp1,dpp2,dst_dp)		get_2_operands(QSP_ARG  enp,dpp1,dpp2,dst_dp)
 
 #define SUBSCR_TYPE(enp)	(VN_CODE(enp)==T_SQUARE_SUBSCR?SQUARE:CURLY)
@@ -459,7 +459,7 @@ int zero_dp(QSP_ARG_DECL  Data_Obj *dp)
 	return 0;
 }
 
-static int assign_obj_from_scalar(QSP_ARG_DECL  Vec_Expr_Node *enp,Data_Obj *dp,Scalar_Value *svp)
+static int _assign_obj_from_scalar(QSP_ARG_DECL  Vec_Expr_Node *enp,Data_Obj *dp,Scalar_Value *svp)
 {
 	if( dp_const(QSP_ARG  dp,svp) == NULL ){
 		node_error(enp);
@@ -1034,7 +1034,7 @@ advise(ERROR_STRING);
  * We use this routine for call-by-reference.
  */
 
-static Identifier *get_arg_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
+static Identifier *_get_arg_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Identifier *idp;
 
@@ -1155,7 +1155,7 @@ static Subrt *eval_funcref(QSP_ARG_DECL  Vec_Expr_Node *enp)
  * and prev_cpp is the context from which we are calling (used to look up the arg vals).
  */
 
-static int assign_ptr_arg(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp, Context_Pair *curr_cpp,Context_Pair *prev_cpp)
+static int _assign_ptr_arg(QSP_ARG_DECL Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp, Context_Pair *curr_cpp,Context_Pair *prev_cpp)
 {
 	Identifier *idp, *src_idp;
 
@@ -1182,7 +1182,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	}
 
-	src_idp = GET_ARG_PTR(val_enp);		/* what if the val_enp is a string?? */
+	src_idp = get_arg_ptr(val_enp);		/* what if the val_enp is a string?? */
 
 	if( prev_cpp != NULL ){
 		POP_ID_CONTEXT;
@@ -1315,7 +1315,7 @@ static Data_Obj * complement_bitmap(QSP_ARG_DECL  Data_Obj *dp)
 	return(dp);
 }
 
-static void eval_scalar(QSP_ARG_DECL Scalar_Value *svp, Vec_Expr_Node *enp, Precision *prec_p)
+static void _eval_scalar(QSP_ARG_DECL Scalar_Value *svp, Vec_Expr_Node *enp, Precision *prec_p)
 {
 	eval_enp = enp;
 
@@ -1448,7 +1448,7 @@ static Data_Obj * vv_bitmap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *dp1,Data_Ob
 	return(bmdp);
 }
 
-static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
+static Data_Obj *_eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 {
 	Data_Obj *bm_dp1,*bm_dp2,*dp,*dp2;
 	long ival;
@@ -1474,7 +1474,7 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
 //fprintf(stderr,"eval_bitmap bool_and case 1  first child is a scalar\n");
 				ival = eval_int_exp(VN_CHILD(enp,0));
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,1));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,1));
 //fprintf(stderr,"eval_bitmap bool_and case 1  back from recursive call to eval_bitmap...\n");
 				if( !ival )
 					constant_bitmap(bm_dp1,0L);
@@ -1483,7 +1483,7 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 			} else if( SCALAR_SHAPE( VN_SHAPE(VN_CHILD(enp,1)) ) ){
 //fprintf(stderr,"eval_bitmap bool_and case 2  second child is a scalar\n");
 				ival = eval_int_exp(VN_CHILD(enp,1));
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
 //fprintf(stderr,"eval_bitmap bool_and case 2  back from recursive call to eval_bitmap...\n");
 				if( !ival )
 					constant_bitmap(bm_dp1,0L);
@@ -1491,9 +1491,9 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 				return(bm_dp1);
 			} else {
 //fprintf(stderr,"eval_bitmap bool_and case 3  neither child is a scalar\n");
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
 //fprintf(stderr,"eval_bitmap bool_and case 2  back from first recursive call to eval_bitmap...\n");
-				bm_dp2 = EVAL_BITMAP(NULL,VN_CHILD(enp,1));
+				bm_dp2 = eval_bitmap(NULL,VN_CHILD(enp,1));
 //fprintf(stderr,"eval_bitmap bool_and case 2  back from second recursive call to eval_bitmap...\n");
 //longlist(QSP_ARG bm_dp1);
 //longlist(QSP_ARG bm_dp2);
@@ -1510,19 +1510,19 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 //fprintf(stderr,"eval_bitmap bool_or BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
 				ival = eval_int_exp(VN_CHILD(enp,0));
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,1));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,1));
 				if( ival )
 					constant_bitmap(bm_dp1,0xffffffff);
 				return(bm_dp1);
 			} else if( SCALAR_SHAPE( VN_SHAPE(VN_CHILD(enp,1)) ) ){
 				ival = eval_int_exp(VN_CHILD(enp,1));
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
 				if( ival )
 					constant_bitmap(bm_dp1,0xffffffff);
 				return(bm_dp1);
 			} else {
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
-				bm_dp2 = EVAL_BITMAP(NULL,VN_CHILD(enp,1));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
+				bm_dp2 = eval_bitmap(NULL,VN_CHILD(enp,1));
 				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVOR) < 0 ){
 					node_error(enp);
 					WARN("Error evaluating bitmap");
@@ -1535,21 +1535,21 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 //fprintf(stderr,"eval_bitmap bool_xor BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,0))) ){
 				ival = eval_int_exp(VN_CHILD(enp,0));
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,1));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,1));
 				if( ival ){
 					bm_dp1 = complement_bitmap(QSP_ARG  bm_dp1);
 				}
 				return(bm_dp1);
 			} else if( SCALAR_SHAPE( VN_SHAPE(VN_CHILD(enp,1)) ) ){
 				ival = eval_int_exp(VN_CHILD(enp,1));
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
 				if( ival ){
 					bm_dp1 = complement_bitmap(QSP_ARG  bm_dp1);
 				}
 				return(bm_dp1);
 			} else {
-				bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
-				bm_dp2 = EVAL_BITMAP(NULL,VN_CHILD(enp,1));
+				bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
+				bm_dp2 = eval_bitmap(NULL,VN_CHILD(enp,1));
 				if( do_vvfunc(QSP_ARG  bm_dp1,bm_dp1,bm_dp2,FVXOR) < 0 ){
 					node_error(enp);
 					WARN("Error evaluating bitmap");
@@ -1560,7 +1560,7 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 			break;
 		case T_BOOL_NOT:
 //fprintf(stderr,"eval_bitmap bool_not BEGIN, dst_dp = 0x%lx\n",(long) dst_dp);
-			bm_dp1 = EVAL_BITMAP(dst_dp,VN_CHILD(enp,0));
+			bm_dp1 = eval_bitmap(dst_dp,VN_CHILD(enp,0));
 			bm_dp1 = complement_bitmap(QSP_ARG  bm_dp1);
 			return(bm_dp1);
 			break;
@@ -1576,7 +1576,7 @@ static Data_Obj *eval_bitmap(QSP_ARG_DECL Data_Obj *dst_dp, Vec_Expr_Node *enp)
 				dp = eval_obj_exp(VN_CHILD(enp,0),NULL);
 				ASSERT_NODE_DATA_TYPE(enp,ND_FUNC)
 				assert( dp != NULL );
-				EVAL_SCALAR(&sval,VN_CHILD(enp,1),OBJ_PREC_PTR(dp));
+				eval_scalar(&sval,VN_CHILD(enp,1),OBJ_PREC_PTR(dp));
 				bm_dp1 = vs_bitmap(QSP_ARG  dst_dp,dp,&sval,VN_BM_CODE(enp));
 
 if( bm_dp1 == NULL ){
@@ -1742,7 +1742,7 @@ static int c_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp)
  * but this is problematic when the expression involves a subroutine call...
  */
 
-static Data_Obj *eval_typecast(QSP_ARG_DECL Vec_Expr_Node *enp, Data_Obj *dst_dp)
+static Data_Obj *_eval_typecast(QSP_ARG_DECL Vec_Expr_Node *enp, Data_Obj *dst_dp)
 {
 	Data_Obj *dp, *tmp_dp;
 
@@ -1868,7 +1868,7 @@ handle_it:
  * going through the motions is to do pointer assignments (to get shape information).
  */
 
-static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp, Context_Pair *prev_cpp)
+static int _assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp, Context_Pair *prev_cpp)
 {
 	int stat;
 	Data_Obj *dp;
@@ -1885,16 +1885,16 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 	switch(VN_CODE(arg_enp)){
 		case T_DECL_STAT:
 			/* en_decl_prec is the type (float,short,etc) */
-			stat=ASSIGN_SUBRT_ARGS(scp,VN_CHILD(arg_enp,0),val_enp,prev_cpp);
+			stat=assign_subrt_args(scp,VN_CHILD(arg_enp,0),val_enp,prev_cpp);
 			return(stat);
 
 		case T_DECL_STAT_LIST:
 			/* descend the arg tree */
 			/* VN_CODE(val_enp) should be T_ARGLIST */
-			stat=ASSIGN_SUBRT_ARGS(scp,VN_CHILD(arg_enp,0),VN_CHILD(val_enp,0),prev_cpp);
+			stat=assign_subrt_args(scp,VN_CHILD(arg_enp,0),VN_CHILD(val_enp,0),prev_cpp);
 			if( stat < 0 ) return(stat);
 
-			stat=ASSIGN_SUBRT_ARGS(scp,VN_CHILD(arg_enp,1),VN_CHILD(val_enp,1),prev_cpp);
+			stat=assign_subrt_args(scp,VN_CHILD(arg_enp,1),VN_CHILD(val_enp,1),prev_cpp);
 			return(stat);
 
 		case T_FUNCPTR_DECL:		/* assign_subrt_args */
@@ -1933,7 +1933,7 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 			return 0;
 
 		case T_PTR_DECL:		/* assign_subrt_args */
-			return( ASSIGN_PTR_ARG(arg_enp,val_enp,_curr_cpp,prev_cpp) );
+			return( assign_ptr_arg(arg_enp,val_enp,_curr_cpp,prev_cpp) );
 
 
 		case T_SCAL_DECL:		/* assign_subrt_args */
@@ -2108,7 +2108,7 @@ Identifier *make_named_reference(QSP_ARG_DECL  const char *name)
 	return(idp);
 }
 
-static void eval_display_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
+static void _eval_display_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 	const char *s;
@@ -2117,8 +2117,8 @@ static void eval_display_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 	switch(VN_CODE(enp)){
 		case T_EXPR_LIST:
-			EVAL_DISPLAY_STAT(VN_CHILD(enp,0));
-			EVAL_DISPLAY_STAT(VN_CHILD(enp,1));
+			eval_display_stat(VN_CHILD(enp,0));
+			eval_display_stat(VN_CHILD(enp,1));
 			break;
 		case T_STR_PTR:
 			s = eval_string(enp);
@@ -2153,21 +2153,21 @@ static void eval_display_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 	}
 }
 
-static Vec_Expr_Node *find_case(QSP_ARG_DECL Vec_Expr_Node *enp,long lval)
+static Vec_Expr_Node *_find_case(QSP_ARG_DECL Vec_Expr_Node *enp,long lval)
 {
 	Vec_Expr_Node *ret_enp;
 	long cval;
 
 	switch(VN_CODE(enp)){
 		case T_CASE_STAT:	/* case_list stat_list pair */
-			if( FIND_CASE(VN_CHILD(enp,0),lval) != NULL )
+			if( find_case(VN_CHILD(enp,0),lval) != NULL )
 				return(enp);
 			else return(NULL);
 
 		case T_CASE_LIST:
-			ret_enp=FIND_CASE(VN_CHILD(enp,0),lval);
+			ret_enp=find_case(VN_CHILD(enp,0),lval);
 			if( ret_enp == NULL )
-				ret_enp=FIND_CASE(VN_CHILD(enp,1),lval);
+				ret_enp=find_case(VN_CHILD(enp,1),lval);
 			return(ret_enp);
 
 		case T_CASE:
@@ -2180,9 +2180,9 @@ static Vec_Expr_Node *find_case(QSP_ARG_DECL Vec_Expr_Node *enp,long lval)
 			return(enp);
 
 		case T_SWITCH_LIST:	/* list of case_stat's */
-			ret_enp=FIND_CASE(VN_CHILD(enp,0),lval);
+			ret_enp=find_case(VN_CHILD(enp,0),lval);
 			if( ret_enp == NULL )
-				ret_enp=FIND_CASE(VN_CHILD(enp,1),lval);
+				ret_enp=find_case(VN_CHILD(enp,1),lval);
 			return(ret_enp);
 
 		default:
@@ -2307,7 +2307,7 @@ static void rls_script_args(void)
 	clear_script_args();
 }
 
-static int parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_args)
+static int _parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_args)
 {
 	Data_Obj *dp;
 
@@ -2318,7 +2318,7 @@ static int parse_script_args(QSP_ARG_DECL Vec_Expr_Node *enp,int index,int max_a
 fprintf(stderr,"parse_script_args BEGIN  index = %d   max_args = %d\n",index,max_args);
 dump_tree(enp);
 	switch(VN_CODE(enp)){
-		case T_DEREFERENCE:				/* set_script_args */
+		case T_DEREFERENCE:				/* parse_script_args */
 			dp = eval_obj_ref(enp);
 			if( dp==NULL ){
 				node_error(enp);
@@ -2341,13 +2341,13 @@ dump_tree(enp);
 			/* do we dereference the pointer??? */
 			node_error(enp);
 			sprintf(ERROR_STRING,
-				"set_script_args:  not sure whether or not to dereference ptr %s",
+				"parse_script_args:  not sure whether or not to dereference ptr %s",
 				VN_STRING(enp));
 			advise(ERROR_STRING);
 			/* fall-thru */
 
-		case T_STATIC_OBJ:		/* set_script_args */
-		case T_DYN_OBJ:			/* set_script_args */
+		case T_STATIC_OBJ:		/* parse_script_args */
+		case T_DYN_OBJ:			/* parse_script_args */
 			/* maybe we could check the node shape instead of looking up the object? */
 			dp=eval_obj_ref(enp);
 			if( IS_SCALAR(dp) ){
@@ -2370,8 +2370,8 @@ dump_tree(enp);
 		case T_MIXED_LIST:
 			{
 			int n1,n2;
-			n1=parse_script_args(QSP_ARG  VN_CHILD(enp,0),index,max_args);
-			n2=parse_script_args(QSP_ARG  VN_CHILD(enp,1),index+n1,max_args);
+			n1=parse_script_args(VN_CHILD(enp,0),index,max_args);
+			n2=parse_script_args(VN_CHILD(enp,1),index+n1,max_args);
 			return(n1+n2);
 			}
 
@@ -2379,7 +2379,7 @@ dump_tree(enp);
 		 * in order to handle generic expressions
 		 */
 
-		case T_LIT_INT: case T_LIT_DBL:			/* set_script_args */
+		case T_LIT_INT: case T_LIT_DBL:			/* parse_script_args */
 		case T_PLUS: case T_MINUS: case T_TIMES: case T_DIVIDE:
 			{
 			double dval;
@@ -2394,7 +2394,7 @@ dump_tree(enp);
 			break;
 	}
 	return 0;
-} /* end set_script_args */
+} /* end parse_script_args */
 
 /*
  * When we call a script func, we want to be able to access all objects, not
@@ -2534,7 +2534,7 @@ static void dec_obj(Data_Obj *dp)
 #define STRING_FORMAT	"%s"
 #define OBJECT_FORMAT	"%f"
 
-static const char *eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
+static const char *_eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	char *s;
 	const char *s1,*s2;
@@ -2572,12 +2572,12 @@ static const char *eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_SET_STR:
 			eval_work_tree(enp,NULL);	/* do the assignment! */
-			return( EVAL_MIXED_LIST(VN_CHILD(enp,0)) );
+			return( eval_mixed_list(VN_CHILD(enp,0)) );
 
 		case T_STRING_LIST:
 		case T_PRINT_LIST:
-			s1=EVAL_MIXED_LIST(VN_CHILD(enp,0));
-			s2=EVAL_MIXED_LIST(VN_CHILD(enp,1));
+			s1=eval_mixed_list(VN_CHILD(enp,0));
+			s2=eval_mixed_list(VN_CHILD(enp,1));
 			n=(int)(strlen(s1)+strlen(s2)+1);
 			s=(char *)getbuf(n);
 			strcpy(s,s1);
@@ -2615,7 +2615,7 @@ static const char *eval_mixed_list(QSP_ARG_DECL Vec_Expr_Node *enp)
 	return("");
 } /* eval_mixed_list */
 
-static void eval_print_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
+static void _eval_print_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 	Identifier *idp;
@@ -2678,9 +2678,9 @@ print_float:
 		case T_STRING_LIST:
 		case T_MIXED_LIST:
 		case T_PRINT_LIST:
-			EVAL_PRINT_STAT(VN_CHILD(enp,0));
+			eval_print_stat(VN_CHILD(enp,0));
 			prt_msg_frag(" ");
-			EVAL_PRINT_STAT(VN_CHILD(enp,1));
+			eval_print_stat(VN_CHILD(enp,1));
 			break;
 		case T_POINTER:
 			idp = eval_ptr_ref(enp,EXPECT_PTR_SET);
@@ -2738,7 +2738,7 @@ print_float:
 
 		case T_SET_STR:
 		case T_STR_PTR:
-			s=EVAL_MIXED_LIST(enp);
+			s=eval_mixed_list(enp);
 			prt_msg_frag(s);
 			break;
 
@@ -2761,14 +2761,14 @@ print_integer:
 
 /* eval_ref_tree - what is this used for??? */
 
-static void eval_ref_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Identifier *dst_idp)
+static void _eval_ref_tree(QSP_ARG_DECL Vec_Expr_Node *enp,Identifier *dst_idp)
 {
 	Identifier *idp;
 
 	switch(VN_CODE(enp)){
 		case T_STAT_LIST:
-			EVAL_REF_TREE(VN_CHILD(enp,0),dst_idp);
-			EVAL_REF_TREE(VN_CHILD(enp,1),dst_idp);
+			eval_ref_tree(VN_CHILD(enp,0),dst_idp);
+			eval_ref_tree(VN_CHILD(enp,1),dst_idp);
 			break;
 		case T_ASSIGN:				/* eval_ref_tree */
 			if( eval_work_tree(enp,NULL) == 0 )
@@ -2823,7 +2823,7 @@ WARN(ERROR_STRING);
 
 	if( rip->ri_arg_stat >= 0 ){
 		eval_decl_tree(SR_BODY(SC_SUBRT(scp)));
-		EVAL_REF_TREE(SR_BODY(SC_SUBRT(scp)),dst_idp);
+		eval_ref_tree(SR_BODY(SC_SUBRT(scp)),dst_idp);
 	}
 
 	wrapup_call(QSP_ARG  rip);
@@ -2833,7 +2833,7 @@ WARN(ERROR_STRING);
 
 /* a function that returns a pointer */
 
-static Identifier * exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
+static Identifier * _exec_reffunc(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Identifier *idp;
 	char name[LLEN];
@@ -3007,7 +3007,7 @@ Run_Info * setup_subrt_call(QSP_ARG_DECL Subrt_Call *scp,Data_Obj *dst_dp)
 	rip->ri_old_srp = curr_srp;
 	curr_srp = srp;
 
-	rip->ri_arg_stat = ASSIGN_SUBRT_ARGS(scp,SR_ARG_DECLS(SC_SUBRT(scp)),SC_ARG_VALS(scp),rip->ri_prev_cpp);
+	rip->ri_arg_stat = assign_subrt_args(scp,SR_ARG_DECLS(SC_SUBRT(scp)),SC_ARG_VALS(scp),rip->ri_prev_cpp);
 
 	return(rip);
 
@@ -3238,7 +3238,7 @@ WARN(ERROR_STRING);
  * We might set a flag RESOLVE_AT_RUNTIME...
  */
 
-static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, int decl_flags)
+static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, int decl_flags)
 {
 	int i;
 	Dimension_Set ds1, *dsp=(&ds1);
@@ -3283,9 +3283,9 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 		case T_BADNAME:
 			return;
 		case T_DECL_ITEM_LIST:
-			EVAL_DECL_STAT(prec_p,VN_CHILD(enp,0),decl_flags);
+			eval_decl_stat(prec_p,VN_CHILD(enp,0),decl_flags);
 			if( VN_CHILD(enp,1)!=NULL )
-				EVAL_DECL_STAT(prec_p,VN_CHILD(enp,1),decl_flags);
+				eval_decl_stat(prec_p,VN_CHILD(enp,1),decl_flags);
 			return;
 		case T_DECL_INIT:		/* eval_decl_stat */
 			{
@@ -3296,7 +3296,7 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 			/* CURDLED? */
 			if( IS_CURDLED(enp) ) return;
 
-			EVAL_DECL_STAT(prec_p,VN_CHILD(enp,0),decl_flags);
+			eval_decl_stat(prec_p,VN_CHILD(enp,0),decl_flags);
 			/* the next node is an expression */
 			dp = get_id_obj(QSP_ARG  VN_STRING(VN_CHILD(enp,0)),enp);
 			assert(dp!=NULL);
@@ -3319,7 +3319,7 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
 				dval = eval_flt_exp(VN_CHILD(enp,1));
 				dbl_to_scalar(&sval,dval,OBJ_PREC_PTR(dp));
-				ASSIGN_OBJ_FROM_SCALAR(enp,dp,&sval);
+				assign_obj_from_scalar(enp,dp,&sval);
 			} else {
 				eval_obj_assignment(dp,VN_CHILD(enp,1));
 			}
@@ -3642,7 +3642,7 @@ fprintf(stderr,"eval_decl_stat:  deleting identifier %s\n",ID_NAME(idp));
 	}
 } /* end eval_decl_stat */
 
-static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, int decl_flags)
+static void _eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, int decl_flags)
 {
 	eval_enp = enp;
 
@@ -3651,7 +3651,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 			{
 			Subrt *srp;
 			srp=subrt_of(VN_STRING(enp));
-			if( srp == NULL ) EVAL_DECL_STAT(prec_p,enp,decl_flags);
+			if( srp == NULL ) eval_decl_stat(prec_p,enp,decl_flags);
 			else {
 				/* This subroutine has already been declared...
 				 * make sure the type matches
@@ -3665,14 +3665,14 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 			}
 		case T_BADNAME: return;
 		case T_DECL_ITEM_LIST:
-			EVAL_EXTERN_DECL(prec_p,VN_CHILD(enp,0),decl_flags);
+			eval_extern_decl(prec_p,VN_CHILD(enp,0),decl_flags);
 			if( VN_CHILD(enp,1)!=NULL )
-				EVAL_EXTERN_DECL(prec_p,VN_CHILD(enp,1),decl_flags);
+				eval_extern_decl(prec_p,VN_CHILD(enp,1),decl_flags);
 			return;
 		case T_DECL_INIT:
 			node_error(enp);
 			advise("no auto-initialization with extern declarations");
-			EVAL_EXTERN_DECL(prec_p,VN_CHILD(enp,0),decl_flags);
+			eval_extern_decl(prec_p,VN_CHILD(enp,0),decl_flags);
 			return;
 
 		case T_SCAL_DECL:
@@ -3688,7 +3688,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 
 			dp=dobj_of(VN_STRING(enp));
 			if( dp == NULL ){
-				EVAL_DECL_STAT(prec_p,enp,decl_flags);
+				eval_decl_stat(prec_p,enp,decl_flags);
 				return;
 			}
 			/* BUG should check that decl matches earlier one... */
@@ -3699,7 +3699,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 			Identifier *idp;
 			idp = id_of(VN_STRING(enp));
 			if( idp == NULL ){
-				EVAL_DECL_STAT(prec_p,enp,decl_flags);
+				eval_decl_stat(prec_p,enp,decl_flags);
 				return;
 			}
 			/* BUG chould check that type matches earlier type */
@@ -3765,10 +3765,10 @@ advise(ERROR_STRING);
 
 		case T_DECL_STAT:
 			/* why en_intval here, and not en_cast_prec??? */
-			EVAL_DECL_STAT(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
+			eval_decl_stat(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
 			break;
 		case T_EXTERN_DECL:
-			EVAL_EXTERN_DECL(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
+			eval_extern_decl(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
 			break;
 		default:
 			missing_case(enp,"eval_tree");
@@ -3799,7 +3799,7 @@ static int get_filetype_index(const char *name)
 }
 #endif /* NOT_YET */
 
-static void eval_info_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
+static void _eval_info_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 
@@ -3810,8 +3810,8 @@ static void eval_info_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 			break;
 
 		case T_EXPR_LIST:
-			EVAL_INFO_STAT(VN_CHILD(enp,0));
-			EVAL_INFO_STAT(VN_CHILD(enp,1));
+			eval_info_stat(VN_CHILD(enp,0));
+			eval_info_stat(VN_CHILD(enp,1));
 			break;
 
 		case T_DEREFERENCE:			/* eval_info_stat */
@@ -4022,7 +4022,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			lval = eval_int_exp(VN_CHILD(enp,1));
 			int_to_scalar(&sval,lval,OBJ_PREC_PTR(dp));
-			if( ASSIGN_OBJ_FROM_SCALAR(enp,dp,&sval) < 0 )
+			if( assign_obj_from_scalar(enp,dp,&sval) < 0 )
 				return 0;
 			return(lval);
 
@@ -4262,10 +4262,10 @@ void _eval_decl_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 			eval_decl_tree(VN_CHILD(enp,1));
 			break;
 		case T_DECL_STAT:
-			EVAL_DECL_STAT(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
+			eval_decl_stat(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
 			break;
 		case T_EXTERN_DECL:
-			EVAL_EXTERN_DECL(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
+			eval_extern_decl(VN_DECL_PREC(enp),VN_CHILD(enp,0),VN_DECL_FLAGS(enp));
 			break;
 		default:
 			/* We will end up here with any code
@@ -4341,7 +4341,7 @@ static int bad_reeval_shape(Vec_Expr_Node *enp)
  * around with us...
  */
 
-void reeval_decl_stat(QSP_ARG_DECL  Precision *prec_p,Vec_Expr_Node *enp,int decl_flags)
+void _reeval_decl_stat(QSP_ARG_DECL  Precision *prec_p,Vec_Expr_Node *enp,int decl_flags)
 {
 	int i;
 	Dimension_Set ds1, *dsp=(&ds1);
@@ -4364,9 +4364,9 @@ advise(ERROR_STRING);
 		case T_BADNAME:
 			return;
 		case T_DECL_ITEM_LIST:
-			reeval_decl_stat(QSP_ARG  prec_p,VN_CHILD(enp,0),decl_flags);
+			reeval_decl_stat(prec_p,VN_CHILD(enp,0),decl_flags);
 			if( VN_CHILD(enp,1)!=NULL )
-				reeval_decl_stat(QSP_ARG  prec_p,VN_CHILD(enp,1),decl_flags);
+				reeval_decl_stat(prec_p,VN_CHILD(enp,1),decl_flags);
 			return;
 			break;
 
@@ -4441,7 +4441,7 @@ advise(ERROR_STRING);
  * This is called from eval_ptr_ref
  */
 
-static Identifier *eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
+static Identifier *_eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Identifier *idp;
 	Data_Obj *dp;
@@ -4530,15 +4530,15 @@ Identifier *_eval_ptr_ref(QSP_ARG_DECL Vec_Expr_Node *enp,int expect_ptr_set)
 
 	switch(VN_CODE(enp)){
 		case T_EQUIVALENCE:
-			idp = EVAL_OBJ_ID(enp);
+			idp = eval_obj_id(enp);
 			return(idp);
 			break;
 
 		case T_CALLFUNC:		/* a function that returns a pointer */
-			return( EXEC_REFFUNC(enp) );
+			return( exec_reffunc(enp) );
 
 		case T_REFERENCE:
-			idp = EVAL_OBJ_ID(VN_CHILD(enp,0));
+			idp = eval_obj_id(VN_CHILD(enp,0));
 			assert( idp != NULL );
 
 			return( idp );
@@ -4631,7 +4631,7 @@ static Data_Obj *eval_subvec(QSP_ARG_DECL  Data_Obj *dp, index_t index, index_t 
 // What does eval_subscript1 do???
 // It appears that this is only used for matlab emulation?
 
-static Data_Obj *eval_subscript1(QSP_ARG_DECL Data_Obj *dp, Vec_Expr_Node *enp)
+static Data_Obj *_eval_subscript1(QSP_ARG_DECL Data_Obj *dp, Vec_Expr_Node *enp)
 {
 	index_t index,index2;
 	Data_Obj *dp2;
@@ -4671,7 +4671,7 @@ static Data_Obj *create_matrix(QSP_ARG_DECL Vec_Expr_Node *enp,Shape_Info *shpp)
 
 	switch(VN_CODE(enp)){
 		case T_RET_LIST:
-			return( CREATE_LIST_LHS(enp) );
+			return( create_list_lhs(enp) );
 
 		case T_DYN_OBJ:		/* create_matrix */
 			/* we need to create an identifier too! */
@@ -4707,7 +4707,7 @@ static Data_Obj *mlab_target(QSP_ARG_DECL Data_Obj *dp, Vec_Expr_Node *enp)
 	return(dp);
 }
 
-static Data_Obj *create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp)
+static Data_Obj *_create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp1,*dp2;
 	List *lp;
@@ -4736,7 +4736,7 @@ static Data_Obj *create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp)
  * To get this to work correctly, we need to subscript dp when we descend a LIST_OBJ...
  */
 
-static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp,index_t index)
+static dimension_t _assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp,index_t index)
 {
 	dimension_t i1,i2;
 	Data_Obj *sub_dp,*src_dp;
@@ -4756,7 +4756,7 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 	switch(VN_CODE(enp)){
 		case T_TYPECAST:			/* assign_obj_from_list */
 			/* do we need to do anything??? BUG? */
-			i1=ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,0),index);
+			i1=assign_obj_from_list(dp,VN_CHILD(enp,0),index);
 			return(i1);
 			break;
 
@@ -4772,7 +4772,7 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 			 * and count up.  (But what about components?)
 			 */
 			/* If the child is a row_list, then we don't need to subscript here */
-			/*i1=*/ ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,0),0);
+			/*i1=*/ assign_obj_from_list(dp,VN_CHILD(enp,0),0);
 			/* why return 1 and not i1??? */
 			return(1);
 			break;
@@ -4785,20 +4785,20 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 			 */
 //advise("assign_obj_from_list T_ROW_LIST");
 			if( VN_CODE(VN_CHILD(enp,0)) == T_ROW_LIST ){
-				i1=ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,0),index);
+				i1=assign_obj_from_list(dp,VN_CHILD(enp,0),index);
 			} else {
 				// If it's not a row_list node, then what is it???
 				sub_dp = D_SUBSCRIPT(dp,index);
-				i1=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,0),index);
+				i1=assign_obj_from_list(sub_dp,VN_CHILD(enp,0),index);
 				delvec(sub_dp);
 			}
 
 
 			if( VN_CODE(VN_CHILD(enp,1)) == T_ROW_LIST ){
-				i2=ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,1),index+i1);
+				i2=assign_obj_from_list(dp,VN_CHILD(enp,1),index+i1);
 			} else {
 				sub_dp = D_SUBSCRIPT(dp,index+i1);
-				i2=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,1),index+i1);
+				i2=assign_obj_from_list(sub_dp,VN_CHILD(enp,1),index+i1);
 				delvec(sub_dp);
 			}
 			return(i1+i2);
@@ -4811,19 +4811,19 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 			 * we could eliminate the child tests - I am so lazy!
 			 */
 			if( VN_CODE(VN_CHILD(enp,0)) == T_COMP_LIST ){
-				i1=ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,0),index);
+				i1=assign_obj_from_list(dp,VN_CHILD(enp,0),index);
 			} else {
 				sub_dp = C_SUBSCRIPT(dp,index);
-				i1=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,0),index);
+				i1=assign_obj_from_list(sub_dp,VN_CHILD(enp,0),index);
 				delvec(sub_dp);
 			}
 
 
 			if( VN_CODE(VN_CHILD(enp,1)) == T_COMP_LIST ){
-				i2=ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,1),index+i1);
+				i2=assign_obj_from_list(dp,VN_CHILD(enp,1),index+i1);
 			} else {
 				sub_dp = C_SUBSCRIPT(dp,index+i1);
-				i2=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,1),index+i1);
+				i2=assign_obj_from_list(sub_dp,VN_CHILD(enp,1),index+i1);
 				delvec(sub_dp);
 			}
 			return(i1+i2);
@@ -4927,7 +4927,7 @@ dump_tree(enp);
 		case T_RET_LIST:		/* eval_obj_ref() */
 			{
 			/* BUG - what if this is not the LHS??? */
-			return( CREATE_LIST_LHS(enp) );
+			return( create_list_lhs(enp) );
 			break;
 			}
 			
@@ -4940,7 +4940,7 @@ dump_tree(enp);
 			 * or for large objects.
 			 */
 			dp=make_local_dobj(QSP_ARG   SHP_TYPE_DIMS(VN_SHAPE(VN_CHILD(enp,0))), VN_PREC_PTR(enp));
-			ASSIGN_OBJ_FROM_LIST(dp,VN_CHILD(enp,0),0);
+			assign_obj_from_list(dp,VN_CHILD(enp,0),0);
 			//SET_OBJ_FLAG_BITS(dp, DT_ASSIGNED);
 			note_assignment(dp);
 			return(dp);
@@ -4959,14 +4959,14 @@ dump_tree(enp);
 			 */
 			while( VN_CODE(VN_CHILD(enp,1)) == T_INDEX_LIST ){
 				enp=VN_CHILD(enp,1);
-				dp2 = EVAL_SUBSCRIPT1(dp,VN_CHILD(enp,0));
+				dp2 = eval_subscript1(dp,VN_CHILD(enp,0));
 				if( dp2 == NULL ){
 					return(dp2);
 				}
 				dp=dp2;
 			}
 			/* BUG doesn't enforce reference to an existing object!? */
-			dp2=EVAL_SUBSCRIPT1(dp,VN_CHILD(enp,1));
+			dp2=eval_subscript1(dp,VN_CHILD(enp,1));
 			return(dp2);
 			break;
 
@@ -5219,7 +5219,7 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
 		 * so we're ok
 		 */
 		if( is_bitmap ){
-			dp1=EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+			dp1=eval_bitmap(NULL,VN_CHILD(enp,0));
 		} else if( dst_dp!=NULL && same_shape(VN_SHAPE(VN_CHILD(enp,0)),OBJ_SHAPE(dst_dp)) ){
 			dp1=eval_obj_exp(VN_CHILD(enp,0),dst_dp);
 		} else {
@@ -5245,13 +5245,13 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
 
 		if( dp2!=dst_dp ){
 			if( is_bitmap ){
-				dp1=EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+				dp1=eval_bitmap(NULL,VN_CHILD(enp,0));
 			} else if( dst_dp!=NULL && same_shape(VN_SHAPE(VN_CHILD(enp,0)),OBJ_SHAPE(dst_dp)) ){
 				dp1=eval_obj_exp(VN_CHILD(enp,0),dst_dp);
 			}
 		} else {
 			if( is_bitmap ){
-				dp1=EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+				dp1=eval_bitmap(NULL,VN_CHILD(enp,0));
 			} else {
 				dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
 			}
@@ -5259,7 +5259,7 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
 	} else {
 		/* Both sides refer to the lhs */
 		if( is_bitmap )
-			dp1=EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+			dp1=eval_bitmap(NULL,VN_CHILD(enp,0));
 		else
 			dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
 
@@ -5284,7 +5284,7 @@ static void get_2_operands(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj **dpp1,Data_
  * THis is kind of like projection?
  */
 
-static void eval_dim_assignment(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp)
+static void _eval_dim_assignment(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -5321,7 +5321,7 @@ static void eval_dim_assignment(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp)
 				cp += j * OBJ_TYPE_INC(dp,i) * OBJ_MACH_PREC_SIZE(dp);
 				SET_OBJ_DATA_PTR(sub_dp, cp);
 
-				EVAL_DIM_ASSIGNMENT(sub_dp,enp);
+				eval_dim_assignment(sub_dp,enp);
 			}
 			delvec(sub_dp);
 			/* all the work done in the recursive calls */
@@ -5869,7 +5869,7 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 			 * and not match the child node...  this is supposed
 			 * to be insured by the compilation process.
 			 */
-			return( EVAL_TYPECAST(enp,dst_dp) );
+			return( eval_typecast(enp,dst_dp) );
 
 		case T_UNDEF:
 			return(NULL);
@@ -6042,7 +6042,7 @@ const char *_eval_string(QSP_ARG_DECL Vec_Expr_Node *enp)
 			return(s);
 
 		case T_PRINT_LIST:
-			return(EVAL_MIXED_LIST(enp));
+			return(eval_mixed_list(enp));
 
 		case T_STRING_LIST:
 			{
@@ -6543,7 +6543,7 @@ dump_tree(enp);
 		case T_BOOL_XOR:
 		case T_BOOL_NOT:
 		case T_BOOL_PTREQ:
-			EVAL_BITMAP(dst_dp,enp);
+			eval_bitmap(dst_dp,enp);
 			break;
 
 		case T_RANGE2:
@@ -6630,8 +6630,8 @@ dump_tree(enp);
 				index = index!=0 ? 1 : 2;
 				assert( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,index))) );
 
-				EVAL_SCALAR(&sval,VN_CHILD(enp,index),OBJ_PREC_PTR(dst_dp));
-				ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+				eval_scalar(&sval,VN_CHILD(enp,index),OBJ_PREC_PTR(dst_dp));
+				assign_obj_from_scalar(enp,dst_dp,&sval);
 			}
 			break;
 		case T_VS_S_CONDASS:		/* eval_obj_assignment */
@@ -6651,8 +6651,8 @@ dump_tree(enp);
 				} else {		/* second choice should be the scalar */
 					assert( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,index))) );
 
-					EVAL_SCALAR(&sval,VN_CHILD(enp,index),OBJ_PREC_PTR(dst_dp));
-					ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+					eval_scalar(&sval,VN_CHILD(enp,index),OBJ_PREC_PTR(dst_dp));
+					assign_obj_from_scalar(enp,dst_dp,&sval);
 				}
 			}
 			break;
@@ -6679,12 +6679,12 @@ dump_tree(enp);
 				 * and then use the select vector function.
 				 */
 
-				bm_dp = EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+				bm_dp = eval_bitmap(NULL,VN_CHILD(enp,0));
 				/* we need to know the type of the destination before
 				 * we evaluate the scalars...
 				 */
-				EVAL_SCALAR(&sval,VN_CHILD(enp,1),OBJ_PREC_PTR(dst_dp));
-				EVAL_SCALAR(&sval2,VN_CHILD(enp,2),OBJ_PREC_PTR(dst_dp));
+				eval_scalar(&sval,VN_CHILD(enp,1),OBJ_PREC_PTR(dst_dp));
+				eval_scalar(&sval2,VN_CHILD(enp,2),OBJ_PREC_PTR(dst_dp));
 
 				setvarg1(oap,dst_dp);
 
@@ -6703,9 +6703,9 @@ dump_tree(enp);
 			{
 				Data_Obj *bm_dp;
 
-				bm_dp = EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+				bm_dp = eval_bitmap(NULL,VN_CHILD(enp,0));
 				dp2=eval_obj_exp(VN_CHILD(enp,1),NULL);
-				EVAL_SCALAR(&sval,VN_CHILD(enp,2),OBJ_PREC_PTR(dst_dp));
+				eval_scalar(&sval,VN_CHILD(enp,2),OBJ_PREC_PTR(dst_dp));
 
 				setvarg2(oap,dst_dp,dp2);
 				SET_OA_SVAL(oap,0, &sval);
@@ -6720,7 +6720,7 @@ dump_tree(enp);
 		case T_VV_B_CONDASS:		/* eval_obj_assignment */
 			{
 				Data_Obj *bm_dp;
-				bm_dp = EVAL_BITMAP(NULL,VN_CHILD(enp,0));
+				bm_dp = eval_bitmap(NULL,VN_CHILD(enp,0));
 				dp2=eval_obj_exp(VN_CHILD(enp,1),NULL);
 				dp3=eval_obj_exp(VN_CHILD(enp,2),NULL);
 
@@ -6751,7 +6751,7 @@ dump_tree(enp);
 				dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
 				dp2=eval_obj_exp(VN_CHILD(enp,1),NULL);
 				dp3=eval_obj_exp(VN_CHILD(enp,2),NULL);
-				EVAL_SCALAR(&sval,VN_CHILD(enp,3),OBJ_MACH_PREC_PTR(dp3));
+				eval_scalar(&sval,VN_CHILD(enp,3),OBJ_MACH_PREC_PTR(dp3));
 				setvarg4(oap,dst_dp,dp1,dp2,dp3);
 				SET_OA_SVAL(oap,0, &sval);
 				if( perf_vfunc(QSP_ARG  VN_BM_CODE(enp), oap) < 0 ){
@@ -6763,7 +6763,7 @@ dump_tree(enp);
 		case T_VS_VV_CONDASS:		/* eval_obj_assignment */
 			{
 				dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
-				EVAL_SCALAR(&sval,VN_CHILD(enp,1),OBJ_MACH_PREC_PTR(dp1));
+				eval_scalar(&sval,VN_CHILD(enp,1),OBJ_MACH_PREC_PTR(dp1));
 				dp2=eval_obj_exp(VN_CHILD(enp,2),NULL);
 				dp3=eval_obj_exp(VN_CHILD(enp,3),NULL);
 				setvarg4(oap,dst_dp,dp1,dp2,dp3);
@@ -6779,9 +6779,9 @@ dump_tree(enp);
 				Scalar_Value sval2;
 
 				dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
-				EVAL_SCALAR(&sval,VN_CHILD(enp,1),OBJ_MACH_PREC_PTR(dp1));
+				eval_scalar(&sval,VN_CHILD(enp,1),OBJ_MACH_PREC_PTR(dp1));
 				dp2=eval_obj_exp(VN_CHILD(enp,2),NULL);
-				EVAL_SCALAR(&sval2,VN_CHILD(enp,3),OBJ_MACH_PREC_PTR(dp2));
+				eval_scalar(&sval2,VN_CHILD(enp,3),OBJ_MACH_PREC_PTR(dp2));
 				setvarg3(oap,dst_dp,dp1,dp2);
 				/* The first scalar is the source */
 				SET_OA_SVAL(oap,0, &sval);
@@ -6846,7 +6846,7 @@ dump_tree(enp);
 			break;
 
 		case T_TYPECAST:		/* eval_obj_assignment */
-			EVAL_TYPECAST(enp,dst_dp);
+			eval_typecast(enp,dst_dp);
 			break;
 
 		/* use tabled functions here???
@@ -6968,9 +6968,9 @@ advise(ERROR_STRING);
 				/* should be its own case... */
 				/* a list of expressions, maybe literals... */
 				/* We need to do something to handle 2D arrays... */
-				/* ASSIGN_OBJ_FROM_LIST(dst_dp,VN_CHILD(enp,0),0); */
+				/* assign_obj_from_list(dst_dp,VN_CHILD(enp,0),0); */
 
-				ASSIGN_OBJ_FROM_LIST(dst_dp,enp,0);
+				assign_obj_from_list(dst_dp,enp,0);
 				//SET_OBJ_FLAG_BITS(dst_dp, DT_ASSIGNED);
 				// done below
 				//note_assignment(dst_dp);
@@ -7003,7 +7003,7 @@ advise(ERROR_STRING);
 			if( IS_SCALAR(dp1) ){
 				svp = (Scalar_Value *)OBJ_DATA_PTR(dp1);
 				/* BUG type conversion? */
-				ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,svp);
+				assign_obj_from_scalar(enp,dst_dp,svp);
 			} else {
 				/* object-to-object copy */
 				if( dst_dp != dp1 ){
@@ -7029,7 +7029,7 @@ advise(ERROR_STRING);
 				dval=eval_flt_exp(VN_CHILD(enp,0));
 				d2=eval_flt_exp(VN_CHILD(enp,1));
 				dbl_to_scalar(&sval,dval*d2,OBJ_PREC_PTR(dst_dp));
-				ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+				assign_obj_from_scalar(enp,dst_dp,&sval);
 			} else {
 				/* we don't pass the dst object, because it may not
 				 * be the right shape - we could check this, but we're lazy!
@@ -7128,7 +7128,7 @@ dump_tree(enp);	// expression error
 				advise("vector operand does not exist");
 				break;
 			}
-			EVAL_SCALAR(&sval,VN_CHILD(enp,1),OBJ_MACH_PREC_PTR(dp1));
+			eval_scalar(&sval,VN_CHILD(enp,1),OBJ_MACH_PREC_PTR(dp1));
 			if( do_vsfunc(QSP_ARG  dst_dp,dp1,&sval,VN_VFUNC_CODE(enp)) < 0 ){
 				node_error(enp);
 				WARN("Error assigning object");
@@ -7156,7 +7156,7 @@ dump_tree(enp);	// expression error
 		case T_SIZE_FN: 	/* eval_obj_assignment */
 			dval = eval_flt_exp(enp);
 			dbl_to_scalar(&sval,dval,OBJ_PREC_PTR(dst_dp));
-			ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+			assign_obj_from_scalar(enp,dst_dp,&sval);
 			break;
 
 		case T_LIT_INT:				/* eval_obj_assignment */
@@ -7165,12 +7165,12 @@ dump_tree(enp);	// expression error
 			 * will work.
 			 */
 			int_to_scalar(&sval,VN_INTVAL(enp),OBJ_PREC_PTR(dst_dp));
-			ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+			assign_obj_from_scalar(enp,dst_dp,&sval);
 			break;
 
 		case T_LIT_DBL:
 			dbl_to_scalar(&sval,VN_DBLVAL(enp),OBJ_PREC_PTR(dst_dp));
-			ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+			assign_obj_from_scalar(enp,dst_dp,&sval);
 			break;
 
 		case T_BITRSHIFT:
@@ -7181,7 +7181,7 @@ dump_tree(enp);	// expression error
 		case T_BITCOMP:
 		case T_MODULO:
 			int_to_scalar( &sval, eval_int_exp(enp), OBJ_PREC_PTR(dst_dp) );
-			ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+			assign_obj_from_scalar(enp,dst_dp,&sval);
 			break;
 
 		case T_MATH0_FN:
@@ -7195,7 +7195,7 @@ dump_tree(enp);	// expression error
 		case T_SCALMAX:
 		case T_SCALMIN:
 			dbl_to_scalar(&sval, eval_flt_exp(enp), OBJ_PREC_PTR(dst_dp) );
-			ASSIGN_OBJ_FROM_SCALAR(enp,dst_dp,&sval);
+			assign_obj_from_scalar(enp,dst_dp,&sval);
 			break;
 
 		case T_MATH0_VFN:			/* eval_obj_assignment */
@@ -7244,7 +7244,7 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	assert(n_stored_script_args==0);	// BUG will fail if recursion
 						// also not thread-safe!?  BUG
 
-	n_args=parse_script_args(QSP_ARG  VN_CHILD(enp,0),0,SR_N_ARGS(srp));
+	n_args=parse_script_args(VN_CHILD(enp,0),0,SR_N_ARGS(srp));
 	if( n_args < 0 ) return -1;
 
 	// IN the objC implementation, the args are held in the query object as a list,
@@ -7403,7 +7403,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	if( VN_CODE(enp) == T_DIM_ASSIGN )
-		EVAL_DIM_ASSIGNMENT(dp,VN_CHILD(enp,1));
+		eval_dim_assignment(dp,VN_CHILD(enp,1));
 	else {
 		eval_obj_assignment(dp,VN_CHILD(enp,1));
 	}
@@ -7574,7 +7574,7 @@ advise(ERROR_STRING);
 
 		case T_DISPLAY:		/* eval_work_tree */
 			if( going ) return(1);
-			EVAL_DISPLAY_STAT(VN_CHILD(enp,0));
+			eval_display_stat(VN_CHILD(enp,0));
 			break;
 
 		case T_SET_FUNCPTR:	/* eval_work_tree */
@@ -7684,7 +7684,7 @@ advise(ERROR_STRING);
 
 			if( ! going ){
 				lval = eval_int_exp(VN_CHILD(enp,0));
-				case_enp = FIND_CASE(VN_CHILD(enp,1),lval);
+				case_enp = find_case(VN_CHILD(enp,1),lval);
 				if( case_enp == NULL ){
 					/* It is not an error for there to be no case.
 					 * We might want to have this warning controlled by a flag.
@@ -7935,13 +7935,13 @@ advise(ERROR_STRING);
 
 		case T_EXP_PRINT:		/* eval_work_tree */
 			if( going ) return(1);
-			EVAL_PRINT_STAT(VN_CHILD(enp,0));
+			eval_print_stat(VN_CHILD(enp,0));
 			prt_msg("");	/* print newline after other expressions */
 			break;
 
 		case T_INFO:		/* eval_work_tree */
 			if( going ) return(1);
-			EVAL_INFO_STAT(VN_CHILD(enp,0));
+			eval_info_stat(VN_CHILD(enp,0));
 			break;
 
 		case T_WARN:		/* eval_work_tree */

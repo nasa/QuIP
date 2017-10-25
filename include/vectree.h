@@ -388,13 +388,14 @@ extern Context_Pair *	pop_previous(SINGLE_QSP_ARG_DECL);
 extern void		_restore_previous(QSP_ARG_DECL  Context_Pair *);
 extern Identifier *	_eval_ptr_ref(QSP_ARG_DECL  Vec_Expr_Node *enp,int expect_ptr_set);
 extern char *		node_desc(Vec_Expr_Node *);
-extern void		reeval_decl_stat(QSP_ARG_DECL  Precision *prec_p,Vec_Expr_Node *,int ro);
+extern void		_reeval_decl_stat(QSP_ARG_DECL  Precision *prec_p,Vec_Expr_Node *,int ro);
 extern const char *	_eval_string(QSP_ARG_DECL Vec_Expr_Node *);
 extern void		_missing_case(QSP_ARG_DECL  Vec_Expr_Node *,const char *);
 extern long		_eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *);
 extern double		_eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *);
 extern void		_eval_decl_tree(QSP_ARG_DECL  Vec_Expr_Node *);
 
+#define reeval_decl_stat(prec,enp,decl_flags)		_reeval_decl_stat(QSP_ARG  prec,enp,decl_flags)
 #define eval_immediate(enp)		_eval_immediate(QSP_ARG enp)
 #define get_set_ptr(enp)		_get_set_ptr(QSP_ARG enp)
 #define eval_obj_ref(enp)		_eval_obj_ref(QSP_ARG enp)
