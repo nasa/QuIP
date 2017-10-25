@@ -84,7 +84,7 @@ static void init_vl2_pfdevs(QSP_ARG_DECL  Compute_Platform *cpp)
 {
 	Platform_Device *pdp;
 
-	pdp = new_pfdev(QSP_ARG  "CPU1");
+	pdp = new_pfdev("CPU1");
 	SET_PFDEV_PLATFORM(pdp,cpp);
 
 	SET_PFDEV_MAX_DIMS(pdp,DEFAULT_PFDEV_MAX_DIMS);
@@ -142,7 +142,7 @@ void vl2_init_platform(SINGLE_QSP_ARG_DECL)
 	init_vl2_pfdevs(QSP_ARG  cpp);
 
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
-		ERROR1("init_ocl_platform:  Failed to pop platform device context!?");
+		error1("init_ocl_platform:  Failed to pop platform device context!?");
 
 	check_vl2_vfa_tbl(SINGLE_QSP_ARG);
 

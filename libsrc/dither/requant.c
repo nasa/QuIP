@@ -94,7 +94,7 @@ static COMMAND_FUNC( do_set_input )
 {
 	Data_Obj *gdp;
 
-	gdp = PICK_OBJ( "source image" );
+	gdp = pick_obj( "source image" );
 	if( gdp == NULL ) return;
 	set_grayscale(gdp);
 }
@@ -103,7 +103,7 @@ static COMMAND_FUNC( do_set_input3d )
 {
 	Data_Obj *gdp;
 
-	gdp = PICK_OBJ( "source image" );
+	gdp = pick_obj( "source image" );
 	if( gdp == NULL ) return;
 	set_grayscale3d(gdp);
 }
@@ -114,7 +114,7 @@ static COMMAND_FUNC( do_set_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "output image" );
+	hdp = pick_obj( "output image" );
 	if( hdp == NULL ) return;
 	set_halftone(hdp);
 }
@@ -123,7 +123,7 @@ static COMMAND_FUNC( do_set_filter )
 {
 	Data_Obj *fdp;
 
-	fdp = PICK_OBJ( "filter image" );
+	fdp = pick_obj( "filter image" );
 	if( fdp == NULL ) return;
 	set_filter(fdp);
 }
@@ -132,7 +132,7 @@ static COMMAND_FUNC( do_set_output3d )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "output image" );
+	hdp = pick_obj( "output image" );
 	if( hdp == NULL ) return;
 	set_halftone3d(hdp);
 }
@@ -141,7 +141,7 @@ static COMMAND_FUNC( do_set_filter3d )
 {
 	Data_Obj *fdp;
 
-	fdp = PICK_OBJ( "filter image" );
+	fdp = pick_obj( "filter image" );
 	if( fdp == NULL ) return;
 	set_filter3d(fdp);
 }
@@ -163,8 +163,8 @@ static COMMAND_FUNC( do_qt_dither )
 {
 	Data_Obj *dpto, *dpfr;
 
-	dpto = PICK_OBJ( "target image" );
-	dpfr = PICK_OBJ( "source image" );
+	dpto = pick_obj( "target image" );
+	dpfr = pick_obj( "source image" );
 
 	if( dpto == NULL || dpfr == NULL ) return;
 
@@ -198,9 +198,9 @@ static COMMAND_FUNC( do_set_clr_input )
 {
 	Data_Obj *lumdp, *rgdp, *bydp;
 
-	lumdp = PICK_OBJ( "luminance image" );
-	rgdp = PICK_OBJ( "red-green image" );
-	bydp = PICK_OBJ( "blue-yellow image" );
+	lumdp = pick_obj( "luminance image" );
+	rgdp = pick_obj( "red-green image" );
+	bydp = pick_obj( "blue-yellow image" );
 
 	if( lumdp==NULL || rgdp==NULL || bydp==NULL ) return;
 
@@ -211,8 +211,8 @@ static COMMAND_FUNC( do_set_dich_input )
 {
 	Data_Obj *lumdp, *rgdp;
 
-	lumdp = PICK_OBJ( "luminance image" );
-	rgdp = PICK_OBJ( "red-green image" );
+	lumdp = pick_obj( "luminance image" );
+	rgdp = pick_obj( "red-green image" );
 
 	if( lumdp==NULL || rgdp==NULL ) return;
 
@@ -223,7 +223,7 @@ static COMMAND_FUNC( do_set_clr_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "byte image for composite halftone" );
+	hdp = pick_obj( "byte image for composite halftone" );
 	if( hdp==NULL ) return;
 	set_rgb_output(hdp);
 }
@@ -232,7 +232,7 @@ static COMMAND_FUNC( do_set_dich_output )
 {
 	Data_Obj *hdp;
 
-	hdp = PICK_OBJ( "byte image for composite halftone" );
+	hdp = pick_obj( "byte image for composite halftone" );
 	if( hdp==NULL ) return;
 	set_dich_output(hdp);
 }
@@ -241,9 +241,9 @@ static COMMAND_FUNC( do_set_clr_filter )
 {
 	Data_Obj *rdp, *gdp, *bdp;
 
-	rdp = PICK_OBJ( "red filter image" );
-	gdp = PICK_OBJ( "green filter image" );
-	bdp = PICK_OBJ( "blue filter image" );
+	rdp = pick_obj( "red filter image" );
+	gdp = pick_obj( "green filter image" );
+	bdp = pick_obj( "blue filter image" );
 
 	if( rdp==NULL || gdp==NULL || bdp==NULL ) return;
 
@@ -254,8 +254,8 @@ static COMMAND_FUNC( do_set_dich_filter )
 {
 	Data_Obj *rdp, *gdp;
 
-	rdp = PICK_OBJ( "red filter image" );
-	gdp = PICK_OBJ( "green filter image" );
+	rdp = pick_obj( "red filter image" );
+	gdp = pick_obj( "green filter image" );
 
 	if( rdp==NULL || gdp==NULL ) return;
 
@@ -304,7 +304,7 @@ static COMMAND_FUNC( do_clr_setxform )
 {
 	Data_Obj *matrix;
 
-	matrix = PICK_OBJ( "transformation matrix" );
+	matrix = pick_obj( "transformation matrix" );
 	if( matrix == NULL ) return;
 	set_clr_xform(matrix);
 }
@@ -313,7 +313,7 @@ static COMMAND_FUNC( do_dich_setxform )
 {
 	Data_Obj *matrix;
 
-	matrix = PICK_OBJ( "transformation matrix" );
+	matrix = pick_obj( "transformation matrix" );
 	if( matrix == NULL ) return;
 	set_dich_xform(matrix);
 }

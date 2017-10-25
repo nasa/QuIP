@@ -175,6 +175,13 @@ typedef struct screen_obj Screen_Obj;
 
 #endif /* ! BUILD_FOR_OBJC */
 
+#define pick_panel(pmpt)	_pick_panel_obj(QSP_ARG  pmpt)
+#define init_panel_objs()	_init_panel_objs(SINGLE_QSP_ARG)
+#define new_panel_obj(s)	_new_panel_obj(QSP_ARG  s)
+#define get_panel_obj(s)	_get_panel_obj(QSP_ARG  s)
+#define panel_obj_of(s)		_panel_obj_of(QSP_ARG  s)
+#define list_panel_objs(fp)	_list_panel_objs(QSP_ARG  fp)
+#define panel_obj_list()	_panel_obj_list(SINGLE_QSP_ARG)
 
 #define CLEAR_PANEL_FLAG_BITS(po,bits)	SET_GW_FLAGS(PO_GW(po),GW_FLAGS(PO_GW(po)) & ~(bits) )
 #define SET_PANEL_FLAG_BITS(po,bits)	SET_GW_FLAGS(PO_GW(po),GW_FLAGS(PO_GW(po)) | (bits) )
@@ -194,7 +201,6 @@ extern Widget curr_thing_obj;
 /* prototypes */
 
 
-#define PICK_PANEL(pmpt)	pick_panel_obj(QSP_ARG  pmpt)
 
 /* screen_objs.c */
 

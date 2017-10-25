@@ -1151,7 +1151,7 @@ static Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 	assert( tmp_dp != NULL );
 
 	strcpy(s,OBJ_NAME(dp));
-	delvec(QSP_ARG  dp);
+	delvec(dp);
 	obj_rename(QSP_ARG  tmp_dp,s);
 	return(tmp_dp);
 }
@@ -1379,7 +1379,7 @@ dump_tree(uk_enp);
 	switch(VN_CODE(uk_enp)){
 		case T_DYN_OBJ:
 fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_enp));
-			idp = GET_ID(VN_STRING(uk_enp));
+			idp = get_id(VN_STRING(uk_enp));
 			assert( idp != NULL );
 			assert( IS_OBJ_REF(idp) );
 
@@ -1389,7 +1389,7 @@ fprintf(stderr,"resolve_object passed unknown dynamic object %s\n",VN_STRING(uk_
 
 		case T_STATIC_OBJ:
 			dp = VN_OBJ(uk_enp);
-			idp = GET_ID(OBJ_NAME(dp));
+			idp = get_id(OBJ_NAME(dp));
 			break;
 
 		default:

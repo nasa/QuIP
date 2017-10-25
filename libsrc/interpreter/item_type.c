@@ -67,7 +67,7 @@ static ITEM_DEL_PROT(Item_Context,ctx)
 
 static Item_Type *	_new_ittyp(QSP_ARG_DECL  const char *);
 
-#define IT_LIST(itp)	_item_list(QSP_ARG  itp)
+//#define IT_LIST(itp)	_item_list(QSP_ARG  itp)
 
 #define ITEM_TYPE_STRING	"Item_Type"
 Item_Type * ittyp_itp=NULL;
@@ -910,14 +910,14 @@ List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 
 	if( ! NEEDS_NEW_LIST(itp) ){
 		/* Nothing changed, just return the existing list */
-		return(IT_LIST(itp));
+		return(current_item_list(itp));
 	}
 
 	/* Something has changed, so we have to rebuild the list.
 	 * Begin by trashing the old list.
 	 */
 	
-	while( (np=remHead(IT_LIST(itp))) != NULL )
+	while( (np=remHead(current_item_list(itp))) != NULL )
 		rls_node(np);
 
 	/* now make up the new list, by concatenating the context lists */
@@ -927,7 +927,7 @@ List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 		while(context_np!=NULL){
 			Item_Context *icp;
 			icp=(Item_Context *) NODE_DATA(context_np);
-			cat_container_items(IT_LIST(itp),CTX_CONTAINER(icp));
+			cat_container_items(current_item_list(itp),CTX_CONTAINER(icp));
 			context_np=NODE_NEXT(context_np);
 			SET_CTX_LIST_SERIAL(icp, CTX_ITEM_SERIAL(icp) );
 		}
@@ -936,7 +936,7 @@ List *_item_list(QSP_ARG_DECL  Item_Type *itp)
 	//CLEAR_ITCI_FLAG_BITS(THIS_ITCI(itp), ITCI_NEEDS_LIST );
 	SET_ITCI_LIST_SERIAL( THIS_ITCI(itp), ITCI_ITEM_SERIAL(THIS_ITCI(itp)) );
 
-	return(IT_LIST(itp));
+	return(current_item_list(itp));
 }
 
 /* reorder a list of items into alphanumeric order of item names */
@@ -1754,12 +1754,10 @@ List *_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	return ITCI_CSTK(itci_p);
 }
 
-#ifdef WHERE_DOES_THIS_GO
 List *_current_item_list(QSP_ARG_DECL  Item_Type *itp)
 {
 	return ITCI_ITEM_LIST(THIS_ITCI(itp));
 }
-#endif // WHERE_DOES_THIS_GO
 
 Item_Context *_current_context(QSP_ARG_DECL  Item_Type *itp)
 {

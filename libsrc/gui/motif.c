@@ -103,7 +103,7 @@ static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj)
 
 	/* otherwise check all panels */
 
-	lp=panel_obj_list(SINGLE_QSP_ARG);
+	lp=panel_obj_list();
 	if( lp==NULL )
 {
 WARN("no panel list");
@@ -171,7 +171,7 @@ Panel_Obj *find_panel(QSP_ARG_DECL  Widget obj)
 	Node *np;
 	Panel_Obj *po;
 
-	lp=panel_obj_list(SINGLE_QSP_ARG);
+	lp=panel_obj_list();
 	if( lp == NULL ) return(NULL);
 	np=QLIST_HEAD(lp);
 	while( np!=NULL ){
@@ -242,7 +242,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 	SET_PO_DOP(po, curr_dop());
 #ifdef CAUTIOUS
 	if( PO_DOP(po) == NULL )
-		ERROR1("CAUTIOUS:  no display object");
+		error1("CAUTIOUS:  no display object");
 #endif
 
 	set_curr_win(PO_ROOTW(po));
@@ -261,7 +261,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 				al, ac);
 
 	if( po->po_frame_obj == (Widget) NULL )
-		ERROR1("error creating frame");
+		error1("error creating frame");
 
 	ac = 0;
 //fprintf(stderr,"make_panel calling XmNautoUnmanage\n");
@@ -271,7 +271,7 @@ void make_panel(QSP_ARG_DECL  Panel_Obj *po,int width,int height)
 				al, ac);
 
 	if( (Widget) po->po_panel_obj == (Widget) NULL )
-		ERROR1("error creating panel");
+		error1("error creating panel");
 
 //fprintf(stderr,"make_panel calling XtDisplay\n");
 	po->po_dpy = XtDisplay(po->po_frame_obj);
@@ -551,7 +551,7 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 	 */
 
 	/*chew_text(DEFAULT_QSP_ARG sop->so_action_text); */
-	ASSIGN_RESERVED_VAR("choice",sop->so_action_text);	/* BUG? action text? */
+	assign_reserved_var("choice",sop->so_action_text);	/* BUG? action text? */
 
 	/* Now we've found the button, how do we find the parent chooser? */
 
@@ -559,7 +559,7 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 
 #ifdef CAUTIOUS
 	if( sop == NULL )
-		ERROR1("CAUTIOUS:  chooser button with no parent!?");
+		error1("CAUTIOUS:  chooser button with no parent!?");
 #endif /* CAUTIOUS */
 
 	chew_text(DEFAULT_QSP_ARG sop->so_action_text, "(chooser event)");
@@ -590,7 +590,7 @@ static void toggle_func(Widget toggleID, XtPointer app_data,
 			value &= 1;
 		}
 		sprintf(val_str,"%d",value);
-		ASSIGN_RESERVED_VAR("toggle_state",val_str);
+		assign_reserved_var("toggle_state",val_str);
 		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(toggle event)");
 	}
 	else WARN("couldn't locate toggle button");
@@ -621,9 +621,9 @@ static void text_func(Widget textID, XtPointer app_data, XtPointer widget_data )
 	s = get_text(sop);
 
 	if( s == NULL )
-		assign_reserved_var( SOB_QSP_ARG  "input_string","(null)");
+		_assign_reserved_var( SOB_QSP_ARG  "input_string","(null)");
 	else {
-		assign_reserved_var( SOB_QSP_ARG  "input_string",s);
+		_assign_reserved_var( SOB_QSP_ARG  "input_string",s);
 		free((void *)s);
 	}
 
@@ -653,9 +653,9 @@ static void text_func2(Widget textID, XtPointer app_data, XtPointer widget_data 
 	s = get_text(sop);
 
 	if( s == NULL )
-		ASSIGN_RESERVED_VAR("input_string","(null)");
+		assign_reserved_var("input_string","(null)");
 	else {
-		ASSIGN_RESERVED_VAR("input_string",s);
+		assign_reserved_var("input_string",s);
 		free((void *)s);
 	}
 
@@ -947,9 +947,9 @@ static void slider_func(Widget sliderID, XtPointer app_data,
 		/* get the value from the slider */
 		XmScaleGetValue(sliderID, &value);
 		sprintf(str,"%d",value);			// BUG overrun?
-		ASSIGN_RESERVED_VAR("slider_val",str);
+		assign_reserved_var("slider_val",str);
 		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(slider event)");
-	} else ERROR1("can't locate slider");
+	} else error1("can't locate slider");
 } // slider_func
 #endif /* HAVE_MOTIF */
 
@@ -1147,7 +1147,7 @@ static void motif_dispatch(SINGLE_QSP_ARG_DECL)
 static void navp_genwin_posn(QSP_ARG_DECL  const char *s, int x, int y)
 {
 	Nav_Panel *np_p;
-	np_p=GET_NAV_PANEL(s);
+	np_p=get_nav_panel(s);
 	if( np_p != NULL ) {
 		//SET_NAVP_X(np_p, x);
 		//SET_NAVP_Y(np_p, y);
@@ -1162,7 +1162,7 @@ static void navp_genwin_show(QSP_ARG_DECL  const char *s)
 {
 	Nav_Panel *np_p;
 
-	np_p=GET_NAV_PANEL(s);
+	np_p=get_nav_panel(s);
 	if( np_p != NULL ) show_panel(QSP_ARG  NAVP_PANEL(np_p));
 	return;
 }
@@ -1171,7 +1171,7 @@ static void navp_genwin_unshow(QSP_ARG_DECL  const char *s)
 {
 	Nav_Panel *np_p;
 
-	np_p=GET_NAV_PANEL(s);
+	np_p=get_nav_panel(s);
 	if( np_p != NULL ) unshow_panel(QSP_ARG  NAVP_PANEL(np_p));
 	return;
 }
@@ -1179,7 +1179,7 @@ static void navp_genwin_unshow(QSP_ARG_DECL  const char *s)
 static void navp_genwin_delete(QSP_ARG_DECL  const char *s)
 {
 	Nav_Panel *np_p;
-	np_p=GET_NAV_PANEL(s);
+	np_p=get_nav_panel(s);
 	if( np_p != NULL ) {
 		WARN("sorry, don't know how to delete a nav_panel yet");
 	}
@@ -1224,7 +1224,7 @@ void motif_init(QSP_ARG_DECL  const char *progname)
 	// but we do this here because nav_panel_itp is
 	// static to this file...
 	if( nav_panel_itp == NULL ){
-		init_nav_panels(SINGLE_QSP_ARG);
+		init_nav_panels();
 		add_genwin(QSP_ARG  nav_panel_itp, &navp_genwin_funcs, NULL);
 	}
 }
@@ -1403,7 +1403,7 @@ static void scroller_func(Widget scrollerID, XtPointer app_data,
 	XmStringGetLtoR(list_cbs->item, (char *)XmSTRING_DEFAULT_CHARSET,
 		&selection);
 
-	ASSIGN_RESERVED_VAR("selection",selection);
+	assign_reserved_var("selection",selection);
 	sop = find_object(DEFAULT_QSP_ARG  scrollerID);
 	if( sop == NULL ) return;
 	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(scroller event)");
@@ -1479,7 +1479,7 @@ void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 #ifdef CAUTIOUS
 	if( sop->so_children != NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  Chooser %s already has a child list!?",SOB_NAME(sop));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -1555,7 +1555,7 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 #ifdef CAUTIOUS
 	if( sop->so_children != NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  Picker %s already has a child list!?",SOB_NAME(sop));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -1726,26 +1726,26 @@ Item_Context *pop_navitm_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
-	icp = pop_item_context(QSP_ARG  nav_item_itp);
+	icp = pop_item_context(nav_item_itp);
 	return icp;
 }
 
 void push_navitm_context(QSP_ARG_DECL  Item_Context *icp)
 {
-	push_item_context(QSP_ARG  nav_item_itp, icp );
+	push_item_context(nav_item_itp, icp );
 }
 
 Item_Context *pop_navgrp_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
-	icp = pop_item_context(QSP_ARG  nav_group_itp);
+	icp = pop_item_context(nav_group_itp);
 	return icp;
 }
 
 void push_navgrp_context(QSP_ARG_DECL  Item_Context *icp)
 {
-	push_item_context(QSP_ARG  nav_group_itp, icp );
+	push_item_context(nav_group_itp, icp );
 }
 
 void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
@@ -1771,7 +1771,7 @@ fprintf(stderr,"remove_nav_group %s BEGIN\n",NAVGRP_NAME(ng_p));
 	assert(icp!=NULL);
 
 fprintf(stderr,"removing item context for nav group %s\n",NAVGRP_NAME(ng_p));
-	delete_item_context(QSP_ARG  icp);
+	delete_item_context(icp);
 fprintf(stderr,"DONE removing item context for nav group %s\n",NAVGRP_NAME(ng_p));
 
 	// Now update the panel itself...
@@ -1782,7 +1782,7 @@ fprintf(stderr,"DONE removing item context for nav group %s\n",NAVGRP_NAME(ng_p)
 	remove_from_panel( NAVGRP_PANEL(ng_p), NAVGRP_SCRNOBJ(ng_p) );
 
 	// remove from database
-	del_nav_group(QSP_ARG  ng_p);
+	del_nav_group(ng_p);
 }
 
 void remove_nav_item(QSP_ARG_DECL  Nav_Item *ni_p)
@@ -1792,26 +1792,26 @@ fprintf(stderr,"remove_nav_item %s BEGIN\n",NAVITM_NAME(ni_p));
 	// need to remove from panel
 	delete_widget(QSP_ARG  NAVITM_SCRNOBJ(ni_p) );
 
-	del_nav_item(QSP_ARG  ni_p);
+	del_nav_item(ni_p);
 }
 
 Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_item_itp == NULL ){
-		init_nav_items(SINGLE_QSP_ARG);
-		set_del_method(QSP_ARG  nav_item_itp, (void (*)(QSP_ARG_DECL  Item *))&remove_nav_item);
+		init_nav_items();
+		set_del_method(nav_item_itp, (void (*)(QSP_ARG_DECL  Item *))&remove_nav_item);
 	}
 
-	return create_item_context(QSP_ARG  nav_item_itp, name );
+	return create_item_context(nav_item_itp, name );
 }
 
 Item_Context *create_navgrp_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_group_itp == NULL ){
-		init_nav_groups(SINGLE_QSP_ARG);
+		init_nav_groups();
 	}
 
-	return create_item_context(QSP_ARG  nav_group_itp, name );
+	return create_item_context(nav_group_itp, name );
 }
 
 Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
@@ -1823,7 +1823,7 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 
 //fprintf(stderr,"create_nav_panel %s BEGIN\n",name);
 
-	np_p = new_nav_panel(QSP_ARG  name);
+	np_p = new_nav_panel(name);
 	if( np_p == NULL ){
 		sprintf(ERROR_STRING,
 "create_nav_panel:  error creating nav_panel \"%s\"!?",name);
@@ -1911,7 +1911,7 @@ Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *np_p, const char *name)
 	int n;
 	char *s;
 
-	ng_p = new_nav_group(QSP_ARG  name);
+	ng_p = new_nav_group(name);
 	if( ng_p == NULL ){
 		sprintf(ERROR_STRING,
 "create_nav_group:  error creating nav_group \"%s\"!?",name);
@@ -2033,7 +2033,7 @@ void end_busy(int final)
 void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 {
 	//WARN("get_confirmation:  not implemented!?");
-	ASSIGN_VAR("confirmed","1");
+	assign_var("confirmed","1");
 	fprintf(stderr,"ALERT:  get_confirmation:  confirming without use input...\n");
 }
 

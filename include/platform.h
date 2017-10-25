@@ -378,8 +378,10 @@ ITEM_INTERFACE_PROTOTYPES( Platform_Device, pfdev )
 
 #define pick_pfdev(pmpt)	_pick_pfdev(QSP_ARG  pmpt)
 #define new_pfdev(name)		_new_pfdev(QSP_ARG  name)
+#define pfdev_of(name)		_pfdev_of(QSP_ARG  name)
 #define init_pfdevs()		_init_pfdevs(SINGLE_QSP_ARG)
 #define pfdev_list()		_pfdev_list(SINGLE_QSP_ARG)
+#define list_pfdevs(fp)		_list_pfdevs(QSP_ARG  fp)
 
 extern Platform_Device *curr_pdp;
 

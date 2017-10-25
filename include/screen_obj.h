@@ -413,9 +413,13 @@ extern IOS_List *all_scrnobjs(SINGLE_QSP_ARG_DECL);
 
 ITEM_INTERFACE_PROTOTYPES(Screen_Obj,scrnobj)
 
+
 #endif /* ! BUILD_FOR_OBJC */
 
-#define PICK_SCRNOBJ(pmpt)		pick_scrnobj(QSP_ARG  pmpt)
+#define init_scrnobjs()		_init_scrnobjs(SINGLE_QSP_ARG)
+#define new_scrnobj(s)		_new_scrnobj(QSP_ARG  s)
+#define pick_scrnobj(pmpt)	_pick_scrnobj(QSP_ARG  pmpt)
+#define del_scrnobj(s)		_del_scrnobj(QSP_ARG  s)
 
 
 /* screen_objs.c */

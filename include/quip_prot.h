@@ -101,6 +101,7 @@ ITEM_INTERFACE_PROTOTYPES( Pipe, pipe )
 #define pipe_of(name)		_pipe_of(QSP_ARG  name)
 #define new_pipe(name)		_new_pipe(QSP_ARG  name)
 #define del_pipe(name)		_del_pipe(QSP_ARG  name)
+#define list_pipes(fp)		_list_pipes(QSP_ARG  fp)
 
 #endif /* HAVE_POPEN */
 
@@ -171,13 +172,14 @@ ITEM_PICK_PROT(Query_Stack,query_stack)
 #define query_stack_list()	_query_stack_list(SINGLE_QSP_ARG)
 #define new_query_stack(name)	_new_query_stack(QSP_ARG  name)
 #define pick_query_stack(p)	_pick_query_stack(QSP_ARG  p)
+#define list_query_stacks(fp)	_list_query_stacks(QSP_ARG  fp)
 
 extern Mouthful *new_mouthful(const char * text, const char *filename);
 
 // item_type.c
 ITEM_LIST_PROT(Item_Type,ittyp)
 ITEM_PICK_PROT(Item_Type,ittyp)
-#define PICK_ITTYP(pmpt)	pick_ittyp(QSP_ARG  pmpt)
+#define pick_ittyp(pmpt)	_pick_ittyp(QSP_ARG  pmpt)
 
 #ifdef HAVE_LIBCURL
 //extern String_Buf *curl_stringbuf(SINGLE_QSP_ARG_DECL);
@@ -319,7 +321,8 @@ extern FILE *_tell_errfile(SINGLE_QSP_ARG_DECL);
 #define tell_errfile()	_tell_errfile(SINGLE_QSP_ARG)
 #define tell_msgfile()	_tell_msgfile(SINGLE_QSP_ARG)
 
-extern Quip_Function *function_of(QSP_ARG_DECL  const char *name);
+// BUG?  why not use ITEM macro here?
+extern Quip_Function *_function_of(QSP_ARG_DECL  const char *name);
 extern void _list_vars(SINGLE_QSP_ARG_DECL);
 extern Variable *_get_var(QSP_ARG_DECL  const char *name);
 #define list_vars()	_list_vars(SINGLE_QSP_ARG);
@@ -565,6 +568,10 @@ extern Data_Obj *	_pick_obj(QSP_ARG_DECL const char *pmpt);
 #define vwr_of( s )	_vwr_of(QSP_ARG  s )
 #define get_vwr( s )	_get_vwr(QSP_ARG  s )
 #define pick_vwr( s )	_pick_vwr(QSP_ARG  s )
+#define list_vwrs( fp )	_list_vwrs(QSP_ARG  fp )
+#define init_vwrs()	_init_vwrs(SINGLE_QSP_ARG)
+#define del_vwr( s )	_del_vwr(QSP_ARG  s )
+#define new_vwr( s )	_new_vwr(QSP_ARG  s )
 
 // BUG this should be per-qsp
 extern int quip_verbose;

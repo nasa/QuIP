@@ -440,7 +440,8 @@ extern Disp_Obj *the_dop;
 
 #endif /* ! BUILD_FOR_OBJC */
 
-#define PICK_CANVAS_EVENT(p)	pick_canvas_event(QSP_ARG  p)
+#define pick_canvas_event(p)	_pick_canvas_event(QSP_ARG  p)
+#define new_canvas_event(s)	_new_canvas_event(QSP_ARG  s)
 
 #define SET_VW_FLAG_BITS(vp,v)		SET_VW_FLAGS(vp, VW_FLAGS(vp) | v )
 #define CLEAR_VW_FLAG_BITS(vp,v)	SET_VW_FLAGS(vp, VW_FLAGS(vp) & ~(v) )
@@ -501,7 +502,6 @@ typedef struct view_cursor {
 		unsigned int	vc_yhot;
 } View_Cursor;
 
-#define PICK_CURSOR(pmpt)	pick_cursor(QSP_ARG  pmpt)
 
 
 /* viewer.c */
@@ -573,7 +573,9 @@ extern void rdplot(QSP_ARG_DECL  FILE *fp);
 /* drag.c */
 
 ITEM_INTERFACE_PROTOTYPES(Draggable,dragg)
-#define PICK_DRAGG(pmpt)	pick_dragg(QSP_ARG  pmpt)
+#define new_dragg(s)		_new_dragg(QSP_ARG  s)
+#define pick_dragg(pmpt)	_pick_dragg(QSP_ARG  pmpt)
+#define list_draggs(fp)		_list_draggs(QSP_ARG  fp)
 
 extern void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp);
 extern Draggable *in_draggable(Viewer *vp,int x,int y);
@@ -582,6 +584,11 @@ extern void extract_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y);
 /* cursors.c */
 
 ITEM_INTERFACE_PROTOTYPES(View_Cursor,cursor)
+
+#define pick_cursor(pmpt)	_pick_cursor(QSP_ARG  pmpt)
+#define new_cursor(s)		_new_cursor(QSP_ARG  s)
+#define list_cursors(fp)	_list_cursors(QSP_ARG  fp)
+
 extern void default_cursors(SINGLE_QSP_ARG_DECL);
 extern void make_cursor(QSP_ARG_DECL  const char *name,Data_Obj *bitmap_dp,int x,int y);
 extern void mk_cursor(QSP_ARG_DECL  const char *name,u_short *data,dimension_t dx,dimension_t dy,dimension_t x,dimension_t y);

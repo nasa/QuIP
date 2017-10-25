@@ -79,7 +79,11 @@ static ITEM_LIST_FUNC(Serial_Port,serial_port)
 static ITEM_DEL_FUNC(Serial_Port,serial_port)
 static ITEM_PICK_FUNC(Serial_Port,serial_port)
 
-#define PICK_SERIAL_PORT(pmpt)		pick_serial_port(QSP_ARG  pmpt)
+#define pick_serial_port(pmpt)		_pick_serial_port(QSP_ARG  pmpt)
+#define serial_port_of(s)		_serial_port_of(QSP_ARG  s)
+#define new_serial_port(s)		_new_serial_port(QSP_ARG  s)
+#define del_serial_port(s)		_del_serial_port(QSP_ARG  s)
+#define list_serial_ports(fp)		_list_serial_ports(QSP_ARG  fp)
 
 // BUG - not thread safe!?
 static ssize_t n_raw_chars=0;
@@ -92,7 +96,7 @@ int open_serial_device(QSP_ARG_DECL  const char * s)
 	int fd;
 	Serial_Port *spp;
 
-	spp=serial_port_of(QSP_ARG  s);
+	spp=serial_port_of(s);
 	if( spp != NULL ){
 		sprintf(ERROR_STRING,"Serial port %s is already open",s);
 		WARN(ERROR_STRING);
@@ -125,10 +129,10 @@ fprintf(stderr,"%s opened...\n",s);
 
 
 
-	spp = new_serial_port(QSP_ARG  s);
+	spp = new_serial_port(s);
 	if( spp == NULL ){
 		sprintf(ERROR_STRING,"Unable to create serial port structure for %s",s);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 		return -1;	// NOTREACHED - silence static analyzer
 	}
 
@@ -339,7 +343,7 @@ int n_serial_chars(QSP_ARG_DECL  int fd)
 	if( ioctl(fd,FIONREAD,&n) < 0 ){
 		perror("n_serial_chars:  ioctl FIONREAD");
 		n=0;
-		ERROR1("unable to monitor serial input");
+		error1("unable to monitor serial input");
 	}
 	return(n);
 #else // ! FIONREAD
@@ -369,7 +373,7 @@ static int get_nreadable(QSP_ARG_DECL  Serial_Port *spp)
 		advise(ERROR_STRING);
 	}
 	sprintf(s,"%d",n);
-	assign_reserved_var(QSP_ARG  "n_readable",s);
+	assign_reserved_var("n_readable",s);
 	return(0);
 }
 
@@ -510,7 +514,7 @@ static char * recv_line(QSP_ARG_DECL  Serial_Port *spp)
 		*lin_ptr=0;
 
 		if( eol_seen ){
-			assign_reserved_var(QSP_ARG  "last_line",linbuf);
+			assign_reserved_var("last_line",linbuf);
 			return(linbuf);
 		}
 	}
@@ -528,9 +532,9 @@ static COMMAND_FUNC( do_insist )
 	else	s=NULL;
 
 	if( s != NULL )
-		assign_reserved_var(QSP_ARG  "serial_response",s);
+		assign_reserved_var("serial_response",s);
 	else
-		assign_reserved_var(QSP_ARG  "serial_response","(null)");
+		assign_reserved_var("serial_response","(null)");
 }
 
 static COMMAND_FUNC( do_raw_recv )
@@ -555,10 +559,10 @@ static COMMAND_FUNC( do_recv )
 	else 	n=0;
 
 	if( n > 0 )
-		assign_reserved_var(QSP_ARG  "serial_response",
+		assign_reserved_var("serial_response",
 					(char *)default_spp->sp_rawbuf);
 	else
-		assign_reserved_var(QSP_ARG  "serial_response","(null)");
+		assign_reserved_var("serial_response","(null)");
 }
 
 static COMMAND_FUNC( do_stty )
@@ -657,7 +661,7 @@ static COMMAND_FUNC( do_tty_redir )
 
 	s = NAMEOF("serial port for input redirection");
 
-	spp = serial_port_of(QSP_ARG  s);
+	spp = serial_port_of(s);
 	if( spp != NULL ) {
 		sprintf(ERROR_STRING,"Serial port %s is already open, close before calling redir",spp->sp_name);
 		WARN(ERROR_STRING);
@@ -695,7 +699,7 @@ static void close_serial_device(SINGLE_QSP_ARG_DECL)
 		sprintf(ERROR_STRING,"error closing serial device %s",default_spp->sp_name);
 		WARN(ERROR_STRING);
 	}
-	del_serial_port(QSP_ARG  default_spp);
+	del_serial_port(default_spp);
 	default_spp = NULL;
 }
 
@@ -714,7 +718,7 @@ static COMMAND_FUNC( do_select_serial )
 {
 	Serial_Port *spp;
 
-	spp = PICK_SERIAL_PORT("default port for serial operations"); 
+	spp = pick_serial_port("default port for serial operations"); 
 	if( spp == NULL ) return;
 
 	default_spp = spp;
@@ -731,8 +735,8 @@ static COMMAND_FUNC( do_connect )
 	int n1,n2;
 	ssize_t nr;
 
-	spp1 = PICK_SERIAL_PORT("first port"); 
-	spp2 = PICK_SERIAL_PORT("second port"); 
+	spp1 = pick_serial_port("first port"); 
+	spp2 = pick_serial_port("second port"); 
 	if( spp1 == NULL || spp2 == NULL ){
 		return;
 	}
@@ -788,7 +792,7 @@ static COMMAND_FUNC( do_tty_term )
 	FILE *console_output_fp;	/* print here to display to user */
 #endif // TTY_CTL
 
-	spp = PICK_SERIAL_PORT("");
+	spp = pick_serial_port("");
 	if( spp == NULL ) return;
 
 #ifdef TTY_CTL
@@ -836,7 +840,7 @@ static COMMAND_FUNC( do_tty_term )
 			int i;
 
 			if( recv_somex(QSP_ARG  spp->sp_fd,spp->sp_rawbuf,RAWBUF_SIZE,0) == 0 ){
-				ERROR1("expected chars but none!?");
+				error1("expected chars but none!?");
 			}
 			buf=spp->sp_rawbuf;
 			for(i=0;i<n_raw_chars;i++){
@@ -877,7 +881,7 @@ advise(ERROR_STRING);
 
 static COMMAND_FUNC( do_list_serial_ports )
 {
-	list_serial_ports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_serial_ports(tell_msgfile());
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(serial_menu,s,f,h)

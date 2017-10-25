@@ -29,7 +29,7 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	Subrt *srp;
 	int i;
 
-	srp=new_subrt(QSP_ARG  name);
+	srp=new_subrt(name);
 	if( srp==NULL ) return(NULL);
 
 	SET_SR_ARG_DECLS(srp, args);
@@ -239,7 +239,7 @@ COMMAND_FUNC( do_run_subrt )
 	Subrt_Call sc;
 	Vec_Expr_Node *enp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 
@@ -262,7 +262,7 @@ COMMAND_FUNC( do_dump_subrt )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 	dump_subrt(srp);
@@ -296,17 +296,17 @@ COMMAND_FUNC( do_opt_subrt )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 	if( srp==NULL ) return;
 
-	OPTIMIZE_SUBRT(srp);
+	optimize_subrt(srp);
 }
 
 COMMAND_FUNC( do_fuse_kernel )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 	if( srp==NULL ) return;
 
 	fuse_subrt(QSP_ARG  srp);
@@ -316,7 +316,7 @@ COMMAND_FUNC( do_tell_cost )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 
@@ -329,7 +329,7 @@ COMMAND_FUNC( do_subrt_info )
 	Vec_Expr_Node *enp;
 	Node *np;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 
@@ -489,11 +489,11 @@ void set_subrt_ctx(QSP_ARG_DECL  const char *name)
 	Item_Context *icp;	/* data_obj, identifier context */
 
 	ctxname = get_subrt_id(QSP_ARG  name);
-	icp=create_id_context(QSP_ARG  ctxname);
+	icp=create_id_context(ctxname);
 	PUSH_ID_CONTEXT(icp);
 
 	icp=create_dobj_context(QSP_ARG  ctxname);
-	PUSH_DOBJ_CONTEXT(icp);
+	push_dobj_context(icp);
 }
 
 static void rls_reference(Reference *refp)
@@ -538,7 +538,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			NWARN(ERROR_STRING);
 			break;
 	}
-	del_id(QSP_ARG  idp );	// releases name for us
+	del_id(idp);	// releases name for us
 }
 
 // This function is called when we delete an object declared in a subroutine...
@@ -582,7 +582,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	icp = POP_SUBRT_ID_CTX(name);
-	delete_item_context(QSP_ARG  icp);
+	delete_item_context(icp);
 
 	/* We don't want to delete static objects!? BUG */
 
@@ -592,7 +592,7 @@ advise(ERROR_STRING);
 	 * we have to delete the context ourselves - or provide a callback?
 	 */
 	icp = POP_SUBRT_DOBJ_CTX(name);
-	delete_item_context_with_callback(QSP_ARG  icp, clear_decl_obj);
+	delete_item_context_with_callback(icp, clear_decl_obj);
 
 	np = remTail(SUBRT_CTX_STACK);
 	assert( np != NULL );
@@ -646,12 +646,12 @@ Item_Context * pop_subrt_ctx(QSP_ARG_DECL  const char *name,Item_Type *itp)
 
 //sprintf(ERROR_STRING,"Searching for context %s",ctxname);
 //advise(ERROR_STRING);
-	icp = ctx_of(QSP_ARG  ctxname);
+	icp = ctx_of(ctxname);
 	assert( icp != NULL );
-	assert( icp == CURRENT_CONTEXT(itp) );
+	assert( icp == current_context(itp) );
 
 //fprintf(stderr,"popping %s from %s\n",CTX_NAME(icp),ITEM_TYPE_NAME(itp));
-	pop_item_context(QSP_ARG  itp);
+	pop_item_context(itp);
 
 	return(icp);
 }
@@ -698,7 +698,7 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 
 	if( subrt_itp == NULL ) return NULL;
 
-	lp=subrt_list(SINGLE_QSP_ARG);
+	lp=subrt_list();
 	if( lp == NULL )
 		return NULL;
 

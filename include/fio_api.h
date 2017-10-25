@@ -88,13 +88,12 @@ extern void		set_filetype(QSP_ARG_DECL  Filetype *ftp);
 
 ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
 
-/* These go elsewhere... */
-#ifdef FOOBAR
-ITEM_INIT_PROT(Filetype,filetype)
-ITEM_NEW_PROT(Filetype,filetype)
-ITEM_CHECK_PROT(Filetype,filetype)
-ITEM_PICK_PROT(Filetype,filetype)
-#endif /* FOOBAR */
+#define init_img_files()	_init_img_files(SINGLE_QSP_ARG)
+#define img_file_of(s)		_img_file_of(QSP_ARG  s)
+#define new_img_file(s)		_new_img_file(QSP_ARG  s)
+#define list_img_files(fp)	_list_img_files(QSP_ARG  fp)
+#define pick_img_file(s)	_pick_img_file(QSP_ARG  s)
+#define del_img_file(s)		_del_img_file(QSP_ARG  s)
 
 extern Filetype *filetype_for_code(QSP_ARG_DECL  filetype_code code);
 #define FILETYPE_FOR_CODE(code)	filetype_for_code(QSP_ARG  code)

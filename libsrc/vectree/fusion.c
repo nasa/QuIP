@@ -165,7 +165,7 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			cat_string(sbp,VN_DECL_NAME(enp));
 			break;
 		default:
-			MISSING_CASE(enp,"emit_kern_arg_decl");
+			missing_case(enp,"emit_kern_arg_decl");
 			break;
 	}
 }
@@ -336,7 +336,7 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			cat_string(sbp," )");
 			break;
 		default:
-			MISSING_CASE(enp,"emit_kern_body_node");
+			missing_case(enp,"emit_kern_body_node");
 			break;
 	}
 }
@@ -474,7 +474,7 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			}
 			break;
 		default:
-			MISSING_CASE(enp,"fuse_kernel");
+			missing_case(enp,"fuse_kernel");
 			break;
 	}
 }
@@ -519,7 +519,7 @@ long set_fused_kernel_args(QSP_ARG_DECL  void *kp, int *idx_p, Vec_Expr_Node *en
 		default:
 			ret_val = -1;
 			sprintf(ERROR_STRING,"set_fused_kernel_args:  unhandled case %s !?",node_desc(enp));
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 	}
 //fprintf(stderr,"set_fused_kernel_args will return %ld\n",ret_val);
 	return ret_val;

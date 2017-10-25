@@ -58,8 +58,8 @@ static float exclip(QSP_ARG_DECL  Data_Obj *dp,Data_Obj *val_sp,
 			sprintf(ERROR_STRING,
 				"new extremum %g, old extremum %g",
 				newex,extremum);
-			ADVISE(ERROR_STRING);
-			ERROR1("ifunc extremum disagrees with vfunc");
+			advise(ERROR_STRING);
+			error1("ifunc extremum disagrees with vfunc");
 		}
 
 		/* now reset this value */
@@ -116,7 +116,7 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 		if( verbose ){
 			sprintf(ERROR_STRING,
 		"scale:  object %s has constant value %g",OBJ_NAME(dp),omn);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 		}
 		rf = 1;
 	} else {

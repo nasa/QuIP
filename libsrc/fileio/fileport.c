@@ -131,18 +131,18 @@ advise(ERROR_STRING);
 				i,namebuf[i],namebuf[i]);
 			advise(ERROR_STRING);
 		}
-		ERROR1("choked");
+		error1("choked");
 	}
 
-	old_ifp=img_file_of(QSP_ARG  namebuf);
+	old_ifp=img_file_of(namebuf);
 
 	if( old_ifp != NULL ){
-		DEL_IMG_FILE(old_ifp);
+		del_img_file(old_ifp);
 		rls_str((char *)old_ifp->if_name);	// BUG?  release name here or not?
 		old_ifp = NULL;
 	}
 
-	new_ifp=new_img_file(QSP_ARG  namebuf);
+	new_ifp=new_img_file(namebuf);
 	if( new_ifp==NULL ){
 		sprintf(ERROR_STRING,
 			"recv_file:  couldn't create file struct \"%s\"",
@@ -159,12 +159,12 @@ advise(ERROR_STRING);
 
 	code = get_port_int32(QSP_ARG  mpp);
 	if( code == -1 )
-		ERROR1("error port code received!?");
+		error1("error port code received!?");
 	if( code != P_DATA ){
 		sprintf(ERROR_STRING,
 	"recv_file:  expected data object packet to complete transmission of file %s!?",
 			new_ifp->if_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 		
 	// the cast generates a compiler warning???

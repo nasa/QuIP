@@ -1108,7 +1108,7 @@ static COMMAND_FUNC( do_get_filenames )
 	objname = NAMEOF("name for new object in which to store filenames");
 	dir = NAMEOF("directory");
 
-	dp = dobj_of(QSP_ARG  objname);
+	dp = dobj_of(objname);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,
 	"get_filenames:  object %s already exists!?",OBJ_NAME(dp));
@@ -1117,7 +1117,7 @@ static COMMAND_FUNC( do_get_filenames )
 		//return;
 		// This used to be a warning and an error,
 		// but here we provide some garbage collection...
-		delvec( QSP_ARG  dp);
+		delvec(dp);
 	}
 
 	dir_p = opendir(dir);

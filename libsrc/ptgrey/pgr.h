@@ -30,6 +30,13 @@ typedef struct pgr_cam {
 
 ITEM_INTERFACE_PROTOTYPES(PGR_Cam,pgc)
 
+#define pick_pgc(p)	_pick_pgc(QSP_ARG  p)
+#define new_pgc(s)	_new_pgc(QSP_ARG  s)
+#define pgc_of(s)	_pgc_of(QSP_ARG  s)
+#define list_pgcs(fp)	_list_pgcs(QSP_ARG  fp)
+#define pgc_list()	_pgc_list(SINGLE_QSP_ARG)
+
+
 /* flag bits */
 
 #define PGR_CAM_USES_BMODE	1

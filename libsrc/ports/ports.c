@@ -18,11 +18,11 @@ void delport(QSP_ARG_DECL  Port *mpp)
 {
 #ifdef CAUTIOUS
 	if( mpp==NULL ) {
-		ERROR1("delport passed NULL");
+		error1("delport passed NULL");
 		return; // NOTREACHED - silence analyzer
 	}
 #endif /* CAUTIOUS */
-	del_item(QSP_ARG  port_itp,mpp);
+	del_item(port_itp,mpp);
 }
 
 void portinfo(QSP_ARG_DECL  Port *mpp)

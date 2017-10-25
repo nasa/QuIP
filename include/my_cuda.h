@@ -101,6 +101,10 @@ enum {
 
 ITEM_INTERFACE_PROTOTYPES( Cuda_Device, cudev )
 
+#define init_cudevs()		_init_cudevs(SINGLE_QSP_ARG)
+#define new_cudev(name)		_new_cudev(QSP_ARG  name)
+#define cudev_of(name)		_cudev_of(QSP_ARG  name)
+#define list_cudevs(fp)		_list_cudevs(QSP_ARG  fp)
 
 
 #ifdef HAVE_CUDA

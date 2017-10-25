@@ -275,7 +275,7 @@ static COMMAND_FUNC( do_xplot )
 
 	std_type x,y,y0,dy,*p;
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 
 	if( bad_plot_vec(QSP_ARG dp,1,"xplot") ) return;
 
@@ -294,7 +294,7 @@ static COMMAND_FUNC( do_yplot )
 	std_type x,y,dx,*p;
 	std_type x0;
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 
 	if( bad_plot_vec(QSP_ARG dp,1,"yplot") ) return;
 
@@ -316,8 +316,8 @@ static COMMAND_FUNC( do_cyplot )
 	std_type x,y,dx,*yp;
 	char *cp;
 
-	dp=PICK_OBJ("data vector");
-	cdp=PICK_OBJ("color vector");
+	dp=pick_obj("data vector");
+	cdp=pick_obj("color vector");
 
 	if( dp==NULL ) return;
 	if( cdp==NULL ) return;
@@ -390,7 +390,7 @@ static COMMAND_FUNC( do_xyplot )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 	if( dp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"xyplot")
@@ -426,7 +426,7 @@ static COMMAND_FUNC( do_xyzplot )
 #define UP	2
 	int pen_state=UP;
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 	if( dp==NULL ) return;
 
 	INSIST_RAM_OBJ(dp,"xyzplot")

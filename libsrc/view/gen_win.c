@@ -249,7 +249,7 @@ static void init_genwin_class(SINGLE_QSP_ARG_DECL)
 		return;
 	}
 #endif /* CAUTIOUS */
-	gw_iclp = new_ios_item_class(QSP_ARG  "genwin");
+	gw_iclp = new_ios_item_class("genwin");
 }
 
 IOS_Item_Type *itp_2;
@@ -270,7 +270,7 @@ void add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp,Genwin_Functions *gwfp,IOS_Item
 Gen_Win *find_genwin(QSP_ARG_DECL  const char *name)
 {
 	INSURE_GENWIN
-	return( (Gen_Win *) get_ios_member(QSP_ARG  gw_iclp,name) );
+	return( (Gen_Win *) get_ios_member(gw_iclp,name) );
 }
 
 #endif /* ! BUILD_FOR_OBJC */
@@ -286,11 +286,11 @@ static Viewer *genwin_viewer(QSP_ARG_DECL  Gen_Win *gwp)
 
 	INSURE_GENWIN
 
-	mip = get_ios_member_info(QSP_ARG  gw_iclp,GW_NAME(gwp));
+	mip = get_ios_member_info(gw_iclp,GW_NAME(gwp));
 	if( mip->mi_lookup != NULL ){
 		vp = (Viewer *)mip->mi_lookup(QSP_ARG  GW_NAME(gwp));
 	} else {
-		vp = (Viewer *)item_of(QSP_ARG  mip->mi_itp,GW_NAME(gwp));
+		vp = (Viewer *)item_of(mip->mi_itp,GW_NAME(gwp));
 	}
 	return(vp);
 }
@@ -308,11 +308,11 @@ static Panel_Obj *genwin_panel(QSP_ARG_DECL  Gen_Win *gwp)
 
 	INSURE_GENWIN
 
-	mip = get_ios_member_info(QSP_ARG  gw_iclp,GW_NAME(gwp));
+	mip = get_ios_member_info(gw_iclp,GW_NAME(gwp));
 	if( mip->mi_lookup != NULL )
 		po = (Panel_Obj *)mip->mi_lookup(QSP_ARG  GW_NAME(gwp));
 	else
-		po = (Panel_Obj *)item_of(QSP_ARG  mip->mi_itp,GW_NAME(gwp));
+		po = (Panel_Obj *)item_of(mip->mi_itp,GW_NAME(gwp));
 	return(po);
 }
 
@@ -355,13 +355,13 @@ static
 
 	INSURE_GENWIN
 
-	mip = get_ios_member_info(QSP_ARG  gw_iclp,GW_NAME(gwp));
+	mip = get_ios_member_info(gw_iclp,GW_NAME(gwp));
 #ifdef CAUTIOUS
 	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  position_genwin %s %d %d, missing member info #2",
 			GW_NAME(gwp),x,y);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -414,7 +414,7 @@ static void show_genwin(QSP_ARG_DECL  IOS_Item *ip)
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  show_genwin %s, missing member info #2",
 			IOS_ITEM_NAME(ip));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -442,7 +442,7 @@ static void unshow_genwin(QSP_ARG_DECL  IOS_Item *ip)
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  position_genwin %s, missing member info #2",
 			IOS_ITEM_NAME(ip));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -513,14 +513,14 @@ static void delete_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 
 	INSURE_GENWIN
 
-	mip = get_ios_member_info(QSP_ARG  gw_iclp,GW_NAME(gwp));
+	mip = get_ios_member_info(gw_iclp,GW_NAME(gwp));
 
 #ifdef CAUTIOUS
 	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  position_genwin %s, missing member info #2",
 			GW_NAME(gwp));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 

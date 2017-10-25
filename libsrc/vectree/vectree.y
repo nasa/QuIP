@@ -464,12 +464,12 @@ objref		: OBJNAME
 			{
 			Undef_Sym *usp;
 
-			usp=undef_of(QSP_ARG  $1);
+			usp=undef_of($1);
 			if( usp == NULL ){
 				/* BUG?  are contexts handled correctly??? */
 				sprintf(YY_ERR_STR,"Undefined symbol %s",$1);
 				yyerror(qsp,  YY_ERR_STR);
-				/*usp=*/new_undef(QSP_ARG  $1);
+				/*usp=*/new_undef($1);
 			}
 			$$=node0(T_UNDEF);
 			//SET_VN_STRING($$, savestr($1));
@@ -1017,7 +1017,7 @@ statline	: simple_stat ';'
 			{
 			Identifier *idp;
 			$$ = node0(T_LABEL);
-			idp = new_id(QSP_ARG  $1);
+			idp = new_id($1);
 			SET_ID_TYPE(idp, ID_LABEL);
 			//SET_VN_STRING($$, savestr(ID_NAME(idp)));
 			SET_VN_STRING($$, $1);
@@ -1165,7 +1165,7 @@ subroutine	: data_type new_func_decl stat_block
 			{
 			/* BUG make sure that precision matches prototype decl */
 			Subrt *srp;
-			srp=subrt_of(QSP_ARG  VN_STRING($2));
+			srp=subrt_of(VN_STRING($2));
 			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,$3);
@@ -2643,7 +2643,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 		return(NATIVE_FUNC_NAME);
 	}
 
-	func_p=function_of(QSP_ARG  CURR_STRING);
+	func_p=function_of(CURR_STRING);
 
 	if( func_p != NULL ){
 		yylvp->func_p = func_p;
@@ -2671,7 +2671,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 	 * See if it is a function or an object name
 	 */
 	
-	srp = subrt_of(QSP_ARG  CURR_STRING);
+	srp = subrt_of(CURR_STRING);
 	if( srp != NULL ){
 		yylvp->srp = srp;
 		if( IS_SCRIPT(srp) )
@@ -2683,7 +2683,7 @@ static int name_token(QSP_ARG_DECL  YYSTYPE *yylvp)
 		}
 	}
 
-	idp = ID_OF( CURR_STRING );
+	idp = id_of( CURR_STRING );
 	if( idp != NULL ){
 		if( IS_STRING_ID(idp) ){
 			yylvp->idp = idp;

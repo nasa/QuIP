@@ -191,10 +191,6 @@ struct item_type {
 	List *		it_free_lp;
 	int		it_container_type;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
-	/*
-	const char **	it_choices;
-	int		it_n_choices;
-	*/
 	List *		it_class_lp;
 
 	// If we can have multiple interpreter threads, then each thread

@@ -213,8 +213,8 @@ ADVISE(ERROR_STRING);*/									\
 		OA_ARGSTYPE(oap) = REAL_ARGS; 						\
 	/* vmov(oap); */								\
 	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );				\
-	delvec(QSP_ARG  sub_dst_dp);							\
-	delvec(QSP_ARG  sub_src_dp);
+	delvec(sub_dst_dp);							\
+	delvec(sub_src_dp);
 
 	if( dx == 0 ){
 		if( dy == 0 ){

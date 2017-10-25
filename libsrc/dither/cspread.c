@@ -341,12 +341,12 @@ static int setup_clr_requantize(SINGLE_QSP_ARG_DECL)
 	_npixels = OBJ_ROWS(halftone_dp) * OBJ_COLS(halftone_dp);
 
 	if( lum_err_dp != NULL ){
-		delvec(QSP_ARG  lum_err_dp);
-		delvec(QSP_ARG  rg_err_dp);
-		delvec(QSP_ARG  by_err_dp);
-		delvec(QSP_ARG  lum_ferr_dp);
-		delvec(QSP_ARG  rg_ferr_dp);
-		delvec(QSP_ARG  by_ferr_dp);
+		delvec(lum_err_dp);
+		delvec(rg_err_dp);
+		delvec(by_err_dp);
+		delvec(lum_ferr_dp);
+		delvec(rg_ferr_dp);
+		delvec(by_ferr_dp);
 	}
 	prec_p = PREC_FOR_CODE(PREC_SP);
 
@@ -956,16 +956,16 @@ COMMAND_FUNC( tell_sos )
 	*/
 
 	sprintf(str,"%f",lum_sos);
-	ASSIGN_VAR("lum_sos",str);
+	assign_var("lum_sos",str);
 	sprintf(str,"%f",rg_sos);
-	ASSIGN_VAR("rg_sos",str);
+	assign_var("rg_sos",str);
 	sprintf(str,"%f",by_sos);
-	ASSIGN_VAR("by_sos",str);
+	assign_var("by_sos",str);
 
 	/* now recompute... */
 	the_sos = rgb_sos();
 	sprintf(str,"%f",the_sos);
-	ASSIGN_VAR("total_sos",str);
+	assign_var("total_sos",str);
 
 	/*
 	advise("RECOMPUTED:");
@@ -1057,7 +1057,7 @@ if( debug & spread_debug ){
 sprintf(ERROR_STRING,"input images:  lum %s, rg %s, by %s",
 OBJ_NAME(deslum_dp),OBJ_NAME(desrg_dp),OBJ_NAME(desby_dp));
 advise(ERROR_STRING);
-longlist(QSP_ARG  deslum_dp);
+longlist(deslum_dp);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1093,17 +1093,17 @@ if( debug & spread_debug ){
 
 COMMAND_FUNC( cspread_tell )
 {
-	LONGLIST(deslum_dp);
-	LONGLIST(desrg_dp);
-	LONGLIST(desby_dp);
-	LONGLIST(halftone_dp);
-	LONGLIST(lum_filt_dp);
-	LONGLIST(rg_filt_dp);
-	LONGLIST(by_filt_dp);
-	LONGLIST(rgb2opp_mat);
-	LONGLIST(lum_err_dp);
-	LONGLIST(rg_err_dp);
-	LONGLIST(by_err_dp);
+	longlist(deslum_dp);
+	longlist(desrg_dp);
+	longlist(desby_dp);
+	longlist(halftone_dp);
+	longlist(lum_filt_dp);
+	longlist(rg_filt_dp);
+	longlist(by_filt_dp);
+	longlist(rgb2opp_mat);
+	longlist(lum_err_dp);
+	longlist(rg_err_dp);
+	longlist(by_err_dp);
 }
 
 

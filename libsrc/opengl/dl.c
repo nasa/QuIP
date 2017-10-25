@@ -20,14 +20,13 @@ static int next_serial_number=0;
 static GLenum dl_mode=GL_COMPILE;
 
 ITEM_INTERFACE_DECLARATIONS(Display_List,dl,0)
-#define PICK_DL(pmpt)	pick_dl(QSP_ARG pmpt)
 
 
 COMMAND_FUNC( do_del_dl )
 {
 	Display_List *dlp;
 
-	dlp = PICK_DL("");
+	dlp = pick_dl("");
 	if( dlp == NULL ) return;
 
 	delete_dl(QSP_ARG  dlp);
@@ -37,7 +36,7 @@ void delete_dl(QSP_ARG_DECL  Display_List *dlp)
 {
 	glDeleteLists(dlp->dl_serial,1);
 
-	del_dl( QSP_ARG  dlp );
+	del_dl( dlp );
 	givbuf(dlp->dl_name);
 	/* object struct itself is put on the free list... */
 }
@@ -49,7 +48,7 @@ COMMAND_FUNC( do_new_dl )
 
 	s=NAMEOF("name for new display list");
 
-	dlp=dl_of(QSP_ARG  s);
+	dlp=dl_of(s);
 	if( dlp != NULL ){
 		sprintf(ERROR_STRING,"A display list named \"%s\" already exists!?",s);
 		WARN(ERROR_STRING);
@@ -71,7 +70,7 @@ void new_display_list(QSP_ARG_DECL  const char *name)
 		return;
 	}
 
-	dlp = new_dl(QSP_ARG  name);
+	dlp = new_dl(name);
 	if( dlp == NULL ) return;
 
 	/* Here we might do other initialization (e.g. make gl calls to create a display list, set the ptr, etc ) */
@@ -87,7 +86,7 @@ COMMAND_FUNC( do_info_dl )
 {
 	Display_List *dlp;					\
 								\
-	dlp = PICK_DL("");					\
+	dlp = pick_dl("");					\
 	if( dlp == NULL ) return;			\
 								\
 	info_dl(QSP_ARG  dlp );
@@ -99,7 +98,7 @@ COMMAND_FUNC( do_call_dl )
 {
 	Display_List *dlp;					\
 								\
-	dlp = PICK_DL("");					\
+	dlp = pick_dl("");					\
 	if( dlp == NULL ) return;			\
 								\
 	call_dl( dlp );
@@ -147,7 +146,7 @@ void call_dl(Display_List *dlp)
 double display_list_exists(QSP_ARG_DECL  const char *name)
 {
 	Display_List *dl;
-	dl = dl_of(QSP_ARG  name);
+	dl = dl_of(name);
 
 	if( dl == NULL ) return(0);
 	return(1.0);

@@ -278,7 +278,7 @@ static void cost_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 
 		default:
-			MISSING_CASE(enp,"cost_node");
+			missing_case(enp,"cost_node");
 			break;
 	}
 }

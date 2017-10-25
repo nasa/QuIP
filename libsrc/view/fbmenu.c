@@ -63,7 +63,7 @@ static FB_Info *curr_fbip=NULL;
 			sprintf(ERROR_STRING,				\
 			"unable to open default frame buffer %s",	\
 				DEFAULT_FB_DEVICE);			\
-			ERROR1(ERROR_STRING);				\
+			error1(ERROR_STRING);				\
 		}							\
 	}
 
@@ -155,7 +155,7 @@ static COMMAND_FUNC( do_open_fb_dev )
 	}
 
 	/* See if requested frame buffer is already open*/
-	fbip = fbi_of(QSP_ARG  s);
+	fbip = fbi_of(s);
 	if( fbip != NULL ){
 		curr_fbip = fbip;
 		sprintf(ERROR_STRING,"Frame buffer device %s is already open, making current.",s);
@@ -181,7 +181,7 @@ static COMMAND_FUNC( do_select_fb_dev )
 {
 	FB_Info *fbip;
 
-	fbip = PICK_FBI("frame buffer device");
+	fbip = pick_fbi("frame buffer device");
 	if( fbip == NULL ) return;
 
 	curr_fbip = fbip;
@@ -253,7 +253,7 @@ static COMMAND_FUNC( do_save_fb )
 	Data_Obj *dp;
 	int x,y;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	x=(int)HOW_MANY("x origin");
 	y=(int)HOW_MANY("y origin");
 
@@ -269,7 +269,7 @@ static COMMAND_FUNC( do_load_fb )
 	Data_Obj *dp;
 	int x,y;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	x=(int)HOW_MANY("x origin");
 	y=(int)HOW_MANY("y origin");
 
@@ -489,7 +489,7 @@ static COMMAND_FUNC( do_fb_pan )
 
 	return;
 #else /* ! HAVE_FB_DEV */
-	ERROR1("do_fb_pan:  Program not configured with framebuffer device support.");
+	error1("do_fb_pan:  Program not configured with framebuffer device support.");
 #endif /* ! HAVE_FB_DEV */
 }
 
@@ -518,7 +518,7 @@ static COMMAND_FUNC( do_new_fb_pan )
 
 	return;
 #else /* ! HAVE_FB_DEV */
-	ERROR1("do_new_fb_pan:  Program not configured with framebuffer device support.");
+	error1("do_new_fb_pan:  Program not configured with framebuffer device support.");
 #endif /* ! HAVE_FB_DEV */
 }
 
@@ -634,9 +634,9 @@ static COMMAND_FUNC( do_get_cmap )
 	struct fb_cmap fbcm;
 #endif // HAVE_FB_DEV
 
-	red_dp = PICK_OBJ("color map RED data object");
-	green_dp = PICK_OBJ("color map GREEN data object");
-	blue_dp = PICK_OBJ("color map BLUE data object");
+	red_dp = pick_obj("color map RED data object");
+	green_dp = pick_obj("color map GREEN data object");
+	blue_dp = pick_obj("color map BLUE data object");
 
 	if( ! good_for_lut(QSP_ARG  red_dp) ) return;
 	if( ! good_for_lut(QSP_ARG  green_dp) ) return;
@@ -671,9 +671,9 @@ static COMMAND_FUNC( do_set_cmap )
 	struct fb_cmap fbcm;
 #endif // HAVE_FB_DEV
 
-	red_dp = PICK_OBJ("color map RED data object");
-	green_dp = PICK_OBJ("color map GREEN data object");
-	blue_dp = PICK_OBJ("color map BLUE data object");
+	red_dp = pick_obj("color map RED data object");
+	green_dp = pick_obj("color map GREEN data object");
+	blue_dp = pick_obj("color map BLUE data object");
 	if( red_dp == NULL || green_dp == NULL || blue_dp == NULL ) return;
 
 	INSIST_RAM_OBJ(red_dp,"set_cmap")

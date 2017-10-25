@@ -353,7 +353,7 @@ static Vec_Expr_Node *dup_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 
 		default:
-			MISSING_CASE(enp,"dup_node");
+			missing_case(enp,"dup_node");
 			break;
 	}
 	return(new_enp);
@@ -531,7 +531,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	//PUSH_ITEM_CONTEXT(DOBJ_ITEM_TYPE,icp);
-	PUSH_DOBJ_CONTEXT(icp);
+	push_dobj_context(icp);
 	icp = (Item_Context *)NODE_DATA(QLIST_TAIL(LIST_OF_ID_CONTEXTS));
 	PUSH_ID_CONTEXT(icp);
 }
@@ -540,7 +540,7 @@ void unset_global_ctx(SINGLE_QSP_ARG_DECL)
 {
 #ifdef QUIP_DEBUG
 	Item_Context *icp;
-	icp= pop_item_context(QSP_ARG  dobj_itp);
+	icp= pop_item_context(dobj_itp);
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"unset_global_ctx:  global context %s popped",CTX_NAME(icp));
 advise(ERROR_STRING);
@@ -549,7 +549,7 @@ advise(ERROR_STRING);
 	pop_item_context(QSP_ARG  dobj_itp);
 #endif /* QUIP_DEBUG */
 	
-	/*icp=*/ pop_item_context(QSP_ARG  id_itp);
+	/*icp=*/ pop_item_context(id_itp);
 }
 
 
@@ -568,7 +568,7 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 		return;
 	}
 	icp=(Item_Context *)NODE_DATA(np);
-	sprintf(ERROR_STRING,"%s (%s)",CTX_NAME(icp),CTX_NAME(CURRENT_CONTEXT(itp)));
+	sprintf(ERROR_STRING,"%s (%s)",CTX_NAME(icp),CTX_NAME(current_context(itp)));
 	advise(ERROR_STRING);
 	np=NODE_NEXT(np);
 	while(np!=NULL){

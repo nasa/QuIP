@@ -102,7 +102,7 @@ static COMMAND_FUNC( do_poke )
  * so we are going to apply the quick fix by initializing to pick_obj()
  */
 
-static void *(*pick_func)(const char *)=(void *(*)(const char *))pick_obj;
+static void *(*pick_func)(const char *)=(void *(*)(const char *))_pick_obj;
 
 #ifdef NOT_USED
 /* call this to link this module with the data module */

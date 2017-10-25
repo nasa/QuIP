@@ -48,8 +48,8 @@ struct identifier {
 
 #define ID_SHAPE(idp)			(idp)->id_shpp
 #define SET_ID_SHAPE(idp,shpp)		(idp)->id_shpp = shpp
-#define PUSH_ID_CONTEXT(icp)		PUSH_ITEM_CONTEXT(id_itp,icp)
-#define POP_ID_CONTEXT			POP_ITEM_CONTEXT(id_itp)
+#define PUSH_ID_CONTEXT(icp)		push_item_context(id_itp,icp)
+#define POP_ID_CONTEXT			pop_item_context(id_itp)
 
 #define ID_PREC_PTR(idp)		SHP_PREC_PTR(ID_SHAPE(idp))
 #define ID_PREC_CODE(idp)		PREC_CODE(ID_PREC_PTR(idp))

@@ -68,7 +68,7 @@ Framebuffer *create_framebuffer(QSP_ARG_DECL  const char *name, int width, int h
 	return( fbp );
 
 #else // ! HAVE_LIBGLEW
-	ERROR1("Sorry, need libglew to be present for gl frame buffers.");
+	error1("Sorry, need libglew to be present for gl frame buffers.");
 	return NULL;	// NOTREACHED
 #endif  // ! HAVE_LIBGLEW
 }
@@ -82,9 +82,9 @@ void delete_framebuffer(QSP_ARG_DECL  Framebuffer *fbp)
 	glDeleteRenderbuffersEXT(1,&(fbp->fb_renderbuffer));
 	glDeleteFramebuffersEXT(1,&(fbp->fb_id));
 #else // ! HAVE_LIBGLEW
-	ERROR1("Sorry, need libglew to be present for gl frame buffers.");
+	error1("Sorry, need libglew to be present for gl frame buffers.");
 #endif // ! HAVE_LIBGLEW
-	del_glfb(QSP_ARG  fbp);
+	del_glfb(fbp);
 }
 
 void glfb_info(QSP_ARG_DECL  Framebuffer *fbp)

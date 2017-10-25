@@ -133,14 +133,14 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 	// Why should we care how many devices there are?
 	// Why have statically-allocated structures?
 	while(n<=MAX_OCL_DEVICES){
-		pdp = pfdev_of(QSP_ARG  s);
+		pdp = pfdev_of(s);
 		if( pdp == NULL ) return(s);
 
 		// This name is in use
 		n++;
 
 		if( strlen(name)+1+MAX_DIGIT_CHARS+1 > scratch_len )
-			ERROR1("available_ocl_device_name:  size of scratch_string is insufficient!?");
+			error1("available_ocl_device_name:  size of scratch_string is insufficient!?");
 
 		sprintf(scratch_string,"%s_%d",name,n);
 		s=scratch_string;
@@ -148,7 +148,7 @@ static const char * available_ocl_device_name(QSP_ARG_DECL  const char *name,cha
 	sprintf(ERROR_STRING,"Number of %s OpenCL devices exceed configured maximum %d!?",
 		name,MAX_OCL_DEVICES);
 	WARN(ERROR_STRING);
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 	return(NULL);	// NOTREACHED - quiet compiler
 }
 
@@ -162,7 +162,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	//strcpy(area_name,PFDEV_NAME(pdp));
 	// make sure names will fit - longest name is %s.%s_host_mapped
 	if( strlen(PLATFORM_NAME(PFDEV_PLATFORM(pdp)))+strlen(PFDEV_NAME(pdp))+strlen("._host_mapped") > MAX_AREA_NAME_LEN )
-		ERROR1("init_ocl_dev_memory:  area name too large for buffer, increase MAX_AREA_NAME_LEN!?");
+		error1("init_ocl_dev_memory:  area name too large for buffer, increase MAX_AREA_NAME_LEN!?");
 
 	sprintf(area_name,"%s.%s",
 		PLATFORM_NAME(PFDEV_PLATFORM(pdp)),PFDEV_NAME(pdp));
@@ -208,7 +208,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating host data area %s",area_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	SET_AREA_PFDEV(ap, pdp);
 	pdp->pd_ap[PF_HOST_AREA_INDEX] = ap;
@@ -233,7 +233,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating host-mapped data area %s",area_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	SET_AREA_PFDEV(ap,pdp);
 	pdp->pd_ap[PF_HOST_MAPPED_AREA_INDEX] = ap;
@@ -323,7 +323,7 @@ static Platform_Device * create_ocl_device(QSP_ARG_DECL  cl_device_id dev_id, Co
 	 * a number to the string...
 	 */
 	name_p = available_ocl_device_name(QSP_ARG  name,scratch,SCRATCH_LEN);	// use cname as scratch string
-	pdp = new_pfdev(QSP_ARG  name_p);
+	pdp = new_pfdev(name_p);
 
 	givbuf(name);
 
@@ -402,7 +402,7 @@ static void init_ocl_device(QSP_ARG_DECL  cl_device_id dev_id,
 		sprintf(ERROR_STRING,"More than %d OpenCL devices found;"
 			"need to increase MAX_OPENCL_DEVICES and recompile",
 			MAX_OPENCL_DEVICES);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 fprintf(stderr,"Setting %s device index to %d\n",PFDEV_NAME(pdp),n_ocl_devs);
 	SET_PFDEV_SERIAL(pdp,n_ocl_devs++);
@@ -646,7 +646,7 @@ void ocl_free_tmp(void *ptr,const char *whence)
 
 static void ocl_update_offset(QSP_ARG_DECL  Data_Obj *dp )
 {
-	ERROR1("ocl_update_offset not implemented!?");
+	error1("ocl_update_offset not implemented!?");
 }
 
 #ifdef USE_OPENCL_SUBREGION
@@ -757,7 +757,7 @@ static void ocl_offset_data(QSP_ARG_DECL  Data_Obj *dp, index_t offset)
 static int ocl_register_buf(QSP_ARG_DECL  Data_Obj *dp)
 {
 	if( opengl_prohibited )
-		ERROR1("ocl_register_buf:  Need to specify GL window BEFORE initializing OpenCL!?");
+		error1("ocl_register_buf:  Need to specify GL window BEFORE initializing OpenCL!?");
 
 #ifdef HAVE_OPENGL
 	cl_mem img;
@@ -872,7 +872,7 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 			break;
 		case N_PLATFORM_KERNEL_STRINGS:
 		default:
-			ERROR1("invalid platform string ID");
+			error1("invalid platform string ID");
 			s=NULL;
 			break;
 	}
@@ -888,13 +888,13 @@ static const char *ocl_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 
 	program = ocl_create_program(ksrc,pdp);
 	if( program == NULL )
-		ERROR1("program creation failure!?");
+		error1("program creation failure!?");
 
 	kernel = ocl_create_kernel(program, kernel_name, pdp);
 	if( kernel == NULL ){
-		ADVISE("Source code of failed program:");
-		ADVISE(ksrc);
-		ERROR1("kernel creation failure!?");
+		advise("Source code of failed program:");
+		advise(ksrc);
+		error1("kernel creation failure!?");
 	}
 	assert( sizeof(cl_kernel) == sizeof(void *) );
 
@@ -1068,7 +1068,7 @@ static void init_ocl_platform(QSP_ARG_DECL  cl_platform_id platform_id)
 	push_pfdev_context(QSP_ARG  PF_CONTEXT(cpp) );
 	init_ocl_devices(QSP_ARG  cpp);
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
-		ERROR1("init_ocl_platform:  Failed to pop platform device context!?");
+		error1("init_ocl_platform:  Failed to pop platform device context!?");
 }
 
 //In general Intel CPU and NV/AMD's GPU are in different platforms

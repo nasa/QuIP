@@ -80,11 +80,12 @@ ITEM_PICK_PROT(Subrt,subrt)
 ITEM_ENUM_PROT(Subrt,subrt)
 ITEM_LIST_PROT(Subrt,subrt)
 
-//extern Subrt *subrt_of(QSP_ARG_DECL  const char *name);
-//extern Subrt *new_subrt(QSP_ARG_DECL  const char *name);
-//extern Subrt *pick_subrt(QSP_ARG_DECL const char *prompt);
+#define subrt_of(s)	_subrt_of(QSP_ARG  s)
+#define new_subrt(s)	_new_subrt(QSP_ARG  s)
+#define pick_subrt(s)	_pick_subrt(QSP_ARG  s)
+#define subrt_list()	_subrt_list(SINGLE_QSP_ARG)
+#define list_subrts(fp)	_list_subrts(QSP_ARG  fp)
 
-#define PICK_SUBRT(p)	pick_subrt(QSP_ARG  p)
 
 extern Item_Type *subrt_itp;
 

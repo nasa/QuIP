@@ -74,7 +74,7 @@ static int fft_row_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char * funcname )
 	"%s:  number of columns of image %s (%d) is not a power of two for FFT",
 			funcname,OBJ_NAME(dp),OBJ_COLS(dp));
 		WARN(ERROR_STRING);
-		LONGLIST(dp);
+		longlist(dp);
 		return(-1);
 	}
 
@@ -88,7 +88,7 @@ static int dim_is_power_of_two( QSP_ARG_DECL  Data_Obj *dp, int dim_idx, const c
 	"%s:  Number of %ss of image %s (%d) is not a power of two!?", funcname,
 			dimension_name[dim_idx],OBJ_NAME(dp),OBJ_DIMENSION(dp,dim_idx));
 		WARN(ERROR_STRING);
-		LONGLIST(dp);
+		longlist(dp);
 		return FALSE;
 	}
 	return TRUE;
@@ -105,7 +105,7 @@ static int fft_col_size_ok(QSP_ARG_DECL  Data_Obj *dp, const char *funcname )
 	"Number of rows of image %s (%d) is not a power of two for FFT",
 			OBJ_NAME(dp),OBJ_ROWS(dp));
 		WARN(ERROR_STRING);
-		LONGLIST(dp);
+		longlist(dp);
 		return(-1);
 	}
 	return(0);

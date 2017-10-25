@@ -228,18 +228,18 @@ static void report_npp_error(const char *whence, const char *funcname, NppStatus
 
 #define GET_MORPH_ARGS					\
 							\
-	dst_dp = PICK_OBJ("target image");		\
-	src_dp = PICK_OBJ("source image");		\
-	mask_dp = PICK_OBJ("mask image");		\
+	dst_dp = pick_obj("target image");		\
+	src_dp = pick_obj("source image");		\
+	mask_dp = pick_obj("mask image");		\
 	anchor.x = HOW_MANY("anchor x");		\
 	anchor.y = HOW_MANY("anchor y");
 
 
 #define GET_FILTER_ARGS					\
 							\
-	dst_dp = PICK_OBJ("target image");		\
-	src_dp = PICK_OBJ("source image");		\
-	mask_dp = PICK_OBJ("kernel image");		\
+	dst_dp = pick_obj("target image");		\
+	src_dp = pick_obj("source image");		\
+	mask_dp = pick_obj("kernel image");		\
 	anchor.x = HOW_MANY("anchor x");		\
 	anchor.y = HOW_MANY("anchor y");		\
 	divisor = HOW_MANY("divisor");
@@ -607,9 +607,9 @@ COMMAND_FUNC( do_npp_vadd )
 	NppiSize size;
 	int pxl_size;
 
-	dst_dp = PICK_OBJ("destination image");
-	src1_dp = PICK_OBJ("first source image");
-	src2_dp = PICK_OBJ("second source image");
+	dst_dp = pick_obj("destination image");
+	src1_dp = pick_obj("first source image");
+	src2_dp = pick_obj("second source image");
 
 	/* BUG - make sure that the sizes all match */
 
@@ -717,7 +717,7 @@ COMMAND_FUNC( do_npp_sum_scratch )
 {
 	Data_Obj *src_dp;
 
-	src_dp = PICK_OBJ("source object");
+	src_dp = pick_obj("source object");
 	if( src_dp == NULL ) return;
 
 	// BUG make sure correct type...
@@ -735,8 +735,8 @@ COMMAND_FUNC( do_npp_sum )
 	NppStatus s;
 #endif // HAVE_LIBNPP
 
-	dst_dp = PICK_OBJ("destination object");
-	src_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination object");
+	src_dp = pick_obj("source object");
 
 	if( dst_dp == NULL || src_dp == NULL )
 		return;
@@ -772,9 +772,9 @@ COMMAND_FUNC( do_nppi_vmul )
 	NppiSize roi_size;
 #endif // HAVE_LIBNPP
 
-	dst_dp = PICK_OBJ("destination object");
-	src1_dp = PICK_OBJ("first source object");
-	src2_dp = PICK_OBJ("second source object");
+	dst_dp = pick_obj("destination object");
+	src1_dp = pick_obj("first source object");
+	src2_dp = pick_obj("second source object");
 
 	if( dst_dp == NULL || src1_dp == NULL || src2_dp == NULL )
 		return;
@@ -802,8 +802,8 @@ COMMAND_FUNC( do_npps_vmul )
 	NppStatus s;
 #endif // HAVE_LIBNPP
 
-	dst_dp = PICK_OBJ("destination/source object");
-	src_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination/source object");
+	src_dp = pick_obj("source object");
 
 	if( dst_dp == NULL || src_dp == NULL )
 		return;

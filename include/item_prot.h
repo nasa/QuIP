@@ -15,6 +15,7 @@ extern void _rename_item(QSP_ARG_DECL  Item_Type *itp,void *ip,char* newname);
 extern Item_Context *	_create_item_context(QSP_ARG_DECL  Item_Type *,const char *name);
 extern Item_Context *	_ctx_of(QSP_ARG_DECL  const char *name);
 extern List *_item_list(QSP_ARG_DECL  Item_Type *itp);
+extern List *_current_item_list(QSP_ARG_DECL  Item_Type *itp);
 extern Item_Context * _pop_item_context(QSP_ARG_DECL  Item_Type *itp);
 extern void _push_item_context(QSP_ARG_DECL  Item_Type *itp, Item_Context *icp);
 extern Item * _pick_item(QSP_ARG_DECL  Item_Type *itp, const char *prompt);
@@ -24,6 +25,7 @@ extern Item * _pick_item(QSP_ARG_DECL  Item_Type *itp, const char *prompt);
 #define create_item_context(itp,name)	_create_item_context(QSP_ARG  itp,name)
 #define ctx_of(name)	_ctx_of(QSP_ARG  name)
 #define item_list(type)			_item_list(QSP_ARG  type)
+#define current_item_list(type)		_current_item_list(QSP_ARG  type)
 #define pop_item_context(itp)		_pop_item_context(QSP_ARG  itp)
 #define push_item_context(itp,icp)	_push_item_context(QSP_ARG  itp,icp)
 #define pick_item(type,prompt)		_pick_item(QSP_ARG  type,prompt)

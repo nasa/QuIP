@@ -11,13 +11,13 @@ ITEM_CHECK_FUNC(Identifier,id)
 ITEM_NEW_FUNC(Identifier,id)
 ITEM_DEL_FUNC(Identifier,id)
 
-void restrict_id_context(QSP_ARG_DECL  int flag)
+void _restrict_id_context(QSP_ARG_DECL  int flag)
 {
 	RESTRICT_ITEM_CONTEXT(id_itp,flag);
 }
 
-Item_Context *create_id_context(QSP_ARG_DECL  const char *name)
+Item_Context *_create_id_context(QSP_ARG_DECL  const char *name)
 {
-	return create_item_context(QSP_ARG  id_itp, name);
+	return create_item_context(id_itp, name);
 }
 

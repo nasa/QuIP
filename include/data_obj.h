@@ -433,8 +433,8 @@ struct data_obj {
 
 #define FETCH_OBJ_FROM_CONTEXT( dp, icp )	container_find_match( CTX_CONTAINER(icp) , OBJ_NAME(dp) )
 
-#define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
-#define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
+//#define PUSH_DOBJ_CONTEXT(icp)		push_dobj_context(QSP_ARG  icp)
+//#define POP_DOBJ_CONTEXT		pop_dobj_context(SINGLE_QSP_ARG)
 #define LIST_OF_DOBJ_CONTEXTS		LIST_OF_CONTEXTS(dobj_itp)
 #define LIST_OF_ID_CONTEXTS		LIST_OF_CONTEXTS(id_itp)
 

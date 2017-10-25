@@ -613,7 +613,7 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 //advise(ERROR_STRING);
 			/* Not sure how much this slows us down... */
 			sprintf(ERROR_STRING,"%g",HDR_P->avch_pts);
-			ASSIGN_VAR("pts",ERROR_STRING);
+			assign_var("pts",ERROR_STRING);
 		}
 
 		// Free the packet that was allocated by av_read_frame

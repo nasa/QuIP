@@ -249,7 +249,7 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 			break;
 	}
 }
-void optimize_subrt(QSP_ARG_DECL Subrt *srp)
+void _optimize_subrt(QSP_ARG_DECL Subrt *srp)
 {
 	u_long nf_before, nf_after;
 

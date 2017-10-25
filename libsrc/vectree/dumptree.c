@@ -168,7 +168,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( code == T_POINTER ){
 			Identifier *idp;
 			/* We don't use get_set_ptr() here because we don't want an error msg... */
-			idp = ID_OF(VN_STRING(enp));
+			idp = id_of(VN_STRING(enp));
 			if( idp != NULL && IS_POINTER(idp) && POINTER_IS_SET(idp) ){
 				if( PTR_REF(ID_PTR(idp)) == NULL ){
 					/* how could this ever happen??? */

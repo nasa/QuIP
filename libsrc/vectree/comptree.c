@@ -323,7 +323,7 @@ static Shape_Info * get_child_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,int child_i
 		if( VN_CODE(enp2) == T_DYN_OBJ ){	// get_child_shape
 			Data_Obj *dp;
 
-			dp=DOBJ_OF(VN_STRING(enp2));
+			dp=dobj_of(VN_STRING(enp2));
 			if( dp == NULL ){
 				sprintf(ERROR_STRING,
 					"Missing obj %s",VN_STRING(enp2));
@@ -373,7 +373,7 @@ static int get_subvec_indices(QSP_ARG_DECL Vec_Expr_Node *enp, dimension_t *i1p,
 				SET_VN_FLAG_BITS(enp, NODE_NEEDS_CALLTIME_RES);
 			}
 		}
-		*i1p = (dimension_t) EVAL_INT_EXP(VN_CHILD(enp,1));
+		*i1p = (dimension_t) eval_int_exp(VN_CHILD(enp,1));
 	}
 
 	if( VN_CODE(enp)==T_SUBVEC ){	// get_subvec_indices
@@ -397,7 +397,7 @@ static int get_subvec_indices(QSP_ARG_DECL Vec_Expr_Node *enp, dimension_t *i1p,
 				SET_VN_FLAG_BITS(enp, NODE_NEEDS_CALLTIME_RES);
 			}
 		}
-		*i2p = (dimension_t) EVAL_INT_EXP(VN_CHILD(enp,2));
+		*i2p = (dimension_t) eval_int_exp(VN_CHILD(enp,2));
 	}
 
 	if( *i1p > *i2p ){
@@ -782,7 +782,7 @@ else advise("mixed mode machine precs do not match, casting");
 			break;
 
 		default:
-			MISSING_CASE(VN_CHILD(enp,index),"typecast_child");
+			missing_case(VN_CHILD(enp,index),"typecast_child");
 			break;
 	}
 
@@ -1011,7 +1011,7 @@ not_integer_only:
 			break;
 
 		default:
-			MISSING_CASE(enp,"check_typecast");
+			missing_case(enp,"check_typecast");
 			break;
 	}
 	/* Don't typecast if we have real and complex... */
@@ -1128,7 +1128,7 @@ advise("check_mating_shapes:  no mating shapes");
 
 
 		default:
-			MISSING_CASE(enp,"check_mating_shapes");
+			missing_case(enp,"check_mating_shapes");
 			/* fall-thru */
 
 		/*
@@ -1209,7 +1209,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			 */
 			i_dim = 0;
 			do {
-				d = (dimension_t) EVAL_INT_EXP(VN_CHILD(lenp,1));
+				d = (dimension_t) eval_int_exp(VN_CHILD(lenp,1));
 				if( d == 0 ){
 					/* not an error if it's not run-time yet */
 					copy_node_shape(enp,uk_shape(PREC_CODE(VN_DECL_PREC(enp))));
@@ -1227,7 +1227,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				break;
 			}
 
-			d = (dimension_t) EVAL_INT_EXP( lenp );
+			d = (dimension_t) eval_int_exp( lenp );
 			if( d == 0 ){
 				/* not an error if it's not run-time yet */
 				copy_node_shape(enp,uk_shape(PREC_CODE(VN_DECL_PREC(enp))));
@@ -1259,9 +1259,9 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			/* We need to evaluate it to know what is going on here */
 			range_enp=VN_CHILD(enp,1);
 			/* do a cautious check here for correct node type */
-			i1 = (dimension_t) EVAL_INT_EXP(VN_CHILD(range_enp,0));
-			i2 = (dimension_t) EVAL_INT_EXP(VN_CHILD(range_enp,1));
-			inc = (incr_t) EVAL_INT_EXP(VN_CHILD(range_enp,2));
+			i1 = (dimension_t) eval_int_exp(VN_CHILD(range_enp,0));
+			i2 = (dimension_t) eval_int_exp(VN_CHILD(range_enp,1));
+			inc = (incr_t) eval_int_exp(VN_CHILD(range_enp,2));
 			if( i2 > i1 ) {
 				l = 1+(i2-i1+1)/inc;
 			} else {
@@ -1289,8 +1289,8 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			break;
 
 		case T_RANGE2:
-			i1 = (dimension_t) EVAL_INT_EXP(VN_CHILD(enp,0));
-			i2 = (dimension_t) EVAL_INT_EXP(VN_CHILD(enp,1));
+			i1 = (dimension_t) eval_int_exp(VN_CHILD(enp,0));
+			i2 = (dimension_t) eval_int_exp(VN_CHILD(enp,1));
 			/* see T_ROW below... */
 			copy_node_shape(enp,VN_CHILD_SHAPE(enp,0));
 			if( i2 < i1 ){
@@ -1571,7 +1571,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_LOAD:		/* update node shape */
 			if( ! executing ) goto no_file;
 
-			str=EVAL_STRING(VN_CHILD(enp,0));
+			str=eval_string(VN_CHILD(enp,0));
 			if( str == NULL ) goto no_file;	/* probably a variable that we can't know until runtime */
 			ifp = img_file_of(QSP_ARG  str);
 
@@ -1827,7 +1827,7 @@ dump_tree(enp);
 				/* BUG? what if the object gets moved?
 				 * possible dangling ptr BUG
 				 */
-				dp = DOBJ_OF(VN_STRING(enp));
+				dp = dobj_of(VN_STRING(enp));
 				if( dp == NULL ){
 /*
 sprintf(ERROR_STRING,"update_node_shape T_DYN_OBJ (matlab):  no object %s!?",VN_STRING(enp));
@@ -1889,7 +1889,7 @@ advise(ERROR_STRING);
 			break;
 
 		default:
-			MISSING_CASE(enp,"update_node_shape");
+			missing_case(enp,"update_node_shape");
 			break;
 	}
 
@@ -2017,7 +2017,7 @@ static void link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *ar
 			break;
 
 		case T_DYN_OBJ:				/* link_uk_args */
-			dp = DOBJ_OF(VN_STRING(arg_enp));
+			dp = dobj_of(VN_STRING(arg_enp));
 			assert( dp != NULL );
 
 			if( UNKNOWN_SHAPE(OBJ_SHAPE(dp)) )
@@ -2056,7 +2056,7 @@ static void link_uk_args(QSP_ARG_DECL  Vec_Expr_Node *call_enp,Vec_Expr_Node *ar
 			break;
 
 		default:
-			MISSING_CASE(arg_enp,"link_uk_args");
+			missing_case(arg_enp,"link_uk_args");
 			break;
 	}
 } /* end link_uk_args */
@@ -2300,7 +2300,7 @@ static const char *struct_name(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			return(VN_STRING(enp));
 
 		default:
-			MISSING_CASE(enp,"struct_name");
+			missing_case(enp,"struct_name");
 			break;
 	}
 	return("xxx");
@@ -2505,7 +2505,7 @@ static int _count_name_refs(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *lhs_nam
 			break;
 
 		default:
-			MISSING_CASE(enp,"count_name_refs");
+			missing_case(enp,"count_name_refs");
 			SET_VN_LHS_REFS(enp,0);
 			break;
 	}
@@ -2610,7 +2610,7 @@ static void commute_bool_test(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_BOOL_EQ:  break;
 		case T_BOOL_NE:  break;
 		default:
-			MISSING_CASE(enp,"commute_bool_test");
+			missing_case(enp,"commute_bool_test");
 			break;
 	}
 }
@@ -2678,13 +2678,13 @@ static Identifier *get_named_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	switch(VN_CODE(enp)){
 		case T_POINTER:
-			idp = ID_OF(VN_STRING(enp));
+			idp = id_of(VN_STRING(enp));
 			assert( idp != NULL );
 			assert( IS_POINTER(idp) );
 
 			return(idp);
 		default:
-			MISSING_CASE(enp,"get_named_ptr");
+			missing_case(enp,"get_named_ptr");
 			break;
 	}
 	return(NULL);
@@ -2774,7 +2774,7 @@ static int check_curds(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_INDIR_CALL:
 			break;
 		default:
-			MISSING_CASE(enp,"check_curds");
+			missing_case(enp,"check_curds");
 			break;
 	}
 
@@ -2843,7 +2843,7 @@ static Vec_Expr_Node *_one_matlab_subscript(QSP_ARG_DECL   Vec_Expr_Node *obj_en
 			/* BUG? do we need to compile the plus nodes? */
 			return(new_enp);
 		default:
-			MISSING_CASE(subscr_enp,"one_matlab_subscript");
+			missing_case(subscr_enp,"one_matlab_subscript");
 			break;
 	}
 	return(NULL);
@@ -2897,7 +2897,7 @@ static Vec_Expr_Node *_compile_matlab_subscript(QSP_ARG_DECL   Vec_Expr_Node *ob
 			new_enp = one_matlab_subscript(obj_enp,subscr_enp);
 			return(new_enp);
 		default:
-			MISSING_CASE(subscr_enp,"compile_matlab_subscript");
+			missing_case(subscr_enp,"compile_matlab_subscript");
 			dump_tree(subscr_enp);
 			break;
 	}
@@ -2978,7 +2978,7 @@ static void _check_bitmap_arg(QSP_ARG_DECL Vec_Expr_Node *enp,int index)
 			break;
 
 		default:
-			MISSING_CASE(VN_CHILD(enp,index),"check_bitmap_arg");
+			missing_case(VN_CHILD(enp,index),"check_bitmap_arg");
 			break;
 	}
 } /* check_bitmap_arg */
@@ -3230,7 +3230,7 @@ static void invert_bool_test(QSP_ARG_DECL Vec_Expr_Node *enp)
 			}
 
 		default:
-			MISSING_CASE(enp,"invert_bool_test");
+			missing_case(enp,"invert_bool_test");
 			break;
 	}
 }
@@ -4467,7 +4467,7 @@ dump_tree(enp);
 			break;
 
 		default:		/* compile_node */
-			MISSING_CASE(enp,"compile_node");
+			missing_case(enp,"compile_node");
 			dump_tree(enp);
 			break;
 	}
@@ -5501,11 +5501,11 @@ dump_tree(enp);
 				break;
 			}
 
-			s=EVAL_STRING(VN_CHILD(enp,0));
+			s=eval_string(VN_CHILD(enp,0));
 			if( s == NULL )
 				dp=NULL;
 			else
-				dp=DOBJ_OF(s);
+				dp=dobj_of(s);
 			assert( dp != NULL );
 
 			goto gen_obj_shape;
@@ -5516,7 +5516,7 @@ dump_tree(enp);
 
 		case T_DYN_OBJ:				/* prelim_node_shape */
 			/* BUG we should use the identifier?? */
-			dp=DOBJ_OF(VN_STRING(enp));
+			dp=dobj_of(VN_STRING(enp));
 
 handle_obj:
 			if( mode_is_matlab ){
@@ -5527,7 +5527,7 @@ handle_obj:
 					return;	/* not an error */
 				}
 
-				idp = ID_OF(VN_STRING(enp));
+				idp = id_of(VN_STRING(enp));
 				if( idp == NULL ){
 					point_node_shape(enp,uk_shape(PREC_DP));
 					return;	/* not an error */
@@ -5607,7 +5607,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 		case T_POINTER:		/* prelim_node_shape */
 			{
 			Identifier *idp;
-			idp = ID_OF(VN_STRING(enp));
+			idp = id_of(VN_STRING(enp));
 
 			assert( idp != NULL );
 			assert( IS_POINTER(idp) );
@@ -5627,7 +5627,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			{
 			Identifier *idp;
 			assert(VN_STRING(enp)!=NULL);
-			idp=get_id(QSP_ARG  VN_STRING(enp));
+			idp=get_id(VN_STRING(enp));
 			assert(idp!=NULL);
 			assert(ID_SHAPE(idp)!=NULL);
 			point_node_shape(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
@@ -5681,8 +5681,8 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 		case T_RANGE2:		/* prelim_node_shape */
 			if( HAS_CONSTANT_VALUE(enp) ){
 				copy_node_shape(enp,scalar_shape(PREC_DI));
-				n1=EVAL_INT_EXP(VN_CHILD(enp,0));
-				n2=EVAL_INT_EXP(VN_CHILD(enp,1));
+				n1=eval_int_exp(VN_CHILD(enp,0));
+				n2=eval_int_exp(VN_CHILD(enp,1));
 				SET_SHP_COLS(VN_SHAPE(enp), floor( n2 - n1 ) );
 				auto_shape_flags(VN_SHAPE(enp));
 			} else {
@@ -5694,9 +5694,9 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			copy_node_shape(enp,scalar_shape(PREC_DI));
 			/* we need to figure out how many elements? */
 			// children of a range node:  first, last, inc
-			n1=EVAL_INT_EXP(VN_CHILD(enp,0));
-			n2=EVAL_INT_EXP(VN_CHILD(enp,1));
-			n3=EVAL_INT_EXP(VN_CHILD(enp,2));
+			n1=eval_int_exp(VN_CHILD(enp,0));
+			n2=eval_int_exp(VN_CHILD(enp,1));
+			n3=eval_int_exp(VN_CHILD(enp,2));
 			/* BUG? should we allow float start and stop? */
 			// We store the number of samples in the column count
 			// field of the range node, even though the range
@@ -5836,7 +5836,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 
 
 		default:
-			MISSING_CASE(enp,"prelim_node_shape");
+			missing_case(enp,"prelim_node_shape");
 			break;
 	}
 } /* end prelim_node_shape */
@@ -5893,7 +5893,7 @@ int decl_count(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			return(1);
 
 		default:
-			MISSING_CASE(enp,"decl_count");
+			missing_case(enp,"decl_count");
 			dump_tree(enp);
 			break;
 	}
@@ -5932,7 +5932,7 @@ static int final_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				return( final_return(QSP_ARG  VN_CHILD(enp,2)) );
 
 			default:
-				MISSING_CASE(enp,"final_return");
+				missing_case(enp,"final_return");
 				return(0);
 		}
 	}
@@ -6224,7 +6224,7 @@ advise(ERROR_STRING);
 	set_subrt_ctx(QSP_ARG  SR_NAME(srp));
 
 	/* declare the arg variables */
-	EVAL_DECL_TREE(SR_ARG_DECLS(srp));
+	eval_decl_tree(SR_ARG_DECLS(srp));
 
 	/* no values to assign, because we haven't been called! */
 
@@ -6786,12 +6786,12 @@ const char *_get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 			return( get_lhs_name(VN_CHILD(enp,0)) );
 
 		case T_OBJ_LOOKUP:
-			return( EVAL_STRING(VN_CHILD(enp,0)) );
+			return( eval_string(VN_CHILD(enp,0)) );
 
 		case T_UNDEF: return("undefined symbol");
 
 		default:
-			MISSING_CASE(enp,"get_lhs_name");
+			missing_case(enp,"get_lhs_name");
 			break;
 	}
 	return(NULL);

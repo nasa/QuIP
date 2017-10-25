@@ -35,7 +35,7 @@
 #define MAX_HIDDEN_CONTEXTS	32
 
 //#define PUSH_CPAIR(cpp)		PUSH_ID_CONTEXT(CP_ID_CTX(cpp));	\
-//				PUSH_DOBJ_CONTEXT(CP_OBJ_CTX(cpp))
+//				push_dobj_context(CP_OBJ_CTX(cpp))
 
 #define PUSH_CPAIR(cpp)		push_cpair(QSP_ARG  cpp)
 
@@ -43,11 +43,11 @@ static inline void push_cpair(QSP_ARG_DECL  Context_Pair *cpp)
 {
 //fprintf(stderr,"push_cpair:  pushing %s\n",CTX_NAME(CP_OBJ_CTX(cpp)));
 	PUSH_ID_CONTEXT(CP_ID_CTX(cpp));
-	PUSH_DOBJ_CONTEXT(CP_OBJ_CTX(cpp));
+	push_dobj_context(CP_OBJ_CTX(cpp));
 }
 
 #define POP_CPAIR		POP_ID_CONTEXT;				\
-				POP_DOBJ_CONTEXT
+				pop_dobj_context();
 
 static void delete_local_objs(SINGLE_QSP_ARG_DECL);
 
@@ -383,7 +383,7 @@ static Data_Obj * check_global_scalar(QSP_ARG_DECL  const char *name,
 					Data_Obj *prototype_dp,Data_Obj *dp)
 {
 	if( dp != NULL && OBJ_PREC(dp) != OBJ_PREC(prototype_dp) ){
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 		dp=NULL;
 	}
 
@@ -1012,7 +1012,7 @@ static Identifier *ptr_for_string(QSP_ARG_DECL  const char *s,Vec_Expr_Node *enp
 	/* We need to make an object and a reference... */
 
 	sprintf(idname,"Lstr.%d",n_auto_strs++);
-	idp = new_id(QSP_ARG  idname);
+	idp = new_id(idname);
 sprintf(ERROR_STRING,"ptr_for_string:  creating id %s",idname);
 advise(ERROR_STRING);
 	SET_ID_TYPE(idp, ID_STRING);
@@ -1045,7 +1045,7 @@ static Identifier *get_arg_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			node_error(enp);
 			sprintf(ERROR_STRING,"object %s not properly referenced, try prepending &",OBJ_NAME(VN_OBJ(enp)));
 			advise(ERROR_STRING);
-			idp = GET_ID(OBJ_NAME(VN_OBJ(enp)));
+			idp = get_id(OBJ_NAME(VN_OBJ(enp)));
 			return(idp);
 			break;
 
@@ -1053,7 +1053,7 @@ static Identifier *get_arg_ptr(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			node_error(enp);
 			sprintf(ERROR_STRING,"object %s not properly referenced, try prepending &",VN_STRING(enp));
 			advise(ERROR_STRING);
-			idp = GET_ID(VN_STRING(enp));
+			idp = get_id(VN_STRING(enp));
 			return(idp);
 			break;
 
@@ -1085,7 +1085,7 @@ static Data_Obj *get_id_obj(QSP_ARG_DECL  const char *name, Vec_Expr_Node *enp)
 {
 	Identifier *idp;
 
-	idp = /* GET_ID */ ID_OF(name);
+	idp = /* get_id */ id_of(name);
 
 	assert( idp != NULL );
 	assert( IS_OBJ_REF(idp) );
@@ -1093,7 +1093,7 @@ static Data_Obj *get_id_obj(QSP_ARG_DECL  const char *name, Vec_Expr_Node *enp)
 
 	{
 		Data_Obj *dp;
-		dp = DOBJ_OF(ID_NAME(idp));
+		dp = dobj_of(ID_NAME(idp));
 		assert( dp != NULL );
 		assert( dp == REF_OBJ(ID_REF(idp)) );
 	}
@@ -1109,7 +1109,7 @@ static Function_Ptr *eval_funcptr(QSP_ARG_DECL Vec_Expr_Node *enp)
 	switch(VN_CODE(enp)){
 		case T_FUNCPTR_DECL:
 		case T_FUNCPTR:
-			idp=ID_OF(VN_STRING(enp));
+			idp=id_of(VN_STRING(enp));
 			/* BUG chould check that type is funcptr */
 			/* BUG chould check that idp is valid */
 			assert( idp != NULL );
@@ -1186,7 +1186,7 @@ advise(ERROR_STRING);
 
 	if( prev_cpp != NULL ){
 		POP_ID_CONTEXT;
-		POP_DOBJ_CONTEXT;
+		pop_dobj_context();
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"assign_ptr_arg:  previous contexts %s, %s popped",CTX_NAME(CP_ID_CTX(prev_cpp)),
@@ -1211,7 +1211,7 @@ advise(ERROR_STRING);
 		return -1;
 	}
 
-	idp = GET_ID(VN_STRING(arg_enp));
+	idp = get_id(VN_STRING(arg_enp));
 	if( idp==NULL ) return -1;
 
 
@@ -1663,7 +1663,7 @@ static void assign_row(QSP_ARG_DECL Data_Obj *dp,dimension_t row_index,Vec_Expr_
 			goto assign_row_from_dp;
 
 		case T_DYN_OBJ:		/* assign_row */
-			src_dp = DOBJ_OF(VN_STRING(enp));
+			src_dp = dobj_of(VN_STRING(enp));
 			/* fall thru */
 assign_row_from_dp:
 			for(j=0;j<OBJ_COLS(src_dp);j++){
@@ -1848,7 +1848,7 @@ handle_it:
 				node_error(enp);
 				WARN("error performing conversion");
 			}
-			delvec(QSP_ARG  tmp_dp);
+			delvec(tmp_dp);
 			break;
 	}
 	return(dst_dp);
@@ -1941,7 +1941,7 @@ static int assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_enp
 			{
 			Identifier *idp;
 			// 
-			idp = get_id(QSP_ARG  VN_STRING(arg_enp));
+			idp = get_id(VN_STRING(arg_enp));
 			assert(idp!=NULL);
 			assert(ID_SHAPE(idp)!=NULL);
 			assert(ID_PREC_PTR(idp)!=NULL);
@@ -2002,7 +2002,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 				/*icp=*/ POP_ID_CONTEXT;
-				icp=POP_DOBJ_CONTEXT;
+				icp=pop_dobj_context();
 				assert( icp == CP_OBJ_CTX(prev_cpp) );
 			}
 
@@ -2093,12 +2093,12 @@ Identifier *make_named_reference(QSP_ARG_DECL  const char *name)
 {
 	Identifier *idp;
 
-	idp = ID_OF(name);
+	idp = id_of(name);
 	if( idp != NULL ) return(idp);
 
 //sprintf(ERROR_STRING,"make_named_reference:  creating id %s",name);
 //advise(ERROR_STRING);
-	idp = new_id(QSP_ARG  name);
+	idp = new_id(name);
 	SET_ID_TYPE(idp, ID_OBJ_REF);
 	SET_ID_REF(idp, NEW_REFERENCE );
 	SET_REF_OBJ(ID_REF(idp), NULL );
@@ -2141,11 +2141,10 @@ static void eval_display_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 				// been printed before we get here...
 				break;
 			} else {
-				list_dobj(QSP_ARG  dp);
+				list_dobj(dp);
 				/* set_output_file */
 				/* pntvec(dp,stdout); */
-				pntvec(QSP_ARG  dp,
-					tell_msgfile(SINGLE_QSP_ARG) );
+				pntvec(QSP_ARG  dp, tell_msgfile() );
 			}
 			break;
 		default:
@@ -2416,7 +2415,7 @@ static void set_script_context(SINGLE_QSP_ARG_DECL)
 	Item_Context *icp;
 	int i;
 
-	icp = POP_DOBJ_CONTEXT;
+	icp = pop_dobj_context();
 	assert( icp != NULL );
 
 #ifdef QUIP_DEBUG
@@ -2433,7 +2432,7 @@ sprintf(ERROR_STRING,"set_script_context:  pushing hidden context %s",CTX_NAME(h
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-		PUSH_DOBJ_CONTEXT(hidden_context[i]);
+		push_dobj_context(hidden_context[i]);
 	}
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
@@ -2441,7 +2440,7 @@ sprintf(ERROR_STRING,"set_script_context:  pushing current context %s",CTX_NAME(
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-	PUSH_DOBJ_CONTEXT(icp);
+	push_dobj_context(icp);
 
 	set_global_ctx(SINGLE_QSP_ARG);	/* we do this so any new items created will be global */
 }
@@ -2453,7 +2452,7 @@ static void unset_script_context(SINGLE_QSP_ARG_DECL)
 
 	unset_global_ctx(SINGLE_QSP_ARG);
 
-	top_icp = POP_DOBJ_CONTEXT;
+	top_icp = pop_dobj_context();
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
@@ -2464,7 +2463,7 @@ advise(ERROR_STRING);
 	assert( top_icp != NULL );
 
 	for(i=0;i<n_hidden_contexts;i++){
-		icp = POP_DOBJ_CONTEXT;
+		icp = pop_dobj_context();
 		assert( icp == hidden_context[n_hidden_contexts-(1+i)] );
 
 #ifdef QUIP_DEBUG
@@ -2475,7 +2474,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	}
 
-	PUSH_DOBJ_CONTEXT(top_icp);
+	push_dobj_context(top_icp);
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"unset_script_context:  top context %s pushed",CTX_NAME(top_icp));
@@ -3184,7 +3183,7 @@ static Data_Obj * finish_obj_decl(QSP_ARG_DECL  Vec_Expr_Node *enp,Dimension_Set
 
 	{
 		Item_Context *icp;
-		icp = current_dobj_context(SINGLE_QSP_ARG);
+		icp = current_dobj_context();
 		if( !strcmp(CTX_NAME(icp),"Data_Obj.default") ){
 //fprintf(stderr,"dobj context is %s, forcing static\n",CTX_NAME(icp));
 			decl_flags |= DECL_IS_STATIC;
@@ -3261,7 +3260,7 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 		case T_PROTO:
 			{
 			Subrt *srp;
-			srp=subrt_of(QSP_ARG  VN_STRING(enp));
+			srp=subrt_of(VN_STRING(enp));
 			if( srp != NULL ){
 				/* subroutine already declared.
 				 * We should check to make sure that the arg decls match BUG
@@ -3499,14 +3498,14 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 	 * RESTRICT_ITEM_CONTEXT causes item lookup to only use the top context.
 	 */
 
-	RESTRICT_ID_CONTEXT(1);
+	restrict_id_context(1);
 
 	assert( VN_STRING(enp) != NULL );
 //fprintf(stderr,"eval_decl_stat creating id, string = \"%s\"...\n",VN_STRING(enp));
 //dump_tree(QSP_ARG  enp);
 
 	// Make sure this name has not been used already...
-	idp = ID_OF(VN_STRING(enp));
+	idp = id_of(VN_STRING(enp));
 	if( idp != NULL ){
 		node_error(enp);
 		sprintf(ERROR_STRING,"identifier %s redeclared",VN_STRING(enp));
@@ -3524,8 +3523,8 @@ static void eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, i
 	// if it exists there.  In that case, we still create the var in the local
 	// context...
 
-	RESTRICT_ID_CONTEXT(0);
-	idp=ID_OF(VN_STRING(enp));
+	restrict_id_context(0);
+	idp=id_of(VN_STRING(enp));
 	if( idp != NULL ){
 		/* only print this message once (the code seems to be
 		 * executed 3 times!?
@@ -3567,7 +3566,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 //advise(ERROR_STRING);
 	// New items are always created in the top context.
 
-	idp = new_id(QSP_ARG  VN_STRING(enp));		/* eval_decl_stat */
+	idp = new_id(VN_STRING(enp));		/* eval_decl_stat */
 	SET_ID_TYPE(idp, type);
 //fprintf(stderr,"new id_type = %d\n",type);
 
@@ -3651,7 +3650,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 		case T_PROTO:
 			{
 			Subrt *srp;
-			srp=subrt_of(QSP_ARG  VN_STRING(enp));
+			srp=subrt_of(VN_STRING(enp));
 			if( srp == NULL ) EVAL_DECL_STAT(prec_p,enp,decl_flags);
 			else {
 				/* This subroutine has already been declared...
@@ -3687,7 +3686,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 			{
 			Data_Obj *dp;
 
-			dp=DOBJ_OF(VN_STRING(enp));
+			dp=dobj_of(VN_STRING(enp));
 			if( dp == NULL ){
 				EVAL_DECL_STAT(prec_p,enp,decl_flags);
 				return;
@@ -3698,7 +3697,7 @@ static void eval_extern_decl(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp,
 		case T_PTR_DECL:			/* eval_extern_decl */
 			{
 			Identifier *idp;
-			idp = ID_OF(VN_STRING(enp));
+			idp = id_of(VN_STRING(enp));
 			if( idp == NULL ){
 				EVAL_DECL_STAT(prec_p,enp,decl_flags);
 				return;
@@ -3830,7 +3829,7 @@ static void eval_info_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 			if( dp==NULL )
 				WARN("missing info object");
 			else {
-				LONGLIST(dp);
+				longlist(dp);
 			}
 			break;
 		default:
@@ -3980,7 +3979,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			exec_subrt(enp,dp);
 			/* get the scalar value */
 			lval = get_long_scalar_value(dp);
-			delvec(QSP_ARG  dp);
+			delvec(dp);
 			return(lval);
 			break;
 
@@ -4035,7 +4034,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				const char *s;
 				s=eval_string(VN_CHILD(enp,0));
 				if( s != NULL )
-					return(file_exists(QSP_ARG  s));
+					return(file_exists(s));
 				else
 					return 0;
 			}
@@ -4057,7 +4056,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,
 	"eval_int_exp:  Object %s is not a scalar!?",OBJ_NAME(dp));
 				WARN(ERROR_STRING);
-				LONGLIST(dp);
+				longlist(dp);
 				return 0;
 			}
 			/* has the object been set? */
@@ -4405,7 +4404,7 @@ advise(ERROR_STRING);
 
 	/* First make sure that the context of this declaration is active */
 	PUSH_ID_CONTEXT(VN_DECL_CTX(enp));
-	idp = ID_OF(VN_STRING(enp));
+	idp = id_of(VN_STRING(enp));
 	POP_ID_CONTEXT;
 	//pop_item_context(QSP_ARG  id_itp);
 
@@ -4424,15 +4423,15 @@ advise(ERROR_STRING);
 
 	if( ID_DOBJ_CTX(idp) != NODE_DATA(QLIST_HEAD(LIST_OF_DOBJ_CONTEXTS)) ){
 		context_pushed=1;
-		PUSH_DOBJ_CONTEXT(ID_DOBJ_CTX(idp));
+		push_dobj_context(ID_DOBJ_CTX(idp));
 	} else context_pushed=0;
 
-	delvec(QSP_ARG  dp);
+	delvec(dp);
 
 	SET_REF_OBJ(ID_REF(idp), finish_obj_decl(QSP_ARG  enp,dsp,prec_p,decl_flags) );	/* reeval_decl_stat */
 
 	if( context_pushed )
-		POP_DOBJ_CONTEXT;
+		pop_dobj_context();
 
 } /* end reeval_decl_stat */
 
@@ -4483,7 +4482,7 @@ static Identifier *eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
 			s=VN_STRING(enp);
 			/* fall-thru */
 find_obj:
-			idp = ID_OF(s);
+			idp = id_of(s);
 			assert( idp != NULL );
 			assert( IS_OBJ_REF(idp) );
 
@@ -4549,7 +4548,7 @@ Identifier *_eval_ptr_ref(QSP_ARG_DECL Vec_Expr_Node *enp,int expect_ptr_set)
 
 		case T_POINTER:		/* eval_ptr_ref */
 		case T_STR_PTR:		/* eval_ptr_ref */
-			idp = GET_ID(VN_STRING(enp));
+			idp = get_id(VN_STRING(enp));
 			assert( idp != NULL );
 
 			/* BUG this is not an error if the ptr is on the left hand side... */
@@ -4608,7 +4607,7 @@ static Data_Obj *eval_subvec(QSP_ARG_DECL  Data_Obj *dp, index_t index, index_t 
 	SET_DIMENSION(dsp, OBJ_RANGE_MAXDIM(dp) , i2+1-index );
 	offsets[ OBJ_RANGE_MAXDIM(dp) ] = index;
 	sprintf(newname,"%s[%d:%d]",OBJ_NAME(dp),index,i2);
-	dp2=DOBJ_OF(newname);
+	dp2=dobj_of(newname);
 	if( dp2 != NULL ) return(dp2);
 
 	dp2=mk_subseq(QSP_ARG  newname,dp,offsets,dsp);
@@ -4791,7 +4790,7 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 				// If it's not a row_list node, then what is it???
 				sub_dp = D_SUBSCRIPT(dp,index);
 				i1=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,0),index);
-				delvec(QSP_ARG  sub_dp);
+				delvec(sub_dp);
 			}
 
 
@@ -4800,7 +4799,7 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 			} else {
 				sub_dp = D_SUBSCRIPT(dp,index+i1);
 				i2=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,1),index+i1);
-				delvec(QSP_ARG  sub_dp);
+				delvec(sub_dp);
 			}
 			return(i1+i2);
 			break;
@@ -4816,7 +4815,7 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 			} else {
 				sub_dp = C_SUBSCRIPT(dp,index);
 				i1=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,0),index);
-				delvec(QSP_ARG  sub_dp);
+				delvec(sub_dp);
 			}
 
 
@@ -4825,7 +4824,7 @@ static dimension_t assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node 
 			} else {
 				sub_dp = C_SUBSCRIPT(dp,index+i1);
 				i2=ASSIGN_OBJ_FROM_LIST(sub_dp,VN_CHILD(enp,1),index+i1);
-				delvec(QSP_ARG  sub_dp);
+				delvec(sub_dp);
 			}
 			return(i1+i2);
 			break;
@@ -5093,7 +5092,7 @@ dump_tree(enp);
 			}
 
 			sprintf(tmp_name,"%s[%d:%d:%d]",OBJ_NAME(dp),index,inc,i2);
-			sub_dp = DOBJ_OF(tmp_name);
+			sub_dp = dobj_of(tmp_name);
 			if( sub_dp != NULL )
 				return(sub_dp);		/* already exists */
 
@@ -5151,7 +5150,7 @@ dump_tree(enp);
 			SET_DIMENSION(dsp, OBJ_RANGE_MINDIM(dp) , i2+1-index );
 			offsets[ OBJ_RANGE_MINDIM(dp) ] = index;
 			sprintf(newname,"%s{%d:%d}",OBJ_NAME(dp),index,i2);
-			dp2=DOBJ_OF(newname);
+			dp2=dobj_of(newname);
 			if( dp2 != NULL ) return(dp2);
 
 			dp2=mk_subseq(QSP_ARG  newname,dp,offsets,dsp);
@@ -5324,7 +5323,7 @@ static void eval_dim_assignment(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp)
 
 				EVAL_DIM_ASSIGNMENT(sub_dp,enp);
 			}
-			delvec(QSP_ARG  sub_dp);
+			delvec(sub_dp);
 			/* all the work done in the recursive calls */
 			return;
 		}
@@ -5375,7 +5374,7 @@ double _eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 	switch(VN_CODE(enp)){
 		case T_SCALAR_VAR:
-			idp = get_id(QSP_ARG  VN_STRING(enp));
+			idp = get_id(VN_STRING(enp));
 			assert(idp!=NULL);
 			dval = cast_from_scalar_value(QSP_ARG  ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
 			break;
@@ -5396,7 +5395,7 @@ return(0.0);
 			//h_vl2_vminv(HOST_CALL_ARGS);
 			platform_dispatch_by_code(QSP_ARG  FVMINV, oap );
 			dval = get_dbl_scalar_value(dp);
-			delvec(QSP_ARG  dp);
+			delvec(dp);
 			break;
 
 		case T_CALLFUNC:			/* eval_flt_exp */
@@ -5413,7 +5412,7 @@ return(0.0);
 			exec_subrt(enp,dp);
 			/* get the scalar value */
 			dval = get_dbl_scalar_value(dp);
-			delvec(QSP_ARG  dp);
+			delvec(dp);
 			break;
 
 
@@ -6217,7 +6216,7 @@ void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index)
 		dp_copy(QSP_ARG  sub_dp,dp);
 
 		/* get rid of the subimage */
-		delvec(QSP_ARG  sub_dp);
+		delvec(sub_dp);
 
 		/* now this is tricky...  we want to swap data areas, and dimensions
 		 * between new_dp and dp...  here goes nothing
@@ -6229,7 +6228,7 @@ void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index)
 		SET_OBJ_TYPE_DIM(new_dp,which_dim, OBJ_TYPE_DIM(dp,which_dim) );
 		SET_OBJ_TYPE_DIM(dp,which_dim, DIMENSION(dsp,which_dim) );
 
-		delvec(QSP_ARG  new_dp);
+		delvec(new_dp);
 	}
 }
 
@@ -6251,13 +6250,13 @@ Data_Obj *mlab_reshape(QSP_ARG_DECL  Data_Obj *dp, Shape_Info *shpp, const char 
 	 * objects on the lhs???
 	 */
 	if( dp != NULL ){
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 	}
 	obj_rename(QSP_ARG  dp_new,name);
 
 	/* We also need to fix the identifier pointer */
 
-	idp = GET_ID(name);
+	idp = get_id(name);
 	assert( idp != NULL );
 	assert( ID_TYPE(idp) == ID_OBJ_REF );
 
@@ -6429,9 +6428,9 @@ static void delete_local_objs(SINGLE_QSP_ARG_DECL)
 		s = (char *)NODE_DATA(np);
 		assert( ! strncmp(s,"L.",2) );	// assume all names begin L.
 
-		dp = DOBJ_OF(s);
+		dp = dobj_of(s);
 		if( dp != NULL ){
-			delvec(QSP_ARG  dp);
+			delvec(dp);
 		}
 		  else {
 		}
@@ -6929,7 +6928,7 @@ dump_tree(enp);
 				read_object_from_file(QSP_ARG  dp1,ifp);
 				//h_vl2_convert(QSP_ARG  dst_dp,dp1);
 				dp_convert(QSP_ARG  dst_dp,dp1);
-				delvec(QSP_ARG  dp1);	// doesn't need delete_local_objects?
+				delvec(dp1);	// doesn't need delete_local_objects?
 			}
 			break;
 #endif /* NOT_YET */
@@ -7375,7 +7374,7 @@ dump_tree(enp);
 	// if the LHS is a scalar var, we need to do something different...
 	if( VN_CODE(VN_CHILD(enp,0)) == T_SCALAR_VAR ){
 		Identifier *idp;
-		idp = get_id(QSP_ARG  VN_STRING(VN_CHILD(enp,0)));
+		idp = get_id(VN_STRING(VN_CHILD(enp,0)));
 		assert(idp!=NULL);
 		assign_scalar_id(QSP_ARG  idp, VN_CHILD(enp,1));
 		return;

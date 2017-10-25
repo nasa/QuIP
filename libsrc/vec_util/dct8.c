@@ -271,7 +271,7 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 		}
 	}
 
-	delvec(QSP_ARG  block_dp);
+	delvec(block_dp);
 }
 
 
