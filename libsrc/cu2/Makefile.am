@@ -7,23 +7,12 @@ all:	libcu2.a
 
 M4OPTS=	-I $(top_srcdir)/include -I $(srcdir)
 
-<<<<<<< HEAD
-#			new_fill_expanded.c
-
-GENERATED_SRCS=						\
-			cu2_utils_expanded.c		\
-			cu2_veclib_expanded.c		\
-			cu2_fill_expanded.c		\
-			cu2_yuv2rgb_expanded.c		\
-			cu2_centroid_expanded.c
-=======
 GENERATED_SRCS=								\
 			$(builddir)/cu2_utils_expanded.c		\
 			$(builddir)/cu2_veclib_expanded.c		\
 			$(builddir)/cu2_fill_expanded.c			\
 			$(builddir)/cu2_yuv2rgb_expanded.c		\
 			$(builddir)/cu2_centroid_expanded.c
->>>>>>> fusion
 
 clean-local:
 	rm -rf $(GENERATED_SRCS)
@@ -37,14 +26,7 @@ $(builddir)/cu2_veclib_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 $(builddir)/cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
 
-<<<<<<< HEAD
-#new_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
-#	m4 $(M4OPTS) < $(srcdir)/new_fill.m4 > $(builddir)/new_fill_expanded.c
-
-cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
-=======
 $(builddir)/cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
->>>>>>> fusion
 	m4 $(M4OPTS) < $(srcdir)/cu2_yuv2rgb.m4 > $(builddir)/cu2_yuv2rgb_expanded.c
 
 $(builddir)/cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
@@ -61,18 +43,10 @@ $(srcdir)/cu2_yuv2rgb.cu:	$(builddir)/cu2_yuv2rgb_expanded.c
 $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 	touch $(srcdir)/cu2_fill.cu
 
-<<<<<<< HEAD
-#$(srcdir)/new_fill.cu:	$(builddir)/new_fill_expanded.c
-#	touch $(srcdir)/new_fill.cu
-
-$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
-	touch $(srcdir)/cu2_utils.cu
-=======
 #$(srcdir)/cu2_utils.cu:	$(builddir)/cu2_utils_expanded.c
 #	touch $(srcdir)/cu2_utils.cu
 $(srcdir)/cu2_utils.c:	$(builddir)/cu2_utils_expanded.c
 	touch $(srcdir)/cu2_utils.c
->>>>>>> fusion
 
 
 # Why does the generic rule not work?
@@ -83,16 +57,8 @@ cu2_yuv2rgb.o:	$(srcdir)/cu2_yuv2rgb.cu
 cu2_fill.o:	$(srcdir)/cu2_fill.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
 
-<<<<<<< HEAD
-#new_fill.o:	$(srcdir)/new_fill.cu
-#	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
-
-cu2_utils.o:	$(srcdir)/cu2_utils.cu
-	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
-=======
 #cu2_utils.o:	$(srcdir)/cu2_utils.cu
 #	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
->>>>>>> fusion
 
 cu2_centroid.o:	$(srcdir)/cu2_centroid.cu
 	$(NVCC) -o $@ -c `test -f $< || echo $(srcdir)/`$< $(NVCCFLAGS)
