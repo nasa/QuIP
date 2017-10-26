@@ -303,7 +303,7 @@ void simulate_typing(const char *str)
 	}
 }
 
-int keyboard_hit(QSP_ARG_DECL  FILE *tty_in)
+int _keyboard_hit(QSP_ARG_DECL  FILE *tty_in)
 {
 	int ready=0;
 
@@ -367,7 +367,7 @@ void check_events(QSP_ARG_DECL  FILE *tty_in)
 			return;
 		}
 
-		ready = keyboard_hit(QSP_ARG  tty_in);
+		ready = keyboard_hit(tty_in);
 
 
 		/* When we compile for profiling, we find that
@@ -855,7 +855,7 @@ const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_
 	static struct completion_data _this_completion;
 
 #ifdef QUIP_DEBUG
-if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
+if( comp_debug <= 0 ) comp_debug=add_debug_module("completion");
 #endif /* QUIP_DEBUG */
 
 	/* BUG need to check here that tty_in, tty_out

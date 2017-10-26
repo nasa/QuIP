@@ -724,7 +724,7 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	if( window_sys_inited ) return;
 
 #ifdef QUIP_DEBUG
-	xdebug = add_debug_module(QSP_ARG  "xsupp");
+	xdebug = add_debug_module("xsupp");
 #endif /* QUIP_DEBUG */
 
 //int (*XSetErrorHandler(handler))()

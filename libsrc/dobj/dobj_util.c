@@ -729,7 +729,7 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 		return;
 	}
 
-	debug_data = add_debug_module(QSP_ARG  "data");
+	debug_data = add_debug_module("data");
 
 	// BUG?  this happens here on the main thread, but child threads
 	// will need to be initialized elsewhere!

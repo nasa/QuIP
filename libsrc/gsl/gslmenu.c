@@ -57,7 +57,7 @@ int gsl_debug=0;
 static void gsl_debug_init(SINGLE_QSP_ARG_DECL)
 {
 	if( ! gsl_debug ){
-		gsl_debug = add_debug_module(QSP_ARG  "gsl");
+		gsl_debug = add_debug_module("gsl");
 	}
 }
 #endif /* QUIP_DEBUG */

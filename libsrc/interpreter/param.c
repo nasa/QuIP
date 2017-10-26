@@ -314,7 +314,7 @@ static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp, const char *filename)
 	int level;
 	const char *s;
 
-	redir(QSP_ARG  fp, filename);
+	redir(fp, filename);
 	level=QLEVEL;
 	do {
 		s=nameof("name of parameter");

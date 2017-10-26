@@ -311,7 +311,7 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	if( inited ) return;
 
 #ifdef QUIP_DEBUG
-	debug_fileio = add_debug_module(QSP_ARG  "fileio");
+	debug_fileio = add_debug_module("fileio");
 #endif /* QUIP_DEBUG */
 
 	/* This may have already been called - e.g. mmvi */

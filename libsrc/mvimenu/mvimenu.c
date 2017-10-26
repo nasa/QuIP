@@ -975,7 +975,7 @@ COMMAND_FUNC( do_movie_menu )
 
 #ifdef QUIP_DEBUG
 	if( mvi_debug < 0 )
-		mvi_debug = add_debug_module(QSP_ARG  "movie");
+		mvi_debug = add_debug_module("movie");
 #endif /* QUIP_DEBUG */
 
 	PUSH_MENU(movie);

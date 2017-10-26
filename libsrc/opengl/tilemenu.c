@@ -196,7 +196,7 @@ COMMAND_FUNC( do_tile_menu )
 		init_dir_names();
 		inited=1;
 #ifdef DEBUG
-		debug_tiles = add_debug_module(QSP_ARG  "tiles");
+		debug_tiles = add_debug_module("tiles");
 #endif /* DEBUG */
 	}
 	PUSH_MENU(tiles);

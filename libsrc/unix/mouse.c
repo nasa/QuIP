@@ -212,7 +212,7 @@ static COMMAND_FUNC( do_mouse_open )
 	int c;
 
 	s=NAMEOF("device file");
-	mouse_fd=open_serial_device(QSP_ARG  s);
+	mouse_fd=open_serial_device(s);
 	// BUG we should set the speed, etc.
 
 	/* We expect to see M3, then some junk... */

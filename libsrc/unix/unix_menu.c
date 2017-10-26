@@ -57,7 +57,7 @@ static const char *intr_str="";
 
 static void my_onintr(int asig /* what is this arg??? */)
 {
-	if( *intr_str == 0 ) nice_exit(DEFAULT_QSP_ARG  0);
+	if( *intr_str == 0 ) _nice_exit(DEFAULT_QSP_ARG  0);
 
 	// like top_menu - but pops everything
 	// Maybe we should then flush any pending input too?
@@ -191,7 +191,7 @@ static COMMAND_FUNC( do_ckpt )
 		ckpt_tbl_dp = mk_vec(QSP_ARG  CKPT_TBL_NAME, MAX_CKPTS, 2, PREC_FOR_CODE(prec) );
 		if( ckpt_tbl_dp == NULL ) error1("Error creating checkpoint table");
 
-		ckpt_msg_dp = mk_img(QSP_ARG  CKPT_MSG_NAME, MAX_CKPTS, MAX_MSG_LEN, 1,
+		ckpt_msg_dp = mk_img(CKPT_MSG_NAME, MAX_CKPTS, MAX_MSG_LEN, 1,
 			PREC_FOR_CODE(PREC_STR) );
 		if( ckpt_msg_dp == NULL ) error1("Error creating checkpoint messages");
 

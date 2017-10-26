@@ -40,7 +40,7 @@ COMMAND_FUNC( do_exit_prog )
 #ifdef BUILD_FOR_OBJC
 	ios_exit_program();	// doesn't exit right away???
 #else // ! BUILD_FOR_OBJC
-	nice_exit(QSP_ARG  0);
+	nice_exit(0);
 #endif	// ! BUILD_FOR_OBJC
 }
 

@@ -338,7 +338,6 @@ extern Variable *_get_var(QSP_ARG_DECL  const char *name);
 
 // error.c
 extern int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL));
-extern void nice_exit(QSP_ARG_DECL  int status);
 extern const char *tell_progname(void);
 extern const char *tell_version(void);
 extern void tty_warn(QSP_ARG_DECL  const char *s);
@@ -350,16 +349,21 @@ extern int string_is_printable(const char *s);
 extern char *show_printable(QSP_ARG_DECL  const char* s);
 extern void error_redir(QSP_ARG_DECL  FILE *fp);
 extern void output_redir(QSP_ARG_DECL  FILE *fp);
-extern void _log_message(QSP_ARG_DECL  const char *msg);
 extern const char *get_date_string(SINGLE_QSP_ARG_DECL);
 
+extern void _log_message(QSP_ARG_DECL  const char *msg);
+extern void _nice_exit(QSP_ARG_DECL  int status);
+
 #define log_message(s)	_log_message(QSP_ARG  s);
+#define nice_exit(s)	_nice_exit(QSP_ARG  s);
 
 
 // debug.c
 extern void debug_module(QSP_ARG_DECL  const char *s);
-extern debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name);
+extern debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name);
 extern void _set_debug(QSP_ARG_DECL  Debug_Module *dbmp);
+
+#define add_debug_module(n)	_add_debug_module(QSP_ARG  n)
 
 ITEM_INIT_PROT(Debug_Module,debug)
 ITEM_NEW_PROT(Debug_Module,debug)
@@ -463,8 +467,10 @@ extern int tell_qlevel(SINGLE_QSP_ARG_DECL);
 extern Query * pop_file( SINGLE_QSP_ARG_DECL );
 
 extern void redir_with_flags( QSP_ARG_DECL  FILE *fp, const char *filename, uint32_t flags );
-extern void redir( QSP_ARG_DECL  FILE *fp, const char *filename );
+extern void _redir( QSP_ARG_DECL  FILE *fp, const char *filename );
 extern void redir_from_pipe( QSP_ARG_DECL  Pipe *pp, const char *cmd );
+
+#define redir(fp,s)	_redir(QSP_ARG  fp,s)
 
 extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 

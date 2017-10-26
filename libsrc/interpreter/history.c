@@ -570,7 +570,7 @@ void _init_hist_from_list(QSP_ARG_DECL  const char *prompt,List* lp)
 
 #ifdef QUIP_DEBUG
 	if( hist_debug == 0 )
-		hist_debug = add_debug_module(QSP_ARG  "history");
+		hist_debug = add_debug_module("history");
 #endif /* QUIP_DEBUG */
 
 #ifdef QUIP_DEBUG

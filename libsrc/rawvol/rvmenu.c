@@ -496,7 +496,7 @@ COMMAND_FUNC( do_rv_menu )
 		/* insure_default_rv(); */
 #ifdef DEBUG
 		if( rawvol_debug == 0 )
-			rawvol_debug = add_debug_module(QSP_ARG  "rawvol");
+			rawvol_debug = add_debug_module("rawvol");
 #endif /* DEBUG */
 		inited++;
 	}

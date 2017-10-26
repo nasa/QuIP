@@ -73,7 +73,7 @@ static void check_posn(incr_t *posn, Data_Obj *dp)
 	}
 }
 
-int setup_requantize3d(SINGLE_QSP_ARG_DECL)
+int _setup_requantize3d(SINGLE_QSP_ARG_DECL)
 {
 	if( _hdp == NULL ){
 		NWARN("output movie not specified");
@@ -297,7 +297,7 @@ void normalize_filter3d(Data_Obj *fdp)
 	}
 }
 
-void init_requant3d(SINGLE_QSP_ARG_DECL)
+void _init_requant3d(SINGLE_QSP_ARG_DECL)
 {
 	dimension_t offset;
 	/* float value; */

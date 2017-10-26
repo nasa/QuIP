@@ -305,7 +305,7 @@ int insure_default_rv(SINGLE_QSP_ARG_DECL)
 	const char *default_name;
 
 	if (!rawvol_debug)
-		rawvol_debug =  add_debug_module(QSP_ARG  "rawvol");
+		rawvol_debug =  add_debug_module("rawvol");
 
 	if( curr_rv_sbp != NULL ){
 		sprintf(ERROR_STRING,"insure_default_rv:  raw volume already open");

@@ -457,7 +457,7 @@ int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL))
  * Call user exit functions, then exit
  */
 
-void nice_exit(QSP_ARG_DECL  int status)
+void _nice_exit(QSP_ARG_DECL  int status)
 		/* exit status */
 {
 	int i;
@@ -574,7 +574,7 @@ static void tty_error1(QSP_ARG_DECL  const char *s1)
 	error_wait();
 #endif /* MAC */
 
-	nice_exit(QSP_ARG  1);
+	nice_exit(1);
 }
 
 void expect_warning(QSP_ARG_DECL  const char *msg)

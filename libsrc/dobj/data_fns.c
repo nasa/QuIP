@@ -300,7 +300,7 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 }
 
 Data_Obj *
-mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimension_t type_dim,Precision *prec_p)		/**/
+_mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimension_t type_dim,Precision *prec_p)		/**/
 {
 	return( make_obj(QSP_ARG  name,1,rows,cols,type_dim,prec_p) );
 }

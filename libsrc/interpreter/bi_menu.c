@@ -416,7 +416,7 @@ static COMMAND_FUNC( do_redir )
 		sprintf(ERROR_STRING,"Error opening file %s!?",s );
 		WARN(ERROR_STRING);
 	} else {
-		redir(QSP_ARG  fp, s );
+		redir(fp, s );
 	}
 }
 
@@ -1584,7 +1584,7 @@ static COMMAND_FUNC( do_pmpttext )
 	s=savestr( nameof("variable name") );
 #ifndef BUILD_FOR_OBJC
 	//push_input_file(QSP_ARG   "-" );
-	redir(QSP_ARG  tfile(SINGLE_QSP_ARG), "-" );
+	redir(tfile(SINGLE_QSP_ARG), "-" );
 	t=savestr( nameof(p) );
 	pop_file(SINGLE_QSP_ARG);
 	assign_var(s,t);
