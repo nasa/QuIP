@@ -648,7 +648,7 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 	bitmap_word bit;
 
 	if( ! HAS_FORMAT_LIST )
-		val = how_many(QSP_ARG  "bit value");
+		val = how_many("bit value");
 	else
 		val = next_input_int_with_format(QSP_ARG  "bit value");
 

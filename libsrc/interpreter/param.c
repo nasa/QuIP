@@ -98,13 +98,13 @@ static void getparm(QSP_ARG_DECL  Param *p)
 	if( IS_ARRAY_PARAM(p) ) getarrp(QSP_ARG  p);
 
 	else if( IS_FLOAT_PARAM(p) )
-		*p->u.fp = fnum= (float)HOW_MUCH( p->p_comment );
+		*p->u.fp = fnum= (float)how_much( p->p_comment );
 	else if( IS_SHORT_PARAM(p) )
-		*p->u.sp = (short)HOW_MANY( p->p_comment );
+		*p->u.sp = (short)how_many( p->p_comment );
 	else if( IS_INT_PARAM(p) )
-		*p->u.ip = (int)HOW_MANY( p->p_comment );
+		*p->u.ip = (int)how_many( p->p_comment );
 	else if( IS_STRING_PARAM(p) )
-		strcpy( p->u.strp, NAMEOF(p->p_comment) );
+		strcpy( p->u.strp, nameof(p->p_comment) );
 
 	else error1(badpstr);
 }
@@ -216,7 +216,7 @@ static COMMAND_FUNC( do_chng_one )
 		pnlist[i] = theptbl[i].p_name;
 #endif /* ! HAVE_HISTORY */
 
-	s=NAMEOF(PNAME_PMPT);
+	s=nameof(PNAME_PMPT);
 	if( !strcmp(s,"all") ){
 		p=theptbl;
 		while( p->p_type != NULL_P_TYPE ) {
@@ -317,7 +317,7 @@ static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp, const char *filename)
 	redir(QSP_ARG  fp, filename);
 	level=QLEVEL;
 	do {
-		s=NAMEOF("name of parameter");
+		s=nameof("name of parameter");
 		if( get_pval(QSP_ARG  s,p) == -1 )
 			WARN("error getting parameter value");
 		/* lookahead word should decrement qlevel at EOF */
@@ -331,7 +331,7 @@ static COMMAND_FUNC( do_prm_rd )
 	FILE *fp;
 	const char *s;
 
-	s=NAMEOF(pfstr);
+	s=nameof(pfstr);
 	fp=TRY_OPEN( s,"r" );
 	if( !fp ) return;
 	rdprms(QSP_ARG  theptbl,fp,s);
@@ -340,7 +340,7 @@ static COMMAND_FUNC( do_prm_rd )
 static COMMAND_FUNC( do_prm_wt )
 {
 	FILE *fp;
-	fp=TRYNICE(NAMEOF(pfstr),"w");
+	fp=TRYNICE(nameof(pfstr),"w");
 	if( fp== NULL ) return;
 	wtprms(QSP_ARG  fp,theptbl);
 }

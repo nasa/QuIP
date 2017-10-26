@@ -524,8 +524,8 @@ COMMAND_FUNC( do_encrypt_string )
 	const char *s;
 	const char *e;
 
-	vn=NAMEOF("variable name for result");
-	s=NAMEOF("string to encrypt");
+	vn=nameof("variable name for result");
+	s=nameof("string to encrypt");
 
 	e = encrypt_string(s);
 
@@ -542,8 +542,8 @@ COMMAND_FUNC( do_decrypt_string )
 	const char *s;
 	const char *d;
 
-	vn=NAMEOF("variable name for result");
-	s=NAMEOF("string to decrypt");
+	vn=nameof("variable name for result");
+	s=nameof("string to decrypt");
 
 	d = decrypt_string(s);
 
@@ -560,8 +560,8 @@ COMMAND_FUNC( do_encrypt_file )
 	const char *outfile_name;
 	FILE *fp_in, *fp_out;
 
-	infile_name = NAMEOF("input filename");
-	outfile_name = NAMEOF("output filename");
+	infile_name = nameof("input filename");
+	outfile_name = nameof("output filename");
 
 	fp_in = TRY_OPEN(infile_name,"r");
 	if( ! fp_in ) return;
@@ -587,8 +587,8 @@ COMMAND_FUNC( do_decrypt_file )
 	const char *outfile_name;
 	FILE *fp_in, *fp_out;
 
-	infile_name = NAMEOF("input filename");
-	outfile_name = NAMEOF("output filename");
+	infile_name = nameof("input filename");
+	outfile_name = nameof("output filename");
 
 	fp_in = TRY_OPEN(infile_name,"r");
 	if( ! fp_in ) return;
@@ -614,7 +614,7 @@ COMMAND_FUNC( do_read_encrypted_file )
 	size_t n_converted;
 
 
-	s=NAMEOF("input file name");
+	s=nameof("input file name");
 	fp=TRY_OPEN(s,"r");
 	if( fp == NULL ) return;
 

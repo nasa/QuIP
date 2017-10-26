@@ -499,7 +499,7 @@ static const char *read_ith_macro_arg(QSP_ARG_DECL  Macro *mp, int i)
 		else
 			s="invalid_item_name"; /* BUG? put what the user actually entered? */
 	} else {
-		s=nameof(QSP_ARG  MA_PROMPT(map) );
+		s=nameof(MA_PROMPT(map) );
 
 		// This can happen if we are out of input
 		// at the lowest level, as in a macro call
@@ -1737,7 +1737,7 @@ DEBUG_LINENO(qline after nextline)
 
 COMMAND_FUNC( set_completion )
 {
-	if( askif(QSP_ARG  "complete commands") ){
+	if( askif("complete commands") ){
 		advise("enabling automatic command completion");
 		SET_QS_FLAG_BITS(THIS_QSP,QS_COMPLETING);
 	} else {
@@ -2197,7 +2197,7 @@ static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const
 	}
 	// Now read the normal macro arg description/prompt
 	sprintf(pmpt,"prompt for %s",item_type_name);
-	return NAMEOF(pmpt);
+	return nameof(pmpt);
 }
 
 // Read the macro args for a new macro definition
@@ -2222,7 +2222,7 @@ static Macro_Arg * read_macro_arg_spec(QSP_ARG_DECL int i)
 	sprintf(pstr2,"%s (or optional item type spec)",pstr);
 
 	/* this won't be freed until the macro is released... */
-	s = NAMEOF(pstr2);
+	s = nameof(pstr2);
 
 	/* We can specify the item type of the prompted-for object
 	 * by preceding the prompt with an item type name in brackets,

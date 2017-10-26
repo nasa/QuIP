@@ -24,7 +24,7 @@ static void check_preload(QSP_ARG_DECL  const char *prompt, int n, const char **
 
 // prompt should already be pre-loaded??
 
-int which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
+int _which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 {
 	int i;
 	int nmatches=0;
@@ -35,7 +35,7 @@ int which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 	check_preload(QSP_ARG  prompt, n, choices);
 #endif /* HAVE_HISTORY */
 
-	user_response = NAMEOF(prompt);
+	user_response = nameof(prompt);
 
 	for(i=0;i<n;i++){
 		assert(choices[i]!=NULL);

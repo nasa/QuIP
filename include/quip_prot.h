@@ -144,23 +144,30 @@ extern void simulate_typing(const char *str);
 
 // query_stack.h
 extern Query_Stack *init_first_query_stack(void);
-extern const char *nameof( QSP_ARG_DECL  const char *pmpt);
-extern long how_many(QSP_ARG_DECL  const char *);
-extern double how_much(QSP_ARG_DECL  const char *);
-#define NAMEOF(s)			nameof(QSP_ARG  s)
-#define HOW_MANY(pmpt)			how_many(QSP_ARG  pmpt)
-#define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
+extern const char *_nameof( QSP_ARG_DECL  const char *pmpt);
+extern long _how_many(QSP_ARG_DECL  const char *);
+extern double _how_much(QSP_ARG_DECL  const char *);
+// gradually phase these all-caps versions out...
+#define NAMEOF(s)		_nameof(QSP_ARG  s)
+#define HOW_MANY(pmpt)		_how_many(QSP_ARG  pmpt)
+#define HOW_MUCH(pmpt)		_how_much(QSP_ARG  pmpt)
+#define ASKIF(p)		_askif(QSP_ARG  p )
+#define WHICH_ONE(p,n,ch)	_which_one(QSP_ARG  p, n, ch )
+
+#define nameof(s)		_nameof(QSP_ARG  s)
+#define how_many(pmpt)		_how_many(QSP_ARG  pmpt)
+#define how_much(pmpt)		_how_much(QSP_ARG  pmpt)
+#define askif(p)		_askif(QSP_ARG  p )
+#define which_one(p,n,ch)	_which_one(QSP_ARG  p, n, ch )
 
 
 extern const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt);
 extern void inhibit_next_prompt_format(SINGLE_QSP_ARG_DECL);
 extern void enable_prompt_format(SINGLE_QSP_ARG_DECL);
-extern int askif( QSP_ARG_DECL  const char *pmpt);
-#define ASKIF(p)		askif(QSP_ARG  p )
+extern int _askif( QSP_ARG_DECL  const char *pmpt);
 
 
-extern int which_one( QSP_ARG_DECL  const char *pmpt, int n, const char **choices );
-#define WHICH_ONE(p,n,ch)	which_one(QSP_ARG  p, n, ch )
+extern int _which_one( QSP_ARG_DECL  const char *pmpt, int n, const char **choices );
 
 extern Query_Stack *new_qstk(QSP_ARG_DECL  const char *name);
 ITEM_INIT_PROT(Query_Stack,query_stack)

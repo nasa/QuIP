@@ -557,43 +557,43 @@ static void init_default_port_data_types(SINGLE_QSP_ARG_DECL)
 
 	if( define_port_data_type(QSP_ARG  (int)P_TEXT, "text",
 			"text to send", recv_text,
-			nameof, xmit_text) == -1 )
+			_nameof, xmit_text) == -1 )
 		WARN("error adding text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_FILE_AS_TEXT, "file_as_text",
 			"local name", recv_text,
-			nameof, xmit_file_as_text) == -1 )
+			_nameof, xmit_file_as_text) == -1 )
 		WARN("error adding text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_PLAIN_FILE, "plain_file",
 			"local filename", recv_plain_file,
-			nameof, xmit_plain_file) == -1 )
+			_nameof, xmit_plain_file) == -1 )
 		WARN("error adding plain_file data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_FILENAME, "filename",
 			"local filename", recv_filename,
-			nameof, xmit_filename) == -1 )
+			_nameof, xmit_filename) == -1 )
 		WARN("error adding plain_file data type to port tables");
 
 #ifdef HAVE_ENCRYPTION
 	if( define_port_data_type(QSP_ARG  (int)P_AUTHENTICATION,
 			"authentication", "data to send", recv_enc_text,
-			nameof, xmit_auth) == -1 )
+			_nameof, xmit_auth) == -1 )
 		WARN("error adding authentication data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_TEXT,
 			"encrypted_text", "text to send", recv_enc_text,
-			nameof, xmit_enc_text) == -1 )
+			_nameof, xmit_enc_text) == -1 )
 		WARN("error adding encrypted text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_FILE,
 			"encrypted_file", "local filename", recv_enc_file,
-			nameof, xmit_enc_file) == -1 )
+			_nameof, xmit_enc_file) == -1 )
 		WARN("error adding encrypted file data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENC_FILE_AS_TEXT,
 			"encrypted_file_as_text", "local filename", recv_enc_text,
-			nameof, xmit_enc_file_as_text) == -1 )
+			_nameof, xmit_enc_file_as_text) == -1 )
 		WARN("error adding encrypted file data type to port tables");
 #endif /* HAVE_ENCRYPTION */
 

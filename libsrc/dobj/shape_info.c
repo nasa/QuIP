@@ -72,7 +72,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 	read_type val;										\
 												\
 	if( ! HAS_FORMAT_LIST )									\
-		val = query_func(QSP_ARG  prompt );						\
+		val = query_func(prompt );							\
 	else											\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
@@ -97,7 +97,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 	read_type val;										\
 												\
 	if( ! HAS_FORMAT_LIST )									\
-		val = query_func(QSP_ARG  prompt );						\
+		val = query_func(prompt );							\
 	else											\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
