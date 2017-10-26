@@ -30,8 +30,8 @@ static COMMAND_FUNC( do_panel_cmap )
 	Panel_Obj *po;
 	Data_Obj *cm_dp;
 
-	po = PICK_PANEL("");
-	cm_dp = PICK_OBJ("colormap object");
+	po = pick_panel("");
+	cm_dp = pick_obj("colormap object");
 
 	if( po == NULL || cm_dp == NULL )
 		return;
@@ -135,7 +135,7 @@ static COMMAND_FUNC(do_accept_edits)
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("edit box");
+	sop=pick_scrnobj("edit box");
 	if( sop == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
@@ -149,7 +149,7 @@ static COMMAND_FUNC( do_del_widget )
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("widget name");
+	sop=pick_scrnobj("widget name");
 	if( sop == NULL ) return;
 
 	delete_widget(QSP_ARG sop);
@@ -158,7 +158,7 @@ static COMMAND_FUNC( do_scrnobj_info )
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("widget name");
+	sop=pick_scrnobj("widget name");
 	if( sop == NULL ) return;
 
 	switch(SOB_TYPE(sop)){
@@ -246,7 +246,7 @@ static COMMAND_FUNC( do_decorate_panel )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 	prepare_for_decoration(QSP_ARG  po);
 	PUSH_MENU(decorate);
 }
@@ -266,7 +266,7 @@ static COMMAND_FUNC(do_scroll)
 	Panel_Obj *po;
 	int yn;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 	yn = ASKIF("allow scrolling for panel");
 
 	if( po == NULL ) return;
@@ -288,7 +288,7 @@ static COMMAND_FUNC( do_check_first )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 
 	if( po == NULL ) return;
 
@@ -301,7 +301,7 @@ static COMMAND_FUNC( do_activate )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 
 	if( po == NULL ) return;
 
@@ -314,7 +314,7 @@ static COMMAND_FUNC( do_deactivate )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 
 	if( po == NULL ) return;
 
@@ -353,7 +353,7 @@ static COMMAND_FUNC( do_control_menu )
 	PUSH_MENU(control);
 }
 
-static COMMAND_FUNC( do_list_panels ){ list_panel_objs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_panels ){ list_panel_objs(tell_msgfile()); }
 
 #undef ADD_CMD
 #define ADD_CMD(s,f,h)	ADD_COMMAND(objects_menu,s,f,h)
@@ -390,7 +390,7 @@ static COMMAND_FUNC( do_sel_panel )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL( "" );
+	po=pick_panel( "" );
 	set_curr_win( po->po_xwin );
 	set_colormap( PO_CMAP_OBJ(po) );
 }
@@ -463,7 +463,7 @@ static COMMAND_FUNC( do_set_nav_group )
 {
 	Nav_Group *nav_g;
 
-	nav_g = PICK_NAV_GROUP("existing navigation group");
+	nav_g = pick_nav_group("existing navigation group");
 
 	if( nav_g == NULL ) return;
 
@@ -495,7 +495,7 @@ static void do_table_item(QSP_ARG_DECL  Table_Item_Type t)
 		return;
 	}
 
-	nav_i = new_nav_item(QSP_ARG  s);
+	nav_i = new_nav_item(s);
 	if( nav_i == NULL ) return;
 
 #ifdef BUILD_FOR_OBJC
@@ -554,7 +554,7 @@ static COMMAND_FUNC( do_set_desc )
 	Nav_Item *nav_i;
 	const char *s;
 
-	nav_i=pick_nav_item( QSP_ARG  "item name" );
+	nav_i=pick_nav_item( "item name" );
 	s = NAMEOF("description string");
 
 	if( curr_nav_g == NULL ){
@@ -578,7 +578,7 @@ static COMMAND_FUNC( do_del_nav_item )
 {
 	Nav_Item *nav_i;
 
-	nav_i=pick_nav_item( QSP_ARG  "item name" );
+	nav_i=pick_nav_item( "item name" );
 	if( nav_i == NULL ) return;
 
 	remove_nav_item(QSP_ARG  nav_i);
@@ -588,7 +588,7 @@ static COMMAND_FUNC( do_del_nav_group )
 {
 	Nav_Group *nav_g;
 
-	nav_g=pick_nav_group( QSP_ARG  "group name" );
+	nav_g=pick_nav_group( "group name" );
 	if( nav_g == NULL ) return;
 
 	remove_nav_group(QSP_ARG  nav_g);
@@ -695,7 +695,7 @@ static COMMAND_FUNC( do_nav_menu )
 	Panel_Obj *pnl_p;
 #endif // ! BUILD_FOR_OBJC
 
-	curr_nav_p = PICK_NAV_PANEL("navigation panel");
+	curr_nav_p = pick_nav_panel("navigation panel");
 
 	// Need to push the item context for the panel!
 	if( curr_nav_p == NULL ) return;
@@ -730,7 +730,7 @@ static COMMAND_FUNC( do_push_nav )
 	const char *s;
 
 	// Are nav panels really regular panels???
-	//po = PICK_PANEL("");
+	//po = pick_panel("");
 	//if( po == NULL ) return;
 
 	s = NAMEOF("name of panel or viewer");

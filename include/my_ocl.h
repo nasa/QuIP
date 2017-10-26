@@ -16,8 +16,21 @@
 
 #define BUILD_FOR_OPENCL
 
+#define MAX_OPENCL_DEVICES	4
+
 #define index_type	int32_t	// for vmaxi etc
 #define INDEX_PREC	PREC_DI	// for vmaxi etc
+
+#ifdef HAVE_OPENCL
+
+typedef struct opencl_kernel_info {
+	cl_kernel	oki_kernel[MAX_OPENCL_DEVICES];
+} OpenCL_Kernel_Info;
+
+#define OCL_KI_KERNEL( kip, idx )		((kip).ocl_kernel_info_p)->oki_kernel[idx]
+#define SET_OCL_KI_KERNEL( kip, idx, kp )	((kip).ocl_kernel_info_p)->oki_kernel[idx] = kp
+
+#endif // HAVE_OPENCL
 
 /* structs */
 typedef struct kernel {
@@ -54,7 +67,7 @@ extern cl_program ocl_create_program(const char *buf, Platform_Device *pdp );
 //extern cl_kernel ocl_create_kernel(cl_program program,
 extern cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 			const char *name, Platform_Device *pdp );
-extern cl_kernel ocl_make_kernel( const char *src, const char *name, Platform_Device *pdp );
+extern void * ocl_make_kernel( QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp );
 
 
 extern void h_ocl_set_seed(int seed);

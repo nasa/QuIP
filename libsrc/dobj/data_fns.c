@@ -69,9 +69,9 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 	if( !is_valid_dname(QSP_ARG  newname) ) return(-1);
 
 	// We expect that the passed object is in the namespace.
-	assert( dobj_of(QSP_ARG  OBJ_NAME(dp)) != NULL );
+	assert( dobj_of(OBJ_NAME(dp)) != NULL );
 
-	dp2=dobj_of(QSP_ARG  newname);
+	dp2=dobj_of(newname);
 	if( dp2 != NULL ){
 		sprintf(ERROR_STRING,
 			"name \"%s\" is already in use in area \"%s\"",
@@ -81,12 +81,12 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 	}
 	/* BUG?  where is the object's node? */
 
-	DELETE_OBJ_ITEM(dp);	// remove from database, add to free list
+	del_dobj(dp);	// remove from database, add to free list
 	SET_OBJ_NAME(dp,savestr(newname));
 
 	/* now add this to the database */
 	/* We might have a memory leak, with the item node? */
-	assert( remove_from_item_free_list(QSP_ARG  dobj_itp, dp) == 0 );
+	assert( remove_from_item_free_list(dobj_itp, dp) == 0 );
 	ADD_OBJ_ITEM(dp);
 
 	return(0);
@@ -134,7 +134,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 
 	INIT_DIMSET_PTR(dsp)
 
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"make_obj_list:  object %s already exists!?",name);
 		WARN(ERROR_STRING);
@@ -159,7 +159,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		prec_p=prec_for_code(PREC_LI);
 	else {
 		prec_p=NULL;	// error1 doesn't return, but silence compiler.
-		ERROR1("Unexpected pointer size!?");
+		error1("Unexpected pointer size!?");
 	}
 
 	dp = make_dobj(QSP_ARG  name,dsp,prec_p);	/* specify prec_long because sizeof(long) == sizeof(dp) */
@@ -203,7 +203,7 @@ Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 
 // Doesn't support CUDA???
 
-void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
+void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 {
 	Precision *prec_p;
 
@@ -224,7 +224,7 @@ void assign_scalar(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 #endif // HAVE_ANY_GPU
 
 	prec_p = OBJ_PREC_PTR(dp);
-	if( (*(prec_p->assign_scalar_func))(dp,svp) < 0 ){
+	if( (*(prec_p->assign_scalar_obj_func))(dp,svp) < 0 ){
 		sprintf(ERROR_STRING,
 			"Unable to set scalar value for object %s!?",
 			OBJ_NAME(dp));
@@ -239,27 +239,27 @@ double cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p
 	return (*(prec_p->cast_to_double_func))(svp);
 }
 
-void cast_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *svp, Precision *prec_p,double val)
 {
 	(*(prec_p->cast_from_double_func))(svp,val);
 }
 
 // This function casts to a single component
 
-void cast_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 1 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
 
-void cast_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 3 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);
 }
 
-void cast_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
+void cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *svp, Precision *prec_p,double val)
 {
 	assert( index >= 0 && index <= 2 );
 	(*(prec_p->cast_indexed_type_from_double_func))(svp,index,val);

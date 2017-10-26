@@ -108,7 +108,7 @@ void wt_raw_contig(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	/* BUG questionable cast */
 	ipixels = (int) npixels;
 	if( (dimension_t) ipixels != npixels )
-		ERROR1("wt_raw_contig:  too much data, problem with short ints");
+		error1("wt_raw_contig:  too much data, problem with short ints");
 
 
 #ifdef CRAY
@@ -202,8 +202,8 @@ advise(ERROR_STRING);
 			OBJ_NAME(dp),totfrms,ifp->if_name,
 			ifp->if_nfrms,ifp->if_frms_to_wt);
 		WARN(ERROR_STRING);
-		LONGLIST(dp);
-		LONGLIST(ifp->if_dp);
+		longlist(dp);
+		longlist(ifp->if_dp);
 		return;
 	}
 	if( !IS_CONTIGUOUS(dp) ){

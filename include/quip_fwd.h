@@ -22,6 +22,9 @@ FWD_TYPEDEF(query_stack,Query_Stack)
 FWD_TYPEDEF(typed_scalar,Typed_Scalar)
 FWD_TYPEDEF(scalar_expr_node,Scalar_Expr_Node)
 FWD_TYPEDEF(subrt,Subrt)
+FWD_TYPEDEF(subrt_call,Subrt_Call)
+FWD_TYPEDEF(identifier,Identifier)
+FWD_TYPEDEF(cuda_kernel_info,CUDA_Kernel_Info)
 
 FWD_TYPEDEF(rv_inode,RV_Inode)
 FWD_TYPEDEF(mouthful,Mouthful)
@@ -74,14 +77,14 @@ FWD_TYPEDEF(viewer,Viewer)
 
 #define COMMAND_FUNC(name)  void name(SINGLE_QSP_ARG_DECL)
 
-#define ITEM_NEW_PROT(type,stem)	type * new_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_INIT_PROT(type,stem)	void init_##stem##s(SINGLE_QSP_ARG_DECL );
-#define ITEM_CHECK_PROT(type,stem)	type * stem##_of(QSP_ARG_DECL  const char *name);
-#define ITEM_GET_PROT(type,stem)	type * get_##stem(QSP_ARG_DECL  const char *name);
-#define ITEM_LIST_PROT(type,stem)	void  list_##stem##s(QSP_ARG_DECL FILE *fp);
-#define ITEM_PICK_PROT(type,stem)	type *pick_##stem(QSP_ARG_DECL  const char *pmpt);
-#define ITEM_ENUM_PROT(type,stem)	List *stem##_list(SINGLE_QSP_ARG_DECL);
-#define ITEM_DEL_PROT(type,stem)	void del_##stem(QSP_ARG_DECL  type *ip);
+#define ITEM_NEW_PROT(type,stem)	type * _new_##stem(QSP_ARG_DECL  const char *name);
+#define ITEM_INIT_PROT(type,stem)	void _init_##stem##s(SINGLE_QSP_ARG_DECL );
+#define ITEM_CHECK_PROT(type,stem)	type * _##stem##_of(QSP_ARG_DECL  const char *name);
+#define ITEM_GET_PROT(type,stem)	type * _get_##stem(QSP_ARG_DECL  const char *name);
+#define ITEM_LIST_PROT(type,stem)	void  _list_##stem##s(QSP_ARG_DECL FILE *fp);
+#define ITEM_PICK_PROT(type,stem)	type *_pick_##stem(QSP_ARG_DECL  const char *pmpt);
+#define ITEM_ENUM_PROT(type,stem)	List *_##stem##_list(SINGLE_QSP_ARG_DECL);
+#define ITEM_DEL_PROT(type,stem)	void _del_##stem(QSP_ARG_DECL  type *ip);
 
 #define ITEM_INTERFACE_PROTOTYPES(type,stem)	IIF_PROTS(type,stem,extern)
 #define ITEM_INTERFACE_PROTOTYPES_STATIC(type,stem)		\

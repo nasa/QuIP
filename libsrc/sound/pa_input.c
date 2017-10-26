@@ -78,6 +78,10 @@ static ITEM_INIT_FUNC(Sound_Device,snddev,0)
 static ITEM_CHECK_FUNC(Sound_Device,snddev)
 static ITEM_NEW_FUNC(Sound_Device,snddev)
 
+#define init_snddevs()	_init_snddevs(SINGLE_QSP_ARG)
+#define snddev_of(s)	_snddev_of(QSP_ARG  s)
+#define new_snddev(s)	_new_snddev(QSP_ARG  s)
+
 
 
 static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname);
@@ -279,14 +283,14 @@ static Sound_Device * init_sound_device(QSP_ARG_DECL  const char *devname)
 {
 	Sound_Device *sdp;
 
-	sdp = snddev_of(QSP_ARG  devname);
+	sdp = snddev_of(devname);
 	if( sdp != NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  device %s is already initialized",devname);
 		WARN(ERROR_STRING);
 		return(sdp);
 	}
 
-	sdp = new_snddev(QSP_ARG  devname);
+	sdp = new_snddev(devname);
 	if( sdp == NULL ){
 		sprintf(ERROR_STRING,"init_sound_device:  unable to create struct for device %s",devname);
 		WARN(ERROR_STRING);
@@ -375,7 +379,7 @@ static  void *disk_writer(void *arg)
 writer_done:
 
 	close(audio_stream_fd);
-	delvec(QSP_ARG  audio_stream_dp);
+	delvec(audio_stream_dp);
 	audio_stream_fd=(-1);
 
 	close(timestamp_stream_fd);

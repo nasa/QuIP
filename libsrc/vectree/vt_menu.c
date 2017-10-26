@@ -103,7 +103,7 @@ static COMMAND_FUNC( do_dump_tree )
 	enp = find_node_by_number(QSP_ARG  n);
 	if( enp == NULL ) return;
 
-	DUMP_TREE(enp);
+	dump_tree(enp);
 }
 
 static COMMAND_FUNC( do_unexport )
@@ -111,10 +111,10 @@ static COMMAND_FUNC( do_unexport )
 	Data_Obj *dp;
 	Identifier *idp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if( dp == NULL ) return;
 
-	idp = ID_OF(OBJ_NAME(dp));
+	idp = id_of(OBJ_NAME(dp));
 	if( idp == NULL ){
 		sprintf(ERROR_STRING,"do_unexport:  object %s has not been exported",OBJ_NAME(dp));
 		WARN(ERROR_STRING);
@@ -140,7 +140,7 @@ static COMMAND_FUNC( do_export )
 	Data_Obj *dp, *parent;
 	Identifier *idp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if( dp == NULL ) return;
 
 	// If this is a subscripted object, export the parent
@@ -167,7 +167,7 @@ static COMMAND_FUNC( do_export )
 	// USED FOR???
 	SET_OBJ_EXTRA(dp,NULL);
 
-	idp = ID_OF(OBJ_NAME(dp));
+	idp = id_of(OBJ_NAME(dp));
 	if( idp != NULL ){
 		sprintf(ERROR_STRING,"do_export:  identifier %s already exists!?",ID_NAME(idp));
 		WARN(ERROR_STRING);
@@ -186,7 +186,7 @@ static void node_info(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 	save_flags = dump_flags;
 	dump_flags = SHOW_ALL;
-	DUMP_NODE(enp);
+	_dump_node_with_shape(QSP_ARG  enp);
 	dump_flags = save_flags;
 }
 
@@ -203,7 +203,7 @@ static COMMAND_FUNC( do_node_info )
 }
 
 static COMMAND_FUNC( do_list_subrts )
-{ list_subrts(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+{ list_subrts(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(expressions_menu,s,f,h)
 
@@ -222,6 +222,7 @@ ADD_CMD( info,		do_subrt_info,	print subroutine info	)
 ADD_CMD( node,		do_node_info,	print node info	)
 ADD_CMD( dump,		do_dump_subrt,	dump a subroutine tree	)
 ADD_CMD( tree,		do_dump_tree,	dump a tree from a given node	)
+ADD_CMD( fuse,		do_fuse_kernel,	build a custom GPU kernel )
 ADD_CMD( show_shp,	do_show_shp,	show node shapes during dump	)
 ADD_CMD( show_res,	do_show_res,	show unknown node resolvers	)
 ADD_CMD( show_key,	do_show_key,	show shape key	)
@@ -234,7 +235,7 @@ static double id_exists(QSP_ARG_DECL  const char *name)
 {
 	Identifier *ip;
 
-	ip=ID_OF(name);
+	ip=id_of(name);
 	if( ip==NULL ){
 		// We didn't find it, but it might be a subscripted object
 		Data_Obj *dp;
@@ -242,7 +243,7 @@ static double id_exists(QSP_ARG_DECL  const char *name)
 		dp=hunt_obj( QSP_ARG  name);
 		if( dp != NULL ){
 			dp = base_object(dp);
-			ip=ID_OF(OBJ_NAME(dp));
+			ip=id_of(OBJ_NAME(dp));
 			if( ip==NULL )
 				return 0.0;
 			else return 1.0;
@@ -257,10 +258,10 @@ void vt_init(SINGLE_QSP_ARG_DECL)
 	sort_tree_tbl();
 	init_fixed_nodes(SINGLE_QSP_ARG);
 
-	init_ids(SINGLE_QSP_ARG);		// init other item types too???
+	init_ids();		// init other item types too???
 	// BUG need to figure out how to do this without referencing itp
 	// why?
-	set_del_method(QSP_ARG  id_itp,delete_id);
+	set_del_method(id_itp,delete_id);
 	DECLARE_STR1_FUNCTION(	id_exists,	id_exists )
 
 #ifdef QUIP_DEBUG

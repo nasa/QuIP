@@ -29,12 +29,19 @@ abort();
 }
 @end
 
+// BUG?  if these are not static, the prototypes should go in a header file...
 
 
 /*static*/ IOS_ITEM_INIT_PROT(IOS_Item_Class,ios_icl)
 /*static*/ IOS_ITEM_NEW_PROT(IOS_Item_Class,ios_icl)
 
 IOS_ITEM_CHECK_PROT(IOS_Item_Class,ios_icl)
+
+#define init_ios_icls()	_init_ios_icls(SINGLE_QSP_ARG)
+#define new_ios_icl(s)	_new_ios_icl(QSP_ARG  s)
+#define ios_icl_of(s)	_ios_icl_of(QSP_ARG  s)
+
+
 
 /*static*/ IOS_ITEM_INIT_FUNC(IOS_Item_Class,ios_icl,0)
 /*static*/ IOS_ITEM_NEW_FUNC(IOS_Item_Class,ios_icl)

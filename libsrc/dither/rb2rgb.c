@@ -63,10 +63,10 @@ int know_lumscal=0;
 
 COMMAND_FUNC( set_matrices )
 {
-	c2p_dp=PICK_OBJ("matrix for chromaticity to phosphor transformation");
-	p2c_dp=PICK_OBJ("matrix for phosphor to chromaticity transformation");
-	o2p_dp=PICK_OBJ("matrix for opponent to phosphor transformation");
-	p2o_dp=PICK_OBJ("matrix for phosphor to opponent transformation");
+	c2p_dp=pick_obj("matrix for chromaticity to phosphor transformation");
+	p2c_dp=pick_obj("matrix for phosphor to chromaticity transformation");
+	o2p_dp=pick_obj("matrix for opponent to phosphor transformation");
+	p2o_dp=pick_obj("matrix for phosphor to opponent transformation");
 
 	install_white(SINGLE_QSP_ARG);	/* BUG should be renamed */
 }

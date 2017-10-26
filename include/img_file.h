@@ -100,6 +100,13 @@ ITEM_PICK_PROT(Filetype,file_type)
 ITEM_ENUM_PROT(Filetype,file_type)
 ITEM_LIST_PROT(Filetype,file_type)	// added for debugging
 
+#define init_file_types()	_init_file_types(SINGLE_QSP_ARG)
+#define new_file_type(s)	_new_file_type(QSP_ARG  s)
+#define file_type_of(s)		_file_type_of(QSP_ARG  s)
+#define pick_file_type(s)	_pick_file_type(QSP_ARG  s)
+#define file_type_list()	_file_type_list(SINGLE_QSP_ARG)
+#define list_file_types(fp)	_list_file_types(QSP_ARG  fp)
+
 typedef struct image_file {
 	Item		if_item;
 #define if_name		if_item.item_name
@@ -136,12 +143,18 @@ typedef struct image_file {
 #define if_tiff	if_file_u.u_tiff
 #endif /* HAVE_TIFF */
 
+#ifdef FOOBAR
+// Moved to fio_api.h
 ITEM_INIT_PROT(Image_File,img_file)
 ITEM_NEW_PROT(Image_File,img_file)
 ITEM_CHECK_PROT(Image_File,img_file)
 ITEM_PICK_PROT(Image_File,img_file)
 
-#define PICK_IMG_FILE(pmpt)	pick_img_file(QSP_ARG  pmpt)
+#define init_img_files(s)	_init_img_files(SINGLE_QSP_ARG)
+#define new_img_file(s)		_new_img_file(QSP_ARG  s)
+#define img_file_of(s)		_img_file_of(QSP_ARG  s)
+#define pick_img_file(pmpt)	_pick_img_file(QSP_ARG  pmpt)
+#endif // FOOBAR
 
 /* flag values for ifp's & filetype's */
 

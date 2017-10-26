@@ -66,6 +66,10 @@ typedef struct fly_cam {
 
 ITEM_INTERFACE_PROTOTYPES(PGR_Cam,pgc)
 
+#define pgc_of(s)	_pgc_of(QSP_ARG  s)
+#define list_pgcs(fp)	_list_pgcs(QSP_ARG  fp)
+#define pick_pgc(s)	_pick_pgc(QSP_ARG  s)
+
 /* flag bits */
 
 #define PGR_CAM_USES_BMODE	1
@@ -86,6 +90,8 @@ typedef struct pgr_property_type {
 } PGR_Property_Type;
 
 ITEM_INTERFACE_PROTOTYPES(PGR_Property_Type,pgr_prop)
+
+#define pick_pgr_prop(p)	_pick_pgr_prop(QSP_ARG  p)
 
 typedef struct fly_frame {
 	const char *		pf_name;

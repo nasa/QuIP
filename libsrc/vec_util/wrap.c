@@ -169,10 +169,10 @@ void dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t 
 //if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"scrolling %s by %d %d into %s",
 OBJ_NAME(src_dp),dx,dy,OBJ_NAME(dst_dp));
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 sprintf(ERROR_STRING,"destination area:  0x%lx,  source area:  0x%lx",
 (int_for_addr)OBJ_DATA_PTR(dst_dp),(int_for_addr)OBJ_DATA_PTR(src_dp));
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 //}
 #endif /* DEBUG */
 
@@ -213,8 +213,8 @@ ADVISE(ERROR_STRING);*/									\
 		OA_ARGSTYPE(oap) = REAL_ARGS; 						\
 	/* vmov(oap); */								\
 	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );				\
-	delvec(QSP_ARG  sub_dst_dp);							\
-	delvec(QSP_ARG  sub_src_dp);
+	delvec(sub_dst_dp);							\
+	delvec(sub_src_dp);
 
 	if( dx == 0 ){
 		if( dy == 0 ){

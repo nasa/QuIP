@@ -13,7 +13,7 @@ static COMMAND_FUNC( do_show_seq )
 {
 	Seq *sp;
 
-	sp = PICK_SEQ("");
+	sp = pick_mviseq("");
 	if( sp == NULL ) return;
 
 	init_show_seq(sp);
@@ -40,7 +40,7 @@ static COMMAND_FUNC( do_redef_seq )
 	char nmbuf[LLEN];
 	const char *s;
 
-	sp = PICK_SEQ("");
+	sp = pick_mviseq("");
 	s=NAMEOF("sequence (quote if includes spaces)");
 
 	if( sp == NULL ){
@@ -59,7 +59,7 @@ static COMMAND_FUNC( do_prt_seq )
 {
 	Seq *seqptr;
 
-	seqptr=PICK_SEQ("");
+	seqptr=pick_mviseq("");
 	if( seqptr != NULL ) pseq(QSP_ARG  seqptr);
 }
 
@@ -67,11 +67,11 @@ static COMMAND_FUNC( do_del_seq )
 {
 	Seq *seqptr;
 
-	seqptr=PICK_SEQ("");
+	seqptr=pick_mviseq("");
 	if( seqptr != NULL ) delseq(QSP_ARG  seqptr);
 }
 
-static COMMAND_FUNC( do_list_Seqs ){ list_mviseqs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_Seqs ){ list_mviseqs(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(sequence_menu,s,f,h)
 

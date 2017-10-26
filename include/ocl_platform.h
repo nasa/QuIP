@@ -36,20 +36,17 @@ struct ocl_dev_info {
 	cl_device_id		odi_dev_id;
 	cl_context		odi_ctx;
 	cl_command_queue	odi_queue; //"stream" in CUDA
-	int			odi_idx;
 	const char *		odi_extensions;
 } ;
 
 #define ODI_DEV_ID(odi_p)	(odi_p)->odi_dev_id
 #define ODI_CTX(odi_p)		(odi_p)->odi_ctx
 #define ODI_QUEUE(odi_p)	(odi_p)->odi_queue
-#define ODI_IDX(odi_p)		(odi_p)->odi_idx
 #define ODI_EXTENSIONS(odi_p)	(odi_p)->odi_extensions
 
 #define SET_ODI_DEV_ID(odi_p,v)		(odi_p)->odi_dev_id = v
 #define SET_ODI_CTX(odi_p,v)		(odi_p)->odi_ctx = v
 #define SET_ODI_QUEUE(odi_p,v)		(odi_p)->odi_queue = v
-#define SET_ODI_IDX(odi_p,v)		(odi_p)->odi_idx = v
 #define SET_ODI_EXTENSIONS(odi_p,v)	(odi_p)->odi_extensions = v
 
 struct ocl_stream_info {

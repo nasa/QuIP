@@ -172,7 +172,7 @@ static void print_cam_info(QSP_ARG_DECL  Camera *cam)
 static COMMAND_FUNC( do_list_cams )
 {
 	prt_msg("A/V Capture Devices:");
-	list_cameras(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_cameras(QSP_ARG  tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
@@ -243,7 +243,7 @@ static COMMAND_FUNC( do_get_cams )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	if( get_camera_names( QSP_ARG  dp ) < 0 )
@@ -254,7 +254,7 @@ static COMMAND_FUNC( do_mon_cam )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 	if( vp == NULL ) return;
 
 	monitor_av_session(vp);
@@ -294,7 +294,7 @@ static COMMAND_FUNC( do_grab_cam )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("target image object");
+	dp = pick_obj("target image object");
 	if( dp == NULL ) return;
 
 	grab_next_frame(dp);

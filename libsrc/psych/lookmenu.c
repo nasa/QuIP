@@ -51,7 +51,7 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 
 	sprintf(num_str,"%d",n_have_classes);	// BUG?  buffer overflow
 						// if n_have_classes too big???
-	ASSIGN_RESERVED_VAR( "n_classes" , num_str );
+	assign_reserved_var( "n_classes" , num_str );
 	
 	if( verbose ){
 		sprintf(ERROR_STRING,"File %s read, %d classes, %d x-values",
@@ -81,7 +81,7 @@ static COMMAND_FUNC( prquic )
 	Trial_Class *tcp;
 
 	fp=TRYNICE( NAMEOF("quic file"), "w");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	in_db = ASKIF("transform x values to decibels");
 
 	if( fp == NULL || tcp == NULL ) return;
@@ -100,7 +100,7 @@ static COMMAND_FUNC( do_print_raw )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "do_print_raw") ) return;
 	print_raw_data(QSP_ARG  tcp);
@@ -126,7 +126,7 @@ static COMMAND_FUNC( pntgrph )
 	FILE *fp;
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	fp=TRYNICE( NAMEOF("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 
@@ -140,7 +140,7 @@ static COMMAND_FUNC( t_wanal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "t_wanal") ) return;
@@ -153,7 +153,7 @@ static COMMAND_FUNC( t_danal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "t_danal") ) return;
@@ -166,7 +166,7 @@ static COMMAND_FUNC( wanal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "wanal") ) return;
@@ -179,7 +179,7 @@ static COMMAND_FUNC( danal )
 {
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	if( tcp == NULL ) return;
 	if( no_data(QSP_ARG  "danal") ) return;
@@ -199,7 +199,7 @@ static COMMAND_FUNC( do_set_chance_rate )
 static COMMAND_FUNC( setcl )
 {
 	//classno=(int)HOW_MANY("index of class of interest");
-	curr_tcp = PICK_TRIAL_CLASS("name of class of interest");
+	curr_tcp = pick_trial_class("name of class of interest");
 	if( curr_tcp == NULL ) return;
 
 	if( no_data(QSP_ARG  "setcl") ) return;
@@ -221,7 +221,7 @@ static COMMAND_FUNC( _split )
 	int wu;
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 
 	wu = ASKIF("retain upper half");
 
@@ -277,7 +277,7 @@ static COMMAND_FUNC( do_pnt_bars )
 	FILE *fp;
 	Trial_Class *tcp;
 
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	fp=TRYNICE( NAMEOF("output file"), "w" );
 	if( fp == NULL || tcp == NULL ) return;
 

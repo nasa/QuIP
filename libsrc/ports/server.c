@@ -121,7 +121,7 @@ int open_server_port(QSP_ARG_DECL  const char *name,int  port_no)
 		return(-1);
 	}
 
-	mpp=new_port(QSP_ARG  name);
+	mpp=new_port(name);
 	if( mpp==NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,"open_server_port %s %d failed to create port struct",

@@ -167,7 +167,7 @@ static COMMAND_FUNC( do_shm_update )
 	int x0,y0;
 
 	GET_VIEWER("do_shm_update")
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	x0 = HOW_MANY("x location");
 	y0 = HOW_MANY("y location");
 
@@ -180,7 +180,7 @@ static COMMAND_FUNC( do_shm_update )
 #endif /* HAVE_X11_EXT */
 
 static COMMAND_FUNC( do_list_viewers )
-{ list_vwrs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+{ list_vwrs(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(viewers_menu,s,f,h)
 
@@ -312,7 +312,7 @@ static COMMAND_FUNC( do_bring_fwd )
 	Data_Obj *dp;
 
 	GET_VIEWER("do_bring_fwd");
-	dp = PICK_OBJ("image");
+	dp = pick_obj("image");
 
 	if( vp == NULL ) return;
 	if( dp == NULL ) return;
@@ -338,7 +338,7 @@ static COMMAND_FUNC( do_send_back )
 	Data_Obj *dp;
 
 	GET_VIEWER("do_send_back");
-	dp = PICK_OBJ("image");
+	dp = pick_obj("image");
 
 	if( vp == NULL ) return;
 	if( dp == NULL ) return;
@@ -470,7 +470,7 @@ static COMMAND_FUNC( do_lock_orientation )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 	if( vp == NULL ) return;
 #ifdef BUILD_FOR_IOS
 	[ VW_QVC(vp) setQvc_flags:
@@ -555,7 +555,7 @@ static double viewer_exists(QSP_ARG_DECL  const char *name)
 {
 	Viewer *vp;
 
-	vp=VWR_OF(name);
+	vp=vwr_of(name);
 	if( vp==NULL ) return(0.0);
 	else return(1.0);
 }

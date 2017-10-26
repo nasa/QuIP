@@ -36,7 +36,7 @@ extern void dup_word(QSP_ARG_DECL const char *);
 extern int dupout(QSP_ARG_DECL  FILE *fp);
 extern FILE *tfile(SINGLE_QSP_ARG_DECL);
 extern void	set_progname(const char *program_name);
-extern Item *	new_item(QSP_ARG_DECL  Item_Type * item_type,const char *name,size_t size);
+//extern Item *	new_item(QSP_ARG_DECL  Item_Type * item_type,const char *name,size_t size);
 extern void _whileloop(QSP_ARG_DECL  int value);
 extern void foreach_loop(QSP_ARG_DECL Foreach_Loop *frp);
 extern void zap_fore(Foreach_Loop *frp);
@@ -47,9 +47,6 @@ extern void reset_return_strings(SINGLE_QSP_ARG_DECL);
 
 extern COMMAND_FUNC( suspend_chewing );
 extern COMMAND_FUNC( unsuspend_chewing );
-
-#define ASSIGN_VAR( s1 , s2 )	assign_var(QSP_ARG  s1 , s2 )
-
 
 
 /* global variable(s) */

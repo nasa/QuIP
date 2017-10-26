@@ -25,6 +25,7 @@ libvectree_a_SOURCES =			\
 			mseq.c		\
 			vt_native.c	\
 			string_ref.c	\
+			fusion.c	\
 			vt_native.h
 
 noinst_HEADERS =	subrt.h

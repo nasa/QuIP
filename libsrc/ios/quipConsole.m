@@ -123,7 +123,7 @@ abort();
 static void ios_prt_msg_frag(QSP_ARG_DECL  const char *s)
 {
 	FILE *fp;
-	if( (fp=tell_msgfile(SINGLE_QSP_ARG)) != stdout ){
+	if( (fp=tell_msgfile()) != stdout ){
 		fputs(s,fp);
 		fflush(fp);
 		return;
@@ -142,7 +142,7 @@ static void ios_prt_msg_frag(QSP_ARG_DECL  const char *s)
 static void ios_advise(QSP_ARG_DECL  const char *s)
 {
 	FILE *fp;
-	if( (fp=tell_errfile(SINGLE_QSP_ARG)) != stderr ){
+	if( (fp=tell_errfile()) != stderr ){
 		PRINT_LINE(s,fp);
 	} else {	// send stderr to console
 		if( console_output_enabled ){

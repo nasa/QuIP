@@ -15,7 +15,7 @@
 
 static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
-	SET_OA_DEST(oap, PICK_OBJ( "destination vector" ) );
+	SET_OA_DEST(oap, pick_obj( "destination vector" ) );
 	if( OA_DEST(oap) == NULL )
 		return(-1);
 	return(0);
@@ -23,7 +23,7 @@ static int get_dst(QSP_ARG_DECL Vec_Obj_Args *oap)
 
 static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC1(oap,PICK_OBJ( "first source vector" ) );
+	SET_OA_SRC1(oap,pick_obj( "first source vector" ) );
 	if( OA_SRC1(oap) == NULL )
 		return(-1);
 	return(0);
@@ -31,7 +31,7 @@ static int get_src1(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC2(oap,PICK_OBJ( "second source vector" ));
+	SET_OA_SRC2(oap,pick_obj( "second source vector" ));
 	if( OA_SRC2(oap) == NULL )
 		return(-1);
 	return(0);
@@ -39,7 +39,7 @@ static int get_src2(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC3(oap,PICK_OBJ( "third source vector" ));
+	SET_OA_SRC3(oap,pick_obj( "third source vector" ));
 	if( OA_SRC3(oap) == NULL )
 		return(-1);
 	return(0);
@@ -48,7 +48,7 @@ static int get_src3(QSP_ARG_DECL  Vec_Obj_Args *oap)
 
 static int get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
 {
-	SET_OA_SRC4(oap,PICK_OBJ( "fourth source vector" ));
+	SET_OA_SRC4(oap,pick_obj( "fourth source vector" ));
 	if( OA_SRC4(oap) == NULL )
 		return(-1);
 	return(0);
@@ -68,7 +68,7 @@ void show_vf(Vector_Function *vfp)
 
 static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
-	SET_OA_SBM( oap, PICK_OBJ( "source bitmap object" ) );
+	SET_OA_SBM( oap, pick_obj( "source bitmap object" ) );
 	if( OA_SBM(oap) == NULL ) return(-1);
 	if( OBJ_PREC( OA_SBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
@@ -83,7 +83,7 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 
 static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 {
-	SET_OA_DBM( oap, PICK_OBJ( "destination bitmap object" ) );
+	SET_OA_DBM( oap, pick_obj( "destination bitmap object" ) );
 	if( OA_DBM(oap) == NULL ) return(-1);
 	if( OBJ_PREC( OA_DBM(oap) ) != PREC_BIT ){
 		sprintf(ERROR_STRING,
@@ -143,8 +143,8 @@ static Data_Obj * get_return_scalar(QSP_ARG_DECL const char *pmpt,Precision *pre
 {
 	Data_Obj *dp;
 
-	/* which data area does PICK_OBJ use??? */
-	dp=PICK_OBJ( pmpt );
+	/* which data area does pick_obj use??? */
+	dp=pick_obj( pmpt );
 	if( dp == NULL ) return(NULL);
 	if( !IS_SCALAR(dp) ){
 		sprintf(ERROR_STRING,
@@ -303,9 +303,9 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		SET_OA_SVAL(oap,1, alloc_sval(prec_p) );
 		SET_OA_SVAL(oap,2, alloc_sval(prec_p) );
 		// BUG - could have an array of prec_p's ???
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
-		cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,2), prec_p, HOW_MUCH(p3) );
+		cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
+		cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+		cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,2), prec_p, HOW_MUCH(p3) );
 	} else if( VF_FLAGS(vfp) & SRC_SCALAR2 /* HAS_2_SCALARS */ ){
 		const char *p1,*p2;
 
@@ -376,8 +376,8 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
 		SET_OA_SVAL(oap,1, alloc_sval(prec_p) );
 		if( retval == 0 ){
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
+			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
 		}
 	}
 
@@ -388,7 +388,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			}
 			SET_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
 			SET_OA_SVAL(oap,0, alloc_sval( prec_p ) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value") );
 		} else if( OA_DEST(oap) == NULL ){	/* error condition */
 			/*double d;
@@ -405,32 +405,32 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 				SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
 			}
 			SET_OA_SVAL(oap,0,alloc_sval( prec_p ) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source real scalar value") );
 		} else if( IS_COMPLEX(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
 			SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
-			cast_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value real part") );
-			cast_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value imaginary part") );
 		} else if( IS_QUAT(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
 			SET_OA_SVAL(oap,0, alloc_sval( prec_p ));
-			cast_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value real part") );
-			cast_to_quat_scalar(QSP_ARG  1,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(QSP_ARG  1,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value i part") );
-			cast_to_quat_scalar(QSP_ARG  2,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(QSP_ARG  2,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value j part") );
-			cast_to_quat_scalar(QSP_ARG  3,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(QSP_ARG  3,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value k part") );
 		} else {
 			// what precision is this?
 			/* use a single scalar for all components */
 			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
 			SET_OA_SVAL(oap,0, alloc_sval( prec_p ) );
-			cast_to_scalar_value(QSP_ARG  OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value") );
 		}
 		if( OA_SVAL(oap,0) == NULL ){

@@ -51,15 +51,24 @@ ITEM_NEW_PROT(Variable,var_)
 ITEM_CHECK_PROT(Variable,var_)
 ITEM_DEL_PROT(Variable,var_)
 
+#define init_var_s()	_init_var_s(SINGLE_QSP_ARG)
+#define new_var_(name)	_new_var_(QSP_ARG  name)
+#define var__of(name)	_var__of(QSP_ARG  name)
+#define del_var_(name)	_del_var_(QSP_ARG  name)
+
+
 extern Variable *create_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
 extern Variable *force_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
 extern void init_dynamic_var(QSP_ARG_DECL  const char *name,
 			const char *(*func)(SINGLE_QSP_ARG_DECL) );
-extern void reserve_variable(QSP_ARG_DECL  const char *name);
-extern void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
+extern void _reserve_variable(QSP_ARG_DECL  const char *name);
+extern void _replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 							const char *replace);
-extern void show_var(QSP_ARG_DECL  Variable *vp );
+extern void _show_var(QSP_ARG_DECL  Variable *vp );
 
+#define replace_var_string(vp,find,replace)	_replace_var_string(QSP_ARG  vp,find,replace)
+#define reserve_variable(name)			_reserve_variable(QSP_ARG  name)
+#define show_var(vp)				_show_var(QSP_ARG  vp)
 
 
 #endif /* ! _VARIABLE_H_ */

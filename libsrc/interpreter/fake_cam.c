@@ -18,14 +18,14 @@ IOS_ITEM_LIST_FUNC(Camera,camera)
 static COMMAND_FUNC( do_list_cams )
 {
 	prt_msg("A/V Capture Devices:");
-	list_cameras(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	_list_cameras(QSP_ARG  tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
 	Camera *cam;
 
-	cam = pick_camera(QSP_ARG  "");
+	cam = _pick_camera(QSP_ARG  "");
 	if( cam == NULL ) return;
 
 	WARN("do_cam_info:  not implemented!?");
@@ -35,7 +35,7 @@ static COMMAND_FUNC( do_get_cams )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	WARN("do_get_cams:  not implemented!?");
@@ -45,7 +45,7 @@ static COMMAND_FUNC( do_mon_cam )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 	if( vp == NULL ) return;
 
 	WARN("do_mon_cam:  not implemented!?");
@@ -81,7 +81,7 @@ static COMMAND_FUNC( do_start_session )
 {
 	Camera *cam;
 
-	cam = pick_camera(QSP_ARG  "");
+	cam = _pick_camera(QSP_ARG  "");
 	if( cam == NULL ) return;
 
 	WARN("do_start_session:  not implemented!?");
@@ -91,7 +91,7 @@ static COMMAND_FUNC( do_grab_cam )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("target image object");
+	dp = pick_obj("target image object");
 	if( dp == NULL ) return;
 
 	WARN("do_grab_cam:  not implemented!?");

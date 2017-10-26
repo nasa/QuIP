@@ -493,13 +493,13 @@ static const char *read_ith_macro_arg(QSP_ARG_DECL  Macro *mp, int i)
 
 	if( MA_ITP(map) != NULL ){
 		Item *ip;
-		ip = pick_item(QSP_ARG  MA_ITP(map), MA_PROMPT(map) );
+		ip = pick_item(MA_ITP(map), MA_PROMPT(map) );
 		if( ip != NULL )
 			s=ITEM_NAME(ip);
 		else
 			s="invalid_item_name"; /* BUG? put what the user actually entered? */
 	} else {
-		s=nameof(QSP_ARG  MA_PROMPT(map) );
+		s=nameof(MA_PROMPT(map) );
 
 		// This can happen if we are out of input
 		// at the lowest level, as in a macro call
@@ -666,7 +666,7 @@ static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
 	if( !(QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS) ) return(0);
 
 	/* Does the buffer contain a macro name?  If not, return */
-	mp=macro_of(QSP_ARG  buf);
+	mp=macro_of(buf);
 	if( mp==NULL ) return(0);
 
 	if( check_macro_recursion(QSP_ARG  mp) < 0 )
@@ -729,7 +729,7 @@ advise(ERROR_STRING);
 
 #ifdef HAVE_HISTORY
 		if( IS_INTERACTIVE(CURR_QRY(THIS_QSP)) && *buf && IS_TRACKING_HISTORY(THIS_QSP) ){
-			add_def(QSP_ARG  pline,buf);
+			add_def(pline,buf);
 		}
 #endif /* HAVE_HISTORY */
 
@@ -1737,7 +1737,7 @@ DEBUG_LINENO(qline after nextline)
 
 COMMAND_FUNC( set_completion )
 {
-	if( askif(QSP_ARG  "complete commands") ){
+	if( askif("complete commands") ){
 		advise("enabling automatic command completion");
 		SET_QS_FLAG_BITS(THIS_QSP,QS_COMPLETING);
 	} else {
@@ -2190,14 +2190,14 @@ static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const
 	strcpy(item_type_name,s+1);
 	item_type_name[n-2]=0;	/* kill closing bracket */
 
-	map->ma_itp = get_item_type(QSP_ARG  item_type_name);
+	map->ma_itp = get_item_type(item_type_name);
 	if( map->ma_itp == NULL ){
 		WARN("Unable to process macro argument item type specification.");
 		return s;
 	}
 	// Now read the normal macro arg description/prompt
 	sprintf(pmpt,"prompt for %s",item_type_name);
-	return NAMEOF(pmpt);
+	return nameof(pmpt);
 }
 
 // Read the macro args for a new macro definition
@@ -2222,7 +2222,7 @@ static Macro_Arg * read_macro_arg_spec(QSP_ARG_DECL int i)
 	sprintf(pstr2,"%s (or optional item type spec)",pstr);
 
 	/* this won't be freed until the macro is released... */
-	s = NAMEOF(pstr2);
+	s = nameof(pstr2);
 
 	/* We can specify the item type of the prompted-for object
 	 * by preceding the prompt with an item type name in brackets,
@@ -2339,7 +2339,7 @@ Query_Stack *new_qstk(QSP_ARG_DECL  const char *name)
 #endif /* THREAD_SAFE_QUERY */
 
 	// We used to use a custom routine here - are there problems using the template??
-	new_qsp = new_query_stack(QSP_ARG  name);
+	new_qsp = new_query_stack(name);
 
 	if( qsp_to_free != NULL ){
 		//DEFAULT_QSP = qsp_to_free;	// why?  appears to do nothing?
@@ -2508,6 +2508,9 @@ void set_query_readfunc( QSP_ARG_DECL  char * (*rfunc)(QSP_ARG_DECL  void *buf, 
 	SET_QRY_READFUNC(CURR_QRY(THIS_QSP), rfunc);
 }
 
+// We have a stack of parser environments, and a free list to keep them around
+// when they are popped...
+
 static void init_vector_parser_data_stack(Query_Stack *qsp)
 {
 	SET_QS_VECTOR_PARSER_DATA_STACK(qsp,new_list());
@@ -2520,15 +2523,22 @@ static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
 	bzero(vpd_p,sizeof(*vpd_p));
 
 	// // Now allocate the strings
-	//SET_VPD_YY_INPUT_LINE(vpd_p,getbuf(LLEN));
-	//SET_VPD_YY_LAST_LINE(vpd_p,getbuf(LLEN));
-	//SET_VPD_EXPR_STRING(vpd_p,getbuf(LLEN));
 	SET_VPD_YY_INPUT_LINE(vpd_p,new_stringbuf());
 	SET_VPD_YY_LAST_LINE(vpd_p,new_stringbuf());
 	SET_VPD_EXPR_STRING(vpd_p,new_stringbuf());
 	SET_VPD_YY_WORD_BUF(vpd_p,new_stringbuf());
 	SET_VPD_EDEPTH(vpd_p, -1);
 	SET_VPD_CURR_STRING(vpd_p, sb_buffer(VPD_EXPR_STRING(vpd_p)) );
+	SET_VPD_SUBRT_CTX_STACK(vpd_p,new_list());
+}
+
+static void rls_vector_parser_data(Vector_Parser_Data *vpd_p)
+{
+	rls_stringbuf(VPD_YY_INPUT_LINE(vpd_p));
+	rls_stringbuf(VPD_YY_LAST_LINE(vpd_p));
+	rls_stringbuf(VPD_EXPR_STRING(vpd_p));
+	rls_stringbuf(VPD_YY_WORD_BUF(vpd_p));
+	rls_list(VPD_SUBRT_CTX_STACK(vpd_p));
 }
 
 static void init_scalar_parser_data(Scalar_Parser_Data *spd_p)
@@ -2540,7 +2550,6 @@ static void init_scalar_parser_data(Scalar_Parser_Data *spd_p)
 	SET_SPD_ESTRINGS_INITED(spd_p,0);
 	SET_SPD_FREE_EXPR_NODE_LIST(spd_p,NULL);
 	// set spd_expr_string's to NULL ???
-	//SET_QS_SPD_YYSTRPTR(spd_p,NULL);
 }
 
 static Vector_Parser_Data *find_free_vector_parser_data(SINGLE_QSP_ARG_DECL)
@@ -2580,6 +2589,9 @@ void pop_vector_parser_data(SINGLE_QSP_ARG_DECL)
 
 	np = remHead( QS_VECTOR_PARSER_DATA_STACK(THIS_QSP) );
 	assert(np!=NULL);
+
+	vpd_p = NODE_DATA(np);
+	rls_vector_parser_data(vpd_p);	// prevent leaks!
 
 	addHead( QS_VECTOR_PARSER_DATA_FREELIST(THIS_QSP), np );
 
@@ -2644,7 +2656,6 @@ void init_query_stack(Query_Stack *qsp)
 
 	SET_QS_FMT_CODE(qsp, FMT_DECIMAL);
 
-	//init_parser_data(qsp);
 	init_vector_parser_data_stack(qsp);
 
 	SET_QS_SCALAR_PARSER_DATA(qsp,getbuf(sizeof(Scalar_Parser_Data)));
@@ -2908,7 +2919,7 @@ void foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 
 #define FORELOOP	(-2)
 
-	ASSIGN_VAR(FL_VARNAME(frp),(const char *)NODE_DATA(QLIST_HEAD(FL_LIST(frp))));
+	assign_var(FL_VARNAME(frp),(const char *)NODE_DATA(QLIST_HEAD(FL_LIST(frp))));
 
 	SET_QRY_COUNT(qp, FORELOOP);		/* BUG should be some unique code */
 	SET_QRY_FORLOOP(qp, frp);
@@ -3127,7 +3138,7 @@ COMMAND_FUNC( close_loop )
 			SET_QRY_FORLOOP(qp,NULL);
 			goto lup_dun;
 		}
-		ASSIGN_VAR(FL_VARNAME(QRY_FORLOOP(qp)),
+		assign_var(FL_VARNAME(QRY_FORLOOP(qp)),
 			(const char *)FL_WORD(QRY_FORLOOP(qp)) );
 
 	} else if( QRY_COUNT(qp) < 0 ){		/* do/while loop */
@@ -3402,20 +3413,20 @@ FILE *tfile(SINGLE_QSP_ARG_DECL)
  * which function used to be called simple_var_of?  var__of ?
  */
 
-Variable *var_of(QSP_ARG_DECL const char *name)
+Variable *_var_of(QSP_ARG_DECL const char *name)
 		/* variable name */
 {
 	int i;
 	Variable *vp;
 	const char *s;
 
-	vp = var__of(QSP_ARG  name);
+	vp = var__of(name);
 	if( vp != NULL ) return(vp);
 
 	/* if not set, try to import from env */
 	s = getenv(name);
 	if( s != NULL ){
-		vp = new_var_(QSP_ARG  name);
+		vp = new_var_(name);
 		SET_VAR_VALUE(vp,savestr(s));
 		SET_VAR_FLAGS(vp,VAR_RESERVED);
 		return(vp);
@@ -3495,7 +3506,7 @@ advise(ERROR_STRING);
 		} else {
 			char varname[32];
 			sprintf(varname,"argv%d",i+1);
-			vp = var__of(QSP_ARG  varname);
+			vp = var__of(varname);
 			return(vp);
 		}
 	}
@@ -3885,7 +3896,7 @@ static void tell_macro_location(QSP_ARG_DECL  const char *location_string, int n
 	mname = location_string+strlen(MACRO_LOCATION_PREFIX);
 	// don't use get_macro, because it prints a warning,
 	// causing infinite regress!?
-	mp = macro_of(QSP_ARG  mname);
+	mp = macro_of(mname);
 	assert( mp != NULL );
 
 	filename = MACRO_FILENAME(mp);

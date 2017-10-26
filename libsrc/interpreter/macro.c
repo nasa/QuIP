@@ -52,14 +52,14 @@ void rls_macro(QSP_ARG_DECL  Macro *mp)
 		assert(MACRO_ARG_TBL(mp)==NULL);
 	}
 
-	del_macro(QSP_ARG  mp);
+	del_macro(mp);
 }
 
 Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno)
 {
 	Macro *mp;
 
-	mp = new_macro(QSP_ARG  name);
+	mp = new_macro(name);
 	SET_MACRO_N_ARGS(mp,n);
 	SET_MACRO_FLAGS(mp,0);
 	SET_MACRO_ARG_TBL(mp,ma_tbl);

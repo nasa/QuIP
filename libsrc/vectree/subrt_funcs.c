@@ -17,7 +17,7 @@
 void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 {
 	if( SR_BODY(srp) != NULL ){
-		NODE_ERROR(body);
+		node_error(body);
 		NWARN("subroutine body is not null!?");
 	}
 
@@ -27,8 +27,9 @@ void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Expr_Node *args,Vec_Expr_Node *body)
 {
 	Subrt *srp;
+	int i;
 
-	srp=new_subrt(QSP_ARG  name);
+	srp=new_subrt(name);
 	if( srp==NULL ) return(NULL);
 
 	SET_SR_ARG_DECLS(srp, args);
@@ -36,41 +37,235 @@ Subrt * remember_subrt(QSP_ARG_DECL  Precision * prec_p,const char *name,Vec_Exp
 	SET_SR_RET_LIST(srp, NULL);
 	SET_SR_CALL_LIST(srp, NULL);
 	SET_SR_PREC_PTR(srp, prec_p);
-	/* We used to give void subrt's a null shape ptr... */
-	SET_SR_SHAPE(srp, ALLOC_SHAPE );
-	COPY_SHAPE(SR_SHAPE(srp), uk_shape(PREC_CODE(prec_p)));
-	if( PREC_CODE(prec_p) == PREC_VOID ){
-		CLEAR_SHP_FLAG_BITS(SR_SHAPE(srp), DT_UNKNOWN_SHAPE);
-	}
+	// Now only subroutine calls have a shape...
+//	/* We used to give void subrt's a null shape ptr... */
+//	SET_SR_SHAPE(srp, ALLOC_SHAPE );
+//	COPY_SHAPE(SR_SHAPE(srp), uk_shape(PREC_CODE(prec_p)));
+//	if( PREC_CODE(prec_p) == PREC_VOID ){
+//		CLEAR_SHP_FLAG_BITS(SR_SHAPE(srp), DT_UNKNOWN_SHAPE);
+//	}
 	SET_SR_FLAGS(srp, 0);
-	SET_SR_CALL_VN(srp, NULL);
+//	SET_SR_CALL_VN(srp, NULL);
+
+	for(i=0;i<N_PLATFORM_TYPES;i++)
+		SET_SR_KERNEL_INFO_PTR(srp,i,NULL);
+
 	return(srp);
+}
+
+static Vec_Expr_Node *get_scalar_arg(QSP_ARG_DECL  Precision *prec_p, const char *prompt)
+{
+	Scalar_Value sv;
+	Vec_Expr_Node *enp;
+
+	(*(prec_p->set_value_from_input_func))(QSP_ARG  &sv, prompt);
+
+	switch( PREC_CODE(prec_p) ){
+		case PREC_SP:
+		case PREC_DP:
+			enp = node0(T_LIT_DBL);
+			SET_VN_DBLVAL(enp,(*(prec_p->cast_to_double_func))(&sv));
+			break;
+		case PREC_BY: case PREC_IN: case PREC_DI: case PREC_LI:
+		case PREC_UBY: case PREC_UIN: case PREC_UDI: case PREC_ULI:
+			enp = node0(T_LIT_INT);
+			// BUG should cast to long not int???
+			SET_VN_INTVAL(enp,(int) (*(prec_p->cast_to_double_func))(&sv));
+			break;
+		default:
+			fprintf(stderr,"get_scalar_arg:  unhandled precision %s!?",PREC_NAME(prec_p));
+			enp = NULL;
+			break;
+	}
+	return enp;
+}
+
+static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *prec_p)
+{
+	const char *s;
+	Data_Obj *dp;
+
+	Vec_Expr_Node *ret_enp=NULL;
+	switch(VN_CODE(enp)){
+		case T_PTR_DECL:
+			sprintf(msg_str,"object for %s * %s",
+				PREC_NAME(prec_p),
+				VN_DECL_NAME(enp)
+				);
+			s = NAMEOF(msg_str);
+			dp = get_obj(QSP_ARG  s);
+			if( dp != NULL ){
+				Vec_Expr_Node *obj_enp;
+				obj_enp=node0(T_STATIC_OBJ);
+				SET_VN_OBJ(obj_enp, dp);
+				point_node_shape(obj_enp,OBJ_SHAPE(dp));
+				SET_VN_PFDEV(obj_enp,OBJ_PFDEV(dp));
+				ret_enp = node1(T_REFERENCE,obj_enp);
+				point_node_shape(ret_enp,OBJ_SHAPE(dp));
+				SET_VN_PFDEV(ret_enp,OBJ_PFDEV(dp));
+			}
+			break;
+		case T_SCAL_DECL:
+			sprintf(msg_str,"%s scalar for %s",
+				PREC_NAME(prec_p),
+				VN_DECL_NAME(enp)
+				);
+			ret_enp = get_scalar_arg(QSP_ARG  prec_p, msg_str);
+			point_node_shape(ret_enp,scalar_shape(PREC_CODE(prec_p)));
+			break;
+		default:
+			fprintf(stderr,"get_one_arg:  unhandled case %s\n",node_desc(enp));
+			break;
+	}
+	return ret_enp;
+}
+
+#ifdef HAVE_ANY_GPU
+
+static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
+{
+	Platform_Device *pdp=NULL;
+
+	switch( VN_CODE(enp) ){
+		case T_STATIC_OBJ:
+			assert(VN_OBJ(enp)!=NULL);
+			pdp = OBJ_PFDEV( VN_OBJ(enp) );
+			break;
+		// no-ops
+		case T_LIT_DBL:
+		case T_LIT_INT:
+		case T_ARGLIST:
+		case T_REFERENCE:
+			break;
+		default:
+			sprintf(DEFAULT_ERROR_STRING,"Missing case for %s in pfdev_for_node!?",
+				node_desc(enp));
+			NWARN(DEFAULT_ERROR_STRING);
+			break;
+	}
+	return pdp;
+}
+
+void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	Platform_Device *pdp=NULL;
+	Vec_Expr_Node *defining_enp=NULL;
+	int curdled=0;
+	int i;
+
+	for(i=0;i<MAX_NODE_CHILDREN;i++){	// BUG - node should record number of children...
+		if( VN_CHILD(enp,i) == NULL ){
+			i = MAX_NODE_CHILDREN;	// terminate loop
+			continue;
+		} else {
+			if( VN_PFDEV( VN_CHILD(enp,i) ) == NULL ){
+				// recursive call
+				update_pfdev_from_children(QSP_ARG  VN_CHILD(enp,i) );
+			}
+			if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL && pdp == NULL ){
+				pdp = VN_PFDEV( VN_CHILD(enp,i) );
+				defining_enp = VN_CHILD(enp,i);
+			}
+
+			// If the device is still null then it is probably a constant
+			// that works on any device...
+			if( VN_PFDEV( VN_CHILD(enp,i) ) != NULL &&
+					pdp != VN_PFDEV( VN_CHILD(enp,i) ) ){
+				sprintf(ERROR_STRING,"Platform mismatch:  %s (%s) and %s (%s)!?",
+					node_desc(defining_enp),PFDEV_NAME(pdp),
+					node_desc(VN_CHILD(enp,i)), PFDEV_NAME(VN_PFDEV(VN_CHILD(enp,i))) );
+				WARN(ERROR_STRING);
+				curdled=1;
+			}
+		}
+	}
+	// Now handle special cases
+	if( pdp == NULL ){
+		pdp = pfdev_for_node(enp);
+	}
+
+	// Some nodes have no children, and constant nodes have no associated device???
+	if( curdled /* || pdp==NULL */ ){
+		return;
+	}
+	SET_VN_PFDEV(enp,pdp);
+} // update_pfdev_from_children
+#endif // HAVE_ANY_GPU
+
+static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
+{
+	Vec_Expr_Node *return_enp=NULL;
+	Vec_Expr_Node *enp1, *enp2;
+
+	switch(VN_CODE(enp)){
+		case T_DECL_STAT:
+			assert( VN_CHILD(enp,0) != NULL );
+			return_enp = get_one_arg(QSP_ARG  VN_CHILD(enp,0), VN_DECL_PREC(enp));
+			break;
+		case T_DECL_STAT_LIST:
+			enp1 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,0));
+			enp2 = get_subrt_arg_tree(QSP_ARG  VN_CHILD(enp,1));
+			// BUG release good node if only one bad
+			if( enp1 != NULL && enp2 != NULL ){
+				return_enp = node2(T_ARGLIST,enp1,enp2);
+#ifdef HAVE_ANY_GPU
+				update_pfdev_from_children(QSP_ARG  return_enp);
+#endif // HAVE_ANY_GPU
+			}
+			break;
+			
+		default:
+			sprintf(ERROR_STRING,"get_subrt_arg_tree:  unhandled case %s",node_desc(enp));
+			WARN(ERROR_STRING);
+			break;
+	}
+	return return_enp;
+}
+
+static Vec_Expr_Node * get_subrt_args(QSP_ARG_DECL  Subrt *srp)
+{
+	Vec_Expr_Node *enp;
+
+	enp = get_subrt_arg_tree(QSP_ARG  SR_ARG_DECLS(srp));
+	return enp;
 }
 
 COMMAND_FUNC( do_run_subrt )
 {
 	Subrt *srp;
+	Subrt_Call sc;
+	Vec_Expr_Node *enp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 
-	SET_SR_ARG_VALS(srp,NULL);
+	// What do we do if there is a fused kernel for this subrt???
 
-	RUN_SUBRT_IMMED(srp,NULL,NULL);
+	push_vector_parser_data(SINGLE_QSP_ARG);
+	enp = get_subrt_args(QSP_ARG  srp);
+
+	SET_SC_SUBRT(&sc,srp);
+	SET_SC_ARG_VALS(&sc,enp);
+	SET_SC_DEST_SHAPE(&sc,NULL);
+	SET_SC_SHAPE(&sc,NULL);
+	SET_SC_CALL_VN(&sc,NULL);
+
+	run_subrt_immed(&sc,NULL);
+	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
 COMMAND_FUNC( do_dump_subrt )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
-	DUMP_SUBRT(srp);
+	dump_subrt(srp);
 }
 
-void dump_subrt(QSP_ARG_DECL Subrt *srp)
+void _dump_subrt(QSP_ARG_DECL Subrt *srp)
 {
 	if( IS_SCRIPT(srp) ){
 		sprintf(msg_str,"Script subrt %s:",SR_NAME(srp));
@@ -83,14 +278,14 @@ void dump_subrt(QSP_ARG_DECL Subrt *srp)
 		sprintf(msg_str,"Subrt %s arg declarations:\n",SR_NAME(srp));
 		prt_msg(msg_str);
 		print_dump_legend(SINGLE_QSP_ARG);
-		DUMP_TREE(SR_ARG_DECLS(srp));
+		dump_tree(SR_ARG_DECLS(srp));
 	}
 
 	if( SR_BODY(srp) != NULL ){
 		sprintf(msg_str,"Subrt %s body:\n",SR_NAME(srp));
 		prt_msg(msg_str);
 		print_dump_legend(SINGLE_QSP_ARG);
-		DUMP_TREE(SR_BODY(srp));
+		dump_tree(SR_BODY(srp));
 	}
 }
 
@@ -98,18 +293,27 @@ COMMAND_FUNC( do_opt_subrt )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
-
+	srp=pick_subrt("");
 	if( srp==NULL ) return;
 
-	OPTIMIZE_SUBRT(srp);
+	optimize_subrt(srp);
+}
+
+COMMAND_FUNC( do_fuse_kernel )
+{
+	Subrt *srp;
+
+	srp=pick_subrt("");
+	if( srp==NULL ) return;
+
+	fuse_subrt(QSP_ARG  srp);
 }
 
 COMMAND_FUNC( do_tell_cost )
 {
 	Subrt *srp;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 
@@ -122,7 +326,7 @@ COMMAND_FUNC( do_subrt_info )
 	Vec_Expr_Node *enp;
 	Node *np;
 
-	srp=PICK_SUBRT("");
+	srp=pick_subrt("");
 
 	if( srp==NULL ) return;
 
@@ -155,7 +359,7 @@ COMMAND_FUNC( do_subrt_info )
 			ret_enp = (Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\tn%d:",VN_SERIAL(ret_enp));
 			prt_msg(msg_str);
-			DUMP_TREE(ret_enp);
+			dump_tree(ret_enp);
 			np=NODE_NEXT(np);
 		}
 	}
@@ -168,10 +372,24 @@ COMMAND_FUNC( do_subrt_info )
 			c_enp = (Vec_Expr_Node *)NODE_DATA(np);
 			sprintf(msg_str,"\tn%d:",VN_SERIAL(c_enp));
 			prt_msg(msg_str);
-			DUMP_TREE(c_enp);
+			dump_tree(c_enp);
 			np=NODE_NEXT(np);
 		}
 	}
+
+	// Display the file and line number where declared...
+	if( VN_INFILE(enp) == NULL ){
+		WARN("subroutine has no associated input file!?");
+	} else {
+		assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
+		sprintf(msg_str,"Subroutine %s declared at line %d, file %s",
+			SR_NAME(srp),
+			VN_LINENO(enp),
+			SR_STRING(VN_INFILE(enp))
+			);
+		prt_msg(msg_str);
+	}
+
 
 	/*
 	sprintf(msg_str,"\t%ld flops, %ld math calls",
@@ -195,7 +413,19 @@ Subrt *create_script_subrt(QSP_ARG_DECL  const char *name,int nargs,const char *
 	return srp;
 }
 
-static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
+static void insure_subrt_ctx_stack(SINGLE_QSP_ARG_DECL)
+{
+	assert(THIS_VPD!=NULL);
+	if( SUBRT_CTX_STACK == NULL ){
+		SET_SUBRT_CTX_STACK(new_list());
+		// BUG?  freed?
+	}
+}
+
+// Make up a unique string by concatenating all the strings in the context stack
+// BUG should use String_Bufs to avoid buffer overflow!?
+
+static const char *name_for_ctx_stack(SINGLE_QSP_ARG_DECL)
 {
 	static char ctxname[LLEN];
 	Node *np;
@@ -208,12 +438,12 @@ static const char *name_from_stack(SINGLE_QSP_ARG_DECL)
 		strcat(ctxname,(char *)NODE_DATA(np));
 		np=NODE_NEXT(np);
 	}
-//sprintf(ERROR_STRING,"name_from_stack:  ctxname = \"%s\"",ctxname);
-//advise(ERROR_STRING);
 	return(ctxname);
 }
 
-/* The original scheme of naming the context Subr.subrtname
+/* get_surt_id - get a unique name for the subroutine context
+ *
+ * The original scheme of naming the context Subr.subrtname
  * is no good, because it can't handle multiple instances,
  * as occur with recursion or multi-threading.
  * We might handle recursion by having a current subroutine
@@ -225,17 +455,14 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
 	Node *np;
 	const char *s;
 
-//sprintf(ERROR_STRING,"get_subrt_id %s BEGIN",name);
-//advise(ERROR_STRING);
-	if( SUBRT_CTX_STACK == NULL ){
-		SUBRT_CTX_STACK = new_list();
-	}
+	assert(THIS_VPD != NULL);
+
+	insure_subrt_ctx_stack(SINGLE_QSP_ARG);
 	s=savestr(name);
 	np=mk_node((void *)s);
-//fprintf(stderr,"Adding context '%s' at 0x%lx to stack\n",s,(long)s);
 	addTail(SUBRT_CTX_STACK,np);
 
-	return(name_from_stack(SINGLE_QSP_ARG));
+	return(name_for_ctx_stack(SINGLE_QSP_ARG));
 }
 
 /* set_subrt_ctx - set subroutine context
@@ -248,6 +475,9 @@ static const char *get_subrt_id(QSP_ARG_DECL  const char *name)
  * is first read in; 2nd, at the beginning of scan_subrt;
  * 3rd, at the beginning of run_subrt().
  *
+ * This pushing and popping of dobj contexts seems likely to fail
+ * in a multi-threaded environment unless the context stacks
+ * are per-qsp!?  But they are!  (see ITCI - item type context info)
  */
 
 void set_subrt_ctx(QSP_ARG_DECL  const char *name)
@@ -256,24 +486,11 @@ void set_subrt_ctx(QSP_ARG_DECL  const char *name)
 	Item_Context *icp;	/* data_obj, identifier context */
 
 	ctxname = get_subrt_id(QSP_ARG  name);
-//sprintf(ERROR_STRING,"set_subrt_ctx, context name is %s",ctxname);
-//advise(ERROR_STRING);
-#ifdef QUIP_DEBUG
-if( debug & scope_debug ){
-/*
-sprintf(ERROR_STRING,"set_subrt_ctx:  pushing context %s for ojects and identifiers",
-ctxname);
-advise(ERROR_STRING);
-*/
-}
-#endif /* QUIP_DEBUG */
-
-//fprintf(stderr,"set_subrt_ctx, name = %s at 0x%lx\n",ctxname,(long)ctxname);
-	icp=create_id_context(QSP_ARG  ctxname);
+	icp=create_id_context(ctxname);
 	PUSH_ID_CONTEXT(icp);
 
 	icp=create_dobj_context(QSP_ARG  ctxname);
-	PUSH_DOBJ_CONTEXT(icp);
+	push_dobj_context(icp);
 }
 
 static void rls_reference(Reference *refp)
@@ -293,13 +510,16 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 	idp = (Identifier *)ip;
 
 	switch(ID_TYPE(idp)){
-		case ID_REFERENCE:
+		case ID_OBJ_REF:
 			/* We used to call delvec(ID_REF(idp)->ref_dp)... */
 			/* We don't do this, because this case occurs in an export/unexport cycle */
 			givbuf(ID_REF(idp));
 			break;
 		case ID_STRING:
 			rls_reference(ID_REF(idp));
+			break;
+		case ID_SCALAR:
+			givbuf(ID_SVAL_PTR(idp));
 			break;
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));
@@ -315,7 +535,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 			NWARN(ERROR_STRING);
 			break;
 	}
-	del_id(QSP_ARG  idp );	// releases name for us
+	del_id(idp);	// releases name for us
 }
 
 // This function is called when we delete an object declared in a subroutine...
@@ -359,7 +579,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	icp = POP_SUBRT_ID_CTX(name);
-	delete_item_context(QSP_ARG  icp);
+	delete_item_context(icp);
 
 	/* We don't want to delete static objects!? BUG */
 
@@ -369,7 +589,7 @@ advise(ERROR_STRING);
 	 * we have to delete the context ourselves - or provide a callback?
 	 */
 	icp = POP_SUBRT_DOBJ_CTX(name);
-	delete_item_context_with_callback(QSP_ARG  icp, clear_decl_obj);
+	delete_item_context_with_callback(icp, clear_decl_obj);
 
 	np = remTail(SUBRT_CTX_STACK);
 	assert( np != NULL );
@@ -390,6 +610,8 @@ advise(ERROR_STRING);
 	SET_CP_OBJ_CTX(cpp,POP_SUBRT_DOBJ_CTX(name));
 }
 
+// Get the name of the current context for a given item_type
+
 static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *itp)
 {
 	/* having this static makes it not thread-safe!? BUG */
@@ -397,6 +619,7 @@ static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *
 	Node *np;
 
 	assert( SUBRT_CTX_STACK != NULL );
+
 	assert( QLIST_TAIL(SUBRT_CTX_STACK) != NULL );
 
 	np = QLIST_TAIL(SUBRT_CTX_STACK);
@@ -404,7 +627,7 @@ static const char *get_subrt_ctx_name(QSP_ARG_DECL  const char *name,Item_Type *
 	assert( ! strcmp(name,(char *)NODE_DATA(np)) );
 
 	/* BUG possible string overflow */
-	sprintf(ctxname,"%s.%s",IT_NAME(itp), name_from_stack(SINGLE_QSP_ARG) );
+	sprintf(ctxname,"%s.%s",IT_NAME(itp), name_for_ctx_stack(SINGLE_QSP_ARG) );
 
 	return( ctxname );
 }
@@ -417,22 +640,15 @@ Item_Context * pop_subrt_ctx(QSP_ARG_DECL  const char *name,Item_Type *itp)
 	Item_Context *icp;
 
 	ctxname = get_subrt_ctx_name(QSP_ARG  name,itp);
-#ifdef QUIP_DEBUG
-if( debug & scope_debug ){
-/*
-sprintf(ERROR_STRING,"pop_subrt_ctx:  popping subroutine context %s for %s items",ctxname,IT_NAME(itp));
-advise(ERROR_STRING);
-*/
-}
-#endif /* QUIP_DEBUG */
 
 //sprintf(ERROR_STRING,"Searching for context %s",ctxname);
 //advise(ERROR_STRING);
-	icp = ctx_of(QSP_ARG  ctxname);
+	icp = ctx_of(ctxname);
 	assert( icp != NULL );
-	assert( icp == CURRENT_CONTEXT(itp) );
+	assert( icp == current_context(itp) );
 
-	pop_item_context(QSP_ARG  itp);
+//fprintf(stderr,"popping %s from %s\n",CTX_NAME(icp),ITEM_TYPE_NAME(itp));
+	pop_item_context(itp);
 
 	return(icp);
 }
@@ -479,7 +695,7 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 
 	if( subrt_itp == NULL ) return NULL;
 
-	lp=subrt_list(SINGLE_QSP_ARG);
+	lp=subrt_list();
 	if( lp == NULL )
 		return NULL;
 
@@ -495,4 +711,17 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 	return(NULL);
 }
 
+Subrt_Call *make_call_instance(Subrt *srp)
+{
+	Subrt_Call *scp;
+
+	scp = getbuf(sizeof(*scp));
+
+	SET_SC_SUBRT(scp,srp);
+	SET_SC_ARG_VALS(scp,NULL);
+	SET_SC_CALL_VN(scp,NULL);
+	SET_SC_SHAPE(scp,NULL);
+	SET_SC_DEST_SHAPE(scp,NULL);
+	return scp;
+}
 

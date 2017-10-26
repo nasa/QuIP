@@ -111,7 +111,7 @@ static void x_play_movie(QSP_ARG_DECL  Movie *mvip)
 	dp = (Data_Obj *)mvip->mvi_data;
 	/* longlist(dp); */
 
-	vp = vwr_of(QSP_ARG  MOVIE_VIEWER_NAME);
+	vp = vwr_of(MOVIE_VIEWER_NAME);
 
 mk_win:
 	if( vp == NULL ){
@@ -181,7 +181,7 @@ static void x_get_frame_comp(QSP_ARG_DECL  Movie *mvip,uint32_t n,Data_Obj *dp,i
 
 static void x_close_movie(QSP_ARG_DECL  Movie *mvip)
 {
-	delvec(QSP_ARG  (Data_Obj *)mvip->mvi_data);
+	delvec((Data_Obj *)mvip->mvi_data);
 }
 
 

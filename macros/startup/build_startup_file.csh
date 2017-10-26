@@ -277,6 +277,7 @@ else if( $flavor == fdm ) then
   cat $HOME/exps/uhco13/stimuli/fdm_demos.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_ipad.scr >> $outfile
 else if( $flavor == symm ) then
+  source add_file.csh ios/utilz.mac
   cat ../$extra_macro_dir/symm/symm.mac >> $outfile
   cat ../$extra_macro_dir/symm/symm_app.mac >> $outfile
   cat ../$extra_macro_dir/symm/symm_main.scr >> $outfile

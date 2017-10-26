@@ -244,6 +244,8 @@ typedef enum {
 	T_CHAR_FN,
 	T_CHAR_VFN,
 
+	T_SCALAR_VAR,
+
 	N_TREE_CODES				/* this has to be last */
 } Tree_Code;
 
@@ -464,6 +466,8 @@ typedef enum {
 		case T_CSUBVEC:					\
 		case T_SQUARE_SUBSCR:				\
 		case T_CURLY_SUBSCR:
+
+// Why "scal" ???
 
 #define ALL_SCALINT_BINOP_CASES					\
 								\

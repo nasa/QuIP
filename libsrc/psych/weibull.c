@@ -58,12 +58,12 @@ static float w_likelihood(SINGLE_QSP_ARG_DECL)		/* called from optimize; return 
 
 	/* compute the likelihood for this guess */
 
-	opp=get_opt_param(QSP_ARG  ALPHA_NAME);
+	opp=get_opt_param(ALPHA_NAME);
 	assert( opp != NULL );
 
 	t_alpha = opp->ans;
 
-	opp=get_opt_param(QSP_ARG  BETA_NAME);
+	opp=get_opt_param(BETA_NAME);
 	assert( opp != NULL );
 
 	t_beta = opp->ans;
@@ -145,19 +145,19 @@ static void weibull_fit(QSP_ARG_DECL  Data_Tbl *dp,int ntrac)		/** maximum likli
 
 	optimize(QSP_ARG  w_likelihood);
 
-	alpha_opp=get_opt_param(QSP_ARG  ALPHA_NAME);
+	alpha_opp=get_opt_param(ALPHA_NAME);
 	assert( alpha_opp != NULL );
 
 	alpha = alpha_opp->ans;
 
-	beta_opp=get_opt_param(QSP_ARG  BETA_NAME);
+	beta_opp=get_opt_param(BETA_NAME);
 	assert( beta_opp != NULL );
 
 	beta = beta_opp->ans;
 
 	/* clean up */
-	del_opt_param(QSP_ARG  beta_opp);
-	del_opt_param(QSP_ARG  alpha_opp);
+	del_opt_param(beta_opp);
+	del_opt_param(alpha_opp);
 }
 
 void w_analyse( QSP_ARG_DECL  Trial_Class *tcp )		/** do a regression on the ith table */

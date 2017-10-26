@@ -310,7 +310,7 @@ static COMMAND_FUNC( do_read_raw_vector )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if(dp == NULL) return;
 
 	/* BUG? where do we check that the vector is of proper type and shape? */
@@ -322,7 +322,7 @@ static COMMAND_FUNC( do_next_read )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("data object for single polhemus record");
+	dp = pick_obj("data object for single polhemus record");
 	if( dp == NULL ) return;
 
 	if( read_next_polh_dp(QSP_ARG  dp) < 0 ) {
@@ -335,7 +335,7 @@ static COMMAND_FUNC( do_cont_read )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("data object for continuous polhemus data acquisition");
+	dp = pick_obj("data object for continuous polhemus data acquisition");
 	if( dp == NULL ) return;
 
 	if( read_cont_polh_dp(dp) < 0 ) {
@@ -348,7 +348,7 @@ static COMMAND_FUNC( do_single_read )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("data object for single polhemus record");
+	dp = pick_obj("data object for single polhemus record");
 
 	if( read_single_polh_dp(QSP_ARG  dp) < 0 ) {
 		WARN("do_single_read: error reading single polhemus data point");
@@ -371,7 +371,7 @@ static COMMAND_FUNC( do_fmt_raw_vector )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("polhemus data vector");
+	dp = pick_obj("polhemus data vector");
 
 	if( ! good_polh_vector(QSP_ARG  dp) ) return;
 
@@ -385,8 +385,8 @@ static COMMAND_FUNC( do_cvt_raw_vector )
 {
 	Data_Obj *fdp, *pdp;
 
-	fdp = PICK_OBJ("float data vector");
-	pdp = PICK_OBJ("polhemus data vector");
+	fdp = pick_obj("float data vector");
+	pdp = pick_obj("polhemus data vector");
 
 	if( ! good_polh_vector(QSP_ARG  pdp) ) return;
 
@@ -467,7 +467,7 @@ static COMMAND_FUNC( do_mk_vector )
 	strcpy(name, NAMEOF("name for new polhemus data vector") );
 	n = (uint32_t) HOW_MANY("number of records");
 
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Can't create new polhemus data vector %s, name is in use already",
 			name);
@@ -526,7 +526,7 @@ static COMMAND_FUNC( do_assign_var )
 	Data_Obj *dp;
 
 	varname=NAMEOF("variable name");
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	i_type = get_record_type(SINGLE_QSP_ARG);
 	index = HOW_MANY("index");
 

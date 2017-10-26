@@ -102,21 +102,21 @@ void set_seed(QSP_ARG_DECL  u_long seed)
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"set_seed:  srand48(%ld)",seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	srand48( seed );
 #elif HAVE_SRANDOM
 	if( verbose ){
 		sprintf(ERROR_STRING,"set_seed:  srandom(%ld)",seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	srandom( seed );
 #elif HAVE_SRAND
 	if( verbose ){
 		sprintf(ERROR_STRING,"set_seed:  srand(%d)",(int)seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	srand( (int)seed );
@@ -175,7 +175,7 @@ void rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"rninit: seed is %d",seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	set_seed(QSP_ARG  seed);

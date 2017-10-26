@@ -189,7 +189,7 @@ FIO_OPEN_FUNC( tiff )
 	if( ifp->if_tiff == NULL ){
 		sprintf(ERROR_STRING,"error opening TIFF file %s",ifp->if_pathname);
 		NWARN(ERROR_STRING);
-		DEL_IMG_FILE(ifp);
+		del_img_file(ifp);
 		// call rls_str here???  BUG?
 		return(NULL);
 	}

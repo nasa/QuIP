@@ -171,7 +171,7 @@ static COMMAND_FUNC( do_ckpt )
 		else if( siz == 4 ) prec=PREC_UDI;
 #ifdef CAUTIOUS
 		else {
-			ERROR1("CAUTIOUS:  do_ckpt:  unhandled size of time_t");
+			error1("CAUTIOUS:  do_ckpt:  unhandled size of time_t");
 			prec=PREC_ULI;	// silence compiler - doesn't know error1 never returns
 		}
 		
@@ -179,7 +179,7 @@ static COMMAND_FUNC( do_ckpt )
 		if( siz2 > siz ) {
 			sprintf(ERROR_STRING,
 "CAUTIOUS:  do_ckpt:  size of suseconds_t (%d) is greater than that of time_t (%d).",siz2,siz);
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 
 #endif /* CAUTIOUS */
@@ -189,11 +189,11 @@ static COMMAND_FUNC( do_ckpt )
 #endif /* HAVE_CUDA */
 
 		ckpt_tbl_dp = mk_vec(QSP_ARG  CKPT_TBL_NAME, MAX_CKPTS, 2, PREC_FOR_CODE(prec) );
-		if( ckpt_tbl_dp == NULL ) ERROR1("Error creating checkpoint table");
+		if( ckpt_tbl_dp == NULL ) error1("Error creating checkpoint table");
 
 		ckpt_msg_dp = mk_img(QSP_ARG  CKPT_MSG_NAME, MAX_CKPTS, MAX_MSG_LEN, 1,
 			PREC_FOR_CODE(PREC_STR) );
-		if( ckpt_msg_dp == NULL ) ERROR1("Error creating checkpoint messages");
+		if( ckpt_msg_dp == NULL ) error1("Error creating checkpoint messages");
 
 #ifdef HAVE_CUDA
 		pop_data_area();
@@ -302,13 +302,13 @@ static COMMAND_FUNC( get_time_of_day )
 	}
 
 	sprintf(msg_str,"%ld",tv.tv_sec);
-	ASSIGN_VAR(s1,msg_str);
+	assign_var(s1,msg_str);
 	// on mac, tv_usec has a wierd type?
 	sprintf(msg_str,"%ld",(long)tv.tv_usec);
-	ASSIGN_VAR(s2,msg_str);
+	assign_var(s2,msg_str);
 #else // ! HAVE_GETTIMEOFDAY
-	ASSIGN_VAR(s1,"0");
-	ASSIGN_VAR(s2,"0");
+	assign_var(s1,"0");
+	assign_var(s2,"0");
 	WARN("Sorry, no gettimeofday!?");
 #endif // ! HAVE_GETTIMEOFDAY
 }
@@ -325,7 +325,7 @@ static COMMAND_FUNC( get_time )
 		t = (time_t) 0;
 	}
 	sprintf(msg_str,"%ld",t);
-	ASSIGN_VAR(s,msg_str);
+	assign_var(s,msg_str);
 }
 
 static COMMAND_FUNC( do_system )				/** execute a shell command */
@@ -346,20 +346,25 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 		return;
 	}
 #endif // HAVE_GETUID
-	
+
+
+#ifndef BUILD_FOR_IOS
 	// On IOS, there is no stdout, so we don't see any output!?
 	stat=system(s);
 	
 	if( stat == -1 )
 		tell_sys_error("system");
-
 	else if( verbose ){
 		sprintf(ERROR_STRING,"Exit status %d",stat);
 		advise(ERROR_STRING);
 	}
-	
+#else // ! BUILD_FOR_IOS
+	WARN("Sorry, system command is temporarily unavailable for iOS!?");
+	stat=(-1);
+#endif // ! BUILD_FOR_IOS
+
 	sprintf(msg_str,"%d",stat);
-	assign_reserved_var(QSP_ARG  "exit_status",msg_str);
+	assign_reserved_var("exit_status",msg_str);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(os_menu,s,f,h)

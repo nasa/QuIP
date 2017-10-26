@@ -487,8 +487,8 @@ static void test_parport(void)
 	pthread_attr_setinheritsched(&attr1,PTHREAD_INHERIT_SCHED);
 
 
-	fbip = PICK_FBI("frame buffer for VSYNC");
-	dp = PICK_OBJ("data vector for latencies");
+	fbip = pick_fbi("frame buffer for VSYNC");
+	dp = pick_obj("data vector for latencies");
 
 	if( fbip == NULL || dp == NULL ) return;
 
@@ -579,7 +579,7 @@ int init_genlock(SINGLE_QSP_ARG_DECL)
 	}
 	gli1.gli_n_heads = n;
 	for(i=0;i<n;i++){
-		gli1.gli_fbip[i] = PICK_FBI("frame buffer for VSYNC");
+		gli1.gli_fbip[i] = pick_fbi("frame buffer for VSYNC");
 		gli1.gli_fb_latency[i] = (-1);
 		gli1.gli_pp_latency[i] = (-1);
 		gli1.gli_refractory[i]=GL_REFRACTORY;	/* wait before adjusting */
@@ -777,7 +777,7 @@ COMMAND_FUNC( do_report_genlock_status )
 {
 	FB_Info *fbip;
 
-	fbip = PICK_FBI("frame buffer");
+	fbip = pick_fbi("frame buffer");
 	if( fbip == NULL ) return;
 
 #ifdef HAVE_GENLOCK
@@ -797,8 +797,8 @@ COMMAND_FUNC( do_fbpair_monitor )
 {
 	FB_Info *fbip1,*fbip2;
 
-	fbip1 = PICK_FBI("first frame buffer");
-	fbip2 = PICK_FBI("second frame buffer");
+	fbip1 = pick_fbi("first frame buffer");
+	fbip2 = pick_fbi("second frame buffer");
 	if( fbip1 == NULL || fbip2 == NULL ) return;
 
 #ifdef HAVE_GENLOCK

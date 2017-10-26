@@ -74,7 +74,7 @@ static void init_##prompt##_menu(void)					\
 	}
 
 extern void add_command_to_menu( Menu *mp, Command *cp );
-extern void list_menu( QSP_ARG_DECL  Menu *mp );
+extern void list_menu( QSP_ARG_DECL  const Menu *mp );
 
 #define PUSH_MENU(prompt)		\
 					\

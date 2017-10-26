@@ -23,6 +23,12 @@ typedef struct my_fann {
 
 ITEM_INTERFACE_PROTOTYPES(My_FANN,fann)
 
+#define new_fann(s)	_new_fann(QSP_ARG  s)
+#define fann_of(s)	_fann_of(QSP_ARG  s)
+#define del_fann(s)	_del_fann(QSP_ARG  s)
+#define pick_fann(s)	_pick_fann(QSP_ARG  s)
+#define list_fanns(fp)	_list_fanns(QSP_ARG  fp)
+
 #define MAX_LAYERS	32		// BUG avoid fixed size...
 
 struct net_params {

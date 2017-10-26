@@ -140,10 +140,10 @@ static COMMAND_FUNC( get_reg )
 	advise(ERROR_STRING);
 
 	sprintf(ERROR_STRING,"0x%x",reg_setting.reg_data.u_s);
-	ASSIGN_VAR("reg_data",ERROR_STRING);
+	assign_var("reg_data",ERROR_STRING);
 #else /* ! HAVE_DAS1602 */
 	NO_AIO_ALERT
-	ASSIGN_VAR("reg_data","0");
+	assign_var("reg_data","0");
 #endif /* ! HAVE_DAS1602 */
 }
 
@@ -283,7 +283,7 @@ static COMMAND_FUNC( read_adc )
 	uint32_t nw=0;
 #endif // HAVE_DAS1602
 
-	dp = PICK_OBJ("data vector");
+	dp = pick_obj("data vector");
 
 	if( dp == NULL ) return;
 
@@ -791,7 +791,7 @@ static COMMAND_FUNC( write_dac )
 	int n;
 #endif /* HAVE_DAS1602 */
 
-	dp=PICK_OBJ("data vector");
+	dp=pick_obj("data vector");
 
 #ifdef HAVE_DAS1602
 
@@ -1087,7 +1087,7 @@ static COMMAND_FUNC( write_dio )
 #endif // HAVE_DAS1602
 
 	i=get_dio_channel(SINGLE_QSP_ARG);
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
 	if( i < 0 ) return;
 	if(dp==NULL) return;
@@ -1134,7 +1134,7 @@ static COMMAND_FUNC( read_dio )
 #endif // HAVE_DAS1602
 
 	i=get_dio_channel(SINGLE_QSP_ARG);
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
 	if(dp==NULL) return;
 	if( i < 0 ) return;
@@ -1236,7 +1236,7 @@ static COMMAND_FUNC( read_nvram )
 #endif // HAVE_DAS1602
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
 	if(dp==NULL) return;
 
@@ -1279,7 +1279,7 @@ static COMMAND_FUNC( write_nvram )		/* sq */
 #endif // HAVE_DAS1602
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 
 	if(dp==NULL) return;
 
@@ -1327,7 +1327,7 @@ static COMMAND_FUNC( ld_nvram )		/*sq */
 
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602
@@ -1388,7 +1388,7 @@ static COMMAND_FUNC( rd_nvram )		/*sq */
 
 	addr = HOW_MANY("NVRAM starting addr (0-255)");
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	if(dp==NULL) return;
 
 #ifdef HAVE_DAS1602

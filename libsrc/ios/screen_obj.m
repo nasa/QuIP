@@ -140,7 +140,7 @@ IOS_Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
 	static int sizable_added=0;
 
 	if( scrnobj_itp == NULL ){
-		init_scrnobjs(SINGLE_QSP_ARG);
+		init_scrnobjs();
 	}
 
 	if( ! sizable_added ){

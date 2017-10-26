@@ -185,10 +185,10 @@ static COMMAND_FUNC( do_difcrs )
 
 	Data_Obj *param_dp, *true_dp, *trial_dp, *jac_dp;
 
-	param_dp = PICK_OBJ("data object for parameter values (will be overwritten)");
-	true_dp = PICK_OBJ("data object for target values");
-	trial_dp = PICK_OBJ("data object for trial values");
-	jac_dp = PICK_OBJ("data object holding Jacobian info");
+	param_dp = pick_obj("data object for parameter values (will be overwritten)");
+	true_dp = pick_obj("data object for target values");
+	trial_dp = pick_obj("data object for trial values");
+	jac_dp = pick_obj("data object holding Jacobian info");
 	Jnnz = HOW_MANY("number of non-zero Jacobian entries");
 	splm_i1._cmd = NAMEOF("script to evaluate parameters");
 

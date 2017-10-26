@@ -218,14 +218,14 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 		}
 	}
 
-	delvec(QSP_ARG  OA_SRC2(oap) );		/* "_transposed_column" */
+	delvec(OA_SRC2(oap) );		/* "_transposed_column" */
 
 	if( OA_SRC1(oap) != dpfr1 )
-		delvec(QSP_ARG  OA_SRC1(oap) );
+		delvec(OA_SRC1(oap) );
 	if( col_dp != dpfr2 )
-		delvec(QSP_ARG  col_dp);
+		delvec(col_dp);
 
-	delvec(QSP_ARG  OA_DEST(oap) );
+	delvec(OA_DEST(oap) );
 }
 
 /* Here we assume the matrix acts on vectors in the tdim direction...
@@ -406,7 +406,7 @@ void newmtrx(QSP_ARG_DECL  const char *s,int dim)
 		WARN("bad dimension");
 		return;
 	}
-	mp=dobj_of(QSP_ARG  s);
+	mp=dobj_of(s);
 	if( mp!=(NULL) ){
 		WARN("name in use already");
 		return;

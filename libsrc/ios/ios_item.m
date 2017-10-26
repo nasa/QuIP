@@ -340,7 +340,7 @@ static IOS_Item_Type *ios_item_type_itp=NULL;
 	WARN(msg.UTF8String );
 
 	advise("Legal values are:");
-    [self list : tell_errfile(SINGLE_QSP_ARG)];
+    [self list : tell_errfile()];
 	return NULL;
 }
 

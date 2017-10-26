@@ -36,7 +36,7 @@ static Item_Type *curr_itp=NULL;
 
 static COMMAND_FUNC( list_types )
 {
-	list_items(QSP_ARG  ittyp_itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(ittyp_itp, tell_msgfile());
 }
 
 static COMMAND_FUNC( select_type )
@@ -45,17 +45,17 @@ static COMMAND_FUNC( select_type )
 	Item_Type *itp;
     
 	/*
-	s=NAMEOF("item type name");
+	s=nameof("item type name");
 	itp = get_item_type(QSP_ARG  s);
 	*/
-	itp = (Item_Type *) pick_item(QSP_ARG  ittyp_itp, "item type name");
+	itp = (Item_Type *) pick_item(ittyp_itp, "item type name");
 	if( itp != NULL )
 		curr_itp = itp;
 }
 
 static COMMAND_FUNC( do_list_items )
 {
-	list_items(QSP_ARG  curr_itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(curr_itp, tell_msgfile());
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(items_menu,s,f,h)
@@ -82,7 +82,7 @@ static COMMAND_FUNC( do_rbt_add )
 	const char *s;
 	Item *ip;
 
-	s=NAMEOF("new item name");
+	s=nameof("new item name");
 
 	// first look for this name in the tree
 
@@ -110,7 +110,7 @@ static COMMAND_FUNC( do_rbt_del )
 {
 	const char *s;
 
-	s = NAMEOF("item name");
+	s = nameof("item name");
 
 	// find the item in the tree
 	rb_delete_key(the_tree_p,s);
@@ -154,7 +154,7 @@ static COMMAND_FUNC( do_rbtree_test )
 
 static COMMAND_FUNC( do_list_macs )
 {
-	list_items(QSP_ARG  macro_itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(macro_itp, tell_msgfile());
 }
 
 static COMMAND_FUNC( do_find_mac )
@@ -162,12 +162,12 @@ static COMMAND_FUNC( do_find_mac )
 	const char *s;
 	List *lp;
 
-	s=NAMEOF("macro name fragment");
+	s=nameof("macro name fragment");
 
-	lp=find_items(QSP_ARG  macro_itp, s);
+	lp=find_items(macro_itp, s);
 	if( lp==NULL ) return;
 
-	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
+	print_list_of_items(lp, tell_msgfile());
 
 	// Need to release the list!
 	dellist(lp);	// releases nodes and list struct but not data
@@ -185,7 +185,7 @@ static List *search_macros(QSP_ARG_DECL  const char *frag)
 	char *lc_frag;
 
 	if( macro_itp == NULL ) return NULL;
-	lp=item_list(QSP_ARG  macro_itp);
+	lp=item_list(macro_itp);
 	if( lp == NULL ) return lp;
 
 	np=QLIST_HEAD(lp);
@@ -216,21 +216,21 @@ static COMMAND_FUNC( do_search_macs )
 	const char *s;
 	List *lp;
 
-	s=NAMEOF("macro fragment");
+	s=nameof("macro fragment");
 	lp=search_macros(QSP_ARG  s);
 	if( lp == NULL ) return;
 
 	sprintf(msg_str,"Fragment \"%s\" occurs in the following macros:",s);
 	prt_msg(msg_str);
 
-	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
+	print_list_of_items(lp, tell_msgfile());
 }
 
 static COMMAND_FUNC( do_show_mac )
 {
 	Macro *mp;
 
-	mp=PICK_MACRO("macro name");
+	mp=pick_macro("macro name");
 	if( mp!= NULL )
 		show_macro(QSP_ARG  mp);
 }
@@ -239,7 +239,7 @@ static COMMAND_FUNC( do_dump_mac )
 {
 	Macro *mp;
 
-	mp=PICK_MACRO("macro name");
+	mp=pick_macro("macro name");
 	if( mp!= NULL )
 		dump_macro(QSP_ARG  mp);
 }
@@ -255,7 +255,7 @@ no_macros:
 		WARN("do_dump_invoked:  no macros!?");
 		return;
 	}
-	lp=item_list(QSP_ARG  macro_itp);
+	lp=item_list(macro_itp);
 	if( lp == NULL ) goto no_macros;
 
 	np=QLIST_HEAD(lp);
@@ -272,7 +272,7 @@ static COMMAND_FUNC( do_info_mac )
 {
 	Macro *mp;
 
-	mp=PICK_MACRO("macro name");
+	mp=pick_macro("macro name");
 	if( mp!= NULL )
 		macro_info(QSP_ARG  mp);
 }
@@ -281,7 +281,7 @@ static COMMAND_FUNC( do_allow_macro_recursion )
 {
 	Macro *mp;
 	
-	mp=PICK_MACRO("");
+	mp=pick_macro("");
 	if( mp == NULL ) return;
 	allow_recursion_for_macro(mp);
 }
@@ -290,7 +290,7 @@ static COMMAND_FUNC( do_set_max_warnings )
 {
 	int n;
 	
-	n=(int)HOW_MANY("maximum number of warnings (negative for unlimited)");
+	n=(int)how_many("maximum number of warnings (negative for unlimited)");
 	SET_QS_MAX_WARNINGS(THIS_QSP,n);
 }
 
@@ -303,14 +303,14 @@ static COMMAND_FUNC( do_def_mac )
 	String_Buf *sbp;
 	int lineno;
 
-	name=NAMEOF("macro name");
-	n=(int)HOW_MANY("number of arguments");
+	name=nameof("macro name");
+	n=(int)how_many("number of arguments");
 
 	if( check_adequate_return_strings(QSP_ARG  n+2) < 0 ){
 		sprintf(ERROR_STRING,
 "define:  %d arguments requested for macro %s exceeds system limit!?\nRebuild application with increased value of N_QRY_RETSTRS.",
 			n-2,name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	ma_tbl = setup_macro_args(QSP_ARG  n);
@@ -322,7 +322,7 @@ static COMMAND_FUNC( do_def_mac )
 	sbp = read_macro_body(SINGLE_QSP_ARG);
 
 	// Now make sure this macro doesn't already exist
-	mp = macro_of(QSP_ARG  name);
+	mp = macro_of(name);
 	if( mp != NULL ){
 		sprintf(ERROR_STRING,"Macro \"%s\" already exists!?",name);
 		WARN(ERROR_STRING);
@@ -345,7 +345,7 @@ static COMMAND_FUNC( do_del_mac )
 {
 	Macro *mp;
 
-	mp = PICK_MACRO("");
+	mp = pick_macro("");
 
 	if( mp == NULL ) return;
 
@@ -358,9 +358,9 @@ static COMMAND_FUNC( do_if )
 	Typed_Scalar *tsp;
 	const char *s;
 
-	tsp=pexpr(QSP_ARG  NAMEOF("condition") );
+	tsp=pexpr(QSP_ARG  nameof("condition") );
 
-	s=NAMEOF("Command word or 'Then'");
+	s=nameof("Command word or 'Then'");
 
 	// Used to use push_text here, but that didn't push macro args...
 
@@ -370,13 +370,13 @@ static COMMAND_FUNC( do_if )
 	if( !strcmp(s,"Then") ){
 		const char *s2;
 		const char *s3;
-		s=NAMEOF("Command word");
-		s2=NAMEOF("'Else'");
+		s=nameof("Command word");
+		s2=nameof("'Else'");
 		if( strcmp(s2,"Else") ){
 			WARN("Then clause must be followed by 'Else'");
 			return;
 		}
-		s3=NAMEOF("Command word");
+		s3=nameof("Command word");
 
 		//if( v != 0.0 )
 		if( ! has_zero_value(tsp) )
@@ -395,7 +395,7 @@ static COMMAND_FUNC( do_push_text )
 {
 	const char *s;
 
-	s=NAMEOF("command string");
+	s=nameof("command string");
 
 	// We have used push_text here for a long time, but if we want
 	// to push a foreach command, then it needs to be at the same level...
@@ -408,7 +408,7 @@ static COMMAND_FUNC( do_redir )
 	const char *s;
 	FILE *fp;
 
-	s = NAMEOF("name of file");
+	s = nameof("name of file");
 	// BUG use NS function...
 	// what does that comment mean?  For mac version?
 	fp=fopen(s,"r");
@@ -423,7 +423,7 @@ static COMMAND_FUNC( do_redir )
 static COMMAND_FUNC( do_warn )
 {
 	const char *s;
-	s = NAMEOF("warning message");
+	s = nameof("warning message");
 	//[THIS_QSP warn : [THIS_QSP nameOf : @"warning message" ] ];
 	WARN( s );
 }
@@ -432,7 +432,7 @@ static COMMAND_FUNC( do_expect_warning )
 {
 	const char *s;
 
-	s=NAMEOF("Beginning of warning message");
+	s=nameof("Beginning of warning message");
 	expect_warning(QSP_ARG  s);
 }
 
@@ -448,17 +448,17 @@ static COMMAND_FUNC( do_set_var )
 	Quip_String *name, *value;
 	Variable *vp;
     
-	name=NAMEOF("variable name");
-	value=NAMEOF("variable value");
+	name=nameof("variable name");
+	value=nameof("variable value");
 
-	vp = var_of(QSP_ARG  name);
+	vp = var_of(name);
 	if( vp != NULL && IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"Sorry, variable \"%s\" is reserved.",name);
 		WARN(ERROR_STRING);
 		return;
 	}
 
-	assign_var(QSP_ARG  name,value);
+	assign_var(name,value);
 }
 
 // on 64 bit architecture, long is 64 bits,
@@ -612,8 +612,8 @@ static COMMAND_FUNC( do_assign_var )
 {
 	Quip_String *namestr, *estr;
 	Typed_Scalar *tsp;
-	namestr=NAMEOF("variable name" );
-	estr=NAMEOF("expression" );
+	namestr=nameof("variable name" );
+	estr=nameof("expression" );
     
 	CHECK_FMT_STRINGS
 
@@ -631,35 +631,35 @@ static COMMAND_FUNC( do_assign_var )
 
 	RELEASE_SCALAR(tsp);
 
-	assign_var(QSP_ARG  namestr, DEST );
+	assign_var(namestr, DEST );
 }
 
 static COMMAND_FUNC( do_show_var )
 {
 	Variable *vp;
     
-	vp = PICK_VAR("");
+	vp = pick_var("");
 	if( vp == NULL ) return;
 
-	show_var(QSP_ARG  vp);
+	show_var(vp);
 }
 
 static COMMAND_FUNC( do_del_var )
 {
 	Variable *vp;
     
-	vp = PICK_VAR("");
+	vp = pick_var("");
 	if( vp == NULL ) return;
 
 	// remove from history list?
 
-	del_var_(QSP_ARG  vp);
+	del_var_(vp);
 }
 
 static COMMAND_FUNC( do_list_vars )
 {
 	//[Variable list];
-	list_vars(SINGLE_QSP_ARG);
+	list_vars();
 }
 
 static COMMAND_FUNC( do_replace_var )
@@ -667,13 +667,13 @@ static COMMAND_FUNC( do_replace_var )
 	Variable *vp;
 	const char *find, *replace;
 
-	vp = PICK_VAR("");
-	find = NAMEOF("substring to replace");
-	replace = NAMEOF("replacement text");
+	vp = pick_var("");
+	find = nameof("substring to replace");
+	replace = nameof("replacement text");
 
 	if( vp == NULL ) return;
 
-	replace_var_string(QSP_ARG  vp,find,replace);
+	replace_var_string(vp,find,replace);
 }
 
 #define MIN_SIG_DIGITS	4
@@ -684,7 +684,7 @@ static COMMAND_FUNC( do_set_nsig )
 {
 	int n;
 
-	n = (int) HOW_MANY("number of digits to print in numeric variables");
+	n = (int) how_many("number of digits to print in numeric variables");
 	if( n<MIN_SIG_DIGITS || n>MAX_SIG_DIGITS ){
 		sprintf(ERROR_STRING,
 	"Requested number of digits (%d) should be between %d and %d, using %d",
@@ -792,8 +792,8 @@ static COMMAND_FUNC( do_despace )
 	const char *src;
 	int i=0;
 
-	vn=NAMEOF("name for destination variable");
-	src=NAMEOF("string to de-space");
+	vn=nameof("name for destination variable");
+	src=nameof("string to de-space");
 
 	while( i<(LLEN-1) && *src ){
 		if( isspace(*src) )
@@ -806,14 +806,14 @@ static COMMAND_FUNC( do_despace )
 	if( *src )
 		WARN("despace:  input string too long, truncating.");
 
-	ASSIGN_VAR(vn,buf);
+	assign_var(vn,buf);
 }
 
 static COMMAND_FUNC( do_find_vars )
 {
 	const char *s;
 
-	s=NAMEOF("name fragment");
+	s=nameof("name fragment");
 
 	find_vars(QSP_ARG  s);
 }
@@ -822,7 +822,7 @@ static COMMAND_FUNC( do_search_vars )
 {
 	const char *s;
 
-	s=NAMEOF("value fragment");
+	s=nameof("value fragment");
 
 	search_vars(QSP_ARG  s);
 }
@@ -875,7 +875,7 @@ static COMMAND_FUNC( do_mac_menu )
 static COMMAND_FUNC( do_repeat )
 {
 	int n;
-	n=(int)HOW_MANY("number of iterations");
+	n=(int)how_many("number of iterations");
 	if( n <= 0 ){
 		WARN("do_repeat:  number of repetitions must be positive!?");
 		return;
@@ -906,7 +906,7 @@ static COMMAND_FUNC( do_while )
 {
 	const char *s;
 
-	s=NAMEOF("expression");
+	s=nameof("expression");
 	whileloop(QSP_ARG  s);
 }
 
@@ -920,10 +920,10 @@ static COMMAND_FUNC( do_foreach_loop )
 
 	frp = NEW_FOREACH_LOOP;
 
-	s=NAMEOF("variable name");
+	s=nameof("variable name");
 	SET_FL_VARNAME(frp, savestr(s) );
 
-	s=NAMEOF("opening delimiter, usually \"(\"");
+	s=nameof("opening delimiter, usually \"(\"");
 	if( !strcmp(s,"(") )
 		strcpy(delim,")");
 	else
@@ -936,7 +936,7 @@ static COMMAND_FUNC( do_foreach_loop )
 	SET_FL_LIST(frp, new_list());
 
 	while(1){
-		s=NAMEOF(pmpt);
+		s=nameof(pmpt);
 		if( !strcmp(s,delim) ){		/* end of list? */
 			if( eltcount(FL_LIST(frp)) == 0 ) {		/* no items */
 				sprintf(ERROR_STRING,
@@ -967,8 +967,8 @@ static COMMAND_FUNC( do_error_exit )
 {
 	const char *s;
 
-	s=NAMEOF("error message");
-	ERROR1(s);
+	s=nameof("error message");
+	error1(s);
 }
 
 static COMMAND_FUNC( do_abort_prog )
@@ -986,14 +986,14 @@ COMMAND_FUNC( do_show_prompt )
 static COMMAND_FUNC( do_advise )
 {
 	Quip_String *s;
-	s=NAMEOF("word to echo");
-	ADVISE(s);
+	s=nameof("word to echo");
+	advise(s);
 }
 
 static COMMAND_FUNC( do_log_message )
 {
 	Quip_String *s;
-	s=NAMEOF("message");
+	s=nameof("message");
 	log_message(s);
 }
 
@@ -1001,16 +1001,16 @@ static COMMAND_FUNC( do_debug )
 {
 	Debug_Module *dmp;
 
-	dmp = pick_debug(QSP_ARG  "");
+	dmp = pick_debug("");
 	if( dmp != NULL )
-		set_debug(QSP_ARG  dmp);
+		set_debug(dmp);
 }
 
 static COMMAND_FUNC( do_echo )
 {
 	Quip_String *s;
 
-	s=NAMEOF("word to echo");
+	s=nameof("word to echo");
 	prt_msg(s);
 }
 
@@ -1058,7 +1058,7 @@ static COMMAND_FUNC( do_cd )
 {
 	const char *s;
 
-	s=NAMEOF("directory");
+	s=nameof("directory");
 	if( s == NULL || strlen(s)==0 ) return;
 
 	if( chdir(s) < 0 ){
@@ -1105,10 +1105,10 @@ static COMMAND_FUNC( do_get_filenames )
 	int maxlen=0;
 	Dimension_Set ds1;
 
-	objname = NAMEOF("name for new object in which to store filenames");
-	dir = NAMEOF("directory");
+	objname = nameof("name for new object in which to store filenames");
+	dir = nameof("directory");
 
-	dp = dobj_of(QSP_ARG  objname);
+	dp = dobj_of(objname);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,
 	"get_filenames:  object %s already exists!?",OBJ_NAME(dp));
@@ -1117,7 +1117,7 @@ static COMMAND_FUNC( do_get_filenames )
 		//return;
 		// This used to be a warning and an error,
 		// but here we provide some garbage collection...
-		delvec( QSP_ARG  dp);
+		delvec(dp);
 	}
 
 	dir_p = opendir(dir);
@@ -1182,7 +1182,7 @@ static COMMAND_FUNC( do_mkdir )
 	const char *s;
 	mode_t mode;
 
-	s=NAMEOF("name for new directory");
+	s=nameof("name for new directory");
 
 	if( s == NULL || *s==0 ) return;
 
@@ -1205,7 +1205,7 @@ static COMMAND_FUNC( do_pwd )
 	}
 
 	// cwd is now a dynamic variable!?
-	//ASSIGN_VAR("cwd",savestr(buf));
+	//assign_var("cwd",savestr(buf));
 	prt_msg(buf);
 }
 
@@ -1213,7 +1213,7 @@ static COMMAND_FUNC( do_rmdir )
 {
 	const char *s;
 
-	s=NAMEOF("name of directory");
+	s=nameof("name of directory");
 
 	if( s == NULL || *s==0 ) return;
 
@@ -1229,7 +1229,7 @@ static COMMAND_FUNC( do_rm )
 {
 	const char *s;
 
-	s=NAMEOF("name of file");
+	s=nameof("name of file");
 
 	if( s == NULL || *s==0 ) return;
 
@@ -1288,8 +1288,8 @@ static COMMAND_FUNC( do_count_lines )
 	const char *fn;
 	const char *vn;
 
-	vn=NAMEOF("variable name for result");
-	fn=NAMEOF("filename");
+	vn=nameof("variable name for result");
+	fn=nameof("filename");
 	fp = try_open(QSP_ARG  fn,"r");
 	if( !fp ) return;
 
@@ -1302,7 +1302,7 @@ static COMMAND_FUNC( do_count_lines )
 
 	// we co-opt error_string as an available buffer...
 	sprintf(ERROR_STRING,"%d",n);
-	ASSIGN_VAR(vn,ERROR_STRING);
+	assign_var(vn,ERROR_STRING);
 }
 
 // For now use these in unix for ios emulation...
@@ -1349,7 +1349,7 @@ static COMMAND_FUNC( do_output_redir )
 {
 	const char *s;
 
-	s=NAMEOF("output file");
+	s=nameof("output file");
 	set_output_file(QSP_ARG  s);
 }
 
@@ -1367,7 +1367,7 @@ static COMMAND_FUNC( do_error_redir )
 	FILE *fp;
 	const char *s;
 
-	s=NAMEOF("error file");
+	s=nameof("error file");
 
 	if( (!strcmp(s,"-")) || (!strcmp(s,"stderr")) )
 		fp=stderr;
@@ -1385,10 +1385,10 @@ static COMMAND_FUNC( do_usleep )
 #ifdef HAVE_USLEEP
 	int n;
 
-	n=(int)HOW_MANY("number of microseconds to sleep");
+	n=(int)how_many("number of microseconds to sleep");
 	usleep(n);
 #else // ! HAVE_USLEEP
-    HOW_MANY("number of microseconds to sleep");
+    how_many("number of microseconds to sleep");
 #ifdef BUILD_FOR_IOS
 	advise("Sorry, no usleep function in this build!?");
 #else	// ! BUILD_FOR_IOS
@@ -1401,7 +1401,7 @@ static COMMAND_FUNC( do_sleep )
 {
 	int n;
 
-	n=(int)HOW_MANY("number of seconds to sleep");
+	n=(int)how_many("number of seconds to sleep");
 #ifdef HAVE_SLEEP
 	sleep(n);
 #else // ! HAVE_SLEEP
@@ -1416,8 +1416,8 @@ static COMMAND_FUNC( do_alarm )
 
 	// Should we have named alarms???
 
-	f=(float)HOW_MUCH("number of seconds before alarm");
-	s=NAMEOF("script to execute on alarm");
+	f=(float)how_much("number of seconds before alarm");
+	s=nameof("script to execute on alarm");
 
 	set_alarm_script(QSP_ARG  s);
 	set_alarm_time(QSP_ARG  f);
@@ -1442,8 +1442,8 @@ static COMMAND_FUNC( do_alarm )
 	struct itimerval itv;
 	int status;
 
-	f=HOW_MUCH("number of seconds before alarm");
-	s=NAMEOF("script to execute on alarm");
+	f=how_much("number of seconds before alarm");
+	s=nameof("script to execute on alarm");
 
 	if( timer_script != NULL ){
 		rls_str(timer_script);
@@ -1479,7 +1479,7 @@ static COMMAND_FUNC( do_copy_cmd )
 {
 	FILE *fp;
 
-	fp=TRYNICE( nameof(QSP_ARG  "transcript file"), "w" );
+	fp=TRYNICE( nameof("transcript file"), "w" );
 	if( fp ) {
 		if(dupout(QSP_ARG fp)==(-1))
 			fclose(fp);
@@ -1544,7 +1544,7 @@ static COMMAND_FUNC( do_timezone )
 
 #ifdef QUIP_DEBUG
 
-static COMMAND_FUNC( do_dump_items ){ dump_items(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_dump_items ){ dump_items(); }
 
 static COMMAND_FUNC( do_qtell )
 {
@@ -1564,7 +1564,7 @@ static COMMAND_FUNC( do_seed )
 {
 	u_long n;
 
-	n=HOW_MANY("value for random number seed");
+	n=how_many("value for random number seed");
 
 	sprintf(msg_str,"Using user-supplied seed of %ld (0x%lx)",n,n);
 	advise(msg_str);
@@ -1580,14 +1580,14 @@ static COMMAND_FUNC( do_pmpttext )
 #endif // BUILD_FOR_OBJC
 	const char *s;
 
-	p=savestr( NAMEOF("prompt string") );
-	s=savestr( NAMEOF("variable name") );
+	p=savestr( nameof("prompt string") );
+	s=savestr( nameof("variable name") );
 #ifndef BUILD_FOR_OBJC
 	//push_input_file(QSP_ARG   "-" );
 	redir(QSP_ARG  tfile(SINGLE_QSP_ARG), "-" );
-	t=savestr( NAMEOF(p) );
+	t=savestr( nameof(p) );
 	pop_file(SINGLE_QSP_ARG);
-	ASSIGN_VAR(s,t);
+	assign_var(s,t);
 	rls_str(t);
 #else // BUILD_FOR_OBJC
 	WARN("Sorry, pmpttext (bi_menu.c) not yet implemented!?");

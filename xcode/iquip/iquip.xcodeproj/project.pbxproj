@@ -1454,6 +1454,8 @@
 		7CE5FDFD1A60750B0029C7AE /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CE5FDFC1A60750B0029C7AE /* avCap.m */; };
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
 		7CE5FE011A60754A0029C7AE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
+		7CEF2F6C1FA182F600ADC7A4 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
+		7CEF2F701FA183D800ADC7A4 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CF4CFAA1CA5F059004F07AE /* start_quip.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFA91CA5F059004F07AE /* start_quip.c */; };
 		7CF4CFAE1CA5F06E004F07AE /* pipe_support.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFAD1CA5F06E004F07AE /* pipe_support.c */; };
 		7CF4CFB01CA5F07F004F07AE /* callback.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CF4CFAF1CA5F07F004F07AE /* callback.c */; };
@@ -1822,6 +1824,8 @@
 		7CE5FDFC1A60750B0029C7AE /* avCap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = avCap.m; sourceTree = "<group>"; };
 		7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		7CE5FE001A60754A0029C7AE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		7CEF2F6B1FA182F600ADC7A4 /* fusion.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fusion.c; sourceTree = "<group>"; };
+		7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = platform_menu.m; sourceTree = "<group>"; };
 		7CF4CFA91CA5F059004F07AE /* start_quip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = start_quip.c; sourceTree = "<group>"; };
 		7CF4CFAD1CA5F06E004F07AE /* pipe_support.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pipe_support.c; sourceTree = "<group>"; };
 		7CF4CFAF1CA5F07F004F07AE /* callback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = callback.c; sourceTree = "<group>"; };
@@ -2133,6 +2137,7 @@
 		7115AE7E16076A720004645A /* veclib */ = {
 			isa = PBXGroup;
 			children = (
+				7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */,
 				7CF4CFB51CA5F186004F07AE /* platform.m */,
 				7C9C32171C0699CE00E2094F /* lin_util.c */,
 				7182907B172620B600F7CB35 /* dispatch.c */,
@@ -2223,6 +2228,7 @@
 		7115AE9616076BD40004645A /* vectree */ = {
 			isa = PBXGroup;
 			children = (
+				7CEF2F6B1FA182F600ADC7A4 /* fusion.c */,
 				7CF4CFBB1CA5F725004F07AE /* vectree.y */,
 				7CB8D5D81B6198B90080809C /* string_ref.c */,
 				71828FF81726196F00F7CB35 /* comptree.c */,
@@ -2772,6 +2778,7 @@
 				71828EBB1726155C00F7CB35 /* contig.c in Sources */,
 				71828EBC1726155C00F7CB35 /* data_fns.c in Sources */,
 				71828EBD1726155C00F7CB35 /* data_obj.c in Sources */,
+				7CEF2F6C1FA182F600ADC7A4 /* fusion.c in Sources */,
 				71828EBE1726155C00F7CB35 /* dfuncs.c in Sources */,
 				71828EBF1726155C00F7CB35 /* dobj_menu.c in Sources */,
 				71828EC01726155C00F7CB35 /* dobj_util.c in Sources */,
@@ -2890,6 +2897,7 @@
 				7C59401A1BB513BE00F655B1 /* vl2_utils.c in Sources */,
 				71828F8B1726182200F7CB35 /* vinterp.c in Sources */,
 				71828F8C1726182200F7CB35 /* wrap.c in Sources */,
+				7CEF2F701FA183D800ADC7A4 /* platform_menu.m in Sources */,
 				71828F8D1726182200F7CB35 /* yuv2rgb.c in Sources */,
 				71828F921726184F00F7CB35 /* vectbl.c in Sources */,
 				71828F941726184F00F7CB35 /* vl_menu.c in Sources */,
@@ -4452,6 +4460,7 @@
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;
@@ -4482,6 +4491,7 @@
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6NC2ML6K22;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "iQuIP/iQuIP-Prefix.pch";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;

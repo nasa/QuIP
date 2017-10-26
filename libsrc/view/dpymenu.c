@@ -49,7 +49,7 @@ static COMMAND_FUNC( set_do )
 {
 	Disp_Obj *dop;
 
-	dop = PICK_DISP_OBJ("");
+	dop = pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	set_display(dop);
@@ -69,14 +69,14 @@ static COMMAND_FUNC( do_tell_dpy )
 		return;
 	}
 
-	ASSIGN_VAR(s,DO_NAME(dop));
+	assign_var(s,DO_NAME(dop));
 }
 
 static COMMAND_FUNC( do_info_do )
 {
 	Disp_Obj *dop;
 
-	dop= PICK_DISP_OBJ("");
+	dop= pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	info_do(dop);
@@ -87,7 +87,7 @@ static COMMAND_FUNC( do_show_visuals )
 {
 	Disp_Obj *dop;
 
-	dop= PICK_DISP_OBJ("");
+	dop= pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
 	show_visuals(QSP_ARG  dop);
@@ -95,7 +95,7 @@ static COMMAND_FUNC( do_show_visuals )
 }
 
 static COMMAND_FUNC( do_list_dos )
-{ list_disp_objs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+{ list_disp_objs(tell_msgfile()); }
 
 
 

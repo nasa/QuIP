@@ -581,7 +581,7 @@ static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 			sprintf(ERROR_STRING,
 				"Couldn't create item context %s",
 				vcdp->vcd_set);
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 	}
 
@@ -591,7 +591,7 @@ static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 	if( vcmdp == NULL ){
 		sprintf(ERROR_STRING,"Couldn't create visca cmd %s",
 			vcdp->vcd_cmd);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	pop_visca_cmd_context(SINGLE_QSP_ARG);
@@ -876,7 +876,7 @@ static void process_inq_error(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vi
 static void inq_result(QSP_ARG_DECL  const char *parameter_name,
 				const char *result_string)
 {
-	ASSIGN_VAR(INQ_RESULT_NAME, result_string);
+	assign_var(INQ_RESULT_NAME, result_string);
 	if( verbose ){
 		if( parameter_name != NULL ){
 			sprintf(msg_str,"%s is %s",parameter_name,result_string);
@@ -1012,7 +1012,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 
 
 			sprintf(result_str,"%d",result);
-			ASSIGN_VAR(INQ_RESULT_NAME, result_str);
+			assign_var(INQ_RESULT_NAME, result_str);
 
 			break;
 
@@ -1036,11 +1036,11 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 			switch(reply_buf[0]){
 				case 2:
 					//prt_msg("ir mode is on");
-					ASSIGN_VAR(INQ_RESULT_NAME, "on");
+					assign_var(INQ_RESULT_NAME, "on");
 					break;
 				case 3:
 					//prt_msg("ir mode is off");
-					ASSIGN_VAR(INQ_RESULT_NAME, "off");
+					assign_var(INQ_RESULT_NAME, "off");
 					break;
 				default:  BAD_RESP(reply_buf[0]); break;
 			}
@@ -1051,12 +1051,12 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 				case 2:
 					// prt_msg("flip mode is on");
 					vcam_p->vcam_flipped = 1;
-					ASSIGN_VAR(INQ_RESULT_NAME,"on");
+					assign_var(INQ_RESULT_NAME,"on");
 					break;
 				case 3:
 					// prt_msg("flip mode is off");
 					vcam_p->vcam_flipped = 0;
-					ASSIGN_VAR(INQ_RESULT_NAME, "off");
+					assign_var(INQ_RESULT_NAME, "off");
 					break;
 				default:  BAD_RESP(reply_buf[0]); break;
 			}
@@ -1066,11 +1066,11 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 			switch( reply_buf[0] ){
 				case 2:
 					//prt_msg("autofocus");
-					ASSIGN_VAR(INQ_RESULT_NAME, "auto");
+					assign_var(INQ_RESULT_NAME, "auto");
 					break;
 				case 3:
 					//prt_msg("manual focus");
-					ASSIGN_VAR(INQ_RESULT_NAME, "manual");
+					assign_var(INQ_RESULT_NAME, "manual");
 					break;
 				default: BAD_RESP(reply_buf[0]); break;
 			}
@@ -1241,7 +1241,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 				prt_msg(msg_str);
 			}
 			sprintf(msg_str,"%d",result);
-			ASSIGN_VAR("pan_posn",msg_str);
+			assign_var("pan_posn",msg_str);
 
 			result = get_number_reply(reply_buf,4,4);
 			if( verbose ){
@@ -1249,7 +1249,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 				prt_msg(msg_str);
 			}
 			sprintf(msg_str,"%d",result);
-			ASSIGN_VAR("tilt_posn",msg_str);
+			assign_var("tilt_posn",msg_str);
 
 			break;
 
@@ -2395,7 +2395,7 @@ static COMMAND_FUNC( do_visca_cmd )
 	Visca_Command *vcmd_p;
 	u_char pkt[MAX_PACKET_LEN];
 
-	vcsp = PICK_CMD_SET("command group");
+	vcsp = pick_cmd_set("command group");
 	if( vcsp == NULL ){
 		/* We eat a dummy word here to avoid a second error if there
 		 * is a typo in the command group name.
@@ -2410,11 +2410,11 @@ static COMMAND_FUNC( do_visca_cmd )
 		return;
 	}
 
-	PUSH_VISCA_CMD_CONTEXT(vcsp->vcs_icp);
+	push_visca_cmd_context(vcsp->vcs_icp);
 
-	vcmd_p = PICK_VISCA_CMD("command");
+	vcmd_p = pick_visca_cmd("command");
 
-	POP_VISCA_CMD_CONTEXT;
+	pop_visca_cmd_context();
 
 	if( vcmd_p == NULL ) return;
 
@@ -2595,7 +2595,7 @@ static COMMAND_FUNC( do_visca_inq )
 	Visca_Inquiry *vip;
 	u_char pkt[MAX_PACKET_LEN];
 	
-	vip = PICK_VISCA_INQ("inquiry");
+	vip = pick_visca_inq("inquiry");
 	if( vip == NULL ){
 		return;
 	}
@@ -2603,7 +2603,7 @@ static COMMAND_FUNC( do_visca_inq )
 	vidp = vip->vi_vidp;
 	
 	if( the_vcam_p == NULL ) {
-		ASSIGN_VAR(INQ_RESULT_NAME,"no_camera");
+		assign_var(INQ_RESULT_NAME,"no_camera");
 		return;
 	}
 
@@ -2675,7 +2675,7 @@ static COMMAND_FUNC( select_cam )
 {
 	Visca_Cam *vcam_p;
 
-	vcam_p=PICK_VCAM("");
+	vcam_p=pick_vcam("");
 	if( vcam_p == NULL ) return;
 
 	if( vcam_p->vcam_param_p == NULL ){
@@ -2864,7 +2864,7 @@ static COMMAND_FUNC( network_status )
 		WARN("network_status:  null vport_itp!?");
 		return;
 	}
-	lp=item_list(QSP_ARG  vport_itp);
+	lp=item_list(vport_itp);
 	if( lp == NULL || eltcount(lp)==0 ){
 		WARN("No visca ports open");
 		return;
@@ -2881,7 +2881,7 @@ static COMMAND_FUNC( do_vport_info )
 {
 	Visca_Port *vport_p;
 
-	vport_p=PICK_VPORT("");
+	vport_p=pick_vport("");
 	if( vport_p == NULL ) return;
 
 	vport_info(QSP_ARG  vport_p);
@@ -2937,7 +2937,7 @@ static COMMAND_FUNC( do_vport_open )
 #endif // ! HAVE_VISCA
 }
 
-static COMMAND_FUNC(do_list_vports){list_vports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_vports){list_vports(tell_msgfile());}
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(visca_port_menu,s,f,h)
 
@@ -2956,7 +2956,7 @@ static COMMAND_FUNC( do_vcam_info )
 {
 	Visca_Cam *vcam_p;
 
-	vcam_p=PICK_VCAM("");
+	vcam_p=pick_vcam("");
 	if( vcam_p == NULL ) return;
 
 	vcam_info(QSP_ARG  vcam_p);
@@ -2967,11 +2967,11 @@ static COMMAND_FUNC( do_get_cam_type )
 	Visca_Cam *vcam_p;
 	const char *s,*s2;
 
-	vcam_p=PICK_VCAM("");
+	vcam_p=pick_vcam("");
 	s = NAMEOF("variable name");
 
 	if( vcam_p == NULL ){
-		ASSIGN_VAR(s,"no_camera");
+		assign_var(s,"no_camera");
 		return;
 	}
 
@@ -2981,10 +2981,10 @@ static COMMAND_FUNC( do_get_cam_type )
 		case EVI_D30: s2="EVI-D30"; break;
 		default: s2="unidentified_camera"; break;
 	}
-	ASSIGN_VAR(s,s2);
+	assign_var(s,s2);
 }
 
-static COMMAND_FUNC(do_list_vcams){list_vcams(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_vcams){list_vcams(tell_msgfile());}
 
 static COMMAND_FUNC(do_get_n_cam)
 {
@@ -3000,7 +3000,7 @@ static COMMAND_FUNC(do_get_n_cam)
 		WARN("do_get_n_cam:  null vport_itp!?");
 		return;
 	}
-	lp=item_list(QSP_ARG  vport_itp);
+	lp=item_list(vport_itp);
 	if( lp == NULL || (n=eltcount(lp))==0 ){
 		WARN("do_get_n_port:  No visca ports open");
 		n=0;
@@ -3020,7 +3020,7 @@ static COMMAND_FUNC(do_get_n_cam)
 	}
 
 	sprintf(msg_str,"%d",ntot);
-	ASSIGN_VAR(s,msg_str);
+	assign_var(s,msg_str);
 }
 
 #undef ADD_CMD

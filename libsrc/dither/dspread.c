@@ -130,28 +130,28 @@ sprintf(ERROR_STRING,"BEGIN act_init, matrix = %s",OBJ_NAME(dich2opp_mat));
 advise(ERROR_STRING);
 	if( ! IS_CONTIGUOUS(dich2opp_mat) ){
 		sprintf(ERROR_STRING,"Matrix %s must be contiguous",OBJ_NAME(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_PREC(dich2opp_mat) != PREC_SP ){
 		sprintf(ERROR_STRING,"Matrix %s (%s) must have %s precision",
 			OBJ_NAME(dich2opp_mat),PREC_NAME(OBJ_PREC_PTR(dich2opp_mat)),
 			PREC_NAME(PREC_FOR_CODE(PREC_SP)));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_COMPS(dich2opp_mat) != 1 ){
 		sprintf(ERROR_STRING,"Matrix %s (%d) must have component dimension = 1",
 			OBJ_NAME(dich2opp_mat),OBJ_COMPS(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_PXL_INC(dich2opp_mat) != 1 ){
 		sprintf(ERROR_STRING,"Matrix %s (%d) must have pixel increment = 1",
 			OBJ_NAME(dich2opp_mat),OBJ_PXL_INC(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	if( OBJ_COLS(dich2opp_mat) != 2 || OBJ_ROWS(dich2opp_mat) != 2 ){
 		sprintf(ERROR_STRING,"Matrix %s (%d x %d) must be 2x2",
 			OBJ_NAME(dich2opp_mat),OBJ_ROWS(dich2opp_mat),OBJ_COLS(dich2opp_mat));
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	fptr = (float *) OBJ_DATA_PTR(dich2opp_mat);
 	for(mask=0;mask<4;mask++){
@@ -279,10 +279,10 @@ static int setup_dich_requantize(SINGLE_QSP_ARG_DECL)
 	_npixels = OBJ_ROWS(halftone_dp) * OBJ_COLS(halftone_dp);
 
 	if( lum_err_dp != NULL ){
-		delvec(QSP_ARG  lum_err_dp);
-		delvec(QSP_ARG  rg_err_dp);
-		delvec(QSP_ARG  lum_ferr_dp);
-		delvec(QSP_ARG  rg_ferr_dp);
+		delvec(lum_err_dp);
+		delvec(rg_err_dp);
+		delvec(lum_ferr_dp);
+		delvec(rg_ferr_dp);
 	}
 	prec_p = PREC_FOR_CODE(PREC_SP);
 	lum_ferr_dp = mk_img(QSP_ARG  "lum_ferror",
@@ -854,9 +854,9 @@ COMMAND_FUNC( dich_tell_sos )
 	prt_msg(msg_str);
 
 	sprintf(str,"%f",lum_sos);
-	ASSIGN_VAR("lum_sos",str);
+	assign_var("lum_sos",str);
 	sprintf(str,"%f",rg_sos);
-	ASSIGN_VAR("rg_sos",str);
+	assign_var("rg_sos",str);
 
 	/* now recompute... */
 	the_sos = dich_sos();
@@ -883,7 +883,7 @@ if( debug & spread_debug ){
 sprintf(ERROR_STRING,"input images:  lum %s, rg %s",
 OBJ_NAME(deslum_dp),OBJ_NAME(desrg_dp));
 advise(ERROR_STRING);
-longlist(QSP_ARG  deslum_dp);
+longlist(deslum_dp);
 }
 #endif /* QUIP_DEBUG */
 
@@ -917,14 +917,14 @@ if( debug & spread_debug ){
 
 COMMAND_FUNC( dspread_tell )
 {
-	LONGLIST(deslum_dp);
-	LONGLIST(desrg_dp);
-	LONGLIST(halftone_dp);
-	LONGLIST(lum_filt_dp);
-	LONGLIST(rg_filt_dp);
-	LONGLIST(dich2opp_mat);
-	LONGLIST(lum_err_dp);
-	LONGLIST(rg_err_dp);
+	longlist(deslum_dp);
+	longlist(desrg_dp);
+	longlist(halftone_dp);
+	longlist(lum_filt_dp);
+	longlist(rg_filt_dp);
+	longlist(dich2opp_mat);
+	longlist(lum_err_dp);
+	longlist(rg_err_dp);
 }
 
 
