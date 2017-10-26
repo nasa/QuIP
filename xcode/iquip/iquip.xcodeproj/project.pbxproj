@@ -2610,6 +2610,9 @@
 					7C43318B1D4D43FC0033687C = {
 						DevelopmentTeam = 6NC2ML6K22;
 					};
+					7CB670971F9484C5001FFADF = {
+						DevelopmentTeam = 6NC2ML6K22;
+					};
 				};
 			};
 			buildConfigurationList = 7106ECF716004437006BF850 /* Build configuration list for PBXProject "iquip" */;
