@@ -11,10 +11,13 @@
 //using namespace dyn;
 //#else
 
+#ifdef HAVE_CUDA
+#define BUILD_FOR_CUDA
+#endif // HAVE_CUDA
+
 #include "platform.h"	// MAX_DEVICES_PER_PLATFORM
 
 #ifdef HAVE_CUDA
-#define BUILD_FOR_CUDA
 
 #include <cuda.h>
 

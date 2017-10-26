@@ -60,7 +60,7 @@ static const char * available_pfdev_name(QSP_ARG_DECL  const char *name,char *sc
 
 	s=name;
 	while(n<=max_devices){
-		pdp = pfdev_of(QSP_ARG  s);
+		pdp = pfdev_of(s);
 		if( pdp == NULL ) return(s);
 
 		// This name is in use
@@ -71,7 +71,7 @@ static const char * available_pfdev_name(QSP_ARG_DECL  const char *name,char *sc
 	sprintf(ERROR_STRING,"Number of %s %s devices exceed configured maximum %d!?",
 		name,PLATFORM_NAME(cpp),max_devices);
 	WARN(ERROR_STRING);
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 	return(NULL);	// NOTREACHED - quiet compiler
 }
 
@@ -91,7 +91,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	if( index >= MAX_CUDA_DEVICES ){
 		sprintf(ERROR_STRING,"Program is compiled for a maximum of %d CUDA devices, can't inititialize device %d.",
 			MAX_CUDA_DEVICES,index);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	if( verbose ){
@@ -125,7 +125,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	 * correctly for the current context!?
 	 */
 	sprintf(ERROR_STRING,"%d.%d",deviceProp.major,deviceProp.minor);
-	assign_var(QSP_ARG  "cuda_comp_cap",ERROR_STRING);
+	assign_var("cuda_comp_cap",ERROR_STRING);
 
 
 	/* What does this do??? */
@@ -151,7 +151,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	 * a number to the string...
 	 */
 	name_p = available_pfdev_name(QSP_ARG  name,dev_name,cpp,MAX_CUDA_DEVICES);	// reuse name as scratch string
-	pdp = new_pfdev(QSP_ARG  name_p);
+	pdp = new_pfdev(name_p);
 	assert( pdp != NULL );
 
 	/* Remember this name in case the default is not found */
@@ -224,7 +224,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating host data area %s",area_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	SET_AREA_CUDA_DEV(ap, pdp);
 	//cuda_data_area[index][CUDA_HOST_AREA_INDEX] = ap;
@@ -248,7 +248,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_cu2_device:  error creating host-mapped data area %s",area_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 	SET_AREA_CUDA_DEV(ap,pdp);
 	//cuda_data_area[index][CUDA_HOST_MAPPED_AREA_INDEX] = ap;
@@ -299,7 +299,7 @@ static void *cu2_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size,
 	e = cudaMalloc( &ptr, size);
 	if( e != cudaSuccess ){
 		if( e == cudaErrorDevicesUnavailable )
-			ERROR1("Cuda devices unavailable!?");
+			error1("Cuda devices unavailable!?");
 		describe_cuda_driver_error2("cu2_mem_alloc","cudaMalloc",e);
 		sprintf(ERROR_STRING,"Attempting to allocate %d bytes.",size);
 		advise(ERROR_STRING);
@@ -443,7 +443,7 @@ static int cu2_unmap_buf(QSP_ARG_DECL  Data_Obj *dp)
 	if( e != cudaSuccess ){
 		describe_cuda_driver_error2("cu2_unmap_buf",
 			"cudaGLUnmapBufferObject",e);
-		ERROR1("failed to unmap buffer object");
+		error1("failed to unmap buffer object");
 		return -1;
 	}
 	return 0;
@@ -485,11 +485,11 @@ static const char *cu2_kernel_string(QSP_ARG_DECL  Platform_Kernel_String_ID whi
 			s="";
 			break;
 		case N_PLATFORM_KERNEL_STRINGS:
-			ERROR1("unexpected platform kernel string ID");
+			error1("unexpected platform kernel string ID");
 			s=NULL;
 			break;
 		default:
-			ERROR1("invalid platform kernel string ID");
+			error1("invalid platform kernel string ID");
 			s=NULL;
 			break;
 	}
@@ -635,7 +635,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 	if( default_cuda_dev_name == NULL ){
 		/* Not specified in environment */
 		// reserved var if set in environment?
-		assign_var(QSP_ARG  DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
+		assign_var(DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
 		default_cuda_dev_found=1;	// not really necessary?
 	} else if( ! default_cuda_dev_found ){
 		/* specified incorrectly */
@@ -644,7 +644,7 @@ static int init_cu2_devices(QSP_ARG_DECL  Compute_Platform *cpp)
 			first_cuda_dev_name);
 		WARN(ERROR_STRING);
 
-		assign_var(QSP_ARG  DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
+		assign_var(DEFAULT_CUDA_DEV_VAR,first_cuda_dev_name);
 		default_cuda_dev_found=1;	// not really necessary?
 	}
 
@@ -681,7 +681,7 @@ void cu2_init_platform(SINGLE_QSP_ARG_DECL)
 		inited = -1;
 	}
 	if( pop_pfdev_context(SINGLE_QSP_ARG) == NULL )
-		ERROR1("cu2_init_platform:  Failed to pop platform device context!?");
+		error1("cu2_init_platform:  Failed to pop platform device context!?");
 
 	check_vfa_tbl(QSP_ARG  cu2_vfa_tbl, N_VEC_FUNCS);
 
@@ -786,7 +786,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 								\
 	if( e != CUDA_SUCCESS ){					\
 		describe_cuda_error2(calling_funcname,cuda_funcname,e); \
-		ERROR1("Fatal cuda error.");			\
+		error1("Fatal cuda error.");			\
 	}
 
 

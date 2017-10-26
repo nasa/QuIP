@@ -491,7 +491,7 @@ static Precision * validate_npp_prec( Precision * prec_p )
 "Sorry, no NPP allocator for %s precision with %d channels",	\
 		PREC_NAME(prec_p),ds.ds_dimension[0]);		\
 	NWARN(DEFAULT_ERROR_STRING);				\
-	delvec(QSP_ARG  dp);					\
+	delvec(dp);						\
 	return;
 
 COMMAND_FUNC( do_npp_malloc )

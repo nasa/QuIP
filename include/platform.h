@@ -134,18 +134,6 @@ typedef struct compute_platform {
 
 } Compute_Platform;
 
-/*
-extern int cpu_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_obj_args *oap);
-
-#ifdef HAVE_OPENCL
-extern int ocl_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_obj_args *oap);
-#endif // HAVE_OPENCL
-
-#ifdef HAVE_CUDA
-extern int cu2_dispatch(QSP_ARG_DECL  struct vector_function *vfp, struct vec_obj_args *oap);
-#endif // HAVE_CUDA
-*/
-
 ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 
 #define pick_platform(pmpt)		_pick_platform(QSP_ARG  pmpt)
@@ -169,8 +157,6 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define PF_OBJ_FREE_FN(cpp)		(cpp)->cp_obj_free_func
 #define PF_OFFSET_DATA_FN(cpp)		(cpp)->cp_offset_data_func
 #define PF_UPDATE_OFFSET_FN(cpp)	(cpp)->cp_update_offset_func
-//#define PF_DISPATCH_FN(cpp)		(cpp)->cp_dispatch_func
-//#define PF_DISPATCH_TBL(cpp)		(cpp)->cp_dispatch_tbl
 #define PF_MAPBUF_FN(cpp)		(cpp)->cp_mapbuf_func
 #define PF_UNMAPBUF_FN(cpp)		(cpp)->cp_unmapbuf_func
 #define PF_REGBUF_FN(cpp)		(cpp)->cp_regbuf_func
@@ -212,13 +198,6 @@ ITEM_INTERFACE_PROTOTYPES( Compute_Platform, platform )
 #define SET_PF_FETCH_KERNEL_FN(cpp,v)		(cpp)->cp_fetch_kernel_func = v
 #define SET_PF_RUN_KERNEL_FN(cpp,v)		(cpp)->cp_run_kernel_func = v
 #define SET_PF_SET_KERNEL_ARG_FN(cpp,v)	(cpp)->cp_set_kernel_arg_func = v
-
-#ifdef FOOBAR
-#define SET_PF_FFT2D_FN(cpp,v)		(cpp)->cp_fft2d_func = v
-#define SET_PF_IFT2D_FN(cpp,v)		(cpp)->cp_ift2d_func = v
-#define SET_PF_FFTROWS_FN(cpp,v)	(cpp)->cp_fftrows_func = v
-#define SET_PF_IFTROWS_FN(cpp,v)	(cpp)->cp_iftrows_func = v
-#endif // FOOBAR
 
 #define SET_PLATFORM_FUNCTIONS(cpp,stem)					\
 										\
