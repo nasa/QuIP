@@ -169,15 +169,12 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			char stat_str[32];
 			Variable *vp;
 
-<<<<<<< HEAD
-			s=EVAL_STRING(VN_CHILD(enp,0));
-#ifdef FOOBAR
-=======
 			s=eval_string(VN_CHILD(enp,0));
->>>>>>> fusion
+#ifndef BUILD_FOR_IOS
 			status = system(s);
-#endif // FOOBAR
-                WARN("Sorry, system() is temporarily unavailable!?");
+#else // ! BUILD_FOR_IOS
+                	WARN("Sorry, system() is temporarily unavailable for iOS!?");
+#endif // ! BUILD_FOR_IOS
                 
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
 			vp=_assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
