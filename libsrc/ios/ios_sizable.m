@@ -74,7 +74,7 @@ double get_object_size(QSP_ARG_DECL  void *ip,int d_index)
 		}
 	}
 #ifdef CAUTIOUS
-	ERROR1("CAUTIOUS:  get_object_size:  shouldn't happen");
+	error1("CAUTIOUS:  get_object_size:  shouldn't happen");
 	return -1.0;
 #endif /* CAUTIOUS */
 }
@@ -104,7 +104,7 @@ const char * get_object_prec_string(QSP_ARG_DECL  void *ip)
 		}
 	}
 #ifdef CAUTIOUS
-	ERROR1("CAUTIOUS:  get_object_prec_string:  shouldn't happen");
+	error1("CAUTIOUS:  get_object_prec_string:  shouldn't happen");
 	return NULL;
 #endif /* CAUTIOUS */
 }

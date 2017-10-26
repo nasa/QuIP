@@ -146,7 +146,7 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 	_npixels = (OBJ_ROWS(_hdp) * OBJ_COLS(_hdp));
 
 	if( _edp != NULL )
-		delvec(QSP_ARG  _edp);
+		delvec(_edp);
 	_edp = mk_img(QSP_ARG  "HT_error",
 		OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _edp == NULL ){
@@ -156,7 +156,7 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 	_eptr = (float *) OBJ_DATA_PTR(_edp);
 
 	if( _fedp != NULL )
-		delvec(QSP_ARG  _fedp);
+		delvec(_fedp);
 	_fedp = mk_img(QSP_ARG  "HT_ferror",
 		OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _fedp == NULL ){
@@ -200,7 +200,7 @@ void setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp)
 	incr_t offset, xos, yos;
 
 	if( _ffdp != NULL )
-		delvec(QSP_ARG  _ffdp);
+		delvec(_ffdp);
 
 	_ffdp = mk_img(QSP_ARG   "double_filter",
 		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));

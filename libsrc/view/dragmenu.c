@@ -17,8 +17,8 @@ COMMAND_FUNC( do_make_dragg )
 	char s[256];
 
 	strcpy(s,NAMEOF("name for draggable"));
-	bm=PICK_OBJ( "mask bitmap" );
-	dp=PICK_OBJ( "image" );
+	bm=pick_obj( "mask bitmap" );
+	dp=pick_obj( "image" );
 
 	if( bm == NULL || dp == NULL ) return;
 
@@ -34,8 +34,8 @@ COMMAND_FUNC( do_embed_draggable )
 	Draggable *dgp;
 	int x,y;
 
-	dgp = PICK_DRAGG("");
-	vp = PICK_VWR("");
+	dgp = pick_dragg("");
+	vp = pick_vwr("");
 
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
@@ -52,7 +52,7 @@ COMMAND_FUNC( do_embed_draggable )
 	addTail(VW_DRAG_LIST(vp),dgp->dg_np);
 }
 
-static COMMAND_FUNC( do_list_draggs ){ list_draggs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_draggs ){ list_draggs(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(dragg_menu,s,f,h)
 

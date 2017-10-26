@@ -308,7 +308,7 @@ COMMAND_FUNC( do_render_to )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 	if( vp == NULL ) return;
 
 	select_gl_viewer(QSP_ARG  vp);
@@ -383,7 +383,7 @@ void select_gl_viewer(QSP_ARG_DECL  Viewer *vp)
 	if( VW_OGL_CTX(vp) == NULL ){
 		sprintf(ERROR_STRING,
 	"CAUTIOUS:  select_gl_viewer %s:  no GL context!?",vp->vw_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -415,14 +415,14 @@ advise(ERROR_STRING);
 	if( VW_OGLV(vp) == NULL ){
 		SET_VW_OGLV(vp,[NSOpenGLView alloc]);
 		NSOpenGLPixelFormat* pixFmt = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
-		if( pixFmt == NULL ) ERROR1("Error creating OpenGL pixel format!?");
+		if( pixFmt == NULL ) error1("Error creating OpenGL pixel format!?");
 		 
 
 		if( [VW_OGLV(vp)
 	initWithFrame : NSMakeRect(0,0,VW_WIDTH(vp),VW_HEIGHT(vp))
 			pixelFormat : pixFmt
 			] == NULL )
-			ERROR1("Error initializing OpenGLView!?");
+			error1("Error initializing OpenGLView!?");
 	}
 
 //fprintf(stderr,"Calling makeCurrentContext for context 0x%lx\n",

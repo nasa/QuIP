@@ -41,7 +41,7 @@ void set_display( Disp_Obj *dop )
 List *displays_list(SINGLE_QSP_ARG_DECL)
 {
 	if( disp_obj_itp == NULL ) return(NULL);
-	return( item_list(QSP_ARG  disp_obj_itp) );
+	return( item_list(disp_obj_itp) );
 }
 
 void info_do( Disp_Obj *dop )
@@ -73,7 +73,7 @@ static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 			"dop_open:  Can't open display \"%s\"\n",DO_NAME(dop));
 		NWARN(ERROR_STRING);
 		/* remove the object */
-		del_disp_obj(QSP_ARG  dop);
+		del_disp_obj(dop);
 		return(-1);
 	}
 	return(0);
@@ -418,7 +418,7 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 	Disp_Obj *dop;
 	static int siz_done=0;
 
-	dop = new_disp_obj(QSP_ARG  name);
+	dop = new_disp_obj(name);
 	if( dop == NULL ){
 		sprintf(ERROR_STRING, "Couldn't create object for display %s",
 					name);
@@ -433,7 +433,7 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 	if( dop_setup(QSP_ARG  dop,desired_depth) < 0 ){
 		/* Bug - XCloseDisplay?? */
 		/* need to destroy object here */
-		del_disp_obj(QSP_ARG  dop);
+		del_disp_obj(dop);
 		return(NULL);
 	}
 	set_display(dop);
@@ -511,7 +511,7 @@ static Disp_Obj * default_x_display(SINGLE_QSP_ARG_DECL)
 	dname = check_display(SINGLE_QSP_ARG);
 
 	/* these two lines added so this can be called more than once */
-	dop = disp_obj_of(QSP_ARG  dname);
+	dop = disp_obj_of(dname);
 	if( dop != NULL ) return(dop);
 
 	dop = check_for_desired_depth(SINGLE_QSP_ARG);
@@ -749,15 +749,15 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	}
 	// Make sure DISPLAY_WIDTH and DISPLAY_HEIGHT are set...
 	// If these have been set in the environment, leave be.
-	vp = var_of(QSP_ARG  "DISPLAY_WIDTH");
+	vp = var_of("DISPLAY_WIDTH");
 	if( vp == NULL ){
 		sprintf(s,"%d",DO_WIDTH(current_dop));
-		ASSIGN_RESERVED_VAR("DISPLAY_WIDTH",s);
+		assign_reserved_var("DISPLAY_WIDTH",s);
 	}
-	vp = var_of(QSP_ARG  "DISPLAY_HEIGHT");
+	vp = var_of("DISPLAY_HEIGHT");
 	if( vp == NULL ){
 		sprintf(s,"%d",DO_HEIGHT(current_dop));
-		ASSIGN_RESERVED_VAR("DISPLAY_HEIGHT",s);
+		assign_reserved_var("DISPLAY_HEIGHT",s);
 	}
 
 	//window_sys_inited=1;
@@ -785,7 +785,7 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 	vlp=get_vis_list(dop,&nvis);
 
 	sprintf(ERROR_STRING,"%d visuals found:",nvis);
-	ADVISE(ERROR_STRING);
+	advise(ERROR_STRING);
 
 	for(i=0;i<nvis;i++){
 		sprintf(ERROR_STRING,"id %p    screen %d   class %d   depth %d    masks %ld %ld %ld   cmap siz %d   bits_per_rgb %d",
@@ -799,7 +799,7 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 			vlp[i].colormap_size,
 			vlp[i].bits_per_rgb
 			);
-		ADVISE(DEFAULT_ERROR_STRING);
+		advise(DEFAULT_ERROR_STRING);
 	}
 }
 

@@ -104,7 +104,7 @@ int setup_requantize3d(SINGLE_QSP_ARG_DECL)
 	_npixels = (dimension_t)(OBJ_FRAMES(_hdp) * OBJ_ROWS(_hdp) * OBJ_COLS(_hdp));
 
 	if( _edp != NULL )
-		delvec(QSP_ARG  _edp);
+		delvec(_edp);
 	_edp = make_obj(QSP_ARG  "HT_error",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _edp == NULL ){
@@ -114,7 +114,7 @@ int setup_requantize3d(SINGLE_QSP_ARG_DECL)
 	_eptr = (float *) OBJ_DATA_PTR(_edp);
 
 	if( _fedp != NULL )
-		delvec(QSP_ARG  _fedp);
+		delvec(_fedp);
 	_fedp = make_obj(QSP_ARG  "HT_ferror",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _fedp == NULL ){
@@ -168,7 +168,7 @@ void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp)
 	float *fptr,val;
 
 	if( _ffdp != NULL )
-		delvec(QSP_ARG  _ffdp);
+		delvec(_ffdp);
 
 	_ffdp = make_obj(QSP_ARG   "double_filter",OBJ_FRAMES(fdp)*2-1,
 		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));

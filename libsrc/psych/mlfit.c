@@ -233,11 +233,11 @@ void ml_fit(QSP_ARG_DECL  Data_Tbl *dtp,int ntrac)		/** maximum liklihood fit */
 	optimize(QSP_ARG  likelihood);
 
 	slope = get_opt_param_value(QSP_ARG  SLOPE_NAME);
-	del_opt_param(QSP_ARG  slope_opp);
+	del_opt_param(slope_opp);
 
 	if( !fc_flag ){
 		y_int = get_opt_param_value(QSP_ARG  INTERCEPT_NAME);
-		del_opt_param(QSP_ARG  int_opp);
+		del_opt_param(int_opp);
 	} else
 		y_int = 0.0;
 }

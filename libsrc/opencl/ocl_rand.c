@@ -25,14 +25,17 @@ static cl_kernel ocl_sp_vuni_kernel = NULL;
 static int ocl_sp_vuni_init(Platform_Device *pdp)
 {
 	struct timeval tv;
+	cl_kernel kernel;
 
 	ocl_sp_vuni_inited=1;
 	// BUG need to be able to name the source string!?
-	if( (ocl_sp_vuni_kernel=ocl_make_kernel(opencl_src,"g_ocl_fast_sp_vuni",pdp))
+	if( (kernel=ocl_make_kernel(DEFAULT_QSP_ARG  opencl_src,"g_ocl_fast_sp_vuni",pdp))
 			== NULL ){
 		NWARN("Error creating kernel for g_ocl_fast_sp_vuni!?");
 		return -1;
 	}
+	ocl_sp_vuni_kernel = kernel;
+
 	if( !ocl_sp_vuni_seeded ){
 		// "randomize" the seed so that we don't get the same numbers every time
 		if( gettimeofday(&tv,NULL) < 0 ){

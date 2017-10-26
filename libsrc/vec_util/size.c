@@ -126,8 +126,8 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 			}
 		}
 	}
-	delvec(QSP_ARG  dst_ss_dp);
-	delvec(QSP_ARG  src_ss_dp);
+	delvec(dst_ss_dp);
+	delvec(src_ss_dp);
 
 	SET_OBJ_FLAG_BITS(dst_dp, DT_ASSIGNED);
 

@@ -258,7 +258,7 @@ void cu2_set_device( QSP_ARG_DECL  Platform_Device *pdp )
 
 COMMAND_FUNC( do_cu2_list_devs  )
 {
-	list_pfdevs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_pfdevs(tell_msgfile());
 }
 
 void insure_cu2_device( QSP_ARG_DECL  Data_Obj *dp )

@@ -26,7 +26,7 @@ struct container_type {
 	// should these be frag match methods?
 	void (* substring_find)(Frag_Match_Info *, const char *);
 	Item *(* frag_item)(Frag_Match_Info *);
-	Item *(* current_frag_match_item)(Frag_Match_Info *);
+	const Item *(* current_frag_match_item)(Frag_Match_Info *);
 	const char *(* advance_frag_match)(Frag_Match_Info *,int direction);
 	void (* reset_frag_match)(Frag_Match_Info *, int direction);
 };

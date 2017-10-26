@@ -56,7 +56,7 @@ static int expect_exact_count=1;
 void release_ram_obj_for_reading(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *dp)
 {
 	if( ram_dp == dp ) return;
-	delvec(QSP_ARG  ram_dp);
+	delvec(ram_dp);
 }
 
 static Data_Obj *create_ram_copy(QSP_ARG_DECL  Data_Obj *dp)
@@ -140,7 +140,7 @@ static Data_Obj *contig_obj(QSP_ARG_DECL  Data_Obj *dp)
 	if( HAS_CONTIGUOUS_DATA(dp) ) return dp;
 
 advise("object is not contiguous, and does not have contiguous data, creating temp object for copy...");
-longlist(QSP_ARG  dp);
+longlist(dp);
 
 	return create_platform_copy(QSP_ARG   dp);
 }
@@ -167,7 +167,7 @@ static void download_platform_data(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj *pf_
 	gen_obj_dnload(QSP_ARG  ram_dp, contig_dp);
 
 	if( contig_dp != pf_dp )
-		delvec(QSP_ARG  contig_dp);
+		delvec(contig_dp);
 }
 
 static void upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp)
@@ -183,7 +183,7 @@ static void upload_platform_data(QSP_ARG_DECL  Data_Obj *pf_dp, Data_Obj *ram_dp
 
 	if( contig_dp != pf_dp ){
 		copy_platform_data(QSP_ARG  pf_dp,contig_dp);
-		delvec(QSP_ARG  contig_dp);
+		delvec(contig_dp);
 	}
 }
 
@@ -228,7 +228,7 @@ static void release_ram_obj_for_writing(QSP_ARG_DECL  Data_Obj *ram_dp, Data_Obj
 	if( ram_dp == dp ) return;	// nothing to do
 
 	upload_platform_data(QSP_ARG  dp,ram_dp);
-	delvec(QSP_ARG  ram_dp);
+	delvec(ram_dp);
 }
 #endif /* ! HAVE_ANY_GPU */
 
@@ -244,7 +244,7 @@ static COMMAND_FUNC( do_read_obj )
 	FILE *fp;
 	const char *s;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	s=NAMEOF("input file");
 
 	if( dp == NULL ) return;
@@ -280,8 +280,8 @@ static COMMAND_FUNC( do_pipe_obj )
 	Pipe *pp;
 	char cmdbuf[LLEN];
 
-	dp=PICK_OBJ("");
-	pp=PICK_PIPE("readable pipe");
+	dp=pick_obj("");
+	pp=pick_pipe("readable pipe");
 
 	if( dp == NULL ) return;
 	if( pp == NULL ) return;
@@ -310,7 +310,7 @@ static COMMAND_FUNC( do_set_var_from_obj )
 	const char *s;
 
 	s=NAMEOF("variable");
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 
 	if( dp == NULL ) return;
 
@@ -323,7 +323,7 @@ static COMMAND_FUNC( do_set_var_from_obj )
 
 	INSURE_OK_FOR_READING(dp)
 
-	ASSIGN_VAR(s,(char *)OBJ_DATA_PTR(ram_dp));
+	assign_var(s,(char *)OBJ_DATA_PTR(ram_dp));
 
 	RELEASE_RAM_OBJ_FOR_READING_IF(dp)
 }
@@ -336,7 +336,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	char *dst_str;
 	dimension_t dst_size;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	src_str=NAMEOF("string");
 
 	if( dp == NULL ) return;
@@ -384,7 +384,7 @@ static COMMAND_FUNC( do_disp_obj )
 	DECL_RAM_DATA_OBJ
 	FILE *fp;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	if( dp==NULL ) return;
 
 	// We used to insist that the object be in RAM,
@@ -393,13 +393,13 @@ static COMMAND_FUNC( do_disp_obj )
 
 	INSURE_OK_FOR_READING(dp)
 
-	fp = tell_msgfile(SINGLE_QSP_ARG);
+	fp = tell_msgfile();
 	if( fp == stdout ){
 		if( IS_IMAGE(ram_dp) || IS_SEQUENCE(ram_dp) )
 			if( !CONFIRM(
 		"are you sure you want to display an image/sequence in ascii") )
 				return;
-		list_dobj(QSP_ARG  ram_dp);
+		list_dobj(ram_dp);
 	}
 	pntvec(QSP_ARG  ram_dp,fp);
 	fflush(fp);
@@ -421,7 +421,7 @@ static COMMAND_FUNC( do_wrt_obj )
 	/* BUG what if pathname is longer than 256??? */
 	const char *filename;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	filename = NAMEOF("output file");
 
 	if( dp==NULL ) return;
@@ -468,7 +468,7 @@ static COMMAND_FUNC( do_append )
 	DECL_RAM_DATA_OBJ
 	FILE *fp;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	if( dp==NULL ) return;
 
 	if( IS_IMAGE(dp) || IS_SEQUENCE(dp) )

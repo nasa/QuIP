@@ -7,8 +7,6 @@ void h_ocl_sp_vuni(HOST_CALL_ARG_DECLS)
 	size_t global_work_size[3] = {1, 1, 1};
 	int ki_idx=0;
 
-	//NWARN("Sorry, sp_vuni not implemented for OpenCL");
-
 	// BUG should make sure destination is contiguous!
 
 	cl_int status;

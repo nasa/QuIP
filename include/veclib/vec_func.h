@@ -234,7 +234,8 @@ extern Vector_Function vec_func_tbl[];
 extern ITEM_PICK_PROT(Vector_Function, vec_func)
 extern ITEM_LIST_PROT(Vector_Function, vec_func)
 
-#define PICK_VEC_FUNC(pmpt)	pick_vec_func(QSP_ARG  pmpt)
+#define pick_vec_func(p)	_pick_vec_func(QSP_ARG p)
+#define list_vec_funcs(fp)	_list_vec_funcs(QSP_ARG fp)
 
 #define BEGIN_VFUNC_DECLS	Vector_Function vec_func_tbl[]={
 

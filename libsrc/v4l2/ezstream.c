@@ -357,7 +357,7 @@ static struct v4l2_buffer *next_frame(QSP_ARG_DECL  int n_devices, Video_Device 
 #ifdef CAUTIOUS
 	if( n_stored_times >= ts_array_size ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  n_stored_times (%d) should be less than ts_array_size (%d) when storing a new timestamp",n_stored_times,ts_array_size);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 	ts_array[n_stored_times].grab_time = nf_buf.timestamp;
@@ -384,7 +384,7 @@ static void v4l2_finish_recording(QSP_ARG_DECL  Image_File *ifp)
 #ifdef CAUTIOUS
 	if( inp == NULL ){
 		sprintf(ERROR_STRING,"CAUTIOUS: v4l2_finish_recording:  missing rv inode %s",ifp->if_name);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif
 
@@ -689,7 +689,7 @@ COMMAND_FUNC( do_stream_record )
 
 COMMAND_FUNC( do_stream_record )
 {
-	ERROR1("do_stream_record:  Program not configured with V4L2 support.");
+	error1("do_stream_record:  Program not configured with V4L2 support.");
 }
 
 #endif /* ! HAVE_V4L2 */

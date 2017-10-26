@@ -18,8 +18,10 @@ Item_Type *prec_itp=NULL;
 	INIT_GENERIC_PREC(name,type,code)		\
 	SET_PREC_SIZE(prec_p, sizeof(type));
 
+#define new_prec(name)	_new_prec(QSP_ARG  name)
+
 #define INIT_GENERIC_PREC(name,type,code)		\
-	prec_p = new_prec(QSP_ARG  #name);		\
+	prec_p = new_prec(#name);		\
 	SET_PREC_CODE(prec_p, code);			\
 	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,name##_set_value_from_input);	\
 	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
@@ -36,19 +38,19 @@ Item_Type *prec_itp=NULL;
 		prec_for_code( code & MACH_PREC_MASK ) ); \
 	}
 
-static Precision *new_prec(QSP_ARG_DECL  const char *name)
+static Precision *_new_prec(QSP_ARG_DECL  const char *name)
 {
 	Precision *prec_p;
 
-	prec_p = (Precision *) new_item(QSP_ARG  prec_itp, name, sizeof(Precision) );
+	prec_p = (Precision *) new_item(prec_itp, name, sizeof(Precision) );
 	assert( prec_p != NULL );
 
 	return(prec_p);
 }
 
-Precision *get_prec(QSP_ARG_DECL  const char *name)
+Precision *_get_prec(QSP_ARG_DECL  const char *name)
 {
-	return (Precision *)get_item(QSP_ARG  prec_itp, name);
+	return (Precision *)get_item(prec_itp, name);
 }
 
 /////////////////////////////////
@@ -70,7 +72,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 	read_type val;										\
 												\
 	if( ! HAS_FORMAT_LIST )									\
-		val = query_func(QSP_ARG  prompt );						\
+		val = query_func(prompt );							\
 	else											\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
@@ -95,7 +97,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 	read_type val;										\
 												\
 	if( ! HAS_FORMAT_LIST )									\
-		val = query_func(QSP_ARG  prompt );						\
+		val = query_func(prompt );							\
 	else											\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
@@ -482,11 +484,11 @@ DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(void)
 
 ////////////////////////////////
 
-void init_precisions(SINGLE_QSP_ARG_DECL)
+void _init_precisions(SINGLE_QSP_ARG_DECL)
 {
 	Precision *prec_p;
 
-	prec_itp = new_item_type(QSP_ARG  "Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
+	prec_itp = new_item_type("Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
 									// should sort based on access?
 
 	INIT_PREC(byte,char,PREC_BY)
@@ -521,10 +523,10 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 List *prec_list(SINGLE_QSP_ARG_DECL)
 {
 	if( prec_itp == NULL ){
-		init_precisions(SINGLE_QSP_ARG);
+		init_precisions();
 	}
 
-	return item_list(QSP_ARG  prec_itp);
+	return item_list(prec_itp);
 }
 
 Precision *const_precision(Precision *prec_p)

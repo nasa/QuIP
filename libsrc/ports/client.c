@@ -90,7 +90,7 @@ int open_client_port(QSP_ARG_DECL  const char *name,const char *hostname,int por
 
 fresh_start:
 
-	mpp=new_port(QSP_ARG  name);
+	mpp=new_port(name);
 	if( mpp==NULL ){
 		if( verbose ){
 			sprintf(ERROR_STRING,"open_client_port %s %s %d failed to create port struct",

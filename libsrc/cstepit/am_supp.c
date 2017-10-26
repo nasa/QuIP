@@ -37,7 +37,7 @@ static void show_simplex_verts()
 {
 	int i,j,n;
 
-	n= eltcount( opt_param_list(SGL_DEFAULT_QSP_ARG) );
+	n= eltcount( _opt_param_list(SGL_DEFAULT_QSP_ARG) );
 
 	for(i=0;i<=n;i++){
 		printf("simplex vertex %d:\n",i);
@@ -54,7 +54,7 @@ static void init_simplex()
 	int n;
 	int i,j;
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp == NULL ){
 		NWARN("init_simplex:  no params!?");
 		return;
@@ -95,7 +95,7 @@ static float amoeba_scr_funk(float *p)
 	qsp = am_qsp;
 #endif // THREAD_SAFE_QUERY
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp==NULL ) {
 		NWARN("no parameters!?");
 		return(0.0);
@@ -109,16 +109,16 @@ static float amoeba_scr_funk(float *p)
 
 		opp=(Opt_Param *)np->n_data;
 		sprintf(str,"%g",p[i+1]);
-		ASSIGN_VAR(opp->op_name,str);
+		assign_var(opp->op_name,str);
 		i++;
 		np=np->n_next;
 	}
 
 	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
-	vp=var__of(QSP_ARG  "error");
+	vp=var__of("error");
 	if( vp == NULL ) {
-		NWARN("variable \"error\" not set!!!");
+		WARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);
 
@@ -133,7 +133,7 @@ static float amoeba_c_funk(float *p)
 	Opt_Param *opp;
 	Node *np;
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	np=QLIST_HEAD(lp);
 
 	i=0;
@@ -177,7 +177,7 @@ static void run_amoeba( float (*func)(float *) )
 
 	/* initialize row list */
 
-	n = eltcount( opt_param_list(SGL_DEFAULT_QSP_ARG) );
+	n = eltcount( _opt_param_list(SGL_DEFAULT_QSP_ARG) );
 
 	for(i=0;i<n+1;i++)
 		p_rowlist[i] = (&simplex_vertices[i][0])  - 1;

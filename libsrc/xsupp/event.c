@@ -110,7 +110,7 @@ static void put_down( QSP_ARG_DECL  int x, int y, Viewer *vp )
 	addTail(vp->vw_draglist,carried->dg_np);
 	carried=NULL;
 
-	delvec(QSP_ARG  drag_image);
+	delvec(drag_image);
 	drag_image = NULL;
 
 	drag_xim->data = (char *)NULL;	/* to avoid freeing the data */
@@ -268,18 +268,18 @@ advise(ERROR_STRING);
 						// BUG give a value to ce_code
 						break;
 					case 1:
-						ASSIGN_VAR("left_button_down","1");
-						ASSIGN_VAR("left_button_up","0");
+						assign_reserved_var("left_button_down","1");
+						assign_reserved_var("left_button_up","0");
 						ce_code = CE_LEFT_BUTTON_DOWN;
 						break;
 					case 2:
-						ASSIGN_VAR("middle_button_down","2");
-						ASSIGN_VAR("middle_button_up","0");
+						assign_reserved_var("middle_button_down","2");
+						assign_reserved_var("middle_button_up","0");
 						ce_code = CE_MIDDLE_BUTTON_DOWN;
 						break;
 					case 3:
-						ASSIGN_VAR("right_button_down","4");
-						ASSIGN_VAR("right_button_up","0");
+						assign_reserved_var("right_button_down","4");
+						assign_reserved_var("right_button_up","0");
 						ce_code = CE_RIGHT_BUTTON_DOWN;
 						break;
 					default:
@@ -297,18 +297,18 @@ advise(ERROR_STRING);
 						// BUG give a value to ce_code
 						break;
 					case 1:
-						ASSIGN_VAR("left_button_down","0");
-						ASSIGN_VAR("left_button_up","1");
+						assign_reserved_var("left_button_down","0");
+						assign_reserved_var("left_button_up","1");
 						ce_code = CE_LEFT_BUTTON_UP;
 						break;
 					case 2:
-						ASSIGN_VAR("middle_button_down","0");
-						ASSIGN_VAR("middle_button_up","2");
+						assign_reserved_var("middle_button_down","0");
+						assign_reserved_var("middle_button_up","2");
 						ce_code = CE_MIDDLE_BUTTON_UP;
 						break;
 					case 3:
-						ASSIGN_VAR("right_button_down","0");
-						ASSIGN_VAR("right_button_up","4");
+						assign_reserved_var("right_button_down","0");
+						assign_reserved_var("right_button_up","4");
 						ce_code = CE_RIGHT_BUTTON_UP;
 						break;
 					default:
@@ -337,9 +337,9 @@ advise(ERROR_STRING);
 				y=vp->vw_height-1;
 			}
 			sprintf(string,"%d",x);
-			ASSIGN_VAR("view_xpos",string);
+			assign_reserved_var("view_xpos",string);
 			sprintf(string,"%d",y);
-			ASSIGN_VAR("view_ypos",string);
+			assign_reserved_var("view_ypos",string);
 
 			win = event->xbutton.window;
 			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
@@ -347,7 +347,7 @@ advise(ERROR_STRING);
 				return 0;
 			}
 
-			ASSIGN_VAR("event_window",vp->vw_name);
+			assign_reserved_var("event_window",vp->vw_name);
 
 			// This is where we would like to use the new canvas_event
 			// scheme instead of the old button scheme...
@@ -481,14 +481,14 @@ advise(ERROR_STRING);
 			}
 
 			sprintf(string,"%d",x);
-			ASSIGN_VAR("view_xpos",string);
+			assign_reserved_var("view_xpos",string);
 			sprintf(string,"%d",y);
-			ASSIGN_VAR("view_ypos",string);
+			assign_reserved_var("view_ypos",string);
 
 			sprintf(string,"%d",button_number);
-			ASSIGN_VAR("button",string);
+			assign_reserved_var("button",string);
 			sprintf(string,"%d", event->type);
-			ASSIGN_VAR("event_type",string);
+			assign_reserved_var("event_type",string);
 
 			CHEW_TEXT(vp->vw_text,"(button motion event)");
 

@@ -114,7 +114,7 @@ List *image_file_list(SINGLE_QSP_ARG_DECL)
 {
 	if( img_file_itp==NULL ) return(NULL);
 
-	return( item_list(QSP_ARG  img_file_itp) );
+	return( item_list(img_file_itp) );
 }
 
 static void update_pathname(Image_File *ifp)
@@ -136,7 +136,7 @@ static void update_pathname(Image_File *ifp)
 
 void set_iofile_directory(QSP_ARG_DECL  const char *dirname)
 {
-	if( !directory_exists(QSP_ARG  dirname) ){
+	if( !directory_exists(dirname) ){
 		sprintf(ERROR_STRING,
 	"Directory %s does not exist or is not a directory", dirname);
 		WARN(ERROR_STRING);
@@ -177,7 +177,7 @@ static FIO_SEEK_FUNC(null)
 
 #define DECLARE_FILETYPE(stem,code,flags)			\
 								\
-	ftp = new_file_type(QSP_ARG  #stem);			\
+	ftp = new_file_type(#stem);				\
 	SET_FT_CODE(ftp,code);					\
 	SET_FT_FLAGS(ftp,flags);				\
 	SET_FT_OPEN_FUNC(ftp,FIO_OPEN_FUNC_NAME(stem));		\
@@ -317,7 +317,7 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	/* This may have already been called - e.g. mmvi */
 	if( img_file_itp == NULL )
 		//img_file_init(SINGLE_QSP_ARG);
-		init_img_files(SINGLE_QSP_ARG);
+		init_img_files();
 
 	create_filetypes(SINGLE_QSP_ARG);	// used to be a static table
 
@@ -325,7 +325,7 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	curr_ftp = FILETYPE_FOR_CODE(IFT_HIPS2);
 
 #ifdef HAVE_GETTIMEOFDAY
-	add_tsable( QSP_ARG   img_file_itp, &if_tsf, (Item * (*)(QSP_ARG_DECL  const char *))img_file_of);
+	add_tsable( QSP_ARG   img_file_itp, &if_tsf, (Item * (*)(QSP_ARG_DECL  const char *))_img_file_of);
 #endif
 
 	add_sizable(QSP_ARG  img_file_itp,&imgfile_sf,NULL);
@@ -337,7 +337,7 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	define_port_data_type(QSP_ARG  P_IMG_FILE,"image_file","name of image file",
 		recv_img_file,
 		/* null_proc, */
-		(const char *(*)(QSP_ARG_DECL  const char *))pick_img_file,
+		(const char *(*)(QSP_ARG_DECL  const char *))_pick_img_file,
 		(void (*)(QSP_ARG_DECL  Port *,const void *,int)) xmit_img_file);
 
 	inited=1;
@@ -365,7 +365,7 @@ void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 	if( ifp->if_pathname != ifp->if_name ){
 		rls_str((char *)ifp->if_pathname);
 	}
-	DEL_IMG_FILE(ifp);	// frees the name
+	del_img_file(ifp);	// frees the name
 
 	/* don't free the struct pointer, it's marked available
 	 * for reuse by del_item (called from del_img_file)...
@@ -606,17 +606,17 @@ static int check_clobber(QSP_ARG_DECL  Image_File *ifp)
 	 * check the file system permissions
 	 */
 
-	if( file_exists(QSP_ARG  ifp->if_pathname) ){
+	if( file_exists(ifp->if_pathname) ){
 		if( no_clobber ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"Not clobbering existing file \"%s\"",
 				ifp->if_pathname);
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
-		} else if( !can_write_to(QSP_ARG  ifp->if_pathname) )
+		} else if( !can_write_to(ifp->if_pathname) )
 			return(-1);
 	} else {
-		if( !file_exists(QSP_ARG  dir) ){
+		if( !file_exists(dir) ){
 			sprintf(DEFAULT_ERROR_STRING, "No directory \"%s\"!?", dir);
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
@@ -624,7 +624,7 @@ static int check_clobber(QSP_ARG_DECL  Image_File *ifp)
 		/* We may have write permissions to the file even if we don't have
 		 * write permissions on the directory, e.g. /dev/null
 		 */
-		if( !can_write_to(QSP_ARG  dir) ){
+		if( !can_write_to(dir) ){
 			sprintf(DEFAULT_ERROR_STRING, "Can't write to directory \"%s\"!?", dir);
 			NWARN(DEFAULT_ERROR_STRING);
 			return(-1);
@@ -667,7 +667,7 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 		return(NULL);
 	}
 
-	ifp = new_img_file(QSP_ARG  name);
+	ifp = new_img_file(name);
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_flags = (short) rw;
@@ -706,7 +706,7 @@ dun:
 			//givbuf(ifp->if_dp);
 			rls_temp_dobj(ifp->if_dp);
 		}
-		DEL_IMG_FILE(ifp);
+		del_img_file(ifp);
 		/* BUG? should also rls_str(name) here???
 		 * Or does del_item release the naem???
 		 */
@@ -948,13 +948,17 @@ static ITEM_INIT_FUNC(Known_Suffix,suffix,0)
 static ITEM_NEW_FUNC(Known_Suffix,suffix)
 static ITEM_CHECK_FUNC(Known_Suffix,suffix)
 
+#define init_suffixs()	_init_suffixs(SINGLE_QSP_ARG)
+#define new_suffix(s)	_new_suffix(QSP_ARG  s)
+#define suffix_of(s)	_suffix_of(QSP_ARG  s)
+
 Filetype *filetype_for_code(QSP_ARG_DECL  filetype_code code)
 {
 	List *lp;
 	Node *np;
 	Filetype *ftp;
 
-	lp = file_type_list(SINGLE_QSP_ARG);
+	lp = file_type_list();
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
 		ftp = (Filetype *) NODE_DATA(np);
@@ -976,7 +980,7 @@ static void init_suffix( QSP_ARG_DECL  const char *name, filetype_code code )
 	ftp = filetype_for_code(QSP_ARG  code);
 	assert( ftp != NULL );
 
-	sfx_p = new_suffix(QSP_ARG  name);
+	sfx_p = new_suffix(name);
 	assert( sfx_p != NULL );
 
 	/* Now file the filetype struct with this code... */
@@ -1075,7 +1079,7 @@ static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name)
 	}
 	if( suffix == NULL || *suffix == 0 ) return(NULL);
 
-	sfx_p = suffix_of(QSP_ARG  suffix);
+	sfx_p = suffix_of(suffix);
 	if( sfx_p == NULL ){
 		// Print an advisory
 		sprintf(ERROR_STRING,"File suffix \"%s\" is not known!?",
@@ -1372,7 +1376,7 @@ double iof_exists(QSP_ARG_DECL  const char *s)
 {
 	Image_File *ifp;
 
-	ifp=img_file_of(QSP_ARG  s);
+	ifp=img_file_of(s);
 	if( ifp==NULL ) return(0.0);
 	else return(1.0);
 }

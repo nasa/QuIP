@@ -92,7 +92,10 @@ typedef struct opencv_cascade {
 
 /* opencv_glue.c */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Image,ocvi)
-#define PICK_OCVI(p)	pick_ocvi(QSP_ARG  p)
+#define pick_ocvi(p)	_pick_ocvi(QSP_ARG  p)
+#define ocvi_of(s)	_ocvi_of(QSP_ARG  s)
+#define new_ocvi(s)	_new_ocvi(QSP_ARG  s)
+#define del_ocvi(s)	_del_ocvi(QSP_ARG  s)
 
 /* extern OpenCV_Image *make_new_ocvi(const char * obj_name); */
 extern OpenCV_Image * load_ocv_image(QSP_ARG_DECL  const char * obj_name, const char * filename );
@@ -107,18 +110,28 @@ extern OpenCV_Image *creat_ocvi_from_dp(QSP_ARG_DECL  Data_Obj *dp);
 
 /* MemStorage */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_MemStorage,ocv_mem)
+#define pick_ocv_mem(p)	_pick_ocv_mem(QSP_ARG  p)
+#define ocv_mem_of(s)	_ocv_mem_of(QSP_ARG  s)
+#define new_ocv_mem(s)	_new_ocv_mem(QSP_ARG  s)
+#define del_ocv_mem(s)	_del_ocv_mem(QSP_ARG  s)
 
 /* Scanner */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Scanner,ocv_scanner)
-#define PICK_OCV_SCANNER(p)	pick_ocv_scanner(QSP_ARG  p)
+#define pick_ocv_scanner(p)	_pick_ocv_scanner(QSP_ARG  p)
+#define ocv_scanner_of(s)	_ocv_scanner_of(QSP_ARG  s)
+#define new_ocv_scanner(s)	_new_ocv_scanner(QSP_ARG  s)
 
 /* Seq */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Seq,ocv_seq)
-#define PICK_OCV_SEQ(p)	pick_ocv_seq(QSP_ARG  p)
+#define pick_ocv_seq(p)	_pick_ocv_seq(QSP_ARG  p)
+#define ocv_seq_of(s)	_ocv_seq_of(QSP_ARG  s)
+#define new_ocv_seq(s)	_new_ocv_seq(QSP_ARG  s)
 
 /* Cascade */
 ITEM_INTERFACE_PROTOTYPES(OpenCV_Cascade,ocv_ccasc)
-#define PICK_CASCADE(p)	pick_ocv_ccasc(QSP_ARG  p)
+#define pick_cascade(p)	_pick_ocv_ccasc(QSP_ARG  p)
+#define ocv_ccasc_of(s)	_ocv_ccasc_of(QSP_ARG  s)
+#define new_ocv_ccasc(s)	_new_ocv_ccasc(QSP_ARG  s)
 
 
 #endif // ! _OPENCV_GLUE_H_

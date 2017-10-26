@@ -563,7 +563,7 @@ int get_camera_names( QSP_ARG_DECL  Data_Obj *str_dp )
 	PGR_Cam *pgcp;
 	int i, n;
 
-	lp = pgc_list(SINGLE_QSP_ARG);
+	lp = pgc_list();
 	if( lp == NULL ){
 		WARN("No cameras!?");
 		return 0;
@@ -985,20 +985,20 @@ static PGR_Cam *unique_camera_instance( QSP_ARG_DECL  dc1394camera_t *cam_p )
 	while(pgcp==NULL){
 		sprintf(cname,"%s_%d",cam_p->model,i);
 		fix_string(cname);	// change spaces to underscores
-		pgcp = pgc_of( QSP_ARG  cname );
+		pgcp = pgc_of( cname );
 		if( pgcp == NULL ){	// This index is free
-			pgcp = new_pgc( QSP_ARG  cname );
+			pgcp = new_pgc( cname );
 			if( pgcp == NULL ){
 				sprintf(ERROR_STRING,
 			"Failed to create camera %s!?",cname);
-				ERROR1(ERROR_STRING);
+				error1(ERROR_STRING);
 			}
 		} else {
 			pgcp = NULL;
 		}
 		i++;
 		if( i>=5 ){
-			ERROR1("Too many cameras!?"); 
+			error1("Too many cameras!?"); 
 		}
 	}
 	return pgcp;
@@ -1053,13 +1053,13 @@ void pop_camera_context(SINGLE_QSP_ARG_DECL)
 {
 	// pop old context...
 	Item_Context *icp;
-	icp=pop_dobj_context(SINGLE_QSP_ARG);
+	icp=pop_dobj_context();
 	assert( icp != NULL );
 }
 
 void push_camera_context(QSP_ARG_DECL  PGR_Cam *pgcp)
 {
-	push_dobj_context(QSP_ARG  pgcp->pc_do_icp);
+	push_dobj_context(pgcp->pc_do_icp);
 }
 
 int init_firewire_system(SINGLE_QSP_ARG_DECL)
@@ -1132,7 +1132,7 @@ int init_firewire_system(SINGLE_QSP_ARG_DECL)
 	// BUG make this a reserved var
 
 	// Set camera name in a script variable here...
-	//ASSIGN_VAR("camera_model",pgcp->pc_cam_p->model);
+	//assign_var("camera_model",pgcp->pc_cam_p->model);
 	//return pgcp;
 
 	return 0;
@@ -1185,14 +1185,14 @@ advise(ERROR_STRING);
 		if ( dc1394_capture_dequeue( pgcp->pc_cam_p, 
 			DC1394_CAPTURE_POLICY_WAIT, &framep )
 			!= DC1394_SUCCESS) {
-	ERROR1("init_buffer_objects:  error in dc1394_capture_dequeue!?" );
+	error1("init_buffer_objects:  error in dc1394_capture_dequeue!?" );
 		}
 		snprintf(fname,TMPSIZE,"_frame%d",framep->id);
 		assert( i == framep->id );
 		dp = make_1394frame_obj(QSP_ARG  framep);
 		if( dc1394_capture_enqueue(pgcp->pc_cam_p,framep)
 				!= DC1394_SUCCESS ){
-			ERROR1("init_buffer_objects:  error enqueueing frame!?");
+			error1("init_buffer_objects:  error enqueueing frame!?");
 		}
 		// Here we might store dp in a table...
 	}
@@ -1250,7 +1250,7 @@ int start_firewire_transmission(QSP_ARG_DECL  PGR_Cam * pgcp, int _ring_buffer_s
 
 #ifdef FOOBAR	// we set this in the script already!?
 	sprintf(msg_str,"%d",ring_buffer_size);		/* tell the scripting language */
-	ASSIGN_VAR("ring_buffer_size",msg_str);
+	assign_var("ring_buffer_size",msg_str);
 #endif // FOOBAR
 
 	// have the camera start sending us data
@@ -1290,7 +1290,7 @@ int start_firewire_transmission(QSP_ARG_DECL  PGR_Cam * pgcp, int _ring_buffer_s
 //advise("start_firewire_transmission DONE");
 
 	// Now make sure that we have the frame objects...
-	dp = dobj_of(QSP_ARG  "_frame1");
+	dp = dobj_of("_frame1");
 	if( dp == NULL ) init_buffer_objects(QSP_ARG  pgcp);
 
 	return(0);
@@ -1356,7 +1356,7 @@ Data_Obj * grab_newest_firewire_frame( QSP_ARG_DECL  PGR_Cam * pgcp )
 			if( n_dequeued > 0 ){	// already have something?
 				// The last one is the newest!
 				sprintf(msg_str,"%d",prev_framep->id);
-				ASSIGN_VAR("newest",msg_str);
+				assign_var("newest",msg_str);
 				note_frame_usage(pgcp,prev_framep);
 				return dobj_for_frame(QSP_ARG  prev_framep);
 			} else {		// No frames yet...

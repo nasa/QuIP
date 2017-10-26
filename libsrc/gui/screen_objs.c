@@ -53,8 +53,6 @@ static void del_po(QSP_ARG_DECL  Panel_Obj *po);
 #endif /* NOT_YET */
 
 
-#define GET_PANEL_OBJ(s)	get_panel_obj(QSP_ARG  s)
-
 /* local prototypes */
 
 
@@ -132,27 +130,27 @@ Item_Context *pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
-	icp = pop_item_context(QSP_ARG  scrnobj_itp);
+	icp = pop_item_context(scrnobj_itp);
 	return icp;
 }
 
 void push_scrnobj_context(QSP_ARG_DECL  Item_Context *icp)
 {
-	push_item_context(QSP_ARG  scrnobj_itp, icp );
+	push_item_context(scrnobj_itp, icp );
 }
 
 Item_Context *current_scrnobj_context(SINGLE_QSP_ARG_DECL)
 {
-	return CURRENT_CONTEXT(scrnobj_itp);
+	return current_context(scrnobj_itp);
 }
 
 Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
 {
 	if( scrnobj_itp == NULL ){
-		init_scrnobjs(SINGLE_QSP_ARG);
+		init_scrnobjs();
 	}
 
-	return create_item_context(QSP_ARG  scrnobj_itp, name );
+	return create_item_context(scrnobj_itp, name );
 }
 
 #endif /* ! BUILD_FOR_OBJC */
@@ -163,7 +161,7 @@ Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
 Screen_Obj *simple_object(QSP_ARG_DECL  const char *name)
 {
 	Screen_Obj *sop;
-	sop = new_scrnobj(QSP_ARG  name);
+	sop = new_scrnobj(name);
 	if( sop == NULL ) return(sop);
 
 	SET_SOB_ACTION(sop,NULL);
@@ -220,7 +218,7 @@ COMMAND_FUNC( do_so_info )
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("");
+	sop=pick_scrnobj("");
 	so_info(sop);
 }
 
@@ -242,12 +240,12 @@ COMMAND_FUNC( do_get_posn_object )
 	Screen_Obj *sop;
 	char str[BUF_LEN];
 
-	sop = PICK_SCRNOBJ("");
+	sop = pick_scrnobj("");
 	if( sop == NULL ) return;
 	sprintf(str, "%d", SOB_X(sop));
-	ASSIGN_RESERVED_VAR("x_val",str);
+	assign_reserved_var("x_val",str);
 	sprintf(str, "%d", SOB_Y(sop));
-	ASSIGN_RESERVED_VAR("y_val",str);
+	assign_reserved_var("y_val",str);
 }
 
 /* Moves an object */
@@ -256,7 +254,7 @@ COMMAND_FUNC( do_set_posn_object )
 	Screen_Obj *sop;
 	int x,y;
 
-	sop = PICK_SCRNOBJ("");
+	sop = pick_scrnobj("");
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 	if( sop == NULL ) return;
@@ -276,7 +274,7 @@ Gen_Win *dummy_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 	gwp = new_genwin(QSP_ARG  name);
 #ifdef CAUTIOUS
 	if( gwp == NULL )
-		ERROR1("CAUTIOUS:  dummy_panel:  error creating panel object!?");
+		error1("CAUTIOUS:  dummy_panel:  error creating panel object!?");
 #endif /* CAUTIOUS */
 
 	SET_GW_WIDTH(gwp, dx);
@@ -302,7 +300,7 @@ Panel_Obj *new_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 {
 	Panel_Obj *po;
 
-	po = new_panel_obj(QSP_ARG  name);
+	po = new_panel_obj(name);
 	if( po == NULL ){
 		printf("ERROR creating new panel object!?\n");
 		return(po);
@@ -372,7 +370,7 @@ COMMAND_FUNC( mk_panel )
 
 COMMAND_FUNC( do_resize_panel )
 {
-    Panel_Obj *po = PICK_PANEL( "" );
+    Panel_Obj *po = pick_panel( "" );
     if (po == NULL) {
         advise("do_resize_panel: no panel found");
         return;
@@ -416,7 +414,7 @@ static void list_widgets(Panel_Obj *po)
 COMMAND_FUNC( do_list_panel_objs )
 {
 	Panel_Obj *po;
-	po=PICK_PANEL("");
+	po=pick_panel("");
  	if( po == NULL ) return;
 
 	list_widgets(po);
@@ -776,7 +774,7 @@ COMMAND_FUNC( assign_text )
 	Screen_Obj *sop;
 	/* char msg[80]; */
 
-	sop = PICK_SCRNOBJ("");
+	sop = pick_scrnobj("");
 	s = NAMEOF("variable name");
 	if( sop == NULL ) return;
 
@@ -792,9 +790,9 @@ COMMAND_FUNC( assign_text )
 
 	/* PAS - Check that v is not nil */
 	if(v)
-		ASSIGN_VAR(s,v);
+		assign_var(s,v);
 	else
-		ASSIGN_VAR(s,"");
+		assign_var(s,"");
 }
 
 COMMAND_FUNC( do_set_prompt )
@@ -802,7 +800,7 @@ COMMAND_FUNC( do_set_prompt )
 	const char *s;
 	Screen_Obj *sop;
 
-	sop = PICK_SCRNOBJ("");
+	sop = pick_scrnobj("");
 	s = NAMEOF("new prompt");
 	if( sop == NULL ) return;
 	givbuf((void *)SOB_ACTION(sop));
@@ -815,7 +813,7 @@ COMMAND_FUNC( do_set_edit_text )
 	const char *s;
 	Screen_Obj *sop;
 
-	sop = PICK_SCRNOBJ("");
+	sop = pick_scrnobj("");
 	s = NAMEOF("text to display");
 	if( sop == NULL ) return;
 
@@ -832,7 +830,7 @@ COMMAND_FUNC( do_set_text_field )
 	const char *s;
 	Screen_Obj *sop;
 
-	sop = PICK_SCRNOBJ("");
+	sop = pick_scrnobj("");
 	s = NAMEOF("text to display");
 	if( sop == NULL ) return;
 
@@ -878,7 +876,7 @@ COMMAND_FUNC( set_new_range )
 	int min;
 	int max;
 
-	sop=PICK_SCRNOBJ("slider");
+	sop=pick_scrnobj("slider");
 	min=(int)HOW_MANY("min value");
 	max=(int)HOW_MANY("max value");
 	if( sop == NULL ) return;
@@ -891,7 +889,7 @@ COMMAND_FUNC( set_new_pos )
 	Screen_Obj *sop;
 	int val;
 
-	sop=PICK_SCRNOBJ("slider");
+	sop=pick_scrnobj("slider");
 	val=(int)HOW_MANY("value");
 	if( sop == NULL ) return;
 	new_slider_pos(sop,val);
@@ -1090,7 +1088,7 @@ COMMAND_FUNC( do_enable_widget )
 	Screen_Obj *sop;
 	int yesno;
 
-	sop=PICK_SCRNOBJ("widget");
+	sop=pick_scrnobj("widget");
 	yesno=ASKIF("Enable widget");
 
 	if( sop == NULL ) return;
@@ -1104,7 +1102,7 @@ COMMAND_FUNC( do_hide_widget )
 	Screen_Obj *sop;
 	int yesno;
 
-	sop=PICK_SCRNOBJ("widget");
+	sop=pick_scrnobj("widget");
 	yesno=ASKIF("Hide widget");
 
 	if( sop == NULL ) return;
@@ -1117,7 +1115,7 @@ COMMAND_FUNC( do_show )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL("");
+	po=pick_panel("");
 	if( po != NULL ) show_panel(QSP_ARG  po);
 }
 
@@ -1126,7 +1124,7 @@ COMMAND_FUNC( do_show )
 static void do_genwin_panel_posn(QSP_ARG_DECL  const char *s, int x, int y)
 {
 	Panel_Obj *po;
-	po=GET_PANEL_OBJ(s);
+	po=get_panel_obj(s);
 	if( po != NULL ) {
 		SET_PO_X(po, x);
 		SET_PO_Y(po, y);
@@ -1139,7 +1137,7 @@ static void do_genwin_panel_show(QSP_ARG_DECL  const char *s)
 {
 	Panel_Obj *po;
 
-	po=GET_PANEL_OBJ(s);
+	po=get_panel_obj(s);
 	if( po != NULL ) show_panel(QSP_ARG  po);
 	return;
 }
@@ -1148,7 +1146,7 @@ static void do_genwin_panel_unshow(QSP_ARG_DECL  const char *s)
 {
 	Panel_Obj *po;
 
-	po=GET_PANEL_OBJ(s);
+	po=get_panel_obj(s);
 	if( po != NULL ) unshow_panel(QSP_ARG  po);
 	return;
 }
@@ -1156,7 +1154,7 @@ static void do_genwin_panel_unshow(QSP_ARG_DECL  const char *s)
 static void do_genwin_panel_delete(QSP_ARG_DECL  const char *s)
 {
 	Panel_Obj *po;
-	po=GET_PANEL_OBJ(s);
+	po=get_panel_obj(s);
 	if( po != NULL ) {
 		WARN("sorry, don't know how to delete panel yet");
 	}
@@ -1170,7 +1168,7 @@ COMMAND_FUNC( do_unshow )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL("");
+	po=pick_panel("");
 	if( po != NULL ) unshow_panel(QSP_ARG  po);
 }
 
@@ -1189,7 +1187,7 @@ COMMAND_FUNC( do_set_gauge_label )
 	Screen_Obj *gp;
 	const char * s;
 
-	gp=PICK_SCRNOBJ("guage");
+	gp=pick_scrnobj("guage");
 	s=NAMEOF("gauge lable");
 
 	if( gp == NULL ) return;
@@ -1203,7 +1201,7 @@ COMMAND_FUNC( do_set_gauge_value )
 	Screen_Obj *gp;
 	int n;
 
-	gp=PICK_SCRNOBJ("guage");
+	gp=pick_scrnobj("guage");
 	n=(int)HOW_MANY("setting");
 
 	if( gp == NULL ) return;
@@ -1217,7 +1215,7 @@ COMMAND_FUNC( do_set_toggle )
 	Screen_Obj *sop;
 	int state;
 
-	sop=PICK_SCRNOBJ("toggle");
+	sop=pick_scrnobj("toggle");
 	state = ASKIF("toggle set");
 
 	if( sop == NULL ) return;
@@ -1238,7 +1236,7 @@ COMMAND_FUNC( do_set_choice )
 	int i;
 	//const char *s;
 
-	sop=PICK_SCRNOBJ("chooser");
+	sop=pick_scrnobj("chooser");
 	if( sop == NULL ){
 		/*s=*/ NAMEOF("dummy word");
 		return;
@@ -1273,7 +1271,7 @@ COMMAND_FUNC(do_get_choice)
 {
 	Screen_Obj *sop;
 
-	sop=PICK_SCRNOBJ("chooser");
+	sop=pick_scrnobj("chooser");
 	if( sop == NULL ) return;
 
 #ifdef BUILD_FOR_IOS
@@ -1321,7 +1319,7 @@ COMMAND_FUNC( do_set_message )
 	Screen_Obj *mp;
 	const char *s;
 
-	mp=PICK_SCRNOBJ("message");
+	mp=pick_scrnobj("message");
 	s=NAMEOF("message text");
 	if( mp == NULL ) return;
 
@@ -1337,7 +1335,7 @@ COMMAND_FUNC( do_set_label )
 	Screen_Obj *mp;
 	const char *s;
 
-	mp=PICK_SCRNOBJ("message");
+	mp=pick_scrnobj("message");
 	s=NAMEOF("message text");
 #ifdef BUILD_FOR_IOS
 	if( mp == NULL ) return;
@@ -1361,7 +1359,7 @@ COMMAND_FUNC( do_append_text )
 	Screen_Obj *tb;
 	const char *s;
 
-	tb=PICK_SCRNOBJ("text_box");
+	tb=pick_scrnobj("text_box");
 	s=NAMEOF("text to append");
 #ifdef BUILD_FOR_IOS
 	if( tb == NULL ) return;
@@ -1383,7 +1381,7 @@ COMMAND_FUNC( do_set_active )
 	Screen_Obj *ai;
 	int yesno;
 
-	ai=PICK_SCRNOBJ("activity indicator");
+	ai=pick_scrnobj("activity indicator");
 	yesno = ASKIF("animate indicator");
 
 #ifdef BUILD_FOR_IOS
@@ -1403,7 +1401,7 @@ COMMAND_FUNC( do_set_active )
 #ifndef BUILD_FOR_OBJC		// why do we not need this in iOS???
 void del_so(QSP_ARG_DECL  Screen_Obj *sop)
 {
-	del_scrnobj(QSP_ARG  sop);	// delete from database...
+	del_scrnobj(sop);	// delete from database...
 
 	if( SOB_ACTION(sop) != NULL ) rls_str(SOB_ACTION(sop));
 	if( SOB_SELECTOR(sop) != NULL ) rls_str(SOB_SELECTOR(sop));
@@ -1418,7 +1416,7 @@ COMMAND_FUNC( clear_screen )
 	Screen_Obj *sop;
 	Panel_Obj *po;
 
-	po=PICK_PANEL("");
+	po=pick_panel("");
 	if( po==NULL ) return;
 
 	lp=item_list(QSP_ARG  scrnobj_itp);
@@ -1450,7 +1448,7 @@ COMMAND_FUNC( do_pposn )
 	int x;
 	int y;
 
-	po=PICK_PANEL("");
+	po=pick_panel("");
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
@@ -1465,7 +1463,7 @@ COMMAND_FUNC( do_delete )
 {
 	Panel_Obj *po;
 
-	po=PICK_PANEL("");
+	po=pick_panel("");
 	if( po != NULL ){
 		WARN("Sorry, don't know how to delete panels yet");
 	}
@@ -1546,7 +1544,7 @@ COMMAND_FUNC( do_set_scroller )
 	Screen_Obj *sop;
 	int n;
 
-	sop = PICK_SCRNOBJ("scroller");
+	sop = pick_scrnobj("scroller");
 	if( sop==NULL ) return;
 
 	n=GET_STRINGS(sop,&string_arr);
@@ -1568,7 +1566,7 @@ void mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp)
 	const char *string_arr[MAX_STRINGS];
 	Item *ip;
 
-	lp=item_list(QSP_ARG  itp);
+	lp=item_list(itp);
 	if( lp == NULL ) return;
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
@@ -1592,8 +1590,8 @@ COMMAND_FUNC( do_item_scroller )
 	Screen_Obj *sop;
 	Item_Type *itp;
 
-	sop = PICK_SCRNOBJ("scroller");
-	itp = PICK_ITTYP("");
+	sop = pick_scrnobj("scroller");
+	itp = pick_ittyp("");
 	if( sop==NULL || itp == NULL ) return;
 
 	mk_it_scroller(QSP_ARG  sop,itp);
@@ -1609,7 +1607,7 @@ COMMAND_FUNC( do_file_scroller )
 	char word[BUF_LEN];
 	FILE *fp;
 
-	sop = PICK_SCRNOBJ("scroller");
+	sop = pick_scrnobj("scroller");
 	fp = TRY_OPEN( NAMEOF("item file"), "r" );
 	if( !fp ) return;
 
@@ -1953,7 +1951,7 @@ static inline Screen_Obj *pick_chooser_or_picker(SINGLE_QSP_ARG_DECL)
 {
 	Screen_Obj *sop;
 
-	sop = PICK_SCRNOBJ("name of chooser or picker");
+	sop = pick_scrnobj("name of chooser or picker");
 	if( sop == NULL ) return NULL;
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER ) return sop;
@@ -2054,7 +2052,7 @@ COMMAND_FUNC( do_set_picks )
 	Screen_Obj *sop;
 	int n_cyl;
 
-	sop = PICK_SCRNOBJ("picker");
+	sop = pick_scrnobj("picker");
 
 	// decrease the number of choices,
 	// allocate a new string array,
@@ -2194,7 +2192,7 @@ void so_init(QSP_ARG_DECL  int argc,const char **argv)
 #ifndef BUILD_FOR_OBJC
 
 	if(panel_obj_itp == NULL)
-		init_panel_objs(SINGLE_QSP_ARG);
+		init_panel_objs();
 
 	/* support for genwin */
 	add_genwin(QSP_ARG  panel_obj_itp, &gwfp, NULL);
@@ -2203,7 +2201,7 @@ void so_init(QSP_ARG_DECL  int argc,const char **argv)
 
 	// scrnobj_itp is null at this point!?
 	if( scrnobj_itp == NULL )
-		init_scrnobjs(SINGLE_QSP_ARG);
+		init_scrnobjs();
 	add_sizable(QSP_ARG  scrnobj_itp,&scrnobj_sf, NULL );
 	
 #else
@@ -2221,7 +2219,7 @@ void so_init(QSP_ARG_DECL  int argc,const char **argv)
 double panel_exists(QSP_ARG_DECL  const char *name)
 {
 	Panel_Obj *po;
-	po = panel_obj_of(QSP_ARG  name);
+	po = panel_obj_of(name);
 
 	if( po == NULL ) return(0);
 	return(1.0);

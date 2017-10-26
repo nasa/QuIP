@@ -1,24 +1,9 @@
 #ifndef _ITEM_TYPE_H_
 #define _ITEM_TYPE_H_
 
-//#include "query_stack.h"
 #include "quip_fwd.h"
-//#include "stack.h"
-//#include "list.h"
-//#include "getbuf.h"
-
-//#include "container.h"
-//#include "dictionary.h"
-
 #include "item_obj.h"
 #include "item_prot.h"
-
-
-//struct dictionary;
-// forward declarations...
-//#include "container_fwd.h"
-
-//#include "dict.h"
 
 struct qrb_node;
 struct item_context;
@@ -206,10 +191,6 @@ struct item_type {
 	List *		it_free_lp;
 	int		it_container_type;
 	void		(*it_del_method)(QSP_ARG_DECL  Item *);
-	/*
-	const char **	it_choices;
-	int		it_n_choices;
-	*/
 	List *		it_class_lp;
 
 	// If we can have multiple interpreter threads, then each thread
@@ -241,33 +222,10 @@ struct item_type {
 //#define RESTRICTED	8	// what does restricted mean???
 
 
-// BUG for thread-safe operation, this flag needs to be per-context stack!
-
-#ifdef FOOBAR
-#define RESTRICT_ITEM_CONTEXT(itp,yesno)		\
-							\
-{							\
-	if( yesno )					\
-		SET_IT_FLAG_BITS(itp,RESTRICTED);	\
-	else						\
-		CLEAR_IT_FLAG_BITS(itp,RESTRICTED);	\
-}
-
-//#define IS_RESTRICTED(itp)	(IT_FLAGS(itp) & RESTRICTED)
-#endif // FOOBAR
-
-
 /* Item_Type */
 #define IT_NAME(itp)			(itp)->it_item.item_name
 #define IT_FREE_LIST(itp)		(itp)->it_free_lp
 
-// eliminate it_flags?
-//#define IT_FLAGS(itp)			(itp)->it_flags
-//#define SET_IT_FLAGS(itp,f)		(itp)->it_flags=f
-//#define SET_IT_FLAG_BITS(itp,f)		(itp)->it_flags |= f
-//#define CLEAR_IT_FLAG_BITS(itp,f)	(itp)->it_flags &= ~(f)
-
-//#define IT_LIST(itp)			(itp)->it_lp
 #define IT_CLASS_LIST(itp)		(itp)->it_class_lp
 #define IT_CONTAINER_TYPE(itp)		(itp)->it_container_type
 #define IT_DEL_METHOD(itp)		(itp)->it_del_method
@@ -277,13 +235,6 @@ struct item_type {
 #define SET_IT_CLASS_LIST(itp,lp)	(itp)->it_class_lp = lp
 #define SET_IT_CONTAINER_TYPE(itp,t)	(itp)->it_container_type = t
 
-//#define IT_N_CHOICES(itp)		(itp)->it_n_choices
-//#define SET_IT_N_CHOICES(itp,n)		(itp)->it_n_choices = n
-//#define IT_CHOICES(itp)			(itp)->it_choices
-//#define SET_IT_CHOICES(itp,choices)	(itp)->it_choices = choices
-
-//#define IT_FRAG_MATCH_INFO(itp)			(itp)->it_fmi_p
-//#define SET_IT_FRAG_MATCH_INFO(itp,fmi_p)	(itp)->it_fmi_p = fmi_p
 #define IT_MATCH_CYCLE(itp)		ITCI_MATCH_CYCLE( THIS_ITCI(itp) )
 #define SET_IT_MATCH_CYCLE(itp,mc_p)	SET_ITCI_MATCH_CYCLE( THIS_ITCI(itp), mc_p )
 
@@ -297,8 +248,8 @@ struct item_type {
 
 // The context field may be null, so we have a function to do the checking
 // and initialization if necessary...
-extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
-#define CURRENT_CONTEXT(itp)		current_context(QSP_ARG  itp)
+extern Item_Context *_current_context(QSP_ARG_DECL  Item_Type *itp);
+#define current_context(itp)		_current_context(QSP_ARG  itp)
 #define SET_CURRENT_CONTEXT(itp,icp)	SET_ITCI_CTX(THIS_ITCI(itp),icp)
 #define ITCI_AT_INDEX(itp,idx)		(&((itp)->it_itci[idx]))
 #ifdef THREAD_SAFE_QUERY
@@ -309,7 +260,7 @@ extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
 
 // this is the list of contexts,
 // not the list of items in a context
-#define LIST_OF_CONTEXTS(itp)		context_stack(QSP_ARG  itp)
+#define LIST_OF_CONTEXTS(itp)		_context_stack(QSP_ARG  itp)
 #define SET_LIST_OF_CONTEXTS(itp,lp)	SET_ITCI_CSTK( THIS_ITCI(itp), lp )
 
 #define FIRST_LIST_OF_CONTEXTS(itp)	ITCI_CSTK( ITCI_AT_INDEX(itp,0) )
@@ -317,16 +268,14 @@ extern Item_Context *current_context(QSP_ARG_DECL  Item_Type *itp);
 #define IS_RESTRICTED(itp)		ITCI_CTX_RESTRICTED( THIS_ITCI(itp) )
 
 // We use ITCI_AT_INDEX instead of THIS_ITCI() when we can't see the qsp internals...
-#define RESTRICT_ITEM_CONTEXT(itp,yesno)	{											\
-							if( yesno ) SET_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);	\
-							else CLEAR_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);		\
-						}
+#define RESTRICT_ITEM_CONTEXT(itp,yesno)								\
+	{												\
+		if( yesno ) SET_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);	\
+		else CLEAR_ITCI_FLAG_BITS(ITCI_AT_INDEX(itp,QS_SERIAL),ITCI_CTX_RESTRICTED_FLAG);	\
+	}
 
 
 #define SET_IT_NAME(itp,s)		(itp)->it_item.item_name=s
-
-
-
 
 
 struct item_class {
@@ -359,7 +308,7 @@ struct member_info {
 
 #define IIF_DECLS(type,stem,storage,container_type)		\
 								\
-static Item_Type *stem##_itp=NULL;			\
+static Item_Type *stem##_itp=NULL;				\
 storage ITEM_INIT_FUNC(type,stem,container_type)		\
 storage ITEM_NEW_FUNC(type,stem)				\
 storage ITEM_CHECK_FUNC(type,stem)				\
@@ -374,7 +323,7 @@ storage ITEM_PICK_FUNC(type,stem)
 
 #define ITEM_NEW_FUNC(type,stem)				\
 								\
-type *new_##stem(QSP_ARG_DECL  const char *name)		\
+type *_new_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	type * stem##_p;					\
 								\
@@ -385,10 +334,9 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 		return NULL;					\
 	}							\
 	if( stem##_itp == NULL )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
+		_init_##stem##s(SINGLE_QSP_ARG);			\
 								\
-	stem##_p = (type *) new_item(QSP_ARG  stem##_itp, name, \
-					sizeof(type));		\
+	stem##_p = (type *) new_item(stem##_itp, name, sizeof(type));		\
 	if( stem##_p == NULL ){					\
 		sprintf(ERROR_STRING,				\
 	"Error creating item %s!?",name);			\
@@ -400,70 +348,75 @@ type *new_##stem(QSP_ARG_DECL  const char *name)		\
 
 #define ITEM_INIT_FUNC(type,stem,container_type)		\
 								\
-void init_##stem##s(SINGLE_QSP_ARG_DECL)			\
+void _init_##stem##s(SINGLE_QSP_ARG_DECL)			\
 {								\
-	stem##_itp = new_item_type(QSP_ARG  #type, container_type);	\
+	stem##_itp = new_item_type(#type, container_type);	\
 }
 
 #define ITEM_CHECK_FUNC(type,stem)				\
 								\
-type *stem##_of(QSP_ARG_DECL  const char *name)			\
+type *_##stem##_of(QSP_ARG_DECL  const char *name)			\
 {								\
 	if( stem##_itp == NULL )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	return (type *)item_of(QSP_ARG  stem##_itp, name );	\
+		_init_##stem##s(SINGLE_QSP_ARG);			\
+	return (type *) item_of(stem##_itp, name );	\
 }
 
 #define ITEM_GET_FUNC(type,stem)				\
 								\
-type *get_##stem(QSP_ARG_DECL  const char *name)		\
+type *_get_##stem(QSP_ARG_DECL  const char *name)		\
 {								\
 	if( stem##_itp == NULL )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	return (type *)get_item(QSP_ARG  stem##_itp, name );	\
+		_init_##stem##s(SINGLE_QSP_ARG);			\
+	return (type *) get_item(stem##_itp, name );	\
 }
 
 #define ITEM_PICK_FUNC(type,stem)				\
 								\
-type *pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
+type *_pick_##stem(QSP_ARG_DECL  const char *pmpt)		\
 {								\
 	if( stem##_itp == NULL )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	return (type *)pick_item(QSP_ARG  stem##_itp, pmpt );	\
+		_init_##stem##s(SINGLE_QSP_ARG);			\
+	return (type *) pick_item(stem##_itp, pmpt );	\
 }
 
 #define ITEM_LIST_FUNC(type,stem)				\
 								\
-void list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
+void _list_##stem##s(QSP_ARG_DECL  FILE *fp)			\
 {								\
 	if( stem##_itp == NULL )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	list_items(QSP_ARG  stem##_itp, fp );			\
+		_init_##stem##s(SINGLE_QSP_ARG);			\
+	list_items(stem##_itp, fp );			\
 }
 
 #define ITEM_ENUM_FUNC(type,stem)				\
 								\
-List * stem##_list(SINGLE_QSP_ARG_DECL)				\
+List * _##stem##_list(SINGLE_QSP_ARG_DECL)				\
 {								\
 	if( stem##_itp == NULL )			\
-		init_##stem##s(SINGLE_QSP_ARG);			\
-	return item_list(QSP_ARG  stem##_itp);			\
+		_init_##stem##s(SINGLE_QSP_ARG);			\
+	return item_list(stem##_itp);			\
 }
 
 #define ITEM_DEL_FUNC(type,stem)				\
 								\
-void del_##stem(QSP_ARG_DECL  type *ip)				\
+void _del_##stem(QSP_ARG_DECL  type *ip)				\
 {								\
-	del_item(QSP_ARG  stem##_itp, (Item *)ip);		\
+	del_item(stem##_itp, (Item *)ip);		\
 }
 
 extern ITEM_INIT_PROT(Item_Type,ittyp)
-extern int add_item( QSP_ARG_DECL  Item_Type *itp, void *ip );
-extern int remove_from_item_free_list(QSP_ARG_DECL  Item_Type *itp, void *ip);
-//extern Item *check_context(Item_Context *icp, const char *name);
-extern const char *find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
-extern List *alpha_sort(QSP_ARG_DECL  List *lp);
-extern List *context_stack(QSP_ARG_DECL  Item_Type *itp);
+extern int _add_item( QSP_ARG_DECL  Item_Type *itp, void *ip );
+extern int _remove_from_item_free_list(QSP_ARG_DECL  Item_Type *itp, void *ip);
+extern const char *_find_partial_match( QSP_ARG_DECL  Item_Type *itp, const char *s );
+extern List *_alpha_sort(QSP_ARG_DECL  List *lp);
+extern List *_context_stack(QSP_ARG_DECL  Item_Type *itp);
+
+#define add_item(itp,ip)	_add_item(QSP_ARG  itp, ip )
+#define remove_from_item_free_list(itp,ip)	_remove_from_item_free_list(QSP_ARG  itp, ip )
+#define find_partial_match(itp,frag)	_find_partial_match(QSP_ARG  itp, frag )
+#define alpha_sort(lp)	_alpha_sort(QSP_ARG  lp)
+#define context_stack(itp)	_context_stack(QSP_ARG  itp)
 
 #endif /* ! _ITEM_TYPE_H_ */
 

@@ -71,7 +71,7 @@ static float frprmn_scr_funk(float *p)
 
 	qsp = pr_qsp;
 #endif // THREAD_SAFE_QUERY
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=opt_param_list();
 	if( lp==NULL ) {
 		NWARN("no parameters!?");
 		return(0.0);
@@ -85,16 +85,16 @@ static float frprmn_scr_funk(float *p)
 
 		opp=(Opt_Param *)np->n_data;
 		sprintf(str,"%g",p[i+1]);
-		ASSIGN_VAR(opp->op_name,str);
+		assign_var(opp->op_name,str);
 		i++;
 		np=np->n_next;
 	}
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	digest(QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
-	vp=var__of(QSP_ARG  "error");
+	vp=var__of("error");
 	if( vp == NULL ) {
-		NWARN("variable \"error\" not set!!!");
+		WARN("variable \"error\" not set!!!");
 		err=0.0;
 	} else sscanf(VAR_VALUE(vp),"%g",&err);
 
@@ -109,7 +109,7 @@ static float frprmn_c_funk(float *p)
 	Opt_Param *opp;
 	Node *np;
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	np=QLIST_HEAD(lp);
 
 	i=0;
@@ -139,7 +139,7 @@ static void run_frprmn( QSP_ARG_DECL  float (*func)(float *) )
 
 	/* initialize the number of parameters */
 
-	n_prms = eltcount( lp=opt_param_list(SGL_DEFAULT_QSP_ARG) );
+	n_prms = eltcount( lp=opt_param_list() );
 
 	/* init the values */
 	np=QLIST_HEAD(lp);

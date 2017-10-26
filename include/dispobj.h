@@ -63,7 +63,11 @@ typedef struct display_object {
 
 ITEM_INTERFACE_PROTOTYPES(Disp_Obj,disp_obj)
 
-#define PICK_DISP_OBJ(p)	pick_disp_obj(QSP_ARG  p)
+#define pick_disp_obj(p)	_pick_disp_obj(QSP_ARG  p)
+#define new_disp_obj(s)		_new_disp_obj(QSP_ARG  s)
+#define disp_obj_of(s)		_disp_obj_of(QSP_ARG  s)
+#define list_disp_objs(fp)	_list_disp_objs(QSP_ARG  fp)
+#define del_disp_obj(s)		_del_disp_obj(QSP_ARG  s)
 
 extern Disp_Obj *	curr_dop(void);
 

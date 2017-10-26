@@ -41,8 +41,8 @@ static COMMAND_FUNC( do_ctone )
 {
 	Data_Obj *dpto,*dpfr;
 
-	dpto = PICK_OBJ("destination image");
-	dpfr = PICK_OBJ("source image");
+	dpto = pick_obj("destination image");
+	dpfr = pick_obj("source image");
 	if( dpto == NULL || dpfr == NULL ) return;
 	ctoneit(QSP_ARG  dpto,dpfr);
 }

@@ -719,14 +719,14 @@ N_CONDITIONAL
 			s = EVAL_SCALEXP_STRING(enp);
 			sprintf(ERROR_STRING,"0x%lx\tstring\t%s",
 				(long/*int_for_addr*/)enp, s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 #ifdef FOOBAR
 		case N_SIZABLE:
 			sprintf(ERROR_STRING,"0x%lx\tsizable\t%s",
 				(long/*int_for_addr*/)enp, enp->sen_string);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 #endif /* FOOBAR */
 
@@ -734,7 +734,7 @@ N_CONDITIONAL
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			sprintf(ERROR_STRING,"0x%lx\ttsable\t%s",
 				(long/*int_for_addr*/)enp, s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_STRVFUNC:
@@ -750,207 +750,207 @@ N_CONDITIONAL
 		case N_SIZFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tsizefunc\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_TSFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tts_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_ILACEFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tinterlace_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_POSNFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tposn_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MATH0FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmath0_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MATH2FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmath2_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MISCFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmisc_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_STR2FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tstr2_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_STR3FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tstr3_func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_DATAFUNC:
 			sprintf(ERROR_STRING,"0x%lx\tdatafunc\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME( enp->sen_func_p ) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_OBJNAME:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
 			sprintf(ERROR_STRING,"0x%lx\tobjname\t%s",
 				(long/*int_for_addr*/)enp, s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SCALAR_OBJ:
 			sprintf(ERROR_STRING,"0x%lx\tscalar_obj\t0x%lx",
 				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SUBSCRIPT:
 			sprintf(ERROR_STRING,"0x%lx\tsubscript\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_CSUBSCRIPT:
 			sprintf(ERROR_STRING,"0x%lx\tcsubscript\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp, (long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MATH1FUNC:
 			sprintf(ERROR_STRING,"0x%lx\tmath1func\t%s",
 				(long/*int_for_addr*/)enp, FUNC_NAME(enp->sen_func_p) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_PLUS:
 			sprintf(ERROR_STRING,"0x%lx\tplus\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MINUS:
 			sprintf(ERROR_STRING,"0x%lx\tminus\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_TIMES:
 			sprintf(ERROR_STRING,"0x%lx\ttimes\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_DIVIDE:
 			sprintf(ERROR_STRING,"0x%lx\tdivide\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_MODULO:
 			sprintf(ERROR_STRING,"0x%lx\tmodulo\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_BITAND:
 			sprintf(ERROR_STRING,"0x%lx\tbitand\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_BITOR:
 			sprintf(ERROR_STRING,"0x%lx\tbitor\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_BITXOR:
 			sprintf(ERROR_STRING,"0x%lx\tbitxor\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SHL:
 			sprintf(ERROR_STRING,"0x%lx\tshl\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_SHR:
 			sprintf(ERROR_STRING,"0x%lx\tshr\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LOGOR:
 			sprintf(ERROR_STRING,"0x%lx\tlog_or\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LOGAND:
 			sprintf(ERROR_STRING,"0x%lx\tlog_and\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LOGXOR:
 			sprintf(ERROR_STRING,"0x%lx\tlog_xor\t0x%lx\t0x%lx",
 				(long/*int_for_addr*/)enp,(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 		case N_LITNUM:
 			string_for_typed_scalar(MSG_STR,LLEN,enp->sen_tsp);
 			sprintf(ERROR_STRING,"0x%lx\tlit_num\t%s",
 				(long/*int_for_addr*/)enp,MSG_STR);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_LE:
 			sprintf(ERROR_STRING,"0x%lx\t<= (LE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_GE:
 			sprintf(ERROR_STRING,"0x%lx\t>= (GE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_NE:
 			sprintf(ERROR_STRING,"0x%lx\t!= (NE)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_LT:
 			sprintf(ERROR_STRING,"0x%lx\t< (LT)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_GT:
 			sprintf(ERROR_STRING,"0x%lx\t> (GT)\t0x%lx, 0x%lx",(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0],(long/*int_for_addr*/)enp->sen_child[1]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_NOT:
 			sprintf(ERROR_STRING,"0x%lx\t! (NOT)\t0x%lx",
 				(long/*int_for_addr*/)enp,
 				(long/*int_for_addr*/)enp->sen_child[0]);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 		case N_STRFUNC:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
@@ -958,7 +958,7 @@ N_CONDITIONAL
 				(long/*int_for_addr*/)enp,
 				FUNC_NAME(enp->sen_func_p),
 				s);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 // comment out the default case for the compiler to show unhandled cases...
@@ -966,7 +966,7 @@ N_CONDITIONAL
 			sprintf(ERROR_STRING,
 		"%s - %s:  unhandled node code %d",
 				WHENCE2(dump_enode),enp->sen_code);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			break;
 
 	}
@@ -1178,7 +1178,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 static void divzer_error(SINGLE_QSP_ARG_DECL)
 {
 	sprintf(DEFAULT_ERROR_STRING,"Error parsing \"%s\"",YY_ORIGINAL);
-	ADVISE(DEFAULT_ERROR_STRING);
+	advise(DEFAULT_ERROR_STRING);
 	NWARN("eval_expr:  divide by 0!?");
 }
 
@@ -1317,7 +1317,7 @@ Typed_Scalar * eval_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
 sprintf(ERROR_STRING,"eval_expr:  code = %d",enp->sen_code);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 dump_enode(QSP_ARG  enp);
 }
 #endif /* QUIP_DEBUG */
@@ -1506,7 +1506,7 @@ dump_enode(QSP_ARG  enp);
 		 */
 
 		if( val_func_p == NULL )
-			val_func_p = function_of(QSP_ARG  "value");
+			val_func_p = function_of("value");
 		assert( val_func_p != NULL );
 
 		/* This seems buggy - there should be a value function
@@ -1727,7 +1727,7 @@ dump_enode(QSP_ARG  enp);
 
 //#ifdef FOOBAR
 //	case N_SLCT_CHAR:		// eval_expr
-//ADVISE("case N_SLCT_CHAR");
+//advise("case N_SLCT_CHAR");
 //		ival = EVAL_EXPR(enp->sen_child[0]);
 //		if( ival < 0 || ival >= strlen(enp->sen_string) )
 //			dval = -1;
@@ -1951,7 +1951,7 @@ Typed_Scalar *parse_number(QSP_ARG_DECL  const char **strptr)
 
 		errno = 0;
 //sprintf(ERROR_STRING,"converting string \"%s\"",buf);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 		d = strtod(buf,&endptr);
 		if( errno == ERANGE ){
 			// This message is printing, but the returned
@@ -1959,14 +1959,14 @@ Typed_Scalar *parse_number(QSP_ARG_DECL  const char **strptr)
 			// the documentation.
 			if( d == 0.0 ){
 sprintf(DEFAULT_ERROR_STRING,"strtod:  possible underflow buf=\"%s\", d = %g",buf,d);
-ADVISE(DEFAULT_ERROR_STRING);
+advise(DEFAULT_ERROR_STRING);
 			} else if( d == HUGE_VAL || d == -HUGE_VAL ){
 sprintf(DEFAULT_ERROR_STRING,"strtod:  possible overflow buf=\"%s\", d = %g  HUGE_VAL = %g",buf,d,HUGE_VAL);
-ADVISE(DEFAULT_ERROR_STRING);
+advise(DEFAULT_ERROR_STRING);
 			} else {
 				if( verbose ){
 sprintf(DEFAULT_ERROR_STRING,"strtod:  possible overflow (inconsistent) buf=\"%s\", d = %g  HUGE_VAL = %g",buf,d,HUGE_VAL);
-ADVISE(DEFAULT_ERROR_STRING);
+advise(DEFAULT_ERROR_STRING);
 				}
 			}
 		} else if( errno != 0 ){
@@ -1976,7 +1976,7 @@ ADVISE(DEFAULT_ERROR_STRING);
 		}
 
 //sprintf(DEFAULT_ERROR_STRING,"flt conversion returning %lg",d);
-//ADVISE(DEFAULT_ERROR_STRING);
+//advise(DEFAULT_ERROR_STRING);
 //		return( scalar_for_double(d) );
 
 	{
@@ -1994,7 +1994,7 @@ static Typed_Scalar * yynumber(SINGLE_QSP_ARG_DECL)
 	Typed_Scalar *tsp;
 
 //sprintf(ERROR_STRING,"yynumber calling parse_number %s",YYSTRPTR[EDEPTH]);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 	tsp = parse_number(DEFAULT_QSP_ARG  (const char **)&YYSTRPTR[EDEPTH]);
 	return tsp;
 }
@@ -2122,8 +2122,7 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 			}
 			*s=0;
 
-			yylvp->func_p = function_of(QSP_ARG
-				sb_buffer(EXPR_STRING[WHICH_EXPR_STR]));
+			yylvp->func_p = function_of(sb_buffer(EXPR_STRING[WHICH_EXPR_STR]));
 			if( yylvp->func_p != NULL ){
 				int t;
 				t = token_for_func_type(FUNC_TYPE(yylvp->func_p));
@@ -2332,7 +2331,7 @@ pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 if( debug & expr_debug ){
 sprintf(ERROR_STRING,"%s - %s:  BEGIN %s, in_pexpr = %d",
 WHENCE2(pexpr),buf,IN_PEXPR);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -2348,10 +2347,10 @@ ADVISE(ERROR_STRING);
 	if( IN_PEXPR ) {
 #ifdef QUIP_DEBUG
 if( debug & expr_debug ){
-ADVISE("pexpr:  nested call to pexpr, calling parse_number");
+advise("pexpr:  nested call to pexpr, calling parse_number");
 }
 #endif /* QUIP_DEBUG */
-//ADVISE("pexpr:  nested call to pexpr, calling parse_number");
+//advise("pexpr:  nested call to pexpr, calling parse_number");
 		return( parse_number(QSP_ARG  &buf) );
 	}
 
@@ -2367,7 +2366,7 @@ ADVISE("pexpr:  nested call to pexpr, calling parse_number");
 		/* Need to somehow free allocated nodes... */
 		if( verbose ){
 			sprintf(ERROR_STRING,"yyparse returned status %d",stat);
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 		}
 		IN_PEXPR=0;
 //fprintf(stderr,"pexpr clearing IN_PEXPR (#1) in thread %d\n",QS_SERIAL);
@@ -2389,7 +2388,7 @@ dump_etree(QSP_ARG  FINAL_EXPR_NODE_P);
 if( debug & expr_debug ){
 if( tsp->ts_prec_code == PREC_DP ){
 sprintf(ERROR_STRING,"pexpr:  s=\"%s\", dval = %g",buf,tsp->ts_value.u_d);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 }
 #endif /* QUIP_DEBUG */

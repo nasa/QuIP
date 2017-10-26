@@ -101,13 +101,13 @@ void getmean( QSP_ARG_DECL  Data_Obj *dp )
 	}
 
 	sprintf(ERROR_STRING,"%f",sum);
-	ASSIGN_VAR("mean",ERROR_STRING);
+	assign_var("mean",ERROR_STRING);
 	sprintf(ERROR_STRING,"%f",sos);
-	ASSIGN_VAR("variance",ERROR_STRING);
+	assign_var("variance",ERROR_STRING);
 	sprintf(ERROR_STRING,"%f",max);
-	ASSIGN_VAR("max",ERROR_STRING);
+	assign_var("max",ERROR_STRING);
 	sprintf(ERROR_STRING,"%f",min);
-	ASSIGN_VAR("min",ERROR_STRING);
+	assign_var("min",ERROR_STRING);
 }
 
 static double equate_value;

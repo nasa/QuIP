@@ -40,7 +40,9 @@ static Viewer *draw_vp=NULL;
 
 #ifdef HAVE_X11
 ITEM_INTERFACE_PROTOTYPES( XFont , xfont )
-#define XFONT_OF( s )		xfont_of( QSP_ARG  s)
+#define xfont_of( s )		_xfont_of( QSP_ARG  s)
+#define new_xfont( s )		_new_xfont( QSP_ARG  s)
+#define list_xfonts( fp )		_list_xfonts( QSP_ARG  fp)
 #endif /* HAVE_X11 */
 
 static int curr_x=0;
@@ -75,7 +77,7 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 
 	DRAW_CHECK(load_font)
 
-	xfp = xfont_of(QSP_ARG  fontname);
+	xfp = xfont_of(fontname);
 	if( xfp != NULL ){
 		sprintf(ERROR_STRING,"load_font:  font %s is already loaded!?",
 			fontname);
@@ -106,7 +108,7 @@ static void load_font(QSP_ARG_DECL  const char *fontname)
 	XFreeFontNames(flist);
 
 	id = XLoadFont(VW_DPY(draw_vp),fontname);
-	xfp = new_xfont(QSP_ARG  fontname);
+	xfp = new_xfont(fontname);
 	if( xfp != NULL ){
 		xfp->xf_id = id;
 		xfp->xf_fsp = XQueryFont(VW_DPY(draw_vp),id);
@@ -164,10 +166,10 @@ static COMMAND_FUNC( do_set_font )
 	s=NAMEOF("font name");
 
 #ifdef HAVE_X11
-	xfp = XFONT_OF(s);
+	xfp = xfont_of(s);
 	if( xfp == NULL ){
 		load_font(QSP_ARG  s);
-		xfp = XFONT_OF(s);
+		xfp = xfont_of(s);
 		if( xfp == NULL ){
 			WARN("Unable to load font!?");
 			return;
@@ -402,7 +404,7 @@ static COMMAND_FUNC( do_set_text_mode )
 		case 2:  right_justify(draw_vp); break;
 #ifdef CAUTIOUS
 		default:
-ERROR1("CAUTIOUS:  do_set_text_mode:  Unexpected text justification index!?");
+error1("CAUTIOUS:  do_set_text_mode:  Unexpected text justification index!?");
 			break;
 #endif /* CAUTIOUS */
 	}
@@ -432,7 +434,7 @@ static COMMAND_FUNC( do_set_text_angle )
 static COMMAND_FUNC( do_list_xfonts )
 {
 #ifdef HAVE_X11
-	list_xfonts(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_xfonts(tell_msgfile());
 #endif /* HAVE_X11 */
 }
 
@@ -446,7 +448,7 @@ static COMMAND_FUNC( do_get_string_width )
 
 	n = get_string_width(draw_vp,s);
 	sprintf(msg_str,"%d",n);
-	ASSIGN_VAR(v,msg_str);
+	assign_var(v,msg_str);
 	rls_str((char *)v);
 }
 

@@ -179,7 +179,7 @@ Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
  * Initialize an existing header structure
  */
 
-static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
+static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 			Dimension_Set *dsp,Precision * prec_p,uint32_t type_flag)
 {
 	if( dp == NULL )	/* name already used */
@@ -228,7 +228,7 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NULL ){
 		/* set this flag so delvec doesn't free nonexistent mem */
 		SET_OBJ_FLAG_BITS(dp,DT_NO_DATA);
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 		return(NULL);
 	}
 
@@ -241,7 +241,7 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 
 Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
-	return init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
+	return _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
 }
 
 
@@ -273,10 +273,10 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 
 	/* Check if we are using contexts...
 	 */
-	dp = new_dobj(QSP_ARG  name);
+	dp = new_dobj(name);
 
 	if( dp == NULL ){
-		dp = dobj_of(QSP_ARG  name);
+		dp = dobj_of(name);
 		if( dp != NULL ){
 
 	// BUG the declfile is ok for the expression
@@ -298,8 +298,8 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 		return(NULL);
 	}
 
-	if( init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
-		delvec(QSP_ARG   dp );
+	if( _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
+		delvec(dp);
 		return(NULL);
 	}
 
@@ -369,7 +369,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 #else // ! NOT_YET
 static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 {
-	ERROR1("make_device_alias:  not implemented, check makedobj.c!?");
+	error1("make_device_alias:  not implemented, check makedobj.c!?");
 }
 #endif // ! NOT_YET
 #endif /* HAVE_CUDA */
@@ -428,7 +428,7 @@ advise(ERROR_STRING);
 		if( get_data_space(QSP_ARG  dp,size,ELEMENT_SIZE(dp) ) < 0 ){
 			SET_OBJ_DATA_PTR(dp,NULL);
 			SET_OBJ_UNALIGNED_PTR(dp,NULL);
-			delvec(QSP_ARG  dp);
+			delvec(dp);
 			return(NULL);
 		}
 	}

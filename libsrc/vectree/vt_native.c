@@ -64,7 +64,7 @@ void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 	}									\
 	if( VN_CODE(enp) != T_ARGLIST ){					\
 		sprintf(ERROR_STRING,"Oops, missing arglist for native function %s!?",name);	\
-		DUMP_TREE(enp);							\
+		dump_tree(enp);							\
 		return;								\
 	}
 
@@ -83,19 +83,19 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp,*src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("cumsum function requires 2 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			dst_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			dst_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			src_dp = eval_obj_exp(arg_enp,NULL);
 
 			if( dst_dp == NULL || src_dp == NULL ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("problem with cumsum args");
 				break;
 			}
@@ -108,26 +108,26 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp,*coord_dp,*src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("render function requires 3 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			dst_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			dst_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			coord_dp = EVAL_OBJ_EXP(arg_enp,NULL);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			coord_dp = eval_obj_exp(arg_enp,NULL);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
+			arg_enp = nth_arg(VN_CHILD(enp,0),2);
+			src_dp = eval_obj_exp(arg_enp,NULL);
 
 			if( dst_dp == NULL || coord_dp == NULL || src_dp == NULL ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("problem with render args");
 				break;
 			}
-			if( FLOATING_PREC(OBJ_PREC(coord_dp)) )
+			if( IS_FLOATING_PREC_CODE(OBJ_PREC(coord_dp)) )
 				render_samples2(QSP_ARG  dst_dp,coord_dp,src_dp);
 			else
 				render_samples(QSP_ARG  dst_dp,coord_dp,src_dp);
@@ -139,16 +139,16 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			Data_Obj *dst_dp, *src_dp;
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("invert function requires 2 args");
 				return;
 			}
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			dst_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			dst_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			src_dp = EVAL_OBJ_EXP(arg_enp,NULL);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			src_dp = eval_obj_exp(arg_enp,NULL);
 
 			/* BUG I use convert() here because I am lazy */
 			/* should just use vmov... */
@@ -169,14 +169,18 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 			char stat_str[32];
 			Variable *vp;
 
+<<<<<<< HEAD
 			s=EVAL_STRING(VN_CHILD(enp,0));
 #ifdef FOOBAR
+=======
+			s=eval_string(VN_CHILD(enp,0));
+>>>>>>> fusion
 			status = system(s);
 #endif // FOOBAR
                 WARN("Sorry, system() is temporarily unavailable!?");
                 
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
-			vp=assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
+			vp=_assign_reserved_var(DEFAULT_QSP_ARG  "exit_status",stat_str);
 			assert( vp != NULL );
 				
 			}
@@ -188,17 +192,17 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 advise("evaluating choldc...");
 			if( arg_count(VN_CHILD(enp,0)) != 2) {
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("choldc requires 2 args");
 				return;
 			}
 
 			/* first arg is the input matrix, second arg is for the diagonal elements... */
-			arg_enp  = NTH_ARG(VN_CHILD(enp,0),0);
-			inmat_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp  = nth_arg(VN_CHILD(enp,0),0);
+			inmat_dp = eval_obj_ref(arg_enp);
 		
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			diag_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			diag_dp = eval_obj_ref(arg_enp);
 
 			if ( inmat_dp == NULL || diag_dp == NULL )
 				return;
@@ -222,19 +226,19 @@ advise("evaluating choldc...");
 			Data_Obj *umat_dp, *vmat_dp, *ev_dp;
 			/* We need to get three args... */
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
-				NODE_ERROR(enp);
+				node_error(enp);
 				NWARN("svdcmp requires 3 args");
 				return;
 			}
 			/* v matrix on the second branch */
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),0);
-			umat_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),0);
+			umat_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),1);
-			ev_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),1);
+			ev_dp = eval_obj_ref(arg_enp);
 
-			arg_enp = NTH_ARG(VN_CHILD(enp,0),2);
-			vmat_dp = EVAL_OBJ_REF(arg_enp);
+			arg_enp = nth_arg(VN_CHILD(enp,0),2);
+			vmat_dp = eval_obj_ref(arg_enp);
 
 			if( ev_dp == NULL || umat_dp == NULL || vmat_dp == NULL )
 				return;
@@ -264,17 +268,17 @@ advise("evaluating choldc...");
 
 			enp=VN_CHILD(enp,0);		/* the arg list */
 			CHECK_ARGLIST(enp,"svbksb")
-			b_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			b_dp = eval_obj_ref(VN_CHILD(enp,1));
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"svbksb")
-			vmat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			vmat_dp = eval_obj_ref(VN_CHILD(enp,1));
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"svbksb")
-			ev_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			ev_dp = eval_obj_ref(VN_CHILD(enp,1));
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"svbksb")
-			umat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
-			x_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+			umat_dp = eval_obj_ref(VN_CHILD(enp,1));
+			x_dp = eval_obj_ref(VN_CHILD(enp,0));
 
 			if( x_dp == NULL || umat_dp == NULL || ev_dp == NULL ||
 				vmat_dp == NULL || b_dp == NULL )
@@ -304,12 +308,12 @@ advise("evaluating choldc...");
 
 			enp=VN_CHILD(enp,0);		/* the arg list */
 			CHECK_ARGLIST(enp,"jacobi")
-			a_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			a_dp = eval_obj_ref(VN_CHILD(enp,1));
 
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"jacobi")
-			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
-			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+			d_dp = eval_obj_ref(VN_CHILD(enp,1));
+			v_dp = eval_obj_ref(VN_CHILD(enp,0));
 
 			if( a_dp == NULL || d_dp == NULL || v_dp == NULL )
 				return;
@@ -339,8 +343,8 @@ advise("evaluating choldc...");
 			/* eigsrt(eigenvectors,eigenvalues) */
 			enp=VN_CHILD(enp,0);
 			CHECK_ARGLIST(enp,"eigsrt")
-			d_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
-			v_dp = EVAL_OBJ_REF(VN_CHILD(enp,0));
+			d_dp = eval_obj_ref(VN_CHILD(enp,1));
+			v_dp = eval_obj_ref(VN_CHILD(enp,0));
 
 			if( d_dp == NULL || v_dp == NULL )
 				return;
@@ -368,9 +372,9 @@ advise("evaluating choldc...");
 			/* left child is an arglist */
 			assert( VN_CODE(VN_CHILD(enp,0)) == T_ARGLIST );
 				
-			dst_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),0));
-			src_dp = EVAL_OBJ_REF(VN_CHILD(VN_CHILD(enp,0),1));
-			mat_dp = EVAL_OBJ_REF(VN_CHILD(enp,1));
+			dst_dp = eval_obj_ref(VN_CHILD(VN_CHILD(enp,0),0));
+			src_dp = eval_obj_ref(VN_CHILD(VN_CHILD(enp,0),1));
+			mat_dp = eval_obj_ref(VN_CHILD(enp,1));
 
 			if( dst_dp == NULL || src_dp == NULL || mat_dp == NULL )
 				return;

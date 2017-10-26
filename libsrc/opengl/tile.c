@@ -1368,7 +1368,7 @@ sprintf(ERROR_STRING,"DEM filename = %s",filename);
 advise(ERROR_STRING);
 			ifp = read_image_file( QSP_ARG  filename );
 			if( ifp == NULL )
-				ERROR1("error reading elevation data");
+				error1("error reading elevation data");
 /*
 sprintf(ERROR_STRING,"\tlevel %d, size is %ld x %ld",i,OBJ_ROWS(ifp->if_dp),OBJ_COLS(ifp->if_dp));
 advise(ERROR_STRING);

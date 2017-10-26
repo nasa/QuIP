@@ -19,9 +19,9 @@
 
 static Item_Type * var__itp=NULL;
 
-extern void list_vars(SINGLE_QSP_ARG_DECL)
+extern void _list_vars(SINGLE_QSP_ARG_DECL)
 {
-	list_items(QSP_ARG  var__itp, tell_msgfile(SINGLE_QSP_ARG));
+	list_items(var__itp, tell_msgfile());
 fprintf(stderr,"list_vars, item_type %s at 0x%lx\n",ITEM_TYPE_NAME(var__itp),(long)var__itp);
 }
 
@@ -29,7 +29,7 @@ const char *var_value(QSP_ARG_DECL  const char *s)
 {
 	Variable *vp;
 	
-	vp=VAR_OF(s);
+	vp=var_of(s);
 	if( vp == NULL ) return NULL;
 	return var_p_value(QSP_ARG  vp);
 }
@@ -52,7 +52,7 @@ Variable *create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *va
 {
 	Variable *vp;
 
-	vp=var_of(QSP_ARG  var_name);
+	vp=var_of(var_name);
 	if( vp != NULL ){
 		sprintf(ERROR_STRING,
 "create_reserved_var:  variable %s already exists!?",var_name);
@@ -66,7 +66,7 @@ Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var
 {
 	Variable *vp;
 
-	vp = new_var_(QSP_ARG  var_name);
+	vp = new_var_(var_name);
 	SET_VAR_VALUE(vp,save_possibly_empty_str(var_val));
 	SET_VAR_FLAGS(vp,VAR_RESERVED);
 	return vp;
@@ -78,11 +78,11 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 	const char *val_str;
 
 	if( *name == 0 ) return NULL;
-	vp=VAR_OF(name);
+	vp=var_of(name);
 	if( vp != NULL ){
 		return(vp);
 	}
-	vp = new_var_(QSP_ARG  name);
+	vp = new_var_(name);
 
 	// if this variable exists in the environment, then
 	// import it, and mark it as reserved...
@@ -104,7 +104,7 @@ static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags
 	return vp;
 }
 
-Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
+Variable *_assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
@@ -137,7 +137,7 @@ Variable *assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 // reserved variables are not assignable from scripts, but
 // are assigned programmatically from code using assign_reserved_var
 
-Variable *assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
+Variable *_assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
@@ -167,11 +167,11 @@ abort();
 	return vp;
 }
 
-Variable *get_var(QSP_ARG_DECL  const char *name)
+Variable *_get_var(QSP_ARG_DECL  const char *name)
 {
 	Variable *vp;
 
-	vp=VAR_OF(name);
+	vp=var_of(name);
 	if( vp == NULL ){
 		sprintf(ERROR_STRING,"No variable \"%s\"!?",name);
 		WARN(ERROR_STRING);
@@ -183,10 +183,10 @@ void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE
 {
 	Variable *vp;
 
-	vp=VAR_OF(name);
+	vp=var_of(name);
 	assert( vp == NULL );
 
-	vp = new_var_(QSP_ARG  name);
+	vp = new_var_(name);
 	SET_VAR_FLAGS(vp, VAR_DYNAMIC | VAR_RESERVED );
 	SET_VAR_FUNC(vp, func);
 }
@@ -325,17 +325,17 @@ void init_variables(SINGLE_QSP_ARG_DECL)
 	init_dynamic_var(QSP_ARG  "pid",get_pid_string);
 	init_dynamic_var(QSP_ARG  "local_date",get_local_date);
 	init_dynamic_var(QSP_ARG  "utc_date",get_utc_date);
-	ASSIGN_VAR("program_name",tell_progname());
-	ASSIGN_VAR("program_version",tell_version());
+	assign_var("program_name",tell_progname());
+	assign_var("program_version",tell_version());
 }
 
 void find_vars(QSP_ARG_DECL  const char *s)
 {
 	List *lp;
 
-	lp=find_items(QSP_ARG  var__itp,s);
+	lp=find_items(var__itp,s);
 	if( lp==NULL ) return;
-	print_list_of_items(QSP_ARG  lp, tell_msgfile(SINGLE_QSP_ARG));
+	print_list_of_items(lp, tell_msgfile());
 }
 
 #define N_EXTRA_CHARS	20
@@ -349,7 +349,7 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	char *str1=NULL;
 	int str1_size=0;
 
-	lp=item_list(QSP_ARG  var__itp);
+	lp=item_list(var__itp);
 	if( lp == NULL ) return;
 
 	np=QLIST_HEAD(lp);
@@ -380,7 +380,7 @@ void search_vars(QSP_ARG_DECL  const char *frag)
 	givbuf(lc_frag);
 }
 
-void reserve_variable(QSP_ARG_DECL  const char *name)
+void _reserve_variable(QSP_ARG_DECL  const char *name)
 {
 	Variable *vp;
 
@@ -405,7 +405,7 @@ void reserve_variable(QSP_ARG_DECL  const char *name)
 // Replace the value of a variable with a string with backslashes
 // inserted before each quote (single or double)
 
-void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
+void _replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 						const char *replace )
 {
 	const char *s, *start;
@@ -434,11 +434,11 @@ void replace_var_string(QSP_ARG_DECL  Variable *vp, const char *find,
 		}
 	} while(*start);
 
-	assign_var(QSP_ARG  VAR_NAME(vp), sb_buffer(sbp) );
+	assign_var(VAR_NAME(vp), sb_buffer(sbp) );
 	rls_stringbuf(sbp);
 }
 
-void show_var(QSP_ARG_DECL  Variable *vp)
+void _show_var(QSP_ARG_DECL  Variable *vp)
 {
 	if( IS_SIMPLE_VAR(vp) ){
 		sprintf(MSG_STR,"$%s = %s",VAR_NAME(vp),VAR_VALUE(vp));
@@ -460,6 +460,6 @@ void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val )
 	sprintf(str,"%ld",val);	// BUG possible buffer overrun???
 
 	// BUG should make this a reserved var?
-	ASSIGN_VAR(varname,str);
+	assign_var(varname,str);
 }
 
