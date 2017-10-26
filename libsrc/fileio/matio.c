@@ -159,11 +159,13 @@ static int describe_matlab_object(QSP_ARG_DECL  matvar_t *matp)
 		case MAT_C_INT64: strcat(msg_str," int64"); break;
 		case MAT_C_UINT64: strcat(msg_str," uint64"); break;
 		case MAT_C_FUNCTION: strcat(msg_str," function"); break;
+#ifdef DEPENDS_ON_VERSION	// but how?  these are recognized on mac, not linux...
 // seems to be an enum, not a define???
 //#ifdef MAT_C_EMPTY
 		case MAT_C_EMPTY: strcat(msg_str," empty"); break;
 //#endif // MAT_C_EMPTY
 		case MAT_C_OPAQUE: strcat(msg_str," opaque"); break;
+#endif // DEPENDS_ON_VERSION	// but how?  these are recognized on mac, not linux...
 	}
 	prt_msg_frag(msg_str);
 

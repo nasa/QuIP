@@ -34,12 +34,9 @@
 
 #define MAX_HIDDEN_CONTEXTS	32
 
-//#define PUSH_CPAIR(cpp)		PUSH_ID_CONTEXT(CP_ID_CTX(cpp));	\
-//				push_dobj_context(CP_OBJ_CTX(cpp))
+#define push_cpair(cpp)		_push_cpair(QSP_ARG  cpp)
 
-#define PUSH_CPAIR(cpp)		push_cpair(QSP_ARG  cpp)
-
-static inline void push_cpair(QSP_ARG_DECL  Context_Pair *cpp)
+static inline void _push_cpair(QSP_ARG_DECL  Context_Pair *cpp)
 {
 //fprintf(stderr,"push_cpair:  pushing %s\n",CTX_NAME(CP_OBJ_CTX(cpp)));
 	PUSH_ID_CONTEXT(CP_ID_CTX(cpp));
@@ -1171,7 +1168,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	if( prev_cpp != NULL ){
-		PUSH_CPAIR(prev_cpp);
+		push_cpair(prev_cpp);
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
@@ -1196,7 +1193,7 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 	}
 
-	PUSH_CPAIR(curr_cpp);
+	push_cpair(curr_cpp);
 
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
@@ -1900,7 +1897,7 @@ static int _assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_en
 			pop_subrt_cpair(QSP_ARG  _curr_cpp,SR_NAME(curr_srp));
 
 			if( prev_cpp != NULL ){
-				PUSH_CPAIR(prev_cpp);
+				push_cpair(prev_cpp);
 			}
 
 			srp = eval_funcref(QSP_ARG  val_enp);
@@ -1911,7 +1908,7 @@ static int _assign_subrt_args(QSP_ARG_DECL Subrt_Call *scp,Vec_Expr_Node *arg_en
 
 			/* Now we switch contexts back to the called subrt */
 
-			PUSH_CPAIR(_curr_cpp);
+			push_cpair(_curr_cpp);
 
 			/* the argument is a function ptr */
 			fpp = eval_funcptr(QSP_ARG  arg_enp);
@@ -1983,7 +1980,7 @@ WARN(ERROR_STRING);
 
 			if( prev_cpp != NULL ){
 
-				PUSH_CPAIR(prev_cpp);
+				push_cpair(prev_cpp);
 
 			}
 
@@ -2011,7 +2008,7 @@ sprintf(ERROR_STRING,"assign_subrt_args T_IMG_DECL:  pushing current context %s"
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-			PUSH_CPAIR(_curr_cpp);
+			push_cpair(_curr_cpp);
 
 			return 0;
 
@@ -2932,7 +2929,7 @@ advise(ERROR_STRING);
 void _restore_previous(QSP_ARG_DECL  Context_Pair *cpp)
 {
 	pop_hidden_context();
-	PUSH_CPAIR(cpp);
+	push_cpair(cpp);
 #ifdef QUIP_DEBUG
 if( debug & scope_debug ){
 sprintf(ERROR_STRING,"restore_previous:  previous contexts %s, %s pushed",

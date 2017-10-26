@@ -369,7 +369,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 #else // ! NOT_YET
 static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 {
-	ERROR1("make_device_alias:  not implemented, check makedobj.c!?");
+	error1("make_device_alias:  not implemented, check makedobj.c!?");
 }
 #endif // ! NOT_YET
 #endif /* HAVE_CUDA */

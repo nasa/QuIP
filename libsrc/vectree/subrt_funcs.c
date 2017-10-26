@@ -149,7 +149,7 @@ static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
 void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Platform_Device *pdp=NULL;
-	Vec_Expr_Node *defining_enp;
+	Vec_Expr_Node *defining_enp=NULL;
 	int curdled=0;
 	int i;
 
