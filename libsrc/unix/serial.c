@@ -655,9 +655,11 @@ static void interp_file(QSP_ARG_DECL  const char *filename)
 static COMMAND_FUNC( do_tty_redir )
 {
 	const char *s;
-	char cmd_str[LLEN];
 	Serial_Port *spp;
+#ifndef BUILD_FOR_IOS
+	char cmd_str[LLEN];
 	int status;
+#endif // ! BUILD_FOR_IOS
 
 	s = NAMEOF("serial port for input redirection");
 
@@ -669,8 +671,8 @@ static COMMAND_FUNC( do_tty_redir )
 	}
 
 	/* BUG should confirm that file exists and is a tty */
-    WARN("tty_redir:  NOT setting line to cooked mode!?");
-#ifdef FOOBAR
+
+#ifndef BUILD_FOR_IOS
 	// Why do we put in cooked mode???
 	// Why do we use system instead of our own stty facility?
 	// Maybe this was written before the internal stty utilities existed?
@@ -678,7 +680,9 @@ static COMMAND_FUNC( do_tty_redir )
 	status=system(cmd_str);
 	if( status < 0 )
 		WARN("Failed to reset serial line!?");
-#endif // FOOBAR
+#else // ! BUILD_FOR_IOS
+	WARN("tty_redir:  NOT setting line to cooked mode (system call not available for iOS!?");
+#endif // ! BUILD_FOR_IOS
     
 	/* ttys_are_interactive=0; */		/* assume a machine is connected */
 	SET_QS_FLAG_BITS(THIS_QSP,QS_INTERACTIVE_TTYS);

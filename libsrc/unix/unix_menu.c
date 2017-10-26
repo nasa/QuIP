@@ -348,8 +348,7 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 #endif // HAVE_GETUID
 
 
-    WARN("Sorry, system command is temporarily unavailable!?");
-#ifdef FOOBAR
+#ifndef BUILD_FOR_IOS
 	// On IOS, there is no stdout, so we don't see any output!?
 	stat=system(s);
 	
@@ -359,7 +358,10 @@ static COMMAND_FUNC( do_system )				/** execute a shell command */
 		sprintf(ERROR_STRING,"Exit status %d",stat);
 		advise(ERROR_STRING);
 	}
-#endif // FOOBAR
+#else // ! BUILD_FOR_IOS
+	WARN("Sorry, system command is temporarily unavailable for iOS!?");
+	stat=(-1);
+#endif // ! BUILD_FOR_IOS
 
 	sprintf(msg_str,"%d",stat);
 	assign_reserved_var("exit_status",msg_str);
