@@ -41,10 +41,6 @@ IOS_ITEM_CHECK_PROT(Nav_Panel,nav_panel)
 IOS_ITEM_ENUM_PROT(Nav_Panel,nav_panel)
 IOS_ITEM_LIST_PROT(Nav_Panel,nav_panel)
 
-#define GET_NAV_PANEL(s)	get_nav_panel(QSP_ARG  s)
-#define NAV_PANEL_OF(s)		nav_panel_of(QSP_ARG  s)
-#define PICK_NAV_PANEL(pmpt)	pick_nav_panel(QSP_ARG  pmpt)
-
 #define NAVP_GRP_CONTEXT(nav_p)		(nav_p).grp_icp
 #define NAVP_ITM_CONTEXT(nav_p)		(nav_p).itm_icp
 
@@ -191,22 +187,26 @@ ITEM_INTERFACE_PROTOTYPES(Nav_Item,nav_item)
 
 #endif // ! BUILD_FOR_OBJC
 
-#define pick_nav_item(s)	_pick_nav_item(QSP_ARG  s)
-#define del_nav_item(s)		_del_nav_item(QSP_ARG  s)
-
 #define init_nav_panels()	_init_nav_panels(SINGLE_QSP_ARG)
 #define pick_nav_panel(s)	_pick_nav_panel(QSP_ARG  s)
 #define get_nav_panel(s)	_get_nav_panel(QSP_ARG  s)
 #define new_nav_panel(s)	_new_nav_panel(QSP_ARG  s)
+#define nav_panel_of(s)		_nav_panel_of(QSP_ARG  s)
+
 
 #define init_nav_groups()	_init_nav_groups(SINGLE_QSP_ARG)
 #define pick_nav_group(pmpt)	_pick_nav_group(QSP_ARG  pmpt)
 #define get_nav_group(s)	_get_nav_group(QSP_ARG  s)
 #define del_nav_group(s)	_del_nav_group(QSP_ARG  s)
 #define new_nav_group(s)	_new_nav_group(QSP_ARG  s)
+#define nav_group_of(s)		_nav_group_of(QSP_ARG  s)
 
 #define init_nav_items()	_init_nav_items(SINGLE_QSP_ARG)
 #define new_nav_item(s)		_new_nav_item(QSP_ARG  s)
+#define pick_nav_item(s)	_pick_nav_item(QSP_ARG  s)
+#define del_nav_item(s)		_del_nav_item(QSP_ARG  s)
+#define nav_item_of(s)		_nav_item_of(QSP_ARG  s)
+
 
 // These prototypes are the same on either system...
 

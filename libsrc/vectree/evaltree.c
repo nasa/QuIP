@@ -3054,6 +3054,8 @@ void _run_subrt_immed(QSP_ARG_DECL  Subrt_Call *scp, Data_Obj *dst_dp)
 	run_subrt(scp,dst_dp);
 }
 
+#ifdef HAVE_ANY_GPU
+
 static Platform_Device *pfdev_for_call(QSP_ARG_DECL  Subrt_Call *scp)
 {
 	// Normally, we determine this from the arg tree...
@@ -3070,6 +3072,8 @@ static Platform_Device *pfdev_for_call(QSP_ARG_DECL  Subrt_Call *scp)
 	return VN_PFDEV( SC_ARG_VALS(scp) );
 }
 
+#endif // HAVE_ANY_GPU
+
 void _run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 {
 	Run_Info *rip;
@@ -3084,11 +3088,15 @@ void _run_subrt(QSP_ARG_DECL Subrt_Call *scp, Data_Obj *dst_dp)
 		return;
 	}
 
+#ifdef HAVE_ANY_GPU
 	// Has this subroutine been "fused" (compiled)?
 	// Need to determine the platform...
 	pdp = pfdev_for_call(QSP_ARG  scp);
 	assert(pdp!=NULL);
 	push_pfdev(pdp);
+#else
+	pdp = NULL;
+#endif // HAVE_ANY_GPU
 
 	if( (kp=find_fused_kernel(QSP_ARG  SC_SUBRT(scp),pdp)) != NULL ){
 		run_fused_kernel(QSP_ARG  scp,kp,pdp);
@@ -3114,7 +3122,9 @@ WARN(ERROR_STRING);
 	}
 
 	wrapup_call(QSP_ARG  rip);
+#ifdef HAVE_ANY_GPU
 	pop_pfdev();
+#endif // HAVE_ANY_GPU
 }
 
 /* A utility routine used when a declaration item has null
@@ -6399,9 +6409,15 @@ _make_local_dobj(QSP_ARG_DECL  Dimension_Set *dsp,Precision *prec_p, Platform_De
 
 	s=localname();	// localname() uses savestr, so we have to free or else there will be a leak
 
+#ifdef HAVE_ANY_GPU
 	if( pdp != NULL ) push_pfdev(pdp);
+#endif // HAVE_ANY_GPU
+
 	dp=make_dobj(QSP_ARG  s,dsp,prec_p);
+
+#ifdef HAVE_ANY_GPU
 	if( pdp != NULL ) pop_pfdev();
+#endif // HAVE_ANY_GPU
 
 	rls_str(s);
 

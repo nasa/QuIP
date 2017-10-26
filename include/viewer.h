@@ -440,8 +440,10 @@ extern Disp_Obj *the_dop;
 
 #endif /* ! BUILD_FOR_OBJC */
 
+#define init_canvas_events()	_init_canvas_events(SINGLE_QSP_ARG)
 #define pick_canvas_event(p)	_pick_canvas_event(QSP_ARG  p)
 #define new_canvas_event(s)	_new_canvas_event(QSP_ARG  s)
+#define canvas_event_of(s)	_canvas_event_of(QSP_ARG  s)
 
 #define SET_VW_FLAG_BITS(vp,v)		SET_VW_FLAGS(vp, VW_FLAGS(vp) | v )
 #define CLEAR_VW_FLAG_BITS(vp,v)	SET_VW_FLAGS(vp, VW_FLAGS(vp) & ~(v) )

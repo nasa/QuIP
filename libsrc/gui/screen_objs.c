@@ -274,7 +274,7 @@ Gen_Win *dummy_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 	gwp = new_genwin(QSP_ARG  name);
 #ifdef CAUTIOUS
 	if( gwp == NULL )
-		ERROR1("CAUTIOUS:  dummy_panel:  error creating panel object!?");
+		error1("CAUTIOUS:  dummy_panel:  error creating panel object!?");
 #endif /* CAUTIOUS */
 
 	SET_GW_WIDTH(gwp, dx);

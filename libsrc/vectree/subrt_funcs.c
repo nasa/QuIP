@@ -120,6 +120,8 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 	return ret_enp;
 }
 
+#ifdef HAVE_ANY_GPU
+
 static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
 {
 	Platform_Device *pdp=NULL;
@@ -188,6 +190,7 @@ void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	}
 	SET_VN_PFDEV(enp,pdp);
 } // update_pfdev_from_children
+#endif // HAVE_ANY_GPU
 
 static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
@@ -205,7 +208,9 @@ static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			// BUG release good node if only one bad
 			if( enp1 != NULL && enp2 != NULL ){
 				return_enp = node2(T_ARGLIST,enp1,enp2);
+#ifdef HAVE_ANY_GPU
 				update_pfdev_from_children(QSP_ARG  return_enp);
+#endif // HAVE_ANY_GPU
 			}
 			break;
 			

@@ -61,7 +61,7 @@ static IOS_Item_Type *panel_obj_itp=NULL;
 // also call the size function thingy...
 //IOS_ITEM_INIT_FUNC(Panel_Obj,panel_obj)
 
-void init_panel_objs(SINGLE_QSP_ARG_DECL)
+void _init_panel_objs(SINGLE_QSP_ARG_DECL)
 {
 	[Panel_Obj initClass];
 	panel_obj_itp = [[IOS_Item_Type alloc]

@@ -71,7 +71,7 @@ IOS_ITEM_CHECK_PROT(Panel_Obj,panel_obj)
 IOS_ITEM_ENUM_PROT(Panel_Obj,panel_obj)
 IOS_ITEM_LIST_PROT(Panel_Obj,panel_obj)
 
-#define GET_PANEL_OBJ(s)	get_panel_obj(QSP_ARG  s)
+//#define GET_PANEL_OBJ(s)	get_panel_obj(QSP_ARG  s)
 
 /* panel.m */
 extern void add_to_panel(Panel_Obj *po, Screen_Obj *sop);

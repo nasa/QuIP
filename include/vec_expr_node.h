@@ -130,7 +130,11 @@ struct vec_expr_node {
 
 /* VecExprNode */
 #define VN_PFDEV(enp)		(enp)->ven_pdp
+#ifdef HAVE_ANY_GPU
 #define SET_VN_PFDEV(enp,pdp)	(enp)->ven_pdp = pdp
+#else // ! HAVE_ANY_GPU
+#define SET_VN_PFDEV(enp,pdp)
+#endif // ! HAVE_ANY_GPU
 #define VN_FLOPS(enp)		(enp)->ven_flops
 #define SET_VN_FLOPS(enp,n)	(enp)->ven_flops = n
 #define VN_INFILE(enp)		(enp)->ven_infile

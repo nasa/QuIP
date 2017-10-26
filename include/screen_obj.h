@@ -418,6 +418,7 @@ ITEM_INTERFACE_PROTOTYPES(Screen_Obj,scrnobj)
 
 #define init_scrnobjs()		_init_scrnobjs(SINGLE_QSP_ARG)
 #define new_scrnobj(s)		_new_scrnobj(QSP_ARG  s)
+#define scrnobj_of(s)		_scrnobj_of(QSP_ARG  s)
 #define pick_scrnobj(pmpt)	_pick_scrnobj(QSP_ARG  pmpt)
 #define del_scrnobj(s)		_del_scrnobj(QSP_ARG  s)
 

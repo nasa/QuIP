@@ -583,7 +583,7 @@ static COMMAND_FUNC( do_delete_func )
 
 static COMMAND_FUNC( do_list_genwins )
 {
-	list_genwins(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_genwins(QSP_ARG  tell_msgfile());
 }
 
 static COMMAND_FUNC( do_genwin_info )

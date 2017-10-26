@@ -150,7 +150,7 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	IOS_Node *np;
 	Panel_Obj *po;
 
-	lp=panel_obj_list(SINGLE_QSP_ARG);
+	lp=panel_obj_list();
 	if( lp == NULL ) return(NULL);
 	np=IOS_LIST_HEAD(lp);
 	while( np!=NULL ){

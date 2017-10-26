@@ -29,7 +29,7 @@ static void find_doc_dir(void)
 						 NSUserDomainMask, YES); 
 	NSString *documentsDirectory = [paths objectAtIndex:0]; // Get documents folder
 
-	ASSIGN_RESERVED_VAR( DOCUMENTS_DIR_VARNAME, documentsDirectory.UTF8String );
+	assign_reserved_var( DOCUMENTS_DIR_VARNAME, documentsDirectory.UTF8String );
 }
 
 
@@ -112,7 +112,7 @@ fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP
 		sprintf(ERROR_STRING,
 			"Failed to find startup file %s.scr or %s.enc!?",
 			startup_filename,startup_filename);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	/* Apparently, this used to be where we looked up the UDID? */
