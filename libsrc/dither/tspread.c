@@ -105,7 +105,7 @@ int _setup_requantize3d(SINGLE_QSP_ARG_DECL)
 
 	if( _edp != NULL )
 		delvec(_edp);
-	_edp = make_obj(QSP_ARG  "HT_error",
+	_edp = make_obj("HT_error",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _edp == NULL ){
 		NWARN("couldn't create error image");
@@ -115,7 +115,7 @@ int _setup_requantize3d(SINGLE_QSP_ARG_DECL)
 
 	if( _fedp != NULL )
 		delvec(_fedp);
-	_fedp = make_obj(QSP_ARG  "HT_ferror",
+	_fedp = make_obj("HT_ferror",
 		OBJ_FRAMES(_hdp),OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _fedp == NULL ){
 		NWARN("couldn't create filtered error image");
@@ -170,7 +170,7 @@ void setup_ffilter3d(QSP_ARG_DECL  Data_Obj *fdp)
 	if( _ffdp != NULL )
 		delvec(_ffdp);
 
-	_ffdp = make_obj(QSP_ARG   "double_filter",OBJ_FRAMES(fdp)*2-1,
+	_ffdp = make_obj("double_filter",OBJ_FRAMES(fdp)*2-1,
 		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));
 
 	if( _ffdp == NULL ){

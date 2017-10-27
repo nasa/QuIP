@@ -25,10 +25,10 @@
 
 static void (*vl2_mem_upload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp )=NULL;
 static void (*vl2_mem_dnload)(QSP_ARG_DECL  void *dst, void *src, size_t siz, index_t offset, struct platform_device *pdp ) = NULL;
-static int (*vl2_obj_alloc)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align) = cpu_obj_alloc;
-static void (*vl2_obj_free)(QSP_ARG_DECL  Data_Obj *dp) = cpu_obj_free;
-static void * (*vl2_mem_alloc)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align) = cpu_mem_alloc;
-static void (*vl2_mem_free)(QSP_ARG_DECL  void *ptr) = cpu_mem_free;
+static int (*vl2_obj_alloc)(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align) = _cpu_obj_alloc;
+static void (*vl2_obj_free)(QSP_ARG_DECL  Data_Obj *dp) = _cpu_obj_free;
+static void * (*vl2_mem_alloc)(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align) = _cpu_mem_alloc;
+static void (*vl2_mem_free)(QSP_ARG_DECL  void *ptr) = _cpu_mem_free;
 static void (*vl2_offset_data)(QSP_ARG_DECL  Data_Obj *dp, index_t o ) = default_offset_data_func;
 
 // Update the offsets in a child after the parent is relocated
@@ -91,7 +91,7 @@ static void init_vl2_pfdevs(QSP_ARG_DECL  Compute_Platform *cpp)
 
 	// set the data area for the device?
 	if( ram_area_p == NULL ){
-		ram_area_p = pf_area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM,pdp);
+		ram_area_p = pf_area_init("ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM,pdp);
 	}
 
 	SET_PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX,ram_area_p);

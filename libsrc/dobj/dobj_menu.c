@@ -65,7 +65,7 @@ static COMMAND_FUNC( do_create_area )
 	INSIST_POSITIVE_NUM(siz,"number of bytes","create_area");
 	INSIST_POSITIVE_NUM(n,"maximum number of objects","create_area");
 
-	curr_ap=new_area(QSP_ARG  area_name, (dimension_t) siz,(unsigned int)n);	// do_create_area
+	curr_ap=new_area(area_name, (dimension_t) siz,(unsigned int)n);	// do_create_area
 }
 
 static COMMAND_FUNC( do_select_area )
@@ -89,7 +89,7 @@ static COMMAND_FUNC( show_area )
 	ap = pick_data_area("");
 	if( ap == NULL ) return;
 
-	show_area_space(QSP_ARG  ap);
+	show_area_space(ap);
 }
 
 static COMMAND_FUNC( do_area_info )
@@ -99,7 +99,7 @@ static COMMAND_FUNC( do_area_info )
 	ap = pick_data_area("");
 	if( ap == NULL ) return;
 
-	data_area_info(QSP_ARG  ap);
+	data_area_info(ap);
 }
 
 static COMMAND_FUNC( do_match_area )
@@ -187,7 +187,9 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL)
 	return (Precision *) pick_item(prec_itp, "data precision" );
 }
 
-static void finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, Precision *prec_p, uint32_t type_flag)
+#define finish_obj(obj_name,dsp,prec_p,type_flag)	_finish_obj(QSP_ARG  obj_name,dsp,prec_p,type_flag)
+
+static void _finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, Precision *prec_p, uint32_t type_flag)
 {
 	assert(prec_p!=NULL);
 
@@ -200,7 +202,7 @@ static void finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, P
 		prec_p = get_prec("float");
 	}
 
-	if( make_dobj_with_shape(QSP_ARG  obj_name,dsp,prec_p,type_flag) == NULL ) {
+	if( make_dobj_with_shape(obj_name,dsp,prec_p,type_flag) == NULL ) {
 		sprintf(ERROR_STRING,"couldn't create data object \"%s\"", obj_name);
 		WARN(ERROR_STRING);
 	}
@@ -232,7 +234,7 @@ static COMMAND_FUNC( new_hyperseq )
 	SET_DIMENSION(dsp,1,nc);
 	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_HYPER_SEQ);
+	finish_obj(obj_name,dsp,prec_p,DT_HYPER_SEQ);
 }
 
 static COMMAND_FUNC( new_seq )
@@ -263,7 +265,7 @@ static COMMAND_FUNC( new_seq )
 	SET_DIMENSION(dsp,1,nc);
 	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_SEQUENCE);
+	finish_obj(obj_name,dsp,prec_p,DT_SEQUENCE);
 }
 
 static COMMAND_FUNC( new_frame )
@@ -293,7 +295,7 @@ static COMMAND_FUNC( new_frame )
 	SET_DIMENSION(dsp,1,nc);
 	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_IMAGE);
+	finish_obj(obj_name,dsp,prec_p,DT_IMAGE);
 }
 
 static COMMAND_FUNC( new_gen_obj )
@@ -332,7 +334,7 @@ static COMMAND_FUNC( new_gen_obj )
 		// If it can, then should move this check to finish_obj???
 	}
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,AUTO_SHAPE);
+	finish_obj(obj_name,dsp,prec_p,AUTO_SHAPE);
 }
 
 #ifdef NOT_YET
@@ -357,7 +359,7 @@ static COMMAND_FUNC( new_obj_list )
 		}
 	}
 
-	if( make_obj_list(QSP_ARG  s,lp) == NULL ){
+	if( make_obj_list(s,lp) == NULL ){
 		sprintf(ERROR_STRING,"error making object list %s");
 		WARN(ERROR_STRING);
 	}
@@ -388,7 +390,7 @@ static COMMAND_FUNC( new_row )
 	SET_DIMENSION(dsp,1,nc);
 	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_ROWVEC);
+	finish_obj(obj_name,dsp,prec_p,DT_ROWVEC);
 }
 
 static COMMAND_FUNC( new_col )
@@ -415,7 +417,7 @@ static COMMAND_FUNC( new_col )
 	SET_DIMENSION(dsp,1,1);
 	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_COLVEC);
+	finish_obj(obj_name,dsp,prec_p,DT_COLVEC);
 }
 
 static COMMAND_FUNC( new_scalar )
@@ -440,7 +442,7 @@ static COMMAND_FUNC( new_scalar )
 	SET_DIMENSION(dsp,1,1);
 	SET_DIMENSION(dsp,0,ncomps);
 
-	finish_obj(QSP_ARG  obj_name,dsp,prec_p,DT_SCALAR);
+	finish_obj(obj_name,dsp,prec_p,DT_SCALAR);
 }
 
 static COMMAND_FUNC( do_delvec )
@@ -486,7 +488,7 @@ static COMMAND_FUNC( mksubimg )
 	INSIST_NONNEGATIVE(xos,"x offset","mksubimg");
 	INSIST_NONNEGATIVE(yos,"y offset","mksubimg");
 
-	newdp=mk_subimg(QSP_ARG  dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols);
+	newdp=mk_subimg(dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
@@ -534,7 +536,7 @@ static COMMAND_FUNC( mksubsequence )
 	SET_DIMENSION(dsp,3,nf);
 	SET_DIMENSION(dsp,4,1);
 
-	newdp=mk_subseq(QSP_ARG  obj_name,dp,offsets,dsp);
+	newdp=mk_subseq(obj_name,dp,offsets,dsp);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
@@ -563,7 +565,7 @@ static COMMAND_FUNC( mksubvector )
 	INSIST_POSITIVE_DIM(cols,"element","mksubvector")
 	INSIST_NONNEGATIVE(xos,"x offset","mksubvector")
 
-	newdp=mk_subimg(QSP_ARG  dp,(index_t)xos,yos,obj_name,rows,(dimension_t)cols);
+	newdp=mk_subimg(dp,(index_t)xos,yos,obj_name,rows,(dimension_t)cols);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
@@ -600,7 +602,7 @@ static COMMAND_FUNC( mksubscalar )
 	offsets[3]=0;
 	offsets[4]=0;
 
-	newdp=mk_subseq(QSP_ARG  obj_name,dp,offsets,dsp);
+	newdp=mk_subseq(obj_name,dp,offsets,dsp);
 	if( newdp == NULL )
 		WARN("couldn't create subscalar");
 }
@@ -619,7 +621,7 @@ static COMMAND_FUNC( do_ilace )
 	parity=WHICH_ONE("parity of selected lines",2,parlist);
 	if( parity < 0 ) return;
 
-	newdp=mk_ilace(QSP_ARG  dp,obj_name,parity);
+	newdp=mk_ilace(dp,obj_name,parity);
 	if( newdp == NULL )
 		WARN("couldn't create interlaced subimage");
 }
@@ -649,7 +651,7 @@ static COMMAND_FUNC( mkcast )
 	INSIST_NONNEGATIVE(xos,"x offset","mkcast")
 	INSIST_NONNEGATIVE(yos,"y offset","mkcast")
 
-	newdp=nmk_subimg(QSP_ARG  dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols,(dimension_t)tdim);
+	newdp=nmk_subimg(dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols,(dimension_t)tdim);
 	if( newdp == NULL )
 		WARN("couldn't create subimage");
 }
@@ -710,7 +712,7 @@ advise("component dim 3 for color");
 		//SET_DIMENSION(dsp,0,3);
 	}
 
-	if( make_equivalence(QSP_ARG  obj_name,dp,dsp,prec_p) == NULL )
+	if( make_equivalence(obj_name,dp,dsp,prec_p) == NULL )
 		WARN("error making equivalence");
 }
 
@@ -776,11 +778,11 @@ static COMMAND_FUNC( mk_subsample )
 
 	// make_subsamp checks the increments...
 
-	if( make_subsamp(QSP_ARG  obj_name,dp,dsp,offsets,incrs) == NULL )
+	if( make_subsamp(obj_name,dp,dsp,offsets,incrs) == NULL )
 		WARN("error making subsamp object");
 }
 
-static COMMAND_FUNC( relocate )
+static COMMAND_FUNC( do_relocate )
 {
 	Data_Obj *dp;
 	long x,y,t;
@@ -804,7 +806,7 @@ static COMMAND_FUNC( relocate )
 		WARN(ERROR_STRING);
 		return;
 	}
-	_relocate(QSP_ARG  dp,(index_t)x,(index_t)y,(index_t)t);
+	relocate(dp,(index_t)x,(index_t)y,(index_t)t);
 }
 
 static COMMAND_FUNC( do_gen_xpose )
@@ -832,11 +834,11 @@ static Data_Obj *get_obj_or_file(QSP_ARG_DECL const char *name)
 	/* dp = dobj_of(name); */
 
 	/* use hunt_obj() in order to pick up indexed strings */
-	dp = hunt_obj(QSP_ARG  name);
+	dp = hunt_obj(name);
 	if( dp != NULL ) return(dp);
 
 #ifndef PC
-	ifp = img_file_of(QSP_ARG  name);
+	ifp = img_file_of(name);
 	if( ifp!=NULL ) return(ifp->if_dp);
 
 	sprintf(ERROR_STRING,"No object or open file \"%s\"",name);
@@ -926,7 +928,7 @@ ADD_CMD( subimage,	mksubimg,	create a subimage	)
 ADD_CMD( subvector,	mksubvector,	create a subvector	)
 ADD_CMD( subscalar,	mksubscalar,	create a subscalar	)
 ADD_CMD( subsequence,	mksubsequence,	create a subsequence	)
-ADD_CMD( relocate,	relocate,	relocate a subimage	)
+ADD_CMD( relocate,	do_relocate,	relocate a subimage	)
 ADD_CMD( equivalence,	equivalence,	equivalence an image to another type	)
 ADD_CMD( transpose,	do_gen_xpose,	generalized transpose (in-place)	)
 ADD_CMD( interlace,	do_ilace,	create a interlaced subimage	)

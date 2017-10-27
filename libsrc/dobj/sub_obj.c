@@ -57,7 +57,9 @@ static index_t get_pix_base_offset(index_t *offsets, Data_Obj *parent)
 
 /* check one dimension */
 
-static int is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *sub_name, Data_Obj *parent )
+#define is_inside(index,which_dim,sub_name,parent)	_is_inside(QSP_ARG  index,which_dim,sub_name,parent)
+
+static int _is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *sub_name, Data_Obj *parent )
 {
 	dimension_t pd;		/* parent dim */
 
@@ -82,7 +84,9 @@ static int is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *su
 
 /* make sure that a requested subobject fits within the parent */
 
-static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimension_Set *dsp, incr_t *incrs, const char *name )
+#define check_inset(parent,offsets,dsp,incrs,name)	_check_inset(QSP_ARG  parent,offsets,dsp,incrs,name)
+
+static int _check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimension_Set *dsp, incr_t *incrs, const char *name )
 {
 	int i;
 	int retval=0;
@@ -97,20 +101,22 @@ static int check_inset( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimens
 		index_t extreme_index;
 
 		extreme_index = offsets[i];
-		if( ! is_inside(QSP_ARG  extreme_index,i,name,parent) )
+		if( ! is_inside(extreme_index,i,name,parent) )
 			retval=(-1);
 
 		extreme_index = offsets[i]+incrs[i]*(DIMENSION(dsp,i)-1);
-		if( ! is_inside(QSP_ARG  extreme_index,i,name,parent) )
+		if( ! is_inside(extreme_index,i,name,parent) )
 			retval=(-1);
 
 	}
 	return retval;
 } /* end check_inset() */
 
-static int check_posn( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimension_Set *dsp, const char *name )
+#define check_posn(parent,offsets,dsp,name)	_check_posn(QSP_ARG  parent,offsets,dsp,name)
+
+static int _check_posn( QSP_ARG_DECL  Data_Obj *parent, index_t *offsets, Dimension_Set *dsp, const char *name )
 {
-	return( check_inset(QSP_ARG  parent,offsets,dsp,ones,name) );
+	return( check_inset(parent,offsets,dsp,ones,name) );
 }
 
 /* Set family fields for both child and parent
@@ -211,19 +217,19 @@ static void set_child_bit0(Data_Obj *dp, index_t *offsets)
 }
 
 Data_Obj *
-mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, Dimension_Set *dsp )
+_mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, Dimension_Set *dsp )
 {
 	Data_Obj *dp;
 	index_t pix_offset;
 
-	if( check_posn(QSP_ARG  parent,offsets,dsp,name) < 0 ) return(NULL);
+	if( check_posn(parent,offsets,dsp,name) < 0 ) return(NULL);
 
 	dp = new_dobj(name);
 	if( dp==NULL ) return(NULL);
 
 	SET_OBJ_SHAPE(dp,ALLOC_SHAPE);
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
+	if( set_obj_dimensions(dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
 		rls_shape( OBJ_SHAPE(dp) );
 		del_dobj(dp);
 		return(NULL);
@@ -237,7 +243,7 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 	set_child_increments(dp,OBJ_TYPE_INCS(parent),OBJ_MACH_INCS(parent));
 	pix_offset = get_pix_base_offset(offsets,parent);
 
-	dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
+	dp = setup_dp(dp,OBJ_PREC_PTR(parent));
 	if( dp==NULL ){
 		/* BUG? where does the cleanup happen? */
 		return(dp);
@@ -274,7 +280,7 @@ mk_subseq( QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, D
 	return(dp);
 } /* end mk_subseq() */
 
-Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
+Data_Obj * _make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 		Dimension_Set *dsp, index_t *offsets, incr_t *incrs )
 {
 	Data_Obj *dp;
@@ -290,7 +296,7 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	//INIT_INCSET_PTR(new_mach_isp)
 	//INIT_INCSET_PTR(new_type_isp)
 
-	if( check_inset(QSP_ARG  parent,offsets,dsp,incrs,name) < 0 )
+	if( check_inset(parent,offsets,dsp,incrs,name) < 0 )
 		return(NULL);
 
 	dp = new_dobj(name);
@@ -298,7 +304,7 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 		return(NULL);
 
 	// init_dp uses AUTO_SHAPE...
-	if( init_dp( QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent) ) == NULL ){
+	if( init_dp(dp,dsp,OBJ_PREC_PTR(parent) ) == NULL ){
 		del_dobj(dp);
 		return(NULL);
 	}
@@ -318,7 +324,7 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 
 	// did init_dp already call setup_dp?? YES
 	// BUT we need to reset the flags!?
-	// dp = setup_dp(QSP_ARG  dp,OBJ_PREC_PTR(parent));
+	// dp = setup_dp(dp,OBJ_PREC_PTR(parent));
 
 	// We might want to not use AUTO_SHAPE - for example, if we subsample
 	// a column vector that we want to treat as an image?
@@ -345,7 +351,7 @@ Data_Obj * make_subsamp( QSP_ARG_DECL  const char *name, Data_Obj *parent,
 	return(dp);
 } /* end mk_subsamp */
 
-Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
+Data_Obj * _mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity )
 {
 	Data_Obj *dp;
 	Dimension_Set ds1, *dsp=(&ds1);
@@ -360,7 +366,7 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
 	DIMSET_COPY(dsp , OBJ_TYPE_DIMS(parent) );
 	SET_DIMENSION(dsp,2,DIMENSION(dsp,2) / 2);
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
+	if( set_obj_dimensions(dp,dsp,OBJ_PREC_PTR(parent)) < 0 ){
 		rls_shape( OBJ_SHAPE(dp) );
 		del_dobj(dp);
 		return(NULL);
@@ -403,7 +409,9 @@ Data_Obj * mk_ilace( QSP_ARG_DECL  Data_Obj *parent, const char *name, int parit
  * relative to its parent...
  */
 
-static void relocate_children(QSP_ARG_DECL  Data_Obj *dp )
+#define relocate_children(dp)	_relocate_children(QSP_ARG  dp)
+
+static void _relocate_children(QSP_ARG_DECL  Data_Obj *dp )
 {
 	Node *np;
 	Data_Obj *child;
@@ -414,7 +422,7 @@ static void relocate_children(QSP_ARG_DECL  Data_Obj *dp )
 		( * PF_UPDATE_OFFSET_FN(OBJ_PLATFORM(dp)) ) (QSP_ARG  child );
 
 		if( OBJ_CHILDREN(child) != NULL )
-			relocate_children(QSP_ARG  child);
+			relocate_children(child);
 		np = NODE_NEXT(np);
 	}
 }
@@ -423,7 +431,7 @@ static void relocate_children(QSP_ARG_DECL  Data_Obj *dp )
  * Checks for valid offsets.
  */
 
-int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
+int _relocate_with_offsets( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 {
 	index_t os;
 
@@ -435,7 +443,7 @@ int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 		return(-1);
 	}
 		
-	if( check_posn(QSP_ARG  OBJ_PARENT(dp),offsets,
+	if( check_posn(OBJ_PARENT(dp),offsets,
 		OBJ_TYPE_DIMS(dp),OBJ_NAME(dp)) < 0 ){
 
 		sprintf(ERROR_STRING,
@@ -453,7 +461,7 @@ int __relocate( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 	 */
 
 	if( OBJ_CHILDREN(dp) != NULL )
-		relocate_children(QSP_ARG  dp);
+		relocate_children(dp);
 
 	return(0);
 } /* __relocate */
@@ -469,12 +477,12 @@ int _relocate( QSP_ARG_DECL  Data_Obj *dp, index_t xos, index_t yos,index_t tos 
 	offsets[3]=tos;
 	offsets[4]=0L;
 
-	return( __relocate(QSP_ARG  dp,offsets) );
+	return( relocate_with_offsets(dp,offsets) );
 }
 
 
 Data_Obj *
-mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols )
+_mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols )
 {
 	index_t offsets[N_DIMENSIONS];
 	Dimension_Set ds1, *dsp=(&ds1);
@@ -485,11 +493,11 @@ mk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *
 	offsets[3]=0L;	SET_DIMENSION(dsp,3,OBJ_TYPE_DIM(parent,3));
 	offsets[4]=0L;	SET_DIMENSION(dsp,4,OBJ_TYPE_DIM(parent,4));
 
-	return(mk_subseq(QSP_ARG  name,parent,offsets,dsp));
+	return(mk_subseq(name,parent,offsets,dsp));
 	// release dimension set or not?
 }
 
-Data_Obj * nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )
+Data_Obj * _nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, const char *name, dimension_t rows,dimension_t cols,dimension_t tdim )
 {
 	index_t offsets[N_DIMENSIONS];
 	Dimension_Set ds1, *dsp=(&ds1);
@@ -500,7 +508,7 @@ Data_Obj * nmk_subimg( QSP_ARG_DECL  Data_Obj *parent, index_t xos,index_t yos, 
 	offsets[3]=0L;	SET_DIMENSION(dsp,3,OBJ_TYPE_DIM(parent,3));
 	offsets[4]=0L;	SET_DIMENSION(dsp,4,OBJ_TYPE_DIM(parent,4));
 
-	return(mk_subseq(QSP_ARG  name,parent,offsets,dsp));
+	return(mk_subseq(name,parent,offsets,dsp));
 }
 
 /* get_machine_dimensions - utility function to support make_equivalence
@@ -592,7 +600,7 @@ static void get_machine_dimensions(Dimension_Set *dst_dsp, Dimension_Set *src_ds
  *
  */
 
-Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp, Precision * prec_p )
+Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Dimension_Set *dsp, Precision * prec_p )
 {
 	Data_Obj *newdp;
 	const char *s;
@@ -877,7 +885,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	SET_OBJ_NAME(newdp,s);
 	SET_OBJ_OFFSET(newdp,0);
 
-	if( set_obj_dimensions(QSP_ARG  newdp,dsp,prec_p) ){
+	if( set_obj_dimensions(newdp,dsp,prec_p) ){
 		rls_shape( OBJ_SHAPE(newdp) );
 		del_dobj(newdp);
 		return(NULL);
@@ -954,7 +962,7 @@ Data_Obj *make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, Di
 	 */
 	parent_relationship(parent,newdp);
 
-	newdp=setup_dp(QSP_ARG  newdp,prec_p);
+	newdp=setup_dp(newdp,prec_p);
 	assert( newdp != NULL );
 
 

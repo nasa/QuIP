@@ -1137,7 +1137,7 @@ static Data_Obj * reshape_obj(QSP_ARG_DECL  Data_Obj *dp,Shape_Info *shpp)
 	 * to use make_local_dobj, because then it would be cleaned up at the end of the command...
 	 */
 
-	tmp_dp = make_dobj(QSP_ARG  localname(),SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+	tmp_dp = make_dobj(localname(),SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
 	assert( dp != NULL );
 	assert( tmp_dp != NULL );
 

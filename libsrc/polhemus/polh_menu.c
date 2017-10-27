@@ -511,8 +511,7 @@ static COMMAND_FUNC( do_mk_vector )
 
 	/* WHY SHORT??? good for binary data, but... */
 	/* BUG need to handle other precisions... */
-	dp = make_dobj(QSP_ARG  name,&ds1,prec_for_code(PREC_IN));
-	//dp = make_dobj(name,&ds1,PREC_SP);
+	dp = make_dobj(name,&ds1,prec_for_code(PREC_IN));
 
 	if( dp == NULL )
 		WARN("unable to create polhemus data vector");

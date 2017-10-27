@@ -131,18 +131,18 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 	ASSIGN_IDX_COUNT(sizes,2,1);
 	ASSIGN_IDX_COUNT(sizes,1,1);
 	ASSIGN_IDX_COUNT(sizes,0,1);
-	sub_dst_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,sizes);	/* xform_list */
+	sub_dst_dp = _mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,sizes);	/* xform_list */
 
 	* sizes = * OBJ_TYPE_DIMS(xform_dp);
 	ASSIGN_IDX_COUNT(sizes,2,1);					/* select one row */
-	sub_xf_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_xf",xform_dp,offsets,sizes);	/* one row */
+	sub_xf_dp = _mk_subseq(DEFAULT_QSP_ARG  "_sub_xf",xform_dp,offsets,sizes);	/* one row */
 	ASSIGN_IDX_COUNT(row_dimset,0,OBJ_COLS(sub_xf_dp));
-	xf_row_dp = make_equivalence(DEFAULT_QSP_ARG  "_xf_row",sub_xf_dp,row_dimset,OBJ_PREC_PTR(sub_xf_dp));
+	xf_row_dp = _make_equivalence(DEFAULT_QSP_ARG  "_xf_row",sub_xf_dp,row_dimset,OBJ_PREC_PTR(sub_xf_dp));
 
 	* sizes = * OBJ_TYPE_DIMS(dpfr);
 	ASSIGN_IDX_COUNT(sizes,2,1);				/* select one pixel */
 	ASSIGN_IDX_COUNT(sizes,1,1);
-	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,sizes);
+	sub_src_dp = _mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,sizes);
 
 	*oap2 = *oap;
 	SET_OA_DEST(oap2,sub_dst_dp);
@@ -221,14 +221,14 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 	/* make a temporary output component */
 	/* like the destination except for tdim */
 
-	//coeff_dp = mk_subimg(DEFAULT_QSP_ARG  xform_dp, 0, 0, "_xform_coeff",1,1);	/* 1x1 subimage at 0 0 */
+	//coeff_dp = _mk_subimg(DEFAULT_QSP_ARG  xform_dp, 0, 0, "_xform_coeff",1,1);	/* 1x1 subimage at 0 0 */
 
 	tmp_sizes = *( OBJ_TYPE_DIMS(dpto) );
 	ASSIGN_IDX_COUNT(&tmp_sizes,0,1);			/* single component */
-	sub_dst_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,&tmp_sizes);	/* vec_xform - RxC image w/ one component */
+	sub_dst_dp = _mk_subseq(DEFAULT_QSP_ARG  "_sub_dst",dpto,offsets,&tmp_sizes);	/* vec_xform - RxC image w/ one component */
 
-	sub_src_dp = mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
-	tmp_dst_dp = make_dobj(DEFAULT_QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
+	sub_src_dp = _mk_subseq(DEFAULT_QSP_ARG  "_sub_src",dpfr,offsets,&tmp_sizes);
+	tmp_dst_dp = _make_dobj(DEFAULT_QSP_ARG  "_tmp_dst",OBJ_TYPE_DIMS(sub_dst_dp),OBJ_PREC_PTR(sub_dst_dp));
 
 	if( sub_dst_dp == NULL || sub_src_dp == NULL || tmp_dst_dp == NULL ){
 		NWARN("error creating temporary object for vec_xform");

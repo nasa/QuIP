@@ -90,7 +90,7 @@ void scale(QSP_ARG_DECL  Data_Obj *dp,double desmin,double desmax)		/* scale an 
 	SET_OA_SRC_OBJ(oap,0,dp);
 	SET_OA_PFDEV(oap, OBJ_PFDEV(dp) );
 
-	scratch_scalar_dp = area_scalar( QSP_ARG  OBJ_AREA(dp) );
+	scratch_scalar_dp = area_scalar(OBJ_AREA(dp));
 	SET_OBJ_PREC_PTR(scratch_scalar_dp,OBJ_PREC_PTR(dp) );
 	/* this used to be oa_sdp[0], but now with "projection" the destination
 	 * doesn't have to be a scalar.

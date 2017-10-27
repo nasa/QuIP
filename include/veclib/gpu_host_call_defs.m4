@@ -730,7 +730,7 @@ dnl	Data_Obj *disp_dp;	// for debugging
 	}
 
 	/* BUG - to make this thread-safe, we need to append the thread index to the name! */
-	prod_dp = make_dobj(DEFAULT_QSP_ARG   "prod_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+	prod_dp = _make_dobj(DEFAULT_QSP_ARG   "prod_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
 	if( prod_dp == NULL ){
 		NWARN("$1:  error creating temp object for products!?");
 		return;

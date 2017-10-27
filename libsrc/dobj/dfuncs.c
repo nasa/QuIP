@@ -142,7 +142,7 @@ static Data_Obj *obj_for_string(QSP_ARG_DECL  const char *string)
 	SET_DIMENSION(dsp,2,1);
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,4,1);
-	dp=make_dobj(QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
+	dp=make_dobj(localname(),dsp,prec_for_code(PREC_STR));
 	if( dp != NULL ){
 		strcpy((char *)OBJ_DATA_PTR(dp),string);
 	}

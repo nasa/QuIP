@@ -200,7 +200,7 @@ static Data_Area * set_arg_data_area(QSP_ARG_DECL  Vec_Obj_Args *oap)
 			 * but we still want to eat up args to avoid
 			 * a parsing error.
 			 */
-			ap = default_data_area(SINGLE_QSP_ARG);
+			ap = default_data_area();
 			push_data_area(ap);
 		}
 	}

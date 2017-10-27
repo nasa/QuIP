@@ -75,15 +75,15 @@ static COMMAND_FUNC( update_vars )
 
 	sprintf(s,"%d",n);
 	sprintf(varname,"n_ready.%s",curr_vdp->vd_name);
-	ASSIGN_VAR(varname,s);
+	assign_var(varname,s);
 
 	sprintf(s,"%d",oldest);
 	sprintf(varname,"oldest.%s",curr_vdp->vd_name);
-	ASSIGN_VAR(varname,s);
+	assign_var(varname,s);
 
 	sprintf(s,"%d",newest);
 	sprintf(varname,"newest.%s",curr_vdp->vd_name);
-	ASSIGN_VAR(varname,s);
+	assign_var(varname,s);
 }
 #endif
 

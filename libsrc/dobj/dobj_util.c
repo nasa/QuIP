@@ -54,7 +54,7 @@ Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 
 // free function for ram data area
 
-void cpu_mem_free(QSP_ARG_DECL  void *ptr)
+void _cpu_mem_free(QSP_ARG_DECL  void *ptr)
 {
 #ifdef HAVE_POSIX_MEMALIGN
 	givbuf(free);
@@ -63,7 +63,7 @@ void cpu_mem_free(QSP_ARG_DECL  void *ptr)
 #endif // ! HAVE_POSIX_MEMALIGN
 }
 
-void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
+void _cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp)
 {
 	givbuf(dp->dt_unaligned_ptr);
 }
