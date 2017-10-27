@@ -187,7 +187,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 
 	// BUG??  with pdp we may not need the DA_ flag???
 	sprintf(area_name,"%s.%s",PLATFORM_NAME(cpp),name_p);
-	ap = pf_area_init(QSP_ARG  area_name,NULL,0,
+	ap = pf_area_init(area_name,NULL,0,
 			MAX_CUDA_GLOBAL_OBJECTS,DA_CUDA_GLOBAL,pdp);
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
@@ -219,7 +219,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	//strcpy(area_name,name_p);
 	//strcat(area_name,"_host");
 	sprintf(area_name,"%s.%s_host",PLATFORM_NAME(cpp),name_p);
-	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
+	ap = pf_area_init(area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 								DA_CUDA_HOST,pdp);
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
@@ -243,7 +243,7 @@ static void init_cu2_device(QSP_ARG_DECL  int index, Compute_Platform *cpp)
 	//strcpy(area_name,name_p);
 	//strcat(area_name,"_host_mapped");
 	sprintf(area_name,"%s.%s_host_mapped",PLATFORM_NAME(cpp),name_p);
-	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
+	ap = pf_area_init(area_name,(u_char *)NULL,0,MAX_CUDA_MAPPED_OBJECTS,
 							DA_CUDA_HOST_MAPPED,pdp);
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,

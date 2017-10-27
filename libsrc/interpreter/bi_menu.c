@@ -1150,7 +1150,7 @@ static COMMAND_FUNC( do_get_filenames )
 	set_dimension(&ds1,1,n);
 	set_dimension(&ds1,0,maxlen);
 
-	dp = make_dobj(QSP_ARG  objname, &ds1,PREC_FOR_CODE(PREC_STR));
+	dp = make_dobj(objname, &ds1,PREC_FOR_CODE(PREC_STR));
 	if( dp == NULL ) goto finish;
 
 	rewinddir(dir_p);

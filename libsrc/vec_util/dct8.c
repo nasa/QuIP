@@ -257,7 +257,7 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 		WARN(ERROR_STRING);
 	}
 
-	block_dp=mk_subimg(QSP_ARG  dp,0,0,"dct_block",DCT_SIZE,DCT_SIZE);
+	block_dp=mk_subimg(dp,0,0,"dct_block",DCT_SIZE,DCT_SIZE);
 	if( block_dp == NULL )
 		WARN("couldn't create subimage for DCT block");
 
@@ -266,7 +266,7 @@ void compute_dct(QSP_ARG_DECL  Data_Obj *dp,int direction)
 
 	for(i=0;i<nx;i++){
 		for(j=0;j<ny;j++){
-			_relocate(QSP_ARG  block_dp,i*DCT_SIZE,j*DCT_SIZE,0);
+			relocate(block_dp,i*DCT_SIZE,j*DCT_SIZE,0);
 			dct8_2D(QSP_ARG  block_dp,direction);
 		}
 	}

@@ -351,10 +351,6 @@ static Scalar_Value private_scalar[N_PROCESSORS];
 	index_t offsets[N_DIMENSIONS]={0,0,0,0,0};				\
 										\
 	n_per_thread = OBJ_TYPE_DIM(dp,i_dim) / n_processors;	\
-/*sprintf(DEFAULT_ERROR_STRING,"FIXIT %s (index = %d):  i_dim = %d   n_per_thread = %ld",		\
-OBJ_NAME(dp), arg_index, i_dim,	\
-							n_per_thread);		\
-NADVISE(DEFAULT_ERROR_STRING);*/								\
 	COPY_DIMS(dsp,OBJ_TYPE_DIMS(dp));					\
 	/* special case the last chunk (later) in case of a remainder... */	\
 	set_dimension(dsp,i_dim, n_per_thread);					\
@@ -365,15 +361,9 @@ NADVISE(DEFAULT_ERROR_STRING);*/								\
 			set_dimension(dsp,i_dim,				\
 	OBJ_TYPE_DIM(dp,i_dim) - n_per_thread * (n_processors-1) );		\
 		}								\
-/*sprintf(DEFAULT_ERROR_STRING,"thread %d:  offset = %ld, n = %ld",i,			\
- * offsets[i_dim],DIMENSION(dsp,i_dim));					\
-NADVISE(DEFAULT_ERROR_STRING);*/								\
 		dest_dp = tmp_obj[arg_index][i] =			\
-			mk_subseq(QSP_ARG  tmp_obj_name[arg_index][i],		\
+			mk_subseq(tmp_obj_name[arg_index][i],		\
 					dp,offsets,dsp);		\
-/*sprintf(DEFAULT_ERROR_STRING,"tmp_obj[%d][%d] %s created",				\
-arg_index,i,OBJ_NAME(tmp_obj[arg_index][i]));					\
-NADVISE(DEFAULT_ERROR_STRING);*/								\
 		offsets[i_dim] += n_per_thread;					\
 	}									\
 }

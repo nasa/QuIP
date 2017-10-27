@@ -78,7 +78,7 @@ void a_init(void)
 	}
 }
 
-Data_Area *default_data_area(SINGLE_QSP_ARG_DECL)
+Data_Area *_default_data_area(SINGLE_QSP_ARG_DECL)
 {
 	if( curr_ap == NULL ) dataobj_init(SINGLE_QSP_ARG);
 	return(curr_ap);
@@ -125,7 +125,7 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, unsigne
 }	// end area_init
 
 Data_Area *			/**/
-pf_area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_chunks, uint32_t flags,   Platform_Device *pdp )
+_pf_area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int n_chunks, uint32_t flags,   Platform_Device *pdp )
 {
 	Data_Area *ap;
 
@@ -138,7 +138,7 @@ pf_area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, int 
 }
 
 Data_Area *
-new_area( QSP_ARG_DECL  const char *s, uint32_t siz, unsigned int n )
+_new_area( QSP_ARG_DECL  const char *s, uint32_t siz, unsigned int n )
 {
 	u_char *buf;
 	Data_Area *ap;
@@ -156,7 +156,7 @@ new_area( QSP_ARG_DECL  const char *s, uint32_t siz, unsigned int n )
 	return(ap);
 }
 
-void data_area_info(QSP_ARG_DECL  Data_Area *ap )
+void _data_area_info(QSP_ARG_DECL  Data_Area *ap )
 {
 	sprintf(MSG_STR,"AREA %s:%-30s",PFDEV_NAME(AREA_PFDEV(ap)),ap->da_name);
 	prt_msg_frag(MSG_STR);
@@ -195,7 +195,7 @@ void data_area_info(QSP_ARG_DECL  Data_Area *ap )
 	}
 }
 
-void list_area(QSP_ARG_DECL  Data_Area *ap )
+void _list_area(QSP_ARG_DECL  Data_Area *ap )
 {
 	sprintf(MSG_STR,"AREA %-10s",ap->da_name);
 	prt_msg_frag(MSG_STR);
@@ -231,7 +231,7 @@ int dp_addr_cmp( const void *dpp1, const void *dpp2 )
 	else return(0);
 }
 
-void show_area_space( QSP_ARG_DECL  Data_Area *ap )
+void _show_area_space( QSP_ARG_DECL  Data_Area *ap )
 {
 	List *lp;
 	Node *np;
@@ -291,7 +291,9 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 
 #define MAX_NAME_LEN	80
 
-static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
+#define init_scratch_scalar(ap)	_init_scratch_scalar(QSP_ARG  ap)
+
+static void _init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
 	char name[MAX_NAME_LEN];
 
@@ -312,10 +314,10 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 	pop_data_area();	// init_scratch_scalar
 }
 
-Data_Obj *area_scalar(QSP_ARG_DECL  Data_Area *ap)
+Data_Obj *_area_scalar(QSP_ARG_DECL  Data_Area *ap)
 {
 	if( AREA_SCALAR_OBJ(ap) == NULL )
-		init_scratch_scalar(QSP_ARG  ap);
+		init_scratch_scalar(ap);
 	return AREA_SCALAR_OBJ(ap);
 }
 

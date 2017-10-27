@@ -80,7 +80,7 @@ static void x_open_movie(QSP_ARG_DECL  const char *filename)
 
 	if( ram_area_p == NULL ) dataobj_init(SINGLE_QSP_ARG);
 
-	dp = make_dobj(QSP_ARG  filename, OBJ_TYPE_DIMS(ifp->if_dp),
+	dp = make_dobj(filename, OBJ_TYPE_DIMS(ifp->if_dp),
 			OBJ_PREC_PTR(ifp->if_dp));
 
 	if( dp == NULL ) return;

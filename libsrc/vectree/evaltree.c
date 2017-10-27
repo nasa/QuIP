@@ -3170,7 +3170,7 @@ static Data_Obj * finish_obj_decl(QSP_ARG_DECL  Vec_Expr_Node *enp,Dimension_Set
 
 	/* at one time we handled special (complex) precision here... */
 
-	dp=make_dobj(QSP_ARG  VN_STRING(enp),dsp,prec_p);
+	dp=make_dobj(VN_STRING(enp),dsp,prec_p);
 
 	if( dp==NULL ){
 		node_error(enp);
@@ -4621,7 +4621,7 @@ static Data_Obj *eval_subvec(QSP_ARG_DECL  Data_Obj *dp, index_t index, index_t 
 	dp2=dobj_of(newname);
 	if( dp2 != NULL ) return(dp2);
 
-	dp2=mk_subseq(QSP_ARG  newname,dp,offsets,dsp);
+	dp2=mk_subseq(newname,dp,offsets,dsp);
 	if( dp2 == NULL ) return(dp2);
 	// We used to decrement maxdim here, but that is wrong...
 	// Because when we do v[0:2]=[1,2,3], v must be subscripted...
@@ -4687,7 +4687,7 @@ static Data_Obj *create_matrix(QSP_ARG_DECL Vec_Expr_Node *enp,Shape_Info *shpp)
 		case T_DYN_OBJ:		/* create_matrix */
 			/* we need to create an identifier too! */
 			idp = make_named_reference(QSP_ARG  VN_STRING(enp));
-			dp = make_dobj(QSP_ARG  VN_STRING(enp),SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+			dp = make_dobj(VN_STRING(enp),SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
 			assert( dp != NULL );
 
 			SET_REF_OBJ(ID_REF(idp), dp );
@@ -4926,7 +4926,7 @@ dump_tree(enp);
 				WARN("invalid parent object for equivalence");
 				return(NULL);
 			}
-			dp = make_equivalence(QSP_ARG  localname(), parent_dp,SHP_TYPE_DIMS(VN_SHAPE(enp)),VN_DECL_PREC(enp));
+			dp = make_equivalence(localname(), parent_dp,SHP_TYPE_DIMS(VN_SHAPE(enp)),VN_DECL_PREC(enp));
 			if( dp == NULL ){
 				node_error(enp);
 				WARN("unable to create equivalence");
@@ -5113,7 +5113,7 @@ dump_tree(enp);
 			offsets[OBJ_RANGE_MAXDIM(dp)] = index;
 			incrs[OBJ_RANGE_MAXDIM(dp)] = inc;
 			/* If we have referred to this before, the object may still exist */
-			sub_dp = make_subsamp(QSP_ARG  tmp_name,dp,dsp,offsets,incrs);
+			sub_dp = make_subsamp(tmp_name,dp,dsp,offsets,incrs);
 
 			if( sub_dp == NULL ) return( sub_dp );
 			SET_OBJ_RANGE_MAXDIM(sub_dp,
@@ -5164,7 +5164,7 @@ dump_tree(enp);
 			dp2=dobj_of(newname);
 			if( dp2 != NULL ) return(dp2);
 
-			dp2=mk_subseq(QSP_ARG  newname,dp,offsets,dsp);
+			dp2=mk_subseq(newname,dp,offsets,dsp);
 			SET_OBJ_RANGE_MINDIM(dp2, OBJ_RANGE_MINDIM(dp)+1 );
 			return(dp2);
 			break;
@@ -5317,7 +5317,7 @@ static void _eval_dim_assignment(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node *enp)
 			COPY_DIMS(dsp , OBJ_TYPE_DIMS(dp) );
 			SET_DIMENSION(dsp,i,1);
 			sprintf(tmp_dst_name,"eda.%s",OBJ_NAME(dp));
-			sub_dp=make_subsamp(QSP_ARG  tmp_dst_name,dp,dsp,dst_offsets,dst_incrs);
+			sub_dp=make_subsamp(tmp_dst_name,dp,dsp,dst_offsets,dst_incrs);
 
 			/* Now copy each row (or whatever).
 			 * Instead of making a new subobject, we just reset the
@@ -6220,14 +6220,14 @@ void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index)
 		}
 		SET_DIMENSION(dsp,which_dim,index);
 
-		new_dp = make_dobj(QSP_ARG  "tmpname",dsp,OBJ_PREC_PTR(dp));
+		new_dp = make_dobj("tmpname",dsp,OBJ_PREC_PTR(dp));
 
 		/* set new data area to all zeroes */
 		sval.u_d = 0.0;	/* BUG assumes PREC_DP */
 		dp_const(QSP_ARG  new_dp,&sval);
 
 		/* copy in original data */
-		sub_dp = mk_subseq(QSP_ARG  "tmp_subseq",new_dp,offsets,OBJ_TYPE_DIMS(dp));
+		sub_dp = mk_subseq("tmp_subseq",new_dp,offsets,OBJ_TYPE_DIMS(dp));
 		dp_copy(QSP_ARG  sub_dp,dp);
 
 		/* get rid of the subimage */
@@ -6259,7 +6259,7 @@ Data_Obj *mlab_reshape(QSP_ARG_DECL  Data_Obj *dp, Shape_Info *shpp, const char 
 	 * object for the assignment, then rename it after
 	 * we are done with the old one...
 	 */
-	dp_new = make_dobj(QSP_ARG  "ass_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
+	dp_new = make_dobj("ass_tmp",SHP_TYPE_DIMS(shpp),SHP_PREC_PTR(shpp));
 	/* BUG? we may have a problem with multiple return objects... */
 	/* what should get_lhs_name() return when there are multiple
 	 * objects on the lhs???
@@ -6410,7 +6410,7 @@ _make_local_dobj(QSP_ARG_DECL  Dimension_Set *dsp,Precision *prec_p, Platform_De
 	if( pdp != NULL ) push_pfdev(pdp);
 #endif // HAVE_ANY_GPU
 
-	dp=make_dobj(QSP_ARG  s,dsp,prec_p);
+	dp=make_dobj(s,dsp,prec_p);
 
 #ifdef HAVE_ANY_GPU
 	if( pdp != NULL ) pop_pfdev();

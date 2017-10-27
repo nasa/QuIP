@@ -321,7 +321,7 @@ static Data_Obj * init_stream_obj(SINGLE_QSP_ARG_DECL)
 	ds1.ds_dimension[3] = 1;
 	ds1.ds_dimension[4] = 1;
 
-	audio_stream_dp = make_dobj(QSP_ARG  "_audio_stream_obj",&ds1,PREC_FOR_CODE(PREC_IN));
+	audio_stream_dp = make_dobj("_audio_stream_obj",&ds1,PREC_FOR_CODE(PREC_IN));
 	return( audio_stream_dp );
 }
 

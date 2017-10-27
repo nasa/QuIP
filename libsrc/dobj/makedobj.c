@@ -40,7 +40,7 @@ void set_dp_alignment(int aval)
 	else default_align=aval;
 }
 
-void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
+void *_cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
 {
 	void *ptr;
 
@@ -81,10 +81,10 @@ void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int al
 
 // allocate memory for a new object in ram
 
-int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+int _cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
 {
 	unsigned char *st;
-	st = cpu_mem_alloc(QSP_ARG  NULL, size, align );
+	st = cpu_mem_alloc(NULL, size, align );
 
 	/* remember the original address of the data for freeing! */
 	SET_OBJ_UNALIGNED_PTR(dp,st);
@@ -170,7 +170,7 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 	return(dp);
 }
 
-Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
+Data_Obj *_setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
 {
 	return setup_dp_with_shape(QSP_ARG  dp,prec_p,AUTO_SHAPE);
 }
@@ -217,7 +217,7 @@ static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	 * various revisions...), and setup_dp returns NULL
 	 */
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,prec_p) < 0 ){
+	if( set_obj_dimensions(dp,dsp,prec_p) < 0 ){
 		WARN("init_dp_with_shape:  error setting dimensions");
 		return(NULL);
 		/* BUG might want to clean up */
@@ -239,7 +239,7 @@ static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	return(dp);
 } // end init_dp_with_shape
 
-Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
+Data_Obj *_init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
 	return _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
 }
@@ -344,7 +344,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	// Need to allocate dimensions and increments...
 	SET_OBJ_SHAPE(new_dp, ALLOC_SHAPE );
 
-	if( set_obj_dimensions(QSP_ARG  new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
+	if( set_obj_dimensions(new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
 		NERROR1("make_device_alias:  error setting alias dimensions");
 	parent_relationship(dp,new_dp);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -383,7 +383,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
  */
 
 Data_Obj *
-make_dobj_with_shape(QSP_ARG_DECL  const char *name,
+_make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 			Dimension_Set *dsp,Precision * prec_p, uint32_t type_flag)
 {
 	Data_Obj *dp;
@@ -445,9 +445,9 @@ advise(ERROR_STRING);
 } /* end make_dobj_with_shape */
 
 Data_Obj *
-make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
+_make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
 {
-	return make_dobj_with_shape(QSP_ARG  name,dsp,prec_p,AUTO_SHAPE);
+	return make_dobj_with_shape(name,dsp,prec_p,AUTO_SHAPE);
 }
 
 /*
@@ -457,7 +457,7 @@ make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
  * (why?  it doesn't set increments...)
  */
 
-int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
+int _set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
 //	int retval=0;
 
@@ -610,7 +610,7 @@ comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 	sprintf(s,".%d",n);
 
 	if( allocate_data )
-		dp2=make_dobj(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));
+		dp2=make_dobj(str,dsp,OBJ_PREC_PTR(dp));
 	else {
 		/* We call this from xsupp when we want to point to an XImage */
 		dp2 = _make_dp(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));

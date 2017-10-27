@@ -95,7 +95,7 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 /* this routine is made obsolete by make_dobj */
 
 Data_Obj *
-make_obj(QSP_ARG_DECL  const char *name,
+_make_obj(QSP_ARG_DECL  const char *name,
 	dimension_t frames,
 	dimension_t rows,
 	dimension_t cols,
@@ -113,7 +113,7 @@ make_obj(QSP_ARG_DECL  const char *name,
 	SET_DIMENSION(dsp,3,frames);
 	SET_DIMENSION(dsp,4,1);
 
-	dp = make_dobj(QSP_ARG  name,dsp,prec_p);
+	dp = make_dobj(name,dsp,prec_p);
 
 	RELEASE_DIMSET(dsp);
 
@@ -162,7 +162,7 @@ Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 		error1("Unexpected pointer size!?");
 	}
 
-	dp = make_dobj(QSP_ARG  name,dsp,prec_p);	/* specify prec_long because sizeof(long) == sizeof(dp) */
+	dp = make_dobj(name,dsp,prec_p);	/* specify prec_long because sizeof(long) == sizeof(dp) */
 
 	SET_OBJ_PREC_PTR(dp,NULL);
 
@@ -197,7 +197,7 @@ Data_Obj *mk_scalar(QSP_ARG_DECL  const char *name,Precision * prec_p)
 {
 	Data_Obj *dp;
 
-	dp=make_obj(QSP_ARG  name,1,1,1,1,prec_p);
+	dp=make_obj(name,1,1,1,1,prec_p);
 	return(dp);
 }
 
@@ -290,7 +290,7 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 {
 	Data_Obj *dp;
 
-	dp=make_obj(QSP_ARG  name,1,1,1,2,prec_for_code(PREC_SP));
+	dp=make_obj(name,1,1,1,2,prec_for_code(PREC_SP));
 	if( dp != NULL ){
 		*((float *)OBJ_DATA_PTR(dp)) = (float)rval;
 		*( ((float *)OBJ_DATA_PTR(dp)) + 1 ) = (float)ival;
@@ -302,14 +302,14 @@ mk_cscalar(QSP_ARG_DECL  const char *name,double rval,double ival)
 Data_Obj *
 _mk_img(QSP_ARG_DECL  const char *name,dimension_t rows,dimension_t cols,dimension_t type_dim,Precision *prec_p)		/**/
 {
-	return( make_obj(QSP_ARG  name,1,rows,cols,type_dim,prec_p) );
+	return( make_obj(name,1,rows,cols,type_dim,prec_p) );
 }
 
 
 Data_Obj *
 mk_vec(QSP_ARG_DECL  const char *name,dimension_t dim,dimension_t type_dim,Precision *prec_p)		/**/
 {
-	return( make_obj(QSP_ARG  name,1,1,dim,type_dim,prec_p) );
+	return( make_obj(name,1,1,dim,type_dim,prec_p) );
 }
 
 /* what is this for? half size?? */
@@ -325,7 +325,7 @@ dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
-	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
+	dp2=make_obj(name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
 	return(dp2);
 }
@@ -341,7 +341,7 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
-	dp2=make_obj(QSP_ARG  name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
+	dp2=make_obj(name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
 	return(dp2);
 }
@@ -356,7 +356,7 @@ dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 {
 	Data_Obj *dp2;
 
-	dp2=make_obj(QSP_ARG  name,OBJ_FRAMES(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
+	dp2=make_obj(name,OBJ_FRAMES(dp),OBJ_ROWS(dp),OBJ_COLS(dp),
 			OBJ_COMPS(dp),OBJ_PREC_PTR(dp));
 	return(dp2);
 }

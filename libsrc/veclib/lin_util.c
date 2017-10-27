@@ -193,7 +193,7 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	else 
 		col_dp=dpfr2;
 
-	SET_OA_DEST(oap,mk_subimg(QSP_ARG  dpto,0,0,"target pixel",1,1) );
+	SET_OA_DEST(oap,mk_subimg(dpto,0,0,"target pixel",1,1) );
 
 	// This has to be called after src/dest are set!
 	set_obj_arg_flags(oap);
@@ -202,7 +202,7 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	set_dimension(sizes,1,OBJ_ROWS(col_dp));
 	set_dimension(sizes,0,OBJ_COMPS(col_dp));
 
-	SET_OA_SRC2(oap,make_equivalence(QSP_ARG  "_transposed_column",
+	SET_OA_SRC2(oap,make_equivalence("_transposed_column",
 						col_dp,sizes,OBJ_PREC_PTR(col_dp)) );
 
 	for(i=0;i<OBJ_ROWS(dpto);i++){
@@ -411,7 +411,7 @@ void newmtrx(QSP_ARG_DECL  const char *s,int dim)
 		WARN("name in use already");
 		return;
 	}
-	mp=make_obj(QSP_ARG  s,1,dim,dim,1,prec_for_code(PREC_SP));
+	mp=make_obj(s,1,dim,dim,1,prec_for_code(PREC_SP));
 	if( mp == NULL ){
 		WARN("couldn't create new matrix");
 		return;

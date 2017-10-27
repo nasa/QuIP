@@ -305,10 +305,10 @@ advise(ERROR_STRING);
 	if( old_obj == NULL ){
 		/* BUG? set curr_ap to ram_area? */
 		if( data_len > 0 )
-			new_dp=make_dobj(QSP_ARG  namebuf,&_type_dims,
+			new_dp=make_dobj(namebuf,&_type_dims,
 							PREC_FOR_CODE(_prec_code));
 		else {
-			new_dp=_make_dp(QSP_ARG  namebuf,&_type_dims,
+			new_dp=make_dp(namebuf,&_type_dims,
 							PREC_FOR_CODE(_prec_code));
 			SET_OBJ_DATA_PTR(new_dp,NULL);
 		}

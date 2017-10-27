@@ -1,3 +1,6 @@
+#ifndef _DOBJ_PROT_H_
+#define _DOBJ_PROT_H_
+
 #include "quip_config.h"
 #include <stdio.h>
 #include "quip_menu.h"
@@ -118,11 +121,8 @@ extern void *		multiply_indexed_data(Data_Obj *dp, dimension_t *offset );
 extern void *		indexed_data(Data_Obj *dp, dimension_t offset );
 extern void		make_contiguous(Data_Obj *);
 extern int		set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dimensions,Precision *);
-extern int		set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dimensions,Precision *);
 extern int		obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
-extern Data_Obj *	make_obj_list(QSP_ARG_DECL  const char *name,List *lp);
-extern Data_Obj *	make_obj(QSP_ARG_DECL  const char *name,dimension_t frames,
-	dimension_t rows,dimension_t cols,dimension_t type_dim,Precision * prec_p);
+extern Data_Obj *	_make_obj_list(QSP_ARG_DECL  const char *name,List *lp);
 extern Data_Obj *	mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
 extern void		assign_scalar_obj(QSP_ARG_DECL  Data_Obj *,Scalar_Value *);
 extern void		extract_scalar_value(QSP_ARG_DECL  Scalar_Value *, Data_Obj *);
@@ -133,7 +133,6 @@ extern void		cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Pre
 extern void		cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern void		cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
-extern Data_Obj *	_mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
 extern Data_Obj *	mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
 extern Data_Obj *	comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data);
 extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
@@ -143,22 +142,38 @@ extern const char *	localname(void);
 extern Data_Obj *	dupdp(QSP_ARG_DECL  Data_Obj *dp);
 extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
+extern Data_Obj *	_mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
+extern int		_set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dimensions,Precision *);
+extern Data_Obj *	_make_obj(QSP_ARG_DECL  const char *name,dimension_t frames, dimension_t rows,dimension_t cols,dimension_t type_dim,Precision * prec_p);
 #define mk_img(s,h,w,d,p)	_mk_img(QSP_ARG  s,h,w,d,p)
+#define set_obj_dimensions(dp,dimensions,prec_p)	_set_obj_dimensions(QSP_ARG  dp,dimensions,prec_p)
+#define make_obj(name,frames,rows,cols,type_dim,prec_p)	_make_obj(QSP_ARG  name,frames,rows,cols,type_dim,prec_p)
 
 /* makedobj.c */
-extern int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align );
-extern void cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp );
-extern void * cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align );
-extern void cpu_mem_free(QSP_ARG_DECL  void *ptr );
-
-extern Data_Obj * make_dobj_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *,uint32_t);
 extern void	  set_dp_alignment(int);
-// what is the difference between make_dobj and _make_dp???
-extern Data_Obj * make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *);
-extern Data_Obj * setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision *);
-extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision * );
-extern Data_Obj * init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *,Precision *);
 extern void set_dimension(Dimension_Set *dsp, int idx, dimension_t value);
+
+extern int _cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align );
+extern void _cpu_obj_free(QSP_ARG_DECL  Data_Obj *dp );
+extern void * _cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align );
+extern void _cpu_mem_free(QSP_ARG_DECL  void *ptr );
+extern Data_Obj * _make_dobj_with_shape(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision *prec_p,uint32_t typ_flg);
+
+// what is the difference between make_dobj and _make_dp???
+extern Data_Obj * _make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision *);
+extern Data_Obj * _setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision *);
+extern Data_Obj * _make_dp(QSP_ARG_DECL  const char *name,Dimension_Set *,Precision * );
+extern Data_Obj * _init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *,Precision *);
+
+#define make_dobj(name,dsp,prec_p)	_make_dobj(QSP_ARG  name,dsp,prec_p)
+#define setup_dp(dp,prec_p)		_setup_dp(QSP_ARG  dp,prec_p)
+#define make_dp(name,dsp,prec_p)	_make_dp(QSP_ARG  name,dsp,prec_p)
+#define init_dp(dp,dsp,prec_p)		_init_dp(QSP_ARG  dp,dsp,prec_p)
+#define cpu_obj_alloc(dp,size,align)	_cpu_obj_alloc(QSP_ARG  dp,size,align)
+#define cpu_obj_free(dp)		_cpu_obj_free(QSP_ARG  dp)
+#define cpu_mem_alloc(pdp,size,align)	_cpu_mem_alloc(QSP_ARG  pdp,size,align)
+#define cpu_mem_free(ptr)		_cpu_mem_free(QSP_ARG  ptr)
+#define make_dobj_with_shape(name,dsp,prec_p,n)	_make_dobj_with_shape(QSP_ARG  name,dsp,prec_p,n)
 
 // These can probably be local to module...
 
@@ -182,20 +197,28 @@ extern void rls_shape(Shape_Info *shpp);
 
 void			push_data_area(Data_Area *);
 void			pop_data_area(void);
-extern List *		da_list(SINGLE_QSP_ARG_DECL);
+extern int		dp_addr_cmp(const void *dpp1,const void *dpp2);
 extern void		a_init(void);
-extern Data_Area *	default_data_area(SINGLE_QSP_ARG_DECL);
 extern void		set_data_area(Data_Area *);
 extern Data_Obj *	search_areas(const char *name);
-extern Data_Area *	pf_area_init(QSP_ARG_DECL  const char *name,u_char *buffer,uint32_t siz,int nobjs,uint32_t flags, struct platform_device *pdp);
-// now only use pf_area_init...
-//extern Data_Area *	area_init(QSP_ARG_DECL  const char *name,u_char *buffer,uint32_t siz,int nobjs,uint32_t flags);
-extern Data_Area *	new_area(QSP_ARG_DECL  const char *s,uint32_t siz,uint32_t n);
-extern void		list_area(QSP_ARG_DECL  Data_Area *ap);
-extern void		data_area_info(QSP_ARG_DECL  Data_Area *ap);
-extern int		dp_addr_cmp(const void *dpp1,const void *dpp2);
-extern void		show_area_space(QSP_ARG_DECL  Data_Area *ap);
-extern Data_Obj *	area_scalar(QSP_ARG_DECL  Data_Area *ap);
+
+extern List *		_da_list(SINGLE_QSP_ARG_DECL);
+extern Data_Area *	_default_data_area(SINGLE_QSP_ARG_DECL);
+extern Data_Area *	_pf_area_init(QSP_ARG_DECL  const char *name,u_char *buffer,uint32_t siz,int nobjs,uint32_t flags, struct platform_device *pdp);
+extern Data_Area *	_new_area(QSP_ARG_DECL  const char *s,uint32_t siz,uint32_t n);
+extern void		_list_area(QSP_ARG_DECL  Data_Area *ap);
+extern void		_data_area_info(QSP_ARG_DECL  Data_Area *ap);
+extern void		_show_area_space(QSP_ARG_DECL  Data_Area *ap);
+extern Data_Obj *	_area_scalar(QSP_ARG_DECL  Data_Area *ap);
+
+#define da_list()					_da_list(SINGLE_QSP_ARG)
+#define default_data_area() 				_default_data_area(SINGLE_QSP_ARG)
+#define pf_area_init(name,buffer,siz,nobjs,flags,pdp)	_pf_area_init(QSP_ARG  name,buffer,siz,nobjs,flags,pdp)
+#define new_area(s,siz,n)				_new_area(QSP_ARG  s,siz,n)
+#define list_area(ap)					_list_area(QSP_ARG  ap)
+#define data_area_info(ap)				_data_area_info(QSP_ARG  ap)
+#define show_area_space(ap)				_show_area_space(QSP_ARG  ap)
+#define area_scalar(ap)					_area_scalar(QSP_ARG  ap)
 
 /* formerly in index.h */
 extern Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str );
@@ -253,20 +276,25 @@ extern double seq_func(Data_Obj *);
 /* sub_obj.c */
 
 extern void parent_relationship(Data_Obj *parent,Data_Obj *child);
-extern Data_Obj *mk_subseq(QSP_ARG_DECL  const char *name, Data_Obj *parent,
- index_t *offsets, Dimension_Set *sizes);
-extern Data_Obj *mk_ilace(QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity);
-extern int __relocate(QSP_ARG_DECL  Data_Obj *dp,index_t *offsets);
-extern int _relocate(QSP_ARG_DECL  Data_Obj *dp,index_t xos,index_t yos,index_t tos);
-extern Data_Obj *mk_subimg(QSP_ARG_DECL  Data_Obj *parent, index_t xos, index_t yos,
- const char *name, dimension_t rows, dimension_t cols);
-extern Data_Obj *nmk_subimg(QSP_ARG_DECL  Data_Obj *parent, index_t xos, index_t yos, 
- const char *name, dimension_t rows, dimension_t cols, dimension_t tdim);
-extern Data_Obj *make_equivalence(QSP_ARG_DECL  const char *name, Data_Obj *dp,
- Dimension_Set *dsp, Precision * prec_p);
-extern Data_Obj *make_subsamp(QSP_ARG_DECL  const char *name, Data_Obj *dp,
- Dimension_Set *sizes, index_t *offsets, incr_t *incrs );
 extern void propagate_flag_to_children(Data_Obj *dp, uint32_t flags );
+
+extern Data_Obj *_mk_subseq(QSP_ARG_DECL  const char *name, Data_Obj *parent, index_t *offsets, Dimension_Set *sizes);
+extern Data_Obj *_mk_ilace(QSP_ARG_DECL  Data_Obj *parent, const char *name, int parity);
+extern int _relocate_with_offsets(QSP_ARG_DECL  Data_Obj *dp,index_t *offsets);
+extern int _relocate(QSP_ARG_DECL  Data_Obj *dp,index_t xos,index_t yos,index_t tos);
+extern Data_Obj *_mk_subimg(QSP_ARG_DECL  Data_Obj *parent, index_t xos, index_t yos, const char *name, dimension_t rows, dimension_t cols);
+extern Data_Obj *_nmk_subimg(QSP_ARG_DECL  Data_Obj *parent, index_t xos, index_t yos, const char *name, dimension_t rows, dimension_t cols, dimension_t tdim);
+extern Data_Obj *_make_equivalence(QSP_ARG_DECL  const char *name, Data_Obj *dp, Dimension_Set *dsp, Precision * prec_p);
+extern Data_Obj *_make_subsamp(QSP_ARG_DECL  const char *name, Data_Obj *dp, Dimension_Set *sizes, index_t *offsets, incr_t *incrs );
+
+#define mk_subseq(name,parent,offsets,sizes)		_mk_subseq(QSP_ARG  name,parent,offsets,sizes)
+#define mk_ilace(parent,name,parity)			_mk_ilace(QSP_ARG  parent,name,parity)
+#define relocate_with_offsets(dp,offsets)		_relocate_with_offsets(QSP_ARG  dp,offsets)
+#define relocate(dp,xos,yos,tos)			_relocate(QSP_ARG  dp,xos,yos,tos)
+#define mk_subimg(parent,xos,yos,name,rows,cols)	_mk_subimg(QSP_ARG  parent,xos,yos,name,rows,cols)
+#define nmk_subimg(parent,xos,yos,name,rows,cols,tdim)	_nmk_subimg(QSP_ARG  parent,xos,yos,name,rows,cols,tdim)
+#define make_equivalence(name,dp,dsp,prec_p)		_make_equivalence(QSP_ARG  name,dp,dsp,prec_p)
+#define make_subsamp(name,dp,sizes,offsets,incrs)	_make_subsamp(QSP_ARG  name,dp,sizes,offsets,incrs)
 
 
 /* verdata.c */
@@ -332,3 +360,4 @@ extern Precision *	complex_precision(Precision *);
 // fio_menu.c
 extern COMMAND_FUNC( do_fio_menu );
 
+#endif // ! _DOBJ_PROT_H_

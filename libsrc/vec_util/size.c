@@ -73,8 +73,8 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 	/* make the subsamples.
 	 * the column increment is expressed in columns, etc.
 	 */
-	dst_ss_dp=make_subsamp(QSP_ARG  "chngsize_dst_obj",dst_dp,size_dsp,offsets,dst_incrs);
-	src_ss_dp=make_subsamp(QSP_ARG  "chngsize_src_obj",src_dp,size_dsp,offsets,src_incrs);
+	dst_ss_dp=make_subsamp("chngsize_dst_obj",dst_dp,size_dsp,offsets,dst_incrs);
+	src_ss_dp=make_subsamp("chngsize_src_obj",src_dp,size_dsp,offsets,src_incrs);
 
 	clear_obj_args(oap);
 	SET_OA_DEST(oap,dst_ss_dp);

@@ -190,18 +190,12 @@ advise(ERROR_STRING);
 
 #define DO_BLOCK( xos, yos )								\
 											\
-/*sprintf(ERROR_STRING,"DO_BLOCK %d %d   dx = %d    dy = %d",xos,yos,dx,dy);		\
-ADVISE(ERROR_STRING);									\
-sprintf(ERROR_STRING,									\
-"src (%s) size:  %ld x %ld",OBJ_NAME(src_dp),OBJ_ROWS(src_dp),OBJ_COLS(src_dp));	\
-ADVISE(ERROR_STRING);*/									\
-											\
-	sub_dst_dp = nmk_subimg(QSP_ARG  dst_dp, (xos)==0?dx:0 , (yos)==0?dy:0 ,	\
+	sub_dst_dp = nmk_subimg(dst_dp, (xos)==0?dx:0 , (yos)==0?dy:0 ,			\
 					"tmp_dst",					\
 					(yos)==0?OBJ_ROWS(src_dp)-(dy):dy,		\
 					(xos)==0?OBJ_COLS(src_dp)-(dx):dx,		\
 					OBJ_COMPS(dst_dp) );				\
-	sub_src_dp = nmk_subimg(QSP_ARG  src_dp, xos, yos, "tmp_src",			\
+	sub_src_dp = nmk_subimg(src_dp, xos, yos, "tmp_src",				\
 					(yos)==0?OBJ_ROWS(src_dp)-(dy):dy,		\
 					(xos)==0?OBJ_COLS(src_dp)-(dx):dx,		\
 					OBJ_COMPS(src_dp) );				\
@@ -213,7 +207,7 @@ ADVISE(ERROR_STRING);*/									\
 		OA_ARGSTYPE(oap) = REAL_ARGS; 						\
 	/* vmov(oap); */								\
 	call_vfunc( QSP_ARG  FIND_VEC_FUNC(FVMOV), oap );				\
-	delvec(sub_dst_dp);							\
+	delvec(sub_dst_dp);								\
 	delvec(sub_src_dp);
 
 	if( dx == 0 ){
