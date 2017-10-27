@@ -13,6 +13,7 @@ libvisca_a_SOURCES = 					\
 
 noinst_HEADERS =		cam_params.h visca.h
 
+# temporarily disable
 viscadata_DATA	=	zoom_coeffs.asc
 
 EXTRA_DIST	=	$(viscadata_DATA)

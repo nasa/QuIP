@@ -14,6 +14,7 @@ GENERATED_SRCS=								\
 			$(builddir)/cu2_yuv2rgb_expanded.c		\
 			$(builddir)/cu2_centroid_expanded.c
 
+
 clean-local:
 	rm -rf $(GENERATED_SRCS)
 
@@ -27,6 +28,10 @@ $(builddir)/cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
 
 $(builddir)/cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+
+#new_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
+#	m4 $(M4OPTS) < $(srcdir)/new_fill.m4 > $(builddir)/new_fill_expanded.c
+
 	m4 $(M4OPTS) < $(srcdir)/cu2_yuv2rgb.m4 > $(builddir)/cu2_yuv2rgb_expanded.c
 
 $(builddir)/cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
@@ -47,6 +52,9 @@ $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 #	touch $(srcdir)/cu2_utils.cu
 $(srcdir)/cu2_utils.c:	$(builddir)/cu2_utils_expanded.c
 	touch $(srcdir)/cu2_utils.c
+#$(srcdir)/new_fill.cu:	$(builddir)/new_fill_expanded.c
+#	touch $(srcdir)/new_fill.cu
+
 
 
 # Why does the generic rule not work?
@@ -95,6 +103,8 @@ NVCPPFLAGS =	-I/usr/local/cuda/include -I$(builddir) -I$(top_builddir) -I$(top_s
 #clean-local:
 #	-rm -rf cu2_veclib_expanded.c cu2_veclib_stripped.c
 
+#				new_fill.cu
+
 NVCC_SOURCES =						\
 				cu2_funcs.cu		\
 				cu2_fill.cu		\
@@ -113,6 +123,8 @@ $(srcdir)/m4_cu2_veclib.c:	cu2_veclib_expanded.c
 
 #			cu2_kern_args.m4
 #			cu2_kernel_src.m4
+
+#			$(srcdir)/new_fill.m4
 
 LOCAL_M4FILES=							\
 			$(srcdir)/cu2_fft_funcs.m4		\
@@ -237,6 +249,8 @@ INC_M4FILES=							\
 #			cu2_host_call_defs.h
 #			cu2_host_untyped_call_defs.h
 #			cu2_typtbl.h
+
+#			new_fill.cu
 
 noinst_HEADERS =					\
 			$(LOCAL_M4FILES)		\

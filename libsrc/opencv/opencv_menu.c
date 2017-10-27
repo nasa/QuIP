@@ -474,6 +474,7 @@ static COMMAND_FUNC( do_new_cascade )
 
 #define false 0
 #define true 1
+
 #ifndef bool
 #define bool int
 #endif // undef bool
