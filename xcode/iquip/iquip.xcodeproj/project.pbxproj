@@ -1451,6 +1451,14 @@
 		7CB671CA1F9484C5001FFADF /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 71BA647617D4F67B00446D65 /* Default-568h@2x.png */; };
 		7CB671D31F9501E6001FFADF /* symm_startup.enc in Resources */ = {isa = PBXBuildFile; fileRef = 7CB671D11F9501DC001FFADF /* symm_startup.enc */; };
 		7CB8D5D91B6198B90080809C /* string_ref.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CB8D5D81B6198B90080809C /* string_ref.c */; };
+		7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
+		7CE0183D1FA2433800E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
+		7CE0183E1FA2433900E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
+		7CE0183F1FA2433A00E1B4C1 /* fusion.c in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6B1FA182F600ADC7A4 /* fusion.c */; };
+		7CE018401FA2435900E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
+		7CE018411FA2435A00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
+		7CE018421FA2435B00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
+		7CE018431FA2435C00E1B4C1 /* platform_menu.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CEF2F6F1FA183D800ADC7A4 /* platform_menu.m */; };
 		7CE5FDFD1A60750B0029C7AE /* avCap.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CE5FDFC1A60750B0029C7AE /* avCap.m */; };
 		7CE5FDFF1A60752D0029C7AE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FDFE1A60752D0029C7AE /* CoreVideo.framework */; };
 		7CE5FE011A60754A0029C7AE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7CE5FE001A60754A0029C7AE /* CoreMedia.framework */; };
@@ -3030,6 +3038,7 @@
 				7C43319C1D4D43FC0033687C /* getwhite.c in Sources */,
 				7C43319D1D4D43FC0033687C /* gspread.c in Sources */,
 				7C43319E1D4D43FC0033687C /* dspread.c in Sources */,
+				7CE018401FA2435900E1B4C1 /* platform_menu.m in Sources */,
 				7C43319F1D4D43FC0033687C /* cspread.c in Sources */,
 				7C4331A01D4D43FC0033687C /* ctone.c in Sources */,
 				7C5D93721D651A140096D7BC /* brent.c in Sources */,
@@ -3149,6 +3158,7 @@
 				7C43320B1D4D43FC0033687C /* weibull.c in Sources */,
 				7C5D93821D651A140096D7BC /* amoeba.c in Sources */,
 				7C43320C1D4D43FC0033687C /* xvalmenu.c in Sources */,
+				7CE0183C1FA2433700E1B4C1 /* fusion.c in Sources */,
 				7C43320D1D4D43FC0033687C /* unix_menu.c in Sources */,
 				7C43320E1D4D43FC0033687C /* conv3d.c in Sources */,
 				7C43320F1D4D43FC0033687C /* convolve.c in Sources */,
@@ -3329,6 +3339,7 @@
 				7C4332D21D4D49450033687C /* contig.c in Sources */,
 				7C4332D31D4D49450033687C /* data_fns.c in Sources */,
 				7C4332D41D4D49450033687C /* data_obj.c in Sources */,
+				7CE0183D1FA2433800E1B4C1 /* fusion.c in Sources */,
 				7C4332D51D4D49450033687C /* dfuncs.c in Sources */,
 				7C4332D61D4D49450033687C /* dobj_menu.c in Sources */,
 				7C4332D71D4D49450033687C /* dobj_util.c in Sources */,
@@ -3447,6 +3458,7 @@
 				7C4333471D4D49450033687C /* vl2_utils.c in Sources */,
 				7C4333481D4D49450033687C /* vinterp.c in Sources */,
 				7C4333491D4D49450033687C /* wrap.c in Sources */,
+				7CE018411FA2435A00E1B4C1 /* platform_menu.m in Sources */,
 				7C43334A1D4D49450033687C /* yuv2rgb.c in Sources */,
 				7C43334B1D4D49450033687C /* vectbl.c in Sources */,
 				7C43334C1D4D49450033687C /* vl_menu.c in Sources */,
@@ -3593,6 +3605,7 @@
 				7C4D6D9E1D5111A400D34AC4 /* contig.c in Sources */,
 				7C4D6D9F1D5111A400D34AC4 /* data_fns.c in Sources */,
 				7C4D6DA01D5111A400D34AC4 /* data_obj.c in Sources */,
+				7CE0183E1FA2433900E1B4C1 /* fusion.c in Sources */,
 				7C4D6DA11D5111A400D34AC4 /* dfuncs.c in Sources */,
 				7C4D6DA21D5111A400D34AC4 /* dobj_menu.c in Sources */,
 				7C4D6DA31D5111A400D34AC4 /* dobj_util.c in Sources */,
@@ -3711,6 +3724,7 @@
 				7C4D6E131D5111A400D34AC4 /* vl2_utils.c in Sources */,
 				7C4D6E141D5111A400D34AC4 /* vinterp.c in Sources */,
 				7C4D6E151D5111A400D34AC4 /* wrap.c in Sources */,
+				7CE018421FA2435B00E1B4C1 /* platform_menu.m in Sources */,
 				7C4D6E161D5111A400D34AC4 /* yuv2rgb.c in Sources */,
 				7C4D6E171D5111A400D34AC4 /* vectbl.c in Sources */,
 				7C4D6E181D5111A400D34AC4 /* vl_menu.c in Sources */,
@@ -3843,6 +3857,7 @@
 				7CB670A91F9484C5001FFADF /* getwhite.c in Sources */,
 				7CB670AA1F9484C5001FFADF /* gspread.c in Sources */,
 				7CB670AB1F9484C5001FFADF /* dspread.c in Sources */,
+				7CE018431FA2435C00E1B4C1 /* platform_menu.m in Sources */,
 				7CB670AC1F9484C5001FFADF /* cspread.c in Sources */,
 				7CB670AD1F9484C5001FFADF /* ctone.c in Sources */,
 				7CB670AE1F9484C5001FFADF /* brent.c in Sources */,
@@ -3962,6 +3977,7 @@
 				7CB671201F9484C5001FFADF /* weibull.c in Sources */,
 				7CB671211F9484C5001FFADF /* amoeba.c in Sources */,
 				7CB671221F9484C5001FFADF /* xvalmenu.c in Sources */,
+				7CE0183F1FA2433A00E1B4C1 /* fusion.c in Sources */,
 				7CB671231F9484C5001FFADF /* unix_menu.c in Sources */,
 				7CB671241F9484C5001FFADF /* conv3d.c in Sources */,
 				7CB671251F9484C5001FFADF /* convolve.c in Sources */,
