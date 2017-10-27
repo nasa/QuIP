@@ -37,7 +37,7 @@ static COMMAND_FUNC( do_fileparse )
 		if( !fp ) return;
 fprintf(stderr,"Parsing contents of file %s\n",s);
 		//push_input_file(QSP_ARG  s);
-		redir(QSP_ARG  fp, s );
+		redir(fp, s );
 	}
 	expr_file(SINGLE_QSP_ARG);
 	/* enable_lookahead(); */
@@ -265,11 +265,11 @@ void vt_init(SINGLE_QSP_ARG_DECL)
 	DECLARE_STR1_FUNCTION(	id_exists,	id_exists )
 
 #ifdef QUIP_DEBUG
-	resolve_debug=add_debug_module(QSP_ARG  "resolver");
-	eval_debug=add_debug_module(QSP_ARG  "evaluator");
-	scope_debug=add_debug_module(QSP_ARG  "scope");
-	cast_debug=add_debug_module(QSP_ARG  "typecast");
-	parser_debug=add_debug_module(QSP_ARG  "quip_parser");
+	resolve_debug=add_debug_module("resolver");
+	eval_debug=add_debug_module("evaluator");
+	scope_debug=add_debug_module("scope");
+	cast_debug=add_debug_module("typecast");
+	parser_debug=add_debug_module("quip_parser");
 #endif /* QUIP_DEBUG */
 
 }

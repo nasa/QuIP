@@ -414,7 +414,7 @@ COMMAND_FUNC( do_sound_menu )
 	if( ! sound_inited ){
 #ifdef DEBUG
 		if( sound_debug == 0 )
-			sound_debug = add_debug_module(QSP_ARG  "sound");
+			sound_debug = add_debug_module("sound");
 #endif /* DEBUG */
 		sound_inited=1;
 	}

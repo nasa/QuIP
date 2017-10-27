@@ -2324,7 +2324,7 @@ pexpr(QSP_ARG_DECL  const char *buf)	/** parse expression */
 
 #ifdef QUIP_DEBUG
 	if( expr_debug <= 0 )
-		expr_debug = add_debug_module(QSP_ARG  "expressions");
+		expr_debug = add_debug_module("expressions");
 #endif /* QUIP_DEBUG */
 
 #ifdef QUIP_DEBUG

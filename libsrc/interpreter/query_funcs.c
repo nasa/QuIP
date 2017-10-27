@@ -1753,7 +1753,7 @@ COMMAND_FUNC( set_completion )
 static void halt_stack(SINGLE_QSP_ARG_DECL)
 {
 	if( QS_SERIAL == FIRST_QUERY_SERIAL ){
-		nice_exit(QSP_ARG  0);
+		nice_exit(0);
 	} else {
 		SET_QS_FLAG_BITS(THIS_QSP,QS_HALTING);
 		CLEAR_QS_FLAG_BITS(THIS_QSP,QS_STILL_TRYING);
@@ -1776,7 +1776,7 @@ static const char *hist_select(QSP_ARG_DECL const char* pline)
 			return NULL;
 		} else {
 			advise("EOF");
-			nice_exit(QSP_ARG  0);
+			nice_exit(0);
 		}
 	}
 
@@ -2284,7 +2284,7 @@ Macro_Arg **setup_macro_args(QSP_ARG_DECL  int n)
  */
 
 void readtty(SINGLE_QSP_ARG_DECL)
-{ redir(QSP_ARG  tfile(SINGLE_QSP_ARG), "/dev/tty" ); }
+{ redir(tfile(SINGLE_QSP_ARG), "/dev/tty" ); }
 #endif /* NOT_USED */
 
 void disable_stripping_quotes(SINGLE_QSP_ARG_DECL)
@@ -2309,12 +2309,12 @@ static void first_query_stack(Query_Stack *qsp)
 	// we need to do this too...
 
 #ifdef BUILD_FOR_CMD_LINE
-	redir(QSP_ARG  stdin, "-" );
+	redir(stdin, "-" );
 #endif // BUILD_FOR_CMD_LINE
 
 #ifdef QUIP_DEBUG
-	qldebug = add_debug_module(QSP_ARG  "query");;
-	lah_debug = add_debug_module(QSP_ARG  "lookahead");;
+	qldebug = add_debug_module("query");;
+	lah_debug = add_debug_module("lookahead");;
 #endif /* QUIP_DEBUG */
 }
 
@@ -2791,7 +2791,7 @@ void redir_with_flags(QSP_ARG_DECL FILE *fp, const char *filename, uint32_t flag
 
 } // redir_with_flags
 
-void redir(QSP_ARG_DECL FILE *fp, const char *filename)
+void _redir(QSP_ARG_DECL FILE *fp, const char *filename)
 {
 	redir_with_flags(QSP_ARG  fp, filename, 0 );
 }
@@ -2848,7 +2848,7 @@ advise(ERROR_STRING);
 
 	//push_input_file( QSP_ARG CURRENT_FILENAME );
 	s = CURRENT_FILENAME;
-	redir( QSP_ARG QRY_FILE_PTR(CURR_QRY(THIS_QSP)), s );
+	redir( QRY_FILE_PTR(CURR_QRY(THIS_QSP)), s );
 
 	/* these two lines are so we can have within-line loops */
 	// Clear the direct-input flags!
@@ -3069,7 +3069,7 @@ void push_text(QSP_ARG_DECL const char *text, const char *filename)
 	else
 		old_qp = NULL;
 
-	redir(QSP_ARG  (FILE *)NULL, filename );
+	redir((FILE *)NULL, filename );
 	qp=(CURR_QRY(THIS_QSP));
 	SET_QRY_LINE_PTR(qp,text);
 	SET_QRY_FLAG_BITS(qp,(Q_HAS_SOMETHING | Q_BUFFERED_TEXT));
@@ -3945,7 +3945,7 @@ inline void reset_return_strings(SINGLE_QSP_ARG_DECL)
 #ifdef HAVE_POPEN
 void redir_from_pipe(QSP_ARG_DECL  Pipe *pp, const char *cmd)
 {
-	redir(QSP_ARG pp->p_fp, cmd);
+	redir(pp->p_fp, cmd);
 	SET_QRY_PIPE( CURR_QRY(THIS_QSP) , pp );
 	SET_QRY_FLAG_BITS(CURR_QRY(THIS_QSP), Q_PIPE);
 }

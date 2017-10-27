@@ -1719,7 +1719,7 @@ COMMAND_FUNC( do_gl_menu )
 	static int inited=0;
 	if( !inited ){
 		inited=1;
-		gl_debug = add_debug_module(QSP_ARG  "gl");
+		gl_debug = add_debug_module("gl");
 		DECLARE_STR1_FUNCTION(	display_list_exists,	display_list_exists )
 	}
 	PUSH_MENU(gl);

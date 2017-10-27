@@ -167,7 +167,7 @@ int numrec_debug=0;
 static void numrec_debug_init(SINGLE_QSP_ARG_DECL)
 {
 	if( ! numrec_debug ){
-		numrec_debug = add_debug_module(QSP_ARG  "numrec");
+		numrec_debug = add_debug_module("numrec");
 	}
 }
 #endif /* DEBUG */

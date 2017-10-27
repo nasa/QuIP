@@ -12,7 +12,7 @@ static COMMAND_FUNC( do_scan2_requant )
 	int n;
 
 	n=(int)HOW_MANY("number of passes");
-	scan2_requant(QSP_ARG  n);
+	scan2_requant(n);
 }
 
 static COMMAND_FUNC( do_scan2_requant3d )
@@ -67,7 +67,7 @@ static COMMAND_FUNC( do_dich_anneal )
 	n=(index_t)HOW_MANY("number of passes");
 	temp1=HOW_MUCH("initial temperature");
 	temp2=HOW_MUCH("final temperature");
-	dich_scan_anneal(QSP_ARG  n,temp1,temp2);
+	dich_scan_anneal(n,temp1,temp2);
 }
 
 static const char *scanlist[]={"raster","scattered","random"};
@@ -148,14 +148,14 @@ static COMMAND_FUNC( do_set_filter3d )
 
 static COMMAND_FUNC( do_init_requant )
 {
-	if( setup_requantize(SINGLE_QSP_ARG) == -1 ) return;
+	if( setup_requantize() == -1 ) return;
 	init_requant();
 }
 
 static COMMAND_FUNC( do_init_requant3d )
 {
-	if( setup_requantize3d(SINGLE_QSP_ARG) == -1 ) return;
-	init_requant3d(SINGLE_QSP_ARG);
+	if( setup_requantize3d() == -1 ) return;
+	init_requant3d();
 }
 
 #ifdef FOOBAR
@@ -204,7 +204,7 @@ static COMMAND_FUNC( do_set_clr_input )
 
 	if( lumdp==NULL || rgdp==NULL || bydp==NULL ) return;
 
-	set_rgb_input(QSP_ARG  lumdp,rgdp,bydp);
+	set_rgb_input(lumdp,rgdp,bydp);
 }
 
 static COMMAND_FUNC( do_set_dich_input )
@@ -216,7 +216,7 @@ static COMMAND_FUNC( do_set_dich_input )
 
 	if( lumdp==NULL || rgdp==NULL ) return;
 
-	set_dich_input(QSP_ARG  lumdp,rgdp);
+	set_dich_input(lumdp,rgdp);
 }
 
 static COMMAND_FUNC( do_set_clr_output )
@@ -268,7 +268,7 @@ static COMMAND_FUNC( do_clr_migrate_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	clr_migrate_pixel(QSP_ARG  x,y);
+	clr_migrate_pixel(x,y);
 }
 
 
@@ -278,7 +278,7 @@ static COMMAND_FUNC( do_clr_redo_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	clr_redo_pixel(QSP_ARG  x,y);
+	clr_redo_pixel(x,y);
 }
 
 static COMMAND_FUNC( do_dich_migrate_pixel )
@@ -287,7 +287,7 @@ static COMMAND_FUNC( do_dich_migrate_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	dich_migrate_pixel(QSP_ARG  x,y);
+	dich_migrate_pixel(x,y);
 }
 
 
@@ -297,7 +297,7 @@ static COMMAND_FUNC( do_dich_redo_pixel )
 
 	x=(int)HOW_MANY("x coordinate");
 	y=(int)HOW_MANY("y coordinate");
-	dich_redo_pixel(QSP_ARG  x,y);
+	dich_redo_pixel(x,y);
 }
 
 static COMMAND_FUNC( do_clr_setxform )
@@ -320,22 +320,22 @@ static COMMAND_FUNC( do_dich_setxform )
 
 static COMMAND_FUNC( do_clr_descend )
 {
-	clr_scan_requant(QSP_ARG  1);
+	clr_scan_requant(1);
 }
 
 static COMMAND_FUNC( do_clr_migrate )
 {
-	clr_scan_migrate(QSP_ARG  1);
+	clr_scan_migrate(1);
 }
 
 static COMMAND_FUNC( do_dich_descend )
 {
-	dich_scan_requant(QSP_ARG  1);
+	dich_scan_requant(1);
 }
 
 static COMMAND_FUNC( do_dich_migrate )
 {
-	dich_scan_migrate(QSP_ARG  1);
+	dich_scan_migrate(1);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(achrom_requant_menu,s,f,h)
@@ -455,7 +455,7 @@ MENU_END(requantize)
 COMMAND_FUNC( do_requant )
 {
 	if( spread_debug == 0 )
-		spread_debug=add_debug_module(QSP_ARG  "requantize");
+		spread_debug=add_debug_module("requantize");
 
 	PUSH_MENU(requantize);
 }

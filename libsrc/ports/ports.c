@@ -61,7 +61,7 @@ void init_my_ports(SINGLE_QSP_ARG_DECL)
 	if( ports_inited ) return;
 
 #ifdef QUIP_DEBUG
-	debug_ports = add_debug_module(QSP_ARG  "ports");
+	debug_ports = add_debug_module("ports");
 #endif /* QUIP_DEBUG */
 
 	init_pdt_tbl();

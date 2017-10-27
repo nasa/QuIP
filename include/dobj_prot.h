@@ -133,7 +133,7 @@ extern void		cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Pre
 extern void		cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern void		cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
-extern Data_Obj *	mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
+extern Data_Obj *	_mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
 extern Data_Obj *	mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
 extern Data_Obj *	comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data);
 extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
@@ -143,6 +143,7 @@ extern const char *	localname(void);
 extern Data_Obj *	dupdp(QSP_ARG_DECL  Data_Obj *dp);
 extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
+#define mk_img(s,h,w,d,p)	_mk_img(QSP_ARG  s,h,w,d,p)
 
 /* makedobj.c */
 extern int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align );

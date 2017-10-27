@@ -1340,7 +1340,7 @@ COMMAND_FUNC( do_v4l2_menu )
 	static int inited=0;
 
 	if( ! inited ){
-		stream_debug=add_debug_module(QSP_ARG  "stream_record");
+		stream_debug=add_debug_module("stream_record");
 #ifdef HAVE_RAWVOL
 		if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
 			WARN("error opening default raw volume");

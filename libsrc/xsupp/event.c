@@ -135,7 +135,7 @@ static void pickup( QSP_ARG_DECL  Draggable *dgp, Viewer *vp )
 	/* make the rendering image */
 	assert( drag_image == NULL );
 
-	drag_image = mk_img(QSP_ARG  "drag_image",dgp->dg_height,
+	drag_image = mk_img("drag_image",dgp->dg_height,
 		dgp->dg_width,vp->vw_depth/8,PREC_FOR_CODE(PREC_BY));
 
 	drag_xim = XCreateImage(VW_DPY(vp),VW_VISUAL(vp),vp->vw_depth,ZPixmap,0,

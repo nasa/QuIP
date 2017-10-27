@@ -71,7 +71,8 @@ extern void hist_bis(const char *pmpt);
 extern const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_in, FILE *tty_out );
 extern void sane_tty(SINGLE_QSP_ARG_DECL);
 extern void check_events(QSP_ARG_DECL  FILE *);
-extern int keyboard_hit(QSP_ARG_DECL  FILE *);
+extern int _keyboard_hit(QSP_ARG_DECL  FILE *);
+#define keyboard_hit(fp)	_keyboard_hit(QSP_ARG  fp)
 #endif /* TTY_CTL */
 
 #endif /* HAVE_HISTORY */

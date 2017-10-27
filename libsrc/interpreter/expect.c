@@ -28,7 +28,7 @@ static u_long sb_debug=0;
 
 #define CHECK_DEBUG_INITED						\
 				if( sb_debug == 0 ){			\
-					sb_debug = add_debug_module(QSP_ARG  "expect_string");	\
+					sb_debug = add_debug_module("expect_string");	\
 				}
 #endif /* QUIP_DEBUG */
 
@@ -130,7 +130,7 @@ int replenish_buffer(QSP_ARG_DECL  Serial_Buffer *sbp,int max_expected)
 			sbp->sb_n_recvd,max_expected,BUFSIZE);
 		advise(ERROR_STRING);
 	}
-	n = recv_somex(QSP_ARG  sbp->sb_fd, &sbp->sb_buf[sbp->sb_n_recvd], BUFSIZE-sbp->sb_n_recvd, max_expected);
+	n = recv_somex(sbp->sb_fd, &sbp->sb_buf[sbp->sb_n_recvd], BUFSIZE-sbp->sb_n_recvd, max_expected);
 //#ifdef QUIP_DEBUG
 //if( (debug & sb_debug) ){
 //sprintf(msg_str,"replenish_buffer:  expected up to %d chars, received %d",
@@ -175,10 +175,10 @@ else prt_msg_frag(",");
 
 	if( *buf == 0 ){
 		int n;
-		n=n_serial_chars(QSP_ARG  sbp->sb_fd);
+		n=n_serial_chars(sbp->sb_fd);
 		while(n==0 && n_tries < MAX_TRIES ){
 			usleep(200);
-			n=n_serial_chars(QSP_ARG  sbp->sb_fd);
+			n=n_serial_chars(sbp->sb_fd);
 			n_tries++;
 		}
 		if( n == 0 ){
@@ -317,7 +317,7 @@ if( debug & sb_debug ){
 //int n;
 sprintf(ERROR_STRING,"expect_string(\"%s\");",printable_string(expected_str));
 advise(ERROR_STRING);
-//n = n_serial_chars(QSP_ARG  sbp->sb_fd);
+//n = n_serial_chars(sbp->sb_fd);
 //sprintf(ERROR_STRING,"%d chars available on serial port",n);
 //advise(ERROR_STRING);
 }

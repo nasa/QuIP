@@ -1208,7 +1208,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 	 */
 
 	//push_input_file(QSP_ARG  s);
-	redir(QSP_ARG  fp, orig_filename);
+	redir(fp, orig_filename);
 
 	/* BUG we'd like to have the string be 'Pipe: "command args"' or something... */
 	if( !strncmp(s,"Pipe",4) ){

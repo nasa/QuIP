@@ -970,7 +970,7 @@ COMMAND_FUNC( do_polh )
 	if( ! polh_inited ) {
 
 #ifdef QUIP_DEBUG
-		debug_polhemus = add_debug_module(QSP_ARG  "polhemus");
+		debug_polhemus = add_debug_module("polhemus");
 		//debug |= debug_polhemus;	/* turn it on for testing */
 #endif /* QUIP_DEBUG */
 

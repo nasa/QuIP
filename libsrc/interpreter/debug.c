@@ -156,7 +156,7 @@ void clr_debug(QSP_ARG_DECL  Debug_Module *dbmp)
 }
 #endif /* NOT_NEEDED */
 
-debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name)
+debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name)
 {
 	Debug_Module *dmp;
 
