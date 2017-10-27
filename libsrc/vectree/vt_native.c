@@ -173,7 +173,8 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 #ifndef BUILD_FOR_IOS
 			status = system(s);
 #else // ! BUILD_FOR_IOS
-                	WARN("Sorry, system() is temporarily unavailable for iOS!?");
+            WARN("Sorry, system() is temporarily unavailable for iOS!?");
+                status=(-1);
 #endif // ! BUILD_FOR_IOS
                 
 			sprintf(stat_str,"%d",status);	// BUG?  protect against buffer overflow?
