@@ -85,7 +85,7 @@ advise(DEFAULT_ERROR_STRING);
 			}
 		}
 	}
-	if( best== -1 ) ERROR1("error too big!!!");
+	if( best== -1 ) error1("error too big!!!");
 #ifdef QUIP_DEBUG
 if( debug & spread_debug ){
 sprintf(DEFAULT_ERROR_STRING,"getbest RETURNING %d",best);

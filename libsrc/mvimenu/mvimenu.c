@@ -35,10 +35,14 @@ static Item_Class *playable_iclp=NULL;
 
 /* local prototypes */
 ITEM_INTERFACE_PROTOTYPES(Movie,mvi)
-#define PICK_MVI(p)	pick_mvi(QSP_ARG  p)
+#define pick_mvi(p)	_pick_mvi(QSP_ARG  p)
 
-#define MVI_OF(s)		mvi_of(QSP_ARG  s)
-#define GET_MVI(s)		get_mvi(QSP_ARG  s)
+#define mvi_of(s)		_mvi_of(QSP_ARG  s)
+#define get_mvi(s)		_get_mvi(QSP_ARG  s)
+#define del_mvi(s)		_del_mvi(QSP_ARG  s)
+#define new_mvi(s)		_new_mvi(QSP_ARG  s)
+#define list_mvis(fp)		_list_mvis(QSP_ARG  fp)
+#define init_mvis()		_init_mvis(SINGLE_QSP_ARG)
 
 static const char *get_movie_name(SINGLE_QSP_ARG_DECL);
 
@@ -80,7 +84,7 @@ static Movie_Module *the_mmp=NULL;
 
 List *movie_list(SINGLE_QSP_ARG_DECL)
 {
-	return(item_list(QSP_ARG  mvi_itp));
+	return(item_list(mvi_itp));
 }
 
 int movie_ok(void)
@@ -103,7 +107,7 @@ Movie *create_movie(QSP_ARG_DECL  const char *moviename)
 {
 	Movie *mvip;
 
-	mvip=MVI_OF(moviename);
+	mvip=mvi_of(moviename);
 	if( mvip!=NULL ){
 		/* overwrite an existing movie only if clobber flag set */
 		if( clobber_movies ){
@@ -112,7 +116,7 @@ Movie *create_movie(QSP_ARG_DECL  const char *moviename)
 			"create_movie:  clobbering existing movie %s",moviename);
 				advise(ERROR_STRING);
 			}
-			del_mvi(QSP_ARG  mvip);
+			del_mvi(mvip);
 			/* maybe do something module-specific here */
 			/* what does rtv do, that's the question! */
 		} else {
@@ -122,7 +126,7 @@ Movie *create_movie(QSP_ARG_DECL  const char *moviename)
 		}
 	}
 
-	mvip=new_mvi(QSP_ARG  moviename);
+	mvip=new_mvi(moviename);
 	if( mvip == NULL )
 		return(mvip);
 
@@ -164,7 +168,7 @@ static COMMAND_FUNC( do_movie_info )
 {
 	Movie *mvip;
 
-	mvip=PICK_MVI("");
+	mvip=pick_mvi("");
 	if( mvip == NULL ) return;
 
 	printf("Movie %s:\n",MOVIE_NAME(mvip));
@@ -195,7 +199,7 @@ static Movie *open_if(QSP_ARG_DECL  const char *s)
 {
 	Movie *mvip;
 
-	mvip=MVI_OF(s);
+	mvip=mvi_of(s);
 
 	if( mvip == NULL ){
 		if( verbose ){
@@ -210,7 +214,7 @@ if( debug & mvi_debug ) advise("calling movie open_func");
 
 /* use pathname here... */
 		(*the_mmp->open_func)(QSP_ARG  s);		/* device specific */
-		mvip = MVI_OF(s);
+		mvip = mvi_of(s);
 	}
 	if( mvip == NULL ){
 		sprintf(ERROR_STRING,"No movie \"%s\"",s);
@@ -234,7 +238,7 @@ static COMMAND_FUNC( do_open_mvi )
 	Movie *mvip;
 
 	s=NAMEOF("movie filename");
-	mvip = MVI_OF(s);
+	mvip = mvi_of(s);
 	if( mvip != NULL ){
 		sprintf(ERROR_STRING,"Movie %s was already open!?",s);
 		advise(ERROR_STRING);
@@ -278,7 +282,7 @@ static COMMAND_FUNC( do_play_movie )
 
 	if( !movie_ok() ) return;
 
-	mip = get_member_info(QSP_ARG  playable_iclp,s);
+	mip = get_member_info(playable_iclp,s);
 
 	/*
 	 * On some implementations (cosmo, sirius), the movies are
@@ -354,7 +358,7 @@ static COMMAND_FUNC( do_shuttle )
 	Movie *mvip;
 	incr_t frame;
 
-	mvip=PICK_MVI("");
+	mvip=pick_mvi("");
 	frame= (incr_t) HOW_MANY("frame index");
 
 	if( mvip == NULL ) return;
@@ -401,7 +405,7 @@ static COMMAND_FUNC( do_getframe )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	frame = (incr_t) HOW_MANY("frame index");
 
@@ -445,7 +449,7 @@ static COMMAND_FUNC( do_getframec )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	frame = (incr_t) HOW_MANY("frame index");
 	comp =  (int) HOW_MANY("component index");
@@ -489,7 +493,7 @@ static COMMAND_FUNC( do_getfields )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	field = (incr_t) HOW_MANY("starting field index");
 
@@ -532,7 +536,7 @@ static COMMAND_FUNC( do_getfieldc )
 	Data_Obj *dp;
 	const char *moviename;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	moviename = get_movie_name(SINGLE_QSP_ARG);
 	field = (incr_t) HOW_MANY("starting field index");
 	comp =  (int) HOW_MANY("component index");
@@ -572,7 +576,7 @@ static COMMAND_FUNC( do_del_mvi )
 {
 	Movie *mvip;
 
-	mvip = PICK_MVI("");
+	mvip = pick_mvi("");
 	if( mvip == NULL ) return;
 
 	if( IS_ASSEMBLING(mvip) ){
@@ -631,7 +635,7 @@ void delete_movie(QSP_ARG_DECL  Movie *mvip)
 {
 	if( mvip == NULL ) return;
 
-	del_mvi(QSP_ARG  mvip);	/* remove from item database */
+	del_mvi(mvip);	/* remove from item database */
 }
 
 static COMMAND_FUNC( do_set_nrefresh )
@@ -684,7 +688,7 @@ static void set_mvidir(QSP_ARG_DECL  const char *dirname)
 	movie_dir = savestr( dirname );
 }
 
-static COMMAND_FUNC( do_list_mvis ){ list_mvis(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_mvis ){ list_mvis(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(playback_menu,s,f,h)
 
@@ -729,8 +733,8 @@ static COMMAND_FUNC( do_add_frame )
 	Data_Obj *dp;
 	Movie *mvip;
 
-	mvip = PICK_MVI("");
-	dp = PICK_OBJ("");
+	mvip = pick_mvi("");
+	dp = pick_obj("");
 
 	if( mvip == NULL || dp == NULL ) return;
 
@@ -743,7 +747,7 @@ static COMMAND_FUNC( do_end_movie )
 {
 	Movie *mvip;
 
-	mvip = PICK_MVI("");
+	mvip = pick_mvi("");
 	if( mvip == NULL ) return;
 
 	if( ! IS_ASSEMBLING(mvip) ){
@@ -925,7 +929,7 @@ static Movie *lookup_movie(QSP_ARG_DECL  const char *name)
 {
 	Movie *mvip;
 
-	mvip=GET_MVI(name);
+	mvip=get_mvi(name);
 	if( mvip == NULL ) return(mvip);
 
 	SET_MOVIE_TIME(mvip, time(NULL));
@@ -936,11 +940,11 @@ COMMAND_FUNC( do_movie_menu )
 {
 
 	if( playable_iclp == NULL ){
-		if( mvi_itp == NULL ) init_mvis(SINGLE_QSP_ARG);
+		if( mvi_itp == NULL ) init_mvis();
 		add_sizable(QSP_ARG  mvi_itp,&mvi_sf,NULL);
 		add_interlaceable(QSP_ARG  mvi_itp,&mvi_if,NULL);
 
-		playable_iclp = new_item_class(QSP_ARG  "playable");
+		playable_iclp = new_item_class("playable");
 		add_playable(mvi_itp,NULL);
 
 		// add sequences to the playable class
@@ -971,7 +975,7 @@ COMMAND_FUNC( do_movie_menu )
 
 #ifdef QUIP_DEBUG
 	if( mvi_debug < 0 )
-		mvi_debug = add_debug_module(QSP_ARG  "movie");
+		mvi_debug = add_debug_module("movie");
 #endif /* QUIP_DEBUG */
 
 	PUSH_MENU(movie);

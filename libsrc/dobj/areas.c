@@ -93,7 +93,7 @@ area_init( QSP_ARG_DECL  const char *name, u_char *buffer, uint32_t siz, unsigne
 
 	a_init();
 
-	ap = new_data_area(QSP_ARG  name);
+	ap = new_data_area(name);
 	if( ap == NULL ) return(ap);
 	//ap = [[DataArea alloc] initWithName : name ];
 
@@ -239,9 +239,9 @@ void show_area_space( QSP_ARG_DECL  Data_Area *ap )
 	Data_Obj *dp;
 	int n,i;
 
-	if( data_area_itp == NULL ) init_data_areas(SINGLE_QSP_ARG);
+	if( data_area_itp == NULL ) init_data_areas();
 
-	lp=dobj_list(SINGLE_QSP_ARG);
+	lp=dobj_list();
 	if( lp==NULL ) return;
 
 	n=eltcount(lp);
@@ -298,7 +298,7 @@ static void init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 	assert( AREA_SCALAR_OBJ(ap) == NULL );
 
 	if( strlen(AREA_NAME(ap))+strlen(".scratch_scalar")+1 > MAX_NAME_LEN )
-		ERROR1("init_scratch_scalar:  need to increase MAX_NAME_LEN!?");
+		error1("init_scratch_scalar:  need to increase MAX_NAME_LEN!?");
 
 	/* Can we make this not hashed??? */
 

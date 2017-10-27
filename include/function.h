@@ -138,6 +138,10 @@ ITEM_INIT_PROT(Quip_Function,function)
 ITEM_NEW_PROT(Quip_Function,function)
 ITEM_CHECK_PROT(Quip_Function,function)
 
+#define init_functions()	_init_functions(SINGLE_QSP_ARG)
+#define new_function(name)	_new_function(QSP_ARG  name)
+#define function_of(name)	_function_of(QSP_ARG  name)
+
 
 #define DECLARE_FUNCTION(name,func,code1,code2,code3,type,member,dim_index)	\
 										\
@@ -145,7 +149,7 @@ ITEM_CHECK_PROT(Quip_Function,function)
 {										\
 	Quip_Function *func_p;							\
 										\
-	func_p = new_function(QSP_ARG  #name);					\
+	func_p = new_function(#name);					\
 	assert(func_p!=NULL);							\
 	func_p->fn_type = type;							\
 	func_p->fn_u.member = func;						\

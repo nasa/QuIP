@@ -20,8 +20,8 @@ static COMMAND_FUNC( do_choldc )
 {
 	Data_Obj *a_dp, *p_dp;
 
-	a_dp=PICK_OBJ( "input/output matrix" );
-	p_dp=PICK_OBJ( "elements diagonal matrix" );
+	a_dp=pick_obj( "input/output matrix" );
+	p_dp=pick_obj( "elements diagonal matrix" );
 
 	if ( a_dp == NULL || p_dp == NULL )
 		return;
@@ -36,9 +36,9 @@ static COMMAND_FUNC( do_svd )
 {
 	Data_Obj *a_dp, *w_dp, *v_dp;
 
-	a_dp=PICK_OBJ( "input matrix" );
-	w_dp=PICK_OBJ( "vector for singular values" );
-	v_dp=PICK_OBJ( "output v matrix" );
+	a_dp=pick_obj( "input matrix" );
+	w_dp=pick_obj( "vector for singular values" );
+	v_dp=pick_obj( "output v matrix" );
 
 	if( a_dp == NULL || w_dp == NULL || v_dp == NULL )
 		return;
@@ -51,11 +51,11 @@ static COMMAND_FUNC( do_svbksb )
 	Data_Obj *u_dp, *w_dp, *v_dp;
 	Data_Obj *x_dp, *b_dp;
 
-	x_dp=PICK_OBJ( "result vector for coefficients" );
-	u_dp=PICK_OBJ( "U matrix" );
-	w_dp=PICK_OBJ( "vector of singular values" );
-	v_dp=PICK_OBJ( "V matrix" );
-	b_dp=PICK_OBJ( "data vector" );
+	x_dp=pick_obj( "result vector for coefficients" );
+	u_dp=pick_obj( "U matrix" );
+	w_dp=pick_obj( "vector of singular values" );
+	v_dp=pick_obj( "V matrix" );
+	b_dp=pick_obj( "data vector" );
 
 	if( u_dp == NULL || w_dp == NULL || v_dp == NULL ||
 		x_dp == NULL || b_dp == NULL )
@@ -69,9 +69,9 @@ static COMMAND_FUNC( do_jacobi )
 	Data_Obj *a_dp,*d_dp,*v_dp;
 	int nrot;
 
-	v_dp = PICK_OBJ("destination matrix for eigenvectors");
-	d_dp = PICK_OBJ("destination vector for eigenvalues");
-	a_dp = PICK_OBJ("input matrix");
+	v_dp = pick_obj("destination matrix for eigenvectors");
+	d_dp = pick_obj("destination vector for eigenvalues");
+	a_dp = pick_obj("input matrix");
 
 	if( v_dp == NULL || d_dp == NULL || a_dp == NULL ) return;
 
@@ -85,8 +85,8 @@ static COMMAND_FUNC( do_eigsrt )
 {
 	Data_Obj *v_dp, *d_dp;
 	
-	v_dp = PICK_OBJ("matrix of eigenvectors from Jacobi");
-	d_dp = PICK_OBJ("vector of eigenvalues from Jacobi");
+	v_dp = pick_obj("matrix of eigenvectors from Jacobi");
+	d_dp = pick_obj("vector of eigenvalues from Jacobi");
 
 	if( v_dp == NULL || d_dp == NULL ) return;
 
@@ -97,7 +97,7 @@ static COMMAND_FUNC( do_moment )
 {
 	Data_Obj *d_dp;
 	
-	d_dp = PICK_OBJ("array of data");
+	d_dp = pick_obj("array of data");
 	/* How to get the values of ave and sdev??? */
 	dp_moment(QSP_ARG  d_dp);
 }
@@ -139,8 +139,8 @@ static COMMAND_FUNC( do_zroots )
 {
 	Data_Obj *a_dp, *r_dp;
 
-	r_dp=PICK_OBJ( "complex destination vector for roots" );
-	a_dp=PICK_OBJ( "polynomial coefficient vector" );
+	r_dp=pick_obj( "complex destination vector for roots" );
+	a_dp=pick_obj( "polynomial coefficient vector" );
 
 	if( r_dp == NULL || a_dp == NULL ) return;
 
@@ -167,7 +167,7 @@ int numrec_debug=0;
 static void numrec_debug_init(SINGLE_QSP_ARG_DECL)
 {
 	if( ! numrec_debug ){
-		numrec_debug = add_debug_module(QSP_ARG  "numrec");
+		numrec_debug = add_debug_module("numrec");
 	}
 }
 #endif /* DEBUG */

@@ -174,9 +174,9 @@ NWARN("rxform_list:  Need to make set oa_argstype before calling!?");
 		} // cols of dpto
 	} // rows of dpto
 
-	delvec(DEFAULT_QSP_ARG  sub_dst_dp);
-	delvec(DEFAULT_QSP_ARG  sub_src_dp);
-	delvec(DEFAULT_QSP_ARG  sub_xf_dp);
+	_delvec(DEFAULT_QSP_ARG  sub_dst_dp);
+	_delvec(DEFAULT_QSP_ARG  sub_src_dp);
+	_delvec(DEFAULT_QSP_ARG  sub_xf_dp);
 }
 
 
@@ -313,9 +313,9 @@ static void HOST_TYPED_CALL_NAME(rvec_xform,type_code)(HOST_CALL_ARG_DECLS)
 			HOST_TYPED_CALL_NAME(rvadd,type_code)(FVADD,oap3);
 		}
 	}
-	delvec(DEFAULT_QSP_ARG  sub_src_dp);
-	delvec(DEFAULT_QSP_ARG  sub_dst_dp);
-	delvec(DEFAULT_QSP_ARG  tmp_dst_dp);
+	_delvec(DEFAULT_QSP_ARG  sub_src_dp);
+	_delvec(DEFAULT_QSP_ARG  sub_dst_dp);
+	_delvec(DEFAULT_QSP_ARG  tmp_dst_dp);
 } /* end rvec_xform() */
 
 #ifdef FOOBAR
@@ -365,7 +365,7 @@ static void HOST_TYPED_CALL_NAME(homog_xform,type_code)(QSP_ARG_DECL  Data_Obj *
 			h_vl2_vadd(oap3);
 		}
 	}
-	delvec(QSP_ARG  tmp_obj);
+	delvec(tmp_obj);
 } /* end homog_xorm */
 #endif // FOOBAR
 

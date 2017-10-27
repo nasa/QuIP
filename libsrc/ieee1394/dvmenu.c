@@ -451,7 +451,7 @@ static COMMAND_FUNC( do_dv_extract )
 	Node *np;
 	Frame *frmp;
 
-	dp=PICK_OBJ("destination data object");
+	dp=pick_obj("destination data object");
 	n=HOW_MANY("index of stored frame");
 	np = nth_elt(grab_lp,n);
 	if( dp == NULL ) return;

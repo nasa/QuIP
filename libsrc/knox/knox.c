@@ -633,7 +633,7 @@ static COMMAND_FUNC( do_fetch_map )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("object for routing results");
+	dp = pick_obj("object for routing results");
 
 	if( dp == NULL ) return;
 

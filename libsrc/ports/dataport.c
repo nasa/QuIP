@@ -225,9 +225,9 @@ long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data obj
 
 #ifdef NOT_YET
 	if( ram_area == NULL )
-		ERROR1("ram data area not initialized");
+		error1("ram data area not initialized");
 	if( curr_ap != ram_area )
-		ERROR1("current data area not ram area!?");
+		error1("current data area not ram area!?");
 #endif /* NOT_YET */
 
 	name_len=get_port_int32(QSP_ARG  mpp);
@@ -284,10 +284,10 @@ advise(ERROR_STRING);
 				i,namebuf[i],namebuf[i]);
 			advise(ERROR_STRING);
 		}
-		ERROR1("choked");
+		error1("choked");
 	}
 
-	old_obj=dobj_of(QSP_ARG  namebuf);
+	old_obj=dobj_of(namebuf);
 
 	if( old_obj != NULL && ( OBJ_ROWS(old_obj)   != DS_ROWS(&_type_dims)   ||
 		   		   OBJ_COLS(old_obj)   != DS_COLS(&_type_dims)   ||
@@ -298,7 +298,7 @@ advise(ERROR_STRING);
 			"mismatched object %s received, discarding old",
 			OBJ_NAME(old_obj));
 		WARN(ERROR_STRING);
-		delvec(QSP_ARG  old_obj);
+		delvec(old_obj);
 		old_obj = NULL;
 	}
 
@@ -335,7 +335,7 @@ advise(ERROR_STRING);
 		sprintf(ERROR_STRING,
 			"recv_obj:  data_len = %ld, size mismatch", data_len);
 		WARN(ERROR_STRING);
-		LONGLIST(new_dp);
+		longlist(new_dp);
 	}
 #endif /* CAUTIOUS */
 

@@ -121,7 +121,7 @@ FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode)
 "try_open:  filename length (%ld) is greater than MAXPATHLEN (%d) !?",
 			(long)strlen(filename),MAXPATHLEN);
 		WARN(ERROR_STRING);
-		ADVISE("Not checking directory permissions...");
+		advise("Not checking directory permissions...");
 		goto proceed;
 	}
 	strcpy(dirname,filename);
@@ -176,10 +176,10 @@ FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode)
 		sprintf(ERROR_STRING,
 	"File %s is owned by %s, not writable by %s,",
 			filename,owner_name,my_name);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 		sprintf(ERROR_STRING,
 	"and directory %s does not have other-write permission.",dirname);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 #endif /* HAVE_GETPWENT */
 
@@ -216,7 +216,7 @@ FILE *try_hard( QSP_ARG_DECL  const char *filename, const char *mode )
 {
         FILE *fp;
         fp=try_open(QSP_ARG  filename,mode);
-        if( !fp ) ERROR1("Missing file caused fatal error");
+        if( !fp ) error1("Missing file caused fatal error");
         return(fp);
 }
 

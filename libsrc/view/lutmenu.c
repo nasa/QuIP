@@ -25,7 +25,7 @@ static Data_Obj *pick_lb(QSP_ARG_DECL  const char *pmpt)
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ(pmpt);
+	dp=pick_obj(pmpt);
 	/* BUG here we ought to check for size, type etc. */
 	return(dp);
 }

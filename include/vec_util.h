@@ -183,26 +183,27 @@ extern void set_halftone3d(Data_Obj *hdp);
 extern int scan_requant3d(int ntimes);
 extern void scan2_requant3d(int ntimes);
 extern void scan_anneal3d(double temp,int ntimes);
-extern int setup_requantize3d(SINGLE_QSP_ARG_DECL);
-extern void init_requant3d(SINGLE_QSP_ARG_DECL);
 extern void set_temp3d(double temp);
 extern void normalize_filter3d(Data_Obj *fdp);
+
+extern int _setup_requantize3d(SINGLE_QSP_ARG_DECL);
+extern void _init_requant3d(SINGLE_QSP_ARG_DECL);
+
+#define setup_requantize3d()	_setup_requantize3d(SINGLE_QSP_ARG)
+#define init_requant3d()	_init_requant3d(SINGLE_QSP_ARG)
 
 /* File spread.c */
 
 extern double get_prob(double dele);
 extern double get_ferror(Data_Obj *edp,Data_Obj *fdp,dimension_t x,dimension_t y);
 extern double get_sos(Data_Obj *edp,Data_Obj *fdp);
-extern int setup_requantize(SINGLE_QSP_ARG_DECL);
 extern void set_filter(Data_Obj *fdp);
 extern void set_grayscale(Data_Obj *gdp);
 extern void set_halftone(Data_Obj *hdp);
-extern void setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp);
 extern double get_volume(Data_Obj *dp);
 extern void normalize_filter(Data_Obj *fdp);
 extern void init_requant(void);
 extern int scan_requant(int ntimes);
-extern void scan2_requant(QSP_ARG_DECL  int ntimes);
 extern void scan_anneal(double temp,int ntimes);
 extern float get_delta(dimension_t x,dimension_t y);
 extern int redo_pixel(dimension_t x,dimension_t y);
@@ -222,34 +223,59 @@ extern double adjust_sos(dimension_t x,dimension_t y,Data_Obj *fedp,Data_Obj *fd
 extern void adjust_ferror( Data_Obj *fedp, Data_Obj *edp, Data_Obj *fdp, dimension_t x, dimension_t y, double factor);
 extern void filter_error( Data_Obj *dpto, Data_Obj *dpfr, Data_Obj *filtdp);
 extern COMMAND_FUNC( init_clr_requant );
-extern void set_rgb_input(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
 extern void set_rgb_output(Data_Obj *);
 extern void set_rgb_filter(Data_Obj *,Data_Obj *,Data_Obj *);
-extern void clr_redo_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
-extern void clr_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
+
 extern void set_clr_xform(Data_Obj *);
-extern void clr_scan_requant(QSP_ARG_DECL  index_t ntimes);
-extern void clr_scan_migrate(QSP_ARG_DECL  index_t ntimes);
 extern COMMAND_FUNC( tell_sos );
 extern COMMAND_FUNC( cspread_tell );
 extern Data_Obj *check_not_temp(Data_Obj *);
 
+extern void _set_rgb_input(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
+extern void _clr_redo_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
+extern void _clr_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
+extern void _clr_scan_requant(QSP_ARG_DECL  index_t ntimes);
+extern void _clr_scan_migrate(QSP_ARG_DECL  index_t ntimes);
+extern int _setup_requantize(SINGLE_QSP_ARG_DECL);
+extern void _setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp);
+extern void _scan2_requant(QSP_ARG_DECL  int ntimes);
+
+#define set_rgb_input(a,b,c)	_set_rgb_input(QSP_ARG  a,b,c)
+#define clr_redo_pixel(x,y)	_clr_redo_pixel(QSP_ARG  x,y)
+#define clr_migrate_pixel(x,y)	_clr_migrate_pixel(QSP_ARG  x,y)
+#define clr_migrate_pixel2(x,y)	_clr_migrate_pixel2(QSP_ARG  x,y)
+#define clr_scan_requant(n)	_clr_scan_requant(QSP_ARG  n)
+#define clr_scan_migrate(n)	_clr_scan_migrate(QSP_ARG  n)
+#define setup_requantize()	_setup_requantize(SINGLE_QSP_ARG)
+#define setup_ffilter(fdp)	_setup_ffilter(QSP_ARG  fdp)
+#define scan2_requant(n)	_scan2_requant(QSP_ARG  n)
+
 /* file dspread.c */
-extern void dich_anneal_migrate( QSP_ARG_DECL  incr_t x, incr_t y, double temp );
 extern COMMAND_FUNC( init_dich_requant );
-extern void set_dich_input(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
 extern void set_dich_output(Data_Obj *);
 extern void set_dich_filter(Data_Obj *,Data_Obj *);
-extern void dich_redo_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
-extern void dich_anneal_pixel(QSP_ARG_DECL  incr_t x, incr_t y, double temp);
-extern void dich_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
-extern void dich_scan_requant(QSP_ARG_DECL  index_t ntimes);
-extern void dich_scan_migrate(QSP_ARG_DECL  index_t ntimes);
 extern COMMAND_FUNC( dich_tell_sos );
 extern void set_dich_xform(Data_Obj *);
 extern COMMAND_FUNC( dspread_tell );
-extern void dich_scan_anneal(QSP_ARG_DECL  index_t ntimes, double temp1, double temp2);
 extern void set_dich_weights(double,double);
+
+extern void _dich_anneal_migrate( QSP_ARG_DECL  incr_t x, incr_t y, double temp );
+extern void _set_dich_input(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+extern void _dich_scan_anneal(QSP_ARG_DECL  index_t ntimes, double temp1, double temp2);
+extern void _dich_redo_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
+extern void _dich_anneal_pixel(QSP_ARG_DECL  incr_t x, incr_t y, double temp);
+extern void _dich_migrate_pixel(QSP_ARG_DECL  incr_t x, incr_t y);
+extern void _dich_scan_requant(QSP_ARG_DECL  index_t ntimes);
+extern void _dich_scan_migrate(QSP_ARG_DECL  index_t ntimes);
+
+#define dich_anneal_migrate(x,y,temp)	_dich_anneal_migrate(QSP_ARG  x,y,temp)
+#define set_dich_input(dp1,dp2)		_set_dich_input(QSP_ARG  dp1,dp2)
+#define dich_scan_anneal(ntimes, temp1, temp2)	_dich_scan_anneal(QSP_ARG  ntimes, temp1, temp2)
+#define dich_redo_pixel(x, y)		_dich_redo_pixel(QSP_ARG  x, y)
+#define dich_anneal_pixel(x, y, temp)	_dich_anneal_pixel(QSP_ARG  x, y, temp)
+#define dich_migrate_pixel(x, y)	_dich_migrate_pixel(QSP_ARG  x, y)
+#define dich_scan_requant(ntimes)	_dich_scan_requant(QSP_ARG  ntimes)
+#define dich_scan_migrate(ntimes)	_dich_scan_migrate(QSP_ARG  ntimes)
 
 /* File median.c */
 

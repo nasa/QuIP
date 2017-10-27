@@ -322,7 +322,7 @@ static COMMAND_FUNC(	do_gl_material )
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, pvec);
 			break;
 		default:
-			ERROR1("do_gl_material:  bad property (shouldn't happen)");
+			error1("do_gl_material:  bad property (shouldn't happen)");
 			break;
 	}
 }
@@ -491,7 +491,7 @@ static COMMAND_FUNC( do_slct_obj )
 //sprintf(ERROR_STRING,"front-most hit is %d",the_hit);
 //advise(ERROR_STRING);
 	sprintf(ret_str,"%d",the_hit);
-	ASSIGN_RESERVED_VAR("selection_index",ret_str);
+	assign_reserved_var("selection_index",ret_str);
 
 	//if (hits != 0) {
 	//manager.advanceTrial(processHits());
@@ -618,14 +618,14 @@ static COMMAND_FUNC( do_cap_q )
 
 	cap = CHOOSE_CAP("capability");
 	if( cap == INVALID_CONSTANT ){
-		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"-1");
+		assign_reserved_var(CAP_RESULT_VARNAME,"-1");
 		return;
 	}
 
 	if( glIsEnabled(cap) == GL_TRUE ){
-		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"1");
+		assign_reserved_var(CAP_RESULT_VARNAME,"1");
 	} else {
-		ASSIGN_RESERVED_VAR(CAP_RESULT_VARNAME,"0");
+		assign_reserved_var(CAP_RESULT_VARNAME,"0");
 	}
 }
 
@@ -779,9 +779,9 @@ static COMMAND_FUNC( do_check_extension )
 
 #ifndef BUILD_FOR_OBJC
 	if( check_extension(QSP_ARG  extension_table[i]) ){
-		ASSIGN_RESERVED_VAR("extension_present","1");
+		assign_reserved_var("extension_present","1");
 	} else {
-		ASSIGN_RESERVED_VAR("extension_present","0");
+		assign_reserved_var("extension_present","0");
 	}
 #else // ! BUILD_FOR_OBJC
 	WARN("Sorry, can't check for extensions in native Apple build...");
@@ -790,7 +790,7 @@ static COMMAND_FUNC( do_check_extension )
 
 static COMMAND_FUNC( do_tex_image )
 {
-	Data_Obj *dp = PICK_OBJ("image");
+	Data_Obj *dp = pick_obj("image");
 	//im_dim = HOW_MUCH("pixel dimension");
 
 	if( dp == NULL ) return;
@@ -1062,7 +1062,7 @@ static COMMAND_FUNC( do_sv_mv_mat )
 	Data_Obj *dp;
 
 	const char *matrix = NAMEOF("matrix type");
-	dp=PICK_OBJ("matrix object");
+	dp=pick_obj("matrix object");
 	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
@@ -1082,7 +1082,7 @@ static COMMAND_FUNC( do_ld_mat )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("matrix object");
+	dp=pick_obj("matrix object");
 	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
@@ -1095,7 +1095,7 @@ static COMMAND_FUNC( do_mul_mat )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("matrix object");
+	dp=pick_obj("matrix object");
 	if( dp == NULL ) return;
 
 	/* BUG check size & type here */
@@ -1383,7 +1383,7 @@ static COMMAND_FUNC( do_lighting_menu )
 	PUSH_MENU(lighting);
 }
 
-static COMMAND_FUNC(do_list_dls){list_dls(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_dls){list_dls(tell_msgfile());}
 
 
 #undef ADD_CMD
@@ -1451,7 +1451,7 @@ static COMMAND_FUNC( do_delete_fb )
 {
 	Framebuffer *fbp;
 
-	fbp = PICK_GLFB("");
+	fbp = pick_glfb("");
 	if( fbp == NULL ) return;
 
 	delete_framebuffer(QSP_ARG  fbp);
@@ -1459,14 +1459,14 @@ static COMMAND_FUNC( do_delete_fb )
 
 static COMMAND_FUNC( do_list_fbs )
 {
-	list_glfbs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_glfbs(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_fb_info )
 {
 	Framebuffer *fbp;
 
-	fbp = PICK_GLFB("");
+	fbp = pick_glfb("");
 	if( fbp == NULL ) return;
 
 	glfb_info(QSP_ARG  fbp);
@@ -1560,10 +1560,10 @@ static COMMAND_FUNC( do_new_gl_buffer )
 #endif // HAVE_OPENGL
 
 	s = NAMEOF("name for GL buffer object");
-	cdp = PICK_PLATFORM("platform");
+	cdp = pick_platform("platform");
 	if( cdp != NULL )
 		push_pfdev_context(QSP_ARG  PF_CONTEXT(cdp) );
-	pdp = PICK_PFDEV("device");
+	pdp = pick_pfdev("device");
 	if( cdp != NULL )
 		pop_pfdev_context(SINGLE_QSP_ARG);
 
@@ -1576,7 +1576,7 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	if( pdp == NULL ) return;
 
 	/* Make sure this name isn't already in use... */
-	dp = dobj_of(QSP_ARG  s);
+	dp = dobj_of(s);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Data object name '%s' is already in use, can't use for GL buffer object.",s);
 		NWARN(ERROR_STRING);
@@ -1598,7 +1598,7 @@ static COMMAND_FUNC( do_new_gl_buffer )
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,
 			"Error creating data_obj header for %s",s);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	SET_OBJ_FLAG_BITS(dp, DT_NO_DATA);	/* can't free this data */
@@ -1719,7 +1719,7 @@ COMMAND_FUNC( do_gl_menu )
 	static int inited=0;
 	if( !inited ){
 		inited=1;
-		gl_debug = add_debug_module(QSP_ARG  "gl");
+		gl_debug = add_debug_module("gl");
 		DECLARE_STR1_FUNCTION(	display_list_exists,	display_list_exists )
 	}
 	PUSH_MENU(gl);

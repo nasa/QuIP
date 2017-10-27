@@ -36,7 +36,7 @@ void init_tmp_dps(SINGLE_QSP_ARG_DECL)
 	add_cmd_callback( QSP_ARG  unlock_all_tmp_objs );
 }
 
-void list_temp_dps(QSP_ARG_DECL  FILE *fp)
+void _list_temp_dps(QSP_ARG_DECL  FILE *fp)
 {
 	Node *np;
 	int n, nl, nc, nr;

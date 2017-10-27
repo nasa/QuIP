@@ -25,13 +25,13 @@ void private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, voi
 	if( OA_DEST(oap) != NULL ){
 		sprintf(buf,"Destination object: %s",OBJ_NAME( OA_DEST(oap) ) );
 		(*report_func)(DEFAULT_QSP_ARG  buf);
-longlist(QSP_ARG  OA_DEST(oap) );
+longlist(OA_DEST(oap) );
 	}
 	for(i=0;i<MAX_N_ARGS; i++){
 		if( OA_SRC_OBJ(oap,i) != NULL ){
 			sprintf(buf,"Source object %d:  %s",i+1,OBJ_NAME( OA_SRC_OBJ(oap,i) ) );
 			(*report_func)(DEFAULT_QSP_ARG  buf);
-longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
+longlist(OA_SRC_OBJ(oap,i) );
 		}
 	}
 	for(i=0;i<MAX_RETSCAL_ARGS; i++){
@@ -172,8 +172,11 @@ static ITEM_INIT_FUNC(Argset_Prec,argset_prec,0)
 static ITEM_NEW_FUNC(Argset_Prec,argset_prec)
 static Argset_Prec * argset_prec_tbl[N_ARGSET_PRECISIONS];
 
+#define init_argset_precs()	_init_argset_precs(SINGLE_QSP_ARG)
+#define new_argset_prec(s)	_new_argset_prec(QSP_ARG  s)
+
 #define INIT_ARGSET_PREC(name,code)			\
-	ap_p = new_argset_prec(QSP_ARG  name);		\
+	ap_p = new_argset_prec(name);		\
 	assert(ap_p != NULL );				\
 	ap_p->ap_code = code;				\
 	assert( code >= 0 && code < N_ARGSET_PRECISIONS );	\

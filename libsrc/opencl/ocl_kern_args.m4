@@ -33,9 +33,9 @@ else fprintf(stderr,"\t_SHOW_KERNEL_ARG:  unhandled case for type %s\n",#$1);
 
 dnl SET_KERNEL_ARG(type,value)
 
-define(`SET_KERNEL_ARG',`_SET_KERNEL_ARG(kernel[pd_idx],$1,$2)')
-define(`SET_KERNEL_ARG_1',`_SET_KERNEL_ARG(kernel1[pd_idx],$1,$2)')
-define(`SET_KERNEL_ARG_2',`_SET_KERNEL_ARG(kernel2[pd_idx],$1,$2)')
+define(`SET_KERNEL_ARG',`_SET_KERNEL_ARG(dev_kernel[pd_idx],$1,$2)')
+define(`SET_KERNEL_ARG_1',`_SET_KERNEL_ARG(dev_kernel1[pd_idx],$1,$2)')
+define(`SET_KERNEL_ARG_2',`_SET_KERNEL_ARG(dev_kernel2[pd_idx],$1,$2)')
 
 define(`SET_KERNEL_ARGS_FAST',SET_KERNEL_ARGS_FAST_$1$2$4$3)
 

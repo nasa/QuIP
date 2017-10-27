@@ -33,9 +33,9 @@ Dup_Float zoombuf $1
 Assign mid floor($fsize/2)
 Sequence filter $tsize $fsize $fsize 1 float
 Scalar maxscal 1 float
-Scalar nmax 1 int32
+Scalar nmax 1 int
 Assign total_ht_pixels nframes(halftone)*ncols(halftone)*nrows(halftone)
-Vector indices $total_ht_pixels 1 int32
+Vector indices $total_ht_pixels 1 int
 .
 
 Define Opt_HT_Init 1 prototype
@@ -55,9 +55,9 @@ If obj_exists('filter') exit_macro
 
 Image filter $fsize $fsize 1 float
 Scalar maxscal 1 float
-Scalar nmax 1 int32
+Scalar nmax 1 int
 Assign total_ht_pixels ncols(halftone)*nrows(halftone)
-Vector indices $total_ht_pixels 1 int32
+Vector indices $total_ht_pixels 1 int
 .
 
 Define Msgs_On 0

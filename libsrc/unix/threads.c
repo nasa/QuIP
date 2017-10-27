@@ -89,7 +89,7 @@ static COMMAND_FUNC( do_new_thread )
 static COMMAND_FUNC( do_list_threads )
 {
 	prt_msg("All threads:");
-	list_query_stacks(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_query_stacks(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_tell_thread )
@@ -104,7 +104,7 @@ static COMMAND_FUNC( do_wait_thread )
 	void **val_ptr=NULL;
 	Query_Stack *thread_qsp;
 
-	thread_qsp = pick_query_stack(QSP_ARG  "thread name");
+	thread_qsp = pick_query_stack("thread name");
 	if( thread_qsp == NULL ) return;
 
 	if( _QS_SERIAL(thread_qsp) == 0 ){

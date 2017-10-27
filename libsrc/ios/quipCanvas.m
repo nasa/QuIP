@@ -26,13 +26,6 @@
 // takes a timer argument, but the one that works is the one
 // with no arg.  (The other throws a missing selector error!?)
 
-#ifdef FOOBAR
--(void) canvasFireTimer:(NSTimer *) timer
-{
-	MAKE_NEEDY(CANVAS_VW(self));
-}
-#endif /* FOOBAR */
-
 // This is called from drawRect, and would seem to request another call to drawRect???
 
 -(void) canvasFire2

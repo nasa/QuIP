@@ -303,7 +303,10 @@ extern void rv_mkfile(QSP_ARG_DECL  const char *s,long total_blocks,long n_per_w
 
 
 ITEM_INTERFACE_PROTOTYPES(RV_Inode,rv_inode)
-#define PICK_RV_INODE(p)	pick_rv_inode(QSP_ARG  p)
+#define pick_rv_inode(p)	_pick_rv_inode(QSP_ARG  p)
+#define get_rv_inode(s)		_get_rv_inode(QSP_ARG  s)
+#define rv_inode_of(s)		_rv_inode_of(QSP_ARG  s)
+#define new_rv_inode(s)		_new_rv_inode(QSP_ARG  s)
 
 extern void set_use_osync(int flag);
 

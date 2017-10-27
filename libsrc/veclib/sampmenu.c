@@ -10,9 +10,9 @@ static COMMAND_FUNC( do_samp_image )
 {
 	Data_Obj *intens_dp, *image_dp, *coord_dp;
 
-	intens_dp=PICK_OBJ( "target list for sampled intensities" );
-	image_dp=PICK_OBJ( "source image for intensities" );
-	coord_dp=PICK_OBJ( "coordinate list" );
+	intens_dp=pick_obj( "target list for sampled intensities" );
+	image_dp=pick_obj( "source image for intensities" );
+	coord_dp=pick_obj( "coordinate list" );
 	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
@@ -23,9 +23,9 @@ static COMMAND_FUNC( do_render )
 {
 	Data_Obj *intens_dp, *image_dp, *coord_dp;
 
-	image_dp=PICK_OBJ( "target image" );
-	intens_dp=PICK_OBJ( "source list of sampled intensities" );
-	coord_dp=PICK_OBJ( "coordinate list" );
+	image_dp=pick_obj( "target image" );
+	intens_dp=pick_obj( "source list of sampled intensities" );
+	coord_dp=pick_obj( "coordinate list" );
 	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 
@@ -36,9 +36,9 @@ static COMMAND_FUNC( do_render2 )
 {
 	Data_Obj *intens_dp, *image_dp, *coord_dp;
 
-	image_dp=PICK_OBJ( "target image" );
-	intens_dp=PICK_OBJ( "source list of sampled intensities" );
-	coord_dp=PICK_OBJ( "coordinate list" );
+	image_dp=pick_obj( "target image" );
+	intens_dp=pick_obj( "source list of sampled intensities" );
+	coord_dp=pick_obj( "coordinate list" );
 	if( intens_dp==NULL || image_dp==NULL || coord_dp==NULL )
 		return;
 

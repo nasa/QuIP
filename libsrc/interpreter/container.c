@@ -152,7 +152,7 @@ static void search_list_for_fragment(List *lp, Frag_Match_Info *fmi_p, const cha
 	int n;
 	Node* np;
 
-	lp = alpha_sort(DEFAULT_QSP_ARG  lp);	// BUG should sort in-place???
+	lp = _alpha_sort(DEFAULT_QSP_ARG  lp);	// BUG should sort in-place???
 
 	np = QLIST_HEAD(lp);
 

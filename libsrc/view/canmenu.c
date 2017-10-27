@@ -18,7 +18,7 @@ static int viewer_name_in_use(QSP_ARG_DECL const char *s)
 {
 	Viewer *vp;
 
-	vp = VWR_OF(s);
+	vp = vwr_of(s);
 	if( vp != NULL){
 		sprintf(ERROR_STRING,"viewer name \"%s\" in use",s);
 		WARN(ERROR_STRING);
@@ -137,7 +137,7 @@ COMMAND_FUNC( reset_button_funcs )
 	//char b1[LLEN],b2[LLEN],b3[LLEN];
 	const char *b1, *b2, *b3;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 
 	b1=savestr(NAMEOF("left button text"));
 	b2=savestr(NAMEOF("middle button text"));
@@ -166,8 +166,8 @@ COMMAND_FUNC( do_set_event_action )
 	Canvas_Event *cep;
 	const char *action_text;
 
-	vp = PICK_VWR("");
-	cep = PICK_CANVAS_EVENT("event type");
+	vp = pick_vwr("");
+	cep = pick_canvas_event("event type");
 	action_text = NAMEOF("action text");
 
 	if( vp == NULL ) return;
@@ -192,7 +192,7 @@ COMMAND_FUNC( reset_window_text )
 	const char *s;
 	Viewer *vp;
 
-	vp=PICK_VWR("");
+	vp=pick_vwr("");
 	s=NAMEOF("window action text");
 
 	if( vp == NULL) return;
@@ -211,7 +211,7 @@ COMMAND_FUNC( do_redraw )
 {
 	Viewer *vp;
 
-	vp=PICK_VWR("");
+	vp=pick_vwr("");
 	if( vp == NULL) return;
 
 	INSURE_X11_SERVER
@@ -225,8 +225,8 @@ COMMAND_FUNC( do_embed_image )
 	Data_Obj *dp;
 	int x,y;
 
-	vp = PICK_VWR("");
-	dp = PICK_OBJ("image");
+	vp = pick_vwr("");
+	dp = pick_obj("image");
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
@@ -263,8 +263,8 @@ COMMAND_FUNC( do_unembed_image )
 	Data_Obj *dp;
 	int x,y;
 
-	dp = PICK_OBJ("image");
-	vp = PICK_VWR("");
+	dp = pick_obj("image");
+	vp = pick_vwr("");
 	x=(int)HOW_MANY("x position");
 	y=(int)HOW_MANY("y position");
 
@@ -284,8 +284,8 @@ COMMAND_FUNC( do_load_viewer )
 	Viewer *vp;
 	Data_Obj *dp;
 
-	vp = PICK_VWR("");
-	dp = PICK_OBJ("image");
+	vp = pick_vwr("");
+	dp = pick_obj("image");
 
 	if( vp == NULL || dp == NULL ) return;
 

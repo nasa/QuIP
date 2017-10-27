@@ -138,7 +138,7 @@ static void read_stamp(SINGLE_QSP_ARG_DECL)
 
 	if( next_sc_to_read >= MAX_TIME_STAMPS ){	/* this buf is full */
 		if( writing_buf >= 0 )
-			ERROR1("read_stamp:  disk writer not keeping up!?");
+			error1("read_stamp:  disk writer not keeping up!?");
 		writing_buf = active_buf;
 		active_buf ++;
 		active_buf %= N_SWAP_BUFFERS;

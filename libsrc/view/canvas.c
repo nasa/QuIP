@@ -69,7 +69,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		"Can't display non-contiguous image %s (viewer %s)",
 			OBJ_NAME(dp),VW_NAME(vp));
 		WARN(ERROR_STRING);
-		LONGLIST(dp);
+		longlist(dp);
 		return;
 	}
 	if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){

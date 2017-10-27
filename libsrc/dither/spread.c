@@ -116,7 +116,7 @@ double get_prob(double dele)
 	return( prob_tbl[index] );
 }
 
-int setup_requantize(SINGLE_QSP_ARG_DECL)
+int _setup_requantize(SINGLE_QSP_ARG_DECL)
 {
 	if( _hdp == NULL ){
 		NWARN("output image not specified");
@@ -146,8 +146,8 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 	_npixels = (OBJ_ROWS(_hdp) * OBJ_COLS(_hdp));
 
 	if( _edp != NULL )
-		delvec(QSP_ARG  _edp);
-	_edp = mk_img(QSP_ARG  "HT_error",
+		delvec(_edp);
+	_edp = mk_img("HT_error",
 		OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _edp == NULL ){
 		NWARN("couldn't create error image");
@@ -156,8 +156,8 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 	_eptr = (float *) OBJ_DATA_PTR(_edp);
 
 	if( _fedp != NULL )
-		delvec(QSP_ARG  _fedp);
-	_fedp = mk_img(QSP_ARG  "HT_ferror",
+		delvec(_fedp);
+	_fedp = mk_img("HT_ferror",
 		OBJ_ROWS(_hdp),OBJ_COLS(_hdp),1,PREC_FOR_CODE(PREC_SP));
 	if( _fedp == NULL ){
 		NWARN("couldn't create filtered error image");
@@ -165,7 +165,7 @@ int setup_requantize(SINGLE_QSP_ARG_DECL)
 	}
 	_feptr = (float *) OBJ_DATA_PTR(_fedp);
 
-	setup_ffilter(QSP_ARG  _fdp);
+	setup_ffilter(_fdp);
 
 	/* We used to seed the random number generator here
 	 * (using the time), but this was eliminated because
@@ -193,16 +193,16 @@ void set_halftone(Data_Obj *hdp)
 	_hptr = (float *) OBJ_DATA_PTR(hdp);
 }
 
-void setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp)
+void _setup_ffilter(QSP_ARG_DECL  Data_Obj *fdp)
 {
 	dimension_t i,j;
 	float *fptr,val;
 	incr_t offset, xos, yos;
 
 	if( _ffdp != NULL )
-		delvec(QSP_ARG  _ffdp);
+		delvec(_ffdp);
 
-	_ffdp = mk_img(QSP_ARG   "double_filter",
+	_ffdp = mk_img("double_filter",
 		OBJ_ROWS(fdp)*2-1,OBJ_COLS(fdp)*2-1,1,PREC_FOR_CODE(PREC_SP));
 
 	if( _ffdp == NULL ){
@@ -333,7 +333,7 @@ int scan_requant(int ntimes)
 	return( n_changed );
 }
 
-void scan2_requant(QSP_ARG_DECL  int ntimes)
+void _scan2_requant(QSP_ARG_DECL  int ntimes)
 {
 	int j;
 	dimension_t i, x,y;

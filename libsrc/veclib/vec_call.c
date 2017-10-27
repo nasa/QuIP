@@ -260,7 +260,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 			sprintf(ERROR_STRING,"chktyp:  source vector %s (%s) must be complex with function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
 			WARN(ERROR_STRING);
-			list_dobj(QSP_ARG  OA_SRC1(oap) );
+			list_dobj(OA_SRC1(oap) );
 			return -1;
 		}
 		if( (VF_FLAGS(vfp) & INV_FT)==0 ){
@@ -268,7 +268,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 				sprintf(ERROR_STRING,"chktyp:  destination vector %s (%s) must be real with function %s",
 					OBJ_NAME(OA_DEST(oap) ) ,OBJ_PREC_NAME( OA_DEST(oap) ),VF_NAME(vfp) );
 				WARN(ERROR_STRING);
-				list_dobj(QSP_ARG OA_DEST(oap) );
+				list_dobj(OA_DEST(oap) );
 				return -1;
 			}
 			SET_OA_ARGSTYPE(oap, REAL_ARGS);
@@ -294,7 +294,7 @@ static int chktyp(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 
 /*
 sprintf(ERROR_STRING,"function %s:  oa_argstype = %s",VF_NAME(vfp) ,argset_type_name[OA_ARGSTYPE(oap) ]);
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 */
 
 	/* if we get to here then it wasn't a special function */
@@ -349,8 +349,8 @@ ADVISE(ERROR_STRING);
 		/*
 		show_obj_args(oap);
 sprintf(ERROR_STRING,"Function %s.",VF_NAME(vfp) );
-ADVISE(ERROR_STRING);
-		ERROR1("chktyp:  Sorry, not sure how to deal with this situation...");
+advise(ERROR_STRING);
+		error1("chktyp:  Sorry, not sure how to deal with this situation...");
 		*/
 
 		if( ! IS_COMPLEX( OA_SRC1(oap) ) ){
@@ -377,7 +377,7 @@ ADVISE(ERROR_STRING);
 		}
 		/* Should the destination be complex??? */
 	} else if( HAS_QMIXED_ARGS(oap) ){
-		ERROR1("FIXME:  need to add code for quaternions, vec_call.c");
+		error1("FIXME:  need to add code for quaternions, vec_call.c");
 		/* BUG add the same check as above for quaternions */
 		return -1;
 	}
@@ -478,7 +478,7 @@ static int chkprec(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)
 		 */
 		if( IS_BITMAP(OA_DEST(oap) ) ){
 /*
-ADVISE("chkprec:  Setting argstype to R_BIT_ARGS!?");
+advise("chkprec:  Setting argstype to R_BIT_ARGS!?");
 			SET_OA_ARGSTYPE(oap, R_BIT_ARGS);
 */
 			/* R_BIT_ARGS was a functype - not an argset type??? */
@@ -769,7 +769,7 @@ static int check_size_match(QSP_ARG_DECL  Vector_Function *vfp, Data_Obj *dp1, D
 		sprintf(ERROR_STRING,
 	"check_size_match:  Size mismatch between objects %s and %s, function %s",
 			OBJ_NAME( dp1 ) ,OBJ_NAME( dp2 ), VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);	// why not warning???
+		advise(ERROR_STRING);	// why not warning???
 		return -1;
 	}
 	assert( status == 0 );
@@ -805,7 +805,7 @@ static int chksiz(QSP_ARG_DECL  Vector_Function *vfp,Vec_Obj_Args *oap)	/* check
 			{
 				sprintf(ERROR_STRING,
 			"chksiz:  bitmap arg func size error, function %s",VF_NAME(vfp) );
-				ADVISE(ERROR_STRING);
+				advise(ERROR_STRING);
 				return -1;
 			}
 		}
@@ -825,7 +825,7 @@ if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"chksiz:  destv %s (%s)  arg1 %s (%s)",
 OBJ_NAME(OA_DEST(oap) ), AREA_NAME(OBJ_AREA(OA_DEST(oap))),
 OBJ_NAME( OA_SRC1(oap) ), AREA_NAME(OBJ_AREA(OA_SRC1(oap))) );
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
@@ -838,7 +838,7 @@ ADVISE(ERROR_STRING);
 		if( (status=cksiz(QSP_ARG  VF_FLAGS(vfp), OA_SRC1(oap) ,OA_SRC2(oap) )) == (-1) ){
 			sprintf(ERROR_STRING,"chksiz:  Size mismatch between arg1 (%s) and arg2 (%s), function %s",
 				OBJ_NAME( OA_SRC1(oap) ) ,OBJ_NAME(OA_SRC2(oap) ) ,VF_NAME(vfp) );
-			ADVISE(ERROR_STRING);
+			advise(ERROR_STRING);
 			return -1;
 		}
 		return 0;
@@ -934,8 +934,8 @@ void wacky_arg(Data_Obj *dp)
 	sprintf(ERROR_STRING, "%s:  inc = %d, cols = %d",
 		OBJ_NAME(dp) , dp->dt_inc, dp->dt_cols );
 	NWARN(ERROR_STRING);
-	list_dobj(QSP_ARG dp);
-	ERROR1("wacky_arg:  can't happen #1");
+	list_dobj(dp);
+	error1("wacky_arg:  can't happen #1");
 }
 
 static char *remove_brackets(char *name)
@@ -1016,7 +1016,7 @@ static int (*gpu_dispatch_func)(Vector_Function *vfp, Vec_Obj_Args *oap)=default
 void set_gpu_dispatch_func( int (*func)(Vector_Function *vfp, Vec_Obj_Args *oap) )
 {
 //sprintf(ERROR_STRING,"Setting gpu dispatch func (0x%lx)",(int_for_addr)func);
-//ADVISE(ERROR_STRING);
+//advise(ERROR_STRING);
 	gpu_dispatch_func = func;
 }
 
@@ -1037,8 +1037,8 @@ int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 		SET_OA_ARGSPREC_CODE(oap, ARGSET_PREC( OBJ_PREC( OA_DEST(oap) )  ));
 	} else {
 		sprintf(ERROR_STRING,"call_vfunc %s:",VF_NAME(vfp) );
-		ADVISE(ERROR_STRING);
-		ERROR1("call_vfunc:  no prototype vector!?");
+		advise(ERROR_STRING);
+		error1("call_vfunc:  no prototype vector!?");
 	}
 
 //sprintf(ERROR_STRING,"call_vfunc:  function %s",VF_NAME(vfp));

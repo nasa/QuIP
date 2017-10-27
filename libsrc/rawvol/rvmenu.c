@@ -61,7 +61,7 @@ static COMMAND_FUNC( do_mkfs )
 			sprintf(ERROR_STRING,
 	"Need to increase MAX_DISKNAME_LEN (%d) to accomodate diskname \"%s\"",
 				MAX_DISKNAME_LEN,s);
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 		strcpy(disknames[i],s);
 		str_arr[i] = disknames[i];
@@ -120,7 +120,7 @@ static COMMAND_FUNC( do_rm )
 {
 	RV_Inode *inp;
 
-	inp = PICK_RV_INODE("");
+	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
 	rv_rmfile(QSP_ARG  inp->rvi_name);
@@ -134,7 +134,7 @@ static COMMAND_FUNC( do_chmod )
 	RV_Inode *inp;
 	int mode;
 
-	inp = PICK_RV_INODE("");
+	inp = pick_rv_inode("");
 	mode = HOW_MANY("integer mode code");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
@@ -148,7 +148,7 @@ static COMMAND_FUNC( do_ls_one )
 {
 	RV_Inode *inp;
 
-	inp = PICK_RV_INODE("");
+	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
 	rv_ls_inode(QSP_ARG  inp);
@@ -299,7 +299,7 @@ static COMMAND_FUNC( do_rv_info )
 {
 	RV_Inode *inp;
 
-	inp = PICK_RV_INODE("filename");
+	inp = pick_rv_inode("filename");
 	if( inp == NULL ) return;
 
 #ifdef HAVE_RAWVOL
@@ -326,7 +326,7 @@ static COMMAND_FUNC( do_err_frms )
 	Frame_Info *fi_p;
 
 	s = NAMEOF("name for data vector");
-	inp = PICK_RV_INODE("filename");
+	inp = pick_rv_inode("filename");
 	i = WHICH_ONE("error type",N_ERROR_TYPES,error_type_list);
 
 	if( inp==NULL || i < 0 ) return;
@@ -341,7 +341,7 @@ static COMMAND_FUNC( do_err_frms )
 		return;
 	}
 
-	dp = dobj_of(QSP_ARG  s);
+	dp = dobj_of(s);
 	if( dp != NULL ){
 		/* object already exists */
 		if( verbose ){
@@ -349,7 +349,7 @@ static COMMAND_FUNC( do_err_frms )
 		"deleting previously created object %s",s);
 			advise(ERROR_STRING);
 		}
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 	}
 
 	dp = mk_vec(QSP_ARG  s,FRAME_INFO_N_SAVED(fi_p),1,PREC_FOR_CODE(PREC_DI));
@@ -496,7 +496,7 @@ COMMAND_FUNC( do_rv_menu )
 		/* insure_default_rv(); */
 #ifdef DEBUG
 		if( rawvol_debug == 0 )
-			rawvol_debug = add_debug_module(QSP_ARG  "rawvol");
+			rawvol_debug = add_debug_module("rawvol");
 #endif /* DEBUG */
 		inited++;
 	}

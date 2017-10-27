@@ -140,12 +140,12 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			if( VN_CODE(VN_CHILD(enp,0)) == T_PTR_DECL ){
 				const char *s;
 
-				s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+				s = (*(PF_KERNEL_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 					(QSP_ARG  PKS_ARG_QUALIFIER );
 				cat_string(sbp,s);
 				if( strlen(s) > 0 )
 					cat_string(sbp," ");
-				add_to_global_var_list(VN_STRING(VN_CHILD(enp,0)));
+				add_to_global_var_list(VN_DECL_NAME(VN_CHILD(enp,0)));
 			}
 
 			cat_string(sbp,PREC_NAME(VN_DECL_PREC(enp)));
@@ -154,18 +154,18 @@ static void emit_kern_arg_decl(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp
 			break;
 		case T_PTR_DECL:
 			cat_string(sbp,"*");
-			cat_string(sbp,VN_STRING(enp));
+			cat_string(sbp,VN_DECL_NAME(enp));
 
 			// For opencl, need an offset arg
 			cat_string(sbp,", int ");
-			cat_string(sbp,VN_STRING(enp));
+			cat_string(sbp,VN_DECL_NAME(enp));
 			cat_string(sbp,"_offset");
 			break;
 		case T_SCAL_DECL:
-			cat_string(sbp,VN_STRING(enp));
+			cat_string(sbp,VN_DECL_NAME(enp));
 			break;
 		default:
-			MISSING_CASE(enp,"emit_kern_arg_decl");
+			missing_case(enp,"emit_kern_arg_decl");
 			break;
 	}
 }
@@ -287,8 +287,8 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			emit_kern_arg_decl(QSP_ARG  sbp, VN_CHILD(enp,0) );
 			cat_string(sbp,";\n");
 			break;
-		case T_DYN_OBJ:
-			// assume this is a var holding a scalar!?
+		case T_DYN_OBJ: // assume this is a var holding a scalar!?
+		case T_SCALAR_VAR:
 			cat_string(sbp,VN_STRING(enp));
 			break;
 
@@ -336,7 +336,7 @@ static void emit_kern_body_node(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *en
 			cat_string(sbp," )");
 			break;
 		default:
-			MISSING_CASE(enp,"emit_kern_body_node");
+			missing_case(enp,"emit_kern_body_node");
 			break;
 	}
 }
@@ -357,7 +357,7 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Sub
 
 	// Make up a name for the kernel
 
-	s = (*(PF_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+	s = (*(PF_KERNEL_STRING_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 			(QSP_ARG  PKS_KERNEL_QUALIFIER );
 	cat_string(sbp,s);	/*"__kernel " (ocl) or "global" (cuda) */
 	if( strlen(s) > 0 )
@@ -372,19 +372,38 @@ static void emit_kern_decl(QSP_ARG_DECL  String_Buf *sbp, const char *kname, Sub
 	cat_string(sbp,")\n");
 }
 
-static void make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
+static void * make_platform_kernel(QSP_ARG_DECL  const char *src, const char *name)
 {
 	void *kp;
 
 	assert( curr_pdp != NULL );
-advise("calling platform-specific kernel creation function...");
-	kp = (*(PF_KRNL_FN( PFDEV_PLATFORM(curr_pdp) ) ))
+	kp = (*(PF_MAKE_KERNEL_FN( PFDEV_PLATFORM(curr_pdp) ) ))
 		(QSP_ARG  src, name, curr_pdp );
 	if( kp == NULL ){ 
 		NERROR1("kernel creation failure!?");
 	}
+	return kp;
+}
 
-	// where to store?
+void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
+{
+	Kernel_Info_Ptr kip;
+
+	kip = SR_KERNEL_INFO_PTR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
+	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip, pdp );
+}
+
+void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp)
+{
+	(*(PF_RUN_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kp, SC_ARG_VALS(scp), pdp);
+	//fprintf(stderr,"Sorry, run_fused_kernel not implemented yet...\n");
+}
+
+static void store_platform_kernel(QSP_ARG_DECL  Subrt *srp, void *kp, Platform_Device *pdp)
+{
+	Kernel_Info_Ptr *kip_p;
+	kip_p = SR_KERNEL_INFO_PTR_ADDR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
+	(*(PF_STORE_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip_p, kp, pdp );
 }
 
 static void make_kernel_name(String_Buf *sbp, Subrt *srp, const char *speed)
@@ -402,11 +421,20 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 {
 	String_Buf *sbp;
 	String_Buf *kname;
+	void *kp;
 
 	assert( ! IS_SCRIPT(srp) );
 
 	if( curr_pdp == NULL ){
 		WARN("fuse_subrt:  no platform selected!?");
+		return;
+	}
+
+	// Make sure that this one hasn't already been fused...
+	kp = find_fused_kernel(QSP_ARG  srp, curr_pdp);
+	if( kp != NULL ){
+		sprintf(ERROR_STRING,"fuse_subrt:  Subroutine %s has already been fused!?",SR_NAME(srp));
+		WARN(ERROR_STRING);
 		return;
 	}
 
@@ -421,12 +449,15 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	emit_kern_body(QSP_ARG  sbp, srp );
 	rls_global_var_list();
 
-	fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
+	if( verbose )
+		fprintf(stderr,"Kernel source:\n\n%s\n\n",sb_buffer(sbp));
 
 	// BUG OpenCL specific code!?!?
-	make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
+	kp = make_platform_kernel(QSP_ARG  sb_buffer(sbp), sb_buffer(kname) );
 
 	// BUG release stringbufs here!
+
+	store_platform_kernel(QSP_ARG  srp,kp,curr_pdp);
 }
 
 void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
@@ -443,9 +474,54 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			}
 			break;
 		default:
-			MISSING_CASE(enp,"fuse_kernel");
+			missing_case(enp,"fuse_kernel");
 			break;
 	}
 }
 
+// returns number of elements to process
+// BUG - this is good for fast kernels, but for slow kernels we need the shapes too!?
+
+long set_fused_kernel_args(QSP_ARG_DECL  void *kp, int *idx_p, Vec_Expr_Node *enp, Compute_Platform *cpp)
+{
+	Data_Obj *dp;
+	long l1, l2, ret_val;
+
+	switch( VN_CODE(enp) ){
+		case T_ARGLIST:
+			l1=set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,0),cpp);
+			l2=set_fused_kernel_args(QSP_ARG  kp,idx_p,VN_CHILD(enp,1),cpp);
+			ret_val = l1 > l2 ? l1 : l2;	// max
+//fprintf(stderr,"set_fused_kernel_args will return %ld (max of %ld and %ld)\n",ret_val,l1,l2);
+			break;
+
+		case T_REFERENCE:
+			enp = VN_CHILD(enp,0);
+			assert(enp!=NULL);
+			assert(VN_CODE(enp)==T_STATIC_OBJ);
+			dp = VN_OBJ(enp);
+			assert(dp!=NULL);
+			ret_val = OBJ_N_MACH_ELTS(dp);
+
+			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &OBJ_DATA_PTR(dp), KERNEL_ARG_VECTOR );
+			break;
+
+		case T_LIT_DBL:
+			ret_val = 1;
+			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &VN_DBLVAL(enp), KERNEL_ARG_DBL );
+			break;
+
+		case T_LIT_INT:
+			ret_val = 1;
+			(*(PF_SET_KERNEL_ARG_FN(cpp)))(QSP_ARG  kp,idx_p, &VN_INTVAL(enp), KERNEL_ARG_INT );
+			break;
+
+		default:
+			ret_val = -1;
+			sprintf(ERROR_STRING,"set_fused_kernel_args:  unhandled case %s !?",node_desc(enp));
+			error1(ERROR_STRING);
+	}
+//fprintf(stderr,"set_fused_kernel_args will return %ld\n",ret_val);
+	return ret_val;
+}
 

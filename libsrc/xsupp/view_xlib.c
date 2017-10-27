@@ -899,7 +899,7 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 #endif /* QUIP_DEBUG */
 		// memory leak on children because locked - same command cycle!?
 
-		delvec(QSP_ARG  disp_dp);
+		delvec(disp_dp);
 	}
 } // end embed_image
 
@@ -1154,7 +1154,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 		n = MIN(OBJ_COMPS(dp),OBJ_COMPS(disp_dp));
 		copy_components(QSP_ARG  n,dp,0,1,disp_dp,0,1);
 		unlock_children(disp_dp);	// so they delete properly
-		delvec(QSP_ARG  disp_dp);
+		delvec(disp_dp);
 	}
 
 	/* set the flag to show the image has some stuff */

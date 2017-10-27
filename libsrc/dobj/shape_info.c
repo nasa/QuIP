@@ -18,13 +18,15 @@ Item_Type *prec_itp=NULL;
 	INIT_GENERIC_PREC(name,type,code)		\
 	SET_PREC_SIZE(prec_p, sizeof(type));
 
+#define new_prec(name)	_new_prec(QSP_ARG  name)
+
 #define INIT_GENERIC_PREC(name,type,code)		\
-	prec_p = new_prec(QSP_ARG  #name);		\
+	prec_p = new_prec(#name);		\
 	SET_PREC_CODE(prec_p, code);			\
 	SET_PREC_SET_VALUE_FROM_INPUT_FUNC(prec_p,name##_set_value_from_input);	\
 	SET_PREC_INDEXED_DATA_FUNC(prec_p,name##_indexed_data);	\
 	SET_PREC_IS_NUMERIC_FUNC(prec_p,name##_is_numeric);	\
-	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar);	\
+	SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,name##_assign_scalar_obj);	\
 	SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,name##_extract_scalar);	\
 	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,cast_##name##_to_double);	\
 	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,cast_##name##_from_double);	\
@@ -36,26 +38,26 @@ Item_Type *prec_itp=NULL;
 		prec_for_code( code & MACH_PREC_MASK ) ); \
 	}
 
-static Precision *new_prec(QSP_ARG_DECL  const char *name)
+static Precision *_new_prec(QSP_ARG_DECL  const char *name)
 {
 	Precision *prec_p;
 
-	prec_p = (Precision *) new_item(QSP_ARG  prec_itp, name, sizeof(Precision) );
+	prec_p = (Precision *) new_item(prec_itp, name, sizeof(Precision) );
 	assert( prec_p != NULL );
 
 	return(prec_p);
 }
 
-Precision *get_prec(QSP_ARG_DECL  const char *name)
+Precision *_get_prec(QSP_ARG_DECL  const char *name)
 {
-	return (Precision *)get_item(QSP_ARG  prec_itp, name);
+	return (Precision *)get_item(prec_itp, name);
 }
 
 /////////////////////////////////
 
 #define DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)						\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 assert( AERROR(#stem"_set_value_from_input should never be called, not a machine precision!?") );\
 }
@@ -63,41 +65,44 @@ assert( AERROR(#stem"_set_value_from_input should never be called, not a machine
 // BUG need special case for bitmap!
 // Floating point values aren't signed...
 
-#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
 	if( ! HAS_FORMAT_LIST )									\
-		val = query_func(QSP_ARG  prompt );						\
+		val = query_func(prompt );							\
 	else											\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
 	if( val < type_min || val > type_max ){							\
 		sprintf(ERROR_STRING,								\
-			"Truncation error converting %s to %s (%s)",				\
-			#read_type,#stem,#type);						\
+			"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",	\
+			#stem,#read_type,#stem,#type);						\
 		WARN(ERROR_STRING);								\
+		sprintf(ERROR_STRING,"val = %ld, type_min = %ld, type_max = %ld",		\
+			(long)val,(long)type_min,(long)type_max);				\
+		advise(ERROR_STRING);								\
 	}											\
 												\
 	if( vp != NULL )									\
 		* ((type *)vp) = (type) val;							\
 }
 
-#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,prompt,next_input_func,type_min,type_max)	\
+#define DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(stem,type,read_type,query_func,next_input_func,type_min,type_max)	\
 												\
-static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
+static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prompt)		\
 {												\
 	read_type val;										\
 												\
 	if( ! HAS_FORMAT_LIST )									\
-		val = query_func(QSP_ARG  prompt );						\
+		val = query_func(prompt );							\
 	else											\
 		val = next_input_func(QSP_ARG  prompt);						\
 												\
 	if( val < (-type_max) || val > type_max ){						\
-		sprintf(ERROR_STRING,"Truncation error converting %s to %s (%s)",#read_type,#stem,#type);		\
+		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#stem,#read_type,#stem,#type);		\
 		WARN(ERROR_STRING);								\
 	}											\
 												\
@@ -110,19 +115,19 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp)					\
 		* ((type *)vp) = (type) val;							\
 }
 
-DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,"real data",next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
-DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,"real data",next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(float,float,double,how_much,next_input_flt_with_format,__FLT_MIN__,__FLT_MAX__)
+DECLARE_SET_FLT_VALUE_FROM_INPUT_FUNC(double,double,double,how_much,next_input_flt_with_format,__DBL_MIN__,__DBL_MAX__)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,"integer data",next_input_int_with_format,MIN_BYTE,MAX_BYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,"integer data",next_input_int_with_format,MIN_SHORT,MAX_SHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT32,MAX_INT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(byte,char,long,how_many,next_input_int_with_format,MIN_BYTE,MAX_BYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(short,short,long,how_many,next_input_int_with_format,MIN_SHORT,MAX_SHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(int,int32_t,long,how_many,next_input_int_with_format,MIN_INT32,MAX_INT32)
 // This one generates warnings when building for iOS?
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_INT64,MAX_INT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(long,int64_t,long,how_many,next_input_int_with_format,MIN_INT64,MAX_INT64)
 
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,"integer data",next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,"integer data",next_input_int_with_format,MIN_USHORT,MAX_USHORT)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT32,MAX_UINT32)
-DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,"integer data",next_input_int_with_format,MIN_UINT64,MAX_UINT64)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_byte,u_char,long,how_many,next_input_int_with_format,MIN_UBYTE,MAX_UBYTE)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_short,u_short,long,how_many,next_input_int_with_format,MIN_USHORT,MAX_USHORT)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_int,int32_t,long,how_many,next_input_int_with_format,MIN_UINT32,MAX_UINT32)
+DECLARE_SET_INT_VALUE_FROM_INPUT_FUNC(u_long,int64_t,long,how_many,next_input_int_with_format,MIN_UINT64,MAX_UINT64)
 
 /////////////////////////////////
 
@@ -188,7 +193,7 @@ static int stem##_is_numeric(void)		\
 
 #define DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*((type *)OBJ_DATA_PTR(dp)) = svp->member ;					\
 	return 0;							\
@@ -196,7 +201,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -205,7 +210,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))  ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -216,7 +221,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,member)		\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	*( (type *)(OBJ_DATA_PTR(dp))   ) = svp->member[0];				\
 	*(((type *)(OBJ_DATA_PTR(dp)))+1) = svp->member[1];				\
@@ -226,7 +231,7 @@ static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
 
 #define DECLARE_BAD_ASSIGN_SCALAR_FUNC(stem)				\
 									\
-static int stem##_assign_scalar(Data_Obj *dp, Scalar_Value *svp)		\
+static int stem##_assign_scalar_obj(Data_Obj *dp, Scalar_Value *svp)		\
 {									\
 	return -1;							\
 }
@@ -392,7 +397,7 @@ DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)
 
 ////////////////////////////////
 
-static int bit_assign_scalar(Data_Obj *dp,Scalar_Value *svp)
+static int bit_assign_scalar_obj(Data_Obj *dp,Scalar_Value *svp)
 {
 	if( svp->bitmap_scalar )
 		*( (BITMAP_DATA_TYPE *)OBJ_DATA_PTR(dp) ) |= 1 << OBJ_BIT0(dp) ;
@@ -479,11 +484,11 @@ DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(void)
 
 ////////////////////////////////
 
-void init_precisions(SINGLE_QSP_ARG_DECL)
+void _init_precisions(SINGLE_QSP_ARG_DECL)
 {
 	Precision *prec_p;
 
-	prec_itp = new_item_type(QSP_ARG  "Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
+	prec_itp = new_item_type("Precision", LIST_CONTAINER);	// used to be hashed, but not many of these?
 									// should sort based on access?
 
 	INIT_PREC(byte,char,PREC_BY)
@@ -518,10 +523,10 @@ void init_precisions(SINGLE_QSP_ARG_DECL)
 List *prec_list(SINGLE_QSP_ARG_DECL)
 {
 	if( prec_itp == NULL ){
-		init_precisions(SINGLE_QSP_ARG);
+		init_precisions();
 	}
 
-	return item_list(QSP_ARG  prec_itp);
+	return item_list(prec_itp);
 }
 
 Precision *const_precision(Precision *prec_p)

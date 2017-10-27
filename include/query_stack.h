@@ -34,7 +34,7 @@ typedef struct vector_parser_data {
 	const char *	vpd_curr_string;
 	double		vpd_final;
 	String_Ref *	vpd_curr_infile;
-	List *		vpd_subroutine_context_stack /* =NO_LIST */ ;
+	List *		vpd_subroutine_context_stack;
 } Vector_Parser_Data;
 
 

@@ -30,7 +30,7 @@ void creat_pipe(QSP_ARG_DECL  const char *name, const char* command, const char*
 		return;
 	}
 
-	pp = new_pipe(QSP_ARG  name);
+	pp = new_pipe(name);
 	if( pp == NULL ) return;
 
 	pp->p_cmd = savestr(command);
@@ -52,7 +52,7 @@ void close_pipe(QSP_ARG_DECL  Pipe *pp)
 		WARN(ERROR_STRING);
 	}
 	rls_str(pp->p_cmd);
-	del_pipe(QSP_ARG  pp);
+	del_pipe(pp);
 }
 
 void sendto_pipe(QSP_ARG_DECL  Pipe *pp,const char* text)
@@ -96,12 +96,12 @@ void readfr_pipe(QSP_ARG_DECL  Pipe *pp,const char* varname)
 			advise(ERROR_STRING);
 		}
 		close_pipe(QSP_ARG  pp);
-		ASSIGN_VAR(varname,"pipe_read_error");
+		assign_var(varname,"pipe_read_error");
 	} else {
 		/* remove trailing newline */
 		if( buf[strlen(buf)-1] == '\n' )
 			buf[strlen(buf)-1] = 0;
-		ASSIGN_VAR(varname,buf);
+		assign_var(varname,buf);
 	}
 }
 

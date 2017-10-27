@@ -14,7 +14,7 @@
 double obj_exists(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp==NULL ) return(0.0);
 	return(1.0);
 }

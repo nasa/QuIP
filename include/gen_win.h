@@ -183,6 +183,14 @@ extern UIViewController *current_view_controller;
 
 #endif /* BUILD_FOR_OBJC */
 
+#define init_genwins()		_init_genwins(SINGLE_QSP_ARG)
+#define new_genwin(s)		_new_genwin(QSP_ARG  s)
+#define genwin_of(s)		_genwin_of(QSP_ARG  s)
+#define get_genwin(s)		_get_genwin(QSP_ARG  s)
+#define pick_genwin(s)		_pick_genwin(QSP_ARG  s)
+//#define del_genwin(s)		_del_genwin(QSP_ARG  s)
+#define list_genwins(fp)	_list_genwins(QSP_ARG  fp)
+#define genwin_list()		_genwin_list(SINGLE_QSP_ARG)
 
 extern void add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp, Genwin_Functions *gwfp,
 	IOS_Item *(*lookup)(QSP_ARG_DECL  const char *));

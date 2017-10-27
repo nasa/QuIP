@@ -743,15 +743,15 @@ fprintf(stderr,"recv_polh_data:  line read:  \"%s\".\n",s);
 				switch(s[3]){
 					case '0':
 						_prt_msg(DEFAULT_QSP_ARG  "Internal sync");
-						ASSIGN_VAR(POLHEMUS_SYNC_VAR_NAME,"internal");
+						assign_var(POLHEMUS_SYNC_VAR_NAME,"internal");
 						break;
 					case '1':
 						_prt_msg(DEFAULT_QSP_ARG  "External sync");
-						ASSIGN_VAR(POLHEMUS_SYNC_VAR_NAME,"external");
+						assign_var(POLHEMUS_SYNC_VAR_NAME,"external");
 						break;
 					case '2':
 						_prt_msg(DEFAULT_QSP_ARG  "External sync");
-						ASSIGN_VAR(POLHEMUS_SYNC_VAR_NAME,"software");
+						assign_var(POLHEMUS_SYNC_VAR_NAME,"software");
 						break;
 #ifdef CAUTIOUS
 					default:

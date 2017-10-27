@@ -26,7 +26,7 @@ static double port_exists(QSP_ARG_DECL  const char *name)
 {
 	Port *mpp;
 
-	mpp = port_of(QSP_ARG  name);
+	mpp = port_of(name);
 	if( mpp==NULL ) return(0.0);
 	return(1.0);
 }
@@ -57,7 +57,7 @@ static COMMAND_FUNC( start_client )
 		}
 	}
 	sprintf(str,"%d",actual);
-	ASSIGN_VAR("actual_port_number",str);
+	assign_reserved_var("actual_port_number",str);
 }
 
 static COMMAND_FUNC( start_server )
@@ -80,7 +80,7 @@ static COMMAND_FUNC( start_server )
 		}
 	}
 	sprintf(str,"%d",actual);
-	ASSIGN_VAR("actual_port_number",str);
+	assign_reserved_var("actual_port_number",str);
 //fprintf(stderr,"server started on port %d\n",actual);
 }
 
@@ -88,7 +88,7 @@ static COMMAND_FUNC( do_reset_socket )
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( mpp==NULL ) return;
 	reset_port(QSP_ARG  mpp );
 }
@@ -97,7 +97,7 @@ static COMMAND_FUNC( do_close_socket )
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( mpp==NULL ) return;
 	mpp->mp_flags &= ~PORT_SERVER;	// force closure
 	reset_port(QSP_ARG  mpp );
@@ -107,7 +107,7 @@ static COMMAND_FUNC( do_connect_port )
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( mpp==NULL ) return;
 
 	if( (mpp->mp_flags & PORT_SERVER) == 0 ){
@@ -124,7 +124,7 @@ static COMMAND_FUNC( do_portinfo )
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( mpp==NULL ) return;
 
 	portinfo(QSP_ARG  mpp);
@@ -134,7 +134,7 @@ static COMMAND_FUNC( do_getopts )
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( mpp==NULL ) return;
 
 #ifdef HAVE_SOCKET
@@ -299,7 +299,7 @@ static COMMAND_FUNC( do_set_secure )
 	Port *mpp;
 	const char *s;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	s = NAMEOF("authentication string");
 
 	if( mpp==NULL ) return;
@@ -321,7 +321,7 @@ static COMMAND_FUNC( do_port_redir )
 	// not thread-safe, should be per-qsp!
 	static char str[128];
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( mpp==NULL ) return;
 
 	if( ! IS_CONNECTED(mpp) ){
@@ -340,7 +340,7 @@ static COMMAND_FUNC( do_port_redir )
 	mpp->mp_flags |= PORT_REDIR;
 }
 
-static COMMAND_FUNC(do_list_ports) {list_ports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_ports) {list_ports(tell_msgfile());}
 
 // BUG?  should we have separate menus for servers and clients?
 
@@ -349,7 +349,7 @@ static COMMAND_FUNC(do_set_sleeptime)
 	Port *mpp;
 	sleep_time_t n;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	n=(sleep_time_t)HOW_MANY("microseconds to sleep when waiting (server)");
 
 	if( mpp==NULL ) return;
@@ -386,8 +386,8 @@ static COMMAND_FUNC(do_send_obj)
 	Port *mpp;
 	size_t s;
 
-	mpp = PICK_PORT("");
-	dp = PICK_OBJ("data vector");
+	mpp = pick_port("");
+	dp = pick_obj("data vector");
 
 	if( mpp == NULL || dp == NULL ) return;
 
@@ -424,7 +424,7 @@ static COMMAND_FUNC(do_bad_magic)
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	send_constant_data(QSP_ARG  mpp, 64, 0xaa );
 }
 
@@ -432,7 +432,7 @@ static COMMAND_FUNC(do_partial_magic)
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	send_constant_data(QSP_ARG  mpp, 3, 0xaa );
 }
 
@@ -440,7 +440,7 @@ static COMMAND_FUNC(do_partial_type)
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		WARN("do_partial_type:  error sending magic number");
 		return;
@@ -453,7 +453,7 @@ static COMMAND_FUNC(do_bad_type)
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		WARN("do_bad_type:  error sending magic number");
 		return;
@@ -470,7 +470,7 @@ static COMMAND_FUNC(do_empty_packet)
 {
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		WARN("do_empty_packet:  error sending magic number");
 		return;
@@ -503,15 +503,15 @@ static COMMAND_FUNC( do_port_check )
 	int v;
 	Port *mpp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 
 	if( mpp == NULL ) return;
 
 	v=check_port_data(QSP_ARG  mpp, 0);
 	if( v == 1 )
-		ASSIGN_VAR("port_ready","1");
+		assign_reserved_var("port_ready","1");
 	else
-		ASSIGN_VAR("port_ready","0");
+		assign_reserved_var("port_ready","0");
 }
 
 #undef ADD_CMD
@@ -557,43 +557,43 @@ static void init_default_port_data_types(SINGLE_QSP_ARG_DECL)
 
 	if( define_port_data_type(QSP_ARG  (int)P_TEXT, "text",
 			"text to send", recv_text,
-			nameof, xmit_text) == -1 )
+			_nameof, xmit_text) == -1 )
 		WARN("error adding text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_FILE_AS_TEXT, "file_as_text",
 			"local name", recv_text,
-			nameof, xmit_file_as_text) == -1 )
+			_nameof, xmit_file_as_text) == -1 )
 		WARN("error adding text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_PLAIN_FILE, "plain_file",
 			"local filename", recv_plain_file,
-			nameof, xmit_plain_file) == -1 )
+			_nameof, xmit_plain_file) == -1 )
 		WARN("error adding plain_file data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_FILENAME, "filename",
 			"local filename", recv_filename,
-			nameof, xmit_filename) == -1 )
+			_nameof, xmit_filename) == -1 )
 		WARN("error adding plain_file data type to port tables");
 
 #ifdef HAVE_ENCRYPTION
 	if( define_port_data_type(QSP_ARG  (int)P_AUTHENTICATION,
 			"authentication", "data to send", recv_enc_text,
-			nameof, xmit_auth) == -1 )
+			_nameof, xmit_auth) == -1 )
 		WARN("error adding authentication data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_TEXT,
 			"encrypted_text", "text to send", recv_enc_text,
-			nameof, xmit_enc_text) == -1 )
+			_nameof, xmit_enc_text) == -1 )
 		WARN("error adding encrypted text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_FILE,
 			"encrypted_file", "local filename", recv_enc_file,
-			nameof, xmit_enc_file) == -1 )
+			_nameof, xmit_enc_file) == -1 )
 		WARN("error adding encrypted file data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENC_FILE_AS_TEXT,
 			"encrypted_file_as_text", "local filename", recv_enc_text,
-			nameof, xmit_enc_file_as_text) == -1 )
+			_nameof, xmit_enc_file_as_text) == -1 )
 		WARN("error adding encrypted file data type to port tables");
 #endif /* HAVE_ENCRYPTION */
 
@@ -605,7 +605,7 @@ COMMAND_FUNC( do_port_menu )
 {
 	Port_Data_Type *pdtp;
 
-	pdtp = pdt_of(QSP_ARG  "text");	// BUG expensive flag lookup!
+	pdtp = pdt_of("text");	// BUG expensive flag lookup!
 	if( pdtp == NULL ) init_default_port_data_types(SINGLE_QSP_ARG);
 
 	PUSH_MENU(ports);

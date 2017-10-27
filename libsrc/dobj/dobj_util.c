@@ -30,7 +30,7 @@
 #define ZOMBIE_SUPPORT
 
 
-Data_Obj *pick_obj(QSP_ARG_DECL  const char *pmpt)
+Data_Obj *_pick_obj(QSP_ARG_DECL  const char *pmpt)
 {
 	const char *s;
 
@@ -119,7 +119,7 @@ static void del_subs(QSP_ARG_DECL  Data_Obj *dp)			/** delete all subimages */
 
 	while( OBJ_CHILDREN( dp ) != NULL ){
 		np=QLIST_HEAD( OBJ_CHILDREN( dp ) );
-		delvec( QSP_ARG  (Data_Obj *) NODE_DATA(np) );
+		delvec( (Data_Obj *) NODE_DATA(np) );
 	}
 }
 
@@ -140,7 +140,7 @@ static void make_zombie(QSP_ARG_DECL  Data_Obj *dp)
 	 * to an image - for instance, if we display an image, then delete it,
 	 * and then later want to refresh the window...
 	 */
-	zombie_item(QSP_ARG  dobj_itp,(Item *)dp);
+	zombie_item(dobj_itp,(Item *)dp);
 
 	sprintf(zname,"Z.%s.%d",OBJ_NAME(dp),n_zombie++);
 fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
@@ -166,7 +166,7 @@ fprintf(stderr,"make_zombine, changing object %s to %s\n",OBJ_NAME(dp),zname);
  * object, a warning is printed and no action is taken.
  */
 
-void delvec(QSP_ARG_DECL  Data_Obj *dp)
+void _delvec(QSP_ARG_DECL  Data_Obj *dp)
 {
 
 	assert(dp!=NULL);
@@ -217,7 +217,7 @@ advise(ERROR_STRING);
 	if( IS_EXPORTED(dp) ){
 		Identifier *idp;
 
-		idp = ID_OF(OBJ_NAME(dp));
+		idp = id_of(OBJ_NAME(dp));
 		assert( idp != NULL );
 		delete_id(QSP_ARG  (Item *)idp);
 	}
@@ -284,7 +284,7 @@ advise(ERROR_STRING);
 		/* put this back on the free list... */
 		recycle_item(dobj_itp,dp);
 	} else {
-		del_item(QSP_ARG  dobj_itp, dp );
+		del_item(dobj_itp, dp );
 	}
 #else /* ! ZOMBIE_SUPPORT */
 
@@ -729,14 +729,14 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 		return;
 	}
 
-	debug_data = add_debug_module(QSP_ARG  "data");
+	debug_data = add_debug_module("data");
 
 	// BUG?  this happens here on the main thread, but child threads
 	// will need to be initialized elsewhere!
 	INSURE_QS_DOBJ_ASCII_INFO(THIS_QSP)
 	init_dobj_ascii_info(QSP_ARG  QS_DOBJ_ASCII_INFO(THIS_QSP) );
     
-	init_dobjs(SINGLE_QSP_ARG);		/* initialize items */
+	init_dobjs();		/* initialize items */
 
 	// update to use platforms...
 	//ram_area_p=area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM);
@@ -744,13 +744,13 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 
 	init_tmp_dps(SINGLE_QSP_ARG);
 
-	set_del_method(QSP_ARG  dobj_itp,(void (*)(QSP_ARG_DECL  Item *))delvec);
+	set_del_method(dobj_itp,(void (*)(QSP_ARG_DECL  Item *))_delvec);
 
 	init_dfuncs(SINGLE_QSP_ARG);
 
 	set_obj_funcs(
                   get_obj,
-                  dobj_of,
+                  _dobj_of,
                   d_subscript,
                   c_subscript);
     
@@ -774,7 +774,7 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	define_port_data_type(QSP_ARG  P_DATA,"data","name of data object",
 		recv_obj,
 		/* null_proc, */
-		(const char *(*)(QSP_ARG_DECL  const char *))pick_obj,
+		(const char *(*)(QSP_ARG_DECL  const char *))_pick_obj,
 		(void (*)(QSP_ARG_DECL Port *,const void *,int)) xmit_obj
 		);
 

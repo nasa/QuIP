@@ -103,7 +103,7 @@ dnl But - we are probably safe, because the compiler will set un-specified
 dnl elements to 0...
 
 define(`DECLARE_OCL_VARS',`
-	static cl_kernel kernel[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};
+	static cl_kernel dev_kernel[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};
 	DECLARE_OCL_COMMON_VARS
 ')
 
@@ -125,8 +125,8 @@ define(`DECLARE_OCL_COMMON_VARS',`
 
 define(`DECLARE_OCL_VARS_2',`
 
-	static cl_kernel kernel1[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};
-	static cl_kernel kernel2[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};
+	static cl_kernel dev_kernel1[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};
+	static cl_kernel dev_kernel2[MAX_OPENCL_DEVICES] = {NULL,NULL,NULL,NULL};
 	DECLARE_OCL_COMMON_VARS
 ')
 
@@ -141,36 +141,24 @@ define(`CHECK_SLOW_KERNEL',`CHECK_KERNEL($1,slow,GPU_SLOW_CALL_NAME($1))')
 
 dnl CHECK_KERNAL(name,ktyp,kname)
 
-define(`CHECK_KERNEL',`_CHECK_KERNEL(kernel,$1,$2,$3)')
-define(`CHECK_KERNEL_1',`_CHECK_KERNEL(kernel1,$1,$2,$3)')
-define(`CHECK_KERNEL_2',`_CHECK_KERNEL(kernel2,$1,$2,$3)')
+define(`CHECK_KERNEL',`_CHECK_KERNEL(dev_kernel,$1,$2,$3)')
+define(`CHECK_KERNEL_1',`_CHECK_KERNEL(dev_kernel1,$1,$2,$3)')
+define(`CHECK_KERNEL_2',`_CHECK_KERNEL(dev_kernel2,$1,$2,$3)')
 
 dnl _CHECK_KERNEL(k,name,ktyp,kname)
 
 define(`_CHECK_KERNEL',`
 	/* _check_kernel $1 $2 $3 $4 */
-	pd_idx = OCLDEV_IDX(VA_PFDEV(vap));
+	pd_idx = PFDEV_SERIAL(VA_PFDEV(vap));
 dnl fprintf(stderr,"_check_kernel $2:  pd_idx = %d\n",pd_idx);
 	if( $1[pd_idx] == NULL ){	/* one-time initialization */
-		cl_kernel *kern_p;
+		cl_kernel kernel;
 		ksrc = KERN_SOURCE_NAME($2,$3);
 dnl fprintf(stderr,"_check_kernel $2:  creating kernel\n");
-		/*
-		program = ocl_create_program(ksrc,VA_PFDEV(vap));
-		if( program == NULL ) 
-			NERROR1("program creation failure!?");
-
-		$1[pd_idx] = ocl_create_kernel(program, "$4", VA_PFDEV(vap));
-		if( $1[pd_idx] == NULL ){ 
-			NADVISE("Source code of failed program:");
-			NADVISE(ksrc);
+		kernel = ocl_make_kernel(DEFAULT_QSP_ARG  ksrc, "$4", VA_PFDEV(vap));
+		if( kernel == NULL )
 			NERROR1("kernel creation failure!?");
-		}
-		*/
-		kern_p = ocl_make_kernel(DEFAULT_QSP_ARG  ksrc, "$4", VA_PFDEV(vap));
-		if( kern_p == NULL )
-			NERROR1("kernel creation failure!?");
-		$1[pd_idx] = (*kern_p);
+		$1[pd_idx] = kernel;
 	}
 ')
 
@@ -223,14 +211,14 @@ define(`SETUP_SLOW_BLOCKS_DBM_1SBM',`SETUP_SLOW_BLOCKS_DBM_')
 dnl CALL_FAST_KERNEL(name,bitmap,typ,scalars,vectors)
 
 dnl	/* BUG - check limit: CL_DEVICE_ADDRESS_BITS */
-define(`CALL_FAST_KERNEL',`FINISH_KERNEL_CALL(kernel,1)')
-define(`CALL_FAST_KERNEL_1',`FINISH_KERNEL_CALL(kernel1,1)')
-define(`CALL_FAST_KERNEL_2',`FINISH_KERNEL_CALL(kernel2,1)')
+define(`CALL_FAST_KERNEL',`FINISH_KERNEL_CALL(dev_kernel,1)')
+define(`CALL_FAST_KERNEL_1',`FINISH_KERNEL_CALL(dev_kernel1,1)')
+define(`CALL_FAST_KERNEL_2',`FINISH_KERNEL_CALL(dev_kernel2,1)')
 
 dnl fast and eqsp only differ in args passed...
 define(`CALL_EQSP_KERNEL',`CALL_FAST_KERNEL')
 
-define(`CALL_FAST_CONV_KERNEL',`FINISH_KERNEL_CALL(kernel,1)')
+define(`CALL_FAST_CONV_KERNEL',`FINISH_KERNEL_CALL(dev_kernel,1)')
 define(`CALL_EQSP_CONV_KERNEL',`CALL_FAST_CONV_KERNEL')
 define(`CALL_SLOW_CONV_KERNEL',`CALL_FAST_CONV_KERNEL')
 
@@ -312,7 +300,7 @@ define(`CALL_GPU_FAST_INDEX_HELPER_FUNC',`
 define(`CALL_SLOW_KERNEL',`
 
 /*show_vec_args(vap);*/
-	FINISH_KERNEL_CALL(kernel, /*3*/ 1 )
+	FINISH_KERNEL_CALL(dev_kernel, /*3*/ 1 )
 ')
 
 dnl Normally we don't want to wait

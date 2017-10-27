@@ -163,11 +163,20 @@ extern int fc_flag;
 /* stair.c */
 
 ITEM_INTERFACE_PROTOTYPES(Trial_Class,trial_class)
-#define PICK_TRIAL_CLASS(s)	pick_trial_class(QSP_ARG  s)
+
+#define init_trial_classs()	_init_trial_classs(SINGLE_QSP_ARG)
+#define pick_trial_class(s)	_pick_trial_class(QSP_ARG  s)
+#define trial_class_of(s)	_trial_class_of(QSP_ARG  s)
+#define new_trial_class(s)	_new_trial_class(QSP_ARG  s)
+#define del_trial_class(s)	_del_trial_class(QSP_ARG  s)
 
 ITEM_INTERFACE_PROTOTYPES(Staircase,stc)
 
-#define PICK_STC(p)	pick_stc(QSP_ARG  p)
+#define pick_stc(p)	_pick_stc(QSP_ARG  p)
+#define del_stc(s)	_del_stc(QSP_ARG  s)
+#define new_stc(s)	_new_stc(QSP_ARG  s)
+#define init_stcs()	_init_stcs(SINGLE_QSP_ARG)
+#define list_stcs(fp)	_list_stcs(QSP_ARG  fp)
 
 extern Trial_Class *class_for(QSP_ARG_DECL  int index);
 extern void save_response(QSP_ARG_DECL  int rsp,Staircase *stc);

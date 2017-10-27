@@ -20,6 +20,10 @@ static ITEM_NEW_FUNC(Port_Data_Type,pdt)
 static ITEM_PICK_FUNC(Port_Data_Type,pdt)
 static ITEM_ENUM_FUNC(Port_Data_Type,pdt)
 
+#define new_pdt(s)	_new_pdt(QSP_ARG  s)
+#define pick_pdt(p)	_pick_pdt(QSP_ARG  p)
+#define pdt_list()	_pdt_list(SINGLE_QSP_ARG)
+
 Packet *last_packet=NULL;
 
 #ifdef FOOBAR
@@ -87,7 +91,7 @@ COMMAND_FUNC( do_set_text_var )
 	Port *mpp;
 	const char *s;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	s=NAMEOF("variable name for storage of next text");
 
 	if( mpp == NULL ) return;
@@ -112,7 +116,7 @@ COMMAND_FUNC( do_set_port_output_file )
 	Port *mpp;
 	const char *s;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 	s=NAMEOF("local filename for next received file");
 
 	if( mpp == NULL ) return;
@@ -127,8 +131,8 @@ COMMAND_FUNC( do_port_xmit )
 	const void *vp;
 	Port *mpp;
 
-	pdtp=pick_pdt(QSP_ARG  "");
-	mpp = PICK_PORT("");
+	pdtp=pick_pdt("");
+	mpp = pick_port("");
 
 	if( pdtp==NULL || mpp==NULL ) goto oops;
 
@@ -184,7 +188,7 @@ int define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const c
 #endif /* CAUTIOUS */
 
 #ifdef CAUTIOUS
-	pdtp = pdt_of(QSP_ARG  my_typename);
+	pdtp = pdt_of(my_typename);
 	if( pdtp != NULL ){
 		sprintf(ERROR_STRING,
 	"CAUTIOUS:  define_port_data_type:  %s already defined!?",
@@ -194,7 +198,7 @@ int define_port_data_type(QSP_ARG_DECL  int code,const char *my_typename,const c
 	}
 #endif /* CAUTIOUS */
 
-	pdtp = new_pdt(QSP_ARG  my_typename);
+	pdtp = new_pdt(my_typename);
 #ifdef CAUTIOUS
 	if( pdtp == NULL ){
 		sprintf(ERROR_STRING,
@@ -264,7 +268,7 @@ static Port_Data_Type *port_data_type_for_code(QSP_ARG_DECL  Packet_Type code)
 	Node *np;
 	Port_Data_Type *pdtp;
 
-	lp = pdt_list(SINGLE_QSP_ARG);
+	lp = pdt_list();
 	if( lp == NULL ) return NULL;
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
@@ -407,11 +411,11 @@ COMMAND_FUNC( do_port_recv )
 	//int type;
 	Port_Data_Type *pdtp;
 
-	mpp = PICK_PORT("");
+	mpp = pick_port("");
 
 	// We specify what type of packet we want - why not just
 	// take what we get?
-	pdtp = pick_pdt(QSP_ARG "");
+	pdtp = pick_pdt("");
 
 	if( mpp==NULL || pdtp==NULL ) return;
 
@@ -449,7 +453,7 @@ COMMAND_FUNC( do_port_recv )
 			|| pkp->pk_pdt->pdt_code == P_ENCRYPTED_TEXT ){
 		if( mpp->mp_text_var_name != NULL ){
 			// Save the text to a variable
-			ASSIGN_VAR(mpp->mp_text_var_name,(const char *)pkp->pk_user_data);
+			assign_var(mpp->mp_text_var_name,(const char *)pkp->pk_user_data);
 			rls_str(mpp->mp_text_var_name);
 			mpp->mp_text_var_name=NULL;	// single use!
 		} else {

@@ -38,7 +38,7 @@ Set test_freq 1000
 Define Init_Test_Sound_Objs 0
 If obj_exists(fsound) exit_macro
 Vector fsound $test_len 1 float
-#Vector ssound $test_len 1 int32	# not short on iOS?
+#Vector ssound $test_len 1 int	# not short on iOS?
 Vector ssound $test_len 1 float		# really?
 .
 

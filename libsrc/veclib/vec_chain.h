@@ -59,7 +59,10 @@ extern void exec_chain(Chain *);
 ITEM_CHECK_PROT(Chain, vec_chain)
 ITEM_LIST_PROT(Chain, vec_chain)
 ITEM_PICK_PROT(Chain, vec_chain)
-#define PICK_CHAIN(p)	pick_vec_chain(QSP_ARG   p)
+
+#define vec_chain_of(s)	_vec_chain_of(QSP_ARG  s)
+#define list_vec_chains(fp)	_list_vec_chains(QSP_ARG  fp)
+#define pick_chain(p)	_pick_vec_chain(QSP_ARG   p)
 
 
 

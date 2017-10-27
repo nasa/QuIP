@@ -80,7 +80,9 @@ struct query {
 #define QRY_FILENAME(qp)		(qp)->q_filename
 #define SET_QRY_FILENAME(qp,s)						\
 	{								\
-	if( QRY_FILENAME(qp) != NULL ) rls_str(QRY_FILENAME(qp));	\
+	if( QRY_FILENAME(qp) != NULL ){					\
+		rls_str(QRY_FILENAME(qp));				\
+	}								\
 	(qp)->q_filename = savestr(s);					\
 	}
 

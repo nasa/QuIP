@@ -613,6 +613,7 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 static int get_next_element(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 {
 	Precision *prec_p;
+	char *prompt;
 
 	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
 
@@ -629,7 +630,9 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	prec_p = OBJ_MACH_PREC_PTR(dp);
-	(*(prec_p->set_value_from_input_func))(QSP_ARG  datap);
+	prompt = msg_str;	// use this buffer...
+	sprintf(prompt,"%s data",PREC_NAME(prec_p));
+	(*(prec_p->set_value_from_input_func))(QSP_ARG  datap, prompt);
 
 	dobj_n_gotten++;
 
@@ -645,7 +648,7 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 	bitmap_word bit;
 
 	if( ! HAS_FORMAT_LIST )
-		val = how_many(QSP_ARG  "bit value");
+		val = how_many("bit value");
 	else
 		val = next_input_int_with_format(QSP_ARG  "bit value");
 
@@ -1205,7 +1208,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 	 */
 
 	//push_input_file(QSP_ARG  s);
-	redir(QSP_ARG  fp, orig_filename);
+	redir(fp, orig_filename);
 
 	/* BUG we'd like to have the string be 'Pipe: "command args"' or something... */
 	if( !strncmp(s,"Pipe",4) ){

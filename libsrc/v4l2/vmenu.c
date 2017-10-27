@@ -397,7 +397,7 @@ advise(ERROR_STRING);
 		dimset.ds_dimension[4]=1;
 		dp = _make_dp(QSP_ARG  name,&dimset,PREC_FOR_CODE(PREC_UBY));
 #ifdef CAUTIOUS
-		if( dp == NULL ) ERROR1("CAUTIOUS:  error creating data_obj for video buffer");
+		if( dp == NULL ) error1("CAUTIOUS:  error creating data_obj for video buffer");
 #endif /* CAUTIOUS */
 		SET_OBJ_DATA_PTR(dp, vdp->vd_buf_tbl[i_buffer].mb_start );
 
@@ -432,7 +432,7 @@ static void report_status(QSP_ARG_DECL  Video_Device *vdp)
 		sprintf(ERROR_STRING,
 	"CAUTIOUS:  report_status:  Flags for video device %s (0x%x) corrupted by unknown bits 0x%x!?",
 			vdp->vd_name,vdp->vd_flags,flags);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -682,7 +682,7 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 	int fd;
 
 	/* first make sure this device is not already open */
-	vdp = video_dev_of(QSP_ARG  dev_name);
+	vdp = video_dev_of(dev_name);
 	if( vdp != NO_VIDEO_DEVICE ){
 		sprintf(ERROR_STRING,"open_video_device:  device %s is already open!?",dev_name);
 		WARN(ERROR_STRING);
@@ -711,7 +711,7 @@ static int open_video_device(QSP_ARG_DECL  const char *dev_name)
 		return -1;
 	}
 
-	vdp = new_video_dev(QSP_ARG  dev_name);
+	vdp = new_video_dev(dev_name);
 #ifdef CAUTIOUS
 	if( vdp == NO_VIDEO_DEVICE ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  open_video_device:  unable to create new Video_Device struct for %s",dev_name);
@@ -753,7 +753,7 @@ static COMMAND_FUNC( do_select )
 {
 	Video_Device *vdp;
 
-	vdp = PICK_VIDEO_DEV("");
+	vdp = pick_video_dev("");
 	if( vdp == NULL ) return;
 
 	curr_vdp = vdp;
@@ -797,8 +797,8 @@ static COMMAND_FUNC( do_yuv2gray )
 {
 	Data_Obj *dst_dp, *src_dp;
 
-	dst_dp = PICK_OBJ("destination GRAY image");
-	src_dp = PICK_OBJ("source YUYV image");
+	dst_dp = pick_obj("destination GRAY image");
+	src_dp = pick_obj("source YUYV image");
 
 	if( dst_dp == NULL || src_dp == NULL )
 		return;
@@ -954,7 +954,7 @@ static void do_get_control( QSP_ARG_DECL const char *varname, int ctl_index )
 	CHECK_DEVICE
 	v=get_integer_control(QSP_ARG ctl_index);
 	sprintf(msg_str,"%d",v);
-	ASSIGN_VAR(varname,msg_str);
+	assign_var(varname,msg_str);
 }
 #endif // HAVE_V4L2
 
@@ -966,7 +966,7 @@ static COMMAND_FUNC( do_get_hue )
 #ifdef HAVE_V4L2
 	do_get_control(QSP_ARG s,V4L2_CID_HUE);
 #else // ! HAVE_V4L2
-	ASSIGN_VAR(s,"0");
+	assign_var(s,"0");
 #endif // ! HAVE_V4L2
 }
 
@@ -978,7 +978,7 @@ static COMMAND_FUNC( do_get_bright )
 #ifdef HAVE_V4L2
 	do_get_control(QSP_ARG s,V4L2_CID_BRIGHTNESS);
 #else // ! HAVE_V4L2
-	ASSIGN_VAR(s,"0");
+	assign_var(s,"0");
 #endif // ! HAVE_V4L2
 }
 
@@ -990,7 +990,7 @@ static COMMAND_FUNC( do_get_contrast )
 #ifdef HAVE_V4L2
 	do_get_control(QSP_ARG s,V4L2_CID_CONTRAST);
 #else // ! HAVE_V4L2
-	ASSIGN_VAR(s,"0");
+	assign_var(s,"0");
 #endif // ! HAVE_V4L2
 }
 
@@ -1002,7 +1002,7 @@ static COMMAND_FUNC( do_get_saturation )
 #ifdef HAVE_V4L2
 	do_get_control(QSP_ARG s,V4L2_CID_SATURATION);
 #else // ! HAVE_V4L2
-	ASSIGN_VAR(s,"0");
+	assign_var(s,"0");
 #endif // ! HAVE_V4L2
 }
 
@@ -1255,8 +1255,8 @@ static COMMAND_FUNC( do_downsample )
 {
 	Data_Obj *dst_dp, *src_dp;
 
-	dst_dp = PICK_OBJ("destination object");
-	src_dp = PICK_OBJ("source object");
+	dst_dp = pick_obj("destination object");
+	src_dp = pick_obj("source object");
 	if( dst_dp == NULL || src_dp == NULL ) return;
 	fast_downsample(dst_dp,src_dp);
 }
@@ -1303,7 +1303,7 @@ static COMMAND_FUNC( do_list_devs )
 		advise("do_list_devs:  no video devices have been opened.");
 		return;
 	}
-	lp = item_list(QSP_ARG  video_dev_itp);
+	lp = item_list(video_dev_itp);
 	np = QLIST_HEAD(lp);
 	while( np != NULL ){
 		vdp = (Video_Device *)np->n_data;
@@ -1340,7 +1340,7 @@ COMMAND_FUNC( do_v4l2_menu )
 	static int inited=0;
 
 	if( ! inited ){
-		stream_debug=add_debug_module(QSP_ARG  "stream_record");
+		stream_debug=add_debug_module("stream_record");
 #ifdef HAVE_RAWVOL
 		if( insure_default_rv(SINGLE_QSP_ARG) < 0 ){
 			WARN("error opening default raw volume");

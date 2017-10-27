@@ -29,9 +29,9 @@ IOS_ITEM_INIT_FUNC(Viewer,vwr,0)
 // override init func to call declare_canvas_events
 // For IOS, this is done in initClass
 
-void init_vwrs(SINGLE_QSP_ARG_DECL)
+void _init_vwrs(SINGLE_QSP_ARG_DECL)
 {
-	vwr_itp = new_item_type(QSP_ARG  "Viewer", DEFAULT_CONTAINER_TYPE);
+	vwr_itp = new_item_type("Viewer", DEFAULT_CONTAINER_TYPE);
 	declare_canvas_events(SINGLE_QSP_ARG);
 }
 
@@ -185,7 +185,7 @@ void release_image(QSP_ARG_DECL  Data_Obj *dp)
 //sprintf(ERROR_STRING,"release_image %s:  refcount = %d",OBJ_NAME(dp),dp->dt_refcount);
 //advise(ERROR_STRING);
 	if( dp->dt_refcount <= 0 /* && IS_ZOMBIE(dp) */ )
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 }
 
 void delete_viewer(QSP_ARG_DECL  Viewer *vp)
@@ -213,7 +213,7 @@ void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 	if( VW_LABEL(vp) != NULL )
 		rls_str((char *)VW_LABEL(vp));
 
-	del_vwr(QSP_ARG  vp);	// releases the name
+	del_vwr(vp);	// releases the name
 	select_viewer(QSP_ARG  NULL);
 }
 
@@ -245,7 +245,7 @@ static double get_vw_posn(QSP_ARG_DECL  IOS_Item *ip, int index )
 		case 1: d = VW_Y_REQUESTED(vp); break;
 #ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  get_vw_posn:  bad index!?");
+			error1("CAUTIOUS:  get_vw_posn:  bad index!?");
 			break;
 #endif // CAUTIOUS
 	}
@@ -277,7 +277,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 		return(NULL);
 	}
 
-	vp=new_vwr(QSP_ARG  name);
+	vp=new_vwr(name);
 	if( vp == NULL ) return(vp);
 
 	/* this might be better done in a global init routine... */
@@ -372,7 +372,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 #ifndef BUILD_FOR_OBJC
 		rls_vw_lists(vp);
 #endif /* BUILD_FOR_OBJC */
-		del_vwr(QSP_ARG  vp);
+		del_vwr(vp);
 		return(NULL);
 	}
 
@@ -409,14 +409,14 @@ IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL)
 {
 	IOS_List *lp;
 
-	lp=ios_item_list(QSP_ARG  vwr_itp);
+	lp=ios_item_list(vwr_itp);
 	if( lp==NULL ) return(NULL);
 	else return(IOS_LIST_HEAD(lp));
 }
 
 IOS_List *viewer_list(SINGLE_QSP_ARG_DECL)
 {
-	return( ios_item_list(QSP_ARG  vwr_itp) );
+	return( ios_item_list(vwr_itp) );
 }
 
 void info_viewer(QSP_ARG_DECL  Viewer *vp)
@@ -467,7 +467,7 @@ static void genwin_viewer_show(QSP_ARG_DECL  const char *s)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
+	vp=get_vwr(s);
 	if( vp == NULL ) return;
 	show_viewer(QSP_ARG  vp);
 	return;
@@ -477,7 +477,7 @@ static void genwin_viewer_unshow(QSP_ARG_DECL  const char *s)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
+	vp=get_vwr(s);
 	if( vp == NULL ) return;
 	unshow_viewer(QSP_ARG  vp);
 	return;
@@ -487,7 +487,7 @@ static void genwin_viewer_posn(QSP_ARG_DECL  const char *s, int x, int y)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
+	vp=get_vwr(s);
 	if( vp == NULL ) return;
 	posn_viewer(vp, x, y);
 	return;
@@ -497,7 +497,7 @@ static void genwin_viewer_delete(QSP_ARG_DECL  const char *s)
 {
 	Viewer *vp;
 
-	vp=GET_VWR(s);
+	vp=get_vwr(s);
 	if( vp == NULL ) return;
 	delete_viewer(QSP_ARG  vp);
 	return;
@@ -513,7 +513,7 @@ static Genwin_Functions gwfp={
 
 void init_viewer_genwin(SINGLE_QSP_ARG_DECL)
 {
-	if( vwr_itp == NULL ) init_vwrs(SINGLE_QSP_ARG);
+	if( vwr_itp == NULL ) init_vwrs();
 #ifndef BUILD_FOR_OBJC
 	add_genwin(QSP_ARG  vwr_itp, &gwfp, NULL);
 #endif /* ! BUILD_FOR_OBJC */
@@ -522,7 +522,7 @@ void init_viewer_genwin(SINGLE_QSP_ARG_DECL)
 
 #define DECLARE_CANVAS_EVENT(name,code)			\
 							\
-	cep = new_canvas_event(QSP_ARG  #name);		\
+	cep = new_canvas_event(#name);			\
 	SET_CE_CODE(cep,code);
 
 void declare_canvas_events(SINGLE_QSP_ARG_DECL)

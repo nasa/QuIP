@@ -88,7 +88,7 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 		 * but no menus have been pushed, so we can't!?
 		 * Could perhaps use builtin menu only?
 		 */
-		redir(QSP_ARG  fp, filename );
+		redir(fp, filename );
 
 		// If the startup file contains widget creation commands,
 		// they can't run before the appDelegate has started (ios).
@@ -154,15 +154,15 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 	fp=fopen(filename,"r");
 
 	if( fp!=NULL ) {
-		redir(QSP_ARG  fp, filename );
+		redir(fp, filename );
 		if( *dir ){
 			// We should only set the variable here if
 			// it doesn't already exist - vars defined
 			// in the environment are reserved!
 			Variable *vp;
-			vp = VAR_OF(STARTUP_DIRNAME);
+			vp = var_of(STARTUP_DIRNAME);
 			if( vp == NULL ){
-				assign_var(QSP_ARG  STARTUP_DIRNAME,dir);
+				assign_var(STARTUP_DIRNAME,dir);
 			}
 		}
 		return(filename);

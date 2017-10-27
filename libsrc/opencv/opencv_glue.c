@@ -29,14 +29,14 @@ static OpenCV_Image *make_new_ocvi(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_Image *ocvi_p;
 
-	ocvi_p = ocvi_of(QSP_ARG  obj_name);
+	ocvi_p = ocvi_of(obj_name);
 	if( ocvi_p != NULL ){
 		sprintf(ERROR_STRING,"OpenCV image %s already exists!?",obj_name);
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
 
-	ocvi_p = new_ocvi(QSP_ARG  obj_name);
+	ocvi_p = new_ocvi(obj_name);
 	if( ocvi_p == NULL ){
 		sprintf(ERROR_STRING,"Error creating OpenCV image %s",obj_name);
 		WARN(ERROR_STRING);
@@ -51,14 +51,14 @@ static OpenCV_MemStorage *make_new_ocv_mem(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_MemStorage *ocv_mem_p;
 
-	ocv_mem_p = ocv_mem_of(QSP_ARG  obj_name);
+	ocv_mem_p = ocv_mem_of(obj_name);
 	if( ocv_mem_p != NULL ){
 		sprintf(ERROR_STRING,"OpenCV mem storage %s already exists!?",obj_name);
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
 
-	ocv_mem_p = new_ocv_mem(QSP_ARG  obj_name);
+	ocv_mem_p = new_ocv_mem(obj_name);
 	if( ocv_mem_p == NULL ){
 		sprintf(ERROR_STRING,"Error creating OpenCV mem storage %s",obj_name);
 		WARN(ERROR_STRING);
@@ -73,14 +73,14 @@ static OpenCV_Scanner *make_new_ocv_scanner(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_Scanner *ocv_scanner_p;
 
-	ocv_scanner_p = ocv_scanner_of(QSP_ARG  obj_name);
+	ocv_scanner_p = ocv_scanner_of(obj_name);
 	if( ocv_scanner_p != NULL ){
 		sprintf(ERROR_STRING,"OpenCV scanner %s already exists!?",obj_name);
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
 
-	ocv_scanner_p = new_ocv_scanner(QSP_ARG  obj_name);
+	ocv_scanner_p = new_ocv_scanner(obj_name);
 	if( ocv_scanner_p == NULL ){
 		sprintf(ERROR_STRING,"Error creating OpenCV scanner %s",obj_name);
 		WARN(ERROR_STRING);
@@ -96,14 +96,14 @@ static OpenCV_Seq *make_new_ocv_seq(QSP_ARG_DECL  const char * obj_name)
 {
 	OpenCV_Seq *ocv_seq_p;
 
-	ocv_seq_p = ocv_seq_of(QSP_ARG  obj_name);
+	ocv_seq_p = ocv_seq_of(obj_name);
 	if( ocv_seq_p != NULL ){
 		sprintf(ERROR_STRING,"OpenCV seq %s already exists!?",obj_name);
 		WARN(ERROR_STRING);
 		return(NULL);
 	}
 
-	ocv_seq_p = new_ocv_seq(QSP_ARG  obj_name);
+	ocv_seq_p = new_ocv_seq(obj_name);
 	if( ocv_seq_p == NULL ){
 		sprintf(ERROR_STRING,"Error creating OpenCV seq %s",obj_name);
 		WARN(ERROR_STRING);
@@ -127,7 +127,7 @@ OpenCV_Image * load_ocv_image(QSP_ARG_DECL   const char * obj_name, const char *
 		sprintf(ERROR_STRING,"Error opening file %s!?",filename);
 		WARN(ERROR_STRING);
 		/* delete new struct here */
-		del_ocvi(QSP_ARG  ocvi_p);
+		del_ocvi(ocvi_p);
 		// free name here?
 		return(NULL);
 	}
@@ -208,7 +208,7 @@ OpenCV_Image * create_ocv_image(QSP_ARG_DECL  const char *obj_name,
 	if( (ocvi_p->ocv_image = cvCreateImage(cvSize(width,height), bit_depth_code, n_channels)) == 0 ){
 		sprintf(ERROR_STRING,"create_ocv_image:  error creating ocv image for %s...",obj_name);
 		WARN(ERROR_STRING);
-		del_ocvi(QSP_ARG  ocvi_p);
+		del_ocvi(ocvi_p);
 		// release name here??
 		return(NULL);
 	}
@@ -235,7 +235,7 @@ OpenCV_MemStorage * create_ocv_mem(QSP_ARG_DECL  const char *obj_name)
 	if( (ocv_mem_p->ocv_mem = cvCreateMemStorage(0)) == 0 ){
 		sprintf(ERROR_STRING,"create_ocv_mem:  error creating ocv mem storage for %s...",obj_name);
 		WARN(ERROR_STRING);
-		del_ocv_mem(QSP_ARG  ocv_mem_p);
+		del_ocv_mem(ocv_mem_p);
 		// release name here???
 		return(NULL);
 	}

@@ -14,7 +14,6 @@ GENERATED_SRCS=								\
 			$(builddir)/cu2_yuv2rgb_expanded.c		\
 			$(builddir)/cu2_centroid_expanded.c
 
-
 clean-local:
 	rm -rf $(GENERATED_SRCS)
 
@@ -28,10 +27,6 @@ $(builddir)/cu2_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
 	m4 $(M4OPTS) < $(srcdir)/cu2_fill.m4 > $(builddir)/cu2_fill_expanded.c
 
 $(builddir)/cu2_yuv2rgb_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
-
-#new_fill_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
-#	m4 $(M4OPTS) < $(srcdir)/new_fill.m4 > $(builddir)/new_fill_expanded.c
-
 	m4 $(M4OPTS) < $(srcdir)/cu2_yuv2rgb.m4 > $(builddir)/cu2_yuv2rgb_expanded.c
 
 $(builddir)/cu2_centroid_expanded.c:	$(LOCAL_M4FILES) $(INC_M4FILES)
@@ -52,9 +47,6 @@ $(srcdir)/cu2_fill.cu:	$(builddir)/cu2_fill_expanded.c
 #	touch $(srcdir)/cu2_utils.cu
 $(srcdir)/cu2_utils.c:	$(builddir)/cu2_utils_expanded.c
 	touch $(srcdir)/cu2_utils.c
-#$(srcdir)/new_fill.cu:	$(builddir)/new_fill_expanded.c
-#	touch $(srcdir)/new_fill.cu
-
 
 
 # Why does the generic rule not work?

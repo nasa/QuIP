@@ -248,7 +248,7 @@ ITEM_INTERFACE_DECLARATIONS( Seq, mviseq, 0 )
 void init_movie_sequences(SINGLE_QSP_ARG_DECL)
 {
 	if( mviseq_itp == NULL )
-		init_mviseqs(SINGLE_QSP_ARG);
+		init_mviseqs();
 	add_playable(mviseq_itp,NULL);
 }
 
@@ -278,7 +278,7 @@ void show_sequence(QSP_ARG_DECL  const char *s)
 {
 	Seq *sp;
 
-	sp = get_mviseq(QSP_ARG  s);
+	sp = get_mviseq(s);
 	if( sp==NULL ) return;
 
 	if( init_show_seq(sp) < 0 ) return;
@@ -332,7 +332,7 @@ int yylex( YYSTYPE *yylval_p, /*SINGLE_QSP_ARG_DECL*/ Query_Stack *qsp )
 
 		if( !strcmp(wrdbuf,"reverse") ) return(REVERSE);
 
-		yylval_p->yysp = mviseq_of( QSP_ARG  wrdbuf );
+		yylval_p->yysp = mviseq_of( wrdbuf );
 		if( yylval_p->yysp != NULL ) return( SEQNAME );
 
 		/* not a sequence, try a pattern name */
@@ -374,7 +374,7 @@ static Seq *new_seq(QSP_ARG_DECL  const char *name)
 {
 	Seq *sp;
 
-	sp=new_mviseq(QSP_ARG  name);	/* get a new item */
+	sp=new_mviseq(name);	/* get a new item */
 	if( sp == NULL ) return(sp);
 
 	init_seq_struct(sp);
@@ -413,7 +413,7 @@ void delseq(QSP_ARG_DECL  Seq *sp)
 	if( sp->seq_next != NULL ) delseq(QSP_ARG  sp->seq_next);
 	if( sp->seq_refcnt <= 0 ){
 		if( sp->seq_name != NULL ){
-			del_mviseq(QSP_ARG  sp);
+			del_mviseq(sp);
 			// return to item free list
 		} else {
 			givbuf(sp);
@@ -499,7 +499,7 @@ List *seqs_referring(QSP_ARG_DECL  void *data)
 	List *lp;
 	Node *np;
 
-	lp=item_list(QSP_ARG  mviseq_itp);
+	lp=item_list(mviseq_itp);
 	np=QLIST_HEAD(lp);
 
 	lp=new_list();

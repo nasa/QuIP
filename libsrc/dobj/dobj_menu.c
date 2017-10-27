@@ -72,7 +72,7 @@ static COMMAND_FUNC( do_select_area )
 {
 	Data_Area *ap;
 
-	ap = PICK_DATA_AREA("");
+	ap = pick_data_area("");
 	if( ap != NULL )
 		curr_ap=ap;
 	else if( curr_ap != NULL ){
@@ -86,7 +86,7 @@ static COMMAND_FUNC( show_area )
 {
 	Data_Area *ap;
 
-	ap = PICK_DATA_AREA("");
+	ap = pick_data_area("");
 	if( ap == NULL ) return;
 
 	show_area_space(QSP_ARG  ap);
@@ -96,7 +96,7 @@ static COMMAND_FUNC( do_area_info )
 {
 	Data_Area *ap;
 
-	ap = PICK_DATA_AREA("");
+	ap = pick_data_area("");
 	if( ap == NULL ) return;
 
 	data_area_info(QSP_ARG  ap);
@@ -106,14 +106,14 @@ static COMMAND_FUNC( do_match_area )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("object");
+	dp = pick_obj("object");
 	if( dp == NULL ) return;
 
 	curr_ap=OBJ_AREA(dp);
 }
 
 static COMMAND_FUNC( do_list_data_areas )
-{ list_data_areas(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+{ list_data_areas(tell_msgfile()); }
 
 static COMMAND_FUNC( do_get_area )
 {
@@ -123,7 +123,7 @@ static COMMAND_FUNC( do_get_area )
 
 	assert( curr_ap != NULL );
 
-	assign_var(QSP_ARG  s, AREA_NAME(curr_ap));
+	assign_var(s, AREA_NAME(curr_ap));
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(areas_menu,s,f,h)
@@ -158,12 +158,12 @@ static COMMAND_FUNC( do_push_context )
 	s=NAMEOF("name for new context");
 	NEW_ITEM_CONTEXT(icp);	// allocates memory and pts icp, but does not initalize?
 	SET_CTX_NAME(icp,savestr(s));
-	push_dobj_context(QSP_ARG  icp);
+	push_dobj_context(icp);
 }
 
 static COMMAND_FUNC( do_pop_context )
 {
-	pop_dobj_context(SINGLE_QSP_ARG);
+	pop_dobj_context();
 }
 
 #undef ADD_CMD
@@ -182,9 +182,9 @@ static COMMAND_FUNC( do_context )
 Precision * get_precision(SINGLE_QSP_ARG_DECL)
 {
 	if( prec_itp == NULL )
-		init_precisions(SINGLE_QSP_ARG);
+		init_precisions();
 
-	return (Precision *) pick_item(QSP_ARG  prec_itp, "data precision" );
+	return (Precision *) pick_item(prec_itp, "data precision" );
 }
 
 static void finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, Precision *prec_p, uint32_t type_flag)
@@ -197,7 +197,7 @@ static void finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, P
 			WARN(ERROR_STRING);
 		}
 		SET_DIMENSION(dsp,0,3);
-		prec_p = get_prec(QSP_ARG  "float");
+		prec_p = get_prec("float");
 	}
 
 	if( make_dobj_with_shape(QSP_ARG  obj_name,dsp,prec_p,type_flag) == NULL ) {
@@ -350,7 +350,7 @@ static COMMAND_FUNC( new_obj_list )
 	while(n--){
 		Data_Obj *dp;
 
-		dp = PICK_OBJ("");
+		dp = pick_obj("");
 		if( dp != NULL ){
 			np=mk_node(dp);
 			addTail(lp,np);
@@ -447,19 +447,19 @@ static COMMAND_FUNC( do_delvec )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	if( dp==NULL ) return;
-	delvec(QSP_ARG  dp);
+	delvec(dp);
 }
 
 static COMMAND_FUNC( do_dobj_info )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	if( dp==NULL ) return;
 
-	LONGLIST(dp);
+	longlist(dp);
 }
 
 static COMMAND_FUNC( mksubimg )
@@ -471,7 +471,7 @@ static COMMAND_FUNC( mksubimg )
 
 	obj_name=NAMEOF("name for subimage");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 
 	cols=HOW_MANY("number of columns");
 	rows=HOW_MANY("number of rows");
@@ -502,7 +502,7 @@ static COMMAND_FUNC( mksubsequence )
 
 	obj_name=NAMEOF("name for subsequence");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 
 	nc = HOW_MANY("number of columns");
 	nr = HOW_MANY("number of rows");
@@ -550,7 +550,7 @@ static COMMAND_FUNC( mksubvector )
 
 	obj_name=NAMEOF("name for subvector");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 
 	cols=HOW_MANY("number of elements");
 	rows=1;
@@ -578,7 +578,7 @@ static COMMAND_FUNC( mksubscalar )
 
 	obj_name=NAMEOF("name for subscalar");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 
 	ncomps = HOW_MANY("number of components");
 	comp_offset = HOW_MANY("component offset");
@@ -633,7 +633,7 @@ static COMMAND_FUNC( mkcast )
 
 	obj_name=NAMEOF("name for cast");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 	if( dp==NULL ) return;
 
 	cols=HOW_MANY("number of columns");
@@ -664,7 +664,7 @@ static COMMAND_FUNC( equivalence )
 
 	obj_name=NAMEOF("name for equivalent image");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 
 	ns=HOW_MANY("number of sequences");
 	nf=HOW_MANY("number of frames");
@@ -731,7 +731,7 @@ static COMMAND_FUNC( mk_subsample )
 
 	obj_name=NAMEOF("name for subsample object");
 
-	dp=PICK_OBJ(PARENT_PROMPT);
+	dp=pick_obj(PARENT_PROMPT);
 
 	/* We violate the rule of returning before getting
 	 * all arguments, because the fields of dp are needed
@@ -786,7 +786,7 @@ static COMMAND_FUNC( relocate )
 	long x,y,t;
 	const char *obj_name;
 
-	dp=PICK_OBJ("subimage");
+	dp=pick_obj("subimage");
 	x=HOW_MANY("x offset");
 	y=HOW_MANY("y offset");
 	t=HOW_MANY("t offset");
@@ -812,7 +812,7 @@ static COMMAND_FUNC( do_gen_xpose )
 	Data_Obj *dp;
 	int d1,d2;
 
-	dp = PICK_OBJ("");
+	dp = pick_obj("");
 	d1=(int)HOW_MANY("dimension index #1");
 	d2=(int)HOW_MANY("dimension index #2");
 
@@ -859,7 +859,7 @@ static COMMAND_FUNC( do_tellprec )
 	dp = get_obj( QSP_ARG NAMEOF("data object") );
 	s = NAMEOF("variable name");
 	if( dp == NULL ) return;
-	ASSIGN_VAR(s,OBJ_PREC_NAME(dp));
+	assign_var(s,OBJ_PREC_NAME(dp));
 }
 
 static COMMAND_FUNC( do_get_align )
@@ -870,15 +870,15 @@ static COMMAND_FUNC( do_get_align )
 	set_dp_alignment(a);
 }
 
-static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
-static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(tell_msgfile()); }
+static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(tell_msgfile()); }
 static COMMAND_FUNC( do_unlock_all_tmp_objs ) { unlock_all_tmp_objs(SINGLE_QSP_ARG); }
 
 static COMMAND_FUNC( do_protect )
 {
 	Data_Obj *dp;
 
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	if( dp == NULL ) return;
 	if( IS_STATIC(dp) ){
 		sprintf(ERROR_STRING,"do_protect:  Object %s is already static!?",OBJ_NAME(dp));

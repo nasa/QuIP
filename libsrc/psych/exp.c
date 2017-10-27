@@ -118,7 +118,7 @@ static COMMAND_FUNC( modify )
 {
 	unsigned int n;
 
-	if( modrt==null_mod ) ERROR1("pointer modrt must be defined by user");
+	if( modrt==null_mod ) error1("pointer modrt must be defined by user");
 	n=(unsigned int)HOW_MANY("condition index");
 	if( n >= eltcount(class_list(SINGLE_QSP_ARG)) ) WARN("undefined condition");
 	else (*modrt)(QSP_ARG n);
@@ -159,7 +159,7 @@ static COMMAND_FUNC( do_trial )	/** present a stimulus, tally response */
 	Trial_Class *tcp;
 
 	//c=(short)HOW_MANY("stimulus class");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	v=(short)HOW_MANY("level");
 
 	if( tcp == NULL ) return;
@@ -186,7 +186,7 @@ static COMMAND_FUNC( demo )		/** demo a stimulus for this experiment */
 	Trial_Class *tcp;
 
 	//c=(int)HOW_MANY("stimulus class");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	v=(int)HOW_MANY("level");
 
 	if( tcp == NULL ) return;
@@ -201,7 +201,7 @@ static COMMAND_FUNC( show_stim )	/** demo a stimulus but don't get response */
 	Trial_Class *tcp;
 
 	//c=(int)HOW_MANY("stimulus class");
-	tcp = PICK_TRIAL_CLASS("");
+	tcp = pick_trial_class("");
 	v=(int)HOW_MANY("level");
 
 	if( tcp == NULL ) return;
@@ -330,7 +330,7 @@ static COMMAND_FUNC( do_new_class )
 	cmd = NAMEOF("string to execute for this stimulus class");
 
 	// Make sure not in use
-	tcp = trial_class_of(QSP_ARG  name);
+	tcp = trial_class_of(name);
 	if( tcp != NULL ){
 		sprintf(ERROR_STRING,"Class name \"%s\" is already in use!?",
 			name);
@@ -338,7 +338,7 @@ static COMMAND_FUNC( do_new_class )
 		return;
 	}
 
-	tcp = new_trial_class(QSP_ARG  name );
+	tcp = new_trial_class(name );
 	SET_CLASS_CMD(tcp,savestr(cmd));
 	SET_CLASS_INDEX(tcp,class_index++);
 	SET_CLASS_DATA_TBL(tcp,NULL);
@@ -406,7 +406,7 @@ COMMAND_FUNC( do_delete_all_classes )
 		del_class(QSP_ARG  tcp);
 		np=next;
 	}
-	ASSIGN_RESERVED_VAR( "n_classes" , "0" );
+	assign_reserved_var( "n_classes" , "0" );
 	/* new_exp(); */
 }
 
@@ -485,12 +485,12 @@ static COMMAND_FUNC( do_get_value )
 	char valstr[32];
 
 	s = NAMEOF("name of variable for value storage");
-	stcp=PICK_STC( "" );
+	stcp=pick_stc( "" );
 
 	if( stcp == NO_STAIR ) return;
 
 	sprintf(valstr,"%g",xval_array[stcp->stc_val]);
-	ASSIGN_VAR(s,valstr);
+	assign_var(s,valstr);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(staircases_menu,s,f,h)
@@ -652,7 +652,7 @@ int response(QSP_ARG_DECL  const char *question_string)
 
 	if( get_response_from_keyboard ){
 #ifndef BUILD_FOR_OBJC
-		redir( QSP_ARG tfile(SINGLE_QSP_ARG), "/dev/tty" );	/* get response from keyboard */
+		redir( tfile(SINGLE_QSP_ARG), "/dev/tty" );	/* get response from keyboard */
 #else // BUILD_FOR_OBJC
 		WARN("response (exp.c):  can't get response from keyboard!?");
 #endif // BUILD_FOR_OBJC
