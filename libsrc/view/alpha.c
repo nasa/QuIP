@@ -44,7 +44,7 @@ void index_alpha( int index, int lv, int hv )
 	update_if();
 }
 	
-void const_alpha(QSP_ARG_DECL  int value)
+void _const_alpha(QSP_ARG_DECL  int value)
 {
 	int i;
 

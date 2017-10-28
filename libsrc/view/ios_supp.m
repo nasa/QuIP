@@ -1079,7 +1079,7 @@ void install_default_lintbl(QSP_ARG_DECL  Dpyable *dpyp)
 
 }
 
-int display_depth(SINGLE_QSP_ARG_DECL)
+int _display_depth(SINGLE_QSP_ARG_DECL)
 {
 	return 4;	// bits or bytes?
 }

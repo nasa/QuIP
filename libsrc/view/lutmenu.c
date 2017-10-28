@@ -35,7 +35,7 @@ static COMMAND_FUNC( do_newlut )
 	const char *name;
 
 	name = NAMEOF("Name of new colormap");
-	if( new_colormap(QSP_ARG  name) == NULL )
+	if( new_colormap(name) == NULL )
 		WARN("error making new colormap");
 }
  

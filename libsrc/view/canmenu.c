@@ -47,7 +47,7 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 
 	if( vp == NULL ) return NULL;
 #ifdef HAVE_X11
-	default_cmap(QSP_ARG  VW_DPYABLE(vp) );
+	default_cmap(VW_DPYABLE(vp) );
 #endif /* HAVE_X11 */
 #ifndef BUILD_FOR_IOS
 	/* default state is to be shown,

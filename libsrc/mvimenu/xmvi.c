@@ -120,7 +120,7 @@ mk_win:
 			WARN("couldn't create viewer");
 			return;
 		}
-		default_cmap(QSP_ARG  VW_DPYABLE(vp) );
+		default_cmap(VW_DPYABLE(vp) );
 		show_viewer(vp);	/* default state is to be shown */
 		select_viewer(vp);
 	} else {

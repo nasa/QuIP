@@ -336,7 +336,7 @@ Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	install_default_lintbl(QSP_ARG  VW_DPYABLE(vp) );
 	sprintf(str,"colormap.%s",name);
 
-	VW_CMAP_OBJ(vp) = new_colormap(QSP_ARG  str);
+	VW_CMAP_OBJ(vp) = new_colormap(str);
 
 	/* new_colormap() used to call set_colormap(),
 	 * but that generated a warning because the window
@@ -515,7 +515,7 @@ void _init_viewer_genwin(SINGLE_QSP_ARG_DECL)
 {
 	if( vwr_itp == NULL ) init_vwrs();
 #ifndef BUILD_FOR_OBJC
-	add_genwin(QSP_ARG  vwr_itp, &gwfp, NULL);
+	add_genwin(vwr_itp, &gwfp, NULL);
 #endif /* ! BUILD_FOR_OBJC */
 	return;
 }

@@ -123,7 +123,7 @@ IOS_ITEM_PICK_FUNC(Nav_Item,nav_item)
 IOS_ITEM_CHECK_FUNC(Nav_Item,nav_item)
 IOS_ITEM_DEL_FUNC(Nav_Item,nav_item)
 
-IOS_Item_Context *pop_navgrp_context(SINGLE_QSP_ARG_DECL)
+IOS_Item_Context *_pop_navgrp_context(SINGLE_QSP_ARG_DECL)
 {
 	IOS_Item_Context *icp;
 	icp = pop_ios_item_context(QSP_ARG  nav_group_itp );
@@ -145,7 +145,7 @@ IOS_Item_Context *create_navgrp_context(QSP_ARG_DECL  const char *name)
 	return create_ios_item_context(QSP_ARG  nav_group_itp, name );
 }
 
-IOS_Item_Context *pop_navitm_context(SINGLE_QSP_ARG_DECL)
+IOS_Item_Context *_pop_navitm_context(SINGLE_QSP_ARG_DECL)
 {
 	IOS_Item_Context *icp;
 

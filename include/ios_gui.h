@@ -67,9 +67,11 @@ extern void dismiss_quip_alert(QUIP_ALERT_OBJ_TYPE *av,NSInteger buttonIndex);
 extern void quip_alert_shown(QUIP_ALERT_OBJ_TYPE *av);
 
 /* ios.m */
-extern void simple_alert(QSP_ARG_DECL  const char *type, const char *msg);
+extern void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg);
 extern void fatal_alert(QSP_ARG_DECL  const char *msg);
 extern int check_deferred_alert(SINGLE_QSP_ARG_DECL);
+
+#define simple_alert(type,msg) _simple_alert(QSP_ARG  type,msg)
 
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);	// a nop
 extern void give_notice(const char **msg_array);

@@ -176,7 +176,7 @@ static void ios_warn(QSP_ARG_DECL  const char *msg)
 fprintf(stderr,"ios_warn:  %s\n",msg);
 	wstr = add_prefix_to_msg(WARNING_PREFIX,msg);
 	ios_advise(wstr); // log to console or file, and possibly xcode console
-	simple_alert(QSP_ARG  "WARNING",msg);
+	simple_alert("WARNING",msg);
 }
 
 static void ios_error(QSP_ARG_DECL  const char *msg)
@@ -298,7 +298,7 @@ void addConsoleToQVC( quipViewController *qvc_p )
 
 //	y0 += add_dismiss_button(/*qvc_p.qadp,*/po);
 
-	pop_scrnobj_context(SGL_DEFAULT_QSP_ARG);
+	pop_scrnobj_context();
 
 	// We'd like to remember this...
 	//globalAppDelegate.console_panel = po;

@@ -226,8 +226,11 @@ extern IOS_Size_Functions panel_sf;
 #endif /* BUILD_FOR_OBJC */
 
 // These functions typically go in an implementation support file...
-extern void show_panel(QSP_ARG_DECL  Panel_Obj *po);
-extern void unshow_panel(QSP_ARG_DECL  Panel_Obj *po);
+extern void _show_panel(QSP_ARG_DECL  Panel_Obj *po);
+extern void _unshow_panel(QSP_ARG_DECL  Panel_Obj *po);
+
+#define show_panel(po) _show_panel(QSP_ARG  po)
+#define unshow_panel(po) _unshow_panel(QSP_ARG  po)
 
 /* panel.m */
 extern void add_to_panel(Panel_Obj *po, Screen_Obj *sop);
