@@ -88,7 +88,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	} else {
 		/* If we are holding an image, release it */
 		if( VW_OBJ(vp) != NULL )
-			release_image(QSP_ARG  VW_OBJ(vp));
+			release_image(VW_OBJ(vp));
 		SET_VW_OBJ(vp,dp);
 		/* make sure this image doesn't get deleted out from under us */
 		SET_OBJ_REFCOUNT(dp,
@@ -100,7 +100,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		//refresh_image(QSP_ARG  vp);
 		usleep(16000);	/* approx 16 msec */
 	}
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 } // end old_load_viewer
 
 #ifndef BUILD_FOR_IOS

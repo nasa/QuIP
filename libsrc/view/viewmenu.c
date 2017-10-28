@@ -48,7 +48,7 @@ COMMAND_FUNC( do_delete_viewer )
 	GET_VIEWER("do_delete_viewer")
 	if( vp == NULL ) return;
 
-	delete_viewer(QSP_ARG  vp);
+	delete_viewer(vp);
 }
 
 COMMAND_FUNC( do_unshow_viewer )
@@ -145,7 +145,7 @@ COMMAND_FUNC( do_info_viewer )
 	GET_VIEWER("do_info_viewer")
 	if( vp==NULL ) return;
 
-	info_viewer(QSP_ARG  vp);
+	info_viewer(vp);
 }
 
 #ifdef HAVE_X11_EXT
@@ -227,7 +227,7 @@ COMMAND_FUNC( do_select_vp )
 	if( vp==NULL ) return;
 
 	INSURE_X11_SERVER
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 }
 
 #ifndef HAVE_VBL
@@ -588,7 +588,7 @@ COMMAND_FUNC( do_view_menu )
 		window_sys_init(SINGLE_QSP_ARG);
 
 		/* genwin support */
-		init_viewer_genwin(SINGLE_QSP_ARG);	
+		init_viewer_genwin();	
 
 		inited=1;
 	}

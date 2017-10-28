@@ -725,7 +725,7 @@ Viewer *_find_viewer( QSP_ARG_DECL  Window win )
 	Node *np;
 	Viewer *vp;
 
-	np=first_viewer_node(SINGLE_QSP_ARG);
+	np=first_viewer_node();
 	while( np != NULL ){
 		vp=(Viewer *) np->n_data;
 		if( vp->vw_xwin == win ) return(vp);

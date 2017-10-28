@@ -154,7 +154,7 @@ static void rls_vw_lists(Viewer *vp)
 // We would like to be able to select a drawable (pixmap or viewer)
 // rather than just a viewer...
 
-void select_viewer(QSP_ARG_DECL  Viewer *vp)
+void _select_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	if( vp == NULL ) return;
 
@@ -179,7 +179,7 @@ advise(ERROR_STRING);
 #endif /* ! BUILD_FOR_OBJC */
 }
 
-void release_image(QSP_ARG_DECL  Data_Obj *dp)
+void _release_image(QSP_ARG_DECL  Data_Obj *dp)
 {
 	dp->dt_refcount --;
 //sprintf(ERROR_STRING,"release_image %s:  refcount = %d",OBJ_NAME(dp),dp->dt_refcount);
@@ -188,7 +188,7 @@ void release_image(QSP_ARG_DECL  Data_Obj *dp)
 		delvec(dp);
 }
 
-void delete_viewer(QSP_ARG_DECL  Viewer *vp)
+void _delete_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	zap_viewer(vp);		/* window sys specific, no calls to givbuf... */
 #ifndef BUILD_FOR_OBJC
@@ -197,10 +197,10 @@ void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 #endif /* BUILD_FOR_OBJC */
 
 	if( VW_OBJ(vp) != NULL )
-		release_image(QSP_ARG  VW_OBJ(vp) );
+		release_image(VW_OBJ(vp) );
 #ifndef BUILD_FOR_OBJC
 	if( VW_CMAP_OBJ(vp) != NULL )
-		release_image(QSP_ARG  VW_CMAP_OBJ(vp));
+		release_image(VW_CMAP_OBJ(vp));
 //}
 	/* BUG the linearization table is owned by the display, not the viewer */
 	/*
@@ -214,7 +214,7 @@ void delete_viewer(QSP_ARG_DECL  Viewer *vp)
 		rls_str((char *)VW_LABEL(vp));
 
 	del_vwr(vp);	// releases the name
-	select_viewer(QSP_ARG  NULL);
+	select_viewer(NULL);
 }
 
 // For ios viewers, see genwin.c
@@ -261,7 +261,7 @@ static IOS_Position_Functions view_pf={
 	get_vw_posn
 };
 
-Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
+Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 {
 	Viewer *vp;
 #ifdef HAVE_X11
@@ -399,13 +399,13 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 
 	SET_GW_TYPE( VW_GW(vp), GW_VIEWER );
 
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 
 	return(vp);
 } // end viewer_init
 
 
-IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL)
+IOS_Node *_first_viewer_node(SINGLE_QSP_ARG_DECL)
 {
 	IOS_List *lp;
 
@@ -414,12 +414,12 @@ IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL)
 	else return(IOS_LIST_HEAD(lp));
 }
 
-IOS_List *viewer_list(SINGLE_QSP_ARG_DECL)
+IOS_List *_viewer_list(SINGLE_QSP_ARG_DECL)
 {
 	return( ios_item_list(vwr_itp) );
 }
 
-void info_viewer(QSP_ARG_DECL  Viewer *vp)
+void _info_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	const char *vtyp;
 
@@ -499,7 +499,7 @@ static void genwin_viewer_delete(QSP_ARG_DECL  const char *s)
 
 	vp=get_vwr(s);
 	if( vp == NULL ) return;
-	delete_viewer(QSP_ARG  vp);
+	delete_viewer(vp);
 	return;
 }
 
@@ -511,7 +511,7 @@ static Genwin_Functions gwfp={
 };
 #endif /* ! BUILD_FOR_OBJC */
 
-void init_viewer_genwin(SINGLE_QSP_ARG_DECL)
+void _init_viewer_genwin(SINGLE_QSP_ARG_DECL)
 {
 	if( vwr_itp == NULL ) init_vwrs();
 #ifndef BUILD_FOR_OBJC

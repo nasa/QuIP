@@ -115,14 +115,14 @@ static void x_play_movie(QSP_ARG_DECL  Movie *mvip)
 
 mk_win:
 	if( vp == NULL ){
-		vp = viewer_init(QSP_ARG  MOVIE_VIEWER_NAME,OBJ_COLS(dp),OBJ_ROWS(dp),0);
+		vp = viewer_init(MOVIE_VIEWER_NAME,OBJ_COLS(dp),OBJ_ROWS(dp),0);
 		if( vp == NULL ){
 			WARN("couldn't create viewer");
 			return;
 		}
 		default_cmap(QSP_ARG  VW_DPYABLE(vp) );
 		show_viewer(vp);	/* default state is to be shown */
-		select_viewer(QSP_ARG  vp);
+		select_viewer(vp);
 	} else {
 		if( vp->vw_width != OBJ_COLS(dp) ||
 			vp->vw_height != OBJ_ROWS(dp) ){
@@ -130,7 +130,7 @@ mk_win:
 				"Resizing movie viewer for movie %s",
 				OBJ_NAME(dp));
 			advise(ERROR_STRING);
-			delete_viewer(QSP_ARG  vp);
+			delete_viewer(vp);
 			vp=NULL;
 			goto mk_win;
 		}

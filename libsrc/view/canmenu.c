@@ -43,7 +43,7 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 		WARN("viewer sizes must be positive");
 		return NULL;
 	}
-	vp = viewer_init(QSP_ARG  name,dx,dy,viewer_type);
+	vp = viewer_init(name,dx,dy,viewer_type);
 
 	if( vp == NULL ) return NULL;
 #ifdef HAVE_X11
@@ -56,7 +56,7 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 	 */
 	show_viewer(vp);
 #endif /* ! BUILD_FOR_IOS */
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 	return vp;
 }
 
@@ -216,7 +216,7 @@ COMMAND_FUNC( do_redraw )
 
 	INSURE_X11_SERVER
 	redraw_viewer(vp);
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 }
 
 COMMAND_FUNC( do_embed_image )
@@ -294,6 +294,6 @@ COMMAND_FUNC( do_load_viewer )
 	INSURE_X11_SERVER
 //fprintf(stderr,"Calling load_viewer %s %s\n",VW_NAME(vp),OBJ_NAME(dp));
 	load_viewer(QSP_ARG  vp,dp);
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 }
 

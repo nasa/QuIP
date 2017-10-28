@@ -508,19 +508,26 @@ typedef struct view_cursor {
 
 /* viewer.c */
 
-extern void init_viewer_genwin(SINGLE_QSP_ARG_DECL);
-
 extern void zap_image_list(Viewer *vp);
-extern void select_viewer(QSP_ARG_DECL  Viewer *vp);
-extern void release_image(QSP_ARG_DECL  Data_Obj *dp);
-extern void delete_viewer(QSP_ARG_DECL  Viewer *vp);
-extern Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags);
-extern IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL);
-extern IOS_List *viewer_list(SINGLE_QSP_ARG_DECL);
-extern void info_viewer(QSP_ARG_DECL  Viewer *vp);
-//extern double viewer_exists(QSP_ARG_DECL  const char *);
 extern void init_genwin_viewer(void);
 
+extern void _init_viewer_genwin(SINGLE_QSP_ARG_DECL);
+extern void _select_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _release_image(QSP_ARG_DECL  Data_Obj *dp);
+extern void _delete_viewer(QSP_ARG_DECL  Viewer *vp);
+extern Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags);
+extern IOS_Node *_first_viewer_node(SINGLE_QSP_ARG_DECL);
+extern IOS_List *_viewer_list(SINGLE_QSP_ARG_DECL);
+extern void _info_viewer(QSP_ARG_DECL  Viewer *vp);
+
+#define init_viewer_genwin() _init_viewer_genwin(SINGLE_QSP_ARG)
+#define select_viewer(vp) _select_viewer(QSP_ARG  vp)
+#define release_image(dp) _release_image(QSP_ARG  dp)
+#define delete_viewer(vp) _delete_viewer(QSP_ARG  vp)
+#define viewer_init(name,dx,dy,flags) _viewer_init(QSP_ARG  name,dx,dy,flags)
+#define first_viewer_node() _first_viewer_node(SINGLE_QSP_ARG)
+#define viewer_list() _viewer_list(SINGLE_QSP_ARG)
+#define info_viewer(vp) _info_viewer(QSP_ARG  vp)
 
 /* canvas.c */
 
