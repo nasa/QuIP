@@ -30,7 +30,7 @@ static void collapse_literal(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	if( VN_PREC(enp) == PREC_SP ){
 		double dval;
 
-		dval = EVAL_FLT_EXP(enp);
+		dval = eval_flt_exp(enp);
 
 		SET_VN_DBLVAL(enp, dval);
 		SET_VN_CODE(enp, T_LIT_DBL);
@@ -39,7 +39,7 @@ static void collapse_literal(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	} else if( VN_PREC(enp) == PREC_DI ){
 		long lval;
 
-		lval = EVAL_INT_EXP(enp);
+		lval = eval_int_exp(enp);
 
 		SET_VN_INTVAL(enp, lval);
 		SET_VN_CODE(enp, T_LIT_INT);
@@ -49,7 +49,7 @@ static void collapse_literal(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		sprintf(ERROR_STRING,
 			"collapse_literal:  unexpected node precision %s",
 			NAME_FOR_PREC_CODE(VN_PREC(enp)));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	/* BUG this is where we should free these nodes;
@@ -245,11 +245,11 @@ static void optimize_tree(QSP_ARG_DECL Vec_Expr_Node *enp)
 			break;
 			
 		default:
-			MISSING_CASE(enp,"optimize_tree");
+			missing_case(enp,"optimize_tree");
 			break;
 	}
 }
-void optimize_subrt(QSP_ARG_DECL Subrt *srp)
+void _optimize_subrt(QSP_ARG_DECL Subrt *srp)
 {
 	u_long nf_before, nf_after;
 

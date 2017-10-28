@@ -72,9 +72,9 @@ Trace_If correlation blink $icv 'image correlation, blink' 1 ICorr_Axes $color1
 
 Define Find_Max_Sample 1 input
 # find location of the maximum
-Vector fms_indices 100 1 int32
+Vector fms_indices 100 1 int
 Std_Scalar fms_maxval
-Scalar fms_maxtimes 1 int32
+Scalar fms_maxtimes 1 int
 Max_Times fms_indices $1 fms_maxval fms_maxtimes
 Assign mxv value(fms_maxval)
 Assign mxt value(fms_maxtimes)

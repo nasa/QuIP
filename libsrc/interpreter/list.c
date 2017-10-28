@@ -29,22 +29,22 @@ int n_active_threads=0;
 void report_node_data(SINGLE_QSP_ARG_DECL)
 {
         sprintf(ERROR_STRING,"%ld nodes allocated",total_nodes);
-        ADVISE(ERROR_STRING);
+        advise(ERROR_STRING);
 
         if( free_node_list == NULL )
-                ADVISE("no nodes freed");
+                advise("no nodes freed");
         else {
                 sprintf(ERROR_STRING,
                         "%d free nodes available",eltcount(free_node_list));
-                ADVISE(ERROR_STRING);
+                advise(ERROR_STRING);
         }
 
         if( free_list_list == NULL )
-                ADVISE("no lists freed");
+                advise("no lists freed");
         else {
                 sprintf(ERROR_STRING,
                         "%d free lists available",eltcount(free_list_list));
-                ADVISE(ERROR_STRING);
+                advise(ERROR_STRING);
         }
 }
 

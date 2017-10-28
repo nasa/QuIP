@@ -199,7 +199,7 @@ static long read_expected_bytes(QSP_ARG_DECL  Port *mpp,void *buf,ssize_t n_want
 			sprintf(ERROR_STRING,
 				"read_expected_bytes: problem reading port \"%s\"",
 				mpp->mp_name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 		} else if( n==0 ){
 //fprintf(stderr,"read_expected_bytes saw EOF?\n");
@@ -344,7 +344,7 @@ long recv_enc_text(QSP_ARG_DECL  Port *mpp, Packet *pkp)
 
 	len=get_port_int32(QSP_ARG  mpp);
 	if( len<=0 ){
-		WARN("recv_enc_text:  bad length");
+		warn("recv_enc_text:  bad length");
 		return(-1);
 	}
 	// BUG?  should we limit the max length?
@@ -354,14 +354,14 @@ long recv_enc_text(QSP_ARG_DECL  Port *mpp, Packet *pkp)
 
 	nread = read_expected_bytes(QSP_ARG  mpp,pkp->pk_data,len);
 	if( nread <= 0 ){
-		WARN("recv_enc_text:  error reading encrypted data");
+		warn("recv_enc_text:  error reading encrypted data");
 		n_decrypted=(-1);
 		goto cleanup;
 	}
 	dbuf = (char *)getbuf(nread);
 	n_decrypted=decrypt_char_buf((uint8_t *)(pkp->pk_data),nread,dbuf,nread);
 	if( n_decrypted <= 0 ){
-		WARN("recv_enc_text:  error decrypting buffer");
+		warn("recv_enc_text:  error decrypting buffer");
 		givbuf(dbuf);
 		dbuf=NULL;
 		goto cleanup;
@@ -425,22 +425,22 @@ int put_port_int32(QSP_ARG_DECL  Port *mpp,int32_t  wrd)
 static void xmit_buffer(QSP_ARG_DECL  Port *mpp,const void *buf, int32_t len, int pkt_code)
 {
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
-		WARN("xmit_buffer:  error sending magic number");
+		warn("xmit_buffer:  error sending magic number");
 		return;
 	}
 
 	if( put_port_int32(QSP_ARG  mpp,pkt_code) == (-1) ){
-		WARN("xmit_buffer:  error sending packet code");
+		warn("xmit_buffer:  error sending packet code");
 		return;
 	}
 
 	if( put_port_int32(QSP_ARG  mpp,len) == (-1) ){
-		WARN("xmit_buffer:  error sending buffer length");
+		warn("xmit_buffer:  error sending buffer length");
 		return;
 	}
 
 	if( write_port(QSP_ARG  mpp,buf,len) != len )
-		WARN("xmit_buffer:  error sending byte buffer");
+		warn("xmit_buffer:  error sending byte buffer");
 }
 
 #ifdef HAVE_STAT
@@ -467,7 +467,7 @@ static char *get_file_contents(QSP_ARG_DECL  const char *filename, struct stat *
 	if( fread(buf,1,(long)stb_p->st_size,fp) != stb_p->st_size ){
 		sprintf(ERROR_STRING,"xmit_plain_file:  error reading file %s",
 			filename);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		fclose(fp);
 		return NULL;
 	}
@@ -496,7 +496,7 @@ void xmit_file_as_text(QSP_ARG_DECL  Port *mpp,const void *_filename,
 	xmit_buffer(QSP_ARG  mpp,buf,(int32_t)(1+statb.st_size),P_TEXT);
 
 #else // ! HAVE_STAT
-	WARN("Sorry, don't know how to transmit a file without fstat to determine file size!?");
+	warn("Sorry, don't know how to transmit a file without fstat to determine file size!?");
 #endif // ! HAVE_STAT
 }
 
@@ -526,7 +526,7 @@ void xmit_plain_file(QSP_ARG_DECL  Port *mpp,const void *_filename,int flag)
 		sprintf(ERROR_STRING,
 	"Remote filename not specified, not transmitting file %s.",
 			filename);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		advise("Use port_output_file command to specify the remote filename.");
 		return;
 	}
@@ -545,7 +545,7 @@ void xmit_plain_file(QSP_ARG_DECL  Port *mpp,const void *_filename,int flag)
 
 
 #else // ! HAVE_STAT
-	WARN("Sorry, don't know how to transmit a file without fstat to determine file size!?");
+	warn("Sorry, don't know how to transmit a file without fstat to determine file size!?");
 #endif // ! HAVE_STAT
 }
 
@@ -575,7 +575,7 @@ static uint8_t *encrypt_text_buffer(QSP_ARG_DECL  const void *text,size_t *siz_p
 				encbuf, max_enc_size);
 
 	if( *siz_p <= 0 ){
-		WARN("encrypt_text_buffer:  encryption error");
+		warn("encrypt_text_buffer:  encryption error");
 		givbuf(encbuf);
 		encbuf=NULL;
 	}
@@ -641,7 +641,7 @@ static void xmit_enc_file_packet(QSP_ARG_DECL  Port *mpp, const void *_filename,
 	givbuf(encbuf);
 
 #else // ! HAVE_STAT
-	WARN("Sorry, don't know how to transmit (encrypted) a file without fstat to determine file size!?");
+	warn("Sorry, don't know how to transmit (encrypted) a file without fstat to determine file size!?");
 #endif // ! HAVE_STAT
 }
 
@@ -682,7 +682,7 @@ ssize_t write_port(QSP_ARG_DECL  Port *mpp,const void *buf,u_long  n)
 		if( last_err == EPIPE ){
 			sprintf(ERROR_STRING,"Write error on port %s",
 				mpp->mp_name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			// Close the port
 			// We don't necessarily want to reconnect here?
 			// Maybe we need to clean up from the error, and
@@ -731,13 +731,13 @@ ssize_t read_port(QSP_ARG_DECL  Port *mpp,void *buf,u_long  n)
 	if( n2 < 0 ){
 		if( errno != EINTR ){
 			tell_sys_error("(read_port) read");
-			WARN("error reading stream packet");
+			warn("error reading stream packet");
 			return(-1);
 		} else if( errno == 0 ){		/* EOF */
 advise("read_port:  errno is zero after read failed - should this happen?????");
 			goto eof_encountered;
 		} else {
-			WARN("read_port:  unexpected read error");
+			warn("read_port:  unexpected read error");
 		}
 	}
 

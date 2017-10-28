@@ -95,7 +95,14 @@ extern COMMAND_FUNC( do_timex_menu );
 extern COMMAND_FUNC( do_pipe_menu );
 extern void close_pipe(QSP_ARG_DECL  Pipe *pp);
 ITEM_INTERFACE_PROTOTYPES( Pipe, pipe )
-#define PICK_PIPE(pmpt)		pick_pipe(QSP_ARG  pmpt)
+
+#define pick_pipe(pmpt)		_pick_pipe(QSP_ARG  pmpt)
+#define init_pipes()		_init_pipes(SINGLE_QSP_ARG)
+#define pipe_of(name)		_pipe_of(QSP_ARG  name)
+#define new_pipe(name)		_new_pipe(QSP_ARG  name)
+#define del_pipe(name)		_del_pipe(QSP_ARG  name)
+#define list_pipes(fp)		_list_pipes(QSP_ARG  fp)
+
 #endif /* HAVE_POPEN */
 
 
@@ -137,23 +144,30 @@ extern void simulate_typing(const char *str);
 
 // query_stack.h
 extern Query_Stack *init_first_query_stack(void);
-extern const char *nameof( QSP_ARG_DECL  const char *pmpt);
-extern long how_many(QSP_ARG_DECL  const char *);
-extern double how_much(QSP_ARG_DECL  const char *);
-#define NAMEOF(s)			nameof(QSP_ARG  s)
-#define HOW_MANY(pmpt)			how_many(QSP_ARG  pmpt)
-#define HOW_MUCH(pmpt)			how_much(QSP_ARG  pmpt)
+extern const char *_nameof( QSP_ARG_DECL  const char *pmpt);
+extern long _how_many(QSP_ARG_DECL  const char *);
+extern double _how_much(QSP_ARG_DECL  const char *);
+// gradually phase these all-caps versions out...
+#define NAMEOF(s)		_nameof(QSP_ARG  s)
+#define HOW_MANY(pmpt)		_how_many(QSP_ARG  pmpt)
+#define HOW_MUCH(pmpt)		_how_much(QSP_ARG  pmpt)
+#define ASKIF(p)		_askif(QSP_ARG  p )
+#define WHICH_ONE(p,n,ch)	_which_one(QSP_ARG  p, n, ch )
+
+#define nameof(s)		_nameof(QSP_ARG  s)
+#define how_many(pmpt)		_how_many(QSP_ARG  pmpt)
+#define how_much(pmpt)		_how_much(QSP_ARG  pmpt)
+#define askif(p)		_askif(QSP_ARG  p )
+#define which_one(p,n,ch)	_which_one(QSP_ARG  p, n, ch )
 
 
 extern const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt);
 extern void inhibit_next_prompt_format(SINGLE_QSP_ARG_DECL);
 extern void enable_prompt_format(SINGLE_QSP_ARG_DECL);
-extern int askif( QSP_ARG_DECL  const char *pmpt);
-#define ASKIF(p)		askif(QSP_ARG  p )
+extern int _askif( QSP_ARG_DECL  const char *pmpt);
 
 
-extern int which_one( QSP_ARG_DECL  const char *pmpt, int n, const char **choices );
-#define WHICH_ONE(p,n,ch)	which_one(QSP_ARG  p, n, ch )
+extern int _which_one( QSP_ARG_DECL  const char *pmpt, int n, const char **choices );
 
 extern Query_Stack *new_qstk(QSP_ARG_DECL  const char *name);
 ITEM_INIT_PROT(Query_Stack,query_stack)
@@ -161,12 +175,18 @@ ITEM_LIST_PROT(Query_Stack,query_stack)
 ITEM_NEW_PROT(Query_Stack,query_stack)
 ITEM_PICK_PROT(Query_Stack,query_stack)
 
+#define init_query_stacks()	_init_query_stacks(SINGLE_QSP_ARG)
+#define query_stack_list()	_query_stack_list(SINGLE_QSP_ARG)
+#define new_query_stack(name)	_new_query_stack(QSP_ARG  name)
+#define pick_query_stack(p)	_pick_query_stack(QSP_ARG  p)
+#define list_query_stacks(fp)	_list_query_stacks(QSP_ARG  fp)
+
 extern Mouthful *new_mouthful(const char * text, const char *filename);
 
 // item_type.c
 ITEM_LIST_PROT(Item_Type,ittyp)
 ITEM_PICK_PROT(Item_Type,ittyp)
-#define PICK_ITTYP(pmpt)	pick_ittyp(QSP_ARG  pmpt)
+#define pick_ittyp(pmpt)	_pick_ittyp(QSP_ARG  pmpt)
 
 #ifdef HAVE_LIBCURL
 //extern String_Buf *curl_stringbuf(SINGLE_QSP_ARG_DECL);
@@ -224,13 +244,12 @@ extern COMMAND_FUNC( do_dobj_menu );
 extern COMMAND_FUNC( do_list_features );
 
 extern void init_builtins(void);
-extern void push_menu(QSP_ARG_DECL  Menu *mp);
+extern void _push_menu(QSP_ARG_DECL  Menu *mp);
+#define push_menu(mp) _push_menu(QSP_ARG  mp)
 
 /* chewtext.c */
-extern void chew_text(QSP_ARG_DECL const char *, const char *filename );
-//extern void digest(QSP_ARG_DECL  const char *text);
-#define CHEW_TEXT(str,filename)		chew_text(QSP_ARG  str, filename)
-//#define DIGEST(t)		digest(QSP_ARG t)
+extern void _chew_text(QSP_ARG_DECL const char *, const char *filename );
+#define chew_text(str,filename)		_chew_text(QSP_ARG  str, filename)
 
 /* dict.c */
 
@@ -267,7 +286,8 @@ extern const char *save_possibly_empty_str(const char *);
 extern void rls_str(const char *);
 extern COMMAND_FUNC( tog_pmpt );
 extern void qdump( SINGLE_QSP_ARG_DECL );
-extern FILE *tfile(SINGLE_QSP_ARG_DECL);
+extern FILE * _tfile(SINGLE_QSP_ARG_DECL);
+#define tfile()					_tfile(SINGLE_QSP_ARG)
 extern int intractive(SINGLE_QSP_ARG_DECL);
 extern void set_args(QSP_ARG_DECL  int ac,char** av);
 extern String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL);
@@ -276,8 +296,6 @@ extern Macro_Arg ** create_generic_macro_args(int n);
 extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
-extern void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
-extern int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
 //extern void resume_chewing(SINGLE_QSP_ARG_DECL);
 extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
@@ -287,6 +305,12 @@ extern void set_query_macro(Query *,Macro *);
 extern void set_query_args(Query *,const char **);
 extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
 extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
+
+extern void _add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
+extern int _rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
+
+#define add_event_func(func)	_add_event_func(QSP_ARG  func)
+#define rem_event_func(func)	_rem_event_func(QSP_ARG  func)
 
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
@@ -302,18 +326,22 @@ extern void show_menu_stack(SINGLE_QSP_ARG_DECL);
 extern Item_Type *ittyp_itp;
 extern Item_Type *macro_itp;
 
-extern FILE *tell_msgfile(SINGLE_QSP_ARG_DECL);
-extern FILE *tell_errfile(SINGLE_QSP_ARG_DECL);
+extern FILE *_tell_msgfile(SINGLE_QSP_ARG_DECL);
+extern FILE *_tell_errfile(SINGLE_QSP_ARG_DECL);
 
-extern Quip_Function *function_of(QSP_ARG_DECL  const char *name);
-extern void list_vars(SINGLE_QSP_ARG_DECL);
-extern Variable *get_var(QSP_ARG_DECL  const char *name);
-#define GET_VAR(s)	get_var(QSP_ARG  s);
+#define tell_errfile()	_tell_errfile(SINGLE_QSP_ARG)
+#define tell_msgfile()	_tell_msgfile(SINGLE_QSP_ARG)
+
+// BUG?  why not use ITEM macro here?
+extern Quip_Function *_function_of(QSP_ARG_DECL  const char *name);
+extern void _list_vars(SINGLE_QSP_ARG_DECL);
+extern Variable *_get_var(QSP_ARG_DECL  const char *name);
+#define list_vars()	_list_vars(SINGLE_QSP_ARG);
+#define get_var(s)	_get_var(QSP_ARG  s);
 
 
 // error.c
 extern int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL));
-extern void nice_exit(QSP_ARG_DECL  int status);
 extern const char *tell_progname(void);
 extern const char *tell_version(void);
 extern void tty_warn(QSP_ARG_DECL  const char *s);
@@ -321,25 +349,40 @@ extern void set_error_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_advise_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_prt_msg_frag_func(void (*func)(QSP_ARG_DECL  const char *));
 extern void set_max_warnings(QSP_ARG_DECL  int n);
+extern int string_is_printable(const char *s);
 extern char *show_printable(QSP_ARG_DECL  const char* s);
 extern void error_redir(QSP_ARG_DECL  FILE *fp);
 extern void output_redir(QSP_ARG_DECL  FILE *fp);
-extern void _log_message(QSP_ARG_DECL  const char *msg);
 extern const char *get_date_string(SINGLE_QSP_ARG_DECL);
 
+extern void _log_message(QSP_ARG_DECL  const char *msg);
+extern void _nice_exit(QSP_ARG_DECL  int status);
+
 #define log_message(s)	_log_message(QSP_ARG  s);
+#define nice_exit(s)	_nice_exit(QSP_ARG  s);
 
 
 // debug.c
 extern void debug_module(QSP_ARG_DECL  const char *s);
-extern debug_flag_t add_debug_module(QSP_ARG_DECL  const char *name);
-extern void set_debug(QSP_ARG_DECL  Debug_Module *dbmp);
+extern debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name);
+extern void _set_debug(QSP_ARG_DECL  Debug_Module *dbmp);
+
+#define add_debug_module(n)	_add_debug_module(QSP_ARG  n)
+
 ITEM_INIT_PROT(Debug_Module,debug)
 ITEM_NEW_PROT(Debug_Module,debug)
 ITEM_CHECK_PROT(Debug_Module,debug)
 ITEM_GET_PROT(Debug_Module,debug)
 ITEM_PICK_PROT(Debug_Module,debug)
 ITEM_LIST_PROT(Debug_Module,debug)
+
+#define set_debug(dbmp)	_set_debug(QSP_ARG  dbmp)
+#define init_debugs()	_init_debugs(SINGLE_QSP_ARG)
+#define new_debug(name)	_new_debug(QSP_ARG  name)
+#define debug_of(name)	_debug_of(QSP_ARG  name)
+#define get_debug(name)	_get_debug(QSP_ARG  name)
+#define pick_debug(prompt)	_pick_debug(QSP_ARG  prompt)
+#define list_debugs(fp)	_list_debugs(QSP_ARG  fp)
 
 
 // rcfile.c
@@ -408,7 +451,12 @@ ITEM_NEW_PROT(Macro,macro)
 ITEM_CHECK_PROT(Macro,macro)
 ITEM_PICK_PROT(Macro,macro)
 ITEM_DEL_PROT(Macro,macro)
-#define PICK_MACRO(pmpt)	pick_macro(QSP_ARG  pmpt)
+
+#define init_macros()		_init_macros(SINGLE_QSP_ARG)
+#define new_macro(name)		_new_macro(QSP_ARG  name)
+#define macro_of(name)		_macro_of(QSP_ARG  name)
+#define pick_macro(pmpt)	_pick_macro(QSP_ARG  pmpt)
+#define del_macro(name)		_del_macro(QSP_ARG  name)
 
 
 // from query_stack.h
@@ -423,54 +471,63 @@ extern int tell_qlevel(SINGLE_QSP_ARG_DECL);
 extern Query * pop_file( SINGLE_QSP_ARG_DECL );
 
 extern void redir_with_flags( QSP_ARG_DECL  FILE *fp, const char *filename, uint32_t flags );
-extern void redir( QSP_ARG_DECL  FILE *fp, const char *filename );
+extern void _redir( QSP_ARG_DECL  FILE *fp, const char *filename );
 extern void redir_from_pipe( QSP_ARG_DECL  Pipe *pp, const char *cmd );
+
+#define redir(fp,s)	_redir(QSP_ARG  fp,s)
 
 extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
 extern const char *current_input_file(SINGLE_QSP_ARG_DECL);
 
-extern int max_vectorizable(SINGLE_QSP_ARG_DECL);
-extern void set_max_vectorizable(QSP_ARG_DECL  int v);
+extern int _max_vectorizable(SINGLE_QSP_ARG_DECL);
+extern void _set_max_vectorizable(QSP_ARG_DECL  int v);
 
-extern void push_text(QSP_ARG_DECL const char *text, const char *filename );
-extern void digest(QSP_ARG_DECL const char *text, const char *filename );
-#define PUSH_TEXT(t,f)	push_text(QSP_ARG  t,f)
+#define max_vectorizable() _max_vectorizable(SINGLE_QSP_ARG)
+#define set_max_vectorizable(v) _set_max_vectorizable(QSP_ARG  v)
+
+extern void _push_text(QSP_ARG_DECL const char *text, const char *filename );
+extern void _digest(QSP_ARG_DECL const char *text, const char *filename );
+#define digest(text,filename) _digest(QSP_ARG text,filename)
+#define push_text(t,f)	_push_text(QSP_ARG  t,f)
 
 extern void push_top_menu(SINGLE_QSP_ARG_DECL);
 
 extern void do_cmd(SINGLE_QSP_ARG_DECL);
-extern Menu * pop_menu(SINGLE_QSP_ARG_DECL);
 extern void enable_stripping_quotes(SINGLE_QSP_ARG_DECL);
 extern void disable_stripping_quotes(SINGLE_QSP_ARG_DECL);
 extern void lookahead(SINGLE_QSP_ARG_DECL);
+
+extern Menu * _pop_menu(SINGLE_QSP_ARG_DECL);
+
+#define pop_menu() _pop_menu(SINGLE_QSP_ARG)
 
 extern Query_Stack *new_qstack(QSP_ARG_DECL  const char *name);
 
 extern void qs_do_cmd(Query_Stack *qsp);
 
-extern void open_loop(QSP_ARG_DECL  int n);
-#define OPEN_LOOP(n)	open_loop(QSP_ARG  n)
-extern void close_loop(SINGLE_QSP_ARG_DECL);
-#define CLOSE_LOOP	close_loop(SINGLE_QSP_ARG)
+extern void _open_loop(QSP_ARG_DECL  int n);
+extern void _close_loop(SINGLE_QSP_ARG_DECL);
+#define open_loop(n)	_open_loop(QSP_ARG  n)
+#define close_loop()	_close_loop(SINGLE_QSP_ARG)
 
-extern void list_current_menu(SINGLE_QSP_ARG_DECL);
-extern void list_builtin_menu(SINGLE_QSP_ARG_DECL);
-#define LIST_CURRENT_MENU	list_current_menu(SINGLE_QSP_ARG)
-#define LIST_BUILTIN_MENU	list_builtin_menu(SINGLE_QSP_ARG)
+extern void _list_current_menu(SINGLE_QSP_ARG_DECL);
+extern void _list_builtin_menu(SINGLE_QSP_ARG_DECL);
+#define list_current_menu()	_list_current_menu(SINGLE_QSP_ARG)
+#define list_builtin_menu()	_list_builtin_menu(SINGLE_QSP_ARG)
 
 
 // variable.c
 extern void init_variables(SINGLE_QSP_ARG_DECL);
 extern void set_script_var_from_int(QSP_ARG_DECL  const char *varname, long val );
-extern Variable *assign_var(QSP_ARG_DECL  const char *name, const char *value);
-extern Variable *assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
-#define ASSIGN_VAR( s1 , s2 )	assign_var(QSP_ARG  s1 , s2 )
-#define ASSIGN_RESERVED_VAR( s1 , s2 )	assign_reserved_var(QSP_ARG  s1 , s2 )
+extern Variable *_assign_var(QSP_ARG_DECL  const char *name, const char *value);
+extern Variable *_assign_reserved_var(QSP_ARG_DECL  const char *name, const char *value);
+#define assign_var( s1 , s2 )	_assign_var(QSP_ARG  s1 , s2 )
+#define assign_reserved_var( s1 , s2 )	_assign_reserved_var(QSP_ARG  s1 , s2 )
 ITEM_PICK_PROT(Variable,var_)
-#define VAR_OF(s)	var_of(QSP_ARG  s)
-extern Variable *var_of(QSP_ARG_DECL const char *name);
-#define PICK_VAR(s)	pick_var_(QSP_ARG  s)
+#define var_of(s)	_var_of(QSP_ARG  s)
+extern Variable *_var_of(QSP_ARG_DECL const char *name);
+#define pick_var(s)	_pick_var_(QSP_ARG  s)
 
 
 // hash.c
@@ -529,12 +586,16 @@ extern COMMAND_FUNC(do_show_prompt);
 extern void report_mutex_error(QSP_ARG_DECL  int status, const char *whence);
 #endif // THREAD_SAFE_QUERY
 
-extern Data_Obj *	pick_obj(QSP_ARG_DECL const char *pmpt);
-#define PICK_OBJ(pmpt)		pick_obj(QSP_ARG   pmpt)
+extern Data_Obj *	_pick_obj(QSP_ARG_DECL const char *pmpt);
+#define pick_obj(pmpt)		_pick_obj(QSP_ARG   pmpt)
 
-#define VWR_OF( s )	vwr_of(QSP_ARG  s )
-#define GET_VWR( s )	get_vwr(QSP_ARG  s )
-#define PICK_VWR( s )	pick_vwr(QSP_ARG  s )
+#define vwr_of( s )	_vwr_of(QSP_ARG  s )
+#define get_vwr( s )	_get_vwr(QSP_ARG  s )
+#define pick_vwr( s )	_pick_vwr(QSP_ARG  s )
+#define list_vwrs( fp )	_list_vwrs(QSP_ARG  fp )
+#define init_vwrs()	_init_vwrs(SINGLE_QSP_ARG)
+#define del_vwr( s )	_del_vwr(QSP_ARG  s )
+#define new_vwr( s )	_new_vwr(QSP_ARG  s )
 
 // BUG this should be per-qsp
 extern int quip_verbose;

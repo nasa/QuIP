@@ -16,10 +16,6 @@
 #include <dispatch/dispatch.h>
 #endif /* BUILD_FOR_IOS */
 
-//#include "my_curl.h"
-
-// For which parser?  scalar or vector???
-
 typedef struct vector_parser_data {
 	void *		vpd_top_enp;	// really Vec_Expr_Node
 	void *		vpd_last_enp;	// really Vec_Expr_Node
@@ -29,7 +25,7 @@ typedef struct vector_parser_data {
 	int		vpd_parser_line_num;
 	String_Buf *	vpd_yy_last_line;
 	String_Buf *	vpd_yy_input_line;
-	String_Buf *	vpd_expr_string;
+	String_Buf *	vpd_expr_string;	// for reading the next word?
 	String_Buf *	vpd_yy_word_buf;
 	int		vpd_semi_seen;		// boolean flag...
 	int		vpd_end_seen;		// boolean flag?
@@ -38,8 +34,48 @@ typedef struct vector_parser_data {
 	const char *	vpd_curr_string;
 	double		vpd_final;
 	String_Ref *	vpd_curr_infile;
-	List *		vpd_subroutine_context_stack /* =NO_LIST */ ;
+	List *		vpd_subroutine_context_stack;
 } Vector_Parser_Data;
+
+
+#define	VPD_TOP_ENP(vpd_p)		(vpd_p)->vpd_top_enp
+#define	VPD_LAST_ENP(vpd_p)		(vpd_p)->vpd_last_enp
+#define	VPD_END_SEEN(vpd_p)		(vpd_p)->vpd_end_seen
+#define	VPD_YY_CP(vpd_p)		(vpd_p)->vpd_yy_cp
+#define	VPD_EXPR_LEVEL(vpd_p)		(vpd_p)->vpd_expr_level
+#define	VPD_LAST_LINE_NUM(vpd_p)	(vpd_p)->vpd_last_line_num
+#define	VPD_PARSER_LINE_NUM(vpd_p)	(vpd_p)->vpd_parser_line_num
+#define	VPD_YY_LAST_LINE(vpd_p)		(vpd_p)->vpd_yy_last_line
+#define	VPD_YY_INPUT_LINE(vpd_p)	(vpd_p)->vpd_yy_input_line
+#define	VPD_YY_WORD_BUF(vpd_p)		(vpd_p)->vpd_yy_word_buf
+#define	VPD_SEMI_SEEN(vpd_p)		(vpd_p)->vpd_semi_seen
+#define	VPD_EXPR_STRING(vpd_p)		(vpd_p)->vpd_expr_string
+#define	VPD_EDEPTH(vpd_p)		(vpd_p)->vpd_edepth
+#define	VPD_CURR_STRING(vpd_p)		(vpd_p)->vpd_curr_string
+#define	VPD_FINAL(vpd_p)		(vpd_p)->vpd_final
+#define	VPD_CURR_INFILE(vpd_p)		(vpd_p)->vpd_curr_infile
+#define VPD_SUBRT_CTX_STACK(vpd_p)	(vpd_p)->vpd_subroutine_context_stack
+
+
+#define	SET_VPD_TOP_ENP(vpd_p,v)		(vpd_p)->vpd_top_enp = v
+#define	SET_VPD_LAST_ENP(vpd_p,v)		(vpd_p)->vpd_last_enp = v
+#define	SET_VPD_END_SEEN(vpd_p,v)		(vpd_p)->vpd_end_seen = v
+#define	SET_VPD_YY_CP(vpd_p,v)			(vpd_p)->vpd_yy_cp = v
+#define	SET_VPD_EXPR_LEVEL(vpd_p,v)		(vpd_p)->vpd_expr_level = v
+#define	SET_VPD_LAST_LINE_NUM(vpd_p,v)		(vpd_p)->vpd_last_line_num = v
+#define	SET_VPD_PARSER_LINE_NUM(vpd_p,v)	(vpd_p)->vpd_parser_line_num = v
+#define	SET_VPD_YY_LAST_LINE(vpd_p,v)		(vpd_p)->vpd_yy_last_line = v
+#define	SET_VPD_YY_WORD_BUF(vpd_p,v)		(vpd_p)->vpd_yy_word_buf = v
+#define	SET_VPD_YY_INPUT_LINE(vpd_p,v)		(vpd_p)->vpd_yy_input_line = v
+#define	SET_VPD_SEMI_SEEN(vpd_p,v)		(vpd_p)->vpd_semi_seen = v
+#define	SET_VPD_EXPR_STRING(vpd_p,v)		(vpd_p)->vpd_expr_string = v
+#define	SET_VPD_EDEPTH(vpd_p,v)			(vpd_p)->vpd_edepth = v
+#define	SET_VPD_CURR_STRING(vpd_p,v)		(vpd_p)->vpd_curr_string = v
+#define	SET_VPD_FINAL(vpd_p,v)			(vpd_p)->vpd_final = v
+#define	SET_VPD_CURR_INFILE(vpd_p,v)		(vpd_p)->vpd_curr_infile = v
+#define SET_VPD_SUBRT_CTX_STACK(vpd_p,v)	(vpd_p)->vpd_subroutine_context_stack = v
+
+
 
 #define MAXEDEPTH	20
 #define MAX_E_STRINGS	64
@@ -76,25 +112,6 @@ typedef struct scalar_parser_data {
 #define SET_SPD_ESTRINGS_INITED(spd_p,val)	(spd_p)->spd_estrings_inited = val
 #define SET_SPD_FREE_EXPR_NODE_LIST(spd_p,val)	(spd_p)->spd_free_enp_lp = val
 
-
-#ifdef FOOBAR
-
-#define QS_SPD_YYSTRPTR(qsp)	(qsp)->qs_scalar_parser_data->spd_yystrptr
-#define QS_SPD_ORIGINAL_STRING(qsp)	(qsp)->qs_scalar_parser_data->spd_original_string
-#define QS_SPD_EDEPTH(qsp)	(qsp)->qs_scalar_parser_data->spd_edepth
-#define QS_SPD_WHICH_STR(qsp)	(qsp)->qs_scalar_parser_data->spd_which_str
-#define QS_SPD_IN_PEXPR(qsp)	(qsp)->qs_scalar_parser_data->spd_in_pexpr
-#define QS_SPD_ESTRINGS_INITED(qsp)	(qsp)->qs_scalar_parser_data->spd_estrings_inited
-#define QS_SPD_FREE_EXPR_NODE_LIST(qsp)	(qsp)->qs_scalar_parser_data->spd_free_enp_lp
-
-#define SET_QS_SPD_YYSTRPTR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_yystrptr = val
-#define SET_QS_SPD_ORIGINAL_STRING(qsp,val)	(qsp)->qs_scalar_parser_data->spd_original_string = val
-#define SET_QS_SPD_EDEPTH(qsp,val)	(qsp)->qs_scalar_parser_data->spd_edepth = val
-#define SET_QS_SPD_WHICH_STR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_which_str = val
-#define SET_QS_SPD_IN_PEXPR(qsp,val)	(qsp)->qs_scalar_parser_data->spd_in_pexpr = val
-#define SET_QS_SPD_ESTRINGS_INITED(qsp,val)	(qsp)->qs_scalar_parser_data->spd_estrings_inited = val
-#define SET_QS_SPD_FREE_EXPR_NODE_LIST(qsp,val)	(qsp)->qs_scalar_parser_data->spd_free_enp_lp = val
-#endif // FOOBAR
 
 // This struct is used to push text frags around...
 
@@ -233,48 +250,6 @@ struct query_stack {
 #define QS_PICKING_ITEM_ITP(qsp)		((qsp)->qs_picking_item_itp)
 #define SET_QS_PICKING_ITEM_ITP(qsp,itp)	(qsp->qs_picking_item_itp) = itp
 
-#define QS_VECTOR_PARSER_DATA_STACK(qsp)	(qsp)->qs_vector_parser_data_stack
-#define QS_VECTOR_PARSER_DATA_FREELIST(qsp)	(qsp)->qs_vector_parser_data_freelist
-#define SET_QS_VECTOR_PARSER_DATA_STACK(qsp,v)	(qsp)->qs_vector_parser_data_stack = v
-#define SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,v)	(qsp)->qs_vector_parser_data_freelist = v
-
-#define	VPD_TOP_ENP(vpd_p)		(vpd_p)->vpd_top_enp
-#define	VPD_LAST_ENP(vpd_p)		(vpd_p)->vpd_last_enp
-#define	VPD_END_SEEN(vpd_p)		(vpd_p)->vpd_end_seen
-#define	VPD_YY_CP(vpd_p)		(vpd_p)->vpd_yy_cp
-#define	VPD_EXPR_LEVEL(vpd_p)		(vpd_p)->vpd_expr_level
-#define	VPD_LAST_LINE_NUM(vpd_p)	(vpd_p)->vpd_last_line_num
-#define	VPD_PARSER_LINE_NUM(vpd_p)	(vpd_p)->vpd_parser_line_num
-#define	VPD_YY_LAST_LINE(vpd_p)		(vpd_p)->vpd_yy_last_line
-#define	VPD_YY_INPUT_LINE(vpd_p)	(vpd_p)->vpd_yy_input_line
-#define	VPD_YY_WORD_BUF(vpd_p)		(vpd_p)->vpd_yy_word_buf
-#define	VPD_SEMI_SEEN(vpd_p)		(vpd_p)->vpd_semi_seen
-#define	VPD_EXPR_STRING(vpd_p)		(vpd_p)->vpd_expr_string
-#define	VPD_EDEPTH(vpd_p)		(vpd_p)->vpd_edepth
-#define	VPD_CURR_STRING(vpd_p)		(vpd_p)->vpd_curr_string
-#define	VPD_FINAL(vpd_p)		(vpd_p)->vpd_final
-#define	VPD_CURR_INFILE(vpd_p)		(vpd_p)->vpd_curr_infile
-#define VPD_SUBRT_CTX_STACK(vpd_p)	(vpd_p)->vpd_subroutine_context_stack
-
-
-#define	SET_VPD_TOP_ENP(vpd_p,v)		(vpd_p)->vpd_top_enp = v
-#define	SET_VPD_LAST_ENP(vpd_p,v)		(vpd_p)->vpd_last_enp = v
-#define	SET_VPD_END_SEEN(vpd_p,v)		(vpd_p)->vpd_end_seen = v
-#define	SET_VPD_YY_CP(vpd_p,v)			(vpd_p)->vpd_yy_cp = v
-#define	SET_VPD_EXPR_LEVEL(vpd_p,v)		(vpd_p)->vpd_expr_level = v
-#define	SET_VPD_LAST_LINE_NUM(vpd_p,v)		(vpd_p)->vpd_last_line_num = v
-#define	SET_VPD_PARSER_LINE_NUM(vpd_p,v)	(vpd_p)->vpd_parser_line_num = v
-#define	SET_VPD_YY_LAST_LINE(vpd_p,v)		(vpd_p)->vpd_yy_last_line = v
-#define	SET_VPD_YY_WORD_BUF(vpd_p,v)		(vpd_p)->vpd_yy_word_buf = v
-#define	SET_VPD_YY_INPUT_LINE(vpd_p,v)		(vpd_p)->vpd_yy_input_line = v
-#define	SET_VPD_SEMI_SEEN(vpd_p,v)		(vpd_p)->vpd_semi_seen = v
-#define	SET_VPD_EXPR_STRING(vpd_p,v)		(vpd_p)->vpd_expr_string = v
-#define	SET_VPD_EDEPTH(vpd_p,v)			(vpd_p)->vpd_edepth = v
-#define	SET_VPD_CURR_STRING(vpd_p,v)		(vpd_p)->vpd_curr_string = v
-#define	SET_VPD_FINAL(vpd_p,v)			(vpd_p)->vpd_final = v
-#define	SET_VPD_CURR_INFILE(vpd_p,v)		(vpd_p)->vpd_curr_infile = v
-#define SET_VPD_SUBRT_CTX_STACK(vpd_p,v)	(vpd_p)->vpd_subroutine_context_stack = v
-
 // this indexing of the list is probably backwards!?
 #define QS_QRY_STACK(qsp)		(qsp)->qs_query_stack
 #define SET_QS_QRY_STACK(qsp,stkp)	(qsp)->qs_query_stack = stkp
@@ -374,7 +349,14 @@ struct query_stack {
 #define SET_QS_AV_STRINGBUF(qsp,sbp)	(qsp)->qs_av_sbp = sbp
 
 #define QS_VECTOR_PARSER_DATA(qsp)		(qsp)->qs_vector_parser_data
+#define QS_VECTOR_PARSER_DATA_STACK(qsp)	(qsp)->qs_vector_parser_data_stack
+#define QS_VECTOR_PARSER_DATA_FREELIST(qsp)	(qsp)->qs_vector_parser_data_freelist
 #define SET_QS_VECTOR_PARSER_DATA(qsp,d)	(qsp)->qs_vector_parser_data = d
+#define SET_QS_VECTOR_PARSER_DATA_STACK(qsp,v)	(qsp)->qs_vector_parser_data_stack = v
+#define SET_QS_VECTOR_PARSER_DATA_FREELIST(qsp,v)	(qsp)->qs_vector_parser_data_freelist = v
+#define THIS_VPD		(QS_VECTOR_PARSER_DATA(THIS_QSP))
+
+
 
 #define QS_SCALAR_PARSER_DATA(qsp)		(qsp)->qs_scalar_parser_data
 #define SET_QS_SCALAR_PARSER_DATA(qsp,d)	(qsp)->qs_scalar_parser_data = d
@@ -463,14 +445,6 @@ struct query_stack {
 
 #define SET_QS_EDEPTH(qsp,d)		(qsp)->qs_edepth=d
 #define QS_EDEPTH(qsp)			(qsp)->qs_edepth
-//#define QS_ESTRING(qsp)			((qsp)->qs_estr)[QS_WHICH_ESTR(qsp)]
-//#define SET_QS_ESTR_ARRAY(qsp,str_p)	(qsp)->qs_estr = str_p
-//#define QS_ESTRING(qsp)			(qsp)->qs_expr_string
-//#define SET_QS_ESTRING(qsp,s)		(qsp)->qs_expr_string = s
-//#define _QS_CURR_STRING(qsp)		(qsp)->_qs_curr_string
-//#define SET_QS_CURR_STRING(qsp,s)	(qsp)->_qs_curr_string=s
-//#define CURR_STRING			QS_CURR_STRING(THIS_QSP)
-//#define SET_CURR_STRING(s)		SET_QS_CURR_STRING(THIS_QSP , s)
 
 #define QS_WORD_SCAN_FLAGS(qsp)		(qsp)->qs_word_scan_flags
 #define QS_START_QUOTE(qsp)		(qsp)->qs_start_quote
@@ -505,8 +479,6 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 // Are these for the scalar parser, the vector parser, or both?
 
 //#define TOP_NODE		((Query_Stack *)THIS_QSP)->qs_top_enp
-
-#define THIS_VPD		(QS_VECTOR_PARSER_DATA(THIS_QSP))
 
 #define LAST_NODE		VPD_LAST_ENP( THIS_VPD )
 #define END_SEEN		VPD_END_SEEN( THIS_VPD )

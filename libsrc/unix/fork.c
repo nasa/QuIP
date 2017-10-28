@@ -63,17 +63,8 @@ COMMAND_FUNC( do_fork )
 		 * only for a shared-memory thread!
 		 */
 
-		CHEW_TEXT(s,"(do_fork)");
-		CHEW_TEXT("fast_exit","(do_fork)");
-#ifdef FOOBAR
-		// The first pushed text gets executed second...
-
-		PUSH_TEXT("fast_exit","(do_fork)");
-		PUSH_TEXT(s,"(do_fork)");
-
-		while(1) qs_do_cmd(THIS_QSP);
-
-#endif // FOOBAR
+		chew_text(s,"(do_fork)");
+		chew_text("fast_exit","(do_fork)");
 	} else if( child_pid == -1 ){
 		tell_sys_error("fork");
 	}

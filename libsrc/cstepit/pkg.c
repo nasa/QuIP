@@ -16,7 +16,7 @@ void insure_opt_pkg(SINGLE_QSP_ARG_DECL)
 {
 	if( curr_opt_pkg == NULL ){
 		init_all_opt_pkgs(SINGLE_QSP_ARG);
-		curr_opt_pkg=get_opt_pkg(QSP_ARG  /* DEFAULT_OPT_PKG */ "cstepit" );
+		curr_opt_pkg=get_opt_pkg("cstepit" );
 		assert( curr_opt_pkg != NULL );
 		if( verbose ){
 			sprintf(ERROR_STRING,
@@ -35,7 +35,7 @@ static void init_one_pkg( QSP_ARG_DECL
 {
 	Opt_Pkg *pkp;
 
-	pkp = new_opt_pkg(QSP_ARG  name);
+	pkp = new_opt_pkg(name);
 	assert( pkp != NULL );
 
 	pkp->pkg_scr_func	= scr_func;

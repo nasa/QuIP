@@ -10,7 +10,7 @@ void add_command_to_menu( Menu *mp, Command *cp )
 		NWARN("add_command_to_menu:  error adding command!?");
 }
 
-void list_menu(QSP_ARG_DECL  Menu *mp)
+void _list_menu(QSP_ARG_DECL  const Menu *mp)
 {
 	List *lp;
 	Node *np;

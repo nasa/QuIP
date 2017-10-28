@@ -1,7 +1,7 @@
 #!/bin/csh
 
 if( $#argv != 1 && $#argv != 2 ) then
-  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm [test]'
+  echo 'usage:  ./build_startup_file.csh demo|ezjet|afalert|pvt|csf|iquip|fdm|symm [test]'
   exit
 endif
 
@@ -10,10 +10,10 @@ pushd ../../include
 popd
 
 set flavor=$1
-if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm ) then
+if( $flavor != demo && $flavor != ezjet && $flavor != afalert && $flavor != csf && $flavor != pvt && $flavor != iquip && $flavor != fdm && $flavor != symm ) then
   echo './build_startup_file.csh:  bad flavor requested:  $flavor'
   echo 'usage:  ./build_startup_file.csh <flavor> [test]'
-  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm'
+  echo 'known flavors:  demo ezjet afalert csf pvt iquip fdm symm'
   exit
 endif
 
@@ -276,6 +276,11 @@ else if( $flavor == fdm ) then
   cat ../../macros/compute/gaussian.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_demos.mac >> $outfile
   cat $HOME/exps/uhco13/stimuli/fdm_ipad.scr >> $outfile
+else if( $flavor == symm ) then
+  source add_file.csh ios/utilz.mac
+  cat ../$extra_macro_dir/symm/symm.mac >> $outfile
+  cat ../$extra_macro_dir/symm/symm_app.mac >> $outfile
+  cat ../$extra_macro_dir/symm/symm_main.scr >> $outfile
 else
   echo "Sorry, unhandled flavor $flavor"
   exit

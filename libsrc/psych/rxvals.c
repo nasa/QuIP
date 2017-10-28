@@ -29,7 +29,7 @@ void rdxvals(QSP_ARG_DECL  const char *fnam)
 	}
 	sprintf(str,"%d",_nvals);
 	// BUG should be a reserved var!
-	ASSIGN_VAR("nxvals",str);
+	assign_var("nxvals",str);
 
 	fclose(fp);
 }

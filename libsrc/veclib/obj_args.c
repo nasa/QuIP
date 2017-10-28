@@ -24,20 +24,20 @@ void private_show_obj_args(QSP_ARG_DECL  char *buf, const Vec_Obj_Args *oap, voi
 
 	if( OA_DEST(oap) != NULL ){
 		sprintf(buf,"Destination object: %s",OBJ_NAME( OA_DEST(oap) ) );
-		(*report_func)(DEFAULT_QSP_ARG  buf);
-longlist(QSP_ARG  OA_DEST(oap) );
+		(*report_func)(QSP_ARG  buf);
+longlist(OA_DEST(oap) );
 	}
 	for(i=0;i<MAX_N_ARGS; i++){
 		if( OA_SRC_OBJ(oap,i) != NULL ){
 			sprintf(buf,"Source object %d:  %s",i+1,OBJ_NAME( OA_SRC_OBJ(oap,i) ) );
-			(*report_func)(DEFAULT_QSP_ARG  buf);
-longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
+			(*report_func)(QSP_ARG  buf);
+longlist(OA_SRC_OBJ(oap,i) );
 		}
 	}
 	for(i=0;i<MAX_RETSCAL_ARGS; i++){
 		if( OA_SCLR_OBJ(oap,i) != NULL ){
 			sprintf(buf,"Scalar object %d:  %s",i+1,OBJ_NAME( OA_SCLR_OBJ(oap,i) ) );
-			(*report_func)(DEFAULT_QSP_ARG  buf);
+			(*report_func)(QSP_ARG  buf);
 		}
 	}
 	for(i=0;i<MAX_SRCSCAL_ARGS; i++){
@@ -54,33 +54,33 @@ longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
 				
 			sprintf(buf,"Scalar value at addr 0x%lx = %s",
 				(int_for_addr)OA_SVAL(oap,i),msgbuf);
-			(*report_func)(DEFAULT_QSP_ARG  buf);
+			(*report_func)(QSP_ARG  buf);
 			/* argset precision is not the same as regular precision? */
 		}
 	}
 	if(  /* OA_ARGSPREC_CODE(oap)  >= 0 && */  OA_ARGSPREC_CODE(oap)  < N_ARGSET_PRECISIONS ){
 		sprintf(buf,"\targsprec:  %s (%d)",type_strings[ OA_ARGSPREC_CODE(oap) ], OA_ARGSPREC_CODE(oap) );
-		(*report_func)(DEFAULT_QSP_ARG  buf);
+		(*report_func)(QSP_ARG  buf);
 	} else if(  OA_ARGSPREC_PTR(oap)  == NULL ){
-		(*report_func)(DEFAULT_QSP_ARG  "\targsprec not set");
+		(*report_func)(QSP_ARG  "\targsprec not set");
 	} else {
 		sprintf(buf,"\targsprec:  garbage value (%d)", OA_ARGSPREC_CODE(oap) );
-		(*report_func)(DEFAULT_QSP_ARG  buf);
+		(*report_func)(QSP_ARG  buf);
 	}
 
 	if( /* OA_ARGSTYPE(oap) >= 0 && */ OA_ARGSTYPE(oap) < N_ARGSET_TYPES ){
 		sprintf(buf,"\targstype:  %s (%d)",argset_type_name[OA_ARGSTYPE(oap)],OA_ARGSTYPE(oap));
-		(*report_func)(DEFAULT_QSP_ARG  buf);
+		(*report_func)(QSP_ARG  buf);
 	} else if( OA_ARGSTYPE(oap) == INVALID_ARGSET_TYPE ){
-		(*report_func)(DEFAULT_QSP_ARG  "\targstype not set");
+		(*report_func)(QSP_ARG  "\targstype not set");
 	} else {
 		sprintf(buf,"\targstype:  garbage value (%d)",OA_ARGSTYPE(oap));
-		(*report_func)(DEFAULT_QSP_ARG  buf);
+		(*report_func)(QSP_ARG  buf);
 	}
 
 	/* BUG uninitialized functype generates garbage values */
 	if( OA_FUNCTYPE(oap) == -1 ){
-		(*report_func)(DEFAULT_QSP_ARG  "\tfunctype not set");
+		(*report_func)(QSP_ARG  "\tfunctype not set");
 	} else {
 		argset_prec_t ap;
 		//prec_t p;
@@ -110,7 +110,7 @@ longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
 				case BIT_ARGS:  ap_string="bit"; break;
 #ifdef CAUTIOUS
 				default:
-					NWARN("CAUTIOUS:  private_show_obj_args:  bad argset precision!?");
+					warn("CAUTIOUS:  private_show_obj_args:  bad argset precision!?");
 					ap_string="(invalid)";
 					break;
 #endif /* CAUTIOUS */
@@ -119,7 +119,7 @@ longlist(QSP_ARG  OA_SRC_OBJ(oap,i) );
 		sprintf(buf,"\tfunctype:  %d (0x%x), argset_prec = %s (%d), argset type = %d",
 			OA_FUNCTYPE(oap),OA_FUNCTYPE(oap),
 			ap_string, ap,dt);
-		(*report_func)(DEFAULT_QSP_ARG  buf);
+		(*report_func)(QSP_ARG  buf);
 	}
 } // end private_show_obj_args
 
@@ -172,8 +172,11 @@ static ITEM_INIT_FUNC(Argset_Prec,argset_prec,0)
 static ITEM_NEW_FUNC(Argset_Prec,argset_prec)
 static Argset_Prec * argset_prec_tbl[N_ARGSET_PRECISIONS];
 
+#define init_argset_precs()	_init_argset_precs(SINGLE_QSP_ARG)
+#define new_argset_prec(s)	_new_argset_prec(QSP_ARG  s)
+
 #define INIT_ARGSET_PREC(name,code)			\
-	ap_p = new_argset_prec(QSP_ARG  name);		\
+	ap_p = new_argset_prec(name);		\
 	assert(ap_p != NULL );				\
 	ap_p->ap_code = code;				\
 	assert( code >= 0 && code < N_ARGSET_PRECISIONS );	\

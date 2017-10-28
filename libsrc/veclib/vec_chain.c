@@ -12,6 +12,6 @@ Chain *new_chain( QSP_ARG_DECL  const char *s )
 
 void del_vec_chain(QSP_ARG_DECL  const char *s)
 {
-	WARN("del_vec_chain not implemented!?");
+	warn("del_vec_chain not implemented!?");
 }
 

@@ -33,8 +33,7 @@ extern void	check_auto_close(QSP_ARG_DECL  Image_File *);
 //extern void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
 extern List *	image_file_list(SINGLE_QSP_ARG_DECL);
 extern void	set_direct_io(int);
-ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
-#define DEL_IMG_FILE(s)	del_img_file(QSP_ARG  s)
+//ITEM_INTERFACE_PROTOTYPES(Image_File,img_file)
 
 extern void setup_dummy(Image_File *ifp);
 extern int open_fd(QSP_ARG_DECL  Image_File *ifp);

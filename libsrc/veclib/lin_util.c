@@ -13,7 +13,7 @@ static void vdot(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 #ifdef HAVE_FVDOT
 	platform_dispatch_by_code(QSP_ARG  FVDOT, oap);
 #else // ! HAVE_FVDOT
-	WARN("vdot:  FVDOT not defined!?");
+	warn("vdot:  FVDOT not defined!?");
 #endif // ! HAVE_FVDOT
 }
 
@@ -23,17 +23,17 @@ static void vmul(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 	platform_dispatch_by_code(QSP_ARG  FVMUL, oap);
 }
 
-static int same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2);
+#define same_pixel_type(dp1,dp2) _same_pixel_type(QSP_ARG  dp1,dp2)
 
-static int same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2)		/* BUG? needed or redundant? */
+static int _same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2)		/* BUG? needed or redundant? */
 {
-	if( !dp_same_prec(QSP_ARG  dp1,dp2,"same_pixel_type") ) return(0);
+	if( !dp_same_prec(dp1,dp2,"same_pixel_type") ) return(0);
 
 	if( OBJ_MACH_DIM(dp1,0) != OBJ_MACH_DIM(dp2,0) ){
-		sprintf(DEFAULT_ERROR_STRING,"component count mismatch:  %s (%d),  %s (%d)",
+		sprintf(ERROR_STRING,"component count mismatch:  %s (%d),  %s (%d)",
 			OBJ_NAME(dp1),OBJ_MACH_DIM(dp2,0),
 			OBJ_NAME(dp2),OBJ_MACH_DIM(dp2,0));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -48,33 +48,33 @@ int prodimg(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *rowobj,Data_Obj *colobj)	/** 
 	Vec_Obj_Args oa1, *oap=&oa1;
 
 	if( OBJ_COLS(rowobj) != OBJ_COLS(dpto) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"prodimg:  row size mismatch, target %s (%d) and row %s (%d)",
 			OBJ_NAME(dpto),OBJ_COLS(dpto),OBJ_NAME(rowobj),
 			OBJ_COLS(rowobj));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	} else if( OBJ_ROWS(colobj) != OBJ_ROWS(dpto) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"prodimg:  column size mismatch, target %s (%d) and column %s (%d)",
 			OBJ_NAME(dpto),OBJ_ROWS(dpto),OBJ_NAME(colobj),
 			OBJ_ROWS(colobj));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
-	} else if( !same_pixel_type(QSP_ARG  dpto,rowobj) ){
-		NWARN("type/precision mismatch");
+	} else if( !same_pixel_type(dpto,rowobj) ){
+		warn("type/precision mismatch");
 		return(-1);
-	} else if( !same_pixel_type(QSP_ARG  dpto,colobj) ){
-		NWARN("type precision mismatch");
+	} else if( !same_pixel_type(dpto,colobj) ){
+		warn("type precision mismatch");
 		return(-1);
 	}
 #ifdef FOOBAR
 	else if( ! FLOATING_OBJ(dpto) ){
-		NWARN("sorry, only float and double supported for prodimg");
+		warn("sorry, only float and double supported for prodimg");
 		return(-1);
 	} else if( IS_COMPLEX(dpto) || IS_COMPLEX(colobj)
 			|| IS_COMPLEX(rowobj) ){
-		NWARN("Sorry, complex not supported");
+		warn("Sorry, complex not supported");
 		return(-1);
 	}
 #endif /* FOOBAR */
@@ -90,33 +90,37 @@ int prodimg(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *rowobj,Data_Obj *colobj)	/** 
  * make sure the object is either float or double, and real or complex
  */
 
-static int is_good_for_inner(Data_Obj *dp,const char *func_name)
+#define is_good_for_inner(dp,func_name) _is_good_for_inner(QSP_ARG  dp,func_name)
+
+static int _is_good_for_inner(QSP_ARG_DECL  Data_Obj *dp,const char *func_name)
 {
 	int retval=1;
 
 	assert( dp != NULL );
 
 	if( OBJ_COMPS(dp) > 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"%s:  object %s has %d components (should be 1)",
+		sprintf(ERROR_STRING,"%s:  object %s has %d components (should be 1)",
 			func_name,OBJ_NAME(dp),OBJ_COMPS(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		retval=0;
 	}
 	if( OBJ_MACH_PREC(dp) != PREC_SP && OBJ_MACH_PREC(dp) != PREC_DP ){
-		sprintf(DEFAULT_ERROR_STRING,"%s:  object %s has machine prec %s (should be float or double)",
+		sprintf(ERROR_STRING,"%s:  object %s has machine prec %s (should be float or double)",
 			func_name,OBJ_NAME(dp),OBJ_MACH_PREC_NAME(dp) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		retval=0;
 	}
 	return(retval);
 }
 
-static int prec_and_type_match(Data_Obj *dp1,Data_Obj *dp2,const char *func_name)
+#define prec_and_type_match(dp1,dp2,func_name) _prec_and_type_match(QSP_ARG  dp1,dp2,func_name)
+
+static int _prec_and_type_match(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *func_name)
 {
 	if( OBJ_PREC(dp1) != OBJ_PREC(dp2) ){
-		sprintf(DEFAULT_ERROR_STRING,"Function %s:  precisions of objects %s (%s) and %s (%s) do not match!?",
+		sprintf(ERROR_STRING,"Function %s:  precisions of objects %s (%s) and %s (%s) do not match!?",
 			func_name,OBJ_NAME(dp1),OBJ_PREC_NAME(dp1),OBJ_NAME(dp2),OBJ_PREC_NAME(dp2));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -124,7 +128,7 @@ static int prec_and_type_match(Data_Obj *dp1,Data_Obj *dp2,const char *func_name
 
 /* inner (matrix) product */
 
-void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
+void _inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 {
 	//dimension_t _n;		/* dot prod len */
 	dimension_t i,j;
@@ -157,24 +161,24 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	if( ! prec_and_type_match(dpto,dpfr2,"inner") ) return;
 
 	if( OBJ_ROWS(dpto) != OBJ_ROWS(dpfr1) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"inner:  dpto %s (%d) and first operand %s (%d) must have same # rows",
 			OBJ_NAME(dpto),OBJ_ROWS(dpto),OBJ_NAME(dpfr1),OBJ_ROWS(dpfr1));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_COLS(dpto) != OBJ_COLS(dpfr2) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"inner:  target %s (%d) and second operand %s (%d) must have same # columns",
 			OBJ_NAME(dpto),OBJ_COLS(dpto),OBJ_NAME(dpfr2),OBJ_COLS(dpfr2));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_COLS(dpfr1) != OBJ_ROWS(dpfr2) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"inner:  # cols of operand %s (%d) must match # rows of operand %s (%d)",
 			OBJ_NAME(dpfr1),OBJ_COLS(dpfr1),OBJ_NAME(dpfr2),OBJ_ROWS(dpfr2));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -184,16 +188,16 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	 */
 
 	if( OBJ_ROWS(dpfr1) > 1 )
-		SET_OA_SRC1(oap,d_subscript(QSP_ARG  dpfr1,0) );	/* subscript first row */
+		SET_OA_SRC1(oap,d_subscript(dpfr1,0) );	/* subscript first row */
 	else
 		SET_OA_SRC1(oap,dpfr1);			/* object is a row */
 
 	if( OBJ_COLS(dpto) > 1 )
-		col_dp=c_subscript(QSP_ARG  dpfr2,0);
+		col_dp=c_subscript(dpfr2,0);
 	else 
 		col_dp=dpfr2;
 
-	SET_OA_DEST(oap,mk_subimg(QSP_ARG  dpto,0,0,"target pixel",1,1) );
+	SET_OA_DEST(oap,mk_subimg(dpto,0,0,"target pixel",1,1) );
 
 	// This has to be called after src/dest are set!
 	set_obj_arg_flags(oap);
@@ -202,7 +206,7 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	set_dimension(sizes,1,OBJ_ROWS(col_dp));
 	set_dimension(sizes,0,OBJ_COMPS(col_dp));
 
-	SET_OA_SRC2(oap,make_equivalence(QSP_ARG  "_transposed_column",
+	SET_OA_SRC2(oap,make_equivalence("_transposed_column",
 						col_dp,sizes,OBJ_PREC_PTR(col_dp)) );
 
 	for(i=0;i<OBJ_ROWS(dpto);i++){
@@ -218,78 +222,78 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 		}
 	}
 
-	delvec(QSP_ARG  OA_SRC2(oap) );		/* "_transposed_column" */
+	delvec(OA_SRC2(oap) );		/* "_transposed_column" */
 
 	if( OA_SRC1(oap) != dpfr1 )
-		delvec(QSP_ARG  OA_SRC1(oap) );
+		delvec(OA_SRC1(oap) );
 	if( col_dp != dpfr2 )
-		delvec(QSP_ARG  col_dp);
+		delvec(col_dp);
 
-	delvec(QSP_ARG  OA_DEST(oap) );
+	delvec(OA_DEST(oap) );
 }
 
 /* Here we assume the matrix acts on vectors in the tdim direction...
  */
 
-int xform_chk(Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
+int _xform_chk(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 {
 	if( dpto==NULL || dpfr==NULL || xform==NULL )
 		return(-1);
 
 	if( !IS_IMAGE(xform) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"xform_chk:  transformation %s must be a matrix (image)",
 			OBJ_NAME(xform));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_COMPS(xform) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"xform_chk:  transform matrix %s must have single-component elements",OBJ_NAME(xform));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_COMPS(dpto) != OBJ_ROWS(xform) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"xform_chk:  target %s component dimension (%d) must match # rows of xform %s (%d)",
 			OBJ_NAME(dpto),OBJ_COMPS(dpto),OBJ_NAME(xform),OBJ_ROWS(xform));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_COMPS(dpfr) != OBJ_COLS(xform) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"xform_chk:  source %s component dimension (%d) must match # columns of xform %s (%d)",
 			OBJ_NAME(dpto),OBJ_COMPS(dpto),OBJ_NAME(xform),OBJ_ROWS(xform));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_N_TYPE_ELTS(dpto)/OBJ_COMPS(dpto) != OBJ_N_TYPE_ELTS(dpfr)/OBJ_COMPS(dpfr) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"xform_chk:  target %s (%d/%d) and source %s (%d/%d) must have same # of elements",
 			OBJ_NAME(dpto),OBJ_N_TYPE_ELTS(dpto),OBJ_COMPS(dpto),
 			OBJ_NAME(dpfr),OBJ_N_TYPE_ELTS(dpfr),OBJ_COMPS(dpfr));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	/* BUG these contiguity requirements may no longer be necessary... */
 
-	if( !is_contiguous(DEFAULT_QSP_ARG  dpto) ){
-		sprintf(DEFAULT_ERROR_STRING,
+	if( !is_contiguous(dpto) ){
+		sprintf(ERROR_STRING,
 			"xform_chk:  xform target %s must be contiguous",OBJ_NAME(dpto));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
-	if( !is_contiguous(DEFAULT_QSP_ARG  dpfr) ){
-		sprintf(DEFAULT_ERROR_STRING,
+	if( !is_contiguous(dpfr) ){
+		sprintf(ERROR_STRING,
 			"xform_chk:  xform source %s must be contiguous",OBJ_NAME(dpfr));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
-	if( !is_contiguous(DEFAULT_QSP_ARG  xform) ){
-		sprintf(DEFAULT_ERROR_STRING,
+	if( !is_contiguous(xform) ){
+		sprintf(ERROR_STRING,
 			"xform_chk:  xform %s must be contiguous",OBJ_NAME(xform));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -314,9 +318,9 @@ void xform_list(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 		case PREC_SP:	sp_obj_xform_list(QSP_ARG  dpto,dpfr,xform); break;
 		case PREC_DP:	dp_obj_xform_list(QSP_ARG  dpto,dpfr,xform); break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"xform_list:  destination object %s (%s) should have float or double precision",
+			sprintf(ERROR_STRING,"xform_list:  destination object %s (%s) should have float or double precision",
 				OBJ_NAME(dpto),OBJ_PREC_NAME(dpto));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 	}
 	*/
 	//WARN("xform_list:  need to implement sp_obj_xform_list and dp_obj_xform_list !?");
@@ -351,7 +355,7 @@ void vec_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 	SET_OA_SRC2(oap,xform);
 	set_obj_arg_flags(oap);
 
-	h_vl2_vec_xform(-1,oap);
+	h_vl2_vec_xform(QSP_ARG  -1,oap);
 
 	/*
 	switch( OBJ_MACH_PREC(dpto) ){
@@ -360,7 +364,7 @@ void vec_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform)
 		default:
 			sprintf(ERROR_STRING,"vec_xform:  destination object %s (%s) should have float or double precision",
 				OBJ_NAME(dpto),OBJ_PREC_NAME(dpto));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 	}
 	*/
 }
@@ -376,7 +380,7 @@ void homog_xform(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform_dp)
 		case PREC_SP:	sp_obj_homog_xform(QSP_ARG  dpto,dpfr,xform_dp); break;
 		case PREC_DP:	dp_obj_homog_xform(QSP_ARG  dpto,dpfr,xform_dp); break;
 		default: sprintf(ERROR_STRING,"homog_xform:  unsupported precision");
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 	*/
@@ -403,17 +407,17 @@ void newmtrx(QSP_ARG_DECL  const char *s,int dim)
 	Data_Obj *mp;
 
 	if( dim <= 1 ){
-		WARN("bad dimension");
+		warn("bad dimension");
 		return;
 	}
-	mp=dobj_of(QSP_ARG  s);
+	mp=dobj_of(s);
 	if( mp!=(NULL) ){
-		WARN("name in use already");
+		warn("name in use already");
 		return;
 	}
-	mp=make_obj(QSP_ARG  s,1,dim,dim,1,prec_for_code(PREC_SP));
+	mp=make_obj(s,1,dim,dim,1,prec_for_code(PREC_SP));
 	if( mp == NULL ){
-		WARN("couldn't create new matrix");
+		warn("couldn't create new matrix");
 		return;
 	}
 	unity(mp);
@@ -464,7 +468,7 @@ void corr_matrix(Data_Obj *dpto,Data_Obj *dpfr)
 	if( OBJ_COLS(dpto) != OBJ_ROWS(dpto) ){
 		sprintf(ERROR_STRING,"target matrix %s (%dx%d) must be square",OBJ_NAME(dpto),
 			OBJ_ROWS(dpto),OBJ_COLS(dpto));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		had_err++;
 	}
 
@@ -472,7 +476,7 @@ void corr_matrix(Data_Obj *dpto,Data_Obj *dpfr)
 		sprintf(ERROR_STRING,
 	"target matrix %s size %d not equal to source matrix %s rows (%d)",
 			OBJ_NAME(dpto),OBJ_COLS(dpto),OBJ_NAME(dpfr),OBJ_ROWS(dpfr));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		had_err++;
 	}
 
@@ -518,20 +522,20 @@ void corr_matrix(Data_Obj *dpto,Data_Obj *dpfr)
 
 /* Compute the determinant of a square matrix */
 
-double determinant(Data_Obj *dp)
+double _determinant(QSP_ARG_DECL  Data_Obj *dp)
 {
 	/*
 	switch(OBJ_MACH_PREC(dp)){
 		case PREC_SP:  return sp_obj_determinant(dp);
 		case PREC_DP:  return dp_obj_determinant(dp);
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"determinant:  object %s has unsupported precision %s",
+			sprintf(ERROR_STRING,"determinant:  object %s has unsupported precision %s",
 				OBJ_NAME(dp),OBJ_MACH_PREC_NAME(dp));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(0.0);
 	}
 	*/
-	NWARN("Need to implement sp_obj_determinant...");
+	warn("Need to implement sp_obj_determinant...");
 	/* NOTREACHED */
 	return(0.0);
 }

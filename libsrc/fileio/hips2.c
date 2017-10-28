@@ -339,8 +339,8 @@ if( verbose ) advise("transposing data to make interleaved components");
 	if( rd_dp != dp ){
 		gen_xpose(rd_dp,4,3);		/* seqs <--> frames */
 		gen_xpose(rd_dp,0,3);		/* comps <--> frames */
-		dp_copy(QSP_ARG  dp,rd_dp);
-		delvec(QSP_ARG  rd_dp);
+		dp_copy(dp,rd_dp);
+		delvec(rd_dp);
 	}
 }
 

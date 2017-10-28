@@ -222,7 +222,7 @@ if( debug ) advise("allocating hips header");
 
 		bmp_to_dp(ifp->if_dp,HDR_P(ifp));
 	} else {
-		ERROR1("Sorry, don't know how to write BMP files");
+		error1("Sorry, don't know how to write BMP files");
 	}
 	return(ifp);
 } /* end bmp_open */

@@ -72,7 +72,6 @@ extern COMMAND_FUNC( set_n_processors );
 //extern void vl_init(SINGLE_QSP_ARG_DECL);
 
 /* vec_args.c */
-extern int check_obj_devices( Vec_Obj_Args *oap );
 extern int is_ram(Data_Obj *);
 extern void zero_oargs(Vec_Obj_Args *oap);
 extern void do_vfunc( QSP_ARG_DECL   Vector_Function *vfp );
@@ -82,10 +81,10 @@ extern int are_ram_args(Vec_Obj_Args *oap);
 extern int are_gpu_args(Vec_Obj_Args *oap);
 #endif /* HAVE_CUDA */
 
+extern int _check_obj_devices( QSP_ARG_DECL  Vec_Obj_Args *oap );
+#define check_obj_devices(oap) _check_obj_devices(QSP_ARG  oap)
+
 /* vec_call.c */
-#ifdef HAVE_CUDA
-extern void set_gpu_dispatch_func( int (*)(Vector_Function *vfp, Vec_Obj_Args *oap) );
-#endif /* HAVE_CUDA */
 extern int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
 extern int cktype(Data_Obj *dp1,Data_Obj *dp2);
 
@@ -106,12 +105,11 @@ extern void set_perf(int);
 
 /* lin_util.c */
 extern int prodimg(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
-extern void inner(QSP_ARG_DECL  Data_Obj *, Data_Obj *, Data_Obj *);
 extern void transpose(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr);
-extern int xform_chk(Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform);
-extern double determinant(Data_Obj *);
 extern void vec_xform(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
 extern void homog_xform(QSP_ARG_DECL  Data_Obj *,Data_Obj *,Data_Obj *);
+extern double _determinant(QSP_ARG_DECL  Data_Obj *dp);
+#define determinant(dp) _determinant(QSP_ARG  dp)
 
 /* wrap.c */
 //extern void dp_scroll(QSP_ARG_DECL  Data_Obj *,Data_Obj *,incr_t,incr_t);

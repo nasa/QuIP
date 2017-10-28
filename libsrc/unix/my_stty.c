@@ -234,10 +234,10 @@ static void show_all(QSP_ARG_DECL  int fd)
 		default: prt_msg("wacky data bits"); break;
 	}
 
-	show_term_flags(QSP_ARG  tiobuf.c_cflag,cf_opts);
-	show_term_flags(QSP_ARG  tiobuf.c_iflag,if_opts);
-	show_term_flags(QSP_ARG  tiobuf.c_oflag,of_opts);
-	show_term_flags(QSP_ARG  tiobuf.c_lflag,lf_opts);
+	show_term_flags(tiobuf.c_cflag,cf_opts);
+	show_term_flags(tiobuf.c_iflag,if_opts);
+	show_term_flags(tiobuf.c_oflag,of_opts);
+	show_term_flags(tiobuf.c_lflag,lf_opts);
 }
 
 static Termio_Option *search_to_tbl(Termio_Option *tbl,const char* name)
@@ -292,10 +292,10 @@ static void dump_all(QSP_ARG_DECL  int fd)
 	}
 	*/
 
-	dump_term_flags(QSP_ARG  tiobuf.c_cflag,cf_opts);
-	dump_term_flags(QSP_ARG  tiobuf.c_iflag,if_opts);
-	dump_term_flags(QSP_ARG  tiobuf.c_oflag,of_opts);
-	dump_term_flags(QSP_ARG  tiobuf.c_lflag,lf_opts);
+	dump_term_flags(tiobuf.c_cflag,cf_opts);
+	dump_term_flags(tiobuf.c_iflag,if_opts);
+	dump_term_flags(tiobuf.c_oflag,of_opts);
+	dump_term_flags(tiobuf.c_lflag,lf_opts);
 }
 
 void set_tty_flag(const char *flagname,int fd,int value)
@@ -507,6 +507,6 @@ COMMAND_FUNC( do_stty_menu )
 	if( stty_fd < 0 )
 		WARN("stty_menu:  no valid file descriptor selected!?");
 
-	PUSH_MENU(stty);
+	CHECK_AND_PUSH_MENU(stty);
 }
 

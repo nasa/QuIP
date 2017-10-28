@@ -440,7 +440,10 @@ extern Disp_Obj *the_dop;
 
 #endif /* ! BUILD_FOR_OBJC */
 
-#define PICK_CANVAS_EVENT(p)	pick_canvas_event(QSP_ARG  p)
+#define init_canvas_events()	_init_canvas_events(SINGLE_QSP_ARG)
+#define pick_canvas_event(p)	_pick_canvas_event(QSP_ARG  p)
+#define new_canvas_event(s)	_new_canvas_event(QSP_ARG  s)
+#define canvas_event_of(s)	_canvas_event_of(QSP_ARG  s)
 
 #define SET_VW_FLAG_BITS(vp,v)		SET_VW_FLAGS(vp, VW_FLAGS(vp) | v )
 #define CLEAR_VW_FLAG_BITS(vp,v)	SET_VW_FLAGS(vp, VW_FLAGS(vp) & ~(v) )
@@ -501,24 +504,30 @@ typedef struct view_cursor {
 		unsigned int	vc_yhot;
 } View_Cursor;
 
-#define PICK_CURSOR(pmpt)	pick_cursor(QSP_ARG  pmpt)
 
 
 /* viewer.c */
 
-extern void init_viewer_genwin(SINGLE_QSP_ARG_DECL);
-
 extern void zap_image_list(Viewer *vp);
-extern void select_viewer(QSP_ARG_DECL  Viewer *vp);
-extern void release_image(QSP_ARG_DECL  Data_Obj *dp);
-extern void delete_viewer(QSP_ARG_DECL  Viewer *vp);
-extern Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags);
-extern IOS_Node *first_viewer_node(SINGLE_QSP_ARG_DECL);
-extern IOS_List *viewer_list(SINGLE_QSP_ARG_DECL);
-extern void info_viewer(QSP_ARG_DECL  Viewer *vp);
-//extern double viewer_exists(QSP_ARG_DECL  const char *);
 extern void init_genwin_viewer(void);
 
+extern void _init_viewer_genwin(SINGLE_QSP_ARG_DECL);
+extern void _select_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _release_image(QSP_ARG_DECL  Data_Obj *dp);
+extern void _delete_viewer(QSP_ARG_DECL  Viewer *vp);
+extern Viewer *_viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags);
+extern IOS_Node *_first_viewer_node(SINGLE_QSP_ARG_DECL);
+extern IOS_List *_viewer_list(SINGLE_QSP_ARG_DECL);
+extern void _info_viewer(QSP_ARG_DECL  Viewer *vp);
+
+#define init_viewer_genwin() _init_viewer_genwin(SINGLE_QSP_ARG)
+#define select_viewer(vp) _select_viewer(QSP_ARG  vp)
+#define release_image(dp) _release_image(QSP_ARG  dp)
+#define delete_viewer(vp) _delete_viewer(QSP_ARG  vp)
+#define viewer_init(name,dx,dy,flags) _viewer_init(QSP_ARG  name,dx,dy,flags)
+#define first_viewer_node() _first_viewer_node(SINGLE_QSP_ARG)
+#define viewer_list() _viewer_list(SINGLE_QSP_ARG)
+#define info_viewer(vp) _info_viewer(QSP_ARG  vp)
 
 /* canvas.c */
 
@@ -573,7 +582,9 @@ extern void rdplot(QSP_ARG_DECL  FILE *fp);
 /* drag.c */
 
 ITEM_INTERFACE_PROTOTYPES(Draggable,dragg)
-#define PICK_DRAGG(pmpt)	pick_dragg(QSP_ARG  pmpt)
+#define new_dragg(s)		_new_dragg(QSP_ARG  s)
+#define pick_dragg(pmpt)	_pick_dragg(QSP_ARG  pmpt)
+#define list_draggs(fp)		_list_draggs(QSP_ARG  fp)
 
 extern void make_dragg(QSP_ARG_DECL  const char *name,Data_Obj *bm,Data_Obj *dp);
 extern Draggable *in_draggable(Viewer *vp,int x,int y);
@@ -582,6 +593,11 @@ extern void extract_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y);
 /* cursors.c */
 
 ITEM_INTERFACE_PROTOTYPES(View_Cursor,cursor)
+
+#define pick_cursor(pmpt)	_pick_cursor(QSP_ARG  pmpt)
+#define new_cursor(s)		_new_cursor(QSP_ARG  s)
+#define list_cursors(fp)	_list_cursors(QSP_ARG  fp)
+
 extern void default_cursors(SINGLE_QSP_ARG_DECL);
 extern void make_cursor(QSP_ARG_DECL  const char *name,Data_Obj *bitmap_dp,int x,int y);
 extern void mk_cursor(QSP_ARG_DECL  const char *name,u_short *data,dimension_t dx,dimension_t dy,dimension_t x,dimension_t y);
@@ -590,27 +606,28 @@ extern void assign_cursor(Viewer *vp,View_Cursor *vcp);
 
 /* from the implentation file (e.g. xsupp) */
 /* These functions define the api that we present from the windowing system */
-extern void show_viewer(QSP_ARG_DECL  Viewer *vp);
-extern void unshow_viewer(QSP_ARG_DECL  Viewer *vp);
 extern void posn_viewer(Viewer *vp,int x,int y);
 extern void relabel_viewer(Viewer *vp,const char *s);
-extern void redraw_viewer(QSP_ARG_DECL  Viewer *vp);
-extern void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
-extern void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
 extern void zap_viewer(Viewer *vp);
-extern int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_dragscape(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_mousescape(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_button_arena(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_viewer(QSP_ARG_DECL  Viewer *vp,int,int);
-/* should this be HAVE_GL only??? */
-extern int make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height);
-extern int		display_depth(SINGLE_QSP_ARG_DECL);
-extern void extra_viewer_info(QSP_ARG_DECL  Viewer *vp);
 extern void _xp_select(Viewer *vp,u_long color);
 extern void _xp_bgselect(Viewer *vp,u_long color);
 extern void _xp_text(Viewer *vp,int x1,int y1,const char *);
 extern void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2);
+
+extern void _show_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _unshow_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _redraw_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
+extern void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
+extern int _make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_dragscape(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_mousescape(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_button_arena(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_viewer(QSP_ARG_DECL  Viewer *vp,int,int);
+/* should this be HAVE_GL only??? */
+extern int _make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height);
+extern int _display_depth(SINGLE_QSP_ARG_DECL);
+extern void _extra_viewer_info(QSP_ARG_DECL  Viewer *vp);
 #ifdef BUILD_FOR_OBJC
 extern void _xp_linewidth(Viewer *vp,CGFloat w);
 extern int is_image_viewer(QSP_ARG_DECL  Viewer *vp);
@@ -645,6 +662,20 @@ extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);
 extern void declare_canvas_events(SINGLE_QSP_ARG_DECL);
 
 //#endif /* HAVE_X11 */
+
+#define show_viewer(vp)				_show_viewer(QSP_ARG  vp)
+#define unshow_viewer(vp)			_unshow_viewer(QSP_ARG  vp)
+#define redraw_viewer(vp)			_redraw_viewer(QSP_ARG  vp)
+#define embed_image(vp,dp,x,y)			_embed_image(QSP_ARG  vp,dp,x,y)
+#define unembed_image(vp,dp,x,y)		_unembed_image(QSP_ARG  vp,dp,x,y)
+#define make_2d_adjuster(vp,w,h)		_make_2d_adjuster(QSP_ARG  vp,w,h)
+#define make_dragscape(vp,w,h)			_make_dragscape(QSP_ARG  vp,w,h)
+#define make_mousescape(vp,w,h)			_make_mousescape(QSP_ARG  vp,w,h)
+#define make_button_arena(vp,w,h)		_make_button_arena(QSP_ARG  vp,w,h)
+#define make_viewer(vp,w,h)			_make_viewer(QSP_ARG  vp,w,h)
+#define make_gl_window(vp, width, height)	_make_gl_window(QSP_ARG  vp, width, height)
+#define display_depth()				_display_depth(SINGLE_QSP_ARG)
+#define extra_viewer_info(vp)			_extra_viewer_info(QSP_ARG  vp)
 
 
 #ifdef __cplusplus

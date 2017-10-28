@@ -111,6 +111,6 @@ MENU_END(accel)
 
 COMMAND_FUNC(do_accel_menu)
 {
-	PUSH_MENU(accel);
+	CHECK_AND_PUSH_MENU(accel);
 }
 

@@ -41,7 +41,7 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 
 	/* For simplicity, we don't allow size changes to be combined with conversions */
 
-	if( !dp_same_prec(QSP_ARG  dst_dp,src_dp,"change_size") )
+	if( !dp_same_prec(dst_dp,src_dp,"change_size") )
 		return(-1);
 
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -73,8 +73,8 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 	/* make the subsamples.
 	 * the column increment is expressed in columns, etc.
 	 */
-	dst_ss_dp=make_subsamp(QSP_ARG  "chngsize_dst_obj",dst_dp,size_dsp,offsets,dst_incrs);
-	src_ss_dp=make_subsamp(QSP_ARG  "chngsize_src_obj",src_dp,size_dsp,offsets,src_incrs);
+	dst_ss_dp=make_subsamp("chngsize_dst_obj",dst_dp,size_dsp,offsets,dst_incrs);
+	src_ss_dp=make_subsamp("chngsize_src_obj",src_dp,size_dsp,offsets,src_incrs);
 
 	clear_obj_args(oap);
 	SET_OA_DEST(oap,dst_ss_dp);
@@ -126,8 +126,8 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 			}
 		}
 	}
-	delvec(QSP_ARG  dst_ss_dp);
-	delvec(QSP_ARG  src_ss_dp);
+	delvec(dst_ss_dp);
+	delvec(src_ss_dp);
 
 	SET_OBJ_FLAG_BITS(dst_dp, DT_ASSIGNED);
 

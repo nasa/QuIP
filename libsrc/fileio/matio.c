@@ -159,9 +159,13 @@ static int describe_matlab_object(QSP_ARG_DECL  matvar_t *matp)
 		case MAT_C_INT64: strcat(msg_str," int64"); break;
 		case MAT_C_UINT64: strcat(msg_str," uint64"); break;
 		case MAT_C_FUNCTION: strcat(msg_str," function"); break;
-#ifdef MAT_C_EMPTY
+#ifdef DEPENDS_ON_VERSION	// but how?  these are recognized on mac, not linux...
+// seems to be an enum, not a define???
+//#ifdef MAT_C_EMPTY
 		case MAT_C_EMPTY: strcat(msg_str," empty"); break;
-#endif // MAT_C_EMPTY
+//#endif // MAT_C_EMPTY
+		case MAT_C_OPAQUE: strcat(msg_str," opaque"); break;
+#endif // DEPENDS_ON_VERSION	// but how?  these are recognized on mac, not linux...
 	}
 	prt_msg_frag(msg_str);
 
@@ -203,17 +207,17 @@ static Data_Obj *make_obj_for_matvar(QSP_ARG_DECL  matvar_t * matvar, matvar_t *
 
 	if( parent == NULL ){
 		if( strlen(matvar->name) >= LLEN )
-			ERROR1("matvar name is too long!?");
+			error1("matvar name is too long!?");
 		strcpy(name,matvar->name);
 	} else {
 		if( strlen(matvar->name)+strlen(parent->name)+1 >= LLEN )
-			ERROR1("matvar structure element name is too long!?");
+			error1("matvar structure element name is too long!?");
 		sprintf(name,"%s.%s",parent->name,matvar->name);
 	}
 //fprintf(stderr,"%s:  rank is %d\n",matvar->name,matvar->rank);
 	nelts=1;
 	for(j=0;j<matvar->rank;j++){
-		if( j>=(N_DIMENSIONS-1) ) ERROR1("Matlab rank is too high!?");
+		if( j>=(N_DIMENSIONS-1) ) error1("Matlab rank is too high!?");
 		// We boost the dimension in our object...
 		ds.ds_dimension[j+1]=matvar->dims[j];
 		nelts *= matvar->dims[j];
@@ -253,7 +257,7 @@ static void handle_struct(QSP_ARG_DECL  matvar_t * matvar )
 #ifdef FOO	// BUG should switch on libmatio version
 	names = Mat_VarGetStructFieldnames(matvar);
 #else
-	ERROR1("Need to find correct implementation of Mat_VarGetStructFieldnames!?");
+	error1("Need to find correct implementation of Mat_VarGetStructFieldnames!?");
 #endif
 	
 
@@ -432,7 +436,7 @@ advise(ERROR_STRING);
 	}
 	*/
 	/* BUG check sizes... */
-	dp_copy(QSP_ARG  dp,ifp->if_dp);
+	dp_copy(dp,ifp->if_dp);
 }
 
 FIO_UNCONV_FUNC( mat )

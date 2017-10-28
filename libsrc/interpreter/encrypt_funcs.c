@@ -298,18 +298,18 @@ static void encrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 	// coder.  (Although we are probably OK if we process chunks
 	// which are multiples of the blocksize.)
 
-	n_in = (long) fp_content_size(QSP_ARG  fp_in);
+	n_in = (long) fp_content_size(fp_in);
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
-		NWARN("encrypt_file:  input file is empty!?");
+		warn("encrypt_file:  input file is empty!?");
 		return;
 	}
 
 	inbuf = getbuf(n_in);
 
 	if( fread(inbuf,1,n_in,fp_in) != n_in ){
-		WARN("do_encrypt_file:  error reading input data");
+		warn("do_encrypt_file:  error reading input data");
 		return;
 	}
 
@@ -420,11 +420,11 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	// about, but for now we don't worry about
 	// them
 
-	n_in = (long) fp_content_size(QSP_ARG  fp_in);
+	n_in = (long) fp_content_size(fp_in);
 	assert( n_in >= 0 );
 
 	if( n_in == 0 ){
-		WARN("decrypt_file_contents:  file is empty!?");
+		warn("decrypt_file_contents:  file is empty!?");
 		return NULL;
 	}
 
@@ -448,7 +448,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 		// convert from hex
 		n_converted = convert_from_hex(buf,line_buf);
 		if( n_converted < 0 ){
-	NWARN("decrypt_file:  error converting hex string for decryption");
+	warn("decrypt_file:  error converting hex string for decryption");
 			goto cleanup1;
 		}
 		buf += n_converted;
@@ -460,7 +460,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 // When the file is large, this buffer can get big...
 	text_buf = getbuf(1+n_in);
 	if( fread(text_buf,1,n_in,fp_in) != n_in ){
-		WARN("decrypt_file_contents:  error reading file contents!?");
+		warn("decrypt_file_contents:  error reading file contents!?");
 		goto cleanup1;
 	}
 	text_buf[n_in]=0;	// make sure null-terminated string
@@ -469,7 +469,7 @@ char *decrypt_file_contents(QSP_ARG_DECL  FILE *fp_in,
 	givbuf(text_buf);
 
 	if( total_converted <= 0 ){
-		WARN("decrypt_file_contents:  error converting hex lines!?");
+		warn("decrypt_file_contents:  error converting hex lines!?");
 		goto cleanup1;
 	}
 
@@ -506,13 +506,13 @@ static void decrypt_file(QSP_ARG_DECL  FILE *fp_in, FILE *fp_out )
 
 	outbuf = decrypt_file_contents(QSP_ARG  fp_in,&n_converted);
 	if( outbuf == NULL ){
-		WARN("decrypt_file:  failed!?");
+		warn("decrypt_file:  failed!?");
 		return;
 	}
 
 	// Now all the data is decrypted...
 	if( fwrite(outbuf,1,n_converted,fp_out) != n_converted ){
-		WARN("do_decrypt_file:  error writing input data");
+		warn("do_decrypt_file:  error writing input data");
 	}
 
 	givbuf(outbuf);
@@ -524,16 +524,16 @@ COMMAND_FUNC( do_encrypt_string )
 	const char *s;
 	const char *e;
 
-	vn=NAMEOF("variable name for result");
-	s=NAMEOF("string to encrypt");
+	vn=nameof("variable name for result");
+	s=nameof("string to encrypt");
 
 	e = encrypt_string(s);
 
 	if( e != NULL ){
-		ASSIGN_VAR(vn,e);
+		assign_var(vn,e);
 		rls_str(e);
 	} else
-		WARN("Encryption failed.");
+		warn("Encryption failed.");
 }
 
 COMMAND_FUNC( do_decrypt_string )
@@ -542,16 +542,16 @@ COMMAND_FUNC( do_decrypt_string )
 	const char *s;
 	const char *d;
 
-	vn=NAMEOF("variable name for result");
-	s=NAMEOF("string to decrypt");
+	vn=nameof("variable name for result");
+	s=nameof("string to decrypt");
 
 	d = decrypt_string(s);
 
 	if( d != NULL ){
-		ASSIGN_VAR(vn,d);
+		assign_var(vn,d);
 		rls_str(d);
 	} else
-		WARN("Decryption failed.");
+		warn("Decryption failed.");
 }
 
 COMMAND_FUNC( do_encrypt_file )
@@ -560,8 +560,8 @@ COMMAND_FUNC( do_encrypt_file )
 	const char *outfile_name;
 	FILE *fp_in, *fp_out;
 
-	infile_name = NAMEOF("input filename");
-	outfile_name = NAMEOF("output filename");
+	infile_name = nameof("input filename");
+	outfile_name = nameof("output filename");
 
 	fp_in = TRY_OPEN(infile_name,"r");
 	if( ! fp_in ) return;
@@ -587,8 +587,8 @@ COMMAND_FUNC( do_decrypt_file )
 	const char *outfile_name;
 	FILE *fp_in, *fp_out;
 
-	infile_name = NAMEOF("input filename");
-	outfile_name = NAMEOF("output filename");
+	infile_name = nameof("input filename");
+	outfile_name = nameof("output filename");
 
 	fp_in = TRY_OPEN(infile_name,"r");
 	if( ! fp_in ) return;
@@ -614,16 +614,16 @@ COMMAND_FUNC( do_read_encrypted_file )
 	size_t n_converted;
 
 
-	s=NAMEOF("input file name");
+	s=nameof("input file name");
 	fp=TRY_OPEN(s,"r");
 	if( fp == NULL ) return;
 
 	outbuf = decrypt_file_contents(QSP_ARG  fp,&n_converted);
 	if( outbuf == NULL ){
-		WARN("read_encrypted_file:  decryption failed!?");
+		warn("read_encrypted_file:  decryption failed!?");
 		return;
 	}
-	PUSH_TEXT(outbuf,s);
+	push_text(outbuf,s);
 
 	// Should we call exec_quip here?
 	// We should not need to - we are in a command already!?

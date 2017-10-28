@@ -249,10 +249,10 @@ static int read_class_data(QSP_ARG_DECL  FILE *fp,int n_classes)
 		return(-1);
 	}
 	if( !strcmp(tstr,"Summary") ){
-		if( verbose ) ADVISE("Reading data in summary format");
+		if( verbose ) advise("Reading data in summary format");
 		return( read_class_summaries(QSP_ARG  n_classes,fp) );
 	} else if( !strcmp(tstr,"Raw") ){
-		if( verbose ) ADVISE("Reading data in raw format");
+		if( verbose ) advise("Reading data in raw format");
 		return( rd_dribble(QSP_ARG  fp) );
 	} else {
 		sprintf(ERROR_STRING,"bizarre data format:  \"%s\"\n",tstr);
@@ -419,7 +419,7 @@ void setup_classes(QSP_ARG_DECL  int n)
 		Trial_Class *tcp;
 
 		sprintf(name,"class%d",i);
-		tcp = trial_class_of(QSP_ARG  name);
+		tcp = trial_class_of(name);
 		if( tcp == NO_CLASS ){
 			/*
 			if(verbose){

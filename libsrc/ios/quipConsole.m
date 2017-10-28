@@ -123,7 +123,7 @@ abort();
 static void ios_prt_msg_frag(QSP_ARG_DECL  const char *s)
 {
 	FILE *fp;
-	if( (fp=tell_msgfile(SINGLE_QSP_ARG)) != stdout ){
+	if( (fp=tell_msgfile()) != stdout ){
 		fputs(s,fp);
 		fflush(fp);
 		return;
@@ -142,7 +142,7 @@ static void ios_prt_msg_frag(QSP_ARG_DECL  const char *s)
 static void ios_advise(QSP_ARG_DECL  const char *s)
 {
 	FILE *fp;
-	if( (fp=tell_errfile(SINGLE_QSP_ARG)) != stderr ){
+	if( (fp=tell_errfile()) != stderr ){
 		PRINT_LINE(s,fp);
 	} else {	// send stderr to console
 		if( console_output_enabled ){
@@ -176,7 +176,7 @@ static void ios_warn(QSP_ARG_DECL  const char *msg)
 fprintf(stderr,"ios_warn:  %s\n",msg);
 	wstr = add_prefix_to_msg(WARNING_PREFIX,msg);
 	ios_advise(wstr); // log to console or file, and possibly xcode console
-	simple_alert(QSP_ARG  "WARNING",msg);
+	simple_alert("WARNING",msg);
 }
 
 static void ios_error(QSP_ARG_DECL  const char *msg)
@@ -298,7 +298,7 @@ void addConsoleToQVC( quipViewController *qvc_p )
 
 //	y0 += add_dismiss_button(/*qvc_p.qadp,*/po);
 
-	pop_scrnobj_context(SGL_DEFAULT_QSP_ARG);
+	pop_scrnobj_context();
 
 	// We'd like to remember this...
 	//globalAppDelegate.console_panel = po;

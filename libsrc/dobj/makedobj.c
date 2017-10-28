@@ -40,7 +40,7 @@ void set_dp_alignment(int aval)
 	else default_align=aval;
 }
 
-void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
+void *_cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int align )
 {
 	void *ptr;
 
@@ -52,13 +52,13 @@ void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int al
 	if( status != 0 ){
 		switch(status){
 			case EINVAL:
-				WARN("cpu_mem_alloc:  bad alignment!?");
+				warn("cpu_mem_alloc:  bad alignment!?");
 				break;
 			case ENOMEM:
-				WARN("cpu_mem_alloc:  memory allocation failure!?");
+				warn("cpu_mem_alloc:  memory allocation failure!?");
 				break;
 			default:
-				WARN("cpu_mem_alloc:  unexpected error code from posix_memalign!?");
+				warn("cpu_mem_alloc:  unexpected error code from posix_memalign!?");
 				break;
 		}
 		return NULL;
@@ -81,10 +81,10 @@ void *cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int al
 
 // allocate memory for a new object in ram
 
-int cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
+int _cpu_obj_alloc(QSP_ARG_DECL  Data_Obj *dp, dimension_t size, int align )
 {
 	unsigned char *st;
-	st = cpu_mem_alloc(QSP_ARG  NULL, size, align );
+	st = cpu_mem_alloc(NULL, size, align );
 
 	/* remember the original address of the data for freeing! */
 	SET_OBJ_UNALIGNED_PTR(dp,st);
@@ -170,7 +170,7 @@ static Data_Obj *setup_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,Precision * prec
 	return(dp);
 }
 
-Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
+Data_Obj *_setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
 {
 	return setup_dp_with_shape(QSP_ARG  dp,prec_p,AUTO_SHAPE);
 }
@@ -179,7 +179,7 @@ Data_Obj *setup_dp(QSP_ARG_DECL  Data_Obj *dp,Precision * prec_p)
  * Initialize an existing header structure
  */
 
-static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
+static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 			Dimension_Set *dsp,Precision * prec_p,uint32_t type_flag)
 {
 	if( dp == NULL )	/* name already used */
@@ -217,8 +217,8 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	 * various revisions...), and setup_dp returns NULL
 	 */
 
-	if( set_obj_dimensions(QSP_ARG  dp,dsp,prec_p) < 0 ){
-		WARN("init_dp_with_shape:  error setting dimensions");
+	if( set_obj_dimensions(dp,dsp,prec_p) < 0 ){
+		warn("init_dp_with_shape:  error setting dimensions");
 		return(NULL);
 		/* BUG might want to clean up */
 	}
@@ -228,7 +228,7 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	if( setup_dp_with_shape(QSP_ARG  dp,prec_p,type_flag) == NULL ){
 		/* set this flag so delvec doesn't free nonexistent mem */
 		SET_OBJ_FLAG_BITS(dp,DT_NO_DATA);
-		delvec(QSP_ARG  dp);
+		delvec(dp);
 		return(NULL);
 	}
 
@@ -239,9 +239,9 @@ static Data_Obj *init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	return(dp);
 } // end init_dp_with_shape
 
-Data_Obj *init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
+Data_Obj *_init_dp(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
-	return init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
+	return _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,AUTO_SHAPE);
 }
 
 
@@ -267,16 +267,16 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 	/* make sure that the new name contains only legal chars */
 	if( !is_valid_dname(QSP_ARG  name) ){
 		sprintf(ERROR_STRING,"invalid data object name \"%s\"",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
 	/* Check if we are using contexts...
 	 */
-	dp = new_dobj(QSP_ARG  name);
+	dp = new_dobj(name);
 
 	if( dp == NULL ){
-		dp = dobj_of(QSP_ARG  name);
+		dp = dobj_of(name);
 		if( dp != NULL ){
 
 	// BUG the declfile is ok for the expression
@@ -298,8 +298,8 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 		return(NULL);
 	}
 
-	if( init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
-		delvec(QSP_ARG   dp );
+	if( _init_dp_with_shape(QSP_ARG  dp,dsp,prec_p,type_flag) == NULL ){
+		delvec(dp);
 		return(NULL);
 	}
 
@@ -330,7 +330,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	//ap = data_area_of(QSP_ARG  name);
 	ap = get_data_area(QSP_ARG  name);
 	if( ap == NULL ){
-		WARN("Failed to find mapped data area");
+		warn("Failed to find mapped data area");
 		return;
 	}
 
@@ -344,7 +344,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	// Need to allocate dimensions and increments...
 	SET_OBJ_SHAPE(new_dp, ALLOC_SHAPE );
 
-	if( set_obj_dimensions(QSP_ARG  new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
+	if( set_obj_dimensions(new_dp,OBJ_TYPE_DIMS(dp),OBJ_PREC_PTR(dp)) < 0 )
 		NERROR1("make_device_alias:  error setting alias dimensions");
 	parent_relationship(dp,new_dp);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -369,7 +369,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 #else // ! NOT_YET
 static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 {
-	ERROR1("make_device_alias:  not implemented, check makedobj.c!?");
+	error1("make_device_alias:  not implemented, check makedobj.c!?");
 }
 #endif // ! NOT_YET
 #endif /* HAVE_CUDA */
@@ -383,7 +383,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
  */
 
 Data_Obj *
-make_dobj_with_shape(QSP_ARG_DECL  const char *name,
+_make_dobj_with_shape(QSP_ARG_DECL  const char *name,
 			Dimension_Set *dsp,Precision * prec_p, uint32_t type_flag)
 {
 	Data_Obj *dp;
@@ -428,7 +428,7 @@ advise(ERROR_STRING);
 		if( get_data_space(QSP_ARG  dp,size,ELEMENT_SIZE(dp) ) < 0 ){
 			SET_OBJ_DATA_PTR(dp,NULL);
 			SET_OBJ_UNALIGNED_PTR(dp,NULL);
-			delvec(QSP_ARG  dp);
+			delvec(dp);
 			return(NULL);
 		}
 	}
@@ -445,9 +445,9 @@ advise(ERROR_STRING);
 } /* end make_dobj_with_shape */
 
 Data_Obj *
-make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
+_make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
 {
-	return make_dobj_with_shape(QSP_ARG  name,dsp,prec_p,AUTO_SHAPE);
+	return make_dobj_with_shape(name,dsp,prec_p,AUTO_SHAPE);
 }
 
 /*
@@ -457,7 +457,7 @@ make_dobj(QSP_ARG_DECL  const char *name,Dimension_Set *dsp,Precision * prec_p)
  * (why?  it doesn't set increments...)
  */
 
-int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
+int _set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision * prec_p)
 {
 //	int retval=0;
 
@@ -465,7 +465,7 @@ int set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision *
 //		sprintf(ERROR_STRING,
 //			"set_obj_dimensions:  error setting shape dimensions for object %s",
 //			OBJ_NAME(dp));
-//		WARN(ERROR_STRING);
+//		warn(ERROR_STRING);
 //		retval=(-1);
 		return -1;
 	}
@@ -545,7 +545,7 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 			sprintf(ERROR_STRING,
 		"Sorry, multi-component (%d) not allowed for complex",
 				DIMENSION(dsp,0));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 
@@ -566,7 +566,7 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 			sprintf(ERROR_STRING,
 	"set_shape_dimensions:  Bad %s dimension (%d) specified",
 				dimension_name[i],DIMENSION(dsp,i));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			SET_DIMENSION(dsp,i,1);
 			retval=(-1);
 		}
@@ -585,7 +585,7 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 /* Make a copy of the given object, but with n components */
 
 Data_Obj *
-comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
+_comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 {
 	char str[256],*s;
 	Data_Obj *dp2;
@@ -610,7 +610,7 @@ comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 	sprintf(s,".%d",n);
 
 	if( allocate_data )
-		dp2=make_dobj(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));
+		dp2=make_dobj(str,dsp,OBJ_PREC_PTR(dp));
 	else {
 		/* We call this from xsupp when we want to point to an XImage */
 		dp2 = _make_dp(QSP_ARG  str,dsp,OBJ_PREC_PTR(dp));

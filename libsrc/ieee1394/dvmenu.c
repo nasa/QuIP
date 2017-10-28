@@ -451,7 +451,7 @@ static COMMAND_FUNC( do_dv_extract )
 	Node *np;
 	Frame *frmp;
 
-	dp=PICK_OBJ("destination data object");
+	dp=pick_obj("destination data object");
 	n=HOW_MANY("index of stored frame");
 	np = nth_elt(grab_lp,n);
 	if( dp == NULL ) return;
@@ -483,6 +483,6 @@ COMMAND_FUNC( do_dv_menu )
 		g_output_queue = new_list();
 		dv_inited=1;
 	}
-	PUSH_MENU(dv);
+	CHECK_AND_PUSH_MENU(dv);
 }
 

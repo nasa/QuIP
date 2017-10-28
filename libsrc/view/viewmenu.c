@@ -38,7 +38,7 @@ COMMAND_FUNC( do_show_viewer )
 
 	INSURE_X11_SERVER
 
-	show_viewer(QSP_ARG  vp);
+	show_viewer(vp);
 }
 
 COMMAND_FUNC( do_delete_viewer )
@@ -48,7 +48,7 @@ COMMAND_FUNC( do_delete_viewer )
 	GET_VIEWER("do_delete_viewer")
 	if( vp == NULL ) return;
 
-	delete_viewer(QSP_ARG  vp);
+	delete_viewer(vp);
 }
 
 COMMAND_FUNC( do_unshow_viewer )
@@ -61,7 +61,7 @@ COMMAND_FUNC( do_unshow_viewer )
 
 	INSURE_X11_SERVER
 	SET_VW_FLAG_BITS(vp, VIEW_UNSHOWN);	/* in case not already mapped */
-	unshow_viewer(QSP_ARG  vp);
+	unshow_viewer(vp);
 }
 
 COMMAND_FUNC( do_posn_viewer )
@@ -134,7 +134,7 @@ COMMAND_FUNC( do_geom )
 	if( vp == NULL ) return;
 #ifdef HAVE_X11
 	INSURE_X11_SERVER
-	show_geom(QSP_ARG  vp);
+	show_geom(vp);
 #endif /* HAVE_X11 */
 }
 
@@ -145,7 +145,7 @@ COMMAND_FUNC( do_info_viewer )
 	GET_VIEWER("do_info_viewer")
 	if( vp==NULL ) return;
 
-	info_viewer(QSP_ARG  vp);
+	info_viewer(vp);
 }
 
 #ifdef HAVE_X11_EXT
@@ -167,7 +167,7 @@ static COMMAND_FUNC( do_shm_update )
 	int x0,y0;
 
 	GET_VIEWER("do_shm_update")
-	dp=PICK_OBJ("");
+	dp=pick_obj("");
 	x0 = HOW_MANY("x location");
 	y0 = HOW_MANY("y location");
 
@@ -180,7 +180,7 @@ static COMMAND_FUNC( do_shm_update )
 #endif /* HAVE_X11_EXT */
 
 static COMMAND_FUNC( do_list_viewers )
-{ list_vwrs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+{ list_vwrs(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(viewers_menu,s,f,h)
 
@@ -216,7 +216,7 @@ MENU_END(viewers)
 COMMAND_FUNC( do_viewer_menu )
 {
 	INSURE_X11_SERVER
-	PUSH_MENU(viewers);
+	CHECK_AND_PUSH_MENU(viewers);
 }
 
 COMMAND_FUNC( do_select_vp )
@@ -227,7 +227,7 @@ COMMAND_FUNC( do_select_vp )
 	if( vp==NULL ) return;
 
 	INSURE_X11_SERVER
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 }
 
 #ifndef HAVE_VBL
@@ -266,7 +266,7 @@ static COMMAND_FUNC( do_wait )
 	if( vp == NULL ) return;
 #ifdef HAVE_X11
 	INSURE_X11_SERVER
-	wait_for_mapped(QSP_ARG  vp,10);
+	wait_for_mapped(vp,10);
 #endif /* HAVE_X11 */
 }
 
@@ -312,7 +312,7 @@ static COMMAND_FUNC( do_bring_fwd )
 	Data_Obj *dp;
 
 	GET_VIEWER("do_bring_fwd");
-	dp = PICK_OBJ("image");
+	dp = pick_obj("image");
 
 	if( vp == NULL ) return;
 	if( dp == NULL ) return;
@@ -338,7 +338,7 @@ static COMMAND_FUNC( do_send_back )
 	Data_Obj *dp;
 
 	GET_VIEWER("do_send_back");
-	dp = PICK_OBJ("image");
+	dp = pick_obj("image");
 
 	if( vp == NULL ) return;
 	if( dp == NULL ) return;
@@ -462,7 +462,7 @@ static COMMAND_FUNC( do_refresh_viewer )
 	// For unix we ought to give a duration?
 	// Can we get an event at the refresh???
 
-	cycle_viewer_images(QSP_ARG  vp, frame_duration);
+	cycle_viewer_images(vp, frame_duration);
 #endif // ! BUILD_FOR_OBJC
 }
 
@@ -470,7 +470,7 @@ static COMMAND_FUNC( do_lock_orientation )
 {
 	Viewer *vp;
 
-	vp = PICK_VWR("");
+	vp = pick_vwr("");
 	if( vp == NULL ) return;
 #ifdef BUILD_FOR_IOS
 	[ VW_QVC(vp) setQvc_flags:
@@ -555,7 +555,7 @@ static double viewer_exists(QSP_ARG_DECL  const char *name)
 {
 	Viewer *vp;
 
-	vp=VWR_OF(name);
+	vp=vwr_of(name);
 	if( vp==NULL ) return(0.0);
 	else return(1.0);
 }
@@ -588,12 +588,12 @@ COMMAND_FUNC( do_view_menu )
 		window_sys_init(SINGLE_QSP_ARG);
 
 		/* genwin support */
-		init_viewer_genwin(SINGLE_QSP_ARG);	
+		init_viewer_genwin();	
 
 		inited=1;
 	}
 
-	PUSH_MENU(view);
+	CHECK_AND_PUSH_MENU(view);
 }
 
 //#else /* ! HAVE_X11 */

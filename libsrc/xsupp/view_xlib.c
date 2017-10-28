@@ -520,7 +520,9 @@ void set_viewer_display(QSP_ARG_DECL  Viewer *vp)
 	vp->vw_dop = dop;
 }
 
-static int make_generic_window(QSP_ARG_DECL  Viewer *vp, int width, int height, long event_mask)
+#define make_generic_window(vp,w,h,m)	_make_generic_window(QSP_ARG  vp,w,h,m)
+
+static int _make_generic_window(QSP_ARG_DECL  Viewer *vp, int width, int height, long event_mask)
 {
 	Window scrW;
 	XGCValues values;
@@ -554,47 +556,47 @@ static void disable_masked_events(Viewer *vp, long event_mask)
 }
 #endif /* FOOBAR */
 
-int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int width,int height)
+int _make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int width,int height)
 {
-	return( make_generic_window(QSP_ARG  vp, width, height, ButtonMotionMask |
+	return( make_generic_window(vp, width, height, ButtonMotionMask |
 				ButtonPressMask |
 				ButtonReleaseMask
 				/* | PointerMotionHintMask */
 				) );
 }
 
-int make_button_arena(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_button_arena(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
 	/* We didn't used to look at Release events? */
-	return( make_generic_window(QSP_ARG  vp, width, height, ButtonPressMask|ButtonReleaseMask ) );
+	return( make_generic_window(vp, width, height, ButtonPressMask|ButtonReleaseMask ) );
 }
 
-int make_dragscape(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_dragscape(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp, width, height, ButtonMotionMask |
+	return( make_generic_window(vp, width, height, ButtonMotionMask |
 				ButtonPressMask |
 				ButtonReleaseMask
 				/* | PointerMotionHintMask */
 				) );
 }
 
-int make_mousescape(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_mousescape(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp, width, height, PointerMotionMask
+	return( make_generic_window(vp, width, height, PointerMotionMask
 				| ButtonPressMask
 				| ButtonReleaseMask
 				/* | PointerMotionHintMask */
 				) );
 }
 
-int make_viewer(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_viewer(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp,width, height, 0L) );
+	return( make_generic_window(vp,width, height, 0L) );
 }
 
-int make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height)
+int _make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height)
 {
-	return( make_generic_window(QSP_ARG  vp,width, height, 0L) );
+	return( make_generic_window(vp,width, height, 0L) );
 }
 
 static int is_mapped(Viewer *vp)
@@ -607,7 +609,7 @@ static int is_mapped(Viewer *vp)
 	return(1);
 }
 
-void show_viewer(QSP_ARG_DECL  Viewer *vp)
+void _show_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	window_sys_init(SINGLE_QSP_ARG);
 
@@ -633,7 +635,7 @@ void show_viewer(QSP_ARG_DECL  Viewer *vp)
 	} while( ! is_mapped(vp) );
 }
 
-void unshow_viewer(QSP_ARG_DECL  Viewer *vp)
+void _unshow_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	// Does it make sense to have to do this here???
 	window_sys_init(SINGLE_QSP_ARG);
@@ -712,7 +714,9 @@ NADVISE(DEFAULT_ERROR_STRING);
 	return(0);
 }
 
-static void copy_components(QSP_ARG_DECL  int n, Data_Obj *dst_dp, int dstart, int dinc,
+#define copy_components(n,dst_dp,dstart,dinc,src_dp,sstart,sinc) _copy_components(QSP_ARG  n,dst_dp,dstart,dinc,src_dp,sstart,sinc)
+
+static void _copy_components(QSP_ARG_DECL  int n, Data_Obj *dst_dp, int dstart, int dinc,
 				Data_Obj *src_dp, int sstart, int sinc )
 {
 	int i,j;
@@ -723,19 +727,19 @@ static void copy_components(QSP_ARG_DECL  int n, Data_Obj *dst_dp, int dstart, i
 	while(n--){
 		if( dinc == 0 )
 			dpto=dst_dp;
-		else	dpto=c_subscript(QSP_ARG  dst_dp,i);
+		else	dpto=c_subscript(dst_dp,i);
 
 		if( sinc == 0 )
 			dpfr=src_dp;
-		else	dpfr=c_subscript(QSP_ARG  src_dp,j);
+		else	dpfr=c_subscript(src_dp,j);
 
-		dp_copy(QSP_ARG  dpto,dpfr);
+		dp_copy(dpto,dpfr);
 		i += dinc;
 		j += sinc;
 	}
 }
 
-void wait_for_mapped(QSP_ARG_DECL  Viewer *vp, int max_wait_time)
+void _wait_for_mapped(QSP_ARG_DECL  Viewer *vp, int max_wait_time)
 {
 	/* BUG max_wait_time not implemented yet */
 
@@ -747,7 +751,7 @@ void wait_for_mapped(QSP_ARG_DECL  Viewer *vp, int max_wait_time)
 	}
 }
 
-void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
+void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 {
 	/* u_long fno; */
 	u_int display_bpp;
@@ -757,7 +761,7 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	if( display_to_mapped && ! is_mapped(vp) ){
 		// Can we be sure that a mapping has been requested???
 		if( verbose ) advise("embed_image:  viewer not mapped, waiting...");
-		wait_for_mapped(QSP_ARG  vp,10);
+		wait_for_mapped(vp,10);
 	}
 
 #ifdef QUIP_DEBUG
@@ -836,14 +840,14 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 			NWARN(ERROR_STRING);
 			return;
 		}
-		disp_dp = comp_replicate(QSP_ARG  dp,display_bpp,ALLOC_DATA);
+		disp_dp = comp_replicate(dp,display_bpp,ALLOC_DATA);
 		if( OBJ_COMPS(dp) == 1 )
-			copy_components(QSP_ARG  display_bpp,disp_dp,0,1,dp,0,0);
+			copy_components(display_bpp,disp_dp,0,1,dp,0,0);
 		else {
 			int n;
 
 			n = MIN(OBJ_COMPS(dp),OBJ_COMPS(disp_dp));
-			copy_components(QSP_ARG  n,disp_dp,0,1,dp,0,1);
+			copy_components(n,disp_dp,0,1,dp,0,1);
 			unlock_children(dp);	// so they delete properly
 		}
 		unlock_children(disp_dp);	// so they delete properly
@@ -899,7 +903,7 @@ void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 #endif /* QUIP_DEBUG */
 		// memory leak on children because locked - same command cycle!?
 
-		delvec(QSP_ARG  disp_dp);
+		delvec(disp_dp);
 	}
 } // end embed_image
 
@@ -1037,7 +1041,7 @@ dop_info(DEFAULT_QSP_ARG  dop);
 	from_memory=0;
 }
 
-void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
+void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 {
 	u_long plane_mask;
 	u_int display_bpp;
@@ -1052,7 +1056,7 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 	 * but how do we find out the width of the window border?
 	 */
 
-	wait_for_mapped(QSP_ARG  vp,1/* this arg is not currently used!? */ );
+	wait_for_mapped(vp,1/* this arg is not currently used!? */ );
 
 	/* Now make sure that the target image is appropriate for this depth */
 	if( x < 0 || y < 0 ||	x+OBJ_COLS(dp) > vp->vw_width  ||
@@ -1148,13 +1152,13 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 		Data_Obj *disp_dp;
 		int n;
 
-		disp_dp = comp_replicate(QSP_ARG  dp,display_bpp,DONT_ALLOC_DATA);
+		disp_dp = comp_replicate(dp,display_bpp,DONT_ALLOC_DATA);
 		SET_OBJ_DATA_PTR(disp_dp, vp->vw_ip2->data );
 
 		n = MIN(OBJ_COMPS(dp),OBJ_COMPS(disp_dp));
-		copy_components(QSP_ARG  n,dp,0,1,disp_dp,0,1);
+		copy_components(n,dp,0,1,disp_dp,0,1);
 		unlock_children(disp_dp);	// so they delete properly
-		delvec(QSP_ARG  disp_dp);
+		delvec(disp_dp);
 	}
 
 	/* set the flag to show the image has some stuff */
@@ -1164,16 +1168,18 @@ void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y)
 
 } /* end unembed_image() */
 
-static void refresh_image(QSP_ARG_DECL  Viewer *vp)
+#define refresh_image(vp) _refresh_image(QSP_ARG  vp)
+
+static void _refresh_image(QSP_ARG_DECL  Viewer *vp)
 {
 	if( ! is_mapped(vp) )
 		return;
 
 	if( vp->vw_dp != NULL )
-		embed_image(QSP_ARG  vp,vp->vw_dp,0,0);
+		embed_image(vp,vp->vw_dp,0,0);
 }
 
-void redraw_viewer(QSP_ARG_DECL  Viewer *vp)
+void _redraw_viewer(QSP_ARG_DECL  Viewer *vp)
 {
 	//time_t now_time;
 
@@ -1206,7 +1212,7 @@ advise(ERROR_STRING);
 
 	if( IS_DRAGSCAPE(vp) ) update_image(vp);
 
-	refresh_image(QSP_ARG  vp);
+	refresh_image(vp);
 
 	x_dump_lut( VW_DPYABLE(vp) );		/* why do we need to do this?? */
 	refresh_drawing(vp);
@@ -1731,7 +1737,7 @@ static void get_geom(Viewer* vp, u_int* width, u_int* height, u_int* depth)
 }
 #endif /* FOOBAR */
 
-void show_geom(QSP_ARG_DECL  Viewer *vp)
+void _show_geom(QSP_ARG_DECL  Viewer *vp)
 {
 	Window root;
 	u_int width, height, border_width, depth;
@@ -1749,7 +1755,7 @@ void show_geom(QSP_ARG_DECL  Viewer *vp)
 	prt_msg(msg_str);
 }
 
-void extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
+void _extra_viewer_info(QSP_ARG_DECL  Viewer *vp)
 {
 	sprintf(msg_str,"\tDisplay\t0x%lx",(u_long)VW_DPY(vp));
 	prt_msg(msg_str);
@@ -2097,7 +2103,7 @@ void relabel_viewer(Viewer *vp,const char *s)
 
 #endif /* ! HAVE_X11 */
 
-void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
+void _cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
 {
 	// BUG are we displaying the head or the tail???
 	Node *np;
@@ -2111,7 +2117,7 @@ void cycle_viewer_images(QSP_ARG_DECL  Viewer *vp, int frame_duration )
 	np = QLIST_HEAD( VW_IMAGE_LIST(vp) );
 
 	wip = (Window_Image *) NODE_DATA(np);
-	embed_image(QSP_ARG  vp,wip->wi_dp,wip->wi_x,wip->wi_y);
+	embed_image(vp,wip->wi_dp,wip->wi_x,wip->wi_y);
 
 	// embed_image does one vbl_wait
 #ifdef HAVE_VBL

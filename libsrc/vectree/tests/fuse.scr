@@ -1,0 +1,108 @@
+max_warnings 2
+#debug getbuf
+
+expressions
+#  debug scope
+#  debug typecast
+#  debug resolver
+  show_shp yes
+  read -
+
+
+float h_a[4],h_b[4],h_c[4];
+h_a=ramp(0,1,0);
+h_b=ramp(0,10,0);
+h_c=ramp(10,1,0);
+end
+  quit
+
+
+platforms
+  select $DEFAULT_PLATFORM $DEFAULT_GPU
+  quit
+
+expressions
+  read -
+
+float a[4],b[4],c[4];
+
+a=ramp(0,1,0);
+b=ramp(0,10,0);
+c=ramp(10,1,0);
+
+print("declaring testk...");
+
+void testk(float *dest, float *src1, float *src2, float kkk)
+{
+	float k2;
+#	int ix;	# genreates int32?
+	short ix;
+
+	k2=atan2(kkk,1);
+	ix = round(kkk) << 2;
+#	*dest = k2 + *src1 + kkk * (*src2+2);
+
+	*dest = *src1 > 5 ? *src2 : 66 ;
+}
+
+void test2( float *dest, float *src1, float *src2, float kkk)
+{
+	display(*src1);
+	print("kkk = ",kkk);
+	*dest = *src1 > kkk ? *src2 : log(*src1) ;
+}
+
+end
+  #dump testk
+  #Pause
+  quit
+
+Define Run3 1 subrt_name
+Run_On_Host $1
+Run_On_GPU $1
+.
+
+Define Run_On_Host 1 subrt_name
+VSet h_a -5
+advise "\n\nRunning subroutine $1 on host...\n\n"
+expressions run $1 h_a h_b h_c 5.1 quit
+Display h_a
+.
+
+Define Run_On_GPU 1 subrt_name
+VSet a -5
+advise "\n\nRunning subroutine $1 on GPU...\n\n"
+expressions run $1 a b c 5.1 quit
+Display a
+.
+
+Define Fuse_Kernel 1 subrt_name
+#advise "NOT Fusing kernel $1..."
+advise "Fusing kernel $1..."
+expressions
+  fuse $1
+  quit
+.
+
+#Pause
+Set n_repetitions 1
+
+Define Test_Subrt 1 subrt_name
+advise "Test_Subrt $1 BEGIN"
+Run_On_Host $1
+Run_On_Host $1
+Set ctr 1
+repeat $n_repetitions
+  advise "ITERATION $ctr"
+  Run3 $1
+#  If $ctr==1 "Fuse_Kernel $1"
+  Increment ctr
+  end
+.
+
+Test_Subrt test2
+Test_Subrt testk
+
+exit
+
+

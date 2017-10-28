@@ -74,7 +74,7 @@ static COMMAND_FUNC( do_new_thread )
 	// a copy.
 
 	// This is a potential memory leak?
-	push_text(new_qsp, savestr(c), "(new thread)" );
+	_push_text(new_qsp, savestr(c), "(new thread)" );
 	set_query_filename( CURR_QRY(new_qsp), "thread text" );
 
 	// We want to create a new variable context for this thread...
@@ -89,7 +89,7 @@ static COMMAND_FUNC( do_new_thread )
 static COMMAND_FUNC( do_list_threads )
 {
 	prt_msg("All threads:");
-	list_query_stacks(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_query_stacks(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_tell_thread )
@@ -104,7 +104,7 @@ static COMMAND_FUNC( do_wait_thread )
 	void **val_ptr=NULL;
 	Query_Stack *thread_qsp;
 
-	thread_qsp = pick_query_stack(QSP_ARG  "thread name");
+	thread_qsp = pick_query_stack("thread name");
 	if( thread_qsp == NULL ) return;
 
 	if( _QS_SERIAL(thread_qsp) == 0 ){
@@ -128,7 +128,7 @@ MENU_END(threads)
 
 COMMAND_FUNC( do_thread_menu )
 {
-	PUSH_MENU( threads );
+	CHECK_AND_PUSH_MENU( threads );
 }
 
 

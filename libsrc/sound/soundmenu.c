@@ -139,7 +139,7 @@ static COMMAND_FUNC( do_recsound )
 	advise(ERROR_STRING);
 	*/
 
-	dp = PICK_OBJ("sound object");
+	dp = pick_obj("sound object");
 	if( dp == NULL ) return;
 	ra.ra_dp = dp;
 #ifdef THREAD_SAFE_QUERY
@@ -173,7 +173,7 @@ static COMMAND_FUNC( do_playsound )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("sound object");
+	dp = pick_obj("sound object");
 	if( dp == NULL ) return;
 
 	play_sound(QSP_ARG  dp);
@@ -206,7 +206,7 @@ static COMMAND_FUNC( do_set_alert )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("warning sound");
+	dp = pick_obj("warning sound");
 	if( dp == NULL ) return;
 
 	use_audio_warning(QSP_ARG  dp);
@@ -234,7 +234,7 @@ static COMMAND_FUNC( do_sound_info )
 	long sec;
 	char *s;
 
-	dp=PICK_OBJ("sound object");
+	dp=pick_obj("sound object");
 	if( dp == NULL ) return;
 
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
@@ -383,12 +383,12 @@ MENU_END(audio_playback)
 
 static COMMAND_FUNC( do_rec_menu )
 {
-	PUSH_MENU(audio_record);
+	CHECK_AND_PUSH_MENU(audio_record);
 }
 
 static COMMAND_FUNC( do_pb_menu )
 {
-	PUSH_MENU(audio_playback);
+	CHECK_AND_PUSH_MENU(audio_playback);
 }
 
 
@@ -414,12 +414,12 @@ COMMAND_FUNC( do_sound_menu )
 	if( ! sound_inited ){
 #ifdef DEBUG
 		if( sound_debug == 0 )
-			sound_debug = add_debug_module(QSP_ARG  "sound");
+			sound_debug = add_debug_module("sound");
 #endif /* DEBUG */
 		sound_inited=1;
 	}
     
-	PUSH_MENU(sound);	/* load the initial menu */
+	CHECK_AND_PUSH_MENU(sound);	/* load the initial menu */
 //#endif // ! BUILD_FOR_IOS
 }
 

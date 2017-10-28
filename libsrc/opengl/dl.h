@@ -11,6 +11,12 @@ typedef struct display_list {
 
 ITEM_INTERFACE_PROTOTYPES(Display_List,dl)
 
+#define list_dls(fp)	_list_dls(QSP_ARG  fp)
+#define pick_dl(p)	_pick_dl(QSP_ARG  p)
+#define del_dl(p)	_del_dl(QSP_ARG  p)
+#define dl_of(s)	_dl_of(QSP_ARG  s)
+#define new_dl(s)	_new_dl(QSP_ARG  s)
+
 extern COMMAND_FUNC( do_new_dl );
 extern COMMAND_FUNC( do_del_dl );
 extern COMMAND_FUNC( do_info_dl );

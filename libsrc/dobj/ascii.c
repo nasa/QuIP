@@ -201,7 +201,7 @@ static void read_literal_format_string(QSP_ARG_DECL  const char **sptr)
 		lit_str[i++]=(*s++);
 	lit_str[i] = 0;
 	if( *s && !isspace(*s) )
-		WARN("literal string overflow in input format spec");
+		warn("literal string overflow in input format spec");
 
 	*sptr = s;
 
@@ -236,7 +236,7 @@ static int process_format_char(QSP_ARG_DECL  const char **sptr )
 	if( *s && !isspace(*s) ){
 		sprintf(ERROR_STRING,
 			"white space should follow format descriptor!?");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	*sptr = s;
@@ -278,7 +278,7 @@ void set_input_format_string( QSP_ARG_DECL  const char *s )
 		if( process_format_string_char(QSP_ARG  &s) < 0 ){
 			sprintf(ERROR_STRING,
 		"Poorly formed input format string \"%s\"" , orig_str);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			// BUG?  clean up by releasing format?
 			return;
 		}
@@ -299,7 +299,7 @@ static int float_format_read_long(QSP_ARG_DECL  long *result, const char *pmpt, 
 		sprintf(ERROR_STRING,
 			"Float format data assigned to integer object %s!?",
 			OBJ_NAME( ascii_data_dp) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		ascii_warned=1;
 	}
 
@@ -319,7 +319,7 @@ static void consume_format_line(QSP_ARG_DECL  Precision *prec_p)
 
 	do {
 		if( QLEVEL != ASCII_LEVEL ){
-			WARN("Incomplete formatted input line!?");
+			warn("Incomplete formatted input line!?");
 			return;
 		}
 		fmt_p = CURRENT_FORMAT;
@@ -341,7 +341,7 @@ static void consume_literal_string(QSP_ARG_DECL  Input_Format_Spec *fmt_p)
 		sprintf(ERROR_STRING,
 	"expected literal string \"%s\", saw string \"%s\"",
 			fmt_p->fmt_litstr,s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -534,7 +534,7 @@ static int check_input_level(SINGLE_QSP_ARG_DECL)
 	if( QLEVEL != ASCII_LEVEL ){
 		sprintf(ERROR_STRING,"check_input_level (ascii):  input depth is %d, expected %d!?",
 			QLEVEL,ASCII_LEVEL);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		advise("premature end of data");
 		sprintf(ERROR_STRING,"%d elements read so far",dobj_n_gotten);
 		advise(ERROR_STRING);
@@ -581,7 +581,7 @@ static int get_a_string(QSP_ARG_DECL  Data_Obj *dp,char *datap,int dim)
 "get_a_string:  input string (%ld chars) longer than data buffer (%ld chars)",
 			(long)(strlen(orig)+1),
 			(long)DIMENSION(OBJ_TYPE_DIMS(dp),dim));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	*t = 0;	// add null terminator
 
@@ -601,7 +601,7 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 			sprintf(ERROR_STRING,
 		"Object %s is not in host ram, cannot %s!?",
 				OBJ_NAME(dp), op_str);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			warned_dp=dp;
 		}
 		return 0;
@@ -613,6 +613,7 @@ int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str)
 static int get_next_element(QSP_ARG_DECL   Data_Obj *dp,void *datap)
 {
 	Precision *prec_p;
+	char *prompt;
 
 	if( check_input_level(SINGLE_QSP_ARG) < 0 ) return(-1);
 
@@ -629,7 +630,9 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 
 	prec_p = OBJ_MACH_PREC_PTR(dp);
-	(*(prec_p->set_value_from_input_func))(QSP_ARG  datap);
+	prompt = msg_str;	// use this buffer...
+	sprintf(prompt,"%s data",PREC_NAME(prec_p));
+	(*(prec_p->set_value_from_input_func))(QSP_ARG  datap, prompt);
 
 	dobj_n_gotten++;
 
@@ -645,12 +648,12 @@ static void bit_set_value_from_input(QSP_ARG_DECL  bitmap_word *wp, bitnum_t i_b
 	bitmap_word bit;
 
 	if( ! HAS_FORMAT_LIST )
-		val = how_many(QSP_ARG  "bit value");
+		val = how_many("bit value");
 	else
 		val = next_input_int_with_format(QSP_ARG  "bit value");
 
 	if( /* val < 0 || */ val > 1 ){     // bitmap_word is an unsigned type
-		WARN("Truncation error converting bit");
+		warn("Truncation error converting bit");
 	}
 	bit = 1 << (i_bit % BITS_PER_BITMAP_WORD);
 
@@ -1205,7 +1208,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 	 */
 
 	//push_input_file(QSP_ARG  s);
-	redir(QSP_ARG  fp, orig_filename);
+	redir(fp, orig_filename);
 
 	/* BUG we'd like to have the string be 'Pipe: "command args"' or something... */
 	if( !strncmp(s,"Pipe",4) ){
@@ -1222,7 +1225,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 			sprintf(ERROR_STRING,
 				"Needed %d values for object %s, file %s has more!?",
 				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) ,orig_filename);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		pop_file(SINGLE_QSP_ARG);
 	}
@@ -1241,7 +1244,7 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 		sprintf(ERROR_STRING,
 	"read_obj:  object %s must be in RAM for assignment!?",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		data_ptr = NULL;
 	} else {
 		data_ptr = OBJ_DATA_PTR(dp);
@@ -1260,19 +1263,19 @@ void read_obj(QSP_ARG_DECL   Data_Obj *dp)
 	if( OBJ_PREC(dp) == PREC_CHAR || OBJ_PREC(dp) == PREC_STR ){
 		if( get_strings(QSP_ARG  dp,(char *)data_ptr,N_DIMENSIONS-1) < 0 ){
 			sprintf(ERROR_STRING,"error reading strings for object %s",OBJ_NAME( dp) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	} else if( IS_BITMAP(dp) ){
 		if( get_bits(QSP_ARG  dp,data_ptr,N_DIMENSIONS-1,OBJ_BIT0(dp)) < 0){
 			sprintf(ERROR_STRING,"expected %d bits for bitmap object %s",
 				OBJ_N_TYPE_ELTS(dp),OBJ_NAME( dp) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	} else {	// normal object
 		if( get_sheets(QSP_ARG  dp,(u_char *)data_ptr,N_DIMENSIONS-1) < 0 ){
 			sprintf(ERROR_STRING,"expected %d elements for object %s",
 				OBJ_N_MACH_ELTS(dp),OBJ_NAME( dp) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	}
 
@@ -1310,11 +1313,11 @@ void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code )
 void set_max_per_line(QSP_ARG_DECL  int n )
 {
 	if( n < 1 )
-		WARN("max_per_line must be positive");
+		warn("max_per_line must be positive");
 	else if( n > ENFORCED_MAX_PER_LINE ){
 		sprintf(ERROR_STRING,"Requested max_per_line (%d) exceeds hard-coded maximum (%d)",
 				n,ENFORCED_MAX_PER_LINE);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else
 		dobj_max_per_line = n;
 }

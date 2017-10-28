@@ -73,14 +73,14 @@ struct precision {
 	// methods
 
 	// read script input with appropriate function, and assign scalar
-	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr);
+	void			(*set_value_from_input_func)(QSP_ARG_DECL  void *ptr, const char *prompt);
 
 	double			(*indexed_data_func)(Data_Obj *dp, int index);
 
 	int			(*is_numeric_func)(void);
 
 	// assign a scalar data object from a scalar value constant
-	int			(*assign_scalar_func)(Data_Obj *dp, Scalar_Value *svp);
+	int			(*assign_scalar_obj_func)(Data_Obj *dp, Scalar_Value *svp);
 
 	// extract a value from a scalar data object
 	void			(*extract_scalar_func)(Scalar_Value *svp, Data_Obj *dp);
@@ -127,8 +127,8 @@ struct precision {
 #define PREC_IS_NUMERIC_FUNC(prec_p)	(prec_p)->is_numeric_func
 #define SET_PREC_IS_NUMERIC_FUNC(prec_p,v)	(prec_p)->is_numeric_func = v
 
-#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_func
-#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_func = v
+#define PREC_ASSIGN_SCALAR_FUNC(prec_p)	(prec_p)->assign_scalar_obj_func
+#define SET_PREC_ASSIGN_SCALAR_FUNC(prec_p,v)	(prec_p)->assign_scalar_obj_func = v
 
 #define PREC_EXTRACT_SCALAR_FUNC(prec_p)	(prec_p)->extract_scalar_func
 #define SET_PREC_EXTRACT_SCALAR_FUNC(prec_p,v)	(prec_p)->extract_scalar_func = v
@@ -372,7 +372,8 @@ struct shape_info {
 #define SET_SHP_BITMAP_GPU_INFO_G(shp,p)	(shp)->si_bitmap_gpu_info_g = p
 
 // BUG currently in vectree/comptree.c, but should be moved!
-extern Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
+extern Shape_Info *_make_outer_shape(QSP_ARG_DECL  Shape_Info *,Shape_Info *);
+#define make_outer_shape(shpp1,shpp2) _make_outer_shape(QSP_ARG  shpp1,shpp2)
 
 #endif /* ! _SHAPE_INFO_H_ */
 

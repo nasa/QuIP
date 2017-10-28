@@ -22,7 +22,7 @@ static COMMAND_FUNC( do_cam_menu );
 									\
 	sprintf(ERROR_STRING,						\
 		"%s:  program built without libflycap support!?",whence);	\
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 
 #define EAT_ONE_DUMMY(whence)						\
 									\
@@ -53,7 +53,7 @@ MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
 {
-	PUSH_MENU(trigger);
+	CHECK_AND_PUSH_MENU(trigger);
 }
 
 static COMMAND_FUNC( do_init )
@@ -71,14 +71,14 @@ static COMMAND_FUNC( do_init )
 
 static COMMAND_FUNC( do_list_cams )
 {
-	list_pgcs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_pgcs(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
 	PGR_Cam *pgcp;
 
-	pgcp = pick_pgc(QSP_ARG  "camera");
+	pgcp = pick_pgc("camera");
 	if( pgcp == NULL ) return;
 
 	if( pgcp == the_cam_p ){
@@ -107,7 +107,7 @@ static COMMAND_FUNC( do_select_cam )
 {
 	PGR_Cam *pgcp;
 
-	pgcp = pick_pgc(QSP_ARG  "camera");
+	pgcp = pick_pgc("camera");
 	if( pgcp == NULL ) return;
 
 	select_camera(QSP_ARG  pgcp);
@@ -138,7 +138,7 @@ static COMMAND_FUNC( do_grab )
 		char num_str[32];
 
 		sprintf(num_str,"%d",the_cam_p->pc_newest);
-		ASSIGN_VAR("newest",num_str);
+		assign_var("newest",num_str);
 	}
 
 }
@@ -333,7 +333,7 @@ static COMMAND_FUNC( do_get_cams )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	if( get_camera_names( QSP_ARG  dp ) < 0 )
@@ -346,7 +346,7 @@ static COMMAND_FUNC( do_get_video_modes )
 	int n;
 	char s[8];
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	CHECK_CAM
@@ -354,7 +354,7 @@ static COMMAND_FUNC( do_get_video_modes )
 	n = get_video_mode_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
-	ASSIGN_VAR("n_video_modes",s);
+	assign_var("n_video_modes",s);
 }
 
 static COMMAND_FUNC( do_get_framerates )
@@ -363,7 +363,7 @@ static COMMAND_FUNC( do_get_framerates )
 	int n;
 	char s[8];
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	CHECK_CAM
@@ -371,7 +371,7 @@ static COMMAND_FUNC( do_get_framerates )
 	n = get_framerate_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
-	ASSIGN_VAR("n_framerates",s);
+	assign_var("n_framerates",s);
 }
 
 static COMMAND_FUNC( do_read_reg )
@@ -413,7 +413,7 @@ static COMMAND_FUNC( do_prop_info )
 {
 	PGR_Property_Type *t;
 
-	t = pick_pgr_prop(QSP_ARG "property type");
+	t = pick_pgr_prop("property type");
 	CHECK_CAM
 
 	if( t == NULL ) return;
@@ -430,7 +430,7 @@ static COMMAND_FUNC( do_show_prop )
 {
 	PGR_Property_Type *t;
 
-	t = pick_pgr_prop(QSP_ARG "property type");
+	t = pick_pgr_prop("property type");
 	CHECK_CAM
 
 	if( t == NULL ) return;
@@ -449,7 +449,7 @@ static COMMAND_FUNC( do_set_auto )
 	int yn;
 	char pmpt[LLEN];
 
-	t = pick_pgr_prop(QSP_ARG "property type");
+	t = pick_pgr_prop("property type");
 	if( t != NULL )
 		sprintf(pmpt,"Enable automatic setting of %s",t->name);
 	else
@@ -482,7 +482,7 @@ static COMMAND_FUNC( do_set_prop )
 	PGR_Property_Type *t;
 	PGR_Prop_Val pv;
 
-	t = pick_pgr_prop(QSP_ARG "property type");
+	t = pick_pgr_prop("property type");
 
 	pv.pv_is_abs = use_absolute;
 	if( use_absolute ){
@@ -605,7 +605,7 @@ MENU_END(properties)
 
 static COMMAND_FUNC( do_prop_menu )
 {
-	PUSH_MENU(properties);
+	CHECK_AND_PUSH_MENU(properties);
 }
 
 static COMMAND_FUNC( do_set_iso_speed )
@@ -643,7 +643,7 @@ MENU_END(camera)
 
 static COMMAND_FUNC( do_cam_menu )
 {
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 
 static COMMAND_FUNC( do_record )
@@ -671,7 +671,7 @@ static COMMAND_FUNC( do_set_bufs )
 {
 	Data_Obj *dp;
 
-	dp = PICK_OBJ("sequence object to use for capture");
+	dp = pick_obj("sequence object to use for capture");
 	if( dp == NULL ) return;
 
 	CHECK_CAM
@@ -721,7 +721,7 @@ MENU_END(capture)
 
 static COMMAND_FUNC( captmenu )
 {
-	PUSH_MENU( capture );
+	CHECK_AND_PUSH_MENU( capture );
 }
 
 #define CAM_P	the_cam_p->pc_cam_p
@@ -797,7 +797,7 @@ MENU_END(format7)
 
 static COMMAND_FUNC( fmt7menu )
 {
-	PUSH_MENU( format7 );
+	CHECK_AND_PUSH_MENU( format7 );
 }
 
 static COMMAND_FUNC( do_bmode )
@@ -850,6 +850,6 @@ COMMAND_FUNC( do_fly_menu )
 {
 	if( the_cam_p != NULL )
 		push_camera_context(QSP_ARG  the_cam_p);
-	PUSH_MENU( fly );
+	CHECK_AND_PUSH_MENU( fly );
 }
 

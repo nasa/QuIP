@@ -1,0 +1,19 @@
+mactex *
+gnupg
+cmake
+cvs
+
+clfft
+fann
+ffmpeg
+gsl
+jpeg
+libdc1394
+libgcrypt
+libgpg-error
+libpng
+libtiff
+opencv
+openmotif
+portaudio
+

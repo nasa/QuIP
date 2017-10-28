@@ -63,8 +63,15 @@ void cat_string(String_Buf *sbp,const char *str)
 {
 	u_int need;
 
-	if( (need=(int)(strlen(sbp->sb_buf)+strlen(str)+1)) > sbp->sb_size )
+	if( sbp->sb_buf == NULL ){
+		assert( sbp->sb_size == 0 );
+		need = strlen(str)+1;
 		enlarge_buffer(sbp,need);
+	}
+
+	if( (need=(int)(strlen(sbp->sb_buf)+strlen(str)+1)) > sbp->sb_size ){
+		enlarge_buffer(sbp,need);
+	}
 	strcat(sbp->sb_buf,str);
 }
 

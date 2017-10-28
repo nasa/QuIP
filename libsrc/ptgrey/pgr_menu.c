@@ -26,7 +26,7 @@ static int camera_feature_set_value(PGR_Cam *pgcp, dc1394feature_info_t *f, int 
 									\
 	sprintf(ERROR_STRING,						\
 		"%s:  program built without dc1394 support!?",whence);	\
-	ERROR1(ERROR_STRING);
+	error1(ERROR_STRING);
 
 #define EAT_ONE_DUMMY(whence)								\
 											\
@@ -58,7 +58,7 @@ MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
 {
-	PUSH_MENU(trigger);
+	CHECK_AND_PUSH_MENU(trigger);
 }
 
 static COMMAND_FUNC( do_init )
@@ -76,14 +76,14 @@ static COMMAND_FUNC( do_init )
 
 static COMMAND_FUNC( do_list_cams )
 {
-	list_pgcs(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));
+	list_pgcs(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_cam_info )
 {
 	PGR_Cam *pgcp;
 
-	pgcp = pick_pgc(QSP_ARG  "camera");
+	pgcp = pick_pgc("camera");
 	if( pgcp == NULL ) return;
 
 #ifdef HAVE_LIBDC1394
@@ -116,7 +116,7 @@ static COMMAND_FUNC( do_select_cam )
 {
 	PGR_Cam *pgcp;
 
-	pgcp = pick_pgc(QSP_ARG  "camera");
+	pgcp = pick_pgc("camera");
 	if( pgcp == NULL ) return;
 
 	select_camera(QSP_ARG  pgcp);
@@ -201,7 +201,7 @@ static COMMAND_FUNC( do_grab_newest )
 			WARN("do_grab_newest:  failure.");
 		// If we are polling, this means there is no newest frame
 		// We should set a script variable to indicate this...
-		ASSIGN_VAR("newest","-1");
+		assign_var("newest","-1");
 		return;
 	}
 #else
@@ -337,29 +337,29 @@ static COMMAND_FUNC( do_get_frange )
 	}
 
 	sprintf(s,"%d",curr_feat_p->value);
-	ASSIGN_VAR("fval",s);
+	assign_var("fval",s);
 	sprintf(s,"%d",curr_feat_p->min);
-	ASSIGN_VAR("fmin",s);
+	assign_var("fmin",s);
 	sprintf(s,"%d",curr_feat_p->max);
-	ASSIGN_VAR("fmax",s);
+	assign_var("fmax",s);
 
 	//if( curr_feat_p->auto_capable ){
 	if( is_auto_capable( curr_feat_p ) ){
-		ASSIGN_VAR("f_auto_capable","1");
+		assign_var("f_auto_capable","1");
 		//sprintf(s,"%d",curr_feat_p->auto_active);
-		//ASSIGN_VAR("f_auto",s);
+		//assign_var("f_auto",s);
 	} else {
-		ASSIGN_VAR("f_auto_capable","0");
-		ASSIGN_VAR("f_auto","0");
+		assign_var("f_auto_capable","0");
+		assign_var("f_auto","0");
 	}
 
 	if( curr_feat_p->on_off_capable ){
-		ASSIGN_VAR("f_onoff_capable","1");
+		assign_var("f_onoff_capable","1");
 		sprintf(s,"%d",curr_feat_p->is_on);
-		ASSIGN_VAR("f_is_on",s);
+		assign_var("f_is_on",s);
 	} else {
-		ASSIGN_VAR("f_onoff_capable","0");
-		ASSIGN_VAR("f_is_on","1");
+		assign_var("f_onoff_capable","0");
+		assign_var("f_is_on","1");
 	}
 #else
 	NO_LIB_MSG("do_get_frange");
@@ -495,7 +495,7 @@ static COMMAND_FUNC( do_set_fval )
 
 static COMMAND_FUNC( change_done )
 {
-	POP_MENU;
+	pop_menu();
 	/* refresh all the features so we can display the current values */
 	get_camera_features(the_cam_p);
 
@@ -538,7 +538,7 @@ static COMMAND_FUNC( do_feature_change )
 	EAT_ONE_DUMMY("do_feature_change");
 #endif
 
-	PUSH_MENU(feature_change);
+	CHECK_AND_PUSH_MENU(feature_change);
 }
 
 static COMMAND_FUNC( do_list_cam_features )
@@ -584,7 +584,7 @@ MENU_END(features)
 
 static COMMAND_FUNC( do_feature_menu )
 {
-	PUSH_MENU(features);
+	CHECK_AND_PUSH_MENU(features);
 }
 
 #ifdef HAVE_LIBDC1394
@@ -613,7 +613,7 @@ static COMMAND_FUNC( do_set_iso_speed )
 			break;
 #ifdef CAUTIOUS
 		default:
-			ERROR1("CAUTIOUS:  do_set_iso_speed:  wacky speed choice!?");
+			error1("CAUTIOUS:  do_set_iso_speed:  wacky speed choice!?");
 			break;
 #endif /* CAUTIOUS */
 	}
@@ -681,7 +681,7 @@ static COMMAND_FUNC( do_get_cams )
 	Data_Obj *dp;
 	int n;
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	n = get_camera_names( QSP_ARG  dp );
@@ -693,7 +693,7 @@ static COMMAND_FUNC( do_get_video_modes )
 	int n;
 	char s[8];
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	CHECK_CAM
@@ -701,7 +701,7 @@ static COMMAND_FUNC( do_get_video_modes )
 	n = get_video_mode_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
-	ASSIGN_VAR("n_video_modes",s);
+	assign_var("n_video_modes",s);
 }
 
 static COMMAND_FUNC( do_get_framerates )
@@ -710,7 +710,7 @@ static COMMAND_FUNC( do_get_framerates )
 	int n;
 	char s[8];
 
-	dp = PICK_OBJ("string table");
+	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
 	CHECK_CAM
@@ -718,7 +718,7 @@ static COMMAND_FUNC( do_get_framerates )
 	n = get_framerate_strings( QSP_ARG  dp, the_cam_p );
 	sprintf(s,"%d",n);
 	// BUG should make this a reserved var...
-	ASSIGN_VAR("n_framerates",s);
+	assign_var("n_framerates",s);
 }
 
 #undef ADD_CMD
@@ -744,7 +744,7 @@ MENU_END(camera)
 
 static COMMAND_FUNC( do_cam_menu )
 {
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 
 #undef ADD_CMD
@@ -760,7 +760,7 @@ MENU_END(capture)
 
 static COMMAND_FUNC( captmenu )
 {
-	PUSH_MENU( capture );
+	CHECK_AND_PUSH_MENU( capture );
 }
 
 #define CAM_P	the_cam_p->pc_cam_p
@@ -936,7 +936,7 @@ MENU_END(format7)
 
 static COMMAND_FUNC( fmt7menu )
 {
-	PUSH_MENU( format7 );
+	CHECK_AND_PUSH_MENU( format7 );
 }
 
 static COMMAND_FUNC( do_bmode )
@@ -978,6 +978,6 @@ MENU_END(pgr)
 
 COMMAND_FUNC( do_pgr_menu )
 {
-	PUSH_MENU( pgr );
+	CHECK_AND_PUSH_MENU( pgr );
 }
 

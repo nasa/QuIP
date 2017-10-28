@@ -15,7 +15,7 @@ COMMAND_FUNC( do_make_cursor )
 	int x,y;
 
 	strcpy(cname,NAMEOF("cursor name"));
-	dp = PICK_OBJ( "bitmap image" );
+	dp = pick_obj( "bitmap image" );
 	x=HOW_MANY("x coordinate of hot spot");
 	y=HOW_MANY("y coordinate of hot spot");
 
@@ -32,8 +32,8 @@ COMMAND_FUNC( do_assign_cursor )
 	View_Cursor *vcp;
 	Viewer *vp;
 
-	vp = PICK_VWR("");
-	vcp = PICK_CURSOR( "cursor" );
+	vp = pick_vwr("");
+	vcp = pick_cursor( "cursor" );
 
 	if( vp == NULL || vcp==NULL ) return;
 	assign_cursor(vp,vcp);
@@ -43,14 +43,14 @@ COMMAND_FUNC( do_root_cursor )
 {
 	View_Cursor *vcp;
 
-	vcp = PICK_CURSOR( "cursor" );
+	vcp = pick_cursor( "cursor" );
 
 	if( vcp==NULL ) return;
 
 	root_cursor(vcp);
 }
 
-static COMMAND_FUNC( do_list_cursors ){ list_cursors(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_cursors ){ list_cursors(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(cursors_menu,s,f,h)
 
@@ -65,6 +65,6 @@ MENU_END(cursors)
 COMMAND_FUNC( do_cursors )
 {
 	INSURE_X11_SERVER
-	PUSH_MENU(cursors);
+	CHECK_AND_PUSH_MENU(cursors);
 }
 

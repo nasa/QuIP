@@ -53,7 +53,7 @@ static COMMAND_FUNC( do_set_filetype )
 {
 	Filetype *ftp;
 
-	ftp = pick_file_type(QSP_ARG  "file format");
+	ftp = pick_file_type("file format");
 
 	if( ftp != NULL )
 		set_filetype(QSP_ARG  ftp);
@@ -75,7 +75,7 @@ static COMMAND_FUNC( do_read_image_file )	/** open file for reading */
 		return;
 	}
 
-	ifp = img_file_of(QSP_ARG  s);
+	ifp = img_file_of(s);
 	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"do_read_image_file:  file %s is already open",ifp->if_name);
 		WARN(ERROR_STRING);
@@ -100,7 +100,7 @@ static COMMAND_FUNC( do_write_image_file )
 		return;
 	}
 
-	ifp = img_file_of(QSP_ARG  s);
+	ifp = img_file_of(s);
 	if( ifp != NULL ){
 		sprintf(ERROR_STRING,"do_write_image_file:  file %s is already open",ifp->if_name);
 		WARN(ERROR_STRING);
@@ -116,8 +116,8 @@ static COMMAND_FUNC( rd_next )
 	Data_Obj *dp;
 	Image_File *ifp;
 
-	dp=PICK_OBJ("name of image data object" );
-	ifp=PICK_IMG_FILE("");
+	dp=pick_obj("name of image data object" );
+	ifp=pick_img_file("");
 
 	read_object_from_file(QSP_ARG  dp,ifp);
 }
@@ -127,8 +127,8 @@ static COMMAND_FUNC( rd_obj )
 	Data_Obj *dp;
 	Image_File *ifp;
 
-	dp=PICK_OBJ( "name of image data object" );
-	ifp=PICK_IMG_FILE("");
+	dp=pick_obj( "name of image data object" );
+	ifp=pick_img_file("");
 	if( dp == NULL ) return;
 	if( ifp == NULL ) return;
 	read_object(QSP_ARG  dp, ifp);
@@ -155,7 +155,7 @@ static COMMAND_FUNC( do_close_hips )
 {
 	Image_File *ifp;
 
-	ifp=PICK_IMG_FILE("");
+	ifp=pick_img_file("");
 
 	close_image_file(QSP_ARG  ifp);
 }
@@ -165,8 +165,8 @@ static COMMAND_FUNC( wt_next )
 	Data_Obj *dp;
 	Image_File *ifp;
 
-	dp=PICK_OBJ( "name of image or sequence" );
-	ifp=PICK_IMG_FILE("");
+	dp=pick_obj( "name of image or sequence" );
+	ifp=pick_img_file("");
 	write_image_to_file(QSP_ARG  ifp,dp);
 }
 
@@ -174,7 +174,7 @@ static COMMAND_FUNC( do_if_info )
 {
 	Image_File *ifp;
 
-	ifp = PICK_IMG_FILE("");
+	ifp = pick_img_file("");
 	if( ifp == NULL ) return;
 	if_info(QSP_ARG  ifp);
 }
@@ -206,7 +206,7 @@ static COMMAND_FUNC( do_seek_frm )
 	Image_File *ifp;
 	dimension_t n;
 
-	ifp = PICK_IMG_FILE("");
+	ifp = pick_img_file("");
 	n = (dimension_t)HOW_MANY("frame index");
 
 	if( ifp == NULL ) return;
@@ -236,7 +236,7 @@ static COMMAND_FUNC( do_delete_imgfile )
 {
 	Image_File *ifp;
 
-	ifp = PICK_IMG_FILE("");
+	ifp = pick_img_file("");
 	if( ifp == NULL ) return;
 
 	if( FT_CODE(IF_TYPE(ifp)) != IFT_RV ){
@@ -255,7 +255,7 @@ static COMMAND_FUNC( do_set_autoclose )
 	Image_File *ifp;
 	int yn;
 
-	ifp = PICK_IMG_FILE("");
+	ifp = pick_img_file("");
 	yn = ASKIF("close automatically after reading last frame");
 
 	if( ifp == NULL ) return;
@@ -264,7 +264,7 @@ static COMMAND_FUNC( do_set_autoclose )
 	else ifp->if_flags &= ~NO_AUTO_CLOSE;
 }
 
-static COMMAND_FUNC( do_list_image_files ) { list_img_files(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_image_files ) { list_img_files(tell_msgfile()); }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(file_io_menu,s,f,h)
 
@@ -319,7 +319,7 @@ COMMAND_FUNC( do_fio_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(file_io);
+	CHECK_AND_PUSH_MENU(file_io);
 } 
 
 

@@ -10,8 +10,11 @@ extern void cpu_id3(Cpu_Info *,int);
 extern COMMAND_FUNC( get_cpu_info );
 
 // cpu_flags.c
-extern int cpu_supports_mmx(void);
-extern int cpu_supports_sse(void);
-extern int cpu_supports_sse2(void);
+extern int _cpu_supports_mmx(SINGLE_QSP_ARG_DECL);
+extern int _cpu_supports_sse(SINGLE_QSP_ARG_DECL);
+extern int _cpu_supports_sse2(SINGLE_QSP_ARG_DECL);
 
+#define cpu_supports_mmx() _cpu_supports_mmx(SINGLE_QSP_ARG)
+#define cpu_supports_sse() _cpu_supports_sse(SINGLE_QSP_ARG)
+#define cpu_supports_sse2() _cpu_supports_sse2(SINGLE_QSP_ARG)
 

@@ -68,7 +68,7 @@ static COMMAND_FUNC( do_sel_lintbl )
 {
 	Data_Obj *lt_dp;
 
-	lt_dp = PICK_OBJ("name of linearization table");
+	lt_dp = pick_obj("name of linearization table");
 	if( lt_dp == NULL ) return;
 
 	CHECK_DPYP("do_sel_lintbl")
@@ -90,6 +90,6 @@ MENU_END(gamma)
 
 COMMAND_FUNC( do_linearize )
 {
-	PUSH_MENU(gamma);
+	CHECK_AND_PUSH_MENU(gamma);
 }
 

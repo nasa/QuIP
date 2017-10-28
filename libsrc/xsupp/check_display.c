@@ -14,7 +14,7 @@ static const char *display_name=NULL;
 /* read the name of the preferred display from the environment */
 /* This function could have a much more descriptive name... */
 
-const char *check_display(SINGLE_QSP_ARG_DECL)
+const char *_check_display(SINGLE_QSP_ARG_DECL)
 {
 	if( display_name != NULL ) return(display_name);
 

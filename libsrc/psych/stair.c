@@ -61,7 +61,7 @@ ITEM_INTERFACE_DECLARATIONS(Staircase,stc,0)
 static List *stair_list(SINGLE_QSP_ARG_DECL)
 {
 	if( stc_itp==NULL ) return(NULL);
-	return(item_list(QSP_ARG  stc_itp) );
+	return(item_list(stc_itp) );
 }
 
 //static int nullstim(QSP_ARG_DECL  int c,int v,Staircase *stcp)
@@ -87,7 +87,7 @@ void new_exp(SINGLE_QSP_ARG_DECL)		/** discard old stairs */
 	while(np!=NULL){
 		stcp = (Staircase *)np->n_data;
 		np=np->n_next;		/* must do this before freeing item! */
-		del_stc(QSP_ARG  stcp);
+		del_stc(stcp);
 		givbuf((void *)stcp->stc_name);
 	}
 }
@@ -196,12 +196,10 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 		assert( incorrect_feedback_string != NULL );
 
 		if( rsp == STAIR_CRCT_RSP(stc) ){
-			chew_text(QSP_ARG correct_feedback_string,
-				FEEDBACK_FILENAME);
+			chew_text(correct_feedback_string, FEEDBACK_FILENAME);
 		}
 		else if( rsp != REDO && rsp != ABORT ){
-			chew_text(QSP_ARG incorrect_feedback_string,
-				FEEDBACK_FILENAME);
+			chew_text(incorrect_feedback_string, FEEDBACK_FILENAME);
 		}
 
 	}
@@ -279,7 +277,7 @@ int makestair( QSP_ARG_DECL  int st,	/* staircase type */
 	assert( tcp != NULL );
 
 	sprintf(str,"staircase.%s.%d",CLASS_NAME(tcp),CLASS_N_STAIRS(tcp) );
-	stcp = new_stc(QSP_ARG  str);
+	stcp = new_stc(str);
 	if( stcp == NULL )
 		return(-1);
 	stcp->stc_tcp = tcp;
@@ -383,7 +381,7 @@ static void mk_stair_array(SINGLE_QSP_ARG_DECL)
 	int n;
 
 	if( stc_itp == NULL )
-		init_stcs(SINGLE_QSP_ARG);
+		init_stcs();
 
 	if( stair_tbl != NULL )
 		givbuf(stair_tbl);
@@ -426,7 +424,7 @@ static void stepall(SINGLE_QSP_ARG_DECL)	/** step each stair in a random order *
 {
 	int i;
 
-if( nstairs==0 ) ERROR1("stepall:  no staircases!?");
+if( nstairs==0 ) error1("stepall:  no staircases!?");
 
 	permute(QSP_ARG  order,nstairs);
 	for(i=0;i<nstairs;i++){
@@ -509,7 +507,7 @@ void add_stair(QSP_ARG_DECL  int type,Trial_Class *tcp )
 
 void del_stair(QSP_ARG_DECL  Staircase *stcp)
 {
-	del_item(QSP_ARG  stc_itp,stcp);
+	del_item(stc_itp,stcp);
 	givbuf((void *)stcp->stc_name);
 }
 
@@ -542,7 +540,7 @@ Trial_Class *index_class(QSP_ARG_DECL  int index)
 	Trial_Class *tcp;
 	List *lp;
 
-	lp=item_list(QSP_ARG  trial_class_itp);
+	lp=item_list(trial_class_itp);
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
@@ -565,7 +563,7 @@ void del_class(QSP_ARG_DECL  Trial_Class *tcp)
 	/* what is this data field? */
 	if( CLASS_CMD(tcp) != NULL ) rls_str(CLASS_CMD(tcp));
 
-	del_trial_class(QSP_ARG  tcp);
+	del_trial_class(tcp);
 }
 
 Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
@@ -575,11 +573,11 @@ Trial_Class *new_class(SINGLE_QSP_ARG_DECL)
 	int n;
 
 	if( trial_class_itp == NULL )
-		init_trial_classs(SINGLE_QSP_ARG);
+		init_trial_classs();
 
 	assert( trial_class_itp != NULL );
 
-	lp=item_list(QSP_ARG  trial_class_itp);
+	lp=item_list(trial_class_itp);
 	if( lp == NULL ) n=0;
 	else n=(int)eltcount(lp);
 
@@ -608,11 +606,11 @@ Trial_Class *class_for( QSP_ARG_DECL  int class_index )
 	Trial_Class *tcp;
 
 	sprintf(newname,"class%d",class_index);
-	tcp = trial_class_of(QSP_ARG  newname);
+	tcp = trial_class_of(newname);
 	if( tcp != NULL )
 		return(tcp);
 
-	tcp = new_trial_class(QSP_ARG  newname);
+	tcp = new_trial_class(newname);
 
 	assert( tcp != NULL );
 
@@ -643,6 +641,6 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 List *class_list(SINGLE_QSP_ARG_DECL)
 {
 	if( trial_class_itp == NULL ) return(NULL);
-	return( item_list(QSP_ARG  trial_class_itp) );
+	return( item_list(trial_class_itp) );
 }
 

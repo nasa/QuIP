@@ -823,10 +823,10 @@ compute linear xform $1 $2 $3 quit quit
 
 # What is the point of this "gpu" version???
 Define GPU_Find_Max_Pixel 1 input
-#Vector fmp_indices ncols('$1') 1 int32
+#Vector fmp_indices ncols('$1') 1 int
 #data precision $1 prec quit
 #Scalar fmp_extval 1 $prec
-#Scalar fmp_n_times 1 int32
+#Scalar fmp_n_times 1 int
 Insure_FMP_Objects
 Max_Times fmp_indices $1 fmp_extval fmp_n_times
 .
@@ -853,9 +853,9 @@ Assign mxx "($mxi)%(ncols('$1'))"
 Define Init_FMP_Objects 1 source_vector
 #data precision $1 fmp_prec quit
 # how should we decide how many indices we need?
-Vector fmp_indices nelts('$1') 1 int32
-#Vector fmp_indices 3 1 int32
-Scalar fmp_n_times 1 int32
+Vector fmp_indices nelts('$1') 1 int
+#Vector fmp_indices 3 1 int
+Scalar fmp_n_times 1 int
 VSet fmp_n_times -1	# BUG just for testing!
 #Std_Scalar fmp_extval	# BUG match precision to input
 Assign fmp_prec precision('$1')

@@ -21,7 +21,7 @@
 #include "quip_prot.h"
 
 // this implementation requires unix stat!?
-int path_exists(QSP_ARG_DECL  const char *pathname)
+int _path_exists(QSP_ARG_DECL  const char *pathname)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
@@ -57,12 +57,12 @@ advise(ERROR_STRING);
 */
 	return(0);
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement path_exists without stat!?");
+	warn("Need to implement path_exists without stat!?");
 	return(0);
 #endif /* HAVE_SYS_STAT_H */
 }
 
-int directory_exists(QSP_ARG_DECL  const char *dirname)
+int _directory_exists(QSP_ARG_DECL  const char *dirname)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
@@ -74,17 +74,17 @@ int directory_exists(QSP_ARG_DECL  const char *dirname)
 
 	if( ! S_ISDIR(statb.st_mode) ){
 		sprintf(DEFAULT_ERROR_STRING,"%s is not a directory!?",dirname);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 		return(0);
 	}
 	return(1);
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement directory_exists without stat!?");
+	warn("Need to implement directory_exists without stat!?");
 	return(0);
 #endif /* HAVE_SYS_STAT_H */
 }
 
-int regfile_exists(QSP_ARG_DECL  const char *pathname)
+int _regfile_exists(QSP_ARG_DECL  const char *pathname)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
@@ -96,17 +96,17 @@ int regfile_exists(QSP_ARG_DECL  const char *pathname)
 
 	if( ! S_ISREG(statb.st_mode) ){
 		sprintf(DEFAULT_ERROR_STRING,"%s is not a regular file!?",pathname);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 		return(0);
 	}
 	return(1);
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement regfile_exists without stat!?");
+	warn("Need to implement regfile_exists without stat!?");
 	return(0);
 #endif /* HAVE_SYS_STAT_H */
 }
 
-int can_write_to(QSP_ARG_DECL  const char *name)
+int _can_write_to(QSP_ARG_DECL  const char *name)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
@@ -141,7 +141,7 @@ int can_write_to(QSP_ARG_DECL  const char *name)
 		if( (statb.st_mode & OWNER_CAN_WRITE ) == 0 ){
 			sprintf(DEFAULT_ERROR_STRING,
 				"No owner write-permission on %s", name);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(DEFAULT_ERROR_STRING);
 			return(0);
 		}
 #ifndef BUILD_FOR_WINDOWS
@@ -153,19 +153,19 @@ int can_write_to(QSP_ARG_DECL  const char *name)
 	  else if( (statb.st_mode & S_IWOTH) == 0 ){
 		sprintf(DEFAULT_ERROR_STRING,
 			"No other write-permission on %s",name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(DEFAULT_ERROR_STRING);
 		return(0);
 	}
 #endif /* S_IWOTH */
 
 	return(1);
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement can_write_to without stat!?");
+	warn("Need to implement can_write_to without stat!?");
 	return(0);
 #endif /* HAVE_SYS_STAT_H */
 }
 
-int file_exists(QSP_ARG_DECL  const char *pathname)
+int _file_exists(QSP_ARG_DECL  const char *pathname)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
@@ -180,12 +180,12 @@ int file_exists(QSP_ARG_DECL  const char *pathname)
 	}
 	return(1);
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement file_exists without stat!?");
+	warn("Need to implement file_exists without stat!?");
 	return(0);
 #endif /* HAVE_SYS_STAT_H */
 }
 
-/* long */ off_t file_content_size(QSP_ARG_DECL  const char *pathname)
+/* long */ off_t _file_content_size(QSP_ARG_DECL  const char *pathname)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
@@ -194,31 +194,31 @@ int file_exists(QSP_ARG_DECL  const char *pathname)
 		sprintf(ERROR_STRING,
 			"file_content_size:  file %s does not exist!?",
 			pathname);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);	// off_t is unsigned!?
 	}
 	return statb.st_size;
 
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement file_content_size without stat!?");
+	warn("Need to implement file_content_size without stat!?");
 	return(-1);
 #endif /* HAVE_SYS_STAT_H */
 }
 
 
-/* long */ off_t fp_content_size(QSP_ARG_DECL  FILE *fp)
+/* long */ off_t _fp_content_size(QSP_ARG_DECL  FILE *fp)
 {
 #ifdef HAVE_SYS_STAT_H
 	struct stat statb;
 
 	if( fstat(fileno(fp),&statb) < 0 ){
-		WARN("fp_content_size:  couldn't fstat!?");
+		warn("fp_content_size:  couldn't fstat!?");
 		return(-1);
 	}
 	return statb.st_size;
 
 #else /* !HAVE_SYS_STAT_H */
-	NWARN("Need to implement fp_content_size without fstat!?");
+	warn("Need to implement fp_content_size without fstat!?");
 	return(-1);
 #endif /* HAVE_SYS_STAT_H */
 }
@@ -228,22 +228,22 @@ int file_exists(QSP_ARG_DECL  const char *pathname)
 // Originally introduced in CUDA support library,
 // to check for device files...
 
-int check_file_access(QSP_ARG_DECL  const char *filename)
+int _check_file_access(QSP_ARG_DECL  const char *filename)
 {
-	if( ! file_exists(QSP_ARG  filename) ){
+	if( ! file_exists(filename) ){
 		sprintf(ERROR_STRING,"File %s does not exist.",filename);
-		//ERROR1(ERROR_STRING);
-		WARN(ERROR_STRING);
+		//error1(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	/*if( ! can_read_from(filename) ){
 		sprintf(ERROR_STRING,"File %s exists, but no read permission.",filename);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}*/
-	if( ! can_write_to(QSP_ARG  filename) ){
+	if( ! can_write_to(filename) ){
 		sprintf(ERROR_STRING,"File %s exists, but no write permission.",filename);
-		//ERROR1(ERROR_STRING);
-		WARN(ERROR_STRING);
+		//error1(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	return 0;

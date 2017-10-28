@@ -138,6 +138,10 @@ ITEM_INIT_PROT(Quip_Function,function)
 ITEM_NEW_PROT(Quip_Function,function)
 ITEM_CHECK_PROT(Quip_Function,function)
 
+#define init_functions()	_init_functions(SINGLE_QSP_ARG)
+#define new_function(name)	_new_function(QSP_ARG  name)
+#define function_of(name)	_function_of(QSP_ARG  name)
+
 
 #define DECLARE_FUNCTION(name,func,code1,code2,code3,type,member,dim_index)	\
 										\
@@ -145,7 +149,7 @@ ITEM_CHECK_PROT(Quip_Function,function)
 {										\
 	Quip_Function *func_p;							\
 										\
-	func_p = new_function(QSP_ARG  #name);					\
+	func_p = new_function(#name);					\
 	assert(func_p!=NULL);							\
 	func_p->fn_type = type;							\
 	func_p->fn_u.member = func;						\
@@ -252,21 +256,20 @@ extern double ptoz( double p );
 extern double ztop( double z );
 
 #define ADD_CLASS_PROTOTYPE(type_stem,func_type)		\
-extern void add_##type_stem(QSP_ARG_DECL  Item_Type *itp,	\
+extern void _add_##type_stem(QSP_ARG_DECL  Item_Type *itp,	\
 	func_type *func_str_ptr, Item *(*lookup)(QSP_ARG_DECL  const char *));
-
-#ifdef FOOBAR
-//extern void add_sizable(QSP_ARG_DECL  Item_Type *itp,Size_Functions *sfp,
-//			Item *(*lookup)(QSP_ARG_DECL  const char *));
-//extern void add_tsable(QSP_ARG_DECL  Item_Type *itp,Timestamp_Functions *sfp,
-//			Item *(*lookup)(QSP_ARG_DECL  const char *));
-#endif // FOOBAR
 
 ADD_CLASS_PROTOTYPE(sizable,Size_Functions)
 ADD_CLASS_PROTOTYPE(tsable,Timestamp_Functions)
 ADD_CLASS_PROTOTYPE(interlaceable,Interlace_Functions)
 ADD_CLASS_PROTOTYPE(positionable,Position_Functions)
 ADD_CLASS_PROTOTYPE(subscriptable,Subscript_Functions)
+
+#define add_sizable(itp,ftype,lookup)		_add_sizable(QSP_ARG  itp,ftype,lookup)
+#define add_tsable(itp,ftype,lookup)		_add_tsable(QSP_ARG  itp,ftype,lookup)
+#define add_interlaceable(itp,ftype,lookup)	_add_interlaceable(QSP_ARG  itp,ftype,lookup)
+#define add_positionable(itp,ftype,lookup)	_add_positionable(QSP_ARG  itp,ftype,lookup)
+#define add_subscriptable(itp,ftype,lookup)	_add_subscriptable(QSP_ARG  itp,ftype,lookup)
 
 
 #ifdef __cplusplus

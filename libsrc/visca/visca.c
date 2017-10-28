@@ -31,9 +31,9 @@
 static Visca_Cam *the_vcam_p=NULL;
 #define vparam_p	the_vcam_p->vcam_param_p
 
-#define HEX_DIGIT_TO_ASCII(dst,val)	hex_digit_to_ascii(QSP_ARG  dst, val)
-#define SET_PAN_SPEED(pkt,spd)	set_pan_speed(QSP_ARG  pkt,spd)
-#define SET_TILT_SPEED(pkt,spd)	set_tilt_speed(QSP_ARG  pkt,spd)
+#define hex_digit_to_ascii(dst,val)	_hex_digit_to_ascii(QSP_ARG  dst, val)
+#define set_pan_speed(pkt,spd)	_set_pan_speed(QSP_ARG  pkt,spd)
+#define set_tilt_speed(pkt,spd)	_set_tilt_speed(QSP_ARG  pkt,spd)
 
 #define NO_VISCA_MSG(p,v)									\
 												\
@@ -547,7 +547,9 @@ static const char *error_message(int code)
 
 #ifdef HAVE_VISCA
 
-static int table_index_for_inq(QSP_ARG_DECL   Visca_Inq_Def *tbl, Inq_Type code )
+#define table_index_for_inq(tbl,code)	_table_index_for_inq(tbl,code)
+
+static int _table_index_for_inq(QSP_ARG_DECL   Visca_Inq_Def *tbl, Inq_Type code )
 {
 	int i=0;
 
@@ -567,31 +569,33 @@ static int table_index_for_inq(QSP_ARG_DECL   Visca_Inq_Def *tbl, Inq_Type code 
  *
  */
 
-static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
+#define init_visca_cmd(vcdp)	_init_visca_cmd(QSP_ARG  vcdp)
+
+static void _init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
 {
 	Visca_Cmd_Set *vcsp;
 	Visca_Command *vcmdp;
 
-	vcsp = cmd_set_of(QSP_ARG  vcdp->vcd_set);
+	vcsp = cmd_set_of(vcdp->vcd_set);
 	if( vcsp == NULL ){
-		vcsp = new_cmd_set(QSP_ARG  vcdp->vcd_set);
+		vcsp = new_cmd_set(vcdp->vcd_set);
 		assert( vcsp != NULL );
-		vcsp->vcs_icp = create_visca_cmd_context(QSP_ARG  vcdp->vcd_set);
+		vcsp->vcs_icp = create_visca_cmd_context(vcdp->vcd_set);
 		if( vcsp->vcs_icp == NULL ){
 			sprintf(ERROR_STRING,
 				"Couldn't create item context %s",
 				vcdp->vcd_set);
-			ERROR1(ERROR_STRING);
+			error1(ERROR_STRING);
 		}
 	}
 
-	push_visca_cmd_context(QSP_ARG  vcsp->vcs_icp);
+	push_visca_cmd_context(vcsp->vcs_icp);
 
-	vcmdp = new_visca_cmd(QSP_ARG  vcdp->vcd_cmd);
+	vcmdp = new_visca_cmd(vcdp->vcd_cmd);
 	if( vcmdp == NULL ){
 		sprintf(ERROR_STRING,"Couldn't create visca cmd %s",
 			vcdp->vcd_cmd);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 
 	pop_visca_cmd_context(SINGLE_QSP_ARG);
@@ -606,11 +610,13 @@ static void init_visca_cmd( QSP_ARG_DECL  Visca_Cmd_Def *vcdp )
  * An item is created that points to the table entry.
  */
 
-static void init_visca_inq( QSP_ARG_DECL  Visca_Inq_Def *vidp )
+#define init_visca_inq(vidp)	_init_visca_inq(QSP_ARG  vidp)
+
+static void _init_visca_inq( QSP_ARG_DECL  Visca_Inq_Def *vidp )
 {
 	Visca_Inquiry *vip;
 
-	vip = new_visca_inq(QSP_ARG  vidp->vid_inq);
+	vip = new_visca_inq(vidp->vid_inq);
 	assert( vip != NULL );
 	vip->vi_vidp = vidp;
 	assert( strlen(vidp->vid_pkt) < MAX_PACKET_LEN );
@@ -619,7 +625,9 @@ static void init_visca_inq( QSP_ARG_DECL  Visca_Inq_Def *vidp )
 /* Scan the table of command defns.
  */
 
-static void load_visca_cmds(SINGLE_QSP_ARG_DECL)
+#define load_visca_cmds()	_load_visca_cmds(SINGLE_QSP_ARG)
+
+static void _load_visca_cmds(SINGLE_QSP_ARG_DECL)
 {
 	unsigned int i;
 	static int cmds_inited=0;
@@ -630,29 +638,29 @@ static void load_visca_cmds(SINGLE_QSP_ARG_DECL)
 	}
 
 	for(i=0;i<N_EVI100_CMDS; i++)
-		init_visca_cmd(QSP_ARG  &vcd_evi100_tbl[i]);
+		init_visca_cmd(&vcd_evi100_tbl[i]);
 
 	for(i=0;i<N_COMMON_CMDS; i++)
-		init_visca_cmd(QSP_ARG  &vcd_common_tbl[i]);
+		init_visca_cmd(&vcd_common_tbl[i]);
 
 	for(i=0;i<N_EVI30_CMDS; i++)
-		init_visca_cmd(QSP_ARG  &vcd_evi30_tbl[i]);
+		init_visca_cmd(&vcd_evi30_tbl[i]);
 
 	for(i=0;i<N_EVI70_CMDS; i++)
-		init_visca_cmd(QSP_ARG  &vcd_evi70_tbl[i]);
+		init_visca_cmd(&vcd_evi70_tbl[i]);
 
 	
 	for(i=0;i<N_EVI100_INQS; i++)
-		init_visca_inq(QSP_ARG  &vid_evi100_tbl[i]);
+		init_visca_inq(&vid_evi100_tbl[i]);
 
 	for(i=0;i<N_COMMON_INQS; i++)
-		init_visca_inq(QSP_ARG  &vid_common_tbl[i]);
+		init_visca_inq(&vid_common_tbl[i]);
 
 	for(i=0;i<N_EVI30_INQS; i++)
-		init_visca_inq(QSP_ARG  &vid_evi30_tbl[i]);
+		init_visca_inq(&vid_evi30_tbl[i]);
 
 	for(i=0;i<N_EVI70_INQS; i++)
-		init_visca_inq(QSP_ARG  &vid_evi70_tbl[i]);
+		init_visca_inq(&vid_evi70_tbl[i]);
 
 	cmds_inited=1;
 
@@ -663,7 +671,9 @@ static void load_visca_cmds(SINGLE_QSP_ARG_DECL)
  * of a command...  but is it sync'd to VBLANK???  Or is that just command execution?
  */
 
-static int get_cmd_ack(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp)
+#define get_cmd_ack(vcam_p, vcdp)	_get_cmd_ack(QSP_ARG  vcam_p, vcdp)
+
+static int _get_cmd_ack(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp)
 {
 	int n=3;
 	int reply_addr;
@@ -675,10 +685,10 @@ static int get_cmd_ack(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp)
 	 * up in the case of something going really wrong.
 	 */
 	
-	while( n_serial_chars(QSP_ARG  vcam_p->vcam_fd) < 3 )
+	while( n_serial_chars(vcam_p->vcam_fd) < 3 )
 		usleep(1000);
 
-	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,ack_buf,LLEN,n);
+	n = recv_somex(vcam_p->vcam_fd,ack_buf,LLEN,n);
 
 	/* Until we put the timeout in, we know we must have something if we are here... */
 	assert( n!=0 );
@@ -719,11 +729,11 @@ static int get_cmd_ack(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp)
 
 		/* eat up the last 0xff */
 
-		while( n_serial_chars(QSP_ARG  vcam_p->vcam_fd) < 1 )
+		while( n_serial_chars(vcam_p->vcam_fd) < 1 )
 			usleep(1000);
 
 		n = 1;
-		n = recv_somex(QSP_ARG  vcam_p->vcam_fd,ack_buf,LLEN,n);
+		n = recv_somex(vcam_p->vcam_fd,ack_buf,LLEN,n);
 
 		if( ack_buf[0] != 0xff ){
 			sprintf(ERROR_STRING,
@@ -740,7 +750,7 @@ static int get_cmd_ack(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp)
 	advise(ERROR_STRING);
 
 set_raw_len(ack_buf);
-	dump_char_buf(QSP_ARG  ack_buf);
+	dump_char_buf(ack_buf);
 	return(-1);
 } /* end get_cmd_ack() */
 
@@ -748,8 +758,9 @@ set_raw_len(ack_buf);
  * take to execute...
  */
 
+#define get_cmd_completion(vcam_p,vcdp)	_get_cmd_completion(QSP_ARG  vcam_p, vcdp)
 
-static void get_cmd_completion( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp )
+static void _get_cmd_completion( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp )
 {
 	int n=3;
 	int reply_addr;
@@ -760,10 +771,10 @@ static void get_cmd_completion( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *
 	 * up in the case of something going really wrong.
 	 */
 
-	while( n_serial_chars(QSP_ARG  vcam_p->vcam_fd) < 3 )
+	while( n_serial_chars(vcam_p->vcam_fd) < 3 )
 		usleep(1000);
 
-	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,comp_buf,LLEN,n);
+	n = recv_somex(vcam_p->vcam_fd,comp_buf,LLEN,n);
 
 	/* this check may not be cautious if we put in a timeout... */
 	assert(n!=0);
@@ -786,11 +797,14 @@ static void get_cmd_completion( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *
 	advise(ERROR_STRING);
 
 set_raw_len(comp_buf);
-	dump_char_buf(QSP_ARG  comp_buf);
+	dump_char_buf(comp_buf);
 } /* end get_cmd_completion */
 
-static int compare_response(QSP_ARG_DECL  Visca_Inq_Def *vidp, unsigned char *buf,
-				unsigned char * proto, int i,int n)
+#define compare_response(vidp,buf,proto,i,n)	_compare_response(QSP_ARG  vidp,buf,proto,i,n)
+
+static int _compare_response(QSP_ARG_DECL  Visca_Inq_Def *vidp,
+		unsigned char *buf,
+		unsigned char * proto, int i,int n)
 {
 	int j;
 
@@ -848,8 +862,9 @@ static long get_number_reply(u_char *buf,int n_hex_digits,int first_position)
 	return(n);
 }
 
+#define process_inq_error(vcam_p, vidp)	_process_inq_error(QSP_ARG  vcam_p, vidp)
 
-static void process_inq_error(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
+static void _process_inq_error(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 {
 	int n;
 	const char *err_msg;
@@ -859,10 +874,10 @@ static void process_inq_error(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vi
 	 * of the error string...
 	 */
 
-	while( n_serial_chars(QSP_ARG  vcam_p->vcam_fd) < 2 )
+	while( n_serial_chars(vcam_p->vcam_fd) < 2 )
 		usleep(1000);
 	n=2;
-	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,err_buf,LLEN,n);
+	n = recv_somex(vcam_p->vcam_fd,err_buf,LLEN,n);
 
 	err_msg = error_message(err_buf[0]);
 	sprintf(ERROR_STRING,"Inquiry %s:  %s",	vidp->vid_inq, err_msg);
@@ -876,7 +891,7 @@ static void process_inq_error(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vi
 static void inq_result(QSP_ARG_DECL  const char *parameter_name,
 				const char *result_string)
 {
-	ASSIGN_VAR(INQ_RESULT_NAME, result_string);
+	assign_var(INQ_RESULT_NAME, result_string);
 	if( verbose ){
 		if( parameter_name != NULL ){
 			sprintf(msg_str,"%s is %s",parameter_name,result_string);
@@ -892,7 +907,9 @@ static void inq_result(QSP_ARG_DECL  const char *parameter_name,
 	"Unexpected response code 0x%.2x, inquiry %s",c, vidp->vid_inq);	\
 				WARN(ERROR_STRING)
 
-static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
+#define get_inq_reply(vcam_p,vidp)	_get_inq_reply(QSP_ARG  vcam_p,vidp)
+
+static void _get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 {
 	u_char reply_buf[LLEN];		/* probably could be MUCH shorter!? */
 	u_char proto[16];
@@ -909,11 +926,11 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 	 * The first two chars should be the address of the camera...
 	 */
 
-	while( n_serial_chars(QSP_ARG  vcam_p->vcam_fd) < 2 )
+	while( n_serial_chars(vcam_p->vcam_fd) < 2 )
 		usleep(1000);
 
 	n=2;
-	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,reply_buf,LLEN,n);
+	n = recv_somex(vcam_p->vcam_fd,reply_buf,LLEN,n);
 	/* should we check that we got two??? */
 	if( n != 2 ){
 		sprintf(ERROR_STRING,"get_inq_reply:  expected 2 chars, got %d",n);
@@ -923,7 +940,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 	reply_addr = 0x80 + (vcam_p->vcam_index << 4);
 
 	if( reply_buf[0] == reply_addr && ( reply_buf[1]==0x60 || reply_buf[1]==0x61 ) ) {	/* an error */
-		process_inq_error(QSP_ARG  vcam_p,vidp);
+		process_inq_error(vcam_p,vidp);
 		return;
 	
 	}
@@ -963,11 +980,11 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 	 */
 
 
-	while( (i=n_serial_chars(QSP_ARG  vcam_p->vcam_fd)) < n ){
+	while( (i=n_serial_chars(vcam_p->vcam_fd)) < n ){
 		usleep(1000);
 	}
 
-	n = recv_somex(QSP_ARG  vcam_p->vcam_fd,reply_buf,LLEN,n);
+	n = recv_somex(vcam_p->vcam_fd,reply_buf,LLEN,n);
 
 //sprintf(ERROR_STRING,"Read %d chars",n);
 //advise(ERROR_STRING);
@@ -979,7 +996,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 	/* convert the prototype reply string to binary */
 
 	for(i=0;i<n;i++)
-		proto[i] = hex_byte(QSP_ARG  (u_char *) &vidp->vid_reply[i*2]);
+		proto[i] = hex_byte((u_char *) &vidp->vid_reply[i*2]);
 
 	/* compare the received string to the expected prototype */
 
@@ -988,7 +1005,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 	 * Therefore, we only compare the first two, and last chars.
 	 */
 
-	if( compare_response(QSP_ARG  vidp,reply_buf,proto,n-1,n) < 0 ) return;
+	if( compare_response(vidp,reply_buf,proto,n-1,n) < 0 ) return;
 
 	/* Handle the reply based on the reply type */
 
@@ -1012,7 +1029,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 
 
 			sprintf(result_str,"%d",result);
-			ASSIGN_VAR(INQ_RESULT_NAME, result_str);
+			assign_var(INQ_RESULT_NAME, result_str);
 
 			break;
 
@@ -1036,11 +1053,11 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 			switch(reply_buf[0]){
 				case 2:
 					//prt_msg("ir mode is on");
-					ASSIGN_VAR(INQ_RESULT_NAME, "on");
+					assign_var(INQ_RESULT_NAME, "on");
 					break;
 				case 3:
 					//prt_msg("ir mode is off");
-					ASSIGN_VAR(INQ_RESULT_NAME, "off");
+					assign_var(INQ_RESULT_NAME, "off");
 					break;
 				default:  BAD_RESP(reply_buf[0]); break;
 			}
@@ -1051,12 +1068,12 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 				case 2:
 					// prt_msg("flip mode is on");
 					vcam_p->vcam_flipped = 1;
-					ASSIGN_VAR(INQ_RESULT_NAME,"on");
+					assign_var(INQ_RESULT_NAME,"on");
 					break;
 				case 3:
 					// prt_msg("flip mode is off");
 					vcam_p->vcam_flipped = 0;
-					ASSIGN_VAR(INQ_RESULT_NAME, "off");
+					assign_var(INQ_RESULT_NAME, "off");
 					break;
 				default:  BAD_RESP(reply_buf[0]); break;
 			}
@@ -1066,11 +1083,11 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 			switch( reply_buf[0] ){
 				case 2:
 					//prt_msg("autofocus");
-					ASSIGN_VAR(INQ_RESULT_NAME, "auto");
+					assign_var(INQ_RESULT_NAME, "auto");
 					break;
 				case 3:
 					//prt_msg("manual focus");
-					ASSIGN_VAR(INQ_RESULT_NAME, "manual");
+					assign_var(INQ_RESULT_NAME, "manual");
 					break;
 				default: BAD_RESP(reply_buf[0]); break;
 			}
@@ -1241,7 +1258,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 				prt_msg(msg_str);
 			}
 			sprintf(msg_str,"%d",result);
-			ASSIGN_VAR("pan_posn",msg_str);
+			assign_var("pan_posn",msg_str);
 
 			result = get_number_reply(reply_buf,4,4);
 			if( verbose ){
@@ -1249,7 +1266,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 				prt_msg(msg_str);
 			}
 			sprintf(msg_str,"%d",result);
-			ASSIGN_VAR("tilt_posn",msg_str);
+			assign_var("tilt_posn",msg_str);
 
 			break;
 
@@ -1420,7 +1437,7 @@ static void get_inq_reply(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp)
 
 } /* end get_inq_reply() */
 
-static void hex_digit_to_ascii(QSP_ARG_DECL  u_char *dest,int val)
+static void _hex_digit_to_ascii(QSP_ARG_DECL  u_char *dest,int val)
 {
 
 	if( val>=0 && val<=9 ){
@@ -1456,10 +1473,10 @@ static COMMAND_FUNC( get_pan_speed )
 	the_vcam_p->vcam_pan_speed = pan_speed;
 }
 
-static void set_pan_speed(QSP_ARG_DECL  u_char *pkt,int speed)
+static void _set_pan_speed(QSP_ARG_DECL  u_char *pkt,int speed)
 {
-	HEX_DIGIT_TO_ASCII(&pkt[9],speed&0x0f);
-	HEX_DIGIT_TO_ASCII(&pkt[8],(speed&0xf0)>>4);
+	hex_digit_to_ascii(&pkt[9],speed&0x0f);
+	hex_digit_to_ascii(&pkt[8],(speed&0xf0)>>4);
 }
 
 static COMMAND_FUNC( get_tilt_speed )
@@ -1480,13 +1497,13 @@ static COMMAND_FUNC( get_tilt_speed )
 	the_vcam_p->vcam_tilt_speed = tilt_speed;
 }
 
-static void set_tilt_speed(QSP_ARG_DECL  u_char *pkt, int speed )
+static void _set_tilt_speed(QSP_ARG_DECL  u_char *pkt, int speed )
 {
 	/* the indices were wrong (was this right for the 30, or has it always been wrong?? */
-	/*HEX_DIGIT_TO_ASCII(&pkt[9],speed&0x0f); */
-	/*HEX_DIGIT_TO_ASCII(&pkt[8],(speed&0xf0)>>4); */
-	HEX_DIGIT_TO_ASCII(&pkt[11],speed&0x0f);
-	HEX_DIGIT_TO_ASCII(&pkt[10],(speed&0xf0)>>4);
+	/*hex_digit_to_ascii(&pkt[9],speed&0x0f); */
+	/*hex_digit_to_ascii(&pkt[8],(speed&0xf0)>>4); */
+	hex_digit_to_ascii(&pkt[11],speed&0x0f);
+	hex_digit_to_ascii(&pkt[10],(speed&0xf0)>>4);
 }
 
 
@@ -1598,22 +1615,24 @@ static void *camera_request_server(void *arg)
  * increase this time... why ?
  */
 
-static void exec_visca_command( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp, u_char *pkt )
+#define exec_visca_command(vcam_p,vcdp,pkt)	_exec_visca_command(QSP_ARG  vcam_p,vcdp,pkt)
+
+static void _exec_visca_command( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp, u_char *pkt )
 {
 	int r;
 
-	send_hex(QSP_ARG  vcam_p->vcam_fd,pkt);
+	send_hex(vcam_p->vcam_fd,pkt);
 	
 	/* BUG commands are sync'd to vertical refresh,
 	 * should use select() instead of sleep()
 	 */
 	usleep( 2000*(strlen((char *)pkt)/2+5) );
 
-	if( (r=get_cmd_ack(QSP_ARG  vcam_p,vcdp)) == 0 ){
+	if( (r=get_cmd_ack(vcam_p,vcdp)) == 0 ){
 //advise("cmd ack gotten, getting completion response...");
-		get_cmd_completion(QSP_ARG  vcam_p,vcdp);
+		get_cmd_completion(vcam_p,vcdp);
 	} else if( r == 1 ){
-		if( (r=get_cmd_ack(QSP_ARG  vcam_p,vcdp)) != 0 ){
+		if( (r=get_cmd_ack(vcam_p,vcdp)) != 0 ){
 			WARN("expected out-of-sequence ACK, but got something else!?");
 		}
 	} else {
@@ -1625,11 +1644,13 @@ static void exec_visca_command( QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Cmd_Def *
 	 */
 }
 
-static void exec_visca_inquiry(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp, u_char *pkt)
+#define exec_visca_inquiry(vcam_p,vidp,pkt)	_exec_visca_inquiry(QSP_ARG  vcam_p,vidp,pkt)
+
+static void _exec_visca_inquiry(QSP_ARG_DECL  Visca_Cam *vcam_p, Visca_Inq_Def *vidp, u_char *pkt)
 {
-	HEX_DIGIT_TO_ASCII(&(pkt[1]), vcam_p->vcam_index);
-	send_hex(QSP_ARG  vcam_p->vcam_fd,(u_char *)pkt);
-	get_inq_reply(QSP_ARG  vcam_p,vidp);
+	hex_digit_to_ascii(&(pkt[1]), vcam_p->vcam_index);
+	send_hex(vcam_p->vcam_fd,(u_char *)pkt);
+	get_inq_reply(vcam_p,vidp);
 }
 
 /* Make sure that this command is valid with the given camera.
@@ -1706,10 +1727,10 @@ static int verify_cmd( Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp )
 		zoom_data = 0x200;					\
 	}								\
 									\
-	HEX_DIGIT_TO_ASCII(&(pkt[ 9]),(zoom_data>>12)&0xf);	\
-	HEX_DIGIT_TO_ASCII(&(pkt[11]),(zoom_data>> 8)&0xf);	\
-	HEX_DIGIT_TO_ASCII(&(pkt[13]),(zoom_data>> 4)&0xf);	\
-	HEX_DIGIT_TO_ASCII(&(pkt[15]),(zoom_data>> 0)&0xf);
+	hex_digit_to_ascii(&(pkt[ 9]),(zoom_data>>12)&0xf);	\
+	hex_digit_to_ascii(&(pkt[11]),(zoom_data>> 8)&0xf);	\
+	hex_digit_to_ascii(&(pkt[13]),(zoom_data>> 4)&0xf);	\
+	hex_digit_to_ascii(&(pkt[15]),(zoom_data>> 0)&0xf);
 
 /* This is a misnomer, this code is only for evi70 combined zoom focus... */
 
@@ -1736,12 +1757,14 @@ static int verify_cmd( Visca_Cam *vcam_p, Visca_Cmd_Def *vcdp )
 		focus_posn = DEFAULT_FOCUS_POSN;			\
 	}								\
 									\
-	HEX_DIGIT_TO_ASCII(&(pkt[17]),(focus_posn>>12)&0xf);		\
-	HEX_DIGIT_TO_ASCII(&(pkt[19]),(focus_posn>> 8)&0xf);		\
-	HEX_DIGIT_TO_ASCII(&(pkt[21]),(focus_posn>> 4)&0xf);		\
-	HEX_DIGIT_TO_ASCII(&(pkt[23]),(focus_posn>> 0)&0xf);
+	hex_digit_to_ascii(&(pkt[17]),(focus_posn>>12)&0xf);		\
+	hex_digit_to_ascii(&(pkt[19]),(focus_posn>> 8)&0xf);		\
+	hex_digit_to_ascii(&(pkt[21]),(focus_posn>> 4)&0xf);		\
+	hex_digit_to_ascii(&(pkt[23]),(focus_posn>> 0)&0xf);
 
-static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
+#define get_command_args(pkt,vcdp)	_get_command_args(QSP_ARG  pkt, vcdp)
+
+static void _get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 {
 	char prompt[LLEN];
 	int zoom_data;
@@ -1773,10 +1796,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				pwr_timer = 0;
 			}
 
-			HEX_DIGIT_TO_ASCII(&(pkt[ 9]),(pwr_timer >>12)&0xf);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(pwr_timer >> 8)&0xf);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(pwr_timer >> 4)&0xf);
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),(pwr_timer >> 0)&0xf);
+			hex_digit_to_ascii(&(pkt[ 9]),(pwr_timer >>12)&0xf);
+			hex_digit_to_ascii(&(pkt[11]),(pwr_timer >> 8)&0xf);
+			hex_digit_to_ascii(&(pkt[13]),(pwr_timer >> 4)&0xf);
+			hex_digit_to_ascii(&(pkt[15]),(pwr_timer >> 0)&0xf);
 			}
 			break;
 
@@ -1815,7 +1838,7 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0");
 				zoom_data=0;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),zoom_data);
+			hex_digit_to_ascii(&(pkt[9]),zoom_data);
 			break;
 
 		case ZOOM_DIG_ARG:	/* evi100 */
@@ -1829,10 +1852,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				zoom_data = 0x57ff;
 			}
 
-			HEX_DIGIT_TO_ASCII(&(pkt[ 9]),(zoom_data>>12)&0xf);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(zoom_data>> 8)&0xf);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(zoom_data>> 4)&0xf);
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),(zoom_data>> 0)&0xf);
+			hex_digit_to_ascii(&(pkt[ 9]),(zoom_data>>12)&0xf);
+			hex_digit_to_ascii(&(pkt[11]),(zoom_data>> 8)&0xf);
+			hex_digit_to_ascii(&(pkt[13]),(zoom_data>> 4)&0xf);
+			hex_digit_to_ascii(&(pkt[15]),(zoom_data>> 0)&0xf);
 			break;
 
 		case FOCUS_SPEED:	/* evi100 */
@@ -1865,10 +1888,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x5000");
 				focus_posn=0x5000;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),focus_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(focus_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(focus_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(focus_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),focus_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(focus_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(focus_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(focus_posn & 0xf000)>>12);
 
 			break;
 
@@ -1885,10 +1908,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x5000");
 				focus_posn=0x5000;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),focus_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(focus_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(focus_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(focus_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),focus_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(focus_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(focus_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(focus_posn & 0xf000)>>12);
 
 			break;
 			
@@ -1906,10 +1929,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				gain=0x7f;
 			}
 
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),gain & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(gain & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(gain & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(gain & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),gain & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(gain & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(gain & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(gain & 0xf000)>>12);
 			
 			break;
 		
@@ -1927,10 +1950,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				gain = 0x7f;
 			}
 
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),gain & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(gain & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(gain & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(gain & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),gain & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(gain & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(gain & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(gain & 0xf000)>>12);
 			
 			break;
 
@@ -1950,10 +1973,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x0a");
 				shutter_speed = 0x0a;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),shutter_speed & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(shutter_speed & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(shutter_speed & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(shutter_speed & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),shutter_speed & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(shutter_speed & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(shutter_speed & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(shutter_speed & 0xf000)>>12);
 			}
 
 			break;
@@ -1976,10 +1999,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x0008");
 				iris_posn = 0x0008;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),iris_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(iris_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(iris_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(iris_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),iris_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(iris_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(iris_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(iris_posn & 0xf000)>>12);
 			}
 
 			break;
@@ -2000,10 +2023,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x0003");
 				gain = 3;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),gain & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(gain & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(gain & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(gain & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),gain & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(gain & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(gain & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(gain & 0xf000)>>12);
 
 			break;
 		
@@ -2023,10 +2046,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x0010");
 				bright_posn = 0x0010;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),bright_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(bright_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(bright_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(bright_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),bright_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(bright_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(bright_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(bright_posn & 0xf000)>>12);
 			}
 
 			break;
@@ -2047,10 +2070,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x0007");
 				exp_comp = 0x0007;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),exp_comp & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(exp_comp & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(exp_comp & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(exp_comp & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),exp_comp & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(exp_comp & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(exp_comp & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(exp_comp & 0xf000)>>12);
 			}
 
 			break;
@@ -2069,10 +2092,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0x0005");
 				gain = 5;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),gain & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(gain & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(gain & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(gain & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),gain & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(gain & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(gain & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(gain & 0xf000)>>12);
 
 			break;
 			
@@ -2117,10 +2140,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				}
 			}
 			
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),dig_effect & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(dig_effect & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),(dig_effect & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),(dig_effect & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[15]),dig_effect & 0x000f);
+			hex_digit_to_ascii(&(pkt[13]),(dig_effect & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[11]),(dig_effect & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[9]),(dig_effect & 0xf000)>>12);
 			}
 
 			break;
@@ -2138,33 +2161,33 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0");				
 				mem_index=0;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),mem_index);
+			hex_digit_to_ascii(&(pkt[11]),mem_index);
 			}
 			break;
 
 		case PT_SPEED:		/* evi100 & evi30 */
 			get_pan_speed(SINGLE_QSP_ARG);
 			get_tilt_speed(SINGLE_QSP_ARG);
-			SET_PAN_SPEED(pkt,the_vcam_p->vcam_pan_speed);
-			SET_TILT_SPEED(pkt,the_vcam_p->vcam_tilt_speed);
+			set_pan_speed(pkt,the_vcam_p->vcam_pan_speed);
+			set_tilt_speed(pkt,the_vcam_p->vcam_tilt_speed);
 			break;
 
 		case TILT_SPEED:		/* evi100 & evi30 */
 			get_tilt_speed(SINGLE_QSP_ARG);
-			SET_TILT_SPEED(pkt,the_vcam_p->vcam_tilt_speed);
+			set_tilt_speed(pkt,the_vcam_p->vcam_tilt_speed);
 			break;
 
 		case PAN_SPEED:		/* evi100 & evi30 */
 			get_pan_speed(SINGLE_QSP_ARG);
-			SET_PAN_SPEED(pkt,the_vcam_p->vcam_pan_speed);
+			set_pan_speed(pkt,the_vcam_p->vcam_pan_speed);
 			break;
 
 		case PT_POSN:		/* evi100 & evi30 */
 
 			get_pan_speed(SINGLE_QSP_ARG);
 			get_tilt_speed(SINGLE_QSP_ARG);
-			SET_PAN_SPEED(pkt,the_vcam_p->vcam_pan_speed);
-			SET_TILT_SPEED(pkt,the_vcam_p->vcam_tilt_speed);
+			set_pan_speed(pkt,the_vcam_p->vcam_pan_speed);
+			set_tilt_speed(pkt,the_vcam_p->vcam_tilt_speed);
 
 			sprintf(prompt,"pan position (%d - %d)",
 				vparam_p->pan_pos_min,vparam_p->pan_pos_max);
@@ -2177,10 +2200,10 @@ static void get_command_args(QSP_ARG_DECL  u_char *pkt, Visca_Cmd_Def *vcdp)
 				advise("defaulting to 0");				
 				pan_posn=0;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[19]),pan_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[17]),(pan_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),(pan_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(pan_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[19]),pan_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[17]),(pan_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[15]),(pan_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[13]),(pan_posn & 0xf000)>>12);
 
 			sprintf(prompt,"tilt position (%d - %d)",
 				vparam_p->tilt_pos_min,vparam_p->tilt_pos_max);
@@ -2205,17 +2228,17 @@ advise(ERROR_STRING);
 					tilt_posn=0;
 				}
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[27]),tilt_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[25]),(tilt_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[23]),(tilt_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[21]),(tilt_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[27]),tilt_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[25]),(tilt_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[23]),(tilt_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[21]),(tilt_posn & 0xf000)>>12);
 
 			break;
 		
 		case PT_LMT_SET:	/* evi100 & evi30 */
 
 			pt_lmt_choice = WHICH_ONE("pantilt downleft/upright", 2, pt_lmt_set_strs); 
-			HEX_DIGIT_TO_ASCII(&(pkt[11]), (pt_lmt_choice & 0x0001));
+			hex_digit_to_ascii(&(pkt[11]), (pt_lmt_choice & 0x0001));
 		
 			sprintf(prompt,"pan limit position (0x%x - 0x%x)",vparam_p->pan_lmt_min, vparam_p->pan_lmt_max);
 			pan_posn = HOW_MANY(prompt);
@@ -2229,10 +2252,10 @@ advise(ERROR_STRING);
 				pan_posn = 0;
 			}
 
-			HEX_DIGIT_TO_ASCII(&(pkt[19]),pan_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[17]),(pan_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[15]),(pan_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[13]),(pan_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[19]),pan_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[17]),(pan_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[15]),(pan_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[13]),(pan_posn & 0xf000)>>12);
 
 			sprintf(prompt,"tilt limit position (0x%x - 0x%x)", vparam_p->tilt_lmt_min, vparam_p->tilt_lmt_max);
 			tilt_posn = HOW_MANY(prompt);
@@ -2245,17 +2268,17 @@ advise(ERROR_STRING);
 				tilt_posn=0;
 			}
 			
-			HEX_DIGIT_TO_ASCII(&(pkt[27]),tilt_posn & 0x000f);
-			HEX_DIGIT_TO_ASCII(&(pkt[25]),(tilt_posn & 0x00f0)>>4);
-			HEX_DIGIT_TO_ASCII(&(pkt[23]),(tilt_posn & 0x0f00)>>8);
-			HEX_DIGIT_TO_ASCII(&(pkt[21]),(tilt_posn & 0xf000)>>12);
+			hex_digit_to_ascii(&(pkt[27]),tilt_posn & 0x000f);
+			hex_digit_to_ascii(&(pkt[25]),(tilt_posn & 0x00f0)>>4);
+			hex_digit_to_ascii(&(pkt[23]),(tilt_posn & 0x0f00)>>8);
+			hex_digit_to_ascii(&(pkt[21]),(tilt_posn & 0xf000)>>12);
 
 		break;
 		
 		case PT_LMT_CLR:	/* evi100 & evi30 */
 		
 			pt_lmt_choice = WHICH_ONE("pantilt downleft/upright", 2, pt_lmt_set_strs); 
-			HEX_DIGIT_TO_ASCII(&(pkt[11]), (pt_lmt_choice & 0x0001));
+			hex_digit_to_ascii(&(pkt[11]), (pt_lmt_choice & 0x0001));
 				
 		break;
 		
@@ -2292,7 +2315,7 @@ advise(ERROR_STRING);
 			else	/* use pan-tilt drive */
 				n=3;
 
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),n);
+			hex_digit_to_ascii(&(pkt[9]),n);
 			break;
 
 		case CHASE_ARG:		/* evi30 */
@@ -2339,7 +2362,7 @@ advise(ERROR_STRING);
 				
 				n=7;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[11]),n);
+			hex_digit_to_ascii(&(pkt[11]),n);
 			break;
 
 			
@@ -2352,7 +2375,7 @@ advise(ERROR_STRING);
 				WARN(ERROR_STRING);
 				n=1;
 			}
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),n);
+			hex_digit_to_ascii(&(pkt[9]),n);
 			break;
 
 		case MM_ARG:		/* evi30 */
@@ -2362,7 +2385,7 @@ advise(ERROR_STRING);
 			else
 				n=3;
 
-			HEX_DIGIT_TO_ASCII(&(pkt[9]),n);
+			hex_digit_to_ascii(&(pkt[9]),n);
 			break;
 
 		 
@@ -2395,7 +2418,7 @@ static COMMAND_FUNC( do_visca_cmd )
 	Visca_Command *vcmd_p;
 	u_char pkt[MAX_PACKET_LEN];
 
-	vcsp = PICK_CMD_SET("command group");
+	vcsp = pick_cmd_set("command group");
 	if( vcsp == NULL ){
 		/* We eat a dummy word here to avoid a second error if there
 		 * is a typo in the command group name.
@@ -2410,11 +2433,11 @@ static COMMAND_FUNC( do_visca_cmd )
 		return;
 	}
 
-	PUSH_VISCA_CMD_CONTEXT(vcsp->vcs_icp);
+	push_visca_cmd_context(vcsp->vcs_icp);
 
-	vcmd_p = PICK_VISCA_CMD("command");
+	vcmd_p = pick_visca_cmd("command");
 
-	POP_VISCA_CMD_CONTEXT;
+	pop_visca_cmd_context();
 
 	if( vcmd_p == NULL ) return;
 
@@ -2449,9 +2472,9 @@ static COMMAND_FUNC( do_visca_cmd )
 	 */
 	
 	strcpy((char *)pkt,(const char *)vcdp->vcd_pkt);
-	get_command_args(QSP_ARG  pkt, vcdp);
+	get_command_args(pkt, vcdp);
 
-	HEX_DIGIT_TO_ASCII(&(pkt[1]),the_vcam_p->vcam_index);
+	hex_digit_to_ascii(&(pkt[1]),the_vcam_p->vcam_index);
 	
 	/* To avoid waiting for the camera to execute a command,
 	 * we're buffering the commands
@@ -2474,7 +2497,7 @@ static COMMAND_FUNC( do_visca_cmd )
 		queue_visca_command(vqcp);
 	} else {
 #endif /* VISCA_THREADS */
-		exec_visca_command(QSP_ARG  the_vcam_p,vcdp,pkt);
+		exec_visca_command(the_vcam_p,vcdp,pkt);
 #ifdef VISCA_THREADS
 	}
 #endif /* VISCA_THREADS */
@@ -2595,7 +2618,7 @@ static COMMAND_FUNC( do_visca_inq )
 	Visca_Inquiry *vip;
 	u_char pkt[MAX_PACKET_LEN];
 	
-	vip = PICK_VISCA_INQ("inquiry");
+	vip = pick_visca_inq("inquiry");
 	if( vip == NULL ){
 		return;
 	}
@@ -2603,7 +2626,7 @@ static COMMAND_FUNC( do_visca_inq )
 	vidp = vip->vi_vidp;
 	
 	if( the_vcam_p == NULL ) {
-		ASSIGN_VAR(INQ_RESULT_NAME,"no_camera");
+		assign_var(INQ_RESULT_NAME,"no_camera");
 		return;
 	}
 
@@ -2614,7 +2637,7 @@ static COMMAND_FUNC( do_visca_inq )
 	}	
 
 	/* We're moving this to exec_visca_inq... */
-	//HEX_DIGIT_TO_ASCII(&(pkt[1]), the_vcam_p->vcam_index);
+	//hex_digit_to_ascii(&(pkt[1]), the_vcam_p->vcam_index);
 	strcpy((char *)pkt,vidp->vid_pkt);
 
 #ifdef VISCA_THREADS
@@ -2639,7 +2662,7 @@ static COMMAND_FUNC( do_visca_inq )
 		exec_visca_inquiry(the_vcam_p,vidp,pkt);
 	}
 #else /* ! VISCA_THREADS */
-	exec_visca_inquiry(QSP_ARG  the_vcam_p,vidp,pkt);
+	exec_visca_inquiry(the_vcam_p,vidp,pkt);
 #endif /* ! VISCA_THREADS */
 } /* end do_visca_inq() */
 
@@ -2675,7 +2698,7 @@ static COMMAND_FUNC( select_cam )
 {
 	Visca_Cam *vcam_p;
 
-	vcam_p=PICK_VCAM("");
+	vcam_p=pick_vcam("");
 	if( vcam_p == NULL ) return;
 
 	if( vcam_p->vcam_param_p == NULL ){
@@ -2702,7 +2725,7 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 	int i;
 
 	sprintf(str,"cam%d",++n_vcams);
-	vcam_p = new_vcam(QSP_ARG  str);
+	vcam_p = new_vcam(str);
 	if( vcam_p == NULL ) return;
 
 	np = mk_node(vcam_p);
@@ -2719,11 +2742,11 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 
 	/* Now ask the camera what is its type */
 	/* INFO_INQ is the first entry... */
-	i=table_index_for_inq(QSP_ARG  vid_common_tbl,INFO_INQ);
+	i=table_index_for_inq(vid_common_tbl,INFO_INQ);
 	assert( i >= 0 );
 
 	strcpy((char *)pkt,(const char *)vid_common_tbl[i].vid_pkt);
-	exec_visca_inquiry(QSP_ARG  vcam_p, &vid_common_tbl[i],pkt);
+	exec_visca_inquiry(vcam_p, &vid_common_tbl[i],pkt);
 
 	/* Now set the camera type based on the info returned */
 	switch( vcam_p->vcam_model_id ){
@@ -2739,11 +2762,11 @@ static void add_camera(QSP_ARG_DECL  Visca_Port *vport_p)
 			// We only do this if it is an evi-d70 - if the others support this,
 			// they do not have a switch on the back panel.
 			// FLIP_MODE_INQ is at index 1
-			i=table_index_for_inq(QSP_ARG  vid_evi70_tbl,FLIP_MODE_INQ);
+			i=table_index_for_inq(vid_evi70_tbl,FLIP_MODE_INQ);
 			assert( i >= 0 );
 
 			strcpy((char *)pkt,(const char *)vid_evi70_tbl[i].vid_pkt);
-			exec_visca_inquiry(QSP_ARG  vcam_p, &vid_evi70_tbl[i],pkt);
+			exec_visca_inquiry(vcam_p, &vid_evi70_tbl[i],pkt);
 			if( vcam_p->vcam_flipped ){
 				// Need to adjust limits for tilt!?
 			}
@@ -2771,20 +2794,20 @@ static void detect_daisy_chain(QSP_ARG_DECL  Visca_Port *vport_p)
 	int n_cams = 0;
 	u_char _buf[LLEN];		/* probably could be MUCH shorter!? */
 
-	send_hex(QSP_ARG  vport_p->vp_fd, (u_char *)"883001ff");		/* address set command */
+	send_hex(vport_p->vp_fd, (u_char *)"883001ff");		/* address set command */
 	
 	/* wait until we have at least 3 chars before reading...
 	 * BUG we should probably set an alarm here to wake us
 	 * up in the case of something going really wrong.
 	 */
 	
-	while( (n=n_serial_chars(QSP_ARG  vport_p->vp_fd)) < 3 ){
+	while( (n=n_serial_chars(vport_p->vp_fd)) < 3 ){
 		/*usleep(1000); */
 		/* sleep(1); */
 		usleep(500000);
 	}
 
-	n = recv_somex(QSP_ARG  vport_p->vp_fd,_buf,LLEN,n);
+	n = recv_somex(vport_p->vp_fd,_buf,LLEN,n);
 
 	if( n==0 ){
 		WARN("detect_daisy_chain:  no ack chars!?");
@@ -2802,14 +2825,14 @@ static void detect_daisy_chain(QSP_ARG_DECL  Visca_Port *vport_p)
 		sprintf(ERROR_STRING,"%s", err_msg);
 		WARN(ERROR_STRING);
 set_raw_len(_buf);
-		dump_char_buf(QSP_ARG  _buf);
+		dump_char_buf(_buf);
 		return;
 	}
 	
 	n_cams = _buf[2]-1;
 	
 	while(n_cams--)
-		add_camera(QSP_ARG  vport_p);
+		add_camera(vport_p);
 	
 	/* we initialize cam_type each time a new network is made */
 
@@ -2819,8 +2842,9 @@ set_raw_len(_buf);
 
 #endif // HAVE_VISCA
 
+#define vcam_info(vcam_p)	_vcam_info(QSP_ARG  vcam_p)
 
-static void vcam_info(QSP_ARG_DECL  Visca_Cam *vcam_p)
+static void _vcam_info(QSP_ARG_DECL  Visca_Cam *vcam_p)
 {
 	const char *s;
 
@@ -2836,8 +2860,9 @@ static void vcam_info(QSP_ARG_DECL  Visca_Cam *vcam_p)
 	prt_msg(msg_str);
 }
 
+#define vport_info(vport_p)	_vport_info(QSP_ARG  vport_p)
 
-static void vport_info(QSP_ARG_DECL  Visca_Port *vport_p)
+static void _vport_info(QSP_ARG_DECL  Visca_Port *vport_p)
 {
 	Node *np;
 
@@ -2849,7 +2874,7 @@ static void vport_info(QSP_ARG_DECL  Visca_Port *vport_p)
 		Visca_Cam *vcam_p;
 
 		vcam_p = (Visca_Cam *)np->n_data;
-		vcam_info(QSP_ARG  vcam_p);
+		vcam_info(vcam_p);
 		np=np->n_next;
 	}
 }
@@ -2864,7 +2889,7 @@ static COMMAND_FUNC( network_status )
 		WARN("network_status:  null vport_itp!?");
 		return;
 	}
-	lp=item_list(QSP_ARG  vport_itp);
+	lp=item_list(vport_itp);
 	if( lp == NULL || eltcount(lp)==0 ){
 		WARN("No visca ports open");
 		return;
@@ -2872,7 +2897,7 @@ static COMMAND_FUNC( network_status )
 	np=QLIST_HEAD(lp);
 	while(np!=NULL){
 		vport_p = (Visca_Port *)np->n_data;
-		vport_info(QSP_ARG  vport_p);
+		vport_info(vport_p);
 		np=np->n_next;
 	}
 }
@@ -2881,10 +2906,10 @@ static COMMAND_FUNC( do_vport_info )
 {
 	Visca_Port *vport_p;
 
-	vport_p=PICK_VPORT("");
+	vport_p=pick_vport("");
 	if( vport_p == NULL ) return;
 
-	vport_info(QSP_ARG  vport_p);
+	vport_info(vport_p);
 }
 
 #ifdef HAVE_VISCA
@@ -2894,14 +2919,14 @@ static Visca_Port *open_port(QSP_ARG_DECL  const char *name)
 	Visca_Port *vport_p;
 	int fd;
 
-	fd = open_serial_device(QSP_ARG  name);
+	fd = open_serial_device(name);
 	if( fd < 0 ) return(NULL);
 
 	/* Set the baud rate here in case somebody changed it by mistake */
 	/* Perhaps should set all the flags too! */
 	set_baud(fd,B9600);
 
-	vport_p = new_vport(QSP_ARG  name);
+	vport_p = new_vport(name);
 	if( vport_p == NULL ){
 		close(fd);			/* BUG? ignore return status? */
 		return(vport_p);
@@ -2914,7 +2939,7 @@ static Visca_Port *open_port(QSP_ARG_DECL  const char *name)
 	ttyraw(fd);
 
 	/* here we should init the daisy chain */
-	detect_daisy_chain(QSP_ARG  vport_p);
+	detect_daisy_chain(vport_p);
 
 	return(vport_p);
 } /* end open_port() */
@@ -2931,13 +2956,13 @@ static COMMAND_FUNC( do_vport_open )
 	s=NAMEOF("Name of serial port device");
 	// BUG generates set but not used compiler warning if no visca
 #ifdef HAVE_VISCA
-	vport_p = open_port(QSP_ARG  s);
+	vport_p = open_port(s);
 #else // ! HAVE_VISCA
 	NO_VISCA_MSG("serial port",s)
 #endif // ! HAVE_VISCA
 }
 
-static COMMAND_FUNC(do_list_vports){list_vports(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_vports){list_vports(tell_msgfile());}
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(visca_port_menu,s,f,h)
 
@@ -2949,17 +2974,17 @@ MENU_END( visca_port)
 
 static COMMAND_FUNC( do_vport_menu )
 {
-	PUSH_MENU(visca_port);
+	CHECK_AND_PUSH_MENU(visca_port);
 }
 
 static COMMAND_FUNC( do_vcam_info )
 {
 	Visca_Cam *vcam_p;
 
-	vcam_p=PICK_VCAM("");
+	vcam_p=pick_vcam("");
 	if( vcam_p == NULL ) return;
 
-	vcam_info(QSP_ARG  vcam_p);
+	vcam_info(vcam_p);
 }
 
 static COMMAND_FUNC( do_get_cam_type )
@@ -2967,11 +2992,11 @@ static COMMAND_FUNC( do_get_cam_type )
 	Visca_Cam *vcam_p;
 	const char *s,*s2;
 
-	vcam_p=PICK_VCAM("");
+	vcam_p=pick_vcam("");
 	s = NAMEOF("variable name");
 
 	if( vcam_p == NULL ){
-		ASSIGN_VAR(s,"no_camera");
+		assign_var(s,"no_camera");
 		return;
 	}
 
@@ -2981,10 +3006,10 @@ static COMMAND_FUNC( do_get_cam_type )
 		case EVI_D30: s2="EVI-D30"; break;
 		default: s2="unidentified_camera"; break;
 	}
-	ASSIGN_VAR(s,s2);
+	assign_var(s,s2);
 }
 
-static COMMAND_FUNC(do_list_vcams){list_vcams(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG));}
+static COMMAND_FUNC(do_list_vcams){list_vcams(tell_msgfile());}
 
 static COMMAND_FUNC(do_get_n_cam)
 {
@@ -3000,7 +3025,7 @@ static COMMAND_FUNC(do_get_n_cam)
 		WARN("do_get_n_cam:  null vport_itp!?");
 		return;
 	}
-	lp=item_list(QSP_ARG  vport_itp);
+	lp=item_list(vport_itp);
 	if( lp == NULL || (n=eltcount(lp))==0 ){
 		WARN("do_get_n_port:  No visca ports open");
 		n=0;
@@ -3020,7 +3045,7 @@ static COMMAND_FUNC(do_get_n_cam)
 	}
 
 	sprintf(msg_str,"%d",ntot);
-	ASSIGN_VAR(s,msg_str);
+	assign_var(s,msg_str);
 }
 
 #undef ADD_CMD
@@ -3035,7 +3060,7 @@ MENU_END(visca_cam)
 
 static COMMAND_FUNC( do_vcam_menu )
 {
-	PUSH_MENU(visca_cam);
+	CHECK_AND_PUSH_MENU(visca_cam);
 }
 
 
@@ -3066,14 +3091,14 @@ static void default_camera(SINGLE_QSP_ARG_DECL)
 	/* BUG?  path_exists wants the pathname to refer to a directory or regular file
 	 * - what will it do with a special file or symbolic link???
 	 */
-	if( ! path_exists(QSP_ARG  DEFAULT_PORT_NAME) ){
+	if( ! path_exists(DEFAULT_PORT_NAME) ){
 		/* say something here? */
 		sprintf(ERROR_STRING,"Default visca port %s does not exist...",DEFAULT_PORT_NAME);
 		advise(ERROR_STRING);
 		return;
 	}
 
-	vport_p = open_port(QSP_ARG  DEFAULT_PORT_NAME);
+	vport_p = open_port(DEFAULT_PORT_NAME);
 	if( vport_p == NULL ){
 		WARN(ERROR_STRING);
 		sprintf(ERROR_STRING,"Unable to open default visca device %s",DEFAULT_PORT_NAME);
@@ -3101,6 +3126,6 @@ COMMAND_FUNC( do_visca_menu )
 	advise("Will parse commands only.");
 #endif // HAVE_VISCA
 
-	PUSH_MENU(visca);
+	CHECK_AND_PUSH_MENU(visca);
 }
 

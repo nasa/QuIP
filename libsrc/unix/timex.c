@@ -51,9 +51,9 @@ static void check_timex(QSP_ARG_DECL  struct timex *tp)
 
 	/* set the script variables tick and freq */
 	sprintf(str,"%ld",tp->tick);
-	assign_reserved_var(QSP_ARG  "timex_tick",str);
+	assign_reserved_var("timex_tick",str);
 	sprintf(str,"%ld",tp->freq);
-	assign_reserved_var(QSP_ARG  "timex_freq",str);
+	assign_reserved_var("timex_freq",str);
 }
 
 static COMMAND_FUNC( do_get_timex )
@@ -155,7 +155,7 @@ MENU_END(timex)
 
 COMMAND_FUNC( do_timex_menu )
 {
-	PUSH_MENU(timex);
+	CHECK_AND_PUSH_MENU(timex);
 }
 
 #endif /* HAVE_ADJTIMEX */

@@ -171,7 +171,7 @@ void sane_tty(SINGLE_QSP_ARG_DECL)	/** call this before exiting */
 	if( verbose )
 		advise("Resetting tty to sane state");
 
-	fp=tfile(SINGLE_QSP_ARG);
+	fp=tfile();
 	tty_reset(fp);
 }
 
@@ -303,7 +303,7 @@ void simulate_typing(const char *str)
 	}
 }
 
-int keyboard_hit(QSP_ARG_DECL  FILE *tty_in)
+int _keyboard_hit(QSP_ARG_DECL  FILE *tty_in)
 {
 	int ready=0;
 
@@ -335,7 +335,7 @@ NWARN("ioctl FIONREAD - EINVAL");
 				ready=1;
 			} else {
 				tell_sys_error("ioctl (FIONREAD check_events)");
-				ERROR1("FIX ME");
+				error1("FIX ME");
 			}
 		}
 		if( n>0 ){
@@ -367,7 +367,7 @@ void check_events(QSP_ARG_DECL  FILE *tty_in)
 			return;
 		}
 
-		ready = keyboard_hit(QSP_ARG  tty_in);
+		ready = keyboard_hit(tty_in);
 
 
 		/* When we compile for profiling, we find that
@@ -399,7 +399,7 @@ static int fetch_termcap_entry(SINGLE_QSP_ARG_DECL)
 
 	s=getenv("TERM");
 	if( s==NULL ){
-		WARN("init_tty_chars:  no TERM in environment");
+		warn("init_tty_chars:  no TERM in environment");
 		so="";
 		ce="";
 		se="";
@@ -409,13 +409,13 @@ static int fetch_termcap_entry(SINGLE_QSP_ARG_DECL)
 	stat=tgetent(tc_ent,s);
 	if( stat!=1 ){
 		if( stat==(-1) ){
-			WARN("init_tty_chars:  can't open termcap file");
+			warn("init_tty_chars:  can't open termcap file");
 		} else if( stat==0 ){
 			sprintf(ERROR_STRING,
 			"no termcap entry for terminal \"%s\"",s);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
-			WARN("unrecognized error status from tgetent()");
+			warn("unrecognized error status from tgetent()");
 		}
 		return -1;
 	}
@@ -437,17 +437,17 @@ static void init_tty_chars(SINGLE_QSP_ARG_DECL)
 	tptr=tbuf;
 	so=tgetstr("so",&tptr);
 	if( so==NULL ){
-		WARN("no standout string in termcap");
+		warn("no standout string in termcap");
 		so="";
 	}
 	se=tgetstr("se",&tptr);
 	if( se==NULL ){
-		WARN("no standend string in termcap");
+		warn("no standend string in termcap");
 		se="";
 	}
 	ce=tgetstr("ce",&tptr);
 	if( ce==NULL ){
-		WARN("no clear-to-eol string in termcap");
+		warn("no clear-to-eol string in termcap");
 		ce="";
 	}
 #else /* ! HAVE_TERMCAP */
@@ -542,16 +542,16 @@ static const char * handle_completed_line(QSP_ARG_DECL  int c,Completion_Data *c
 
 	if( EDIT_MODE ){
 		if( *PROMPT && *edit_string )
-			add_def(QSP_ARG  PROMPT,edit_string);
+			add_def(PROMPT,edit_string);
 		return(edit_string);
 	} else {
 		if( *PROMPT && THIS_SELECTION != NULL && *THIS_SELECTION ){
-			add_def(QSP_ARG  PROMPT,THIS_SELECTION);
+			add_def(PROMPT,THIS_SELECTION);
 		}
 
 		// Store the newline too...
 		if( N_SO_FAR >= (LLEN-1) ){
-			WARN("too many input chars!?");
+			warn("too many input chars!?");
 		} else {
 			//CHARS_TYPED[N_SO_FAR++] = c;
 			// We do this after returning from get_response_from_user.
@@ -568,14 +568,14 @@ static void check_for_completion(QSP_ARG_DECL  Completion_Data *cdp)
 	u_int l;
 	if( IS_PICKING_ITEM ){
 		// we are picking an item...
-		THIS_SELECTION=find_partial_match(QSP_ARG  QS_PICKING_ITEM_ITP(THIS_QSP),CHARS_TYPED);
+		THIS_SELECTION=find_partial_match(QS_PICKING_ITEM_ITP(THIS_QSP),CHARS_TYPED);
 		l=strlen(THIS_SELECTION);
 		if( l == 0 ) THIS_SELECTION=CHARS_TYPED;
 		if( l > N_SO_FAR ){
 			show_completion(cdp,1);
 		}
 	} else {	// not picking an item
-		THIS_SELECTION=get_match(QSP_ARG  PROMPT,CHARS_TYPED);
+		THIS_SELECTION=get_match(PROMPT,CHARS_TYPED);
 		l=strlen(THIS_SELECTION);
 
 		/* We only want to check against builtins
@@ -593,7 +593,7 @@ static void check_for_completion(QSP_ARG_DECL  Completion_Data *cdp)
 		 */
 
 		if( l == 0 && IS_COMMAND_PROMPT(PROMPT) ) {
-			THIS_SELECTION=get_match(QSP_ARG  h_bpmpt,CHARS_TYPED);
+			THIS_SELECTION=get_match(h_bpmpt,CHARS_TYPED);
 			l=strlen(THIS_SELECTION);
 		}
 
@@ -607,7 +607,7 @@ static void check_for_completion(QSP_ARG_DECL  Completion_Data *cdp)
 			 * but don't show it if nothing has been typed.
 			 * The user can see the defaults with ^N.
 			 */
-			THIS_SELECTION=get_match(QSP_ARG  PROMPT,CHARS_TYPED);
+			THIS_SELECTION=get_match(PROMPT,CHARS_TYPED);
 			THIS_SELECTION=CHARS_TYPED;
 		}
 	}
@@ -634,11 +634,11 @@ static int handle_escape_sequence(QSP_ARG_DECL  Completion_Data *cdp)
 			c = LF_ARROW;
 		else {
 	sprintf(ERROR_STRING,"Unexpected arrow key char seen:  0%o !?",c);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 		}
 	} else {
 		sprintf(ERROR_STRING,"Unexpected char 0%o seenm after escape",c);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	return c;
@@ -651,7 +651,7 @@ static int handle_arrow_key(QSP_ARG_DECL  int c, Completion_Data *cdp)
 			ERASE_ONE_CHAR
 		}
 		erase_completion(cdp);
-		THIS_SELECTION=cyc_match(QSP_ARG  CHARS_TYPED,CYC_FORWARD);
+		THIS_SELECTION=cyc_match(CHARS_TYPED,CYC_FORWARD);
 		if( strlen(THIS_SELECTION) > N_SO_FAR )
 			show_completion(cdp,1);
 		BEGIN_EDIT
@@ -662,7 +662,7 @@ static int handle_arrow_key(QSP_ARG_DECL  int c, Completion_Data *cdp)
 		}
 		erase_completion(cdp);
 		/* BUG need to cycle the opposite way */
-		THIS_SELECTION=cyc_match(QSP_ARG  CHARS_TYPED,CYC_BACKWARD);
+		THIS_SELECTION=cyc_match(CHARS_TYPED,CYC_BACKWARD);
 		if( strlen(THIS_SELECTION) > N_SO_FAR )
 			show_completion(cdp,1);
 		BEGIN_EDIT
@@ -782,7 +782,7 @@ static void append_character(QSP_ARG_DECL  int c, Completion_Data *cdp)
 			erase_completion(cdp);
 	}
 	if( N_SO_FAR >= (LLEN-1) ){
-		WARN("too many input chars!?");
+		warn("too many input chars!?");
 	} else {
 		CHARS_TYPED[N_SO_FAR++] = c;
 	}
@@ -827,7 +827,7 @@ static int check_special_char(QSP_ARG_DECL  int c, Completion_Data *cdp)
 		 * Might be considered a BUG?
 		 */
 		erase_completion(cdp);
-		THIS_SELECTION=cyc_match(QSP_ARG  CHARS_TYPED,CYC_FORWARD);
+		THIS_SELECTION=cyc_match(CHARS_TYPED,CYC_FORWARD);
 		if( strlen(THIS_SELECTION) > N_SO_FAR )
 			show_completion(cdp,1);
 		return 1;
@@ -855,7 +855,7 @@ const char *get_response_from_user( QSP_ARG_DECL  const char *prompt, FILE *tty_
 	static struct completion_data _this_completion;
 
 #ifdef QUIP_DEBUG
-if( comp_debug <= 0 ) comp_debug=add_debug_module(QSP_ARG  "completion");
+if( comp_debug <= 0 ) comp_debug=add_debug_module("completion");
 #endif /* QUIP_DEBUG */
 
 	/* BUG need to check here that tty_in, tty_out

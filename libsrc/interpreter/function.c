@@ -179,12 +179,12 @@ static double ascii_val(QSP_ARG_DECL  const char *s)
 {
 	unsigned long l;
 	if( (l=strlen(s)) == 0 ){
-		WARN("ascii() passed an empty string!?");
+		warn("ascii() passed an empty string!?");
 		return 0;
 	}
 	if( l > 1 ){
 		sprintf(ERROR_STRING,"ascii() passed a string of length %lu, returning value of 1st char.",l);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return (double) s[0];
 }
@@ -193,7 +193,7 @@ static double dvarexists(QSP_ARG_DECL  const char *s)
 {
 	Variable *vp;
 
-	vp = var_of(QSP_ARG  s);
+	vp = var_of(s);
 	if( vp == NULL ) return 0.0;
 	return 1.0;
 }
@@ -202,28 +202,28 @@ static double dmacroexists(QSP_ARG_DECL  const char *s)
 {
 	Macro *mp;
 
-	mp = macro_of(QSP_ARG  s);
+	mp = macro_of(s);
 	if( mp == NULL ) return 0.0;
 	return 1.0;
 }
 
 static double dexists(QSP_ARG_DECL  const char *fname)
 {
-	if( path_exists(QSP_ARG  fname) )
+	if( path_exists(fname) )
 		return(1.0);
 	else	return(0.0);
 }
 
 static double disdir(QSP_ARG_DECL  const char *path)
 {
-	if( directory_exists(QSP_ARG path) )
+	if( directory_exists(path) )
 		return 1.0;
 	else	return 0.0;
 }
 
 static double disreg(QSP_ARG_DECL  const char *path)
 {
-	if( regfile_exists(QSP_ARG path) )
+	if( regfile_exists(path) )
 		return 1.0;
 	else	return 0.0;
 }
@@ -270,10 +270,10 @@ static void init_##type_stem##_class(SINGLE_QSP_ARG_DECL)		\
 	if( type_stem##_icp != NULL ){				\
 		sprintf(ERROR_STRING,					\
 	"Redundant call to %s class initializer",#type_stem);		\
-		WARN(ERROR_STRING);					\
+		warn(ERROR_STRING);					\
 		return;							\
 	}								\
-	type_stem##_icp = new_item_class(QSP_ARG  #type_stem );		\
+	type_stem##_icp = new_item_class(#type_stem );		\
 }
 
 DECLARE_CLASS_INITIALIZER(sizable)
@@ -291,11 +291,11 @@ DECLARE_CLASS_INITIALIZER(positionable)
 
 #define DECLARE_ADD_FUNCTION(type_stem,func_type)			\
 									\
-void add_##type_stem(QSP_ARG_DECL  Item_Type *itp,			\
+void _add_##type_stem(QSP_ARG_DECL  Item_Type *itp,			\
 		func_type *func_str_ptr,				\
 		Item *(*lookup)(QSP_ARG_DECL  const char *))		\
 {									\
-	if( type_stem##_icp == NULL )				\
+	if( type_stem##_icp == NULL )					\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 	add_items_to_class(type_stem##_icp,itp,func_str_ptr,lookup);	\
 }
@@ -316,7 +316,7 @@ Item *find_##type_stem(QSP_ARG_DECL  const char *name )			\
 	if( type_stem##_icp == NULL )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 									\
-	return( get_member(QSP_ARG  type_stem##_icp,name) );		\
+	return( get_member(type_stem##_icp,name) );		\
 }
 
 DECLARE_FIND_FUNCTION(sizable)
@@ -341,7 +341,7 @@ Item *check_##type_stem(QSP_ARG_DECL  const char *name )		\
 	if( type_stem##_icp == NULL )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 									\
-	ip = check_member(QSP_ARG  type_stem##_icp, name );		\
+	ip = check_member(type_stem##_icp, name );		\
 	OBJC_CHECK(type_stem)						\
 	return ip;							\
 }
@@ -357,7 +357,7 @@ func_type *get_##type_stem##_functions(QSP_ARG_DECL  Item *ip)		\
 	Member_Info *mip;						\
 	if( type_stem##_icp == NULL )				\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
-	mip = get_member_info(QSP_ARG  type_stem##_icp,ip->item_name);	\
+	mip = get_member_info(type_stem##_icp,ip->item_name);	\
 	/*MEMBER_CAUTIOUS_CHECK(type_stem)*/				\
 	assert( mip != NULL );				\
 	return (func_type *) mip->mi_data;				\
@@ -442,7 +442,7 @@ static double get_timestamp(QSP_ARG_DECL  Item *ip,int func_index,dimension_t fr
 	if( tsable_icp == NULL )
 		init_tsable_class(SINGLE_QSP_ARG);
 
-	mip = get_member_info(QSP_ARG  tsable_icp,ip->item_name);
+	mip = get_member_info(tsable_icp,ip->item_name);
 	assert( mip != NULL );
 
 	tsfp = (Timestamp_Functions *) mip->mi_data;
@@ -464,7 +464,7 @@ Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	if( subscriptable_icp == NULL )
 		init_subscriptable_class(SINGLE_QSP_ARG);
 
-	mip = get_member_info(QSP_ARG  subscriptable_icp,ip->item_name);
+	mip = get_member_info(subscriptable_icp,ip->item_name);
 	assert( mip != NULL );
 
 	sfp = (Subscript_Functions *) mip->mi_data;
@@ -472,7 +472,7 @@ Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	if( sfp->subscript == NULL ){
 		sprintf(ERROR_STRING,"Can't subscript object %s!?",
 			ip->item_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -492,7 +492,7 @@ Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	if( subscriptable_icp == NULL )
 		init_subscriptable_class(SINGLE_QSP_ARG);
 
-	mip = get_member_info(QSP_ARG  subscriptable_icp,ip->item_name);
+	mip = get_member_info(subscriptable_icp,ip->item_name);
 	assert( mip != NULL );
 
 	sfp = (Subscript_Functions *) mip->mi_data;
@@ -500,7 +500,7 @@ Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	if( sfp->csubscript == NULL ){
 		sprintf(ERROR_STRING,"Can't subscript object %s",
 			ip->item_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 

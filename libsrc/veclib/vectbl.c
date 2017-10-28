@@ -14,6 +14,7 @@
 
 static Item_Type *vec_func_itp=NULL;
 static ITEM_INIT_PROT(Vector_Function, vec_func)
+#define init_vec_funcs()	_init_vec_funcs(SINGLE_QSP_ARG)
 
 static ITEM_INIT_FUNC(Vector_Function, vec_func, 0)
 ITEM_LIST_FUNC(Vector_Function, vec_func)
@@ -355,10 +356,10 @@ static void create_vfs(SINGLE_QSP_ARG_DECL)
 {
 	u_int i;
 
-	init_vec_funcs(SINGLE_QSP_ARG);	// init item type
+	init_vec_funcs();	// init item type
 
 	for(i=0;i<N_NVFS;i++){
-		add_item(QSP_ARG  vec_func_itp, &vec_func_tbl[i] );
+		add_item(vec_func_itp, &vec_func_tbl[i] );
 	}
 }
 
@@ -392,7 +393,7 @@ void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 	if( size != N_VEC_FUNCS ){
 		sprintf(ERROR_STRING,"check_vfa_tbl:  size (%d) not equal to N_VEC_FUNCS (%d)!?",
 			size,N_VEC_FUNCS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	qsort(vfa_tbl,size,sizeof(Vec_Func_Array),vfa_cmp);
@@ -408,7 +409,7 @@ i, VF_NAME(&vec_func_tbl[i]),
 vfa_tbl[i].vfa_code,
 VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ])
 );
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 
@@ -417,7 +418,7 @@ ADVISE(ERROR_STRING);
 	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
 		i,VF_NAME(&vec_func_tbl[i]),
 		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 //			retval = (-1);
 		}
 
@@ -438,14 +439,14 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 	}
 
 	if( veclib_debug == 0 )
-		veclib_debug = add_debug_module(QSP_ARG  "veclib");
+		veclib_debug = add_debug_module("veclib");
 
 	/* sort the table to insure that each entry is at the location of its code */
 #ifdef CAUTIOUS
 	if( N_VEC_FUNCS != N_NVFS ){
 		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
 			N_VEC_FUNCS-N_NVFS);
-		ERROR1(ERROR_STRING);
+		error1(ERROR_STRING);
 	}
 #endif // CAUTIOUS
 
@@ -462,7 +463,7 @@ sprintf(ERROR_STRING,"vl_init:  vec_func_tbl[%d] (%s):  code %d (%s)",
 i, VF_NAME(&vec_func_tbl[i]),
 VF_CODE(&vec_func_tbl[i]), VF_NAME(&vec_func_tbl[ VF_CODE(&vec_func_tbl[i]) ])
 );
-ADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 
 		assert( VF_CODE(&vec_func_tbl[i]) == i );

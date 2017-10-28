@@ -65,7 +65,7 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("read_global_startup:  no HOME in environment");
+		warn("read_traditional_startup:  no HOME in environment");
 		return -1;
 	}
 
@@ -88,7 +88,7 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 		 * but no menus have been pushed, so we can't!?
 		 * Could perhaps use builtin menu only?
 		 */
-		redir(QSP_ARG  fp, filename );
+		redir(fp, filename );
 
 		// If the startup file contains widget creation commands,
 		// they can't run before the appDelegate has started (ios).
@@ -138,7 +138,9 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 /* I used #elif here, but the mac choked on it  - jbm */
 #define DIR_DELIM	"/"
 
-static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
+#define try_directory(dir,progname) _try_directory(QSP_ARG  dir,progname)
+
+static char *_try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 {
 	FILE *fp;
 	static char filename[MAXPATHLEN];
@@ -154,15 +156,15 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 	fp=fopen(filename,"r");
 
 	if( fp!=NULL ) {
-		redir(QSP_ARG  fp, filename );
+		redir(fp, filename );
 		if( *dir ){
 			// We should only set the variable here if
 			// it doesn't already exist - vars defined
 			// in the environment are reserved!
 			Variable *vp;
-			vp = VAR_OF(STARTUP_DIRNAME);
+			vp = var_of(STARTUP_DIRNAME);
 			if( vp == NULL ){
-				assign_var(QSP_ARG  STARTUP_DIRNAME,dir);
+				assign_var(STARTUP_DIRNAME,dir);
 			}
 		}
 		return(filename);
@@ -173,7 +175,7 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 
 static char *try_cwd(QSP_ARG_DECL  char *progname)
 {
-	return( try_directory(QSP_ARG  ".",progname) );
+	return( try_directory(".",progname) );
 }
 
 static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user's home directory */
@@ -183,10 +185,10 @@ static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user'
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("try_home:  no HOME in environment");
+		warn("try_home:  no HOME in environment");
 		return(NULL);
 	}
-	return( try_directory(QSP_ARG  home,progname) );
+	return( try_directory(home,progname) );
 }
 
 static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in user-specified directory */
@@ -195,12 +197,12 @@ static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in 
 
 	dir=getenv(STARTUP_DIRNAME);
 	if( dir == NULL ) return(NULL);
-	return( try_directory(QSP_ARG  dir,progname) );
+	return( try_directory(dir,progname) );
 }
 
 static char *try_default(QSP_ARG_DECL  char *progname) /* look for dotfile in default system directory */
 {
-	return( try_directory(QSP_ARG  QUIP_DEFAULT_DIR,progname) );
+	return( try_directory(QUIP_DEFAULT_DIR,progname) );
 }
 
 #endif // BUILD_FOR_OBJC

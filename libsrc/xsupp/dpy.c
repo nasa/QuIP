@@ -41,7 +41,7 @@ void set_display( Disp_Obj *dop )
 List *displays_list(SINGLE_QSP_ARG_DECL)
 {
 	if( disp_obj_itp == NULL ) return(NULL);
-	return( item_list(QSP_ARG  disp_obj_itp) );
+	return( item_list(disp_obj_itp) );
 }
 
 void info_do( Disp_Obj *dop )
@@ -58,8 +58,9 @@ void info_do( Disp_Obj *dop )
 }
 
 
+#define dop_open(dop) _dop_open(QSP_ARG  dop)
 
-static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
+static int _dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 {
 	/* BUG - on Solaris, when we have DISPLAY set to :0,
 	 * but are on a remote server, this call hangs...
@@ -73,7 +74,7 @@ static int dop_open( QSP_ARG_DECL  Disp_Obj *dop )
 			"dop_open:  Can't open display \"%s\"\n",DO_NAME(dop));
 		NWARN(ERROR_STRING);
 		/* remove the object */
-		del_disp_obj(QSP_ARG  dop);
+		del_disp_obj(dop);
 		return(-1);
 	}
 	return(0);
@@ -281,8 +282,9 @@ static Visual *Get15BitVisual( Disp_Obj * dop)
 	return( GetSpecifiedVisual(dop,15) );
 }
 
+#define dop_setup(dop,desired_depth) _dop_setup(QSP_ARG   dop, desired_depth)
 
-static int dop_setup( QSP_ARG_DECL   Disp_Obj *dop, int desired_depth)
+static int _dop_setup( QSP_ARG_DECL   Disp_Obj *dop, int desired_depth)
 {
 	XVisualInfo vinfo, *list;
 	int n;
@@ -413,12 +415,12 @@ static Size_Functions dpy_sf={
  * Open the named display
  */
 
-Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
+Disp_Obj *_open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 {
 	Disp_Obj *dop;
 	static int siz_done=0;
 
-	dop = new_disp_obj(QSP_ARG  name);
+	dop = new_disp_obj(name);
 	if( dop == NULL ){
 		sprintf(ERROR_STRING, "Couldn't create object for display %s",
 					name);
@@ -426,21 +428,21 @@ Disp_Obj *open_display(QSP_ARG_DECL  const char *name,int desired_depth)
 		return(NULL);
 	}
 
-	if( dop_open(QSP_ARG  dop) < 0 ){
+	if( dop_open(dop) < 0 ){
 		return(NULL);
 	}
 
-	if( dop_setup(QSP_ARG  dop,desired_depth) < 0 ){
+	if( dop_setup(dop,desired_depth) < 0 ){
 		/* Bug - XCloseDisplay?? */
 		/* need to destroy object here */
-		del_disp_obj(QSP_ARG  dop);
+		del_disp_obj(dop);
 		return(NULL);
 	}
 	set_display(dop);
 
 	if( ! siz_done ){
 		siz_done++;
-		add_sizable(QSP_ARG  disp_obj_itp,&dpy_sf, NULL );
+		add_sizable(disp_obj_itp,&dpy_sf, NULL );
 	}
 
 	return(dop);
@@ -458,7 +460,7 @@ static Disp_Obj *check_for_desired_depth(SINGLE_QSP_ARG_DECL)
 
 	desired_depth=atoi(s);
 
-	dop = open_display(QSP_ARG  dname,desired_depth);
+	dop = open_display(dname,desired_depth);
 	if( dop == NULL ){
 		sprintf(ERROR_STRING,"Unable to open display %s with $DESIRED_DEPTH (%d)",
 			dname,desired_depth);
@@ -470,11 +472,13 @@ static Disp_Obj *check_for_desired_depth(SINGLE_QSP_ARG_DECL)
 #define MAX_DISPLAY_DEPTHS	4
 static int possible_depths[MAX_DISPLAY_DEPTHS]={24,8,16,15};
 
-static Disp_Obj *check_possible_depth(QSP_ARG_DECL  int d, const char *dname)
+#define check_possible_depth(d,dname) _check_possible_depth(QSP_ARG  d, dname)
+
+static Disp_Obj *_check_possible_depth(QSP_ARG_DECL  int d, const char *dname)
 {
 	Disp_Obj *dop;
 
-	dop = open_display(QSP_ARG  dname,d);
+	dop = open_display(dname,d);
 	if( dop != NULL && verbose ){
 		sprintf(ERROR_STRING,
 			"Using depth %d on display %s",
@@ -484,13 +488,15 @@ static Disp_Obj *check_possible_depth(QSP_ARG_DECL  int d, const char *dname)
 	return(dop);
 }
 
-static Disp_Obj *check_possible_depths(QSP_ARG_DECL  const char *dname)
+#define check_possible_depths(dname) _check_possible_depths(QSP_ARG  dname)
+
+static Disp_Obj *_check_possible_depths(QSP_ARG_DECL  const char *dname)
 {
 	Disp_Obj *dop;
 	int i;
 
 	for(i=0;i<MAX_DISPLAY_DEPTHS;i++){
-		dop=check_possible_depth(QSP_ARG  possible_depths[i], dname);
+		dop=check_possible_depth(possible_depths[i], dname);
 		if( dop != NULL ) return dop;
 
 		if( verbose ){
@@ -508,16 +514,16 @@ static Disp_Obj * default_x_display(SINGLE_QSP_ARG_DECL)
 	const char *dname;
 	Disp_Obj *dop;
 
-	dname = check_display(SINGLE_QSP_ARG);
+	dname = check_display();
 
 	/* these two lines added so this can be called more than once */
-	dop = disp_obj_of(QSP_ARG  dname);
+	dop = disp_obj_of(dname);
 	if( dop != NULL ) return(dop);
 
 	dop = check_for_desired_depth(SINGLE_QSP_ARG);
 	if( dop != NULL ) return dop;
 
-	dop = check_possible_depths(QSP_ARG  dname);
+	dop = check_possible_depths(dname);
 	return dop;
 }
 /* end default_x_display */
@@ -724,7 +730,7 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	if( window_sys_inited ) return;
 
 #ifdef QUIP_DEBUG
-	xdebug = add_debug_module(QSP_ARG  "xsupp");
+	xdebug = add_debug_module("xsupp");
 #endif /* QUIP_DEBUG */
 
 //int (*XSetErrorHandler(handler))()
@@ -735,7 +741,7 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 		fprintf(stderr,"XSetErrorHandler returned 0x%lx\n",(long)old_handler);
 
 
-	add_event_func(QSP_ARG  i_loop);
+	add_event_func(i_loop);
 	set_discard_func( discard_events );
 
 	window_sys_inited=1;
@@ -749,15 +755,15 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 	}
 	// Make sure DISPLAY_WIDTH and DISPLAY_HEIGHT are set...
 	// If these have been set in the environment, leave be.
-	vp = var_of(QSP_ARG  "DISPLAY_WIDTH");
+	vp = var_of("DISPLAY_WIDTH");
 	if( vp == NULL ){
 		sprintf(s,"%d",DO_WIDTH(current_dop));
-		ASSIGN_RESERVED_VAR("DISPLAY_WIDTH",s);
+		assign_reserved_var("DISPLAY_WIDTH",s);
 	}
-	vp = var_of(QSP_ARG  "DISPLAY_HEIGHT");
+	vp = var_of("DISPLAY_HEIGHT");
 	if( vp == NULL ){
 		sprintf(s,"%d",DO_HEIGHT(current_dop));
-		ASSIGN_RESERVED_VAR("DISPLAY_HEIGHT",s);
+		assign_reserved_var("DISPLAY_HEIGHT",s);
 	}
 
 	//window_sys_inited=1;
@@ -766,7 +772,7 @@ void window_sys_init(SINGLE_QSP_ARG_DECL)
 #define DEFAULT_DISPLAY_DEPTH	24
 #define ALTERNATE_DISPLAY_DEPTH	8
 
-int display_depth(SINGLE_QSP_ARG_DECL)
+int _display_depth(SINGLE_QSP_ARG_DECL)
 {
 	if( current_dop == NULL )
 		current_dop = default_x_display(SINGLE_QSP_ARG);
@@ -777,7 +783,7 @@ int display_depth(SINGLE_QSP_ARG_DECL)
 	return( DO_DEPTH(current_dop) );
 }
 
-void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
+void _show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 {
 	int nvis,i;
 	XVisualInfo *	vlp;
@@ -785,7 +791,7 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 	vlp=get_vis_list(dop,&nvis);
 
 	sprintf(ERROR_STRING,"%d visuals found:",nvis);
-	ADVISE(ERROR_STRING);
+	advise(ERROR_STRING);
 
 	for(i=0;i<nvis;i++){
 		sprintf(ERROR_STRING,"id %p    screen %d   class %d   depth %d    masks %ld %ld %ld   cmap siz %d   bits_per_rgb %d",
@@ -799,7 +805,7 @@ void show_visuals(QSP_ARG_DECL  Disp_Obj *dop )
 			vlp[i].colormap_size,
 			vlp[i].bits_per_rgb
 			);
-		ADVISE(DEFAULT_ERROR_STRING);
+		advise(DEFAULT_ERROR_STRING);
 	}
 }
 

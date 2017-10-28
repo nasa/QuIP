@@ -212,7 +212,7 @@ static COMMAND_FUNC( do_mouse_open )
 	int c;
 
 	s=NAMEOF("device file");
-	mouse_fd=open_serial_device(QSP_ARG  s);
+	mouse_fd=open_serial_device(s);
 	// BUG we should set the speed, etc.
 
 	/* We expect to see M3, then some junk... */
@@ -418,7 +418,7 @@ next_packet:
 	if( packet[3] & 040 ) button_state |= MIDDLE_BUTTON_DOWN;
 
 	sprintf(MSG_STR,"%d",button_state);
-	assign_reserved_var(QSP_ARG  "mouse_buttons", MSG_STR);
+	assign_reserved_var("mouse_buttons", MSG_STR);
 
 	decode_motion_packet(&dx,&dy,packet);
 
@@ -428,9 +428,9 @@ next_packet:
 	//prt_msg(MSG_STR);
 
 	sprintf(MSG_STR,"%d",dx);
-	assign_reserved_var(QSP_ARG  "mouse_dx", MSG_STR);
+	assign_reserved_var("mouse_dx", MSG_STR);
 	sprintf(MSG_STR,"%d",dy);
-	assign_reserved_var(QSP_ARG  "mouse_dy", MSG_STR);
+	assign_reserved_var("mouse_dy", MSG_STR);
 
 }
 
@@ -514,10 +514,10 @@ static COMMAND_FUNC( do_check_mouse )
 {
 	if( n_buffered_chars >= 3 ) {
 		advise("mouse data available");
-		assign_reserved_var(QSP_ARG  "mouse_data","1");
+		assign_reserved_var("mouse_data","1");
 	} else {
 		advise("no mouse data available");
-		assign_reserved_var(QSP_ARG  "mouse_data","0");
+		assign_reserved_var("mouse_data","0");
 	}
 }
 
@@ -573,8 +573,7 @@ static void check_mouse(SINGLE_QSP_ARG_DECL)
 			//if( intractive(SINGLE_QSP_ARG) )
 			//	simulate_typing(mouse_action[event]);
 			//else
-				chew_text(QSP_ARG  mouse_action[event],
-					"(mouse event)" );
+				chew_text(mouse_action[event],"(mouse event)");
 		}
 	}
 }
@@ -588,14 +587,14 @@ static COMMAND_FUNC( poll_mouse )
 			WARN("already polling mouse");
 			return;
 		}
-		add_event_func(QSP_ARG  check_mouse);
+		add_event_func(check_mouse);
 		polling=1;
 	} else {
 		if( ! polling ) {
 			WARN("not already polling mouse");
 			return;
 		}
-		if( rem_event_func(QSP_ARG  check_mouse) < 0 )
+		if( rem_event_func(check_mouse) < 0 )
 			WARN("error removing mouse handler");
 		polling=0;
 	}
@@ -637,7 +636,7 @@ MENU_END(mouse)
 
 COMMAND_FUNC( do_mouse_menu )
 {
-	PUSH_MENU(mouse);
+	CHECK_AND_PUSH_MENU(mouse);
 }
 
 

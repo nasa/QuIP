@@ -883,7 +883,7 @@ static COMMAND_FUNC( do_ls450_calib_const )
 
 static COMMAND_FUNC( inq_ls450 )
 {
-	PUSH_MENU(ls450_inquiry);
+	CHECK_AND_PUSH_MENU(ls450_inquiry);
 }
 
 
@@ -901,17 +901,17 @@ MENU_END(ls450)
 
 static COMMAND_FUNC( do_spectra_menu )
 {
-	PUSH_MENU(spectra);
+	CHECK_AND_PUSH_MENU(spectra);
 }
 
 static COMMAND_FUNC( do_cntrl_menu )
 {
-	PUSH_MENU(usb2k_control);
+	CHECK_AND_PUSH_MENU(usb2k_control);
 }
 
 static COMMAND_FUNC( do_inq_menu )
 {
-	PUSH_MENU(usb2k_inquiry);
+	CHECK_AND_PUSH_MENU(usb2k_inquiry);
 }
 
 static COMMAND_FUNC( do_ver )
@@ -942,7 +942,7 @@ static void poll_accessories()
 
 static COMMAND_FUNC( do_ls450_menu )
 {
-	PUSH_MENU(ls450);
+	CHECK_AND_PUSH_MENU(ls450);
 }
 
 static COMMAND_FUNC(do_clear_input_buf)
@@ -974,7 +974,7 @@ COMMAND_FUNC( do_usb2000_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(usb2k);
+	CHECK_AND_PUSH_MENU(usb2k);
 
 }
 

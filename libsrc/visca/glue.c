@@ -10,21 +10,21 @@ ITEM_INTERFACE_DECLARATIONS(Visca_Command,visca_cmd,0)
 ITEM_INTERFACE_DECLARATIONS(Visca_Inquiry,visca_inq,0)
 
 
-Item_Context *create_visca_cmd_context(QSP_ARG_DECL  const char *name)
+Item_Context *_create_visca_cmd_context(QSP_ARG_DECL  const char *name)
 {
 	if( visca_cmd_itp == NULL )
-		init_visca_cmds(SINGLE_QSP_ARG);
+		init_visca_cmds();
 
-	return create_item_context(QSP_ARG  visca_cmd_itp, name);
+	return create_item_context(visca_cmd_itp, name);
 }
 
-void push_visca_cmd_context(QSP_ARG_DECL  Item_Context *icp)
+void _push_visca_cmd_context(QSP_ARG_DECL  Item_Context *icp)
 {
-	PUSH_ITEM_CONTEXT( visca_cmd_itp, icp );
+	push_item_context( visca_cmd_itp, icp );
 }
 
-Item_Context *pop_visca_cmd_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_pop_visca_cmd_context(SINGLE_QSP_ARG_DECL)
 {
-	return POP_ITEM_CONTEXT(visca_cmd_itp);
+	return pop_item_context(visca_cmd_itp);
 }
 

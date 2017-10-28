@@ -246,7 +246,7 @@ static void process_median(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		WARN(ERROR_STRING);
 		return;
 	}
-	if( !dp_same_prec(QSP_ARG  dpto,dpfr,"process_median") ){
+	if( !dp_same_prec(dpto,dpfr,"process_median") ){
 		WARN("source and target must have same precision for median filter");
 		return;
 	}
@@ -328,7 +328,7 @@ void median_1D(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,int median_radius)
 	INSIST_OBJ_PREC(dpto,PREC_SP,median_1D)
 	INSIST_OBJ_PREC(dpfr,PREC_SP,median_1D)
 
-	if( ! dp_same_size(QSP_ARG  dpto,dpfr,"median_1D") ){
+	if( ! dp_same_size(dpto,dpfr,"median_1D") ){
 		WARN("median_1D:  object sizes must match!?");
 		return;
 	}

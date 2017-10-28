@@ -150,7 +150,7 @@ Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv)
 	IOS_Node *np;
 	Panel_Obj *po;
 
-	lp=panel_obj_list(SINGLE_QSP_ARG);
+	lp=panel_obj_list();
 	if( lp == NULL ) return(NULL);
 	np=IOS_LIST_HEAD(lp);
 	while( np!=NULL ){
@@ -1783,7 +1783,7 @@ void end_busy(int final)
 	dismiss_busy_alert(a);
 } // end_busy
 
-void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	generic_alert(QSP_ARG  type,msg);
 }

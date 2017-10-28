@@ -85,14 +85,14 @@ void set_random_seed(SINGLE_QSP_ARG_DECL)
 	gettimeofday(&tv,NULL);
 	seed_val = tv.tv_usec & 0xffff;	/* 64k different seeds */
 #else
-	WARN("rn.c:  need to implement set_random_seed without gettimeofday!?");
+	warn("rn.c:  need to implement set_random_seed without gettimeofday!?");
 	seed_val=1;
 #endif
 
 #ifdef HAVE_SRAND48
 	srand48( seed_val );
 #else
-	//WARN("rn.c:  need to implement set_random_seed without srand48!?");
+	//warn("rn.c:  need to implement set_random_seed without srand48!?");
 #endif
 }
 
@@ -102,26 +102,26 @@ void set_seed(QSP_ARG_DECL  u_long seed)
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"set_seed:  srand48(%ld)",seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	srand48( seed );
 #elif HAVE_SRANDOM
 	if( verbose ){
 		sprintf(ERROR_STRING,"set_seed:  srandom(%ld)",seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	srandom( seed );
 #elif HAVE_SRAND
 	if( verbose ){
 		sprintf(ERROR_STRING,"set_seed:  srand(%d)",(int)seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	srand( (int)seed );
 #else
-	WARN("rn.c:  no function to set random number generator seed identified by configure!?");
+	warn("rn.c:  no function to set random number generator seed identified by configure!?");
 #endif /* DRAND48 */
 
 	is_seeded=1;
@@ -170,12 +170,12 @@ void rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
         seed= (int)  tvec & 0xfff ;
 
 #else
-	WARN("rn.c:  No time function available to generate a random seed, using 0.");
+	warn("rn.c:  No time function available to generate a random seed, using 0.");
 #endif
 
 	if( verbose ){
 		sprintf(ERROR_STRING,"rninit: seed is %d",seed);
-		ADVISE(ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	set_seed(QSP_ARG  seed);
@@ -216,7 +216,7 @@ void permute(QSP_ARG_DECL  SCRAMBLE_TYPE *buf,int n)
 
 	if( n <= 0 ){
 		sprintf(ERROR_STRING,"permute:  number of elements (%d) must be positive!?",n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
         for(i=0;i<n;i++) buf[i]=i;

@@ -31,7 +31,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_PTR_DECL,	"ptr_decl",		0,	CP_SHP,	ND_DECL	},
 
 {	T_ARGLIST,	"arglist",		2,	NO_SHP,	ND_LIST	},
-{	T_CALLFUNC,	"callfunc",		1,	CP_SHP,	ND_CALLF	},
+{	T_CALLFUNC,	"callfunc",		1,	PT_SHP,	ND_CALLF	},
 {	T_CALL_NATIVE,	"call_native",		1,	CP_SHP,	ND_CALLF	},
 {	T_RETURN,	"return",		1,	PT_SHP,	ND_NONE	},
 {	T_EXIT,		"exit",			1,	NO_SHP,	ND_NONE	},
@@ -48,6 +48,7 @@ Tree_Node_Type tnt_tbl[N_TREE_CODES]={
 {	T_COMP_OBJ,	"compobj",		1,	CP_SHP,	ND_NONE	},
 {	T_DYN_OBJ,	"dynamic_object",	0,	PT_SHP,	ND_STRING	},
 {	T_STATIC_OBJ,	"static_object",	0,	PT_SHP,	ND_STRING	},
+{	T_SCALAR_VAR,	"scalar_var",		0,	PT_SHP,	ND_STRING	},
 {	T_POINTER,	"pointer",		0,	PT_SHP,	ND_STRING	},
 {	T_STR_PTR,	"str_ptr",		0,	PT_SHP,	ND_STRING	},
 {	T_REFERENCE,	"reference",		1,	PT_SHP,	ND_NONE	},

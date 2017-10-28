@@ -47,7 +47,7 @@ static COMMAND_FUNC( do_sendpipe )
 	Pipe *pp;
 	const char *s;
 
-	pp=PICK_PIPE("");
+	pp=pick_pipe("");
 	s=NAMEOF("text to send");
 
 	if( pp == NULL ) return;
@@ -59,11 +59,11 @@ static COMMAND_FUNC( do_readpipe )
 	Pipe *pp;
 	const char *s;
 
-	pp=PICK_PIPE("");
+	pp=pick_pipe("");
 	s=NAMEOF("variable for text storage");
 
 	if( pp == NULL ) {
-		ASSIGN_VAR(s,"error_missing_pipe");
+		assign_var(s,"error_missing_pipe");
 		return;
 	}
 	readfr_pipe(QSP_ARG  pp,s);
@@ -74,7 +74,7 @@ static COMMAND_FUNC( do_pipe_info )
 	Pipe *pp;
 	int i;
 
-	pp = PICK_PIPE("");
+	pp = pick_pipe("");
 	if( pp == NULL ) return;
 
 	if( pp->p_flgs & READ_PIPE ) i=0;
@@ -96,13 +96,13 @@ static COMMAND_FUNC( do_closepipe )
 {
 	Pipe *pp;
 
-	pp = PICK_PIPE("");
+	pp = pick_pipe("");
 	if( pp == NULL ) return;
 
 	close_pipe(QSP_ARG  pp);
 }
 
-static COMMAND_FUNC( do_list_pipes ){ list_pipes(QSP_ARG  tell_msgfile(SINGLE_QSP_ARG)); }
+static COMMAND_FUNC( do_list_pipes ){ list_pipes(tell_msgfile()); }
 
 /* fp should be null - but where do we specify the pipe handle? */
 
@@ -110,7 +110,7 @@ static COMMAND_FUNC( do_pipe_redir )
 {
 	Pipe *pp;
 
-	pp = PICK_PIPE("");
+	pp = pick_pipe("");
 	if( pp == NULL ) return;
 
 	if( (pp->p_flgs & READ_PIPE) == 0 ) {
@@ -141,7 +141,7 @@ static double pipe_exists(QSP_ARG_DECL  const char *s)
 {
 	Pipe *pp;
 
-	pp=pipe_of(QSP_ARG  s);
+	pp=pipe_of(s);
 	if( pp==NULL ) return(0.0);
 	else return(1.0);
 }
@@ -153,7 +153,7 @@ COMMAND_FUNC( do_pipe_menu )
 		DECLARE_STR1_FUNCTION(	pipe_exists,	pipe_exists )
 		inited=1;
 	}
-	PUSH_MENU(pipes);
+	CHECK_AND_PUSH_MENU(pipes);
 }
 
 

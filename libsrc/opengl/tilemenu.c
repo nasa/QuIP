@@ -62,7 +62,7 @@ static COMMAND_FUNC( do_add )
 		tile_lp = new_list();
 #ifdef CAUTIOUS
 	if( tile_lp == NULL )
-		ERROR1("CAUTIOUS:  error creating tile list");
+		error1("CAUTIOUS:  error creating tile list");
 #endif /* CAUTIOUS */
 	np = mk_node(mtp);
 	addTail(tile_lp,np);
@@ -99,7 +99,7 @@ static COMMAND_FUNC( do_xform_tiles )
 	Data_Obj *dp;
 	Node *np;
 
-	dp = PICK_OBJ("transformation matrix");
+	dp = pick_obj("transformation matrix");
 	if( dp == NULL ) return;
 
 	/* We call tile_check_subdiv to determine the subdivisions */
@@ -196,10 +196,10 @@ COMMAND_FUNC( do_tile_menu )
 		init_dir_names();
 		inited=1;
 #ifdef DEBUG
-		debug_tiles = add_debug_module(QSP_ARG  "tiles");
+		debug_tiles = add_debug_module("tiles");
 #endif /* DEBUG */
 	}
-	PUSH_MENU(tiles);
+	CHECK_AND_PUSH_MENU(tiles);
 }
 
 #endif /* HAVE_OPENGL */

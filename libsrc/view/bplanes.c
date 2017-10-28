@@ -154,7 +154,7 @@ void sine_mod_amp(QSP_ARG_DECL  int nframes,float *phases,int period,float *enve
 	arginc = (float)(8*atan(1)/period);
 	for(i=0;i<nframes;i++){
 		sprintf(str,"%s%d",lutstem,i);
-		if( new_colormap(QSP_ARG  str) == NULL )
+		if( new_colormap(str) == NULL )
 			NERROR1("error creating LUT buffer");
 		if( envelope != ((float *)NULL) )
 			factor=envelope[i];

@@ -33,7 +33,7 @@ static void init_cstepit_params(SINGLE_QSP_ARG_DECL)
 	int i,n;
 	int nfmax;		/* max. # function calls */
 
-	lp = opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp = opt_param_list();
 	if( lp == NULL ) return;
 
 	n_prms=eltcount(lp);
@@ -85,7 +85,7 @@ static void cstepit_scr_funk(void)
 		return;
 	}
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	if( lp == NULL ){
 		NWARN("No optimization parameters to vary!?");
 		err=0.0;
@@ -103,7 +103,7 @@ static void cstepit_scr_funk(void)
 
 		opp = (Opt_Param *)( np->n_data);
 		sprintf(str,"%g",ans[i]);	/* why add 1?  fortan? */
-		assign_var(DEFAULT_QSP_ARG  opp->op_name,str);
+		_assign_var(DEFAULT_QSP_ARG  opp->op_name,str);
 		i++;
 		np=np->n_next;
 	}
@@ -121,9 +121,9 @@ static void cstepit_scr_funk(void)
 	 * didn't have a quit after the call to optimize - ???
 	 */
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	_digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
-	vp=var__of(DEFAULT_QSP_ARG  "error");
+	vp=_var__of(DEFAULT_QSP_ARG  "error");
 	if( vp == NULL ) {
 		NWARN(DEFAULT_ERROR_STRING);
 		sprintf(DEFAULT_ERROR_STRING,
@@ -151,7 +151,7 @@ static void evaluate_error_c(void)
 
 	getvals(x,n_prms);		/* get the parameter estimates */
 
-	lp=opt_param_list(SGL_DEFAULT_QSP_ARG);
+	lp=_opt_param_list(SGL_DEFAULT_QSP_ARG);
 	np=QLIST_HEAD(lp);
 	i=0;
 	while(np!=NULL && i < n_prms ){

@@ -33,8 +33,10 @@ extern void setvarg5(Vec_Obj_Args *oap,Data_Obj *dstv,Data_Obj *src1,Data_Obj *s
 /* Public prototypes */
 
 // which file did this come from?
-extern int insure_static(const Vec_Obj_Args *oap);
+extern int _insure_static(QSP_ARG_DECL  const Vec_Obj_Args *oap);
 extern void add_link(void (*func)(LINK_FUNC_ARG_DECLS),LINK_FUNC_ARG_DECLS);
+
+#define insure_static(oap) _insure_static(QSP_ARG  oap)
 
 /* vectbl.c */
 extern void vl_init(SINGLE_QSP_ARG_DECL);
@@ -45,7 +47,7 @@ extern int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
 
 /* vec_call.c */
 #ifdef HAVE_ANY_GPU
-extern void set_gpu_dispatch_func( int (*)(Vector_Function *vfp, Vec_Obj_Args *oap) );
+extern void set_gpu_dispatch_func( int (*)(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap) );
 #endif /* HAVE_ANY_GPU */
 
 extern int call_vfunc( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap );
@@ -64,6 +66,13 @@ extern void set_obj_arg_flags(Vec_Obj_Args *);
 extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);
 
 extern debug_flag_t veclib_debug;
+
+/* lin_util.c */
+extern int _xform_chk(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Data_Obj *xform);
+extern void _inner(QSP_ARG_DECL  Data_Obj *, Data_Obj *, Data_Obj *);
+
+#define xform_chk(dpto,dpfr,xform) _xform_chk(QSP_ARG  dpto,dpfr,xform)
+#define inner(dpto,dp1,dp2) _inner(QSP_ARG  dpto,dp1,dp2)
 
 #ifdef __cplusplus
 }

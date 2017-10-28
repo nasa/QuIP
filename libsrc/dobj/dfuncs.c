@@ -14,7 +14,7 @@
 double obj_exists(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp==NULL ) return(0.0);
 	return(1.0);
 }
@@ -142,7 +142,7 @@ static Data_Obj *obj_for_string(QSP_ARG_DECL  const char *string)
 	SET_DIMENSION(dsp,2,1);
 	SET_DIMENSION(dsp,3,1);
 	SET_DIMENSION(dsp,4,1);
-	dp=make_dobj(QSP_ARG  localname(),dsp,prec_for_code(PREC_STR));
+	dp=make_dobj(localname(),dsp,prec_for_code(PREC_STR));
 	if( dp != NULL ){
 		strcpy((char *)OBJ_DATA_PTR(dp),string);
 	}

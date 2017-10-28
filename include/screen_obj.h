@@ -402,8 +402,11 @@ IOS_ITEM_CHECK_PROT(Screen_Obj,scrnobj)
 IOS_ITEM_PICK_PROT(Screen_Obj,scrnobj)
 IOS_ITEM_ENUM_PROT(Screen_Obj,scrnobj)
 
-extern IOS_Item_Context *pop_scrnobj_context(SINGLE_QSP_ARG_DECL);
-extern void push_scrnobj_context(QSP_ARG_DECL  IOS_Item_Context *icp);
+extern IOS_Item_Context *_pop_scrnobj_context(SINGLE_QSP_ARG_DECL);
+extern void _push_scrnobj_context(QSP_ARG_DECL  IOS_Item_Context *icp);
+
+#define pop_scrnobj_context() _pop_scrnobj_context(SINGLE_QSP_ARG)
+#define push_scrnobj_context(icp) _push_scrnobj_context(QSP_ARG  icp)
 
 extern IOS_Size_Functions scrnobj_sf;
 
@@ -413,14 +416,18 @@ extern IOS_List *all_scrnobjs(SINGLE_QSP_ARG_DECL);
 
 ITEM_INTERFACE_PROTOTYPES(Screen_Obj,scrnobj)
 
+
 #endif /* ! BUILD_FOR_OBJC */
 
-#define PICK_SCRNOBJ(pmpt)		pick_scrnobj(QSP_ARG  pmpt)
+#define init_scrnobjs()		_init_scrnobjs(SINGLE_QSP_ARG)
+#define new_scrnobj(s)		_new_scrnobj(QSP_ARG  s)
+#define scrnobj_of(s)		_scrnobj_of(QSP_ARG  s)
+#define pick_scrnobj(pmpt)	_pick_scrnobj(QSP_ARG  pmpt)
+#define del_scrnobj(s)		_del_scrnobj(QSP_ARG  s)
 
 
 /* screen_objs.c */
 
-extern Screen_Obj *simple_object(QSP_ARG_DECL  const char *name);
 extern Screen_Obj *dup_so(QSP_ARG_DECL  Screen_Obj *sop);
 extern void so_info(Screen_Obj *sop);
 extern Screen_Obj *get_parts(QSP_ARG_DECL const char *class_str);
@@ -429,13 +436,17 @@ extern Screen_Obj *mk_menu(QSP_ARG_DECL  Screen_Obj *mip);
 #define MK_MENU(mip)			mk_menu(QSP_ARG  mip)
 extern void fix_names(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *parent);
 extern void push_parent(Screen_Obj *mp);
-extern void get_min_max_val(QSP_ARG_DECL  int *minp,int *maxp,int *valp);
-#define GET_MIN_MAX_VAL(minp,maxp,valp)		get_min_max_val(QSP_ARG  minp,maxp,valp)
-extern void get_so_width(QSP_ARG_DECL int *widthp);
-#define GET_SOB_WIDTH(widthp)			get_so_width(QSP_ARG  widthp)
-extern int get_strings(QSP_ARG_DECL  Screen_Obj *sop,const char ***sss);
-#define GET_STRINGS(sop,sss)		get_strings(QSP_ARG  sop,sss)
-extern void mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp);
+extern void _get_min_max_val(QSP_ARG_DECL  int *minp,int *maxp,int *valp);
+extern void _get_so_width(QSP_ARG_DECL int *widthp);
+extern int _get_strings(QSP_ARG_DECL  Screen_Obj *sop,const char ***sss);
+extern void _mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp);
+extern Screen_Obj *_simple_object(QSP_ARG_DECL  const char *name);
+
+#define get_min_max_val(minp,maxp,valp)		_get_min_max_val(QSP_ARG  minp,maxp,valp)
+#define get_so_width(widthp)			_get_so_width(QSP_ARG  widthp)
+#define get_strings(sop,sss)			_get_strings(QSP_ARG  sop,sss)
+#define mk_it_scroller(sop,itp)			_mk_it_scroller(QSP_ARG  sop,itp)
+#define simple_object(name) _simple_object(QSP_ARG  name)
 
 extern COMMAND_FUNC(mk_panel);
 
@@ -443,16 +454,15 @@ extern COMMAND_FUNC(mk_panel);
 extern void reposition(Screen_Obj *sop);
 extern void make_menu(QSP_ARG_DECL  Screen_Obj *mp,Screen_Obj *mip);
 extern void make_menu_choice(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *parent);
-extern void make_button(QSP_ARG_DECL  Screen_Obj *bo);
 
 #ifdef HAVE_MOTIF
 extern void delete_motif_widget(Screen_Obj *sop);
 #endif // HAVE_MOTIF
-extern void delete_widget(QSP_ARG_DECL  Screen_Obj *sop);
+extern void _delete_widget(QSP_ARG_DECL  Screen_Obj *sop);
+#define delete_widget(sop) _delete_widget(QSP_ARG  sop)
 
 extern void make_pullright(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *pr,Screen_Obj *parent);
 extern void make_toggle(QSP_ARG_DECL  Screen_Obj *bo);
-extern void make_label(QSP_ARG_DECL  Screen_Obj *sop);
 extern void make_text_field(QSP_ARG_DECL  Screen_Obj *to);
 #ifdef BUILD_FOR_OBJC
 extern void make_text_box(QSP_ARG_DECL  Screen_Obj *tb, BOOL is_editable);
@@ -483,16 +493,25 @@ extern void set_gauge_label(Screen_Obj *gp,const char *s);
 extern void update_gauge_label(Screen_Obj *gp);
 extern void update_message(Screen_Obj *mp);
 extern void update_label(Screen_Obj *mp);
-extern void make_scroller(QSP_ARG_DECL  Screen_Obj *sop);
 extern void set_scroller_list(Screen_Obj *sop,const char *string_list[],int nlist);
-extern void make_chooser(QSP_ARG_DECL  Screen_Obj *sop,int n,const char **stringlist);
-extern void make_picker(QSP_ARG_DECL  Screen_Obj *sop);
 
-extern IOS_Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name);
+extern IOS_Item_Context *_create_scrnobj_context(QSP_ARG_DECL  const char *name);
+#define create_scrnobj_context(name) _create_scrnobj_context(QSP_ARG  name)
 
 extern void get_device_dims(Screen_Obj *sop);
 extern void del_so(QSP_ARG_DECL  Screen_Obj *sop);
 
+extern void _make_label(QSP_ARG_DECL  Screen_Obj *sop);
+extern void _make_scroller(QSP_ARG_DECL  Screen_Obj *sop);
+extern void _make_chooser(QSP_ARG_DECL  Screen_Obj *sop,int n,const char **stringlist);
+extern void _make_picker(QSP_ARG_DECL  Screen_Obj *sop);
+extern void _make_button(QSP_ARG_DECL  Screen_Obj *bo);
+
+#define make_label(sop) _make_label(QSP_ARG  sop)
+#define make_scroller(sop) _make_scroller(QSP_ARG  sop)
+#define make_chooser(sop,n,stringlist) _make_chooser(QSP_ARG  sop,n,stringlist)
+#define make_picker(sop) _make_picker(QSP_ARG  sop)
+#define make_button(bo) _make_button(QSP_ARG  bo)
 
 extern void clear_all_selections(Screen_Obj *sop);
 
