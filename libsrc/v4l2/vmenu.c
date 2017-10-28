@@ -1021,7 +1021,7 @@ MENU_END(video_controls)
 
 static COMMAND_FUNC( do_vctl_menu )
 {
-	PUSH_MENU(video_controls);
+	CHECK_AND_PUSH_MENU(video_controls);
 }
 
 static COMMAND_FUNC( do_report_input )
@@ -1248,7 +1248,7 @@ MENU_END(standards)
 
 static COMMAND_FUNC( do_std_menu )
 {
-	PUSH_MENU(standards);
+	CHECK_AND_PUSH_MENU(standards);
 }
 
 static COMMAND_FUNC( do_downsample )
@@ -1290,7 +1290,7 @@ debug_flag_t stream_debug=0;
 
 static COMMAND_FUNC( do_stream_menu )
 {
-	PUSH_MENU(stream);
+	CHECK_AND_PUSH_MENU(stream);
 }
 
 static COMMAND_FUNC( do_list_devs )
@@ -1358,6 +1358,6 @@ COMMAND_FUNC( do_v4l2_menu )
 
 	}
 
-	PUSH_MENU(v4l2);
+	CHECK_AND_PUSH_MENU(v4l2);
 }
 

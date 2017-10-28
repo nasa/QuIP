@@ -143,7 +143,7 @@ MENU_END(areas)
 
 static COMMAND_FUNC( do_area )
 {
-	PUSH_MENU(areas);
+	CHECK_AND_PUSH_MENU(areas);
 }
 
 /* Create and push a new context */
@@ -176,7 +176,7 @@ MENU_END(contexts)
 
 static COMMAND_FUNC( do_context )
 {
-	PUSH_MENU(contexts);
+	CHECK_AND_PUSH_MENU(contexts);
 }
 
 Precision * get_precision(SINGLE_QSP_ARG_DECL)
@@ -956,6 +956,6 @@ COMMAND_FUNC( do_dobj_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(data);
+	CHECK_AND_PUSH_MENU(data);
 }
 

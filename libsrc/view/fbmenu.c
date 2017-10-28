@@ -786,7 +786,7 @@ MENU_END(var_info)
 
 static COMMAND_FUNC( do_var_info )
 {
-	PUSH_MENU(var_info);
+	CHECK_AND_PUSH_MENU(var_info);
 }
 
 static COMMAND_FUNC( do_init_gl )
@@ -832,7 +832,7 @@ MENU_END(fb)
 COMMAND_FUNC( do_fb_menu )
 {
 	/* insure_x11_server(); */	/* not clear we really need this for *this* menu!? BUG? */
-	PUSH_MENU(fb);
+	CHECK_AND_PUSH_MENU(fb);
 }
 
 

@@ -133,7 +133,7 @@ MENU_END(stepit)
 
 COMMAND_FUNC( do_step_menu )
 {
-	PUSH_MENU(stepit);
+	CHECK_AND_PUSH_MENU(stepit);
 }
 
 

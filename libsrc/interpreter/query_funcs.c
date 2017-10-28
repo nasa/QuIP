@@ -446,7 +446,7 @@ DEBUG_LINENO(lookahead_til before eatup_space_for_lookahead #1)
 		while( (QLEVEL == _level) && (QRY_HAS_TEXT(qp) == 0) ){
 			/* nextline() never pops more than one level */
 DEBUG_LINENO(lookahead_til before nextline)
-			nextline(QSP_ARG "" );	// lookahead_til
+			nextline("");	// lookahead_til
 DEBUG_LINENO(lookahead_til after nextline)
 			// But because it can pop a level, we should not any
 			// the space here...
@@ -614,7 +614,7 @@ advise(ERROR_STRING);
 
 	// we use MSG_STR as a scratch buffer...
 	sprintf(MSG_STR,"%s%s",MACRO_LOCATION_PREFIX,MACRO_NAME(mp));
-	PUSH_TEXT(MACRO_TEXT(mp), MSG_STR);
+	push_text(MACRO_TEXT(mp), MSG_STR);
 
 	qp = CURR_QRY(THIS_QSP) ;
 
@@ -690,7 +690,7 @@ static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
 
 // was qword
 
-/*static*/ const char * next_query_word(QSP_ARG_DECL const char *pline)
+/*static*/ const char * _next_query_word(QSP_ARG_DECL const char *pline)
 		/* prompt */
 {
 	const char *buf;
@@ -760,7 +760,7 @@ static inline void replenish_buffer(SINGLE_QSP_ARG_DECL)
 
 	n_have = (int) ((QS_RET_PTR(THIS_QSP))-QS_RET_STR(THIS_QSP));	/* cast for pc */
 
-	input_ptr=qline(QSP_ARG  "");
+	input_ptr=qline("");
 	assert(input_ptr!=NULL);
 	n_need = strlen(QS_RET_STR(THIS_QSP))+strlen(input_ptr)+16;
 
@@ -1607,7 +1607,7 @@ static const char *next_word_from_level(QSP_ARG_DECL  const char *pline)
 	qp=(CURR_QRY(THIS_QSP));
 	if( !QRY_HAS_TEXT(qp) )	/* need to read more input */
 	{
-		buf=qline(QSP_ARG  pline );
+		buf=qline(pline);
 	}
 
 	if( QLEVEL < 0 ){
@@ -1676,7 +1676,7 @@ const char * steal_line(QSP_ARG_DECL  const char* pline)
 	/* int n; */
 	const char *buf;
 
-	buf=qline(QSP_ARG  pline);
+	buf=qline(pline);
 	/*
 	n=strlen(buf);
 	if( n>1 && (buf[n-1] == '\n' || buf[n-1] == '\r') )
@@ -1698,7 +1698,7 @@ const char * steal_line(QSP_ARG_DECL  const char* pline)
  * saves the line to the transcript file.
  */
 
-const char * qline(QSP_ARG_DECL  const char *pline)
+const char * _qline(QSP_ARG_DECL  const char *pline)
 		/* prompt string */
 {
 	Query *qp;
@@ -1711,7 +1711,7 @@ const char * qline(QSP_ARG_DECL  const char *pline)
 
 		/* if the current level is out, nextline will pop 1 level */
 DEBUG_LINENO(qline before nextline)
-		buf=nextline(QSP_ARG  pline);	// qline
+		buf=nextline(pline);	// qline
 DEBUG_LINENO(qline after nextline)
 
 		if( IS_HALTING(THIS_QSP) ) return NULL;
@@ -1724,8 +1724,8 @@ DEBUG_LINENO(qline after nextline)
 
 		if( QRY_HAS_TEXT(qp) ){
 			if( IS_DUPING ){
-				dup_word(QSP_ARG  QRY_LINE_PTR(qp) );
-				dup_word(QSP_ARG  "\n");
+				dup_word(QRY_LINE_PTR(qp) );
+				dup_word("\n");
 			}
 			return(buf);
 		}
@@ -1879,7 +1879,7 @@ static int check_for_complete_line(QSP_ARG_DECL  const char *buf)
  * We return the buffer, AND set QRY_LINE_PTR(qp)  - redundant?
  */
 
-const char * nextline(QSP_ARG_DECL  const char *pline)
+const char * _nextline(QSP_ARG_DECL  const char *pline)
 		/* prompt */
 {
 	Query *qp;
@@ -2061,7 +2061,7 @@ static const char *extract_line_for_macro(SINGLE_QSP_ARG_DECL)
 
 	level = QLEVEL;
 	while( ! QRY_HAS_TEXT(CURR_QRY(THIS_QSP)) ){
-		/*from=*/qline(QSP_ARG  "");
+		/*from=*/qline("");
 		// BUG - we need to handle premature EOF?
 		if( QLEVEL != level ){
 			sprintf(ERROR_STRING,"extract_line_for_macro:  premature EOF!?");
@@ -2156,9 +2156,6 @@ String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL)
 
 	mac_sbp = new_stringbuf();
 	copy_string(mac_sbp,"");	// initialize - redundant?
-
-	//s=qline(QSP_ARG  "");
-	//qp->q_rdlineno++;	// count this line
 
 	while( (status=get_next_macro_line(QSP_ARG  mac_sbp)) == 1 )
 		;
@@ -2437,7 +2434,7 @@ static int need_to_chunk(const char *s)		/* does s contain non-quoted spaces? */
 // It is somewhat unfortunate that the indentation doesn't
 // come out the way we would like it...
 
-void dup_word(QSP_ARG_DECL  const char *s)
+void _dup_word(QSP_ARG_DECL  const char *s)
 {
 	int chunkme;
 	FILE *fp;
@@ -2475,7 +2472,7 @@ void ql_debug(SINGLE_QSP_ARG_DECL)
 
 #endif /* NOT_USED */
 
-int dupout(QSP_ARG_DECL  FILE *fp)			/** save input text to file fp */
+int _dupout(QSP_ARG_DECL  FILE *fp)			/** save input text to file fp */
 {
 	if( IS_DUPING ){
 		WARN("already dup'ing");
@@ -2895,7 +2892,7 @@ static void insure_query_text_buf(Query *qp)
  * and the q_file is not NULL
  */
 
-void open_loop(QSP_ARG_DECL int n)
+void _open_loop(QSP_ARG_DECL int n)
 			/* loop count */
 {
 	Query *qp;
@@ -2909,7 +2906,7 @@ void open_loop(QSP_ARG_DECL int n)
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
 }
 
-void foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
+void _foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 {
 	Query *qp;
 
@@ -2943,7 +2940,7 @@ void zap_fore(Foreach_Loop *frp)
 #ifdef BUILD_FOR_OBJC
 #define READING_FROM_TERMINAL(qp)	1
 #else // ! BUILD_FOR_OBJC
-#define READING_FROM_TERMINAL(qp)	( QRY_FILE_PTR(qp) == tfile(SINGLE_QSP_ARG) )
+#define READING_FROM_TERMINAL(qp)	( QRY_FILE_PTR(qp) == tfile() )
 #endif // ! BUILD_FOR_OBJC
 
 static inline void close_query_file(QSP_ARG_DECL  Query *qp)
@@ -3059,7 +3056,7 @@ sprintf(ERROR_STRING,"%s - %s (qlevel = %d):  pushing at level %d, text 0x%lx  (
  * encrypted file...
  */
 
-void push_text(QSP_ARG_DECL const char *text, const char *filename)
+void _push_text(QSP_ARG_DECL const char *text, const char *filename)
 {
 	Query *qp, *old_qp;
 
@@ -3105,11 +3102,11 @@ WHENCE_L(fullpush),QLEVEL + 1,text);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-	push_text(QSP_ARG  text, filename);
+	push_text(text, filename);
 	share_macro_args(QSP_ARG CURR_QRY(THIS_QSP),QRY_AT_LEVEL(THIS_QSP,QLEVEL-1));	// fullpush
 }
 
-COMMAND_FUNC( close_loop )
+void _close_loop(SINGLE_QSP_ARG_DECL)
 {
 	Query *qp;
 	Query *loop_qp;
@@ -3228,7 +3225,7 @@ void _whileloop(QSP_ARG_DECL  int value)
  * it at the right time
  */
 
-void push_if(QSP_ARG_DECL const char *text)
+void _push_if(QSP_ARG_DECL const char *text)
 {
 	//Query *qp;
 
@@ -3250,14 +3247,14 @@ void set_args(QSP_ARG_DECL  int ac,char** av)
 	char acstr[32];
 
 	sprintf(acstr,"%d",ac-1);  /* don't count command name */
-	create_reserved_var(QSP_ARG  "argc",acstr);
+	create_reserved_var("argc",acstr);
 
 	for(i=0;i<ac;i++){
 		/* allow the cmd args to be referenced $argv1 etc, because $1 $2 don't work inside macros.
 		 * BUG - we really ought to copy the shell and allow variable subscripting:  $argv[1]
 		 */
 		sprintf(acstr,"argv%d",i);
-		create_reserved_var(QSP_ARG  acstr,av[i]);
+		create_reserved_var(acstr,av[i]);
 
 		n_cmd_args++;
 	}
@@ -3375,7 +3372,7 @@ void set_qflags(QSP_ARG_DECL int flag)
 
 static FILE *ttyfile=NO_TTY;
 
-FILE *tfile(SINGLE_QSP_ARG_DECL)
+FILE *_tfile(SINGLE_QSP_ARG_DECL)
 {
 	char ttn[24];
 
@@ -3538,7 +3535,7 @@ double my_round( double n )
 
 void push_top_menu(SINGLE_QSP_ARG_DECL)
 {
-	PUSH_MENU_PTR( BOTTOM_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
+	push_menu( BOTTOM_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
 }
 
 
@@ -3724,13 +3721,13 @@ Query *query_at_level(QSP_ARG_DECL  int l)
 
 COMMAND_FUNC( do_pop_menu )
 {
-	POP_MENU;
+	pop_menu();
 }
 
 // This message doesn't match the function name, but it is only called from macro creation...
 // BUG - we need a better way of checking on a per-command basis...
 
-inline int check_adequate_return_strings(QSP_ARG_DECL  int n)
+inline int _check_adequate_return_strings(QSP_ARG_DECL  int n)
 {
 	if( n > N_QRY_RETSTRS ){
 		sprintf(ERROR_STRING,"%d return strings needed, system limit is %d",
@@ -3937,7 +3934,7 @@ inline const char *current_filename(SINGLE_QSP_ARG_DECL)
 	return QRY_FILENAME( CURR_QRY(THIS_QSP) );
 }
 
-inline void reset_return_strings(SINGLE_QSP_ARG_DECL)
+inline void _reset_return_strings(SINGLE_QSP_ARG_DECL)
 {
 	SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
 }

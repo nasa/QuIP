@@ -993,6 +993,6 @@ MENU_END(cal_menu)
 
 COMMAND_FUNC( do_cal_menu )
 {
-	PUSH_MENU(cal_menu);
+	CHECK_AND_PUSH_MENU(cal_menu);
 }
 

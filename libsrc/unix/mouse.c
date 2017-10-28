@@ -573,8 +573,7 @@ static void check_mouse(SINGLE_QSP_ARG_DECL)
 			//if( intractive(SINGLE_QSP_ARG) )
 			//	simulate_typing(mouse_action[event]);
 			//else
-				chew_text(QSP_ARG  mouse_action[event],
-					"(mouse event)" );
+				chew_text(mouse_action[event],"(mouse event)");
 		}
 	}
 }
@@ -637,7 +636,7 @@ MENU_END(mouse)
 
 COMMAND_FUNC( do_mouse_menu )
 {
-	PUSH_MENU(mouse);
+	CHECK_AND_PUSH_MENU(mouse);
 }
 
 

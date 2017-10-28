@@ -90,6 +90,6 @@ MENU_END(gamma)
 
 COMMAND_FUNC( do_linearize )
 {
-	PUSH_MENU(gamma);
+	CHECK_AND_PUSH_MENU(gamma);
 }
 

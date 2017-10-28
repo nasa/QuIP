@@ -711,7 +711,7 @@ MENU_END(playback)
 
 static COMMAND_FUNC( do_play_menu )
 {
-	PUSH_MENU(playback);
+	CHECK_AND_PUSH_MENU(playback);
 }
 
 #define MAX_MOVIE_FIELDS	0x40000000	/* a dummy value */
@@ -825,7 +825,7 @@ MENU_END(assemble)
 
 static COMMAND_FUNC( ass_menu )
 {
-	PUSH_MENU(assemble);
+	CHECK_AND_PUSH_MENU(assemble);
 }
 
 static COMMAND_FUNC( dev_menu )
@@ -978,7 +978,7 @@ COMMAND_FUNC( do_movie_menu )
 		mvi_debug = add_debug_module("movie");
 #endif /* QUIP_DEBUG */
 
-	PUSH_MENU(movie);
+	CHECK_AND_PUSH_MENU(movie);
 }
 
 void load_movie_module(QSP_ARG_DECL  Movie_Module *mmp)

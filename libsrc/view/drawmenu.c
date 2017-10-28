@@ -492,6 +492,6 @@ COMMAND_FUNC( do_draw_menu )
 		init_viewer_canvas(vp);
 #endif /* BUILD_FOR_OBJC */
 
-	PUSH_MENU(draw);
+	CHECK_AND_PUSH_MENU(draw);
 }
 

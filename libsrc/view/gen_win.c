@@ -622,6 +622,6 @@ MENU_END(genwin)
 COMMAND_FUNC( do_genwin_menu )
 {
 	// used to call auto_version here, but this was in its own lib...
-	PUSH_MENU(genwin);
+	CHECK_AND_PUSH_MENU(genwin);
 }
 

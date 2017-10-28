@@ -132,7 +132,7 @@ MENU_END(cjpeg)
 
 static COMMAND_FUNC( do_cjpeg_param_menu )
 {
-	PUSH_MENU(cjpeg);
+	CHECK_AND_PUSH_MENU(cjpeg);
 }
 
 static const char *fmt_choices[N_JPEG_INFO_FORMATS]={"binary","ascii"};
@@ -157,7 +157,7 @@ MENU_END(jpeg)
 
 COMMAND_FUNC( do_jpeg_menu )
 {
-	PUSH_MENU(jpeg);
+	CHECK_AND_PUSH_MENU(jpeg);
 }
 
 #endif /* HAVE_JPEG_SUPPORT */

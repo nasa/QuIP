@@ -357,7 +357,7 @@ advise(ERROR_STRING);
 
 				if( VW_EVENT_TBL(vp) != NULL ){
 					if( VW_EVENT_ACTION(vp,ce_code) != NULL ){
-						CHEW_TEXT( VW_EVENT_ACTION(vp,ce_code), "(viewer event)" );
+						chew_text( VW_EVENT_ACTION(vp,ce_code), "(viewer event)" );
 					}
 					// Do nothing if the event action has not been specified
 				} else {
@@ -365,11 +365,11 @@ advise(ERROR_STRING);
 					// This is mainly here to support backward-compatibility with old scripts.
 					// We should print a deprecated warning when the old-style actions are set...
 					if( button_number == 1 )
-				CHEW_TEXT(vp->vw_text1,"(button 1 event)");
+				chew_text(vp->vw_text1,"(button 1 event)");
 					else if( button_number == 2 )
-				CHEW_TEXT(vp->vw_text2,"(button 2 event)");
+				chew_text(vp->vw_text2,"(button 2 event)");
 					else if( button_number == 3 )
-				CHEW_TEXT(vp->vw_text3,"(button 3 event)");
+				chew_text(vp->vw_text3,"(button 3 event)");
 					else if( button_number == 0 ){
 						/* this sometimes happens on the new laptop
 						 * when using the touchpad... ???
@@ -490,7 +490,7 @@ advise(ERROR_STRING);
 			sprintf(string,"%d", event->type);
 			assign_reserved_var("event_type",string);
 
-			CHEW_TEXT(vp->vw_text,"(button motion event)");
+			chew_text(vp->vw_text,"(button motion event)");
 
 			last_button = button_number;
 			break;

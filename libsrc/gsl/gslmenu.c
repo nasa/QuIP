@@ -75,7 +75,7 @@ COMMAND_FUNC( do_gsl_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(gsl);
+	CHECK_AND_PUSH_MENU(gsl);
 }
 	
 #endif /* HAVE_GSL */

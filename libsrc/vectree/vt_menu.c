@@ -283,6 +283,6 @@ COMMAND_FUNC( do_exprs )
 		vt_init(SINGLE_QSP_ARG);
 		inited=1;
 	}
-	PUSH_MENU(expressions);
+	CHECK_AND_PUSH_MENU(expressions);
 }
 

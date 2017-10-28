@@ -1026,7 +1026,7 @@ MENU_END(capture)
 
 COMMAND_FUNC( do_capture )
 {
-	PUSH_MENU(capture);
+	CHECK_AND_PUSH_MENU(capture);
 }
 
 #undef ADD_CMD
@@ -1046,7 +1046,7 @@ MENU_END(cap_tst)
 
 COMMAND_FUNC( do_captst )
 {
-	PUSH_MENU(cap_tst);
+	CHECK_AND_PUSH_MENU(cap_tst);
 }
 
 

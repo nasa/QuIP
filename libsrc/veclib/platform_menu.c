@@ -364,6 +364,6 @@ COMMAND_FUNC( do_platform_menu )
 		init_all_platforms(SINGLE_QSP_ARG);
 		inited=1;
 	}
-	PUSH_MENU(platform);
+	CHECK_AND_PUSH_MENU(platform);
 }
 

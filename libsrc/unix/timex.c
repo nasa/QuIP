@@ -155,7 +155,7 @@ MENU_END(timex)
 
 COMMAND_FUNC( do_timex_menu )
 {
-	PUSH_MENU(timex);
+	CHECK_AND_PUSH_MENU(timex);
 }
 
 #endif /* HAVE_ADJTIMEX */

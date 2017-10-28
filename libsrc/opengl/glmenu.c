@@ -149,7 +149,7 @@ MENU_END( color )
 
 static COMMAND_FUNC( do_color_menu )
 {
-	PUSH_MENU(color);
+	CHECK_AND_PUSH_MENU(color);
 }
 
 static GLenum current_primitive=INVALID_CONSTANT;
@@ -433,7 +433,7 @@ static COMMAND_FUNC( do_slct_obj )
 	//drawer.drawAirspace(&manager, &table);
 	
 	/* Call the user's draw routine here... */
-	chew_text(QSP_ARG  s, "(gl object selection)" );
+	chew_text(s, "(gl object selection)" );
 	rls_str(s);
 
 	// Restoring the original projection matrix.
@@ -576,7 +576,7 @@ MENU_END(object)
 
 static COMMAND_FUNC( do_gl_obj_menu )
 {
-	PUSH_MENU(object);
+	CHECK_AND_PUSH_MENU(object);
 }
 
 static COMMAND_FUNC( do_enable )
@@ -853,7 +853,7 @@ MENU_END(capabilities)
 
 static COMMAND_FUNC( do_cap_menu )
 {
-	PUSH_MENU(capabilities);
+	CHECK_AND_PUSH_MENU(capabilities);
 }
 
 static COMMAND_FUNC( set_pt_size )
@@ -948,7 +948,7 @@ MENU_END(mode)
 
 static COMMAND_FUNC( do_mode_menu )
 {
-	PUSH_MENU(mode);
+	CHECK_AND_PUSH_MENU(mode);
 }
 
 static COMMAND_FUNC( set_xf_mode )
@@ -1180,7 +1180,7 @@ MENU_END(xform)
 
 static COMMAND_FUNC( do_xf_menu )
 {
-	PUSH_MENU(xform);
+	CHECK_AND_PUSH_MENU(xform);
 }
 
 static COMMAND_FUNC( set_shading_model )
@@ -1380,7 +1380,7 @@ MENU_END(lighting)
 
 static COMMAND_FUNC( do_lighting_menu )
 {
-	PUSH_MENU(lighting);
+	CHECK_AND_PUSH_MENU(lighting);
 }
 
 static COMMAND_FUNC(do_list_dls){list_dls(tell_msgfile());}
@@ -1402,7 +1402,7 @@ MENU_END(display_list)
 
 static COMMAND_FUNC( do_dl_menu )
 {
-	PUSH_MENU(display_list);
+	CHECK_AND_PUSH_MENU(display_list);
 }
 
 static COMMAND_FUNC(do_swap_buffers){swap_buffers();}
@@ -1484,7 +1484,7 @@ MENU_END(glfb)
 
 static COMMAND_FUNC( do_glfb_menu )
 {
-	PUSH_MENU(glfb);
+	CHECK_AND_PUSH_MENU(glfb);
 }
 
 #ifdef HAVE_OPENGL
@@ -1722,7 +1722,7 @@ COMMAND_FUNC( do_gl_menu )
 		gl_debug = add_debug_module("gl");
 		DECLARE_STR1_FUNCTION(	display_list_exists,	display_list_exists )
 	}
-	PUSH_MENU(gl);
+	CHECK_AND_PUSH_MENU(gl);
 }
 
 #endif /* HAVE_OPENGL */

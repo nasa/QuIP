@@ -623,7 +623,7 @@ COMMAND_FUNC( do_read_encrypted_file )
 		WARN("read_encrypted_file:  decryption failed!?");
 		return;
 	}
-	PUSH_TEXT(outbuf,s);
+	push_text(outbuf,s);
 
 	// Should we call exec_quip here?
 	// We should not need to - we are in a command already!?

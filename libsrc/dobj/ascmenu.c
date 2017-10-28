@@ -581,6 +581,6 @@ MENU_END(ascii)
 
 COMMAND_FUNC( asciimenu )			/** ascii object submenu */
 {
-	PUSH_MENU(ascii);
+	CHECK_AND_PUSH_MENU(ascii);
 }
 

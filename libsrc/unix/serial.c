@@ -821,7 +821,7 @@ static COMMAND_FUNC( do_tty_term )
 	console_output_fp = stdout;
 #endif // ! HISTORY
 
-	console_input_fp = tfile(SINGLE_QSP_ARG);
+	console_input_fp = tfile();
 
 	/* we might like raw, but want to catch ^C etc. */
 	/* BUT we don't want to map CR to NL... */
@@ -931,7 +931,7 @@ MENU_END( serial )
 
 COMMAND_FUNC( do_ser_menu )
 {
-	PUSH_MENU(serial);
+	CHECK_AND_PUSH_MENU(serial);
 }
 
 

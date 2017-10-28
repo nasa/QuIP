@@ -27,7 +27,7 @@ long _how_many(QSP_ARG_DECL  const char *prompt)
 	// Why does how_many all next_query_word, while how_much uses nameof???
 
 	pline = format_prompt(QSP_ARG  PROMPT_FORMAT, prompt);
-	s=next_query_word(QSP_ARG  pline);
+	s=next_query_word(pline);
 
 	tsp=pexpr(QSP_ARG  s);
 
@@ -139,7 +139,7 @@ const char * _nameof(QSP_ARG_DECL  const char *prompt)
 
 	v = QS_FLAGS(THIS_QSP) & QS_EXPAND_MACS;		/* save current value */
 	CLEAR_QS_FLAG_BITS(THIS_QSP,QS_EXPAND_MACS);
-	buf=next_query_word(QSP_ARG  pline);
+	buf=next_query_word(pline);
 	SET_QS_FLAG_BITS(THIS_QSP,v);		/* restore macro state */
 	return(buf);
 }

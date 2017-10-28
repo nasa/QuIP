@@ -376,12 +376,12 @@ MENU_END(threeD_requant)
 
 static COMMAND_FUNC( do_achrom )
 {
-	PUSH_MENU(achrom_requant);
+	CHECK_AND_PUSH_MENU(achrom_requant);
 }
 
 static COMMAND_FUNC( do_3d )
 {
-	PUSH_MENU(threeD_requant);
+	CHECK_AND_PUSH_MENU(threeD_requant);
 }
 
 #undef ADD_CMD
@@ -433,12 +433,12 @@ MENU_END(dichrom_requant)
 
 static COMMAND_FUNC( do_dichrom )
 {
-	PUSH_MENU(dichrom_requant);
+	CHECK_AND_PUSH_MENU(dichrom_requant);
 }
 
 static COMMAND_FUNC( do_color )
 {
-	PUSH_MENU(color_requant);
+	CHECK_AND_PUSH_MENU(color_requant);
 }
 
 #undef ADD_CMD
@@ -457,7 +457,7 @@ COMMAND_FUNC( do_requant )
 	if( spread_debug == 0 )
 		spread_debug=add_debug_module("requantize");
 
-	PUSH_MENU(requantize);
+	CHECK_AND_PUSH_MENU(requantize);
 }
 
 

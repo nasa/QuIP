@@ -30,7 +30,7 @@ static COMMAND_FUNC( do_read_file_from_server )
 		file_content_sbp = sbp;
 	}
 
-	PUSH_TEXT( sb_buffer(file_content_sbp), url );
+	push_text( sb_buffer(file_content_sbp), url );
 
 	exec_quip(SINGLE_QSP_ARG);				// interpret the commands!
 
@@ -81,6 +81,6 @@ COMMAND_FUNC( do_http_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(http);
+	CHECK_AND_PUSH_MENU(http);
 }
 

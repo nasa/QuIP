@@ -121,7 +121,7 @@ static void cstepit_scr_funk(void)
 	 * didn't have a quit after the call to optimize - ???
 	 */
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	_digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=_var__of(DEFAULT_QSP_ARG  "error");
 	if( vp == NULL ) {

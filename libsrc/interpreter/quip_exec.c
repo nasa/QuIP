@@ -39,7 +39,7 @@ static void perform_callbacks(SINGLE_QSP_ARG_DECL)
 {
 	assert( QS_CALLBACK_LIST(THIS_QSP) != NULL );
 
-	reset_return_strings(SINGLE_QSP_ARG);
+	reset_return_strings();
 	call_funcs_from_list(QSP_ARG  QS_CALLBACK_LIST(THIS_QSP) );
 }
 
@@ -73,9 +73,9 @@ void qs_do_cmd( Query_Stack *qsp )
 
 
 	//SET_QRY_RETSTR_IDX(CURR_QRY(THIS_QSP),0);
-	reset_return_strings(SINGLE_QSP_ARG);
+	reset_return_strings();
 
-	cmd = next_query_word(QSP_ARG  QS_CMD_PROMPT_STR(qsp));
+	cmd = next_query_word(QS_CMD_PROMPT_STR(qsp));
 
 	if( cmd == NULL || strlen(cmd) == 0 ){
 		return;
@@ -190,13 +190,13 @@ static void store_mouthful(QSP_ARG_DECL  const char *text,
 
 void chew_mouthful(Mouthful *mfp)
 {
-	chew_text(DEFAULT_QSP_ARG  mfp->text, mfp->filename );
+	_chew_text(DEFAULT_QSP_ARG  mfp->text, mfp->filename );
 }
 
 static void begin_digestion(QSP_ARG_DECL  const char *text, const char *filename)
 {
 	push_top_menu(SINGLE_QSP_ARG);	/* make sure at root menu */
-	PUSH_TEXT(text,filename);	/* or fullpush? */
+	push_text(text,filename);	/* or fullpush? */
 }
 
 // Interpret this text
@@ -228,14 +228,14 @@ static void finish_digestion(QSP_ARG_DECL  int level)
 	if( IS_HALTING(THIS_QSP) ){
 		return;
 	}
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 
 // We use digest when we call from the optimization package,
 // because it doesn't mess with the chew flag...
 
-void digest(QSP_ARG_DECL  const char *text, const char *filename)
+void _digest(QSP_ARG_DECL  const char *text, const char *filename)
 {
 	/* set_busy_cursor(); */
 
@@ -278,7 +278,7 @@ void finish_swallowing(SINGLE_QSP_ARG_DECL)
 // eat this text, unless we are already chewing something else...
 // In that case, save it for later.
 
-void chew_text(QSP_ARG_DECL  const char *text, const char *filename )
+void _chew_text(QSP_ARG_DECL  const char *text, const char *filename )
 {
 	if( text == NULL ) return;
 	if( IS_CHEWING(THIS_QSP) ){

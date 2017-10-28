@@ -65,6 +65,6 @@ MENU_END(cursors)
 COMMAND_FUNC( do_cursors )
 {
 	INSURE_X11_SERVER
-	PUSH_MENU(cursors);
+	CHECK_AND_PUSH_MENU(cursors);
 }
 

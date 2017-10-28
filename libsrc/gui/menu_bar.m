@@ -138,7 +138,7 @@ static COMMAND_FUNC(do_populate_menu)
 		push_ios_item_context(QSP_ARG  menu_bar_item_itp, 
 						curr_menu.item_icp );
 	}
-	PUSH_MENU(populate_menu);
+	CHECK_AND_PUSH_MENU(populate_menu);
 }
 
 #undef ADD_CMD
@@ -191,6 +191,6 @@ MENU_END(menu_bar)
 
 COMMAND_FUNC(do_menu_bar)
 {
-	PUSH_MENU(menu_bar)
+	CHECK_AND_PUSH_MENU(menu_bar)
 }
 

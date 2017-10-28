@@ -153,7 +153,7 @@ COMMAND_FUNC( do_pipe_menu )
 		DECLARE_STR1_FUNCTION(	pipe_exists,	pipe_exists )
 		inited=1;
 	}
-	PUSH_MENU(pipes);
+	CHECK_AND_PUSH_MENU(pipes);
 }
 
 

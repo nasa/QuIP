@@ -138,7 +138,9 @@ static int read_global_startup(QSP_ARG_DECL const char *progname)
 /* I used #elif here, but the mac choked on it  - jbm */
 #define DIR_DELIM	"/"
 
-static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
+#define try_directory(dir,progname) _try_directory(QSP_ARG  dir,progname)
+
+static char *_try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 {
 	FILE *fp;
 	static char filename[MAXPATHLEN];
@@ -173,7 +175,7 @@ static char *try_directory(QSP_ARG_DECL  const char *dir,const char* progname)
 
 static char *try_cwd(QSP_ARG_DECL  char *progname)
 {
-	return( try_directory(QSP_ARG  ".",progname) );
+	return( try_directory(".",progname) );
 }
 
 static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user's home directory */
@@ -186,7 +188,7 @@ static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user'
 		WARN("try_home:  no HOME in environment");
 		return(NULL);
 	}
-	return( try_directory(QSP_ARG  home,progname) );
+	return( try_directory(home,progname) );
 }
 
 static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in user-specified directory */
@@ -195,12 +197,12 @@ static char *try_user_spec(QSP_ARG_DECL  char *progname) /* look for dotfile in 
 
 	dir=getenv(STARTUP_DIRNAME);
 	if( dir == NULL ) return(NULL);
-	return( try_directory(QSP_ARG  dir,progname) );
+	return( try_directory(dir,progname) );
 }
 
 static char *try_default(QSP_ARG_DECL  char *progname) /* look for dotfile in default system directory */
 {
-	return( try_directory(QSP_ARG  QUIP_DEFAULT_DIR,progname) );
+	return( try_directory(QUIP_DEFAULT_DIR,progname) );
 }
 
 #endif // BUILD_FOR_OBJC

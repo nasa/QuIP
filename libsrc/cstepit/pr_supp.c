@@ -90,7 +90,7 @@ static float frprmn_scr_funk(float *p)
 		np=np->n_next;
 	}
 
-	digest(QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	digest(opt_func_string, OPTIMIZER_FILENAME);
 	
 	vp=var__of("error");
 	if( vp == NULL ) {

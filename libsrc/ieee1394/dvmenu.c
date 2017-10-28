@@ -483,6 +483,6 @@ COMMAND_FUNC( do_dv_menu )
 		g_output_queue = new_list();
 		dv_inited=1;
 	}
-	PUSH_MENU(dv);
+	CHECK_AND_PUSH_MENU(dv);
 }
 

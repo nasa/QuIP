@@ -34,18 +34,14 @@ extern void waitq(int fd);
 extern int keyhit(int fd);
 extern int get_erase_chr(int fd);
 extern int get_kill_chr(int fd);
-extern void show_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
-extern void dump_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
+extern void _show_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
+extern void _dump_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
+
+#define show_term_flags(flag,tbl) _show_term_flags(QSP_ARG  flag,tbl)
+#define dump_term_flags(flag,tbl) _dump_term_flags(QSP_ARG  flag,tbl)
 
 // my_stty.c
 extern void set_tty_flag(const char *flagname,int fd,int value);
-
-#ifdef FOOBAR
-/* tty_flags.c */
-extern void dump_all(QSP_ARG_DECL  int fd);
-extern int get_flag_value(QSP_ARG_DECL   const char *flagname);
-#endif // FOOBAR
-
 
 #endif /* TTY_CTL */
 

@@ -422,7 +422,7 @@ static void button_func(Widget buttonID, XtPointer app_data,
 
 	sop = find_object(buttonID);
 	if( sop != NULL ){
-		chew_text(DEFAULT_QSP_ARG sop->so_action_text,
+		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,
 						"(button event)");
 	}
 	else WARN("couldn't locate button");
@@ -553,7 +553,6 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 	 * We may be able to deal with that in the script...
 	 */
 
-	/*chew_text(DEFAULT_QSP_ARG sop->so_action_text); */
 	assign_reserved_var("choice",sop->so_action_text);	/* BUG? action text? */
 
 	/* Now we've found the button, how do we find the parent chooser? */
@@ -565,7 +564,7 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 		error1("CAUTIOUS:  chooser button with no parent!?");
 #endif /* CAUTIOUS */
 
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text, "(chooser event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text, "(chooser event)");
 }
 #endif /* HAVE_MOTIF */
 
@@ -594,7 +593,7 @@ static void toggle_func(Widget toggleID, XtPointer app_data,
 		}
 		sprintf(val_str,"%d",value);
 		assign_reserved_var("toggle_state",val_str);
-		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(toggle event)");
+		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(toggle event)");
 	}
 	else WARN("couldn't locate toggle button");
 } // toggle_func
@@ -631,8 +630,7 @@ static void text_func(Widget textID, XtPointer app_data, XtPointer widget_data )
 	}
 
 	/* We should chew the text when a return is typed, or something? */
-//NADVISE("text_func calling chew_text...");
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text event)");
 } // text_func
 
 /* this is supposed to be the losing focus callback */
@@ -663,7 +661,7 @@ static void text_func2(Widget textID, XtPointer app_data, XtPointer widget_data 
 	}
 
 //NADVISE("text_func2 calling chew_text...");
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text2 event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text2 event)");
 } // text_func2
 #endif /* HAVE_MOTIF */
 
@@ -951,7 +949,7 @@ static void slider_func(Widget sliderID, XtPointer app_data,
 		XmScaleGetValue(sliderID, &value);
 		sprintf(str,"%d",value);			// BUG overrun?
 		assign_reserved_var("slider_val",str);
-		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(slider event)");
+		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(slider event)");
 	} else error1("can't locate slider");
 } // slider_func
 #endif /* HAVE_MOTIF */
@@ -1409,7 +1407,7 @@ static void scroller_func(Widget scrollerID, XtPointer app_data,
 	assign_reserved_var("selection",selection);
 	sop = _find_object(DEFAULT_QSP_ARG  scrollerID);
 	if( sop == NULL ) return;
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(scroller event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(scroller event)");
 } // scroller_func
 #endif /* HAVE_MOTIF */
 

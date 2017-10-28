@@ -55,7 +55,7 @@ MENU_END(sample)
 
 COMMAND_FUNC( do_samp_menu )
 {
-	PUSH_MENU(sample);
+	CHECK_AND_PUSH_MENU(sample);
 }
 
 

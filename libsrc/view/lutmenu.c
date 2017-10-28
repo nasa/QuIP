@@ -96,6 +96,6 @@ MENU_END(lutbufs)
 
 COMMAND_FUNC( do_lutbufs )
 {
-	PUSH_MENU(lutbufs);
+	CHECK_AND_PUSH_MENU(lutbufs);
 }
 

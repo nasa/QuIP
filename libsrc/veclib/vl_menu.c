@@ -93,7 +93,7 @@ COMMAND_FUNC( do_vl_menu )
 		//init_vl_menu();
 		inited=1;
 	}
-	PUSH_MENU(veclib);
+	CHECK_AND_PUSH_MENU(veclib);
 }
 
 

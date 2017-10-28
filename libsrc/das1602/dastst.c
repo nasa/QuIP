@@ -170,7 +170,7 @@ MENU_END(registers)
 
 static COMMAND_FUNC( do_reg_menu )
 {
-	PUSH_MENU(registers);
+	CHECK_AND_PUSH_MENU(registers);
 }
 
 static int get_adc_channel(QSP_ARG_DECL  const char *pmpt,
@@ -711,7 +711,7 @@ MENU_END(adc_calib)
 
 static COMMAND_FUNC( adc_calib )
 {
-	PUSH_MENU(adc_calib);
+	CHECK_AND_PUSH_MENU(adc_calib);
 }
 
 
@@ -735,7 +735,7 @@ MENU_END(adc)
 
 static COMMAND_FUNC( do_adc_menu )
 {
-	PUSH_MENU(adc);
+	CHECK_AND_PUSH_MENU(adc);
 }
 
 static int dac_chno;
@@ -1000,7 +1000,7 @@ MENU_END(dac)
 
 static COMMAND_FUNC( do_dac_menu )
 {
-	PUSH_MENU(dac);
+	CHECK_AND_PUSH_MENU(dac);
 }
 
 #ifdef HAVE_DAS1602
@@ -1188,7 +1188,7 @@ MENU_END(dio)
 
 static COMMAND_FUNC( do_dio_menu )
 {
-	PUSH_MENU(dio);
+	CHECK_AND_PUSH_MENU(dio);
 }
 
 
@@ -1454,7 +1454,7 @@ MENU_END(nvram)
 
 static COMMAND_FUNC( do_nvram_menu )
 {
-	PUSH_MENU(nvram);
+	CHECK_AND_PUSH_MENU(nvram);
 }
 
 
@@ -1471,6 +1471,6 @@ MENU_END(das1602)
 
 COMMAND_FUNC( do_aio_menu )
 {
-	PUSH_MENU(das1602);
+	CHECK_AND_PUSH_MENU(das1602);
 }
 

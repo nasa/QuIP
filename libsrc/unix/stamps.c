@@ -504,7 +504,7 @@ MENU_END(stamps)
 
 COMMAND_FUNC( do_stamp_menu )
 {
-	PUSH_MENU(stamps);
+	CHECK_AND_PUSH_MENU(stamps);
 }
 
 

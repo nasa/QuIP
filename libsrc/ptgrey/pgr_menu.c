@@ -58,7 +58,7 @@ MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
 {
-	PUSH_MENU(trigger);
+	CHECK_AND_PUSH_MENU(trigger);
 }
 
 static COMMAND_FUNC( do_init )
@@ -495,7 +495,7 @@ static COMMAND_FUNC( do_set_fval )
 
 static COMMAND_FUNC( change_done )
 {
-	POP_MENU;
+	pop_menu();
 	/* refresh all the features so we can display the current values */
 	get_camera_features(the_cam_p);
 
@@ -538,7 +538,7 @@ static COMMAND_FUNC( do_feature_change )
 	EAT_ONE_DUMMY("do_feature_change");
 #endif
 
-	PUSH_MENU(feature_change);
+	CHECK_AND_PUSH_MENU(feature_change);
 }
 
 static COMMAND_FUNC( do_list_cam_features )
@@ -584,7 +584,7 @@ MENU_END(features)
 
 static COMMAND_FUNC( do_feature_menu )
 {
-	PUSH_MENU(features);
+	CHECK_AND_PUSH_MENU(features);
 }
 
 #ifdef HAVE_LIBDC1394
@@ -744,7 +744,7 @@ MENU_END(camera)
 
 static COMMAND_FUNC( do_cam_menu )
 {
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 
 #undef ADD_CMD
@@ -760,7 +760,7 @@ MENU_END(capture)
 
 static COMMAND_FUNC( captmenu )
 {
-	PUSH_MENU( capture );
+	CHECK_AND_PUSH_MENU( capture );
 }
 
 #define CAM_P	the_cam_p->pc_cam_p
@@ -936,7 +936,7 @@ MENU_END(format7)
 
 static COMMAND_FUNC( fmt7menu )
 {
-	PUSH_MENU( format7 );
+	CHECK_AND_PUSH_MENU( format7 );
 }
 
 static COMMAND_FUNC( do_bmode )
@@ -978,6 +978,6 @@ MENU_END(pgr)
 
 COMMAND_FUNC( do_pgr_menu )
 {
-	PUSH_MENU( pgr );
+	CHECK_AND_PUSH_MENU( pgr );
 }
 

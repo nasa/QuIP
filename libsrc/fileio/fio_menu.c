@@ -319,7 +319,7 @@ COMMAND_FUNC( do_fio_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(file_io);
+	CHECK_AND_PUSH_MENU(file_io);
 } 
 
 

@@ -57,7 +57,7 @@ MENU_END( npp )
 
 static COMMAND_FUNC( do_npp_menu )
 {
-	PUSH_MENU(npp);
+	CHECK_AND_PUSH_MENU(npp);
 }
 
 #ifdef NOT_YET	// not obsolete, but not ready to integrate...
@@ -170,7 +170,7 @@ MENU_END( cuda_gl )
 static COMMAND_FUNC(do_cuda_gl_menu)
 {
 	/* Do cuda-specific init here? */
-	PUSH_MENU(cuda_gl);
+	CHECK_AND_PUSH_MENU(cuda_gl);
 }
 
 #endif /* HAVE_GLUT */
@@ -191,7 +191,7 @@ MENU_END( cuda_event )
 
 static COMMAND_FUNC( do_cuda_event_menu )
 {
-	PUSH_MENU(cuda_event);
+	CHECK_AND_PUSH_MENU(cuda_event);
 }
 
 
@@ -208,7 +208,7 @@ MENU_END( cuda_stream )
 
 static COMMAND_FUNC( do_cuda_stream_menu )
 {
-	PUSH_MENU(cuda_stream);
+	CHECK_AND_PUSH_MENU(cuda_stream);
 }
 
 static COMMAND_FUNC( do_prt_cap )
@@ -285,7 +285,7 @@ COMMAND_FUNC( do_cuda_menu )
 		cuda_inited=1;
 	}
 
-	PUSH_MENU(cuda);
+	CHECK_AND_PUSH_MENU(cuda);
 }
 
 }

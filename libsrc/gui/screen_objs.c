@@ -563,7 +563,7 @@ else
 WARN("all parent menus popped!!");
 }
 #endif /* QUIP_DEBUG */
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 void push_parent(Screen_Obj *mp)
@@ -623,7 +623,7 @@ static void _get_menu_items(QSP_ARG_DECL  Screen_Obj *mp)
 	int depth;
 
 	push_parent(mp);
-	PUSH_MENU(menu_item);
+	CHECK_AND_PUSH_MENU(menu_item);
 
 	/* now need to do_cmd() until menu is exited */
 	/* But don't we normally just execute commands??? */

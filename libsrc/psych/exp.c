@@ -510,7 +510,7 @@ static COMMAND_FUNC( do_staircase_menu )
 		rninit(SINGLE_QSP_ARG);
 		new_exp(SINGLE_QSP_ARG);
 	}
-	PUSH_MENU( staircases );
+	CHECK_AND_PUSH_MENU( staircases );
 }
 
 #undef ADD_CMD
@@ -544,7 +544,7 @@ COMMAND_FUNC( do_exp_menu )
 		rninit(SINGLE_QSP_ARG);
 		new_exp(SINGLE_QSP_ARG);
 	}
-	PUSH_MENU(experiment);
+	CHECK_AND_PUSH_MENU(experiment);
 }
 
 static void set_rsp_word(const char **sptr,const char *s,const char *default_str)
@@ -652,7 +652,7 @@ int response(QSP_ARG_DECL  const char *question_string)
 
 	if( get_response_from_keyboard ){
 #ifndef BUILD_FOR_OBJC
-		redir( tfile(SINGLE_QSP_ARG), "/dev/tty" );	/* get response from keyboard */
+		redir( tfile(), "/dev/tty" );	/* get response from keyboard */
 #else // BUILD_FOR_OBJC
 		WARN("response (exp.c):  can't get response from keyboard!?");
 #endif // BUILD_FOR_OBJC

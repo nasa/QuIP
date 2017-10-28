@@ -7295,7 +7295,7 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	 */
 
 	sprintf(msg_str,"Script func %s",SR_NAME(srp));
-	push_text(QSP_ARG  (char *)SR_TEXT(srp), msg_str);
+	push_text((char *)SR_TEXT(srp), msg_str);
 
 	qp=CURR_QRY(THIS_QSP);
 

@@ -98,6 +98,6 @@ MENU_END(memops)
 
 COMMAND_FUNC( buf_ops )
 {
-	PUSH_MENU(memops);
+	CHECK_AND_PUSH_MENU(memops);
 }
 

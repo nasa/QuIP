@@ -197,7 +197,7 @@ MENU_END(cmaps)
 
 COMMAND_FUNC( do_cmaps )
 {
-	PUSH_MENU(cmaps);
+	CHECK_AND_PUSH_MENU(cmaps);
 }
 
 #undef ADD_CMD
@@ -256,6 +256,6 @@ COMMAND_FUNC( do_lut_menu )
 	 */
 	
 
-	PUSH_MENU(luts);
+	CHECK_AND_PUSH_MENU(luts);
 }
 

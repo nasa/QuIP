@@ -44,7 +44,7 @@ COMMAND_FUNC( do_exit_prog )
 #endif	// ! BUILD_FOR_OBJC
 }
 
-Menu *pop_menu(SINGLE_QSP_ARG_DECL)
+Menu *_pop_menu(SINGLE_QSP_ARG_DECL)
 {
 	Menu *mp;
 

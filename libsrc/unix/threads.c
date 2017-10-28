@@ -74,7 +74,7 @@ static COMMAND_FUNC( do_new_thread )
 	// a copy.
 
 	// This is a potential memory leak?
-	push_text(new_qsp, savestr(c), "(new thread)" );
+	_push_text(new_qsp, savestr(c), "(new thread)" );
 	set_query_filename( CURR_QRY(new_qsp), "thread text" );
 
 	// We want to create a new variable context for this thread...
@@ -128,7 +128,7 @@ MENU_END(threads)
 
 COMMAND_FUNC( do_thread_menu )
 {
-	PUSH_MENU( threads );
+	CHECK_AND_PUSH_MENU( threads );
 }
 
 

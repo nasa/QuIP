@@ -180,7 +180,7 @@ MENU_END(flow)
 
 COMMAND_FUNC( meteor_flow_menu )
 {
-	PUSH_MENU(flow);
+	CHECK_AND_PUSH_MENU(flow);
 }
 
 #endif /* HAVE_METEOR */

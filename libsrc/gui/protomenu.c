@@ -62,7 +62,7 @@ void _unprepare_for_decoration(SINGLE_QSP_ARG_DECL)
 static COMMAND_FUNC( end_decorate )
 {
 	unprepare_for_decoration();
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 static COMMAND_FUNC( do_hide_back )
@@ -142,7 +142,7 @@ static COMMAND_FUNC(do_accept_edits)
 	dismiss_keyboard(sop);
 #endif // BUILD_FOR_IOS
 
-	chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), SOB_FILENAME );
+	_chew_text(DEFAULT_QSP_ARG  SOB_ACTION(sop), SOB_FILENAME );
 }
 
 static COMMAND_FUNC( do_del_widget )
@@ -248,7 +248,7 @@ static COMMAND_FUNC( do_decorate_panel )
 
 	po=pick_panel( "" );
 	prepare_for_decoration(po);
-	PUSH_MENU(decorate);
+	CHECK_AND_PUSH_MENU(decorate);
 }
 
 /*
@@ -350,7 +350,7 @@ MENU_END(control)
 
 static COMMAND_FUNC( do_control_menu )
 {
-	PUSH_MENU(control);
+	CHECK_AND_PUSH_MENU(control);
 }
 
 static COMMAND_FUNC( do_list_panels ){ list_panel_objs(tell_msgfile()); }
@@ -366,7 +366,7 @@ MENU_END(objects)
 
 static COMMAND_FUNC( do_so_menu )
 {
-	PUSH_MENU(objects);
+	CHECK_AND_PUSH_MENU(objects);
 }
 
 #ifdef MALLOC_DEBUG
@@ -643,7 +643,7 @@ static COMMAND_FUNC( do_end_navigation )
 
 	}
 
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 #undef ADD_CMD
@@ -722,7 +722,7 @@ static COMMAND_FUNC( do_nav_menu )
 	// What does this comment mean?
 	curr_nav_g = NULL;
 
-	PUSH_MENU(navigation);
+	CHECK_AND_PUSH_MENU(navigation);
 } // do_nav_menu
 
 static COMMAND_FUNC( do_push_nav )
@@ -919,6 +919,6 @@ COMMAND_FUNC( do_protomenu )
 	advise("Commands will parse but have no effect.");
 #endif /* ! HAVE_MOTIF */
 #endif /* ! BUILD_FOR_OBJC */
-	PUSH_MENU(interface);
+	CHECK_AND_PUSH_MENU(interface);
 }
 

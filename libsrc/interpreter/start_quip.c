@@ -30,7 +30,7 @@ static Menu *first_menu=NULL;
 void push_first_menu(Query_Stack *qsp)
 {
 	assert( first_menu != NULL );
-	PUSH_MENU_PTR(first_menu);
+	push_menu(first_menu);
 }
 
 void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
@@ -51,8 +51,7 @@ void start_quip_with_menu(int argc, char **argv, Menu *initial_menu_p )
 	init_variables(SINGLE_QSP_ARG);	// specify dynamic variables
 	declare_functions(SINGLE_QSP_ARG);
 
-	//PUSH_MENU(quip);
-	PUSH_MENU_PTR(initial_menu_p);
+	push_menu(initial_menu_p);
 
 	set_args(QSP_ARG  argc,argv);
 	rcfile(qsp,argv[0]);

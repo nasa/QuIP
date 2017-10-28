@@ -101,6 +101,6 @@ MENU_END(staircases)
 
 COMMAND_FUNC( staircase_menu )
 {
-	PUSH_MENU(staircases);
+	CHECK_AND_PUSH_MENU(staircases);
 }
 

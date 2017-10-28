@@ -67,7 +67,7 @@ ADD_CMD( list,		do_list_items,	list items of selected type)
 MENU_END(items)
 
 
-static COMMAND_FUNC( do_items ) { PUSH_MENU(items); }
+static COMMAND_FUNC( do_items ) { CHECK_AND_PUSH_MENU(items); }
 
 //////////////////////////////////////
 
@@ -149,7 +149,7 @@ static COMMAND_FUNC( do_rbtree_test )
 		//the_tree_p = create_rb_tree( test_compare, test_destroy_key, test_destroy_data );
 		the_tree_p = create_rb_tree();
 	}
-	PUSH_MENU(rbt);
+	CHECK_AND_PUSH_MENU(rbt);
 }
 
 static COMMAND_FUNC( do_list_macs )
@@ -306,7 +306,7 @@ static COMMAND_FUNC( do_def_mac )
 	name=nameof("macro name");
 	n=(int)how_many("number of arguments");
 
-	if( check_adequate_return_strings(QSP_ARG  n+2) < 0 ){
+	if( check_adequate_return_strings(n+2) < 0 ){
 		sprintf(ERROR_STRING,
 "define:  %d arguments requested for macro %s exceeds system limit!?\nRebuild application with increased value of N_QRY_RETSTRS.",
 			n-2,name);
@@ -337,7 +337,7 @@ static COMMAND_FUNC( do_def_mac )
 	rls_stringbuf(sbp);
 
 	// for compatibility with quip - maybe should change this?
-	POP_MENU;
+	pop_menu();
 
 } // do_def_mac
 
@@ -380,13 +380,13 @@ static COMMAND_FUNC( do_if )
 
 		//if( v != 0.0 )
 		if( ! has_zero_value(tsp) )
-			push_if(QSP_ARG  s);
+			push_if(s);
 		else
-			push_if(QSP_ARG  s3);
+			push_if(s3);
 	} else {
 		//if( v != 0.0 )
 		if( ! has_zero_value(tsp) )
-			push_if(QSP_ARG  s);
+			push_if(s);
 	}
 	RELEASE_SCALAR(tsp);
 }
@@ -399,7 +399,7 @@ static COMMAND_FUNC( do_push_text )
 
 	// We have used push_text here for a long time, but if we want
 	// to push a foreach command, then it needs to be at the same level...
-	PUSH_TEXT(s,"-");
+	push_text(s,"-");
 }
 
 
@@ -868,9 +868,9 @@ MENU_END(macros)
 
 
 static COMMAND_FUNC( do_var_menu )
-{ PUSH_MENU(variables); }
+{ CHECK_AND_PUSH_MENU(variables); }
 static COMMAND_FUNC( do_mac_menu )
-{ PUSH_MENU(macros); }
+{ CHECK_AND_PUSH_MENU(macros); }
 
 static COMMAND_FUNC( do_repeat )
 {
@@ -881,33 +881,27 @@ static COMMAND_FUNC( do_repeat )
 		return;
 	}
 
-	OPEN_LOOP(n);
+	open_loop(n);
 }
 
 static COMMAND_FUNC( do_close_loop )
 {
 	//[THIS_QSP closeLoop ];
-	CLOSE_LOOP;
-}
-
-static void whileloop(QSP_ARG_DECL   const char *exp_str)
-{
-	Typed_Scalar *tsp;
-
-	tsp = pexpr(QSP_ARG  exp_str);
-	if( has_zero_value(tsp) )
-		_whileloop(QSP_ARG  0);
-	else
-		_whileloop(QSP_ARG  1);
-	RELEASE_SCALAR(tsp);
+	close_loop();
 }
 
 static COMMAND_FUNC( do_while )
 {
 	const char *s;
+	Typed_Scalar *tsp;
 
 	s=nameof("expression");
-	whileloop(QSP_ARG  s);
+	tsp = pexpr(QSP_ARG  s);
+	if( has_zero_value(tsp) )
+		whileloop(0);
+	else
+		whileloop(1);
+	RELEASE_SCALAR(tsp);
 }
 
 static COMMAND_FUNC( do_foreach_loop )
@@ -946,7 +940,7 @@ static COMMAND_FUNC( do_foreach_loop )
 				zap_fore(frp);
 			} else {
 				SET_FL_NODE(frp, QLIST_HEAD(FL_LIST(frp)) );
-				foreach_loop(QSP_ARG  frp);
+				foreach_loop(frp);
 			}
 			return;
 		} else {
@@ -960,7 +954,7 @@ static COMMAND_FUNC( do_foreach_loop )
 
 static COMMAND_FUNC( do_do_loop )
 {
-	OPEN_LOOP(-1);
+	open_loop(-1);
 }
 
 static COMMAND_FUNC( do_error_exit )
@@ -1481,7 +1475,7 @@ static COMMAND_FUNC( do_copy_cmd )
 
 	fp=TRYNICE( nameof("transcript file"), "w" );
 	if( fp ) {
-		if(dupout(QSP_ARG fp)==(-1))
+		if(dupout(fp)==(-1))
 			fclose(fp);
 	}
 }
@@ -1584,7 +1578,7 @@ static COMMAND_FUNC( do_pmpttext )
 	s=savestr( nameof("variable name") );
 #ifndef BUILD_FOR_OBJC
 	//push_input_file(QSP_ARG   "-" );
-	redir(tfile(SINGLE_QSP_ARG), "-" );
+	redir(tfile(), "-" );
 	t=savestr( nameof(p) );
 	pop_file(SINGLE_QSP_ARG);
 	assign_var(s,t);
@@ -1687,7 +1681,7 @@ MENU_SIMPLE_END(help)
 void init_builtins(void)
 {
 	// Normally we do not have to call the init functions,
-	// as it is done automatically by the macro PUSH_MENU,
+	// as it is done automatically by the macro CHECK_AND_PUSH_MENU,
 	// but these menus are never pushed, so we do it here.
 	init_help_menu();
 	init_builtin_menu();

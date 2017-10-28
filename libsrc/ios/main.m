@@ -102,7 +102,7 @@ fprintf(stderr,"ios_read_global_startup:  STARTUP_FILE = %s\n",STRINGIFY(STARTUP
 			WARN("error decrypting startup file!?");
 			return -1;
 		}
-		PUSH_TEXT(s,startup_path.UTF8String);	//
+		push_text(s,startup_path.UTF8String);	//
 
 		// BUG  We should free the file contents
 		// and the saved name eventually?

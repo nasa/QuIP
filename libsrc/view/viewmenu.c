@@ -216,7 +216,7 @@ MENU_END(viewers)
 COMMAND_FUNC( do_viewer_menu )
 {
 	INSURE_X11_SERVER
-	PUSH_MENU(viewers);
+	CHECK_AND_PUSH_MENU(viewers);
 }
 
 COMMAND_FUNC( do_select_vp )
@@ -593,7 +593,7 @@ COMMAND_FUNC( do_view_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(view);
+	CHECK_AND_PUSH_MENU(view);
 }
 
 //#else /* ! HAVE_X11 */

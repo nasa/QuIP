@@ -196,12 +196,10 @@ void save_response(QSP_ARG_DECL  int rsp,Staircase *stc)
 		assert( incorrect_feedback_string != NULL );
 
 		if( rsp == STAIR_CRCT_RSP(stc) ){
-			chew_text(QSP_ARG correct_feedback_string,
-				FEEDBACK_FILENAME);
+			chew_text(correct_feedback_string, FEEDBACK_FILENAME);
 		}
 		else if( rsp != REDO && rsp != ABORT ){
-			chew_text(QSP_ARG incorrect_feedback_string,
-				FEEDBACK_FILENAME);
+			chew_text(incorrect_feedback_string, FEEDBACK_FILENAME);
 		}
 
 	}
