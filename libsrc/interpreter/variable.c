@@ -48,7 +48,7 @@ ITEM_CHECK_FUNC(Variable,var_)
 ITEM_PICK_FUNC(Variable,var_)
 ITEM_DEL_FUNC(Variable,var_)
 
-Variable *create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
+Variable *_create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
@@ -59,10 +59,10 @@ Variable *create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *va
 		WARN(ERROR_STRING);
 		return NULL;
 	}
-	return force_reserved_var(QSP_ARG  var_name,var_val);
+	return force_reserved_var(var_name,var_val);
 }
 
-Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val )
+Variable *_force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var_val )
 {
 	Variable *vp;
 
@@ -72,7 +72,9 @@ Variable *force_reserved_var(QSP_ARG_DECL  const char *var_name, const char *var
 	return vp;
 }
 
-static Variable *insure_variable(QSP_ARG_DECL  const char *name, int creat_flags )
+#define insure_variable(name,creat_flags) _insure_variable(QSP_ARG  name,creat_flags)
+
+static Variable *_insure_variable(QSP_ARG_DECL  const char *name, int creat_flags )
 {
 	Variable *vp;
 	const char *val_str;
@@ -108,7 +110,7 @@ Variable *_assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 {
 	Variable *vp;
 
-	vp = insure_variable(QSP_ARG  var_name, VAR_SIMPLE );
+	vp = insure_variable(var_name, VAR_SIMPLE );
 
 	if( vp == NULL ) return vp;
 
@@ -141,7 +143,7 @@ Variable *_assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *v
 {
 	Variable *vp;
 
-	vp = insure_variable(QSP_ARG  var_name, VAR_RESERVED );
+	vp = insure_variable(var_name, VAR_RESERVED );
 
 	if( vp == NULL ) return vp;
 
@@ -179,7 +181,7 @@ Variable *_get_var(QSP_ARG_DECL  const char *name)
 	return vp;
 }
 
-void init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE_QSP_ARG_DECL) )
+void _init_dynamic_var(QSP_ARG_DECL  const char *name, const char *(*func)(SINGLE_QSP_ARG_DECL) )
 {
 	Variable *vp;
 
@@ -310,21 +312,21 @@ const char *tell_version(void)
 void init_variables(SINGLE_QSP_ARG_DECL)
 {
 	// used by system builtin in ../unix
-	create_reserved_var(QSP_ARG  "exit_status","0");
-	create_reserved_var(QSP_ARG  "mouse_data","0");
-	create_reserved_var(QSP_ARG  "n_readable","0");
-	create_reserved_var(QSP_ARG  "last_line","0");
-	create_reserved_var(QSP_ARG  "serial_response","0");
-	create_reserved_var(QSP_ARG  "timex_tick","0");
-	create_reserved_var(QSP_ARG  "timex_freq","0");
-	create_reserved_var(QSP_ARG  "git_version",QUIP_VERSION_STRING);
+	create_reserved_var("exit_status","0");
+	create_reserved_var("mouse_data","0");
+	create_reserved_var("n_readable","0");
+	create_reserved_var("last_line","0");
+	create_reserved_var("serial_response","0");
+	create_reserved_var("timex_tick","0");
+	create_reserved_var("timex_freq","0");
+	create_reserved_var("git_version",QUIP_VERSION_STRING);
 
-	init_dynamic_var(QSP_ARG  "verbose",get_verbose);
-	init_dynamic_var(QSP_ARG  "cwd",my_getcwd);
+	init_dynamic_var("verbose",get_verbose);
+	init_dynamic_var("cwd",my_getcwd);
 	// BUG pid shouldn't change, but might after a fork?
-	init_dynamic_var(QSP_ARG  "pid",get_pid_string);
-	init_dynamic_var(QSP_ARG  "local_date",get_local_date);
-	init_dynamic_var(QSP_ARG  "utc_date",get_utc_date);
+	init_dynamic_var("pid",get_pid_string);
+	init_dynamic_var("local_date",get_local_date);
+	init_dynamic_var("utc_date",get_utc_date);
 	assign_var("program_name",tell_progname());
 	assign_var("program_version",tell_version());
 }
@@ -384,7 +386,7 @@ void _reserve_variable(QSP_ARG_DECL  const char *name)
 {
 	Variable *vp;
 
-	vp = insure_variable(QSP_ARG  name,VAR_RESERVED);
+	vp = insure_variable(name,VAR_RESERVED);
 	if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(ERROR_STRING,
 	"reserve_variable:  no need to reserve dynamic variable %s",

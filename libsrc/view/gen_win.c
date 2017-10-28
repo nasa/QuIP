@@ -93,11 +93,11 @@ static IOS_Position_Functions genwin_pf={
 
 +(void)    initClass
 {
-	genwin_itp = new_ios_item_type(DEFAULT_QSP_ARG  "Gen_Win");
+	genwin_itp = _new_ios_item_type(DEFAULT_QSP_ARG  "Gen_Win");
 
 	// final NULL arg means use default lookup function
-	add_ios_sizable(DEFAULT_QSP_ARG  genwin_itp, &genwin_sf, NULL );
-	add_ios_positionable(DEFAULT_QSP_ARG  genwin_itp, &genwin_pf, NULL );
+	_add_ios_sizable(DEFAULT_QSP_ARG  genwin_itp, &genwin_sf, NULL );
+	_add_ios_positionable(DEFAULT_QSP_ARG  genwin_itp, &genwin_pf, NULL );
 }
 
 @end
@@ -112,7 +112,7 @@ IOS_ITEM_ENUM_FUNC(Gen_Win,genwin)
 
 Gen_Win *find_genwin(QSP_ARG_DECL  const char *name)
 {
-	return (Gen_Win *) get_genwin(QSP_ARG  name);
+	return (Gen_Win *) get_genwin(name);
 }
 
 /* Make a new window...
@@ -126,7 +126,7 @@ Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 	CGSize s;
 
 //fprintf(stderr,"make_genwin %s BEGIN\n",name);
-	gwp = new_genwin(QSP_ARG  name);
+	gwp = new_genwin(name);
 
 	s.width = width;
 	s.height = height;
@@ -191,13 +191,13 @@ Gen_Win *make_genwin(QSP_ARG_DECL  const char *name,int width,int height)
 
 	// This might have been called either for viewer creation, or
 	// panel creation...  make sure the other one is created also.
-	Panel_Obj *po = panel_obj_of(QSP_ARG  GW_NAME(gwp));
+	Panel_Obj *po = panel_obj_of(GW_NAME(gwp));
 	if( po == NULL ){
-		/* po = */ new_panel(QSP_ARG  GW_NAME(gwp), GW_WIDTH(gwp), GW_HEIGHT(gwp) );
+		/* po = */ new_panel(GW_NAME(gwp), GW_WIDTH(gwp), GW_HEIGHT(gwp) );
 	}
-	Viewer *vp = vwr_of(QSP_ARG  GW_NAME(gwp));
+	Viewer *vp = vwr_of(GW_NAME(gwp));
 	if( vp == NULL ){
-		/* vp = */ viewer_init(QSP_ARG  GW_NAME(gwp), GW_WIDTH(gwp), GW_HEIGHT(gwp), VIEW_BUTTON_ARENA);
+		/* vp = */ viewer_init(GW_NAME(gwp), GW_WIDTH(gwp), GW_HEIGHT(gwp), VIEW_BUTTON_ARENA);
 	}
 
 	return gwp;
@@ -254,7 +254,7 @@ static void init_genwin_class(SINGLE_QSP_ARG_DECL)
 
 IOS_Item_Type *itp_2;
 
-void add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp,Genwin_Functions *gwfp,IOS_Item *(*lookup)(QSP_ARG_DECL  const char *))
+void _add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp,Genwin_Functions *gwfp,IOS_Item *(*lookup)(QSP_ARG_DECL  const char *))
 {
 	INSURE_GENWIN
 
@@ -267,7 +267,7 @@ void add_genwin(QSP_ARG_DECL  IOS_Item_Type *itp,Genwin_Functions *gwfp,IOS_Item
  * of the class.
  */
 
-Gen_Win *find_genwin(QSP_ARG_DECL  const char *name)
+Gen_Win *_find_genwin(QSP_ARG_DECL  const char *name)
 {
 	INSURE_GENWIN
 	return( (Gen_Win *) get_ios_member(gw_iclp,name) );
@@ -277,7 +277,9 @@ Gen_Win *find_genwin(QSP_ARG_DECL  const char *name)
 
 #ifdef HAVE_X11
 
-static Viewer *genwin_viewer(QSP_ARG_DECL  Gen_Win *gwp)
+#define genwin_viewer(gwp) _genwin_viewer(QSP_ARG  gwp)
+
+static Viewer *_genwin_viewer(QSP_ARG_DECL  Gen_Win *gwp)
 {
 	Viewer *vp;
 	IOS_Member_Info *mip;
@@ -299,7 +301,9 @@ static Viewer *genwin_viewer(QSP_ARG_DECL  Gen_Win *gwp)
 
 #ifdef HAVE_MOTIF
 
-static Panel_Obj *genwin_panel(QSP_ARG_DECL  Gen_Win *gwp)
+#define genwin_panel(gwp) _genwin_panel(QSP_ARG  gwp)
+
+static Panel_Obj *_genwin_panel(QSP_ARG_DECL  Gen_Win *gwp)
 {
 	Panel_Obj *po;
 	IOS_Member_Info *mip;
@@ -318,19 +322,19 @@ static Panel_Obj *genwin_panel(QSP_ARG_DECL  Gen_Win *gwp)
 
 #endif /* HAVE_MOTIF */
 
-Dpyable *genwin_display(QSP_ARG_DECL  Gen_Win *gwp)
+Dpyable *_genwin_display(QSP_ARG_DECL  Gen_Win *gwp)
 {
 #ifdef HAVE_X11
 	Viewer *vp;
 
-	vp = genwin_viewer(QSP_ARG  gwp);
+	vp = genwin_viewer(gwp);
 	if( vp != NULL ){
 		return( VW_DPYABLE(vp) );
 	} else {
 #ifdef HAVE_MOTIF
 		Panel_Obj *po;
 
-		po = genwin_panel(QSP_ARG  gwp);
+		po = genwin_panel(gwp);
 		if( po != NULL ){
 			return( PO_DPYABLE(po) );
 		}
@@ -343,9 +347,10 @@ Dpyable *genwin_display(QSP_ARG_DECL  Gen_Win *gwp)
 
 /* position a window */
 #ifndef BUILD_FOR_MACOS
+#define posn_genwin(gwp,x,y) _posn_genwin(QSP_ARG  gwp,x,y)
 static
 #endif // BUILD_FOR_MACOS
-	void posn_genwin(QSP_ARG_DECL  Gen_Win *gwp,int x,int y)
+void _posn_genwin(QSP_ARG_DECL  Gen_Win *gwp,int x,int y)
 {
 #ifndef BUILD_FOR_OBJC
 	Genwin_Functions *gwfp;
@@ -407,7 +412,7 @@ static void show_genwin(QSP_ARG_DECL  IOS_Item *ip)
 
 	INSURE_GENWIN
 
-	mip = get_ios_member_info(QSP_ARG  gw_iclp,IOS_ITEM_NAME(ip));
+	mip = get_ios_member_info(gw_iclp,IOS_ITEM_NAME(ip));
 
 #ifdef CAUTIOUS
 	if( mip == NULL ){
@@ -435,7 +440,7 @@ static void unshow_genwin(QSP_ARG_DECL  IOS_Item *ip)
 
 	INSURE_GENWIN
 
-	mip = get_ios_member_info(QSP_ARG  gw_iclp,IOS_ITEM_NAME(ip));
+	mip = get_ios_member_info(gw_iclp,IOS_ITEM_NAME(ip));
 
 #ifdef CAUTIOUS
 	if( mip == NULL ){
@@ -453,20 +458,20 @@ static void unshow_genwin(QSP_ARG_DECL  IOS_Item *ip)
 }
 #endif // FOOBAR
 
-void show_genwin(QSP_ARG_DECL  Gen_Win *gwp)
+void _show_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 {
 	switch( GW_TYPE(gwp) ){
 		case GW_PANEL:
-			show_panel(QSP_ARG  (Panel_Obj *)gwp);
+			show_panel((Panel_Obj *)gwp);
 			break;
 		case GW_VIEWER:
-			show_viewer(QSP_ARG  (Viewer *) gwp);
+			show_viewer((Viewer *) gwp);
 			break;
 		case GW_NAV_PANEL:
 #ifdef BUILD_FOR_OBJC
-            push_nav(QSP_ARG  gwp);
+            push_nav(gwp);
 #else // ! BUILD_FOR_OBJC
-			show_panel(QSP_ARG  NAVP_PANEL( ((Nav_Panel *)gwp) ) );
+			show_panel(NAVP_PANEL( ((Nav_Panel *)gwp) ) );
 #endif // ! BUILD_FOR_OBJC
 			break;
 		default:
@@ -477,20 +482,20 @@ void show_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 	}
 }
 
-void unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp)
+void _unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 {
 	switch( GW_TYPE(gwp) ){
 		case GW_PANEL:
-			unshow_panel(QSP_ARG  (Panel_Obj *)gwp);
+			unshow_panel((Panel_Obj *)gwp);
 			break;
 		case GW_VIEWER:
-			unshow_viewer(QSP_ARG  (Viewer *) gwp);
+			unshow_viewer((Viewer *) gwp);
 			break;
 		case GW_NAV_PANEL:
 #ifdef BUILD_FOR_OBJC
             pop_nav(SINGLE_QSP_ARG  1);
 #else // ! BUILD_FOR_OBJC
-			unshow_panel(QSP_ARG  NAVP_PANEL(((Nav_Panel *)gwp)) );
+			unshow_panel(NAVP_PANEL(((Nav_Panel *)gwp)) );
 #endif // ! BUILD_FOR_OBJC
 			break;
 		default:
@@ -503,7 +508,9 @@ void unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 
 
 /* delete a window */
-static void delete_genwin(QSP_ARG_DECL  Gen_Win *gwp)
+#define delete_genwin(gwp) _delete_genwin(QSP_ARG  gwp)
+
+static void _delete_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 {
 #ifndef BUILD_FOR_OBJC
 	Genwin_Functions *gwfp;
@@ -540,8 +547,8 @@ static COMMAND_FUNC( do_posn_func )
 	x = (int)HOW_MANY("x position");
 	y = (int)HOW_MANY("y position");
 
-	gwp = find_genwin(QSP_ARG  s);
-	if( gwp != NULL ) posn_genwin(QSP_ARG  gwp, x, y);
+	gwp = find_genwin(s);
+	if( gwp != NULL ) posn_genwin(gwp, x, y);
 }
 
 static COMMAND_FUNC( do_show_func )
@@ -550,8 +557,8 @@ static COMMAND_FUNC( do_show_func )
 	const char *s;
 
 	s = NAMEOF("genwin");
-	gwp = find_genwin(QSP_ARG  s);
-	if( gwp != NULL ) show_genwin(QSP_ARG  gwp);
+	gwp = find_genwin(s);
+	if( gwp != NULL ) show_genwin(gwp);
 }
 
 static COMMAND_FUNC( do_unshow_func )
@@ -560,8 +567,8 @@ static COMMAND_FUNC( do_unshow_func )
 	const char *s;
 
 	s = NAMEOF("genwin");
-	gwp = find_genwin(QSP_ARG  s);
-	if( gwp != NULL ) unshow_genwin(QSP_ARG  gwp);
+	gwp = find_genwin(s);
+	if( gwp != NULL ) unshow_genwin(gwp);
 }
 
 static COMMAND_FUNC( do_delete_func )
@@ -570,8 +577,8 @@ static COMMAND_FUNC( do_delete_func )
 	const char *s;
 
 	s = NAMEOF("genwin");
-	gwp = find_genwin(QSP_ARG  s);
-	if( gwp != NULL ) delete_genwin(QSP_ARG  gwp);
+	gwp = find_genwin(s);
+	if( gwp != NULL ) delete_genwin(gwp);
 }
 
 #ifdef BUILD_FOR_OBJC
@@ -583,7 +590,7 @@ static COMMAND_FUNC( do_delete_func )
 
 static COMMAND_FUNC( do_list_genwins )
 {
-	list_genwins(QSP_ARG  tell_msgfile());
+	list_genwins(tell_msgfile());
 }
 
 static COMMAND_FUNC( do_genwin_info )
@@ -592,7 +599,7 @@ static COMMAND_FUNC( do_genwin_info )
 	const char *s;
 
 	s = NAMEOF("genwin");
-	gwp = find_genwin(QSP_ARG  s);
+	gwp = find_genwin(s);
 	if( gwp == NULL ) return;
 
 	advise("Sorry, genwin_info not implemented!?");
@@ -615,6 +622,6 @@ MENU_END(genwin)
 COMMAND_FUNC( do_genwin_menu )
 {
 	// used to call auto_version here, but this was in its own lib...
-	PUSH_MENU(genwin);
+	CHECK_AND_PUSH_MENU(genwin);
 }
 

@@ -1783,7 +1783,7 @@ void end_busy(int final)
 	dismiss_busy_alert(a);
 } // end_busy
 
-void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	generic_alert(QSP_ARG  type,msg);
 }

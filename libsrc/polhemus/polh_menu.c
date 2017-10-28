@@ -835,7 +835,7 @@ MENU_END(ph_bore)
 
 static COMMAND_FUNC( do_ph_bore )
 {
-	PUSH_MENU(ph_bore);
+	CHECK_AND_PUSH_MENU(ph_bore);
 }
 
 static COMMAND_FUNC( do_set_pos )
@@ -851,10 +851,10 @@ static COMMAND_FUNC( do_get_pos )
 }
 
 static COMMAND_FUNC( ph_pdata_menu )
-{ PUSH_MENU(ph_acq); }
+{ CHECK_AND_PUSH_MENU(ph_acq); }
 
 static COMMAND_FUNC( do_ph_dev )
-{ PUSH_MENU(ph_dev); }
+{ CHECK_AND_PUSH_MENU(ph_dev); }
 
 
 
@@ -870,7 +870,7 @@ ADD_CMD( get_position,	do_get_pos,	get current adaptive filter position controls
 MENU_END(ph_comp)
 
 static COMMAND_FUNC( do_ph_comp )
-{ PUSH_MENU(ph_comp); }
+{ CHECK_AND_PUSH_MENU(ph_comp); }
 
 
 #undef ADD_CMD
@@ -884,7 +884,7 @@ ADD_CMD( get_positional,	do_get_post,		get positional angular limits )
 MENU_END(ph_env)
 
 static COMMAND_FUNC( do_ph_env )
-{ PUSH_MENU(ph_env); }
+{ CHECK_AND_PUSH_MENU(ph_env); }
 
 
 #undef ADD_CMD
@@ -896,7 +896,7 @@ ADD_CMD( get,	do_get_hemi,	get current operational hemisphere )
 MENU_END(ph_hemi)
 
 static COMMAND_FUNC( do_ph_hemi )
-{ PUSH_MENU(ph_hemi); }
+{ CHECK_AND_PUSH_MENU(ph_hemi); }
 
 
 #undef ADD_CMD
@@ -911,7 +911,7 @@ ADD_CMD( response,	do_chk_resp,	check for command response )
 MENU_END(ph_sys)
 
 static COMMAND_FUNC( do_ph_sys )
-{ PUSH_MENU(ph_sys); }
+{ CHECK_AND_PUSH_MENU(ph_sys); }
 
 
 #undef ADD_CMD
@@ -925,7 +925,7 @@ ADD_CMD( reset,		do_reset_align,		reset alignment to factory default )
 MENU_END(ph_align)
 
 static COMMAND_FUNC( do_ph_align )
-{ PUSH_MENU(ph_align); }
+{ CHECK_AND_PUSH_MENU(ph_align); }
 
 /* BUG these commands should be organized better... */
 
@@ -947,7 +947,7 @@ MENU_END(ph_misc)
 
 static COMMAND_FUNC( do_ph_misc )
 {
-	PUSH_MENU(ph_misc);
+	CHECK_AND_PUSH_MENU(ph_misc);
 }
 
 /*                           Main Menu:    Polh                              */
@@ -980,6 +980,6 @@ COMMAND_FUNC( do_polh )
 		polh_inited = 1;
 	}
 
-	PUSH_MENU(polh);
+	CHECK_AND_PUSH_MENU(polh);
 }
 

@@ -244,13 +244,12 @@ extern COMMAND_FUNC( do_dobj_menu );
 extern COMMAND_FUNC( do_list_features );
 
 extern void init_builtins(void);
-extern void push_menu(QSP_ARG_DECL  Menu *mp);
+extern void _push_menu(QSP_ARG_DECL  Menu *mp);
+#define push_menu(mp) _push_menu(QSP_ARG  mp)
 
 /* chewtext.c */
-extern void chew_text(QSP_ARG_DECL const char *, const char *filename );
-//extern void digest(QSP_ARG_DECL  const char *text);
-#define CHEW_TEXT(str,filename)		chew_text(QSP_ARG  str, filename)
-//#define DIGEST(t)		digest(QSP_ARG t)
+extern void _chew_text(QSP_ARG_DECL const char *, const char *filename );
+#define chew_text(str,filename)		_chew_text(QSP_ARG  str, filename)
 
 /* dict.c */
 
@@ -287,7 +286,8 @@ extern const char *save_possibly_empty_str(const char *);
 extern void rls_str(const char *);
 extern COMMAND_FUNC( tog_pmpt );
 extern void qdump( SINGLE_QSP_ARG_DECL );
-extern FILE *tfile(SINGLE_QSP_ARG_DECL);
+extern FILE * _tfile(SINGLE_QSP_ARG_DECL);
+#define tfile()					_tfile(SINGLE_QSP_ARG)
 extern int intractive(SINGLE_QSP_ARG_DECL);
 extern void set_args(QSP_ARG_DECL  int ac,char** av);
 extern String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL);
@@ -296,8 +296,6 @@ extern Macro_Arg ** create_generic_macro_args(int n);
 extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
-extern void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
-extern int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
 //extern void resume_chewing(SINGLE_QSP_ARG_DECL);
 extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
@@ -307,6 +305,12 @@ extern void set_query_macro(Query *,Macro *);
 extern void set_query_args(Query *,const char **);
 extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
 extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
+
+extern void _add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
+extern int _rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
+
+#define add_event_func(func)	_add_event_func(QSP_ARG  func)
+#define rem_event_func(func)	_rem_event_func(QSP_ARG  func)
 
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
@@ -476,34 +480,41 @@ extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
 extern const char *current_input_file(SINGLE_QSP_ARG_DECL);
 
-extern int max_vectorizable(SINGLE_QSP_ARG_DECL);
-extern void set_max_vectorizable(QSP_ARG_DECL  int v);
+extern int _max_vectorizable(SINGLE_QSP_ARG_DECL);
+extern void _set_max_vectorizable(QSP_ARG_DECL  int v);
 
-extern void push_text(QSP_ARG_DECL const char *text, const char *filename );
-extern void digest(QSP_ARG_DECL const char *text, const char *filename );
-#define PUSH_TEXT(t,f)	push_text(QSP_ARG  t,f)
+#define max_vectorizable() _max_vectorizable(SINGLE_QSP_ARG)
+#define set_max_vectorizable(v) _set_max_vectorizable(QSP_ARG  v)
+
+extern void _push_text(QSP_ARG_DECL const char *text, const char *filename );
+extern void _digest(QSP_ARG_DECL const char *text, const char *filename );
+#define digest(text,filename) _digest(QSP_ARG text,filename)
+#define push_text(t,f)	_push_text(QSP_ARG  t,f)
 
 extern void push_top_menu(SINGLE_QSP_ARG_DECL);
 
 extern void do_cmd(SINGLE_QSP_ARG_DECL);
-extern Menu * pop_menu(SINGLE_QSP_ARG_DECL);
 extern void enable_stripping_quotes(SINGLE_QSP_ARG_DECL);
 extern void disable_stripping_quotes(SINGLE_QSP_ARG_DECL);
 extern void lookahead(SINGLE_QSP_ARG_DECL);
+
+extern Menu * _pop_menu(SINGLE_QSP_ARG_DECL);
+
+#define pop_menu() _pop_menu(SINGLE_QSP_ARG)
 
 extern Query_Stack *new_qstack(QSP_ARG_DECL  const char *name);
 
 extern void qs_do_cmd(Query_Stack *qsp);
 
-extern void open_loop(QSP_ARG_DECL  int n);
-#define OPEN_LOOP(n)	open_loop(QSP_ARG  n)
-extern void close_loop(SINGLE_QSP_ARG_DECL);
-#define CLOSE_LOOP	close_loop(SINGLE_QSP_ARG)
+extern void _open_loop(QSP_ARG_DECL  int n);
+extern void _close_loop(SINGLE_QSP_ARG_DECL);
+#define open_loop(n)	_open_loop(QSP_ARG  n)
+#define close_loop()	_close_loop(SINGLE_QSP_ARG)
 
-extern void list_current_menu(SINGLE_QSP_ARG_DECL);
-extern void list_builtin_menu(SINGLE_QSP_ARG_DECL);
-#define LIST_CURRENT_MENU	list_current_menu(SINGLE_QSP_ARG)
-#define LIST_BUILTIN_MENU	list_builtin_menu(SINGLE_QSP_ARG)
+extern void _list_current_menu(SINGLE_QSP_ARG_DECL);
+extern void _list_builtin_menu(SINGLE_QSP_ARG_DECL);
+#define list_current_menu()	_list_current_menu(SINGLE_QSP_ARG)
+#define list_builtin_menu()	_list_builtin_menu(SINGLE_QSP_ARG)
 
 
 // variable.c

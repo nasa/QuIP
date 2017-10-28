@@ -143,7 +143,7 @@ MENU_END(areas)
 
 static COMMAND_FUNC( do_area )
 {
-	PUSH_MENU(areas);
+	CHECK_AND_PUSH_MENU(areas);
 }
 
 /* Create and push a new context */
@@ -176,7 +176,7 @@ MENU_END(contexts)
 
 static COMMAND_FUNC( do_context )
 {
-	PUSH_MENU(contexts);
+	CHECK_AND_PUSH_MENU(contexts);
 }
 
 Precision * get_precision(SINGLE_QSP_ARG_DECL)
@@ -874,7 +874,7 @@ static COMMAND_FUNC( do_get_align )
 
 static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(tell_msgfile()); }
 static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(tell_msgfile()); }
-static COMMAND_FUNC( do_unlock_all_tmp_objs ) { unlock_all_tmp_objs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_unlock_all_tmp_objs ) { unlock_all_tmp_objs(); }
 
 static COMMAND_FUNC( do_protect )
 {
@@ -956,6 +956,6 @@ COMMAND_FUNC( do_dobj_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(data);
+	CHECK_AND_PUSH_MENU(data);
 }
 

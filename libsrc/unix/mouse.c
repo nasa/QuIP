@@ -573,8 +573,7 @@ static void check_mouse(SINGLE_QSP_ARG_DECL)
 			//if( intractive(SINGLE_QSP_ARG) )
 			//	simulate_typing(mouse_action[event]);
 			//else
-				chew_text(QSP_ARG  mouse_action[event],
-					"(mouse event)" );
+				chew_text(mouse_action[event],"(mouse event)");
 		}
 	}
 }
@@ -588,14 +587,14 @@ static COMMAND_FUNC( poll_mouse )
 			WARN("already polling mouse");
 			return;
 		}
-		add_event_func(QSP_ARG  check_mouse);
+		add_event_func(check_mouse);
 		polling=1;
 	} else {
 		if( ! polling ) {
 			WARN("not already polling mouse");
 			return;
 		}
-		if( rem_event_func(QSP_ARG  check_mouse) < 0 )
+		if( rem_event_func(check_mouse) < 0 )
 			WARN("error removing mouse handler");
 		polling=0;
 	}
@@ -637,7 +636,7 @@ MENU_END(mouse)
 
 COMMAND_FUNC( do_mouse_menu )
 {
-	PUSH_MENU(mouse);
+	CHECK_AND_PUSH_MENU(mouse);
 }
 
 

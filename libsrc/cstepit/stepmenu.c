@@ -54,7 +54,7 @@ static COMMAND_FUNC( set_params )
 		/* in case we have a lot of params, and the expressions
 		 * involve subsripted objects...
 		 */
-		unlock_all_tmp_objs(SINGLE_QSP_ARG);
+		unlock_all_tmp_objs();
 	}
 /*
 sprintf(error_string,"%d parameters read",n);
@@ -133,7 +133,7 @@ MENU_END(stepit)
 
 COMMAND_FUNC( do_step_menu )
 {
-	PUSH_MENU(stepit);
+	CHECK_AND_PUSH_MENU(stepit);
 }
 
 

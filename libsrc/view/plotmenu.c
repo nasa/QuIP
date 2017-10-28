@@ -333,7 +333,7 @@ static COMMAND_FUNC( do_cyplot )
 		WARN("color vector should be byte");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dp,cdp,"do_cyplot") ){
+	if( !dp_same_size(dp,cdp,"do_cyplot") ){
 		sprintf(ERROR_STRING,"data vector %s and color vector %s must have identical sizes",
 			OBJ_NAME(dp),OBJ_NAME(cdp));
 		WARN(ERROR_STRING);
@@ -508,7 +508,7 @@ static COMMAND_FUNC( do_end_plot )
 #ifdef BUILD_FOR_IOS
 	xp_update();
 #endif /* BUILD_FOR_IOS */
-	POP_MENU;
+	pop_menu();
 }
 #endif /* FOOBAR */
 
@@ -556,6 +556,6 @@ COMMAND_FUNC( do_xp_menu )
 	if( vp != NULL )
 		xp_setup(QSP_ARG  vp);
 
-	PUSH_MENU(xplot);
+	CHECK_AND_PUSH_MENU(xplot);
 }
 

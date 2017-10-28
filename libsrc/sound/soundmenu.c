@@ -383,12 +383,12 @@ MENU_END(audio_playback)
 
 static COMMAND_FUNC( do_rec_menu )
 {
-	PUSH_MENU(audio_record);
+	CHECK_AND_PUSH_MENU(audio_record);
 }
 
 static COMMAND_FUNC( do_pb_menu )
 {
-	PUSH_MENU(audio_playback);
+	CHECK_AND_PUSH_MENU(audio_playback);
 }
 
 
@@ -419,7 +419,7 @@ COMMAND_FUNC( do_sound_menu )
 		sound_inited=1;
 	}
     
-	PUSH_MENU(sound);	/* load the initial menu */
+	CHECK_AND_PUSH_MENU(sound);	/* load the initial menu */
 //#endif // ! BUILD_FOR_IOS
 }
 

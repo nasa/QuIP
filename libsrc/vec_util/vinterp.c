@@ -86,16 +86,16 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 	INSIST_RAM_OBJ(source,vinterp)
 	INSIST_RAM_OBJ(control,vinterp)
 
-	if( not_prec(QSP_ARG  target,PREC_SP) )  return;
-	if( not_prec(QSP_ARG  source,PREC_SP) )  return;
-	if( not_prec(QSP_ARG  control,PREC_SP) ) return;
+	if( not_prec(target,PREC_SP) )  return;
+	if( not_prec(source,PREC_SP) )  return;
+	if( not_prec(control,PREC_SP) ) return;
 
 
-	if( !dp_same_size(QSP_ARG  target,source,"vinterp") ){
+	if( !dp_same_size(target,source,"vinterp") ){
 		NWARN("vinterp:  target/source length mismatch");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  target,control,"vinterp") ){
+	if( !dp_same_size(target,control,"vinterp") ){
 		NWARN("vinterp:  target/control length mismatch");
 		return;
 	}

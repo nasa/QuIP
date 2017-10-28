@@ -62,7 +62,7 @@ MENU_END(chains)
 
 COMMAND_FUNC( do_chains )
 {
-	PUSH_MENU(chains);
+	CHECK_AND_PUSH_MENU(chains);
 }
 
 

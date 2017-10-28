@@ -35,7 +35,7 @@ static COMMAND_FUNC( do_newlut )
 	const char *name;
 
 	name = NAMEOF("Name of new colormap");
-	if( new_colormap(QSP_ARG  name) == NULL )
+	if( new_colormap(name) == NULL )
 		WARN("error making new colormap");
 }
  
@@ -96,6 +96,6 @@ MENU_END(lutbufs)
 
 COMMAND_FUNC( do_lutbufs )
 {
-	PUSH_MENU(lutbufs);
+	CHECK_AND_PUSH_MENU(lutbufs);
 }
 

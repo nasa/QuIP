@@ -279,7 +279,7 @@ MENU_END(admin)
 
 static COMMAND_FUNC( do_admin )
 {
-	PUSH_MENU(admin);
+	CHECK_AND_PUSH_MENU(admin);
 }
 
 static COMMAND_FUNC( do_rv_end )
@@ -292,7 +292,7 @@ static COMMAND_FUNC( do_rv_end )
 	MISSING_CONFIG(rv_sync)
 #endif // ! HAVE_RAWVOL
 
-	POP_MENU;
+	pop_menu();
 }
 
 static COMMAND_FUNC( do_rv_info )
@@ -501,6 +501,6 @@ COMMAND_FUNC( do_rv_menu )
 		inited++;
 	}
 
-	PUSH_MENU(rawvol);
+	CHECK_AND_PUSH_MENU(rawvol);
 }
 

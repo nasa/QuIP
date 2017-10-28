@@ -46,8 +46,8 @@ Panel_Obj *curr_panel=NULL;
 /* local prototypes */
 static void list_widgets(Panel_Obj *po);
 
-static void get_menu_items(QSP_ARG_DECL  Screen_Obj *mp);
-#define GET_MENU_ITEMS(mp)		get_menu_items(QSP_ARG  mp)
+static void _get_menu_items(QSP_ARG_DECL  Screen_Obj *mp);
+#define get_menu_items(mp)		_get_menu_items(QSP_ARG  mp)
 #ifdef NOT_YET
 static void del_po(QSP_ARG_DECL  Panel_Obj *po);
 #endif /* NOT_YET */
@@ -126,7 +126,7 @@ void add_to_navp(Nav_Panel *np_p, Screen_Obj *sop)	// for X11
 
 /* Why don't these do anything!?!? */
 
-Item_Context *pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
@@ -134,17 +134,17 @@ Item_Context *pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
 	return icp;
 }
 
-void push_scrnobj_context(QSP_ARG_DECL  Item_Context *icp)
+void _push_scrnobj_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	push_item_context(scrnobj_itp, icp );
 }
 
-Item_Context *current_scrnobj_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_current_scrnobj_context(SINGLE_QSP_ARG_DECL)
 {
 	return current_context(scrnobj_itp);
 }
 
-Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
+Item_Context *_create_scrnobj_context(QSP_ARG_DECL  const char *name)
 {
 	if( scrnobj_itp == NULL ){
 		init_scrnobjs();
@@ -158,7 +158,7 @@ Item_Context *create_scrnobj_context(QSP_ARG_DECL  const char *name)
 
 #define WIDGET_TYPE_NAME(sop)		widget_type_name[WIDGET_INDEX(sop)]
 
-Screen_Obj *simple_object(QSP_ARG_DECL  const char *name)
+Screen_Obj *_simple_object(QSP_ARG_DECL  const char *name)
 {
 	Screen_Obj *sop;
 	sop = new_scrnobj(name);
@@ -188,7 +188,7 @@ Screen_Obj *dup_so(QSP_ARG_DECL  Screen_Obj *sop)
 	char name[BUF_LEN];
 
 	sprintf(name,"%s.dup",SOB_NAME(sop));
-	dup = simple_object(QSP_ARG  name);
+	dup = simple_object(name);
 	if( sop == NULL ) return(sop);
 	SET_SOB_PARENT(dup, SOB_PARENT(sop) );
 	SET_SOB_PANEL(dup, SOB_PANEL(sop) );
@@ -289,7 +289,7 @@ Gen_Win *dummy_panel(QSP_ARG_DECL  const char *name,int dx,int dy)
 
 static void make_scrnobj_ctx_for_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
-	IOS_Item_Context *icp = create_scrnobj_context(QSP_ARG  PO_NAME(po) );
+	IOS_Item_Context *icp = create_scrnobj_context(PO_NAME(po));
 //sprintf(ERROR_STRING,"new_panel %s (0x%lx, qvc = 0x%lx), size is %d x %d,  setting context to 0x%lx",
 //PO_NAME(po),(long)po,(long)PO_QVC(po),PO_WIDTH(po),PO_HEIGHT(po),(long)icp);
 //advise(ERROR_STRING);
@@ -447,7 +447,7 @@ Screen_Obj *get_parts(QSP_ARG_DECL  const char *class_str)
 
 	if( curr_panel == NULL ) return(NULL);
 
-	sop = simple_object(QSP_ARG  label);
+	sop = simple_object(label);
 	if( sop == NULL ) return(sop);
 
 	SET_SOB_ACTION(sop, savestr(text));
@@ -474,7 +474,7 @@ if( debug ) fprintf(stderr,"Making menu \"%s\"\n",SOB_NAME(mp));
 
 	make_menu(QSP_ARG  mp,mip);
 
-	GET_MENU_ITEMS(mp);
+	get_menu_items(mp);
 
 #ifdef QUIP_DEBUG
 if( debug ) fprintf(stderr,"make_menu:  back from get_menu_items (menu %s)\n",
@@ -563,7 +563,7 @@ else
 WARN("all parent menus popped!!");
 }
 #endif /* QUIP_DEBUG */
-	pop_menu(SINGLE_QSP_ARG);
+	pop_menu();
 }
 
 void push_parent(Screen_Obj *mp)
@@ -618,12 +618,12 @@ ADD_CMD( button,	do_normal,	specify normal menu item )
 ADD_CMD( end_menu,	end_menu,	quit adding menu items )
 MENU_SIMPLE_END(menu_item)	// use SIMPLE to avoid auto quit/pop_menu
 
-static void get_menu_items(QSP_ARG_DECL  Screen_Obj *mp)
+static void _get_menu_items(QSP_ARG_DECL  Screen_Obj *mp)
 {
 	int depth;
 
 	push_parent(mp);
-	PUSH_MENU(menu_item);
+	CHECK_AND_PUSH_MENU(menu_item);
 
 	/* now need to do_cmd() until menu is exited */
 	/* But don't we normally just execute commands??? */
@@ -635,14 +635,14 @@ static void get_menu_items(QSP_ARG_DECL  Screen_Obj *mp)
 	}
 }
 
-void get_min_max_val(QSP_ARG_DECL  int *minp,int *maxp,int *valp)
+void _get_min_max_val(QSP_ARG_DECL  int *minp,int *maxp,int *valp)
 {
 	*minp=(int)HOW_MANY("min value");
 	*maxp=(int)HOW_MANY("max value");
 	*valp=(int)HOW_MANY("initial value");
 }
 
-void get_so_width(QSP_ARG_DECL int *widthp)
+void _get_so_width(QSP_ARG_DECL int *widthp)
 {
 	*widthp=(int)HOW_MANY("width");
 }
@@ -655,7 +655,7 @@ COMMAND_FUNC( mk_button )
 	if( bo == NULL ) return;
 	SET_SOB_TYPE(bo, SOT_BUTTON);
 
-	make_button(QSP_ARG  bo);
+	make_button(bo);
 	add_to_panel(curr_panel,bo);
 
 	INC_PO_CURR_Y(curr_panel, BUTTON_HEIGHT + GAP_HEIGHT );
@@ -849,7 +849,7 @@ COMMAND_FUNC( mk_gauge )
 	int val;
 
 	gop=GET_PARTS("gauge");
-	GET_MIN_MAX_VAL(&minval,&maxval,&val);
+	get_min_max_val(&minval,&maxval,&val);
 	if( gop == NULL ) return;
 	SET_SOB_TYPE(gop, SOT_GAUGE);
 	SET_SOB_MIN(gop,minval);
@@ -922,7 +922,7 @@ COMMAND_FUNC( mk_slider )
 	int min, max, val;
 
 	sop = GET_PARTS("slider");
-	GET_MIN_MAX_VAL(&min,&max,&val);
+	get_min_max_val(&min,&max,&val);
 	if( sop == NULL ) return;
 	SET_SOB_WIDTH(sop,DEFAULT_SLIDER_WIDTH);
 	FINISH_SLIDER(SOT_SLIDER)
@@ -934,7 +934,7 @@ COMMAND_FUNC( mk_adjuster )
 	int min, max, val;
 
 	sop = GET_PARTS("adjuster");
-	GET_MIN_MAX_VAL(&min,&max,&val);
+	get_min_max_val(&min,&max,&val);
 	if( sop == NULL ) return;
 	SET_SOB_WIDTH(sop,DEFAULT_SLIDER_WIDTH);
 	FINISH_SLIDER(SOT_ADJUSTER)
@@ -949,8 +949,8 @@ COMMAND_FUNC( mk_slider_w )
 	int width;
 
 	sop = GET_PARTS("slider");
-	GET_MIN_MAX_VAL(&min,&max,&val);
-	GET_SOB_WIDTH(&width);
+	get_min_max_val(&min,&max,&val);
+	get_so_width(&width);
 	if( sop == NULL ) return;
 	SET_SOB_WIDTH(sop,width);
 	FINISH_SLIDER(SOT_SLIDER)
@@ -965,8 +965,8 @@ COMMAND_FUNC( mk_adjuster_w )
 	int width;
 
 	sop = GET_PARTS("slider");
-	GET_MIN_MAX_VAL(&min,&max,&val);
-	GET_SOB_WIDTH(&width);
+	get_min_max_val(&min,&max,&val);
+	get_so_width(&width);
 	if( sop == NULL ) return;
 	SET_SOB_WIDTH(sop,width);
 	FINISH_SLIDER(SOT_ADJUSTER)
@@ -990,7 +990,7 @@ COMMAND_FUNC( mk_label )
 	// BUG can we do something better than hard-coding this???
 	SET_SOB_HEIGHT(mp, MESSAGE_HEIGHT);
 	// what sets the width?
-	make_label(QSP_ARG  mp);
+	make_label(mp);
 	add_to_panel(curr_panel,mp);
 
 	// BUG - when we can wrap lines, the height will be
@@ -1116,7 +1116,7 @@ COMMAND_FUNC( do_show )
 	Panel_Obj *po;
 
 	po=pick_panel("");
-	if( po != NULL ) show_panel(QSP_ARG  po);
+	if( po != NULL ) show_panel(po);
 }
 
 #ifndef BUILD_FOR_OBJC
@@ -1138,7 +1138,7 @@ static void do_genwin_panel_show(QSP_ARG_DECL  const char *s)
 	Panel_Obj *po;
 
 	po=get_panel_obj(s);
-	if( po != NULL ) show_panel(QSP_ARG  po);
+	if( po != NULL ) show_panel(po);
 	return;
 }
 
@@ -1147,7 +1147,7 @@ static void do_genwin_panel_unshow(QSP_ARG_DECL  const char *s)
 	Panel_Obj *po;
 
 	po=get_panel_obj(s);
-	if( po != NULL ) unshow_panel(QSP_ARG  po);
+	if( po != NULL ) unshow_panel(po);
 	return;
 }
 
@@ -1169,7 +1169,7 @@ COMMAND_FUNC( do_unshow )
 	Panel_Obj *po;
 
 	po=pick_panel("");
-	if( po != NULL ) unshow_panel(QSP_ARG  po);
+	if( po != NULL ) unshow_panel(po);
 }
 
 #define INSIST_GAUGE(gp,func)						\
@@ -1419,17 +1419,17 @@ COMMAND_FUNC( clear_screen )
 	po=pick_panel("");
 	if( po==NULL ) return;
 
-	lp=item_list(QSP_ARG  scrnobj_itp);
+	lp=item_list(scrnobj_itp);
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
 	while( np != NULL ){
 		sop = (Screen_Obj *)np->n_data;
 		if( WIDGET_PANEL(sop) == po )
-			del_so(QSP_ARG  sop);
+			del_so(sop);
 		np=np->n_next;
 	}
-	del_po(QSP_ARG  po);
+	del_po(po);
 }
 
 static void del_po(QSP_ARG_DECL  Panel_Obj *po)
@@ -1437,7 +1437,7 @@ static void del_po(QSP_ARG_DECL  Panel_Obj *po)
 	/* should deallocate any window system stuff first */
 	free_wsys_stuff(po);
 
-	del_panel_obj(QSP_ARG  po);
+	del_panel_obj(po);
 	givbuf((void *)PO_NAME(po));
 }
 #endif /* NOT_YET */
@@ -1492,7 +1492,7 @@ COMMAND_FUNC( mk_scroller )
 	if( sop == NULL ) return;
 	SET_SOB_TYPE(sop, SOT_SCROLLER);
 
-	make_scroller(QSP_ARG  sop);
+	make_scroller(sop);
 	add_to_panel(curr_panel,sop);
 	INC_PO_CURR_Y(curr_panel, SCROLLER_HEIGHT + GAP_HEIGHT + 50 );
 }
@@ -1505,7 +1505,7 @@ COMMAND_FUNC( mk_scroller )
 // but that was incorrect for the motif implementation of pickers,
 // so for choosers it is important to do this after calling get_strings...
 
-int get_strings(QSP_ARG_DECL Screen_Obj *sop,const char ***sss)
+int _get_strings(QSP_ARG_DECL Screen_Obj *sop,const char ***sss)
 {
 	const char **string_arr;
 	int i;
@@ -1547,7 +1547,7 @@ COMMAND_FUNC( do_set_scroller )
 	sop = pick_scrnobj("scroller");
 	if( sop==NULL ) return;
 
-	n=GET_STRINGS(sop,&string_arr);
+	n=get_strings(sop,&string_arr);
 	if( n < 0 ) return;
 
 	SET_SOB_N_SELECTORS(sop,n);
@@ -1556,7 +1556,7 @@ COMMAND_FUNC( do_set_scroller )
 	set_scroller_list(sop,string_arr,n);
 }
 
-void mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp)
+void _mk_it_scroller(QSP_ARG_DECL  Screen_Obj *sop,Item_Type *itp)
 {
 	List *lp;
 	Node *np;
@@ -1594,7 +1594,7 @@ COMMAND_FUNC( do_item_scroller )
 	itp = pick_ittyp("");
 	if( sop==NULL || itp == NULL ) return;
 
-	mk_it_scroller(QSP_ARG  sop,itp);
+	mk_it_scroller(sop,itp);
 }
 
 COMMAND_FUNC( do_file_scroller )
@@ -1638,13 +1638,13 @@ COMMAND_FUNC( do_mlt_chooser )
 
 	// the string_arr is allocated for exactly n strings,
 	// if we later want to add something we have to reallocate!?
-	n=GET_STRINGS(sop,&string_arr);
+	n=get_strings(sop,&string_arr);
 	if( n < 0 ) return;
 
 	SET_SOB_N_SELECTORS(sop,n);
 	SET_SOB_SELECTORS(sop,string_arr);
 
-	make_chooser(QSP_ARG  sop,n,string_arr);
+	make_chooser(sop,n,string_arr);
 	add_to_panel(curr_panel,sop);
 
 //fprintf(stderr,"before increment, curr_y = %d\n",PO_CURR_Y(curr_panel));
@@ -1664,13 +1664,13 @@ COMMAND_FUNC( do_chooser )
 
 	// the string_arr is allocated for exactly n strings,
 	// if we later want to add something we have to reallocate!?
-	n=GET_STRINGS(sop,&string_arr);
+	n=get_strings(sop,&string_arr);
 	if( n < 0 ) return;
 
 	SET_SOB_N_SELECTORS(sop,n);
 	SET_SOB_SELECTORS(sop,string_arr);
 
-	make_chooser(QSP_ARG  sop,n,string_arr);
+	make_chooser(sop,n,string_arr);
 	add_to_panel(curr_panel,sop);
 
 //fprintf(stderr,"before increment, curr_y = %d\n",PO_CURR_Y(curr_panel));
@@ -1678,7 +1678,9 @@ COMMAND_FUNC( do_chooser )
 //fprintf(stderr,"after increment, curr_y = %d\n",PO_CURR_Y(curr_panel));
 }
 
-static void get_picker_strings(QSP_ARG_DECL  Screen_Obj *sop, int n_cyl )
+#define get_picker_strings(sop,n_cyl) _get_picker_strings(QSP_ARG  sop, n_cyl )
+
+static void _get_picker_strings(QSP_ARG_DECL  Screen_Obj *sop, int n_cyl )
 {
 	int *count_tbl;
 	int i, j, n_max;
@@ -1693,7 +1695,7 @@ static void get_picker_strings(QSP_ARG_DECL  Screen_Obj *sop, int n_cyl )
 	n_max=0;
 	for(i=0;i<n_cyl;i++){
 		const char **selectors;
-		n=GET_STRINGS(sop,&string_arr);
+		n=get_strings(sop,&string_arr);
 		if( n < 0 ) return;	// BUG clean up!
 		else if( n > 0 ){
 			SET_SOB_N_SELECTORS_AT_IDX(sop, i, n);
@@ -1711,7 +1713,9 @@ static void get_picker_strings(QSP_ARG_DECL  Screen_Obj *sop, int n_cyl )
 	}
 }
 
-static void del_picks( QSP_ARG_DECL  Screen_Obj *sop )
+#define del_picks(sop) _del_picks(QSP_ARG  sop)
+
+static void _del_picks( QSP_ARG_DECL  Screen_Obj *sop )
 {
 	int i, n_cyl;
 	void *p;
@@ -1754,9 +1758,9 @@ COMMAND_FUNC( do_picker )
 		return;
 	}
 
-	get_picker_strings(QSP_ARG  sop, n_cyl );
+	get_picker_strings(sop, n_cyl );
 
-	make_picker(QSP_ARG  sop);
+	make_picker(sop);
 	add_to_panel(curr_panel,sop);
 
 	INC_PO_CURR_Y( curr_panel, SOB_HEIGHT(sop) + GAP_HEIGHT );
@@ -1883,7 +1887,7 @@ static void add_choice_to_picker(QSP_ARG_DECL  Screen_Obj *sop, const char *s)
 	int i, n;
 
 	assert( SOB_TYPE(sop) == SOT_PICKER );
-	if( insist_one_component(QSP_ARG  sop, "add_choice_to_picker") < 0 ) return;
+	if( insist_one_component(sop, "add_choice_to_picker") < 0 ) return;
 
 	if( insist_choice_not_present(SOB_SELECTORS_AT_IDX(sop,0),SOB_N_SELECTORS_AT_IDX(sop,0),s,
 			SOB_NAME(sop),"add_choice_to_picker") < 0 )
@@ -1931,7 +1935,7 @@ static inline void delete_choice_from_picker(QSP_ARG_DECL  Screen_Obj *sop, cons
 	const char **new_string_arr;
 
 	assert( SOB_TYPE(sop) == SOT_PICKER );
-	if( insist_one_component(QSP_ARG  sop, "add_choice_to_picker") < 0 ) return;
+	if( insist_one_component(sop, "add_choice_to_picker") < 0 ) return;
 
 	if( insist_choice_present(SOB_SELECTORS_AT_IDX(sop,0),SOB_N_SELECTORS_AT_IDX(sop,0),s,SOB_NAME(sop),"delete_choice_from_picker") < 0 )
 		return;
@@ -1989,10 +1993,10 @@ COMMAND_FUNC( do_add_choice )
 	// BUG this should work for "scrollers" too!
 
 	if( SOB_TYPE(sop) == SOT_PICKER ){
-		add_choice_to_picker(QSP_ARG  sop, s);
+		add_choice_to_picker(sop, s);
 	} else {
 		assert( SOB_TYPE(sop) == SOT_CHOOSER );
-		add_choice_to_chooser(QSP_ARG  sop, s);
+		add_choice_to_chooser(sop, s);
 	}
 	reload_chooser(sop);
 
@@ -2023,10 +2027,10 @@ COMMAND_FUNC( do_del_choice )
 #ifdef BUILD_FOR_IOS
 
 	if( SOB_TYPE(sop) == SOT_CHOOSER ){
-		delete_choice_from_chooser(QSP_ARG  sop,s);
+		delete_choice_from_chooser(sop,s);
 	} else {
 		assert( SOB_TYPE(sop) == SOT_PICKER );
-		delete_choice_from_picker(QSP_ARG  sop,s);
+		delete_choice_from_picker(sop,s);
 	}
 
 #else /* ! BUILD_FOR_IOS */
@@ -2079,9 +2083,9 @@ COMMAND_FUNC( do_set_picks )
 		return;
 	}
 
-	del_picks( QSP_ARG  sop );
+	del_picks( sop );
 
-	get_picker_strings(QSP_ARG  sop, n_cyl );
+	get_picker_strings(sop, n_cyl );
 
 	RELOAD_PICKER
 
@@ -2099,7 +2103,7 @@ Node *first_panel_node(SINGLE_QSP_ARG_DECL)
 {
 	List *lp;
 
-	lp=item_list(QSP_ARG  panel_obj_itp);
+	lp=item_list(panel_obj_itp);
 	if( lp==NULL ) return(NULL);
 	else return(QLIST_HEAD(lp));
 }
@@ -2178,7 +2182,7 @@ IOS_Size_Functions scrnobj_sf={
 		(const char * (*)(QSP_ARG_DECL  IOS_Item *))default_prec_name
 };
 
-void so_init(QSP_ARG_DECL  int argc,const char **argv)
+void _so_init(QSP_ARG_DECL  int argc,const char **argv)
 {
 	static int so_inited=0;
 
@@ -2186,7 +2190,7 @@ void so_init(QSP_ARG_DECL  int argc,const char **argv)
 	window_sys_init(SINGLE_QSP_ARG);
 
 #ifdef HAVE_MOTIF
-	motif_init(QSP_ARG  argv[0]);
+	motif_init(argv[0]);
 #endif /* HAVE_MOTIF */
 
 #ifndef BUILD_FOR_OBJC
@@ -2195,14 +2199,14 @@ void so_init(QSP_ARG_DECL  int argc,const char **argv)
 		init_panel_objs();
 
 	/* support for genwin */
-	add_genwin(QSP_ARG  panel_obj_itp, &gwfp, NULL);
+	add_genwin(panel_obj_itp, &gwfp, NULL);
 	
-	add_sizable(QSP_ARG  panel_obj_itp,&panel_sf, NULL );
+	add_sizable(panel_obj_itp,&panel_sf, NULL );
 
 	// scrnobj_itp is null at this point!?
 	if( scrnobj_itp == NULL )
 		init_scrnobjs();
-	add_sizable(QSP_ARG  scrnobj_itp,&scrnobj_sf, NULL );
+	add_sizable(scrnobj_itp,&scrnobj_sf, NULL );
 	
 #else
 

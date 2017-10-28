@@ -199,7 +199,7 @@ COMMAND_FUNC( do_tile_menu )
 		debug_tiles = add_debug_module("tiles");
 #endif /* DEBUG */
 	}
-	PUSH_MENU(tiles);
+	CHECK_AND_PUSH_MENU(tiles);
 }
 
 #endif /* HAVE_OPENGL */

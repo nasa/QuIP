@@ -14,6 +14,7 @@ extern void bring_image_to_front(QSP_ARG_DECL
 	Viewer *vp, Data_Obj *dp, int x, int y );
 
 #ifdef BUILD_FOR_MACOS
-extern void posn_genwin(QSP_ARG_DECL  IOS_Item *ip, int x, int y);
+extern void _posn_genwin(QSP_ARG_DECL  IOS_Item *ip, int x, int y);
+#define posn_genwin(ip,x,y) _posn_genwin(QSP_ARG  ip,x,y)
 #endif // BUILD_FOR_MACOS
 

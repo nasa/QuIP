@@ -36,7 +36,7 @@ Dpyable *current_dpyp;
 #include "gen_win.h"
 #endif /* BUILD_FOR_IOS */
 
-Data_Obj *new_colormap(QSP_ARG_DECL  const char *name)
+Data_Obj *_new_colormap(QSP_ARG_DECL  const char *name)
 {
 	Data_Obj *dp;
 
@@ -101,7 +101,7 @@ void _setcolor(QSP_ARG_DECL  int c,int r,int g,int b)
 {
 	/*insure_linearization(); */
 
-	if( color_index_out_of_range(QSP_ARG  c) )
+	if( color_index_out_of_range(c) )
 		return;
 
 	/* we've checked the index; now check the phosphor levels */
@@ -177,7 +177,7 @@ void _setcolor(QSP_ARG_DECL  int c,int r,int g,int b)
 
 }
 
-void const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b)
+void _const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b)
 {
 	push_cm_state();
 	CLR_CM_STATE(IMMEDIATE);
@@ -188,7 +188,7 @@ void const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b)
 	update_if();
 }
 
-void make_grayscale(QSP_ARG_DECL  int base,int n_colors)
+void _make_grayscale(QSP_ARG_DECL  int base,int n_colors)
 {
 	int i;
 	int inc,v;
@@ -208,7 +208,7 @@ void make_grayscale(QSP_ARG_DECL  int base,int n_colors)
 	update_if();
 }
 
-void make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
+void _make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
 {
 	int ir,ig,ib;
 	int rinc,ginc,binc;
@@ -253,9 +253,9 @@ void make_rgb(QSP_ARG_DECL  int base,int nr,int ng,int nb)
 	}
 }
 
-void poke_lut(QSP_ARG_DECL  int c,int r,int g,int b)
+void _poke_lut(QSP_ARG_DECL  int c,int r,int g,int b)
 {
-	if( color_index_out_of_range(QSP_ARG  c) ) return;
+	if( color_index_out_of_range(c) ) return;
 
 #ifdef HAVE_X11
 	CM_DATA( DPA_CMAP_OBJ(current_dpyp),0,c)= (unsigned char)r;
@@ -266,7 +266,7 @@ void poke_lut(QSP_ARG_DECL  int c,int r,int g,int b)
 	update_if();
 }
 
-void setmap(QSP_ARG_DECL  Data_Obj *dp)
+void _setmap(QSP_ARG_DECL  Data_Obj *dp)
 {
 	short nc,ci,pxl_inc;
 	float *fptr;
@@ -381,7 +381,7 @@ void select_cmap_display(Dpyable *dpyp)
 	current_dpyp = dpyp;		/* default_cmap() */
 }
 
-void default_cmap(QSP_ARG_DECL  Dpyable *dpyp)
+void _default_cmap(QSP_ARG_DECL  Dpyable *dpyp)
 {
 	current_dpyp = dpyp;		/* default_cmap() */
 
@@ -389,14 +389,14 @@ void default_cmap(QSP_ARG_DECL  Dpyable *dpyp)
 		advise("Initializing default color map");
 
 	/* grayscale */
-	make_grayscale(QSP_ARG  GRAYSCALE_BASE,NC_GRAYSCALE);
+	make_grayscale(GRAYSCALE_BASE,NC_GRAYSCALE);
 
 	/* color */
-	make_rgb(QSP_ARG  COLOR_BASE,N_RED_LEVELS,N_GREEN_LEVELS,N_BLUE_LEVELS);
+	make_rgb(COLOR_BASE,N_RED_LEVELS,N_GREEN_LEVELS,N_BLUE_LEVELS);
 }
 #endif /* HAVE_X11 */
 
-int color_index_out_of_range(QSP_ARG_DECL  unsigned int index)
+int _color_index_out_of_range(QSP_ARG_DECL  unsigned int index)
 {
 #ifdef HAVE_X11
 	// This condition can happen if the window name has a space!?

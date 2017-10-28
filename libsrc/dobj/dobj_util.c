@@ -91,7 +91,7 @@ static void release_data(QSP_ARG_DECL  Data_Obj *dp )
  *	Remove a child object from parent's list
  */
 
-void disown_child( QSP_ARG_DECL  Data_Obj *dp )
+void _disown_child( QSP_ARG_DECL  Data_Obj *dp )
 {
 	Node *np;
 
@@ -226,7 +226,7 @@ advise(ERROR_STRING);
 		del_subs(QSP_ARG  dp);
 	}
 	if( OBJ_PARENT(dp) != NULL ){
-		disown_child(QSP_ARG  dp);
+		disown_child(dp);
 	}
 
 	if( IS_TEMP(dp) ){
@@ -714,8 +714,8 @@ static Position_Functions dobj_pf={
 };
 
 static Subscript_Functions dobj_ssf={
-	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	d_subscript,
-	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	c_subscript
+	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	_d_subscript,
+	(Item * (*)(QSP_ARG_DECL  Item *,index_t))	_c_subscript
 };
 
 void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
@@ -742,7 +742,7 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	//ram_area_p=area_init(QSP_ARG  "ram",NULL,0L,MAX_RAM_CHUNKS,DA_RAM);
 	vl2_init_platform(SINGLE_QSP_ARG);	// this initializes ram_area_p
 
-	init_tmp_dps(SINGLE_QSP_ARG);
+	init_tmp_dps();
 
 	set_del_method(dobj_itp,(void (*)(QSP_ARG_DECL  Item *))_delvec);
 
@@ -751,19 +751,19 @@ void dataobj_init(SINGLE_QSP_ARG_DECL)		// initiliaze the module
 	set_obj_funcs(
                   get_obj,
                   _dobj_of,
-                  d_subscript,
-                  c_subscript);
+                  _d_subscript,
+                  _c_subscript);
     
 	init_dobj_expr_funcs(SINGLE_QSP_ARG);
 
 //	/* BUG need to make context items sizables too!? */
-	add_sizable(QSP_ARG  dobj_itp,&dobj_sf,
+	add_sizable(dobj_itp,&dobj_sf,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
-	add_positionable(QSP_ARG  dobj_itp,&dobj_pf,
+	add_positionable(dobj_itp,&dobj_pf,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
-	add_interlaceable(QSP_ARG  dobj_itp,&dobj_if,
+	add_interlaceable(dobj_itp,&dobj_if,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
-	add_subscriptable(QSP_ARG  dobj_itp,&dobj_ssf,
+	add_subscriptable(dobj_itp,&dobj_ssf,
 		(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 
 	// This was commented out - why?

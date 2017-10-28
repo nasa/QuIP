@@ -639,9 +639,9 @@ FIO_RD_FUNC( pngfio )
 //		error1("error in expand_image");
 
 	/* make sure that the sizes match */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,0,"png_rd") ) return;	/* same # components? */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,1,"png_rd") ) return;	/* same # columns? */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,2,"png_rd") ) return;	/* same # rows? */
+	if( ! dp_same_dim(dp,ifp->if_dp,0,"png_rd") ) return;	/* same # components? */
+	if( ! dp_same_dim(dp,ifp->if_dp,1,"png_rd") ) return;	/* same # columns? */
+	if( ! dp_same_dim(dp,ifp->if_dp,2,"png_rd") ) return;	/* same # rows? */
 
 	// data_ptr = OBJ_DATA_PTR(dp);
 

@@ -1466,9 +1466,9 @@ FIO_RD_FUNC( jpeg )
 	struct jpeg_decompress_struct	*cip;
 
 	/* make sure that the sizes match */
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,0,"jpeg_rd") ) return;
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,1,"jpeg_rd") ) return;
-	if( ! dp_same_dim(QSP_ARG  dp,ifp->if_dp,2,"jpeg_rd") ) return;
+	if( ! dp_same_dim(dp,ifp->if_dp,0,"jpeg_rd") ) return;
+	if( ! dp_same_dim(dp,ifp->if_dp,1,"jpeg_rd") ) return;
+	if( ! dp_same_dim(dp,ifp->if_dp,2,"jpeg_rd") ) return;
 
 	jpeg_ifp = ifp;		/* so LML marker processor can xfer data to header */
 	cip = &(HDR_P(ifp)->u.d_cinfo);

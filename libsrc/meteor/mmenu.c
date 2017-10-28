@@ -459,7 +459,7 @@ MENU_END(pupfind)
 
 static COMMAND_FUNC( pf_menu )
 {
-	PUSH_MENU(pupfind);
+	CHECK_AND_PUSH_MENU(pupfind);
 }
 
 #undef ADD_CMD
@@ -583,7 +583,7 @@ advise("back from meteor init");
 		inited=1;
 	}
 
-	PUSH_MENU(meteor);
+	CHECK_AND_PUSH_MENU(meteor);
 }
 
 

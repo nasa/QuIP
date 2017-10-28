@@ -395,6 +395,6 @@ MENU_END(fann)
 
 COMMAND_FUNC(do_fann_menu)
 {
-	PUSH_MENU(fann)
+	CHECK_AND_PUSH_MENU(fann)
 }
 

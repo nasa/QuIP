@@ -123,7 +123,7 @@ _make_obj(QSP_ARG_DECL  const char *name,
 /* What is a list object?
  */
 
-Data_Obj * make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
+Data_Obj *_make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 {
 	Data_Obj *dp;
     	Data_Obj **dp_tbl;

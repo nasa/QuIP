@@ -53,7 +53,7 @@ MENU_END(trigger)
 
 static COMMAND_FUNC( do_trigger )
 {
-	PUSH_MENU(trigger);
+	CHECK_AND_PUSH_MENU(trigger);
 }
 
 static COMMAND_FUNC( do_init )
@@ -605,7 +605,7 @@ MENU_END(properties)
 
 static COMMAND_FUNC( do_prop_menu )
 {
-	PUSH_MENU(properties);
+	CHECK_AND_PUSH_MENU(properties);
 }
 
 static COMMAND_FUNC( do_set_iso_speed )
@@ -643,7 +643,7 @@ MENU_END(camera)
 
 static COMMAND_FUNC( do_cam_menu )
 {
-	PUSH_MENU(camera);
+	CHECK_AND_PUSH_MENU(camera);
 }
 
 static COMMAND_FUNC( do_record )
@@ -721,7 +721,7 @@ MENU_END(capture)
 
 static COMMAND_FUNC( captmenu )
 {
-	PUSH_MENU( capture );
+	CHECK_AND_PUSH_MENU( capture );
 }
 
 #define CAM_P	the_cam_p->pc_cam_p
@@ -797,7 +797,7 @@ MENU_END(format7)
 
 static COMMAND_FUNC( fmt7menu )
 {
-	PUSH_MENU( format7 );
+	CHECK_AND_PUSH_MENU( format7 );
 }
 
 static COMMAND_FUNC( do_bmode )
@@ -850,6 +850,6 @@ COMMAND_FUNC( do_fly_menu )
 {
 	if( the_cam_p != NULL )
 		push_camera_context(QSP_ARG  the_cam_p);
-	PUSH_MENU( fly );
+	CHECK_AND_PUSH_MENU( fly );
 }
 

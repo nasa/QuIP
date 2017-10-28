@@ -315,6 +315,6 @@ MENU_END(sparse)
 
 COMMAND_FUNC( do_sparse_menu )
 {
-	PUSH_MENU(sparse);
+	CHECK_AND_PUSH_MENU(sparse);
 }
 

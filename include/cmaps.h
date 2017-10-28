@@ -107,22 +107,33 @@ extern void		push_cm_state(void);
 extern void		pop_cm_state(void);
 extern void		cm_immediate(long immediate);
 extern void		update_all(void);
-#define setcolor(c,r,g,b)	_setcolor(QSP_ARG  c,r,g,b)
-extern void		_setcolor(QSP_ARG_DECL  int c, int r, int g, int b);
-extern void		const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b);
-extern void		make_grayscale(QSP_ARG_DECL  int base,int n_colors);
-extern void		make_rgb(QSP_ARG_DECL  int base, int nr,int ng, int nb);
-extern void		poke_lut(QSP_ARG_DECL  int c, int r, int g, int b);
-extern void		setmap(QSP_ARG_DECL  Data_Obj *);
 extern void		getmap(Data_Obj *);
-extern Data_Obj *	new_colormap(QSP_ARG_DECL  const char *);
 extern void		set_colormap(Data_Obj *);
-#ifdef HAVE_X11
-extern void		default_cmap(QSP_ARG_DECL  Dpyable *);
-extern void		select_cmap_display(Dpyable *);
-#endif /* HAVE_X11 */
-extern int		color_index_out_of_range(QSP_ARG_DECL  u_int index);
 extern void		update_if(void);
+
+extern void		_setcolor(QSP_ARG_DECL  int c, int r, int g, int b);
+extern void		_const_cmap(QSP_ARG_DECL  int base,int n,int r,int g,int b);
+extern void		_make_grayscale(QSP_ARG_DECL  int base,int n_colors);
+extern void		_make_rgb(QSP_ARG_DECL  int base, int nr,int ng, int nb);
+extern void		_poke_lut(QSP_ARG_DECL  int c, int r, int g, int b);
+extern void		_setmap(QSP_ARG_DECL  Data_Obj *);
+extern Data_Obj *	_new_colormap(QSP_ARG_DECL  const char *);
+extern int		_color_index_out_of_range(QSP_ARG_DECL  u_int index);
+
+#define setcolor(c,r,g,b)		_setcolor(QSP_ARG  c,r,g,b)
+#define const_cmap(base,n,r,g,b)	_const_cmap(QSP_ARG  base,n,r,g,b)
+#define make_grayscale(base,n_colors)	_make_grayscale(QSP_ARG  base,n_colors)
+#define make_rgb(base,nr,ng,nb)		_make_rgb(QSP_ARG  base,nr,ng,nb)
+#define poke_lut(c,r,g,b)		_poke_lut(QSP_ARG  c,r,g,b)
+#define setmap(dp)			_setmap(QSP_ARG  dp)
+#define new_colormap(s)			_new_colormap(QSP_ARG  s)
+#define color_index_out_of_range(index)	_color_index_out_of_range(QSP_ARG  index)
+
+#ifdef HAVE_X11
+extern void		select_cmap_display(Dpyable *);
+extern void		_default_cmap(QSP_ARG_DECL  Dpyable *);
+#define default_cmap(p) _default_cmap(QSP_ARG  p)
+#endif /* HAVE_X11 */
 
 /* funcvec.c */
 extern void	dump_lut(Data_Obj *cm_dp);
@@ -152,7 +163,9 @@ extern void	set_bits_per_comp(int n);
 
 extern void	set_alpha(int index,int alpha);
 extern void	index_alpha(int index,int lv,int hv);
-extern void	const_alpha(QSP_ARG_DECL  int value);
+extern void	_const_alpha(QSP_ARG_DECL  int value);
+
+#define const_alpha(value) _const_alpha(QSP_ARG  value)
 
 /* verluts.c */
 extern void	verluts(SINGLE_QSP_ARG_DECL);

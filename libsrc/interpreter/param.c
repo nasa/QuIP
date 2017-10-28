@@ -356,7 +356,7 @@ MENU_END(change_parameter)
 
 COMMAND_FUNC( prm_menu )
 {
-	PUSH_MENU(change_parameter);
+	CHECK_AND_PUSH_MENU(change_parameter);
 }
 
 void chngp(QSP_ARG_DECL  Param *p) /** display and modify parameters */

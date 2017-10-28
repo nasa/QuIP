@@ -22,8 +22,8 @@ void war_cumsum(QSP_ARG_DECL  Data_Obj *dp_to,Data_Obj *dp_fr)
 		return;
 	}
 	/* check precision & type dimension */
-	if( !dp_same_pixel_type(QSP_ARG  dp_to,dp_fr,"war_cumsum") ) return;
-	if( ! dp_same_size(QSP_ARG  dp_to,dp_fr,"war_cumsum") ) return;
+	if( !dp_same_pixel_type(dp_to,dp_fr,"war_cumsum") ) return;
+	if( ! dp_same_size(dp_to,dp_fr,"war_cumsum") ) return;
 
 	/*
 	if( ! IS_ROWVEC(dp_to) ){

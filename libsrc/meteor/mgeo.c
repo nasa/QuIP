@@ -404,7 +404,7 @@ MENU_END(geometry)
 
 COMMAND_FUNC( do_geometry )
 {
-	PUSH_MENU(geometry);
+	CHECK_AND_PUSH_MENU(geometry);
 }
 
 

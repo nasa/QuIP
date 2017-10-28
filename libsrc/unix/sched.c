@@ -156,6 +156,6 @@ MENU_END(sched)
 
 COMMAND_FUNC( do_sched_menu )
 {
-	PUSH_MENU(sched);
+	CHECK_AND_PUSH_MENU(sched);
 }
 

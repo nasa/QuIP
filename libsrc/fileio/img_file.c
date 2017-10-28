@@ -325,11 +325,11 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	curr_ftp = FILETYPE_FOR_CODE(IFT_HIPS2);
 
 #ifdef HAVE_GETTIMEOFDAY
-	add_tsable( QSP_ARG   img_file_itp, &if_tsf, (Item * (*)(QSP_ARG_DECL  const char *))_img_file_of);
+	add_tsable( img_file_itp, &if_tsf, (Item * (*)(QSP_ARG_DECL  const char *))_img_file_of);
 #endif
 
-	add_sizable(QSP_ARG  img_file_itp,&imgfile_sf,NULL);
-	add_interlaceable(QSP_ARG  img_file_itp,&imgfile_if,NULL);
+	add_sizable(img_file_itp,&imgfile_sf,NULL);
+	add_interlaceable(img_file_itp,&imgfile_if,NULL);
 
 	//setstrfunc("iof_exists",iof_exists);
 	DECLARE_STR1_FUNCTION(	iof_exists,	iof_exists )

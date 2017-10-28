@@ -185,7 +185,7 @@ COMMAND_FUNC( do_nr_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(numrec);
+	CHECK_AND_PUSH_MENU(numrec);
 }
 
 #endif /* HAVE_NUMREC */

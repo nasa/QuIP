@@ -153,7 +153,7 @@ static int real_cpx_objs_ok( QSP_ARG_DECL  Data_Obj *real_dp,Data_Obj *cpx_dp, c
 		return FALSE;
 	}
 
-	if( !dp_same_mach_prec(QSP_ARG  cpx_dp,real_dp,funcname) ){
+	if( !dp_same_mach_prec(cpx_dp,real_dp,funcname) ){
 		sprintf(ERROR_STRING,
 	"%s:  complex object (%s,%s) and target (%s,%s) must have same precision",
 			funcname,OBJ_NAME(cpx_dp),OBJ_MACH_PREC_NAME(cpx_dp),

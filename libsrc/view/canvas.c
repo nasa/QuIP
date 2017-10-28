@@ -88,7 +88,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	} else {
 		/* If we are holding an image, release it */
 		if( VW_OBJ(vp) != NULL )
-			release_image(QSP_ARG  VW_OBJ(vp));
+			release_image(VW_OBJ(vp));
 		SET_VW_OBJ(vp,dp);
 		/* make sure this image doesn't get deleted out from under us */
 		SET_OBJ_REFCOUNT(dp,
@@ -100,7 +100,7 @@ void old_load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 		//refresh_image(QSP_ARG  vp);
 		usleep(16000);	/* approx 16 msec */
 	}
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 } // end old_load_viewer
 
 #ifndef BUILD_FOR_IOS
@@ -124,7 +124,7 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 			// image is first in the list now
 			wip->wi_x = x;
 			wip->wi_y = y;
-			embed_image(QSP_ARG  vp,dp,wip->wi_x,wip->wi_y);
+			embed_image(vp,dp,wip->wi_x,wip->wi_y);
 			return;
 		}
 		// rotate the list
@@ -160,12 +160,12 @@ void load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	 * should be added to the list or not
 	 */
 #ifdef BUILD_FOR_IOS
-	embed_image(QSP_ARG  vp,dp,0,0);
+	embed_image(vp,dp,0,0);
 #else /* ! BUILD_FOR_IOS */
 
 	if( add_image(vp,dp,0,0) ){
 //fprintf(stderr,"load_viewer:  redrawing image %s\n",OBJ_NAME(dp));
-		embed_image(QSP_ARG  vp,dp,0,0);
+		embed_image(vp,dp,0,0);
 	} else {
 		// This image has already been displayed...
 //fprintf(stderr,"load_viewer:  bringing old image %s to front\n",OBJ_NAME(dp));

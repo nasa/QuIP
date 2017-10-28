@@ -495,7 +495,7 @@ MENU_END(port_test)
 
 static COMMAND_FUNC(do_port_tests)
 {
-	PUSH_MENU(port_test);
+	CHECK_AND_PUSH_MENU(port_test);
 }
 
 static COMMAND_FUNC( do_port_check )
@@ -608,6 +608,6 @@ COMMAND_FUNC( do_port_menu )
 	pdtp = pdt_of("text");	// BUG expensive flag lookup!
 	if( pdtp == NULL ) init_default_port_data_types(SINGLE_QSP_ARG);
 
-	PUSH_MENU(ports);
+	CHECK_AND_PUSH_MENU(ports);
 }
 

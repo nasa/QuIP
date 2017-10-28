@@ -210,23 +210,38 @@ ITEM_INTERFACE_PROTOTYPES(Nav_Item,nav_item)
 
 // These prototypes are the same on either system...
 
-extern void push_navgrp_context(QSP_ARG_DECL  IOS_Item_Context *icp);
-extern void push_navitm_context(QSP_ARG_DECL  IOS_Item_Context *icp);
-extern IOS_Item_Context * pop_navgrp_context(SINGLE_QSP_ARG_DECL);
-extern IOS_Item_Context * pop_navitm_context(SINGLE_QSP_ARG_DECL);
-extern IOS_Item_Context * create_navgrp_context(QSP_ARG_DECL const char *name);
-extern IOS_Item_Context * create_navitm_context(QSP_ARG_DECL const char *name);
-extern Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *nav_p, const char *name);
-extern Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name);
-extern void remove_nav_item(QSP_ARG_DECL  Nav_Item *nav_i);
-extern void remove_nav_group(QSP_ARG_DECL  Nav_Group *nav_g);
-extern void hide_nav_bar(QSP_ARG_DECL  int hide);
-extern void hide_back_button(QSP_ARG_DECL  Panel_Obj *po, int hide);
-
 extern void posn_navp(Nav_Panel *np_p);
-extern void show_nav(QSP_ARG_DECL  Nav_Panel *np_p);
-extern void unshow_nav(QSP_ARG_DECL  Nav_Panel *np_p);
 extern void add_to_navp(Nav_Panel *np_p, Screen_Obj *sop);
+
+extern void _push_navgrp_context(QSP_ARG_DECL  IOS_Item_Context *icp);
+extern void _push_navitm_context(QSP_ARG_DECL  IOS_Item_Context *icp);
+extern IOS_Item_Context * _pop_navgrp_context(SINGLE_QSP_ARG_DECL);
+extern IOS_Item_Context * _pop_navitm_context(SINGLE_QSP_ARG_DECL);
+extern IOS_Item_Context * _create_navgrp_context(QSP_ARG_DECL const char *name);
+extern IOS_Item_Context * _create_navitm_context(QSP_ARG_DECL const char *name);
+extern Nav_Group *_create_nav_group(QSP_ARG_DECL  Nav_Panel *nav_p, const char *name);
+extern Nav_Panel *_create_nav_panel(QSP_ARG_DECL  const char *name);
+extern void _remove_nav_item(QSP_ARG_DECL  Nav_Item *nav_i);
+extern void _remove_nav_group(QSP_ARG_DECL  Nav_Group *nav_g);
+extern void _hide_nav_bar(QSP_ARG_DECL  int hide);
+extern void _hide_back_button(QSP_ARG_DECL  Panel_Obj *po, int hide);
+extern void _show_nav(QSP_ARG_DECL  Nav_Panel *np_p);
+extern void _unshow_nav(QSP_ARG_DECL  Nav_Panel *np_p);
+
+#define push_navgrp_context(icp) _push_navgrp_context(QSP_ARG  icp)
+#define push_navitm_context(icp) _push_navitm_context(QSP_ARG  icp)
+#define pop_navgrp_context() _pop_navgrp_context(SINGLE_QSP_ARG)
+#define pop_navitm_context() _pop_navitm_context(SINGLE_QSP_ARG)
+#define create_navgrp_context(name) _create_navgrp_context(QSP_ARG name)
+#define create_navitm_context(name) _create_navitm_context(QSP_ARG name)
+#define create_nav_group(nav_p,name) _create_nav_group(QSP_ARG  nav_p,name)
+#define create_nav_panel(name) _create_nav_panel(QSP_ARG  name)
+#define remove_nav_item(nav_i) _remove_nav_item(QSP_ARG  nav_i)
+#define remove_nav_group(nav_g) _remove_nav_group(QSP_ARG  nav_g)
+#define hide_nav_bar(hide) _hide_nav_bar(QSP_ARG  hide)
+#define hide_back_button(po,hide) _hide_back_button(QSP_ARG  po,hide)
+#define show_nav(np_p) _show_nav(QSP_ARG  np_p)
+#define unshow_nav(np_p) _unshow_nav(QSP_ARG  np_p)
 
 #endif /* ! _NAV_PANEL_H_ */
 

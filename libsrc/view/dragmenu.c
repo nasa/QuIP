@@ -65,6 +65,6 @@ MENU_END(dragg)
 COMMAND_FUNC( draggmenu )
 {
 	INSURE_X11_SERVER
-	PUSH_MENU(dragg);
+	CHECK_AND_PUSH_MENU(dragg);
 }
 

@@ -248,7 +248,7 @@ MENU_END(unary)
 
 static COMMAND_FUNC( do_unary )
 {
-	PUSH_MENU(unary);
+	CHECK_AND_PUSH_MENU(unary);
 }
 
 static COMMAND_FUNC( doatan ){	DO_VCODE(FVATAN); }
@@ -308,7 +308,7 @@ MENU_END(trig)
 
 static COMMAND_FUNC( do_trig )
 {
-	PUSH_MENU(trig);
+	CHECK_AND_PUSH_MENU(trig);
 }
 
 static COMMAND_FUNC( do_and ){	DO_VCODE(FVAND); }
@@ -353,7 +353,7 @@ MENU_END(logical)
 
 static COMMAND_FUNC( do_logic )
 {
-	PUSH_MENU(logical);
+	CHECK_AND_PUSH_MENU(logical);
 }
 
 static COMMAND_FUNC( do_vvadd ){	DO_VCODE(FVADD); }
@@ -377,7 +377,7 @@ MENU_END(vvector)
 
 static COMMAND_FUNC( do_vv )
 {
-	PUSH_MENU(vvector);
+	CHECK_AND_PUSH_MENU(vvector);
 }
 
 static COMMAND_FUNC( do_vsadd )		{	DO_VCODE(FVSADD); }
@@ -422,7 +422,7 @@ ADD_CMD( xor,	do_vsxor,	bitwise xor of scalar and vector	)
 MENU_END(svector)
 
 
-static COMMAND_FUNC( do_vs ) { PUSH_MENU(svector); }
+static COMMAND_FUNC( do_vs ) { CHECK_AND_PUSH_MENU(svector); }
 
 /* These return a single scalar, and can be used as projection operators */
 static COMMAND_FUNC( domaxv ){	DO_VCODE(FVMAXV); }
@@ -462,7 +462,7 @@ MENU_END(minmax)
 
 static COMMAND_FUNC( do_minmax )
 {
-	PUSH_MENU(minmax);
+	CHECK_AND_PUSH_MENU(minmax);
 }
 
 static COMMAND_FUNC( do_cumsum )
@@ -1325,7 +1325,7 @@ MENU_END(image)
 
 static COMMAND_FUNC( do_imgsyn )
 {
-	PUSH_MENU(image);
+	CHECK_AND_PUSH_MENU(image);
 }
 
 static COMMAND_FUNC( do_sort )
@@ -1443,7 +1443,7 @@ MENU_END(misc)
 
 static COMMAND_FUNC( do_misc )
 {
-	PUSH_MENU(misc);
+	CHECK_AND_PUSH_MENU(misc);
 }
 
 #define EXCHANGE( dp1, dp2 )				\
@@ -1481,7 +1481,7 @@ static COMMAND_FUNC( do_misc )
 		op2(QSP_ARG  to,fr);			\
 		EXCHANGE(to,fr);			\
 	}						\
-	dp_copy(QSP_ARG  to,fr);
+	dp_copy(to,fr);
 
 #ifdef HAVE_MORPH
 
@@ -1584,7 +1584,7 @@ MENU_END(morph)
 
 static COMMAND_FUNC( do_morph )
 {
-	PUSH_MENU(morph);
+	CHECK_AND_PUSH_MENU(morph);
 }
 
 #endif /* HAVE_MORPH */
@@ -1696,7 +1696,7 @@ MENU_END(fft)
 
 static COMMAND_FUNC( do_fft )
 {
-	PUSH_MENU(fft);
+	CHECK_AND_PUSH_MENU(fft);
 }
 
 
@@ -1802,7 +1802,7 @@ MENU_END(compare)
 
 static COMMAND_FUNC( docmp )
 {
-	PUSH_MENU(compare);
+	CHECK_AND_PUSH_MENU(compare);
 }
 
 /* static COMMAND_FUNC( do_corr ) { DO_VCODE(FVCONV); } */
@@ -2009,7 +2009,7 @@ MENU_END(linear)
 
 static COMMAND_FUNC( do_lin )
 {
-	PUSH_MENU(linear);
+	CHECK_AND_PUSH_MENU(linear);
 }
 
 #ifdef VECEXP
@@ -2055,7 +2055,7 @@ Command expr_menu[]={
 {
 	warm_init();
 	expr_init();
-	PUSH_MENU(expr_menu);
+	CHECK_AND_PUSH_MENU(expr_menu);
 }
 #endif /* VECEXP */
 
@@ -2097,7 +2097,7 @@ MENU_END(control)
 
 static COMMAND_FUNC(do_ctl )
 {
-	PUSH_MENU(control);
+	CHECK_AND_PUSH_MENU(control);
 }
 
 #undef ADD_CMD
@@ -2157,7 +2157,7 @@ COMMAND_FUNC(do_comp_menu )
 		inited=1;
 	}
 
-	PUSH_MENU(compute);
+	CHECK_AND_PUSH_MENU(compute);
 }
 
 #define VFUNC_FOR_CODE(code)		(&vec_func_tbl[code])

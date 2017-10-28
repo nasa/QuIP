@@ -171,7 +171,7 @@ void sane_tty(SINGLE_QSP_ARG_DECL)	/** call this before exiting */
 	if( verbose )
 		advise("Resetting tty to sane state");
 
-	fp=tfile(SINGLE_QSP_ARG);
+	fp=tfile();
 	tty_reset(fp);
 }
 

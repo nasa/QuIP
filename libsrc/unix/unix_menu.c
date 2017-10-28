@@ -64,7 +64,7 @@ static void my_onintr(int asig /* what is this arg??? */)
 	while( STACK_DEPTH(QS_MENU_STACK(DEFAULT_QSP)) > MIN_CMD_DEPTH )
 		pop_menu(SGL_DEFAULT_QSP_ARG);
 
-	push_text(DEFAULT_QSP_ARG  intr_str, "intr_handler" );
+	_push_text(DEFAULT_QSP_ARG  intr_str, "intr_handler" );
 
 	//curr_qsp->qs_flags &= ~QS_HAD_INTR;	/* clear flag */
 	CLEAR_QS_FLAG_BITS(DEFAULT_QSP,QS_HAD_INTR);
@@ -440,6 +440,6 @@ MENU_END(os)
 
 COMMAND_FUNC( do_unix_menu )
 {
-	PUSH_MENU(os);
+	CHECK_AND_PUSH_MENU(os);
 }
 

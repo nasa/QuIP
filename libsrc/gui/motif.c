@@ -95,7 +95,10 @@ ITEM_PICK_FUNC(Nav_Group,nav_group)
 ITEM_DEL_FUNC(Nav_Group,nav_group)
 
 #ifdef HAVE_MOTIF
-static Screen_Obj *find_object(QSP_ARG_DECL  Widget obj)
+
+#define find_object(obj) _find_object(QSP_ARG  obj)
+
+static Screen_Obj *_find_object(QSP_ARG_DECL  Widget obj)
 {
 	List *lp,*lp2;
 	Node *np,*np2;
@@ -140,14 +143,14 @@ static void push_widget_context(QSP_ARG_DECL  Screen_Obj *sop)
 	Item_Context *icp;
 	char *ctx_name;
 
-	icp = current_scrnobj_context(SINGLE_QSP_ARG);
+	icp = current_scrnobj_context();
 	assert( icp != NULL );
 	n = 2 + strlen( CTX_NAME(icp) ) + strlen( SOB_NAME(sop) );
 	ctx_name = getbuf(n);
 	sprintf(ctx_name,"%s.%s",CTX_NAME(icp),SOB_NAME(sop) );
-	icp = create_scrnobj_context(QSP_ARG  ctx_name );
+	icp = create_scrnobj_context(ctx_name );
 	givbuf(ctx_name);
-	push_scrnobj_context(QSP_ARG  icp);
+	push_scrnobj_context(icp);
 }
 
 #endif /* HAVE_MOTIF */
@@ -417,9 +420,9 @@ static void button_func(Widget buttonID, XtPointer app_data,
 
 	INIT_MOTIF_QSP
 
-	sop = find_object(QSP_ARG  buttonID);
+	sop = find_object(buttonID);
 	if( sop != NULL ){
-		chew_text(DEFAULT_QSP_ARG sop->so_action_text,
+		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,
 						"(button event)");
 	}
 	else WARN("couldn't locate button");
@@ -528,7 +531,7 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 
 	INIT_MOTIF_QSP
 
-	sop = find_object(QSP_ARG  buttonID);
+	sop = find_object(buttonID);
 
 	if( sop == NULL ) {
 		WARN("couldn't locate chooser button");
@@ -550,7 +553,6 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 	 * We may be able to deal with that in the script...
 	 */
 
-	/*chew_text(DEFAULT_QSP_ARG sop->so_action_text); */
 	assign_reserved_var("choice",sop->so_action_text);	/* BUG? action text? */
 
 	/* Now we've found the button, how do we find the parent chooser? */
@@ -562,7 +564,7 @@ static void chooser_func(Widget buttonID, XtPointer app_data,	/* app_data should
 		error1("CAUTIOUS:  chooser button with no parent!?");
 #endif /* CAUTIOUS */
 
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text, "(chooser event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text, "(chooser event)");
 }
 #endif /* HAVE_MOTIF */
 
@@ -579,7 +581,7 @@ static void toggle_func(Widget toggleID, XtPointer app_data,
 
 	INIT_MOTIF_QSP
 
-	sop = find_object(QSP_ARG  toggleID);
+	sop = find_object(toggleID);
 	if( sop != NULL ){
 		XtSetArg(al[ac], XmNset, &value);
 		XtGetValues(toggleID, al, 1);
@@ -591,7 +593,7 @@ static void toggle_func(Widget toggleID, XtPointer app_data,
 		}
 		sprintf(val_str,"%d",value);
 		assign_reserved_var("toggle_state",val_str);
-		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(toggle event)");
+		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(toggle event)");
 	}
 	else WARN("couldn't locate toggle button");
 } // toggle_func
@@ -610,7 +612,7 @@ static void text_func(Widget textID, XtPointer app_data, XtPointer widget_data )
 	Screen_Obj *sop;
 	const char *s;
 
-	sop=find_object(DEFAULT_QSP_ARG  textID);
+	sop=_find_object(DEFAULT_QSP_ARG  textID);
 #ifdef CAUTIOUS
 	if( sop == NULL ){
 		NWARN("CAUTIOUS:  text_func:  couldn't locate text widget");
@@ -628,8 +630,7 @@ static void text_func(Widget textID, XtPointer app_data, XtPointer widget_data )
 	}
 
 	/* We should chew the text when a return is typed, or something? */
-//NADVISE("text_func calling chew_text...");
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text event)");
 } // text_func
 
 /* this is supposed to be the losing focus callback */
@@ -642,7 +643,7 @@ static void text_func2(Widget textID, XtPointer app_data, XtPointer widget_data 
 
 	INIT_MOTIF_QSP
 
-	sop=find_object(DEFAULT_QSP_ARG  textID);
+	sop=_find_object(DEFAULT_QSP_ARG  textID);
 #ifdef CAUTIOUS
 	if( sop == NULL ){
 		WARN("CAUTIOUS:  text_func:  couldn't locate text widget");
@@ -660,7 +661,7 @@ static void text_func2(Widget textID, XtPointer app_data, XtPointer widget_data 
 	}
 
 //NADVISE("text_func2 calling chew_text...");
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text2 event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(text2 event)");
 } // text_func2
 #endif /* HAVE_MOTIF */
 
@@ -683,7 +684,7 @@ void make_separator(QSP_ARG_DECL  Screen_Obj *so)
 #endif /* FOO */
 }
 
-void make_button(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_button(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	Arg al[10];
@@ -941,14 +942,14 @@ static void slider_func(Widget sliderID, XtPointer app_data,
 
 	INIT_MOTIF_QSP
 
-	sop = find_object(DEFAULT_QSP_ARG  sliderID);
+	sop = _find_object(DEFAULT_QSP_ARG  sliderID);
 	if( sop != NULL ){
 
 		/* get the value from the slider */
 		XmScaleGetValue(sliderID, &value);
 		sprintf(str,"%d",value);			// BUG overrun?
 		assign_reserved_var("slider_val",str);
-		chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(slider event)");
+		_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(slider event)");
 	} else error1("can't locate slider");
 } // slider_func
 #endif /* HAVE_MOTIF */
@@ -1163,7 +1164,7 @@ static void navp_genwin_show(QSP_ARG_DECL  const char *s)
 	Nav_Panel *np_p;
 
 	np_p=get_nav_panel(s);
-	if( np_p != NULL ) show_panel(QSP_ARG  NAVP_PANEL(np_p));
+	if( np_p != NULL ) show_panel(NAVP_PANEL(np_p));
 	return;
 }
 
@@ -1172,7 +1173,7 @@ static void navp_genwin_unshow(QSP_ARG_DECL  const char *s)
 	Nav_Panel *np_p;
 
 	np_p=get_nav_panel(s);
-	if( np_p != NULL ) unshow_panel(QSP_ARG  NAVP_PANEL(np_p));
+	if( np_p != NULL ) unshow_panel(NAVP_PANEL(np_p));
 	return;
 }
 
@@ -1194,14 +1195,14 @@ static Genwin_Functions navp_genwin_funcs={
 	navp_genwin_delete
 };
 
-void motif_init(QSP_ARG_DECL  const char *progname)
+void _motif_init(QSP_ARG_DECL  const char *progname)
 {
 	const char *argv[1];
 	int argc=1;
 
 	argv[0]=progname;
 
-	the_dname = check_display(SINGLE_QSP_ARG);
+	the_dname = check_display();
 
 	/*
 	 * initialize the Xt toolkit and create an application context
@@ -1218,14 +1219,14 @@ void motif_init(QSP_ARG_DECL  const char *progname)
 		return;
 	}
 
-	add_event_func(QSP_ARG  motif_dispatch);
+	add_event_func(motif_dispatch);
 
 	// This is not really a motif-specific thing,
 	// but we do this here because nav_panel_itp is
 	// static to this file...
 	if( nav_panel_itp == NULL ){
 		init_nav_panels();
-		add_genwin(QSP_ARG  nav_panel_itp, &navp_genwin_funcs, NULL);
+		add_genwin(nav_panel_itp, &navp_genwin_funcs, NULL);
 	}
 }
 #endif /* HAVE_MOTIF */
@@ -1283,7 +1284,7 @@ static int panel_mapped(Panel_Obj *po)
 }
 #endif /* HAVE_MOTIF */
 
-void show_panel(QSP_ARG_DECL  Panel_Obj *po)
+void _show_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
 #ifdef HAVE_MOTIF
 	if( PANEL_MAPPED(po) ){
@@ -1334,7 +1335,7 @@ void show_panel(QSP_ARG_DECL  Panel_Obj *po)
 #endif /* HAVE_MOTIF */
 } /* end show_panel */
 
-void unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
+void _unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
 #ifdef HAVE_MOTIF
 	if( PANEL_UNMAPPED(po) ){
@@ -1404,13 +1405,13 @@ static void scroller_func(Widget scrollerID, XtPointer app_data,
 		&selection);
 
 	assign_reserved_var("selection",selection);
-	sop = find_object(DEFAULT_QSP_ARG  scrollerID);
+	sop = _find_object(DEFAULT_QSP_ARG  scrollerID);
 	if( sop == NULL ) return;
-	chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(scroller event)");
+	_chew_text(DEFAULT_QSP_ARG sop->so_action_text,"(scroller event)");
 } // scroller_func
 #endif /* HAVE_MOTIF */
 
-void make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	Arg al[10];
@@ -1457,7 +1458,7 @@ void set_scroller_list(Screen_Obj *sop, const char *string_list[],
 #endif /* HAVE_MOTIF */
 }
 
-void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
+void _make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 {
 #ifdef HAVE_MOTIF
 	int	j;
@@ -1489,7 +1490,7 @@ void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 
 	for(j=0; j<n; j++)
 	{
-		b_sop = simple_object(QSP_ARG  stringlist[j]);
+		b_sop = simple_object(stringlist[j]);
 		if( b_sop==NULL ) return;
 		b_sop->so_action_text = savestr(stringlist[j]);
 		b_sop->so_parent = sop;
@@ -1514,7 +1515,7 @@ void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 		XtManageChild(b_sop->so_obj);
 	}
 
-	pop_scrnobj_context(SINGLE_QSP_ARG);
+	pop_scrnobj_context();
 
 #endif /* HAVE_MOTIF */
 
@@ -1524,7 +1525,7 @@ void make_chooser(QSP_ARG_DECL  Screen_Obj *sop, int n, const char **stringlist)
 // This is copied from make_chooser, and doesn't implement multiple components...
 // For this to ever work, we need to change the callback.
 
-void make_picker(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	int	j;
@@ -1572,7 +1573,7 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 	push_widget_context(QSP_ARG  sop);
 
 	for(j=0; j<n; j++) {
-		b_sop = simple_object(QSP_ARG  stringlist[j]);
+		b_sop = simple_object(stringlist[j]);
 		if( b_sop==NULL ) return;
 		b_sop->so_action_text = savestr(stringlist[j]);
 		b_sop->so_parent = sop;
@@ -1597,7 +1598,7 @@ void make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 		XtManageChild(b_sop->so_obj);
 	}
 
-	pop_scrnobj_context(SINGLE_QSP_ARG);
+	pop_scrnobj_context();
 
 	SET_SOB_HEIGHT(sop, CHOOSER_HEIGHT + CHOOSER_ITEM_HEIGHT*n );
 #endif /* HAVE_MOTIF */
@@ -1656,7 +1657,7 @@ void set_pick(Screen_Obj *sop, int cyl, int which )
 	NWARN_ONCE("set_pick:  not implemented for motif!?");
 }
 
-void make_label(QSP_ARG_DECL  Screen_Obj *sop)
+void _make_label(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	Arg al[10];
@@ -1718,11 +1719,11 @@ void add_navitm_to_group(Nav_Group *ng_p,Nav_Item *ni_p)
 {
 }
 
-void hide_nav_bar(QSP_ARG_DECL  int hide)
+void _hide_nav_bar(QSP_ARG_DECL  int hide)
 {
 }
 
-Item_Context *pop_navitm_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_pop_navitm_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
@@ -1730,12 +1731,12 @@ Item_Context *pop_navitm_context(SINGLE_QSP_ARG_DECL)
 	return icp;
 }
 
-void push_navitm_context(QSP_ARG_DECL  Item_Context *icp)
+void _push_navitm_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	push_item_context(nav_item_itp, icp );
 }
 
-Item_Context *pop_navgrp_context(SINGLE_QSP_ARG_DECL)
+Item_Context *_pop_navgrp_context(SINGLE_QSP_ARG_DECL)
 {
 	Item_Context *icp;
 
@@ -1743,12 +1744,12 @@ Item_Context *pop_navgrp_context(SINGLE_QSP_ARG_DECL)
 	return icp;
 }
 
-void push_navgrp_context(QSP_ARG_DECL  Item_Context *icp)
+void _push_navgrp_context(QSP_ARG_DECL  Item_Context *icp)
 {
 	push_item_context(nav_group_itp, icp );
 }
 
-void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
+void _delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	// get rid of motif stuff...
@@ -1761,7 +1762,7 @@ void delete_widget(QSP_ARG_DECL  Screen_Obj *sop)
 
 // undoes the things done by create_nav_group
 
-void remove_nav_group(QSP_ARG_DECL  Nav_Group *ng_p)
+void _remove_nav_group(QSP_ARG_DECL  Nav_Group *ng_p)
 {
 	// first remove the items
 	Item_Context *icp;
@@ -1775,7 +1776,7 @@ fprintf(stderr,"removing item context for nav group %s\n",NAVGRP_NAME(ng_p));
 fprintf(stderr,"DONE removing item context for nav group %s\n",NAVGRP_NAME(ng_p));
 
 	// Now update the panel itself...
-	delete_widget( QSP_ARG  NAVGRP_SCRNOBJ(ng_p) );
+	delete_widget( NAVGRP_SCRNOBJ(ng_p) );
 	//delete_widget( QSP_ARG  NAVGRP_SCRNOBJ(ng_p) );
 
 //fprintf(stderr,"OOPS, need to delete screen_obj %s\n",SOB_NAME(NAVGRP_SCRNOBJ(ng_p)));
@@ -1785,27 +1786,27 @@ fprintf(stderr,"DONE removing item context for nav group %s\n",NAVGRP_NAME(ng_p)
 	del_nav_group(ng_p);
 }
 
-void remove_nav_item(QSP_ARG_DECL  Nav_Item *ni_p)
+void _remove_nav_item(QSP_ARG_DECL  Nav_Item *ni_p)
 {
 fprintf(stderr,"remove_nav_item %s BEGIN\n",NAVITM_NAME(ni_p));
 
 	// need to remove from panel
-	delete_widget(QSP_ARG  NAVITM_SCRNOBJ(ni_p) );
+	delete_widget( NAVITM_SCRNOBJ(ni_p) );
 
 	del_nav_item(ni_p);
 }
 
-Item_Context *create_navitm_context(QSP_ARG_DECL  const char *name)
+Item_Context *_create_navitm_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_item_itp == NULL ){
 		init_nav_items();
-		set_del_method(nav_item_itp, (void (*)(QSP_ARG_DECL  Item *))&remove_nav_item);
+		set_del_method(nav_item_itp, (void (*)(QSP_ARG_DECL  Item *))&_remove_nav_item);
 	}
 
 	return create_item_context(nav_item_itp, name );
 }
 
-Item_Context *create_navgrp_context(QSP_ARG_DECL  const char *name)
+Item_Context *_create_navgrp_context(QSP_ARG_DECL  const char *name)
 {
 	if( nav_group_itp == NULL ){
 		init_nav_groups();
@@ -1814,7 +1815,7 @@ Item_Context *create_navgrp_context(QSP_ARG_DECL  const char *name)
 	return create_item_context(nav_group_itp, name );
 }
 
-Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
+Nav_Panel *_create_nav_panel(QSP_ARG_DECL  const char *name)
 {
 	Nav_Panel *np_p;
 #ifdef HAVE_MOTIF
@@ -1856,7 +1857,7 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 
 	IOS_Item_Context *icp;
 	
-	icp = create_navgrp_context(QSP_ARG  name );
+	icp = create_navgrp_context(name);
 	// We need to push the context, and pop when we finish?
 	// We don't push until we enter the navigation submenu...
 
@@ -1865,7 +1866,7 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 //	PUSH_ITEM_CONTEXT(nav_group_itp, icp);
 	SET_NAVP_GRP_CONTEXT(np_p, icp);
 
-	icp = create_navitm_context(QSP_ARG  name );
+	icp = create_navitm_context(name);
 //	PUSH_ITEM_CONTEXT(nav_item_itp, icp);
 	SET_NAVP_ITM_CONTEXT(np_p, icp);
 
@@ -1874,11 +1875,11 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 	// a "back" button...
 	{
 	Screen_Obj *bo;
-	prepare_for_decoration(QSP_ARG  NAVP_PANEL(np_p) );
+	prepare_for_decoration(NAVP_PANEL(np_p) );
 
 	// next 7 lines from get_parts, screen_objs.c
 //fprintf(stderr,"create_nav_panel adding back button...\n");
-	bo = simple_object(QSP_ARG  "Back");
+	bo = simple_object("Back");
 	if( bo == NULL ){
 		WARN("Error creating back button for nav_panel!?");
 		goto no_back_button;
@@ -1891,21 +1892,21 @@ Nav_Panel *create_nav_panel(QSP_ARG_DECL  const char *name)
 	// next 6 lines from mk_button, screen_objs.c
 	SET_SOB_TYPE(bo, SOT_BUTTON);
 
-	make_button(QSP_ARG  bo);
+	make_button(bo);
 	add_to_panel(curr_panel,bo);
 
 	INC_PO_CURR_Y(curr_panel, BUTTON_HEIGHT + GAP_HEIGHT );
 
 
 
-	unprepare_for_decoration(SINGLE_QSP_ARG);
+	unprepare_for_decoration();
 	}
 no_back_button:
 
 	return np_p;
 } // create_nav_panel
 
-Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *np_p, const char *name)
+Nav_Group *_create_nav_group(QSP_ARG_DECL  Nav_Panel *np_p, const char *name)
 {
 	Nav_Group *ng_p;
 	int n;
@@ -1924,7 +1925,7 @@ Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *np_p, const char *name)
 
 	// need to init item context...
 	Item_Context *icp;
-	//icp = create_navgrp_context(QSP_ARG  name );
+	//icp = create_navgrp_context(name );
 	
 	// The context name needs to include the panel name,
 	// so that group names can be repeated on different panels
@@ -1932,7 +1933,7 @@ Nav_Group *create_nav_group(QSP_ARG_DECL  Nav_Panel *np_p, const char *name)
 	s = getbuf(n);
 	sprintf(s,"%s.%s",NAVP_NAME(np_p),name);
 
-	icp = create_navitm_context(QSP_ARG  s );
+	icp = create_navitm_context(s);
 
 	givbuf(s);
 
@@ -1979,7 +1980,7 @@ static void show_panel_stack(const char *s)
 }
 #endif // ONLY_IF_NEEDED
 
-void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
+void _push_nav(QSP_ARG_DECL  Gen_Win *gwp)
 {
 	Gen_Win *current_gwp;
 
@@ -1992,15 +1993,15 @@ void push_nav(QSP_ARG_DECL  Gen_Win *gwp)
 	// We need to keep a stack of panels...
 	if( (current_gwp=TOP_OF_STACK(nav_stack)) != NULL ){
 //fprintf(stderr,"push_nav %s:  un-showing %s\n",GW_NAME(gwp),GW_NAME(current_gwp));
-		unshow_genwin(QSP_ARG  current_gwp);
+		unshow_genwin(current_gwp);
 	}
 
 	PUSH_TO_STACK(nav_stack,gwp);
 //fprintf(stderr,"showing associated panel %s\n",PO_NAME(NAVP_PANEL(gwp)));
-	show_genwin(QSP_ARG  gwp);
+	show_genwin(gwp);
 }
 
-void pop_nav(QSP_ARG_DECL  int count)
+void _pop_nav(QSP_ARG_DECL  int count)
 {
 	Gen_Win *gwp;
 
@@ -2011,7 +2012,7 @@ void pop_nav(QSP_ARG_DECL  int count)
 	gwp = POP_FROM_STACK(nav_stack);
 	assert( gwp != NULL );
 //fprintf(stderr,"pop_nav un-showing current top-of-stack %s\n",GW_NAME(gwp));
-	unshow_genwin(QSP_ARG  gwp);
+	unshow_genwin(gwp);
 
 	count --;
 	while( count -- ){
@@ -2022,7 +2023,7 @@ void pop_nav(QSP_ARG_DECL  int count)
 
 //fprintf(stderr,"pop_nav done popping\n");
 	assert( (gwp=TOP_OF_STACK(nav_stack)) != NULL );
-	show_genwin(QSP_ARG  gwp);
+	show_genwin(gwp);
 }
 
 void end_busy(int final)
@@ -2030,14 +2031,14 @@ void end_busy(int final)
 	NWARN("end_busy:  not implemented!?");
 }
 
-void get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
+void _get_confirmation(QSP_ARG_DECL  const char *title, const char *question)
 {
 	//WARN("get_confirmation:  not implemented!?");
 	assign_var("confirmed","1");
 	fprintf(stderr,"ALERT:  get_confirmation:  confirming without use input...\n");
 }
 
-void simple_alert(QSP_ARG_DECL  const char *title, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *title, const char *msg)
 {
 	// ideally this should be a popup window that keeps the focus until
 	// dismissed, but for now we just print the message to the console
@@ -2045,7 +2046,7 @@ void simple_alert(QSP_ARG_DECL  const char *title, const char *msg)
 	fprintf(stderr,"%s:  %s\n",title,msg);
 }
 
-void notify_busy(QSP_ARG_DECL  const char *title, const char *msg)
+void _notify_busy(QSP_ARG_DECL  const char *title, const char *msg)
 {
 	WARN("notify_busy:  not implemented!?");
 }

@@ -23,7 +23,7 @@ static COMMAND_FUNC( do_new_do )
 
 	s=NAMEOF("display");
 #ifdef HAVE_X11
-	if( open_display(QSP_ARG  s,8) == NULL ){
+	if( open_display(s,8) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -38,7 +38,7 @@ static COMMAND_FUNC( do_open_do )
 	s=NAMEOF("display");
 	d=HOW_MANY("desired bit depth");
 #ifdef HAVE_X11
-	if( open_display(QSP_ARG  s,d) == NULL ){
+	if( open_display(s,d) == NULL ){
 		sprintf(ERROR_STRING,"unable to open %s",s);
 		WARN(ERROR_STRING);
 	}
@@ -90,7 +90,7 @@ static COMMAND_FUNC( do_show_visuals )
 	dop= pick_disp_obj("");
 	if( dop == NULL ) return;
 #ifdef HAVE_X11
-	show_visuals(QSP_ARG  dop);
+	show_visuals(dop);
 #endif /* HAVE_X11 */
 }
 
@@ -117,6 +117,6 @@ COMMAND_FUNC( dpymenu )
 	insure_x11_server(SINGLE_QSP_ARG);
 #endif /* HAVE_X11 */
 
-	PUSH_MENU(displays);
+	CHECK_AND_PUSH_MENU(displays);
 }
 

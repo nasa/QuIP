@@ -86,6 +86,6 @@ MENU_END(sequence)
 
 COMMAND_FUNC( do_seq_menu )
 {
-	PUSH_MENU(sequence);
+	CHECK_AND_PUSH_MENU(sequence);
 }
 

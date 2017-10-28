@@ -180,6 +180,6 @@ MENU_END(bitplanes)
 
 COMMAND_FUNC( do_bit_menu )
 {
-	PUSH_MENU(bitplanes);
+	CHECK_AND_PUSH_MENU(bitplanes);
 }
 

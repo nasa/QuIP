@@ -101,9 +101,9 @@ next_index:
 		index = index_for_scalar(tsp);
 		RELEASE_SCALAR(tsp)
 		if( right_delim == ']' )
-			newdp=gen_subscript(QSP_ARG  dp,maxd,index,SQUARE);
+			newdp=gen_subscript(dp,maxd,index,SQUARE);
 		else
-			newdp=gen_subscript(QSP_ARG  dp,mind,index,CURLY);
+			newdp=gen_subscript(dp,mind,index,CURLY);
 	}
 
 	if( *cp ) return(index_data(QSP_ARG  newdp,cp));

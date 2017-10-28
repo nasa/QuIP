@@ -94,7 +94,7 @@ int default_stim(QSP_ARG_DECL  Trial_Class *tcp,int val,Staircase *stcp)
 	//PUSH_INPUT_FILE(msg_str);
 
 	//interpret_text_fragment(QSP_ARG tcp->cl_data);		/* use chew_text??? */
-	chew_text(QSP_ARG CLASS_CMD(tcp), "(stimulus text)");
+	chew_text(CLASS_CMD(tcp), "(stimulus text)");
 	vp=var_of("response_string");
 	if( vp != NULL )
 		rsp=response(QSP_ARG  VAR_VALUE(vp));

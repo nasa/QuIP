@@ -1584,7 +1584,7 @@ void check_deferred_alert(SINGLE_QSP_ARG_DECL)
 	deferred_alert.msg=NULL;
 }
 
-void simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
+void _simple_alert(QSP_ARG_DECL  const char *type, const char *msg)
 {
 	generic_alert(QSP_ARG  type,msg);
 }

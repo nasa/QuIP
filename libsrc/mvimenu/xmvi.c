@@ -115,14 +115,14 @@ static void x_play_movie(QSP_ARG_DECL  Movie *mvip)
 
 mk_win:
 	if( vp == NULL ){
-		vp = viewer_init(QSP_ARG  MOVIE_VIEWER_NAME,OBJ_COLS(dp),OBJ_ROWS(dp),0);
+		vp = viewer_init(MOVIE_VIEWER_NAME,OBJ_COLS(dp),OBJ_ROWS(dp),0);
 		if( vp == NULL ){
 			WARN("couldn't create viewer");
 			return;
 		}
-		default_cmap(QSP_ARG  VW_DPYABLE(vp) );
-		show_viewer(QSP_ARG  vp);	/* default state is to be shown */
-		select_viewer(QSP_ARG  vp);
+		default_cmap(VW_DPYABLE(vp) );
+		show_viewer(vp);	/* default state is to be shown */
+		select_viewer(vp);
 	} else {
 		if( vp->vw_width != OBJ_COLS(dp) ||
 			vp->vw_height != OBJ_ROWS(dp) ){
@@ -130,7 +130,7 @@ mk_win:
 				"Resizing movie viewer for movie %s",
 				OBJ_NAME(dp));
 			advise(ERROR_STRING);
-			delete_viewer(QSP_ARG  vp);
+			delete_viewer(vp);
 			vp=NULL;
 			goto mk_win;
 		}
@@ -169,9 +169,9 @@ static void x_get_frame(QSP_ARG_DECL  Movie *mvip,uint32_t n,Data_Obj *dp)
 		src_dp = index_data(QSP_ARG  src_dp,index);
 	}
 
-	if( dp_same(QSP_ARG  src_dp,dp,"x_get_frame") ) return;
+	if( dp_same(src_dp,dp,"x_get_frame") ) return;
 
-	dp_copy(QSP_ARG  dp,src_dp);
+	dp_copy(dp,src_dp);
 }
 
 static void x_get_frame_comp(QSP_ARG_DECL  Movie *mvip,uint32_t n,Data_Obj *dp,int nc)

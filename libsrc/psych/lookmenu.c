@@ -244,7 +244,7 @@ MENU_END(ogive)
 
 static COMMAND_FUNC( do_ogive )
 {
-	PUSH_MENU(ogive);
+	CHECK_AND_PUSH_MENU(ogive);
 }
 
 static COMMAND_FUNC( seter )
@@ -269,7 +269,7 @@ MENU_END(weibull)
 
 static COMMAND_FUNC( do_weibull )
 {
-	PUSH_MENU(weibull);
+	CHECK_AND_PUSH_MENU(weibull);
 }
 
 static COMMAND_FUNC( do_pnt_bars )
@@ -313,6 +313,6 @@ MENU_END(lookit)
 
 COMMAND_FUNC( lookmenu )
 {
-	PUSH_MENU(lookit);
+	CHECK_AND_PUSH_MENU(lookit);
 }
 

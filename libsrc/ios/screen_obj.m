@@ -115,7 +115,7 @@ void show_ctx_stack(void)
 }
 #endif // MAX_DEBUG
 
-IOS_Item_Context *pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
+IOS_Item_Context *_pop_scrnobj_context(SINGLE_QSP_ARG_DECL)
 {
 	IOS_Item_Context *icp;
 	icp = pop_ios_item_context(QSP_ARG  scrnobj_itp );

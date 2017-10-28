@@ -129,6 +129,6 @@ MENU_END(xvals)
 
 COMMAND_FUNC( xval_menu )	/** play around with an experiment */
 {
-	PUSH_MENU(xvals);
+	CHECK_AND_PUSH_MENU(xvals);
 }
 

@@ -2974,7 +2974,7 @@ MENU_END( visca_port)
 
 static COMMAND_FUNC( do_vport_menu )
 {
-	PUSH_MENU(visca_port);
+	CHECK_AND_PUSH_MENU(visca_port);
 }
 
 static COMMAND_FUNC( do_vcam_info )
@@ -3060,7 +3060,7 @@ MENU_END(visca_cam)
 
 static COMMAND_FUNC( do_vcam_menu )
 {
-	PUSH_MENU(visca_cam);
+	CHECK_AND_PUSH_MENU(visca_cam);
 }
 
 
@@ -3126,6 +3126,6 @@ COMMAND_FUNC( do_visca_menu )
 	advise("Will parse commands only.");
 #endif // HAVE_VISCA
 
-	PUSH_MENU(visca);
+	CHECK_AND_PUSH_MENU(visca);
 }
 

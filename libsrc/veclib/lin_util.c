@@ -23,11 +23,11 @@ static void vmul(/*HOST_CALL_ARG_DECLS*/ QSP_ARG_DECL  Vec_Obj_Args *oap )
 	platform_dispatch_by_code(QSP_ARG  FVMUL, oap);
 }
 
-static int same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2);
+#define same_pixel_type(dp1,dp2) _same_pixel_type(QSP_ARG  dp1,dp2)
 
-static int same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2)		/* BUG? needed or redundant? */
+static int _same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2)		/* BUG? needed or redundant? */
 {
-	if( !dp_same_prec(QSP_ARG  dp1,dp2,"same_pixel_type") ) return(0);
+	if( !dp_same_prec(dp1,dp2,"same_pixel_type") ) return(0);
 
 	if( OBJ_MACH_DIM(dp1,0) != OBJ_MACH_DIM(dp2,0) ){
 		sprintf(DEFAULT_ERROR_STRING,"component count mismatch:  %s (%d),  %s (%d)",
@@ -61,10 +61,10 @@ int prodimg(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *rowobj,Data_Obj *colobj)	/** 
 			OBJ_ROWS(colobj));
 		NWARN(DEFAULT_ERROR_STRING);
 		return(-1);
-	} else if( !same_pixel_type(QSP_ARG  dpto,rowobj) ){
+	} else if( !same_pixel_type(dpto,rowobj) ){
 		NWARN("type/precision mismatch");
 		return(-1);
-	} else if( !same_pixel_type(QSP_ARG  dpto,colobj) ){
+	} else if( !same_pixel_type(dpto,colobj) ){
 		NWARN("type precision mismatch");
 		return(-1);
 	}
@@ -184,12 +184,12 @@ void inner(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr2)
 	 */
 
 	if( OBJ_ROWS(dpfr1) > 1 )
-		SET_OA_SRC1(oap,d_subscript(QSP_ARG  dpfr1,0) );	/* subscript first row */
+		SET_OA_SRC1(oap,d_subscript(dpfr1,0) );	/* subscript first row */
 	else
 		SET_OA_SRC1(oap,dpfr1);			/* object is a row */
 
 	if( OBJ_COLS(dpto) > 1 )
-		col_dp=c_subscript(QSP_ARG  dpfr2,0);
+		col_dp=c_subscript(dpfr2,0);
 	else 
 		col_dp=dpfr2;
 

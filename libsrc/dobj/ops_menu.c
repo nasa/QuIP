@@ -21,7 +21,7 @@ static COMMAND_FUNC( do_getmean )
 	Data_Obj *dp;
 
 	dp=pick_obj("");
-	getmean(QSP_ARG  dp);
+	getmean(dp);
 }
 
 static COMMAND_FUNC( do_equate )
@@ -33,7 +33,7 @@ static COMMAND_FUNC( do_equate )
 	v=HOW_MUCH("value");
 	if( dp==NULL ) return;
 
-	dp_equate(QSP_ARG  dp,v);
+	dp_equate(dp,v);
 }
 
 static COMMAND_FUNC( do_cpybuf )
@@ -44,7 +44,7 @@ static COMMAND_FUNC( do_cpybuf )
 	dp_fr=pick_obj("source data object");
 	if( dp_to==NULL || dp_fr==NULL ) return;
 
-	dp_copy(QSP_ARG  dp_to,dp_fr);
+	dp_copy(dp_to,dp_fr);
 }
 
 static COMMAND_FUNC( do_rnd )
@@ -56,7 +56,7 @@ static COMMAND_FUNC( do_rnd )
 	imin=(int)HOW_MANY("minimum random value");
 	imax=(int)HOW_MANY("maximum random value");
 	if( dp==NULL ) return;
-	i_rnd(QSP_ARG  dp,imin,imax);
+	i_rnd(dp,imin,imax);
 }
 
 #ifdef NOT_YET
@@ -65,7 +65,7 @@ static COMMAND_FUNC( do_seed )
 	long n;
 
 	n=HOW_MANY("seed for uniform random number generator");
-	set_seed(QSP_ARG  n);	/* make sure proper flag is set, see rn.c */
+	set_seed(n);	/* make sure proper flag is set, see rn.c */
 }
 #endif /* NOT_YET */
 
@@ -77,7 +77,7 @@ static COMMAND_FUNC( do_uni )
 
 	dp=pick_obj("float data object");
 	if( dp==NULL ) return;
-	dp_uni(QSP_ARG  dp);
+	dp_uni(dp);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(memops_menu,s,f,h)
@@ -98,6 +98,6 @@ MENU_END(memops)
 
 COMMAND_FUNC( buf_ops )
 {
-	PUSH_MENU(memops);
+	CHECK_AND_PUSH_MENU(memops);
 }
 

@@ -485,13 +485,13 @@ COMMAND_FUNC( do_draw_menu )
 
 	GET_VIEWER("drawmenu")
 	draw_vp = vp;
-	select_viewer(QSP_ARG  vp);
+	select_viewer(vp);
 
 #ifdef BUILD_FOR_OBJC
 	if( VW_CANVAS(vp) == NULL )
 		init_viewer_canvas(vp);
 #endif /* BUILD_FOR_OBJC */
 
-	PUSH_MENU(draw);
+	CHECK_AND_PUSH_MENU(draw);
 }
 

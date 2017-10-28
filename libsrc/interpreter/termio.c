@@ -47,7 +47,7 @@
 static struct termios tiobuf;
 
 
-void show_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl)
+void _show_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl)
 {
 	while(tbl->to_name != NULL ){
 		if( flag & tbl->to_bit ){
@@ -64,7 +64,7 @@ void show_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl)
 
 #define SETFLAG_CMD_WORD	"setflag"
 
-void dump_term_flags(QSP_ARG_DECL  u_long flag, Termio_Option *tbl)
+void _dump_term_flags(QSP_ARG_DECL  u_long flag, Termio_Option *tbl)
 {
 	while(tbl->to_name != NULL ){
 		if( flag & tbl->to_bit ){

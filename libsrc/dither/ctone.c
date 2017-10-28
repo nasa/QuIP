@@ -71,7 +71,7 @@ MENU_END(options)
 
 COMMAND_FUNC( do_ctone_menu )
 {
-	PUSH_MENU(options);
+	CHECK_AND_PUSH_MENU(options);
 }
 
 

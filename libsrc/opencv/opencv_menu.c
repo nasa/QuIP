@@ -637,7 +637,7 @@ MENU_END(face_finder)
 
 static COMMAND_FUNC( do_face_finder )
 {
-	PUSH_MENU(face_finder);
+	CHECK_AND_PUSH_MENU(face_finder);
 }
 
 #undef ADD_CMD
@@ -673,7 +673,7 @@ MENU_END(open_cv)
 
 COMMAND_FUNC( do_ocv_menu )
 {
-	PUSH_MENU( open_cv );
+	CHECK_AND_PUSH_MENU( open_cv );
 }
 
 

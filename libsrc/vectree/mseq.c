@@ -180,7 +180,7 @@ MENU_END(mseq)
 
 COMMAND_FUNC( do_mseq_menu )
 {
-	PUSH_MENU(mseq);
+	CHECK_AND_PUSH_MENU(mseq);
 }
 
 
