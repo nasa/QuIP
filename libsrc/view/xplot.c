@@ -39,7 +39,7 @@ static void remember_space(Viewer *vp,float _x0,float _y0,float delx,float dely)
 	SET_VW_YDEL(vp, dely);
 }
 
-void xp_space(int x1,int y1,int x2,int y2)
+void _xplot_space(QSP_ARG_DECL  int x1,int y1,int x2,int y2)
 {
 	float _x0,_y0,delx,dely;
 
@@ -51,7 +51,7 @@ void xp_space(int x1,int y1,int x2,int y2)
 }
 
 /** like libplot space, but takes float args */
-void xp_fspace(float x1,float y1,float x2,float y2)
+void _xplot_fspace(QSP_ARG_DECL  float x1,float y1,float x2,float y2)
 {
 	float _x0,_y0,delx,dely;
 
@@ -81,7 +81,7 @@ static void unscalefxy(Viewer *vp,float *px,float *py)
 	*px = x + VW_XMIN(vp);	*py = y + VW_YMIN(vp);
 }
 
-void tell_plot_space(SINGLE_QSP_ARG_DECL)
+void _tell_plot_space(SINGLE_QSP_ARG_DECL)
 {
 	sprintf(msg_str,"Viewer %s:",VW_NAME(plot_vp));
 	prt_msg(msg_str);
@@ -93,7 +93,7 @@ void tell_plot_space(SINGLE_QSP_ARG_DECL)
 	prt_msg(msg_str);
 }
 
-void xp_circle(float radius)
+void _xplot_circle(QSP_ARG_DECL  float radius)
 {
 	float cx,cy;
 
@@ -105,10 +105,10 @@ void xp_circle(float radius)
 	/* convert from screen coords to plotting units */
 	unscalefxy(plot_vp,&cx,&cy);
 
-	xp_farc(cx,cy,cx+radius,cy,cx+radius,cy);
+	xplot_farc(cx,cy,cx+radius,cy,cx+radius,cy);
 }
 
-void xp_fill_polygon(int num_points,
+void _xplot_fill_polygon(QSP_ARG_DECL  int num_points,
 			float* x_vals, float* y_vals)
 {
 	int *xp,*yp;
@@ -134,7 +134,7 @@ void xp_fill_polygon(int num_points,
 	givbuf(yp);
 }
 
-void xp_ffill_arc(float cx,float cy,float x1,float y1,float x2,float y2)
+void _xplot_ffill_arc(QSP_ARG_DECL  float cx,float cy,float x1,float y1,float x2,float y2)
 {
 	float _cx,_cy,_x1,_y1,_x2,_y2;
 	int xl,yu,w,h,a1,a2;
@@ -174,14 +174,14 @@ _cx,_cy,_x1,_y1,_x2,_y2);
 	_xp_fill_arc(plot_vp,xl,yu,w,h,start,delta);  
 }
 
-void xp_arc(int cx,int cy,int x1,int y1,int x2,int y2)
+void _xplot_arc(QSP_ARG_DECL  int cx,int cy,int x1,int y1,int x2,int y2)
 {
-	xp_farc((float)cx,(float)cy,
+	xplot_farc((float)cx,(float)cy,
 		(float)x1,(float)y1,
 		(float)x2,(float)y2 );
 }
 
-void xp_farc(float cx,float cy,float x1,float y1,float x2,float y2)
+void _xplot_farc(QSP_ARG_DECL  float cx,float cy,float x1,float y1,float x2,float y2)
 {
 	float _cx,_cy,_x1,_y1,_x2,_y2;
 	int xl,yu,w,h,a1,a2;
@@ -203,7 +203,7 @@ void xp_farc(float cx,float cy,float x1,float y1,float x2,float y2)
 	h=w;
 
 /*
-printf("xp_farc:  ctr %f %f   p1 %f %f   p2 %f %f\n",
+printf("xplot_farc:  ctr %f %f   p1 %f %f   p2 %f %f\n",
 _cx,_cy,_x1,_y1,_x2,_y2);
 */
 
@@ -249,7 +249,7 @@ void scalexy(Viewer *vp,int *px,int *py)
 	*px = (int)( X0+ x);		*py = (int)( Y0 + VW_HEIGHT(vp) - (y+1));
 }
 
-void xp_fmove(float x,float y)
+void _xplot_fmove(QSP_ARG_DECL  float x,float y)
 {
 	float fx,fy;
 
@@ -263,7 +263,7 @@ void xp_fmove(float x,float y)
 	_xp_move(plot_vp,_currx,_curry);
 }
 
-void xp_move(int x,int y)
+void _xplot_move(QSP_ARG_DECL  int x,int y)
 {
 	if( plot_vp == NULL ) return;
 
@@ -273,7 +273,7 @@ void xp_move(int x,int y)
 	_xp_move(plot_vp,_currx,_curry);
 }
 
-void xp_fcont(float x,float y)
+void _xplot_fcont(QSP_ARG_DECL  float x,float y)
 {
 	int ix,iy;
 	float fx,fy;
@@ -287,30 +287,30 @@ void xp_fcont(float x,float y)
 	ix=(int)round(fx+0.5);
 	iy=(int)round(fy+0.5);
 
-	_xp_line(plot_vp,_currx,_curry,ix,iy);
+	xp_line(plot_vp,_currx,_curry,ix,iy);
 
 	_currx=ix;
 	_curry=iy;
 }
 
-void xp_point(int x,int y)
+void _xplot_point(QSP_ARG_DECL  int x,int y)
 {
-	xp_move(x,y);
-	xp_cont(x,y);
+	xplot_move(x,y);
+	xplot_cont(x,y);
 }
 
-void xp_fpoint(float x,float y)
+void _xplot_fpoint(QSP_ARG_DECL  float x,float y)
 {
-	xp_fmove(x,y);
-	xp_fcont(x,y);
+	xplot_fmove(x,y);
+	xplot_fcont(x,y);
 }
 
-void xp_cont(int x,int y)
+void _xplot_cont(QSP_ARG_DECL  int x,int y)
 {
 	if( plot_vp == NULL ) return;
 
 	scalexy(plot_vp,&x,&y);
-	_xp_line(plot_vp,_currx,_curry,x,y);
+	xp_line(plot_vp,_currx,_curry,x,y);
 	/* why don't we use cont here??? something to do with scaling??? */
 	/* _xp_cont(plot_vp,x,y); */
 
@@ -318,16 +318,16 @@ void xp_cont(int x,int y)
 	_curry=y;
 }
 
-void xp_line(int x1,int y1,int x2,int y2)
+void _xplot_line(QSP_ARG_DECL  int x1,int y1,int x2,int y2)
 {
-	xp_move(x1,y1);
-	xp_cont(x2,y2);
+	xplot_move(x1,y1);
+	xplot_cont(x2,y2);
 }
 
-void xp_fline(float x1,float y1,float x2,float y2)
+void _xplot_fline(QSP_ARG_DECL  float x1,float y1,float x2,float y2)
 {
-	xp_fmove(x1,y1);
-	xp_fcont(x2,y2);
+	xplot_fmove(x1,y1);
+	xplot_fcont(x2,y2);
 }
 
 #define DEFAULT_FONT_WIDTH	10
@@ -338,12 +338,12 @@ void xp_fline(float x1,float y1,float x2,float y2)
 #define PLOT_TEXT_OFFSET	0
 #define PIXELS_PER_CHAR		8
 
-void xp_text(const char *s)
+void _xplot_text(QSP_ARG_DECL  const char *s)
 {
 	float delta;
 
 	if( plot_vp != NULL ){
-		_xp_text(plot_vp,_currx,_curry+PLOT_TEXT_OFFSET,s);
+		xp_text(plot_vp,_currx,_curry+PLOT_TEXT_OFFSET,s);
 	}
 
 	/* Probably graph(1) expects that this will move the pointer... */
@@ -354,7 +354,7 @@ void xp_text(const char *s)
 	_currx += delta;
 }
 
-void xp_setup(QSP_ARG_DECL  Viewer *vp)
+void _xplot_setup(QSP_ARG_DECL  Viewer *vp)
 {
 	if( ! IS_PLOTTER(vp) ){
 		sprintf(ERROR_STRING,"xp_setup:  viewer %s is not a plotter!?",
@@ -367,33 +367,33 @@ void xp_setup(QSP_ARG_DECL  Viewer *vp)
 	if( plot_vp != NULL ){
 		/* this is just a default... */
 		if( VW_XDEL(vp) != 0.0 ){	/* params already set */
-			xp_fspace(VW_XMIN(vp),VW_YMIN(vp),
+			xplot_fspace(VW_XMIN(vp),VW_YMIN(vp),
 				VW_XMIN(vp)+VW_XDEL(vp),VW_YMIN(vp)+VW_YDEL(vp));
 		} else {			/* use default */
-			xp_space(0,0,VW_WIDTH(vp)-1,VW_HEIGHT(vp)-1);
+			xplot_space(0,0,VW_WIDTH(vp)-1,VW_HEIGHT(vp)-1);
 		}
 	}
 }
 
-void xp_bgselect(u_long color)
+void _xplot_bgselect(QSP_ARG_DECL  u_long color)
 {
 	if( plot_vp == NULL ) {
 		return;
 	}
 
-	_xp_bgselect(plot_vp,color);
+	xp_bgselect(plot_vp,color);
 }
 
-void xp_select(u_long color)
+void _xplot_select(QSP_ARG_DECL  u_long color)
 {
 	if( plot_vp == NULL ) {
 		return;
 	}
 
-	_xp_select(plot_vp,color);
+	xp_select(plot_vp,color);
 }
 
-void xp_erase(void)
+void _xplot_erase(SINGLE_QSP_ARG_DECL)
 {
 	if( plot_vp != NULL ){
 		_xp_erase(plot_vp);
@@ -401,7 +401,7 @@ void xp_erase(void)
 }
 
 #ifdef BUILD_FOR_IOS
-void xp_update(void)
+void _xplot_update(SINGLE_QSP_ARG_DECL)
 {
 	if( plot_vp != NULL ){
 		_xp_update(plot_vp);

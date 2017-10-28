@@ -206,7 +206,7 @@ static COMMAND_FUNC( do_set_fg )
 
 	DRAW_CHECK(do_set_fg)
 
-	_xp_select(draw_vp,val);
+	xp_select(draw_vp,val);
 }
 
 static COMMAND_FUNC( do_set_bg )
@@ -217,7 +217,7 @@ static COMMAND_FUNC( do_set_bg )
 
 	DRAW_CHECK(do_set_bg)
 
-	_xp_bgselect(draw_vp,val);
+	xp_bgselect(draw_vp,val);
 }
 
 static COMMAND_FUNC( do_draw_string )
@@ -230,7 +230,7 @@ static COMMAND_FUNC( do_draw_string )
 
 	DRAW_CHECK(do_draw_string)
 
-	_xp_text(draw_vp,x,y,s);
+	xp_text(draw_vp,x,y,s);
 }
 
 static COMMAND_FUNC( do_show_gc )
@@ -269,7 +269,7 @@ static COMMAND_FUNC( do_cont )
 
 	DRAW_CHECK(do_cont)
 
-	_xp_line(draw_vp,curr_x,curr_y,x,y);
+	xp_line(draw_vp,curr_x,curr_y,x,y);
 	curr_x = x;
 	curr_y = y;
 }

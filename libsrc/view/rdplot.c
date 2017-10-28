@@ -36,11 +36,11 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 
 	while( (c=getc(fp)) != EOF ){
 		switch( c ){
-			case 'e': xp_erase(); break;
+			case 'e': xplot_erase(); break;
 			case 's':
 				getpair(fp,&x1,&y1);
 				getpair(fp,&x2,&y2);
-				xp_space(x1,y1,x2,y2);
+				xplot_space(x1,y1,x2,y2);
 				break;
 			case 't':
 				{
@@ -51,37 +51,37 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 						labelstring[i++]=(char)c;
 					}
 					labelstring[i]=0;
-					xp_text(labelstring);
+					xplot_text(labelstring);
 				}
 				break;
 			case 'l':
 				getpair(fp,&x1,&y1);
 				getpair(fp,&x2,&y2);
-				xp_line(x1,y1,x2,y2);
+				xplot_line(x1,y1,x2,y2);
 				break;
 			case 'c':
 				getpair(fp,&x1,&y1);
 				getone(fp,&x2);
-				xp_move(x1,y1);
-				xp_circle(x2);
+				xplot_move(x1,y1);
+				xplot_circle(x2);
 				break;
 			case 'a':
 				getpair(fp,&x1,&y1);
 				getpair(fp,&x2,&y2);
 				getpair(fp,&x3,&y3);
-				xp_arc(x1,y1,x2,y2,x3,y3);
+				xplot_arc(x1,y1,x2,y2,x3,y3);
 				break;
 			case 'm':
 				getpair(fp,&x1,&y1);
-				xp_move(x1,y1);
+				xplot_move(x1,y1);
 				break;
 			case 'n':
 				getpair(fp,&x1,&y1);
-				xp_cont(x1,y1);
+				xplot_cont(x1,y1);
 				break;
 			case 'p':
 				getpair(fp,&x1,&y1);
-				xp_point(x1,y1);
+				xplot_point(x1,y1);
 				break;
 			case 'f':
 				s=modstr;
@@ -89,15 +89,15 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 					*s++ = (char)c;
 				*s=0;
 				if( !strcmp(modstr,"solid") )
-					xp_select(1);
+					xplot_select(1);
 				else if( !strcmp(modstr,"dotted") )
-					xp_select(2);
+					xplot_select(2);
 				else if( !strcmp(modstr,"dotdashed") )
-					xp_select(3);
+					xplot_select(3);
 				else if( !strcmp(modstr,"shortdashed") )
-					xp_select(4);
+					xplot_select(4);
 				else if( !strcmp(modstr,"longdashed") )
-					xp_select(5);
+					xplot_select(5);
 				else WARN("unsupported line color");
 				break;
 			default:
