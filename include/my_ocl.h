@@ -62,13 +62,15 @@ extern void delete_kernel(QSP_ARG_DECL  Kernel *kp);
 // ocl_utils.c
 
 extern void report_ocl_error(QSP_ARG_DECL  cl_int status, const char *whence);
-extern void insure_ocl_device(Data_Obj *dp);
 extern cl_program ocl_create_program(const char *buf, Platform_Device *pdp );
 //extern cl_kernel ocl_create_kernel(cl_program program,
 extern cl_kernel ocl_create_kernel(/*QSP_ARG_DECL*/  cl_program program,
 			const char *name, Platform_Device *pdp );
 extern void * ocl_make_kernel( QSP_ARG_DECL  const char *src, const char *name, Platform_Device *pdp );
 
+extern void _insure_ocl_device(QSP_ARG_DECL  Data_Obj *dp);
+
+#define insure_ocl_device(dp) _insure_ocl_device(QSP_ARG  dp)
 
 extern void h_ocl_set_seed(int seed);
 

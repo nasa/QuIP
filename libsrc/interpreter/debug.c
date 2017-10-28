@@ -76,7 +76,7 @@ static Debug_Module * add_auto_module(QSP_ARG_DECL  const char *name, debug_flag
 			sprintf(ERROR_STRING,
 		"Debug module %s (mask = 0x%x) added out of sequence (n_debug_modules = %d)!?",
 				name,mask,n_debug_modules);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		n_debug_modules++;
 	}
@@ -167,7 +167,7 @@ debug_flag_t _add_debug_module(QSP_ARG_DECL  const char *name)
 
 	if( n_debug_modules >= MAX_DEBUG_MODULES ){
 		sprintf(ERROR_STRING,"Can't add debug module %s",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,"n is %d",n_debug_modules);
 		advise(ERROR_STRING);
 		sprintf(ERROR_STRING,"Max is %ld",(long)MAX_DEBUG_MODULES);

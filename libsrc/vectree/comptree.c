@@ -236,7 +236,7 @@ void _point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 		node_error(enp);
 		sprintf(ERROR_STRING,
 	"point_node_shape:  %s node n%d already owns shape info!?",NNAME(enp),VN_SERIAL(enp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		/*
 		DESCRIBE_SHAPE(VN_SHAPE(enp));
 		*/
@@ -327,7 +327,7 @@ static Shape_Info * get_child_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,int child_i
 			if( dp == NULL ){
 				sprintf(ERROR_STRING,
 					"Missing obj %s",VN_STRING(enp2));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 			} else {
 				/* BUG should we use the decl node?? */
 				shpp = OBJ_SHAPE(dp);
@@ -404,7 +404,7 @@ static int get_subvec_indices(QSP_ARG_DECL Vec_Expr_Node *enp, dimension_t *i1p,
 		node_error(enp);
 		sprintf(ERROR_STRING,"first range index (%d) should be less than or equal to second range index (%d)",
 		*i1p,*i2p);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 
@@ -429,7 +429,7 @@ static Shape_Info *void_shape(void)
 // We will also use this to size temp objects for GPU operations,
 // perhaps should be in a different library?
 
-Shape_Info *make_outer_shape(QSP_ARG_DECL  Shape_Info *shpp1, Shape_Info *shpp2)
+Shape_Info *_make_outer_shape(QSP_ARG_DECL  Shape_Info *shpp1, Shape_Info *shpp2)
 {
 	int i;
 	/*static Shape_Info ret_shp;*/
@@ -564,13 +564,13 @@ DESCRIBE_SHAPE(VN_SHAPE(enp2));
 		auto_shape_flags(shpp);
 		return(shpp);	/* BUG?  can we get away with a single static shape here??? */
 #endif // FOOBAR
-		shpp = make_outer_shape(QSP_ARG  VN_SHAPE(enp1), VN_SHAPE(enp2));
+		shpp = make_outer_shape(VN_SHAPE(enp1), VN_SHAPE(enp2));
 		if( shpp != NULL ) return shpp;		// BUG memory leak!?
 	}
 
 mismatch:
 	node_error(enp);
-	NWARN("shapes_mate:  Operands have incompatible shapes");
+	warn("shapes_mate:  Operands have incompatible shapes");
 	advise(node_desc(enp));
 	/*
 	dump_shape(VN_SHAPE(enp1));
@@ -620,7 +620,7 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 		if( ! shapes_mate(VN_CHILD(enp,0),VN_CHILD(enp,1),enp) ){
 			node_error(enp);
-			WARN("update_assign_shape:  assignment shapes do not mate");
+			warn("update_assign_shape:  assignment shapes do not mate");
 			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
 			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
 			CURDLE(enp)
@@ -960,7 +960,7 @@ dump_tree(enp);
 	"check_typecast:  unhandled function code %d (%s)",VN_VFUNC_CODE(enp),
 						VF_NAME( FIND_VEC_FUNC( VN_VFUNC_CODE(enp) ) )
 						);
-					WARN(ERROR_STRING);
+					warn(ERROR_STRING);
 					break;
 			}
 			break;
@@ -1222,7 +1222,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 			if( i_dim >= N_DIMENSIONS ){
 				node_error(enp);
-				WARN("too many dimension specifiers");
+				warn("too many dimension specifiers");
 				CURDLE(enp)
 				break;
 			}
@@ -1268,7 +1268,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				l = 1+(i1-i2+1)/(-inc);
 			}
 			if( l < 0 )
-				WARN("apparent length of subsample object is negative!?");
+				warn("apparent length of subsample object is negative!?");
 
 			SET_SHP_N_TYPE_ELTS(VN_SHAPE(enp),
 				SHP_N_TYPE_ELTS(VN_SHAPE(enp)) /
@@ -1297,7 +1297,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,
 "First element of range specification (%d) should be smaller than the second (%d)!?",
 					i1,i2);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				advise("Reversing.");
 				SET_SHP_COLS(VN_SHAPE(enp), 1 + (i1 - i2) );
 			} else {
@@ -1401,7 +1401,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,
 			"update_node_shape:  %s node n%d has dimension %d zero, can't subscript",
 					NNAME(VN_CHILD(enp,0)),VN_SERIAL(VN_CHILD(enp,0)),SHP_MAXDIM(VN_CHILD_SHAPE(enp,0)));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				break;
 			}
 
@@ -1426,7 +1426,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,
 			"update_node_shape:  %s node n%d has dimension %d zero, can't subscript",
 					NNAME(VN_CHILD(enp,0)),VN_SERIAL(VN_CHILD(enp,0)),SHP_MINDIM(VN_CHILD_SHAPE(enp,0)));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				break;
 			}
 
@@ -1581,7 +1581,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 					node_error(enp);
 					sprintf(ERROR_STRING,
 	"update_node_shape READ/LOAD:  Couldn't open image file %s",str);
-					WARN(ERROR_STRING);
+					warn(ERROR_STRING);
 					goto no_file;
 				}
 			}
@@ -1589,7 +1589,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( ! IS_READABLE(ifp) ){
 				sprintf(ERROR_STRING,
 		"File %s is not readable!?",str);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				goto no_file;
 			}
 			assert( ifp->if_dp != NULL );
@@ -1629,7 +1629,7 @@ no_file:
 				break;
 			} else if( IS_CURDLED(VN_CHILD(enp,0)) ){
 				/* an error expr */
-				WARN("return expression is curdled!?");
+				warn("return expression is curdled!?");
 				discard_node_shape(enp);
 				break;
 			} else {
@@ -1660,7 +1660,7 @@ no_file:
 
 
 					node_error(enp);
-					WARN("mismatched return shapes");
+					warn("mismatched return shapes");
 				}
 			}
 			*/
@@ -1680,7 +1680,7 @@ no_file:
 				sprintf(ERROR_STRING,
 	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				CURDLE(enp)
 				break;
 			}
@@ -1808,7 +1808,7 @@ no_file:
 			/* this is redundant most of the time... */
 			if( get_mating_shapes(enp,0,1) == NULL )
 {
-WARN("update_node_shape (vv/vs func):  no mating shapes!?");
+warn("update_node_shape (vv/vs func):  no mating shapes!?");
 dump_tree(enp);
 				return;
 }
@@ -2189,7 +2189,7 @@ static void compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			if( (shpp=compatible_shape(VN_CHILD(enp,0),VN_CHILD(enp,1),enp)) == NULL ){
 				/* Here we might want to allow assignment of a row to an image... */
 				node_error(enp);
-				WARN("compute_assign_shape:  assignment shapes do not mate");
+				warn("compute_assign_shape:  assignment shapes do not mate");
 				advise(node_desc(VN_CHILD(enp,0)));
 				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
 				advise(node_desc(VN_CHILD(enp,1)));
@@ -3171,10 +3171,10 @@ static void _check_mating_bitmap(QSP_ARG_DECL  Vec_Expr_Node *enp,Vec_Expr_Node 
 					enlarged = 1;
 				} else if( SHP_TYPE_DIM(VN_SHAPE(enp),i) != SHP_TYPE_DIM(VN_SHAPE(bm_enp),i) ){
 					node_error(enp);
-					sprintf(DEFAULT_ERROR_STRING,
+					sprintf(ERROR_STRING,
 	"check_mating_bitmap:  Bitmap %s does not have shape to match %s!?",
 						node_desc(bm_enp),node_desc(enp));
-					NWARN(DEFAULT_ERROR_STRING);
+					warn(ERROR_STRING);
 					CURDLE(enp)
 					return;
 				}
@@ -3439,13 +3439,13 @@ static void fix_resolver_references(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		sprintf(ERROR_STRING,						\
 	"check_xx_xx_condass_code:  bad shapes #%d - shouldn't happen?",	\
 			checkpoint_number);					\
-		WARN(ERROR_STRING);						\
+		warn(ERROR_STRING);						\
 	}									\
 	if( get_mating_shapes(enp,1,comparison_index) == NULL ){		\
 		sprintf(ERROR_STRING,						\
 	"check_xx_xx_condass_code:  bad shapes #%d - shouldn't happen?",	\
 			checkpoint_number+1);					\
-		WARN(ERROR_STRING);						\
+		warn(ERROR_STRING);						\
 	}
 
 #define RELEASE_BOOL(enp)							\
@@ -3664,7 +3664,7 @@ static void _check_minmax_code(QSP_ARG_DECL   Vec_Expr_Node *enp)
 else {
 sprintf(ERROR_STRING,"check_minmax_code:  expected T_EXPR_LIST in child[0], found %s",
 node_desc(VN_CHILD(enp,0)));
-WARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 
 	assert( VN_CODE(VN_CHILD(enp,1)) != T_EXPR_LIST );
@@ -3685,7 +3685,7 @@ WARN(ERROR_STRING);
 	 * or a vector and a scalar?
 	 */
 	if( get_mating_shapes(enp,0,1) == NULL ){
-		WARN("check_minmax_code:  bad shapes!?");
+		warn("check_minmax_code:  bad shapes!?");
 		return;
 	}
 
@@ -3835,7 +3835,7 @@ static Vec_Expr_Node * _compile_node(QSP_ARG_DECL   Vec_Expr_Node *enp)
 			/* logical AND etc. */
 			if( get_mating_shapes(enp,0,1) == NULL )
 {
-WARN("compile_node (binary boolop):  no mating shapes!?");
+warn("compile_node (binary boolop):  no mating shapes!?");
 dump_tree(enp);
 }
 
@@ -3855,7 +3855,7 @@ dump_tree(enp);
 
 		case T_UMINUS:		/* compile_node */
 			if( VN_CHILD_SHAPE(enp,0) == NULL ){
-	WARN("compile_node:  uminus arg has not shape!?");
+	warn("compile_node:  uminus arg has not shape!?");
 				break;		/* an error */
 			}
 
@@ -3909,7 +3909,7 @@ excise_uminus:
 
 		case T_BITCOMP:		/* compile_node */
 			if( VN_CHILD_SHAPE(enp,0) == NULL ){
-	WARN("compile_node:  bitcomp arg has not shape!?");
+	warn("compile_node:  bitcomp arg has not shape!?");
 				break;		/* an error */
 			}
 
@@ -4067,7 +4067,7 @@ dump_tree(enp);
 
 		case T_INT1_FN:			/* compile_node */
 			if( VN_CHILD_SHAPE(enp,0) == NULL ){
-				WARN("compile_node:  child has no shape");
+				warn("compile_node:  child has no shape");
 				break;
 			}
 
@@ -4093,7 +4093,7 @@ dump_tree(enp);
 
 		case T_MATH1_FN:		/* compile_node */
 			if( VN_CHILD_SHAPE(enp,0) == NULL ){
-				WARN("compile_node:  child has no shape");
+				warn("compile_node:  child has no shape");
 				break;
 			}
 
@@ -4137,7 +4137,7 @@ dump_tree(enp);
 			// subroutine?  BUG?
 
 			if( VN_CHILD_SHAPE(enp,0) == NULL ){
-				WARN("compile_node:  child has no shape");
+				warn("compile_node:  child has no shape");
 				break;
 			}
 
@@ -4350,7 +4350,7 @@ dump_tree(enp);
 #ifdef NOT_YET
 				enp=fix_render_code(QSP_ARG  enp);
 #else /* ! NOT_YET */
-				WARN("Sorry, vector subscripts not implemented for objC yet...");
+				warn("Sorry, vector subscripts not implemented for objC yet...");
 #endif /* NOT_YET */
 			}
 			break;
@@ -5074,7 +5074,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			} else if( IS_CURDLED(VN_CHILD(enp,0)) ){
 				/* an error expr */
-				WARN("return expression is curdled!?");
+				warn("return expression is curdled!?");
 				discard_node_shape(enp);
 				return;
 			} else {
@@ -5100,7 +5100,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				} else if( !shapes_match(SR_SHAPE(srp), VN_SHAPE(enp)) ){
 					// does the shape of this return match?
 					node_error(enp);
-					WARN("mismatched return shapes");
+					warn("mismatched return shapes");
 				}
 			}
 			*/
@@ -5150,7 +5150,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,
 	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
 					arg_count(VN_CHILD(enp,0)));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				CURDLE(enp)
 				return;
 			}
@@ -5456,7 +5456,7 @@ fprintf(stderr,"prelim_node_shape T_ASSIGN:  curdled child!?\n");
 
 			if( get_mating_shapes(enp,0,1) == NULL )
 {
-WARN("prelim_node_shape (boolop):  no mating shapes!?");
+warn("prelim_node_shape (boolop):  no mating shapes!?");
 dump_tree(enp);
 				return;
 }
@@ -5586,7 +5586,7 @@ gen_obj_shape:
 				if( (OBJ_FLAGS(dp)&DT_EXPORTED) == 0 && ! mode_is_matlab ){
 sprintf(ERROR_STRING,"prelim_node_shape OBJECT %s (%s):  no decl node, and object was not exported!?",
 VN_STRING(enp),node_desc(enp));
-WARN(ERROR_STRING);
+warn(ERROR_STRING);
 				}
 #endif // FOOBAR
 				point_node_shape(enp,OBJ_SHAPE(dp));
@@ -6155,7 +6155,6 @@ static Vec_Expr_Node * balance_list(Vec_Expr_Node *enp, Tree_Code list_code )
 
 	if( enp == NULL ){
 		// This occurs if we have an empty subroutine...
-		//NWARN("CAUTIOUS:  balance_list passed null node");
 		return(enp);
 	}
 
@@ -6252,7 +6251,7 @@ dump_tree(SR_BODY(srp));
 	if( SR_PREC_CODE(srp) != PREC_VOID && ! final_return(QSP_ARG  SR_BODY(srp)) ){
 		/* what node should we report the error at ? */
 		sprintf(ERROR_STRING,"subroutine %s does not end with a return statement",SR_NAME(srp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 /*
@@ -6373,7 +6372,7 @@ static Vec_Expr_Node * fix_render_code(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	lhs_enp = VN_CHILD(enp,0);
 	if( VN_CODE(lhs_enp) != T_SQUARE_SUBSCR ){
 		node_error(enp);
-		NWARN("fix_render_code:  only know how to fix SQUARE_SUBSCR lhs - sorry!");
+		warn("fix_render_code:  only know how to fix SQUARE_SUBSCR lhs - sorry!");
 		return(NULL);
 	}
 
@@ -6728,17 +6727,17 @@ Vec_Expr_Node *_nth_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, int n)
 	if( VN_CODE(enp) != T_ARGLIST ){
 		if( n == 0 ) return(enp);
 		node_error(enp);
-		sprintf(DEFAULT_ERROR_STRING,"nth_arg:  %s is not an arg_list node, but arg %d requested",
+		sprintf(ERROR_STRING,"nth_arg:  %s is not an arg_list node, but arg %d requested",
 			node_desc(enp),n);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
 	if( n >= (l=leaf_count(enp,T_ARGLIST)) ){
 		node_error(enp);
-		sprintf(DEFAULT_ERROR_STRING,"nth_arg:  %s has %d leaves, but arg %d requested",
+		sprintf(ERROR_STRING,"nth_arg:  %s has %d leaves, but arg %d requested",
 			node_desc(enp),l,n);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 

@@ -11,15 +11,17 @@
 #include <stdio.h>
 #include <string.h>
 
-static int cpu_flag_set(char *string)
+#define cpu_flag_set(string) _cpu_flag_set(QSP_ARG  string)
+
+static int _cpu_flag_set(QSP_ARG_DECL  char *string)
 {
 	FILE *fp;
 	char str[32];
 
 	fp=popen("grep flags /proc/cpuinfo | head -1 | awk -F ':' '{print $2}'","r");
 	if( fp == NULL ) {
-		sprintf(DEFAULT_ERROR_STRING,"cpu_flag_set:  error opening pipe to read /proc/cpuinfo");
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"cpu_flag_set:  error opening pipe to read /proc/cpuinfo");
+		warn(ERROR_STRING);
 		return(0);
 	}
 	while( fscanf(fp,"%s",str) == 1 ){

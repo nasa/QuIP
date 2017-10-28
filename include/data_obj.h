@@ -196,13 +196,13 @@ struct data_obj {
 //#ifdef CAUTIOUS
 
 #define IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
-				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) && is_contiguous(QSP_ARG  dp) ) )
+				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) && is_contiguous(dp) ) )
 
 // These two look the same - what is the difference???
 
 #define N_IS_CONTIGUOUS(dp)	(  ( OBJ_FLAGS(dp) & DT_CONTIG ) || 		\
 				( (!(OBJ_FLAGS(dp) & DT_CHECKED)) &&		\
-				is_contiguous(DEFAULT_QSP_ARG  dp) ) )
+				_is_contiguous(DEFAULT_QSP_ARG  dp) ) )
 
 #define IS_EVENLY_SPACED(dp)	( OBJ_FLAGS(dp) & DT_EVENLY )
 

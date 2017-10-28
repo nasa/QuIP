@@ -54,17 +54,17 @@ int _which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 		sprintf(ERROR_STRING,"Unambiguous substring match of \"%s\" to \"%s\"",
 			user_response,choices[lastmatch]);
 		//advise(ERROR_STRING);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(lastmatch);
 	}
 	else if( nmatches > 1 ){
 		sprintf(ERROR_STRING,"ambiguous choice \"%s\"",user_response);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	sprintf(ERROR_STRING,"invalid choice \"%s\"",user_response);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	sprintf(ERROR_STRING,"valid selections for %s are:",prompt);
 	advise(ERROR_STRING);
 	for(i=0;i<n;i++){

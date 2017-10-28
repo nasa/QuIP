@@ -59,7 +59,7 @@ Menu *_pop_menu(SINGLE_QSP_ARG_DECL)
         
 #else // ! BUILD_FOR_CMD_LINE
 
-	WARN("unexpected call to pop_menu!?");
+	warn("unexpected call to pop_menu!?");
         
 fprintf(stderr,"pop_menu:  menu stack empty, exiting program...\n");
 abort();    // for debugging...
@@ -81,7 +81,7 @@ void show_menu_stack(SINGLE_QSP_ARG_DECL)
 
 	lp = QS_MENU_STACK(THIS_QSP);
 	if( lp == NULL ){
-		WARN("show_menu_stack:  no menu stack!?");
+		warn("show_menu_stack:  no menu stack!?");
 		return;
 	}
 	np = QLIST_HEAD(lp);

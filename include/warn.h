@@ -16,7 +16,10 @@ extern void _error1(QSP_ARG_DECL  const char *msg);
 __attribute__ ((__noreturn__)) extern void _error1(QSP_ARG_DECL  const char *msg);
 #endif // ! BUILD_FOR_IOS
 
-#define WARN(msg)	script_warn(QSP_ARG msg)
+// Phasing out all-caps WARN...
+#define WARN(msg)	warn(msg)
+#define warn(msg)	script_warn(QSP_ARG msg)
+
 #define NWARN(msg)	script_warn(DEFAULT_QSP_ARG msg)
 
 // when we run this on the iOS simulator, the bell char prints
@@ -36,7 +39,7 @@ __attribute__ ((__noreturn__)) extern void _error1(QSP_ARG_DECL  const char *msg
 	{						\
 		static int warned=0;			\
 		if( ! warned ){				\
-			WARN(s);			\
+			warn(s);			\
 			warned=1;			\
 		}					\
 	}

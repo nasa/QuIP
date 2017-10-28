@@ -29,7 +29,7 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL);
 	if( var <= 0 ){										\
 		sprintf(ERROR_STRING,"%s %s:  number of %ss (%ld) must be positive",		\
 			subrt_name,obj_name,dim_name,var);					\
-		WARN(ERROR_STRING);								\
+		warn(ERROR_STRING);								\
 		return;										\
 	}
 
@@ -38,7 +38,7 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL);
 	if( var <= 0 ){										\
 		sprintf(ERROR_STRING,"%s:  %s (%ld) must be positive",				\
 			subrt_name,desc_str,var);						\
-		WARN(ERROR_STRING);								\
+		warn(ERROR_STRING);								\
 		return;										\
 	}
 
@@ -48,7 +48,7 @@ Precision * get_precision(SINGLE_QSP_ARG_DECL);
 	if( var < 0 ){										\
 		sprintf(ERROR_STRING,"%s %s:  %s (%ld) must be positive",			\
 			subrt_name,obj_name,var_string,var);					\
-		WARN(ERROR_STRING);								\
+		warn(ERROR_STRING);								\
 		return;										\
 	}
 
@@ -196,7 +196,7 @@ static void _finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, 
 	if( COLOR_PRECISION(PREC_CODE(prec_p)) ){
 		if( DIMENSION(dsp,0) != 1 ){
 			sprintf(ERROR_STRING,"object %s, number of rgb triples per pixel should be 1",obj_name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		SET_DIMENSION(dsp,0,3);
 		prec_p = get_prec("float");
@@ -204,7 +204,7 @@ static void _finish_obj(QSP_ARG_DECL  const char *obj_name, Dimension_Set *dsp, 
 
 	if( make_dobj_with_shape(obj_name,dsp,prec_p,type_flag) == NULL ) {
 		sprintf(ERROR_STRING,"couldn't create data object \"%s\"", obj_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -329,7 +329,7 @@ static COMMAND_FUNC( new_gen_obj )
 	SET_DIMENSION(dsp,0,ncomps);
 
 	if( *obj_name == 0 ){
-		WARN("new_gen_obj:  Null object name!?");
+		warn("new_gen_obj:  Null object name!?");
 		return;	// shouldn't happen, but can - HOW???
 		// If it can, then should move this check to finish_obj???
 	}
@@ -361,7 +361,7 @@ static COMMAND_FUNC( new_obj_list )
 
 	if( make_obj_list(s,lp) == NULL ){
 		sprintf(ERROR_STRING,"error making object list %s");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 #endif /* NOT_YET */
@@ -490,7 +490,7 @@ static COMMAND_FUNC( mksubimg )
 
 	newdp=mk_subimg(dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols);
 	if( newdp == NULL )
-		WARN("couldn't create subimage");
+		warn("couldn't create subimage");
 }
 
 static COMMAND_FUNC( mksubsequence )
@@ -538,7 +538,7 @@ static COMMAND_FUNC( mksubsequence )
 
 	newdp=mk_subseq(obj_name,dp,offsets,dsp);
 	if( newdp == NULL )
-		WARN("couldn't create subimage");
+		warn("couldn't create subimage");
 }
 
 static COMMAND_FUNC( mksubvector )
@@ -567,7 +567,7 @@ static COMMAND_FUNC( mksubvector )
 
 	newdp=mk_subimg(dp,(index_t)xos,yos,obj_name,rows,(dimension_t)cols);
 	if( newdp == NULL )
-		WARN("couldn't create subimage");
+		warn("couldn't create subimage");
 }
 
 static COMMAND_FUNC( mksubscalar )
@@ -604,7 +604,7 @@ static COMMAND_FUNC( mksubscalar )
 
 	newdp=mk_subseq(obj_name,dp,offsets,dsp);
 	if( newdp == NULL )
-		WARN("couldn't create subscalar");
+		warn("couldn't create subscalar");
 }
 
 static COMMAND_FUNC( do_ilace )
@@ -623,7 +623,7 @@ static COMMAND_FUNC( do_ilace )
 
 	newdp=mk_ilace(dp,obj_name,parity);
 	if( newdp == NULL )
-		WARN("couldn't create interlaced subimage");
+		warn("couldn't create interlaced subimage");
 }
 
 static COMMAND_FUNC( mkcast )
@@ -653,7 +653,7 @@ static COMMAND_FUNC( mkcast )
 
 	newdp=nmk_subimg(dp,(index_t)xos,(index_t)yos,obj_name,(dimension_t)rows,(dimension_t)cols,(dimension_t)tdim);
 	if( newdp == NULL )
-		WARN("couldn't create subimage");
+		warn("couldn't create subimage");
 }
 
 static COMMAND_FUNC( equivalence )
@@ -693,19 +693,19 @@ static COMMAND_FUNC( equivalence )
 
 	if( COMPLEX_PRECISION(PREC_CODE(prec_p)) ){
 		if( DIMENSION(dsp,0) != 1 ){
-			WARN("Sorry, can only have 1 complex component");
+			warn("Sorry, can only have 1 complex component");
 			return;
 		}
 		//SET_DIMENSION(dsp,0,2);
 	} else if( QUAT_PRECISION(PREC_CODE(prec_p)) ){
 		if( DIMENSION(dsp,0) != 1 ){
-			WARN("Sorry, can only have 1 quaternion component");
+			warn("Sorry, can only have 1 quaternion component");
 			return;
 		}
 		//SET_DIMENSION(dsp,0,2);
 	} else if( COLOR_PRECISION(PREC_CODE(prec_p)) ){
 		if( DIMENSION(dsp,0) != 1 ){
-			WARN("Sorry, can only have 1 color triple per pixel");
+			warn("Sorry, can only have 1 color triple per pixel");
 			return;
 		}
 advise("component dim 3 for color");
@@ -713,7 +713,7 @@ advise("component dim 3 for color");
 	}
 
 	if( make_equivalence(obj_name,dp,dsp,prec_p) == NULL )
-		WARN("error making equivalence");
+		warn("error making equivalence");
 }
 
 #define MAX_PMPT_LEN	128	// BUG check for overrun
@@ -779,7 +779,7 @@ static COMMAND_FUNC( mk_subsample )
 	// make_subsamp checks the increments...
 
 	if( make_subsamp(obj_name,dp,dsp,offsets,incrs) == NULL )
-		WARN("error making subsamp object");
+		warn("error making subsamp object");
 }
 
 static COMMAND_FUNC( do_relocate )
@@ -803,7 +803,7 @@ static COMMAND_FUNC( do_relocate )
 		sprintf(ERROR_STRING,
 	"relocate:  object \"%s\" is not a subimage",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	relocate(dp,(index_t)x,(index_t)y,(index_t)t);
@@ -842,11 +842,11 @@ static Data_Obj *get_obj_or_file(QSP_ARG_DECL const char *name)
 	if( ifp!=NULL ) return(ifp->if_dp);
 
 	sprintf(ERROR_STRING,"No object or open file \"%s\"",name);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 #else /* PC */
 	sprintf(ERROR_STRING,
 		"No object \"%s\" (not checking for files!?)",name);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 #endif /* ! PC */
 
 	return(dp);
@@ -884,7 +884,7 @@ static COMMAND_FUNC( do_protect )
 	if( dp == NULL ) return;
 	if( IS_STATIC(dp) ){
 		sprintf(ERROR_STRING,"do_protect:  Object %s is already static!?",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	SET_OBJ_FLAG_BITS(dp,DT_STATIC);

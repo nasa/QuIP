@@ -113,7 +113,7 @@ static COMMAND_FUNC( do_connect_port )
 	if( (mpp->mp_flags & PORT_SERVER) == 0 ){
 		sprintf(ERROR_STRING,"lstnport:  port %s is not a server port!?",
 			mpp->mp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -140,7 +140,7 @@ static COMMAND_FUNC( do_getopts )
 #ifdef HAVE_SOCKET
 	show_sockopts(QSP_ARG  mpp);
 #else // ! HAVE_SOCKET
-	WARN("do_getopts:  Sorry, no socket implementation!?");
+	warn("do_getopts:  Sorry, no socket implementation!?");
 #endif // ! HAVE_SOCKET
 }
 
@@ -211,7 +211,7 @@ advise("empty encrypted text packet, returning null...");
 				return(NULL);
 			}
 			else if( (l+1) > size )
-				WARN("port_read:  too much text for buffer");
+				warn("port_read:  too much text for buffer");
 //fprintf(stderr,"received %ld bytes of encrypted text\n",l);
 			strncpy(buf,pkp->pk_user_data,size);
 			buf[size-1]=0;
@@ -327,7 +327,7 @@ static COMMAND_FUNC( do_port_redir )
 	if( ! IS_CONNECTED(mpp) ){
 		sprintf(ERROR_STRING,
 "do_port_redir:  Port %s is not connected to a client!?",mpp->mp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -393,7 +393,7 @@ static COMMAND_FUNC(do_send_obj)
 
 	s = OBJ_N_MACH_ELTS(dp) * PREC_SIZE( OBJ_PREC_PTR(dp) );
 	if( write_port(QSP_ARG  mpp,OBJ_DATA_PTR(dp), s ) != s ){
-		WARN("Error writing data vector!?");
+		warn("Error writing data vector!?");
 	}
 	// WHY did this test code close the port here???
 	//  // close the port here?  
@@ -413,7 +413,7 @@ static void send_constant_data(QSP_ARG_DECL  Port *mpp,
 		buf[i]=(char)val;	// make sure this not magic number!
 
 	if( write_port(QSP_ARG  mpp,buf, n ) != n ){
-		WARN("Error writing constant data vector!?");
+		warn("Error writing constant data vector!?");
 	}
 	//close_port(QSP_ARG  mpp);
 
@@ -442,7 +442,7 @@ static COMMAND_FUNC(do_partial_type)
 
 	mpp = pick_port("");
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
-		WARN("do_partial_type:  error sending magic number");
+		warn("do_partial_type:  error sending magic number");
 		return;
 	}
 
@@ -455,11 +455,11 @@ static COMMAND_FUNC(do_bad_type)
 
 	mpp = pick_port("");
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
-		WARN("do_bad_type:  error sending magic number");
+		warn("do_bad_type:  error sending magic number");
 		return;
 	}
 	if( put_port_int32(QSP_ARG  mpp,MAX_PORT_CODES+1) == (-1) ){
-		WARN("do_bad_type:  error sending packet code");
+		warn("do_bad_type:  error sending packet code");
 		return;
 	}
 
@@ -472,11 +472,11 @@ static COMMAND_FUNC(do_empty_packet)
 
 	mpp = pick_port("");
 	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
-		WARN("do_empty_packet:  error sending magic number");
+		warn("do_empty_packet:  error sending magic number");
 		return;
 	}
 	if( put_port_int32(QSP_ARG  mpp,P_TEXT) == (-1) ){
-		WARN("do_empty_packet:  error sending packet code");
+		warn("do_empty_packet:  error sending packet code");
 		return;
 	}
 	close_port(QSP_ARG  mpp);
@@ -558,43 +558,43 @@ static void init_default_port_data_types(SINGLE_QSP_ARG_DECL)
 	if( define_port_data_type(QSP_ARG  (int)P_TEXT, "text",
 			"text to send", recv_text,
 			_nameof, xmit_text) == -1 )
-		WARN("error adding text data type to port tables");
+		warn("error adding text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_FILE_AS_TEXT, "file_as_text",
 			"local name", recv_text,
 			_nameof, xmit_file_as_text) == -1 )
-		WARN("error adding text data type to port tables");
+		warn("error adding text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_PLAIN_FILE, "plain_file",
 			"local filename", recv_plain_file,
 			_nameof, xmit_plain_file) == -1 )
-		WARN("error adding plain_file data type to port tables");
+		warn("error adding plain_file data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_FILENAME, "filename",
 			"local filename", recv_filename,
 			_nameof, xmit_filename) == -1 )
-		WARN("error adding plain_file data type to port tables");
+		warn("error adding plain_file data type to port tables");
 
 #ifdef HAVE_ENCRYPTION
 	if( define_port_data_type(QSP_ARG  (int)P_AUTHENTICATION,
 			"authentication", "data to send", recv_enc_text,
 			_nameof, xmit_auth) == -1 )
-		WARN("error adding authentication data type to port tables");
+		warn("error adding authentication data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_TEXT,
 			"encrypted_text", "text to send", recv_enc_text,
 			_nameof, xmit_enc_text) == -1 )
-		WARN("error adding encrypted text data type to port tables");
+		warn("error adding encrypted text data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENCRYPTED_FILE,
 			"encrypted_file", "local filename", recv_enc_file,
 			_nameof, xmit_enc_file) == -1 )
-		WARN("error adding encrypted file data type to port tables");
+		warn("error adding encrypted file data type to port tables");
 
 	if( define_port_data_type(QSP_ARG  (int)P_ENC_FILE_AS_TEXT,
 			"encrypted_file_as_text", "local filename", recv_enc_text,
 			_nameof, xmit_enc_file_as_text) == -1 )
-		WARN("error adding encrypted file data type to port tables");
+		warn("error adding encrypted file data type to port tables");
 #endif /* HAVE_ENCRYPTION */
 
 	// do this now too...

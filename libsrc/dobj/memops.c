@@ -34,7 +34,7 @@ void _getmean( QSP_ARG_DECL  Data_Obj *dp )
 
 	if( dp== NULL ) return;
 	if( OBJ_PREC(dp) != PREC_SP && OBJ_PREC(dp) != PREC_IN ){
-		NWARN("sorry, only float or short objects");
+		warn("sorry, only float or short objects");
 		return;
 	}
 	if( OBJ_MACH_DIM(dp,0) != 1 ){
@@ -43,7 +43,7 @@ void _getmean( QSP_ARG_DECL  Data_Obj *dp )
 		advise(ERROR_STRING);
 	}
 	if( ! IS_CONTIGUOUS(dp) ){
-		NWARN("sorry, can only compute mean of contiguous objects");
+		warn("sorry, can only compute mean of contiguous objects");
 		return;
 	}
 	sum=sos=0.0;
@@ -310,7 +310,7 @@ void _i_rnd( QSP_ARG_DECL  Data_Obj *dp, int imin, int imax )
 	if( OBJ_MACH_PREC(dp) != PREC_BY && OBJ_MACH_PREC(dp) != PREC_UBY ){
 		sprintf(ERROR_STRING,"i_rnd:  object %s (%s) should have %s or %s precision",
 				OBJ_NAME(dp),OBJ_PREC_NAME(dp),NAME_FOR_PREC_CODE(PREC_BY),NAME_FOR_PREC_CODE(PREC_UBY));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -355,7 +355,7 @@ void _dp_uni( QSP_ARG_DECL  Data_Obj *dp )
 	if( dp==NULL ) return;
 
 	if( OBJ_PREC(dp) != PREC_SP ){
-		NWARN("Uniform random numbers require FLOAT precision");
+		warn("Uniform random numbers require FLOAT precision");
 		return;
 	}
 
@@ -398,7 +398,7 @@ int _dp_same_dim(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index,const char 
 		OBJ_NAME(dp1),OBJ_NAME(dp2),dimension_name[index],
 		OBJ_TYPE_DIM(dp1,index),
 		OBJ_TYPE_DIM(dp2,index));
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return(0);
 }
 
@@ -465,7 +465,7 @@ int _dp_same_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2, const char *whence 
 			whence,
 			OBJ_NAME(dp1),OBJ_PREC_NAME(dp1),
 			OBJ_NAME(dp2),OBJ_PREC_NAME(dp2) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -480,7 +480,7 @@ int _dp_same_mach_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2, const char *wh
 			whence,
 			OBJ_NAME(dp1),OBJ_MACH_PREC_NAME(dp1),
 			OBJ_NAME(dp2),OBJ_MACH_PREC_NAME(dp2));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -497,7 +497,7 @@ int _dp_same_pixel_type( QSP_ARG_DECL  Data_Obj *dp1, Data_Obj *dp2, const char 
 			whence,
 			OBJ_NAME(dp1),OBJ_MACH_DIM(dp1,0),
 			OBJ_NAME(dp2),OBJ_MACH_DIM(dp2,0));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -680,7 +680,7 @@ int _not_prec(QSP_ARG_DECL  Data_Obj *dp,prec_t prec)
 	if( OBJ_MACH_PREC(dp) != prec ){
 		sprintf(ERROR_STRING,"Object %s has precision %s, expecting %s",
 			OBJ_NAME(dp),OBJ_MACH_PREC_NAME(dp),NAME_FOR_PREC_CODE(prec));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(1);
 	}
 	return(0);

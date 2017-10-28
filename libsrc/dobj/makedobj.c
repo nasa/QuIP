@@ -52,13 +52,13 @@ void *_cpu_mem_alloc(QSP_ARG_DECL  Platform_Device *pdp, dimension_t size, int a
 	if( status != 0 ){
 		switch(status){
 			case EINVAL:
-				WARN("cpu_mem_alloc:  bad alignment!?");
+				warn("cpu_mem_alloc:  bad alignment!?");
 				break;
 			case ENOMEM:
-				WARN("cpu_mem_alloc:  memory allocation failure!?");
+				warn("cpu_mem_alloc:  memory allocation failure!?");
 				break;
 			default:
-				WARN("cpu_mem_alloc:  unexpected error code from posix_memalign!?");
+				warn("cpu_mem_alloc:  unexpected error code from posix_memalign!?");
 				break;
 		}
 		return NULL;
@@ -218,7 +218,7 @@ static Data_Obj *_init_dp_with_shape(QSP_ARG_DECL  Data_Obj *dp,
 	 */
 
 	if( set_obj_dimensions(dp,dsp,prec_p) < 0 ){
-		WARN("init_dp_with_shape:  error setting dimensions");
+		warn("init_dp_with_shape:  error setting dimensions");
 		return(NULL);
 		/* BUG might want to clean up */
 	}
@@ -267,7 +267,7 @@ static Data_Obj * _make_dp_with_shape(QSP_ARG_DECL  const char *name,
 	/* make sure that the new name contains only legal chars */
 	if( !is_valid_dname(QSP_ARG  name) ){
 		sprintf(ERROR_STRING,"invalid data object name \"%s\"",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -330,7 +330,7 @@ static void make_device_alias( QSP_ARG_DECL  Data_Obj *dp, uint32_t type_flag )
 	//ap = data_area_of(QSP_ARG  name);
 	ap = get_data_area(QSP_ARG  name);
 	if( ap == NULL ){
-		WARN("Failed to find mapped data area");
+		warn("Failed to find mapped data area");
 		return;
 	}
 
@@ -465,7 +465,7 @@ int _set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dsp,Precision 
 //		sprintf(ERROR_STRING,
 //			"set_obj_dimensions:  error setting shape dimensions for object %s",
 //			OBJ_NAME(dp));
-//		WARN(ERROR_STRING);
+//		warn(ERROR_STRING);
 //		retval=(-1);
 		return -1;
 	}
@@ -545,7 +545,7 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 			sprintf(ERROR_STRING,
 		"Sorry, multi-component (%d) not allowed for complex",
 				DIMENSION(dsp,0));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return -1;
 		}
 
@@ -566,7 +566,7 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 			sprintf(ERROR_STRING,
 	"set_shape_dimensions:  Bad %s dimension (%d) specified",
 				dimension_name[i],DIMENSION(dsp,i));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			SET_DIMENSION(dsp,i,1);
 			retval=(-1);
 		}

@@ -65,7 +65,7 @@ static int read_traditional_startup(QSP_ARG_DECL  const char *progname)
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("read_traditional_startup:  no HOME in environment");
+		warn("read_traditional_startup:  no HOME in environment");
 		return -1;
 	}
 
@@ -185,7 +185,7 @@ static char *try_home(QSP_ARG_DECL  char *progname)	/* look for dotfile in user'
 	home=getenv("HOME");
 
 	if( home == NULL ){
-		WARN("try_home:  no HOME in environment");
+		warn("try_home:  no HOME in environment");
 		return(NULL);
 	}
 	return( try_directory(home,progname) );

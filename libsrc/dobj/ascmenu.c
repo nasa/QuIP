@@ -317,7 +317,7 @@ static COMMAND_FUNC( do_set_var_from_obj )
 	if( ! IS_STRING(dp) ){
 		sprintf(ERROR_STRING,"do_set_var_from_obj:  object %s (%s) does not have string precision",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -348,7 +348,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	if( ! IS_STRING(dp) ){
 		sprintf(ERROR_STRING,"do_set_obj_from_var:  object %s (%s) does not have string precision",
 			OBJ_NAME(dp),OBJ_PREC_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -358,7 +358,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 		sprintf(ERROR_STRING,
 	"Truncating string of length %d to fit string object %s (%d)...",
 			(int)strlen(src_str), OBJ_NAME(dp), dst_size );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	INSURE_OK_FOR_WRITING(dp)
@@ -366,7 +366,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	if( ! IS_CONTIGUOUS(ram_dp) ){
 		sprintf(ERROR_STRING,"Sorry, object %s must be contiguous for string reading",
 			OBJ_NAME(ram_dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		assert(ram_dp==dp);
 		return;
 	}

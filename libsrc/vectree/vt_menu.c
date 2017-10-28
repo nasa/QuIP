@@ -117,7 +117,7 @@ static COMMAND_FUNC( do_unexport )
 	idp = id_of(OBJ_NAME(dp));
 	if( idp == NULL ){
 		sprintf(ERROR_STRING,"do_unexport:  object %s has not been exported",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	/* now remove it */
@@ -170,7 +170,7 @@ static COMMAND_FUNC( do_export )
 	idp = id_of(OBJ_NAME(dp));
 	if( idp != NULL ){
 		sprintf(ERROR_STRING,"do_export:  identifier %s already exists!?",ID_NAME(idp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	idp = make_named_reference(QSP_ARG  OBJ_NAME(dp));

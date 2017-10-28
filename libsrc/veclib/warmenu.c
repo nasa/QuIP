@@ -17,7 +17,7 @@
 
 #define TEMP_UNIMP(func)			\
 						\
-WARN("Sorry, function " #func " is temporarily unimplemented.");
+	warn("Sorry, function " #func " is temporarily unimplemented.");
 
 #define DO_VCODE(code)	do_vcode(QSP_ARG  code)
 
@@ -46,11 +46,11 @@ static COMMAND_FUNC( do_convert )
 	//h_vl2_convert(QSP_ARG  dst,src);
 	// BUG need to choose platform based on args!
 	if( IS_BITMAP(dst) ){
-		WARN("do_convert:  Sorry, forgot how to convert to bit!?");
+		warn("do_convert:  Sorry, forgot how to convert to bit!?");
 		return;
 	}
 	if( IS_BITMAP(src) ){
-		WARN("do_convert:  Sorry, forgot how to convert from bit!?");
+		warn("do_convert:  Sorry, forgot how to convert from bit!?");
 		return;
 	}
 
@@ -157,7 +157,7 @@ static COMMAND_FUNC( getDimSum )
 
 		} else {
 			sprintf(ERROR_STRING,"Check destination object %s dims.", OBJ_NAME(dp_dst));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	} else {
@@ -169,7 +169,7 @@ static COMMAND_FUNC( getDimSum )
 			}
 		} else {
 			sprintf(ERROR_STRING,"Check destination object %s dims.", OBJ_NAME(dp_dst));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -680,7 +680,7 @@ static COMMAND_FUNC( do_set_filter )
 static COMMAND_FUNC( do_init_images )
 {
 	if( setup_requantize() == -1 )
-		WARN("error setting up images");
+		warn("error setting up images");
 }
 
 static COMMAND_FUNC( do_init_requant )
@@ -891,7 +891,7 @@ static COMMAND_FUNC( do_2dramp )
 		case PREC_UBY:  SETUP_SCALARS(u_char); break;
 		case PREC_UIN:  SETUP_SCALARS(u_short); break;
 		case PREC_UDI:  SETUP_SCALARS(u_long); break;
-		default:  WARN("missing prec case in ramp2d"); break;
+		default:  warn("missing prec case in ramp2d"); break;
 	}
 
 	ramp2d(&oargs);
@@ -918,7 +918,7 @@ static COMMAND_FUNC( do_wrap3d )
 #ifdef FOOBAR
 	wrap3d(QSP_ARG  dpto,dpfr);
 #else
-	WARN("no wrap3d yet");
+	warn("no wrap3d yet");
 #endif
 }
 
@@ -973,7 +973,7 @@ static COMMAND_FUNC( do_lutmap_s )
 	if( dst==NULL || src==NULL || map==NULL )
 		return;
 	if( lutmap(QSP_ARG  dst,src,map) == (-1) )
-		WARN("mapping failed");
+		warn("mapping failed");
 }
 #endif // FOOBAR
 
@@ -990,7 +990,7 @@ static COMMAND_FUNC( do_fsdither )
 	dpfr=pick_obj( "source image" );
 	n=(int)HOW_MANY("number of quantization levels");
 	if( n<2 || n > MAX_FS_LEVELS ){
-		WARN("bad number of halftone levels");
+		warn("bad number of halftone levels");
 		return;
 	}
 	for(i=0;i<n;i++)
@@ -1014,7 +1014,7 @@ static COMMAND_FUNC( do_udither )		/* uniform quantization */
 	minlvl = (float)HOW_MUCH("minimum level value");
 	maxlvl = (float)HOW_MUCH("maximum level value");
 	if( n<2 || n > MAX_FS_LEVELS ){
-		WARN("bad number of halftone levels");
+		warn("bad number of halftone levels");
 		return;
 	}
 	for(i=0;i<n;i++){
@@ -1196,7 +1196,7 @@ static COMMAND_FUNC( do_fill )
 
 	if( dp == NULL ) return;
 	if( tol < 0 ){
-		WARN("tolerance must be non-negative");
+		warn("tolerance must be non-negative");
 		return;
 	}
 
@@ -1508,7 +1508,7 @@ static COMMAND_FUNC( do_closing )
 	if( to==NULL || fr==NULL ) return;
 
 	if( size <= 0 ){
-		WARN("size for closing operator must be positive");
+		warn("size for closing operator must be positive");
 		return;
 	}
 
@@ -1527,7 +1527,7 @@ static COMMAND_FUNC( do_opening )   /* Should choose the size of the opening */
 	if( to==NULL || fr==NULL ) return;
 
 	if( size <= 0 ){
-		WARN("size for opening operator must be positive");
+		warn("size for opening operator must be positive");
 		return;
 	}
 
@@ -1834,7 +1834,7 @@ static COMMAND_FUNC( do_ginvert )
 	/* BUG? is complete error checking done here??? */
 
 	if( ! IS_CONTIGUOUS(dp) ){
-		WARN("matrix must be contiguous for G-J inversion");
+		warn("matrix must be contiguous for G-J inversion");
 		return;
 	}
 
@@ -1846,7 +1846,7 @@ static COMMAND_FUNC( do_ginvert )
 		sprintf(ERROR_STRING,
 	"Matrix %s should have float or double precision for Gauss-Jordan inversion",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -1864,8 +1864,7 @@ static COMMAND_FUNC(do_inner)
 	if( target==NULL || v1==NULL || v2==NULL )
 		return;
 
-	inner(QSP_ARG  target,v1,v2);
-	//TEMP_UNIMP(inner)
+	inner(target,v1,v2);
 }
 
 static COMMAND_FUNC( do_invert )
@@ -1876,7 +1875,7 @@ static COMMAND_FUNC( do_invert )
 	dp=pick_obj( "matrix" );
 	if( dp == NULL ) return;
 	det=dt_invert(QSP_ARG  dp);
-	if( det == 0.0 ) WARN("ZERO DETERMINANT!!!");
+	if( det == 0.0 ) warn("ZERO DETERMINANT!!!");
 	else if( verbose ) {
 		sprintf(msg_str,"determinant:  %g",det);
 		prt_msg(msg_str);
@@ -1916,7 +1915,7 @@ static COMMAND_FUNC( do_determinant )
 	} else {
 		sprintf(ERROR_STRING,"determinant:  bad scalar precision (%s) for object %s!?",
 			PREC_NAME(OBJ_PREC_PTR(dp)),OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	
 }
@@ -1939,7 +1938,7 @@ static COMMAND_FUNC(do_xform_list )
 	set_obj_arg_flags(&oa1);
 
 	// BUG need to make this a platform function!?
-	h_vl2_xform_list( -1,  &oa1);
+	h_vl2_xform_list(QSP_ARG  -1,  &oa1);
 	//TEMP_UNIMP(xform_list)
 }
 
@@ -1974,7 +1973,7 @@ static COMMAND_FUNC( do_homog_xform )
 #ifdef FOOBAR
 COMMAND_FUNC( do_outer )
 {
-	WARN("sorry, outer product not yet implemented");
+	warn("sorry, outer product not yet implemented");
 }
 #endif /* FOOBAR */
 

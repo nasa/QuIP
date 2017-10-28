@@ -557,7 +557,7 @@ static const char **read_macro_args(QSP_ARG_DECL  Macro *mp)
 
 			sprintf(ERROR_STRING,
 		"Missing arguments for macro %s!?", MACRO_NAME(mp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 
 			for(j=0;j<i;j++) rls_str(args[j]);
 			givbuf(args);
@@ -591,7 +591,7 @@ static int check_macro_recursion(QSP_ARG_DECL  Macro *mp)
 		if( QRY_MACRO(QRY_AT_LEVEL(THIS_QSP,i--)) == mp ){
 			sprintf(ERROR_STRING,
 				"Macro recursion, macro \"%s\":  ",MACRO_NAME(mp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		if( verbose )
 			qdump(SINGLE_QSP_ARG);
 		return -1;
@@ -1043,7 +1043,7 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 		while( IS_LEGAL_VAR_CHAR(*sp) && i < LLEN )
 			tmp_vnam[i++] = *sp++;
 		if( i == LLEN ){
-			WARN("Variable name too long");
+			warn("Variable name too long");
 			i--;
 		}
 		tmp_vnam[i]=0;
@@ -1054,7 +1054,7 @@ static char * get_varval(QSP_ARG_DECL  char **spp)			/** see if buf containts a 
 		if( *sp != RIGHT_CURLY ){
 			sprintf(ERROR_STRING,"Right curly brace expected:  \"%s\"",
 				*spp);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			sp++;
 		}
@@ -1122,7 +1122,7 @@ advise(ERROR_STRING);
 	}
 
 	sprintf(ERROR_STRING,"Undefined variable \"%s\"!?",vname);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 	return(NULL);		/* no match, no expansion */
 } // end get_varval
@@ -1546,7 +1546,7 @@ static char * next_word_from_input_line(SINGLE_QSP_ARG_DECL)
 
 	if( start_quote && (word_scan_flags & RW_INQUOTE) ){
 		sprintf(ERROR_STRING,"next_word_from_input_line:  no closing quote (start_quote = %c)",start_quote);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		/* If the buffer has overflowed, we can't print into error_string! */
 #define BC_STR	"buffer contained "
 		if( strlen(QS_RET_STR(THIS_QSP))+strlen(BC_STR) < (LLEN-4) ){
@@ -1857,7 +1857,7 @@ static int check_for_complete_line(QSP_ARG_DECL  const char *buf)
 
 	if( QRY_READFUNC(CURR_QRY(THIS_QSP)) == ((READFUNC_CAST) FGETS) && buf[n] != '\n' &&
 		buf[n] != '\r' ){
-		WARN("check_for_complete_line:  input line not terminated by \\n or \\r");
+		warn("check_for_complete_line:  input line not terminated by \\n or \\r");
 		sprintf(ERROR_STRING,"line:  \"%s\"",buf);
 		advise(ERROR_STRING);
 		return -1;
@@ -1975,7 +1975,7 @@ static const char *getmarg(QSP_ARG_DECL  int index)
 			"getmarg:  arg index %d out of range for macro %s (%d args)",
 			1+index,MACRO_NAME(QRY_MACRO(CURR_QRY(THIS_QSP))),
 			MACRO_N_ARGS(QRY_MACRO(CURR_QRY(THIS_QSP))));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 #ifdef QUIP_DEBUG
@@ -2065,7 +2065,7 @@ static const char *extract_line_for_macro(SINGLE_QSP_ARG_DECL)
 		// BUG - we need to handle premature EOF?
 		if( QLEVEL != level ){
 			sprintf(ERROR_STRING,"extract_line_for_macro:  premature EOF!?");
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return NULL;
 		}
 	}
@@ -2077,14 +2077,14 @@ static const char *extract_line_for_macro(SINGLE_QSP_ARG_DECL)
 	n=0;
 	if( *from == '.' ){
 		if( *(from+1) != '\n' ){
-	WARN("Macro definition should be terminated by a line containing a single '.'!?");
+	warn("Macro definition should be terminated by a line containing a single '.'!?");
 		}
 	}
 	while( *from && *from != '\n' ){
 		// check for buffer overrun
 		if( n >= LLEN-1 ){
 			sprintf(ERROR_STRING,"extract_line_for_macro:  buffer too small!?");
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			to--;
 			n--;
 		}
@@ -2161,7 +2161,7 @@ String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL)
 		;
 
 	if( status != 0 )
-		WARN("bad macro definition");
+		warn("bad macro definition");
 
 	// BUG?  We might return NULL so that we can print an error message with
 	// the macro name...
@@ -2180,7 +2180,7 @@ static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const
 
 	n=(int)strlen(s);
 	if( s[n-1] != '>' ){
-		WARN("Unterminated macro argument item type specification.");
+		warn("Unterminated macro argument item type specification.");
 		return s;
 	}
 
@@ -2189,7 +2189,7 @@ static const char *check_macro_arg_item_spec(QSP_ARG_DECL  Macro_Arg *map, const
 
 	map->ma_itp = get_item_type(item_type_name);
 	if( map->ma_itp == NULL ){
-		WARN("Unable to process macro argument item type specification.");
+		warn("Unable to process macro argument item type specification.");
 		return s;
 	}
 	// Now read the normal macro arg description/prompt
@@ -2257,7 +2257,7 @@ static inline void check_macro_def_line(SINGLE_QSP_ARG_DECL)
 {
 	if( QRY_LINENO(CURR_QRY(THIS_QSP)) == QRY_LINES_READ(CURR_QRY(THIS_QSP)) ){
 		if( scan_line_remainder(QSP_ARG  "macro declaration") < 0 )
-			WARN("extra text after macro args!?");
+			warn("extra text after macro args!?");
 	}
 }
 
@@ -2475,7 +2475,7 @@ void ql_debug(SINGLE_QSP_ARG_DECL)
 int _dupout(QSP_ARG_DECL  FILE *fp)			/** save input text to file fp */
 {
 	if( IS_DUPING ){
-		WARN("already dup'ing");
+		warn("already dup'ing");
 		return(-1);
 	} else {
 		SET_QRY_DUPFILE(CURR_QRY(THIS_QSP),fp);
@@ -2987,7 +2987,7 @@ Query * pop_file(SINGLE_QSP_ARG_DECL)
 	Query *qp;
 
 	if( QLEVEL<0 ){
-		WARN("pop_file:  no file to pop");
+		warn("pop_file:  no file to pop");
 		return NULL;
 	}
 
@@ -3114,7 +3114,7 @@ void _close_loop(SINGLE_QSP_ARG_DECL)
 	const char *s;
 
 	if( QLEVEL <= 0 || QRY_COUNT(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)) == 0 ){
-		WARN(errmsg);
+		warn(errmsg);
 		return;
 	}
 
@@ -3202,7 +3202,7 @@ void _whileloop(QSP_ARG_DECL  int value)
 	assert( QLEVEL >= 0 );
 
 	if( QLEVEL == 0 || QRY_COUNT(QRY_AT_LEVEL(THIS_QSP,QLEVEL-1)) == 0 ){
-		WARN(errmsg);
+		warn(errmsg);
 		return;
 	}
 
@@ -3279,7 +3279,7 @@ static void show_query_level(QSP_ARG_DECL int i)
 	if( i< 0 || i > QLEVEL ){
 		sprintf(ERROR_STRING,"Requested level %d out of range 0-%d",
 			i,QLEVEL);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -3346,7 +3346,7 @@ void qdump(SINGLE_QSP_ARG_DECL)
 		advise(ERROR_STRING);
 	} else {
 		sprintf(ERROR_STRING,"\nCORRUPTED HEAP DETECTED!!!");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #endif /* MALLOC_DEBUG */
 }
@@ -3393,7 +3393,7 @@ FILE *_tfile(SINGLE_QSP_ARG_DECL)
 	ttyfile=fopen(ttn,"r");
 	if( (!ttyfile) && verbose ){
 		sprintf(ERROR_STRING,"tfile:  can't open control tty: %s",ttn);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	return(ttyfile);
@@ -3498,7 +3498,7 @@ advise(ERROR_STRING);
 			sprintf(ERROR_STRING,
 "variable index %d too high; only %d command line arguments\n",
 			i+1,n_cmd_args);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		} else {
 			char varname[32];
@@ -3572,14 +3572,14 @@ void rls_str(const char *s)
 void callbacks_on(SINGLE_QSP_ARG_DECL)
 {
 	if( IS_PROCESSING_CALLBACKS(THIS_QSP) )
-		WARN("callbacks_on:  callbacks are already being processed");
+		warn("callbacks_on:  callbacks are already being processed");
 	SET_QS_FLAG_BITS(THIS_QSP,QS_PROCESSING_CALLBACKS);
 }
 
 void callbacks_off(SINGLE_QSP_ARG_DECL)
 {
 	if( ! IS_PROCESSING_CALLBACKS(THIS_QSP) )
-		WARN("callbacks_off:  callbacks are already being inhibited");
+		warn("callbacks_off:  callbacks are already being inhibited");
 	CLEAR_QS_FLAG_BITS(THIS_QSP,QS_PROCESSING_CALLBACKS);
 }
 #endif /* FOOBAR */
@@ -3756,7 +3756,7 @@ void exit_current_file(SINGLE_QSP_ARG_DECL)
 		i--;
 	}
 	if( done_level < 0 ){
-		WARN("exit_file:  no file to exit!?");
+		warn("exit_file:  no file to exit!?");
 		return;
 	}
 	i=QLEVEL;
@@ -3789,7 +3789,7 @@ static int macro_exit_level(SINGLE_QSP_ARG_DECL)
 		i--;
 	}
 	if( mp == NULL ){
-		WARN("exit_macro:  no macro to exit!?");
+		warn("exit_macro:  no macro to exit!?");
 		return -1;
 	}
 	assert( done_level != (-1) );

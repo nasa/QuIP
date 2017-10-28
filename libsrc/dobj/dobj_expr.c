@@ -32,7 +32,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(NULL);
 			}
 			break;
@@ -45,7 +45,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			if( szp == NULL ){
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(NULL);
 			}
 			break;
@@ -68,7 +68,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_DOBJV_STR_ARG_FUNC:	// eval_szbl_expr
 			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
 			if( s == NULL ){
-				WARN("Error evaluating arg for object-valued function!?");
+				warn("Error evaluating arg for object-valued function!?");
 				return NULL;
 			}
 			szp = (Item *) (*enp->sen_func_p->fn_u.dobjv_str_arg_func)( QSP_ARG  s );
@@ -76,7 +76,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		default:
 			sprintf(ERROR_STRING,
 		"unexpected case in eval_szbl_expr %d",enp->sen_code);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			assert(0);
 			break;
 	}
@@ -94,15 +94,15 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 static Data_Obj * _def_obj(QSP_ARG_DECL  const char *name)
 {
 	sprintf(DEFAULT_ERROR_STRING,"can't search for object \"%s\"; ",name);
-	WARN(DEFAULT_ERROR_STRING);
+	warn(DEFAULT_ERROR_STRING);
 
-	WARN("data module not linked");
+	warn("data module not linked");
 	return(NULL);
 }
 
 static Data_Obj *_def_sub(QSP_ARG_DECL  Data_Obj *object,index_t index)
 {
-	WARN("can't get subobject; data module not linked");
+	warn("can't get subobject; data module not linked");
 	return(NULL);
 }
 
@@ -177,7 +177,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_DOBJV_STR_ARG_FUNC:	// eval_szbl_expr
 			s = eval_scalexp_string(QSP_ARG  enp->sen_child[0]);
 			if( s == NULL ){
-				WARN("Error evaluating arg for object-valued function!?");
+				warn("Error evaluating arg for object-valued function!?");
 				return NULL;
 			}
 			dp = (*enp->sen_func_p->fn_u.dobjv_str_arg_func)( QSP_ARG  s );
@@ -186,7 +186,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		default:
 			sprintf(ERROR_STRING,
 		"unexpected case (%d) in eval_dobj_expr",enp->sen_code);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			assert(0);
 			break;
 	}

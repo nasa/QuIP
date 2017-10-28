@@ -6,11 +6,11 @@
 
 define(`INSIST_CONTIG',`
 
-	if( ! is_contiguous( DEFAULT_QSP_ARG  $1 ) ){
-		sprintf(DEFAULT_ERROR_STRING,
+	if( ! is_contiguous($1) ){
+		sprintf(ERROR_STRING,
 	"Sorry, object %s must be contiguous for %s (gpu only?).",
 			OBJ_NAME($1),$2);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 ')
@@ -20,9 +20,9 @@ define(`INSIST_CONTIG',`
 define(`INSIST_LENGTH',`
 
 	if( ($1) == 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"Oops, kind of silly to do %s of 1-len vector %s!?",$2,$3);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 ')

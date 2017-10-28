@@ -56,7 +56,7 @@ Variable *_create_reserved_var(QSP_ARG_DECL  const char *var_name, const char *v
 	if( vp != NULL ){
 		sprintf(ERROR_STRING,
 "create_reserved_var:  variable %s already exists!?",var_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 	return force_reserved_var(var_name,var_val);
@@ -97,7 +97,7 @@ static Variable *_insure_variable(QSP_ARG_DECL  const char *name, int creat_flag
 			sprintf(ERROR_STRING,
 	"insure_variable:  %s exists in environment, but reserved flag not passed!?",
 				name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	} else {
 		SET_VAR_FLAGS(vp, creat_flags );
@@ -120,12 +120,12 @@ Variable *_assign_var(QSP_ARG_DECL  const char *var_name, const char *var_val)
 	if( IS_DYNAMIC_VAR(vp) ){
 		sprintf(ERROR_STRING,"assign_var:  dynamic variable %s is not assignable!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	} else if( IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"assign_var:  reserved variable %s is not assignable!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	}
 
@@ -151,13 +151,13 @@ Variable *_assign_reserved_var(QSP_ARG_DECL  const char *var_name, const char *v
 		sprintf(ERROR_STRING,
 "assign_reserved_var:  dynamic variable %s is not assignable!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return NULL;
 	} else if( ! IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,
 "assign_reserved_var:  variable %s is not reserved!?",
 			VAR_NAME(vp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 abort();
 		return NULL;
 	}
@@ -176,7 +176,7 @@ Variable *_get_var(QSP_ARG_DECL  const char *name)
 	vp=var_of(name);
 	if( vp == NULL ){
 		sprintf(ERROR_STRING,"No variable \"%s\"!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return vp;
 }
@@ -225,7 +225,7 @@ static const char *get_pid_string(SINGLE_QSP_ARG_DECL)
 	pid = getpid();
 	n_needed=snprintf(buf,MAX_PID_DIGITS+1,"%d",pid);
 	if( n_needed > (MAX_PID_DIGITS+1) ){
-		WARN("get_pid_string:  Need to increase MAX_PID_DIGITS!?");
+		warn("get_pid_string:  Need to increase MAX_PID_DIGITS!?");
 	}
 
 	return buf;
@@ -391,14 +391,14 @@ void _reserve_variable(QSP_ARG_DECL  const char *name)
 		sprintf(ERROR_STRING,
 	"reserve_variable:  no need to reserve dynamic variable %s",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,
 	"reserve_variable:  redundant call to reserve variable %s",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	SET_VAR_FLAG_BITS(vp,VAR_RESERVED);

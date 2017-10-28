@@ -53,8 +53,11 @@ extern void dump_chain(Chain *);
 extern void terse_dump_chain(Chain *);
 extern void chain_info(QSP_ARG_DECL  Chain *);
 extern void start_chain(QSP_ARG_DECL  const char *);
-extern void end_chain(void);
 extern void exec_chain(Chain *);
+
+extern void _end_chain(SINGLE_QSP_ARG_DECL);
+
+#define end_chain() _end_chain(SINGLE_QSP_ARG)
 
 ITEM_CHECK_PROT(Chain, vec_chain)
 ITEM_LIST_PROT(Chain, vec_chain)
@@ -74,7 +77,9 @@ extern Chain *new_vec_chain(const char *name);
 extern void del_vec_chain(QSP_ARG_DECL  const char *s);
 
 extern Chain *new_chain( QSP_ARG_DECL  const char *s );
-extern int chain_breaks(const char *routine_name);
+
+extern int _chain_breaks(QSP_ARG_DECL  const char *routine_name);
+#define chain_breaks(routine_name) _chain_breaks(QSP_ARG  routine_name)
 
 #endif /* _VEC_CHAIN_H_ */
 

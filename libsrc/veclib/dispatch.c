@@ -108,7 +108,7 @@ COMMAND_FUNC( set_n_processors )
 	} else {
 		sprintf(ERROR_STRING,"%d processors requested, %d max on this machine",
 			n,N_PROCESSORS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -185,7 +185,7 @@ mpnadvise(myindex,mystring);
 private_show_obj_args(QSP_ARG  mystring,pip->pi_oap,_advise);
 }
 #endif /* QUIP_DEBUG */
-			(*(pip->pi_func))(pip->pi_vf_code,pip->pi_oap);
+			(*(pip->pi_func))(QSP_ARG  pip->pi_vf_code,pip->pi_oap);
 //mpnadvise(myindex,"BACK from function call");
 		}
 
@@ -320,7 +320,7 @@ NADVISE(DEFAULT_ERROR_STRING);
 	}
 
 	/* this thread does some of the work too! */
-	(*func)(vf_code,&oa[n_processors-1]);
+	(*func)(QSP_ARG  vf_code,&oa[n_processors-1]);
 	
 	wait_for_threads();
 
@@ -459,9 +459,9 @@ static int multiprocessor_dispatch(QSP_ARG_DECL  const Vector_Function *vfp,
 		 */
 
 		float inc;
-NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
+warn("Arghh - probably botching vramp scalar args for multiple processors...");
 		if( OBJ_PREC(OA_DEST(&oa_tbl[0])) != PREC_SP ){
-			NWARN("sorry, can only fix vramp multiprocessor args for float precision");
+			warn("sorry, can only fix vramp multiprocessor args for float precision");
 			return -1;
 		}
 		//extract_scalar_value( &private_scalar[0], OA_SVAL1(oap) );
@@ -478,7 +478,7 @@ NWARN("Arghh - probably botching vramp scalar args for multiple processors...");
 			oa_tbl[i].oa_sdp[0] = /* Need more objects */ NULL;
 		}
 	} else if( VF_CODE(vfp) == FVRAMP2D ){
-		WARN("NEED TO FIX CODE FOR MULTIPROC RAMP2D");
+		warn("NEED TO FIX CODE FOR MULTIPROC RAMP2D");
 		return -1;
 	}
 
@@ -565,11 +565,11 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 "CAUTIOUS:  platform_dispatch:  table entry %d has code %d - expected %s",
 			VF_CODE(vfp),
 			PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_code,VF_NAME(vfp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,
 "platform_dispatch:  vfa table for platform %s may not be sorted?",
 			PLATFORM_NAME(cpp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
 
@@ -596,7 +596,7 @@ fprintf(stderr,"Calling function at 0x%lx\n",
 
 	// Do it!
 //fprintf(stderr,"platform_dispatch calling function %s from vfa_tbl...\n",VF_NAME(vfp));
-	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(VF_CODE(vfp),oap);
+	(*(PF_FUNC_TBL(cpp)[VF_CODE(vfp)].vfa_func[OA_FUNCTYPE(oap)]))(QSP_ARG  VF_CODE(vfp),oap);
 	return 0;
 
 } /* end platform_dispatch */
@@ -613,7 +613,7 @@ fprintf(stderr,"Calling function at 0x%lx\n",
 			if( OBJ_PFDEV(dp) != pdp ){		\
 	sprintf(ERROR_STRING,"Object %s has wrong device (%s) - expected %s",	\
 	OBJ_NAME(dp),PFDEV_NAME(OBJ_PFDEV(dp)),PFDEV_NAME(pdp));	\
-				WARN(ERROR_STRING);		\
+				warn(ERROR_STRING);		\
 				return NULL;			\
 			}					\
 		}						\
@@ -675,7 +675,7 @@ void dp_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp )
 "dp_convert:  destination object %s has unexpected precision (%s)!?",
 				OBJ_NAME(dst_dp),
 				NAME_FOR_PREC_CODE(OBJ_MACH_PREC(dst_dp)) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 	}
 

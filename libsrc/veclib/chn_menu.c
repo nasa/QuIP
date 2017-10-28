@@ -26,7 +26,7 @@ static COMMAND_FUNC( do_start_chain )
 	s=NAMEOF("new chain");
 	cp=vec_chain_of( s );
 	if( cp != NULL ){
-		WARN("chain name already in use");
+		warn("chain name already in use");
 		return;
 	}
 

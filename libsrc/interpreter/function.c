@@ -179,12 +179,12 @@ static double ascii_val(QSP_ARG_DECL  const char *s)
 {
 	unsigned long l;
 	if( (l=strlen(s)) == 0 ){
-		WARN("ascii() passed an empty string!?");
+		warn("ascii() passed an empty string!?");
 		return 0;
 	}
 	if( l > 1 ){
 		sprintf(ERROR_STRING,"ascii() passed a string of length %lu, returning value of 1st char.",l);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return (double) s[0];
 }
@@ -270,7 +270,7 @@ static void init_##type_stem##_class(SINGLE_QSP_ARG_DECL)		\
 	if( type_stem##_icp != NULL ){				\
 		sprintf(ERROR_STRING,					\
 	"Redundant call to %s class initializer",#type_stem);		\
-		WARN(ERROR_STRING);					\
+		warn(ERROR_STRING);					\
 		return;							\
 	}								\
 	type_stem##_icp = new_item_class(#type_stem );		\
@@ -472,7 +472,7 @@ Item *sub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	if( sfp->subscript == NULL ){
 		sprintf(ERROR_STRING,"Can't subscript object %s!?",
 			ip->item_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -500,7 +500,7 @@ Item *csub_sizable(QSP_ARG_DECL  Item *ip,index_t index)
 	if( sfp->csubscript == NULL ){
 		sprintf(ERROR_STRING,"Can't subscript object %s",
 			ip->item_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 

@@ -22,18 +22,18 @@ suppress_no	dnl enable output
 
 static void nullobjf(HOST_CALL_ARG_DECLS)
 {
-	NWARN("CAUTIOUS:  attempt to call an OpenCL function for an unimplemented precision!?");
+	warn("CAUTIOUS:  attempt to call an OpenCL function for an unimplemented precision!?");
 	show_obj_args(DEFAULT_QSP_ARG  oap);
 	/* no more global this_vfp... */
 	/*
-	NADVISE("nullobjf:");
-	sprintf(DEFAULT_ERROR_STRING,
+	advise("nullobjf:");
+	sprintf(ERROR_STRING,
 		"Oops, function %s has not been implemented for %s %s precision (functype = %d)",
 		VF_NAME(this_vfp), type_strings[OA_FUNCTYPE(oap)%N_ARGSET_PRECISIONS],
 		argset_type_name[(OA_FUNCTYPE(oap)/N_ARGSET_PRECISIONS)+1],OA_FUNCTYPE(oap));
-	NWARN(DEFAULT_ERROR_STRING);
+	warn(ERROR_STRING);
 	*/
-	NADVISE("Need to add better error checking!");
+	advise("Need to add better error checking!");
 	abort();
 }
 

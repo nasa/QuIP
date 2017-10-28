@@ -85,7 +85,7 @@ static COMMAND_FUNC( do_packed_mseq )
 	if( (dimension_t)(((1<<n)+n-1)/n) > OBJ_COLS(dp) ){
 		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",OBJ_NAME(dp),
 				OBJ_COLS(dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -114,7 +114,7 @@ static COMMAND_FUNC( do_mseq )
 	if( (dimension_t)((1<<n)-1) > OBJ_COLS(dp) ){
 		sprintf(ERROR_STRING,"target mseq vector %s (%d) too small for this register length %d",OBJ_NAME(dp),
 				OBJ_COLS(dp),n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -124,7 +124,7 @@ static COMMAND_FUNC( do_mseq )
 		prt_msg(msg_str);
 	} else {
 		sprintf(ERROR_STRING,"BAD reglen = %d, t = %d, seqlen = %d (0x%x)",n,t,m,m);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 

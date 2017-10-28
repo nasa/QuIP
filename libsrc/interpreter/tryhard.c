@@ -120,7 +120,7 @@ FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode)
 		sprintf(ERROR_STRING,
 "try_open:  filename length (%ld) is greater than MAXPATHLEN (%d) !?",
 			(long)strlen(filename),MAXPATHLEN);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		advise("Not checking directory permissions...");
 		goto proceed;
 	}
@@ -195,11 +195,11 @@ proceed:
 			sprintf(ERROR_STRING,
 		"Can't open file (filename too long - %ld chars), mode %s",
 				(long)strlen(filename),mode);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
 			sprintf(ERROR_STRING,"can't open file %s, mode %s",
 				filename, mode);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	}
         return(fp);
@@ -226,10 +226,10 @@ COMMAND_FUNC( togclobber )
 {
 	if( cautious ){
 		cautious=0;
-		WARN("allowing file overwrites without explicit confirmation");
+		warn("allowing file overwrites without explicit confirmation");
 	} else {
 		cautious=1;
-		WARN("requiring confirmation for file overwrites");
+		warn("requiring confirmation for file overwrites");
 	}
 }
 
@@ -243,7 +243,7 @@ FILE *trynice(QSP_ARG_DECL  const char *fnam, const char *mode)
     
 	if( fnam[0]==0 ){
 		sprintf(ERROR_STRING,"null file name");
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 #ifdef HAVE_STAT

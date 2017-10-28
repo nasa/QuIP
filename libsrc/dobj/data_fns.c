@@ -76,7 +76,7 @@ int obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname)
 		sprintf(ERROR_STRING,
 			"name \"%s\" is already in use in area \"%s\"",
 			newname,AREA_NAME( OBJ_AREA(dp) ) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	/* BUG?  where is the object's node? */
@@ -137,7 +137,7 @@ Data_Obj *_make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	dp = dobj_of(name);
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"make_obj_list:  object %s already exists!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -145,7 +145,7 @@ Data_Obj *_make_obj_list(QSP_ARG_DECL  const char *name, List *lp)
 	SET_DIMENSION(dsp,1,eltcount(lp));
 	if( DIMENSION(dsp,1) < 1 ){
 		sprintf(ERROR_STRING,"make_obj_list %s:  object list has no elements!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -228,7 +228,7 @@ void assign_scalar_obj(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value *svp)
 		sprintf(ERROR_STRING,
 			"Unable to set scalar value for object %s!?",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	SET_OBJ_FLAG_BITS(dp,DT_ASSIGNED);
@@ -322,7 +322,7 @@ dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 	if( !IS_IMAGE(dp) ){
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	dp2=make_obj(name,1,(OBJ_ROWS(dp))>>1,(OBJ_COLS(dp))>>1,
@@ -338,7 +338,7 @@ dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name)
 	if( !IS_IMAGE(dp) ){
 		sprintf(ERROR_STRING,"dup_half:  \"%s\" is not an image",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	dp2=make_obj(name,1,(OBJ_ROWS(dp))<<1,(OBJ_COLS(dp))<<1,
@@ -394,7 +394,7 @@ int is_valid_dname(QSP_ARG_DECL  const char *name)
 			sprintf(ERROR_STRING,
 			"illegal character '%c' (0x%x) in data name (\"%s\")",
 				*s,*s,name);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(0);
 		}
 		s++;

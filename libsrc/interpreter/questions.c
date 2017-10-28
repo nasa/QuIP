@@ -34,7 +34,7 @@ long _how_many(QSP_ARG_DECL  const char *prompt)
 	if( SCALAR_PREC_CODE(tsp) == PREC_STR ){
 		sprintf(ERROR_STRING,
 	"how_many:  can't convert string \"%s\" to an integer!?",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = 0;
 	} else {
 		// What should we do on 32 bit machines?

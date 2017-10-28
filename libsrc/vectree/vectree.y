@@ -653,7 +653,7 @@ expression	: FIX_SIZE '(' expression ')'
 			$$=node0(T_BADNAME);
 			node_error($$);
 			CURDLE($$)
-			WARN("illegal use of data function");
+			warn("illegal use of data function");
 			}
 		| DATA_FUNC '(' objref ')' {
 			$$=node1(T_DATA_FN,$3);
@@ -772,7 +772,7 @@ expression	: FIX_SIZE '(' expression ')'
 			$$=$1;
 			}
 		| WARP '(' expression ',' expression ')' {
-			WARN("warp not implemented");
+			warn("warp not implemented");
 			$$=$3;
 			}
 		| LOOKUP '(' expression ',' expression ')' {
@@ -1519,7 +1519,7 @@ decl_item	: decl_identifier {
 			SET_VN_STRING($$, savestr( FUNC_NAME( $1 )) );
 			CURDLE($$)
 			node_error($$);
-			WARN("illegal data function name use");
+			warn("illegal data function name use");
 			}
 		| SIZE_FUNC
 			{
@@ -1527,7 +1527,7 @@ decl_item	: decl_identifier {
 			SET_VN_STRING($$, savestr( FUNC_NAME($1) ) );
 			CURDLE($$)
 			node_error($$);
-			WARN("illegal size function name use");
+			warn("illegal size function name use");
 			}
 		/*
 		| badname
@@ -2289,7 +2289,7 @@ if( debug & parser_debug ){ advise("yylex returning NEWLINE"); }
 			goto nexttok;
 		} else if( c=='/' && *(YY_CP+1)=='*' ){
 			/* BUG print the line number here */
-			WARN("comment within a comment!?");
+			warn("comment within a comment!?");
 			YY_CP+=2;
 			goto nexttok;
 		}
@@ -2563,7 +2563,7 @@ if( debug & parser_debug ){ sprintf(ERROR_STRING,"yylex returning char '%c' (0x%
 #endif /* QUIP_DEBUG */
 		return(c);
 	} else {
-		WARN("yylex error");
+		warn("yylex error");
 		return(0);
 	}
 	/* NOTREACHED */
@@ -2768,7 +2768,7 @@ double parse_stuff(SINGLE_QSP_ARG_DECL)		/** parse expression */
 		check_release(TOP_NODE);
 	} else {
 		// Do we get here on a syntax error???
-		WARN("Unsuccessfully parsed statement (top_node=NULL");
+		warn("Unsuccessfully parsed statement (top_node=NULL");
 		sprintf(ERROR_STRING,"status = %d\n",stat);	// suppress compiler warning
 		advise(ERROR_STRING);
 	}

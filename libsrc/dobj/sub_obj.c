@@ -72,7 +72,7 @@ static int _is_inside( QSP_ARG_DECL  index_t index, int which_dim, const char *s
 			dimension_name[which_dim],
 			index,sub_name,OBJ_NAME(parent),
 			dimension_name[which_dim],pd);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		sprintf(ERROR_STRING,
 			"dim index %d:  parent size = %u",
 			which_dim, OBJ_TYPE_DIM(parent,which_dim));
@@ -439,7 +439,7 @@ int _relocate_with_offsets( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 		sprintf(ERROR_STRING,
 	"__relocate:  object \"%s\" is not a subimage",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 		
@@ -448,7 +448,7 @@ int _relocate_with_offsets( QSP_ARG_DECL  Data_Obj *dp, index_t *offsets )
 
 		sprintf(ERROR_STRING,
 			"bad relocation info for %s",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	os = get_pix_base_offset(offsets,OBJ_PARENT(dp));
@@ -662,7 +662,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 			sprintf(ERROR_STRING,
 	"make_equivalence:  parent object %s n_contig = %d < %d, can't cast to %s",
 				OBJ_NAME(parent),n_contig,n_per_child,PREC_NAME(prec_p));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		}
 	} else if( n_child_bytes_per_elt < n_parent_bytes_per_elt ) {
@@ -687,7 +687,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 		sprintf(ERROR_STRING,
 	"make_equivalence %s:  total requested size (%d bytes) does not match parent %s (%d bytes)",
 			name,total_child_bytes,OBJ_NAME(parent),total_parent_bytes);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -798,7 +798,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 			/* Increment the child dimension only.
 			 */
 			if( child_dim >= N_DIMENSIONS ){
-				WARN("make_equivalence:  giving up!?");
+				warn("make_equivalence:  giving up!?");
 				return(NULL);
 			}
 			/* increase the child dimension */
@@ -828,7 +828,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 				total_parent_bytes *= OBJ_MACH_DIM(parent,parent_dim);
 			else {
 				sprintf(ERROR_STRING,"make_equivalence:  can't fit objects");
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				sprintf(ERROR_STRING,"total_parent_bytes = %d   total_child_bytes = %d",
 					total_parent_bytes,total_child_bytes);
 				advise(ERROR_STRING);
@@ -852,7 +852,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 					* OBJ_MACH_DIM(parent,parent_dim-1)) ){
 				sprintf(ERROR_STRING,
 						"make_equivalence:  problem with unevenly spaced parent object %s",OBJ_NAME(parent));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				sprintf(ERROR_STRING,"%s inc[%d] (%d) != inc[%d] (%d) * dim[%d] (%d)",
 					OBJ_NAME(parent),parent_dim,OBJ_MACH_INC(parent,parent_dim),
 					parent_dim-1,OBJ_MACH_INC(parent,parent_dim-1),
@@ -872,7 +872,7 @@ Data_Obj *_make_equivalence( QSP_ARG_DECL  const char *name, Data_Obj *parent, D
 	newdp=new_dobj(name);
 
 	if( newdp == NULL ){
-		WARN("couldn't create equivalence");
+		warn("couldn't create equivalence");
 		return(NULL);
 	}
 

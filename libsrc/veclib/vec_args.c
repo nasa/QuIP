@@ -57,11 +57,11 @@ static int get_src4(QSP_ARG_DECL  Vec_Obj_Args *oap)
 #ifdef NOT_YET
 void show_vf(Vector_Function *vfp)
 {
-	sprintf(DEFAULT_ERROR_STRING,"function %s, flags = 0x%x",VF_NAME(vfp),VF_FLAGS(vfp) );
-	NADVISE(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"function %s, flags = 0x%x",VF_NAME(vfp),VF_FLAGS(vfp) );
+	advise(ERROR_STRING);
 	/*
-	sprintf(DEFAULT_ERROR_STRING,"V_INPLACE = 0x%x",V_INPLACE);
-	NADVISE(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"V_INPLACE = 0x%x",V_INPLACE);
+	advise(ERROR_STRING);
 	*/
 }
 #endif /* NOT_YET */
@@ -75,7 +75,7 @@ static int get_src_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 			"get_src_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
 			OBJ_NAME(OA_SBM(oap) ),
 			OBJ_PREC_NAME( OA_SBM(oap) ), OBJ_PREC( OA_SBM(oap) ),PREC_BIT);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -90,7 +90,7 @@ static int get_dst_bitmap(QSP_ARG_DECL Vec_Obj_Args *oap)
 			"get_dst_bitmap:  bitmap \"%s\" (%s,0x%x) must have bit precision (0x%x)",
 			OBJ_NAME(OA_DBM(oap) ),
 			OBJ_PREC_NAME( OA_DBM(oap) ), OBJ_PREC( OA_DBM(oap) ),PREC_BIT);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -149,20 +149,20 @@ static Data_Obj * get_return_scalar(QSP_ARG_DECL const char *pmpt,Precision *pre
 	if( !IS_SCALAR(dp) ){
 		sprintf(ERROR_STRING,
 			"get_return_scalar:  %s is not a scalar",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	if( OBJ_PREC_PTR( dp) != prec_p ){
 		sprintf(ERROR_STRING,
 			"get_return_scalar:  %s scalar %s should have precision %s",
 			OBJ_PREC_NAME(dp),OBJ_NAME(dp),PREC_NAME(prec_p));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"get_return_scalar:  returning %s scalar %s",OBJ_MACH_PREC_NAME(dp),OBJ_NAME(dp));
-NADVISE(ERROR_STRING);
+advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 	return(dp);
@@ -271,7 +271,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 
 	// suppress compiler warning by checking return value
 	// This never should happen...
-	//if( ap == NULL ) WARN("bad return value from set_arg_data_area");
+	//if( ap == NULL ) warn("bad return value from set_arg_data_area");
 	assert( ap != NULL );
 
 #endif /* HAVE_ANY_GPU */
@@ -335,7 +335,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 					sprintf(ERROR_STRING,
 "get_scalar_args:  function %s does not permit operations with complex targets",
 						VF_NAME(vfp) );
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				retval=(-1);
 			}
 		}
@@ -350,7 +350,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 					OA_DEST(oap) == NULL ?
 					"(null destination)" :
 					OBJ_NAME(OA_DEST(oap) ));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				retval=(-1);
 			}
 		}
@@ -444,7 +444,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			sprintf(ERROR_STRING,
 	"get_scalar_args (%s):  no argument to use for precision prototype!?",
 				VF_NAME(vfp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			retval=(-1);
 		} else {
 			_dp1 = get_return_scalar(QSP_ARG
@@ -566,27 +566,29 @@ static int check_one_obj_loc( Data_Obj *dp )
 	if( s == OARGS_GPU ) all_ram=0;
 #endif // FOOBAR
 
-static int check_obj_device(Data_Obj *dp, Vec_Obj_Args *oap)
+#define check_obj_device(dp,oap) _check_obj_device(QSP_ARG  dp,oap)
+
+static int _check_obj_device(QSP_ARG_DECL  Data_Obj *dp, Vec_Obj_Args *oap)
 {
 	if( dp == NULL ) return 0;	// not an error
 	if( OA_PFDEV(oap) == NULL ){
 		SET_OA_PFDEV(oap,OBJ_PFDEV(dp));
-if( OA_PFDEV(oap) == NULL ) NWARN("Null platform device!?");
+if( OA_PFDEV(oap) == NULL ) warn("Null platform device!?");
 		return 0;
 	}
 	if( OA_PFDEV(oap) != OBJ_PFDEV(dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "check_obj_device:  object %s device %s does not match expected device %s!?",
 			OBJ_NAME(dp),
 			PFDEV_NAME( OBJ_PFDEV(dp) ),
 			PFDEV_NAME( OA_PFDEV(oap) ) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	return 0;
 }
 
-int check_obj_devices( Vec_Obj_Args *oap )
+int _check_obj_devices(QSP_ARG_DECL  Vec_Obj_Args *oap )
 {
 	//int s, all_ram=1, all_gpu=1;
 	int i;
@@ -596,14 +598,14 @@ int check_obj_devices( Vec_Obj_Args *oap )
 	}
 
 	if( check_obj_device(OA_DEST(oap),oap) < 0 ){
-		NWARN("check_obj_devices:  bad destination!?");
+		warn("check_obj_devices:  bad destination!?");
 		return -1;
 	}
 
 	for(i=0;i<MAX_N_ARGS;i++){
 		if( check_obj_device(OA_SRC_OBJ(oap,i),oap) < 0 ){
 			// BUG give a better error message
-			NWARN("platform device mismatch!?");
+			warn("platform device mismatch!?");
 			return -1;
 		}
 	}
@@ -652,7 +654,7 @@ void mixed_location_error(QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap)
 	int i;
 
 	sprintf(ERROR_STRING,"%s:  arguments must reside on a single device.",VF_NAME(vfp));
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 	report_obj_device(QSP_ARG  OA_DEST(oap) );
 	for(i=0;i<MAX_N_ARGS;i++)
@@ -671,14 +673,14 @@ void do_vfunc( QSP_ARG_DECL  Vector_Function *vfp )
 	if( get_args(QSP_ARG  oap, vfp) < 0 ){
 		sprintf(ERROR_STRING,"Error getting arguments for function %s",
 			VF_NAME(vfp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 if( OA_DEST(oap) == NULL ){
 /* BUG?  is this really an error?  The bitmap destination might be here... */
 sprintf(ERROR_STRING,"%s:  Null destination!?!?", VF_NAME(vfp));
-WARN(ERROR_STRING);
+warn(ERROR_STRING);
 }
 
 	call_vfunc(QSP_ARG  vfp,oap);

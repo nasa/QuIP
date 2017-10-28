@@ -63,7 +63,7 @@ int is_evenly_spaced(Data_Obj *dp)
 	return 1;
 }
 
-int is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
+int _is_contiguous(QSP_ARG_DECL  Data_Obj *dp)
 {
 	assert( OBJ_FLAGS(dp) & DT_CHECKED );
 	return(IS_CONTIGUOUS(dp));

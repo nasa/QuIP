@@ -80,7 +80,7 @@ Platform_Device * _pop_pfdev(SINGLE_QSP_ARG_DECL)
 	Platform_Device *pdp;
 
 	if( curr_pdp == NULL ){
-		WARN("pop_pfdev:  nothing to pop (no current device)!?");
+		warn("pop_pfdev:  nothing to pop (no current device)!?");
 		return NULL;
 	}
 	curr_pdp = NULL;
@@ -226,7 +226,7 @@ static COMMAND_FUNC(do_set_dev_type)
 
 	if( pdp == NULL ){
 		sprintf(ERROR_STRING,"No %s device found!?",dev_type_names[i]);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -294,7 +294,7 @@ static COMMAND_FUNC(do_pop_pfdev)
 	Platform_Device *pdp;
 
 	pdp = pop_pfdev();
-	if( pdp == NULL ) WARN("nothing popped!?");
+	if( pdp == NULL ) warn("nothing popped!?");
 }
 
 

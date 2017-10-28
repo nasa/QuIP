@@ -332,8 +332,8 @@ define(`SETUP_BLOCKS_XYZ_DBM_1SBM',`
 dnl	SETUP_BLOCKS_X(w)
 define(`SETUP_BLOCKS_X',`
 
-dnl /*sprintf(DEFAULT_ERROR_STRING,"SETUP_BLOCKS_X:  len = %d",$1);
-dnl NADVISE(DEFAULT_ERROR_STRING);*/
+dnl /*sprintf(ERROR_STRING,"SETUP_BLOCKS_X:  len = %d",$1);
+dnl advise(ERROR_STRING);*/
 	if( ($1) < MAX_THREADS_PER_ROW ) {
 		n_threads_per_block.x = $1;
 		n_blocks.x = 1;
@@ -399,23 +399,23 @@ ifdef(`MORE_DEBUG',`
 
 define(`REPORT_THREAD_INFO',`
 
-sprintf(DEFAULT_ERROR_STRING,"Blocks:  %d x %d x %d    Threads:  %d x %d x %d",
+sprintf(ERROR_STRING,"Blocks:  %d x %d x %d    Threads:  %d x %d x %d",
 n_blocks.x,n_blocks.y,n_blocks.z,
 n_threads_per_block.x,n_threads_per_block.y,n_threads_per_block.z);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"Length:  %d x %d x %d    Extra:  %d x %d x %d",
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"Length:  %d x %d x %d    Extra:  %d x %d x %d",
 VA_ITERATION_TOTAL(vap),VA_LEN_Y(vap),VA_LEN_Z(vap),extra.x,extra.y,extra.z);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 ')
 
 define(`REPORT_THREAD_INFO2',`
 
-sprintf(DEFAULT_ERROR_STRING,"Blocks:  %d x %d    Threads:  %d x %d",
+sprintf(ERROR_STRING,"Blocks:  %d x %d    Threads:  %d x %d",
 n_blocks.x,n_blocks.y,n_threads_per_block.x,n_threads_per_block.y);
-NADVISE(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"Len1:  %ld   Len2:  %ld   Extra:  %d x %d",
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"Len1:  %ld   Len2:  %ld   Extra:  %d x %d",
 len1,len2,extra.x,extra.y);
-NADVISE(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 ')
 
 ',` dnl else /* ! MORE_DEBUG */
@@ -537,16 +537,16 @@ define(`GET_THREADS_PER_DBM_SBMBLOCK',`
 
 define(`MAX_THREADS_PER_BITMAP_ROW',`MIN(MAX_THREADS_PER_ROW,BITS_PER_BITMAP_WORD)')
 
-dnl	INSIST_LENGTH( n , msg , name )
-define(`INSIST_LENGTH',`
-
-	if( ($1) == 1 ){
-		sprintf(DEFAULT_ERROR_STRING,
-	"Oops, kind of silly to do %s of 1-len vector %s!?",$2,$3);
-		NWARN(DEFAULT_ERROR_STRING);
-		return;
-	}
-')
+dnl dnl	INSIST_LENGTH( n , msg , name )
+dnl define(`INSIST_LENGTH',`
+dnl 
+dnl 	if( ($1) == 1 ){
+dnl 		sprintf(ERROR_STRING,
+dnl 	"Oops, kind of silly to do %s of 1-len vector %s!?",$2,$3);
+dnl 		warn(ERROR_STRING);
+dnl 		return;
+dnl 	}
+dnl ')
 
 
 ifdef(`MORE_DEBUG',`
@@ -554,46 +554,46 @@ ifdef(`MORE_DEBUG',`
 dnl	REPORT_VECTORIZATION1( host_func_name )
 define(`REPORT_VECTORIZATION1',`
 
-	sprintf(DEFAULT_ERROR_STRING,
+	sprintf(ERROR_STRING,
 "%s:  ready to vectorize:\txyz_len.x = %ld, inc1.x = %ld, inc1.y = %ld",
 		"$1",VA_ITERATION_TOTAL(vap),inc1.x,inc1.y);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 ')
 
 dnl	REPORT_VECTORIZATION2( host_func_name )
 define(`REPORT_VECTORIZATION2',`
 
 	REPORT_VECTORIZATION1($1)
-	sprintf(DEFAULT_ERROR_STRING, "\t\t\t\tinc2.x = %ld, inc2.y = %ld",
+	sprintf(ERROR_STRING, "\t\t\t\tinc2.x = %ld, inc2.y = %ld",
 		inc2.x,inc2.y);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 ')
 
 dnl	REPORT_VECTORIZATION3( host_func_name )
 define(`REPORT_VECTORIZATION3',`
 
 	REPORT_VECTORIZATION2($1)
-	sprintf(DEFAULT_ERROR_STRING, "\t\t\t\tinc3.x = %ld, inc3.y = %ld",
+	sprintf(ERROR_STRING, "\t\t\t\tinc3.x = %ld, inc3.y = %ld",
 		inc3.x,inc3.y);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 ')
 
 dnl	REPORT_VECTORIZATION4( host_func_name )
 define(`REPORT_VECTORIZATION4',`
 
 	REPORT_VECTORIZATION3($1)
-	sprintf(DEFAULT_ERROR_STRING, "\t\t\t\tinc4.x = %ld, inc4.y = %ld",
+	sprintf(ERROR_STRING, "\t\t\t\tinc4.x = %ld, inc4.y = %ld",
 		inc4.x,inc4.y);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 ')
 
 dnl	REPORT_VECTORIZATION5( host_func_name )
 define(`REPORT_VECTORIZATION5',`
 
 	REPORT_VECTORIZATION4($1)
-	sprintf(DEFAULT_ERROR_STRING, "\t\t\t\tinc5.x = %ld, inc5.y = %ld",
+	sprintf(ERROR_STRING, "\t\t\t\tinc5.x = %ld, inc5.y = %ld",
 		inc5.x,inc5.y);
-	NADVISE(DEFAULT_ERROR_STRING);
+	advise(ERROR_STRING);
 ')
 
 ',` dnl else /* ! MORE_DEBUG */
@@ -619,8 +619,8 @@ define(`REPORT_VECTORIZATION5',`')
 dnl	CALL_GPU_FAST_NOCC_SETUP_FUNC(name)
 define(`CALL_GPU_FAST_NOCC_SETUP_FUNC',`
 	CLEAR_GPU_ERROR(SETUP_NAME($1))
-sprintf(DEFAULT_ERROR_STRING,"calling %s...","SETUP_NAME($1)");
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"calling %s...","SETUP_NAME($1)");
+advise(ERROR_STRING);
 	REPORT_THREAD_INFO2
 	/* call_gpu_fast_nocc_setup_func /$1/ */
 	GPU_FAST_CALL_NAME(SETUP_NAME($1))<<< NN_GPU >>>
@@ -634,8 +634,8 @@ NADVISE(DEFAULT_ERROR_STRING);
 dnl	CALL_GPU_FAST_NOCC_HELPER_FUNC(name)
 define(`CALL_GPU_FAST_NOCC_HELPER_FUNC',`
 	CLEAR_GPU_ERROR(HELPER_NAME($1))
-sprintf(DEFAULT_ERROR_STRING,"calling %s...","HELPER_NAME($1)");
-NADVISE(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"calling %s...","HELPER_NAME($1)");
+advise(ERROR_STRING);
 	REPORT_THREAD_INFO2
 	GPU_FAST_CALL_NAME(HELPER_NAME($1))<<< NN_GPU >>>
 		(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride); 

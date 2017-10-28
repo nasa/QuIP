@@ -57,13 +57,14 @@ void eval_vt_native_assignment(Data_Obj *dp, Vec_Expr_Node *enp )
 
 #define CHECK_ARGLIST(enp,name)							\
 										\
-	if( enp == NULL ){						\
-		NWARN(ERROR_STRING);						\
+	if( enp == NULL ){							\
 		sprintf(ERROR_STRING,"missing arg list for native function %s",name);	\
+		warn(ERROR_STRING);						\
 		return;								\
 	}									\
 	if( VN_CODE(enp) != T_ARGLIST ){					\
 		sprintf(ERROR_STRING,"Oops, missing arglist for native function %s!?",name);	\
+		warn(ERROR_STRING);						\
 		dump_tree(enp);							\
 		return;								\
 	}
@@ -84,7 +85,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
 				node_error(enp);
-				NWARN("cumsum function requires 2 args");
+				warn("cumsum function requires 2 args");
 				return;
 			}
 
@@ -96,7 +97,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 			if( dst_dp == NULL || src_dp == NULL ){
 				node_error(enp);
-				NWARN("problem with cumsum args");
+				warn("problem with cumsum args");
 				break;
 			}
 
@@ -109,7 +110,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
 				node_error(enp);
-				NWARN("render function requires 3 args");
+				warn("render function requires 3 args");
 				return;
 			}
 
@@ -124,7 +125,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 			if( dst_dp == NULL || coord_dp == NULL || src_dp == NULL ){
 				node_error(enp);
-				NWARN("problem with render args");
+				warn("problem with render args");
 				break;
 			}
 			if( IS_FLOATING_PREC_CODE(OBJ_PREC(coord_dp)) )
@@ -140,7 +141,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 
 			if( arg_count(VN_CHILD(enp,0)) != 2 ){
 				node_error(enp);
-				NWARN("invert function requires 2 args");
+				warn("invert function requires 2 args");
 				return;
 			}
 
@@ -173,7 +174,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 #ifndef BUILD_FOR_IOS
 			status = system(s);
 #else // ! BUILD_FOR_IOS
-            WARN("Sorry, system() is temporarily unavailable for iOS!?");
+            warn("Sorry, system() is temporarily unavailable for iOS!?");
                 status=(-1);
 #endif // ! BUILD_FOR_IOS
                 
@@ -191,7 +192,7 @@ void eval_vt_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp )
 advise("evaluating choldc...");
 			if( arg_count(VN_CHILD(enp,0)) != 2) {
 				node_error(enp);
-				NWARN("choldc requires 2 args");
+				warn("choldc requires 2 args");
 				return;
 			}
 
@@ -209,11 +210,11 @@ advise("evaluating choldc...");
 #ifdef USE_NUMREC
 			dp_choldc(inmat_dp,diag_dp);
 #else // ! USE_NUMREC	
-			NWARN("Program not configured to use numerical recipes library, can't compute CHOLESKY");
+			warn("Program not configured to use numerical recipes library, can't compute CHOLESKY");
 #endif // ! USE_NUMREC	
 
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute CHOLESKY");
+			warn("No numerical recipes library, can't compute CHOLESKY");
 #endif // ! HAVE_NUMREC
 
 			}
@@ -225,7 +226,7 @@ advise("evaluating choldc...");
 			/* We need to get three args... */
 			if( arg_count(VN_CHILD(enp,0)) != 3 ){
 				node_error(enp);
-				NWARN("svdcmp requires 3 args");
+				warn("svdcmp requires 3 args");
 				return;
 			}
 			/* v matrix on the second branch */
@@ -251,10 +252,10 @@ advise("evaluating choldc...");
 #ifdef USE_NUMREC
 			dp_svd(umat_dp,ev_dp,vmat_dp);
 #else // USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute SVD! - try GSL?");
+			warn("Program not configured to use numerical recipes library, can't compute SVD! - try GSL?");
 #endif // USE_NUMREC
 #else
-			NWARN("Numerical recipes library not present, can't compute SVD");
+			warn("Numerical recipes library not present, can't compute SVD");
 #endif
 			}
 			break;
@@ -286,10 +287,10 @@ advise("evaluating choldc...");
 #ifdef USE_NUMREC
 			dp_svbksb(x_dp,umat_dp,ev_dp,vmat_dp,b_dp);
 #else // ! USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute SVBKSB");
+			warn("Program not configured to use numerical recipes library, can't compute SVBKSB");
 #endif // ! USE_NUMREC
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute SVBKSB");
+			warn("No numerical recipes library, can't compute SVBKSB");
 #endif // ! HAVE_NUMREC
 			}
 			break;
@@ -327,11 +328,11 @@ advise("evaluating choldc...");
 			//SET_OBJ_FLAG_BITS(v_dp, DT_ASSIGNED);
 			note_assignment(v_dp);
 #else // ! USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute JACOBI");
+			warn("Program not configured to use numerical recipes library, can't compute JACOBI");
 #endif // ! USE_NUMREC
 
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute JACOBI");
+			warn("No numerical recipes library, can't compute JACOBI");
 #endif // ! HAVE_NUMREC
 			}
 			break;
@@ -351,11 +352,11 @@ advise("evaluating choldc...");
 #ifdef USE_NUMREC
 			dp_eigsrt(QSP_ARG  v_dp,d_dp);
 #else // ! USE_NUMREC
-			NWARN("Program not configured to use numerical recipes library, can't compute EIGSRT");
+			warn("Program not configured to use numerical recipes library, can't compute EIGSRT");
 #endif // ! USE_NUMREC
 
 #else // ! HAVE_NUMREC
-			NWARN("No numerical recipes library, can't compute EIGSRT");
+			warn("No numerical recipes library, can't compute EIGSRT");
 #endif // ! HAVE_NUMREC
 			}
 			break;
@@ -389,7 +390,7 @@ advise("evaluating choldc...");
 #ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING,"CAUTIOUS:  eval_vt_native_work (vt):  unhandled keyword %s (%ld)",vt_native_func_tbl[VN_INTVAL(enp)].kw_token,VN_INTVAL(enp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 //			assert( AERROR("eval_vt_native_work:  unhandled keyword!?") );
 			break;
 #endif /* CAUTIOUS */

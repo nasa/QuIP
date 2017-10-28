@@ -90,7 +90,7 @@ static ITEM_NEW_FUNC(Item_Context,ctx)
 static ITEM_DEL_FUNC(Item_Context,ctx)
 
 #define CHECK_ITEM_INDEX( itp )	if( ( itp ) == NULL ){		\
-					WARN("Null item type");		\
+					warn("Null item type");		\
 					return;				\
 				}
 
@@ -105,7 +105,7 @@ u_long total_from_malloc = 0;
 
 static void no_del_method(QSP_ARG_DECL  Item *ip)
 {
-	WARN("Undefined item deletion method");
+	warn("Undefined item deletion method");
 	sprintf(ERROR_STRING,"Can't delete item '%s'",ITEM_NAME(ip));
 	advise(ERROR_STRING);
 }
@@ -315,7 +315,7 @@ Item_Type * _new_item_type(QSP_ARG_DECL  const char *atypename, int container_ty
 		if( ip != NULL ){
 			sprintf(ERROR_STRING,
 			"Item type name \"%s\" is already in use\n",atypename);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		}
 	}
@@ -380,7 +380,7 @@ static int insure_item_name_available(QSP_ARG_DECL  Item_Type *itp, const char *
 		sprintf(ERROR_STRING,
 	"%s name \"%s\" is already in use in context %s",
 			IT_NAME(itp),name,CTX_NAME(current_context(itp)));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	return 0;
@@ -639,7 +639,7 @@ Item_Context * _pop_item_context( QSP_ARG_DECL  Item_Type *itp )
 	if( np==NULL ){
 		sprintf(ERROR_STRING,
 			"Item type %s has no context to pop",IT_NAME(itp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	rls_node(np);
@@ -708,7 +708,7 @@ void _delete_item_context_with_callback( QSP_ARG_DECL  Item_Context *icp, void (
 	if( IT_DEL_METHOD(itp) == no_del_method ){
 		sprintf(ERROR_STRING,
 	"No object deletion method provided for item type %s",IT_NAME(itp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else {
 		List *lp;
 
@@ -860,7 +860,7 @@ Item *_get_item( QSP_ARG_DECL  Item_Type *itp, const char* name )
 
 		sprintf(ERROR_STRING,"no %s \"%s\"",
 			IT_NAME(itp),name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return(ip);
 }
@@ -985,7 +985,7 @@ List *_alpha_sort(QSP_ARG_DECL  List *lp)
 void _report_invalid_pick(QSP_ARG_DECL  Item_Type *itp, const char *s)
 {
 	sprintf(ERROR_STRING,"No %s \"%s\"",ITEM_TYPE_NAME(itp),s);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 
 	sprintf(ERROR_STRING,"Possible %s choices:",ITEM_TYPE_NAME(itp));
 	advise(ERROR_STRING);
@@ -1264,7 +1264,7 @@ static int remove_item_from_context(QSP_ARG_DECL  Item_Context *icp, Item *ip)
 			sprintf(ERROR_STRING,
 	"zombie_item:  unable to remove item %s from context %s",
 				ITEM_NAME(ip),CTX_NAME(icp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		/* BUG make the context needy... */
 		/* does this do it? */
@@ -1422,7 +1422,7 @@ void report_mutex_error(QSP_ARG_DECL  int status,const char *whence)
 		case EPERM: msg = "not mutex owner"; break;
 		default: msg = "unexpected mutex error"; break;
 	}
-	WARN(msg);
+	warn(msg);
 }
 #endif /* HAVE_PTHREADS */
 

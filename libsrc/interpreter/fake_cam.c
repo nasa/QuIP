@@ -28,7 +28,7 @@ static COMMAND_FUNC( do_cam_info )
 	cam = _pick_camera(QSP_ARG  "");
 	if( cam == NULL ) return;
 
-	WARN("do_cam_info:  not implemented!?");
+	warn("do_cam_info:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_get_cams )
@@ -38,7 +38,7 @@ static COMMAND_FUNC( do_get_cams )
 	dp = pick_obj("string table");
 	if( dp == NULL ) return;
 
-	WARN("do_get_cams:  not implemented!?");
+	warn("do_get_cams:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_mon_cam )
@@ -48,33 +48,33 @@ static COMMAND_FUNC( do_mon_cam )
 	vp = pick_vwr("");
 	if( vp == NULL ) return;
 
-	WARN("do_mon_cam:  not implemented!?");
+	warn("do_mon_cam:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_stop_mon )
 {
-	WARN("do_stop_mon:  not implemented!?");
+	warn("do_stop_mon:  not implemented!?");
 }
 
 
 static COMMAND_FUNC( do_chk_session )
 {
-	WARN("do_chk_session:  not implemented!?");
+	warn("do_chk_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_stop_session )
 {
-	WARN("do_stop_session:  not implemented!?");
+	warn("do_stop_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_pause_session )
 {
-	WARN("do_pause_session:  not implemented!?");
+	warn("do_pause_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_restart_session )
 {
-	WARN("do_restart_session:  not implemented!?");
+	warn("do_restart_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_start_session )
@@ -84,7 +84,7 @@ static COMMAND_FUNC( do_start_session )
 	cam = _pick_camera(QSP_ARG  "");
 	if( cam == NULL ) return;
 
-	WARN("do_start_session:  not implemented!?");
+	warn("do_start_session:  not implemented!?");
 }
 
 static COMMAND_FUNC( do_grab_cam )
@@ -94,7 +94,7 @@ static COMMAND_FUNC( do_grab_cam )
 	dp = pick_obj("target image object");
 	if( dp == NULL ) return;
 
-	WARN("do_grab_cam:  not implemented!?");
+	warn("do_grab_cam:  not implemented!?");
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(camera_menu,s,f,h)

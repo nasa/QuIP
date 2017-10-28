@@ -105,7 +105,7 @@ static void emit_symbol_for_func(QSP_ARG_DECL  String_Buf *sbp, Vec_Func_Code co
 			sprintf(ERROR_STRING,
 	"emit_symbol_for_func:  unhandled function %s!?",
 	VF_NAME(FIND_VEC_FUNC(code)));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 	}
 	cat_string(sbp,s);
@@ -218,7 +218,7 @@ static void emit_bool_op(QSP_ARG_DECL  String_Buf *sbp, Vec_Expr_Node *enp)
 		default:
 			sprintf(ERROR_STRING,
 				"emit_bool_op:  unhandled bitmap code %d!?",VN_BM_CODE(enp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 }
@@ -426,7 +426,7 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	assert( ! IS_SCRIPT(srp) );
 
 	if( curr_pdp == NULL ){
-		WARN("fuse_subrt:  no platform selected!?");
+		warn("fuse_subrt:  no platform selected!?");
 		return;
 	}
 
@@ -434,7 +434,7 @@ void fuse_subrt(QSP_ARG_DECL  Subrt *srp)
 	kp = find_fused_kernel(QSP_ARG  srp, curr_pdp);
 	if( kp != NULL ){
 		sprintf(ERROR_STRING,"fuse_subrt:  Subroutine %s has already been fused!?",SR_NAME(srp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -468,7 +468,7 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case T_SUBRT:
 			srp = VN_SUBRT(enp);
 			if( IS_SCRIPT(srp) ){
-				WARN("Sorry, can't fuse script subroutines");
+				warn("Sorry, can't fuse script subroutines");
 			} else {
 				fuse_subrt(QSP_ARG  srp);
 			}

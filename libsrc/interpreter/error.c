@@ -594,7 +594,7 @@ void check_expected_warning(SINGLE_QSP_ARG_DECL)
 	if( QS_EXPECTED_WARNING(THIS_QSP) != NULL ){
 		sprintf(ERROR_STRING,"Expected warning beginning with \"%s\" never issued!?",
 			QS_EXPECTED_WARNING(THIS_QSP));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 

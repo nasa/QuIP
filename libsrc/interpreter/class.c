@@ -86,7 +86,7 @@ Member_Info *_get_member_info(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	if( mip == NULL ){
 		sprintf(ERROR_STRING,
 	"No member %s in item class %s",name,CL_NAME(icp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return mip;
 }
@@ -122,7 +122,7 @@ Item * _get_member(QSP_ARG_DECL  Item_Class *icp,const char *name)
 	if( ip == NULL ){
 		sprintf(ERROR_STRING,"No member %s found in %s class",
 			name,CL_NAME(icp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return ip;
 }

@@ -476,7 +476,7 @@ Data_Obj *_gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t ind
 	if( dp==NULL ) return(dp);
 
 	if( which_dim < 0 || which_dim >= N_DIMENSIONS ){
-		WARN("gen_subscript:  dimension index out of range");
+		warn("gen_subscript:  dimension index out of range");
 		return(NULL);
 	}
 	/* We used to disallow subscripting dimensions with only one element,
@@ -489,7 +489,7 @@ Data_Obj *_gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t ind
 		"%s subscript too small (%d, min %u) for object %s",
 			dimension_name[which_dim],index,
 			base_index,OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -504,7 +504,7 @@ Data_Obj *_gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t ind
 			"%s subscript too large (%u, max %u) for object %s",
 				dimension_name[which_dim],index,
 				OBJ_MACH_DIM(dp,which_dim)+base_index-1,OBJ_NAME(dp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		}
 	} else {	/* bitmap */
@@ -513,7 +513,7 @@ Data_Obj *_gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t ind
 			"%s subscript too large (%u, max %u) for object %s",
 				dimension_name[which_dim],index,
 				OBJ_MACH_DIM(dp,which_dim)+base_index-1,OBJ_NAME(dp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		}
 	}
@@ -580,7 +580,7 @@ Data_Obj *_gen_subscript( QSP_ARG_DECL  Data_Obj *dp, int which_dim, index_t ind
 	SET_OBJ_N_TYPE_ELTS(newdp, OBJ_N_TYPE_ELTS(newdp)/OBJ_TYPE_DIM(dp,which_dim) );
 
 	if( SET_OBJ_SHAPE_FLAGS(newdp) < 0 )
-		WARN("holy mole batman!?");
+		warn("holy mole batman!?");
 
 	check_contiguity(newdp);
 
@@ -713,7 +713,7 @@ void _set_array_base_index(QSP_ARG_DECL  int index)
 		sprintf(ERROR_STRING,
 	"set_base_index:  requested base index (%d) is out of range (0-1)",
 			index);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

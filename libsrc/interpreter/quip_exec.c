@@ -104,7 +104,7 @@ void qs_do_cmd( Query_Stack *qsp )
 #endif /* HAVE_HISTORY */
 
 		sprintf(ERROR_STRING,"Command \"%s\" not found!?",cmd);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		// Show the menu here
 		list_menu( TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
 		list_menu( QS_HELP_MENU(THIS_QSP) );
@@ -261,7 +261,7 @@ static void chew_stored(SINGLE_QSP_ARG_DECL)
 			}
 		}
 	}
-	/* else { WARN("no chew_list"); } */
+	/* else { warn("no chew_list"); } */
 
 	/* set_std_cursor(); */
 } // end chew_stored

@@ -214,7 +214,7 @@ static void nother_child(Vec_Expr_Node * enp,Vec_Expr_Node * child,int index)
 //				enp->en_serial,
 //				NNAME(enp)
 //				);
-//			WARN(ERROR_STRING);
+//			warn(ERROR_STRING);
 //		}
 		assert( VN_PARENT(child) == NULL );
 		*/
@@ -564,7 +564,7 @@ void show_context_stack(QSP_ARG_DECL  Item_Type *itp)
 	np=QLIST_HEAD(LIST_OF_CONTEXTS(itp));
 
 	if( np==NULL ) {
-		WARN("context list is empty");
+		warn("context list is empty");
 		return;
 	}
 	icp=(Item_Context *)NODE_DATA(np);

@@ -50,7 +50,7 @@ static void showparm( QSP_ARG_DECL  Param* p ) /** show p on the screen */
 #ifndef NO_STDIO
 	pparam(QSP_ARG  p,stderr);
 #else
-	WARN("Can't show parameter without stdio!?");
+	warn("Can't show parameter without stdio!?");
 #endif
 }
 
@@ -88,7 +88,7 @@ static void pparam(QSP_ARG_DECL  Param* p,FILE* fp)	/** print parameter pted to 
 	}
 	else {
 		sprintf(ERROR_STRING,"parameter type:  0x%x",p->p_type);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		error1(badpstr);
 	}
 }
@@ -129,7 +129,7 @@ static void getarrel(QSP_ARG_DECL  Param *p,int pindex)
 	max=(int)((p->p_type & NELTMASK) + 1);
 	if( pindex < 0 || pindex >= max ){
 		sprintf(ERROR_STRING,"legal indices:0 to %d",max);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( IS_FLOAT_ARRAY_PARAM(p) ){
@@ -227,7 +227,7 @@ static COMMAND_FUNC( do_chng_one )
 		return;
 	} else if( get_pval(QSP_ARG  s,theptbl) == -1 ){
 		sprintf(ERROR_STRING,"Unknown parameter \"%s\"",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
@@ -257,7 +257,7 @@ static index_t ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
 		if( i >= (MAX_INDEX_STRING_LEN-1)){
 			sprintf(ERROR_STRING,"ifarr:  index string too long (%d chars max)",
 				MAX_INDEX_STRING_LEN-1);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NOTARR);
 		}
 		index_string[i++] = *s++;
@@ -265,7 +265,7 @@ static index_t ifarr(QSP_ARG_DECL  const char *s)	/* return index or NOTARR */
 	index_string[i]=0;
 
 	if( *s != ']' ) {
-		WARN("ifarr:  no closing brace for index");
+		warn("ifarr:  no closing brace for index");
 		return(NOTARR);
 	}
 	tsp = pexpr(QSP_ARG  index_string );
@@ -290,7 +290,7 @@ static int get_pval(QSP_ARG_DECL  const char *name,Param* ptable)
 		} else ptable++;
 	}
 	sprintf(ERROR_STRING,"no parameter \"%s\"",name);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return(-1);
 }
 
@@ -319,7 +319,7 @@ static void rdprms(QSP_ARG_DECL  Param *p,FILE* fp, const char *filename)
 	do {
 		s=nameof("name of parameter");
 		if( get_pval(QSP_ARG  s,p) == -1 )
-			WARN("error getting parameter value");
+			warn("error getting parameter value");
 		/* lookahead word should decrement qlevel at EOF */
 		lookahead(SINGLE_QSP_ARG);
 	} while( level == QLEVEL );

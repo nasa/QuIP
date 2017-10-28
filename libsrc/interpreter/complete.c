@@ -399,7 +399,7 @@ static int fetch_termcap_entry(SINGLE_QSP_ARG_DECL)
 
 	s=getenv("TERM");
 	if( s==NULL ){
-		WARN("init_tty_chars:  no TERM in environment");
+		warn("init_tty_chars:  no TERM in environment");
 		so="";
 		ce="";
 		se="";
@@ -409,13 +409,13 @@ static int fetch_termcap_entry(SINGLE_QSP_ARG_DECL)
 	stat=tgetent(tc_ent,s);
 	if( stat!=1 ){
 		if( stat==(-1) ){
-			WARN("init_tty_chars:  can't open termcap file");
+			warn("init_tty_chars:  can't open termcap file");
 		} else if( stat==0 ){
 			sprintf(ERROR_STRING,
 			"no termcap entry for terminal \"%s\"",s);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		} else {
-			WARN("unrecognized error status from tgetent()");
+			warn("unrecognized error status from tgetent()");
 		}
 		return -1;
 	}
@@ -437,17 +437,17 @@ static void init_tty_chars(SINGLE_QSP_ARG_DECL)
 	tptr=tbuf;
 	so=tgetstr("so",&tptr);
 	if( so==NULL ){
-		WARN("no standout string in termcap");
+		warn("no standout string in termcap");
 		so="";
 	}
 	se=tgetstr("se",&tptr);
 	if( se==NULL ){
-		WARN("no standend string in termcap");
+		warn("no standend string in termcap");
 		se="";
 	}
 	ce=tgetstr("ce",&tptr);
 	if( ce==NULL ){
-		WARN("no clear-to-eol string in termcap");
+		warn("no clear-to-eol string in termcap");
 		ce="";
 	}
 #else /* ! HAVE_TERMCAP */
@@ -551,7 +551,7 @@ static const char * handle_completed_line(QSP_ARG_DECL  int c,Completion_Data *c
 
 		// Store the newline too...
 		if( N_SO_FAR >= (LLEN-1) ){
-			WARN("too many input chars!?");
+			warn("too many input chars!?");
 		} else {
 			//CHARS_TYPED[N_SO_FAR++] = c;
 			// We do this after returning from get_response_from_user.
@@ -634,11 +634,11 @@ static int handle_escape_sequence(QSP_ARG_DECL  Completion_Data *cdp)
 			c = LF_ARROW;
 		else {
 	sprintf(ERROR_STRING,"Unexpected arrow key char seen:  0%o !?",c);
-	WARN(ERROR_STRING);
+	warn(ERROR_STRING);
 		}
 	} else {
 		sprintf(ERROR_STRING,"Unexpected char 0%o seenm after escape",c);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 	return c;
@@ -782,7 +782,7 @@ static void append_character(QSP_ARG_DECL  int c, Completion_Data *cdp)
 			erase_completion(cdp);
 	}
 	if( N_SO_FAR >= (LLEN-1) ){
-		WARN("too many input chars!?");
+		warn("too many input chars!?");
 	} else {
 		CHARS_TYPED[N_SO_FAR++] = c;
 	}

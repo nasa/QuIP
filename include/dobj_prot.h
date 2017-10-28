@@ -17,8 +17,9 @@
 /* contig.c */
 
 extern int is_evenly_spaced(Data_Obj *);
-extern int is_contiguous(QSP_ARG_DECL  Data_Obj *);
 extern void check_contiguity(Data_Obj *);
+extern int _is_contiguous(QSP_ARG_DECL  Data_Obj *);
+#define is_contiguous(dp) _is_contiguous(QSP_ARG  dp)
 
 /* data_obj.c */
 

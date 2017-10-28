@@ -252,7 +252,7 @@ static COMMAND_FUNC( do_dump_invoked )
 
 	if( macro_itp == NULL ){
 no_macros:
-		WARN("do_dump_invoked:  no macros!?");
+		warn("do_dump_invoked:  no macros!?");
 		return;
 	}
 	lp=item_list(macro_itp);
@@ -325,7 +325,7 @@ static COMMAND_FUNC( do_def_mac )
 	mp = macro_of(name);
 	if( mp != NULL ){
 		sprintf(ERROR_STRING,"Macro \"%s\" already exists!?",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		// Report where the macro was declared...
 		sprintf(ERROR_STRING,"Macro \"%s\" defined in file %s, line %d",
 			name,macro_filename(mp),macro_lineno(mp) );
@@ -373,7 +373,7 @@ static COMMAND_FUNC( do_if )
 		s=nameof("Command word");
 		s2=nameof("'Else'");
 		if( strcmp(s2,"Else") ){
-			WARN("Then clause must be followed by 'Else'");
+			warn("Then clause must be followed by 'Else'");
 			return;
 		}
 		s3=nameof("Command word");
@@ -414,7 +414,7 @@ static COMMAND_FUNC( do_redir )
 	fp=fopen(s,"r");
 	if( fp == NULL ){
 		sprintf(ERROR_STRING,"Error opening file %s!?",s );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	} else {
 		redir(fp, s );
 	}
@@ -425,7 +425,7 @@ static COMMAND_FUNC( do_warn )
 	const char *s;
 	s = nameof("warning message");
 	//[THIS_QSP warn : [THIS_QSP nameOf : @"warning message" ] ];
-	WARN( s );
+	warn( s );
 }
 
 static COMMAND_FUNC( do_expect_warning )
@@ -454,7 +454,7 @@ static COMMAND_FUNC( do_set_var )
 	vp = var_of(name);
 	if( vp != NULL && IS_RESERVED_VAR(vp) ){
 		sprintf(ERROR_STRING,"Sorry, variable \"%s\" is reserved.",name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -689,14 +689,14 @@ static COMMAND_FUNC( do_set_nsig )
 		sprintf(ERROR_STRING,
 	"Requested number of digits (%d) should be between %d and %d, using %d",
 			n,MIN_SIG_DIGITS,MAX_SIG_DIGITS,MAX_SIG_DIGITS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n=MAX_SIG_DIGITS;
 	}
 	CHECK_FMT_STRINGS
 
 	// we insist first that we are using the g (float) format?
 	if( QS_NUMBER_FMT(THIS_QSP) != QS_GFORMAT(THIS_QSP) ){
-		WARN("do_set_nsig:  Changing variable format to float (g)");
+		warn("do_set_nsig:  Changing variable format to float (g)");
 		SET_QS_NUMBER_FMT(THIS_QSP,QS_GFORMAT(THIS_QSP));
 	}
 
@@ -732,7 +732,7 @@ static void set_fmt(QSP_ARG_DECL  Number_Fmt i)
 		case FMT_OCTAL:  SET_QS_NUMBER_FMT(THIS_QSP,QS_OFORMAT(THIS_QSP)); break;
 		case FMT_POSTSCRIPT:
 			/* does this make sense? */
-WARN("set_fmt:  not sure what to do with FMT_POSTSCRIPT - using decimal.");
+warn("set_fmt:  not sure what to do with FMT_POSTSCRIPT - using decimal.");
 			SET_QS_NUMBER_FMT(THIS_QSP,QS_DFORMAT(THIS_QSP));
 			break;
 		default:
@@ -778,7 +778,7 @@ static COMMAND_FUNC( do_pop_fmt )
 {
 	//assert( QS_VAR_FMT_STACK(THIS_QSP) != NULL );
 	if( QS_VAR_FMT_STACK(THIS_QSP) == NULL || STACK_IS_EMPTY(QS_VAR_FMT_STACK(THIS_QSP)) ){
-		WARN("No variable format has been pushed, can't pop!?");
+		warn("No variable format has been pushed, can't pop!?");
 		return;
 	}
 
@@ -804,7 +804,7 @@ static COMMAND_FUNC( do_despace )
 	}
 	buf[i]=0;
 	if( *src )
-		WARN("despace:  input string too long, truncating.");
+		warn("despace:  input string too long, truncating.");
 
 	assign_var(vn,buf);
 }
@@ -877,7 +877,7 @@ static COMMAND_FUNC( do_repeat )
 	int n;
 	n=(int)how_many("number of iterations");
 	if( n <= 0 ){
-		WARN("do_repeat:  number of repetitions must be positive!?");
+		warn("do_repeat:  number of repetitions must be positive!?");
 		return;
 	}
 
@@ -936,7 +936,7 @@ static COMMAND_FUNC( do_foreach_loop )
 				sprintf(ERROR_STRING,
 			"foreach:  no values specified for variable %s",
 					FL_VARNAME(frp));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				zap_fore(frp);
 			} else {
 				SET_FL_NODE(frp, QLIST_HEAD(FL_LIST(frp)) );
@@ -1058,7 +1058,7 @@ static COMMAND_FUNC( do_cd )
 	if( chdir(s) < 0 ){
 		tell_sys_error("chdir");
 		sprintf(ERROR_STRING,"Failed to chdir to %s",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	// should we cache in a variable such as $cwd?
 }
@@ -1070,7 +1070,7 @@ static COMMAND_FUNC( do_ls )
 
 	dir_p = opendir(".");
 	if( dir_p == NULL ){
-		WARN("Failed to open directory.");
+		warn("Failed to open directory.");
 		return;
 	}
 	di_p = readdir(dir_p);
@@ -1079,7 +1079,7 @@ static COMMAND_FUNC( do_ls )
 		di_p = readdir(dir_p);
 	}
 	if( closedir(dir_p) < 0 ){
-		WARN("Error closing directory!?");
+		warn("Error closing directory!?");
 		return;
 	}
 }
@@ -1118,7 +1118,7 @@ static COMMAND_FUNC( do_get_filenames )
 	if( dir_p == NULL ){
 		sprintf(ERROR_STRING,
 	"get_filenames:  failed to open directory '%s'",dir);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -1166,7 +1166,7 @@ static COMMAND_FUNC( do_get_filenames )
 
 finish:
 	if( closedir(dir_p) < 0 ){
-		WARN("Error closing directory!?");
+		warn("Error closing directory!?");
 		return;
 	}
 }
@@ -1184,7 +1184,7 @@ static COMMAND_FUNC( do_mkdir )
 
 	if( mkdir(s,mode) < 0 ){
 		tell_sys_error("mkdir");
-		WARN("Error creating new directory!?");
+		warn("Error creating new directory!?");
 		return;
 	}
 }
@@ -1214,7 +1214,7 @@ static COMMAND_FUNC( do_rmdir )
 	if( rmdir(s) < 0 ){
 		tell_sys_error("rmdir");
 		sprintf(ERROR_STRING,"Error removing directory %s!?",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 }
@@ -1230,7 +1230,7 @@ static COMMAND_FUNC( do_rm )
 	if( unlink(s) < 0 ){
 		tell_sys_error("unlink");
 		sprintf(ERROR_STRING,"Error removing file %s!?",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 }
@@ -1245,7 +1245,7 @@ static COMMAND_FUNC( do_rm_all )
 
 	dir_p = opendir(".");
 	if( dir_p == NULL ){
-		WARN("Failed to open directory.");
+		warn("Failed to open directory.");
 		return;
 	}
 
@@ -1262,14 +1262,14 @@ static COMMAND_FUNC( do_rm_all )
 			if( unlink(fn) < 0 ){
 				tell_sys_error("unlink");
 				sprintf(ERROR_STRING,"Error removing file %s!?",fn);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return;
 			}
 		}
 		di_p = readdir(dir_p);
 	}
 	if( closedir(dir_p) < 0 ){
-		WARN("Error closing directory!?");
+		warn("Error closing directory!?");
 		return;
 	}
 
@@ -1386,7 +1386,7 @@ static COMMAND_FUNC( do_usleep )
 #ifdef BUILD_FOR_IOS
 	advise("Sorry, no usleep function in this build!?");
 #else	// ! BUILD_FOR_IOS
-	WARN("Sorry, no usleep function in this build!?");
+	warn("Sorry, no usleep function in this build!?");
 #endif // ! BUILD_FOR_IOS
 #endif // ! HAVE_USLEEP
 }
@@ -1399,7 +1399,7 @@ static COMMAND_FUNC( do_sleep )
 #ifdef HAVE_SLEEP
 	sleep(n);
 #else // ! HAVE_SLEEP
-	WARN("Sorry, no sleep available in this build!?");
+	warn("Sorry, no sleep available in this build!?");
 #endif // ! HAVE_SLEEP
 }
 
@@ -1584,7 +1584,7 @@ static COMMAND_FUNC( do_pmpttext )
 	assign_var(s,t);
 	rls_str(t);
 #else // BUILD_FOR_OBJC
-	WARN("Sorry, pmpttext (bi_menu.c) not yet implemented!?");
+	warn("Sorry, pmpttext (bi_menu.c) not yet implemented!?");
 #endif // BUILD_FOR_OBJC
 	rls_str(p);
 	rls_str(s);

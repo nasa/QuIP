@@ -49,7 +49,7 @@ static void collapse_literal(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		sprintf(ERROR_STRING,
 			"collapse_literal:  unexpected node precision %s",
 			NAME_FOR_PREC_CODE(VN_PREC(enp)));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	/* BUG this is where we should free these nodes;

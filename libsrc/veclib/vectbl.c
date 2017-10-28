@@ -393,7 +393,7 @@ void check_vfa_tbl(QSP_ARG_DECL  Vec_Func_Array *vfa_tbl, int size)
 	if( size != N_VEC_FUNCS ){
 		sprintf(ERROR_STRING,"check_vfa_tbl:  size (%d) not equal to N_VEC_FUNCS (%d)!?",
 			size,N_VEC_FUNCS);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	qsort(vfa_tbl,size,sizeof(Vec_Func_Array),vfa_cmp);
@@ -418,7 +418,7 @@ advise(ERROR_STRING);
 	"CAUTIOUS:  check_vfa_tbl:  Vec_Func_Array table entry %d (%s) has code %d (%s)!?",
 		i,VF_NAME(&vec_func_tbl[i]),
 		vfa_tbl[i].vfa_code,VF_NAME(&vec_func_tbl[ vfa_tbl[i].vfa_code ]) );
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 //			retval = (-1);
 		}
 

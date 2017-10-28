@@ -18,7 +18,7 @@ void update_subrt(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *body )
 {
 	if( SR_BODY(srp) != NULL ){
 		node_error(body);
-		NWARN("subroutine body is not null!?");
+		warn("subroutine body is not null!?");
 	}
 
 	SET_SR_BODY(srp, body);
@@ -174,7 +174,7 @@ void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				sprintf(ERROR_STRING,"Platform mismatch:  %s (%s) and %s (%s)!?",
 					node_desc(defining_enp),PFDEV_NAME(pdp),
 					node_desc(VN_CHILD(enp,i)), PFDEV_NAME(VN_PFDEV(VN_CHILD(enp,i))) );
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				curdled=1;
 			}
 		}
@@ -216,7 +216,7 @@ static Vec_Expr_Node * get_subrt_arg_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			
 		default:
 			sprintf(ERROR_STRING,"get_subrt_arg_tree:  unhandled case %s",node_desc(enp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 	return return_enp;
@@ -379,7 +379,7 @@ COMMAND_FUNC( do_subrt_info )
 
 	// Display the file and line number where declared...
 	if( VN_INFILE(enp) == NULL ){
-		WARN("subroutine has no associated input file!?");
+		warn("subroutine has no associated input file!?");
 	} else {
 		assert( string_is_printable(SR_STRING(VN_INFILE(enp))) );
 		sprintf(msg_str,"Subroutine %s declared at line %d, file %s",
@@ -532,7 +532,7 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 
 		default:
 			sprintf(ERROR_STRING,"delete_id:  unhandled id type %d",ID_TYPE(idp));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 	del_id(idp);	// releases name for us

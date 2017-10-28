@@ -639,7 +639,7 @@ dump_tree(enp);
 		case T_INDIR_CALL:
 			/* First see if the function ptr has been set */
 			/*
-			WARN("resolve_tree:  not sure how to handle INDIR_CALL");
+			warn("resolve_tree:  not sure how to handle INDIR_CALL");
 			*/
 			break;
 
@@ -659,7 +659,7 @@ dump_tree(enp);
 				/*
 	//			sprintf(ERROR_STRING,"CAUTIOUS:  resolve_tree %s:  ptr %s has null ref arg!?",
 					node_desc(enp),ID_NAME(idp));
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				*/
 				break;
 			}
@@ -924,7 +924,7 @@ void resolve_subrt(QSP_ARG_DECL  Subrt_Call *scp,List *uk_list, Shape_Info *ret_
 		stat = CHECK_ARG_SHAPES(SR_ARG_DECLS(srp),argval_tree,scp);
 		if( stat < 0 ) {
 sprintf(ERROR_STRING,"resolve_subrt %s:  argument error",SR_NAME(srp));
-WARN(ERROR_STRING);
+warn(ERROR_STRING);
 			goto givup;
 		}
 	}
@@ -1214,7 +1214,7 @@ advise(ERROR_STRING);
 
 sprintf(ERROR_STRING,"resolve_obj_id:  calling reeval_decl_stat %s", VN_STRING(decl_enp));
 advise(ERROR_STRING);
-if( shpp == NULL ) WARN("shape ptr is null!?");
+if( shpp == NULL ) warn("shape ptr is null!?");
 DESCRIBE_SHAPE(shpp);
 }
 #endif /* QUIP_DEBUG */
@@ -1320,7 +1320,7 @@ advise(ERROR_STRING);
 			node_error(uk_enp);
 			sprintf(ERROR_STRING,
 		"resolve_pointer:  Shape mismatch with object %s",OBJ_NAME(dp));
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
 DESCRIBE_SHAPE(shpp);
 		}
@@ -1529,7 +1529,7 @@ Vec_Expr_Node *resolve_node(QSP_ARG_DECL  Vec_Expr_Node *uk_enp,Shape_Info *shpp
 				resolve_obj_list(QSP_ARG  uk_enp,scalar_shape(SHP_PREC(shpp)));
 			} else {
 sprintf(ERROR_STRING,"resolve_node %s:  oops, only know how to resolve from rowvec!?",node_desc(uk_enp));
-WARN(ERROR_STRING);
+warn(ERROR_STRING);
 			}
 			return(uk_enp);
 
@@ -2179,7 +2179,7 @@ int check_arg_shapes(QSP_ARG_DECL  Vec_Expr_Node *arg_enp,Vec_Expr_Node *val_enp
 	else if( val_enp == NULL ){
 		/* BUG we want to report this error at the line number of the callfunc node */
 		sprintf(ERROR_STRING,"check_arg_shapes:  Subroutine %s requires arguments",SR_NAME(SC_SUBRT(scp)));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -2253,7 +2253,7 @@ advise(ERROR_STRING);
 					node_error(SC_CALL_VN(scp));
 					sprintf(ERROR_STRING,
 	"subrt %s:  argument shape mismatch",SR_NAME(SC_SUBRT(scp)));
-					WARN(ERROR_STRING);
+					warn(ERROR_STRING);
 advise("argument prototype shape:");
 DESCRIBE_SHAPE(VN_SHAPE(arg_enp));
 advise("argument value shape:");

@@ -80,7 +80,7 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 		sprintf(ERROR_STRING,								\
 			"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",	\
 			#stem,#read_type,#stem,#type);						\
-		WARN(ERROR_STRING);								\
+		warn(ERROR_STRING);								\
 		sprintf(ERROR_STRING,"val = %ld, type_min = %ld, type_max = %ld",		\
 			(long)val,(long)type_min,(long)type_max);				\
 		advise(ERROR_STRING);								\
@@ -103,12 +103,12 @@ static void stem##_set_value_from_input(QSP_ARG_DECL  void *vp, const char *prom
 												\
 	if( val < (-type_max) || val > type_max ){						\
 		sprintf(ERROR_STRING,"%s_set_value_from_input:  Truncation error converting %s to %s (%s)",#stem,#read_type,#stem,#type);		\
-		WARN(ERROR_STRING);								\
+		warn(ERROR_STRING);								\
 	}											\
 												\
 	if( (val < (type_min) && val > 0) || (val > (-type_min) && val < 0) ){			\
 		sprintf(ERROR_STRING,"Rounding error converting %s to %s (%s)",#read_type,#stem,#type);			\
-		WARN(ERROR_STRING);								\
+		warn(ERROR_STRING);								\
 	}											\
 												\
 	if( vp != NULL )									\

@@ -23,7 +23,7 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	if( dpto == dpfr )
 		WARN("source and destination should differ for erosion!?");
 
-	if( !is_contiguous(QSP_ARG  dpfr) ){
+	if( !is_contiguous(dpfr) ){
 		sprintf(ERROR_STRING,
 			"source image %s must be contiguous for erosion",
 			OBJ_NAME(dpfr));
@@ -227,7 +227,7 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 	if( dpto == dpfr )
 		WARN("source and destination should differ for dilation!?");
 
-	if( !is_contiguous(QSP_ARG  dpfr) ){
+	if( !is_contiguous(dpfr) ){
 		sprintf(ERROR_STRING,
 			"source image %s must be contiguous for dilation",
 			OBJ_NAME(dpfr));

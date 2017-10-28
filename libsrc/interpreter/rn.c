@@ -85,14 +85,14 @@ void set_random_seed(SINGLE_QSP_ARG_DECL)
 	gettimeofday(&tv,NULL);
 	seed_val = tv.tv_usec & 0xffff;	/* 64k different seeds */
 #else
-	WARN("rn.c:  need to implement set_random_seed without gettimeofday!?");
+	warn("rn.c:  need to implement set_random_seed without gettimeofday!?");
 	seed_val=1;
 #endif
 
 #ifdef HAVE_SRAND48
 	srand48( seed_val );
 #else
-	//WARN("rn.c:  need to implement set_random_seed without srand48!?");
+	//warn("rn.c:  need to implement set_random_seed without srand48!?");
 #endif
 }
 
@@ -121,7 +121,7 @@ void set_seed(QSP_ARG_DECL  u_long seed)
 
 	srand( (int)seed );
 #else
-	WARN("rn.c:  no function to set random number generator seed identified by configure!?");
+	warn("rn.c:  no function to set random number generator seed identified by configure!?");
 #endif /* DRAND48 */
 
 	is_seeded=1;
@@ -170,7 +170,7 @@ void rninit(SINGLE_QSP_ARG_DECL)        /** randomly seed the generator */
         seed= (int)  tvec & 0xfff ;
 
 #else
-	WARN("rn.c:  No time function available to generate a random seed, using 0.");
+	warn("rn.c:  No time function available to generate a random seed, using 0.");
 #endif
 
 	if( verbose ){
@@ -216,7 +216,7 @@ void permute(QSP_ARG_DECL  SCRAMBLE_TYPE *buf,int n)
 
 	if( n <= 0 ){
 		sprintf(ERROR_STRING,"permute:  number of elements (%d) must be positive!?",n);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
         for(i=0;i<n;i++) buf[i]=i;
