@@ -53,9 +53,9 @@ int _cpu_supports_sse2(SINGLE_QSP_ARG_DECL)
 
 /* BUG this stuff might work on Macs if we knew how to test... */
 
-int cpu_supports_mmx(void) { return 1; }
-int cpu_supports_sse(void) { return 1; }
-int cpu_supports_sse2(void) { return 1; }
+int _cpu_supports_mmx(SINGLE_QSP_ARG_DECL) { return 1; }
+int _cpu_supports_sse(SINGLE_QSP_ARG_DECL) { return 1; }
+int _cpu_supports_sse2(SINGLE_QSP_ARG_DECL) { return 1; }
 
 #endif /* ! HAVE_PROC_CPUINFO */
 
