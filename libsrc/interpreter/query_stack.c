@@ -27,7 +27,7 @@ ITEM_PICK_FUNC(Query_Stack,query_stack)
 static void push_prompt(QSP_ARG_DECL  const char *pmpt);
 static void pop_prompt(SINGLE_QSP_ARG_DECL);
 
-void push_menu(QSP_ARG_DECL  Menu *mp)
+void _push_menu(QSP_ARG_DECL  Menu *mp)
 {
 	push_item(QS_MENU_STACK(THIS_QSP),mp);
 

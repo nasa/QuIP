@@ -1010,14 +1010,14 @@ static COMMAND_FUNC( do_echo )
 
 static COMMAND_FUNC( do_list_current_menu )
 {
-	list_menu( QSP_ARG  TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
-	list_menu( QSP_ARG  QS_HELP_MENU(THIS_QSP) );
+	list_menu( TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
+	list_menu( QS_HELP_MENU(THIS_QSP) );
 }
 
 static COMMAND_FUNC( do_list_builtin_menu )
 {
-	list_menu( QSP_ARG  QS_BUILTIN_MENU(THIS_QSP) );
-	list_menu( QSP_ARG  QS_HELP_MENU(THIS_QSP) );
+	list_menu( QS_BUILTIN_MENU(THIS_QSP) );
+	list_menu( QS_HELP_MENU(THIS_QSP) );
 }
 
 static COMMAND_FUNC(do_nop)

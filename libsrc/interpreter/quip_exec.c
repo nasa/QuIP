@@ -106,8 +106,8 @@ void qs_do_cmd( Query_Stack *qsp )
 		sprintf(ERROR_STRING,"Command \"%s\" not found!?",cmd);
 		WARN(ERROR_STRING);
 		// Show the menu here
-		list_menu( QSP_ARG  TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
-		list_menu( QSP_ARG  QS_HELP_MENU(THIS_QSP) );
+		list_menu( TOP_OF_STACK( QS_MENU_STACK(THIS_QSP) ) );
+		list_menu( QS_HELP_MENU(THIS_QSP) );
 
 		return;
 	}
