@@ -62,7 +62,7 @@ static void my_onintr(int asig /* what is this arg??? */)
 	// like top_menu - but pops everything
 	// Maybe we should then flush any pending input too?
 	while( STACK_DEPTH(QS_MENU_STACK(DEFAULT_QSP)) > MIN_CMD_DEPTH )
-		pop_menu(SGL_DEFAULT_QSP_ARG);
+		_pop_menu(SGL_DEFAULT_QSP_ARG);
 
 	_push_text(DEFAULT_QSP_ARG  intr_str, "intr_handler" );
 
