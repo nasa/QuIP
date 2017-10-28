@@ -306,7 +306,7 @@ static int good_kernel_for_filter(Data_Obj *dp, const char *whence )
 static int good_for_morph( QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp,
 				Data_Obj *mask_dp, const char * whence )
 {
-	if( ! dp_same_size(QSP_ARG  dst_dp,src_dp,whence) )
+	if( ! dp_same_size(dst_dp,src_dp,whence) )
 		return(0);
 	if( ! good_img_for_morph(QSP_ARG  dst_dp,whence) )
 		return(0);
@@ -329,9 +329,9 @@ static int good_for_morph( QSP_ARG_DECL   Data_Obj *dst_dp, Data_Obj *src_dp,
 static int good_for_filter( QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src_dp,
 				Data_Obj *mask_dp, const char * whence )
 {
-	if( ! dp_same_size(QSP_ARG  dst_dp,src_dp,whence) )
+	if( ! dp_same_size(dst_dp,src_dp,whence) )
 		return(0);
-	if( ! dp_same_prec(QSP_ARG  dst_dp,src_dp,whence) )
+	if( ! dp_same_prec(dst_dp,src_dp,whence) )
 		return(0);
 	if( OBJ_PREC(mask_dp) != PREC_DI ){
 		sprintf(ERROR_STRING,
