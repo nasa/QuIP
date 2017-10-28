@@ -619,8 +619,6 @@ define(`REPORT_VECTORIZATION5',`')
 dnl	CALL_GPU_FAST_NOCC_SETUP_FUNC(name)
 define(`CALL_GPU_FAST_NOCC_SETUP_FUNC',`
 	CLEAR_GPU_ERROR(SETUP_NAME($1))
-sprintf(ERROR_STRING,"calling %s...","SETUP_NAME($1)");
-advise(ERROR_STRING);
 	REPORT_THREAD_INFO2
 	/* call_gpu_fast_nocc_setup_func /$1/ */
 	GPU_FAST_CALL_NAME(SETUP_NAME($1))<<< NN_GPU >>>
@@ -634,8 +632,6 @@ advise(ERROR_STRING);
 dnl	CALL_GPU_FAST_NOCC_HELPER_FUNC(name)
 define(`CALL_GPU_FAST_NOCC_HELPER_FUNC',`
 	CLEAR_GPU_ERROR(HELPER_NAME($1))
-sprintf(ERROR_STRING,"calling %s...","HELPER_NAME($1)");
-advise(ERROR_STRING);
 	REPORT_THREAD_INFO2
 	GPU_FAST_CALL_NAME(HELPER_NAME($1))<<< NN_GPU >>>
 		(dst_values, dst_counts,src_values,src_counts, indices,len1,len2,stride); 

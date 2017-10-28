@@ -85,9 +85,6 @@ extern int _check_obj_devices( QSP_ARG_DECL  Vec_Obj_Args *oap );
 #define check_obj_devices(oap) _check_obj_devices(QSP_ARG  oap)
 
 /* vec_call.c */
-#ifdef HAVE_CUDA
-extern void set_gpu_dispatch_func( int (*)(Vector_Function *vfp, Vec_Obj_Args *oap) );
-#endif /* HAVE_CUDA */
 extern int perf_vfunc(QSP_ARG_DECL  Vec_Func_Code code, Vec_Obj_Args *oap);
 extern int cktype(Data_Obj *dp1,Data_Obj *dp2);
 

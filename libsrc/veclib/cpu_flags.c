@@ -34,17 +34,17 @@ static int _cpu_flag_set(QSP_ARG_DECL  char *string)
 	return(0);
 }
 
-int cpu_supports_mmx(void)
+int _cpu_supports_mmx(SINGLE_QSP_ARG_DECL)
 {
 	return cpu_flag_set("mmx");
 }
 
-int cpu_supports_sse(void)
+int _cpu_supports_sse(SINGLE_QSP_ARG_DECL)
 {
 	return cpu_flag_set("sse");
 }
 
-int cpu_supports_sse2(void)
+int _cpu_supports_sse2(SINGLE_QSP_ARG_DECL)
 {
 	return cpu_flag_set("sse2");
 }
