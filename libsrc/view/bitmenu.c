@@ -52,7 +52,7 @@ static COMMAND_FUNC( do_bitplanes )
 	nplanes = (int)HOW_MANY("number of image components");
 	for(i=0;i<nplanes;i++)
 		amplist[i]=(float)HOW_MUCH("vector amplitude");
-	set_bitplanes(QSP_ARG  nplanes, amplist);
+	set_bitplanes(nplanes, amplist);
 }
 
 static COMMAND_FUNC( do_set_base )
@@ -152,7 +152,7 @@ static COMMAND_FUNC( do_sine_mod )
 	for(i=0;i<nc;i++)
 		phase[i] = (float)(i*2*atan(1));
 
-	sine_mod_amp(QSP_ARG  nf,phase,per,(float *)NULL,s);
+	sine_mod_amp(nf,phase,per,(float *)NULL,s);
 }
 
 static COMMAND_FUNC( do_set_ncomps )

@@ -8,10 +8,10 @@
 #include "quip_prot.h"
 #include "cmaps.h"
 
-void set_alpha( int index,int alpha )
+void _set_alpha(QSP_ARG_DECL  int index,int alpha )
 {
 	if( ALPHA_INDEX >= N_COMPS ){
-		NWARN("Sorry, no alpha color map");
+		warn("Sorry, no alpha color map");
 		return;
 	}
 #ifdef HAVE_X11
@@ -26,7 +26,7 @@ void set_alpha( int index,int alpha )
 
 #define N_INDEX_BITS	15
 
-void index_alpha( int index, int lv, int hv )
+void _index_alpha(QSP_ARG_DECL  int index, int lv, int hv )
 {
 	int color,bit;
 

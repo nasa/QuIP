@@ -103,7 +103,7 @@ void rdplot(QSP_ARG_DECL  FILE *fp )
 			default:
 				sprintf(ERROR_STRING,
 				"unrecognized plot command '%c' (%o)",c,c);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				goto plotdun;
 		}
 	}

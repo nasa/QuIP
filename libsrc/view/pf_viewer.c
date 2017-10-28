@@ -129,7 +129,9 @@ static void update_pf_viewer(QSP_ARG_DECL  Platform_Viewer *pvp, Data_Obj *dp)
 
 static int pf_viewer_subsystem_inited=0;
 
-static void init_pf_viewer_subsystem(void)
+#define init_pf_viewer_subsystem() _init_pf_viewer_subsystem(SINGLE_QSP_ARG)
+
+static void _init_pf_viewer_subsystem(SINGLE_QSP_ARG_DECL)
 {
 	const char *pn;
 	int n;
@@ -137,7 +139,7 @@ static void init_pf_viewer_subsystem(void)
 	pn = tell_progname();
 
 	if( pf_viewer_subsystem_inited ){
-		NWARN("Platform viewer subsystem already initialized!?");
+		warn("Platform viewer subsystem already initialized!?");
 		return;
 	}
 
