@@ -171,7 +171,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 
 	// address set to NULL says use custom allocator - see dobj/makedobj.c
 
-	ap = pf_area_init(QSP_ARG  area_name,NULL,0, MAX_OCL_GLOBAL_OBJECTS,DA_OCL_GLOBAL,pdp);
+	ap = pf_area_init(area_name,NULL,0, MAX_OCL_GLOBAL_OBJECTS,DA_OCL_GLOBAL,pdp);
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
 	"init_ocl_dev_memory:  error creating global data area %s",area_name);
@@ -203,7 +203,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	sprintf(area_name,"%s.%s_host",
 		PLATFORM_NAME(PFDEV_PLATFORM(pdp)),PFDEV_NAME(pdp));
 
-	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
+	ap = pf_area_init(area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
 							DA_OCL_HOST,pdp);
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
@@ -228,7 +228,7 @@ static void init_ocl_dev_memory(QSP_ARG_DECL  Platform_Device *pdp)
 	sprintf(area_name,"%s.%s_host_mapped",
 		PLATFORM_NAME(PFDEV_PLATFORM(pdp)),PFDEV_NAME(pdp));
 
-	ap = pf_area_init(QSP_ARG  area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
+	ap = pf_area_init(area_name,(u_char *)NULL,0,MAX_OCL_MAPPED_OBJECTS,
 						DA_OCL_HOST_MAPPED,pdp);
 	if( ap == NULL ){
 		sprintf(ERROR_STRING,
