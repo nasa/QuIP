@@ -333,7 +333,7 @@ static COMMAND_FUNC( do_cyplot )
 		WARN("color vector should be byte");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dp,cdp,"do_cyplot") ){
+	if( !dp_same_size(dp,cdp,"do_cyplot") ){
 		sprintf(ERROR_STRING,"data vector %s and color vector %s must have identical sizes",
 			OBJ_NAME(dp),OBJ_NAME(cdp));
 		WARN(ERROR_STRING);

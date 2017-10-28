@@ -941,8 +941,8 @@ COMMAND_FUNC( do_movie_menu )
 
 	if( playable_iclp == NULL ){
 		if( mvi_itp == NULL ) init_mvis();
-		add_sizable(QSP_ARG  mvi_itp,&mvi_sf,NULL);
-		add_interlaceable(QSP_ARG  mvi_itp,&mvi_if,NULL);
+		add_sizable(mvi_itp,&mvi_sf,NULL);
+		add_interlaceable(mvi_itp,&mvi_if,NULL);
 
 		playable_iclp = new_item_class("playable");
 		add_playable(mvi_itp,NULL);

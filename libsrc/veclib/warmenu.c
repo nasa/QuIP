@@ -1481,7 +1481,7 @@ static COMMAND_FUNC( do_misc )
 		op2(QSP_ARG  to,fr);			\
 		EXCHANGE(to,fr);			\
 	}						\
-	dp_copy(QSP_ARG  to,fr);
+	dp_copy(to,fr);
 
 #ifdef HAVE_MORPH
 

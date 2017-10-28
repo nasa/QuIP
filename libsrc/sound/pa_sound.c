@@ -269,7 +269,7 @@ void audio_init(QSP_ARG_DECL  int mode)
 
 
 	if( ! ts_class_inited ){
-		add_tsable(QSP_ARG  dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
+		add_tsable(dobj_itp,&dobj_tsf,(Item * (*)(QSP_ARG_DECL  const char *))hunt_obj);
 		ts_class_inited++;
 	}
 

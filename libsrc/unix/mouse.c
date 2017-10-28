@@ -588,14 +588,14 @@ static COMMAND_FUNC( poll_mouse )
 			WARN("already polling mouse");
 			return;
 		}
-		add_event_func(QSP_ARG  check_mouse);
+		add_event_func(check_mouse);
 		polling=1;
 	} else {
 		if( ! polling ) {
 			WARN("not already polling mouse");
 			return;
 		}
-		if( rem_event_func(QSP_ARG  check_mouse) < 0 )
+		if( rem_event_func(check_mouse) < 0 )
 			WARN("error removing mouse handler");
 		polling=0;
 	}

@@ -3614,7 +3614,7 @@ static void add_func_to_list(List *lp,void (*func)(SINGLE_QSP_ARG_DECL) )
 }
 
 
-void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )	/** set event processing function */
+void _add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )	/** set event processing function */
 {
 	if( QS_EVENT_LIST(THIS_QSP) == NULL ){
 		SET_QS_EVENT_LIST(THIS_QSP, new_list() );
@@ -3622,7 +3622,7 @@ void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )	/** set ev
 	add_func_to_list(QS_EVENT_LIST(THIS_QSP),func);
 }
 
-int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
+int _rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) )
 {
 	Node *np;
 	np = remData(QS_EVENT_LIST(THIS_QSP),(void *)func);

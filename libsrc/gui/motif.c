@@ -1201,7 +1201,7 @@ void motif_init(QSP_ARG_DECL  const char *progname)
 
 	argv[0]=progname;
 
-	the_dname = check_display(SINGLE_QSP_ARG);
+	the_dname = check_display();
 
 	/*
 	 * initialize the Xt toolkit and create an application context
@@ -1218,7 +1218,7 @@ void motif_init(QSP_ARG_DECL  const char *progname)
 		return;
 	}
 
-	add_event_func(QSP_ARG  motif_dispatch);
+	add_event_func(motif_dispatch);
 
 	// This is not really a motif-specific thing,
 	// but we do this here because nav_panel_itp is

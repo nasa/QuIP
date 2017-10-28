@@ -247,12 +247,12 @@ FILE *qs_msg_file(SINGLE_QSP_ARG_DECL)
 	return QS_MSG_FILE(THIS_QSP);
 }
 
-int max_vectorizable(SINGLE_QSP_ARG_DECL)
+int _max_vectorizable(SINGLE_QSP_ARG_DECL)
 {
 	return QS_MAX_VECTORIZABLE(THIS_QSP);
 }
 
-void set_max_vectorizable(QSP_ARG_DECL  int v)
+void _set_max_vectorizable(QSP_ARG_DECL  int v)
 {
 	SET_QS_MAX_VECTORIZABLE(THIS_QSP,v);
 }

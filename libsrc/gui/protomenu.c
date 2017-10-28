@@ -895,7 +895,7 @@ COMMAND_FUNC( do_protomenu )
 #ifdef HAVE_X11
 		const char *display_name;
 		// why call this - does this force an init of X11?
-		display_name = which_display(SINGLE_QSP_ARG);
+		display_name = which_display();
 		// the next lines suppress a warning about unused value of s
 		if( verbose ){
 			sprintf(MSG_STR,"Using display '%s'",display_name);

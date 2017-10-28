@@ -120,8 +120,6 @@ static Data_Obj *_create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
 #define eval_dim_assignment(dp,enp)		_eval_dim_assignment(QSP_ARG  dp,enp)
 #define eval_decl_stat(prec,enp,decl_flags)		_eval_decl_stat(QSP_ARG  prec,enp,decl_flags)
 #define eval_extern_decl(prec_p,enp,decl_flags)		_eval_extern_decl(QSP_ARG  prec_p,enp,decl_flags)
-#define D_SUBSCRIPT(dp,index)		d_subscript(QSP_ARG  dp , index )
-#define C_SUBSCRIPT(dp,index)		c_subscript(QSP_ARG  dp , index )
 
 #define get_arg_ptr(enp)	_get_arg_ptr(QSP_ARG  enp)
 #define parse_script_args(enp,index,max_args)		_parse_script_args(QSP_ARG  enp,index,max_args)
@@ -866,7 +864,7 @@ static Data_Obj *map_subscripts(QSP_ARG_DECL  Data_Obj *src_dp, Data_Obj *index_
 
 	/* Now check the sizes - we might like to use dp_same_size(), but we allow tdim to differ  */
 
-	if( !dp_same_dims(QSP_ARG  dst_dp,index_dp,1,N_DIMENSIONS-1,"map_subscripts") ){
+	if( !dp_same_dims(dst_dp,index_dp,1,N_DIMENSIONS-1,"map_subscripts") ){
 		node_error(enp);
 		sprintf(ERROR_STRING,"map_subscripts:  objects %s and %s should have the same shape",
 			OBJ_NAME(dst_dp),OBJ_NAME(index_dp));
@@ -1297,7 +1295,7 @@ static Data_Obj * complement_bitmap(QSP_ARG_DECL  Data_Obj *dp)
 		new_dp = dup_obj(QSP_ARG  dp,s=localname());
 		assert( new_dp != NULL );
 
-		dp_copy(QSP_ARG  new_dp,dp);
+		dp_copy(new_dp,dp);
 		dp = new_dp;
 	}
 
@@ -1700,10 +1698,10 @@ static int c_convert(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *dp)
 		}
 	} else if( IS_COMPLEX(dst_dp) ){
 		if( IS_REAL(dp) ){
-			tmp_dp = C_SUBSCRIPT(dst_dp,0);
+			tmp_dp = c_subscript(dst_dp,0);
 			dp_convert(QSP_ARG  tmp_dp,dp);
 			// BUG should set imaginary part to 0!
-			tmp_dp = C_SUBSCRIPT(dst_dp,1);
+			tmp_dp = c_subscript(dst_dp,1);
 			return zero_dp(QSP_ARG  tmp_dp);
 		} else if( IS_COMPLEX(dp) ){
 			dp_convert(QSP_ARG  dst_dp,dp);
@@ -4669,7 +4667,7 @@ static Data_Obj *_eval_subscript1(QSP_ARG_DECL Data_Obj *dp, Vec_Expr_Node *enp)
 	 */
 	insure_object_size(QSP_ARG  dp,index);
 
-	dp2 = D_SUBSCRIPT(dp,index);
+	dp2 = d_subscript(dp,index);
 	return( dp2 );
 }
 
@@ -4733,7 +4731,7 @@ static Data_Obj *_create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp)
 	lp=new_list();
 	addTail(lp,np1);
 	addTail(lp,np2);
-	dp1=make_obj_list(QSP_ARG  localname(),lp);
+	dp1=make_obj_list(localname(),lp);
 	return(dp1);
 }
 
@@ -4799,7 +4797,7 @@ static dimension_t _assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node
 				i1=assign_obj_from_list(dp,VN_CHILD(enp,0),index);
 			} else {
 				// If it's not a row_list node, then what is it???
-				sub_dp = D_SUBSCRIPT(dp,index);
+				sub_dp = d_subscript(dp,index);
 				i1=assign_obj_from_list(sub_dp,VN_CHILD(enp,0),index);
 				delvec(sub_dp);
 			}
@@ -4808,7 +4806,7 @@ static dimension_t _assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node
 			if( VN_CODE(VN_CHILD(enp,1)) == T_ROW_LIST ){
 				i2=assign_obj_from_list(dp,VN_CHILD(enp,1),index+i1);
 			} else {
-				sub_dp = D_SUBSCRIPT(dp,index+i1);
+				sub_dp = d_subscript(dp,index+i1);
 				i2=assign_obj_from_list(sub_dp,VN_CHILD(enp,1),index+i1);
 				delvec(sub_dp);
 			}
@@ -4824,7 +4822,7 @@ static dimension_t _assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node
 			if( VN_CODE(VN_CHILD(enp,0)) == T_COMP_LIST ){
 				i1=assign_obj_from_list(dp,VN_CHILD(enp,0),index);
 			} else {
-				sub_dp = C_SUBSCRIPT(dp,index);
+				sub_dp = c_subscript(dp,index);
 				i1=assign_obj_from_list(sub_dp,VN_CHILD(enp,0),index);
 				delvec(sub_dp);
 			}
@@ -4833,7 +4831,7 @@ static dimension_t _assign_obj_from_list(QSP_ARG_DECL Data_Obj *dp,Vec_Expr_Node
 			if( VN_CODE(VN_CHILD(enp,1)) == T_COMP_LIST ){
 				i2=assign_obj_from_list(dp,VN_CHILD(enp,1),index+i1);
 			} else {
-				sub_dp = C_SUBSCRIPT(dp,index+i1);
+				sub_dp = c_subscript(dp,index+i1);
 				i2=assign_obj_from_list(sub_dp,VN_CHILD(enp,1),index+i1);
 				delvec(sub_dp);
 			}
@@ -5058,7 +5056,7 @@ dump_tree(enp);
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			if( dp == NULL ) return(dp);
 			index = (index_t) eval_int_exp(VN_CHILD(enp,1));
-			dp=C_SUBSCRIPT(dp,index);
+			dp=c_subscript(dp,index);
 			return(dp);
 
 		case T_SQUARE_SUBSCR:				/* eval_obj_ref */
@@ -5069,7 +5067,7 @@ dump_tree(enp);
 			 */
 			if( SCALAR_SHAPE(VN_SHAPE(VN_CHILD(enp,1))) ){
 				index = (index_t) eval_int_exp(VN_CHILD(enp,1));
-				dp = D_SUBSCRIPT(dp,index);
+				dp = d_subscript(dp,index);
 				return( dp );
 			} else {
 				node_error(enp);
@@ -5172,13 +5170,13 @@ dump_tree(enp);
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			if( dp == NULL ) return(dp);
 			/* BUG make sure that the object is commplex! */
-			return( C_SUBSCRIPT(dp,0) );
+			return( c_subscript(dp,0) );
 			break;
 		case T_IMAG_PART:
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			if( dp == NULL ) return(dp);
 			/* BUG make sure that the object is commplex! */
-			return( C_SUBSCRIPT(dp,1) );
+			return( c_subscript(dp,1) );
 			break;
 
 		default:
@@ -5444,7 +5442,7 @@ return(0.0);
 		case T_SUBSCRIPT1:			/* eval_flt_exp */
 			dp=GET_OBJ(VN_STRING(VN_CHILD(enp,0)));
 			index = (index_t) eval_flt_exp(VN_CHILD(enp,1));
-			dp2 = D_SUBSCRIPT(dp,index);
+			dp2 = d_subscript(dp,index);
 			if( dp2 == NULL ){
 				sprintf(ERROR_STRING,
 		"Couldn't form subobject %s[%d]",OBJ_NAME(dp),index);
@@ -5689,7 +5687,7 @@ obj_flt_exp:
 			/* dp=GET_OBJ(VN_STRING(VN_CHILD(enp,0))); */
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			index = (index_t) eval_int_exp(VN_CHILD(enp,1));
-			dp2 = D_SUBSCRIPT(dp,index);
+			dp2 = d_subscript(dp,index);
 			if( dp2 == NULL ){
 				sprintf(ERROR_STRING,
 		"Couldn't form subobject %s[%d]",OBJ_NAME(dp),index);
@@ -5704,7 +5702,7 @@ obj_flt_exp:
 		case T_CURLY_SUBSCR:
 			dp = eval_obj_ref(VN_CHILD(enp,0));
 			index = (index_t) eval_int_exp(VN_CHILD(enp,1));
-			dp2 = C_SUBSCRIPT(dp,index);
+			dp2 = c_subscript(dp,index);
 			if( dp2 == NULL ){
 				sprintf(ERROR_STRING,
 		"Couldn't form subobject %s[%d]",OBJ_NAME(dp),index);
@@ -5926,9 +5924,9 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 				index_t index;
 				index = (index_t)eval_int_exp(VN_CHILD(enp,1));
 				if( VN_CODE(enp) == T_SQUARE_SUBSCR )
-					return( D_SUBSCRIPT(dp,index) );
+					return( d_subscript(dp,index) );
 				else
-					return( C_SUBSCRIPT(dp,index) );
+					return( c_subscript(dp,index) );
 			} else {
 				Data_Obj *index_dp;
 				index_dp=eval_obj_ref(VN_CHILD(enp,1));
@@ -5951,7 +5949,7 @@ Data_Obj *_eval_obj_exp(QSP_ARG_DECL Vec_Expr_Node *enp,Data_Obj *dst_dp)
 		case T_SUBSCRIPT1:	/* eval_obj_exp */
 			dp=GET_OBJ(VN_STRING(VN_CHILD(enp,0)));
 			index = eval_flt_exp(VN_CHILD(enp,1));
-			dp2 = D_SUBSCRIPT(dp,index);
+			dp2 = d_subscript(dp,index);
 			return(dp2);
 #endif /* MATLAB_FOOBAR */
 
@@ -6228,7 +6226,7 @@ void insure_object_size(QSP_ARG_DECL  Data_Obj *dp,index_t index)
 
 		/* copy in original data */
 		sub_dp = mk_subseq("tmp_subseq",new_dp,offsets,OBJ_TYPE_DIMS(dp));
-		dp_copy(QSP_ARG  sub_dp,dp);
+		dp_copy(sub_dp,dp);
 
 		/* get rid of the subimage */
 		delvec(sub_dp);
@@ -6609,7 +6607,7 @@ dump_tree(enp);
 		case T_ROW:
 			/* do we need to subscript dst_dp?? */
 			if( OBJ_ROWS(dst_dp) > 1 ){
-				dp2 = D_SUBSCRIPT(dst_dp,1);
+				dp2 = d_subscript(dst_dp,1);
 			} else {
 				dp2 = dst_dp;
 			}
@@ -7016,7 +7014,7 @@ advise(ERROR_STRING);
 			}
 			if( mode_is_matlab ){
 				if( OBJ_ROWS(dp1) == 1 && OBJ_ROWS(dst_dp) > 1 ){
-					dp2 = D_SUBSCRIPT(dst_dp,1);
+					dp2 = d_subscript(dst_dp,1);
 					//setvarg2(oap,dst_dp,dp1);
 					//h_vl2_convert(HOST_CALL_ARGS);
 					dp_convert(QSP_ARG  dst_dp,dp1);
@@ -7498,7 +7496,7 @@ advise(ERROR_STRING);
 
 	/* Where should we put this? */
 	/* We want to do this at the END of each statement... */
-	unlock_all_tmp_objs(SINGLE_QSP_ARG);
+	unlock_all_tmp_objs();
 
 	/* BUG we'll do something more efficient eventually */
 

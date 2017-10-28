@@ -283,9 +283,9 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	/* this might be better done in a global init routine... */
 	if( !siz_done ){
 		/* Can we handle mixed Item_Types and IOS_Item_Types??? */
-		add_ios_sizable(QSP_ARG  vwr_itp,&view_sf, NULL );
+		add_ios_sizable(vwr_itp,&view_sf, NULL );
 #ifndef BUILD_FOR_OBJC
-		add_positionable(QSP_ARG  vwr_itp,&view_pf,NULL );
+		add_positionable(vwr_itp,&view_pf,NULL );
 #endif // BUILD_FOR_OBJC
 		siz_done=1;
 	}
@@ -353,20 +353,20 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 	/* do window system specific stuff */
 
 	if( flags & VIEW_ADJUSTER )
-		stat=make_2d_adjuster(QSP_ARG  vp,dx,dy);
+		stat=make_2d_adjuster(vp,dx,dy);
 	else if( flags & VIEW_DRAGSCAPE )
-		stat=make_dragscape(QSP_ARG  vp,dx,dy);
+		stat=make_dragscape(vp,dx,dy);
 	else if( flags & VIEW_MOUSESCAPE )
-		stat=make_mousescape(QSP_ARG  vp,dx,dy);
+		stat=make_mousescape(vp,dx,dy);
 	else if( flags & (VIEW_BUTTON_ARENA|VIEW_PLOTTER) ){
-		stat=make_button_arena(QSP_ARG  vp,dx,dy);
+		stat=make_button_arena(vp,dx,dy);
 	}
 #ifdef SGI_GL
 	else if( flags & VIEW_GL )
-		stat=make_gl_window(QSP_ARG  vp,dx,dy);
+		stat=make_gl_window(vp,dx,dy);
 #endif /* SGI_GL */
 	else
-		stat=make_viewer(QSP_ARG  vp,dx,dy);
+		stat=make_viewer(vp,dx,dy);
 
 	if( stat < 0 ){		/* probably can't open DISPLAY */
 #ifndef BUILD_FOR_OBJC
@@ -389,7 +389,7 @@ Viewer *viewer_init(QSP_ARG_DECL  const char *name,int dx,int dy,int flags)
 #endif /* BUILD_FOR_IOS */
 
 
-	SET_VW_DEPTH(vp, display_depth(SINGLE_QSP_ARG) );
+	SET_VW_DEPTH(vp, display_depth() );
 
 	SET_VW_OBJ(vp, NULL);
 
@@ -451,7 +451,7 @@ void info_viewer(QSP_ARG_DECL  Viewer *vp)
 	}
 #endif /* HAVE_X11 */
 
-	extra_viewer_info(QSP_ARG  vp);
+	extra_viewer_info(vp);
 }
 
 /* genwin support */
@@ -469,7 +469,7 @@ static void genwin_viewer_show(QSP_ARG_DECL  const char *s)
 
 	vp=get_vwr(s);
 	if( vp == NULL ) return;
-	show_viewer(QSP_ARG  vp);
+	show_viewer(vp);
 	return;
 }
 
@@ -479,7 +479,7 @@ static void genwin_viewer_unshow(QSP_ARG_DECL  const char *s)
 
 	vp=get_vwr(s);
 	if( vp == NULL ) return;
-	unshow_viewer(QSP_ARG  vp);
+	unshow_viewer(vp);
 	return;
 }
 

@@ -291,11 +291,11 @@ DECLARE_CLASS_INITIALIZER(positionable)
 
 #define DECLARE_ADD_FUNCTION(type_stem,func_type)			\
 									\
-void add_##type_stem(QSP_ARG_DECL  Item_Type *itp,			\
+void _add_##type_stem(QSP_ARG_DECL  Item_Type *itp,			\
 		func_type *func_str_ptr,				\
 		Item *(*lookup)(QSP_ARG_DECL  const char *))		\
 {									\
-	if( type_stem##_icp == NULL )				\
+	if( type_stem##_icp == NULL )					\
 		init_##type_stem##_class(SINGLE_QSP_ARG);		\
 	add_items_to_class(type_stem##_icp,itp,func_str_ptr,lookup);	\
 }

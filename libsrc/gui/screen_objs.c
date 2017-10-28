@@ -2197,12 +2197,12 @@ void so_init(QSP_ARG_DECL  int argc,const char **argv)
 	/* support for genwin */
 	add_genwin(QSP_ARG  panel_obj_itp, &gwfp, NULL);
 	
-	add_sizable(QSP_ARG  panel_obj_itp,&panel_sf, NULL );
+	add_sizable(panel_obj_itp,&panel_sf, NULL );
 
 	// scrnobj_itp is null at this point!?
 	if( scrnobj_itp == NULL )
 		init_scrnobjs();
-	add_sizable(QSP_ARG  scrnobj_itp,&scrnobj_sf, NULL );
+	add_sizable(scrnobj_itp,&scrnobj_sf, NULL );
 	
 #else
 

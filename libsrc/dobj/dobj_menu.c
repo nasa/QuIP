@@ -874,7 +874,7 @@ static COMMAND_FUNC( do_get_align )
 
 static COMMAND_FUNC( do_list_dobjs ) { list_dobjs(tell_msgfile()); }
 static COMMAND_FUNC( do_list_temp_dps ) { list_temp_dps(tell_msgfile()); }
-static COMMAND_FUNC( do_unlock_all_tmp_objs ) { unlock_all_tmp_objs(SINGLE_QSP_ARG); }
+static COMMAND_FUNC( do_unlock_all_tmp_objs ) { unlock_all_tmp_objs(); }
 
 static COMMAND_FUNC( do_protect )
 {

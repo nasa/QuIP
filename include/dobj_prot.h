@@ -36,7 +36,7 @@ extern List *		_dobj_list(SINGLE_QSP_ARG_DECL);
 #define dobj_list()	_dobj_list(SINGLE_QSP_ARG)
 
 
-extern void		disown_child(QSP_ARG_DECL  Data_Obj * dp);
+extern void		_disown_child(QSP_ARG_DECL  Data_Obj * dp);
 extern void		_delvec(QSP_ARG_DECL  Data_Obj * dp);
 extern void		info_area(QSP_ARG_DECL  Data_Area *ap);
 extern void		info_all_dps(SINGLE_QSP_ARG_DECL);
@@ -56,6 +56,7 @@ extern void		dataobj_init(SINGLE_QSP_ARG_DECL);
 extern void		init_dfuncs(SINGLE_QSP_ARG_DECL);
 extern int		same_shape(Shape_Info *,Shape_Info *);
 
+#define disown_child(dp) _disown_child(QSP_ARG  dp)
 #define delvec(dp)	_delvec(QSP_ARG  dp)
 
 /* dplist.c */
@@ -83,25 +84,34 @@ extern Data_Obj * pars_obj(const char *);
 /* formerly in arrays.h */
 
 extern void release_tmp_obj(Data_Obj *);
-extern void unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL);
-extern void set_array_base_index(QSP_ARG_DECL  int);
-extern void init_tmp_dps(SINGLE_QSP_ARG_DECL);
-extern Data_Obj * find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp);
-extern Data_Obj * temp_child(QSP_ARG_DECL  const char *name,Data_Obj * dp);
-extern void make_array_name(QSP_ARG_DECL  char *target_str,int buflen,Data_Obj * dp,
-   index_t index,int which_dim,int subscr_type);
-extern Data_Obj * gen_subscript(QSP_ARG_DECL  Data_Obj * dp,
-   int which_dim,index_t index,int subscr_type);
-extern Data_Obj * reduce_from_end(QSP_ARG_DECL  Data_Obj * dp,
-   index_t index,int subscr_type);
-extern Data_Obj * d_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
-extern Data_Obj * c_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
 extern int is_in_string(int c,const char *s);
-extern void reindex(QSP_ARG_DECL  Data_Obj * ,int,index_t);
-extern void _list_temp_dps(QSP_ARG_DECL  FILE *fp);
 extern void unlock_children(Data_Obj *dp);
 
-#define list_temp_dps(fp)	_list_temp_dps(QSP_ARG  fp)
+extern void _unlock_all_tmp_objs(SINGLE_QSP_ARG_DECL);
+extern void _set_array_base_index(QSP_ARG_DECL  int);
+extern void _init_tmp_dps(SINGLE_QSP_ARG_DECL);
+extern Data_Obj * _find_free_temp_dp(QSP_ARG_DECL  Data_Obj *dp);
+extern Data_Obj * _temp_child(QSP_ARG_DECL  const char *name,Data_Obj * dp);
+extern void _make_array_name(QSP_ARG_DECL  char *target_str,int buflen,Data_Obj * dp, index_t index,int which_dim,int subscr_type);
+extern Data_Obj * _gen_subscript(QSP_ARG_DECL  Data_Obj * dp, int which_dim,index_t index,int subscr_type);
+extern Data_Obj * _reduce_from_end(QSP_ARG_DECL  Data_Obj * dp, index_t index,int subscr_type);
+extern Data_Obj * _d_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
+extern Data_Obj * _c_subscript(QSP_ARG_DECL  Data_Obj * dp,index_t index);
+extern void _reindex(QSP_ARG_DECL  Data_Obj * ,int,index_t);
+extern void _list_temp_dps(QSP_ARG_DECL  FILE *fp);
+
+#define unlock_all_tmp_objs()		_unlock_all_tmp_objs(SINGLE_QSP_ARG)
+#define set_array_base_index(idx)	_set_array_base_index(QSP_ARG  idx)
+#define init_tmp_dps()			_init_tmp_dps(SINGLE_QSP_ARG)
+#define find_free_temp_dp(dp)		_find_free_temp_dp(QSP_ARG  dp)
+#define temp_child(name,dp)		_temp_child(QSP_ARG  name,dp)
+#define make_array_name(target_str,buflen,dp,index,which_dim,subscr_type)		_make_array_name(QSP_ARG  target_str,buflen,dp,index,which_dim,subscr_type)
+#define gen_subscript(dp,which_dim,index,subscr_type)		_gen_subscript(QSP_ARG  dp,which_dim,index,subscr_type)
+#define reduce_from_end(dp,index,subscr_type)		_reduce_from_end(QSP_ARG  dp,index,subscr_type)
+#define d_subscript(dp,index)		_d_subscript(QSP_ARG  dp,index)
+#define c_subscript(dp,index)		_c_subscript(QSP_ARG  dp,index)
+#define reindex(dp,which_dim,idx)	_reindex(QSP_ARG  dp,which_dim,idx)
+#define list_temp_dps(fp)		_list_temp_dps(QSP_ARG  fp)
 
 /* get_obj.c */
 /* formerly in get_obj.h */
@@ -116,13 +126,13 @@ extern Data_Obj * get_img(QSP_ARG_DECL  const char *s );
 
 
 /* data_fns.c */
+extern const char *	localname(void);
 
 extern void *		multiply_indexed_data(Data_Obj *dp, dimension_t *offset );
 extern void *		indexed_data(Data_Obj *dp, dimension_t offset );
 extern void		make_contiguous(Data_Obj *);
 extern int		set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dimensions,Precision *);
 extern int		obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
-extern Data_Obj *	_make_obj_list(QSP_ARG_DECL  const char *name,List *lp);
 extern Data_Obj *	mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
 extern void		assign_scalar_obj(QSP_ARG_DECL  Data_Obj *,Scalar_Value *);
 extern void		extract_scalar_value(QSP_ARG_DECL  Scalar_Value *, Data_Obj *);
@@ -134,20 +144,22 @@ extern void		cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Pr
 extern void		cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
 extern Data_Obj *	mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
-extern Data_Obj *	comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data);
 extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
 extern Data_Obj *	dup_dbl(QSP_ARG_DECL  Data_Obj *dp,const char *name);
 extern Data_Obj *	dup_obj(QSP_ARG_DECL  Data_Obj *dp,const char *name);
-extern const char *	localname(void);
 extern Data_Obj *	dupdp(QSP_ARG_DECL  Data_Obj *dp);
 extern int		is_valid_dname(QSP_ARG_DECL  const char *name);
 
 extern Data_Obj *	_mk_img(QSP_ARG_DECL  const char *,dimension_t,dimension_t,dimension_t ,Precision *prec_p);
 extern int		_set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dimensions,Precision *);
 extern Data_Obj *	_make_obj(QSP_ARG_DECL  const char *name,dimension_t frames, dimension_t rows,dimension_t cols,dimension_t type_dim,Precision * prec_p);
+extern Data_Obj *	_comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data);
+extern Data_Obj *	_make_obj_list(QSP_ARG_DECL  const char *name,List *lp);
 #define mk_img(s,h,w,d,p)	_mk_img(QSP_ARG  s,h,w,d,p)
 #define set_obj_dimensions(dp,dimensions,prec_p)	_set_obj_dimensions(QSP_ARG  dp,dimensions,prec_p)
 #define make_obj(name,frames,rows,cols,type_dim,prec_p)	_make_obj(QSP_ARG  name,frames,rows,cols,type_dim,prec_p)
+#define comp_replicate(dp,n,f)	_comp_replicate(QSP_ARG  dp,n,f)
+#define make_obj_list(name,lp) _make_obj_list(QSP_ARG  name,lp)
 
 /* makedobj.c */
 extern void	  set_dp_alignment(int);
@@ -212,7 +224,7 @@ extern void		_show_area_space(QSP_ARG_DECL  Data_Area *ap);
 extern Data_Obj *	_area_scalar(QSP_ARG_DECL  Data_Area *ap);
 
 #define da_list()					_da_list(SINGLE_QSP_ARG)
-#define default_data_area() 				_default_data_area(SINGLE_QSP_ARG)
+#define default_data_area()				_default_data_area(SINGLE_QSP_ARG)
 #define pf_area_init(name,buffer,siz,nobjs,flags,pdp)	_pf_area_init(QSP_ARG  name,buffer,siz,nobjs,flags,pdp)
 #define new_area(s,siz,n)				_new_area(QSP_ARG  s,siz,n)
 #define list_area(ap)					_list_area(QSP_ARG  ap)
@@ -224,42 +236,58 @@ extern Data_Obj *	_area_scalar(QSP_ARG_DECL  Data_Area *ap);
 extern Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str );
 
 /* memops.c */
-extern int not_prec(QSP_ARG_DECL  Data_Obj *,prec_t);
-extern void check_vectorization(QSP_ARG_DECL  Data_Obj *dp);
-extern void dp1_vectorize(QSP_ARG_DECL  int,Data_Obj *,void (*func)(Data_Obj *) );
-extern void dp2_vectorize(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *,
-				void (*func)(Data_Obj *,Data_Obj *) );
-extern void getmean(QSP_ARG_DECL  Data_Obj *dp);
-extern void dp_equate(QSP_ARG_DECL  Data_Obj *dp, double v);
-extern void dp_copy(QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr);
-extern void i_rnd(QSP_ARG_DECL  Data_Obj *dp, int imin, int imax);
-extern void dp_uni(QSP_ARG_DECL  Data_Obj *dp);
-extern void mxpose(Data_Obj *dp_to, Data_Obj *dp_fr);
-
-extern int dp_same_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
-
-#define CHECK_SAME_PREC( dp1, dp2, whence )				\
-									\
-	if( !dp_same_prec(DEFAULT_QSP_ARG  dp1,dp2,whence) )			\
-		return;
-	
-extern int dp_same_mach_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
-extern int dp_same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
-extern int dp_same_size(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
-
-#define CHECK_SAME_SIZE( dp1, dp2, whence )				\
-									\
-	if( !dp_same_size(DEFAULT_QSP_ARG  dp1,dp2,whence) )			\
-		return;
-	
-extern int dp_same_dim(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index,const char *whence);
-extern int dp_same_dims(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index1,int index2,const char *whence);
-extern int dp_same(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
-
 extern int dp_same_size_query(Data_Obj *dp1,Data_Obj *dp2);
 extern int dp_same_size_query_rc(Data_Obj *real_dp,Data_Obj *cpx_dp);
 extern int dp_equal_dim(Data_Obj *dp1,Data_Obj *dp2,int index);
-extern int dp_equal_dims(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index1,int index2);
+extern void mxpose(Data_Obj *dp_to, Data_Obj *dp_fr);
+
+extern int _not_prec(QSP_ARG_DECL  Data_Obj *,prec_t);
+extern void _check_vectorization(QSP_ARG_DECL  Data_Obj *dp);
+extern void _dp1_vectorize(QSP_ARG_DECL  int,Data_Obj *,void (*func)(Data_Obj *) );
+extern void _dp2_vectorize(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *, void (*func)(Data_Obj *,Data_Obj *) );
+extern void _getmean(QSP_ARG_DECL  Data_Obj *dp);
+extern void _dp_equate(QSP_ARG_DECL  Data_Obj *dp, double v);
+extern void _dp_copy(QSP_ARG_DECL  Data_Obj *dp_to, Data_Obj *dp_fr);
+extern void _i_rnd(QSP_ARG_DECL  Data_Obj *dp, int imin, int imax);
+extern void _dp_uni(QSP_ARG_DECL  Data_Obj *dp);
+extern int _dp_same_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
+extern int _dp_same_mach_prec(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
+extern int _dp_same_pixel_type(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
+extern int _dp_same_size(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
+extern int _dp_same_dim(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index,const char *whence);
+extern int _dp_same_dims(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index1,int index2,const char *whence);
+extern int _dp_same(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,const char *whence);
+extern int _dp_equal_dims(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2,int index1,int index2);
+
+#define not_prec(dp,p)				_not_prec(QSP_ARG  dp,p)
+#define check_vectorization(dp)			_check_vectorization(QSP_ARG  dp)
+#define dp1_vectorize(i,dp,func)		_dp1_vectorize(QSP_ARG  i,dp,func)
+#define dp2_vectorize(i,dp1,dp2,func)		_dp2_vectorize(QSP_ARG  i,dp1,dp2,func)
+#define getmean(dp)				_getmean(QSP_ARG  dp)
+#define dp_equate(dp,v)				_dp_equate(QSP_ARG  dp,v)
+#define dp_copy(dp_to,dp_fr)			_dp_copy(QSP_ARG  dp_to,dp_fr)
+#define i_rnd(dp,imin,imax)			_i_rnd(QSP_ARG  dp,imin,imax)
+#define dp_uni(dp)				_dp_uni(QSP_ARG  dp)
+#define dp_same_prec(dp1,dp2,whence)		_dp_same_prec(QSP_ARG  dp1,dp2,whence)
+#define dp_same_mach_prec(dp1,dp2,whence)	_dp_same_mach_prec(QSP_ARG  dp1,dp2,whence)
+#define dp_same_pixel_type(dp1,dp2,whence)	_dp_same_pixel_type(QSP_ARG  dp1,dp2,whence)
+#define dp_same_size(dp1,dp2,whence)		_dp_same_size(QSP_ARG  dp1,dp2,whence)
+#define dp_same_dim(dp1,dp2,index,whence)	_dp_same_dim(QSP_ARG  dp1,dp2,index,whence)
+#define dp_same_dims(dp1,dp2,index1,index2,whence)	_dp_same_dims(QSP_ARG  dp1,dp2,index1,index2,whence)
+#define dp_same(dp1,dp2,whence)			_dp_same(QSP_ARG  dp1,dp2,whence)
+#define dp_equal_dims(dp1,dp2,index1,index2)	_dp_equal_dims(QSP_ARG  dp1,dp2,index1,index2)
+
+
+#define CHECK_SAME_PREC( dp1, dp2, whence )				\
+									\
+	if( !_dp_same_prec(DEFAULT_QSP_ARG  dp1,dp2,whence) )		\
+		return;
+	
+#define CHECK_SAME_SIZE( dp1, dp2, whence )				\
+									\
+	if( !_dp_same_size(DEFAULT_QSP_ARG  dp1,dp2,whence) )		\
+		return;
+
 // doesn't seem to be here any more
 //extern int dp_same_len(QSP_ARG_DECL  Data_Obj *dp1,Data_Obj *dp2);
 

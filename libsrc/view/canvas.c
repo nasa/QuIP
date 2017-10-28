@@ -124,7 +124,7 @@ void bring_image_to_front(QSP_ARG_DECL  Viewer *vp, Data_Obj *dp, int x, int y )
 			// image is first in the list now
 			wip->wi_x = x;
 			wip->wi_y = y;
-			embed_image(QSP_ARG  vp,dp,wip->wi_x,wip->wi_y);
+			embed_image(vp,dp,wip->wi_x,wip->wi_y);
 			return;
 		}
 		// rotate the list
@@ -160,12 +160,12 @@ void load_viewer( QSP_ARG_DECL  Viewer *vp, Data_Obj *dp )
 	 * should be added to the list or not
 	 */
 #ifdef BUILD_FOR_IOS
-	embed_image(QSP_ARG  vp,dp,0,0);
+	embed_image(vp,dp,0,0);
 #else /* ! BUILD_FOR_IOS */
 
 	if( add_image(vp,dp,0,0) ){
 //fprintf(stderr,"load_viewer:  redrawing image %s\n",OBJ_NAME(dp));
-		embed_image(QSP_ARG  vp,dp,0,0);
+		embed_image(vp,dp,0,0);
 	} else {
 		// This image has already been displayed...
 //fprintf(stderr,"load_viewer:  bringing old image %s to front\n",OBJ_NAME(dp));

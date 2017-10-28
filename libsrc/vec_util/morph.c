@@ -34,7 +34,7 @@ void erode(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		WARN("precision must be float for erosion");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dpto,dpfr,"erode") ){
+	if( !dp_same_size(dpto,dpfr,"erode") ){
 		WARN("images must be equal in size for erosion");
 		return;
 	}
@@ -238,7 +238,7 @@ void dilate(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr)
 		WARN("precision must be float for dilation");
 		return;
 	}
-	if( !dp_same_size(QSP_ARG  dpto,dpfr,"dilate") ){
+	if( !dp_same_size(dpto,dpfr,"dilate") ){
 		WARN("images must be equal in size for dilation");
 		return;
 	}

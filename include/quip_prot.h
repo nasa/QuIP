@@ -296,8 +296,6 @@ extern Macro_Arg ** create_generic_macro_args(int n);
 extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
-extern void add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
-extern int rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
 //extern void resume_chewing(SINGLE_QSP_ARG_DECL);
 extern void resume_execution(SINGLE_QSP_ARG_DECL);
 extern void resume_quip(SINGLE_QSP_ARG_DECL);
@@ -307,6 +305,12 @@ extern void set_query_macro(Query *,Macro *);
 extern void set_query_args(Query *,const char **);
 extern void print_qs_levels(QSP_ARG_DECL  int *level_to_print, int n_levels_to_print);
 extern int *get_levels_to_print(QSP_ARG_DECL  int *n_ptr);
+
+extern void _add_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
+extern int _rem_event_func(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL) );
+
+#define add_event_func(func)	_add_event_func(QSP_ARG  func)
+#define rem_event_func(func)	_rem_event_func(QSP_ARG  func)
 
 #ifdef HAVE_HISTORY
 #ifdef TTY_CTL
@@ -476,8 +480,11 @@ extern void add_cmd_callback(QSP_ARG_DECL  void (*f)(SINGLE_QSP_ARG_DECL) );
 
 extern const char *current_input_file(SINGLE_QSP_ARG_DECL);
 
-extern int max_vectorizable(SINGLE_QSP_ARG_DECL);
-extern void set_max_vectorizable(QSP_ARG_DECL  int v);
+extern int _max_vectorizable(SINGLE_QSP_ARG_DECL);
+extern void _set_max_vectorizable(QSP_ARG_DECL  int v);
+
+#define max_vectorizable() _max_vectorizable(SINGLE_QSP_ARG)
+#define set_max_vectorizable(v) _set_max_vectorizable(QSP_ARG  v)
 
 extern void push_text(QSP_ARG_DECL const char *text, const char *filename );
 extern void digest(QSP_ARG_DECL const char *text, const char *filename );

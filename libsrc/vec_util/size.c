@@ -41,7 +41,7 @@ static int change_size(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp )
 
 	/* For simplicity, we don't allow size changes to be combined with conversions */
 
-	if( !dp_same_prec(QSP_ARG  dst_dp,src_dp,"change_size") )
+	if( !dp_same_prec(dst_dp,src_dp,"change_size") )
 		return(-1);
 
 	for(i=0;i<N_DIMENSIONS;i++){

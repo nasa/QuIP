@@ -460,7 +460,7 @@ void show_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 			show_panel(QSP_ARG  (Panel_Obj *)gwp);
 			break;
 		case GW_VIEWER:
-			show_viewer(QSP_ARG  (Viewer *) gwp);
+			show_viewer((Viewer *) gwp);
 			break;
 		case GW_NAV_PANEL:
 #ifdef BUILD_FOR_OBJC
@@ -484,7 +484,7 @@ void unshow_genwin(QSP_ARG_DECL  Gen_Win *gwp)
 			unshow_panel(QSP_ARG  (Panel_Obj *)gwp);
 			break;
 		case GW_VIEWER:
-			unshow_viewer(QSP_ARG  (Viewer *) gwp);
+			unshow_viewer((Viewer *) gwp);
 			break;
 		case GW_NAV_PANEL:
 #ifdef BUILD_FOR_OBJC

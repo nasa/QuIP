@@ -585,7 +585,7 @@ int set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dsp,Preci
 /* Make a copy of the given object, but with n components */
 
 Data_Obj *
-comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
+_comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data)
 {
 	char str[256],*s;
 	Data_Obj *dp2;

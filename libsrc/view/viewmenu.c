@@ -38,7 +38,7 @@ COMMAND_FUNC( do_show_viewer )
 
 	INSURE_X11_SERVER
 
-	show_viewer(QSP_ARG  vp);
+	show_viewer(vp);
 }
 
 COMMAND_FUNC( do_delete_viewer )
@@ -61,7 +61,7 @@ COMMAND_FUNC( do_unshow_viewer )
 
 	INSURE_X11_SERVER
 	SET_VW_FLAG_BITS(vp, VIEW_UNSHOWN);	/* in case not already mapped */
-	unshow_viewer(QSP_ARG  vp);
+	unshow_viewer(vp);
 }
 
 COMMAND_FUNC( do_posn_viewer )
@@ -134,7 +134,7 @@ COMMAND_FUNC( do_geom )
 	if( vp == NULL ) return;
 #ifdef HAVE_X11
 	INSURE_X11_SERVER
-	show_geom(QSP_ARG  vp);
+	show_geom(vp);
 #endif /* HAVE_X11 */
 }
 
@@ -266,7 +266,7 @@ static COMMAND_FUNC( do_wait )
 	if( vp == NULL ) return;
 #ifdef HAVE_X11
 	INSURE_X11_SERVER
-	wait_for_mapped(QSP_ARG  vp,10);
+	wait_for_mapped(vp,10);
 #endif /* HAVE_X11 */
 }
 
@@ -462,7 +462,7 @@ static COMMAND_FUNC( do_refresh_viewer )
 	// For unix we ought to give a duration?
 	// Can we get an event at the refresh???
 
-	cycle_viewer_images(QSP_ARG  vp, frame_duration);
+	cycle_viewer_images(vp, frame_duration);
 #endif // ! BUILD_FOR_OBJC
 }
 

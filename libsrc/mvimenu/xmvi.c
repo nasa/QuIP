@@ -121,7 +121,7 @@ mk_win:
 			return;
 		}
 		default_cmap(QSP_ARG  VW_DPYABLE(vp) );
-		show_viewer(QSP_ARG  vp);	/* default state is to be shown */
+		show_viewer(vp);	/* default state is to be shown */
 		select_viewer(QSP_ARG  vp);
 	} else {
 		if( vp->vw_width != OBJ_COLS(dp) ||
@@ -169,9 +169,9 @@ static void x_get_frame(QSP_ARG_DECL  Movie *mvip,uint32_t n,Data_Obj *dp)
 		src_dp = index_data(QSP_ARG  src_dp,index);
 	}
 
-	if( dp_same(QSP_ARG  src_dp,dp,"x_get_frame") ) return;
+	if( dp_same(src_dp,dp,"x_get_frame") ) return;
 
-	dp_copy(QSP_ARG  dp,src_dp);
+	dp_copy(dp,src_dp);
 }
 
 static void x_get_frame_comp(QSP_ARG_DECL  Movie *mvip,uint32_t n,Data_Obj *dp,int nc)

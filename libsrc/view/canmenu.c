@@ -54,7 +54,7 @@ static Viewer * mk_new_viewer(QSP_ARG_DECL int viewer_type)
 	 * but in IOS we can only see one at a time, so
 	 * we leave them on the bottom until we ask.
 	 */
-	show_viewer(QSP_ARG  vp);
+	show_viewer(vp);
 #endif /* ! BUILD_FOR_IOS */
 	select_viewer(QSP_ARG  vp);
 	return vp;
@@ -215,7 +215,7 @@ COMMAND_FUNC( do_redraw )
 	if( vp == NULL) return;
 
 	INSURE_X11_SERVER
-	redraw_viewer(QSP_ARG  vp);
+	redraw_viewer(vp);
 	select_viewer(QSP_ARG  vp);
 }
 
@@ -240,12 +240,12 @@ COMMAND_FUNC( do_embed_image )
 	INSURE_X11_SERVER
 
 #ifdef BUILD_FOR_IOS
-	embed_image(QSP_ARG  vp,dp,x,y);
+	embed_image(vp,dp,x,y);
 #else /* ! BUILD_FOR_IOS */
 
 	// what does add_image do???
 	if( add_image(vp,dp,x,y) ){
-		embed_image(QSP_ARG  vp,dp,x,y);
+		embed_image(vp,dp,x,y);
 	} else {
 		bring_image_to_front(QSP_ARG  vp,dp,x,y);
 	}
@@ -276,7 +276,7 @@ COMMAND_FUNC( do_unembed_image )
 	INSIST_RAM_OBJ(dp,"unembed_image");
 
 	INSURE_X11_SERVER
-	unembed_image(QSP_ARG  vp,dp,x,y);
+	unembed_image(vp,dp,x,y);
 }
 
 COMMAND_FUNC( do_load_viewer )

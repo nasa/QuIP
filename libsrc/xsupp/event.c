@@ -201,7 +201,7 @@ static int HandleEvent( QSP_ARG_DECL  XEvent *event, int *donep )
 		case Expose:
 			win = event->xexpose.window;
 
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 				NWARN("can't find viewing window for expose event");
 				return 0;
 			}
@@ -236,7 +236,7 @@ sprintf(ERROR_STRING,"redrawing viewer %s after expose event",vp->vw_name);
 advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
-				redraw_viewer(QSP_ARG  vp);
+				redraw_viewer(vp);
 			}
 //else advise("ignoring expose event w/ count > 0");
 
@@ -245,7 +245,7 @@ advise(ERROR_STRING);
 		case ButtonRelease:
 		case ButtonPress:
 			win = event->xbutton.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 		NWARN("can't find viewing window for button event");
 				return 0;
 			}
@@ -342,7 +342,7 @@ advise(ERROR_STRING);
 			assign_reserved_var("view_ypos",string);
 
 			win = event->xbutton.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 				NWARN("can't find viewing window for button event");
 				return 0;
 			}
@@ -412,7 +412,7 @@ advise(ERROR_STRING);
 
 		case MapNotify:
 			win = event->xmapping.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 				NWARN("can't find viewing window for map event");
 				return 0;
 			}
@@ -424,12 +424,12 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-			redraw_viewer(QSP_ARG  vp);
+			redraw_viewer(vp);
 			return 0;
 
 		case MotionNotify:
 			win = event->xmotion.window;
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 		NWARN("can't find viewing window for motion event");
 				return 0;
 			}
@@ -508,7 +508,7 @@ advise(ERROR_STRING);
 			//NADVISE("ConfigureNotify event!");
 			win = event->xconfigure.window;
 
-			if( (vp=find_viewer(QSP_ARG  win)) == NULL ){
+			if( (vp=find_viewer(win)) == NULL ){
 				// Apparently we receive this event after we delete a window
 		//NWARN("can't find viewer for configure event");
 				return 0;
@@ -720,7 +720,7 @@ void discard_events(SINGLE_QSP_ARG_DECL)
 	}
 }
 
-Viewer *find_viewer( QSP_ARG_DECL  Window win )
+Viewer *_find_viewer( QSP_ARG_DECL  Window win )
 {
 	Node *np;
 	Viewer *vp;

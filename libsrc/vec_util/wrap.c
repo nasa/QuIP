@@ -26,7 +26,7 @@ void wrap(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp)
 	}
 #endif /* CAUTIOUS */
 
-	if( dp_same_prec(QSP_ARG  dst_dp,src_dp,"wrap") == 0 ) return;
+	if( dp_same_prec(dst_dp,src_dp,"wrap") == 0 ) return;
 #ifdef FOOBAR
 	if( cktype(dst_dp,src_dp)==(-1)) return;
 #endif /* FOOBAR */
@@ -57,7 +57,7 @@ Data_Obj *dst_dp, *src_dp;
 		WARN(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
-	if( dp_same_prec(QSP_ARG  dst_dp,src_dp,"wrap3d")==0) return;
+	if( dp_same_prec(dst_dp,src_dp,"wrap3d")==0) return;
 #ifdef FOOBAR
 	if( cktype(dst_dp,src_dp)==(-1)) return;
 #endif /* FOOBAR */
@@ -159,7 +159,7 @@ void dp_scroll(QSP_ARG_DECL  Data_Obj *dst_dp,Data_Obj *src_dp,incr_t dx,incr_t 
 		WARN(ERROR_STRING);
 	}
 #endif /* CAUTIOUS */
-	if( dp_same_prec(QSP_ARG  dst_dp,src_dp,"dp_scroll")==0) return;
+	if( dp_same_prec(dst_dp,src_dp,"dp_scroll")==0) return;
 
 #ifdef FOOBAR
 	if( cktype(dst_dp,src_dp)==(-1)) return;

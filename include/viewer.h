@@ -599,27 +599,28 @@ extern void assign_cursor(Viewer *vp,View_Cursor *vcp);
 
 /* from the implentation file (e.g. xsupp) */
 /* These functions define the api that we present from the windowing system */
-extern void show_viewer(QSP_ARG_DECL  Viewer *vp);
-extern void unshow_viewer(QSP_ARG_DECL  Viewer *vp);
 extern void posn_viewer(Viewer *vp,int x,int y);
 extern void relabel_viewer(Viewer *vp,const char *s);
-extern void redraw_viewer(QSP_ARG_DECL  Viewer *vp);
-extern void embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
-extern void unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
 extern void zap_viewer(Viewer *vp);
-extern int make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_dragscape(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_mousescape(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_button_arena(QSP_ARG_DECL  Viewer *vp,int,int);
-extern int make_viewer(QSP_ARG_DECL  Viewer *vp,int,int);
-/* should this be HAVE_GL only??? */
-extern int make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height);
-extern int		display_depth(SINGLE_QSP_ARG_DECL);
-extern void extra_viewer_info(QSP_ARG_DECL  Viewer *vp);
 extern void _xp_select(Viewer *vp,u_long color);
 extern void _xp_bgselect(Viewer *vp,u_long color);
 extern void _xp_text(Viewer *vp,int x1,int y1,const char *);
 extern void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2);
+
+extern void _show_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _unshow_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _redraw_viewer(QSP_ARG_DECL  Viewer *vp);
+extern void _embed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
+extern void _unembed_image(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp,int x,int y);
+extern int _make_2d_adjuster(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_dragscape(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_mousescape(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_button_arena(QSP_ARG_DECL  Viewer *vp,int,int);
+extern int _make_viewer(QSP_ARG_DECL  Viewer *vp,int,int);
+/* should this be HAVE_GL only??? */
+extern int _make_gl_window(QSP_ARG_DECL  Viewer *vp, int width, int height);
+extern int _display_depth(SINGLE_QSP_ARG_DECL);
+extern void _extra_viewer_info(QSP_ARG_DECL  Viewer *vp);
 #ifdef BUILD_FOR_OBJC
 extern void _xp_linewidth(Viewer *vp,CGFloat w);
 extern int is_image_viewer(QSP_ARG_DECL  Viewer *vp);
@@ -654,6 +655,20 @@ extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);
 extern void declare_canvas_events(SINGLE_QSP_ARG_DECL);
 
 //#endif /* HAVE_X11 */
+
+#define show_viewer(vp)				_show_viewer(QSP_ARG  vp)
+#define unshow_viewer(vp)			_unshow_viewer(QSP_ARG  vp)
+#define redraw_viewer(vp)			_redraw_viewer(QSP_ARG  vp)
+#define embed_image(vp,dp,x,y)			_embed_image(QSP_ARG  vp,dp,x,y)
+#define unembed_image(vp,dp,x,y)		_unembed_image(QSP_ARG  vp,dp,x,y)
+#define make_2d_adjuster(vp,w,h)		_make_2d_adjuster(QSP_ARG  vp,w,h)
+#define make_dragscape(vp,w,h)			_make_dragscape(QSP_ARG  vp,w,h)
+#define make_mousescape(vp,w,h)			_make_mousescape(QSP_ARG  vp,w,h)
+#define make_button_arena(vp,w,h)		_make_button_arena(QSP_ARG  vp,w,h)
+#define make_viewer(vp,w,h)			_make_viewer(QSP_ARG  vp,w,h)
+#define make_gl_window(vp, width, height)	_make_gl_window(QSP_ARG  vp, width, height)
+#define display_depth()				_display_depth(SINGLE_QSP_ARG)
+#define extra_viewer_info(vp)			_extra_viewer_info(QSP_ARG  vp)
 
 
 #ifdef __cplusplus
