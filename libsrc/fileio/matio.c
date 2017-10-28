@@ -436,7 +436,7 @@ advise(ERROR_STRING);
 	}
 	*/
 	/* BUG check sizes... */
-	dp_copy(QSP_ARG  dp,ifp->if_dp);
+	dp_copy(dp,ifp->if_dp);
 }
 
 FIO_UNCONV_FUNC( mat )
