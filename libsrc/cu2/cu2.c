@@ -272,8 +272,8 @@ int cu2_dispatch( QSP_ARG_DECL  Vector_Function *vfp, Vec_Obj_Args *oap )
 
 	i = vfp->vf_code;
 	if( cu2_func_tbl[i].cu2_func == NULL){
-		sprintf(DEFAULT_ERROR_STRING,"Sorry, function %s has not yet been implemented for the cuda2 platform.",VF_NAME(vfp));
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"Sorry, function %s has not yet been implemented for the cuda2 platform.",VF_NAME(vfp));
+		warn(ERROR_STRING);
 		return(-1);
 	}
 // BUG?  why not typtbl???
@@ -741,7 +741,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	status = cufftPlan1d(&plan, NX, CUFFT_C2C, BATCH);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftPlan1d: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run forward fft on data
@@ -749,7 +749,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 			(cufftComplex *)result, CUFFT_FORWARD);
 	if (status != CUFFT_SUCCESS) {
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	//Run inverse fft on data
@@ -757,7 +757,7 @@ void g_fwdfft(QSP_ARG_DECL  Data_Obj *dst_dp, Data_Obj *src1_dp)
 	if (status != CUFFT_SUCCESS)
 	{
 		sprintf(ERROR_STRING, "Error in cufftExecC2C: %s\n", getCUFFTError(status));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}*/
 
 	//Free resources
