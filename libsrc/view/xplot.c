@@ -396,7 +396,7 @@ void _xplot_select(QSP_ARG_DECL  u_long color)
 void _xplot_erase(SINGLE_QSP_ARG_DECL)
 {
 	if( plot_vp != NULL ){
-		_xp_erase(plot_vp);
+		xp_erase(plot_vp);
 	}
 }
 

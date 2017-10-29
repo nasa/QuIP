@@ -589,11 +589,13 @@ extern void _xplot_erase(SINGLE_QSP_ARG_DECL);
 #define xplot_erase() _xplot_erase(SINGLE_QSP_ARG)
 
 #ifdef BUILD_FOR_IOS
-extern void xp_update(void);
+extern void _xplot_update(SINGLE_QSP_ARG_DECL);
+#define xplot_update()	_xplot_update(SINGLE_QSP_ARG)
 extern quipImageView *image_view_for_viewer(Viewer *vp);
 #endif /* BUILD_FOR_IOS */
 
-extern void dump_drawlist(QSP_ARG_DECL  Viewer *vp);
+extern void _dump_drawlist(QSP_ARG_DECL  Viewer *vp);
+#define dump_drawlist(vp) _dump_drawlist(QSP_ARG  vp)
 
 /* rdplot.c */
 
@@ -663,7 +665,6 @@ extern void _xp_linewidth(Viewer *vp,int w);
 #endif // ! BUILD_FOR_OBJC
 extern void _xp_cont(Viewer *vp,int x,int y);
 extern void _xp_arc(Viewer *,int,int,int,int,int,int);
-extern void _xp_erase(Viewer *vp);
 extern void _xp_update(Viewer *vp);
 extern void set_remember_gfx(int flag);
 extern void _xp_fill_arc(Viewer*, int, int, int, int, int, int);
@@ -671,18 +672,28 @@ extern void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_v
 extern void _xp_move(Viewer *vp,int x1,int y1);
 extern int exec_drawlist(Viewer *vp);
 extern void set_char_spacing(Viewer *vp,int sz);
-extern void set_font_by_name(Viewer *vp,const char *s);
+
+extern void _set_font_by_name(QSP_ARG_DECL  Viewer *vp,const char *s);
+extern void _xp_erase(QSP_ARG_DECL  Viewer *vp);
 extern void _set_text_angle(QSP_ARG_DECL  Viewer *vp,float a);
 extern void _set_font_size(QSP_ARG_DECL  Viewer *vp,int sz);
+
+#define set_font_by_name(vp,s) _set_font_by_name(QSP_ARG  vp,s)
+#define xp_erase(vp) _xp_erase(QSP_ARG  vp)
 #define set_text_angle(vp,a) _set_text_angle(QSP_ARG  vp,a)
 #define set_font_size(vp,sz) _set_font_size(QSP_ARG  vp,sz)
 
-extern void center_text(Viewer *vp);
-extern void left_justify(Viewer *vp);
-extern void right_justify(Viewer *vp);
 int event_loop(SINGLE_QSP_ARG_DECL);
 extern void embed_draggable(Data_Obj *dp,Draggable *dgp);
 extern void window_sys_init(SINGLE_QSP_ARG_DECL);
+
+extern void _center_text(QSP_ARG_DECL  Viewer *vp);
+extern void _left_justify(QSP_ARG_DECL  Viewer *vp);
+extern void _right_justify(QSP_ARG_DECL  Viewer *vp);
+#define center_text(vp) _center_text(QSP_ARG  vp)
+#define left_justify(vp) _left_justify(QSP_ARG  vp)
+#define right_justify(vp) _right_justify(QSP_ARG  vp)
+
 extern void	set_viewer_display(QSP_ARG_DECL  Viewer *vp);
 extern void	cmap_setup(Viewer *);
 extern void set_action_for_event(Viewer *vp,Canvas_Event *cep,const char *s);

@@ -37,8 +37,6 @@
 
 #include "quip_prot.h"
 #include "data_obj.h"
-#include "handle.h"
-//#include "callback_api.h"
 #include "xsupp_prot.h"
 #include "cmaps.h"
 #include "viewer.h"
@@ -1487,7 +1485,7 @@ void set_remember_gfx(int flag)
 	remember_gfx=flag;
 }
 
-void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	Node *np;
 
@@ -1547,19 +1545,19 @@ void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 	}
 }
 
-void center_text(Viewer *vp)
+void _center_text(QSP_ARG_DECL  Viewer *vp)
 {
 	text_mode = CENTER_TEXT;
 	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
 }
 
-void right_justify(Viewer *vp)
+void _right_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	text_mode = RIGHT_JUSTIFY;
 	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
 }
 
-void left_justify(Viewer *vp)
+void _left_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	text_mode = LEFT_JUSTIFY;
 	if( REMEMBER_GFX ) remember_text_mode(vp,text_mode);
@@ -1691,7 +1689,7 @@ void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
 	givbuf(pxp);
 }
 
-void _xp_erase(Viewer *vp)
+void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 {
 	XClearWindow(VW_DPY(vp),vp->vw_xwin);
 	forget_drawing(vp);

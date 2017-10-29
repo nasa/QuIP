@@ -316,7 +316,7 @@ static COMMAND_FUNC( do_clear )
 {
 	DRAW_CHECK(do_clear)
 
-	_xp_erase(draw_vp);
+	xp_erase(draw_vp);
 }
 
 static COMMAND_FUNC( do_update )

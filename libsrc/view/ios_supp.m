@@ -833,7 +833,7 @@ void set_remember_gfx(int flag)
 
 }
 
-void _xp_erase(Viewer *vp)
+void _xp_erase(QSP_ARG_DECL  Viewer *vp)
 {
 	// We used to release the drawlist here, but that is wrong
 	// because it may contain non-drawing directives, like setting the font etc.
@@ -857,7 +857,7 @@ void _xp_update(Viewer *vp)
 }
 
 
-void _xp_move(Viewer *vp,int x1,int y1)
+void _xp_move(QSP_ARG_DECL  Viewer *vp,int x1,int y1)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_MOVE);
@@ -866,7 +866,7 @@ void _xp_move(Viewer *vp,int x1,int y1)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_select(Viewer *vp, u_long index)
+void _xp_select(QSP_ARG_DECL  Viewer *vp, u_long index)
 {
 	QUIP_COLOR_TYPE *c;
 
@@ -881,7 +881,7 @@ void _xp_select(Viewer *vp, u_long index)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_bgselect(Viewer *vp, u_long index)
+void _xp_bgselect(QSP_ARG_DECL  Viewer *vp, u_long index)
 {
 	QUIP_COLOR_TYPE *c;
 
@@ -894,7 +894,7 @@ void _xp_bgselect(Viewer *vp, u_long index)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
+void _xp_line(QSP_ARG_DECL  Viewer *vp,int x1,int y1,int x2,int y2)
 {
 	Draw_Op *do_p;
 
@@ -908,7 +908,7 @@ void _xp_line(Viewer *vp,int x1,int y1,int x2,int y2)
 	MAKE_NEEDY(vp);
 }
 
-void _xp_linewidth(Viewer *vp,CGFloat w)
+void _xp_linewidth(QSP_ARG_DECL  Viewer *vp,CGFloat w)
 {
 	Draw_Op *do_p;
 
@@ -920,7 +920,7 @@ void _xp_linewidth(Viewer *vp,CGFloat w)
 	//MAKE_NEEDY(vp);
 }
 
-void set_font_size(Viewer *vp,int sz)
+void _set_font_size(QSP_ARG_DECL  Viewer *vp,int sz)
 {
 	Draw_Op *do_p;
 
@@ -931,7 +931,7 @@ void set_font_size(Viewer *vp,int sz)
 				// e.g. get_string_offset
 }
 
-void set_text_angle(Viewer *vp,float a)
+void _set_text_angle(QSP_ARG_DECL  Viewer *vp,float a)
 {
 	Draw_Op *do_p;
 
@@ -940,7 +940,7 @@ void set_text_angle(Viewer *vp,float a)
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void set_char_spacing(Viewer *vp,int sz)
+void _set_char_spacing(QSP_ARG_DECL  Viewer *vp,int sz)
 {
 	Draw_Op *do_p;
 
@@ -950,7 +950,7 @@ void set_char_spacing(Viewer *vp,int sz)
 }
 
 
-void set_font_by_name(Viewer *vp,const char *s)
+void _set_font_by_name(QSP_ARG_DECL  Viewer *vp,const char *s)
 {
 	Draw_Op *do_p;
 
@@ -961,7 +961,7 @@ void set_font_by_name(Viewer *vp,const char *s)
 	//MAKE_NEEDY(vp);
 }
 
-void _xp_text(Viewer *vp,int x, int y, const char *s)
+void _xp_text(QSP_ARG_DECL  Viewer *vp,int x, int y, const char *s)
 {
 	Draw_Op *do_p;
 	_xp_move(vp,x,y);
@@ -971,50 +971,50 @@ void _xp_text(Viewer *vp,int x, int y, const char *s)
 	MAKE_NEEDY(vp);
 }
 
-void _xp_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
+void _xp_arc(QSP_ARG_DECL  Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 {
 
 	// Not sure what the args are???
-	//advise("_xp_arc:  UNIMPLEMENTED!?");
+	warn("_xp_arc:  UNIMPLEMENTED!?");
 	//CGContextAddArc(VW_GFX_CTX(vp),x,y,radius,startAngle,endAngle,clockwise);
 }
 
-void _xp_fill_arc(Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
+void _xp_fill_arc(QSP_ARG_DECL  Viewer *vp,int p1,int p2,int p3,int p4,int p5,int p6)
 {
-	NADVISE("_xp_fill_arc:  UNIMPLEMENTED!?");
+	warn("_xp_fill_arc:  UNIMPLEMENTED!?");
 
 }
 
-void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals)
+void _xp_fill_polygon(QSP_ARG_DECL  Viewer* vp, int num_points, int* px_vals, int* py_vals)
 {
-	NADVISE("_xp_fill_polygon:  UNIMPLEMENTED!?");
+	warn("_xp_fill_polygon:  UNIMPLEMENTED!?");
 
 }
 
 // CGContextSetAllowsAntialiasing
 // CGContextSetShouldAntialias
 
-void dump_drawlist(QSP_ARG_DECL  Viewer *vp)
+void _dump_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	advise("dump_drawlist:  UNIMPLEMENTED!?");
 
 }
 
-void left_justify(Viewer *vp)
+void _left_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_LJUST);
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void right_justify(Viewer *vp)
+void _right_justify(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_RJUST);
 	ADD_DRAW_OP(vp,do_p);
 }
 
-void center_text(Viewer *vp)
+void _center_text(QSP_ARG_DECL  Viewer *vp)
 {
 	Draw_Op *do_p;
 	do_p = new_drawop(DO_CJUST);

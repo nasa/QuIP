@@ -210,7 +210,7 @@ static COMMAND_FUNC( do_dumpdraw )
 	GET_VIEWER("do_dumpdraw")
 	if( vp == NULL ) return;
 
-	dump_drawlist(QSP_ARG  vp);
+	dump_drawlist(vp);
 }
 
 static int bad_plot_vec2(QSP_ARG_DECL Data_Obj *dp,dimension_t n_comps_expected,const char *funcname)
@@ -503,18 +503,10 @@ static COMMAND_FUNC( do_update_plot )
 {
 #ifdef BUILD_FOR_IOS
 	xplot_update();
-#endif /* BUILD_FOR_IOS */
+#else /* ! BUILD_FOR_IOS */
+	advise("update_plot does nothing (except on iOS)");
+#endif /* ! BUILD_FOR_IOS */
 }
-
-#ifdef FOOBAR
-static COMMAND_FUNC( do_end_plot )
-{
-#ifdef BUILD_FOR_IOS
-	xplot_update();
-#endif /* BUILD_FOR_IOS */
-	pop_menu();
-}
-#endif /* FOOBAR */
 
 static COMMAND_FUNC( do_tell_plot_space ){ tell_plot_space(); }
 
