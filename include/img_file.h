@@ -57,9 +57,9 @@ typedef struct filetype {
 				index_t,index_t,index_t);
 	int		(*wt_func)(QSP_ARG_DECL  Data_Obj *,struct image_file *);
 	void		(*close_func)(QSP_ARG_DECL  struct image_file *);
-	int		(*unconv_func)(void *,Data_Obj *);
+	int		(*unconv_func)(QSP_ARG_DECL  void *,Data_Obj *);
 					/* from dp to whatever */
-	int		(*conv_func)(Data_Obj *, void *);
+	int		(*conv_func)(QSP_ARG_DECL  Data_Obj *, void *);
 					/* from whatever to dp */
 	void		(*info_func)(QSP_ARG_DECL  struct image_file *);
 	int		(*seek_func)(QSP_ARG_DECL  struct image_file *,dimension_t);	/* might need to be 64 bit... */

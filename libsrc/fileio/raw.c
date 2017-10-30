@@ -277,24 +277,24 @@ void set_raw_prec(Precision * prec_p)
 
 
 /* used to pass this the ifp, but now we're makeing this uniform... */
-int raw_to_dp( Data_Obj *dp, void *vp )
+int _raw_to_dp(QSP_ARG_DECL  Data_Obj *dp, void *vp )
 {
 	Image_File *ifp;
 
 	ifp = (Image_File *)vp;
 
 	if( raw_rows <= 0 || raw_cols <= 0 )
-		NWARN("size of raw image file not specified!?");
+		warn("size of raw image file not specified!?");
 		
 	if( raw_prec_p == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"Pixel precision for raw file %s not specified!?",
 			ifp->if_name);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		raw_prec_p = PREC_FOR_CODE(PREC_UBY);
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"Assuming default value of %s.",PREC_NAME(raw_prec_p));
-		NADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 	}
 
 	SET_OBJ_PREC_PTR(dp, raw_prec_p);
@@ -308,7 +308,7 @@ int raw_to_dp( Data_Obj *dp, void *vp )
 		/* first get the total file size */
 		s = lseek(ifp->if_fd,0,SEEK_END);
 		if( s == ((off_t)-1) ){
-			_tell_sys_error(DEFAULT_QSP_ARG  "raw_to_dp:  lseek");
+			tell_sys_error("raw_to_dp:  lseek");
 			SET_OBJ_FRAMES(dp, 1);
 		} else {
 			dimension_t frm_size;
@@ -317,16 +317,16 @@ int raw_to_dp( Data_Obj *dp, void *vp )
 			SET_OBJ_FRAMES(dp, s / frm_size);
 
 			if( (s % frm_size) != 0 ){
-				sprintf(DEFAULT_ERROR_STRING,
+				sprintf(ERROR_STRING,
 		"Number of bytes (%ld) in raw file %s is not an integral multiple of the frame size (%ld)",
 					(long)s,ifp->if_name,(long)frm_size);
-				NWARN(DEFAULT_ERROR_STRING);
+				warn(ERROR_STRING);
 			}
 		}
 		s = lseek(ifp->if_fd,0,SEEK_SET);
 		if( s == ((off_t)-1) ){
-			_tell_sys_error(DEFAULT_QSP_ARG  "raw_to_dp:  lseek");
-			NWARN("error rewinding file");
+			tell_sys_error("raw_to_dp:  lseek");
+			warn("error rewinding file");
 		}
 	} else {
 		SET_OBJ_FRAMES(dp, raw_frames);
@@ -362,15 +362,15 @@ FIO_OPEN_FUNC( raw )
 	return(ifp);
 }
 
-int raw_unconv( void *hd_pp, Data_Obj *dp )
+int _raw_unconv(QSP_ARG_DECL  void *hd_pp, Data_Obj *dp )
 {
-	NWARN("raw_unconv not implemented");
+	warn("raw_unconv not implemented");
 	return(-1);
 }
 
-int raw_conv( Data_Obj *dp, void *hd_pp )
+int _raw_conv(QSP_ARG_DECL  Data_Obj *dp, void *hd_pp )
 {
-	NWARN("raw_conv not implemented");
+	warn("raw_conv not implemented");
 	return(-1);
 }
 

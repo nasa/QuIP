@@ -79,7 +79,7 @@ static void print_fps(double r, const char *s)
 	NADVISE(DEFAULT_ERROR_STRING);
 }
 
-int avi_to_dp(Data_Obj *dp,AVCodec_Hdr *hd_p)
+int _avi_to_dp(QSP_ARG_DECL  Data_Obj *dp,AVCodec_Hdr *hd_p)
 {
 	//uint32_t fps;
 
@@ -472,13 +472,15 @@ static void copy_frame_data(Data_Obj *dp, AVFrame * frame_p )
 	}
 }
 
-static void convert_video_frame(Image_File *ifp)
+#define convert_video_frame(ifp) _convert_video_frame(QSP_ARG  ifp)
+
+static void _convert_video_frame(QSP_ARG_DECL  Image_File *ifp)
 {
 	int ret;
 
 	// Did we get a video frame?
 	if( ! HDR_P->avch_frame_finished) {
-		NWARN("convert_video_frame:  frame is not finished!?");
+		warn("convert_video_frame:  frame is not finished!?");
 		return;
 	}
 
@@ -511,7 +513,7 @@ static void convert_video_frame(Image_File *ifp)
 				w, h, MY_PIX_FMT, SWS_BICUBIC,
 				NULL, NULL, NULL);
 		if(HDR_P->avch_img_convert_ctx_p == NULL) {
-			NWARN("Cannot initialize the conversion context!");
+			warn("Cannot initialize the conversion context!");
 			return;
 		}
 	}
@@ -546,7 +548,7 @@ static void convert_video_frame(Image_File *ifp)
 	// check return value to suppress compiler warning
 	// Return value should be "height of output slice"
 	if( ret < 0 )
-		NWARN("convert_video_frame:  Bad return value from sws_scale!?");
+		warn("convert_video_frame:  Bad return value from sws_scale!?");
 
 	/* Now we've converted into our libavcodec rgb frame,
 	 * but can we go straight to our data obj?
@@ -558,7 +560,7 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 	HDR_P->avch_frame_finished = 0;
 	while( ! HDR_P->avch_frame_finished ){
 		if( av_read_frame(HDR_P->avch_format_ctx_p, &HDR_P->avch_packet)<0) {
-			NWARN("av_read_frame:  no data!?");
+			warn("av_read_frame:  no data!?");
 			return(-1);
 		}
 		// Is this a packet from the video stream?
@@ -568,7 +570,7 @@ static int get_next_avi_frame(QSP_ARG_DECL  Image_File *ifp)
 			// in the new API, we send a packet then read frames.
 			if( avcodec_send_packet( HDR_P->avch_codec_ctx_p,
 				&HDR_P->avch_packet)<0) {
-				NWARN("avcodec_send_packet failed!?");
+				warn("avcodec_send_packet failed!?");
 				return -1;
 			}
 #else
@@ -647,15 +649,15 @@ FIO_WT_FUNC( avi )
 }
 
 
-int avi_unconv(void *hdr_pp,Data_Obj *dp)
+int _avi_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("avi_unconv not implemented");
+	warn("avi_unconv not implemented");
 	return(-1);
 }
 
-int avi_conv(Data_Obj *dp,void *hd_pp)
+int _avi_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("avi_conv not implemented");
+	warn("avi_conv not implemented");
 	return(-1);
 }
 

@@ -34,21 +34,21 @@ int FIO_SEEK_FUNC_NAME(stem)( QSP_ARG_DECL  Image_File *ifp, dimension_t n )
 #define FIO_INFO_FUNC( stem )			\
 void FIO_INFO_FUNC_NAME(stem)( QSP_ARG_DECL  Image_File *ifp )
 
-#define FIO_FT_TO_DP_FUNC_NAME(stem)		stem##_to_dp
+#define FIO_FT_TO_DP_FUNC_NAME(stem)		_##stem##_to_dp
 #define FIO_FT_TO_DP_FUNC(stem,header_type)					\
-int FIO_FT_TO_DP_FUNC_NAME(stem)(Data_Obj *dp,header_type *hd_p)
+int FIO_FT_TO_DP_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp,header_type *hd_p)
 
-#define FIO_DP_TO_FT_FUNC_NAME(stem)		do_to_##stem
+#define FIO_DP_TO_FT_FUNC_NAME(stem)		_dp_to_##stem
 #define FIO_DP_TO_FT_FUNC(stem,header_type)					\
-int FIO_DP_TO_FT_FUNC_NAME(stem)(header_type *hd_p,Data_Obj *dp)
+int FIO_DP_TO_FT_FUNC_NAME(stem)(QSP_ARG_DECL  header_type *hd_p,Data_Obj *dp)
 
-#define FIO_UNCONV_FUNC_NAME(stem)		stem##_unconv
+#define FIO_UNCONV_FUNC_NAME(stem)		_##stem##_unconv
 #define FIO_UNCONV_FUNC(stem)						\
-int FIO_UNCONV_FUNC_NAME(stem)(void *hd_pp ,Data_Obj *dp)
+int FIO_UNCONV_FUNC_NAME(stem)(QSP_ARG_DECL  void *hd_pp ,Data_Obj *dp)
 
-#define FIO_CONV_FUNC_NAME(stem)		stem##_conv
+#define FIO_CONV_FUNC_NAME(stem)		_##stem##_conv
 #define FIO_CONV_FUNC(stem)						\
-int FIO_CONV_FUNC_NAME(stem)(Data_Obj *dp, void *hd_pp)
+int FIO_CONV_FUNC_NAME(stem)(QSP_ARG_DECL  Data_Obj *dp, void *hd_pp)
 
 #define FIO_INTERFACE_PROTOTYPES( stem , header_type )			\
 									\
