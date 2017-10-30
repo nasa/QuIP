@@ -94,8 +94,8 @@ static Shape_Info *_void_shpp;
 
 #include "vt_native.h"
 
-void (*native_prelim_func)(QSP_ARG_DECL  Vec_Expr_Node *)=prelim_vt_native_shape;
-void (*native_update_func)(Vec_Expr_Node *)=update_vt_native_shape;
+void (*native_prelim_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_prelim_vt_native_shape;
+void (*native_update_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_update_vt_native_shape;
 
 #define MULTIPLY_DIMENSIONS(p,dsp)			\
 							\
@@ -1311,7 +1311,7 @@ void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 		case T_CALL_NATIVE:
 			/* update_native_shape(enp); */
-			(*native_update_func)(enp);
+			(*native_update_func)(QSP_ARG  enp);
 			break;
 
 		case T_SUBSCRIPT1:	/* update_node_shape */

@@ -176,6 +176,7 @@ define(`db_func_name',`NULL')
 ') dnl endif /* ! MAX_DEBUG */
 
 
+dnl CHECK_MATCH doesn't seem to be used!?
 
 dnl	CHECK_MATCH(dp1,dp2)
 define(`CHECK_MATCH',`
@@ -188,9 +189,9 @@ define(`CHECK_MATCH',`
 				! UNKNOWN_SHAPE($1) ){
 			install_shape($2,$1);
 		} else {
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 "Shape mismatch between objects %s and %s",OBJ_NAME($1),OBJ_NAME($2));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return;
 		}
 	}
@@ -201,7 +202,7 @@ define(`OBJ_ARG_CHK_DBM',`
 
 	ANNOUNCE_FUNCTION
 	if( bitmap_dst_dp == NULL ){
-NWARN("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");
+warn("OBJ_ARG_CHK_DBM:  Null bitmap destination object!?");
 		return;
 	}
 ')
@@ -211,7 +212,7 @@ define(`OBJ_ARG_CHK_DBM_',`OBJ_ARG_CHK_DBM')
 define(`OBJ_ARG_CHK_SBM',`
 
 	if( bitmap_src_dp == NULL ){
-		NWARN("Null bitmap source object!?");
+		warn("Null bitmap source object!?");
 		return;
 	}
 ')
@@ -2124,8 +2125,8 @@ define(`IDXRES_FAST_FUNC',`
 
 FF_DECL($1)(IDX_PTR_ARG,PTR_ARGS_SRC1,COUNT_ARG)
 {
-	sprintf(DEFAULT_ERROR_STRING,"Sorry, Function %s is not implemented.","$1");
-	NWARN(DEFAULT_ERROR_STRING);
+	sprintf(ERROR_STRING,"Sorry, Function %s is not implemented.","$1");
+	warn(ERROR_STRING);
 }
 ')
 

@@ -146,11 +146,11 @@ extern Item_Type *id_itp;
 extern int mode_is_matlab;
 
 extern void	(*native_prelim_func)(QSP_ARG_DECL  Vec_Expr_Node *);
-extern void	(*native_update_func)(Vec_Expr_Node *);
-extern const char *	(*native_string_func)(Vec_Expr_Node *);
-extern float	(*native_flt_func)(Vec_Expr_Node *);
+extern void	(*native_update_func)(QSP_ARG_DECL  Vec_Expr_Node *);
+extern const char *	(*native_string_func)(QSP_ARG_DECL  Vec_Expr_Node *);
+extern float	(*native_flt_func)(QSP_ARG_DECL  Vec_Expr_Node *);
 extern void	(*native_work_func)(QSP_ARG_DECL  Vec_Expr_Node *);
-extern void	(*native_assign_func)(Data_Obj *,Vec_Expr_Node *);
+extern void	(*native_assign_func)(QSP_ARG_DECL  Data_Obj *,Vec_Expr_Node *);
 
 extern int dump_flags;
 
@@ -266,8 +266,11 @@ extern Vec_Expr_Node *_node1(QSP_ARG_DECL  Tree_Code,Vec_Expr_Node *);
 extern Vec_Expr_Node *_node2(QSP_ARG_DECL  Tree_Code,Vec_Expr_Node *,Vec_Expr_Node *);
 extern Vec_Expr_Node *_node3(QSP_ARG_DECL  Tree_Code,Vec_Expr_Node *,Vec_Expr_Node *,Vec_Expr_Node *);
 
-extern void rls_vectree(Vec_Expr_Node *);
-extern void check_release(Vec_Expr_Node *);
+extern void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *);
+#define rls_vectree(enp) _rls_vectree(QSP_ARG enp) 
+
+extern void _check_release(QSP_ARG_DECL  Vec_Expr_Node *enp);
+#define check_release(enp) _check_release(QSP_ARG  enp)
 
 extern void _node_error(QSP_ARG_DECL  Vec_Expr_Node *);
 

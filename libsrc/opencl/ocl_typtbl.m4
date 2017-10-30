@@ -23,7 +23,7 @@ suppress_no	dnl enable output
 static void nullobjf(HOST_CALL_ARG_DECLS)
 {
 	warn("CAUTIOUS:  attempt to call an OpenCL function for an unimplemented precision!?");
-	show_obj_args(DEFAULT_QSP_ARG  oap);
+	show_obj_args(oap);
 	/* no more global this_vfp... */
 	/*
 	advise("nullobjf:");

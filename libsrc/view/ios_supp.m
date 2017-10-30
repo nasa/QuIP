@@ -138,7 +138,7 @@ typedef struct pt_arg {
 	if( ios_eltcount(VW_DRAW_LIST(vp)) > MAX_DRAWLIST_LEN ){\
 		static int warned=0;				\
 		if( !warned ){					\
-			NWARN("Too many stored draw ops!?");	\
+			warn("Too many stored draw ops!?");	\
 			warned=1;				\
 		}						\
 	} else {						\
@@ -165,10 +165,10 @@ typedef struct pt_arg {
 
 #define CHECK_COLOR_INDEX(funcname,color)		\
 	if( color > 255 ){				\
-		sprintf(DEFAULT_ERROR_STRING,		\
+		sprintf(ERROR_STRING,		\
 "%s:  color (%ld) must be in the range 0-255",		\
 			#funcname,color);		\
-		NWARN(DEFAULT_ERROR_STRING);		\
+		warn(ERROR_STRING);		\
 		return;					\
 	}
 
@@ -331,7 +331,7 @@ static void init_text_font(Viewer *vp)
 {
 #ifdef CAUTIOUS
 	if( VW_GFX_CTX(vp) == NULL ){
-		NWARN("CAUTIOUS:  init_text_font:  viewer has null context!?");
+		warn("CAUTIOUS:  init_text_font:  viewer has null context!?");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -367,7 +367,9 @@ static void init_text_font(Viewer *vp)
 	CGContextSetTextMatrix (VW_GFX_CTX(vp), myTextTransform);
 }
 
-static int exec_drawop(Viewer *vp, Draw_Op *do_p)
+#define exec_drawop(vp,do_p) _exec_drawop(QSP_ARG  vp,do_p)
+
+static int _exec_drawop(QSP_ARG_DECL  Viewer *vp, Draw_Op *do_p)
 {
 	QUIP_COLOR_TYPE *c;
 	static CGFloat x=0.0;
@@ -379,13 +381,13 @@ static int exec_drawop(Viewer *vp, Draw_Op *do_p)
 	if( do_p == NULL ) NERROR1("CAUTIOUS:  exec_drawop:  null operation ptr!?");
 
 	if( VW_GFX_CTX(vp) == NULL ){
-		NWARN("CAUTIOUS:  exec_drawop:  null context!?");
+		warn("CAUTIOUS:  exec_drawop:  null context!?");
 		return -1;
 	}
 #endif /* CAUTIOUS */
 	switch( do_p.code ){
 		case DO_UNUSED:
-			NWARN("invalid zero Draw_Op_Code!?");
+			warn("invalid zero Draw_Op_Code!?");
 			return 0;
 			break;
 		case DO_MOVE:
@@ -502,8 +504,8 @@ CGSize drawn_size =
 				CGContextShowTextAtPoint (VW_GFX_CTX(vp),
 					x-pt.x, y-pt.y, DOA_STR(do_p), strlen(DOA_STR(do_p)) );
 			} else {
-				sprintf(DEFAULT_ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
-				NWARN(DEFAULT_ERROR_STRING);
+				sprintf(ERROR_STRING,"Unexpected text justification mode 0x%x!?",VW_FLAGS(vp)&VW_JUSTIFY_MASK);
+				warn(ERROR_STRING);
 			}
 			break;
 
@@ -538,13 +540,13 @@ CGSize drawn_size =
 			return -1;
 			break;
 		default:
-			NWARN("Unexpected code in exec_drawop!?");
+			warn("Unexpected code in exec_drawop!?");
 			break;
 	}
 	return 0;
 }
 
-int exec_drawlist(Viewer *vp)
+int _exec_drawlist(QSP_ARG_DECL  Viewer *vp)
 {
 	IOS_Node *np;
 	int retval=0;
@@ -553,7 +555,7 @@ int exec_drawlist(Viewer *vp)
 
 #ifdef BUILD_FOR_IOS
 	if( VW_GFX_CTX(vp) != UIGraphicsGetCurrentContext() )
-		NWARN("viewer context does not match UIGraphicsGetCurrentContext !?");
+		warn("viewer context does not match UIGraphicsGetCurrentContext !?");
 #endif // BUILD_FOR_IOS
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	CGContextSetStrokeColorSpace( VW_GFX_CTX(vp), colorSpace );
@@ -1100,10 +1102,10 @@ int get_string_width(Viewer *vp, const char *s)
 {
 	// Do we really initialize here???
 	if( VW_GFX_CTX(vp) == NULL ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"get_string_width '%s':  drawing context for viewer %s is NULL!?",
 			s,VW_NAME(vp));
-		NADVISE(DEFAULT_ERROR_STRING);
+		NADVISE(ERROR_STRING);
 		return( (int)strlen(s) * DEFAULT_PIXELS_PER_CHAR );
 	}
 
@@ -1192,9 +1194,9 @@ void init_viewer_images(Viewer *vp)
 	// That comment says we want the controls in front - so why
 	// are we bringing the images to the front???
 
-//sprintf(DEFAULT_ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
+//sprintf(ERROR_STRING,"init_viewer_images:  bringing images 0x%lx to front, superview = 0x%lx",
 //(long)qip,(long)VW_QV(vp));
-//advise(DEFAULT_ERROR_STRING);
+//advise(ERROR_STRING);
 
 	//[VW_QV(vp) bringSubviewToFront:qip];
 

@@ -58,9 +58,10 @@ extern COMMAND_FUNC( do_yuv2rgb );
 
 /* obj_args.c */
 extern void clear_obj_args(Vec_Obj_Args *);
-extern void show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *);
+extern void _show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *);
 extern void set_obj_arg_flags(Vec_Obj_Args *);
 
+#define show_obj_args(oap) _show_obj_args(QSP_ARG  oap)
 
 /* cksiz.c */
 extern int old_cksiz(QSP_ARG_DECL  int,Data_Obj *,Data_Obj *);

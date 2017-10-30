@@ -311,10 +311,10 @@ void launch_threads(QSP_ARG_DECL
 		pi[i].pi_vf_code = vf_code;
 #ifdef QUIP_DEBUG
 if( debug & veclib_debug ){
-sprintf(DEFAULT_ERROR_STRING,"launch_threads: enabling data processing thread %d, pi_oap = 0x%lx",
+sprintf(ERROR_STRING,"launch_threads: enabling data processing thread %d, pi_oap = 0x%lx",
 i,(int_for_addr)pi[i].pi_oap);
-NADVISE(DEFAULT_ERROR_STRING);
-//show_obj_args(QSP_ARG  &oa[i]);
+advise(ERROR_STRING);
+//show_obj_args(&oa[i]);
 }
 #endif /* QUIP_DEBUG */
 	}
@@ -537,11 +537,11 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 
 #ifdef QUIP_DEBUG
 	if( debug & veclib_debug ) {
-		sprintf(DEFAULT_ERROR_STRING,"\nvec_dispatch:  Function %s",
+		sprintf(ERROR_STRING,"\nvec_dispatch:  Function %s",
 			VF_NAME(vfp));
-		NADVISE(DEFAULT_ERROR_STRING);
+		advise(ERROR_STRING);
 
-		show_obj_args(QSP_ARG  oap);
+		show_obj_args(oap);
 	}
 #endif /* QUIP_DEBUG */
 
@@ -583,8 +583,8 @@ int platform_dispatch( QSP_ARG_DECL  const Compute_Platform *cpp,
 if( debug & veclib_debug ){
 sprintf(ERROR_STRING,"vec_dispatch:  calling tabled function, code = %d, functype = %d",
 VF_CODE(vfp),OA_FUNCTYPE(oap));
-NADVISE(ERROR_STRING);
-show_obj_args(QSP_ARG  oap);
+advise(ERROR_STRING);
+show_obj_args(oap);
 }
 #endif /* QUIP_DEBUG */
 

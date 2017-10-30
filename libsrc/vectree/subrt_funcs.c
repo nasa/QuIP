@@ -122,7 +122,9 @@ static Vec_Expr_Node *get_one_arg(QSP_ARG_DECL  Vec_Expr_Node *enp, Precision *p
 
 #ifdef HAVE_ANY_GPU
 
-static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
+#define pfdev_for_node(enp) _pfdev_for_node(QSP_ARG  enp)
+
+static Platform_Device *_pfdev_for_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Platform_Device *pdp=NULL;
 
@@ -138,9 +140,9 @@ static Platform_Device *pfdev_for_node(Vec_Expr_Node *enp)
 		case T_REFERENCE:
 			break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,"Missing case for %s in pfdev_for_node!?",
+			sprintf(ERROR_STRING,"Missing case for %s in pfdev_for_node!?",
 				node_desc(enp));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
 	}
 	return pdp;

@@ -377,7 +377,7 @@ Vec_Expr_Node *_dup_tree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	return(new_enp);
 }
 
-void check_release(Vec_Expr_Node *enp)
+void _check_release(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	if( enp == NULL ) return;
 	if( NODE_IS_FINISHED(enp) ){
@@ -403,7 +403,7 @@ void check_release(Vec_Expr_Node *enp)
  * Another way to deal with that problem might be to have a reference count...
  */
 
-void rls_vectree(Vec_Expr_Node *enp)
+void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	int i;
 
@@ -462,14 +462,12 @@ void rls_vectree(Vec_Expr_Node *enp)
 			/* just here to suppress a compiler warning */
 			assert( AERROR("init_expr_node:  bad data type code!?") );
 			break;
-		/*
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 "rls_vectree:  missing case for tree node data type %s",
 tnt_tbl[VN_CODE(enp)].tnt_name);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			break;
-			*/
 	}
 
 	/* BUG we should check whether or not the node owns any lists,

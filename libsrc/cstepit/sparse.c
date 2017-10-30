@@ -55,7 +55,7 @@ static void predictor_func( double *parameters, double *hat_x, int nvars,
 //fprintf(stderr,"Pushing command \"%s\"\n",splmi_p->_cmd);
 	qsp = splmi_p->_qsp;
 
-	chew_text( QSP_ARG  splmi_p->_cmd, "Sparse LM optimization" );
+	chew_text( splmi_p->_cmd, "Sparse LM optimization" );
 	// now need to execute...
 
 	// after execution, store the results in hat_x
