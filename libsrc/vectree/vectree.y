@@ -2161,7 +2161,7 @@ static const char *match_quote(QSP_ARG_DECL  const char **spp)
 		(*spp)++; /* YY_CP++; */
 	}
 	if( c != '"' ) {
-		NWARN("missing quote");
+		warn("missing quote");
 		sprintf(ERROR_STRING,"string \"%s\" stored",CURR_STRING);
 		advise(ERROR_STRING);
 	} else (*spp)++;			/* skip over closing quote */
@@ -2782,8 +2782,6 @@ void yyerror(Query_Stack *qsp,  char *s)
 {
 	const char *filename;
 	int ql,n;
-	char yyerror_str[YY_LLEN];
-
 	/* get the filename and line number */
 
 	filename=CURRENT_FILENAME;
@@ -2791,26 +2789,26 @@ void yyerror(Query_Stack *qsp,  char *s)
 	//n = THIS_QSP->qs_query[ql].q_lineno;
 	n = current_line_number(SINGLE_QSP_ARG);
 
-	sprintf(yyerror_str,"%s, line %d:  %s",filename,n,s);
-	NWARN(yyerror_str);
+	sprintf(ERROR_STRING,"%s, line %d:  %s",filename,n,s);
+	warn(ERROR_STRING);
 
-	sprintf(yyerror_str,"\t%s",sb_buffer(YY_INPUT_LINE));
-	advise(yyerror_str);
+	sprintf(ERROR_STRING,"\t%s",sb_buffer(YY_INPUT_LINE));
+	advise(ERROR_STRING);
 	/* print an arrow at the problem point... */
 	n=(int)(strlen(sb_buffer(YY_INPUT_LINE))-strlen(YY_CP));
 	n-=2;
 	if( n < 0 ) n=0;
-	strcpy(yyerror_str,"\t");
-	while(n--) strcat(yyerror_str," ");
-	strcat(yyerror_str,"^");
-	NADVISE(yyerror_str);
+	strcpy(ERROR_STRING,"\t");
+	while(n--) strcat(ERROR_STRING," ");
+	strcat(ERROR_STRING,"^");
+	advise(ERROR_STRING);
 
 	/* we might use this to print an arrow at the problem point... */
 	/*
 	if( *YY_CP ){
-		sprintf(yyerror_str,"\"%s\" left in the buffer",YY_CP);
-		NADVISE(yyerror_str);
-	} else NADVISE("no buffered text");
+		sprintf(ERROR_STRING,"\"%s\" left in the buffer",YY_CP);
+		advise(ERROR_STRING);
+	} else advise("no buffered text");
 	*/
 
 	FINAL=(-1);

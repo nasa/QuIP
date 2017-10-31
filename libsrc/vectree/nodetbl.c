@@ -283,20 +283,6 @@ void sort_tree_tbl()
 
 		for(i=0;i<N_TREE_CODES;i++){
 			assert( tnt_tbl[i].tnt_code == i );
-//			if( tnt_tbl[i].tnt_code != i ){
-//				sprintf(DEFAULT_ERROR_STRING,
-//			"tnt_tbl[%d,%s].tnt_code = %d, should be %d !?",
-//					i,tnt_tbl[i].tnt_name,tnt_tbl[i].tnt_code,i);
-//				NWARN(DEFAULT_ERROR_STRING);
-//				NERROR1("make sure that all tree codes are listed in nodetbl.c");
-//			}
-//			/*
-//			else if( verbose ){
-//				sprintf(DEFAULT_ERROR_STRING,
-//			"tnt_tbl[%d] = %s",i,tnt_tbl[i].tnt_name);
-//				advise(DEFAULT_ERROR_STRING);
-//			}
-//			*/
 		}
 	}
 #endif /* CAUTIOUS */

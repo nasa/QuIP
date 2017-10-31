@@ -13,22 +13,22 @@
 extern struct extpar *findparam(Hips2_Header *hd,char *name);
 
 /* hips2.c */
-extern int		hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p);
 extern void		hdr2_strs(Hips2_Header *hdp);
-//extern FIO_OPEN_FUNC( hips2_open );
-//extern FIO_CLOSE_FUNC( hips2_close );
+extern int		set_hips2_hdr(QSP_ARG_DECL  Image_File *ifp);
+
+//extern int		hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p);
+//extern int		dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp);
+extern FIO_FT_TO_DP_FUNC(hips2,Hips2_Header);
+extern FIO_DP_TO_FT_FUNC(hips2,Hips2_Header);
 extern FIO_OPEN_FUNC( hips2 );
 extern FIO_CLOSE_FUNC( hips2 );
-extern int		dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp);
-extern int		set_hips2_hdr(QSP_ARG_DECL  Image_File *ifp);
-//extern FIO_WT_FUNC( hips2_wt );
-//extern FIO_RD_FUNC( hips2_rd );
 extern FIO_WT_FUNC( hips2 );
 extern FIO_RD_FUNC( hips2 );
-//extern int		hips2_unconv(void *hd_pp ,Data_Obj *dp);
-//extern int		hips2_conv(Data_Obj *dp, void *hd_pp);
 extern FIO_CONV_FUNC( hips2 );
 extern FIO_UNCONV_FUNC( hips2 );
+
+#define hips2_to_dp(a,b)	_hips2_to_dp(QSP_ARG  a,b)
+#define dp_to_hips2(a,b)	_dp_to_hips2(QSP_ARG  a,b)
 
 /* writehdr.c */
 extern int		wt_hips2_hdr(FILE *fp,Hips2_Header *hd,const Filename fname);

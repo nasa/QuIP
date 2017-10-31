@@ -24,7 +24,8 @@ static int valid_wav_header(Wav_Header *hd_p)
 	return(1);
 }
 
-int wav_to_dp(Data_Obj *dp,Wav_Header *hd_p)
+//int _wav_to_dp(QSP_ARG_DECL  Data_Obj *dp,Wav_Header *hd_p)
+FIO_FT_TO_DP_FUNC(wav,Wav_Header)
 {
 	Precision * prec_p;
 	dimension_t total_samples, samples_per_channel;
@@ -155,7 +156,6 @@ FIO_CLOSE_FUNC( wav )
 }
 
 FIO_DP_TO_FT_FUNC(wav,Wav_Header)
-//int dp_to_wav(Wav_Header *hd_p,Data_Obj *dp)
 {
 	/* num_frame set when when write request given */
 
@@ -193,7 +193,7 @@ FIO_DP_TO_FT_FUNC(wav,Wav_Header)
 
 FIO_SETHDR_FUNC( wav )
 {
-	if( FIO_DP_TO_FT_FUNC_NAME(wav)(ifp->if_hdr_p,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(wav)(QSP_ARG  ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		wav_close(QSP_ARG  ifp);
 		return(-1);
 	}
@@ -240,7 +240,7 @@ FIO_UNCONV_FUNC(wav)
 	*hdr_pp = (Wav_Header *)getbuf( sizeof(Wav_Header) );
 	if( *hdr_pp == NULL ) return(-1);
 
-	FIO_DP_TO_FT_FUNC_NAME(wav)(*hdr_pp,dp);
+	FIO_DP_TO_FT_FUNC_NAME(wav)(QSP_ARG  *hdr_pp,dp);
 
 	return(0);
 }

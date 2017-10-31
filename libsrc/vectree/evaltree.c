@@ -131,10 +131,10 @@ static Data_Obj *_create_list_lhs(QSP_ARG_DECL Vec_Expr_Node *enp);
 
 #define max( n1 , n2 )		(n1>n2?n1:n2)
 
-const char *(*native_string_func)(Vec_Expr_Node *)=eval_vt_native_string;
-float (*native_flt_func)(Vec_Expr_Node *)=eval_vt_native_flt;
-void (*native_work_func)(QSP_ARG_DECL  Vec_Expr_Node *)=eval_vt_native_work;
-void (*native_assign_func)(Data_Obj *,Vec_Expr_Node *)=eval_vt_native_assignment;
+const char *(*native_string_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_eval_vt_native_string;
+float (*native_flt_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_eval_vt_native_flt;
+void (*native_work_func)(QSP_ARG_DECL  Vec_Expr_Node *)=_eval_vt_native_work;
+void (*native_assign_func)(QSP_ARG_DECL  Data_Obj *,Vec_Expr_Node *)=_eval_vt_native_assignment;
 
 #ifdef NOT_USED
 static void eval_native_assignment(Data_Obj *dp,Vec_Expr_Node *enp)

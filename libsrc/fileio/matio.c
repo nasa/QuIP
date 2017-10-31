@@ -379,7 +379,7 @@ FIO_DP_TO_FT_FUNC(mat,/*matvar_t*/ Matio_Hdr )
 
 FIO_SETHDR_FUNC( mat )
 {
-	if( FIO_DP_TO_FT_FUNC_NAME(mat)(ifp->if_hdr_p,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(mat)(QSP_ARG  ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		mat_close(QSP_ARG  ifp);
 		return(-1);
 	}

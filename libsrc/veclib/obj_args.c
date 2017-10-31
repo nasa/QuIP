@@ -123,7 +123,7 @@ longlist(OA_SRC_OBJ(oap,i) );
 	}
 } // end private_show_obj_args
 
-void show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *oap)
+void _show_obj_args(QSP_ARG_DECL  const Vec_Obj_Args *oap)
 {
 	private_show_obj_args(QSP_ARG  ERROR_STRING,oap,_advise);
 }

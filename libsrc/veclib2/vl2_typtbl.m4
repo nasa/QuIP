@@ -22,22 +22,22 @@ my_include(`veclib/gen_typtbl.m4')
 
 static void nullobjf(HOST_CALL_ARG_DECLS)
 {
-	sprintf(DEFAULT_ERROR_STRING,
+	sprintf(ERROR_STRING,
 "CAUTIOUS:  function %s is not implemented for precision %s!?",
 		VF_NAME(&vec_func_tbl[vf_code]),
 		ARGSPREC_NAME(OA_ARGSPREC_PTR(oap)) );
-	NWARN(DEFAULT_ERROR_STRING);
-	show_obj_args(DEFAULT_QSP_ARG  oap);
+	warn(ERROR_STRING);
+	show_obj_args(oap);
 	/* no more global this_vfp... */
 	/*
-	NADVISE("nullobjf:");
-	sprintf(DEFAULT_ERROR_STRING,
+	advise("nullobjf:");
+	sprintf(ERROR_STRING,
 		"Oops, function %s has not been implemented for %s %s precision (functype = %d)",
 		VF_NAME(this_vfp), type_strings[OA_FUNCTYPE(oap)%N_ARGSET_PRECISIONS],
 		argset_type_name[(OA_FUNCTYPE(oap)/N_ARGSET_PRECISIONS)+1],OA_FUNCTYPE(oap));
-	NWARN(DEFAULT_ERROR_STRING);
+	warn(ERROR_STRING);
 	*/
-	NADVISE("Need to add better error checking!");
+	advise("Need to add better error checking!");
 	abort();
 }
 

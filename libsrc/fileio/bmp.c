@@ -227,15 +227,15 @@ if( debug ) advise("allocating hips header");
 	return(ifp);
 } /* end bmp_open */
 
-int bmp_unconv(void *hdr_pp,Data_Obj *dp)
+int _bmp_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("bmp_unconv not implemented");
+	warn("bmp_unconv not implemented");
 	return(-1);
 }
 
-int bmp_conv(Data_Obj *dp,void *hd_pp)
+int _bmp_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("bmp_conv not implemented");
+	warn("bmp_conv not implemented");
 	return(-1);
 }
 
@@ -294,9 +294,9 @@ static void bmp_rd_bit_image(Data_Obj *dp,Image_File *ifp,index_t x_offset,index
 
 	/* 1-bit format cannot be compressed */
 	if (HDR_P(ifp)->bmp_compression != BMP_BI_RGB){
-		sprintf(DEFAULT_ERROR_STRING,"bmp_rd %s:  compression code (%d) is not BMP+BI_RGB (%d)!?",
+		sprintf(ERROR_STRING,"bmp_rd %s:  compression code (%d) is not BMP+BI_RGB (%d)!?",
 			ifp->if_name,HDR_P(ifp)->bmp_compression,BMP_BI_RGB);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

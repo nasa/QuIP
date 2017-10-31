@@ -193,8 +193,8 @@ static FIO_SEEK_FUNC(null)
 #define network_rd	null_rd
 #define network_wt	dummy_wt
 #define network_close	null_close
-#define network_conv	null_conv
-#define network_unconv	null_unconv
+#define _network_conv	_null_conv
+#define _network_unconv	_null_unconv
 #define network_seek	null_seek
 #define network_info_func	null_info_func
 #define network_seek_frame	null_seek_frame
@@ -472,7 +472,7 @@ int open_fd(QSP_ARG_DECL  Image_File *ifp)
 				sprintf(ERROR_STRING,"statvfs (%s):",
 					ifp->if_pathname);
 				tell_sys_error(ERROR_STRING);
-				NWARN("Couldn't determine fs type, not using O_DIRECT");
+				warn("Couldn't determine fs type, not using O_DIRECT");
 			} else {
 				if( vfsbuf.f_flag & ST_LOCAL ){
 					o_direct = O_DIRECT;
@@ -512,17 +512,17 @@ retry:
 			o_direct = 0;
 sprintf(ERROR_STRING,"Couldn't open file \"%s\" with direct i/o.",
 ifp->if_pathname);
-NWARN(ERROR_STRING);
+warn(ERROR_STRING);
 advise("retrying to open write file w/o DIRECT_IO");
 			goto retry;
 		}
 #endif /* HAVE_DIRECT_IO */
 
 		tell_sys_error("open");
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"open_fd:  error getting descriptor for %s file %s",
 			IS_READABLE(ifp)?"read":"write",ifp->if_pathname);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -541,7 +541,7 @@ advise(ERROR_STRING);
 
 	if( ifp->if_hd.rgb_ip == NULL ){
 		sprintf(ERROR_STRING,"Error iopening file %s",ifp->if_pathname);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	} else return(0);
 }
@@ -571,7 +571,7 @@ int open_fp(Image_File *ifp)
 				sprintf(ERROR_STRING,
 			"open_fp:  error getting RGB descriptor for file %s",
 					ifp->if_pathname);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return(-1);
 			} else return(0);
 		} else {
@@ -608,25 +608,25 @@ static int check_clobber(QSP_ARG_DECL  Image_File *ifp)
 
 	if( file_exists(ifp->if_pathname) ){
 		if( no_clobber ){
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 				"Not clobbering existing file \"%s\"",
 				ifp->if_pathname);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 		} else if( !can_write_to(ifp->if_pathname) )
 			return(-1);
 	} else {
 		if( !file_exists(dir) ){
-			sprintf(DEFAULT_ERROR_STRING, "No directory \"%s\"!?", dir);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING, "No directory \"%s\"!?", dir);
+			warn(ERROR_STRING);
 			return(-1);
 		}
 		/* We may have write permissions to the file even if we don't have
 		 * write permissions on the directory, e.g. /dev/null
 		 */
 		if( !can_write_to(dir) ){
-			sprintf(DEFAULT_ERROR_STRING, "Can't write to directory \"%s\"!?", dir);
-			NWARN(DEFAULT_ERROR_STRING);
+			sprintf(ERROR_STRING, "Can't write to directory \"%s\"!?", dir);
+			warn(ERROR_STRING);
 			return(-1);
 		}
 	}
@@ -658,12 +658,12 @@ Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 	if( rw == FILE_READ && CANNOT_READ(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, don't know how to read %s files",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	} else if( rw == FILE_WRITE && CANNOT_WRITE(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, don't know how to write %s files",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -1115,7 +1115,7 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 	if( CANNOT_READ(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, can't read files of type %s",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -1125,7 +1125,7 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 	if( ifp == NULL ) {
 		sprintf(ERROR_STRING,
 			"error reading %s file \"%s\"",FT_NAME(ftp),name);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	return(ifp);
 }
@@ -1152,7 +1152,7 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 	if( CANNOT_WRITE(ftp) ){
 		sprintf(ERROR_STRING,"Sorry, can't write files of type %s",
 			FT_NAME(ftp));
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 

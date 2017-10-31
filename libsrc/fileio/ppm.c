@@ -25,10 +25,10 @@ FIO_FT_TO_DP_FUNC(ppm,Ppm_Header)
 		case 5: type_dim=1; break;
 		case 6: type_dim=3; break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"ppm_to_dp:  unsupported pixel format code %d",
 				hd_p->format);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 	}
 	SET_OBJ_PREC_PTR(dp, prec_p);
@@ -37,8 +37,8 @@ FIO_FT_TO_DP_FUNC(ppm,Ppm_Header)
 	SET_OBJ_COLS(dp, hd_p->cols);
 	SET_OBJ_ROWS(dp, hd_p->rows);
 /*
-//sprintf(DEFAULT_ERROR_STRING,"ppm_to_dp:  c = %d, r = %d",hd_p->cols,hd_p->rows);
-//advise(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"ppm_to_dp:  c = %d, r = %d",hd_p->cols,hd_p->rows);
+//advise(ERROR_STRING);
 */
 	SET_OBJ_FRAMES(dp, 1);
 	SET_OBJ_SEQS(dp, 1);
@@ -76,7 +76,7 @@ static char *next_header_line(FILE *fp)
 	return(hdr_line);
 }
 
-int rd_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
+int _rd_ppm_hdr(QSP_ARG_DECL  FILE *fp,Ppm_Header *hdp,const char *filename)
 {
 	int f;
 	int r,c;
@@ -85,19 +85,19 @@ int rd_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
 
 	s=next_header_line(fp);
 	if( s == NULL ){
-		NWARN("missing ppm format code line");
+		warn("missing ppm format code line");
 		return(-1);
 	}
 
 	if( sscanf(s,"P%d",&f) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading ppm format code, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading ppm format code, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	s=next_header_line(fp);
 	if( s == NULL ){
-		NWARN("missing ppm image size line");
+		warn("missing ppm image size line");
 		return(-1);
 	}
 
@@ -108,28 +108,28 @@ int rd_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
 	 */
 #ifdef FOOBAR
 	if( sscanf(s,"%d %d",&c,&r) != 2 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading ppm image size, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading ppm image size, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
 	s=next_header_line(fp);
 	if( s == NULL ){
-		NWARN("missing ppm extra number line");
+		warn("missing ppm extra number line");
 		return(-1);
 	}
 #else
 	if( sscanf(s,"%d %d %d",&c,&r,&n) != 3 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading ppm image size + extra number, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading ppm image size + extra number, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	
 #endif /* FOOBAR */
 
 	if( sscanf(s,"%d",&n) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading ppm extra number, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading ppm extra number, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	hdp->format = f;
@@ -172,17 +172,17 @@ FIO_CLOSE_FUNC( ppm )
 FIO_DP_TO_FT_FUNC(ppm,Ppm_Header)
 {
 	if( OBJ_PREC(dp) != PREC_UBY ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 		"Sorry, can only write unsigned byte images to PPM, object %s has prec %s",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_FRAMES(dp)>1 || OBJ_SEQS(dp)>1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 		"Sorry, object %s has more than 1 frame/seq, can only write 1 to PPM",
 			OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -191,7 +191,7 @@ FIO_DP_TO_FT_FUNC(ppm,Ppm_Header)
 	else if( OBJ_COMPS(dp) == 3 )
 		hd_p->format = 6;
 	else {
-		NWARN("Sorry, PPM only supports type dimensions 1 and 3");
+		warn("Sorry, PPM only supports type dimensions 1 and 3");
 		return(-1);
 	}
 		
@@ -204,7 +204,7 @@ FIO_DP_TO_FT_FUNC(ppm,Ppm_Header)
 	return(0);
 }
 
-void wt_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
+void _wt_ppm_hdr(QSP_ARG_DECL  FILE *fp,Ppm_Header *hdp,const char *filename)
 {
 	fprintf(fp,"P%d\n",hdp->format);
 	/*
@@ -217,7 +217,7 @@ void wt_ppm_hdr(FILE *fp,Ppm_Header *hdp,const char *filename)
 
 FIO_SETHDR_FUNC( ppm ) /* set header fields from image object */
 {
-	if( FIO_DP_TO_FT_FUNC_NAME(ppm)(ifp->if_hdr_p,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(ppm)(QSP_ARG  ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		ppm_close(QSP_ARG  ifp);
 		return(-1);
 	}
@@ -255,7 +255,7 @@ FIO_WT_FUNC( ppm )	/** output next frame */
 	return(0);
 }
 
-int ppm_unconv(void *hdr_pp,Data_Obj *dp)
+int _ppm_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
 	Ppm_Header **hd_pp;
 
@@ -267,14 +267,14 @@ int ppm_unconv(void *hdr_pp,Data_Obj *dp)
 	if( *hd_pp == NULL ) return(-1);
 
 	//dp_to_ppm(*hd_pp,dp);
-	FIO_DP_TO_FT_FUNC_NAME(ppm)(*hd_pp,dp);
+	FIO_DP_TO_FT_FUNC_NAME(ppm)(QSP_ARG  *hd_pp,dp);
 
 	return(0);
 }
 
-int ppm_conv(Data_Obj *dp,void *hd_pp)
+int _ppm_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("ppm_conv not implemented");
+	warn("ppm_conv not implemented");
 	return(-1);
 }
 
@@ -284,7 +284,7 @@ int ppm_conv(Data_Obj *dp,void *hd_pp)
  * but with an additional nframes field
  */
 
-int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
+int _dis_to_dp(QSP_ARG_DECL  Data_Obj *dp,Dis_Header *hd_p)
 {
 	short type_dim=1;
 	Precision * prec_p;
@@ -295,10 +295,10 @@ int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 		case 5: type_dim=1; break;
 		case 6: type_dim=3; break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"ppm_to_dp:  unsupported pixel format code %d",
 				hd_p->format);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 	}
 	SET_OBJ_PREC_PTR(dp, prec_p);
@@ -328,7 +328,7 @@ int dis_to_dp(Data_Obj *dp,Dis_Header *hd_p)
 	return(0);
 }
 
-int rd_dis_hdr(FILE *fp,Dis_Header *hdp,const char *filename)
+int _rd_dis_hdr(QSP_ARG_DECL  FILE *fp,Dis_Header *hdp,const char *filename)
 {
 	int f;
 	int r,c;
@@ -337,23 +337,23 @@ int rd_dis_hdr(FILE *fp,Dis_Header *hdp,const char *filename)
 	int ch;
 
 	if( fscanf(fp,"P%d",&f) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading dis format code, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading dis format code, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( fscanf(fp,"%d %d %d",&c,&r,&nf) != 3 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading dis sizes, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading dis sizes, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( fscanf(fp,"%d",&n) != 1 ){
-		sprintf(DEFAULT_ERROR_STRING,"error reading dis extra number, file %s",filename);
-		NWARN(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"error reading dis extra number, file %s",filename);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	ch = getc(fp);
 	if( ch != '\r' && ch != '\n' ){
-		NWARN("Bad char at end of .dis header!?");
+		warn("Bad char at end of .dis header!?");
 		return(-1);
 	}
 	hdp->format = f;
@@ -398,17 +398,17 @@ FIO_CLOSE_FUNC( dis )
 FIO_DP_TO_FT_FUNC(dis,Dis_Header)
 {
 	if( OBJ_PREC(dp) != PREC_UBY ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 		"Sorry, can only write unsigned byte images to PPM, object %s has prec %s",
 			OBJ_NAME(dp),PREC_NAME(OBJ_PREC_PTR(dp)));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	if( OBJ_SEQS(dp)>1 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 		"Sorry, object %s has more than 1 seq, can only write 1 to .dis",
 			OBJ_NAME(dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 
@@ -417,7 +417,7 @@ FIO_DP_TO_FT_FUNC(dis,Dis_Header)
 	else if( OBJ_COMPS(dp) == 3 )
 		hd_p->format = 6;
 	else {
-		NWARN("Sorry, .dis only supports type dimensions 1 and 3");
+		warn("Sorry, .dis only supports type dimensions 1 and 3");
 		return(-1);
 	}
 		
@@ -431,7 +431,7 @@ FIO_DP_TO_FT_FUNC(dis,Dis_Header)
 	return(0);
 }
 
-void wt_dis_hdr(FILE *fp,Dis_Header *hdp,const char *filename)
+void _wt_dis_hdr(QSP_ARG_DECL  FILE *fp,Dis_Header *hdp,const char *filename)
 {
 	fprintf(fp,"P%d\n",hdp->format);
 	fprintf(fp,"%d %d %d\n",hdp->cols,hdp->rows,hdp->frames);
@@ -441,7 +441,7 @@ void wt_dis_hdr(FILE *fp,Dis_Header *hdp,const char *filename)
 
 FIO_SETHDR_FUNC( dis )		/* set header fields from image object */
 {
-	if( FIO_DP_TO_FT_FUNC_NAME(dis)(ifp->if_hdr_p,ifp->if_dp) < 0 ){
+	if( FIO_DP_TO_FT_FUNC_NAME(dis)(QSP_ARG  ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		dis_close(QSP_ARG  ifp);
 		return(-1);
 	}
@@ -463,7 +463,7 @@ FIO_WT_FUNC( dis )
 	return(0);
 }
 
-int dis_unconv(void *hdr_pp,Data_Obj *dp)
+int _dis_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
 	Dis_Header **hd_pp;
 
@@ -474,14 +474,14 @@ int dis_unconv(void *hdr_pp,Data_Obj *dp)
 	*hd_pp = (Dis_Header *)getbuf( sizeof(Dis_Header) );
 	if( *hd_pp == NULL ) return(-1);
 
-	FIO_DP_TO_FT_FUNC_NAME(dis)(*hd_pp,dp);
+	FIO_DP_TO_FT_FUNC_NAME(dis)(QSP_ARG  *hd_pp,dp);
 
 	return(0);
 }
 
-int dis_conv(Data_Obj *dp,void *hd_pp)
+int _dis_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("dis_conv not implemented");
+	warn("dis_conv not implemented");
 	return(-1);
 }
 

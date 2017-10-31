@@ -7,6 +7,8 @@
 
 FIO_INTERFACE_PROTOTYPES( raw , void )
 
+#define raw_to_dp(a,b)	_raw_to_dp(QSP_ARG  a,b)
+
 extern void	rd_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 extern void	read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 /* extern void	read_frame(Data_Obj *dp,Image_File *ifp); */
@@ -15,7 +17,6 @@ extern void	wt_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 extern void	wt_raw_contig(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 extern void	wt_raw_data(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp);
 extern void	set_raw_sizes(dimension_t arr[N_DIMENSIONS]);
-//extern void	raw_to_dp(Data_Obj *dp);
 
 
 #endif /* _RAW_H_ */

@@ -69,9 +69,9 @@ define(`XFER_FFT_SINC',`
 	} else if( IS_COLVEC($3) ){
 		SET_FFT_SINC($2, OBJ_ROW_INC( ($3) ) );
 	} else {
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
+		warn(ERROR_STRING);
 		return;
 	}
 ')
@@ -85,9 +85,9 @@ define(`XFER_FFT_DINC',`
 	} else if( IS_COLVEC($3) ){
 		SET_FFT_DINC($2, OBJ_ROW_INC( ($3) ) );
 	} else {
-		NWARN(DEFAULT_ERROR_STRING);
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"%s:  %s is neither a row nor a column!?","$1",OBJ_NAME($3));
+		warn(ERROR_STRING);
 		return;
 	}
 	dnl /* if( IS_COMPLEX($3) )	SET_FFT_DINC($2, FFT_DINC($2)/2); */
@@ -179,7 +179,7 @@ static void PF_FFT_CALL_NAME(cvfft)(FFT_Args *fap)
 
 	if( len != last_cpx_len ) {
 ifelse(MULTI_PROC_TEST,`1',`
-		if( n_processors > 1 ) NWARN("cvfft:  init_twiddle is not thread-safe!?");
+		if( n_processors > 1 ) _warn(DEFAULT_QSP_ARG  "cvfft:  init_twiddle is not thread-safe!?");
 ')
 		init_twiddle (len);
 	}
@@ -192,7 +192,7 @@ ifelse(MULTI_PROC_TEST,`1',`
 
 	if( len != bitrev_size ){
 ifelse(MULTI_PROC_TEST,`1',`
-		if( n_processors > 1 ) NWARN("cvfft:  bitrev_init is not thread-safe!?");
+		if( n_processors > 1 ) _warn(DEFAULT_QSP_ARG  "cvfft:  bitrev_init is not thread-safe!?");
 ')
 		bitrev_init(len);
 	}

@@ -79,7 +79,7 @@ String_Buf *get_url_contents(QSP_ARG_DECL  const char *url)
 	prt_msg("");		// newline after the dots we have been printing...
 
 	if( success != 0 ){
-		NWARN("curl_easy_perform error...");
+		warn("curl_easy_perform error...");
 		advise(MY_CURL_ERROR_BUFFER);
 		return NULL;
 	}
@@ -112,7 +112,7 @@ void write_file_from_url( QSP_ARG_DECL  FILE *fp_out, const char *url )
 	prt_msg("");
 
 	if( success != 0 ){
-		NWARN("curl_easy_perform error...");
+		warn("curl_easy_perform error...");
 		advise(MY_CURL_ERROR_BUFFER);
 	}
 }

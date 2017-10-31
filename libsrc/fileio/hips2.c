@@ -18,12 +18,10 @@
 
 static int num_color=1;
 
-static void rewrite_hips2_nf(FILE *fp,dimension_t n);
-
 // Apparently, hips2 cannot handle multi-component pixels?
 // Color is handled with separate color frames???
 
-int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
+int _hips2_to_dp(QSP_ARG_DECL  Data_Obj *dp,Hips2_Header *hd_p)
 {
 	short type_dim=1;
 	short prec;
@@ -36,10 +34,10 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 		case PFDOUBLE:prec=PREC_DP; break;
 		case PFCOMPLEX: prec=PREC_SP; type_dim=2; break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"hips2_to_dp:  unsupported pixel format code %d",
 				hd_p->pixel_format);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 	}
 	SET_OBJ_PREC_PTR(dp,prec_for_code(prec));
@@ -49,7 +47,7 @@ int hips2_to_dp(Data_Obj *dp,Hips2_Header *hd_p)
 	SET_OBJ_ROWS(dp, hd_p->rows);
 	if( hd_p->numcolor != 1 ){
 		if( type_dim != 1 )
-			NWARN("Sorry, no complex pixels with multiple color planes");
+			warn("Sorry, no complex pixels with multiple color planes");
 
 		/* This header describes the layout of the data in the file,
 		 * But now how we really want to represent it...
@@ -129,13 +127,52 @@ FIO_OPEN_FUNC(hips2)
 			return(NULL);
 		}
 		if( hips2_to_dp(ifp->if_dp,ifp->if_hdr_p) < 0 )
-			NWARN("error converting hips2 header");
+			warn("error converting hips2 header");
 	} else {	/* write file */
 		hdr2_strs(ifp->if_hdr_p);		/* make null strings */
 	}
 	return(ifp);
 }
 
+
+/* rewrite the number of frames in this header */
+
+#define rewrite_hips2_nf(fp,n) _rewrite_hips2_nf(QSP_ARG  fp,n)
+
+static void _rewrite_hips2_nf(QSP_ARG_DECL  FILE *fp,dimension_t n)
+{
+	int i;
+	int c;
+	char str[16];
+
+	/* seek to beginning of file */
+	if( fseek(fp,0L,0) != 0 ){
+		warn("error seeking to hips2 header");
+		return;
+	}
+
+	/* eat up the first THREE lines;
+	 * hips2 has a HIPS\n magic number line,
+	 * and then the two name lines, and then the frame count
+	 */
+
+	for(i=0;i<3;i++){
+		do {
+			if( (c=getc(fp)) == EOF ){
+				warn("error reading header char");
+				return;
+			}
+		} while(c!='\n');
+	}
+
+	/* print the new nframes string */
+
+	sprintf(str,"%6d",n);
+	if( fwrite(str,1,6,fp) != 6 ){
+		warn("error overwriting header nframes");
+		return;
+	}
+}
 
 FIO_CLOSE_FUNC( hips2 )
 {
@@ -146,7 +183,7 @@ FIO_CLOSE_FUNC( hips2 )
 		if( ifp->if_nfrms <= 0 ){
 			sprintf(ERROR_STRING, "file %s nframes=%d!?",
 				ifp->if_name,ifp->if_nfrms);
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		rewrite_hips2_nf(ifp->if_fp,ifp->if_nfrms);
 	}
@@ -159,7 +196,7 @@ FIO_CLOSE_FUNC( hips2 )
 	GENERIC_IMGFILE_CLOSE(ifp);
 }
 
-int dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp)
+int _dp_to_hips2(QSP_ARG_DECL  Hips2_Header *hd_p,Data_Obj *dp)
 {
 	dimension_t size;
 
@@ -224,7 +261,7 @@ int dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp)
 			hd_p->pixel_format = PFDOUBLE;
 			size=sizeof(double);
 			if( IS_COMPLEX(dp) )
-		NWARN("sorry, hips2 doesn't support double complex");
+		warn("sorry, hips2 doesn't support double complex");
 			break;
 		case PREC_SP:
 			if( IS_COMPLEX(dp) ){
@@ -236,7 +273,7 @@ int dp_to_hips2(Hips2_Header *hd_p,Data_Obj *dp)
 			}
 			break;
 		default:
-			NWARN("dp_to_hips2:  unsupported pixel format");
+			warn("dp_to_hips2:  unsupported pixel format");
 			return(-1);
 	}
 	hd_p->sizepix=size;
@@ -274,7 +311,7 @@ FIO_WT_FUNC( hips2 )
 
 	if( OBJ_COMPS(dp) > 1 ){
 		if( OBJ_SEQS(dp) > 1 ){
-	NWARN("can't write color hypersequences in HIPS2 format");
+	warn("can't write color hypersequences in HIPS2 format");
 			return(-1);
 		}
 		dobj = *dp;	/* copy the thing */
@@ -325,7 +362,7 @@ FIO_RD_FUNC( hips2 )
 
 	if( OBJ_COMPS(dp) > 1 ){	/* color kludge */
 		if( OBJ_SEQS(dp) > 1 ){
-			NWARN("Sorry, can't convert color hyperseqs from HIPS2");
+			warn("Sorry, can't convert color hyperseqs from HIPS2");
 			return;
 		}
 if( verbose ) advise("transposing data to make interleaved components");
@@ -344,7 +381,7 @@ if( verbose ) advise("transposing data to make interleaved components");
 	}
 }
 
-int hips2_unconv(void *hdr_pp,Data_Obj *dp)
+int _hips2_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
 	Hips2_Header **hd_pp;
 
@@ -360,45 +397,9 @@ int hips2_unconv(void *hdr_pp,Data_Obj *dp)
 	return(0);
 }
 
-int hips2_conv(Data_Obj *dp,void *hd_pp)
+int _hips2_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("hips2_conv not implemented");
+	warn("hips2_conv not implemented");
 	return(-1);
 }
 
-/* rewrite the number of frames in this header */
-
-static void rewrite_hips2_nf(FILE *fp,dimension_t n)
-{
-	int i;
-	int c;
-	char str[16];
-
-	/* seek to beginning of file */
-	if( fseek(fp,0L,0) != 0 ){
-		NWARN("error seeking to hips2 header");
-		return;
-	}
-
-	/* eat up the first THREE lines;
-	 * hips2 has a HIPS\n magic number line,
-	 * and then the two name lines, and then the frame count
-	 */
-
-	for(i=0;i<3;i++){
-		do {
-			if( (c=getc(fp)) == EOF ){
-				NWARN("error reading header char");
-				return;
-			}
-		} while(c!='\n');
-	}
-
-	/* print the new nframes string */
-
-	sprintf(str,"%6d",n);
-	if( fwrite(str,1,6,fp) != 6 ){
-		NWARN("error overwriting header nframes");
-		return;
-	}
-}
