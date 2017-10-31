@@ -105,7 +105,7 @@ static unsigned char read8BitValue(Image_File *ifp)
 //void bmp_close(Image_File *ifp)
 FIO_CLOSE_FUNC( bmp )
 {
-	generic_imgfile_close(QSP_ARG  ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_OPEN_FUNC( bmp )

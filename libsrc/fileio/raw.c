@@ -71,7 +71,7 @@ void wt_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 							!= 1 ){
 					WARN("error writing pixel component");
 							SET_ERROR(ifp);
-							close_image_file(QSP_ARG  ifp);
+							close_image_file(ifp);
 							return;
 						}
 						cbase += cinc;
@@ -164,7 +164,7 @@ ccdun:		givbuf(cbuf);
 				"%ld bytes actually written",(long)actual);
 			advise(ERROR_STRING);
 			SET_ERROR(ifp);
-			close_image_file(QSP_ARG  ifp);
+			close_image_file(ifp);
 		}
 	} else {
 		n = ipixels*size;
@@ -173,7 +173,7 @@ ccdun:		givbuf(cbuf);
 				"%d bytes requested, %ld bytes actually written",n,(long)actual);
 			WARN(ERROR_STRING);
 			SET_ERROR(ifp);
-			close_image_file(QSP_ARG  ifp);
+			close_image_file(ifp);
 			return;
 		}
 

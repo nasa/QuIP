@@ -1478,7 +1478,7 @@ FIO_CLOSE_FUNC( jpeg )
 		givbuf(HDR_P(ifp)->jpeg_seek_table);
 	if( ifp->if_hdr_p != NULL )
 		givbuf(ifp->if_hdr_p);
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_RD_FUNC( lml )
@@ -1773,7 +1773,7 @@ FIO_WT_FUNC( jpeg )
 			ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
 		}
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 	return(0);
 }

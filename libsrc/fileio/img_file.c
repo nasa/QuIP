@@ -199,7 +199,7 @@ static FIO_SEEK_FUNC(null)
 #define network_info_func	null_info_func
 #define network_seek_frame	null_seek_frame
 
-#define raw_close	generic_imgfile_close
+#define raw_close	_generic_imgfile_close
 #define raw_seek	uio_seek
 #define raw_info_func	null_info_func
 #define raw_seek_frame	uio_seek_frame
@@ -379,7 +379,7 @@ void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
  * may be called from filetype-specific close routine.
  */
 
-void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp)
+void _generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp)
 {
 	if( USES_STDIO(ifp) ){
 		if( ifp->if_fp != NULL ) {
@@ -1198,7 +1198,7 @@ void read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
  * Calls routine from table.
  */
 
-void close_image_file(QSP_ARG_DECL  Image_File *ifp)
+void _close_image_file(QSP_ARG_DECL  Image_File *ifp)
 {
 	if( ifp == NULL ) return;
 	(*FT_CLOSE_FUNC(IF_TYPE(ifp)))(QSP_ARG  ifp);
@@ -1368,7 +1368,7 @@ void check_auto_close(QSP_ARG_DECL  Image_File *ifp)
 			ifp->if_name,ifp->if_nfrms);
 			advise(ERROR_STRING);
 		}
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 }
 

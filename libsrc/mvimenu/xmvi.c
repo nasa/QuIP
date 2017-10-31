@@ -34,7 +34,7 @@ static void x_add_frame(QSP_ARG_DECL  Movie *mvip,Data_Obj *dp)
 
 static void x_end_assemble(QSP_ARG_DECL  Movie *mvip)
 {
-	close_image_file(QSP_ARG  (Image_File *)mvip->mvi_data);
+	close_image_file((Image_File *)mvip->mvi_data);
 	delete_movie(QSP_ARG  mvip);
 }
 

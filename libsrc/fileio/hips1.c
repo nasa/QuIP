@@ -85,7 +85,7 @@ if( debug & debug_fileio ) advise("freeing hips1 header struct");
 #endif
 		givbuf(ifp->if_hdr_p);
 	}
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 int _hips1_to_dp(QSP_ARG_DECL  Data_Obj *dp,Hips1_Header *hd_p)

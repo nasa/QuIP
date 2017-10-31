@@ -435,12 +435,12 @@ FIO_CLOSE_FUNC( avi )
 #endif // ! OLD
 
 	/* TIFFClose(ifp->if_avi); */
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_DP_TO_FT_FUNC(avi,AVCodec_Hdr)
 {
-	NERROR1("Sorry, dp_to_avi not implemented");
+	error1("Sorry, dp_to_avi not implemented");
 	return(-1);
 }
 

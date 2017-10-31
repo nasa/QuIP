@@ -10,6 +10,11 @@
 
 /* rawvol.c */
 ITEM_INTERFACE_PROTOTYPES(RV_Inode,rv_inode)
+
+#define rv_inode_of(s)	_rv_inode_of(QSP_ARG  s)
+#define get_rv_inode(s)	_get_rv_inode(QSP_ARG  s)
+#define del_rv_inode(s)	_del_rv_inode(QSP_ARG  s)
+
 extern int	rv_truncate(RV_Inode *,dimension_t);
 extern int	rv_set_shape(QSP_ARG_DECL  const char *filename, Shape_Info *shpp);
 extern void	rv_info(QSP_ARG_DECL  RV_Inode *);

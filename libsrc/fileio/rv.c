@@ -93,7 +93,7 @@ FIO_OPEN_FUNC( rvfio )
 		return(NULL);
 	}
 
-	inp = rv_inode_of(QSP_ARG  name);
+	inp = rv_inode_of(name);
 
 	if( rw == FILE_WRITE ){
 		u_long size;
@@ -113,7 +113,7 @@ FIO_OPEN_FUNC( rvfio )
 		}
 		_n_disks = creat_rv_file(QSP_ARG  name,size,rv_fd_arr);
 		if( _n_disks < 0 ) return(NULL);
-		inp = rv_inode_of(QSP_ARG  name);
+		inp = rv_inode_of(name);
 	} else {			/* FILE_READ */
 		if( inp == NULL ){
 			sprintf(ERROR_STRING,"File %s does not exist, can't read",name);
@@ -122,7 +122,7 @@ FIO_OPEN_FUNC( rvfio )
 		}
 
 		/* check for file struct already existing */
-		ifp = img_file_of(QSP_ARG  name);
+		ifp = img_file_of(name);
 		/* BUG make sure that it is type RV here! */
 		if( ifp != NULL ){
 			if( ! IS_READABLE(ifp) ){
@@ -150,7 +150,7 @@ FIO_OPEN_FUNC( rvfio )
 		}
 	}
 
-	ifp = new_img_file(QSP_ARG  name);
+	ifp = new_img_file(name);
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_flags = rw;
@@ -233,7 +233,7 @@ FIO_SETHDR_FUNC( rvfio ) /* set header fields from image object */
 
 	if( dp_to_rv(ifp->if_hdr_p,ifp->if_dp) < 0 ){
 		/* where does this come from?? */
-		GENERIC_IMGFILE_CLOSE(ifp);
+		generic_imgfile_close(ifp);
 		return(-1);
 	}
 	return(0);
@@ -283,7 +283,7 @@ off64_t retoff;
 		 * We can check the len and decide whether or
 		 * not we need to reallocate.
 		 */
-		inp = get_rv_inode(QSP_ARG  ifp->if_name);
+		inp = get_rv_inode(ifp->if_name);
 		HDR_P_LVAL(ifp) = inp;
 
 		/* Now we need to reallocate the blocks for this file */
@@ -326,9 +326,9 @@ fprintf(stderr,"bpi = %ld (0x%lx), bpf = %ld (0x%lx)\n",bpi,bpi,bpf,bpf);
 	disk_index = (int)(ifp->if_nfrms % n_disks);
 
 retoff = my_lseek64(rv_fd_arr[disk_index],(off64_t) 0,SEEK_CUR);
-fprintf(stderr,"Current file position is 0x%lx\n",retoff);
+fprintf(stderr,"Current file position is 0x%llx\n",retoff);
 
-fprintf(stderr,"writing %d (0x%lx) bytes of data from 0x%lx\n",bpi,bpi,(u_long)OBJ_DATA_PTR(dp));
+fprintf(stderr,"writing %ld (0x%lx) bytes of data from 0x%lx\n",bpi,bpi,(u_long)OBJ_DATA_PTR(dp));
 	if( (nw=write(rv_fd_arr[disk_index],OBJ_DATA_PTR(dp),bpi)) != bpi ){
 		if( nw < 0 ) tell_sys_error("write");
 		sprintf(ERROR_STRING,
@@ -347,7 +347,7 @@ fprintf(stderr,"writing %d (0x%lx) bytes of data from 0x%lx\n",bpi,bpi,(u_long)O
 	 */
 
 	if( bpf > bpi ){
-fprintf(stderr,"writing %d pad bytes of data from 0x%lx\n",bpf-bpi,(u_long)OBJ_DATA_PTR(dp));
+fprintf(stderr,"writing %ld pad bytes of data from 0x%lx\n",bpf-bpi,(u_long)OBJ_DATA_PTR(dp));
 		if( (nw=write(rv_fd_arr[disk_index],OBJ_DATA_PTR(dp),bpf-bpi)) != bpf-bpi ){
 			if( nw < 0 ) tell_sys_error("write");
 			sprintf(ERROR_STRING,
@@ -471,7 +471,7 @@ advise(ERROR_STRING);
 
 /* the unconvert routine creates a disk header */
 
-int rvfio_unconv(void *hdr_pp,Data_Obj *dp)
+int _rvfio_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
 	RV_Inode **in_pp;
 
@@ -487,7 +487,7 @@ int rvfio_unconv(void *hdr_pp,Data_Obj *dp)
 	return(0);
 }
 
-int rvfio_conv(Data_Obj *dp,void *hd_pp)
+int _rvfio_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
 	warn("rv_conv not implemented");
 	return(-1);
@@ -505,7 +505,7 @@ FIO_INFO_FUNC( rvfio )
 FIO_CLOSE_FUNC( rvfio )
 {
 	/* this is where we should check the number of frames written?? */
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 double get_rv_seconds(QSP_ARG_DECL  Image_File *ifp,dimension_t frame)

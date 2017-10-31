@@ -36,7 +36,7 @@ FIO_OPEN_FUNC( ascii )
 
 FIO_CLOSE_FUNC( ascii )
 {
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_WT_FUNC( ascii )

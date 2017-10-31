@@ -152,7 +152,7 @@ FIO_CLOSE_FUNC( wav )
 	if( ifp->if_hdr_p != NULL )
 		givbuf(ifp->if_hdr_p);
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_DP_TO_FT_FUNC(wav,Wav_Header)

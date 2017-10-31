@@ -147,7 +147,7 @@ static COMMAND_FUNC( do_close_all_hips )
 	while(np!=NULL){
 		ifp=(Image_File *)np->n_data;
 		np=np->n_next;
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 }
 
@@ -157,7 +157,7 @@ static COMMAND_FUNC( do_close_hips )
 
 	ifp=pick_img_file("");
 
-	close_image_file(QSP_ARG  ifp);
+	close_image_file(ifp);
 }
 
 static COMMAND_FUNC( wt_next )

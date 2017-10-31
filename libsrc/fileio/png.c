@@ -136,7 +136,7 @@ FIO_CLOSE_FUNC( pngfio )
 		givbuf(ifp->if_hdr_p);
 	}
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 // Scanning all of the chunks (like what we do with jpeg) is very slow
@@ -878,7 +878,7 @@ FIO_WT_FUNC( pngfio )		// unix version
 			ifp->if_name,ifp->if_nfrms);
 			NADVISE(ERROR_STRING);
 		}
-		close_image_file(QSP_ARG  ifp);
+		close_image_file(ifp);
 	}
 
 //	/* close the file */

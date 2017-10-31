@@ -166,7 +166,7 @@ FIO_CLOSE_FUNC( ppm )
 	if( ifp->if_hdr_p != NULL ){
 		givbuf(ifp->if_hdr_p);
 	}
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_DP_TO_FT_FUNC(ppm,Ppm_Header)
@@ -391,7 +391,7 @@ FIO_CLOSE_FUNC( dis )
 	if( ifp->if_hdr_p != NULL ){
 		givbuf(ifp->if_hdr_p);
 	}
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 //int dp_to_dis(Dis_Header *hd_p,Data_Obj *dp)

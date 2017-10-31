@@ -224,7 +224,7 @@ FIO_CLOSE_FUNC( tiff )
 	/* can we write multiple frames to tiff??? */
 
 	TIFFClose(ifp->if_tiff);
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 //int dp_to_tiff(TIFF *tiff,Data_Obj *dp)

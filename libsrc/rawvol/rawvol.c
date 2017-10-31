@@ -355,7 +355,7 @@ static void remove_path_component(void)
 static void pop_pathname_context(SINGLE_QSP_ARG_DECL)
 {
 //fprintf(stderr,"pop_pathname_context\n");
-	pop_item_context(QSP_ARG  rv_inode_itp);
+	pop_item_context(rv_inode_itp);
 }
 
 static void set_pathname_context(SINGLE_QSP_ARG_DECL)
@@ -365,19 +365,19 @@ static void set_pathname_context(SINGLE_QSP_ARG_DECL)
 
 //fprintf(stderr,"set_pathname_context, rv_pathname = %s BEGIN\n",rv_pathname);
 	sprintf(ctxname,"RV_Inode.%s",rv_pathname);
-	icp = ctx_of(QSP_ARG  ctxname);
+	icp = ctx_of(ctxname);
 	if( icp == NULL ){
 		if( rv_inode_itp == NULL )
-			rv_inode_itp = new_item_type(QSP_ARG  "RV_Inode", DEFAULT_CONTAINER_TYPE);
+			rv_inode_itp = new_item_type("RV_Inode", DEFAULT_CONTAINER_TYPE);
 
-		icp = create_item_context(QSP_ARG  rv_inode_itp,rv_pathname);
+		icp = create_item_context(rv_inode_itp,rv_pathname);
 		if( icp == NULL ){
 			sprintf(ERROR_STRING,"error creating rv context %s",rv_pathname);
 			WARN(ERROR_STRING);
 			return;
 		}
 	}
-	PUSH_ITEM_CONTEXT(rv_inode_itp,icp);
+	push_item_context(rv_inode_itp,icp);
 }
 
 static void read_rv_data(RV_Inode *inp,char *data,uint32_t size)
@@ -598,7 +598,7 @@ static void scan_inode(QSP_ARG_DECL  RV_Inode *dk_inp)
 
 	/* now create a heap struct for this inode */
 
-	inp = new_rv_inode(QSP_ARG  name);
+	inp = new_rv_inode(name);
 
 	if( inp == NULL ){
 		// This can happen if we have a name collision - it should not be allowed
@@ -657,9 +657,9 @@ static void scan_inode(QSP_ARG_DECL  RV_Inode *dk_inp)
 		auto_shape_flags(RV_MOVIE_SHAPE(inp));
 
 		/* the image file might be open already if we are rescanning */
-		ifp = img_file_of(QSP_ARG  RV_NAME(inp));
+		ifp = img_file_of(RV_NAME(inp));
 		if( ifp != NULL ){
-			close_image_file(QSP_ARG  ifp);
+			close_image_file(ifp);
 		}
 
 		setup_rv_iofile(QSP_ARG  inp);
@@ -707,6 +707,7 @@ static void link_directory(QSP_ARG_DECL  RV_Inode *dk_inp)
 	}
 }
 
+#ifdef O_DIRECT
 static void check_inode_size()
 {
 	int s;
@@ -719,6 +720,7 @@ static void check_inode_size()
 		abort();
 	}
 }
+#endif // O_DIRECT
 
 static int rv_already_open(QSP_ARG_DECL  const char *vol_name)
 {
@@ -1013,7 +1015,7 @@ static void scan_rv_file_system(SINGLE_QSP_ARG_DECL)
 
 		if( curr_rv_sbp->rv_magic == RV_MAGIC2 ){
 			RV_Inode *inp;
-			inp=rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
+			inp=rv_inode_of(ROOT_DIR_NAME);
 			assert( inp != NULL );
 
 			curr_rv_sbp->rv_cwd = inp;
@@ -1180,7 +1182,7 @@ static void rls_inode(QSP_ARG_DECL  RV_Inode *inp)			/* convert back to disk for
 	rls_data_blocks(RV_N_BLOCKS(inp),RV_ADDR(inp));
 	remove_from_parent(inp);
 
-	del_rv_inode(QSP_ARG  inp);	/* remove from database */
+	del_rv_inode(inp);	/* remove from database */
 } /* end rls_inode */
 
 /* This is a bit tricky, because rv files can be created in isolation,
@@ -1211,9 +1213,9 @@ static int rm_inode(QSP_ARG_DECL  RV_Inode *inp, int check_permissions)
 		 * the fileio menu!
 		 */
 
-		ifp = img_file_of(QSP_ARG  RV_NAME(inp));
+		ifp = img_file_of(RV_NAME(inp));
 		if( ifp != NULL )
-			GENERIC_IMGFILE_CLOSE(ifp);
+			generic_imgfile_close(ifp);
 	}
 
 	// remove all of the children...
@@ -1251,7 +1253,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 
 	/* now get rid of all the mem structs */
 	if( rv_cd(QSP_ARG  ROOT_DIR_NAME) < 0 ) WARN("unable to cd /");
-	inp=get_rv_inode(QSP_ARG  ROOT_DIR_NAME);
+	inp=get_rv_inode(ROOT_DIR_NAME);
 
 	assert( inp != NULL );
 
@@ -1279,7 +1281,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 	mem_release(curr_rv_sbp);
 	curr_rv_sbp = NULL;
 
-	while( eltcount( CONTEXT_LIST(rv_inode_itp) ) > 1 )
+	while( eltcount( context_stack(rv_inode_itp) ) > 1 )
 		pop_pathname_context(SINGLE_QSP_ARG);
 } // end rv_close
 
@@ -1510,7 +1512,7 @@ RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,uint32_t size)
 
 	/* make sure name is unique */
 
-	inp = new_rv_inode(QSP_ARG  name);			/* get a struct from the heap */
+	inp = new_rv_inode(name);			/* get a struct from the heap */
 
 	if( inp == NULL ) return(inp);
 
@@ -1615,7 +1617,7 @@ errorC:
 errorB:
 	givspace(&rv_st_freelist,strlen(name)+1,RV_NAME_IDX(inp));
 errorA:
-	del_rv_inode(QSP_ARG  inp);		/* remove from database */
+	del_rv_inode(inp);		/* remove from database */
 	return(NULL);
 } /* end rv_newfile */
 
@@ -1746,7 +1748,7 @@ static int flush_super(QSP_ARG_DECL  RV_Super *sbp)
 		} else {
 			perror("write");
 			sprintf(ERROR_STRING,
-"Tried to write %d (0x%x) bytes at 0x%lx",block_size,block_size,(long)sbp);
+"Tried to write %zu (0x%zx) bytes at 0x%lx",block_size,block_size,(long)sbp);
 			advise(ERROR_STRING);
 		}
 		WARN("error writing superblock");
@@ -1874,7 +1876,7 @@ static int rv_step_dir(QSP_ARG_DECL  const char *dirname)
 	} else if( !strcmp(dirname,".") ) return(0);	/* a noop */
 
 	set_pathname_context(SINGLE_QSP_ARG);
-	inp = rv_inode_of(QSP_ARG  dirname);
+	inp = rv_inode_of(dirname);
 	pop_pathname_context(SINGLE_QSP_ARG);
 
 	if( inp==NULL ){
@@ -1888,7 +1890,7 @@ static int rv_step_dir(QSP_ARG_DECL  const char *dirname)
 	else
 		add_path_component(RV_NAME(inp));
 
-	if( eltcount( CONTEXT_LIST(rv_inode_itp) ) > 1 )
+	if( eltcount( context_stack(rv_inode_itp) ) > 1 )
 		pop_pathname_context(SINGLE_QSP_ARG);
 	else if( ! in_mkfs ){
 		sprintf(ERROR_STRING,"rv_mkdir:  no context to pop!?");
@@ -1915,7 +1917,7 @@ int rv_rmfile(QSP_ARG_DECL  const char *name)
 				sprintf(ERROR_STRING,"You probably should not be removing directory %s",s);
 				WARN(ERROR_STRING);
 			}
-			inp = get_rv_inode(QSP_ARG  s);
+			inp = get_rv_inode(s);
 			if( inp==NULL ) return(-1);
 			status=rm_inode(QSP_ARG  inp,1);
 		} else {
@@ -1938,7 +1940,7 @@ void rv_lsfile(QSP_ARG_DECL  const char *name)
 {
 	RV_Inode *inp;
 
-	inp = rv_inode_of(QSP_ARG  name);
+	inp = rv_inode_of(name);
 	if( inp==NULL ) return;
 
 	rv_ls_inode(QSP_ARG  inp);
@@ -2323,7 +2325,7 @@ void traverse_rv_inodes( QSP_ARG_DECL  void (*func)(QSP_ARG_DECL RV_Inode *) )
 
 	CHECK_VOLUME("traverse_rv_inodes")
 
-	inp = rv_inode_of(QSP_ARG  ROOT_DIR_NAME);
+	inp = rv_inode_of(ROOT_DIR_NAME);
 if( inp == NULL ) fprintf(stderr,"traverse_rv_inodes:  failed to find root dir \"%s\"\n",ROOT_DIR_NAME);
 	assert( inp != NULL );
 
@@ -2354,7 +2356,7 @@ static void traverse_list( QSP_ARG_DECL  List *lp, void (*func)(QSP_ARG_DECL  RV
 
 void rv_ls_ctx(SINGLE_QSP_ARG_DECL)
 {
-	traverse_list( QSP_ARG  item_list(QSP_ARG  rv_inode_itp), rv_ls_inode );
+	traverse_list( QSP_ARG  item_list(rv_inode_itp), rv_ls_inode );
 }
 
 static void sync_super(void)
@@ -2522,7 +2524,7 @@ int creat_rv_file(QSP_ARG_DECL  const char *filename,uint32_t size,int *fd_arr)
 {
 	RV_Inode *inp;
 
-	inp = rv_inode_of(QSP_ARG  filename);
+	inp = rv_inode_of(filename);
 	if( inp != NULL ){
 		sprintf(ERROR_STRING,"Deleting old version of file %s",filename);
 		advise(ERROR_STRING);
@@ -2766,7 +2768,7 @@ int rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
 {
 	RV_Inode *inp;
 
-	inp = get_rv_inode(QSP_ARG  filename);
+	inp = get_rv_inode(filename);
 	if( inp == NULL ) return(-1);
 
 	assert(RV_MOVIE_SHAPE(inp) != NULL);
@@ -2864,7 +2866,7 @@ int rv_realloc(QSP_ARG_DECL  const char *name,uint32_t size)
 {
 	RV_Inode *inp;
 
-	inp = rv_inode_of(QSP_ARG  name);
+	inp = rv_inode_of(name);
 	if( inp == NULL ){
 		sprintf(ERROR_STRING,"rv_realloc:  no file %s",name);
 		WARN(ERROR_STRING);

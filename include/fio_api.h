@@ -68,9 +68,12 @@ extern FIO_CONV_FUNC(stem);
 
 /* img_file.c */
 extern Filetype *	current_filetype(void);
-extern void close_image_file(QSP_ARG_DECL  Image_File *ifp);
-extern void generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
-#define GENERIC_IMGFILE_CLOSE(ifp)	generic_imgfile_close(QSP_ARG  ifp)
+extern void _close_image_file(QSP_ARG_DECL  Image_File *ifp);
+extern void _generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp);
+
+#define close_image_file(ifp)	_close_image_file(QSP_ARG  ifp)
+#define generic_imgfile_close(ifp)	_generic_imgfile_close(QSP_ARG  ifp)
+
 extern void if_info(QSP_ARG_DECL  Image_File *ifp);
 extern Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n);
 extern void write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp);

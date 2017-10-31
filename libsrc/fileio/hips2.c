@@ -193,7 +193,7 @@ FIO_CLOSE_FUNC( hips2 )
 		givbuf(ifp->if_hdr_p);
 	}
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 int _dp_to_hips2(QSP_ARG_DECL  Hips2_Header *hd_p,Data_Obj *dp)
