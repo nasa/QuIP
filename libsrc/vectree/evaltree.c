@@ -3948,6 +3948,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			dval1 = eval_flt_exp(VN_CHILD(enp,0));
 			switch(VN_PREC(enp)){
 				case PREC_BY:   return( (long) ((char)     dval1 ) );
+				case PREC_STR:
 				case PREC_UBY:  return( (long) ((u_char)   dval1 ) );
 				case PREC_IN:   return( (long) ((short)    dval1 ) );
 				case PREC_UIN:  return( (long) ((u_short)  dval1 ) );
@@ -3962,6 +3963,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 					else return(1);
 
 				default:
+					dump_tree(enp);
 					assert( AERROR("eval_int_exp:  unhandled precision") );
 			}
 			break;
