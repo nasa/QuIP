@@ -89,7 +89,7 @@ FIO_OPEN_FUNC( rvfio )
 
 	if( ! legal_rv_filename(name) ){
 		sprintf(ERROR_STRING,"rv_open:  \"%s\" is not a legal filename",name);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 
@@ -117,7 +117,7 @@ FIO_OPEN_FUNC( rvfio )
 	} else {			/* FILE_READ */
 		if( inp == NULL ){
 			sprintf(ERROR_STRING,"File %s does not exist, can't read",name);
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		}
 
@@ -136,7 +136,7 @@ FIO_OPEN_FUNC( rvfio )
 			if( IS_READABLE(ifp) ){
 				if( (_n_disks=queue_rv_file(QSP_ARG  inp,rv_fd_arr)) < 0 ){
 			sprintf(ERROR_STRING,"Error queueing file %s",ifp->if_name);
-					NWARN(ERROR_STRING);
+					warn(ERROR_STRING);
 				}
 				return(ifp);
 			}
@@ -145,7 +145,7 @@ FIO_OPEN_FUNC( rvfio )
 
 			/* NOTREACHED */
 			sprintf(ERROR_STRING,"File %s is not readable!?",ifp->if_name);
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			return(NULL);
 		}
 	}
@@ -197,7 +197,7 @@ FIO_OPEN_FUNC( rvfio )
 		 */
 		if( (_n_disks=queue_rv_file(QSP_ARG  inp,rv_fd_arr)) < 0 ){
 			sprintf(ERROR_STRING,"Error queueing file %s",ifp->if_name);
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 	} else {
 		ifp->if_dp = NULL;
@@ -305,7 +305,7 @@ off64_t retoff;
 			sprintf(ERROR_STRING,
 		"error allocating %ld disk blocks for file %s",
 				size,ifp->if_name);
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 
 		if( set_rvfio_hdr(QSP_ARG  ifp) < 0 ) return(-1);
@@ -334,7 +334,7 @@ fprintf(stderr,"writing %d (0x%lx) bytes of data from 0x%lx\n",bpi,bpi,(u_long)O
 		sprintf(ERROR_STRING,
 	"write error on disk %d (fd=%d), %ld bytes requested, %ld written",disk_index,
 		rv_fd_arr[disk_index],bpi,nw);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		/* BUG? do something sensible here to clean up? */
 		return(-1);
 	}
@@ -353,7 +353,7 @@ fprintf(stderr,"writing %d pad bytes of data from 0x%lx\n",bpf-bpi,(u_long)OBJ_D
 			sprintf(ERROR_STRING,
 	"write error on disk %d (fd=%d), %ld bytes requested, %ld written",disk_index,
 			rv_fd_arr[disk_index],bpf-bpi,nw);
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			/* BUG? do something sensible here to clean up? */
 			return(-1);
 		}
@@ -383,9 +383,9 @@ static struct timeval *rv_time_ptr(QSP_ARG_DECL  Image_File *ifp, index_t frame)
 
 	if( rv_movie_extra( HDR_P(ifp) ) != sizeof(struct timeval) ){
 		/* sizeof is long in ia64? */
-		sprintf(DEFAULT_ERROR_STRING,"rv_time_ptr:  expected rvi_extra_bytes (%d) to equal sizeof(struct timeval) (%d) !?",
+		sprintf(ERROR_STRING,"rv_time_ptr:  expected rvi_extra_bytes (%d) to equal sizeof(struct timeval) (%d) !?",
 				rv_movie_extra( HDR_P(ifp) ),(int)sizeof(struct timeval));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(NULL);
 	}
 	n_to_read = bpi + rv_movie_extra( HDR_P(ifp) );
@@ -397,10 +397,10 @@ static struct timeval *rv_time_ptr(QSP_ARG_DECL  Image_File *ifp, index_t frame)
 
 	if( (n=read(rv_fd_arr[disk_index],buf,n_to_read)) != n_to_read ){
 		if( n < 0 ) tell_sys_error("read");
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"error reading RV data from disk %d (fd=%d), %d bytes read (%ld requested)",
 			disk_index,rv_fd_arr[disk_index],n,n_to_read);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	tvp = (struct timeval *)(buf + bpi);
 	tv = *tvp;
@@ -434,7 +434,7 @@ FIO_RD_FUNC( rvfio )
 	/* BUG? should we verify that dp is only one frame? */
 
 	if( x_offset !=0 || y_offset != 0 || t_offset != 0 ){
-		NWARN("rvfio_rd:  non-zero offsets not supported");
+		warn("rvfio_rd:  non-zero offsets not supported");
 		return;
 	}
 
@@ -454,7 +454,7 @@ ifp->if_name,ifp->if_nfrms,disk_index);
 advise(ERROR_STRING);
 }
 	if( rv_frame_seek(QSP_ARG  HDR_P(ifp),ifp->if_nfrms) < 0 ){
-		NWARN("rvfio_rd:  seek failed, not reading data");
+		warn("rvfio_rd:  seek failed, not reading data");
 		return;
 	}
 
@@ -463,7 +463,7 @@ advise(ERROR_STRING);
 		sprintf(ERROR_STRING,
 	"error reading RV data from disk %d (fd=%d), %d bytes read (%ld requested)",
 			disk_index,rv_fd_arr[disk_index],n,bpi);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 
 	ifp->if_nfrms++;
@@ -489,7 +489,7 @@ int rvfio_unconv(void *hdr_pp,Data_Obj *dp)
 
 int rvfio_conv(Data_Obj *dp,void *hd_pp)
 {
-	NWARN("rv_conv not implemented");
+	warn("rv_conv not implemented");
 	return(-1);
 }
 
