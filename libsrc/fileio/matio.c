@@ -362,7 +362,7 @@ FIO_CLOSE_FUNC( mat )
 {
 	/* can we write multiple frames to mat??? */
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_DP_TO_FT_FUNC(mat,/*matvar_t*/ Matio_Hdr )

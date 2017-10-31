@@ -21,7 +21,7 @@
 
 void vl_close(QSP_ARG_DECL  Image_File *ifp)
 {
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 Image_File *		/**/

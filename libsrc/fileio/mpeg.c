@@ -307,7 +307,7 @@ void mpeg_close(Image_File *ifp)
 	if( ifp->hdr != NULL )
 		givbuf(ifp->hdr);
 
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 

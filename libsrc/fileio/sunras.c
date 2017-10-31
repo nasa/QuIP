@@ -16,7 +16,7 @@ void sunras_close(QSP_ARG_DECL  Image_File *ifp)
 	if( ifp->if_hd != NULL ){
 		givbuf(ifp->if_hd);
 	}
-	GENERIC_IMGFILE_CLOSE(ifp);
+	generic_imgfile_close(ifp);
 }
 
 void sunras_rd(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)		/**/
