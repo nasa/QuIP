@@ -877,10 +877,10 @@ static COMMAND_FUNC( do_repeat )
 	int n;
 	n=(int)how_many("number of iterations");
 	if( n <= 0 ){
-		warn("do_repeat:  number of repetitions must be positive!?");
+		sprintf(ERROR_STRING,"do_repeat:  number of repetitions (%d) must be positive!?",n);
+		warn(ERROR_STRING);
 		return;
 	}
-
 	open_loop(n);
 }
 

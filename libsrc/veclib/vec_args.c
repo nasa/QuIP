@@ -400,13 +400,21 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			 * Well we can, but it breaks vsatan2 with cuda...
 			 */
 			if( VF_FLAGS(vfp) & SRC1_VEC ){
-				SET_MACH_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
+				if( OA_SRC1(oap) == NULL ){	// input error
+					HOW_MUCH("dummy value");
+					retval=(-1);
+				} else {
+					SET_MACH_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
+				}
 			} else {
+				// We assume OA_DEST can't be null, because it is real
 				SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );
 			}
-			SET_OA_SVAL(oap,0,alloc_sval( prec_p ) );
-			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
-				HOW_MUCH("source real scalar value") );
+			if( retval >= 0 ){	// no error yet?
+				SET_OA_SVAL(oap,0,alloc_sval( prec_p ) );
+				cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
+					HOW_MUCH("source real scalar value") );
+			}
 		} else if( IS_COMPLEX(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
 			SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
