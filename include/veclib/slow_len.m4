@@ -14,7 +14,7 @@
 // These are only the source dimensions.
 
 dnl SETUP_SLOW_LEN(bitmaps,typ,vectors)
-define(`SETUP_SLOW_LEN',/* setup_slow_len /$1/ /$2/ /$3/ */SETUP_SLOW_LEN_$1$2$3)
+define(`SETUP_SLOW_LEN',SETUP_SLOW_LEN_$1$2$3)
 
 dnl SETUP_SLOW_LEN_RC_N(n)
 define(`SETUP_SLOW_LEN_RC_N',`if( setup_slow_len(vap,1,0,$1,VA_PFDEV(vap)) < 0 ) return;')

@@ -26,7 +26,7 @@
  * -2 out of memory
  */
 
-int gauss_jordan(float *matrix,dimension_t size)
+int _gauss_jordan(QSP_ARG_DECL  float *matrix,dimension_t size)
 {
 	int indxc[MAXSIZE];
 	int indxr[MAXSIZE];
@@ -56,7 +56,7 @@ int gauss_jordan(float *matrix,dimension_t size)
 							icol=k;
 						}
 					} else if( ipiv[k] > 1 ){
-						NWARN("G-J:  singular, returning -1");
+						warn("G-J:  singular, returning -1");
 						return(-1);
 					}
 				}
@@ -81,7 +81,7 @@ int gauss_jordan(float *matrix,dimension_t size)
 		indxr[i]=irow;
 		indxc[i]=icol;
 		if( (tmp=matrix[icol*size+icol]) == 0.0 ){
-			NWARN("G-J:  singular matrix");
+			warn("G-J:  singular matrix");
 			return(-1);
 		}
 		pivinv = 1/tmp;
@@ -122,7 +122,7 @@ int gauss_jordan(float *matrix,dimension_t size)
 	return(0);
 }
 
-int dp_gauss_jordan(double *matrix,dimension_t size)
+int _dp_gauss_jordan(QSP_ARG_DECL  double *matrix,dimension_t size)
 {
 	int indxc[MAXSIZE];
 	int indxr[MAXSIZE];
@@ -152,7 +152,7 @@ int dp_gauss_jordan(double *matrix,dimension_t size)
 							icol=k;
 						}
 					} else if( ipiv[k] > 1 ){
-						NWARN("G-J:  singular, returning -1");
+						warn("G-J:  singular, returning -1");
 						return(-1);
 					}
 				}
@@ -177,7 +177,7 @@ int dp_gauss_jordan(double *matrix,dimension_t size)
 		indxr[i]=irow;
 		indxc[i]=icol;
 		if( (tmp=matrix[icol*size+icol]) == 0.0 ){
-			NWARN("G-J:  singular matrix");
+			warn("G-J:  singular matrix");
 			return(-1);
 		}
 		pivinv = 1/tmp;

@@ -48,7 +48,8 @@
 //#define MAX3(szi_p)	MAXD(MAX2(szi_p),szi_p->szi_src_dim[1][i_dim])
 
 
-int setup_slow_len(	Vector_Args *vap,
+int _setup_slow_len(	QSP_ARG_DECL
+			Vector_Args *vap,
 			dimension_t start_dim,	// 0, or 1 for complex?
 			int i_first,		// index of first source vector
 			int n_vec,		// number of source vectors
@@ -91,14 +92,14 @@ int setup_slow_len(	Vector_Args *vap,
 	 * we need to conditionally complain if the number set is 3.
 	 */
 				if( PFDEV_MAX_DIMS(pdp) == 2 ){
-NWARN("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations");
+warn("Sorry, CUDA compute capability >= 2.0 required for 3-D array operations");
 					return(-1);
 				}
 				SET_VA_LEN_Z(vap,max_d);
 				SET_VA_DIM_INDEX(vap,n_set,i_dim);
 				n_set ++;
 			} else {
-				NWARN("setup_slow_len:  Too many dimensions requested.");
+				warn("setup_slow_len:  Too many dimensions requested.");
 				return(-1);
 			}
 		}

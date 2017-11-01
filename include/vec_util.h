@@ -95,8 +95,10 @@ extern void dp_halftone(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,dimension_t 
 /* File gj.c */
 
 
-extern int gauss_jordan(float *matrix,dimension_t size);
-extern int dp_gauss_jordan(double *matrix,dimension_t size);
+extern int _gauss_jordan(QSP_ARG_DECL  float *matrix,dimension_t size);
+extern int _dp_gauss_jordan(QSP_ARG_DECL  double *matrix,dimension_t size);
+#define gauss_jordan(matrix,size) _gauss_jordan(QSP_ARG  matrix,size)
+#define dp_gauss_jordan(matrix,size) _dp_gauss_jordan(QSP_ARG  matrix,size)
 
 
 /* File histo.c */

@@ -92,15 +92,15 @@ void vinterp(QSP_ARG_DECL  Data_Obj *target,Data_Obj *source,Data_Obj *control)
 
 
 	if( !dp_same_size(target,source,"vinterp") ){
-		NWARN("vinterp:  target/source length mismatch");
+		warn("vinterp:  target/source length mismatch");
 		return;
 	}
 	if( !dp_same_size(target,control,"vinterp") ){
-		NWARN("vinterp:  target/control length mismatch");
+		warn("vinterp:  target/control length mismatch");
 		return;
 	}
 	if( OBJ_COMPS(source) != 1 || OBJ_COMPS(target) != 1 ){
-		NWARN("vinterp:  component dimensions must be 1");
+		warn("vinterp:  component dimensions must be 1");
 		return;
 	}
 
@@ -164,7 +164,7 @@ advise(ERROR_STRING);
 		float fill_val;
 		int j;
 		if( start_index < 0 ){
-			NWARN("vinterp:  no valid data!?");
+			warn("vinterp:  no valid data!?");
 			fill_val=0.0;
 		} else fill_val = get_start_val(source,control,start_index);
 		for(j=0;j<n_to_interpolate;j++){

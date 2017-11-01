@@ -18,14 +18,14 @@ void odither(QSP_ARG_DECL  Data_Obj *dp,int size)/* ordered dither matrix order 
 	INSIST_RAM_OBJ(dp,odither)
 
 	if( OBJ_PREC(dp) != PREC_SP ){
-		NWARN("target image must be float precision");
+		warn("target image must be float precision");
 		return;
 	}
 	logsiz=0;
 	factor=1;
 	while( size != 1 ){
 		if( size & 1 ){
-			NWARN("size must be a power of 2");
+			warn("size must be a power of 2");
 			return;
 		}
 		size >>= 1;
