@@ -523,8 +523,12 @@ Define Fill 5 img x y v tol
 compute misc fill $1 $2 $3 $4 $5 quit quit
 .
 
-Define Map 3 float_output byte_input map_vector
-compute misc map $1 $2 $3 quit quit
+Define Map_S 3 float_output short_input map_vector
+compute misc map_s $1 $2 $3 quit quit
+.
+
+Define Map_B 3 float_output byte_input map_vector
+compute misc map_b $1 $2 $3 quit quit
 .
 
 Define Finite 1 image

@@ -1078,6 +1078,8 @@ FIO_WT_FUNC( pngfio )		// iOS version
 	return(0);
 }
 
+#define png_to_dp(dp, img) _png_to_dp(QSP_ARG  dp, img)
+
 static void _png_to_dp(QSP_ARG_DECL  Data_Obj *dp, UIImage *img)	// iOS version
 {
 
@@ -1228,14 +1230,16 @@ FIO_SEEK_FUNC(pngfio)
 	return(0);
 }
 
-int pngfio_unconv(void *hdr_pp,Data_Obj *dp)
+//int pngfio_unconv(void *hdr_pp,Data_Obj *dp)		// iOS version
+FIO_UNCONV_FUNC(pngfio)
 {
 	warn("png_unconv() not implemented!?");
 	return(-1);
 }
 
+//int pngfio_conv(Data_Obj *dp,void *hd_pp)		// iOS version
 
-int pngfio_conv(Data_Obj *dp,void *hd_pp)
+FIO_CONV_FUNC(pngfio)
 {
 	warn("png_conv not implemented");
 	return(-1);
