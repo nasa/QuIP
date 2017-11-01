@@ -142,7 +142,7 @@ FIO_OPEN_FUNC( hips1 )
 if( debug & debug_fileio ) advise("opening hips1 image file");
 #endif /* QUIP_DEBUG */
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_HIPS1));
 	/* img_file_creat creates dummy if_dp only if readable */
 
 	if( ifp==NULL ) return(ifp);
@@ -297,9 +297,9 @@ FIO_WT_FUNC(hips1)
 		/* reset nframes */
 		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
 		if( set_hdr(QSP_ARG  ifp) < 0 ) return(-1);
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 	return(0);
 }
 

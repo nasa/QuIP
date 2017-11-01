@@ -103,7 +103,7 @@ int movie_ok(void)
 
 static int clobber_movies=1;
 
-Movie *create_movie(QSP_ARG_DECL  const char *moviename)
+Movie *_create_movie(QSP_ARG_DECL  const char *moviename)
 {
 	Movie *mvip;
 
@@ -147,7 +147,7 @@ static Movie *create_writable_movie(QSP_ARG_DECL  const char *moviename,uint32_t
 {
 	Movie *mvip;
 
-	mvip=create_movie(QSP_ARG  moviename);
+	mvip=create_movie(moviename);
 	if( mvip == NULL ) return(mvip);
 
 	if( !movie_ok() ) return(NULL);
@@ -157,7 +157,7 @@ if( debug & mvi_debug ) advise("calling movie setup_func");
 #endif /* QUIP_DEBUG */
 
 	if( (*the_mmp->setup_func)(QSP_ARG  mvip,n_fields) < 0 ){	/* device specific */
-		delete_movie(QSP_ARG  mvip);
+		delete_movie(mvip);
 		return(NULL);
 	}
 
@@ -626,12 +626,12 @@ void close_movie(QSP_ARG_DECL  Movie *mvip)
 	if( the_mmp != NULL )
 		(*the_mmp->close_func)(QSP_ARG  mvip);		/* device specific */
 
-	delete_movie(QSP_ARG  mvip);
+	delete_movie(mvip);
 }
 
 /* delete a movie from the database */
 
-void delete_movie(QSP_ARG_DECL  Movie *mvip)
+void _delete_movie(QSP_ARG_DECL  Movie *mvip)
 {
 	if( mvip == NULL ) return;
 
@@ -981,7 +981,7 @@ COMMAND_FUNC( do_movie_menu )
 	CHECK_AND_PUSH_MENU(movie);
 }
 
-void load_movie_module(QSP_ARG_DECL  Movie_Module *mmp)
+void _load_movie_module(QSP_ARG_DECL  Movie_Module *mmp)
 {
 	the_mmp = mmp;
 

@@ -18,9 +18,9 @@ __attribute__ ((__noreturn__)) extern void _error1(QSP_ARG_DECL  const char *msg
 
 // Phasing out all-caps WARN...
 #define WARN(msg)	warn(msg)
-#define warn(msg)	script_warn(QSP_ARG msg)
+#define warn(msg)	_warn(QSP_ARG msg)
 
-#define NWARN(msg)	script_warn(DEFAULT_QSP_ARG msg)
+#define NWARN(msg)	_warn(DEFAULT_QSP_ARG msg)
 
 // when we run this on the iOS simulator, the bell char prints
 // as a lower case A!?

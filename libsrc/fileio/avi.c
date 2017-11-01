@@ -221,7 +221,7 @@ FIO_OPEN_FUNC( avi )
 	Image_File *ifp;
 	long numBytes;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_AVI));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_AVI));
 	if( ifp==NULL ) return(ifp);
 
 	/* img_file_creat updates if_pathname if a directory has been specified */

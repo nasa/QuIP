@@ -46,7 +46,7 @@ static COMMAND_FUNC( do_set_iofdir )
 	const char *s;
 
 	s=NAMEOF("directory for image/data files");
-	set_iofile_directory(QSP_ARG  s);
+	set_iofile_directory(s);
 }
 
 static COMMAND_FUNC( do_set_filetype )
@@ -56,7 +56,7 @@ static COMMAND_FUNC( do_set_filetype )
 	ftp = pick_file_type("file format");
 
 	if( ftp != NULL )
-		set_filetype(QSP_ARG  ftp);
+		set_filetype(ftp);
 }
 
 static COMMAND_FUNC( do_read_image_file )	/** open file for reading */
@@ -82,7 +82,7 @@ static COMMAND_FUNC( do_read_image_file )	/** open file for reading */
 		return;
 	}
 
-	if(  read_image_file(QSP_ARG  s) == NULL )
+	if(  read_image_file(s) == NULL )
 		WARN("error reading image file");
 }
 
@@ -107,7 +107,7 @@ static COMMAND_FUNC( do_write_image_file )
 		return;
 	}
 
-	if( write_image_file(QSP_ARG  s,n) == NULL )
+	if( write_image_file(s,n) == NULL )
 		WARN("error writing image file");
 }
 
@@ -119,7 +119,7 @@ static COMMAND_FUNC( rd_next )
 	dp=pick_obj("name of image data object" );
 	ifp=pick_img_file("");
 
-	read_object_from_file(QSP_ARG  dp,ifp);
+	read_object_from_file(dp,ifp);
 }
 
 static COMMAND_FUNC( rd_obj )
@@ -131,7 +131,7 @@ static COMMAND_FUNC( rd_obj )
 	ifp=pick_img_file("");
 	if( dp == NULL ) return;
 	if( ifp == NULL ) return;
-	read_object(QSP_ARG  dp, ifp);
+	read_object(dp, ifp);
 }
 
 static COMMAND_FUNC( do_close_all_hips )
@@ -167,7 +167,7 @@ static COMMAND_FUNC( wt_next )
 
 	dp=pick_obj( "name of image or sequence" );
 	ifp=pick_img_file("");
-	write_image_to_file(QSP_ARG  ifp,dp);
+	write_image_to_file(ifp,dp);
 }
 
 static COMMAND_FUNC( do_if_info )
@@ -176,7 +176,7 @@ static COMMAND_FUNC( do_if_info )
 
 	ifp = pick_img_file("");
 	if( ifp == NULL ) return;
-	if_info(QSP_ARG  ifp);
+	if_info(ifp);
 }
 
 static COMMAND_FUNC( do_set_raw_sizes )
@@ -211,7 +211,7 @@ static COMMAND_FUNC( do_seek_frm )
 
 	if( ifp == NULL ) return;
 
-	image_file_seek(QSP_ARG  ifp,n);
+	image_file_seek(ifp,n);
 }
 
 static COMMAND_FUNC( do_set_clobber )
@@ -247,7 +247,7 @@ static COMMAND_FUNC( do_delete_imgfile )
 		return;
 	}
 
-	delete_image_file(QSP_ARG  ifp);
+	delete_image_file(ifp);
 }
 
 static COMMAND_FUNC( do_set_autoclose )

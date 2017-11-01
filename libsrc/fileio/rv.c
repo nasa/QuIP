@@ -41,7 +41,7 @@ static int rv_fd_arr[MAX_DISKS];
 
 int rvfio_seek_frame(QSP_ARG_DECL  Image_File *ifp, dimension_t n )
 {
-	if( rv_frame_seek(QSP_ARG  HDR_P(ifp),n) < 0 )
+	if( rv_frame_seek(HDR_P(ifp),n) < 0 )
 		return(-1);
 	ifp->if_nfrms = n;
 	return(0);
@@ -50,10 +50,6 @@ int rvfio_seek_frame(QSP_ARG_DECL  Image_File *ifp, dimension_t n )
 static int rv_to_dp(Data_Obj *dp,RV_Inode *inp)
 {
 	u_long blks_per_frame;
-
-//fprintf(stderr,"rv_to_dp 0x%lx  0x%lx BEGIN\n",(long)dp,(long)inp);
-//describe_shape(DEFAULT_QSP_ARG  &inp->rvi_shape);
-//longlist(dp);
 
 	// Does this do mach dims as well as type dims???
 	copy_shape( OBJ_SHAPE(dp), rv_movie_shape(inp) );
@@ -109,9 +105,9 @@ FIO_OPEN_FUNC( rvfio )
 			/* overwrite of an existing file.
 			 * destroy the old one to make sure we get the size right.
 			 */
-			rv_rmfile(QSP_ARG  name);
+			rv_rmfile(name);
 		}
-		_n_disks = creat_rv_file(QSP_ARG  name,size,rv_fd_arr);
+		_n_disks = creat_rv_file(name,size,rv_fd_arr);
 		if( _n_disks < 0 ) return(NULL);
 		inp = rv_inode_of(name);
 	} else {			/* FILE_READ */
@@ -134,7 +130,7 @@ FIO_OPEN_FUNC( rvfio )
 				ifp->if_flags |= FILE_READ;
 			}
 			if( IS_READABLE(ifp) ){
-				if( (_n_disks=queue_rv_file(QSP_ARG  inp,rv_fd_arr)) < 0 ){
+				if( (_n_disks=queue_rv_file(inp,rv_fd_arr)) < 0 ){
 			sprintf(ERROR_STRING,"Error queueing file %s",ifp->if_name);
 					warn(ERROR_STRING);
 				}
@@ -195,7 +191,7 @@ FIO_OPEN_FUNC( rvfio )
 		 * per-file seek offsets around...  but this should work
 		 * if we are reading from a single file.
 		 */
-		if( (_n_disks=queue_rv_file(QSP_ARG  inp,rv_fd_arr)) < 0 ){
+		if( (_n_disks=queue_rv_file(inp,rv_fd_arr)) < 0 ){
 			sprintf(ERROR_STRING,"Error queueing file %s",ifp->if_name);
 			warn(ERROR_STRING);
 		}
@@ -276,7 +272,7 @@ off64_t retoff;
 		SET_OBJ_FRAMES(ifp->if_dp,  ifp->if_frms_to_wt );
 		SET_OBJ_SEQS(ifp->if_dp, 1);
 		auto_shape_flags(OBJ_SHAPE(ifp->if_dp));
-		rv_set_shape(QSP_ARG  ifp->if_name,OBJ_SHAPE(ifp->if_dp));
+		rv_set_shape(ifp->if_name,OBJ_SHAPE(ifp->if_dp));
 
 		/* This used to be after the call to rv_realloc()...
 		 * Does the object exist now?  it should...
@@ -301,15 +297,15 @@ off64_t retoff;
 		f2a = rv_frames_to_allocate(OBJ_FRAMES(ifp->if_dp));
 		size *= f2a;
 
-		if( rv_realloc(QSP_ARG  ifp->if_name,size) < 0 ){
+		if( rv_realloc(ifp->if_name,size) < 0 ){
 			sprintf(ERROR_STRING,
 		"error allocating %ld disk blocks for file %s",
 				size,ifp->if_name);
 			warn(ERROR_STRING);
 		}
 
-		if( set_rvfio_hdr(QSP_ARG  ifp) < 0 ) return(-1);
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+		if( set_rvfio_hdr(ifp) < 0 ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
 	/* Because we are writing each frame to a separate disk,
 	 * we need to know the index of this frame to know which
@@ -366,7 +362,9 @@ fprintf(stderr,"writing %ld pad bytes of data from 0x%lx\n",bpf-bpi,(u_long)OBJ_
 	return(0);
 }
 
-static struct timeval *rv_time_ptr(QSP_ARG_DECL  Image_File *ifp, index_t frame)
+#define rv_time_ptr(ifp,frame) _rv_time_ptr(QSP_ARG  ifp,frame)
+
+static struct timeval *_rv_time_ptr(QSP_ARG_DECL  Image_File *ifp, index_t frame)
 {
 	static struct timeval tv,*tvp;
 	char *buf;
@@ -376,7 +374,7 @@ static struct timeval *rv_time_ptr(QSP_ARG_DECL  Image_File *ifp, index_t frame)
 
 	disk_index = (int)( frame % n_rv_disks() );
 
-	if( rv_frame_seek(QSP_ARG  HDR_P(ifp),frame) < 0 )
+	if( rv_frame_seek(HDR_P(ifp),frame) < 0 )
 		return(NULL);
 
 	bpi = OBJ_COMPS(ifp->if_dp) * OBJ_COLS(ifp->if_dp) * OBJ_ROWS(ifp->if_dp) ;
@@ -453,7 +451,7 @@ sprintf(ERROR_STRING,"rvfio_rd:  file %s seeking to frame %d, will read from dis
 ifp->if_name,ifp->if_nfrms,disk_index);
 advise(ERROR_STRING);
 }
-	if( rv_frame_seek(QSP_ARG  HDR_P(ifp),ifp->if_nfrms) < 0 ){
+	if( rv_frame_seek(HDR_P(ifp),ifp->if_nfrms) < 0 ){
 		warn("rvfio_rd:  seek failed, not reading data");
 		return;
 	}
@@ -495,7 +493,7 @@ int _rvfio_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 
 FIO_INFO_FUNC( rvfio )
 {
-	rv_info(QSP_ARG  HDR_P(ifp));
+	rv_info(HDR_P(ifp));
 }
 
 /*
@@ -512,7 +510,7 @@ double get_rv_seconds(QSP_ARG_DECL  Image_File *ifp,dimension_t frame)
 {
 	struct timeval *tvp;
 
-	tvp = rv_time_ptr(QSP_ARG  ifp,frame);	/* BUG how do we pass the frame index? */
+	tvp = rv_time_ptr(ifp,frame);	/* BUG how do we pass the frame index? */
 	if( tvp == NULL ) return(-1.0);
 	return((double)tvp->tv_sec);
 }
@@ -521,7 +519,7 @@ double get_rv_milliseconds(QSP_ARG_DECL  Image_File *ifp,dimension_t frame)
 {
 	struct timeval *tvp;
 
-	tvp = rv_time_ptr(QSP_ARG  ifp,frame);	/* BUG how do we pass the frame index? */
+	tvp = rv_time_ptr(ifp,frame);	/* BUG how do we pass the frame index? */
 	if( tvp == NULL ) return(-1.0);
 	return(((double)tvp->tv_usec/1000.0));
 }
@@ -530,7 +528,7 @@ double get_rv_microseconds(QSP_ARG_DECL  Image_File *ifp,dimension_t frame)
 {
 	struct timeval *tvp;
 
-	tvp = rv_time_ptr(QSP_ARG  ifp,frame);	/* BUG how do we pass the frame index? */
+	tvp = rv_time_ptr(ifp,frame);	/* BUG how do we pass the frame index? */
 	if( tvp == NULL ) return(-1.0);
 	return((double)(tvp->tv_usec%1000));
 }

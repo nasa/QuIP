@@ -143,7 +143,7 @@ FIO_OPEN_FUNC( ppm )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Ppm_Header) );
@@ -232,7 +232,7 @@ FIO_RD_FUNC( ppm )
 
 FIO_SEEK_FUNC( ppm )
 {
-	return std_seek_frame( QSP_ARG  ifp, n );
+	return std_seek_frame( ifp, n );
 }
 
 FIO_INFO_FUNC( ppm )
@@ -248,10 +248,10 @@ FIO_WT_FUNC( ppm )	/** output next frame */
 	if( ifp->if_dp == NULL ){	/* first time check, always true for ppm */
 		setup_dummy(ifp);	/* create if_dp */
 		copy_dimensions(ifp->if_dp, dp);
-		if( set_ppm_hdr(QSP_ARG  ifp) < 0 ) return(-1);
+		if( set_ppm_hdr(ifp) < 0 ) return(-1);
 	}
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 	return(0);
 }
 
@@ -368,7 +368,7 @@ FIO_OPEN_FUNC( dis )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PPM));
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = (Dis_Header *)getbuf( sizeof(Dis_Header) );
@@ -456,10 +456,10 @@ FIO_WT_FUNC( dis )
 	if( ifp->if_dp == NULL ){	/* first time check, always true for ppm */
 		setup_dummy(ifp);	/* create if_dp */
 		copy_dimensions(ifp->if_dp, dp);
-		if( set_dis_hdr(QSP_ARG  ifp) < 0 ) return(-1);
+		if( set_dis_hdr(ifp) < 0 ) return(-1);
 	}
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 	return(0);
 }
 

@@ -33,7 +33,7 @@ vl_open(QSP_ARG_DECL  const char *name,int rw)		/**/
 if( debug ) advise("opening image file");
 #endif /* QUIP_DEBUG */
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_VL) );
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_VL) );
 
 	/* img_file_creat creates dummy if_dp only if readable */
 
@@ -90,15 +90,15 @@ dun:
 	return(ifp);
 }
 
-int vl_unconv(void *hdr_pp,Data_Obj *dp)
+int _vl_unconv(QSP_ARG_DECL  void *hdr_pp,Data_Obj *dp)
 {
-	NWARN("vl_unconv not implemented");
+	warn("vl_unconv not implemented");
 	return(-1);
 }
 
-int vl_conv(Data_Obj *dp,void *hd_pp)
+int _vl_conv(QSP_ARG_DECL  Data_Obj *dp,void *hd_pp)
 {
-	NWARN("vl_conv not implemented");
+	warn("vl_conv not implemented");
 	return(-1);
 }
 

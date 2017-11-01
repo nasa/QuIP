@@ -179,7 +179,7 @@ FIO_OPEN_FUNC( tiff )
 	Image_File *ifp;
 	char *modestr;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_TIFF));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_TIFF));
 	if( ifp==NULL ) return(ifp);
 
 	if( IS_READABLE(ifp) )	modestr="r";
@@ -310,7 +310,7 @@ set_flt:
 	return(0);
 }
 
-int set_tiff_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from image object */
+int _set_tiff_hdr(QSP_ARG_DECL  Image_File *ifp)		/* set header fields from image object */
 {
 	if( FIO_DP_TO_FT_FUNC_NAME(tiff)(QSP_ARG  ifp->if_tiff,ifp->if_dp) < 0 ){
 		tiff_close(QSP_ARG  ifp);
@@ -333,9 +333,9 @@ FIO_WT_FUNC( tiff )
 		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
 		SET_OBJ_SEQS(ifp->if_dp, 1);
 
-		if( set_tiff_hdr(QSP_ARG  ifp) < 0 ) return(-1);
+		if( set_tiff_hdr(ifp) < 0 ) return(-1);
 
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
 	/* now write the data */
 // We get an error from TIFFWriteScanline about setting PlanarConfig...
@@ -347,7 +347,7 @@ FIO_WT_FUNC( tiff )
 	}
 
 	ifp->if_nfrms ++ ;
-	check_auto_close(QSP_ARG  ifp);
+	check_auto_close(ifp);
 	return(0);
 }
 

@@ -104,7 +104,7 @@ FIO_OPEN_FUNC(hips2)
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_HIPS2));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_HIPS2));
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = (Hips2_Header *)getbuf( sizeof(Hips2_Header) );
@@ -350,9 +350,9 @@ FIO_WT_FUNC( hips2 )
 
 		if( set_hips2_hdr(QSP_ARG  ifp) < 0 ) return(-1);
 
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 	return(0);
 }
 

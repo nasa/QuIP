@@ -282,8 +282,6 @@ extern int remember_frame_info(RV_Inode *inp, int index, USHORT_ARG nerr, dimens
 extern void xfer_frame_info(dimension_t *lp,int index,RV_Inode *inp);
 extern void dump_block(QSP_ARG_DECL  int i,dimension_t block);
 
-extern int	rv_frame_seek(QSP_ARG_DECL  RV_Inode *,dimension_t);
-
 extern void read_rv_super(QSP_ARG_DECL  const char *vol_name);
 extern RV_Inode * rv_newfile(QSP_ARG_DECL  const char *name,dimension_t size);
 extern void rv_lsfile(QSP_ARG_DECL  const char *name);

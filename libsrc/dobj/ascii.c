@@ -1192,7 +1192,7 @@ static int get_sheets(QSP_ARG_DECL  Data_Obj *dp,unsigned char *data,int dim)
 	return status;
 }
 
-void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count)
+void _read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count)
 {
 	const char *orig_filename;
 	int level;
@@ -1218,7 +1218,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 
 	level = QLEVEL;
 
-	read_obj(QSP_ARG  dp);
+	read_obj(dp);
 
 	if( level == QLEVEL ){
 		if( expect_exact_count ){
@@ -1233,7 +1233,7 @@ void read_ascii_data(QSP_ARG_DECL  Data_Obj *dp, FILE *fp, const char *s, int ex
 	rls_str( orig_filename);
 } // read_ascii_data
 
-void read_obj(QSP_ARG_DECL   Data_Obj *dp)
+void _read_obj(QSP_ARG_DECL   Data_Obj *dp)
 {
 	void *data_ptr;
 

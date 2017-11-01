@@ -586,11 +586,11 @@ print_text_marker (j_decompress_ptr cinfop)
   if (traceit) {
     if (cinfop->unread_marker == JPEG_COM){
       sprintf(DEFAULT_ERROR_STRING, "Comment, length %d:\n", length);
-      NADVISE(DEFAULT_ERROR_STRING);
+      _advise(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
     } else {			/* assume it is an APPn otherwise */
       sprintf(DEFAULT_ERROR_STRING, "APP%d, length %d:\n",
 	      cinfop->unread_marker - JPEG_APP0, length);
-      NADVISE(DEFAULT_ERROR_STRING);
+      _advise(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
     }
   }
 
@@ -660,13 +660,13 @@ process_lml_marker(j_decompress_ptr cinfop)
 		sprintf(DEFAULT_ERROR_STRING,
 			"APP3 id code 0x%x does not match expected LML code 0x%lx",
 			app_id,LML_APP_ID);
-		NWARN(DEFAULT_ERROR_STRING);
+		_warn(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
 	}
 
 	if( length != OLD_APP3_LENGTH && length != NEW_APP3_LENGTH ){
 		sprintf(DEFAULT_ERROR_STRING,"APP3 length is 0x%x, expected 0x%x or 0x%x!?",
 			length,OLD_APP3_LENGTH,NEW_APP3_LENGTH);
-		NWARN(DEFAULT_ERROR_STRING);
+		_warn(DEFAULT_QSP_ARG  DEFAULT_ERROR_STRING);
 	}
 
 	HDR_P(jpeg_ifp)->lml_frameNo  = jgetshort(cinfop);
@@ -783,11 +783,11 @@ static FILE * _remove_info_if_stale(QSP_ARG_DECL  const char *info_name,FILE *in
 	/* if the info file is older than the file itself, then it should be unlinked and recomputed */
 	/* need to stat both files... */
 	if( fstat(fileno(info_fp),&info_statb) < 0 ){
-		_tell_sys_error(DEFAULT_QSP_ARG  "check_jpeg_info:  fstat:");
+		tell_sys_error("check_jpeg_info:  fstat:");
 		NERROR1("unable to stat jpeg info file");
 	}
 	if( fstat(fileno(src_fp),&file_statb) < 0 ){
-		_tell_sys_error(DEFAULT_QSP_ARG  "check_jpeg_info:  fstat:");
+		tell_sys_error("check_jpeg_info:  fstat:");
 		NERROR1("unable to stat jpeg data file");
 	}
 	/* now compare mod times */
@@ -798,7 +798,7 @@ static FILE * _remove_info_if_stale(QSP_ARG_DECL  const char *info_name,FILE *in
 		fclose(info_fp);
 
 		if( unlink(info_name) < 0 ){
-			_tell_sys_error(DEFAULT_QSP_ARG  "remove_info_if_stale:  unlink:");
+			tell_sys_error("remove_info_if_stale:  unlink:");
 			warn("unable to remove stale jpeg info file");
 			/* may not have permission */
 		}
@@ -1102,14 +1102,14 @@ static int _rd_jpeg_hdr(QSP_ARG_DECL  Image_File *ifp)
 	/* scan_markers() fills in the image dimensions & depth... */
 	while( scan_markers(ifp) ){
 		nf++;
-		if( verbose && (nf % 60) == 0 ) _prt_msg_frag(DEFAULT_QSP_ARG  ".");
+		if( verbose && (nf % 60) == 0 ) prt_msg_frag(".");
 		if( nf < MAX_SEEK_TBL_SIZE )
 			tbl[nf] = ftell(ifp->if_fp);
 		/* if this is exceeded, we'll print a warning
 		 * after we've finished scanning the file.
 		 */
 	}
-	if( verbose ) _prt_msg(DEFAULT_QSP_ARG  "");
+	if( verbose ) prt_msg("");
 
 	if( nf > MAX_SEEK_TBL_SIZE ){
 		sprintf(ERROR_STRING,
@@ -1411,7 +1411,7 @@ FIO_OPEN_FUNC( jpeg )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_JPEG));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_JPEG));
 	if( ifp==NULL ) return(ifp);
 
 	return( finish_jpeg_open(QSP_ARG  ifp) );
@@ -1421,13 +1421,15 @@ FIO_OPEN_FUNC( lml )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_LML));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_LML));
 	if( ifp==NULL ) return(ifp);
 
 	return( finish_jpeg_open(QSP_ARG  ifp) );
 }
 
-static void complete_compressor_setup(Image_File *ifp)
+#define complete_compressor_setup(ifp) _complete_compressor_setup(QSP_ARG  ifp)
+
+static void _complete_compressor_setup(QSP_ARG_DECL  Image_File *ifp)
 {
 	struct jpeg_compress_struct *cip;
 

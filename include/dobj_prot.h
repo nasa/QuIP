@@ -234,7 +234,8 @@ extern Data_Obj *	_area_scalar(QSP_ARG_DECL  Data_Area *ap);
 #define area_scalar(ap)					_area_scalar(QSP_ARG  ap)
 
 /* formerly in index.h */
-extern Data_Obj * index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str );
+extern Data_Obj * _index_data( QSP_ARG_DECL  Data_Obj *dp, const char *index_str );
+#define index_data(dp,index_str) _index_data( QSP_ARG  dp,index_str )
 
 /* memops.c */
 extern int dp_same_size_query(Data_Obj *dp1,Data_Obj *dp2);
@@ -343,14 +344,18 @@ extern void format_scalar_obj(QSP_ARG_DECL  char *buf,int buflen,Data_Obj *dp,vo
 extern void format_scalar_value(QSP_ARG_DECL  char *buf,int buflen,void *data,Precision *prec_p);
 extern char * string_for_scalar(QSP_ARG_DECL  void *data,Precision *prec_p);
 extern void pntvec(QSP_ARG_DECL  Data_Obj *dp, FILE *fp);
-extern void read_ascii_data(QSP_ARG_DECL Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count);
-extern void read_obj(QSP_ARG_DECL Data_Obj *dp);
 extern void dptrace(QSP_ARG_DECL  Data_Obj *);
 extern void set_integer_print_fmt(QSP_ARG_DECL  Number_Fmt fmt_code);
 extern void set_max_per_line(QSP_ARG_DECL  int n);
 extern void set_input_format_string(QSP_ARG_DECL  const char *s);
 extern void set_display_precision(QSP_ARG_DECL  int);
 extern int object_is_in_ram(QSP_ARG_DECL  Data_Obj *dp, const char *op_str);
+
+extern void _read_obj(QSP_ARG_DECL Data_Obj *dp);
+extern void _read_ascii_data(QSP_ARG_DECL Data_Obj *dp, FILE *fp, const char *s, int expect_exact_count);
+
+#define read_obj(dp) _read_obj(QSP_ARG dp)
+#define read_ascii_data(dp,fp,s,c) _read_ascii_data(QSP_ARG dp,fp,s,c)
 
 /* datamenu.c */
 extern Precision * get_precision(SINGLE_QSP_ARG_DECL);

@@ -34,10 +34,10 @@ FIO_FT_TO_DP_FUNC(wav,Wav_Header)
 		case 8:  prec_p=PREC_FOR_CODE(PREC_UBY); break;
 		case 16: prec_p=PREC_FOR_CODE(PREC_IN); break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"wav_to_dp:  unexpected # of bits per sample %d",
 				hd_p->wh_bits_per_sample);
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 	}
 	SET_OBJ_PREC_PTR(dp, prec_p);
@@ -108,7 +108,7 @@ FIO_OPEN_FUNC( wav )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_WAV));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_WAV));
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Wav_Header) );
@@ -169,10 +169,10 @@ FIO_DP_TO_FT_FUNC(wav,Wav_Header)
 			hd_p->wh_bits_per_sample = 16;
 			break;
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"dp_to_wav:  vector %s has unsupported source precision %s",
 				OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)));
-			NWARN(DEFAULT_ERROR_STRING);
+			warn(ERROR_STRING);
 			return(-1);
 			break;
 	}
@@ -217,10 +217,10 @@ FIO_WT_FUNC( wav )
 		/* set the rows & columns in our file struct */
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);
-		if( set_wav_hdr(QSP_ARG  ifp) < 0 ) return(-1);
+		if( set_wav_hdr(ifp) < 0 ) return(-1);
 	}
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 	return(0);
 }
 
@@ -247,7 +247,7 @@ FIO_UNCONV_FUNC(wav)
 
 FIO_CONV_FUNC(wav)
 {
-	NWARN("wav_conv not implemented");
+	warn("wav_conv not implemented");
 	return(-1);
 }
 

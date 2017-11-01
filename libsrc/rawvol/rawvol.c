@@ -1289,7 +1289,7 @@ void rv_close(SINGLE_QSP_ARG_DECL)
 
 void setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp)
 {
-	set_filetype(QSP_ARG  FILETYPE_FOR_CODE(IFT_RV));
+	set_filetype(FILETYPE_FOR_CODE(IFT_RV));
 
 	/* BUG read_image_file() may change the filetype, if the filename
 	 * implies something different...  there should be a way of disabling
@@ -1297,7 +1297,7 @@ void setup_rv_iofile(QSP_ARG_DECL  RV_Inode *inp)
 	 * disallowed.
 	 */
 
-	read_image_file(QSP_ARG  RV_NAME(inp));
+	read_image_file(RV_NAME(inp));
 }
 
 static void write_rv_data(RV_Inode *inp,char *data,uint32_t size)
@@ -1900,7 +1900,7 @@ static int rv_step_dir(QSP_ARG_DECL  const char *dirname)
 	return(0);
 } /* end rv_step_dir */
 
-int rv_rmfile(QSP_ARG_DECL  const char *name)
+int _rv_rmfile(QSP_ARG_DECL  const char *name)
 {
 	RV_Inode *inp;
 	char *s;
@@ -1980,7 +1980,7 @@ static void rv_ls_extra(QSP_ARG_DECL  RV_Inode *inp)
 		}
 }
 
-void rv_info(QSP_ARG_DECL  RV_Inode *inp)
+void _rv_info(QSP_ARG_DECL  RV_Inode *inp)
 {
 	rv_ls_inode(QSP_ARG  inp);
 	rv_ls_extra(QSP_ARG  inp);
@@ -2289,7 +2289,7 @@ sprintf(ERROR_STRING,"rv_rm_cwd removing %s",RV_NAME(inp));
 advise(ERROR_STRING);
 }
 #endif /* DEBUG */
-		if( rv_rmfile(QSP_ARG  RV_NAME(inp)) < 0 )
+		if( rv_rmfile(RV_NAME(inp)) < 0 )
 			return;
 
 		np=QLIST_HEAD(lp);
@@ -2520,7 +2520,7 @@ static void get_dio_params(int fd)
 /* creat_rv_file returns the number of file descriptors, or -1
  */
 
-int creat_rv_file(QSP_ARG_DECL  const char *filename,uint32_t size,int *fd_arr)
+int _creat_rv_file(QSP_ARG_DECL  const char *filename,uint32_t size,int *fd_arr)
 {
 	RV_Inode *inp;
 
@@ -2528,7 +2528,7 @@ int creat_rv_file(QSP_ARG_DECL  const char *filename,uint32_t size,int *fd_arr)
 	if( inp != NULL ){
 		sprintf(ERROR_STRING,"Deleting old version of file %s",filename);
 		advise(ERROR_STRING);
-		rv_rmfile(QSP_ARG  filename);
+		rv_rmfile(filename);
 	}
 
 	inp = rv_newfile(QSP_ARG  filename,size);
@@ -2536,7 +2536,7 @@ int creat_rv_file(QSP_ARG_DECL  const char *filename,uint32_t size,int *fd_arr)
 
 	/* now queue up the file descriptors */
 
-	return( queue_rv_file(QSP_ARG  inp,fd_arr) );
+	return( queue_rv_file(inp,fd_arr) );
 }
 
 int rv_cd(QSP_ARG_DECL  const char *dirname)
@@ -2652,7 +2652,7 @@ void rv_mkdir(QSP_ARG_DECL  const char *dirname)
 
 // This seeks to the proper positions...
 
-int queue_rv_file(QSP_ARG_DECL  RV_Inode *inp,int *fd_arr)
+int _queue_rv_file(QSP_ARG_DECL  RV_Inode *inp,int *fd_arr)
 {
 	int i;
 	/* what is the type of off64_t? */
@@ -2689,7 +2689,7 @@ advise(ERROR_STRING);
 	return(retval);
 }
 
-int rv_frame_seek(QSP_ARG_DECL  RV_Inode *inp,uint32_t frame_index)
+int _rv_frame_seek(QSP_ARG_DECL  RV_Inode *inp,uint32_t frame_index)
 {
 	off64_t os,offset,retoff, blks_per_frame;
 	int retval=0;
@@ -2764,7 +2764,7 @@ advise(ERROR_STRING);
 	return(retval);
 }
 
-int rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
+int _rv_set_shape(QSP_ARG_DECL  const char *filename,Shape_Info *shpp)
 {
 	RV_Inode *inp;
 
@@ -2862,7 +2862,7 @@ void rawvol_get_usage(SINGLE_QSP_ARG_DECL)
  * the size arg is the total number of blocks!
  */
 
-int rv_realloc(QSP_ARG_DECL  const char *name,uint32_t size)
+int _rv_realloc(QSP_ARG_DECL  const char *name,uint32_t size)
 {
 	RV_Inode *inp;
 

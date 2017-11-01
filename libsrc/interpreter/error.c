@@ -176,6 +176,7 @@ static void check_max_warnings(SINGLE_QSP_ARG_DECL)
  * We'd like to print the input line number where this occurred,
  * but to do that we need a qsp?
  * To do that, we introduced another function script_warn, w/ macro WARN
+ * but changed script_warn to _warn
  */
 
 #define deliver_warning(msg)	_deliver_warning(QSP_ARG  msg)
@@ -769,9 +770,9 @@ void q_error1( QSP_ARG_DECL  const char *msg )
 	_error1(QSP_ARG  msg);
 }
 
-// script_warn - print a warning, preceded by a script input location
+// _warn - print a warning, preceded by a script input location
 
-void script_warn( QSP_ARG_DECL  const char *msg )
+void _warn( QSP_ARG_DECL  const char *msg )
 {
 	tell_input_location(SINGLE_QSP_ARG);
 	deliver_warning(msg);

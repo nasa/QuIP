@@ -16,6 +16,8 @@ char VersionId_inc_ppm[] = QUIP_VERSION_STRING;
 
 FIO_INTERFACE_PROTOTYPES( ppm , Ppm_Header )
 
+#define set_ppm_hdr(ifp)	_set_ppm_hdr(QSP_ARG  ifp)
+
 extern int _rd_ppm_hdr(QSP_ARG_DECL  FILE *fp,Ppm_Header *,const char *filename);
 extern void _wt_ppm_hdr(QSP_ARG_DECL  FILE *fp,Ppm_Header *hdp,const char *filename);
 
@@ -26,6 +28,8 @@ extern void _wt_ppm_hdr(QSP_ARG_DECL  FILE *fp,Ppm_Header *hdp,const char *filen
 #define dp_to_ppm(a,b)	_dp_to_ppm(QSP_ARG  a,b)
 
 FIO_INTERFACE_PROTOTYPES( dis, Dis_Header )
+
+#define set_dis_hdr(ifp)	_set_dis_hdr(QSP_ARG  ifp)
 
 extern int _rd_dis_hdr(QSP_ARG_DECL  FILE *fp,Dis_Header *,const char *filename);
 extern void _wt_dis_hdr(QSP_ARG_DECL  FILE *fp,Dis_Header *hdp,const char *filename);

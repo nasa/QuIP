@@ -48,7 +48,7 @@ list_dobjs(SINGLE_QSP_ARG);
 	dp = dobj_of(stem);
 	if( dp == NULL ) return(dp);
 
-	return( index_data(QSP_ARG  dp,s) );
+	return( index_data(dp,s) );
 }
 
 Data_Obj *get_obj(QSP_ARG_DECL  const char *name)

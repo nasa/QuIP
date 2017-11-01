@@ -33,7 +33,9 @@ FIO_INFO_FUNC(mat)
 	//advise("Sorry, mat_info not implemented yet");
 }
 
-static Precision * prec_of_matlab_object(matvar_t *matp)
+#define prec_of_matlab_object(matp) _prec_of_matlab_object(QSP_ARG  matp)
+
+static Precision * _prec_of_matlab_object(QSP_ARG_DECL  matvar_t *matp)
 {
 	switch(matp->data_type){
 		case MAT_T_DOUBLE: return(PREC_FOR_CODE(PREC_DP));
@@ -47,45 +49,45 @@ static Precision * prec_of_matlab_object(matvar_t *matp)
 		case MAT_T_UINT32: return(PREC_FOR_CODE(PREC_UDI));
 		case MAT_T_UINT64: return(PREC_FOR_CODE(PREC_ULI));
 		case MAT_T_MATRIX:
-			NWARN("prec_of_matlab_object:  Need to handle matlab matrix type!?");
+			warn("prec_of_matlab_object:  Need to handle matlab matrix type!?");
 			return(NULL);
 		case MAT_T_COMPRESSED:
-			NWARN("prec_of_matlab_object:  Need to handle matlab compressed type!?");
+			warn("prec_of_matlab_object:  Need to handle matlab compressed type!?");
 			return(NULL);
 		case MAT_T_STRING:
-			NWARN("prec_of_matlab_object:  Need to handle matlab string type!?");
+			warn("prec_of_matlab_object:  Need to handle matlab string type!?");
 			return(NULL);
 		case MAT_T_CELL:
-			//NWARN("prec_of_matlab_object:  Need to handle matlab cell type!?");
-			sprintf(DEFAULT_ERROR_STRING,
+			//warn("prec_of_matlab_object:  Need to handle matlab cell type!?");
+			sprintf(ERROR_STRING,
 	"NOT handling matlab type CELL, variable %s",matp->name);
-			NADVISE(DEFAULT_ERROR_STRING);
+			advise(ERROR_STRING);
 			return(NULL);
 		case MAT_T_STRUCT:
-			//NWARN("prec_of_matlab_object:  Need to handle matlab struct type!?");
+			//warn("prec_of_matlab_object:  Need to handle matlab struct type!?");
 			return(NULL);
 		case MAT_T_ARRAY:
-			NWARN("prec_of_matlab_object:  Need to handle matlab array type!?");
+			warn("prec_of_matlab_object:  Need to handle matlab array type!?");
 			return(NULL);
 		case MAT_T_FUNCTION:
-			NWARN("prec_of_matlab_object:  Need to handle matlab function type!?");
+			warn("prec_of_matlab_object:  Need to handle matlab function type!?");
 			return(NULL);
 		case MAT_T_UNKNOWN:
-			NWARN("prec_of_matlab_object:  Need to handle matlab unknown type!?");
+			warn("prec_of_matlab_object:  Need to handle matlab unknown type!?");
 			return(NULL);
 		case MAT_T_UTF8:
 		case MAT_T_UTF16:
 		case MAT_T_UTF32:
-			NWARN("Not sure what to do with matlab UTF data type!?");
+			warn("Not sure what to do with matlab UTF data type!?");
 			return(NULL);
 
 		// Comment out the default case to get compiler warnings
 		// about un-handled cases...
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 		"prec_of_matlab_object:  unexpected data_type %d (0x%x)!?",
 				matp->data_type,matp->data_type);
-			NADVISE(DEFAULT_ERROR_STRING);
+			advise(ERROR_STRING);
 			return(NULL);
 	}
 	/* NOTREACHED */
@@ -134,9 +136,9 @@ static int describe_matlab_object(QSP_ARG_DECL  matvar_t *matp)
 		// comment out the default case to get compiler
 		// warnings about un-handled cases
 		default:
-			sprintf(DEFAULT_ERROR_STRING,
+			sprintf(ERROR_STRING,
 				"(unexpected matlab type code %d)",matp->data_type);
-			strcat(msg_str,DEFAULT_ERROR_STRING);
+			strcat(msg_str,ERROR_STRING);
 			break;
 	}
 	prt_msg_frag(msg_str);
@@ -180,8 +182,8 @@ static int describe_matlab_object(QSP_ARG_DECL  matvar_t *matp)
 
 	prt_msg("");
 
-	//sprintf(DEFAULT_ERROR_STRING,"\tdata addr = 0x%lx",(u_long)matp->data);
-	//advise(DEFAULT_ERROR_STRING);
+	//sprintf(ERROR_STRING,"\tdata addr = 0x%lx",(u_long)matp->data);
+	//advise(ERROR_STRING);
 
 	return(0);
 }
@@ -250,7 +252,7 @@ static void handle_struct(QSP_ARG_DECL  matvar_t * matvar )
 
 	nfields = Mat_VarGetNumberOfFields(matvar);
 	if( nfields == 0 ){
-		WARN("structure has 0 fields!?");
+		warn("structure has 0 fields!?");
 	}
 
 	// BUG?  undefined on ubuntu???
@@ -262,7 +264,7 @@ static void handle_struct(QSP_ARG_DECL  matvar_t * matvar )
 	
 
 	if( names == NULL ){
-WARN("Mat_VarGetStructFieldnames failed!?");
+warn("Mat_VarGetStructFieldnames failed!?");
 	} else {
 		int i;
 		matvar_t **v_array;
@@ -280,7 +282,7 @@ WARN("Mat_VarGetStructFieldnames failed!?");
 			dp=make_obj_for_matvar(QSP_ARG  v_array[i],
 							matvar,prec_p);
 			if( dp == NULL ){
-		//WARN("error making structure element!?");
+		//warn("error making structure element!?");
 				sprintf(ERROR_STRING,
 					"NOT making data object for %s.%s\n",
 					matvar->name,v_array[i]->name);
@@ -301,7 +303,7 @@ FIO_OPEN_FUNC( mat )
 
 	// Make sure the file exists here...
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_MATLAB));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_MATLAB));
 	if( ifp==NULL ) return(ifp);
 
 	if( IS_READABLE(ifp) ){
@@ -312,7 +314,7 @@ FIO_OPEN_FUNC( mat )
 		// BUG if the file doesn't exist?
 		if( mat == NULL ){
 			sprintf(ERROR_STRING,"Error opening file %s!?",ifp->if_pathname);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			// need to deallocate ifp...
 			mat_close(QSP_ARG  ifp);
 			return NULL;
@@ -397,9 +399,9 @@ FIO_WT_FUNC( mat )
 		SET_OBJ_FRAMES(ifp->if_dp, ifp->if_frms_to_wt);
 		SET_OBJ_SEQS(ifp->if_dp, 1);
 
-		if( set_mat_hdr(QSP_ARG  ifp) < 0 ) return(-1);
+		if( set_mat_hdr(ifp) < 0 ) return(-1);
 
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
 	/* now write the data */
 #ifdef FOOBAR
@@ -407,13 +409,13 @@ FIO_WT_FUNC( mat )
 	datap = dp->dt_data;
 	for(row=0;row<dp->dt_rows;row++){
 		if( TIFFWriteScanline(ifp->if_mat,datap,row,0) != 1 )
-			WARN("error writing TIFF scanline");
+			warn("error writing TIFF scanline");
 		datap += siztbl[MACHINE_PREC(dp)] * dp->dt_rowinc;
 	}
 #endif /* FOOBAR */
 
 	ifp->if_nfrms ++ ;
-	check_auto_close(QSP_ARG  ifp);
+	check_auto_close(ifp);
 	return(0);
 }
 
@@ -422,7 +424,7 @@ FIO_RD_FUNC(  mat )
 	if( x_offset != 0 || y_offset != 0  || t_offset != 0 ){
 		sprintf(ERROR_STRING,"mat_rd %s:  Sorry, don't know how to handle non-zero offsets",
 			ifp->if_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -432,7 +434,7 @@ dp->dt_nelts,siztbl[MACHINE_PREC(dp)]);
 advise(ERROR_STRING);
 	if( fread(dp->dt_data,siztbl[MACHINE_PREC(dp)],dp->dt_nelts,ifp->if_fp) != dp->dt_nelts ){
 		sprintf(ERROR_STRING,"mat_rd %s:  error reading data",ifp->if_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	*/
 	/* BUG check sizes... */
@@ -441,19 +443,19 @@ advise(ERROR_STRING);
 
 FIO_UNCONV_FUNC( mat )
 {
-	NWARN("mat_unconv not implemented");
+	warn("mat_unconv not implemented");
 	return(-1);
 }
 
 FIO_CONV_FUNC( mat )
 {
-	NWARN("mat_conv not implemented");
+	warn("mat_conv not implemented");
 	return(-1);
 }
 
 FIO_SEEK_FUNC( mat )
 {
-	WARN("mat_seek not implemented");
+	warn("mat_seek not implemented");
 	return(-1);
 }
 

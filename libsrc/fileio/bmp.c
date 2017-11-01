@@ -116,7 +116,7 @@ FIO_OPEN_FUNC( bmp )
 if( debug ) advise("opening image file");
 #endif /* DEBUG */
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_BMP));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_BMP));
 	if( ifp==NULL ) return(ifp);
 
 	/* img_file_creat creates dummy if_dp only if readable */

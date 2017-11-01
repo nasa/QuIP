@@ -66,7 +66,7 @@ static int send_to_port( QSP_ARG_DECL  Port *mpp, char *cp, u_long n )
 	long nsent;
 
 	while( n > 0 ){
-		nsent=write_port(QSP_ARG  mpp,cp,n);
+		nsent=write_port(mpp,cp,n);
 		if( nsent < 0 ) return -1;
 		n-=nsent;
 		cp+=nsent;
@@ -94,7 +94,7 @@ fprintf(stderr,"if_pipe:  received SIGPIPE, arg = %d\n",i);
 
 
 /** xmit_obj - send a data object */
-void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
+void _xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 /* if flag is zero, don't xmit the actual image data */
 {
 	uint32_t name_len;
@@ -108,13 +108,13 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 	signal(SIGPIPE,SIG_IGN);
 #endif /* SIGPIPE */
 
-	if( put_port_int32(QSP_ARG  mpp,PORT_MAGIC_NUMBER) == (-1) ){
+	if( put_port_int32(mpp,PORT_MAGIC_NUMBER) == (-1) ){
 		warn("xmit_obj:  error sending port magic number");
 		return;
 	}
 
 	code=P_DATA;
-	if( put_port_int32(QSP_ARG  mpp,code) == (-1) ){
+	if( put_port_int32(mpp,code) == (-1) ){
 		warn("xmit_obj:  error sending code");
 		return;
 	}
@@ -144,29 +144,29 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 	}
 
 
-	if( put_port_int32(QSP_ARG  mpp,name_len) == -1 ){
+	if( put_port_int32(mpp,name_len) == -1 ){
 		warn("xmit_obj:  error writing first length word");
 		return;
 	}
-	if( put_port_int32(QSP_ARG  mpp,data_len) == -1 ){
+	if( put_port_int32(mpp,data_len) == -1 ){
 		warn("xmit_obj:  error writing second length word");
 		return;
 	}
 
-	if( put_port_int32(QSP_ARG  mpp,(int32_t) OBJ_PREC(dp)) == -1 ||
-	    put_port_int32(QSP_ARG  mpp,(int32_t) OBJ_N_MACH_ELTS(dp) ) == -1 ){
+	if( put_port_int32(mpp,(int32_t) OBJ_PREC(dp)) == -1 ||
+	    put_port_int32(mpp,(int32_t) OBJ_N_MACH_ELTS(dp) ) == -1 ){
 		warn("error sending object header data");
 		return;
 	}
 	    
 	for(i=0;i<N_DIMENSIONS;i++){
-		if( put_port_int32(QSP_ARG  mpp,(int32_t) OBJ_TYPE_DIM(dp,i)) == -1 ){
+		if( put_port_int32(mpp,(int32_t) OBJ_TYPE_DIM(dp,i)) == -1 ){
 			warn("error sending object dimensions");
 			return;
 		}
 	}
 
-	if( write_port(QSP_ARG  mpp,OBJ_NAME(dp),name_len) == (-1) ){
+	if( write_port(mpp,OBJ_NAME(dp),name_len) == (-1) ){
 		warn("xmit_obj:  error writing data object name");
 		return;
 	}
@@ -210,7 +210,7 @@ void xmit_obj( QSP_ARG_DECL  Port *mpp, Data_Obj *dp, int dataflag )
 	}
 }
 
-long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data object */
+long _recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data object */
 {
 	long name_len, data_len;
 	Data_Obj *old_obj, *new_dp;
@@ -230,9 +230,9 @@ long recv_obj(QSP_ARG_DECL  Port *mpp, Packet *pkp)			/** recieve a new data obj
 		error1("current data area not ram area!?");
 #endif /* NOT_YET */
 
-	name_len=get_port_int32(QSP_ARG  mpp);
+	name_len=get_port_int32(mpp);
 	if( name_len <= 0 ) goto error_return;
-	data_len=get_port_int32(QSP_ARG  mpp);
+	data_len=get_port_int32(mpp);
 	if( data_len < 0 ) goto error_return;
 
 #ifdef QUIP_DEBUG
@@ -245,8 +245,8 @@ advise(ERROR_STRING);
 
 	// Get the critical information abou the object
 
-	_prec_code =(prec_t)get_port_int32(QSP_ARG  mpp);
-	_n_mach_elts = (dimension_t) get_port_int32(QSP_ARG  mpp); // n_mach_elts
+	_prec_code =(prec_t)get_port_int32(mpp);
+	_n_mach_elts = (dimension_t) get_port_int32(mpp); // n_mach_elts
 	if( _prec_code == (prec_t)BAD_PORT_LONG ||
 		_n_mach_elts == (dimension_t) BAD_PORT_LONG ) {
 
@@ -256,7 +256,7 @@ advise(ERROR_STRING);
 
 	for(i=0;i<N_DIMENSIONS;i++){
 		long l;
-		l= get_port_int32(QSP_ARG  mpp);
+		l= get_port_int32(mpp);
 		if( l < 0 ) {
 			warn("error getting object dimensions");
 			goto error_return;
@@ -269,7 +269,7 @@ advise(ERROR_STRING);
 		warn("more than LLEN name chars!?");
 		goto error_return;
 	}
-	if( read_port(QSP_ARG  mpp,namebuf,name_len) != name_len ){
+	if( read_port(mpp,namebuf,name_len) != name_len ){
 		warn("recv_obj:  error reading data object name");
 		goto error_return;
 	}
@@ -343,7 +343,7 @@ advise(ERROR_STRING);
 	while( data_len ){
 		long nb2;
 
-		nb2=read_port(QSP_ARG  mpp,cp,data_len);
+		nb2=read_port(mpp,cp,data_len);
 		if( nb2 == 0 ){	/* EOF */
 			warn("recv_obj:  error reading object data");
 			goto error_return;

@@ -273,7 +273,7 @@ extern void		_dump_dict_info(QSP_ARG_DECL  Dictionary *dict_p);
 
 extern char *qpfgets(QSP_ARG_DECL  void *buf, int size, void *fp);
 extern void input_on_stdin(void);
-extern void script_warn(QSP_ARG_DECL  const char *);
+extern void _warn(QSP_ARG_DECL  const char *);
 extern void expect_warning(QSP_ARG_DECL  const char *);
 extern void check_expected_warning(SINGLE_QSP_ARG_DECL);
 #ifdef BUILD_FOR_IOS

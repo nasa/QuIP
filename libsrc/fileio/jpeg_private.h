@@ -74,7 +74,9 @@ extern void install_djpeg_params(j_decompress_ptr cinfop);
 extern COMMAND_FUNC( do_djpeg_param_menu );
 
 /* copts.c */
-extern void install_cjpeg_params(j_compress_ptr cinfo);
+extern void _install_cjpeg_params(QSP_ARG_DECL  j_compress_ptr cinfo);
+#define install_cjpeg_params(cinfo) _install_cjpeg_params(QSP_ARG  cinfo)
+
 extern void set_my_sample_factors(int hfactor[],int vfactor[]);
 
 #endif /* HAVE_JPEG_SUPPORT */

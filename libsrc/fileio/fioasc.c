@@ -17,7 +17,7 @@ FIO_OPEN_FUNC( ascii )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_ASC));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_ASC));
 	if( ifp==NULL ) return(ifp);
 
 	if( IS_READABLE(ifp) ){
@@ -47,7 +47,7 @@ FIO_WT_FUNC( ascii )
 		setup_dummy(ifp);
 		copy_dimensions(ifp->if_dp, dp);
 
-	} else if( !same_type(QSP_ARG  dp,ifp) ) return(-1);
+	} else if( !same_type(dp,ifp) ) return(-1);
 
 	/* Now write the data! */
 
@@ -59,12 +59,12 @@ FIO_WT_FUNC( ascii )
 FIO_RD_FUNC( ascii )
 {
 	/* BUG how do we handle the offsets?? */
-	read_ascii_data(QSP_ARG  dp, ifp->if_fp, ifp->if_name, 1 /* expect_exact_count */ );
+	read_ascii_data(dp, ifp->if_fp, ifp->if_name, 1 /* expect_exact_count */ );
 }
 
 FIO_SEEK_FUNC( ascii )
 {
-	return std_seek_frame( QSP_ARG  ifp, n );
+	return std_seek_frame( ifp, n );
 }
 
 FIO_INFO_FUNC( ascii )
@@ -74,13 +74,13 @@ FIO_INFO_FUNC( ascii )
 
 FIO_UNCONV_FUNC( ascii )
 {
-	NWARN("asc_unconv not implemented");
+	warn("asc_unconv not implemented");
 	return(-1);
 }
 
 FIO_CONV_FUNC( ascii )
 {
-	NWARN("asc_conv not implemented");
+	warn("asc_conv not implemented");
 	return(-1);
 }
 

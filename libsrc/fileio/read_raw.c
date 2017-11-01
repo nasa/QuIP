@@ -88,7 +88,7 @@ void rd_raw_gaps(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	}
 }
 
-void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+void _read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	dimension_t n, size;
 	size_t n2;
@@ -97,7 +97,7 @@ void read_object(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	int goofed=0;
 #endif /* CRAY */
 
-	if( !same_type(QSP_ARG  dp,ifp) ) return;
+	if( !same_type(dp,ifp) ) return;
 
 	/* this wants nframes the same too!?
 	 * same_size() checks only rows & cols
@@ -222,7 +222,9 @@ advise(ERROR_STRING);
  * The offsets are offsets into the target data object.
  */
 
-int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
+#define frag_read(dp,ifp,x_offset,y_offset,t_offset) _frag_read(QSP_ARG  dp,ifp,x_offset,y_offset,t_offset)
+
+static int _frag_read(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,index_t t_offset)
 {
 	dimension_t x_fill, y_fill;	/* number of cols,rows to draw */
 	dimension_t dx,dy;		/* dimensions of input file */
@@ -237,7 +239,7 @@ int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,ind
 	x_fill=(OBJ_COLS(dp)-x_offset);
 	y_fill=(OBJ_ROWS(dp)-y_offset);
 	if( x_fill <= 0 || y_fill <= 0 ){
-		NWARN("frag_read:  offset too great for this object");
+		warn("frag_read:  offset too great for this object");
 		return(-1);
 	}
 	dx=OBJ_COLS(ifp->if_dp);
@@ -247,21 +249,21 @@ int frag_read(Data_Obj *dp,Image_File *ifp,index_t x_offset,index_t y_offset,ind
 		x_dump=dx-x_fill;
 		//x_skip=0;
 if( ! THICK_TOLD ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too wide (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too wide (%d) for object %s (%d)",
 ifp->if_name,dx,OBJ_NAME(dp),x_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 /*
-//sprintf(DEFAULT_ERROR_STRING,"xskip = %d    x_fill = %d    dx = %d    x_dump = %d\n",x_skip,x_fill,dx,x_dump);
-//advise(DEFAULT_ERROR_STRING);
+//sprintf(ERROR_STRING,"xskip = %d    x_fill = %d    dx = %d    x_dump = %d\n",x_skip,x_fill,dx,x_dump);
+//advise(ERROR_STRING);
 */
 TELL_THICK;
 }
 	} else {		/* image thinner that data area? */
 
 if( dx < x_fill && (! THIN_TOLD) ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too thin (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too thin (%d) for object %s (%d)",
 ifp->if_name,dx,OBJ_NAME(dp),x_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 TELL_THIN;
 }
 		//x_skip=x_fill-dx;
@@ -271,9 +273,9 @@ TELL_THIN;
 	if( dy > y_fill ){	/* image taller than data area */
 
 if( ! TALL_TOLD ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too tall (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too tall (%d) for object %s (%d)",
 ifp->if_name,dy,OBJ_NAME(dp),y_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 TELL_TALL;
 }
 		x_skip=x_fill-dx;
@@ -281,9 +283,9 @@ TELL_TALL;
 	} else {		/* image shorter than data area */
 
 if( dy < y_fill && (! SHORT_TOLD) ){
-sprintf(DEFAULT_ERROR_STRING,"image in file %s too short (%d) for object %s (%d)",
+sprintf(ERROR_STRING,"image in file %s too short (%d) for object %s (%d)",
 ifp->if_name,dy,OBJ_NAME(dp),y_fill);
-NWARN(DEFAULT_ERROR_STRING);
+warn(ERROR_STRING);
 TELL_SHORT;
 }
 		x_skip=x_fill-dx;
@@ -356,7 +358,7 @@ FIO_RD_FUNC( raw )
 {
 	uint32_t totfrms;
 
-	if( !same_type(QSP_ARG  dp,ifp) ) return;
+	if( !same_type(dp,ifp) ) return;
 
 	if( t_offset >= OBJ_FRAMES(dp) ){
 		sprintf(ERROR_STRING,
@@ -378,7 +380,7 @@ FIO_RD_FUNC( raw )
 		OBJ_COLS(dp)==OBJ_COLS(ifp->if_dp) &&
 		x_offset==0 && y_offset==0 ){
 
-		read_object(QSP_ARG  dp,ifp);
+		read_object(dp,ifp);
 	} else {
 		if( frag_read(dp,ifp,x_offset,y_offset,t_offset) < 0 )
 			goto readerr;

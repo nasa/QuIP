@@ -202,7 +202,7 @@ Image_File * mpeg_open(const char *name,int rw)
 printf("mpeg_open: IN\n");
 #endif /* QUIP_DEBUG */
 	
-	ifp = IMG_FILE_CREAT(name,rw,IFT_MPEG);
+	ifp = img_file_creat(name,rw,IFT_MPEG);
 	if( ifp==NULL ) return(ifp);
 
 	ifp->hdr = (Mpeg_Hdr *)getbuf( sizeof(Mpeg_Hdr) );

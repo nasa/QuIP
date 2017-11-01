@@ -12,6 +12,8 @@
 /* wav.c */
 FIO_INTERFACE_PROTOTYPES( wav, Wav_Header )
 
+#define set_wav_hdr(ifp)	_set_wav_hdr(QSP_ARG  ifp)
+
 #define wav_to_dp(a,b)	_wav_to_dp(QSP_ARG  a,b)
 #define dp_to_wav(a,b)	_dp_to_wav(QSP_ARG  a,b)
 

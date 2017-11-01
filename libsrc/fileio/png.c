@@ -467,7 +467,7 @@ FIO_OPEN_FUNC( pngfio )		// unix version
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
 	if( ifp==NULL ) return(ifp);
 
 	ifp->if_hdr_p = getbuf( sizeof(Png_Hdr) );
@@ -1146,7 +1146,7 @@ FIO_OPEN_FUNC( pngfio )		// iOS version
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
+	ifp = img_file_creat(name,rw,FILETYPE_FOR_CODE(IFT_PNG));
 	if( ifp==NULL ) return(ifp);
 
 	// if it's readable, then we would read the header so we can
@@ -1182,7 +1182,7 @@ FIO_CLOSE_FUNC( pngfio )		// iOS version
 	} else {
 		//advise("pngfio_close:  doing nothing.");
 	}
-	generic_imgfile_close(QSP_ARG  ifp);
+	generic_imgfile_close(ifp);
 }
 
 FIO_RD_FUNC( pngfio )		// iOS version

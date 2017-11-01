@@ -123,7 +123,7 @@ static COMMAND_FUNC( do_rm )
 	inp = pick_rv_inode("");
 	if( inp==NULL ) return;
 #ifdef HAVE_RAWVOL
-	rv_rmfile(QSP_ARG  inp->rvi_name);
+	rv_rmfile(inp->rvi_name);
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_rmfile)
 #endif // ! HAVE_RAWVOL
@@ -303,7 +303,7 @@ static COMMAND_FUNC( do_rv_info )
 	if( inp == NULL ) return;
 
 #ifdef HAVE_RAWVOL
-	rv_info(QSP_ARG  inp);
+	rv_info(inp);
 #else // ! HAVE_RAWVOL
 	MISSING_CONFIG(rv_info)
 #endif // ! HAVE_RAWVOL

@@ -134,7 +134,7 @@ static void update_pathname(Image_File *ifp)
 	}
 }
 
-void set_iofile_directory(QSP_ARG_DECL  const char *dirname)
+void _set_iofile_directory(QSP_ARG_DECL  const char *dirname)
 {
 	if( !directory_exists(dirname) ){
 		sprintf(ERROR_STRING,
@@ -209,7 +209,7 @@ static FIO_SEEK_FUNC(null)
 #define hips1_seek_frame	uio_seek_frame
 
 #define hips2_info_func		null_info_func
-#define hips2_seek_frame	std_seek_frame
+#define hips2_seek_frame	_std_seek_frame
 
 #define bmp_wt		dummy_wt
 #define bmp_seek_frame	null_seek_frame
@@ -334,11 +334,11 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
 	//setstrfunc("iof_exists",iof_exists);
 	DECLARE_STR1_FUNCTION(	iof_exists,	iof_exists )
 
-	define_port_data_type(QSP_ARG  P_IMG_FILE,"image_file","name of image file",
-		recv_img_file,
+	define_port_data_type(P_IMG_FILE,"image_file","name of image file",
+		_recv_img_file,
 		/* null_proc, */
 		(const char *(*)(QSP_ARG_DECL  const char *))_pick_img_file,
-		(void (*)(QSP_ARG_DECL  Port *,const void *,int)) xmit_img_file);
+		(void (*)(QSP_ARG_DECL  Port *,const void *,int)) _xmit_img_file);
 
 	inited=1;
 }
@@ -348,7 +348,7 @@ void image_file_init(SINGLE_QSP_ARG_DECL)
  * been closed, if necessary.
  */
 
-void delete_image_file(QSP_ARG_DECL  Image_File *ifp)
+void _delete_image_file(QSP_ARG_DECL  Image_File *ifp)
 {
 	// BUG - this can fail for a raw volume file because
 	// of permissions mismatch...
@@ -396,7 +396,7 @@ void _generic_imgfile_close(QSP_ARG_DECL  Image_File *ifp)
 		if( USES_STDIO(ifp) || USES_UNIX_IO(ifp) )
 			unlink(ifp->if_pathname);	/* remove file */
 	}
-	delete_image_file(QSP_ARG  ifp);
+	delete_image_file(ifp);
 }
 
 static Data_Obj *new_temp_dobj(void)
@@ -650,7 +650,7 @@ void image_file_clobber(int flag)
  * given the existence of a different function called open_image_file...
  */
 
-Image_File *img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
+Image_File *_img_file_creat(QSP_ARG_DECL  const char *name,int rw,Filetype * ftp)
 {
 	Image_File *ifp;
 	int had_error=0;
@@ -747,7 +747,7 @@ int same_size(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 	return(1);
 }
 
-int same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+int _same_type(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	int retval=1;
 
@@ -801,7 +801,7 @@ void copy_dimensions(Data_Obj *dpto,Data_Obj *dpfr)	/* used by write routines...
 	SET_OBJ_N_TYPE_ELTS(dpto,OBJ_N_TYPE_ELTS(dpfr) );
 }
 
-void if_info(QSP_ARG_DECL  Image_File *ifp)
+void _if_info(QSP_ARG_DECL  Image_File *ifp)
 {
 	sprintf(msg_str,"File %s:",ifp->if_name);
 	prt_msg(msg_str);
@@ -884,7 +884,7 @@ void dump_image_file(QSP_ARG_DECL  const char *filename,Filetype *ftp,void *data
 		rls_temp_dobj(dp);
 		return;
 	}
-	write_image_to_file(QSP_ARG  ifp,dp);
+	write_image_to_file(ifp,dp);
 	rls_temp_dobj(dp);
 }
 
@@ -932,7 +932,7 @@ Filetype * current_filetype(void)
 	return(curr_ftp);
 }
 
-void set_filetype(QSP_ARG_DECL  Filetype *ftp)
+void _set_filetype(QSP_ARG_DECL  Filetype *ftp)
 {
 	curr_ftp=ftp;
 }
@@ -1097,7 +1097,7 @@ static Filetype* infer_filetype_from_name(QSP_ARG_DECL  const char *name)
  * Call type-specific function to open the file
  */
 
-Image_File *read_image_file(QSP_ARG_DECL  const char *name)
+Image_File *_read_image_file(QSP_ARG_DECL  const char *name)
 {
 	Image_File *ifp;
 	Filetype * ftp;
@@ -1132,7 +1132,7 @@ Image_File *read_image_file(QSP_ARG_DECL  const char *name)
 
 /* Open a file for writing */
 
-Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
+Image_File *_write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 {
 	Image_File *ifp;
 	Filetype * ftp;
@@ -1165,7 +1165,7 @@ Image_File *write_image_file(QSP_ARG_DECL  const char *filename,dimension_t n)
 
 /* Should we impose that the objects have the same size?? */
 
-void read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
+void _read_object_from_file(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)
 {
 	if( dp == NULL ) return;
 	if( ifp == NULL ) return;
@@ -1211,14 +1211,14 @@ void _close_image_file(QSP_ARG_DECL  Image_File *ifp)
  * call vectored module-specific routine...
  */
 
-Image_File * open_image_file(QSP_ARG_DECL  const char *filename,const char *rw)
+Image_File * _open_image_file(QSP_ARG_DECL  const char *filename,const char *rw)
 {
 	Image_File *ifp;
 
 sprintf(ERROR_STRING,"open_image_file %s",filename);
 advise(ERROR_STRING);
 	if( *rw == 'r' )
-		ifp = read_image_file(QSP_ARG  filename);
+		ifp = read_image_file(filename);
 
 	/* BUG 4096 is an arbitrary big number.  Originally we
 	 * passed the number of frames to write to the open routine
@@ -1228,7 +1228,7 @@ advise(ERROR_STRING);
 	 */
 
 	else if( *rw == 'w' )
-		ifp = write_image_file(QSP_ARG  filename,4096);
+		ifp = write_image_file(filename,4096);
 
 	else {
 		assert( AERROR("bad r/w string passed to open_image_file") );
@@ -1239,7 +1239,7 @@ advise(ERROR_STRING);
 
 /* put an image out to a writable file */
 
-void write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
+void _write_image_to_file(QSP_ARG_DECL  Image_File *ifp,Data_Obj *dp)
 {
 	/* take filetype from image file */
 	if( dp == NULL ) return;
@@ -1297,7 +1297,7 @@ int uio_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
 	return(0);
 }
 
-int std_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
+int _std_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
 {
 	off_t offset;
 
@@ -1314,7 +1314,7 @@ int std_seek_frame(QSP_ARG_DECL  Image_File *ifp, index_t n)
 	return(0);
 }
 
-int image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n)
+int _image_file_seek(QSP_ARG_DECL  Image_File *ifp,dimension_t n)
 {
 	/* BUG?  off_t is long long on new sgi!? */
 
@@ -1360,7 +1360,7 @@ advise(ERROR_STRING);
 	return(0);
 }
 
-void check_auto_close(QSP_ARG_DECL  Image_File *ifp)
+void _check_auto_close(QSP_ARG_DECL  Image_File *ifp)
 {
 	if( ifp->if_nfrms >= ifp->if_frms_to_wt ){
 		if( verbose ){

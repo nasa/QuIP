@@ -535,7 +535,8 @@ extern int add_image(Viewer *vp,Data_Obj *dp,int x,int y);
 extern void insert_image(Data_Obj *dpto,Data_Obj *dpfr,int x,int y,int frameno);
 extern void update_image(Viewer *vp);
 extern void load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
-extern void old_load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+extern void _old_load_viewer(QSP_ARG_DECL  Viewer *vp,Data_Obj *dp);
+#define old_load_viewer(vp,dp) _old_load_viewer(QSP_ARG  vp,dp)
 
 /* xplot.c */
 

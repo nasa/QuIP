@@ -180,7 +180,7 @@ ccdun:		givbuf(cbuf);
 	}
 }
 
-void wt_raw_data(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)		/** output next frame */
+void _wt_raw_data(QSP_ARG_DECL  Data_Obj *dp,Image_File *ifp)		/** output next frame */
 {
 	dimension_t totfrms;
 
@@ -192,7 +192,7 @@ advise(ERROR_STRING);
 }
 #endif /* QUIP_DEBUG */
 
-	if( !same_type(QSP_ARG  dp,ifp) ) return;
+	if( !same_type(dp,ifp) ) return;
 
 	totfrms = OBJ_FRAMES(dp) * OBJ_SEQS(dp);
 
@@ -234,7 +234,7 @@ advise(ERROR_STRING);
 
 	ifp->if_nfrms += totfrms;
 
-	check_auto_close(QSP_ARG  ifp);
+	check_auto_close(ifp);
 }
 
 FIO_WT_FUNC( raw )
@@ -256,7 +256,7 @@ FIO_WT_FUNC( raw )
 		SET_OBJ_FRAMES(ifp->if_dp, nf);
 	}
 
-	wt_raw_data(QSP_ARG  dp,ifp);
+	wt_raw_data(dp,ifp);
 
 	return(0);
 }
@@ -340,7 +340,7 @@ FIO_OPEN_FUNC( raw )
 {
 	Image_File *ifp;
 
-	ifp = IMG_FILE_CREAT(name,rw,filetype_for_code(QSP_ARG  IFT_RAW));
+	ifp = img_file_creat(name,rw,filetype_for_code(QSP_ARG  IFT_RAW));
 
 	/* img_file_creat creates dummy if_dp only if readable */
 
