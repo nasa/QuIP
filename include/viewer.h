@@ -671,16 +671,17 @@ extern void set_remember_gfx(int flag);
 extern void _xp_fill_arc(Viewer*, int, int, int, int, int, int);
 extern void _xp_fill_polygon(Viewer* vp, int num_points, int* px_vals, int* py_vals);
 extern void _xp_move(Viewer *vp,int x1,int y1);
+
+
+extern void _set_char_spacing(QSP_ARG_DECL  Viewer *vp,int sz);
 extern int _exec_drawlist(QSP_ARG_DECL  Viewer *vp);
-extern void set_char_spacing(Viewer *vp,int sz);
-
-#define exec_drawlist(vp) _exec_drawlist(QSP_ARG  vp)
-
 extern void _set_font_by_name(QSP_ARG_DECL  Viewer *vp,const char *s);
 extern void _xp_erase(QSP_ARG_DECL  Viewer *vp);
 extern void _set_text_angle(QSP_ARG_DECL  Viewer *vp,float a);
 extern void _set_font_size(QSP_ARG_DECL  Viewer *vp,int sz);
 
+#define set_char_spacing(vp,sz) _set_char_spacing(QSP_ARG  vp,sz)
+#define exec_drawlist(vp) _exec_drawlist(QSP_ARG  vp)
 #define set_font_by_name(vp,s) _set_font_by_name(QSP_ARG  vp,s)
 #define xp_erase(vp) _xp_erase(QSP_ARG  vp)
 #define set_text_angle(vp,a) _set_text_angle(QSP_ARG  vp,a)
