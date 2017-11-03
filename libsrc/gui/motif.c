@@ -155,7 +155,7 @@ static void push_widget_context(QSP_ARG_DECL  Screen_Obj *sop)
 
 #endif /* HAVE_MOTIF */
 
-void reposition(Screen_Obj *sop)
+void _reposition(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	/* Reposition frame if it has one */
@@ -315,7 +315,9 @@ void post_menu_handler (Widget w, XtPointer client_data,
 	XtManageChild (popup);
 }
 
-static Widget generic_frame(Widget parent, Screen_Obj *sop, int shadow_type)
+#define generic_frame(parent,sop,shadow_type) _generic_frame(QSP_ARG  parent,sop,shadow_type)
+
+static Widget _generic_frame(QSP_ARG_DECL  Widget parent, Screen_Obj *sop, int shadow_type)
 {
 	Arg al[10];
 	int ac = 0;
@@ -345,7 +347,7 @@ static Widget generic_frame(Widget parent, Screen_Obj *sop, int shadow_type)
 		sop->so_x = curr_panel->po_currx;
 		sop->so_y = curr_panel->po_curry;
 	} else {
-		NWARN("CAUTIOUS:  generic_frame:  current_panel is NULL!?");
+		warn("CAUTIOUS:  generic_frame:  current_panel is NULL!?");
 	}
 
 	ac = 0;
@@ -838,14 +840,14 @@ void make_edit_box(QSP_ARG_DECL  Screen_Obj *sop)
 
 /* For a text widget, this sets the text!? */
 
-void update_prompt(Screen_Obj *sop)
+void _update_prompt(QSP_ARG_DECL  Screen_Obj *sop)
 {
 #ifdef HAVE_MOTIF
 	XmTextFieldSetString(sop->so_obj, (char *)sop->so_content_text);
 #endif /* HAVE_MOTIF */
 }
 
-void update_text_field(Screen_Obj *sop, const char *string)
+void _update_text_field(QSP_ARG_DECL  Screen_Obj *sop, const char *string)
 {
 #ifdef HAVE_MOTIF
 	XmTextFieldSetString(sop->so_obj, (char *)string );
@@ -1001,7 +1003,7 @@ static void make_width_slider(QSP_ARG_DECL  Screen_Obj *sop)
 #endif /* HAVE_MOTIF */
 
 
-void new_slider_range(Screen_Obj *sop, int xmin, int xmax)
+void _new_slider_range(QSP_ARG_DECL  Screen_Obj *sop, int xmin, int xmax)
 {
 #ifdef HAVE_MOTIF
 	Arg al[10];
@@ -1024,7 +1026,7 @@ void new_slider_range(Screen_Obj *sop, int xmin, int xmax)
 }
 
 
-void new_slider_pos(Screen_Obj *sop, int val)
+void _new_slider_pos(QSP_ARG_DECL  Screen_Obj *sop, int val)
 {
 #ifdef HAVE_MOTIF
 	Arg al[10];
@@ -1349,7 +1351,7 @@ void _unshow_panel(QSP_ARG_DECL  Panel_Obj *po)
 #endif /* HAVE_MOTIF */
 }
 
-void posn_panel(Panel_Obj *po)
+void _posn_panel(QSP_ARG_DECL  Panel_Obj *po)
 {
 #ifdef HAVE_MOTIF
 	Arg al[10];
@@ -1437,7 +1439,7 @@ void _make_scroller(QSP_ARG_DECL  Screen_Obj *sop)
 
 }
 
-void set_scroller_list(Screen_Obj *sop, const char *string_list[],
+void _set_scroller_list(QSP_ARG_DECL  Screen_Obj *sop, const char *string_list[],
 	int nlist)
 {
 #ifdef HAVE_MOTIF
@@ -1604,7 +1606,7 @@ void _make_picker(QSP_ARG_DECL  Screen_Obj *sop)
 #endif /* HAVE_MOTIF */
 }
 
-void set_choice(Screen_Obj *sop,int i)
+void _set_choice(QSP_ARG_DECL  Screen_Obj *sop,int i)
 {
 	Node *np;
 	int n;
@@ -1652,9 +1654,10 @@ void clear_all_selections(Screen_Obj *sop)
 	NWARN_ONCE("clear_all_selections:  not implemented!?");
 }
 
-void set_pick(Screen_Obj *sop, int cyl, int which )
+void _set_pick(QSP_ARG_DECL  Screen_Obj *sop, int cyl, int which )
 {
-	NWARN_ONCE("set_pick:  not implemented for motif!?");
+	//NWARN_ONCE("set_pick:  not implemented for motif!?");
+	warn("set_pick:  not implemented for motif!?");
 }
 
 void _make_label(QSP_ARG_DECL  Screen_Obj *sop)
@@ -2026,9 +2029,9 @@ void _pop_nav(QSP_ARG_DECL  int count)
 	show_genwin(gwp);
 }
 
-void end_busy(int final)
+void _end_busy(QSP_ARG_DECL  int final)
 {
-	NWARN("end_busy:  not implemented!?");
+	warn("end_busy:  not implemented!?");
 }
 
 void _get_confirmation(QSP_ARG_DECL  const char *title, const char *question)

@@ -451,9 +451,11 @@ extern Screen_Obj *_simple_object(QSP_ARG_DECL  const char *name);
 extern COMMAND_FUNC(mk_panel);
 
 // BUG most of these prototypes can go in the lib-local include file...
-extern void reposition(Screen_Obj *sop);
 extern void make_menu(QSP_ARG_DECL  Screen_Obj *mp,Screen_Obj *mip);
 extern void make_menu_choice(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *parent);
+
+extern void _reposition(QSP_ARG_DECL  Screen_Obj *sop);
+#define reposition(sop) _reposition(QSP_ARG  sop)
 
 #ifdef HAVE_MOTIF
 extern void delete_motif_widget(Screen_Obj *sop);
@@ -473,16 +475,11 @@ extern void set_activity_indicator(Screen_Obj *mp,int on_off);
 
 extern void make_separator(QSP_ARG_DECL  Screen_Obj *so);
 extern void make_edit_box(QSP_ARG_DECL  Screen_Obj *to);
-extern void update_prompt(Screen_Obj *to);
 extern void update_edit_text(Screen_Obj *sop, const char *string);
-extern void update_text_field(Screen_Obj *sop, const char *string);
 extern const char *get_text(Screen_Obj *to);
 extern void make_gauge(QSP_ARG_DECL  Screen_Obj *go);
 extern void make_slider(QSP_ARG_DECL  Screen_Obj *sop);
 extern void make_slider_w(QSP_ARG_DECL  Screen_Obj *sop);
-extern void new_slider_range(Screen_Obj *sop,int xmin,int xmax);
-extern void new_slider_range(Screen_Obj *sop,int xmin,int xmax);
-extern void new_slider_pos(Screen_Obj *sop,int pos);
 extern void set_toggle_state(Screen_Obj *sop,int pos);
 //extern void set_choice(Screen_Obj *sop,int which);
 extern void make_adjuster(QSP_ARG_DECL  Screen_Obj *sop);
@@ -493,9 +490,19 @@ extern void set_gauge_label(Screen_Obj *gp,const char *s);
 extern void update_gauge_label(Screen_Obj *gp);
 extern void update_message(Screen_Obj *mp);
 extern void update_label(Screen_Obj *mp);
-extern void set_scroller_list(Screen_Obj *sop,const char *string_list[],int nlist);
 
+
+extern void _set_scroller_list(QSP_ARG_DECL  Screen_Obj *sop,const char *string_list[],int nlist);
+extern void _update_text_field(QSP_ARG_DECL  Screen_Obj *sop, const char *string);
+extern void _new_slider_range(QSP_ARG_DECL  Screen_Obj *sop,int xmin,int xmax);
+extern void _new_slider_pos(QSP_ARG_DECL  Screen_Obj *sop,int pos);
+extern void _update_prompt(QSP_ARG_DECL  Screen_Obj *to);
 extern IOS_Item_Context *_create_scrnobj_context(QSP_ARG_DECL  const char *name);
+#define set_scroller_list(sop,string_list,nlist) _set_scroller_list(QSP_ARG  sop,string_list,nlist)
+#define update_text_field(sop,string) _update_text_field(QSP_ARG  sop,string)
+#define new_slider_range(sop,xmin,xmax) _new_slider_range(QSP_ARG  sop,xmin,xmax)
+#define new_slider_pos(sop,pos) _new_slider_pos(QSP_ARG  sop,pos)
+#define update_prompt(to) _update_prompt(QSP_ARG  to)
 #define create_scrnobj_context(name) _create_scrnobj_context(QSP_ARG  name)
 
 extern void get_device_dims(Screen_Obj *sop);

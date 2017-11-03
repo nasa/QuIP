@@ -214,9 +214,11 @@ extern void make_panel(QSP_ARG_DECL  Panel_Obj *po,int,int);
 extern void activate_panel(QSP_ARG_DECL  Panel_Obj *po, int yesno);
 extern void panel_cmap(Panel_Obj *po, Data_Obj *cm_dp);
 extern void label_panel(Panel_Obj *po, const char *s);
-extern void posn_panel(Panel_Obj *po);
 extern void free_wsys_stuff(Panel_Obj *po);
 extern void window_cm(Panel_Obj *po,Data_Obj *cm_dp);
+
+extern void _posn_panel(QSP_ARG_DECL  Panel_Obj *po);
+#define posn_panel(po) _posn_panel(QSP_ARG  po)
 
 #ifdef BUILD_FOR_OBJC
 extern Panel_Obj *find_panel(QSP_ARG_DECL  quipView *qv);
