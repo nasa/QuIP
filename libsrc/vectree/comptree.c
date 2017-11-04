@@ -4318,10 +4318,17 @@ dump_tree(enp);
 			 * by transforming to render(img,coords,samples);
 			 */
 
+if( VN_CHILD_SHAPE(enp,1)==NULL){
+fprintf(stderr,"compile_node %s:  null child shape!?\n",node_desc(enp));
+dump_tree(enp);
+}
 			assert( VN_CHILD_SHAPE(enp,1) != NULL );
 
 //fprintf(stderr,"compile_node T_ASSIGN\n");
 //dump_tree(enp);
+			assert(VN_CHILD_SHAPE(enp,0)!=NULL);
+			assert(SHP_PREC_PTR(VN_CHILD_SHAPE(enp,0))!=NULL);
+			assert(SHP_PREC_PTR(VN_CHILD_SHAPE(enp,1))!=NULL);
 			if( (!SCALAR_SHAPE(VN_CHILD_SHAPE(enp,1))) &&
 				/* next line added for matlab */
 				VN_CHILD_SHAPE(enp,0) != NULL &&
@@ -5130,6 +5137,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 			/* void subrt's never need to have a shape */
 			if( SR_PREC_CODE(SC_SUBRT(scp)) == PREC_VOID ){
+fprintf(stderr,"prelim_node_shape:  Subroutine %s returns void, setting callfunc shape to null!\n",SR_NAME(SC_SUBRT(scp)));
 				SET_VN_SHAPE(enp, NULL);
 				return;
 			}
@@ -5139,6 +5147,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 				&& enp != SR_BODY(curr_srp) &&
 				VN_CODE(VN_PARENT(enp)) != T_STAT_LIST ){
 
+fprintf(stderr,"prelim_node_shape:  remembering subroutine %s\n",SR_NAME(SC_SUBRT(scp)));
 				/* Why are we doing this?? */
 				remember_callfunc_node(curr_srp,enp);
 			}
@@ -5157,6 +5166,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 
 
+fprintf(stderr,"prelim_node_shape:  pointing node shape to SC_SHAPE\n");
 			//copy_node_shape(enp,SR_SHAPE(srp));
 			point_node_shape(enp,SC_SHAPE(scp));
 			break;

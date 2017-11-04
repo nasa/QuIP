@@ -232,6 +232,14 @@ static Vec_Expr_Node * get_subrt_args(QSP_ARG_DECL  Subrt *srp)
 	return enp;
 }
 
+static void clear_call_shapes(Subrt_Call *scp)
+{
+	//SET_SC_DEST_SHAPE(&sc,NULL);
+	//SET_SC_SHAPE(&sc,NULL);
+	bzero(SC_DEST_SHAPE(scp),sizeof(Shape_Info));
+	bzero(SC_SHAPE(scp),sizeof(Shape_Info));
+}
+
 COMMAND_FUNC( do_run_subrt )
 {
 	Subrt *srp;
@@ -249,9 +257,9 @@ COMMAND_FUNC( do_run_subrt )
 
 	SET_SC_SUBRT(&sc,srp);
 	SET_SC_ARG_VALS(&sc,enp);
-	SET_SC_DEST_SHAPE(&sc,NULL);
-	SET_SC_SHAPE(&sc,NULL);
 	SET_SC_CALL_VN(&sc,NULL);
+
+	clear_call_shapes(&sc);
 
 	run_subrt_immed(&sc,NULL);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
@@ -722,8 +730,7 @@ Subrt_Call *make_call_instance(Subrt *srp)
 	SET_SC_SUBRT(scp,srp);
 	SET_SC_ARG_VALS(scp,NULL);
 	SET_SC_CALL_VN(scp,NULL);
-	SET_SC_SHAPE(scp,NULL);
-	SET_SC_DEST_SHAPE(scp,NULL);
+	clear_call_shapes(scp);
 	return scp;
 }
 

@@ -954,7 +954,8 @@ warn(ERROR_STRING);
 	/* now try for the args */
 	/* resolve_uk_args( */
 
-	SET_SC_DEST_SHAPE(scp, NULL);
+	// scp now holds shape struct, not a ptr
+	//SET_SC_DEST_SHAPE(scp, NULL);
 
 	delete_subrt_ctx(QSP_ARG  SR_NAME(srp));
 

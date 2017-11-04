@@ -93,8 +93,10 @@ struct subrt_call {
 	struct subrt *	sc_srp;
 	Vec_Expr_Node *	sc_arg_vals;
 	Vec_Expr_Node *	sc_call_enp;
-	Shape_Info *	sc_shpp;
-	Shape_Info *	sc_dest_shpp;
+//	Shape_Info *	sc_shpp;
+//	Shape_Info *	sc_dest_shpp;
+	Shape_Info	sc_shape;
+	Shape_Info	sc_dest_shape;
 } ;
 
 #define SC_SUBRT(scp)			(scp)->sc_srp
@@ -103,10 +105,11 @@ struct subrt_call {
 #define SET_SC_ARG_VALS(scp,lp)		(scp)->sc_arg_vals = lp
 #define SC_CALL_VN(scp)			(scp)->sc_call_enp
 #define SET_SC_CALL_VN(scp,enp)		(scp)->sc_call_enp = enp
-#define SC_SHAPE(scp)			(scp)->sc_shpp
-#define SET_SC_SHAPE(scp,shpp)		(scp)->sc_shpp = shpp
-#define SC_DEST_SHAPE(scp)		(scp)->sc_dest_shpp
-#define SET_SC_DEST_SHAPE(scp,shpp)	(scp)->sc_dest_shpp = shpp
+
+#define SC_SHAPE(scp)			(&((scp)->sc_shape))
+#define SET_SC_SHAPE(scp,shpp)		(scp)->sc_shape = (*(shpp))
+#define SC_DEST_SHAPE(scp)		(&((scp)->sc_dest_shape))
+#define SET_SC_DEST_SHAPE(scp,shpp)	(scp)->sc_dest_shape = (*(shpp))
 
 extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
