@@ -106,12 +106,9 @@ void init_expr_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_INT:
 			SET_VN_INTVAL(enp, 0);
 			break;
-		case ND_SUBRT:
-			SET_VN_SUBRT(enp, NULL);
-			break;
 		case ND_CALLF:
 			SET_VN_UK_ARGS(enp, NULL);
-			SET_VN_SUBRT_CALL(enp, NULL);
+			SET_VN_SUBRT(enp, NULL);
 			break;
 		case ND_STRING:
 			SET_VN_STRING(enp, NULL);
@@ -159,7 +156,6 @@ const char *node_data_type_desc(Node_Data_Type t)
 		data_type_names[ ND_LIST ] = "list";
 		data_type_names[ ND_DBL ] = "dbl";
 		data_type_names[ ND_INT ] = "int";
-		data_type_names[ ND_SUBRT ] = "subrt";
 		data_type_names[ ND_CALLF ] = "callf";
 		data_type_names[ ND_STRING ] = "string";
 		data_type_names[ ND_CAST ] = "cast";
@@ -441,7 +437,6 @@ void _rls_vectree(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		case ND_LIST:
 		case ND_DBL:
 		case ND_INT:
-		case ND_SUBRT:
 		case ND_CALLF:
 		case ND_STRING:
 		case ND_CAST:

@@ -232,19 +232,11 @@ static Vec_Expr_Node * get_subrt_args(QSP_ARG_DECL  Subrt *srp)
 	return enp;
 }
 
-static void clear_call_shapes(Subrt_Call *scp)
-{
-	//SET_SC_DEST_SHAPE(&sc,NULL);
-	//SET_SC_SHAPE(&sc,NULL);
-	bzero(SC_DEST_SHAPE(scp),sizeof(Shape_Info));
-	bzero(SC_SHAPE(scp),sizeof(Shape_Info));
-}
-
 COMMAND_FUNC( do_run_subrt )
 {
 	Subrt *srp;
-	Subrt_Call sc;
-	Vec_Expr_Node *enp;
+	Vec_Expr_Node *args_enp;
+	Vec_Expr_Node *call_enp;
 
 	srp=pick_subrt("");
 
@@ -253,15 +245,10 @@ COMMAND_FUNC( do_run_subrt )
 	// What do we do if there is a fused kernel for this subrt???
 
 	push_vector_parser_data(SINGLE_QSP_ARG);
-	enp = get_subrt_args(QSP_ARG  srp);
+	args_enp = get_subrt_args(QSP_ARG  srp);
+	call_enp = node1(T_CALLFUNC,args_enp);
 
-	SET_SC_SUBRT(&sc,srp);
-	SET_SC_ARG_VALS(&sc,enp);
-	SET_SC_CALL_VN(&sc,NULL);
-
-	clear_call_shapes(&sc);
-
-	run_subrt_immed(&sc,NULL);
+	run_subrt_immed(srp,NULL,call_enp);
 	pop_vector_parser_data(SINGLE_QSP_ARG);
 }
 
@@ -719,18 +706,5 @@ Vec_Expr_Node *find_node_by_number(QSP_ARG_DECL  int n)
 		np=NODE_NEXT(np);
 	}
 	return(NULL);
-}
-
-Subrt_Call *make_call_instance(Subrt *srp)
-{
-	Subrt_Call *scp;
-
-	scp = getbuf(sizeof(*scp));
-
-	SET_SC_SUBRT(scp,srp);
-	SET_SC_ARG_VALS(scp,NULL);
-	SET_SC_CALL_VN(scp,NULL);
-	clear_call_shapes(scp);
-	return scp;
 }
 

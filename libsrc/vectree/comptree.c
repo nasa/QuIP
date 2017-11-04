@@ -1173,7 +1173,7 @@ static Shape_Info * _get_mating_shapes(QSP_ARG_DECL   Vec_Expr_Node *enp,int i1,
 void _update_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 {
 	Shape_Info *tmp_shpp;
-	Subrt_Call *scp;
+	Subrt *srp;
 	dimension_t i1,i2,len ;
 #ifdef NOT_YET
 	Image_File *ifp;
@@ -1669,25 +1669,23 @@ no_file:
 
 		case T_CALLFUNC:			/* update_node_shape */
 
-			scp=VN_SUBRT_CALL(enp);
-			SET_SC_CALL_VN(scp, enp);
+			srp=VN_SUBRT(enp);
 
 			/* Why do we do this here??? */
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
 				node_error(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
 					arg_count(VN_CHILD(enp,0)));
 				warn(ERROR_STRING);
 				CURDLE(enp)
 				break;
 			}
 
-			if( SC_SHAPE(scp) != NULL ){
-				copy_node_shape(enp,SC_SHAPE(scp));
-			}
+			// No basis to determine shape at this stage?
+			//copy_node_shape(enp,SC_SHAPE(scp));
 			break;
 
 		case T_ARGLIST:		/* update_node_shape */
@@ -4392,7 +4390,7 @@ dump_tree(enp);
 
 		/* all these cases are do-nothings... */
 
-		case T_SUBRT:
+		case T_SUBRT_DECL:
 		case T_EXIT:
 		case T_CALLFUNC:		/* compile_node */
 		case T_CALL_NATIVE:
@@ -4524,7 +4522,7 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
 	Data_Obj *dp;
 	Shape_Info *tmp_shpp;
-	Subrt_Call *scp;
+	Subrt *srp;
 	Vec_Expr_Node *decl_enp;
 	dimension_t i1;
 	const char *s;
@@ -5127,17 +5125,17 @@ static void _prelim_node_shape(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 		case T_CALLFUNC:			/* prelim_node_shape */
 
-			scp=VN_SUBRT_CALL(enp);
-			SET_SC_CALL_VN(scp, enp);
+			srp=VN_SUBRT(enp);
 
 			/* We probably need a separate list! */
 			/* link any unknown shape args to the callfunc node */
+			/* what is the child?  the arg list? */
 			if( ! NULL_CHILD(enp,0) )
 				link_uk_args(QSP_ARG  enp,VN_CHILD(enp,0));
 
 			/* void subrt's never need to have a shape */
-			if( SR_PREC_CODE(SC_SUBRT(scp)) == PREC_VOID ){
-fprintf(stderr,"prelim_node_shape:  Subroutine %s returns void, setting callfunc shape to null!\n",SR_NAME(SC_SUBRT(scp)));
+			if( SR_PREC_CODE(srp) == PREC_VOID ){
+fprintf(stderr,"prelim_node_shape:  Subroutine %s returns void, setting callfunc shape to null!\n",SR_NAME(srp));
 				SET_VN_SHAPE(enp, NULL);
 				return;
 			}
@@ -5147,17 +5145,17 @@ fprintf(stderr,"prelim_node_shape:  Subroutine %s returns void, setting callfunc
 				&& enp != SR_BODY(curr_srp) &&
 				VN_CODE(VN_PARENT(enp)) != T_STAT_LIST ){
 
-fprintf(stderr,"prelim_node_shape:  remembering subroutine %s\n",SR_NAME(SC_SUBRT(scp)));
+fprintf(stderr,"prelim_node_shape:  remembering subroutine %s\n",SR_NAME(srp));
 				/* Why are we doing this?? */
 				remember_callfunc_node(curr_srp,enp);
 			}
 
 
 			/* make sure the number of aruments is correct */
-			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(SC_SUBRT(scp)) ){
+			if( arg_count(VN_CHILD(enp,0)) != SR_N_ARGS(srp) ){
 				node_error(enp);
 				sprintf(ERROR_STRING,
-	"Subrt %s expects %d arguments (%d passed)",SR_NAME(SC_SUBRT(scp)), SR_N_ARGS(SC_SUBRT(scp)),
+	"Subrt %s expects %d arguments (%d passed)",SR_NAME(srp), SR_N_ARGS(srp),
 					arg_count(VN_CHILD(enp,0)));
 				warn(ERROR_STRING);
 				CURDLE(enp)
@@ -5166,9 +5164,9 @@ fprintf(stderr,"prelim_node_shape:  remembering subroutine %s\n",SR_NAME(SC_SUBR
 
 
 
-fprintf(stderr,"prelim_node_shape:  pointing node shape to SC_SHAPE\n");
+fprintf(stderr,"prelim_node_shape:  copying callfunc node shape\n");
 			//copy_node_shape(enp,SR_SHAPE(srp));
-			point_node_shape(enp,SC_SHAPE(scp));
+			copy_node_shape(enp,uk_shape( SR_PREC_CODE(srp)  ) );
 			break;
 
 		case T_ROW_LIST:				/* prelim_node_shape */
@@ -5760,7 +5758,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 		case T_MIXED_LIST:
 		case T_PERFORM:
 		case T_SCRIPT:
-		case T_SUBRT:
+		case T_SUBRT_DECL:
 		case T_STRCPY:
 		case T_STRCAT:
 		case T_OUTPUT_FILE:

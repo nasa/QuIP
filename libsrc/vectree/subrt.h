@@ -89,34 +89,13 @@ ITEM_LIST_PROT(Subrt,subrt)
 
 extern Item_Type *subrt_itp;
 
-struct subrt_call {
-	struct subrt *	sc_srp;
-	Vec_Expr_Node *	sc_arg_vals;
-	Vec_Expr_Node *	sc_call_enp;
-//	Shape_Info *	sc_shpp;
-//	Shape_Info *	sc_dest_shpp;
-	Shape_Info	sc_shape;
-	Shape_Info	sc_dest_shape;
-} ;
-
-#define SC_SUBRT(scp)			(scp)->sc_srp
-#define SET_SC_SUBRT(scp,srp)		(scp)->sc_srp = srp
-#define SC_ARG_VALS(scp)		(scp)->sc_arg_vals
-#define SET_SC_ARG_VALS(scp,lp)		(scp)->sc_arg_vals = lp
-#define SC_CALL_VN(scp)			(scp)->sc_call_enp
-#define SET_SC_CALL_VN(scp,enp)		(scp)->sc_call_enp = enp
-
-#define SC_SHAPE(scp)			(&((scp)->sc_shape))
-#define SET_SC_SHAPE(scp,shpp)		(scp)->sc_shape = (*(shpp))
-#define SC_DEST_SHAPE(scp)		(&((scp)->sc_dest_shape))
-#define SET_SC_DEST_SHAPE(scp,shpp)	(scp)->sc_dest_shape = (*(shpp))
-
 extern void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp);
 extern void fuse_subrt(QSP_ARG_DECL  Subrt *srp);
-extern Subrt_Call *make_call_instance(Subrt *srp);
 extern void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp);
-extern void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp);
 extern void update_pfdev_from_children(QSP_ARG_DECL  Vec_Expr_Node *enp);
+
+extern void _run_fused_kernel(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *args_enp, void * kp, Platform_Device *pdp);
+#define run_fused_kernel(srp,args_enp,kp,pdp) _run_fused_kernel(QSP_ARG  srp,args_enp,kp,pdp)
 
 #ifdef MAX_DEBUG
 extern void dump_resolvers(Vec_Expr_Node *enp);

@@ -393,9 +393,9 @@ void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
 	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip, pdp );
 }
 
-void run_fused_kernel(QSP_ARG_DECL  Subrt_Call *scp, void * kp, Platform_Device *pdp)
+void _run_fused_kernel(QSP_ARG_DECL  Subrt *srp, Vec_Expr_Node *args_enp, void * kp, Platform_Device *pdp)
 {
-	(*(PF_RUN_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kp, SC_ARG_VALS(scp), pdp);
+	(*(PF_RUN_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kp, args_enp, pdp);
 	//fprintf(stderr,"Sorry, run_fused_kernel not implemented yet...\n");
 }
 
@@ -465,7 +465,7 @@ void fuse_kernel(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	Subrt *srp;
 
 	switch(VN_CODE(enp)){
-		case T_SUBRT:
+		case T_SUBRT_DECL:
 			srp = VN_SUBRT(enp);
 			if( IS_SCRIPT(srp) ){
 				warn("Sorry, can't fuse script subroutines");

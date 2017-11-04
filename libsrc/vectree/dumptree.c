@@ -209,7 +209,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		//sprintf(msg_str,"  %s",NAME_FOR_PREC_CODE(VN_INTVAL(enp)));
 		sprintf(msg_str,"  %s",PREC_NAME(VN_PREC_PTR(enp)));
 		prt_msg_frag(msg_str);
-	} else if( code == T_SUBRT || code == T_SCRIPT ){
+	} else if( code == T_SUBRT_DECL || code == T_SCRIPT ){
 		Subrt *srp;
 		srp=VN_SUBRT(enp);
 		sprintf(msg_str,"\t%s",SR_NAME(srp));
@@ -262,7 +262,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		sprintf(msg_str," %s",VF_NAME(FIND_VEC_FUNC(VN_VFUNC_CODE(enp))));
 		prt_msg_frag(msg_str);
 	} else if( code==T_CALLFUNC ){
-		sprintf(msg_str," %s", SR_NAME(SC_SUBRT(VN_SUBRT_CALL(enp))));
+		sprintf(msg_str," %s", SR_NAME(VN_SUBRT(enp)));
 		prt_msg_frag(msg_str);
 	} else if( code==T_LIT_INT ){
 		sprintf(msg_str," %ld",VN_INTVAL(enp));

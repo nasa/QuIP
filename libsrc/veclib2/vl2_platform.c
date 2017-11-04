@@ -96,6 +96,9 @@ static void init_vl2_pfdevs(QSP_ARG_DECL  Compute_Platform *cpp)
 
 	SET_PFDEV_AREA(pdp,PFDEV_GLOBAL_AREA_INDEX,ram_area_p);
 	SET_AREA_PFDEV( ram_area_p, pdp );
+
+	if( default_pfdev() == NULL )
+		set_default_pfdev(pdp);
 }
 
 static void vl2_store_kernel(QSP_ARG_DECL  Kernel_Info_Ptr *kip_p, void *kp, Platform_Device *pdp)

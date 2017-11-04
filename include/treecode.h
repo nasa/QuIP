@@ -48,7 +48,7 @@ typedef enum {
 	T_EXPR_LIST,				/* 39 */
 	T_EXP_PRINT,				/* 40 */
 	/* subroutine stuff */
-	T_SUBRT,				/* 41 */
+	T_SUBRT_DECL,				/* 41 */
 	T_RETURN,				/* 42 */
 	T_EXIT,					/* 43 */
 	T_ARGLIST,				/* 44 */

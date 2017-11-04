@@ -315,7 +315,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 
 %type <enp> program
 %type <enp> prog_elt
-%type <enp> subroutine
+%type <enp> subroutine_decl
 %type <enp> new_func_decl
 %type <enp> old_func_decl
 /* %type <enp> function_prototype */
@@ -756,7 +756,7 @@ expression	: FIX_SIZE '(' expression ')'
 		| FUNCNAME '(' func_args ')'
 			{
 			$$=node1(T_CALLFUNC,$3);
-			SET_VN_SUBRT_CALL($$, make_call_instance($1));
+			SET_VN_SUBRT($$, $1);
 			/* make sure this is not a void subroutine! */
 			if( SR_PREC_CODE($1) == PREC_VOID ){
 				node_error($$);
@@ -866,7 +866,7 @@ void_call	: FUNCNAME '(' func_args ')'
 			{
 			/* BUG check to see that this subrt is void! */
 			$$=node1(T_CALLFUNC,$3);
-			SET_VN_SUBRT_CALL($$, make_call_instance($1));
+			SET_VN_SUBRT($$, $1);
 			if( SR_PREC_CODE($1) != PREC_VOID ){
 				node_error($$);
 				sprintf(YY_ERR_STR,"return value of function %s is ignored",SR_NAME($1));
@@ -895,7 +895,7 @@ ref_arg		: '&' objref %prec UNARY
 		| REFFUNC '(' func_args ')'
 			{
 			$$=node1(T_CALLFUNC,$3);
-			SET_VN_SUBRT_CALL($$, make_call_instance($1));
+			SET_VN_SUBRT($$, $1);
 			/* make sure this is not a void subroutine! */
 			if( SR_PREC_CODE($1) == PREC_VOID ){
 				node_error($$);
@@ -1138,12 +1138,12 @@ old_func_decl	: FUNCNAME '(' arg_decl_list ')'
 			}
 		;
 
-subroutine	: data_type new_func_decl stat_block
+subroutine_decl	: data_type new_func_decl stat_block
 			{
 			Subrt *srp;
 			srp=remember_subrt(QSP_ARG  $1,VN_STRING($2),VN_CHILD($2,0),$3);
 			SET_SR_PREC_PTR(srp, $1);
-			$$=node0(T_SUBRT);
+			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(QSP_ARG  VN_STRING($2));	/* this deletes the objects... */
 			// But why is the context in existence here?
@@ -1156,7 +1156,7 @@ subroutine	: data_type new_func_decl stat_block
 			SET_SR_PREC_PTR(srp, $1);
 			SET_SR_FLAG_BITS(srp, SR_REFFUNC);
 			/* set a flag to show returns ptr */
-			$$=node0(T_SUBRT);
+			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(QSP_ARG  VN_STRING($3));	/* this deletes the objects... */
 			compile_subrt(srp);
@@ -1169,7 +1169,7 @@ subroutine	: data_type new_func_decl stat_block
 			assert( srp != NULL );
 
 			update_subrt(QSP_ARG  srp,$3);
-			$$=node0(T_SUBRT);
+			$$=node0(T_SUBRT_DECL);
 			SET_VN_SUBRT($$,srp);
 			delete_subrt_ctx(QSP_ARG  VN_STRING($2));
 			compile_subrt(srp);
@@ -1191,7 +1191,7 @@ arg_decl_list	:		/* nuthin */
 			}
 		;
 
-prog_elt	: subroutine
+prog_elt	: subroutine_decl
 		| decl_statement
 			{
 			if( $$ != NULL ) {
