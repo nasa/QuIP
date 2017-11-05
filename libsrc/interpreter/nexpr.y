@@ -385,30 +385,8 @@ e_string	: E_STRING {
 // Because when we say ncols(xxx) we want the number of columns of an object
 // named xxx, not the length of the string "xxx"...
 
-data_object	: /* E_STRING {			// the name of an object
-			Scalar_Expr_Node *enp;
-			enp=NODE0(N_LITSTR);
-			enp->sen_tsp = $1;
-			$$=NODE1(N_OBJNAME,enp);
-			}
-		| E_QSTRING {
-			/* the string is the data, not the name of an object... */
-			/* We added this node type to support things like
-			 * isdigit("abc1"[2]), but treating quoted strings
-			 * as row vectors broke a lot of things where we quote
-			 * the name of an image file...
-			 *
-			 * A compromise is to strip the quotes as normally,
-			 * but if the data_obj does not exist, THEN treat it
-			 * as a string... messy!
-			 */
-			 /*
-			Scalar_Expr_Node *enp;
-			enp=NODE0(N_LITSTR);
-			enp->sen_tsp = $1;
-			$$=NODE1(N_QUOT_STR,enp);
-			}
-		|*/ e_string {
+data_object	:
+		  e_string {
 			$$=NODE1(N_OBJNAME,$1);
 			}
  
@@ -694,7 +672,7 @@ static Item* eval_tsbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No time-stampable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		default:
@@ -1017,11 +995,32 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_SCALAR_OBJ:
 			dp = eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
 			if( IS_SCALAR(dp) ) return(dp);
-			return(NULL);
+			return NULL;
 			break;
-		case N_OBJNAME:
+		case N_OBJNAME:	// eval_dobj_expr
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			dp = (*obj_get_func)( QSP_ARG  s );
+			dp = (*exist_func)( QSP_ARG  s );
+			if( dp == NULL ){	// could be an identifier?
+				Identifier *idp;
+				idp = id_of(s);
+				if( idp == NULL ){
+					sprintf(ERROR_STRING,
+	"No object or identifier %s!?",s);
+					warn(ERROR_STRING);
+					return NULL;
+				}
+				if( ID_TYPE(idp) == ID_SCALAR ){
+					// create a temp scalar object
+					dp = mk_scalar("tmp_scal",ID_PREC_PTR(idp));
+
+					// BUG when to release this object???
+				} else {
+					sprintf(ERROR_STRING,
+	"Identifier %s is not a scalar!?",s);
+					warn(ERROR_STRING);
+					return NULL;
+				}
+			}
 			break;
 		case N_SUBSCRIPT:
 			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);
@@ -1071,14 +1070,14 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No sizable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		//case N_SUBSIZ:
 		case N_SUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1086,7 +1085,7 @@ static Item * eval_szbl_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_CSUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1124,7 +1123,7 @@ static Item * eval_positionable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		sprintf(ERROR_STRING,
 			"No positionable object \"%s\"!?",s);
 		NWARN(ERROR_STRING);
-		return(NULL);
+		return NULL;
 	}
 
 	return(szp);
@@ -1145,7 +1144,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 				sprintf(ERROR_STRING,
 					"No interlaceable object \"%s\"!?",s);
 				NWARN(ERROR_STRING);
-				return(NULL);
+				return NULL;
 			}
 			break;
 		// are data objects interlaceable???
@@ -1154,7 +1153,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_SUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = sub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -1162,7 +1161,7 @@ static Item * eval_interlaceable_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 		case N_CSUBSCRIPT:
 			szp2=EVAL_SZBL_EXPR(enp->sen_child[0]);
 			if( szp2 == NULL )
-				return(NULL);
+				return NULL;
 			index = index_for_scalar( EVAL_EXPR(enp->sen_child[1]) );
 			szp = csub_sizable(DEFAULT_QSP_ARG  szp2,index);
 			break;
@@ -2481,13 +2480,13 @@ static Data_Obj * _def_obj(QSP_ARG_DECL  const char *name)
 	NWARN(DEFAULT_ERROR_STRING);
 
 	NWARN("data module not linked");
-	return(NULL);
+	return NULL;
 }
 
 static Data_Obj *_def_sub(QSP_ARG_DECL  Data_Obj *object,index_t index)
 {
 	NWARN("can't get subobject; data module not linked");
-	return(NULL);
+	return NULL;
 }
 
 

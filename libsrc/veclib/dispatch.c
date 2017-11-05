@@ -464,10 +464,8 @@ warn("Arghh - probably botching vramp scalar args for multiple processors...");
 			warn("sorry, can only fix vramp multiprocessor args for float precision");
 			return -1;
 		}
-		//extract_scalar_value( &private_scalar[0], OA_SVAL1(oap) );
-		//extract_scalar_value( (Scalar_Value *)(&inc), OA_SVAL2(oap) );
-		extract_scalar_value(QSP_ARG  &private_scalar[0], OA_SCLR1(oap) );
-		extract_scalar_value(QSP_ARG  (Scalar_Value *)(&inc), OA_SCLR2(oap) );
+		extract_scalar_value(&private_scalar[0], OA_SCLR1(oap) );
+		extract_scalar_value((Scalar_Value *)(&inc), OA_SCLR2(oap) );
 		for(i=1;i<n_processors;i++){
 			/*
 			private_scalar[i].u_f = private_scalar[i-1].u_f

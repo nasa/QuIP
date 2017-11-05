@@ -1,12 +1,17 @@
 # test of new standardized mapping function
 
+Set dest_type u_byte
 Set n 4
 
-Set dest_type u_byte
+# test of multi-component mapping
 
+
+
+Vector rgb $n 3 $dest_type
 Vector dst $n 1 $dest_type
 Vector mdst $n 3 $dest_type
 Vector map_b 256 1 $dest_type
+Vector rgb_map_b 256 3 $dest_type
 Vector map_s 1024 1 $dest_type
 Vector src_b $n 1 u_byte
 Vector src_s $n 1 u_short
@@ -17,6 +22,9 @@ Subvector s_s map_s 22 0
 #Ramp1D map_b 0 1/ncols(map_b)
 #Ramp1D map_s 0 1/ncols(map_s)
 # This init will work for byte maps as well...
+Ramp1D rgb_map_b{0} 0 1
+Ramp1D rgb_map_b{1} 0 2
+Ramp1D rgb_map_b{2} 0 3
 Ramp1D map_b 0 1
 Ramp1D map_s 0 3
 #Display s_b
@@ -31,6 +39,12 @@ data
       0 10 20 21
     quit
   quit
+
+VSet rgb 55
+Map_B rgb src_b rgb_map_b
+Display src_b
+Display rgb
+exit
 
 Define Test_Fast_Map 0
 veclib execute vlutmapb dst src_b map_b quit

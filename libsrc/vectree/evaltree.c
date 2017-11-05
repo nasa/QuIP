@@ -157,7 +157,7 @@ static void assign_scalar_id(QSP_ARG_DECL  Identifier *idp, Vec_Expr_Node *val_e
 {
 	double d;
 	d = eval_flt_exp(val_enp);
-	cast_dbl_to_scalar_value(QSP_ARG  ID_SVAL_PTR(idp),ID_PREC_PTR(idp),d);
+	cast_dbl_to_scalar_value(ID_SVAL_PTR(idp),ID_PREC_PTR(idp),d);
 }
 
 static void eval_native_work(QSP_ARG_DECL  Vec_Expr_Node *enp)
@@ -357,44 +357,6 @@ static void int_to_scalar(Scalar_Value *svp,long intval,Precision *prec_p)
 	}
 }
 
-#ifdef FOOBAR
-static Data_Obj *make_global_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p)
-{
-	Data_Obj *dp;
-
-	set_global_ctx(SINGLE_QSP_ARG);
-#ifdef HAVE_CUDA
-	push_data_area(ram_area_p);
-#endif // HAVE_CUDA
-	dp = mk_scalar(QSP_ARG  name,prec_p);
-#ifdef HAVE_CUDA
-	pop_data_area();
-#endif // HAVE_CUDA
-	unset_global_ctx(SINGLE_QSP_ARG);
-	return(dp);
-}
-
-static Data_Obj * check_global_scalar(QSP_ARG_DECL  const char *name,
-					Data_Obj *prototype_dp,Data_Obj *dp)
-{
-	if( dp != NULL && OBJ_PREC(dp) != OBJ_PREC(prototype_dp) ){
-		delvec(dp);
-		dp=NULL;
-	}
-
-	if( dp == NULL ){
-		/* We have to create this scalar in the global context,
-		 * otherwise when the subroutine exits, and its context
-		 * is deleted, this object will be deleted too -
-		 * but our static pointer will still be dangling!?
-		 */
-		dp = make_global_scalar(QSP_ARG  name,OBJ_PREC_PTR(prototype_dp));
-	}
-
-	return(dp);
-}
-#endif // FOOBAR
-
 /* dp_const should be used for floating point assignments... */
 
 /*
@@ -411,21 +373,6 @@ static Data_Obj *dp_const(QSP_ARG_DECL  Data_Obj *dp,Scalar_Value * svp)
 	int status;
 
 	INIT_OBJ_ARG_PTR(oap)
-
-#ifdef FOOBAR
-	const_dp=check_global_scalar(QSP_ARG  "const_scalar",dp,const_dp);
-
-	if( OBJ_PREC(const_dp) == PREC_BIT ){
-		/* assign_scalar_obj will only change 1 bit */
-		*((bitmap_word *) OBJ_DATA_PTR(const_dp)) = 0;
-	}
-
-	/* now assign the value */
-	assign_scalar_obj(QSP_ARG  const_dp,svp);
-
-	SET_OA_SRC1(oap,const_dp);
-	SET_OA_SVAL(oap,0, (Scalar_Value *)OBJ_DATA_PTR(const_dp));
-#endif // FOOBAR
 
 	setvarg1(oap,dp);	// has to come first (clears *oap)
 	SET_OA_SVAL(oap,0, svp );
@@ -907,20 +854,8 @@ static int do_vvfunc(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr1,Data_Obj *dpfr
 
 static int do_vsfunc(QSP_ARG_DECL  Data_Obj *dpto,Data_Obj *dpfr,Scalar_Value *svp,Vec_Func_Code code)
 {
-#ifdef FOOBAR
-	static Data_Obj *scal_dp=NULL;
-#endif // FOOBAR
 	Vec_Obj_Args oa1, *oap=&oa1;
 	int retval;
-
-#ifdef FOOBAR
-	scal_dp = check_global_scalar(QSP_ARG  "vsfunc_scalar",dpfr,scal_dp);
-
-	assign_scalar_obj(QSP_ARG  scal_dp,svp);
-	setvarg2(oap,dpto,dpfr);
-	//SET_OA_SRC1(oap, scal_dp);
-	SET_OA_SVAL(oap,0, (Scalar_Value *)OBJ_DATA_PTR(scal_dp));
-#endif // FOOBAR
 
 	setvarg2(oap,dpto,dpfr);
 	SET_OA_SVAL(oap,0, svp );
@@ -1007,7 +942,7 @@ static Identifier *ptr_for_string(QSP_ARG_DECL  const char *s,Vec_Expr_Node *enp
 	/* We need to make an object and a reference... */
 
 	sprintf(idname,"Lstr.%d",n_auto_strs++);
-	idp = new_id(idname);
+	idp = new_identifier(idname);
 sprintf(ERROR_STRING,"ptr_for_string:  creating id %s",idname);
 advise(ERROR_STRING);
 	SET_ID_TYPE(idp, ID_STRING);
@@ -1599,9 +1534,9 @@ static void easy_ramp2d(QSP_ARG_DECL  Data_Obj *dst_dp,double start,double dx,do
 	Vec_Obj_Args oa1;
 	Scalar_Value sv1, sv2, sv3;
 
-	cast_dbl_to_scalar_value(QSP_ARG  &sv1,OBJ_PREC_PTR(dst_dp),(double)start);
-	cast_dbl_to_scalar_value(QSP_ARG  &sv2,OBJ_PREC_PTR(dst_dp),(double)dx);
-	cast_dbl_to_scalar_value(QSP_ARG  &sv3,OBJ_PREC_PTR(dst_dp),(double)dy);
+	cast_dbl_to_scalar_value(&sv1,OBJ_PREC_PTR(dst_dp),(double)start);
+	cast_dbl_to_scalar_value(&sv2,OBJ_PREC_PTR(dst_dp),(double)dx);
+	cast_dbl_to_scalar_value(&sv3,OBJ_PREC_PTR(dst_dp),(double)dy);
 
 	clear_obj_args(&oa1);
 	//SET_OA_SRC_OBJ(&oa1,0, dst_dp);			// why set this???
@@ -2074,7 +2009,7 @@ Identifier *make_named_reference(QSP_ARG_DECL  const char *name)
 
 //sprintf(ERROR_STRING,"make_named_reference:  creating id %s",name);
 //advise(ERROR_STRING);
-	idp = new_id(name);
+	idp = new_identifier(name);
 	SET_ID_TYPE(idp, ID_OBJ_REF);
 	SET_ID_REF(idp, NEW_REFERENCE );
 	SET_REF_OBJ(ID_REF(idp), NULL );
@@ -3571,7 +3506,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 //advise(ERROR_STRING);
 	// New items are always created in the top context.
 
-	idp = new_id(VN_STRING(enp));		/* eval_decl_stat */
+	idp = new_identifier(VN_STRING(enp));		/* eval_decl_stat */
 	SET_ID_TYPE(idp, type);
 //fprintf(stderr,"new id_type = %d\n",type);
 
@@ -3582,7 +3517,7 @@ show_context_stack(QSP_ARG  dobj_itp);
 		case ID_SCALAR:
 			SET_ID_SVAL_PTR( idp, getbuf(sizeof(Scalar_Value)) );
 			copy_node_shape(enp,scalar_shape(PREC_CODE(prec_p)));
-			SET_ID_SHAPE(idp,VN_SHAPE(enp));
+			set_id_shape(idp,VN_SHAPE(enp));
 			break;
 
 		case ID_OBJ_REF:
@@ -3914,6 +3849,15 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 	switch(VN_CODE(enp)){
 		/* case T_MATH1_FUNC: */	/* returns double - should have been typecast? */
+		case T_SCALAR_VAR:		// eval_int_exp
+			{
+			Identifier *idp;
+			idp = get_id(VN_STRING(enp));
+			assert(idp!=NULL);
+			lval = (long) cast_from_scalar_value(ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
+			return lval;
+			}
+
 		case T_VS_FUNC:
 			dp = eval_obj_exp(enp,NULL);
 			if( dp == NULL ){
@@ -4476,7 +4420,7 @@ static Identifier *_eval_obj_id(QSP_ARG_DECL Vec_Expr_Node *enp)
 			/* now make an identifier to go with this thing */
 			idp = make_named_reference(QSP_ARG  OBJ_NAME(dp));
 			SET_REF_OBJ(ID_REF(idp), dp );
-			SET_ID_SHAPE(idp, OBJ_SHAPE(dp) );
+			set_id_shape(idp, OBJ_SHAPE(dp) );
 			return(idp);
 
 		case T_OBJ_LOOKUP:
@@ -4689,7 +4633,7 @@ static Data_Obj *create_matrix(QSP_ARG_DECL Vec_Expr_Node *enp,Shape_Info *shpp)
 			assert( dp != NULL );
 
 			SET_REF_OBJ(ID_REF(idp), dp );
-			SET_ID_SHAPE(idp, OBJ_SHAPE(dp) );
+			set_id_shape(idp, OBJ_SHAPE(dp) );
 			return(dp);
 		default:
 			missing_case(enp,"create_matrix");
@@ -5369,7 +5313,6 @@ double _eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 	index_t index;
 	Scalar_Value *svp;
 	Subrt *srp;
-	//Dimension_Set dimset={{1,1,1,1,1}};
 	Dimension_Set ds1, *dsp=(&ds1);
 	Vec_Obj_Args oa1, *oap=&oa1;
 
@@ -5382,10 +5325,21 @@ double _eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 	eval_enp = enp;
 
 	switch(VN_CODE(enp)){
-		case T_SCALAR_VAR:
+		case T_SUM:
+			// create a destination object...
+			dp2=eval_obj_exp(VN_CHILD(enp,0),NULL);
+			dp=mk_scalar("tmp_sum",OBJ_PREC_PTR(dp2));
+			clear_obj_args(oap);
+			setvarg2(oap,dp,dp2);
+			platform_dispatch_by_code(QSP_ARG  FVSUM, oap);
+			dval = cast_from_scalar_value(OBJ_DATA_PTR(dp),OBJ_PREC_PTR(dp));
+			delvec(dp);
+			break;
+
+		case T_SCALAR_VAR:		// eval_flt_exp
 			idp = get_id(VN_STRING(enp));
 			assert(idp!=NULL);
-			dval = cast_from_scalar_value(QSP_ARG  ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
+			dval = cast_from_scalar_value(ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
 			break;
 			
 		case T_MINVAL:
@@ -6275,9 +6229,9 @@ Data_Obj *mlab_reshape(QSP_ARG_DECL  Data_Obj *dp, Shape_Info *shpp, const char 
 
 	SET_REF_OBJ(ID_REF(idp), dp_new );
 	/* and update the shape! */
-	SET_ID_SHAPE(idp, OBJ_SHAPE(dp_new) );
+	set_id_shape(idp, OBJ_SHAPE(dp_new) );
 	return(dp_new);
-}
+} // mlab_reshape
 				
 static Data_Obj * mlab_lhs(QSP_ARG_DECL Data_Obj *dp, Vec_Expr_Node *enp)
 {
@@ -6530,6 +6484,7 @@ static void _eval_obj_assignment(QSP_ARG_DECL Data_Obj *dst_dp,Vec_Expr_Node *en
 #endif /* NOT_YET */
 	Scalar_Value sval,*svp;
 	Vec_Obj_Args oa1, *oap=&oa1;
+	Identifier *idp;
 	//int i;
 	const char *s;
 	//int vf_code=(-1);
@@ -6555,6 +6510,19 @@ dump_tree(enp);
 #endif /* QUIP_DEBUG */
 
 	switch(VN_CODE(enp)){
+		case T_SCALAR_VAR:	// eval_obj_assignment
+			idp = get_id(VN_STRING(enp));
+			assert(idp!=NULL);
+			if( ID_PREC_CODE(idp) == OBJ_PREC(dst_dp) ){
+				assign_obj_from_scalar(enp,dst_dp,ID_SVAL_PTR(idp));
+			} else {
+				dval = cast_from_scalar_value(ID_SVAL_PTR(idp),ID_PREC_PTR(idp));
+				(*(OBJ_PREC_PTR(dst_dp)->cast_from_double_func))(&sval,dval);
+
+				assign_obj_from_scalar(enp,dst_dp,&sval);
+			}
+			break;
+
 		case T_BOOL_EQ:
 		case T_BOOL_NE:
 		case T_BOOL_LT:
@@ -6898,9 +6866,6 @@ dump_tree(enp);
 			dp1=eval_obj_exp(VN_CHILD(enp,0),NULL);
 			clear_obj_args(oap);
 			setvarg2(oap,dst_dp,dp1);
-			//vsum(oap);
-			//vf_code=FVSUM;
-			//h_vl2_vsum(HOST_CALL_ARGS);
 			platform_dispatch_by_code(QSP_ARG  FVSUM, oap);
 			break;
 

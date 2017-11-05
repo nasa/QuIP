@@ -31,6 +31,7 @@ Item_Type *prec_itp=NULL;
 	SET_PREC_CAST_TO_DOUBLE_FUNC(prec_p,cast_##name##_to_double);	\
 	SET_PREC_CAST_FROM_DOUBLE_FUNC(prec_p,cast_##name##_from_double);	\
 	SET_PREC_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(prec_p,cast_indexed_##name##_from_double);	\
+	SET_PREC_COPY_VALUE_FUNC(prec_p,copy_##name##_value);	\
 	if( (code & PSEUDO_PREC_MASK) == 0 )		\
 		SET_PREC_MACH_PREC_PTR(prec_p, prec_p);	\
 	else {						\
@@ -319,6 +320,20 @@ static void cast_##stem##_from_double(Scalar_Value *svp, double val)	\
 
 ////////////////////////////
 
+#define DECLARE_COPY_VALUE_FUNC(stem,member)				\
+									\
+static void copy_##stem##_value						\
+			(Scalar_Value *dst_svp, Scalar_Value *src_svp)	\
+{									\
+	dst_svp->member = src_svp->member;				\
+}
+
+DECLARE_COPY_VALUE_FUNC(string,u_b)
+DECLARE_COPY_VALUE_FUNC(bit,u_bit)
+
+static void copy_void_value(Scalar_Value *dst_svp, Scalar_Value *src_svp) {}
+
+
 #define DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)	\
 									\
 static void cast_indexed_##stem##_from_double				\
@@ -353,6 +368,7 @@ DECLARE_POSSIBLY_BITMAP_INDEXED_DATA_FUNC(stem,type)
 #define DECLARE_ALMOST_REAL_SCALAR_FUNCS(stem,type,member)		\
 									\
 DECLARE_IS_NUMERIC_FUNC(stem)						\
+DECLARE_COPY_VALUE_FUNC(stem,member)					\
 DECLARE_CAST_FROM_DOUBLE_FUNC(stem,type,member)				\
 DECLARE_CAST_TO_DOUBLE_FUNC(stem,member)				\
 DECLARE_BAD_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem)			\
@@ -360,40 +376,43 @@ DECLARE_ASSIGN_REAL_SCALAR_FUNC(stem,type,member)			\
 DECLARE_EXTRACT_REAL_SCALAR_FUNC(stem,type,member)
 
 
-#define DECLARE_CPX_SCALAR_FUNCS(stem,type,member)			\
+#define DECLARE_CPX_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
 									\
+DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
 DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
 DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
-DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\
-DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,member)			\
-DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,member)
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
+DECLARE_ASSIGN_CPX_SCALAR_FUNC(stem,type,indexable_member)		\
+DECLARE_EXTRACT_CPX_SCALAR_FUNC(stem,type,indexable_member)
 
 
-#define DECLARE_QUAT_SCALAR_FUNCS(stem,type,member)			\
+#define DECLARE_QUAT_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
 									\
+DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
 DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
 DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
-DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\
-DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,member)			\
-DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,member)
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
+DECLARE_ASSIGN_QUAT_SCALAR_FUNC(stem,type,indexable_member)		\
+DECLARE_EXTRACT_QUAT_SCALAR_FUNC(stem,type,indexable_member)
 
 
-#define DECLARE_COLOR_SCALAR_FUNCS(stem,type,member)			\
+#define DECLARE_COLOR_SCALAR_FUNCS(stem,type,indexable_member,copyable_member) \
 									\
+DECLARE_COPY_VALUE_FUNC(stem,copyable_member)				\
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(stem)				\
-DECLARE_BAD_INDEXED_DATA_FUNC(stem)				\
-DECLARE_IS_NUMERIC_FUNC(stem)				\
+DECLARE_BAD_INDEXED_DATA_FUNC(stem)					\
+DECLARE_IS_NUMERIC_FUNC(stem)						\
 DECLARE_BAD_CAST_FROM_DOUBLE_FUNC(stem)					\
 DECLARE_BAD_CAST_TO_DOUBLE_FUNC(stem)					\
-DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,member)		\
-DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,member)			\
-DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,member)
+DECLARE_CAST_INDEXED_TYPE_FROM_DOUBLE_FUNC(stem,type,indexable_member)	\
+DECLARE_ASSIGN_COLOR_SCALAR_FUNC(stem,type,indexable_member)		\
+DECLARE_EXTRACT_COLOR_SCALAR_FUNC(stem,type,indexable_member)
 
 ////////////////////////////////
 
@@ -455,13 +474,13 @@ DECLARE_ALMOST_REAL_SCALAR_FUNCS(char,char,u_b)
 DECLARE_BAD_INDEXED_DATA_FUNC(char)
 DECLARE_BAD_SET_VALUE_FROM_INPUT_FUNC(char)
 
-DECLARE_CPX_SCALAR_FUNCS(complex,float,u_fc)
-DECLARE_CPX_SCALAR_FUNCS(dblcpx,double,u_dc)
+DECLARE_CPX_SCALAR_FUNCS(complex,float,u_fc,u_spc)
+DECLARE_CPX_SCALAR_FUNCS(dblcpx,double,u_dc,u_dpc)
 
-DECLARE_QUAT_SCALAR_FUNCS(quaternion,float,u_fq)
-DECLARE_QUAT_SCALAR_FUNCS(dblquat,double,u_dq)
+DECLARE_QUAT_SCALAR_FUNCS(quaternion,float,u_fq,u_spq)
+DECLARE_QUAT_SCALAR_FUNCS(dblquat,double,u_dq,u_dpq)
 
-DECLARE_COLOR_SCALAR_FUNCS(color,float,u_color_comp)
+DECLARE_COLOR_SCALAR_FUNCS(color,float,u_color_comp,u_color)
 
 DECLARE_NOT_NUMERIC_FUNC(string)
 DECLARE_BAD_ASSIGN_SCALAR_FUNC(string)

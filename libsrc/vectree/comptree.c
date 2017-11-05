@@ -238,7 +238,7 @@ void _point_node_shape(QSP_ARG_DECL  Vec_Expr_Node *enp,Shape_Info *shpp)
 	"point_node_shape:  %s node n%d already owns shape info!?",NNAME(enp),VN_SERIAL(enp));
 		warn(ERROR_STRING);
 		/*
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 		*/
 		discard_node_shape(enp);
 	}
@@ -529,8 +529,8 @@ static Shape_Info * _shapes_mate(QSP_ARG_DECL  Vec_Expr_Node *enp1,Vec_Expr_Node
 	}
 
 /*
-DESCRIBE_SHAPE(VN_SHAPE(enp1));
-DESCRIBE_SHAPE(VN_SHAPE(enp2));
+describe_shape(VN_SHAPE(enp1));
+describe_shape(VN_SHAPE(enp2));
 	advise("shapes_mate:  should we fall through??");
 	*/
 
@@ -621,8 +621,8 @@ static void update_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		if( ! shapes_mate(VN_CHILD(enp,0),VN_CHILD(enp,1),enp) ){
 			node_error(enp);
 			warn("update_assign_shape:  assignment shapes do not mate");
-			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
-			DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
+			describe_shape(VN_CHILD_SHAPE(enp,0));
+			describe_shape(VN_CHILD_SHAPE(enp,1));
 			CURDLE(enp)
 		} else {
 			point_node_shape(enp,VN_CHILD_SHAPE(enp,0));
@@ -791,7 +791,7 @@ if( debug & cast_debug ){
 sprintf(ERROR_STRING,"typecast_child %s:  typecasting child %s to %s",node_desc(enp),node_desc(VN_CHILD(enp,index)),
 PREC_NAME(prec_p));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(VN_CHILD(enp,index)));
+describe_shape(VN_SHAPE(VN_CHILD(enp,index)));
 }
 #endif /* QUIP_DEBUG */
 
@@ -1140,7 +1140,7 @@ advise("check_mating_shapes:  no mating shapes");
 		ALL_SCALAR_BINOP_CASES
 //sprintf(ERROR_STRING,"check_mating_shapes %s:  pointing to shape:",node_desc(enp));
 //advise(ERROR_STRING);
-//DESCRIBE_SHAPE(shpp);
+//describe_shape(shpp);
 			point_node_shape(enp,shpp);
 			break;
 
@@ -2113,9 +2113,9 @@ static Shape_Info *compatible_shape(Vec_Expr_Node *enp1,Vec_Expr_Node *enp2,Vec_
 				/* allow this */
 			} else {
 NADVISE("compatible_shape:  enp1");
-describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp1));
+_describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp1));
 NADVISE("compatible_shape:  enp2");
-describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp2));
+_describe_shape(DEFAULT_QSP_ARG  VN_SHAPE(enp2));
 				return(NULL);
 			}
 		}
@@ -2189,9 +2189,9 @@ static void compute_assign_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 				node_error(enp);
 				warn("compute_assign_shape:  assignment shapes do not mate");
 				advise(node_desc(VN_CHILD(enp,0)));
-				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,0));
+				describe_shape(VN_CHILD_SHAPE(enp,0));
 				advise(node_desc(VN_CHILD(enp,1)));
-				DESCRIBE_SHAPE(VN_CHILD_SHAPE(enp,1));
+				describe_shape(VN_CHILD_SHAPE(enp,1));
 dump_tree(enp);
 				CURDLE(enp)
 			} else {
@@ -5164,7 +5164,6 @@ fprintf(stderr,"prelim_node_shape:  remembering subroutine %s\n",SR_NAME(srp));
 
 
 
-fprintf(stderr,"prelim_node_shape:  copying callfunc node shape\n");
 			//copy_node_shape(enp,SR_SHAPE(srp));
 			copy_node_shape(enp,uk_shape( SR_PREC_CODE(srp)  ) );
 			break;
@@ -5602,7 +5601,7 @@ warn(ERROR_STRING);
 /*
 sprintf(ERROR_STRING,"prelim_node_shape %s:  pointing to %s",node_desc(enp),node_desc(decl_enp));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
+describe_shape(VN_SHAPE(decl_enp));
 */
 				assert( VN_SHAPE(decl_enp) != NULL );
 
@@ -5642,6 +5641,7 @@ DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
 			idp=get_id(VN_STRING(enp));
 			assert(idp!=NULL);
 			assert(ID_SHAPE(idp)!=NULL);
+			assert(SHP_PREC_PTR(ID_SHAPE(idp))!=NULL);
 			point_node_shape(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
 			}
 			break;
@@ -6681,8 +6681,8 @@ Shape_Info * product_shape(Shape_Info *shpp1,Shape_Info *shpp2)
 #endif /* FOOBAR */
 
 /*
-DESCRIBE_SHAPE(shpp1);
-DESCRIBE_SHAPE(shpp2);
+describe_shape(shpp1);
+describe_shape(shpp2);
 	advise("product_shape:  should we fall through??");
 	*/
 

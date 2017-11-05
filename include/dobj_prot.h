@@ -134,15 +134,24 @@ extern void *		indexed_data(Data_Obj *dp, dimension_t offset );
 extern void		make_contiguous(Data_Obj *);
 extern int		set_shape_dimensions(QSP_ARG_DECL  Shape_Info *shpp,Dimension_Set *dimensions,Precision *);
 extern int		obj_rename(QSP_ARG_DECL  Data_Obj *dp,const char *newname);
-extern Data_Obj *	mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
+extern Data_Obj *	_mk_scalar(QSP_ARG_DECL  const char *name,Precision *prec_p);
 extern void		assign_scalar_obj(QSP_ARG_DECL  Data_Obj *,Scalar_Value *);
-extern void		extract_scalar_value(QSP_ARG_DECL  Scalar_Value *, Data_Obj *);
-extern double		cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p);
-extern void		cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p, double val);
+
+extern void		_extract_scalar_value(QSP_ARG_DECL  Scalar_Value *, Data_Obj *);
+extern double		_cast_from_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p);
+extern void		_cast_dbl_to_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p, double val);
 /*extern const char *	string_for_scalar_value(QSP_ARG_DECL  Scalar_Value *, Precision *prec_p); */
-extern void		cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
-extern void		cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
-extern void		cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
+extern void		_cast_dbl_to_cpx_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
+extern void		_cast_dbl_to_quat_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
+extern void		_cast_dbl_to_color_scalar(QSP_ARG_DECL  int index, Scalar_Value *, Precision *prec_p, double val);
+
+#define extract_scalar_value(svp, dp) _extract_scalar_value(QSP_ARG  svp, dp)
+#define cast_from_scalar_value(svp, prec_p) _cast_from_scalar_value(QSP_ARG  svp, prec_p)
+#define cast_dbl_to_scalar_value(svp, prec_p, val) _cast_dbl_to_scalar_value(QSP_ARG  svp, prec_p, val)
+#define cast_dbl_to_cpx_scalar(index, svp, prec_p, val) _cast_dbl_to_cpx_scalar(QSP_ARG  index, svp, prec_p, val)
+#define cast_dbl_to_quat_scalar(index, svp, prec_p, val) _cast_dbl_to_quat_scalar(QSP_ARG  index, svp, prec_p, val)
+#define cast_dbl_to_color_scalar(index, svp, prec_p, val) _cast_dbl_to_color_scalar(QSP_ARG  index, svp, prec_p, val)
+
 extern Data_Obj *	mk_cscalar(QSP_ARG_DECL  const char *name,double rval, double ival);
 extern Data_Obj *	mk_vec(QSP_ARG_DECL  const char *,dimension_t, dimension_t,Precision *prec_p);
 extern Data_Obj *	dup_half(QSP_ARG_DECL  Data_Obj *dp,const char *name);
@@ -156,6 +165,7 @@ extern int		_set_obj_dimensions(QSP_ARG_DECL  Data_Obj *dp,Dimension_Set *dimens
 extern Data_Obj *	_make_obj(QSP_ARG_DECL  const char *name,dimension_t frames, dimension_t rows,dimension_t cols,dimension_t type_dim,Precision * prec_p);
 extern Data_Obj *	_comp_replicate(QSP_ARG_DECL  Data_Obj *dp,int n,int allocate_data);
 extern Data_Obj *	_make_obj_list(QSP_ARG_DECL  const char *name,List *lp);
+#define mk_scalar(name,prec_p) _mk_scalar(QSP_ARG  name,prec_p)
 #define mk_img(s,h,w,d,p)	_mk_img(QSP_ARG  s,h,w,d,p)
 #define set_obj_dimensions(dp,dimensions,prec_p)	_set_obj_dimensions(QSP_ARG  dp,dimensions,prec_p)
 #define make_obj(name,frames,rows,cols,type_dim,prec_p)	_make_obj(QSP_ARG  name,frames,rows,cols,type_dim,prec_p)

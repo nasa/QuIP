@@ -1985,7 +1985,7 @@ void _rv_info(QSP_ARG_DECL  RV_Inode *inp)
 	rv_ls_inode(QSP_ARG  inp);
 	rv_ls_extra(QSP_ARG  inp);
 	if( IS_REGULAR_FILE(inp) )
-		describe_shape(QSP_ARG  RV_MOVIE_SHAPE(inp));
+		describe_shape(RV_MOVIE_SHAPE(inp));
 }
 
 void rv_ls_inode(QSP_ARG_DECL  RV_Inode *inp)

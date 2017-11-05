@@ -95,6 +95,8 @@ void _disown_child( QSP_ARG_DECL  Data_Obj *dp )
 {
 	Node *np;
 
+	if( OBJ_PARENT(dp) == NULL ) return;
+	
 	np=remData(OBJ_CHILDREN( OBJ_PARENT(dp) ),dp);
 	assert( np != NULL );
 

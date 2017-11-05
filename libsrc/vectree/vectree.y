@@ -1017,7 +1017,7 @@ statline	: simple_stat ';'
 			{
 			Identifier *idp;
 			$$ = node0(T_LABEL);
-			idp = new_id($1);
+			idp = new_identifier($1);
 			SET_ID_TYPE(idp, ID_LABEL);
 			//SET_VN_STRING($$, savestr(ID_NAME(idp)));
 			SET_VN_STRING($$, $1);

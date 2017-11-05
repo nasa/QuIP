@@ -42,7 +42,7 @@ Precision *prec_for_code(prec_t prec)
 	return NULL;
 }
 
-void describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
+void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp)
 {
 	assert( SHP_PREC_PTR(shpp) != NULL );
 	
@@ -138,7 +138,7 @@ void dump_shape(QSP_ARG_DECL  Shape_Info *shpp)
 	sprintf(MSG_STR,"shpp = 0x%lx",(int_for_addr)shpp);
 	prt_msg(MSG_STR);
 
-	describe_shape(QSP_ARG  shpp);
+	describe_shape(shpp);
 	sprintf(MSG_STR,"prec = 0x%"PREC_FMT_X,SHP_PREC(shpp));
 	prt_msg(MSG_STR);
 	for(i=0;i<N_DIMENSIONS;i++){
@@ -174,7 +174,7 @@ void _list_dobj(QSP_ARG_DECL  Data_Obj *dp)
 		sprintf(string,"%s:%s", AREA_NAME( OBJ_AREA(dp) ), OBJ_NAME(dp) );
 	sprintf(MSG_STR,"%-40s",string);
 	prt_msg_frag(MSG_STR);
-	describe_shape(QSP_ARG   OBJ_SHAPE(dp) );
+	describe_shape(OBJ_SHAPE(dp) );
 
 	/*
 	if( dp->dt_extra != NULL ){

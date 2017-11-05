@@ -448,8 +448,8 @@ extern int set_obj_shape_flags(Data_Obj *dp);
 
 
 extern Data_Area *curr_ap;
-void describe_shape(QSP_ARG_DECL  Shape_Info *shpp);
-#define DESCRIBE_SHAPE(shpp)	describe_shape(QSP_ARG  shpp)
+void _describe_shape(QSP_ARG_DECL  Shape_Info *shpp);
+#define describe_shape(shpp)	_describe_shape(QSP_ARG  shpp)
 
 extern Item_Context *create_dobj_context(QSP_ARG_DECL  const char *);
 

@@ -303,9 +303,9 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		SET_OA_SVAL(oap,1, alloc_sval(prec_p) );
 		SET_OA_SVAL(oap,2, alloc_sval(prec_p) );
 		// BUG - could have an array of prec_p's ???
-		cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
-		cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
-		cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,2), prec_p, HOW_MUCH(p3) );
+		cast_dbl_to_scalar_value(OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
+		cast_dbl_to_scalar_value(OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+		cast_dbl_to_scalar_value(OA_SVAL(oap,2), prec_p, HOW_MUCH(p3) );
 	} else if( VF_FLAGS(vfp) & SRC_SCALAR2 /* HAS_2_SCALARS */ ){
 		const char *p1,*p2;
 
@@ -376,8 +376,8 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 		SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
 		SET_OA_SVAL(oap,1, alloc_sval(prec_p) );
 		if( retval == 0 ){
-			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
-			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
+			cast_dbl_to_scalar_value(OA_SVAL(oap,0), prec_p, HOW_MUCH(p1) );
+			cast_dbl_to_scalar_value(OA_SVAL(oap,1), prec_p, HOW_MUCH(p2) );
 		}
 	}
 
@@ -388,7 +388,7 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			}
 			SET_PREC_FROM_OBJ( prec_p, OA_SRC1(oap) );
 			SET_OA_SVAL(oap,0, alloc_sval( prec_p ) );
-			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_scalar_value(OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value") );
 		} else if( OA_DEST(oap) == NULL ){	/* error condition */
 			/*double d;
@@ -412,33 +412,33 @@ static int get_scalar_args(QSP_ARG_DECL Vec_Obj_Args *oap, Vector_Function *vfp)
 			}
 			if( retval >= 0 ){	// no error yet?
 				SET_OA_SVAL(oap,0,alloc_sval( prec_p ) );
-				cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0), prec_p,
+				cast_dbl_to_scalar_value(OA_SVAL(oap,0), prec_p,
 					HOW_MUCH("source real scalar value") );
 			}
 		} else if( IS_COMPLEX(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
 			SET_OA_SVAL(oap,0, alloc_sval(prec_p) );
-			cast_dbl_to_cpx_scalar(QSP_ARG  0,OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_cpx_scalar(0,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value real part") );
-			cast_dbl_to_cpx_scalar(QSP_ARG  1,OA_SVAL(oap,0), prec_p,
+			cast_dbl_to_cpx_scalar(1,OA_SVAL(oap,0), prec_p,
 				HOW_MUCH("source scalar value imaginary part") );
 		} else if( IS_QUAT(OA_DEST(oap)) ) {
 			prec_p = OBJ_PREC_PTR(OA_DEST(oap));
 			SET_OA_SVAL(oap,0, alloc_sval( prec_p ));
-			cast_dbl_to_quat_scalar(QSP_ARG  0,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(0,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value real part") );
-			cast_dbl_to_quat_scalar(QSP_ARG  1,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(1,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value i part") );
-			cast_dbl_to_quat_scalar(QSP_ARG  2,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(2,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value j part") );
-			cast_dbl_to_quat_scalar(QSP_ARG  3,OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_quat_scalar(3,OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value k part") );
 		} else {
 			// what precision is this?
 			/* use a single scalar for all components */
 			SET_MACH_PREC_FROM_OBJ( prec_p, OA_DEST(oap) );	// why dest?
 			SET_OA_SVAL(oap,0, alloc_sval( prec_p ) );
-			cast_dbl_to_scalar_value(QSP_ARG  OA_SVAL(oap,0),  prec_p,
+			cast_dbl_to_scalar_value(OA_SVAL(oap,0),  prec_p,
 				HOW_MUCH("source scalar value") );
 		}
 		if( OA_SVAL(oap,0) == NULL ){

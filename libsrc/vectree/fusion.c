@@ -389,6 +389,8 @@ void * find_fused_kernel(QSP_ARG_DECL  Subrt *srp, Platform_Device *pdp )
 {
 	Kernel_Info_Ptr kip;
 
+	if( pdp==NULL ) return NULL;	// if no gpu...
+
 	kip = SR_KERNEL_INFO_PTR(srp,PF_TYPE(PFDEV_PLATFORM(pdp)));
 	return (*(PF_FETCH_KERNEL_FN(PFDEV_PLATFORM(pdp))))(QSP_ARG  kip, pdp );
 }

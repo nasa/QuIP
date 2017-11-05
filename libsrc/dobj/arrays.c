@@ -7,6 +7,7 @@
 #include "data_obj.h"
 #include "debug.h"
 #include "platform.h"
+#include "dobj_private.h"
 
 /* Sbscripted objects are implemented from a fixed-size pool of temporary
  * objects.  The thinking is that these will be used in an expression
@@ -122,6 +123,17 @@ static Data_Obj * _temp_replica(QSP_ARG_DECL  Data_Obj *dp)
 	COPY_SHAPE(OBJ_SHAPE(newdp),OBJ_SHAPE(dp));	
 
 	return( newdp );
+}
+
+Data_Obj * _temp_scalar(QSP_ARG_DECL  const char *s, Precision *prec_p)
+{
+	Data_Obj *dp, *newdp;
+
+	dp = mk_scalar(s,prec_p);
+	newdp=temp_replica(dp);
+	delvec(dp);
+	SET_OBJ_NAME(newdp,savestr(s));
+	return newdp;
 }
 
 /* release_tmpobj_resources

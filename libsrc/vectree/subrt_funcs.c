@@ -341,7 +341,7 @@ COMMAND_FUNC( do_subrt_info )
 	enp = SR_BODY(srp);
 
 	if( VN_SHAPE(enp) != NULL ){
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 	} else prt_msg("shape not determinable");
 
 	sprintf(msg_str,"\t%d arguments",SR_N_ARGS(srp));

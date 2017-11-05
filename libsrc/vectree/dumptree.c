@@ -302,7 +302,7 @@ static void _dump_node_basic(QSP_ARG_DECL  Vec_Expr_Node *enp)
 			prt_msg_frag(msg_str);
 		}
 		prt_msg_frag("\t");
-		DESCRIBE_SHAPE(VN_SHAPE(enp));
+		describe_shape(VN_SHAPE(enp));
 	}
 
 	if( SHOWING_RESOLVERS && VN_RESOLVERS(enp)!=NULL ){

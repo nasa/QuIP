@@ -445,11 +445,11 @@ void late_calltime_resolve(QSP_ARG_DECL  Subrt *srp, Data_Obj *dst_dp)
 	/* assert( SR_SHAPE(srp) == NULL ); */
 
 #ifdef QUIP_DEBUG
-//if( debug & resolve_debug ){
+if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"late_calltime_resolve %s begin:",SR_NAME(srp));
 advise(ERROR_STRING);
 dump_subrt(srp);
-//}
+}
 #endif /* QUIP_DEBUG */
 
 	lp = get_uk_list(QSP_ARG  SR_BODY(srp));
@@ -457,11 +457,11 @@ dump_subrt(srp);
 		resolve_uk_nodes(QSP_ARG  lp);
 
 #ifdef QUIP_DEBUG
-//if( debug & resolve_debug ){
+if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"late_calltime_resolve %s done:",SR_NAME(srp));
 advise(ERROR_STRING);
 dump_subrt(srp);
-//}
+}
 #endif /* QUIP_DEBUG */
 
 		dellist(lp);
@@ -689,7 +689,7 @@ if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_tree POINTER %s:  object %s has known shape",node_desc(enp),
 OBJ_NAME(REF_OBJ(PTR_REF(ID_PTR(idp)))));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
+describe_shape(OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
 }
 #endif /* QUIP_DEBUG */
 				resolve_pointer(QSP_ARG  enp,OBJ_SHAPE(REF_OBJ(PTR_REF(ID_PTR(idp)))));
@@ -1217,7 +1217,7 @@ advise(ERROR_STRING);
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_obj_id:  setting decl node shape for %s", VN_STRING(decl_enp));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(shpp);
+describe_shape(shpp);
 }
 #endif /* QUIP_DEBUG */
 	COPY_SHAPE(tmp_shpp, shpp);
@@ -1240,7 +1240,7 @@ advise(ERROR_STRING);
 sprintf(ERROR_STRING,"resolve_obj_id:  calling reeval_decl_stat %s", VN_STRING(decl_enp));
 advise(ERROR_STRING);
 if( shpp == NULL ) warn("shape ptr is null!?");
-DESCRIBE_SHAPE(shpp);
+describe_shape(shpp);
 }
 #endif /* QUIP_DEBUG */
 
@@ -1346,8 +1346,8 @@ advise(ERROR_STRING);
 			sprintf(ERROR_STRING,
 		"resolve_pointer:  Shape mismatch with object %s",OBJ_NAME(dp));
 			warn(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
-DESCRIBE_SHAPE(shpp);
+describe_shape(VN_SHAPE(uk_enp));
+describe_shape(shpp);
 		}
 	}
 
@@ -1418,7 +1418,7 @@ fprintf(stderr,"resolve_object calling resolve_obj_id, idp = 0x%lx\n",(long)idp)
 if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"resolve_object %s:",node_desc(uk_enp));
 advise(ERROR_STRING);
-DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
+describe_shape(VN_SHAPE(uk_enp));
 }
 #endif /* QUIP_DEBUG */
 
@@ -1734,7 +1734,7 @@ if( debug & resolve_debug ){
 		sprintf(ERROR_STRING,"ADVISORY:  resolve_unknown_parent %s from %s:  known shape is scalar!?",
 			node_desc(uk_enp),node_desc(enp));
 		prt_msg(ERROR_STRING);
-		DESCRIBE_SHAPE(shpp);
+		describe_shape(shpp);
 	}
 }
 #endif /* QUIP_DEBUG */
@@ -1888,7 +1888,7 @@ if( debug & resolve_debug ){
 		sprintf(ERROR_STRING,"ADVISORY:  resolve_unknown_child %s from %s:  known shape is scalar!?",
 			node_desc(uk_enp),node_desc(enp));
 		prt_msg(ERROR_STRING);
-		DESCRIBE_SHAPE(shpp);
+		describe_shape(shpp);
 	}
 }
 #endif /* QUIP_DEBUG */
@@ -1928,7 +1928,7 @@ if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"effect_resolution of %s from %s",node_desc(uk_enp),node_desc(enp));
 advise(ERROR_STRING);
 advise("known shape:");
-DESCRIBE_SHAPE(VN_SHAPE(enp));
+describe_shape(VN_SHAPE(enp));
 }
 #endif /* QUIP_DEBUG */
 
@@ -1952,9 +1952,9 @@ if( debug & resolve_debug ){
 sprintf(ERROR_STRING,"After effect_resolution of %s from %s:",node_desc(uk_enp),node_desc(enp));
 advise(ERROR_STRING);
 advise("known shape:");
-DESCRIBE_SHAPE(VN_SHAPE(enp));
+describe_shape(VN_SHAPE(enp));
 advise("resolved shape:");
-DESCRIBE_SHAPE(VN_SHAPE(uk_enp));
+describe_shape(VN_SHAPE(uk_enp));
 }
 #endif /* QUIP_DEBUG */
 
@@ -2029,14 +2029,14 @@ void resolve_argval_shapes(QSP_ARG_DECL  Vec_Expr_Node *val_enp,Vec_Expr_Node *d
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 advise("resolve_argval_shapes:  propagating a shape!!");
-DESCRIBE_SHAPE(VN_SHAPE(decl_enp));
+describe_shape(VN_SHAPE(decl_enp));
 }
 #endif /* QUIP_DEBUG */
 			PROPAGATE_SHAPE(val_enp,VN_SHAPE(decl_enp));
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 advise("resolve_argval_shapes:  DONE");
-DESCRIBE_SHAPE(VN_SHAPE(val_enp));
+describe_shape(VN_SHAPE(val_enp));
 }
 #endif /* QUIP_DEBUG */
 			break;
@@ -2283,16 +2283,16 @@ advise(ERROR_STRING);
 	"subrt %s:  argument shape mismatch",SR_NAME(srp));
 					warn(ERROR_STRING);
 advise("argument prototype shape:");
-DESCRIBE_SHAPE(VN_SHAPE(arg_enp));
+describe_shape(VN_SHAPE(arg_enp));
 advise("argument value shape:");
-DESCRIBE_SHAPE(VN_SHAPE(val_enp));
+describe_shape(VN_SHAPE(val_enp));
 dump_tree(arg_enp);
 
 #ifdef QUIP_DEBUG
 if( debug & resolve_debug ){
 advise(VN_STRING(arg_enp));
-DESCRIBE_SHAPE(VN_SHAPE(arg_enp));
-DESCRIBE_SHAPE(VN_SHAPE(val_enp));
+describe_shape(VN_SHAPE(arg_enp));
+describe_shape(VN_SHAPE(val_enp));
 }
 #endif /* QUIP_DEBUG */
 					return(-1);

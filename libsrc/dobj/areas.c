@@ -310,7 +310,7 @@ static void _init_scratch_scalar(QSP_ARG_DECL  Data_Area *ap)
 	//set_data_area(ap);	// init_scratch_scalar
 	push_data_area(ap);	// init_scratch_scalar
 	sprintf(name,"%s.scratch_scalar",AREA_NAME(ap));
-	ap->da_dp = mk_scalar(QSP_ARG  name, PREC_FOR_CODE(PREC_DP) );
+	ap->da_dp = mk_scalar(name, PREC_FOR_CODE(PREC_DP) );
 	pop_data_area();	// init_scratch_scalar
 }
 
