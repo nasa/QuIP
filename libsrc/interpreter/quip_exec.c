@@ -331,15 +331,20 @@ void resume_quip(SINGLE_QSP_ARG_DECL)
 
 void exec_at_level(QSP_ARG_DECL  int level)
 {
+	int l;
+
 	assert( level >= 0 );
 
 	// We thought a lookahead here might help, but it didn't, probably
 	// because lookahead does not skip comments?
 
+	push_stop_level(level);
+
 	//lookahead(SINGLE_QSP_ARG);	// in case an empty macro was pushed?
 	while( QLEVEL >= level ){
 		qs_do_cmd(THIS_QSP);
 		if( IS_HALTING(THIS_QSP) ){
+			// restore stop level here???  BUG?
 			return;
 		}
 
@@ -350,6 +355,8 @@ void exec_at_level(QSP_ARG_DECL  int level)
 
 		lookahead(SINGLE_QSP_ARG);
 	}
+	l = pop_stop_level();
+	set_stop_level(l);
 
 	// BUG?  what happens if we halt execution when an alert is delivered?
 }

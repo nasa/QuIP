@@ -638,7 +638,7 @@ static void clear_data(Trial_Class *tcp)	/* clear data table for this class */
 	}
 }
 
-List *class_list(SINGLE_QSP_ARG_DECL)
+List *_class_list(SINGLE_QSP_ARG_DECL)
 {
 	if( trial_class_itp == NULL ) return(NULL);
 	return( item_list(trial_class_itp) );

@@ -107,15 +107,20 @@ ITEM_INTERFACE_PROTOTYPES( Pipe, pipe )
 
 
 // try_hard.c
-extern FILE *try_hard( QSP_ARG_DECL  const char *filename, const char *mode );
-extern FILE *trynice(QSP_ARG_DECL  const char *fnam, const char *mode);
-extern QUIP_BOOL confirm(QSP_ARG_DECL  const char *pmpt);
-extern FILE *try_open(QSP_ARG_DECL  const char *filename, const char *mode);
+extern FILE *_try_hard( QSP_ARG_DECL  const char *filename, const char *mode );
+extern FILE *_try_nice(QSP_ARG_DECL  const char *fnam, const char *mode);
+extern QUIP_BOOL _confirm(QSP_ARG_DECL  const char *pmpt);
+extern FILE *_try_open(QSP_ARG_DECL  const char *filename, const char *mode);
 
-#define TRY_OPEN(s,m)		try_open(QSP_ARG  s,m)
-#define TRY_HARD(s,m)		try_hard(QSP_ARG  s,m)
-#define TRYNICE(s,m)		trynice(QSP_ARG  s,m)
-#define CONFIRM(p)		confirm(QSP_ARG  p)
+#define try_open(s,m)		_try_open(QSP_ARG  s,m)
+#define try_hard(s,m)		_try_hard(QSP_ARG  s,m)
+#define try_nice(s,m)		_try_nice(QSP_ARG  s,m)
+#define confirm(p)		_confirm(QSP_ARG  p)
+
+#define TRY_OPEN(s,m)		_try_open(QSP_ARG  s,m)
+#define TRY_HARD(s,m)		_try_hard(QSP_ARG  s,m)
+#define TRY_NICE(s,m)		_try_nice(QSP_ARG  s,m)
+#define CONFIRM(p)		_confirm(QSP_ARG  p)
 
 extern COMMAND_FUNC( togclobber );
 
@@ -159,9 +164,10 @@ extern double _how_much(QSP_ARG_DECL  const char *);
 #define how_much(pmpt)		_how_much(QSP_ARG  pmpt)
 #define askif(p)		_askif(QSP_ARG  p )
 #define which_one(p,n,ch)	_which_one(QSP_ARG  p, n, ch )
+#define format_prompt(fmt,prompt) _format_prompt(QSP_ARG  fmt,prompt)
 
 
-extern const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt);
+extern const char *_format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt);
 extern void inhibit_next_prompt_format(SINGLE_QSP_ARG_DECL);
 extern void enable_prompt_format(SINGLE_QSP_ARG_DECL);
 extern int _askif( QSP_ARG_DECL  const char *pmpt);

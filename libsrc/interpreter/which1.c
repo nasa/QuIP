@@ -12,13 +12,21 @@
 #include "history.h"
 
 #ifdef HAVE_HISTORY
-static void check_preload(QSP_ARG_DECL  const char *prompt, int n, const char **choices)
+
+#define check_preload(prompt,n,choices) _check_preload(QSP_ARG  prompt,n,choices)
+
+static void _check_preload(QSP_ARG_DECL  const char *prompt, int n, const char **choices)
 {
+	const char *pline;
+
 	if( ! IS_COMPLETING(THIS_QSP) ) return;
 	if( ! intractive(SINGLE_QSP_ARG) ) return;
 	if( *prompt == 0 ) return;
 
-	preload_history_list(prompt,n,choices);
+// Need to format the prompt!
+	pline = format_prompt(PROMPT_FORMAT, prompt);
+fprintf(stderr,"check_preload calling preload_history_list for %s\n",pline);
+	preload_history_list(pline,n,choices);
 }
 #endif /* HAVE_HISTORY */
 
@@ -32,7 +40,7 @@ int _which_one(QSP_ARG_DECL  const char *prompt, int n, const char** choices)
 	const char *user_response;
 
 #ifdef HAVE_HISTORY
-	check_preload(QSP_ARG  prompt, n, choices);
+	check_preload(prompt, n, choices);
 #endif /* HAVE_HISTORY */
 
 	user_response = nameof(prompt);

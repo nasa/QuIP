@@ -690,14 +690,14 @@ static inline int expand_macro_if(QSP_ARG_DECL  const char *buf)
 
 // was qword
 
-/*static*/ const char * _next_query_word(QSP_ARG_DECL const char *pline)
+const char * _next_query_word(QSP_ARG_DECL const char *pline)
 		/* prompt */
 {
 	const char *buf;
 
 	do {
 		do {
-			if( QLEVEL < 0 ){
+			if( QLEVEL < Q_STOP_LEVEL ){
 				return NULL;
 			}
 
@@ -744,7 +744,7 @@ advise(ERROR_STRING);
 
 	// This can happen if we run out of input while trying to
 	// read the macro args...
-	if( QLEVEL < 0 ) return NULL;
+	if( QLEVEL < Q_STOP_LEVEL ) return NULL;
 
 	return(buf);
 } /* end next_query_word() */
@@ -2640,6 +2640,8 @@ void init_query_stack(Query_Stack *qsp)
 	SET_QS_QRY_STACK(qsp,new_stack());
 	SET_QS_MENU_STACK(qsp,new_stack());
 	SET_QS_LEVEL(qsp,(-1));
+	SET_QS_STOP_LEVEL(qsp,0);
+	SET_QS_STOP_LEVEL_STACK(qsp,NULL);
 
 	for(i=0;i<MAX_VAR_BUFS;i++){
 		SET_QS_VAR_BUF(qsp,i,new_stringbuf());
@@ -2686,6 +2688,28 @@ void init_query_stack(Query_Stack *qsp)
 	}
 #endif /* USE_QS_QUEUE */
 }
+
+void _push_stop_level(QSP_ARG_DECL  int l)
+{
+	if( QS_STOP_LEVEL_STACK(THIS_QSP) == NULL )
+		SET_QS_STOP_LEVEL_STACK(THIS_QSP,new_stack());
+
+	push_item( QS_STOP_LEVEL_STACK(THIS_QSP), (void *) ((long)Q_STOP_LEVEL) );
+
+	SET_QS_STOP_LEVEL(THIS_QSP,l);
+}
+
+int _pop_stop_level(SINGLE_QSP_ARG_DECL)
+{
+	void *vp;
+
+	assert( QS_STOP_LEVEL_STACK(THIS_QSP) != NULL );
+	assert( stack_size(QS_STOP_LEVEL_STACK(THIS_QSP)) > 0 );
+
+	vp = pop_item(QS_STOP_LEVEL_STACK(THIS_QSP));
+	return (int) vp;
+}
+
 
 // The filename is now part of the query struct, so we don't have a separate stack...
 

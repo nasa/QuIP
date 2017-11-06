@@ -406,7 +406,7 @@ COMMAND_FUNC( constrain_slope )
 {
 	int ctype;
 
-	ctype = WHICH_ONE("constraint for slope",3,clist);
+	ctype = which_one("constraint for slope",3,clist);
 	if( ctype < 0 ) return;
 
 	slope_constraint = ctype -1;

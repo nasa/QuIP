@@ -381,7 +381,7 @@ static void save_data_to_file(QSP_ARG_DECL  const char *filename, const char *bu
 {
 	FILE *fp;
 
-	fp = try_open(QSP_ARG  filename,"w");
+	fp = try_open(filename,"w");
 	if( !fp ) return;
 
 	if( fwrite(buf,1,size,fp) != size ){

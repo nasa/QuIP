@@ -245,7 +245,7 @@ static COMMAND_FUNC( do_read_obj )
 	const char *s;
 
 	dp=pick_obj("");
-	s=NAMEOF("input file");
+	s=nameof("input file");
 
 	if( dp == NULL ) return;
 
@@ -309,7 +309,7 @@ static COMMAND_FUNC( do_set_var_from_obj )
 	DECL_RAM_DATA_OBJ
 	const char *s;
 
-	s=NAMEOF("variable");
+	s=nameof("variable");
 	dp=pick_obj("");
 
 	if( dp == NULL ) return;
@@ -337,7 +337,7 @@ static COMMAND_FUNC( do_set_obj_from_var )
 	dimension_t dst_size;
 
 	dp=pick_obj("");
-	src_str=NAMEOF("string");
+	src_str=nameof("string");
 
 	if( dp == NULL ) return;
 
@@ -422,7 +422,7 @@ static COMMAND_FUNC( do_wrt_obj )
 	const char *filename;
 
 	dp=pick_obj("");
-	filename = NAMEOF("output file");
+	filename = nameof("output file");
 
 	if( dp==NULL ) return;
 
@@ -430,7 +430,7 @@ static COMMAND_FUNC( do_wrt_obj )
 		// BUG? we don't check append flag here,
 		// but there is a separate append command...
 
-		fp=TRYNICE( filename, "w" );
+		fp=try_nice( filename, "w" );
 		if( !fp ) return;
 	} else {
 		// If the invoking script has redirected stdout,
@@ -475,7 +475,7 @@ static COMMAND_FUNC( do_append )
 		if( !CONFIRM(
 		"are you sure you want to write an image/sequence in ascii") )
 			return;
-	fp=TRYNICE( NAMEOF("output file"), "a" );
+	fp=try_nice( nameof("output file"), "a" );
 	if( !fp ) return;
 
 	INSURE_OK_FOR_READING(dp)
@@ -544,7 +544,7 @@ static COMMAND_FUNC( do_set_in_fmt )
 {
 	const char *s;
 
-	s=NAMEOF("input line format string");
+	s=nameof("input line format string");
 	set_input_format_string(QSP_ARG  s);
 }
 

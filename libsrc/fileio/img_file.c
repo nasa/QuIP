@@ -552,12 +552,12 @@ int open_fp(Image_File *ifp)
 #ifndef HAVE_RGB
 
 	if( IS_READABLE(ifp) ){
-		ifp->if_fp = try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"r");
+		ifp->if_fp = _try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"r");
 	} else {
 		/* open read-write so we can read back
 		 * the header if necessary...  (see hips2.c)
 		 */
-		ifp->if_fp = try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"w+");
+		ifp->if_fp = _try_open(DEFAULT_QSP_ARG  ifp->if_pathname,"w+");
 	}
 	if( ! ifp->if_fp ) return(-1);
 	return(0);

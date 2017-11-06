@@ -11,9 +11,6 @@
 
 #include "quip_prot.h"
 #include "debug.h"
-//#include "sigpush.h"
-//#include "vars.h"
-//#include "tryhard.h"		/* try_open */
 
 #include "polh_dev.h"
 #include "data_obj.h"
@@ -760,7 +757,7 @@ void display_formatted_point(QSP_ARG_DECL  Fmt_Pt * fpp, Polh_Record_Format *prf
 
 int set_continuous_output_file(QSP_ARG_DECL  const char *fname)
 {
-	polh_output_file = try_open(QSP_ARG  fname, "w");
+	polh_output_file = try_open(fname, "w");
 
 	if( !polh_output_file ) {
 		sprintf(DEFAULT_ERROR_STRING, "Unable to open file for continuous output: %s", fname);

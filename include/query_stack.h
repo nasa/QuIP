@@ -148,6 +148,8 @@ struct query_stack {
 	int		qs_which_var_buf;
 	Stack *		qs_query_stack;
 	int		_qs_level;	// used for lookahead
+	int		_qs_stop_level;	// used for lookahead
+	Stack *		qs_stop_level_stack;
 	int		qs_ascii_level;
 	int		qs_chew_level;
 	String_Buf *	qs_av_sbp;			// what is this?
@@ -325,7 +327,7 @@ struct query_stack {
 #define SET_QS_ERROR_FILE(qsp,fp)	(qsp)->qs_error_fp = fp
 #define SET_QS_MSG_FILE(qsp,fp)		(qsp)->qs_msg_fp = fp
 
-#define QS_HAS_SOMETHING(qsp)		(QLEVEL>=0 && QRY_HAS_TEXT(CURR_QRY(qsp)))
+#define QS_HAS_SOMETHING(qsp)		(QLEVEL>=Q_STOP_LEVEL && QRY_HAS_TEXT(CURR_QRY(qsp)))
 #define QS_LINES_READ(qsp)		QRY_LINES_READ(CURR_QRY(qsp))
 
 #define QS_MENU_STACK(qsp)		(qsp)->qs_menu_stack
@@ -393,6 +395,10 @@ struct query_stack {
 #define SET_QS_SERIAL(qsp,n)		(qsp)->qs_serial=n
 #define QS_LEVEL(qsp)			(qsp)->_qs_level
 #define SET_QS_LEVEL(qsp,l)		(qsp)->_qs_level = l
+#define QS_STOP_LEVEL(qsp)		(qsp)->_qs_stop_level
+#define SET_QS_STOP_LEVEL(qsp,l)	(qsp)->_qs_stop_level = l
+#define QS_STOP_LEVEL_STACK(qsp)	(qsp)->qs_stop_level_stack
+#define SET_QS_STOP_LEVEL_STACK(qsp,v)	(qsp)->qs_stop_level_stack = v
 #define QS_CHEW_LEVEL(qsp)		(qsp)->qs_chew_level
 #define SET_QS_CHEW_LEVEL(qsp,l)	(qsp)->qs_chew_level = l
 #define QS_ASCII_LEVEL(qsp)		(qsp)->qs_ascii_level
@@ -527,5 +533,10 @@ if( QS_DOBJ_ASCII_INFO(qsp) == NULL ){		\
 
 extern void rls_mouthful(Mouthful *mfp);
 
+#define set_stop_level(l) SET_QS_STOP_LEVEL(THIS_QSP,l)
+extern void _push_stop_level(QSP_ARG_DECL  int l);
+extern int _pop_stop_level(SINGLE_QSP_ARG_DECL);
+#define push_stop_level(l) _push_stop_level(QSP_ARG  l)
+#define pop_stop_level() _pop_stop_level(SINGLE_QSP_ARG)
 
 #endif /* !  _QUERY_STACK_H_ */

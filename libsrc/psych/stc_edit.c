@@ -38,7 +38,7 @@ static int get_stair_type(SINGLE_QSP_ARG_DECL)
 {
 	int t;
 
-	t=WHICH_ONE("staircase feedback type",3,type_list);
+	t=which_one("staircase feedback type",3,type_list);
 	switch(t){
 		case 0: return(UP_DOWN);
 		case 1: return(TWO_TO_ONE);

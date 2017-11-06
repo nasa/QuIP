@@ -98,7 +98,7 @@ static void do_rspinit(void);
 	if( _nvals <= 0 ){					\
 		sprintf(ERROR_STRING,				\
 	"Need to initialize x values (n=%d)",_nvals);		\
-		WARN(ERROR_STRING);				\
+		warn(ERROR_STRING);				\
 		return;						\
 	}
 
@@ -120,19 +120,19 @@ static COMMAND_FUNC( modify )
 
 	if( modrt==null_mod ) error1("pointer modrt must be defined by user");
 	n=(unsigned int)HOW_MANY("condition index");
-	if( n >= eltcount(class_list(SINGLE_QSP_ARG)) ) WARN("undefined condition");
+	if( n >= eltcount(class_list()) ) warn("undefined condition");
 	else (*modrt)(QSP_ARG n);
 }
 
 static int insure_exp_is_ready(SINGLE_QSP_ARG_DECL)	/* make sure there is something to run */
 {
-	if( eltcount(class_list(SINGLE_QSP_ARG)) <= 0 ){
-		WARN("no conditions defined");
+	if( eltcount(class_list()) <= 0 ){
+		warn("no conditions defined");
 		return(-1);
 	}
 	if( _nvals <= 0 ){
 		sprintf(ERROR_STRING,"Need to initialize x values (n=%d)",_nvals);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return(0);
@@ -244,7 +244,7 @@ static void make_staircases(SINGLE_QSP_ARG_DECL)
 	Node *np;
 	Trial_Class *tcp;
 
-	lp=class_list(SINGLE_QSP_ARG);
+	lp=class_list();
 	assert( lp != NULL );
 
 	np=QLIST_HEAD(lp);
@@ -326,15 +326,15 @@ static COMMAND_FUNC( do_new_class )
 	const char *name, *cmd;
 	Trial_Class *tcp;
 
-	name = NAMEOF("nickname for this class");
-	cmd = NAMEOF("string to execute for this stimulus class");
+	name = nameof("nickname for this class");
+	cmd = nameof("string to execute for this stimulus class");
 
 	// Make sure not in use
 	tcp = trial_class_of(name);
 	if( tcp != NULL ){
 		sprintf(ERROR_STRING,"Class name \"%s\" is already in use!?",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -347,7 +347,7 @@ static COMMAND_FUNC( do_new_class )
 	if( _nvals > 0 ){
 		alloc_data_tbl(tcp,_nvals);
 	} else {
-		WARN("need to specify x-values before declaring stimulus class!?");
+		warn("need to specify x-values before declaring stimulus class!?");
 		SET_CLASS_DATA_TBL(tcp,NULL);
 	}
 
@@ -373,7 +373,7 @@ static void setup_files(SINGLE_QSP_ARG_DECL)
 	if( IS_DRIBBLING ){
 		init_dribble_file(SINGLE_QSP_ARG);
 	} else {
-		while( (fp=TRYNICE(NAMEOF("summary data file"),"w"))
+		while( (fp=try_nice(nameof("summary data file"),"w"))
 			== NULL ) ;
 		set_summary_file(fp);
 	}
@@ -396,7 +396,7 @@ COMMAND_FUNC( do_delete_all_classes )
 	Node *np,*next;
 	Trial_Class *tcp;
 
-	lp=class_list(SINGLE_QSP_ARG);
+	lp=class_list();
 	if( lp==NULL ) return;
 
 	np=QLIST_HEAD(lp);
@@ -447,13 +447,13 @@ static COMMAND_FUNC( do_feedback )
 {
 	const char *s;
 
-	s=NAMEOF("script fragment to interpret for correct feedback");
+	s=nameof("script fragment to interpret for correct feedback");
 
 	if( correct_feedback_string != NULL )
 		rls_str(correct_feedback_string);
 	correct_feedback_string = savestr(s);
 
-	s=NAMEOF("script fragment to interpret for incorrect feedback");
+	s=nameof("script fragment to interpret for incorrect feedback");
 
 	if( incorrect_feedback_string != NULL )
 		rls_str(incorrect_feedback_string);
@@ -484,7 +484,7 @@ static COMMAND_FUNC( do_get_value )
 	Staircase *stcp;
 	char valstr[32];
 
-	s = NAMEOF("name of variable for value storage");
+	s = nameof("name of variable for value storage");
 	stcp=pick_stc( "" );
 
 	if( stcp == NO_STAIR ) return;
@@ -581,19 +581,19 @@ static COMMAND_FUNC( setyesno )
 		is_a_substring(RSP_ABORT,response_list[NO_INDEX]) ||
 		is_a_substring(RSP_ABORT,response_list[REDO_INDEX]) ){
 
-		WARN("conflict with abort response");
+		warn("conflict with abort response");
 		goto bad;
 	}
 	if( response_list[YES_INDEX][0] == response_list[NO_INDEX][0] ){
-		WARN("yes and no responses must differ in the 1st character");
+		warn("yes and no responses must differ in the 1st character");
 		goto bad;
 	}
 	if( response_list[YES_INDEX][0] == response_list[REDO_INDEX][0] ){
-		WARN("yes and redo responses must differ in the 1st character");
+		warn("yes and redo responses must differ in the 1st character");
 		goto bad;
 	}
 	if( response_list[NO_INDEX][0] == response_list[REDO_INDEX][0] ){
-		WARN("no and redo responses must differ in the 1st character");
+		warn("no and redo responses must differ in the 1st character");
 		goto bad;
 	}
 	custom_keys=1;
@@ -614,7 +614,7 @@ void get_rsp_word(QSP_ARG_DECL const char **sptr,const char *def_rsp)
 	const char *s;
 
 	sprintf(buf,"word %s response",def_rsp);
-	s=NAMEOF(buf);
+	s=nameof(buf);
 	sprintf(buf,"use \"%s\" for %s response",s,def_rsp);
 	if( !CONFIRM(buf) ) return;
 
@@ -654,14 +654,14 @@ int response(QSP_ARG_DECL  const char *question_string)
 #ifndef BUILD_FOR_OBJC
 		redir( tfile(), "/dev/tty" );	/* get response from keyboard */
 #else // BUILD_FOR_OBJC
-		WARN("response (exp.c):  can't get response from keyboard!?");
+		warn("response (exp.c):  can't get response from keyboard!?");
 #endif // BUILD_FOR_OBJC
 	}
 
 
 	do {
 		inhibit_next_prompt_format(SINGLE_QSP_ARG);	// prompt already formatted!
-		n=WHICH_ONE(rpmtstr,N_RESPONSES,response_list);
+		n=which_one(rpmtstr,N_RESPONSES,response_list);
 		enable_prompt_format(SINGLE_QSP_ARG);
 	} while( n < 0 );
 

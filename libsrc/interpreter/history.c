@@ -304,7 +304,7 @@ static inline void insure_prompt_buf(QSP_ARG_DECL  const char *fmt, const char *
  * - what does that mean?  should we reset the flag here???
  */
 
-const char *format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
+const char *_format_prompt(QSP_ARG_DECL  const char *fmt, const char *prompt)
 {
 	char *pline;
 
@@ -329,7 +329,7 @@ void _rem_phist(QSP_ARG_DECL  const char *prompt,const char* word)
 {
 	const char *formatted_prompt;
 
-	formatted_prompt = format_prompt(QSP_ARG  prompt);
+	formatted_prompt = format_prompt(prompt);
 	char s[LLEN];
 
 	sprintf(s,PROMPT_FORMAT,prompt);

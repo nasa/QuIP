@@ -13,7 +13,7 @@ void clrdat(SINGLE_QSP_ARG_DECL)	/* just clears data tables */
 	Data_Tbl *dtp;
 	int i;
 
-	lp=class_list(SINGLE_QSP_ARG);
+	lp=class_list();
 	if( lp == NULL ) return;
 
 	np=QLIST_HEAD(lp);

@@ -198,10 +198,12 @@ extern void del_stair(QSP_ARG_DECL  Staircase *stcp);
 extern COMMAND_FUNC( del_all_stairs );
 extern void si_init(void);
 
-extern List *class_list(SINGLE_QSP_ARG_DECL);
+extern List *_class_list(SINGLE_QSP_ARG_DECL);
 extern Trial_Class *index_class(QSP_ARG_DECL  int);
 extern void del_class(QSP_ARG_DECL  Trial_Class *tcp);
 extern Trial_Class *new_class(SINGLE_QSP_ARG_DECL);
+
+#define class_list() _class_list(SINGLE_QSP_ARG)
 
 /* exp.c */
 extern COMMAND_FUNC( do_delete_all_classes );
@@ -301,6 +303,8 @@ extern void weibull_out(QSP_ARG_DECL  Trial_Class * );
 
 /* xvalmenu.c */
 
+extern int insure_xval_array(void);
+extern void set_n_xvals(int n);
 extern COMMAND_FUNC( xval_menu );
 
 #endif /* ! NO_STAIR */

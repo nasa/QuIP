@@ -7283,6 +7283,9 @@ static int execute_script_node(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	enable_stripping_quotes(SINGLE_QSP_ARG);
 	while( QLEVEL >= start_level ){
 		// was do_cmd
+		// We have a problem, if the script contains
+		// a pause macro and a ^D is typed, do_cmd
+		// tries to read more input...
 		qs_do_cmd(THIS_QSP);
 		lookahead(SINGLE_QSP_ARG);
 	}
