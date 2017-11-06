@@ -28,7 +28,7 @@ static COMMAND_FUNC( do_read_data )	/** read a data file */
 	char num_str[16];
 
 	filename=nameof("data file");
-	fp=TRY_OPEN( filename, "r" );
+	fp=try_open( filename, "r" );
 	if( !fp ) return;
 
 	/* We used to clear the data tables here,

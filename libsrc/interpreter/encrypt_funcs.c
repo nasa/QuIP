@@ -563,10 +563,10 @@ COMMAND_FUNC( do_encrypt_file )
 	infile_name = nameof("input filename");
 	outfile_name = nameof("output filename");
 
-	fp_in = TRY_OPEN(infile_name,"r");
+	fp_in = try_open(infile_name,"r");
 	if( ! fp_in ) return;
 
-	fp_out = TRY_OPEN(outfile_name,"w");
+	fp_out = try_open(outfile_name,"w");
 	if( !fp_out ){
 		fclose(fp_in);
 		return;
@@ -590,10 +590,10 @@ COMMAND_FUNC( do_decrypt_file )
 	infile_name = nameof("input filename");
 	outfile_name = nameof("output filename");
 
-	fp_in = TRY_OPEN(infile_name,"r");
+	fp_in = try_open(infile_name,"r");
 	if( ! fp_in ) return;
 
-	fp_out = TRY_OPEN(outfile_name,"w");
+	fp_out = try_open(outfile_name,"w");
 	if( !fp_out ){
 		fclose(fp_in);
 		return;
@@ -615,7 +615,7 @@ COMMAND_FUNC( do_read_encrypted_file )
 
 
 	s=nameof("input file name");
-	fp=TRY_OPEN(s,"r");
+	fp=try_open(s,"r");
 	if( fp == NULL ) return;
 
 	outbuf = decrypt_file_contents(QSP_ARG  fp,&n_converted);

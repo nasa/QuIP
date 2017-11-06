@@ -959,7 +959,7 @@ void copycmd(SINGLE_QSP_ARG_DECL)
 {
 	FILE *fp;
 
-	fp=TRYNICE( nameof("transcript file"), "w" );
+	fp=try_nice( nameof("transcript file"), "w" );
 	if( fp ) {
 		if(dupout(fp)==(-1))
 			fclose(fp);

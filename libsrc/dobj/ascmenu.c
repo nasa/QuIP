@@ -260,7 +260,7 @@ static COMMAND_FUNC( do_read_obj )
 	INSURE_OK_FOR_WRITING(dp)
 
 	if( strcmp(s,"-") && strcmp(s,"stdin") ){
-		fp=TRY_OPEN( s, "r" );
+		fp=try_open( s, "r" );
 		if( !fp ) return;
 
 		read_ascii_data(ram_dp,fp,s,expect_exact_count);

@@ -205,7 +205,7 @@ char *name;
 
 		sprintf(filename, "%s.%c", name, '0' + j);
 
-		if(!(fp = TRYNICE(filename, "w"))) {
+		if(!(fp = try_nice(filename, "w"))) {
 			continue;
 		}
 

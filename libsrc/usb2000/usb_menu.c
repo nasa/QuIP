@@ -480,7 +480,7 @@ static COMMAND_FUNC( do_save_spec )
 	filename = NAMEOF("output file");
 
 	if( strcmp(filename,"-") && strcmp(filename,"stdout") ){
-		fp=TRYNICE( filename, "w" );
+		fp=try_nice( filename, "w" );
 		if( !fp ) return;
 
 	} else {
