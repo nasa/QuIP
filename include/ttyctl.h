@@ -41,7 +41,8 @@ extern void _dump_term_flags(QSP_ARG_DECL  u_long flag,Termio_Option *tbl);
 #define dump_term_flags(flag,tbl) _dump_term_flags(QSP_ARG  flag,tbl)
 
 // my_stty.c
-extern void set_tty_flag(const char *flagname,int fd,int value);
+extern void _set_tty_flag(QSP_ARG_DECL  const char *flagname,int fd,int value);
+#define set_tty_flag(flagname,fd,value) _set_tty_flag(QSP_ARG  flagname,fd,value)
 
 #endif /* TTY_CTL */
 

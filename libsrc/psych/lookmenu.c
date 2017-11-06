@@ -216,7 +216,7 @@ static COMMAND_FUNC( setcl )
 }
 #endif // FUBAR
 
-static COMMAND_FUNC( _split )
+static COMMAND_FUNC( do_split )
 {
 	int wu;
 	Trial_Class *tcp;
@@ -226,9 +226,9 @@ static COMMAND_FUNC( _split )
 	wu = ASKIF("retain upper half");
 
 	if( tcp == NULL ) return;
-	if( no_data(QSP_ARG  "_split") ) return;
+	if( no_data(QSP_ARG  "split") ) return;
 
-	split(QSP_ARG  tcp,wu);
+	split(tcp,wu);
 }
 
 #define ADD_CMD(s,f,h)	ADD_COMMAND(ogive_menu,s,f,h)
@@ -304,8 +304,8 @@ ADD_CMD( plotprint,	pntgrph,	print data for plotting )
 ADD_CMD( errbars,	do_pnt_bars,	print psychometric function with error bars )
 ADD_CMD( ogive,		do_ogive,	do fits with to ogive )
 ADD_CMD( weibull,	do_weibull,	do fits to weibull function )
-ADD_CMD( split,		_split,		split data at zeroes )
-ADD_CMD( lump,		lump,		lump data conditions )
+ADD_CMD( split,		do_split,	split data at zeroes )
+ADD_CMD( lump,		do_lump,	lump data conditions )
 #ifdef QUIK
 ADD_CMD( Quick,		prquic,		print data in QUICK format )
 #endif /* QUIK */

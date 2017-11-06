@@ -77,7 +77,7 @@ static COMMAND_FUNC( baud_inq )
 #ifdef CAUTIOUS
 		default:
 			sprintf(ERROR_STRING, "CAUTIOUS: unknown baud rate: %d", baud_rate);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 #endif /* CAUTIOUS */
 	}
 }
@@ -96,7 +96,7 @@ static COMMAND_FUNC( trig_mode_inq )
 		case 1: advise("trigger mode: software trigger"); break;
 		case 3: advise("trigger mode: external hardware trigger"); break;
 #ifdef CAUTIOUS
-		default: WARN("CAUTIOUS: unknown trigger mode");
+		default: warn("CAUTIOUS: unknown trigger mode");
 #endif /* CAUTIOUS */
 	}
 }
@@ -115,7 +115,7 @@ static COMMAND_FUNC( lamp_inq )
 		case LAMP_LOW:	prt_msg("lamp enable: low"); break;
 #ifdef CAUTIOUS
 		default:
-			WARN("CAUTIOUS:  unrecognized status returned by get_lamp_status()!?");
+			warn("CAUTIOUS:  unrecognized status returned by get_lamp_status()!?");
 			break;
 #endif /* CAUTIOUS */
 	}
@@ -133,7 +133,7 @@ static COMMAND_FUNC( calib_const_inq )
 	       sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_CALIB_INDEX, MAX_CALIB_INDEX);
 
-	       WARN(ERROR_STRING);
+	       warn(ERROR_STRING);
 	       return;
 	}
 
@@ -176,7 +176,7 @@ static COMMAND_FUNC( timer_inq )
 
 #ifdef CAUTIOUS
 		default:
-			WARN("CAUTIOUS:  unrecognized value returned by get_timer_type()!?");
+			warn("CAUTIOUS:  unrecognized value returned by get_timer_type()!?");
 #endif /* CAUTIOUS */
 	}
 
@@ -221,14 +221,14 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 	u_short i,j;
 	float tmp_data[MAX_N_OF_PIXELS*2];
 
-	strcpy(	name, NAMEOF("name for new spectra data vector") );
+	strcpy(	name, nameof("name for new spectra data vector") );
 
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 
 	if( dp != NULL ){
 		sprintf(ERROR_STRING,"Can't create new data vector %s, name is in use already",
 			name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		/* We could delete the existing object here, or recycle it if the dimension is correct... */
 		return -1;
 	}
@@ -236,13 +236,13 @@ static short mk_spec_vector(QSP_ARG_DECL  short size, Spectral_Data *sdp)
 	dp = mk_vec(QSP_ARG  name,size,2,PREC_FOR_CODE(PREC_SP));
 
 	if( dp == NULL ) {
-		WARN("unable to create spectra data vector");
+		warn("unable to create spectra data vector");
 		return -1;
 	}
 
 	if( ! IS_CONTIGUOUS(dp) ){
 		sprintf(ERROR_STRING, "mk_spec_vector: object %s must be contiguous",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return -1;
 	}
 
@@ -295,7 +295,7 @@ static COMMAND_FUNC( do_add_scans )
 		sprintf(ERROR_STRING, "number (%d) should be in range %d - %d",
 			data_word, MIN_N_SCANS, MAX_N_SCANS);
 
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -343,12 +343,12 @@ static COMMAND_FUNC( do_sampling_mode )
 			break;
 
 		case 1:
-			n = HOW_MUCH("number of wavelengths to skip");
+			n = how_many("number of wavelengths to skip");
 
 			if( n<(1/BIN_WIDTH) || n>=WAVELENGTH_RANGE ) {
 				sprintf(ERROR_STRING, "number of wavelengths(%f) has to be in range(%f-%f)",
 						n, (1/BIN_WIDTH), WAVELENGTH_RANGE );
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 
 				return;
 			}
@@ -358,32 +358,32 @@ static COMMAND_FUNC( do_sampling_mode )
 			break;
 
 		case 2:
-			x = HOW_MUCH("starting wavelength");
+			x = how_much("starting wavelength");
 
 			if( x<MIN_WAVELENGTH || x>MAX_WAVELENGTH ) {
 				sprintf(ERROR_STRING, "wavelength(%f) has to be in range(%f-%f)",
 						x, MIN_WAVELENGTH, MAX_WAVELENGTH);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 
 				return;
 			}
 
-			y = HOW_MUCH("ending wavelength");
+			y = how_much("ending wavelength");
 
 			if( y<MIN_WAVELENGTH || y>MAX_WAVELENGTH ) {
 				sprintf(ERROR_STRING, "wavelength(%f) has to be in range(%f-%f)",
 						y, MIN_WAVELENGTH, MAX_WAVELENGTH);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 
 				return;
 			}
 
-			n = HOW_MUCH("number of wavelengths to skip");
+			n = how_many("number of wavelengths to skip");
 
 			if( n<(1/BIN_WIDTH) || n>=WAVELENGTH_RANGE ) {
 				sprintf(ERROR_STRING, "number of wavelength(%f) has to be in range(%f-%f)",
 						n, (1/BIN_WIDTH), WAVELENGTH_RANGE);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 
 				return;
 			}
@@ -399,7 +399,7 @@ static COMMAND_FUNC( do_sampling_mode )
 			/* see manual pg.11 for these limits */
 			if( n<0 || n>10 ) {
 				sprintf(ERROR_STRING, "n (%f) has to be in range(0-10)",n);
-				WARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				return;
 			}
 
@@ -407,12 +407,12 @@ static COMMAND_FUNC( do_sampling_mode )
 				char prompt[LLEN];
 
 				sprintf(prompt, "wavelength (%d)", i+1);
-				wavelengths[i] = HOW_MUCH(prompt);
+				wavelengths[i] = how_much(prompt);
 
 				if( wavelengths[i]<MIN_WAVELENGTH || wavelengths[i]>MAX_WAVELENGTH ) {
 					sprintf(ERROR_STRING, "wavelength(%f) has to be in range(%f-%f)",
 						wavelengths[i], MIN_WAVELENGTH, MAX_WAVELENGTH);
-					WARN(ERROR_STRING);
+					warn(ERROR_STRING);
 
 					return;
 				}
@@ -424,7 +424,7 @@ static COMMAND_FUNC( do_sampling_mode )
 
 		} /* case 3 */
 		default:
-			WARN("do_sampling_mode:  bad case!?");
+			warn("do_sampling_mode:  bad case!?");
 			return;
 			break;
 
@@ -468,16 +468,16 @@ static COMMAND_FUNC( do_save_spec )
 	/* BUG what if pathname is longer than 256??? */
 	const char *filename;
 
-	strcpy(name, NAMEOF("name of spec vector to save") );
+	strcpy(name, nameof("name of spec vector to save") );
 
-	dp = dobj_of(QSP_ARG  name);
+	dp = dobj_of(name);
 	if( dp == NULL ){
 		sprintf(ERROR_STRING,"%s does not exist", name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
-	filename = NAMEOF("output file");
+	filename = nameof("output file");
 
 	if( strcmp(filename,"-") && strcmp(filename,"stdout") ){
 		fp=try_nice( filename, "w" );
@@ -570,7 +570,7 @@ static COMMAND_FUNC( do_pb_width )
 		sprintf(ERROR_STRING, "number (%d) should be in range %d - %d",
 			data_word, MIN_PB_WIDTH, MAX_PB_WIDTH);
 
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -594,7 +594,7 @@ static COMMAND_FUNC( do_integ_time )
 		sprintf(ERROR_STRING, "integration time(%d) should be in range %d - %d",
 			data_word, MIN_INTEG_TIME, MAX_INTEG_TIME);
 
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -657,7 +657,7 @@ static COMMAND_FUNC( do_calib_const )
 	 */
 
 	if(!ascii_mode) {
-		WARN("This command requires ASCII mode");
+		warn("This command requires ASCII mode");
 		return;
 	}
 
@@ -668,7 +668,7 @@ static COMMAND_FUNC( do_calib_const )
 		sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_CALIB_INDEX, MAX_CALIB_INDEX);
 
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -676,7 +676,7 @@ static COMMAND_FUNC( do_calib_const )
 	 * specified format can be seen in the file calib_consts or by reading the calib consts.
 	 */
 
-	calib_const = NAMEOF("calib constant value");
+	calib_const = nameof("calib constant value");
 
 	if ( set_calib_const(QSP_ARG  CALIB_CONSTS, calib_index, calib_const) < 0 )
 		return;
@@ -746,7 +746,7 @@ static COMMAND_FUNC( led_mode_inq )
 		case 0: advise("LED mode: CW"); break;
 		case 1: advise("LED mode: pulsed"); break;
 #ifdef CAUTIOUS
-		default: WARN("CAUTIOUS: unknown led mode");
+		default: warn("CAUTIOUS: unknown led mode");
 #endif /* CAUTIOUS */
 	}
 
@@ -764,7 +764,7 @@ static COMMAND_FUNC( do_ls450_const_inq )
 	       sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_LS450_CALIB_INDEX, MAX_LS450_CALIB_INDEX);
 
-	       WARN(ERROR_STRING);
+	       warn(ERROR_STRING);
 	       return;
 	}
 
@@ -800,7 +800,7 @@ static COMMAND_FUNC( do_analog_op )
 		sprintf(ERROR_STRING, "analog output (%d) should be in range %d - %d",
 			analog_op, MIN_ANALOG_OP, MAX_ANALOG_OP);
 
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -833,7 +833,7 @@ static COMMAND_FUNC( do_temp )
 					 */
 
 	if(!ascii_mode) {
-		WARN("This command requires ASCII mode");
+		warn("This command requires ASCII mode");
 		return;
 	}
 
@@ -855,7 +855,7 @@ static COMMAND_FUNC( do_ls450_calib_const )
 	/* make sure that mode is ascii (manual pg.16) */
 
 	if(!ascii_mode) {
-		WARN("This command requires ASCII mode");
+		warn("This command requires ASCII mode");
 		return;
 	}
 
@@ -866,7 +866,7 @@ static COMMAND_FUNC( do_ls450_calib_const )
 		sprintf(ERROR_STRING, " (%d) should be in range %d - %d",
 			calib_index, MIN_LS450_CALIB_INDEX, MAX_LS450_CALIB_INDEX);
 
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -874,7 +874,7 @@ static COMMAND_FUNC( do_ls450_calib_const )
 	 * specified format can be seen in the file calib_consts or by reading the calib consts.
 	 */
 
-	calib_const = NAMEOF("calib constant value");
+	calib_const = nameof("calib constant value");
 
 	if ( set_calib_const(QSP_ARG LS_450_CALIB_CONST, calib_index, calib_const) < 0 )
 		return;
@@ -935,7 +935,7 @@ static void poll_accessories()
 {
 	/*BUG: this should be a combination of + followed by ?+ */
 
-	WARN("sorry: This cmd not yet implemented");
+	warn("sorry: This cmd not yet implemented");
 
 }
 #endif /* NOT_USED */

@@ -122,7 +122,7 @@ static int read_mouse_input(SINGLE_QSP_ARG_DECL)
 
 #ifdef CAUTIOUS
 	if( n_buffer_locs <= 0 ){
-		WARN("CAUTIOUS:  no available buffer locations!?");
+		warn("CAUTIOUS:  no available buffer locations!?");
 		return(-1);
 	}
 #endif /* CAUTIOUS */
@@ -130,7 +130,7 @@ static int read_mouse_input(SINGLE_QSP_ARG_DECL)
 	if( n > n_buffer_locs ){
 		sprintf(ERROR_STRING,"%d mouse chars available, but only %d free buffer locs",
 			n,n_buffer_locs);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n = n_buffer_locs;
 	}
 
@@ -138,7 +138,7 @@ static int read_mouse_input(SINGLE_QSP_ARG_DECL)
 		if( n2 < 0 )
 			perror("read");
 		sprintf(ERROR_STRING,"expected %d chars from mouse, read %zd!?",n,n2);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		if( n2 >= 0 ) n=(int)n2;
 		else return(-1);
 	}
@@ -221,10 +221,10 @@ static COMMAND_FUNC( do_mouse_open )
 advise("do_mouse_open:  back from sleep");
 	c=next_mouse_char(SINGLE_QSP_ARG);
 	if( c != 'M' )
-		WARN("expected to see M when mouse was opened!?");
+		warn("expected to see M when mouse was opened!?");
 	c=next_mouse_char(SINGLE_QSP_ARG);
 	if( c != '3' )
-		WARN("expected to see M3 when mouse was opened!?");
+		warn("expected to see M3 when mouse was opened!?");
 }
 
 static void send_mouse(QSP_ARG_DECL  char *chardata,int n)
@@ -232,7 +232,7 @@ static void send_mouse(QSP_ARG_DECL  char *chardata,int n)
 	if( mouse_fd < 0 ) return;
 
 	if( write(mouse_fd,chardata,n) != n )
-		WARN("error writing string");
+		warn("error writing string");
 }
 
 static COMMAND_FUNC(do_send_mouse)
@@ -245,7 +245,7 @@ static COMMAND_FUNC(do_send_mouse)
 	strcat(str,"\n");
 
 	if( mouse_fd < 0 ) {
-		WARN("mouse device not open");
+		warn("mouse device not open");
 		return;
 	}
 
@@ -324,7 +324,7 @@ static void next_mouse_packet(SINGLE_QSP_ARG_DECL)
 		packet[i]=0;	// reset to known state
 
 	if( mouse_fd < 0 ){
-		WARN("mouse device not open");
+		warn("mouse device not open");
 		return;
 	}
 
@@ -340,7 +340,7 @@ next_packet:
 	if( ! IS_HEADER_BYTE(packet[0]) ){
 		sprintf(ERROR_STRING,
 	"next_mouse_packet:  synchronization error (char = 0x%x)",packet[0]);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		advise("expected bit 0100 to be set");
 		if( verbose )
 			show_history();
@@ -351,14 +351,14 @@ next_packet:
 	packet[1]= (unsigned char)next_mouse_char(SINGLE_QSP_ARG);
 //SHOW_PACKET_CHAR(1);
 	//if( packet[1] & 0100 ){
-		//WARN("corrupt packet");
+		//warn("corrupt packet");
 		//packet[0] = packet[1];
 		//goto again1;
 	//}
 	packet[2]= (unsigned char)next_mouse_char(SINGLE_QSP_ARG);
 //SHOW_PACKET_CHAR(2);
 	//if( packet[2] & 0100 ){
-		//WARN("corrupt packet");
+		//warn("corrupt packet");
 		//packet[0] = packet[2];
 		//goto again1;
 	//}
@@ -458,7 +458,7 @@ static Mouse_Event interpret_packet(SINGLE_QSP_ARG_DECL)
 	}
 
 	//if( (packet[1] & 0100) || (packet[2] & 0100) ){
-	//	if( verbose ) WARN("corrupt mouse packet");
+	//	if( verbose ) warn("corrupt mouse packet");
 	//	return(N_MOUSE_EVENTS);
 	//}
 
@@ -584,18 +584,18 @@ static COMMAND_FUNC( poll_mouse )
 
 	if( ASKIF("check for mouse events") ){
 		if( polling ){
-			WARN("already polling mouse");
+			warn("already polling mouse");
 			return;
 		}
 		add_event_func(check_mouse);
 		polling=1;
 	} else {
 		if( ! polling ) {
-			WARN("not already polling mouse");
+			warn("not already polling mouse");
 			return;
 		}
 		if( rem_event_func(check_mouse) < 0 )
-			WARN("error removing mouse handler");
+			warn("error removing mouse handler");
 		polling=0;
 	}
 }

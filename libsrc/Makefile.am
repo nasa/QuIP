@@ -47,6 +47,7 @@ SUBDIRS =			\
 		gui		\
 		opengl		\
 		polhemus	\
+		usb2000		\
 		rawvol		\
 		mvimenu		\
 		unix		\

@@ -57,7 +57,7 @@ int object_is_sound(QSP_ARG_DECL  Data_Obj *dp)
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"Object %s has %s precision, should be %s for sound",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -163,7 +163,7 @@ advise("beginning synchronous record");
 static COMMAND_FUNC( do_waitrec )
 {
 	if( ! async_record ){
-		WARN("waitrec:  not in asynchronous sound record mode");
+		warn("waitrec:  not in asynchronous sound record mode");
 		return;
 	}
 	while(recording_in_progress) usleep(1000);
@@ -221,7 +221,7 @@ static COMMAND_FUNC( do_set_samp_freq )
 	rate = (int)HOW_MANY("sample frequency");
 	if( rate <= 0 ){
 		sprintf(ERROR_STRING,"sample frequency must be greater than or equal to %d",MIN_SAMP_FREQ);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	set_samp_freq(QSP_ARG  rate);
@@ -240,17 +240,17 @@ static COMMAND_FUNC( do_sound_info )
 	if( OBJ_MACH_PREC(dp) != PREC_IN ){
 		sprintf(ERROR_STRING,"sound_info:  object %s has %s precision, expect %s for sounds",
 			OBJ_NAME(dp),PREC_NAME(OBJ_MACH_PREC_PTR(dp)),NAME_FOR_PREC_CODE(PREC_IN) );
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 	if( OBJ_ROWS(dp) > 1 || OBJ_FRAMES(dp) > 1 || OBJ_SEQS(dp) > 1 ){
 		sprintf(ERROR_STRING,"sound_info:  object %s is not a row vector!?",OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	if( OBJ_N_TYPE_ELTS(dp) < N_TIMESTAMP_WORDS ){
 		sprintf(ERROR_STRING,"sound_info:  object %s has too few elements to contain a timestamp",
 			OBJ_NAME(dp));
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -293,14 +293,14 @@ static COMMAND_FUNC( do_recstream )
 	if( sound_fd < 0 ){
 		sprintf(ERROR_STRING,"open(%s)",s);
 		tell_sys_error(ERROR_STRING);
-		WARN("error opening audio stream file");
+		warn("error opening audio stream file");
 		return;
 	}
 
 	if( timestamp_fd < 0 ){
 		sprintf(ERROR_STRING,"open(%s)",s);
 		tell_sys_error(ERROR_STRING);
-		WARN("error opening audio timestamp stream file");
+		warn("error opening audio timestamp stream file");
 		return;
 	}
 
@@ -317,7 +317,7 @@ static COMMAND_FUNC( do_pb_stream )
 	if( fd < 0 ){
 		sprintf(ERROR_STRING,"open(%s)",s);
 		tell_sys_error(ERROR_STRING);
-		WARN("error opening audio stream file");
+		warn("error opening audio stream file");
 		return;
 	}
 
@@ -407,7 +407,7 @@ MENU_END(sound)
 COMMAND_FUNC( do_sound_menu )
 {
 //#ifdef BUILD_FOR_IOS
-//    WARN("Sorry, no sound support for iOS yet...");
+//    warn("Sorry, no sound support for iOS yet...");
 //#else // ! BUILD_FOR_IOS
 	static int sound_inited=0;
     

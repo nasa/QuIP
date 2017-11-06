@@ -12,7 +12,7 @@ static void advise_no_sound(SINGLE_QSP_ARG_DECL)
 
 	if( no_sound_advised ) return;
 
-	WARN("Sorry, no sound support in this build.");
+	warn("Sorry, no sound support in this build.");
 	no_sound_advised=1;
 }
 

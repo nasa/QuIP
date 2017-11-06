@@ -15,9 +15,6 @@ static COMMAND_FUNC( do_cam_menu );
 // BUG - this should be part of the camera struct!?
 static dc1394video_mode_t the_fmt7_mode=DC1394_VIDEO_MODE_FORMAT7_0;
 
-static void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn);
-static void camera_feature_set_onoff(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn);
-static int camera_feature_set_value(PGR_Cam *pgcp, dc1394feature_info_t *f, int val);
 #endif
 
 #ifndef HAVE_LIBDC1394
@@ -367,7 +364,10 @@ static COMMAND_FUNC( do_get_frange )
 }
 
 #ifdef HAVE_LIBDC1394
-static void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
+
+#define camera_feature_set_auto(pgcp, f, yn) _camera_feature_set_auto(QSP_ARG  pgcp, f, yn)
+
+static void _camera_feature_set_auto(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
 {
 	/* make sure this feature supports auto */
 	/*
@@ -384,43 +384,47 @@ static void camera_feature_set_auto(PGR_Cam *pgcp, dc1394feature_info_t *f, int 
 		yn ?  DC1394_FEATURE_MODE_AUTO : DC1394_FEATURE_MODE_MANUAL ) !=
 		DC1394_SUCCESS ){
 
-		sprintf(DEFAULT_ERROR_STRING,"error setting %s mode for %s",
+		sprintf(ERROR_STRING,"error setting %s mode for %s",
 			yn?"auto":"manual",
 			/*dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
 			dc1394_feature_get_string(f->id) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
-static void camera_feature_set_onoff(PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
+#define camera_feature_set_onoff(pgcp,f,yn) _camera_feature_set_onoff(QSP_ARG  pgcp,f,yn)
+
+static void _camera_feature_set_onoff(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_info_t *f, int yn)
 {
 	/* make sure this feature supports auto */
 	if( ! f->on_off_capable ){
-		sprintf(DEFAULT_ERROR_STRING,"%s is not on_off-capable",
+		sprintf(ERROR_STRING,"%s is not on_off-capable",
 			/*dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
 			dc1394_feature_get_string(f->id) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
 	if( dc1394_feature_set_power( pgcp->pc_cam_p, f->id,
 		yn ?  DC1394_ON : DC1394_OFF ) != DC1394_SUCCESS ){
 
-		sprintf(DEFAULT_ERROR_STRING,"error turning %s %s",
+		sprintf(ERROR_STRING,"error turning %s %s",
 			yn?"on":"off",
 			/*dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
 			dc1394_feature_get_string(f->id) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 }
 
-static int camera_feature_set_value(PGR_Cam *pgcp, dc1394feature_info_t *f, int val)
+#define camera_feature_set_value(pgcp,f,val) _camera_feature_set_value(QSP_ARG  pgcp,f,val)
+
+static int _camera_feature_set_value(QSP_ARG_DECL  PGR_Cam *pgcp, dc1394feature_info_t *f, int val)
 {
 	if( dc1394_feature_set_value( pgcp->pc_cam_p, f->id, val ) != DC1394_SUCCESS ){
-		sprintf(DEFAULT_ERROR_STRING,"error setting value (%d) for %s",val,
+		sprintf(ERROR_STRING,"error setting value (%d) for %s",val,
 			/* dc1394_feature_desc[f->id - DC1394_FEATURE_MIN]*/
 			dc1394_feature_get_string(f->id) );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1);
 	}
 	return 0;

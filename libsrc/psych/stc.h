@@ -231,23 +231,21 @@ extern void tersout(QSP_ARG_DECL  Trial_Class *);
 extern COMMAND_FUNC( constrain_slope );
 extern void set_fcflag(int flg);
 extern void set_chance_rate(double chance_rate);
-extern double regr(Data_Tbl *dp,int first);
 extern void analyse( QSP_ARG_DECL  Trial_Class *tcp );
 #ifdef QUIK
 extern void pntquic(FILE *fp,Trial_Class *tcp,int in_db);
 #endif /* QUIK */
 extern void print_raw_data(QSP_ARG_DECL  Trial_Class * tcp);
-extern void split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper);
 
+extern double _regr(QSP_ARG_DECL  Data_Tbl *dp,int first);
+extern void _split(QSP_ARG_DECL  Trial_Class * tcp,int wantupper);
+
+#define regr(dp,first) _regr(QSP_ARG  dp,first)
+#define split(tcp,wantupper) _split(QSP_ARG  tcp,wantupper)
 
 
 /* lump.c */
-extern COMMAND_FUNC( lump );
-
-/* ptoz.c */
-// prototypes moved to include/function.h
-//extern double ptoz(double prob);
-//extern double ztop(double zscore);
+extern COMMAND_FUNC( do_lump );
 
 /* asc_data.c */
 
@@ -297,9 +295,10 @@ extern COMMAND_FUNC( lookmenu );
 
 extern void w_analyse( QSP_ARG_DECL  Trial_Class * );
 extern void w_tersout(QSP_ARG_DECL  Trial_Class * );
-extern void w_set_error_rate(double er);
 extern void weibull_out(QSP_ARG_DECL  Trial_Class * );
 
+extern void _w_set_error_rate(QSP_ARG_DECL  double er);
+#define w_set_error_rate(er) _w_set_error_rate(QSP_ARG  er)
 
 /* xvalmenu.c */
 

@@ -186,13 +186,13 @@ void w_tersout(QSP_ARG_DECL  Trial_Class * tcp)
 	/* BUG should print out chi sq stat */
 }
 
-void w_set_error_rate(double er)
+void _w_set_error_rate(QSP_ARG_DECL  double er)
 {
 	if( er < 0 ){
-		NWARN("error rate must be non-negative");
+		warn("error rate must be non-negative");
 		return;
 	} else if( er >= 1 ){
-		NWARN("error rate cannot be >= 1");
+		warn("error rate cannot be >= 1");
 		return;
 	} else if( er < MIN_DELTA ){
 		if( verbose ){

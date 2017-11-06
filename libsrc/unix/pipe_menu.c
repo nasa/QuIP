@@ -81,7 +81,7 @@ static COMMAND_FUNC( do_pipe_info )
 	else if( pp->p_flgs & READ_PIPE ) i=1;
 #ifdef CAUTIOUS
 	else {
-		WARN("CAUTIOUS:  bad pipe r/w flag");
+		warn("CAUTIOUS:  bad pipe r/w flag");
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -116,7 +116,7 @@ static COMMAND_FUNC( do_pipe_redir )
 	if( (pp->p_flgs & READ_PIPE) == 0 ) {
 		sprintf(ERROR_STRING,
 	"do_pipe_redir:  pipe %s is not readable!?",pp->p_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 

@@ -1664,6 +1664,7 @@ AC_CONFIG_FILES([Makefile
 		 libsrc/opencl/Random123/Makefile
 		 libsrc/opencl/Random123/features/Makefile
 		 libsrc/cu2/Makefile
+		 libsrc/usb2000/Makefile
 		 src/Makefile])
 
 # These modules should really be external???

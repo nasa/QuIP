@@ -96,7 +96,7 @@ long local_maxima(QSP_ARG_DECL  Data_Obj *val_dp, Data_Obj *coord_dp, Data_Obj *
 				if( n_maxima > OBJ_COLS(coord_dp) ){
 					sprintf(ERROR_STRING,"local_maxima:  coord vector %s (%d columns) needs to be enlarged!?",
 						OBJ_NAME(coord_dp),OBJ_COLS(coord_dp));
-					NWARN(ERROR_STRING);
+					warn(ERROR_STRING);
 					return(OBJ_COLS(coord_dp));
 				}
 				*val_p++ = v;

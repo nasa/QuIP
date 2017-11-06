@@ -63,7 +63,7 @@ static Serial_Port *default_spp=NULL;
 											\
 	if( default_spp == NULL ){						\
 		sprintf(ERROR_STRING,"%s:  no default serial port selected",rname);	\
-		WARN(ERROR_STRING);							\
+		warn(ERROR_STRING);							\
 		if( return_flag ) return;						\
 	}
 
@@ -99,7 +99,7 @@ int _open_serial_device(QSP_ARG_DECL  const char * s)
 	spp=serial_port_of(s);
 	if( spp != NULL ){
 		sprintf(ERROR_STRING,"Serial port %s is already open",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(spp->sp_fd);
 	}
 
@@ -107,7 +107,7 @@ fprintf(stderr,"opening %s...\n",s);
 	fd=open(s,O_RDWR);
 	if( fd < 0 ){
 		sprintf(ERROR_STRING,"error opening tty file \"%s\"",s);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(fd);
 	}
 fprintf(stderr,"%s opened...\n",s);
@@ -117,12 +117,12 @@ fprintf(stderr,"%s opened...\n",s);
 	if( flock(fd,LOCK_EX|LOCK_NB) < 0 ){
 		if( errno == EWOULDBLOCK ){
 			sprintf(ERROR_STRING,"Unable to obtain exclusive lock on tty file %s",s);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 			advise("Make sure the port is not in use by another process");
 		} else {
 			perror("flock");
 			sprintf(ERROR_STRING,"unable to get exclusive lock on serial device %s",s);
-			WARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		return(-1);
 	}
@@ -156,7 +156,7 @@ static COMMAND_FUNC( do_open )
 	s=NAMEOF("device file");
 
 	if( open_serial_device(s) < 0 )
-		WARN("Error opening serial device");
+		warn("Error opening serial device");
 }
 
 void _send_serial(QSP_ARG_DECL  int fd,const u_char *chardata,int n)
@@ -167,7 +167,7 @@ void _send_serial(QSP_ARG_DECL  int fd,const u_char *chardata,int n)
 	if( fd < 0 ){
 		sprintf(ERROR_STRING,
 			"CAUTIOUS:  send_serial passed invalid file descriptor (%d)",fd);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 #endif /* CAUTIOUS */
@@ -176,12 +176,12 @@ try_again:
 	n_written = write(fd,chardata,n);
 	if( n_written < 0 ){
 		perror("write");
-		WARN("send_serial:  error writing string");
+		warn("send_serial:  error writing string");
 	} else if( n_written != n ){
 		sprintf(ERROR_STRING,
 			"send_serial:  %d chars requested, %zd actually written",
 			n,n_written);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		n -= n_written;
 		chardata += n_written;
 		goto try_again;
@@ -195,8 +195,9 @@ try_again:
 					*sto ++ = *sfr++;		\
 				} while( *(sfr-1) );
 
+#define expand_escape_sequences(str,buflen) _expand_escape_sequences(QSP_ARG  str,buflen)
 
-static void expand_escape_sequences(u_char *str,int buflen)
+static void _expand_escape_sequences(QSP_ARG_DECL  u_char *str,int buflen)
 {
 	u_char *sto,*sfr;
 
@@ -204,7 +205,7 @@ static void expand_escape_sequences(u_char *str,int buflen)
 		if( *str == '\\' ){
 			str++;
 			if( *str == 0 ){
-				NWARN("expand_escape_sequences:  single backslash at end of string");
+				warn("expand_escape_sequences:  single backslash at end of string");
 				return;
 			} else if( *str == 'r' ){
 				*(str-1) = '\r';
@@ -229,20 +230,20 @@ static void expand_escape_sequences(u_char *str,int buflen)
 				v=*str-'0';
 				str++;
 				if( *str == 0 ){
-					NWARN("expand_excape_sequences:  missing digit chars");
+					warn("expand_excape_sequences:  missing digit chars");
 					return;
 				} else if( !isdigit(*str) ){
-					NWARN("expand_excape_sequences:  missing second digit");
+					warn("expand_excape_sequences:  missing second digit");
 					return;
 				}
 				v *= 8;
 				v += *str - '0';
 				str++;
 				if( *str == 0 ){
-					NWARN("expand_excape_sequences:  missing digit char");
+					warn("expand_excape_sequences:  missing digit char");
 					return;
 				} else if( !isdigit(*str) ){
-					NWARN("expand_excape_sequences:  missing third digit");
+					warn("expand_excape_sequences:  missing third digit");
 					return;
 				}
 				v *= 8;
@@ -282,7 +283,7 @@ static int _get_hex_digit(QSP_ARG_DECL  int c)
 	if( c>='A' && c<= 'F' ) return(10+c-'A');
 
 	sprintf(ERROR_STRING,"get_hex_digit:  Illegal hex digit '%c' (0x%x)",c,c);
-	NWARN(ERROR_STRING);
+	warn(ERROR_STRING);
 	return(-1);
 }
 
@@ -311,7 +312,7 @@ int _hex_byte(QSP_ARG_DECL  const u_char *s)
 	if( d1 < 0 ) return(-1);
 
 	if( *s==0 ){
-		NWARN("missing second hex digit");
+		warn("missing second hex digit");
 		return(-1);
 	}
 
@@ -349,7 +350,7 @@ int _n_serial_chars(QSP_ARG_DECL  int fd)
 	}
 	return(n);
 #else // ! FIONREAD
-    WARN("n_serial_chars:  No FIONREAD ioctl!?");
+    warn("n_serial_chars:  No FIONREAD ioctl!?");
     return 1;
 #endif // ! FIONREAD
 }
@@ -403,7 +404,7 @@ ssize_t _recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize, int max_want)
 		sprintf(ERROR_STRING,
 "recv_somex:  bufsize (%d) must be at least 1 greater than max_want (%d)",
 			bufsize,max_want);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		abort();
 	}
 
@@ -428,7 +429,7 @@ ssize_t _recv_somex(QSP_ARG_DECL  int fd,u_char *buf,int bufsize, int max_want)
 		n=(bufsize-1);
 	}
 
-	if( (n_raw_chars=read(fd,buf,n)) != n ) WARN("error reading");
+	if( (n_raw_chars=read(fd,buf,n)) != n ) warn("error reading");
 
 	buf[n_raw_chars]=0;
 /*
@@ -476,7 +477,7 @@ static char * _recv_line(QSP_ARG_DECL  Serial_Port *spp)
 			spp->sp_rawbuf[i]!='\r' ){
 
 			if( n_lin_chars >= LLEN ){
-				WARN("line buffer overflow");
+				warn("line buffer overflow");
 
 				sprintf(ERROR_STRING,
 			"i = %d, n_raw_chars = %zd, n_lin_chars = %d",
@@ -675,7 +676,7 @@ static COMMAND_FUNC( do_tty_redir )
 	spp = serial_port_of(s);
 	if( spp != NULL ) {
 		sprintf(ERROR_STRING,"Serial port %s is already open, close before calling redir",spp->sp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return;
 	}
 
@@ -688,9 +689,9 @@ static COMMAND_FUNC( do_tty_redir )
 	sprintf(cmd_str,"stty cooked < %s",s);
 	status=system(cmd_str);
 	if( status < 0 )
-		WARN("Failed to reset serial line!?");
+		warn("Failed to reset serial line!?");
 #else // ! BUILD_FOR_IOS
-	WARN("tty_redir:  NOT setting line to cooked mode (system call not available for iOS!?");
+	warn("tty_redir:  NOT setting line to cooked mode (system call not available for iOS!?");
 #endif // ! BUILD_FOR_IOS
     
 	/* ttys_are_interactive=0; */		/* assume a machine is connected */
@@ -705,14 +706,14 @@ static void close_serial_device(SINGLE_QSP_ARG_DECL)
 	CHECK_DEFAULT_SERIAL_PORT("close_serial_device",1);
 
 	if( default_spp->sp_fd < 0 ){
-		WARN("no serial port open, can't close");
+		warn("no serial port open, can't close");
 		return;
 	}
 
 	if( close(default_spp->sp_fd) < 0 ){
 		tell_sys_error("close");
 		sprintf(ERROR_STRING,"error closing serial device %s",default_spp->sp_name);
-		WARN(ERROR_STRING);
+		warn(ERROR_STRING);
 	}
 	del_serial_port(default_spp);
 	default_spp = NULL;
@@ -756,7 +757,7 @@ static COMMAND_FUNC( do_connect )
 		return;
 	}
 	if( spp1 == spp2 ){
-		WARN("the two serial ports must be different");
+		warn("the two serial ports must be different");
 		return;
 	}
 
@@ -764,7 +765,7 @@ static COMMAND_FUNC( do_connect )
 		n1 = int_nreadable(spp1);
 		if( n1 > 0 ){
 			if( (nr=recv_somex(spp1->sp_fd,spp1->sp_rawbuf,RAWBUF_SIZE,0)) == 0 ){
-				WARN("Oops - no chars received on port 1, expected some!?");
+				warn("Oops - no chars received on port 1, expected some!?");
 			} else {
 				if( nr!=n1 ){
 					sprintf(ERROR_STRING,"Expected %d chars on %s, received %zd!?",
@@ -780,7 +781,7 @@ dump_char_buf(spp1->sp_rawbuf);
 		n2 = int_nreadable(spp2);
 		if( n2 > 0 ){
 			if( (nr=recv_somex(spp2->sp_fd,spp2->sp_rawbuf,RAWBUF_SIZE,0)) == 0 ){
-				WARN("Oops - no chars received on port 2, expected some!?");
+				warn("Oops - no chars received on port 2, expected some!?");
 			} else {
 				if( nr!=n2 ){
 					sprintf(ERROR_STRING,"Expected %d chars on %s, received %zd!?",
@@ -890,7 +891,7 @@ advise(ERROR_STRING);
 		}
 	}
 #else // ! TTY_CTL
-	WARN("Sorry, build with TTY_CTL to connect console to a serial port.");
+	warn("Sorry, build with TTY_CTL to connect console to a serial port.");
 #endif // ! TTY_CTL
 }
 

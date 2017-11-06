@@ -53,7 +53,7 @@ COMMAND_FUNC( do_fork )
 	s=NAMEOF("string to interpret in forked task");
 
 	if( child_pid != -1 ){
-		WARN("Sorry, can't have more than 1 child");
+		warn("Sorry, can't have more than 1 child");
 		return;
 	}
 	if( (child_pid=fork()) == 0 ){
@@ -78,7 +78,7 @@ COMMAND_FUNC( do_wait_child )
 {
 #ifdef HAVE_FORK
 	if( child_pid == -1 ){
-		WARN("No child to wait for");
+		warn("No child to wait for");
 		return;
 	}
 	if( wait((void *)0) == -1 )

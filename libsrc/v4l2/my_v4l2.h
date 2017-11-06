@@ -40,7 +40,8 @@ extern void release_oldest_buffer(QSP_ARG_DECL  Video_Device *);
 #endif /* HAVE_V4L2 */
 
 /* fastdown.c */
-extern void fast_downsample(Data_Obj *,Data_Obj *);
+extern void _fast_downsample(QSP_ARG_DECL  Data_Obj *,Data_Obj *);
+#define fast_downsample(dp1,dp2) _fast_downsample(QSP_ARG  dp1,dp2)
 
 
 #endif /* _MY_V4L2_H_ */
