@@ -133,7 +133,6 @@
 		71828F521726179700F7CB35 /* lookmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F501726179700F7CB35 /* lookmenu.c */; };
 		71828F531726179700F7CB35 /* lump.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F511726179700F7CB35 /* lump.c */; };
 		71828F5A172617A900F7CB35 /* mlfit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F54172617A900F7CB35 /* mlfit.c */; };
-		71828F5B172617A900F7CB35 /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F55172617A900F7CB35 /* ptoz.c */; };
 		71828F5C172617A900F7CB35 /* rxvals.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F56172617A900F7CB35 /* rxvals.c */; };
 		71828F5D172617A900F7CB35 /* stair.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F57172617A900F7CB35 /* stair.c */; };
 		71828F5E172617A900F7CB35 /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
@@ -382,7 +381,6 @@
 		7C4332031D4D43FC0033687C /* lookmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F501726179700F7CB35 /* lookmenu.c */; };
 		7C4332041D4D43FC0033687C /* lump.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F511726179700F7CB35 /* lump.c */; };
 		7C4332051D4D43FC0033687C /* mlfit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F54172617A900F7CB35 /* mlfit.c */; };
-		7C4332061D4D43FC0033687C /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F55172617A900F7CB35 /* ptoz.c */; };
 		7C4332071D4D43FC0033687C /* rxvals.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F56172617A900F7CB35 /* rxvals.c */; };
 		7C4332081D4D43FC0033687C /* stair.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F57172617A900F7CB35 /* stair.c */; };
 		7C4332091D4D43FC0033687C /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
@@ -661,7 +659,6 @@
 		7C43332A1D4D49450033687C /* lookmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F501726179700F7CB35 /* lookmenu.c */; };
 		7C43332B1D4D49450033687C /* lump.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F511726179700F7CB35 /* lump.c */; };
 		7C43332C1D4D49450033687C /* mlfit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F54172617A900F7CB35 /* mlfit.c */; };
-		7C43332D1D4D49450033687C /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F55172617A900F7CB35 /* ptoz.c */; };
 		7C43332E1D4D49450033687C /* rxvals.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F56172617A900F7CB35 /* rxvals.c */; };
 		7C43332F1D4D49450033687C /* stair.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F57172617A900F7CB35 /* stair.c */; };
 		7C4333301D4D49450033687C /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
@@ -945,7 +942,6 @@
 		7C4D6DF61D5111A400D34AC4 /* lookmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F501726179700F7CB35 /* lookmenu.c */; };
 		7C4D6DF71D5111A400D34AC4 /* lump.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F511726179700F7CB35 /* lump.c */; };
 		7C4D6DF81D5111A400D34AC4 /* mlfit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F54172617A900F7CB35 /* mlfit.c */; };
-		7C4D6DF91D5111A400D34AC4 /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F55172617A900F7CB35 /* ptoz.c */; };
 		7C4D6DFA1D5111A400D34AC4 /* rxvals.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F56172617A900F7CB35 /* rxvals.c */; };
 		7C4D6DFB1D5111A400D34AC4 /* stair.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F57172617A900F7CB35 /* stair.c */; };
 		7C4D6DFC1D5111A400D34AC4 /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
@@ -1276,7 +1272,6 @@
 		7CB671181F9484C5001FFADF /* lookmenu.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F501726179700F7CB35 /* lookmenu.c */; };
 		7CB671191F9484C5001FFADF /* lump.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F511726179700F7CB35 /* lump.c */; };
 		7CB6711A1F9484C5001FFADF /* mlfit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F54172617A900F7CB35 /* mlfit.c */; };
-		7CB6711B1F9484C5001FFADF /* ptoz.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F55172617A900F7CB35 /* ptoz.c */; };
 		7CB6711C1F9484C5001FFADF /* rxvals.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F56172617A900F7CB35 /* rxvals.c */; };
 		7CB6711D1F9484C5001FFADF /* stair.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F57172617A900F7CB35 /* stair.c */; };
 		7CB6711E1F9484C5001FFADF /* stc_edit.c in Sources */ = {isa = PBXBuildFile; fileRef = 71828F58172617A900F7CB35 /* stc_edit.c */; };
@@ -1652,7 +1647,6 @@
 		71828F501726179700F7CB35 /* lookmenu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lookmenu.c; sourceTree = "<group>"; };
 		71828F511726179700F7CB35 /* lump.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lump.c; sourceTree = "<group>"; };
 		71828F54172617A900F7CB35 /* mlfit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mlfit.c; sourceTree = "<group>"; };
-		71828F55172617A900F7CB35 /* ptoz.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ptoz.c; sourceTree = "<group>"; };
 		71828F56172617A900F7CB35 /* rxvals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rxvals.c; sourceTree = "<group>"; };
 		71828F57172617A900F7CB35 /* stair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stair.c; sourceTree = "<group>"; };
 		71828F58172617A900F7CB35 /* stc_edit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stc_edit.c; sourceTree = "<group>"; };
@@ -2286,7 +2280,6 @@
 				71828F60172617B800F7CB35 /* weibull.c */,
 				71828F61172617B800F7CB35 /* xvalmenu.c */,
 				71828F54172617A900F7CB35 /* mlfit.c */,
-				71828F55172617A900F7CB35 /* ptoz.c */,
 				71828F56172617A900F7CB35 /* rxvals.c */,
 				71828F57172617A900F7CB35 /* stair.c */,
 				71828F58172617A900F7CB35 /* stc_edit.c */,
@@ -2874,7 +2867,6 @@
 				71828F521726179700F7CB35 /* lookmenu.c in Sources */,
 				71828F531726179700F7CB35 /* lump.c in Sources */,
 				71828F5A172617A900F7CB35 /* mlfit.c in Sources */,
-				71828F5B172617A900F7CB35 /* ptoz.c in Sources */,
 				71828F5C172617A900F7CB35 /* rxvals.c in Sources */,
 				7C61EA411E1B080A0056CC01 /* vl2_platform.c in Sources */,
 				71828F5D172617A900F7CB35 /* stair.c in Sources */,
@@ -3150,7 +3142,6 @@
 				7C4332031D4D43FC0033687C /* lookmenu.c in Sources */,
 				7C4332041D4D43FC0033687C /* lump.c in Sources */,
 				7C4332051D4D43FC0033687C /* mlfit.c in Sources */,
-				7C4332061D4D43FC0033687C /* ptoz.c in Sources */,
 				7C4332071D4D43FC0033687C /* rxvals.c in Sources */,
 				7C4332081D4D43FC0033687C /* stair.c in Sources */,
 				7C4332091D4D43FC0033687C /* stc_edit.c in Sources */,
@@ -3427,7 +3418,6 @@
 				7C43332A1D4D49450033687C /* lookmenu.c in Sources */,
 				7C43332B1D4D49450033687C /* lump.c in Sources */,
 				7C43332C1D4D49450033687C /* mlfit.c in Sources */,
-				7C43332D1D4D49450033687C /* ptoz.c in Sources */,
 				7C43332E1D4D49450033687C /* rxvals.c in Sources */,
 				7C61EA431E1B08EA0056CC01 /* vl2_platform.c in Sources */,
 				7C43332F1D4D49450033687C /* stair.c in Sources */,
@@ -3693,7 +3683,6 @@
 				7C4D6DF61D5111A400D34AC4 /* lookmenu.c in Sources */,
 				7C4D6DF71D5111A400D34AC4 /* lump.c in Sources */,
 				7C4D6DF81D5111A400D34AC4 /* mlfit.c in Sources */,
-				7C4D6DF91D5111A400D34AC4 /* ptoz.c in Sources */,
 				7C4D6DFA1D5111A400D34AC4 /* rxvals.c in Sources */,
 				7C61EA441E1B08EB0056CC01 /* vl2_platform.c in Sources */,
 				7C4D6DFB1D5111A400D34AC4 /* stair.c in Sources */,
@@ -3969,7 +3958,6 @@
 				7CB671181F9484C5001FFADF /* lookmenu.c in Sources */,
 				7CB671191F9484C5001FFADF /* lump.c in Sources */,
 				7CB6711A1F9484C5001FFADF /* mlfit.c in Sources */,
-				7CB6711B1F9484C5001FFADF /* ptoz.c in Sources */,
 				7CB6711C1F9484C5001FFADF /* rxvals.c in Sources */,
 				7CB6711D1F9484C5001FFADF /* stair.c in Sources */,
 				7CB6711E1F9484C5001FFADF /* stc_edit.c in Sources */,
