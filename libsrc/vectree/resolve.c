@@ -259,8 +259,7 @@ static void find_uk_nodes(QSP_ARG_DECL  Vec_Expr_Node *enp,List *lp)
 			ALL_CTL_FLOW_CASES
 			ALL_CONDASS_CASES
 			ALL_NUMERIC_COMPARISON_CASES
-			BINARY_BOOLOP_CASES
-			case T_BOOL_NOT:
+			ALL_BOOLOP_CASES
 
 			case T_SUM:
 			case T_CALLFUNC:
@@ -472,6 +471,9 @@ dump_subrt(srp);
 	resolution_flags = save_res;
 }
 
+// find_known_return - recursively descend the tree, looking for
+// a return node with a known shape
+
 #define find_known_return(enp) _find_known_return(QSP_ARG  enp)
 
 static Vec_Expr_Node * _find_known_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
@@ -482,6 +484,10 @@ static Vec_Expr_Node * _find_known_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
 	assert(enp!=NULL);
 
 	switch(VN_CODE(enp)){
+		case T_FOR:
+			// probably don't need to descend the 3
+			// children, but no harm in doing so to be safe.
+			break;
 		case T_RETURN:
 			assert( VN_SHAPE(enp) != NULL );
 
@@ -512,6 +518,10 @@ static Vec_Expr_Node * _find_known_return(QSP_ARG_DECL  Vec_Expr_Node *enp)
 		/* for all of these cases, we know there will not be a
 		 * child return node, so we return right away
 		 */
+		ALL_NUMERIC_COMPARISON_CASES
+		ALL_BOOLOP_CASES
+		ALL_INCDEC_CASES
+
 		case T_DECL_STAT:
 		case T_DECL_STAT_LIST:
 		case T_INFO:

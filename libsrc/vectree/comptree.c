@@ -2327,10 +2327,12 @@ static int _count_name_refs(QSP_ARG_DECL  Vec_Expr_Node *enp,const char *lhs_nam
 			}
 			break;
 
+#ifdef SCALARS_NOT_OBJECTS
+		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
 		case T_FUNCPTR:
 		case T_POINTER:
 		case T_STR_PTR:
-		case T_SCALAR_VAR:
 		case T_DYN_OBJ:		// _count_name_refs
 			if( strcmp(VN_STRING(enp),lhs_name) ){
 				SET_VN_LHS_REFS(enp,0);
@@ -4405,7 +4407,9 @@ dump_tree(enp);
 		case T_CSUBSAMP:
 		case T_LIT_INT:
 		case T_LIT_DBL:
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
 		case T_SET_FUNCPTR:
 		case T_CURLY_SUBSCR:	/* compile_node */
 		case T_SQUARE_SUBSCR:		/* compile_node */
@@ -5634,6 +5638,7 @@ describe_shape(VN_SHAPE(decl_enp));
 			point_node_shape(enp,scalar_shape(PREC_DI));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
 			break;
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:
 			{
 			Identifier *idp;
@@ -5645,6 +5650,7 @@ describe_shape(VN_SHAPE(decl_enp));
 			point_node_shape(enp,scalar_shape(SHP_PREC(ID_SHAPE(idp))));
 			}
 			break;
+#endif // SCALARS_NOT_OBJECTS
 		case T_LIT_DBL:			/* prelim_node_shape */
 			point_node_shape(enp,scalar_shape(PREC_DP));
 			SET_VN_FLAG_BITS(enp, NODE_HAS_CONST_VALUE);
@@ -6775,11 +6781,14 @@ void _update_tree_shape(QSP_ARG_DECL  Vec_Expr_Node *enp)
 
 const char *_get_lhs_name(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
+
 	switch(VN_CODE(enp)){
+#ifdef SCALARS_NOT_OBJECTS
+		case T_SCALAR_VAR:
+#endif // SCALARS_NOT_OBJECTS
 		case T_POINTER:
 		case T_STR_PTR:
 		case T_DYN_OBJ:
-		case T_SCALAR_VAR:
 			return(VN_STRING(enp));
 		case T_STATIC_OBJ:
 			return(OBJ_NAME(VN_OBJ(enp)));

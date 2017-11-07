@@ -515,9 +515,11 @@ void delete_id(QSP_ARG_DECL  Item *ip)
 		case ID_STRING:
 			rls_reference(ID_REF(idp));
 			break;
-		case ID_SCALAR:
-			givbuf(ID_SVAL_PTR(idp));
-			break;
+#ifdef SCALARS_NOT_OBJECTS
+//		case ID_SCALAR:
+//			givbuf(ID_SVAL_PTR(idp));
+//			break;
+#endif // SCALARS_NOT_OBJECTS
 		case ID_POINTER:
 			givbuf(ID_PTR(idp));
 			break;

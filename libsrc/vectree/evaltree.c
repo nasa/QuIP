@@ -2536,6 +2536,7 @@ static void _eval_print_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 	eval_enp = enp;
 
 	switch(VN_CODE(enp)){
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:			/* eval_print_stat */
 			idp = get_id(VN_STRING(enp));
 			assert(idp!=NULL);
@@ -2544,6 +2545,7 @@ static void _eval_print_stat(QSP_ARG_DECL Vec_Expr_Node *enp)
 			else
 				goto print_integer;
 			break;
+#endif // SCALARS_NOT_OBJECTS
 		case T_CALLFUNC:			/* eval_print_stat */
 			if( ! SCALAR_SHAPE(VN_SHAPE(enp)) ){
 				prt_msg("");
@@ -3267,7 +3269,7 @@ static void _eval_decl_stat(QSP_ARG_DECL Precision * prec_p,Vec_Expr_Node *enp, 
 			}
 		case T_SCAL_DECL:
 			SET_VN_DECL_PREC(enp, prec_p);
-			type = ID_SCALAR;
+			/*type = ID_SCALAR;*/
 			break;
 
 		case T_CSCAL_DECL:					/* eval_decl_stat */
@@ -3514,11 +3516,13 @@ show_context_stack(QSP_ARG  dobj_itp);
 	assert( idp != NULL );
 
 	switch( type ){
+#ifdef SCALARS_NOT_OBJECTS
 		case ID_SCALAR:
 			SET_ID_SVAL_PTR( idp, getbuf(sizeof(Scalar_Value)) );
 			copy_node_shape(enp,scalar_shape(PREC_CODE(prec_p)));
 			set_id_shape(idp,VN_SHAPE(enp));
 			break;
+#endif // SCALARS_NOT_OBJECTS
 
 		case ID_OBJ_REF:
 			// Here we create on object...
@@ -3849,6 +3853,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 
 	switch(VN_CODE(enp)){
 		/* case T_MATH1_FUNC: */	/* returns double - should have been typecast? */
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:		// eval_int_exp
 			{
 			Identifier *idp;
@@ -3857,6 +3862,7 @@ long _eval_int_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			lval = (long) cast_from_scalar_value(ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
 			return lval;
 			}
+#endif // SCALARS_NOT_OBJECTS
 
 		case T_VS_FUNC:
 			dp = eval_obj_exp(enp,NULL);
@@ -5306,8 +5312,10 @@ static double scalar_to_double(Scalar_Value *svp,Precision *prec_p)
 
 double _eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 {
-	Data_Obj *dp,*dp2;
+#ifdef SCALARS_NOT_OBJECTS
 	Identifier *idp;
+#endif // SCALARS_NOT_OBJECTS
+	Data_Obj *dp,*dp2;
 	double dval;
 	double dval2;
 	index_t index;
@@ -5336,11 +5344,13 @@ double _eval_flt_exp(QSP_ARG_DECL Vec_Expr_Node *enp)
 			delvec(dp);
 			break;
 
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:		// eval_flt_exp
 			idp = get_id(VN_STRING(enp));
 			assert(idp!=NULL);
 			dval = cast_from_scalar_value(ID_SVAL_PTR(idp), ID_PREC_PTR(idp));
 			break;
+#endif // SCALARS_NOT_OBJECTS
 			
 		case T_MINVAL:
 			dp2=eval_obj_exp(VN_CHILD(enp,0),NULL);
@@ -6475,6 +6485,9 @@ static void delete_local_objs(SINGLE_QSP_ARG_DECL)
 
 static void _eval_obj_assignment(QSP_ARG_DECL Data_Obj *dst_dp,Vec_Expr_Node *enp)
 {
+#ifdef SCALARS_NOT_OBJECTS
+	Identifier *idp;
+#endif // SCALARS_NOT_OBJECTS
 	double start,dx,dy;
 	double dval;
 	Data_Obj *dp1,*dp2,*dp3,*dp4;
@@ -6484,7 +6497,6 @@ static void _eval_obj_assignment(QSP_ARG_DECL Data_Obj *dst_dp,Vec_Expr_Node *en
 #endif /* NOT_YET */
 	Scalar_Value sval,*svp;
 	Vec_Obj_Args oa1, *oap=&oa1;
-	Identifier *idp;
 	//int i;
 	const char *s;
 	//int vf_code=(-1);
@@ -6510,6 +6522,7 @@ dump_tree(enp);
 #endif /* QUIP_DEBUG */
 
 	switch(VN_CODE(enp)){
+#ifdef SCALARS_NOT_OBJECTS
 		case T_SCALAR_VAR:	// eval_obj_assignment
 			idp = get_id(VN_STRING(enp));
 			assert(idp!=NULL);
@@ -6522,6 +6535,7 @@ dump_tree(enp);
 				assign_obj_from_scalar(enp,dst_dp,&sval);
 			}
 			break;
+#endif // SCALARS_NOT_OBJECTS
 
 		case T_BOOL_EQ:
 		case T_BOOL_NE:
@@ -7363,6 +7377,7 @@ dump_tree(enp);
 	}
 
 	// if the LHS is a scalar var, we need to do something different...
+#ifdef SCALARS_NOT_OBJECTS
 	if( VN_CODE(VN_CHILD(enp,0)) == T_SCALAR_VAR ){
 		Identifier *idp;
 		idp = get_id(VN_STRING(VN_CHILD(enp,0)));
@@ -7370,6 +7385,7 @@ dump_tree(enp);
 		assign_scalar_id(QSP_ARG  idp, VN_CHILD(enp,1));
 		return;
 	}
+#endif // SCALARS_NOT_OBJECTS
 
 	dp = eval_obj_ref(VN_CHILD(enp,0));
 	if( dp == NULL ){

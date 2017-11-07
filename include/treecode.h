@@ -1,5 +1,6 @@
 
-#ifndef BINARY_BOOLOP_CASES
+#ifndef _TREECODE_H_
+#define _TREECODE_H_
 
 typedef enum {
 	T_PROTO,				/* 0 */
@@ -244,7 +245,9 @@ typedef enum {
 	T_CHAR_FN,
 	T_CHAR_VFN,
 
+#ifdef SCALARS_NOT_OBJECTS
 	T_SCALAR_VAR,
+#endif // SCALARS_NOT_OBJECTS
 
 	N_TREE_CODES				/* this has to be last */
 } Tree_Code;
@@ -627,5 +630,5 @@ typedef enum {
 		case T_BOOL_XOR:					\
 
 
-#endif /* undef BINARY_BOOLOP_CASES */
+#endif // undef _TREECODE_H_
 

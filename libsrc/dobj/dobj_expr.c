@@ -126,6 +126,8 @@ void set_obj_funcs(
 	csub_func=cfunc;
 }
 
+#ifdef SCALARS_NOT_OBJECTS
+
 #define scalar_obj_for_id(idp) _scalar_obj_for_id(QSP_ARG  idp)
 
 static Data_Obj * _scalar_obj_for_id(QSP_ARG_DECL  Identifier *idp)
@@ -139,6 +141,8 @@ static Data_Obj * _scalar_obj_for_id(QSP_ARG_DECL  Identifier *idp)
 
 	return dp;
 }
+
+#endif // SCALARS_NOT_OBJECTS
 
 /* Evaluate a parsed expression */
 
@@ -174,7 +178,8 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 			break;
 		case N_OBJNAME:
 			s = EVAL_SCALEXP_STRING(enp->sen_child[0]);
-			//dp = (*obj_get_func)( QSP_ARG  s );
+			dp = (*obj_get_func)( QSP_ARG  s );
+#ifdef SCALARS_NOT_OBJECTS
 			dp = (*exist_func)( QSP_ARG  s );
 			if( dp == NULL ){
 				Identifier *idp;
@@ -194,6 +199,7 @@ static Data_Obj *eval_dobj_expr( QSP_ARG_DECL  Scalar_Expr_Node *enp )
 					return NULL;
 				}
 			}
+#endif // SCALARS_NOT_OBJECTS
 			break;
 		case N_SUBSCRIPT:
 			dp2=eval_dobj_expr(QSP_ARG  enp->sen_child[0]);

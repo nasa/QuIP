@@ -300,7 +300,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %token <idp> PTRNAME
 %token <idp> STRNAME
 %token <idp> LABELNAME
-%token <idp> SCALARNAME
+/* %token <idp> SCALARNAME */
 %token <idp> FUNCPTRNAME
 
 %token <e_string> LEX_STRING
@@ -354,7 +354,7 @@ int yylex(YYSTYPE *yylvp, Query_Stack *qsp);
 %type <enp> info_stat
 
 %type <enp> objref
-%type <enp> scalref
+/* %type <enp> scalref */
 %type <enp> lvalue
 %type <enp> pointer
 %type <enp> func_ptr
@@ -428,12 +428,14 @@ subsamp_spec	:	expression ':' expression ':' expression
 			}
 		;
 
-scalref		: SCALARNAME
-			{
-			$$=node0(T_SCALAR_VAR);
-			SET_VN_STRING($$, savestr(ID_NAME($1)));
-			}
-		;
+/*
+//scalref		: SCALARNAME
+//			{
+//			$$=node0(T_SCALAR_VAR);
+//			SET_VN_STRING($$, savestr(ID_NAME($1)));
+//			}
+//		;
+		*/
 
 objref		: OBJNAME
 			{
@@ -557,11 +559,13 @@ expression	: FIX_SIZE '(' expression ')'
 			// BUG - we cast to int, but this could be a long???
 			SET_VN_INTVAL($$, (int) $1);
 			}
-		| SCALARNAME
-			{
-			$$=node0(T_SCALAR_VAR);
-			SET_VN_STRING($$, savestr(ID_NAME($1)));
-			}
+		/*
+//		| SCALARNAME
+//			{
+//			$$=node0(T_SCALAR_VAR);
+//			SET_VN_STRING($$, savestr(ID_NAME($1)));
+//			}
+			*/
 		| expression LOG_EQ expression {
 			$$=node2(T_BOOL_EQ,$1,$3);
 			}
@@ -938,7 +942,7 @@ str_assgn	: str_ptr '=' print_list {
  */
 
 lvalue		: objref
-		| scalref
+		/* | scalref */
 		;
 
 assignment	: lvalue '=' expression {
@@ -1411,9 +1415,11 @@ decl_identifier	: NEWNAME	/* saved */
 			{ $$ = savestr(ID_NAME($1)); }
 		| STRNAME
 			{ $$ = savestr(ID_NAME($1)); }
-		| SCALARNAME
-			{
-			$$ = savestr(ID_NAME($1)); }
+		/*
+//		| SCALARNAME
+//			{
+//			$$ = savestr(ID_NAME($1)); }
+			*/
 		|	precision
 			{
 			yyerror(THIS_QSP,  (char *)"illegal attempt to use a keyword as an identifier");
@@ -2708,9 +2714,9 @@ WARN(ERROR_STRING);
 				yylvp->dp = (Data_Obj *)REF_SBUF(ID_REF(idp));
 			}
 			return(OBJNAME);
-		} else if( IS_SCALAR_ID(idp) ){
-			yylvp->idp = idp;
-			return(SCALARNAME);
+//		} else if( IS_SCALAR_ID(idp) ){
+//			yylvp->idp = idp;
+//			return(SCALARNAME);
 		} else if( IS_LABEL(idp) ){
 			yylvp->idp = idp;
 			return(LABELNAME);

@@ -13,7 +13,7 @@ typedef enum {
 	ID_STRING,	// 3
 	ID_FUNCPTR,	// 4
 	ID_LABEL,	// 5
-	ID_SCALAR,	// 6
+/*	ID_SCALAR,	// 6	*/
 	ID_INVALID
 } Id_Type;
 
