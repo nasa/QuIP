@@ -75,18 +75,18 @@ static const char *scanlist[]={"raster","scattered","random"};
 static COMMAND_FUNC( do_pickscan )
 {
 	switch( WHICH_ONE("type of scanning pattern",3,scanlist) ){
-		case 0: scan_func=get_xy_raster_point; break;
-		case 1: scan_func=get_xy_scattered_point; break;
-		case 2: scan_func=get_xy_random_point; break;
+		case 0: scan_func=_get_xy_raster_point; break;
+		case 1: scan_func=_get_xy_scattered_point; break;
+		case 2: scan_func=_get_xy_random_point; break;
 	}
 }
 
 static COMMAND_FUNC( do_pickscan3d )
 {
 	switch( WHICH_ONE("type of scanning pattern",3,scanlist) ){
-		case 0: scan_func3d=get_3d_raster_point; break;
-		case 1: scan_func3d=get_3d_scattered_point; break;
-		case 2: scan_func3d=get_3d_random_point; break;
+		case 0: scan_func3d=_get_3d_raster_point; break;
+		case 1: scan_func3d=_get_3d_scattered_point; break;
+		case 2: scan_func3d=_get_3d_random_point; break;
 	}
 }
 

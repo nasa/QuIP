@@ -67,26 +67,28 @@ static double dich_sos(void);
 static void adjust_dich_sos(dimension_t x,dimension_t y,double factor);
 static void adjust_dich_ferror(dimension_t x,dimension_t y,double factor);
 
-static int good_location(incr_t x, incr_t y)
+#define good_location(x, y) _good_location(QSP_ARG  x, y)
+
+static int _good_location(QSP_ARG_DECL  incr_t x, incr_t y)
 {
 	if( !initialized ) {
-		NWARN("not initialized");
+		warn("not initialized");
 		return(0);
 	}
 
 	if( x < 0 || x >= OBJ_COLS(halftone_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "good_location:  x coordinate %d is out of range for image %s (0-%d)",
 			x,OBJ_NAME(halftone_dp),OBJ_COLS(halftone_dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 
 	if( y < 0 || y >= OBJ_ROWS(halftone_dp) ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "good_location:  y coordinate %d is out of range for image %s (0-%d)",
 			y,OBJ_NAME(halftone_dp),OBJ_ROWS(halftone_dp));
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return(0);
 	}
 	return(1);
@@ -110,8 +112,8 @@ static void init_ferror(void)
 static void adjust_dich_ferror(dimension_t x,dimension_t y,double factor)
 {
 /*
-sprintf(DEFAULT_ERROR_STRING,"adjust_dich_ferror %d %d:  factor = %g",x,y,factor);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"adjust_dich_ferror %d %d:  factor = %g",x,y,factor);
+advise(ERROR_STRING);
 */
 	adjust_ferror(lum_ferr_dp,lum_err_dp,lum_filt_dp,x,y,factor);
 	adjust_ferror(rg_ferr_dp,rg_err_dp,rg_filt_dp,x,y,factor);
@@ -123,7 +125,7 @@ static void act_init(SINGLE_QSP_ARG_DECL)
 	float *fptr;
 
 	if( dich2opp_mat == NULL ){
-		WARN("transformation matrix not defined");
+		warn("transformation matrix not defined");
 		return;
 	}
 sprintf(ERROR_STRING,"BEGIN act_init, matrix = %s",OBJ_NAME(dich2opp_mat));
@@ -213,12 +215,12 @@ static void _recalc_error(QSP_ARG_DECL  dimension_t x,dimension_t y,int mask)
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"recalc_error %d %d  %d:  act %f %f",
+sprintf(ERROR_STRING,"recalc_error %d %d  %d:  act %f %f",
 x,y,mask,lum,rg);
-advise(DEFAULT_ERROR_STRING);
-sprintf(DEFAULT_ERROR_STRING,"recalc_error %d %d  %d:  des %f %f",
+advise(ERROR_STRING);
+sprintf(ERROR_STRING,"recalc_error %d %d  %d:  des %f %f",
 x,y,mask,deslum,desrg);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -252,29 +254,29 @@ static int setup_dich_requantize(SINGLE_QSP_ARG_DECL)
 	Precision *prec_p;
 
 	if( halftone_dp == NULL ){
-		WARN("output image not specified");
+		warn("output image not specified");
 		return(ERROR_RETURN);
 	}
 	if( deslum_dp == NULL || desrg_dp == NULL ){
-		WARN("input images not specified");
+		warn("input images not specified");
 		return(ERROR_RETURN);
 	}
 
 	if( lum_filt_dp == NULL ){
-		WARN("filters not specified");
+		warn("filters not specified");
 		return(ERROR_RETURN);
 	}
 
 	if( OBJ_ROWS(halftone_dp) != OBJ_ROWS(deslum_dp) ||
 		OBJ_COLS(halftone_dp) != OBJ_COLS(deslum_dp) ){
-		WARN("input/output size mismatch");
+		warn("input/output size mismatch");
 		return(ERROR_RETURN);
 	}
 
 	if( (OBJ_ROWS(deslum_dp) != OBJ_COLS(deslum_dp)) &&
-		( scan_func == get_xy_scattered_point) ){
+		( scan_func == _get_xy_scattered_point) ){
 
-		WARN("input image must be square for scattered scanning");
+		warn("input image must be square for scattered scanning");
 		return(ERROR_RETURN);
 	}
 
@@ -292,7 +294,7 @@ static int setup_dich_requantize(SINGLE_QSP_ARG_DECL)
 	rg_ferr_dp = mk_img("rg_ferror",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
 	if( lum_ferr_dp == NULL || rg_ferr_dp == NULL ){
-		WARN("couldn't create filtered error images");
+		warn("couldn't create filtered error images");
 		return(ERROR_RETURN);
 	}
 
@@ -301,7 +303,7 @@ static int setup_dich_requantize(SINGLE_QSP_ARG_DECL)
 	rg_err_dp = mk_img("rg_error",
 		OBJ_ROWS(halftone_dp),OBJ_COLS(halftone_dp),1,prec_p);
 	if( lum_err_dp == NULL || rg_err_dp == NULL ){
-		WARN("couldn't create error images");
+		warn("couldn't create error images");
 		return(ERROR_RETURN);
 	}
 
@@ -332,7 +334,7 @@ COMMAND_FUNC( init_dich_requant )
 	/* initialize error images */
 
 	if( halftone_dp == NULL ){
-		NWARN("init_dich_requant:  no halftone image specified");
+		warn("init_dich_requant:  no halftone image specified");
 		return;
 	}
 	advise("init_dich_requant:  calculating error");
@@ -374,9 +376,9 @@ static void adjust_dich_sos(dimension_t x,dimension_t y,double factor)
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"adjust_dich_sos %d %d %g:  lum_sos = %g, rg_sos = %g,   total = %g",
+sprintf(ERROR_STRING,"adjust_dich_sos %d %d %g:  lum_sos = %g, rg_sos = %g,   total = %g",
 x,y,factor,lum_sos,rg_sos,the_sos);
-advise(DEFAULT_ERROR_STRING);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -390,8 +392,8 @@ static void _try_it(QSP_ARG_DECL  int mask,dimension_t x,dimension_t y)
 #ifdef QUIP_DEBUG
 /*
 if( debug & spread_debug ){
-sprintf(DEFAULT_ERROR_STRING,"try_it %d  %d %d",mask,x,y);
-advise(DEFAULT_ERROR_STRING);
+sprintf(ERROR_STRING,"try_it %d  %d %d",mask,x,y);
+advise(ERROR_STRING);
 }
 */
 #endif /* QUIP_DEBUG */
@@ -751,7 +753,7 @@ void _dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -761,7 +763,7 @@ void _dich_scan_requant(QSP_ARG_DECL  uint32_t ntimes)
 
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
 			dich_redo_pixel(x,y);
 		}
 	}
@@ -783,7 +785,7 @@ void _dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double e
 
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -797,7 +799,7 @@ void _dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double e
 
 	for(j=0;j<ntimes;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
 			/*
 			dich_anneal_pixel(x,y,temp);
 			*/
@@ -805,7 +807,7 @@ void _dich_scan_anneal(QSP_ARG_DECL  uint32_t ntimes,double start_temp, double e
 			temp += delta_t;
 #ifdef CAUTIOUS
 			if( temp < 0 ){
-				NWARN("CAUTIOUS:  dich_scan_anneal:  temperature is negative!?");
+				warn("CAUTIOUS:  dich_scan_anneal:  temperature is negative!?");
 				temp=0.0;
 			}
 #endif /* CAUTIOUS */
@@ -820,7 +822,7 @@ void _dich_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 	dimension_t x,y;
 
 	if( _npixels == NO_PIXELS ){
-		NWARN("have to tell me which images first!");
+		warn("have to tell me which images first!");
 		return;
 	}
 
@@ -832,7 +834,7 @@ void _dich_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 
 	for(j=0;j<n_times;j++){
 		for(i=0;i<_npixels;i++){
-			(*scan_func)(i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
+			(*scan_func)(QSP_ARG  i,OBJ_COLS(halftone_dp),OBJ_ROWS(halftone_dp),&x,&y);
 			dich_migrate_pixel2(x,y);
 		}
 	}
@@ -840,8 +842,8 @@ void _dich_scan_migrate(QSP_ARG_DECL  uint32_t n_times)
 	if( n_pixels_changed == 0 ){
 		advise("No pixels changed.");
 	} else {
-		sprintf(DEFAULT_ERROR_STRING,"%d pixels changed.",n_pixels_changed);
-		advise(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"%d pixels changed.",n_pixels_changed);
+		advise(ERROR_STRING);
 	}
 }
 
