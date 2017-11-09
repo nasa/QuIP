@@ -684,9 +684,9 @@ static void mk_text_input_line(QSP_ARG_DECL  int so_code)
 
 	s = NAMEOF("default value");
 
-	if( to == NULL || s == NULL ) return;
+	if( to == NULL ) return;
 
-	SET_SOB_CONTENT(to, savestr(s));
+	SET_SOB_CONTENT(to, save_possibly_empty_str(s));
 	SET_SOB_TYPE(to, so_code);
 
 #ifdef BUILD_FOR_IOS

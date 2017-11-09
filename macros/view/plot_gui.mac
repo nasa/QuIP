@@ -8,6 +8,8 @@ Set fig_dir ./figures
 
 Define Init_Plot_GUI_Defaults 0
 
+Set plot_name default_plot	# should get plot name from cmd line?
+
 Set n_data_series 0
 Set n_grids 0
 Set show_plot_legend 0
@@ -423,7 +425,7 @@ interface
       Then "set_toggle '$plot_legend_toggle_widget_name' yes"
       Else "set_toggle '$plot_legend_toggle_widget_name' no"
     # chooser
-    chooser 'Plot type' SetPlotType 2 'points' 'bar' jpg
+    chooser 'Plot type' SetPlotType 2 'points' 'bar'
     quit
   quit
 Panel_Off $main_panel
