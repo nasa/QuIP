@@ -430,10 +430,10 @@ ITEM_INTERFACE_PROTOTYPES(Screen_Obj,scrnobj)
 
 extern Screen_Obj *dup_so(QSP_ARG_DECL  Screen_Obj *sop);
 extern void so_info(Screen_Obj *sop);
-extern Screen_Obj *get_parts(QSP_ARG_DECL const char *class_str);
-#define GET_PARTS(class_str)		get_parts(QSP_ARG  class_str)
-extern Screen_Obj *mk_menu(QSP_ARG_DECL  Screen_Obj *mip);
-#define MK_MENU(mip)			mk_menu(QSP_ARG  mip)
+extern Screen_Obj *_get_parts(QSP_ARG_DECL const char *class_str);
+#define get_parts(class_str)		_get_parts(QSP_ARG  class_str)
+extern Screen_Obj *_mk_menu(QSP_ARG_DECL  Screen_Obj *mip);
+#define mk_menu(mip)			_mk_menu(QSP_ARG  mip)
 extern void fix_names(QSP_ARG_DECL  Screen_Obj *mip,Screen_Obj *parent);
 extern void push_parent(Screen_Obj *mp);
 extern void _get_min_max_val(QSP_ARG_DECL  int *minp,int *maxp,int *valp);
