@@ -14,8 +14,10 @@
 #include "list.h"
 #include "variable.h"
 
+#ifdef THREAD_SAFE_QUERY
 // We assume that only one thread will use this at a time...
 static Query_Stack *cs_qsp=NULL;
+#endif // THREAD_SAFE_QUERY
 
 static int n_prms;
 
