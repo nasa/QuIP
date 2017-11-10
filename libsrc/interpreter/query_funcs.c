@@ -3625,7 +3625,7 @@ static void add_func_to_list(List *lp,void (*func)(SINGLE_QSP_ARG_DECL) )
 #ifdef CAUTIOUS
 	np = QLIST_HEAD(lp);
 	while(np!=NULL){
-		assert( func != ((void (*)())NODE_DATA(np)) );
+		assert( func != ((void (*)(SINGLE_QSP_ARG_DECL))NODE_DATA(np)) );
 		np = NODE_NEXT(np);
 	}
 #endif // CAUTIOUS

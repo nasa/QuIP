@@ -174,7 +174,7 @@ ITEM_INTERFACE_PROTOTYPES(Port,port)
 extern Port *get_channel(Port *mpp,int mode);
 extern void delport(QSP_ARG_DECL  Port *mpp);
 extern void portinfo(QSP_ARG_DECL  Port *mpp);
-extern void close_all_ports();
+//extern void close_all_ports();
 
 /* xmitrecv.c */
 extern int check_port_data(QSP_ARG_DECL  Port *mpp, uint32_t usecs);
@@ -199,7 +199,7 @@ extern void if_pipe(int);
 /* server.c & client.c */
 extern void set_max_client_retries(QSP_ARG_DECL  int n);
 extern int get_connection(QSP_ARG_DECL  Port *mpp);
-extern void nofunc();
+extern void nofunc(void);
 extern void set_port_event_func( void (*func)(void) );
 extern void port_disable_events(void);
 extern void port_enable_events(void);

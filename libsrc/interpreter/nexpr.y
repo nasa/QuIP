@@ -16,7 +16,7 @@
 #include <limits.h>
 #endif // HAVE_LIMITS_H
 
-double rn_number();
+double rn_number(double);
 
 #include "nexpr.h"
 #include "func_helper.h"

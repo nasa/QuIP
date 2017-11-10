@@ -57,10 +57,10 @@ static int whkeyword(Keyword *table,const char *str);
 
 double parse_stuff(SINGLE_QSP_ARG_DECL);
 
-double nullfunc();
-double dummyfunc();
-double rn_number();
-double dstrcmp();
+//double nullfunc();
+//double dummyfunc();
+double rn_number(double);
+double dstrcmp(char *,char *);
 
 /* We use a fixed number of static string buffers to hold string names.
  * This works ok if we have a short program, or if we use the strings

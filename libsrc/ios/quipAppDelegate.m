@@ -282,7 +282,7 @@ static void clear_selection(Screen_Obj *sop, NSIndexPath *path )
 
 // Call a function on all of the selections (in a multi-chooser)
 
-static int path_iterate(Screen_Obj *sop, void (*func)() )
+static int path_iterate(Screen_Obj *sop, void (*func)(Screen_Obj *,NSIndexPath *) )
 {
 #ifdef BUILD_FOR_IOS
 	UITableView *tableView = (UITableView *) SOB_CONTROL(sop);

@@ -456,7 +456,7 @@ void make_message(QSP_ARG_DECL  Screen_Obj *sop)
 
 	sprintf(s,"%s:  %s",SOB_NAME(sop),SOB_CONTENT(sop));
 	//w=PIXELS_PER_CHAR*strlen(s)+EXTRA_WIDTH;
-	w=globalAppDelegate.dev_size.width,
+	w=globalAppDelegate.dev_size.width;
 	f=CGRectMake(PO_CURR_X(curr_panel),PO_CURR_Y(curr_panel),w,BUTTON_HEIGHT);
 	l=[[UILabel alloc] initWithFrame:f];
 	l.text = STRINGOBJ( s );

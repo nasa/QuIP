@@ -19,7 +19,7 @@ extern int	rv_truncate(RV_Inode *,dimension_t);
 extern int	legal_rv_filename(const char *);
 extern void	traverse_rv_inodes( QSP_ARG_DECL  void (*f)(QSP_ARG_DECL  RV_Inode *) );
 extern int	insure_default_rv(SINGLE_QSP_ARG_DECL);
-extern int	rv_get_ndisks();
+extern int	rv_get_ndisks(void);
 extern void	rv_sync(SINGLE_QSP_ARG_DECL);
 extern int	remember_frame_info(RV_Inode *inp, int index,
 				USHORT_ARG nerr, dimension_t *frames);

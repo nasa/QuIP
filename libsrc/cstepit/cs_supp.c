@@ -168,7 +168,7 @@ static void evaluate_error_c(void)
 	setfobj(err);
 }
 
-void run_cstepit_c(QSP_ARG_DECL  float (*func)())
+void run_cstepit_c(QSP_ARG_DECL  float (*func)(void))
 {
 	init_cstepit_params(SINGLE_QSP_ARG);
 
