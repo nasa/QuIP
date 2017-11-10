@@ -36,8 +36,12 @@ extern "C" {
 
 // This used to be a macro - do we still need it?
 extern Query * query_at_level(QSP_ARG_DECL  int l);
-extern Query *new_query(void);
-extern void rls_query(Query *);
+extern Query *_new_query(SINGLE_QSP_ARG_DECL);
+#define new_query() _new_query(SINGLE_QSP_ARG)
+
+extern void _rls_query(QSP_ARG_DECL  Query *);
+#define rls_query(qp) _rls_query(QSP_ARG  qp)
+
 extern int query_has_text(Query *);
 extern void exit_current_file(SINGLE_QSP_ARG_DECL);
 extern void exit_current_macro(SINGLE_QSP_ARG_DECL);
@@ -145,7 +149,8 @@ extern void set_discard_func(void (*func)(SINGLE_QSP_ARG_DECL) );
 extern void init_aux_menus(Query_Stack *qsp);
 
 // complete.c
-extern void simulate_typing(const char *str);
+extern void _simulate_typing(QSP_ARG_DECL  const char *str);
+#define simulate_typing(str) _simulate_typing(QSP_ARG  str)
 
 // query_stack.h
 extern Query_Stack *init_first_query_stack(void);
@@ -249,7 +254,8 @@ extern COMMAND_FUNC( do_dobj_menu );
 // features.c
 extern COMMAND_FUNC( do_list_features );
 
-extern void init_builtins(void);
+extern void _init_builtins(SINGLE_QSP_ARG_DECL);
+#define init_builtins() _init_builtins(SINGLE_QSP_ARG)
 extern void _push_menu(QSP_ARG_DECL  Menu *mp);
 #define push_menu(mp) _push_menu(QSP_ARG  mp)
 
@@ -298,7 +304,9 @@ extern int intractive(SINGLE_QSP_ARG_DECL);
 extern void set_args(QSP_ARG_DECL  int ac,char** av);
 extern String_Buf * read_macro_body(SINGLE_QSP_ARG_DECL);
 extern Macro_Arg ** setup_macro_args(QSP_ARG_DECL int n);
-extern Macro_Arg ** create_generic_macro_args(int n);
+extern Macro_Arg ** _create_generic_macro_args(QSP_ARG_DECL  int n);
+#define create_generic_macro_args(n) _create_generic_macro_args(QSP_ARG  n)
+
 extern Macro * create_macro(QSP_ARG_DECL  const char *name, int n, Macro_Arg **ma_tbl, String_Buf *sbp, int lineno);
 extern void set_query_readfunc( QSP_ARG_DECL
 	char * (*func)(QSP_ARG_DECL  void *buf, int size, void *fp ) );
@@ -347,8 +355,6 @@ extern Variable *_get_var(QSP_ARG_DECL  const char *name);
 
 
 // error.c
-extern int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL));
-extern const char *tell_progname(void);
 extern const char *tell_version(void);
 extern void tty_warn(QSP_ARG_DECL  const char *s);
 extern void set_error_func(void (*func)(QSP_ARG_DECL  const char *));
@@ -363,9 +369,13 @@ extern const char *get_date_string(SINGLE_QSP_ARG_DECL);
 
 extern void _log_message(QSP_ARG_DECL  const char *msg);
 extern void _nice_exit(QSP_ARG_DECL  int status);
+extern const char *_tell_progname(SINGLE_QSP_ARG_DECL);
+extern int _do_on_exit(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL));
 
 #define log_message(s)	_log_message(QSP_ARG  s);
 #define nice_exit(s)	_nice_exit(QSP_ARG  s);
+#define tell_progname() _tell_progname(SINGLE_QSP_ARG)
+#define do_on_exit(func) _do_on_exit(QSP_ARG  func)
 
 
 // debug.c
@@ -537,16 +547,33 @@ extern Variable *_var_of(QSP_ARG_DECL const char *name);
 
 
 // hash.c
-extern void		zap_hash_tbl(Hash_Tbl *);
-extern List *		ht_list(Hash_Tbl *);
-extern Hash_Tbl *	enlarge_ht(Hash_Tbl *);
-extern Hash_Tbl *	ht_init(const char *name);
-extern int		insert_hash(void *ptr,Hash_Tbl *table);
-extern void		show_ht(Hash_Tbl *table);
-extern void *		fetch_hash(const char *name,Hash_Tbl *table);
+extern void		_zap_hash_tbl(QSP_ARG_DECL  Hash_Tbl *);
+extern List *		_ht_list(QSP_ARG_DECL  Hash_Tbl *);
+#define zap_hash_tbl(htp) _zap_hash_tbl(QSP_ARG  htp)
+#define ht_list(htp) _ht_list(QSP_ARG  htp)
+
+extern Hash_Tbl *	_enlarge_ht(QSP_ARG_DECL  Hash_Tbl *);
+#define enlarge_ht(htp) _enlarge_ht(QSP_ARG  htp)
+
+extern Hash_Tbl *	_ht_init(QSP_ARG_DECL  const char *name);
+#define ht_init(name) _ht_init(QSP_ARG  name)
+
+extern int		_insert_hash(QSP_ARG_DECL  void *ptr,Hash_Tbl *table);
+#define insert_hash(ptr,table) _insert_hash(QSP_ARG  ptr,table)
+
+extern void		_show_ht(QSP_ARG_DECL  Hash_Tbl *table);
+#define show_ht(table) _show_ht(QSP_ARG  table)
+
+extern void *		_fetch_hash(QSP_ARG_DECL  const char *name,Hash_Tbl *table);
+#define fetch_hash(name,table) _fetch_hash(QSP_ARG  name,table)
+
 //extern int		remove_hash(void *ptr,Hash_Tbl *table);
-extern int		remove_name_from_hash(const char *name,Hash_Tbl *table);
-extern int		remove_item_from_hash(const Item *ip,Hash_Tbl *table);
+extern int		_remove_name_from_hash(QSP_ARG_DECL  const char *name,Hash_Tbl *table);
+#define remove_name_from_hash(name,table) _remove_name_from_hash(QSP_ARG  name,table)
+
+extern int		_remove_item_from_hash(QSP_ARG_DECL  const Item *ip,Hash_Tbl *table);
+#define remove_item_from_hash(ip,table) _remove_item_from_hash(QSP_ARG  ip,table)
+
 extern void		tell_hash_stats(QSP_ARG_DECL  Hash_Tbl *table);
 
 

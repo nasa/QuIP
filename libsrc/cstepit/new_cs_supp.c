@@ -46,13 +46,13 @@ static void new_cstepit_scr_funk()
 	new_getvals(ans,n_prms);
 
 	if( opt_func_string==NULL ){
-		NWARN("No optimization string defined");
+		warn("No optimization string defined");
 		return;
 	}
 
 	lp=opt_param_list();
 	if( lp == NULL ){
-		NWARN("No optimization parameters to vary!?");
+		warn("No optimization parameters to vary!?");
 		err=0.0;
 		new_setfobj((double)err);
 		return;
@@ -70,11 +70,11 @@ static void new_cstepit_scr_funk()
 		np=np->n_next;
 	}
 
-	digest(DEFAULT_QSP_ARG  opt_func_string, OPTIMIZER_FILENAME);
+	digest(opt_func_string, OPTIMIZER_FILENAME);
 
 	vp=var__of("error");
 	if( vp == NULL ) {
-		NWARN(error_string);
+		warn(error_string);
 		sprintf(error_string,
 	"variable \"error\" not set by script fragment \"%s\"!?",
 			opt_func_string);

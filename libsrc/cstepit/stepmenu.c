@@ -20,9 +20,9 @@ static COMMAND_FUNC( set_params )
 	int i;
 	int n;
 
-	n=(int)HOW_MANY("number of paramters");
+	n=(int)how_many("number of paramters");
 	if( n <= 0 ){
-		NWARN("ridiculous number of paramters");
+		warn("ridiculous number of paramters");
 		return;
 	}
 
@@ -36,11 +36,11 @@ static COMMAND_FUNC( set_params )
 
 		s=NAMEOF("parameter name");
 
-		a=(float)HOW_MUCH("starting value");
-		mnv=(float)HOW_MUCH("minimum value");
-		mxv=(float)HOW_MUCH("maximum value");
-		del=(float)HOW_MUCH("starting increment");
-		mndl=(float)HOW_MUCH("minimum increment");
+		a=(float)how_much("starting value");
+		mnv=(float)how_much("minimum value");
+		mxv=(float)how_much("maximum value");
+		del=(float)how_much("starting increment");
+		mndl=(float)how_much("minimum increment");
 
 		opp = new_opt_param(s);
 		if( opp != NULL ){

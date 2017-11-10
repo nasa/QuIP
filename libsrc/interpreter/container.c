@@ -11,9 +11,11 @@
 #define VALID_CONTAINER_TYPE(t)	( t == LIST_CONTAINER || t == HASH_TBL_CONTAINER || t == RB_TREE_CONTAINER )
 
 // forward declaration
-static void init_container(Container *cnt_p,container_type_code type);
+static void _init_container(QSP_ARG_DECL  Container *cnt_p,container_type_code type);
+#define init_container(cnt_p, type) _init_container(QSP_ARG  cnt_p, type)
 
-Container * create_container(const char *name, container_type_code type)
+
+Container * _create_container(QSP_ARG_DECL  const char *name, container_type_code type)
 {
 	Container *cnt_p;
 
@@ -23,7 +25,7 @@ Container * create_container(const char *name, container_type_code type)
 	return cnt_p;
 }
 
-void set_container_type(Container *cnt_p, int type)
+void _set_container_type(QSP_ARG_DECL  Container *cnt_p, int type)
 {
 	assert(type!=0);
 
@@ -46,7 +48,7 @@ void set_container_type(Container *cnt_p, int type)
 	}
 }
 
-static void *list_insert_item(Container *cnt_p, Item *ip)
+static void *_list_insert_item(QSP_ARG_DECL  Container *cnt_p, Item *ip)
 {
 	Node *np;
 	np = mk_node(ip);
@@ -54,7 +56,7 @@ static void *list_insert_item(Container *cnt_p, Item *ip)
 	return np;
 }
 
-static void *hash_tbl_insert_item(Container *cnt_p,Item *ip)
+static void *_hash_tbl_insert_item(QSP_ARG_DECL  Container *cnt_p,Item *ip)
 {
 	int stat;
 	stat=insert_hash(ip,cnt_p->cnt_htp);
@@ -63,12 +65,12 @@ static void *hash_tbl_insert_item(Container *cnt_p,Item *ip)
 	return NULL;
 }
 
-static void *rb_tree_insert_item(Container *cnt_p,Item *ip)
+static void *_rb_tree_insert_item(QSP_ARG_DECL  Container *cnt_p,Item *ip)
 {
 	return rb_insert_item(cnt_p->cnt_tree_p, ip );
 }
 
-Container * new_container(int type)
+Container * _new_container(QSP_ARG_DECL  int type)
 {
 	Container *cnt_p=NULL;
 
@@ -80,18 +82,18 @@ Container * new_container(int type)
 	return cnt_p;
 }
 
-int add_to_container(Container *cnt_p, Item *ip)
+int _add_to_container(QSP_ARG_DECL  Container *cnt_p, Item *ip)
 {
 	void *ptr;
 
-	ptr = (*(cnt_p->cnt_typ_p->insert_item))(cnt_p,ip);
+	ptr = (*(cnt_p->cnt_typ_p->insert_item))(QSP_ARG  cnt_p,ip);
 
 	if( ptr == NULL )
 		return -1;
 	return 0;
 }
 
-static int list_remove_name(Container *cnt_p, const char *name)
+static int _list_remove_name(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
 	Node *np;
 
@@ -103,22 +105,22 @@ static int list_remove_name(Container *cnt_p, const char *name)
 	return 0;
 }
 
-static int hash_tbl_remove_name(Container *cnt_p, const char *name)
+static int _hash_tbl_remove_name(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
 	return remove_name_from_hash(name,cnt_p->cnt_htp);
 }
 
-static int rb_tree_remove_name(Container *cnt_p, const char *name)
+static int _rb_tree_remove_name(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
 	return rb_delete_key(cnt_p->cnt_tree_p, name );
 }
 
 int remove_name_from_container(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
-	return cnt_p->cnt_typ_p->remove_name(cnt_p,name);
+	return cnt_p->cnt_typ_p->remove_name(QSP_ARG  cnt_p,name);
 }
 
-static Item *list_find_match(Container *cnt_p, const char *name)
+static Item *_list_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
 	Node *np;
 
@@ -127,12 +129,12 @@ static Item *list_find_match(Container *cnt_p, const char *name)
 	return (Item *) NODE_DATA(np);
 }
 
-static Item *hash_tbl_find_match(Container *cnt_p, const char *name)
+static Item *_hash_tbl_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
 	return (Item*) fetch_hash(name,cnt_p->cnt_htp);
 }
 
-static Item *rb_tree_find_match(Container *cnt_p, const char *name)
+static Item *_rb_tree_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
 	qrb_node *tnp;
 
@@ -142,9 +144,9 @@ static Item *rb_tree_find_match(Container *cnt_p, const char *name)
 	return (Item *) tnp->data;
 }
 
-Item *container_find_match(Container *cnt_p, const char *name)
+Item *_container_find_match(QSP_ARG_DECL  Container *cnt_p, const char *name)
 {
-	return cnt_p->cnt_typ_p->find_match(cnt_p,name);
+	return cnt_p->cnt_typ_p->find_match(QSP_ARG  cnt_p,name);
 }
 
 static void search_list_for_fragment(List *lp, Frag_Match_Info *fmi_p, const char *frag)
@@ -188,7 +190,7 @@ static void search_list_for_fragment(List *lp, Frag_Match_Info *fmi_p, const cha
 	}
 }
 
-static void list_substring_find( Frag_Match_Info *fmi_p, const char *frag )
+static void _list_substring_find(QSP_ARG_DECL  Frag_Match_Info *fmi_p, const char *frag )
 {
 	Container *cnt_p;
 
@@ -197,7 +199,9 @@ static void list_substring_find( Frag_Match_Info *fmi_p, const char *frag )
 	search_list_for_fragment(cnt_p->cnt_lp,fmi_p,frag);
 }
 
-static Container *ht_list_container(Hash_Tbl *htp)
+#define ht_list_container(htp) _ht_list_container(QSP_ARG  htp)
+
+static Container *_ht_list_container(QSP_ARG_DECL  Hash_Tbl *htp)
 {
 	Container *cnt_p;
 
@@ -208,7 +212,9 @@ static Container *ht_list_container(Hash_Tbl *htp)
 
 // Because the hash table items are not sorted, we need to keep a list of the items...
 
-static void hash_tbl_substring_find(Frag_Match_Info *fmi_p,const char *frag)
+#define hash_tbl_substring_find(fmi_p,frag) _hash_tbl_substring_find(QSP_ARG  fmi_p,frag)
+
+static void _hash_tbl_substring_find(QSP_ARG_DECL  Frag_Match_Info *fmi_p,const char *frag)
 {
 	Container *cnt_p;
 	Container *list_cnt_p;
@@ -221,7 +227,7 @@ static void hash_tbl_substring_find(Frag_Match_Info *fmi_p,const char *frag)
 	// BUG memory leak?
 }
 
-static void rb_tree_substring_find(Frag_Match_Info *fmi_p, const char *frag )
+static void _rb_tree_substring_find(QSP_ARG_DECL  Frag_Match_Info *fmi_p, const char *frag )
 {
 	Container *cnt_p;
 
@@ -246,7 +252,7 @@ void container_find_substring_matches(Frag_Match_Info *fmi_p, const char *frag)
 {
 	Container *cnt_p;
 	cnt_p = FMI_CONTAINER(fmi_p);
-	(*(cnt_p->cnt_typ_p->substring_find))(fmi_p,frag);
+	(*(cnt_p->cnt_typ_p->substring_find))(DEFAULT_QSP_ARG  fmi_p,frag);
 }
 
 static Enumerator *list_advance_enum(Enumerator *ep)
@@ -278,13 +284,13 @@ static Enumerator *hash_tbl_advance_enum(Enumerator *ep)
 
 // add the items from this container to the given list
 
-void cat_container_items(List *lp, Container *cnt_p)
+void _cat_container_items(QSP_ARG_DECL  List *lp, Container *cnt_p)
 {
 	Node *np;
 	Item *ip;
 	Enumerator *ep, *orig;
 
-	ep = (*(cnt_p->cnt_typ_p->new_enumerator))(cnt_p);
+	ep = (*(cnt_p->cnt_typ_p->new_enumerator))(DEFAULT_QSP_ARG  cnt_p);
 
 	if( ep == NULL ) return;	// enumerator is null if the container is empty
 
@@ -301,17 +307,17 @@ void cat_container_items(List *lp, Container *cnt_p)
 	orig->e_typ_p->release_enum(orig);
 }
 
-inline static long list_eltcount(Container *cnt_p)
+inline static long _list_eltcount(Container *cnt_p)
 {
 	return eltcount(cnt_p->cnt_lp);
 }
 
-inline static long hash_tbl_eltcount(Container *cnt_p)
+inline static long _hash_tbl_eltcount(Container *cnt_p)
 {
 	return cnt_p->cnt_htp->ht_n_entries;
 }
 
-inline static long rb_tree_eltcount(Container *cnt_p)
+inline static long _rb_tree_eltcount(Container *cnt_p)
 {
 	return rb_node_count(cnt_p->cnt_tree_p);
 }
@@ -321,22 +327,22 @@ long container_eltcount(Container *cnt_p)
 	return cnt_p->cnt_typ_p->eltcount(cnt_p);
 }
 
-List *container_list(Container *cnt_p)
+List *_container_list(QSP_ARG_DECL  Container *cnt_p)
 {
-	return cnt_p->cnt_typ_p->list_of_items(cnt_p);
+	return cnt_p->cnt_typ_p->list_of_items(QSP_ARG  cnt_p);
 }
 
-static List *list_list_of_items(Container *cnt_p)
+static List *_list_list_of_items(QSP_ARG_DECL  Container *cnt_p)
 {
 	return cnt_p->cnt_lp;
 }
 
-static List *hash_tbl_list_of_items(Container *cnt_p)
+static List *_hash_tbl_list_of_items(QSP_ARG_DECL  Container *cnt_p)
 {
 	return hash_tbl_list(cnt_p->cnt_htp);
 }
 
-static List *rb_tree_list_of_items(Container *cnt_p)
+static List *_rb_tree_list_of_items(QSP_ARG_DECL  Container *cnt_p)
 {
 	return rb_tree_list(cnt_p->cnt_tree_p);
 }
@@ -347,19 +353,19 @@ static void release_container(Container *cnt_p)
 	givbuf(cnt_p);
 }
 
-static void list_delete(Container *cnt_p)
+static void _list_delete(QSP_ARG_DECL  Container *cnt_p)
 {
 	zap_list(cnt_p->cnt_lp);
 	release_container(cnt_p);
 }
 
-static void hash_tbl_delete(Container *cnt_p)
+static void _hash_tbl_delete(QSP_ARG_DECL  Container *cnt_p)
 {
 	zap_hash_tbl(cnt_p->cnt_htp);
 	release_container(cnt_p);
 }
 
-static void rb_tree_delete(Container *cnt_p)
+static void _rb_tree_delete(QSP_ARG_DECL  Container *cnt_p)
 {
 	release_rb_tree(cnt_p->cnt_tree_p);
 	release_container(cnt_p);
@@ -373,20 +379,20 @@ static void print_container_info_header(QSP_ARG_DECL  Container *cnt_p)
 	prt_msg(MSG_STR);
 }
 
-static void list_dump_info(QSP_ARG_DECL Container *cnt_p)
+static void _list_dump_info(QSP_ARG_DECL Container *cnt_p)
 {
 	print_container_info_header(QSP_ARG  cnt_p);
 	sprintf(MSG_STR,"\tlist with %d elements\n",eltcount(cnt_p->cnt_lp));
 	prt_msg(MSG_STR);
 }
 
-static void hash_tbl_dump_info(QSP_ARG_DECL Container *cnt_p)
+static void _hash_tbl_dump_info(QSP_ARG_DECL Container *cnt_p)
 {
 	print_container_info_header(QSP_ARG  cnt_p);
 	tell_hash_stats(QSP_ARG  cnt_p->cnt_htp );
 }
 
-static void rb_tree_dump_info(QSP_ARG_DECL Container *cnt_p)
+static void _rb_tree_dump_info(QSP_ARG_DECL Container *cnt_p)
 {
 	print_container_info_header(QSP_ARG  cnt_p);
 	prt_msg("\tRed-black tree, sorry no stats...");
@@ -438,7 +444,9 @@ static void hash_tbl_release_enum(Enumerator *ep)
 	INIT_ONE_ENUM_FUNCTION(release_enum,stem)			\
 	INIT_ONE_ENUM_FUNCTION(current_enum_item,stem)			\
 
-static Enumerator_Type *list_enumerator_type(void)
+#define list_enumerator_type() _list_enumerator_type(SINGLE_QSP_ARG)
+
+static Enumerator_Type *_list_enumerator_type(SINGLE_QSP_ARG_DECL)
 {
 	static Enumerator_Type *etp=NULL;
 
@@ -449,7 +457,9 @@ static Enumerator_Type *list_enumerator_type(void)
 	return etp;
 }
 
-static Enumerator_Type *rb_tree_enumerator_type(void)
+#define rb_tree_enumerator_type() _rb_tree_enumerator_type(SINGLE_QSP_ARG)
+
+static Enumerator_Type *_rb_tree_enumerator_type(SINGLE_QSP_ARG_DECL)
 {
 	static Enumerator_Type *etp=NULL;
 
@@ -460,7 +470,9 @@ static Enumerator_Type *rb_tree_enumerator_type(void)
 	return etp;
 }
 
-static Enumerator_Type *hash_tbl_enumerator_type(void)
+#define hash_tbl_enumerator_type() _hash_tbl_enumerator_type(SINGLE_QSP_ARG)
+
+static Enumerator_Type *_hash_tbl_enumerator_type(SINGLE_QSP_ARG_DECL)
 {
 	static Enumerator_Type *etp=NULL;
 
@@ -471,7 +483,9 @@ static Enumerator_Type *hash_tbl_enumerator_type(void)
 	return etp;
 }
 
-static Enumerator *new_enumerator(Container *cnt_p)
+#define new_enumerator(cnt_p) _new_enumerator(QSP_ARG  cnt_p)
+
+static Enumerator *_new_enumerator(QSP_ARG_DECL  Container *cnt_p)
 {
 	Enumerator *ep;
 
@@ -482,7 +496,7 @@ static Enumerator *new_enumerator(Container *cnt_p)
 
 #define DECLARE_NEW_ENUM_FUNC(container_type,enumerator_type,member)		\
 										\
-static Enumerator * container_type##_new_enumerator(Container *cnt_p)		\
+static Enumerator * _##container_type##_new_enumerator(QSP_ARG_DECL  Container *cnt_p)		\
 {										\
 	Enumerator *ep;								\
 	enumerator_type *vp;							\
@@ -544,22 +558,22 @@ static Enumerator *rb_tree_new_enumerator(Container *cnt_p)
 }
 #endif // FOOBAR
 
-static Item *rb_tree_frag_item(Frag_Match_Info *fmi_p)
+static Item *_rb_tree_frag_item(Frag_Match_Info *fmi_p)
 {
 	if( CURR_RBT_FRAG(fmi_p) == NULL ) return NULL;
 
 	return RB_NODE_DATA( CURR_RBT_FRAG(fmi_p) );
 }
 
-static Item *list_frag_item(Frag_Match_Info *fmi_p)
+static Item *_list_frag_item(Frag_Match_Info *fmi_p)
 {
 	if( CURR_LIST_FRAG(fmi_p) == NULL ) return NULL;
 	return NODE_DATA( CURR_LIST_FRAG(fmi_p) );
 }
 
-static Item *hash_tbl_frag_item(Frag_Match_Info *fmi_p)
+static Item *_hash_tbl_frag_item(Frag_Match_Info *fmi_p)
 {
-	return list_frag_item(fmi_p);
+	return _list_frag_item(fmi_p);
 }
 
 
@@ -571,23 +585,23 @@ Item *current_frag_item( Frag_Match_Info *fmi_p )
 	return (*(cnt_p->cnt_typ_p->frag_item))(fmi_p);
 }
 
-static const Item *list_current_frag_match_item(Frag_Match_Info *fmi_p)
+static const Item *_list_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
 	return fmi_p->fmi_u.li.curr_np->n_data;
 }
 
-static const Item *rb_tree_current_frag_match_item(Frag_Match_Info *fmi_p)
+static const Item *_rb_tree_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
 	return fmi_p->fmi_u.rbti.curr_n_p->data;
 }
 
-static const Item *hash_tbl_current_frag_match_item(Frag_Match_Info *fmi_p)
+static const Item *_hash_tbl_current_frag_match_item(Frag_Match_Info *fmi_p)
 {
 	assert( "hash_tbl_current_frag_match_item should never be called" == NULL );
 	return NULL;
 }
 
-static void list_reset_frag_match( Frag_Match_Info *fmi_p, int direction )
+static void _list_reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
 	if( direction == CYC_FORWARD )
 		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.first_np;
@@ -595,7 +609,7 @@ static void list_reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 		fmi_p->fmi_u.li.curr_np = fmi_p->fmi_u.li.last_np;
 }
 
-static void rb_tree_reset_frag_match( Frag_Match_Info *fmi_p, int direction )
+static void _rb_tree_reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
 	if( direction == CYC_FORWARD )
 		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.first_n_p;
@@ -603,12 +617,12 @@ static void rb_tree_reset_frag_match( Frag_Match_Info *fmi_p, int direction )
 		fmi_p->fmi_u.rbti.curr_n_p = fmi_p->fmi_u.rbti.last_n_p;
 }
 
-static void hash_tbl_reset_frag_match( Frag_Match_Info *fmi_p, int direction )
+static void _hash_tbl_reset_frag_match(QSP_ARG_DECL  Frag_Match_Info *fmi_p, int direction )
 {
 	assert("hash_tbl_reset_frag_match should never be called!?"==NULL);
 }
 
-static const char *list_advance_frag_match( Frag_Match_Info * fmi_p, int direction )
+static const char *_list_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
 {
 	const Item *ip;
 
@@ -633,7 +647,7 @@ static const char *list_advance_frag_match( Frag_Match_Info * fmi_p, int directi
 	return ip->item_name;
 }
 
-static const char *rb_tree_advance_frag_match( Frag_Match_Info * fmi_p, int direction )
+static const char *_rb_tree_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
 {
 	Item *ip;
 
@@ -659,29 +673,29 @@ static const char *rb_tree_advance_frag_match( Frag_Match_Info * fmi_p, int dire
 	return ip->item_name;
 }
 
-static const char *hash_tbl_advance_frag_match( Frag_Match_Info * fmi_p, int direction )
+static const char *_hash_tbl_advance_frag_match(QSP_ARG_DECL  Frag_Match_Info * fmi_p, int direction )
 {
 	assert( "hash_tbl_advance_frag_match should never be called" == NULL );
 	return NULL;
 }
 
-static void list_init_data(Container *cnt_p)
+static void _list_init_data(Container *cnt_p)
 {
 	cnt_p->cnt_lp = NULL;
 }
 
-static void hash_tbl_init_data(Container *cnt_p)
+static void _hash_tbl_init_data(Container *cnt_p)
 {
 	cnt_p->cnt_htp = NULL;
 }
 
-static void rb_tree_init_data(Container *cnt_p)
+static void _rb_tree_init_data(Container *cnt_p)
 {
 	cnt_p->cnt_tree_p = NULL;
 }
 
 #define INIT_ONE_FUNCTION(func,stem)					\
-	ctp->func = stem##_##func;
+	ctp->func = _##stem##_##func;
 
 #define INIT_CONTAINER_TYPE_FUNCTIONS(stem)				\
 	INIT_ONE_FUNCTION(insert_item,stem)				\
@@ -702,7 +716,9 @@ static void rb_tree_init_data(Container *cnt_p)
 	INIT_ONE_FUNCTION(reset_frag_match,stem)			\
 
 
-static Container_Type *list_container_type(void)
+#define list_container_type() _list_container_type(SINGLE_QSP_ARG)
+
+static Container_Type *_list_container_type(SINGLE_QSP_ARG_DECL)
 {
 	static Container_Type *ctp=NULL;
 
@@ -713,7 +729,9 @@ static Container_Type *list_container_type(void)
 	return ctp;
 }
 
-static Container_Type *hash_tbl_container_type(void)
+#define hash_tbl_container_type() _hash_tbl_container_type(SINGLE_QSP_ARG)
+
+static Container_Type *_hash_tbl_container_type(SINGLE_QSP_ARG_DECL)
 {
 	static Container_Type *ctp=NULL;
 
@@ -724,7 +742,9 @@ static Container_Type *hash_tbl_container_type(void)
 	return ctp;
 }
 
-static Container_Type *rb_tree_container_type(void)
+#define rb_tree_container_type() _rb_tree_container_type(SINGLE_QSP_ARG)
+
+static Container_Type *_rb_tree_container_type(SINGLE_QSP_ARG_DECL)
 {
 	static Container_Type *ctp=NULL;
 
@@ -735,7 +755,7 @@ static Container_Type *rb_tree_container_type(void)
 	return ctp;
 }
 
-static void init_container(Container *cnt_p, container_type_code type)
+static void _init_container(QSP_ARG_DECL  Container *cnt_p, container_type_code type)
 {
 	cnt_p->name = NULL;
 

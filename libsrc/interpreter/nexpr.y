@@ -2252,7 +2252,9 @@ static int yylex(YYSTYPE *yylvp, Query_Stack *qsp)	/* return the next token */
 
 /* rls_tree should only be called when locked */
 
-static void rls_tree( Scalar_Expr_Node *enp )
+#define rls_tree(enp) _rls_tree(QSP_ARG  enp)
+
+static void _rls_tree(QSP_ARG_DECL  Scalar_Expr_Node *enp )
 {
 	Node *np;
 

@@ -214,7 +214,7 @@ void rls_node(Node *np)
  * allocate memory for a new one.
  */
 
-static Node *newnode()			/**/
+static Node *newnode(void)			/**/
 {
 	Node *np;
 
@@ -278,7 +278,7 @@ static Node *newnode()			/**/
  * and then release the list pointer.
  */
 
-void dellist( List *lp )
+void _dellist(QSP_ARG_DECL  List *lp )
 {
 	rls_nodes_from_list(lp);
 	rls_list(lp);
@@ -340,7 +340,7 @@ static void init_list(List *lp)
  * Return a pointer to a new list structure
  */
 
-List *new_list()
+List *new_list(void)
 {
 	List *lp;
 
@@ -655,7 +655,7 @@ Node *list_find_named_item(List *lp, const char *name)
 	return NULL;
 }
 
-List_Enumerator *new_list_enumerator(List *lp)
+List_Enumerator *_new_list_enumerator(QSP_ARG_DECL  List *lp)
 {
 	List_Enumerator *lep;
 
@@ -682,7 +682,7 @@ void rls_list_nodes(List *lp)
 
 // release all the nodes in a list and the list too
 
-void zap_list(List *lp)
+void _zap_list(QSP_ARG_DECL  List *lp)
 {
 	rls_list_nodes(lp);
 	rls_list(lp);

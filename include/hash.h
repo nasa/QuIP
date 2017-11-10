@@ -58,11 +58,15 @@ typedef struct {
 	void **current_entry;
 } Hash_Tbl_Enumerator;
 
-extern Hash_Tbl_Enumerator *new_hash_tbl_enumerator(Hash_Tbl *htp);
+extern Hash_Tbl_Enumerator *_new_hash_tbl_enumerator(QSP_ARG_DECL  Hash_Tbl *htp);
+#define new_hash_tbl_enumerator(htp) _new_hash_tbl_enumerator(QSP_ARG  htp)
+
 extern void advance_ht_enumerator(Hash_Tbl_Enumerator *htep);
 extern void rls_hash_tbl_enumerator(Hash_Tbl_Enumerator *htep);
 extern Item * ht_enumerator_item(Hash_Tbl_Enumerator *htep);
 
-extern List *hash_tbl_list(Hash_Tbl *htp);
+extern List *_hash_tbl_list(QSP_ARG_DECL  Hash_Tbl *htp);
+#define hash_tbl_list(htp) _hash_tbl_list(QSP_ARG  htp)
+
 #endif // ! _HASH_H_
 

@@ -2515,7 +2515,9 @@ static void init_vector_parser_data_stack(Query_Stack *qsp)
 	SET_QS_VECTOR_PARSER_DATA(qsp,NULL);
 }
 
-static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
+#define init_vector_parser_data(vpd_p) _init_vector_parser_data(QSP_ARG  vpd_p)
+
+static void _init_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *vpd_p)
 {
 	bzero(vpd_p,sizeof(*vpd_p));
 
@@ -2529,7 +2531,9 @@ static void init_vector_parser_data(Vector_Parser_Data *vpd_p)
 	SET_VPD_SUBRT_CTX_STACK(vpd_p,new_list());
 }
 
-static void rls_vector_parser_data(Vector_Parser_Data *vpd_p)
+#define rls_vector_parser_data(vpd_p) _rls_vector_parser_data(QSP_ARG  vpd_p)
+
+static void _rls_vector_parser_data(QSP_ARG_DECL  Vector_Parser_Data *vpd_p)
 {
 	rls_stringbuf(VPD_YY_INPUT_LINE(vpd_p));
 	rls_stringbuf(VPD_YY_LAST_LINE(vpd_p));
@@ -2948,7 +2952,7 @@ void _foreach_loop(QSP_ARG_DECL Foreach_Loop *frp)
 	SET_QRY_FLAG_BITS(qp,Q_SAVING);
 }
 
-void zap_fore(Foreach_Loop *frp)
+void _zap_fore(QSP_ARG_DECL  Foreach_Loop *frp)
 {
 	Node *np;
 

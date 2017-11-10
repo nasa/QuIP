@@ -23,7 +23,7 @@ static void set_root_node(qrb_tree *tree_p, qrb_node *np)
 	MAKE_BLACK(np);
 }
 
-qrb_tree* create_rb_tree( void )
+qrb_tree* _create_rb_tree( SINGLE_QSP_ARG_DECL )
 /* int (*compare) (const void*,const void*),
 						void (*destroy_key) (void*),
 						void (*destroy_data) (void*) */
@@ -141,7 +141,7 @@ static void func_name(qrb_tree *tree_p, qrb_node *np)		\
 GENERAL_ROTATION(rotate_right,left,right)
 GENERAL_ROTATION(rotate_left,right,left)
 
-qrb_node * rb_insert_item(qrb_tree* tree_p, Item *ip )
+qrb_node * _rb_insert_item(QSP_ARG_DECL  qrb_tree* tree_p, Item *ip )
 {
 	qrb_node * x_p;
 	qrb_node * new_node_p;
@@ -551,12 +551,12 @@ int rb_delete_item(qrb_tree *tree_p, Item *ip)
 	return rb_delete_key(tree_p,ITEM_NAME(ip));
 }
 
-void rb_traverse( qrb_node *np, void (*func)(qrb_node *, qrb_tree *), qrb_tree* tree_p )
+void _rb_traverse(QSP_ARG_DECL  qrb_node *np, void (*func)(QSP_ARG_DECL  qrb_node *, qrb_tree *), qrb_tree* tree_p )
 {
 	if( np == NULL ) return;
 
 	rb_traverse( np->left, func, tree_p );
-	(*func)(np, tree_p);
+	(*func)(QSP_ARG  np, tree_p);
 	rb_traverse( np->right, func, tree_p );
 
 }
@@ -742,7 +742,7 @@ void rls_rb_tree_enumerator(RB_Tree_Enumerator *ep)
 	givbuf(ep);	// keep a pool for efficiency?  Maybe the tree should have an enumerator as part of it?
 }
 
-RB_Tree_Enumerator *new_rb_tree_enumerator(qrb_tree *tree_p)
+RB_Tree_Enumerator *_new_rb_tree_enumerator(QSP_ARG_DECL  qrb_tree *tree_p)
 {
 	RB_Tree_Enumerator *rbtep;
 
@@ -781,7 +781,9 @@ static void rb_tree_dump( qrb_tree *tree_p )
 }
 */
 
-static void add_rb_node_to_list(qrb_node *rbn_p, qrb_tree *tree_p)
+#define add_rb_node_to_list(rbn_p,tree_p) _add_rb_node_to_list(QSP_ARG  rbn_p,tree_p)
+
+static void _add_rb_node_to_list(QSP_ARG_DECL  qrb_node *rbn_p, qrb_tree *tree_p)
 {
 	Node *np;
 	Item *ip;
@@ -791,16 +793,18 @@ static void add_rb_node_to_list(qrb_node *rbn_p, qrb_tree *tree_p)
 	addTail( RB_TREE_ITEM_LIST(tree_p), np );
 }
 
-static void make_rb_tree_list(qrb_tree *tree_p)
+#define make_rb_tree_list(tree_p) _make_rb_tree_list(QSP_ARG  tree_p)
+
+static void _make_rb_tree_list(QSP_ARG_DECL  qrb_tree *tree_p)
 {
 	assert( RB_TREE_ITEM_LIST(tree_p) == NULL );
 
 	SET_RB_TREE_ITEM_LIST(tree_p,new_list());
-	rb_traverse(tree_p->root,add_rb_node_to_list,tree_p);
+	rb_traverse(tree_p->root,_add_rb_node_to_list,tree_p);
 	MARK_RB_TREE_CURRENT(tree_p);
 }
 
-List *rb_tree_list(qrb_tree *tree_p)
+List *_rb_tree_list(QSP_ARG_DECL  qrb_tree *tree_p)
 {
 	if( RB_TREE_ITEM_LIST(tree_p) == NULL ){
 		make_rb_tree_list(tree_p);	// allocates and populates a new list

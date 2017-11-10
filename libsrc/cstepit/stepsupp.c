@@ -79,7 +79,7 @@ float get_opt_param_value(QSP_ARG_DECL  const char *name)
 	opp=get_opt_param(name);
 	if( opp==NULL ){
 		sprintf(ERROR_STRING,"No optimization parameter \"%s\"",name);
-		NWARN(ERROR_STRING);
+		warn(ERROR_STRING);
 		return(-1.0);
 	}
 	return(opp->ans);

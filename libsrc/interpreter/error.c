@@ -102,10 +102,10 @@ void set_progname(const char *program_name)
  * Return a pointer to the name of the program
  */
 
-const char *tell_progname(void)
+const char *_tell_progname(SINGLE_QSP_ARG_DECL)
 {
 	if( _progname == NULL ){
-		NWARN("tell_progname():  progname not set!?");
+		warn("tell_progname():  progname not set!?");
 		return("");
 	}
 	return(_progname);
@@ -325,10 +325,10 @@ static const char *show_unprintable(QSP_ARG_DECL  const char* s)
 	to=printable_str;
 
 	if( strlen(s) >= PRINTABLE_LEN ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 	"show_unprintable:  input string length (%ld) is greater than buffer size (%d)!?",
 			(long) strlen(s), PRINTABLE_LEN );
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		//return(s);		/* print a warning here? */
 		return("<string too long>");
 	}
@@ -444,10 +444,10 @@ void _prt_msg_frag(QSP_ARG_DECL  const char* msg)
  * Return value 0 if successful, -1 if too many exit functions.
  */
 
-int do_on_exit(void (*func)(SINGLE_QSP_ARG_DECL))
+int _do_on_exit(QSP_ARG_DECL  void (*func)(SINGLE_QSP_ARG_DECL))
 {
 	if( n_exit_funcs >= MAX_EXIT_FUNCS ){
-		NWARN("too many exit functions requested");
+		warn("too many exit functions requested");
 		return(-1);
 	}
 	exit_func_tbl[n_exit_funcs++] = func;
@@ -496,7 +496,7 @@ FILE *_tell_msgfile(SINGLE_QSP_ARG_DECL)
 	if( QS_MSG_FILE(THIS_QSP) == NULL )
 		SET_QS_MSG_FILE(THIS_QSP,stdout);
 #else
-	if( QS_MSG_FILE(THIS_QSP) == NULL ) NWARN("null msgfile - no stdio!??");
+	if( QS_MSG_FILE(THIS_QSP) == NULL ) warn("null msgfile - no stdio!??");
 #endif
 	return(QS_MSG_FILE(THIS_QSP));
 }
@@ -507,7 +507,7 @@ FILE *_tell_errfile(SINGLE_QSP_ARG_DECL)
 	if( QS_ERROR_FILE(THIS_QSP) == NULL )
 		SET_QS_ERROR_FILE(THIS_QSP,stderr);
 #else
-	if( QS_ERROR_FILE(THIS_QSP) == NULL ) NWARN("null errfile - no stdio!??");
+	if( QS_ERROR_FILE(THIS_QSP) == NULL ) warn("null errfile - no stdio!??");
 #endif
 	return(QS_ERROR_FILE(THIS_QSP));
 }

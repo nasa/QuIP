@@ -83,15 +83,19 @@ typedef struct qrb_tree {
 //			     void (*data_destroy)(void*)
 //			     );
 
-extern qrb_tree* create_rb_tree(void);
+extern qrb_tree* _create_rb_tree(SINGLE_QSP_ARG_DECL);
+#define create_rb_tree() _create_rb_tree(SINGLE_QSP_ARG)
 
-extern qrb_node * rb_insert_item(qrb_tree*, Item * ip );
+extern qrb_node * _rb_insert_item(QSP_ARG_DECL  qrb_tree*, Item * ip );
+#define rb_insert_item(p,ip) _rb_insert_item(QSP_ARG  p,ip)
+
 extern int rb_delete_key(qrb_tree*, const char *);
 extern int rb_delete_named_item(qrb_tree*, const char *name);
 extern int rb_delete_item(qrb_tree*, Item *ip);
 extern qrb_node* rb_find(qrb_tree*, const char * key );
 extern void rb_substring_find(Frag_Match_Info * fmi_p, qrb_tree*, const char * frag );
-extern void rb_traverse( qrb_node *np, void (*func)(qrb_node *,qrb_tree *), qrb_tree *tree_p );
+extern void _rb_traverse(QSP_ARG_DECL  qrb_node *np, void (*func)(QSP_ARG_DECL  qrb_node *,qrb_tree *), qrb_tree *tree_p );
+#define rb_traverse(np,func,tree_p) _rb_traverse(QSP_ARG  np, func,tree_p )
 extern void rb_check(qrb_tree *);
 extern qrb_node * rb_successor_node( qrb_node *n_p );
 extern qrb_node * rb_predecessor_node( qrb_node *n_p );
@@ -111,14 +115,17 @@ typedef struct {
 	qrb_node *	node_p;
 } RB_Tree_Enumerator;
 
-extern RB_Tree_Enumerator *new_rb_tree_enumerator(qrb_tree *tp);
+extern RB_Tree_Enumerator *_new_rb_tree_enumerator(QSP_ARG_DECL  qrb_tree *tp);
+#define new_rb_tree_enumerator(tp) _new_rb_tree_enumerator(QSP_ARG  tp)
+
 extern void advance_rb_tree_enumerator(RB_Tree_Enumerator *rbtep);
 extern void rls_rb_tree_enumerator(RB_Tree_Enumerator *rbtep);
 extern Item * rb_tree_enumerator_item(RB_Tree_Enumerator *rbtep);
 extern long rb_node_count(qrb_tree *tree_p);
 extern void release_rb_tree(qrb_tree *tree_p);
 
-extern List *rb_tree_list(qrb_tree *tree_p);
+extern List *_rb_tree_list(QSP_ARG_DECL  qrb_tree *tree_p);
+#define rb_tree_list(tree_p) _rb_tree_list(QSP_ARG  tree_p)
 
 #endif // ! _RBTREE_H_
 

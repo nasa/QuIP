@@ -38,7 +38,7 @@ struct menu {
 
 #define MENU_BEGIN(prompt)						\
 static Menu *prompt##_menu=NULL;					\
-static void init_##prompt##_menu(void)					\
+static void init_##prompt##_menu(SINGLE_QSP_ARG_DECL)			\
 {									\
 	Command *cp;							\
 									\
@@ -70,10 +70,12 @@ static void init_##prompt##_menu(void)					\
 #define CHECK_MENU(prompt)					\
 								\
 	if( prompt##_menu == NULL ){				\
-		init_##prompt##_menu();				\
+		init_##prompt##_menu(SINGLE_QSP_ARG);		\
 	}
 
-extern void add_command_to_menu( Menu *mp, Command *cp );
+extern void _add_command_to_menu(QSP_ARG_DECL  Menu *mp, Command *cp );
+#define add_command_to_menu(mp,cp) _add_command_to_menu(QSP_ARG  mp,cp)
+
 extern void _list_menu( QSP_ARG_DECL  const Menu *mp );
 #define list_menu( mp ) _list_menu( QSP_ARG  mp )
 

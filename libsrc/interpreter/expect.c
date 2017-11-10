@@ -183,7 +183,7 @@ else prt_msg_frag(",");
 		}
 		if( n == 0 ){
 			if( n_tries >= MAX_TRIES ){
-				NWARN("buffered_char:  No readable chars from serial device, check power");
+				warn("buffered_char:  No readable chars from serial device, check power");
 				return(-1);
 			}
 		}
@@ -237,7 +237,7 @@ static int expect_char(Serial_Buffer *sbp, int expected)
 		if( verbose ){
 			sprintf(ERROR_STRING,"expect_char:  expected 0x%x ('%s'), but saw 0x%x ('%s')",
 					expected,printable_version(expected),c,printable_version(c));
-			NWARN(ERROR_STRING);
+			warn(ERROR_STRING);
 		}
 		/* pretend the char hasn't been read... */
 		sbp->sb_n_scanned --;
@@ -376,7 +376,7 @@ advise(msg_str);
 			i_r++;
 			if( i_r >= LLEN ){
 				sprintf(ERROR_STRING,"expect_string:  too many received characters (%d max)",LLEN-1);
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 			}
 		}
 
@@ -473,13 +473,13 @@ advise(ERROR_STRING);
 #endif /* QUIP_DEBUG */
 			} else {
 				sprintf(ERROR_STRING,"get_token:  too many token chars!?");
-				NWARN(ERROR_STRING);
+				warn(ERROR_STRING);
 				s++;
 				n_scanned++;
 			}
 		} else {
 			if( strlen(token) == 0 ){
-				NWARN("get_token:  non-digit seen before any digits!?");
+				warn("get_token:  non-digit seen before any digits!?");
 				s++;
 				n_scanned++;
 			} else {
@@ -509,7 +509,7 @@ int get_number( QSP_ARG_DECL  Serial_Buffer *sbp )
 	if( n_tok > 0 ){	/* success */
 		return( atoi(token) );
 	}
-	NWARN("get_number:  no token!?");
+	warn("get_number:  no token!?");
 /* show_buffer(sbp); */
 	return(-1);	/* BUG?  can the jukebox ever return a negative number? */
 }
@@ -522,7 +522,7 @@ void expected_response( QSP_ARG_DECL  Serial_Buffer *sbp, const char *expected_s
 
 	s=expect_string(QSP_ARG  sbp,expected_str);
 	if( s != NULL ){
-		NWARN("response mismatch");
+		warn("response mismatch");
 		sprintf(ERROR_STRING,"Expected string:  \"%s\"",printable_string(expected_str));
 		advise(ERROR_STRING);
 		sprintf(ERROR_STRING,"Received string:  \"%s\"",printable_string(s));

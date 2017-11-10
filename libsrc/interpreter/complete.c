@@ -273,7 +273,7 @@ int get_keystroke()
  * to allow keyboard OR mouse generated text input.
  */
 
-void simulate_typing(const char *str)
+void _simulate_typing(QSP_ARG_DECL  const char *str)
 {
 
 /* A persistent bug in the Mac implementation has led to this code.
@@ -291,7 +291,7 @@ void simulate_typing(const char *str)
 
 		/* first make sure there's enough space */
 		if( (long)(strlen(simulated_input)+strlen(str)+1) > (TYPING_BUFFER_SIZE-(simulated_input-typing_buffer)) ){
-			NWARN("typing buffer overflow");
+			warn("typing buffer overflow");
 			return;
 		}
 
@@ -330,7 +330,7 @@ int _keyboard_hit(QSP_ARG_DECL  FILE *tty_in)
 
 			if( errno == EINVAL ){  /* not supported? */
 				/* when does this happen? */
-NWARN("ioctl FIONREAD - EINVAL");
+warn("ioctl FIONREAD - EINVAL");
 				try_fionread=0;
 				ready=1;
 			} else {
@@ -503,12 +503,14 @@ static char edit_string[LLEN];
 
 #define IS_PICKING_ITEM		QS_PICKING_ITEM_ITP(THIS_QSP) != NULL
 
-static void insure_special_chars(FILE *fp)
+#define insure_special_chars(fp) _insure_special_chars(QSP_ARG  fp)
+
+static void _insure_special_chars(QSP_ARG_DECL  FILE *fp)
 {
 	if( ers_char == 0 ){
 		ers_char = get_erase_chr(fileno(fp));
 		if( ers_char == -1 ){
-			NWARN("Erase character defaulting to ^H");
+			warn("Erase character defaulting to ^H");
 			ers_char='\b';
 		}
 	}
@@ -516,7 +518,7 @@ static void insure_special_chars(FILE *fp)
 	if( kill_char == 0 ){
 		kill_char = get_kill_chr(fileno(fp));
 		if( kill_char == -1 ){
-			NWARN("Kill character defaulting to ^U");
+			warn("Kill character defaulting to ^U");
 			kill_char='';
 		}
 	}

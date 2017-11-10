@@ -13,22 +13,22 @@ typedef int container_type_code;
 
 struct container_type {
 	// methods
-	void *(* insert_item)(Container *,Item *);
-	int (*remove_name)(Container *, const char *);
-	Item * (*find_match)(Container *, const char *);
+	void *(* insert_item)(QSP_ARG_DECL  Container *,Item *);
+	int (*remove_name)(QSP_ARG_DECL  Container *, const char *);
+	Item * (*find_match)(QSP_ARG_DECL  Container *, const char *);
 	long (*eltcount)(Container *);
-	void (*delete)(Container *);
+	void (*delete)(QSP_ARG_DECL  Container *);
 	void (*init_data)(Container *);
-	List * (*list_of_items)(Container *);
+	List * (*list_of_items)(QSP_ARG_DECL  Container *);
 	void (*dump_info)(QSP_ARG_DECL  Container *);
-	Enumerator *(* new_enumerator)(Container *);
+	Enumerator *(* new_enumerator)(QSP_ARG_DECL  Container *);
 
 	// should these be frag match methods?
-	void (* substring_find)(Frag_Match_Info *, const char *);
+	void (* substring_find)(QSP_ARG_DECL  Frag_Match_Info *, const char *);
 	Item *(* frag_item)(Frag_Match_Info *);
 	const Item *(* current_frag_match_item)(Frag_Match_Info *);
-	const char *(* advance_frag_match)(Frag_Match_Info *,int direction);
-	void (* reset_frag_match)(Frag_Match_Info *, int direction);
+	const char *(* advance_frag_match)(QSP_ARG_DECL  Frag_Match_Info *,int direction);
+	void (* reset_frag_match)(QSP_ARG_DECL  Frag_Match_Info *, int direction);
 };
 
 struct container {

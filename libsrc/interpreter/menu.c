@@ -4,7 +4,7 @@
 #include "container_fwd.h"
 #include "quip_menu.h"
 
-void add_command_to_menu( Menu *mp, Command *cp )
+void _add_command_to_menu(QSP_ARG_DECL  Menu *mp, Command *cp )
 {
 	if( add_to_container(MENU_CONTAINER(mp),(Item *)cp) < 0 )
 		NWARN("add_command_to_menu:  error adding command!?");

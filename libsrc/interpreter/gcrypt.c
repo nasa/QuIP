@@ -51,16 +51,19 @@ static int the_hash_len=32;
 		report_gcrypt_error(#func,#call,status);	\
 	}
 
-static void report_gcrypt_error(const char *whence,
-				const char *call, gcry_error_t status)
+#define report_gcrypt_error(whence,call,status) _report_gcrypt_error(QSP_ARG  whence,call,status)
+
+static void _report_gcrypt_error(QSP_ARG_DECL  const char *whence, const char *call, gcry_error_t status)
 {
-	sprintf(DEFAULT_ERROR_STRING,
+	sprintf(ERROR_STRING,
 		"%s:  %s:  %s", whence,call, gcry_strerror(status));
-	NWARN(DEFAULT_ERROR_STRING);
+	warn(ERROR_STRING);
 }
 
 
-static void init_gcrypt_subsystem(void)
+#define init_gcrypt_subsystem() _init_gcrypt_subsystem(SINGLE_QSP_ARG)
+
+static void _init_gcrypt_subsystem(SINGLE_QSP_ARG_DECL)
 {
 	const char *s;
 	gcry_error_t status;
@@ -69,15 +72,15 @@ static void init_gcrypt_subsystem(void)
 
 	s=gcry_check_version(GCRYPT_VERSION);	
 	if( !s ){	// mismatch means wrong dynamic library
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 			"Expected libgcrypt version %s!?", GCRYPT_VERSION);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		NERROR1("libgcrypt version mismatch!?");
 	}
 
 	if( verbose ){
-		sprintf(DEFAULT_ERROR_STRING,"libgcrypt version %s",s);
-		NADVISE(DEFAULT_ERROR_STRING);
+		sprintf(ERROR_STRING,"libgcrypt version %s",s);
+		advise(ERROR_STRING);
 	}
 
 #ifdef USE_SECURE_MEMORY
@@ -86,7 +89,7 @@ static void init_gcrypt_subsystem(void)
 	 * parsed program options which might be used to suppress such
 	 * warnings.
 	 */
-NADVISE("libgcrypt will use secure memory...");
+advise("libgcrypt will use secure memory...");
 	gcry_control (GCRYCTL_SUSPEND_SECMEM_WARN);
 
 	/* ... If required, other initialization goes here.  Note that the
@@ -112,7 +115,7 @@ NADVISE("libgcrypt will use secure memory...");
 
 #else /* ! USE_SECURE_MEMORY */
 
-//NADVISE("libgcrypt will NOT use secure memory...");
+//advise("libgcrypt will NOT use secure memory...");
 	// This initialization assumes that the environment
 	// is secure, so that secure memory does not need to
 	// be used for key storage...
@@ -164,7 +167,7 @@ NADVISE("libgcrypt will use secure memory...");
 // are pad chars - but what if we want to encrypt arbitrary
 // data, where a null byte might be a legitimate value???
 
-size_t decrypt_char_buf(const uint8_t *in_buf, size_t in_len, char *out_buf, size_t out_len )
+size_t _decrypt_char_buf(QSP_ARG_DECL  const uint8_t *in_buf, size_t in_len, char *out_buf, size_t out_len )
 {
 	gcry_error_t status;
 	int bs;
@@ -176,10 +179,10 @@ size_t decrypt_char_buf(const uint8_t *in_buf, size_t in_len, char *out_buf, siz
 	if( bs <= 0 ) return 0;	// when lib not present?
 
 	if( (in_len % bs) != 0 ){
-		sprintf(DEFAULT_ERROR_STRING,
+		sprintf(ERROR_STRING,
 "decrypt_char_buf:  input size (%ld) is not an integral number of blocks (bs = %d)!?",
 			(long)in_len,bs);
-		NWARN(DEFAULT_ERROR_STRING);
+		warn(ERROR_STRING);
 		return 0;
 	}
 
@@ -201,7 +204,7 @@ size_t decrypt_char_buf(const uint8_t *in_buf, size_t in_len, char *out_buf, siz
 	return out_len;
 }
 
-size_t encrypt_char_buf(const char *in_buf, size_t in_len, uint8_t *out_buf, size_t out_len)
+size_t _encrypt_char_buf(QSP_ARG_DECL  const char *in_buf, size_t in_len, uint8_t *out_buf, size_t out_len)
 {
 	gcry_error_t status;
 	size_t padded_len, n_blocks;
@@ -232,7 +235,7 @@ size_t encrypt_char_buf(const char *in_buf, size_t in_len, uint8_t *out_buf, siz
 		padded_len=in_len;
 	}
 	if( out_len < padded_len ){
-		NWARN("encrypt_char_buf:  output buffer too small for pad!?");
+		warn("encrypt_char_buf:  output buffer too small for pad!?");
 		return 0;
 	}
 
@@ -273,7 +276,7 @@ int encryption_hash_size(void)
 
 // this needs to hash the key and allocate the space for the hash
 
-int hash_my_key(void **vpp,const char *key,int key_len)
+int _hash_my_key(QSP_ARG_DECL  void **vpp,const char *key,int key_len)
 {
 	unsigned char *digest;
 	unsigned char *storage;
@@ -328,32 +331,32 @@ int hash_my_key(void **vpp,const char *key,int key_len)
 
 size_t decrypt_char_buf(const uint8_t *in_buf, size_t in_len, char *out_buf, size_t out_len )
 {
-	NWARN("decrypt_char_buf:  libgcrypt not present!?");
+	warn("decrypt_char_buf:  libgcrypt not present!?");
 	return 0;
 }
 
 size_t encrypt_char_buf(const char *in_buf, size_t in_len, uint8_t *out_buf, size_t out_len)
 {
-	NWARN("encrypt_char_buf:  libgcrypt not present!?");
+	warn("encrypt_char_buf:  libgcrypt not present!?");
 	return 0;
 }
 
 size_t encryption_block_size(void)
 {
-	NWARN("encryption_block_size:  libgcrypt not present!?");
+	warn("encryption_block_size:  libgcrypt not present!?");
 	return 0;
 }
 
 
 size_t encryption_key_size(void)
 {
-	NWARN("encryption_key_size:  libgcrypt not present!?");
+	warn("encryption_key_size:  libgcrypt not present!?");
 	return 0;
 }
 
 int encryption_hash_size(void)
 {
-	NWARN("encryption_hash_size:  libgcrypt not present!?");
+	warn("encryption_hash_size:  libgcrypt not present!?");
 	return 0;
 }
 
@@ -361,7 +364,7 @@ int encryption_hash_size(void)
 
 int hash_my_key(void **vpp,const char *key,int key_len)
 {
-	NWARN("hash_my_key:  libgcrypt not present!?");
+	warn("hash_my_key:  libgcrypt not present!?");
 	return 0;
 }
 
