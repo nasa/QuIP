@@ -444,7 +444,7 @@ void vl_init(SINGLE_QSP_ARG_DECL)
 	/* sort the table to insure that each entry is at the location of its code */
 #ifdef CAUTIOUS
 	if( N_VEC_FUNCS != N_NVFS ){
-		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %ld entries!?",
+		sprintf(ERROR_STRING,"CAUTIOUS:  vl_init:  Vector function table is missing %zd entries!?",
 			N_VEC_FUNCS-N_NVFS);
 		error1(ERROR_STRING);
 	}
