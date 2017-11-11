@@ -33,6 +33,8 @@
 #endif
 
 #include "quip_prot.h"
+#include "function.h"
+#include "debug.h"
 #include "sound.h"
 
 static snd_pcm_t *playback_handle=NULL;
