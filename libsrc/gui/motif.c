@@ -1133,17 +1133,15 @@ COMMAND_FUNC( do_dispatch )
 	motif_qsp = THIS_QSP;
 	motif_dispatch(SINGLE_QSP_ARG);
 }
-#endif // HAVE_MOTIF
 
 static void motif_dispatch(SINGLE_QSP_ARG_DECL)
 {
-#ifdef HAVE_MOTIF
 	XtInputMask mask;
 
 	while( (mask = XtAppPending(globalAppContext)) != 0)
 		XtAppProcessEvent(globalAppContext, mask);
-#endif // HAVE_MOTIF
 }
+#endif // HAVE_MOTIF
 
 
 #ifdef HAVE_MOTIF
